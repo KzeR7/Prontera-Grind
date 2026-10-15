@@ -3,7 +3,21 @@
 Read this first. [README.md](README.md) is the reference spec; this file says where work stopped,
 what is verified, what is still open, and how to pick it up.
 
-## Snapshot (2026-10-15)
+## Current preparation (2026-10-15)
+
+Owner now requests five core RO skills per class. Thirty skills and corresponding
+draft FX are implemented, retaining existing IDs/ranks. Rolling Cutter spins five
+times in one slot at 0.2-second spacing, building stacks for Cross Ripper Slasher.
+Support buffs/heals run outside offensive slots. See [SKILL-RESEARCH.md](SKILL-RESEARCH.md)
+for sources, adaptations and the inspected shared video. Runtime regression checks,
+including the flag-on 15-check skill suite, verify these changes.
+
+Native preparation remains 12 fixed looks / 400 actions / 2,573 original frames, including caster and GX roll routes.
+Classes remain locked. Native wardrobe attachment integration, rite UI, Ascension
+progression and release acceptance remain open. The snapshot below is historical;
+its old skill counts and names do not describe the current package.
+
+## Historical snapshot (2026-10-15)
 
 - **Branch:** `arena/20c27edf-prontera-grind` (session-fixed; do not switch branches).
 - **Last commit:** `9f4e79d` — "Merge main into 4th-job branch; resolve PR #91 conflicts". Pushed to
@@ -51,9 +65,9 @@ Status key: **[ ]** not started · **[~]** partly done · **[x]** done. Owner = 
 - [ ] **Owner: unlock.** Explicit instruction to flip `FOURTH_JOBS_LIVE` and bump `BUILD`.
 - [ ] **Owner: `JOFF[4] = 100` pacing.** Kept as built (Job Lv 1–50 ↔ Base 101–150). Confirm once the Ascension design is settled.
 - [ ] **Owner: native bodies (ROADMAP Milestone 4, Phase B).** The 4th jobs wear parent packed bodies. New body choices need an owner decision (`docs/DECISIONS.md`, "Reserve future progression bodies").
-- [ ] **Owner or agent with sheets: skill icons and FX.** The 18 skills reuse native art by alias (`ART4` in `index.html`). Their own art is not made; do not repaint existing sprites.
-- [ ] **Agent: Afterglow V6 effects** for the 4th-job skills. Not generated.
-- [ ] **Owner: Ascension aura and Ascension track.** Design note only. Lv 150+ is a separate Ascension level with its own stats; a later Ascension skill tab raises skill boost. Nothing is built.
+- [ ] **Owner or agent with sheets: skill icons and FX.** The 18 skills reuse native art by alias (`ART4` in `index.html`). Dedicated effects are now generated; new icon artwork still needs approved sources. Do not repaint native icons.
+- [x] **Agent: Afterglow effects** for all 18 fourth-job skills, generated and covered by the expanded animation simulation.
+- [~] **Ascension aura and Ascension track.** Aura implemented behind the class flag; the track remains a design note. Lv 150+ is a separate Ascension level with its own stats; a later Ascension skill tab raises skill boost. The progression track is not built.
 - [ ] **Agent/owner: Crucible rite panel.** `changeClass()` stands in for the rite.
 - [ ] **Owner: balance.** Stat multipliers (`aspd`, `atk`, `hp` in `CD4`) and skill numbers (`SKILLS4`) are provisional. Tune with the new mobs and bosses, then regenerate fixtures.
 - [ ] **Agent: browser check.** Nothing has been looked at in a real browser with the flag on: Class Tree row, skill cards, combo bar, icon aliases, the absorb ward and bounce visuals. Do this before the unlock.

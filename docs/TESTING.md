@@ -161,3 +161,32 @@ PNG path to Python for a close view of each area. `astral_scenery_sim.js` checks
 deterministic geometry, varied paving/island surfaces, actual prop bounds against
 the combat corridor, pillar supports, finite vertices, mesh budgets, and resource
 disposal both with textures and with missing images.
+
+## Parked fourth-job visual review
+
+Keep `FOURTH_JOBS_LIVE=false`. Use the normal static preview server and open
+`/Updates/fourth-jobs/review.html` for the original native fixed-look sprites and
+30 core skill effects. This page is excluded from the production build.
+
+Run `python3 tools/build_fourth_job_review.py --check`,
+`node tools/tests/afterglow_sim.js` (now covers 105 effects on a flag-on page copy),
+`node tools/tests/owner_fx_sim.js` and the existing fourth-job skill suite. The
+normal skill material checks above remain required. With Pillow installed, run
+`python tools/tests/fourth_job_assets.py --native <native-root> --proof <export-root>`;
+[source recovery and native export instructions](../tools/native-fourth-jobs/README.md)
+explain how to obtain those external fixtures. Without those arguments, the asset
+audit validates recorded packed hashes and frame reconstruction only.
+
+In the shared browser, run
+`coderabbit-agent-browser eval "$(cat tools/check_fourth_job_browser.js)"` at desktop
+and 390px widths. Check sprite download failure/retry and reduced-motion startup
+as well. The pack is not yet integrated with the live wardrobe; these checks do
+not replace full flag-on gameplay and wardrobe acceptance before release.
+
+Fourth-job playback correction: `node tools/tests/fourth_job_motion_sim.js` checks
+native skill routes and deterministic body/effect time. Run
+`tools/check_fourth_job_playback_browser.js` via the shared browser eval command
+on the review page to check actual Canvas FX for all 30 skills, resumed playback
+and body changes during scrubbing. The expanded native audit checks 400 actions /
+2,573 frames. Manual route browser coverage is 384; GX roll aliases are covered
+by motion and pixel playback checks. Skill selection intentionally resumes playback.

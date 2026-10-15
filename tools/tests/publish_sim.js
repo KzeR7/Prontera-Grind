@@ -26,7 +26,7 @@ const skinDir = (skinData.match(/"dir":"([^"]+)"/) || [])[1];
 const skinFile = (skinData.match(/"files":\{"S":"([^"]+)"/) || [])[1];
 
 const forbidden = ['_login.html', '_shot.html', 'logic2.js', 'tools', 'docs', 'Sprite', 'image-search',
-  'AGENTS.md', 'READ-ME-FIRST.md', 'Updates/lord-knight-bundles', 'assets/wardrobe/v1', 'assets/wardrobe/v3', 'assets/wardrobe/v4', '_recon_v27b.png', '_recon_v27c.png', '_recon_v27d.png', '_recon_v27e.png'];
+  'AGENTS.md', 'READ-ME-FIRST.md', 'Updates/fourth-jobs', 'Updates/lord-knight-bundles', 'assets/wardrobe/v1', 'assets/wardrobe/v3', 'assets/wardrobe/v4', '_recon_v27b.png', '_recon_v27c.png', '_recon_v27d.png', '_recon_v27e.png'];
 
 t('the build script runs and finishes cleanly', () => {
   assert.ok(built, 'tools/build_site.sh exited non-zero: ' + (buildErr && (buildErr.stderr || '').toString().slice(0, 300)));

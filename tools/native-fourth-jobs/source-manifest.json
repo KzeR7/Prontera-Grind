@@ -1,0 +1,541 @@
+{
+  "schemaVersion": 1,
+  "rendererCommit": "4de4fa747431979d35c747d7edd549a872efd9e1",
+  "files": [
+    {
+      "path": "data/imf/기사_남.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%B3%C2%B2.imf",
+      "bytes": 11796,
+      "sha256": "de221e85dacc8067339c49acbc2e8d9493b0fc7c036f3337ae71349b5f4986e8"
+    },
+    {
+      "path": "data/imf/기사_여.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%BF%C2%A9.imf",
+      "bytes": 11796,
+      "sha256": "519b13a609a8eef42e3afe8426475c4890c8b1e221b0995b806fcc8b1524fb8b"
+    },
+    {
+      "path": "data/imf/마도기어_남.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%B8%C2%B6%C2%B5%C2%B5%C2%B1%C3%A2%C2%BE%C3%AE_%C2%B3%C2%B2.imf",
+      "bytes": 11796,
+      "sha256": "fa5dc5471f95e62a0d8225d26089106b6858f762c2c03425cb78f7bbebdf742d"
+    },
+    {
+      "path": "data/imf/마도기어_여.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%B8%C2%B6%C2%B5%C2%B5%C2%B1%C3%A2%C2%BE%C3%AE_%C2%BF%C2%A9.imf",
+      "bytes": 11796,
+      "sha256": "381a99b9c48abd91d66e705b65c9d8d9a5b44d3cbe800ac60f7df386e72091da"
+    },
+    {
+      "path": "data/imf/어세신크로스_남.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85%C3%85%C2%A9%C2%B7%C3%8E%C2%BD%C2%BA_%C2%B3%C2%B2.imf",
+      "bytes": 11796,
+      "sha256": "fe529b4baf173672fd1519f6408bc9e79ed95939c4f300b0488a4c28438bd5aa"
+    },
+    {
+      "path": "data/imf/어세신크로스_여.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85%C3%85%C2%A9%C2%B7%C3%8E%C2%BD%C2%BA_%C2%BF%C2%A9.imf",
+      "bytes": 11796,
+      "sha256": "2ae2565ca7cf4e506ea5ab37f85066bf375fb42518a38cec566a940c8fa9262e"
+    },
+    {
+      "path": "data/imf/워록_남.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%BF%C3%B6%C2%B7%C3%8F_%C2%B3%C2%B2.imf",
+      "absent": true
+    },
+    {
+      "path": "data/imf/워록_여.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%BF%C3%B6%C2%B7%C3%8F_%C2%BF%C2%A9.imf",
+      "bytes": 11796,
+      "sha256": "2ae2565ca7cf4e506ea5ab37f85066bf375fb42518a38cec566a940c8fa9262e"
+    },
+    {
+      "path": "data/imf/프리스트_남.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE_%C2%B3%C2%B2.imf",
+      "bytes": 11796,
+      "sha256": "de221e85dacc8067339c49acbc2e8d9493b0fc7c036f3337ae71349b5f4986e8"
+    },
+    {
+      "path": "data/imf/프리스트_여.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE_%C2%BF%C2%A9.imf",
+      "bytes": 11796,
+      "sha256": "2ae2565ca7cf4e506ea5ab37f85066bf375fb42518a38cec566a940c8fa9262e"
+    },
+    {
+      "path": "data/imf/헌터_남.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C3%87%C3%A5%C3%85%C3%8D_%C2%B3%C2%B2.imf",
+      "bytes": 11796,
+      "sha256": "de221e85dacc8067339c49acbc2e8d9493b0fc7c036f3337ae71349b5f4986e8"
+    },
+    {
+      "path": "data/imf/헌터_여.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C3%87%C3%A5%C3%85%C3%8D_%C2%BF%C2%A9.imf",
+      "bytes": 11796,
+      "sha256": "2ae2565ca7cf4e506ea5ab37f85066bf375fb42518a38cec566a940c8fa9262e"
+    },
+    {
+      "path": "data/palette/머리/머리2_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "5bb0d26e536820efb6d83818b38908e9abd6b422d9b6a23bed6493f37d3793c8"
+    },
+    {
+      "path": "data/palette/머리/머리2_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "00f7400751551f43e3cd655055cef0542eab2f7a1a0da50ccc5dc0bfa79b61a8"
+    },
+    {
+      "path": "data/sprite/shadow.act",
+      "url": "https://grf.robrowser.com/data/sprite/shadow.act",
+      "bytes": 96,
+      "sha256": "87ec393360e9aba9b1b07ed416e305586675c8feec055446923b322826ce1062"
+    },
+    {
+      "path": "data/sprite/shadow.spr",
+      "url": "https://grf.robrowser.com/data/sprite/shadow.spr",
+      "bytes": 1537,
+      "sha256": "0dbb900969eda93bc64989fff90094513759b00eb75f5325dcbe1f8854c76acf"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_남_검.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7%5C%C2%B1%C3%A2%C2%BB%C3%A7_%C2%B3%C2%B2_%C2%B0%C3%8B.act",
+      "bytes": 37476,
+      "sha256": "10e3306923d228e1ff87dfbe2029e684eef4d6011ba347c7fd3a6cfda2fdd53d"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_남_검.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7%5C%C2%B1%C3%A2%C2%BB%C3%A7_%C2%B3%C2%B2_%C2%B0%C3%8B.spr",
+      "bytes": 3239,
+      "sha256": "dd350813fea474afa6b78e3661839e6b50fcd92c4e0df0a6e921d45b820238a3"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_남_검_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%B3%C2%B2_%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "bytes": 37716,
+      "sha256": "7d2599da1056363a50f48c27669dc186a09da3afe11d3c97837cac5e44b88f80"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_남_검_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%B3%C2%B2_%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "bytes": 32290,
+      "sha256": "efa6a010d370eb08836df745c07adfa917d75d13d0d02623db78de0b8bee76c7"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_여_검.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7%5C%C2%B1%C3%A2%C2%BB%C3%A7_%C2%BF%C2%A9_%C2%B0%C3%8B.act",
+      "bytes": 37332,
+      "sha256": "8445d22aefc181d2f35a3e08d3028c1b78b972b7a5811de51cd1bf4fba6df0d8"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_여_검.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7%5C%C2%B1%C3%A2%C2%BB%C3%A7_%C2%BF%C2%A9_%C2%B0%C3%8B.spr",
+      "bytes": 3938,
+      "sha256": "4f0ce4c9314367beb195621069503c79194a12a6f596744132b5abc47087e477"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_여_검_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%BF%C2%A9_%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "bytes": 37332,
+      "sha256": "ed144b333726a0b5d5dcf7c4616784b89a306b4babb7af321cfc935e73cbe5a5"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_여_검_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%BF%C2%A9_%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "bytes": 6717,
+      "sha256": "1bc79bb045d6e7b180f697db5a0a6a4f03d894eee171699b29aa394a71560097"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/2_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/2_%C2%B3%C2%B2.act",
+      "bytes": 61044,
+      "sha256": "904afd5ddac10b756362f2e86c6cb9a80f71d53d7006a306b625ba102d38cdcb"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/2_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/2_%C2%B3%C2%B2.spr",
+      "bytes": 8505,
+      "sha256": "02d968e6b889f565b68c66dbec7f6290da8982cdb44a12febe47ef8361e3a18d"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/2_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/2_%C2%BF%C2%A9.act",
+      "bytes": 61044,
+      "sha256": "0c352f65bc9a0ba40afbfdfd5eb3093ad560194108e468c98a907ba916ba146b"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/2_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/2_%C2%BF%C2%A9.spr",
+      "bytes": 9777,
+      "sha256": "724113660894be3145e251e07f72a5d6da161d581a02d1c6debd98ea82950cb2"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/길로틴크로스_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B1%C3%A6%C2%B7%C3%8E%C3%86%C2%BE%C3%85%C2%A9%C2%B7%C3%8E%C2%BD%C2%BA_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "9b0736976cbb3209c3534bbeae43b6ec9bc77fef5173cdc5e0baae7fe8462f1e"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/길로틴크로스_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B1%C3%A6%C2%B7%C3%8E%C3%86%C2%BE%C3%85%C2%A9%C2%B7%C3%8E%C2%BD%C2%BA_%C2%B3%C2%B2.spr",
+      "bytes": 228786,
+      "sha256": "08ac24463d9bcb7ec5b34bdf3db233c308230d9d6b9187a06339089a4a0f84ff"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/레인져_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B7%C2%B9%C3%80%C3%8E%C3%81%C2%AE_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "73636d939f10e723b38897e79f2ee1417c7e60a541f82289385f1bbf204e309f"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/레인져_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B7%C2%B9%C3%80%C3%8E%C3%81%C2%AE_%C2%B3%C2%B2.spr",
+      "bytes": 237373,
+      "sha256": "29dda73ce12acfacb08647e35de2afafa8772f511205a462c31db3c512171a17"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/룬나이트_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B7%C3%A9%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "d87dfba68a3346e11dd845f69ab0172b7d95a7f66c91bf73e6fd47bc827593bc"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/룬나이트_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B7%C3%A9%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%B3%C2%B2.spr",
+      "bytes": 237776,
+      "sha256": "6af563bf0332dac2831d30d544e85ea280b3006a734c57edcaa955db7fe504ce"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/미케닉_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B9%C3%8C%C3%84%C3%89%C2%B4%C3%90_%C2%B3%C2%B2.act",
+      "bytes": 48796,
+      "sha256": "9fac53059771d5794f3b7e197944b9a17bbbda49c524567ccd092f0b4cf8d87d"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/미케닉_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B9%C3%8C%C3%84%C3%89%C2%B4%C3%90_%C2%B3%C2%B2.spr",
+      "bytes": 223737,
+      "sha256": "a3d03fae6d39d68504daa3888793bda16ca5c1fb55f60b2c55cbc531fec4ee4e"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/아크비숍_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%BE%C3%86%C3%85%C2%A9%C2%BA%C3%B1%C2%BC%C3%B3_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "0622070eb6df81b4e86e56f807974d8e9366451c167aec1c06f98d1d73873b92"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/아크비숍_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%BE%C3%86%C3%85%C2%A9%C2%BA%C3%B1%C2%BC%C3%B3_%C2%B3%C2%B2.spr",
+      "bytes": 231060,
+      "sha256": "2d5e5b98442951676a93f8c54d19fb1b5d6921e078402174df76c23a355cc420"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/워록_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%BF%C3%B6%C2%B7%C3%8F_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "169c8a5e750a91d07fdbe7fd4d6b616b187bfa4e6d8317d8e56c568906580731"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/워록_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%BF%C3%B6%C2%B7%C3%8F_%C2%B3%C2%B2.spr",
+      "bytes": 271317,
+      "sha256": "5ccdac0c34faa2263336b14e4f9cba934c1068235cf24426e280adc8e99b6553"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/길로틴크로스_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B1%C3%A6%C2%B7%C3%8E%C3%86%C2%BE%C3%85%C2%A9%C2%B7%C3%8E%C2%BD%C2%BA_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "61eafe4bed6aec776a732a2f1569578b12d1185f17f93ffe7efa8aa4ac8f28db"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/길로틴크로스_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B1%C3%A6%C2%B7%C3%8E%C3%86%C2%BE%C3%85%C2%A9%C2%B7%C3%8E%C2%BD%C2%BA_%C2%BF%C2%A9.spr",
+      "bytes": 213697,
+      "sha256": "507dfe90bee2f5c9e428c3120beacec4b9c6ec410e6e787308999b7f02a94b71"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/레인져_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B7%C2%B9%C3%80%C3%8E%C3%81%C2%AE_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "a49cef71f6b3f33dc75c8345c47b1705149768a64b1bddefb3d5e9b87942b372"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/레인져_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B7%C2%B9%C3%80%C3%8E%C3%81%C2%AE_%C2%BF%C2%A9.spr",
+      "bytes": 209325,
+      "sha256": "abc69d5d061c877e7609dd6a35484f479d22eaa67552d0c66f233f668184e9a9"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/룬나이트_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B7%C3%A9%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "a2a1ba85f8d3bfa615ed5300efb4133a85fee3734aaa4556ec8d306cfdddebf0"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/룬나이트_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B7%C3%A9%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%BF%C2%A9.spr",
+      "bytes": 197925,
+      "sha256": "bfca996e460e812c4d7f557b4bf7c351906d57fefeedfaf85c46a6dd051a3078"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/미케닉_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B9%C3%8C%C3%84%C3%89%C2%B4%C3%90_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "2e967f7e6622111654381625d9a3fc209201877cee682bc151b64f8777b9e17e"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/미케닉_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B9%C3%8C%C3%84%C3%89%C2%B4%C3%90_%C2%BF%C2%A9.spr",
+      "bytes": 207932,
+      "sha256": "5c2667ccfd3e5381dc51a43b8c7881bafff16c9e8c5df982472c4dfafa6f4d69"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/아크비숍_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%BE%C3%86%C3%85%C2%A9%C2%BA%C3%B1%C2%BC%C3%B3_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "080f8a0d89a112401767d2df90260372a81876b95540052fea23667f5dcdd6fe"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/아크비숍_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%BE%C3%86%C3%85%C2%A9%C2%BA%C3%B1%C2%BC%C3%B3_%C2%BF%C2%A9.spr",
+      "bytes": 201573,
+      "sha256": "9903a5786fba7a711d6107a54ac259c9d30852e049b526b3c261601279cf47f2"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/워록_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%BF%C3%B6%C2%B7%C3%8F_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "dd852a7c08cf6b5306b86c6ff5dba3ce2aae2f47cfc4d9e94835077952f87182"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/워록_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%BF%C3%B6%C2%B7%C3%8F_%C2%BF%C2%A9.spr",
+      "bytes": 239795,
+      "sha256": "0011af706f7ecb9781100749980893a58079e44f6dca42bbad938a7f18eeb8bb"
+    },
+    {
+      "path": "data/sprite/인간족/어세신/어세신_남_카타르_카타르.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85_%C2%B3%C2%B2_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3.act",
+      "bytes": 37332,
+      "sha256": "a9717848de0147918af1a9db520476b4a2869c71f9f47caf3dd0c719b4e81231"
+    },
+    {
+      "path": "data/sprite/인간족/어세신/어세신_남_카타르_카타르.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85_%C2%B3%C2%B2_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3.spr",
+      "bytes": 7196,
+      "sha256": "de029afc45fb2dd587b9d928cb2df5d1e5c6a61ebd000941c0b2e03d47f7ed86"
+    },
+    {
+      "path": "data/sprite/인간족/어세신/어세신_남_카타르_카타르_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85_%C2%B3%C2%B2_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "bytes": 37332,
+      "sha256": "e5f0f5227ddea86cbb38b5e383b6df68605e177899bbf0c297b12ba6f5dd6108"
+    },
+    {
+      "path": "data/sprite/인간족/어세신/어세신_남_카타르_카타르_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85_%C2%B3%C2%B2_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "bytes": 6757,
+      "sha256": "750d843f9c3ecee9d775e931dd8794215770f38c99feb964caffa9d529c37750"
+    },
+    {
+      "path": "data/sprite/인간족/어세신/어세신_여_카타르_카타르.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85_%C2%BF%C2%A9_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3.act",
+      "bytes": 37332,
+      "sha256": "c58cc1606b7138aadd19c9ad2a77f5c2a791e651ad1ff69a277f0a3393502c7c"
+    },
+    {
+      "path": "data/sprite/인간족/어세신/어세신_여_카타르_카타르.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85_%C2%BF%C2%A9_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3.spr",
+      "bytes": 12974,
+      "sha256": "f0a3ebc43d1f400aa8ad3cd36c5c56f393c99c85b17055b9da9de14d19c3226c"
+    },
+    {
+      "path": "data/sprite/인간족/어세신/어세신_여_카타르_카타르_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85_%C2%BF%C2%A9_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "bytes": 37332,
+      "sha256": "102f46ae53f084a31dee651384554004f28a6af0dcf0e88788e36788d40e1d57"
+    },
+    {
+      "path": "data/sprite/인간족/어세신/어세신_여_카타르_카타르_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85/%C2%BE%C3%AE%C2%BC%C2%BC%C2%BD%C3%85_%C2%BF%C2%A9_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C3%84%C2%AB%C3%85%C2%B8%C2%B8%C2%A3_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "bytes": 4066,
+      "sha256": "35ecf051b4afc6700ba64aedaccdf5b46d7c98eeeba99ef5e0c324a6e9d2553b"
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_남_롯드.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2_%C2%B7%C3%94%C2%B5%C3%A5.act",
+      "bytes": 37332,
+      "sha256": "55c3dd6cea03eca4dbe5d95d0686c66501066d802b914d1f93828558c73464c8"
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_남_롯드.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2_%C2%B7%C3%94%C2%B5%C3%A5.spr",
+      "bytes": 4125,
+      "sha256": "b73b38ad7c1c54d2479554d870bcf7209dc5a61638d8f23bfd72038551604365"
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_남_롯드_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2_%C2%B7%C3%94%C2%B5%C3%A5_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_남_롯드_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2_%C2%B7%C3%94%C2%B5%C3%A5_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_여_롯드.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9_%C2%B7%C3%94%C2%B5%C3%A5.act",
+      "bytes": 37556,
+      "sha256": "e4f079769b62f5234b6e17d0c59348840c84b7d6674f326fc522c94a800848ff"
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_여_롯드.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9_%C2%B7%C3%94%C2%B5%C3%A5.spr",
+      "bytes": 3329,
+      "sha256": "1ade436b47df0deaea4a2126643f35bc31da20f1145424d7445e0cdf22789d47"
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_여_롯드_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9_%C2%B7%C3%94%C2%B5%C3%A5_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_여_롯드_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9_%C2%B7%C3%94%C2%B5%C3%A5_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/제철공/제철공_남_클럽.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8_%C2%B3%C2%B2_%C3%85%C2%AC%C2%B7%C2%B4.act",
+      "bytes": 39060,
+      "sha256": "4fe9eabd50305085143e0e8e84d67dd719d7719aadd1411f614a24258f56b1ff"
+    },
+    {
+      "path": "data/sprite/인간족/제철공/제철공_남_클럽.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8_%C2%B3%C2%B2_%C3%85%C2%AC%C2%B7%C2%B4.spr",
+      "bytes": 3355,
+      "sha256": "69c154722f2681ebfaadd08f001454138e9c320088ae85109a02620c9dbecdd8"
+    },
+    {
+      "path": "data/sprite/인간족/제철공/제철공_남_클럽_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8_%C2%B3%C2%B2_%C3%85%C2%AC%C2%B7%C2%B4_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/제철공/제철공_남_클럽_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8_%C2%B3%C2%B2_%C3%85%C2%AC%C2%B7%C2%B4_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/제철공/제철공_여_클럽.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8_%C2%BF%C2%A9_%C3%85%C2%AC%C2%B7%C2%B4.act",
+      "bytes": 39060,
+      "sha256": "9f2c8b4224b6757688a149a999df63edf22c652170a48dfba46f6c8c1880eeee"
+    },
+    {
+      "path": "data/sprite/인간족/제철공/제철공_여_클럽.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8_%C2%BF%C2%A9_%C3%85%C2%AC%C2%B7%C2%B4.spr",
+      "bytes": 4519,
+      "sha256": "294576bde9ebcb79a4c7abde518d1f47304eb264cd51d78bf77341729d020568"
+    },
+    {
+      "path": "data/sprite/인간족/제철공/제철공_여_클럽_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8_%C2%BF%C2%A9_%C3%85%C2%AC%C2%B7%C2%B4_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/제철공/제철공_여_클럽_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8/%C3%81%C2%A6%C3%83%C2%B6%C2%B0%C3%B8_%C2%BF%C2%A9_%C3%85%C2%AC%C2%B7%C2%B4_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/프리스트/프리스트_남_클럽.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE_%C2%B3%C2%B2_%C3%85%C2%AC%C2%B7%C2%B4.act",
+      "bytes": 37332,
+      "sha256": "f6ffd085e933b0638344322e27102ec830ef8a1827ae675e4ff46c08cc07ec8e"
+    },
+    {
+      "path": "data/sprite/인간족/프리스트/프리스트_남_클럽.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE_%C2%B3%C2%B2_%C3%85%C2%AC%C2%B7%C2%B4.spr",
+      "bytes": 5667,
+      "sha256": "8e785f16ccdab5a11b688f01c0ba3a5290045084f951b27ab014a5ab7e906cb5"
+    },
+    {
+      "path": "data/sprite/인간족/프리스트/프리스트_남_클럽_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE_%C2%B3%C2%B2_%C3%85%C2%AC%C2%B7%C2%B4_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/프리스트/프리스트_남_클럽_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE_%C2%B3%C2%B2_%C3%85%C2%AC%C2%B7%C2%B4_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/프리스트/프리스트_여_클럽.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE_%C2%BF%C2%A9_%C3%85%C2%AC%C2%B7%C2%B4.act",
+      "bytes": 36692,
+      "sha256": "1483395e14af4d7617697379d539bf3c331084ab92ab41479f8d875709e963c3"
+    },
+    {
+      "path": "data/sprite/인간족/프리스트/프리스트_여_클럽.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE_%C2%BF%C2%A9_%C3%85%C2%AC%C2%B7%C2%B4.spr",
+      "bytes": 4006,
+      "sha256": "72d761ccea29918578b3ed8b0196f48c2f5b10b5860f804db6cb9288baa32dbe"
+    },
+    {
+      "path": "data/sprite/인간족/프리스트/프리스트_여_클럽_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE_%C2%BF%C2%A9_%C3%85%C2%AC%C2%B7%C2%B4_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/프리스트/프리스트_여_클럽_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE/%C3%87%C3%81%C2%B8%C2%AE%C2%BD%C2%BA%C3%86%C2%AE_%C2%BF%C2%A9_%C3%85%C2%AC%C2%B7%C2%B4_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/헌터/헌터_남_활.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%A5%C3%85%C3%8D/%C3%87%C3%A5%C3%85%C3%8D_%C2%B3%C2%B2_%C3%88%C2%B0.act",
+      "bytes": 37332,
+      "sha256": "e2c0bb601536f1c38495fcdf3fb5a370524a236cdacc2e7c835716b20b428f8a"
+    },
+    {
+      "path": "data/sprite/인간족/헌터/헌터_남_활.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%A5%C3%85%C3%8D/%C3%87%C3%A5%C3%85%C3%8D_%C2%B3%C2%B2_%C3%88%C2%B0.spr",
+      "bytes": 5178,
+      "sha256": "ab0de32352b150b3ab3bd6de0fb7d5e14d0b8b99ae79c038bb4978ee93db29f3"
+    },
+    {
+      "path": "data/sprite/인간족/헌터/헌터_남_활_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%A5%C3%85%C3%8D/%C3%87%C3%A5%C3%85%C3%8D_%C2%B3%C2%B2_%C3%88%C2%B0_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/헌터/헌터_남_활_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%A5%C3%85%C3%8D/%C3%87%C3%A5%C3%85%C3%8D_%C2%B3%C2%B2_%C3%88%C2%B0_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/헌터/헌터_여_활.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%A5%C3%85%C3%8D/%C3%87%C3%A5%C3%85%C3%8D_%C2%BF%C2%A9_%C3%88%C2%B0.act",
+      "bytes": 37332,
+      "sha256": "c89f6590a05f2fe7c44ce379009cfa1e4ab32f0847646d867f9001b2d5e2962b"
+    },
+    {
+      "path": "data/sprite/인간족/헌터/헌터_여_활.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%A5%C3%85%C3%8D/%C3%87%C3%A5%C3%85%C3%8D_%C2%BF%C2%A9_%C3%88%C2%B0.spr",
+      "bytes": 4323,
+      "sha256": "359ce33c428e91e3dcd908524f4dbc78a0bfc05272b2bbe63cf23ed97dcfe71d"
+    },
+    {
+      "path": "data/sprite/인간족/헌터/헌터_여_활_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%A5%C3%85%C3%8D/%C3%87%C3%A5%C3%85%C3%8D_%C2%BF%C2%A9_%C3%88%C2%B0_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "absent": true
+    },
+    {
+      "path": "data/sprite/인간족/헌터/헌터_여_활_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%87%C3%A5%C3%85%C3%8D/%C3%87%C3%A5%C3%85%C3%8D_%C2%BF%C2%A9_%C3%88%C2%B0_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "absent": true
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # 4th Jobs (Milestone 4) — built, parked, not unlocked
 
-**Status (2026-10-15):** all six 4th-job classes and their 18 signature skills are built in
+**Status (2026-10-15):** all six 4th-job classes and their 30 core RO skills are built in
 `index.html` and tested, but **parked**. `FOURTH_JOBS_LIVE` is `false`, so the live game still has
 19 classes, 91 skills and the `haven-v157` build label (`main`'s). Nothing here is unlocked until the owner
 gives an explicit instruction (see [Go-live checklist](#go-live-checklist)).
@@ -9,6 +9,13 @@ gives an explicit instruction (see [Go-live checklist](#go-live-checklist)).
 
 This folder is the reference for that instruction. It does not replace the code: the code is the
 source of truth, and this file says what it should do and what is still open.
+
+## Visual preparation update (2026-10-15)
+
+The owner approved the five core RO skills per class, original native sprite recovery and keeping
+the classes locked. [VISUALS.md](VISUALS.md) records the new six-class native review
+pack, dedicated Afterglow effects and flag-gated aura. Wardrobe integration remains
+open; the native review pack is a fixed composition and stays out of production.
 
 ## What is built
 
@@ -19,15 +26,15 @@ source of truth, and this file says what it should do and what is still open.
 | Pacing: `JOFF[4]=100` (Job Lv 1 at Base 101, Job Lv 50 at Base 150) | `JOFF` | `JOFF` pin has the 5th entry, unused live |
 | Fourth Class Tree row | `V.job()` | Only when flag on |
 | Packed body = parent body (until native bodies exist) | `PACK_BODY` | Only when flag on |
-| 18 signature skills (`SKILLS4`) | `index.html`, joined to `SKILLS` only when flag on | No |
+| 30 core RO skills (`SKILLS4`) | `index.html`, joined to `SKILLS` only when flag on | No |
 | Mechanic runtime (stacks, bounces, stuns, roulette, gap-closers, absorb) | `castSkill` and helpers beside `chainHit` | Unchanged for live skills |
-| Native icon aliases and effect kinds for the 18 skills | `if(FOURTH_JOBS_LIVE)` block after `SKILL_VISUAL_REDESIGN` | No |
+| Native icon aliases and effect kinds for the 30 skills | `if(FOURTH_JOBS_LIVE)` block after `SKILL_VISUAL_REDESIGN` | No |
 | Guillotine Cross katar-or-dagger rule (`katarOnly`) | `katarOnly()` | Live function, no live class affected |
 
 Tests (all run from the repository root):
 
 * `node tools/tests/fourth_job_sim.js` — 20 checks: roster, unlock gate, pacing, Class Tree, bodies, gear.
-* `node tools/tests/fourth_job_skills_sim.js` — 25 checks: the 18 skills, every mechanic, and the live skill list unchanged.
+* `node tools/tests/fourth_job_skills_sim.js` — 15 checks: the 30 skills, rapid-spin combo, support, save compatibility and unchanged live skill list.
 * `node tools/tests/dual_wield_sim.js` — the live Assassin pin plus the Guillotine Cross rule.
 
 Both 4th-job sims run a copy of the page with the flag turned on. Nothing is edited on disk.
@@ -51,57 +58,19 @@ Unlock for all six: Base Lv 150 **and** parent Job Lv 50 (plus the existing chai
 Job Lv cap 50. The 4th-job tier keeps the existing gear ceiling (`gearTierOf` and `classTierOf` clamp
 at tier 3, so the Transcendent band applies).
 
-## The 18 signature skills
+## The 30 core RO skills
 
-Each row is one skill. Power is the total damage of the cast, split across hits, as in the rest of
-the game. Numbers are **provisional** and not balance-tuned against the combat model.
+See [the researched skill selection and exact adaptations](SKILL-RESEARCH.md) for
+all five skills per class, source links, Rolling Cutter tuning and save compatibility.
+`SKILLS4` in `index.html` is the source of truth for current numbers. The review's
+skill data and FX catalogue are generated from it.
 
-| ID | Name | Class | CD (s) | Hits | Power | Shape | Mechanic |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `rk_charge` | Rune Charge | Rune Knight | 4.0 | 3 | 2.3 | single | gap-closer (dash 4); gains Rune stacks per hit (max 5) |
-| `rk_burst` | Rune Burst | Rune Knight | 6.0 | 1 | 2.6 | radial | spends Rune stacks, +25% each |
-| `rk_ward` | Rune Ward | Rune Knight | 10.0 | 1 | 1.2 | single | absorb: 25% of max HP, 8 s |
-| `wl_chain` | Chain Lightning | Warlock | 3.0 | 1 | 2.6 | single | bounce to 3 nearest, 50% of a hit |
-| `wl_seal` | Soul Seal | Warlock | 4.0 | 1 | 1.6 | single | target stacks: seal (max 5, 8 s) |
-| `wl_det` | Seal Detonation | Warlock | 6.0 | 1 | 2.4 | splash | spends target seals, +20% each; stun 0.8 s if any were spent |
-| `rg_hunt` | Hunting Pounce | Ranger | 4.0 | 2 | 2.2 | single | gap-closer (dash 6); gains Quarry stacks per hit (max 4) |
-| `rg_warg` | Warg Strike | Ranger | 3.5 | 2 | 2.0 | single | roulette: each hit 25% to stun 1.5 s; spends Quarry, +15% each |
-| `rg_storm` | Storm Arrows | Ranger | 5.0 | 1 | 2.4 | splash | bounce to 4 nearest, 40% of a hit |
-| `gc_cross` | Cross Impact | Guillotine Cross | 3.5 | 2 | 2.6 | cross | spends target Bleed, +12% each; roulette: each cut 30% for an extra cut at 60% of a cut |
-| `gc_slip` | Shadow Slip | Guillotine Cross | 4.5 | 3 | 2.0 | single | gap-closer (dash 5); target stacks: Bleed (max 5, 6 s) |
-| `gc_veil` | Venom Veil | Guillotine Cross | 10.0 | 1 | 1.1 | single | absorb: 20% of max HP, 6 s |
-| `ab_chain` | Holy Chain | Arch Bishop | 3.5 | 2 | 1.8 | single | bounce to 2 nearest, 50% of a hit |
-| `ab_judge` | Judgment Seal | Arch Bishop | 6.0 | 1 | 2.6 | single | stun 1.0 s (bosses resist repeat stuns) |
-| `ab_ward` | Sanctuary Ward | Arch Bishop | 12.0 | 1 | 1.0 | single | absorb: 30% of max HP, 8 s |
-| `mc_gat` | Gatling Fever | Mechanic | 3.0 | 6 | 2.8 | single | gains Heat stacks per hit (max 5) |
-| `mc_over` | Overheat Cannon | Mechanic | 6.0 | 1 | 2.6 | splash | spends Heat stacks, +20% each |
-| `mc_rocket` | Rocket Jump | Mechanic | 5.0 | 1 | 2.0 | splash | gap-closer (dash 6); stun 0.6 s on all targets |
-
-## Mechanic definitions
-
-These are the rules the code implements (see the `SKILLS4` comment in `index.html`).
-
-* **Stacks, self (`gain` / `spend`).** A landed hit adds one stack, up to `max`. Each stack lasts 12
-  seconds from its last hit. A spending skill consumes every stack when it is cast and adds `per`
-  damage for each stack spent. Stacks belong to the character's current class run: changing class resets the skill runtime, so they clear.
-* **Stacks, target (`tgtStack` / `tgtSpend`).** A hit on the primary target adds one stack to that
-  mob, up to `max`, lasting `life` seconds. A spending skill consumes the mob's stacks for `per` each.
-  Target stacks are lost when the mob dies or leaves.
-* **Bounce.** After the cast lands, the `n` nearest other living enemies in the same pack each take
-  `share` of **one** hit. A bounce is a proc hit: it does not re-trigger marks or deathmarks, and it
-  does not bounce again.
-* **Stun.** Flat stuns (`stun`) apply to every target hit. Target-spend stuns apply only when stacks
-  were actually spent. Stun time follows the game's existing rules, so bosses resist repeats.
-* **Roulette (`roulette`).** Each direct hit rolls `chance` percent. On success it either stuns for
-  `value` seconds (`effect: "stun"`) or adds an extra strike for `value` × one hit's damage
-  (`effect: "strike"`). A strike is a proc hit and does not roll again. Warg Strike is the 25% example.
-  *Interpretation:* "roulette" means random-chance procs, as recorded in the session. It does **not**
-  mean the boss-map roulette in Milestone 2, which is out of scope here.
-* **Gap-closer (`dash`).** Existing dash: the player steps toward the target and stops at its stop distance.
-  It does nothing when the target is in another pack, when the target is already close, or when it is
-  further than the dash distance plus a small margin.
-* **Absorb (`absorb`).** Casting starts a ward that soaks incoming monster damage until it is used up
-  or it expires. A new ward replaces any ward still up. Without a ward, incoming damage is unchanged.
+Rolling Cutter casts five times within one slot at 0.2-second spacing, adds one
+Rolling stack per cast (cap ten, lifetime ten seconds), then advances. Cross Ripper
+Slasher requires and consumes stacks. Other attacks use the ordinary ordered combo.
+Hallucination Walk, Praefatio, Duple Light and Highness Heal run automatically outside
+the offensive slots. Existing IDs/ranks are retained; converted buffs are removed
+from offensive slots by load sanitization. Endgame balance acceptance remains open.
 
 ## Dagger counts as katar (owner decision)
 
@@ -131,12 +100,12 @@ past 150.
 ## Open items (not done, and why)
 
 * **Native bodies and wardrobe (ROADMAP Milestone 4, Phase B).** Each 4th job wears its parent's
-  packed body until native bodies exist. Native art needs the owner's sprite sheets, and the rule
-  is not to repaint sprite art. `docs/DECISIONS.md` requires an explicit owner decision for new bodies.
-* **Skill icons and effects.** The 18 skills reuse native icons and effect kinds, by alias. Their
-  own art and FX are open, and are not invented here.
-* **Afterglow V6 effects.** Not generated for the 4th-job skills.
-* **Ascension aura** and the **Crucible rite panel** (the current `changeClass()` stands in for the rite).
+  packed body until native wardrobe integration is complete. The original native art is now recovered
+  and audited in the review pack; all cosmetic attachment routes remain open. The owner approved these original progression bodies for preparation.
+* **Skill icons and effects.** The 30 skills reuse native icons and effect kinds, by alias. Their
+  dedicated draft effects are now built; icons still use approved unmodified crops.
+* **Afterglow effects.** Draft choreography for all 30 fourth-job skills is generated. The shared video has now been inspected and the visual treatment revised; native body/FX playback is synchronized. See the updated research notes.
+* **Ascension aura:** built behind the class flag. **Crucible rite panel:** still open (the current `changeClass()` stands in for the rite).
 * **Balance.** Power, cooldown, stack and roulette numbers are provisional. The owner tunes them
   with the new mobs and bosses. `tools/progression_balance.js` regenerates the combat fixtures when
   they change.

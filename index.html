@@ -1222,7 +1222,7 @@ const SKILLS=[
  {"id":"basilica","n":"Final Judgment","max":5,"type":"act","col":"#fff3a0","text":"Strike with a holy seal that detonates after a short delay, damaging nearby enemies.","from":"High Priest","cd":5.0,"hits":1,"power":2.2,"shape":"splash","pulse":0.6,"delay":0.4},
  {"id":"meltdown","n":"Shatter Strike","max":10,"type":"act","col":"#ffa040","text":"A heavy strike with nearby splash. Deals 12% more damage against a target marked by Armor Crack.","from":"Whitesmith","cd":4.0,"hits":1,"power":1.244,"shape":"splash","shatter":0.12}
 ];
-// Milestone 4 (4th jobs): three signature skills per class, dark-launched with the classes. They are
+// Milestone 4 (4th jobs): five core RO skills per class, dark-launched with the classes. They are
 // joined to SKILLS only while FOURTH_JOBS_LIVE is true, so the live skill list, fixtures and combat
 // numbers stay exactly as they are. Mechanic fields (read by castSkill and its helpers below):
 //   gain {key,max}        a direct hit adds one self stack (12 s); stacks are spent by `spend`
@@ -1235,24 +1235,36 @@ const SKILLS=[
 //   absorb {pct,life}     raises a ward absorbing pct of max HP in incoming damage for life seconds
 //   stun                  flat stun on every target (existing field)
 const SKILLS4=[
- {"id":"rk_charge","n":"Rune Charge","max":10,"type":"act","col":"#ffd36e","text":"Dash to an enemy and strike three times. Each hit adds a Rune stack (up to 5, lasting 12 seconds).","from":"Rune Knight","cd":4.0,"hits":3,"power":2.3,"shape":"single","dash":4,"gain":{"key":"rune","max":5}},
- {"id":"rk_burst","n":"Rune Burst","max":10,"type":"act","col":"#ff9d3d","text":"Spend every Rune stack for +25% damage each, in a radial burst around you.","from":"Rune Knight","cd":6.0,"hits":1,"power":2.6,"shape":"radial","spend":{"key":"rune","per":0.25}},
- {"id":"rk_ward","n":"Rune Ward","max":10,"type":"act","col":"#fff3a0","text":"Strike, then raise a ward that absorbs up to 25% of your max HP in damage for 8 seconds.","from":"Rune Knight","cd":10.0,"hits":1,"power":1.2,"shape":"single","absorb":{"pct":0.25,"life":8}},
- {"id":"wl_chain","n":"Chain Lightning","max":10,"type":"act","col":"#c9a0ff","text":"A lightning strike that bounces to three nearby enemies for half damage.","from":"Warlock","cd":3.0,"hits":1,"power":2.6,"shape":"single","bounce":{"n":3,"share":0.5}},
- {"id":"wl_seal","n":"Soul Seal","max":10,"type":"act","col":"#8a5cff","text":"Brand the target with a soul seal. Each cast adds one seal stack (up to 5, lasting 8 seconds).","from":"Warlock","cd":4.0,"hits":1,"power":1.6,"shape":"single","tgtStack":{"key":"seal","max":5,"life":8}},
- {"id":"wl_det","n":"Seal Detonation","max":10,"type":"act","col":"#ff5a8a","text":"Detonate the target's seals for +20% damage each, with splash to nearby enemies. Spending any seals also stuns the target for 0.8 seconds.","from":"Warlock","cd":6.0,"hits":1,"power":2.4,"shape":"splash","tgtSpend":{"key":"seal","per":0.2,"stun":0.8}},
- {"id":"rg_hunt","n":"Hunting Pounce","max":10,"type":"act","col":"#7dff7d","text":"Leap at a distant enemy and shoot twice. Each hit adds a Quarry stack (up to 4, lasting 12 seconds).","from":"Ranger","cd":4.0,"hits":2,"power":2.2,"shape":"single","dash":6,"gain":{"key":"quarry","max":4}},
- {"id":"rg_warg","n":"Warg Strike","max":10,"type":"act","col":"#b5ff6e","text":"Two warg-bolstered shots. Each hit has a 25% chance to stun for 1.5 seconds. Spends Quarry stacks for +15% damage each.","from":"Ranger","cd":3.5,"hits":2,"power":2.0,"shape":"single","spend":{"key":"quarry","per":0.15},"roulette":{"chance":25,"effect":"stun","value":1.5}},
- {"id":"rg_storm","n":"Storm Arrows","max":10,"type":"act","col":"#8fe9ff","text":"An arrow volley on the target area that bounces to four more enemies for 40% damage.","from":"Ranger","cd":5.0,"hits":1,"power":2.4,"shape":"splash","bounce":{"n":4,"share":0.4}},
- {"id":"gc_cross","n":"Cross Impact","max":10,"type":"act","col":"#c0c0ff","text":"Two crossing katar or dagger cuts. Spends the target's Bleed stacks for +12% each. Each cut has a 30% chance to add an extra cut for 60% of a cut's damage.","from":"Guillotine Cross","cd":3.5,"hits":2,"power":2.6,"shape":"cross","tgtSpend":{"key":"bleed","per":0.12},"roulette":{"chance":30,"effect":"strike","value":0.6}},
- {"id":"gc_slip","n":"Shadow Slip","max":10,"type":"act","col":"#8080a8","text":"Slip in behind the target and cut three times. Each cut adds a Bleed stack to the target (up to 5, lasting 6 seconds).","from":"Guillotine Cross","cd":4.5,"hits":3,"power":2.0,"shape":"single","dash":5,"tgtStack":{"key":"bleed","max":5,"life":6}},
- {"id":"gc_veil","n":"Venom Veil","max":10,"type":"act","col":"#7dff9d","text":"A quick cut, then a veil that absorbs up to 20% of your max HP in damage for 6 seconds.","from":"Guillotine Cross","cd":10.0,"hits":1,"power":1.1,"shape":"single","absorb":{"pct":0.2,"life":6}},
- {"id":"ab_chain","n":"Holy Chain","max":10,"type":"act","col":"#fff3a0","text":"A holy strike that chains to two nearby enemies for half of one hit.","from":"Arch Bishop","cd":3.5,"hits":2,"power":1.8,"shape":"single","bounce":{"n":2,"share":0.5}},
- {"id":"ab_judge","n":"Judgment Seal","max":10,"type":"act","col":"#ffe14d","text":"A seal of judgment that stuns the target for 1 second. Bosses resist repeat stuns.","from":"Arch Bishop","cd":6.0,"hits":1,"power":2.6,"shape":"single","stun":1.0},
- {"id":"ab_ward","n":"Sanctuary Ward","max":10,"type":"act","col":"#fff8d0","text":"A holy ward that absorbs up to 30% of your max HP in damage for 8 seconds.","from":"Arch Bishop","cd":12.0,"hits":1,"power":1.0,"shape":"single","absorb":{"pct":0.3,"life":8}},
- {"id":"mc_gat","n":"Gatling Fever","max":10,"type":"act","col":"#ffb347","text":"Six rapid cannon hits. Each hit adds a Heat stack (up to 5, lasting 12 seconds).","from":"Mechanic","cd":3.0,"hits":6,"power":2.8,"shape":"single","gain":{"key":"heat","max":5}},
- {"id":"mc_over","n":"Overheat Cannon","max":10,"type":"act","col":"#ff5a2a","text":"Fire every Heat stack for +20% damage each, with splash to nearby enemies.","from":"Mechanic","cd":6.0,"hits":1,"power":2.6,"shape":"splash","spend":{"key":"heat","per":0.2}},
- {"id":"mc_rocket","n":"Rocket Jump","max":10,"type":"act","col":"#ffd28a","text":"Rocket-leap at a distant enemy and shock nearby enemies, stunning them for 0.6 seconds.","from":"Mechanic","cd":5.0,"hits":1,"power":2.0,"shape":"splash","dash":6,"stun":0.6}
+ {"id":"rk_charge","n":"Sonic Wave","max":10,"type":"act","col":"#ffb45e","cd":3,"hits":1,"power":2.8,"shape":"single","icon":"bash","visual":"wave","rng":6,"text":"Send a cutting shockwave at a distant enemy.","from":"Rune Knight"},
+ {"id":"rk_burst","n":"Ignition Break","max":10,"type":"act","col":"#ffb45e","cd":5,"hits":1,"power":3.8,"shape":"radial","icon":"bowl","visual":"fireburst","text":"Release a fiery explosion around the caster.","from":"Rune Knight"},
+ {"id":"rk_ward","n":"Dragon Breath","max":10,"type":"act","col":"#ffb45e","cd":4,"hits":1,"power":3.2,"shape":"cone","icon":"fireball","visual":"breath","text":"Breathe fire in a cone toward the enemy.","from":"Rune Knight"},
+ {"id":"rk_spear","n":"Hundred Spears","max":10,"type":"act","col":"#ffb45e","cd":5,"hits":5,"power":3.6,"shape":"single","icon":"spiral","visual":"cuts","text":"Drive a rapid sequence of spear strikes into one target.","from":"Rune Knight"},
+ {"id":"rk_wind","n":"Wind Cutter","max":10,"type":"act","col":"#ffb45e","cd":2,"hits":1,"power":2.2,"shape":"radial","icon":"bowl","visual":"spin","text":"Sweep a blade of wind around the caster.","from":"Rune Knight"},
+ {"id":"wl_chain","n":"Chain Lightning","max":10,"type":"act","col":"#bd9aff","cd":3,"hits":1,"power":2.6,"shape":"single","icon":"nap","visual":"lightning","bounce":{"n":3,"share":0.5},"text":"Lightning jumps from the target to three nearby enemies.","from":"Warlock"},
+ {"id":"wl_seal","n":"Soul Expansion","max":10,"type":"act","col":"#bd9aff","cd":2,"hits":1,"power":2.2,"shape":"splash","icon":"sdestroy","visual":"detonate","text":"Expand spiritual energy through the target and nearby enemies.","from":"Warlock"},
+ {"id":"wl_det","n":"Crimson Rock","max":10,"type":"act","col":"#bd9aff","cd":6,"hits":1,"power":3.5,"shape":"splash","icon":"meteor","visual":"meteor","stun":0.8,"text":"Drop a blazing rock onto an area, briefly stunning enemies.","from":"Warlock"},
+ {"id":"wl_frost","n":"Jack Frost","max":10,"type":"act","col":"#bd9aff","cd":5,"hits":1,"power":2.8,"shape":"radial","icon":"fnova","visual":"frost","slow":0.35,"text":"A caster-centered frost wave damages and slows nearby enemies.","from":"Warlock"},
+ {"id":"wl_comet","n":"Comet","max":10,"type":"act","col":"#bd9aff","cd":12,"hits":1,"power":5,"shape":"splash","icon":"meteor","visual":"comet","text":"Call down a large comet explosion over the target area.","from":"Warlock"},
+ {"id":"rg_hunt","n":"Aimed Bolt","max":10,"type":"act","col":"#9ce5b0","cd":3,"hits":3,"power":2.8,"shape":"single","icon":"falcon","visual":"pounce","rng":7,"text":"Aim a concentrated multi-hit bow shot at one enemy.","from":"Ranger"},
+ {"id":"rg_warg","n":"Warg Strike","max":10,"type":"act","col":"#9ce5b0","cd":3.5,"hits":1,"power":2.5,"shape":"single","icon":"beast","visual":"wolf","rng":7,"text":"Send the warg to strike a selected enemy.","from":"Ranger"},
+ {"id":"rg_storm","n":"Arrow Storm","max":10,"type":"act","col":"#9ce5b0","cd":5,"hits":3,"power":3.6,"shape":"splash","icon":"ashower","visual":"arrows","rng":7,"text":"Rain a broad volley of arrows onto the target area.","from":"Ranger"},
+ {"id":"rg_bite","n":"Warg Bite","max":10,"type":"act","col":"#9ce5b0","cd":7,"hits":1,"power":2,"shape":"single","icon":"beast","visual":"wolf","rng":7,"root":2,"text":"The warg bites and immobilizes the enemy; bosses resist roots.","from":"Ranger"},
+ {"id":"rg_cluster","n":"Cluster Bomb","max":10,"type":"act","col":"#9ce5b0","cd":6,"hits":1,"power":3,"shape":"splash","icon":"landmine","visual":"bomb","rng":7,"delay":0.6,"pulse":0.65,"text":"Place a bomb at the target; its main blast follows after 0.6 seconds.","from":"Ranger"},
+ {"id":"gc_cross","n":"Cross Impact","max":10,"type":"act","col":"#d89dff","cd":1,"hits":7,"power":3.2,"shape":"single","icon":"vdust","visual":"cross","text":"Seven rapid cuts focused on one target. Daggers count as katars.","from":"Guillotine Cross"},
+ {"id":"gc_slip","n":"Dark Illusion","max":10,"type":"act","col":"#d89dff","cd":5,"hits":1,"power":1.8,"shape":"single","icon":"dodge","visual":"cuts","dash":5,"text":"Close the gap in shadow and strike the enemy.","from":"Guillotine Cross"},
+ {"id":"gc_veil","n":"Hallucination Walk","max":10,"type":"buff","col":"#d89dff","cd":20,"hits":1,"power":0,"shape":"single","icon":"dodge","visual":"ward","text":"Heighten evasion for 8 seconds. Refreshes outside the offensive combo.","key":"block","flat":8,"rate":1.2,"duration":8,"from":"Guillotine Cross"},
+ {"id":"gc_roll","n":"Rolling Cutter","max":10,"type":"act","col":"#d89dff","cd":0.2,"hits":1,"power":0.65,"shape":"radial","icon":"akatar","visual":"spin","spacing":0.2,"repeat":5,"castGain":{"key":"rolling","max":10,"life":10},"text":"Spin five times at 0.2-second spacing in one combo slot. Each spin adds a Rolling stack (max 10, lasts 10 seconds).","from":"Guillotine Cross"},
+ {"id":"gc_ripper","n":"Cross Ripper Slasher","max":10,"type":"act","col":"#d89dff","cd":2,"hits":1,"power":2.4,"shape":"single","icon":"sdestroy","visual":"ripper","rng":7,"requiresStack":"rolling","spend":{"key":"rolling","per":0.2},"text":"Requires Rolling stacks. Throw a spinning blade, consuming all stacks for +20% damage each.","from":"Guillotine Cross"},
+ {"id":"ab_chain","n":"Judex","max":10,"type":"act","col":"#fff0b7","cd":2,"hits":3,"power":2.2,"shape":"splash","icon":"judex","visual":"judgment","text":"Strike the target area with three pulses of holy light.","from":"Arch Bishop"},
+ {"id":"ab_judge","n":"Adoramus","max":10,"type":"act","col":"#fff0b7","cd":5,"hits":1,"power":3.8,"shape":"single","icon":"holy","visual":"judgment","slow":0.3,"blind":0.15,"text":"A concentrated holy beam damages, slows and blinds one enemy.","from":"Arch Bishop"},
+ {"id":"ab_ward","n":"Praefatio","max":10,"type":"buff","col":"#fff0b7","cd":12,"hits":1,"power":0,"shape":"single","icon":"kyrie","visual":"ward","absorb":{"pct":0.3,"life":8,"ranked":true},"text":"Raise a barrier absorbing up to 30% of max HP for 8 seconds. Refreshes independently of the combo.","key":"guard","flat":0,"rate":0,"duration":8,"from":"Arch Bishop"},
+ {"id":"ab_duple","n":"Duple Light","max":10,"type":"buff","col":"#fff0b7","cd":15,"hits":1,"power":0,"shape":"single","icon":"holy","visual":"ward","text":"Two holy lights empower basic attacks for 12 seconds (adapted as a sacred damage bonus).","key":"sacred","flat":5,"rate":1.5,"duration":12,"from":"Arch Bishop"},
+ {"id":"ab_highness","n":"Highness Heal","max":10,"type":"heal","col":"#fff0b7","cd":6,"hits":1,"power":0,"shape":"single","icon":"heal","visual":"ward","text":"Automatically restore 15–35% of max HP below half health. Does not occupy a combo slot.","healBase":0.15,"healRank":0.02,"from":"Arch Bishop"},
+ {"id":"mc_gat","n":"Vulcan Arm","max":10,"type":"act","col":"#ffbd77","cd":2,"hits":3,"power":2,"shape":"single","icon":"hammer","visual":"gatling","rng":6,"text":"Fire a short burst from the Mado-mounted gun.","from":"Mechanic"},
+ {"id":"mc_over","n":"Arm Cannon","max":10,"type":"act","col":"#ffbd77","cd":4,"hits":1,"power":3.6,"shape":"splash","icon":"fireball","visual":"cannon","rng":6,"text":"Fire a heavy cannon shell that explodes around the target.","from":"Mechanic"},
+ {"id":"mc_rocket","n":"Axe Tornado","max":10,"type":"act","col":"#ffbd77","cd":4,"hits":1,"power":3.2,"shape":"radial","icon":"cart","visual":"spin","text":"Swing an axe in a full circle around the caster.","from":"Mechanic"},
+ {"id":"mc_boomerang","n":"Axe Boomerang","max":10,"type":"act","col":"#ffbd77","cd":3,"hits":1,"power":2.5,"shape":"single","icon":"hammer","visual":"ripper","rng":6,"text":"Hurl a spinning axe at a distant enemy.","from":"Mechanic"},
+ {"id":"mc_swing","n":"Power Swing","max":10,"type":"act","col":"#ffbd77","cd":2,"hits":1,"power":2.2,"shape":"single","icon":"hammer","visual":"burst","stun":0.6,"text":"Deliver a heavy axe blow with a brief stun.","from":"Mechanic"}
 ];
 if(FOURTH_JOBS_LIVE)SKILLS.push(...SKILLS4);
 for(const s of SKILLS){
@@ -1261,7 +1273,8 @@ for(const s of SKILLS){
   if(s.type==='act'){s.mul=L=>s.power*(.55+.45*Math.min(s.max,L)/s.max);s.aoe=s.shape!=='single';}
   if(s.type==='pas'||s.type==='buff')s.f=L=>(s.flat||0)+s.rate*(s.id==='thrust'?Math.min(5,L):L);
   s.d=L=>s.type==='act'?`${Math.round(s.mul(L)*100*(typeof skillTuning==='function'&&typeof S!=='undefined'&&S&&s.cls.includes(S.cls)?skillTuning(false,s,L)*skillStatScale(s,L):1))}% total ${s.magic?'magic':'physical'} power${s.hits>1?' across '+s.hits+' hits':''} · ${s.cd}s cooldown · ${s.shape}${s.rng?' · '+s.rng+' tiles range':''}${s.aoe&&s.areaScale?' · '+s.areaScale+'× area reach':''}. ${s.text}`:
-    s.type==='heal'?`Auto: heals ${10+5*L}% HP below half · ${s.cd}s cooldown.`:
+    s.type==='buff'&&s.absorb?`Auto: barrier absorbs ${Math.round(s.absorb.pct*(s.absorb.ranked?.5+.05*L:1)*100)}% max HP · ${s.duration}s duration / ${s.cd}s cooldown. ${s.text}`:
+    s.type==='heal'?`Auto: heals ${s.healBase?Math.round((s.healBase+s.healRank*L)*100):10+5*L}% HP below half · ${s.cd}s cooldown.`:
     `${s.text} ${s.key}: +${s.f(L).toFixed(1)}${['range','echo','momentum'].includes(s.key)?'':'%'}${s.type==='buff'?' · '+(s.id==='dpois'?5+L:['ovthrust','thrust'].includes(s.id)?8+2*Math.min(5,L):s.duration)+'s duration / '+rotationCooldown()+'s rotation cooldown':''}`;
   const describe=s.d;s.d=L=>describe(L)+(s.training?' Training: '+Object.entries(s.training).map(([key,rate])=>'+'+(rate*L).toFixed(1)+' '+key.toUpperCase()+(key==='def'?'':'%')).join(', ')+'.':'');
 }
@@ -1316,14 +1329,12 @@ const SKILL_VISUAL_REDESIGN={aura:'holyAura',mystic:'holyAura',sight:'windAura',
  env:'multiSlash',dodge:'multiSlash',sandat:'arrowRain',vdust:'multiSlash',vsplash:'shadow',sdestroy:'soulBolt',dpois:'frenzyAura',akatar:'multiSlash',
  heal:'holyBolt',signum:'holyNova',sanct:'holyBolt',kyrie:'holyBolt',judex:'holyBolt',assum:'holyNova',basilica:'holyNova',wperf:'impact',meltdown:'impact'};
 for(const [id,kind] of Object.entries(SKILL_VISUAL_REDESIGN))SKILL_VFX[id]={kind,at:SKILLS.find(s=>s.id===id).type==='buff'?'caster':'target',life:.6,redesigned:true};
-// Milestone 4 (dark-launched): the 18 4th-job skills reuse native icon art and existing effect kinds.
+// Milestone 4 (dark-launched): the 30 4th-job skills reuse native icon art and existing effect kinds.
 // No new sprites are painted; their own art is an open item for the owner (see Updates/fourth-jobs/).
 if(FOURTH_JOBS_LIVE){
-  const ART4={rk_charge:'bash',rk_burst:'bowl',rk_ward:'jointbeat',wl_chain:'nap',wl_seal:'sdestroy',wl_det:'storm',rg_hunt:'falcon',rg_warg:'beast',rg_storm:'ashower',gc_cross:'vdust',gc_slip:'dodge',gc_veil:'vsplash',ab_chain:'holy',ab_judge:'basilica',ab_ward:'sanct',mc_gat:'hammer',mc_over:'fireball',mc_rocket:'cart'};
-  const FX4={rk_charge:'multiSlash',rk_burst:'impact',rk_ward:'holyAura',wl_chain:'soulBolt',wl_seal:'shadow',wl_det:'impact',rg_hunt:'arrowRain',rg_warg:'multiSlash',rg_storm:'arrowRain',gc_cross:'multiSlash',gc_slip:'shadow',gc_veil:'shadow',ab_chain:'holyAura',ab_judge:'impact',ab_ward:'holyAura',mc_gat:'impact',mc_over:'impact',mc_rocket:'impact'};
   for(const sk of SKILLS4){
-    if(typeof PGSkillIcons!=='undefined'&&!PGSkillIcons[sk.id]&&PGSkillIcons[ART4[sk.id]])PGSkillIcons[sk.id]=PGSkillIcons[ART4[sk.id]];
-    if(!SKILL_VFX[sk.id])SKILL_VFX[sk.id]={kind:FX4[sk.id],at:sk.absorb?'caster':'target',life:.6,redesigned:true};
+    if(typeof PGSkillIcons!=='undefined'&&!PGSkillIcons[sk.id]&&PGSkillIcons[sk.icon])PGSkillIcons[sk.id]=PGSkillIcons[sk.icon];
+    SKILL_VFX[sk.id]={kind:sk.type==='act'?'impact':'holyAura',at:sk.type!=='act'||sk.shape==='radial'?'caster':'target',life:.6,redesigned:true};
   }
 }
 function skillFxSpec(id,color){const v=SKILL_VFX[id];return v?{id,kind:v.kind,at:v.at||'target',life:v.life||.65,color:color||'#fff'}:null}
@@ -3453,7 +3464,7 @@ function comboRole(sk){return sk.mark||sk.follow||sk.blind?'Opener':sk.execute||
 function suggestedCombo(){const attacks=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
   const opener=attacks.find(s=>s.mark||s.follow||s.blind),picked=opener?[opener]:[];
   // Keep an inherited opener, then mix the newest attacks with the previous job's tools.
-  for(const from of lineOf(S.cls).slice().reverse())for(const sk of attacks.filter(s=>s.from===from).slice(0,2))if(!picked.includes(sk))picked.push(sk);
+  for(const from of lineOf(S.cls).slice().reverse())for(const sk of attacks.filter(s=>s.from===from).slice(0,FOURTH_JOBS_LIVE&&CLASSES[from]?.tier===4?5:2))if(!picked.includes(sk))picked.push(sk);
   for(const sk of attacks)if(!picked.includes(sk))picked.push(sk);
   return picked.slice(0,6).sort((a,b)=>(comboRole(a)==='Finisher')-(comboRole(b)==='Finisher')).map(s=>s.id);
 }
@@ -3468,7 +3479,7 @@ function rotationCooldown(){return 3;}
 function comboStatus(){const c=comboConfig(),r=skillState();if(!c.enabled)return 'Combo paused';if(t<(r.recoverUntil||0))return 'Recovering · '+Math.max(0,r.recoverUntil-t).toFixed(1)+'s';
   if(!rotationSkills().length)return 'Choose an attack to begin';return r.comboSlots?'Combo · '+Math.min(r.cursor+1,r.comboSlots.length)+' / '+r.comboSlots.length:'Ready for next combo';}
 function rotationBar(){const c=comboConfig(),available=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
-  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, once each, then recover for 3 seconds. Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · basic attacks during recovery</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
+  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, then recover for 3 seconds.${FOURTH_JOBS_LIVE&&S.cls==='Guillotine Cross'?' Rolling Cutter spins five times in its slot at 0.2s spacing.':' Each attack casts once.'} Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · basic attacks during recovery</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
 }
 // v39: the master auto-cast switch. It covers every learned skill of the current line that
 // auto-casts (everything except passives), reads ON only while ALL of them are ON, and clears
@@ -3482,7 +3493,7 @@ const statResetCost=()=>S.skillRespec&&S.skillRespec[S.cls]?0:rcost();
 const skMasterTile=()=>{const on=skAllOn(),n=skTog().length,done=skillsFullyAllocated();
   return`<div class="sk-tools"><label class="sk-master${on?'':' off'}" title="Switch the auto-cast of every learned skill on or off"><span class="sk-kind">ALL</span><div class="si" aria-hidden="true">&#9199;&#65039;</div><div class="sk-name">Auto-cast all</div><div class="sk-autocast"><input type="checkbox" data-a="skall" ${on?'checked':''} aria-label="Auto-cast every learned skill"> ${on?'ALL ON':'SOMETHING OFF'}</div><small>${n} skill${n===1?'':'s'} on this line</small></label><button class="sk-alloc" data-a="skalloc" ${done||skpAvail()<1?'disabled':''} title="Auto-allocate all available points: learn each available skill first, then improve ranks">⚡ Auto-allocate all skills<small>${done?'All skills maxed':'Learn every skill first'}</small></button></div>`};
 const skillDetailCard=sel=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));
-  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='buff'?'Buff (auto-refresh)':comboRole(sel)}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Used automatically when ready.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div>${sel.type==='act'?`<p class="combo-membership">${comboConfig().slots.includes(sel.id)?'In your combo · casts once per cycle.':'Choose this attack in a combo slot to use it.'}</p>`:''}<small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
+  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='buff'?'Buff (auto-refresh)':comboRole(sel)}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Used automatically when ready.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div>${sel.type==='act'?`<p class="combo-membership">${comboConfig().slots.includes(sel.id)?(sel.repeat?'In your combo · '+sel.repeat+' spins per slot.':'In your combo · casts once per cycle.'):'Choose this attack in a combo slot to use it.'}</p>`:''}<small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
 const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f(lv(s.id)):0)+(s.training&&s.training[k]||0)*lv(s.id):0),0)+(typeof skillBonus==='function'?skillBonus(k):0);
 // v81 dual wield (owner): "let set that assasin & assassin cross can wield daggers. 2 hands."
 // A two-handed katar is TWO_HANDED weapons and a left-hand dagger is DUAL of one, so a pair of
@@ -3926,7 +3937,7 @@ function chainHit(src,dmg,col,n,skill=false){if(!src||!(dmg>0)||mobs.length<2)re
 // Milestone 4 mechanics (dark-launched with SKILLS4). Each helper does nothing for a skill that lacks its field,
 // so the live skills never reach these lines' effects. Stacks expire against the game clock `t`.
 const SELF_STACK_LIFE=12;
-function addSelfStack(key,max){const r=skillState();r.stacks=r.stacks||{};const e=r.stacks[key],n=e&&e.until>t?e.n:0;r.stacks[key]={n:Math.min(max,n+1),until:t+SELF_STACK_LIFE}}
+function addSelfStack(key,max,life=SELF_STACK_LIFE){const r=skillState();r.stacks=r.stacks||{};const e=r.stacks[key],n=e&&e.until>t?e.n:0;r.stacks[key]={n:Math.min(max,n+1),until:t+life}}
 function takeSelfStacks(key){const r=skillState(),e=r.stacks&&r.stacks[key];if(!e)return 0;delete r.stacks[key];return e.until>t?e.n:0}
 function addTargetStack(o,a){o.stk=o.stk||{};const e=o.stk[a.key],n=e&&e.until>t?e.n:0;o.stk[a.key]={n:Math.min(a.max,n+1),until:t+a.life}}
 function takeTargetStacks(o,key){const e=o&&o.stk&&o.stk[key];if(!e)return 0;delete o.stk[key];return e.until>t?e.n:0}
@@ -3945,7 +3956,7 @@ function bounceStrike(from,sk,raw){const b=sk.bounce;
   for(const o of near){shots.push({x0:from.x,z0:from.z,x1:o.x,z1:o.z,t:0,col:sk.col||'#fff'});skillHit(o,raw*b.share/sk.hits,sk,true)}
 }
 // Absorb: a new ward replaces any ward still up. It soaks incoming player damage until spent or it expires.
-function startAbsorb(a){const r=skillState();r.absorb={amount:maxHp()*a.pct,until:t+a.life}}
+function startAbsorb(a,rank=10){const r=skillState();r.absorb={amount:maxHp()*a.pct*(a.ranked?.5+.05*rank:1),until:t+a.life}}
 function absorbSoak(d){const a=skillState().absorb;if(!a||!(a.until>t)||!(a.amount>0))return d;const soak=Math.min(d,a.amount);a.amount-=soak;return d-soak}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
 // v83.3 (owner): the number motion is v82's again - the owner had already tuned it and only wants to
@@ -4115,14 +4126,15 @@ const SWING_MIN_T=.14,SWING_MAX_T=.55;     // seconds: the shortest and longest 
 let skillRuntime;
 function resetSkillRuntime(keepBuffs=false){const previous=keepBuffs&&skillRuntime&&skillRuntime.owner===(S&&S.cls)&&skillRuntime.save===S?skillRuntime:null;
   skillRuntime={owner:S&&S.cls,save:S,buffs:previous?previous.buffs:{},events:[],casts:{},echo:0,momentum:0,lastHit:-99,follow:0,dash:0,approach:null,
-    comboSlots:previous?previous.comboSlots:null,cursor:previous?previous.cursor:0,nextCastAt:previous?previous.nextCastAt:0,recoverUntil:previous?previous.recoverUntil:0};}
+    repeatCount:previous?previous.repeatCount:0,comboSlots:previous?previous.comboSlots:null,cursor:previous?previous.cursor:0,nextCastAt:previous?previous.nextCastAt:0,recoverUntil:previous?previous.recoverUntil:0};}
 function skillState(){if(!skillRuntime||skillRuntime.owner!==(S&&S.cls)||skillRuntime.save!==S)resetSkillRuntime();return skillRuntime;}
-function finishCombo(r){r.comboSlots=null;r.cursor=0;r.recoverUntil=t+3;}
-function nextComboSkill(target){const r=skillState(),c=comboConfig();if(!c.enabled||t<r.recoverUntil||t+swingLength(Math.min(.5,aspd()))*SWING_CONTACT<r.nextCastAt)return null;
+function finishCombo(r){r.comboSlots=null;r.cursor=0;r.repeatCount=0;r.recoverUntil=t+3;}
+function skillStackReady(sk){const e=skillState().stacks?.[sk.requiresStack];return !sk.requiresStack||!!(e&&e.n>0&&e.until>t);}
+function nextComboSkill(target){const r=skillState(),c=comboConfig();if(!c.enabled||t<r.recoverUntil||t+swingLength(Math.min(SKILLS.find(s=>s.id===r.comboSlots?.[r.cursor])?.spacing||.5,aspd()))*SWING_CONTACT+1e-8<r.nextCastAt)return null;
   if(!r.comboSlots){r.comboSlots=rotationSkills().map(s=>s.id);r.cursor=0;if(!r.comboSlots.length){r.comboSlots=null;return null;}}
   while(r.cursor<r.comboSlots.length){const id=r.comboSlots[r.cursor],sk=SKILLS.find(s=>s.id===id);
-    if(sk&&skillOn(id)&&(skCd[id]||0)<=0&&Math.hypot(target.x-pl.x,target.z-pl.z)<=skillRange(sk,target)+.6)return sk;
-    r.cursor++;}
+    if(sk&&skillOn(id)&&skillStackReady(sk)&&(skCd[id]||0)<=(sk.repeat?swingLength(Math.min(sk.spacing||.5,aspd()))*SWING_CONTACT+1e-8:0)&&Math.hypot(target.x-pl.x,target.z-pl.z)<=skillRange(sk,target)+.6)return sk;
+    r.cursor++;r.repeatCount=0;}
   finishCombo(r);return null;
 }
 function skillBonus(key){const r=skillState();let sum=0;for(const id in r.buffs){const b=r.buffs[id];if((b.key===key||key==='aspd'&&b.key==='speed')&&skillOn(id))sum+=b.value;}return sum;}
@@ -4410,7 +4422,7 @@ function skillHit(target,raw,sk,proc=false){if(!target||target.hp<=0||!mobs.incl
   return damage;
 }
 function castSkill(sk,k){
-  const target=mob;if(!target||target.hp<=0||!mobs.includes(target))return;
+  const target=mob;if(!target||target.hp<=0||!mobs.includes(target)||!skillStackReady(sk))return;
   const r=skillState(),L=lv(sk.id);skillDash(sk,target);playSkillFx(sk.id,target,sk.col);
   const bonus=pv('damage')+(sk.falcon?pv('falcon'):0)+(['cart','cartrev','meltdown'].includes(sk.id)?Math.min(3,r.momentum)*pv('momentum'):0);
   // INT multiplies caster skills. Physical training is folded into rank coefficients
@@ -4422,7 +4434,8 @@ function castSkill(sk,k){
   if(sk.shatter&&target.skillMark&&target.skillMark.source==='wperf')raw*=1+sk.shatter;
   if(sk.spend)raw*=1+sk.spend.per*takeSelfStacks(sk.spend.key);
   let tgtSpent=0;if(sk.tgtSpend){tgtSpent=takeTargetStacks(target,sk.tgtSpend.key);raw*=1+sk.tgtSpend.per*tgtSpent;}
-  if(sk.absorb)startAbsorb(sk.absorb);
+  if(sk.absorb)startAbsorb(sk.absorb,L);
+  if(sk.castGain)addSelfStack(sk.castGain.key,sk.castGain.max,sk.castGain.life);
   const targets=skillTargets(sk,target),pulse=sk.pulse||0,death=sk.death||0;
   let dealt=0;for(const o of targets){const amount=raw*(o===target?1:.8*skillTuning(true,sk,L)/skillTuning(false,sk,L))*(1-pulse-death-(sk.dot||0));
     // Split the declared total; extra hits never become unrelated 1x strikes.
@@ -4453,7 +4466,11 @@ function tickCombatSkills(dt){const r=skillState();r.counter=Math.max(0,(r.count
   if(mobs.some(o=>o.hp>0))for(const sk of SKILLS){if(sk.type!=='buff'||!skillOn(sk.id)||(sk.id==='ovthrust'&&skillOn('thrust'))||(skCd[sk.id]||0)>0||(r.buffs[sk.id]&&r.buffs[sk.id].left>.5))continue;
     if(sk.id==='thrust')delete r.buffs.ovthrust;
     const duration=sk.id==='dpois'?5+lv(sk.id):['ovthrust','thrust'].includes(sk.id)?8+2*Math.min(5,lv(sk.id)):sk.duration;
+    if(sk.absorb)startAbsorb(sk.absorb,lv(sk.id));
     r.buffs[sk.id]={key:sk.key,value:sk.f(lv(sk.id)),left:duration};skCd[sk.id]=sk.cd;playSkillFx(sk.id,null,sk.col);
+  }
+  for(const sk of SKILLS4){if(!FOURTH_JOBS_LIVE||sk.type!=='heal'||!skillOn(sk.id)||S.hp>=maxHp()*.5||(skCd[sk.id]||0)>0)continue;
+    const h=Math.ceil(maxHp()*(sk.healBase+sk.healRank*lv(sk.id)));S.hp=Math.min(maxHp(),S.hp+h);skCd[sk.id]=sk.cd;playSkillFx(sk.id,null,sk.col);skillNameFloat(sk.n);addFloat(pl.x,2.6,pl.z,'+'+h,sk.col);
   }
   const events=r.events;r.events=[];for(const e of events){e.left-=dt;if(e.owner!==S.cls)continue;if(e.left<=0)e.fn();else r.events.push(e);}
   for(const o of mobs.slice()){
@@ -4496,7 +4513,7 @@ function playerAttack(){
   if(!mob)return;
   engageWait=0;   // a swing is the proof the fight is live: the walk-in wait starts again (v88.4)
   const far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6,sk=nextComboSkill(mob);
-  const interval=sk?.5:aspd();pAtkT=interval;atkAnim=1;swingDur=swingLength(Math.min(interval,aspd()));
+  const interval=sk?(sk.spacing||.5):aspd();pAtkT=interval;atkAnim=1;swingDur=swingLength(Math.min(interval,aspd()));
   const casts=sk?[sk]:[];
   const d=pv('dbl');
   swing={t:swingDur*SWING_CONTACT,target:mob,pack:mob.pack,casts:casts.map(sk=>({sk,k:1})),
@@ -4514,8 +4531,8 @@ function resolveSwing(s){
   if(!comboConfig().enabled||t<r.recoverUntil||t<r.nextCastAt)s.casts=[];
   if(s.casts.length){
     const c=s.casts[0];
-    if(skillOn(c.sk.id)&&r.comboSlots&&r.comboSlots[r.cursor]===c.sk.id&&mob.pack===s.pack&&Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(c.sk,mob)+.6){
-      skCd[c.sk.id]=c.sk.cd;r.casts[c.sk.id]=t;r.nextCastAt=t+.5;r.cursor++;skillNameFloat(c.sk.n);castSkill(c.sk,1);
+    if(skillOn(c.sk.id)&&skillStackReady(c.sk)&&r.comboSlots&&r.comboSlots[r.cursor]===c.sk.id&&mob.pack===s.pack&&Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(c.sk,mob)+.6){
+      skCd[c.sk.id]=c.sk.cd;r.casts[c.sk.id]=t;r.nextCastAt=t+(c.sk.spacing||.5);r.repeatCount=(r.repeatCount||0)+1;if(r.repeatCount>=(c.sk.repeat||1)){r.cursor++;r.repeatCount=0;}skillNameFloat(c.sk.n);castSkill(c.sk,1);
       if(r.cursor>=r.comboSlots.length)finishCombo(r);
     }
   }else if(!s.far){
@@ -9096,14 +9113,22 @@ function getSkillAfterglow(){
   canvas.setAttribute('aria-hidden','true');
   canvas.style.cssText='position:absolute;inset:0;pointer-events:none';
   const renderer=PGSkillAfterglow.create(canvas);if(!renderer)return null;
+  renderer.aura=(x,z,time)=>{
+    if(typeof PGFourthJobVisuals==='undefined')return;
+    const g=canvas.getContext('2d'),at=scr(x,.04,z),top=scr(x,3.05,z),ratio=Math.min(2,Math.max(1,devicePixelRatio||1));
+    g.save();g.setTransform(ratio,0,0,ratio,0,0);
+    PGFourthJobVisuals.aura(g,at[0],at[1],time,'#dfc582',Math.max(.01,Math.hypot(top[0]-at[0],top[1]-at[1])/120));g.restore();
+  };
   $('weaponSpriteLayer').after(canvas);skillAfterglow=renderer;return renderer;
 }
 function playSkillFx(id,target,color){
   if(simVisualsOff())return;
   const r=skillFxSpec(id,color);if(!r)return;
+  const skill=SKILLS.find(s=>s.id===id),ward=FOURTH_JOBS_LIVE&&SKILLS4.includes(skill)&&!!(skill.type!=='act'||skill.shape==='radial');
+  if(ward)target=null; // Fourth-job support and radial effects follow the caster.
   const fx={...r,x0:pl.x,z0:pl.z,x1:target&&Number.isFinite(target.x)?target.x:pl.x,
     z1:target&&Number.isFinite(target.z)?target.z:pl.z,age:0,group:null,parts:[]};
-  const skill=SKILLS.find(s=>s.id===id);fx.magic=!!skill?.magic;fx.areaScale=skill?.shape!=='single'?(skill?.areaScale||1):1;
+  fx.magic=!!skill?.magic;fx.areaScale=skill?.shape!=='single'?(skill?.areaScale||1):1;
   fx.targetScale=skill?.shape==='single'&&target&&typeof mobVisualScale==='function'&&(target.spriteScale||target.boss)?cl(mobVisualScale(target),.35,2):1;
   if(typeof PGSkillAfterglow!=='undefined'&&PGSkillAfterglow.has(id)&&getSkillAfterglow()){
     fx.afterglow=true;fx.life=PGSkillAfterglow.life;
@@ -9114,7 +9139,10 @@ function disposeSkillFx(fx){if(!fx||!fx.group)return;scene.remove(fx.group);fx.g
   if(o.material)o.material.dispose();if(o.userData&&o.userData.skillFxOwnGeometry&&o.geometry)o.geometry.dispose()});fx.group=null}
 function tickSkillFx(dt){for(let i=skillFx.length-1;i>=0;i--){const fx=skillFx[i];fx.age+=dt;if(fx.age>=fx.life){disposeSkillFx(fx);skillFx.splice(i,1)}}}
 function syncSkillFx(){
+  const ascended=FOURTH_JOBS_LIVE&&typeof S!=='undefined'&&S&&CLASSES[S.cls]?.tier===4;
+  if(ascended)getSkillAfterglow();
   if(skillAfterglow)skillAfterglow.draw(skillFx,R.domElement.clientWidth,R.domElement.clientHeight,scr,devicePixelRatio||1);
+  if(ascended)skillAfterglow?.aura(pl.x,pl.z,t);
   for(const fx of skillFx){if(fx.afterglow)continue;if(!fx.group)makeSkillFxNode(fx);const q=cl(fx.age/fx.life,0,1),ease=1-Math.pow(1-q,2);
     if(fx.at==='path')fx.group.position.set(fx.x0+(fx.x1-fx.x0)*ease,.95+Math.sin(q*Math.PI)*.34,fx.z0+(fx.z1-fx.z0)*ease);
     else{const x=fx.at==='caster'?fx.x0:fx.x1,z=fx.at==='caster'?fx.z0:fx.z1;fx.group.position.set(x,0,z)}

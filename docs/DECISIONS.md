@@ -13,7 +13,8 @@ the implementation/tests together. Read the linked sources for exact details.
 | Pets come from drops, not hatching | Collection is part of farming. Training/Bond/skill rolls do not replace acquisition. See `PETS` and pet tests. |
 | Daggers count as katars for katar skills | Owner decision (Milestone 4), to avoid problems with the Assassin Cross dagger. Skill execution does not check weapon type, so a dagger already triggers katar skills; any future weapon gate must accept a dagger wherever it accepts a katar. Guillotine Cross wears a katar, or a dagger in each hand, through `katarOnly()` and `dualWield()`. See `tools/tests/dual_wield_sim.js` and `tools/tests/fourth_job_skills_sim.js`. |
 | Lv 150+ is an Ascension level, not Base Level | Owner clarification (Milestone 4/5). Base Level 150 and above is a separate Ascension level with its own stats; Job Level continues as normal and a later Ascension skill tab raises skill boost. Design note only: the 4th-job unlock gate uses Base Lv 150 and the Ascension track is not built. See `Updates/fourth-jobs/README.md`. |
-| 4th jobs stay parked until instructed | Owner instruction (Milestone 4). The six 4th-job classes and their 18 skills are built behind `FOURTH_JOBS_LIVE=false` and stored as reference in `Updates/fourth-jobs/`. Flip the flag only on explicit owner instruction. |
+| Fourth-job visuals use the latest skills and original native art | Owner approval (15 October 2026) uses five core RO skills per class (superseding the provisional three-skill package), authorizes recovery of all six native progression bodies and keeps classes locked during preparation. The fixed-look review pack does not authorize wardrobe costumes or a release. See `Updates/fourth-jobs/VISUALS.md`. |
+| 4th jobs stay parked until instructed | Owner instruction (Milestone 4). The six 4th-job classes and their 30 skills are built behind `FOURTH_JOBS_LIVE=false` and stored as reference in `Updates/fourth-jobs/`. Flip the flag only on explicit owner instruction. |
 | Preserve original sprite art | Supplied crops and pinned native sources define the artwork. Preserve pixels, native placement, layers and action timing; do not fill gaps with invented art. See native pipeline READMEs. |
 | Distinct native bodies for both genders | Current ACT/SPR wardrobe uses each gender's native body and action data. The original shared-body instruction describes only the legacy packed fallback. |
 | Cosmetics preserve gameplay | Wardrobe apply/cancel/reset must retain job, equipment and progression. See wardrobe game tests. |
@@ -39,3 +40,9 @@ Relevant detail: [Game design](GAME-DESIGN.md), [Code map](CODE-MAP.md),
 [native wardrobe](../tools/native-wardrobe/README.md),
 [native pets](../tools/native-pets/README.md),
 [skill icons](../tools/native-skill-icons/README.md).
+
+## Five-skill Ascension update (15 October 2026)
+
+Five authentic RO skill identities per class; game-specific tuning and simplified
+solo support. Rolling Cutter is the only repeated slot: five casts at 0.2s spacing,
+then advance and retain recovery. See [research](../Updates/fourth-jobs/SKILL-RESEARCH.md).

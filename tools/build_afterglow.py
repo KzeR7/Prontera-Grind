@@ -116,6 +116,12 @@ def build():
     runtime = runtime.replace(marker, new_adjustments + '\n' + redesign + '\n' + marker +
                               'if(ownerOld.has(id)){ownerOldPaint(id,t,detail);return;}')
     # Source comments remain in the authored files; omit comment-only lines from the shipped bundle.
+    source = (ROOT / 'index.html').read_text()
+    fourth = json.loads('[' + source.split('const SKILLS4=[', 1)[1].split('\n];', 1)[0] + ']')
+    rows = [[sk['id'], sk['n'], sk['from'], sk['col'], sk['visual'], sk.get('hits', 1), sk['type'], sk.get('spacing', .5)] for sk in fourth]
+    fourth_source = (ROOT / 'tools/skill-fx-proposals/fourth-job-fx.js').read_text()
+    runtime += '\n' + fourth_source.replace('/* FOURTH_SKILL_ROWS */[]', json.dumps(rows, separators=(',', ':')))
+
     return '\n'.join(line.strip() for i, line in enumerate(runtime.splitlines())
                      if line.strip() and (i < 2 or not line.lstrip().startswith('//'))) + '\n'
 

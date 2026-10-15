@@ -156,3 +156,10 @@ that an account owns the corresponding server save.
 Keep old saves working. Verify load → change → save → reload and switching between
 two accounts for state changes. Do not replace real conflict/ownership logic with
 a permissive preview shortcut in production code.
+
+## Locked Ascension skill preparation
+
+The six parked classes have five core RO skills each. In flag-on preparation,
+Rolling Cutter casts five times in one slot at 0.2-second spacing before advancing;
+other attacks retain ordinary combo timing. Support runs outside offensive slots.
+See [research and adaptations](../Updates/fourth-jobs/SKILL-RESEARCH.md).
