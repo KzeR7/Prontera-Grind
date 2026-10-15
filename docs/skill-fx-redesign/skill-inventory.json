@@ -1,0 +1,2681 @@
+{
+  "schemaVersion": 1,
+  "status": "proposal",
+  "baselineCommit": "bd763574290afdaf68d6b3143fe2ddb0344e3322",
+  "extractedFrom": {
+    "game": "index.html: SKILLS evaluated from const CD to const pm",
+    "fx": "tools/skill-fx-proposals/afterglow-v8.html: FX excluding concept"
+  },
+  "counts": {
+    "gameSkills": 91,
+    "renderedSkills": 75,
+    "excludedPassives": 16
+  },
+  "notes": [
+    "Directions and trajectories are retained; material groups are proposed production groupings.",
+    "Null audit/asset/layer fields are intentionally unresolved and must be filled from real code during implementation.",
+    "Declared hits may be stopped early on death; multiple declared hits are resolved synchronously, not independently scheduled visual events."
+  ],
+  "skills": [
+    {
+      "id": "fire",
+      "name": "Fire Bolt",
+      "observed": {
+        "class": "Mage",
+        "type": "act",
+        "hits": 3,
+        "shape": "single",
+        "cooldownSeconds": 2,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "Three focused fire hits.",
+        "currentFxSpec": {
+          "kind": "fireBolt",
+          "at": "target",
+          "life": 0.8
+        },
+        "currentFxDescription": "Five turbulent flame bolts fall in quick succession with hot cores and separate ember contacts."
+      },
+      "proposed": {
+        "materialGroup": "fire",
+        "stage": "pilot",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "dstr",
+      "name": "Double Strafe",
+      "observed": {
+        "class": "Archer",
+        "type": "act",
+        "hits": 2,
+        "shape": "single",
+        "cooldownSeconds": 2,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Two focused arrow hits.",
+        "currentFxSpec": {
+          "kind": "arrowBurst",
+          "life": 0.48
+        },
+        "currentFxDescription": "Two visible arrows launch together along parallel paths with simultaneous contacts."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "aid",
+      "name": "First Aid",
+      "observed": {
+        "class": "Novice",
+        "type": "heal",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 6,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Automatically heals below half health.",
+        "currentFxSpec": {
+          "kind": "heal",
+          "at": "caster",
+          "life": 0.72
+        },
+        "currentFxDescription": "A restorative cross resolves above the caster with gentle rising sage bands."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "bash",
+      "name": "Bash",
+      "observed": {
+        "class": "Swordman",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 2,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A focused sword strike.",
+        "currentFxSpec": {
+          "kind": "impact",
+          "life": 0.46
+        },
+        "currentFxDescription": "A textured amber blade trail lands with a concentrated flare, fine sparks and a short pressure arc."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "endure",
+      "name": "Rising Slash",
+      "observed": {
+        "class": "Swordman",
+        "type": "act",
+        "hits": 1,
+        "shape": "cone",
+        "cooldownSeconds": 3,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "An upward sword arc. Your next direct hit within 3 seconds deals 10% more damage.",
+        "currentFxSpec": {
+          "kind": "multiSlash",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A bright orange blade rises from the ground in one sweeping uppercut."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "provoke",
+      "name": "Provoke",
+      "observed": {
+        "class": "Swordman",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 5,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A challenge strike. Your next three direct hits within 3 seconds deal 10% more damage.",
+        "currentFxSpec": {
+          "kind": "impact",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A fiery challenge crest flares above the target in outward rays."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "bowl",
+      "name": "Bowling Bash",
+      "observed": {
+        "class": "Knight",
+        "type": "act",
+        "hits": 1,
+        "shape": "radial",
+        "cooldownSeconds": 4,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "Sweep nearby enemies with a broad sword strike.",
+        "currentFxSpec": {
+          "kind": "shockwave",
+          "life": 0.72
+        },
+        "currentFxDescription": "A tumbling orange crescent rolls from caster to target, scattering grit."
+      },
+      "proposed": {
+        "materialGroup": "heavy_physical",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "pierce",
+      "name": "Sword Thrust",
+      "observed": {
+        "class": "Knight",
+        "type": "act",
+        "hits": 3,
+        "shape": "single",
+        "cooldownSeconds": 2.5,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Three quick sword thrusts against one enemy.",
+        "currentFxSpec": {
+          "kind": "multiSlash",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A long, narrow orange thrust compresses through three tiny pressure collars."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "quick",
+      "name": "Two-Hand Quicken",
+      "observed": {
+        "class": "Knight",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Increase sword attack speed.",
+        "currentFxSpec": {
+          "kind": "windAura",
+          "at": "caster",
+          "life": 0.78
+        },
+        "currentFxDescription": "An orange speed crest and short afterimage chevrons resolve beside the caster."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "spiral",
+      "name": "Spiral Slash",
+      "observed": {
+        "class": "Lord Knight",
+        "type": "act",
+        "hits": 5,
+        "shape": "single",
+        "cooldownSeconds": 5,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Five sword cuts against one enemy.",
+        "currentFxSpec": {
+          "kind": "multiSlash",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "One continuous orange corkscrew winds inward around the target, ending at the center. No repeated slash passes."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "aura",
+      "name": "Aura Blade",
+      "observed": {
+        "class": "Lord Knight",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Empower weapon attacks with a sustained aura.",
+        "currentFxSpec": {
+          "kind": "holyAura",
+          "at": "caster",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A textured amber weapon aura rises above an engraved seal with fine ascending embers."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "jointbeat",
+      "name": "Parrying",
+      "observed": {
+        "class": "Lord Knight",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Chance to block physical hits while continuing to attack.",
+        "currentFxSpec": {
+          "kind": "impact",
+          "life": 0.5
+        },
+        "currentFxDescription": "Two crossed orange guards catch a localized parry spark."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "nap",
+      "name": "Lightning Bolt",
+      "observed": {
+        "class": "Mage",
+        "type": "act",
+        "hits": 3,
+        "shape": "single",
+        "cooldownSeconds": 2.5,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "Three focused lightning hits.",
+        "currentFxSpec": {
+          "kind": "lightning",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A branching electric discharge flickers through a white-hot core into a concentrated ground contact."
+      },
+      "proposed": {
+        "materialGroup": "lightning",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "coat",
+      "name": "Energy Coat",
+      "observed": {
+        "class": "Mage",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "Reduce incoming damage.",
+        "currentFxSpec": {
+          "kind": "shieldAura",
+          "at": "caster",
+          "life": 0.82
+        },
+        "currentFxDescription": "A faceted blue barrier assembles around the caster, outlined by a pale edge and ground seal."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "fireball",
+      "name": "Fire Ball",
+      "observed": {
+        "class": "Mage",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 3.5,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "A fire blast around the target.",
+        "currentFxSpec": {
+          "kind": "fireNova",
+          "at": "path",
+          "life": 0.62
+        },
+        "currentFxDescription": "A rolling incandescent fireball leaves a turbulent wake, then blooms into a hot impact and drifting smoke."
+      },
+      "proposed": {
+        "materialGroup": "fire",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "storm",
+      "name": "Storm Gust",
+      "observed": {
+        "class": "Wizard",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 6,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "An icy impact and a follow-up pulse, with a brief chance to stun.",
+        "currentFxSpec": {
+          "kind": "iceStorm",
+          "life": 0.95
+        },
+        "currentFxDescription": "Refractive ice shards form with a sharp frost impact, then wind-driven snow circulates around an open center."
+      },
+      "proposed": {
+        "materialGroup": "ice",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "jup",
+      "name": "Jupitel Thunder",
+      "observed": {
+        "class": "Wizard",
+        "type": "act",
+        "hits": 4,
+        "shape": "single",
+        "cooldownSeconds": 3,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "Four focused lightning hits.",
+        "currentFxSpec": {
+          "kind": "lightning",
+          "life": 0.55
+        },
+        "currentFxDescription": "A turbulent charged orb follows its original flight path, then releases a branching electrical corona and shearing sparks."
+      },
+      "proposed": {
+        "materialGroup": "lightning",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "amp",
+      "name": "Meteor Storm",
+      "observed": {
+        "class": "Wizard",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 7,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "Meteors strike the target area twice.",
+        "currentFxSpec": {
+          "kind": "meteor",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Fractured molten stones descend through turbulent fire, throwing incandescent fragments and smoke on impact."
+      },
+      "proposed": {
+        "materialGroup": "fire",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "tstorm",
+      "name": "Heaven’s Drive",
+      "observed": {
+        "class": "Wizard",
+        "type": "act",
+        "hits": 1,
+        "shape": "line",
+        "cooldownSeconds": 4,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "Earth erupts in a line through the target.",
+        "currentFxSpec": {
+          "kind": "earthTrap",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A staggered wave of layered rock slabs pushes upward through cracks, grit and dust."
+      },
+      "proposed": {
+        "materialGroup": "earth",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "meteor",
+      "name": "Magic Crasher",
+      "observed": {
+        "class": "High Wizard",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 2.5,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "A quick projectile powered by magic attack.",
+        "currentFxSpec": {
+          "kind": "psychic",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A sharp violet magic splinter flies horizontally and shatters into a pressure star."
+      },
+      "proposed": {
+        "materialGroup": "shadow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "grav",
+      "name": "Gravity Well",
+      "observed": {
+        "class": "High Wizard",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 5,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "A gravity impact and follow-up pulse. Pull nearby ordinary enemies together and briefly slow movement.",
+        "currentFxSpec": {
+          "kind": "gravity",
+          "life": 0.88
+        },
+        "currentFxDescription": "Spiraling fragments feed a dark gravity core; two compressed pressure pulses pull light and matter inward."
+      },
+      "proposed": {
+        "materialGroup": "shadow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "mystic",
+      "name": "Mystical Amplification",
+      "observed": {
+        "class": "High Wizard",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "Increase spell damage.",
+        "currentFxSpec": {
+          "kind": "holyAura",
+          "at": "caster",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "An engraved violet seal, hexagonal sigil and converging crystal motes gather at the caster."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "napalm",
+      "name": "Napalm Vulcan",
+      "observed": {
+        "class": "High Wizard",
+        "type": "act",
+        "hits": 4,
+        "shape": "splash",
+        "cooldownSeconds": 3,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "Four spectral hits with nearby splash damage.",
+        "currentFxSpec": {
+          "kind": "psychic",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Five textured spectral pressure clouds detonate with staggered hot cores and fractured violet wakes."
+      },
+      "proposed": {
+        "materialGroup": "shadow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "iconc",
+      "name": "Improve Concentration",
+      "observed": {
+        "class": "Archer",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Increase attack speed.",
+        "currentFxSpec": {
+          "kind": "windAura",
+          "at": "caster",
+          "life": 0.7
+        },
+        "currentFxDescription": "An eye-shaped focus lens opens beside the caster and resolves into precision ticks."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "blitz",
+      "name": "Blitz Beat",
+      "observed": {
+        "class": "Hunter",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 3,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "A falcon strike with nearby splash damage.",
+        "currentFxSpec": {
+          "kind": "falcon",
+          "life": 0.62
+        },
+        "currentFxDescription": "A feathered falcon follows a broad swooping attack path."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "sharp",
+      "name": "Marked Shot",
+      "observed": {
+        "class": "Hunter",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 3,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A focused arrow marks the target. Your next three direct hits within 3 seconds deal 12% more damage.",
+        "currentFxSpec": {
+          "kind": "arrowLine",
+          "life": 0.55
+        },
+        "currentFxDescription": "A contracting four-point reticle marks one fast, precise arrow."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "falcon",
+      "name": "Falcon Assault",
+      "observed": {
+        "class": "Sniper",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 4,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A heavy focused falcon strike.",
+        "currentFxSpec": {
+          "kind": "falcon",
+          "life": 0.62
+        },
+        "currentFxDescription": "A feathered falcon dives in 0.34 seconds with swept wings and short velocity echoes."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "focus",
+      "name": "Sharp Shooting",
+      "observed": {
+        "class": "Sniper",
+        "type": "act",
+        "hits": 1,
+        "shape": "line",
+        "cooldownSeconds": 3,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "An arrow pierces enemies in a line.",
+        "currentFxSpec": {
+          "kind": "arrowBurst",
+          "life": 0.52
+        },
+        "currentFxDescription": "A heavier piercing arrow passes through the target and leaves a long exit slipstream."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "sight",
+      "name": "True Sight",
+      "observed": {
+        "class": "Sniper",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Increase critical chance.",
+        "currentFxSpec": {
+          "kind": "windAura",
+          "at": "caster",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Three staggered vision lenses open beside a focused scanning cone."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "pharrow",
+      "name": "Snare Trap",
+      "observed": {
+        "class": "Sniper",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 6,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Automatically trap the target for 2 seconds. Bosses are rooted for 1.25 seconds, then resist roots for 3 seconds. Rooted enemies can still attack.",
+        "currentFxSpec": {
+          "kind": "earthTrap",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A shaded metal jaw trap closes its teeth and restraints around the target’s feet."
+      },
+      "proposed": {
+        "materialGroup": "earth",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "env",
+      "name": "Quick Cut",
+      "observed": {
+        "class": "Thief",
+        "type": "act",
+        "hits": 2,
+        "shape": "single",
+        "cooldownSeconds": 2,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Two quick blade hits with a katar or dagger.",
+        "currentFxSpec": {
+          "kind": "multiSlash",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "One short dagger snap cuts across the target with a small, immediate contact."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "dodge",
+      "name": "Feint Slash",
+      "observed": {
+        "class": "Thief",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 3,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A direct slash that briefly reduces the target’s accuracy.",
+        "currentFxSpec": {
+          "kind": "multiSlash",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A lateral decoy draws attention before a delayed reverse counter-cut lands."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "sonic",
+      "name": "Sonic Blow",
+      "observed": {
+        "class": "Assassin",
+        "type": "act",
+        "hits": 8,
+        "shape": "single",
+        "cooldownSeconds": 3,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Eight focused blade hits with a katar or dagger.",
+        "currentFxSpec": {
+          "kind": "multiSlash",
+          "life": 0.52
+        },
+        "currentFxDescription": "Eight textured violet and icy blade trails cross in rapid succession, each punctuated by a tight contact flash."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "pilot",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "grim",
+      "name": "Grimtooth",
+      "observed": {
+        "class": "Assassin",
+        "type": "act",
+        "hits": 1,
+        "shape": "line",
+        "cooldownSeconds": 3.5,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "A blade wave pierces enemies in a narrow line.",
+        "currentFxSpec": {
+          "kind": "shadow",
+          "life": 0.62
+        },
+        "currentFxDescription": "A worm-like maw of 26 small hooked teeth erupts around the monster in two staggered rings, with inward cutting tips, broken earth and outward dust."
+      },
+      "proposed": {
+        "materialGroup": "grimtooth",
+        "stage": "pilot",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "vdust",
+      "name": "Cross Slash",
+      "observed": {
+        "class": "Assassin",
+        "type": "act",
+        "hits": 2,
+        "shape": "cross",
+        "cooldownSeconds": 3,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "Two cuts strike a small crossing area.",
+        "currentFxSpec": {
+          "kind": "multiSlash",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Two long blades cross once into a clear X, then their edges peel apart."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "mAss",
+      "name": "Meteor Assault",
+      "observed": {
+        "class": "Assassin Cross",
+        "type": "act",
+        "hits": 1,
+        "shape": "radial",
+        "cooldownSeconds": 4,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "An immediate blade burst around you.",
+        "currentFxSpec": {
+          "kind": "radial",
+          "life": 0.7
+        },
+        "currentFxDescription": "Seven purple force blades explode radially outward from a violet core."
+      },
+      "proposed": {
+        "materialGroup": "heavy_physical",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "soulb",
+      "name": "Soul Breaker",
+      "observed": {
+        "class": "Assassin Cross",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 3,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A ranged blade-energy strike powered by physical attack.",
+        "currentFxSpec": {
+          "kind": "soulBolt",
+          "at": "path",
+          "life": 0.64
+        },
+        "currentFxDescription": "A wide crescent flies level toward the enemy, with its convex cutting edge facing forward and its sharp tips trailing behind. A beveled edge, fine wake and quick contact retain the 0.29-second flight."
+      },
+      "proposed": {
+        "materialGroup": "shadow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "sdestroy",
+      "name": "Deathmark",
+      "observed": {
+        "class": "Assassin Cross",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 4,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Strike and mark the target. The mark bursts after three more direct hits or 1.5 seconds.",
+        "currentFxSpec": {
+          "kind": "soulBolt",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Four curse needles close around a diamond deathmark; the mark fractures outward."
+      },
+      "proposed": {
+        "materialGroup": "shadow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "holy",
+      "name": "Holy Light",
+      "observed": {
+        "class": "Acolyte",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 2,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "A focused holy beam that damages every enemy type.",
+        "currentFxSpec": {
+          "kind": "holyBolt",
+          "at": "target",
+          "life": 0.7
+        },
+        "currentFxDescription": "A slender ivory light shaft meets an engraved ground seal, with rising light motes and a warm contact flare."
+      },
+      "proposed": {
+        "materialGroup": "holy",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "heal",
+      "name": "Searing Light",
+      "observed": {
+        "class": "Acolyte",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 2.5,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "A holy impact with nearby splash. Successful hits also heal you when below 60% health.",
+        "currentFxSpec": {
+          "kind": "holyBolt",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A rotating eight-point light flies horizontally, bursts into rays, then echoes a small heal at the caster."
+      },
+      "proposed": {
+        "materialGroup": "holy",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "bless",
+      "name": "Blessing",
+      "observed": {
+        "class": "Acolyte",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "Increase your direct damage.",
+        "currentFxSpec": {
+          "kind": "holyAura",
+          "at": "caster",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A warm cross materializes over the caster while fine motes rise beneath it."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "iagi",
+      "name": "Zeal",
+      "observed": {
+        "class": "Acolyte",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "Increase attack speed. At maximum attack speed, also increase direct skill damage.",
+        "currentFxSpec": {
+          "kind": "windAura",
+          "at": "caster",
+          "life": 0.7
+        },
+        "currentFxDescription": "Two layered wing-like light fans unfurl beside the caster."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "magnus",
+      "name": "Holy Nova",
+      "observed": {
+        "class": "Priest",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 4,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "A holy burst around the target.",
+        "currentFxSpec": {
+          "kind": "holyField",
+          "life": 0.95
+        },
+        "currentFxDescription": "A gold double-ring seal expands beneath four staggered columns of holy light."
+      },
+      "proposed": {
+        "materialGroup": "holy",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "sanct",
+      "name": "Judgment Pillar",
+      "observed": {
+        "class": "Priest",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 3,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "A column of holy light hits the target and nearby enemies.",
+        "currentFxSpec": {
+          "kind": "holyBolt",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A descending luminous veil resolves into a tall pillar with rising motes."
+      },
+      "proposed": {
+        "materialGroup": "holy",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "asp",
+      "name": "Sacred Weapon",
+      "observed": {
+        "class": "Priest",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "Empower normal mace attacks with holy damage.",
+        "currentFxSpec": {
+          "kind": "holyAura",
+          "at": "caster",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "An ivory sword glints beside the caster and releases a small weapon seal."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "kyrie",
+      "name": "Penance",
+      "observed": {
+        "class": "Priest",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 3.5,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "A holy strike marks the target. Your next three holy skill hits within 3 seconds deal extra damage.",
+        "currentFxSpec": {
+          "kind": "holyBolt",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Five sacred diamonds converge before a small cross-shaped punishment lands."
+      },
+      "proposed": {
+        "materialGroup": "holy",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "judex",
+      "name": "Divine Barrage",
+      "observed": {
+        "class": "High Priest",
+        "type": "act",
+        "hits": 4,
+        "shape": "single",
+        "cooldownSeconds": 2.5,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "A rapid sequence of focused holy beams.",
+        "currentFxSpec": {
+          "kind": "holyBolt",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Six luminous projectiles converge from separate directions in a rapid barrage."
+      },
+      "proposed": {
+        "materialGroup": "holy",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "assum",
+      "name": "Consecration",
+      "observed": {
+        "class": "High Priest",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 4,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "Holy ground strikes immediately and pulses once more.",
+        "currentFxSpec": {
+          "kind": "holyNova",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "An eight-point consecration seal illuminates the ground with raised light stations."
+      },
+      "proposed": {
+        "materialGroup": "holy",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "gloria",
+      "name": "Gloria",
+      "observed": {
+        "class": "High Priest",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "Increase critical chance.",
+        "currentFxSpec": {
+          "kind": "holyAura",
+          "at": "caster",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "An ivory halo and five ceremonial light motes rise over the caster’s inscribed ground seal."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "mammo",
+      "name": "Mammonite",
+      "observed": {
+        "class": "Merchant",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 2,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A heavy focused weapon hit.",
+        "currentFxSpec": {
+          "kind": "goldStrike",
+          "life": 0.48
+        },
+        "currentFxDescription": "A strike knocks spinning gold coins out of the target; coins fall and bounce."
+      },
+      "proposed": {
+        "materialGroup": "heavy_physical",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "hammer",
+      "name": "Hammer Fall",
+      "observed": {
+        "class": "Blacksmith",
+        "type": "act",
+        "hits": 1,
+        "shape": "radial",
+        "cooldownSeconds": 4,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "Strike nearby enemies with a chance to briefly stun.",
+        "currentFxSpec": {
+          "kind": "hammerFall",
+          "life": 0.85
+        },
+        "currentFxDescription": "A solid beveled bronze hammer accelerates into a grounded strike with compact debris and recoil."
+      },
+      "proposed": {
+        "materialGroup": "heavy_physical",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "adren",
+      "name": "Adrenaline Rush",
+      "observed": {
+        "class": "Blacksmith",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Increase attack speed.",
+        "currentFxSpec": {
+          "kind": "windAura",
+          "at": "caster",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Four ascending amber force arrows and a brief pulse signal increased attack speed."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "wperf",
+      "name": "Armor Crack",
+      "observed": {
+        "class": "Blacksmith",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 3,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A heavy strike. Your next three direct hits within 3 seconds deal 10% more damage.",
+        "currentFxSpec": {
+          "kind": "impact",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Cracks propagate through a shaded armor plate before it breaks into four pieces."
+      },
+      "proposed": {
+        "materialGroup": "heavy_physical",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "cart",
+      "name": "Cart Termination",
+      "observed": {
+        "class": "Whitesmith",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 3,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A heavy focused cart impact.",
+        "currentFxSpec": {
+          "kind": "cartCrash",
+          "life": 0.62
+        },
+        "currentFxDescription": "A shaded wooden cart rolls forward on metal-rimmed wheels and lands a compact physical impact."
+      },
+      "proposed": {
+        "materialGroup": "heavy_physical",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "thrust",
+      "name": "Maximum Power Thrust",
+      "observed": {
+        "class": "Whitesmith",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 29,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Empower physical attacks. Replaces Overthrust while enabled.",
+        "currentFxSpec": {
+          "kind": "frenzyAura",
+          "at": "caster",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Three stacked amber power bands rise around a compact force emblem."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "cboost",
+      "name": "Cart Boost",
+      "observed": {
+        "class": "Whitesmith",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Increase travel speed.",
+        "currentFxSpec": {
+          "kind": "windAura",
+          "at": "caster",
+          "life": 0.7
+        },
+        "currentFxDescription": "A compact induction pad energizes twin amber exhaust trails and acceleration ticks beneath the caster. No floating wheel symbols."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "frenzy",
+      "name": "Frenzy",
+      "observed": {
+        "class": "Lord Knight",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 10,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A short burst of increased damage.",
+        "currentFxSpec": {
+          "kind": "frenzyAura",
+          "at": "caster",
+          "life": 0.8
+        },
+        "currentFxDescription": "Rough orange flame tongues and a jagged crest surge upward around the caster."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "dpois",
+      "name": "Blade Frenzy",
+      "observed": {
+        "class": "Assassin Cross",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 31,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A short burst of increased physical attack with katars or daggers.",
+        "currentFxSpec": {
+          "kind": "frenzyAura",
+          "at": "caster",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Two violet blade silhouettes flank the caster above fine poison diamonds."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "ovthrust",
+      "name": "Overthrust",
+      "observed": {
+        "class": "Blacksmith",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 29,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A burst of increased physical attack.",
+        "currentFxSpec": {
+          "kind": "frenzyAura",
+          "at": "caster",
+          "life": 0.78
+        },
+        "currentFxDescription": "Six amber force nodes gather around a hexagonal power crest."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "mbrk",
+      "name": "Magnum Break",
+      "observed": {
+        "class": "Swordman",
+        "type": "act",
+        "hits": 1,
+        "shape": "radial",
+        "cooldownSeconds": 4,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "A fiery sword burst around you.",
+        "currentFxSpec": {
+          "kind": "fireNova",
+          "life": 0.72
+        },
+        "currentFxDescription": "A low orange flame front ignites around the target and dissolves into smoke."
+      },
+      "proposed": {
+        "materialGroup": "fire",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "fdiver",
+      "name": "Frost Diver",
+      "observed": {
+        "class": "Mage",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 3,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "An icy hit with a chance to briefly stun.",
+        "currentFxSpec": {
+          "kind": "iceHit",
+          "life": 0.66
+        },
+        "currentFxDescription": "A refractive frost spear skims the ground and strikes into a crystalline freeze with flying ice chips."
+      },
+      "proposed": {
+        "materialGroup": "ice",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "fnova",
+      "name": "Lord of Vermilion",
+      "observed": {
+        "class": "Wizard",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 6,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "A lightning field strikes and pulses once more.",
+        "currentFxSpec": {
+          "kind": "lightningStorm",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Orange lightning branches strike under a low thundercloud bank with individual amber contacts."
+      },
+      "proposed": {
+        "materialGroup": "lightning",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "ashower",
+      "name": "Arrow Shower",
+      "observed": {
+        "class": "Archer",
+        "type": "act",
+        "hits": 1,
+        "shape": "cone",
+        "cooldownSeconds": 3.5,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "A fan of arrows strikes enemies in front of you.",
+        "currentFxSpec": {
+          "kind": "arrowRain",
+          "life": 0.74
+        },
+        "currentFxDescription": "Twelve beveled arrows rain down across a broad area, each with its own compact metal contact and dust response."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "sandat",
+      "name": "Fan of Blades",
+      "observed": {
+        "class": "Thief",
+        "type": "act",
+        "hits": 1,
+        "shape": "cone",
+        "cooldownSeconds": 3.5,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "A fan of blades strikes enemies in front of you.",
+        "currentFxSpec": {
+          "kind": "arrowRain",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Five visible blades launch from the caster in a spreading fan."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "signum",
+      "name": "Radiant Sweep",
+      "observed": {
+        "class": "Acolyte",
+        "type": "act",
+        "hits": 1,
+        "shape": "cone",
+        "cooldownSeconds": 3.5,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "A fan of holy light strikes enemies in front of you.",
+        "currentFxSpec": {
+          "kind": "holyNova",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A tall ivory crescent sweeps sideways across the target, shedding warm motes."
+      },
+      "proposed": {
+        "materialGroup": "holy",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "cartrev",
+      "name": "Cart Revolution",
+      "observed": {
+        "class": "Merchant",
+        "type": "act",
+        "hits": 1,
+        "shape": "radial",
+        "cooldownSeconds": 3.5,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "A cart sweep strikes nearby enemies.",
+        "currentFxSpec": {
+          "kind": "cartCrash",
+          "life": 0.62
+        },
+        "currentFxDescription": "A gold-outlined cart sweeps around the target on a curved ground path, leaving a continuous amber skid trail and outward contact ticks."
+      },
+      "proposed": {
+        "materialGroup": "heavy_physical",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "spearboom",
+      "name": "Counter Attack",
+      "observed": {
+        "class": "Knight",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 2,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A quick sword strike. Deals 20% more damage if you were hit within the last 2 seconds.",
+        "currentFxSpec": {
+          "kind": "impact",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "An orange guard catches a glancing blow before a short rising counter-thrust."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "tblow",
+      "name": "Traumatic Blow",
+      "observed": {
+        "class": "Lord Knight",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 3,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "A sword strike followed by a short bleed. Repeated bleeds refresh the effect.",
+        "currentFxSpec": {
+          "kind": "bleed",
+          "life": 0.66
+        },
+        "currentFxDescription": "One heavy orange wound-cut leaves downward amber fracture wisps."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "landmine",
+      "name": "Land Mine",
+      "observed": {
+        "class": "Hunter",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 4,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "Automatically place a mine at the target. The initial hit is followed by an explosion.",
+        "currentFxSpec": {
+          "kind": "earthTrap",
+          "life": 0.66
+        },
+        "currentFxDescription": "A compact ground charge arms, flashes, and sends real fragments and dust upward."
+      },
+      "proposed": {
+        "materialGroup": "earth",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "wwalk",
+      "name": "Wind Walk",
+      "observed": {
+        "class": "Sniper",
+        "type": "buff",
+        "hits": null,
+        "shape": null,
+        "cooldownSeconds": 12,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Increase travel speed.",
+        "currentFxSpec": {
+          "kind": "windAura",
+          "at": "caster",
+          "life": 0.78
+        },
+        "currentFxDescription": "Long low wind slipstreams glide past the caster’s feet."
+      },
+      "proposed": {
+        "materialGroup": "support",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "vsplash",
+      "name": "Shadow Dash",
+      "observed": {
+        "class": "Assassin",
+        "type": "act",
+        "hits": 1,
+        "shape": "line",
+        "cooldownSeconds": 4,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "Dash into melee and slash through enemies in a narrow line. Strike in place when already close.",
+        "currentFxSpec": {
+          "kind": "shadow",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A single hooded shadow afterimage lunges forward through a thin smoke wake, ending in one sharp piercing seam and drifting spectral fragments."
+      },
+      "proposed": {
+        "materialGroup": "shadow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "akatar",
+      "name": "Phantom Rush",
+      "observed": {
+        "class": "Assassin Cross",
+        "type": "act",
+        "hits": 3,
+        "shape": "single",
+        "cooldownSeconds": 5,
+        "magic": false,
+        "aoe": false,
+        "gameDescription": "Three focused cuts with a short dash when needed. Strike in place when already close.",
+        "currentFxSpec": {
+          "kind": "multiSlash",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "Three detailed spectral attack poses converge from separate directions in staggered thrusts. Their contacts fracture outward in three fine branches."
+      },
+      "proposed": {
+        "materialGroup": "steel_arrow",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "tundead",
+      "name": "Exorcism",
+      "observed": {
+        "class": "Priest",
+        "type": "act",
+        "hits": 1,
+        "shape": "single",
+        "cooldownSeconds": 3,
+        "magic": true,
+        "aoe": false,
+        "gameDescription": "A heavy holy strike. Deals 15% more damage below 30% target health.",
+        "currentFxSpec": {
+          "kind": "holyNova",
+          "life": 0.8
+        },
+        "currentFxDescription": "An ivory banishment star breaks into outward sacred motes."
+      },
+      "proposed": {
+        "materialGroup": "holy",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "basilica",
+      "name": "Final Judgment",
+      "observed": {
+        "class": "High Priest",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 5,
+        "magic": true,
+        "aoe": true,
+        "gameDescription": "Strike with a holy seal that detonates after a short delay, damaging nearby enemies.",
+        "currentFxSpec": {
+          "kind": "holyNova",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "A large twelve-point judgment seal gathers before a heavy central light descends."
+      },
+      "proposed": {
+        "materialGroup": "holy",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    },
+    {
+      "id": "meltdown",
+      "name": "Shatter Strike",
+      "observed": {
+        "class": "Whitesmith",
+        "type": "act",
+        "hits": 1,
+        "shape": "splash",
+        "cooldownSeconds": 4,
+        "magic": false,
+        "aoe": true,
+        "gameDescription": "A heavy strike with nearby splash. Deals 12% more damage against a target marked by Armor Crack.",
+        "currentFxSpec": {
+          "kind": "impact",
+          "at": "target",
+          "life": 0.6,
+          "redesigned": true
+        },
+        "currentFxDescription": "An armor plate heats along a jagged fracture and sheds incandescent fragments."
+      },
+      "proposed": {
+        "materialGroup": "heavy_physical",
+        "stage": "rollout",
+        "preserveTrajectory": true,
+        "primaryContactAudit": null,
+        "assetIds": null,
+        "layerPlan": null,
+        "normalSpeedVisualAcceptance": null
+      },
+      "production": {
+        "art": "not_started",
+        "integration": "not_started",
+        "validation": "not_started"
+      }
+    }
+  ],
+  "excludedSkills": [
+    {
+      "id": "hprec",
+      "name": "HP Recovery",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "spear",
+      "name": "Sword Training",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "owl",
+      "name": "Owl’s Eye",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "vult",
+      "name": "Vulture’s Eye",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "beast",
+      "name": "Beast Bane",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "falconry",
+      "name": "Steel Crow",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "dbl",
+      "name": "Twin Strike",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "steal",
+      "name": "Plunder",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "katm",
+      "name": "Edge Mastery",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "meditatio",
+      "name": "Holy Echo",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "greed",
+      "name": "Overcharge",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "phys",
+      "name": "Pushcart",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "discount",
+      "name": "Discount",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "wresearch",
+      "name": "Weapon Research",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "skin",
+      "name": "Cart Momentum",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    },
+    {
+      "id": "vermilion",
+      "name": "Soul Drain",
+      "type": "pas",
+      "reason": "Passive has no cast effect in the current catalog."
+    }
+  ]
+}

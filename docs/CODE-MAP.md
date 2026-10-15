@@ -17,7 +17,7 @@ editing. Many tests execute extracted pieces of the real page.
 | Pets and training | `index.html`: `PETS`, `petBuff`, `petR`; `assets/pets.js`, `assets/pets/v1/` | `pet_sim.js`, `pet_game_sim.js`, `pet_sprites_sim.js` |
 | Wardrobe and native hero sprites | `assets/wardrobe.js`, `assets/wardrobe-ui.js`, `assets/wardrobe.css`, `assets/wardrobe/v5/`; `index.html`: `PGWardrobe` | `wardrobe_sim.js`, `wardrobe_game_sim.js`, native asset audits |
 | Skill artwork | `assets/skill-icons.js`, `assets/skill-icons/`; `tools/native-skill-icons/` | source crop audit; `tools/check_skill_pets_browser.js` |
-| Skill casting effects | `assets/skill-afterglow.js`, generated `assets/afterglow-animations.js`; `index.html`: `playSkillFx`, `tickSkillFx`, `syncSkillFx` | `afterglow_sim.js`, `skill_sim.js`; `python3 tools/build_afterglow.py --check` |
+| Skill casting effects | `assets/skill-afterglow.js`, generated `assets/afterglow-animations.js` and `assets/skill-materials.js`; `index.html`: `playSkillFx`, `tickSkillFx`, `syncSkillFx` | `afterglow_sim.js`, `skill_sim.js`; `python3 tools/build_afterglow.py --check` |
 | Panels, buttons and hotkeys | `index.html`: `V`, `ACT`, `TABS`, `SIDE_TABS`; `assets/ui/` and wardrobe UI module | `ui_sim.js`, `panel_layout_smoke.js`, `eclipse_ui_sim.js` |
 | Browser saves, login, cloud sync, away rewards | `index.html`: `fresh`, `load`, `save`, `saveKey`, `CLOUD`, `offlinePlan` | `save_load_sim.js`, `save_owner_sim.js`, `cloud_sim.js`, `offline_sim.js`, `migration_sim.js` |
 | API accounts, sessions and saves | `functions/api/`, `functions/_lib/auth.js`, `functions/_lib/db.js`, `functions/_lib/validate.js` | `api_sim.js`, `registration_sim.js`, `dev_server_sim.js` |
@@ -54,13 +54,23 @@ an exhaustive test selection. Follow dependencies across systems and see
 Do not regenerate all art for an unrelated UI fix. Generated files and base64
 atlases are outputs, not useful first reads. Start with manifests and generators.
 
-The owner's approved Canvas choreography lives in `tools/skill-fx-proposals/afterglow-v6.html`.
+The current Arcana effect source lives in `tools/skill-fx-proposals/afterglow-v8.html`; V7 is retained for comparison.
 Run `python3 tools/build_afterglow.py` after changing that source. The generated runtime
 excludes preview backgrounds, stand-ins, controls and the extra Venom Field concept.
 `assets/skill-afterglow.js` projects cast positions onto one transparent battlefield
 canvas. Local effects preserve uniform scale; traveling effects align the study's
-caster/target anchors with the projected flight path. Their visual duration is 3.6
-simulation seconds, independent of damage and cooldowns. The existing 28-effect cap
+caster/target anchors with the projected flight path. The adapter plays the drawing timeline at 1.65×; visual duration is 2.2
+simulation seconds, independent of damage and cooldowns. Single-target casts follow
+the displayed monster size; area spells retain their world coverage. Animated flame,
+smoke, light trails, ice, molten rock and seals use one embedded WebP atlas generated
+by `tools/build_skill_materials.py`, with vector fallbacks while loading or on decode
+failure. See the [material pipeline](../tools/skill-fx-materials/README.md). Grimtooth
+reuses three cached tooth surfaces for 26 small inward-facing teeth in two rings;
+all teeth remain visible at reduced detail. Shared contacts choose material responses
+from the active skill (metal/earth fragments, flame and soot, ice shards, electrical
+branches, holy light or spectral splinters). Additional contacts follow existing
+arrival, fracture and assembly times. Gravity pressure keeps its inward motion.
+No camera shake or gameplay timing changes are involved. The existing 28-effect cap
 and lower particle detail on narrow screens/dense casts bound work. The original
 Three renderer remains the fallback when the adapter is unavailable; its source
 backup is under `tools/skill-fx-backups/pre-afterglow/`.
