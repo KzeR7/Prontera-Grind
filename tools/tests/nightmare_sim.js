@@ -275,7 +275,7 @@ t('a save cannot be left standing in a locked Nightmare stage', () => {
   assert.ok(src.includes('if((S.lvl|0)>10&&!nmMapOpen(S.mp|0))S.lvl=10;'), 'initSession pulls a character out of a Nightmare tier it has not unlocked');
   assert.ok(src.includes('go:()=>{if(canTravel(mapM,mapL))'), 'travel allows an unlocked Nightmare stage on that map');
   assert.ok(src.includes('nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM))'), 'the map panel caps at the band of that map');
-  assert.ok(src.includes('mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))))'), 'and the stage picker cannot be clamped below the band');
+  assert.ok(src.includes('mapL=Math.min(mapL,mapM>=10?5:Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))))'), 'and the stage picker cannot be clamped below the band');
 });
 
 t('v90.3 (B): nominal reward per HP is equal before NM5 wave redistribution', () => {

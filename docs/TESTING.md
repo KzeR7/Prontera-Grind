@@ -131,8 +131,8 @@ checkout or a combined branch.
 
 Build with `bash tools/build_site.sh` and run `node tools/dev_server.js --gm-all`
 for a disposable preview. Maps → Ascension Map uses normal travel, combat and
-loot. The World Atlas holds the original ten maps. Both destination grids have a
-frame and grid background. The previous scenery popup is no longer used.
+loot. The World Atlas holds the original ten maps. Both destination lists use plain backgrounds with gold section dividers.
+Both Ascension destinations open independently at Base 150 without boss clears. The previous scenery popup is no longer used.
 
 Run `node tools/tests/panel_layout_smoke.js`,
 `node tools/tests/ascension_scene_sim.js`,
