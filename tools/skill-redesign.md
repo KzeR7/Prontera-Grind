@@ -1,6 +1,13 @@
 # Class skill redesign (v97)
 
-The game defines 91 skill slots: five per class and one for Novice. Descendants retain inherited skills. Sword jobs use swords; every Assassin-line attack supports katars and daggers. Attacks and buffs run automatically on cooldown, with no mana or manual resource rotation.
+> **Status:** this file records the v97 skill redesign and is kept as the design history
+> behind the current skills. Two things have moved on since it was written: offensive
+> casts are now player-ordered (see below), and the stationary gate in
+> [Balance limits](#balance-limits) has been superseded. For the shipped behaviour read
+> [Game design](../docs/GAME-DESIGN.md) and
+> [progression-redesign.md](progression-redesign.md).
+
+The game defines 91 skill slots: five per class and one for Novice. Descendants retain inherited skills. Sword jobs use swords; every Assassin-line attack supports katars and daggers. Buffs still run automatically on cooldown, with no mana or manual resource rotation. Offensive casts no longer do: since v140 (finalized in v143) the player picks and orders them in a class-specific six-slot combo, which fires once per attack in slot order at 0.5-second cast spacing, then recovers for 3 seconds.
 
 ## Combat
 
@@ -42,7 +49,7 @@ Moving checks use real spawn, damage, recovery and kill logic: 180 seconds of fa
 
 ## Balance limits
 
-The frozen stationary gate is ±5% single-target DPS, ±10% three-target DPS, and ±5% average companion power, against each class's own old result. No cross-class equalization is applied.
+The v97 frozen stationary gate was ±5% single-target DPS, ±10% three-target DPS, and ±5% average companion power, against each class's own old result, with no cross-class equalization. **That gate is retired.** `tools/tests/skill_balance_sim.js` now enforces the v98 gate against the `d164bd0527cfe335f9c183d0e576800716b7dd26` reference: no gear or growth sample may lose more than 10% DPS, completed gear builds may gain at most 20%, boss wins must be retained and farming deaths must not increase. The owner's +20% allowance applies to completed benchmark builds only; intermediate profiles may gain more. See [progression-redesign.md](progression-redesign.md) for the current measured numbers.
 
 **Moving encounter gates remain separate:** burst, crowd control and movement change short fights and farming. The strict encounter checker reports each deviation from the proposed ±5% farm/boss-time target and any reduced boss success. Passing stationary checks does not establish equivalent farming or boss survival. Current fixtures are controlled samples, not exhaustive coverage of cards, mastery, every equipment combination, Nightmare or 30-minute farming.
 

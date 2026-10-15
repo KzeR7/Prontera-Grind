@@ -1,4 +1,4 @@
-# v98 progression, cards and farming guide
+# Progression, cards and farming guide (measurements: v144)
 
 ## Player rules
 
@@ -14,7 +14,7 @@
 
 180 named definitions cover 90 monster families in normal and Nightmare forms. Their effects and eligible equipment slots are fixed. Live drops, offline drops, the map and guide use these definitions. Nightmare rotations now expose every family.
 
-Limits: one equipped card per family (normal/Nightmare count together), two boss cards per build, one boss card per item, one Crit DMG card per item. Empty sockets can therefore support distinct damage, speed, defensive or farming choices.
+Limits, all of them per item: one card per monster family (normal/Nightmare count together), two boss cards and two Crit DMG cards. There is no build-wide cap on boss cards or on a family, so the same family can sit on different pieces. `socketWhy()` is the authority; `equipment_cards_sim.js` pins that a third boss card and a third Crit DMG card are what stay blocked. Empty sockets can therefore support distinct damage, speed, defensive or farming choices.
 
 Examples:
 
