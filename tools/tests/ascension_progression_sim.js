@@ -45,3 +45,40 @@ try{
  assert.match(html,/N\+ weapon evolution/);assert.match(html,/Ascension skill/);
  console.log('PASS: ten fields, boss5/escorts, no equipment online/offline, stage4→5, capped final route, twenty legacy migrations/idempotence, material UI.');
 }finally{game.close();}
+
+// Access, save repair and balance use the real online spawn path.
+const balance=createGame();
+try{
+ const {ev}=balance;
+ ev('S=fresh();S.auto=false;S.adv=false;S.lv=149;S.mapClears.fill(true)');
+ for(const m of [10,11])assert.equal(ev(`canTravel(${m},1)`),false);
+ ev('S.lv=150;S.mapClears.fill(false)');
+ for(const m of [10,11]){
+  assert.equal(ev(`canTravel(${m},1)`),true);
+  assert.equal(ev(`canTravel(${m},2)`),false); // Stages still earn their normal progress.
+  ev(`S.mp=${m};S.lvl=1;currentUser='ascension-access';lsPut(saveKey(),JSON.stringify(S));S=load()`);
+  assert.equal(ev('S.mp'),m);assert.equal(ev('S.lvl'),1);
+ }
+ ev('S.mp=9;S.lvl=15;spawn();window.abyss=mobs.find(x=>x.boss)');
+ const abyss=ev('({hp:window.abyss.hp,atk:window.abyss.atk})');
+ for(const m of [10,11]){
+  let previous=0;
+  for(let stage=1;stage<=5;stage++){
+   ev(`S.mp=${m};S.lvl=${stage};spawn()`);
+   const regular=ev('mobs.find(x=>!x.boss)');
+   assert.ok(regular.hp>previous);previous=regular.hp;
+   if(stage===1){
+    assert.equal(regular.hp,Math.floor(abyss.hp*1.3));
+    assert.equal(regular.atk,Math.floor(abyss.atk*1.3));
+    console.log(`${ev('MAPS[S.mp].n')} entry: ${regular.hp} HP, ${regular.atk} ATK; ${(regular.hp/32000000).toFixed(2)}s at 32M DPS (HP only).`);
+   }
+   if(stage===5){
+    const boss=ev('mobs.find(x=>x.boss)');
+    assert.ok(Math.abs(boss.hp-regular.hp*4)<=4);
+    assert.ok(Math.abs(boss.atk-regular.atk*4)<=4);
+   }
+  }
+ }
+ ev('S.lv=149;S.mp=11;lsPut(saveKey(),JSON.stringify(S));S=load()');assert.equal(ev('S.mp'),9);
+ console.log('PASS: independent Lv150 access without clears, reload/locked-save repair, both five-stage HP/ATK ramps and MVP scaling.');
+}finally{balance.close();}

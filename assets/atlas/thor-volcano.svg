@@ -1,28 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="750" height="350" viewBox="0 0 750 350">
-  <defs>
-    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#201d2c"/><stop offset=".5" stop-color="#6c3940"/><stop offset="1" stop-color="#d27b50"/></linearGradient>
-    <radialGradient id="glow"><stop stop-color="#ffc172" stop-opacity=".8"/><stop offset=".4" stop-color="#f77a39" stop-opacity=".35"/><stop offset="1" stop-color="#ec542b" stop-opacity="0"/></radialGradient>
-    <linearGradient id="mountain" x2=".6" y2="1"><stop stop-color="#64505a"/><stop offset=".5" stop-color="#352d3d"/><stop offset="1" stop-color="#211e2b"/></linearGradient>
-    <linearGradient id="lava" x2=".5" y2="1"><stop stop-color="#fff2a8"/><stop offset=".4" stop-color="#ffc260"/><stop offset="1" stop-color="#f05b2c"/></linearGradient>
-    <linearGradient id="smoke" x2=".3" y2="1"><stop stop-color="#2b2635" stop-opacity=".75"/><stop offset="1" stop-color="#78505a" stop-opacity=".25"/></linearGradient>
-  </defs>
-  <path d="M0 0H750V350H0Z" fill="url(#sky)"/>
-  <ellipse cx="461" cy="137" rx="228" ry="143" fill="url(#glow)"/>
-  <path d="M0 170 63 112 96 141 164 75 213 122 255 107 305 165 365 131 435 177 532 98 578 122 637 79 701 152 750 125V350H0Z" fill="#765158" opacity=".55"/>
-  <path d="M750 211 678 143 622 161 574 207 530 184 469 227 425 199 345 245 268 187 181 233 100 165 0 206V350H750Z" fill="#493746"/>
-  <path d="M216 256 291 186 360 97 399 86 426 91 469 83 500 93 549 178 619 245 666 288Z" fill="url(#mountain)"/>
-  <path d="m426 91-18 82-43 41-19 67 57-26 35-52 5-43 26-77Z" fill="#77606a" opacity=".35"/>
-  <path d="m360 97 39-11 27 5 43-8 31 10-37 15-58-1Z" fill="#211e2a"/>
-  <path d="m372 99 34-7 21 7 39-9 22 4-28 10-52 1Z" fill="#ffbb66"/>
-  <path d="m440 104-9 29 17 21-22 21 13 26-27 21 11 22-29 30 20-3 27-29-10-20 23-18-11-28 22-21-20-24 8-27Z" fill="#da542e"/>
-  <path d="m442 105-7 29 16 21-20 21 12 26-26 21 10 20-24 27" fill="none" stroke="url(#lava)" stroke-width="4" stroke-linejoin="round"/>
-  <path d="M359 82Q310 60 331 36 311 17 354 1H573Q582 30 534 42 554 62 506 74L473 88Z" fill="url(#smoke)"/>
-  <path d="M367 65Q394 43 439 62T519 55" fill="none" stroke="#b67b77" stroke-opacity=".2" stroke-width="13"/>
-  <path d="M0 268 70 227 125 242 173 223 226 267 305 241 354 267 423 252 483 269 560 243 603 270 663 241 750 265V350H0Z" fill="#272430"/>
-  <path d="M500 245Q445 263 481 281T406 305 356 350H620Q525 326 558 306T500 280 524 247Z" fill="#a94330"/>
-  <path d="M505 246Q460 265 493 281T432 305 402 350H578Q495 325 529 307T490 279 514 247Z" fill="url(#lava)"/>
-  <path d="M503 249Q480 266 506 282T459 305 455 350" fill="none" stroke="#ffe2a1" stroke-width="3" opacity=".8"/>
-  <g fill="#40323d" stroke="#6f4c4e"><path d="m101 282 17-72 12-12 8 48 21 44Z"/><path d="m177 287 10-42 11-11 14 49Z"/><path d="m627 281 18-53 13-9 14 76Z"/><path d="m687 313 9-74 14-16 14 38 5 67Z"/></g>
-  <g fill="#ffd394"><circle cx="342" cy="109" r="1.6"/><circle cx="516" cy="151" r="1.4"/><circle cx="320" cy="196" r="1"/><circle cx="558" cy="69" r="1.4"/><circle cx="597" cy="202" r="1"/><circle cx="278" cy="82" r="1.2"/><circle cx="469" cy="48" r="1"/><circle cx="567" cy="286" r="1.7"/></g>
-  <path d="M0 319 76 289 159 323 245 298 319 334 360 350H0ZM599 350l35-39 42 15 24-17 50 16v25Z" fill="#1d1e29"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="750" height="350" viewBox="0 0 750 350" role="img" aria-label="Thor Volcano basalt cavern and lava channels">
+ <defs>
+  <linearGradient id="cavern" x2="0" y2="1"><stop stop-color="#100e12"/><stop offset=".6" stop-color="#542820"/><stop offset="1" stop-color="#211714"/></linearGradient>
+  <linearGradient id="rock" x2=".6" y2="1"><stop stop-color="#443a37"/><stop offset=".5" stop-color="#241f20"/><stop offset="1" stop-color="#100f14"/></linearGradient>
+  <linearGradient id="lava" x2="0" y2="1"><stop stop-color="#ffe49a"/><stop offset=".4" stop-color="#ff9b35"/><stop offset="1" stop-color="#d83d15"/></linearGradient>
+  <radialGradient id="heat"><stop stop-color="#ff9a3d" stop-opacity=".65"/><stop offset="1" stop-color="#d23e16" stop-opacity="0"/></radialGradient>
+  <pattern id="basalt" width="65" height="98" patternUnits="userSpaceOnUse"><path d="m0 15 24-9 26 11 15-6v87H0Z" fill="url(#rock)"/><path d="m24 6-3 72 7 20M50 17l-4 81M0 15l21 8 29-6" fill="none" stroke="#70615a" stroke-opacity=".22"/></pattern>
+ </defs>
+ <path fill="url(#cavern)" d="M0 0h750v350H0z"/>
+ <ellipse cx="410" cy="207" rx="325" ry="170" fill="url(#heat)"/>
+ <!-- Layered basalt walls and vents inside the volcano. -->
+ <path d="m0 88 62-30 83 68 50-37 41 21 53 78 70-59 66 37 65-97 52 31 60-49 56 68 92-50v222H0Z" fill="#362c29"/>
+ <path d="m261 117 13 64-9 36 20 21m205-158-12 65 8 23-20 54m135-148-8 75 13 28-5 42" fill="none" stroke="#d04c25" stroke-width="7"/>
+ <path d="m262 118 13 62-8 37 18 20m205-154-10 61 8 23-20 54m133-146-7 72 14 29-6 42" fill="none" stroke="#ffb54c" stroke-width="2"/>
+ <path d="M0 229 89 205 155 222 225 206 304 229 373 213 441 235 531 208 604 228 676 211 750 233V350H0Z" fill="#1c191b"/>
+ <path d="M750 228 635 237 565 259 481 260 402 295 286 311 213 350H750Z" fill="#8e2d17"/>
+ <path d="M750 234 638 244 577 267 487 270 422 303 321 321 270 350H750Z" fill="url(#lava)"/>
+ <path d="m750 247-105 6-68 25-82 2-67 33-94 19-29 18m235-70 54 32 84 12 35 26" fill="none" stroke="#ffe8a1" stroke-width="3" opacity=".85"/>
+ <path d="m313 351 75-25 71 4 40 20m101-71 40-15 36 4 29 13-57 8Z" fill="#292122" stroke="#f07430" stroke-width="2"/>
+ <!-- Columns frame an open, molten interior rather than an outdoor mountain. -->
+ <path d="M0 0h176l-9 42-25 9-7 69-28 12-13 105-33 39L0 269ZM750 0H613l12 66 28 18 9 94 30 15 12 52 46 19Z" fill="url(#basalt)"/>
+ <path d="M0 0h750v24l-68 12-64-11-67 30-45-17-59 29-50-21-52 12-41-31-67 14-48-16-65 12-64-18Z" fill="#141216"/>
+ <path d="m176 0-9 42-24 9-8 69-28 12-13 105m519-237 12 66 28 18 9 94 30 15" fill="none" stroke="#79604e" stroke-opacity=".45" stroke-width="2"/>
+ <path d="M0 310 66 276 129 293 180 269 251 294 295 324 313 350H0Zm652 40 29-40 36-9 33 14v35Z" fill="url(#rock)"/>
+ <g fill="#ffc174"><circle cx="308" cy="156" r="1.5"/><circle cx="453" cy="115" r="1"/><circle cx="513" cy="193" r="1.7"/><circle cx="347" cy="94" r="1"/><circle cx="570" cy="147" r="1.2"/><circle cx="219" cy="184" r="1"/><circle cx="423" cy="226" r="1.3"/></g>
 </svg>

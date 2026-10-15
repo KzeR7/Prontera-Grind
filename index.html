@@ -783,7 +783,8 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 #wins .ui-panel>.atabs.map-season-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--ui-line,#605642);padding:5px;gap:5px;border-radius:8px;background:#14151b}
 #wins .ui-panel>.atabs.map-season-tabs button{height:auto;min-height:44px;min-width:0;padding:6px;white-space:normal;font-size:11px;line-height:1.3}.map-season-tabs .map-coming-soon{display:block;margin-top:3px;font-size:8px;letter-spacing:.08em;text-transform:uppercase}.map-season-tabs button:disabled{cursor:not-allowed;opacity:.55}
 .eclipse-atlas-hero .ascension-preview{display:block;width:100%;height:100%;object-fit:cover;object-position:center 20%}
-.ui-panel[data-layout="map"] .ui-destinations .mapgrid{border:1px solid #71634d;padding:8px;border-radius:8px;background-image:linear-gradient(#a58e6520 1px,transparent 1px),linear-gradient(90deg,#a58e6520 1px,transparent 1px);background-size:24px 24px}
+.eclipse-atlas-hero .ascension-preview[src*="thor-volcano"]{object-position:center 75%}
+.ui-panel[data-layout="map"] .ui-destinations .mapgrid{padding:0;border:0;background:none}
 .ui-panel[data-layout="map"] .ui-destinations .mapcard{border:1px solid #71634d;background:#202128e8}
 </style>
 <link rel="preload" href="assets/ui/fonts/font-0.ttf" as="font" type="font/ttf" crossorigin>
@@ -1096,7 +1097,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-15 haven-v156 Astral masonry and fractured ruins';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-15 haven-v157 Ascension access and endgame balance';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1649,7 +1650,7 @@ function repairMastery(f){
   if(!HUNT_TITLES.some(t=>t.id===f.equippedTitle&&safeCount(f.indexXp)>=t.xp))f.equippedTitle=null;
   return f;
 }
-const REC=['Lv 1-10','Lv 10-50','Lv 10-50','Lv 10-50','Lv 10-50','Lv 60-67','Lv 67-74','Lv 74-80','Lv 80-90','Lv 90-99','Lv 140-150','Lv 150'];
+const REC=['Lv 1-10','Lv 10-50','Lv 10-50','Lv 10-50','Lv 10-50','Lv 60-67','Lv 67-74','Lv 74-80','Lv 80-90','Lv 90-99','Lv 150','Lv 150'];
 MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89,139,149][i];m.rec=REC[i]});
 // ---------- v76: the Nightmare band ----------
 // Field power STOPPED at Abyss Stage 10 (power 99) while the level cap is 150, so Base Lv 100-150
@@ -1669,7 +1670,7 @@ const nmTierOf=m=>(m|0)<=4?0:1;
 // How many Nightmare tiers the character has unlocked right now (0-2). The GM switch opens both.
 const nmTierOpen=t=>{if(S&&S.gmnm)return true;return !!S&&(S.lv|0)>=NMLV[t]};
 const nmMapOpen=m=>m<10&&nmTierOpen(nmTierOf(m));
-const ascensionOpen=m=>m<10||!!S&&(S.gmnm||S.lv>=(m===10?140:150)&&!!S.mapClears?.[m-1]);
+const ascensionOpen=m=>m<10||!!S&&(S.gmnm||S.lv>=150);
 const normalStages=m=>m>=10?5:10;
 const bossStage=(m,l)=>l===normalStages(m)||(m<10&&l===15);
 const canTravel=(m,l)=>Number.isInteger(m)&&m>=0&&m<MAPS.length&&Number.isInteger(l)&&l>=1&&l<=15&&ascensionOpen(m)&&(m>=10?l<=normalStages(m)&&l<=(S.prog[m]||1):l<=nmMaxFor(m));
@@ -2680,7 +2681,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   f.ascensionStageVersion=1;
   for(let i=10;i<MAPS.length;i++)f.prog[i]=cl(Math.floor(f.prog[i]),1,5);
   f.mp=Math.max(0,Math.min(MAPS.length-1,Math.floor(f.mp||0)));f.lvl=Math.max(1,Math.min(f.mp>=10?5:15,Math.floor(f.lvl||1)));
-  if(f.mp>=10&&!f.gmnm&&(f.lv<(f.mp===10?140:150)||!f.mapClears[f.mp-1])){f.mp=9;f.lvl=10;}
+  if(f.mp>=10&&!f.gmnm&&f.lv<150){f.mp=9;f.lvl=10;}
   if(!f.jobs||typeof f.jobs!=='object'||Array.isArray(f.jobs))f.jobs=F.jobs;
   for(const n of Object.keys(f.jobs)){
     const c=CLASSES[n],j=f.jobs[n];
@@ -3634,6 +3635,17 @@ function fieldExpReward(m,stage,boss=false){
   const escorts=m<5?3:5,budget=mvp+escorts*regular,escort=Math.floor(budget/(escorts+1.25));
   return boss?budget-escorts*escort:escort;
 }
+// Ascension starts 30% above Nightmare Abyss's final MVP, then ramps by stage.
+// Both maps are parallel level-150 routes; Thor has the steeper later-stage curve.
+function ascensionCombatStats(m,stage,boss=false){
+  if(m<10)return {};
+  const power=fieldPower(9,15),weight=1+9*.15+(9-4)*.2;
+  const abyssHp=Math.floor(500*weight*Math.pow(power,HPE)*NMBOSSHP*nm15Of(15));
+  const abyssAtk=Math.floor((8+power*6.5)*weight*NMATK*nm15Of(15)*eaOf(power));
+  const ramp=(m===10?[1,1.25,1.6,2,2.5]:[1,1.35,1.8,2.4,3.2])[stage-1];
+  const scale=1.3*ramp*(boss?4:1),hp=Math.floor(abyssHp*scale);
+  return {hp,max:hp,atk:Math.floor(abyssAtk*scale)};
+}
 // One field monster, before it is placed. Shared by the wave builder and by every camp refill, so a
 // monster that walks back in is exactly the monster the field started with.
 function minionDef(pack){
@@ -3641,7 +3653,7 @@ function minionDef(pack){
   const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
   const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm);
   return{...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l)),
-    exp:fieldExpReward(S.mp,S.lvl),zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000*nz)),
+    ...ascensionCombatStats(S.mp,S.lvl),exp:fieldExpReward(S.mp,S.lvl),zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000*nz)),
     size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec,
     spawn:0,ry:0,at:rnd(.6,1.6),a:rnd(0,Math.PI*2),wt:rnd(1,4)};
 }
@@ -3675,7 +3687,7 @@ function spawn(){
   if(bossWave){
     const hp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(S.lvl):1));
     mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),
-      exp:fieldExpReward(S.mp,S.lvl,true),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz)),
+      ...ascensionCombatStats(S.mp,S.lvl,true),exp:fieldExpReward(S.mp,S.lvl,true),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz)),
       size:1.3,mag:true,lvl:l,sec:F.sec});
     // The first five maps bring three escorts; the five later maps bring five.
     for(let i=0;i<(S.mp<5?3:5);i++)mobs.push(minionDef(0));
@@ -4478,7 +4490,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
       recordMapClear(S.mp,S.lvl);
       const nextMap=S.mp+1,current=MAPS[S.mp].n;
       if(nextMap<MAPS.length){
-        log(`${current} Stage ${S.lvl} cleared! ${MAPS[nextMap].n}${ascensionOpen(nextMap)?' Stage 1 is ready'+(S.adv?' — auto-advancing.':'.'):' requires Base Lv '+(nextMap===10?140:150)+'.'}`,'r3');
+        log(`${current} Stage ${S.lvl} cleared! ${MAPS[nextMap].n}${ascensionOpen(nextMap)?' Stage 1 is ready'+(S.adv?' — auto-advancing.':'.'):' requires Base Lv 150.'}`,'r3');
         if(S.adv&&ascensionOpen(nextMap)){S.mp=nextMap;S.lvl=1;mapM=nextMap;mapL=1;if(typeof mapSeason!=='undefined')mapSeason=nextMap>=10?'ascension':'atlas'}
       }else log(`${current} Stage ${S.lvl} cleared! The Ascension route is complete. Turn Auto-advance off to farm this sanctuary.`,'r3');
     }
@@ -4678,7 +4690,7 @@ function guideLink(source){const {m,l,ch,monster}=source;return`<button data-a="
 function guideScore(c){const magic=INT_CLASSES.includes(S.cls),wanted=guideMode==='survive'?['hpPct','vit','def','mdef']:guideMode==='farm'?['move','field',magic?'matk':'atk',C().main,'aspd']:['cdm',magic?'matk':'atk',C().main,'crit'];
  return cardEffects(c).reduce((n,e)=>n+(wanted.includes(e.k)?(wanted.length-wanted.indexOf(e.k))*10+e.v/10:0),0);}
 function levelingGuide(){const sources=guideSources();return `<details open><summary>Level &amp; stage roadmap · ${esc(S.cls)}</summary><p>Start at Stages 1–3, move to 4–9 when kills stay quick, and farm Stage 10 only when its MVP is reliable. Compare a full minute of EXP/min and Zeny/min; a lower field can pay better. Turn Auto-advance off to camp a target.</p><div class="guide-grid">${MAPS.map((mp,m)=>{
- const [low,high]=m>=10?[m===10?140:150,150]:m===0?[1,10]:m<5?[10,60]:m<8?[60,80]:[80,99];
+ const [low,high]=m>=10?[150,150]:m===0?[1,10]:m<5?[10,60]:m<8?[60,80]:[80,99];
  const weapon=sources.gear.find(x=>x.m===m&&x.l<=10&&C().wt.includes(x.item.k));
  const armor=sources.gear.find(x=>x.m===m&&x.l<=10&&['armor','head','leg'].includes(x.item.k));
  const cards=CARD_CATALOG.filter(c=>c.map===m&&!c.nightmare).sort((a,b)=>guideScore(b)-guideScore(a)).slice(0,2);
@@ -4944,7 +4956,7 @@ const V={
     // and Endless Echo takes the whole destination row under the map grid. The Auto-advance switch
     // lives here too, next to the stages it walks you through.
     const fieldBand=`<div class="mapband fields">
-      <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr,normalStages(mapM))}/${normalStages(mapM)} stages available${mapM>=10?(ascensionOpen(mapM)?' &middot; Ascension unlocked':' &middot; Requires Base Lv '+(mapM===10?140:150)+' and '+MAPS[mapM-1].n+' Stage '+normalStages(mapM-1)+' victory'):nmo?' &middot; <b>Nightmare open</b>':' &middot; Nightmare unlocks at Base Lv '+NMLV[nmTierOf(mapM)]}</small>
+      <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr,normalStages(mapM))}/${normalStages(mapM)} stages available${mapM>=10?(ascensionOpen(mapM)?' &middot; Ascension unlocked':' &middot; Requires Base Lv 150'):nmo?' &middot; <b>Nightmare open</b>':' &middot; Nightmare unlocks at Base Lv '+NMLV[nmTierOf(mapM)]}</small>
         <button class="go" data-a="go" ${mapL>cap?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
       <div class="lvgrid">${Array.from({length:mapM>=10?5:15},(_,i)=>{const l=i+1,nm=l>10,lock=l>cap;return`<button class="map-node${lock?' locked':''}${nm?' nm-node':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${bossStage(mapM,l)?' boss-node':''}${l===normalStages(mapM)?' normal-boss-node':''}" data-a="sell_" data-v="${l}" title="${nm?'Nightmare ':'Normal '}${nm?`Stage ${l-10}`:`Stage ${l}`}${l===normalStages(mapM)?' - normal mode MVP':''}${lock&&nm?' - locked until Base Lv '+NMLV[nmTierOf(mapM)]:''}"><b>${bossStage(mapM,l)?'💀 ':''}${nm?'NM '+((l-10)):'Stage '+l}</b></button>`}).join('')}</div>
       <small class="map-stage-note">${mapM>=10?'Five Ascension stages · Stages 1–2 share a design; 3, 4 and 5 have distinct scenery. Stage 5 is an immediate MVP with five escorts. No equipment drops.':`<b>Stages 1-10 are Normal</b>; Stage 10 is the normal MVP field. Purple nodes are Nightmare stages 11-15. ${nmOpen()<2?`Next unlock: ${nmOpen()<1?'Nightmare Prontera to Payon (maps 1-5) at Base Lv '+NMLV[0]:'Nightmare Comodo to Abyss (maps 6-10) at Base Lv '+NMLV[1]}.`:'Both Nightmare tiers are unlocked.'}`}</small>
@@ -5340,7 +5352,7 @@ function arrangePanel(k,root){
     const destinations=section('01 / Destination','ui-destinations');put(destinations,maps);if(band)put(destinations,fold('About destinations',[...band.childNodes].filter(n=>n!==special),'destinations'));
     maps?.querySelectorAll('.mapcard').forEach((card,i)=>card.prepend(make('span','eclipse-map-number',String(+card.dataset.v+1).padStart(2,'0'))));
     const route=section('02 / Choose your stage','ui-route'),hero=make('div','eclipse-atlas-hero');
-    hero.innerHTML=(mapM>=10?'<img class="ascension-preview" src="'+(mapM===10?'assets/atlas/astral-citadel.png?v=156':'assets/atlas/thor-volcano.svg')+'" width="750" height="350" alt="'+(mapM===10?'Connected stone bridge through an indigo starfield, ruined arches and a luminous boss seal':'Volcanic peaks and rivers of glowing lava')+'">':'<canvas id="eclipseAtlas" width="750" height="350" aria-label="Terrain preview for '+esc(MAPS[mapM].n)+'"></canvas>')+'<div><span class="ui-eyebrow">'+(mapM>=10?'ASCENSION':'RUNE-MIDGARD')+' / '+String(mapM+1).padStart(2,'0')+'</span><h2>'+esc(MAPS[mapM].n)+'</h2><p>'+esc(MAPS[mapM].t)+' · Recommended '+esc(MAPS[mapM].rec)+'</p></div>';
+    hero.innerHTML=(mapM>=10?'<img class="ascension-preview" src="'+(mapM===10?'assets/atlas/astral-citadel.png?v=156':'assets/atlas/thor-volcano.svg?v=157')+'" width="750" height="350" alt="'+(mapM===10?'Connected stone bridge through an indigo starfield, ruined arches and a luminous boss seal':'Basalt cavern, molten lava channels and glowing volcanic vents')+'">':'<canvas id="eclipseAtlas" width="750" height="350" aria-label="Terrain preview for '+esc(MAPS[mapM].n)+'"></canvas>')+'<div><span class="ui-eyebrow">'+(mapM>=10?'ASCENSION':'RUNE-MIDGARD')+' / '+String(mapM+1).padStart(2,'0')+'</span><h2>'+esc(MAPS[mapM].n)+'</h2><p>'+esc(MAPS[mapM].t)+' · Recommended '+esc(MAPS[mapM].rec)+'</p></div>';
     route.prepend(hero);put(route,fields);
     if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')],nodes=[...fields.querySelectorAll('.map-node')],grid=fields.querySelector('.lvgrid');
       if(grid){const normal=make('div','eclipse-stages'),nightmare=make('div','eclipse-stages eclipse-nightmare');nodes.forEach((node,i)=>{node.querySelector('b').textContent=i<10?(i===normalStages(mapM)-1?'♛':String(i+1).padStart(2,'0')):'NM '+(i-9);node.setAttribute('aria-label',node.title);node.setAttribute('aria-pressed',String(mapL===i+1));put(i<10?normal:nightmare,node)});grid.replaceChildren(normal,nightmare)}

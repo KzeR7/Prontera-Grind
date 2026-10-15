@@ -337,7 +337,7 @@ t('World Atlas and Ascension Map have separate destination grids and normal trav
  assert.strictEqual(doc.querySelectorAll('.map-node').length,5);assert.strictEqual(doc.querySelectorAll('dialog iframe,[data-a=explore]').length,0);
  assert.strictEqual(doc.querySelector('[role=tabpanel]').id,'map-panel-ascension');
  assert.match(doc.querySelector('.ascension-preview').getAttribute('src'),/astral-citadel\.png\?v=156$/);assert.strictEqual(doc.querySelector('#eclipseAtlas'),null);
- doc.querySelector('[data-a=selm][data-v="11"]').click();assert.match(doc.querySelector('.ascension-preview').getAttribute('src'),/thor-volcano\.svg$/);
+ doc.querySelector('[data-a=selm][data-v="11"]').click();assert.match(doc.querySelector('.ascension-preview').getAttribute('src'),/thor-volcano\.svg\?v=157$/);
  doc.querySelector('[data-a=selm][data-v="10"]').click();
  assert.strictEqual(ev('JSON.stringify(S)'),before);
  doc.querySelector('#map-tab-ascension').dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
@@ -349,13 +349,13 @@ t('Ascension gates, immediate MVP escorts, stage progression, material boundarie
  ev("S=fresh();S.auto=false;S.adv=true;S.lv=139;S.mapClears[9]=true;mapM=10;mapL=1");
  assert.strictEqual(ev('canTravel(10,1)'),false);ev('ACT.go()');assert.strictEqual(ev('S.mp'),0);
  ev('S.lv=140;S.mapClears[9]=false');assert.strictEqual(ev('canTravel(10,1)'),false);
- ev('S.mapClears[9]=true;ACT.go();spawn()');assert.strictEqual(ev('S.mp'),10);
+ ev('S.lv=150;S.mapClears[9]=false;ACT.go();spawn()');assert.strictEqual(ev('S.mp'),10);
  assert.match(window.document.querySelector('#eclipseMapStage').textContent,/Ascension Map/);
  assert.strictEqual(ev('mobs.every(m=>m.mapIndex===10&&m.spriteId>0&&Number.isFinite(m.hp)&&m.hp>0)'),true);
  assert.strictEqual(ev('canTravel(10,2)'),false);
  ev('S.kl=MPS-1;kill(mobs[0])');assert.strictEqual(ev('S.prog[10]'),2);assert.strictEqual(ev('S.lvl'),2);
  ev('S.prog[10]=5;gotoField(10,5);spawn()');assert.strictEqual(ev('mobs.length'),6);assert.strictEqual(ev('mobs.filter(m=>m.boss).length'),1);
- ev('kill(mobs.find(m=>m.boss))');assert.strictEqual(ev('S.mapClears[10]'),true);assert.strictEqual(ev('S.mp'),10);
+ ev('kill(mobs.find(m=>m.boss))');assert.strictEqual(ev('S.mapClears[10]'),true);assert.strictEqual(ev('S.mp'),11);
  ev('S.lv=150;mapM=11;mapL=1;ACT.go();spawn()');assert.strictEqual(ev('S.mp'),11);assert.strictEqual(ev('nmMapOpen(11)'),false);assert.strictEqual(ev('canTravel(11,11)'),false);
  ev('gotoField(11,11)');assert.strictEqual(ev('S.lvl'),1);
  assert.strictEqual(ev('gearPool(11,5).length===0'),true);

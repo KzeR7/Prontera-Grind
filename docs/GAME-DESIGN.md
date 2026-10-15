@@ -19,12 +19,13 @@ progression; Endless Echo is a separate damage trial with its own rewards and li
 
 ## Ascension fields
 
-Maps → Ascension Map contains Astral Citadel and Thor Volcano, beside the framed
-World Atlas destination grid. The adjacent Social Hub tab is locked as Coming Soon.
+Maps → Ascension Map contains Astral Citadel and Thor Volcano, beside the
+World Atlas destination list. The adjacent Social Hub tab is locked as Coming Soon.
 Astral and Thor have illustrated destination previews. Travel enters the main battlefield with the current
-character, combat and drops. Astral requires Base 140 and a recorded Abyss Stage 10
-victory; Thor requires Base 150 and an Astral Stage 5 victory. Existing saves must
-record those boss victories after this update, since older saves did not track them.
+character, combat and drops. Both maps unlock independently at Base 150, with no prerequisite boss clears.
+The lowest mobs have 30% more HP and ATK than the Nightmare Abyss Stage 5 MVP
+(internal Stage 15). Later stages ramp further, with a steeper curve in Thor;
+each Ascension MVP has four times its own stage’s regular mob HP and ATK.
 Both Ascension maps have five stages: 1–2 share arrival scenery, 3 is the crossing,
 4 is the approach, and 5 starts immediately with the MVP and five escorts. Neither
 map adds Nightmare stages or drops equipment. Cards, ore and pets still roll.
