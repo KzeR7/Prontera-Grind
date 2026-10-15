@@ -86,56 +86,29 @@ This roadmap outlines the next major evolutionary phase:
 | **High Priest** | **Arch Bishop** | Devastating sacred holy light rays, radial exorcism shockwaves, and party sustain auras. |
 | **Whitesmith** | **Mechanic** | Heavy whirling axe devastation, explosive cart artillery, and armor-buffing thermal shields. |
 
-### Signature 3rd Job Skills (3 per Class)
-Designed specifically around Horizon Haven's batch combat execution (max 3 batch, 1.5s gap, cooldown-based, no SP pool):
+### Core RO skills (five per class)
 
-#### 1. Rune Knight
-* **Ignition Break** *(Active Strike · Cooldown: 4.0s · Shape: Radial)*
-  Ignites weapon with intense dragon heat, detonating an explosive shockwave hitting all enemies in the lane for heavy physical damage.
-* **Dragon Breath** *(Active Strike · Cooldown: 5.5s · Shape: Frontal Cone)*
-  Unleashes a cone of fiery draconic flame. Damage scales directly with character Max HP and Base Level.
-* **Runestone Mastery** *(Active Buff · Cooldown: 14.0s · Duration: 12.0s)*
-  Crushes an ancient runestone, granting an absorption barrier equal to 20% Max HP and granting weapon attacks 15% armor penetration.
+The owner requested five recognizable Ragnarok Online skills per class. This replaces
+both the earlier three-skill proposal and the provisional `SKILLS4` names.
+[Research, sources and game adaptations](../Updates/fourth-jobs/SKILL-RESEARCH.md).
 
-#### 2. Warlock
-* **Chain Lightning** *(Active Spell · Cooldown: 3.5s · Shape: Bouncing Target)*
-  Discharges high-voltage lightning at the primary target that leaps to up to 3 additional nearby enemies, dealing escalating damage per bounce (+15% per jump).
-* **Crimson Rock** *(Active Spell · Cooldown: 6.0s · Shape: Splash Impact)*
-  Summons a colossal burning meteor that crashes onto the battlefield, dealing massive magic damage with a guaranteed 1.0s stun and 3.0s burn DoT.
-* **Reading Spellbook** *(Active Buff · Cooldown: 15.0s · Duration: 12.0s)*
-  Pre-casts complex arcane incantations, reducing skill batch recovery gap from 1.5s to 1.2s and shortening all magic cooldowns by 15%.
+| Class | Core skills |
+| --- | --- |
+| Rune Knight | Sonic Wave, Ignition Break, Dragon Breath, Hundred Spears, Wind Cutter |
+| Warlock | Chain Lightning, Soul Expansion, Crimson Rock, Jack Frost, Comet |
+| Ranger | Aimed Bolt, Warg Strike, Arrow Storm, Warg Bite, Cluster Bomb |
+| Guillotine Cross | Cross Impact, Dark Illusion, Hallucination Walk, Rolling Cutter, Cross Ripper Slasher |
+| Arch Bishop | Judex, Adoramus, Praefatio, Duple Light, Highness Heal |
+| Mechanic | Vulcan Arm, Arm Cannon, Axe Tornado, Axe Boomerang, Power Swing |
 
-#### 3. Ranger
-* **Arrow Storm** *(Active Strike · Cooldown: 5.0s · Shape: Full-Lane Volley)*
-  Fires a relentless storm of arrows into the sky, raining physical destruction down upon every monster currently active in the lane.
-* **Aimed Bolt** *(Active Strike · Cooldown: 3.0s · Shape: Single Target)*
-  Takes precise aim at a single foe, delivering high-velocity armor-piercing damage. Deals +35% bonus damage against Bosses and immobilized targets.
-* **Warg Strike** *(Passive Proc · Cooldown: Internal 1.0s)*
-  Basic attacks and skills have a 25% chance to call down an ethereal spirit wolf to bite the target for unmitigated physical damage.
-
-#### 4. Guillotine Cross
-* **Cross Impact** *(Active Strike · Cooldown: 3.0s · Shape: Single Target)*
-  Slips behind the enemy to deliver a blinding 7-hit assassination flurry with high critical strike scaling.
-* **Rolling Cutter** *(Active Strike · Cooldown: 2.0s · Shape: Radial)*
-  Spins violently with dual daggers or katar, slicing all adjacent enemies. Each consecutive cast within 4 seconds adds 1 momentum stack (up to 5 stacks, +15% damage per stack).
-* **Dark Illusion** *(Active Gap-Closer · Cooldown: 4.5s · Shape: Single Target)*
-  Dissolves into shadows and reappears at the target's flank, delivering an immediate strike and granting +25% Critical Chance for 3.0 seconds.
-
-#### 5. Arch Bishop
-* **Adoramus** *(Active Spell · Cooldown: 3.5s · Shape: Single Target)*
-  Focuses a beam of blinding sacred sunlight upon an enemy, dealing heavy holy magic damage and reducing the target's attack speed and movement by 30% for 3 seconds.
-* **Judex** *(Active Spell · Cooldown: 2.5s · Shape: Radial)*
-  Emits a divine shockwave outward from the caster, dealing holy magic damage to all nearby enemies (amplified by 50% against Undead and Demon monsters).
-* **Sacrament & Coluseo** *(Active Buff · Cooldown: 16.0s · Duration: 12.0s)*
-  Invokes divine protection, regenerating 1.5% Max HP every second and accelerating skill cooldown recovery by 10%.
-
-#### 6. Mechanic
-* **Axe Tornado** *(Active Strike · Cooldown: 3.5s · Shape: Radial)*
-  Spins a heavy two-handed axe or mace to generate a localized whirlwind, dragging nearby enemies inward and dealing heavy physical damage.
-* **Cart Cannon** *(Active Strike · Cooldown: 3.0s · Shape: Splash Ranged)*
-  Fires explosive artillery munitions from the reinforced pushcart, dealing heavy ranged physical splash damage with high knockback.
-* **Overheat Buffer** *(Active Buff · Cooldown: 14.0s · Duration: 12.0s)*
-  Channels thermal exhaust into offensive kinetic output. Absorbs 10% of incoming damage and converts it into bonus flat ATK (up to +25% total ATK).
+The six-slot bar keeps ordered attacks and three-second recovery. Rolling Cutter
+occupies one slot and spins five times at 0.2-second spacing, then advances. Each
+cast builds one Rolling stack (max ten, expires after ten seconds); Cross Ripper
+Slasher consumes them. Buffs and healing operate independently of offensive slots.
+The project normalizes skills to ten ranks and uses its own damage formulas.
+Classes remain locked. The shared reference video is now inspected and the FX revised. Native GX Rolling
+Cutter and caster action playback are available in the review; visual acceptance
+and game wardrobe integration remain open.
 
 ### Visual & Sprite Strategy
 * **Phase A — Mechanics & Aura (Immediate implementation):**
@@ -427,15 +400,15 @@ When ready to implement, execute in these sequential milestones:
 * **Milestone 4 — 3rd Job Advancement & Skills**
   - Base Lv 150 & Transcendent Job Lv 50 unlock condition in `classBlock()` and `changeClass()`.
   - Add the 6 3rd Job classes to `CLASSES`.
-  - Implement 3 signature skills per class (18 total) into `SKILLS` and generate Afterglow V6 effects.
+  - Implement 5 core RO skills per class (30 total) into `SKILLS` and generate Afterglow V6 effects.
   - Character Ascension aura visual.
   - **Status (2026-10-15 - built and parked, not unlocked):** the six 4th-job classes (`CD4`) and their
-    18 signature skills (`SKILLS4`, three per class) are built in `index.html` behind
+    30 core skills (`SKILLS4`, five per class) are built in `index.html` behind
     **`FOURTH_JOBS_LIVE` = `false`**, so the live game still has 19 classes, 91 skills and an unchanged
     build label. With the flag on: the classes sit under their Transcendent parents (tier 4), unlock at
     Base Lv 150 and parent Job Lv 50 (`classBlock()`, `ADV4_BASE_LV`), use `JOFF[4]=100` pacing, get a
-    fourth Class Tree row, and wear their parent's packed body. The skills use the mechanics stacks,
-    bounces, stuns, gap-closers (dash), absorb and roulette (per-hit chance procs), built in
+    fourth Class Tree row, and wear their parent's packed body. The skills use Rolling stacks, bounded repeated casts, automatic support,
+    bounces, stuns, gap-closers (dash) and absorption, built in
     `castSkill` and helpers beside `chainHit`. Guillotine Cross follows the katar-or-dagger rule
     (a dagger works the same as a katar for katar skills). Stat multipliers (`aspd`, `atk`, `hp`) and
     skill numbers are provisional, to be tuned with the new mobs and bosses.
@@ -444,11 +417,20 @@ When ready to implement, execute in these sequential milestones:
     the unlock. **Ascension (owner clarification):** Lv 150 and above is not a Base Level increase. It is
     a separate Ascension level with its own stats; Job Level continues as normal, and a later Ascension
     skill tab will raise skill boost. This is a design note only and is not built.
-    Checks: `tools/tests/fourth_job_sim.js` (20) and `tools/tests/fourth_job_skills_sim.js` (25), both
+    Checks: `tools/tests/fourth_job_sim.js` (20) and `tools/tests/fourth_job_skills_sim.js` (15), both
     flag on, plus live-page unchanged checks; `dual_wield_sim.js` for the Guillotine Cross rule.
+  - **Visual preparation (2026-10-15, owner-approved; still locked):** original native bodies
+    for all six classes are recovered and packed for both genders, eight directions and
+    idle/walk/attack (400 actions, 2,573 exact frames). Dedicated Afterglow choreography for
+    all 30 core skills and the flag-gated Ascension aura are built. Support and radial effects
+    render at the caster. Video-reference FX approval remains pending. Inspect `Updates/fourth-jobs/review.html` and
+    [visual preparation notes](../Updates/fourth-jobs/VISUALS.md). The fixed-look native pack
+    stays out of production; hairstyle/color/accessory attachment routes and game wardrobe
+    integration remain open. Icons retain approved native crops. The rite panel, Ascension
+    track, balance acceptance and full flag-on gameplay remain open.
   - **Before flipping the flag:** the roster-wide suites will flag what is missing: native 3rd-job bodies
-    and wardrobe entries (Phase B), the skill icons and FX (currently reused native art), Afterglow V6
-    effects, the Ascension aura and the Crucible rite panel, and the build-label mirrors. See the
+    and wardrobe entries (Phase B), new skill icon sources if desired (icons currently reuse approved native crops),
+    the Crucible rite panel, and the build-label mirrors. See the
     go-live checklist in `Updates/fourth-jobs/README.md`.
 
 * **Milestone 5 — Post-Lv 150 Ascension Stats Box**

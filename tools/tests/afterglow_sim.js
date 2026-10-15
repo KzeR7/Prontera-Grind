@@ -1,7 +1,7 @@
 // Exercise the generated choreography and the game's actual effect lifecycle.
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const path=require('node:path'),THREE=require('three');
-const root=path.resolve(__dirname,'../..'),src=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const root=path.resolve(__dirname,'../..'),src=fs.readFileSync(path.join(root,'index.html'),'utf8').replace('const FOURTH_JOBS_LIVE=false;','const FOURTH_JOBS_LIVE=true;');
 const grab=(a,b)=>src.slice(src.indexOf(a),src.indexOf(b,src.indexOf(a)));
 let marks=0,transforms=[],depth=0,rasterMarks=0,atlasReady=true,atlasWidth=1024,toothDraws=[],stoneDraws=[];
 class MaterialImage{get complete(){return atlasReady}get naturalWidth(){return atlasWidth}get naturalHeight(){return atlasWidth}}
@@ -25,7 +25,7 @@ vm.createContext(box);
 vm.runInContext(grab('const MOB_REGULAR_VISUAL=','const mobSpriteUrl=')+grab('const CD=[','const pm=s=>')+grab('const SKILL_FX_GEOMETRY=','let drag=null;const dom=R.domElement;'),box);
 for(const file of ['assets/skill-materials.js','assets/afterglow-animations.js','assets/skill-afterglow.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),box);
 const ev=code=>vm.runInContext(code,box);
-assert.equal(ev('PGAfterglowAnimations.catalog.length'),75);
+assert.equal(ev('PGAfterglowAnimations.catalog.length'),105);
 assert.equal(ev('SKILLS.filter(s=>s.type!=="pas").every(s=>PGSkillAfterglow.has(s.id))'),true,'missing game skill');
 assert.equal(ev('PGSkillAfterglow.has("concept-venom")'),false);
 assert.equal(ev('SKILLS.filter(s=>s.type==="pas").some(s=>PGSkillAfterglow.has(s.id))'),false);
@@ -115,4 +115,20 @@ assert.equal(narrow.width,780);assert.equal(narrow.height,1400);
 box.simVisualsOff=()=>true;ev('playSkillFx("fire",target)');assert.equal(box.skillFx.length,0);
 assert(src.includes('assets/afterglow-animations.js?v=151')&&src.includes('assets/skill-afterglow.js?v=147'));
 assert(src.includes(':not(#skillAfterglowLayer)'),'clean-screen hides effects');
-console.log('Afterglow: 75 skills, loaded/pending/failed materials, full/mobile/dense detail, compressed timing, drawing/state, projection/reversal/vertical paths, expiry, cap, resize, hidden catch-up passed (Canvas operations; no GPU).');
+console.log('Afterglow: 105 skills (including all 30 parked fourth-job skills), loaded/pending/failed materials, full/mobile/dense detail, compressed timing, drawing/state, projection/reversal/vertical paths, expiry, cap, resize, hidden catch-up passed (Canvas operations; no GPU).');
+
+box.simVisualsOff=()=>false;
+// Wards and Rune Burst follow the caster, without changing the hit target in combat.
+for(const id of ['gc_veil','ab_ward','ab_duple','ab_highness','rk_burst','rk_wind','gc_roll','wl_frost','mc_rocket']){
+  box.id=id;ev('playSkillFx(id,{x:5,z:-2,spriteScale:1.28,boss:true})');
+  assert.equal(box.skillFx[0].x1,box.pl.x,id+' not at caster');
+  assert.equal(box.skillFx[0].z1,box.pl.z,id+' not at caster');
+  assert.equal(box.skillFx[0].targetScale,1,id+' scaled from enemy');ev('tickSkillFx(4)');
+}
+marks=0;ev('S={cls:"Rune Knight"};t=.5;syncSkillFx()');assert(marks>0,'fourth-job aura missing');assert.equal(depth,0);
+marks=0;ev('S.cls="Lord Knight";syncSkillFx()');assert.equal(marks,0,'aura leaked to parent class');
+console.log('Fourth-job ward/Rune Burst caster anchors and class-gated aura passed.');
+
+// A flag-on fourth-job effect must not re-anchor an earlier class radial skill.
+box.id=ev('SKILLS.find(s=>s.shape==="radial"&&!SKILLS4.includes(s)).id');
+ev('playSkillFx(id,{x:5,z:-2})');assert.equal(box.skillFx[0].x1,5);assert.equal(box.skillFx[0].z1,-2);ev('tickSkillFx(4)');
