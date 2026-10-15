@@ -324,4 +324,36 @@ t('auto-sell filter editor saves drafts, keeps text during redraws and previews 
   ev('S.inv[0].locked=true');doc.querySelector('[data-a="sellconfirm"]').click();
   assert.strictEqual(ev('S.inv.length'),1,'newly locked gear survives confirmation');
 });
+t('Season 2 Maps is the right-hand atlas tab; tab navigation and redraws preserve farming/selection state',()=>{
+ const doc=window.document;ev("tabs.splice(0,tabs.length,'map');mapSeason='atlas';mapM=3;mapL=4;renderWin()");
+ const before=ev('JSON.stringify(S)');
+ assert.deepStrictEqual([...doc.querySelectorAll('.map-season-tabs [role=tab]')].map(b=>b.textContent),['World Atlas','Season 2 Maps']);
+ assert.strictEqual(doc.querySelectorAll('[data-a=selm]').length,10);assert.strictEqual(doc.querySelectorAll('[data-a=explore]').length,0);
+ doc.querySelector('#map-tab-atlas').dispatchEvent(new window.KeyboardEvent('keydown',{key:'End',bubbles:true}));
+ assert.strictEqual(ev('mapSeason'),'season2');assert.strictEqual(doc.querySelector('#map-tab-season2').getAttribute('aria-selected'),'true');assert.strictEqual(doc.activeElement.id,'map-tab-season2');
+ assert.strictEqual(doc.querySelectorAll('.ui-season-two [data-a=explore]').length,2);assert.strictEqual(doc.querySelectorAll('[data-a=selm]').length,0);
+ assert.strictEqual(doc.querySelector('[role=tabpanel]').id,'map-panel-season2');assert.strictEqual(doc.querySelector('[role=tabpanel]').getAttribute('aria-labelledby'),'map-tab-season2');
+ ev('renderWin()');assert.strictEqual(ev('mapSeason'),'season2');assert.strictEqual(ev('JSON.stringify(S)'),before);assert.strictEqual(ev('mapM'),3);assert.strictEqual(ev('mapL'),4);
+ doc.querySelector('#map-tab-season2').dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
+ assert.strictEqual(ev('mapSeason'),'atlas');assert.strictEqual(doc.querySelectorAll('[data-a=selm]').length,10);assert.strictEqual(doc.querySelectorAll('[data-a=explore]').length,0);assert.strictEqual(doc.querySelector('[role=tabpanel]').id,'map-panel-atlas');
+ ev("ACT.mapseason('invalid')");assert.strictEqual(ev('mapSeason'),'atlas');
+ doc.querySelector('#map-tab-season2').click();ev("ACT.guidemap('2:3')");assert.strictEqual(ev('mapSeason'),'atlas');assert.strictEqual(ev('mapM'),2);assert.strictEqual(ev('mapL'),3);
+ doc.querySelector('#map-tab-season2').click();ev("openTab('map');openTab('map')");assert.strictEqual(ev('mapSeason'),'atlas');
+});
+t('endgame cards survive composition; exploration uses only a visual snapshot and leaves farming IDs/progression unchanged',()=>{
+ window.eval(fs.readFileSync(path.join(ROOT,'assets/wardrobe.js'),'utf8'));
+ window.eval(fs.readFileSync(path.join(ROOT,'assets/map-exploration.js'),'utf8'));
+ window.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')};
+ ev("tabs.splice(0,tabs.length,'map');mapM=0;mapL=1;renderWin()");
+ const doc=window.document,before=ev('JSON.stringify(S)'),count=ev('MAPS.length');
+ assert.strictEqual(doc.querySelectorAll('[data-a=explore]').length,0);doc.querySelector('#map-tab-season2').click();assert.strictEqual(doc.querySelectorAll('.ui-season-two [data-a=explore]').length,2);
+ doc.querySelector('[data-a=explore][data-v=astral]').click();assert.strictEqual(window.PGMapExploration.isOpen(),true);assert.strictEqual(ev('simVisualsOff()'),true);
+ const iframe=doc.querySelector('.endgame-dialog iframe'),url=new URL(iframe.src),snapshot=JSON.parse(decodeURIComponent(url.hash.slice(1)));
+ assert.strictEqual(url.pathname,'/assets/endgame/explore.html');assert.strictEqual(url.searchParams.get('map'),'astral');assert.deepStrictEqual(Object.keys(snapshot).sort(),['appearance','className']);assert.strictEqual(ev('JSON.stringify(S)'),before);assert.strictEqual(ev('MAPS.length'),count);
+ let disposed=0;iframe.contentWindow.PGJourneyPreview={dispose(){disposed++}};
+ const wrong=new window.MessageEvent('message',{origin:'https://untrusted.invalid',data:{type:'pg-endgame-close'}});window.dispatchEvent(wrong);assert.strictEqual(window.PGMapExploration.isOpen(),true);
+ ev('escapeUI()');assert.strictEqual(disposed,1);assert.strictEqual(window.PGMapExploration.isOpen(),false);assert.strictEqual(doc.querySelectorAll('.endgame-dialog iframe').length,0);assert.strictEqual(ev('simVisualsOff()'),false);assert.strictEqual(ev('JSON.stringify(S)'),before);
+ doc.querySelector('[data-a=explore][data-v=thor]').click();assert.strictEqual(new URL(doc.querySelector('.endgame-dialog iframe').src).searchParams.get('map'),'thor');doc.querySelector('.endgame-dialog [data-close]').click();assert.strictEqual(window.PGMapExploration.isOpen(),false);
+ assert.strictEqual(window.PGMapExploration.open('../bad'),false);
+});
 console.log(`\n${pass} passed, ${fail} failed`);window.close();process.exit(fail?1:0);

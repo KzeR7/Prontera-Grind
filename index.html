@@ -778,6 +778,13 @@ body.clean-screen #wrap>.title,body.clean-screen #ov>*:not(#mobSpriteLayer):not(
 body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud{background:transparent;border:0;pointer-events:none}body.clean-screen #screenBtn{pointer-events:auto}
 #qp{max-height:55vh;overflow:auto}.quest-tabs{display:flex;gap:5px;margin:6px 0}.quest-tabs button{flex:1}.ore-quantity{width:100%;box-sizing:border-box}
 .bag-item-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.bag-item-list article{display:grid;grid-template-columns:1fr auto;gap:6px}.bag-item-list small{grid-column:1/-1}.eclipse-bag>.bag-tools{flex-shrink:0}.eclipse-bag>.chooser{font-size:11px}
+
+
+/* Season 2 is the right-hand atlas tab, not part of the farming destination list. */
+#wins .ui-panel>.map-season-tabs{gap:8px;padding:0 14px;flex-wrap:nowrap}#wins .map-season-tabs button{flex:0 1 auto;min-width:0;padding:12px 16px;font-size:12px;white-space:nowrap}#wins .ui-panel[data-layout="map"][data-view="season2"] .ui-content{display:block}#wins .ui-season-two{width:100%;min-width:0}#wins .ui-season-two .endgame-expeditions{margin:0;padding:0;border:0}#wins .ui-season-two .endgame-intro h3{font-size:26px}#wins .ui-season-two .endgame-card{min-height:180px}#wins .ui-season-two .endgame-card b{font-size:25px}@media(max-width:600px){#wins .map-season-tabs button{flex:1;padding:12px 8px;font-size:11px}#wins .ui-season-two .endgame-card{min-height:140px}}
+
+/* Endgame exploration is isolated from stable farming-map/save IDs. */
+.endgame-expeditions{container-type:inline-size;min-width:0;margin:12px 0 4px;padding-top:14px;border-top:1px solid var(--edge2,#ffffff20)}.endgame-intro>span{font-size:8px;letter-spacing:.15em;color:#b2a0d0}.endgame-intro h3{font:500 18px Georgia,serif;margin:5px 0}.endgame-intro p,.endgame-disclaimer{font-size:10px;line-height:1.6;opacity:.8}.endgame-cards{display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0}.endgame-card{display:flex;gap:12px;align-items:center;text-align:left;padding:16px 12px;border:1px solid #9a80b750;border-radius:7px;color:#f2eafa;background:radial-gradient(ellipse at 0 0,#61507a70,transparent 80%),#211c32;min-width:0;cursor:pointer}.endgame-card.thor{background:radial-gradient(ellipse at 0 100%,#b65b2570,transparent 85%),#32221e;border-color:#aa693e70}.endgame-mark{font-size:34px;min-width:35px;color:#d2b5f0}.thor .endgame-mark{color:#ffb572}.endgame-card small{display:block;font-size:8px;letter-spacing:.08em;opacity:.7}.endgame-card b{display:block;font:500 20px Georgia,serif;margin:5px 0}.endgame-card em{display:block;font-size:10px;font-style:normal;line-height:1.6;opacity:.8}.endgame-card>span:last-child{min-width:0;overflow-wrap:anywhere}.endgame-card strong{display:block;font-size:10px;color:#dfc6f4;margin-top:12px}.thor strong{color:#ffd0a0}.endgame-card:hover{border-color:#dec6ed}.endgame-card:focus-visible{outline:2px solid #d4b6f2;outline-offset:3px}.endgame-dialog{padding:0;border:1px solid #736380;border-radius:10px;background:#100e18;color:#f4edf8;width:96vw;max-width:1600px;height:94vh;height:94dvh;max-height:100dvh;overflow:hidden;box-sizing:border-box}.endgame-dialog[open]{display:flex;flex-direction:column}.endgame-dialog::backdrop{background:#080710da}.endgame-dialog>header{padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;background:#1c1725;flex-shrink:0}.endgame-dialog h2{font:400 21px Georgia,serif;margin:3px 0}.endgame-dialog header small{font-size:8px;letter-spacing:.14em;color:#c8afdd}.endgame-dialog header p{font:10px/1.5 system-ui;margin:0;color:#c5b9d2}.endgame-dialog-actions{display:flex;gap:6px}.endgame-dialog button{font:11px system-ui;padding:10px;border:1px solid #736380;border-radius:5px;background:#2b2238;color:#f4edf8;cursor:pointer}.endgame-frame-host{flex:1;min-height:0}.endgame-frame-host iframe{display:block;width:100%;height:100%;border:0;background:#100e18}@container(min-width:520px){.endgame-cards{grid-template-columns:1fr 1fr}}@container(max-width:239px){.endgame-card{display:block;padding:12px 8px}.endgame-mark{float:right;font-size:21px;min-width:20px;margin-left:5px}.endgame-card b{font-size:17px;line-height:1.2}.endgame-card em{display:none}.endgame-card small{font-size:7px;line-height:1.5}.endgame-card strong{font-size:9px;margin-top:8px}}@media(max-width:600px){.endgame-dialog{width:100vw;height:100dvh;max-width:100vw;margin:0;border:0;border-radius:0}.endgame-dialog>header{padding:10px;gap:7px;align-items:flex-start}.endgame-dialog h2{font-size:17px}.endgame-dialog header p{max-width:210px}.endgame-dialog-actions{flex-direction:column}.endgame-dialog button{font-size:10px;padding:9px}}
 </style>
 <link rel="preload" href="assets/ui/fonts/font-0.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-1.ttf" as="font" type="font/ttf" crossorigin>
@@ -852,6 +859,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <script src="assets/wardrobe.js?v=134"></script>
+<script src="assets/map-exploration.js?v=146"></script>
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-materials.js?v=147"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
@@ -1086,8 +1094,8 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
-const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-15 haven-v151 Redone skill effects';   // shown on the login card - confirms which file you loaded
+const simVisualsOff=()=>document.hidden||simCatchingUp||!!window.PGMapExploration?.isOpen();
+const BUILD='2026-10-15 haven-v152 Season 2 Maps and chosen skill effects';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4876,8 +4884,14 @@ function eclipseVisibleInventory(){
 function eclipseInventoryTools(){const known=new Set(eclipseInventoryState?.owner===S?eclipseInventoryState.ids:S.inv.map(it=>String(it.id))),n=S.inv.filter(it=>!known.has(String(it.id))).length;
  return `<div class="eclipse-inventory-tools"><label>Find equipment<input data-eclipse-search aria-label="Find equipment" value="${esc(eclipseSearch)}" placeholder="Search your bag…"></label><div class="eclipse-filters"><button data-a="filtergear" data-v="-1" aria-pressed="${eclipseRarity<0}">All</button>${RARALL.map((r,i)=>`<button data-a="filtergear" data-v="${i}" class="eclipse-rarity-filter r${i}" aria-pressed="${eclipseRarity===i}">${r.n}</button>`).join('')}</div><div class="eclipse-new-drops"><span>Inventory stays in place</span><button data-a="newdrops" ${n?'':'disabled'}>${n?'Show new drops ('+n+')':'Up to date'}</button></div></div>`;
 }
+// Map collection tabs are UI-only; never saved as farming-map IDs/unlocks.
+let mapSeason='atlas';
+function mapCollectionTabs(){return `<div class="atabs map-season-tabs" role="tablist" aria-label="Map collections">${[['atlas','World Atlas'],['season2','Season 2 Maps']].map(([id,label])=>`<button type="button" id="map-tab-${id}" role="tab" aria-selected="${mapSeason===id}" aria-controls="map-panel-${id}" tabindex="${mapSeason===id?0:-1}" class="${mapSeason===id?'on':''}" data-a="mapseason" data-v="${id}">${label}</button>`).join('')}</div>`;}
+function seasonTwoMapCards(){return `<section class="endgame-expeditions" aria-label="Season 2 Maps"><div class="endgame-intro"><span>BEYOND THE HORIZON</span><h3>Season 2 Maps</h3><p>Explore the new scenery. Native mobs and combat are still in development; these are not farming destinations yet.</p></div><div class="endgame-cards">
+      <button class="endgame-card astral" data-a="explore" data-v="astral"><span class="endgame-mark" aria-hidden="true">✧</span><span><small>FLOATING BRIDGE / 4 ZONES</small><b>Astral Citadel</b><em>Walk through the stars toward the far sanctuary.</em><strong>Explore scenery →</strong></span></button>
+      <button class="endgame-card thor" data-a="explore" data-v="thor"><span class="endgame-mark" aria-hidden="true">♨</span><span><small>VOLCANIC FIELDS / 4 DESIGNS</small><b>Thor Volcano</b><em>Inspect fractured basalt, molten spills and the Primal Core.</em><strong>Explore scenery →</strong></span></button></div><small class="endgame-disclaimer">Scenery inspection only · no drops or unlock changes · your current field keeps farming</small></section>`;}
 const V={
-  map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=Math.max(pr,nmMaxFor(mapM));
+  map(){const navigation=mapCollectionTabs();if(mapSeason==='season2')return navigation+seasonTwoMapCards();const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=Math.max(pr,nmMaxFor(mapM));
     // The map tab is a compact 450px, two-band panel: pick a map on the top band, walk its fields on the
     // next one, read the drop tables underneath. The field band is sticky, so the level you are
     // choosing stays on screen while the tables below it scroll - no scrolling down to find it.
@@ -4893,7 +4907,7 @@ const V={
       <div class="lvgrid">${Array.from({length:15},(_,i)=>{const l=i+1,nm=l>10,lock=l>cap;return`<button class="map-node${lock?' locked':''}${nm?' nm-node':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10||l===15?' boss-node':''}${l===10?' normal-boss-node':''}" data-a="sell_" data-v="${l}" title="${nm?'Nightmare ':'Normal '}${nm?`Stage ${l-10}`:`Stage ${l}`}${l===10?' - normal mode MVP':''}${lock&&nm?' - locked until Base Lv '+NMLV[nmTierOf(mapM)]:''}"><b>${l===10||l===15?'💀 ':''}${nm?'NM '+((l-10)):'Stage '+l}</b></button>`}).join('')}</div>
       <small class="map-stage-note"><b>Stages 1-10 are Normal</b>; Stage 10 is the normal MVP field. Purple nodes are Nightmare stages 11-15. ${nmOpen()<2?`Next unlock: ${nmOpen()<1?'Nightmare Prontera to Payon (maps 1-5) at Base Lv '+NMLV[0]:'Nightmare Comodo to Abyss (maps 6-10) at Base Lv '+NMLV[1]}.`:'Both Nightmare tiers are unlocked.'}</small>
       <div class="row" style="align-items:center"><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance through stages and maps</label><small style="opacity:.75">turn off to farm where you stand</small></div></div>`;
-    return`<div class="mapband">
+    return`${navigation}<div class="mapband">
       <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
       <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
         return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
@@ -5275,10 +5289,12 @@ function arrangePanel(k,root){
   const tabs=q('.atabs');if(tabs)root.prepend(tabs);
   const mode=k==='status'?sub.status:k==='bag'?sub.bag:k==='equip'?(sub.equip==='equip0'?'equip':sub.equip):k;
   root.dataset.view=mode;
-  const labels={reforge:['EQUIPMENT','Reforge affixes','Select affixes, review the cost, then keep or accept your offer.'],refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],job:['PROGRESSION','Class paths','Browse a path. Inspect a class. Make your next move.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
+  const labels={reforge:['EQUIPMENT','Reforge affixes','Select affixes, review the cost, then keep or accept your offer.'],refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:mapSeason==='season2'?['EXPLORE / SEASON 2','Season 2 Maps','Astral Citadel and Thor Volcano · scenery exploration']:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],job:['PROGRESSION','Class paths','Browse a path. Inspect a class. Make your next move.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
   const info=labels[mode]||labels[k];
   if(info){const h=make('header','ui-hero');put(h,make('span','ui-eyebrow',info[0]),make('h2','',info[1]),make('p','',info[2]));root.insertBefore(h,body)}
-  if(k==='map'){
+  if(k==='map'){body.id='map-panel-'+mapSeason;body.setAttribute('role','tabpanel');body.setAttribute('aria-labelledby','map-tab-'+mapSeason);}
+  if(k==='map'&&mapSeason==='season2'){root.dataset.view='season2';const content=put(section('SEASON 2 / Destinations','ui-season-two'),q('.endgame-expeditions'));body.replaceChildren(content);
+  }else if(k==='map'){
     const band=q('.mapband:not(.fields)'),maps=q('.mapgrid'),fields=q('.fields'),special=q('.map-specials'),drops=q('.mapcols');
     const destinations=section('01 / Destination','ui-destinations');put(destinations,maps);if(band)put(destinations,fold('About destinations',[...band.childNodes].filter(n=>n!==special),'destinations'));
     maps?.querySelectorAll('.mapcard').forEach((card,i)=>card.prepend(make('span','eclipse-map-number',String(i+1).padStart(2,'0'))));
@@ -5629,7 +5645,7 @@ if($('wins')&&$('wins').addEventListener)$('wins').addEventListener('pointerdown
 const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexOf(k);if(i>=0&&expandedPanels.size&&!expandedPanels.has(k)){expandedPanels.clear();expandedPanels.add(k);renderWin();return}if(i<0)expandedPanels.clear();if(k==='skills'&&i>=0)selS=null;if(k!=='status')eqPick=null;if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
   if(k==='pet')sub.pet='party';if(k==='job')eclipseJobsBrowse=false;if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
-  if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
+  if(k==='map'){mapSeason='atlas';mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
 const gotoField=(m,l)=>{
   // v77: travelling cancels a run. Leaving the arena is the same door as pressing Leave - a ranked
   // run that is abandoned is simply not paid.
@@ -5645,6 +5661,8 @@ const ACT={
   openreforge:()=>{if(!tabs.includes('equip'))openTab('equip');sub.equip='reforge';renderWin()},
   boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
   boardrefresh:()=>boardRefresh(boardPeriod),
+  mapseason:v=>{if(!['atlas','season2'].includes(v)||!tabs.includes('map'))return;mapSeason=v;renderWin();$('wins').querySelector('.map-season-tabs [aria-selected="true"]')?.focus();},
+  explore:v=>{if(S&&window.PGMapExploration)PGMapExploration.open(v,{className:S.cls,appearance:typeof wardrobeAppearance==='function'?wardrobeAppearance():PGWardrobe.defaults(S.sex)});},
   selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on')},
   // v75 test control: feed the selected pet (or the first one) n duplicates and let petFold do
   // the rest, so the owner can watch a species' passive climb without farming 15 drops.
@@ -5703,7 +5721,7 @@ const ACT={
   indexall:name=>{const owner=S,count=Math.min(cardMasteryCardByName(String(name)).length,CARD_MASTERY_PER_CARD-cardMasteryLevel(String(name)));if(count<1)return;ask(`Permanently consume ${count} ${name} for the Card Index? These copies will be gone and cannot be equipped or merged. Each adds one Mastery rank and one token.`,()=>{if(S!==owner)return;const r=donateAllToMastery(String(name),count);if(!r.donated)return;S.hp=Math.min(S.hp,maxHp());
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()})},
-  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
+  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapSeason='atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
   petmotion:v=>{if(['idle','walk','attack'].includes(v)){petPreviewStance=v;renderWin()}},
   petretry:()=>{const p=gp(selP);if(p&&petSpriteStore){const id=PETS[p.sp].spriteId;petSpriteStore.retry(petAssetKey(id,petPreviewStance,0)).catch(()=>{})}},
   pswap:id=>{const pet=gp(id),select=$('wins').querySelector('[data-pet-replace="'+id+'"]'),previous=gp(select?.value);if(!pet||pet.on||!previous?.on)return;previous.on=false;pet.on=true;ui();save()},
@@ -5772,7 +5790,7 @@ $('sideMenu').onclick=$('sideRail').onclick;
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
 $('feedTab').onclick=()=>ACT.feed();
 $('wins').addEventListener('click',e=>{if(e.target.closest('[data-eclipse-refine]'))ACT.sub('equip:refine')});
-$('wins').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-a]')){e.preventDefault();e.target.click()}});
+$('wins').addEventListener('keydown',e=>{if(e.target.matches('.map-season-tabs [role=tab]')&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const v=e.key==='Home'?'atlas':e.key==='End'?'season2':e.target.dataset.v==='atlas'?'season2':'atlas';ACT.mapseason(v);return}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-a]')){e.preventDefault();e.target.click()}});
 $('wins').addEventListener('input',e=>{if(e.target.hasAttribute('data-eclipse-search')){eclipseSearch=e.target.value;renderWin()}});
 $('wins').addEventListener('change',e=>{if(e.target.matches('[data-workslot]')){ACT.workslot(e.target.value);return}if(e.target.matches('[data-sell-field],[data-sell-affix],[data-sell-min]'))editSellFilter(e.target)});
 $('wins').onclick=e=>{const nav=e.target.closest('[data-t]');if(nav&&TABS[nav.dataset.t]){if(!tabs.includes(nav.dataset.t))openTab(nav.dataset.t);return}const expand=e.target.closest('[data-ui-expand]');if(expand){e.stopPropagation();chooserAtPointerDown=null;chooserPointerInside=false;skillPointerInside=false;skillCardPointerInside=false;const k=expand.dataset.uiExpand;const restore=expandedPanels.has(k);expandedPanels.clear();if(!restore)expandedPanels.add(k);renderWin();return}const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
@@ -5815,13 +5833,16 @@ document.addEventListener('click',e=>{
   skillPointerInside=false;skillCardPointerInside=false;
   if(selS&&!skillInside){selS=null;if(tabs.includes('skills'))renderWin()}
 });
+addEventListener('pg-exploration-close',()=>{if(S)ui();});
 function escapeUI(){
+  if(window.PGMapExploration?.isOpen()){PGMapExploration.close();return}
   if($('modal').style.display==='flex'){$('mn').click();return}
   if(tabs.length){tabs.length=0;expandedPanels.clear();eqPick=null;selS=null;sideOpen=false;renderWin();return}
   if(sideOpen||!$('screenOptions').hidden){sideOpen=false;$('screenOptions').hidden=true;$('screenBtn').setAttribute('aria-expanded','false');renderQ();return}
   ask('Log out of Horizon Haven? Your progress will be saved.',()=>logout(),{yes:'Log out',no:'Stay'});
 }
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();
+  if(window.PGMapExploration?.isOpen()){if(k==='ESCAPE'){e.preventDefault();escapeUI();}return;}
   if(k==='F12'){e.preventDefault();if(e.repeat)return;toggleFullscreen();return}
   if(k==='ESCAPE'){e.preventDefault();escapeUI();return}if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={R:['equip','refine'],C:['bag','cards']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1]&&(!expandedPanels.size||expandedPanels.has(X[0]));sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(expandedPanels.size){expandedPanels.clear();expandedPanels.add(X[0])}if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 

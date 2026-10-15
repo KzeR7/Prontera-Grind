@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "groups": [
+    {
+      "stages": [
+        1,
+        2,
+        3
+      ],
+      "variant": 0
+    },
+    {
+      "stages": [
+        4,
+        5,
+        6
+      ],
+      "variant": 1
+    },
+    {
+      "stages": [
+        7,
+        8,
+        9
+      ],
+      "variant": 2
+    },
+    {
+      "stages": [
+        10
+      ],
+      "variant": 3
+    }
+  ],
+  "files": [
+    {
+      "file": "astral-broken-nave.png",
+      "width": 1376,
+      "height": 768,
+      "bytes": 2442081,
+      "sha256": "8c585f77e22b4d5cec463cc55fb2e6281cdbd2702b6eb7e0d57fd18b96894dae",
+      "kind": "AI-generated environment art study; not a production atlas or in-game capture"
+    },
+    {
+      "file": "astral-fallen-sanctuary.png",
+      "width": 1376,
+      "height": 768,
+      "bytes": 2109230,
+      "sha256": "1efb950f41734fcc947dc8a1a76c932bf2835bc5c80f2b0c89bfe9c0c9e540b1",
+      "kind": "AI-generated environment art study; not a production atlas or in-game capture"
+    },
+    {
+      "file": "astral-inner-sanctuary.png",
+      "width": 1376,
+      "height": 768,
+      "bytes": 2804677,
+      "sha256": "447fc8e69ab1c7d2387043d23a5631d887c7520658e23a6e884572c7d66900ed",
+      "kind": "AI-generated environment art study; not a production atlas or in-game capture"
+    },
+    {
+      "file": "astral-outer-terrace.png",
+      "width": 1376,
+      "height": 768,
+      "bytes": 2533254,
+      "sha256": "77cb8f1bffd799fd39dfa7231bb3efa0c96e1018d5e1c78e471546da30193a4f",
+      "kind": "AI-generated environment art study; not a production atlas or in-game capture"
+    },
+    {
+      "file": "thor-core-approach.png",
+      "width": 1376,
+      "height": 768,
+      "bytes": 2296096,
+      "sha256": "a35c9e897a99e96b42df46004e4a10f37e64d7e011797958756006a97483d79f",
+      "kind": "AI-generated environment art study; not a production atlas or in-game capture"
+    },
+    {
+      "file": "thor-magma-gallery.png",
+      "width": 1376,
+      "height": 768,
+      "bytes": 2343180,
+      "sha256": "c4a3ecbc5adca33a65a0ec1e5bd40f4caff8f199dca91fc8a06c133e516c279a",
+      "kind": "AI-generated environment art study; not a production atlas or in-game capture"
+    },
+    {
+      "file": "thor-outer-fissure.png",
+      "width": 1376,
+      "height": 768,
+      "bytes": 2250829,
+      "sha256": "27fb56df8966b017fa927ab01d75ced91bf4542b82f590c9f11e7292ebd23ed8",
+      "kind": "AI-generated environment art study; not a production atlas or in-game capture"
+    },
+    {
+      "file": "thor-primal-core.png",
+      "width": 1376,
+      "height": 768,
+      "bytes": 2224635,
+      "sha256": "72546c6742f3e46f35b612538badea78a53bdd4c3adf2322c2e44dbe388e39bc",
+      "kind": "AI-generated environment art study; not a production atlas or in-game capture"
+    }
+  ]
+}

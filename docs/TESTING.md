@@ -126,3 +126,16 @@ when available; otherwise report that portion as unverified.
 Record exact commands, results and material missing coverage in the task handoff.
 Historical pass counts and old workspace-only records are not evidence for a new
 checkout or a combined branch.
+
+## World Atlas endgame scenery exploration
+
+Build the selected runtime with `bash tools/build_site.sh`; serve `dist/` through
+`node tools/dev_server.js` (or `--gm-all` for a disposable owner-enabled preview).
+In the game choose Maps → Season 2 Maps. Farming progression/rewards are
+separate; these entries are scenery inspection, not normal map IDs 11/12.
+`node tools/tests/publish_sim.js` verifies lazy selection, byte-identical native
+contracts, licenses and size bounds; `panel_layout_smoke.js` checks action/state
+isolation and disposal. Actual desktop/phone/native character checks are in
+`tools/check_game_maps_browser.js`; see its header for the command and required
+Chromium packages. `--publish` refreshes dev-only captures/source checksums under
+`docs/map-concepts/game-ui-review/`. Never publish that capture directory.

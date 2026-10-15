@@ -1,16 +1,12 @@
-# .assetsignore — Cloudflare Pages never serves these, even if the project's output directory is
-# the repo root. This is the SECOND line of defence: the first is that the host publishes dist/
-# (see tools/build_site.sh and tools/server-shift-plan.md §7b), which simply does not contain them.
-#
-# Keep this list in sync with the "forbidden" list in tools/tests/publish_sim.js — that test fails
-# if a dev file ever reaches the publish directory on either path.
-#
-# The game fetches exactly three things at runtime: /index.html, /assets/**, /Updates/Sprite/**,
-# so everything else in this repo is safe to exclude. Note the entries are explicit and contain no
-# `!` re-includes: if this file were ever the only protection, nothing the game needs disappears.
+# Additional exclusions for publishing tools that honor .assetsignore.
+# Production must publish dist/ from tools/build_site.sh, NOT the repository root.
+# The assembled tree and its exclusions are verified by tools/tests/publish_sim.js;
+# this advisory file is not a replacement for that tested boundary.
+# No ! re-includes: nothing required at runtime should depend on negation rules.
 
 # --- dev material -------------------------------------------------------------
 tools/
+docs/
 Sprite/
 image-search/
 

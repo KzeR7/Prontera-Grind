@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "repository": "rathena/rathena",
+  "commit": "d4b8e7b8f16061cc2496d377ac8f777ce72a4f39",
+  "sourcePath": "db/re/mob_db.yml",
+  "sourceSha256": "fe79480381a98953a0281edafd775486926b5e186feec0a99816a95433907136",
+  "note": "Candidate native identities, not approved sprite substitutions; no source combat balance imported.",
+  "monsters": [
+    {
+      "id": 1366,
+      "aegisName": "LAVA_GOLEM",
+      "nativeName": "Lava Golem",
+      "spriteStatus": "not recovered; identity metadata only"
+    },
+    {
+      "id": 1700,
+      "aegisName": "OBSERVATION",
+      "nativeName": "Dame of Sentinel",
+      "spriteStatus": "not recovered; identity metadata only"
+    },
+    {
+      "id": 1702,
+      "aegisName": "RETRIBUTION",
+      "nativeName": "Baroness of Retribution",
+      "spriteStatus": "not recovered; identity metadata only"
+    },
+    {
+      "id": 1705,
+      "aegisName": "THA_DESPERO",
+      "nativeName": "Despero of Thanatos",
+      "spriteStatus": "not recovered; identity metadata only"
+    },
+    {
+      "id": 1706,
+      "aegisName": "THA_MAERO",
+      "nativeName": "Maero of Thanatos",
+      "spriteStatus": "not recovered; identity metadata only"
+    },
+    {
+      "id": 1707,
+      "aegisName": "THA_DOLOR",
+      "nativeName": "Dolor of Thanatos",
+      "spriteStatus": "not recovered; identity metadata only"
+    },
+    {
+      "id": 1708,
+      "aegisName": "THANATOS",
+      "nativeName": "Thanatos Phantom",
+      "spriteStatus": "not recovered; identity metadata only"
+    },
+    {
+      "id": 1831,
+      "aegisName": "SALAMANDER",
+      "nativeName": "Salamander",
+      "spriteStatus": "not recovered; identity metadata only"
+    },
+    {
+      "id": 1832,
+      "aegisName": "IFRIT",
+      "nativeName": "Ifrit",
+      "spriteStatus": "not recovered; identity metadata only"
+    },
+    {
+      "id": 1833,
+      "aegisName": "KASA",
+      "nativeName": "Kasa",
+      "spriteStatus": "not recovered; identity metadata only"
+    },
+    {
+      "id": 1836,
+      "aegisName": "MAGMARING",
+      "nativeName": "Magmaring",
+      "spriteStatus": "not recovered; identity metadata only"
+    },
+    {
+      "id": 1837,
+      "aegisName": "IMP",
+      "nativeName": "Imp",
+      "spriteStatus": "not recovered; identity metadata only"
+    }
+  ]
+}

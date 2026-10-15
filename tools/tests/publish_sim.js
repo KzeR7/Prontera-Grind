@@ -25,7 +25,7 @@ const skinData = fs.readFileSync(path.join(root, 'assets', 'class_skins_data.js'
 const skinDir = (skinData.match(/"dir":"([^"]+)"/) || [])[1];
 const skinFile = (skinData.match(/"files":\{"S":"([^"]+)"/) || [])[1];
 
-const forbidden = ['_login.html', '_shot.html', 'logic2.js', 'tools', 'Sprite', 'image-search',
+const forbidden = ['_login.html', '_shot.html', 'logic2.js', 'tools', 'docs', 'Sprite', 'image-search',
   'AGENTS.md', 'READ-ME-FIRST.md', 'Updates/lord-knight-bundles', 'assets/wardrobe/v1', 'assets/wardrobe/v3', 'assets/wardrobe/v4', '_recon_v27b.png', '_recon_v27c.png', '_recon_v27d.png', '_recon_v27e.png'];
 
 t('the build script runs and finishes cleanly', () => {
@@ -74,13 +74,13 @@ t('the GM console ships, because it is only a client of the API', () => {
   assert.ok(!/GM_PASS|gmHash|passwordHash/.test(gm), 'the console must hold no credentials of its own');
 });
 
-t('Pages sends only /api/* through Functions (the free allowance depends on it)', () => {
+t('Pages sends only /api/* through Functions (no static invocations)', () => {
   const f = path.join(out, '_routes.json');
   assert.ok(fs.existsSync(f), '_routes.json must be in the publish directory (Pages reads it from there)');
   const r = JSON.parse(fs.readFileSync(f, 'utf8'));
   assert.strictEqual(r.version, 1);
-  assert.deepStrictEqual(r.include, ['/api/*'], 'only the API should invoke Functions; static files are free and unlimited');
-  assert.ok(!/index\.html|\/\*\*/.test(r.include.join(',')), 'a broad include would bill every page view to the Functions allowance');
+  assert.deepStrictEqual(r.include, ['/api/*'], 'only the API should invoke Functions; static requests stay outside its routing');
+  assert.ok(!/index\.html|\/\*\*/.test(r.include.join(',')), 'a broad include would send every page view through Functions');
 });
 
 t('every API path the client calls exists as a Function file', () => {
@@ -98,10 +98,33 @@ t('the published tree is small enough to stay honest', () => {
   const bytes = walk(out);
   const mb = bytes / 1048576;
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
-  assert.ok(mb < 38.5, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the shared native class pack and fallback game must fit in 38.5 MiB.');
+  assert.ok(mb < 43, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the native packs, fallback game and selected lossless exploration runtime must fit in 43 MiB.');
   const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<13.5*1048576,'nineteen classes and fifty-two accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));
   for(const r of Object.values(catalog.assets))for(const key of ['meta','image'])assert.ok(fs.existsSync(path.join(wardrobe,r[key])),'native catalog asset is published');
+});
+
+t('kit JSON delivery is smaller with identical values; native contracts and source images stay byte-identical',()=>{
+ const optimizer=require('../optimize_delivery.js');let saved=0;
+ for(const file of optimizer.FILES){const source=fs.readFileSync(path.join(root,'assets/kit',file)),published=fs.readFileSync(path.join(out,'assets/kit',file));assert.deepStrictEqual(JSON.parse(published),JSON.parse(source));assert.ok(published.length<=source.length);saved+=source.length-published.length;}
+ assert.ok(saved>180000,'The kit should not republish formatting whitespace');
+ const copyFiles=['assets/kit/ro-spritesheet.png','assets/kit/ro-tiles-hd.png','assets/wardrobe/v5/catalog.json','assets/pets/v1/catalog.json','assets/sprite_pack_data.js'];
+ for(const file of copyFiles)assert.ok(fs.readFileSync(path.join(root,file)).equals(fs.readFileSync(path.join(out,file))),file+' must remain byte-identical');
+ assert.strictEqual(optimizer.optimize(out),0,'Optimisation must be idempotent');
+});
+
+t('in-game endgame exploration ships only selected runtime resources with lazy lossless materials',()=>{
+ const dir=path.join(out,'assets/endgame'),files=fs.readdirSync(dir),html=fs.readFileSync(path.join(dir,'explore.html'),'utf8');
+ assert.ok(fs.readFileSync(path.join(dir,'THREE-LICENSE.txt'),'utf8').includes('Permission is hereby granted'));
+ assert.ok(!/\/tools\/|\/docs\//.test(html));assert.ok(html.includes('character?.className'));assert.ok(html.includes('No HP, damage, drops'));
+ const textures=JSON.parse(fs.readFileSync(path.join(dir,'textures/runtime-manifest.json')));
+ assert.deepStrictEqual(fs.readdirSync(path.join(dir,'textures')).sort(),['runtime-manifest.json',...Object.values(textures.textures).map(r=>r.file)].sort());
+ for(const rec of Object.values(textures.textures))assert.ok(fs.readFileSync(path.join(dir,'textures',rec.file)).equals(fs.readFileSync(path.join(root,'tools/maps/textures',rec.file))));
+ for(const file of ['endgame-scenes.js','journey-details.js','journey-state.js','journey-hero.js','journey-navigation.js'])assert.ok(fs.readFileSync(path.join(dir,file)).equals(fs.readFileSync(path.join(root,'tools/maps',file))),file+' must match reviewed source');
+ const materials=fs.readFileSync(path.join(dir,'journey-materials.js'),'utf8');assert.ok(materials.includes('/assets/endgame/textures/'));assert.ok(!materials.includes('/tools/'));
+ assert.ok(!src.includes('src="assets/endgame/'),'Main game must not eagerly preload the exploration scene');
+ assert.ok(fs.existsSync(path.join(out,'assets/map-exploration.js')));
+ const walk=d=>fs.readdirSync(d,{withFileTypes:true}).reduce((n,e)=>n+(e.isDirectory()?walk(path.join(d,e.name)):fs.statSync(path.join(d,e.name)).size),0);assert.ok(walk(dir)<4.25*1048576);
 });
 
 t('all supplied skill crops and native pet states ship within their bounded packs',()=>{
@@ -112,9 +135,9 @@ t('all supplied skill crops and native pet states ship within their bounded pack
  const size=d=>fs.readdirSync(d).reduce((n,f)=>n+fs.statSync(path.join(d,f)).size,0);assert.ok(size(iconRoot)<2*1048576);assert.ok(size(petRoot)<2*1048576);
 });
 
-t('.assetsignore covers the same dev material (the Cloudflare safety net)', () => {
+t('.assetsignore includes dev material (dist is the tested publish boundary)', () => {
   const ignore = fs.readFileSync(path.join(root, '.assetsignore'), 'utf8');
-  for (const f of ['tools/', 'Sprite/', 'image-search/', '_login.html', '_shot.html', 'logic2.js', 'Updates/ApngAnimation/', 'Updates/damage-floats-proposal/', 'Updates/crit-frame-compare/']) {
+  for (const f of ['tools/', 'docs/', 'Sprite/', 'image-search/', '_login.html', '_shot.html', 'logic2.js', 'Updates/ApngAnimation/', 'Updates/damage-floats-proposal/', 'Updates/crit-frame-compare/']) {
     assert.ok(ignore.includes(f), '.assetsignore does not exclude ' + f);
   }
   assert.ok(!/^\s*!/.test(ignore.split('\n').filter(l => !l.startsWith('#')).join('\n')),
