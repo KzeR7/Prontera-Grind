@@ -639,6 +639,7 @@ const STAGE_SCENES=[
   ]
 ];
 function stageSpec(m,stage){
+  if(m>=10)return {layout:'field',f:{}};
   const original=KIT_MAP[m];
   if(stage<=3)return original;
   const tier=stage<=6?0:stage<=9?1:2,c=STAGE_SCENES[m][tier],f={base:c.base,base2:c.base};

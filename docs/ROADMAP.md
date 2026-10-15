@@ -182,6 +182,17 @@ Standard base stat allocation caps at 120 (costing 2,790 points out of 2,811 ava
 
 ---
 
+## Current Ascension field implementation (haven-v155)
+
+Both destinations are playable in the main battlefield with five stages each:
+1–2 share a design, stage 3 and stage 4 have distinct scenery, stage 5 is the MVP.
+Astral Shards and Primal Catalysts are farmed for N+ weapon evolution; Valkyrie’s
+Sigils are farmed for new Ascension skill growth. Equipment does not drop here.
+The material wallet and online/offline rolls work; spending recipes and skill
+upgrade menus are future work. Old ten-stage saves migrate once without losing
+clears or owned items. The designs below retain earlier proposals; this owner
+correction supersedes their ten-stage/equipment/summoning reward assumptions.
+
 ## 4. Two New Progression Maps (Maps 11 & 12)
 
 Visual direction studies: [Map concept review](map-concepts/README.md). These are

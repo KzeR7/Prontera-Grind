@@ -231,12 +231,12 @@ t('the 50,000-kill species ladder and album title endpoint are data-driven',()=>
   assert.strictEqual(U.indexXpForCount(50),56,'the second rung is at 50 kills');
   assert.strictEqual(U.indexXpForCount(1000),1029,'the 1,000-kill rung lands mid-ladder');
   assert.strictEqual(U.indexXpForCount(50000),50279,'a fully hunted species is 50,000 kills plus 279 bonus XP');
-  // The last title is about twenty maxed species; the 90-species album is a separate goal.
-  assert.strictEqual(U.MONSTER_INDEX.length,90,'the album is 90 species');
+  // The last title is about twenty maxed species; the 102-species album is a separate goal.
+  assert.strictEqual(U.MONSTER_INDEX.length,102,'the album is 102 species');
   assert.strictEqual(U.INDEX_TITLES.at(-1).xp,1000000,'the final title is 1m Index XP');
   assert.ok(U.INDEX_TITLES.at(-1).xp<=20*50279+1000,'~twenty maxed species, not one');
   const album=U.MONSTER_INDEX.length*50279;
-  assert.strictEqual(album,4525110,'a perfect album is 4,525,110 Index XP');
+  assert.strictEqual(album,5128458,'a perfect album is 5,128,458 Index XP');
   assert.ok(album>U.INDEX_TITLES.at(-1).xp*4,'so the album is a much longer, separate goal');
 });
 
@@ -260,17 +260,17 @@ t('v51 migration: old per-rank rewards and the global track become capped gacha 
   assert.strictEqual(U.cardMasteryAvailable(),30,'and all 30 tokens are spendable again');
 });
 
-t('a full card album is 450 tokens; the caps fill first and the rest wait',()=>{
+t('a full card album is 510 tokens; the caps fill first and the rest wait',()=>{
   const U=sb.__l,names=Array.from(U.CARD_NAMES),state={cardIndex:U.emptyCardIndex(),cards:[]};
   for(const name of names){state.cardIndex.byName[name]=5;state.cardIndex.mastery[name]=5}
   U.setState(state);
-  assert.strictEqual(U.cardMasteryTotal(),450,'five ranks across all 90 cards');
-  assert.strictEqual(U.cardMasteryEarned(),450,'every rank is one token');
-  assert.strictEqual(U.cardMasteryAvailable(),450,'nothing spent yet');
+  assert.strictEqual(U.cardMasteryTotal(),510,'five ranks across all 102 cards');
+  assert.strictEqual(U.cardMasteryEarned(),510,'every rank is one token');
+  assert.strictEqual(U.cardMasteryAvailable(),510,'nothing spent yet');
   let n=0;while(U.cardMasteryGacha())n++;
   const capTotal=Object.values(U.CARD_REWARD_CAPS).reduce((a,b)=>a+b,0);
   assert.strictEqual(n,capTotal,'the gacha fills every cap and then stops handing out wasted rolls');
-  assert.strictEqual(U.cardMasteryAvailable(),450-capTotal,'the tokens that could not be spent stay in the bank');
+  assert.strictEqual(U.cardMasteryAvailable(),510-capTotal,'the tokens that could not be spent stay in the bank');
   assert.strictEqual(U.cardMasteryGacha(),null,'no roll is possible while every cap is full');
   state.cards=[{id:'leg',n:'Poring Card',g:3,stat:'str',v:3}];
   state.cardIndex.rolls=[];U.setState(state);

@@ -12,10 +12,42 @@ The player spends stat and skill points, equips/refines gear, uses cards, develo
 pets, completes quests and moves to harder fields. The game keeps grinding while
 panels are open. Away rewards have separate timing and save rules.
 
-Ten maps have ten normal stages each. Stage 10 has an immediate boss with escorts;
+The original ten maps have ten normal stages each. Stage 10 has an immediate boss with escorts;
 do not apply the earlier stages' kill threshold to that encounter. Maps have distinct
 visual identities and recommended progression. The Nightmare band extends endgame
 progression; Endless Echo is a separate damage trial with its own rewards and limits.
+
+## Ascension fields
+
+Maps → Ascension Map contains Astral Citadel and Thor Volcano, beside the framed
+World Atlas destination grid. The adjacent Social Hub tab is locked as Coming Soon.
+Astral and Thor have illustrated destination previews. Travel enters the main battlefield with the current
+character, combat and drops. Astral requires Base 140 and a recorded Abyss Stage 10
+victory; Thor requires Base 150 and an Astral Stage 5 victory. Existing saves must
+record those boss victories after this update, since older saves did not track them.
+Both Ascension maps have five stages: 1–2 share arrival scenery, 3 is the crossing,
+4 is the approach, and 5 starts immediately with the MVP and five escorts. Neither
+map adds Nightmare stages or drops equipment. Cards, ore and pets still roll.
+Astral uses a continuous stone bridge in a deep space sky, with ruined edge arches,
+a rune observatory and a boss seal. The rear gate stands on paving and all pillars
+have solid foundations joining the bridge. Uneven chipped paving, worn border
+mosaics, branching cracks, fallen column sections and small relic shrines give the
+bridge its age. Arrival has a compass inlay, the crossing a broken mosaic, the
+observatory an engraved celestial instrument, and the sanctuary a constellation
+seal. Nearby islands have independent fractured rock profiles and scattered ruins.
+Tall details stay along the margins, leaving the combat corridor open.
+Thor retains the approved volcanic scenes.
+Old ten-stage Ascension saves migrate once (1/2–3/4–6/7–9/10 → 1/2/3/4/5),
+including away-income source stages. Recorded clears, materials and owned items survive.
+
+Native mobs use local original APNGs for idle, walk and attack in eight directions.
+Materials are saved separately from equipment: Astral Shard (Astral) and Primal
+Catalyst (Thor) each roll at 0.035% per kill; Valkyrie's Sigil rolls at 0.0025% per
+ordinary mob/escort and 0.1% per MVP. The map's Field intelligence shows the wallet.
+Online and server-budgeted offline kills share these rolls. Materials are collected
+for N+ weapon evolution (Shard/Catalyst) and Ascension skill growth (Sigil).
+Recipes and skill upgrade menus remain planned; these materials cannot be spent yet.
+Existing maps, pet identities and Nightmare reward values retain their meaning.
 
 ## Classes and progression
 

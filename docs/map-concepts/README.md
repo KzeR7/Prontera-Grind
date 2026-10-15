@@ -1,5 +1,14 @@
 # New-map proposal review
 
+> Current implementation (haven-v155): Maps → **Ascension Map** enters live
+> Astral/Thor fields in the main battlefield. Each has five stages (1–2 / 3 / 4 / boss 5),
+> native mobs, cards and materials for N+ weapon evolution and Ascension skill growth.
+> No equipment drops. Astral has redesigned space/ruin/rune scenery with grounded pillars.
+> Historical ten-stage studies, screenshots and earlier plans below retain their sources.
+> See [Game design](/docs/GAME-DESIGN.md) for current gameplay.
+
+
+
 ## Current review package — non-mob preview completion pass
 
 Read the [full detailed proposal](FULL-PROPOSAL.md). Astral is now **one continuous

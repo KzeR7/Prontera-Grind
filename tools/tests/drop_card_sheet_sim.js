@@ -19,7 +19,7 @@ function liveData(){
     mapDecl,
     `MAPS.forEach(mp=>{mp.mobs=mp.mobs.map(x=>({n:x.split(':')[0]}));mp.boss={n:mp.boss.split(':')[0]};});`,
     pick(/const REC=\[[^\]]*\];/,'map recommendations'),
-    `MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89][i];m.rec=REC[i]});`,
+    `MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89,139,149][i];m.rec=REC[i]});`,
     // v76: the Nightmare band's constants and the two extra catalogue rows per map, so the sheet
     // shows exactly what the game ships
     grab('const NMLV=[', 'GEAR.forEach((row,m)=>{row.push(nmRow(m,0),nmRow(m,1))});') + 'GEAR.forEach((row,m)=>{row.push(nmRow(m,0),nmRow(m,1))});',
@@ -71,7 +71,7 @@ function liveData(){
         {slot:'leg',name:g.l},{slot:'acc',name:g.ac},{slot:'acc',name:g.ac2}];
       return raw.map((item,i)=>({id:`m${mi}-s${si}-i${i}`,...item}));
     };
-    const sections=Array.from(mp.gear,(g,si)=>{
+    const sections=Array.from(mi>=10?[]:mp.gear,(g,si)=>{
       const items=sectionItems(g,mi,si);
       if(mi===9&&si===3){
         const added=sectionItems(mp.gearUpgrade,mi,si).map((item,i)=>({...item,id:`m${mi}-s${si}-u-i${i}`,gearSet:'abyss-ascended'}));
@@ -80,7 +80,7 @@ function liveData(){
       return {index:si,items};
     });
     const stages=[];
-    for(let level=1;level<=10;level++){
+    for(let level=1;level<=(mi>=10?5:10);level++){
       const F=X.fieldOf(mi,level),sec=F.sec,section=sections[sec];
       const itemId=d=>{
         const found=section.items.find(x=>x.slot==='weapon'?x.weaponType===d.k&&x.name===d.n:x.slot===d.k&&x.name===d.n);
@@ -116,17 +116,23 @@ console.log('equipment & card sheet: offline, live-source baseline\n');
 
 t('the embedded snapshot exactly matches the current game tables',()=>assert.deepStrictEqual(sheet,live));
 t('the worksheet covers all maps, gear sections, and field stages',()=>{
-  assert.strictEqual(sheet.maps.length,10);
+  assert.strictEqual(sheet.maps.length,12);
   // Each map has four normal job sections plus the two separate Nightmare rows; the Abyss's
   // enhanced third-job set is listed as a variant inside section 3, not a new equip-gate section.
-  for(const m of sheet.maps){assert.strictEqual(m.sections.length,6,m.name);assert.strictEqual(m.stages.length,10,m.name);assert.ok(m.stages.every(s=>s.mobs.length===2),m.name+' field mob count')}
-  assert.ok(sheet.maps.every(m=>m.sections[4].name===undefined||m.sections[4].items.length>0),'the Nightmare rows carry items');
+  for(const [mi,m] of sheet.maps.entries()){assert.strictEqual(m.sections.length,mi>=10?0:6,m.name);assert.strictEqual(m.stages.length,mi>=10?5:10,m.name);assert.ok(m.stages.every(s=>s.mobs.length===2),m.name+' field mob count')}
+  assert.ok(sheet.maps.slice(0,10).every(m=>m.sections[4].name===undefined||m.sections[4].items.length>0),'the Nightmare rows carry items');
   assert.strictEqual(sheet.sectionNames[4],'Nightmare gear');assert.strictEqual(sheet.sectionNames[5],'Abyssal Nightmare gear');
   // v80: Geffen and Payon each gained a second weapon family, and the Nightmare rows are generated
   // from each map's own section 3, so all six of their rows grew by one: 601 -> 613. The Thief-line
   // katar swap then took four back: Morroc's 2nd-job and high-tier shelves (and the two Nightmare
   // rows built from the high-tier one) now carry a single katar where they carried a dagger too.
-  assert.strictEqual(sheet.maps.reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),609);
+  assert.strictEqual(sheet.maps.slice(0,10).reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),609);
+});
+t('Ascension worksheet fields expose five material-only stages and the stage-five boss',()=>{
+  for(const m of sheet.maps.slice(10)){
+    assert.strictEqual(m.sections.length,0);assert.strictEqual(m.stages.length,5);
+    for(const s of m.stages){assert.ok(s.mobs.every(x=>x.drops.length===0));assert.strictEqual(!!s.boss,s.stage===5);if(s.boss)assert.strictEqual(s.boss.drops.length,0);}
+  }
 });
 t('the worksheet snapshot carries the map-specific equipment progression',()=>{
   assert.strictEqual(sheet.sectionNames[0],'Starter gear');
@@ -154,7 +160,7 @@ t('every stage item assignment follows the allocated weapon-first rotation',()=>
   // accessory, each stage walks two weapons and four defensive pieces along the map's shelf, and
   // no item is ever listed twice on one field (the old window listed one item on both mobs at two
   // different rates, and left 20 of 100 normal fields with no weapon at all).
-  for(let mi=0;mi<sheet.maps.length;mi++)for(const stage of sheet.maps[mi].stages){
+  for(let mi=0;mi<10;mi++)for(const stage of sheet.maps[mi].stages){
     const pool=sheet.maps[mi].sections[stage.section].items.filter(x=>(x.gearSet||'base')===stage.gearSet);
     const weapons=pool.filter(x=>x.slot==='weapon'),defensive=pool.filter(x=>x.slot!=='weapon');
     const where=`${sheet.maps[mi].name} stage ${stage.stage}`,seen=new Set();
@@ -208,7 +214,7 @@ t('every requested stage band drops weapon families for all eligible class lines
   }
 });
 t('rarity, card grades, and Stage-10 boss pools are complete',()=>{
-  for(let mi=0;mi<sheet.maps.length;mi++){
+  for(let mi=0;mi<10;mi++){
     const m=sheet.maps[mi];
     for(const s of m.stages){
       const cardGrade=Math.min(2,mi<1?0:mi<5?1:mi<8?2:3);
@@ -300,7 +306,7 @@ t('worksheet rebases v44 saved catalog IDs when late-map weapons are added',()=>
     8:{2:['sword','mace','katar'],3:['sword','katar','staff']},
     9:{2:['sword','katar','mace'],3:['sword','katar','staff']}
   };
-  const oldCatalog=sheet.maps.map((m,mi)=>m.sections.map((section,si)=>{
+  const oldCatalog=sheet.maps.slice(0,10).map((m,mi)=>m.sections.map((section,si)=>{
     const oldItems=section.items.filter(i=>mi<5||![2,3].includes(si)||i.slot!=='weapon'||previousTypes[mi][si].includes(i.weaponType));
     return oldItems.map((i,index)=>({...i,id:`m${mi}-s${si}-i${index}`,field:true,boss:true}));
   }));

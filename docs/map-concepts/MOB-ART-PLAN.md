@@ -1,5 +1,12 @@
 # New-map mob graphics — native source plan
 
+> Current implementation (haven-v153): Maps → **Ascension Map** now enters live
+> Astral/Thor fields in the main battlefield. The twelve native mobs, equipment,
+> cards and material drops are integrated. The former scenery popup and missing-art
+> descriptions below document the earlier proposal. See [Game design](/docs/GAME-DESIGN.md)
+> and [Native mob exports](/tools/native-mobs/README.md) for current behavior/provenance.
+
+
 ## Quality contract
 
 New maps must not fall back to generic coloured blobs, demons or repainted existing

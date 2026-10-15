@@ -1,8 +1,8 @@
 {
   "baselineRevision": "d164bd0527cfe335f9c183d0e576800716b7dd26",
   "baselineHash": "a251cffc5abeea9ab881fd471e99f36bf4c6aa8cd1f4dcdecb3a2bc982cca0e3",
-  "sourceHash": "cc36012432c2614907656c993bb16053e834118e332705498606f133f30824d5",
-  "combatHash": "8b4e3bc938858bac95d97080e8171e0a6995f18b0762a1f3d295f6e0971c93d5",
+  "sourceHash": "e605a9def8958fa5253c8c0f7b33673a78aaeb01956def578d88990c8a81dc45",
+  "combatHash": "62358f9dfae808a4653c21418b756080eef3e53514f9e31433340c8cec9a7f27",
   "toolHash": "98fa6a212996bed7ec50535e9a473ec799cbe4f89f0d742aed6517c63a725ae5",
   "seconds": 120,
   "seed": 789,
@@ -931,7 +931,7 @@
         "int": 1,
         "vit": 1
       },
-      "atk": 11226,
+      "atk": 11524,
       "matk": 5826,
       "crit": 78,
       "critD": 5.324,
@@ -939,7 +939,7 @@
       "cards": [
         "Dark Lord Card",
         "Abyss Knight Card",
-        "Death Knight Card"
+        "Ifrit Card"
       ]
     },
     {
@@ -1029,7 +1029,7 @@
         "int": 1,
         "vit": 1
       },
-      "atk": 17384,
+      "atk": 17816,
       "matk": 8525,
       "crit": 65.625,
       "critD": 4.64,
@@ -1037,7 +1037,7 @@
       "cards": [
         "Dark Lord Card",
         "Abyss Knight Card",
-        "Death Knight Card"
+        "Ifrit Card"
       ]
     },
     {
