@@ -17,7 +17,7 @@ const helpers = from('let farmSession=null;', '// ---------- accounts (stored in
 const stageCode=src.match(/const normalStages=[^\n]*/)[0];
 const ascensionCode=from('const ASCENSION_MATERIALS=', 'function kill(o){')+'\n'+src.match(/const ascensionOpen=[^\n]*/)[0];
 const newCardCode=require('./helpers/progression')(src,'newCard');
-const reward = from('function fieldExpReward(', '// One field monster, before it is placed.');
+const reward = from('const ascRewardBonus=', '// One field monster, before it is placed.');
 const simulation = from('function offlineMobForCurrentField(m=S.mp,stage=S.lvl){', '// ---------- skill effects: damage over time, stun, chain ----------');
 
 function harness() {
@@ -54,7 +54,8 @@ function harness() {
     const cardVal = () => 1, uid = () => ++state.nextId;
     const pickW = () => 0, PW = [[100]], PETS = [], PET_SKILL_WEIGHTS = [], PET_SKILLS = [], EGG = 1;
   `;
-  const code = from('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------') + '\n' + config + '\n' + stamp + '\n' + helpers + '\n' + newCardCode + '\n' + reward + '\n' + stageCode + '\n' + ascensionCode + '\n' + simulation + `
+  const progression = from('// ---------- Ascension: shared earnings, independent class allocations ----------','const fresh=')+'\n'+src.match(/const FOURTH_JOBS_LIVE=[^;]+;/)[0];
+  const code = progression+'\n'+from('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------') + '\n' + config + '\n' + stamp + '\n' + helpers + '\n' + newCardCode + '\n' + reward + '\n' + stageCode + '\n' + ascensionCode + '\n' + simulation + `
     globalThis.api = {
       offlinePlan, offlineRateSample, applyOfflineProgress, offlineAwardKill,
       mapSelection(){return[mapM,mapL]},

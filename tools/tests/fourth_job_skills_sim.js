@@ -16,15 +16,15 @@ function setup(cls='Guillotine Cross'){
 }
 try{
  test('locked live catalogue remains 91 skills; no ascension skills leak',()=>{assert.equal(live.ev('SKILLS.length'),91);assert.equal(live.ev('SKILLS.some(s=>SKILLS4.includes(s))'),false)});
- test('six classes have five unique authentic skills and descriptions',()=>{
+ test('six classes have six unique authentic skills and descriptions',()=>{
   const expected={
-   'Rune Knight':['Sonic Wave','Ignition Break','Dragon Breath','Hundred Spears','Wind Cutter'],
-   Warlock:['Chain Lightning','Soul Expansion','Crimson Rock','Jack Frost','Comet'],
-   Ranger:['Aimed Bolt','Warg Strike','Arrow Storm','Warg Bite','Cluster Bomb'],
-   'Guillotine Cross':['Cross Impact','Dark Illusion','Hallucination Walk','Rolling Cutter','Cross Ripper Slasher'],
-   'Arch Bishop':['Judex','Adoramus','Praefatio','Duple Light','Highness Heal'],
-   Mechanic:['Vulcan Arm','Arm Cannon','Axe Tornado','Axe Boomerang','Power Swing']};
-  assert.equal(ev('SKILLS4.length'),30);assert.equal(ev('new Set(SKILLS.map(s=>s.id)).size'),ev('SKILLS.length'));
+   'Rune Knight':['Sonic Wave','Ignition Break','Dragon Breath','Hundred Spears','Wind Cutter','Enchant Blade'],
+   Warlock:['Chain Lightning','Soul Expansion','Crimson Rock','Jack Frost','Comet','Tetra Vortex'],
+   Ranger:['Aimed Bolt','Warg Strike','Arrow Storm','Warg Bite','Cluster Bomb','Unlimit'],
+   'Guillotine Cross':['Cross Impact','Dark Illusion','Hallucination Walk','Rolling Cutter','Cross Ripper Slasher','Dark Claw'],
+   'Arch Bishop':['Judex','Adoramus','Praefatio','Duple Light','Highness Heal','Epiclesis'],
+   Mechanic:['Vulcan Arm','Arm Cannon','Axe Tornado','Axe Boomerang','Power Swing','Magma Eruption']};
+  assert.equal(ev('SKILLS4.length'),36);assert.equal(ev('new Set(SKILLS.map(s=>s.id)).size'),ev('SKILLS.length'));
   for(const [c,names]of Object.entries(expected))assert.deepEqual(probe(`return SKILLS4.filter(s=>s.from===${JSON.stringify(c)}).map(s=>s.n)`),names);
   assert(ev('SKILLS4.every(s=>s.max===10&&s.cd>0&&s.d(1).length>20)'));
  });

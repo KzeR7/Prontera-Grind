@@ -11,9 +11,9 @@ function setup(cls='Assassin Cross',weapon='katar'){
  `);
 }
 function test(name,fn){try{fn();passed++;console.log('  ok '+name);}catch(e){failed++;console.error('  FAIL '+name+' — '+e.stack);}}
-test('exact five skills per class, one Novice skill, sword-only progression',()=>{
- assert.equal(ev('SKILLS.length'),121);
- assert.ok(ev(`Object.keys(CLASSES).every(c=>SKILLS.filter(s=>s.from===c).length===(c==='Novice'?1:5))`));
+test('five core skills plus one Ascension unlock per fourth job, one Novice skill, sword-only progression',()=>{
+ assert.equal(ev('SKILLS.length'),127);
+ assert.ok(ev(`Object.keys(CLASSES).every(c=>SKILLS.filter(s=>s.from===c).length===(c==='Novice'?1:CLASSES[c].tier===4?6:5))`));
  assert.ok(ev(`['Swordman','Knight','Lord Knight'].every(c=>CLASSES[c].wt.join()==='sword')`));
 });
 test('all inherited Assassin attacks execute with both weapon paths and single-dagger fallback',()=>{
@@ -123,7 +123,7 @@ test('a migrated class gets exactly one free stat reset',()=>{
 });
 test('every attack rank increases total primary and secondary damage independently',()=>{
  for(const cls of JSON.parse(ev('JSON.stringify(Object.keys(CLASSES))'))){setup(cls);
-  assert.ok(ev(`SKILLS.filter(s=>s.type==='act'&&s.cls.includes(S.cls)).every(s=>{
+  assert.ok(ev(`SKILLS.filter(s=>s.type==='act'&&!s.ascensionOnly&&s.cls.includes(S.cls)).every(s=>{
     for(const area of [false,true]){let last=0;for(let rank=1;rank<=s.max;rank++){
       const power=s.mul(rank)*skillTuning(area,s,rank);if(!(power>last))return false;last=power;
     }}return true;
@@ -132,7 +132,7 @@ test('every attack rank increases total primary and secondary damage independent
 });
 test('unrelated upgrades cannot reduce learned attack coefficients or companion power',()=>{
  for(const cls of ['High Priest','High Wizard','Whitesmith','Assassin Cross']){setup(cls);
-  assert.ok(ev(`(()=>{const attacks=SKILLS.filter(s=>s.type==='act'&&s.cls.includes(S.cls));
+  assert.ok(ev(`(()=>{const attacks=SKILLS.filter(s=>s.type==='act'&&!s.ascensionOnly&&s.cls.includes(S.cls));
     S.sk=Object.fromEntries(SKILLS.filter(s=>s.cls.includes(S.cls)).map(s=>[s.id,1]));
     const before=attacks.map(s=>skillTuning(false,s,1)),companion=skillTuning('companion');
     for(const s of SKILLS.filter(s=>s.cls.includes(S.cls)))S.sk[s.id]=s.max;

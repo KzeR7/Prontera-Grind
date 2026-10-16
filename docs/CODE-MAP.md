@@ -140,8 +140,29 @@ loads. Check `map_delivery_sim.js` and the journey browser audit; do not apply t
 pipeline to native sprites/metadata. See [cloud data](CLOUD-DATA.md) for current
 published bytes versus requested resources and API/database load.
 
-Class Path (v159): `V.job()` renders six lineage buttons, five selected progression
-steps and one inspector. `ACT.selk` only selects; `ACT.job` promotes/starts the trial.
-`CD4` supplies locked future labels without adding them to `CLASSES`. Layout is in
-`assets/ui/eclipse.css` (`class-path-*`). Check `eclipse_ui_sim.js`,
-`panel_layout_smoke.js`, `fourth_job_sim.js` and `mythic_rules_sim.js`.
+Jobs (v161): `V.job()` defaults to the full 25-node lineage; `jobview` switches to
+Tree design and `jobbranch` expands one first-class lineage. `ACT.selk` inspects;
+`ACT.job` retains advancement/trial gates. `V.ascension` exposes the shared Forge
+under Equipment → Ascension. Check `eclipse_ui_sim.js`, `panel_layout_smoke.js`,
+`fourth_job_sim.js` and `mythic_rules_sim.js`.
+
+`assets/fourth-jobs.js` adapts the audited fixed native composites to the Wardrobe
+renderer, using its bounded, checksum-validated loader. `tools/build_fourth_job_runtime.py`
+copies identical atlases and native action metadata into `assets/fourth-jobs/v1/`.
+The original review/proof files remain under Updates and are excluded from publishing.
+Run the generator with `--check`, `fourth_job_runtime_sim.js`, `wardrobe_game_sim.js`
+and `publish_sim.js`. These composites have fixed heads/weapons; cosmetics are retained
+in saves for earlier classes. They have no separate weapon layer for refine edging.
+
+Ascension v162: `ascensionCandidates`, `transformToMythic` and `ascensionForgePanel` implement owned-item evolution. `makeMythicEquipment` is reserved for GM gifts. `startAstralJourney` / `tickAstralJourney` / `cancelAstralJourney` own continuous bridge travel. v163 activates the approved progression tracks.
+
+Ascension v163: `ASC_XP_BASE`, `ASC_REWARD_VERSION`, `ASC_STATS`, `ASC_UPGRADES`, `cleanAscension`, `gainAscension`,
+`allocateAscension`, `resetAscension` and `ascensionProgressPanel` own the two
+tracks, class presets and UI. `ascSkillVariant` / `ascCooldown` / `ascDamage`
+feed existing combat; `resetSkillRuntime` cancels transient effects. `farmSample`
+marks the current reward version (4 in v165); `applyOfflineProgress` credits the saved source class.
+`ascRewardRatio`, `fieldExpReward` and `fieldZenyReward` share online/away rewards.
+In v165 only EXP uses HP scaling; Zeny uses matching Abyss regular/MVP per-kill rewards plus 5–10%.
+Check `ascension_tracks_sim.js`, `ascension_combat_sim.js`,
+`ascension_rewards_sim.js` alongside offline, save/owner/cloud, skill/combo,
+combat/stat/economy, map and UI suites.

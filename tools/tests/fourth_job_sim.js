@@ -66,7 +66,7 @@ console.log('dark launch: the live roster is unchanged\n');
     classes: Object.keys(CLASSES).length,
     fourth: Object.values(CLASSES).filter(c => c.tier === 4).length,
     joff: JOFF.slice(0, 4).join(),
-    tree: (V.job().match(/class="class-path-tabs"/g)||[]).length,
+    tree: (V.job().match(/class="tree class-lineage-overview"/g)||[]).length,
     build: BUILD,
     hasRuneKnight: !!CLASSES['Rune Knight'],
   })`);
@@ -74,9 +74,9 @@ console.log('dark launch: the live roster is unchanged\n');
   assert.equal(r.fourth, 6, 'no 4th-tier class is live');
   assert.equal(r.hasRuneKnight, true, 'Rune Knight is not in the live roster');
   assert.equal(r.joff, '0,9,49,98', 'the live pacing table is unchanged');
-  assert.equal(r.tree, 1, 'the live Class Path has one lineage picker');
+  assert.equal(r.tree, 1, 'the live Jobs tab defaults to the full lineage');
   // Live Class Path presentation has its own coordinated build label.
-  assert.ok(r.build === '2026-10-16 haven-v160 Mythic testing unlock', 'the visible redesign has the coordinated build label');
+  assert.ok(r.build === '2026-10-16 haven-v164 Ascension pacing', 'the visible redesign has the coordinated build label');
   console.log('ok   live page: 19 classes, no 4th job, JOFF/Class Tree/build unchanged');
   pass++;
 }
@@ -174,7 +174,7 @@ test('4th jobs wear their parent packed body, not an Assassin Cross fallback', (
 
 test('each selected lineage includes its fourth job and live trial action', () => `
   ${setup('Lord Knight', 50, 150)}
-  return ${JSON.stringify(FOURTH)}.every(([n,p])=>{selK=n;S.cls=p;S.jobs[p]={jl:50,jx:0};const html=V.job();return html.includes('class-path-track')&&html.includes('data-a="job" data-v="'+n+'"')&&html.includes('Enter advancement trial')});`);
+  return ${JSON.stringify(FOURTH)}.every(([n,p])=>{selK=n;S.cls=p;S.jobs[p]={jl:50,jx:0};const html=V.job();return html.includes('class-lineage-overview')&&html.includes('data-a="job" data-v="'+n+'"')&&html.includes('Enter advancement trial')});`);
 
 test('the Eclipse lineage uses the 4th job as the last step of its path', () => `
   ${setup('Lord Knight', 50, 150)}

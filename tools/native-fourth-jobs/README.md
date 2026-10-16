@@ -108,3 +108,19 @@ The review follows the selected skill by default. Cast mode fits clips to swings
 as the game does; manual mode keeps the native frame delays. Scrubbing controls
 both body and effects. `tools/check_fourth_job_playback_browser.js` verifies actual
 Canvas effects, changing pixels, native roll actions and automatic playback.
+
+## Gameplay delivery (v161)
+
+The testing unlock now uses these exact composites for all six jobs in gameplay,
+portraits and Wardrobe. Run `python3 tools/build_fourth_job_runtime.py` after
+regenerating the review pack, then run it with `--check`. The delivery catalog omits
+proof hashes and adds a standing figure height derived from the idle bounds. PNGs,
+action delays and placements are copied unchanged into `assets/fourth-jobs/v1/`.
+`assets/fourth-jobs.js` uses the existing Wardrobe draw path and checksum/bounded
+loading. No new native exports or attachment guesses are involved.
+
+These remain fixed looks: gender can change, but hair/accessories are disabled and
+saved cosmetic choices are retained for earlier jobs. The composite contains the
+native weapon; separate weapon-layer refine edging needs a future layered export.
+The former parent-body route remains only as legacy data, and is not selected for
+fourth-job rendering. Runtime failures wait for Retry in Wardrobe.

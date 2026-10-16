@@ -132,7 +132,7 @@ checkout or a combined branch.
 Build with `bash tools/build_site.sh` and run `node tools/dev_server.js --gm-all`
 for a disposable preview. Maps → Ascension Map uses normal travel, combat and
 loot. The World Atlas holds the original ten maps. Both destination lists use plain backgrounds with gold section dividers.
-Both Ascension destinations open independently at Base 150 without boss clears. The previous scenery popup is no longer used.
+Both Ascension destinations require a fourth-job class without boss clears. The previous scenery popup is no longer used.
 
 Run `node tools/tests/panel_layout_smoke.js`,
 `node tools/tests/ascension_scene_sim.js`,
@@ -164,7 +164,7 @@ disposal both with textures and with missing images.
 
 ## Parked fourth-job visual review
 
-Keep `FOURTH_JOBS_LIVE=false`. Use the normal static preview server and open
+The owner testing build has `FOURTH_JOBS_LIVE=true`. Use the normal static preview server and open
 `/Updates/fourth-jobs/review.html` for the original native fixed-look sprites and
 30 core skill effects. This page is excluded from the production build.
 
@@ -180,8 +180,10 @@ audit validates recorded packed hashes and frame reconstruction only.
 In the shared browser, run
 `coderabbit-agent-browser eval "$(cat tools/check_fourth_job_browser.js)"` at desktop
 and 390px widths. Check sprite download failure/retry and reduced-motion startup
-as well. The pack is not yet integrated with the live wardrobe; these checks do
-not replace full flag-on gameplay and wardrobe acceptance before release.
+as well. The fixed-look pack is integrated with the live renderer in v161. Run
+`python3 tools/build_fourth_job_runtime.py --check` and
+`node tools/tests/fourth_job_runtime_sim.js` for delivery/loading/frame coverage;
+review-page checks do not replace gameplay and wardrobe acceptance before release.
 
 Fourth-job playback correction: `node tools/tests/fourth_job_motion_sim.js` checks
 native skill routes and deterministic body/effect time. Run
@@ -190,3 +192,33 @@ on the review page to check actual Canvas FX for all 30 skills, resumed playback
 and body changes during scrubbing. The expanded native audit checks 400 actions /
 2,573 frames. Manual route browser coverage is 384; GX roll aliases are covered
 by motion and pixel playback checks. Skill selection intentionally resumes playback.
+
+For v162, run `ascension_evolution_sim.js`, `astral_journey_sim.js`, `mythic_testing_sim.js`, `fourth_job_mythic_sim.js` and the existing Ascension/UI suites. Regenerate Thor with `node tools/maps/render_astral_preview.js thor | python tools/maps/render_astral_preview.py`; this mode also needs `@napi-rs/canvas` (tested 1.0.11), alongside Three, Pillow and numpy. The banner uses actual scene geometry and textures, with software lighting.
+
+## Ascension progression (v163)
+
+Run `node tools/tests/ascension_tracks_sim.js`,
+`node tools/tests/ascension_combat_sim.js` and
+`node tools/tests/ascension_rewards_sim.js`. They exercise actual page helpers,
+combat, source-class away attribution, duplicate claims, state repair, ordinary
+skill ledger separation and live/away reward parity. Include save/owner/cloud,
+offline, skill/combo, job/trial/Mythic, combat/stat/economy and Ascension map/UI
+suites when these paths change. Historical balance fixtures can be regenerated
+with `node tools/progression_balance.js --reuse-baseline`, then separately
+`--skills --reuse-baseline` and `--encounters --reuse-baseline`; preserve original
+baseline rows. Validate with `node tools/tests/skill_balance_sim.js`.
+
+In the built browser check both Character allocation tabs at desktop and 390px:
+earn/spend limits, six class presets, all six upgrades per class, combo availability,
+auto-cast on/off, reset/cancel, reload and fresh account isolation. Test scene
+rendering on a GPU-capable browser separately from the documented renderer stub.
+
+For v165 reward/pacing retunes, `ascension_rewards_sim.js` pins 700 shared hours
+and ~87.5 class hours at 8M combat EXP/min, 5–10% EXP per HP, and 5–10% Zeny
+**per kill** against matching Abyss regular/MVP mobs at low/mid/high random rolls.
+It checks live/away parity including bosses and unchanged original-map Zeny.
+`ascension_tracks_sim.js` rejects v164 measured-income samples both at load and
+claim while preserving current-version samples, earned progress and ordinary-map
+samples. Existing Mythic/evolution suites cover actual prices, resource deductions
+and equipment identity. Price probes must use `mythic:true`; `sec:6` alone falls
+back to N+ rarity for ore and reforge fees.

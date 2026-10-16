@@ -6,12 +6,12 @@ const test=(name,fn)=>{ev("Math.random=window.testRandom;S=fresh();S.cls='Guillo
 try{
  test('all classes and crafted weapon families are available',()=>{
   assert.equal(ev('Object.values(CLASSES).filter(c=>c.tier===4).length'),6);
-  assert.ok(ev("ascensionForgePanel().includes('celestial:weapon:dagger')"));
-  assert.ok(ev("ascensionForgePanel().includes('celestial:weapon:katar')"));
+  assert.ok(ev("ascensionForgePanel().includes('data-ascension-item')"));
+  assert.equal(ev("(ascensionForgePanel().match(/data-a=.ascset/g)||[]).length"),6);
  });
  test('invalid crafting and full bags never consume resources',()=>{
   ev('window.wallet=JSON.stringify([S.zeny,S.ascensionMat])');
-  ev("craftAscensionPiece('celestial','weapon','invalid');S.inv=Array.from({length:BAGMAX},()=>({}));ACT.craftasc('celestial:weapon:dagger')");
+  ev("makeMythicEquipment('celestial','weapon','invalid');S.inv=Array.from({length:BAGMAX},()=>({}));ACT.craftasc('celestial:weapon:dagger')");
   assert.equal(ev('JSON.stringify([S.zeny,S.ascensionMat])===window.wallet'),true);
  });
  test('transformation preserves identity, cards and refinement',()=>{
@@ -19,19 +19,19 @@ try{
   assert.equal(ev('S.eq.weapon.sec'),6);assert.equal(ev('S.eq.weapon.id'),700);assert.equal(ev('S.eq.weapon.cards[0].id'),701);assert.equal(ev('S.eq.weapon.r'),10);
  });
  test('four-affix reforge survives save repair and accepts without changing identity',()=>{
-  ev("S.eq.weapon=craftAscensionPiece('celestial','weapon','dagger').item;window.gearId=S.eq.weapon.id;reforge('weapon',true)");
+  ev("S.eq.weapon=makeMythicEquipment('celestial','weapon','dagger').item;window.gearId=S.eq.weapon.id;reforge('weapon',true)");
   assert.equal(ev('validReforgeOffer(S).after.length'),4);
   ev('localStorage.setItem(saveKey(),JSON.stringify(S));S=load()');assert.equal(ev('validReforgeOffer(S).after.length'),4);
   ev('resolveReforge(true)');assert.equal(ev('S.eq.weapon.id===window.gearId'),true);assert.equal(ev('S.eq.weapon.aff.length'),4);
  });
  test('Mythic +15 uses finite ore costs; ordinary gear remains capped',()=>{
-  ev("S.eq.weapon=craftAscensionPiece('celestial','weapon','dagger').item;S.eq.weapon.r=14;Math.random=()=>0;refine('weapon')");
+  ev("S.eq.weapon=makeMythicEquipment('celestial','weapon','dagger').item;S.eq.weapon.r=14;Math.random=()=>0;refine('weapon')");
   assert.equal(ev('S.eq.weapon.r'),15);assert.equal(ev('S.ore.ori'),985);assert.equal(ev('refCh({...S.eq.weapon,r:14})'),2);
   assert.match(ev('V.refine()'),/MAX/);ev("refine('armor')");
   ev('S.eq.weapon.sec=5;S.eq.weapon.r=10');ev("refine('weapon')");assert.equal(ev('S.eq.weapon.r'),10);
  });
  test('GM grants new resources and edits Mythic to four affixes / +15',()=>{
-  ev("S.eq.weapon=craftAscensionPiece('celestial','weapon','dagger').item;gmApplyGift({resource:'ascMat2',amount:25});gmApplyGift({resource:'mythicScrolls',amount:10});gmApplyGear({mode:'affixes',itemId:S.eq.weapon.id,refine:15,aff:[{k:'str',v:10},{k:'agi',v:10},{k:'crit',v:20},{k:'cdm',v:10}]})");
+  ev("S.eq.weapon=makeMythicEquipment('celestial','weapon','dagger').item;gmApplyGift({resource:'ascMat2',amount:25});gmApplyGift({resource:'mythicScrolls',amount:10});gmApplyGear({mode:'affixes',itemId:S.eq.weapon.id,refine:15,aff:[{k:'str',v:10},{k:'agi',v:10},{k:'crit',v:20},{k:'cdm',v:10}]})");
   assert.equal(ev('S.mythicScrolls'),10);assert.equal(ev('S.eq.weapon.r'),15);assert.equal(ev('S.eq.weapon.aff.length'),4);
   ev('S.eq.weapon.sec=5');assert.throws(()=>ev("gmApplyGear({mode:'affixes',itemId:S.eq.weapon.id,refine:15,aff:[]})"));
  });

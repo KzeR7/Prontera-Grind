@@ -84,11 +84,12 @@ t('map has destination, travel and field-guide sections; travel stays outside fo
   assert.ok(root.querySelector('.ui-field-guide .mapcols'));
   assert.ok(!root.querySelector('.ui-field-guide details'), 'drops are visible without opening tabs');
 });
-t('Echo sits below travel inside the atlas center column',()=>{
+t('Echo has its own panel between Ascension and Social',()=>{
+  ev("mapSeason='echo'");
   const root=window.document.createElement('div');root.innerHTML=ev('V.map()');ev('arrangePanel')('map',root);
-  assert.deepStrictEqual([...root.querySelector('.ui-content').children].map(e=>e.className),['ui-section ui-destinations','ui-section ui-route','ui-section ui-field-guide']);
-  assert.ok(root.querySelector('.ui-route .ui-challenge [data-trial=lobby]'));
-  assert.ok(root.querySelector('.ui-route #eclipseAtlas'));
+  assert.ok(root.querySelector('#map-panel-echo [data-trial=lobby]'));
+  assert.equal(root.querySelector('[data-a=go]'),null);
+  ev("mapSeason='atlas'");
 });
 t('kill updates retain live journal rows and focused controls',()=>{
   ev("tabs.splice(0,tabs.length,'index');indexMode='mobs';renderWin()");
@@ -141,11 +142,14 @@ t('every field previews the same local equipment sprite the generated bag item r
   }
   assert.strictEqual(ev('JSON.stringify(S)'),before,'sprite selection does not migrate saves');
 });
-t('job paths offer six lineages and five focused progression steps',()=>{
-  const root=window.document.createElement('div');root.innerHTML=ev('V.job()');ev('arrangePanel')('job',root);
+t('jobs default to a full lineage and offer an expanding design view',()=>{
+  ev('eclipseJobsBrowse=false');const root=window.document.createElement('div');root.innerHTML=ev('V.job()');ev('arrangePanel')('job',root);
+  assert.strictEqual(root.querySelectorAll('.class-lineage-overview .tn').length,25);
+  ev("eclipseJobsBrowse=true;jobBranch='Mage'");root.innerHTML=ev('V.job()');ev('arrangePanel')('job',root);
   assert.strictEqual(root.querySelectorAll('.class-path-tabs button').length,6);
-  assert.strictEqual(root.querySelectorAll('.class-path-track .tn').length,5);
+  assert.strictEqual(root.querySelectorAll('.class-path-track .tn').length,4);
   assert.ok(root.querySelector('.class-path-focus #classPreview'));
+  ev('eclipseJobsBrowse=false');
 });
 t('bag details are outside the item grid, including all Nightmare sale actions',()=>{
   ev("sub.bag='bag'");const root=window.document.createElement('div');root.innerHTML=ev('V.equip()');ev('arrangePanel')('equip',root);
@@ -327,17 +331,17 @@ t('auto-sell filter editor saves drafts, keeps text during redraws and previews 
 t('World Atlas and Ascension Map have separate destination grids and normal travel controls',()=>{
  const doc=window.document;ev("tabs.splice(0,tabs.length,'map');mapSeason='atlas';mapM=3;mapL=4;S.mp=3;S.lvl=4;renderWin()");
  const before=ev('JSON.stringify(S)');
- assert.deepStrictEqual([...doc.querySelectorAll('.map-season-tabs [role=tab]')].map(b=>b.id),['map-tab-atlas','map-tab-ascension','map-tab-social']);
+ assert.deepStrictEqual([...doc.querySelectorAll('.map-season-tabs [role=tab]')].map(b=>b.id),['map-tab-atlas','map-tab-ascension','map-tab-echo','map-tab-social']);
  const social=doc.querySelector('#map-tab-social');assert.ok(social.disabled);assert.strictEqual(social.getAttribute('aria-disabled'),'true');assert.match(social.textContent,/Social Hub.*Coming Soon/);
  social.click();ev("ACT.mapseason('social')");assert.strictEqual(ev('mapSeason'),'atlas');assert.strictEqual(ev('JSON.stringify(S)'),before);
  assert.strictEqual(doc.querySelectorAll('[data-a=selm]').length,10);
- doc.querySelector('#map-tab-atlas').dispatchEvent(new window.KeyboardEvent('keydown',{key:'End',bubbles:true}));
+ doc.querySelector('#map-tab-atlas').dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
  assert.strictEqual(ev('mapSeason'),'ascension');assert.strictEqual(doc.activeElement.id,'map-tab-ascension');
  assert.deepStrictEqual([...doc.querySelectorAll('[data-a=selm]')].map(b=>b.dataset.v),['10','11']);
  assert.strictEqual(doc.querySelectorAll('.map-node').length,5);assert.strictEqual(doc.querySelectorAll('dialog iframe,[data-a=explore]').length,0);
  assert.strictEqual(doc.querySelector('[role=tabpanel]').id,'map-panel-ascension');
  assert.match(doc.querySelector('.ascension-preview').getAttribute('src'),/astral-citadel\.png\?v=156$/);assert.strictEqual(doc.querySelector('#eclipseAtlas'),null);
- doc.querySelector('[data-a=selm][data-v="11"]').click();assert.match(doc.querySelector('.ascension-preview').getAttribute('src'),/thor-volcano\.svg\?v=157$/);
+ doc.querySelector('[data-a=selm][data-v="11"]').click();assert.match(doc.querySelector('.ascension-preview').getAttribute('src'),/thor-volcano\.png\?v=162$/);
  doc.querySelector('[data-a=selm][data-v="10"]').click();
  assert.strictEqual(ev('JSON.stringify(S)'),before);
  doc.querySelector('#map-tab-ascension').dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
@@ -349,12 +353,12 @@ t('Ascension gates, immediate MVP escorts, stage progression, material boundarie
  ev("S=fresh();S.auto=false;S.adv=true;S.lv=139;S.mapClears[9]=true;mapM=10;mapL=1");
  assert.strictEqual(ev('canTravel(10,1)'),false);ev('ACT.go()');assert.strictEqual(ev('S.mp'),0);
  ev('S.lv=140;S.mapClears[9]=false');assert.strictEqual(ev('canTravel(10,1)'),false);
- ev('S.lv=150;S.mapClears[9]=false;ACT.go();spawn()');assert.strictEqual(ev('S.mp'),10);
+ ev("S.cls='Rune Knight';S.lv=150;S.mapClears[9]=false;ACT.go();spawn()");assert.strictEqual(ev('S.mp'),10);
  assert.match(window.document.querySelector('#eclipseMapStage').textContent,/Ascension Map/);
  assert.strictEqual(ev('mobs.every(m=>m.mapIndex===10&&m.spriteId>0&&Number.isFinite(m.hp)&&m.hp>0)'),true);
  assert.strictEqual(ev('canTravel(10,2)'),false);
  ev('S.kl=MPS-1;kill(mobs[0])');assert.strictEqual(ev('S.prog[10]'),2);assert.strictEqual(ev('S.lvl'),2);
- ev('S.prog[10]=5;gotoField(10,5);spawn()');assert.strictEqual(ev('mobs.length'),6);assert.strictEqual(ev('mobs.filter(m=>m.boss).length'),1);
+ ev('S.prog[10]=5;gotoField(10,5);for(let i=0;i<1000&&astralJourney;i++)tickAstralJourney(.1);spawn()');assert.strictEqual(ev('mobs.length'),6);assert.strictEqual(ev('mobs.filter(m=>m.boss).length'),1);
  ev('kill(mobs.find(m=>m.boss))');assert.strictEqual(ev('S.mapClears[10]'),true);assert.strictEqual(ev('S.mp'),11);
  ev('S.lv=150;mapM=11;mapL=1;ACT.go();spawn()');assert.strictEqual(ev('S.mp'),11);assert.strictEqual(ev('nmMapOpen(11)'),false);assert.strictEqual(ev('canTravel(11,11)'),false);
  ev('gotoField(11,11)');assert.strictEqual(ev('S.lvl'),1);

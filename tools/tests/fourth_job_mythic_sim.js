@@ -13,8 +13,9 @@ try{
    ev(`S=fresh();S.auto=false;S.cls=${JSON.stringify(parent)};S.lv=150;S.zeny=1e10;S.ascensionMat=[1000,1000,1000];
     for(const name of lineOf(S.cls))S.jobs[name]={jl:CLASSES[name].mj,jx:0};
     S.eq.weapon={id:90001,slot:'weapon',wt:C().wt[0],name:'N+ regression weapon',sec:5,tier:4,val:500,r:10,slots:3,cards:[Object.assign(newCard(CARD_CATALOG.find(card=>card.stat==='str'&&!card.nightmare)),{id:90002})],aff:[{k:'str',v:10},{k:'agi',v:10},{k:'vit',v:10}]};
+    changeClass(${JSON.stringify(cls)});JOB_RITE.enemy.hp=0;kill(JOB_RITE.enemy);JOB_RITE.exitAt=Date.now();tickJobRite();
     window.transformed=transformToMythic(S.eq.weapon,'celestial');
-    window.crafted=craftAscensionPiece('celestial','armor');S.eq.armor=window.crafted.item;S.eq.weapon.locked=false;S.eq.armor.locked=false;
+    S.eq.armor={id:90003,slot:'armor',sec:5,val:100,aff:[],cards:[]};window.crafted=transformToMythic(S.eq.armor,'celestial');S.eq.weapon.locked=true;S.eq.weapon.wearer=S.cls;S.eq.armor.locked=false;
    `);
    assert.equal(ev('window.transformed.success'),true);
    assert.equal(ev('S.eq.weapon.r'),10);
@@ -22,11 +23,11 @@ try{
    assert.equal(ev("rarOf(S.eq.weapon).n"),'Mythic');
    const before=probe("return {weapon:S.eq.weapon,armor:S.eq.armor,materials:S.ascensionMat,zeny:S.zeny,atkBonus:bon('atk')}" );
    assert.equal(probe("const total=bon('atk'),set=S.eq.armor.ascSet;delete S.eq.armor.ascSet;const without=bon('atk');S.eq.armor.ascSet=set;return total-without"),5,'two-piece set reaches the live stat formula');
-   ev(`changeClass(${JSON.stringify(cls)});JOB_RITE.enemy.hp=0;kill(JOB_RITE.enemy);JOB_RITE.exitAt=Date.now();tickJobRite();`);
+
    assert.equal(ev('S.cls'),cls);assert.equal(ev('jobOf().jl'),1);
    assert.equal(ev('items().every(it=>canUse(it))'),true);
    assert.deepEqual(probe("return {weapon:S.eq.weapon,armor:S.eq.armor,materials:S.ascensionMat,zeny:S.zeny,atkBonus:bon('atk')}"),before);
-   ev(`changeClass(${JSON.stringify(parent)});changeClass(${JSON.stringify(cls)});localStorage.setItem(saveKey(),JSON.stringify(S));S=load();`);
+   ev(`changeClass(${JSON.stringify(parent)});if(items().some(it=>it.sec===6))throw Error('parent retained Mythic');changeClass(${JSON.stringify(cls)});localStorage.setItem(saveKey(),JSON.stringify(S));S=load();`);
    assert.equal(ev('S.cls'),cls);
    assert.deepEqual(probe("return {weapon:S.eq.weapon,armor:S.eq.armor,materials:S.ascensionMat,zeny:S.zeny,atkBonus:bon('atk')}"),before);
    assert.equal(ev('items().concat(S.inv).filter(it=>it.id===90001).length'),1,'one physical weapon, with snapshots referencing it by ID');

@@ -19,9 +19,9 @@ try{
   assert.equal(ev('gearPool(10,1).length+gearPool(11,5).length'),0);
  });
  test('Ascension Forge crafts Mythic using the exact material and Zeny cost',()=>{
-  ev("S=fresh();S.cls='Lord Knight';S.lv=150;S.ascensionMat=[1000,1000,1000];S.zeny=1e9");
+  ev("S=fresh();S.cls='Rune Knight';S.lv=150;S.ascensionMat=[1000,1000,1000];S.zeny=1e9");
   const before=probe("return {m:S.ascensionMat,z:S.zeny,cost:ASC_SETS.celestial.cost.armor}");
-  const result=probe("const crafted=craftAscensionPiece('celestial','armor');S.eq.armor=crafted.item;return {crafted,m:S.ascensionMat,z:S.zeny}");
+  const result=probe("S.eq.armor={id:9100,slot:'armor',sec:5,val:100,aff:[],cards:[]};const crafted=transformToMythic(S.eq.armor,'celestial');return {crafted,m:S.ascensionMat,z:S.zeny}");
   assert.equal(result.crafted.item.mythic,true);assert.equal(result.crafted.item.sec,6);assert.equal(result.crafted.item.ascSet,'celestial');
   assert.deepEqual(result.m,[before.m[0]-before.cost[0],before.m[1],before.m[2]-before.cost[1]]);
   assert.equal(result.z,before.z-before.cost[2]);assert.equal(ev('statCap()'),150);

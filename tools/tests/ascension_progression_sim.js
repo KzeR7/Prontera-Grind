@@ -3,7 +3,7 @@
 const assert=require('assert/strict'),{createGame}=require('./helpers/game');
 const game=createGame(),{ev}=game;
 try{
- ev("currentUser='ascension_migration';S=fresh();S.lv=150;S.mapClears[9]=true;S.mapClears[10]=true;S.auto=false;S.adv=false;");
+ ev("currentUser='ascension_migration';S=fresh();S.cls='Rune Knight';S.lv=150;S.mapClears[9]=true;S.mapClears[10]=true;S.auto=false;S.adv=false;");
  for(const m of [10,11])for(let l=1;l<=5;l++){
   ev(`S.mp=${m};S.lvl=${l};S.prog[${m}]=5;spawn()`);
   assert.equal(ev(`fieldOf(${m},${l}).boss!==null`),l===5);
@@ -32,17 +32,17 @@ try{
  // Migration is based on the saved version, never on the defaults merged during load.
  const expected=[1,2,2,3,3,3,4,4,4,5];
  for(const m of [10,11])for(let old=1;old<=10;old++){
-  ev(`S=fresh();S.lv=150;S.mapClears[9]=true;S.mapClears[10]=true;S.mp=${m};S.lvl=${old};S.prog[${m}]=${old};S.ascensionMat=[3,4,5];
-   S.offlineIncome={version:1,key:'Novice:${m}:${old}',at:1,xp:3,zeny:4,job:2,kph:60};delete S.ascensionStageVersion;
+  ev(`S=fresh();S.cls='Rune Knight';S.lv=150;S.mapClears[9]=true;S.mapClears[10]=true;S.mp=${m};S.lvl=${old};S.prog[${m}]=${old};S.ascensionMat=[3,4,5];
+   S.offlineIncome={rewardVersion:ASC_REWARD_VERSION,version:1,key:'Rune Knight:${m}:${old}',at:1,xp:3,zeny:4,job:2,kph:60};delete S.ascensionStageVersion;
    lsPut(saveKey(),JSON.stringify(S));S=load();`);
   assert.equal(ev('S.lvl'),expected[old-1]);assert.equal(ev(`S.prog[${m}]`),expected[old-1]);
-  assert.equal(ev('S.offlineIncome.key'),`Novice:${m}:${expected[old-1]}`);
+  assert.equal(ev('S.offlineIncome.key'),`Rune Knight:${m}:${expected[old-1]}`);
   assert.equal(ev('S.mapClears[10]'),true);assert.equal(ev('S.ascensionMat.join()'),'3,4,5');
   ev('lsPut(saveKey(),JSON.stringify(S));S=load()');assert.equal(ev('S.lvl'),expected[old-1]);
  }
  ev("S.prog[11]=5;S.mp=11;S.lvl=5;mapM=11;mapL=5;mapSeason='ascension';");
  const html=ev('V.map()');assert.match(html,/5\/5 stages available/);assert.doesNotMatch(html,/Gear chance per kill|Every MVP drop is/);
- assert.match(html,/N\+ weapon evolution/);assert.match(html,/Ascension skill/);
+ assert.match(html,/N\+ equipment evolution/);assert.match(html,/Ascension stats/);
  console.log('PASS: ten fields, boss5/escorts, no equipment online/offline, stage4→5, capped final route, twenty legacy migrations/idempotence, material UI.');
 }finally{game.close();}
 
@@ -52,7 +52,7 @@ try{
  const {ev}=balance;
  ev('S=fresh();S.auto=false;S.adv=false;S.lv=149;S.mapClears.fill(true)');
  for(const m of [10,11])assert.equal(ev(`canTravel(${m},1)`),false);
- ev('S.lv=150;S.mapClears.fill(false)');
+ ev("S.cls='Rune Knight';S.lv=150;S.mapClears.fill(false)");
  for(const m of [10,11]){
   assert.equal(ev(`canTravel(${m},1)`),true);
   assert.equal(ev(`canTravel(${m},2)`),false); // Stages still earn their normal progress.
@@ -82,6 +82,6 @@ try{
    }
   }
  }
- ev('S.lv=149;S.mp=11;lsPut(saveKey(),JSON.stringify(S));S=load()');assert.equal(ev('S.mp'),9);
- console.log('PASS: independent Lv150 access without clears, reload/locked-save repair, both five-stage HP/ATK ramps and MVP scaling.');
+ ev("S.cls='Lord Knight';S.lv=150;S.mp=11;lsPut(saveKey(),JSON.stringify(S));S=load()");assert.equal(ev('S.mp'),9);
+ console.log('PASS: independent fourth-job access without clears, reload/locked-save repair, both five-stage HP/ATK ramps and MVP scaling.');
 }finally{balance.close();}

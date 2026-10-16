@@ -20,9 +20,9 @@ progression; Endless Echo is a separate damage trial with its own rewards and li
 ## Ascension fields
 
 Maps → Ascension Map contains Astral Citadel and Thor Volcano, beside the
-World Atlas destination list. The adjacent Social Hub tab is locked as Coming Soon.
+World Atlas destination list. Endless Echo has its own tab between Ascension Map and the locked Social Hub tab.
 Astral and Thor have illustrated destination previews. Travel enters the main battlefield with the current
-character, combat and drops. Both maps unlock independently at Base 150, with no prerequisite boss clears.
+character, combat and drops. Both maps require a fourth-job class, with no prerequisite boss clears.
 Ascension mobs use the v158 difficulty curves relative to the Nightmare Abyss
 Stage 5 MVP (internal Stage 15). Astral starts at five times its HP and ATK;
 Thor starts at seven times. Later stages ramp further, with a steeper curve in Thor;
@@ -47,14 +47,75 @@ Materials are saved separately from equipment: Astral Shard (Astral) and Primal
 Catalyst (Thor) each roll at 0.035% per kill; Valkyrie's Sigil rolls at 0.0025% per
 ordinary mob/escort and 0.1% per MVP. The map's Field intelligence shows the wallet.
 Online and server-budgeted offline kills share these rolls. Materials are collected
-for N+ weapon evolution (Shard/Catalyst) and Ascension skill growth (Sigil).
-Black Market → Ascension Forge spends Shards/Catalysts, Sigils and Zeny to craft
-Mythic set equipment or transform N+ gear. Ascension skill upgrade menus remain planned.
+for N+ equipment evolution (Shards/Catalysts plus Sigils).
+Equipment → Ascension (also available in Black Market) requires a fourth-job class. Choose a set, then an eligible owned N+ piece. Evolution spends Shards/Catalysts, Sigils and Zeny, preserving the same item ID, refinement, cards and existing affixes while filling to four affixes. It never creates an extra item. Mythic equipment can only be worn by fourth jobs. Character contains working Ascension stats and Skill ascension allocation tabs.
 Existing maps, pet identities and Nightmare reward values retain their meaning.
+
+## Ascension progression (v165)
+
+Any combat EXP earned as a fourth job credits both Ascension tracks in full.
+Shared stat Ascension starts at 0 and caps at 50, granting one point per level.
+Each fourth job has its own saved allocation of the same earned budget; switching
+classes restores its preset. Eight stats cap at 10 ranks each, so 50 points cannot
+max all eight. Bonuses activate only while playing a fourth job.
+
+| Stat | Per rank | Rank 10 |
+| --- | --- | --- |
+| Might | +1% physical/magic character damage | +10% |
+| Precision | +1 percentage point post-cap crit | +10 points |
+| Ferocity | +3 percentage points crit damage | +30 points |
+| Slayer | +1.5% boss damage | +15% |
+| Vitality | +2% max HP | +20% |
+| Guard | 1% less remaining incoming damage | 10% less |
+| Haste | 1% shorter basic-attack interval after its floor | 10% shorter |
+| Evasion | +0.5 percentage point post-cap flee | +5 points |
+
+Skill Ascension starts at 0 and caps at 30 **per fourth job**, one point per level.
+Six skills each take five ranks. The five ordinary skills keep their existing
+rank 1–10 ledger; the sixth is unlocked by its first Ascension rank: Enchant Blade,
+Tetra Vortex, Unlimit, Dark Claw, Epiclesis or Magma Eruption. The sixth skill also appears in the normal skill library with a link to unlock
+it in Skill ascension. New attacks can be assigned to the six-slot combo; buffs
+auto-cast independently and have an on/off control in Skill ascension. Resets are free during testing and keep earned levels.
+
+Numeric skill benefits scale linearly except Dragon Breath's burn and Chain
+Lightning's extra bounce, which unlock at rank 5. Boss-damage bonuses replace the
+proposed defense penetration extras because enemies have no DEF/MDEF stat.
+Existing resistance, boss crowd-control limits and ordinary skill budgets apply.
+Ascension events/buffs cancel on reset, class change or account-state replacement.
+
+The next-level requirement is `round(base × (level + 1)^1.8 / 1000) × 1000`,
+with base 16,007,274 for shared stats and 8,212,500 for class skills. At the
+8M combat EXP/min reference, the shared track targets about 700 active hours and
+each class skill track about 87.5 hours. Full costs are 336,000,008,000 and
+42,000,866,000 EXP respectively. These are reference targets; actual farming rates
+vary with build, map, travel and deaths. Previously earned levels, partial EXP and
+allocations survive this retune.
+
+Away progress uses the existing 50% rate and four-hour claim cap, credited to the
+class in its saved income sample, once per server claim. Quest and GM Base-EXP
+grants do not contribute; no historical EXP is converted.
+
+Astral reward bonuses by stage are 5/5.5/6/6.5/7%; Thor bonuses are
+7/7.75/8.5/9.25/10%. EXP pays this premium per HP relative to Nightmare Abyss
+Stage 15 escorts, so raw EXP still reflects the greater combat difficulty.
+Zeny instead pays this premium **per kill**, using the corresponding Abyss
+regular or MVP reward. Zeny never scales with Ascension HP. These maps primarily
+supply materials; they need not outperform Abyss in Zeny/hour. MVP EXP remains
+four times stage regular EXP. HP/ATK and material odds are unchanged. Stale
+Ascension away-income samples are invalidated; ordinary-map samples survive.
+
+Existing sinks are retained after reducing currency supply: Mythic evolution
+costs 50–140M Zeny per piece plus materials; four-affix Mythic reforges cost
+1.2M (all), 3.6M (two), or 7.2M (one), with selective ore/material fees.
+Mythic +11–15 attempts cost 264/288/312/336/360k Zeny plus 15 ore each, at
+30/21/12/5/2% success. Failure preserves the Mythic rank. Expected +10→+15
+fees total about 29.57M, or 159.21M including purchased ore at existing prices;
+actual RNG costs vary. Prior map reward changes did not rebalance these prices.
+New skill/equipment artwork remains a separate unfinished item.
 
 ## Classes and progression
 
-There are 19 classes: Novice plus six three-step lines:
+There are 25 classes: Novice plus six four-step lines. The first three steps are:
 
 | First job | Second job | Transcendent job |
 | --- | --- | --- |
@@ -125,8 +186,10 @@ Movement from AGI, pets, skills and running shares a 10.045 units/second cap.
 Equipment and card movement is applied afterward and can exceed that cap; those
 bonuses retain their combined +20% limit.
 
-Class Path shows six lineage choices, one selected progression from Novice through
-the fourth job, and a focused class inspector. The six fourth jobs appear as Coming
+Jobs opens with the complete class lineage on one page. Tree design is a second
+tab: Novice sits above six first classes; selecting one expands its complete line
+and collapses the previous line. Selecting the same branch collapses it. Both views
+share a focused inspector. The six fourth jobs appear as Coming
 soon while the release flag is off. Inspection does not change class.
 
 ## Equipment, cards and currency
@@ -190,8 +253,15 @@ without field rewards/progress. Played classes return directly. The local test b
 GM → Ascension testing grants Base 150, crafting materials, Zeny, ores and both
 protection scroll types. Grant any of the six complete sets for your current weapon
 families. Max the parent job and use Class Path for the real timed trial.
-The Forge offers each compatible weapon and N+ transformation; maps do not drop gear.
+The Forge evolves compatible owned N+ equipment; maps do not drop gear.
 Mythic refines reach +15 (15 ores per attempt; +11…+15 chances 30/21/12/5/2%).
 Four-affix reforges retain their paid offer across reloads. The cloud GM console
 includes all crafted gear, materials and Mythic scrolls, and supports +15/four-affix edits.
-Native fourth-job bodies remain in the review pack; gameplay uses the existing parent-body fallback.
+Fourth jobs use the original native composites in gameplay, portraits and Wardrobe,
+with both genders, eight directions and native idle/walk/attack clocks. The fixed
+head and weapon are composed by the native renderer. Hair/accessory controls are
+disabled for these bodies; saved cosmetics return on earlier classes. Separate
+weapon-layer refinement edging is unavailable on these combined sprites. Equipment
+→ Ascension opens the N+ evolution Forge.
+
+Astral stage changes walk along the continuous bridge with the following camera; arrival rebases the scene and actors together. Echo entry cancels travel safely. Thor’s atlas banner is rasterized from its actual scenery and textures.

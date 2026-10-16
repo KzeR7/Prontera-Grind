@@ -4,7 +4,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),THREE=re
 const source=fs.readFileSync(require('path').join(__dirname,'../../index.html'),'utf8');
 const start=source.indexOf('let ascensionWorld=null,'),end=source.indexOf('function buildDeco(m)',start);
 const pending=[],scene=new THREE.Scene(),ground={visible:true},hemi={intensity:.8},sun={intensity:.9};
-const context={THREE,scene,ground,hemi,sun,KIT:{ground:{visible:true}},townObjs:[{visible:true}],road:{visible:true},Z0:-28,Z1:12,S:{mp:10,lvl:4},TRIAL:{on:false},JOB_RITE:{on:false},log(){},PGAscension:{build:()=>new Promise(resolve=>pending.push(resolve))}};context.window=context;vm.createContext(context);
+const context={ASTRAL_FOCUS:[-8,-40,-74,-140,-208],astralOriginStage:0,astralJourney:null,THREE,scene,ground,hemi,sun,KIT:{ground:{visible:true}},townObjs:[{visible:true}],road:{visible:true},Z0:-28,Z1:12,S:{mp:10,lvl:4},TRIAL:{on:false},JOB_RITE:{on:false},log(){},PGAscension:{build:()=>new Promise(resolve=>pending.push(resolve))}};context.window=context;vm.createContext(context);
 vm.runInContext(source.slice(start,end)+'\nglobalThis.api={clearAscension,buildAscension,get world(){return ascensionWorld}};',context);
 function world(focus=-140){let disposed=0;const w={scene:new THREE.Scene(),view:{focus},dispose(){disposed++;this.scene.clear()},get disposed(){return disposed}};w.scene.add(new THREE.Group());return w;}
 (async()=>{
