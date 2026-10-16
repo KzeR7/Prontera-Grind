@@ -6813,3 +6813,28 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** GM Tools → Maxed Ascension equipment by class. Ore grants are under GM multiplier; resets are under Level test controls.
 * **Checks:** New GM preset regression (7 groups), Mythic testing (10), gear (43), save/load (27), GM tools (14), panel layout (42), generated catalog check, publishing (15), site build and whitespace checks passed. Desktop/390px shared-browser controls and layouts passed with the explicit repository renderer stub; actual WebGL remains unavailable in this sandbox. Save test initially exposed expected locked:false normalization; corrected its expectation and verified every granted item survives reload.
 * **Delivery:** Local workspace changes only; no push or deployment.
+
+### 2026-10-16 — `haven-v181 background music player`
+* **Changed:** Added a background music system with per-map playlists, volume/mute/on-off controls in Settings, track cycling and save-persisted preferences. Tracks are configured in `assets/bgm-tracks.js` and support local audio files or YouTube video IDs. Map travel and auto-advance switch tracks automatically. (Authored as v177 on the BGM branch before main reused that build number; renumbered at merge.)
+* **Try it:** Settings → Background music; edit `assets/bgm-tracks.js` to add tracks per map index.
+* **Checks:** JavaScript syntax checks and affected sim suites passed; update watcher mirror check updated.
+* **Delivery:** Shipped on `arena/4a530a07-prontera-grind` in PR #100.
+
+### 2026-10-16 — `haven-v182 bgm player widget`
+* **Changed:** Added the two Ascension map tracks (Astral Citadel, Thor Volcano) to `assets/bgm-tracks.js`. Added a floating BGM player on PC web, parked under the HP box at the top-left: collapsed it shows the playing track (map BGM by default) with prev/next/mute/power, and the ▾ chevron opens a list of every added track so players can circulate through all BGMs by hand; Auto · map BGM returns control to per-map switching. Phone browsers never show the widget and keep plain autoplay map music. Picking a track while BGM is off turns it back on; state resets to map BGM on load. (Authored as v178 on the BGM branch; renumbered at merge.)
+* **Try it:** On PC, press ▾ on the player under the HP box and pick any track, then Auto · map BGM. Travel to Astral Citadel or Thor Volcano for their new map themes. Phones: just travel and listen.
+* **Checks:** `node --check` on `assets/bgm.js`/`assets/bgm-tracks.js`. New `bgm_sim` (11 passed) covers the exact per-map tracks, minimized widget, library cycling and Auto-restore (it caught a hand-picked track surviving Auto · map BGM, and a prev-while-off leak, both fixed). Update watcher (6), UI (64) and save/load (27) sim suites passed.
+* **Delivery:** Shipped on `arena/4a530a07-prontera-grind` in PR #100.
+
+### 2026-10-16 — `haven-v183 bonus bgm selections + GM equipment presets`
+* **Changed:** Added two bonus BGM selections to the PC player's song list (not tied to a map): Theme of Gonryun (Not So Far Away) and Theme of Prontera. They circulate with every other track in the ▾ list and through prev/next, exactly like the map themes. (Authored as v179 on the BGM branch; renumbered at merge.)
+* **Merged:** Combined with `haven-v180 GM equipment presets` from main - BUILD names both feature sets, and main's Nightmare-material migration (nmMat v3) is preserved in saves alongside the BGM preferences.
+* **Try it:** On PC, open the player under the HP box and pick ♪ Theme of Gonryun or ♪ Theme of Prontera.
+* **Checks:** `bgm_sim` extended (15 tracks listed, both bonus videos, wrap-around at the new list end) and passing; update watcher (6), UI (64) and save/load (27) suites passed after the merge.
+* **Delivery:** Shipped on `arena/4a530a07-prontera-grind` in PR #100; not merged to main.
+
+### 2026-10-16 — `haven-v184 bgm playback fixes`
+* **Changed:** Fixed two BGM player bugs found in PR review. Volume/mute/on-off preferences now actually persist and load: the code checked `window.S`, but the save object is a `let` binding in `index.html` and never a `window` property, so the checks silently disabled both saving and loading. YouTube playback now waits for the player's own `onReady` before loading a video; a track requested earlier waits as the pending video and plays the moment the player is ready instead of being dropped.
+* **Try it:** Change the volume or mute BGM, reload - it remembers. The first track after the login screen always starts, even on a slow connection.
+* **Checks:** `bgm_sim` grown to 12 cases (S-binding persistence + onReady pending-video regression); replaying the suite against the pre-fix code fails 9 of 12, so the cases bite. Update watcher (6), UI (64) and save/load (27) suites passed.
+* **Delivery:** Shipped on `arena/4a530a07-prontera-grind` in PR #100; not merged to main.
