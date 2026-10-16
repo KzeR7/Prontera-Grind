@@ -13,7 +13,8 @@ try{
    const efficiency=regular.exp/abyss.exp;
    assert.ok(efficiency>previous,'deeper stages pay more per kill');previous=efficiency;
    assert.ok(Math.abs(efficiency-ev(`ascRewardBonus(${m},${s})`))<1/abyss.exp);
-   assert.ok(efficiency>=1.05-1/abyss.exp&&efficiency<=1.10+1/abyss.exp,'modest 5–10% EXP premium per kill');
+   const lo=m===10?3:7,hi=m===10?8:15;
+   assert.ok(efficiency>=lo-1/abyss.exp&&efficiency<=hi+1/abyss.exp,'v172: Astral pays 3–8x the anchor per kill, Thor 7–15x');
    assert.ok(Math.abs(ev('fieldExpReward(S.mp,S.lvl,true)')-regular.exp*4)<=3);
    for(const boss of [false,true])for(const roll of [0,.5,.999999]){
     ev(`Math.random=()=>${roll}`);
@@ -38,8 +39,8 @@ try{
   let previous=0;for(let level=0;level<(skills?30:50);level++){const n=ev(`ascNeed(${level},${skills})`);assert.ok(n>previous&&n%1000===0);previous=n;}
  }
  const shared=ev('Array.from({length:50},(_,i)=>ascNeed(i)).reduce((a,b)=>a+b,0)'),skills=ev('Array.from({length:30},(_,i)=>ascNeed(i,true)).reduce((a,b)=>a+b,0)');
- assert.ok(Math.abs(shared/480000000-700)<.01,'shared track targets about 700h at 8M EXP/min');
- assert.ok(Math.abs(skills/480000000-87.5)<.1,'each class skill track targets about 87.5h');
+ assert.ok(Math.abs(shared/84000000-666.7)<.1,'v172: shared track targets about 667h at the 1.4M EXP/min the retuned top field sustains');
+ assert.ok(Math.abs(skills/84000000-83.3)<.1,'v172: each class skill track targets about 83h at the same rate');
  assert.ok(shared/skills>7.99&&shared/skills<8.01,'shared track is about eight class skill tracks');
  console.log('PASS: ten Ascension reward stages, live/away parity, boss EXP 4×, Zeny 2–3× for matching regular/MVP rolls, 300 original Zeny cases, actual kill credits both tracks, increasing EXP curves.');
 }finally{g.close()}

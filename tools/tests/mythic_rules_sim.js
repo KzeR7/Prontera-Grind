@@ -24,14 +24,42 @@ try{
   const result=probe("S.eq.armor={id:9100,slot:'armor',sec:5,val:100,aff:[],cards:[]};const crafted=transformToMythic(S.eq.armor,'celestial');return {crafted,m:S.ascensionMat,z:S.zeny}");
   assert.equal(result.crafted.item.mythic,true);assert.equal(result.crafted.item.sec,6);assert.equal(result.crafted.item.ascSet,'celestial');
   assert.deepEqual(result.m,[before.m[0]-before.cost[0],before.m[1],before.m[2]-before.cost[1]]);
-  assert.equal(result.z,before.z-before.cost[2]);assert.equal(ev('statCap()'),150);
+  assert.equal(result.z,before.z-before.cost[2]);assert.equal(ev('statCap()'),120,'v174: Mythic no longer raises the stat cap');
  });
- test('active and saved class stats above 120 survive reload, including with gear removed',()=>{
-  ev("S.st.str=150;S.st.vit=135;S.base['High Wizard']={lv:150,exp:0,pts:7,hp:100,st:{str:1,agi:1,dex:135,luk:1,int:150,vit:1},eq:null};localStorage.setItem(saveKey(),JSON.stringify(S));S=load()");
-  assert.equal(ev('S.st.str'),150);assert.equal(ev('S.st.vit'),135);assert.equal(ev("S.base['High Wizard'].st.int"),150);assert.equal(ev("S.base['High Wizard'].st.dex"),135);
+ test('v174: active and saved class stats above 120 clamp to 120 with an exact refund',()=>{
+  ev("S.pts=100;S.st.str=150;S.st.vit=135;S.base['High Wizard']={lv:150,exp:0,pts:7,hp:100,st:{str:1,agi:1,dex:135,luk:1,int:150,vit:1},eq:null};localStorage.setItem(saveKey(),JSON.stringify(S));S=load()");
+  assert.equal(ev('S.st.str'),120);assert.equal(ev('S.st.vit'),120);assert.equal(ev("S.base['High Wizard'].st.int"),120);assert.equal(ev("S.base['High Wizard'].st.dex"),120);
+  assert.equal(ev('S.pts'),100+1335+555,'150->120 refunds 1335, 135->120 refunds 555');
+  assert.equal(ev("S.base['High Wizard'].pts"),7+1335+555);
   ev('S.eq.armor=null;localStorage.setItem(saveKey(),JSON.stringify(S));S=load()');
-  assert.equal(ev('S.st.str'),150);assert.equal(ev('statCap()'),120,'unequipping Mythic prevents further allocation above 120');
-  ev('S.st.str=999;localStorage.setItem(saveKey(),JSON.stringify(S));S=load()');assert.equal(ev('S.st.str'),150);
+  assert.equal(ev('S.st.str'),120);assert.equal(ev('statCap()'),120,'the cap is 120 with or without Mythic');
+  ev('S.st.str=999;localStorage.setItem(saveKey(),JSON.stringify(S));S=load()');assert.equal(ev('S.st.str'),120);
+ });
+ test('Mythic item cards list the full set ladder with the worn count, and the inspector one-liner follows it',()=>{
+  ev("S=fresh();S.cls='Rune Knight';S.lv=150;S.eq.armor=makeMythicEquipment('celestial','armor').item;S.eq.head=makeMythicEquipment('celestial','head').item");
+  const card=ev('itemMain(S.eq.armor)');
+  assert.match(card,/Celestial set/);
+  assert.match(card,/\(2 worn\)/);
+  assert.match(card,/2 pieces:<\/b> \+5% ATK, \+5% Max HP — active/);
+  assert.match(card,/4 pieces:<\/b> \+10% ATK, \+10% Max HP, \+5% ASPD<\/div>/,'an unearned tier stays a plain row, not an active one');
+  assert.match(card,/6 pieces:<\/b> \+18% ATK/);
+  assert.match(ev('eclipseItemSummary(S.eq.armor,true)'),/Celestial 2\/6/);
+  assert.match(ev('eclipseItemSummary(S.eq.armor,true)'),/\+5% ATK, \+5% Max HP — active/);
+  ev('S.eq.head=null');
+  assert.match(ev('itemMain(S.eq.armor)'),/\(1 worn\)/);
+  assert.doesNotMatch(ev('itemMain(S.eq.armor)'),/— active/);
+  assert.match(ev('eclipseItemSummary(S.eq.armor,true)'),/2 pieces to activate a bonus/);
+  assert.doesNotMatch(ev('itemMain(S.eq.weapon)'),/eclipse-item-set|Celestial set/,'ordinary gear shows no set card');
+ });
+ test('v173: Mythic rolls use the plain table value, so the step over N+ is smooth (~1.67x, was 2.5x)',()=>{
+  ev(`S=fresh();S.cls='Rune Knight';Math.random=()=>0.999999;window.maxRoll=rollAffix('str',{slot:'armor',sec:6,tier:4,mp:10,quality:1.5}).v;Math.random=()=>0;window.minRoll=rollAffix('str',{slot:'armor',sec:6,tier:4,mp:10,quality:1.5}).v;Math.random=()=>0.999999;window.npRoll=rollAffix('str',{slot:'armor',sec:5,tier:4,mp:9,quality:1}).v;`);
+  assert.equal(ev('maxRoll'),69,'top STR roll is the table max, not table x 1.5 (was 104)');
+  assert.equal(ev('minRoll'),44);
+  assert.equal(ev('npRoll'),55,'N+ ignores the mythic rule and rolls exactly as before');
+  ev(`S.eq.armor={id:9200,slot:'armor',sec:5,val:100,aff:[{k:'str',v:40}],cards:[]};S.ascensionMat=[1000,1000,1000];S.zeny=1e9;window.evo=transformToMythic(S.eq.armor,'celestial').item`);
+  assert.equal(ev('evo.aff.length'),4);
+  assert.ok(ev('evo.aff.every(a=>a.v<=affixValue(a.k,6,4,1.25,10))'),'evolved and filled rolls never exceed the plain table max');
+  assert.equal(ev('evo.aff.filter(a=>a.v===40).length'),1,'the kept N+ roll survives evolution untouched');
  });
  console.log(passed+' passed');
 }finally{game.close()}

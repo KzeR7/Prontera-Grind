@@ -59,12 +59,12 @@ try{
   ev(`S.mp=${m};S.lvl=1;currentUser='ascension-access';lsPut(saveKey(),JSON.stringify(S));S=load()`);
   assert.equal(ev('S.mp'),m);assert.equal(ev('S.lvl'),1);
  }
- ev('S.mp=9;S.lvl=15;spawn();window.abyss=mobs.find(x=>x.boss)');
- const abyss=ev('({hp:window.abyss.hp,atk:window.abyss.atk})');
- // Independent HP and ATK ramps relative to Nightmare Abyss final MVP.
- const hpScales={10:[1.25,1.75,2.5,3.5,5],11:[1.75,2.5,3.5,5,7]};
- // Literal pre-v167 damage values guard against another accidental ATK retune.
- const originalAtk={10:[71820,114912,186732,287280,430920],11:[100548,158004,258552,402192,574560]};
+ ev('S.mp=9;S.lvl=15;spawn();window.anchor=mobs.find(x=>!x.boss)');
+ const anchor=ev('({hp:window.anchor.hp,atk:window.anchor.atk})');
+ // v172: HP and ATK ramps relative to the Nightmare Abyss REGULAR mob. The old MVP-anchored
+ // ramps multiplied everything ~12x past playable (A1 one-shot a decent mythic GX at 1.05x pay).
+ const hpScales={10:[2,3,4.5,6.5,9],11:[7,9,11,14,18]};
+ const atkScales={10:[1.5,1.9,2.4,3,3.8],11:[4,4.8,5.6,6.6,8]};
  for(const m of [10,11]){
   let previous=0;
   for(let stage=1;stage<=5;stage++){
@@ -72,17 +72,17 @@ try{
    const regular=ev('mobs.find(x=>!x.boss)');
    assert.equal(ev('mobs.every(x=>mhOf(x)===(x.boss?55:45))'),true,'all Ascension mobs and escorts receive +15 HIT');
    assert.ok(regular.hp>previous);previous=regular.hp;
-   const hpScale=hpScales[m][stage-1];
-   assert.equal(regular.hp,Math.floor(abyss.hp*hpScale),`map ${m} stage ${stage} HP`);
-   assert.equal(regular.atk,originalAtk[m][stage-1],`map ${m} stage ${stage} original ATK`);
-   assert.equal(ev(`ascensionCombatStats(${m},${stage},true).atk`),originalAtk[m][stage-1]*4,`map ${m} stage ${stage} original boss ATK`);
+   const hpScale=hpScales[m][stage-1],atkScale=atkScales[m][stage-1];
+   assert.equal(regular.hp,Math.floor(anchor.hp*hpScale),`map ${m} stage ${stage} HP`);
+   assert.equal(regular.atk,Math.floor(anchor.atk*atkScale),`map ${m} stage ${stage} ATK`);
+   assert.equal(ev(`ascensionCombatStats(${m},${stage},true).atk`),Math.floor(anchor.atk*atkScale*3),`map ${m} stage ${stage} boss ATK (3x its mob)`);
    if(stage===1){
     console.log(`${ev('MAPS[S.mp].n')} entry: ${regular.hp} HP, ${regular.atk} ATK; ${(regular.hp/32000000).toFixed(2)}s at 32M DPS (HP only).`);
    }
    if(stage===5){
     const boss=ev('mobs.find(x=>x.boss)');
-    assert.ok(Math.abs(boss.hp-regular.hp*3)<=4);
-    assert.equal(boss.atk,regular.atk*4);
+    assert.equal(boss.hp,Math.floor(anchor.hp*hpScales[m][4]*3),'stage boss carries 3x its mob HP');
+    assert.equal(boss.atk,Math.floor(anchor.atk*atkScales[m][4]*3),'stage boss hits 3x its mob ATK (v172, was 4x)');
    }
   }
  }

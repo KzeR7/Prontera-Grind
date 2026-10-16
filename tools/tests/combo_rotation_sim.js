@@ -108,7 +108,7 @@ try{
   assert.equal(ev('S.cls'),'Lord Knight');assert.equal(ev('comboConfig().slots.join()'),ev('knightCombo'));assert.equal(ev('swing'),null);
  });
  test('editor exposes six accessible selectors and only learned class-line attacks',()=>{
-  setup('Mage');ev(`tabs.length=0;openTab('skills');renderWin()`);
+  setup('Mage');ev(`tabs.length=0;openTab('skills');sub.skills='combo';renderWin()`);
   assert.equal(g.window.document.querySelectorAll('[data-combo-slot]').length,6);
   assert.ok([...g.window.document.querySelectorAll('[data-combo-slot] option')].every(o=>!o.value||ev(`SKILLS.find(s=>s.id===${JSON.stringify(o.value)}).cls.includes(S.cls)`)));
   const selector=g.window.document.querySelector('[data-combo-slot="0"]');selector.value='nap';selector.dispatchEvent(new g.window.Event('change',{bubbles:true}));assert.equal(ev('comboConfig().slots[0]'),'nap');

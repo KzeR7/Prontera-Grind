@@ -37,7 +37,10 @@ try{
   ev("S.ore.ori=1000;S.mythicScrolls=5;S.useRefineScroll=true;window.previousRandom=Math.random;Math.random=()=>0;");
   try{
    for(let rank=11;rank<=15;rank++){
-    ev("refine('weapon')");assert.equal(ev('S.eq.weapon.r'),rank);
+    ev("refine('weapon')");
+    if(rank===11)assert.match(ev(`document.getElementById('mt').textContent`),/This Mythic equipment is \+10, so failure cannot drop its rank\. Use one Mythic Refine Protection Scroll anyway\?/,'v174: protected Mythic at +10 warns before spending the scroll');
+    ev(`if(document.getElementById('modal').style.display==='flex')document.getElementById('my').click()`);
+    assert.equal(ev('S.eq.weapon.r'),rank);
    }
    assert.equal(ev('S.mythicScrolls'),0);
    assert.equal(ev("rarOf(S.eq.weapon).n"),'Mythic');

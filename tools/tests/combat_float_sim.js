@@ -9,7 +9,9 @@ const end = src.indexOf('\n// Skill labels track', start);
 assert.ok(start >= 0 && end > start, 'cannot locate the production damageFloat helper');
 const damageCode = src.slice(start, end);
 const emitted = [];
-const box = { simVisualsOff:()=>false, S: {}, numTxt: n => 'n' + n, addFloat: (...args) => emitted.push(args), floats: [], rnd: (a, b) => (a + b) / 2, mobVisualScale: () => 1,
+const box = { simVisualsOff:()=>false, S: {}, numTxt: n => 'n' + n, addFloat: (x, y, z, txt, col, big, kind) => { emitted.push([x, y, z, txt, col, big, kind]); box.floats.push({ x, y, z, txt, kind, life: 1, lift: 0 }); }, floats: [],
+  isDamageFloat: k => k === 'damage' || k === 'skill-damage' || k === 'critical' || k === 'skill-critical' || k === 'dot',
+  rnd: (a, b) => (a + b) / 2, mobVisualScale: () => 1,
   scr: (x, y, z) => [0, 600 - y * 50], pl: { x: 0, z: 0 },   // 50 screen px per world unit, for the px-exact spawn helpers
   DMG_LIFE: 1 / .8696, DMG_RISE: 70, DMG_FADE: .75, DMG_RATE: .8696, DMG_SPREAD: 14 };
 vm.createContext(box);
@@ -235,6 +237,31 @@ t('a swing resolves on the attack animation contact frame, not on the key press'
     assert.ok(ev('mobs[1].hp<1e9'),'contact retargets a living monster in the same camp');
     assert.equal(ev('dmgGroup'),null,'the printed group is released');
   }finally{g.close()}
+});
+
+t('v171: a rapid volley on one spot stacks upward, one free step per number', () => {
+  box.S.dmgShow = true; box.floats.length = 0; emitted.length = 0;
+  // Rolling Cutter's five spins, all on the same monster: the screenshot's 1.0M/1.2M blob.
+  for (let i = 0; i < 5; i++) box.__damageFloat(1, 2, 3, 1000000 + i, true, false, true);
+  assert.deepStrictEqual(box.floats.map(f => f.lift), [0, 36, 72, 108, 144],
+    'each spin takes the lowest free 36px step, so the volley reads as a column');
+  assert.ok(box.floats.every(f => f.kind === 'skill-critical'), 'stacking never changes the damage type');
+});
+
+t('v171: the stack reuses a freed bottom step, caps at five, and leaves other labels alone', () => {
+  box.S.dmgShow = true; box.floats.length = 0; emitted.length = 0;
+  for (let i = 0; i < 5; i++) box.__damageFloat(1, 2, 3, 100 + i);
+  box.floats[0].life = 0;   // the bottom number expired and is waiting for the filter
+  box.__damageFloat(1, 2, 3, 999);
+  assert.strictEqual(box.floats[5].lift, 0, 'an expired number frees its step');
+  box.__damageFloat(1, 2, 3, 1000);
+  assert.deepStrictEqual(box.floats.map(f => f.lift), [0, 36, 72, 108, 144, 0, 0],
+    'past five live numbers the column packs the bottom step instead of climbing off screen');
+  box.__damageFloat(1, 20, 3, 50);   // 18 world units down = 900px away on the stub projection
+  assert.strictEqual(box.floats[7].lift, 0, 'a far-away number starts its own stack');
+  box.__damageFloat(1, 2, 3, 60, false, true);   // incoming damage is not the damage family
+  assert.strictEqual(box.floats[8].lift, 0, 'incoming damage never takes a stack step');
+  assert.ok(src.includes('-(f.lift||0)'), 'the draw loop rides the lift on top of the climb');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
