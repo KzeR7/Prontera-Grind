@@ -280,13 +280,14 @@ t('attributes precede combat stats and supporting destinations remain accessible
   assert.ok(guide.querySelector('[data-ui-icon="guide"]'));
   guide.click();
   assert.ok(window.document.querySelector('[data-win="guide"]'));
+  window.document.querySelector('[data-win="guide"] [data-a="guidepage"][data-v="leveling"]').click();
   const source=window.document.querySelector('[data-win="guide"] [data-a="guidemap"]');
   const [map,stage]=source.dataset.v.split(':').map(Number);source.click();
   assert.ok(window.document.querySelector('[data-win="map"]'));
   assert.strictEqual(ev('mapM'),map);assert.strictEqual(ev('mapL'),stage);
 });
 t('dedicated guide uses current cards, filters and upgrade planner from the fork',()=>{
-  ev("tabs.splice(0,tabs.length,'guide');guideMode='farm';guideTier='current';renderWin()");
+  ev("tabs.splice(0,tabs.length,'guide');guidePage='cards';guideMode='farm';guideTier='current';renderWin()");
   const doc=window.document;
   assert.ok(doc.querySelector('[data-win="guide"] .build-guide'));
   doc.querySelector('[data-win="guide"] [data-a="guidemode"][data-v="survive"]').click();
