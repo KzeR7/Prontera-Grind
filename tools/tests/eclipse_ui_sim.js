@@ -272,16 +272,24 @@ test('gear groups by type then rarity within the same name without mutating inve
  assert.deepEqual([...doc.querySelectorAll('.eclipse-bag .grid [data-tip]')].map(n=>n.dataset.tip),['93003','93004','93002','93001']);
  assert.equal(ev('S.inv.map(it=>it.id).join()'),'93001,93002,93003,93004');
 });
-test('compact skills open the selected inspector with working auto-cast',()=>{
+test('skills show inline descriptions with working auto-cast in each tile and the inspector',()=>{
  ev(`tabs.push('skills');renderWin()`);
  const tile=doc.querySelector('.sk[data-v=aid]');
- assert.equal(tile.querySelector('[data-skill-detail]'),null,'tiles stay compact');
- tile.click();
+ assert.ok(tile.querySelector('[data-skill-detail=aid]'),'every tile shows its own effects inline (v171 restores the pre-streamline text)');
+ assert.match(tile.querySelector('[data-skill-detail=aid]').textContent,/heals \d+% HP below half/,'the inline text is the level-aware First Aid description');
+ tile.querySelector('[data-a=sktog]').click();assert.equal(ev('skOff("aid")'),true);
+ doc.querySelector('.sk[data-v=aid] [data-a=sktog]').click();assert.equal(ev('skOff("aid")'),false);
+ doc.querySelector('.sk[data-v=aid]').click();
  let inspector=doc.querySelector('[data-win=skills] .ui-selected-skill');
- assert.ok(inspector.querySelector('[data-skill-detail=aid]'));
+ assert.ok(inspector.querySelector('[data-skill-detail=aid]'),'the inspector keeps the selected card too');
  inspector.querySelector('[data-a=sktog]').click();assert.equal(ev('skOff("aid")'),true);
  inspector=doc.querySelector('[data-win=skills] .ui-selected-skill');
  inspector.querySelector('[data-a=sktog]').click();assert.equal(ev('skOff("aid")'),false);
+});
+test('filled combo slots carry their attack description as a hover title',()=>{
+ const bar=ev(`S.cls='Swordman';S.sk={bash:5};S.skillCombos={Swordman:{enabled:true,slots:['bash',null,null,null,null,null]}};rotationBar()`);
+ assert.match(bar,/title="Bash · Lv 5 · 2s cooldown — A focused sword strike\."/,'a filled slot hovers its name, rank, cooldown and one-line text (v171)');
+ assert.equal((bar.match(/<article class="combo-slot filled" data-combo-index="\d" title="/g)||[]).length,1,'only the filled slot gets a title');
 });
 test('refinement animates the shown equipment, cards have card icons and market has no guide',()=>{
  ev(`tabs.push('equip');sub.equip='refine';renderWin();eclipseRefineFeedback(S.eq.weapon,0,true)`);
@@ -336,6 +344,27 @@ test('supplies owned quantities refresh on passive drops and retain the quantity
  assert.deepEqual([...body.querySelectorAll('.eclipse-owned-count')].map(e=>e.textContent),['Owned: 1,000','Owned: 1,001','Owned: 4','Owned: 10']);
  assert.equal(body.querySelector('.ore-quantity'),quantity);assert.equal(quantity.value,'5');
  body.querySelector('[data-a=bmore][data-v=ori]').click();assert.equal(ev('S.ore.ori'),1005);assert.match(body.querySelector('.eclipse-owned-count').textContent,/1,005/);
+});
+test('v174 TEMPORARY single-panel mode: opening a tab closes the rest, toggling still works',()=>{
+ ev("tabs.length=0;expandedPanels.clear();openTab('equip');openTab('job')");
+ assert.equal(ev('JSON.stringify(tabs)'),'["job"]');
+ assert.equal(doc.querySelectorAll('#wins>[data-win]').length,1);
+ ev("openTab('job')");
+ assert.equal(ev('JSON.stringify(tabs)'),'[]','reopening the open tab still toggles it shut');
+ assert.equal(ev('SINGLE_PANEL'),true,'the flag documents the temporary mode');
+});
+test('v174: Skills has Skills/Combo/Ascension sub-tabs; Character keeps stats only',()=>{
+ ev("sub.skills='skilllist'");
+ const tiles=ev('V.skills()');
+ assert.ok(tiles.includes('data-v="skills:combo"')&&tiles.includes('data-v="skills:skillasc"'),'the sub-bar links all three views');
+ assert.ok(!tiles.includes('skill-rotation'),'the tiles view no longer buries the combo plan');
+ ev("sub.skills='combo'");
+ assert.ok(ev('V.skills()').includes('skill-rotation'),'the Combo sub-tab owns the rotation bar');
+ assert.ok(!ev('V.skills()').includes('data-ui-disclosure'),'the Combo view is never folded');
+ ev("sub.skills='skillasc';S.cls='Rune Knight'");
+ assert.match(ev('V.skills()'),/Ascension ranks are separate/,'Skill ascension moved out of Character');
+ ev("sub.status='stats'");
+ assert.ok(!ev('V.status()').includes('status:ascskills'),'Character no longer lists Skill ascension');
 });
 console.log(`${passed} passed`);
 }finally{g.close()}

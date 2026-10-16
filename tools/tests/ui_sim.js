@@ -515,7 +515,7 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
   // and the actual slot click opens that window
   const slotAction = src.slice(src.indexOf('seleq:v=>'), src.indexOf('skall:()=>', src.indexOf('seleq:v=>')));
   assert.ok(slotAction.includes('eqPick=v') && slotAction.includes("if(!tabs.includes('equip'))") && slotAction.includes("tabs.push('equip')"), 'slot selection opens Loadout when the workbench is closed');
-  assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
+  assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='skills')sub.skills='skilllist';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
 });
 
 t('v88: the Auto-equip switch lives on the Bag tab, not in Settings (owner: "move it, arrange it tidy")', () => {
@@ -704,7 +704,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
     'active, healing and buff skills must show a name above the caster');
   const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
-    let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4},rnd=(a,b)=>(a+b)/2;
+    let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4},rnd=(a,b)=>(a+b)/2,scr=(x,y,z)=>[x*10,600-y*50];
     ${grab('const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;', 'function log(m,cls,cat,visual){')}
     this.__f={floats,pl,damageFloat,skillNameFloat,shortNum,numTxt,get S(){return S},set full(v){S.dmgShort=!v},
       get dmgShow(){return S.dmgShow!==false},set dmgShow(v){S.dmgShow=v==='on'||v===true}};
@@ -768,9 +768,9 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
 t('the short-form option (100K / 1M) goes well with the floats: labels size the burst, the fill carries the suffix', () => {
   const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
-    let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4},rnd=(a,b)=>(a+b)/2;
+    let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4},rnd=(a,b)=>(a+b)/2,scr=(x,y,z)=>[x*10,600-y*50];
     ${grab('const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;', 'function log(m,cls,cat,visual){')}
-    this.__f={floats,damageFloat,shortNum,numTxt,get S(){return S},set full(v){S.dmgShort=!v}};
+    this.__f={floats,damageFloat,shortNum,numTxt,get S(){return S},set full(v){S.dmgShort=!v},get lifts(){return floats.map(f=>f.lift||0)}};
   `,box);
   const F=box.__f;
   F.damageFloat(1,2,3,1250000,true);   // 1.3M in the default short style
@@ -782,6 +782,7 @@ t('the short-form option (100K / 1M) goes well with the floats: labels size the 
   assert.strictEqual(F.floats[2].txt,'240K','ordinary hits shorten too, from 100,000 up');
   assert.strictEqual(F.floats[3].txt,'550K','incoming damage follows the same setting (and 55,000 would stay full - short starts at 100K)');
   assert.strictEqual(F.floats[0].kind,'critical','and keeps its critical treatment');
+  assert.deepStrictEqual(Array.from(F.lifts),[0,36,72,0],'a same-spot volley stacks through the real addFloat path too (v171: damage lifts, incoming does not)');
   const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=');
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
   vm.createContext(Object.assign(scene,{simVisualsOff:()=>false}));

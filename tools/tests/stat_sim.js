@@ -2,31 +2,36 @@
 //   node tools/tests/stat_sim.js
 //
 // The rules being tested:
-//   * stats cap at 99 until Base Lv 100, then at 120;
+//   * stats cap at 99 until Base Lv 100, then at 120 - always (v174: the Mythic 150
+//     tier is retired; Mythic gear only uncaps derived stats, never stat points);
 //   * raising a stat costs 1+floor((v-1)/10) below 100 and 10+(v-100) above, and that
 //     cost never goes DOWN as the stat climbs (the first draft of the elite tier dipped
 //     from 10pt to 8pt at exactly v=100);
 //   * a player who spends optimally ends Lv150 with exactly three stats at 120. The
 //     original curve landed on 120/120/119 - two maxed and one a point short;
-//   * a corrupt save cannot carry a stat above the hard cap.
+//   * a corrupt save cannot carry a stat above the hard cap;
+//   * v174: legacy stats above the cap are clamped on load and every point paid above
+//     the cap is refunded exactly (150 -> 120 refunds 1335 points per stat).
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot find ' + name + ' in index.html'); return m[0]; };
 
-const statBlock = pick(/const MAXST=\d+,ASCENSION_MAXST=\d+,BASECAP=\d+,ELITELV=\d+,ASCENSIONLV=\d+,statCap=\(\)=>[^;]+;/, 'stat cap constants');
+const statBlock = pick(/const MAXST=\d+,ASCENSION_MAXST=\d+,BASECAP=\d+,ELITELV=\d+,ASCENSIONLV=\d+,statCapForLv=[^;]+,statCap=\(\)=>[^;]+;/, 'stat cap constants');
 const costFn = pick(/cost=k=>\{const v=S\.st\[k\];return[^}]*\}/, 'cost()');
 const totalPtsFn = pick(/const totalPts=\(\)=>\{[^}]*\}/, 'totalPts()');
-const clampLine = pick(/for\(const k of\['str','agi','dex','luk','int','vit'\]\)f\.st\[k\][^\n]*?;/, 'load() stat clamp');
+const levelCostFn = pick(/const statLevelCost=u=>\{[^}]*\}/, 'statLevelCost()');
+const clampLine = pick(/for\(const k of\['str','agi','dex','luk','int','vit'\]\)\{const cap=.*?f\.st\[k\]=v;\}/, 'load() stat clamp');
 
 const harness = `
 ${statBlock}
+${levelCostFn}
 ${totalPtsFn.replace('const totalPts', 'const totalPts_')}, rcost=()=>0;
 const totalPts = totalPts_;
 let S = null;
 const items=()=>Object.values(S.eq||{}).filter(Boolean);
 ${costFn.replace('cost=k=>', 'const cost=k=>')}
 const num_ = (v,d) => { v = +v; return Number.isFinite(v) ? v : d };
-this.__s = { cost, totalPts, statCap, MAXST, BASECAP, ELITELV,
+this.__s = { cost, totalPts, statCap, statCapForLv, statLevelCost, MAXST, BASECAP, ELITELV,
              clamp: f => { ${clampLine.trim()} return f; },
              set S(v){S=v}, get S(){return S} };
 `;
@@ -49,10 +54,13 @@ t('the cap is 99 below Base Lv 100 and 120 from Base Lv 100', () => {
   assert.strictEqual(H.MAXST, 120);
 });
 
-t('Mythic equipment unlocks 150 allocation only at Base Lv 150',()=>{
+t('v174: Mythic equipment no longer raises the stat cap (120 always, 99 below Lv100)',()=>{
   H.S=mkS(149);H.S.eq={armor:{sec:6}};assert.strictEqual(H.statCap(),120);
-  H.S.lv=150;assert.strictEqual(H.statCap(),150);
+  H.S.lv=150;assert.strictEqual(H.statCap(),120,'the 150 tier is retired');
   H.S.eq={armor:{sec:5}};assert.strictEqual(H.statCap(),120);
+  H.S=mkS(99);H.S.eq={armor:{sec:6}};assert.strictEqual(H.statCap(),99);
+  assert.strictEqual(H.statCapForLv(100),120);
+  assert.strictEqual(H.statCapForLv(99),99);
 });
 
 t('the cost curve never gets cheaper as the stat climbs', () => {
@@ -122,14 +130,18 @@ t('a Lv99 player is capped at 99 and cannot pre-buy the elite tier', () => {
   console.log('       Lv99: ' + KEYS.map(k => k + ' ' + r.st[k]).join(', '));
 });
 
-t('a save carrying a stat above the hard cap is clamped on load', () => {
-  const f = H.clamp({ st: { str: 999, agi: -5, dex: 'abc', luk: null, int: 120, vit: 121 } });
-  assert.strictEqual(f.st.str, 150, 'str above MAXST not clamped');
-  assert.strictEqual(f.st.vit, 121, 'valid Mythic allocation is preserved');
+t('v174: legacy stats above the cap clamp to the cap with an exact point refund', () => {
+  const f = H.clamp({ lv: 150, pts: 7, st: { str: 150, agi: -5, dex: 'abc', luk: null, int: 120, vit: 121 } });
+  assert.strictEqual(f.st.str, 120, 'str above MAXST not clamped');
+  assert.strictEqual(f.st.vit, 120, 'legacy Mythic 121 must come down to 120');
   assert.strictEqual(f.st.int, 120, 'int at MAXST should be kept');
   assert.strictEqual(f.st.agi, 1, 'negative stat not repaired');
   assert.strictEqual(f.st.dex, 1, 'non-numeric stat not repaired');
   assert.strictEqual(f.st.luk, 1, 'null stat not repaired');
+  assert.strictEqual(f.pts, 7 + 1335 + 30, 'refund must be exact: 1335 for 150->120, 30 for 121->120');
+  const low = H.clamp({ lv: 50, pts: 0, st: { str: 120, agi: 1, dex: 1, luk: 1, int: 1, vit: 1 } });
+  assert.strictEqual(low.st.str, 99, 'sub-100 characters clamp to 99');
+  assert.strictEqual(low.pts, 400, 'levels 100->120 above a 99 cap refund 400');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

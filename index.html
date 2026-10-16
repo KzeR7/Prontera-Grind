@@ -780,7 +780,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 .bag-item-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.bag-item-list article{display:grid;grid-template-columns:1fr auto;gap:6px}.bag-item-list small{grid-column:1/-1}.eclipse-bag>.bag-tools{flex-shrink:0}.eclipse-bag>.chooser{font-size:11px}
 
 
-#wins .ui-panel>.atabs.map-season-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--ui-line,#605642);padding:5px;gap:5px;border-radius:8px;background:#14151b}
+#wins .ui-panel>.atabs.map-season-tabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--ui-line,#605642);padding:5px;gap:5px;border-radius:8px;background:#14151b}
 #wins .ui-panel>.atabs.map-season-tabs button{height:auto;min-height:44px;min-width:0;padding:6px;white-space:normal;font-size:11px;line-height:1.3}.map-season-tabs .map-coming-soon{display:block;margin-top:3px;font-size:8px;letter-spacing:.08em;text-transform:uppercase}.map-season-tabs button:disabled{cursor:not-allowed;opacity:.55}
 .eclipse-atlas-hero .ascension-preview{display:block;width:100%;height:100%;object-fit:cover;object-position:center 20%}
 .eclipse-atlas-hero .ascension-preview[src*="thor-volcano"]{object-position:center 75%}
@@ -1115,7 +1115,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-16 haven-v170 HP affix conversion';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-16 haven-v174 hard 120 cap';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2577,12 +2577,18 @@ const dropTxt=([T,ch],who)=>{const why=whyNot(T),worse=dropIsWorse(T),cls='dropl
  return`<div class="${cls}"${tip?` title="${tip}"`:''}><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small>${who?` <small class="dwho">${who}</small>`:''}</span><span class="drr">${why?'<small class="dnot">Class restricted</small>':''}<b>${Math.round(ch*1e4)/1e4}%</b></span></div>`};
 
 // ---------- stat progression ----------
-// Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat
-// costs 1+floor((v-1)/10) below 100 and 10+(v-100) from 100 up, so one stat 1->120 costs
-// 930 points. The grant curve 4+floor(l/5) pays 1352 by Lv99 and 2811 by Lv150 - exactly
-// three stats at 120 with a handful of points left over. Pinned by tools/tests/stat_sim.js.
-// Declared here (before fresh()/load()) so the save repair preserves allocated Mythic stats up to the absolute cap, even with gear unequipped.
-const MAXST=120,ASCENSION_MAXST=150,BASECAP=99,ELITELV=100,ASCENSIONLV=150,statCap=()=>S.lv>=ASCENSIONLV&&items().some(it=>it.sec===6)?ASCENSION_MAXST:S.lv>=ELITELV?MAXST:BASECAP;
+// Stats cap at 99 until Base Lv 100, then 120 - always. v174 (owner: 120 is the cap):
+// the retired Mythic 150 tier is gone, so Mythic gear no longer raises stat points at all -
+// it only uncaps the derived stats (ASPD floor, crit past 100, movement cap). Legacy saves
+// above 120 are repaired on load (see load()). Raising a stat costs 1+floor((v-1)/10)
+// below 100 and 10+(v-100) from 100 up, so one stat 1->120 costs 930 points. The grant
+// curve 4+floor(l/5) pays 1352 by Lv99 and 2811 by Lv150 - exactly three stats at 120 with
+// a handful of points left over. Pinned by tools/tests/stat_sim.js.
+// ASCENSION_MAXST/ASCENSIONLV stay defined so older harnesses keep parsing; nothing reads them.
+// Declared here (before fresh()/load()) so the save repair and the level cap share one rule.
+const MAXST=120,ASCENSION_MAXST=150,BASECAP=99,ELITELV=100,ASCENSIONLV=150,statCapForLv=lv=>lv>=ELITELV?MAXST:BASECAP,statCap=()=>statCapForLv(S.lv);
+// v174 refund helper: what stat level u cost when it was bought (mirrors cost() and repairProgression's spent()).
+const statLevelCost=u=>{const v=u-1;return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
 
 // ---------- economy tuning ----------
 // v56 live pacing: the whole EXP economy reads at one tenth (EXP_RATE 7 is the old 70x),
@@ -2893,7 +2899,10 @@ const ASC_UPGRADES={
  mc_gat:{damage:25,range:1},mc_over:{damage:25,boss:10},mc_rocket:{damage:20,area:20},mc_boomerang:{damage:25,cooldown:10},mc_swing:{damage:25,stun:.5},mc_magma:{damage:25}
 };
 // At 8M combat EXP/min: ~700h shared / ~87.5h per class. Rounded per level.
-const ASC_XP_BASE={stats:16007274,skills:8212500},ASC_REWARD_VERSION=5;
+// v172 (owner: ~700h stats / ~80h skills): both bases rescale by exactly 6 (both divide evenly),
+// keeping the 1.8 exponent and the 8x track ratio - 56B/7B totals fill in ~670h/~83h at the
+// ~1.4M/min the retuned top field sustains. No migration: levels just arrive sooner.
+const ASC_XP_BASE={stats:2667879,skills:1368750},ASC_REWARD_VERSION=5;
 const ascNeed=(level,skills=false)=>Math.round(ASC_XP_BASE[skills?'skills':'stats']*Math.pow(level+1,1.8)/1000)*1000;
 function cleanAscension(value){
  const count=(v,max)=>Number.isFinite(Number(v))?Math.max(0,Math.min(max,Math.floor(Number(v)))):0;
@@ -2971,7 +2980,9 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   if(!Array.isArray(f.autoSell))f.autoSell=[false,false,false,false,false,false,false];else f.autoSell=[0,1,2,3,4,5,6].map(i=>f.autoSell[i]===true||f.autoSell[i]===1);
   const sellRules=cleanAutoSellRules(f.autoSellRules);f.autoSellRules=sellRules||defaultAutoSellRules();if(!sellRules)f.autoSell=f.autoSell.map(()=>false);
   if(!f.logOff||typeof f.logOff!=='object'||Array.isArray(f.logOff))f.logOff={};
-  for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(ASCENSION_MAXST,num_(f.st[k],1)));
+  // v174 (owner: 120 is the cap): legacy stats above the level cap come down to the cap and
+  // every point paid above it is refunded exactly.
+  for(const k of['str','agi','dex','luk','int','vit']){const cap=statCapForLv(Math.floor(num_(f.lv,1)));let v=Math.max(1,Math.floor(num_(f.st[k],1)));if(v>cap){let refund=0;for(let u=cap+1;u<=v;u++)refund+=statLevelCost(u);f.pts=Math.max(0,Math.floor(num_(f.pts,0)))+refund;v=cap;}f.st[k]=v;}
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
   repairMaterials(f,s.nmMatVersion);f.dps=safeCount(f.dps);
   // v77 (Endless Echo): Trial Shards and the ranked record. A save without them is simply a
@@ -3045,7 +3056,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
     r.lv=Math.max(1,Math.min(150,Math.floor(num_(r.lv,1))));r.exp=Math.max(0,num_(r.exp,0));
     r.pts=Math.max(0,Math.floor(num_(r.pts,0)));r.hp=Math.max(1,num_(r.hp,1));
     if(!r.st||typeof r.st!=='object')r.st={};
-    for(const s of['str','agi','dex','luk','int','vit'])r.st[s]=Math.max(1,Math.min(ASCENSION_MAXST,num_(r.st[s],1)));
+    for(const s of['str','agi','dex','luk','int','vit']){const cap=statCapForLv(Math.floor(num_(r.lv,1)));let v=Math.max(1,Math.floor(num_(r.st[s],1)));if(v>cap){let refund=0;for(let u=cap+1;u<=v;u++)refund+=statLevelCost(u);r.pts=Math.max(0,Math.floor(num_(r.pts,0)))+refund;v=cap;}r.st[s]=v;}
     if(!r.eq||typeof r.eq!=='object')r.eq=null}   // null = loadout unknown: keep what is worn
   if(!Array.isArray(f.pets))f.pets=[];f.pets=f.pets.filter(p=>p&&typeof p==='object');if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
   if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;
@@ -3715,7 +3726,9 @@ const C=()=>CLASSES[S.cls]||CLASSES.Novice,lv=id=>ASC_ONLY_SKILLS.has(id)?(ascRa
 // all above the discount). Novice is untouched: its ten levels are the game's opening minutes
 // and it correctly has only First Aid.
 const JOB_EARLY=.5,EARLY_JOB_LV=15;
-const jneed=j=>{const t=C().tier||0,L=j+JOFF[t],n=(t>0&&j<=EARLY_JOB_LV?needAt(L)*JOB_EARLY:needAt(L)),e=epkOf(L);return Math.max(1,Math.floor(.7*n*e/(e+n*qrOf(L))))};
+// v172 (owner: fourth-job Job should last ~20-40h, not an afternoon): tier-4 job levels cost
+// 40x the shared formula (608M to Job 50, ~30h at mid-ascension kill pay). Tiers 0-3 untouched.
+const jneed=j=>{const t=C().tier||0,L=j+JOFF[t],n=(t>0&&j<=EARLY_JOB_LV?needAt(L)*JOB_EARLY:needAt(L)),e=epkOf(L);return Math.max(1,Math.floor(.7*n*e/(e+n*qrOf(L))))*(t===4?40:1)};
 // A skill is usable when it has levels, the current class inherits it, and the player has
 // not switched its auto-cast off in the Skills panel.
 const skOff=id=>!!(S.skOff&&S.skOff[id]),skillOn=id=>lv(id)>0&&SKILLS.find(s=>s.id===id).cls.includes(S.cls)&&!skOff(id);
@@ -3739,7 +3752,7 @@ function rotationCooldown(){return 3;}
 function comboStatus(){const c=comboConfig(),r=skillState();if(!c.enabled)return 'Combo paused';if(t<(r.recoverUntil||0))return 'Recovering · '+Math.max(0,r.recoverUntil-t).toFixed(1)+'s';
   if(!rotationSkills().length)return 'Choose an attack to begin';return r.comboSlots?'Combo · '+Math.min(r.cursor+1,r.comboSlots.length)+' / '+r.comboSlots.length:'Ready for next combo';}
 function rotationBar(){const c=comboConfig(),available=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
-  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, then recover for 3 seconds.${FOURTH_JOBS_LIVE&&S.cls==='Guillotine Cross'?' Rolling Cutter spins five times in its slot at 0.2s spacing.':' Each attack casts once.'} Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · basic attacks during recovery</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
+  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, then recover for 3 seconds.${FOURTH_JOBS_LIVE&&S.cls==='Guillotine Cross'?' Rolling Cutter spins five times in its slot at 0.2s spacing.':' Each attack casts once.'} Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · basic attacks during recovery</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"${sk?` title="${esc(sk.n+' · Lv '+lv(sk.id)+' · '+sk.cd+'s cooldown — '+(sk.text||''))}"`:''}><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
 }
 // v39: the master auto-cast switch. It covers every learned skill of the current line that
 // auto-casts (everything except passives), reads ON only while ALL of them are ON, and clears
@@ -3753,7 +3766,7 @@ const statResetCost=()=>S.skillRespec&&S.skillRespec[S.cls]?0:rcost();
 const skMasterTile=()=>{const on=skAllOn(),n=skTog().length,done=skillsFullyAllocated();
   return`<div class="sk-tools"><label class="sk-master${on?'':' off'}" title="Switch the auto-cast of every learned skill on or off"><span class="sk-kind">ALL</span><div class="si" aria-hidden="true">&#9199;&#65039;</div><div class="sk-name">Auto-cast all</div><div class="sk-autocast"><input type="checkbox" data-a="skall" ${on?'checked':''} aria-label="Auto-cast every learned skill"> ${on?'ALL ON':'SOMETHING OFF'}</div><small>${n} skill${n===1?'':'s'} on this line</small></label><button class="sk-alloc" data-a="skalloc" ${done||skpAvail()<1?'disabled':''} title="Auto-allocate all available points: learn each available skill first, then improve ranks">⚡ Auto-allocate all skills<small>${done?'All skills maxed':'Learn every skill first'}</small></button></div>`};
 const skillDetailCard=sel=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));
-  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='buff'?'Buff (auto-refresh)':comboRole(sel)}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Used automatically when ready.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div>${sel.type==='act'?`<p class="combo-membership">${comboConfig().slots.includes(sel.id)?(sel.repeat?'In your combo · '+sel.repeat+' spins per slot.':'In your combo · casts once per cycle.'):'Choose this attack in a combo slot to use it.'}</p>`:''}<small>${sel.ascensionOnly?esc(sel.text)+' '+sel.cd+'s cooldown. '+(ascRank(sel.id)?ascUpgradeText(sel.id,ascRank(sel.id)):'Spend 1 Ascension point to unlock this sixth skill.'):sel.d(Math.max(1,SL))}</small>${!sel.ascensionOnly&&SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
+  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='buff'?'Buff (auto-refresh)':comboRole(sel)}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Used automatically when ready.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div>${sel.type==='act'?`<p class="combo-membership">${(S.skillCombos&&S.skillCombos[S.cls]?S.skillCombos[S.cls].slots:[]).includes(sel.id)?(sel.repeat?'In your combo · '+sel.repeat+' spins per slot.':'In your combo · casts once per cycle.'):'Choose this attack in a combo slot to use it.'}</p>`:''}<small>${sel.ascensionOnly?esc(sel.text)+' '+sel.cd+'s cooldown. '+(ascRank(sel.id)?ascUpgradeText(sel.id,ascRank(sel.id)):'Spend 1 Ascension point to unlock this sixth skill.'):sel.d(Math.max(1,SL))}</small>${!sel.ascensionOnly&&SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
 const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f(lv(s.id)):0)+(s.training&&s.training[k]||0)*lv(s.id):0),0)+(typeof skillBonus==='function'?skillBonus(k):0);
 // v81 dual wield (owner): "let set that assasin & assassin cross can wield daggers. 2 hands."
 // A two-handed katar is TWO_HANDED weapons and a left-hand dagger is DUAL of one, so a pair of
@@ -3957,7 +3970,9 @@ const starterAtk=l=>6+3*(l-1);
 // 25% more than one escort. Assign integer remainder to the MVP; normal fields and
 // Nightmare stages 11-14 retain their existing pay. Online and offline use this helper.
 // Material fields: bounded rewards per kill, independent of monster HP.
-const ascRewardBonus=(m,stage)=>(m===10?[1.05,1.055,1.06,1.065,1.07]:[1.07,1.0775,1.085,1.0925,1.10])[stage-1];
+// v172 (owner: 1.05x pay for 15x danger): Astral pays 3-8x the anchor per kill, Thor 7-15x,
+// so the top field sustains ~1.4M EXP/min and the rescaled ascension curve below lands on time.
+const ascRewardBonus=(m,stage)=>(m===10?[3,4,5,6.5,8]:[7,8.5,10,12,15])[stage-1];
 const ascZenyBonus=(m,stage)=>(m===10?[2,2.1,2.2,2.3,2.4]:[2.4,2.55,2.7,2.85,3])[stage-1];
 function ascRewardRatio(m,stage,boss=false){return ascRewardBonus(m,stage)*(boss?4:1)}
 function fieldZenyReward(m,stage,boss=false){
@@ -3977,15 +3992,19 @@ function fieldExpReward(m,stage,boss=false){
 }
 // Parallel level-150 routes: retain v167's lower HP and the original v158 ATK.
 // The owner requested HP reductions only and chose +15 HIT for field enemies below.
+// v172 (owner: the new maps one-shot a decent mythic GX while paying 1.05x): the ramps rebase
+// onto the Nightmare-Abyss-15 REGULAR mob (the same HPK/(5+l*4.6) formulas minionDef spawns with)
+// instead of its MVP, so the numbers read as plain anchor multiples. Astral runs HP x2-9 / ATK
+// x1.5-3.8, Thor HP x7-18 / ATK x4-8, and a stage boss hits 3x its mob instead of 4x.
 function ascensionCombatStats(m,stage,boss=false){
   if(m<10)return {};
   const power=fieldPower(9,15),weight=1+9*.15+(9-4)*.2;
-  const abyssHp=Math.floor(500*weight*Math.pow(power,HPE)*NMBOSSHP*nm15Of(15));
-  const abyssAtk=Math.floor((8+power*6.5)*weight*NMATK*nm15Of(15)*eaOf(power));
-  const hpRamp=(m===10?[1.25,1.75,2.5,3.5,5]:[1.75,2.5,3.5,5,7])[stage-1];
-  const atkRamp=(m===10?[5,8,13,20,30]:[7,11,18,28,40])[stage-1];
-  const hp=Math.floor(abyssHp*hpRamp*(boss?3:1));
-  return {hp,max:hp,atk:Math.floor(abyssAtk*atkRamp*(boss?4:1))};
+  const anchorHp=Math.floor(HPK*weight*Math.pow(power,HPE)*NMHP*nm15Of(15));
+  const anchorAtk=Math.floor((5+power*4.6)*weight*NMATK*nm15Of(15)*eaOf(power));
+  const hpRamp=(m===10?[2,3,4.5,6.5,9]:[7,9,11,14,18])[stage-1];
+  const atkRamp=(m===10?[1.5,1.9,2.4,3,3.8]:[4,4.8,5.6,6.6,8])[stage-1];
+  const hp=Math.floor(anchorHp*hpRamp*(boss?3:1));
+  return {hp,max:hp,atk:Math.floor(anchorAtk*atkRamp*(boss?3:1))};
 }
 // One field monster, before it is placed. Shared by the wave builder and by every camp refill, so a
 // monster that walks back in is exactly the monster the field started with.
@@ -4044,7 +4063,11 @@ function spawn(){
   activePack=nearestPack();mob=bossWave?mobs[0]:packMob();pAtkT=.3;
 }
 const affixPool=it=>it.slot==='weapon'?(it.wt==='staff'?['int','dex','matk','crit','cdm','hp']:['str','agi','dex','luk','atk','crit','aspd','cdm']):it.slot==='acc'?['str','agi','dex','int','vit','luk','atk','matk','crit','cdm','move']:it.slot==='leg'?['agi','vit','hp','flee','aspd','move']:it.slot==='head'?['str','dex','int','vit','hp','atk','matk']:['vit','hp','flee','str','agi'];
-const rollAffix=(k,it)=>({k,v:k==='move'?Math.min(it.slot==='acc'?5:8,Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)))):Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)*(it.quality||1)))});
+// v173 (owner: Mythic should sit ~1.5x over N+, smooth): Mythic rolls use the plain table value.
+// The stored quality:1.5 used to multiply every Mythic roll (STR 44-69 became 66-104), pushing a
+// fully-reforged piece to 2.5x N+. Rolls now ignore it (existing values stay exactly as rolled);
+// art, value and sell price never read it for sec-6, so nothing else moves. Lands ~1.67x total.
+const rollAffix=(k,it)=>({k,v:k==='move'?Math.min(it.slot==='acc'?5:8,Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)))):Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)*(it.sec===6?1:(it.quality||1))))});
 function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){
   const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';
   // The numeric field-quality input (see dropTier) feeds the existing stat/value rolls. The item
@@ -4273,7 +4296,17 @@ const fullNum=()=>typeof S!=='undefined'&&S&&S.dmgShort===false;
 // combat float when it is off, and 'Short form' (S.dmgShort) switches between 100K/1M and the
 // full digits. Reward floats (Zeny, EXP) follow the short/full style but are never hidden.
 const numTxt=n=>fullNum()?String(Math.round(n)):shortNum(n);
-const damageFloat=(x,y,z,amount,critical=false,incoming=false,skill=false)=>{if(S&&S.dmgShow===false)return;addFloat(x,y,z,numTxt(amount),null,false,incoming?'incoming':critical?(skill?'skill-critical':'critical'):skill?'skill-damage':'damage')};
+const damageFloat=(x,y,z,amount,critical=false,incoming=false,skill=false)=>{if(S&&S.dmgShow===false)return;const kind=incoming?'incoming':critical?(skill?'skill-critical':'critical'):skill?'skill-damage':'damage';const lift=isDamageFloat(kind)?damageLift(x,y,z):0,n=floats.length;addFloat(x,y,z,numTxt(amount),null,false,kind);if(floats.length>n)floats[floats.length-1].lift=lift;};
+// v171 (owner: Rolling Cutter's five rapid spins pile crit bursts into one unreadable blob - the
+// screenshot's 1.0M/1.2M overlap): a damage number that would spawn on top of a live neighbour
+// stacks upward instead: inside one spawn neighbourhood (DMG_STACK_PX) each number takes the lowest
+// free DMG_STACK_STEP, reusing a freed bottom step when an older number expires and never climbing
+// past DMG_STACK_MAX steps. Only the damage family stacks (misses, skill
+// names and loot labels keep their own spots); DoT numbers merge in place already. The lift rides
+// the draw loop's climb, so the whole flight path shifts up. Kept inside the damageFloat through
+// skill-labels span so the float sims keep testing the shipped code, not a copy of it.
+const DMG_STACK_PX=90,DMG_STACK_STEP=36,DMG_STACK_MAX=5;
+const damageLift=(x,y,z)=>{try{const[a,b]=scr(x,y,z),used=[];for(const f of floats){if(!isDamageFloat(f.kind)||f.life<=0)continue;const[fa,fb]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);if(Math.hypot(fa-a,fb-b)>=DMG_STACK_PX)continue;const s=Math.round((f.lift||0)/DMG_STACK_STEP);if(s>=0&&s<DMG_STACK_MAX)used[s]=(used[s]||0)+1}for(let s=0;s<DMG_STACK_MAX;s++)if(!used[s])return s*DMG_STACK_STEP;let m=0;for(let s=1;s<DMG_STACK_MAX;s++)if((used[s]||0)<(used[m]||0))m=s;return m*DMG_STACK_STEP}catch(e){return 0}};
 // v83: ONE number per monster per swing. While a swing resolves, every hit on the same monster is
 // collected in dmgGroup and printed as a single number when the group closes - so a transcendent
 // swing (4 casts, up to 10 hits each) shows one number per monster instead of six to eleven.
@@ -5005,9 +5038,11 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
   const needsMythicScroll=it.sec===6&&previousRank>=10;
   if(protectedAttempt&&needsMythicScroll&&!safeCount(S.mythicScrolls)){log('Mythic Protection Scroll required for +11 to +15 refines. These drop from Ascension map bosses only.');return;}
   if(protectedAttempt&&!needsMythicScroll&&!safeCount(S.refineScrolls)){log('Refine Protection Scroll is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
-  if(protectedAttempt&&previousRank<5&&it.sec!==6&&arguments[1]!==it){
+  // v174 (owner: Mythic +11..+15 drops on unprotected fails, +10 and below stays safe):
+  // warn before spending any scroll where failure cannot drop the rank.
+  if(protectedAttempt&&((it.sec!==6&&previousRank<5)||(it.sec===6&&previousRank<=10))&&arguments[1]!==it){
     const owner=S;let pending=true;
-    ask('This equipment is below +5, so failure cannot drop its rank. Use one Refine Protection Scroll anyway? This attempt also costs '+c.toLocaleString()+'z and '+need+' '+ORE[o]+'.',()=>{
+    ask((it.sec===6?'This Mythic equipment is +'+previousRank+', so failure cannot drop its rank. Use one '+(needsMythicScroll?'Mythic ':'')+'Refine Protection Scroll anyway?':'This equipment is below +5, so failure cannot drop its rank. Use one Refine Protection Scroll anyway?')+' This attempt also costs '+c.toLocaleString()+'z and '+need+' '+ORE[o]+'.',()=>{
       if(!pending)return;pending=false;
       if(S!==owner||S.eq[sl]!==it||(it.r||0)!==previousRank||!S.useRefineScroll)return;
       refine(sl,it);
@@ -5017,6 +5052,7 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
   S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){succeeded=true;it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(protectedAttempt){log(`Refine failed, but your ${needsMythicScroll?'Mythic ':''}Protection Scroll kept +${it.r}.`,'r3','gear')}
     else if(it.r>=5&&it.sec!==6){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
+    else if(it.sec===6&&it.r>=11){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
     else if(it.r>=10&&it.sec===6){log(`Refine failed, but +10 is safe on Mythic gear. Kept +${it.r}.`,'r3','gear')}
     else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save();if(typeof eclipseRefineFeedback==='function')eclipseRefineFeedback(it,previousRank,succeeded)}
 // Outcome presentation follows the committed transaction; it never rolls or spends resources.
@@ -5331,7 +5367,13 @@ function itemMain(it){
   <div><small>Worn by: <b>${gearUserOf(it)}</b></small></div>
   <div><small>Gear Lv ${gearRefLevel(it)} &middot; reference only: gear is gated by class tier, never by Base Lv</small></div>${it.locked?`<div><small class="r3">&#9733; Locked &middot; protected from auto-sell</small></div>`:''}
   ${canUse(it)?'':`<div><small class="r0">${whyNot(it)}${it.wearer?` This was ${it.wearer}'s gear - it goes straight back on when you switch to ${it.wearer} again.`:''}</small></div>`}
-  <div><b>${it.wt==='staff'?'Weapon MATK contribution':SLOTS[it.slot].stat} +${it.wt==='staff'?Math.round(ev(it)*.8):ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${worn?`<div><small class="r0">Lower base value than the ${SLOTS[it.slot].label.toLowerCase()} you are wearing (${SLOTS[it.slot].stat} +${ev(worn)}) — compare affixes and cards before replacing it.</small></div>`:''}${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
+  <div><b>${it.wt==='staff'?'Weapon MATK contribution':SLOTS[it.slot].stat} +${it.wt==='staff'?Math.round(ev(it)*.8):ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${worn?`<div><small class="r0">Lower base value than the ${SLOTS[it.slot].label.toLowerCase()} you are wearing (${SLOTS[it.slot].stat} +${ev(worn)}) — compare affixes and cards before replacing it.</small></div>`:''}${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}${it.sec===6&&it.ascSet?mythicSetCard(it):''}`}
+// v171 (owner: set bonuses only exist in the Forge): one reader for the full bonus list on every
+// Mythic item description plus the one-liner in the equipment inspector. Guarded like bon() so the
+// UI sims that slice itemMain without the Ascension tables still run.
+const mythicSetState=it=>{const set=typeof ASC_SETS==='undefined'?null:ASC_SETS[it.ascSet];if(!set||!set.bonuses)return null;const worn=S&&S.eq?Object.values(S.eq).filter(x=>x&&x.ascSet===it.ascSet).length:0;return{set,worn,tier:set.bonuses.filter(b=>worn>=b.count).pop()||null}};
+const mythicSetCard=it=>{const m=mythicSetState(it);if(!m)return'';return `<div class="sec">${esc(m.set.name)} set <small>(${m.worn} worn)</small></div>`+m.set.bonuses.map(b=>{const on=m.worn>=b.count;return `<div${on?' class="r1"':''}>${on?'&#9670;':'&#9671;'} <b>${b.count} pieces:</b> ${esc(b.desc)}${on?' — active':''}</div>`}).join('')};
+const mythicSetLine=it=>{const m=mythicSetState(it);if(!m)return'';return `<div class="eclipse-item-set"><div><span>◆</span><b>${esc(m.set.name)} ${m.worn}/6</b> · ${m.tier?esc(m.tier.desc)+' — active':'2 pieces to activate a bonus'}</div></div>`};
 function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')}
 const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${S.freeCardRemoval?0:200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
 const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],status=classStatus(n),label={cur:'Current',played:'Played',ok:'Available',lock:'Locked'}[status];return`<div class="tn ${status}${selK===n?' pick':''}" data-class-status="${status}" data-a="selk" data-v="${n}"><b>${n}</b><small><span class="eclipse-job-status">${label}</span> · ${pj?`Job ${pj.jl}/${c.mj}`:'Job '+c.rj+' req'}</small></div>`};
@@ -5432,7 +5474,7 @@ function editSellFilter(el){const r=sellDraft(),key=el.dataset.sellField;
   if(el.type==='checkbox'||el.tagName==='SELECT')renderWin();
 }
 
-function eclipseItemSummary(it,worn){return `<div class="eclipse-item-heading"><div class="eclipse-item-icon b${dtier(it)}">${icon(it)}</div><div><small class="${rarCls(it)}">${rarOf(it).n} · ${esc(it.wt||SLOTS[it.slot].label)}</small><h3>${esc(iname(it))}</h3><p>${esc(SECN[it.sec||0])}</p>${worn?'<span class="eclipse-equipped-tag">✓ EQUIPPED</span>':''}</div></div><div class="eclipse-item-power"><span>${it.wt==='staff'?'WEAPON MATK':SLOTS[it.slot].stat}</span><div><strong>${it.wt==='staff'?Math.round(ev(it)*.8):ev(it)}</strong><small>Includes +${it.r||0} refinement</small></div></div><div class="eclipse-item-affixes">${(it.aff||[]).map(a=>'<div><span>◇</span>'+esc(affTxt(a))+'</div>').join('')||'<small>No additional affixes</small>'}</div>`}
+function eclipseItemSummary(it,worn){return `<div class="eclipse-item-heading"><div class="eclipse-item-icon b${dtier(it)}">${icon(it)}</div><div><small class="${rarCls(it)}">${rarOf(it).n} · ${esc(it.wt||SLOTS[it.slot].label)}</small><h3>${esc(iname(it))}</h3><p>${esc(SECN[it.sec||0])}</p>${worn?'<span class="eclipse-equipped-tag">✓ EQUIPPED</span>':''}</div></div><div class="eclipse-item-power"><span>${it.wt==='staff'?'WEAPON MATK':SLOTS[it.slot].stat}</span><div><strong>${it.wt==='staff'?Math.round(ev(it)*.8):ev(it)}</strong><small>Includes +${it.r||0} refinement</small></div></div><div class="eclipse-item-affixes">${(it.aff||[]).map(a=>'<div><span>◇</span>'+esc(affTxt(a))+'</div>').join('')||'<small>No additional affixes</small>'}</div>${it.sec===6&&it.ascSet?mythicSetLine(it):''}`}
 let eclipseQuestAll=false;
 let eclipseInventoryState=null,eclipseInspectBag=false,eclipseSearch='',eclipseRarity=-1,eclipseEchoPick=false;
 const ECLIPSE_GEAR_PAGE_SIZE=60;
@@ -5521,9 +5563,10 @@ const V={
     </div>${future?'':`<div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="classPreview" width="126" height="134" role="img" aria-label="${S.sex==='f'?'female':'male'} ${k} class skin preview"></canvas><span class="hair-preview-loading" id="classPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">CLASS PREVIEW</span><b>${k}</b><span>${S.sex==='f'?'Female':'Male'}</span></div></div>`}</div>
     <div class="eclipse-class-bonus"><b>Class collection <strong>+${collDmg()}% damage</strong></b><p>${playedClasses()} / ${t3Total()} transcendent classes at Base Lv 100+. Each earns a permanent +1% damage for every class.</p></div>
     <details class="ui-fold"><summary>Switching classes & starting over</summary><p>Played classes keep their Base Lv, Job Lv, stats, skills and gear. Unplayed classes must meet their parent requirements. Selecting a class only inspects it.</p><button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button></details>`},
-  skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
+  skills(){return subBar('skills')+(V[sub.skills]||V.skilllist)()},
+  skilllist(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
     return`${S.skillRefund?`<div class="row"><small><b>New class skills:</b> ${S.skillRefund} old skill ranks were cleared. Your earned points are available on their original class lines. Use Auto-allocate to learn attacks first, then all other skills. Each played class also has one free stat reset.</small></div>`:''}${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill points: spend one point per rank. Your current class inherits earlier skills in its own line. Select up to six attacks for an ordered combo. Buffs refresh independently; passives remain active. Basic attacks continue during the 3-second recovery.</small>`
-    +(fourthJob()?`<p>Skill Ascension gives 30 points: five ranks for each of your five ordinary skills plus one new skill. Unlock the sixth skill in Character → Skill ascension; assign new attacks to a combo, while support skills auto-cast. <button data-a=ascopenskill>Open Skill ascension</button></p>`:'')+rotationBar()+`<div class="sk-slot">${sel&&line.includes(sel.from)?skillDetailCard(sel):'<small class="sk-slot-empty">Pick a skill to read what it does and to switch its auto-cast on or off.</small>'}</div>`
+    +`<div class="sk-slot">${sel&&line.includes(sel.from)?skillDetailCard(sel):'<small class="sk-slot-empty">Pick a skill to read what it does and to switch its auto-cast on or off.</small>'}</div>`
     +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id),off=!!(L&&s.type!=='pas'&&skOff(s.id)),kind=s.ascensionOnly?'ASCENSION':s.type==='pas'?'PASSIVE':s.type==='buff'?'BUFF':s.type==='heal'?'HEAL':'ACTIVE';
       return`<div class="sk${L?'':' off'}${off?' auto-off':''}${selS===s.id?' sel':''}" style="--sk-accent:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}">
         <div class="sk-head"><span class="sk-kind">${kind}</span>${off?'<span class="sk-paused">OFF</span>':''}</div>
@@ -5608,7 +5651,9 @@ const V={
     <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
     <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
     <div class="hd" style="margin-top:10px">Skill accounting test controls</div><small>Max the current class line, then use the normal Auto-allocate all skills button or let GM do both steps.</small><div class="row"><button data-a="gmskill" data-v="maxjobs">Max current line jobs</button><button data-a="gmskill" data-v="maxallocate">Max jobs + auto allocate</button><button data-a="gmskill" data-v="reset">Reset current line skills</button></div>
-    <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmbond" data-v="1">+1 duplicate on the selected pet (Bond)</button><button data-a="gmbond" data-v="5">+5 duplicates</button></div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>`}};
+    <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmbond" data-v="1">+1 duplicate on the selected pet (Bond)</button><button data-a="gmbond" data-v="5">+5 duplicates</button></div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>
+    <div class="hd" style="margin-top:10px">Ascension test controls</div><small>Stats levels are account-wide; skill levels belong to the current class. Spend the points in Character → Ascension stats and Skills → Ascension.</small><div class="row"><button data-a="gmascstats" data-v="max">Max Stats Ascension 50</button><button data-a="gmascstats" data-v="reset">Reset Stats Ascension</button><button data-a="gmascskills" data-v="max">Max Skill Ascension 30</button><button data-a="gmascskills" data-v="reset">Reset Skill Ascension</button></div>
+    <div class="hd" style="margin-top:10px">Level test controls</div><small>Base level, EXP and points return to fresh Lv1 values; stats, gear and jobs stay untouched.</small><div class="row"><button data-a="gmresetlv">Reset Base Lv → 1</button></div>`}};
 // v90: the Black Market panel. Locked until Base Lv 100; ore is bought one at a time and a reforge is
 // offered for every worn piece that has an affix.
 V.guide=()=>buildGuide(true);
@@ -5629,7 +5674,7 @@ function katarOnly(cls=S.cls){return cls==='Assassin'||cls==='Assassin Cross'||c
 // one blade, and the katar is not theirs either. dualWield() is what opens the left-hand slot.
 function dualWield(cls=S.cls){const c=CLASSES[cls]||CLASSES.Novice;return c.wt.includes('dagger')&&c.wt.includes('katar')}
 function ekey(it){if(it.slot==='acc')return S.eq.acc1&&!S.eq.acc2?'acc2':'acc1';return it.slot}
-const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=false,sideOpen=false,eqPick=null,indexMode='mobs';const sub={status:'stats',bag:'bag',equip:'equip0',market:'supplies',pet:'party'};let eclipseJobsBrowse=false,jobBranch=null;
+const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=false,sideOpen=false,eqPick=null,indexMode='mobs';const sub={status:'stats',bag:'bag',equip:'equip0',market:'supplies',pet:'party',skills:'skilllist'};let eclipseJobsBrowse=false,jobBranch=null;
 // The Index window is rebuilt on every game update, so a native <details> would slam shut the
 // moment a kill or level-up re-renders it. Remember each map's open/closed choice per tab and
 // feed it back into the markup, so reading another map's ledger stays readable.
@@ -5660,7 +5705,7 @@ function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
   const old=S.eq[k];transferEquipmentCards(old,it,k);S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
   S.hp=Math.min(S.hp,maxHp());log('Equipped '+iname(it)+' ('+EQK.find(x=>x[0]===k)[1].toLowerCase()+').','','gear');ui();save()}
-const SUBS={equip:[['equip0','Loadout'],['refine','Refine (R)'],['reforge','Reforge'],['ascension','Ascension']],status:[['stats','Stats'],['ascstats','Ascension stats'],['ascskills','Skill ascension']],bag:[['bag','Items'],['cards','Cards']]};
+const SUBS={equip:[['equip0','Loadout'],['refine','Refine (R)'],['reforge','Reforge'],['ascension','Ascension']],status:[['stats','Stats'],['ascstats','Ascension stats']],bag:[['bag','Items'],['cards','Cards']],skills:[['skilllist','Skills'],['combo','Combo'],['skillasc','Ascension']]};
 const subBar=t=>`<div class="atabs">${SUBS[t].map(([k,n])=>`<button data-a="sub" data-v="${t}:${k}" class="${sub[t]===k?'on':''}">${n}</button>`).join('')}</div>`;
 V.ascension=()=>ascensionForgePanel();
 function ascensionProgressPanel(skills=false){
@@ -5676,6 +5721,9 @@ function ascensionProgressPanel(skills=false){
 }
 
 V.ascstats=()=>ascensionProgressPanel();V.ascskills=()=>ascensionProgressPanel(true);
+// v174 (owner: combo and skill ascension live under Skills now): the Combo sub-tab owns the
+// rotation bar outright, and Skill ascension moved out of Character into Skills -> Ascension.
+V.skillasc=V.ascskills;V.combo=()=>rotationBar();
 V.reforge=()=>bmOpen()?reforgePanel():`<p>Reforge opens with the Black Market at Base Lv ${BM_LV}.</p>`;
 V.equip=()=>subBar('equip')+V[sub.equip]();
 V.status=()=>subBar('status')+V[sub.status]();
@@ -5894,7 +5942,7 @@ function arrangePanel(k,root){
   }else if(k==='job'){
     body.classList.add('class-path-panel');
     body.querySelectorAll('.tn[data-a=selk]').forEach(node=>{node.setAttribute('role','button');node.setAttribute('tabindex','0');node.setAttribute('aria-pressed',String(node.dataset.v===(selK||S.cls)))});
-  }else if(k==='skills'){
+  }else if(k==='skills'&&sub.skills==='skilllist'){
     const slot=q('.sk-slot'),tools=q('.sk-tools'),reset=q('[data-a="rskill"]'),grids=all('.skg'),intro=direct().filter(e=>!e.matches('.sk-slot,.skg,.sec,.skill-rotation')&&e!==reset);
     const catalog=section('Your class skill library','ui-skill-catalog');
     const skillGrid=make('div','skg');
@@ -5902,6 +5950,13 @@ function arrangePanel(k,root){
     if(tools)tools.remove();
     const chosen=slot?.querySelector('.sk-detail-card');
     const detail=section('Selected skill','ui-selected-skill');put(detail,chosen||make('p','ui-empty','Select a skill to inspect its effects and auto-cast setting.'));
+    // v171 (owner: the streamline hid every description): each tile shows its own effects inline
+    // again - skillDetailCard already renders the level-aware text and the auto-cast switch, so the
+    // inspector keeps the selected card and every tile renders its own fresh copy beside it.
+    for(const tile of catalog.querySelectorAll('.sk[data-a=ssel]')){
+      const skill=SKILLS.find(s=>s.id===tile.dataset.v);if(!skill)continue;
+      const content=make('div','eclipse-skill-description');content.innerHTML=skillDetailCard(skill);put(tile,content);
+    }
     const footer=put(section('Automation','ui-automation'),tools);
     // The allocation tile can be a sibling of the master tile in older saves/builds.
     const masters=all('.sk-master,.sk-alloc');masters.forEach(e=>{if(!footer.contains(e))footer.append(e)});
@@ -6213,9 +6268,11 @@ const winUp=()=>{winPress=false;if(winDirty){winDirty=false;renderWin()}};
 // Guarded so the headless UI harness (which pulls this slice into a bare vm) still loads.
 if(typeof addEventListener==='function'){addEventListener('pointerup',winUp);addEventListener('pointercancel',winUp)}
 if($('wins')&&$('wins').addEventListener)$('wins').addEventListener('pointerdown',()=>{winPress=true});
-const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexOf(k);if(i>=0&&expandedPanels.size&&!expandedPanels.has(k)){expandedPanels.clear();expandedPanels.add(k);renderWin();return}if(i<0)expandedPanels.clear();if(k==='skills'&&i>=0)selS=null;if(k!=='status')eqPick=null;if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
+const MAX_TABS=3;
+// v174 (owner, TEMPORARY): single-panel mode - opening a panel closes the rest. Flip to false to restore multi-tab.
+const SINGLE_PANEL=true;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexOf(k);if(i>=0&&expandedPanels.size&&!expandedPanels.has(k)){expandedPanels.clear();expandedPanels.add(k);renderWin();return}if(i<0)expandedPanels.clear();if(k==='skills'&&i>=0)selS=null;if(k!=='status')eqPick=null;if(i>=0)tabs.splice(i,1);else{if(SINGLE_PANEL)tabs.length=0;else if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
-  if(k==='pet')sub.pet='party';if(k==='job'){eclipseJobsBrowse=false;jobBranch=null;selK=null;}if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
+  if(k==='pet')sub.pet='party';if(k==='job'){eclipseJobsBrowse=false;jobBranch=null;selK=null;}if(k==='status')sub.status='stats';if(k==='skills')sub.skills='skilllist';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
   if(k==='map'){mapSeason=S.mp>=10?'ascension':'atlas';mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
 // Astral is one continuous bridge. Combat uses local field coordinates; after
 // walking we shift scenery, actors and camera together, preserving the visible world.
@@ -6305,7 +6362,7 @@ const ACT={
   sellnow:()=>previewAutoSell(),bulksellnow:()=>previewAutoSell(true),bulkrar:v=>{bulkSellState();const i=Number(v);if(!Number.isInteger(i)||i<0||i>=RARALL.length)return;bulkSellSelection.rarities[i]=!bulkSellSelection.rarities[i];autoSellPreview=null;renderWin()},sellconfirm:()=>confirmAutoSell(),sellcancel:()=>{autoSellPreview=null;ui()},
   sellrulesapply:()=>{const rules=cleanAutoSellRules(sellDraft());if(!rules)return log('Check filter values: use valid numbers, up to 100 equipment names and 0–10 empty sockets.','r0','gear');S.autoSellRules=rules;autoSellDraft=null;autoSellPreview=null;save();ui();log('Auto-sell filters saved.','r3','gear')},
   sellrulescancel:()=>{autoSellDraft=null;renderWin()},
-  ascopenskill:()=>{sub.status='ascskills';if(!tabs.includes('status'))tabs.push('status');renderWin()},
+  ascopenskill:()=>{sub.skills='skillasc';if(!tabs.includes('skills'))tabs.push('skills');renderWin()},
   ascstat:v=>{if(allocateAscension(v)){ui();save()}},
   ascskill:v=>{if(allocateAscension(v,true)){ui();save()}},
   ascreset:v=>{const owner=S,cls=S.cls;ask('Reset '+(v==='skills'?'skill':'stat')+' Ascension allocations for '+cls+'? Earned levels and EXP are kept. Free during testing.',()=>{if(S!==owner||S.cls!==cls)return;resetAscension(v==='skills');ui();save()})},
@@ -6313,7 +6370,10 @@ const ACT={
   transformasc:v=>{const[key,id]=v.split(':');const it=[...items(),...S.inv].find(x=>String(x.id)===id);if(!it||S.reforgePending&&String(S.reforgePending.id)===id)return;const result=transformToMythic(it,key);if(result?.error){log(result.error,'r0');return}ascensionItemPick='';log('Ascended '+iname(it)+' — your N+ item has evolved.','r4','gear');ui();save()},
   gmendgame:()=>{if(!S.gm)return;S.lv=150;S.pts=Math.max(0,totalPts()-ptsSpent());S.zeny+=10000000000;S.ascensionMat=S.ascensionMat.map(n=>safeCount(n)+1000);S.mythicScrolls=safeCount(S.mythicScrolls)+100;S.refineScrolls=safeCount(S.refineScrolls)+100;S.ore.ori+=1000;S.ore.elu+=1000;ui();save()},
   gmset:key=>{if(!S.gm||!Object.hasOwn(ASC_SETS,key))return;const recipes=[...C().wt.map(w=>['weapon',w]),...['armor','head','off','leg','acc','acc'].map(s=>[s,undefined])];if(S.inv.length+recipes.length>BAGMAX)return log('Make bag space for the complete set.','r0');const z=S.zeny,m=S.ascensionMat;try{S.zeny=1e12;S.ascensionMat=[10000,10000,10000];for(const [slot,wt] of recipes){const r=makeMythicEquipment(key,slot,wt);if(r?.item)S.inv.push(r.item)}}finally{S.zeny=z;S.ascensionMat=m}ui();save()},
-  gmaura:v=>{if(!S.gm)return;S.lv=+v;S.pts=Math.max(0,totalPts()-ptsSpent());ui();save()},gmglow:v=>{if(!S.gm||!S.eq.weapon||!Number.isInteger(+v)||+v<0||+v>(S.eq.weapon.sec===6?15:10))return;S.eq.weapon.r=+v;ui();save()},
+  gmaura:v=>{if(!S.gm)return;S.lv=+v;S.pts=Math.max(0,totalPts()-ptsSpent());ui();save()},
+  gmascstats:v=>{if(!S.gm)return;const a=ascState();if(v==='max'){a.level=50;a.xp=0;}else{a.level=0;a.xp=0;a.stats[S.cls]={};}S.hp=Math.min(S.hp,maxHp());ui();save()},
+  gmascskills:v=>{if(!S.gm)return;const a=ascState();if(!a.skills[S.cls])a.skills[S.cls]={level:0,xp:0,ranks:{}};const t=a.skills[S.cls];if(v==='max'){t.level=30;t.xp=0;}else{t.level=0;t.xp=0;t.ranks={};resetSkillRuntime();swing=null;for(const id in skCd)delete skCd[id];}ui();save()},
+  gmresetlv:()=>{if(!S.gm)return;S.lv=1;S.exp=0;S.pts=Math.max(0,totalPts()-ptsSpent());S.hp=maxHp();ui();save()},gmglow:v=>{if(!S.gm||!S.eq.weapon||!Number.isInteger(+v)||+v<0||+v>(S.eq.weapon.sec===6?15:10))return;S.eq.weapon.r=+v;ui();save()},
   sellpreset:v=>{const r=defaultAutoSellRules();if(v==='physical')r.affixes=[{k:'str',min:0},{k:'dex',min:0},{k:'crit',min:0},{k:'cdm',min:0}];else if(v==='caster')r.affixes=[{k:'int',min:0},{k:'matk',min:0}];else if(v==='collector')r.minEmpty=2;else return;autoSellDraft={owner:S,rules:r};renderWin()},
   clicksell:()=>{S.clickSell=false;ui();save()},
   quicksell:id=>{selB=id;eclipseInspectBag=true;renderWin()},
@@ -9751,7 +9811,9 @@ function draw(){
              // 75% of the 1.15s life, so the last quarter of it is the fade (r/(1-DMG_FADE)).
       const r=Math.max(0,f.life),tt=1-r,cs=(f.kind==='critical'||f.kind==='skill-critical')?1.05:.375;
       const sway=tt<.28?10*(tt/.28):10-38*Math.min(1,(tt-.28)/.72);
-      const dy=-DMG_RISE*Math.min(1,tt*1.15),dxx=sway+(f.sw||0)*Math.min(1,tt/.22)+(f.sp||0),sc=1+cs*Math.max(0,1-tt/.2);
+      // v171: the stack lift rides the climb - a number that spawned onto a live neighbour
+      // keeps its whole flight path shifted up, so a Rolling Cutter volley reads as a column.
+      const dy=-DMG_RISE*Math.min(1,tt*1.15)-(f.lift||0),dxx=sway+(f.sw||0)*Math.min(1,tt/.22)+(f.sp||0),sc=1+cs*Math.max(0,1-tt/.2);
       f.el.style.transform='translate(-50%,-50%) translate('+dxx.toFixed(1)+'px,'+dy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
       f.el.style.opacity=Math.min(1,Math.max(0,r/.25))}
     else f.el.style.opacity=Math.max(0,f.life)});

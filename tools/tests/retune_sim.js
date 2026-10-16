@@ -35,10 +35,11 @@ try{
   assert.equal(ev(`gearItemIconId(makeMythicEquipment('${set}','${slot}','${kind}').item)`),id);
  }
  ev(`tabs.push('skills');renderWin()`);
- assert.equal(g.window.document.querySelectorAll('.eclipse-skill-description').length,0,'no full description duplicated on each skill');
+ assert.equal(g.window.document.querySelectorAll('.eclipse-skill-description').length,g.window.document.querySelectorAll('.sk[data-a=ssel]').length,'every skill tile shows its own description inline (v171 restores the pre-streamline text)');
+ assert.ok(g.window.document.querySelectorAll('.eclipse-skill-description').length>0,'the restored tiles are not empty');
  assert.ok(g.window.document.querySelector('.ui-selected-skill'));
  assert.equal(g.window.document.querySelectorAll('.class-lineage-overview').length,0,'lineage belongs only to Class Tree');
  ev(`tabs.splice(0,tabs.length,'job');renderWin()`);
  assert.equal(g.window.document.querySelectorAll('.class-lineage-overview .tn').length,25);
- console.log('PASS: post-cap ASPD display, physical headgear, HP/CDM specialization, 42 native hashes, all 72 Mythic slot mappings and compact skill/class separation.');
+ console.log('PASS: post-cap ASPD display, physical headgear, HP/CDM specialization, 42 native hashes, all 72 Mythic slot mappings, restored skill descriptions and skill/class separation.');
 }finally{g.close()}

@@ -331,6 +331,7 @@ t('auto-sell filter editor saves drafts, keeps text during redraws and previews 
 t('World Atlas and Ascension Map have separate destination grids and normal travel controls',()=>{
  const doc=window.document;ev("tabs.splice(0,tabs.length,'map');mapSeason='atlas';mapM=3;mapL=4;S.mp=3;S.lvl=4;renderWin()");
  const before=ev('JSON.stringify(S)');
+ assert.ok(html.includes('map-season-tabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))'),'v174: the season strip is four columns so Social sits beside Ascension, not below');
  assert.deepStrictEqual([...doc.querySelectorAll('.map-season-tabs [role=tab]')].map(b=>b.id),['map-tab-atlas','map-tab-ascension','map-tab-echo','map-tab-social']);
  const social=doc.querySelector('#map-tab-social');assert.ok(social.disabled);assert.strictEqual(social.getAttribute('aria-disabled'),'true');assert.match(social.textContent,/Social Hub.*Coming Soon/);
  social.click();ev("ACT.mapseason('social')");assert.strictEqual(ev('mapSeason'),'atlas');assert.strictEqual(ev('JSON.stringify(S)'),before);
