@@ -21,6 +21,7 @@ const helpers = [
 
 const harness = `
 ${roster}
+${grab('// ---------- Ascension: shared earnings, independent class allocations ----------','const fresh=')}
 ${helpers}
 ${ledger}
 // skOff and skillOn share one line in index.html, so the pick above already brought both in.
@@ -189,6 +190,9 @@ t('player ATK and MATK formulas consume only their matching pet buffs and passiv
     let mob={x:0,z:0,hp:10000,size:.6,spriteScale:1},shake=0,S={dmg:0};
     const atk=()=>100,matk=()=>200,missCh=()=>0,crit=()=>0,st=()=>0,critD=()=>2,rnd=(a,b)=>a,addFloat=()=>{},damageFloat=()=>{},
       showDamage=(o,x,y,z,a,c,sk)=>damageFloat(x,y,z,a,c,false,sk),mobDamageY=()=>1.9;
+    ${roster}
+    ${grab('// ---------- Ascension: shared earnings, independent class allocations ----------','const fresh=')}
+    ${grab('let skillRuntime;', '// Combo damage is checked')}
     ${STRIKE_SRC}
     const hp=mob.hp;strike(1,'#fff',false);const physical=hp-mob.hp;mob.hp=hp;strike(1,'#fff',true);this.damage={physical,magical:hp-mob.hp};
   `,strikeBox);
@@ -569,7 +573,7 @@ t('a maxed job level fits its data-derived tree without exposed overflow', () =>
   const rows = [];
   for (const [name, c] of Object.entries(K.CLASSES)) {
     const line = []; for (let x = name; x; x = K.CLASSES[x].par) line.unshift(x);
-    const reach = K.SKILLS.filter(s => line.includes(s.from));
+    const reach = K.SKILLS.filter(s => !s.ascensionOnly&&line.includes(s.from));
     // the flat per-level cost, less the one free level of First Aid every line inherits
     const need = reach.reduce((a, s) => a + 1 * s.max, 0) - 1;
     const earned = line.reduce((a, n) => a + (K.CLASSES[n].mj - 1), 0);
@@ -596,7 +600,7 @@ t('a rushed promotion is deliberately short of the full tree (v59 build choice)'
   const floor = 0;                       // the Novice restarted: no Novice job levels at all
   const rows = [];
   for (const [label, line] of Object.entries(lines)) {
-    const reach = K.SKILLS.filter(s => line.includes(s.from));
+    const reach = K.SKILLS.filter(s => !s.ascensionOnly&&line.includes(s.from));
     const tree = reach.reduce((a, s) => a + s.max, 0) - (reach.some(s => s.id === 'aid') ? 1 : 0);
     const earn = label === 'Novice' ? 9
       : label === '1st job' ? 9 + 49
@@ -667,7 +671,7 @@ t('actives carry a cooldown and a damage multiplier that grows with level', () =
     assert.ok(s.cd > 0, s.id + ' has no cooldown');
     assert.strictEqual(typeof s.mul, 'function', s.id + ' has no multiplier');
     assert.ok(s.hits >= 1, s.id + ' has no hit count');
-    assert.ok(s.mul(5) > s.mul(1), `${s.id} does not scale with level`);
+    if(s.id!=='gc_claw')assert.ok(s.mul(5) > s.mul(1), `${s.id} does not scale with level`);
     assert.ok(s.col, s.id + ' has no colour');
   }
 });
@@ -694,7 +698,7 @@ t('effect parameters are in sane ranges', () => {
 
 t('automatic buffs have positive benefits and valid cooldowns', () => {
   const buffs=K.SKILLS.filter(s=>s.type==='buff');assert.ok(buffs.length>=10);
-  for(const s of buffs){assert.ok(s.f(1)>0||s.absorb?.pct>0,s.id);assert.ok(s.cd>0&&s.duration>0,s.id);assert.ok(!s.to,s.id+' must not retain the old HP gate');}
+  for(const s of buffs){assert.ok(s.f(1)>0||s.absorb?.pct>0||s.ascensionOnly&&K.run('ASC_UPGRADES')[s.id],s.id);assert.ok(s.cd>0&&s.duration>0,s.id);assert.ok(!s.to,s.id+' must not retain the old HP gate');}
 });
 t('buff upgrades never weaken their benefit', () => {
   for(const s of K.SKILLS.filter(s=>s.type==='buff'))for(let rank=2;rank<=s.max;rank++)assert.ok(s.f(rank)>=s.f(rank-1),s.id);

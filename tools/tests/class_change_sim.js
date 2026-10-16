@@ -21,9 +21,7 @@ if (!/const totalPts=\(\)=>\{let p=10;for\(let l=2;l<=S\.lv;l\+\+\)p\+=4\+Math\.
 // v74: the live canUse() carries the class-tier gate (index.html, the st()/canUse() line). The
 // harness copy below mirrors it, so pin the real shape here: if the gate moves or is reworded,
 // this fails instead of letting the sweep tests below pass against a stale rule.
-if (!/gearTierOK=\(it,cls=S\.cls\)=>gearTierOf\(it\)<=Math\.max\(1,classTierOf\(cls\)\)/.test(src) ||
-    !/canUse=it=>gearTierOK\(it\)&&\(it\.slot==='off'\?canShield\(\)/.test(src))
-  throw new Error('canUse()/gearTierOK() changed shape in index.html - update this harness copy');
+const gearTierRule=grab('gearTierOK=(it,cls=S.cls)=>',',gearUserOf=');
 if (!/function stowUnfit\(from\)\{/.test(src)) throw new Error('stowUnfit() disappeared from index.html');
 
 const harness = `
@@ -43,7 +41,7 @@ const log = () => {}, ui = () => {}, save = () => {}, addFloat = () => {}, pl = 
 const gearTierOf = it => Math.max(0, Math.min(3, ((it && it.sec) | 0) || 0));
 const classTierOf = (cls = S.cls) => Math.max(0, Math.min(3, (CLASSES[cls] && CLASSES[cls].tier) || 0));
 // v74.1: the lowest band (sections 0 and 1) is shared by Novice and first jobs, hence max(1, ...)
-const gearTierOK = (it, cls = S.cls) => gearTierOf(it) <= Math.max(1, classTierOf(cls));
+const ${gearTierRule};
 const iname = it => (it.r ? '+' + it.r + ' ' : '') + it.name;
 const canUse = it => gearTierOK(it) && (it.slot === 'off' ? canShield() : (it.slot !== 'weapon' || !it.wt || C().wt.includes(it.wt)));
 this.__h = {changeClass, classBlock, playedClass, playedClasses, t3Total, collDmg, classRec, snapClass, equipRec, noviceRun, clearClassSkills, stowUnfit, canUse, gearTierOK, CLASSES,

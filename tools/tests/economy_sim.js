@@ -207,6 +207,8 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       ${src.match(/const NM_ZENY_CH=[^;]+;/)[0]}
       ${src.match(/function nmZenyRoll\(mob\)\{[^\n]*/)[0]}
       ${grab('function earnZeny(amount){','function kill(o){')}
+      const FOURTH_JOBS_LIVE=true,CLASSES={};
+      ${grab('// ---------- Ascension: shared earnings, independent class allocations ----------','const fresh=')}
       ${rewards}
       this.result={xp:S.exp,z:S.zeny,jobXP,kills:S.kills,recorded};
     `,world);
@@ -233,6 +235,8 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       ${src.match(/const NM_ZENY_CH=[^;]+;/)[0]}
       ${src.match(/function nmZenyRoll\(mob\)\{[^\n]*/)[0]}
       ${grab('function earnZeny(amount){','function kill(o){')}
+      const FOURTH_JOBS_LIVE=true,CLASSES={};
+      ${grab('// ---------- Ascension: shared earnings, independent class allocations ----------','const fresh=')}
       ${rewards}
       this.result={xp:S.exp,z:S.zeny,jobXP};
     `,world);
@@ -386,7 +390,8 @@ t('low-level Zeny is still pocket change but no longer zero (v56 floor)', () => 
   assert.ok(killZeny(25) >= 6 && killZeny(25) <= 8, 'the curve takes over around Lv25 (got ' + killZeny(25).toFixed(1) + ')');
   assert.ok(killZeny(50) > 25, 'the mid-game curve is untouched (got ' + killZeny(50).toFixed(1) + ')');
   assert.strictEqual(E.ZMIN, 5, 'the shipped floor');
-  assert.strictEqual(src.match(/zeny:Math\.max\(ZMIN,/g).length, 4, 'online and offline mob/boss Zeny all use the floor');
+  assert.strictEqual((src.match(/zeny:fieldZenyReward\(/g)||[]).length,4,'online and offline mob/boss Zeny share the reward helper');
+  assert.ok(src.includes('return Math.max(ZMIN,Math.floor(ri(range[0],range[1])*l*l/1000*nz))'),'ordinary reward helper retains its floor');
   E.S = { lv: 1, gm: false }; E.PW = 1;
   assert.ok(E.newQuest('kill').z < 200, 'a Lv1 quest should not pay endgame money');
 });

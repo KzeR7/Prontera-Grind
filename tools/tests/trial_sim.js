@@ -22,7 +22,7 @@ console.log('endless echo: the three-minute damage trial\n');
 const DAY = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
 // v90.10: the tier helpers the Nightmare gear token reads (secField picks the section by tier)
 const tierHelpers = [/const nmTierOf=[^\n]*/, /const secField=\(m,l\)=>[^;]+;/].map(re => src.match(re)[0]).join('\n');
-const trialBlock = tierHelpers + '\n' + grab('// ========================= Endless Echo', 'const NMNAME=');
+const trialBlock = 'let astralJourney=null;\n'+grab('function cancelAstralJourney(){','function tickAstralJourney(dt){')+tierHelpers + '\n' + grab('// ========================= Endless Echo', 'const NMNAME=');
 const nmNames = grab("const NMNAME=['Dread'", 'const NMNAME2=');
 
 // ---- one arena, with the DOM and the world stubbed the way a run needs them ----------------
@@ -247,7 +247,7 @@ t('the run ends itself on the clock and leaves the arena', () => {
   assert.ok(src.includes('if(TRIAL.left<=0)return trialFinish()'), 'update() ends the run at zero');
   assert.ok(src.includes("$('stageTitle').textContent=JOB_RITE.on?'Crucible of the Valkyrie':hudTrial?`Endless Echo \u00b7 ${trialClock()}`"),
     'the HUD title carries the clock while a run is on');
-  assert.ok(src.includes("const pt=JOB_RITE.on?`Crucible · ${Math.ceil(jobRiteLeft())}s left`:hudTrial?`\ud83c\udfdb ${trialClock()} left"), 'and the progress line counts the damage down with it');
+  assert.ok(src.includes("const pt=astralJourney?'Walking to Astral Stage '+astralJourney.to:JOB_RITE.on?`Crucible · ${Math.ceil(jobRiteLeft())}s left`:hudTrial?`\ud83c\udfdb ${trialClock()} left"), 'and the progress line counts the damage down with it');
   const A = arena();
   A.trialEnter('training');
   assert.strictEqual(A.spawnCalls.length, 0, 'entering does not respawn a field');

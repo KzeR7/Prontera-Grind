@@ -1679,3 +1679,52 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 @container(max-width:620px){#wins .class-path-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}#wins .class-path-track{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#wins .class-path-track>.tn:last-child{grid-column:1/-1}#wins .class-path-focus{grid-template-columns:minmax(0,1fr)}#wins .class-path-focus .hair-preview-card{flex-direction:row;text-align:left}}
 #wins .class-path-track .tn.lock{opacity:1;filter:none;color:var(--ink)}
 #wins .class-path-track .tn.lock small{color:var(--e-muted)}
+
+/* Full lineage overview and an optional expanding design view. */
+#wins .class-lineage-overview .trow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+#wins .class-lineage-overview .trow:first-child{display:flex;justify-content:center}
+#wins .class-lineage-overview .tn{min-width:0;width:100%;padding:8px 3px;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+#wins .class-lineage-overview .trow:first-child .tn{width:150px}
+#wins .class-lineage-overview .tn b{font-size:11px}
+#wins .class-lineage-overview .tn small{font-size:9px}
+#wins .class-design-root{display:flex;justify-content:center;margin:14px 0}
+#wins .class-path-tabs [aria-expanded=true]{border-color:var(--gold);color:var(--gold);background:var(--e-soft)}
+#wins .class-path-track{grid-template-columns:repeat(4,minmax(0,1fr))}
+@container(max-width:620px){#wins .class-lineage-overview .trow{gap:3px}#wins .class-lineage-overview .tn b{font-size:9px}#wins .class-lineage-overview .tn small{font-size:8px}#wins .class-path-track{grid-template-columns:repeat(2,minmax(0,1fr))}#wins .class-path-track>.tn:last-child{grid-column:auto}}
+
+/* One Mythic set and one owned source item at a time. */
+#wins .ascension-forge{max-width:100%;padding:4px}
+#wins .ascension-set-picker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin:20px 0}
+#wins .ascension-set-picker button{display:flex;flex-direction:column;gap:5px;min-width:0;padding:12px 5px}
+#wins .ascension-set-picker [aria-pressed=true]{border-color:var(--gold);color:var(--gold);background:var(--e-soft)}
+#wins .ascension-forge-body{display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,2fr);gap:22px}
+#wins .ascension-set-info ul{padding:0;list-style:none;display:grid;gap:18px}
+#wins .ascension-set-info li{display:grid;gap:6px;padding-bottom:14px;border-bottom:1px solid var(--e-line);font-size:12px;line-height:1.7}
+#wins .ascension-set-info li.active{color:var(--gold)}
+#wins .ascension-evolution label{display:grid;gap:8px;font-size:12px}
+#wins .ascension-evolution select{width:100%;min-width:0;padding:12px}
+#wins .ascension-item-change{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:12px;align-items:center;margin:24px 0;text-align:center}
+#wins .ascension-item-change>div{display:grid;justify-items:center;gap:10px;min-width:0}
+#wins .ascension-item-change img{width:64px;height:64px;object-fit:contain;image-rendering:pixelated}
+#wins .ascension-costs>div{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--e-line)}
+#wins .ascension-costs dd{margin:0;text-align:right}
+#wins .ascension-empty{padding:24px 0;line-height:1.8;color:var(--e-muted)}
+#wins .echo-panel{display:block!important}#wins .echo-destination{padding:24px;max-width:800px;margin:auto}
+#wins .ascension-progression{padding:20px;line-height:1.8}
+#wins .ascension-skill-preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}
+#wins .ascension-skill-preview article{display:grid;justify-items:center;gap:9px;text-align:center;padding:14px;border:1px solid var(--e-line);border-radius:8px}
+@container(max-width:620px){#wins .ascension-set-picker{grid-template-columns:repeat(3,minmax(0,1fr))}#wins .ascension-forge-body{grid-template-columns:minmax(0,1fr)}#wins .ascension-costs{font-size:11px}}
+
+/* v163 Ascension allocation panels */
+#wins .ascension-progress-summary{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+#wins .ascension-progression progress{width:100%;height:12px;accent-color:var(--e-gold);margin-top:14px}
+#wins .ascension-allocation-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:14px;margin:20px 0}
+#wins .ascension-upgrade{display:flex;flex-direction:column;gap:10px;padding:18px;border:1px solid var(--e-line);border-radius:8px;min-width:0}
+#wins .ascension-upgrade header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#wins .ascension-upgrade h3,#wins .ascension-upgrade p{margin:0}
+#wins .ascension-upgrade header img{width:48px;height:48px;object-fit:contain}
+#wins .ascension-upgrade small{color:var(--e-muted)}
+#wins .ascension-upgrade button{margin-top:auto;min-height:38px}
+/* The Ascension unlock uses a full label rather than the ordinary rank button. */
+#wins .ui-skill-catalog .sk>small{grid-column:1/-1;text-align:left;line-height:1.4}
+#wins .ui-skill-catalog .sk>[data-a=ascopenskill]{grid-column:1/-1;grid-row:auto;width:auto;max-width:100%;justify-self:start;white-space:normal;min-height:30px;padding:6px 10px}

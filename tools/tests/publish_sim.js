@@ -49,9 +49,15 @@ t('every asset path index.html names statically ships with it', () => {
   }
   assert.ok(!bare.includes('assets/sprite_pack_data.js'),'legacy sprite pack must not download on normal startup');
   assert.ok(src.includes("script.src='assets/sprite_pack_data.js?v=2'"),'fallback pack remains available on demand');
-  for(const file of ['assets/atlas/astral-citadel.png','assets/atlas/thor-volcano.svg'])assert.ok(fs.existsSync(path.join(out,file)),'Ascension illustration ships: '+file);
+  for(const file of ['assets/atlas/astral-citadel.png','assets/atlas/thor-volcano.png'])assert.ok(fs.existsSync(path.join(out,file)),'Ascension illustration ships: '+file);
   const missing = bare.filter(r => !fs.existsSync(path.join(out, r)));
   assert.deepStrictEqual(missing, [], 'referenced but not published: ' + missing.join(', '));
+});
+
+t('all fourth-job runtime assets ship byte for byte', () => {
+  const dir='assets/fourth-jobs/v1';
+  for(const name of fs.readdirSync(path.join(root,dir)))assert.deepStrictEqual(fs.readFileSync(path.join(out,dir,name)),fs.readFileSync(path.join(root,dir,name)));
+  assert.ok(fs.existsSync(path.join(out,'assets/fourth-jobs.js')));
 });
 
 t('the class skins the game points at are published (Updates/Sprite/)', () => {
