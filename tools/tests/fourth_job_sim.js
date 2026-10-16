@@ -66,7 +66,7 @@ console.log('dark launch: the live roster is unchanged\n');
     classes: Object.keys(CLASSES).length,
     fourth: Object.values(CLASSES).filter(c => c.tier === 4).length,
     joff: JOFF.slice(0, 4).join(),
-    tree: (V.job().match(/class="tree class-lineage-overview"/g)||[]).length,
+    tree: (V.job().match(/class="current-class-path"/g)||[]).length,
     build: BUILD,
     hasRuneKnight: !!CLASSES['Rune Knight'],
   })`);
@@ -174,7 +174,7 @@ test('4th jobs wear their parent packed body, not an Assassin Cross fallback', (
 
 test('each selected lineage includes its fourth job and live trial action', () => `
   ${setup('Lord Knight', 50, 150)}
-  return ${JSON.stringify(FOURTH)}.every(([n,p])=>{selK=n;S.cls=p;S.jobs[p]={jl:50,jx:0};const html=V.job();return html.includes('class-lineage-overview')&&html.includes('data-a="job" data-v="'+n+'"')&&html.includes('Enter advancement trial')});`);
+  return ${JSON.stringify(FOURTH)}.every(([n,p])=>{selK=n;S.cls=p;S.jobs[p]={jl:50,jx:0};const html=V.job();return html.includes('current-class-path')&&html.includes('data-a="job" data-v="'+n+'"')&&html.includes('Enter advancement trial')});`);
 
 test('the Eclipse lineage uses the 4th job as the last step of its path', () => `
   ${setup('Lord Knight', 50, 150)}

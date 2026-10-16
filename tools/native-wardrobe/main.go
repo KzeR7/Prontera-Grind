@@ -40,9 +40,9 @@ func main() {
 		weapon = 1
 	case 2, 9, 4010, 4055:
 		weapon = 10
-	case 4, 5, 8, 4009:
+	case 4, 5, 8, 4009, 4057:
 		weapon = 8
-	case 10, 4011:
+	case 10, 4011, 4058:
 		weapon = 8
 		attack = 88
 	case 6:
@@ -52,7 +52,7 @@ func main() {
 		attack = 88
 	case 3:
 		weapon = 11
-	case 11, 4012:
+	case 11, 4012, 4056:
 		weapon = 11
 		attack = 88
 	}
@@ -81,9 +81,7 @@ func main() {
 					break
 				}
 				req := engine.Request{Job: job, Gender: g, Head: head, HeadPalette: pal, BodyPalette: -1, Headgear: []uint32{69, 3}, Garment: 1, Weapon: weapon, Frame: -1, HeadDir: rotype.Straight, EnableShadow: true, Canvas: "320x280+160+200"}
-				if job == 4054 {
-					req.Outfit = 1
-				}
+				if job >= 4054 && job <= 4059 { req.Headgear = nil; req.Garment = 0 }
 				hair := map[string]engine.WardrobeAction{}
 				base := map[string]engine.WardrobeAction{}
 				for _, stance := range []string{"idle", "walk", "attack"} {
@@ -108,7 +106,9 @@ func main() {
 							must(err)
 							// Export alternative pieces with the renderer's own attachments and order.
 							// Their pixels are bundled once; only one piece per slot is drawn at runtime.
-							for _, id := range []uint32{2, 17, 12, 8, 56, 57} {
+							extraIDs := []uint32{2, 17, 12, 8, 56, 57}
+							if job >= 4054 && job <= 4059 { extraIDs = nil }
+							for _, id := range extraIDs {
 								variant := req
 								variant.Headgear = []uint32{id}
 								variant.Garment = 0
@@ -128,7 +128,9 @@ func main() {
 								base[key] = current
 							}
 							if proof {
-								for mask := 0; mask < 8; mask++ {
+								masks := 8
+								if job >= 4054 && job <= 4059 { masks = 1 }
+								for mask := 0; mask < masks; mask++ {
 									variant := req
 									variant.Headgear = []uint32{0, 0}
 									variant.Garment = 0

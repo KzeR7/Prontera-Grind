@@ -265,3 +265,31 @@ The v170 PR preparation also refreshes progression `after` measurements with
 its old rotation estimate as a diagnostic only and checks the actual Pack Leader
 +10% limit and duplicate-species protection through `petDmg()`. Generated
 Afterglow covers ordinary skills; Ascension skills use the generic FX lifecycle.
+
+
+## v179 travel, materials, class/skill layout and fourth-job wardrobe
+
+Run `node tools/tests/progression_refresh_sim.js` for all twenty two-second Astral
+stage pairs (including pet following), both old material wallet migrations and
+idempotence, legacy gifts/crafting/reforge/purchases, refinement loss/protection,
+current-path/full-tree controls, top-of-Skills combo and the Echo scene.
+Affected callers are `astral_journey_sim.js`, `material_sim.js`,
+`adventurer_updates_sim.js`, `gear_sim.js`, `zeny_sink_sim.js`, `eclipse_ui_sim.js`,
+`panel_layout_smoke.js`, `ui_sim.js`, `fourth_job_sim.js` and the GM/save suites.
+`node tools/build_gm_catalog.cjs --check` verifies the regenerated GM catalog.
+
+Fourth-job customization now uses native components, superseding the earlier
+fixed-look gameplay adapter described above. Run `fourth_job_runtime_sim.js`,
+`wardrobe_game_sim.js`, `wardrobe_sim.js`, `python3 tools/tests/fourth_wardrobe_baseline.py`
+and `publish_sim.js`. The native layer/proof audit needs recovered source inputs;
+see [fourth-job wardrobe rebuild](../tools/native-wardrobe/README.md). Do not skip
+that audit when regenerating sprite data. The former fixed composite pack remains
+a local proof reference and is excluded from publishing.
+
+Check desktop and 390px shared-browser layouts: Maps → Endless Echo, Class Tree
+current path/full overview/neutral portrait, Skills combo first, and Wardrobe
+hair/colors/accessories for all six jobs and both genders. The sandbox's Chromium
+could not create WebGL; `node tools/native-wardrobe/browser_setup.cjs` reloads the
+shared page with the explicit repository renderer stub for DOM/Canvas checks.
+Reapply it after a fresh reload when needed. Stubbed checks do not cover GPU or
+physical phones.

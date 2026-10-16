@@ -26,7 +26,7 @@ const skinDir = (skinData.match(/"dir":"([^"]+)"/) || [])[1];
 const skinFile = (skinData.match(/"files":\{"S":"([^"]+)"/) || [])[1];
 
 const forbidden = ['_login.html', '_shot.html', 'logic2.js', 'tools', 'docs', 'Sprite', 'image-search',
-  'AGENTS.md', 'READ-ME-FIRST.md', 'Updates/fourth-jobs', 'Updates/lord-knight-bundles', 'assets/wardrobe/v1', 'assets/wardrobe/v3', 'assets/wardrobe/v4', '_recon_v27b.png', '_recon_v27c.png', '_recon_v27d.png', '_recon_v27e.png'];
+  'AGENTS.md', 'READ-ME-FIRST.md', 'Updates/fourth-jobs', 'Updates/lord-knight-bundles', 'assets/wardrobe/v1', 'assets/wardrobe/v3', 'assets/wardrobe/v4', 'assets/fourth-jobs', '_recon_v27b.png', '_recon_v27c.png', '_recon_v27d.png', '_recon_v27e.png'];
 
 t('the build script runs and finishes cleanly', () => {
   assert.ok(built, 'tools/build_site.sh exited non-zero: ' + (buildErr && (buildErr.stderr || '').toString().slice(0, 300)));
@@ -49,13 +49,13 @@ t('every asset path index.html names statically ships with it', () => {
   }
   assert.ok(!bare.includes('assets/sprite_pack_data.js'),'legacy sprite pack must not download on normal startup');
   assert.ok(src.includes("script.src='assets/sprite_pack_data.js?v=2'"),'fallback pack remains available on demand');
-  for(const file of ['assets/atlas/astral-citadel.png','assets/atlas/thor-volcano.png'])assert.ok(fs.existsSync(path.join(out,file)),'Ascension illustration ships: '+file);
+  for(const file of ['assets/atlas/astral-citadel.png','assets/atlas/thor-volcano.png','assets/atlas/endless-echo.svg'])assert.ok(fs.existsSync(path.join(out,file)),'Ascension illustration ships: '+file);
   const missing = bare.filter(r => !fs.existsSync(path.join(out, r)));
   assert.deepStrictEqual(missing, [], 'referenced but not published: ' + missing.join(', '));
 });
 
 t('all fourth-job runtime assets ship byte for byte', () => {
-  const dir='assets/fourth-jobs/v1';
+  const dir='assets/wardrobe/fourth/v1';
   for(const name of fs.readdirSync(path.join(root,dir)))assert.deepStrictEqual(fs.readFileSync(path.join(out,dir,name)),fs.readFileSync(path.join(root,dir,name)));
   assert.ok(fs.existsSync(path.join(out,'assets/fourth-jobs.js')));
 });
@@ -112,7 +112,8 @@ t('the published tree is small enough to stay honest', () => {
   const bytes = walk(out);
   const mb = bytes / 1048576;
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
-  assert.ok(mb < 58, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the native packs, fallback game and selected lossless scenery and native Ascension mobs plus six advancement opponents must fit in 58 MiB.');
+  assert.ok(mb < 62.5, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the native packs, fallback game and selected lossless scenery and native Ascension mobs plus six advancement opponents plus the six editable fourth-job wardrobes must fit in 62.5 MiB.');
+  const fourth=path.join(out,'assets/wardrobe/fourth/v1');assert.ok(walk(fourth)<6.25*1048576,'six fourth jobs share hair and accessory pixels');
   const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<13.5*1048576,'nineteen classes and fifty-two accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));
   for(const r of Object.values(catalog.assets))for(const key of ['meta','image'])assert.ok(fs.existsSync(path.join(wardrobe,r[key])),'native catalog asset is published');

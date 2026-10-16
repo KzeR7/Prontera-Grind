@@ -116,17 +116,17 @@ t('the roll covers every kill from Niflheim on and every Nightmare stage; bosses
 
 t('the Black Market sells one Nightmare material for 3,000,000 Zeny', () => {
   assert.strictEqual(M.BM_MAT_PRICE, 3000000);
-  assert.strictEqual(M.NM_MAT.length, 5, 'five materials, one per Nightmare map pair');
+  assert.strictEqual(M.NM_MAT.length, 1, 'one shared Void Core wallet');
 });
 
 t('buyMat takes the price and adds one of that material', () => {
   M.S = { lv: 100, zeny: 5000000, nmMat: [] };
   M.LOGS.length = 0;
-  sandbox.__m.buyMat(3);
+  sandbox.__m.buyMat(0);
   assert.strictEqual(M.S.zeny, 2000000, 'the price is taken');
-  assert.strictEqual(M.S.nmMat[3], 1, 'the material goes into its own slot');
+  assert.strictEqual(M.S.nmMat[0], 1, 'the material goes into its own slot');
   assert.ok(M.UI >= 1 && M.SAVES >= 1, 'the screen refreshes and the game saves');
-  assert.ok(M.LOGS.some(l => l.includes(M.NM_MAT[3])), 'the purchase is logged with the material name');
+  assert.ok(M.LOGS.some(l => l.includes(M.NM_MAT[0])), 'the purchase is logged with the material name');
 });
 
 t('buyMat refuses when the player cannot pay, and changes nothing', () => {

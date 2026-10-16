@@ -142,7 +142,9 @@ learned offensive skills from the current class's inherited line and reorder the
 with arrows or slot selectors. Each attack casts once in order at full power, with
 0.5-second cast spacing aligned to attack animation contact. Skill swings animate
 at the faster of the build's attack interval and that cast spacing. Each cast
-replaces a normal swing during the burst. After completion,
+replaces a normal swing during the burst. Fast builds also use normal attacks
+between casts when a complete attack animation fits before the next skill's
+windup. These attacks do not shorten skill spacing or delay the next cast. After completion,
 offensive skills recover for 3 simulation seconds; basic attacks and pets continue.
 Basic attacks, pet power and healing amounts retain
 their existing formulas. Cooldowns belong to individual skills. Unavailable, paused or out-of-range attacks
@@ -155,7 +157,9 @@ use their earlier offensive priority to initialize slots; missing priorities use
 starter combo with inherited openers and attacks from newer jobs. Field transitions
 preserve combo/recovery timing, while class and account changes clear transient
 combat state. Melee classes close to normal attack range even when a ranged skill
-is learned. Bow range passives extend both normal attacks and skills.
+is learned. During a fight, characters immediately close any gap when their
+target drifts just outside attack range, and hold position once back in range.
+Bow range passives extend both normal attacks and skills.
 Mage and Acolyte lines attack with magic at six tiles; their area skills
 have increased reach and damage, especially Mage. Read each skill's current definition:
 historical IDs can remain unchanged after a skill is renamed or redesigned.
@@ -196,11 +200,11 @@ Movement from AGI, pets, skills and running shares a 10.045 units/second cap.
 Equipment and card movement is applied afterward and can exceed that cap; those
 bonuses retain their combined +20% limit.
 
-Jobs opens with the complete class lineage on one page. Class tree is a second
-tab: Novice sits above six first classes; selecting one expands its complete line
-and collapses the previous line. Selecting the same branch collapses it. Both views
-share a focused inspector. The six fourth jobs appear as Coming
-soon while the release flag is off. Inspection does not change class.
+Class Tree opens with large clickable cards for the current five-step lineage.
+Available cards use the existing class-change and first-unlock trial gates.
+The Class tree subview retains the full 25-node overview with its inspector.
+Locked/current cards explain their status; the portrait has a neutral slate background.
+Inspection in the full overview does not change class.
 
 ## Equipment, cards and currency
 
@@ -263,6 +267,13 @@ without field rewards/progress. Played classes return directly. The local test b
 GM → Ascension testing grants Base 150, crafting materials, Zeny, ores and both
 protection scroll types. Grant any of the six complete sets for your current weapon
 families. Max the parent job and use Class Path for the real timed trial.
+GM → Maxed Ascension equipment by class grants a matching set to the bag for any
+of the six fourth jobs, with +15 refinement, maximum base values and four maximum
+legal affix rolls. Includes each weapon option, two accessories and two daggers for
+Guillotine Cross. Cards stay empty. Class, equipped items and wallets are preserved;
+insufficient bag capacity rejects the entire grant. Additional GM controls add 1,000
+of both ores alongside the existing +20, and set Base level to 1, 99 or 120 while
+clearing Base EXP and recalculating unspent points without resetting allocated stats.
 The Forge evolves compatible owned N+ equipment; maps do not drop gear.
 Mythic refines reach +15 (15 ores per attempt; +11…+15 chances 30/21/12/5/2%).
 Four-affix reforges retain their paid offer across reloads. The cloud GM console
@@ -308,5 +319,30 @@ All headgear grades offer STR/DEX/INT/VIT/HP/ATK/MATK with equal selection odds
 Each key now has a 1/7 chance on the first affix, so the older INT/VIT/HP/MATK
 options are less frequent than in the former four-key pool. Roll values and
 affix counts retain their rarity rules.
-Skills use compact tiles with one selected inspector and collapsible Combo setup.
-The full class lineage and expanding branch cards remain in Class Tree.
+Skills opens with the six-slot combo editor above the compact skill library and selected inspector.
+There is no separate Combo tab or empty bottom setup fold.
+
+
+## v179 progression and wardrobe refresh
+
+Astral stage changes walk continuously to any destination in exactly two seconds;
+pets keep pace. Arrival rebases the world/camera together and account/class/trial
+changes cancel travel safely. Ordinary movement and combat speed are unchanged.
+Endless Echo has a local illustrated portal/arena background in Maps.
+
+Nightmare MVPs across all ten ordinary regions drop only Void Core. Save version 3
+sums old ten-slot or five-slot material wallets once. Drops, offline rewards,
+legacy GM gifts, market purchases, scroll crafting (20 cores) and selective N/N+
+reforges use that wallet. Ascension materials retain their separate purposes.
+
+Unprotected refinement failures at current +5 through +9 lose one rank, including
+Mythic. Below +5 is safe; Mythic +10 is a checkpoint. Above +10, an unprotected
+failure loses one rank down to the checkpoint. Protection still consumes the
+appropriate scroll on every attempt, including success.
+
+All six fourth jobs now use genuine native body/hair/accessory components with
+20 hairstyles per gender, nine original palettes and the same 52 pieces as earlier
+classes. Apply/cancel/reset, male/female memory and account/class changes preserve
+progression and equipment. The separate fourth-job pack retains all eight directions,
+original frame clocks/placement, weapon/shadow layers and original world scale.
+See the native wardrobe README for source recovery, packing and proof commands.

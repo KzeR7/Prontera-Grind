@@ -197,26 +197,20 @@ test('card collection tiles expose names and retain keyboard selection',()=>{
  ev(`S.cards=CARD_CATALOG.slice(0,2).map(c=>newCard(c));tabs.push('bag');sub.bag='cards';renderWin()`);
  const tile=[...doc.querySelectorAll('.eclipse-card-grid [data-a=selc]')].find(t=>t.textContent.includes('Poring'));assert.ok(tile);tile.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));assert.ok(doc.querySelector('[data-win=bag] .ui-inspector').textContent.includes('Poring'));
 });
-test('class paths focus one lineage and keep inspection separate from switching',()=>{
- ev("S=fresh();S.cls='Lord Knight';S.jobs['Lord Knight']={jl:50,jx:0};selK=null;tabs.push('job');renderWin()");
- const before=ev('JSON.stringify(S)');assert.equal(doc.querySelectorAll('.class-lineage-overview [data-a=selk]').length,25);doc.querySelector('[data-a=jobview][data-v=browse]').click();assert.equal(doc.querySelectorAll('.class-path-tabs button').length,6);doc.querySelector('.class-path-tabs [data-v=Swordman]').click();
- assert.equal(doc.querySelectorAll('.class-path-track [data-a=selk]').length,4);
- doc.querySelector('.class-path-tabs [data-v=Mage]').click();assert.equal(ev('selK'),'Mage');
- doc.querySelector('.class-path-track [data-v=Wizard]').click();assert.equal(ev('JSON.stringify(S)'),before);
- assert.ok(doc.querySelector('[data-a=job][data-v=Wizard]').disabled);
- doc.querySelector('.class-path-track [data-v=Warlock]').click();assert.match(doc.querySelector('.class-path-focus').textContent,/Enter advancement trial/);
- assert.match(doc.querySelector('.class-path-focus').textContent,/High Wizard Job Lv 50/);
- assert.ok(doc.querySelector('[data-a=job][data-v=Warlock]').disabled);assert.equal(ev('CLASSES.Warlock.tier'),4);
- doc.querySelector('.class-path-tabs [data-v=Swordman]').click();assert.equal(doc.querySelector('.class-path-track [data-v=Warlock]'),null);assert.equal(doc.querySelectorAll('.class-path-track .tn').length,4);doc.querySelector('.class-path-tabs [data-v=Swordman]').click();assert.equal(doc.querySelector('.class-path-track'),null);assert.equal(ev('JSON.stringify(S)'),before);
+test('current lineage offers direct class actions and the full tree inspects without switching',()=>{
+ ev("S=fresh();S.cls='Lord Knight';S.jobs['Lord Knight']={jl:50,jx:0};selK=null;eclipseJobsBrowse=false;tabs.push('job');renderWin()");
+ assert.equal(doc.querySelectorAll('.current-class-card').length,5);
+ doc.querySelector('[data-a=jobview][data-v=browse]').click();
+ assert.equal(doc.querySelectorAll('.class-lineage-overview [data-a=selk]').length,25);
+ const before=ev('JSON.stringify(S)');doc.querySelector('.class-lineage-overview [data-v=Wizard]').click();
+ assert.equal(ev('JSON.stringify(S)'),before);assert.ok(doc.querySelector('.class-path-focus [data-a=job][data-v=Wizard]').disabled);
+ doc.querySelector('.class-lineage-overview [data-v=Warlock]').click();assert.match(doc.querySelector('.class-path-focus').textContent,/Enter advancement trial/);assert.ok(doc.querySelector('.class-path-focus [data-a=job][data-v=Warlock]').disabled);
 });
-test('selected path shows current, played, available and locked states',()=>{
- ev("S=fresh();S.cls='Mage';S.jobs={Novice:{jl:10,jx:0},Mage:{jl:40,jx:0},Swordman:{jl:20,jx:0}};S.base={Swordman:{lv:40}};selK=null;tabs.push('job');renderWin()");
- ev("eclipseJobsBrowse=false;renderWin()");doc.querySelector('[data-a=jobview][data-v=browse]').click();doc.querySelector('.class-path-tabs [data-v=Mage]').click();
- const status=n=>doc.querySelector('.class-path-track [data-v="'+n+'"]');
- assert.equal(status('Mage').dataset.classStatus,'cur');assert.equal(status('Wizard').dataset.classStatus,'ok');assert.equal(status('High Wizard').dataset.classStatus,'lock');
- doc.querySelector('.class-path-tabs [data-v=Swordman]').click();assert.equal(status('Swordman').dataset.classStatus,'played');
- doc.querySelector('.class-path-tabs [data-v=Mage]').click();status('Wizard').click();doc.querySelector('[data-a=job][data-v=Wizard]').click();
- assert.equal(ev('S.cls'),'Wizard');assert.equal(status('Wizard').dataset.classStatus,'cur');assert.equal(status('Mage').dataset.classStatus,'played');
+test('class tree retains current, played, available and locked states',()=>{
+ ev("S=fresh();S.cls='Mage';S.jobs={Novice:{jl:10,jx:0},Mage:{jl:40,jx:0},Swordman:{jl:20,jx:0}};S.base={Swordman:{lv:40}};selK=null;eclipseJobsBrowse=true;tabs.push('job');renderWin()");
+ const status=n=>doc.querySelector('.class-lineage-overview [data-v="'+n+'"]');
+ assert.equal(status('Mage').dataset.classStatus,'cur');assert.equal(status('Wizard').dataset.classStatus,'ok');assert.equal(status('High Wizard').dataset.classStatus,'lock');assert.equal(status('Swordman').dataset.classStatus,'played');
+ status('Wizard').click();doc.querySelector('.class-path-focus [data-a=job][data-v=Wizard]').click();assert.equal(ev('S.cls'),'Wizard');assert.equal(status('Wizard').dataset.classStatus,'cur');assert.equal(status('Mage').dataset.classStatus,'played');
 });
 test('Novice restart is disclosed once and keeps confirmation',()=>{
  ev("S.cls='Mage';S.jobs.Mage={jl:40,jx:0};selK=null;tabs.push('job');renderWin()");
@@ -326,7 +320,7 @@ test('class path shows one collection summary while browsing',()=>{
  ev("S.cls='Lord Knight';S.lv=100;S.base={'High Wizard':{lv:100}};selK=null;eclipseJobsBrowse=false;tabs.push('job');renderWin()");
  assert.equal(ev('collDmg()'),2);assert.equal(doc.querySelectorAll('.eclipse-class-bonus').length,1);
  assert.match(doc.querySelector('.eclipse-class-bonus').textContent,/\+2% damage/);
- doc.querySelector('.class-lineage-overview [data-v=Mage]').click();ev("S.base['High Wizard'].lv=99;renderWin()");
+ doc.querySelector('[data-a=jobview][data-v=browse]').click();doc.querySelector('.class-lineage-overview [data-v=Mage]').click();ev("S.base['High Wizard'].lv=99;renderWin()");
  assert.match(doc.querySelector('.eclipse-class-bonus').textContent,/\+1% damage/);
 });
 test('Ascension Forge keeps crafting and transformation controls in Eclipse',()=>{
@@ -356,8 +350,8 @@ test('v174 TEMPORARY single-panel mode: opening a tab closes the rest, toggling 
 test('v174: Skills has Skills/Combo/Ascension sub-tabs; Character keeps stats only',()=>{
  ev("sub.skills='skilllist'");
  const tiles=ev('V.skills()');
- assert.ok(tiles.includes('data-v="skills:combo"')&&tiles.includes('data-v="skills:skillasc"'),'the sub-bar links all three views');
- assert.ok(!tiles.includes('skill-rotation'),'the tiles view no longer buries the combo plan');
+ assert.ok(!tiles.includes('data-v="skills:combo"')&&tiles.includes('data-v="skills:skillasc"'),'the sub-bar keeps only Skills and Ascension');
+ assert.ok(tiles.includes('skill-rotation'),'the skill library includes its combo plan');
  ev("sub.skills='combo'");
  assert.ok(ev('V.skills()').includes('skill-rotation'),'the Combo sub-tab owns the rotation bar');
  assert.ok(!ev('V.skills()').includes('data-ui-disclosure'),'the Combo view is never folded');

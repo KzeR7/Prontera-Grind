@@ -18,7 +18,7 @@ try {
    }
    S.zeny=1e15;S.ascensionMat=[1000000,1000000,1000000];
    for(const [key,set] of Object.entries(ASC_SETS))for(const slot of Object.keys(set.cost))for(const wt of slot==='weapon'?Object.keys(set.pieces.weapon):[undefined]){
-    const {item}=craftAscensionPiece(key,slot,wt);delete item.id;
+    const {item}=makeMythicEquipment(key,slot,wt);delete item.id;
     entries.push({id:'mythic:'+key+':'+slot+(wt?':'+wt:''),label:item.name+' · '+(wt||slot),type:'gear',item,affixes:affixPool(item)});
    }
    for(const c of CARD_CATALOG){const item=newCard(c);delete item.id;entries.push({id:'card:'+c.cardKey,label:item.n,type:'card',item});}

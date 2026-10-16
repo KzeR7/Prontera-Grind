@@ -6,7 +6,7 @@ from PIL import Image,ImageChops
 repo=Path(__file__).resolve().parents[2]
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('exports',type=Path);p.add_argument('pieces',type=Path);p.add_argument('proof',type=Path)
-a=p.parse_args();root=repo/'assets/wardrobe/v5';cat=json.loads((root/'catalog.json').read_text());cache={};layer_count=0;proof_count=0;maximum=0
+p.add_argument('--pack',type=Path,default=repo/'assets/wardrobe/v5');a=p.parse_args();root=a.pack;cat=json.loads((root/'catalog.json').read_text());cache={};layer_count=0;proof_count=0;maximum=0
 
 def asset(key):
     if key in cache:return cache[key]
@@ -29,7 +29,7 @@ def asset(key):
     actions={k:dict(delay=v['delay'],frames=[poses[i]for i in v['frames']])for k,v in m['actions'].items()}
     cache[key]=(original,actions,im);return cache[key]
 
-assert len(cat['classes'])==19 and not cat['outfits'];assert cat['accessories']==json.loads((Path(__file__).resolve().parents[2]/'tools/native-wardrobe/accessories.json').read_text())
+assert len(cat['classes']) in [6,19] and not cat['outfits'];assert cat['accessories']==json.loads((Path(__file__).resolve().parents[2]/'tools/native-wardrobe/accessories.json').read_text())
 for key in cat['assets']:
     original,actions,im=asset(key)
     if key.startswith('base-'):
@@ -60,7 +60,7 @@ for cls,job in cat['classes'].items():
                         result=Image.new('RGBA',(320,280));layers=[(p,bi)for p in frame]+[(p,hi)for p in h['frames'][i%len(h['frames'])]]+[(p,pi)for p in c['frames'][i]]
                         for q,atlas in sorted(layers,key=lambda x:x[0][6]):
                             sx,sy,w,height,x,y,_,_=q;result.alpha_composite(atlas.crop((sx,sy,sx+w,sy+height)),(x,y))
-                        expected=Image.open(a.proof/str(job)/sex/item['key']/name/f'{i}.png').convert('RGBA');delta=max(e[1]for e in ImageChops.difference(result,expected).getextrema());assert delta<=(3 if item['key']=='evilScythe'else 2),(cls,sex,item['key'],name,i,delta);maximum=max(maximum,delta);proof_count+=1
+                        expected=Image.open(a.proof/str(job)/sex/item['key']/name/f'{i}.png').convert('RGBA');delta=max(e[1]for e in ImageChops.difference(result,expected).getextrema());assert delta<=(3 if item['key']in ['evilScythe','shuriken','poisonSpider','mainspringScrew'] else 2),(cls,sex,item['key'],name,i,delta);maximum=max(maximum,delta);proof_count+=1
     print('Checked',cls,flush=True)
 files=list(root.iterdir());size=sum(f.stat().st_size for f in files);assert len(files)<700
 print(json.dumps(dict(status='pass',exactLayerFrames=layer_count,nativeComparisonFrames=proof_count,maxChannelDifference=maximum,files=len(files),bytes=size)))

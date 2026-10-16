@@ -7,9 +7,12 @@ const g=createGame(html),ev=g.ev;
  assert.equal(ev('CD4.every(c=>wardrobeSupported(c[0])&&wardrobePending(c[0]))'),true,'every fourth job waits for its original native sprite');
  ev(`window.matchMedia=()=>({matches:false});window.__saveCount=0;save=()=>{__saveCount++};S.hair=17;S.sex='f';S.cls='Lord Knight';tabs.push('wardrobe');renderWin();`);
  // Loader itself is checked against actual files separately; this test controls readiness/failure.
- g.window.__catalog=JSON.parse(fs.readFileSync(path.join(repo,'assets/wardrobe/v5/catalog.json'),'utf8'));
- g.window.__metadata={};for(const [id,r] of Object.entries(g.window.__catalog.assets))g.window.__metadata[id]=require('../../assets/wardrobe.js').validateMeta(JSON.parse(fs.readFileSync(path.join(repo,'assets/wardrobe/v5',r.meta),'utf8')),r);
- ev(`wardrobeStore.select=async(client,a,cls='Lord Knight')=>{const job=PGWardrobe.CLASSES[cls],route=id=>({metadata:{clock:__metadata[id].clock,actions:Object.fromEntries(Object.entries(__metadata[id].actions).filter(([k])=>k.startsWith(job+':')).map(([k,v])=>[k.split(':')[1],v]))},image:{}});return {key:job+'|'+PGWardrobe.key(a),cls,selection:PGWardrobe.normalize(a),ids:[],base:{metadata:__metadata['base-'+job+'-'+a.sex],figureHeight:__catalog.assets['base-'+job+'-'+a.sex].figureHeight,image:{}},hair:route('hair-'+PGWardrobe.key(a)),pieces:Object.keys(PGWardrobe.ACCESSORIES).map(k=>a[k]).filter(k=>k&&k!=='none').map(k=>route('piece-'+k+'-'+a.sex))}};wardrobeLoad();`);await new Promise(r=>setImmediate(r));
+ g.window.__catalogs={};g.window.__metadatas={};
+ for(const [pack,dir]of [['base','assets/wardrobe/v5'],['fourth','assets/wardrobe/fourth/v1']]){
+  const catalog=JSON.parse(fs.readFileSync(path.join(repo,dir,'catalog.json'),'utf8'));g.window.__catalogs[pack]=catalog;g.window.__metadatas[pack]={};
+  for(const [id,r]of Object.entries(catalog.assets))g.window.__metadatas[pack][id]=require('../../assets/wardrobe.js').validateMeta(JSON.parse(fs.readFileSync(path.join(repo,dir,r.meta),'utf8')),r);
+ }
+ ev(`wardrobeStore.select=async(client,a,cls='Lord Knight')=>{const fourth=Object.hasOwn(PGFourthJobs.CLASSES,cls),job=(fourth?PGFourthJobs.CLASSES:PGWardrobe.CLASSES)[cls],metadata=__metadatas[fourth?'fourth':'base'],catalog=__catalogs[fourth?'fourth':'base'],route=id=>({metadata:{clock:metadata[id].clock,actions:Object.fromEntries(Object.entries(metadata[id].actions).filter(([k])=>k.startsWith(job+':')).map(([k,v])=>[k.split(':')[1],v]))},image:{}});return {key:job+'|'+PGWardrobe.key(a),cls,selection:PGWardrobe.normalize(a),ids:[],base:{metadata:metadata['base-'+job+'-'+a.sex],figureHeight:catalog.assets['base-'+job+'-'+a.sex].figureHeight,image:{}},hair:route('hair-'+PGWardrobe.key(a)),pieces:Object.keys(PGWardrobe.ACCESSORIES).map(k=>a[k]).filter(k=>k&&k!=='none').map(k=>route('piece-'+k+'-'+a.sex))}};wardrobeLoad();`);await new Promise(r=>setImmediate(r));
  assert.equal(ev('S.appearance'),null);assert.equal(ev('S.hair'),17);assert.equal(ev('__saveCount'),0);
  ev(`wardrobeChange('head',42);wardrobeChange('color',8);wardrobeChange('halo',false);`);await new Promise(r=>setImmediate(r));assert.equal(ev('S.appearance'),null);assert.equal(ev('__saveCount'),0);
  ev(`wardrobeAction('cancel')`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.draft.heads.f'),2);assert.equal(ev('S.hair'),17);
@@ -92,6 +95,19 @@ const g=createGame(html),ev=g.ev;
   assert.equal(ev('heroSpr.userData.wardrobe.look.cls'),cls);assert(Number.isFinite(ev('heroSpr.scale.y')));assert(Math.abs(ev('heroSpr.scale.y*heroSpr.userData.wardrobe.look.base.figureHeight/280-SKIN_H'))<1e-9);
   for(let d=0;d<8;d++){ev(`captureWardrobeFrame(__nativeSprite,${d},true,0,1000);captureWardrobeFrame(__nativeSprite,${d},false,1,2000);captureWardrobeFrame(__nativeSprite,${d},false,.001,3000)`);assert(ev(`__nativeSprite.userData.wardrobe.paint.startsWith('attack${d}:')`))}
   const save=ev('JSON.stringify(S)');g.window.localStorage.setItem('pg_save3_skill-test',save);assert.equal(ev('load().cls'),cls);assert.equal(ev('load().appearance'),null);
+ }
+ // Fourth jobs have enabled controls and apply/cancel/reset using actual class metadata.
+ for(const cls of ['Rune Knight','Warlock','Ranger','Guillotine Cross','Arch Bishop','Mechanic']){
+  g.window.__nextClass=cls;ev(`S.cls=__nextClass;tabs.splice(0,tabs.length,'wardrobe');renderWin()`);await new Promise(r=>setImmediate(r));
+  assert.equal(ev('wardrobeState.look.cls'),cls);
+  assert.equal(g.window.document.querySelectorAll('.wardrobe fieldset[disabled]').length,0);
+  const progress=ev(progressState),before=ev('JSON.stringify(S.appearance)');
+  ev(`wardrobeChange('head',42);wardrobeChange('color',8);wardrobeChange('headwear','foxEars');wardrobeChange('backwear','evilScythe');wardrobeAction('apply')`);
+  assert.equal(ev('JSON.stringify(S.appearance)'),before,'pending appearance does not apply');await new Promise(r=>setImmediate(r));
+  ev(`wardrobeAction('apply')`);assert.equal(ev('S.appearance.colors[S.sex]'),8);assert.equal(ev('S.appearance.backwear'),'evilScythe');assert.equal(ev(progressState),progress);
+  g.window.localStorage.setItem('pg_save3_skill-test',ev('JSON.stringify(S)'));assert.equal(ev('load().appearance.headwear'),'foxEars');
+  ev(`wardrobeChange('headwear','goldDragonHelm')`);await new Promise(r=>setImmediate(r));ev(`wardrobeAction('cancel')`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.draft.headwear'),'foxEars');
+  ev(`wardrobeAction('original')`);await new Promise(r=>setImmediate(r));assert.equal(ev('S.appearance'),null);assert.equal(ev('S.cls'),cls);assert.equal(ev(progressState),progress);
  }
  ev(`tabs.push('job');window.__portrait=document.createElement('canvas');__portrait.width=126;__portrait.height=134;wardrobePortrait(__portrait,'Archer')`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeClassLook.cls'),'Archer');assert.equal(ev(`wardrobePortrait(__portrait,'Archer')`),true);
  // Each requested head survives apply/save/load; the independently looping

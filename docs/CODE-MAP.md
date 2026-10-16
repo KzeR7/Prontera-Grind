@@ -10,7 +10,7 @@ editing. Many tests execute extracted pieces of the real page.
 | --- | --- | --- |
 | Classes, promotion, saved builds | `index.html`: `CD`, `CLASSES`, `classBlock`, `changeClass`, `snapClass`, `noviceRun` | `class_change_sim.js`, `loadout_update_sim.js`, `save_load_sim.js` |
 | Stats, Base/Job EXP and pacing | `index.html`: `statCap`, `totalPts`, `baseNeedAt`, `needAt`, `jneed`, `expRate`, `economy tuning`; `tools/tune_pacing.js` | `base_pacing_sim.js`, `stat_sim.js`, `economy_sim.js`, `progression_sim.js` |
-| Combat and skill execution | `index.html`: `SKILLS`, `comboConfig`, `nextComboSkill`, `resolveSwing`, `tickCombatSkills`, `simAdvance`, `loop` | `combo_rotation_sim.js`, `skill_sim.js`, `skill_redesign_sim.js`, `combat_damage_sim.js`, `attack_sync_sim.js`, `field_loop_smoke.js` |
+| Combat and skill execution | `index.html`: `SKILLS`, `comboConfig`, `nextComboSkill`, `resolveSwing`, `tickCombatSkills`, `simAdvance`, `loop` | `combo_rotation_sim.js`, `skill_sim.js`, `skill_redesign_sim.js`, `combat_damage_sim.js`, `attack_sync_sim.js`, `field_loop_smoke.js`, `ascension_attack_sim.js` |
 | 4th-job classes and skills (Milestone 4, dark-launched behind `FOURTH_JOBS_LIVE`) | `index.html`: `CD4`/`FOURTH_JOBS_LIVE`, `ADV4_BASE_LV`, `classBlock()`, `JOFF`, `PACK_BODY`, `V.job()` tree rows, `SKILLS4` and the mechanic helpers beside `chainHit` (`castSkill`, `absorbSoak`), `katarOnly()` | `fourth_job_sim.js`, `fourth_job_skills_sim.js` (flag on, plus live-page checks); parked reference in `Updates/fourth-jobs/` |
 | Fourth-job advancement trial (locked) | `index.html`: `JOB_RITE`, `startJobRite`, `showJobRiteResult`, `tickJobRite`, `finishJobRite`; dark room and three-second animated result/promotion | `job_rite_sim.js`, `fourth_job_sim.js`, `fourth_job_mythic_sim.js` |
 | Gear, class eligibility, cards, autosell | `index.html`: `genGear`, `canUse`, `stowUnfit`, `equipRec`, `CARD_FITS` | `gear_sim.js`, `dual_wield_sim.js`, `card_sim.js`, `autosell_sim.js` |
@@ -140,19 +140,21 @@ loads. Check `map_delivery_sim.js` and the journey browser audit; do not apply t
 pipeline to native sprites/metadata. See [cloud data](CLOUD-DATA.md) for current
 published bytes versus requested resources and API/database load.
 
-Jobs (v161): `V.job()` defaults to the full 25-node lineage; `jobview` switches to
-Tree design and `jobbranch` expands one first-class lineage. `ACT.selk` inspects;
-`ACT.job` retains advancement/trial gates. `V.ascension` exposes the shared Forge
-under Equipment → Ascension. Check `eclipse_ui_sim.js`, `panel_layout_smoke.js`,
-`fourth_job_sim.js` and `mythic_rules_sim.js`.
+Class Tree (v179): `V.job()` defaults to a current five-node path whose cards
+use `ACT.job` and the existing advancement/trial gates. `jobview` switches to the
+full 25-node overview; `ACT.selk` inspects there. `V.skills` renders `rotationBar`
+before composition; `arrangePanel` moves it above the skill catalog without
+mutating saves. Check `progression_refresh_sim.js`, `eclipse_ui_sim.js` and
+`panel_layout_smoke.js`.
 
-`assets/fourth-jobs.js` adapts the audited fixed native composites to the Wardrobe
-renderer, using its bounded, checksum-validated loader. `tools/build_fourth_job_runtime.py`
-copies identical atlases and native action metadata into `assets/fourth-jobs/v1/`.
-The original review/proof files remain under Updates and are excluded from publishing.
-Run the generator with `--check`, `fourth_job_runtime_sim.js`, `wardrobe_game_sim.js`
-and `publish_sim.js`. These composites have fixed heads/weapons; cosmetics are retained
-in saves for earlier classes. They have no separate weapon layer for refine edging.
+`assets/fourth-jobs.js` uses the shared bounded native component loader with
+six class routes and `assets/wardrobe/fourth/v1/`. The earlier nineteen-class pack
+remains at `assets/wardrobe/v5/`. `tools/build_wardrobe_collection.py --fourth-jobs`
+packs original exports; fourth-source/preview manifests and
+`prepare_fourth_previews.py` preserve provenance. The former fixed composite pack
+is retained locally as proof input and excluded from publishing. See
+`tools/native-wardrobe/README.md`; run `fourth_job_runtime_sim.js`,
+`wardrobe_game_sim.js`, `fourth_wardrobe_baseline.py` and the native layer audit.
 
 Ascension v162: `ascensionCandidates`, `transformToMythic` and `ascensionForgePanel` implement owned-item evolution. `makeMythicEquipment` is reserved for GM gifts. `startAstralJourney` / `tickAstralJourney` / `cancelAstralJourney` own continuous bridge travel. v163 activates the approved progression tracks.
 

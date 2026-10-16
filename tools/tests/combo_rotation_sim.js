@@ -30,6 +30,29 @@ try{
    assert.ok(times[6].t-times[5].t>=3,'recovery must finish before next impact');ev('TRIAL.on=false');
   }
  });
+ test('fast builds fill skill gaps with complete basics without delaying casts or recovery',()=>{
+  setup();ev('window.normalClassAspd=C().aspd;window.normalStrike=strike;window.normalAttack=playerAttack');
+  try{
+   for(const interval of [.16,.2,.24,.3,.49,.5,.8]){
+    setup();ev(`S.skOff=Object.fromEntries(SKILLS.filter(s=>s.type==='buff').map(s=>[s.id,true]));C().aspd=10;C().aspd*=${interval}/aspd();S.adv=false;S.auto=false;TRIAL.on=true;TRIAL.left=1e9;mob.fixed=true;mob.at=1e9;mob.atk=0;mob.hx=0;mob.hz=0;mob.a=0;mob.spawn=1;S.hp=maxHp();comboConfig().slots=['bash','endure','bowl','pierce','spiral','mbrk'];
+     window.gapCasts=[];window.gapBasics=[];window.gapStarts=[];
+     castSkill=s=>gapCasts.push({id:s.id,t});strike=()=>gapBasics.push(t);
+     playerAttack=()=>{normalAttack();if(swing)gapStarts.push({t,d:swingDur,skill:!!swing.casts.length})};
+     for(let i=0;i<600;i++){update(1/60);floats.length=0;shots.length=0;}`);
+    const casts=JSON.parse(ev('JSON.stringify(gapCasts)')),basics=Array.from(ev('gapBasics'));
+    const starts=JSON.parse(ev('JSON.stringify(gapStarts)'));
+    assert.deepEqual(casts.slice(0,6).map(s=>s.id),['bash','endure','bowl','pierce','spiral','mbrk']);
+    for(let i=1;i<6;i++)assert.ok(casts[i].t-casts[i-1].t>=.5-1e-8&&casts[i].t-casts[i-1].t<.55,'unchanged spacing at '+interval);
+    const between=basics.filter(t=>t>casts[0].t&&t<casts[5].t);
+    if(interval<=.24)assert.ok(between.length>=5,'fast basics between skills at '+interval);
+    else assert.equal(between.length,0,'no room for a complete basic at '+interval);
+    for(let i=1;i<starts.length;i++)assert.ok(starts[i].t>=starts[i-1].t+starts[i-1].d-1e-8,'no interrupted swing at '+interval);
+    assert.ok(casts[6].t-casts[5].t>=3,'three-second recovery at '+interval);
+    assert.ok(basics.some(t=>t>casts[5].t&&t<casts[5].t+3),'basics in recovery at '+interval);
+    ev('playerAttack=normalAttack;TRIAL.on=false');
+   }
+  }finally{ev('C().aspd=normalClassAspd;strike=normalStrike;playerAttack=normalAttack;TRIAL.on=false')}
+ });
  test('cooldowns belong to skills and adding attacks cannot change them',()=>{
   setup();ev(`comboConfig().slots=['bash',null,null,null,null,null]`);cast(0);assert.equal(ev('skCd.bash'),2);
   ev(`comboConfig().slots[1]='spiral'`);assert.equal(ev('skCd.bash'),2);

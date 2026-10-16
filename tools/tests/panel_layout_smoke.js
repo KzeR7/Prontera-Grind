@@ -142,12 +142,11 @@ t('every field previews the same local equipment sprite the generated bag item r
   }
   assert.strictEqual(ev('JSON.stringify(S)'),before,'sprite selection does not migrate saves');
 });
-t('jobs default to a full lineage and offer an expanding design view',()=>{
+t('jobs offer the current five-class path and the full tree',()=>{
   ev('eclipseJobsBrowse=false');const root=window.document.createElement('div');root.innerHTML=ev('V.job()');ev('arrangePanel')('job',root);
+  assert.strictEqual(root.querySelectorAll('.current-class-card').length,5);
+  ev('eclipseJobsBrowse=true');root.innerHTML=ev('V.job()');ev('arrangePanel')('job',root);
   assert.strictEqual(root.querySelectorAll('.class-lineage-overview .tn').length,25);
-  ev("eclipseJobsBrowse=true;jobBranch='Mage'");root.innerHTML=ev('V.job()');ev('arrangePanel')('job',root);
-  assert.strictEqual(root.querySelectorAll('.class-path-tabs button').length,6);
-  assert.strictEqual(root.querySelectorAll('.class-path-track .tn').length,4);
   assert.ok(root.querySelector('.class-path-focus #classPreview'));
   ev('eclipseJobsBrowse=false');
 });

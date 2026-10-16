@@ -6,7 +6,9 @@ from PIL import Image
 from wardrobe_png import encode_png
 from build_wardrobe_classes import CLASSES
 
-def build(source,pieces,definitions,output,append_to=None,piece=None):
+FOURTH_CLASSES={'Rune Knight':4054,'Warlock':4055,'Ranger':4056,'Guillotine Cross':4059,'Arch Bishop':4057,'Mechanic':4058}
+
+def build(source,pieces,definitions,output,append_to=None,piece=None,classes=CLASSES):
     output.mkdir(parents=True,exist_ok=True)
     if any(output.iterdir()):raise ValueError('Use an empty output directory')
     defs=json.loads(definitions.read_text());groups={};images={};heights={}
@@ -15,7 +17,7 @@ def build(source,pieces,definitions,output,append_to=None,piece=None):
         if sum(map(len,defs.values()))!=1:raise ValueError('Unknown or ambiguous accessory')
     if append_to:
         manifest=json.loads((append_to/'catalog.json').read_text())
-        assert manifest['classes']==CLASSES and not manifest['outfits']
+        assert manifest['classes']==classes and not manifest['outfits']
         for path in append_to.iterdir():shutil.copyfile(path,output/path.name)
         for slot,items in defs.items():
             for item in items:
@@ -29,7 +31,7 @@ def build(source,pieces,definitions,output,append_to=None,piece=None):
             target[name if group.startswith('base-') else str(job)+':'+name]=dict(delay=view['delay'],frames=frames)
             for f in frames:
                 for p in f:images.setdefault(p['image'],folder/'images'/(p['image']+'.png'))
-    for job in CLASSES.values():
+    for job in classes.values():
         folder=source/str(job)
         for sex in ['m','f']:
             if not append_to:
@@ -37,6 +39,11 @@ def build(source,pieces,definitions,output,append_to=None,piece=None):
                 hair=json.loads((folder/f'hair-{sex}-2-0.json').read_text())['idle0']['frames'][0]
                 figure=[p for p in base+hair if p['slot'] in {'body','hair'}]
                 heights[f'base-{job}-{sex}']=max(p['y']+Image.open(folder/'images'/(p['image']+'.png')).height for p in figure)-min(p['y']for p in figure)
+                if job in FOURTH_CLASSES.values():
+                    # Keep the original fourth-job world scale: visible idle pixels above the native foot anchor.
+                    idle=[p for name,v in json.loads((folder/f'base-{sex}.json').read_text()).items() if name.startswith('idle') for f in v['frames'] for p in f if p['slot'] in {'body','weapon','shadow'}]
+                    idle += [p for name,v in json.loads((folder/f'hair-{sex}-2-0.json').read_text()).items() if name.startswith('idle') for f in v['frames'] for p in f if p['slot']=='hair']
+                    heights[f'base-{job}-{sex}']=200-min(p['y']+Image.open(folder/'images'/(p['image']+'.png')).getbbox()[1] for p in idle)
                 add(folder,folder/f'base-{sex}.json',f'base-{job}-{sex}',{'body','weapon','shadow'},job)
             for items in defs.values():
                 for item in items:
@@ -44,7 +51,7 @@ def build(source,pieces,definitions,output,append_to=None,piece=None):
         if not append_to:
             for path in sorted(folder.glob('hair-*.json')):add(folder,path,path.stem,{'hair'},job)
     if not append_to:
-        manifest=dict(version=2,width=320,height=280,anchor=[160,200],classes=CLASSES,outfits={},accessories=defs,assets={})
+        manifest=dict(version=2,width=320,height=280,anchor=[160,200],classes=classes,outfits={},accessories=defs,assets={})
     for name, actions in sorted(groups.items()):
         # Native action order is stable across palettes; content-hash order is not.
         # Stable placement lets all palette variants reuse the same attachment file.
@@ -106,7 +113,7 @@ def build(source,pieces,definitions,output,append_to=None,piece=None):
         digest=hashlib.sha256(meta).hexdigest(); filename='poses-'+digest[:20]+'.json'; (output/filename).write_bytes(meta)
         manifest['assets'][name]=dict(meta=filename,metaSha256=digest,metaBytes=len(meta),image=image,imageSha256=sha,imageBytes=len(png),width=width,height=height)
     for key,height in heights.items():manifest['assets'][key]['figureHeight']=height
-    assert len(manifest['assets'])==360+2*len(CLASSES)+2*sum(len(x)for x in manifest['accessories'].values())
+    assert len(manifest['assets'])==360+2*len(classes)+2*sum(len(x)for x in manifest['accessories'].values())
     (output/'catalog.json').write_text(json.dumps(manifest,separators=(',',':'))+'\n')
     files=list(output.iterdir());print(json.dumps(dict(files=len(files),bytes=sum(p.stat().st_size for p in files),maxAtlasBytes=max(r['width']*r['height']*4 for r in manifest['assets'].values()))))
 
@@ -114,7 +121,8 @@ if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     for name in ['source','pieces','definitions','output']:p.add_argument(name,type=Path)
     p.add_argument('--append',type=Path,help='Preserve an existing pack byte for byte and append new pieces')
+    p.add_argument('--fourth-jobs',action='store_true',help='Build the six native fourth-job classes')
     p.add_argument('--piece',help='Build only this accessory key (with --append)')
     a=p.parse_args()
     if a.piece and not a.append:p.error('--piece requires --append')
-    build(a.source,a.pieces,a.definitions,a.output,a.append,a.piece)
+    build(a.source,a.pieces,a.definitions,a.output,a.append,a.piece,FOURTH_CLASSES if a.fourth_jobs else CLASSES)
