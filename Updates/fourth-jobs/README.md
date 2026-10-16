@@ -1,8 +1,14 @@
+> **Current status — 16 October 2026, v160:** Owner authorized the testing unlock.
+> `FOURTH_JOBS_LIVE=true`: 25 classes / 121 skills. Earlier parked-state notes below
+> describe preparation. Trials, Mythic Forge, +15 refinement, four-affix reforges
+> and updated GM testing controls are enabled locally. Parent-body fallback remains;
+> native review bodies are not yet wired into gameplay. No deployment performed.
+
 # 4th Jobs (Milestone 4) — built, parked, not unlocked
 
-**Status (2026-10-15):** all six 4th-job classes and their 30 core RO skills are built in
+**Status (2026-10-16):** all six 4th-job classes and their 30 core RO skills are built in
 `index.html` and tested, but **parked**. `FOURTH_JOBS_LIVE` is `false`, so the live game still has
-19 classes, 91 skills and the `haven-v157` build label (`main`'s). Nothing here is unlocked until the owner
+19 classes, 91 skills and the `haven-v158` build label (`main`'s). Nothing here is unlocked until the owner
 gives an explicit instruction (see [Go-live checklist](#go-live-checklist)).
 
 **Picking this up later? Read [HANDOFF.md](HANDOFF.md) first:** it lists where work stopped, what is verified and what is still open.
@@ -17,6 +23,34 @@ the classes locked. [VISUALS.md](VISUALS.md) records the new six-class native re
 pack, dedicated Afterglow effects and flag-gated aura. Wardrobe integration remains
 open; the native review pack is a fixed composition and stays out of production.
 
+
+## Advancement trial (16 October 2026; parked)
+
+First advancement at Base 150 and Transcendent Job 50 enters a dark Crucible arena
+from the Class Tree. Defeat the single opponent within **60 real seconds** to advance.
+Pausing or hiding the page does not extend the timer. Timeout, defeat, leaving or
+reload does not unlock the job; retry from the Class Tree. Previously played jobs
+still restore directly. The arena grants no loot, EXP, materials or field progress.
+Victory, defeat and timeout display large animated result text while combat stops in
+the dark room for three real seconds. The return is automatic; victory automatically
+changes the job after the pause. Reduced-motion users see static wording. Original
+field position, HP and pending drops return when the trial ends.
+
+| Current class | Opponent / original sprite ID | Unlock |
+| --- | --- | --- |
+| Lord Knight | Lord Knight Seyren / 1634 | Rune Knight |
+| Assassin Cross | Assassin Cross Eremes / 1635 | Guillotine Cross |
+| Whitesmith | Whitesmith Harword / 1636 | Mechanic |
+| High Priest | High Priest Magaleta / 1637 | Arch Bishop |
+| Sniper | Sniper Shecil / 1638 | Ranger |
+| High Wizard | High Wizard Katrinn / 1639 | Warlock |
+
+All six share the first ordinary Astral mob's combat values, obtained from
+`ascensionCombatStats(10,1)` and its template: currently **446,707,925 HP / 71,820 ATK**.
+The native sprites retain their own pixels and action timing; class-specific boss
+stats are not imported. `tools/tests/job_rite_sim.js` exercises all six fights and
+save/account boundaries. `FOURTH_JOBS_LIVE=false` remains the release gate.
+
 ## What is built
 
 | Piece | Where | Live today? |
@@ -24,6 +58,7 @@ open; the native review pack is a fixed composition and stays out of production.
 | Six 4th-tier classes (`CD4`) | `index.html`, under `FOURTH_JOBS_LIVE` | No (flag off) |
 | Unlock gate: Base Lv 150 + parent Job Lv 50 (`ADV4_BASE_LV`) | `classBlock()` | Only when flag on |
 | Pacing: `JOFF[4]=100` (Job Lv 1 at Base 101, Job Lv 50 at Base 150) | `JOFF` | `JOFF` pin has the 5th entry, unused live |
+| Timed advancement trial | `startJobRite()`, `kill()`, `tickJobRite()` | Only when flag on |
 | Fourth Class Tree row | `V.job()` | Only when flag on |
 | Packed body = parent body (until native bodies exist) | `PACK_BODY` | Only when flag on |
 | 30 core RO skills (`SKILLS4`) | `index.html`, joined to `SKILLS` only when flag on | No |
@@ -105,7 +140,7 @@ past 150.
 * **Skill icons and effects.** The 30 skills reuse native icons and effect kinds, by alias. Their
   dedicated draft effects are now built; icons still use approved unmodified crops.
 * **Afterglow effects.** Draft choreography for all 30 fourth-job skills is generated. The shared video has now been inspected and the visual treatment revised; native body/FX playback is synchronized. See the updated research notes.
-* **Ascension aura:** built behind the class flag. **Crucible rite panel:** still open (the current `changeClass()` stands in for the rite).
+* **Ascension aura and Crucible trial:** built behind the class flag. See the advancement trial below.
 * **Balance.** Power, cooldown, stack and roulette numbers are provisional. The owner tunes them
   with the new mobs and bosses. `tools/progression_balance.js` regenerates the combat fixtures when
   they change.

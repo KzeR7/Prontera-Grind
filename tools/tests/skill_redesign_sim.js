@@ -12,7 +12,7 @@ function setup(cls='Assassin Cross',weapon='katar'){
 }
 function test(name,fn){try{fn();passed++;console.log('  ok '+name);}catch(e){failed++;console.error('  FAIL '+name+' — '+e.stack);}}
 test('exact five skills per class, one Novice skill, sword-only progression',()=>{
- assert.equal(ev('SKILLS.length'),91);
+ assert.equal(ev('SKILLS.length'),121);
  assert.ok(ev(`Object.keys(CLASSES).every(c=>SKILLS.filter(s=>s.from===c).length===(c==='Novice'?1:5))`));
  assert.ok(ev(`['Swordman','Knight','Lord Knight'].every(c=>CLASSES[c].wt.join()==='sword')`));
 });

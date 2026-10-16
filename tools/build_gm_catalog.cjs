@@ -16,8 +16,13 @@ try {
      entries.push({id:'gear:'+key,label:item.name+' · '+MAPS[m].n+' · '+T.k,type:'gear',item,affixes:affixPool(item)});
     }
    }
+   S.zeny=1e15;S.ascensionMat=[1000000,1000000,1000000];
+   for(const [key,set] of Object.entries(ASC_SETS))for(const slot of Object.keys(set.cost))for(const wt of slot==='weapon'?Object.keys(set.pieces.weapon):[undefined]){
+    const {item}=craftAscensionPiece(key,slot,wt);delete item.id;
+    entries.push({id:'mythic:'+key+':'+slot+(wt?':'+wt:''),label:item.name+' · '+(wt||slot),type:'gear',item,affixes:affixPool(item)});
+   }
    for(const c of CARD_CATALOG){const item=newCard(c);delete item.id;entries.push({id:'card:'+c.cardKey,label:item.n,type:'card',item});}
-   for(const [resource,label] of [['ori','Oridecon'],['elu','Elunium'],['shards','Echo Shards'],['dps','Drop Protection Scroll'],['refineScrolls','Refine Scroll'],...NM_MAT.map((n,i)=>['nmat'+i,n])])entries.push({id:resource,resource,label,type:'resource'});
+   for(const [resource,label] of [['ori','Oridecon'],['elu','Elunium'],['shards','Echo Shards'],['dps','Drop Protection Scroll'],['refineScrolls','Refine Scroll'],['mythicScrolls','Mythic Protection Scroll'],...ASCENSION_MATERIALS.map((n,i)=>['ascMat'+i,n]),...NM_MAT.map((n,i)=>['nmat'+i,n])])entries.push({id:resource,resource,label,type:'resource'});
    return {entries,affixes:AL,skills:Object.fromEntries(SKILLS.map(x=>[x.id,x.n])),sections:SECN,rarities:RAR.map(x=>x.n),slotStats:Object.fromEntries(Object.entries(SLOTS).map(([k,v])=>[k,v.stat])),slots:EQK.map(([id,label])=>({id,label})),classes:Object.fromEntries(Object.entries(CLASSES).map(([k,c])=>[k,{tier:c.tier,wt:c.wt}]))};
   }finally{Math.random=oldRandom}
  })())`);

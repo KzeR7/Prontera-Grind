@@ -141,11 +141,11 @@ t('every field previews the same local equipment sprite the generated bag item r
   }
   assert.strictEqual(ev('JSON.stringify(S)'),before,'sprite selection does not migrate saves');
 });
-t('job paths preserve all 19 classes in six readable progression rows',()=>{
+t('job paths offer six lineages and five focused progression steps',()=>{
   const root=window.document.createElement('div');root.innerHTML=ev('V.job()');ev('arrangePanel')('job',root);
-  assert.strictEqual(root.querySelectorAll('.ui-job-path').length,6);
-  for(const row of root.querySelectorAll('.ui-job-path'))assert.strictEqual(row.querySelectorAll('.tn').length,3);
-  assert.ok(root.querySelector('.ui-inspector #classPreview'));
+  assert.strictEqual(root.querySelectorAll('.class-path-tabs button').length,6);
+  assert.strictEqual(root.querySelectorAll('.class-path-track .tn').length,5);
+  assert.ok(root.querySelector('.class-path-focus #classPreview'));
 });
 t('bag details are outside the item grid, including all Nightmare sale actions',()=>{
   ev("sub.bag='bag'");const root=window.document.createElement('div');root.innerHTML=ev('V.equip()');ev('arrangePanel')('equip',root);

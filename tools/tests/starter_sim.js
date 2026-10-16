@@ -10,6 +10,7 @@ vm.runInContext(`
 ${grab('const SU=k=>', ',K5=[')},K5=['str','agi','dex','luk','int'];
 ${grab('const CD=[','const saveKey=')}
 ${src.match(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/)[0]}
+const items=()=>Object.values(S.eq).filter(Boolean);
 const C=()=>CLASSES[S.cls],st=k=>S.st[k],eqv=()=>0,bon=()=>0,pv=()=>0,collDmg=()=>0;
 ${grab('const maxHp=()=>','const totalPts=')}
 ${grab('const KIT_MAP={','const KIT_TILE=')}
@@ -204,7 +205,7 @@ t('clearing normal Stage 10 advances to the next map when Auto-advance is on',()
  const random=seededMath.random;seededMath.random=()=>.999999;
  try{H.kill(finalBoss)}finally{seededMath.random=random}
  assert.strictEqual(H.S.mp,9,'Abyss remains the last normal map');assert.strictEqual(H.S.lvl,10,'Stage 10 does not auto-jump into the Nightmare band');
- assert.ok(H.logs.slice(before).some(x=>x.includes('Astral Citadel')&&x.includes('requires Base Lv 140')),'the last clear keeps Nightmare separate');
+ assert.ok(H.logs.slice(before).some(x=>x.includes('Astral Citadel')&&x.includes('requires Base Lv 150')),'the last clear keeps Nightmare separate');
 });
 t('stage 10 starts with boss plus 3 or 5 escorts and boss defeat resets the whole fight when farming',()=>{
  for(const m of [0,4,5,9]){

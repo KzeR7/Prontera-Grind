@@ -3,7 +3,7 @@ import hashlib, json, pathlib, re
 from PIL import Image
 root=pathlib.Path(__file__).resolve().parents[2]
 manifest=json.loads((root/'tools/native-mobs/source-manifest.json').read_text())
-assert len(manifest['assets'])==12*24
+assert len(manifest['assets'])==18*24
 heights={}
 for name,record in manifest['assets'].items():
     path=root/'assets/mobs/v1'/name
@@ -27,4 +27,4 @@ sizes=json.loads((root/'tools/native-mobs/size-reference.json').read_text())['si
 code=(root/'index.html').read_text().split('const MOB_SIZE_BY_ID={')[1].split('};')[0]
 runtime_sizes=dict(re.findall(r"(\d+):'(Small|Medium|Large)'",code))
 assert all(runtime_sizes[mob]==size for mob,size in sizes.items())
-print('PASS: 288 native APNG exports: source hashes, frames, exact pixels, placement, delays, 12 posters and figure extents.')
+print('PASS: 432 native APNG exports: source hashes, frames, exact pixels, placement, delays, 18 posters and figure extents.')

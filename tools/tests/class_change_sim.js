@@ -80,7 +80,7 @@ t('Assassin jobs keep the Katar, or a dagger in each hand, and still stow a shie
 });
 
 t('new second and transcendent jobs preserve every stat and unspent point', () => {
-  for(const [name,c] of Object.entries(H.CLASSES).filter(([,c])=>c.tier>=2)){
+  for(const [name,c] of Object.entries(H.CLASSES).filter(([,c])=>c.tier>=2&&c.tier<=3)){
     const jobs={}; for(let n=c.par;n;n=H.CLASSES[n].par)jobs[n]={jl:50,jx:0};
     const stats=st({str:20,agi:17,dex:14,int:11,vit:8,luk:5});
     H.S=mk({cls:c.par,lv:60,exp:123,pts:7,st:stats,jobs});

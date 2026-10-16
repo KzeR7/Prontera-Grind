@@ -47,7 +47,9 @@ function runGear(html,modern,moving=false){const g=createGame(html),rows=[];
  if(moving)rows.push({cls,profile,weapon:wt,...encounters(g),...stats});else for(const count of [1,3]){outfitted(g,cls,profile,wt,modern);rows.push({cls,profile,weapon:wt,count,...stationary(g,count,120),build:stats});}
  console.error(cls,profile,wt);
  }g.close();return rows;}
-function runGrowth(html,modern){const g=createGame(html),rows=[],classes=JSON.parse(g.ev('JSON.stringify(Object.keys(CLASSES))'));
+// Historical growth comparisons cover only classes present in the baseline revision.
+// Fourth jobs have separate skill/trial/Mythic integration suites.
+function runGrowth(html,modern){const g=createGame(html),rows=[],classes=JSON.parse(g.ev('JSON.stringify(Object.keys(CLASSES).filter(k=>CLASSES[k].tier<4))'));
  for(const cls of classes)for(const weapon of /^Assassin/.test(cls)?['katar','dagger']:[''])for(const profile of [0,1,2]){
   configure(g,cls,profile,weapon,123);
   if(modern)g.ev(`if(!INT_CLASSES.includes(S.cls)){for(const k in S.st)S.st[k]=1;S.pts=totalPts();const order=[C().main,C().main,'agi','dex','luk','vit'];let more=true;while(more){more=false;for(const k of order)if(S.st[k]<statCap()&&S.pts>=cost(k)){S.pts-=cost(k);S.st[k]++;more=true;}}S.hp=maxHp();}`);

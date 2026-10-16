@@ -197,28 +197,32 @@ test('card collection tiles expose names and retain keyboard selection',()=>{
  ev(`S.cards=CARD_CATALOG.slice(0,2).map(c=>newCard(c));tabs.push('bag');sub.bag='cards';renderWin()`);
  const tile=[...doc.querySelectorAll('.eclipse-card-grid [data-a=selc]')].find(t=>t.textContent.includes('Poring'));assert.ok(tile);tile.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));assert.ok(doc.querySelector('[data-win=bag] .ui-inspector').textContent.includes('Poring'));
 });
-test('class overview opens all lineages and keeps selection separate from switching',()=>{
- ev(`S.cls='Lord Knight';eclipseJobsBrowse=false;tabs.push('job');renderWin()`);
- assert.equal(doc.querySelector('.eclipse-class-overview').hidden,false);assert.equal(doc.querySelectorAll('.eclipse-class-node').length,4);
- const before=ev('JSON.stringify(S)');doc.querySelector('[data-a=jobview][data-v=browse]').click();assert.equal(doc.querySelector('.eclipse-class-browser').hidden,false);
- assert.equal(doc.querySelectorAll('.eclipse-class-browser [data-a=selk]').length,19);
- doc.querySelector('.eclipse-class-browser [data-a=selk][data-v=Wizard]').click();assert.equal(ev('selK'),'Wizard');assert.equal(ev('JSON.stringify(S)'),before);
- assert.ok(doc.querySelector('[data-a=job][data-v=Wizard]').disabled);doc.querySelector('[data-a=jobview][data-v=overview]').click();assert.equal(doc.querySelector('.eclipse-class-overview').hidden,false);
+test('class paths focus one lineage and keep inspection separate from switching',()=>{
+ ev("S=fresh();S.cls='Lord Knight';S.jobs['Lord Knight']={jl:50,jx:0};selK=null;tabs.push('job');renderWin()");
+ const before=ev('JSON.stringify(S)');assert.equal(doc.querySelectorAll('.class-path-tabs button').length,6);
+ assert.equal(doc.querySelectorAll('.class-path-track [data-a=selk]').length,5);
+ doc.querySelector('.class-path-tabs [data-v=Mage]').click();assert.equal(ev('selK'),'Mage');
+ doc.querySelector('.class-path-track [data-v=Wizard]').click();assert.equal(ev('JSON.stringify(S)'),before);
+ assert.ok(doc.querySelector('[data-a=job][data-v=Wizard]').disabled);
+ doc.querySelector('.class-path-track [data-v=Warlock]').click();assert.match(doc.querySelector('.class-path-focus').textContent,/Enter advancement trial/);
+ assert.match(doc.querySelector('.class-path-focus').textContent,/High Wizard Job Lv 50/);
+ assert.ok(doc.querySelector('[data-a=job][data-v=Warlock]').disabled);assert.equal(ev('CLASSES.Warlock.tier'),4);
+ doc.querySelector('.class-path-heading button').click();assert.equal(ev('selK'),'Lord Knight');
 });
-test('Jobs labels current, played, available and locked from real class history',()=>{
- ev("S.cls='Mage';S.jobs={Novice:{jl:10,jx:0},Mage:{jl:40,jx:0},Archer:{jl:5,jx:0},Merchant:{jl:1,jx:0}};S.base={Swordman:{lv:40}};selK=null;eclipseJobsBrowse=false;tabs.push('job');renderWin()");
- const panel=doc.querySelector('[data-win=job]'),status=n=>panel.querySelector('.eclipse-class-browser [data-a=selk][data-v="'+n+'"]');
- for(const [n,state,label] of [['Mage','cur','Current'],['Swordman','played','Played'],['Archer','played','Played'],['Wizard','ok','Available'],['Merchant','lock','Locked']]){const tile=status(n);assert.equal(tile.dataset.classStatus,state);assert.match(tile.querySelector('.eclipse-job-status').textContent,new RegExp(label))}
- assert.match(panel.querySelector('.eclipse-class-overview [data-v=Mage]').textContent,/Current/);
- panel.querySelector('[data-a=jobview][data-v=browse]').click();status('Wizard').click();panel.querySelector('[data-a=job][data-v=Wizard]').click();
+test('selected path shows current, played, available and locked states',()=>{
+ ev("S=fresh();S.cls='Mage';S.jobs={Novice:{jl:10,jx:0},Mage:{jl:40,jx:0},Swordman:{jl:20,jx:0}};S.base={Swordman:{lv:40}};selK=null;tabs.push('job');renderWin()");
+ const status=n=>doc.querySelector('.class-path-track [data-v="'+n+'"]');
+ assert.equal(status('Mage').dataset.classStatus,'cur');assert.equal(status('Wizard').dataset.classStatus,'ok');assert.equal(status('High Wizard').dataset.classStatus,'lock');
+ doc.querySelector('.class-path-tabs [data-v=Swordman]').click();assert.equal(status('Swordman').dataset.classStatus,'played');
+ doc.querySelector('.class-path-tabs [data-v=Mage]').click();status('Wizard').click();doc.querySelector('[data-a=job][data-v=Wizard]').click();
  assert.equal(ev('S.cls'),'Wizard');assert.equal(status('Wizard').dataset.classStatus,'cur');assert.equal(status('Mage').dataset.classStatus,'played');
 });
-test('Novice restart remains visible on the main Jobs tab and keeps confirmation',()=>{
- ev("S.cls='Mage';S.jobs.Mage={jl:40,jx:0};eclipseJobsBrowse=false;tabs.push('job');renderWin()");
- const button=doc.querySelector('.eclipse-job-actions [data-a=job][data-v=Novice]');assert.ok(button);assert.equal(button.closest('.eclipse-class-browser,.eclipse-class-overview,details,.ui-inspector'),null);assert.equal(button.disabled,false);
- button.click();assert.equal(doc.getElementById('modal').style.display,'flex');assert.equal(ev('S.cls'),'Mage');doc.getElementById('mn').click();assert.equal(ev('S.cls'),'Mage');
- doc.querySelector('[data-a=jobview][data-v=browse]').click();assert.equal(doc.querySelector('.eclipse-job-actions [data-a=job][data-v=Novice]'),button);assert.equal(doc.querySelectorAll('[data-a=job][data-v=Novice].full').length,1);
- button.click();doc.getElementById('my').click();assert.equal(ev('S.cls'),'Novice');assert.equal(ev('S.lv'),25);assert.equal(doc.querySelector('.eclipse-job-actions [data-a=job][data-v=Novice]').disabled,true);
+test('Novice restart is disclosed once and keeps confirmation',()=>{
+ ev("S.cls='Mage';S.jobs.Mage={jl:40,jx:0};selK=null;tabs.push('job');renderWin()");
+ const button=doc.querySelector('[data-a=job][data-v=Novice].full');assert.ok(button.closest('details'));assert.equal(button.disabled,false);
+ button.closest('details').open=true;button.click();assert.equal(doc.getElementById('modal').style.display,'flex');doc.getElementById('mn').click();assert.equal(ev('S.cls'),'Mage');
+ button.click();doc.getElementById('my').click();assert.equal(ev('S.cls'),'Novice');assert.equal(ev('S.lv'),25);assert.equal(doc.querySelectorAll('[data-a=job][data-v=Novice].full').length,1);
+ assert.equal(doc.querySelector('[data-a=job][data-v=Novice].full').disabled,true);
 });
 test('pet cards preserve training, skills and deployment controls',()=>{
  ev(`S.pets=[{id:91001,sp:0,mut:0,eq:[0,1,2],skills:[],on:true},{id:91002,sp:1,mut:0,eq:[0,0,0],skills:[],on:false}];selP=null;sub.pet='party';tabs.push('pet');renderWin()`);
@@ -304,12 +308,19 @@ test('class emblems are distinct and supplies put both ores before the scroll',(
 test('a confirmed below-five failure consumes one scroll and keeps the rank',()=>{
  ev(`tabs.push('equip');sub.equip='refine';renderWin();S.eq.weapon.r=2;S.useRefineScroll=true;S.refineScrolls=2;refine('weapon');window.oldRefRandom=Math.random;Math.random=()=>.999`);doc.getElementById('my').click();ev('Math.random=window.oldRefRandom');assert.equal(ev('S.eq.weapon.r'),2);assert.equal(ev('S.refineScrolls'),1);assert.match(doc.getElementById('eclipseRefineResult').textContent,/Rank kept at \+2/);
 });
-test('class path shows the current collection bonus in both views',()=>{
- ev("S.cls='Lord Knight';S.lv=100;S.base={'High Wizard':{lv:100}};eclipseJobsBrowse=false;tabs.push('job');renderWin()");
- assert.equal(ev('collDmg()'),2);assert.equal(doc.querySelectorAll('.eclipse-class-bonus').length,2);
- for(const node of doc.querySelectorAll('.eclipse-class-bonus')){assert.match(node.textContent,/\+2% damage/);assert.match(node.textContent,/permanent \+1%/);assert.match(node.textContent,/Base Lv 100/)}
- doc.querySelector('[data-a=jobview][data-v=browse]').click();assert.equal(doc.querySelector('.eclipse-class-browser').hidden,false);
- ev("S.base['High Wizard'].lv=99;renderWin()");assert.match(doc.querySelector('.eclipse-class-browser .eclipse-class-bonus').textContent,/\+1% damage/);
+test('class path shows one collection summary while browsing',()=>{
+ ev("S.cls='Lord Knight';S.lv=100;S.base={'High Wizard':{lv:100}};selK=null;tabs.push('job');renderWin()");
+ assert.equal(ev('collDmg()'),2);assert.equal(doc.querySelectorAll('.eclipse-class-bonus').length,1);
+ assert.match(doc.querySelector('.eclipse-class-bonus').textContent,/\+2% damage/);
+ doc.querySelector('.class-path-tabs [data-v=Mage]').click();ev("S.base['High Wizard'].lv=99;renderWin()");
+ assert.match(doc.querySelector('.eclipse-class-bonus').textContent,/\+1% damage/);
+});
+test('Ascension Forge keeps crafting and transformation controls in Eclipse',()=>{
+ ev("S=fresh();S.cls='Guillotine Cross';S.lv=150;S.zeny=1e12;S.ascensionMat=[1000,1000,1000];S.inv=[{id:777,slot:'weapon',wt:'dagger',sec:5,name:'N+ Dagger',r:10,aff:[],cards:[],val:100}];sub.market='ascension';tabs.push('market');renderWin()");
+ assert.equal(doc.querySelectorAll('[data-a=craftasc]').length,42);
+ assert.equal(doc.querySelectorAll('[data-a=transformasc]').length,6);
+ doc.querySelector('[data-a=craftasc][data-v="celestial:weapon:dagger"]').click();
+ assert.equal(ev("S.inv.filter(it=>it.sec===6&&it.wt==='dagger').length"),1);
 });
 test('supplies owned quantities refresh on passive drops and retain the quantity input',()=>{
  ev("tabs.push('market');S.ore.ori=999;S.ore.elu=998;S.refineScrolls=3;S.shards=9;renderWin()");

@@ -11,22 +11,30 @@
 //   * eaOf (v86, kept): power 90+ fields also swing 1.4x harder - player HP/DEF grew far faster
 //     than the flat (5+l*4.6) ATK formula;
 //   * ASPD is RO-flavoured (v86): the AGI reduction climbs to 68%, the attack floor is .13s
-//     (~7.7 hits/s), and the sheet prints the RO-style ASPD number;
+//     (~7.7 hits/s), or .10s with equipped Mythic gear; the sheet prints RO-style ASPD;
 //   * a wiped field restocks inside 8s (v87: worst camp wait 7s).
-const fs = require('fs'), vm = require('vm'), assert = require('assert');
+const fs = require('fs'), assert = require('assert');
+const {createGame} = require('./helpers/game');
+const game = createGame(), ev = game.ev;
+function combatBuild(cls,agi,pct=0,sec=5){
+  ev(`S=fresh();S.cls=${JSON.stringify(cls)};S.lv=150;S.st.agi=${agi};resetSkillRuntime();
+    S.eq={armor:{id:901,slot:'armor',sec:${sec},val:0,aff:[{k:'aspd',v:${pct}}],cards:[]}};`);
+}
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
-const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot find ' + name); return m; };
 
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 console.log('combat damage: the v87 mob-side incoming-damage rules and ASPD\n');
 
-t('the character is un-nerfed: flee cap is back to 60% - monsters carry HIT instead', () => {
-  const line = pick(/const crit=\(\)=>\{[\s\S]*?missCh=\(\)=>Math\.max\(0,15-st\('dex'\)\*\.25\);/, 'crit/flee line')[0];
-  assert.ok(line.includes("flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')"), 'flee cap 60 (the v85 shape)');
-  assert.ok(!line.includes("Math.min(30,st('agi')"), 'the v86 30% flee cap is gone');
-  const agi = 99, lv = 150;
-  assert.strictEqual(Math.min(60, agi * .5 + lv * .1), 60, 'an endgame AGI build keeps its full 60% (v86 read 30)');
+t('flee caps at 60% normally and 80% with equipped Mythic gear', () => {
+  combatBuild('Lord Knight',99);
+  assert.strictEqual(ev('flee()'),60,'ordinary endgame AGI retains the 60% cap');
+  ev('S.eq.armor.sec=6');
+  assert.strictEqual(ev('flee()'),64.5,'Mythic raises the cap without granting free flee');
+  ev("S.eq.armor.aff.push({k:'flee',v:50})");
+  assert.strictEqual(ev('flee()'),80,'Mythic caps even heavily boosted flee at 80%');
+  ev('S.inv.push(S.eq.armor);S.eq.armor=null');
+  assert.strictEqual(ev('flee()'),60,'Mythic in the bag does not raise the cap');
   // the monster side: the swing roll subtracts the monster HIT rating, with a 5% dodge floor
   assert.ok(src.includes("if(Math.random()*100<Math.max(5,flee()-mhOf(m))+(m.blind?m.blind.power*100:0)+skillBonus('block'))addFloat"), 'the live dodge roll carries mhOf');
   assert.ok(!src.includes('Math.random()*100<flee())addFloat'), 'the old bare flee roll is gone');
@@ -111,14 +119,22 @@ t('a wiped field is back inside 8 seconds: the worst camp refill wait is 7s', ()
     'the empty-field sweep still ticks the camp timers (the v86 whole-field-wipe fix)');
 });
 
-t('ASPD: AGI caps at a 68% reduction (.0058/point) and the floor is .13s', () => {
-  assert.ok(src.includes("Math.max(.13,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))"), 'the live formula shape');
-  const aspd = (cls, agi, pct = 0) => Math.max(.13, .85 * cls * (1 - Math.min(.68, agi * .0058)) / (1 + pct / 100));
-  assert.ok(aspd(.72, 120) < aspd(.72, 99) * .8, 'AGI 120 is meaningfully faster than AGI 99 (~25% shorter interval)');
-  assert.strictEqual(aspd(.72, 99).toFixed(4), (.85 * .72 * (1 - .5742)).toFixed(4), 'AGI 99 cuts 57.4%');
-  assert.ok(aspd(.72, 99) > .25 && aspd(.72, 99) < .27, 'a Lord Knight at AGI 99 swings every ~.26s (3.8/s)');
-  assert.strictEqual(aspd(.5, 120, 60), .13, 'a maxed Assassin Cross with gear ASPD% rides the floor (~7.7/s)');
-  assert.ok(aspd(1, 9) > .75, 'a fresh Novice stays slow (~1.2/s) - the buff is AGI-gated, not global');
+t('ASPD preserves ordinary AGI scaling and grants the .10s floor only with equipped Mythic gear', () => {
+  combatBuild('Lord Knight',99);
+  const ordinary99=ev('aspd()');
+  assert.strictEqual(ordinary99.toFixed(4),(.85*.72*(1-.5742)).toFixed(4),'AGI 99 cuts 57.4%');
+  assert.ok(ordinary99>.25&&ordinary99<.27,'ordinary Lord Knight swings every ~.26s');
+  ev('S.st.agi=120');
+  assert.ok(ev('aspd()')<ordinary99*.8,'AGI 120 is meaningfully faster than AGI 99');
+  assert.strictEqual(ev('aspd()'),.85*.72*(1-.68),'AGI reduction stops at 68%');
+  combatBuild('Assassin Cross',120,60);
+  assert.strictEqual(ev('aspd()'),.13,'ordinary gear retains the .13s floor');
+  ev('S.eq.armor.sec=6');
+  assert.strictEqual(ev('aspd()'),.10,'equipped Mythic unlocks the .10s floor');
+  ev('S.inv.push(S.eq.armor);S.eq.armor=null');
+  assert.strictEqual(ev('aspd()'),.85*.5*(1-.68),'bagged Mythic grants neither ASPD nor its lower floor');
+  combatBuild('Novice',9);
+  assert.ok(ev('aspd()')>.75,'fresh Novice remains slow');
 });
 
 t('the drawn swing keeps up: minimum animation .14s, and the sheet shows the RO-style ASPD number', () => {
@@ -147,4 +163,5 @@ t('v88: the drawn swing follows the real attack rate (owner: "the atk animation 
 });
 
 console.log(`\ncombat damage: ${pass} passed, ${fail} failed`);
+game.close();
 process.exit(fail ? 1 : 0);

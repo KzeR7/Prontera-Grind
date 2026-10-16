@@ -109,7 +109,7 @@ ok(/bare-handed everywhere/.test(page) && /weapon on every view/.test(page),
 const index = read('index.html');
 // Milestone 4: the 4th-job rows (CD4) join the roster only when FOURTH_JOBS_LIVE is on. Compare the
 // page with the roster the game actually uses, so the dark-launched rows do not count while it is off.
-const cdEnd = /const FOURTH_JOBS_LIVE=true;/.test(index) ? index.indexOf('const CLASSES={}') : index.indexOf('const FOURTH_JOBS_LIVE=');
+const cdEnd = index.indexOf('const FOURTH_JOBS_LIVE='); // This review pack covers the 19 parent bodies.
 const cd = index.slice(index.indexOf('const CD=['), cdEnd);
 // one CD row: ['Name', parent (a name or 0), ... , ['fam','fam'], 'mainstat', …]
 const cdRows = [...cd.matchAll(/\['([A-Z][^']*)',[^,]+,[^\]]*?\[((?:'[^']*',?\s*)+)\],\s*'\w+'/g)];

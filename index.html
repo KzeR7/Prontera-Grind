@@ -786,6 +786,23 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 .eclipse-atlas-hero .ascension-preview[src*="thor-volcano"]{object-position:center 75%}
 .ui-panel[data-layout="map"] .ui-destinations .mapgrid{padding:0;border:0;background:none}
 .ui-panel[data-layout="map"] .ui-destinations .mapcard{border:1px solid #71634d;background:#202128e8}
+
+
+#jobRiteResult{position:absolute;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;pointer-events:none;background:radial-gradient(ellipse,#05050be6,transparent 75%)}
+#jobRiteResult[hidden]{display:none}#jobRiteResult>div{visibility:visible;width:min(600px,100%);text-align:center;color:#ffe1a3;animation:rite-result-reveal .85s cubic-bezier(.16,1,.3,1) both}
+#jobRiteResult[data-result=defeat]>div{color:#ff9eaf}#jobRiteResult strong{display:block;font-family:Georgia,serif;font-size:clamp(36px,8vw,88px);font-weight:700;letter-spacing:.08em;line-height:1.2;text-shadow:0 0 32px currentColor,0 4px 16px #000}
+#jobRiteResult strong::after{content:'';display:block;height:1px;width:80%;margin:16px auto;background:linear-gradient(90deg,transparent,currentColor,transparent);animation:rite-result-line 1s ease-out both}
+#jobRiteResult p{font-size:clamp(14px,2.5vw,21px);line-height:1.6;color:#f6eadd;text-shadow:0 2px 8px #000;margin:12px 0}#jobRiteResult small{color:#c6bccc;font-size:12px;letter-spacing:.04em}
+body.job-rite-result .fl,body.job-rite-result #skillAfterglowLayer{visibility:hidden!important}
+body.job-rite-result #jobRiteHud,body.job-rite-result #tag,body.job-rite-result #heroTitle{display:none!important}body.job-rite-result #dock,body.job-rite-result #wins,body.job-rite-result #sideRail{pointer-events:none}
+@keyframes rite-result-reveal{from{opacity:0;transform:scale(.82) translateY(12px);filter:blur(8px)}to{opacity:1;transform:scale(1) translateY(0);filter:blur(0)}}
+@keyframes rite-result-line{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){#jobRiteResult>div,#jobRiteResult strong::after{animation:none}}
+
+#jobRiteHud{position:absolute;top:18px;left:50%;transform:translateX(-50%);z-index:15;display:grid;gap:5px;width:min(340px,calc(100% - 32px));padding:14px 18px;box-sizing:border-box;background:#0c0b16ed;border:1px solid #887497;border-radius:8px;color:#f5e9d7;text-align:center;pointer-events:auto;box-shadow:0 8px 32px #0008}
+body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!important}
+@media(max-width:700px){#jobRiteHud{top:110px}}
+#jobRiteHud[hidden]{display:none}#jobRiteHud small{font-size:9px;letter-spacing:1.4px;color:#c3a5d3}#jobRiteHud b{font-size:15px}#jobRiteHud span{font-size:11px}#jobRiteHud time{font-size:26px;font-variant-numeric:tabular-nums;color:#ffe2a3}#jobRiteHud button{justify-self:center;background:#282131;color:#f5e9d7;border-color:#887497;padding:5px 14px}
 </style>
 <link rel="preload" href="assets/ui/fonts/font-0.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-1.ttf" as="font" type="font/ttf" crossorigin>
@@ -795,7 +812,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=143">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=159">
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 </head>
 <body>
@@ -812,7 +829,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>HORIZON HAVEN / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
 <div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Horizon <small>HAVEN</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover">&#9679; <b id="zeny">0</b> Zeny</div>
-<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="true" aria-controls="eclipseCombatDetails" aria-label="Minimize auto combat bar">− Hide</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
+<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="true" aria-controls="eclipseCombatDetails" aria-label="Minimize auto combat bar">− Hide</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
 <div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd">Speed x1</button></div><div id="wins"></div></div></div>
 <div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health"><span>HP</span> <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
 </div></div>
@@ -1097,7 +1114,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-15 haven-v158 Ascension bug fixes and endgame difficulty';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-16 haven-v160 Mythic testing unlock';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1114,7 +1131,7 @@ const CD=[['Novice',0,1,1,1,'e8dcc0','',['dagger','sword'],'str',0],
 ['High Priest','Priest',.8,1.6813,1.25,'c8a820','604000',['mace'],'int',0],['Whitesmith','Blacksmith',.7,2.01,1.6,'c06000','502000',['axe','mace'],'str',0]];
 // Milestone 4 (4th jobs, tier 4). Dark-launched: these rows join the roster only when FOURTH_JOBS_LIVE is true,
 // so the live game keeps its 19 classes until skills, native bodies and the balance pass are ready.
-const FOURTH_JOBS_LIVE=false;
+const FOURTH_JOBS_LIVE=true;
 const CD4=[
 ['Rune Knight','Lord Knight',.7,2.1,1.95,'9e1f12','4a0c08',['sword'],'str',0,'5a0e08'],['Warlock','High Wizard',.86,2.6,1.05,'5b1fa8','250a45',['staff'],'int',1,'3a0f70'],['Ranger','Sniper',.52,2,1.1,'2f7d46','0c3f22',['bow'],'dex',1,'0c4a28'],['Guillotine Cross','Assassin Cross',.48,2.05,1.2,'4a4a62','15151f',['katar','dagger'],'str',0,'2a2a3a'],['Arch Bishop','High Priest',.78,1.8,1.35,'f2d978','8a6a10',['mace'],'int',0,'c9a22c'],['Mechanic','Whitesmith',.68,2.15,1.75,'e07b20','6b3206',['axe','mace'],'str',0,'9a4a10']];
 if(FOURTH_JOBS_LIVE)CD.push(...CD4);
@@ -1222,7 +1239,7 @@ const SKILLS=[
  {"id":"basilica","n":"Final Judgment","max":5,"type":"act","col":"#fff3a0","text":"Strike with a holy seal that detonates after a short delay, damaging nearby enemies.","from":"High Priest","cd":5.0,"hits":1,"power":2.2,"shape":"splash","pulse":0.6,"delay":0.4},
  {"id":"meltdown","n":"Shatter Strike","max":10,"type":"act","col":"#ffa040","text":"A heavy strike with nearby splash. Deals 12% more damage against a target marked by Armor Crack.","from":"Whitesmith","cd":4.0,"hits":1,"power":1.244,"shape":"splash","shatter":0.12}
 ];
-// Milestone 4 (4th jobs): three signature skills per class, dark-launched with the classes. They are
+// Milestone 4 (4th jobs): five core RO skills per class, dark-launched with the classes. They are
 // joined to SKILLS only while FOURTH_JOBS_LIVE is true, so the live skill list, fixtures and combat
 // numbers stay exactly as they are. Mechanic fields (read by castSkill and its helpers below):
 //   gain {key,max}        a direct hit adds one self stack (12 s); stacks are spent by `spend`
@@ -1235,24 +1252,36 @@ const SKILLS=[
 //   absorb {pct,life}     raises a ward absorbing pct of max HP in incoming damage for life seconds
 //   stun                  flat stun on every target (existing field)
 const SKILLS4=[
- {"id":"rk_charge","n":"Rune Charge","max":10,"type":"act","col":"#ffd36e","text":"Dash to an enemy and strike three times. Each hit adds a Rune stack (up to 5, lasting 12 seconds).","from":"Rune Knight","cd":4.0,"hits":3,"power":2.3,"shape":"single","dash":4,"gain":{"key":"rune","max":5}},
- {"id":"rk_burst","n":"Rune Burst","max":10,"type":"act","col":"#ff9d3d","text":"Spend every Rune stack for +25% damage each, in a radial burst around you.","from":"Rune Knight","cd":6.0,"hits":1,"power":2.6,"shape":"radial","spend":{"key":"rune","per":0.25}},
- {"id":"rk_ward","n":"Rune Ward","max":10,"type":"act","col":"#fff3a0","text":"Strike, then raise a ward that absorbs up to 25% of your max HP in damage for 8 seconds.","from":"Rune Knight","cd":10.0,"hits":1,"power":1.2,"shape":"single","absorb":{"pct":0.25,"life":8}},
- {"id":"wl_chain","n":"Chain Lightning","max":10,"type":"act","col":"#c9a0ff","text":"A lightning strike that bounces to three nearby enemies for half damage.","from":"Warlock","cd":3.0,"hits":1,"power":2.6,"shape":"single","bounce":{"n":3,"share":0.5}},
- {"id":"wl_seal","n":"Soul Seal","max":10,"type":"act","col":"#8a5cff","text":"Brand the target with a soul seal. Each cast adds one seal stack (up to 5, lasting 8 seconds).","from":"Warlock","cd":4.0,"hits":1,"power":1.6,"shape":"single","tgtStack":{"key":"seal","max":5,"life":8}},
- {"id":"wl_det","n":"Seal Detonation","max":10,"type":"act","col":"#ff5a8a","text":"Detonate the target's seals for +20% damage each, with splash to nearby enemies. Spending any seals also stuns the target for 0.8 seconds.","from":"Warlock","cd":6.0,"hits":1,"power":2.4,"shape":"splash","tgtSpend":{"key":"seal","per":0.2,"stun":0.8}},
- {"id":"rg_hunt","n":"Hunting Pounce","max":10,"type":"act","col":"#7dff7d","text":"Leap at a distant enemy and shoot twice. Each hit adds a Quarry stack (up to 4, lasting 12 seconds).","from":"Ranger","cd":4.0,"hits":2,"power":2.2,"shape":"single","dash":6,"gain":{"key":"quarry","max":4}},
- {"id":"rg_warg","n":"Warg Strike","max":10,"type":"act","col":"#b5ff6e","text":"Two warg-bolstered shots. Each hit has a 25% chance to stun for 1.5 seconds. Spends Quarry stacks for +15% damage each.","from":"Ranger","cd":3.5,"hits":2,"power":2.0,"shape":"single","spend":{"key":"quarry","per":0.15},"roulette":{"chance":25,"effect":"stun","value":1.5}},
- {"id":"rg_storm","n":"Storm Arrows","max":10,"type":"act","col":"#8fe9ff","text":"An arrow volley on the target area that bounces to four more enemies for 40% damage.","from":"Ranger","cd":5.0,"hits":1,"power":2.4,"shape":"splash","bounce":{"n":4,"share":0.4}},
- {"id":"gc_cross","n":"Cross Impact","max":10,"type":"act","col":"#c0c0ff","text":"Two crossing katar or dagger cuts. Spends the target's Bleed stacks for +12% each. Each cut has a 30% chance to add an extra cut for 60% of a cut's damage.","from":"Guillotine Cross","cd":3.5,"hits":2,"power":2.6,"shape":"cross","tgtSpend":{"key":"bleed","per":0.12},"roulette":{"chance":30,"effect":"strike","value":0.6}},
- {"id":"gc_slip","n":"Shadow Slip","max":10,"type":"act","col":"#8080a8","text":"Slip in behind the target and cut three times. Each cut adds a Bleed stack to the target (up to 5, lasting 6 seconds).","from":"Guillotine Cross","cd":4.5,"hits":3,"power":2.0,"shape":"single","dash":5,"tgtStack":{"key":"bleed","max":5,"life":6}},
- {"id":"gc_veil","n":"Venom Veil","max":10,"type":"act","col":"#7dff9d","text":"A quick cut, then a veil that absorbs up to 20% of your max HP in damage for 6 seconds.","from":"Guillotine Cross","cd":10.0,"hits":1,"power":1.1,"shape":"single","absorb":{"pct":0.2,"life":6}},
- {"id":"ab_chain","n":"Holy Chain","max":10,"type":"act","col":"#fff3a0","text":"A holy strike that chains to two nearby enemies for half of one hit.","from":"Arch Bishop","cd":3.5,"hits":2,"power":1.8,"shape":"single","bounce":{"n":2,"share":0.5}},
- {"id":"ab_judge","n":"Judgment Seal","max":10,"type":"act","col":"#ffe14d","text":"A seal of judgment that stuns the target for 1 second. Bosses resist repeat stuns.","from":"Arch Bishop","cd":6.0,"hits":1,"power":2.6,"shape":"single","stun":1.0},
- {"id":"ab_ward","n":"Sanctuary Ward","max":10,"type":"act","col":"#fff8d0","text":"A holy ward that absorbs up to 30% of your max HP in damage for 8 seconds.","from":"Arch Bishop","cd":12.0,"hits":1,"power":1.0,"shape":"single","absorb":{"pct":0.3,"life":8}},
- {"id":"mc_gat","n":"Gatling Fever","max":10,"type":"act","col":"#ffb347","text":"Six rapid cannon hits. Each hit adds a Heat stack (up to 5, lasting 12 seconds).","from":"Mechanic","cd":3.0,"hits":6,"power":2.8,"shape":"single","gain":{"key":"heat","max":5}},
- {"id":"mc_over","n":"Overheat Cannon","max":10,"type":"act","col":"#ff5a2a","text":"Fire every Heat stack for +20% damage each, with splash to nearby enemies.","from":"Mechanic","cd":6.0,"hits":1,"power":2.6,"shape":"splash","spend":{"key":"heat","per":0.2}},
- {"id":"mc_rocket","n":"Rocket Jump","max":10,"type":"act","col":"#ffd28a","text":"Rocket-leap at a distant enemy and shock nearby enemies, stunning them for 0.6 seconds.","from":"Mechanic","cd":5.0,"hits":1,"power":2.0,"shape":"splash","dash":6,"stun":0.6}
+ {"id":"rk_charge","n":"Sonic Wave","max":10,"type":"act","col":"#ffb45e","cd":3,"hits":1,"power":2.8,"shape":"single","icon":"bash","visual":"wave","rng":6,"text":"Send a cutting shockwave at a distant enemy.","from":"Rune Knight"},
+ {"id":"rk_burst","n":"Ignition Break","max":10,"type":"act","col":"#ffb45e","cd":5,"hits":1,"power":3.8,"shape":"radial","icon":"bowl","visual":"fireburst","text":"Release a fiery explosion around the caster.","from":"Rune Knight"},
+ {"id":"rk_ward","n":"Dragon Breath","max":10,"type":"act","col":"#ffb45e","cd":4,"hits":1,"power":3.2,"shape":"cone","icon":"fireball","visual":"breath","text":"Breathe fire in a cone toward the enemy.","from":"Rune Knight"},
+ {"id":"rk_spear","n":"Hundred Spears","max":10,"type":"act","col":"#ffb45e","cd":5,"hits":5,"power":3.6,"shape":"single","icon":"spiral","visual":"cuts","text":"Drive a rapid sequence of spear strikes into one target.","from":"Rune Knight"},
+ {"id":"rk_wind","n":"Wind Cutter","max":10,"type":"act","col":"#ffb45e","cd":2,"hits":1,"power":2.2,"shape":"radial","icon":"bowl","visual":"spin","text":"Sweep a blade of wind around the caster.","from":"Rune Knight"},
+ {"id":"wl_chain","n":"Chain Lightning","max":10,"type":"act","col":"#bd9aff","cd":3,"hits":1,"power":2.6,"shape":"single","icon":"nap","visual":"lightning","bounce":{"n":3,"share":0.5},"text":"Lightning jumps from the target to three nearby enemies.","from":"Warlock"},
+ {"id":"wl_seal","n":"Soul Expansion","max":10,"type":"act","col":"#bd9aff","cd":2,"hits":1,"power":2.2,"shape":"splash","icon":"sdestroy","visual":"detonate","text":"Expand spiritual energy through the target and nearby enemies.","from":"Warlock"},
+ {"id":"wl_det","n":"Crimson Rock","max":10,"type":"act","col":"#bd9aff","cd":6,"hits":1,"power":3.5,"shape":"splash","icon":"meteor","visual":"meteor","stun":0.8,"text":"Drop a blazing rock onto an area, briefly stunning enemies.","from":"Warlock"},
+ {"id":"wl_frost","n":"Jack Frost","max":10,"type":"act","col":"#bd9aff","cd":5,"hits":1,"power":2.8,"shape":"radial","icon":"fnova","visual":"frost","slow":0.35,"text":"A caster-centered frost wave damages and slows nearby enemies.","from":"Warlock"},
+ {"id":"wl_comet","n":"Comet","max":10,"type":"act","col":"#bd9aff","cd":12,"hits":1,"power":5,"shape":"splash","icon":"meteor","visual":"comet","text":"Call down a large comet explosion over the target area.","from":"Warlock"},
+ {"id":"rg_hunt","n":"Aimed Bolt","max":10,"type":"act","col":"#9ce5b0","cd":3,"hits":3,"power":2.8,"shape":"single","icon":"falcon","visual":"pounce","rng":7,"text":"Aim a concentrated multi-hit bow shot at one enemy.","from":"Ranger"},
+ {"id":"rg_warg","n":"Warg Strike","max":10,"type":"act","col":"#9ce5b0","cd":3.5,"hits":1,"power":2.5,"shape":"single","icon":"beast","visual":"wolf","rng":7,"text":"Send the warg to strike a selected enemy.","from":"Ranger"},
+ {"id":"rg_storm","n":"Arrow Storm","max":10,"type":"act","col":"#9ce5b0","cd":5,"hits":3,"power":3.6,"shape":"splash","icon":"ashower","visual":"arrows","rng":7,"text":"Rain a broad volley of arrows onto the target area.","from":"Ranger"},
+ {"id":"rg_bite","n":"Warg Bite","max":10,"type":"act","col":"#9ce5b0","cd":7,"hits":1,"power":2,"shape":"single","icon":"beast","visual":"wolf","rng":7,"root":2,"text":"The warg bites and immobilizes the enemy; bosses resist roots.","from":"Ranger"},
+ {"id":"rg_cluster","n":"Cluster Bomb","max":10,"type":"act","col":"#9ce5b0","cd":6,"hits":1,"power":3,"shape":"splash","icon":"landmine","visual":"bomb","rng":7,"delay":0.6,"pulse":0.65,"text":"Place a bomb at the target; its main blast follows after 0.6 seconds.","from":"Ranger"},
+ {"id":"gc_cross","n":"Cross Impact","max":10,"type":"act","col":"#d89dff","cd":1,"hits":7,"power":3.2,"shape":"single","icon":"vdust","visual":"cross","text":"Seven rapid cuts focused on one target. Daggers count as katars.","from":"Guillotine Cross"},
+ {"id":"gc_slip","n":"Dark Illusion","max":10,"type":"act","col":"#d89dff","cd":5,"hits":1,"power":1.8,"shape":"single","icon":"dodge","visual":"cuts","dash":5,"text":"Close the gap in shadow and strike the enemy.","from":"Guillotine Cross"},
+ {"id":"gc_veil","n":"Hallucination Walk","max":10,"type":"buff","col":"#d89dff","cd":20,"hits":1,"power":0,"shape":"single","icon":"dodge","visual":"ward","text":"Heighten evasion for 8 seconds. Refreshes outside the offensive combo.","key":"block","flat":8,"rate":1.2,"duration":8,"from":"Guillotine Cross"},
+ {"id":"gc_roll","n":"Rolling Cutter","max":10,"type":"act","col":"#d89dff","cd":0.2,"hits":1,"power":0.65,"shape":"radial","icon":"akatar","visual":"spin","spacing":0.2,"repeat":5,"castGain":{"key":"rolling","max":10,"life":10},"text":"Spin five times at 0.2-second spacing in one combo slot. Each spin adds a Rolling stack (max 10, lasts 10 seconds).","from":"Guillotine Cross"},
+ {"id":"gc_ripper","n":"Cross Ripper Slasher","max":10,"type":"act","col":"#d89dff","cd":2,"hits":1,"power":2.4,"shape":"single","icon":"sdestroy","visual":"ripper","rng":7,"requiresStack":"rolling","spend":{"key":"rolling","per":0.2},"text":"Requires Rolling stacks. Throw a spinning blade, consuming all stacks for +20% damage each.","from":"Guillotine Cross"},
+ {"id":"ab_chain","n":"Judex","max":10,"type":"act","col":"#fff0b7","cd":2,"hits":3,"power":2.2,"shape":"splash","icon":"judex","visual":"judgment","text":"Strike the target area with three pulses of holy light.","from":"Arch Bishop"},
+ {"id":"ab_judge","n":"Adoramus","max":10,"type":"act","col":"#fff0b7","cd":5,"hits":1,"power":3.8,"shape":"single","icon":"holy","visual":"judgment","slow":0.3,"blind":0.15,"text":"A concentrated holy beam damages, slows and blinds one enemy.","from":"Arch Bishop"},
+ {"id":"ab_ward","n":"Praefatio","max":10,"type":"buff","col":"#fff0b7","cd":12,"hits":1,"power":0,"shape":"single","icon":"kyrie","visual":"ward","absorb":{"pct":0.3,"life":8,"ranked":true},"text":"Raise a barrier absorbing up to 30% of max HP for 8 seconds. Refreshes independently of the combo.","key":"guard","flat":0,"rate":0,"duration":8,"from":"Arch Bishop"},
+ {"id":"ab_duple","n":"Duple Light","max":10,"type":"buff","col":"#fff0b7","cd":15,"hits":1,"power":0,"shape":"single","icon":"holy","visual":"ward","text":"Two holy lights empower basic attacks for 12 seconds (adapted as a sacred damage bonus).","key":"sacred","flat":5,"rate":1.5,"duration":12,"from":"Arch Bishop"},
+ {"id":"ab_highness","n":"Highness Heal","max":10,"type":"heal","col":"#fff0b7","cd":6,"hits":1,"power":0,"shape":"single","icon":"heal","visual":"ward","text":"Automatically restore 15–35% of max HP below half health. Does not occupy a combo slot.","healBase":0.15,"healRank":0.02,"from":"Arch Bishop"},
+ {"id":"mc_gat","n":"Vulcan Arm","max":10,"type":"act","col":"#ffbd77","cd":2,"hits":3,"power":2,"shape":"single","icon":"hammer","visual":"gatling","rng":6,"text":"Fire a short burst from the Mado-mounted gun.","from":"Mechanic"},
+ {"id":"mc_over","n":"Arm Cannon","max":10,"type":"act","col":"#ffbd77","cd":4,"hits":1,"power":3.6,"shape":"splash","icon":"fireball","visual":"cannon","rng":6,"text":"Fire a heavy cannon shell that explodes around the target.","from":"Mechanic"},
+ {"id":"mc_rocket","n":"Axe Tornado","max":10,"type":"act","col":"#ffbd77","cd":4,"hits":1,"power":3.2,"shape":"radial","icon":"cart","visual":"spin","text":"Swing an axe in a full circle around the caster.","from":"Mechanic"},
+ {"id":"mc_boomerang","n":"Axe Boomerang","max":10,"type":"act","col":"#ffbd77","cd":3,"hits":1,"power":2.5,"shape":"single","icon":"hammer","visual":"ripper","rng":6,"text":"Hurl a spinning axe at a distant enemy.","from":"Mechanic"},
+ {"id":"mc_swing","n":"Power Swing","max":10,"type":"act","col":"#ffbd77","cd":2,"hits":1,"power":2.2,"shape":"single","icon":"hammer","visual":"burst","stun":0.6,"text":"Deliver a heavy axe blow with a brief stun.","from":"Mechanic"}
 ];
 if(FOURTH_JOBS_LIVE)SKILLS.push(...SKILLS4);
 for(const s of SKILLS){
@@ -1261,7 +1290,8 @@ for(const s of SKILLS){
   if(s.type==='act'){s.mul=L=>s.power*(.55+.45*Math.min(s.max,L)/s.max);s.aoe=s.shape!=='single';}
   if(s.type==='pas'||s.type==='buff')s.f=L=>(s.flat||0)+s.rate*(s.id==='thrust'?Math.min(5,L):L);
   s.d=L=>s.type==='act'?`${Math.round(s.mul(L)*100*(typeof skillTuning==='function'&&typeof S!=='undefined'&&S&&s.cls.includes(S.cls)?skillTuning(false,s,L)*skillStatScale(s,L):1))}% total ${s.magic?'magic':'physical'} power${s.hits>1?' across '+s.hits+' hits':''} · ${s.cd}s cooldown · ${s.shape}${s.rng?' · '+s.rng+' tiles range':''}${s.aoe&&s.areaScale?' · '+s.areaScale+'× area reach':''}. ${s.text}`:
-    s.type==='heal'?`Auto: heals ${10+5*L}% HP below half · ${s.cd}s cooldown.`:
+    s.type==='buff'&&s.absorb?`Auto: barrier absorbs ${Math.round(s.absorb.pct*(s.absorb.ranked?.5+.05*L:1)*100)}% max HP · ${s.duration}s duration / ${s.cd}s cooldown. ${s.text}`:
+    s.type==='heal'?`Auto: heals ${s.healBase?Math.round((s.healBase+s.healRank*L)*100):10+5*L}% HP below half · ${s.cd}s cooldown.`:
     `${s.text} ${s.key}: +${s.f(L).toFixed(1)}${['range','echo','momentum'].includes(s.key)?'':'%'}${s.type==='buff'?' · '+(s.id==='dpois'?5+L:['ovthrust','thrust'].includes(s.id)?8+2*Math.min(5,L):s.duration)+'s duration / '+rotationCooldown()+'s rotation cooldown':''}`;
   const describe=s.d;s.d=L=>describe(L)+(s.training?' Training: '+Object.entries(s.training).map(([key,rate])=>'+'+(rate*L).toFixed(1)+' '+key.toUpperCase()+(key==='def'?'':'%')).join(', ')+'.':'');
 }
@@ -1316,14 +1346,13 @@ const SKILL_VISUAL_REDESIGN={aura:'holyAura',mystic:'holyAura',sight:'windAura',
  env:'multiSlash',dodge:'multiSlash',sandat:'arrowRain',vdust:'multiSlash',vsplash:'shadow',sdestroy:'soulBolt',dpois:'frenzyAura',akatar:'multiSlash',
  heal:'holyBolt',signum:'holyNova',sanct:'holyBolt',kyrie:'holyBolt',judex:'holyBolt',assum:'holyNova',basilica:'holyNova',wperf:'impact',meltdown:'impact'};
 for(const [id,kind] of Object.entries(SKILL_VISUAL_REDESIGN))SKILL_VFX[id]={kind,at:SKILLS.find(s=>s.id===id).type==='buff'?'caster':'target',life:.6,redesigned:true};
-// Milestone 4 (dark-launched): the 18 4th-job skills reuse native icon art and existing effect kinds.
+// Milestone 4 (dark-launched): the 30 4th-job skills reuse native icon art and existing effect kinds.
 // No new sprites are painted; their own art is an open item for the owner (see Updates/fourth-jobs/).
 if(FOURTH_JOBS_LIVE){
-  const ART4={rk_charge:'bash',rk_burst:'bowl',rk_ward:'jointbeat',wl_chain:'nap',wl_seal:'sdestroy',wl_det:'storm',rg_hunt:'falcon',rg_warg:'beast',rg_storm:'ashower',gc_cross:'vdust',gc_slip:'dodge',gc_veil:'vsplash',ab_chain:'holy',ab_judge:'basilica',ab_ward:'sanct',mc_gat:'hammer',mc_over:'fireball',mc_rocket:'cart'};
-  const FX4={rk_charge:'multiSlash',rk_burst:'impact',rk_ward:'holyAura',wl_chain:'soulBolt',wl_seal:'shadow',wl_det:'impact',rg_hunt:'arrowRain',rg_warg:'multiSlash',rg_storm:'arrowRain',gc_cross:'multiSlash',gc_slip:'shadow',gc_veil:'shadow',ab_chain:'holyAura',ab_judge:'impact',ab_ward:'holyAura',mc_gat:'impact',mc_over:'impact',mc_rocket:'impact'};
   for(const sk of SKILLS4){
-    if(typeof PGSkillIcons!=='undefined'&&!PGSkillIcons[sk.id]&&PGSkillIcons[ART4[sk.id]])PGSkillIcons[sk.id]=PGSkillIcons[ART4[sk.id]];
-    if(!SKILL_VFX[sk.id])SKILL_VFX[sk.id]={kind:FX4[sk.id],at:sk.absorb?'caster':'target',life:.6,redesigned:true};
+    if(typeof SKILL_ICON!=='undefined')SKILL_ICON[sk.id]=SKILL_ICON[sk.icon];
+    if(typeof PGSkillIcons!=='undefined'&&!PGSkillIcons[sk.id]&&PGSkillIcons[sk.icon])PGSkillIcons[sk.id]=PGSkillIcons[sk.icon];
+    SKILL_VFX[sk.id]={kind:sk.type==='act'?'impact':'holyAura',at:sk.type!=='act'||sk.shape==='radial'?'caster':'target',life:.6,redesigned:true};
   }
 }
 function skillFxSpec(id,color){const v=SKILL_VFX[id];return v?{id,kind:v.kind,at:v.at||'target',life:v.life||.65,color:color||'#fff'}:null}
@@ -1332,6 +1361,7 @@ const pm=s=>{const[n,c,sh]=s.split(':');const spriteId=MOB_SPRITES[n]||0,spriteS
 // One-facing RO monster PNGs are hosted by the Divine Pride monster database. Most names
 // match directly; game-only themed names use the closest named RO monster (not recoloured).
 const MOB_SPRITES={
+  'Lord Knight Seyren':1634,'Assassin Cross Eremes':1635,'Whitesmith Harword':1636,'High Priest Magaleta':1637,'Sniper Shecil':1638,'High Wizard Katrinn':1639,
   'Retribution Angel':1702,'Despair Phantom':1705,'Tower Watcher':1700,'Death Whisperer':1706,'Agony Demon':1707,'Memory of Thanatos':1708,
   'Magma Slag':1836,'Fire Imp':1837,'Kasa':1833,'Salamander':1831,'Obsidian Golem':1366,'Ifrit':1832,
   'Poring':1002,'Fabre':1007,'Lunatic':1063,'Drops':1113,'Chonchon':1011,'Willow':1010,
@@ -1376,7 +1406,7 @@ const MOB_SPRITES={
 // factors are .62/.92/1.28; the render path below applies a regular-only multiplier so
 // even a medium Poring looks shorter than the player. Boss scale remains unchanged.
 // The size labels come from https://www.divine-pride.net/database/monster/{ID}.
-const MOB_SIZE_BY_ID={1700:'Medium',1702:'Medium',1705:'Large',1706:'Medium',1707:'Small',1708:'Large',1831:'Large',1832:'Large',1836:'Small',1837:'Small',
+const MOB_SIZE_BY_ID={1634:'Medium',1635:'Medium',1636:'Medium',1637:'Medium',1638:'Medium',1639:'Medium',1700:'Medium',1702:'Medium',1705:'Large',1706:'Medium',1707:'Small',1708:'Large',1831:'Large',1832:'Large',1836:'Small',1837:'Small',
   1001:'Small',1004:'Small',1005:'Small',1007:'Small',1008:'Small',1011:'Small',1051:'Small',1063:'Small',1070:'Small',1073:'Small',
   1141:'Small',1142:'Small',1143:'Small',1144:'Small',1167:'Small',1179:'Small',1837:'Small',1866:'Small',1869:'Small',2023:'Small',
   1002:'Medium',1010:'Medium',1013:'Medium',1014:'Medium',1015:'Medium',1016:'Medium',1023:'Medium',1030:'Medium',1031:'Medium',1033:'Medium',
@@ -1393,7 +1423,7 @@ const MOB_SIZE_SCALE={Small:.62,Medium:.92,Large:1.28};
 // hero. Bosses keep the exact v29 height. This changes visual art only, not hitboxes.
 const MOB_REGULAR_VISUAL=.7;
 const mobVisualScale=m=>Math.max(.05,(m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)*(m.spawn||0));
-const ASCENSION_MOB_IDS=new Set([1702,1705,1700,1706,1707,1708,1836,1837,1833,1831,1366,1832]);
+const ASCENSION_MOB_IDS=new Set([1702,1705,1700,1706,1707,1708,1836,1837,1833,1831,1366,1832,1634,1635,1636,1637,1638,1639]);
 const mobSpriteUrl=id=>ASCENSION_MOB_IDS.has(+id)?`assets/mobs/v1/${+id}-0.png`:Number.isInteger(+id)&&+id>0?`https://static.divine-pride.net/images/mobs/png/${+id}.png`:'';
 // ---------- equipment database ----------
 // Four sections per map (starter / 1st-job / 2nd-job / high tier), each a themed set:
@@ -1573,9 +1603,11 @@ function ascensionForgePanel(){
       const [mats,sig,zeny]=cost;
       let name=slot==='weapon'?Object.values(set.pieces.weapon).join(' / '):set.pieces[slot];
       const canAfford=owned>=mats&&sigils>=sig&&S.zeny>=zeny;
-      html+=`<article class="mob-card"><b>${slot==='weapon'?'Mythic Weapon':('Mythic '+set.pieces[slot])}</b><small>${slot.toUpperCase()} · ${mats} ${mat} + ${sig} Sigils + ${zeny.toLocaleString()}z</small><button data-a="craftasc" data-v="${key}:${slot}" ${canAfford?'':'disabled'}>Craft</button></article>`;
+      html+=`<article class="mob-card"><b>${slot==='weapon'?'Mythic Weapon':('Mythic '+set.pieces[slot])}</b><small>${slot.toUpperCase()} · ${mats} ${mat} + ${sig} Sigils + ${zeny.toLocaleString()}z</small>${(slot==='weapon'?C().wt:['']).map(wt=>`<button data-a="craftasc" data-v="${key}:${slot}:${wt}" ${canAfford?'':'disabled'}>Craft ${wt}</button>`).join('')}</article>`;
     }
     html+=`</div>`;
+    const candidates=[...items(),...S.inv].filter(it=>it.sec===5);
+    if(candidates.length)html+=`<details><summary>Transform N+ gear into ${set.name}</summary><p>Uses the same crafting cost. Keeps cards, identity and refinement.</p>${candidates.map(it=>`<button data-a="transformasc" data-v="${key}:${it.id}">${esc(iname(it))}</button>`).join('')}</details>`;
   }
   return html;
 }
@@ -1603,9 +1635,9 @@ function craftAscensionPiece(setKey,slot,weaponType){
   if((S.ascensionMat?.[set.mat]||0)<mats)return{error:'Not enough '+ASCENSION_MATERIALS[set.mat]};
   if((S.ascensionMat?.[2]||0)<sigils)return{error:"Not enough Valkyrie's Sigils"};
   if(S.zeny<zeny)return{error:'Not enough Zeny ('+zeny.toLocaleString()+' needed)'};
-  S.ascensionMat[set.mat]-=mats;S.ascensionMat[2]-=sigils;S.zeny-=zeny;
   const name=slot==='weapon'?set.pieces.weapon[weaponType]:set.pieces[slot];
   if(!name)return{error:'Invalid weapon type for your class'};
+  S.ascensionMat[set.mat]-=mats;S.ascensionMat[2]-=sigils;S.zeny-=zeny;
   const tier=4,val=Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*15*1.15*RAR[4].m*1.5*rnd(.95,1.05));
   const profile={slot,wt:slot==='weapon'?weaponType:undefined,sec:6,tier,mp:set.map,quality:1.5};
   const pool=affixPool(profile).slice(),aff=[];
@@ -1624,9 +1656,9 @@ function transformToMythic(item,setKey){
   if((S.ascensionMat?.[set.mat]||0)<mats)return{error:'Not enough '+ASCENSION_MATERIALS[set.mat]};
   if((S.ascensionMat?.[2]||0)<sigils)return{error:"Not enough Valkyrie's Sigils"};
   if(S.zeny<zeny)return{error:'Not enough Zeny ('+zeny.toLocaleString()+' needed)'};
-  S.ascensionMat[set.mat]-=mats;S.ascensionMat[2]-=sigils;S.zeny-=zeny;
   const name=slot==='weapon'?set.pieces.weapon[weaponType]:set.pieces[slot];
   if(!name)return{error:'Invalid weapon type for your class'};
+  S.ascensionMat[set.mat]-=mats;S.ascensionMat[2]-=sigils;S.zeny-=zeny;
   item.sec=6;item.mythic=true;item.ascSet=setKey;item.tier=4;item.quality=1.5;item.mp=set.map;item.lvl=150;
   item.name='Mythic '+name;
   // Preserve existing affixes - they keep their N+ values until reforged
@@ -2168,6 +2200,7 @@ function trialArena(){
 }
 // ---------------------------------------------------------------- the run ----
 function trialEnter(mode){
+  if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on)return;
   const st=trialState();
   if(mode==='ranked'&&!trialLeftToday()){log('No ranked runs left today - practice is always open.','r0','trial');ui();return}
   TRIAL.on=true;TRIAL.mode=mode==='ranked'?'ranked':'training';TRIAL.left=TRIAL_SECS;TRIAL.dmg0=S.dmg||0;TRIAL.dmg=0;TRIAL.result=null;TRIAL.shop=false;
@@ -2551,7 +2584,7 @@ const dropTxt=([T,ch],who)=>{const why=whyNot(T),worse=dropIsWorse(T),cls='dropl
 // costs 1+floor((v-1)/10) below 100 and 10+(v-100) from 100 up, so one stat 1->120 costs
 // 930 points. The grant curve 4+floor(l/5) pays 1352 by Lv99 and 2811 by Lv150 - exactly
 // three stats at 120 with a handful of points left over. Pinned by tools/tests/stat_sim.js.
-// Declared here (before fresh()/load()) so the save repair can clamp to MAXST too.
+// Declared here (before fresh()/load()) so the save repair preserves allocated Mythic stats up to the absolute cap, even with gear unequipped.
 const MAXST=120,ASCENSION_MAXST=150,BASECAP=99,ELITELV=100,ASCENSIONLV=150,statCap=()=>S.lv>=ASCENSIONLV&&items().some(it=>it.sec===6)?ASCENSION_MAXST:S.lv>=ELITELV?MAXST:BASECAP;
 
 // ---------- economy tuning ----------
@@ -2882,7 +2915,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   if(!Array.isArray(f.autoSell))f.autoSell=[false,false,false,false,false,false,false];else f.autoSell=[0,1,2,3,4,5,6].map(i=>f.autoSell[i]===true||f.autoSell[i]===1);
   const sellRules=cleanAutoSellRules(f.autoSellRules);f.autoSellRules=sellRules||defaultAutoSellRules();if(!sellRules)f.autoSell=f.autoSell.map(()=>false);
   if(!f.logOff||typeof f.logOff!=='object'||Array.isArray(f.logOff))f.logOff={};
-  for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
+  for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(ASCENSION_MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
   repairMaterials(f,s.nmMatVersion);f.dps=safeCount(f.dps);
   // v77 (Endless Echo): Trial Shards and the ranked record. A save without them is simply a
@@ -2956,7 +2989,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
     r.lv=Math.max(1,Math.min(150,Math.floor(num_(r.lv,1))));r.exp=Math.max(0,num_(r.exp,0));
     r.pts=Math.max(0,Math.floor(num_(r.pts,0)));r.hp=Math.max(1,num_(r.hp,1));
     if(!r.st||typeof r.st!=='object')r.st={};
-    for(const s of['str','agi','dex','luk','int','vit'])r.st[s]=Math.max(1,Math.min(MAXST,num_(r.st[s],1)));
+    for(const s of['str','agi','dex','luk','int','vit'])r.st[s]=Math.max(1,Math.min(ASCENSION_MAXST,num_(r.st[s],1)));
     if(!r.eq||typeof r.eq!=='object')r.eq=null}   // null = loadout unknown: keep what is worn
   if(!Array.isArray(f.pets))f.pets=[];f.pets=f.pets.filter(p=>p&&typeof p==='object');if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
   if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;
@@ -2991,6 +3024,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
 let farmSession=null;
 const farmKey=()=>[S.cls,S.mp,S.lvl].join(':');
 function farmSample(now=Date.now()){
+ if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on)return;
  if(!farmSession||farmSession.owner!==S||farmSession.key!==farmKey()||now<farmSession.start){farmSession={owner:S,key:farmKey(),start:now,events:[]};}
  const f=farmSession;f.events=f.events.filter(e=>e.at>now-60000);
  const elapsed=Math.min(60000,now-f.start);if(elapsed<60000)return;
@@ -3339,7 +3373,8 @@ function gmApplyGift(p){
   if(!Number.isInteger(amount)||amount<1||amount>1000000)throw Error('Invalid gift quantity');
   if(p.resource){
     if(['ori','elu'].includes(p.resource))S.ore[p.resource]+=amount;
-    else if(['shards','dps','refineScrolls'].includes(p.resource))S[p.resource]=safeCount(S[p.resource])+amount;
+    else if(['shards','dps','refineScrolls','mythicScrolls'].includes(p.resource))S[p.resource]=safeCount(S[p.resource])+amount;
+    else if(/^ascMat[0-2]$/.test(p.resource))S.ascensionMat[+p.resource.slice(6)]+=amount;
     else if(/^nmat[0-4]$/.test(p.resource))S.nmMat[+p.resource.slice(4)]+=amount;
     else if(/^nm[0-9]$/.test(p.resource))S.nmMat[nmMatIndex(+p.resource.slice(2))]+=amount;
     else throw Error('Unknown resource');
@@ -3360,8 +3395,8 @@ function gmApplyGear(p){
     if(p.slot==='weapon'&&it.wt==='katar'&&S.eq.off){S.inv.push(S.eq.off);S.eq.off=null;}
     equipIn(p.slot,it.id);
   }else if(p.mode==='affixes'){
-    if(!Array.isArray(p.aff)||p.aff.length>3||p.aff.some(a=>!affixPool(it).includes(a.k)||!Number.isFinite(a.v)||a.v<1||a.v>10000)||new Set(p.aff.map(a=>a.k)).size!==p.aff.length)throw Error('Invalid affixes');
-    if(!Number.isInteger(p.refine)||p.refine<0||p.refine>10)throw Error('Invalid refinement');
+    if(!Array.isArray(p.aff)||p.aff.length>(it.sec===6?4:3)||p.aff.some(a=>!affixPool(it).includes(a.k)||!Number.isFinite(a.v)||a.v<1||a.v>10000)||new Set(p.aff.map(a=>a.k)).size!==p.aff.length)throw Error('Invalid affixes');
+    if(!Number.isInteger(p.refine)||p.refine<0||p.refine>(it.sec===6?15:10))throw Error('Invalid refinement');
     if(S.reforgePending&&String(S.reforgePending.id)===String(it.id))throw Error('Resolve the paid reforge offer before applying this edit');
     it.aff=p.aff.map(a=>({...a}));it.r=p.refine;
     S.hp=Math.min(S.hp,maxHp());
@@ -3631,7 +3666,7 @@ function comboRole(sk){return sk.mark||sk.follow||sk.blind?'Opener':sk.execute||
 function suggestedCombo(){const attacks=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
   const opener=attacks.find(s=>s.mark||s.follow||s.blind),picked=opener?[opener]:[];
   // Keep an inherited opener, then mix the newest attacks with the previous job's tools.
-  for(const from of lineOf(S.cls).slice().reverse())for(const sk of attacks.filter(s=>s.from===from).slice(0,2))if(!picked.includes(sk))picked.push(sk);
+  for(const from of lineOf(S.cls).slice().reverse())for(const sk of attacks.filter(s=>s.from===from).slice(0,FOURTH_JOBS_LIVE&&CLASSES[from]?.tier===4?5:2))if(!picked.includes(sk))picked.push(sk);
   for(const sk of attacks)if(!picked.includes(sk))picked.push(sk);
   return picked.slice(0,6).sort((a,b)=>(comboRole(a)==='Finisher')-(comboRole(b)==='Finisher')).map(s=>s.id);
 }
@@ -3646,7 +3681,7 @@ function rotationCooldown(){return 3;}
 function comboStatus(){const c=comboConfig(),r=skillState();if(!c.enabled)return 'Combo paused';if(t<(r.recoverUntil||0))return 'Recovering · '+Math.max(0,r.recoverUntil-t).toFixed(1)+'s';
   if(!rotationSkills().length)return 'Choose an attack to begin';return r.comboSlots?'Combo · '+Math.min(r.cursor+1,r.comboSlots.length)+' / '+r.comboSlots.length:'Ready for next combo';}
 function rotationBar(){const c=comboConfig(),available=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
-  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, once each, then recover for 3 seconds. Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · basic attacks during recovery</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
+  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, then recover for 3 seconds.${FOURTH_JOBS_LIVE&&S.cls==='Guillotine Cross'?' Rolling Cutter spins five times in its slot at 0.2s spacing.':' Each attack casts once.'} Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · basic attacks during recovery</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
 }
 // v39: the master auto-cast switch. It covers every learned skill of the current line that
 // auto-casts (everything except passives), reads ON only while ALL of them are ON, and clears
@@ -3660,7 +3695,7 @@ const statResetCost=()=>S.skillRespec&&S.skillRespec[S.cls]?0:rcost();
 const skMasterTile=()=>{const on=skAllOn(),n=skTog().length,done=skillsFullyAllocated();
   return`<div class="sk-tools"><label class="sk-master${on?'':' off'}" title="Switch the auto-cast of every learned skill on or off"><span class="sk-kind">ALL</span><div class="si" aria-hidden="true">&#9199;&#65039;</div><div class="sk-name">Auto-cast all</div><div class="sk-autocast"><input type="checkbox" data-a="skall" ${on?'checked':''} aria-label="Auto-cast every learned skill"> ${on?'ALL ON':'SOMETHING OFF'}</div><small>${n} skill${n===1?'':'s'} on this line</small></label><button class="sk-alloc" data-a="skalloc" ${done||skpAvail()<1?'disabled':''} title="Auto-allocate all available points: learn each available skill first, then improve ranks">⚡ Auto-allocate all skills<small>${done?'All skills maxed':'Learn every skill first'}</small></button></div>`};
 const skillDetailCard=sel=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));
-  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='buff'?'Buff (auto-refresh)':comboRole(sel)}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Used automatically when ready.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div>${sel.type==='act'?`<p class="combo-membership">${comboConfig().slots.includes(sel.id)?'In your combo · casts once per cycle.':'Choose this attack in a combo slot to use it.'}</p>`:''}<small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
+  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='buff'?'Buff (auto-refresh)':comboRole(sel)}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Used automatically when ready.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div>${sel.type==='act'?`<p class="combo-membership">${comboConfig().slots.includes(sel.id)?(sel.repeat?'In your combo · '+sel.repeat+' spins per slot.':'In your combo · casts once per cycle.'):'Choose this attack in a combo slot to use it.'}</p>`:''}<small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
 const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f(lv(s.id)):0)+(s.training&&s.training[k]||0)*lv(s.id):0),0)+(typeof skillBonus==='function'?skillBonus(k):0);
 // v81 dual wield (owner): "let set that assasin & assassin cross can wield daggers. 2 hands."
 // A two-handed katar is TWO_HANDED weapons and a left-hand dagger is DUAL of one, so a pair of
@@ -3703,7 +3738,8 @@ const aspd=()=>{const floor=items().some(it=>it.sec===6)?.10:.13;return Math.max
 // stats, skills, gear and card mastery counts half. A Lv70 LUK dump with both Hunter/Sniper crit
 // passives lands ~51%, so the last stretch to 60 is a real build. Index Crit (above) is the only
 // source that passes the 60 cap, and the total stops at 100.
-const crit=()=>{const hasMythic=items().some(it=>it.sec===6),baseCap=hasMythic?80:60;const v=2+st('luk')*.25+pv('crit')+bon('crit')+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(baseCap,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0))},flee=()=>{const hasMythic=items().some(it=>it.sec===6),cap=hasMythic?80:60;return Math.min(cap,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0))},missCh=()=>Math.max(0,15-st('dex')*.25);
+const mythicCrit=()=>{let v=0;for(const it of items())if(it.sec===6){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k==='crit')v+=a.v*f}for(const a of Object.values(ascensionSetBonuses()))v+=a.tier.stats.crit||0;return v};
+const crit=(bonus=0)=>{const extra=mythicCrit(),v=2+st('luk')*.25+pv('crit')+bon('crit')-extra+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0)+bonus)+extra},flee=()=>{const hasMythic=items().some(it=>it.sec===6),cap=hasMythic?80:60;return Math.min(cap,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0))},missCh=()=>Math.max(0,15-st('dex')*.25);
 // Movement before equipment is capped at 70% of the owner's 14.35 u/s reference.
 // Pets, movement buffs and long-distance running share the cap. Equipment/card movement
 // applies afterward, retaining its existing combined +20% limit.
@@ -3751,7 +3787,7 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 // every attempt eats more ore the rarer the piece. v90.2 (owner): Legendary takes 5 ore a try, N and N+ take 10.
 // REF_ORE is indexed by rarIdx (Common, Fine, Rare, Epic, Legendary, N, N+); refOre() is the ore one attempt takes.
 // v90.8 (owner: Zeny sink): refine Zeny is x3 (REF_ZENY_MUL).
-const REF_ZENY_MUL=3,refCost=it=>{const r=it.r||0;if(r>=10&&it.sec===6)return Math.round(REF_ZENY_MUL*400*(r+1)*(1+(it.sec||0)*.5)*5);return Math.round(REF_ZENY_MUL*400*(r+1)*(1+(it.sec||0)*.5))},REF_ORE=[1,1,2,2,5,10,10],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>{const r=it.r||0;if(r>=10&&it.sec===6)return[30,21,12,5][r-10]||0;return[70,70,70,70,49,42,35,28,21,14][r]};
+const REF_ZENY_MUL=3,refCost=it=>{const r=it.r||0;if(r>=10&&it.sec===6)return Math.round(REF_ZENY_MUL*400*(r+1)*(1+(it.sec||0)*.5)*5);return Math.round(REF_ZENY_MUL*400*(r+1)*(1+(it.sec||0)*.5))},REF_ORE=[1,1,2,2,5,10,10,15],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>{const r=it.r||0;if(r>=10&&it.sec===6)return[30,21,12,5,2][r-10]||0;return[70,70,70,70,49,42,35,28,21,14][r]};
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${cardName(c)}${c.legacy?' [legacy]':''} (${cardEffects(c).map(cardEffectText).join(', ')})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>bossStage(S.mp,S.lvl),fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Curated original RO equipment art: progression follows the saved job section,
@@ -3918,6 +3954,7 @@ function fillCamp(i,c){
   }
 }
 function spawn(){
+  if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on)return;
   if(typeof resetSkillRuntime==='function')resetSkillRuntime(true);
   const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP*nm15Of(S.lvl):1,na=nm1?NMATK*nm15Of(S.lvl):1,nz=nm1?NMZENY*nmPayOf(S.mp,S.lvl,2):1;
   mobs=[];activePack=0;camps=[];engageTgt=null;
@@ -4116,7 +4153,7 @@ function chainHit(src,dmg,col,n,skill=false){if(!src||!(dmg>0)||mobs.length<2)re
 // Milestone 4 mechanics (dark-launched with SKILLS4). Each helper does nothing for a skill that lacks its field,
 // so the live skills never reach these lines' effects. Stacks expire against the game clock `t`.
 const SELF_STACK_LIFE=12;
-function addSelfStack(key,max){const r=skillState();r.stacks=r.stacks||{};const e=r.stacks[key],n=e&&e.until>t?e.n:0;r.stacks[key]={n:Math.min(max,n+1),until:t+SELF_STACK_LIFE}}
+function addSelfStack(key,max,life=SELF_STACK_LIFE){const r=skillState();r.stacks=r.stacks||{};const e=r.stacks[key],n=e&&e.until>t?e.n:0;r.stacks[key]={n:Math.min(max,n+1),until:t+life}}
 function takeSelfStacks(key){const r=skillState(),e=r.stacks&&r.stacks[key];if(!e)return 0;delete r.stacks[key];return e.until>t?e.n:0}
 function addTargetStack(o,a){o.stk=o.stk||{};const e=o.stk[a.key],n=e&&e.until>t?e.n:0;o.stk[a.key]={n:Math.min(a.max,n+1),until:t+a.life}}
 function takeTargetStacks(o,key){const e=o&&o.stk&&o.stk[key];if(!e)return 0;delete o.stk[key];return e.until>t?e.n:0}
@@ -4135,7 +4172,7 @@ function bounceStrike(from,sk,raw){const b=sk.bounce;
   for(const o of near){shots.push({x0:from.x,z0:from.z,x1:o.x,z1:o.z,t:0,col:sk.col||'#fff'});skillHit(o,raw*b.share/sk.hits,sk,true)}
 }
 // Absorb: a new ward replaces any ward still up. It soaks incoming player damage until spent or it expires.
-function startAbsorb(a){const r=skillState();r.absorb={amount:maxHp()*a.pct,until:t+a.life}}
+function startAbsorb(a,rank=10){const r=skillState();r.absorb={amount:maxHp()*a.pct*(a.ranked?.5+.05*rank:1),until:t+a.life}}
 function absorbSoak(d){const a=skillState().absorb;if(!a||!(a.until>t)||!(a.amount>0))return d;const soak=Math.min(d,a.amount);a.amount-=soak;return d-soak}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
 // v83.3 (owner): the number motion is v82's again - the owner had already tuned it and only wants to
@@ -4305,14 +4342,15 @@ const SWING_MIN_T=.14,SWING_MAX_T=.55;     // seconds: the shortest and longest 
 let skillRuntime;
 function resetSkillRuntime(keepBuffs=false){const previous=keepBuffs&&skillRuntime&&skillRuntime.owner===(S&&S.cls)&&skillRuntime.save===S?skillRuntime:null;
   skillRuntime={owner:S&&S.cls,save:S,buffs:previous?previous.buffs:{},events:[],casts:{},echo:0,momentum:0,lastHit:-99,follow:0,dash:0,approach:null,
-    comboSlots:previous?previous.comboSlots:null,cursor:previous?previous.cursor:0,nextCastAt:previous?previous.nextCastAt:0,recoverUntil:previous?previous.recoverUntil:0};}
+    repeatCount:previous?previous.repeatCount:0,comboSlots:previous?previous.comboSlots:null,cursor:previous?previous.cursor:0,nextCastAt:previous?previous.nextCastAt:0,recoverUntil:previous?previous.recoverUntil:0};}
 function skillState(){if(!skillRuntime||skillRuntime.owner!==(S&&S.cls)||skillRuntime.save!==S)resetSkillRuntime();return skillRuntime;}
-function finishCombo(r){r.comboSlots=null;r.cursor=0;r.recoverUntil=t+3;}
-function nextComboSkill(target){const r=skillState(),c=comboConfig();if(!c.enabled||t<r.recoverUntil||t+swingLength(Math.min(.5,aspd()))*SWING_CONTACT<r.nextCastAt)return null;
+function finishCombo(r){r.comboSlots=null;r.cursor=0;r.repeatCount=0;r.recoverUntil=t+3;}
+function skillStackReady(sk){const e=skillState().stacks?.[sk.requiresStack];return !sk.requiresStack||!!(e&&e.n>0&&e.until>t);}
+function nextComboSkill(target){const r=skillState(),c=comboConfig();if(!c.enabled||t<r.recoverUntil||t+swingLength(Math.min(SKILLS.find(s=>s.id===r.comboSlots?.[r.cursor])?.spacing||.5,aspd()))*SWING_CONTACT+1e-8<r.nextCastAt)return null;
   if(!r.comboSlots){r.comboSlots=rotationSkills().map(s=>s.id);r.cursor=0;if(!r.comboSlots.length){r.comboSlots=null;return null;}}
   while(r.cursor<r.comboSlots.length){const id=r.comboSlots[r.cursor],sk=SKILLS.find(s=>s.id===id);
-    if(sk&&skillOn(id)&&(skCd[id]||0)<=0&&Math.hypot(target.x-pl.x,target.z-pl.z)<=skillRange(sk,target)+.6)return sk;
-    r.cursor++;}
+    if(sk&&skillOn(id)&&skillStackReady(sk)&&(skCd[id]||0)<=(sk.repeat?swingLength(Math.min(sk.spacing||.5,aspd()))*SWING_CONTACT+1e-8:0)&&Math.hypot(target.x-pl.x,target.z-pl.z)<=skillRange(sk,target)+.6)return sk;
+    r.cursor++;r.repeatCount=0;}
   finishCombo(r);return null;
 }
 function skillBonus(key){const r=skillState();let sum=0;for(const id in r.buffs){const b=r.buffs[id];if((b.key===key||key==='aspd'&&b.key==='speed')&&skillOn(id))sum+=b.value;}return sum;}
@@ -4593,14 +4631,14 @@ function skillHit(target,raw,sk,proc=false){if(!target||target.hp<=0||!mobs.incl
     if(r.follow>0&&t<r.followUntil){boost+=r.follow;r.follow=0;}
     if(pv('zeny')&&skillOn('steal')&&target.hp>=target.max*.8)boost+=lv('steal')*.01;}
   if(Math.random()*100<missCh())return 0;
-  const critical=Math.random()*100<Math.max(0,Math.min(100,crit()+skillBonus('critical'))*(1-(target.critRes||0)));
+  const critical=Math.random()*100<Math.max(0,crit(skillBonus('critical'))*(1-(target.critRes||0)));
   const damage=Math.max(1,Math.round(raw*boost*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(critical?critD():1)*(target.boss?1+petPassive('boss')/100:1)*fieldDamage(target)));
   hurt(target,damage,sk.col,critical,true);
   if(!proc&&target.hp>0&&target.deathmark){if(--target.deathmark.hits<=0){const mark=target.deathmark;delete target.deathmark;skillHit(target,mark.raw,mark.sk,true);}}
   return damage;
 }
 function castSkill(sk,k){
-  const target=mob;if(!target||target.hp<=0||!mobs.includes(target))return;
+  const target=mob;if(!target||target.hp<=0||!mobs.includes(target)||!skillStackReady(sk))return;
   const r=skillState(),L=lv(sk.id);skillDash(sk,target);playSkillFx(sk.id,target,sk.col);
   const bonus=pv('damage')+(sk.falcon?pv('falcon'):0)+(['cart','cartrev','meltdown'].includes(sk.id)?Math.min(3,r.momentum)*pv('momentum'):0);
   // INT multiplies caster skills. Physical training is folded into rank coefficients
@@ -4612,7 +4650,8 @@ function castSkill(sk,k){
   if(sk.shatter&&target.skillMark&&target.skillMark.source==='wperf')raw*=1+sk.shatter;
   if(sk.spend)raw*=1+sk.spend.per*takeSelfStacks(sk.spend.key);
   let tgtSpent=0;if(sk.tgtSpend){tgtSpent=takeTargetStacks(target,sk.tgtSpend.key);raw*=1+sk.tgtSpend.per*tgtSpent;}
-  if(sk.absorb)startAbsorb(sk.absorb);
+  if(sk.absorb)startAbsorb(sk.absorb,L);
+  if(sk.castGain)addSelfStack(sk.castGain.key,sk.castGain.max,sk.castGain.life);
   const targets=skillTargets(sk,target),pulse=sk.pulse||0,death=sk.death||0;
   let dealt=0;for(const o of targets){const amount=raw*(o===target?1:.8*skillTuning(true,sk,L)/skillTuning(false,sk,L))*(1-pulse-death-(sk.dot||0));
     // Split the declared total; extra hits never become unrelated 1x strikes.
@@ -4643,7 +4682,11 @@ function tickCombatSkills(dt){const r=skillState();r.counter=Math.max(0,(r.count
   if(mobs.some(o=>o.hp>0))for(const sk of SKILLS){if(sk.type!=='buff'||!skillOn(sk.id)||(sk.id==='ovthrust'&&skillOn('thrust'))||(skCd[sk.id]||0)>0||(r.buffs[sk.id]&&r.buffs[sk.id].left>.5))continue;
     if(sk.id==='thrust')delete r.buffs.ovthrust;
     const duration=sk.id==='dpois'?5+lv(sk.id):['ovthrust','thrust'].includes(sk.id)?8+2*Math.min(5,lv(sk.id)):sk.duration;
+    if(sk.absorb)startAbsorb(sk.absorb,lv(sk.id));
     r.buffs[sk.id]={key:sk.key,value:sk.f(lv(sk.id)),left:duration};skCd[sk.id]=sk.cd;playSkillFx(sk.id,null,sk.col);
+  }
+  for(const sk of SKILLS4){if(!FOURTH_JOBS_LIVE||sk.type!=='heal'||!skillOn(sk.id)||S.hp>=maxHp()*.5||(skCd[sk.id]||0)>0)continue;
+    const h=Math.ceil(maxHp()*(sk.healBase+sk.healRank*lv(sk.id)));S.hp=Math.min(maxHp(),S.hp+h);skCd[sk.id]=sk.cd;playSkillFx(sk.id,null,sk.col);skillNameFloat(sk.n);addFloat(pl.x,2.6,pl.z,'+'+h,sk.col);
   }
   const events=r.events;r.events=[];for(const e of events){e.left-=dt;if(e.owner!==S.cls)continue;if(e.left<=0)e.fn();else r.events.push(e);}
   for(const o of mobs.slice()){
@@ -4686,7 +4729,7 @@ function playerAttack(){
   if(!mob)return;
   engageWait=0;   // a swing is the proof the fight is live: the walk-in wait starts again (v88.4)
   const far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6,sk=nextComboSkill(mob);
-  const interval=sk?.5:aspd();pAtkT=interval;atkAnim=1;swingDur=swingLength(Math.min(interval,aspd()));
+  const interval=sk?(sk.spacing||.5):aspd();pAtkT=interval;atkAnim=1;swingDur=swingLength(Math.min(interval,aspd()));
   const casts=sk?[sk]:[];
   const d=pv('dbl');
   swing={t:swingDur*SWING_CONTACT,target:mob,pack:mob.pack,casts:casts.map(sk=>({sk,k:1})),
@@ -4704,8 +4747,8 @@ function resolveSwing(s){
   if(!comboConfig().enabled||t<r.recoverUntil||t<r.nextCastAt)s.casts=[];
   if(s.casts.length){
     const c=s.casts[0];
-    if(skillOn(c.sk.id)&&r.comboSlots&&r.comboSlots[r.cursor]===c.sk.id&&mob.pack===s.pack&&Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(c.sk,mob)+.6){
-      skCd[c.sk.id]=c.sk.cd;r.casts[c.sk.id]=t;r.nextCastAt=t+.5;r.cursor++;skillNameFloat(c.sk.n);castSkill(c.sk,1);
+    if(skillOn(c.sk.id)&&skillStackReady(c.sk)&&r.comboSlots&&r.comboSlots[r.cursor]===c.sk.id&&mob.pack===s.pack&&Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(c.sk,mob)+.6){
+      skCd[c.sk.id]=c.sk.cd;r.casts[c.sk.id]=t;r.nextCastAt=t+(c.sk.spacing||.5);r.repeatCount=(r.repeatCount||0)+1;if(r.repeatCount>=(c.sk.repeat||1)){r.cursor++;r.repeatCount=0;}skillNameFloat(c.sk.n);castSkill(c.sk,1);
       if(r.cursor>=r.comboSlots.length)finishCombo(r);
     }
   }else if(!s.far){
@@ -4735,6 +4778,7 @@ function ascensionDrops(mob){
 }
 function recordMapClear(m,l){if(l===normalStages(m)){if(!S.mapClears)S.mapClears=MAPS.map(()=>false);S.mapClears[m]=true;}}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
+  if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){if(mob===JOB_RITE.enemy&&mob.hp<=0&&JOB_RITE.owner===S&&JOB_RITE.user===currentUser){if(!JOB_RITE.outcome){if(jobRiteLeft()>0)showJobRiteResult(true,'victory');else showJobRiteResult(false,'timeout');}mobs=[];mob=null;}else mob=keep;return;}
   const g=gx();S.kills++;recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
   const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100)*nmZenyRoll(mob))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));recordFarmIncome(xp,z,Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));questEvent('hunt',1,mob.n);questEvent('maps',1,S.mp);if(S.lvl>10)questEvent('nightmare');
   addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny',{title:mob.n+' defeated',label:'+'+xp.toLocaleString()+' EXP',zeny:z});
@@ -4878,7 +4922,7 @@ const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Colle
 // Older saves may retain refineScrollFrom; protection now has a single On/Off setting.
 const refineScrollFrom=()=>0;
 function refineProtectionUI(){return `<div class="sec">Refine Protection Scrolls</div><small>Regular: ${safeCount(S.refineScrolls)} (for +0 to +10 on all gear)</small><br><small>Mythic: ${safeCount(S.mythicScrolls)} (for +11 to +15 on Mythic gear, boss drop only)</small><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>When On, one scroll is used per attempt, including success, and prevents rank loss. +10 is safe on Mythic gear (no scroll needed). Below +5 on regular gear, we ask before spending a scroll. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
-function refine(sl){const it=S.eq[sl];const maxRef=it.sec===6?15:10;if(!it||(it.r||0)>=maxRef)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
+function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it.r||0)>=maxRef)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
   if(S.ore[o]<need){log(`You need ${need} ${ORE[o]} for this piece. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
   const previousRank=it.r||0;let succeeded=false;const protectedAttempt=!!S.useRefineScroll;
   const needsMythicScroll=it.sec===6&&previousRank>=10;
@@ -4936,7 +4980,7 @@ function affixRangeText(a,it){if(!it)return affTxt(a);const value=f=>a.k==='move
 function reforge(sl,all=false,confirmed=null){
  if(!bmOpen()||S.reforgePending)return;const it=S.eq[sl];if(!it)return;
  const chosen=all?(it.aff||[]).map((_,i)=>i):(reforgeSelection[it.id]||[]).filter((x,i,a)=>Number.isInteger(x)&&x>=0&&x<it.aff.length&&a.indexOf(x)===i);
- if(!chosen.length||chosen.length>3)return;
+ if(!chosen.length||chosen.length>(it.sec===6?4:3))return;
  S.nmMat=nmMatCounts();const q=reforgeQuote(it,chosen.length),oreMissing=Math.max(0,q.ore-safeCount(S.ore[q.oreKey])),matMissing=Math.max(0,q.mat-S.nmMat[q.map]),ascMatMissing=q.ascMatType>=0?Math.max(0,q.ascMat-(S.ascensionMat?.[q.ascMatType]||0)):0,extra=oreMissing*BM_ORE+matMissing*BM_MAT_PRICE;
  const signature=JSON.stringify([it.id,it.aff,chosen,q,oreMissing,matMissing,ascMatMissing]);
  if(confirmed&&confirmed!==signature){log('Equipment, selection or materials changed. Please review a new quote.','','gear');return;}
@@ -4952,7 +4996,7 @@ function reforge(sl,all=false,confirmed=null){
 }
 function validReforgeOffer(f){const p=f.reforgePending;if(!p||typeof p.before!=='string'||!Array.isArray(p.after))return null;
  const it=[...Object.values(f.eq||{}),...(f.inv||[])].find(x=>x&&x.id===p.id);if(!it)return null;
- try{const old=JSON.parse(p.before);if(!Array.isArray(old)||old.length<1||old.length>3||p.after.length!==old.length)return null;
+ try{const old=JSON.parse(p.before);if(!Array.isArray(old)||old.length<1||old.length>(it.sec===6?4:3)||p.after.length!==old.length)return null;
   if(!p.after.every((a,i)=>a&&AFF.includes(a.k)&&Number.isFinite(a.v)&&a.v>0&&(JSON.stringify(a)===JSON.stringify(old[i])||affixPool(it).includes(a.k))))return null;
   if(new Set(p.after.map(a=>a.k)).size!==p.after.length)return null;
   return p;
@@ -4997,7 +5041,7 @@ function buildGuide(market=false){const sources=guideSources(),phase=guideTier,e
  const weapons=sources.gear.filter(x=>eligible(x.m,x.l)&&C().wt.includes(x.item.k)&&gearTierOK(x.item)).sort((a,b)=>b.item.sec-a.item.sec||b.item.tier-a.item.tier||b.m-a.m||b.l-a.l);
  const unique=weapons.filter((x,i,a)=>a.findIndex(y=>y.item.n===x.item.n)===i).slice(0,4);
  const primary=INT_CLASSES.includes(S.cls)?'INT':C().main.toUpperCase();
- return`<section class="build-guide">${levelingGuide()}<div class="hd">${market?'Upgrade planner':'Build & farming guide'} · ${esc(S.cls)}</div><p>Main stat: <b>${primary}</b>. ${INT_CLASSES.includes(S.cls)?'INT powers your attacks and skill multiplier.':'Physical skills gain damage from learned ranks; INT does not multiply them.'} Use AGI for speed, DEX for accuracy, LUK for criticals and VIT for survival. Three stats can reach 120 at Base 150.</p><div class="row">${['farm','boss','survive'].map(x=>`<button data-a="guidemode" data-v="${x}" aria-pressed="${guideMode===x}">${{farm:'Farming',boss:'Boss damage',survive:'Survival'}[x]}</button>`).join('')}</div><div class="row">${['current','normal','nightmare'].map(x=>`<button data-a="guidetier" data-v="${x}" aria-pressed="${phase===x}">${{current:'Accessible now',normal:'Normal targets',nightmare:'Nightmare targets'}[x]}</button>`).join('')}</div><p>Weapon choices: ${C().wt.join(', ')}${dualWield()?' · two daggers or a two-handed katar':''}. These are farming targets, not guaranteed DPS upgrades; compare cards and affixes.</p><div class="guide-grid">${unique.map(x=>`<article class="mob-card"><b>${esc(x.item.n)}</b><small>${SECN[x.item.sec]} · ${gearUserOf(x.item)}</small>${guideLink(x)}</article>`).join('')||'<p>Unlock more fields to see weapon targets.</p>'}</div><div class="sec">Cards for ${guideMode==='survive'?'survival':guideMode==='boss'?'boss damage':'farming'}</div><small>One card per monster family per item, up to two boss cards and two Crit DMG cards per item, with no build-wide boss limit. Normal and Nightmare variants share a family.</small><div class="guide-grid">${cardRows||'<p>No matching accessible sources. Browse normal targets to plan ahead.</p>'}</div>${market?`<div class="sec">Your next upgrades</div>${EQK.filter(([k])=>S.eq[k]).map(([k,n])=>{const it=S.eq[k],empty=Math.max(0,(it.slots||0)-(it.cards||[]).length);return`<p><b>${n}</b>: ${empty?empty+' empty socket(s): choose a compatible card above. ':'Sockets filled. '}${(it.r||0)<10?'Refine costs '+refCost(it).toLocaleString()+'z and '+refOre(it)+' '+ORE[it.slot==='weapon'?'ori':'elu']+'.':'Refinement complete.'} ${(it.aff||[]).length?'Use Single Reforge to protect your two best affixes on a three-affix item.':''}</p>`}).join('')}<small>Cards and weapons are farmed from the listed monsters. This market sells refinement supplies, not these equipment drops.</small>`:''}<details><summary>Caps, criticals and healing</summary><p>Ordinary crit caps at 60%; Index adds up to 40%. Boss resistance still reduces the final chance. Crit DMG applies to damaging skills. Each LUK adds 0.008× Crit DMG; each DEX adds 0.005×. ASPD cannot go below 0.13 seconds per attack. DEX 60 removes ordinary miss chance.</p><p>Movement before equipment caps at ${MOVE_CAP} u/s, including pets, skills and running. Equipment/card movement adds ${equipmentMove()}% / 20% after that cap.</p><p>HP Leech: ${cardMasteryStat('leech')*.5}% of actual basic-attack damage. Pet siphon: 0.5% of actual pet damage while active. Combined healing cannot exceed 2% Max HP per second. Overkill never heals; skill healing and regeneration are separate.</p></details></section>`;
+ return`<section class="build-guide">${levelingGuide()}<div class="hd">${market?'Upgrade planner':'Build & farming guide'} · ${esc(S.cls)}</div><p>Main stat: <b>${primary}</b>. ${INT_CLASSES.includes(S.cls)?'INT powers your attacks and skill multiplier.':'Physical skills gain damage from learned ranks; INT does not multiply them.'} Use AGI for speed, DEX for accuracy, LUK for criticals and VIT for survival. Three stats can reach 120 at Base 150.</p><div class="row">${['farm','boss','survive'].map(x=>`<button data-a="guidemode" data-v="${x}" aria-pressed="${guideMode===x}">${{farm:'Farming',boss:'Boss damage',survive:'Survival'}[x]}</button>`).join('')}</div><div class="row">${['current','normal','nightmare'].map(x=>`<button data-a="guidetier" data-v="${x}" aria-pressed="${phase===x}">${{current:'Accessible now',normal:'Normal targets',nightmare:'Nightmare targets'}[x]}</button>`).join('')}</div><p>Weapon choices: ${C().wt.join(', ')}${dualWield()?' · two daggers or a two-handed katar':''}. These are farming targets, not guaranteed DPS upgrades; compare cards and affixes.</p><div class="guide-grid">${unique.map(x=>`<article class="mob-card"><b>${esc(x.item.n)}</b><small>${SECN[x.item.sec]} · ${gearUserOf(x.item)}</small>${guideLink(x)}</article>`).join('')||'<p>Unlock more fields to see weapon targets.</p>'}</div><div class="sec">Cards for ${guideMode==='survive'?'survival':guideMode==='boss'?'boss damage':'farming'}</div><small>One card per monster family per item, up to two boss cards and two Crit DMG cards per item, with no build-wide boss limit. Normal and Nightmare variants share a family.</small><div class="guide-grid">${cardRows||'<p>No matching accessible sources. Browse normal targets to plan ahead.</p>'}</div>${market?`<div class="sec">Your next upgrades</div>${EQK.filter(([k])=>S.eq[k]).map(([k,n])=>{const it=S.eq[k],empty=Math.max(0,(it.slots||0)-(it.cards||[]).length);return`<p><b>${n}</b>: ${empty?empty+' empty socket(s): choose a compatible card above. ':'Sockets filled. '}${(it.r||0)<(it.sec===6?15:10)?'Refine costs '+refCost(it).toLocaleString()+'z and '+refOre(it)+' '+ORE[it.slot==='weapon'?'ori':'elu']+'.':'Refinement complete.'} ${(it.aff||[]).length?'Use Single Reforge to protect your two best affixes on a three-affix item.':''}</p>`}).join('')}<small>Cards and weapons are farmed from the listed monsters. This market sells refinement supplies, not these equipment drops.</small>`:''}<details><summary>Caps, criticals and healing</summary><p>Ordinary crit caps at 60%; Index adds up to 40%. Mythic crit affixes and set bonuses add beyond 100%. Boss resistance still reduces the final chance. Crit DMG applies to damaging skills. Each LUK adds 0.008× Crit DMG; each DEX adds 0.005×. ASPD cannot go below 0.13 seconds per attack. DEX 60 removes ordinary miss chance.</p><p>Movement before equipment caps at ${MOVE_CAP} u/s, including pets, skills and running. Equipment/card movement adds ${equipmentMove()}% / 20% after that cap.</p><p>HP Leech: ${cardMasteryStat('leech')*.5}% of actual basic-attack damage. Pet siphon: 0.5% of actual pet damage while active. Combined healing cannot exceed 2% Max HP per second. Overkill never heals; skill healing and regeneration are separate.</p></details></section>`;
 }
 
 // ---------- class change ----------
@@ -5048,7 +5092,7 @@ const playedClasses=()=>{const s=new Set();if(CLASSES[S.cls]&&CLASSES[S.cls].tie
 const t3Total=()=>{let n=0;for(const k in CLASSES)if(CLASSES[k].tier===3)n++;return n};
 const collDmg=()=>playedClasses();
 function classBlock(n){
-  if(n===S.cls)return'Current class';if(n==='Novice')return'';
+  if(n===S.cls)return'Current class';if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on)return'Leave the Crucible first';if(n==='Novice')return'';
   if(playedClass(n))return'';
   for(let x=n;CLASSES[x].par;x=CLASSES[x].par){const p=CLASSES[x].par,pj=S.jobs[p];if(!pj||pj.jl<CLASSES[x].rj)return`Needs ${p} Job Lv ${CLASSES[x].rj}`}
   if(CLASSES[n].tier>=4&&S.lv<ADV4_BASE_LV)return`Needs Base Lv ${ADV4_BASE_LV}`;
@@ -5070,6 +5114,7 @@ function stowUnfit(from){
   if(n)log(`${n} piece${n===1?'':'s'} came off (${names.join(', ')}): your ${S.cls} cannot wear ${n===1?'it':'them'}. Locked in the Bag - it goes straight back on when you switch back.`,'r3','gear');
   return n}
 function changeClass(n){if(classBlock(n))return;
+  if(CLASSES[n]?.tier===4&&!playedClass(n)&&JOB_RITE.passed!==n)return startJobRite(n);
   snapClass();                                 // remember the class we are stepping away from
   const from=S.cls;S.cls=n;jobOf();if(typeof resetSkillRuntime==='function'){swing=null;resetSkillRuntime();for(const id in skCd)delete skCd[id];}
   const rec=n==='Novice'?null:classRec(n);     // a class you left earlier picks up where it stopped
@@ -5083,6 +5128,98 @@ function changeClass(n){if(classBlock(n))return;
     :n==='Novice'?`Restarted as Novice · Base Lv ${S.lv} · job levels cleared · ${S.pts} stat points to spend.`
     :`Class: ${n} · Base Lv ${S.lv} · Job Lv 1 · ${from==='Novice'?'stats refunded':'stats retained'} · ${S.pts} stat points to spend.`,'r4');
   addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
+
+// Crucible of the Valkyrie: transient combat, never a saved farming destination.
+const JOB_RITE_OPPONENTS={
+  'Lord Knight':{n:'Lord Knight Seyren',spriteId:1634},
+  'Assassin Cross':{n:'Assassin Cross Eremes',spriteId:1635},
+  Whitesmith:{n:'Whitesmith Harword',spriteId:1636},
+  'High Priest':{n:'High Priest Magaleta',spriteId:1637},
+  Sniper:{n:'Sniper Shecil',spriteId:1638},
+  'High Wizard':{n:'High Wizard Katrinn',spriteId:1639}
+};
+const JOB_RITE_RESULT_MS=3000;
+const JOB_RITE={on:false,passed:null,result:null};
+function jobRiteLeft(){return JOB_RITE.on?Math.max(0,Math.min(60-(t-JOB_RITE.started),(JOB_RITE.deadline-Date.now())/1000)):0}
+function jobRiteHud(){
+  const host=document.getElementById('jobRiteHud');if(!host)return;
+  const showing=JOB_RITE.on&&!!JOB_RITE.outcome,result=document.getElementById('jobRiteResult');
+  document.body.classList.toggle('job-rite',JOB_RITE.on);document.body.classList.toggle('job-rite-result',showing);
+  if(result){
+    result.hidden=!showing;
+    if(showing){
+      const won=JOB_RITE.outcome==='passed',wording=(selector,text)=>{const node=result.querySelector(selector);if(node.textContent!==text)node.textContent=text;};result.dataset.result=won?'victory':'defeat';
+      wording('strong',won?'VICTORY':JOB_RITE.outcome==='timeout'?'TIME UP':'DEFEATED');
+      wording('p',won?`Your trial is complete. You will become ${JOB_RITE.target}.`:'Your trial has ended. Return to the Class Tree to try again.');
+      wording('small',`Returning in ${Math.max(0,Math.ceil((JOB_RITE.exitAt-Date.now())/1000))}…`);
+    }
+  }
+  host.hidden=!JOB_RITE.on||showing;if(!JOB_RITE.on||showing)return;
+  const left=Math.ceil(jobRiteLeft());
+  host.querySelector('b').textContent=JOB_RITE.enemy.n;
+  host.querySelector('time').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+}
+function startJobRite(target){
+  if(!FOURTH_JOBS_LIVE||JOB_RITE.on||TRIAL.on||!CLASSES[target]||CLASSES[target].tier!==4||playedClass(target)||classBlock(target)||S.cls!==CLASSES[target].par)return false;
+  const opponent=JOB_RITE_OPPONENTS[S.cls];if(!opponent)return false;
+  const template=fieldOf(10,1).mobs[0],stats=ascensionCombatStats(10,1);
+  Object.assign(JOB_RITE,{on:true,owner:S,user:currentUser,parent:S.cls,target,started:t,deadline:Date.now()+60000,outcome:null,exitAt:0,result:null,
+    home:{mobs,mob,camps,activePack,respawn,engageTgt,drops,position:{...pl},hp:S.hp,tb,petBuff:{...petBuff},petBuffSrc:{...petBuffSrc}},
+    enemy:{...template,...opponent,...stats,x:0,z:-4,hx:0,hz:-4,a:0,size:.6,pack:0,boss:false,spawn:1,mapIndex:10,sec:fieldOf(10,1).sec,
+      spriteSize:'Medium',spriteScale:.92,lvl:fieldPower(10,1),at:1.5,stun:0,mag:['demon','tree','blob'].includes(template.shape),drops:[],cardCh:0,exp:0,zeny:0}});
+  mobs=[JOB_RITE.enemy];mob=JOB_RITE.enemy;camps=[];activePack=0;engageTgt=null;drops=[];respawn=1e9;
+  swing=null;resetSkillRuntime();for(const id in skCd)delete skCd[id];tb={};farmSession=null;
+  S.hp=maxHp();pl.x=0;pl.z=-1;pl.wx=null;pl.wz=-1;pl.wt=0;pAtkT=.2;
+  tabs.length=0;lastKey='';jobRiteHud();
+  log(`Crucible: defeat ${opponent.n} within 60 seconds to become ${target}.`,'r4');ui();return true;
+}
+function showJobRiteResult(passed,reason){
+  if(!JOB_RITE.on||JOB_RITE.outcome)return;
+  JOB_RITE.outcome=passed?'passed':reason;JOB_RITE.exitAt=Date.now()+JOB_RITE_RESULT_MS;
+  swing=null;atkAnim=0;pl.run=false;resetSkillRuntime();
+  for(const m of mobs){m.run=false;m.atkAnim=0;}
+  if(!passed&&reason==='defeat')S.hp=0;
+  jobRiteHud();ui();
+}
+function finishJobRite(passed,reason='left'){
+  if(!JOB_RITE.on)return false;
+  const same=JOB_RITE.owner===S&&JOB_RITE.user===currentUser&&S.cls===JOB_RITE.parent;
+  const {home,target,parent}=JOB_RITE;JOB_RITE.on=false;JOB_RITE.passed=null;
+  JOB_RITE.result=same?{passed:!!passed,target,parent,reason}:null;
+  swing=null;resetSkillRuntime();for(const id in skCd)delete skCd[id];farmSession=null;
+  if(same){
+    mobs=home.mobs;mob=home.mob;camps=home.camps;activePack=home.activePack;respawn=home.respawn;engageTgt=home.engageTgt;drops=home.drops;
+    Object.assign(pl,home.position);S.hp=Math.max(1,Math.min(home.hp,maxHp()));tb=home.tb;petBuff={...home.petBuff};petBuffSrc={...home.petBuffSrc};
+  }else{mobs=[];mob=null;camps=[];drops=[];respawn=0;engageTgt=null;tb={};for(const k in petBuff)petBuff[k]=0;petBuffSrc={};}
+  JOB_RITE.owner=null;JOB_RITE.home=null;JOB_RITE.enemy=null;lastKey='';jobRiteHud();
+  if(!same)return false;
+  if(passed){
+    JOB_RITE.passed=target;
+    try{changeClass(target)}finally{JOB_RITE.passed=null;}
+    log(`Crucible passed. You are now ${target}!`,'r4');
+  }else{
+    log(`Crucible ${reason==='timeout'?'time expired':reason==='defeat'?'failed: you were defeated':'abandoned'}. Return to the Class Tree to try again.`,'r0');ui();save();
+  }
+  return true;
+}
+function tickJobRite(){
+  if(!JOB_RITE.on)return false;
+  if(JOB_RITE.owner!==S||JOB_RITE.user!==currentUser||S.cls!==JOB_RITE.parent){finishJobRite(false,'account');return true;}
+  if(JOB_RITE.outcome){
+    if(Date.now()>=JOB_RITE.exitAt)finishJobRite(JOB_RITE.outcome==='passed',JOB_RITE.outcome==='passed'?'victory':JOB_RITE.outcome);
+    else jobRiteHud();
+    return true;
+  }
+  if(jobRiteLeft()<=0){showJobRiteResult(false,'timeout');return true;}
+  if(S.hp<=0){showJobRiteResult(false,'defeat');return true;}
+  jobRiteHud();return false;
+}
+function jobRiteArena(){
+  clearAscension();while(deco.children.length)deco.remove(deco.children[0]);
+  if(KIT.ground)KIT.ground.visible=false;townObjs.forEach(o=>o.visible=false);road.visible=false;
+  const color=new THREE.Color(0x05050b);scene.background=color;scene.fog=new THREE.Fog(color,12,40);
+  ground.material.color.setHex(0x101019);hemi.intensity=.45;sun.intensity=.35;
+}
 
 // ---------- UI ----------
 // Index, Black Market and Leaderboard share an independent dropdown below Quests.
@@ -5296,20 +5433,22 @@ const V={
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${Math.min(193,Math.round(144+5/Math.max(.13,aspd())))}</b> <small>${(1/aspd()).toFixed(2)}/s</small></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Movement speed <b>${moveSpd().toFixed(2)}</b> <small>u/s</small></span></div>
     <small><b>Movement speed</b> starts at ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} u/s from AGI ${st('agi')}. Pets, skills and running share a ${MOVE_CAP} u/s cap. Equipment and cards add ${equipmentMove()}% afterward (up to 20%), allowing movement above the cap.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}% before the cap.`:''}</small>
-    <small>Crit is capped at 60% from stats, skills, gear and card mastery; above 45% each further point counts half. <b>Index Crit</b> (+${idxC}% of +40 max, from Hunt Titles) is the only source that passes the cap, and the total stops at 100%.</small>
+    <small>Ordinary crit from stats, skills, gear and card mastery caps at 60%; above 45% each further point counts half. <b>Index Crit</b> adds +${idxC}% of +40 max from Hunt Titles. Mythic crit affixes and set bonuses add after the normal 100% cap (100% + 20% = 120%).</small>
     <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${statResetCost()&&S.zeny<statResetCost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${statResetCost()?statResetCost()+'z':'free'})</button>`},
   job(){const lines=[['Swordman','Knight','Lord Knight','Rune Knight'],['Mage','Wizard','High Wizard','Warlock'],['Archer','Hunter','Sniper','Ranger'],['Thief','Assassin','Assassin Cross','Guillotine Cross'],['Acolyte','Priest','High Priest','Arch Bishop'],['Merchant','Blacksmith','Whitesmith','Mechanic']];
-    const k=selK||S.cls,c=CLASSES[k],blk=classBlock(k),pj=S.jobs[k],rec=classRec(k);
-    return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
-    ${[0,1,2,3].filter(i=>lines.some(l=>CLASSES[l[i]])).map((i,j,a)=>`<div class="trow">${lines.map(l=>tnode(l[i])).join('')}</div>${j<a.length-1?'<div class="trunk"></div>':''}`).join('')}</div>
-    <div class="legend"><span class="tn cur">Current</span><span class="tn ok">Available</span><span class="tn played">Played</span><span class="tn lock">Locked</span></div>
-    <div class="hd" style="margin-top:4px">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent - play them all!)</small></div>
-    <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
-    <small>${pj?`Saved ${rec?`Base Lv ${rec.lv} &middot; `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${playedClass(k)&&k!==S.cls?' &middot; <b>waiting: your stats, skills and gear are still on it</b>':''} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')}${katarOnly(k)?' (two-handed Katar; no off-hand)':''} &middot; Main stat ${SU(c.main)}</small>
-    <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>
-    <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="classPreview" width="126" height="134" role="img" aria-label="${S.sex==='f'?'female':'male'} ${k} class skin preview"></canvas><span class="hair-preview-loading" id="classPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">CLASS PREVIEW</span><b>${k}</b><span>${S.sex==='f'?'Female':'Male'} &middot; animating</span><span class="hair-style-label">${k===S.cls?'You wear this now':'What this class looks like'}</span></div></div>
-    <small><b>A class you have played before is one click away</b> - its Base Lv, job level, skills, stats and gear are still on it, so there is no Novice reset needed to go back to it. A class you have <i>never</i> played still has to be unlocked from its parent (or from the Novice).</small>
-    <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
+    const k=selK||S.cls,planned=CD4.find(row=>row[0]===k),c=CLASSES[k],future=!c&&!!planned,path=lines.find(line=>line.includes(k))||lines.find(line=>line.includes(S.cls))||lines[0],blk=future?'Coming soon':classBlock(k),pj=S.jobs[k],rec=future?null:classRec(k);
+    const node=n=>CLASSES[n]?tnode(n):`<button class="tn lock${k===n?' pick':''}" data-class-status="lock" data-a="selk" data-v="${n}"><b>${n}</b><small><span class="eclipse-job-status">Coming soon</span> · 4th job</small></button>`;
+    return`<nav class="class-path-tabs" aria-label="Class lineages">${lines.map(line=>`<button data-a="selk" data-v="${line[0]}" aria-pressed="${line===path}">${line[0]}</button>`).join('')}</nav>
+    <div class="class-path-heading"><div><small>SELECTED LINEAGE</small><h3>${path[0]} path</h3></div><button data-a="selk" data-v="${S.cls}">Your class</button></div>
+    <div class="class-path-track" aria-label="${path[0]} progression">${node('Novice')}${path.map(node).join('')}</div>
+    <div class="class-path-focus"><div class="ui-inspector">
+    <div class="mob-card"><small>${future?'4TH JOB · COMING SOON':{cur:'CURRENT CLASS',played:'PLAYED CLASS',ok:'AVAILABLE CLASS',lock:'LOCKED CLASS'}[classStatus(k)]}</small><h3>${k}</h3>
+    ${future?`<p>Advance from <b>${planned[1]}</b> at Base Lv 150 and Job Lv 50.</p><p>Defeat ${JOB_RITE_OPPONENTS[planned[1]].n} in a 60-second Crucible trial. Victory completes the job change automatically.</p><button disabled>Coming soon</button>`:
+    `<small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' · Next: <b>'+c.kids.join(', ')+'</b>':''}</small><p>${pj?`Saved ${rec?`Base Lv ${rec.lv} · `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${playedClass(k)&&k!==S.cls?' · Your saved build is ready to return.':''}</p><small>Weapons: ${c.wt.join(', ')} · Main stat ${SU(c.main)}<br>ATK ×${c.atk} · ASPD ×${c.aspd} · HP ×${c.hp}</small>
+    <div class="row"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':c.tier===4&&!playedClass(k)?'Enter advancement trial':'Change to '+k}</button>${blk&&k!==S.cls?`<small>${blk}</small>`:''}</div>`}</div>
+    </div>${future?'':`<div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="classPreview" width="126" height="134" role="img" aria-label="${S.sex==='f'?'female':'male'} ${k} class skin preview"></canvas><span class="hair-preview-loading" id="classPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">CLASS PREVIEW</span><b>${k}</b><span>${S.sex==='f'?'Female':'Male'}</span></div></div>`}</div>
+    <div class="eclipse-class-bonus"><b>Class collection <strong>+${collDmg()}% damage</strong></b><p>${playedClasses()} / ${t3Total()} transcendent classes at Base Lv 100+. Each earns a permanent +1% damage for every class.</p></div>
+    <details class="ui-fold"><summary>Switching classes & starting over</summary><p>Played classes keep their Base Lv, Job Lv, stats, skills and gear. Unplayed classes must meet their parent requirements. Selecting a class only inspects it.</p><button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button></details>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
     return`${S.skillRefund?`<div class="row"><small><b>New class skills:</b> ${S.skillRefund} old skill ranks were cleared. Your earned points are available on their original class lines. Use Auto-allocate to learn attacks first, then all other skills. Each played class also has one free stat reset.</small></div>`:''}${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill points: spend one point per rank. Your current class inherits earlier skills in its own line. Select up to six attacks for an ordered combo. Buffs refresh independently; passives remain active. Basic attacks continue during the 3-second recovery.</small>`
     +rotationBar()+`<div class="sk-slot">${sel&&line.includes(sel.from)?skillDetailCard(sel):'<small class="sk-slot-empty">Pick a skill to read what it does and to switch its auto-cast on or off.</small>'}</div>`
@@ -5361,9 +5500,9 @@ const V={
   cards(){const entries=ownedCardEntries(),g={};entries.forEach(({card:c,key:k})=>{(g[k]=g[k]||[]).push(c)});const ks=Object.keys(g).filter(k=>collectionGrade<0||g[k][0].g===collectionGrade).sort((a,b)=>cardStars(g[b][0])-cardStars(g[a][0])||g[b][0].g-g[a][0].g||g[a][0].n.localeCompare(g[b][0].n)||a.localeCompare(b)),sel=ks.includes(selC)?g[selC][0]:null,loose=sel&&S.cards.includes(sel);
     return`<p>Equipped cards stay here and can be merged using loose copies. Compatible cards transfer when replacing gear; cards that cannot fit stay on the old item. Merge identical cards: ★ +9%, ★★ +12%, ★★★ +15% effects. Each step consumes 1 / 3 / 5 extra unstarred copies (10 cards total for ★★★). Normal and Nightmare merge separately. Starred cards are protected from Mastery donations and resets.</p><div class="eclipse-card-filters" role="group" aria-label="Card grade">${[[-1,"All grades"],...GRADE.map((n,i)=>[i,n])].map(([v,n])=>`<button data-a="cardgrade" data-v="${v}" aria-pressed="${collectionGrade===v}">${n}</button>`).join('')}</div><div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${esc(n)}" data-tip="${g[n][0].id}">🃏<small>${"★".repeat(cardStars(g[n][0]))}</small><i class="rf">x${g[n].length}</i></div>`).join('')||(entries.length?'<small>No cards in this grade.</small>':'<small>No cards yet. Every monster drops its own card at a low chance.</small>')}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<p class="card-location">${esc(entries.find(x=>x.card===sel).location)}</p><div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return loose&&e&&(e.cards||[]).length<(e.slots||0)&&!socketWhy(sel,e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}${!sel.legacy&&sel.cardKey&&cardStars(sel)<3?`<button data-a="mergecard" data-v="${sel.id}">Merge to ${cardStars(sel)+1}★ · ${CARD_MERGE_COST[cardStars(sel)]} extra copies</button>`:""}${loose?`<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button>`:''}</div></div>`:''}`},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Protection Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+. Enable Refine Protection Scroll below: one scroll is consumed on every attempt while On, including success, and keeps your rank on failure. Only current +5 or above can lose a rank. Below +5 asks for confirmation before spending a scroll. Success chance is unchanged. Crafted and purchased scrolls share this reserve.</small>`
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Protection Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, 10 on N and N+, and 15 on Mythic. Mythic gear can reach +15. Enable Refine Protection Scroll below: one scroll is consumed on every attempt while On, including success, and keeps your rank on failure. Only current +5 or above can lose a rank. Below +5 asks for confirmation before spending a scroll. Success chance is unchanged. Crafted and purchased scrolls share this reserve.</small>`
     +`${refineProtectionUI()}`+dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
-      return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
+      return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=(it.sec===6?15:10)?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=(it.sec===6?15:10)||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
     return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters, and every species has a signature passive - a duplicate folds into the copy you own and raises that species' Bond. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}<span class="pet-bond-badge">${bondStars(q.sp)}</span></div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
   board(){const labels={daily:'Daily',weekly:'Weekly',all:'All-time'},data=boardCache[boardPeriod],esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -5392,7 +5531,7 @@ const V={
     <div class="hd">Interface palette</div>${typeof eclipsePaletteControls==='function'?eclipsePaletteControls():''}<div class="hd" style="margin-top:10px">Gameplay</div><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
     <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it. Auto-equip lives on the <b>Bag</b> tab and Auto-advance on the <b>World Map</b> tab, next to what they control.</small>
     <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
-  gm(){return`<div class="hd">Player management</div><p><a href="/gm.html" target="_blank" rel="noopener">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Auras: Base 50 / 99 / 150. Weapon glow: +7 / +9 / +10.</small><div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="9">Weapon +9</button><button data-a="gmglow" data-v="10">Weapon +10</button></div><div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
+  gm(){return`<div class="hd">Player management</div><p><a href="/gm.html" target="_blank" rel="noopener">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Auras: Base 50 / 99 / 150. Weapon glow: +7 / +9 / +10.</small><div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="9">Weapon +9</button><button data-a="gmglow" data-v="10">Weapon +10</button></div><div class="hd">Ascension testing</div><button data-a="gmendgame">Base 150 + crafting/refine supplies</button><p>Max your current job, then use Class Path to enter its fourth-job trial. Grant a complete Mythic set for your current weapons:</p><div class="row">${Object.entries(ASC_SETS).map(([k,v])=>`<button data-a="gmset" data-v="${k}">${v.name}</button>`).join('')}</div><div class="row">${[11,12,13,14,15].map(n=>`<button data-a="gmglow" data-v="${n}">Mythic weapon +${n}</button>`).join('')}</div><div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
     <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmnm">Unlock Nightmare (Base Lv 150)</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
     <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
     <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
@@ -5482,7 +5621,7 @@ function renderMobIndex(){
     <small>Every species has its own eight-rung kill ladder: 10, 50, 250, 1,000, 5,000, 10,000, 25,000 and 50,000 kills. First kills discover a monster, repeated kills raise that monster's mastery, and every rung adds Index XP. Variety and quantity both move the rank bar.</small>
     <small><b>Album:</b> ${albumDone}/${MONSTER_INDEX.length} species hunted to their last rung (50,000 kills) - ${(MONSTER_INDEX.length*50279).toLocaleString()} Index XP in total, kept separate from the title ranks so there is always one more hunt.</small></div>
     <div class="mastery-progress-card index-xp-card"><div><b>Index Mastery Lv ${Math.max(1,rank)}</b> <small>· ${next?`${(next.xp-xp).toLocaleString()} XP to ${next.name}`:'all title ranks complete'}</small></div><div class="mastery-track"><i style="width:${pct.toFixed(1)}%"></i></div><small>${xp.toLocaleString()}${next?` / ${next.xp.toLocaleString()}`:''} Index XP${next?' · next title: '+next.name:''} · <b>Index Crit +${indexCrit()}% / +40%</b></small>
-    <small>Index Crit is the only crit source that sits outside the 60% cap: every Hunt Title you unlock adds its slice (+1/+1/+2/+2/+3/+4/+5/+6/+7/+9), and all ten put a fully capped build on exactly 100% crit. It cannot come from equipment or stats.</small></div>
+    <small>Index Crit adds beyond the ordinary 60% core cap: every Hunt Title you unlock adds its slice (+1/+1/+2/+2/+3/+4/+5/+6/+7/+9), and all ten put a fully capped build on exactly 100% crit. Mythic crit affixes and set bonuses add after the normal 100% total cap.</small></div>
     <div class="mastery-section-title">🏅 Index Title Ranks <small>Equip any rank you have earned</small></div><div class="mastery-title-list">${renderTitleTrack()}</div>
     <div class="mastery-section-title">📖 Monster Index <small>${MONSTER_INDEX.length} entries across ${MAPS.length} maps · 8 mastery rungs each</small></div>
     ${MAPS.map((mp,map)=>{const rows=MONSTER_INDEX.filter(m=>m.map===map),mapFound=rows.filter(m=>safeCount(counts[m.id])>0).length,mapKills=rows.reduce((n,m)=>n+safeCount(counts[m.id]),0);
@@ -5666,21 +5805,8 @@ function arrangePanel(k,root){
     const metrics=section('Combat overview','ui-metrics');if(combat)put(metrics,[...combat.children]);
     const notes=direct().filter(e=>e!==combat&&!attrs.includes(e)&&e!==reset);body.replaceChildren(attributes,metrics,fold('Build notes & progression',notes,'build-notes'),fold('Reset attributes',reset,'respec'));
   }else if(k==='job'){
-    const tree=q('.tree'),preview=q('.hair-preview-card'),detail=q('.mob-card'),legend=q('.legend'),restart=q('[data-a="job"][data-v="Novice"].full');
-    const paths=section('Six paths. Your next class.','ui-job-paths');
-    if(tree){const rows=[...tree.querySelectorAll('.trow')],start=rows.shift();if(start)put(paths,put(make('div','ui-job-start'),start));for(let i=0;i<6;i++){const row=make('div','ui-job-path');rows.forEach(r=>{const node=r.querySelectorAll('.tn')[0];if(node){node.setAttribute('role','button');node.setAttribute('tabindex','0');row.append(node)}});put(paths,row)}}
-    paths.querySelectorAll('[data-a=selk]').forEach(node=>{const emblem=make('span','eclipse-class-tile-icon');emblem.innerHTML=eclipseClassEmblem(node.dataset.v);node.prepend(emblem);node.setAttribute('role','button');node.setAttribute('tabindex','0')});
-    const picked=inspector('Selected class',[preview,detail]);
-    const notes=direct().filter(e=>e!==tree&&e!==preview&&e!==detail&&e!==legend&&e!==restart);
-    const overview=make('div','eclipse-class-overview'),lineage=make('div','eclipse-class-lineage');
-    const family=lineOf(S.cls)[1],line=family?['Novice',...down(family)]:['Novice'];for(const name of line){const status=classStatus(name),node=make('button','eclipse-class-node '+status+(status==='cur'?' current':''));node.dataset.a='selk';node.dataset.v=name;node.dataset.classStatus=status;node.innerHTML=eclipseClassEmblem(name)+'<h3>'+esc(name)+'</h3><small class="eclipse-job-status">'+{cur:'Current',played:'Played',ok:'Available',lock:'Locked'}[status]+'</small>'+(S.jobs[name]?'<small>Job Lv '+S.jobs[name].jl+'</small>':'');put(lineage,node)}
-    const intro=make('div','eclipse-class-info');intro.innerHTML='<b>Build your own path.</b><p>Played classes keep their own Base Level, Job Level, skills, stats and worn gear. New classes begin at Job Level 1. Browse a lineage to review its requirements.</p><button class="eclipse-primary" data-a="jobview" data-v="browse">Browse class lineages →</button>';
-    const bonus=make('div','eclipse-class-bonus');bonus.innerHTML='<b>Current collection bonus <strong>+'+collDmg()+'% damage</strong></b><p>'+playedClasses()+' / '+t3Total()+' transcendent classes at Base Lv 100+. Each earns a permanent +1% damage for every class you play, up to +'+t3Total()+'%. Switching classes keeps the earned bonus.</p>';
-    put(overview,lineage,bonus,intro);overview.hidden=eclipseJobsBrowse||!family;
-    const browser=make('div','eclipse-class-browser');browser.hidden=!eclipseJobsBrowse&&!!family;
-    const back=make('button','eclipse-text-button','← Your class lineage');back.dataset.a='jobview';back.dataset.v='overview';
-    const actions=make('div','eclipse-job-actions');if(legend)put(actions,legend);if(restart)put(actions,restart);
-    put(picked,fold('Class switching & collection',notes,'class-notes'));put(browser,back,bonus.cloneNode(true),split(paths,picked));body.replaceChildren(actions,overview,browser);
+    body.classList.add('class-path-panel');
+    body.querySelectorAll('.tn[data-a=selk]').forEach(node=>{node.setAttribute('role','button');node.setAttribute('tabindex','0');node.setAttribute('aria-pressed',String(node.dataset.v===(selK||S.cls)))});
   }else if(k==='skills'){
     const slot=q('.sk-slot'),tools=q('.sk-tools'),reset=q('[data-a="rskill"]'),grids=all('.skg'),intro=direct().filter(e=>!e.matches('.sk-slot,.skg,.sec,.skill-rotation')&&e!==reset);
     const catalog=section('Your class skill library','ui-skill-catalog');
@@ -5749,10 +5875,10 @@ function arrangePanel(k,root){
       if(protectionRow){const heading=protectionRow.previousElementSibling,hint=protectionRow.nextElementSibling;put(protection,heading,protectionRow,hint)}
       const notes=direct().filter(e=>!rows.includes(e));
       if(mode==='reforge'){
-        const buttons=[...chosen.querySelectorAll('[data-a="bmref"]')];const quote=make('div','eclipse-quote-summary');const picked=reforgeSelection[it.id]||[],cost=reforgeQuote(it,picked.length||it.aff.length);const oreMissing=Math.max(0,cost.ore-safeCount(S.ore[cost.oreKey])),matMissing=Math.max(0,cost.mat-safeCount(nmMatCounts()[cost.map])),extra=oreMissing*BM_ORE+matMissing*BM_MAT_PRICE;quote.innerHTML='<h2>'+(picked.length?'Selected affixes':'Full reroll')+'</h2><div><span>Reforge fee</span><b>'+cost.zeny.toLocaleString()+'z</b></div><div><span>'+ORE[cost.oreKey]+'</span><b>'+cost.ore+' / '+safeCount(S.ore[cost.oreKey])+' owned</b></div>'+(cost.mat?'<div><span>'+esc(NM_MAT[cost.map])+'</span><b>'+cost.mat+' / '+safeCount(nmMatCounts()[cost.map])+' owned</b></div>':'')+'<div><span>Missing materials</span><b>'+extra.toLocaleString()+'z</b></div><div><span>Total</span><b>'+(cost.zeny+extra).toLocaleString()+'z</b></div>';put(aside,quote);put(aside,make('p','','Select individual affixes or reroll all. Review the result before accepting.'));buttons.forEach(b=>put(aside,b));
+        const buttons=[...chosen.querySelectorAll('[data-a="bmref"]')];const quote=make('div','eclipse-quote-summary');const picked=reforgeSelection[it.id]||[],cost=reforgeQuote(it,picked.length||it.aff.length);const oreMissing=Math.max(0,cost.ore-safeCount(S.ore[cost.oreKey])),matMissing=Math.max(0,cost.mat-safeCount(nmMatCounts()[cost.map])),extra=oreMissing*BM_ORE+matMissing*BM_MAT_PRICE;quote.innerHTML='<h2>'+(picked.length?'Selected affixes':'Full reroll')+'</h2><div><span>Reforge fee</span><b>'+cost.zeny.toLocaleString()+'z</b></div><div><span>'+ORE[cost.oreKey]+'</span><b>'+cost.ore+' / '+safeCount(S.ore[cost.oreKey])+' owned</b></div>'+(cost.mat?'<div><span>'+esc(NM_MAT[cost.map])+'</span><b>'+cost.mat+' / '+safeCount(nmMatCounts()[cost.map])+' owned</b></div>':'')+(cost.ascMat&&cost.ascMatType>=0?'<div><span>'+esc(ASCENSION_MATERIALS[cost.ascMatType])+'</span><b>'+cost.ascMat+' / '+safeCount(S.ascensionMat[cost.ascMatType])+' owned</b></div>':'')+'<div><span>Missing materials</span><b>'+extra.toLocaleString()+'z</b></div><div><span>Total</span><b>'+(cost.zeny+extra).toLocaleString()+'z</b></div>';put(aside,quote);put(aside,make('p','','Select individual affixes or reroll all. Review the result before accepting.'));buttons.forEach(b=>put(aside,b));
         if(offer){put(stage,offer);aside.hidden=true}else put(stage,chosen);put(aside,fold('Rules & materials',notes,'workshop-notes'));
       }else{
-        const button=chosen.querySelector('[data-a=refine]'),preview=make('div','eclipse-refine-preview'),rank=it.r||0,ore=it.slot==='weapon'?'ori':'elu';preview.innerHTML='<div class="eclipse-rank-preview"><b>+'+rank+'</b><span>→</span><b>+'+Math.min(10,rank+1)+'</b></div><div><span>'+SLOTS[it.slot].stat+'</span><b>'+ev(it)+' → '+(rank>=10?ev(it):Math.round(it.val*(1+(rank+1)*.15)))+'</b></div><div><span>Success chance</span><b>'+(rank>=10?'Maximum refinement':refCh(it)+'%')+'</b></div><div><span>Required Zeny</span><b>'+refCost(it).toLocaleString()+'z</b></div><div><span>'+ORE[ore]+'</span><b>'+refOre(it)+' / '+safeCount(S.ore[ore])+' owned</b></div>';chosen.replaceChildren(preview);put(stage,chosen,put(make('div','eclipse-workshop-action'),button));const reserve=make('div','refine-reserve');reserve.textContent='Oridecon: '+safeCount(S.ore.ori)+' · Elunium: '+safeCount(S.ore.elu);stage.prepend(reserve);put(aside,protection,fold('Resources, rates & damage',notes,'workshop-notes'));
+        const button=chosen.querySelector('[data-a=refine]'),preview=make('div','eclipse-refine-preview'),rank=it.r||0,ore=it.slot==='weapon'?'ori':'elu';preview.innerHTML='<div class="eclipse-rank-preview"><b>+'+rank+'</b><span>→</span><b>+'+Math.min(it.sec===6?15:10,rank+1)+'</b></div><div><span>'+SLOTS[it.slot].stat+'</span><b>'+ev(it)+' → '+(rank>=(it.sec===6?15:10)?ev(it):Math.round(it.val*(1+(rank+1)*.15)))+'</b></div><div><span>Success chance</span><b>'+(rank>=(it.sec===6?15:10)?'Maximum refinement':refCh(it)+'%')+'</b></div><div><span>Required Zeny</span><b>'+refCost(it).toLocaleString()+'z</b></div><div><span>'+ORE[ore]+'</span><b>'+refOre(it)+' / '+safeCount(S.ore[ore])+' owned</b></div>';chosen.replaceChildren(preview);put(stage,chosen,put(make('div','eclipse-workshop-action'),button));const reserve=make('div','refine-reserve');reserve.textContent='Oridecon: '+safeCount(S.ore.ori)+' · Elunium: '+safeCount(S.ore.elu);stage.prepend(reserve);put(aside,protection,fold('Resources, rates & damage',notes,'workshop-notes'));
       }
       body.replaceChildren(put(make('div','eclipse-workshop'),menu,stage,aside));
     }
@@ -5776,7 +5902,7 @@ function arrangePanel(k,root){
     if(detail){const headings=[...detail.querySelectorAll(':scope > .sec')];headings.forEach((h,i)=>{const nodes=[];let next=h.nextSibling;while(next&&!(next.nodeType===1&&next.classList.contains('sec'))){const current=next;next=next.nextSibling;nodes.push(current)}const d=fold(h.textContent,nodes,'pet-detail-'+i,i!==1);h.replaceWith(d)})}
     put(panel,fold('Pet drops & bonding',notes,'pet-notes'));body.replaceChildren(catalog,panel);
   }else if(k==='market'){
-    if(!bmOpen()||sub.market==='echo')return;
+    if(!bmOpen()||sub.market==='echo'||sub.market==='ascension')return;
     const workshop=q('[data-a=openreforge]'),guide=q('.build-guide'),ore=all('.slot').filter(e=>e.querySelector('[data-a="bmore"]')),scrollCard=q('[data-a=buyscroll]')?.closest('.slot'),materials=all('.slot').filter(e=>e.querySelector('[data-a="bmmat"]'));
     const products=make('div','eclipse-market-grid');
     const product=(node,kind,desc,owned)=>{if(!node)return;node.classList.add('eclipse-product');const copy=put(make('div','eclipse-product-copy'),[...node.childNodes]),art=make('div','eclipse-product-icon');art.innerHTML=uiIcon(kind);const name=copy.querySelector('b');if(name&&desc){const description=make('p','',desc),count=make('small','eclipse-owned-count','Owned: '+safeCount(owned).toLocaleString());name.after(description,count)};put(node,art,copy);put(products,node)};
@@ -6007,10 +6133,11 @@ if(typeof addEventListener==='function'){addEventListener('pointerup',winUp);add
 if($('wins')&&$('wins').addEventListener)$('wins').addEventListener('pointerdown',()=>{winPress=true});
 const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexOf(k);if(i>=0&&expandedPanels.size&&!expandedPanels.has(k)){expandedPanels.clear();expandedPanels.add(k);renderWin();return}if(i<0)expandedPanels.clear();if(k==='skills'&&i>=0)selS=null;if(k!=='status')eqPick=null;if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
-  if(k==='pet')sub.pet='party';if(k==='job')eclipseJobsBrowse=false;if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
+  if(k==='pet')sub.pet='party';if(k==='job'){eclipseJobsBrowse=false;selK=null;}if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
   if(k==='map'){mapSeason=S.mp>=10?'ascension':'atlas';mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
 const gotoField=(m,l)=>{
   if(!canTravel(m,l))return;
+  if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){if(JOB_RITE.outcome)return;finishJobRite(false);}
   // v77: travelling cancels a run. Leaving the arena is the same door as pressing Leave - a ranked
   // run that is abandoned is simply not paid.
   if(typeof TRIAL!=='undefined'&&TRIAL.on)trialExit();
@@ -6040,7 +6167,7 @@ const ACT={
     log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{if(!Number.isInteger(+v)||+v<1||+v>(mapM>=10?5:15))return;mapL=+v;renderWin('[data-win="map"] .map-node.picked')},go:()=>{if(canTravel(mapM,mapL)){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
-  jobview:v=>{eclipseJobsBrowse=v==='browse';renderWin()},selk:v=>{selK=v;eclipseJobsBrowse=true;renderWin('[data-win=job] .ui-inspector')},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
+  jobview:v=>{eclipseJobsBrowse=v==='browse';renderWin()},selk:v=>{if(!CLASSES[v]&&!CD4.some(row=>row[0]===v))return;selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else if(CLASSES[n]?.tier===4&&!playedClass(n))ask(`Enter the Crucible? Defeat ${JOB_RITE_OPPONENTS[CLASSES[n].par]?.n} within 60 seconds to become ${n}.`,()=>changeClass(n),{yes:'Enter trial',no:'Stay'});else changeClass(n)},
   rstat:()=>{const c=statResetCost();if(S.zeny<c)return denied(c,'stats');S.zeny-=c;if(S.skillRespec)delete S.skillRespec[S.cls];for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.'+(c?' -'+c.toLocaleString()+'z':''));ui();save()},
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(!s||!s.cls.includes(S.cls))return;const nx=lv(id)+1,c=skCost(nx);
     if(nx>s.max||!lineOf(S.cls).includes(s.from))return;
@@ -6057,7 +6184,10 @@ const ACT={
   sellnow:()=>previewAutoSell(),bulksellnow:()=>previewAutoSell(true),bulkrar:v=>{bulkSellState();const i=Number(v);if(!Number.isInteger(i)||i<0||i>=RARALL.length)return;bulkSellSelection.rarities[i]=!bulkSellSelection.rarities[i];autoSellPreview=null;renderWin()},sellconfirm:()=>confirmAutoSell(),sellcancel:()=>{autoSellPreview=null;ui()},
   sellrulesapply:()=>{const rules=cleanAutoSellRules(sellDraft());if(!rules)return log('Check filter values: use valid numbers, up to 100 equipment names and 0–10 empty sockets.','r0','gear');S.autoSellRules=rules;autoSellDraft=null;autoSellPreview=null;save();ui();log('Auto-sell filters saved.','r3','gear')},
   sellrulescancel:()=>{autoSellDraft=null;renderWin()},
-  gmaura:v=>{if(!S.gm)return;S.lv=+v;S.pts=Math.max(0,totalPts()-ptsSpent());ui();save()},gmglow:v=>{if(!S.gm||!S.eq.weapon)return;S.eq.weapon.r=+v;ui();save()},
+  transformasc:v=>{const[key,id]=v.split(':');const it=[...items(),...S.inv].find(x=>String(x.id)===id);if(!it||S.reforgePending&&String(S.reforgePending.id)===id)return;const result=transformToMythic(it,key);if(result?.error)log(result.error,'r0');ui();save()},
+  gmendgame:()=>{if(!S.gm)return;S.lv=150;S.pts=Math.max(0,totalPts()-ptsSpent());S.zeny+=10000000000;S.ascensionMat=S.ascensionMat.map(n=>safeCount(n)+1000);S.mythicScrolls=safeCount(S.mythicScrolls)+100;S.refineScrolls=safeCount(S.refineScrolls)+100;S.ore.ori+=1000;S.ore.elu+=1000;ui();save()},
+  gmset:key=>{if(!S.gm||!Object.hasOwn(ASC_SETS,key))return;const recipes=[...C().wt.map(w=>['weapon',w]),...['armor','head','off','leg','acc','acc'].map(s=>[s,undefined])];if(S.inv.length+recipes.length>BAGMAX)return log('Make bag space for the complete set.','r0');const z=S.zeny,m=S.ascensionMat;try{S.zeny=1e12;S.ascensionMat=[10000,10000,10000];for(const [slot,wt] of recipes){const r=craftAscensionPiece(key,slot,wt);if(r?.item)S.inv.push(r.item)}}finally{S.zeny=z;S.ascensionMat=m}ui();save()},
+  gmaura:v=>{if(!S.gm)return;S.lv=+v;S.pts=Math.max(0,totalPts()-ptsSpent());ui();save()},gmglow:v=>{if(!S.gm||!S.eq.weapon||!Number.isInteger(+v)||+v<0||+v>(S.eq.weapon.sec===6?15:10))return;S.eq.weapon.r=+v;ui();save()},
   sellpreset:v=>{const r=defaultAutoSellRules();if(v==='physical')r.affixes=[{k:'str',min:0},{k:'dex',min:0},{k:'crit',min:0},{k:'cdm',min:0}];else if(v==='caster')r.affixes=[{k:'int',min:0},{k:'matk',min:0}];else if(v==='collector')r.minEmpty=2;else return;autoSellDraft={owner:S,rules:r};renderWin()},
   clicksell:()=>{S.clickSell=false;ui();save()},
   quicksell:id=>{selB=id;eclipseInspectBag=true;renderWin()},
@@ -6088,7 +6218,7 @@ const ACT={
   indexall:name=>{const owner=S,count=Math.min(cardMasteryCardByName(String(name)).length,CARD_MASTERY_PER_CARD-cardMasteryLevel(String(name)));if(count<1)return;ask(`Permanently consume ${count} ${name} for the Card Index? These copies will be gone and cannot be equipped or merged. Each adds one Mastery rank and one token.`,()=>{if(S!==owner)return;const r=donateAllToMastery(String(name),count);if(!r.donated)return;S.hp=Math.min(S.hp,maxHp());
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()})},
-  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),craftasc:v=>{const[setKey,slot]=v.split(':');const c=C(),wt=slot==='weapon'?(c.wt[0]||'sword'):undefined;const result=craftAscensionPiece(setKey,slot,wt);if(result.error){log(result.error,'r0');ui();return}if(S.inv.length>=BAGMAX){log('Bag is full — make room first.','r0');ui();return}S.inv.push(result.item);log(`Crafted ${result.item.name}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,result.item.name+'!','#ff6bff',true);ui();save()},bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!Number.isInteger(m)||m<0||m>=MAPS.length||!Number.isInteger(l)||l<1||l>(m>=10?5:15))return;if(!tabs.includes('map'))openTab('map');mapSeason=m>=10?'ascension':'atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
+  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),craftasc:v=>{if(S.inv.length>=BAGMAX){log('Bag is full — make room first.','r0');return}const[setKey,slot,selectedWeapon]=v.split(':');const c=C(),wt=slot==='weapon'?(selectedWeapon||c.wt[0]||'sword'):undefined;if(slot==='weapon'&&!c.wt.includes(wt))return;const result=craftAscensionPiece(setKey,slot,wt);if(!result)return;if(result.error){log(result.error,'r0');ui();return}if(S.inv.length>=BAGMAX){log('Bag is full — make room first.','r0');ui();return}S.inv.push(result.item);log(`Crafted ${result.item.name}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,result.item.name+'!','#ff6bff',true);ui();save()},bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!Number.isInteger(m)||m<0||m>=MAPS.length||!Number.isInteger(l)||l<1||l>(m>=10?5:15))return;if(!tabs.includes('map'))openTab('map');mapSeason=m>=10?'ascension':'atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
   petmotion:v=>{if(['idle','walk','attack'].includes(v)){petPreviewStance=v;renderWin()}},
   petretry:()=>{const p=gp(selP);if(p&&petSpriteStore){const id=PETS[p.sp].spriteId;petSpriteStore.retry(petAssetKey(id,petPreviewStance,0)).catch(()=>{})}},
   pswap:id=>{const pet=gp(id),select=$('wins').querySelector('[data-pet-replace="'+id+'"]'),previous=gp(select?.value);if(!pet||pet.on||!previous?.on)return;previous.on=false;pet.on=true;ui();save()},
@@ -6308,8 +6438,8 @@ function ui(anchor){if(!S)return;const returned=repairEquippedCards(S);if(return
   // v77: during an Endless Echo run the title is the clock and the status is the mode, so the player
   // never has to open anything to see how long is left. The "(MVP map)" tag is gone with the other
   // parentheticals - the MVP FIGHT line on the HUD carries that.
-  $('stageTitle').textContent=hudTrial?`Endless Echo · ${trialClock()}`:fieldName();
-  $('grindStatus').textContent=hudTrial?(TRIAL.mode==='ranked'?'🏛 Ranked run':'🏛 Training'):(S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier');renderWin(anchor);polishIcons($('hud'));polishIcons($('grindStatus'));polishIcons($('feedTab'));polishIcons($('hudBuffs'))}
+  $('stageTitle').textContent=JOB_RITE.on?'Crucible of the Valkyrie':hudTrial?`Endless Echo · ${trialClock()}`:fieldName();
+  $('grindStatus').textContent=JOB_RITE.on?'Job advancement trial':hudTrial?(TRIAL.mode==='ranked'?'🏛 Ranked run':'🏛 Training'):(S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier');renderWin(anchor);polishIcons($('hud'));polishIcons($('grindStatus'));polishIcons($('feedTab'));polishIcons($('hudBuffs'))}
 
 // The owner felt the prior slowdown was too aggressive, so this is exactly halfway between
 // the original `6.5 + 0.05*AGI` pace and v66's proposed curve. It is 8.12 at AGI 99
@@ -6317,6 +6447,7 @@ function ui(anchor){if(!S)return;const returned=repairEquippedCards(S);if(return
 // lives up with the other derived stats (see moveSpd), because the Character sheet prints it.
 function update(dt){
   if(!S)return;t+=dt;
+  if(typeof tickJobRite==='function'&&tickJobRite())return;
   // v77: the Endless Echo clock. The HUD text is refreshed once a second, not every frame.
   if(TRIAL.on){TRIAL.left-=dt;const tc=trialClock();if(tc!==hudTrialClock){hudTrialClock=tc;if(typeof $==='function'&&$('stageTitle'))$('stageTitle').textContent=`Endless Echo · ${tc}`}
     if(TRIAL.left<=0)return trialFinish()}
@@ -6401,7 +6532,7 @@ function update(dt){
         else{const raw=m.mag?mdef():def(),md=raw*(1-prOf(m)),cut=Math.min(.75,md/(md+4000));
           const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)*(1-Math.min(.25,skillBonus('guard')/100))));const dAbs=absorbSoak(d);S.hp-=dAbs;skillState().counter=2;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,heroDamageY(),pl.z,dAbs,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
-if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};
+if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(false,'defeat');return;}log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
     // Awake monsters keep their own approach angle and are pushed apart, so a camp surrounds the hero
@@ -6589,14 +6720,14 @@ function buildAscension(m,stage){
   const epoch=ascensionEpoch;townObjs.forEach(o=>o.visible=false);road.visible=false;if(KIT.ground)KIT.ground.visible=false;
   if(!window.PGAscension)return;
   PGAscension.build(m,stage).then(world=>{
-    if(epoch!==ascensionEpoch||!S||S.mp!==m||S.lvl!==stage||TRIAL.on){world.dispose();return}
+    if(epoch!==ascensionEpoch||!S||S.mp!==m||S.lvl!==stage||TRIAL.on||JOB_RITE.on){world.dispose();return}
     ascensionWorld=world;ascensionRoot=new THREE.Group();
     ascensionRoot.position.z=m===10?(Z0+Z1)/2-world.view.focus:0;
     for(const child of [...world.scene.children])ascensionRoot.add(child);
     scene.add(ascensionRoot);scene.background=world.scene.background;scene.fog=world.scene.fog;ground.visible=false;hemi.intensity=0;sun.intensity=0;
   }).catch(()=>{if(epoch===ascensionEpoch)log('Scenery could not load. Travel again to retry.','r0');});
 }
-function buildDeco(m){clearAscension();while(deco.children.length)deco.remove(deco.children[0]);
+function buildDeco(m){if(JOB_RITE.on)return jobRiteArena();clearAscension();while(deco.children.length)deco.remove(deco.children[0]);
   if(m>=10){buildAscension(m,S.lvl);return}
   // The kit dresses every map, Prontera included (v27). The block-built town, its cathedral and its
   // fountain are the **no-atlas fallback** now, kept for the case where the sheet cannot be
@@ -6911,7 +7042,7 @@ function kitFetch(){
   // The kit is an enhancement: no fetch, no atlas, no design - the game keeps its own scenery.
   if(typeof fetch!=='function'||typeof Image!=='function')return;
   try{
-    const rebuildActiveScenery=()=>{if(!S)return;if(TRIAL.on)trialArena();else buildDeco(S.mp)};
+    const rebuildActiveScenery=()=>{if(!S)return;if(JOB_RITE.on)jobRiteArena();else if(TRIAL.on)trialArena();else buildDeco(S.mp)};
     const j=n=>fetch('assets/kit/'+n).then(r=>r&&r.ok?r.json():null).catch(()=>null);
     Promise.all([j('ro-spritesheet.json'),j('ro-map-payon.json'),j('ro-map-morocc.json'),j('ro-tiles-hd.json')]).then(([man,pay,mor,hdMan])=>{
       if(!man||!pay)return; KIT.man=man; KIT.des.payon=pay; if(mor)KIT.des.morocc=mor; if(hdMan)KIT.hdMan=hdMan;
@@ -9315,14 +9446,22 @@ function getSkillAfterglow(){
   canvas.setAttribute('aria-hidden','true');
   canvas.style.cssText='position:absolute;inset:0;pointer-events:none';
   const renderer=PGSkillAfterglow.create(canvas);if(!renderer)return null;
+  renderer.aura=(x,z,time)=>{
+    if(typeof PGFourthJobVisuals==='undefined')return;
+    const g=canvas.getContext('2d'),at=scr(x,.04,z),top=scr(x,3.05,z),ratio=Math.min(2,Math.max(1,devicePixelRatio||1));
+    g.save();g.setTransform(ratio,0,0,ratio,0,0);
+    PGFourthJobVisuals.aura(g,at[0],at[1],time,'#dfc582',Math.max(.01,Math.hypot(top[0]-at[0],top[1]-at[1])/120));g.restore();
+  };
   $('weaponSpriteLayer').after(canvas);skillAfterglow=renderer;return renderer;
 }
 function playSkillFx(id,target,color){
   if(simVisualsOff())return;
   const r=skillFxSpec(id,color);if(!r)return;
+  const skill=SKILLS.find(s=>s.id===id),ward=FOURTH_JOBS_LIVE&&SKILLS4.includes(skill)&&!!(skill.type!=='act'||skill.shape==='radial');
+  if(ward)target=null; // Fourth-job support and radial effects follow the caster.
   const fx={...r,x0:pl.x,z0:pl.z,x1:target&&Number.isFinite(target.x)?target.x:pl.x,
     z1:target&&Number.isFinite(target.z)?target.z:pl.z,age:0,group:null,parts:[]};
-  const skill=SKILLS.find(s=>s.id===id);fx.magic=!!skill?.magic;fx.areaScale=skill?.shape!=='single'?(skill?.areaScale||1):1;
+  fx.magic=!!skill?.magic;fx.areaScale=skill?.shape!=='single'?(skill?.areaScale||1):1;
   fx.targetScale=skill?.shape==='single'&&target&&typeof mobVisualScale==='function'&&(target.spriteScale||target.boss)?cl(mobVisualScale(target),.35,2):1;
   if(typeof PGSkillAfterglow!=='undefined'&&PGSkillAfterglow.has(id)&&getSkillAfterglow()){
     fx.afterglow=true;fx.life=PGSkillAfterglow.life;
@@ -9333,7 +9472,10 @@ function disposeSkillFx(fx){if(!fx||!fx.group)return;scene.remove(fx.group);fx.g
   if(o.material)o.material.dispose();if(o.userData&&o.userData.skillFxOwnGeometry&&o.geometry)o.geometry.dispose()});fx.group=null}
 function tickSkillFx(dt){for(let i=skillFx.length-1;i>=0;i--){const fx=skillFx[i];fx.age+=dt;if(fx.age>=fx.life){disposeSkillFx(fx);skillFx.splice(i,1)}}}
 function syncSkillFx(){
+  const ascended=FOURTH_JOBS_LIVE&&typeof S!=='undefined'&&S&&CLASSES[S.cls]?.tier===4;
+  if(ascended)getSkillAfterglow();
   if(skillAfterglow)skillAfterglow.draw(skillFx,R.domElement.clientWidth,R.domElement.clientHeight,scr,devicePixelRatio||1);
+  if(ascended)skillAfterglow?.aura(pl.x,pl.z,t);
   for(const fx of skillFx){if(fx.afterglow)continue;if(!fx.group)makeSkillFxNode(fx);const q=cl(fx.age/fx.life,0,1),ease=1-Math.pow(1-q,2);
     if(fx.at==='path')fx.group.position.set(fx.x0+(fx.x1-fx.x0)*ease,.95+Math.sin(q*Math.PI)*.34,fx.z0+(fx.z1-fx.z0)*ease);
     else{const x=fx.at==='caster'?fx.x0:fx.x1,z=fx.at==='caster'?fx.z0:fx.z1;fx.group.position.set(x,0,z)}
@@ -9380,11 +9522,12 @@ dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(zoo
 // pushed the avatar down into the lower third of the view.
 const CAMERA_FOCUS_Y=.28,CAMERA_LEAD_Z=.25,ct=new THREE.Vector3(0,CAMERA_FOCUS_Y,0);let lastKey='';
 function draw(){
-  if(!S)return;const bn=isBoss(),key=(TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
+  if(!S)return;const bn=isBoss(),key=(JOB_RITE.on?'rite:':TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;
     // v77: the trial is a scene of its own. Entering and leaving changes the key, so the arena is
     // built on the way in and the real field is rebuilt on the way out - exactly like a map move.
-    if(TRIAL.on){clearAscension();const col=new THREE.Color(0x171020);scene.background=col;scene.fog=new THREE.Fog(col,22,64);ground.material.color.setHex(0x392d42);hemi.intensity=.52;sun.intensity=.48;trialArena()}
+    if(JOB_RITE.on)jobRiteArena();
+    else if(TRIAL.on){clearAscension();const col=new THREE.Color(0x171020);scene.background=col;scene.fog=new THREE.Fog(col,22,64);ground.material.color.setHex(0x392d42);hemi.intensity=.52;sun.intensity=.48;trialArena()}
     else{const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);hemi.intensity=.8;sun.intensity=.9;buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}}
   if(ascensionWorld)ascensionWorld.update(t,S.bg!==false);
   P.position.set(pl.x,0,pl.z);
@@ -9483,7 +9626,7 @@ function draw(){
       f.el.style.transform='translate(-50%,-50%) translate('+dxx.toFixed(1)+'px,'+dy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
       f.el.style.opacity=Math.min(1,Math.max(0,r/.25))}
     else f.el.style.opacity=Math.max(0,f.life)});
-  const pt=hudTrial?`🏛 ${trialClock()} left · ${Math.round(Math.max(0,(S.dmg||0)-TRIAL.dmg0)).toLocaleString()} damage`:bn?`MVP FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
+  const pt=JOB_RITE.on?`Crucible · ${Math.ceil(jobRiteLeft())}s left`:hudTrial?`🏛 ${trialClock()} left · ${Math.round(Math.max(0,(S.dmg||0)-TRIAL.dmg0)).toLocaleString()} damage`:bn?`MVP FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 // ---------- the clock: one simulation, driven by frames or by timers ----------
 // A browser stops calling requestAnimationFrame the moment its tab is not the one on screen, which

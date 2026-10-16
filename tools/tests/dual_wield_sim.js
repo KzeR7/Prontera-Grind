@@ -33,7 +33,7 @@ const code = [
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
   pick(/const st=k=>[^\n]*canUse=it=>[^;]+;/, 'st()/canUse()'),
   pick(/const items=\(\)=>[^\n]*/, 'items()/ev()/eqv() (the DUAL and TWO_HANDED rates)'),
-  pick(/const bon=k=>\{[^\n]*/, 'bon()'),
+  grab('const bon=k=>{', '// v74 (owner:'),
   pick(/const atk=\(\)=>[^\n]*/, 'atk()'),
   pick(/const matk=\(\)=>[^\n]*/, 'matk()'),
   pick(/const def=\(\)=>[^,]+,mdef=/, 'def()').replace(/,mdef=$/, ''),
@@ -45,7 +45,8 @@ const code = [
 
 // The socket roll is a one-line statement with no dependencies of its own, so it is replayed
 // inside a function instead of being joined to the harness body.
-const socketLine = pick(/const slots=slot==='weapon'[^\n]*/, 'the socket roll');
+const socketLine = grab('function genGear(', 'function offlineMobForCurrentField(').match(/const slots=slot==='weapon'[^\n]*/)?.[0];
+assert.ok(socketLine, 'genGear socket roll missing');
 
 const harness = `
 ${code}
@@ -73,7 +74,7 @@ const wear = (cls, eq) => { H.S = mkS(cls, Object.assign(empty(), eq)); };
 // ---- 1. who may hold two blades -------------------------------------------
 t('only the two Assassin jobs wield a dagger alongside the katar, and only they dual-wield', () => {
   const both = Object.keys(H.CLASSES).filter(c => H.CLASSES[c].wt.includes('dagger') && H.CLASSES[c].wt.includes('katar'));
-  assert.deepStrictEqual(both.sort(), ['Assassin', 'Assassin Cross'], 'nobody else holds a dagger and a katar');
+  assert.deepStrictEqual(both.sort(), ['Assassin', 'Assassin Cross', 'Guillotine Cross'], 'nobody else holds a dagger and a katar');
   for (const cls of both) {
     assert.deepStrictEqual(Array.from(H.CLASSES[cls].wt), ['katar', 'dagger'], cls + ' keeps the katar first');
     assert.ok(H.CLASSES[cls].tier >= 2, cls + ' is a second job or above');

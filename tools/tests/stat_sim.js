@@ -13,7 +13,7 @@ const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot find ' + name + ' in index.html'); return m[0]; };
 
-const statBlock = pick(/const MAXST=\d+,BASECAP=\d+,ELITELV=\d+,statCap=\(\)=>[^;]+;/, 'stat cap constants');
+const statBlock = pick(/const MAXST=\d+,ASCENSION_MAXST=\d+,BASECAP=\d+,ELITELV=\d+,ASCENSIONLV=\d+,statCap=\(\)=>[^;]+;/, 'stat cap constants');
 const costFn = pick(/cost=k=>\{const v=S\.st\[k\];return[^}]*\}/, 'cost()');
 const totalPtsFn = pick(/const totalPts=\(\)=>\{[^}]*\}/, 'totalPts()');
 const clampLine = pick(/for\(const k of\['str','agi','dex','luk','int','vit'\]\)f\.st\[k\][^\n]*?;/, 'load() stat clamp');
@@ -23,6 +23,7 @@ ${statBlock}
 ${totalPtsFn.replace('const totalPts', 'const totalPts_')}, rcost=()=>0;
 const totalPts = totalPts_;
 let S = null;
+const items=()=>Object.values(S.eq||{}).filter(Boolean);
 ${costFn.replace('cost=k=>', 'const cost=k=>')}
 const num_ = (v,d) => { v = +v; return Number.isFinite(v) ? v : d };
 this.__s = { cost, totalPts, statCap, MAXST, BASECAP, ELITELV,
@@ -46,6 +47,12 @@ t('the cap is 99 below Base Lv 100 and 120 from Base Lv 100', () => {
   H.S = mkS(100); assert.strictEqual(H.statCap(), 120, 'Lv100 must unlock 120');
   H.S = mkS(150); assert.strictEqual(H.statCap(), 120);
   assert.strictEqual(H.MAXST, 120);
+});
+
+t('Mythic equipment unlocks 150 allocation only at Base Lv 150',()=>{
+  H.S=mkS(149);H.S.eq={armor:{sec:6}};assert.strictEqual(H.statCap(),120);
+  H.S.lv=150;assert.strictEqual(H.statCap(),150);
+  H.S.eq={armor:{sec:5}};assert.strictEqual(H.statCap(),120);
 });
 
 t('the cost curve never gets cheaper as the stat climbs', () => {
@@ -117,8 +124,8 @@ t('a Lv99 player is capped at 99 and cannot pre-buy the elite tier', () => {
 
 t('a save carrying a stat above the hard cap is clamped on load', () => {
   const f = H.clamp({ st: { str: 999, agi: -5, dex: 'abc', luk: null, int: 120, vit: 121 } });
-  assert.strictEqual(f.st.str, 120, 'str above MAXST not clamped');
-  assert.strictEqual(f.st.vit, 120, 'vit above MAXST not clamped');
+  assert.strictEqual(f.st.str, 150, 'str above MAXST not clamped');
+  assert.strictEqual(f.st.vit, 121, 'valid Mythic allocation is preserved');
   assert.strictEqual(f.st.int, 120, 'int at MAXST should be kept');
   assert.strictEqual(f.st.agi, 1, 'negative stat not repaired');
   assert.strictEqual(f.st.dex, 1, 'non-numeric stat not repaired');

@@ -1,10 +1,10 @@
-// Native class/weapon/hair preview: exact game coverage, source integrity and controller races.
+// Parent-body native class/weapon/hair preview (fourth jobs retain parent fallback): exact game coverage, source integrity and controller races.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto');
 const root=path.join(__dirname,'../..'),dir=path.join(root,'Updates/class-weapon-preview');
 const report=JSON.parse(fs.readFileSync(path.join(dir,'audit.json')));
 const src=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const begin=src.indexOf('const CD='),end=src.indexOf('const CLASSES=',begin);
-const game=vm.runInNewContext(src.slice(begin,end)+';CD');
+const game=vm.runInNewContext(src.slice(begin,end)+';CD.filter(c=>!CD4.includes(c))');
 assert.deepEqual(report.catalog.classes.map(c=>[c.name,c.weapons]),JSON.parse(JSON.stringify(game.map(c=>[c[0],c[7]]))));
 const combos=report.catalog.classes.reduce((n,c)=>n+c.weapons.length*2,0);
 assert.equal(combos,50);assert.equal(report.cases.length,combos*3*3);

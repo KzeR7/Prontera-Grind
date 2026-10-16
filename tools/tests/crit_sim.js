@@ -1,8 +1,8 @@
 // The v73 crit rules (owner): LUK pays 0.25 a point with a flat base of 2, everything that comes
-// from stats, skill passives, gear and card mastery is capped at 60% (and above 45% every further
-// point counts half), and Index Crit - earned only by unlocking Hunt Titles - is the one source
-// that lives outside that cap. All ten titles add up to +40, so a perfect Index puts a fully
-// capped build on exactly 100% crit. High-level bosses also cut the crit chance rolled against
+// from stats, skill passives, gear and card mastery ordinarily caps at 60% (and above 45% every further
+// point counts half), and Index Crit - earned only by unlocking Hunt Titles - adds after that cap. All ten titles add up to +40, so a perfect Index puts a fully
+// capped build on exactly 100% crit. Equipped Mythic raises the core cap to 80%,
+// while the total still stops at 100%. High-level bosses also cut the crit chance rolled against
 // them by their map's resistance.
 //   node tools/tests/crit_sim.js
 const fs = require('node:fs');
@@ -19,16 +19,20 @@ const code = [
   pick(/const INDEX_TITLES=\[[\s\S]*?\n\];/, 'INDEX_TITLES'),
   pick(/const indexRankForXp=[^\n]+/, 'indexRankForXp'),
   pick(/const indexExperience=[^\n]+/, 'indexExperience'),
-  pick(/const BOSS_CRIT_RES=\[[^\]]*\],NM_CRIT_RES=\[[^\]]*\],bossCritRes=\(m,l\)=>[^;]+;/, 'boss crit resistance (+ the v76 Nightmare ladder)'),
-  pick(/const crit=\(\)=>[^\n]*/, 'crit/flee/missCh'),
+  grab('const BOSS_CRIT_RES=', 'const OFFLINE_CAP_MS='),
+  pick(/const mythicCrit=[^\n]*/, 'Mythic crit'),
+  pick(/const crit=\(bonus=0\)=>[^\n]*/, 'crit/flee/missCh'),
 ];
 const harness = `
 ${code.join('\n')}
 const safeCount = v => {const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
 let PV = 0, BON = 0, CM = 0;
 const S = { st:{luk:1,dex:1}, lv:1, indexXp:0, eq:{} };
+const ascensionSetBonuses=()=>({}),DUAL=.5;
+const items=()=>Object.values(S.eq).filter(Boolean);
 const st = k => S.st[k] || 1, pv = k => PV, bon = k => BON, cardMasteryStat = k => CM;
 this.__c = { crit, bossCritRes, indexCrit, indexCritBonus, INDEX_CRIT, INDEX_TITLES, BOSS_CRIT_RES, NM_CRIT_RES,
+  equip(it){S.eq={weapon:it}},
   set(pv, bon, cm, luk, xp){ PV = pv; BON = bon; CM = cm; S.st.luk = luk; S.indexXp = xp; } };
 `;
 
@@ -65,6 +69,13 @@ t('every stat, skill, gear and mastery source stops at 60%, and above 45% each p
   // no combination of capped sources may pass 60
   C.set(100000, 100000, 5, 120, 0);
   assert.strictEqual(C.crit(), 60, 'stats, skills, gear and card mastery alone can never pass 60%');
+});
+
+t('equipped Mythic raises the core cap to 80%, while total crit stays at 100%',()=>{
+  C.set(100000,100000,5,120,0);C.equip({sec:5});assert.strictEqual(C.crit(),60);
+  C.equip({sec:6,aff:[{k:'crit',v:20}]});assert.strictEqual(C.crit(),80);
+  C.set(100000,100000,5,120,1000000);assert.strictEqual(C.crit(),120);
+  C.equip(null);C.set(100000,100000,5,120,0);assert.strictEqual(C.crit(),60);
 });
 
 t('Index Crit is earned only from Hunt Titles and lifts the total towards 100%', () => {

@@ -1659,3 +1659,23 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @container(max-width:650px){.combo-slots{grid-template-columns:repeat(3,minmax(0,1fr))}.combo-live{flex-wrap:wrap}.combo-live small{width:100%;margin-left:15px}.combo-bottom{flex-wrap:wrap}.combo-bottom>small{order:3;width:100%}}
 @media(max-width:560px){#wins .skill-rotation{padding:12px}.combo-heading h3{font-size:20px}.combo-eyebrow{font-size:8px;letter-spacing:.8px}.combo-slots{grid-template-columns:repeat(3,minmax(0,1fr))}.combo-heading button{font-size:10px;padding:7px}.combo-slot-actions button{min-height:32px}#comboFieldStatus{bottom:120px;max-width:90vw;white-space:nowrap}}
+
+/* v159: one lineage and one class inspector, with future jobs kept in their path. */
+#wins .class-path-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:20px}
+#wins .class-path-tabs button{min-width:0;padding:10px 4px;font-size:11px}
+#wins .class-path-tabs [aria-pressed=true]{border-color:var(--gold);color:var(--gold);background:var(--e-soft)}
+#wins .class-path-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+#wins .class-path-heading small{font-size:9px;letter-spacing:.15em;color:var(--e-muted)}
+#wins .class-path-heading h3{margin:4px 0;font-size:19px}
+#wins .class-path-track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 2px 20px}
+#wins .class-path-track .tn{display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:86px;padding:10px;text-align:left;white-space:normal;cursor:pointer}
+#wins .class-path-track .tn b{font-size:12px;line-height:1.4}#wins .class-path-track .tn small{font-size:10px;line-height:1.5;margin-top:5px}
+#wins .class-path-focus{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:18px;margin-bottom:16px;align-items:start}
+#wins .class-path-focus .ui-inspector{padding:16px;border:1px solid var(--e-line);border-radius:8px}
+#wins .class-path-focus .mob-card{padding:0;border:0;background:none}#wins .class-path-focus h3{font-size:23px;margin:6px 0 12px}
+#wins .class-path-focus p{line-height:1.65;font-size:12px}#wins .class-path-focus .row{margin-top:18px;align-items:start;flex-direction:column}
+#wins .class-path-focus .hair-preview-card{margin:0;flex-direction:column;text-align:center;padding:16px;min-width:0}
+#wins .class-path-panel>.ui-fold{margin-top:12px}
+@container(max-width:620px){#wins .class-path-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}#wins .class-path-track{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#wins .class-path-track>.tn:last-child{grid-column:1/-1}#wins .class-path-focus{grid-template-columns:minmax(0,1fr)}#wins .class-path-focus .hair-preview-card{flex-direction:row;text-align:left}}
+#wins .class-path-track .tn.lock{opacity:1;filter:none;color:var(--ink)}
+#wins .class-path-track .tn.lock small{color:var(--e-muted)}

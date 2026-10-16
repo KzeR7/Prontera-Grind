@@ -12,6 +12,7 @@ editing. Many tests execute extracted pieces of the real page.
 | Stats, Base/Job EXP and pacing | `index.html`: `statCap`, `totalPts`, `baseNeedAt`, `needAt`, `jneed`, `expRate`, `economy tuning`; `tools/tune_pacing.js` | `base_pacing_sim.js`, `stat_sim.js`, `economy_sim.js`, `progression_sim.js` |
 | Combat and skill execution | `index.html`: `SKILLS`, `comboConfig`, `nextComboSkill`, `resolveSwing`, `tickCombatSkills`, `simAdvance`, `loop` | `combo_rotation_sim.js`, `skill_sim.js`, `skill_redesign_sim.js`, `combat_damage_sim.js`, `attack_sync_sim.js`, `field_loop_smoke.js` |
 | 4th-job classes and skills (Milestone 4, dark-launched behind `FOURTH_JOBS_LIVE`) | `index.html`: `CD4`/`FOURTH_JOBS_LIVE`, `ADV4_BASE_LV`, `classBlock()`, `JOFF`, `PACK_BODY`, `V.job()` tree rows, `SKILLS4` and the mechanic helpers beside `chainHit` (`castSkill`, `absorbSoak`), `katarOnly()` | `fourth_job_sim.js`, `fourth_job_skills_sim.js` (flag on, plus live-page checks); parked reference in `Updates/fourth-jobs/` |
+| Fourth-job advancement trial (locked) | `index.html`: `JOB_RITE`, `startJobRite`, `showJobRiteResult`, `tickJobRite`, `finishJobRite`; dark room and three-second animated result/promotion | `job_rite_sim.js`, `fourth_job_sim.js`, `fourth_job_mythic_sim.js` |
 | Gear, class eligibility, cards, autosell | `index.html`: `genGear`, `canUse`, `stowUnfit`, `equipRec`, `CARD_FITS` | `gear_sim.js`, `dual_wield_sim.js`, `card_sim.js`, `autosell_sim.js` |
 | Ascension maps and native mobs | `assets/ascension.js`, `assets/astral-scenery.js`, `assets/mobs/v1/`; `index.html`: `MAPS`, `canTravel`, `ascensionDrops`, `recordMapClear`, `buildAscension`, `syncMobImage`, `V.map`, `ACT.mapseason`; `tools/maps/build_game_exploration.js` | `publish_sim.js`, `panel_layout_smoke.js`, `ascension_scene_sim.js`, `ascension_progression_sim.js`, `astral_scenery_sim.js`, `native_mob_assets.py` |
 | Map stages, scenery, Nightmare | `index.html`: `MAPS`, `fieldPlan`, `buildDeco`, `KIT_MAP` | `starter_sim.js`, `scene_sim.js`, `kit_sim.js`, `nightmare_sim.js` |
@@ -138,3 +139,9 @@ and content-hashed WebP copies. `journey-materials.js` caches destination-specif
 loads. Check `map_delivery_sim.js` and the journey browser audit; do not apply this
 pipeline to native sprites/metadata. See [cloud data](CLOUD-DATA.md) for current
 published bytes versus requested resources and API/database load.
+
+Class Path (v159): `V.job()` renders six lineage buttons, five selected progression
+steps and one inspector. `ACT.selk` only selects; `ACT.job` promotes/starts the trial.
+`CD4` supplies locked future labels without adding them to `CLASSES`. Layout is in
+`assets/ui/eclipse.css` (`class-path-*`). Check `eclipse_ui_sim.js`,
+`panel_layout_smoke.js`, `fourth_job_sim.js` and `mythic_rules_sim.js`.

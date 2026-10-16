@@ -27,13 +27,17 @@ test('bulk preview excludes later drops and rechecks selected rarity',()=>{
  ev(`bulkSellSelection.rarities[0]=true;ACT.bulksellnow();S.inv.push(gear(23,'C'));ACT.sellconfirm()`);assert.equal(ev('S.inv.map(x=>x.id).join()'),'23');
 });
 test('Bag previews actual item counts and retains card and Loadout navigation',()=>{
- ev(`S.ore.ori=42;S.refineScrolls=7;S.nmMat[0]=13;tabs.splice(0,tabs.length,'bag');sub.bag='bag';renderWin()`);
- assert.equal(doc.querySelectorAll('.bag-item-list article').length,9);assert.match(doc.querySelector('.bag-items').textContent,/Refine Protection Scroll7/);assert.doesNotMatch(doc.querySelector('.bag-items').textContent,/Drop Protection Scroll/);assert.match(doc.querySelector('.bag-items').textContent,/Oridecon42/);assert.equal(doc.querySelector('.grid'),null);
+ ev(`S.ore.ori=42;S.ore.elu=5;S.refineScrolls=7;S.shards=11;S.nmMat=[13,17,19,23,29];S.ascensionMat=[31,37,41];tabs.splice(0,tabs.length,'bag');sub.bag='bag';renderWin()`);
+ const expected=[['Oridecon','42'],['Elunium','5'],['Refine Protection Scroll','7'],['Echo Shards','11'],
+  ...Array.from(ev('NM_MAT'),(name,i)=>[name,String([13,17,19,23,29][i])]),
+  ...Array.from(ev('ASCENSION_MATERIALS'),(name,i)=>[name,String([31,37,41][i])])];
+ assert.deepEqual([...doc.querySelectorAll('.bag-item-list article')].map(row=>[row.querySelector('b').textContent,row.querySelector('strong').textContent]),expected);
+ assert.match(doc.querySelector('.bag-items').textContent,/Refine Protection Scroll7/);assert.doesNotMatch(doc.querySelector('.bag-items').textContent,/Drop Protection Scroll/);assert.match(doc.querySelector('.bag-items').textContent,/Oridecon42/);assert.equal(doc.querySelector('.grid'),null);
  doc.querySelector('[data-v="bag:cards"]').click();assert.ok(doc.querySelector('.eclipse-card-grid'));
  ev(`sub.bag='bag';renderWin()`);doc.querySelector('.bag-items [data-t=equip]').click();assert.ok(doc.querySelector('.eclipse-bag'));
 });
-test('every skill has a distinct motif/emblem composition with valid artwork',()=>{
- const keys=ev(`SKILLS.map(s=>(SKILL_ICON[s.id]||'rune')+':'+(SKILL_EMBLEM[s.id]||''))`);assert.equal(new Set(keys).size,keys.length);
+test('legacy skills keep distinct motifs; fourth skills reuse approved valid artwork',()=>{
+ const keys=ev(`SKILLS.filter(s=>!SKILLS4.includes(s)).map(s=>(SKILL_ICON[s.id]||'rune')+':'+(SKILL_EMBLEM[s.id]||''))`);assert.equal(new Set(keys).size,keys.length);
  assert.equal(ev(`SKILLS.every(s=>SKILL_PICTO[SKILL_ICON[s.id]]&&(!SKILL_EMBLEM[s.id]||SKILL_PICTO[SKILL_EMBLEM[s.id]]))`),true);
 });
 test('hidden simulation retains logs without rebuilding DOM or allocating skill effects',()=>{

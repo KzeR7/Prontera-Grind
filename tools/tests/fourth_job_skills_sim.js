@@ -2,8 +2,8 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {createGame}=require('./helpers/game');
 const source=fs.readFileSync(path.resolve(__dirname,'../../index.html'),'utf8');
-assert(source.includes('const FOURTH_JOBS_LIVE=false;'));
-const live=createGame(),g=createGame(source.replace('const FOURTH_JOBS_LIVE=false;','const FOURTH_JOBS_LIVE=true;')),ev=g.ev;
+assert(source.includes('const FOURTH_JOBS_LIVE=true;'));
+const live=createGame(source.replace('const FOURTH_JOBS_LIVE=true;','const FOURTH_JOBS_LIVE=false;')),g=createGame(source.replace('const FOURTH_JOBS_LIVE=false;','const FOURTH_JOBS_LIVE=true;')),ev=g.ev;
 let passed=0;
 const test=(n,f)=>{f();passed++;console.log('ok '+n)};
 const probe=c=>JSON.parse(ev('JSON.stringify((()=>{'+c+'})())'));

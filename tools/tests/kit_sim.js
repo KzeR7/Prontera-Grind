@@ -656,7 +656,7 @@ t('the Echo Court overlays its crypt floor onto a normal Niflheim kit plan', () 
   assert.ok(arenaFn.includes('m.color.setHex(0x796e84)') && arenaFn.includes('KIT.ground.material.color.setHex(0x5c5269)'), 'both HD props and terrain get the darker violet/slate palette');
   assert.ok(!/RingGeometry|CylinderGeometry|BoxGeometry/.test(arenaFn), 'the court adds no mismatched block-built art');
   const loader = grab('function kitFetch(){', '// v2 is ONE atlas');
-  assert.ok(loader.includes('if(TRIAL.on)trialArena();else buildDeco(S.mp)'), 'late HD tile downloads rebuild whichever scene is active');
+  assert.ok(loader.includes('if(JOB_RITE.on)jobRiteArena();else if(TRIAL.on)trialArena();else buildDeco(S.mp)'), 'late HD tile downloads rebuild whichever scene is active');
 
   K.setAssets(); K.setStage(1);
   const original = JSON.stringify(K.kitPlan(8,1));
@@ -695,7 +695,7 @@ t('Echo details use existing art and leave the combat center clear',()=>{
 t('all ten maps have four complete themed scenes and no spawn or boss floor stamps', () => {
   K.setAssets();
   // v77: the Endless Echo arena is a scene of its own, so the key now carries the mode as well.
-  assert.ok(/key=\(TRIAL\.on\?'trial:':'field:'\)\+S\.mp\+':'\+S\.lvl\+':'\+bn/.test(src),
+  assert.ok(/key=\(JOB_RITE\.on\?'rite:':TRIAL\.on\?'trial:':'field:'\)\+S\.mp\+':'\+S\.lvl\+':'\+bn/.test(src),
     'stage changes (and entering the trial) must rebuild the scene');
   assert.ok(!/function stageDress/.test(src), 'old spawn pads/boss floor layer must be removed');
   for(let m=0;m<10;m++){
