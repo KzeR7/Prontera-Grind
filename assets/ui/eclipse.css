@@ -46,6 +46,28 @@ small{color:var(--e-muted)}
 .eclipse-levels>span{float:right}
 #hud #titleLabel{font-size:8px;color:var(--gold);background:none;padding:0;border:0;margin-top:4px}
 
+/* v178: floating BGM player, parked under the HUD card at the top-left. Collapsed it just
+   shows what is playing (map BGM by default); the chevron opens the full track list so any
+   added track can be picked. PC web only - phones keep plain autoplay map music. */
+#bgmPlayer{position:absolute;left:max(8px,env(safe-area-inset-left));top:179px;width:304px;z-index:44;background:linear-gradient(130deg,var(--e-raised),var(--e-glass));border:1px solid var(--edge);border-radius:8px;box-shadow:0 12px 30px #0003;pointer-events:auto;font:10px/1.5 var(--e-font);color:var(--ink)}
+#bgmPlayer[hidden]{display:none}
+.bgm-player-bar{display:flex;align-items:center;gap:6px;padding:6px 8px}
+.bgm-ico{flex:none;color:var(--gold);font-size:12px}
+.bgm-now{flex:1;min-width:0;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bgm-mode{flex:none;color:var(--e-muted);font-size:7px;letter-spacing:1px;text-transform:uppercase}
+.bgm-ib{flex:none;width:22px;height:22px;padding:0;font-size:12px;line-height:1;color:var(--gold);background:none;border:0}
+.bgm-ib:focus-visible{outline:2px solid var(--gold)}
+.bgm-player-body{border-top:1px solid var(--edge);padding:6px 8px 8px;display:grid;gap:6px}
+.bgm-row{display:block;width:100%;text-align:left;font-size:10px;padding:3px 6px;border-radius:4px;color:var(--ink);background:none;border:1px solid transparent;cursor:pointer}
+.bgm-row:hover{border-color:var(--edge)}
+.bgm-row.on{background:var(--e-soft);border-color:var(--gold);color:var(--gold)}
+.bgm-list{max-height:196px;overflow-y:auto;margin:0;padding:0;list-style:none;display:grid;gap:2px}
+.bgm-vol{display:flex;align-items:center;gap:6px;font-size:8px;color:var(--e-muted)}
+.bgm-vol label{display:flex;align-items:center;gap:6px;flex:1}
+.bgm-vol input[type=range]{flex:1;accent-color:var(--gold)}
+body.clean-screen #bgmPlayer{visibility:hidden}
+@media (max-width:900px),(pointer:coarse){#bgmPlayer{display:none!important}}
+
 #eclipseCombat{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:250px;z-index:42;line-height:1.5;background:var(--e-glass);border:1px solid var(--edge);border-radius:8px;padding:11px 14px;pointer-events:auto;font-size:10px}
 #eclipseCombat>div:first-child{display:flex;align-items:center;justify-content:space-between}
 .eclipse-live{color:var(--gold);letter-spacing:1.5px;font-size:8px}

@@ -6786,3 +6786,21 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** Guide → Your build: switch goals and target tiers. In the guide preview, select First-login tour, close the guide with X, then follow More → Guide.
 * **Checks:** Expanded guide regression, panel layout (42) and UI (64) passed. Shared-browser desktop/390px checks passed for distinct plans/tiers, card visibility, recipe navigation and both hint steps without uncaught errors. UI suite initially exposed unguarded DOM listeners in its isolated harness; guarded registrations and reran successfully. Preview uses the documented renderer fallback because WebGL is unavailable.
 * **Delivery:** Local changes and refreshed guide preview; no push or deployment.
+
+### 2026-10-16 — `haven-v177 background music player`
+* **Changed:** Added a background music system with per-map playlists, volume/mute/on-off controls in Settings, track cycling and save-persisted preferences. Tracks are configured in `assets/bgm-tracks.js` and support local audio files or YouTube video IDs. Map travel and auto-advance switch tracks automatically.
+* **Try it:** Settings → Background music; edit `assets/bgm-tracks.js` to add tracks per map index.
+* **Checks:** JavaScript syntax checks and affected sim suites passed; update watcher mirror check updated.
+* **Delivery:** Local changes on `arena/4a530a07-prontera-grind`; no push or deployment.
+
+### 2026-10-16 — `haven-v178 bgm player widget`
+* **Changed:** Added the two Ascension map tracks (Astral Citadel, Thor Volcano) to `assets/bgm-tracks.js`. Added a floating BGM player on PC web, parked under the HP box at the top-left: collapsed it shows the playing track (map BGM by default) with prev/next/mute/power, and the ▾ chevron opens a list of every added track so players can circulate through all BGMs by hand; Auto · map BGM returns control to per-map switching. Phone browsers never show the widget and keep plain autoplay map music. Picking a track while BGM is off turns it back on; state resets to map BGM on load.
+* **Try it:** On PC, press ▾ on the player under the HP box and pick any track, then Auto · map BGM. Travel to Astral Citadel or Thor Volcano for their new map themes. Phones: just travel and listen.
+* **Checks:** `node --check` on `assets/bgm.js`/`assets/bgm-tracks.js`. New `bgm_sim` (11 passed) covers the exact per-map tracks, minimized widget, library cycling and Auto-restore (it caught a hand-picked track surviving Auto · map BGM, and a prev-while-off leak, both fixed). Update watcher (6), UI (64) and save/load (27) sim suites passed.
+* **Delivery:** Local changes on `arena/4a530a07-prontera-grind`; no push or deployment.
+
+### 2026-10-16 — `haven-v179 bonus bgm selections`
+* **Changed:** Added two bonus BGM selections to the PC player's song list (not tied to a map): Theme of Gonryun (Not So Far Away) and Theme of Prontera. They circulate with every other track in the ▾ list and through prev/next, exactly like the map themes.
+* **Try it:** On PC, open the player under the HP box and pick ♪ Theme of Gonryun or ♪ Theme of Prontera.
+* **Checks:** `bgm_sim` extended (15 tracks listed, both bonus videos, wrap-around at the new list end) and passing; update watcher (6), UI (64) and save/load (27) suites passed.
+* **Delivery:** Local changes on `arena/4a530a07-prontera-grind`; no push or deployment.

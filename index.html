@@ -836,6 +836,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd">Speed x1</button></div><div id="wins"></div></div></div>
 <div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health"><span>HP</span> <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
 </div></div>
+<section id="bgmPlayer" hidden aria-label="Background music player"></section>
 <div id="screenOptions" hidden></div>
 <div id="xp-dock" aria-label="Level progress"><div id="eclipseMetrics"><div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div>EXP/min <b id="expmin" title="EXP earned per minute (last 60 seconds, refreshed each second)">0</b></div><div>Zeny/min <b id="zenymin">0</b></div><div class="eclipse-dps-meter">DPS <b id="dps">0</b></div></div><div id="xp-track">
   <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="xpb"></div><span class="eclipse-xp-value" id="eclipseBaseValue"></span><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
@@ -888,6 +889,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-afterglow.js?v=147"></script>
 <script src="assets/pets.js?v=130"></script>
+<script src="assets/bgm-tracks.js?v=1"></script>
+<script src="assets/bgm.js?v=1"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1118,7 +1121,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-16 haven-v176 build plans and guide hints';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-16 haven-v179 bonus bgm selections';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2944,7 +2947,7 @@ function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},scale=rank/5,lab
  return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*scale).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
-const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.45,muted:false},
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -2971,6 +2974,10 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   if(f.cameraShake!==true&&f.cameraShake!==false)f.cameraShake=true;
   if(typeof PGWardrobe!=='undefined'){f.appearance=PGWardrobe.normalize(f.appearance);if(f.appearance)f.sex=f.appearance.sex;}
   if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;      // and the floats are shown unless switched off
+  if(!f.bgm||typeof f.bgm!=='object')f.bgm={enabled:true,volume:.45,muted:false};
+  if(f.bgm.enabled!==true&&f.bgm.enabled!==false)f.bgm.enabled=true;
+  if(typeof f.bgm.volume!=='number'||!isFinite(f.bgm.volume))f.bgm.volume=.45;
+  if(f.bgm.muted!==true&&f.bgm.muted!==false)f.bgm.muted=false;
   // v39 tools, all four defaulting to the quiet behaviour: the on-screen log starts unfolded,
   // a bag click inspects rather than sells, nothing is auto-sold and no log filter is hidden.
   if(f.feed!==true&&f.feed!==false)f.feed=true;
@@ -3206,6 +3213,7 @@ function initSession(gm,newAccount=false){
   if(elsewhere){const who=currentUser;currentUser=null;showErr(saveBlockedText(who,elsewhere,false));return}
   try{
     hudRate=null;zenyEarned=0;expEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>(S.mp>=10?5:15)){S.mp=0;S.lvl=1}
+  if(typeof BGM!=='undefined')BGM.sync(S.mp);
     // v74: a save made before the class-tier gate can be wearing gear its class may not use (a
     // Novice in High-tier armour). The sweep runs here too, so the rule holds from the first
     // frame of a session, not only from the next class change. `from=null` means no wearer label:
@@ -3534,6 +3542,7 @@ function cloudStart(u,gm){
   if(S.mp>=MAPS.length||S.lvl>(S.mp>=10?5:15)){S.mp=0;S.lvl=1}
   if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);   // v74: same repair on a cloud login
   if(typeof foldDupPets==='function')foldDupPets();                                // v75: same fold on a cloud login
+  if(typeof BGM!=='undefined')BGM.sync(S.mp);
   cloudSession(u,gm);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
 }
 async function initSessionFromCloud(u,gm,isNew){
@@ -3563,6 +3572,7 @@ async function initSessionFromCloud(u,gm,isNew){
       if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}
     }else{
       S=fresh();S.gm=!!gm;S.q=['kill','loot','boss'].map(newQuest);CLOUD.ver=0;CLOUD.dirty=true;
+      if(typeof BGM!=='undefined')BGM.sync(S.mp);
       cloudSession(u,gm);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
       log('Welcome, '+u+'! Your progress will follow you to any device.','r1','cloud');
     }
@@ -4923,6 +4933,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
       if(nextMap<MAPS.length){
         log(`${current} Stage ${S.lvl} cleared! ${MAPS[nextMap].n}${ascensionOpen(nextMap)?' Stage 1 is ready'+(S.adv?' — auto-advancing.':'.'):' requires a fourth-job class.'}`,'r3');
         if(S.adv&&ascensionOpen(nextMap)){S.mp=nextMap;S.lvl=1;mapM=nextMap;mapL=1;if(typeof mapSeason!=='undefined')mapSeason=nextMap>=10?'ascension':'atlas';
+          if(typeof BGM!=='undefined')BGM.sync(S.mp);
           // haven-v158: on ascension maps, position the hero at the entry for a walk-in transition
           if(nextMap>=10){pl.x=0;pl.z=Z1-1.5;pl.wz=Z1-1.5;pl.wx=null;}}
       }else log(`${current} Stage ${S.lvl} cleared! The Ascension route is complete. Turn Auto-advance off to farm this sanctuary.`,'r3');
@@ -5757,6 +5768,10 @@ const V={
     <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
     <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
     <small>On or off, and how the numbers read. Saved with your account.</small>
+    <div class="hd" style="margin-top:10px">Background music</div>
+    <div class="row"><button data-a="bgm" data-v="toggle" class="${typeof BGM!=='undefined'&&BGM.enabled?'on':''}" aria-pressed="${typeof BGM!=='undefined'&&BGM.enabled}">${typeof BGM!=='undefined'&&BGM.enabled?'BGM: On':'BGM: Off'}</button><button data-a="bgmmute" class="${typeof BGM!=='undefined'&&BGM.muted?'on':''}" aria-pressed="${typeof BGM!=='undefined'&&BGM.muted}">${typeof BGM!=='undefined'&&BGM.muted?'Unmute':'Mute'}</button></div>
+    <div class="row" style="margin-top:4px"><button data-a="bgmvol" data-v="-">Vol -</button><button data-a="bgmvol" data-v="+">Vol +</button><button data-a="bgmprev">Prev</button><button data-a="bgmnext">Next</button></div>
+    <small>Current track: ${typeof BGM!=='undefined'?esc(BGM.currentTitle()):'No track'} · Volume ${typeof BGM!=='undefined'?Math.round(BGM.volume*100):45}%. On PC the player under the HP box lists every track (map BGM is the default; press ▾ to pick any song); phones just autoplay the map's track. Tracks are configured per map in assets/bgm-tracks.js.</small>
     <div class="hd">Interface palette</div>${typeof eclipsePaletteControls==='function'?eclipsePaletteControls():''}<div class="hd" style="margin-top:10px">Gameplay</div><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
     <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it. Auto-equip lives on the <b>Bag</b> tab and Auto-advance on the <b>World Map</b> tab, next to what they control.</small>
     <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
@@ -6434,12 +6449,18 @@ const gotoField=(m,l)=>{
   const walk=m===10&&S.mp===10&&S.lvl!==l,from=S.lvl;
   if(!walk){astralJourney=null;astralOriginStage=m===10?l:0;}
   lastKey='';S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;camps=[];respawn=.3;
+  if(typeof BGM!=='undefined')BGM.sync(S.mp);
   // haven-v158: on ascension maps, place the hero at the field entry so they walk into the zone
   // instead of appearing in the middle of it. The roam logic will then walk them forward.
   if(walk)startAstralJourney(from,l);else if(m>=10){pl.x=0;pl.z=Z1-1.5;pl.wz=Z1-1.5;pl.wx=null;}
   qRefresh();ui();save()};
 const ACT={
   workslot:v=>{if(EQK.some(([k])=>k===v)){selE=v;renderWin()}},
+  bgm:v=>{if(typeof BGM!=='undefined'){if(v==='toggle')BGM.setEnabled(!BGM.enabled);else BGM.setEnabled(true);BGM.savePrefs&&BGM.savePrefs();if(typeof ui==='function')ui()}},
+  bgmmute:()=>{if(typeof BGM!=='undefined'){BGM.setMuted(!BGM.muted);if(typeof ui==='function')ui()}},
+  bgmvol:v=>{if(typeof BGM!=='undefined'){BGM.setVolume(BGM.volume+(v==='+'?.1:-.1));if(typeof ui==='function')ui()}},
+  bgmnext:()=>{if(typeof BGM!=='undefined'){BGM.next();if(typeof ui==='function')ui()}},
+  bgmprev:()=>{if(typeof BGM!=='undefined'){BGM.prev();if(typeof ui==='function')ui()}},
   echostore:()=>{eclipseEchoPick=false;renderWin()},
   gearpage:v=>{const page=Number(v);if(Number.isInteger(page)&&page>=0&&eclipseInventoryState?.owner===S){eclipseInventoryState.page=page;selB=null;eclipseInspectBag=false;renderWin();$('wins').querySelectorAll('[data-panel-scroll=inventory],[data-panel-scroll=equipment-bag]').forEach(e=>e.scrollTop=0)}},
   newdrops:()=>{eclipseInventoryState={owner:S,ids:S.inv.map(it=>String(it.id))};renderWin()},
@@ -10011,6 +10032,7 @@ function finishAway(){
 document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();else bgShow()});
 setInterval(bgTick,SIM_BG_MS);
 resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();
+if(typeof BGM!=='undefined')BGM.playLogin();
 // ---------- update watcher (v88) ---------------------------------------------------------------
 // The owner asked: when a Cloudflare deploy lands, every player's browser should hard-refresh by
 // itself, on PC and on mobile. /api/version (functions/api/version.js) answers with the BUILD
