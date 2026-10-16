@@ -45,8 +45,8 @@ const fresh = (over) => ({ eq: { weapon: piece(5) }, ore: { ori: 999, elu: 999 }
 const FAIL = 0.999, WIN = 0;
 
 // ---- 1. the materials come from the Stage 15 boss only -----------------------
-t('the Nightmare materials are five different names, one per map pair', () => {
-  assert.deepStrictEqual(Array.from(M.NM_MAT), ['Dread Essence','Void Core','Spectral Ectoplasm','Oni Horn','Helheim Rune']);
+t('Nightmare materials use only Void Core', () => {
+  assert.deepStrictEqual(Array.from(M.NM_MAT), ['Void Core']);
 });
 
 // ---- 2. craftDps: 20 materials of any mix --------------------------------------
@@ -54,7 +54,7 @@ t('craftDps needs 20 materials, any mix, and spends exactly 20', () => {
   M.S = fresh({ nmMat: [5,5,5,5,0] });   // 20 in total, from four maps
   M.craftDps();
   assert.strictEqual(M.S.refineScrolls, 1, 'one scroll is made');
-  assert.deepStrictEqual(Array.from(M.S.nmMat), [0,0,0,0,0], 'all 20 are spent, from whichever maps they came from');
+  assert.deepStrictEqual(Array.from(M.S.nmMat), [0], 'all 20 are spent from the shared wallet');
 });
 t('craftDps refuses with 19 and says how many are held', () => {
   M.S = fresh({ nmMat: [5,5,5,4,0] });   // 19
@@ -62,7 +62,7 @@ t('craftDps refuses with 19 and says how many are held', () => {
   M.craftDps();
   assert.strictEqual(M.S.refineScrolls, 0, 'no scroll for 19');
   assert.deepStrictEqual(Array.from(M.S.nmMat), [5,5,5,4,0], 'nothing is spent');
-  assert.ok(M.LOGS.some(x => x.includes('20 Nightmare materials') && x.includes('You have 19')), 'the player is told the count');
+  assert.ok(M.LOGS.some(x => x.includes('20 Void Cores') && x.includes('You have 19')), 'the player is told the count');
 });
 t('craftDps keeps the leftovers when more than 20 are held', () => {
   M.S = fresh({ nmMat: [9,9,9,0,0] });   // 27

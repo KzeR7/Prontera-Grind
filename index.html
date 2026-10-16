@@ -815,7 +815,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=166">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=179">
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 </head>
 <body>
@@ -880,8 +880,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="comboFieldStatus" data-combo-status aria-label="Combat combo status"></div>
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
-<script src="assets/wardrobe.js?v=134"></script>
-<script src="assets/fourth-jobs.js?v=166"></script>
+<script src="assets/wardrobe.js?v=179"></script>
+<script src="assets/fourth-jobs.js?v=179"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/skill-icons.js?v=130"></script>
@@ -1121,7 +1121,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-16 haven-v179 bonus bgm selections';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-16 haven-v183 bonus bgm selections + GM equipment presets';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1646,6 +1646,32 @@ function makeMythicEquipment(setKey,slot,weaponType){
   const slots=slot==='weapon'&&(weaponType==='katar'||weaponType==='bow')?4:slot==='weapon'?3:1;
   const item={id:uid(),slot,wt:slot==='weapon'?weaponType:undefined,tier,val,name:'Mythic '+name,aff,slots,cards:[],sec:6,lvl:150,quality:1.5,mp:set.map,mythic:true,ascSet:setKey};
   return{item};
+}
+// GM presets grant separate items; selecting a class never changes the player's job or gear.
+const GM_ASC_PRESETS={
+  'Rune Knight':{set:'molten',main:'str'},'Warlock':{set:'ethereal',main:'int'},
+  'Ranger':{set:'infernal',main:'dex'},'Guillotine Cross':{set:'voidwalker',main:'str'},
+  'Arch Bishop':{set:'primal',main:'int'},'Mechanic':{set:'molten',main:'str'}
+};
+function gmMaxAscensionGear(cls){
+  if(!S.gm||!Object.hasOwn(GM_ASC_PRESETS,cls))return;
+  const preset=GM_ASC_PRESETS[cls],c=CLASSES[cls];
+  const recipes=[...c.wt.map(w=>['weapon',w]),...['armor','head','leg','acc','acc'].map(slot=>[slot])];
+  if(dualWield(cls))recipes.push(['weapon','dagger']);
+  if(S.inv.length+recipes.length>BAGMAX)return log('Make bag space for the complete preset ('+recipes.length+' items).','r0');
+  const gear=recipes.map(([slot,wt])=>{
+    const it=makeMythicEquipment(preset.set,slot,wt).item,magic=preset.main==='int';
+    const priority=slot==='weapon'?(wt==='staff'?['matk','int','dex','hp']:magic?['str','atk','aspd','cdm']:[preset.main,'atk','crit','cdm']):
+      slot==='head'?[preset.main,magic?'matk':'atk','vit','hp']:
+      slot==='acc'?[preset.main,magic?'matk':'atk','crit','cdm']:
+      slot==='leg'?['aspd','move','hp','vit']:['hp','vit','agi','flee'];
+    const pool=affixPool(it),keys=[...new Set([...priority,...pool])].filter(k=>pool.includes(k)).slice(0,4);
+    it.r=15;
+    it.val=Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*15*1.15*RAR[4].m*1.5*1.05);
+    it.aff=keys.map(k=>({k,v:k==='move'?Math.min(slot==='acc'?5:8,affixValue(k,6,4,1.25,it.mp)):affixValue(k,6,4,1.25,it.mp)}));
+    return it;
+  });
+  S.inv.push(...gear);log('Granted '+cls+' '+ASC_SETS[preset.set].name+' preset: +15, maximum base values and four maximum affixes. Check your bag.','r4','gear');ui();save();
 }
 function transformToMythic(item,setKey){
   if(!fourthJob())return{error:'Ascension requires a fourth-job class'};
@@ -2448,14 +2474,12 @@ const FIELD_GEAR_NM=[.5,.4,.3],FIELD_GEAR_MID_NM=[.35,.28,.21];
 // Stages 4 and 5 - rolls HALF of its table, on normal mobs and in the Stage 5 MVP pool alike. Cards, ore
 // and pets are not touched. Section 4 (N, Stages 1-3 of the band) keeps the v76.2 third.
 const NMPLUS_DROP=.5;
-// v90.6 (owner, option 3): each Nightmare map's Stage 15 boss drops that map's own crafting material.
-// Five materials, one per adjacent pair of maps. Any 20 craft a Refine Protection Scroll.
-// Old ten-type saves are summed pairwise once; nmMatIndex maps drops and reforge costs.
-const NM_MAT=['Dread Essence','Void Core','Spectral Ectoplasm','Oni Horn','Helheim Rune'];
-const nmMatIndex=m=>Math.floor(Math.max(0,Math.min(9,m|0))/2);
-function repairMaterials(f,version){const old=Array.isArray(f.nmMat)?f.nmMat:[];f.nmMat=NM_MAT.map((_,i)=>version===2?safeCount(old[i]):safeCount(old[i*2])+safeCount(old[i*2+1]));f.nmMatVersion=2;}
+// All Nightmare materials share one wallet; preserve quantities from both older layouts.
+const NM_MAT=['Void Core'];
+const nmMatIndex=m=>0;
+function repairMaterials(f,version){const old=Array.isArray(f.nmMat)?f.nmMat:[];f.nmMat=[version===3?safeCount(old[0]):old.reduce((n,v)=>safeCount(n+safeCount(v)),0)];f.nmMatVersion=3;}
 const NM_MAT_CH=1;
-// v90.7 (owner): a Refine Protection Scroll costs 20 Nightmare materials, any mix from any maps.
+// v90.7 (owner): a Refine Protection Scroll costs 20 Void Cores.
 const DPS_MATS=20;
 // v90.9 (owner): a regular Nightmare mob pays Zeny on NM_ZENY_CH (90%) of its kills, and the payout is a random
 // NM_ZENY_LO to NM_ZENY_HI (0.5x to 1.0x) of the old value: mean 0.675 of before. Bosses always pay.
@@ -2947,7 +2971,7 @@ function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},scale=rank/5,lab
  return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*scale).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
-const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.45,muted:false},
+const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.45,muted:false},
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -3455,7 +3479,7 @@ function gmApplyGift(p){
     if(['ori','elu'].includes(p.resource))S.ore[p.resource]+=amount;
     else if(['shards','dps','refineScrolls','mythicScrolls'].includes(p.resource))S[p.resource]=safeCount(S[p.resource])+amount;
     else if(/^ascMat[0-2]$/.test(p.resource))S.ascensionMat[+p.resource.slice(6)]+=amount;
-    else if(/^nmat[0-4]$/.test(p.resource))S.nmMat[+p.resource.slice(4)]+=amount;
+    else if(/^nmat[0-4]$/.test(p.resource))S.nmMat[0]+=amount;
     else if(/^nm[0-9]$/.test(p.resource))S.nmMat[nmMatIndex(+p.resource.slice(2))]+=amount;
     else throw Error('Unknown resource');
   }else if(p.item){
@@ -3766,7 +3790,7 @@ function rotationCooldown(){return 3;}
 function comboStatus(){const c=comboConfig(),r=skillState();if(!c.enabled)return 'Combo paused';if(t<(r.recoverUntil||0))return 'Recovering · '+Math.max(0,r.recoverUntil-t).toFixed(1)+'s';
   if(!rotationSkills().length)return 'Choose an attack to begin';return r.comboSlots?'Combo · '+Math.min(r.cursor+1,r.comboSlots.length)+' / '+r.comboSlots.length:'Ready for next combo';}
 function rotationBar(){const c=comboConfig(),available=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
-  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, then recover for 3 seconds.${FOURTH_JOBS_LIVE&&S.cls==='Guillotine Cross'?' Rolling Cutter spins five times in its slot at 0.2s spacing.':' Each attack casts once.'} Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · basic attacks during recovery</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"${sk?` title="${esc(sk.n+' · Lv '+lv(sk.id)+' · '+sk.cd+'s cooldown — '+(sk.text||''))}"`:''}><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
+  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, then recover for 3 seconds.${FOURTH_JOBS_LIVE&&S.cls==='Guillotine Cross'?' Rolling Cutter spins five times in its slot at 0.2s spacing.':' Each attack casts once.'} Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · fast basic attacks between skills</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"${sk?` title="${esc(sk.n+' · Lv '+lv(sk.id)+' · '+sk.cd+'s cooldown — '+(sk.text||''))}"`:''}><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
 }
 // v39: the master auto-cast switch. It covers every learned skill of the current line that
 // auto-casts (everything except passives), reads ON only while ALL of them are ON, and clears
@@ -4460,7 +4484,10 @@ function resetSkillRuntime(keepBuffs=false){if(typeof mobs!=='undefined')for(con
 function skillState(){if(!skillRuntime||skillRuntime.owner!==(S&&S.cls)||skillRuntime.save!==S)resetSkillRuntime();return skillRuntime;}
 function finishCombo(r){r.comboSlots=null;r.cursor=0;r.repeatCount=0;r.recoverUntil=t+3;}
 function skillStackReady(sk){const e=skillState().stacks?.[sk.requiresStack];return !sk.requiresStack||!!(e&&e.n>0&&e.until>t);}
-function nextComboSkill(target){const r=skillState(),c=comboConfig();if(!c.enabled||t<r.recoverUntil||t+swingLength(Math.min(SKILLS.find(s=>s.id===r.comboSlots?.[r.cursor])?.spacing||.5,aspd()))*SWING_CONTACT+1e-8<r.nextCastAt)return null;
+// Time until the next skill's windup can start without bringing its impact forward.
+function comboSwingWait(){const r=skillState(),sk=SKILLS.find(s=>s.id===r.comboSlots?.[r.cursor]);
+  return Math.max(0,r.nextCastAt-t-swingLength(Math.min(sk?.spacing||.5,aspd()))*SWING_CONTACT);}
+function nextComboSkill(target){const r=skillState(),c=comboConfig();if(!c.enabled||t<r.recoverUntil||comboSwingWait()>1e-8)return null;
   if(!r.comboSlots){r.comboSlots=rotationSkills().map(s=>s.id);r.cursor=0;if(!r.comboSlots.length){r.comboSlots=null;return null;}}
   while(r.cursor<r.comboSlots.length){const id=r.comboSlots[r.cursor],sk=SKILLS.find(s=>s.id===id);
     if(sk&&skillOn(id)&&skillStackReady(sk)&&(skCd[id]||0)<=(sk.repeat?swingLength(Math.min(sk.spacing||.5,aspd()))*SWING_CONTACT+1e-8:0)&&Math.hypot(target.x-pl.x,target.z-pl.z)<=skillRange(sk,target)+.6)return sk;
@@ -4851,9 +4878,13 @@ function swingLength(interval=aspd()){                    // the drawn attack an
 }
 function playerAttack(){
   if(!mob)return;
-  engageWait=0;   // a swing is the proof the fight is live: the walk-in wait starts again (v88.4)
+  engageWait=0;   // a swing ends the current out-of-range tracking
   const far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6,sk=nextComboSkill(mob);
-  const interval=sk?(sk.spacing||.5):aspd();pAtkT=interval;atkAnim=1;swingDur=swingLength(Math.min(interval,aspd()));
+  const r=skillState(),wait=!sk&&comboConfig().enabled&&r.comboSlots?comboSwingWait():0;
+  // Fill only gaps that fit a complete normal swing; reserve the next skill's windup.
+  if(wait>1e-8&&swingLength()>wait){pAtkT=wait;return;}
+  const interval=sk?Math.min(sk.spacing||.5,aspd()):aspd();pAtkT=interval;atkAnim=1;swingDur=swingLength(Math.min(interval,aspd()));
+  if(wait>1e-8)pAtkT=Math.min(pAtkT,wait);
   const casts=sk?[sk]:[];
   const d=pv('dbl');
   swing={t:swingDur*SWING_CONTACT,target:mob,pack:mob.pack,casts:casts.map(sk=>({sk,k:1})),
@@ -5046,16 +5077,15 @@ function qRefresh(){if(S)questBook();}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} MVP${q.goal>1?'s':''}`;
 // Older saves may retain refineScrollFrom; protection now has a single On/Off setting.
 const refineScrollFrom=()=>0;
-function refineProtectionUI(){return `<div class="sec">Refine Protection Scrolls</div><small>Regular: ${safeCount(S.refineScrolls)} (for +0 to +10 on all gear)</small><br><small>Mythic: ${safeCount(S.mythicScrolls)} (for +11 to +15 on Mythic gear, boss drop only)</small><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>When On, one scroll is used per attempt, including success, and prevents rank loss. +10 is safe on Mythic gear (no scroll needed). Below +5 on regular gear, we ask before spending a scroll. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
+function refineProtectionUI(){return `<div class="sec">Refine Protection Scrolls</div><small>Regular: ${safeCount(S.refineScrolls)} (for +0 to +10 on all gear)</small><br><small>Mythic: ${safeCount(S.mythicScrolls)} (for +11 to +15 on Mythic gear, boss drop only)</small><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>When On, one scroll is used per attempt, including success, and prevents rank loss. +10 is safe on Mythic gear (no scroll needed). Below +5, we ask before spending a scroll. Unprotected failures from +5 to +9 lose one rank on every grade. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
 function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it.r||0)>=maxRef)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
   if(S.ore[o]<need){log(`You need ${need} ${ORE[o]} for this piece. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
   const previousRank=it.r||0;let succeeded=false;const protectedAttempt=!!S.useRefineScroll;
   const needsMythicScroll=it.sec===6&&previousRank>=10;
   if(protectedAttempt&&needsMythicScroll&&!safeCount(S.mythicScrolls)){log('Mythic Protection Scroll required for +11 to +15 refines. These drop from Ascension map bosses only.');return;}
   if(protectedAttempt&&!needsMythicScroll&&!safeCount(S.refineScrolls)){log('Refine Protection Scroll is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
-  // v174 (owner: Mythic +11..+15 drops on unprotected fails, +10 and below stays safe):
-  // warn before spending any scroll where failure cannot drop the rank.
-  if(protectedAttempt&&((it.sec!==6&&previousRank<5)||(it.sec===6&&previousRank<=10))&&arguments[1]!==it){
+  // Warn before spending a scroll where a failed attempt cannot drop the rank.
+  if(protectedAttempt&&(previousRank<5||(it.sec===6&&previousRank===10))&&arguments[1]!==it){
     const owner=S;let pending=true;
     ask((it.sec===6?'This Mythic equipment is +'+previousRank+', so failure cannot drop its rank. Use one '+(needsMythicScroll?'Mythic ':'')+'Refine Protection Scroll anyway?':'This equipment is below +5, so failure cannot drop its rank. Use one Refine Protection Scroll anyway?')+' This attempt also costs '+c.toLocaleString()+'z and '+need+' '+ORE[o]+'.',()=>{
       if(!pending)return;pending=false;
@@ -5066,7 +5096,7 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
   if(protectedAttempt){if(needsMythicScroll)S.mythicScrolls--;else S.refineScrolls--;}
   S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){succeeded=true;it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(protectedAttempt){log(`Refine failed, but your ${needsMythicScroll?'Mythic ':''}Protection Scroll kept +${it.r}.`,'r3','gear')}
-    else if(it.r>=5&&it.sec!==6){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
+    else if(it.r>=5&&(it.sec!==6||it.r<10)){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
     else if(it.sec===6&&it.r>=11){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
     else if(it.r>=10&&it.sec===6){log(`Refine failed, but +10 is safe on Mythic gear. Kept +${it.r}.`,'r3','gear')}
     else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save();if(typeof eclipseRefineFeedback==='function')eclipseRefineFeedback(it,previousRank,succeeded)}
@@ -5079,11 +5109,11 @@ function eclipseRefineFeedback(it,previousRank,succeeded){
   const result=$('eclipseRefineResult');if(result){result.classList.remove('refine-success','refine-failure');void result.offsetWidth;result.classList.add(succeeded?'refine-success':'refine-failure')}
   eclipseRefineTimer=setTimeout(()=>{eclipseRefineOutcome=null;renderWin()},3600);
 }
-// Crafted Refine Protection Scrolls cost 20 Nightmare materials of any mix.
+// Crafted Refine Protection Scrolls cost 20 Void Cores.
 // Crafted and purchased scrolls share the reserve and the Refine On/Off control.
-function craftDps(){if(!S)return;const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);if(total<DPS_MATS){log(`A Refine Protection Scroll needs ${DPS_MATS} Nightmare materials, any mix. You have ${total}.`,'','gear');ui();return}let left=DPS_MATS;S.nmMat=have.map(n=>{const take=Math.min(n,left);left-=take;return n-take});S.refineScrolls=safeCount(S.refineScrolls)+1;log('Crafted a Refine Protection Scroll.','r3','gear');ui();save()}
-function nmMatCounts(){return NM_MAT.map((_,i)=>safeCount(S.nmMat&&S.nmMat[i]))}
-function dpsPanel(){const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);return`<div class="sec" style="margin-top:8px">Craft protection scrolls</div><small>Scrolls: ${safeCount(S.refineScrolls)}. Crafted scrolls join the same reserve as purchased scrolls. Enable On in Refine to use one per attempt, including success.</small><div class="row" style="margin-top:4px"><button data-a="craftdps" ${total<DPS_MATS?'disabled':''}>Craft Refine Protection Scroll (${DPS_MATS} materials, any mix)</button></div><small>Materials ${total}/${DPS_MATS}: ${NM_MAT.map((n,i)=>n+' '+have[i]).join(' &middot; ')}</small>`}
+function craftDps(){if(!S)return;const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);if(total<DPS_MATS){log(`A Refine Protection Scroll needs ${DPS_MATS} Void Cores. You have ${total}.`,'','gear');ui();return}let left=DPS_MATS;S.nmMat=have.map(n=>{const take=Math.min(n,left);left-=take;return n-take});S.refineScrolls=safeCount(S.refineScrolls)+1;log('Crafted a Refine Protection Scroll.','r3','gear');ui();save()}
+function nmMatCounts(){return [safeCount((S.nmMat||[]).reduce((n,v)=>safeCount(n+safeCount(v)),0))]}
+function dpsPanel(){const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);return`<div class="sec" style="margin-top:8px">Craft protection scrolls</div><small>Scrolls: ${safeCount(S.refineScrolls)}. Crafted scrolls join the same reserve as purchased scrolls. Enable On in Refine to use one per attempt, including success.</small><div class="row" style="margin-top:4px"><button data-a="craftdps" ${total<DPS_MATS?'disabled':''}>Craft Refine Protection Scroll (${DPS_MATS} Void Cores)</button></div><small>Materials ${total}/${DPS_MATS}: ${NM_MAT.map((n,i)=>n+' '+have[i]).join(' &middot; ')}</small>`}
 
 // ---------- v90: Black Market - the endgame Zeny sinks (Base Lv 100+) ----------
 // Zeny overflows once a character is past Base Lv 100, so the Black Market gives it two places to go:
@@ -5165,7 +5195,7 @@ function levelingGuide(){return `<header class="handbook-intro"><small>02 / YOUR
  [`${NMLV[0]}–139`,'Enter Nightmare',[0,1,2,3,4],'Nightmare Prontera through Payon unlocks at Base 120 and offers N equipment. Start at NM 1; target NM 4–5 for equipment once stable. NM 5 is the MVP stage. Compare income with Normal Stage 10 before committing.'],
  [`${NMLV[1]}–150`,'Prepare for the Crucible',[5,6,7,8,9],'Nightmare Comodo through Abyss unlocks at Base 140 and offers N+ equipment. Farm compatible N+ pieces and useful cards. At Base 150 and parent Job 50, open Jobs and challenge the 60-second fourth-job trial. Failure or timeout allows a retry.'],
  ['150 / fourth job','Begin Ascension',[10,11],'After successful promotion, both maps unlock without prerequisite boss clears. Start at Stage 1. Stages 1–2 are arrival, 3 crossing, 4 approach and 5 an MVP with five escorts. Farm materials here; keep using Nightmare for equipment.']
- ].map(([level,title,maps,body])=>`<article><span class="route-level">${level}</span><div><h3>${title}</h3><p>${body}</p><div class="guide-actions">${maps.map(m=>`<button data-a="guidemap" data-v="${m}:${level.includes('139')||level.includes('140')?11:1}">${MAPS[m].n}</button>`).join('')}</div></div></article>`).join('')}</div><section class="guide-note"><h3>When should I move?</h3><p>Watch a full minute of EXP/min and Zeny/min after each change. If deaths, travel or slow kills lower your income, return to your previous field. Turn Auto-advance off to camp a card or material. Drops are random; a listed chance is per monster kill, not a promise.</p><p>Nightmare MVPs supply five map-pair materials: ${NM_MAT.map((n,i)=>`${n} (${MAPS[i*2].n} / ${MAPS[i*2+1].n})`).join('; ')}. Craft a Refine Protection Scroll with ${DPS_MATS} materials of any mix. Selected-affix N/N+ reforges use the matching material.</p></section>`;}
+ ].map(([level,title,maps,body])=>`<article><span class="route-level">${level}</span><div><h3>${title}</h3><p>${body}</p><div class="guide-actions">${maps.map(m=>`<button data-a="guidemap" data-v="${m}:${level.includes('139')||level.includes('140')?11:1}">${MAPS[m].n}</button>`).join('')}</div></div></article>`).join('')}</div><section class="guide-note"><h3>When should I move?</h3><p>Watch a full minute of EXP/min and Zeny/min after each change. If deaths, travel or slow kills lower your income, return to your previous field. Turn Auto-advance off to camp a card or material. Drops are random; a listed chance is per monster kill, not a promise.</p><p>Nightmare MVPs across all regions supply Void Core. Craft a Refine Protection Scroll with ${DPS_MATS} Void Cores. Selected-affix N/N+ reforges also use Void Core.</p></section>`;}
 const GUIDE_LESSONS={
  beginner:[
  ['Welcome to Prontera','Your character fights automatically. Kills earn Base EXP, Job EXP, Zeny and random loot. Start in Prontera, spend points in Character and inspect drops in Bag. The game keeps fighting while you read panels.','status'],
@@ -5232,10 +5262,10 @@ function beginnerGuide(){const chapters=[
  ['Pets & Bond','Pets join through monster drops, not eggs. Deploy up to three in Pets to use their bonuses. Duplicate species become Bond. Training, Bond and pet battle-skill rolls are separate upgrades; inspect their costs and effects. Only deployed pets provide their applicable battle bonuses.'],
  ['Contracts & Mastery Index','Follow the on-screen contracts and claim completed rewards. Mob Index tracks kills and Index XP, unlocking hunt titles and permanent rewards. Card Mastery consumes loose, unstarred cards to award tokens for random permanent stats. That copy is gone: equip useful cards first and donate spare copies. A Mastery reset consumes a Legendary card and refunds spent tokens.'],
  ['Endless Echo & rankings','Maps → Endless Echo is a three-minute damage trial. Practise in training before using your two daily ranked attempts. Ranked results earn Echo Shards for its reward shop. Leaderboard compares progress with other players when the online service is available.'],
- ['Wardrobe, Settings & the log','Wardrobe changes appearance without changing combat stats. Fourth-job bodies have fixed native looks with some cosmetic controls unavailable. Settings adjusts combat display and preferences. Display controls the screen layout; Log helps you inspect drops, levels and events.'],
+ ['Wardrobe, Settings & the log','Wardrobe changes appearance without changing combat stats. All classes support native hairstyles, colors and accessories, including the six fourth jobs. Settings adjusts combat display and preferences. Display controls the screen layout; Log helps you inspect drops, levels and events.'],
  ['Saving & time away','Watch the cloud badge when using an online account. Browser-only previews save on this browser. Hidden tabs continue fighting; they are not away time. Away rewards use a measured farming sample at 50% efficiency, capped at four hours per claim, after at least three minutes without a save. Let a stable field run for a full minute to refresh its sample.']
  ];return `<header class="handbook-intro"><small>01 / START HERE</small><h2>Your adventure, one step at a time</h2><p>Fight → spend points → equip upgrades → choose a better field. You do not need to master every system on your first day.</p><button data-a="guidereplay" data-v="beginner">Replay first-login tour</button></header><div class="guide-chapters">${chapters.map(([title,body],i)=>`<details data-ui-disclosure="handbook-beginner-${i}" ${i===0?'open':''}><summary>${String(i+1).padStart(2,'0')} · ${title}</summary><p>${body}</p></details>`).join('')}</div>`;}
-function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 60-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(([title,body])=>`<article class="guide-note"><h3>${title}</h3><p>${body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>+${x.step}${x.unit} per rank · ${x.text}. Maximum 10 ranks.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts each have a 0.035% chance per kill on their own map. Valkyrie’s Sigils roll at 0.0025% on ordinary enemies and 0.1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Mythic refinement failure preserves the rank. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
+function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 60-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(([title,body])=>`<article class="guide-note"><h3>${title}</h3><p>${body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>+${x.step}${x.unit} per rank · ${x.text}. Maximum 10 ranks.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts each have a 0.035% chance per kill on their own map. Valkyrie’s Sigils roll at 0.0025% on ordinary enemies and 0.1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Unprotected failures at +5–9 lose one rank. Mythic +10 is a checkpoint; higher failures lose one rank unless protected. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
 function handbook(){return `<section class="handbook"><nav class="guide-nav" aria-label="Guide chapters">${[['beginner','Beginner'],['leveling','Leveling route'],['build','Your build'],['cards','Card targets'],['ascension','Ascension']].map(([id,label])=>`<button data-a="guidepage" data-v="${id}" aria-pressed="${guidePage===id}">${label}</button>`).join('')}</nav>${guideTourPanel()}${guidePage==='beginner'?beginnerGuide():guidePage==='leveling'?levelingGuide():guidePage==='ascension'?ascensionGuide():buildGuide(true)}</section>`;}
 function guideBuildPlan(){
  const main=INT_CLASSES.includes(S.cls)?'INT':C().main.toUpperCase(),power=INT_CLASSES.includes(S.cls)?'MATK':'ATK';
@@ -5621,7 +5651,7 @@ function eclipseInventoryTools(){const known=new Set(eclipseInventoryState?.owne
 let mapSeason='atlas';
 function mapCollectionTabs(){return `<div class="atabs map-season-tabs" role="tablist" aria-label="Map collections">${[['atlas','World Atlas'],['ascension','Ascension Map'],['echo','Endless Echo']].map(([id,label])=>`<button type="button" id="map-tab-${id}" role="tab" aria-selected="${mapSeason===id}" aria-controls="map-panel-${id}" tabindex="${mapSeason===id?0:-1}" class="${mapSeason===id?'on':''}" data-a="mapseason" data-v="${id}">${label}</button>`).join('')}<button type="button" id="map-tab-social" role="tab" aria-selected="false" aria-disabled="true" aria-label="Social Hub, locked, coming soon" tabindex="-1" disabled><span aria-hidden="true">&#128274; </span>Social Hub<small class="map-coming-soon">Coming Soon</small></button></div>`;}
 const V={
-  map(){const navigation=mapCollectionTabs();if(mapSeason==='echo')return navigation+`<section class="echo-destination"><div class="hd">Endless Echo</div><p>Face the Lord of Death Illusion in a three-minute damage trial.</p><div class="trial-stats"><span>Personal best <b>${Math.round(trialState().best||0).toLocaleString()} DPS</b></span><span><b>${trialLeftToday()}/2</b> ranked attempts left</span><span><b>${S.shards|0}</b> Echo Shards</span></div><button data-trial="lobby">Enter Endless Echo</button></section>`;const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM));
+  map(){const navigation=mapCollectionTabs();if(mapSeason==='echo')return navigation+`<section class="echo-destination"><div class="echo-scene" role="img" aria-label="A moonlit arena beneath a violet portal"><span>ENDLESS ECHO</span><strong>Beyond the veil</strong><small>Three minutes. One unbroken challenge.</small></div><div class="hd">Endless Echo</div><p>Face the Lord of Death Illusion in a three-minute damage trial.</p><div class="trial-stats"><span>Personal best <b>${Math.round(trialState().best||0).toLocaleString()} DPS</b></span><span><b>${trialLeftToday()}/2</b> ranked attempts left</span><span><b>${S.shards|0}</b> Echo Shards</span></div><button data-trial="lobby">Enter Endless Echo</button></section>`;const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM));
     // The map tab is a compact 450px, two-band panel: pick a map on the top band, walk its fields on the
     // next one, read the drop tables underneath. The field band is sticky, so the level you are
     // choosing stays on screen while the tables below it scroll - no scrolling down to find it.
@@ -5678,8 +5708,9 @@ const V={
     const k=selK||S.cls,planned=CD4.find(row=>row[0]===k),c=CLASSES[k],future=!c&&!!planned,blk=future?'Coming soon':classBlock(k),pj=S.jobs[k],rec=future?null:classRec(k);
     const node=n=>CLASSES[n]?tnode(n):`<button class="tn lock${k===n?' pick':''}" data-class-status="lock" data-a="selk" data-v="${n}"><b>${n}</b><small><span class="eclipse-job-status">Coming soon</span> · 4th job</small></button>`;
     const overview=`<div class="tree class-lineage-overview"><div class="trow">${node('Novice')}</div><div class="trunk"></div>${[0,1,2,3].map((i)=>`<div class="trow">${lines.map(line=>node(line[i])).join('')}</div>${i<3?'<div class="trunk"></div>':''}`).join('')}</div>`;
-    const design=`<div class="class-design-root">${node('Novice')}</div><nav class="class-path-tabs" aria-label="First classes">${lines.map(line=>`<button data-a="jobbranch" data-v="${line[0]}" aria-expanded="${jobBranch===line[0]}">${line[0]}</button>`).join('')}</nav>${jobBranch?`<div class="class-path-heading"><h3>${jobBranch} lineage</h3></div><div class="class-path-track" aria-label="${jobBranch} progression">${lines.find(line=>line[0]===jobBranch).map(node).join('')}</div>`:''}`;
-    return`<div class="atabs" aria-label="Jobs views"><button data-a="jobview" data-v="lineage" class="${!eclipseJobsBrowse?'on':''}">Class lineage</button><button data-a="jobview" data-v="browse" class="${eclipseJobsBrowse?'on':''}">Class tree</button></div>${eclipseJobsBrowse?design:overview}
+    const currentLine=lines.find(line=>line.includes(S.cls)),path=['Novice',...(currentLine||[])];
+    const design=`<div class="current-class-path" aria-label="Current class lineage">${path.map((n,i)=>{const c=CLASSES[n],blocked=c?classBlock(n):'Coming soon';return `<button class="current-class-card ${n===S.cls?'current':''}" data-a="job" data-v="${n}" ${blocked?'disabled':''} ${n===S.cls?'aria-current="step"':''}><span class="ui-eyebrow">${i===0?'START':i+' / JOB'}</span><span class="class-card-emblem" aria-hidden="true">${['✧','⚔','♜','♛','✦'][i]}</span><strong>${n}</strong><small>${n===S.cls?'Current class':blocked||'Change class'}</small></button>`}).join('')}</div>${!currentLine?'<p>Select a first class in Class tree to explore its full lineage.</p>':''}`;
+    return`<div class="atabs" aria-label="Jobs views"><button data-a="jobview" data-v="lineage" class="${!eclipseJobsBrowse?'on':''}">Current lineage</button><button data-a="jobview" data-v="browse" class="${eclipseJobsBrowse?'on':''}">Class tree</button></div>${eclipseJobsBrowse?overview:design}
     <div class="class-path-focus"><div class="ui-inspector">
     <div class="mob-card"><small>${future?'4TH JOB · COMING SOON':{cur:'CURRENT CLASS',played:'PLAYED CLASS',ok:'AVAILABLE CLASS',lock:'LOCKED CLASS'}[classStatus(k)]}</small><h3>${k}</h3>
     ${future?`<p>Advance from <b>${planned[1]}</b> at Base Lv 150 and Job Lv 50.</p><p>Defeat ${JOB_RITE_OPPONENTS[planned[1]].n} in a 60-second Crucible trial. Victory completes the job change automatically.</p><button disabled>Coming soon</button>`:
@@ -5687,8 +5718,8 @@ const V={
     <div class="row"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':c.tier===4&&!playedClass(k)?'Enter advancement trial':'Change to '+k}</button>${blk&&k!==S.cls?`<small>${blk}</small>`:''}</div>`}</div>
     </div>${future?'':`<div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="classPreview" width="126" height="134" role="img" aria-label="${S.sex==='f'?'female':'male'} ${k} class skin preview"></canvas><span class="hair-preview-loading" id="classPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">CLASS PREVIEW</span><b>${k}</b><span>${S.sex==='f'?'Female':'Male'}</span></div></div>`}</div>
     <div class="eclipse-class-bonus"><b>Class collection <strong>+${collDmg()}% damage</strong></b><p>${playedClasses()} / ${t3Total()} transcendent classes at Base Lv 100+. Each earns a permanent +1% damage for every class.</p></div>
-    <details class="ui-fold"><summary>Switching classes & starting over</summary><p>Played classes keep their Base Lv, Job Lv, stats, skills and gear. Unplayed classes must meet their parent requirements. Selecting a class only inspects it.</p><button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button></details>`},
-  skills(){return subBar('skills')+(V[sub.skills]||V.skilllist)()},
+    <details class="ui-fold"><summary>Switching classes & starting over</summary><p>Played classes keep their Base Lv, Job Lv, stats, skills and gear. Unplayed classes must meet their parent requirements. Class tree nodes open an inspection. Current lineage cards change class when available.</p><button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button></details>`},
+  skills(){if(sub.skills==='combo')sub.skills='skilllist';return subBar('skills')+(sub.skills==='skilllist'?rotationBar():'')+(V[sub.skills]||V.skilllist)()},
   skilllist(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
     return`${S.skillRefund?`<div class="row"><small><b>New class skills:</b> ${S.skillRefund} old skill ranks were cleared. Your earned points are available on their original class lines. Use Auto-allocate to learn attacks first, then all other skills. Each played class also has one free stat reset.</small></div>`:''}${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill points: spend one point per rank. Your current class inherits earlier skills in its own line. Select up to six attacks for an ordered combo. Buffs refresh independently; passives remain active. Basic attacks continue during the 3-second recovery.</small>`
     +`<div class="sk-slot">${sel&&line.includes(sel.from)?skillDetailCard(sel):'<small class="sk-slot-empty">Pick a skill to read what it does and to switch its auto-cast on or off.</small>'}</div>`
@@ -5775,14 +5806,14 @@ const V={
     <div class="hd">Interface palette</div>${typeof eclipsePaletteControls==='function'?eclipsePaletteControls():''}<div class="hd" style="margin-top:10px">Gameplay</div><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
     <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it. Auto-equip lives on the <b>Bag</b> tab and Auto-advance on the <b>World Map</b> tab, next to what they control.</small>
     <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
-  gm(){return`<div class="hd">Player management</div><p><a href="/gm.html" target="_blank" rel="noopener">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Auras: Base 50 / 99 / 150. Weapon glow: +7 / +9 / +10.</small><div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="9">Weapon +9</button><button data-a="gmglow" data-v="10">Weapon +10</button></div><div class="hd">Ascension testing</div><button data-a="gmendgame">Base 150 + crafting/refine supplies</button><p>Max your current job, then use Class Path to enter its fourth-job trial. Grant a complete Mythic set for your current weapons:</p><div class="row">${Object.entries(ASC_SETS).map(([k,v])=>`<button data-a="gmset" data-v="${k}">${v.name}</button>`).join('')}</div><div class="row">${[11,12,13,14,15].map(n=>`<button data-a="gmglow" data-v="${n}">Mythic weapon +${n}</button>`).join('')}</div><div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
-    <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmnm">Unlock Nightmare (Base Lv 150)</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
+  gm(){return`<div class="hd">Player management</div><p><a href="/gm.html" target="_blank" rel="noopener">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Auras: Base 50 / 99 / 150. Weapon glow: +7 / +9 / +10.</small><div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="9">Weapon +9</button><button data-a="gmglow" data-v="10">Weapon +10</button></div><div class="hd">Ascension testing</div><button data-a="gmendgame">Base 150 + crafting/refine supplies</button><p>Max your current job, then use Class Path to enter its fourth-job trial. Grant a complete Mythic set for your current weapons:</p><div class="row">${Object.entries(ASC_SETS).map(([k,v])=>`<button data-a="gmset" data-v="${k}">${v.name}</button>`).join('')}</div><div class="row">${[11,12,13,14,15].map(n=>`<button data-a="gmglow" data-v="${n}">Mythic weapon +${n}</button>`).join('')}</div><div class="hd">Maxed Ascension equipment by class</div><p>Grant to bag: +15 Mythic gear, maximum base values and four maximum affix rolls per item. Includes each class weapon option and a second dagger for Guillotine Cross. Cards are empty; equip after reaching the matching fourth job.</p><div class="row">${Object.entries(GM_ASC_PRESETS).map(([cls,p])=>`<button data-a="gmmaxset" data-v="${cls}">${cls} · ${ASC_SETS[p.set].name} +15</button>`).join('')}</div><div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
+    <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gmo" data-v="1000">+1,000 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmnm">Unlock Nightmare (Base Lv 150)</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
     <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
     <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
     <div class="hd" style="margin-top:10px">Skill accounting test controls</div><small>Max the current class line, then use the normal Auto-allocate all skills button or let GM do both steps.</small><div class="row"><button data-a="gmskill" data-v="maxjobs">Max current line jobs</button><button data-a="gmskill" data-v="maxallocate">Max jobs + auto allocate</button><button data-a="gmskill" data-v="reset">Reset current line skills</button></div>
     <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmbond" data-v="1">+1 duplicate on the selected pet (Bond)</button><button data-a="gmbond" data-v="5">+5 duplicates</button></div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>
     <div class="hd" style="margin-top:10px">Ascension test controls</div><small>Stats levels are account-wide; skill levels belong to the current class. Spend the points in Character → Ascension stats and Skills → Ascension.</small><div class="row"><button data-a="gmascstats" data-v="max">Max Stats Ascension 50</button><button data-a="gmascstats" data-v="reset">Reset Stats Ascension</button><button data-a="gmascskills" data-v="max">Max Skill Ascension 30</button><button data-a="gmascskills" data-v="reset">Reset Skill Ascension</button></div>
-    <div class="hd" style="margin-top:10px">Level test controls</div><small>Base level, EXP and points return to fresh Lv1 values; stats, gear and jobs stay untouched.</small><div class="row"><button data-a="gmresetlv">Reset Base Lv → 1</button></div>`}};
+    <div class="hd" style="margin-top:10px">Level test controls</div><small>Set Base level and clear Base EXP. Unspent points are recalculated; allocated stats, gear and jobs stay untouched.</small><div class="row">${[1,99,120].map(n=>`<button data-a="gmresetlv" data-v="${n}">Reset Base Lv → ${n}</button>`).join('')}</div>`}};
 // v90: the Black Market panel. Locked until Base Lv 100; ore is bought one at a time and a reforge is
 // offered for every worn piece that has an affix.
 V.guide=()=>handbook();
@@ -5834,7 +5865,7 @@ function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
   const old=S.eq[k];transferEquipmentCards(old,it,k);S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
   S.hp=Math.min(S.hp,maxHp());log('Equipped '+iname(it)+' ('+EQK.find(x=>x[0]===k)[1].toLowerCase()+').','','gear');ui();save()}
-const SUBS={equip:[['equip0','Loadout'],['refine','Refine (R)'],['reforge','Reforge'],['ascension','Ascension']],status:[['stats','Stats'],['ascstats','Ascension stats']],bag:[['bag','Items'],['cards','Cards']],skills:[['skilllist','Skills'],['combo','Combo'],['skillasc','Ascension']]};
+const SUBS={equip:[['equip0','Loadout'],['refine','Refine (R)'],['reforge','Reforge'],['ascension','Ascension']],status:[['stats','Stats'],['ascstats','Ascension stats']],bag:[['bag','Items'],['cards','Cards']],skills:[['skilllist','Skills'],['skillasc','Ascension']]};
 const subBar=t=>`<div class="atabs">${SUBS[t].map(([k,n])=>`<button data-a="sub" data-v="${t}:${k}" class="${sub[t]===k?'on':''}">${n}</button>`).join('')}</div>`;
 V.ascension=()=>ascensionForgePanel();
 function ascensionProgressPanel(skills=false){
@@ -5850,9 +5881,8 @@ function ascensionProgressPanel(skills=false){
 }
 
 V.ascstats=()=>ascensionProgressPanel();V.ascskills=()=>ascensionProgressPanel(true);
-// v174 (owner: combo and skill ascension live under Skills now): the Combo sub-tab owns the
-// rotation bar outright, and Skill ascension moved out of Character into Skills -> Ascension.
-V.skillasc=V.ascskills;V.combo=()=>rotationBar();
+// Combo editing lives at the top of the skill library.
+V.skillasc=V.ascskills;
 V.reforge=()=>bmOpen()?reforgePanel():`<p>Reforge opens with the Black Market at Base Lv ${BM_LV}.</p>`;
 V.equip=()=>subBar('equip')+V[sub.equip]();
 V.status=()=>subBar('status')+V[sub.status]();
@@ -6042,7 +6072,7 @@ function arrangePanel(k,root){
   const tabs=q('.atabs');if(tabs)root.prepend(tabs);
   const mode=k==='status'?sub.status:k==='bag'?sub.bag:k==='equip'?(sub.equip==='equip0'?'equip':sub.equip):k;
   root.dataset.view=mode;
-  const labels={reforge:['EQUIPMENT','Reforge affixes','Select affixes, review the cost, then keep or accept your offer.'],refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:mapSeason==='echo'?['CHALLENGE','Endless Echo','Three minutes · your best damage']:mapSeason==='ascension'?['EXPLORE / ASCENSION','Ascension Map','Fourth-job classes unlock Astral Citadel and Thor Volcano']:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],ascension:['EQUIPMENT','Ascension Forge','Evolve owned N+ equipment into a Mythic set piece.'],job:['PROGRESSION','Class lineage','Inspect every class or explore an expanding tree.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
+  const labels={reforge:['EQUIPMENT','Reforge affixes','Select affixes, review the cost, then keep or accept your offer.'],refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:mapSeason==='echo'?['CHALLENGE','Endless Echo','Three minutes · your best damage']:mapSeason==='ascension'?['EXPLORE / ASCENSION','Ascension Map','Fourth-job classes unlock Astral Citadel and Thor Volcano']:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],ascension:['EQUIPMENT','Ascension Forge','Evolve owned N+ equipment into a Mythic set piece.'],job:['PROGRESSION','Class Tree','Follow your current lineage or explore every class.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
   const info=labels[mode]||labels[k];
   if(info){const h=make('header','ui-hero');put(h,make('span','ui-eyebrow',info[0]),make('h2','',info[1]),make('p','',info[2]));root.insertBefore(h,body)}
   if(k==='map'){body.id='map-panel-'+mapSeason;body.setAttribute('role','tabpanel');body.setAttribute('aria-labelledby','map-tab-'+mapSeason);}
@@ -6089,7 +6119,8 @@ function arrangePanel(k,root){
     const footer=put(section('Automation','ui-automation'),tools);
     // The allocation tile can be a sibling of the master tile in older saves/builds.
     const masters=all('.sk-master,.sk-alloc');masters.forEach(e=>{if(!footer.contains(e))footer.append(e)});
-    body.replaceChildren(footer,scroll('skills',catalog),detail,fold('Combo setup',q('.skill-rotation'),'combo-setup'),fold('Skill points & combat rules',intro,'skill-notes'),fold('Reset skills',reset,'respec'));
+    const combo=put(make('div','ui-combo-editor'),q('.skill-rotation'));
+    body.replaceChildren(combo,footer,scroll('skills',catalog),detail,fold('Skill points & combat rules',intro,'skill-notes'),fold('Reset skills',reset,'respec'));
   }else if(mode==='bag'&&q('.bag-items')){
     body.classList.add('ui-materials');
   }else if(mode==='bag'||mode==='cards'){
@@ -6199,7 +6230,7 @@ function arrangePanel(k,root){
 }
 
 const DOCK_TABS=['map','status','equip','job','skills','bag','pet','market','log','wardrobe','set'];
-const DOCK_LABEL={wardrobe:'Wardrobe',map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
+const DOCK_LABEL={wardrobe:'Wardrobe',map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Class Tree',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
 function eclipsePositionMore(){
   const menu=$('sideMenu'),button=$('dock').querySelector('.eclipse-more');if(!sideOpen||!button)return;
   const rect=$('dock').getBoundingClientRect(),width=menu.offsetWidth||225;
@@ -6411,7 +6442,7 @@ function startAstralJourney(from,to){
   if(S.mp!==10||from===to)return false;
   if(!astralOriginStage)astralOriginStage=from;
   const target=ASTRAL_FOCUS[to-1]-ASTRAL_FOCUS[astralOriginStage-1]+Z1-5;
-  astralJourney={owner:S,user:currentUser,cls:S.cls,to,target};
+  astralJourney={owner:S,user:currentUser,cls:S.cls,to,target,elapsed:0};
   mobs=[];mob=null;camps=[];engageTgt=null;activePack=0;respawn=.3;swing=null;atkAnim=0;
   resetSkillRuntime();pl.wx=null;pl.wt=0;pl.run=true;
   return true;
@@ -6426,9 +6457,10 @@ function cancelAstralJourney(){
 function tickAstralJourney(dt){
   const journey=astralJourney;if(!journey)return false;
   if(S!==journey.owner||currentUser!==journey.user||S.cls!==journey.cls||S.mp!==10||TRIAL.on||JOB_RITE.on){cancelAstralJourney();return false}
-  const dx=-pl.x,dz=journey.target-pl.z,distance=Math.hypot(dx,dz),step=Math.min(distance,moveSpd(true)*Math.max(0,dt));
+  journey.elapsed=Math.min(2,journey.elapsed+Math.max(0,dt));
+  const dx=-pl.x,dz=journey.target-pl.z,distance=Math.hypot(dx,dz),remaining=Math.max(0,2-journey.elapsed),step=remaining===0?distance:distance*Math.max(0,dt)/(remaining+Math.max(0,dt));
   if(distance>.001){pl.x+=dx/distance*step;pl.z+=dz/distance*step;pl.ry=-Math.atan2(dz,dx);pl.run=true}
-  for(const [i,pet] of Object.values(petR).entries()){const x=pl.x-1+(i%3),z=pl.z+1.3,px=x-pet.x,pz=z-pet.z,d=Math.hypot(px,pz),v=Math.min(d,moveSpd(true)*dt);if(d>.01){pet.x+=px/d*v;pet.z+=pz/d*v;pet.face=Math.atan2(pz,px)}pet.run=d>.15;pet.lunge=0}
+  for(const [i,pet] of Object.values(petR).entries()){const x=pl.x-1+(i%3),z=pl.z+1.3,px=x-pet.x,pz=z-pet.z,d=Math.hypot(px,pz),v=Math.min(d,Math.max(moveSpd(true)*dt,step));if(d>.01){pet.x+=px/d*v;pet.z+=pz/d*v;pet.face=Math.atan2(pz,px)}pet.run=d>.15;pet.lunge=0}
   if(distance<=step+.001){
     const shift=ASTRAL_FOCUS[astralOriginStage-1]-ASTRAL_FOCUS[journey.to-1];
     pl.z+=shift;pl.wz=pl.z;ct.z+=shift;
@@ -6504,11 +6536,12 @@ const ACT={
   ascset:v=>{if(Object.hasOwn(ASC_SETS,v)){ascensionSetPick=v;ascensionItemPick='';renderWin()}},
   transformasc:v=>{const[key,id]=v.split(':');const it=[...items(),...S.inv].find(x=>String(x.id)===id);if(!it||S.reforgePending&&String(S.reforgePending.id)===id)return;const result=transformToMythic(it,key);if(result?.error){log(result.error,'r0');return}ascensionItemPick='';log('Ascended '+iname(it)+' — your N+ item has evolved.','r4','gear');ui();save()},
   gmendgame:()=>{if(!S.gm)return;S.lv=150;S.pts=Math.max(0,totalPts()-ptsSpent());S.zeny+=10000000000;S.ascensionMat=S.ascensionMat.map(n=>safeCount(n)+1000);S.mythicScrolls=safeCount(S.mythicScrolls)+100;S.refineScrolls=safeCount(S.refineScrolls)+100;S.ore.ori+=1000;S.ore.elu+=1000;ui();save()},
+  gmmaxset:cls=>gmMaxAscensionGear(cls),
   gmset:key=>{if(!S.gm||!Object.hasOwn(ASC_SETS,key))return;const recipes=[...C().wt.map(w=>['weapon',w]),...['armor','head','off','leg','acc','acc'].map(s=>[s,undefined])];if(S.inv.length+recipes.length>BAGMAX)return log('Make bag space for the complete set.','r0');const z=S.zeny,m=S.ascensionMat;try{S.zeny=1e12;S.ascensionMat=[10000,10000,10000];for(const [slot,wt] of recipes){const r=makeMythicEquipment(key,slot,wt);if(r?.item)S.inv.push(r.item)}}finally{S.zeny=z;S.ascensionMat=m}ui();save()},
   gmaura:v=>{if(!S.gm)return;S.lv=+v;S.pts=Math.max(0,totalPts()-ptsSpent());ui();save()},
   gmascstats:v=>{if(!S.gm)return;const a=ascState();if(v==='max'){a.level=50;a.xp=0;}else{a.level=0;a.xp=0;a.stats[S.cls]={};}S.hp=Math.min(S.hp,maxHp());ui();save()},
   gmascskills:v=>{if(!S.gm)return;const a=ascState();if(!a.skills[S.cls])a.skills[S.cls]={level:0,xp:0,ranks:{}};const t=a.skills[S.cls];if(v==='max'){t.level=30;t.xp=0;}else{t.level=0;t.xp=0;t.ranks={};resetSkillRuntime();swing=null;for(const id in skCd)delete skCd[id];}ui();save()},
-  gmresetlv:()=>{if(!S.gm)return;S.lv=1;S.exp=0;S.pts=Math.max(0,totalPts()-ptsSpent());S.hp=maxHp();ui();save()},gmglow:v=>{if(!S.gm||!S.eq.weapon||!Number.isInteger(+v)||+v<0||+v>(S.eq.weapon.sec===6?15:10))return;S.eq.weapon.r=+v;ui();save()},
+  gmresetlv:(v=1)=>{if(!S.gm||![1,99,120].includes(+v))return;S.lv=+v;S.exp=0;S.pts=Math.max(0,totalPts()-ptsSpent());S.hp=maxHp();ui();save()},gmglow:v=>{if(!S.gm||!S.eq.weapon||!Number.isInteger(+v)||+v<0||+v>(S.eq.weapon.sec===6?15:10))return;S.eq.weapon.r=+v;ui();save()},
   sellpreset:v=>{const r=defaultAutoSellRules();if(v==='physical')r.affixes=[{k:'str',min:0},{k:'dex',min:0},{k:'crit',min:0},{k:'cdm',min:0}];else if(v==='caster')r.affixes=[{k:'int',min:0},{k:'matk',min:0}];else if(v==='collector')r.minEmpty=2;else return;autoSellDraft={owner:S,rules:r};renderWin()},
   clicksell:()=>{S.clickSell=false;ui();save()},
   quicksell:id=>{selB=id;eclipseInspectBag=true;renderWin()},
@@ -6598,7 +6631,7 @@ const ACT={
   costume:()=>{log('Costumes arrive in a future patch - they will restyle a class without changing its stats.','','misc');ui()},
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
   reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;expEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
-  gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
+  gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:(v=20)=>{if(!S.gm||![20,1000].includes(+v))return;S.ore.ori+=+v;S.ore.elu+=+v;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
   gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmindex:v=>gmIndexTest(v),gmcard:v=>gmCardTest(v),gmskill:v=>gmSkillTest(v),gmpet:v=>gmPetTest(v),gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
 $('eclipseCompanions').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
 $('dock').addEventListener('scroll',eclipsePositionMore);
@@ -6885,21 +6918,12 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
       if(dist<=reach+.6)engageTgt=mob;
       else if(engageTgt!==mob||dist>reach+1.2)engageTgt=null;
       if(engageTgt===mob){
-        // ...and swing only while the target really is in range. The 1.2-unit break radius is a
-        // stand-still window, not an attack window: a monster a step out walks back in rather than
-        // making the hero shuffle after it.
-        // v88.4 (owner: "the character gets stuck attacking, it still takes hits, only dying fixes it"):
-        // that assumption fails for a small monster. Its own approach ring (1.9 + 0.25*size) can sit
-        // just outside the hero's attack window (reach + 0.6), so it stops there, never walks in, and
-        // the hero waits forever for it - both stand still while the monster keeps hitting. Found by
-        // a repeated-run sweep of Novice, Swordman, Thief and Merchant fights (tools/tests/field_loop_smoke.js pins it).
-        // Now a latched hero waits one second for the walk-in; if the target is still out of reach it
-        // closes to its attack distance itself. Walking in never happens while the target is in reach.
-        // The wait is not reset by a frame in reach: a monster that dances across the edge of the window
-        // would keep the count below one second for ever. Only a swing (playerAttack) or a broken latch clears it.
+        // Keep the current target within the break radius, but only swing in actual range.
+        // A latched target can drift just outside attack range as its camp spreads out.
+        // Close that gap immediately: the old one-second walk-in wait paused combat
+        // even when the hero only needed to move a few pixels. Hold still while in range.
         if(dist<=reach+.6){tx=pl.x;tz=pl.z;pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}
-        else if((engageWait+=dt)<1){tx=pl.x;tz=pl.z}
-        else{const k=reach*.85/dist;tx=mob.x+(pl.x-mob.x)*k;tz=mob.z+(pl.z-mob.z)*k}}
+        else{engageWait+=dt;const k=reach*.85/dist;tx=mob.x+(pl.x-mob.x)*k;tz=mob.z+(pl.z-mob.z)*k}}
       else{engageWait=0;pl.orb+=dt*.8;const r=reach*.85;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r}}
   }
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
@@ -10051,6 +10075,6 @@ function updateWatch(){
 }
 setInterval(updateWatch,60000);
 </script>
-<script src="assets/wardrobe-ui.js?v=166"></script>
+<script src="assets/wardrobe-ui.js?v=179"></script>
 </body>
 </html>

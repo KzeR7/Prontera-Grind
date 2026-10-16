@@ -1,0 +1,2170 @@
+{
+  "schemaVersion": 1,
+  "archive": {
+    "page": "https://www.mediafire.com/file/o0mfywht1rpqhkc/official_data.grf/file",
+    "bytes": 782906013,
+    "reference": "https://llchrisll.github.io/ROTPDocs/misc/custom_officials/"
+  },
+  "files": [
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/길로틴크로스_남.act",
+      "archiveOffset": 64178262,
+      "compressedBytes": 5476,
+      "bytes": 48276,
+      "sha256": "f525d28ae12177e259d43a3c136fe9e9b85d25bcdba6fd0192d9dc10b5c4f398"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/길로틴크로스_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/레인져_남.act",
+      "archiveOffset": 174196070,
+      "compressedBytes": 5457,
+      "bytes": 48276,
+      "sha256": "3ac4f156426f073bc22e23541cfc147259afc32efd7565d3d87b292479a4402a"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/레인져_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/룬나이트_남.act",
+      "archiveOffset": 464141878,
+      "compressedBytes": 5016,
+      "bytes": 48276,
+      "sha256": "ac3bb12dd9a67c1d7c48021661f8f92f75c5187f06b2de1aae79ce14f7696e60"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/룬나이트_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/미케닉_남.act",
+      "archiveOffset": 525345766,
+      "compressedBytes": 6657,
+      "bytes": 48276,
+      "sha256": "f11c3029fa0f62484f95380c8c22b301d7b247e6d01f79ba86dc70150da22040"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/미케닉_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/아크비숍_남.act",
+      "archiveOffset": 765900398,
+      "compressedBytes": 6347,
+      "bytes": 48276,
+      "sha256": "31f56ec95c84f3d99805eb7c0b4ea1dc85fd96fa6d2371154e97e3edd97def4e"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/아크비숍_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/워록_남.act",
+      "archiveOffset": 625996406,
+      "compressedBytes": 3920,
+      "bytes": 48276,
+      "sha256": "636575515ac74e3dffe604e93864d8e25a893cbca21a01ee300afff0b79e2445"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/남/워록_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/길로틴크로스_여.act",
+      "archiveOffset": 3191390,
+      "compressedBytes": 5908,
+      "bytes": 48276,
+      "sha256": "bbfd7d2a75b3cb848b0cefae4bbfe9cce542f781fd0e22a238f0a5263da162eb"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/길로틴크로스_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/레인져_여.act",
+      "archiveOffset": 579094566,
+      "compressedBytes": 5611,
+      "bytes": 48276,
+      "sha256": "0d4b75eed7a90a5d29db4a79d23363c31580a47e7760d023e5770b8092f4b3dd"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/레인져_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/룬나이트_여.act",
+      "archiveOffset": 135303542,
+      "compressedBytes": 4290,
+      "bytes": 48276,
+      "sha256": "6906f630b32e7032770c71b2420dabf31ce7356889f8c1a407c3fae4c65da95c"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/룬나이트_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/미케닉_여.act",
+      "archiveOffset": 180170854,
+      "compressedBytes": 4684,
+      "bytes": 48276,
+      "sha256": "378e703f24f669b17be6bd61facee5edf6784351629fc65012384942b668bf6b"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/미케닉_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/아크비숍_여.act",
+      "archiveOffset": 498349750,
+      "compressedBytes": 4317,
+      "bytes": 48276,
+      "sha256": "db0f9a5549b021095cf747147ef73144f0f919f2932d35143aba0da45b01e19e"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/아크비숍_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/워록_여.act",
+      "archiveOffset": 367320294,
+      "compressedBytes": 5478,
+      "bytes": 48276,
+      "sha256": "40c0574f3f07cf59d1b8177695f0963d27e5d33466b592120be066130762adf6"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/angelribbonwing/여/워록_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/남/길로틴크로스_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/남/레인져_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/남/룬나이트_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/남/미케닉_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/남/아크비숍_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/남/워록_남.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/여/길로틴크로스_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/여/레인져_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/여/룬나이트_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/여/미케닉_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/여/아크비숍_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/angelribbonwing/여/워록_여.spr",
+      "archiveOffset": 692189358,
+      "compressedBytes": 5036,
+      "bytes": 10984,
+      "sha256": "782c213c1783a04a9eea1fcb3516a3755762805c2b6a8df4367c3e5abc724627"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/c_blackbear_back_tw.spr",
+      "archiveOffset": 446583494,
+      "compressedBytes": 3051,
+      "bytes": 6047,
+      "sha256": "4b9d930f7904ab59ad2eef79a2f59ee37f69b02b4d656217be39fd2b794f2d76"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/남/길로틴크로스_남.act",
+      "archiveOffset": 726893494,
+      "compressedBytes": 5453,
+      "bytes": 48276,
+      "sha256": "9b6b1df63e292219d54f2fe5a1cc998b3312383c30057f8b005349cbad8f9f6b"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/남/레인져_남.act",
+      "archiveOffset": 359906998,
+      "compressedBytes": 5495,
+      "bytes": 48276,
+      "sha256": "e58a8004473cf70f19d6571cccd8b242076f833e56b4a7b00809bc2b8416fdff"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/남/룬나이트_남.act",
+      "archiveOffset": 612492078,
+      "compressedBytes": 5008,
+      "bytes": 48276,
+      "sha256": "6d7c39301b67ca156e2c9c681b52994e9f837d58d3e798edcc472e09f4031ec0"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/남/미케닉_남.act",
+      "archiveOffset": 541305374,
+      "compressedBytes": 6704,
+      "bytes": 48276,
+      "sha256": "5b1384c96fa7f026ac4692599b3560351ed7799738704c6435b2b7b4c4c1bd3e"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/남/아크비숍_남.act",
+      "archiveOffset": 273538654,
+      "compressedBytes": 6348,
+      "bytes": 48276,
+      "sha256": "6206666e9f6a795fee358b95e6c6b5141616d748fccd7ceef3b2b24e2b5486de"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/남/워록_남.act",
+      "archiveOffset": 660670126,
+      "compressedBytes": 3938,
+      "bytes": 48276,
+      "sha256": "cffabe3a8ae4692de2b4a6174fe7137898ae81d65ce0deacc715b17200963b81"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/여/길로틴크로스_여.act",
+      "archiveOffset": 17814,
+      "compressedBytes": 5888,
+      "bytes": 48276,
+      "sha256": "c62f760397ef6b6d91a6c4a6b1bb30cd30cb56cb625732d81696d00ea638a8b3"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/여/레인져_여.act",
+      "archiveOffset": 501510574,
+      "compressedBytes": 5629,
+      "bytes": 48276,
+      "sha256": "2b159c0eff7160493ce7b968dbb233f979195fe211344ae41a760e67e3ba2a2b"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/여/룬나이트_여.act",
+      "archiveOffset": 618259726,
+      "compressedBytes": 4286,
+      "bytes": 48276,
+      "sha256": "d6621d80dbb14ee047cdab3cd62bafc8812de4b9803f3d9f43fa457403351d10"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/여/미케닉_여.act",
+      "archiveOffset": 600684398,
+      "compressedBytes": 4715,
+      "bytes": 48276,
+      "sha256": "df32c1d4a6c0c615b26652a9df8bf0142903db605201a120b017fc0deb023219"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/여/아크비숍_여.act",
+      "archiveOffset": 713360422,
+      "compressedBytes": 4304,
+      "bytes": 48276,
+      "sha256": "c32b9f0b7d6c4fea43752709b4385cbe557a48510242bd97e73fbd1dc8d41d24"
+    },
+    {
+      "path": "data/sprite/로브/c_blackbear_back_tw/여/워록_여.act",
+      "archiveOffset": 401463158,
+      "compressedBytes": 5468,
+      "bytes": 48276,
+      "sha256": "d90cff79b0343c927f5d2fe2f0c9aa529d827619263a9a3c4c76d8553651c7a9"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/c_leticia_wing.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/길로틴크로스_남.act",
+      "archiveOffset": 1106350,
+      "compressedBytes": 5388,
+      "bytes": 48276,
+      "sha256": "f836101f66277a673a050103df2b22c4806c0a1b06d3388304c181d32e39109a"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/길로틴크로스_남.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/레인져_남.act",
+      "archiveOffset": 302784230,
+      "compressedBytes": 5376,
+      "bytes": 48276,
+      "sha256": "90a7eeba55e6daf1b45d9cb044008961b6e9674dfa5690a8d298a3d33b1c1ad1"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/레인져_남.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/룬나이트_남.act",
+      "archiveOffset": 207132926,
+      "compressedBytes": 4989,
+      "bytes": 48276,
+      "sha256": "95c06bb414b6ad5466625ffdb790d294133e19455a27b6b9b80185b202922ba0"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/룬나이트_남.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/미케닉_남.act",
+      "archiveOffset": 754181934,
+      "compressedBytes": 6597,
+      "bytes": 48276,
+      "sha256": "21b75401a1b7f9c659ccb40dd33837316b5e8b5521f2ea7d14ad2e94077fc143"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/미케닉_남.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/아크비숍_남.act",
+      "archiveOffset": 644034118,
+      "compressedBytes": 6271,
+      "bytes": 48276,
+      "sha256": "c0605091dd62acc240ad211191cbb06fe39499bd00a66ddf41be2f51388bb323"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/아크비숍_남.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/워록_남.act",
+      "archiveOffset": 47552022,
+      "compressedBytes": 3915,
+      "bytes": 48276,
+      "sha256": "74e8e6cfe94f1417e7f2634a6346523d45b02dcfafe818c1bd1d456a695600d8"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/남/워록_남.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/길로틴크로스_여.act",
+      "archiveOffset": 434781406,
+      "compressedBytes": 5866,
+      "bytes": 48276,
+      "sha256": "a432426422d7bdb4507678b5b9b502110e22fe7afc8a5dc4da7858c0bb46a0eb"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/길로틴크로스_여.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/레인져_여.act",
+      "archiveOffset": 598314166,
+      "compressedBytes": 4378,
+      "bytes": 48276,
+      "sha256": "501d95d4d0b85d934bfbe5a65da6c6e434fa7c78c8e9656861c72c6692200d3e"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/레인져_여.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/룬나이트_여.act",
+      "archiveOffset": 436812654,
+      "compressedBytes": 4076,
+      "bytes": 48276,
+      "sha256": "766fc2f72450de0c1745cbbabcedd9a64c80441fb1445cf428082c47d3e5b67d"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/룬나이트_여.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/미케닉_여.act",
+      "archiveOffset": 170537558,
+      "compressedBytes": 4110,
+      "bytes": 48276,
+      "sha256": "4448f0d1416a40ca27ce94d809c6850aa8d4375c613b118afce30bbe7a37c5d2"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/미케닉_여.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/아크비숍_여.act",
+      "archiveOffset": 223782102,
+      "compressedBytes": 4121,
+      "bytes": 48276,
+      "sha256": "8f418ce3e70f6a789846642914b5531fa6df07c136c8bedd78f938000d1f93a0"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/아크비숍_여.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/워록_여.act",
+      "archiveOffset": 697371518,
+      "compressedBytes": 5388,
+      "bytes": 48276,
+      "sha256": "b9eb663d30e1d1c6c2196e9efb556c23273fee08bb291e06bd8ace5cbc70dcd3"
+    },
+    {
+      "path": "data/sprite/로브/c_leticia_wing/여/워록_여.spr",
+      "archiveOffset": 455977422,
+      "compressedBytes": 7405,
+      "bytes": 15856,
+      "sha256": "009722c55eb2d919d30625c97b686c2fb0779c8a0ad2dfe01c6840265da8ca11"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/c_mystical_wing.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/길로틴크로스_남.act",
+      "archiveOffset": 722319614,
+      "compressedBytes": 5491,
+      "bytes": 48276,
+      "sha256": "c68ff06eac397fed3ca5e2dce4d90b4b119d5749864219b1c106bb9347705574"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/길로틴크로스_남.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/레인져_남.act",
+      "archiveOffset": 64145598,
+      "compressedBytes": 5472,
+      "bytes": 48276,
+      "sha256": "291ba39ba08ce7c9904604c485951c0edcf4f97b1ec4ca4186b25a0f2ae2244b"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/레인져_남.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/룬나이트_남.act",
+      "archiveOffset": 20899422,
+      "compressedBytes": 5046,
+      "bytes": 48276,
+      "sha256": "14e0f9c653c9fafbdd7f18314f2a616dafd956e6b33285e61129eaf38bb87b1f"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/룬나이트_남.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/미케닉_남.act",
+      "archiveOffset": 631914974,
+      "compressedBytes": 6758,
+      "bytes": 48276,
+      "sha256": "aa0ccc8ebffeb8164610c905ccf8e9f593a107eb3e5c48c8c5fed3cdbe007dbc"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/미케닉_남.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/아크비숍_남.act",
+      "archiveOffset": 530043126,
+      "compressedBytes": 6334,
+      "bytes": 48276,
+      "sha256": "932b1c185e7aed44f1651aa60249c1d4c0d3f8b8808dad39a24e209f8ea39816"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/아크비숍_남.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/워록_남.act",
+      "archiveOffset": 305693470,
+      "compressedBytes": 3944,
+      "bytes": 48276,
+      "sha256": "5e392dcee1390421af4f504726857789e72a73f90dfeac1cae91df281f6e79d9"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/남/워록_남.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/길로틴크로스_여.act",
+      "archiveOffset": 416071582,
+      "compressedBytes": 5903,
+      "bytes": 48276,
+      "sha256": "ee2b15150d183666669c936d18d78c3cc2accc487ce6060497a28f3ce29a728a"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/길로틴크로스_여.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/레인져_여.act",
+      "archiveOffset": 58572998,
+      "compressedBytes": 5628,
+      "bytes": 48276,
+      "sha256": "8ff9eaaadffa337b1ab48d9ea0a3205e4b76e12130859eff6ce683c89c9dd631"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/레인져_여.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/룬나이트_여.act",
+      "archiveOffset": 593408814,
+      "compressedBytes": 4021,
+      "bytes": 48276,
+      "sha256": "c6a75616722b9355cd52853387def55e09b4270bcf2508c1231da3187d44b1bf"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/룬나이트_여.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/미케닉_여.act",
+      "archiveOffset": 195015198,
+      "compressedBytes": 4740,
+      "bytes": 48276,
+      "sha256": "017796af6dd7320d4e3b4f69ce67a213dee7040a850f721e03ca94c525016ade"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/미케닉_여.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/아크비숍_여.act",
+      "archiveOffset": 322238590,
+      "compressedBytes": 4315,
+      "bytes": 48276,
+      "sha256": "06652049dfb2869e805c175827294c24082857b415fe20ad38cef105e9379128"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/아크비숍_여.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/워록_여.act",
+      "archiveOffset": 644111598,
+      "compressedBytes": 5486,
+      "bytes": 48276,
+      "sha256": "6acef0e4eef46b3148cf172df717bd15148e0d97e5fe352f00bc67c079d730ab"
+    },
+    {
+      "path": "data/sprite/로브/c_mystical_wing/여/워록_여.spr",
+      "archiveOffset": 541392502,
+      "compressedBytes": 19297,
+      "bytes": 43819,
+      "sha256": "5759c0c6dcf0a145cf4bc70de8b4c5124e5cd6772cae04274530b4c9f41ee2d5"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/c_sandalphon_wing_tw.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/길로틴크로스_남.act",
+      "archiveOffset": 660537070,
+      "compressedBytes": 5472,
+      "bytes": 48276,
+      "sha256": "eb43c25ea881b4751d7821147d88edd143e5696faee05c42bcd9cbb9b01e1f43"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/길로틴크로스_남.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/레인져_남.act",
+      "archiveOffset": 253494814,
+      "compressedBytes": 5487,
+      "bytes": 48276,
+      "sha256": "2de4fac69fe7775f01a554fc85b143bea5c3372829e23d21cd9cb69aff058124"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/레인져_남.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/룬나이트_남.act",
+      "archiveOffset": 445172686,
+      "compressedBytes": 5024,
+      "bytes": 48276,
+      "sha256": "4d8f9e62e1edd593e4e1fa42e79849f1650c4b4debc4ff1d7eead5712a870184"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/룬나이트_남.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/미케닉_남.act",
+      "archiveOffset": 631336958,
+      "compressedBytes": 6724,
+      "bytes": 48276,
+      "sha256": "0347d274512f35eb8ca1459c1930f1d540e94ddc9c01c92325127b7ae9f9d590"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/미케닉_남.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/아크비숍_남.act",
+      "archiveOffset": 407632038,
+      "compressedBytes": 6348,
+      "bytes": 48276,
+      "sha256": "45564a7e76e42fd8cf3f3d8a1918ccb49b5bead255f95e9bf2aaf5cfb663a3fd"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/아크비숍_남.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/워록_남.act",
+      "archiveOffset": 173129006,
+      "compressedBytes": 3939,
+      "bytes": 48276,
+      "sha256": "3ac870a5ff676539e39ae276f381173f4813c2c3d624edfc783fa5a34084d3e0"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/남/워록_남.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/길로틴크로스_여.act",
+      "archiveOffset": 237436358,
+      "compressedBytes": 5888,
+      "bytes": 48276,
+      "sha256": "efd89c6f27adca3dea6316ff2fa76cb7499bc6f4ce11efb97a964a0ec940a5a9"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/길로틴크로스_여.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/레인져_여.act",
+      "archiveOffset": 221386006,
+      "compressedBytes": 5656,
+      "bytes": 48276,
+      "sha256": "3b84a8964460e76468c232c6279fcf7e5d87bc47a650dddbb03f470043d3cb9d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/레인져_여.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/룬나이트_여.act",
+      "archiveOffset": 523789646,
+      "compressedBytes": 4307,
+      "bytes": 48276,
+      "sha256": "0adb58960ea871b1aa991c11f7928d205518f79b4f3599627e3ff4e00a5ebfa5"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/룬나이트_여.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/미케닉_여.act",
+      "archiveOffset": 309848654,
+      "compressedBytes": 4723,
+      "bytes": 48276,
+      "sha256": "4966ee8adffad6d5b4dcda220138b6c0d7a5c37352b55cfbbe1205d37b6127ab"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/미케닉_여.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/아크비숍_여.act",
+      "archiveOffset": 376750846,
+      "compressedBytes": 4330,
+      "bytes": 48276,
+      "sha256": "a6660d1fdb5f9c104b78913a123d9a849e63981cffb155c37b8c7860b9a329b0"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/아크비숍_여.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/워록_여.act",
+      "archiveOffset": 114383334,
+      "compressedBytes": 5453,
+      "bytes": 48276,
+      "sha256": "7e11c0cba686052a453fd58ec268fb99af813d36f4dd4f4891ed9e700c75223a"
+    },
+    {
+      "path": "data/sprite/로브/c_sandalphon_wing_tw/여/워록_여.spr",
+      "archiveOffset": 751700142,
+      "compressedBytes": 9554,
+      "bytes": 18110,
+      "sha256": "56d691e87c9dd5f8c37c2773480140dcbaae64d55fec7a13477af92ade1daa8d"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/c_sorcerer_cape.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/길로틴크로스_남.act",
+      "archiveOffset": 444221406,
+      "compressedBytes": 5404,
+      "bytes": 48276,
+      "sha256": "5d1a740a9f6ad4cfaab9f7b37b8bcaa404bb906ccb9119374608845345ceb582"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/길로틴크로스_남.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/레인져_남.act",
+      "archiveOffset": 668067046,
+      "compressedBytes": 5367,
+      "bytes": 48276,
+      "sha256": "c5c831148b6f0772a09fd4facdd4f3de88a606e439ee5b803846590e27e9a0e3"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/레인져_남.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/룬나이트_남.act",
+      "archiveOffset": 773037582,
+      "compressedBytes": 5000,
+      "bytes": 48276,
+      "sha256": "28896eabb001991c7cafaab2033dd16441b512a4818ff3239eca3c8e172e7dbe"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/룬나이트_남.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/미케닉_남.act",
+      "archiveOffset": 701869366,
+      "compressedBytes": 6559,
+      "bytes": 48276,
+      "sha256": "393dc530f0fdc434e8da9773359e5325b789c265462a4705d191b02a95dbd82d"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/미케닉_남.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/아크비숍_남.act",
+      "archiveOffset": 690890750,
+      "compressedBytes": 6245,
+      "bytes": 48276,
+      "sha256": "d2ea9f4bb52c7f8090c6cc9d659a8151a84f01fde1b11f0b7df606f0f7bf14e4"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/아크비숍_남.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/워록_남.act",
+      "archiveOffset": 379029878,
+      "compressedBytes": 3897,
+      "bytes": 48276,
+      "sha256": "d60d263029dc1743046e4ff6041a7cfdf1c2cbbc39a93a28fb4b62c94f044086"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/남/워록_남.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/길로틴크로스_여.act",
+      "archiveOffset": 273062126,
+      "compressedBytes": 5842,
+      "bytes": 48276,
+      "sha256": "2a28ad35ec7138a591928179c7e24af6e52a918db4cbb20c1ffc4afed6a4a9a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/길로틴크로스_여.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/레인져_여.act",
+      "archiveOffset": 751695734,
+      "compressedBytes": 4405,
+      "bytes": 48276,
+      "sha256": "8cbd8bd02fb83609e143c4599b81b4df39a9101861cf805f77736c5210fab086"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/레인져_여.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/룬나이트_여.act",
+      "archiveOffset": 285121086,
+      "compressedBytes": 4053,
+      "bytes": 48276,
+      "sha256": "70cd2297043dd60470e8178d718d96852533d2711f7f412218e5cc0c9db2580e"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/룬나이트_여.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/미케닉_여.act",
+      "archiveOffset": 520128406,
+      "compressedBytes": 4086,
+      "bytes": 48276,
+      "sha256": "4bb31ac752771c561562da02af03df606ed4a52d8f4218873ce81399e2906aaa"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/미케닉_여.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/아크비숍_여.act",
+      "archiveOffset": 394824742,
+      "compressedBytes": 4105,
+      "bytes": 48276,
+      "sha256": "8ec48eeaf9f76c00f107230ced5f271db5fc73373605d4b9228c34c5683d1f6c"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/아크비숍_여.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/워록_여.act",
+      "archiveOffset": 539309646,
+      "compressedBytes": 5408,
+      "bytes": 48276,
+      "sha256": "1211782fa97105dd64e02657ae758a0f5f4410b7b3ba7e1a9e471cd90adc2136"
+    },
+    {
+      "path": "data/sprite/로브/c_sorcerer_cape/여/워록_여.spr",
+      "archiveOffset": 604512086,
+      "compressedBytes": 9797,
+      "bytes": 26005,
+      "sha256": "4210408dbbea022c6701a84cfe9eed98e5b5ccff3a2b89af97ca3dda3f29d7a7"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/fairy_of_eden.spr",
+      "archiveOffset": 121641350,
+      "compressedBytes": 11263,
+      "bytes": 20218,
+      "sha256": "d686ad4d969ea797f63ff08e22f1b6942d1af035787290d8d6b036a7e096c872"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/길로틴크로스_남.act",
+      "archiveOffset": 504751326,
+      "compressedBytes": 5478,
+      "bytes": 48276,
+      "sha256": "f7ac0d9a6b81c0e9b54e1e880ae9e2b3ef11ca2b039a04fb5b06aca423a31814"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/길로틴크로스_남.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/레인져_남.act",
+      "archiveOffset": 394769462,
+      "compressedBytes": 5512,
+      "bytes": 48276,
+      "sha256": "c2cd59f88264ad1bdb87c434219410f423e8ffa6fe604c88649585e3441c1c6e"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/레인져_남.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/룬나이트_남.act",
+      "archiveOffset": 18136054,
+      "compressedBytes": 5046,
+      "bytes": 48276,
+      "sha256": "2e5c963708da50d847151e57fbd683279a714a24d82dc01f7cd927df55a30c5a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/룬나이트_남.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/미케닉_남.act",
+      "archiveOffset": 158006774,
+      "compressedBytes": 6730,
+      "bytes": 48276,
+      "sha256": "7b606f87efa2dc53478bbf9400eea904d879bcc2dc394f3cb4cf84fc7586cb68"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/미케닉_남.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/아크비숍_남.act",
+      "archiveOffset": 553374542,
+      "compressedBytes": 6354,
+      "bytes": 48276,
+      "sha256": "e5f3c4d6b8838d8346e0805ba6b4ca27373b11bb6026553dd19d849144eebe25"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/아크비숍_남.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/워록_남.act",
+      "archiveOffset": 293942534,
+      "compressedBytes": 3944,
+      "bytes": 48276,
+      "sha256": "da3c7c16659d454aab08b0e38cf681b61b048401b952c58216d3cdab0b9cdfb2"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/남/워록_남.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/길로틴크로스_여.act",
+      "archiveOffset": 67469166,
+      "compressedBytes": 5886,
+      "bytes": 48276,
+      "sha256": "f3589a21515b42130eef5b629f0a05c160828006c196c6474f5a88b34e4ac8f0"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/길로틴크로스_여.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/레인져_여.act",
+      "archiveOffset": 562468390,
+      "compressedBytes": 5637,
+      "bytes": 48276,
+      "sha256": "8b3463b89810d19c46784d0dd99bd8d2828a5c25e47facb2c2cc67ef8b112830"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/레인져_여.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/룬나이트_여.act",
+      "archiveOffset": 397196182,
+      "compressedBytes": 4012,
+      "bytes": 48276,
+      "sha256": "4a5d3a7dd516398da125f9834ea97be051bee8ff00b1bda736afe8d7a636cf61"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/룬나이트_여.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/미케닉_여.act",
+      "archiveOffset": 62170182,
+      "compressedBytes": 4736,
+      "bytes": 48276,
+      "sha256": "6bc28d89fd0be73b04e159a6c4baa9f19632891253cb8853c92c06caf835fd12"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/미케닉_여.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/아크비숍_여.act",
+      "archiveOffset": 585572686,
+      "compressedBytes": 4320,
+      "bytes": 48276,
+      "sha256": "3338e7cbda6038d6ef11ccb7e5c2a1d601b3c28a545ee3c84372a5d51d8b89f1"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/아크비숍_여.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/워록_여.act",
+      "archiveOffset": 44753150,
+      "compressedBytes": 5483,
+      "bytes": 48276,
+      "sha256": "8773e6254388d4fcb6ba83272756128dd82e943bfc67d4a048436c46661952a0"
+    },
+    {
+      "path": "data/sprite/로브/fairy_of_eden/여/워록_여.spr",
+      "archiveOffset": 626742606,
+      "compressedBytes": 11397,
+      "bytes": 20218,
+      "sha256": "1c57a2637bfae9e4894cca40deda1dcab645c5ddac208abd3e6d837530d23c8a"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/길로틴크로스_남.act",
+      "archiveOffset": 733982998,
+      "compressedBytes": 5423,
+      "bytes": 48276,
+      "sha256": "e0ddded954b43c1acc9189f402600d6a2a359a27cd773f021feeadebc0574e3e"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/길로틴크로스_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/레인져_남.act",
+      "archiveOffset": 521754958,
+      "compressedBytes": 5449,
+      "bytes": 48276,
+      "sha256": "5f3d4c6992f36ee9393bad0e051ee2b4a5fc6026d464a50e053184555fdb5399"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/레인져_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/룬나이트_남.act",
+      "archiveOffset": 649454678,
+      "compressedBytes": 5015,
+      "bytes": 48276,
+      "sha256": "de92148b4edf5c2351e31b53588c43735c0c72f3f57f43b57d0e23ceab07c4ac"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/룬나이트_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/미케닉_남.act",
+      "archiveOffset": 288879190,
+      "compressedBytes": 6609,
+      "bytes": 48276,
+      "sha256": "e54d51fa5e664003b3d23eaac9a49c4645f18c8b6c920d05e7322c714be3a012"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/미케닉_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/아크비숍_남.act",
+      "archiveOffset": 281959510,
+      "compressedBytes": 6237,
+      "bytes": 48276,
+      "sha256": "a98154f6d7ff8f557af3fa899cb061da62827127b6fb24c3374ece5f14e23e38"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/아크비숍_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/워록_남.act",
+      "archiveOffset": 443564198,
+      "compressedBytes": 3911,
+      "bytes": 48276,
+      "sha256": "57b87d8675daf7b80c7139a4288aac40bcd1b9bb089c88b4c4a3bc75ea829dbc"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/남/워록_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/길로틴크로스_여.act",
+      "archiveOffset": 117141526,
+      "compressedBytes": 5898,
+      "bytes": 48276,
+      "sha256": "a5c0dd85addd79fb2f2adb8168c82ccd336fac4de2db3d9bf4bc19beea7d96c1"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/길로틴크로스_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/레인져_여.act",
+      "archiveOffset": 314679438,
+      "compressedBytes": 5663,
+      "bytes": 48276,
+      "sha256": "d494a72227aefd270c7722de4112ae64761b0f033ca832b61abc67851241f2b9"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/레인져_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/룬나이트_여.act",
+      "archiveOffset": 241124286,
+      "compressedBytes": 4149,
+      "bytes": 44628,
+      "sha256": "02954462d7a4ffe96a59626557f46dc04b349a74457c97baddf720382ac2fa14"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/룬나이트_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/미케닉_여.act",
+      "archiveOffset": 112589494,
+      "compressedBytes": 4594,
+      "bytes": 44628,
+      "sha256": "6dcb9093e3308e784ea172a0f3d46620fd5f9575b89a0a78dadd7c8e9f3054e5"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/미케닉_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/아크비숍_여.act",
+      "archiveOffset": 302602918,
+      "compressedBytes": 4163,
+      "bytes": 44628,
+      "sha256": "ff6121ada0334cc993fd43a3023440869f597d631aa6f952635a4d939025cea4"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/아크비숍_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/워록_여.act",
+      "archiveOffset": 613788590,
+      "compressedBytes": 5452,
+      "bytes": 48276,
+      "sha256": "364c251cf26ab6a515d68ea0ea21951bdbcad1bfb377c9d0ad9dc6d6bb62972f"
+    },
+    {
+      "path": "data/sprite/로브/light_darkness_wing/여/워록_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/길로틴크로스_남.act",
+      "archiveOffset": 220523814,
+      "compressedBytes": 5471,
+      "bytes": 48276,
+      "sha256": "10f96d3f7bdbe0a64cc109b293588bb76779b9b74905cb11f2d1fa1ad17915f7"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/길로틴크로스_남.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/레인져_남.act",
+      "archiveOffset": 428703334,
+      "compressedBytes": 5476,
+      "bytes": 48276,
+      "sha256": "9b6197573c7adb23ddc5595ec6c3ab5d809f46dc051bdfea1fad6d89bc3585fe"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/레인져_남.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/룬나이트_남.act",
+      "archiveOffset": 556427726,
+      "compressedBytes": 5026,
+      "bytes": 48276,
+      "sha256": "166a5be394105b591705c726cbcf1ee7611e04fe98f2d939c31ff2b65bfe952a"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/룬나이트_남.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/미케닉_남.act",
+      "archiveOffset": 666876734,
+      "compressedBytes": 6719,
+      "bytes": 48276,
+      "sha256": "237a21b2fd4134a40046521e24796e29af4d7013bd614b8c6b3e45524c75e9ab"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/미케닉_남.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/아크비숍_남.act",
+      "archiveOffset": 766164334,
+      "compressedBytes": 6327,
+      "bytes": 48276,
+      "sha256": "06ea1a06f49778ed389e27056091bda449c0e34e6a39855874c13e3babb7d1ea"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/아크비숍_남.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/워록_남.act",
+      "archiveOffset": 167060838,
+      "compressedBytes": 3934,
+      "bytes": 48276,
+      "sha256": "36fa6bebb8ec3f6bbd33b738e1922ae7f4a8dd465a827cd84355963a38beaf52"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/남/워록_남.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/메카닉윙.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/길로틴크로스_여.act",
+      "archiveOffset": 259449526,
+      "compressedBytes": 5884,
+      "bytes": 48276,
+      "sha256": "d51d4b69781cd39cd1185956c9cad1f5bce5ebe90c635e35d9f75b50ea84e394"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/길로틴크로스_여.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/레인져_여.act",
+      "archiveOffset": 449002302,
+      "compressedBytes": 5632,
+      "bytes": 48276,
+      "sha256": "6ac4bc47f73135f58043e147e9a92d120ac20cd247eb87ffbbed881e37048fd2"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/레인져_여.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/룬나이트_여.act",
+      "archiveOffset": 608737798,
+      "compressedBytes": 4310,
+      "bytes": 48276,
+      "sha256": "8696e8dad0021ee21d1cf94563300151e68234b1fb6fb20a336a4cc4a6bd0d7c"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/룬나이트_여.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/미케닉_여.act",
+      "archiveOffset": 104745822,
+      "compressedBytes": 4756,
+      "bytes": 48276,
+      "sha256": "f6ace9f29ad572728671c474f5f44ee776b874e06a45057ca2fa62d3be253f42"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/미케닉_여.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/아크비숍_여.act",
+      "archiveOffset": 634276158,
+      "compressedBytes": 4353,
+      "bytes": 48276,
+      "sha256": "137f6f938eca7ba5dc59975bf610578a3ecdd98306e677f1857f6c8c949c187f"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/아크비숍_여.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/워록_여.act",
+      "archiveOffset": 41079958,
+      "compressedBytes": 5459,
+      "bytes": 48276,
+      "sha256": "56108458dd8eb9f764211089dd9324b3ca8defc293b04b90861753d98c98b7a6"
+    },
+    {
+      "path": "data/sprite/로브/메카닉윙/여/워록_여.spr",
+      "archiveOffset": 410338038,
+      "compressedBytes": 2996,
+      "bytes": 5476,
+      "sha256": "34ea89be770db0d98ecb6d46c43ff7d46acba4477d4d6b16babfb12e8643c24e"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/길로틴크로스_남.act",
+      "archiveOffset": 733982998,
+      "compressedBytes": 5423,
+      "bytes": 48276,
+      "sha256": "e0ddded954b43c1acc9189f402600d6a2a359a27cd773f021feeadebc0574e3e"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/길로틴크로스_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/레인져_남.act",
+      "archiveOffset": 521754958,
+      "compressedBytes": 5449,
+      "bytes": 48276,
+      "sha256": "5f3d4c6992f36ee9393bad0e051ee2b4a5fc6026d464a50e053184555fdb5399"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/레인져_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/룬나이트_남.act",
+      "archiveOffset": 649454678,
+      "compressedBytes": 5015,
+      "bytes": 48276,
+      "sha256": "de92148b4edf5c2351e31b53588c43735c0c72f3f57f43b57d0e23ceab07c4ac"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/룬나이트_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/미케닉_남.act",
+      "archiveOffset": 288879190,
+      "compressedBytes": 6609,
+      "bytes": 48276,
+      "sha256": "e54d51fa5e664003b3d23eaac9a49c4645f18c8b6c920d05e7322c714be3a012"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/미케닉_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/아크비숍_남.act",
+      "archiveOffset": 281959510,
+      "compressedBytes": 6237,
+      "bytes": 48276,
+      "sha256": "a98154f6d7ff8f557af3fa899cb061da62827127b6fb24c3374ece5f14e23e38"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/아크비숍_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/워록_남.act",
+      "archiveOffset": 443564198,
+      "compressedBytes": 3911,
+      "bytes": 48276,
+      "sha256": "57b87d8675daf7b80c7139a4288aac40bcd1b9bb089c88b4c4a3bc75ea829dbc"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/남/워록_남.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/빛과어둠의날개.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/길로틴크로스_여.act",
+      "archiveOffset": 117141526,
+      "compressedBytes": 5898,
+      "bytes": 48276,
+      "sha256": "a5c0dd85addd79fb2f2adb8168c82ccd336fac4de2db3d9bf4bc19beea7d96c1"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/길로틴크로스_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/레인져_여.act",
+      "archiveOffset": 314679438,
+      "compressedBytes": 5663,
+      "bytes": 48276,
+      "sha256": "d494a72227aefd270c7722de4112ae64761b0f033ca832b61abc67851241f2b9"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/레인져_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/룬나이트_여.act",
+      "archiveOffset": 241124286,
+      "compressedBytes": 4149,
+      "bytes": 44628,
+      "sha256": "02954462d7a4ffe96a59626557f46dc04b349a74457c97baddf720382ac2fa14"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/룬나이트_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/미케닉_여.act",
+      "archiveOffset": 112589494,
+      "compressedBytes": 4594,
+      "bytes": 44628,
+      "sha256": "6dcb9093e3308e784ea172a0f3d46620fd5f9575b89a0a78dadd7c8e9f3054e5"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/미케닉_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/아크비숍_여.act",
+      "archiveOffset": 302602918,
+      "compressedBytes": 4163,
+      "bytes": 44628,
+      "sha256": "ff6121ada0334cc993fd43a3023440869f597d631aa6f952635a4d939025cea4"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/아크비숍_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/워록_여.act",
+      "archiveOffset": 613788590,
+      "compressedBytes": 5452,
+      "bytes": 48276,
+      "sha256": "364c251cf26ab6a515d68ea0ea21951bdbcad1bfb377c9d0ad9dc6d6bb62972f"
+    },
+    {
+      "path": "data/sprite/로브/빛과어둠의날개/여/워록_여.spr",
+      "archiveOffset": 320551486,
+      "compressedBytes": 6429,
+      "bytes": 13155,
+      "sha256": "6e43cccaaea200af599a532ef56efb88eb0446cbcc2269d1161ba8b2e3eb4315"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/길로틴크로스_남.act",
+      "archiveOffset": 180926222,
+      "compressedBytes": 5472,
+      "bytes": 48276,
+      "sha256": "c17206108395b187b752aa384e9df1faa1a8c740f07abae68c8b8272db3d1739"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/길로틴크로스_남.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/레인져_남.act",
+      "archiveOffset": 681125686,
+      "compressedBytes": 5460,
+      "bytes": 48276,
+      "sha256": "8edd8b7094f2568b3e947a3c5e8c817d16618a93bc67e5e346dbd53eb1f68e34"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/레인져_남.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/룬나이트_남.act",
+      "archiveOffset": 626419094,
+      "compressedBytes": 4982,
+      "bytes": 48276,
+      "sha256": "9c4d1507a5aab45448a911897a50be63fb5c87e088bf62ea8c260218a5a3988a"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/룬나이트_남.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/미케닉_남.act",
+      "archiveOffset": 359616766,
+      "compressedBytes": 6724,
+      "bytes": 48276,
+      "sha256": "30a4092f674a99794aa8633cb15f83db2c270c3993cab04f070152abc0001f0f"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/미케닉_남.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/아크비숍_남.act",
+      "archiveOffset": 645587886,
+      "compressedBytes": 6341,
+      "bytes": 48276,
+      "sha256": "0e605debfc02239cf95b5c761a0f16f18d0840eb5ebe904636635528b0066ce7"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/아크비숍_남.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/워록_남.act",
+      "archiveOffset": 554151078,
+      "compressedBytes": 3928,
+      "bytes": 48276,
+      "sha256": "46fdace3e6ff188a72d81eb9f3d6d345c2e40b4424e676697253a617e2c4b536"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/남/워록_남.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/엔젤페더.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/길로틴크로스_여.act",
+      "archiveOffset": 350893422,
+      "compressedBytes": 5876,
+      "bytes": 48276,
+      "sha256": "f2164acd5db64d5353273d7a323de37732760310dfd9627333d3d7de6291868d"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/길로틴크로스_여.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/레인져_여.act",
+      "archiveOffset": 370394070,
+      "compressedBytes": 4362,
+      "bytes": 48276,
+      "sha256": "0d1858c99467200dc6fff1ded3517342697e7ee0926f1b24c1e4b88fb4c902c3"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/레인져_여.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/룬나이트_여.act",
+      "archiveOffset": 590914742,
+      "compressedBytes": 4054,
+      "bytes": 48276,
+      "sha256": "07044fea5e0a4744a0a1fc02cc3d3df52da890db85384be95f7bec69fb37d33f"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/룬나이트_여.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/미케닉_여.act",
+      "archiveOffset": 558838734,
+      "compressedBytes": 4085,
+      "bytes": 48276,
+      "sha256": "cb6f0ab54b09a838a4a2e923d5f5e7214229ce54a263fe89792de878ea3db1ef"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/미케닉_여.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/아크비숍_여.act",
+      "archiveOffset": 440637814,
+      "compressedBytes": 4102,
+      "bytes": 48276,
+      "sha256": "433ed4b9ae243a559fbd4b547d8d19dee9b24bed713c9f04e8c28877dc51d599"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/아크비숍_여.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/워록_여.act",
+      "archiveOffset": 209304742,
+      "compressedBytes": 5385,
+      "bytes": 48276,
+      "sha256": "9f6918c1ea563f3609f5f752ae0dbe5a551efe7a467465273eff8017ef4b14e6"
+    },
+    {
+      "path": "data/sprite/로브/엔젤페더/여/워록_여.spr",
+      "archiveOffset": 520446702,
+      "compressedBytes": 2031,
+      "bytes": 4157,
+      "sha256": "9f6d68f2bc8442d629dd5494ced017ff26e2a4deb079f844357423434b65d2d4"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/길로틴크로스_남.act",
+      "archiveOffset": 427682414,
+      "compressedBytes": 5470,
+      "bytes": 48276,
+      "sha256": "3f6ae83095773434764d8ba7221bb903082f2eaf23d1b1d38d5a3f2c110dd9ac"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/길로틴크로스_남.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/레인져_남.act",
+      "archiveOffset": 143218398,
+      "compressedBytes": 5470,
+      "bytes": 48276,
+      "sha256": "1134af2f5fd73737fcb4a7c2f2f2c8d777bfcf2b0db4a817247ec2aa9a586f06"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/레인져_남.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/룬나이트_남.act",
+      "archiveOffset": 314719582,
+      "compressedBytes": 4994,
+      "bytes": 48276,
+      "sha256": "4ff66f9315940d2330adc958a415d71ce28750f780eab7fe3eef49e1c15ce4f6"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/룬나이트_남.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/미케닉_남.act",
+      "archiveOffset": 131509982,
+      "compressedBytes": 6697,
+      "bytes": 48276,
+      "sha256": "d601f0c0c876dd3267fdd4736d380078c9ef2db9770671e4814bfb3caba06a7a"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/미케닉_남.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/아크비숍_남.act",
+      "archiveOffset": 653834366,
+      "compressedBytes": 6326,
+      "bytes": 48276,
+      "sha256": "80630a0b3d1d8a918c2c6d05ab636ff2a98f1a228fb61c971da32138c340bb5c"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/아크비숍_남.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/워록_남.act",
+      "archiveOffset": 289302398,
+      "compressedBytes": 3935,
+      "bytes": 48276,
+      "sha256": "86f5b888e0094ef2ac2bbc7e0e5ab706b16b01a26a85d89701dfbae472d4955a"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/남/워록_남.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/길로틴크로스_여.act",
+      "archiveOffset": 194571166,
+      "compressedBytes": 5874,
+      "bytes": 48276,
+      "sha256": "39084e2e81c133c9a5491db7ea6f5e25bd25518980f6a07aab16513040742fcf"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/길로틴크로스_여.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/레인져_여.act",
+      "archiveOffset": 759561934,
+      "compressedBytes": 5619,
+      "bytes": 48276,
+      "sha256": "c1660c96fb5ba90f12d71367746d13e4a1746ca81fb8b077d4e45120ee862081"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/레인져_여.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/룬나이트_여.act",
+      "archiveOffset": 320582630,
+      "compressedBytes": 3996,
+      "bytes": 48276,
+      "sha256": "cb6b3c8845ac64c4bf1e741a7267489cdfbbf3df3b43f7f6e55f08f8fb7c6d19"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/룬나이트_여.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/미케닉_여.act",
+      "archiveOffset": 612542478,
+      "compressedBytes": 4727,
+      "bytes": 48276,
+      "sha256": "4adf241aaeead6a6e08973e17c19d2d9973cd929352f5b7c0c04a2c9fdc73fdc"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/미케닉_여.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/아크비숍_여.act",
+      "archiveOffset": 113829710,
+      "compressedBytes": 4323,
+      "bytes": 48276,
+      "sha256": "0bb425a9fcedd2b118e27e5b115efc6cc59f06b2cdf9367971a2e6f46e383e84"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/아크비숍_여.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/워록_여.act",
+      "archiveOffset": 324703150,
+      "compressedBytes": 5474,
+      "bytes": 48276,
+      "sha256": "a06f3e35a3f14f986558b016f0d3f13ba3ec90490c669f504e90a7f3f1edac4c"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/여/워록_여.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/하늘색큐피트날개/하늘색큐피트날개.spr",
+      "archiveOffset": 535488006,
+      "compressedBytes": 1758,
+      "bytes": 3914,
+      "sha256": "0ac80ab0c690b161f80d617a5f33fcb97e0ab2dddae132b3d8bd905237972d7e"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/레인져_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C2%B7%C2%B9%C3%80%C3%8E%C3%81%C2%AE_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "5f3d4c6992f36ee9393bad0e051ee2b4a5fc6026d464a50e053184555fdb5399"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/레인져_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C2%B7%C2%B9%C3%80%C3%8E%C3%81%C2%AE_%C2%B3%C2%B2.spr",
+      "bytes": 13155,
+      "sha256": "8f94fd275cb3f2a2774e17a29afac08c8f9d3d73345edcd2b5155ea6a4816d6c"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/레인져_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C2%B7%C2%B9%C3%80%C3%8E%C3%81%C2%AE_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "d6d2b99c0951cb7fdb2838825fa02563d0a59eda1d35eaadefb98a561d0e5086"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/레인져_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C2%B7%C2%B9%C3%80%C3%8E%C3%81%C2%AE_%C2%BF%C2%A9.spr",
+      "bytes": 12033,
+      "sha256": "a57155a524af8fc43d261964de9b351f6a83086209480b0282aa7e8959ce746f"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/아크비숍_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C2%BE%C3%86%C3%85%C2%A9%C2%BA%C3%B1%C2%BC%C3%B3_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "a98154f6d7ff8f557af3fa899cb061da62827127b6fb24c3374ece5f14e23e38"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/아크비숍_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C2%BE%C3%86%C3%85%C2%A9%C2%BA%C3%B1%C2%BC%C3%B3_%C2%B3%C2%B2.spr",
+      "bytes": 13153,
+      "sha256": "e16da58be1d6f73f7eee964d649e76afd4150cf51d5ce8e4e588c05c085138fb"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/아크비숍_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C2%BE%C3%86%C3%85%C2%A9%C2%BA%C3%B1%C2%BC%C3%B3_%C2%BF%C2%A9.act",
+      "bytes": 44628,
+      "sha256": "ff6121ada0334cc993fd43a3023440869f597d631aa6f952635a4d939025cea4"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/아크비숍_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C2%BE%C3%86%C3%85%C2%A9%C2%BA%C3%B1%C2%BC%C3%B3_%C2%BF%C2%A9.spr",
+      "bytes": 13153,
+      "sha256": "e16da58be1d6f73f7eee964d649e76afd4150cf51d5ce8e4e588c05c085138fb"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/미케닉_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C2%B9%C3%8C%C3%84%C3%89%C2%B4%C3%90_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "e54d51fa5e664003b3d23eaac9a49c4645f18c8b6c920d05e7322c714be3a012"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/미케닉_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C2%B9%C3%8C%C3%84%C3%89%C2%B4%C3%90_%C2%B3%C2%B2.spr",
+      "bytes": 13155,
+      "sha256": "ee1cafe6bdde5b2477f47aa9d10d4e33284abbafd4a7d91c0670f8a5470a7466"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/미케닉_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C2%B9%C3%8C%C3%84%C3%89%C2%B4%C3%90_%C2%BF%C2%A9.act",
+      "bytes": 44628,
+      "sha256": "6dcb9093e3308e784ea172a0f3d46620fd5f9575b89a0a78dadd7c8e9f3054e5"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/미케닉_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C2%B9%C3%8C%C3%84%C3%89%C2%B4%C3%90_%C2%BF%C2%A9.spr",
+      "bytes": 13153,
+      "sha256": "e16da58be1d6f73f7eee964d649e76afd4150cf51d5ce8e4e588c05c085138fb"
+    }
+  ],
+  "rendererCommit": "4de4fa747431979d35c747d7edd549a872efd9e1",
+  "provenance": "Original per-job and shared garment records from the pinned official supplement; backpack template sprites pruned by the pinned renderer. Four preview-adapted garments are recovered separately."
+}

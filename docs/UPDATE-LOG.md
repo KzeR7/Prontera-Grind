@@ -6787,20 +6787,48 @@ The owner's second pass over v77, six notes, all built.
 * **Checks:** Expanded guide regression, panel layout (42) and UI (64) passed. Shared-browser desktop/390px checks passed for distinct plans/tiers, card visibility, recipe navigation and both hint steps without uncaught errors. UI suite initially exposed unguarded DOM listeners in its isolated harness; guarded registrations and reran successfully. Preview uses the documented renderer fallback because WebGL is unavailable.
 * **Delivery:** Local changes and refreshed guide preview; no push or deployment.
 
-### 2026-10-16 — `haven-v177 background music player`
-* **Changed:** Added a background music system with per-map playlists, volume/mute/on-off controls in Settings, track cycling and save-persisted preferences. Tracks are configured in `assets/bgm-tracks.js` and support local audio files or YouTube video IDs. Map travel and auto-advance switch tracks automatically.
+### 2026-10-16 — `haven-v177 basic attacks between skills`
+* **Changed:** Fast characters use normal attacks between combo skills when a complete swing fits. Skill order, cast spacing, individual cooldowns and three-second recovery are preserved. The Combo hint explains this behavior.
+* **Try it:** Fight with a fast AGI/ASPD build and several attacks in Combo; normal hits fill available gaps between skill casts.
+* **Checks:** Combo rotation (18), attack sync (8), fourth-job skills (15), skill (44), skill redesign (25), combat damage (10), Ascension combat (13) and field-loop smoke (9) passed. Browser appearance remains unverified.
+* **Delivery:** Local workspace changes; no push or deployment.
+
+### 2026-10-16 — `haven-v178 close attack range gaps`
+* **Changed:** Characters immediately step closer when their current target drifts just outside attack range. Removed a one-second stationary wait reproduced during Ascension combat; characters still hold their position while in range.
+* **Try it:** Fight regular monsters and MVPs in Astral Citadel or Thor Volcano. Small changes in monster position should no longer cause a one-second standstill.
+* **Checks:** New Ascension attack regression passed 24 class/map/monster cases; field-loop, combo, attack-sync, fourth-job skills, Ascension combat, skill redesign, combat damage, Ascension progression and Astral journey suites passed. Browser appearance remains unverified.
+* **Delivery:** Local workspace changes; no push or deployment.
+
+
+### 2026-10-16 — `haven-v179 travel and progression refresh`
+* **Changed:** Astral stage changes finish their continuous walk in two seconds with pets keeping pace. Endless Echo has a portal/arena illustration in Maps. Class Tree opens with large clickable current-lineage cards and retains the full overview; native portraits use a slate background. Combo editing is at the top of Skills, with the separate tab and empty bottom setup removed.
+* **Changed:** All five Nightmare materials consolidate into Void Core, preserving old wallet totals once. Drops, offline rewards, legacy GM gifts, purchases, scroll crafting and selective reforges share it. Unprotected +5–9 failures lose one refinement rank on all grades, correcting Mythic's below-10 exemption; below +5 and Mythic's +10 checkpoint stay safe. Protection and higher Mythic rules retain their existing behavior.
+* **Changed:** All six fourth jobs support 20 hairstyles per gender, nine native palettes and all 52 accessories. Recovered original component/attachment inputs, pinned four explicit preview adapters, and regenerated the component pack. Native pixels, eight directions, animation timing, weapons, shadows and world scale are preserved. Earlier-class assets remain unchanged. The GM catalog generator now uses the current Mythic recipe API and its catalog is regenerated.
+* **Try it:** Change Astral stages; open Maps → Endless Echo, Class Tree and Skills. Open Wardrobe on any fourth job, change hair/color/accessories, then Apply, Cancel or Reset. Refine without protection from +5–9 to see failure rank loss.
+* **Checks:** All selected progression/material/refinement/save/GM/combat/UI suites passed, including the new seven-group regression and 24 Ascension attack cases. Fourth-job runtime checked 2,160 hair/color looks and all 624 class/gender/accessory combinations. Native audit passed 447,970 exact layer frames and 11,943 independent compositions (maximum translucent rounding difference 3/255); all 1,869 default composite frames match exactly. Desktop/390px shared-browser DOM/Canvas checks passed. Publishing checks (15), site build, generated catalog checks and whitespace check passed. Chromium WebGL could not initialize; browser checks used the explicit repository renderer stub, so GPU/physical-device validation remains unavailable.
+* **Delivery:** Local workspace changes and built dist only; no push or deployment.
+
+### 2026-10-16 — `haven-v180 GM equipment presets`
+* **Changed:** GM Tools now grants class-specific +15 Mythic presets with maximum base values and four maximum legal affix rolls. All six fourth jobs have a preset, including their weapon alternatives, two accessories and a second Guillotine Cross dagger. Grants go to the bag with empty card sockets; class, equipped items, existing item identity and wallets are preserved. Full bags reject the whole preset. Added +1,000 of both ores alongside the existing +20 and Base level resets to 1, 99 and 120, clearing Base EXP and recalculating unspent stat points while preserving allocated stats/jobs/gear.
+* **Try it:** GM Tools → Maxed Ascension equipment by class. Ore grants are under GM multiplier; resets are under Level test controls.
+* **Checks:** New GM preset regression (7 groups), Mythic testing (10), gear (43), save/load (27), GM tools (14), panel layout (42), generated catalog check, publishing (15), site build and whitespace checks passed. Desktop/390px shared-browser controls and layouts passed with the explicit repository renderer stub; actual WebGL remains unavailable in this sandbox. Save test initially exposed expected locked:false normalization; corrected its expectation and verified every granted item survives reload.
+* **Delivery:** Local workspace changes only; no push or deployment.
+
+### 2026-10-16 — `haven-v181 background music player`
+* **Changed:** Added a background music system with per-map playlists, volume/mute/on-off controls in Settings, track cycling and save-persisted preferences. Tracks are configured in `assets/bgm-tracks.js` and support local audio files or YouTube video IDs. Map travel and auto-advance switch tracks automatically. (Authored as v177 on the BGM branch before main reused that build number; renumbered at merge.)
 * **Try it:** Settings → Background music; edit `assets/bgm-tracks.js` to add tracks per map index.
 * **Checks:** JavaScript syntax checks and affected sim suites passed; update watcher mirror check updated.
-* **Delivery:** Local changes on `arena/4a530a07-prontera-grind`; no push or deployment.
+* **Delivery:** Shipped on `arena/4a530a07-prontera-grind` in PR #100.
 
-### 2026-10-16 — `haven-v178 bgm player widget`
-* **Changed:** Added the two Ascension map tracks (Astral Citadel, Thor Volcano) to `assets/bgm-tracks.js`. Added a floating BGM player on PC web, parked under the HP box at the top-left: collapsed it shows the playing track (map BGM by default) with prev/next/mute/power, and the ▾ chevron opens a list of every added track so players can circulate through all BGMs by hand; Auto · map BGM returns control to per-map switching. Phone browsers never show the widget and keep plain autoplay map music. Picking a track while BGM is off turns it back on; state resets to map BGM on load.
+### 2026-10-16 — `haven-v182 bgm player widget`
+* **Changed:** Added the two Ascension map tracks (Astral Citadel, Thor Volcano) to `assets/bgm-tracks.js`. Added a floating BGM player on PC web, parked under the HP box at the top-left: collapsed it shows the playing track (map BGM by default) with prev/next/mute/power, and the ▾ chevron opens a list of every added track so players can circulate through all BGMs by hand; Auto · map BGM returns control to per-map switching. Phone browsers never show the widget and keep plain autoplay map music. Picking a track while BGM is off turns it back on; state resets to map BGM on load. (Authored as v178 on the BGM branch; renumbered at merge.)
 * **Try it:** On PC, press ▾ on the player under the HP box and pick any track, then Auto · map BGM. Travel to Astral Citadel or Thor Volcano for their new map themes. Phones: just travel and listen.
 * **Checks:** `node --check` on `assets/bgm.js`/`assets/bgm-tracks.js`. New `bgm_sim` (11 passed) covers the exact per-map tracks, minimized widget, library cycling and Auto-restore (it caught a hand-picked track surviving Auto · map BGM, and a prev-while-off leak, both fixed). Update watcher (6), UI (64) and save/load (27) sim suites passed.
-* **Delivery:** Local changes on `arena/4a530a07-prontera-grind`; no push or deployment.
+* **Delivery:** Shipped on `arena/4a530a07-prontera-grind` in PR #100.
 
-### 2026-10-16 — `haven-v179 bonus bgm selections`
-* **Changed:** Added two bonus BGM selections to the PC player's song list (not tied to a map): Theme of Gonryun (Not So Far Away) and Theme of Prontera. They circulate with every other track in the ▾ list and through prev/next, exactly like the map themes.
+### 2026-10-16 — `haven-v183 bonus bgm selections + GM equipment presets`
+* **Changed:** Added two bonus BGM selections to the PC player's song list (not tied to a map): Theme of Gonryun (Not So Far Away) and Theme of Prontera. They circulate with every other track in the ▾ list and through prev/next, exactly like the map themes. (Authored as v179 on the BGM branch; renumbered at merge.)
+* **Merged:** Combined with `haven-v180 GM equipment presets` from main - BUILD names both feature sets, and main's Nightmare-material migration (nmMat v3) is preserved in saves alongside the BGM preferences.
 * **Try it:** On PC, open the player under the HP box and pick ♪ Theme of Gonryun or ♪ Theme of Prontera.
-* **Checks:** `bgm_sim` extended (15 tracks listed, both bonus videos, wrap-around at the new list end) and passing; update watcher (6), UI (64) and save/load (27) suites passed.
-* **Delivery:** Local changes on `arena/4a530a07-prontera-grind`; no push or deployment.
+* **Checks:** `bgm_sim` extended (15 tracks listed, both bonus videos, wrap-around at the new list end) and passing; update watcher (6), UI (64) and save/load (27) suites passed after the merge.
+* **Delivery:** Shipped on `arena/4a530a07-prontera-grind` in PR #100; not merged to main.

@@ -1768,3 +1768,16 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .ui-skill-catalog .sk-head{flex-wrap:wrap;min-width:0}
 #wins .ui-skill-catalog .sk-level{white-space:normal;overflow-wrap:anywhere}
 #wins .ui-skill-catalog .sk .si,#wins .ui-skill-catalog .skill-art{width:30px;height:30px}
+
+/* v179: readable current lineage, neutral native portrait and Echo destination art. */
+#wins .current-class-path{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:4px 0 22px}
+#wins .current-class-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:190px;padding:18px 10px;white-space:normal;text-align:center;border:1px solid var(--edge2);border-radius:12px;background:linear-gradient(160deg,var(--e-raised),var(--e-bg));color:var(--ink)}
+#wins .current-class-card strong{font-size:15px;line-height:1.5}#wins .current-class-card small{font-size:11px;color:var(--e-muted);line-height:1.5}
+#wins .current-class-card.current{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--e-soft)}#wins .current-class-card:disabled{opacity:.75}
+#wins .class-card-emblem{display:grid;place-items:center;width:58px;height:58px;border:1px solid var(--edge2);border-radius:50%;font-size:30px;color:var(--gold)}
+#wins .class-path-panel .hair-preview-card{background:#182131}#wins .class-path-panel .hair-preview-stage{background:radial-gradient(ellipse,#374159,#182131 75%);border-color:#56617b}
+#wins .echo-destination{overflow:hidden;border:1px solid var(--edge2);border-radius:14px;background:var(--e-bg)}
+#wins .echo-scene{min-height:235px;margin:-24px -24px 24px;padding:34px 28px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:12px;background:linear-gradient(90deg,#0c1423db,transparent 80%),url('../atlas/endless-echo.svg') center/cover;color:#eeeafa}
+#wins .echo-scene span{letter-spacing:.22em;font-size:10px;color:#c7b8e4}#wins .echo-scene strong{font:700 28px var(--e-display)}#wins .echo-scene small{max-width:24ch;color:#ccc7dc;line-height:1.7}
+#wins .ui-combo-editor{margin-bottom:22px}
+@media(max-width:740px){#wins .current-class-path{grid-template-columns:repeat(2,minmax(0,1fr))}#wins .current-class-card{min-height:165px}#wins .echo-scene{min-height:230px;background-position:60% center}#wins .echo-scene strong{font-size:24px}}

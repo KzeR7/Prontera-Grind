@@ -958,7 +958,7 @@ t('the class-change panel previews the class it is describing', () => {
   assert.ok(h.includes('CLASS PREVIEW') && h.includes('CURRENT CLASS'), 'with a plain label for the class you already are');
   assert.ok(h.includes('data-v="Knight"'), 'and the selected class has an action');
   assert.ok(!h.includes('S (front) view'), 'without the retired view essay');
-  assert.ok(h.includes('Class lineage'), 'the class tree contains the lineage overview');
+  assert.ok(h.includes('current-class-path') && h.includes('Class tree'), 'current path and full-tree switch are available');
   const g = h.match(/.{0,40}undefined.{0,40}/);
   assert.ok(!g, 'the class panel renders without undefined values: ' + (g ? g[0] : ''));
 });
@@ -1109,8 +1109,8 @@ t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one a
   assert.ok(!U.V.reforge().includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
   // v90.8: the ten Nightmare materials are sold here, one Buy 1 button each
   assert.ok(h.includes('Nightmare materials') && h.includes('3,000,000z each'),'the Nightmare materials are listed and priced at 3,000,000z');
-  assert.strictEqual(h.split('data-a="bmmat"').length-1,5,'five material rows, one button each');
-  assert.ok(h.includes('data-a="bmmat" data-v="4"'),'the last material (Helheim Rune) has its own button');
+  assert.strictEqual(h.split('data-a="bmmat"').length-1,1,'one Void Core row');
+  assert.ok(h.includes('data-a="bmmat" data-v="0"'),'the last material (Helheim Rune) has its own button');
   U.S.zeny=2999999; h=U.V.market();
   assert.ok(/data-a="bmmat" data-v="0" disabled/.test(h),'a material button is disabled when the player cannot pay 3,000,000z');
   U.S.zeny=10000000; h=U.V.market();
