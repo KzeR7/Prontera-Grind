@@ -42,19 +42,19 @@ func main() {
 	switch job {
 	case 0, 6:
 		weapon = 1
-	case 2, 9, 4010:
+	case 2, 9, 4010, 4055:
 		weapon = 10
-	case 4, 5, 8, 4009:
+	case 4, 5, 8, 4009, 4057:
 		weapon = 8
-	case 10, 4011:
+	case 10, 4011, 4058:
 		weapon = 8
 		attack = 88
-	case 12, 4013:
+	case 12, 4013, 4059:
 		weapon = 16
 		attack = 88
 	case 3:
 		weapon = 11
-	case 11, 4012:
+	case 11, 4012, 4056:
 		weapon = 11
 		attack = 88
 	}
@@ -63,7 +63,7 @@ func main() {
 		offset := attack
 		if sex == "f" {
 			g = rotype.Female
-			if job == 0 || job == 9 || job == 4010 {
+			if job == 0 || job == 9 || job == 4010 || job == 4055 {
 				offset = 88
 			}
 		}

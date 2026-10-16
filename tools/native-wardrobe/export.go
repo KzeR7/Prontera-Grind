@@ -57,7 +57,7 @@ func (e *Engine) ExportWardrobe(req Request, folder string, headOnly bool, proof
 		}
 	}
 	weapons := 2
-	if req.Weapon == 10 || req.Weapon == 11 || req.Job == 8 || req.Job == 10 || req.Job == 4009 || req.Job == 4011 {
+	if req.Weapon == 10 || req.Weapon == 11 || req.Job == 8 || req.Job == 10 || req.Job == 4009 || req.Job == 4011 || req.Job == 4057 || req.Job == 4058 {
 		weapons = 1
 	} // Staves, bows and these mace sets have no separate slash component.
 	accessories := 0

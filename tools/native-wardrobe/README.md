@@ -1,3 +1,88 @@
+# Native wardrobe: all 25 classes
+
+## Fourth-job rebuild (v179)
+
+Rune Knight, Warlock, Ranger, Guillotine Cross, Arch Bishop and Mechanic now
+support the same 20 hairstyles per gender, nine native palettes and 52 accessories
+as the earlier nineteen classes. The live component pack is
+`assets/wardrobe/fourth/v1/`; the earlier pack remains byte-identical at v5.
+Default layered sprites match all 1,869 previous native composite animation frames
+exactly, including position and world scale. No alternate body outfit is used.
+
+Use Go 1.24.2, Python 3.9+ and Pillow 11.3.0. Check out ragassets
+`4de4fa747431979d35c747d7edd549a872efd9e1` outside the game checkout. Install
+`export.go` as `gateway/internal/render/engine/wardrobe_export.go`, `main.go` as
+`gateway/cmd/wardrobe-export/main.go`, `accessory_export.go` as
+`gateway/cmd/wardrobe-accessories/main.go` and `accessory_proof.go` as
+`gateway/cmd/wardrobe-accessory-proof/main.go`. Build those three commands there.
+The `mise exec go@1.24.2 -- go build ...` form works in the coding sandbox.
+
+Recover inputs in this order (native-root and all scratch exports stay outside
+the checkout):
+
+```sh
+python3 tools/native-fourth-jobs/recover.py /tmp/fourth-native
+python3 tools/native-wardrobe/fetch_sources.py /tmp/fourth-native
+python3 tools/native-wardrobe/fetch_accessory_sources.py /tmp/fourth-native
+python3 tools/native-wardrobe/fetch_accessory_sources.py /tmp/fourth-native --manifest tools/native-wardrobe/requested-items-source-manifest.json
+python3 tools/native-wardrobe/fetch_accessory_sources.py /tmp/fourth-native --manifest tools/native-wardrobe/seven-items-source-manifest.json
+python3 tools/native-wardrobe/fetch_accessory_sources.py /tmp/fourth-native --manifest tools/native-wardrobe/fourth-source-manifest.json
+python3 tools/native-wardrobe/prepare_fourth_previews.py /tmp/fourth-native --cache /tmp/fourth-previews
+```
+
+The fourth source manifest pins 310 original garment records, including per-job
+Archangel wing data. The preview manifest pins 480 public responses: 48 per-job
+trees and 432 PNG frame responses. All frame banks were independently fetched for
+each class/gender and match the earlier pinned originals. Evil Scythe, Shuriken,
+Poison Spider and Mainspring Screw use 96 explicitly derived ACT/SPR adapters;
+these retain exact pixels/exposed geometry and are not recovered original binaries.
+Preparation verifies fingerprints and must follow original input recovery so those
+four preview adapters take precedence. Runtime serves only local files.
+
+Create `/tmp/fourth-hairs.json` from the live hairstyle lists:
+
+```sh
+node -p "JSON.stringify({hairs:require('./assets/wardrobe.js').HAIRS})" > /tmp/fourth-hairs.json
+python3 -c "import json; print(json.dumps({'classes':json.load(open('assets/wardrobe/fourth/v1/catalog.json'))['classes']}))" > /tmp/fourth-classes.json
+```
+
+Run the three built commands:
+
+```sh
+for job in 4054 4055 4056 4059 4057 4058; do
+  wardrobe-export /tmp/fourth-native /tmp/fourth-hairs.json /tmp/fourth-exports/$job full $job || exit
+  wardrobe-accessories /tmp/fourth-native tools/native-wardrobe/accessories.json /tmp/fourth-pieces/$job $job || exit
+  wardrobe-accessory-proof /tmp/fourth-native tools/native-wardrobe/accessories.json /tmp/fourth-proofs/$job $job || exit
+done
+python3 tools/native-wardrobe/build_black_thunder.py /tmp/fourth-native /tmp/fourth-pieces /tmp/fourth-classes.json
+python3 tools/build_wardrobe_collection.py /tmp/fourth-exports /tmp/fourth-pieces tools/native-wardrobe/accessories.json /tmp/fourth-pack --fourth-jobs
+```
+
+Copy the fresh pack into `assets/wardrobe/fourth/v1/` only after validation. It
+contains 564 files / 6,233,243 bytes (5.94 MiB), maximum decoded atlas 4,026,880
+bytes. Each store retains the existing 16 MiB image / 1 MiB metadata budgets.
+Publishing excludes the obsolete fixed composites (retained in the checkout for
+proofs), permits 6.25 MiB for this pack and 62.5 MiB for the complete site.
+
+```sh
+python3 tools/tests/wardrobe_accessories_assets.py /tmp/fourth-exports /tmp/fourth-pieces /tmp/fourth-proofs --pack assets/wardrobe/fourth/v1
+python3 tools/tests/fourth_wardrobe_baseline.py
+node tools/tests/fourth_job_runtime_sim.js
+node tools/tests/wardrobe_game_sim.js
+node tools/tests/wardrobe_sim.js
+node tools/tests/publish_sim.js
+```
+
+The native audit checks 447,970 exact layer frames and 11,943 independent native
+compositions (maximum 3/255 translucent rounding difference). Baseline proof checks
+1,869 default frames pixel-for-pixel plus unchanged earlier-class assets. Runtime
+coverage includes 2,160 hair/color looks and all 624 class/gender/piece choices.
+Canvas and controls can be checked in the shared browser with the repository's
+explicit renderer stub when the sandbox cannot create WebGL. That does not verify
+GPU rendering or physical devices.
+
+---
+
 # Fifty-two-piece Wardrobe (v5)
 
 V5 offers thirteen Head, twelve Face, ten Mouth and seventeen Wings pieces, plus None for each.

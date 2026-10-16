@@ -39,7 +39,7 @@ try{
  assert.ok(g.window.document.querySelectorAll('.eclipse-skill-description').length>0,'the restored tiles are not empty');
  assert.ok(g.window.document.querySelector('.ui-selected-skill'));
  assert.equal(g.window.document.querySelectorAll('.class-lineage-overview').length,0,'lineage belongs only to Class Tree');
- ev(`tabs.splice(0,tabs.length,'job');renderWin()`);
+ ev(`tabs.splice(0,tabs.length,'job');eclipseJobsBrowse=true;renderWin()`);
  assert.equal(g.window.document.querySelectorAll('.class-lineage-overview .tn').length,25);
  console.log('PASS: post-cap ASPD display, physical headgear, HP/CDM specialization, 42 native hashes, all 72 Mythic slot mappings, restored skill descriptions and skill/class separation.');
 }finally{g.close()}
