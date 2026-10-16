@@ -6832,3 +6832,9 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** On PC, open the player under the HP box and pick ♪ Theme of Gonryun or ♪ Theme of Prontera.
 * **Checks:** `bgm_sim` extended (15 tracks listed, both bonus videos, wrap-around at the new list end) and passing; update watcher (6), UI (64) and save/load (27) suites passed after the merge.
 * **Delivery:** Shipped on `arena/4a530a07-prontera-grind` in PR #100; not merged to main.
+
+### 2026-10-16 — `haven-v184 bgm playback fixes`
+* **Changed:** Fixed two BGM player bugs found in PR review. Volume/mute/on-off preferences now actually persist and load: the code checked `window.S`, but the save object is a `let` binding in `index.html` and never a `window` property, so the checks silently disabled both saving and loading. YouTube playback now waits for the player's own `onReady` before loading a video; a track requested earlier waits as the pending video and plays the moment the player is ready instead of being dropped.
+* **Try it:** Change the volume or mute BGM, reload - it remembers. The first track after the login screen always starts, even on a slow connection.
+* **Checks:** `bgm_sim` grown to 12 cases (S-binding persistence + onReady pending-video regression); replaying the suite against the pre-fix code fails 9 of 12, so the cases bite. Update watcher (6), UI (64) and save/load (27) suites passed.
+* **Delivery:** Shipped on `arena/4a530a07-prontera-grind` in PR #100; not merged to main.

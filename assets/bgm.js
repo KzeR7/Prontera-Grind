@@ -14,6 +14,7 @@
     audio: null,
     ytPlayer: null,
     ytReady: false,
+    ytPlayerReady: false,
     ytContainer: null,
     ytPendingVideo: null,
     initDone: false,
@@ -38,13 +39,12 @@
         if (typeof prev === 'function') try { prev(); } catch (e) {}
         this.ytReady = true;
         this._createYtPlayer();
-        if (this.ytPendingVideo) { this._ytLoad(this.ytPendingVideo); this.ytPendingVideo = null; }
       };
       if (window.YT && window.YT.Player) { this.ytReady = true; this._createYtPlayer(); }
     },
     loadPrefs: function () {
       try {
-        if (window.S && S.bgm && typeof S.bgm === 'object') {
+        if (typeof S !== 'undefined' && S && S.bgm && typeof S.bgm === 'object') {
           this.enabled = S.bgm.enabled !== false;
           if (typeof S.bgm.volume === 'number' && isFinite(S.bgm.volume)) this.volume = Math.max(0, Math.min(1, S.bgm.volume));
           this.muted = !!S.bgm.muted;
@@ -53,7 +53,7 @@
     },
     savePrefs: function () {
       try {
-        if (window.S) {
+        if (typeof S !== 'undefined' && S) {
           if (!S.bgm || typeof S.bgm !== 'object') S.bgm = {};
           S.bgm.enabled = this.enabled;
           S.bgm.volume = this.volume;
@@ -73,7 +73,15 @@
           height: '1', width: '1',
           playerVars: { autoplay: 0, controls: 0, playsinline: 1, rel: 0 },
           events: {
-            onReady: () => { this._applyVolume(); },
+            onReady: () => {
+              this.ytPlayerReady = true;
+              this._applyVolume();
+              if (this.ytPendingVideo) {
+                const v = this.ytPendingVideo;
+                this.ytPendingVideo = null;
+                this._ytLoad(v);
+              }
+            },
             onStateChange: (e) => { if (e.data === YT.PlayerState.ENDED) this.next(); }
           }
         });
@@ -135,7 +143,7 @@
           const m = vid.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/);
           if (m) vid = m[1];
         }
-        if (this.ytReady && this.ytPlayer && typeof this.ytPlayer.loadVideoById === 'function') {
+        if (this.ytPlayerReady && this.ytPlayer && typeof this.ytPlayer.loadVideoById === 'function') {
           try { this.ytPlayer.loadVideoById(vid); this.ytPlayer.playVideo(); } catch (e) {}
         } else { this.ytPendingVideo = vid; }
       } else {
@@ -193,7 +201,7 @@
           const m = vid.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/);
           if (m) vid = m[1];
         }
-        if (this.ytReady && this.ytPlayer && typeof this.ytPlayer.loadVideoById === 'function') {
+        if (this.ytPlayerReady && this.ytPlayer && typeof this.ytPlayer.loadVideoById === 'function') {
           try { this.ytPlayer.loadVideoById(vid); this.ytPlayer.playVideo(); } catch (e) {}
         } else {
           this.ytPendingVideo = vid;

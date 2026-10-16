@@ -13,7 +13,11 @@
 //   * Auto · map BGM really hands control back to per-map switching - the map's own track
 //     resumes, not whatever was playing;
 //   * picking a song while BGM is off turns BGM back on;
-//   * volume, mute and on/off preferences persist with the save and load back;
+//   * YouTube playback only starts after the player's own onReady - an earlier request waits as
+//     the pending video and plays when the player is ready (it is never dropped);
+//   * volume, mute and on/off preferences persist with the save and load back - through the
+//     global `S` binding (`let S` in index.html is never `window.S`, so a window.S guard would
+//     silently disable persistence in the browser);
 //   * phones never get the widget (hidden by CSS) and the page wires playLogin + travel syncs.
 //
 // This drives the REAL assets/bgm-tracks.js and assets/bgm.js in a vm with a fake document and
@@ -67,23 +71,40 @@ FakeAudio.prototype.removeAttribute = function () {};
 FakeAudio.prototype.load = function () {};
 FakeAudio.prototype.play = function () { return { catch() {} }; };
 
-// fake YouTube API: remember every video the game asks for
+// fake YouTube API: remembers every video the game asks for. Like the real player, it rejects
+// loadVideoById/playVideo until the player's own onReady has fired - the sim calls _fireReady.
 const yt = { loaded: null, played: 0, stopped: 0, vol: null };
-function FakeYTPlayer() {
-  this.loadVideoById = (v) => { yt.loaded = String(v); };
-  this.playVideo = () => { yt.played++; };
+function FakeYTPlayer(container, opts) {
+  this.opts = opts || {};
+  this.ready = false;
+  FakeYTPlayer.last = this;
+  this.loadVideoById = (v) => {
+    if (!this.ready) throw new Error('loadVideoById called before onReady');
+    yt.loaded = String(v);
+  };
+  this.playVideo = () => { if (!this.ready) throw new Error('playVideo called before onReady'); yt.played++; };
   this.stopVideo = () => { yt.stopped++; };
   this.setVolume = (v) => { yt.vol = v; };
   this.mute = () => {};
   this.unMute = () => {};
+  this._fireReady = () => {
+    this.ready = true;
+    if (this.opts.events && this.opts.events.onReady) this.opts.events.onReady({ target: this });
+  };
 }
+const ytReadyNow = () => FakeYTPlayer.last._fireReady();
+
 const sandbox = {
-  console, document, Audio: FakeAudio, S: {},
+  console, document, Audio: FakeAudio,
   save: () => { sandbox.saved = (sandbox.saved || 0) + 1; },
   YT: { Player: FakeYTPlayer, PlayerState: { ENDED: -1 } }
 };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
+// index.html declares the save object with `let` (a lexical binding, NOT window.S) - mirror that
+// exactly so prefs code that wrongly checks window.S fails here the way it fails in the browser.
+vm.runInContext('let S = {};', sandbox, { filename: 's-binding.js' });
+const ev = (code) => vm.runInContext(code, sandbox);
 vm.runInContext(tracksSrc, sandbox, { filename: 'bgm-tracks.js' });
 vm.runInContext(bgmSrc, sandbox, { filename: 'bgm.js' });
 const BGM = sandbox.window.BGM;
@@ -122,6 +143,21 @@ test('every map plus the login screen carries its exact configured track', () =>
   // keys: maps 0-11 + login + extras (2 bonus selections) + the 'default' fallback playlist
   assert.equal(Object.keys(sandbox.window.BGM_TRACKS).length, 15);
   assert.ok(Array.isArray(sandbox.window.BGM_TRACKS.default), 'fallback playlist exists');
+});
+
+test('playback waits for the player onReady; pending requests are never lost', () => {
+  BGM.setEnabled(true);
+  BGM.playLogin();
+  assert.equal(yt.loaded, null, 'no player calls before onReady');
+  assert.equal(BGM.ytPendingVideo, EXPECTED.login, 'the first request waits for the player');
+  click({ 'data-bgm-i': '1' }); // a hand-pick before ready just replaces the pending request
+  assert.equal(yt.loaded, null, 'still no player calls before onReady');
+  assert.equal(BGM.ytPendingVideo, EXPECTED[1], 'the latest request wins');
+  BGM.setAutoMode();
+  assert.equal(BGM.ytPendingVideo, EXPECTED.login, 'map BGM takes the pending slot back');
+  ytReadyNow();
+  assert.equal(yt.loaded, EXPECTED.login, 'onReady flushes the pending request and plays');
+  assert.equal(BGM.ytPendingVideo, null);
 });
 
 test('map BGM is the default: entering maps plays their tracks, travel switches', () => {
@@ -231,9 +267,9 @@ test('volume, mute and on/off persist with the save and load back', () => {
   BGM.setVolume(0.8);
   BGM.setMuted(true);
   BGM.setEnabled(false);
-  assert.equal(sandbox.S.bgm.volume, 0.8);
-  assert.equal(sandbox.S.bgm.muted, true);
-  assert.equal(sandbox.S.bgm.enabled, false);
+  assert.equal(ev('S.bgm.volume'), 0.8);
+  assert.equal(ev('S.bgm.muted'), true);
+  assert.equal(ev('S.bgm.enabled'), false);
   assert.ok(sandbox.saved > 0, 'save() ran');
   BGM.enabled = true; BGM.muted = false; BGM.volume = 0.1; // reset in-memory only
   BGM.loadPrefs();
@@ -255,6 +291,8 @@ test('phones keep plain autoplay: the widget is CSS-hidden and the page wires th
   assert.match(indexSrc, /BGM\.playLogin\(\)/, 'login screen music starts');
   assert.ok((indexSrc.match(/BGM\.sync\(S\.mp\)/g) || []).length >= 2, 'travel and auto-advance resync');
   assert.match(indexSrc, /data-a="bgm"/, 'settings controls present');
+  assert.ok(!/window\.S\b/.test(bgmSrc), 'prefs use the global S binding (S is `let`, never window.S)');
+  assert.match(bgmSrc, /typeof S !== 'undefined'/);
 });
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
