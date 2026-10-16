@@ -166,3 +166,19 @@ In v165 only EXP uses HP scaling; Zeny uses matching Abyss regular/MVP per-kill 
 Check `ascension_tracks_sim.js`, `ascension_combat_sim.js`,
 `ascension_rewards_sim.js` alongside offline, save/owner/cloud, skill/combo,
 combat/stat/economy, map and UI suites.
+
+Handbook (v175): `handbook`, `beginnerGuide`, `levelingGuide`, `buildGuide` and
+`ascensionGuide` render the five Guide chapters. `guideSources` reads `fieldOf`
+for actual monsters, equipment and card chances; `CARD_CATALOG` supplies effects
+and slot compatibility. Level bands are recommendations, while `classBlock`,
+`NMLV`, `canTravel`, `ASC_STATS` and the current combat/economy helpers define
+unlock rules. `maybeGuide` runs after session initialization and fourth-job changes;
+`S.handbook` stores completion and step positions in the existing account save.
+Tours can be dismissed or replayed without changing progression. Validate with
+`guide_sim.js`, `panel_layout_smoke.js`, save/owner, class-change and job-rite suites.
+
+Handbook v176: `guideBuildPlan`, `guideTierPlan` and `guideMythicTargets` supply
+visible goal/tier recommendations and Forge links. `guideFinderSync` owns the
+first-guide close → More → Guide hint, keyed to the current state object;
+`S.handbook.findGuide` saves completion. Existing menu/panel redraws update the
+highlight, and desktop/mobile resize/scroll events reposition it.
