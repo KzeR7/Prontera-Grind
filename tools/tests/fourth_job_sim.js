@@ -76,7 +76,7 @@ console.log('dark launch: the live roster is unchanged\n');
   assert.equal(r.joff, '0,9,49,98', 'the live pacing table is unchanged');
   assert.equal(r.tree, 1, 'the live Jobs tab defaults to the full lineage');
   // Live Class Path presentation has its own coordinated build label.
-  assert.ok(r.build === '2026-10-16 haven-v164 Ascension pacing', 'the visible redesign has the coordinated build label');
+  assert.ok(r.build === LIVE_HTML.match(/const BUILD='([^']+)'/)[1], 'the visible redesign has the coordinated build label');
   console.log('ok   live page: 19 classes, no 4th job, JOFF/Class Tree/build unchanged');
   pass++;
 }

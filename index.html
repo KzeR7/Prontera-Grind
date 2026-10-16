@@ -812,7 +812,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=159">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=166">
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 </head>
 <body>
@@ -877,7 +877,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <script src="assets/wardrobe.js?v=134"></script>
-<script src="assets/fourth-jobs.js?v=161"></script>
+<script src="assets/fourth-jobs.js?v=166"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/skill-icons.js?v=130"></script>
@@ -1115,7 +1115,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-16 haven-v165 Material economy';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-16 haven-v170 HP affix conversion';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1977,15 +1977,16 @@ const eaOf=l=>(l|0)>=90?1.4:1;
 // instead, on their own stat line. Both helpers read the monster's own field power (m.lvl) and
 // ramp from power 60, so nothing at or below Payon changes and the pressure builds through
 // Niflheim into Abyss/Nightmare:
-//   mhOf - monster HIT rating, subtracted from the player's dodge at the swing (cap +30, bosses
-//          +40; the roll keeps a 5% dodge floor = a 95% hit ceiling). A dodge-stacked character
+//   mhOf - monster HIT rating, subtracted from the player's dodge at the swing (base cap +30,
+//          bosses +40; Astral/Thor field enemies add the owner's chosen +15 hitBonus).
+//          The roll keeps a 5% dodge floor = a 95% hit ceiling. A dodge-stacked character
 //          still reads 60% Flee on the sheet - endgame monsters are simply accurate enough to
 //          punch through most of it, while a weak stray still whiffs as before.
 //   prOf - monster armor pierce, thinning the player's DEF before the def/(def+4000) cut (up to
 //          60%, bosses 70%). This is what un-sits the tank: the old cut formula plateaus at
 //          12k DEF and the cap made everything above it identical - pierce scales with the
 //          attacker, so the deepest maps keep biting no matter how much armor you stack.
-const mhOf=m=>Math.min(30,Math.max(0,((m.lvl|0)-60)*1.25))*(m.boss?4/3:1);
+const mhOf=m=>Math.min(30,Math.max(0,((m.lvl|0)-60)*1.25))*(m.boss?4/3:1)+(m.hitBonus||0);
 const prOf=m=>Math.min(.6,Math.max(0,((m.lvl|0)-60)*.02))+(m.boss?.1:0);
 // Each map's Nightmare gear is its own high-tier row, renamed: same weapon families and slots (so
 // every class can still use its own weapon) and a per-map word that keeps every name unique. Section
@@ -2880,7 +2881,7 @@ const ASC_STATS={
  slayer:{n:'Slayer',step:1.5,unit:'%',text:'Damage against bosses'},
  vitality:{n:'Vitality',step:2,unit:'%',text:'Maximum HP'},
  guard:{n:'Guard',step:1,unit:'%',text:'Less incoming damage, applied after ordinary mitigation'},
- haste:{n:'Haste',step:1,unit:'%',text:'Shorter basic-attack interval, beyond its ordinary floor'},
+ haste:{n:'Haste',step:1,unit:'%',text:'Shorter basic-attack interval after its ordinary floor; maximum 192 ASPD'},
  evasion:{n:'Evasion',step:.5,unit:' pp',text:'Flee beyond the ordinary cap'}
 };
 const ASC_UPGRADES={
@@ -2892,7 +2893,7 @@ const ASC_UPGRADES={
  mc_gat:{damage:25,range:1},mc_over:{damage:25,boss:10},mc_rocket:{damage:20,area:20},mc_boomerang:{damage:25,cooldown:10},mc_swing:{damage:25,stun:.5},mc_magma:{damage:25}
 };
 // At 8M combat EXP/min: ~700h shared / ~87.5h per class. Rounded per level.
-const ASC_XP_BASE={stats:16007274,skills:8212500},ASC_REWARD_VERSION=4;
+const ASC_XP_BASE={stats:16007274,skills:8212500},ASC_REWARD_VERSION=5;
 const ascNeed=(level,skills=false)=>Math.round(ASC_XP_BASE[skills?'skills':'stats']*Math.pow(level+1,1.8)/1000)*1000;
 function cleanAscension(value){
  const count=(v,max)=>Number.isFinite(Number(v))?Math.max(0,Math.min(max,Math.floor(Number(v)))):0;
@@ -3761,7 +3762,7 @@ const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f
 // atk(): it reads the left hand as eqv('off'), which is only non-zero for a dagger. A shield
 // still reads as its own DEF, which is why def() keeps its slot==='off' guard.
 const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,DUAL=.5,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
-const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f;for(const c of it.cards||[])for(const e of cardEffects(c))if(e.k===k)v+=e.v*f}
+const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f*(k==='hp'?2:1);for(const c of it.cards||[])for(const e of cardEffects(c))if(e.k===k)v+=e.v*f}
   // haven-v158: Ascension set bonuses add percentage stats on top of gear and cards.
   if(typeof ascensionSetBonuses==='function')for(const a of Object.values(ascensionSetBonuses()))if(a.tier.stats[k])v+=a.tier.stats[k];
   return v};
@@ -3789,7 +3790,8 @@ const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25
 // owner asked for; class speed ordering is preserved until the floor). Typical endgame intervals:
 // Assassin Cross ~.14s, Sniper ~.15s, Lord Knight ~.20s before gear ASPD%; with gear ASPD% most
 // trans classes ride the .13 floor.
-const aspd=()=>{const floor=items().some(it=>it.sec===6)?.10:.13;return Math.max(floor,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100))*(1-ascStat('haste')/100)};
+// Owner cap: 192 ASPD = 9.6 basic attacks/s. Apply after Haste and every speed bonus.
+const aspd=()=>{const floor=items().some(it=>it.sec===6)?.10:.13;return Math.max(5/(192-144),Math.max(floor,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100))*(1-ascStat('haste')/100))};
 // v73 crit retune (owner): reaching the 60% cap used to be a LUK dump - LUK 99 alone paid
 // 39.6%. LUK now pays 0.25 a point, the flat base is 2, and above 45% every further point from
 // stats, skills, gear and card mastery counts half. A Lv70 LUK dump with both Hunter/Sniper crit
@@ -3845,11 +3847,12 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 // REF_ORE is indexed by rarIdx (Common, Fine, Rare, Epic, Legendary, N, N+); refOre() is the ore one attempt takes.
 // v90.8 (owner: Zeny sink): refine Zeny is x3 (REF_ZENY_MUL).
 const REF_ZENY_MUL=3,refCost=it=>{const r=it.r||0;if(r>=10&&it.sec===6)return Math.round(REF_ZENY_MUL*400*(r+1)*(1+(it.sec||0)*.5)*5);return Math.round(REF_ZENY_MUL*400*(r+1)*(1+(it.sec||0)*.5))},REF_ORE=[1,1,2,2,5,10,10,15],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>{const r=it.r||0;if(r>=10&&it.sec===6)return[30,21,12,5,2][r-10]||0;return[70,70,70,70,49,42,35,28,21,14][r]};
-const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${cardName(c)}${c.legacy?' [legacy]':''} (${cardEffects(c).map(cardEffectText).join(', ')})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
+const affTxt=a=>a.k==='hp'?`${AL[a.k]} +${a.v*2} (roll +${a.v} ×2)`:`${AL[a.k]} +${a.v}`,cardTxt=c=>`${cardName(c)}${c.legacy?' [legacy]':''} (${cardEffects(c).map(cardEffectText).join(', ')})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>bossStage(S.mp,S.lvl),fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Curated original RO equipment art: progression follows the saved job section,
 // with robe and pendant variants selected by item type. All selected PNGs ship locally.
 const RO_ITEM_ICON_CANDIDATES={
+ mythic:{"celestial":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450264,"head":430002,"off":460040,"leg":470196,"acc":490327},"voidwalker":{"sword":500054,"dagger":510075,"axe":520021,"mace":590047,"staff":550089,"katar":610041,"bow":700059,"armor":450270,"head":430002,"off":460040,"leg":470197,"acc":490328},"ethereal":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450265,"head":430002,"off":460040,"leg":450268,"acc":490330},"primal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15380,"head":19343,"off":460023,"leg":22201,"acc":490104},"molten":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15378,"head":19343,"off":460023,"leg":22199,"acc":490104},"infernal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15379,"head":19343,"off":460023,"leg":22200,"acc":490451}},
  sword:[1101,1123,1137,1142,1133,1145],
  dagger:[1201,1207,1217,1226,1232,1240],
  katar:[1250,1252,1254,1256,1258,1260],
@@ -3894,7 +3897,7 @@ const equipmentArtFamily=it=>{if(!it||it.card||it.ore)return'';const slot=gearSl
   if(slot==='armor'&&/robe|cloak|garb|shirt|vest|coat|clothes|suit/i.test(name))return'robe';
   if(slot==='acc'&&/pendant|necklace|charm|bead|belt|tear|glass/i.test(name))return'pendant';
   return slot};
-const gearItemIconId=it=>{const list=RO_ITEM_ICON_CANDIDATES[equipmentArtFamily(it)];return list?list[equipmentArtTier(it)]:0};
+const gearItemIconId=it=>{const mythic=it.sec===6&&RO_ITEM_ICON_CANDIDATES.mythic[it.ascSet];if(mythic)return mythic[it.slot==='weapon'?it.wt:it.slot]||0;const list=RO_ITEM_ICON_CANDIDATES[equipmentArtFamily(it)];return list?list[equipmentArtTier(it)]:0};
 const itemIconUrl=id=>id?`assets/equipment-icons/${id}.png`:'';
 const itemIconMarkup=it=>{const svg=itemSvgMarkup(it),id=gearItemIconId(it);
   return id?`<img class="ro-item-icon" src="${itemIconUrl(id)}" data-svg="${ITEM_ICON_KEY(it)}" alt="" loading="${it.k?'eager':'lazy'}" decoding="async">`
@@ -3953,17 +3956,13 @@ const starterAtk=l=>6+3*(l-1);
 // Keep the Nightmare MVP wave's raw EXP budget intact while giving its MVP at least
 // 25% more than one escort. Assign integer remainder to the MVP; normal fields and
 // Nightmare stages 11-14 retain their existing pay. Online and offline use this helper.
-// EXP scales with HP at a 5–10% efficiency premium. Material fields give only
-// 5–10% extra Zeny per kill over the matching Abyss mob; HP never inflates Zeny.
+// Material fields: bounded rewards per kill, independent of monster HP.
 const ascRewardBonus=(m,stage)=>(m===10?[1.05,1.055,1.06,1.065,1.07]:[1.07,1.0775,1.085,1.0925,1.10])[stage-1];
-function ascRewardRatio(m,stage,boss=false){
- const hp=ascensionCombatStats(m,stage,boss).hp,power=fieldPower(9,15),weight=1+9*.15+(9-4)*.2;
- const escortHp=Math.floor(HPK*weight*Math.pow(power,HPE)*NMHP*nm15Of(15));
- return hp/escortHp*ascRewardBonus(m,stage);
-}
+const ascZenyBonus=(m,stage)=>(m===10?[2,2.1,2.2,2.3,2.4]:[2.4,2.55,2.7,2.85,3])[stage-1];
+function ascRewardRatio(m,stage,boss=false){return ascRewardBonus(m,stage)*(boss?4:1)}
 function fieldZenyReward(m,stage,boss=false){
  const l=fieldPower(m,stage),range=boss?BZK:ZK;
- if(m>=10)return Math.round(fieldZenyReward(9,15,boss)*ascRewardBonus(m,stage));
+ if(m>=10)return Math.round(fieldZenyReward(9,15,boss)*ascZenyBonus(m,stage));
  const nz=stage>10?(boss?NMZENY:nmZenyOf(stage))*nmPayOf(m,stage,2):1;
  return Math.max(ZMIN,Math.floor(ri(range[0],range[1])*l*l/1000*nz));
 }
@@ -3976,21 +3975,17 @@ function fieldExpReward(m,stage,boss=false){
   const escorts=m<5?3:5,budget=mvp+escorts*regular,escort=Math.floor(budget/(escorts+1.25));
   return boss?budget-escorts*escort:escort;
 }
-// Ascension starts well above Nightmare Abyss's final MVP, then ramps steeply by stage.
-// Both maps are parallel level-150 routes; Thor has the steeper later-stage curve.
-// haven-v158 balance: the old ramp ([1..2.5] Astral, [1..3.2] Thor at 1.3x base) let a 3rd-class
-// character with ~32M DPS and HP leech breeze through stage 4 with no real threat. These maps are
-// the endgame grind for 4th-class characters, so the floor is raised: base scale 2.0x and a much
-// steeper ramp per stage. Stage 1 is now a real fight for a 3rd-class; stage 5 boss is a 4th-class
-// checkpoint that demands the Ascension gear the map itself drops.
+// Parallel level-150 routes: retain v167's lower HP and the original v158 ATK.
+// The owner requested HP reductions only and chose +15 HIT for field enemies below.
 function ascensionCombatStats(m,stage,boss=false){
   if(m<10)return {};
   const power=fieldPower(9,15),weight=1+9*.15+(9-4)*.2;
   const abyssHp=Math.floor(500*weight*Math.pow(power,HPE)*NMBOSSHP*nm15Of(15));
   const abyssAtk=Math.floor((8+power*6.5)*weight*NMATK*nm15Of(15)*eaOf(power));
-  const ramp=(m===10?[2.5,4,6.5,10,15]:[3.5,5.5,9,14,20])[stage-1];
-  const scale=2.0*ramp*(boss?4:1),hp=Math.floor(abyssHp*scale);
-  return {hp,max:hp,atk:Math.floor(abyssAtk*scale)};
+  const hpRamp=(m===10?[1.25,1.75,2.5,3.5,5]:[1.75,2.5,3.5,5,7])[stage-1];
+  const atkRamp=(m===10?[5,8,13,20,30]:[7,11,18,28,40])[stage-1];
+  const hp=Math.floor(abyssHp*hpRamp*(boss?3:1));
+  return {hp,max:hp,atk:Math.floor(abyssAtk*atkRamp*(boss?4:1))};
 }
 // One field monster, before it is placed. Shared by the wave builder and by every camp refill, so a
 // monster that walks back in is exactly the monster the field started with.
@@ -3998,7 +3993,7 @@ function minionDef(pack){
   const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP*nm15Of(S.lvl):1,na=nm1?NMATK*nm15Of(S.lvl):1,nz=nm1?nmZenyOf(S.lvl)*nmPayOf(S.mp,S.lvl,2):1;
   const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
   const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm);
-  return{...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l)),
+  return{...m,mapIndex:S.mp,hitBonus:S.mp===10||S.mp===11?15:0,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l)),
     ...ascensionCombatStats(S.mp,S.lvl),exp:fieldExpReward(S.mp,S.lvl),zeny:fieldZenyReward(S.mp,S.lvl),
     size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec,
     spawn:0,ry:0,at:rnd(.6,1.6),a:rnd(0,Math.PI*2),wt:rnd(1,4)};
@@ -4033,7 +4028,7 @@ function spawn(){
   const bossWave=!!F.boss;
   if(bossWave){
     const hp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(S.lvl):1));
-    mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),
+    mobs.push({...F.boss,mapIndex:S.mp,hitBonus:S.mp===10||S.mp===11?15:0,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),
       ...ascensionCombatStats(S.mp,S.lvl,true),exp:fieldExpReward(S.mp,S.lvl,true),zeny:fieldZenyReward(S.mp,S.lvl,true),
       size:1.3,mag:true,lvl:l,sec:F.sec});
     // The first five maps bring three escorts; the five later maps bring five.
@@ -4048,7 +4043,7 @@ function spawn(){
   }
   activePack=nearestPack();mob=bossWave?mobs[0]:packMob();pAtkT=.3;
 }
-const affixPool=it=>it.slot==='weapon'?(it.wt==='staff'?['int','dex','matk','crit','cdm','hp']:['str','agi','dex','luk','atk','crit','aspd','cdm']):it.slot==='acc'?['str','agi','dex','int','vit','luk','atk','matk','crit','cdm','move']:it.slot==='leg'?['agi','vit','hp','flee','aspd','move']:it.slot==='head'?['int','vit','hp','matk']:['vit','hp','flee','str','agi'];
+const affixPool=it=>it.slot==='weapon'?(it.wt==='staff'?['int','dex','matk','crit','cdm','hp']:['str','agi','dex','luk','atk','crit','aspd','cdm']):it.slot==='acc'?['str','agi','dex','int','vit','luk','atk','matk','crit','cdm','move']:it.slot==='leg'?['agi','vit','hp','flee','aspd','move']:it.slot==='head'?['str','dex','int','vit','hp','atk','matk']:['vit','hp','flee','str','agi'];
 const rollAffix=(k,it)=>({k,v:k==='move'?Math.min(it.slot==='acc'?5:8,Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)))):Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)*(it.quality||1)))});
 function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){
   const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';
@@ -5058,7 +5053,7 @@ let reforgeSelection={};
 function reforgeQuote(it,n){const all=(it.aff||[]).length,full=n===all,fee=full?1:n===2?3:6;
  return{zeny:reforgeCost(it)*fee,ore:full?0:(rarIdx(it)+1)*(n===2?2:4),mat:it.sec>=4&&it.sec<6&&!full?(n===2?2:4):0,ascMat:it.sec===6&&!full?(n===2?3:5):0,ascMatType:it.ascSet?ASC_SETS[it.ascSet]?.mat:-1,oreKey:it.slot==='weapon'?'ori':'elu',map:nmMatIndex(it.mp)};}
 function affixRangeText(a,it){if(!it)return affTxt(a);const value=f=>a.k==='move'?Math.min(it.slot==='acc'?5:8,Math.max(1,Math.round(affixValue(a.k,it.sec,it.tier,f,it.mp)))):Math.max(1,Math.round(affixValue(a.k,it.sec,it.tier,f,it.mp)*(it.quality||1)));
- return `${affTxt(a)} [${value(.8)}~${value(1.25)}]`;}
+ return `${affTxt(a)} [${value(.8)*(a.k==='hp'?2:1)}~${value(1.25)*(a.k==='hp'?2:1)}${a.k==='hp'?' effective':''}]`;}
 function reforge(sl,all=false,confirmed=null){
  if(!bmOpen()||S.reforgePending)return;const it=S.eq[sl];if(!it)return;
  const chosen=all?(it.aff||[]).map((_,i)=>i):(reforgeSelection[it.id]||[]).filter((x,i,a)=>Number.isInteger(x)&&x>=0&&x<it.aff.length&&a.indexOf(x)===i);
@@ -5123,7 +5118,7 @@ function buildGuide(market=false){const sources=guideSources(),phase=guideTier,e
  const weapons=sources.gear.filter(x=>eligible(x.m,x.l)&&C().wt.includes(x.item.k)&&gearTierOK(x.item)).sort((a,b)=>b.item.sec-a.item.sec||b.item.tier-a.item.tier||b.m-a.m||b.l-a.l);
  const unique=weapons.filter((x,i,a)=>a.findIndex(y=>y.item.n===x.item.n)===i).slice(0,4);
  const primary=INT_CLASSES.includes(S.cls)?'INT':C().main.toUpperCase();
- return`<section class="build-guide">${levelingGuide()}<div class="hd">${market?'Upgrade planner':'Build & farming guide'} · ${esc(S.cls)}</div><p>Main stat: <b>${primary}</b>. ${INT_CLASSES.includes(S.cls)?'INT powers your attacks and skill multiplier.':'Physical skills gain damage from learned ranks; INT does not multiply them.'} Use AGI for speed, DEX for accuracy, LUK for criticals and VIT for survival. Three stats can reach 120 at Base 150.</p><div class="row">${['farm','boss','survive'].map(x=>`<button data-a="guidemode" data-v="${x}" aria-pressed="${guideMode===x}">${{farm:'Farming',boss:'Boss damage',survive:'Survival'}[x]}</button>`).join('')}</div><div class="row">${['current','normal','nightmare'].map(x=>`<button data-a="guidetier" data-v="${x}" aria-pressed="${phase===x}">${{current:'Accessible now',normal:'Normal targets',nightmare:'Nightmare targets'}[x]}</button>`).join('')}</div><p>Weapon choices: ${C().wt.join(', ')}${dualWield()?' · two daggers or a two-handed katar':''}. These are farming targets, not guaranteed DPS upgrades; compare cards and affixes.</p><div class="guide-grid">${unique.map(x=>`<article class="mob-card"><b>${esc(x.item.n)}</b><small>${SECN[x.item.sec]} · ${gearUserOf(x.item)}</small>${guideLink(x)}</article>`).join('')||'<p>Unlock more fields to see weapon targets.</p>'}</div><div class="sec">Cards for ${guideMode==='survive'?'survival':guideMode==='boss'?'boss damage':'farming'}</div><small>One card per monster family per item, up to two boss cards and two Crit DMG cards per item, with no build-wide boss limit. Normal and Nightmare variants share a family.</small><div class="guide-grid">${cardRows||'<p>No matching accessible sources. Browse normal targets to plan ahead.</p>'}</div>${market?`<div class="sec">Your next upgrades</div>${EQK.filter(([k])=>S.eq[k]).map(([k,n])=>{const it=S.eq[k],empty=Math.max(0,(it.slots||0)-(it.cards||[]).length);return`<p><b>${n}</b>: ${empty?empty+' empty socket(s): choose a compatible card above. ':'Sockets filled. '}${(it.r||0)<(it.sec===6?15:10)?'Refine costs '+refCost(it).toLocaleString()+'z and '+refOre(it)+' '+ORE[it.slot==='weapon'?'ori':'elu']+'.':'Refinement complete.'} ${(it.aff||[]).length?'Use Single Reforge to protect your two best affixes on a three-affix item.':''}</p>`}).join('')}<small>Cards and weapons are farmed from the listed monsters. This market sells refinement supplies, not these equipment drops.</small>`:''}<details><summary>Caps, criticals and healing</summary><p>Ordinary crit caps at 60%; Index adds up to 40%. Mythic crit affixes and set bonuses add beyond 100%. Boss resistance still reduces the final chance. Crit DMG applies to damaging skills. Each LUK adds 0.008× Crit DMG; each DEX adds 0.005×. ASPD cannot go below 0.13 seconds per attack. DEX 60 removes ordinary miss chance.</p><p>Movement before equipment caps at ${MOVE_CAP} u/s, including pets, skills and running. Equipment/card movement adds ${equipmentMove()}% / 20% after that cap.</p><p>HP Leech: ${cardMasteryStat('leech')*.5}% of actual basic-attack damage. Pet siphon: 0.5% of actual pet damage while active. Combined healing cannot exceed 2% Max HP per second. Overkill never heals; skill healing and regeneration are separate.</p></details></section>`;
+ return`<section class="build-guide">${levelingGuide()}<div class="hd">${market?'Upgrade planner':'Build & farming guide'} · ${esc(S.cls)}</div><p>Main stat: <b>${primary}</b>. ${INT_CLASSES.includes(S.cls)?'INT powers your attacks and skill multiplier.':'Physical skills gain damage from learned ranks; INT does not multiply them.'} Use AGI for speed, DEX for accuracy, LUK for criticals and VIT for survival. Three stats can reach 120 at Base 150.</p><div class="row">${['farm','boss','survive'].map(x=>`<button data-a="guidemode" data-v="${x}" aria-pressed="${guideMode===x}">${{farm:'Farming',boss:'Boss damage',survive:'Survival'}[x]}</button>`).join('')}</div><div class="row">${['current','normal','nightmare'].map(x=>`<button data-a="guidetier" data-v="${x}" aria-pressed="${phase===x}">${{current:'Accessible now',normal:'Normal targets',nightmare:'Nightmare targets'}[x]}</button>`).join('')}</div><p>Weapon choices: ${C().wt.join(', ')}${dualWield()?' · two daggers or a two-handed katar':''}. These are farming targets, not guaranteed DPS upgrades; compare cards and affixes.</p><div class="guide-grid">${unique.map(x=>`<article class="mob-card"><b>${esc(x.item.n)}</b><small>${SECN[x.item.sec]} · ${gearUserOf(x.item)}</small>${guideLink(x)}</article>`).join('')||'<p>Unlock more fields to see weapon targets.</p>'}</div><div class="sec">Cards for ${guideMode==='survive'?'survival':guideMode==='boss'?'boss damage':'farming'}</div><small>One card per monster family per item, up to two boss cards and two Crit DMG cards per item, with no build-wide boss limit. Normal and Nightmare variants share a family.</small><div class="guide-grid">${cardRows||'<p>No matching accessible sources. Browse normal targets to plan ahead.</p>'}</div>${market?`<div class="sec">Your next upgrades</div>${EQK.filter(([k])=>S.eq[k]).map(([k,n])=>{const it=S.eq[k],empty=Math.max(0,(it.slots||0)-(it.cards||[]).length);return`<p><b>${n}</b>: ${empty?empty+' empty socket(s): choose a compatible card above. ':'Sockets filled. '}${(it.r||0)<(it.sec===6?15:10)?'Refine costs '+refCost(it).toLocaleString()+'z and '+refOre(it)+' '+ORE[it.slot==='weapon'?'ori':'elu']+'.':'Refinement complete.'} ${(it.aff||[]).length?'Use Single Reforge to protect your two best affixes on a three-affix item.':''}</p>`}).join('')}<small>Cards and weapons are farmed from the listed monsters. This market sells refinement supplies, not these equipment drops.</small>`:''}<details><summary>Caps, criticals and healing</summary><p>Ordinary crit caps at 60%; Index adds up to 40%. Mythic crit affixes and set bonuses add beyond 100%. Boss resistance still reduces the final chance. Crit DMG applies to damaging skills. Each LUK adds 0.008× Crit DMG; each DEX adds 0.005×. Ordinary gear has a 0.13s interval floor before Haste. Mythic gear and Haste can accelerate basic attacks, up to 192 ASPD (9.6 attacks/s). DEX 60 removes ordinary miss chance.</p><p>Movement before equipment caps at ${MOVE_CAP} u/s, including pets, skills and running. Equipment/card movement adds ${equipmentMove()}% / 20% after that cap.</p><p>HP Leech: ${cardMasteryStat('leech')*.5}% of actual basic-attack damage. Pet siphon: 0.5% of actual pet damage while active. Combined healing cannot exceed 2% Max HP per second. Overkill never heals; skill healing and regeneration are separate.</p></details></section>`;
 }
 
 // ---------- class change ----------
@@ -5406,7 +5401,7 @@ let autoSellDraft=null,autoSellPreview=null,bulkSellSelection=null;
 function bulkSellState(){if(!bulkSellSelection||bulkSellSelection.owner!==S)bulkSellSelection={owner:S,rarities:RARALL.map(()=>true)};return {...S,autoSell:bulkSellSelection.rarities};}
 function sellDraft(){if(!autoSellDraft||autoSellDraft.owner!==S)autoSellDraft={owner:S,rules:cleanAutoSellRules(S.autoSellRules)||defaultAutoSellRules()};return autoSellDraft.rules;}
 function autoSellEditor(){const r=sellDraft(),on=(list,k)=>list.includes(k)?'checked':'',preview=autoSellPreview&&autoSellPreview.owner===S?autoSellPreview:null;
-  return `<details class="autosell-editor" data-ui-disclosure="bag-sell-filters"><summary>Equipment &amp; affix filters</summary><p class="sell-help">Match every selected category. Within a category, match any selection. Empty equipment filters mean all equipment. Save filters to apply them to drops, offline loot and previews.</p>
+  return `<details class="autosell-editor" data-ui-disclosure="bag-sell-filters"><summary>Equipment &amp; affix filters</summary><p class="sell-help">Match every selected category. Within a category, match any selection. Empty equipment filters mean all equipment. Affix minimums use stored roll values; HP contributes twice its roll to your stats. Save filters to apply them to drops, offline loot and previews.</p>
   <div class="row"><small>Presets (edit before saving):</small><button data-a="sellpreset" data-v="physical">Physical</button><button data-a="sellpreset" data-v="caster">Caster</button><button data-a="sellpreset" data-v="collector">Collector</button></div>
   <fieldset><legend>Sell these equipment slots</legend><div class="sell-options">${AUTOSELL_SLOTS.map(k=>`<label><input type="checkbox" data-sell-field="slots" value="${k}" ${on(r.slots,k)}> ${SLOTS[k].label}</label>`).join('')}</div></fieldset>
   <fieldset><legend>Weapon families (optional)</legend><div class="sell-options">${AUTOSELL_WEAPONS.map(k=>`<label><input type="checkbox" data-sell-field="weapons" value="${k}" ${on(r.weapons,k)}> ${k}</label>`).join('')}</div><small>Choosing a family keeps all non-weapons.</small></fieldset>
@@ -5508,7 +5503,7 @@ const V={
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
     +(petBonusList().length?`<small><b>Pet bonuses</b> (the fighting pets): ${petBonusList().join(' &middot; ')}</small>`:'')
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
-    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${Math.min(193,Math.round(144+5/Math.max(.13,aspd())))}</b> <small>${(1/aspd()).toFixed(2)}/s</small></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Movement speed <b>${moveSpd().toFixed(2)}</b> <small>u/s</small></span></div>
+    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${Math.round(144+5/aspd())}</b> <small>${(1/aspd()).toFixed(2)}/s</small></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Movement speed <b>${moveSpd().toFixed(2)}</b> <small>u/s</small></span></div>
     <small><b>Movement speed</b> starts at ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} u/s from AGI ${st('agi')}. Pets, skills and running share a ${MOVE_CAP} u/s cap. Equipment and cards add ${equipmentMove()}% afterward (up to 20%), allowing movement above the cap.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}% before the cap.`:''}</small>
     <small>Ordinary crit from stats, skills, gear and card mastery caps at 60%; above 45% each further point counts half. <b>Index Crit</b> adds +${idxC}% of +40 max from Hunt Titles. Mythic crit affixes and set bonuses add after the normal 100% cap (100% + 20% = 120%).</small>
     <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${statResetCost()&&S.zeny<statResetCost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${statResetCost()?statResetCost()+'z':'free'})</button>`},
@@ -5517,7 +5512,7 @@ const V={
     const node=n=>CLASSES[n]?tnode(n):`<button class="tn lock${k===n?' pick':''}" data-class-status="lock" data-a="selk" data-v="${n}"><b>${n}</b><small><span class="eclipse-job-status">Coming soon</span> · 4th job</small></button>`;
     const overview=`<div class="tree class-lineage-overview"><div class="trow">${node('Novice')}</div><div class="trunk"></div>${[0,1,2,3].map((i)=>`<div class="trow">${lines.map(line=>node(line[i])).join('')}</div>${i<3?'<div class="trunk"></div>':''}`).join('')}</div>`;
     const design=`<div class="class-design-root">${node('Novice')}</div><nav class="class-path-tabs" aria-label="First classes">${lines.map(line=>`<button data-a="jobbranch" data-v="${line[0]}" aria-expanded="${jobBranch===line[0]}">${line[0]}</button>`).join('')}</nav>${jobBranch?`<div class="class-path-heading"><h3>${jobBranch} lineage</h3></div><div class="class-path-track" aria-label="${jobBranch} progression">${lines.find(line=>line[0]===jobBranch).map(node).join('')}</div>`:''}`;
-    return`<div class="atabs" aria-label="Jobs views"><button data-a="jobview" data-v="lineage" class="${!eclipseJobsBrowse?'on':''}">Class lineage</button><button data-a="jobview" data-v="browse" class="${eclipseJobsBrowse?'on':''}">Tree design</button></div>${eclipseJobsBrowse?design:overview}
+    return`<div class="atabs" aria-label="Jobs views"><button data-a="jobview" data-v="lineage" class="${!eclipseJobsBrowse?'on':''}">Class lineage</button><button data-a="jobview" data-v="browse" class="${eclipseJobsBrowse?'on':''}">Class tree</button></div>${eclipseJobsBrowse?design:overview}
     <div class="class-path-focus"><div class="ui-inspector">
     <div class="mob-card"><small>${future?'4TH JOB · COMING SOON':{cur:'CURRENT CLASS',played:'PLAYED CLASS',ok:'AVAILABLE CLASS',lock:'LOCKED CLASS'}[classStatus(k)]}</small><h3>${k}</h3>
     ${future?`<p>Advance from <b>${planned[1]}</b> at Base Lv 150 and Job Lv 50.</p><p>Defeat ${JOB_RITE_OPPONENTS[planned[1]].n} in a 60-second Crucible trial. Victory completes the job change automatically.</p><button disabled>Coming soon</button>`:
@@ -5906,16 +5901,11 @@ function arrangePanel(k,root){
     grids.forEach(g=>{const label=g.previousElementSibling?.textContent||'Skills';for(const tile of [...g.querySelectorAll('.sk[data-a=ssel]')]){tile.querySelector('.sk-head')?.append(make('small','eclipse-skill-class',label));put(skillGrid,tile)}});put(catalog,skillGrid);
     if(tools)tools.remove();
     const chosen=slot?.querySelector('.sk-detail-card');
-    for(const tile of catalog.querySelectorAll('.sk[data-a=ssel]')){
-      const skill=SKILLS.find(s=>s.id===tile.dataset.v);if(!skill)continue;
-      const content=make('div','eclipse-skill-description');
-      if(chosen?.dataset.skillDetail===skill.id)put(content,chosen);else content.innerHTML=skillDetailCard(skill);
-      put(tile,content);
-    }
+    const detail=section('Selected skill','ui-selected-skill');put(detail,chosen||make('p','ui-empty','Select a skill to inspect its effects and auto-cast setting.'));
     const footer=put(section('Automation','ui-automation'),tools);
     // The allocation tile can be a sibling of the master tile in older saves/builds.
     const masters=all('.sk-master,.sk-alloc');masters.forEach(e=>{if(!footer.contains(e))footer.append(e)});
-    body.replaceChildren(q('.skill-rotation'),footer,scroll('skills',catalog),fold('Skill points & combat rules',intro,'skill-notes'),fold('Reset skills',reset,'respec'));
+    body.replaceChildren(footer,scroll('skills',catalog),detail,fold('Combo setup',q('.skill-rotation'),'combo-setup'),fold('Skill points & combat rules',intro,'skill-notes'),fold('Reset skills',reset,'respec'));
   }else if(mode==='bag'&&q('.bag-items')){
     body.classList.add('ui-materials');
   }else if(mode==='bag'||mode==='cards'){
@@ -9862,6 +9852,6 @@ function updateWatch(){
 }
 setInterval(updateWatch,60000);
 </script>
-<script src="assets/wardrobe-ui.js?v=161"></script>
+<script src="assets/wardrobe-ui.js?v=166"></script>
 </body>
 </html>

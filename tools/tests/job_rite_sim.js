@@ -22,6 +22,7 @@ try{
    assert.equal(ev('S.cls'),parent);assert.equal(ev('JOB_RITE.on'),true);
    assert.deepEqual(probe('return {name:mob.n,id:mob.spriteId,hp:mob.hp,atk:mob.atk,count:mobs.length}'),{name:enemy,id,hp:ev('ascensionCombatStats(10,1).hp'),atk:ev('ascensionCombatStats(10,1).atk'),count:1});
    assert.equal(ev('S.hp'),ev('maxHp()'));
+   assert.equal(ev('mhOf(mob)'),30,'field-only +15 HIT does not change the advancement opponent');
    assert.equal(ev('mob.size'),.6);assert.equal(ev("mob.mag===['demon','tree','blob'].includes(fieldOf(10,1).mobs[0].shape)"),true);
    ev('JOB_RITE.enemy.hp=0;kill(JOB_RITE.enemy);tickJobRite()');
    assert.equal(ev('JOB_RITE.outcome'),'passed');assert.equal(ev('S.cls'),parent);

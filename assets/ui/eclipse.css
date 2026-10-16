@@ -1728,3 +1728,21 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 /* The Ascension unlock uses a full label rather than the ordinary rank button. */
 #wins .ui-skill-catalog .sk>small{grid-column:1/-1;text-align:left;line-height:1.4}
 #wins .ui-skill-catalog .sk>[data-a=ascopenskill]{grid-column:1/-1;grid-row:auto;width:auto;max-width:100%;justify-self:start;white-space:normal;min-height:30px;padding:6px 10px}
+
+/* Skills stay compact; the Class Tree owns the large progression cards. */
+#wins .ui-skill-catalog .skg{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#wins .ui-skill-catalog .sk{display:grid;grid-template-columns:30px minmax(0,1fr) 30px;padding:8px;cursor:pointer;min-height:0}
+#wins .ui-selected-skill .sk-detail-card{margin:0}
+@container(max-width:700px){#wins .ui-skill-catalog .skg{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container(max-width:360px){#wins .ui-skill-catalog .skg{grid-template-columns:1fr}}
+
+#wins .class-lineage-overview .trow:first-child .tn{flex:none}
+#wins .class-lineage-overview .tn.lock{opacity:1;filter:none}
+#wins .skill-rotation{padding:10px;margin:0}
+#wins .combo-heading h3{font-size:17px;margin:4px 0}
+#wins .combo-icon{height:32px;min-height:0}
+#wins .combo-icon img{width:30px;height:30px}
+#wins .combo-slot>small{min-height:0}
+#wins .ui-skill-catalog .sk-head{flex-wrap:wrap;min-width:0}
+#wins .ui-skill-catalog .sk-level{white-space:normal;overflow-wrap:anywhere}
+#wins .ui-skill-catalog .sk .si,#wins .ui-skill-catalog .skill-art{width:30px;height:30px}

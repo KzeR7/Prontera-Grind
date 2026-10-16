@@ -60,7 +60,9 @@ t('the monster stat line: mhOf ramps +1.25/point from power 60 (bosses x4/3), pr
   assert.ok(src.includes('const eaOf=l=>(l|0)>=90?1.4:1;'), 'the eaOf helper (v86, kept)');
   assert.ok(src.includes('atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l))'), 'mob ATK x eaOf');
   assert.ok(src.includes('atk:Math.floor((8+l*6.5)*mb*na*eaOf(l))'), 'MVP ATK x eaOf');
-  assert.ok(src.includes('const mhOf=m=>Math.min(30,Math.max(0,((m.lvl|0)-60)*1.25))*(m.boss?4/3:1);'), 'the mhOf helper');
+  assert.strictEqual(ev('mhOf({lvl:175,boss:false})'),30,'ordinary endgame HIT remains +30');
+  assert.strictEqual(ev('mhOf({lvl:175,boss:true})'),40,'ordinary boss HIT remains +40');
+  assert.strictEqual(ev('mhOf({lvl:175,boss:false,hitBonus:15})'),45,'field HIT bonus adds after the ordinary cap');
   assert.ok(src.includes('const prOf=m=>Math.min(.6,Math.max(0,((m.lvl|0)-60)*.02))+(m.boss?.1:0);'), 'the prOf helper');
   const mhOf = m => Math.min(30, Math.max(0, ((m.lvl | 0) - 60) * 1.25)) * (m.boss ? 4 / 3 : 1);
   const prOf = m => Math.min(.6, Math.max(0, ((m.lvl | 0) - 60) * .02)) + (m.boss ? .1 : 0);
@@ -119,7 +121,7 @@ t('a wiped field is back inside 8 seconds: the worst camp refill wait is 7s', ()
     'the empty-field sweep still ticks the camp timers (the v86 whole-field-wipe fix)');
 });
 
-t('ASPD preserves ordinary AGI scaling and grants the .10s floor only with equipped Mythic gear', () => {
+t('ASPD preserves ordinary AGI scaling and allows 192 ASPD only with equipped Mythic gear or Haste', () => {
   combatBuild('Lord Knight',99);
   const ordinary99=ev('aspd()');
   assert.strictEqual(ordinary99.toFixed(4),(.85*.72*(1-.5742)).toFixed(4),'AGI 99 cuts 57.4%');
@@ -130,7 +132,7 @@ t('ASPD preserves ordinary AGI scaling and grants the .10s floor only with equip
   combatBuild('Assassin Cross',120,60);
   assert.strictEqual(ev('aspd()'),.13,'ordinary gear retains the .13s floor');
   ev('S.eq.armor.sec=6');
-  assert.strictEqual(ev('aspd()'),.10,'equipped Mythic unlocks the .10s floor');
+  assert.strictEqual(ev('aspd()'),5/48,'equipped Mythic reaches the hard 192 cap');
   ev('S.inv.push(S.eq.armor);S.eq.armor=null');
   assert.strictEqual(ev('aspd()'),.85*.5*(1-.68),'bagged Mythic grants neither ASPD nor its lower floor');
   combatBuild('Novice',9);
@@ -139,8 +141,8 @@ t('ASPD preserves ordinary AGI scaling and grants the .10s floor only with equip
 
 t('the drawn swing keeps up: minimum animation .14s, and the sheet shows the RO-style ASPD number', () => {
   assert.ok(src.includes('const SWING_MIN_T=.14,SWING_MAX_T=.55;'), 'the animation clamp follows the new floor');
-  assert.ok(src.includes('Math.min(193,Math.round(144+5/'), 'RO ASPD = 144 + 5/interval, capped at the RO ceiling 193');
-  const roAspd = d => Math.min(193, Math.round(144 + 5 / d));
+  assert.ok(src.includes('Math.round(144+5/aspd())'), 'RO-style ASPD reflects the actual post-cap interval');
+  const roAspd = d => Math.round(144 + 5 / d);
   assert.strictEqual(roAspd(.425), 156, 'a Novice-paced swing reads ~156');
   assert.strictEqual(roAspd(.13), 182, 'the machine-gun floor reads 182');
 });

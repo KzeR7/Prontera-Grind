@@ -44,6 +44,7 @@ const code = [
   require('./helpers/progression')(src,'affixes'),
 
   grab('const CD=[', 'const pm=s=>'),                       // classes + skills
+  pick(/const ASC_ONLY_SKILLS=[^\n]*/, 'Ascension skill IDs'),
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
   pick(/const st=k=>[^\n]*canUse=it=>[^;]+;/, 'canUse'),
   pick(/const heroMoveSpeedForAgi=[^\n]+;/, 'movement speed curve'),
@@ -131,7 +132,8 @@ const code = [
 
 const harness = `
 // stubs the pulled-in code needs at load time and when a panel renders
-const t=0,skillState=()=>({cursor:0});
+const t=0,skillState=()=>({cursor:0,buffs:{}});
+const ascStat=()=>0,ascRank=()=>0,ascSkillValue=()=>0;
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'sw'},armor:{label:'Armor',stat:'DEF',ic:'ar'},head:{label:'Headgear',stat:'HP',ic:'hd'},off:{label:'Shield',stat:'DEF',ic:'sh'},leg:{label:'Legwear',stat:'DEF',ic:'lg'},acc:{label:'Accessory',stat:'HP',ic:'ac'}};
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
 const RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]),rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
@@ -233,7 +235,7 @@ t('the map panel renders every map and field', () => {
   assert.ok(h.includes('mapcard'), 'the map selector must be the scalable grid');
   // v88: the town is gone, so the ten field cards are the whole grid, Endless Echo alone takes the
   // destination row, and the Auto-advance switch lives on this tab next to the stage picker.
-  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 11, 'ten field cards plus Endless Echo');
+  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 10, 'ten World Atlas field cards; Echo has its own tab');
   assert.strictEqual((h.match(/data-a="selm"/g) || []).length, 10, 'only the ten fields select a stage list');
   assert.ok(!/data-a="town"/.test(h), 'the town card is gone with the map');
   assert.ok(!/town-card/.test(h), 'and so is its style hook');
@@ -732,7 +734,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   assert.strictEqual(F.floats[5].txt,'1896','critical digits come back too');
   const strikeBox={};vm.createContext(Object.assign(strikeBox,{simVisualsOff:()=>false}));
   vm.runInContext(`
-    const fieldDamage=()=>1,applyLeech=()=>0,cardMasteryStat=()=>0;
+    const fieldDamage=()=>1,ascDamage=()=>1,skillBonus=()=>0,applyLeech=()=>0,cardMasteryStat=()=>0;
     let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null,S={dmg:0};
     const missCh=()=>0,crit=()=>100,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
       rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...args)=>{hit=args},
@@ -855,7 +857,7 @@ t('v74: the HUD shows EXP/min beside the kill rate, on the same rolling minute',
   assert.ok(src.includes("const expEl=$('expmin')"), 'the readout element is read once per refresh');
   assert.ok(src.includes('function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarned+=n}'),
     'EXP income is counted like Zeny: gross, never lowered by a level-up');
-  assert.ok(src.includes('earnZeny(z);earnExp(xp);addJob('), 'the kill reward pays through earnExp');
+  assert.ok(src.includes('earnZeny(z);earnExp(xp);gainAscension(xp);addJob('), 'kill reward pays through earnExp and Ascension');
   assert.ok(src.includes('earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;'), 'offline kills count too');
   assert.ok(src.includes('earnZeny(q.z||0);earnExp(q.xp||0);'), 'quest EXP counts as income');
   const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
@@ -955,7 +957,7 @@ t('the class-change panel previews the class it is describing', () => {
   assert.ok(h.includes('CLASS PREVIEW') && h.includes('CURRENT CLASS'), 'with a plain label for the class you already are');
   assert.ok(h.includes('data-v="Knight"'), 'and the selected class has an action');
   assert.ok(!h.includes('S (front) view'), 'without the retired view essay');
-  assert.ok(h.includes('SELECTED LINEAGE'), 'and a label for a class you are only looking at');
+  assert.ok(h.includes('Class lineage'), 'the class tree contains the lineage overview');
   const g = h.match(/.{0,40}undefined.{0,40}/);
   assert.ok(!g, 'the class panel renders without undefined values: ' + (g ? g[0] : ''));
 });
@@ -1393,24 +1395,17 @@ t('the N+ stages walk the weapon shelf again, with the halved rate and one weapo
   assert.ok(!hp.includes('3 families'), 'Prontera N does not share a per-family chance any more');
 });
 
-t('the damage trial is entered from the map selection, and the lobby offers the three doors', () => {
-  U.S = mkS('Knight'); U.mapM = 9; U.mapL = 10;
-  const h = U.V.map();
-  // v77 (owner): "the dungeon button should be at the map selection itself not at the stages"
-  assert.ok(h.includes('Endless Echo'), 'the map window names the trial');
-  assert.ok(h.includes('data-trial="lobby"'), 'and its button opens the lobby');
-  assert.ok(h.includes('three-minute damage trial') && h.includes('best single-run DPS'), 'the card states the 3-minute format and what is measured');
-  assert.ok(h.includes('Lord of Death Illusion'), 'the World Map card names the Endless Echo boss');
-  assert.ok(h.includes('/2 ranked attempts today') && h.includes('Echo Shards'), 'the card states remaining attempts and the Shard balance');
-  const iSpecial=h.indexOf('class="map-specials'),iFields=h.indexOf('class="mapband fields'),specials=h.slice(iSpecial,iFields);
-  assert.ok(iSpecial>=0&&iFields>iSpecial, 'the destination row sits above the stage list');
-  assert.ok(specials.includes('dungeoncard')&&!specials.includes('town-card')&&(specials.match(/class="mapcard/g)||[]).length===1, 'Endless Echo alone takes the whole row');
-  assert.ok(src.includes('.map-specials{display:grid;grid-template-columns:minmax(0,1fr);'), 'the row is a single full-width column now that the town is gone');
-  assert.ok(src.includes('align-items:center') && src.includes('text-align:center'), 'the feature card uses centered alignment');
-  assert.ok(src.includes('.echo-copy{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;text-align:center}'), 'the title and explanatory copy are centered within the card');
-  assert.ok(src.includes('.dungeoncard .echo-copy>b{display:block;max-width:100%;font-size:15px;'), 'the Endless Echo title has a readable desktop size');
-  assert.ok(src.includes('.dungeoncard .echo-copy>b{font-size:13px}'), 'the title remains readable on mobile');
-  assert.ok(!src.includes('.mapband.dungeon{'), 'the old bottom band is gone');
+t('Endless Echo opens from its map tab and the lobby offers the three doors', () => {
+  // Exercise the current destination through the complete page, including its
+  // actual trial state readers. The old shared destination row was retired.
+  const game=require('./helpers/game').createGame();
+  let h;
+  try{h=game.ev("S=fresh();mapSeason='echo';V.map()")}finally{game.close()}
+  assert.ok(h.includes('Endless Echo') && h.includes('data-trial="lobby"'), 'Echo has a working lobby entry');
+  assert.ok(h.includes('three-minute damage trial') && h.includes('Personal best'), 'the destination describes duration and record');
+  assert.ok(h.includes('Lord of Death Illusion'), 'the Echo destination names its boss');
+  assert.ok(h.includes('/2</b> ranked attempts left') && h.includes('Echo Shards'), 'tries and shards are visible');
+  assert.ok(h.includes('class="echo-destination"') && !h.includes('class="mapgrid"'), 'Echo has its own destination panel');
   // the lobby itself: ranked with the tries left, unlimited training, and the Shard Store. The
   // rendered HTML is exercised by trial_sim.js; here the source is pinned.
   const lobby = grab('function trialLobby(view){', 'function trialShopHtml(inline=false){');

@@ -1,8 +1,8 @@
 // The v73 crit rules (owner): LUK pays 0.25 a point with a flat base of 2, everything that comes
 // from stats, skill passives, gear and card mastery ordinarily caps at 60% (and above 45% every further
 // point counts half), and Index Crit - earned only by unlocking Hunt Titles - adds after that cap. All ten titles add up to +40, so a perfect Index puts a fully
-// capped build on exactly 100% crit. Equipped Mythic raises the core cap to 80%,
-// while the total still stops at 100%. High-level bosses also cut the crit chance rolled against
+// capped build on exactly 100% crit. Mythic crit affixes add after that cap;
+// Ascension Precision is covered by ascension_combat_sim. High-level bosses cut the chance rolled against
 // them by their map's resistance.
 //   node tools/tests/crit_sim.js
 const fs = require('node:fs');
@@ -28,7 +28,7 @@ ${code.join('\n')}
 const safeCount = v => {const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
 let PV = 0, BON = 0, CM = 0;
 const S = { st:{luk:1,dex:1}, lv:1, indexXp:0, eq:{} };
-const ascensionSetBonuses=()=>({}),DUAL=.5;
+const ascensionSetBonuses=()=>({}),ascStat=()=>0,DUAL=.5;
 const items=()=>Object.values(S.eq).filter(Boolean);
 const st = k => S.st[k] || 1, pv = k => PV, bon = k => BON, cardMasteryStat = k => CM;
 this.__c = { crit, bossCritRes, indexCrit, indexCritBonus, INDEX_CRIT, INDEX_TITLES, BOSS_CRIT_RES, NM_CRIT_RES,
@@ -71,7 +71,7 @@ t('every stat, skill, gear and mastery source stops at 60%, and above 45% each p
   assert.strictEqual(C.crit(), 60, 'stats, skills, gear and card mastery alone can never pass 60%');
 });
 
-t('equipped Mythic raises the core cap to 80%, while total crit stays at 100%',()=>{
+t('Mythic crit rolls add after the ordinary and Index caps',()=>{
   C.set(100000,100000,5,120,0);C.equip({sec:5});assert.strictEqual(C.crit(),60);
   C.equip({sec:6,aff:[{k:'crit',v:20}]});assert.strictEqual(C.crit(),80);
   C.set(100000,100000,5,120,1000000);assert.strictEqual(C.crit(),120);
@@ -129,7 +129,7 @@ t('high-level bosses cut the crit chance rolled against them', () => {
   const strikeBox = {};
   vm.createContext(strikeBox);
   vm.runInContext(`
-    const fieldDamage=()=>1,applyLeech=()=>0,cardMasteryStat=()=>0;
+    const fieldDamage=()=>1,ascDamage=()=>1,skillBonus=()=>0,applyLeech=()=>0,cardMasteryStat=()=>0;
     let mob={x:1,z:3,hp:1e9,size:1,critRes:.3},shake=0,hit=null,S={dmg:0};
     const missCh=()=>0,crit=()=>50,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
       rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...a)=>{hit=a},

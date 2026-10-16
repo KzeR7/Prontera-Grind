@@ -1,8 +1,8 @@
 {
   "baselineRevision": "d164bd0527cfe335f9c183d0e576800716b7dd26",
   "baselineHash": "a251cffc5abeea9ab881fd471e99f36bf4c6aa8cd1f4dcdecb3a2bc982cca0e3",
-  "sourceHash": "00d63312bbee49234f4b47a79ab36f04260903240bb51b220e1074c15ce9bea2",
-  "combatHash": "08f3a5939f1f5c5bee7f65a6de277b4ba5dada9298233ff92699c4732419e4fe",
+  "sourceHash": "82420ba0fd5f5992f67c9bb1f2a63348f57f049acc53543db81be7eb7a6ebf79",
+  "combatHash": "1fc4c83ee5babaef99d71484144a0a7e62bb246862fdb1253a20d95c3bdbdebc",
   "toolHash": "2009380088b648ea710659276d97c058b65db18cdf525ad4aa0308189606d7fe",
   "seconds": 120,
   "seed": 789,
@@ -697,7 +697,7 @@
       "kills": 126,
       "kph": 3780,
       "deaths": 0,
-      "minHp": 0.987703720355176,
+      "minHp": 0.9878414723599102,
       "leech": 0,
       "bossWin": true,
       "bossSeconds": 4.166666666666662,
@@ -714,7 +714,7 @@
       "matk": 2749,
       "crit": 49.25,
       "critD": 3.538,
-      "hp": 88970,
+      "hp": 89978,
       "cards": [
         "Dragon Lord Card"
       ]
@@ -726,7 +726,7 @@
       "kills": 168,
       "kph": 5040,
       "deaths": 0,
-      "minHp": 0.9964899933630585,
+      "minHp": 0.9965212324019831,
       "leech": 0,
       "bossWin": true,
       "bossSeconds": 2.066666666666669,
@@ -743,7 +743,7 @@
       "matk": 6198,
       "crit": 65.625,
       "critD": 4.64,
-      "hp": 224501,
+      "hp": 226517,
       "cards": [
         "Dark Lord Card",
         "Abyss Knight Card"
@@ -756,8 +756,8 @@
       "kills": 50,
       "kph": 1500,
       "deaths": 0,
-      "minHp": 0.9916083997985548,
-      "leech": 126070.76799999888,
+      "minHp": 0.9916548497086768,
+      "leech": 125646.19200000691,
       "bossWin": true,
       "bossSeconds": 60.16666666666581,
       "bossHpLeft": 0,
@@ -773,7 +773,7 @@
       "matk": 16772,
       "crit": 97.75,
       "critD": 6.761,
-      "hp": 683064,
+      "hp": 686866,
       "cards": [
         "Nightmare Dark Lord Card",
         "Nightmare Abyss Knight Card",
@@ -810,7 +810,7 @@
       "matk": 6852,
       "crit": 49.25,
       "critD": 3.538,
-      "hp": 49288,
+      "hp": 49708,
       "cards": [
         "Shiranui Card"
       ]
@@ -822,7 +822,7 @@
       "kills": 199,
       "kph": 5970,
       "deaths": 0,
-      "minHp": 0.991924013403727,
+      "minHp": 0.9919781614424942,
       "leech": 0,
       "bossWin": true,
       "bossSeconds": 1.8000000000000023,
@@ -839,7 +839,7 @@
       "matk": 13983,
       "crit": 65.625,
       "critD": 4.64,
-      "hp": 124443,
+      "hp": 125283,
       "cards": [
         "Dark Lord Card",
         "Abyss Knight Card"
@@ -852,8 +852,8 @@
       "kills": 85,
       "kph": 2550,
       "deaths": 0,
-      "minHp": 0.9901713197601175,
-      "leech": 38682.0000000001,
+      "minHp": 0.9902122321082725,
+      "leech": 38528.00000000011,
       "bossWin": true,
       "bossSeconds": 21.466666666666892,
       "bossHpLeft": 0,
@@ -869,7 +869,7 @@
       "matk": 37295,
       "crit": 97.75,
       "critD": 6.761,
-      "hp": 344502,
+      "hp": 345942,
       "cards": [
         "Nightmare Dark Lord Card",
         "Nightmare Abyss Knight Card",
@@ -905,7 +905,7 @@
       "matk": 2601,
       "crit": 69,
       "critD": 4.042,
-      "hp": 48737,
+      "hp": 49178,
       "cards": [
         "Dragon Lord Card",
         "Merman Card"
@@ -935,7 +935,7 @@
       "matk": 5826,
       "crit": 78,
       "critD": 5.324,
-      "hp": 122724,
+      "hp": 123606,
       "cards": [
         "Dark Lord Card",
         "Abyss Knight Card",
@@ -949,8 +949,8 @@
       "kills": 53,
       "kph": 1590,
       "deaths": 0,
-      "minHp": 0.9887442137302913,
-      "leech": 166374.4400000001,
+      "minHp": 0.9887941377499685,
+      "leech": 166804.52000000002,
       "bossWin": true,
       "bossSeconds": 50.89999999999967,
       "bossHpLeft": 0,
@@ -966,7 +966,7 @@
       "matk": 15681,
       "crit": 100,
       "critD": 7.6850000000000005,
-      "hp": 339381,
+      "hp": 340893,
       "cards": [
         "Nightmare Dark Lord Card",
         "Nightmare Abyss Knight Card",
@@ -986,7 +986,7 @@
       "kills": 160,
       "kph": 4800,
       "deaths": 0,
-      "minHp": 0.9771628760912736,
+      "minHp": 0.9773676686285067,
       "leech": 0,
       "bossWin": true,
       "bossSeconds": 2.7,
@@ -1003,7 +1003,7 @@
       "matk": 3606,
       "crit": 49.25,
       "critD": 3.538,
-      "hp": 53378,
+      "hp": 53861,
       "cards": [
         "Dragon Lord Card",
         "Merman Card"
@@ -1016,7 +1016,7 @@
       "kills": 181,
       "kph": 5430,
       "deaths": 0,
-      "minHp": 0.9929619379222093,
+      "minHp": 0.9930121585486563,
       "leech": 0,
       "bossWin": true,
       "bossSeconds": 1.5333333333333348,
@@ -1033,7 +1033,7 @@
       "matk": 8525,
       "crit": 65.625,
       "critD": 4.64,
-      "hp": 134412,
+      "hp": 135378,
       "cards": [
         "Dark Lord Card",
         "Abyss Knight Card",
@@ -1047,8 +1047,8 @@
       "kills": 98,
       "kph": 2940,
       "deaths": 0,
-      "minHp": 0.9901023128680694,
-      "leech": 89306.12500000003,
+      "minHp": 0.9901462131621308,
+      "leech": 89445.72500000003,
       "bossWin": true,
       "bossSeconds": 20.166666666666828,
       "bossHpLeft": 0,
@@ -1064,7 +1064,7 @@
       "matk": 23576,
       "crit": 97.75,
       "critD": 6.761,
-      "hp": 371703,
+      "hp": 373359,
       "cards": [
         "Nightmare Dark Lord Card",
         "Nightmare Abyss Knight Card",
@@ -1084,7 +1084,7 @@
       "kills": 156,
       "kph": 4680,
       "deaths": 0,
-      "minHp": 0.9793405197508865,
+      "minHp": 0.9795150794206143,
       "leech": 0,
       "bossWin": true,
       "bossSeconds": 2.066666666666669,
@@ -1101,7 +1101,7 @@
       "matk": 2625,
       "crit": 50.75,
       "critD": 3.573,
-      "hp": 56681,
+      "hp": 57164,
       "cards": [
         "Dragon Lord Card"
       ]
@@ -1130,7 +1130,7 @@
       "matk": 5918,
       "crit": 67.375,
       "critD": 4.709999999999999,
-      "hp": 143109,
+      "hp": 144075,
       "cards": [
         "Dark Lord Card",
         "Abyss Knight Card"
@@ -1143,8 +1143,8 @@
       "kills": 102,
       "kph": 3060,
       "deaths": 0,
-      "minHp": 0.9916350520095816,
-      "leech": 99469.71500000001,
+      "minHp": 0.9916698715290084,
+      "leech": 99602.195,
       "bossWin": true,
       "bossSeconds": 21.800000000000242,
       "bossHpLeft": 0,
@@ -1160,7 +1160,7 @@
       "matk": 16013,
       "crit": 100,
       "critD": 6.871,
-      "hp": 396177,
+      "hp": 397833,
       "cards": [
         "Nightmare Dark Lord Card",
         "Nightmare Abyss Knight Card",
@@ -1179,7 +1179,7 @@
       "kills": 122,
       "kph": 3660,
       "deaths": 0,
-      "minHp": 0.9886218337784252,
+      "minHp": 0.9887492998319597,
       "leech": 0,
       "bossWin": true,
       "bossSeconds": 6.4666666666666535,
@@ -1196,7 +1196,7 @@
       "matk": 3653,
       "crit": 49.25,
       "critD": 3.538,
-      "hp": 61785,
+      "hp": 62485,
       "cards": [
         "Shiranui Card"
       ]
@@ -1208,7 +1208,7 @@
       "kills": 162,
       "kph": 4860,
       "deaths": 0,
-      "minHp": 0.9957088977832512,
+      "minHp": 0.9957470884402176,
       "leech": 0,
       "bossWin": true,
       "bossSeconds": 4.366666666666661,
@@ -1225,7 +1225,7 @@
       "matk": 7402,
       "crit": 65.625,
       "critD": 4.64,
-      "hp": 155904,
+      "hp": 157304,
       "cards": [
         "Dark Lord Card",
         "Abyss Knight Card"
@@ -1238,8 +1238,8 @@
       "kills": 45,
       "kph": 1350,
       "deaths": 0,
-      "minHp": 0.9925982924001265,
-      "leech": 50607.6700000007,
+      "minHp": 0.9926392586846684,
+      "leech": 50222.94999999933,
       "bossWin": true,
       "bossSeconds": 55.53333333333274,
       "bossHpLeft": 0,
@@ -1255,7 +1255,7 @@
       "matk": 20119,
       "crit": 97.75,
       "critD": 6.761,
-      "hp": 474350,
+      "hp": 476990,
       "cards": [
         "Nightmare Dark Lord Card",
         "Nightmare Abyss Knight Card",
@@ -1275,7 +1275,7 @@
       "kills": 125,
       "kph": 3750,
       "deaths": 0,
-      "minHp": 0.9910391394876378,
+      "minHp": 0.9911395253853015,
       "leech": 0,
       "bossWin": true,
       "bossSeconds": 4.266666666666661,
@@ -1292,7 +1292,7 @@
       "matk": 2777,
       "crit": 49.25,
       "critD": 3.538,
-      "hp": 118627,
+      "hp": 119971,
       "cards": [
         "Dragon Lord Card"
       ]
@@ -1304,7 +1304,7 @@
       "kills": 186,
       "kph": 5580,
       "deaths": 0,
-      "minHp": 0.9971637128969215,
+      "minHp": 0.9971889558080014,
       "leech": 0,
       "bossWin": true,
       "bossSeconds": 3.133333333333332,
@@ -1321,7 +1321,7 @@
       "matk": 6261,
       "crit": 65.625,
       "critD": 4.64,
-      "hp": 299335,
+      "hp": 302023,
       "cards": [
         "Dark Lord Card",
         "Abyss Knight Card"
@@ -1334,8 +1334,8 @@
       "kills": 56,
       "kph": 1680,
       "deaths": 0,
-      "minHp": 0.9941878766330674,
-      "leech": 134262.3100000001,
+      "minHp": 0.9942200437128196,
+      "leech": 134223.3100000001,
       "bossWin": true,
       "bossSeconds": 54.83333333333278,
       "bossHpLeft": 0,
@@ -1351,7 +1351,7 @@
       "matk": 16940,
       "crit": 97.75,
       "critD": 6.761,
-      "hp": 883154,
+      "hp": 888069,
       "cards": [
         "Nightmare Dark Lord Card",
         "Nightmare Abyss Knight Card",

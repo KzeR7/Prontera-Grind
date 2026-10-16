@@ -1,8 +1,8 @@
 {
   "baselineRevision": "d164bd0527cfe335f9c183d0e576800716b7dd26",
   "baselineHash": "a251cffc5abeea9ab881fd471e99f36bf4c6aa8cd1f4dcdecb3a2bc982cca0e3",
-  "sourceHash": "00d63312bbee49234f4b47a79ab36f04260903240bb51b220e1074c15ce9bea2",
-  "combatHash": "08f3a5939f1f5c5bee7f65a6de277b4ba5dada9298233ff92699c4732419e4fe",
+  "sourceHash": "82420ba0fd5f5992f67c9bb1f2a63348f57f049acc53543db81be7eb7a6ebf79",
+  "combatHash": "1fc4c83ee5babaef99d71484144a0a7e62bb246862fdb1253a20d95c3bdbdebc",
   "toolHash": "2009380088b648ea710659276d97c058b65db18cdf525ad4aa0308189606d7fe",
   "seconds": 120,
   "seed": 789,
@@ -1866,7 +1866,7 @@
         "matk": 2749,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 88970,
+        "hp": 89978,
         "cards": [
           "Dragon Lord Card"
         ]
@@ -1906,7 +1906,7 @@
         "matk": 2749,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 88970,
+        "hp": 89978,
         "cards": [
           "Dragon Lord Card"
         ]
@@ -1946,7 +1946,7 @@
         "matk": 6198,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 224501,
+        "hp": 226517,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -1987,7 +1987,7 @@
         "matk": 6198,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 224501,
+        "hp": 226517,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -2028,7 +2028,7 @@
         "matk": 16772,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 683064,
+        "hp": 686866,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -2076,7 +2076,7 @@
         "matk": 16772,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 683064,
+        "hp": 686866,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -2124,7 +2124,7 @@
         "matk": 6852,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 49288,
+        "hp": 49708,
         "cards": [
           "Shiranui Card"
         ]
@@ -2164,7 +2164,7 @@
         "matk": 6852,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 49288,
+        "hp": 49708,
         "cards": [
           "Shiranui Card"
         ]
@@ -2204,7 +2204,7 @@
         "matk": 13983,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 124443,
+        "hp": 125283,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -2245,7 +2245,7 @@
         "matk": 13983,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 124443,
+        "hp": 125283,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -2286,7 +2286,7 @@
         "matk": 37295,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 344502,
+        "hp": 345942,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -2333,7 +2333,7 @@
         "matk": 37295,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 344502,
+        "hp": 345942,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -2380,7 +2380,7 @@
         "matk": 2601,
         "crit": 69,
         "critD": 4.042,
-        "hp": 48737,
+        "hp": 49178,
         "cards": [
           "Dragon Lord Card",
           "Merman Card"
@@ -2421,7 +2421,7 @@
         "matk": 2601,
         "crit": 69,
         "critD": 4.042,
-        "hp": 48737,
+        "hp": 49178,
         "cards": [
           "Dragon Lord Card",
           "Merman Card"
@@ -2462,7 +2462,7 @@
         "matk": 5826,
         "crit": 78,
         "critD": 5.324,
-        "hp": 122724,
+        "hp": 123606,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card",
@@ -2504,7 +2504,7 @@
         "matk": 5826,
         "crit": 78,
         "critD": 5.324,
-        "hp": 122724,
+        "hp": 123606,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card",
@@ -2546,7 +2546,7 @@
         "matk": 15681,
         "crit": 100,
         "critD": 7.6850000000000005,
-        "hp": 339381,
+        "hp": 340893,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -2594,7 +2594,7 @@
         "matk": 15681,
         "crit": 100,
         "critD": 7.6850000000000005,
-        "hp": 339381,
+        "hp": 340893,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -2642,7 +2642,7 @@
         "matk": 3606,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 53378,
+        "hp": 53861,
         "cards": [
           "Dragon Lord Card",
           "Merman Card"
@@ -2683,7 +2683,7 @@
         "matk": 3606,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 53378,
+        "hp": 53861,
         "cards": [
           "Dragon Lord Card",
           "Merman Card"
@@ -2724,7 +2724,7 @@
         "matk": 8525,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 134412,
+        "hp": 135378,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card",
@@ -2766,7 +2766,7 @@
         "matk": 8525,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 134412,
+        "hp": 135378,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card",
@@ -2808,7 +2808,7 @@
         "matk": 23576,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 371703,
+        "hp": 373359,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -2856,7 +2856,7 @@
         "matk": 23576,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 371703,
+        "hp": 373359,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -2904,7 +2904,7 @@
         "matk": 2625,
         "crit": 50.75,
         "critD": 3.573,
-        "hp": 56681,
+        "hp": 57164,
         "cards": [
           "Dragon Lord Card"
         ]
@@ -2944,7 +2944,7 @@
         "matk": 2625,
         "crit": 50.75,
         "critD": 3.573,
-        "hp": 56681,
+        "hp": 57164,
         "cards": [
           "Dragon Lord Card"
         ]
@@ -2984,7 +2984,7 @@
         "matk": 5918,
         "crit": 67.375,
         "critD": 4.709999999999999,
-        "hp": 143109,
+        "hp": 144075,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -3025,7 +3025,7 @@
         "matk": 5918,
         "crit": 67.375,
         "critD": 4.709999999999999,
-        "hp": 143109,
+        "hp": 144075,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -3066,7 +3066,7 @@
         "matk": 16013,
         "crit": 100,
         "critD": 6.871,
-        "hp": 396177,
+        "hp": 397833,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -3113,7 +3113,7 @@
         "matk": 16013,
         "crit": 100,
         "critD": 6.871,
-        "hp": 396177,
+        "hp": 397833,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -3160,7 +3160,7 @@
         "matk": 3653,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 61785,
+        "hp": 62485,
         "cards": [
           "Shiranui Card"
         ]
@@ -3200,7 +3200,7 @@
         "matk": 3653,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 61785,
+        "hp": 62485,
         "cards": [
           "Shiranui Card"
         ]
@@ -3240,7 +3240,7 @@
         "matk": 7402,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 155904,
+        "hp": 157304,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -3281,7 +3281,7 @@
         "matk": 7402,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 155904,
+        "hp": 157304,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -3322,7 +3322,7 @@
         "matk": 20119,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 474350,
+        "hp": 476990,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -3370,7 +3370,7 @@
         "matk": 20119,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 474350,
+        "hp": 476990,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -3418,7 +3418,7 @@
         "matk": 2777,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 118627,
+        "hp": 119971,
         "cards": [
           "Dragon Lord Card"
         ]
@@ -3458,7 +3458,7 @@
         "matk": 2777,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 118627,
+        "hp": 119971,
         "cards": [
           "Dragon Lord Card"
         ]
@@ -3498,7 +3498,7 @@
         "matk": 6261,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 299335,
+        "hp": 302023,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -3539,7 +3539,7 @@
         "matk": 6261,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 299335,
+        "hp": 302023,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -3580,7 +3580,7 @@
         "matk": 16940,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 883154,
+        "hp": 888069,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -3628,7 +3628,7 @@
         "matk": 16940,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 883154,
+        "hp": 888069,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",

@@ -272,11 +272,16 @@ test('gear groups by type then rarity within the same name without mutating inve
  assert.deepEqual([...doc.querySelectorAll('.eclipse-bag .grid [data-tip]')].map(n=>n.dataset.tip),['93003','93004','93002','93001']);
  assert.equal(ev('S.inv.map(it=>it.id).join()'),'93001,93002,93003,93004');
 });
-test('skills expose descriptions and working auto-cast inside each tile',()=>{
+test('compact skills open the selected inspector with working auto-cast',()=>{
  ev(`tabs.push('skills');renderWin()`);
- const tile=doc.querySelector('.sk[data-v=aid]');assert.ok(tile.querySelector('[data-skill-detail=aid]'));assert.equal(doc.querySelector('[data-win=skills] .ui-inspector'),null);
- tile.querySelector('[data-a=sktog]').click();assert.equal(ev('skOff("aid")'),true);
- doc.querySelector('.sk[data-v=aid] [data-a=sktog]').click();assert.equal(ev('skOff("aid")'),false);
+ const tile=doc.querySelector('.sk[data-v=aid]');
+ assert.equal(tile.querySelector('[data-skill-detail]'),null,'tiles stay compact');
+ tile.click();
+ let inspector=doc.querySelector('[data-win=skills] .ui-selected-skill');
+ assert.ok(inspector.querySelector('[data-skill-detail=aid]'));
+ inspector.querySelector('[data-a=sktog]').click();assert.equal(ev('skOff("aid")'),true);
+ inspector=doc.querySelector('[data-win=skills] .ui-selected-skill');
+ inspector.querySelector('[data-a=sktog]').click();assert.equal(ev('skOff("aid")'),false);
 });
 test('refinement animates the shown equipment, cards have card icons and market has no guide',()=>{
  ev(`tabs.push('equip');sub.equip='refine';renderWin();eclipseRefineFeedback(S.eq.weapon,0,true)`);

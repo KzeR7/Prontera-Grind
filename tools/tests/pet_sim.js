@@ -28,7 +28,8 @@ const code = [
   require('./helpers/progression')(src,'leech'),
 
   pick(/const SU=k=>[^\n]*HPK=\d+,HPE=[\d.]+/, 'HPK/HPE'),
-  grab('const CD=[', 'const pm=s=>'),                    // CLASSES
+  grab('const CD=[', 'const pm=s=>'),
+  pick(/const ASC_ONLY_SKILLS=[^\n]*/, 'Ascension skill IDs'),                    // CLASSES
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
   pick(/const items=\(\)=>[^\n]*/, 'items/ev/iname/eqv'),
   grab('const bon=k=>{', '// v74 (owner:'),
@@ -62,6 +63,7 @@ ${code}
 let __seed=1;const __r=()=>((__seed=(__seed*1103515245+12345)>>>0)/4294967296);
 const rnd=(a,b)=>a+__r()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 const pickW=w=>{let r=Math.random()*w.reduce((x,y)=>x+y,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return w.length-1};
+const ascStat=()=>0,ascRank=()=>0,ascSkillValue=()=>0,skillState=()=>({buffs:{}});
 let t=0,S=null,tb={},petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={},mobs=[],pl={x:1.5,z:1.5};
 const numTxt=String,addFloat=()=>{},playSkillFx=()=>{},log=()=>{},earnZeny=()=>{},collDmg=()=>0;
 let dealt=0;const hurt=(o,d)=>{dealt+=d;o.hp=1e12};
@@ -445,13 +447,16 @@ t('MEASUREMENT: pet and illustrative rotation estimates remain finite (real bala
   // v97's real-update baseline comparison checks pet/player preservation across all classes.
   assert.ok(Number.isFinite(ratio)&&ratio>0, 'the diagnostic pet/rotation ratio remains finite');
   assert.ok(worst / full > .02, 'even a Common pet must be a real companion (got ' + (worst / full).toFixed(3) + 'x; .06 before the v89 nerf)');
-  // v75: the SIGNATURE PASSIVES have to live inside this band too. Pack Leader (+10% pet damage
-  // for every fighting pet, at Bond 5) is the only one that touches this number, and the owner
-  // approved a bonus of at most 10% - so the band moves deliberately to at most 0.78x with the
-  // strongest legal pack running, and this line is what holds that promise.
-  const withPack = ratio * (1 + 10 / 100);
-  console.log('       with Pack Leader maxed (+10%) the same pet sits at ' + withPack.toFixed(3) + 'x, the v75 limit');
-  assert.ok(withPack <= .78, 'the passives must keep a maxed pet inside the companion band (got ' + withPack.toFixed(3) + 'x)');
+  // The obsolete per-swing rotation estimate cannot set a companion DPS cap.
+  // Verify the owner's actual +10% Pack Leader limit through real petDmg instead.
+  const pet=maxedPet(7),baseDamage=P.petDmg(pet);
+  P.S.pets=[maxedPet(2)];P.S.bond=Array(P.PETS.length).fill(999);
+  assert.strictEqual(P.petPassive('petdmg'),10,'max Bond Pack Leader is +10%');
+  const ledDamage=P.petDmg(pet);
+  assert.ok(Math.abs(ledDamage-baseDamage*1.1)<=1,'Pack Leader adds only 10%, allowing integer rounding');
+  P.S.pets.push({...maxedPet(2),id:2});
+  assert.strictEqual(P.petDmg(pet),ledDamage,'a second Wolf cannot stack Pack Leader');
+
 });
 
 t('the stepped simulation and the analytic model agree (real petHit, crits off)', () => {
