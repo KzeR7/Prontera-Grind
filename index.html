@@ -1118,7 +1118,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-16 haven-v180 GM equipment presets';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-16 haven-v181 Mythic GM base repair';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1630,18 +1630,37 @@ function ascensionSetBonuses(){
   }
   return active;
 }
-// Build a crafted Ascension item. The item has Mythic rarity, the set tag, and strong base stats.
+// GM gifts stand in for evolving a top-field N+ drop. Evolution itself preserves its source base.
+// Match genGear's N+ formula, including the field-power factor; Mythic quality is not a base multiplier.
+function mythicGiftBaseValue(slot,roll){
+  return Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*15*(1+fieldPower(9,15)*.15)*RAR[4].m*MAPVAL[9]*roll));
+}
+function repairMythicGiftBase(it){
+  if(!it||it.mythicGiftVersion||it.sec!==6||it.mythic!==true||it.tier!==4||it.lvl!==150||it.quality!==1.5)return;
+  const set=Object.hasOwn(ASC_SETS,it.ascSet)?ASC_SETS[it.ascSet]:null;
+  if(!set||it.mp!==set.map||!Object.hasOwn(set.cost,it.slot))return;
+  const name=it.slot==='weapon'?set.pieces.weapon[it.wt]:set.pieces[it.slot];
+  if(!name||it.name!=='Mythic '+name)return;
+  // Only the narrow legacy gift band qualifies. Real evolved N+ bases are far above it.
+  const base={weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[it.slot]*15*1.15*4.5*1.5;
+  const lo=Math.round(base*.95),hi=Math.round(base*1.05);
+  if(!Number.isInteger(it.val)||it.val<lo||it.val>hi)return;
+  // The original random roll was not saved. Keep its relative position in the corrected band.
+  const low=mythicGiftBaseValue(it.slot,.9),high=mythicGiftBaseValue(it.slot,1.12);
+  it.val=Math.round(low+(high-low)*(it.val-lo)/(hi-lo));it.mythicGiftVersion=1;
+}
+// Build a GM Ascension item with the same base range as an evolved top-field N+ piece.
 function makeMythicEquipment(setKey,slot,weaponType){
   const set=ASC_SETS[setKey];if(!set)return null;
   const cost=set.cost[slot];if(!cost)return null;
   const name=slot==='weapon'?set.pieces.weapon[weaponType]:set.pieces[slot];
   if(!name)return{error:'Invalid equipment recipe'};
-  const tier=4,val=Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*15*1.15*RAR[4].m*1.5*rnd(.95,1.05));
+  const tier=4,val=mythicGiftBaseValue(slot,rnd(.9,1.12));
   const profile={slot,wt:slot==='weapon'?weaponType:undefined,sec:6,tier,mp:set.map,quality:1.5};
   const pool=affixPool(profile).slice(),aff=[];
   for(let i=0;i<4;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push(rollAffix(k,profile))}
   const slots=slot==='weapon'&&(weaponType==='katar'||weaponType==='bow')?4:slot==='weapon'?3:1;
-  const item={id:uid(),slot,wt:slot==='weapon'?weaponType:undefined,tier,val,name:'Mythic '+name,aff,slots,cards:[],sec:6,lvl:150,quality:1.5,mp:set.map,mythic:true,ascSet:setKey};
+  const item={id:uid(),slot,wt:slot==='weapon'?weaponType:undefined,tier,val,name:'Mythic '+name,aff,slots,cards:[],sec:6,lvl:150,quality:1.5,mp:set.map,mythic:true,ascSet:setKey,mythicGiftVersion:1};
   return{item};
 }
 // GM presets grant separate items; selecting a class never changes the player's job or gear.
@@ -1664,7 +1683,7 @@ function gmMaxAscensionGear(cls){
       slot==='leg'?['aspd','move','hp','vit']:['hp','vit','agi','flee'];
     const pool=affixPool(it),keys=[...new Set([...priority,...pool])].filter(k=>pool.includes(k)).slice(0,4);
     it.r=15;
-    it.val=Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*15*1.15*RAR[4].m*1.5*1.05);
+    it.val=mythicGiftBaseValue(slot,1.12);
     it.aff=keys.map(k=>({k,v:k==='move'?Math.min(slot==='acc'?5:8,affixValue(k,6,4,1.25,it.mp)):affixValue(k,6,4,1.25,it.mp)}));
     return it;
   });
@@ -3087,6 +3106,8 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
     if(!r.eq||typeof r.eq!=='object')r.eq=null}   // null = loadout unknown: keep what is worn
   if(!Array.isArray(f.pets))f.pets=[];f.pets=f.pets.filter(p=>p&&typeof p==='object');if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
   if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;
+  // Repair old GM gifts wherever owned; class loadouts reference these items by ID.
+  [...Object.values(f.eq),...f.inv].forEach(repairMythicGiftBase);
   // v47 equipment locks are per-item data: legacy gear defaults unlocked, while deliberate locks persist.
   {const fixLock=it=>{if(it&&typeof it==='object')it.locked=it.locked===true};f.inv.forEach(fixLock);Object.values(f.eq).forEach(fixLock)}
   if(f.hp<=0)f.hp=F.hp;
@@ -3478,7 +3499,7 @@ function gmApplyGift(p){
     if(amount>100)throw Error('Too many items');
     if(!p.item.card&&S.inv.length+amount>BAGMAX)throw Error('Bag full; gift will wait for space');
     const dest=p.item.card?S.cards:S.inv;
-    for(let i=0;i<amount;i++)dest.push({...JSON.parse(JSON.stringify(p.item)),id:uid()});
+    for(let i=0;i<amount;i++){const item={...JSON.parse(JSON.stringify(p.item)),id:uid()};if(!p.item.card)repairMythicGiftBase(item);dest.push(item);}
   }else throw Error('Unknown gift');
 }
 function gmApplyGear(p){

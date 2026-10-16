@@ -6813,3 +6813,15 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** GM Tools → Maxed Ascension equipment by class. Ore grants are under GM multiplier; resets are under Level test controls.
 * **Checks:** New GM preset regression (7 groups), Mythic testing (10), gear (43), save/load (27), GM tools (14), panel layout (42), generated catalog check, publishing (15), site build and whitespace checks passed. Desktop/390px shared-browser controls and layouts passed with the explicit repository renderer stub; actual WebGL remains unavailable in this sandbox. Save test initially exposed expected locked:false normalization; corrected its expectation and verified every granted item survives reload.
 * **Delivery:** Local workspace changes only; no push or deployment.
+
+### 2026-10-16 — `haven-v181 Mythic GM base repair`
+* **Changed:** Fixed underpowered GM Mythic base values by matching top-field N+ equipment before evolution. Both GM set controls and the cloud catalog now use that range; max presets use its maximum. Identifiable old gifts repair on load or queued delivery, retaining IDs, refinement, cards, affixes and relative base rolls. Evolved gear keeps its stored base.
+* **Try it:** Load the corrected build and inspect affected GM gear, or grant a new maxed class set. A maximum +15 helmet now contributes 79,115 HP instead of 3,975.
+* **Checks:** Cross-path and save/gift repair regression added; focused equipment/GM/save suites and corrected combat comparison being verified. Final results recorded below.
+* **Delivery:** Local changes only; no push or deployment.
+
+### 2026-10-16 — `haven-v181` verification completed
+* **Changed:** Completed the corrected maximum-equipment comparison for all six fourth jobs and eight weapon builds across every Astral/Thor stage and Abyss Nightmare Stage 5. The earlier GM-based maximum-equipment comparison is superseded.
+* **Try it:** See the task's corrected simulation report and reproducible data bundle. Existing affected gifts repair when loaded in v181; new maximum gifts match maximum evolved N+ bases.
+* **Checks:** All 19 selected equipment/evolution/save/account/GM/cloud/combat/build suites passed, alongside catalog parity and whitespace checks. The corrected 560-session matrix passed 96 fixture assertions: each boss field had 40/40 first wins with pets and 40/40 without. All 440 pet-on farming sessions had zero deaths. All 24 independent boss replay rows matched exactly; all 24 first outcomes agreed at 30/60 Hz. Earlier fixture errors and a stale reference build label were corrected before final passes. Full push gate and GPU/deployed-server checks were not run.
+* **Delivery:** Local v181 changes and generated report/data only; no push or deployment.

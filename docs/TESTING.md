@@ -293,3 +293,15 @@ could not create WebGL; `node tools/native-wardrobe/browser_setup.cjs` reloads t
 shared page with the explicit repository renderer stub for DOM/Canvas checks.
 Reapply it after a fresh reload when needed. Stubbed checks do not cover GPU or
 physical phones.
+
+## v181 Mythic GM bases
+
+Run `node tools/tests/mythic_gift_base_sim.js` and
+`node tools/tests/gm_presets_sim.js`. The first compares every set/slot and weapon
+against actual maximum-field N+ drops at low/mid/high rolls, then evolves eligible
+owned sources. Shield bases are compared directly because current fourth jobs
+cannot equip shields. It checks all six maximum presets, legacy gift repair,
+repeat loads, separate accounts, cards/refinement/affix/ID preservation, paid
+reforge offers, queued cloud gifts and regenerated catalog parity.
+Include Mythic/evolution, gear, class/save/owner/cloud and GM suites. Regenerate
+the catalog with `node tools/build_gm_catalog.cjs`, then verify `--check`.

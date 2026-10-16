@@ -270,7 +270,11 @@ families. Max the parent job and use Class Path for the real timed trial.
 GM → Maxed Ascension equipment by class grants a matching set to the bag for any
 of the six fourth jobs, with +15 refinement, maximum base values and four maximum
 legal affix rolls. Includes each weapon option, two accessories and two daggers for
-Guillotine Cross. Cards stay empty. Class, equipped items and wallets are preserved;
+Guillotine Cross. Bases match maximum Abyss Nightmare Stage 5 N+ drops evolved into Mythic; the gift
+constructor uses that same base range. Legacy gifts in the old low-value band
+repair on load or queued cloud delivery, preserving their relative base roll, item
+ID, cards, refinement and affixes. Evolved N+ bases remain unchanged.
+Cards stay empty. Class, equipped items and wallets are preserved;
 insufficient bag capacity rejects the entire grant. Additional GM controls add 1,000
 of both ores alongside the existing +20, and set Base level to 1, 99 or 120 while
 clearing Base EXP and recalculating unspent points without resetting allocated stats.
