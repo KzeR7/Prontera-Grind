@@ -238,8 +238,8 @@ t('the field tables read the band: boss pool, ore and crit resistance', () => {
     assert.ok(nm.every(ch => ch > 0), 'a Nightmare mob still rolls gear');
   }
   assert.ok(src.includes('const gch=(l>10?(m>=5?FIELD_GEAR_MID_NM:FIELD_GEAR_NM):(m>=5?FIELD_GEAR_MID:FIELD_GEAR)).map(x=>sec===5?x*NMPLUS_DROP:x);'), 'fieldOf picks the band table by stage, not by map alone, and halves N+ (v89)');
-  assert.strictEqual(N.fieldOf(0, 11).mobs[0].oreCh, .015, 'Nightmare fields drop ore 1.5% a kill');
-  assert.strictEqual(N.fieldOf(0, 10).mobs[0].oreCh, .01, 'the normal boss field keeps 1%');
+  assert.strictEqual(N.fieldOf(0, 11).mobs[0].oreCh, .005, 'Nightmare fields drop ore 0.5% a kill');
+  assert.strictEqual(N.fieldOf(0, 10).mobs[0].oreCh, .005, 'normal field escorts also drop ore at 0.5%');
   assert.strictEqual(N.fieldOf(9, 9).boss, null, 'and nothing but stage 10 and 15 has a boss');
   assert.ok(N.fieldOf(9, 15).boss && N.fieldOf(3, 15).boss, 'every map ends its Nightmare band with a boss');
   // the drops a Nightmare field rolls come from the Nightmare rows only

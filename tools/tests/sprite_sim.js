@@ -63,7 +63,7 @@ t('all regular monsters and bosses on all ten maps have a Divine Pride sprite ID
   assert.deepStrictEqual(missing, [], 'unmapped monsters: ' + missing.join(', '));
   assert.strictEqual(MAPS.length, 12);
   assert.strictEqual(MAPS.reduce((n, m) => n + m.mobs.length, 0), 90, 'the check covers all 80 regular monsters');
-  assert.strictEqual(Object.keys(MOB_SPRITES).length, 102, '80 regular names plus ten boss names are mapped');
+  assert.strictEqual(Object.keys(MOB_SPRITES).length, 108, 'map monsters plus six advancement opponents are mapped');
 });
 
 t('monster IDs include the intentional RO-name aliases and point at the PNG endpoint', () => {
@@ -123,19 +123,19 @@ t('all pets use native animation with local fallback and remain uniformly small'
   assert.strictEqual(ctx.images.length,20);assert.strictEqual(ctx.requested.length,20);
 });
 
-t('all 85 unique Divine Pride mob IDs match their database size class and player-relative scale', () => {
+t('all 100 unique native/Divine Pride mob IDs match their database size class and player-relative scale', () => {
   // Reference list transcribed from the Small/Medium/Large labels on the corresponding
   // Divine Pride monster pages; index.html documents the common URL pattern and audit date.
   const dpSize={
     Small:[1707,1836,1001,1004,1005,1007,1008,1011,1051,1063,1070,1073,1141,1142,1143,1144,1167,1179,1837,1866,1869,2023],
-    Medium:[1700,1702,1706,1002,1010,1013,1014,1015,1016,1023,1030,1031,1033,1036,1041,1044,1052,1076,1077,1090,1106,1108,1112,1113,1128,1139,1154,1155,1165,1177,1180,1189,1198,1204,1215,1264,1323,1406,1517,1867,1880],
+    Medium:[1634,1635,1636,1637,1638,1639,1700,1702,1706,1002,1010,1013,1014,1015,1016,1023,1030,1031,1033,1036,1041,1044,1052,1076,1077,1090,1106,1108,1112,1113,1128,1139,1154,1155,1165,1177,1180,1189,1198,1204,1215,1264,1323,1406,1517,1867,1880],
     Large:[1705,1708,1831,1832,1019,1029,1039,1055,1060,1094,1098,1115,1117,1149,1159,1166,1192,1219,1268,1272,1278,1302,1305,1366,1373,1405,1719,1775,1833,20843,2202]
   };
   const allIds=[...new Set(Object.values(MOB_SPRITES))].sort((a,b)=>a-b),classified=Object.keys(MOB_SIZE_BY_ID).map(Number).sort((a,b)=>a-b);
-  assert.strictEqual(allIds.length,94,'expected 94 unique sprite IDs across twelve maps');
+  assert.strictEqual(allIds.length,100,'expected 100 unique sprite IDs across twelve maps and advancement trials');
   assert.deepStrictEqual(classified,allIds,'size table must cover exactly the sprites used by map mobs and bosses');
   for(const [size,ids] of Object.entries(dpSize))for(const id of ids)assert.strictEqual(MOB_SIZE_BY_ID[id],size,'Divine Pride size for sprite '+id);
-  assert.strictEqual(Object.values(dpSize).reduce((n,ids)=>n+ids.length,0),94,'the cited size reference list must account for every ID once');
+  assert.strictEqual(Object.values(dpSize).reduce((n,ids)=>n+ids.length,0),100,'the cited size reference list must account for every ID once');
   assert.strictEqual(MOB_SIZE_SCALE.Small,.62);assert.strictEqual(MOB_SIZE_SCALE.Medium,.92);assert.strictEqual(MOB_SIZE_SCALE.Large,1.28);
   for(const map of MAPS)for(const mob of [map.boss,...map.mobs]){
     assert.ok(['Small','Medium','Large'].includes(mob.spriteSize),mob.n+' missing size class');

@@ -245,9 +245,9 @@ t('the dummy never dies, never swings, and never moves', () => {
 
 t('the run ends itself on the clock and leaves the arena', () => {
   assert.ok(src.includes('if(TRIAL.left<=0)return trialFinish()'), 'update() ends the run at zero');
-  assert.ok(src.includes("$('stageTitle').textContent=hudTrial?`Endless Echo \u00b7 ${trialClock()}`"),
+  assert.ok(src.includes("$('stageTitle').textContent=JOB_RITE.on?'Crucible of the Valkyrie':hudTrial?`Endless Echo \u00b7 ${trialClock()}`"),
     'the HUD title carries the clock while a run is on');
-  assert.ok(src.includes("const pt=hudTrial?`\ud83c\udfdb ${trialClock()} left"), 'and the progress line counts the damage down with it');
+  assert.ok(src.includes("const pt=JOB_RITE.on?`Crucible · ${Math.ceil(jobRiteLeft())}s left`:hudTrial?`\ud83c\udfdb ${trialClock()} left"), 'and the progress line counts the damage down with it');
   const A = arena();
   A.trialEnter('training');
   assert.strictEqual(A.spawnCalls.length, 0, 'entering does not respawn a field');
@@ -380,7 +380,7 @@ t('the Echo Court reuses the game\'s Niflheim HD map kit instead of mismatched b
   assert.ok(arenaFn.includes('if(!built)buildDeco(8)'), 'the ordinary Niflheim fallback appears while the HD kit loads');
   assert.ok(!/RingGeometry|CylinderGeometry|BoxGeometry/.test(arenaFn), 'no procedural rune rings or plain block pillars');
   assert.ok(arenaFn.includes('PointLight(0x9a5cf0'), 'a restrained purple key light');
-  assert.ok(src.includes("key=(TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn"), 'the scene key switches on the run');
+  assert.ok(src.includes("key=(JOB_RITE.on?'rite:':TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn"), 'the scene key switches on the run');
   assert.ok(src.includes('new THREE.Color(0x171020)') && src.includes('new THREE.Fog(col,22,64)'), 'the arena uses a deep violet sky and closer, darker fog');
   assert.ok(src.includes('hemi.intensity=.52;sun.intensity=.48') && src.includes('hemi.intensity=.8;sun.intensity=.9'), 'arena lighting dims and the field lighting restores on exit');
   assert.ok(src.includes('if(TRIAL.on)trialArena();else buildDeco(S.mp)'), 'late HD asset loads rebuild the Echo Court, not the player\'s current field');

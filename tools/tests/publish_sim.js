@@ -93,13 +93,20 @@ t('every API path the client calls exists as a Function file', () => {
     assert.ok(fs.existsSync(path.join(root, 'functions', 'api', p.slice(1) + '.js')), 'missing handler: ' + p);
 });
 
+t('all six advancement opponents ship with their original action bytes', () => {
+  for(let id=1634;id<=1639;id++)for(let action=0;action<24;action++){
+    const rel=`assets/mobs/v1/${id}-${action}.png`;
+    assert.deepStrictEqual(fs.readFileSync(path.join(out,rel)),fs.readFileSync(path.join(root,rel)),rel);
+  }
+});
+
 t('the published tree is small enough to stay honest', () => {
   const walk = d => fs.readdirSync(d, { withFileTypes: true }).reduce((a, e) =>
     a + (e.isDirectory() ? walk(path.join(d, e.name)) : fs.statSync(path.join(d, e.name)).size), 0);
   const bytes = walk(out);
   const mb = bytes / 1048576;
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
-  assert.ok(mb < 54, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the native packs, fallback game and selected lossless scenery and native Ascension mobs must fit in 54 MiB.');
+  assert.ok(mb < 58, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the native packs, fallback game and selected lossless scenery and native Ascension mobs plus six advancement opponents must fit in 58 MiB.');
   const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<13.5*1048576,'nineteen classes and fifty-two accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));
   for(const r of Object.values(catalog.assets))for(const key of ['meta','image'])assert.ok(fs.existsSync(path.join(wardrobe,r[key])),'native catalog asset is published');

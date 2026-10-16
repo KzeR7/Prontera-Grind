@@ -301,7 +301,7 @@ function skinWeaponPlacement(p,clsRec,view,fi){
 }
 // Cosmetic milestones; no stat bonuses and no changes to the source art.
 const LEVEL_AURAS=[{at:50,color:'#79dcff',pattern:'compass'},{at:99,color:'#b897ff',pattern:'arcane'},{at:150,color:'#ffd779',pattern:'sunburst'}];
-const REFINE_GLOWS=[{at:7,color:'#71ffae',edge:.65,alpha:.6},{at:9,color:'#ff7cbe',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95}];
+const REFINE_GLOWS=[{at:7,color:'#71ffae',edge:.65,alpha:.6},{at:9,color:'#a78bfa',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95},{at:11,color:'#ff9500',edge:1.6,alpha:1},{at:13,color:'#ffa500',edge:1.8,alpha:1},{at:15,color:'#ffcc00',edge:2,alpha:1}];
 const milestone=(rows,value)=>rows.filter(x=>value>=x.at).at(-1)||null;
 let levelAura=null;
 // Ribbon geometry keeps the sigil strokes crisp on both WebGL and mobile renderers.

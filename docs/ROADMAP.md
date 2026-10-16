@@ -69,7 +69,7 @@ This roadmap outlines the next major evolutionary phase:
 ### Unlock Requirements
 * **Base Level:** 150 (max base level cap).
 * **Job Level:** 50 in current Transcendent class (Lord Knight, High Wizard, Sniper, Assassin Cross, High Priest, Whitesmith).
-* **Advancement Quest / Rite:** "Crucible of the Valkyrie" (interact with the Class Tree panel once both conditions are met).
+* **Advancement Quest / Rite:** "Crucible of the Valkyrie" (Class Tree). First unlock teleports into a dark arena: defeat the matching native Biolabs opponent within 60 real seconds, using the first ordinary Astral mob combat stats. See the [six matchups](../Updates/fourth-jobs/README.md#advancement-trial-16-october-2026-parked). Victory/defeat/timeout displays animated wording for three seconds in the dark arena before automatic return; success automatically changes the job. Failure/timeout/leave permits retry; previously played classes restore directly. Built behind the existing class flag.
 
 ### Job Level Ladder
 * 3rd Jobs feature their own dedicated **Job Level 1 to 50** progression.
@@ -402,19 +402,18 @@ When ready to implement, execute in these sequential milestones:
   - Add the 6 3rd Job classes to `CLASSES`.
   - Implement 5 core RO skills per class (30 total) into `SKILLS` and generate Afterglow V6 effects.
   - Character Ascension aura visual.
-  - **Status (2026-10-15 - built and parked, not unlocked):** the six 4th-job classes (`CD4`) and their
+  - **Status (2026-10-16 - enabled for owner testing):** the six 4th-job classes (`CD4`) and their
     30 core skills (`SKILLS4`, five per class) are built in `index.html` behind
-    **`FOURTH_JOBS_LIVE` = `false`**, so the live game still has 19 classes, 91 skills and an unchanged
-    build label. With the flag on: the classes sit under their Transcendent parents (tier 4), unlock at
+    **`FOURTH_JOBS_LIVE` = `true`**, giving the local build 25 playable classes and 121 skills.
+    The v159 Class Path tab previews the fourth job at the end of each selected lineage. With the flag on: the classes sit under their Transcendent parents (tier 4), unlock at
     Base Lv 150 and parent Job Lv 50 (`classBlock()`, `ADV4_BASE_LV`), use `JOFF[4]=100` pacing, get a
-    fourth Class Tree row, and wear their parent's packed body. The skills use Rolling stacks, bounded repeated casts, automatic support,
+    playable fourth step in their Class Path, and wear their parent's packed body. The skills use Rolling stacks, bounded repeated casts, automatic support,
     bounces, stuns, gap-closers (dash) and absorption, built in
     `castSkill` and helpers beside `chainHit`. Guillotine Cross follows the katar-or-dagger rule
     (a dagger works the same as a katar for katar skills). Stat multipliers (`aspd`, `atk`, `hp`) and
     skill numbers are provisional, to be tuned with the new mobs and bosses.
     The reference package (spec, skill table, mechanic definitions, Ascension note, unlock steps and
-    go-live checklist) is parked in `Updates/fourth-jobs/README.md`. The owner has not yet instructed
-    the unlock. **Ascension (owner clarification):** Lv 150 and above is not a Base Level increase. It is
+    go-live checklist) is parked in `Updates/fourth-jobs/README.md`. The owner authorized the testing unlock on 16 October 2026. **Ascension (owner clarification):** Lv 150 and above is not a Base Level increase. It is
     a separate Ascension level with its own stats; Job Level continues as normal, and a later Ascension
     skill tab will raise skill boost. This is a design note only and is not built.
     Checks: `tools/tests/fourth_job_sim.js` (20) and `tools/tests/fourth_job_skills_sim.js` (15), both
@@ -426,11 +425,11 @@ When ready to implement, execute in these sequential milestones:
     render at the caster. Video-reference FX approval remains pending. Inspect `Updates/fourth-jobs/review.html` and
     [visual preparation notes](../Updates/fourth-jobs/VISUALS.md). The fixed-look native pack
     stays out of production; hairstyle/color/accessory attachment routes and game wardrobe
-    integration remain open. Icons retain approved native crops. The rite panel, Ascension
-    track, balance acceptance and full flag-on gameplay remain open.
+    integration remain open. Icons retain approved native crops. The timed Crucible trial is built (16 October 2026). Ascension
+    track, balance acceptance and full flag-on gameplay acceptance remain open.
   - **Before flipping the flag:** the roster-wide suites will flag what is missing: native 3rd-job bodies
     and wardrobe entries (Phase B), new skill icon sources if desired (icons currently reuse approved native crops),
-    the Crucible rite panel, and the build-label mirrors. See the
+    and the build-label mirrors. See the
     go-live checklist in `Updates/fourth-jobs/README.md`.
 
 * **Milestone 5 — Post-Lv 150 Ascension Stats Box**

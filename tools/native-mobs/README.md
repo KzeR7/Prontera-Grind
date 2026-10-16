@@ -1,7 +1,7 @@
-# Ascension native monster exports
+# Ascension and advancement native monster exports
 
-Twelve original RO monsters are delivered locally as 288 unmodified APNG exports
-(12 monsters × idle/walk/attack × eight directions). They come from the public
+Eighteen original RO monsters are delivered locally as 432 unmodified APNG exports
+(18 monsters × idle/walk/attack × eight directions). They come from the public
 ragassets native renderer at `https://assets.latam-tools.com.br/image`, documented
 by `adsonpleal/ragassets` at `4de4fa747431979d35c747d7edd549a872efd9e1`.
 The hosted renderer's deployed revision is not independently attested; the
@@ -24,6 +24,12 @@ Death Whisperer→1706, Agony Demon→1707, Memory of Thanatos→1708,
 Magma Slag→1836, Fire Imp→1837, Kasa→1833, Salamander→1831,
 Obsidian Golem→1366 and Ifrit→1832. These are display aliases; source pixels retain
 their genuine native appearance.
+
+The six advancement opponents retain their native names: Lord Knight Seyren→1634,
+Assassin Cross Eremes→1635, Whitesmith Harword→1636, High Priest Magaleta→1637,
+Sniper Shecil→1638 and High Wizard Katrinn→1639. Their Medium sizes and identities
+are pinned to the rAthena source in `size-reference.json`. Trial combat values come
+from the first Astral ordinary mob, independently of sprite identity.
 
 With Python 3 and Pillow 11.3.0:
 

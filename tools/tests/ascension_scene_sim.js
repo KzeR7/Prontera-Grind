@@ -4,7 +4,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),THREE=re
 const source=fs.readFileSync(require('path').join(__dirname,'../../index.html'),'utf8');
 const start=source.indexOf('let ascensionWorld=null,'),end=source.indexOf('function buildDeco(m)',start);
 const pending=[],scene=new THREE.Scene(),ground={visible:true},hemi={intensity:.8},sun={intensity:.9};
-const context={THREE,scene,ground,hemi,sun,KIT:{ground:{visible:true}},townObjs:[{visible:true}],road:{visible:true},Z0:-28,Z1:12,S:{mp:10,lvl:4},TRIAL:{on:false},log(){},PGAscension:{build:()=>new Promise(resolve=>pending.push(resolve))}};context.window=context;vm.createContext(context);
+const context={THREE,scene,ground,hemi,sun,KIT:{ground:{visible:true}},townObjs:[{visible:true}],road:{visible:true},Z0:-28,Z1:12,S:{mp:10,lvl:4},TRIAL:{on:false},JOB_RITE:{on:false},log(){},PGAscension:{build:()=>new Promise(resolve=>pending.push(resolve))}};context.window=context;vm.createContext(context);
 vm.runInContext(source.slice(start,end)+'\nglobalThis.api={clearAscension,buildAscension,get world(){return ascensionWorld}};',context);
 function world(focus=-140){let disposed=0;const w={scene:new THREE.Scene(),view:{focus},dispose(){disposed++;this.scene.clear()},get disposed(){return disposed}};w.scene.add(new THREE.Group());return w;}
 (async()=>{
@@ -13,6 +13,7 @@ function world(focus=-140){let disposed=0;const w={scene:new THREE.Scene(),view:
  pending.shift()(live);await Promise.resolve();assert.equal(context.api.world,live);assert.equal(ground.visible,false);assert.equal(scene.children[0].position.z,132);assert.equal(hemi.intensity,0);
  context.api.clearAscension();assert.equal(live.disposed,1);assert.equal(scene.children.length,0);assert.equal(ground.visible,true);assert.equal(hemi.intensity,.8);
  context.api.buildAscension(10,4);context.TRIAL.on=true;const trialStale=world();pending.shift()(trialStale);await Promise.resolve();assert.equal(trialStale.disposed,1);assert.equal(scene.children.length,0);
+ context.TRIAL.on=false;context.api.buildAscension(10,4);context.JOB_RITE.on=true;const riteStale=world();pending.shift()(riteStale);await Promise.resolve();assert.equal(riteStale.disposed,1);assert.equal(scene.children.length,0);
  console.log('PASS: main-scene attach, bridge placement, original lighting, disposal, stale downloads and trial isolation.');
 })().catch(error=>{console.error(error);process.exitCode=1});
 // The actual lazy loader serves the live five-stage Astral module and maps Thor

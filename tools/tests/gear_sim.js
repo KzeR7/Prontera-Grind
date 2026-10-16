@@ -53,7 +53,7 @@ const code = [
   pick(/const NM_MAT=\[[^\]]*\];/, 'the Nightmare crafting materials'),
   pick(/const nmMatIndex=[^;]+;/, 'map-pair material index'),
   pick(/const NM_MAT_CH=[^;]+;/, 'the material drop chance'),
-  pick(/const BOSS_CRIT_RES=\[[^\]]*\],NM_CRIT_RES=\[[^\]]*\],bossCritRes=\(m,l\)=>[^;]+;/, 'boss crit resistance (+ the v76 Nightmare ladder)'),
+  grab('const BOSS_CRIT_RES=', 'const OFFLINE_CAP_MS='),
   pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
   pick(/K5=\[[^\]]*\];/, 'K5'),
   pick(/const cardVal=\(g,st\)=>[^;]+;/, 'cardVal'),
@@ -453,7 +453,7 @@ t('N and N+ by tier (v90.10): the weapon walk is back on every map, and the N+ h
 t('N+ flat affixes (v89): STR and Flee top out near the high-tier ceiling, the other affixes keep their numbers', () => {
   // v89 (owner: \"n+ affix are giving 60+ flee % and 60+ str is too much\"). Flat stats and Flee use
   // section multipliers 3.5 (N, section 4) and 4 (N+, section 5) instead of 5 and 6.
-  assert.deepStrictEqual(Array.from(G.NM_FLAT_MUL), [3.5, 4], 'the flat-stat multipliers are pinned');
+  assert.deepStrictEqual(Array.from(G.NM_FLAT_MUL), [3.5, 4, 5], 'the flat-stat multipliers are pinned');
   assert.strictEqual(G.affixValue('str', 5, 4, 1.25), 55, 'N+ STR top roll on Abyss is 55 (was 83)');
   assert.strictEqual(G.affixValue('str', 4, 4, 1.25), 48, 'N STR top roll on Abyss is 48 (was 69)');
   // the ceiling N+ flat stats reach is the one a Legendary high-tier piece already rolls
@@ -510,8 +510,8 @@ t('regular mobs drop both ores on every stage and Stage 10 keeps its stronger bo
     assert.strictEqual(F.boss.card.g, 3, 'boss card must be Legendary');
     assert.ok(F.boss.cardCh < F.mobs[0].cardCh, 'boss card rarer than a mob card');
     assert.ok(F.boss.ore && F.mobs.every(x => x.ore), 'Stage 10 regular mobs and boss drop oridecon/elunium');
-    assert.ok(F.mobs.every(x => x.oreCh === 0.01), 'Stage 10 regular mobs drop ore at 1% each');
-    assert.strictEqual(F.boss.oreCh, 0.025, 'the boss drops ore at 2.5% each');
+    assert.ok(F.mobs.every(x => x.oreCh === 0.005), 'Stage 10 escorts drop ore at 0.5% each');
+    assert.strictEqual(F.boss.oreCh, 0.008, 'the boss drops ore at 0.8% each');
   }
   assert.strictEqual(G.fieldOf(0, 1).mobs[0].card.g, 0, 'low fields keep common cards');
 });
@@ -753,7 +753,7 @@ t('Nightmare equipment is its own N rarity, separate from Legendary and map qual
   assert.strictEqual(G.rarCls(ab), 'r6', 'and is painted with .r6');
   assert.ok(ab.name.startsWith('N+ '), 'the item name states it: ' + ab.name);
   assert.ok(src.includes('.r6{color:#c026d3;font-weight:bold}'), 'N+ is its own colour in the CSS');
-  assert.strictEqual(G.RARALL.length, 7, 'seven rarity bands: five ordinary + N + N+');
+  assert.strictEqual(G.RARALL.length, 8, 'eight rarity bands: five ordinary + N + N+ + crafted Mythic');
   // The owner's Nightmare drop-rate tables are unchanged: one third of their normal counterparts.
   assert.strictEqual(G.FIELD_GEAR_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.5,1.2,0.9');
   assert.strictEqual(G.FIELD_GEAR_MID_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.05,0.84,0.63');
@@ -801,10 +801,10 @@ t('the cdm affix only rolls on weapons and accessories, like the cdm card always
 t('N and N+ Flee, ATK, ASPD and Crit % take the v90 nerf; STR, Max HP and Crit DMG do not move', () => {
   // v90 (owner): a slightly higher nerf on Flee, ATK, ASPD and CRIT in sections 4/5. Flee x3.0 / x3.4,
   // ATK %, ASPD % and Crit % x4.2 / x5.0. The flat stats stay on x3.5 / x4.
-  assert.deepStrictEqual(Array.from(G.NM_MUL.flee), [3, 3.4], 'Flee multipliers are pinned');
-  assert.deepStrictEqual(Array.from(G.NM_MUL.atk), [4.2, 5], 'ATK multipliers are pinned');
-  assert.deepStrictEqual(Array.from(G.NM_MUL.aspd), [4.2, 5], 'ASPD multipliers are pinned');
-  assert.deepStrictEqual(Array.from(G.NM_MUL.crit), [4.2, 5], 'Crit multipliers are pinned');
+  assert.deepStrictEqual(Array.from(G.NM_MUL.flee), [3, 3.4, 4], 'Flee multipliers are pinned');
+  assert.deepStrictEqual(Array.from(G.NM_MUL.atk), [4.2, 5, 6], 'ATK multipliers are pinned');
+  assert.deepStrictEqual(Array.from(G.NM_MUL.aspd), [4.2, 5, 6], 'ASPD multipliers are pinned');
+  assert.deepStrictEqual(Array.from(G.NM_MUL.crit), [4.2, 5, 6], 'Crit multipliers are pinned');
   assert.strictEqual(G.affixValue('flee', 5, 4, 1.25), 38, 'N+ Flee top roll on Abyss is 38 (was 44)');
   assert.strictEqual(G.affixValue('flee', 4, 4, 1.25), 33, 'N Flee top roll on Abyss is 33 (was 39)');
   assert.strictEqual(G.affixValue('atk', 5, 4, 1.25), 55, 'N+ ATK top roll is 55 (was 66)');

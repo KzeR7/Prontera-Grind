@@ -40,7 +40,7 @@ function liveData(){
     pick(/const MAPVAL=\[[^\]]*\];/,'map value bands'),
     pick(/const dropTier=\(m,l\)=>[^;]+;/,'dropTier'),
     pick(/const FIELD_GEAR=\[[^\]]*\],FIELD_GEAR_MID=\[[^\]]*\],BOSS_POOL_TOTAL=\[[^\]]*\];/,'field drop tables'),
-    pick(/const BOSS_CRIT_RES=\[[^\]]*\],NM_CRIT_RES=\[[^\]]*\],bossCritRes=\(m,l\)=>[^;]+;/,'boss crit resistance'),
+    grab('const BOSS_CRIT_RES=', 'const OFFLINE_CAP_MS='),
     grab('function gearPool(m,l){','// ---------- stat progression'),
     `const WICON=${pickValue(/const WICON=(\{[^}]*\})/,'weapon type table')};`,
     `this.__live={MAPS,RAR,GRADE,AFF,AB,K5,cardVal,cardStat,CFIT,SECN,WICON,fieldPower,fieldOf};`

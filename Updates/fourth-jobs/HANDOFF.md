@@ -1,3 +1,9 @@
+> **Current status — 16 October 2026, v160:** Owner authorized the testing unlock.
+> `FOURTH_JOBS_LIVE=true`: 25 classes / 121 skills. Earlier parked-state notes below
+> describe preparation. Trials, Mythic Forge, +15 refinement, four-affix reforges
+> and updated GM testing controls are enabled locally. Parent-body fallback remains;
+> native review bodies are not yet wired into gameplay. No deployment performed.
+
 # Handoff: 4th Jobs (Milestone 4)
 
 Read this first. [README.md](README.md) is the reference spec; this file says where work stopped,
@@ -13,7 +19,10 @@ for sources, adaptations and the inspected shared video. Runtime regression chec
 including the flag-on 15-check skill suite, verify these changes.
 
 Native preparation remains 12 fixed looks / 400 actions / 2,573 original frames, including caster and GX roll routes.
-Classes remain locked. Native wardrobe attachment integration, rite UI, Ascension
+16 October 2026: the timed Crucible trial is built with six matching native Biolabs
+opponents and first ordinary Astral mob stats; see [current rules](README.md#advancement-trial-16-october-2026-parked).
+
+Classes remain locked. Native wardrobe attachment integration, Ascension
 progression and release acceptance remain open. The snapshot below is historical;
 its old skill counts and names do not describe the current package.
 
@@ -68,7 +77,7 @@ Status key: **[ ]** not started · **[~]** partly done · **[x]** done. Owner = 
 - [ ] **Owner or agent with sheets: skill icons and FX.** The 18 skills reuse native art by alias (`ART4` in `index.html`). Dedicated effects are now generated; new icon artwork still needs approved sources. Do not repaint native icons.
 - [x] **Agent: Afterglow effects** for all 18 fourth-job skills, generated and covered by the expanded animation simulation.
 - [~] **Ascension aura and Ascension track.** Aura implemented behind the class flag; the track remains a design note. Lv 150+ is a separate Ascension level with its own stats; a later Ascension skill tab raises skill boost. The progression track is not built.
-- [ ] **Agent/owner: Crucible rite panel.** `changeClass()` stands in for the rite.
+- [x] **Agent: Crucible advancement trial (16 October 2026).** Dark arena, matching native opponent, 60-second deadline and retry/return flow are implemented behind the class flag.
 - [ ] **Owner: balance.** Stat multipliers (`aspd`, `atk`, `hp` in `CD4`) and skill numbers (`SKILLS4`) are provisional. Tune with the new mobs and bosses, then regenerate fixtures.
 - [ ] **Agent: browser check.** Nothing has been looked at in a real browser with the flag on: Class Tree row, skill cards, combo bar, icon aliases, the absorb ward and bounce visuals. Do this before the unlock.
 - [ ] **Agent: flag-on roster suites.** Several live-page checks will fail once the flag is on (19 → 25 classes, 91 → 109 skills, `JOFF` length, Class Tree rows). Update them deliberately; the go-live checklist in the README lists them.

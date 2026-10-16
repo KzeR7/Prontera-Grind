@@ -61,15 +61,18 @@ try{
  }
  ev('S.mp=9;S.lvl=15;spawn();window.abyss=mobs.find(x=>x.boss)');
  const abyss=ev('({hp:window.abyss.hp,atk:window.abyss.atk})');
+ // Shipped v158 scales relative to Nightmare Abyss's final MVP, including its 1.3 buff.
+ const scales={10:[5,8,13,20,30],11:[7,11,18,28,40]};
  for(const m of [10,11]){
   let previous=0;
   for(let stage=1;stage<=5;stage++){
    ev(`S.mp=${m};S.lvl=${stage};spawn()`);
    const regular=ev('mobs.find(x=>!x.boss)');
    assert.ok(regular.hp>previous);previous=regular.hp;
+   const scale=scales[m][stage-1];
+   assert.equal(regular.hp,Math.floor(abyss.hp*scale),`map ${m} stage ${stage} HP`);
+   assert.equal(regular.atk,Math.floor(abyss.atk*scale),`map ${m} stage ${stage} ATK`);
    if(stage===1){
-    assert.equal(regular.hp,Math.floor(abyss.hp*1.3));
-    assert.equal(regular.atk,Math.floor(abyss.atk*1.3));
     console.log(`${ev('MAPS[S.mp].n')} entry: ${regular.hp} HP, ${regular.atk} ATK; ${(regular.hp/32000000).toFixed(2)}s at 32M DPS (HP only).`);
    }
    if(stage===5){

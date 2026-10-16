@@ -23,8 +23,9 @@ Maps → Ascension Map contains Astral Citadel and Thor Volcano, beside the
 World Atlas destination list. The adjacent Social Hub tab is locked as Coming Soon.
 Astral and Thor have illustrated destination previews. Travel enters the main battlefield with the current
 character, combat and drops. Both maps unlock independently at Base 150, with no prerequisite boss clears.
-The lowest mobs have 30% more HP and ATK than the Nightmare Abyss Stage 5 MVP
-(internal Stage 15). Later stages ramp further, with a steeper curve in Thor;
+Ascension mobs use the v158 difficulty curves relative to the Nightmare Abyss
+Stage 5 MVP (internal Stage 15). Astral starts at five times its HP and ATK;
+Thor starts at seven times. Later stages ramp further, with a steeper curve in Thor;
 each Ascension MVP has four times its own stage’s regular mob HP and ATK.
 Both Ascension maps have five stages: 1–2 share arrival scenery, 3 is the crossing,
 4 is the approach, and 5 starts immediately with the MVP and five escorts. Neither
@@ -47,7 +48,8 @@ Catalyst (Thor) each roll at 0.035% per kill; Valkyrie's Sigil rolls at 0.0025% 
 ordinary mob/escort and 0.1% per MVP. The map's Field intelligence shows the wallet.
 Online and server-budgeted offline kills share these rolls. Materials are collected
 for N+ weapon evolution (Shard/Catalyst) and Ascension skill growth (Sigil).
-Recipes and skill upgrade menus remain planned; these materials cannot be spent yet.
+Black Market → Ascension Forge spends Shards/Catalysts, Sigils and Zeny to craft
+Mythic set equipment or transform N+ gear. Ascension skill upgrade menus remain planned.
 Existing maps, pet identities and Nightmare reward values retain their meaning.
 
 ## Classes and progression
@@ -95,6 +97,9 @@ Novice refunds them. Returning to Novice has a deliberate reset path. Use
 tests for the exact transitions; never treat all class changes as one reset.
 
 Current stat allocation caps at 99 before Base level 100, and at 120 from 100.
+At Base 150, wearing Mythic gear raises allocation to 150. Earned allocations survive
+class switches, gear removal and reload; removing Mythic prevents further allocation
+above the ordinary cap.
 Base progression ends at 150. Do not copy earlier grant curves or pacing estimates
 from historical notes: `totalPts()`, `statCap()`, `needAt()`, `jneed()` and the
 progression/economy tests define current behavior. Base EXP requirements from
@@ -120,12 +125,22 @@ Movement from AGI, pets, skills and running shares a 10.045 units/second cap.
 Equipment and card movement is applied afterward and can exceed that cap; those
 bonuses retain their combined +20% limit.
 
+Class Path shows six lineage choices, one selected progression from Novice through
+the fourth job, and a focused class inspector. The six fourth jobs appear as Coming
+soon while the release flag is off. Inspection does not change class.
+
 ## Equipment, cards and currency
 
 Gear eligibility depends on class, weapon family and progression tier. Switching
 classes stows incompatible equipment safely and can restore the same item IDs on
 return. Inventory, class snapshots, equipment locks and autosell must agree.
 Selecting bag equipment always inspects it, including on saves with the retired click-sell flag. Manual sales ask for confirmation; bulk sales preview their contents. Drop auto-sell settings do not sell existing inventory.
+Ordinary core crit caps at 60%. Above 45%,
+each additional point contributes half. Hunt Title Index Crit adds up to 40%
+after the core cap, with a 100% normal total ceiling. Mythic direct crit affixes
+and set crit bonuses then add without that cap: 100% + 20% = 120%. Socketed cards
+and LUK keep their ordinary rules. Off-hand dagger bonuses keep their 50% weighting.
+Boss resistance reduces the full result, for both basic attacks and skills. Astral and Thor drop no equipment; Mythic gear comes from the Forge.
 Cards, refining, ores and Nightmare materials interact with gear and the economy.
 Check the corresponding tests before changing eligibility, rolls, prices or rewards.
 
@@ -157,9 +172,26 @@ Keep old saves working. Verify load → change → save → reload and switching
 two accounts for state changes. Do not replace real conflict/ownership logic with
 a permissive preview shortcut in production code.
 
-## Locked Ascension skill preparation
+## Fourth jobs enabled for testing
 
-The six parked classes have five core RO skills each. In flag-on preparation,
+The six fourth jobs are enabled by owner request (16 October 2026), with five skills each.
 Rolling Cutter casts five times in one slot at 0.2-second spacing before advancing;
 other attacks retain ordinary combo timing. Support runs outside offensive slots.
 See [research and adaptations](../Updates/fourth-jobs/SKILL-RESEARCH.md).
+
+First fourth-job advancement also requires a 60-second Crucible fight in a dark
+arena, using the matching native Biolabs opponent and first ordinary Astral mob
+combat stats. Animated victory/defeat/timeout wording stays in the dark room for three
+real seconds with combat stopped, followed by automatic return and, on victory,
+automatic job change. Timeout, defeat or leaving allows retry
+without field rewards/progress. Played classes return directly. The local test build uses `FOURTH_JOBS_LIVE=true`; see the [matchups and rules](../Updates/fourth-jobs/README.md#advancement-trial-16-october-2026-parked).
+
+### Mythic testing access (v160)
+GM → Ascension testing grants Base 150, crafting materials, Zeny, ores and both
+protection scroll types. Grant any of the six complete sets for your current weapon
+families. Max the parent job and use Class Path for the real timed trial.
+The Forge offers each compatible weapon and N+ transformation; maps do not drop gear.
+Mythic refines reach +15 (15 ores per attempt; +11…+15 chances 30/21/12/5/2%).
+Four-affix reforges retain their paid offer across reloads. The cloud GM console
+includes all crafted gear, materials and Mythic scrolls, and supports +15/four-affix edits.
+Native fourth-job bodies remain in the review pack; gameplay uses the existing parent-body fallback.

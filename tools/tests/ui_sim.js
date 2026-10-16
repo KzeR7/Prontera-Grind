@@ -35,6 +35,8 @@ t('no panel emits an action that ACT does not define', () => {
 
 // ---- the renderers ----------------------------------------------------------
 const code = [
+  pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill pictogram map'),
+
   require('./helpers/progression')(src,'cards'),
   pick(/const esc=[^\n]*/, 'esc'),
   pick(/const INT_CLASSES=[^\n]*/, 'INT_CLASSES'),
@@ -51,6 +53,7 @@ const code = [
   pick(/const aspd=\(\)=>[^\n]*/, 'aspd'),
   grab('const pm=s=>', 'const pw=()=>'),
   grab('const CARD_CATALOG=', 'function repairEquippedCards('),          // maps + their REC bands
+  pick(/const ASCENSION_MATERIALS=[^\n]*/, 'Ascension materials'),
   petData,                                             // pet roster, Divine Pride icons and gacha skills
   pick(/const secOf=[^;]+;/, 'secOf'),
   pick(/const AM=\[[^\]]*\],GRADE=\[[^\]]*\],GI=\[[^\]]*\],CV=\[[^\]]*\];/, 'rarity tables'),
@@ -67,13 +70,13 @@ const code = [
   pick(/const cell=\(it,sel,extra=''\)=>[^\n]*/, 'cell'),
   pick(/const STATS=\[[\s\S]*?\];/, 'STATS'),
   grab('const UI_ICONS=', 'const SKILL_ICON='),
-  pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill pictogram map'),
   pick(/const SKILL_TONE=\{[^;]+;/, 'skill icon color themes'),
   pick(/const SKILL_PICTO=\{[\s\S]*?\n\};/, 'local vector skill art'),
   grab('const SKILL_EMBLEM=', '// The CDM affix stays'),
   pick(/const SKSLOTS=t=>[^;]+;/, 'SKSLOTS/SKFADE'),
   pick(/const tnode=n=>[^\n]*/, 'tnode'),
-  pick(/const crit=\(\)=>[^\n]*/, 'crit/flee/missCh'),
+  pick(/const mythicCrit=[^\n]*/, 'Mythic crit'),
+  pick(/const crit=\(bonus=0\)=>[^\n]*/, 'crit/flee/missCh'),
   pick(/const def=\(\)=>[^\n]*/, 'def/mdef/critD/needAt/need/cost'),
   pick(/const totalPts=\(\)=>[^\n]*/, 'totalPts/rcost'),
   grab('function classRec(n){', '// ---------- UI ----------'),
@@ -99,7 +102,7 @@ const code = [
   grab('const itemIconMarkup=it=>', 'const icon=it=>'),  // ...and the markup that picks art or silhouette
   pick(/const icon=it=>[^;]+;/, 'icon'),
   pick(/const items=\(\)=>[^\n]*/, 'items/ev/iname/eqv'),
-  pick(/const REF_ZENY_MUL=3,refCost=it=>[^;]+;/, 'refCost/refCh'),
+  pick(/const REF_ZENY_MUL=[^\n]*/, 'refCost/refCh'),
   grab('const BM_LV=', '// ---------- class change ----------'),   // v90: the Black Market helpers (ore, reforge, price)
   pick(/const AL=\{[^}]*\};/, 'affix labels'),
   pick(/const uid=[^\n]*/, 'rnd and ri'),
@@ -278,7 +281,7 @@ t('the map panel renders every map and field', () => {
   assert.ok(normBoss.includes('Stages 1-10 are Normal') && normBoss.includes('Purple nodes are Nightmare stages 11-15'), 'the field picker explicitly separates normal and Nightmare stages');
   assert.ok(src.includes('.map-node.normal-boss-node{background:#fff5d7;border-color:#c1842b'), 'the normal Stage 10 boss has a warm accent, not the Nightmare purple');
   U.mapM = 0;
-  assert.ok(b.includes('1% each') && b.includes('2.5% each'), 'v51 ore rates: 1% per monster, 2.5% per boss');
+  assert.ok(b.includes('0.5% each') && b.includes('0.8% each'), 'ordinary mobs roll ore at 0.5%, bosses at 0.8%');
 });
 
 t('the map tab is a compact two-band panel: maps on top, that map\'s fields under them', () => {
@@ -595,8 +598,8 @@ t('skill art is local, movement slowdown is moderated, and the unchanged camera 
   assert.ok(!src.includes('https://static.divine-pride.net/images/skills/'), 'skill artwork no longer depends on hotlinked images');
   assert.ok(src.includes('class="skill-art family-${art.family}"')&&src.includes('data-skill="${id}"'), 'each skill uses the supplied local art registry');
   assert.ok(src.includes('.skill-art{display:block;width:46px;height:46px'), 'the vector artwork is high-resolution and not a tiny red sprite');
-  const moveMatch=src.match(/const heroMoveSpeedForAgi=agi=>[^;]+;/);assert.ok(moveMatch,'AGI movement curve is missing');
-  const move=new Function(moveMatch[0]+';return heroMoveSpeedForAgi')();
+  const moveMatch=src.match(/const heroMoveSpeedForAgi=[^\n]+/);assert.ok(moveMatch,'AGI movement curve is missing');
+  const move=new Function(moveMatch[0].split(',moveSpd=')[0]+';return heroMoveSpeedForAgi')();
   const old99=6.5+99*.05,old120=6.5+120*.05;
   assert.ok(Math.abs((1-move(99)/old99)*100-29.1)<.2, 'AGI 99 keeps about half the previous slowdown: 8.12 vs 11.45');
   assert.ok(Math.abs((1-move(120)/old120)*100-30.5)<.2, 'AGI 120 keeps about half the previous slowdown: 8.68 vs 12.5');
@@ -949,10 +952,10 @@ t('the class-change panel previews the class it is describing', () => {
   const h = U.V.job();
   assert.ok(h.includes('id="classPreview"') && h.includes('id="classPreviewLoading"'), 'the class panel has its own canvas and loading note');
   assert.ok(h.includes('male Knight class skin preview'), 'the preview describes the current class and gender');
-  assert.ok(h.includes('CLASS PREVIEW') && h.includes('You wear this now'), 'with a plain label for the class you already are');
-  assert.ok(h.includes('&middot; animating'), 'and the class preview is labelled as the animation too');
+  assert.ok(h.includes('CLASS PREVIEW') && h.includes('CURRENT CLASS'), 'with a plain label for the class you already are');
+  assert.ok(h.includes('data-v="Knight"'), 'and the selected class has an action');
   assert.ok(!h.includes('S (front) view'), 'without the retired view essay');
-  assert.ok(h.includes('What this class looks like') || h.includes('You wear this now'), 'and a label for a class you are only looking at');
+  assert.ok(h.includes('SELECTED LINEAGE'), 'and a label for a class you are only looking at');
   const g = h.match(/.{0,40}undefined.{0,40}/);
   assert.ok(!g, 'the class panel renders without undefined values: ' + (g ? g[0] : ''));
 });
@@ -1638,7 +1641,7 @@ t('the Log window filters by category, and the on-screen feed folds away', () =>
     'and reads clearly on hover or focus');
   assert.ok(src.includes('#feedTab.filt::after{'), 'a quiet dot marks a filter that is hiding lines');
   assert.ok(src.includes("b.classList.toggle('filt',hid>0);"), 'and the dot is driven by the real filter state');
-  assert.ok(src.includes('feedTab();') && src.includes("$('stageTitle').textContent=hudTrial?"), 'every redraw keeps the tab label honest');
+  assert.ok(src.includes('feedTab();') && src.includes("$('stageTitle').textContent=JOB_RITE.on?"), 'every redraw keeps the tab label honest');
   assert.ok(src.includes("feed:()=>{S.feed=!feedOn();feedTab();ui();save()}"), 'toggling it saves');
   const box = {}; vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
@@ -1756,9 +1759,9 @@ t('refine controls sit with the piece: the ladder is the v51 30%-nerfed one', ()
   const e = U.V.equip();
   assert.ok(e.indexOf('Refine') > -1 && e.indexOf('Insert card') > -1, 'the weapon shows both sections');
   assert.ok(e.indexOf('Refine') < e.indexOf('Insert card'), 'Refine comes before the long card-insert list, not after it');
-  assert.ok(src.includes('refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0]'), 'the refine chance table is the nerfed one');
-  assert.ok(src.includes('ore:true,oreCh:l>10?.015:l===10?.01:.005') && src.includes('ore:true,oreCh:.025'),
-    'regular mobs drop both ores at 0.5% / 1% (1.5% in the Nightmare band), Stage 10 boss at 2.5%');
+  assert.ok(src.includes('return[70,70,70,70,49,42,35,28,21,14][r]'), 'the refine chance table is the nerfed one');
+  assert.ok(src.includes('cardCh:.15,ore:true,oreCh:.005') && src.includes('cardCh:.1,ore:true,oreCh:.008'),
+    'regular mobs drop ores at 0.5%, bosses at 0.8%');
 });
 
 t('worn equipment can never be auto-sold or bulk-sold', () => {

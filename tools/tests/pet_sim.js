@@ -31,7 +31,7 @@ const code = [
   grab('const CD=[', 'const pm=s=>'),                    // CLASSES
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
   pick(/const items=\(\)=>[^\n]*/, 'items/ev/iname/eqv'),
-  pick(/const bon=k=>\{[^\n]*/, 'bon()'),
+  grab('const bon=k=>{', '// v74 (owner:'),
   pick(/const st=k=>[^\n]*canUse=it=>[^;]+;/, 'st/canUse'),
   grab('const maxHp=\(\)=>', 'const totalPts=\(\)=>'),   // atk/matk/aspd/crit/flee/missCh/def/mdef/critD
   pick(/const RAR=\[[^\]]*\];/, 'RAR'),
@@ -407,7 +407,7 @@ t('every signature passive is wired into the real game (v75)', () => {
     boss: /mob\.boss\?1\+petPassive\('boss'\)\/100:1/,
     hp: /maxHp=\(\)=>[^;]*\(1\+petPassive\('hp'\)\/100\)/,
     dr: /\(1-cut\)\*\(1-petPassive\('dr'\)\/100\)/,
-    move: /moveSpd=\(running=false\)=>Math.min\(MOVE_CAP,[^\n]*petPassive\('move'\)/,
+    move: /moveSpd=\(running=false\)=>\{[^\n]*Math.min\(cap,[^\n]*petPassive\('move'\)/,
   };
   for(const k of Object.keys(sites)) assert.ok(sites[k].test(src), k + ' is never read by index.html');
   assert.ok(/spd=moveSpd\(pd>3\)/.test(src), 'the walk must call moveSpd(), or Swift Mount would only exist on the sheet');

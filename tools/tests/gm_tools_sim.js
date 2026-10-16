@@ -87,6 +87,22 @@ try{
    game.ev(`S=${JSON.stringify(s)};gmApplyGear({mode:'equip',itemId:123,slot:'weapon'})`);
    assert.equal(game.ev('S.eq.weapon.id'),123);assert.equal(game.ev('S.inv.some(x=>x.id===1)'),true);
   });
+  await test('GM catalogue and API support Mythic gear and fourth-job shields',async()=>{
+   const {GM_CATALOG}=await import('../../functions/_lib/gm-catalog.js');
+   const {equipmentPayload,giftPayload}=await import('../../functions/_lib/gm-tools.js');
+   assert.equal(Object.values(GM_CATALOG.classes).filter(c=>c.tier===4).length,6);
+   assert.equal(GM_CATALOG.entries.filter(e=>e.id.startsWith('mythic:')).length,72);
+   assert.equal(giftPayload({catalogId:'ascMat2',amount:5}).resource,'ascMat2');
+   assert.equal(giftPayload({catalogId:'mythicScrolls',amount:5}).resource,'mythicScrolls');
+   const entry=GM_CATALOG.entries.find(e=>e.id==='mythic:celestial:off');
+   const item={...entry.item,id:444};
+   for(const cls of ['Rune Knight','Arch Bishop','Mechanic'])assert.equal(equipmentPayload({mode:'equip',itemId:444,slot:'off'},JSON.stringify({cls,eq:{},inv:[item]})).slot,'off');
+   const aff=entry.affixes.slice(0,4).map(k=>({k,v:20})),body={mode:'affixes',itemId:444,refine:15,aff};
+   const blob=JSON.stringify({cls:'Rune Knight',eq:{off:item},inv:[]});
+   assert.equal(equipmentPayload(body,blob).aff.length,4);
+   assert.throws(()=>equipmentPayload({...body,refine:16},blob));
+   assert.throws(()=>equipmentPayload(body,JSON.stringify({eq:{off:{...item,sec:5}}})));
+  });
   await test('milestone boundaries and aura geometry update without accumulation',async()=>{
    for(const [lv,at] of [[49,null],[50,50],[98,50],[99,99],[149,99],[150,150]])assert.equal(game.ev(`milestone(LEVEL_AURAS,${lv})?.at??null`),at);
    for(const [r,at] of [[4,null],[6,null],[7,7],[8,7],[9,9],[10,10]])assert.equal(game.ev(`milestone(REFINE_GLOWS,${r})?.at??null`),at);

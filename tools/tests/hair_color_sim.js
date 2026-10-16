@@ -17,7 +17,7 @@ for(const sex of ['m','f']){
  for(const id of selected)assert.equal(row.styles.find(s=>s.n===id).colors,9);
 }
 const game=fs.readFileSync(path.join(root,'index.html'),'utf8'),start=game.indexOf('const CD=');
-const classes=vm.runInNewContext(game.slice(start,game.indexOf('const CLASSES=',start))+';CD');
+const classes=vm.runInNewContext(game.slice(start,game.indexOf('const CLASSES=',start))+';CD.filter(c=>!CD4.includes(c))');
 assert.deepEqual(data.classes.map(c=>[c.name,c.weapons]),JSON.parse(JSON.stringify(classes.map(c=>[c[0],c[7]]))));
 const state={cls:'Lord Knight',weapon:'sword',hair:{m:data.hairs.m[0],f:data.hairs.f[0]},palette:{m:0,f:0},direction:'SE',animated:true};
 const keys=new Set();

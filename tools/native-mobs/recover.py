@@ -3,7 +3,7 @@ import concurrent.futures, hashlib, io, json, pathlib, urllib.request
 from PIL import Image
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / 'assets/mobs/v1'
-IDS = [1702,1705,1700,1706,1707,1708,1836,1837,1833,1831,1366,1832]
+IDS = [1702,1705,1700,1706,1707,1708,1836,1837,1833,1831,1366,1832,1634,1635,1636,1637,1638,1639]
 BASE = 'https://assets.latam-tools.com.br/image'
 def recover(pair):
     mob, action = pair

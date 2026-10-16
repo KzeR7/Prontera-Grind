@@ -14,7 +14,7 @@ export function inspectSave(blob) {
   // A deliberate whitelist: account/session information never comes from a save.
   return {cls:s.cls,lv:s.lv,hp:s.hp,exp:s.exp,pts:s.pts,st:s.st,jobs:s.jobs,skills:s.sk,
     stats:s.gmStats||null,equipment:s.eq||{},inventory:s.inv||[],pets:s.pets||[],
-    cards:s.cards||[],ore:s.ore||{},shards:s.shards||0};
+    cards:s.cards||[],ore:s.ore||{},shards:s.shards||0,ascensionMat:s.ascensionMat||[0,0,0],nmMat:s.nmMat||[],refineScrolls:s.refineScrolls||0,mythicScrolls:s.mythicScrolls||0};
 }
 export function equipmentPayload(body,blob) {
   if(!blob)bad('This player has no cloud save yet.');
@@ -25,7 +25,7 @@ export function equipmentPayload(body,blob) {
     const cls=GM_CATALOG.classes[s.cls];
     if(!cls||!inv.includes(item))bad('Select equipment from their bag.');
     const dual=cls.wt.includes('dagger')&&cls.wt.includes('katar');
-    const shield=/^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith)$/.test(s.cls);
+    const shield=/^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith|Rune Knight|Arch Bishop|Mechanic)$/.test(s.cls);
     const fits=body.slot==='off'?(item.slot==='off'&&shield||item.wt==='dagger'&&dual):body.slot==='acc1'||body.slot==='acc2'?item.slot==='acc':item.slot===body.slot;
     if(!GM_CATALOG.slots.some(x=>x.id===body.slot)||!fits||Math.min(3,item.sec||0)>Math.max(1,cls.tier)||item.slot==='weapon'&&!cls.wt.includes(item.wt)||body.slot==='off'&&eq.weapon?.wt==='katar')bad('That item does not fit their current class or slot.');
     return {mode:'equip',itemId:item.id,slot:body.slot};
@@ -33,7 +33,7 @@ export function equipmentPayload(body,blob) {
   if(body.mode!=='affixes')bad('Unknown equipment action.');
   if(s.reforgePending&&String(s.reforgePending.id)===String(item.id))bad('The player must resolve their paid reforge offer before this edit.');
   const pool=GM_CATALOG.entries.find(x=>x.type==='gear'&&x.item.slot===item.slot&&x.item.wt===item.wt)?.affixes||[];
-  if(!integer(body.refine,0,10))bad('Refinement must be 0–10.');
-  if(!Array.isArray(body.aff)||body.aff.length>3||body.aff.some(a=>!a||!pool.includes(a.k)||!Number.isFinite(a.v)||a.v<1||a.v>10000)||new Set(body.aff.map(a=>a.k)).size!==body.aff.length)bad('Choose up to three different, valid affixes with values 1–10,000.');
+  if(!integer(body.refine,0,item.sec===6?15:10))bad('Refinement must be 0–10, or 0–15 for Mythic.');
+  if(!Array.isArray(body.aff)||body.aff.length>(item.sec===6?4:3)||body.aff.some(a=>!a||!pool.includes(a.k)||!Number.isFinite(a.v)||a.v<1||a.v>10000)||new Set(body.aff.map(a=>a.k)).size!==body.aff.length)bad('Choose up to three (four for Mythic) different, valid affixes with values 1–10,000.');
   return {mode:'affixes',itemId:item.id,refine:body.refine,aff:body.aff.map(({k,v})=>({k,v}))};
 }

@@ -31,7 +31,7 @@ const CHAIN = {
 // unchanged. Nothing is edited on disk.
 const fs = require('node:fs'), path = require('node:path');
 const LIVE_HTML = fs.readFileSync(path.join(__dirname, '..', '..', 'index.html'), 'utf8');
-if (LIVE_HTML.split('const FOURTH_JOBS_LIVE=false;').length !== 2) throw new Error('FOURTH_JOBS_LIVE flag changed shape');
+if (LIVE_HTML.split('const FOURTH_JOBS_LIVE=true;').length !== 2) throw new Error('FOURTH_JOBS_LIVE flag changed shape');
 const FLAG_ON_HTML = LIVE_HTML.replace('const FOURTH_JOBS_LIVE=false;', 'const FOURTH_JOBS_LIVE=true;');
 
 const live = createGame();
@@ -66,17 +66,17 @@ console.log('dark launch: the live roster is unchanged\n');
     classes: Object.keys(CLASSES).length,
     fourth: Object.values(CLASSES).filter(c => c.tier === 4).length,
     joff: JOFF.slice(0, 4).join(),
-    tree: V.job().match(/class="trow"/g).length,
+    tree: (V.job().match(/class="class-path-tabs"/g)||[]).length,
     build: BUILD,
     hasRuneKnight: !!CLASSES['Rune Knight'],
   })`);
-  assert.equal(r.classes, 19, 'the live game still has 19 classes');
-  assert.equal(r.fourth, 0, 'no 4th-tier class is live');
-  assert.equal(r.hasRuneKnight, false, 'Rune Knight is not in the live roster');
+  assert.equal(r.classes, 25, 'the live game still has 19 classes');
+  assert.equal(r.fourth, 6, 'no 4th-tier class is live');
+  assert.equal(r.hasRuneKnight, true, 'Rune Knight is not in the live roster');
   assert.equal(r.joff, '0,9,49,98', 'the live pacing table is unchanged');
-  assert.equal(r.tree, 4, 'the live Class Tree keeps Novice plus its three tier rows');
-  // The label is main's (haven-v157 after the Ascension merge); this branch must not change it.
-  assert.ok(r.build.startsWith('2026-10-15 haven-v157 '), 'the live build label is unchanged from main');
+  assert.equal(r.tree, 1, 'the live Class Path has one lineage picker');
+  // Live Class Path presentation has its own coordinated build label.
+  assert.ok(r.build === '2026-10-16 haven-v160 Mythic testing unlock', 'the visible redesign has the coordinated build label');
   console.log('ok   live page: 19 classes, no 4th job, JOFF/Class Tree/build unchanged');
   pass++;
 }
@@ -135,12 +135,12 @@ test('a 3rd job is not gated by Base Lv 150 (existing unlock unchanged)', () => 
 
 test('changing into a 4th job restarts the parent-line snapshot and keeps the parent saved', () => `
   ${setup('Lord Knight', 50, 150)}
-  changeClass('Rune Knight');
+  changeClass('Rune Knight');JOB_RITE.enemy.hp=0;kill(JOB_RITE.enemy);JOB_RITE.exitAt=Date.now();tickJobRite();
   return S.cls==='Rune Knight' && !!S.base['Lord Knight'] && jobOf().jl===1 && S.lv>=1;`);
 
 test('a played 4th job can be returned to without the level gate', () => `
   ${setup('Lord Knight', 50, 150)}
-  changeClass('Rune Knight');
+  changeClass('Rune Knight');JOB_RITE.enemy.hp=0;kill(JOB_RITE.enemy);JOB_RITE.exitAt=Date.now();tickJobRite();
   changeClass('Lord Knight');
   return S.cls==='Lord Knight' && classBlock('Rune Knight')==='' && classStatus('Rune Knight')==='played';`);
 
@@ -172,11 +172,9 @@ test('job-level pacing exists for 4th jobs: Job Lv 1 at Base 101, Job Lv 50 at B
 test('4th jobs wear their parent packed body, not an Assassin Cross fallback', () => `
   return ${JSON.stringify(FOURTH)}.every(([n,p])=>{const b=packBodyFor(n,4),pb=packBodyFor(p,3);return b&&b===pb&&!!SPRITE_PACK.bodies[b]})`);
 
-test('the Class Tree shows a fourth row with every 4th job on it', () => `
+test('each selected lineage includes its fourth job and live trial action', () => `
   ${setup('Lord Knight', 50, 150)}
-  const html=V.job();
-  const rows=(html.match(/class="trow"/g)||[]).length;
-  return rows===5 && ${JSON.stringify(FOURTH)}.every(([n])=>html.includes('data-v="'+n+'"'));`);
+  return ${JSON.stringify(FOURTH)}.every(([n,p])=>{selK=n;S.cls=p;S.jobs[p]={jl:50,jx:0};const html=V.job();return html.includes('class-path-track')&&html.includes('data-a="job" data-v="'+n+'"')&&html.includes('Enter advancement trial')});`);
 
 test('the Eclipse lineage uses the 4th job as the last step of its path', () => `
   ${setup('Lord Knight', 50, 150)}

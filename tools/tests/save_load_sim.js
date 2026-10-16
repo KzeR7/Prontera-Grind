@@ -324,7 +324,7 @@ t('the field is roamed, not marched back to the spawn point', () => {
   assert.ok(/tx=pl\.wx;tz=pl\.wz\}/.test(src), 'the roam target does not close the empty-field branch');
   // and defeat really does put you back at the entrance
   assert.ok(/pl\.x=0;pl\.z=Z1-1\.5;pl\.wt=0;/.test(src), 'defeat no longer resets the position');
-  assert.ok(/S\.hp<=0[\s\S]{0,220}pl\.x=0;pl\.z=Z1-1\.5/.test(src),
+  assert.ok(/if\(S\.hp<=0\)\{[^\n]*log\('You were defeated[\s\S]*?pl\.x=0;pl\.z=Z1-1\.5/.test(src.slice(src.indexOf('function update(dt){'))),
     'the position reset is not inside the defeat handler');
 });
 
