@@ -167,7 +167,7 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   // MVP EXP is shared with the offline helper; Zeny retains the original boss multiplier.
   // mvp_exp_sim exercises real rewards and conserved NM5 budgets across every map.
   assert.ok(src.includes('na=nm1?NMATK*nm15Of(S.lvl):1,nz=nm1?NMZENY*nmPayOf(S.mp,S.lvl,2):1;'), 'spawn() reads the MVP knobs once (v89: ATK x1.3 on Stage 15; v90.3: map pay)');
-  assert.ok(src.includes('exp:fieldExpReward(S.mp,S.lvl,true),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz))'), 'MVP uses shared EXP and original Zeny');
+  assert.ok(src.includes('exp:fieldExpReward(S.mp,S.lvl,true),zeny:fieldZenyReward(S.mp,S.lvl,true)'), 'MVP uses shared EXP and original Zeny');
   assert.ok(src.includes('nm1=stage>10,nz=nm1?nmZenyOf(stage)*nmPayOf(m,stage,2):1,bnz=nm1?NMZENY*nmPayOf(m,stage,2):1'), 'the offline simulator mirrors the band pay (v90.3: map pay)');
   assert.ok(src.includes('hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm)'), 'mob HP x NMHP');
   assert.ok(src.includes('atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l))'), 'mob ATK x NMATK (and the v86 endgame bump)');

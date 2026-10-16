@@ -61,24 +61,28 @@ try{
  }
  ev('S.mp=9;S.lvl=15;spawn();window.abyss=mobs.find(x=>x.boss)');
  const abyss=ev('({hp:window.abyss.hp,atk:window.abyss.atk})');
- // Shipped v158 scales relative to Nightmare Abyss's final MVP, including its 1.3 buff.
- const scales={10:[5,8,13,20,30],11:[7,11,18,28,40]};
+ // Independent HP and ATK ramps relative to Nightmare Abyss final MVP.
+ const hpScales={10:[1.25,1.75,2.5,3.5,5],11:[1.75,2.5,3.5,5,7]};
+ // Literal pre-v167 damage values guard against another accidental ATK retune.
+ const originalAtk={10:[71820,114912,186732,287280,430920],11:[100548,158004,258552,402192,574560]};
  for(const m of [10,11]){
   let previous=0;
   for(let stage=1;stage<=5;stage++){
    ev(`S.mp=${m};S.lvl=${stage};spawn()`);
    const regular=ev('mobs.find(x=>!x.boss)');
+   assert.equal(ev('mobs.every(x=>mhOf(x)===(x.boss?55:45))'),true,'all Ascension mobs and escorts receive +15 HIT');
    assert.ok(regular.hp>previous);previous=regular.hp;
-   const scale=scales[m][stage-1];
-   assert.equal(regular.hp,Math.floor(abyss.hp*scale),`map ${m} stage ${stage} HP`);
-   assert.equal(regular.atk,Math.floor(abyss.atk*scale),`map ${m} stage ${stage} ATK`);
+   const hpScale=hpScales[m][stage-1];
+   assert.equal(regular.hp,Math.floor(abyss.hp*hpScale),`map ${m} stage ${stage} HP`);
+   assert.equal(regular.atk,originalAtk[m][stage-1],`map ${m} stage ${stage} original ATK`);
+   assert.equal(ev(`ascensionCombatStats(${m},${stage},true).atk`),originalAtk[m][stage-1]*4,`map ${m} stage ${stage} original boss ATK`);
    if(stage===1){
     console.log(`${ev('MAPS[S.mp].n')} entry: ${regular.hp} HP, ${regular.atk} ATK; ${(regular.hp/32000000).toFixed(2)}s at 32M DPS (HP only).`);
    }
    if(stage===5){
     const boss=ev('mobs.find(x=>x.boss)');
-    assert.ok(Math.abs(boss.hp-regular.hp*4)<=4);
-    assert.ok(Math.abs(boss.atk-regular.atk*4)<=4);
+    assert.ok(Math.abs(boss.hp-regular.hp*3)<=4);
+    assert.equal(boss.atk,regular.atk*4);
    }
   }
  }

@@ -23,10 +23,16 @@ Maps → Ascension Map contains Astral Citadel and Thor Volcano, beside the
 World Atlas destination list. Endless Echo has its own tab between Ascension Map and the locked Social Hub tab.
 Astral and Thor have illustrated destination previews. Travel enters the main battlefield with the current
 character, combat and drops. Both maps require a fourth-job class, with no prerequisite boss clears.
-Ascension mobs use the v158 difficulty curves relative to the Nightmare Abyss
-Stage 5 MVP (internal Stage 15). Astral starts at five times its HP and ATK;
-Thor starts at seven times. Later stages ramp further, with a steeper curve in Thor;
-each Ascension MVP has four times its own stage’s regular mob HP and ATK.
+Ascension mobs use separate HP and ATK curves relative to the Nightmare Abyss
+Stage 5 MVP (internal Stage 15). Astral regular HP scales by 1.25/1.75/2.5/3.5/5,
+and ATK retains its original 5/8/13/20/30 multipliers. Thor regular HP scales by
+1.75/2.5/3.5/5/7, and ATK retains 7/11/18/28/40.
+Each MVP has three times its stage regular HP and four times its ATK.
+The first fourth-job trial uses Astral's entry regular HP/ATK: lower HP, original ATK.
+The owner chose +15 HIT for Astral/Thor field mobs, escorts and bosses in v168;
+their endgame HIT is now 45 regular / 55 boss. At 80 Flee, this means 65%/75%
+hit chance before blind/block, with the existing 5% dodge floor. Original maps,
+Endless Echo and the advancement trial retain their prior HIT.
 Both Ascension maps have five stages: 1–2 share arrival scenery, 3 is the crossing,
 4 is the approach, and 5 starts immediately with the MVP and five escorts. Neither
 map adds Nightmare stages or drops equipment. Cards, ore and pets still roll.
@@ -51,7 +57,7 @@ for N+ equipment evolution (Shards/Catalysts plus Sigils).
 Equipment → Ascension (also available in Black Market) requires a fourth-job class. Choose a set, then an eligible owned N+ piece. Evolution spends Shards/Catalysts, Sigils and Zeny, preserving the same item ID, refinement, cards and existing affixes while filling to four affixes. It never creates an extra item. Mythic equipment can only be worn by fourth jobs. Character contains working Ascension stats and Skill ascension allocation tabs.
 Existing maps, pet identities and Nightmare reward values retain their meaning.
 
-## Ascension progression (v165)
+## Ascension progression (v167)
 
 Any combat EXP earned as a fourth job credits both Ascension tracks in full.
 Shared stat Ascension starts at 0 and caps at 50, granting one point per level.
@@ -67,7 +73,7 @@ max all eight. Bonuses activate only while playing a fourth job.
 | Slayer | +1.5% boss damage | +15% |
 | Vitality | +2% max HP | +20% |
 | Guard | 1% less remaining incoming damage | 10% less |
-| Haste | 1% shorter basic-attack interval after its floor | 10% shorter |
+| Haste | 1% shorter basic-attack interval after its ordinary floor, capped at 192 ASPD | Up to 10% shorter |
 | Evasion | +0.5 percentage point post-cap flee | +5 points |
 
 Skill Ascension starts at 0 and caps at 30 **per fourth job**, one point per level.
@@ -95,14 +101,18 @@ Away progress uses the existing 50% rate and four-hour claim cap, credited to th
 class in its saved income sample, once per server claim. Quest and GM Base-EXP
 grants do not contribute; no historical EXP is converted.
 
-Astral reward bonuses by stage are 5/5.5/6/6.5/7%; Thor bonuses are
-7/7.75/8.5/9.25/10%. EXP pays this premium per HP relative to Nightmare Abyss
-Stage 15 escorts, so raw EXP still reflects the greater combat difficulty.
-Zeny instead pays this premium **per kill**, using the corresponding Abyss
-regular or MVP reward. Zeny never scales with Ascension HP. These maps primarily
-supply materials; they need not outperform Abyss in Zeny/hour. MVP EXP remains
-four times stage regular EXP. HP/ATK and material odds are unchanged. Stale
-Ascension away-income samples are invalidated; ordinary-map samples survive.
+Astral EXP bonuses by stage are 5/5.5/6/6.5/7%; Thor bonuses are
+7/7.75/8.5/9.25/10%. These now apply **per kill**, relative to a Nightmare Abyss
+Stage 15 escort, without scaling with monster HP. MVP EXP is four times the
+stage regular reward. Zeny uses the matching Abyss regular/MVP payout multiplied
+by 2/2.1/2.2/2.3/2.4 in Astral and 2.4/2.55/2.7/2.85/3 in Thor.
+Material odds are unchanged; enemy HP is reduced, ATK is restored to its original
+values, and v168 adds the owner-selected +15 field HIT. New-map EXP is about 98.3–99.8% lower
+than v165, so ordinary jobs no longer receive HP-inflated rewards. Both Ascension
+tracks also earn this lower combat EXP; the 700/87.5-hour figures above remain
+8M EXP/min references, not measured times for these maps. Earned levels and points
+survive. Stale Ascension away-income samples are invalidated at load and claim;
+ordinary-map samples survive.
 
 Existing sinks are retained after reducing currency supply: Mythic evolution
 costs 50–140M Zeny per piece plus materials; four-affix Mythic reforges cost
@@ -111,7 +121,7 @@ Mythic +11–15 attempts cost 264/288/312/336/360k Zeny plus 15 ore each, at
 30/21/12/5/2% success. Failure preserves the Mythic rank. Expected +10→+15
 fees total about 29.57M, or 159.21M including purchased ore at existing prices;
 actual RNG costs vary. Prior map reward changes did not rebalance these prices.
-New skill/equipment artwork remains a separate unfinished item.
+New skill artwork remains unfinished. Mythic inventory icons now use native Glacier/Dim Glacier art for Astral sets and Crimson/Lava Leather/Phoenix art for Thor sets. The custom sets share some official pieces; see `assets/equipment-icons/mythic-manifest.json` for all slot mappings and original hashes.
 
 ## Classes and progression
 
@@ -186,7 +196,7 @@ Movement from AGI, pets, skills and running shares a 10.045 units/second cap.
 Equipment and card movement is applied afterward and can exceed that cap; those
 bonuses retain their combined +20% limit.
 
-Jobs opens with the complete class lineage on one page. Tree design is a second
+Jobs opens with the complete class lineage on one page. Class tree is a second
 tab: Novice sits above six first classes; selecting one expands its complete line
 and collapses the previous line. Selecting the same branch collapses it. Both views
 share a focused inspector. The six fourth jobs appear as Coming
@@ -265,3 +275,38 @@ weapon-layer refinement edging is unavailable on these combined sprites. Equipme
 → Ascension opens the N+ evolution Forge.
 
 Astral stage changes walk along the continuous bridge with the following camera; arrival rebases the scene and actors together. Echo entry cancels travel safely. Thor’s atlas banner is rasterized from its actual scenery and textures.
+
+### Mythic affix and combat retune (v167)
+
+The v166 raw HP/CDM roll increases are reverted. Newly rolled HP uses weight 12,
+and CDM uses .45 before its existing 70% post-roll. Saved affixes are not rewritten.
+Critical damage still gains .008× per LUK and .005× per DEX; VIT still gives 8 base
+HP, .5 DEF and .4 MDEF per point. Mythic crit affixes and set bonuses retain their
+existing post-cap behavior until a stat-conversion proposal is accepted.
+
+In v170 the owner approved **HP affix ×2 at every equipment grade**, for both
+existing and future items, including inherited rolls after evolution. Stored roll
+numbers are preserved; `bon('hp')` doubles only equipment affixes when reading
+stats. Cards, VIT, equipment base values and set bonuses retain their own rules.
+The existing off-hand dagger contribution remains 50%. Item details and reforge
+comparisons show effective HP plus the stored roll; autosell minimums retain
+stored-roll units so saved filters keep their behavior.
+
+The owner chose to retain **Crit ×1 and LUK ×1**. The tested ×.25 Crit / ×.5 LUK
+reductions are not adopted. HP scaling changes survival, healing/shields derived
+from max HP and potentially farming rates; it is not a measured farming-time guarantee.
+Discuss further balance proposals with the owner before implementing them.
+
+Basic attacks now have a hard 192 ASPD ceiling after Haste, gear, cards and skills.
+Using this game's display formula, that is 9.6 attacks/second and an interval
+of 5/48 seconds. Ordinary equipment retains its .13s floor before Haste; Mythic
+gear and Haste can reach the final ceiling. Extra Haste cannot exceed 192.
+Skill cast spacing and combo recovery retain their separate timing rules.
+
+All headgear grades offer STR/DEX/INT/VIT/HP/ATK/MATK with equal selection odds
+(v169 owner choice). New drops and reforges use this pool; existing rolls survive.
+Each key now has a 1/7 chance on the first affix, so the older INT/VIT/HP/MATK
+options are less frequent than in the former four-key pool. Roll values and
+affix counts retain their rarity rules.
+Skills use compact tiles with one selected inspector and collapsible Combo setup.
+The full class lineage and expanding branch cards remain in Class Tree.

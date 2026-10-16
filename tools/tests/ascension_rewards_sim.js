@@ -10,16 +10,16 @@ try{
    ev(`S.mp=${m};S.lvl=${s};spawn()`);
    const regular=ev('mobs.find(o=>!o.boss)'),away=ev('offlineMobForCurrentField()');
    assert.equal(regular.exp,away.exp);assert.equal(regular.zeny,away.zeny);
-   const efficiency=regular.exp/regular.hp/(abyss.exp/abyss.hp);
-   assert.ok(efficiency>previous,'deeper stages pay more per HP');previous=efficiency;
-   assert.ok(Math.abs(efficiency-ev(`ascRewardBonus(${m},${s})`))<.00001);
-   assert.ok(efficiency>=1.05-.00001&&efficiency<=1.10+.00001,'modest 5–10% reward premium per HP');
+   const efficiency=regular.exp/abyss.exp;
+   assert.ok(efficiency>previous,'deeper stages pay more per kill');previous=efficiency;
+   assert.ok(Math.abs(efficiency-ev(`ascRewardBonus(${m},${s})`))<1/abyss.exp);
+   assert.ok(efficiency>=1.05-1/abyss.exp&&efficiency<=1.10+1/abyss.exp,'modest 5–10% EXP premium per kill');
    assert.ok(Math.abs(ev('fieldExpReward(S.mp,S.lvl,true)')-regular.exp*4)<=3);
    for(const boss of [false,true])for(const roll of [0,.5,.999999]){
     ev(`Math.random=()=>${roll}`);
     const base=ev(`fieldZenyReward(9,15,${boss})`),actual=ev(`fieldZenyReward(${m},${s},${boss})`);
-    assert.ok(actual/base>=1.05-1/base&&actual/base<=1.10+1/base,'Zeny is 5–10% per kill, independent of HP');
-    assert.equal(actual,Math.round(base*ev(`ascRewardBonus(${m},${s})`)));
+    assert.ok(actual/base>=2-1/base&&actual/base<=3+1/base,'Zeny is 2–3× per kill, independent of HP');
+    assert.equal(actual,Math.round(base*ev(`ascZenyBonus(${m},${s})`)));
    }
    ev('Math.random=()=>.5');
    if(s===5){const boss=ev('mobs.find(o=>o.boss)');assert.ok(Math.abs(boss.exp-regular.exp*4)<=3);ev('Math.random=()=>0');assert.equal(ev('offlineMobForCurrentField().boss'),true);assert.equal(ev('offlineMobForCurrentField().zeny'),ev('fieldZenyReward(S.mp,S.lvl,true)'));ev('Math.random=()=>.5');}
@@ -41,5 +41,5 @@ try{
  assert.ok(Math.abs(shared/480000000-700)<.01,'shared track targets about 700h at 8M EXP/min');
  assert.ok(Math.abs(skills/480000000-87.5)<.1,'each class skill track targets about 87.5h');
  assert.ok(shared/skills>7.99&&shared/skills<8.01,'shared track is about eight class skill tracks');
- console.log('PASS: ten Ascension reward stages, live/away parity, boss EXP 4×, Zeny 5–10% for matching regular/MVP rolls, 300 original Zeny cases, actual kill credits both tracks, increasing EXP curves.');
+ console.log('PASS: ten Ascension reward stages, live/away parity, boss EXP 4×, Zeny 2–3× for matching regular/MVP rolls, 300 original Zeny cases, actual kill credits both tracks, increasing EXP curves.');
 }finally{g.close()}

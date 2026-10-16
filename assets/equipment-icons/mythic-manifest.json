@@ -1,0 +1,387 @@
+{
+  "description": "Original Ragnarok inventory sprites for custom Mythic sets. Glacier/Dim Glacier for Astral; Crimson weapons, Lava Leather armor/boots and Phoenix accessories for Thor. Shared native pieces fill missing official slots; no pixel recoloring. Inventory icons, not equipped character layers.",
+  "database": "https://github.com/rathena/rathena/blob/master/db/re/item_db_equip.yml",
+  "sets": {
+    "celestial": {
+      "sword": 500049,
+      "dagger": 510061,
+      "axe": 520017,
+      "mace": 590038,
+      "staff": 550069,
+      "katar": 610037,
+      "bow": 700052,
+      "armor": 450264,
+      "head": 430002,
+      "off": 460040,
+      "leg": 470196,
+      "acc": 490327
+    },
+    "voidwalker": {
+      "sword": 500054,
+      "dagger": 510075,
+      "axe": 520021,
+      "mace": 590047,
+      "staff": 550089,
+      "katar": 610041,
+      "bow": 700059,
+      "armor": 450270,
+      "head": 430002,
+      "off": 460040,
+      "leg": 470197,
+      "acc": 490328
+    },
+    "ethereal": {
+      "sword": 500049,
+      "dagger": 510061,
+      "axe": 520017,
+      "mace": 590038,
+      "staff": 550069,
+      "katar": 610037,
+      "bow": 700052,
+      "armor": 450265,
+      "head": 430002,
+      "off": 460040,
+      "leg": 450268,
+      "acc": 490330
+    },
+    "primal": {
+      "sword": 13454,
+      "dagger": 28705,
+      "axe": 28106,
+      "mace": 16040,
+      "staff": 1680,
+      "katar": 28007,
+      "bow": 18130,
+      "armor": 15380,
+      "head": 19343,
+      "off": 460023,
+      "leg": 22201,
+      "acc": 490104
+    },
+    "molten": {
+      "sword": 13454,
+      "dagger": 28705,
+      "axe": 28106,
+      "mace": 16040,
+      "staff": 1680,
+      "katar": 28007,
+      "bow": 18130,
+      "armor": 15378,
+      "head": 19343,
+      "off": 460023,
+      "leg": 22199,
+      "acc": 490104
+    },
+    "infernal": {
+      "sword": 13454,
+      "dagger": 28705,
+      "axe": 28106,
+      "mace": 16040,
+      "staff": 1680,
+      "katar": 28007,
+      "bow": 18130,
+      "armor": 15379,
+      "head": 19343,
+      "off": 460023,
+      "leg": 22200,
+      "acc": 490451
+    }
+  },
+  "assets": [
+    {
+      "id": 1680,
+      "name": "Crimson Rod",
+      "file": "1680.png",
+      "source": "https://static.divine-pride.net/images/items/item/1680.png",
+      "sha256": "6bb128671c6ffe86385ec0eda2166b971ef71ce2c2454062015fca4ae484ab15"
+    },
+    {
+      "id": 13454,
+      "name": "Crimson Saber",
+      "file": "13454.png",
+      "source": "https://static.divine-pride.net/images/items/item/13454.png",
+      "sha256": "3195d63074b95fb15c747a43a14a678633fca88159783bbbad2f637e7798ce96"
+    },
+    {
+      "id": 15378,
+      "name": "Lava Leather Armor",
+      "file": "15378.png",
+      "source": "https://static.divine-pride.net/images/items/item/15378.png",
+      "sha256": "4c018b5a34523febd2acab2370a9ffbdf430cd823af16ed76a099abc70e30465"
+    },
+    {
+      "id": 15379,
+      "name": "Lava Leather Suit",
+      "file": "15379.png",
+      "source": "https://static.divine-pride.net/images/items/item/15379.png",
+      "sha256": "f5eb00cffe56959fcf577eaad73988dcc7c3ea6fa4f8bf071ac5131d6be5cde5"
+    },
+    {
+      "id": 15380,
+      "name": "Lava Leather Robe",
+      "file": "15380.png",
+      "source": "https://static.divine-pride.net/images/items/item/15380.png",
+      "sha256": "a479854bf917947b79b2c4a0da734fba6b8bdcf39547a756fe3d2a5a87e52d4f"
+    },
+    {
+      "id": 16040,
+      "name": "Crimson Mace",
+      "file": "16040.png",
+      "source": "https://static.divine-pride.net/images/items/item/16040.png",
+      "sha256": "fd3d67293291236453efe931f6eedb6fc1c94183b4303b31903c53fdedc8ac7b"
+    },
+    {
+      "id": 18130,
+      "name": "Crimson Bow",
+      "file": "18130.png",
+      "source": "https://static.divine-pride.net/images/items/item/18130.png",
+      "sha256": "a4a68b1fa55453ea1cf22f9691e42e4cfd2c31a7f4db45e6351e3178ba4c9ebc"
+    },
+    {
+      "id": 19343,
+      "name": "Circlet of Phoenix",
+      "file": "19343.png",
+      "source": "https://static.divine-pride.net/images/items/item/19343.png",
+      "sha256": "b7db998344ae9e7f46d91afa9d9e0143c851bdd1a0c096fbea9ce68e4a01352c"
+    },
+    {
+      "id": 22199,
+      "name": "Lava Leather Boots",
+      "file": "22199.png",
+      "source": "https://static.divine-pride.net/images/items/item/22199.png",
+      "sha256": "02aba1a14effca33e5d6edd451ef942ac749be555e965ef54d24634b89e4db49"
+    },
+    {
+      "id": 22200,
+      "name": "Lava Leather Shoes",
+      "file": "22200.png",
+      "source": "https://static.divine-pride.net/images/items/item/22200.png",
+      "sha256": "d7bc73315fdf25cf7d52f4662fb1729353e99efa96eabe5e79de49411c6607eb"
+    },
+    {
+      "id": 22201,
+      "name": "Lava Leather Sandals",
+      "file": "22201.png",
+      "source": "https://static.divine-pride.net/images/items/item/22201.png",
+      "sha256": "8f0d15399c5dc18854dd81d4154b7b332b4d79a7011643249973f151eee887c5"
+    },
+    {
+      "id": 28007,
+      "name": "Crimson Katar",
+      "file": "28007.png",
+      "source": "https://static.divine-pride.net/images/items/item/28007.png",
+      "sha256": "ced7c6df6ede4d3833d1b9eb6094d532128408e620fae7f6195f91d819b03a93"
+    },
+    {
+      "id": 28106,
+      "name": "Crimson Two-Handed Axe",
+      "file": "28106.png",
+      "source": "https://static.divine-pride.net/images/items/item/28106.png",
+      "sha256": "e89c2623f3e91bf3da20c5327809d8a54cb72abac7ff1c18725356c98bf9e0f3"
+    },
+    {
+      "id": 28705,
+      "name": "Crimson Dagger",
+      "file": "28705.png",
+      "source": "https://static.divine-pride.net/images/items/item/28705.png",
+      "sha256": "01e5c6a33f8bfef3cc8a92da893605e4449f9ac1248a6e930092adc71bfdcbda"
+    },
+    {
+      "id": 430002,
+      "name": "Awakened Glacier Helm",
+      "file": "430002.png",
+      "source": "https://static.divine-pride.net/images/items/item/430002.png",
+      "sha256": "756aa189fb66757dc456f5e5caeba894a4dd1b2b45018f4df64f0035bdbbf8be"
+    },
+    {
+      "id": 450264,
+      "name": "Glacier Armor",
+      "file": "450264.png",
+      "source": "https://static.divine-pride.net/images/items/item/450264.png",
+      "sha256": "3193ef1ae972709eaf148121ea5162b13b2ff04d3d3ff6dcda1e7e56df7d7f55"
+    },
+    {
+      "id": 450265,
+      "name": "Glacier Robe",
+      "file": "450265.png",
+      "source": "https://static.divine-pride.net/images/items/item/450265.png",
+      "sha256": "60838f2409fb0b2925b6855a74207b3e7a426bb1990a86f20367900266a719ce"
+    },
+    {
+      "id": 450268,
+      "name": "Glacier Shoes",
+      "file": "450268.png",
+      "source": "https://static.divine-pride.net/images/items/item/450268.png",
+      "sha256": "c17f15ddd50d860d0add865d7f3d8f5430f31983e60d21881a0299e902d548ee"
+    },
+    {
+      "id": 450270,
+      "name": "Dim Glacier Armor",
+      "file": "450270.png",
+      "source": "https://static.divine-pride.net/images/items/item/450270.png",
+      "sha256": "7a266f58ef986abaef3b1535408ec6898b45018edc8708abb41484afc336d395"
+    },
+    {
+      "id": 460023,
+      "name": "Shield of Phoenix",
+      "file": "460023.png",
+      "source": "https://static.divine-pride.net/images/items/item/460023.png",
+      "sha256": "3b8a992c7768dbc4269d967a597fed761127d94b509e3d24454840483c3bb3c2"
+    },
+    {
+      "id": 460040,
+      "name": "Glacier Guard",
+      "file": "460040.png",
+      "source": "https://static.divine-pride.net/images/items/item/460040.png",
+      "sha256": "226d0b70928b86d1a0ea817bf0c009afa4defdb2dc5a7bac0f52550557a07ac4"
+    },
+    {
+      "id": 470196,
+      "name": "Glacier Boots",
+      "file": "470196.png",
+      "source": "https://static.divine-pride.net/images/items/item/470196.png",
+      "sha256": "fc9cc695571518d6362bde91b2a49606fe7cadfb415609d9852c1e108319e58f"
+    },
+    {
+      "id": 470197,
+      "name": "Dim Glacier Boots",
+      "file": "470197.png",
+      "source": "https://static.divine-pride.net/images/items/item/470197.png",
+      "sha256": "5cfa969310839c49860003d6bcb3c5c74a76043b6ab8037571d6254d7fcf4dbf"
+    },
+    {
+      "id": 490104,
+      "name": "Ring of Phoenix",
+      "file": "490104.png",
+      "source": "https://static.divine-pride.net/images/items/item/490104.png",
+      "sha256": "4ae0f64a83c4bd202d8353400d9caccf0a89ae487024ffd8f1a4131f54c5c144"
+    },
+    {
+      "id": 490327,
+      "name": "Glacier Ring",
+      "file": "490327.png",
+      "source": "https://static.divine-pride.net/images/items/item/490327.png",
+      "sha256": "45a756b3957f87d1e7b2769ff5ad2c988ff6844200c859726bd0f2cfd8ab93b2"
+    },
+    {
+      "id": 490328,
+      "name": "Glacier Pendant",
+      "file": "490328.png",
+      "source": "https://static.divine-pride.net/images/items/item/490328.png",
+      "sha256": "56de07ffa83d1263fb3b645c69dd4d1bcfd1fcbd9f517ad2eda202c530f4f007"
+    },
+    {
+      "id": 490330,
+      "name": "Glacier Necklace",
+      "file": "490330.png",
+      "source": "https://static.divine-pride.net/images/items/item/490330.png",
+      "sha256": "bf7a942e6f656f77ba8152cfe51ef938d9263a096249a4a72f4142a38919823c"
+    },
+    {
+      "id": 490451,
+      "name": "Crimson Necklace",
+      "file": "490451.png",
+      "source": "https://static.divine-pride.net/images/items/item/490451.png",
+      "sha256": "613b6da9b617a077ad573c573ce121e9cc0275c42399cb67c3113a9ef9cf5899"
+    },
+    {
+      "id": 500049,
+      "name": "Glacier Sword",
+      "file": "500049.png",
+      "source": "https://static.divine-pride.net/images/items/item/500049.png",
+      "sha256": "56fb6a6486030eea4518c43b7fe283367d957b1af9c029152ad02c098a66df33"
+    },
+    {
+      "id": 500054,
+      "name": "Dim Glacier Sword",
+      "file": "500054.png",
+      "source": "https://static.divine-pride.net/images/items/item/500054.png",
+      "sha256": "34dcd237a6c2bae7925841efb3802cb0a47070774224be3c5a122bb3adb8fe27"
+    },
+    {
+      "id": 510061,
+      "name": "Glacier Rogue Knife",
+      "file": "510061.png",
+      "source": "https://static.divine-pride.net/images/items/item/510061.png",
+      "sha256": "b1f39d5a85c5277770b3d7b58e48b55306c305b90ece5db0e3461ff7542b47ea"
+    },
+    {
+      "id": 510075,
+      "name": "Dim Glacier Rogue Knife",
+      "file": "510075.png",
+      "source": "https://static.divine-pride.net/images/items/item/510075.png",
+      "sha256": "784c9de8ace2f8c3727b3b1ef0b127799cf19a8e129ead7bfc86d510fb974df6"
+    },
+    {
+      "id": 520017,
+      "name": "Glacier Axe",
+      "file": "520017.png",
+      "source": "https://static.divine-pride.net/images/items/item/520017.png",
+      "sha256": "68b63409de54a8971940df2ed12eafd7b8ece70e7801d507863bf70b2af4eea2"
+    },
+    {
+      "id": 520021,
+      "name": "Dim Glacier Axe",
+      "file": "520021.png",
+      "source": "https://static.divine-pride.net/images/items/item/520021.png",
+      "sha256": "fb37262ef4a56406eb384ea904622d368f7b2c359ff1cfc2f938912bae520f5a"
+    },
+    {
+      "id": 550069,
+      "name": "Glacier Wand",
+      "file": "550069.png",
+      "source": "https://static.divine-pride.net/images/items/item/550069.png",
+      "sha256": "9b20125814c1b92df3fc5b06fe76a280e0c7a5743c257c5c7c3cdb7f3891fb3f"
+    },
+    {
+      "id": 550089,
+      "name": "Dim Glacier Wand",
+      "file": "550089.png",
+      "source": "https://static.divine-pride.net/images/items/item/550089.png",
+      "sha256": "62d27c46afe0bc9230fb048cbb84c83555cf758096c262ba892b79a16b6027a1"
+    },
+    {
+      "id": 590038,
+      "name": "Glacier Mace",
+      "file": "590038.png",
+      "source": "https://static.divine-pride.net/images/items/item/590038.png",
+      "sha256": "d010940daa540890d10f23e501ef51f42912eb40d4a18613b5ac2aabab9b1f75"
+    },
+    {
+      "id": 590047,
+      "name": "Dim Glacier Mace",
+      "file": "590047.png",
+      "source": "https://static.divine-pride.net/images/items/item/590047.png",
+      "sha256": "34be2d9dd98685a3d759c5622dbb1bfc5d32f59a9c751fa74c9f6ebb05dfef61"
+    },
+    {
+      "id": 610037,
+      "name": "Glacier Katar",
+      "file": "610037.png",
+      "source": "https://static.divine-pride.net/images/items/item/610037.png",
+      "sha256": "a0abc4398d4894c26ab4f3a5eb96337c7f9470ddab9152589f3676c5714b212e"
+    },
+    {
+      "id": 610041,
+      "name": "Dim Glacier Katar",
+      "file": "610041.png",
+      "source": "https://static.divine-pride.net/images/items/item/610041.png",
+      "sha256": "04120bcb2cfe68a2dccef656eb6feaa719d191005cbb77716e1138399b830b25"
+    },
+    {
+      "id": 700052,
+      "name": "Glacier Bow",
+      "file": "700052.png",
+      "source": "https://static.divine-pride.net/images/items/item/700052.png",
+      "sha256": "7d0c850cb0fdaf6f95239aa214b210c25fb369a59f5e75092d6b149e77be7382"
+    },
+    {
+      "id": 700059,
+      "name": "Dim Glacier Bow",
+      "file": "700059.png",
+      "source": "https://static.divine-pride.net/images/items/item/700059.png",
+      "sha256": "73a2b3b5ab8c4f9f7c19efd5af431bab532d6ca02f7096dc0e45d6ab1830e6b7"
+    }
+  ],
+  "databaseSha256": "a2b53925ad2b6138d5c563ec94f1b3f449e8d33435b00687b2f661ecb5322e01"
+}

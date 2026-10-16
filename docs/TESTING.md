@@ -222,3 +222,46 @@ claim while preserving current-version samples, earned progress and ordinary-map
 samples. Existing Mythic/evolution suites cover actual prices, resource deductions
 and equipment identity. Price probes must use `mythic:true`; `sec:6` alone falls
 back to N+ rarity for ore and reforge fees.
+
+For v166, `node tools/tests/retune_sim.js` checks Mythic affix specialization,
+post-cap ASPD display, all 72 set/slot icon mappings and 42 native PNG hashes,
+and Skills/Class Tree separation. `ascension_rewards_sim.js` now pins 5–10%
+EXP per kill and bounded 2–3× Zeny per kill; `ascension_tracks_sim.js` rejects
+v165 away samples. Include the existing gear/combat, Mythic/evolution and panel
+checks. The isolated `crit_sim.js` and `ui_sim.js` harnesses include neutral Ascension
+dependencies; their current assertions cover the separate Echo destination and
+Class Tree lineage. Full-page Ascension combat and panel suites cover integration.
+
+For v167 run `node tools/tests/combat_retune_sim.js`: all six fourth jobs,
+ordinary/Mythic equipment, Haste on/off, extreme speed bonuses, displayed 192
+ceiling, actual basic-hit cadence and saved-roll preservation. The updated
+`ascension_progression_sim.js` pins independent HP/ATK stage ramps and boss
+3× HP / original 4× ATK (corrected in v168). Include `job_rite_sim.js` because trial stats use Astral entry,
+and reward/offline suites to verify unchanged per-kill payouts. `retune_sim.js`
+now checks the reverted HP/CDM rolls and 192 cap. Stat conversions remain proposed.
+
+For v168, `combat_retune_sim.js` also checks unchanged original-map HIT at all
+150 stages and real Astral/Thor enemy swings: 65% regular / 75% boss hit chance
+at 80 Flee, retained blind/block effects and the 5% dodge floor. The progression
+suite pins literal original ATK values for every Ascension stage and the 4× boss
+multiplier while preserving reduced HP. Trial coverage verifies its HIT is unchanged.
+
+For v169, `retune_sim.js` checks the shared headgear pool in all seven sections,
+actual physical-stat generation across sections/tiers, paid reforge offers and
+acceptance for all eight grades, and preservation of a saved old headgear roll.
+Include gear, economy, save/load and evolution checks. Temporary conversion
+experiments must keep raw gear/allocated stats matched and state scope explicitly;
+stat snapshots and stationary combat do not establish leveling or farm income.
+
+For v170, `node tools/tests/hp_affix_sim.js` covers all eight grades, HP ×2 with
+Crit/LUK ×1, unchanged cards and off-hand weighting, saved raw rolls, item/reforge
+UI and stored-roll autosell minimums. HP-dependent combat, healing/shields, pets,
+trial, save/account and equipment suites are affected. The earlier conversion
+experiment's damage reductions describe the rejected crit/LUK proposal, not v170.
+
+The v170 PR preparation also refreshes progression `after` measurements with
+`node tools/progression_balance.js --reuse-baseline` and its `--skills` /
+`--encounters` modes; historical `before` rows stay intact. `pet_sim.js` uses
+its old rotation estimate as a diagnostic only and checks the actual Pack Leader
++10% limit and duplicate-species protection through `petDmg()`. Generated
+Afterglow covers ordinary skills; Ascension skills use the generic FX lifecycle.

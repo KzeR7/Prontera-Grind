@@ -26,7 +26,9 @@ vm.runInContext(grab('const MOB_REGULAR_VISUAL=','const mobSpriteUrl=')+grab('co
 for(const file of ['assets/skill-materials.js','assets/afterglow-animations.js','assets/skill-afterglow.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),box);
 const ev=code=>vm.runInContext(code,box);
 assert.equal(ev('PGAfterglowAnimations.catalog.length'),105);
-assert.equal(ev('SKILLS.filter(s=>s.type!=="pas").every(s=>PGSkillAfterglow.has(s.id))'),true,'missing game skill');
+// The generated catalog covers ordinary skills; the six Ascension skills use
+// the game's generic lifecycle, exercised by ascension_combat_sim.
+assert.equal(ev('SKILLS.filter(s=>s.type!=="pas"&&!s.ascensionOnly).every(s=>PGSkillAfterglow.has(s.id))'),true,'missing ordinary game skill');
 assert.equal(ev('PGSkillAfterglow.has("concept-venom")'),false);
 assert.equal(ev('SKILLS.filter(s=>s.type==="pas").some(s=>PGSkillAfterglow.has(s.id))'),false);
 for(const id of ev('PGAfterglowAnimations.catalog.map(f=>f.id)')){
