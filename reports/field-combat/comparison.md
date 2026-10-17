@@ -1,7 +1,5 @@
 # Real-field combat comparison — timing only
 
-> Reward-rate warning: fourth-job fixtures use GM x100 rewards; third-job fixtures use ordinary player rates. These native absolute rates must not be compared across tiers. Read `results.md` for ordinary-rate normalized results.
-
 **Exploratory simulations, not the owner’s save or a deployed browser test. No game balance was changed.**
 
 Before uses only the pre-v177 `playerAttack()`; after uses current timing. All other source and each paired starting build/field/RNG seed match.
@@ -15,6 +13,8 @@ Before uses only the pre-v177 `playerAttack()`; after uses current timing. All o
 - Casters: corrected +15 GM presets, identical gear for INT-focused and INT/ASPD; base INT120 in both. INT-focus spends toward DEX/LUK/VIT before AGI; INT/ASPD buys AGI120 and DEX60 before the remaining priorities. There is an actual point-budget trade-off, not free AGI.
 - Third jobs: completed +10 N+ benchmark gear/cards/mastery; strip AGI/ASPD affixes and speed/AGI cards identically across all speeds, then purchase base AGI1/60/120 and allocate the remaining legal budget. These are speed-isolation fixtures, not claims of optimized N+ builds.
 - Current corrected PR101 item bases are identical on both timing sides. No gameplay tuning, caster buff, equipment-gated timing or test-limit relaxation was applied.
+
+> Reward-rate warning: fourth-job fixtures use GM x100 rewards; third-job fixtures use ordinary player rates. These native absolute rates must not be compared across tiers. Read `results.md` for ordinary-rate normalized results.
 
 **Use EXP/min, boss clears/min, boss outcomes and deaths together. Boss death despawns surviving escorts, so a lower total kill count can coexist with faster boss farming. Raw/HUD-style DPS counts overkill.** Different fixtures are not a comprehensive class-balance ranking.
 

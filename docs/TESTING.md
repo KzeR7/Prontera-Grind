@@ -413,3 +413,27 @@ proof. Screenshots/diagnostics remain excluded under `node_modules/.arena-checks
 The pet asset disposal test waits for the actual async decoder-entry signal with a
 five-second failure bound instead of 100 event-loop spins. This removes a concurrency
 race observed during the full gate without relaxing asset/disposal assertions.
+
+## Field-report rendering regressions
+
+`node tools/tests/field_report_sim.js` exercises the pure production renderers in
+`tools/lib/field_reports.cjs` without replaying combat. It covers the native GM x100
+warning independently of normalization, full/quick/other seed counts, per-side
+boss-attempt denominators, mixed win/loss outcomes, missing/invalid boss means and
+unchanged reduction arithmetic for valid means. Removing the warning, restoring a
+hard-coded session count or bypassing the timing guard must make the suite fail.
+
+For an end-to-end quick check, use a scratch output directory (not the historical
+checked-in report):
+
+```sh
+node tools/compare_field_combat.cjs node_modules/.arena-checks/field-report-quick --quick
+node tools/summarize_field_combat.cjs node_modules/.arena-checks/field-report-quick
+```
+
+The comparison generator itself must emit the native reward warning before running
+the summarizer. Quick output reports one seed, 10-second sessions/limits and actual
+attempts, and is explicitly not acceptance/balance evidence. The summarizer retains
+its measured-source hash check; do not bypass it to re-normalize historical data
+against a newer game. Existing Markdown can be re-rendered from its stored raw and
+ordinary-rate summaries using the pure renderers, without editing either JSON file.

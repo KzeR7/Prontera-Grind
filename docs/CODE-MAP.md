@@ -6,6 +6,11 @@ editing. Many tests execute extracted pieces of the real page.
 
 ## Find the right system
 
+Field-combat measurement reports: `tools/compare_field_combat.cjs` and
+`tools/summarize_field_combat.cjs` use the pure `tools/lib/field_reports.cjs`
+renderers. Regression coverage: `tools/tests/field_report_sim.js`; historical
+measurements remain qualified by their saved source hashes.
+
 | Task | Implementation / search anchors | Useful checks |
 | --- | --- | --- |
 | Classes, promotion, saved builds | `index.html`: `CD`, `CLASSES`, `classBlock`, `changeClass`, `snapClass`, `noviceRun` | `class_change_sim.js`, `loadout_update_sim.js`, `save_load_sim.js` |

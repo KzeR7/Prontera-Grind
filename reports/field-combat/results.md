@@ -1,14 +1,14 @@
 # Field-test results — ordinary reward rates
 
-**No gameplay tuning was applied.** This compares old/current attack timing in memory, with identical starting builds per pair. 246 farming sessions (180 seconds each, three seeds) and 216 independent boss attempts (first win/death or 90 seconds). Real movement, enemy attacks, escorts, crit resistance, healing, shields and damage effects; headless renderer. No pets.
+**No gameplay tuning was applied.** This compares old/current attack timing in memory, with identical starting builds per pair. 246 farming sessions (180 seconds each, 3 seeds) and 216 independent boss attempts (first win/death or 90 seconds). Real movement, enemy attacks, escorts, crit resistance, healing, shields and damage effects; headless renderer. No pets.
 
 ## Important qualifications
 
-- GX is a **synthetic Infernal proxy**, not your saved character. Only visible base stats and weapon rolls could be matched; unseen equipment/cards/skills/Ascension are assumptions. The proxy has 228,638 ATK and 584,140 HP, versus 276,583 ATK and 424,803 HP in the screenshot, and has no pets. Its Thor5 failures must not be attributed to your actual character.
+- GX is a **synthetic Infernal proxy**, not your saved character. Only visible base stats and weapon rolls could be matched; unseen equipment/cards/skills/Ascension are assumptions. See the recorded fixture snapshots for actual ATK/HP and investment. Its results must not be attributed to your actual character.
 - Caster fixtures have +15 corrected Mythic gear, three-star cards, max card mastery and 50/30 Ascension budgets; they do not match the GX proxy’s full investment. Compare a build against itself, not absolute class rankings.
 - Original fourth-job simulations retained the GM x100 reward setting used to generate gear. **All EXP/Zeny rates in this summary are normalized to ordinary Lv150 player rewards.** Normal EXP is calculated from each sample’s actual regular/boss kill counts using the unchanged real reward helpers, including integer rounding; it reconciles exactly to native measured rewards before normalization. Zeny uses the actual native/normal multiplier ratio. No combat result was changed.
 - Boss death clears surviving escorts without awarding their kills. A faster boss clear can reduce total kills and EXP; use boss clears, income and survival together.
-- Three seeds and three-minute windows are exploratory, not enough to set a balance multiplier.
+- 3 seeds and 180-second farming windows are exploratory, not enough to set a balance multiplier.
 
 ## Thor Stage 1 — farming
 
@@ -22,15 +22,15 @@
 
 ## Astral Stage 5 — farming and independent boss trials
 
-| Build | EXP/min old → current | Timing gain | Boss time old → current | Deaths old → current¹ |
-|---|---:|---:|---:|---:|
-| Warlock int-focus | 6.22M → 6.75M | +8.5% | 16.72s → 16.36s | 0 → 0 |
-| Warlock int-speed | 6.10M → 6.87M | +12.6% | 15.11s → 14.26s | 0 → 0 |
-| Arch Bishop int-focus | 3.49M → 3.90M | +11.7% | 31.09s → 26.32s | 0 → 0 |
-| Arch Bishop int-speed | 3.90M → 4.56M | +16.7% | 29.53s → 24.20s | 0 → 0 |
-| GX Infernal proxy | 3.18M → 4.43M | +39.4% | 14.09s → 9.94s | 1 → 0 |
+| Build | EXP/min old → current | Timing gain | Boss time old → current | Deaths old → current¹ | Boss wins old → current |
+|---|---:|---:|---:|---:|---:|
+| Warlock int-focus | 6.22M → 6.75M | +8.5% | 16.72s → 16.36s | 0 → 0 | 3/3 → 3/3 |
+| Warlock int-speed | 6.10M → 6.87M | +12.6% | 15.11s → 14.26s | 0 → 0 | 3/3 → 3/3 |
+| Arch Bishop int-focus | 3.49M → 3.90M | +11.7% | 31.09s → 26.32s | 0 → 0 | 3/3 → 3/3 |
+| Arch Bishop int-speed | 3.90M → 4.56M | +16.7% | 29.53s → 24.20s | 0 → 0 | 3/3 → 3/3 |
+| GX Infernal proxy | 3.18M → 4.43M | +39.4% | 14.09s → 9.94s | 1 → 0 | 3/3 → 3/3 |
 
-All five Astral fixtures won all three independent boss trials with either timing.
+5 Astral fixtures: 15/15 independent boss wins before; 15/15 after.
 
 ## Thor Stage 5 — boss trials
 
@@ -42,11 +42,12 @@ All five Astral fixtures won all three independent boss trials with either timin
 | Arch Bishop int-speed | 3/3 · 56.20s | 3/3 · 47.18s | 0 → 0 |
 | GX Infernal proxy | 0/3 · — | 0/3 · — | 40 → 38 |
 
-¹ Farming deaths summed over three seeds: nine minutes per timing. Boss time is the mean of winning independent trials only. GX has no successful independent Thor5 trial; a later farm clear does not make it a reliable farming build.
+¹ Farming deaths summed over 3 seeds: 9 minutes per build/timing. Boss time is the mean of winning independent trials only; missing times do not establish kill-time parity.
+GX has no successful independent Thor5 trial; a later farm clear does not make it a reliable farming build.
 
 ## Lv150 N+ — Abyss Nightmare Stage 5
 
-All three AGI fixtures use identical speed-stripped gear; legal base-stat allocation differs. Ordinary N+ does not necessarily reach 192 ASPD.
+AGI fixtures use identical speed-stripped gear; legal base-stat allocation differs. Ordinary N+ does not necessarily reach 192 ASPD.
 
 | Build | Base AGI | Boss time old → current | Boss-time reduction | EXP/min timing change |
 |---|---:|---:|---:|---:|
@@ -72,13 +73,13 @@ All three AGI fixtures use identical speed-stripped gear; legal base-stat alloca
 | Whitesmith axe | 60 | 69.83s → 53.12s | +23.9% | +16.7% |
 | Whitesmith axe | 120 | 59.84s → 47.68s | +20.3% | +26.7% |
 
-## Findings
+## Findings and interpretation
 
-1. **The bonus reaches third-job N+ builds.** Faster physical examples clear the Abyss boss substantially sooner. At AGI120: Lord Knight 61.43 → 46.13s, Sniper 54.31 → 42.04s, Assassin Cross katar 18.27 → 14.27s, Whitesmith 59.84 → 47.68s.
-2. **Caster speed investment already matters without a new magic buff.** Current Thor1 EXP/min is higher for INT/AGI than INT-focused variants of both casters. Warlock has no Zeal skill; Arch Bishop does.
-3. **Arch Bishop already has speed-conditioned spell scaling.** Its inherited Zeal rank5 adds 15% speed; when the interval is ≤0.131s, its active value also multiplies direct skill damage by 1.15. The INT/AGI fixture reaches 192 ASPD and records boosted casts; the INT-focused fixture peaks around180 and records none. This is already implemented, not a hypothetical buff.
-4. **A larger percentage gain does not establish stronger overall field performance.** These fixtures mix different investment assumptions. The GX proxy gains strongly in Thor1 but cannot reliably survive Thor5; do not use it to justify nerfing the owner’s GX or buffing all casters.
-5. **No balance coefficient is justified yet.** First obtain the actual GX save (or complete loadout/skills/Ascension/pet details), and build matched-investment alternatives before making class-ranking or compensation decisions.
+1. **Read timing effects from the measured rows.** Use the N+ table for third-job builds and compare each build against itself. Missing or conditional boss-win times are not unconditional clear-time improvements.
+2. **Caster speed investment has an existing trade-off.** The INT/AGI and INT-focused fixtures spend the same legal point budget differently; compare measured income, survival and boss outcomes rather than assuming a universal benefit.
+3. **Arch Bishop already has speed-conditioned spell scaling.** Its inherited Zeal rank 5 grants 15% speed; when the interval is ≤0.131s, its active value also multiplies direct skill damage by 1.15. Peak ASPD and boosted cast counts are recorded in the raw report. This is an existing rule, not a new caster buff.
+4. **A larger percentage gain does not establish stronger overall field performance.** These fixtures mix different investment assumptions. Do not use a synthetic GX proxy as evidence of the owner’s actual performance.
+5. **No balance coefficient is justified by these runs alone.** Obtain the actual GX save or complete loadout/skills/Ascension/pet details, and build matched-investment alternatives before making class-ranking or compensation decisions.
 
 ## Data and reproduction
 
