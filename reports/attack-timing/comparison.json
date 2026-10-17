@@ -1,0 +1,2990 @@
+{
+  "sourceSha256": "8f5d2b8da3a38065bc1cfb68d314bd23062b98dbbf98d99f087b7bc511d70c3e",
+  "timingRef": "e996b1134bbf638e95a4f2792dc407b9e0b7bcef^",
+  "oldTimingSha256": "ef7bdecf4d89c73a6d4c9364ab6ef7c2f97f11152cd541fa8678b6b9631bbb91",
+  "currentTimingSha256": "cacaa609d3c9064b14b7f160050524cdb01c85a62ac619b21b86a02a6dd2ecd6",
+  "seconds": 120,
+  "warmupSeconds": 20,
+  "hz": 30,
+  "classes": 25,
+  "builds": 33,
+  "sessions": 132,
+  "method": "Same current page on both sides; replace only playerAttack with its pre-v177 definition in memory. Same seeded setup and skill order per pair, checked equipment/stat/skill snapshot equality, with unchanged ATK/MATK/attack interval. Uses repository stationary harness, renderer/FX stubs and stationary non-attacking targets (single-target crit resistance zero). No farming, survivability, GPU or pet contribution claims.",
+  "setups": {
+    "early": "Novice/first/second jobs: existing configure profile 2 (Lv 10/49/99), synthetic +6 growth equipment, inherited skills up to rank 10.",
+    "third": "Third jobs: existing completed outfitted profile 2, Lv150 +10 N+ equipment/cards and card mastery. Matches earlier Sniper/High Priest examples.",
+    "fourth": "Fourth jobs: Lv150 corrected +15 maximum GM preset, empty sockets, maximum ordinary class skills, automatic six-slot combo, no allocated Ascension stats/skills, no pets or card mastery. This is not a fully maxed account."
+  },
+  "rows": [
+    {
+      "class": "Novice",
+      "tier": 0,
+      "weapon": "dagger",
+      "targets": 1,
+      "level": 10,
+      "inputSha256": "db8f5b332467ad8aeb99605d9406bd74421f7ed1120b97a6bffae95339b15d62",
+      "before": {
+        "petMean": 51,
+        "autoDps": 118.44166666666666,
+        "dps": 118.44166666666666,
+        "opening": 120.2,
+        "pet": 51,
+        "atk": 107,
+        "matk": 70,
+        "interval": 0.80563,
+        "stats": {
+          "str": 17,
+          "agi": 9,
+          "dex": 9,
+          "luk": 9,
+          "int": 1,
+          "vit": 8
+        }
+      },
+      "after": {
+        "petMean": 51,
+        "autoDps": 118.44166666666666,
+        "dps": 118.44166666666666,
+        "opening": 120.2,
+        "pet": 51,
+        "atk": 107,
+        "matk": 70,
+        "interval": 0.80563,
+        "stats": {
+          "str": 17,
+          "agi": 9,
+          "dex": 9,
+          "luk": 9,
+          "int": 1,
+          "vit": 8
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Novice",
+      "tier": 0,
+      "weapon": "dagger",
+      "targets": 3,
+      "level": 10,
+      "inputSha256": "db8f5b332467ad8aeb99605d9406bd74421f7ed1120b97a6bffae95339b15d62",
+      "before": {
+        "petMean": 51,
+        "autoDps": 118.44166666666666,
+        "dps": 118.44166666666666,
+        "opening": 120.2,
+        "pet": 51,
+        "atk": 107,
+        "matk": 70,
+        "interval": 0.80563,
+        "stats": {
+          "str": 17,
+          "agi": 9,
+          "dex": 9,
+          "luk": 9,
+          "int": 1,
+          "vit": 8
+        }
+      },
+      "after": {
+        "petMean": 51,
+        "autoDps": 118.44166666666666,
+        "dps": 118.44166666666666,
+        "opening": 120.2,
+        "pet": 51,
+        "atk": 107,
+        "matk": 70,
+        "interval": 0.80563,
+        "stats": {
+          "str": 17,
+          "agi": 9,
+          "dex": 9,
+          "luk": 9,
+          "int": 1,
+          "vit": 8
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Novice",
+      "tier": 0,
+      "weapon": "sword",
+      "targets": 1,
+      "level": 10,
+      "inputSha256": "d7b4b86877b63950f49c7cf1b413d2081038421b9dcc9ad0053a20812cbb0330",
+      "before": {
+        "petMean": 51,
+        "autoDps": 118.44166666666666,
+        "dps": 118.44166666666666,
+        "opening": 120.2,
+        "pet": 51,
+        "atk": 107,
+        "matk": 70,
+        "interval": 0.80563,
+        "stats": {
+          "str": 17,
+          "agi": 9,
+          "dex": 9,
+          "luk": 9,
+          "int": 1,
+          "vit": 8
+        }
+      },
+      "after": {
+        "petMean": 51,
+        "autoDps": 118.44166666666666,
+        "dps": 118.44166666666666,
+        "opening": 120.2,
+        "pet": 51,
+        "atk": 107,
+        "matk": 70,
+        "interval": 0.80563,
+        "stats": {
+          "str": 17,
+          "agi": 9,
+          "dex": 9,
+          "luk": 9,
+          "int": 1,
+          "vit": 8
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Novice",
+      "tier": 0,
+      "weapon": "sword",
+      "targets": 3,
+      "level": 10,
+      "inputSha256": "d7b4b86877b63950f49c7cf1b413d2081038421b9dcc9ad0053a20812cbb0330",
+      "before": {
+        "petMean": 51,
+        "autoDps": 118.44166666666666,
+        "dps": 118.44166666666666,
+        "opening": 120.2,
+        "pet": 51,
+        "atk": 107,
+        "matk": 70,
+        "interval": 0.80563,
+        "stats": {
+          "str": 17,
+          "agi": 9,
+          "dex": 9,
+          "luk": 9,
+          "int": 1,
+          "vit": 8
+        }
+      },
+      "after": {
+        "petMean": 51,
+        "autoDps": 118.44166666666666,
+        "dps": 118.44166666666666,
+        "opening": 120.2,
+        "pet": 51,
+        "atk": 107,
+        "matk": 70,
+        "interval": 0.80563,
+        "stats": {
+          "str": 17,
+          "agi": 9,
+          "dex": 9,
+          "luk": 9,
+          "int": 1,
+          "vit": 8
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Swordman",
+      "tier": 1,
+      "weapon": "sword",
+      "targets": 1,
+      "level": 49,
+      "inputSha256": "4b128606e7a54bc096faadcf28cb27b2df775fd036886df6a2d7ae489fb95cbc",
+      "before": {
+        "petMean": 244,
+        "autoDps": 464.675,
+        "dps": 1160.5833333333333,
+        "opening": 1096,
+        "pet": 244,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.666995,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 244,
+        "autoDps": 464.675,
+        "dps": 1160.5833333333333,
+        "opening": 1096,
+        "pet": 244,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.666995,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Swordman",
+      "tier": 1,
+      "weapon": "sword",
+      "targets": 3,
+      "level": 49,
+      "inputSha256": "4b128606e7a54bc096faadcf28cb27b2df775fd036886df6a2d7ae489fb95cbc",
+      "before": {
+        "petMean": 244,
+        "autoDps": 448.175,
+        "dps": 1296.425,
+        "opening": 1318.1,
+        "pet": 244,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.666995,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 244,
+        "autoDps": 448.175,
+        "dps": 1296.425,
+        "opening": 1318.1,
+        "pet": 244,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.666995,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Mage",
+      "tier": 1,
+      "weapon": "staff",
+      "targets": 1,
+      "level": 49,
+      "inputSha256": "817b1ab92148dd99087f954d2feb651d7513e27ce5e6c797b48d9f9e893d1731",
+      "before": {
+        "petMean": 237,
+        "autoDps": 371.48333333333335,
+        "dps": 2168.491666666667,
+        "opening": 2325.3,
+        "pet": 237,
+        "atk": 528,
+        "matk": 466,
+        "interval": 0.77231,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 59,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 237,
+        "autoDps": 371.48333333333335,
+        "dps": 2168.491666666667,
+        "opening": 2325.3,
+        "pet": 237,
+        "atk": 528,
+        "matk": 466,
+        "interval": 0.77231,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 59,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Mage",
+      "tier": 1,
+      "weapon": "staff",
+      "targets": 3,
+      "level": 49,
+      "inputSha256": "817b1ab92148dd99087f954d2feb651d7513e27ce5e6c797b48d9f9e893d1731",
+      "before": {
+        "petMean": 237,
+        "autoDps": 362.975,
+        "dps": 3878.633333333333,
+        "opening": 4950.1,
+        "pet": 237,
+        "atk": 528,
+        "matk": 466,
+        "interval": 0.77231,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 59,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 237,
+        "autoDps": 362.975,
+        "dps": 3878.633333333333,
+        "opening": 4950.1,
+        "pet": 237,
+        "atk": 528,
+        "matk": 466,
+        "interval": 0.77231,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 59,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Archer",
+      "tier": 1,
+      "weapon": "bow",
+      "targets": 1,
+      "level": 49,
+      "inputSha256": "07de9cfacf86e4d2b31f79a49459d89f60ecedb3a57b13aaef7af9f3dd486463",
+      "before": {
+        "petMean": 263,
+        "autoDps": 879.5,
+        "dps": 2057.225,
+        "opening": 2302.9,
+        "pet": 263,
+        "atk": 547,
+        "matk": 371,
+        "interval": 0.5425318181818182,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 59,
+          "luk": 30,
+          "int": 30,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 263,
+        "autoDps": 879.5,
+        "dps": 2057.225,
+        "opening": 2302.9,
+        "pet": 263,
+        "atk": 547,
+        "matk": 371,
+        "interval": 0.5425318181818182,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 59,
+          "luk": 30,
+          "int": 30,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Archer",
+      "tier": 1,
+      "weapon": "bow",
+      "targets": 3,
+      "level": 49,
+      "inputSha256": "07de9cfacf86e4d2b31f79a49459d89f60ecedb3a57b13aaef7af9f3dd486463",
+      "before": {
+        "petMean": 263,
+        "autoDps": 909.1416666666667,
+        "dps": 2303.9416666666666,
+        "opening": 2368.5,
+        "pet": 263,
+        "atk": 547,
+        "matk": 371,
+        "interval": 0.5425318181818182,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 59,
+          "luk": 30,
+          "int": 30,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 263,
+        "autoDps": 909.1416666666667,
+        "dps": 2303.9416666666666,
+        "opening": 2368.5,
+        "pet": 263,
+        "atk": 547,
+        "matk": 371,
+        "interval": 0.5425318181818182,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 59,
+          "luk": 30,
+          "int": 30,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Thief",
+      "tier": 1,
+      "weapon": "dagger",
+      "targets": 1,
+      "level": 49,
+      "inputSha256": "669d8a8e1495a2e19e8727c144d3366ee93805db5e331f09101d32cfa9c19259",
+      "before": {
+        "petMean": 215,
+        "autoDps": 786.425,
+        "dps": 2150.1666666666665,
+        "opening": 3565.2,
+        "pet": 215,
+        "atk": 447,
+        "matk": 299,
+        "interval": 0.5616800000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 215,
+        "autoDps": 786.425,
+        "dps": 2150.1666666666665,
+        "opening": 3565.2,
+        "pet": 215,
+        "atk": 447,
+        "matk": 299,
+        "interval": 0.5616800000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Thief",
+      "tier": 1,
+      "weapon": "dagger",
+      "targets": 3,
+      "level": 49,
+      "inputSha256": "669d8a8e1495a2e19e8727c144d3366ee93805db5e331f09101d32cfa9c19259",
+      "before": {
+        "petMean": 215,
+        "autoDps": 796.6916666666667,
+        "dps": 2454.8166666666666,
+        "opening": 3509,
+        "pet": 215,
+        "atk": 447,
+        "matk": 299,
+        "interval": 0.5616800000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 215,
+        "autoDps": 796.6916666666667,
+        "dps": 2454.8166666666666,
+        "opening": 3509,
+        "pet": 215,
+        "atk": 447,
+        "matk": 299,
+        "interval": 0.5616800000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Acolyte",
+      "tier": 1,
+      "weapon": "mace",
+      "targets": 1,
+      "level": 49,
+      "inputSha256": "a09ed2c2b74944d29c7d2ae86b76bab882937cde6e0ba83f0eb01614aa2bb452",
+      "before": {
+        "petMean": 227,
+        "autoDps": 479.53333333333336,
+        "dps": 1363.7083333333333,
+        "opening": 1278.5,
+        "pet": 227,
+        "atk": 491,
+        "matk": 377,
+        "interval": 0.6105217391304348,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 59,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 227,
+        "autoDps": 479.53333333333336,
+        "dps": 1363.7083333333333,
+        "opening": 1278.5,
+        "pet": 227,
+        "atk": 491,
+        "matk": 377,
+        "interval": 0.6105217391304348,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 59,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Acolyte",
+      "tier": 1,
+      "weapon": "mace",
+      "targets": 3,
+      "level": 49,
+      "inputSha256": "a09ed2c2b74944d29c7d2ae86b76bab882937cde6e0ba83f0eb01614aa2bb452",
+      "before": {
+        "petMean": 227,
+        "autoDps": 465.31666666666666,
+        "dps": 1579.0416666666667,
+        "opening": 1516.5,
+        "pet": 227,
+        "atk": 491,
+        "matk": 377,
+        "interval": 0.6105217391304348,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 59,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 227,
+        "autoDps": 465.31666666666666,
+        "dps": 1579.0416666666667,
+        "opening": 1516.5,
+        "pet": 227,
+        "atk": 491,
+        "matk": 377,
+        "interval": 0.6105217391304348,
+        "stats": {
+          "str": 1,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 59,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Merchant",
+      "tier": 1,
+      "weapon": "axe",
+      "targets": 1,
+      "level": 49,
+      "inputSha256": "682e36739b15adc34937594de5a6345d7fff9a8f5ce30638f1e96406890e0ad0",
+      "before": {
+        "petMean": 234,
+        "autoDps": 631.5083333333333,
+        "dps": 1573.575,
+        "opening": 1597.4,
+        "pet": 234,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.6318900000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 234,
+        "autoDps": 631.5083333333333,
+        "dps": 1573.575,
+        "opening": 1597.4,
+        "pet": 234,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.6318900000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Merchant",
+      "tier": 1,
+      "weapon": "axe",
+      "targets": 3,
+      "level": 49,
+      "inputSha256": "682e36739b15adc34937594de5a6345d7fff9a8f5ce30638f1e96406890e0ad0",
+      "before": {
+        "petMean": 234,
+        "autoDps": 619.2916666666666,
+        "dps": 2083.5833333333335,
+        "opening": 2553.2,
+        "pet": 234,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.6318900000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 234,
+        "autoDps": 619.2916666666666,
+        "dps": 2083.5833333333335,
+        "opening": 2553.2,
+        "pet": 234,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.6318900000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Merchant",
+      "tier": 1,
+      "weapon": "mace",
+      "targets": 1,
+      "level": 49,
+      "inputSha256": "92e0baf53be1c59a45497bce948d2c92d552b028111a33c88f48325c61ec8c4a",
+      "before": {
+        "petMean": 234,
+        "autoDps": 631.5083333333333,
+        "dps": 1573.575,
+        "opening": 1597.4,
+        "pet": 234,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.6318900000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 234,
+        "autoDps": 631.5083333333333,
+        "dps": 1573.575,
+        "opening": 1597.4,
+        "pet": 234,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.6318900000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Merchant",
+      "tier": 1,
+      "weapon": "mace",
+      "targets": 3,
+      "level": 49,
+      "inputSha256": "92e0baf53be1c59a45497bce948d2c92d552b028111a33c88f48325c61ec8c4a",
+      "before": {
+        "petMean": 234,
+        "autoDps": 619.2916666666666,
+        "dps": 2083.5833333333335,
+        "opening": 2553.2,
+        "pet": 234,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.6318900000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "after": {
+        "petMean": 234,
+        "autoDps": 619.2916666666666,
+        "dps": 2083.5833333333335,
+        "opening": 2553.2,
+        "pet": 234,
+        "atk": 488,
+        "matk": 326,
+        "interval": 0.6318900000000001,
+        "stats": {
+          "str": 59,
+          "agi": 30,
+          "dex": 30,
+          "luk": 30,
+          "int": 1,
+          "vit": 30
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Knight",
+      "tier": 2,
+      "weapon": "sword",
+      "targets": 1,
+      "level": 99,
+      "inputSha256": "93d478d968ef94a6623a3f23efe351e20e16bdd0034f012ddc8bc32e156de96a",
+      "before": {
+        "petMean": 689,
+        "autoDps": 2304.4333333333334,
+        "dps": 7809.783333333334,
+        "opening": 8196.7,
+        "pet": 689,
+        "atk": 1389,
+        "matk": 797,
+        "interval": 0.35913807692307687,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 689,
+        "autoDps": 2340.883333333333,
+        "dps": 7954.575,
+        "opening": 8331.9,
+        "pet": 689,
+        "atk": 1389,
+        "matk": 797,
+        "interval": 0.35913807692307687,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "changePercent": 1.8539780232912806
+    },
+    {
+      "class": "Knight",
+      "tier": 2,
+      "weapon": "sword",
+      "targets": 3,
+      "level": 99,
+      "inputSha256": "93d478d968ef94a6623a3f23efe351e20e16bdd0034f012ddc8bc32e156de96a",
+      "before": {
+        "petMean": 689,
+        "autoDps": 2349.7916666666665,
+        "dps": 8850.491666666667,
+        "opening": 10305,
+        "pet": 689,
+        "atk": 1389,
+        "matk": 797,
+        "interval": 0.35913807692307687,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 689,
+        "autoDps": 2403.525,
+        "dps": 9234.541666666666,
+        "opening": 10462.1,
+        "pet": 689,
+        "atk": 1389,
+        "matk": 797,
+        "interval": 0.35913807692307687,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "changePercent": 4.339306949990518
+    },
+    {
+      "class": "Wizard",
+      "tier": 2,
+      "weapon": "staff",
+      "targets": 1,
+      "level": 99,
+      "inputSha256": "d0f8bc74ff7c94893fa855ef164507947648a25df496d604215b0dcd295e7e0c",
+      "before": {
+        "petMean": 625,
+        "autoDps": 1953.9083333333333,
+        "dps": 16548.808333333334,
+        "opening": 19505,
+        "pet": 625,
+        "atk": 1389,
+        "matk": 1526,
+        "interval": 0.54927,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 99,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 625,
+        "autoDps": 1953.9083333333333,
+        "dps": 16548.808333333334,
+        "opening": 19505,
+        "pet": 625,
+        "atk": 1389,
+        "matk": 1526,
+        "interval": 0.54927,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 99,
+          "vit": 60
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Wizard",
+      "tier": 2,
+      "weapon": "staff",
+      "targets": 3,
+      "level": 99,
+      "inputSha256": "d0f8bc74ff7c94893fa855ef164507947648a25df496d604215b0dcd295e7e0c",
+      "before": {
+        "petMean": 625,
+        "autoDps": 1988.95,
+        "dps": 28462.525,
+        "opening": 33505.2,
+        "pet": 625,
+        "atk": 1389,
+        "matk": 1526,
+        "interval": 0.54927,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 99,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 625,
+        "autoDps": 1988.95,
+        "dps": 28462.525,
+        "opening": 33505.2,
+        "pet": 625,
+        "atk": 1389,
+        "matk": 1526,
+        "interval": 0.54927,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 99,
+          "vit": 60
+        }
+      },
+      "changePercent": 0
+    },
+    {
+      "class": "Hunter",
+      "tier": 2,
+      "weapon": "bow",
+      "targets": 1,
+      "level": 99,
+      "inputSha256": "9fad61c49ea57ccaa3cf8c334a8f86714f01cf085a7ff83d9efa2f171a8978c2",
+      "before": {
+        "petMean": 709,
+        "autoDps": 3958.5333333333333,
+        "dps": 15284.55,
+        "opening": 17019,
+        "pet": 709,
+        "atk": 1477,
+        "matk": 881,
+        "interval": 0.3495354545454545,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 99,
+          "luk": 60,
+          "int": 60,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 709,
+        "autoDps": 4025.3166666666666,
+        "dps": 15824.366666666667,
+        "opening": 17179.1,
+        "pet": 709,
+        "atk": 1477,
+        "matk": 881,
+        "interval": 0.3495354545454545,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 99,
+          "luk": 60,
+          "int": 60,
+          "vit": 60
+        }
+      },
+      "changePercent": 3.5317799128313787
+    },
+    {
+      "class": "Hunter",
+      "tier": 2,
+      "weapon": "bow",
+      "targets": 3,
+      "level": 99,
+      "inputSha256": "9fad61c49ea57ccaa3cf8c334a8f86714f01cf085a7ff83d9efa2f171a8978c2",
+      "before": {
+        "petMean": 709,
+        "autoDps": 3866.616666666667,
+        "dps": 19838.491666666665,
+        "opening": 22534.7,
+        "pet": 709,
+        "atk": 1477,
+        "matk": 881,
+        "interval": 0.3495354545454545,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 99,
+          "luk": 60,
+          "int": 60,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 709,
+        "autoDps": 3970.9,
+        "dps": 20689.475,
+        "opening": 22681.4,
+        "pet": 709,
+        "atk": 1477,
+        "matk": 881,
+        "interval": 0.3495354545454545,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 99,
+          "luk": 60,
+          "int": 60,
+          "vit": 60
+        }
+      },
+      "changePercent": 4.28955662371846
+    },
+    {
+      "class": "Assassin",
+      "tier": 2,
+      "weapon": "katar",
+      "targets": 1,
+      "level": 99,
+      "inputSha256": "189a7b5c7a1210d7631ac9e0ae95f7070b72d75e43090df5a0e60d3f4ae270f0",
+      "before": {
+        "petMean": 808,
+        "autoDps": 5001.25,
+        "dps": 23810.758333333335,
+        "opening": 27332.6,
+        "pet": 808,
+        "atk": 1683,
+        "matk": 997,
+        "interval": 0.3405474,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 808,
+        "autoDps": 5088.05,
+        "dps": 24408.333333333332,
+        "opening": 27955.1,
+        "pet": 808,
+        "atk": 1683,
+        "matk": 997,
+        "interval": 0.3405474,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "changePercent": 2.509684872839335
+    },
+    {
+      "class": "Assassin",
+      "tier": 2,
+      "weapon": "katar",
+      "targets": 3,
+      "level": 99,
+      "inputSha256": "189a7b5c7a1210d7631ac9e0ae95f7070b72d75e43090df5a0e60d3f4ae270f0",
+      "before": {
+        "petMean": 808,
+        "autoDps": 4810.983333333334,
+        "dps": 34829.85,
+        "opening": 42331.1,
+        "pet": 808,
+        "atk": 1683,
+        "matk": 997,
+        "interval": 0.3405474,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 808,
+        "autoDps": 4896.975,
+        "dps": 36048.425,
+        "opening": 43020,
+        "pet": 808,
+        "atk": 1683,
+        "matk": 997,
+        "interval": 0.3405474,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "changePercent": 3.4986513005367703
+    },
+    {
+      "class": "Assassin",
+      "tier": 2,
+      "weapon": "dagger",
+      "targets": 1,
+      "level": 99,
+      "inputSha256": "0a622b45a9a100ede85019f59362a2be7ce6a15b320ad2be3c3768158c358b3f",
+      "before": {
+        "petMean": 808,
+        "autoDps": 5001.25,
+        "dps": 23810.758333333335,
+        "opening": 27332.6,
+        "pet": 808,
+        "atk": 1683,
+        "matk": 770,
+        "interval": 0.3405474,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 808,
+        "autoDps": 5088.05,
+        "dps": 24408.333333333332,
+        "opening": 27955.1,
+        "pet": 808,
+        "atk": 1683,
+        "matk": 770,
+        "interval": 0.3405474,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "changePercent": 2.509684872839335
+    },
+    {
+      "class": "Assassin",
+      "tier": 2,
+      "weapon": "dagger",
+      "targets": 3,
+      "level": 99,
+      "inputSha256": "0a622b45a9a100ede85019f59362a2be7ce6a15b320ad2be3c3768158c358b3f",
+      "before": {
+        "petMean": 808,
+        "autoDps": 4810.983333333334,
+        "dps": 34829.85,
+        "opening": 42331.1,
+        "pet": 808,
+        "atk": 1683,
+        "matk": 770,
+        "interval": 0.3405474,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 808,
+        "autoDps": 4896.975,
+        "dps": 36048.425,
+        "opening": 43020,
+        "pet": 808,
+        "atk": 1683,
+        "matk": 770,
+        "interval": 0.3405474,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "changePercent": 3.4986513005367703
+    },
+    {
+      "class": "Priest",
+      "tier": 2,
+      "weapon": "mace",
+      "targets": 1,
+      "level": 99,
+      "inputSha256": "43a846c7ff0a0de77f44b807d851827ecc90bcc34fb6ff7b0f33eab0ef431de4",
+      "before": {
+        "petMean": 603,
+        "autoDps": 1683.5083333333334,
+        "dps": 6120.491666666667,
+        "opening": 7464.2,
+        "pet": 603,
+        "atk": 1354,
+        "matk": 882,
+        "interval": 0.4298634782608696,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 99,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 603,
+        "autoDps": 1750.925,
+        "dps": 6315.7,
+        "opening": 7596.2,
+        "pet": 603,
+        "atk": 1354,
+        "matk": 882,
+        "interval": 0.4298634782608696,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 99,
+          "vit": 60
+        }
+      },
+      "changePercent": 3.1894224184059183
+    },
+    {
+      "class": "Priest",
+      "tier": 2,
+      "weapon": "mace",
+      "targets": 3,
+      "level": 99,
+      "inputSha256": "43a846c7ff0a0de77f44b807d851827ecc90bcc34fb6ff7b0f33eab0ef431de4",
+      "before": {
+        "petMean": 603,
+        "autoDps": 1731.6083333333333,
+        "dps": 6587.333333333333,
+        "opening": 7045.3,
+        "pet": 603,
+        "atk": 1354,
+        "matk": 882,
+        "interval": 0.4298634782608696,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 99,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 603,
+        "autoDps": 1801.8333333333333,
+        "dps": 6718.683333333333,
+        "opening": 7160.9,
+        "pet": 603,
+        "atk": 1354,
+        "matk": 882,
+        "interval": 0.4298634782608696,
+        "stats": {
+          "str": 1,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 99,
+          "vit": 60
+        }
+      },
+      "changePercent": 1.9939783422730617
+    },
+    {
+      "class": "Blacksmith",
+      "tier": 2,
+      "weapon": "axe",
+      "targets": 1,
+      "level": 99,
+      "inputSha256": "2158d04608a6fa291b2f975654eeb940066a9378647864521542367df85b7cc9",
+      "before": {
+        "petMean": 960.2,
+        "autoDps": 4153.025,
+        "dps": 9876.133333333333,
+        "opening": 11323.9,
+        "pet": 800,
+        "atk": 1666,
+        "matk": 850,
+        "interval": 0.35153280000000003,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 960.2,
+        "autoDps": 4267.341666666666,
+        "dps": 10229.725,
+        "opening": 12029,
+        "pet": 800,
+        "atk": 1666,
+        "matk": 850,
+        "interval": 0.35153280000000003,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "changePercent": 3.580264205964556
+    },
+    {
+      "class": "Blacksmith",
+      "tier": 2,
+      "weapon": "axe",
+      "targets": 3,
+      "level": 99,
+      "inputSha256": "2158d04608a6fa291b2f975654eeb940066a9378647864521542367df85b7cc9",
+      "before": {
+        "petMean": 960.2,
+        "autoDps": 3959.925,
+        "dps": 13640.516666666666,
+        "opening": 15290.2,
+        "pet": 800,
+        "atk": 1666,
+        "matk": 850,
+        "interval": 0.35153280000000003,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 960.2,
+        "autoDps": 4028.4,
+        "dps": 14278.891666666666,
+        "opening": 16024.8,
+        "pet": 800,
+        "atk": 1666,
+        "matk": 850,
+        "interval": 0.35153280000000003,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "changePercent": 4.679991349301282
+    },
+    {
+      "class": "Blacksmith",
+      "tier": 2,
+      "weapon": "mace",
+      "targets": 1,
+      "level": 99,
+      "inputSha256": "5ed9b1be1e4f2959470fd506772304ac2add7d029a3f4d5ae5e5c8c50af104fe",
+      "before": {
+        "petMean": 960.2,
+        "autoDps": 4153.025,
+        "dps": 9876.133333333333,
+        "opening": 11323.9,
+        "pet": 800,
+        "atk": 1666,
+        "matk": 850,
+        "interval": 0.35153280000000003,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 960.2,
+        "autoDps": 4267.341666666666,
+        "dps": 10229.725,
+        "opening": 12029,
+        "pet": 800,
+        "atk": 1666,
+        "matk": 850,
+        "interval": 0.35153280000000003,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "changePercent": 3.580264205964556
+    },
+    {
+      "class": "Blacksmith",
+      "tier": 2,
+      "weapon": "mace",
+      "targets": 3,
+      "level": 99,
+      "inputSha256": "5ed9b1be1e4f2959470fd506772304ac2add7d029a3f4d5ae5e5c8c50af104fe",
+      "before": {
+        "petMean": 960.2,
+        "autoDps": 3959.925,
+        "dps": 13640.516666666666,
+        "opening": 15290.2,
+        "pet": 800,
+        "atk": 1666,
+        "matk": 850,
+        "interval": 0.35153280000000003,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "after": {
+        "petMean": 960.2,
+        "autoDps": 4028.4,
+        "dps": 14278.891666666666,
+        "opening": 16024.8,
+        "pet": 800,
+        "atk": 1666,
+        "matk": 850,
+        "interval": 0.35153280000000003,
+        "stats": {
+          "str": 99,
+          "agi": 61,
+          "dex": 60,
+          "luk": 60,
+          "int": 1,
+          "vit": 60
+        }
+      },
+      "changePercent": 4.679991349301282
+    },
+    {
+      "class": "Lord Knight",
+      "tier": 3,
+      "weapon": "sword",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "01843e86ed51da6e69d846f789b66498a23498d458355557be75b7c469343670",
+      "before": {
+        "petMean": 16778,
+        "autoDps": 927508.8666666667,
+        "dps": 2821491.975,
+        "opening": 2928223.3,
+        "pet": 16778,
+        "atk": 33999,
+        "matk": 16772,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 16778,
+        "autoDps": 1509212.125,
+        "dps": 3420600.7583333333,
+        "opening": 3611733,
+        "pet": 16778,
+        "atk": 33999,
+        "matk": 16772,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 21.233758190410356
+    },
+    {
+      "class": "Lord Knight",
+      "tier": 3,
+      "weapon": "sword",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "01843e86ed51da6e69d846f789b66498a23498d458355557be75b7c469343670",
+      "before": {
+        "petMean": 16778,
+        "autoDps": 909898.9,
+        "dps": 3149858.933333333,
+        "opening": 3293256.3,
+        "pet": 16778,
+        "atk": 33999,
+        "matk": 16772,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 16778,
+        "autoDps": 1515500.4416666667,
+        "dps": 3691002.4583333335,
+        "opening": 3757661.1,
+        "pet": 16778,
+        "atk": 33999,
+        "matk": 16772,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 17.179928893746865
+    },
+    {
+      "class": "High Wizard",
+      "tier": 3,
+      "weapon": "staff",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "7b0b681157b6671356173a479445ccc9ff720f021127ac3918f8eeb4a79f8660",
+      "before": {
+        "petMean": 11175,
+        "autoDps": 674008.3416666667,
+        "dps": 6180757.016666667,
+        "opening": 6824813.7,
+        "pet": 11175,
+        "atk": 24831,
+        "matk": 37295,
+        "interval": 0.18,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 11175,
+        "autoDps": 989899.125,
+        "dps": 6339486.916666667,
+        "opening": 7103842.7,
+        "pet": 11175,
+        "atk": 24831,
+        "matk": 37295,
+        "interval": 0.18,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "changePercent": 2.5681304016964113
+    },
+    {
+      "class": "High Wizard",
+      "tier": 3,
+      "weapon": "staff",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "7b0b681157b6671356173a479445ccc9ff720f021127ac3918f8eeb4a79f8660",
+      "before": {
+        "petMean": 11175,
+        "autoDps": 671721.275,
+        "dps": 8598043.758333333,
+        "opening": 9638276.1,
+        "pet": 11175,
+        "atk": 24831,
+        "matk": 37295,
+        "interval": 0.18,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 11175,
+        "autoDps": 1001452.8666666667,
+        "dps": 8778997.95,
+        "opening": 10035660.8,
+        "pet": 11175,
+        "atk": 24831,
+        "matk": 37295,
+        "interval": 0.18,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "changePercent": 2.1045972404046376
+    },
+    {
+      "class": "Sniper",
+      "tier": 3,
+      "weapon": "bow",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "c91050ad068f9ca629e55ae5bb06987d0d0cc7f13ca7ada5ab8b72033413de24",
+      "before": {
+        "petMean": 15973,
+        "autoDps": 932261.1333333333,
+        "dps": 3012829.683333333,
+        "opening": 3232226.4,
+        "pet": 15973,
+        "atk": 33277,
+        "matk": 15681,
+        "interval": 0.13,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 15973,
+        "autoDps": 1514911.0333333334,
+        "dps": 3607256.425,
+        "opening": 3924041.1,
+        "pet": 15973,
+        "atk": 33277,
+        "matk": 15681,
+        "interval": 0.13,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 19.729848818038896
+    },
+    {
+      "class": "Sniper",
+      "tier": 3,
+      "weapon": "bow",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "c91050ad068f9ca629e55ae5bb06987d0d0cc7f13ca7ada5ab8b72033413de24",
+      "before": {
+        "petMean": 15973,
+        "autoDps": 932858.3666666667,
+        "dps": 3155679.425,
+        "opening": 3414761.1,
+        "pet": 15973,
+        "atk": 33277,
+        "matk": 15681,
+        "interval": 0.13,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 15973,
+        "autoDps": 1514392.1916666667,
+        "dps": 3758467.9833333334,
+        "opening": 4150432.6,
+        "pet": 15973,
+        "atk": 33277,
+        "matk": 15681,
+        "interval": 0.13,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 19.10170448740476
+    },
+    {
+      "class": "Assassin Cross",
+      "tier": 3,
+      "weapon": "katar",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "b748228e80f895820381427a4207ab4707c24fa38dec0bca20ac148bdaf5f2e2",
+      "before": {
+        "petMean": 28722,
+        "autoDps": 2527222.1416666666,
+        "dps": 8188051.7,
+        "opening": 10527177.4,
+        "pet": 25319,
+        "atk": 52747,
+        "matk": 23576,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 28722,
+        "autoDps": 4202407.325,
+        "dps": 10025116.433333334,
+        "opening": 14007405.7,
+        "pet": 25319,
+        "atk": 52747,
+        "matk": 23576,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 22.43592005328121
+    },
+    {
+      "class": "Assassin Cross",
+      "tier": 3,
+      "weapon": "katar",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "b748228e80f895820381427a4207ab4707c24fa38dec0bca20ac148bdaf5f2e2",
+      "before": {
+        "petMean": 28722,
+        "autoDps": 2561917.975,
+        "dps": 10333613.908333333,
+        "opening": 13302528.3,
+        "pet": 25319,
+        "atk": 52747,
+        "matk": 23576,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 28722,
+        "autoDps": 4150761.283333333,
+        "dps": 11981817.883333333,
+        "opening": 16200223.8,
+        "pet": 25319,
+        "atk": 52747,
+        "matk": 23576,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 15.949927969254185
+    },
+    {
+      "class": "Assassin Cross",
+      "tier": 3,
+      "weapon": "dagger",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "36fc5ba3341a2cf67c6c0beaa9446143ac6825e7a5336a5d14ae769d848a9e0c",
+      "before": {
+        "petMean": 26001.333333333332,
+        "autoDps": 2364167.975,
+        "dps": 7808348.083333333,
+        "opening": 10331724.8,
+        "pet": 22598,
+        "atk": 47080,
+        "matk": 16013,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 26001.333333333332,
+        "autoDps": 3914184.575,
+        "dps": 9393440.2,
+        "opening": 12901568.9,
+        "pet": 22598,
+        "atk": 47080,
+        "matk": 16013,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 20.299967416283526
+    },
+    {
+      "class": "Assassin Cross",
+      "tier": 3,
+      "weapon": "dagger",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "36fc5ba3341a2cf67c6c0beaa9446143ac6825e7a5336a5d14ae769d848a9e0c",
+      "before": {
+        "petMean": 26001.333333333332,
+        "autoDps": 2377261.1666666665,
+        "dps": 9651951.391666668,
+        "opening": 13305280.2,
+        "pet": 22598,
+        "atk": 47080,
+        "matk": 16013,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 26001.333333333332,
+        "autoDps": 3832554.2083333335,
+        "dps": 11066309.383333333,
+        "opening": 15680101.9,
+        "pet": 22598,
+        "atk": 47080,
+        "matk": 16013,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 14.653596296473248
+    },
+    {
+      "class": "High Priest",
+      "tier": 3,
+      "weapon": "mace",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "4d5457ebaa1c089c4bfb993b95717a85f80b26f90139fd1ffe5fbb4dbd74b00f",
+      "before": {
+        "petMean": 13636,
+        "autoDps": 524350.625,
+        "dps": 2432991.975,
+        "opening": 2686055.2,
+        "pet": 13636,
+        "atk": 27729,
+        "matk": 20119,
+        "interval": 0.14410596026490066,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 13636,
+        "autoDps": 917059.7583333333,
+        "dps": 2813009.841666667,
+        "opening": 3108019.5,
+        "pet": 13636,
+        "atk": 27729,
+        "matk": 20119,
+        "interval": 0.14410596026490066,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "changePercent": 15.619363753415861
+    },
+    {
+      "class": "High Priest",
+      "tier": 3,
+      "weapon": "mace",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "4d5457ebaa1c089c4bfb993b95717a85f80b26f90139fd1ffe5fbb4dbd74b00f",
+      "before": {
+        "petMean": 13636,
+        "autoDps": 517268.74166666664,
+        "dps": 2797299.9916666667,
+        "opening": 3105986.8,
+        "pet": 13636,
+        "atk": 27729,
+        "matk": 20119,
+        "interval": 0.14410596026490066,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 13636,
+        "autoDps": 911829.9333333333,
+        "dps": 3180807.85,
+        "opening": 3573707.1,
+        "pet": 13636,
+        "atk": 27729,
+        "matk": 20119,
+        "interval": 0.14410596026490066,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "changePercent": 13.709929556208756
+    },
+    {
+      "class": "Whitesmith",
+      "tier": 3,
+      "weapon": "axe",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "ae0dc959718ec90c4484eb1881dfc3a34464f980f47c9ee3641c0802f998f9cb",
+      "before": {
+        "petMean": 21150.4,
+        "autoDps": 1062151.1333333333,
+        "dps": 2756910.45,
+        "opening": 3077181.3,
+        "pet": 18469,
+        "atk": 38478,
+        "matk": 16940,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 21150.4,
+        "autoDps": 1729483.4833333334,
+        "dps": 3459787.325,
+        "opening": 3908111.6,
+        "pet": 18469,
+        "atk": 38478,
+        "matk": 16940,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 25.49509270422621
+    },
+    {
+      "class": "Whitesmith",
+      "tier": 3,
+      "weapon": "axe",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "ae0dc959718ec90c4484eb1881dfc3a34464f980f47c9ee3641c0802f998f9cb",
+      "before": {
+        "petMean": 21150.4,
+        "autoDps": 1065827,
+        "dps": 4323989.025,
+        "opening": 4989710.8,
+        "pet": 18469,
+        "atk": 38478,
+        "matk": 16940,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 21150.4,
+        "autoDps": 1731279.7416666667,
+        "dps": 5014070.908333333,
+        "opening": 5817998.9,
+        "pet": 18469,
+        "atk": 38478,
+        "matk": 16940,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 15.95938101006935
+    },
+    {
+      "class": "Whitesmith",
+      "tier": 3,
+      "weapon": "mace",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "2cac406980c8d1c66e2a65f7b775507b680b99ee3e8d610f350f43f20fc08725",
+      "before": {
+        "petMean": 21150.4,
+        "autoDps": 1062151.1333333333,
+        "dps": 2756910.45,
+        "opening": 3077181.3,
+        "pet": 18469,
+        "atk": 38478,
+        "matk": 16940,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 21150.4,
+        "autoDps": 1729483.4833333334,
+        "dps": 3459787.325,
+        "opening": 3908111.6,
+        "pet": 18469,
+        "atk": 38478,
+        "matk": 16940,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 25.49509270422621
+    },
+    {
+      "class": "Whitesmith",
+      "tier": 3,
+      "weapon": "mace",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "2cac406980c8d1c66e2a65f7b775507b680b99ee3e8d610f350f43f20fc08725",
+      "before": {
+        "petMean": 21150.4,
+        "autoDps": 1065827,
+        "dps": 4323989.025,
+        "opening": 4989710.8,
+        "pet": 18469,
+        "atk": 38478,
+        "matk": 16940,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 21150.4,
+        "autoDps": 1731279.7416666667,
+        "dps": 5014070.908333333,
+        "opening": 5817998.9,
+        "pet": 18469,
+        "atk": 38478,
+        "matk": 16940,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 15.95938101006935
+    },
+    {
+      "class": "Rune Knight",
+      "tier": 4,
+      "weapon": "sword",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "0cdc4a7e792f98e6ac2d8006352cc9ebf5366a2c3caf08afc58048552bc0be61",
+      "before": {
+        "petMean": 72490,
+        "autoDps": 2501425.5416666665,
+        "dps": 4703442.733333333,
+        "opening": 4595729.7,
+        "pet": 72490,
+        "atk": 151020,
+        "matk": 27257,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 72490,
+        "autoDps": 4699275.675,
+        "dps": 6901787.966666667,
+        "opening": 7175659.6,
+        "pet": 72490,
+        "atk": 151020,
+        "matk": 27257,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 46.739066636309715
+    },
+    {
+      "class": "Rune Knight",
+      "tier": 4,
+      "weapon": "sword",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "0cdc4a7e792f98e6ac2d8006352cc9ebf5366a2c3caf08afc58048552bc0be61",
+      "before": {
+        "petMean": 72490,
+        "autoDps": 2810971.025,
+        "dps": 7750232.108333333,
+        "opening": 8107769.2,
+        "pet": 72490,
+        "atk": 151020,
+        "matk": 27257,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 72490,
+        "autoDps": 5264787.525,
+        "dps": 10210020.416666666,
+        "opening": 11001369.4,
+        "pet": 72490,
+        "atk": 151020,
+        "matk": 27257,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 31.738253434867826
+    },
+    {
+      "class": "Warlock",
+      "tier": 4,
+      "weapon": "staff",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "6b2754031413b68c08b900fc87fc5757bc8941690bcc9da47232c7672d145c5b",
+      "before": {
+        "petMean": 20942,
+        "autoDps": 1095638.1833333333,
+        "dps": 5718167.441666666,
+        "opening": 6281233.5,
+        "pet": 20942,
+        "atk": 43629,
+        "matk": 79481,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 20942,
+        "autoDps": 1660347.6166666667,
+        "dps": 6592509.45,
+        "opening": 6385434.1,
+        "pet": 20942,
+        "atk": 43629,
+        "matk": 79481,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "changePercent": 15.290598207430083
+    },
+    {
+      "class": "Warlock",
+      "tier": 4,
+      "weapon": "staff",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "6b2754031413b68c08b900fc87fc5757bc8941690bcc9da47232c7672d145c5b",
+      "before": {
+        "petMean": 20942,
+        "autoDps": 1198782.7916666667,
+        "dps": 12728422.8,
+        "opening": 14433084.8,
+        "pet": 20942,
+        "atk": 43629,
+        "matk": 79481,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 20942,
+        "autoDps": 1844319.125,
+        "dps": 13494624.308333334,
+        "opening": 16060856.9,
+        "pet": 20942,
+        "atk": 43629,
+        "matk": 79481,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "changePercent": 6.019610759106242
+    },
+    {
+      "class": "Ranger",
+      "tier": 4,
+      "weapon": "bow",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "c9918d8f31b9c327d4d96578527ca3024ec0ef2e637a68b7976da28b3d509e5c",
+      "before": {
+        "petMean": 68105,
+        "autoDps": 3452802.75,
+        "dps": 5720038.858333333,
+        "opening": 5674184.5,
+        "pet": 68105,
+        "atk": 141885,
+        "matk": 26127,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 68105,
+        "autoDps": 5891549.058333334,
+        "dps": 8154781.433333334,
+        "opening": 8280729.8,
+        "pet": 68105,
+        "atk": 141885,
+        "matk": 26127,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 42.565140470206856
+    },
+    {
+      "class": "Ranger",
+      "tier": 4,
+      "weapon": "bow",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "c9918d8f31b9c327d4d96578527ca3024ec0ef2e637a68b7976da28b3d509e5c",
+      "before": {
+        "petMean": 68105,
+        "autoDps": 3458835.125,
+        "dps": 7012992.125,
+        "opening": 7109368.6,
+        "pet": 68105,
+        "atk": 141885,
+        "matk": 26127,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 68105,
+        "autoDps": 5898975.15,
+        "dps": 9460041.316666666,
+        "opening": 9732526.7,
+        "pet": 68105,
+        "atk": 141885,
+        "matk": 26127,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 34.89308340933959
+    },
+    {
+      "class": "Guillotine Cross",
+      "tier": 4,
+      "weapon": "katar",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "efdc6b77c32acf1b682a3d5f9147f2f378f0b4d38696dc0f202c1152601668c4",
+      "before": {
+        "petMean": 105377,
+        "autoDps": 4880453.95,
+        "dps": 8241842.833333333,
+        "opening": 7846024.4,
+        "pet": 99307,
+        "atk": 206890,
+        "matk": 39584,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 105377,
+        "autoDps": 8772522.916666666,
+        "dps": 12124575.741666667,
+        "opening": 13635534.3,
+        "pet": 99307,
+        "atk": 206890,
+        "matk": 39584,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 47.11000909444667
+    },
+    {
+      "class": "Guillotine Cross",
+      "tier": 4,
+      "weapon": "katar",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "efdc6b77c32acf1b682a3d5f9147f2f378f0b4d38696dc0f202c1152601668c4",
+      "before": {
+        "petMean": 105377,
+        "autoDps": 4772589.125,
+        "dps": 9894700.708333334,
+        "opening": 11169951,
+        "pet": 99307,
+        "atk": 206890,
+        "matk": 39584,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 105377,
+        "autoDps": 8714846.091666667,
+        "dps": 13793845.258333333,
+        "opening": 16112968.7,
+        "pet": 99307,
+        "atk": 206890,
+        "matk": 39584,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 39.40639201664919
+    },
+    {
+      "class": "Guillotine Cross",
+      "tier": 4,
+      "weapon": "dagger",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "643dcd9bbcf3884e1ac5b518b2ed6693636a164a4ad00f5c830eeaab68bb9796",
+      "before": {
+        "petMean": 113627,
+        "autoDps": 5454216.808333334,
+        "dps": 9212670.641666668,
+        "opening": 8707318.3,
+        "pet": 107544,
+        "atk": 224051,
+        "matk": 26608,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 113627,
+        "autoDps": 9805789.608333332,
+        "dps": 13553776.391666668,
+        "opening": 15132369.3,
+        "pet": 107544,
+        "atk": 224051,
+        "matk": 26608,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 47.12103491865036
+    },
+    {
+      "class": "Guillotine Cross",
+      "tier": 4,
+      "weapon": "dagger",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "643dcd9bbcf3884e1ac5b518b2ed6693636a164a4ad00f5c830eeaab68bb9796",
+      "before": {
+        "petMean": 113627,
+        "autoDps": 5334088.658333333,
+        "dps": 11061360.458333334,
+        "opening": 12396127.1,
+        "pet": 107544,
+        "atk": 224051,
+        "matk": 26608,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 113627,
+        "autoDps": 9739800.2,
+        "dps": 15418943.041666666,
+        "opening": 17881762.7,
+        "pet": 107544,
+        "atk": 224051,
+        "matk": 26608,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 39.39463504283911
+    },
+    {
+      "class": "Arch Bishop",
+      "tier": 4,
+      "weapon": "mace",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "353f9ebea6a0179dd70675c53cd130e1a8e7a6ecc8bfed38e5f6e82633e49212",
+      "before": {
+        "petMean": 32531,
+        "autoDps": 829511.0583333333,
+        "dps": 3970969.8666666667,
+        "opening": 4223053.7,
+        "pet": 32531,
+        "atk": 67772,
+        "matk": 41690,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 32531,
+        "autoDps": 1570393.7,
+        "dps": 4696010.533333333,
+        "opening": 4930484.3,
+        "pet": 32531,
+        "atk": 67772,
+        "matk": 41690,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "changePercent": 18.258528546208396
+    },
+    {
+      "class": "Arch Bishop",
+      "tier": 4,
+      "weapon": "mace",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "353f9ebea6a0179dd70675c53cd130e1a8e7a6ecc8bfed38e5f6e82633e49212",
+      "before": {
+        "petMean": 32531,
+        "autoDps": 961625.325,
+        "dps": 7520833.066666666,
+        "opening": 8112346.6,
+        "pet": 32531,
+        "atk": 67772,
+        "matk": 41690,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 32531,
+        "autoDps": 1817472.225,
+        "dps": 8459862.366666667,
+        "opening": 9491085.6,
+        "pet": 32531,
+        "atk": 67772,
+        "matk": 41690,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "changePercent": 12.485708586750889
+    },
+    {
+      "class": "Mechanic",
+      "tier": 4,
+      "weapon": "axe",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "8133675eb2ad5c43dc0825419baab2b0d0a8c4a513e174ebaa8f195ae57d3ae3",
+      "before": {
+        "petMean": 82346.4,
+        "autoDps": 2509709.9583333335,
+        "dps": 4461872.283333333,
+        "opening": 4522971,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 82346.4,
+        "autoDps": 4720368.441666666,
+        "dps": 6658284.425,
+        "opening": 7270780.7,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 49.22624410095826
+    },
+    {
+      "class": "Mechanic",
+      "tier": 4,
+      "weapon": "axe",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "8133675eb2ad5c43dc0825419baab2b0d0a8c4a513e174ebaa8f195ae57d3ae3",
+      "before": {
+        "petMean": 82346.4,
+        "autoDps": 2817982.05,
+        "dps": 6493784.791666667,
+        "opening": 6939924.5,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 82346.4,
+        "autoDps": 5284854.15,
+        "dps": 8963804.933333334,
+        "opening": 9961085.3,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 38.03668000880458
+    },
+    {
+      "class": "Mechanic",
+      "tier": 4,
+      "weapon": "mace",
+      "targets": 1,
+      "level": 150,
+      "inputSha256": "84f369b9cd78bc6087a5de67a77d325849d09ec02eac6a77e0cfe737cf12b901",
+      "before": {
+        "petMean": 82346.4,
+        "autoDps": 2509709.9583333335,
+        "dps": 4461872.283333333,
+        "opening": 4522971,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 82346.4,
+        "autoDps": 4720368.441666666,
+        "dps": 6658284.425,
+        "opening": 7270780.7,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 49.22624410095826
+    },
+    {
+      "class": "Mechanic",
+      "tier": 4,
+      "weapon": "mace",
+      "targets": 3,
+      "level": 150,
+      "inputSha256": "84f369b9cd78bc6087a5de67a77d325849d09ec02eac6a77e0cfe737cf12b901",
+      "before": {
+        "petMean": 82346.4,
+        "autoDps": 2817982.05,
+        "dps": 6493784.791666667,
+        "opening": 6939924.5,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 82346.4,
+        "autoDps": 5284854.15,
+        "dps": 8963804.933333334,
+        "opening": 9961085.3,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "changePercent": 38.03668000880458
+    }
+  ]
+}

@@ -8,7 +8,7 @@ the implementation/tests together. Read the linked sources for exact details.
 | --- | --- |
 | Return directly to previously played classes | The owner wanted saved builds available without repeating a Novice reset. `classBlock()` and `changeClass()` restore the class snapshot. Gear is matched by identity, not cloned. |
 | Base EXP requirements increase from 100 | The owner approved the tested 50% increase to Base requirements from Lv100. Job requirements, contract rewards and the measured offline EXP/min rule keep their existing formulas. See `baseNeedAt`, `needAt` and `base_pacing_sim.js`. |
-| Ordered six-slot combos with recovery | Attacks cast once in player-selected order from the active class line, then recover for 3 seconds. Buffs and emergency healing are independent. Earlier jobs remain useful through inherited marks and follow-up effects. No Heat/SP meter. |
+| Ordered six-slot combos with recovery | Attacks cast once in player-selected order from the active class line, then recover for 3 seconds. Between-skill swings follow ASPD visually but deal no normal-attack damage or on-hit effects (owner decision, 17 October 2026); recovery basics still deal damage. Rolling Cutter retains its explicit repeats. Buffs and emergency healing are independent. Earlier jobs remain useful through inherited marks and follow-up effects. No Heat/SP meter. |
 | Keep old IDs and save ownership | Renamed skills, appended pets, cosmetics and cloud sync must not reinterpret old progress or mix accounts. See migration, save-owner and cloud tests. |
 | Pets come from drops, not hatching | Collection is part of farming. Training/Bond/skill rolls do not replace acquisition. See `PETS` and pet tests. |
 | Daggers count as katars for katar skills | Owner decision (Milestone 4), to avoid problems with the Assassin Cross dagger. Skill execution does not check weapon type, so a dagger already triggers katar skills; any future weapon gate must accept a dagger wherever it accepts a katar. Guillotine Cross wears a katar, or a dagger in each hand, through `katarOnly()` and `dualWield()`. See `tools/tests/dual_wield_sim.js` and `tools/tests/fourth_job_skills_sim.js`. |
@@ -64,3 +64,29 @@ Class Tree has current-lineage change cards and the full overview; Combo moves t
 the top of Skills. Unprotected +5–9 refinement failures downgrade on all grades;
 below +5 and the Mythic +10 checkpoint stay safe. Fourth-job wardrobes use native
 components rather than inferred attachment offsets.
+
+### 2026-10-17 — One-time historical balance exception
+
+The owner explicitly approved ignoring the currently measured v186 historical
+High Priest/Sniper balance failures: High Priest completed N+ single/three-target
+DPS +20.3248%/+20.3106% against the October 10 baseline, and early-growth Sniper
+DPS -10.8727%. This is a one-time acceptance of those results, not an instruction
+to change the baseline, remove the test, relax thresholds permanently or disregard
+new regressions. The test remains visibly failing. This approval does not itself
+authorize a commit, push or deployment. Endgame compensation through Ascension
+skills/stats and Mythic progression is at proposal stage; no coefficients changed.
+
+
+### 2026-10-17 — v187 late-investment offense
+
+The owner approves distributing power through earned Ascension/Mythic progression,
+with full potential late in the game rather than a flat fourth-job transfer buff.
+Paired measurements showed existing maximum Ascension/+15 fixtures already exceed
+the earlier timing-only targets, so v187 back-loads existing offense without raising
+maximum coefficients: quadratic offensive stat/skill ranks, rank-scaled damaging
+sixth-skill base power, and refinement-scaled offensive Mythic set bonuses. Support,
+speed, cooldowns, 0.5s combo contacts, Rolling Cutter's 0.2s repeats and cosmetic
+(non-damaging) gap swings are preserved. Intermediate builds are intentionally
+weaker than v186; identical max-investment builds retain their DPS. The proposed
+50/30/20 split remains a planning guide, not an exact attribution or an added buff.
+The existing one-time historical High Priest/Sniper exception remains unchanged.

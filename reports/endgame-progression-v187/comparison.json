@@ -1,0 +1,2027 @@
+{
+  "beforeSourceHash": "6efd53e9a99646b34054166fd7f66c91c2f991eaa1ba25dffcc239ff373f2f45",
+  "afterSourceHash": "03d861ca285546b1f576fd09613694668ca295d566e5542370b1bc7846bf5a2f",
+  "seed": 789,
+  "seconds": 120,
+  "warmup": 20,
+  "hz": 30,
+  "sessions": 96,
+  "rows": [
+    {
+      "cls": "Rune Knight",
+      "weapon": "sword",
+      "stage": "transfer",
+      "inputHash": "78c62d20e785114d94ea32db1bf6af846a94fa8bd7cf56b358a7c2cf9b3390f1",
+      "before": {
+        "petMean": 24860,
+        "autoDps": 606114.225,
+        "dps": 1035680.8166666667,
+        "opening": 896344.6,
+        "pet": 24860,
+        "atk": 51792,
+        "matk": 17518,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 24860,
+        "autoDps": 606114.225,
+        "dps": 1035680.8166666667,
+        "opening": 896344.6,
+        "pet": 24860,
+        "atk": 51792,
+        "matk": 17518,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Rune Knight",
+      "weapon": "sword",
+      "stage": "evolved",
+      "inputHash": "6bc071e31a6203c23529ca82c89bbdc970a58f9c030d376fe660b0ff4f665f2d",
+      "before": {
+        "petMean": 56701,
+        "autoDps": 2254227.216666667,
+        "dps": 3989804.566666667,
+        "opening": 3944326.5,
+        "pet": 56701,
+        "atk": 118128,
+        "matk": 21124,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 55116,
+        "autoDps": 2191177.275,
+        "dps": 3878211.0833333335,
+        "opening": 3834005,
+        "pet": 55116,
+        "atk": 114824,
+        "matk": 21124,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Rune Knight",
+      "weapon": "sword",
+      "stage": "mid",
+      "inputHash": "7710a1e64b2753288a20a6df6154a6fad203538c0f048e8fd636dbae2208edf9",
+      "before": {
+        "petMean": 56701,
+        "autoDps": 2682282.75,
+        "dps": 4938020.541666667,
+        "opening": 4945314.1,
+        "pet": 56701,
+        "atk": 118128,
+        "matk": 21124,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 55116,
+        "autoDps": 2388976.7333333334,
+        "dps": 4322583.833333333,
+        "opening": 4301512.9,
+        "pet": 55116,
+        "atk": 114824,
+        "matk": 21124,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Rune Knight",
+      "weapon": "sword",
+      "stage": "late",
+      "inputHash": "de41794f530096dcd4da4cf46616ee7c44871c2c189ba0887512f293e635ce15",
+      "before": {
+        "petMean": 66176,
+        "autoDps": 3482480.65,
+        "dps": 6531490.15,
+        "opening": 6594580,
+        "pet": 66176,
+        "atk": 137867,
+        "matk": 24805,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 64992,
+        "autoDps": 3239484.7583333333,
+        "dps": 6007824.308333334,
+        "opening": 6042206.9,
+        "pet": 64992,
+        "atk": 135399,
+        "matk": 24805,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Rune Knight",
+      "weapon": "sword",
+      "stage": "full",
+      "inputHash": "3a4acd6eec23afee28ba9d7ba8fee4913694ab50ea8a338c623e819044dbe1d5",
+      "before": {
+        "petMean": 72490,
+        "autoDps": 4077635.1666666665,
+        "dps": 7768525.3,
+        "opening": 7878683.2,
+        "pet": 72490,
+        "atk": 151020,
+        "matk": 27257,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 72490,
+        "autoDps": 4077635.1666666665,
+        "dps": 7768525.3,
+        "opening": 7878683.2,
+        "pet": 72490,
+        "atk": 151020,
+        "matk": 27257,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Rune Knight",
+      "weapon": "sword",
+      "stage": "reference",
+      "inputHash": "20fc0b01558b080d485611765e0d4d806bd37af0f59a236e8421f8dd673cb003",
+      "before": {
+        "petMean": 72490,
+        "autoDps": 2881902.6166666667,
+        "dps": 5100740.541666667,
+        "opening": 5042599.5,
+        "pet": 72490,
+        "atk": 151020,
+        "matk": 27257,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 72490,
+        "autoDps": 2881902.6166666667,
+        "dps": 5100740.541666667,
+        "opening": 5042599.5,
+        "pet": 72490,
+        "atk": 151020,
+        "matk": 27257,
+        "interval": 0.10577777777777775,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Warlock",
+      "weapon": "staff",
+      "stage": "transfer",
+      "inputHash": "395ac76d4edfacc6097d6c5df1540f4b216e23b5b4772e75f44edd41b4560abf",
+      "before": {
+        "petMean": 18820,
+        "autoDps": 322287.625,
+        "dps": 1067688.2166666666,
+        "opening": 1176839.2,
+        "pet": 18820,
+        "atk": 39208,
+        "matk": 37906,
+        "interval": 0.172,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 18820,
+        "autoDps": 322287.625,
+        "dps": 1067688.2166666666,
+        "opening": 1176839.2,
+        "pet": 18820,
+        "atk": 39208,
+        "matk": 37906,
+        "interval": 0.172,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Warlock",
+      "weapon": "staff",
+      "stage": "evolved",
+      "inputHash": "4b65b1862f6d781eb8f482070751f803d3fafbaad43c834c4c6223b8ed1e77be",
+      "before": {
+        "petMean": 16386,
+        "autoDps": 884265.4666666667,
+        "dps": 4684818.116666666,
+        "opening": 5376508.6,
+        "pet": 16386,
+        "atk": 34137,
+        "matk": 62394,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 16386,
+        "autoDps": 837100.05,
+        "dps": 4434937.05,
+        "opening": 5089733.7,
+        "pet": 16386,
+        "atk": 34137,
+        "matk": 59066,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Warlock",
+      "weapon": "staff",
+      "stage": "mid",
+      "inputHash": "f154e8212fff15df9aedfbf2a260a86da4ed0d4941d89194cf23ee8874be5c4d",
+      "before": {
+        "petMean": 16386,
+        "autoDps": 1059216.8583333334,
+        "dps": 6034112.875,
+        "opening": 7248472.7,
+        "pet": 16386,
+        "atk": 34137,
+        "matk": 62394,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 16386,
+        "autoDps": 918781.3583333333,
+        "dps": 5065046.725,
+        "opening": 5777890.4,
+        "pet": 16386,
+        "atk": 34137,
+        "matk": 59066,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Warlock",
+      "weapon": "staff",
+      "stage": "late",
+      "inputHash": "825c27a3ed7e4e271b885e5fef9c60eca233eae1e4de902773c07b9eba7f0a0a",
+      "before": {
+        "petMean": 19120,
+        "autoDps": 1380803.925,
+        "dps": 8452162.158333333,
+        "opening": 9698626.8,
+        "pet": 19120,
+        "atk": 39833,
+        "matk": 72648,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 19120,
+        "autoDps": 1266417.7333333334,
+        "dps": 7530289.083333333,
+        "opening": 8670216.9,
+        "pet": 19120,
+        "atk": 39833,
+        "matk": 70168,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Warlock",
+      "weapon": "staff",
+      "stage": "full",
+      "inputHash": "10a795982d69d214de0099c9bfd0c7fb7a6eec7c4cef7ad3bd49b1aecc101213",
+      "before": {
+        "petMean": 20942,
+        "autoDps": 1629248.3083333333,
+        "dps": 10503645.825,
+        "opening": 11563414.9,
+        "pet": 20942,
+        "atk": 43629,
+        "matk": 79481,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 20942,
+        "autoDps": 1629248.3083333333,
+        "dps": 10503645.825,
+        "opening": 11563414.9,
+        "pet": 20942,
+        "atk": 43629,
+        "matk": 79481,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Warlock",
+      "weapon": "staff",
+      "stage": "reference",
+      "inputHash": "2fef54a4c9238ae5ac92c1186020bc3ee073b82c31a452df657bbb1e79443d27",
+      "before": {
+        "petMean": 20942,
+        "autoDps": 1126427.3333333333,
+        "dps": 5967785.866666666,
+        "opening": 6848900.3,
+        "pet": 20942,
+        "atk": 43629,
+        "matk": 79481,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 20942,
+        "autoDps": 1126427.3333333333,
+        "dps": 5967785.866666666,
+        "opening": 6848900.3,
+        "pet": 20942,
+        "atk": 43629,
+        "matk": 79481,
+        "interval": 0.15594666666666665,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Ranger",
+      "weapon": "bow",
+      "stage": "transfer",
+      "inputHash": "6a1812ebd1fc679e15a307659649e6062e8fe836ed24810489e9447dd930f014",
+      "before": {
+        "petMean": 22563,
+        "autoDps": 633365.5583333333,
+        "dps": 1064554.7166666666,
+        "opening": 894400.3,
+        "pet": 22563,
+        "atk": 47006,
+        "matk": 16013,
+        "interval": 0.13,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 22563,
+        "autoDps": 633365.5583333333,
+        "dps": 1064554.7166666666,
+        "opening": 894400.3,
+        "pet": 22563,
+        "atk": 47006,
+        "matk": 16013,
+        "interval": 0.13,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Ranger",
+      "weapon": "bow",
+      "stage": "evolved",
+      "inputHash": "76ea9207c77bc94c46415bbc48525f18e90c9d0b4c41340ed3fc67923a25494b",
+      "before": {
+        "petMean": 53349,
+        "autoDps": 2899454.183333333,
+        "dps": 4682789.683333334,
+        "opening": 4636120.3,
+        "pet": 53349,
+        "atk": 111144,
+        "matk": 20286,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 51676,
+        "autoDps": 2746648.5833333335,
+        "dps": 4435999.683333334,
+        "opening": 4391790.2,
+        "pet": 51676,
+        "atk": 107659,
+        "matk": 20286,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Ranger",
+      "weapon": "bow",
+      "stage": "mid",
+      "inputHash": "b997a66d0a00978c525cc2e8884dba8c2b706365f08466591f9cd6a8dc6fc879",
+      "before": {
+        "petMean": 53349,
+        "autoDps": 3424932.4583333335,
+        "dps": 5784319.475,
+        "opening": 5905488.3,
+        "pet": 53349,
+        "atk": 111144,
+        "matk": 20286,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 51676,
+        "autoDps": 2983053.3833333333,
+        "dps": 4944091.566666666,
+        "opening": 4959883.8,
+        "pet": 51676,
+        "atk": 107659,
+        "matk": 20286,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Ranger",
+      "weapon": "bow",
+      "stage": "late",
+      "inputHash": "2bf6e08bbc5eb7204e5b0669e2653002d5584255f7daf2bb24d7dc6ec78e48b2",
+      "before": {
+        "petMean": 62204,
+        "autoDps": 4431204.216666667,
+        "dps": 7619695.4,
+        "opening": 7991889.9,
+        "pet": 62204,
+        "atk": 129592,
+        "matk": 23791,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 60956,
+        "autoDps": 4064352.925,
+        "dps": 6902838.033333333,
+        "opening": 7158753.1,
+        "pet": 60956,
+        "atk": 126992,
+        "matk": 23791,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Ranger",
+      "weapon": "bow",
+      "stage": "full",
+      "inputHash": "756aea59da50e1a40158b3e1bf38c8431d460e18eabc8a179414266d66c59f6c",
+      "before": {
+        "petMean": 68105,
+        "autoDps": 5174068.366666666,
+        "dps": 9034983.3,
+        "opening": 9609220.6,
+        "pet": 68105,
+        "atk": 141885,
+        "matk": 26127,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 68105,
+        "autoDps": 5174068.366666666,
+        "dps": 9034983.3,
+        "opening": 9609220.6,
+        "pet": 68105,
+        "atk": 141885,
+        "matk": 26127,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Ranger",
+      "weapon": "bow",
+      "stage": "reference",
+      "inputHash": "5db268710870ae01f9b80dde099dbc285e0c006c3984157ecd93e7fa000dfaf9",
+      "before": {
+        "petMean": 68105,
+        "autoDps": 3701405.716666667,
+        "dps": 5977988.891666667,
+        "opening": 5918411.8,
+        "pet": 68105,
+        "atk": 141885,
+        "matk": 26127,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 68105,
+        "autoDps": 3701405.716666667,
+        "dps": 5977988.891666667,
+        "opening": 5918411.8,
+        "pet": 68105,
+        "atk": 141885,
+        "matk": 26127,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "katar",
+      "stage": "transfer",
+      "inputHash": "e6063a40e36a6d2117f577114ea352ea70c52e83508fce39e6c87b1e9e3d1a77",
+      "before": {
+        "petMean": 39358,
+        "autoDps": 1062758.325,
+        "dps": 1710007.6166666667,
+        "opening": 1692584.3,
+        "pet": 36078,
+        "atk": 75163,
+        "matk": 22657,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 39358,
+        "autoDps": 1062758.325,
+        "dps": 1710007.6166666667,
+        "opening": 1692584.3,
+        "pet": 36078,
+        "atk": 75163,
+        "matk": 22657,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "katar",
+      "stage": "evolved",
+      "inputHash": "4da0e1b6d9c33c57ac34e55606ee0528a246c03601fe88ce9ff2e2bd7d697447",
+      "before": {
+        "petMean": 81989.66666666667,
+        "autoDps": 4312612.358333333,
+        "dps": 6935734.066666666,
+        "opening": 6619836.7,
+        "pet": 77267,
+        "atk": 160972,
+        "matk": 30603,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 81989.66666666667,
+        "autoDps": 4220549.833333333,
+        "dps": 6787674.966666667,
+        "opening": 6478521.5,
+        "pet": 77267,
+        "atk": 160972,
+        "matk": 30603,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "katar",
+      "stage": "mid",
+      "inputHash": "66b15959b1b84091fa245f75508e465c04ab85d40b2dfe054c297c5c04ddeabd",
+      "before": {
+        "petMean": 81989.66666666667,
+        "autoDps": 5691317.191666666,
+        "dps": 8753144.233333332,
+        "opening": 8486444.1,
+        "pet": 77267,
+        "atk": 160972,
+        "matk": 30603,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 81989.66666666667,
+        "autoDps": 5128983.883333334,
+        "dps": 7774729.125,
+        "opening": 7430141,
+        "pet": 77267,
+        "atk": 160972,
+        "matk": 30603,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "katar",
+      "stage": "late",
+      "inputHash": "82f1b946652c3df47dbfbe9599ae5bd2eff76790d218f7dc7ba80556cbbd0a36",
+      "before": {
+        "petMean": 96024.66666666667,
+        "autoDps": 7361812.466666667,
+        "dps": 11535797.625,
+        "opening": 11416142.8,
+        "pet": 90493,
+        "atk": 188528,
+        "matk": 35992,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 96024.66666666667,
+        "autoDps": 6902202.966666667,
+        "dps": 10714858.783333333,
+        "opening": 10509635,
+        "pet": 90493,
+        "atk": 188528,
+        "matk": 35992,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "katar",
+      "stage": "full",
+      "inputHash": "22421f471acacd54bd515d29baf3f750a9e48b3775bb76fffc4e14a834b1d20a",
+      "before": {
+        "petMean": 105377,
+        "autoDps": 8604207.908333333,
+        "dps": 13638877.508333333,
+        "opening": 13643889.8,
+        "pet": 99307,
+        "atk": 206890,
+        "matk": 39584,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 105377,
+        "autoDps": 8604207.908333333,
+        "dps": 13638877.508333333,
+        "opening": 13643889.8,
+        "pet": 99307,
+        "atk": 206890,
+        "matk": 39584,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "katar",
+      "stage": "reference",
+      "inputHash": "c85f76f09628dba899cef9eb22a17d9fe63f7a741f42715870c7fdffc88036ac",
+      "before": {
+        "petMean": 105377,
+        "autoDps": 5542803.408333333,
+        "dps": 8914181.808333334,
+        "opening": 8508170.9,
+        "pet": 99307,
+        "atk": 206890,
+        "matk": 39584,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 105377,
+        "autoDps": 5542803.408333333,
+        "dps": 8914181.808333334,
+        "opening": 8508170.9,
+        "pet": 99307,
+        "atk": 206890,
+        "matk": 39584,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "dagger",
+      "stage": "transfer",
+      "inputHash": "d7641dcbb729f4337b880207247f21af921d05e9e03914cf0ee2003547e384ce",
+      "before": {
+        "petMean": 39097.666666666664,
+        "autoDps": 1126129.3916666666,
+        "dps": 1725015.5,
+        "opening": 1519533.6,
+        "pet": 35594,
+        "atk": 74155,
+        "matk": 16462,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 39097.666666666664,
+        "autoDps": 1126129.3916666666,
+        "dps": 1725015.5,
+        "opening": 1519533.6,
+        "pet": 35594,
+        "atk": 74155,
+        "matk": 16462,
+        "interval": 0.13,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "dagger",
+      "stage": "evolved",
+      "inputHash": "f0621900dce5833f4bcb9f6f7ff6c78ed17bf2e4d1c57a78172e8e8245d59d67",
+      "before": {
+        "petMean": 88461.33333333333,
+        "autoDps": 4823490.608333333,
+        "dps": 7758084.983333333,
+        "opening": 7350905,
+        "pet": 83726,
+        "atk": 174429,
+        "matk": 20621,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 88461.33333333333,
+        "autoDps": 4724173.775,
+        "dps": 7598344.05,
+        "opening": 7199548,
+        "pet": 83726,
+        "atk": 174429,
+        "matk": 20621,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "dagger",
+      "stage": "mid",
+      "inputHash": "dc680006c2e26db8ff8fbf77a13b1b6efe7d725986bf40ad597c5ce48a4a43ec",
+      "before": {
+        "petMean": 88461.33333333333,
+        "autoDps": 6356681.383333334,
+        "dps": 9777725.375,
+        "opening": 9412172.2,
+        "pet": 83726,
+        "atk": 174429,
+        "matk": 20621,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 88461.33333333333,
+        "autoDps": 5736321.791666667,
+        "dps": 8696487.941666666,
+        "opening": 8251741,
+        "pet": 83726,
+        "atk": 174429,
+        "matk": 20621,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "dagger",
+      "stage": "late",
+      "inputHash": "4c8a53495a008e10a8e80ce21232eaa3ae406be5852aa29aeac0ea63a193b044",
+      "before": {
+        "petMean": 103564,
+        "autoDps": 8213533.141666667,
+        "dps": 12872078.875,
+        "opening": 12647697.7,
+        "pet": 98020,
+        "atk": 204208,
+        "matk": 24214,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 103564,
+        "autoDps": 7707034.408333333,
+        "dps": 11965809.025,
+        "opening": 11652898.5,
+        "pet": 98020,
+        "atk": 204208,
+        "matk": 24214,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "dagger",
+      "stage": "full",
+      "inputHash": "5821d2ec69c962b35542c546ab8289b79f223d2f279646bafe38b4c8854741e9",
+      "before": {
+        "petMean": 113627,
+        "autoDps": 9593416.391666668,
+        "dps": 15208854.091666667,
+        "opening": 15105973.5,
+        "pet": 107544,
+        "atk": 224051,
+        "matk": 26608,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 113627,
+        "autoDps": 9593416.391666668,
+        "dps": 15208854.091666667,
+        "opening": 15105973.5,
+        "pet": 107544,
+        "atk": 224051,
+        "matk": 26608,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Guillotine Cross",
+      "weapon": "dagger",
+      "stage": "reference",
+      "inputHash": "aeeee7994df8178a605d82d73e6a195989bd7b1322309d6a64fbd6cc07c48ffe",
+      "before": {
+        "petMean": 113627,
+        "autoDps": 6195699.916666667,
+        "dps": 9965141.141666668,
+        "opening": 9442151.5,
+        "pet": 107544,
+        "atk": 224051,
+        "matk": 26608,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 113627,
+        "autoDps": 6195699.916666667,
+        "dps": 9965141.141666668,
+        "opening": 9442151.5,
+        "pet": 107544,
+        "atk": 224051,
+        "matk": 26608,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Arch Bishop",
+      "weapon": "mace",
+      "stage": "transfer",
+      "inputHash": "0495cb2c436671628db17bf47c0ec1e8061ed5eb138df2608733192ac6c5f6ab",
+      "before": {
+        "petMean": 22316,
+        "autoDps": 240425.675,
+        "dps": 707184.3666666667,
+        "opening": 690020.6,
+        "pet": 22316,
+        "atk": 46492,
+        "matk": 19732,
+        "interval": 0.14050331125827814,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 22316,
+        "autoDps": 240425.675,
+        "dps": 707184.3666666667,
+        "opening": 690020.6,
+        "pet": 22316,
+        "atk": 46492,
+        "matk": 19732,
+        "interval": 0.14050331125827814,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Arch Bishop",
+      "weapon": "mace",
+      "stage": "evolved",
+      "inputHash": "1f41864737f830152c1de91ffe5cbcf3b2c807ce53423c1be6a6ad060dd760ab",
+      "before": {
+        "petMean": 25402,
+        "autoDps": 733154.25,
+        "dps": 3264997.941666667,
+        "opening": 3408463.4,
+        "pet": 25402,
+        "atk": 52920,
+        "matk": 32647,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 25402,
+        "autoDps": 687117.325,
+        "dps": 3059979.158333333,
+        "opening": 3194436.2,
+        "pet": 25402,
+        "atk": 52920,
+        "matk": 30597,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Arch Bishop",
+      "weapon": "mace",
+      "stage": "mid",
+      "inputHash": "2d73ad995b15405a7bd6b13f702d4045f718fe80d407551def8c18cbb5a6bd69",
+      "before": {
+        "petMean": 25402,
+        "autoDps": 914198.8583333333,
+        "dps": 4184590.3916666666,
+        "opening": 4633433.3,
+        "pet": 25402,
+        "atk": 52920,
+        "matk": 32647,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 25402,
+        "autoDps": 769216.0083333333,
+        "dps": 3503644.716666667,
+        "opening": 3609605.1,
+        "pet": 25402,
+        "atk": 52920,
+        "matk": 30597,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Arch Bishop",
+      "weapon": "mace",
+      "stage": "late",
+      "inputHash": "9b76368bcbb98f48bc7e077bf3b951997ea0a26b62506bd31dbe9deb581145f2",
+      "before": {
+        "petMean": 29680,
+        "autoDps": 1245483.8583333334,
+        "dps": 5513250.233333333,
+        "opening": 6101342.9,
+        "pet": 29680,
+        "atk": 61833,
+        "matk": 38074,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 29680,
+        "autoDps": 1112028.4166666667,
+        "dps": 4948714.191666666,
+        "opening": 5445618.1,
+        "pet": 29680,
+        "atk": 61833,
+        "matk": 36544,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Arch Bishop",
+      "weapon": "mace",
+      "stage": "full",
+      "inputHash": "017674b29a79dc21108e95f41b836ba3c44cbb86bba9dabb50fb21d8ea4c7a7e",
+      "before": {
+        "petMean": 32531,
+        "autoDps": 1495588.6333333333,
+        "dps": 6560865.608333333,
+        "opening": 7229691,
+        "pet": 32531,
+        "atk": 67772,
+        "matk": 41690,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 32531,
+        "autoDps": 1495588.6333333333,
+        "dps": 6560865.608333333,
+        "opening": 7229691,
+        "pet": 32531,
+        "atk": 67772,
+        "matk": 41690,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Arch Bishop",
+      "weapon": "mace",
+      "stage": "reference",
+      "inputHash": "d33d528b140753a86b32b19545fca198e8211260150e32cbdcdcf91549444b95",
+      "before": {
+        "petMean": 32531,
+        "autoDps": 936232.9916666667,
+        "dps": 4169380.4166666665,
+        "opening": 4352585.4,
+        "pet": 32531,
+        "atk": 67772,
+        "matk": 41690,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 32531,
+        "autoDps": 936232.9916666667,
+        "dps": 4169380.4166666665,
+        "opening": 4352585.4,
+        "pet": 32531,
+        "atk": 67772,
+        "matk": 41690,
+        "interval": 0.10416666666666667,
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "axe",
+      "stage": "transfer",
+      "inputHash": "7031abbd1c9e5b9afe6020391b6eb5528c99caa6aee30db6b890bf997d989900",
+      "before": {
+        "petMean": 21812.6,
+        "autoDps": 393056.99166666664,
+        "dps": 719079.65,
+        "opening": 774077.9,
+        "pet": 19274,
+        "atk": 40155,
+        "matk": 16380,
+        "interval": 0.147968,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 21812.6,
+        "autoDps": 393056.99166666664,
+        "dps": 719079.65,
+        "opening": 774077.9,
+        "pet": 19274,
+        "atk": 40155,
+        "matk": 16380,
+        "interval": 0.147968,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "axe",
+      "stage": "evolved",
+      "inputHash": "671320b9497b747fad47c6732fcda4330686e466ecd0bc1b012e55619c8e7051",
+      "before": {
+        "petMean": 64411.4,
+        "autoDps": 2267789.0833333335,
+        "dps": 3788309.3583333334,
+        "opening": 3911288.6,
+        "pet": 60758,
+        "atk": 126579,
+        "matk": 21627,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 62787.4,
+        "autoDps": 2210575.15,
+        "dps": 3692763.3916666666,
+        "opening": 3816276.1,
+        "pet": 59134,
+        "atk": 123196,
+        "matk": 21627,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "axe",
+      "stage": "mid",
+      "inputHash": "131d0320c18b5c5a66dc994221d1d9f122cd3f0772ceaa15028e7d039b1a1a7e",
+      "before": {
+        "petMean": 64411.4,
+        "autoDps": 2654200.075,
+        "dps": 4654813.666666667,
+        "opening": 4860432.2,
+        "pet": 60758,
+        "atk": 126579,
+        "matk": 21627,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 62787.4,
+        "autoDps": 2394170.716666667,
+        "dps": 4109021.275,
+        "opening": 4272973.9,
+        "pet": 59134,
+        "atk": 123196,
+        "matk": 21627,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "axe",
+      "stage": "late",
+      "inputHash": "45b045cbe11e089f67525a023f36b65f26bbbfb78f2b45d1a546fd7773267414",
+      "before": {
+        "petMean": 75174.2,
+        "autoDps": 3390458.8333333335,
+        "dps": 6085934.466666667,
+        "opening": 6390131.2,
+        "pet": 70910,
+        "atk": 147730,
+        "matk": 25395,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 73961.2,
+        "autoDps": 3180025.975,
+        "dps": 5627784.016666667,
+        "opening": 5893729.2,
+        "pet": 69697,
+        "atk": 145203,
+        "matk": 25395,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "axe",
+      "stage": "full",
+      "inputHash": "42c48aadf5ddc946adc8755ba31841c873a6f4583a0d25e2dc9788aea75088ac",
+      "before": {
+        "petMean": 82346.4,
+        "autoDps": 3938132.575,
+        "dps": 7194632.566666666,
+        "opening": 7583776.4,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 82346.4,
+        "autoDps": 3938132.575,
+        "dps": 7194632.566666666,
+        "opening": 7583776.4,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "axe",
+      "stage": "reference",
+      "inputHash": "08ed11e34102ca331a8db0b5d3302edd6bc612c8dcc8c10d5ac51ea7c474dfac",
+      "before": {
+        "petMean": 82346.4,
+        "autoDps": 2899235.2083333335,
+        "dps": 4843130.983333333,
+        "opening": 5000349,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 82346.4,
+        "autoDps": 2899235.2083333335,
+        "dps": 4843130.983333333,
+        "opening": 5000349,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "mace",
+      "stage": "transfer",
+      "inputHash": "535764880dc3dc3238cdbfc6d951928708398ef83e94e808189f66d3052ab16f",
+      "before": {
+        "petMean": 21812.6,
+        "autoDps": 393056.99166666664,
+        "dps": 719079.65,
+        "opening": 774077.9,
+        "pet": 19274,
+        "atk": 40155,
+        "matk": 16380,
+        "interval": 0.147968,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 21812.6,
+        "autoDps": 393056.99166666664,
+        "dps": 719079.65,
+        "opening": 774077.9,
+        "pet": 19274,
+        "atk": 40155,
+        "matk": 16380,
+        "interval": 0.147968,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "mace",
+      "stage": "evolved",
+      "inputHash": "b5f84ae886d1fcbf9fe10937b87988f647368d42175ea29ad46d04119779e11d",
+      "before": {
+        "petMean": 64411.4,
+        "autoDps": 2267789.0833333335,
+        "dps": 3788309.3583333334,
+        "opening": 3911288.6,
+        "pet": 60758,
+        "atk": 126579,
+        "matk": 21627,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 62787.4,
+        "autoDps": 2210575.15,
+        "dps": 3692763.3916666666,
+        "opening": 3816276.1,
+        "pet": 59134,
+        "atk": 123196,
+        "matk": 21627,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "mace",
+      "stage": "mid",
+      "inputHash": "32709e0fd72d128e1b469705c54516b0c94d160cc1826479cdab19213002b343",
+      "before": {
+        "petMean": 64411.4,
+        "autoDps": 2654200.075,
+        "dps": 4654813.666666667,
+        "opening": 4860432.2,
+        "pet": 60758,
+        "atk": 126579,
+        "matk": 21627,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 62787.4,
+        "autoDps": 2394170.716666667,
+        "dps": 4109021.275,
+        "opening": 4272973.9,
+        "pet": 59134,
+        "atk": 123196,
+        "matk": 21627,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "mace",
+      "stage": "late",
+      "inputHash": "aea560d67048e15392950439a68d0588b30397f6c3e09d0148de29cfc3c47cb8",
+      "before": {
+        "petMean": 75174.2,
+        "autoDps": 3390458.8333333335,
+        "dps": 6085934.466666667,
+        "opening": 6390131.2,
+        "pet": 70910,
+        "atk": 147730,
+        "matk": 25395,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 73961.2,
+        "autoDps": 3180025.975,
+        "dps": 5627784.016666667,
+        "opening": 5893729.2,
+        "pet": 69697,
+        "atk": 145203,
+        "matk": 25395,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "mace",
+      "stage": "full",
+      "inputHash": "b17354b5aa6d9e164b41ac2c964593a6ed7691e6673d2233bbdacb1bd5afe316",
+      "before": {
+        "petMean": 82346.4,
+        "autoDps": 3938132.575,
+        "dps": 7194632.566666666,
+        "opening": 7583776.4,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 82346.4,
+        "autoDps": 3938132.575,
+        "dps": 7194632.566666666,
+        "opening": 7583776.4,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    },
+    {
+      "cls": "Mechanic",
+      "weapon": "mace",
+      "stage": "reference",
+      "inputHash": "144f7fac6ee8fe94077b672bc57febf4adc6fa5fa47f9c9c10ab27124c15ca93",
+      "before": {
+        "petMean": 82346.4,
+        "autoDps": 2899235.2083333335,
+        "dps": 4843130.983333333,
+        "opening": 5000349,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      },
+      "after": {
+        "petMean": 82346.4,
+        "autoDps": 2899235.2083333335,
+        "dps": 4843130.983333333,
+        "opening": 5000349,
+        "pet": 77676,
+        "atk": 161824,
+        "matk": 27906,
+        "interval": 0.10569142857142856,
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        }
+      }
+    }
+  ]
+}

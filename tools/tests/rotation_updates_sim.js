@@ -16,9 +16,10 @@ try{
   assert.equal(ev('comboConfig().slots.join()'),ev('order'));
   ev(`currentUser='other-rotation-account';S=load()`);assert.equal(ev('Object.keys(S.skillCombos).length'),0);
   ev(`currentUser='skill-test';S=load();tabs.length=0;openTab('skills');renderWin()`);
-  assert.equal(ev(`!!document.querySelector('.skill-rotation')`),false,'v174: the skill tiles no longer bury the combo plan');
+  assert.equal(ev(`!!document.querySelector('.skill-rotation')`),true,'v179: Skills opens with the combo editor');
+  assert.equal(ev(`document.querySelector('.ui-content').firstElementChild.className`),'ui-combo-editor','combo editor precedes skill tiles');
   ev(`sub.skills='combo';renderWin()`);
-  assert.equal(ev(`!!document.querySelector('.skill-rotation')&&!document.querySelector('.skill-rotation').closest('details')`),true,'v174: the Combo sub-tab shows the plan unfolded');
+  assert.equal(ev(`!!document.querySelector('.skill-rotation')&&!document.querySelector('.skill-rotation').closest('details')`),true,'v179: legacy Combo navigation still shows the plan unfolded');
   ev(`S=fresh();S.lv=120;S.zeny=1e9;S.ore.ori=1000;S.eq.weapon.aff=[{k:'str',v:10},{k:'agi',v:10},{k:'dex',v:10}];reforgeSelection[S.eq.weapon.id]=[1];window.before=JSON.stringify(S.eq.weapon.aff);reforge('weapon');lsPut(saveKey(),JSON.stringify(S));S=load();window.paid=S.zeny;keepAndReforge();`);
   assert.equal(ev('JSON.stringify(S.eq.weapon.aff)'),ev('before'));
   assert.equal(ev('S.reforgePending.chosen.join()'),'1');

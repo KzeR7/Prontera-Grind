@@ -5,6 +5,9 @@ const g=createGame(),ev=g.ev;
 let passed=0;
 function setup(cls,map,boss){
  ev(`S=fresh();S.cls=${JSON.stringify(cls)};S.lv=150;S.mp=${map};S.lvl=${boss?5:1};S.auto=false;S.adv=false;S.pets=[];S.sk={};S.st.agi=120;
+  // Test movement/re-engagement, not a random first-swing MISS at fresh DEX 1.
+  // Keep the real strike/damage path; DEX 120 makes missCh() zero.
+  S.st.dex=120;
   t=10;tb={};for(const k in skCd)delete skCd[k];resetSkillRuntime();swing=null;atkAnim=0;pAtkT=0;TRIAL.on=false;astralJourney=null;spawn();
   mob=mobs.find(m=>m.boss===${boss});mobs=[mob];camps=[];activePack=mob.pack;
   mob.hp=mob.max=1e12;mob.atk=0;mob.at=1e9;mob.fixed=true;mob.spawn=1;mob.a=0;mob.z=mob.hz=0;

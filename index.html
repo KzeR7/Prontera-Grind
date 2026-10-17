@@ -1121,7 +1121,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-16 haven-v184 bgm playback fixes';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-17 haven-v187 late Ascension power';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1612,7 +1612,7 @@ function ascensionForgePanel(){
   const affordable=cost&&(S.ascensionMat?.[set.mat]||0)>=cost[0]&&(S.ascensionMat?.[2]||0)>=cost[1]&&S.zeny>=cost[2];
   return `<section class="ascension-forge"><header><span class="ui-eyebrow">EQUIPMENT EVOLUTION</span><h2>Ascension Forge</h2><p>${unlocked?'Evolve one N+ item into its Mythic set piece.':'Unlocks when you become a fourth-job class.'}</p></header>
   <div class="ascension-set-picker" aria-label="Mythic sets">${Object.entries(ASC_SETS).map(([id,v])=>`<button data-a="ascset" data-v="${id}" aria-pressed="${id===key}"><b>${v.name}</b><small>${v.mat===0?'Astral':'Primal'}</small></button>`).join('')}</div>
-  <div class="ascension-forge-body"><section class="ascension-set-info"><h3>${set.name} set</h3><p>${active?active.count+' pieces equipped':'No set bonus active'}</p><ul>${set.bonuses.map(b=>`<li class="${active&&active.count>=b.count?'active':''}"><b>${b.count} pieces</b><span>${b.desc}</span></li>`).join('')}</ul></section>
+  <div class="ascension-forge-body"><section class="ascension-set-info"><h3>${set.name} set</h3><p>Listed offense is the +15 maximum. ATK, MATK, Crit, Crit DMG and Field DMG start at 40% of that bonus through +10; +11–15 progressively unlock the rest. Defensive and speed set bonuses are unchanged.</p><p>${active?active.count+' pieces equipped':'No set bonus active'}</p><ul>${set.bonuses.map(b=>`<li class="${active&&active.count>=b.count?'active':''}"><b>${b.count} pieces</b><span>${b.desc}</span></li>`).join('')}</ul>${active?'<p>Active set stats: '+Object.entries(active.tier.stats).map(([k,v])=>esc(k)+' +'+Number(v.toFixed(2))+'%').join(' · ')+'</p>':''}</section>
   <section class="ascension-evolution"><label>Choose N+ equipment<select data-ascension-item ${unlocked?'':'disabled'}><option value="">Select an owned item…</option>${candidates.map(x=>`<option value="${x.id}" ${it===x?'selected':''}>${esc(iname(x))}${items().includes(x)?' · Equipped':' · Bag'}</option>`).join('')}</select></label>
   ${it?`<div class="ascension-item-change"><div>${itemIconMarkup(it)}<strong>${esc(iname(it))}</strong><small>Current N+ item</small></div><span aria-hidden="true">→</span><div>${itemIconMarkup({...it,sec:6,ascSet:key})}<strong>Mythic ${esc(it.slot==='weapon'?set.pieces.weapon[it.wt]:set.pieces[it.slot])}</strong><small>${set.name} set · Fourth jobs only</small></div></div><p>Keeps refinement, cards, existing affixes and item identity. Fills up to four affixes.</p><dl class="ascension-costs"><div><dt>${mat}</dt><dd>${cost[0]} / ${S.ascensionMat?.[set.mat]||0}</dd></div><div><dt>Valkyrie's Sigil</dt><dd>${cost[1]} / ${S.ascensionMat?.[2]||0}</dd></div><div><dt>Zeny</dt><dd>${cost[2].toLocaleString()} / ${S.zeny.toLocaleString()}</dd></div></dl><button class="full" data-a="transformasc" data-v="${key}:${it.id}" ${unlocked&&affordable?'':'disabled'}>Ascend selected equipment</button>`:`<p class="ascension-empty">${candidates.length?'Choose equipment to preview the result and exact material cost.':'No eligible N+ equipment. Only equipment your current class can wear is listed; finish any pending reforge first.'}</p>`}
   </section></div></section>`;
@@ -1628,23 +1628,55 @@ function ascensionSetBonuses(){
     }
     if(count>=2){
       const tier=set.bonuses.filter(b=>count>=b.count).pop();
-      if(tier)active[key]={count,tier,set};
+      if(tier){
+        // Retain maximum set strength, but earn offense through +11..15 refinement.
+        // Best qualifying pieces and lower-tier floors prevent a weaker extra piece
+        // or crossing a set threshold from reducing an already earned bonus.
+        const refined=worn.filter(it=>it.ascSet===key).map(it=>Math.max(0,Math.min(15,Number(it.r)||0))).sort((a,b)=>b-a);
+        const stats={...tier.stats};
+        for(const k of ['atk','matk','crit','cdm','field']){
+          let best=0;for(const b of set.bonuses){if(count<b.count)continue;
+            const mean=refined.slice(0,b.count).reduce((a,b)=>a+b,0)/b.count,q=Math.max(0,(mean-10)/5);
+            best=Math.max(best,(b.stats[k]||0)*(.4+.6*q*q));}
+          if(best)stats[k]=best;
+        }
+        active[key]={count,tier:{...tier,stats},set};
+      }
     }
   }
   return active;
 }
-// Build a crafted Ascension item. The item has Mythic rarity, the set tag, and strong base stats.
+// GM gifts stand in for evolving a top-field N+ drop. Evolution itself preserves its source base.
+// Match genGear's N+ formula, including the field-power factor; Mythic quality is not a base multiplier.
+function mythicGiftBaseValue(slot,roll){
+  return Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*15*(1+fieldPower(9,15)*.15)*RAR[4].m*MAPVAL[9]*roll));
+}
+function repairMythicGiftBase(it){
+  if(!it||it.mythicGiftVersion||it.sec!==6||it.mythic!==true||it.tier!==4||it.lvl!==150||it.quality!==1.5)return;
+  const set=Object.hasOwn(ASC_SETS,it.ascSet)?ASC_SETS[it.ascSet]:null;
+  if(!set||it.mp!==set.map||!Object.hasOwn(set.cost,it.slot))return;
+  const name=it.slot==='weapon'?set.pieces.weapon[it.wt]:set.pieces[it.slot];
+  if(!name||it.name!=='Mythic '+name)return;
+  // Only the narrow legacy gift band qualifies. Real evolved N+ bases are far above it.
+  const base={weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[it.slot]*15*1.15*4.5*1.5;
+  const lo=Math.round(base*.95),hi=Math.round(base*1.05);
+  if(!Number.isInteger(it.val)||it.val<lo||it.val>hi)return;
+  // The original random roll was not saved. Keep its relative position in the corrected band.
+  const low=mythicGiftBaseValue(it.slot,.9),high=mythicGiftBaseValue(it.slot,1.12);
+  it.val=Math.round(low+(high-low)*(it.val-lo)/(hi-lo));it.mythicGiftVersion=1;
+}
+// Build a GM Ascension item with the same base range as an evolved top-field N+ piece.
 function makeMythicEquipment(setKey,slot,weaponType){
   const set=ASC_SETS[setKey];if(!set)return null;
   const cost=set.cost[slot];if(!cost)return null;
   const name=slot==='weapon'?set.pieces.weapon[weaponType]:set.pieces[slot];
   if(!name)return{error:'Invalid equipment recipe'};
-  const tier=4,val=Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*15*1.15*RAR[4].m*1.5*rnd(.95,1.05));
+  const tier=4,val=mythicGiftBaseValue(slot,rnd(.9,1.12));
   const profile={slot,wt:slot==='weapon'?weaponType:undefined,sec:6,tier,mp:set.map,quality:1.5};
   const pool=affixPool(profile).slice(),aff=[];
   for(let i=0;i<4;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push(rollAffix(k,profile))}
   const slots=slot==='weapon'&&(weaponType==='katar'||weaponType==='bow')?4:slot==='weapon'?3:1;
-  const item={id:uid(),slot,wt:slot==='weapon'?weaponType:undefined,tier,val,name:'Mythic '+name,aff,slots,cards:[],sec:6,lvl:150,quality:1.5,mp:set.map,mythic:true,ascSet:setKey};
+  const item={id:uid(),slot,wt:slot==='weapon'?weaponType:undefined,tier,val,name:'Mythic '+name,aff,slots,cards:[],sec:6,lvl:150,quality:1.5,mp:set.map,mythic:true,ascSet:setKey,mythicGiftVersion:1};
   return{item};
 }
 // GM presets grant separate items; selecting a class never changes the player's job or gear.
@@ -1667,7 +1699,7 @@ function gmMaxAscensionGear(cls){
       slot==='leg'?['aspd','move','hp','vit']:['hp','vit','agi','flee'];
     const pool=affixPool(it),keys=[...new Set([...priority,...pool])].filter(k=>pool.includes(k)).slice(0,4);
     it.r=15;
-    it.val=Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*15*1.15*RAR[4].m*1.5*1.05);
+    it.val=mythicGiftBaseValue(slot,1.12);
     it.aff=keys.map(k=>({k,v:k==='move'?Math.min(slot==='acc'?5:8,affixValue(k,6,4,1.25,it.mp)):affixValue(k,6,4,1.25,it.mp)}));
     return it;
   });
@@ -2943,9 +2975,13 @@ function cleanAscension(value){
  }return a;
 }
 function ascState(){if(!S.ascension||S.ascension.version!==1)S.ascension=cleanAscension(S.ascension);return S.ascension;}
-function ascStat(k){return CLASSES[S?.cls]?.tier===4?(ascState().stats[S.cls]?.[k]||0)*(ASC_STATS[k]?.step||0):0;}
+// Offensive ranks mature quadratically: buying the first point never grants endgame power.
+function ascStatValue(k,rank){const n=Math.max(0,Math.min(10,Number(rank)||0));return (ASC_STATS[k]?.step||0)*n*(['might','precision','ferocity','slayer'].includes(k)?n/10:1);}
+function ascStat(k){return CLASSES[S?.cls]?.tier===4?ascStatValue(k,ascState().stats[S.cls]?.[k]||0):0;}
 function ascRank(id){const sk=SKILLS4.find(s=>s.id===id);return sk?.from===S?.cls&&CLASSES[S.cls]?.tier===4?ascState().skills[S.cls]?.ranks[id]||0:0;}
-function ascSkillValue(id,key){return (ASC_UPGRADES[id]?.[key]||0)*ascRank(id)/5;}
+function ascUpgradeScale(key,rank){const q=Math.max(0,Math.min(5,Number(rank)||0))/5;return ['damage','boss','critical','vulnerable','buff'].includes(key)?q*q:q;}
+function ascSkillValue(id,key){return (ASC_UPGRADES[id]?.[key]||0)*ascUpgradeScale(key,ascRank(id));}
+function ascSignaturePower(sk){return sk.ascensionOnly&&sk.type==='act'?(.4+.6*ascUpgradeScale('damage',ascRank(sk.id))):1;}
 function gainAscension(amount,cls=S.cls){
  if(!FOURTH_JOBS_LIVE||CLASSES[cls]?.tier!==4||!Number.isFinite(amount)||amount<=0)return;
  const a=ascState(),advance=(track,cap,skills)=>{const before=track.level;if(track.level===cap)return;track.xp+=Math.floor(amount);
@@ -2967,8 +3003,8 @@ function ascSkillVariant(sk){const rank=ascRank(sk.id);if(!rank)return sk;const 
  return v;
 }
 const ascCooldown=sk=>sk.cd*(1-ascSkillValue(sk.id,'cooldown')/100);
-function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},scale=rank/5,labels={damage:'skill damage',area:'area radius',range:'range',boss:'damage to bosses',cooldown:'shorter cooldown',stun:'stun seconds',root:'root seconds',slow:'slow points',critical:'critical chance points beyond cap',duration:'duration seconds',flee:'flee points beyond cap',barrier:'max HP shield points',buff:id==='rk_enchant'?'basic-attack damage':id==='rg_unlimit'?'ranged physical damage':'sacred damage points',heal:'relative healing',vulnerable:'target damage taken',regen:'max HP healed over 5s'};
- return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*scale).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
+function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},labels={damage:'skill damage',area:'area radius',range:'range',boss:'damage to bosses',cooldown:'shorter cooldown',stun:'stun seconds',root:'root seconds',slow:'slow points',critical:'critical chance points beyond cap',duration:'duration seconds',flee:'flee points beyond cap',barrier:'max HP shield points',buff:id==='rk_enchant'?'basic-attack damage':id==='rg_unlimit'?'ranged physical damage':'sacred damage points',heal:'relative healing',vulnerable:'target damage taken',regen:'max HP healed over 5s'};
+ return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*ascUpgradeScale(k,rank)).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
 const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.45,muted:false},
@@ -3094,6 +3130,8 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
     if(!r.eq||typeof r.eq!=='object')r.eq=null}   // null = loadout unknown: keep what is worn
   if(!Array.isArray(f.pets))f.pets=[];f.pets=f.pets.filter(p=>p&&typeof p==='object');if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
   if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;
+  // Repair old GM gifts wherever owned; class loadouts reference these items by ID.
+  [...Object.values(f.eq),...f.inv].forEach(repairMythicGiftBase);
   // v47 equipment locks are per-item data: legacy gear defaults unlocked, while deliberate locks persist.
   {const fixLock=it=>{if(it&&typeof it==='object')it.locked=it.locked===true};f.inv.forEach(fixLock);Object.values(f.eq).forEach(fixLock)}
   if(f.hp<=0)f.hp=F.hp;
@@ -3486,7 +3524,7 @@ function gmApplyGift(p){
     if(amount>100)throw Error('Too many items');
     if(!p.item.card&&S.inv.length+amount>BAGMAX)throw Error('Bag full; gift will wait for space');
     const dest=p.item.card?S.cards:S.inv;
-    for(let i=0;i<amount;i++)dest.push({...JSON.parse(JSON.stringify(p.item)),id:uid()});
+    for(let i=0;i<amount;i++){const item={...JSON.parse(JSON.stringify(p.item)),id:uid()};if(!p.item.card)repairMythicGiftBase(item);dest.push(item);}
   }else throw Error('Unknown gift');
 }
 function gmApplyGear(p){
@@ -3790,7 +3828,7 @@ function rotationCooldown(){return 3;}
 function comboStatus(){const c=comboConfig(),r=skillState();if(!c.enabled)return 'Combo paused';if(t<(r.recoverUntil||0))return 'Recovering · '+Math.max(0,r.recoverUntil-t).toFixed(1)+'s';
   if(!rotationSkills().length)return 'Choose an attack to begin';return r.comboSlots?'Combo · '+Math.min(r.cursor+1,r.comboSlots.length)+' / '+r.comboSlots.length:'Ready for next combo';}
 function rotationBar(){const c=comboConfig(),available=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
-  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, then recover for 3 seconds.${FOURTH_JOBS_LIVE&&S.cls==='Guillotine Cross'?' Rolling Cutter spins five times in its slot at 0.2s spacing.':' Each attack casts once.'} Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · fast basic attacks between skills</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"${sk?` title="${esc(sk.n+' · Lv '+lv(sk.id)+' · '+sk.cd+'s cooldown — '+(sk.text||''))}"`:''}><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
+  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, then recover for 3 seconds.${FOURTH_JOBS_LIVE&&S.cls==='Guillotine Cross'?' Rolling Cutter spins five times in its slot at 0.2s spacing.':' Each attack casts once.'} Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · visual-only swings between skills</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"${sk?` title="${esc(sk.n+' · Lv '+lv(sk.id)+' · '+sk.cd+'s cooldown — '+(sk.text||''))}"`:''}><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
 }
 // v39: the master auto-cast switch. It covers every learned skill of the current line that
 // auto-casts (everything except passives), reads ON only while ALL of them are ON, and clears
@@ -4785,7 +4823,7 @@ function castSkill(sk,k){
   const bonus=pv('damage')+(sk.falcon?pv('falcon'):0)+(['cart','cartrev','meltdown'].includes(sk.id)?Math.min(3,r.momentum)*pv('momentum'):0);
   // INT multiplies caster skills. Physical training is folded into rank coefficients
   // before interpolation so increasing an attack rank never lowers its damage.
-  let raw=(sk.magic?matk():atk())*skillStatScale(sk,L)*sk.mul(L)*k*(1+bonus/100)*skillTuning(false,sk,L)*(1+ascSkillValue(sk.id,'damage')/100);
+  let raw=(sk.magic?matk():atk())*skillStatScale(sk,L)*sk.mul(L)*k*(1+bonus/100)*skillTuning(false,sk,L)*(1+ascSkillValue(sk.id,'damage')/100)*ascSignaturePower(sk);
   if(sk.counter&&r.counter>0){raw*=1.2;r.counter=0;}
   if(skillOn('iagi')&&aspd()<=.131)raw*=1+(r.buffs.iagi?r.buffs.iagi.value:0)/100;
   if(sk.execute&&target.hp/target.max<.3)raw*=1+sk.execute;
@@ -4881,25 +4919,31 @@ function playerAttack(){
   engageWait=0;   // a swing ends the current out-of-range tracking
   const far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6,sk=nextComboSkill(mob);
   const r=skillState(),wait=!sk&&comboConfig().enabled&&r.comboSlots?comboSwingWait():0;
-  // Fill only gaps that fit a complete normal swing; reserve the next skill's windup.
+  // Fill only gaps that fit a complete visual swing; reserve the next skill's windup.
   if(wait>1e-8&&swingLength()>wait){pAtkT=wait;return;}
   const interval=sk?Math.min(sk.spacing||.5,aspd()):aspd();pAtkT=interval;atkAnim=1;swingDur=swingLength(Math.min(interval,aspd()));
-  if(wait>1e-8)pAtkT=Math.min(pAtkT,wait);
+  if(wait>1e-8){
+    pAtkT=Math.min(pAtkT,wait);
+    // ASPD animates the native attack pose, but gap swings never roll or resolve a hit.
+    swing={t:swingDur*SWING_CONTACT,casts:[],visualOnly:true};return;
+  }
   const casts=sk?[sk]:[];
   const d=pv('dbl');
   swing={t:swingDur*SWING_CONTACT,target:mob,pack:mob.pack,casts:casts.map(sk=>({sk,k:1})),
     far,double:d&&Math.random()<d/100+st('dex')*.003};
 }
 function resolveSwing(s){
+  if(s.visualOnly)return; // No targeting, RNG, damage, procs, leech or projectiles.
   // the monster picked when the key went down may already be dead (pet, DoT or the previous swing):
   // the hit moves to the nearest survivor of the same camp instead of being thrown away.
   let tgt=s.target;
   if(!tgt||!mobs.includes(tgt)||tgt.hp<=0)tgt=mobs.find(m=>m.pack===s.pack&&m.hp>0)||mob;
   if(!tgt||!mobs.includes(tgt)||tgt.hp<=0)return;
+  const r=skillState();
+  // A cancelled skill must not turn into a damaging normal attack.
+  if(s.casts.length&&(!comboConfig().enabled||t<r.recoverUntil||t<r.nextCastAt))return;
   mob=tgt;
   dmgGroup=new Map();
-  const r=skillState();
-  if(!comboConfig().enabled||t<r.recoverUntil||t<r.nextCastAt)s.casts=[];
   if(s.casts.length){
     const c=s.casts[0];
     if(skillOn(c.sk.id)&&skillStackReady(c.sk)&&r.comboSlots&&r.comboSlots[r.cursor]===c.sk.id&&mob.pack===s.pack&&Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(c.sk,mob)+.6){
@@ -5265,7 +5309,7 @@ function beginnerGuide(){const chapters=[
  ['Wardrobe, Settings & the log','Wardrobe changes appearance without changing combat stats. All classes support native hairstyles, colors and accessories, including the six fourth jobs. Settings adjusts combat display and preferences. Display controls the screen layout; Log helps you inspect drops, levels and events.'],
  ['Saving & time away','Watch the cloud badge when using an online account. Browser-only previews save on this browser. Hidden tabs continue fighting; they are not away time. Away rewards use a measured farming sample at 50% efficiency, capped at four hours per claim, after at least three minutes without a save. Let a stable field run for a full minute to refresh its sample.']
  ];return `<header class="handbook-intro"><small>01 / START HERE</small><h2>Your adventure, one step at a time</h2><p>Fight → spend points → equip upgrades → choose a better field. You do not need to master every system on your first day.</p><button data-a="guidereplay" data-v="beginner">Replay first-login tour</button></header><div class="guide-chapters">${chapters.map(([title,body],i)=>`<details data-ui-disclosure="handbook-beginner-${i}" ${i===0?'open':''}><summary>${String(i+1).padStart(2,'0')} · ${title}</summary><p>${body}</p></details>`).join('')}</div>`;}
-function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 60-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(([title,body])=>`<article class="guide-note"><h3>${title}</h3><p>${body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>+${x.step}${x.unit} per rank · ${x.text}. Maximum 10 ranks.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts each have a 0.035% chance per kill on their own map. Valkyrie’s Sigils roll at 0.0025% on ordinary enemies and 0.1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Unprotected failures at +5–9 lose one rank. Mythic +10 is a checkpoint; higher failures lose one rank unless protected. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
+function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 60-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(([title,body])=>`<article class="guide-note"><h3>${title}</h3><p>${body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>${['Might','Precision','Ferocity','Slayer'].includes(x.n)?'Late-rank offensive growth; rank 5 grants 25% of the maximum':'+'+x.step+x.unit+' per rank'} · ${x.text}. Rank 10: +${10*x.step}${x.unit}.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts each have a 0.035% chance per kill on their own map. Valkyrie’s Sigils roll at 0.0025% on ordinary enemies and 0.1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Unprotected failures at +5–9 lose one rank. Mythic +10 is a checkpoint; higher failures lose one rank unless protected. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
 function handbook(){return `<section class="handbook"><nav class="guide-nav" aria-label="Guide chapters">${[['beginner','Beginner'],['leveling','Leveling route'],['build','Your build'],['cards','Card targets'],['ascension','Ascension']].map(([id,label])=>`<button data-a="guidepage" data-v="${id}" aria-pressed="${guidePage===id}">${label}</button>`).join('')}</nav>${guideTourPanel()}${guidePage==='beginner'?beginnerGuide():guidePage==='leveling'?levelingGuide():guidePage==='ascension'?ascensionGuide():buildGuide(true)}</section>`;}
 function guideBuildPlan(){
  const main=INT_CLASSES.includes(S.cls)?'INT':C().main.toUpperCase(),power=INT_CLASSES.includes(S.cls)?'MATK':'ATK';
@@ -5876,8 +5920,8 @@ function ascensionProgressPanel(skills=false){
  <progress aria-label="${skills?'Class skill':'Shared stat'} Ascension EXP" max="${maxed?1:needXP}" value="${maxed?1:track.xp}"></progress><p>${maxed?'Maximum level reached':xp(track.xp)+' / '+xp(needXP)+' EXP to next level'}</p>
  <p>${skills?'Combat EXP earned as '+esc(S.cls)+' levels this track. One point per level: 30 points for six skills × five ranks. Five enhance ordinary skills; the sixth unlocks a new skill.':'Combat EXP from every fourth job contributes here. One point per level; 50 points total. Each stat caps at 10. Your '+esc(S.cls)+' allocation is saved separately.'} Away combat EXP contributes at the existing 50% rate.</p>
  <div class="ascension-allocation-grid">${skills?SKILLS4.filter(sk=>sk.from===S.cls).map(sk=>{const rank=ascRank(sk.id),locked=sk.ascensionOnly&&!rank;return `<article class="ascension-upgrade"><header>${skillIcon(sk.id)}<div><h3>${esc(sk.n)}</h3><small>Ascension ${rank} / 5${sk.ascensionOnly?' · '+(locked?'Rank 1 unlocks this skill':'Signature skill unlocked'):' · Ordinary Lv '+lv(sk.id)+' / '+sk.max}</small></div></header><p>${sk.ascensionOnly?esc(sk.text):'Enhances this skill while playing '+esc(S.cls)+'.'}</p><p><b>${rank?'Current: '+ascUpgradeText(sk.id,rank):'No Ascension bonus yet'}</b></p><small>Rank 5: ${ascUpgradeText(sk.id)}</small>${sk.ascensionOnly&&rank?`<button data-a="sktog" data-v="${sk.id}" aria-pressed="${!skOff(sk.id)}">Auto-cast ${skOff(sk.id)?'off':'on'}</button>`:''}<button data-a="ascskill" data-v="${sk.id}" ${rank>=5||!ascPoints(true)?'disabled':''}>${rank>=5?'Maxed':locked?'Unlock · 1 point':'Upgrade · 1 point'}</button></article>`}).join(''):
- Object.entries(ASC_STATS).map(([key,st])=>{const rank=a.stats[S.cls][key]||0;return `<article class="ascension-upgrade"><header><h3>${st.n}</h3><b>${rank} / 10</b></header><p>${st.text}</p><strong>+${Number((rank*st.step).toFixed(2))}${st.unit}</strong><small>+${st.step}${st.unit} per point · Maximum +${10*st.step}${st.unit}</small><button data-a="ascstat" data-v="${key}" ${rank>=10||!ascPoints()?'disabled':''}>${rank>=10?'Maxed':'Allocate · 1 point'}</button></article>`}).join('')}</div>
- <p>${skills?'Ascension ranks are separate from ordinary skill levels. New attacks can be assigned to your six-slot combo in Skills; support skills auto-cast independently.':'Post-cap bonuses are applied separately. Enemy resistance still applies; bonus critical chance does not create multiple critical hits.'}</p><button data-a="ascreset" data-v="${skills?'skills':'stats'}" ${spent?'':'disabled'}>Reset ${esc(S.cls)} allocations · Free during testing</button></section>`;
+ Object.entries(ASC_STATS).map(([key,st])=>{const rank=a.stats[S.cls][key]||0;return `<article class="ascension-upgrade"><header><h3>${st.n}</h3><b>${rank} / 10</b></header><p>${st.text}</p><strong>+${Number(ascStatValue(key,rank).toFixed(2))}${st.unit}</strong><small>${['might','precision','ferocity','slayer'].includes(key)?'Late-rank growth · Next point +'+Number((ascStatValue(key,Math.min(10,rank+1))-ascStatValue(key,rank)).toFixed(2))+st.unit:'+'+st.step+st.unit+' per point'} · Maximum +${10*st.step}${st.unit}</small><button data-a="ascstat" data-v="${key}" ${rank>=10||!ascPoints()?'disabled':''}>${rank>=10?'Maxed':'Allocate · 1 point'}</button></article>`}).join('')}</div>
+ <p>${skills?'Offensive bonuses grow with the square of rank progress; final ranks grant the largest gains. New damaging sixth skills also mature from 42.4% cast power at rank 1 to 100% at rank 5. Support and cooldown upgrades keep their existing progression. Ascension ranks are separate from ordinary skill levels. New attacks can be assigned to your six-slot combo in Skills; support skills auto-cast independently.':'Post-cap bonuses are applied separately. Enemy resistance still applies; bonus critical chance does not create multiple critical hits.'}</p><button data-a="ascreset" data-v="${skills?'skills':'stats'}" ${spent?'':'disabled'}>Reset ${esc(S.cls)} allocations · Free during testing</button></section>`;
 }
 
 V.ascstats=()=>ascensionProgressPanel();V.ascskills=()=>ascensionProgressPanel(true);

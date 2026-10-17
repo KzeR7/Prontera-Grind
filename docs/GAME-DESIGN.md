@@ -65,12 +65,12 @@ Each fourth job has its own saved allocation of the same earned budget; switchin
 classes restores its preset. Eight stats cap at 10 ranks each, so 50 points cannot
 max all eight. Bonuses activate only while playing a fourth job.
 
-| Stat | Per rank | Rank 10 |
+| Stat | Growth | Rank 10 |
 | --- | --- | --- |
-| Might | +1% physical/magic character damage | +10% |
-| Precision | +1 percentage point post-cap crit | +10 points |
-| Ferocity | +3 percentage points crit damage | +30 points |
-| Slayer | +1.5% boss damage | +15% |
+| Might | +10% × (rank / 10)² physical/magic character damage | +10% |
+| Precision | +10 × (rank / 10)² post-cap crit points | +10 points |
+| Ferocity | +30 × (rank / 10)² crit-damage points | +30 points |
+| Slayer | +15% × (rank / 10)² boss damage | +15% |
 | Vitality | +2% max HP | +20% |
 | Guard | 1% less remaining incoming damage | 10% less |
 | Haste | 1% shorter basic-attack interval after its ordinary floor, capped at 192 ASPD | Up to 10% shorter |
@@ -83,8 +83,12 @@ Tetra Vortex, Unlimit, Dark Claw, Epiclesis or Magma Eruption. The sixth skill a
 it in Skill ascension. New attacks can be assigned to the six-slot combo; buffs
 auto-cast independently and have an on/off control in Skill ascension. Resets are free during testing and keep earned levels.
 
-Numeric skill benefits scale linearly except Dragon Breath's burn and Chain
-Lightning's extra bounce, which unlock at rank 5. Boss-damage bonuses replace the
+Offensive skill bonuses (damage, boss damage, critical chance, vulnerability and
+offensive buffs) scale with (rank / 5)²: 4/16/36/64/100% of their maximum. Utility,
+healing, shields, duration and cooldown upgrades retain linear scaling. Dragon
+Breath's burn and Chain Lightning's extra bounce unlock at rank 5. New damaging
+signatures (Tetra Vortex/Magma Eruption) also scale their base cast power from
+42.4% at rank 1 to 100% at rank 5; ordinary attacks' base coefficients are unchanged. Boss-damage bonuses replace the
 proposed defense penetration extras because enemies have no DEF/MDEF stat.
 Existing resistance, boss crowd-control limits and ordinary skill budgets apply.
 Ascension events/buffs cancel on reset, class change or account-state replacement.
@@ -142,9 +146,12 @@ learned offensive skills from the current class's inherited line and reorder the
 with arrows or slot selectors. Each attack casts once in order at full power, with
 0.5-second cast spacing aligned to attack animation contact. Skill swings animate
 at the faster of the build's attack interval and that cast spacing. Each cast
-replaces a normal swing during the burst. Fast builds also use normal attacks
-between casts when a complete attack animation fits before the next skill's
-windup. These attacks do not shorten skill spacing or delay the next cast. After completion,
+replaces a normal swing during the burst. Between casts, ASPD may play complete
+**visual-only** attack swings when they fit before the next skill's windup. These
+cosmetic swings do not deal damage, roll combat RNG, launch projectiles, trigger
+Twin Strike/on-hit effects or heal through leech. They never shorten skill spacing
+or delay the next cast. This rule is the same for every class and equipment grade.
+Rolling Cutter retains its existing five repeats at 0.2-second spacing. After completion,
 offensive skills recover for 3 simulation seconds; basic attacks and pets continue.
 Basic attacks, pet power and healing amounts retain
 their existing formulas. Cooldowns belong to individual skills. Unavailable, paused or out-of-range attacks
@@ -270,7 +277,11 @@ families. Max the parent job and use Class Path for the real timed trial.
 GM → Maxed Ascension equipment by class grants a matching set to the bag for any
 of the six fourth jobs, with +15 refinement, maximum base values and four maximum
 legal affix rolls. Includes each weapon option, two accessories and two daggers for
-Guillotine Cross. Cards stay empty. Class, equipped items and wallets are preserved;
+Guillotine Cross. Bases match maximum Abyss Nightmare Stage 5 N+ drops evolved into Mythic; the gift
+constructor uses that same base range. Legacy gifts in the old low-value band
+repair on load or queued cloud delivery, preserving their relative base roll, item
+ID, cards, refinement and affixes. Evolved N+ bases remain unchanged.
+Cards stay empty. Class, equipped items and wallets are preserved;
 insufficient bag capacity rejects the entire grant. Additional GM controls add 1,000
 of both ores alongside the existing +20, and set Base level to 1, 99 or 120 while
 clearing Base EXP and recalculating unspent points without resetting allocated stats.
@@ -346,3 +357,28 @@ classes. Apply/cancel/reset, male/female memory and account/class changes preser
 progression and equipment. The separate fourth-job pack retains all eight directions,
 original frame clocks/placement, weapon/shadow layers and original world scale.
 See the native wardrobe README for source recovery, packing and proof commands.
+
+
+## Late-investment offense (v187)
+
+There is no extra damage multiplier for simply transferring to a fourth job.
+Might/Precision/Ferocity/Slayer and offensive skill upgrades give their largest
+increments at final ranks, without increasing their maximum. Support and speed
+bonuses, skill cooldowns and combo timing are unchanged. Existing earned levels,
+allocations, EXP and item records are preserved; intermediate investments become
+weaker than v186 by design, while the same fully invested build retains its power.
+
+Mythic set ATK/MATK/Crit/Crit DMG/Field DMG bonuses start at 40% of listed maximum
+through +10. Above +10, the multiplier is 0.4 + 0.6 × ((mean refinement - 10) / 5)²,
+reaching 100% at +15. Each 2/4/6-piece tier uses its best qualifying pieces; active
+offensive stats retain the maximum earned across qualifying tiers, preventing a
+weak additional piece from reducing a previously earned bonus. Defense, HP, flee
+and ASPD set bonuses retain their existing values. Item bases, affix/card rolls,
+refine prices/odds and the GM base repair do not change.
+
+The proposed 50/30/20 allocation was a planning budget, not an additional multiplier
+or a claim of exact measured contribution. v186's maximum gear/Ascension fixtures
+already exceeded the old timing-only DPS targets, so v187 back-loads existing
+power instead of adding another blanket damage buff. See the qualified paired
+measurements in `reports/endgame-progression-v187/summary.md`; those empty-socket,
+petless stationary fixtures are not fully maxed account or live-field forecasts.

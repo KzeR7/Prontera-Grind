@@ -24,6 +24,11 @@ const store=new Store({fetcher,decode});
  const oversized=new Store({decode,fetcher:async()=>new Response('x',{headers:{'content-length':'999999999'}})});await assert.rejects(oversized.init(),/Oversized/);oversized.dispose();
  const streamed=new Store({decode,fetcher:async()=>new Response(new Uint8Array(129*1024))});await assert.rejects(streamed.init(),/Oversized/);streamed.dispose();
  const tiny=new Store({decode,fetcher,budget:1});await assert.rejects(tiny.request('1002-idle'),/memory limit/);tiny.dispose();
- let release;const waiting=new Store({fetcher,decode:bytes=>new Promise(resolve=>{release=()=>decode(bytes).then(resolve)})});const pending=waiting.request('1002-idle');for(let i=0;i<100&&!release;i++)await new Promise(r=>setImmediate(r));assert.ok(release);waiting.dispose();release();await assert.rejects(pending,/decoded pet/);assert.equal(waiting.pixelBytes,0);assert.equal(waiting.failed.size,0);
+ // Await the actual decoder entry, not an arbitrary count of event-loop spins:
+ // asynchronous checksum work can take longer under a concurrent full-suite run.
+ let release,decodeStarted,timer;const started=new Promise(resolve=>{decodeStarted=resolve});
+ const waiting=new Store({fetcher,decode:bytes=>new Promise(resolve=>{release=()=>decode(bytes).then(resolve);decodeStarted()})});const pending=waiting.request('1002-idle');
+ try{await Promise.race([started,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('pet decoder did not start within 5s')),5000)})])}finally{clearTimeout(timer)}
+ assert.ok(release);waiting.dispose();release();await assert.rejects(pending,/decoded pet/);assert.equal(waiting.pixelBytes,0);assert.equal(waiting.failed.size,0);
  console.log('PASS: all 20 pets / 81 native state assets, timing/directions, selected downloads, four pinned views, bounds/checksums, size/memory limits, cached failures/retry and disposal');
 })().catch(e=>{console.error(e);process.exitCode=1});

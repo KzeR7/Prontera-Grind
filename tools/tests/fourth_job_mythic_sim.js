@@ -22,7 +22,7 @@ try{
    assert.equal(ev('S.eq.weapon.aff.length'),4);
    assert.equal(ev("rarOf(S.eq.weapon).n"),'Mythic');
    const before=probe("return {weapon:S.eq.weapon,armor:S.eq.armor,materials:S.ascensionMat,zeny:S.zeny,atkBonus:bon('atk')}" );
-   assert.equal(probe("const total=bon('atk'),set=S.eq.armor.ascSet;delete S.eq.armor.ascSet;const without=bon('atk');S.eq.armor.ascSet=set;return total-without"),5,'two-piece set reaches the live stat formula');
+   assert.equal(probe("const total=bon('atk'),set=S.eq.armor.ascSet;delete S.eq.armor.ascSet;const without=bon('atk');S.eq.armor.ascSet=set;return total-without"),2,'unrefined two-piece set starts at 40% offense in the live stat formula');
 
    assert.equal(ev('S.cls'),cls);assert.equal(ev('jobOf().jl'),1);
    assert.equal(ev('items().every(it=>canUse(it))'),true);
