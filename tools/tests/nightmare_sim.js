@@ -317,18 +317,18 @@ t('v90.5: Abyss keeps its old pay; the lower maps are tuned down to match it', (
   console.log('       Stage 15 pay vs Abyss (EXP / Zeny): Prontera ' + N.nmPayOf(0, 15, 1.5).toFixed(3) + ' / ' + N.nmPayOf(0, 15, 2).toFixed(3) + ', Niflheim ' + N.nmPayOf(8, 15, 1.5).toFixed(3) + ' / ' + N.nmPayOf(8, 15, 2).toFixed(3));
 });
 
-t('v90.6 (crafting): each Nightmare map has one material, dropped by its Stage 15 boss only', () => {
+t('v179 (crafting): all Nightmare maps drop shared Void Core from Stage 15 bosses only', () => {
   const names = new Set();
   for (let m = 0; m < 10; m++) {
     const F = N.fieldOf(m, 15);
     assert.ok(F.boss.mat, N.MAPS[m].n + ' Stage 15 boss carries a material');
-    assert.strictEqual(F.boss.mat.m, Math.floor(m/2), 'the material belongs to its own map');
-    assert.strictEqual(F.boss.mat.n, N.NM_MAT[Math.floor(m/2)], 'named from the materials table');
+    assert.strictEqual(F.boss.mat.m, 0, 'all maps credit the shared material wallet');
+    assert.strictEqual(F.boss.mat.n, 'Void Core', 'the consolidated material has its stable name');
     names.add(F.boss.mat.n);
     for (const mob of F.mobs) assert.strictEqual(mob.mat, undefined, 'no field mob drops a material');
     assert.strictEqual(N.fieldOf(m, 10).boss.mat, null, 'the Stage 10 boss has no material');
   }
-  assert.strictEqual(names.size, 5, 'all ten materials have their own name');
+  assert.strictEqual(names.size, 1, 'all ten maps share one material');
   assert.strictEqual(N.NM_MAT_CH, 1, 'the material chance is 1% a Stage 15 boss kill (v90.7)');
 });
 

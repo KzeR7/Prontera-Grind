@@ -1,0 +1,3329 @@
+{
+  "sourceSha256": "8f5d2b8da3a38065bc1cfb68d314bd23062b98dbbf98d99f087b7bc511d70c3e",
+  "explanation": "Ordinary Lv150 rewards derived from measured kills and real helpers; original combat measurements unchanged.",
+  "rates": {
+    "Lord Knight sword AGI1|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Lord Knight sword AGI60|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Lord Knight sword AGI120|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "High Wizard staff AGI1|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "High Wizard staff AGI60|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "High Wizard staff AGI120|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Sniper bow AGI1|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Sniper bow AGI60|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Sniper bow AGI120|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Assassin Cross katar AGI1|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Assassin Cross katar AGI60|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Assassin Cross katar AGI120|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Assassin Cross dagger AGI1|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Assassin Cross dagger AGI60|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Assassin Cross dagger AGI120|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "High Priest mace AGI1|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "High Priest mace AGI60|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "High Priest mace AGI120|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Whitesmith axe AGI1|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Whitesmith axe AGI60|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Whitesmith axe AGI120|abyss": {
+      "nativeRate": 2.3333333333333335,
+      "nativeZeny": 1,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 27116,
+      "nativeBoss": 33908,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Warlock int-focus|abyss": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 1162100,
+      "nativeBoss": 1453200,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Warlock int-focus|astral": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 9296800,
+      "nativeBoss": 37187200,
+      "normalRegular": 216925,
+      "normalBoss": 867701
+    },
+    "Warlock int-focus|thor1": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 8134700,
+      "nativeBoss": 32538800,
+      "normalRegular": 189810,
+      "normalBoss": 759239
+    },
+    "Warlock int-focus|thor5": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 17431500,
+      "nativeBoss": 69726000,
+      "normalRegular": 406735,
+      "normalBoss": 1626940
+    },
+    "Warlock int-speed|abyss": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 1162100,
+      "nativeBoss": 1453200,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Warlock int-speed|astral": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 9296800,
+      "nativeBoss": 37187200,
+      "normalRegular": 216925,
+      "normalBoss": 867701
+    },
+    "Warlock int-speed|thor1": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 8134700,
+      "nativeBoss": 32538800,
+      "normalRegular": 189810,
+      "normalBoss": 759239
+    },
+    "Warlock int-speed|thor5": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 17431500,
+      "nativeBoss": 69726000,
+      "normalRegular": 406735,
+      "normalBoss": 1626940
+    },
+    "Arch Bishop int-focus|abyss": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 1162100,
+      "nativeBoss": 1453200,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Arch Bishop int-focus|astral": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 9296800,
+      "nativeBoss": 37187200,
+      "normalRegular": 216925,
+      "normalBoss": 867701
+    },
+    "Arch Bishop int-focus|thor1": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 8134700,
+      "nativeBoss": 32538800,
+      "normalRegular": 189810,
+      "normalBoss": 759239
+    },
+    "Arch Bishop int-focus|thor5": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 17431500,
+      "nativeBoss": 69726000,
+      "normalRegular": 406735,
+      "normalBoss": 1626940
+    },
+    "Arch Bishop int-speed|abyss": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 1162100,
+      "nativeBoss": 1453200,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "Arch Bishop int-speed|astral": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 9296800,
+      "nativeBoss": 37187200,
+      "normalRegular": 216925,
+      "normalBoss": 867701
+    },
+    "Arch Bishop int-speed|thor1": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 8134700,
+      "nativeBoss": 32538800,
+      "normalRegular": 189810,
+      "normalBoss": 759239
+    },
+    "Arch Bishop int-speed|thor5": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 17431500,
+      "nativeBoss": 69726000,
+      "normalRegular": 406735,
+      "normalBoss": 1626940
+    },
+    "GX Infernal proxy|abyss": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 1162100,
+      "nativeBoss": 1453200,
+      "normalRegular": 27116,
+      "normalBoss": 33908
+    },
+    "GX Infernal proxy|astral": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 9296800,
+      "nativeBoss": 37187200,
+      "normalRegular": 216925,
+      "normalBoss": 867701
+    },
+    "GX Infernal proxy|thor1": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 8134700,
+      "nativeBoss": 32538800,
+      "normalRegular": 189810,
+      "normalBoss": 759239
+    },
+    "GX Infernal proxy|thor5": {
+      "nativeRate": 100,
+      "nativeZeny": 100,
+      "normalRate": 2.3333333333333335,
+      "normalZeny": 1,
+      "nativeRegular": 17431500,
+      "nativeBoss": 69726000,
+      "normalRegular": 406735,
+      "normalBoss": 1626940
+    }
+  },
+  "summaries": [
+    {
+      "config": "Lord Knight sword AGI1",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 28889,
+        "matk": 16820,
+        "hp": 688624,
+        "interval": 0.5145647524752476,
+        "aspd": 153.71695005526155,
+        "crit": 98.125,
+        "critD": 6.785,
+        "flee": 28
+      },
+      "before": {
+        "expPerMinute": 112992,
+        "zenyPerMinute": 18863.666666666668,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 156.6031728439531,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 4,
+        "deaths": 0,
+        "rawDps": 1783620.4055555556,
+        "effectiveDps": 1756171.5296296298,
+        "rawDpsBySource": {
+          "basic": 196893.87962962964,
+          "skill": 1584961.1222222224,
+          "proc": 0,
+          "dot": 1765.403703703704,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 73.3,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 112992,
+        "zenyPerMinute": 16415.444444444445,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 156.6031728439531,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 4,
+        "deaths": 0,
+        "rawDps": 1874798.953703704,
+        "effectiveDps": 1842431.840740741,
+        "rawDpsBySource": {
+          "basic": 203383.00740740742,
+          "skill": 1669607.4907407407,
+          "proc": 0,
+          "dot": 1808.4555555555555,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 72.05555555555556,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 0,
+      "kpmChangePercent": 0
+    },
+    {
+      "config": "Lord Knight sword AGI60",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 28889,
+        "matk": 16781,
+        "hp": 688434,
+        "interval": 0.3072118811881188,
+        "aspd": 160.275412203014,
+        "crit": 98.125,
+        "critD": 6.785,
+        "flee": 57.5
+      },
+      "before": {
+        "expPerMinute": 112992,
+        "zenyPerMinute": 18536.55555555556,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 165.10969305539442,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 4,
+        "deaths": 0,
+        "rawDps": 1937523.2629629627,
+        "effectiveDps": 1902037.9185185188,
+        "rawDpsBySource": {
+          "basic": 279444.7074074074,
+          "skill": 1656283.462962963,
+          "proc": 0,
+          "dot": 1795.0925925925924,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 69.68888888888888,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 131824,
+        "zenyPerMinute": 21057.888888888887,
+        "bossClearsPerMinute": 0.7777777777777777,
+        "peakAspd": 165.10969305539442,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 4.666666666666667,
+        "deaths": 0,
+        "rawDps": 2166785.205555556,
+        "effectiveDps": 2135717.7925925925,
+        "rawDpsBySource": {
+          "basic": 464208.14074074075,
+          "skill": 1700808.6962962963,
+          "proc": 0,
+          "dot": 1768.3685185185186,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 56.26666666666667,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 16.666666666666675,
+      "kpmChangePercent": 16.666666666666675
+    },
+    {
+      "config": "Lord Knight sword AGI120",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 28884,
+        "matk": 16775,
+        "hp": 687104,
+        "interval": 0.19390099009900985,
+        "aspd": 169.78635620915034,
+        "crit": 97.125,
+        "critD": 6.721,
+        "flee": 60
+      },
+      "before": {
+        "expPerMinute": 134836.8888888889,
+        "zenyPerMinute": 20510,
+        "bossClearsPerMinute": 0.7777777777777777,
+        "peakAspd": 177.44566993464053,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 4.777777777777778,
+        "deaths": 0,
+        "rawDps": 2090654.5203703705,
+        "effectiveDps": 2068024.585185185,
+        "rawDpsBySource": {
+          "basic": 444080.20370370365,
+          "skill": 1644804.9611111113,
+          "proc": 0,
+          "dot": 1769.3555555555556,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 61.43333333333334,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 48972.44444444444,
+        "zenyPerMinute": 20152.44444444444,
+        "bossClearsPerMinute": 1,
+        "peakAspd": 177.44566993464053,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 1.5555555555555554,
+        "deaths": 0,
+        "rawDps": 2441741.92037037,
+        "effectiveDps": 2432302.342592593,
+        "rawDpsBySource": {
+          "basic": 759198.8777777777,
+          "skill": 1680723.2166666668,
+          "proc": 0,
+          "dot": 1819.825925925926,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 46.13333333333333,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": -63.680232577303286,
+      "kpmChangePercent": -67.44186046511629
+    },
+    {
+      "config": "High Wizard staff AGI1",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 24840,
+        "matk": 37309,
+        "hp": 346830,
+        "interval": 0.6432059405940593,
+        "aspd": 151.77356004420923,
+        "crit": 98.125,
+        "critD": 6.785,
+        "flee": 28
+      },
+      "before": {
+        "expPerMinute": 391704.44444444444,
+        "zenyPerMinute": 65755.77777777778,
+        "bossClearsPerMinute": 2.2222222222222223,
+        "peakAspd": 151.77356004420923,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 13.888888888888888,
+        "deaths": 0,
+        "rawDps": 5318030.90925926,
+        "effectiveDps": 5072691.066666666,
+        "rawDpsBySource": {
+          "basic": 129535.2111111111,
+          "skill": 4492400.012962963,
+          "proc": 696095.6851851852,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 20.57777777777778,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 391704.44444444444,
+        "zenyPerMinute": 65755.77777777778,
+        "bossClearsPerMinute": 2.2222222222222223,
+        "peakAspd": 151.77356004420923,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 13.888888888888888,
+        "deaths": 0,
+        "rawDps": 5318030.90925926,
+        "effectiveDps": 5072691.066666666,
+        "rawDpsBySource": {
+          "basic": 129535.2111111111,
+          "skill": 4492400.012962963,
+          "proc": 696095.6851851852,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 20.57777777777778,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 0,
+      "kpmChangePercent": 0
+    },
+    {
+      "config": "High Wizard staff AGI60",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 24840,
+        "matk": 37309,
+        "hp": 346734,
+        "interval": 0.3840148514851485,
+        "aspd": 157.02032976241122,
+        "crit": 98.125,
+        "critD": 6.785,
+        "flee": 57.5
+      },
+      "before": {
+        "expPerMinute": 406768.8888888888,
+        "zenyPerMinute": 52429.1111111111,
+        "bossClearsPerMinute": 2.2222222222222228,
+        "peakAspd": 157.02032976241122,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 14.444444444444443,
+        "deaths": 0,
+        "rawDps": 5270059.9055555565,
+        "effectiveDps": 5018490.292592593,
+        "rawDpsBySource": {
+          "basic": 209623.04814814814,
+          "skill": 4400877.661111111,
+          "proc": 659559.1962962962,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 22.177777777777777,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 403001.3333333333,
+        "zenyPerMinute": 59093.11111111112,
+        "bossClearsPerMinute": 2.111111111111111,
+        "peakAspd": 157.02032976241122,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 14.333333333333334,
+        "deaths": 0,
+        "rawDps": 5193924.462962964,
+        "effectiveDps": 4969508.738888889,
+        "rawDpsBySource": {
+          "basic": 228242.10555555555,
+          "skill": 4355310.377777778,
+          "proc": 610371.9796296296,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 24.266666666666666,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": -0.9262152682932068,
+      "kpmChangePercent": -0.7692307692307554
+    },
+    {
+      "config": "High Wizard staff AGI120",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 24835,
+        "matk": 37309,
+        "hp": 346062,
+        "interval": 0.24237623762376234,
+        "aspd": 164.62908496732027,
+        "crit": 97.125,
+        "critD": 6.721,
+        "flee": 60
+      },
+      "before": {
+        "expPerMinute": 406768.8888888888,
+        "zenyPerMinute": 58615.88888888888,
+        "bossClearsPerMinute": 2.2222222222222228,
+        "peakAspd": 164.62908496732027,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 14.444444444444443,
+        "deaths": 0,
+        "rawDps": 5199686.435185186,
+        "effectiveDps": 5022969.37037037,
+        "rawDpsBySource": {
+          "basic": 302728.5444444444,
+          "skill": 4244021.575925926,
+          "proc": 652936.3148148148,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 21.7,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 444432.8888888888,
+        "zenyPerMinute": 69021,
+        "bossClearsPerMinute": 2.4444444444444446,
+        "peakAspd": 164.62908496732027,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 15.777777777777777,
+        "deaths": 0,
+        "rawDps": 5810560.551851853,
+        "effectiveDps": 5542308.82037037,
+        "rawDpsBySource": {
+          "basic": 467759.0814814815,
+          "skill": 4697127.538888889,
+          "proc": 645673.9314814814,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 22.600000000000005,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 9.259311866962406,
+      "kpmChangePercent": 9.230769230769242
+    },
+    {
+      "config": "Sniper bow AGI1",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 33277,
+        "matk": 15726,
+        "hp": 341893,
+        "interval": 0.393070297029703,
+        "aspd": 156.7203709814333,
+        "crit": 100,
+        "critD": 7.6850000000000005,
+        "flee": 28
+      },
+      "before": {
+        "expPerMinute": 22605.333333333332,
+        "zenyPerMinute": 14084.22222222222,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 157.97981365286233,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 0.6666666666666666,
+        "deaths": 0,
+        "rawDps": 1600066.4425925927,
+        "effectiveDps": 1593840.5055555555,
+        "rawDpsBySource": {
+          "basic": 205929.96666666667,
+          "skill": 1394136.475925926,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 62.24444444444444,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 30140.44444444444,
+        "zenyPerMinute": 15768.555555555557,
+        "bossClearsPerMinute": 0.8888888888888888,
+        "peakAspd": 157.97981365286233,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 0.8888888888888888,
+        "deaths": 0,
+        "rawDps": 1725131.7185185186,
+        "effectiveDps": 1715994.3796296297,
+        "rawDpsBySource": {
+          "basic": 213516.60185185182,
+          "skill": 1511615.1166666665,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 60.63333333333333,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 33.33333333333333,
+      "kpmChangePercent": 33.33333333333333
+    },
+    {
+      "config": "Sniper bow AGI60",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 33277,
+        "matk": 15726,
+        "hp": 341825,
+        "interval": 0.23467574257425744,
+        "aspd": 165.30599415667288,
+        "crit": 100,
+        "critD": 7.6850000000000005,
+        "flee": 57.5
+      },
+      "before": {
+        "expPerMinute": 30140.44444444444,
+        "zenyPerMinute": 10965.111111111111,
+        "bossClearsPerMinute": 0.8888888888888888,
+        "peakAspd": 167.4154985286207,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 0.8888888888888888,
+        "deaths": 0,
+        "rawDps": 1742715.7999999998,
+        "effectiveDps": 1732029.1888888888,
+        "rawDpsBySource": {
+          "basic": 311917.1148148148,
+          "skill": 1430798.6851851854,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 58.12222222222223,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 33908,
+        "zenyPerMinute": 17176.777777777777,
+        "bossClearsPerMinute": 1,
+        "peakAspd": 167.4154985286207,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 1,
+        "deaths": 0,
+        "rawDps": 1943387.4000000001,
+        "effectiveDps": 1928582.962962963,
+        "rawDpsBySource": {
+          "basic": 487471.1277777778,
+          "skill": 1455916.272222222,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 50.28888888888889,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 12.5,
+      "kpmChangePercent": 12.5
+    },
+    {
+      "config": "Sniper bow AGI120",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 33277,
+        "matk": 15684,
+        "hp": 341019,
+        "interval": 0.1481188118811881,
+        "aspd": 177.7566844919786,
+        "crit": 100,
+        "critD": 7.6850000000000005,
+        "flee": 60
+      },
+      "before": {
+        "expPerMinute": 33908,
+        "zenyPerMinute": 18028.666666666668,
+        "bossClearsPerMinute": 1,
+        "peakAspd": 181.09893048128342,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 1,
+        "deaths": 0,
+        "rawDps": 1900111.798148148,
+        "effectiveDps": 1883601.7925925925,
+        "rawDpsBySource": {
+          "basic": 429042.45185185183,
+          "skill": 1471069.3462962962,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 54.31111111111111,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 45210.666666666664,
+        "zenyPerMinute": 22020.11111111111,
+        "bossClearsPerMinute": 1.3333333333333333,
+        "peakAspd": 181.09893048128342,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 1.3333333333333333,
+        "deaths": 0,
+        "rawDps": 2298946.111111111,
+        "effectiveDps": 2281801.403703704,
+        "rawDpsBySource": {
+          "basic": 759616.3092592593,
+          "skill": 1539329.8018518519,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 42.044444444444444,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 33.33333333333333,
+      "kpmChangePercent": 33.33333333333333
+    },
+    {
+      "config": "Assassin Cross katar AGI1",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 52760,
+        "matk": 23622,
+        "hp": 374380,
+        "interval": 0.35733663366336627,
+        "aspd": 157.99240807957662,
+        "crit": 98.125,
+        "critD": 6.785,
+        "flee": 43
+      },
+      "before": {
+        "expPerMinute": 387936.8888888888,
+        "zenyPerMinute": 70695.2222222222,
+        "bossClearsPerMinute": 2.111111111111111,
+        "peakAspd": 157.99240807957662,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 13.777777777777777,
+        "deaths": 0,
+        "rawDps": 5405979.605555556,
+        "effectiveDps": 4959239.140740741,
+        "rawDpsBySource": {
+          "basic": 334174.5055555555,
+          "skill": 4828751.268518519,
+          "proc": 243053.83148148147,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 22.722222222222218,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 395472,
+        "zenyPerMinute": 68925.22222222223,
+        "bossClearsPerMinute": 2.3333333333333335,
+        "peakAspd": 157.99240807957662,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 14,
+        "deaths": 0,
+        "rawDps": 5691864.451851852,
+        "effectiveDps": 5171809.888888888,
+        "rawDpsBySource": {
+          "basic": 331078.1740740741,
+          "skill": 5131484.807407408,
+          "proc": 229301.47037037034,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 22.777777777777782,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 1.942354884757913,
+      "kpmChangePercent": 1.6129032258064502
+    },
+    {
+      "config": "Assassin Cross katar AGI60",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 52760,
+        "matk": 23585,
+        "hp": 374270,
+        "interval": 0.21334158415841584,
+        "aspd": 167.43659357234017,
+        "crit": 98.125,
+        "critD": 6.785,
+        "flee": 60
+      },
+      "before": {
+        "expPerMinute": 448200.44444444444,
+        "zenyPerMinute": 84571.55555555556,
+        "bossClearsPerMinute": 2.5555555555555554,
+        "peakAspd": 167.43659357234017,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 15.888888888888888,
+        "deaths": 0,
+        "rawDps": 6137867.477777778,
+        "effectiveDps": 5651267.253703703,
+        "rawDpsBySource": {
+          "basic": 490451.10555555555,
+          "skill": 5262334.372222222,
+          "proc": 385082,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 20.044444444444444,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 491135.5555555555,
+        "zenyPerMinute": 96272.88888888888,
+        "bossClearsPerMinute": 2.6666666666666665,
+        "peakAspd": 167.43659357234017,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 17.444444444444446,
+        "deaths": 0,
+        "rawDps": 6699411.255555555,
+        "effectiveDps": 6114688.788888889,
+        "rawDpsBySource": {
+          "basic": 761987.8277777778,
+          "skill": 5375585.294444445,
+          "proc": 561838.1333333334,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 18.788888888888888,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 9.579444117760794,
+      "kpmChangePercent": 9.790209790209815
+    },
+    {
+      "config": "Assassin Cross katar AGI120",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 52753,
+        "matk": 23579,
+        "hp": 373497,
+        "interval": 0.13465346534653463,
+        "aspd": 181.13235294117646,
+        "crit": 97.125,
+        "critD": 6.721,
+        "flee": 60
+      },
+      "before": {
+        "expPerMinute": 485109.77777777775,
+        "zenyPerMinute": 92184.33333333333,
+        "bossClearsPerMinute": 2.6666666666666665,
+        "peakAspd": 181.13235294117646,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 17.222222222222225,
+        "deaths": 0,
+        "rawDps": 6615219.007407407,
+        "effectiveDps": 6083397.698148149,
+        "rawDpsBySource": {
+          "basic": 679534.6481481482,
+          "skill": 5443797.283333333,
+          "proc": 491887.0759259259,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 18.26666666666667,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 561192.4444444445,
+        "zenyPerMinute": 106390.33333333333,
+        "bossClearsPerMinute": 3.2222222222222228,
+        "peakAspd": 181.13235294117646,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 19.88888888888889,
+        "deaths": 0,
+        "rawDps": 7612269.618518519,
+        "effectiveDps": 7145291.957407407,
+        "rawDpsBySource": {
+          "basic": 1213252.1851851852,
+          "skill": 5552364.281481481,
+          "proc": 846653.1518518518,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 14.266666666666666,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 15.68359784772657,
+      "kpmChangePercent": 15.483870967741908
+    },
+    {
+      "config": "Assassin Cross dagger AGI1",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 47092,
+        "matk": 16059,
+        "hp": 398854,
+        "interval": 0.35733663366336627,
+        "aspd": 157.99240807957662,
+        "crit": 100,
+        "critD": 6.895,
+        "flee": 43
+      },
+      "before": {
+        "expPerMinute": 354040.44444444444,
+        "zenyPerMinute": 71227,
+        "bossClearsPerMinute": 2,
+        "peakAspd": 157.99240807957662,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 12.555555555555555,
+        "deaths": 0,
+        "rawDps": 5039792.207407407,
+        "effectiveDps": 4633731.62962963,
+        "rawDpsBySource": {
+          "basic": 312179.9240740741,
+          "skill": 4506791.666666667,
+          "proc": 220820.61666666667,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 25.21111111111111,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 384169.3333333333,
+        "zenyPerMinute": 67912.11111111111,
+        "bossClearsPerMinute": 2,
+        "peakAspd": 157.99240807957662,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 13.666666666666666,
+        "deaths": 0,
+        "rawDps": 5203003.420370371,
+        "effectiveDps": 4769794.031481481,
+        "rawDpsBySource": {
+          "basic": 313044.8037037037,
+          "skill": 4656963.311111111,
+          "proc": 232995.30555555553,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 24.344444444444445,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 8.510013294149687,
+      "kpmChangePercent": 8.849557522123884
+    },
+    {
+      "config": "Assassin Cross dagger AGI60",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 47092,
+        "matk": 16022,
+        "hp": 398744,
+        "interval": 0.21334158415841584,
+        "aspd": 167.43659357234017,
+        "crit": 100,
+        "critD": 6.895,
+        "flee": 60
+      },
+      "before": {
+        "expPerMinute": 431626.6666666667,
+        "zenyPerMinute": 74929.55555555555,
+        "bossClearsPerMinute": 2.3333333333333335,
+        "peakAspd": 167.43659357234017,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 15.333333333333334,
+        "deaths": 0,
+        "rawDps": 5819446.374074074,
+        "effectiveDps": 5347068.118518519,
+        "rawDpsBySource": {
+          "basic": 464669.7833333334,
+          "skill": 4998294.142592592,
+          "proc": 356482.44814814813,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 22,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 448200.44444444444,
+        "zenyPerMinute": 89199.55555555556,
+        "bossClearsPerMinute": 2.5555555555555554,
+        "peakAspd": 167.43659357234017,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 15.888888888888888,
+        "deaths": 0,
+        "rawDps": 6174544.727777776,
+        "effectiveDps": 5752332.4037037045,
+        "rawDpsBySource": {
+          "basic": 696989.5555555555,
+          "skill": 4967953.112962963,
+          "proc": 509602.0592592593,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 20.255555555555556,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 3.8398410148688056,
+      "kpmChangePercent": 3.6231884057970953
+    },
+    {
+      "config": "Assassin Cross dagger AGI120",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 47085,
+        "matk": 16016,
+        "hp": 397971,
+        "interval": 0.13465346534653463,
+        "aspd": 181.13235294117646,
+        "crit": 100,
+        "critD": 6.8309999999999995,
+        "flee": 60
+      },
+      "before": {
+        "expPerMinute": 444432.8888888888,
+        "zenyPerMinute": 76614.2222222222,
+        "bossClearsPerMinute": 2.4444444444444446,
+        "peakAspd": 181.13235294117646,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 15.777777777777777,
+        "deaths": 0,
+        "rawDps": 5952212.083333333,
+        "effectiveDps": 5545846.5,
+        "rawDpsBySource": {
+          "basic": 593831.1314814816,
+          "skill": 4885995.038888889,
+          "proc": 472385.91296296305,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 18.77777777777778,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 538592.888888889,
+        "zenyPerMinute": 98913.11111111111,
+        "bossClearsPerMinute": 3,
+        "peakAspd": 181.13235294117646,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 19.111111111111114,
+        "deaths": 0,
+        "rawDps": 7251021.757407407,
+        "effectiveDps": 6812572.694444445,
+        "rawDpsBySource": {
+          "basic": 1107183.2555555555,
+          "skill": 5340636.05,
+          "proc": 803202.4518518519,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 14.444444444444445,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 21.18655085032215,
+      "kpmChangePercent": 21.12676056338032
+    },
+    {
+      "config": "High Priest mace AGI1",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 27739,
+        "matk": 20127,
+        "hp": 478211,
+        "interval": 0.5717386138613861,
+        "aspd": 152.7452550497354,
+        "crit": 98.125,
+        "critD": 6.785,
+        "flee": 28
+      },
+      "before": {
+        "expPerMinute": 112992,
+        "zenyPerMinute": 17857.666666666668,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 154.04405530464658,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 4,
+        "deaths": 0,
+        "rawDps": 1831398.962962963,
+        "effectiveDps": 1816466.3814814815,
+        "rawDpsBySource": {
+          "basic": 112911.53703703704,
+          "skill": 1519594.548148148,
+          "proc": 198892.87777777776,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 73.01111111111112,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 112992,
+        "zenyPerMinute": 15931.777777777776,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 154.04405530464658,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 4,
+        "deaths": 0,
+        "rawDps": 1822323.335185185,
+        "effectiveDps": 1808153.7962962964,
+        "rawDpsBySource": {
+          "basic": 117099.42037037038,
+          "skill": 1490185.8759259258,
+          "proc": 215038.0388888889,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 69.05555555555554,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 0,
+      "kpmChangePercent": 0
+    },
+    {
+      "config": "High Priest mace AGI60",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 27739,
+        "matk": 20127,
+        "hp": 478079,
+        "interval": 0.34134653465346537,
+        "aspd": 158.64787098271262,
+        "crit": 98.125,
+        "critD": 6.785,
+        "flee": 57.5
+      },
+      "before": {
+        "expPerMinute": 158185.33333333334,
+        "zenyPerMinute": 22538.666666666668,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 160.82329736628378,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 5.666666666666667,
+        "deaths": 0,
+        "rawDps": 1981440.825925926,
+        "effectiveDps": 1955902.1462962963,
+        "rawDpsBySource": {
+          "basic": 191273.43148148144,
+          "skill": 1579847.312962963,
+          "proc": 210320.08148148147,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 65.12222222222222,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 158185.33333333334,
+        "zenyPerMinute": 17512.44444444444,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 160.82329736628378,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 5.666666666666667,
+        "deaths": 0,
+        "rawDps": 1984528.227777778,
+        "effectiveDps": 1960818.2703703705,
+        "rawDpsBySource": {
+          "basic": 197240.5777777778,
+          "skill": 1584418.409259259,
+          "proc": 202869.24074074076,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 63.84444444444444,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 0,
+      "kpmChangePercent": 0
+    },
+    {
+      "config": "High Priest mace AGI120",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 27733,
+        "matk": 20127,
+        "hp": 477155,
+        "interval": 0.21544554455445544,
+        "aspd": 167.2077205882353,
+        "crit": 97.125,
+        "critD": 6.721,
+        "flee": 60
+      },
+      "before": {
+        "expPerMinute": 158185.33333333334,
+        "zenyPerMinute": 20729.333333333332,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 170.65441176470588,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 5.666666666666667,
+        "deaths": 0,
+        "rawDps": 2048523.6296296297,
+        "effectiveDps": 2028195.8648148149,
+        "rawDpsBySource": {
+          "basic": 251922.6925925926,
+          "skill": 1575650.3148148146,
+          "proc": 220950.62222222218,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 62.62222222222223,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 169488,
+        "zenyPerMinute": 24976.111111111113,
+        "bossClearsPerMinute": 1,
+        "peakAspd": 170.65441176470588,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 6,
+        "deaths": 0,
+        "rawDps": 2202693.8648148146,
+        "effectiveDps": 2180200.9222222217,
+        "rawDpsBySource": {
+          "basic": 379299.3851851852,
+          "skill": 1604970.7888888891,
+          "proc": 218423.69074074074,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 57.133333333333326,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 7.145205202336502,
+      "kpmChangePercent": 5.882352941176472
+    },
+    {
+      "config": "Whitesmith axe AGI1",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 38492,
+        "matk": 16989,
+        "hp": 890342,
+        "interval": 0.5002712871287128,
+        "aspd": 153.9945771996976,
+        "crit": 98.125,
+        "critD": 6.785,
+        "flee": 28
+      },
+      "before": {
+        "expPerMinute": 158185.33333333334,
+        "zenyPerMinute": 38346.22222222222,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 156.4684824471475,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 5.666666666666667,
+        "deaths": 0,
+        "rawDps": 1899552.0777777778,
+        "effectiveDps": 1808742.951851852,
+        "rawDpsBySource": {
+          "basic": 219725.30000000002,
+          "skill": 1679826.777777778,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 72.43333333333334,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 158185.33333333334,
+        "zenyPerMinute": 34322.666666666664,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 156.4684824471475,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 5.666666666666667,
+        "deaths": 0,
+        "rawDps": 1942476.8666666665,
+        "effectiveDps": 1842662.474074074,
+        "rawDpsBySource": {
+          "basic": 214359.98888888888,
+          "skill": 1728116.8777777776,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 72.84444444444445,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 0,
+      "kpmChangePercent": 0
+    },
+    {
+      "config": "Whitesmith axe AGI60",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 38492,
+        "matk": 16950,
+        "hp": 890097,
+        "interval": 0.29867821782178217,
+        "aspd": 160.74042398024298,
+        "crit": 98.125,
+        "critD": 6.785,
+        "flee": 57.5
+      },
+      "before": {
+        "expPerMinute": 158185.33333333334,
+        "zenyPerMinute": 35044.444444444445,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 164.88409328228332,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 5.666666666666667,
+        "deaths": 0,
+        "rawDps": 2069603.9222222222,
+        "effectiveDps": 1992423.5666666667,
+        "rawDpsBySource": {
+          "basic": 317562.8703703704,
+          "skill": 1752041.0518518519,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 69.83333333333333,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 184552.44444444447,
+        "zenyPerMinute": 46560.44444444444,
+        "bossClearsPerMinute": 1,
+        "peakAspd": 164.88409328228332,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 6.555555555555556,
+        "deaths": 0,
+        "rawDps": 2382570.9499999997,
+        "effectiveDps": 2307251.07037037,
+        "rawDpsBySource": {
+          "basic": 526329.8888888889,
+          "skill": 1856241.0611111112,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 53.12222222222223,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 16.668492935150624,
+      "kpmChangePercent": 15.686274509803933
+    },
+    {
+      "config": "Whitesmith axe AGI120",
+      "group": "third",
+      "field": "abyss",
+      "stats": {
+        "atk": 38485,
+        "matk": 16944,
+        "hp": 888376,
+        "interval": 0.18851485148514846,
+        "aspd": 170.5231092436975,
+        "crit": 97.125,
+        "critD": 6.721,
+        "flee": 60
+      },
+      "before": {
+        "expPerMinute": 169488,
+        "zenyPerMinute": 47060.55555555556,
+        "bossClearsPerMinute": 1,
+        "peakAspd": 177.08823529411765,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 6,
+        "deaths": 0,
+        "rawDps": 2268744.464814815,
+        "effectiveDps": 2182292.192592593,
+        "rawDpsBySource": {
+          "basic": 508774.22037037037,
+          "skill": 1759970.2444444445,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 59.84444444444444,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 214681.33333333334,
+        "zenyPerMinute": 47521.77777777778,
+        "bossClearsPerMinute": 1,
+        "peakAspd": 177.08823529411765,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 7.666666666666667,
+        "deaths": 0,
+        "rawDps": 2793211.337037037,
+        "effectiveDps": 2690147.648148148,
+        "rawDpsBySource": {
+          "basic": 909740.4111111112,
+          "skill": 1883470.925925926,
+          "proc": 0,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 47.67777777777778,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 26.664621290789526,
+      "kpmChangePercent": 27.77777777777779
+    },
+    {
+      "config": "Warlock int-focus",
+      "group": "caster",
+      "field": "abyss",
+      "stats": {
+        "atk": 44282,
+        "matk": 83546,
+        "hp": 906658,
+        "interval": 0.21736357615894042,
+        "aspd": 167.00293401661696,
+        "crit": 143.25,
+        "critD": 7.35,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 1419929.3333333333,
+        "zenyPerMinute": 224131.77777777778,
+        "bossClearsPerMinute": 8.111111111111112,
+        "peakAspd": 167.00293401661696,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 50.333333333333336,
+        "deaths": 0,
+        "rawDps": 26010877.62407407,
+        "effectiveDps": 17598230.150000002,
+        "rawDpsBySource": {
+          "basic": 1212779.5833333333,
+          "skill": 23439569.2,
+          "proc": 1358528.8407407405,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 5.044444444444444,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 1442528.8888888888,
+        "zenyPerMinute": 232897.5555555556,
+        "bossClearsPerMinute": 8.333333333333334,
+        "peakAspd": 167.00293401661696,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 51.11111111111111,
+        "deaths": 0,
+        "rawDps": 26782216.733333334,
+        "effectiveDps": 18078417.14814815,
+        "rawDpsBySource": {
+          "basic": 1712623.4907407407,
+          "skill": 23482017.87407407,
+          "proc": 1587575.3685185185,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 3.933333333333333,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 1.591597203115902,
+      "kpmChangePercent": 1.5452538631346435
+    },
+    {
+      "config": "Warlock int-focus",
+      "group": "caster",
+      "field": "astral",
+      "stats": {
+        "atk": 44282,
+        "matk": 83546,
+        "hp": 906658,
+        "interval": 0.21736357615894042,
+        "aspd": 167.00293401661696,
+        "crit": 143.25,
+        "critD": 7.35,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 6218519.666666667,
+        "zenyPerMinute": 193295,
+        "bossClearsPerMinute": 3,
+        "peakAspd": 167.00293401661696,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 19.666666666666668,
+        "deaths": 0,
+        "rawDps": 32704673.03333333,
+        "effectiveDps": 29665568.32222222,
+        "rawDpsBySource": {
+          "basic": 1139687.15,
+          "skill": 29752508.979629632,
+          "proc": 1812476.9037037038,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 16.722222222222225,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 6748781.111111112,
+        "zenyPerMinute": 206914.33333333334,
+        "bossClearsPerMinute": 3.3333333333333335,
+        "peakAspd": 167.00293401661696,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 21.111111111111114,
+        "deaths": 0,
+        "rawDps": 34497093.538888894,
+        "effectiveDps": 31744183.87962963,
+        "rawDpsBySource": {
+          "basic": 1579168.0703703705,
+          "skill": 30802644.68888889,
+          "proc": 2115280.7796296296,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 16.355555555555558,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 8.527133029534717,
+      "kpmChangePercent": 7.344632768361592
+    },
+    {
+      "config": "Warlock int-focus",
+      "group": "caster",
+      "field": "thor1",
+      "stats": {
+        "atk": 44282,
+        "matk": 83546,
+        "hp": 906658,
+        "interval": 0.21736357615894042,
+        "aspd": 167.00293401661696,
+        "crit": 143.25,
+        "critD": 7.35,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 4239090,
+        "zenyPerMinute": 100608.88888888889,
+        "bossClearsPerMinute": 0,
+        "peakAspd": 167.00293401661696,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 22.333333333333332,
+        "deaths": 0,
+        "rawDps": 23364118.324074075,
+        "effectiveDps": 19704150.203703705,
+        "rawDpsBySource": {
+          "basic": 1767441.4037037038,
+          "skill": 20241038.457407407,
+          "proc": 1355638.462962963,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 0,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "not present",
+          "not present",
+          "not present"
+        ]
+      },
+      "after": {
+        "expPerMinute": 4449990,
+        "zenyPerMinute": 111808.44444444445,
+        "bossClearsPerMinute": 0,
+        "peakAspd": 167.00293401661696,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 23.444444444444446,
+        "deaths": 0,
+        "rawDps": 23905860.903703704,
+        "effectiveDps": 20855223.446296293,
+        "rawDpsBySource": {
+          "basic": 2520472.3000000003,
+          "skill": 20038496.105555557,
+          "proc": 1346892.4981481482,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 0,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "not present",
+          "not present",
+          "not present"
+        ]
+      },
+      "expChangePercent": 4.975124378109452,
+      "kpmChangePercent": 4.9751243781094745
+    },
+    {
+      "config": "Warlock int-focus",
+      "group": "caster",
+      "field": "thor5",
+      "stats": {
+        "atk": 44282,
+        "matk": 83546,
+        "hp": 906658,
+        "interval": 0.21736357615894042,
+        "aspd": 167.00293401661696,
+        "crit": 143.25,
+        "critD": 7.35,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 5739482.777777779,
+        "zenyPerMinute": 102834.66666666667,
+        "bossClearsPerMinute": 1.4444444444444444,
+        "peakAspd": 167.00293401661696,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 9.777777777777777,
+        "deaths": 0,
+        "rawDps": 31532791.729629632,
+        "effectiveDps": 30241354.37592593,
+        "rawDpsBySource": {
+          "basic": 1187459.5722222223,
+          "skill": 28228958.229629625,
+          "proc": 2116373.927777778,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 31.066666666666663,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 5920253.888888889,
+        "zenyPerMinute": 116174.44444444444,
+        "bossClearsPerMinute": 1.5555555555555556,
+        "peakAspd": 167.00293401661696,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 9.888888888888888,
+        "deaths": 0,
+        "rawDps": 31864592.785185188,
+        "effectiveDps": 30781117.962962966,
+        "rawDpsBySource": {
+          "basic": 1659792.6148148149,
+          "skill": 28204516.457407404,
+          "proc": 2000283.712962963,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 34.833333333333336,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 3.1496062992125706,
+      "kpmChangePercent": 1.1363636363636243
+    },
+    {
+      "config": "Warlock int-speed",
+      "group": "caster",
+      "field": "abyss",
+      "stats": {
+        "atk": 44238,
+        "matk": 83454,
+        "hp": 906658,
+        "interval": 0.1549139072847682,
+        "aspd": 176.27599179206567,
+        "crit": 141.25,
+        "critD": 6.986,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 1367200.8888888888,
+        "zenyPerMinute": 219483.4444444444,
+        "bossClearsPerMinute": 7.888888888888888,
+        "peakAspd": 176.27599179206567,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 48.444444444444436,
+        "deaths": 0,
+        "rawDps": 24816242.435185183,
+        "effectiveDps": 17050119.096296296,
+        "rawDpsBySource": {
+          "basic": 1647554.8444444444,
+          "skill": 21709714.987037037,
+          "proc": 1458972.6037037037,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 4.9,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 1495257.3333333333,
+        "zenyPerMinute": 233647.66666666666,
+        "bossClearsPerMinute": 8.555555555555555,
+        "peakAspd": 176.27599179206567,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 53,
+        "deaths": 0,
+        "rawDps": 27629549.805555552,
+        "effectiveDps": 18680809.6537037,
+        "rawDpsBySource": {
+          "basic": 2501488.57962963,
+          "skill": 23571471.66481482,
+          "proc": 1556589.561111111,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 4.388888888888889,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 9.366322497677327,
+      "kpmChangePercent": 9.403669724770669
+    },
+    {
+      "config": "Warlock int-speed",
+      "group": "caster",
+      "field": "astral",
+      "stats": {
+        "atk": 44238,
+        "matk": 83454,
+        "hp": 906658,
+        "interval": 0.1549139072847682,
+        "aspd": 176.27599179206567,
+        "crit": 141.25,
+        "critD": 6.986,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 6098005.777777779,
+        "zenyPerMinute": 177331.77777777775,
+        "bossClearsPerMinute": 3,
+        "peakAspd": 176.27599179206567,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 19.111111111111114,
+        "deaths": 0,
+        "rawDps": 31793507.564814817,
+        "effectiveDps": 28906490.099999998,
+        "rawDpsBySource": {
+          "basic": 1438089.6037037037,
+          "skill": 28456983.19259259,
+          "proc": 1898434.7685185187,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 15.111111111111112,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 6869295,
+        "zenyPerMinute": 194388.77777777775,
+        "bossClearsPerMinute": 3.3333333333333335,
+        "peakAspd": 176.27599179206567,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 21.666666666666668,
+        "deaths": 0,
+        "rawDps": 35648754.65740741,
+        "effectiveDps": 32586183.774074078,
+        "rawDpsBySource": {
+          "basic": 2377510.3425925924,
+          "skill": 31178430.65925926,
+          "proc": 2092813.6555555556,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 14.255555555555555,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 12.648220587670433,
+      "kpmChangePercent": 13.372093023255793
+    },
+    {
+      "config": "Warlock int-speed",
+      "group": "caster",
+      "field": "thor1",
+      "stats": {
+        "atk": 44238,
+        "matk": 83454,
+        "hp": 906658,
+        "interval": 0.1549139072847682,
+        "aspd": 176.27599179206567,
+        "crit": 141.25,
+        "critD": 6.986,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 4302360,
+        "zenyPerMinute": 102697.11111111111,
+        "bossClearsPerMinute": 0,
+        "peakAspd": 176.27599179206567,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 22.666666666666668,
+        "deaths": 0,
+        "rawDps": 23089416.933333334,
+        "effectiveDps": 20062963.846296296,
+        "rawDpsBySource": {
+          "basic": 2359924.953703704,
+          "skill": 19632606.622222222,
+          "proc": 1096885.3574074076,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 0,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "not present",
+          "not present",
+          "not present"
+        ]
+      },
+      "after": {
+        "expPerMinute": 4766340,
+        "zenyPerMinute": 116332.55555555555,
+        "bossClearsPerMinute": 0,
+        "peakAspd": 176.27599179206567,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 25.11111111111111,
+        "deaths": 0,
+        "rawDps": 25196178.32962963,
+        "effectiveDps": 22133709.03148148,
+        "rawDpsBySource": {
+          "basic": 3757063.512962963,
+          "skill": 20314210.26851852,
+          "proc": 1124904.548148148,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 0,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "not present",
+          "not present",
+          "not present"
+        ]
+      },
+      "expChangePercent": 10.784313725490202,
+      "kpmChangePercent": 10.784313725490179
+    },
+    {
+      "config": "Warlock int-speed",
+      "group": "caster",
+      "field": "thor5",
+      "stats": {
+        "atk": 44238,
+        "matk": 83454,
+        "hp": 906658,
+        "interval": 0.1549139072847682,
+        "aspd": 176.27599179206567,
+        "crit": 141.25,
+        "critD": 6.986,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 5558711.666666667,
+        "zenyPerMinute": 117149.11111111112,
+        "bossClearsPerMinute": 1.3333333333333333,
+        "peakAspd": 176.27599179206567,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 9.666666666666666,
+        "deaths": 0,
+        "rawDps": 30882512.855555553,
+        "effectiveDps": 29413611.325925928,
+        "rawDpsBySource": {
+          "basic": 1566263.5092592593,
+          "skill": 27363287.120370373,
+          "proc": 1952962.2259259261,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 36.44444444444445,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 6417374.444444445,
+        "zenyPerMinute": 137991.66666666666,
+        "bossClearsPerMinute": 1.6666666666666667,
+        "peakAspd": 176.27599179206567,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 10.777777777777777,
+        "deaths": 0,
+        "rawDps": 36166863.67962963,
+        "effectiveDps": 34551737.32037037,
+        "rawDpsBySource": {
+          "basic": 2475827.5481481478,
+          "skill": 31544290.76111111,
+          "proc": 2146745.370370371,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 32.111111111111114,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 15.44715447154472,
+      "kpmChangePercent": 11.494252873563205
+    },
+    {
+      "config": "Arch Bishop int-focus",
+      "group": "caster",
+      "field": "abyss",
+      "stats": {
+        "atk": 68409,
+        "matk": 44410,
+        "hp": 1133417,
+        "interval": 0.1481029850746269,
+        "aspd": 177.76029185016478,
+        "crit": 143.25,
+        "critD": 7.3149999999999995,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 824840.4444444445,
+        "zenyPerMinute": 125186.88888888888,
+        "bossClearsPerMinute": 4.777777777777779,
+        "peakAspd": 180.27971661510244,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 29.222222222222225,
+        "deaths": 0,
+        "rawDps": 11703159.296296299,
+        "effectiveDps": 10316390.387037037,
+        "rawDpsBySource": {
+          "basic": 1221866.1907407406,
+          "skill": 9653005.964814814,
+          "proc": 828287.1407407407,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 11.244444444444445,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 915232.888888889,
+        "zenyPerMinute": 139361.4444444444,
+        "bossClearsPerMinute": 5.222222222222221,
+        "peakAspd": 180.27971661510244,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 32.44444444444445,
+        "deaths": 0,
+        "rawDps": 13268215.257407406,
+        "effectiveDps": 11486607.90925926,
+        "rawDpsBySource": {
+          "basic": 2184908.6,
+          "skill": 10078533.662962962,
+          "proc": 1004772.9944444444,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 10.511111111111111,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 10.958779367969363,
+      "kpmChangePercent": 11.026615969581766
+    },
+    {
+      "config": "Arch Bishop int-focus",
+      "group": "caster",
+      "field": "astral",
+      "stats": {
+        "atk": 68409,
+        "matk": 44410,
+        "hp": 1133417,
+        "interval": 0.1481029850746269,
+        "aspd": 177.76029185016478,
+        "crit": 143.25,
+        "critD": 7.3149999999999995,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 3494904.4444444445,
+        "zenyPerMinute": 117717.2222222222,
+        "bossClearsPerMinute": 1.6666666666666667,
+        "peakAspd": 180.27971661510244,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 11.111111111111109,
+        "deaths": 0,
+        "rawDps": 18215544.40185185,
+        "effectiveDps": 17680224.762962963,
+        "rawDpsBySource": {
+          "basic": 1130489.388888889,
+          "skill": 15462702.36111111,
+          "proc": 1622352.6518518522,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 31.08888888888889,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 3904652,
+        "zenyPerMinute": 120155.77777777777,
+        "bossClearsPerMinute": 2,
+        "peakAspd": 180.27971661510244,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 12,
+        "deaths": 0,
+        "rawDps": 20836215.994444445,
+        "effectiveDps": 20356793.594444443,
+        "rawDpsBySource": {
+          "basic": 1929215.0944444444,
+          "skill": 17162182.205555554,
+          "proc": 1744818.6944444443,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 26.322222222222223,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 11.724141877666971,
+      "kpmChangePercent": 8.000000000000028
+    },
+    {
+      "config": "Arch Bishop int-focus",
+      "group": "caster",
+      "field": "thor1",
+      "stats": {
+        "atk": 68409,
+        "matk": 44410,
+        "hp": 1133417,
+        "interval": 0.1481029850746269,
+        "aspd": 177.76029185016478,
+        "crit": 143.25,
+        "critD": 7.3149999999999995,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 2551890,
+        "zenyPerMinute": 64038.8888888889,
+        "bossClearsPerMinute": 0,
+        "peakAspd": 180.27971661510244,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 13.444444444444443,
+        "deaths": 0,
+        "rawDps": 12627303.22962963,
+        "effectiveDps": 12019882.31851852,
+        "rawDpsBySource": {
+          "basic": 1843241.775925926,
+          "skill": 9593367.812962962,
+          "proc": 1190693.6407407408,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 0,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "not present",
+          "not present",
+          "not present"
+        ]
+      },
+      "after": {
+        "expPerMinute": 2826060,
+        "zenyPerMinute": 68235.44444444445,
+        "bossClearsPerMinute": 0,
+        "peakAspd": 180.27971661510244,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 14.888888888888888,
+        "deaths": 0,
+        "rawDps": 13897881.957407407,
+        "effectiveDps": 13253890.381481482,
+        "rawDpsBySource": {
+          "basic": 3248228.955555556,
+          "skill": 9546968.424074074,
+          "proc": 1102684.5777777778,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 0,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "not present",
+          "not present",
+          "not present"
+        ]
+      },
+      "expChangePercent": 10.743801652892571,
+      "kpmChangePercent": 10.743801652892571
+    },
+    {
+      "config": "Arch Bishop int-focus",
+      "group": "caster",
+      "field": "thor5",
+      "stats": {
+        "atk": 68409,
+        "matk": 44410,
+        "hp": 1133417,
+        "interval": 0.1481029850746269,
+        "aspd": 177.76029185016478,
+        "crit": 143.25,
+        "critD": 7.3149999999999995,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 3118301.6666666665,
+        "zenyPerMinute": 63600.777777777774,
+        "bossClearsPerMinute": 0.6666666666666666,
+        "peakAspd": 180.27971661510244,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 5.666666666666667,
+        "deaths": 0,
+        "rawDps": 17823823.864814814,
+        "effectiveDps": 17684958.16481481,
+        "rawDpsBySource": {
+          "basic": 1145150.562962963,
+          "skill": 15119094.49074074,
+          "proc": 1559578.8111111112,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 60.77777777777778,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 3660615,
+        "zenyPerMinute": 69296,
+        "bossClearsPerMinute": 1,
+        "peakAspd": 180.27971661510244,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 6,
+        "deaths": 0,
+        "rawDps": 19787991.849999998,
+        "effectiveDps": 19641548.37962963,
+        "rawDpsBySource": {
+          "basic": 1992576.3166666664,
+          "skill": 16209598.32037037,
+          "proc": 1585817.212962963,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 53.611111111111114,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 17.391304347826097,
+      "kpmChangePercent": 5.882352941176472
+    },
+    {
+      "config": "Arch Bishop int-speed",
+      "group": "caster",
+      "field": "abyss",
+      "stats": {
+        "atk": 68340,
+        "matk": 44361,
+        "hp": 1133417,
+        "interval": 0.10555223880597016,
+        "aspd": 191.36990950226243,
+        "crit": 141.25,
+        "critD": 6.951,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 896400.888888889,
+        "zenyPerMinute": 146867.33333333334,
+        "bossClearsPerMinute": 5.111111111111111,
+        "peakAspd": 192,
+        "zealBoostedCasts": 536,
+        "killsPerMinute": 31.777777777777782,
+        "deaths": 0,
+        "rawDps": 13086543.722222224,
+        "effectiveDps": 11094581.85925926,
+        "rawDpsBySource": {
+          "basic": 1467688.6851851854,
+          "skill": 10679998.812962964,
+          "proc": 938856.2240740741,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 9.611111111111112,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 1043289.3333333334,
+        "zenyPerMinute": 162249,
+        "bossClearsPerMinute": 5.888888888888889,
+        "peakAspd": 192,
+        "zealBoostedCasts": 524,
+        "killsPerMinute": 37,
+        "deaths": 0,
+        "rawDps": 15184471.042592593,
+        "effectiveDps": 12909527.211111112,
+        "rawDpsBySource": {
+          "basic": 2688174.962962963,
+          "skill": 11471147.23888889,
+          "proc": 1025148.8407407409,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 8.422222222222222,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 16.38646795927614,
+      "kpmChangePercent": 16.433566433566416
+    },
+    {
+      "config": "Arch Bishop int-speed",
+      "group": "caster",
+      "field": "astral",
+      "stats": {
+        "atk": 68340,
+        "matk": 44361,
+        "hp": 1133417,
+        "interval": 0.10555223880597016,
+        "aspd": 191.36990950226243,
+        "crit": 141.25,
+        "critD": 6.951,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 3904652,
+        "zenyPerMinute": 127319.11111111111,
+        "bossClearsPerMinute": 2,
+        "peakAspd": 192,
+        "zealBoostedCasts": 551,
+        "killsPerMinute": 12,
+        "deaths": 0,
+        "rawDps": 18875059.25925926,
+        "effectiveDps": 18120880.86666667,
+        "rawDpsBySource": {
+          "basic": 1276888.7388888889,
+          "skill": 16032862.887037037,
+          "proc": 1565307.6333333335,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 29.53333333333333,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 4555427.333333333,
+        "zenyPerMinute": 143264.55555555556,
+        "bossClearsPerMinute": 2.3333333333333335,
+        "peakAspd": 192,
+        "zealBoostedCasts": 540,
+        "killsPerMinute": 14,
+        "deaths": 0,
+        "rawDps": 22300408.646296296,
+        "effectiveDps": 21573584.968518518,
+        "rawDpsBySource": {
+          "basic": 2511796.8703703703,
+          "skill": 17949898.76111111,
+          "proc": 1838713.0148148148,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 24.2,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 16.66666666666665,
+      "kpmChangePercent": 16.666666666666675
+    },
+    {
+      "config": "Arch Bishop int-speed",
+      "group": "caster",
+      "field": "thor1",
+      "stats": {
+        "atk": 68340,
+        "matk": 44361,
+        "hp": 1133417,
+        "interval": 0.10555223880597016,
+        "aspd": 191.36990950226243,
+        "crit": 141.25,
+        "critD": 6.951,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 2783880,
+        "zenyPerMinute": 67861.88888888888,
+        "bossClearsPerMinute": 0,
+        "peakAspd": 192,
+        "zealBoostedCasts": 548,
+        "killsPerMinute": 14.666666666666666,
+        "deaths": 0,
+        "rawDps": 13707114.614814816,
+        "effectiveDps": 13045260.607407408,
+        "rawDpsBySource": {
+          "basic": 2166932.755555555,
+          "skill": 10319749.488888888,
+          "proc": 1220432.3703703706,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 0,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "not present",
+          "not present",
+          "not present"
+        ]
+      },
+      "after": {
+        "expPerMinute": 3205680,
+        "zenyPerMinute": 71410.55555555556,
+        "bossClearsPerMinute": 0,
+        "peakAspd": 192,
+        "zealBoostedCasts": 558,
+        "killsPerMinute": 16.88888888888889,
+        "deaths": 0,
+        "rawDps": 15693451.572222224,
+        "effectiveDps": 14990009.42962963,
+        "rawDpsBySource": {
+          "basic": 4141314.5666666664,
+          "skill": 10422000.783333333,
+          "proc": 1130136.2222222222,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 0,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "not present",
+          "not present",
+          "not present"
+        ]
+      },
+      "expChangePercent": 15.15151515151516,
+      "kpmChangePercent": 15.15151515151516
+    },
+    {
+      "config": "Arch Bishop int-speed",
+      "group": "caster",
+      "field": "thor5",
+      "stats": {
+        "atk": 68340,
+        "matk": 44361,
+        "hp": 1133417,
+        "interval": 0.10555223880597016,
+        "aspd": 191.36990950226243,
+        "crit": 141.25,
+        "critD": 6.951,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 3660615,
+        "zenyPerMinute": 67379.44444444445,
+        "bossClearsPerMinute": 1,
+        "peakAspd": 192,
+        "zealBoostedCasts": 553,
+        "killsPerMinute": 6,
+        "deaths": 0,
+        "rawDps": 19536082.316666666,
+        "effectiveDps": 19212226.751851853,
+        "rawDpsBySource": {
+          "basic": 1296454.9555555554,
+          "skill": 16480002.777777778,
+          "proc": 1759624.5833333333,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 56.199999999999996,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 3886578.8888888895,
+        "zenyPerMinute": 83774.22222222222,
+        "bossClearsPerMinute": 1,
+        "peakAspd": 192,
+        "zealBoostedCasts": 551,
+        "killsPerMinute": 6.555555555555556,
+        "deaths": 0,
+        "rawDps": 23383916.39814815,
+        "effectiveDps": 23077470.68148148,
+        "rawDpsBySource": {
+          "basic": 2535698.0314814816,
+          "skill": 18942521.935185187,
+          "proc": 1905696.4314814815,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 47.17777777777778,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 6.172839506172845,
+      "kpmChangePercent": 9.259259259259277
+    },
+    {
+      "config": "GX Infernal proxy",
+      "group": "gx",
+      "field": "abyss",
+      "stats": {
+        "atk": 228638,
+        "matk": 36071,
+        "hp": 584140,
+        "interval": 0.10416666666666667,
+        "aspd": 192,
+        "crit": 171.5,
+        "critD": 7.819,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 1072698.2222222222,
+        "zenyPerMinute": 248578,
+        "bossClearsPerMinute": 8.444444444444445,
+        "peakAspd": 192,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 37.444444444444436,
+        "deaths": 0,
+        "rawDps": 18879033.607407406,
+        "effectiveDps": 17249227.157407407,
+        "rawDpsBySource": {
+          "basic": 5102225.718518519,
+          "skill": 10601840.50925926,
+          "proc": 3174967.379629629,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 6.688888888888889,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 1529182.6666666667,
+        "zenyPerMinute": 331999.55555555556,
+        "bossClearsPerMinute": 10.888888888888888,
+        "peakAspd": 192,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 53.666666666666664,
+        "deaths": 0,
+        "rawDps": 24716610.342592593,
+        "effectiveDps": 22323044.325925928,
+        "rawDpsBySource": {
+          "basic": 7631183.535185185,
+          "skill": 12582606.77037037,
+          "proc": 4502820.037037037,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 4.5555555555555545,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 42.55478707690803,
+      "kpmChangePercent": 43.32344213649855
+    },
+    {
+      "config": "GX Infernal proxy",
+      "group": "gx",
+      "field": "astral",
+      "stats": {
+        "atk": 228638,
+        "matk": 36071,
+        "hp": 584140,
+        "interval": 0.10416666666666667,
+        "aspd": 192,
+        "crit": 171.5,
+        "critD": 7.819,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 3181570.3333333335,
+        "zenyPerMinute": 180003.55555555553,
+        "bossClearsPerMinute": 3.6666666666666665,
+        "peakAspd": 192,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 3.6666666666666665,
+        "deaths": 1,
+        "rawDps": 19631145.650000002,
+        "effectiveDps": 19532924.827777777,
+        "rawDpsBySource": {
+          "basic": 4679619.511111111,
+          "skill": 12039638.016666666,
+          "proc": 2911888.1222222224,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 14.088888888888889,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "after": {
+        "expPerMinute": 4434916.222222223,
+        "zenyPerMinute": 284603.88888888893,
+        "bossClearsPerMinute": 5.111111111111111,
+        "peakAspd": 192,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 5.111111111111111,
+        "deaths": 0,
+        "rawDps": 24217336.087037038,
+        "effectiveDps": 24019447.762962963,
+        "rawDpsBySource": {
+          "basic": 7799985.692592592,
+          "skill": 11744841.353703702,
+          "proc": 4672509.0407407405,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 3,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": 9.944444444444445,
+        "bossOutcomes": [
+          "win",
+          "win",
+          "win"
+        ]
+      },
+      "expChangePercent": 39.393939393939405,
+      "kpmChangePercent": 39.393939393939384
+    },
+    {
+      "config": "GX Infernal proxy",
+      "group": "gx",
+      "field": "thor1",
+      "stats": {
+        "atk": 228638,
+        "matk": 36071,
+        "hp": 584140,
+        "interval": 0.10416666666666667,
+        "aspd": 192,
+        "crit": 171.5,
+        "critD": 7.819,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 3648570,
+        "zenyPerMinute": 108449.66666666667,
+        "bossClearsPerMinute": 0,
+        "peakAspd": 192,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 19.222222222222218,
+        "deaths": 0,
+        "rawDps": 17493233.246296298,
+        "effectiveDps": 16938108.027777776,
+        "rawDpsBySource": {
+          "basic": 5894308.564814814,
+          "skill": 8024337,
+          "proc": 3574587.681481481,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 0,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "not present",
+          "not present",
+          "not present"
+        ]
+      },
+      "after": {
+        "expPerMinute": 4956150,
+        "zenyPerMinute": 140052.66666666666,
+        "bossClearsPerMinute": 0,
+        "peakAspd": 192,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 26.11111111111111,
+        "deaths": 0,
+        "rawDps": 23807818.646296296,
+        "effectiveDps": 22965392.211111113,
+        "rawDpsBySource": {
+          "basic": 9859334.299999999,
+          "skill": 7860695.690740741,
+          "proc": 6087788.655555555,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 0,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "not present",
+          "not present",
+          "not present"
+        ]
+      },
+      "expChangePercent": 35.838150289017335,
+      "kpmChangePercent": 35.83815028901738
+    },
+    {
+      "config": "GX Infernal proxy",
+      "group": "gx",
+      "field": "thor5",
+      "stats": {
+        "atk": 228638,
+        "matk": 36071,
+        "hp": 584140,
+        "interval": 0.10416666666666667,
+        "aspd": 192,
+        "crit": 171.5,
+        "critD": 7.819,
+        "flee": 85
+      },
+      "before": {
+        "expPerMinute": 0,
+        "zenyPerMinute": 0,
+        "bossClearsPerMinute": 0,
+        "peakAspd": 192,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 0,
+        "deaths": 40,
+        "rawDps": 18344201.27962963,
+        "effectiveDps": 18344201.27962963,
+        "rawDpsBySource": {
+          "basic": 4260642.850000001,
+          "skill": 11340184.464814814,
+          "proc": 2743373.9648148147,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "death",
+          "death",
+          "death"
+        ]
+      },
+      "after": {
+        "expPerMinute": 180771.11111111112,
+        "zenyPerMinute": 4153.333333333333,
+        "bossClearsPerMinute": 0.1111111111111111,
+        "peakAspd": 192,
+        "zealBoostedCasts": 0,
+        "killsPerMinute": 0.1111111111111111,
+        "deaths": 38,
+        "rawDps": 23272543.435185183,
+        "effectiveDps": 23270528.661111113,
+        "rawDpsBySource": {
+          "basic": 7442147.551851851,
+          "skill": 11259452.675925925,
+          "proc": 4570943.207407407,
+          "dot": 0,
+          "pet": 0,
+          "other": 0
+        },
+        "bossWins": 0,
+        "bossAttempts": 3,
+        "bossMeanWinSeconds": null,
+        "bossOutcomes": [
+          "death",
+          "death",
+          "death"
+        ]
+      },
+      "expChangePercent": null,
+      "kpmChangePercent": null
+    }
+  ]
+}

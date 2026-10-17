@@ -293,3 +293,147 @@ could not create WebGL; `node tools/native-wardrobe/browser_setup.cjs` reloads t
 shared page with the explicit repository renderer stub for DOM/Canvas checks.
 Reapply it after a fresh reload when needed. Stubbed checks do not cover GPU or
 physical phones.
+
+## v185 Mythic GM bases
+
+Run `node tools/tests/mythic_gift_base_sim.js` and
+`node tools/tests/gm_presets_sim.js`. The first compares every set/slot and weapon
+against actual maximum-field N+ drops at low/mid/high rolls, then evolves eligible
+owned sources. Shield bases are compared directly because current fourth jobs
+cannot equip shields. It checks all six maximum presets, legacy gift repair,
+repeat loads, separate accounts, cards/refinement/affix/ID preservation, paid
+reforge offers, queued cloud gifts and regenerated catalog parity.
+Include Mythic/evolution, gear, class/save/owner/cloud and GM suites. Regenerate
+the catalog with `node tools/build_gm_catalog.cjs`, then verify `--check`.
+
+## Timing-only real-field comparison
+
+For exploratory comparisons without changing game balance:
+
+```sh
+node tools/compare_field_combat.cjs reports/field-combat
+node tools/summarize_field_combat.cjs reports/field-combat
+```
+
+The first runs actual field enemies, movement, healing, effects, deaths and boss
+escorts with only `playerAttack()` changed in memory between old/current timing.
+It asserts matching paired inputs, reconciles damage/kill counters, suppresses newly
+acquired pets and freezes Job/Ascension earnings to hold the test build constant.
+`--quick` is a short harness check, not acceptance evidence. The second reconciles
+measured EXP against real regular/boss rewards and derives ordinary Lv150 rates;
+GM-generated fourth-job fixtures otherwise retain x100 native reward rates.
+Read `results.md` first, then the full fixtures/assumptions and per-seed JSON.
+The screenshot-derived GX fixture is not the owner's save; different fixture
+investments are not a class-ranking proof. Renderer/FX are stubbed, and three
+seeds/three-minute windows do not justify a balance multiplier.
+
+## Cosmetic combo-gap swings (v186)
+
+Run `node tools/tests/cosmetic_combo_sim.js`, `combo_rotation_sim.js` and
+`attack_sync_sim.js` (the latter two also under `tools/tests/`). The real-page
+cosmetic suite rejects combat RNG during both creation and impact, targeting,
+projectiles, damage/leech/proc helpers, stale class/account/target state and
+paused queued-skill fallback damage. It covers every offensive class: no basics
+inside a combo burst, damaging basics retained during the three-second recovery.
+The rotation suite checks complete ASPD-paced swings and unchanged skill spacing;
+include fourth-job skill/motion checks for Rolling Cutter's five 0.2-second casts.
+
+For actual native attack pixels and desktop/390px Skills pause/resume controls:
+
+```sh
+# Optional browser dependencies, alongside jsdom/Three and Node 24:
+npm install --no-save --package-lock=false playwright-core @sparticuz/chromium
+bash tools/build_site.sh
+# With tools/preview_server.py already serving the repository on port 8000:
+CHROMIUM_BUNDLED_LIBS=1 node tools/check_cosmetic_combo_browser.cjs http://127.0.0.1:8000/dist
+```
+
+Keep the previously installed test dependencies when adding browser packages in
+an environment without a package manifest. The check loads shipped native assets
+from the built site, runs the real attack/update/native Canvas painter, compares
+changing RGBA pixels, and checks zero cosmetic damage for male/female GX/Warlock.
+It replaces only the external Three CDN download with the same local r128 library;
+there is no WebGL renderer stub. In the sandbox, Chromium uses software SwiftShader.
+The animation is stepped deterministically (rAF is paused), so this is not a
+physical-phone/FPS or full-scene GPU performance test. Diagnostics are scratch
+files under `node_modules/.arena-checks/`, not publishable artifacts.
+
+The checked-in attack-timing and field-combat reports predate v186's cosmetic-only
+gap rule. Their stored source hashes identify the historical damaging-gap version;
+do not cite those DPS/income values as measurements of v186. Re-measure into a
+new report directory if current-version balance evidence is needed; preserve the
+old reports. Refresh all three progression fixtures after combat changes and keep
+the historical skill-balance limits intact, even if they still fail.
+
+
+## Late Ascension / Mythic progression (v187)
+
+Run `node tools/tests/endgame_progression_sim.js` alongside Ascension tracks/combat,
+fourth-job skills/Mythic, equipment/evolution, save/owner and cosmetic-combo suites.
+The nine-group regression covers offensive rank curves and maximum preservation,
+linear support/cooldown upgrades, signature base power, mixed-refinement set floors,
+UI values, save/reset/class/account isolation and retained combo timing. Mutation
+checks against linear stats/skills, instant maximum set bonuses and instant full
+signature power must fail. The existing promotion/reload test now expects +2% ATK
+from an immature two-piece Celestial set, rather than its +15 maximum of +5%.
+
+Reproduce the paired stationary report without replacing the working page:
+
+```sh
+mkdir -p node_modules/.arena-checks
+patch -R -o node_modules/.arena-checks/v186.html index.html < reports/endgame-progression-v187/v186-to-v187.patch
+node tools/compare_endgame_progression.cjs node_modules/.arena-checks/v186.html reports/endgame-progression-v187-rerun
+```
+
+The reverse patch reconstructs the exact local v186 page used for this comparison;
+verify the before/after SHA-256 values recorded in `comparison.json`. Later source
+changes may require recovering the recorded source first. The 48 paired setups
+assert identical inputs, unchanged no-Ascension N+ and maximum-investment DPS,
+and monotonic intermediate growth for eight class/weapon builds. All use maximum
+ordinary skills/job levels, empty sockets, no mastery/pets and a stationary boss
+with no crit resistance; the N+ entry proxy is not a fresh Job 1 owner save. The
+50/30/20 design guide is not a measured exact contribution, and the old timing-only
+values are not a reason to add another blanket +47% to an already invested build.
+Recheck real farming/survival before making field-pacing claims.
+
+For built-site controls at 1280px/390px, with the preview server/dependencies above:
+
+```sh
+bash tools/build_site.sh
+CHROMIUM_BUNDLED_LIBS=1 node tools/check_endgame_progression_browser.cjs http://127.0.0.1:8000/dist
+CHROMIUM_BUNDLED_LIBS=1 node tools/check_cosmetic_combo_browser.cjs http://127.0.0.1:8000/dist
+```
+
+The first uses actual allocation/sub-tab controls, reset cancel/confirm, Forge set
+selection, refinement previews, save reload and account replacement. The second
+retains the native cosmetic-animation pixel checks. Both pause rAF for deterministic
+checks and use software Chromium WebGL, not a renderer stub or physical-device/FPS
+proof. Screenshots/diagnostics remain excluded under `node_modules/.arena-checks/`.
+
+The pet asset disposal test waits for the actual async decoder-entry signal with a
+five-second failure bound instead of 100 event-loop spins. This removes a concurrency
+race observed during the full gate without relaxing asset/disposal assertions.
+
+## Field-report rendering regressions
+
+`node tools/tests/field_report_sim.js` exercises the pure production renderers in
+`tools/lib/field_reports.cjs` without replaying combat. It covers the native GM x100
+warning independently of normalization, full/quick/other seed counts, per-side
+boss-attempt denominators, mixed win/loss outcomes, missing/invalid boss means and
+unchanged reduction arithmetic for valid means. Removing the warning, restoring a
+hard-coded session count or bypassing the timing guard must make the suite fail.
+
+For an end-to-end quick check, use a scratch output directory (not the historical
+checked-in report):
+
+```sh
+node tools/compare_field_combat.cjs node_modules/.arena-checks/field-report-quick --quick
+node tools/summarize_field_combat.cjs node_modules/.arena-checks/field-report-quick
+```
+
+The comparison generator itself must emit the native reward warning before running
+the summarizer. Quick output reports one seed, 10-second sessions/limits and actual
+attempts, and is explicitly not acceptance/balance evidence. The summarizer retains
+its measured-source hash check; do not bypass it to re-normalize historical data
+against a newer game. Existing Markdown can be re-rendered from its stored raw and
+ordinary-rate summaries using the pure renderers, without editing either JSON file.
