@@ -3,9 +3,10 @@
   const BGM = {
     tracks: {},
     enabled: true,
-    volume: 0.45,
+    volume: 0.05,
     muted: false,
     mode: 'map',
+    shuffle: false,
     manualIndex: 0,
     currentMap: null,
     indices: {},
@@ -45,9 +46,9 @@
     loadPrefs: function () {
       try {
         if (typeof S !== 'undefined' && S && S.bgm && typeof S.bgm === 'object') {
-          this.enabled = S.bgm.enabled !== false;
+          this.enabled = S.bgm.enabled !== false && !S.bgm.muted;
           if (typeof S.bgm.volume === 'number' && isFinite(S.bgm.volume)) this.volume = Math.max(0, Math.min(1, S.bgm.volume));
-          this.muted = !!S.bgm.muted;
+          this.muted = false;
         }
       } catch (e) {}
     },
@@ -158,6 +159,7 @@
     },
     setAutoMode: function () {
       this.mode = 'map';
+      this.shuffle = false;
       this.playingMap = null;
       this.savePrefs();
       this.sync(this.currentMap);
@@ -166,6 +168,7 @@
     sync: function (mp) {
       this.init();
       this.loadPrefs();
+      this._applyVolume();
       this.currentMap = (mp === undefined ? this.currentMap : mp);
       if (!this.enabled) { this.stopMedia(); this.playingMap = this.currentMap; this.currentTrack = null; this.renderUI(); return; }
       if (this.mode !== 'map') { this.playingMap = this.currentMap; this.renderUI(); return; }
@@ -216,12 +219,20 @@
       this.renderUI();
     },
     stopMedia: function () {
+      this.ytPendingVideo = null;
       try { this.audio.pause(); this.audio.removeAttribute('src'); this.audio.load(); } catch (e) {}
       try { if (this.ytPlayer && typeof this.ytPlayer.stopVideo === 'function') this.ytPlayer.stopVideo(); } catch (e) {}
     },
     stop: function () { this.stopMedia(); this.currentTrack = null; },
+    toggleShuffle: function () { this.init(); this.shuffle = !this.shuffle; if (this.shuffle) this.next(); this.renderUI(); },
     next: function () {
       if (!this.enabled) return;
+      if (this.shuffle) {
+        const list = this.allTracks(), current = list.findIndex(x => x.track === this.currentTrack);
+        const choices = list.map((_, i) => i).filter(i => i !== current);
+        if (choices.length) this.playAllIndex(choices[Math.floor(Math.random() * choices.length)]);
+        return;
+      }
       if (this.mode === 'manual') {
         this.playAllIndex(this.manualIndex + 1);
         return;
@@ -250,8 +261,11 @@
     },
     setEnabled: function (v) {
       this.enabled = !!v;
+      this.muted = false;
+      this._applyVolume();
       this.savePrefs();
       if (!this.enabled) { this.stopMedia(); this.currentTrack = null; }
+      else if (this.mode === 'manual') this.playAllIndex(this.manualIndex);
       else this.sync(this.currentMap);
       this.renderUI();
     },
@@ -278,7 +292,7 @@
         case 'expand': this.togglePanel(); break;
         case 'prev': this.prev(); break;
         case 'next': this.next(); break;
-        case 'mute': this.setMuted(!this.muted); break;
+        case 'shuffle': this.toggleShuffle(); break;
         case 'power': this.setEnabled(!this.enabled); break;
         case 'auto': this.setAutoMode(); break;
       }
@@ -296,7 +310,7 @@
             '<b class="bgm-now">Map BGM</b><small class="bgm-mode">map</small>' +
             '<button type="button" class="bgm-ib" data-bgm="prev" title="Previous track" aria-label="Previous track">⏮</button>' +
             '<button type="button" class="bgm-ib" data-bgm="next" title="Next track" aria-label="Next track">⏭</button>' +
-            '<button type="button" class="bgm-ib" data-bgm="mute" title="Mute" aria-pressed="false">🔊</button>' +
+            '<button type="button" class="bgm-ib" data-bgm="shuffle" title="Shuffle tracks" aria-label="Shuffle tracks" aria-pressed="false">⤨</button>' +
             '<button type="button" class="bgm-ib" data-bgm="power" title="Turn BGM on or off" aria-pressed="true">⏻</button>' +
           '</div>' +
           '<div class="bgm-player-body" id="bgmPlayerBody" hidden>' +
@@ -313,7 +327,7 @@
       const chev = root.querySelector('[data-bgm=expand]');
       const now = root.querySelector('.bgm-now');
       const modeTag = root.querySelector('.bgm-mode');
-      const muteBtn = root.querySelector('[data-bgm=mute]');
+      const shuffleBtn = root.querySelector('[data-bgm=shuffle]');
       const powerBtn = root.querySelector('[data-bgm=power]');
       const autoRow = root.querySelector('.bgm-auto');
       const list = root.querySelector('.bgm-list');
@@ -332,11 +346,7 @@
         modeTag.textContent = this.mode === 'map' ? 'map' : 'picked';
         modeTag.title = this.mode === 'map' ? 'Following the map you are in' : 'Hand-picked track';
       }
-      if (muteBtn) {
-        muteBtn.textContent = this.muted ? '🔇' : '🔊';
-        muteBtn.setAttribute('aria-pressed', String(!!this.muted));
-        muteBtn.title = this.muted ? 'Unmute' : 'Mute';
-      }
+      if (shuffleBtn) shuffleBtn.setAttribute('aria-pressed', String(this.shuffle));
       if (powerBtn) {
         powerBtn.setAttribute('aria-pressed', String(!!this.enabled));
         powerBtn.style.opacity = this.enabled ? '1' : '.45';

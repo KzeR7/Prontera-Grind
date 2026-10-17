@@ -54,7 +54,7 @@ Catalyst (Thor) each roll at 0.035% per kill; Valkyrie's Sigil rolls at 0.0025% 
 ordinary mob/escort and 0.1% per MVP. The map's Field intelligence shows the wallet.
 Online and server-budgeted offline kills share these rolls. Materials are collected
 for N+ equipment evolution (Shards/Catalysts plus Sigils).
-Equipment → Ascension (also available in Black Market) requires a fourth-job class. Choose a set, then an eligible owned N+ piece. Evolution spends Shards/Catalysts, Sigils and Zeny, preserving the same item ID, refinement, cards and existing affixes while filling to four affixes. It never creates an extra item. Mythic equipment can only be worn by fourth jobs. Character contains working Ascension stats and Skill ascension allocation tabs.
+Equipment → Ascension Forge requires a fourth-job class. Choose a set, then an eligible owned N+ piece. Evolution spends Shards/Catalysts, Sigils and Zeny, preserving the same item ID, refinement, cards and existing affixes while filling to four affixes. It never creates an extra item. Mythic equipment can only be worn by fourth jobs. Character contains working Ascension stats and Skill ascension allocation tabs.
 Existing maps, pet identities and Nightmare reward values retain their meaning.
 
 ## Ascension progression (v167)
@@ -207,7 +207,7 @@ Movement from AGI, pets, skills and running shares a 10.045 units/second cap.
 Equipment and card movement is applied afterward and can exceed that cap; those
 bonuses retain their combined +20% limit.
 
-Class Tree opens with large clickable cards for the current five-step lineage.
+Class Tree opens with cards for the current five-step lineage; each class name is an explicit job-change button.
 Available cards use the existing class-change and first-unlock trial gates.
 The Class tree subview retains the full 25-node overview with its inspector.
 Locked/current cards explain their status; the portrait has a neutral slate background.

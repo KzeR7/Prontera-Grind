@@ -228,7 +228,7 @@ test('pet cards preserve training, skills and deployment controls',()=>{
  doc.querySelector('.ui-inspector [data-a=pon]').click();assert.equal(ev('gp(91002).on'),true);doc.querySelector('[data-v="pet:party"]').click();assert.match(doc.querySelector('.eclipse-pet-tabs').textContent,/2 \/ 3/);
 });
 test('supplies cards buy entered quantities and expose the inline Echo store',()=>{
- ev(`tabs.push('market');renderWin()`);assert.equal(doc.querySelectorAll('.eclipse-product').length,4);
+ ev(`tabs.push('market');renderWin()`);assert.equal(doc.querySelectorAll('.eclipse-product').length,5);
  const qty=doc.getElementById('oreQty-ori');qty.value='7';qty.dispatchEvent(new g.window.Event('input',{bubbles:true}));const before=ev('S.zeny');
  doc.querySelector('[data-a=bmore][data-v=ori]').click();assert.equal(ev('S.ore.ori'),1007);assert.equal(ev('S.zeny'),before-700000);
  doc.querySelector('.eclipse-product [data-v="market:echo"]').click();assert.equal(ev('sub.market'),'echo');assert.ok(doc.querySelector('[data-buy=ori]'));
@@ -311,7 +311,7 @@ test('large HUD numbers are compact while the exact rates remain accessible',()=
 });
 test('class emblems are distinct and supplies put both ores before the scroll',()=>{
  assert.notEqual(ev("eclipseClassEmblem('Swordman')"),ev("eclipseClassEmblem('Mage')"));assert.notEqual(ev("eclipseClassEmblem('Swordman')"),ev("eclipseClassEmblem('Lord Knight')"));
- ev("tabs.push('market');renderWin()");assert.deepEqual([...doc.querySelectorAll('.eclipse-product-copy>b')].map(e=>e.textContent),['Oridecon','Elunium','Refine Protection Scroll','Echo store']);assert.match(doc.querySelector('.eclipse-product').textContent,/Owned: 1,000/);
+ ev("tabs.push('market');renderWin()");assert.deepEqual([...doc.querySelectorAll('.eclipse-product-copy>b')].map(e=>e.textContent),['Oridecon','Elunium','Refine Protection Scroll','Echo store','Void Core']);assert.match(doc.querySelector('.eclipse-product').textContent,/Owned: 1,000/);
 });
 test('a confirmed below-five failure consumes one scroll and keeps the rank',()=>{
  ev(`tabs.push('equip');sub.equip='refine';renderWin();S.eq.weapon.r=2;S.useRefineScroll=true;S.refineScrolls=2;refine('weapon');window.oldRefRandom=Math.random;Math.random=()=>.999`);doc.getElementById('my').click();ev('Math.random=window.oldRefRandom');assert.equal(ev('S.eq.weapon.r'),2);assert.equal(ev('S.refineScrolls'),1);assert.match(doc.getElementById('eclipseRefineResult').textContent,/Rank kept at \+2/);
@@ -335,7 +335,7 @@ test('supplies owned quantities refresh on passive drops and retain the quantity
  ev("tabs.push('market');S.ore.ori=999;S.ore.elu=998;S.refineScrolls=3;S.shards=9;renderWin()");
  const body=doc.querySelector('[data-win=market] .wbody'),quantity=body.querySelector('.ore-quantity');quantity.value='5';quantity.dispatchEvent(new g.window.Event('input',{bubbles:true}));
  ev('S.ore.ori=1000;S.ore.elu=1001;S.refineScrolls=4;S.shards=10;ui()');
- assert.deepEqual([...body.querySelectorAll('.eclipse-owned-count')].map(e=>e.textContent),['Owned: 1,000','Owned: 1,001','Owned: 4','Owned: 10']);
+ assert.deepEqual([...body.querySelectorAll('.eclipse-owned-count')].map(e=>e.textContent),['Owned: 1,000','Owned: 1,001','Owned: 4','Owned: 10','Owned: 0']);
  assert.equal(body.querySelector('.ore-quantity'),quantity);assert.equal(quantity.value,'5');
  body.querySelector('[data-a=bmore][data-v=ori]').click();assert.equal(ev('S.ore.ori'),1005);assert.match(body.querySelector('.eclipse-owned-count').textContent,/1,005/);
 });
