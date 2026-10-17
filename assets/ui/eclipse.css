@@ -1781,3 +1781,29 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .echo-scene span{letter-spacing:.22em;font-size:10px;color:#c7b8e4}#wins .echo-scene strong{font:700 28px var(--e-display)}#wins .echo-scene small{max-width:24ch;color:#ccc7dc;line-height:1.7}
 #wins .ui-combo-editor{margin-bottom:22px}
 @media(max-width:740px){#wins .current-class-path{grid-template-columns:repeat(2,minmax(0,1fr))}#wins .current-class-card{min-height:165px}#wins .echo-scene{min-height:230px;background-position:60% center}#wins .echo-scene strong{font-size:24px}}
+
+/* v188: flush music controls and consistent slate/gold utility panels. */
+@media(min-width:901px){
+ #bgmPlayer{left:22px;top:159px;width:302px;box-sizing:border-box;border:1px solid var(--gold);border-top:0;border-radius:0 0 8px 8px}
+ #hud{border-bottom-left-radius:0;border-bottom-right-radius:0}
+}
+.bgm-player-body[hidden]{display:none!important}
+.bgm-ib[aria-pressed=true]{color:var(--gold);background:var(--e-soft)}
+#echoLeave{position:absolute;top:140px;left:50%;transform:translateX(-50%);z-index:49;pointer-events:auto;border-color:var(--gold);background:var(--panel)}
+#echoLeave[hidden]{display:none}
+#wins .ui-settings-section .hair-preview-stage{background:radial-gradient(ellipse,var(--e-raised),var(--e-bg));border-color:var(--edge2)}
+#wins :is(.mastery-title,.mastery-medal,.mastery-stat,.mastery-card-row,.mastery-map,.card-roll-recent,.mastery-empty,.card-reward-legend,.mastery-summary,.mastery-progress-card,.board-row,.board-state,.board-periods,.board-head){background:var(--panel)!important;border-color:var(--edge2)!important;color:var(--ink)}
+#wins :is(.mastery-title.active,.board-row.me,.board-row:nth-child(2)){background:var(--e-soft)!important;border-color:var(--gold)!important}
+#wins :is(.mastery-tabs,.board-periods) button{background:var(--e-bg);color:var(--e-muted);border-color:var(--edge2)}
+#trial .trial-card{background:var(--panel);border-color:var(--gold)}
+#trial :is(.trial-intro,.trial-result-banner,.trial-next-cache,.trial-stat,.trial-act,.trial-reward-details,.shopline,.trial-ladder){background:var(--e-bg);border-color:var(--edge2);color:var(--ink)}
+#trial :is(.trial-intro,.trial-result-banner,.trial-next-cache,.trial-stat,.trial-act) :is(b,span,small){color:inherit}
+#trial .trial-result-banner{background:linear-gradient(135deg,#292239,var(--panel));border-color:var(--gold)}
+#trial .trial-result-banner b,#trial .trial-next-cache b{color:var(--gold)}
+#trial .trial-act:hover{background:var(--e-raised);border-color:var(--gold)}
+#trial .trial-choice-mark{background:var(--e-soft);color:var(--gold)}
+#wins .reforge-pool{padding:12px;border:1px solid var(--edge2);background:var(--e-bg);margin:8px 0}
+#wins .current-class-card>button{border-color:var(--gold);min-height:38px;font-size:13px}
+#wins .mastery-map>summary{background:var(--e-raised);border-color:var(--edge2);color:var(--ink)}
+#trial :is(.trial-head,.trial-close,.trial-choice-timer,.trial-rung,.trial-reward-details>summary){background:var(--e-raised);border-color:var(--edge2);color:var(--ink)}
+#trial .trial-rung.next{background:var(--e-soft);border-color:var(--gold)}

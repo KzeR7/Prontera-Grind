@@ -250,35 +250,33 @@ test('picking a song while BGM is off turns BGM back on', () => {
   assert.equal(root.querySelector('[data-bgm=power]').getAttribute('aria-pressed'), 'true');
 });
 
-test('mute and volume control the player and follow the settings buttons', () => {
-  click({ 'data-bgm': 'mute' });
-  assert.equal(BGM.muted, true);
-  assert.equal(yt.vol, 0, 'YouTube player is silenced');
-  assert.equal(root.querySelector('[data-bgm=mute]').getAttribute('aria-pressed'), 'true');
-  click({ 'data-bgm': 'mute' });
-  assert.equal(BGM.muted, false);
-  BGM.setVolume(0.7);
-  assert.equal(yt.vol, 70);
-  assert.equal(root.querySelector('.bgm-vol-range').value, '70', 'the widget slider mirrors it');
-  BGM.setVolume(0.45);
-});
-
-test('volume, mute and on/off persist with the save and load back', () => {
-  BGM.setVolume(0.8);
-  BGM.setMuted(true);
-  BGM.setEnabled(false);
-  assert.equal(ev('S.bgm.volume'), 0.8);
-  assert.equal(ev('S.bgm.muted'), true);
-  assert.equal(ev('S.bgm.enabled'), false);
-  assert.ok(sandbox.saved > 0, 'save() ran');
-  BGM.enabled = true; BGM.muted = false; BGM.volume = 0.1; // reset in-memory only
-  BGM.loadPrefs();
-  assert.equal(BGM.volume, 0.8);
-  assert.equal(BGM.muted, true);
+test('one power control resumes manual music and volume persists', () => {
+  BGM.playAllIndex(3);
+  click({ 'data-bgm': 'power' });
   assert.equal(BGM.enabled, false);
-  BGM.setEnabled(true);
-  BGM.setMuted(false);
-  BGM.setVolume(0.45);
+  click({ 'data-bgm': 'power' });
+  assert.equal(BGM.enabled, true);
+  assert.equal(yt.loaded, EXPECTED[3]);
+  assert.equal(BGM.currentTrack, BGM.allTracks()[3].track);
+  BGM.setVolume(.05);
+  assert.equal(yt.vol, 5);
+  assert.equal(ev('S.bgm.volume'), .05);
+  BGM.volume=.9; BGM.loadPrefs(); assert.equal(BGM.volume,.05);
+  assert.ok(!root.innerHTML.includes('data-bgm="mute"'));
+});
+test('legacy mute becomes off and can be turned back on', () => {
+  ev('S.bgm={enabled:true,muted:true,volume:.2}');
+  BGM.loadPrefs(); assert.equal(BGM.enabled,false);
+  BGM.setEnabled(true); assert.equal(BGM.enabled,true);
+  assert.equal(ev('S.bgm.muted'),false);
+});
+test('shuffle skips the current track and auto restores map mode', () => {
+  const before=BGM.currentTrack;
+  click({'data-bgm':'shuffle'});
+  assert.equal(BGM.shuffle,true); assert.notEqual(BGM.currentTrack,before);
+  const next=BGM.currentTrack; BGM.next(); assert.notEqual(BGM.currentTrack,next);
+  click({'data-bgm':'auto'}); assert.equal(BGM.shuffle,false); assert.equal(BGM.mode,'map');
+  assert.match(cssSrc,/\.bgm-player-body\[hidden\]\{display:none!important\}/);
 });
 
 test('phones keep plain autoplay: the widget is CSS-hidden and the page wires the hooks', () => {
