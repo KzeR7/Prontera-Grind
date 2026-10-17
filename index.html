@@ -891,7 +891,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=1"></script>
 <script src="assets/bgm.js?v=188"></script>
-<script src="assets/combat-audio.js?v=188"></script>
+<script src="assets/combat-audio.js?v=189"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1122,7 +1122,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-17 haven-v188 gameplay UI and audio polish';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-17 haven-v189 affix ranges and native hit sounds';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2876,7 +2876,7 @@ function petHit(p,target){
       }else{
         const hitList=use.kind==='aoe'?mobs.slice().filter(o=>Math.hypot(o.x-target.x,o.z-target.z)<=use.radius):[target];
         let dealt=0;
-        for(const o of hitList)if(o&&o.hp>0){const d=Math.max(1,Math.round(petDmg(p)*use.power*(o.boss?1+petPassive('boss')/100:1)));dealt+=Math.min(o.hp,d);hurt(o,d,use.color)}
+        for(const o of hitList)if(o&&o.hp>0){const d=Math.max(1,Math.round(petDmg(p)*use.power*(o.boss?1+petPassive('boss')/100:1)));dealt+=Math.min(o.hp,d);hurt(o,d,use.color,false,false,'fist')}
         petLeech(dealt);
         addFloat(target.x,2.4,target.z,use.n,use.color,true);playSkillFx(use.vfx,target,use.color);
       }
@@ -2885,7 +2885,7 @@ function petHit(p,target){
   }
   let d=petDmg(p)*rnd(.9,1.1);const c=Math.random()*100<p.eq[2]*5;if(c)d*=2;
   const hit=Math.max(1,Math.round(d*(target&&target.boss?1+petPassive('boss')/100:1)));
-  const drained=Math.min(target.hp,hit);hurt(target,hit,MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c);
+  const drained=Math.min(target.hp,hit);hurt(target,hit,MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c,false,'fist');
   petLeech(drained);
   return false;
 }
@@ -4144,7 +4144,8 @@ const affixPool=it=>it.slot==='weapon'?(it.wt==='staff'?['int','dex','matk','cri
 // The stored quality:1.5 used to multiply every Mythic roll (STR 44-69 became 66-104), pushing a
 // fully-reforged piece to 2.5x N+. Rolls now ignore it (existing values stay exactly as rolled);
 // art, value and sell price never read it for sec-6, so nothing else moves. Lands ~1.67x total.
-const rollAffix=(k,it)=>({k,v:k==='move'?Math.min(it.slot==='acc'?5:8,Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)))):Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)*(it.sec===6?1:(it.quality||1))))});
+const rolledAffixValue=(k,it,roll)=>k==='move'?Math.min(it.slot==='acc'?5:8,Math.max(1,Math.round(affixValue(k,it.sec,it.tier,roll,it.mp)))):Math.max(1,Math.round(affixValue(k,it.sec,it.tier,roll,it.mp)*(it.sec===6?1:(it.quality||1))));
+const rollAffix=(k,it)=>({k,v:rolledAffixValue(k,it,rnd(.8,1.25))});
 function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){
   const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';
   // The numeric field-quality input (see dropTier) feeds the existing stat/value rolls. The item
@@ -4502,7 +4503,7 @@ function heroStandoff(m){
 }
 function shot(col){if(!mob)return;const magic=INT_CLASSES.includes(S.cls),arrow=heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)==='bow';if(!magic&&!arrow)return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||(magic?'#d9b9ff':'#fff'),arrow:!magic&&arrow})}
-function hurt(o,d,col,c,skill=false){if(d>0&&typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false);S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill);if(o.hp<=0)kill(o)}
+function hurt(o,d,col,c,skill=false,soundWeapon=S.eq.weapon?.wt){if(d>0&&typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false,soundWeapon);S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill);if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false,skill=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'MISS','#dfe5ed',false,'miss');return}
   // v73: the crit roll answers to the target - a boss carries its map's crit resistance
@@ -5178,8 +5179,8 @@ function buyOre(o,quantity=1){const n=Number(quantity);if(!bmOpen()||!ORE[o]||!N
 let reforgeSelection={};
 function reforgeQuote(it,n){const all=(it.aff||[]).length,full=n===all,fee=full?1:n===2?3:6;
  return{zeny:reforgeCost(it)*fee,ore:full?0:(rarIdx(it)+1)*(n===2?2:4),mat:it.sec>=4&&it.sec<6&&!full?(n===2?2:4):0,ascMat:it.sec===6&&!full?(n===2?3:5):0,ascMatType:it.ascSet?ASC_SETS[it.ascSet]?.mat:-1,oreKey:it.slot==='weapon'?'ori':'elu',map:nmMatIndex(it.mp)};}
-function affixRangeText(a,it){if(!it)return affTxt(a);const value=f=>a.k==='move'?Math.min(it.slot==='acc'?5:8,Math.max(1,Math.round(affixValue(a.k,it.sec,it.tier,f,it.mp)))):Math.max(1,Math.round(affixValue(a.k,it.sec,it.tier,f,it.mp)*(it.quality||1)));
- return `${affTxt(a)} [${value(.8)*(a.k==='hp'?2:1)}~${value(1.25)*(a.k==='hp'?2:1)}${a.k==='hp'?' effective':''}]`;}
+function affixRangeText(a,it){if(!it)return affTxt(a);const min=rolledAffixValue(a.k,it,.8),max=rolledAffixValue(a.k,it,1.25),scale=a.k==='hp'?2:1;
+ return `${affTxt(a)} [${min*scale}~${max*scale}${a.k==='hp'?' effective':''}]${a.v>0&&(a.v<min||a.v>max)?' · saved roll outside current range':''}`;}
 function reforge(sl,all=false,confirmed=null){
  if(!bmOpen()||S.reforgePending)return;const it=S.eq[sl];if(!it)return;
  const chosen=all?(it.aff||[]).map((_,i)=>i):(reforgeSelection[it.id]||[]).filter((x,i,a)=>Number.isInteger(x)&&x>=0&&x<it.aff.length&&a.indexOf(x)===i);

@@ -1,0 +1,49 @@
+{
+  "source": "Ragnarok Online client WAV recordings served by the roBrowser GRF reference host",
+  "retrieved": "2026-10-17",
+  "mappingRevision": "9f3281c02fee66f8be949b7e58429dc49775a7be",
+  "assets": [
+    {
+      "file": "_hit_sword.wav",
+      "url": "https://grf.robrowser.com/data/wav/_hit_sword.wav",
+      "sha256": "1dfbdbd2f441b4dfda85282cc84b49407ea138f834d8a182ba1b15c9bcd98caa",
+      "bytes": 24866
+    },
+    {
+      "file": "_hit_spear.wav",
+      "url": "https://grf.robrowser.com/data/wav/_hit_spear.wav",
+      "sha256": "51cf3557e5fe5ff700b8d884f9e44af4175f8b1ebc3a8185d8069f399ffd382a",
+      "bytes": 8816
+    },
+    {
+      "file": "_hit_axe.wav",
+      "url": "https://grf.robrowser.com/data/wav/_hit_axe.wav",
+      "sha256": "0aa9becf023ffb18355314e071871d7bcf3fba479329f46868171791c83d1c1d",
+      "bytes": 16114
+    },
+    {
+      "file": "_hit_mace.wav",
+      "url": "https://grf.robrowser.com/data/wav/_hit_mace.wav",
+      "sha256": "54aef95af378a442c4b500f7b5535dfbe76c593ce6a614a48baa04637c47e72c",
+      "bytes": 16114
+    },
+    {
+      "file": "_hit_rod.wav",
+      "url": "https://grf.robrowser.com/data/wav/_hit_rod.wav",
+      "sha256": "eae40a60273ca176bf22e0bcd253108c9ba6a01bc34a047be9d3d3a7b73db45d",
+      "bytes": 12576
+    },
+    {
+      "file": "_hit_arrow.wav",
+      "url": "https://grf.robrowser.com/data/wav/_hit_arrow.wav",
+      "sha256": "d3d1df59ef78251d4f4327a628c3f1a482ed1b70b072a4602fc8c2f3d5cacbe2",
+      "bytes": 13360
+    },
+    {
+      "file": "_hit_fist1.wav",
+      "url": "https://grf.robrowser.com/data/wav/_hit_fist1.wav",
+      "sha256": "9a188d3b22777d91b3e6e1460430fbe55e9f9bbe805d40944f18441e4bbff1a7",
+      "bytes": 11216
+    }
+  ]
+}
