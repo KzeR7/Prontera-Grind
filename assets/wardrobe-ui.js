@@ -68,9 +68,14 @@ function wardrobeHero(opt){wardrobeOwner();const a=wardrobeAppearance();if(!ward
  const k=JSON.stringify([opt.cls,a]);if(wardrobeRequested!==k){wardrobeRequested=k;const owner=S;wardrobeStore.select('hero',a,opt.cls).then(look=>{if(look&&S===owner&&wardrobeRequested===k){wardrobeEquipped=look;heroKey='';wardrobeFailure=''}}).catch(()=>{if(S===owner&&wardrobeRequested===k){wardrobeFailure='Saved appearance could not load. Open Wardrobe and retry.';log(wardrobeFailure,'r0')}})}
  return wardrobeEquipped&&wardrobeEquipped.cls===opt.cls?wardrobeEquipped:null;
 }
+// The atlases paint every figure's contact shadow with its bottom edge on canvas
+// row 208 of 280 (measured across all 40 base bodies; the idle feet sit 206-211),
+// so 208/280 is the ground line. Anchoring higher buried the whole figure up to
+// its shins; the sprite's own painted shadow now rests exactly on the floor.
+const WARDROBE_GROUND=208;
 function mkWardrobeHero(look){const cv=document.createElement('canvas');cv.width=320;cv.height=280;const tex=new THREE.CanvasTexture(cv);tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;
  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.12}));const px=SKIN_H/look.base.figureHeight;
- spr.scale.set(320*px,280*px,1);spr.center.set(.5,1-200/280);spr.userData.wardrobe={look,cv,tex,paint:'',route:'',start:0};return spr}
+ spr.scale.set(320*px,280*px,1);spr.center.set(.5,1-WARDROBE_GROUND/280);spr.userData.wardrobe={look,cv,tex,paint:'',route:'',start:0};return spr}
 function captureWardrobeFrame(spr,dir,run,attack,now=performance.now()){const sk=spr.userData.wardrobe,stance=attack>0?'attack':run?'walk':'idle';// Game-facing indices already follow RO S,SW,W,NW,N,NE,E,SE.
  const route=stance+dir;if(route!==sk.route){sk.route=route;sk.start=now}const v=sk.look.base.metadata.actions[route],progress=attack>0?Math.max(0,Math.min(1,1-attack)):null,ms=now-sk.start,i=PGWardrobe.animationKey(sk.look,stance,dir,ms,progress,now),glow=milestone(REFINE_GLOWS,S?.eq?.weapon?.r||0),paint=route+':'+i+(glow?':refine'+glow.at+':'+Math.floor(now/33):'');
  if(sk.paint===paint)return false;

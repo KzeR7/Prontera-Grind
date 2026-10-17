@@ -49,7 +49,7 @@ small{color:var(--e-muted)}
 /* v178: floating BGM player, parked under the HUD card at the top-left. Collapsed it just
    shows what is playing (map BGM by default); the chevron opens the full track list so any
    added track can be picked. PC web only - phones keep plain autoplay map music. */
-#bgmPlayer{position:absolute;left:max(8px,env(safe-area-inset-left));top:179px;width:304px;z-index:44;background:linear-gradient(130deg,var(--e-raised),var(--e-glass));border:1px solid var(--edge);border-radius:8px;box-shadow:0 12px 30px #0003;pointer-events:auto;font:10px/1.5 var(--e-font);color:var(--ink)}
+#bgmPlayer{position:absolute;left:max(8px,env(safe-area-inset-left));top:171px;width:304px;z-index:44;background:linear-gradient(130deg,var(--e-raised),var(--e-glass));border:1px solid var(--gold);border-radius:8px;box-shadow:0 12px 30px #0003,inset 0 1px 0 #d7b77a22;pointer-events:auto;font:10px/1.5 var(--e-font);color:var(--ink)}
 #bgmPlayer[hidden]{display:none}
 .bgm-player-bar{display:flex;align-items:center;gap:6px;padding:6px 8px}
 .bgm-ico{flex:none;color:var(--gold);font-size:12px}
@@ -58,6 +58,7 @@ small{color:var(--e-muted)}
 .bgm-ib{flex:none;width:22px;height:22px;padding:0;font-size:12px;line-height:1;color:var(--gold);background:none;border:0}
 .bgm-ib:focus-visible{outline:2px solid var(--gold)}
 .bgm-player-body{border-top:1px solid var(--edge);padding:6px 8px 8px;display:grid;gap:6px}
+.bgm-player-body[hidden]{display:none}
 .bgm-row{display:block;width:100%;text-align:left;font-size:10px;padding:3px 6px;border-radius:4px;color:var(--ink);background:none;border:1px solid transparent;cursor:pointer}
 .bgm-row:hover{border-color:var(--edge)}
 .bgm-row.on{background:var(--e-soft);border-color:var(--gold);color:var(--gold)}
@@ -271,6 +272,25 @@ body.clean-screen #bgmPlayer{visibility:hidden}
 .trial-stat,.trial-act,.shopline,.trial-reward-details{background:var(--e-bg);border-color:var(--edge);color:var(--ink)}
 .trial-act small,.trial-note{color:var(--e-muted)}
 .trial-act:hover{background:var(--e-raised)}
+/* The Endless Echo overlay kept the field UI's moss paint: its heading, intro,
+   cache banner, rungs, close button and choice timer now follow the theme. */
+.trial-head,.trial-intro,.trial-result-banner,.trial-next-cache,.trial-rung{background:var(--e-bg);border-color:var(--edge);color:var(--ink)}
+.trial-intro>b,.trial-intro>span,.trial-result-banner small,.trial-result-banner b,.trial-result-banner span,.trial-next-cache>span,.trial-next-cache>b,.trial-rung b,.trial-rung small{color:var(--ink)}
+.trial-close,.trial-choice-timer{background:var(--e-raised);border-color:var(--edge);color:var(--gold)}
+/* The moss paint reaches the action buttons through the compound
+   .trial-card button.trial-act selector, so this override needs the
+   overlay's own id to outrank it. */
+#trial .trial-card button.trial-act{background:var(--e-bg);border-color:var(--edge);color:var(--ink)}
+#trial .trial-card button.trial-act small{color:var(--e-muted)}
+#trial .trial-card button.trial-act:hover{background:var(--e-raised)}
+.dungeoncard,.dungeoncard:hover{background:var(--e-bg);border-color:var(--edge)}
+.dungeoncard .echo-copy>b,.dungeoncard .echo-sub,.echo-meta b{color:var(--ink)}
+.dungeoncard .echo-meta small,.dungeoncard .echo-open{background:var(--e-raised);border-color:var(--edge);color:var(--e-muted)}
+/* Reforge: the receivable-affix pool and the Ascension Forge carried-over list. */
+.reforge-pool-list,.ascension-affixes .reforge-pool-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.pool-affix{font-size:9px;padding:3px 7px;border:1px solid var(--edge);border-radius:4px;background:var(--e-bg);color:var(--e-muted)}
+.pool-affix.on{border-color:var(--gold);color:var(--gold);background:var(--e-soft)}
+.ascension-affixes{margin:8px 0}.ascension-affixes>small{font-size:9px;color:var(--e-muted);letter-spacing:1px;text-transform:uppercase}
 #modal #my{background:var(--gold);color:var(--e-bg)}
 
 body.clean-screen #eclipseHeader,body.clean-screen #eclipseCombat,body.clean-screen #eclipseMetrics{visibility:hidden}
@@ -415,6 +435,13 @@ body.clean-screen #screenBtn{visibility:visible}
 #wins .ui-panel>.atabs button{flex:0 0 auto;border:0;border-bottom:1px solid transparent;border-radius:0;background:none;font-weight:400;font-size:10px;padding:11px 0;color:var(--e-muted)}
 
 #wins .ui-panel>.atabs button.on{color:var(--gold);border-bottom-color:var(--gold)}
+/* The field UI's moss paint also tints the inactive text of the other tab
+   bars (mastery tabs on Index, period picker on the leaderboard); the Eclipse
+   muted tone replaces it, exactly as the atabs rule above already does. */
+#wins .ui-panel>.mastery-tabs button,#wins .gt button,#wins .board-periods button{color:var(--e-muted)}
+/* Settings: the live character preview kept the field UI's moss stage and card. */
+#wins .ui-settings-section .hair-preview-card{background:var(--e-raised);border-color:var(--edge);box-shadow:none}
+#wins .ui-settings-section .hair-preview-stage{background:radial-gradient(ellipse,var(--e-soft),var(--e-bg));border-color:var(--edge)}
 
 #wins .wbody[data-layout=equip]>.ui-content:has(.eclipse-equipment){padding:0;display:block}
 
@@ -1772,12 +1799,15 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 /* v179: readable current lineage, neutral native portrait and Echo destination art. */
 #wins .current-class-path{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:4px 0 22px}
 #wins .current-class-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:190px;padding:18px 10px;white-space:normal;text-align:center;border:1px solid var(--edge2);border-radius:12px;background:linear-gradient(160deg,var(--e-raised),var(--e-bg));color:var(--ink)}
-#wins .current-class-card strong{font-size:15px;line-height:1.5}#wins .current-class-card small{font-size:11px;color:var(--e-muted);line-height:1.5}
-#wins .current-class-card.current{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--e-soft)}#wins .current-class-card:disabled{opacity:.75}
+#wins .current-class-card strong,#wins .current-class-card .class-name{font-size:15px;line-height:1.5}
+#wins .current-class-card .class-name{border:0;background:none;padding:0;font:inherit;color:var(--gold);cursor:pointer}
+#wins .current-class-card .class-name:hover{text-decoration:underline}
+#wins .current-class-card small{font-size:11px;color:var(--e-muted);line-height:1.5}
+#wins .current-class-card.current{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--e-soft)}#wins .current-class-card.locked{opacity:.75}
 #wins .class-card-emblem{display:grid;place-items:center;width:58px;height:58px;border:1px solid var(--edge2);border-radius:50%;font-size:30px;color:var(--gold)}
 #wins .class-path-panel .hair-preview-card{background:#182131}#wins .class-path-panel .hair-preview-stage{background:radial-gradient(ellipse,#374159,#182131 75%);border-color:#56617b}
 #wins .echo-destination{overflow:hidden;border:1px solid var(--edge2);border-radius:14px;background:var(--e-bg)}
-#wins .echo-scene{min-height:235px;margin:-24px -24px 24px;padding:34px 28px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:12px;background:linear-gradient(90deg,#0c1423db,transparent 80%),url('../atlas/endless-echo.svg') center/cover;color:#eeeafa}
+#wins .echo-scene{min-height:235px;margin:-24px -24px 24px;padding:34px 28px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:12px;background:linear-gradient(90deg,#171020e6,transparent 80%),url('../atlas/endless-echo.svg') center/cover;color:#eeeafa}
 #wins .echo-scene span{letter-spacing:.22em;font-size:10px;color:#c7b8e4}#wins .echo-scene strong{font:700 28px var(--e-display)}#wins .echo-scene small{max-width:24ch;color:#ccc7dc;line-height:1.7}
 #wins .ui-combo-editor{margin-bottom:22px}
 @media(max-width:740px){#wins .current-class-path{grid-template-columns:repeat(2,minmax(0,1fr))}#wins .current-class-card{min-height:165px}#wins .echo-scene{min-height:230px;background-position:60% center}#wins .echo-scene strong{font-size:24px}}

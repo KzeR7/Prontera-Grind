@@ -3,8 +3,8 @@
   const BGM = {
     tracks: {},
     enabled: true,
-    volume: 0.45,
-    muted: false,
+    volume: 0.05,
+    shuffle: false,
     mode: 'map',
     manualIndex: 0,
     currentMap: null,
@@ -47,7 +47,11 @@
         if (typeof S !== 'undefined' && S && S.bgm && typeof S.bgm === 'object') {
           this.enabled = S.bgm.enabled !== false;
           if (typeof S.bgm.volume === 'number' && isFinite(S.bgm.volume)) this.volume = Math.max(0, Math.min(1, S.bgm.volume));
-          this.muted = !!S.bgm.muted;
+          // Older saves have a separate mute flag. The widget now has one sound
+          // switch, so restore the saved on/off state rather than preserving a
+          // second invisible silence state from the retired mute control.
+          this.muted = false;
+          if (typeof S.bgm.shuffle === 'boolean') this.shuffle = S.bgm.shuffle;
         }
       } catch (e) {}
     },
@@ -58,6 +62,7 @@
           S.bgm.enabled = this.enabled;
           S.bgm.volume = this.volume;
           S.bgm.muted = this.muted;
+          S.bgm.shuffle = this.shuffle;
           if (typeof save === 'function') save();
         }
       } catch (e) {}
@@ -172,7 +177,7 @@
       const list = this.listFor(this.currentMap);
       if (!list.length) { this.stopMedia(); this.playingMap = this.currentMap; this.currentTrack = null; this.renderUI(); return; }
       if (this.playingMap === this.currentMap && this.currentTrack) { this.renderUI(); return; }
-      if (this.indices[this.currentMap] === undefined) this.indices[this.currentMap] = 0;
+      if (this.indices[this.currentMap] === undefined) this.indices[this.currentMap] = this.shuffle && list.length > 1 ? Math.floor(Math.random() * list.length) : 0;
       this.playingMap = this.currentMap;
       this.playIndex(this.indices[this.currentMap]);
       this.renderUI();
@@ -223,13 +228,21 @@
     next: function () {
       if (!this.enabled) return;
       if (this.mode === 'manual') {
-        this.playAllIndex(this.manualIndex + 1);
+        const count = this.allTracks().length;
+        if (this.shuffle && count > 1) {
+          let i; do { i = Math.floor(Math.random() * count); } while (i === this.manualIndex);
+          this.playAllIndex(i);
+        } else this.playAllIndex(this.manualIndex + 1);
         return;
       }
       const mp = this.currentMap;
       const list = this.listFor(mp);
       if (!list.length) return;
-      const i = (this.indices[mp] || 0) + 1;
+      let i;
+      if (this.shuffle && list.length > 1) {
+        // Any track but the one that is ending, so shuffle never repeats in place.
+        do { i = Math.floor(Math.random() * list.length); } while (i === (this.indices[mp] || 0));
+      } else i = (this.indices[mp] || 0) + 1;
       this.indices[mp] = i;
       this.playIndex(i);
       this.renderUI();
@@ -250,9 +263,17 @@
     },
     setEnabled: function (v) {
       this.enabled = !!v;
+      // Mute and the power switch did the same thing; the switch is the only one left,
+      // so turning the music back on always restores the volume the player set.
+      if (this.enabled) this.muted = false;
       this.savePrefs();
       if (!this.enabled) { this.stopMedia(); this.currentTrack = null; }
       else this.sync(this.currentMap);
+      this.renderUI();
+    },
+    toggleShuffle: function () {
+      this.shuffle = !this.shuffle;
+      this.savePrefs();
       this.renderUI();
     },
     setMuted: function (v) { this.muted = !!v; this._applyVolume(); this.savePrefs(); this.renderUI(); },
@@ -278,7 +299,7 @@
         case 'expand': this.togglePanel(); break;
         case 'prev': this.prev(); break;
         case 'next': this.next(); break;
-        case 'mute': this.setMuted(!this.muted); break;
+        case 'shuffle': this.toggleShuffle(); break;
         case 'power': this.setEnabled(!this.enabled); break;
         case 'auto': this.setAutoMode(); break;
       }
@@ -296,7 +317,7 @@
             '<b class="bgm-now">Map BGM</b><small class="bgm-mode">map</small>' +
             '<button type="button" class="bgm-ib" data-bgm="prev" title="Previous track" aria-label="Previous track">⏮</button>' +
             '<button type="button" class="bgm-ib" data-bgm="next" title="Next track" aria-label="Next track">⏭</button>' +
-            '<button type="button" class="bgm-ib" data-bgm="mute" title="Mute" aria-pressed="false">🔊</button>' +
+            '<button type="button" class="bgm-ib" data-bgm="shuffle" title="Shuffle the map\'s tracks" aria-pressed="false" aria-label="Shuffle">🔀</button>' +
             '<button type="button" class="bgm-ib" data-bgm="power" title="Turn BGM on or off" aria-pressed="true">⏻</button>' +
           '</div>' +
           '<div class="bgm-player-body" id="bgmPlayerBody" hidden>' +
@@ -313,7 +334,7 @@
       const chev = root.querySelector('[data-bgm=expand]');
       const now = root.querySelector('.bgm-now');
       const modeTag = root.querySelector('.bgm-mode');
-      const muteBtn = root.querySelector('[data-bgm=mute]');
+      const shuffleBtn = root.querySelector('[data-bgm=shuffle]');
       const powerBtn = root.querySelector('[data-bgm=power]');
       const autoRow = root.querySelector('.bgm-auto');
       const list = root.querySelector('.bgm-list');
@@ -332,10 +353,10 @@
         modeTag.textContent = this.mode === 'map' ? 'map' : 'picked';
         modeTag.title = this.mode === 'map' ? 'Following the map you are in' : 'Hand-picked track';
       }
-      if (muteBtn) {
-        muteBtn.textContent = this.muted ? '🔇' : '🔊';
-        muteBtn.setAttribute('aria-pressed', String(!!this.muted));
-        muteBtn.title = this.muted ? 'Unmute' : 'Mute';
+      if (shuffleBtn) {
+        shuffleBtn.setAttribute('aria-pressed', String(!!this.shuffle));
+        shuffleBtn.style.opacity = this.shuffle ? '1' : '.55';
+        shuffleBtn.title = this.shuffle ? 'Shuffle on - the map\'s tracks play in random order' : 'Shuffle the map\'s tracks';
       }
       if (powerBtn) {
         powerBtn.setAttribute('aria-pressed', String(!!this.enabled));

@@ -9,7 +9,7 @@ const end = src.indexOf('\n// Skill labels track', start);
 assert.ok(start >= 0 && end > start, 'cannot locate the production damageFloat helper');
 const damageCode = src.slice(start, end);
 const emitted = [];
-const box = { simVisualsOff:()=>false, S: {}, numTxt: n => 'n' + n, addFloat: (x, y, z, txt, col, big, kind) => { emitted.push([x, y, z, txt, col, big, kind]); box.floats.push({ x, y, z, txt, kind, life: 1, lift: 0 }); }, floats: [],
+const box = { simVisualsOff:()=>false, S: {}, numTxt: n => 'n' + n, sfxHit: () => {}, addFloat: (x, y, z, txt, col, big, kind) => { emitted.push([x, y, z, txt, col, big, kind]); box.floats.push({ x, y, z, txt, kind, life: 1, lift: 0 }); }, floats: [],
   isDamageFloat: k => k === 'damage' || k === 'skill-damage' || k === 'critical' || k === 'skill-critical' || k === 'dot',
   rnd: (a, b) => (a + b) / 2, mobVisualScale: () => 1,
   scr: (x, y, z) => [0, 600 - y * 50], pl: { x: 0, z: 0 },   // 50 screen px per world unit, for the px-exact spawn helpers

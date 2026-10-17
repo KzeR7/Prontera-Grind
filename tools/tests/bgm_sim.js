@@ -176,7 +176,9 @@ test('map BGM is the default: entering maps plays their tracks, travel switches'
   assert.equal(BGM.mode, 'map');
 });
 
-test('the widget builds minimized, showing what plays, with the list hidden until pressed', () => {
+test('the widget builds minimized, starts quiet, and keeps the list hidden until pressed', () => {
+  assert.equal(BGM.volume, 0.05, 'lowest non-zero default volume');
+  assert.ok(indexSrc.includes('bgm:{enabled:true,volume:.05,muted:false}'), 'fresh accounts use the quiet BGM default');
   assert.equal(root.hidden, false, 'widget mounts');
   assert.equal(root.querySelector('#bgmPlayerBody').hidden, true, 'list starts collapsed');
   assert.equal(root.querySelector('[data-bgm=expand]').getAttribute('aria-expanded'), 'false');
@@ -250,40 +252,48 @@ test('picking a song while BGM is off turns BGM back on', () => {
   assert.equal(root.querySelector('[data-bgm=power]').getAttribute('aria-pressed'), 'true');
 });
 
-test('mute and volume control the player and follow the settings buttons', () => {
-  click({ 'data-bgm': 'mute' });
-  assert.equal(BGM.muted, true);
-  assert.equal(yt.vol, 0, 'YouTube player is silenced');
-  assert.equal(root.querySelector('[data-bgm=mute]').getAttribute('aria-pressed'), 'true');
-  click({ 'data-bgm': 'mute' });
-  assert.equal(BGM.muted, false);
+test('volume, shuffle and on/off control the player and follow the settings buttons', () => {
+  click({ 'data-bgm': 'shuffle' });
+  assert.equal(BGM.shuffle, true);
+  assert.equal(root.querySelector('[data-bgm=shuffle]').getAttribute('aria-pressed'), 'true');
+  // Shuffle applies to both map rotation and hand-picked all-track playback.
+  BGM.playAllIndex(0); ev('window.__originalRandom=Math.random;Math.random=()=>0.5'); BGM.next();
+  assert.equal(BGM.manualIndex, Math.floor(0.5 * BGM.allTracks().length), 'shuffle selects a random all-track entry');
+  ev('Math.random=window.__originalRandom;delete window.__originalRandom');
+  click({ 'data-bgm': 'shuffle' });
+  assert.equal(BGM.shuffle, false);
+  assert.ok(!root.innerHTML.includes('data-bgm="mute"'), 'mute was a duplicate of the power switch and is gone');
+  assert.ok(root.innerHTML.includes('data-bgm="shuffle"'), 'the bar builds a shuffle button');
   BGM.setVolume(0.7);
   assert.equal(yt.vol, 70);
   assert.equal(root.querySelector('.bgm-vol-range').value, '70', 'the widget slider mirrors it');
   BGM.setVolume(0.45);
 });
 
-test('volume, mute and on/off persist with the save and load back', () => {
+test('volume, on/off and shuffle persist; retired mute flags no longer create a hidden silence state', () => {
   BGM.setVolume(0.8);
-  BGM.setMuted(true);
+  BGM.toggleShuffle();
   BGM.setEnabled(false);
   assert.equal(ev('S.bgm.volume'), 0.8);
-  assert.equal(ev('S.bgm.muted'), true);
+  assert.equal(ev('S.bgm.shuffle'), true);
   assert.equal(ev('S.bgm.enabled'), false);
-  assert.ok(sandbox.saved > 0, 'save() ran');
-  BGM.enabled = true; BGM.muted = false; BGM.volume = 0.1; // reset in-memory only
+  // Old saves may still have muted:true. The single power switch owns the
+  // sound state now; that retired field must not silently mute the track.
+  ev('S.bgm.muted=true');
+  BGM.enabled = true; BGM.muted = true; BGM.shuffle = false; BGM.volume = 0.1;
   BGM.loadPrefs();
   assert.equal(BGM.volume, 0.8);
-  assert.equal(BGM.muted, true);
+  assert.equal(BGM.muted, false);
+  assert.equal(BGM.shuffle, true);
   assert.equal(BGM.enabled, false);
   BGM.setEnabled(true);
-  BGM.setMuted(false);
+  BGM.toggleShuffle();
   BGM.setVolume(0.45);
 });
 
 test('phones keep plain autoplay: the widget is CSS-hidden and the page wires the hooks', () => {
   assert.match(cssSrc, /@media \(max-width:900px\),\(pointer:coarse\)\{#bgmPlayer\{display:none!important\}\}/);
-  assert.match(cssSrc, /#bgmPlayer\{position:absolute;left:max\(8px,env\(safe-area-inset-left\)\);top:179px/, 'sits under the HP box');
+  assert.match(cssSrc, /#bgmPlayer\{position:absolute;left:max\(8px,env\(safe-area-inset-left\)\);top:171px/, 'sits flush under the HP box');
   assert.match(cssSrc, /body\.clean-screen #bgmPlayer\{visibility:hidden\}/);
   assert.match(indexSrc, /<section id="bgmPlayer" hidden/);
   assert.match(indexSrc, /assets\/bgm-tracks\.js/);

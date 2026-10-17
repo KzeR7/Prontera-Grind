@@ -1107,10 +1107,11 @@ t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one a
   assert.ok(U.V.reforge().includes('data-a="bmref" data-v="armor:all"'),'a worn piece with affixes can be reforged');
   assert.ok(U.V.reforge().includes('Full · 1,050,000z'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
   assert.ok(!U.V.reforge().includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
-  // v90.8: the ten Nightmare materials are sold here, one Buy 1 button each
-  assert.ok(h.includes('Nightmare materials') && h.includes('3,000,000z each'),'the Nightmare materials are listed and priced at 3,000,000z');
+  // the Void Core is a normal Supplies product now; the Nightmare fold is gone
+  assert.ok(h.includes('Nightmare MVP material'),'the Void Core is listed as a Supplies product');
+  assert.ok(!h.includes('Nightmare materials'),'the Nightmare materials fold is gone');
   assert.strictEqual(h.split('data-a="bmmat"').length-1,1,'one Void Core row');
-  assert.ok(h.includes('data-a="bmmat" data-v="0"'),'the last material (Helheim Rune) has its own button');
+  assert.ok(h.includes('data-a="bmmat" data-v="0"'),'the Void Core has its own button');
   U.S.zeny=2999999; h=U.V.market();
   assert.ok(/data-a="bmmat" data-v="0" disabled/.test(h),'a material button is disabled when the player cannot pay 3,000,000z');
   U.S.zeny=10000000; h=U.V.market();

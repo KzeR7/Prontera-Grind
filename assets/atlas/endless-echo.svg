@@ -1,16 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="400" viewBox="0 0 1000 400">
 <defs>
  <radialGradient id="sky"><stop stop-color="#59477e"/><stop offset=".55" stop-color="#22283f"/><stop offset="1" stop-color="#0c1423"/></radialGradient>
+ <radialGradient id="moon"><stop stop-color="#f4efff"/><stop offset=".7" stop-color="#c9bce8"/><stop offset="1" stop-color="#9d8cc7"/></radialGradient>
  <radialGradient id="gate"><stop stop-color="#b2a5e8" stop-opacity=".45"/><stop offset=".6" stop-color="#7565b3" stop-opacity=".15"/><stop offset="1" stop-color="#7565b3" stop-opacity="0"/></radialGradient>
  <linearGradient id="stone" x2="0" y2="1"><stop stop-color="#475069"/><stop offset="1" stop-color="#182337"/></linearGradient>
- <pattern id="stars" width="145" height="91" patternUnits="userSpaceOnUse"><circle cx="19" cy="15" r="1" fill="#c1bedc"/><circle cx="103" cy="53" r=".7" fill="#777fa5"/><circle cx="67" cy="84" r=".7" fill="#b0a8cf"/></pattern>
+ <linearGradient id="mist" x2="0" y2="1"><stop stop-color="#8f7fc4" stop-opacity=".16"/><stop offset="1" stop-color="#8f7fc4" stop-opacity="0"/></linearGradient>
+ <pattern id="stars" width="145" height="91" patternUnits="userSpaceOnUse"><circle cx="19" cy="15" r="1" fill="#c1bedc"/><circle cx="103" cy="53" r=".7" fill="#777fa5"/><circle cx="67" cy="84" r=".7" fill="#b0a8cf"/><circle cx="131" cy="28" r=".6" fill="#8d84b8"/><circle cx="41" cy="62" r=".5" fill="#8d84b8"/></pattern>
 </defs>
-<path fill="url(#sky)" d="M0 0h1000v400H0z"/><path fill="url(#stars)" d="M0 0h1000v280H0z"/>
+<path fill="url(#sky)" d="M0 0h1000v400H0z"/>
+<path fill="url(#stars)" d="M0 0h1000v280H0z"/>
+<circle cx="178" cy="86" r="46" fill="url(#moon)" opacity=".95"/>
+<circle cx="163" cy="74" r="7" fill="#b7a8dd" opacity=".5"/><circle cx="190" cy="98" r="5" fill="#b7a8dd" opacity=".45"/><circle cx="172" cy="104" r="4" fill="#b7a8dd" opacity=".4"/>
+<ellipse cx="178" cy="86" rx="70" ry="66" fill="#cbbff0" opacity=".06"/>
 <ellipse cx="730" cy="178" rx="210" ry="190" fill="url(#gate)"/>
 <g fill="none" stroke="#a49bd6"><ellipse cx="730" cy="179" rx="70" ry="108" stroke-width="3"/><ellipse cx="730" cy="179" rx="81" ry="120" opacity=".4"/><path d="m730 46 8 19-8 19-8-19Zm0 230 8 19-8 19-8-19ZM639 170l15 9-15 9-15-9Zm182 0 15 9-15 9-15-9Z"/></g>
 <path fill="#141e30" d="m0 288 110-21 90 22 87-14 101 31 92-16 114 15 106-23 93 12 107-26v132H0Z"/>
 <path fill="url(#stone)" stroke="#53596f" d="m445 400 89-88 191-28 194 37 81 79Z"/>
 <g fill="none" stroke="#9692bc" opacity=".5"><ellipse cx="737" cy="341" rx="153" ry="42"/><ellipse cx="737" cy="341" rx="124" ry="31"/><path d="m620 325 233 33m-195 10 162-57m-77-9-7 81"/></g>
 <g fill="url(#stone)" stroke="#53596f"><path d="M560 306V135l23-12 23 12v171l-23 7Z"/><path d="M862 306V135l23-12 23 12v171l-23 7Z"/><path d="m548 135 35-18 36 18-36 13Zm302 0 35-18 36 18-36 13Z"/><path d="m550 306 33 10 35-10v15l-35 11-33-11Zm302 0 33 10 35-10v15l-35 11-33-11Z"/></g>
-<path d="M591 135q140-166 286 0" fill="none" stroke="#53596f" stroke-width="15"/><path d="M591 135q140-166 286 0" fill="none" stroke="#8b83a7" stroke-width="2"/>
+<path d="M591 135q140-166 286 0" fill="none" stroke="#53596f" stroke-width="15"/>
+<path d="M591 135q140-166 286 0" fill="none" stroke="#8b83a7" stroke-width="2"/>
+<path fill="url(#mist)" d="M0 300q250-26 500-8t500 6v100H0Z"/>
 </svg>
