@@ -16,6 +16,20 @@ test('five core skills plus one Ascension unlock per fourth job, one Novice skil
  assert.ok(ev(`Object.keys(CLASSES).every(c=>SKILLS.filter(s=>s.from===c).length===(c==='Novice'?1:CLASSES[c].tier===4?6:5))`));
  assert.ok(ev(`['Swordman','Knight','Lord Knight'].every(c=>CLASSES[c].wt.join()==='sword')`));
 });
+test('Merchant HP comes only from Pushcart; Mechanic reaches 2.1x with maxed HP skills',()=>{
+ for(const [cls,multiplier] of [['Merchant',1.44],['Blacksmith',1.68],['Whitesmith',1.92],['Mechanic',2.1],['Rune Knight',1.95],['Guillotine Cross',1.2]]){
+  ev(`S=fresh();S.cls=${JSON.stringify(cls)};S.lv=150;S.sk={phys:10,skin:10};resetSkillRuntime();tb={};petBuff={};`);
+  const hp=ev('maxHp()');
+  assert.equal(ev("pv('hpp')"),cls==='Rune Knight'||cls==='Guillotine Cross'?0:20,cls);
+  assert.equal(hp,Math.round(3088*multiplier),cls+' HP without equipment or other bonuses');
+  ev('delete S.sk.skin');assert.equal(ev('maxHp()'),hp,'Cart Momentum must not multiply HP');
+ }
+ ev("S.cls='Mechanic';S.sk={phys:5,skin:10}");
+ assert.equal(ev("pv('hpp')"),10,'partial Pushcart ranks retain linear HP growth');
+ assert.equal(ev("pv('momentum')"),10,'Cart Momentum retains its offensive ranks');
+ assert.ok(!ev("SKILLS.find(s=>s.id==='skin').d(10)").includes('HPP'),'description must not promise removed HP');
+ ev("delete S.sk.phys");assert.equal(ev("pv('hpp')"),0,'Cart Momentum alone grants no HP');
+});
 test('all inherited Assassin attacks execute with both weapon paths and single-dagger fallback',()=>{
  for(const weapon of ['katar','dagger']){setup('Assassin Cross',weapon);
   for(const off of [true,false]){if(!off)ev('S.eq.off=null');

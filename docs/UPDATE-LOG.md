@@ -6915,3 +6915,28 @@ The owner's second pass over v77, six notes, all built.
 * **Checks:** Native audio, all-class attack timing, attack sync, cosmetic combo, rotation, combat damage, saved settings, pet rendering, publishing and site build passed. Shared-browser decoding/routing and review pending at entry creation; final results recorded below.
 * **Delivery:** Local workspace changes; no push or deployment.
 * **Final checks:** All listed suites passed. Shared Chromium decoded all 16 native recordings and verified actual katar motion/contact playback, animation callback timing and mute after a click. Browser rendering used the repository's renderer stub because sandbox WebGL initialization failed; GPU rendering and subjective listening are unverified.
+### 2026-10-18 — `haven-v190 merchant HP balance`
+* **Changed:** Removed Cart Momentum’s extra HP training. Maxed Pushcart still gives +20% HP: Mechanic now has 2.10× combined class/skill HP, Whitesmith 1.92×. Cart Momentum offense, saved ranks and other class lines retain their rules. Updated build mirrors.
+* **Try it:** Compare Mechanic/Whitesmith Character HP with maxed Pushcart and inspect Cart Momentum’s description. Equipment, cards, pets and Ascension can raise HP further.
+* **Checks:** Skill redesign 26, save/load 27, build watcher 6 and static publishing 15 groups passed. HP-affix conversion/save boundaries and all ten Ascension reward stages with live/away parity passed. Diff whitespace check passed. The map report uses real helpers for 12 enemy/reward rows; no map tuning applied.
+* **Delivery:** Local workspace edits only; no commit, push or deployment.
+
+### 2026-10-18 — `haven-v191 ascension field balance`
+* **Changed:** Halved stage-5 escort HP in Astral/Thor, lowered boss HIT to 50, and increased every stage’s ordinary/escort/boss Zeny by 30%. Boss HP, stages 1–4 HP, ATK, EXP and drop odds retain their values. Reward version 6 refreshes stale Ascension income samples while retaining original-map samples and progression. Corrected the current map guide to match the live combat/reward formulas.
+* **Try it:** Compare stage-5 escorts and boss hit chance in both maps; farm any stage to record new Zeny income. Mythic materials still fund equipment evolution and selective reforges.
+* **Checks:** Ascension progression and rewards passed across both maps/all ten stages; Ascension tracks 16, combat 10, offline 13, advancement rite 20, save/load 27, update watcher 6 and publishing 15 checks passed. Diff whitespace check passed. Drop rates remain unchanged; material uses and recipe costs audited separately.
+* **Delivery:** Local edits only; no commit, push or deployment.
+
+### 2026-10-18 — `haven-v192 ascension drops and scroll exchanges`
+* **Changed:** Shards/Catalysts now drop at 0.2%; Sigils at 0.05% from mobs/escorts and 1% from bosses. Black Market exchanges 100 Sigils for one Mythic Protection Scroll; Echo sells one for 600 Echo Shards. Both fund the existing refinement reserve. Updated map, handbook and refinement text.
+* **Try it:** Inspect either Ascension map’s material rates, then open Market → Black Market or Echo to buy a Mythic Protection Scroll.
+* **Checks:** Seven real-page drop/shop groups passed, covering probability boundaries, online/offline material parity, exact prices, insufficient funds, gates, live button handlers, save/load and refinement consumption. Echo 18, save/load 27, offline 13, Mythic 7, Eclipse UI 50, UI 64, panel 42, update watcher 6 and publish 15 checks passed; Ascension progression passed for both maps. Fixed a hidden market product found by panel checks and updated old product-list expectations. Whitespace check passed.
+* **Delivery:** Local edits only; no commit, push or deployment.
+
+### 2026-10-18 — `haven-v192 balance PR recovery`
+* **Changed:** Recovered the approved balance commit onto current main, preserving the native attack audio changes and both update-log histories. Updated the older combat regression to expect the approved boss HIT50 (70% hit chance at 80 Flee).
+* **Try it:** Inspect Market → Black Market and Echo store for the two Mythic Protection Scroll exchanges; compare stage-5 Ascension escorts and boss hit chance.
+* **Checks:** Full pre-push gate and desktop/phone purchase-control verification in progress at entry creation; final results recorded below. The older combat test exposed a stale 75% expectation after the approved HIT change.
+* **Delivery:** Original commit is pushed and PR #4 was closed without merging. Recovery is local at entry creation; no deployment.
+* **Final checks:** The 121-command gate initially passed 118 checks and failed three. Corrected the stale boss-HIT assertion and missing normal-map context in gear fixtures; both reruns passed. Refreshed all three progression fixtures while preserving historical baseline rows. Final gate status: 120 passed, one failed, no skips. `skill_balance_sim.js` still rejects High Priest completed single-target DPS at +20.3248% against its +20% historical limit. A paired actual-helper check measured identical 2,509,313.2 DPS on current main and this recovery, proving this failure predates recovery; no unrelated class retune or limit relaxation applied. Built-site desktop/390px exchange clicks, insufficient-funds states, separate currencies and page reload passed with the repository renderer stub; clean phone layout inspected. GPU rendering and physical-device performance unverified.
+* **Delivery update:** Recovery remains local because the repository requires every gate to pass before a push. PR creation also requires Full access in the task Permissions menu. No replacement PR or deployment.

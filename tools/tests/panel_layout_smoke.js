@@ -371,9 +371,9 @@ t('Ascension gates, immediate MVP escorts, stage progression, material boundarie
  ev('window.oldRandom=Math.random;Math.random=()=>0');
  assert.strictEqual(ev('ascensionDrops({mapIndex:9,boss:true}).length'),0);
  assert.strictEqual(ev('ascensionDrops({mapIndex:10,boss:false}).map(d=>d.n).join(",")'),"Astral Shard,Valkyrie's Sigil");
- ev('Math.random=()=>.0003');assert.strictEqual(ev('ascensionDrops({mapIndex:11,boss:false}).map(d=>d.n).join(",")'),'Primal Catalyst');
- ev('Math.random=()=>.0009');assert.strictEqual(ev('ascensionDrops({mapIndex:11,boss:true}).map(d=>d.n).join(",")'),"Valkyrie's Sigil");
- ev('Math.random=()=>.001');assert.strictEqual(ev('ascensionDrops({mapIndex:11,boss:true}).length'),0);
+ ev('Math.random=()=>.001');assert.strictEqual(ev('ascensionDrops({mapIndex:11,boss:false}).map(d=>d.n).join(",")'),'Primal Catalyst');
+ ev('Math.random=()=>.005');assert.strictEqual(ev('ascensionDrops({mapIndex:11,boss:true}).map(d=>d.n).join(",")'),"Valkyrie's Sigil");
+ ev('Math.random=()=>.01');assert.strictEqual(ev('ascensionDrops({mapIndex:11,boss:true}).length'),0);
  ev('currentUser="ascension_test";Math.random=window.oldRandom;collect({ascMat:0,n:"Astral Shard"});save()');assert.strictEqual(ev('S.ascensionMat[0]'),1);
  assert.strictEqual(ev('load().ascensionMat[0]'),1);assert.strictEqual(ev('load().mapClears[10]'),true);
  ev('S.prog=S.prog.slice(0,10);delete S.ascensionMat;delete S.mapClears;S.mp=0;save();S=load()');

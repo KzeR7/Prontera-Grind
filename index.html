@@ -1122,7 +1122,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-18 haven-v190 native attack sound sync';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-18 haven-v192 ascension drops and scroll exchanges';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1224,7 +1224,7 @@ const SKILLS=[
  {"id":"wresearch","n":"Weapon Research","max":10,"type":"pas","col":"#fff3a0","text":"Increase weapon attack.","from":"Blacksmith","key":"atk","rate":1.5},
  {"id":"cart","n":"Cart Termination","max":10,"type":"act","col":"#ffa040","text":"A heavy focused cart impact.","from":"Whitesmith","cd":3.0,"hits":1,"power":2.4,"shape":"single"},
  {"id":"thrust","n":"Maximum Power Thrust","max":10,"type":"buff","col":"#fff3a0","text":"Empower physical attacks. Replaces Overthrust while enabled.","from":"Whitesmith","key":"atk","rate":6,"duration":28,"cd":29,"training":{"atk":3},"flat":15},
- {"id":"skin","n":"Cart Momentum","max":10,"type":"pas","col":"#fff3a0","text":"Damaging casts build up to three stacks that strengthen cart attacks. Stacks fade after 5 seconds without a cast.","from":"Whitesmith","key":"momentum","rate":1,"training":{"hpp":3}},
+ {"id":"skin","n":"Cart Momentum","max":10,"type":"pas","col":"#fff3a0","text":"Damaging casts build up to three stacks that strengthen cart attacks. Stacks fade after 5 seconds without a cast.","from":"Whitesmith","key":"momentum","rate":1},
  {"id":"cboost","n":"Cart Boost","max":5,"type":"buff","col":"#ffa040","text":"Increase travel speed.","from":"Whitesmith","key":"move","rate":2,"duration":12,"cd":12},
  {"id":"frenzy","n":"Frenzy","max":5,"type":"buff","col":"#ff4d4d","text":"A short burst of increased damage.","from":"Lord Knight","key":"damage","rate":5,"duration":5,"cd":10},
  {"id":"dpois","n":"Blade Frenzy","max":5,"type":"buff","col":"#b05cff","text":"A short burst of increased physical attack with katars or daggers.","from":"Assassin Cross","key":"atk","rate":10,"duration":15,"cd":31,"flat":25},
@@ -2111,6 +2111,7 @@ const TRIAL_STORE=[
   {id:'lcard', c:200, n:'Random Boss Card Voucher', d:'Adds a normal boss card from Prontera through Amatsu. Niflheim/Abyss Crit DMG boss cards must be farmed.'},
   {id:'nmgear',c:400, n:'Nightmare Gear Token',          d:'Choose a map for one class-usable item. Prontera to Payon give section 4; Comodo to Abyss give section 5. The map sets its quality cap.',lv:120},
   {id:'rscroll',c:400,n:'Refine Protection Scroll',                  d:'Enable in Refine: prevents a rank drop on failure at +5 or higher. Consumed on each selected attempt, including success.'},
+  {id:'mscroll',c:600,n:'Mythic Protection Scroll', d:'Protects a +11 to +15 Mythic refinement attempt against rank loss. Consumed per protected attempt, including success.'},
 ];
 const trialState=()=>{
   if(!S.trial||typeof S.trial!=='object')S.trial={day:trialDay(),used:0,best:0,runs:0,chest:0};
@@ -2325,6 +2326,7 @@ function trialBuy(id,inline=false){
     S.cards.push(card);
     log(`Shard Store: random Legendary ${card.n} (${card.effects.map(cardEffectText).join(', ')}) added to your card collection.`,'r3','trial')}
   else if(id==='rscroll'){S.refineScrolls=safeCount(S.refineScrolls+1);log('Shard Store: +1 Refine Protection Scroll added to your reserve. Enable it in Refine to prevent a rank drop on failure.','r3','trial')}
+  else if(id==='mscroll'){if(!Number.isSafeInteger(S.mythicScrolls+1))return;S.mythicScrolls++;log('Shard Store: +1 Mythic Protection Scroll added to your reserve. Enable it in Refine for +11 to +15 Mythic attempts.','r3','trial')}
   else if(id==='nmgear'){if(inline){eclipseEchoPick=true;renderWin()}else trialLobby('pickmap');return}
   S.shards=Math.max(0,(S.shards|0)-row.c);save();
   if(inline)ui();else trialLobby('store')}
@@ -2965,7 +2967,7 @@ const ASC_UPGRADES={
 // v172 (owner: ~700h stats / ~80h skills): both bases rescale by exactly 6 (both divide evenly),
 // keeping the 1.8 exponent and the 8x track ratio - 56B/7B totals fill in ~670h/~83h at the
 // ~1.4M/min the retuned top field sustains. No migration: levels just arrive sooner.
-const ASC_XP_BASE={stats:2667879,skills:1368750},ASC_REWARD_VERSION=5;
+const ASC_XP_BASE={stats:2667879,skills:1368750},ASC_REWARD_VERSION=6;
 const ascNeed=(level,skills=false)=>Math.round(ASC_XP_BASE[skills?'skills':'stats']*Math.pow(level+1,1.8)/1000)*1000;
 function cleanAscension(value){
  const count=(v,max)=>Number.isFinite(Number(v))?Math.max(0,Math.min(max,Math.floor(Number(v)))):0;
@@ -4050,7 +4052,7 @@ const starterAtk=l=>6+3*(l-1);
 // v172 (owner: 1.05x pay for 15x danger): Astral pays 3-8x the anchor per kill, Thor 7-15x,
 // so the top field sustains ~1.4M EXP/min and the rescaled ascension curve below lands on time.
 const ascRewardBonus=(m,stage)=>(m===10?[3,4,5,6.5,8]:[7,8.5,10,12,15])[stage-1];
-const ascZenyBonus=(m,stage)=>(m===10?[2,2.1,2.2,2.3,2.4]:[2.4,2.55,2.7,2.85,3])[stage-1];
+const ascZenyBonus=(m,stage)=>(m===10?[2,2.1,2.2,2.3,2.4]:[2.4,2.55,2.7,2.85,3])[stage-1]*1.3;
 function ascRewardRatio(m,stage,boss=false){return ascRewardBonus(m,stage)*(boss?4:1)}
 function fieldZenyReward(m,stage,boss=false){
  const l=fieldPower(m,stage),range=boss?BZK:ZK;
@@ -4080,7 +4082,8 @@ function ascensionCombatStats(m,stage,boss=false){
   const anchorAtk=Math.floor((5+power*4.6)*weight*NMATK*nm15Of(15)*eaOf(power));
   const hpRamp=(m===10?[2,3,4.5,6.5,9]:[7,9,11,14,18])[stage-1];
   const atkRamp=(m===10?[1.5,1.9,2.4,3,3.8]:[4,4.8,5.6,6.6,8])[stage-1];
-  const hp=Math.floor(anchorHp*hpRamp*(boss?3:1));
+  // v191: only stage-5 escorts lose half HP; the boss keeps its original HP/ATK.
+  const hp=Math.floor(anchorHp*hpRamp*(boss?3:stage===5?.5:1));
   return {hp,max:hp,atk:Math.floor(anchorAtk*atkRamp*(boss?3:1))};
 }
 // One field monster, before it is placed. Shared by the wave builder and by every camp refill, so a
@@ -4124,7 +4127,7 @@ function spawn(){
   const bossWave=!!F.boss;
   if(bossWave){
     const hp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(S.lvl):1));
-    mobs.push({...F.boss,mapIndex:S.mp,hitBonus:S.mp===10||S.mp===11?15:0,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),
+    mobs.push({...F.boss,mapIndex:S.mp,hitBonus:S.mp===10||S.mp===11?10:0,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),
       ...ascensionCombatStats(S.mp,S.lvl,true),exp:fieldExpReward(S.mp,S.lvl,true),zeny:fieldZenyReward(S.mp,S.lvl,true),
       size:1.3,mag:true,lvl:l,sec:F.sec});
     // The first five maps bring three escorts; the five later maps bring five.
@@ -4978,7 +4981,7 @@ function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarne
 const ASCENSION_MATERIALS=['Astral Shard','Primal Catalyst',"Valkyrie's Sigil"];
 function ascensionDrops(mob){
   const m=mob.mapIndex??S.mp;if(m<10)return [];
-  return [[m-10,.035],[2,mob.boss?.1:.0025]].filter(([,chance])=>Math.random()*100<chance).map(([ascMat])=>({ascMat,id:uid(),n:ASCENSION_MATERIALS[ascMat]}));
+  return [[m-10,.2],[2,mob.boss?1:.05]].filter(([,chance])=>Math.random()*100<chance).map(([ascMat])=>({ascMat,id:uid(),n:ASCENSION_MATERIALS[ascMat]}));
 }
 function recordMapClear(m,l){if(l===normalStages(m)){if(!S.mapClears)S.mapClears=MAPS.map(()=>false);S.mapClears[m]=true;}}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
@@ -4993,7 +4996,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop(newCard(mob.card)))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh*(1+petPassive('ore')/100))drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
   for(const item of ascensionDrops(mob))drops.push(mkDrop(item));
-  // Mythic Protection Scroll: very rare drop from Ascension map bosses only (not purchasable)
+  // Mythic Protection Scroll: rare Ascension boss drop; also sold in Black Market and Echo.
   if(mob.boss&&S.mp>=10&&Math.random()<0.0005){S.mythicScrolls=safeCount(S.mythicScrolls)+1;log('Found a Mythic Protection Scroll!','r4','gear');addFloat(mob.x,3,mob.z,'MYTHIC SCROLL!','#ffa500',true);}
   if(mob.mat&&Math.random()*100<NM_MAT_CH)drops.push(mkDrop({mat:mob.mat.m,id:uid(),n:mob.mat.n}));
   if(Math.random()*100<(mob.boss?.5:.03)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]),T=PET_TRAIT[sp];
@@ -5126,12 +5129,12 @@ function qRefresh(){if(S)questBook();}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} MVP${q.goal>1?'s':''}`;
 // Older saves may retain refineScrollFrom; protection now has a single On/Off setting.
 const refineScrollFrom=()=>0;
-function refineProtectionUI(){return `<div class="sec">Refine Protection Scrolls</div><small>Regular: ${safeCount(S.refineScrolls)} (for +0 to +10 on all gear)</small><br><small>Mythic: ${safeCount(S.mythicScrolls)} (for +11 to +15 on Mythic gear, boss drop only)</small><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>When On, one scroll is used per attempt, including success, and prevents rank loss. +10 is safe on Mythic gear (no scroll needed). Below +5, we ask before spending a scroll. Unprotected failures from +5 to +9 lose one rank on every grade. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
+function refineProtectionUI(){return `<div class="sec">Refine Protection Scrolls</div><small>Regular: ${safeCount(S.refineScrolls)} (for +0 to +10 on all gear)</small><br><small>Mythic: ${safeCount(S.mythicScrolls)} (for +11 to +15 on Mythic gear; boss drops, Black Market or Echo)</small><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>When On, one scroll is used per attempt, including success, and prevents rank loss. +10 is safe on Mythic gear (no scroll needed). Below +5, we ask before spending a scroll. Unprotected failures from +5 to +9 lose one rank on every grade. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
 function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it.r||0)>=maxRef)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
   if(S.ore[o]<need){log(`You need ${need} ${ORE[o]} for this piece. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
   const previousRank=it.r||0;let succeeded=false;const protectedAttempt=!!S.useRefineScroll;
   const needsMythicScroll=it.sec===6&&previousRank>=10;
-  if(protectedAttempt&&needsMythicScroll&&!safeCount(S.mythicScrolls)){log('Mythic Protection Scroll required for +11 to +15 refines. These drop from Ascension map bosses only.');return;}
+  if(protectedAttempt&&needsMythicScroll&&!safeCount(S.mythicScrolls)){log('Mythic Protection Scroll required for +11 to +15 refines. Find them on Ascension bosses, or exchange 100 Sigils in the Black Market or 600 Echo Shards in Echo.');return;}
   if(protectedAttempt&&!needsMythicScroll&&!safeCount(S.refineScrolls)){log('Refine Protection Scroll is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
   // Warn before spending a scroll where a failed attempt cannot drop the rank.
   if(protectedAttempt&&(previousRank<5||(it.sec===6&&previousRank===10))&&arguments[1]!==it){
@@ -5174,6 +5177,11 @@ const reforgeCost=it=>BM_REFORGE*(rarIdx(it)+1);
 const BM_SCROLL=80000000;
 const marketQty={ori:'1',elu:'1'};
 function buyRefineScroll(){if(!bmOpen()||S.zeny<BM_SCROLL)return;S.zeny-=BM_SCROLL;S.refineScrolls=safeCount(S.refineScrolls)+1;ui();save()}
+const BM_MYTHIC_SIGILS=100;
+function buyMythicScroll(){const sigils=safeCount(S.ascensionMat?.[2]),scrolls=safeCount(S.mythicScrolls);
+ if(!bmOpen()||sigils<BM_MYTHIC_SIGILS||!Number.isSafeInteger(scrolls+1))return;
+ S.ascensionMat[2]=sigils-BM_MYTHIC_SIGILS;S.mythicScrolls=scrolls+1;
+ log('Black Market: exchanged '+BM_MYTHIC_SIGILS+' Valkyrie’s Sigils for 1 Mythic Protection Scroll.','r4','gear');ui();save()}
 function buyOre(o,quantity=1){const n=Number(quantity);if(!bmOpen()||!ORE[o]||!Number.isSafeInteger(n)||n<1||n>1000000)return;
  const cost=BM_ORE*n;if(S.zeny<cost||!Number.isSafeInteger(safeCount(S.ore[o])+n)){log('Not enough Zeny for that quantity.','','zeny');return}
  S.zeny-=cost;S.ore[o]=safeCount(S.ore[o])+n;log(`Black Market: bought ${n} ${ORE[o]} for ${cost.toLocaleString()}z.`,'r3','zeny');ui();save()}
@@ -5315,7 +5323,7 @@ function beginnerGuide(){const chapters=[
  ['Wardrobe, Settings & the log','Wardrobe changes appearance without changing combat stats. All classes support native hairstyles, colors and accessories, including the six fourth jobs. Settings adjusts combat display and preferences. Display controls the screen layout; Log helps you inspect drops, levels and events.'],
  ['Saving & time away','Watch the cloud badge when using an online account. Browser-only previews save on this browser. Hidden tabs continue fighting; they are not away time. Away rewards use a measured farming sample at 50% efficiency, capped at four hours per claim, after at least three minutes without a save. Let a stable field run for a full minute to refresh its sample.']
  ];return `<header class="handbook-intro"><small>01 / START HERE</small><h2>Your adventure, one step at a time</h2><p>Fight → spend points → equip upgrades → choose a better field. You do not need to master every system on your first day.</p><button data-a="guidereplay" data-v="beginner">Replay first-login tour</button></header><div class="guide-chapters">${chapters.map(([title,body],i)=>`<details data-ui-disclosure="handbook-beginner-${i}" ${i===0?'open':''}><summary>${String(i+1).padStart(2,'0')} · ${title}</summary><p>${body}</p></details>`).join('')}</div>`;}
-function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 60-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(([title,body])=>`<article class="guide-note"><h3>${title}</h3><p>${body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>${['Might','Precision','Ferocity','Slayer'].includes(x.n)?'Late-rank offensive growth; rank 5 grants 25% of the maximum':'+'+x.step+x.unit+' per rank'} · ${x.text}. Rank 10: +${10*x.step}${x.unit}.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts each have a 0.035% chance per kill on their own map. Valkyrie’s Sigils roll at 0.0025% on ordinary enemies and 0.1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Unprotected failures at +5–9 lose one rank. Mythic +10 is a checkpoint; higher failures lose one rank unless protected. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
+function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 60-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(([title,body])=>`<article class="guide-note"><h3>${title}</h3><p>${body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>${['Might','Precision','Ferocity','Slayer'].includes(x.n)?'Late-rank offensive growth; rank 5 grants 25% of the maximum':'+'+x.step+x.unit+' per rank'} · ${x.text}. Rank 10: +${10*x.step}${x.unit}.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts each have a 0.2% chance per kill on their own map. Valkyrie’s Sigils roll at 0.05% on ordinary enemies and 1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses, or cost 100 Valkyrie’s Sigils in the Black Market or 600 Echo Shards in Echo. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Unprotected failures at +5–9 lose one rank. Mythic +10 is a checkpoint; higher failures lose one rank unless protected. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
 function handbook(){return `<section class="handbook"><nav class="guide-nav" aria-label="Guide chapters">${[['beginner','Beginner'],['leveling','Leveling route'],['build','Your build'],['cards','Card targets'],['ascension','Ascension Forge']].map(([id,label])=>`<button data-a="guidepage" data-v="${id}" aria-pressed="${guidePage===id}">${label}</button>`).join('')}</nav>${guideTourPanel()}${guidePage==='beginner'?beginnerGuide():guidePage==='leveling'?levelingGuide():guidePage==='ascension'?ascensionGuide():buildGuide(true)}</section>`;}
 function guideBuildPlan(){
  const main=INT_CLASSES.includes(S.cls)?'INT':C().main.toUpperCase(),power=INT_CLASSES.includes(S.cls)?'MATK':'ATK';
@@ -5745,7 +5753,7 @@ const V={
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${cardEffects(F.boss.card).map(cardEffectText).join(', ')}, ${GRADE[F.boss.card.g]})</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
         </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage '+normalStages(mapM)}.</small>`}
-        ${mapM>=10?`<div class="sec">Ascension materials</div><p>${ASCENSION_MATERIALS[mapM-10]}: 0.035% per kill<br>Valkyrie's Sigil: 0.0025% per mob / 0.1% per MVP</p><small>Stored: ${ASCENSION_MATERIALS.map((n,i)=>esc(n)+' × '+safeCount(S.ascensionMat?.[i])).join(' · ')}</small>`:''}<div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from MVPs. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
+        ${mapM>=10?`<div class="sec">Ascension materials</div><p>${ASCENSION_MATERIALS[mapM-10]}: 0.2% per kill<br>Valkyrie's Sigil: 0.05% per mob / 1% per MVP</p><small>Stored: ${ASCENSION_MATERIALS.map((n,i)=>esc(n)+' × '+safeCount(S.ascensionMat?.[i])).join(' · ')}</small>`:''}<div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from MVPs. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'',idxC=typeof indexCrit==='function'?indexCrit():0;
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
     +(petBonusList().length?`<small><b>Pet bonuses</b> (the fighting pets): ${petBonusList().join(' &middot; ')}</small>`:'')
@@ -5873,7 +5881,7 @@ V.market=()=>{const navigation=`<div class="atabs"><button data-a="sub" data-v="
 if(sub.market==='echo')return navigation+(eclipseEchoPick?eclipseEchoPicker():trialShopHtml(true));const guide=navigation;if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
 const ores=Object.entries(ORE).map(([o,n])=>`<div class="slot"><b>${n}</b><label>Quantity<input class="ore-quantity" id="oreQty-${o}" type="number" min="1" max="1000000" step="1" value="${esc(marketQty[o])}" aria-label="${n} quantity"></label><small>${BM_ORE.toLocaleString()}z each · <output id="oreTotal-${o}">${Number.isSafeInteger(Number(marketQty[o]))&&Number(marketQty[o])>0?(Number(marketQty[o])*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity'}</output></small><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy quantity</button></div>`).join('');
 const mats=NM_MAT.map((n,i)=>`<div class="slot"><b>${n}</b><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1 · ${BM_MAT_PRICE.toLocaleString()}z</button></div>`).join('');
-return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+`<div class="slot"><b>Refine Protection Scroll</b><small>Enable On in Equipment → Refine. One scroll per attempt, including success; prevents rank loss on failure. Only +5 and above can lose a rank; below +5 asks for confirmation.</small><button data-a="buyscroll" ${S.zeny<BM_SCROLL?'disabled':''}>Buy 1 · 80,000,000z</button></div>`+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<button data-a="openreforge" class="full">Equipment workshop → Reforge</button>'};
+return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+`<div class="slot"><b>Refine Protection Scroll</b><small>Enable On in Equipment → Refine. One scroll per attempt, including success; prevents rank loss on failure. Only +5 and above can lose a rank; below +5 asks for confirmation.</small><button data-a="buyscroll" ${S.zeny<BM_SCROLL?'disabled':''}>Buy 1 · 80,000,000z</button></div><div class="slot"><b>Mythic Protection Scroll</b><small>Protects +11 to +15 Mythic refinement attempts. One scroll per protected attempt, including success. Owned: ${safeCount(S.mythicScrolls)} · Valkyrie’s Sigils: ${safeCount(S.ascensionMat?.[2])}</small><button data-a="buymythicscroll" ${safeCount(S.ascensionMat?.[2])<BM_MYTHIC_SIGILS?'disabled':''}>Buy 1 · ${BM_MYTHIC_SIGILS} Valkyrie’s Sigils</button></div>`+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<button data-a="openreforge" class="full">Equipment workshop → Reforge</button>'};
 V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide</button></div>${indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
 const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
 const CFIT={matk:'weapon',move:'acc',hpPct:'armor',def:'armor',mdef:'head',field:'weapon',str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
@@ -6251,10 +6259,10 @@ function arrangePanel(k,root){
     put(panel,fold('Pet drops & bonding',notes,'pet-notes'));body.replaceChildren(catalog,panel);
   }else if(k==='market'){
     if(!bmOpen()||sub.market==='echo'||sub.market==='ascension')return;
-    const workshop=q('[data-a=openreforge]'),guide=q('.build-guide'),ore=all('.slot').filter(e=>e.querySelector('[data-a="bmore"]')),scrollCard=q('[data-a=buyscroll]')?.closest('.slot'),materials=all('.slot').filter(e=>e.querySelector('[data-a="bmmat"]'));
+    const workshop=q('[data-a=openreforge]'),guide=q('.build-guide'),ore=all('.slot').filter(e=>e.querySelector('[data-a="bmore"]')),scrollCard=q('[data-a=buyscroll]')?.closest('.slot'),mythicScrollCard=q('[data-a=buymythicscroll]')?.closest('.slot'),materials=all('.slot').filter(e=>e.querySelector('[data-a="bmmat"]'));
     const products=make('div','eclipse-market-grid');
     const product=(node,kind,desc,owned)=>{if(!node)return;node.classList.add('eclipse-product');const copy=put(make('div','eclipse-product-copy'),[...node.childNodes]),art=make('div','eclipse-product-icon');art.innerHTML=uiIcon(kind);const name=copy.querySelector('b');if(name&&desc){const description=make('p','',desc),count=make('small','eclipse-owned-count','Owned: '+safeCount(owned).toLocaleString());name.after(description,count)};put(node,art,copy);put(products,node)};
-    ore.forEach((node,i)=>product(node,'gem',(i?'Armor':'Weapon')+' refinement material.',S.ore[i?'elu':'ori']));product(scrollCard,'coin','Prevent rank loss on a protected attempt.',S.refineScrolls);
+    ore.forEach((node,i)=>product(node,'gem',(i?'Armor':'Weapon')+' refinement material.',S.ore[i?'elu':'ori']));product(scrollCard,'coin','Prevent rank loss on a protected attempt.',S.refineScrolls);product(mythicScrollCard,'coin','Protect +11 to +15 Mythic refinement attempts.',S.mythicScrolls);
     const echo=make('div','slot');echo.innerHTML='<b>Echo store</b><button data-a="sub" data-v="market:echo">Browse offers →</button>';product(echo,'moon','Spend Echo Shards earned in Endless Echo.',S.shards);
     materials.forEach((node,i)=>product(node,'gem','Crafting and selective reforge material.',S.nmMat[i]));
     body.replaceChildren(products,put(make('div','eclipse-market-tools'),workshop,guide));
@@ -6624,7 +6632,7 @@ const ACT={
   indexall:name=>{const owner=S,count=Math.min(cardMasteryCardByName(String(name)).length,CARD_MASTERY_PER_CARD-cardMasteryLevel(String(name)));if(count<1)return;ask(`Permanently consume ${count} ${name} for the Card Index? These copies will be gone and cannot be equipped or merged. Each adds one Mastery rank and one token.`,()=>{if(S!==owner)return;const r=donateAllToMastery(String(name),count);if(!r.donated)return;S.hp=Math.min(S.hp,maxHp());
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()})},
-  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),craftasc:v=>ACT.transformasc(v),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpool:v=>{reforgePoolOpen=reforgePoolOpen===v?null:v;renderWin()},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guideforge:v=>{if(!ASC_SETS[v])return;ascensionSetPick=v;if(!tabs.includes('equip'))openTab('equip');sub.equip='ascension';renderWin()},guidepage:v=>{if(['beginner','leveling','build','cards','ascension'].includes(v)){guidePage=v;guideTour=null;}renderWin()},guidestep:v=>guideStep(v),guidereplay:v=>{if(!GUIDE_LESSONS[v])return;guideTour=v;guidePage=v;S.handbook={...guideProgress(),[v+'Step']:0};renderWin()},guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare','ascension'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!Number.isInteger(m)||m<0||m>=MAPS.length||!Number.isInteger(l)||l<1||l>(m>=10?5:15))return;if(!tabs.includes('map'))openTab('map');mapSeason=m>=10?'ascension':'atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
+  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),buymythicscroll:()=>buyMythicScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),craftasc:v=>ACT.transformasc(v),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpool:v=>{reforgePoolOpen=reforgePoolOpen===v?null:v;renderWin()},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guideforge:v=>{if(!ASC_SETS[v])return;ascensionSetPick=v;if(!tabs.includes('equip'))openTab('equip');sub.equip='ascension';renderWin()},guidepage:v=>{if(['beginner','leveling','build','cards','ascension'].includes(v)){guidePage=v;guideTour=null;}renderWin()},guidestep:v=>guideStep(v),guidereplay:v=>{if(!GUIDE_LESSONS[v])return;guideTour=v;guidePage=v;S.handbook={...guideProgress(),[v+'Step']:0};renderWin()},guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare','ascension'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!Number.isInteger(m)||m<0||m>=MAPS.length||!Number.isInteger(l)||l<1||l>(m>=10?5:15))return;if(!tabs.includes('map'))openTab('map');mapSeason=m>=10?'ascension':'atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
   petmotion:v=>{if(['idle','walk','attack'].includes(v)){petPreviewStance=v;renderWin()}},
   petretry:()=>{const p=gp(selP);if(p&&petSpriteStore){const id=PETS[p.sp].spriteId;petSpriteStore.retry(petAssetKey(id,petPreviewStance,0)).catch(()=>{})}},
   pswap:id=>{const pet=gp(id),select=$('wins').querySelector('[data-pet-replace="'+id+'"]'),previous=gp(select?.value);if(!pet||pet.on||!previous?.on)return;previous.on=false;pet.on=true;ui();save()},

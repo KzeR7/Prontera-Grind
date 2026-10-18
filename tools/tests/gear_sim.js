@@ -358,8 +358,9 @@ t('the drop table: 3.6% a kill on maps 1-5, 2.52% from Comodo on, boss pools 6% 
 
 t('the real equipment-drop loop creates boss gear when an independent roll succeeds', () => {
   G.S = {st:{luk:0},eq:{}};
-  // ore:false because the slice now reaches the ore gate, and this test counts equipment
-  const F = G.fieldOf(0, 10), boss = {...F.boss,boss:true,lvl:10,sec:F.sec,ore:false};
+  // Explicit mapIndex matches live spawns and excludes Ascension materials; ore:false
+  // because the slice now reaches the ore gate, and this test counts equipment
+  const F = G.fieldOf(0, 10), boss = {...F.boss,mapIndex:0,boss:true,lvl:10,sec:F.sec,ore:false};
   assert.strictEqual(boss.drops.length, G.gearPool(0,10).length, 'expected a roll for every boss-pool item');
   // The per-item gate is 6/n % (~0.86% on this 7-item pool): a 1.2% die pays out nothing,
   // a 0.5% die clears every entry.
@@ -370,7 +371,7 @@ t('the real equipment-drop loop creates boss gear when an independent roll succe
   assert.ok(drops.every(d => d.it && d.it.tier === G.MAPGRADE[0]), 'the boss drop must sit on the map grade cap');
   assert.ok(drops.every(d => d.it.slot), 'successful boss rolls must be real equipment objects');
   // The regular-mob branch is also the live loop: 0.8% clears all three gates (1.5/1.2/0.9).
-  const mob = {...G.fieldOf(0,1).mobs[0],boss:false,lvl:1,sec:0,ore:false};
+  const mob = {...G.fieldOf(0,1).mobs[0],mapIndex:0,boss:false,lvl:1,sec:0,ore:false};
   const mobDrops = G.executeGearRoll(mob, .008);
   assert.strictEqual(mobDrops.length, 3, 'regular-mob equipment gates did not execute');
 });

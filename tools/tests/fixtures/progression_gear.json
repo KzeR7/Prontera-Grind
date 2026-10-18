@@ -1,8 +1,8 @@
 {
   "baselineRevision": "d164bd0527cfe335f9c183d0e576800716b7dd26",
   "baselineHash": "a251cffc5abeea9ab881fd471e99f36bf4c6aa8cd1f4dcdecb3a2bc982cca0e3",
-  "sourceHash": "03d861ca285546b1f576fd09613694668ca295d566e5542370b1bc7846bf5a2f",
-  "combatHash": "e7225b326393e530c8ca55bd96bc38b04c4f3f3f62b8e63952906e7578c13f3d",
+  "sourceHash": "a6624092616221bf9fdb8a1f8fcb451c19c593cc5142951a4af0146cb8fa8102",
+  "combatHash": "4b3acc27118d4c6412708c7c0f459e84c7aac4730411295cce0019f470569dd0",
   "toolHash": "2009380088b648ea710659276d97c058b65db18cdf525ad4aa0308189606d7fe",
   "seconds": 120,
   "seed": 789,
@@ -3418,7 +3418,7 @@
         "matk": 2777,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 119971,
+        "hp": 95977,
         "cards": [
           "Dragon Lord Card"
         ]
@@ -3458,7 +3458,7 @@
         "matk": 2777,
         "crit": 49.25,
         "critD": 3.538,
-        "hp": 119971,
+        "hp": 95977,
         "cards": [
           "Dragon Lord Card"
         ]
@@ -3498,7 +3498,7 @@
         "matk": 6261,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 302023,
+        "hp": 241619,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -3539,7 +3539,7 @@
         "matk": 6261,
         "crit": 65.625,
         "critD": 4.64,
-        "hp": 302023,
+        "hp": 241619,
         "cards": [
           "Dark Lord Card",
           "Abyss Knight Card"
@@ -3580,7 +3580,7 @@
         "matk": 16940,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 888069,
+        "hp": 721556,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
@@ -3628,7 +3628,7 @@
         "matk": 16940,
         "crit": 97.75,
         "critD": 6.761,
-        "hp": 888069,
+        "hp": 721556,
         "cards": [
           "Nightmare Dark Lord Card",
           "Nightmare Abyss Knight Card",
