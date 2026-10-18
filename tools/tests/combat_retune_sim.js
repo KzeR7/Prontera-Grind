@@ -37,10 +37,10 @@ try{
  }
  for(const map of [10,11]){
   assert.equal(hitCount(map,false),65,'regular hit chance at 80 Flee');
-  assert.equal(hitCount(map,true),75,'boss hit chance at 80 Flee');
+  assert.equal(hitCount(map,true),70,'boss HIT50 gives 70% hit chance at 80 Flee');
   assert.equal(hitCount(map,false,{blind:.1}),55,'blind retains its ten-point benefit');
   assert.equal(hitCount(map,false,{block:10}),55,'Parrying retains its ten-point benefit');
   assert.equal(hitCount(map,false,{agi:1}),95,'five-percent dodge floor survives higher HIT');
  }
- console.log('PASS: original-map HIT at all 150 stages; Astral/Thor real swings land 65%/75% at 80 Flee, blind/block benefits and dodge floor preserved.');
+ console.log('PASS: original-map HIT at all 150 stages; Astral/Thor real swings land 65%/70% at 80 Flee, blind/block benefits and dodge floor preserved.');
 }finally{h.close()}
