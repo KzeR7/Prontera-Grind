@@ -190,3 +190,19 @@ visible goal/tier recommendations and Forge links. `guideFinderSync` owns the
 first-guide close → More → Guide hint, keyed to the current state object;
 `S.handbook.findGuide` saves completion. Existing menu/panel redraws update the
 highlight, and desktop/mobile resize/scroll events reposition it.
+
+Ascension v191: `ascensionCombatStats` halves only stage-5 escort HP while retaining
+boss HP and all ATK. `spawn` gives Ascension bosses +10 field HIT (50 total), while
+`minionDef` keeps +15 (45 total). `ascZenyBonus` raises all stage/enemy payouts by
+30%. `ASC_REWARD_VERSION=6` invalidates stale Ascension income at load/claim.
+Cover these boundaries with `ascension_progression_sim.js`,
+`ascension_rewards_sim.js`, `ascension_tracks_sim.js`, `combat_damage_sim.js`,
+`offline_sim.js` and `job_rite_sim.js`.
+
+### Ascension drop and scroll exchanges (v192)
+
+`ascensionDrops` supplies online/offline material rolls. `buyMythicScroll` handles
+the Black Market Sigil exchange through `ACT.buymythicscroll`; `TRIAL_STORE` and
+`trialBuy` handle the Echo `mscroll` entry. Both purchases credit `S.mythicScrolls`.
+`ascension_drop_shop_sim.js` covers probability boundaries, currencies, purchase
+gates, both Echo entry points, persistence and refinement consumption.

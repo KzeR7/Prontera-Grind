@@ -70,10 +70,11 @@ try{
   for(let stage=1;stage<=5;stage++){
    ev(`S.mp=${m};S.lvl=${stage};spawn()`);
    const regular=ev('mobs.find(x=>!x.boss)');
-   assert.equal(ev('mobs.every(x=>mhOf(x)===(x.boss?55:45))'),true,'all Ascension mobs and escorts receive +15 HIT');
-   assert.ok(regular.hp>previous);previous=regular.hp;
+   assert.equal(ev('mobs.every(x=>mhOf(x)===(x.boss?50:45))'),true,'Ascension boss HIT is 50; ordinary mobs and escorts retain 45');
+   if(stage<5)assert.ok(regular.hp>previous);previous=regular.hp;
    const hpScale=hpScales[m][stage-1],atkScale=atkScales[m][stage-1];
-   assert.equal(regular.hp,Math.floor(anchor.hp*hpScale),`map ${m} stage ${stage} HP`);
+   assert.equal(regular.hp,Math.floor(anchor.hp*hpScale*(stage===5?.5:1)),`map ${m} stage ${stage} HP; only stage-5 escorts are halved`);
+   assert.equal(regular.max,regular.hp,'maximum HP matches current HP at spawn');
    assert.equal(regular.atk,Math.floor(anchor.atk*atkScale),`map ${m} stage ${stage} ATK`);
    assert.equal(ev(`ascensionCombatStats(${m},${stage},true).atk`),Math.floor(anchor.atk*atkScale*3),`map ${m} stage ${stage} boss ATK (3x its mob)`);
    if(stage===1){
@@ -81,11 +82,11 @@ try{
    }
    if(stage===5){
     const boss=ev('mobs.find(x=>x.boss)');
-    assert.equal(boss.hp,Math.floor(anchor.hp*hpScales[m][4]*3),'stage boss carries 3x its mob HP');
-    assert.equal(boss.atk,Math.floor(anchor.atk*atkScales[m][4]*3),'stage boss hits 3x its mob ATK (v172, was 4x)');
+    assert.equal(boss.hp,Math.floor(anchor.hp*hpScales[m][4]*3),'stage boss retains its original HP after the escort reduction');
+    assert.equal(boss.atk,Math.floor(anchor.atk*atkScales[m][4]*3),'stage boss retains its original ATK');
    }
   }
  }
  ev("S.cls='Lord Knight';S.lv=150;S.mp=11;lsPut(saveKey(),JSON.stringify(S));S=load()");assert.equal(ev('S.mp'),9);
- console.log('PASS: independent fourth-job access without clears, reload/locked-save repair, both five-stage HP/ATK ramps and MVP scaling.');
+ console.log('PASS: independent fourth-job access without clears, reload/locked-save repair, stage-5 escort HP halved, unchanged ordinary/boss HP and ATK, boss HIT50/ordinary HIT45.');
 }finally{balance.close();}

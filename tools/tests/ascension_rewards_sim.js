@@ -19,8 +19,9 @@ try{
    for(const boss of [false,true])for(const roll of [0,.5,.999999]){
     ev(`Math.random=()=>${roll}`);
     const base=ev(`fieldZenyReward(9,15,${boss})`),actual=ev(`fieldZenyReward(${m},${s},${boss})`);
-    assert.ok(actual/base>=2-1/base&&actual/base<=3+1/base,'Zeny is 2–3× per kill, independent of HP');
-    assert.equal(actual,Math.round(base*ev(`ascZenyBonus(${m},${s})`)));
+    assert.ok(actual/base>=2.6-1/base&&actual/base<=3.9+1/base,'Zeny is 2.6–3.9× per kill after the approved 30% increase');
+    const oldBonus=(m===10?[2,2.1,2.2,2.3,2.4]:[2.4,2.55,2.7,2.85,3])[s-1];
+    assert.equal(actual,Math.round(base*(oldBonus*1.3)),'all stages and enemy types receive exactly the 30% base Zeny increase');
    }
    ev('Math.random=()=>.5');
    if(s===5){const boss=ev('mobs.find(o=>o.boss)');assert.ok(Math.abs(boss.exp-regular.exp*4)<=3);ev('Math.random=()=>0');assert.equal(ev('offlineMobForCurrentField().boss'),true);assert.equal(ev('offlineMobForCurrentField().zeny'),ev('fieldZenyReward(S.mp,S.lvl,true)'));ev('Math.random=()=>.5');}
@@ -42,5 +43,5 @@ try{
  assert.ok(Math.abs(shared/84000000-666.7)<.1,'v172: shared track targets about 667h at the 1.4M EXP/min the retuned top field sustains');
  assert.ok(Math.abs(skills/84000000-83.3)<.1,'v172: each class skill track targets about 83h at the same rate');
  assert.ok(shared/skills>7.99&&shared/skills<8.01,'shared track is about eight class skill tracks');
- console.log('PASS: ten Ascension reward stages, live/away parity, boss EXP 4×, Zeny 2–3× for matching regular/MVP rolls, 300 original Zeny cases, actual kill credits both tracks, increasing EXP curves.');
+ console.log('PASS: ten Ascension reward stages, live/away parity, boss EXP 4×, Zeny +30% across every stage and regular/MVP roll, 300 original Zeny cases, actual kill credits both tracks, increasing EXP curves.');
 }finally{g.close()}

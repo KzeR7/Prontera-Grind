@@ -90,3 +90,29 @@ speed, cooldowns, 0.5s combo contacts, Rolling Cutter's 0.2s repeats and cosmeti
 weaker than v186; identical max-investment builds retain their DPS. The proposed
 50/30/20 split remains a planning guide, not an exact attribution or an added buff.
 The existing one-time historical High Priest/Sniper exception remains unchanged.
+
+### 2026-10-18 — Merchant-line HP target (v190)
+
+The owner selects Mechanic combined class/skill HP of 2.10× instead of 2.625×.
+Keep its 1.75× class base and Pushcart’s maximum +20% HP; remove Cart Momentum’s
+extra +30% HP training, retaining its offensive effect and saved ranks. This also
+reduces Whitesmith to 1.92×. Other class lines and equipment/affix formulas are
+unchanged. Ascension map HP/EXP/Zeny remain under discussion.
+
+### 2026-10-18 — Ascension escort and income adjustment (v191)
+
+The owner approves half HP for stage-5 escorts in Astral Citadel and Thor Volcano,
+boss HIT 55→50, and +30% Zeny for ordinary mobs, escorts and bosses at every stage.
+Boss HP, stages 1–4 HP, all ATK, EXP and drop rates retain their values. Reward
+version 6 invalidates old Ascension income samples so new measured rates can be
+recorded; original-map samples and earned progression remain intact. Drop-rate
+changes are awaiting discussion of current material uses and costs.
+
+### 2026-10-18 — Ascension materials and Mythic scroll exchanges (v192)
+
+The owner selects 0.2% per kill for Astral Shards/Primal Catalysts, 0.05%
+ordinary/escort Sigils, and explicitly 1% boss Sigils. Mythic Protection Scrolls
+cost 100 Sigils each in the Black Market and 600 Echo Shards each in Echo.
+The existing market gate applies; Echo retains its existing access rules. Purchases
+use the existing saved Mythic scroll reserve, retaining refinement behavior and the
+0.05% online boss scroll drop. Echo Shards are separate from Astral Shards.
