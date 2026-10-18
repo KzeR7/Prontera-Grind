@@ -275,7 +275,7 @@ t('the lobby offers exactly the three doors, ranked first and honest about the t
 });
 
 t('the Shard Store spends shards and grants the random voucher and scroll exactly once', () => {
-  assert.strictEqual(A0().TRIAL_STORE.map(r => r.c).join(','), '45,45,35,180,200,400,400', 'the requested Echo Shard prices including the placeholder scroll');
+  assert.strictEqual(A0().TRIAL_STORE.map(r => r.c).join(','), '45,45,35,180,200,400,400,600', 'the requested Echo Shard prices including regular and Mythic scrolls');
   const A = arena({ shards: 2500, lv: 150, random: .999999 });
   A.trialBuy('ori');
   assert.strictEqual(A.S.shards, 2500 - 45, 'Oridecon x5 costs 45');

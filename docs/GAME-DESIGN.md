@@ -23,16 +23,16 @@ Maps → Ascension Map contains Astral Citadel and Thor Volcano, beside the
 World Atlas destination list. Endless Echo has its own tab between Ascension Map and the locked Social Hub tab.
 Astral and Thor have illustrated destination previews. Travel enters the main battlefield with the current
 character, combat and drops. Both maps require a fourth-job class, with no prerequisite boss clears.
-Ascension mobs use separate HP and ATK curves relative to the Nightmare Abyss
-Stage 5 MVP (internal Stage 15). Astral regular HP scales by 1.25/1.75/2.5/3.5/5,
-and ATK retains its original 5/8/13/20/30 multipliers. Thor regular HP scales by
-1.75/2.5/3.5/5/7, and ATK retains 7/11/18/28/40.
-Each MVP has three times its stage regular HP and four times its ATK.
-The first fourth-job trial uses Astral's entry regular HP/ATK: lower HP, original ATK.
-The owner chose +15 HIT for Astral/Thor field mobs, escorts and bosses in v168;
-their endgame HIT is now 45 regular / 55 boss. At 80 Flee, this means 65%/75%
-hit chance before blind/block, with the existing 5% dodge floor. Original maps,
-Endless Echo and the advancement trial retain their prior HIT.
+Ascension combat scales from the Nightmare Abyss Stage 5 regular mob (internal
+Stage 15). Astral HP multipliers by stage are 2/3/4.5/6.5/9 and ATK multipliers
+are 1.5/1.9/2.4/3/3.8. Thor HP multipliers are 7/9/11/14/18 and ATK multipliers
+are 4/4.8/5.6/6.6/8. The stage-5 boss retains three times its original stage
+regular HP and ATK. In v191, only its five escorts receive half the original
+stage regular HP; their ATK is unchanged. Stages 1–4 and boss HP are unchanged.
+The first fourth-job trial uses Astral stage-1 regular HP/ATK and retains its HIT.
+Ordinary Ascension mobs and escorts have 45 HIT; v191 lowers boss HIT from 55 to
+50. At 80 Flee, ordinary/escort hit chance is 65% and boss hit chance is 70%,
+before blind/block. The existing 5% dodge floor still applies.
 Both Ascension maps have five stages: 1–2 share arrival scenery, 3 is the crossing,
 4 is the approach, and 5 starts immediately with the MVP and five escorts. Neither
 map adds Nightmare stages or drops equipment. Cards, ore and pets still roll.
@@ -50,10 +50,14 @@ including away-income source stages. Recorded clears, materials and owned items 
 
 Native mobs use local original APNGs for idle, walk and attack in eight directions.
 Materials are saved separately from equipment: Astral Shard (Astral) and Primal
-Catalyst (Thor) each roll at 0.035% per kill; Valkyrie's Sigil rolls at 0.0025% per
-ordinary mob/escort and 0.1% per MVP. The map's Field intelligence shows the wallet.
+Catalyst (Thor) each roll at 0.2% per kill; Valkyrie's Sigil rolls at 0.05% per
+ordinary mob/escort and 1% per MVP. The map's Field intelligence shows the wallet.
 Online and server-budgeted offline kills share these rolls. Materials are collected
-for N+ equipment evolution (Shards/Catalysts plus Sigils).
+for N+ equipment evolution (Shards/Catalysts plus Sigils). Shards/Catalysts also fund
+selective Mythic reforging. Mythic Protection Scrolls can be exchanged for 100
+Valkyrie’s Sigils each in the Black Market (its existing Base 100 gate applies), or
+600 Echo Shards each in the Echo Shard Store. Both add to the saved Mythic scroll
+reserve used by protected +11–15 attempts. The 0.05% online boss scroll drop remains.
 Equipment → Ascension Forge requires a fourth-job class. Choose a set, then an eligible owned N+ piece. Evolution spends Shards/Catalysts, Sigils and Zeny, preserving the same item ID, refinement, cards and existing affixes while filling to four affixes. It never creates an extra item. Mythic equipment can only be worn by fourth jobs. Character contains working Ascension stats and Skill ascension allocation tabs.
 Existing maps, pet identities and Nightmare reward values retain their meaning.
 
@@ -105,24 +109,24 @@ Away progress uses the existing 50% rate and four-hour claim cap, credited to th
 class in its saved income sample, once per server claim. Quest and GM Base-EXP
 grants do not contribute; no historical EXP is converted.
 
-Astral EXP bonuses by stage are 5/5.5/6/6.5/7%; Thor bonuses are
-7/7.75/8.5/9.25/10%. These now apply **per kill**, relative to a Nightmare Abyss
-Stage 15 escort, without scaling with monster HP. MVP EXP is four times the
-stage regular reward. Zeny uses the matching Abyss regular/MVP payout multiplied
-by 2/2.1/2.2/2.3/2.4 in Astral and 2.4/2.55/2.7/2.85/3 in Thor.
-Material odds are unchanged; enemy HP is reduced, ATK is restored to its original
-values, and v168 adds the owner-selected +15 field HIT. New-map EXP is about 98.3–99.8% lower
-than v165, so ordinary jobs no longer receive HP-inflated rewards. Both Ascension
-tracks also earn this lower combat EXP; the 700/87.5-hour figures above remain
-8M EXP/min references, not measured times for these maps. Earned levels and points
-survive. Stale Ascension away-income samples are invalidated at load and claim;
-ordinary-map samples survive.
+Astral EXP pays 3/4/5/6.5/8 times the Nightmare Abyss Stage 15 regular reward
+per kill; Thor pays 7/8.5/10/12/15 times. Boss EXP is four times the original
+stage regular reward. Escort HP reductions do not reduce their EXP.
+Zeny uses the matching Abyss regular/boss payout with Astral stage multipliers
+2/2.1/2.2/2.3/2.4 and Thor 2.4/2.55/2.7/2.85/3, all increased by 30% in v191.
+The increase applies to ordinary enemies, stage-5 escorts and bosses, through
+both live reward definitions and away simulations. The separate 90% paying-kill
+chance and 50–100% payout roll still apply, including to bosses.
+The current reward version is 6. Stale Ascension measured income samples are
+invalidated at load and claim, then replaced by a new farming sample; ordinary
+map samples survive. Earned levels, EXP, allocations and material wallets survive.
+Material drop rates are unchanged pending further owner tuning.
 
 Existing sinks are retained after reducing currency supply: Mythic evolution
 costs 50–140M Zeny per piece plus materials; four-affix Mythic reforges cost
 1.2M (all), 3.6M (two), or 7.2M (one), with selective ore/material fees.
 Mythic +11–15 attempts cost 264/288/312/336/360k Zeny plus 15 ore each, at
-30/21/12/5/2% success. Failure preserves the Mythic rank. Expected +10→+15
+30/21/12/5/2% success. Protected failure preserves the Mythic rank; unprotected +11–15 failures lose one rank. Expected +10→+15
 fees total about 29.57M, or 159.21M including purchased ore at existing prices;
 actual RNG costs vary. Prior map reward changes did not rebalance these prices.
 New skill artwork remains unfinished. Mythic inventory icons now use native Glacier/Dim Glacier art for Astral sets and Crimson/Lava Leather/Phoenix art for Thor sets. The custom sets share some official pieces; see `assets/equipment-icons/mythic-manifest.json` for all slot mappings and original hashes.
@@ -212,6 +216,14 @@ Available cards use the existing class-change and first-unlock trial gates.
 The Class tree subview retains the full 25-node overview with its inspector.
 Locked/current cards explain their status; the portrait has a neutral slate background.
 Inspection in the full overview does not change class.
+
+### Merchant-line HP (v190)
+
+Pushcart grants +2% maximum HP per rank, up to +20%. Cart Momentum retains
+its offensive stacking effect and no longer grants HP training. With maxed
+Pushcart, Whitesmith has a 1.92× combined class/skill HP multiplier and Mechanic
+has 2.10× (1.75× class × 1.20). Equipment, cards, pets and Ascension HP bonuses
+apply through their existing rules.
 
 ## Equipment, cards and currency
 

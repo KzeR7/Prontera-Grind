@@ -6908,3 +6908,21 @@ The owner's second pass over v77, six notes, all built.
 * **Delivery:** Local workspace changes; no commit, push, PR or deployment.
 
 * **Final browser checks:** Desktop (1440px) and phone (390px) Reforge controls passed: corrected ranges/pool, selected paid offer, save/load, keep/replace, preserved saved rolls and no horizontal overflow. Settings mute/unmute and persisted preference passed. All seven local native WAVs decoded in shared Chromium; normal/critical bow contacts used the same native buffer, sword selected a different buffer. Actual page reload preserved the paid offer and affixes without charging again. The first reload assertion assumed an unchanged wallet while farming continued; narrowed it to reject repeated fees and permit earned Zeny. These checks use the renderer stub; GPU graphics and subjective listening remain unverified.
+
+### 2026-10-18 — `haven-v190 merchant HP balance`
+* **Changed:** Removed Cart Momentum’s extra HP training. Maxed Pushcart still gives +20% HP: Mechanic now has 2.10× combined class/skill HP, Whitesmith 1.92×. Cart Momentum offense, saved ranks and other class lines retain their rules. Updated build mirrors.
+* **Try it:** Compare Mechanic/Whitesmith Character HP with maxed Pushcart and inspect Cart Momentum’s description. Equipment, cards, pets and Ascension can raise HP further.
+* **Checks:** Skill redesign 26, save/load 27, build watcher 6 and static publishing 15 groups passed. HP-affix conversion/save boundaries and all ten Ascension reward stages with live/away parity passed. Diff whitespace check passed. The map report uses real helpers for 12 enemy/reward rows; no map tuning applied.
+* **Delivery:** Local workspace edits only; no commit, push or deployment.
+
+### 2026-10-18 — `haven-v191 ascension field balance`
+* **Changed:** Halved stage-5 escort HP in Astral/Thor, lowered boss HIT to 50, and increased every stage’s ordinary/escort/boss Zeny by 30%. Boss HP, stages 1–4 HP, ATK, EXP and drop odds retain their values. Reward version 6 refreshes stale Ascension income samples while retaining original-map samples and progression. Corrected the current map guide to match the live combat/reward formulas.
+* **Try it:** Compare stage-5 escorts and boss hit chance in both maps; farm any stage to record new Zeny income. Mythic materials still fund equipment evolution and selective reforges.
+* **Checks:** Ascension progression and rewards passed across both maps/all ten stages; Ascension tracks 16, combat 10, offline 13, advancement rite 20, save/load 27, update watcher 6 and publishing 15 checks passed. Diff whitespace check passed. Drop rates remain unchanged; material uses and recipe costs audited separately.
+* **Delivery:** Local edits only; no commit, push or deployment.
+
+### 2026-10-18 — `haven-v192 ascension drops and scroll exchanges`
+* **Changed:** Shards/Catalysts now drop at 0.2%; Sigils at 0.05% from mobs/escorts and 1% from bosses. Black Market exchanges 100 Sigils for one Mythic Protection Scroll; Echo sells one for 600 Echo Shards. Both fund the existing refinement reserve. Updated map, handbook and refinement text.
+* **Try it:** Inspect either Ascension map’s material rates, then open Market → Black Market or Echo to buy a Mythic Protection Scroll.
+* **Checks:** Seven real-page drop/shop groups passed, covering probability boundaries, online/offline material parity, exact prices, insufficient funds, gates, live button handlers, save/load and refinement consumption. Echo 18, save/load 27, offline 13, Mythic 7, Eclipse UI 50, UI 64, panel 42, update watcher 6 and publish 15 checks passed; Ascension progression passed for both maps. Fixed a hidden market product found by panel checks and updated old product-list expectations. Whitespace check passed.
+* **Delivery:** Local edits only; no commit, push or deployment.
