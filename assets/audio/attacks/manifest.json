@@ -1,0 +1,61 @@
+{
+  "source": "Ragnarok Online client WAV recordings served by the roBrowser GRF reference host",
+  "retrieved": "2026-10-18",
+  "mappingRevision": "9f3281c02fee66f8be949b7e58429dc49775a7be",
+  "assets": [
+    {
+      "file": "attack_sword.wav",
+      "url": "https://grf.robrowser.com/data/wav/attack_sword.wav",
+      "sha256": "ab012146c9af9e5727550a2a4521cad25fdc5e7759c6f074a01a36391adda654",
+      "bytes": 10768
+    },
+    {
+      "file": "attack_short_sword.wav",
+      "url": "https://grf.robrowser.com/data/wav/attack_short_sword.wav",
+      "sha256": "eb3291c5052114b5dd48695f40a1706f7c61bf1af087573387837e545ddff7a9",
+      "bytes": 10086
+    },
+    {
+      "file": "attack_spear.wav",
+      "url": "https://grf.robrowser.com/data/wav/attack_spear.wav",
+      "sha256": "0741af6fdfe6b77c4ae8ab48da5bd5ee78c0efbd378d7123e19c1d25f36f07a8",
+      "bytes": 8588
+    },
+    {
+      "file": "attack_axe.wav",
+      "url": "https://grf.robrowser.com/data/wav/attack_axe.wav",
+      "sha256": "f020aea8f64c632a1149c4f790301510b1b0d4e037684ac87f92d405d05d28f2",
+      "bytes": 20990
+    },
+    {
+      "file": "attack_mace.wav",
+      "url": "https://grf.robrowser.com/data/wav/attack_mace.wav",
+      "sha256": "e61712264b9bfeba3a804ceeedf40b124665093c570b5d0fe4a27b3454b5aa66",
+      "bytes": 14274
+    },
+    {
+      "file": "attack_katar.wav",
+      "url": "https://grf.robrowser.com/data/wav/attack_katar.wav",
+      "sha256": "902bb03044a9af22c267321d1c6461022436884c70ac8926ecee3534f8a51f9b",
+      "bytes": 10114
+    },
+    {
+      "file": "attack_rod.wav",
+      "url": "https://grf.robrowser.com/data/wav/attack_rod.wav",
+      "sha256": "b63b90e96c622fc10c5b2a341644afc5012ab0473eeb1c35679ab29882e24f80",
+      "bytes": 9556
+    },
+    {
+      "file": "attack_bow1.wav",
+      "url": "https://grf.robrowser.com/data/wav/attack_bow1.wav",
+      "sha256": "d06ce701dd7ee7af60ae638aa509985e7fdd24748939307a7fa114245a8fbb83",
+      "bytes": 14214
+    },
+    {
+      "file": "attack_fist.wav",
+      "url": "https://grf.robrowser.com/data/wav/attack_fist.wav",
+      "sha256": "3838bbc07c3906489e0fbed3647e594c25799bf12556309bbda5a2a774e6c096",
+      "bytes": 14644
+    }
+  ]
+}

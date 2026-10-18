@@ -891,7 +891,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=1"></script>
 <script src="assets/bgm.js?v=188"></script>
-<script src="assets/combat-audio.js?v=189"></script>
+<script src="assets/combat-audio.js?v=190"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1122,7 +1122,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-17 haven-v189 affix ranges and native hit sounds';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-18 haven-v190 native attack sound sync';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2876,7 +2876,7 @@ function petHit(p,target){
       }else{
         const hitList=use.kind==='aoe'?mobs.slice().filter(o=>Math.hypot(o.x-target.x,o.z-target.z)<=use.radius):[target];
         let dealt=0;
-        for(const o of hitList)if(o&&o.hp>0){const d=Math.max(1,Math.round(petDmg(p)*use.power*(o.boss?1+petPassive('boss')/100:1)));dealt+=Math.min(o.hp,d);hurt(o,d,use.color,false,false,'fist')}
+        for(const o of hitList)if(o&&o.hp>0){const d=Math.max(1,Math.round(petDmg(p)*use.power*(o.boss?1+petPassive('boss')/100:1)));dealt+=Math.min(o.hp,d);hurt(o,d,use.color,false,false,'fist','pet')}
         petLeech(dealt);
         addFloat(target.x,2.4,target.z,use.n,use.color,true);playSkillFx(use.vfx,target,use.color);
       }
@@ -2885,7 +2885,7 @@ function petHit(p,target){
   }
   let d=petDmg(p)*rnd(.9,1.1);const c=Math.random()*100<p.eq[2]*5;if(c)d*=2;
   const hit=Math.max(1,Math.round(d*(target&&target.boss?1+petPassive('boss')/100:1)));
-  const drained=Math.min(target.hp,hit);hurt(target,hit,MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c,false,'fist');
+  const drained=Math.min(target.hp,hit);hurt(target,hit,MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c,false,'fist','pet');
   petLeech(drained);
   return false;
 }
@@ -4503,12 +4503,13 @@ function heroStandoff(m){
 }
 function shot(col){if(!mob)return;const magic=INT_CLASSES.includes(S.cls),arrow=heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)==='bow';if(!magic&&!arrow)return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||(magic?'#d9b9ff':'#fff'),arrow:!magic&&arrow})}
-function hurt(o,d,col,c,skill=false,soundWeapon=S.eq.weapon?.wt){if(d>0&&typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false,soundWeapon);S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill);if(o.hp<=0)kill(o)}
+function hurt(o,d,col,c,skill=false,soundWeapon=S.eq.weapon?.wt,soundKind=skill?'skill':'normal'){if(d>0&&typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false,soundWeapon,soundKind);S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill);if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false,skill=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'MISS','#dfe5ed',false,'miss');return}
   // v73: the crit roll answers to the target - a boss carries its map's crit resistance
   // (BOSS_CRIT_RES) and every other monster resists nothing.
   const c=Math.random()*100<Math.max(0,crit()*(1-(mob.critRes||0))),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)*(mob.boss?1+petPassive('boss')/100:1)*fieldDamage(mob)*ascDamage(mob)*(1+skillBonus('ascBlade')/100)*(1+(!magic?skillBonus('ascRanged'):0)/100)));
+  if(typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false,S.eq.weapon?.wt,skill?'skill':'normal');
   S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;mob.hitAnim=1;shake=c?6:2;applyLeech(Math.min(d,Math.max(0,mob.hp+d)),cardMasteryStat('leech')*.5);showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill);
 }
 // Legacy coefficient helpers retained for damage simulations; combo casts use full power.
@@ -4924,6 +4925,8 @@ function playerAttack(){
   // Fill only gaps that fit a complete visual swing; reserve the next skill's windup.
   if(wait>1e-8&&swingLength()>wait){pAtkT=wait;return;}
   const interval=sk?Math.min(sk.spacing||.5,aspd()):aspd();pAtkT=interval;atkAnim=1;swingDur=swingLength(Math.min(interval,aspd()));
+  // One weapon sound per drawn attack, including misses and visual-only combo gaps.
+  if(typeof CombatAudio!=='undefined')CombatAudio.attack?.(S.sfx!==false,S.eq.weapon?.wt);
   if(wait>1e-8){
     pAtkT=Math.min(pAtkT,wait);
     // ASPD animates the native attack pose, but gap swings never roll or resolve a hit.
@@ -5846,7 +5849,7 @@ const V={
     <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
     <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
     <small>On or off, and how the numbers read. Saved with your account.</small>
-    <div class="hd">Combat audio</div><button data-a="sfx" aria-pressed="${S.sfx!==false}">Hit sounds: ${S.sfx===false?'Off':'On'}</button><div class="hd" style="margin-top:10px">Background music</div>
+    <div class="hd">Combat audio</div><button data-a="sfx" aria-pressed="${S.sfx!==false}">Attack / hit sounds: ${S.sfx===false?'Off':'On'}</button><div class="hd" style="margin-top:10px">Background music</div>
     <div class="row"><button data-a="bgm" data-v="toggle" class="${typeof BGM!=='undefined'&&BGM.enabled?'on':''}" aria-pressed="${typeof BGM!=='undefined'&&BGM.enabled}">${typeof BGM!=='undefined'&&BGM.enabled?'BGM: On':'BGM: Off'}</button></div>
     <div class="row" style="margin-top:4px"><button data-a="bgmvol" data-v="-">Vol -</button><button data-a="bgmvol" data-v="+">Vol +</button><button data-a="bgmprev">Prev</button><button data-a="bgmnext">Next</button><button data-a="bgmshuffle" aria-pressed="${typeof BGM!=='undefined'&&BGM.shuffle}">Shuffle</button></div>
     <small>Current track: ${typeof BGM!=='undefined'?esc(BGM.currentTitle()):'No track'} · Volume ${typeof BGM!=='undefined'?Math.round(BGM.volume*100):5}%. On PC the player under the HP box lists every track (map BGM is the default; press ▾ to pick any song); phones just autoplay the map's track. Tracks are configured per map in assets/bgm-tracks.js.</small>

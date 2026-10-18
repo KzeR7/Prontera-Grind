@@ -14,7 +14,7 @@ try{
  ev(`trialEnter('ranked');TRIAL.left=175;trialExit()`);assert.equal(ev('TRIAL.on'),false);assert.equal(ev('S.trial.used'),0);
  ev(`trialEnter('ranked');TRIAL.left=160;trialExit()`);assert.equal(ev('S.trial.used'),1);assert.equal(ev('S.shards'),0);
  ev(`window.contacts=[];window.CombatAudio={hit:(...x)=>contacts.push(x)};window.target={hp:100,x:0,z:0,size:1};hurt(target,5,'red',true);S.sfx=false;hurt(target,5,'red',false)`);
- assert.deepEqual(JSON.parse(ev('JSON.stringify(contacts)')),[[true,true,'sword'],[false,false,'sword']]);
+ assert.deepEqual(JSON.parse(ev('JSON.stringify(contacts)')),[[true,true,'sword','normal'],[false,false,'sword','normal']]);
  ev(`S=fresh();S.sfx=false;localStorage.setItem(saveKey(),JSON.stringify(S));S=load()`);assert.equal(ev('S.sfx'),false);
  console.log('PASS polish: default audio, forge affixes, market, sorting, floor anchors, trial exit, hit routing and saved SFX');
 }finally{g.close()}

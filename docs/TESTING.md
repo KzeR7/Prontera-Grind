@@ -437,3 +437,16 @@ attempts, and is explicitly not acceptance/balance evidence. The summarizer reta
 its measured-source hash check; do not bypass it to re-normalize historical data
 against a newer game. Existing Markdown can be re-rendered from its stored raw and
 ordinary-rate summaries using the pure renderers, without editing either JSON file.
+
+## Attack and contact audio (v190)
+
+Run `node tools/tests/combat_audio_sim.js` and `node tools/tests/attack_audio_sim.js`
+for native WAV integrity/mappings, separate motion/contact budgets, loading/unlock,
+all 25 classes' actual animation/contact callbacks, misses and cosmetic gap swings.
+Include `gameplay_polish_sim.js` for saved sound settings, `attack_sync_sim.js`,
+`cosmetic_combo_sim.js`, `combo_rotation_sim.js`, `combat_damage_sim.js`,
+`pet_game_sim.js` and `publish_sim.js` for affected callers and asset delivery.
+In the browser, unlock audio with a click/key, verify native WAV decoding, normal
+swings with combos paused, skill bursts and pets, then toggle Attack / hit sounds
+in Settings. BGM uses its own controls. Instrumented callbacks do not prove
+subjective listening quality or physical speaker latency.
