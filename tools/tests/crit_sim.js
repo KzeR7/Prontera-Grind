@@ -28,7 +28,7 @@ ${code.join('\n')}
 const safeCount = v => {const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
 let PV = 0, BON = 0, CM = 0;
 const S = { st:{luk:1,dex:1}, lv:1, indexXp:0, eq:{} };
-const ascensionSetBonuses=()=>({}),ascStat=()=>0,DUAL=.5;
+const ascensionSetBonuses=()=>({}),ascStat=()=>0,DUAL=${src.match(/DUAL=([.\d]+)/)[1]};
 const items=()=>Object.values(S.eq).filter(Boolean);
 const st = k => S.st[k] || 1, pv = k => PV, bon = k => BON, cardMasteryStat = k => CM;
 this.__c = { crit, bossCritRes, indexCrit, indexCritBonus, INDEX_CRIT, INDEX_TITLES, BOSS_CRIT_RES, NM_CRIT_RES,

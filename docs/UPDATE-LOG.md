@@ -6974,3 +6974,25 @@ The owner's second pass over v77, six notes, all built.
 * **Checks:** Added a real Three r128 ShaderLib regression that failed on the original code and passes with the fix; 50 terrain scenes, site build and 16 publishing groups passed. Final WebGL verification pending below. Remote PR head matched the supplied revision; no failing statuses were reported.
 * **Delivery:** Local repair only; runtime handles commit/push. No prepared local merge exists; no PR merge or publication performed by this turn.
 * **Final checks:** Real WebGL2/SwiftShader passed twenty preview scenes across all ten maps at desktop/portrait widths with zero page/shader errors, default-map/no-field-download checks before and after preview, actor/effect floor contact, native animation, arena cleanup and missing-asset fallback. GitHub reports no required checks on the branch. Physical-device performance is unmeasured.
+
+### 2026-10-19 — `haven-v198 trial and boss balance`
+* **Changed:** Job trials have 3× Astral-entry HP and a 30-second limit. Nightmare Abyss Dark Lord has 25% more HP. Thor boss ATK is 25% lower. Prompts and current guides reflect the trial timer. Other enemies, Astral HP, per-kill rewards and the three-second result pause retain their rules.
+* **Try it:** Enter a first fourth-job trial from Class Tree; challenge Nightmare Abyss Stage 5 and Thor Stage 5.
+* **Checks:** Affected checks and encounter comparison in progress; final results follow below.
+* **Delivery:** Local changes only.
+* **Final checks:** All 19 affected simulation suites passed, including 20 trial lifecycle checks, scoped original-map boss/escort pins, real Thor incoming damage, rewards/offline, class/save/account, guide, build mirrors and publishing. Two initial test-fixture failures were corrected (const override and stale 1:00 HUD expectation). All 189 post-change encounter simulations completed; completed N+ trials cleared in 3.5–18.3 seconds, and all 21 third-job Nightmare Abyss boss attempts passed. All 42 Astral boss outcomes match baseline exactly. Comparisons exclude only timestamp-generated card IDs; combat fixtures/effects match. Renderer/FX are stubbed; owner-save and GPU acceptance were not performed. Local changes only.
+
+### 2026-10-19 — `haven-v199 Assassin weapon exclusivity`
+* **Changed:** Manual bag/slot equip and saved class-loadout restoration now enforce one katar with an empty left hand. A katar safely stows the off-hand item; the left-hand chooser refuses daggers while a katar is worn. Manual katar swaps needing extra bag space are refused before changing equipment. Dual-dagger damage weights remain 100% main hand / 50% off hand.
+* **Try it:** As Assassin, Assassin Cross or Guillotine Cross, equip two daggers, switch to a katar, then try adding a left-hand dagger. Switch back to dagger main hand to equip the second dagger.
+* **Checks:** Regression checks in progress; final results follow.
+* **Delivery:** Local changes only; earlier v198 balance changes retained.
+* **Final checks:** 17 affected suites passed: Assassin equipment, dual wield, equipment cards, gear, class change, save/load, save owner, cloud, loadout UI, fourth-job Mythic/skills, HP affixes, panel layout, update watcher, publishing and GM presets/tools. Corrected a historical class-change assertion that explicitly allowed katar plus dagger; all 27 class-change checks now pass. The broader isolated UI suite has three existing failures (two missing KIT dependencies and an old title-seal position pin), reproduced unchanged against the pre-fix source. Actual before/after manual equip reproduction preserves all three items while removing the invalid combination. No attack/damage coefficients changed. Local changes only.
+
+
+### 2026-10-19 — `haven-v200 off-hand dagger balance`
+* **Changed:** Reduced off-hand dagger refined weapon value, affixes and cards from 50% to the owner-selected 35%, including Mythic direct crit. Main-hand daggers contribute 100% and katars 150%. Equal dagger pairs now give 135% weapon value and at most 4.05 full-card equivalents from six sockets. Existing rolls, cards, sockets and item IDs are preserved; auto-equip uses the same rate.
+* **Try it:** Compare equal refined daggers with a katar as any Assassin job; switch weapons and reload to check both equipment rules and stats.
+* **Checks:** Affected regression checks in progress; results follow.
+* **Delivery:** Local changes only; previous trial/boss balance and weapon exclusivity fixes retained.
+* **Final checks:** All 19 affected suites passed: dual wield, Assassin equipment, HP affixes, crit, gear, equipment cards, cards, autosell, class change, save/load, save owner, cloud, fourth-job Mythic/skills, combat damage, Ascension attack, pet gameplay, update watcher and publishing. Tests cover all three Assassin jobs, refined weapon weighting, card/affix values after reload, stored raw rolls and auto-equip's changed comparison. Whitespace check passed. No browser/GPU or full push gate performed. Local changes only.
