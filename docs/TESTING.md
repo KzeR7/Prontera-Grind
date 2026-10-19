@@ -477,7 +477,9 @@ contact, hero traversal across hills in both directions, pet/loot/projectile/aur
 contact at several ground heights, arena cleanup and missing asset fallback. The
 simulation checks outdoor-only prop selection, combat clearance, distinct hill
 profiles, gradual slopes, natural pond depressions, exact triangle contact and
-smooth indexed terrain normals. It uses real WebGL through SwiftShader, with paused rAF; it does
+smooth indexed terrain normals. It also passes the real Three r128 ShaderLib
+source through the prop material hook, checking that unresolved map includes are
+replaced with atlas-bound UV sampling while preserving color conversion. It uses real WebGL through SwiftShader, with paused rAF; it does
 not establish physical-device performance. Shared Preview Chromium lacks WebGL
 in this sandbox. Inspect the generated map screenshots for terrain and scenery.
 

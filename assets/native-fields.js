@@ -138,7 +138,8 @@ function build(THREE,asset,map,stage,plan){
   shader.vertexShader='attribute vec4 sourceBounds; varying vec4 nativeBounds;\n'+shader.vertexShader;
   shader.vertexShader=shader.vertexShader.replace('#include <uv_vertex>','#include <uv_vertex>\nnativeBounds=sourceBounds;');
   shader.fragmentShader='varying vec4 nativeBounds;\n'+shader.fragmentShader;
-  shader.fragmentShader=shader.fragmentShader.replace('texture2D( map, vUv )','texture2D( map, clamp(vUv,nativeBounds.xy,nativeBounds.zw) )');
+  const mapFragment=THREE.ShaderChunk.map_fragment.replace('texture2D( map, vUv )','texture2D( map, clamp(vUv,nativeBounds.xy,nativeBounds.zw) )');
+  shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',mapFragment);
  };
  const modelGeos={};
  for(const p of props){

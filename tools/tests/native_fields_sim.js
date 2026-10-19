@@ -28,6 +28,17 @@ for(let map=0;map<10;map++)for(const stage of [1,4,7,10,15]){
  for(let x=-13;x<=13;x+=2)for(let z=-28;z<=12;z+=2){const y=F.heightAt(map,x,z);samples.push(y);maxSlope=Math.max(maxSlope,Math.abs(F.heightAt(map,x+.01,z)-y)/.01,Math.abs(F.heightAt(map,x,z+.01)-y)/.01)}
  assert(Math.max(...samples)-Math.min(...samples)>2,'relief must reach playable field');assert(maxSlope<1.1,'walkable hills must remain gradual without stair jumps');
  const world=F.build(THREE,{record,vertices,terrain:{},atlas:{}},map,stage,plan);scenes++;maxTriangles=Math.max(maxTriangles,world.diagnostics.triangles);
+ if(map===0&&stage===1){
+  // onBeforeCompile receives unresolved ShaderLib includes in Three r128.
+  const material=world.root.children.find(mesh=>mesh.userData.nativeProp).material;
+  const shader={vertexShader:THREE.ShaderLib.basic.vertexShader,fragmentShader:THREE.ShaderLib.basic.fragmentShader};
+  assert(shader.fragmentShader.includes('#include <map_fragment>'));
+  material.onBeforeCompile(shader);
+  assert(shader.vertexShader.includes('nativeBounds=sourceBounds;'),'source atlas bounds must reach the fragment shader');
+  assert(!shader.fragmentShader.includes('#include <map_fragment>'),'map chunk must be patched before include expansion');
+  assert(shader.fragmentShader.includes('texture2D( map, clamp(vUv,nativeBounds.xy,nativeBounds.zw) )'),'atlas sampling must clamp interpolated UVs');
+  assert(shader.fragmentShader.includes('mapTexelToLinear( texelColor )'),'preserve map chunk color conversion');
+ }
  const floor=world.root.children[0].geometry,a=floor.attributes.position;assert(floor.index,'shared vertices smooth terrain normals');assert(floor.attributes.normal);assert(floor.groups.length<=1);assert(world.diagnostics.triangles<100000,'geometry budget');
  // Sample triangle interiors independently: production foot height must meet the actual GPU mesh.
  for(let k=0;k<floor.index.count;k+=Math.floor(floor.index.count/79/3)*3){
