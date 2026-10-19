@@ -1,0 +1,282 @@
+[
+  {
+    "map": "prontera",
+    "models": {
+      "tree": 9,
+      "tree2": 382,
+      "shrub": 194,
+      "stump": 369,
+      "detail": 373
+    },
+    "tiles": {
+      "base": [
+        4,
+        0
+      ],
+      "patch": [
+        1,
+        0
+      ],
+      "road": [
+        1,
+        0
+      ],
+      "cliff": [
+        2,
+        0
+      ]
+    },
+    "sourceMap": "prt_fild08"
+  },
+  {
+    "map": "izlude",
+    "models": {
+      "tree": 0,
+      "shrub": 194,
+      "stump": 465,
+      "detail": 373
+    },
+    "tiles": {
+      "base": [
+        4,
+        0
+      ],
+      "patch": [
+        1,
+        0
+      ],
+      "road": [
+        1,
+        0
+      ],
+      "cliff": [
+        2,
+        0
+      ]
+    },
+    "sourceMap": "prt_fild08"
+  },
+  {
+    "map": "geffen",
+    "models": {
+      "tree": 15,
+      "shrub": 119,
+      "rock": 202,
+      "detail": 203
+    },
+    "tiles": {
+      "base": [
+        2,
+        0
+      ],
+      "patch": [
+        3,
+        2
+      ],
+      "road": [
+        3,
+        2
+      ],
+      "cliff": [
+        3,
+        0
+      ]
+    },
+    "sourceMap": "gef_fild00"
+  },
+  {
+    "map": "morocc",
+    "models": {
+      "tree": 3,
+      "shrub": 41,
+      "detail": 39
+    },
+    "tiles": {
+      "base": [
+        1,
+        0
+      ],
+      "patch": [
+        0,
+        3
+      ],
+      "road": [
+        0,
+        3
+      ],
+      "cliff": [
+        2,
+        0
+      ]
+    },
+    "sourceMap": "moc_fild01"
+  },
+  {
+    "map": "payon",
+    "models": {
+      "tree": 2,
+      "tree2": 12,
+      "shrub": 6,
+      "rock": 18,
+      "detail": 7
+    },
+    "tiles": {
+      "base": [
+        2,
+        0
+      ],
+      "patch": [
+        4,
+        0
+      ],
+      "road": [
+        4,
+        0
+      ],
+      "cliff": [
+        3,
+        2
+      ]
+    },
+    "sourceMap": "pay_fild01"
+  },
+  {
+    "map": "comodo",
+    "models": {
+      "tree": 5,
+      "tree2": 105,
+      "shrub": 3,
+      "rock": 9,
+      "detail": 14,
+      "stump": 16
+    },
+    "tiles": {
+      "base": [
+        1,
+        0
+      ],
+      "patch": [
+        2,
+        1
+      ],
+      "road": [
+        2,
+        1
+      ],
+      "cliff": [
+        2,
+        0
+      ]
+    },
+    "sourceMap": "cmd_fild01"
+  },
+  {
+    "map": "louyang",
+    "models": {
+      "tree": 66,
+      "tree2": 8,
+      "shrub": 65,
+      "rock": 0,
+      "detail": 100
+    },
+    "tiles": {
+      "base": [
+        0,
+        0
+      ],
+      "patch": [
+        0,
+        0
+      ],
+      "road": [
+        0,
+        0
+      ],
+      "cliff": [
+        1,
+        0
+      ]
+    },
+    "sourceMap": "lou_fild01"
+  },
+  {
+    "map": "amatsu",
+    "models": {
+      "tree": 18,
+      "shrub": 12,
+      "rock": 15,
+      "detail": 4,
+      "stump": 23
+    },
+    "tiles": {
+      "base": [
+        1,
+        0
+      ],
+      "patch": [
+        3,
+        1
+      ],
+      "road": [
+        3,
+        1
+      ],
+      "cliff": [
+        2,
+        0
+      ]
+    },
+    "sourceMap": "ama_fild01"
+  },
+  {
+    "map": "gl_chyard",
+    "models": {
+      "tree": 799,
+      "detail": 875,
+      "rock": 94
+    },
+    "tiles": {
+      "base": [
+        1,
+        1
+      ],
+      "patch": [
+        1,
+        1
+      ],
+      "road": [
+        2,
+        0
+      ],
+      "cliff": [
+        1,
+        2
+      ]
+    }
+  },
+  {
+    "map": "hu_fild05",
+    "models": {
+      "detail": 216,
+      "rock": 1234
+    },
+    "tiles": {
+      "base": [
+        1,
+        0
+      ],
+      "patch": [
+        2,
+        0
+      ],
+      "road": [
+        1,
+        0
+      ],
+      "cliff": [
+        2,
+        3
+      ]
+    }
+  }
+]

@@ -450,3 +450,44 @@ In the browser, unlock audio with a click/key, verify native WAV decoding, norma
 swings with combos paused, skill bursts and pets, then toggle Attack / hit sounds
 in Settings. BGM uses its own controls. Instrumented callbacks do not prove
 subjective listening quality or physical speaker latency.
+
+
+## Outdoor combat fields and monster proportions (v195)
+
+See [source pipeline](../tools/native-fields/README.md) for pinned public source
+packages, the two unavailable dungeon substitutions and monster fallback IDs. Run:
+
+```sh
+node tools/tests/native_fields_sim.js
+node tools/tests/reference_mobs_sim.js
+python tools/tests/native_fields_assets.py --source-cache /path/to/map-cache --mob-cache /path/to/mob-cache
+python3 tools/backup_map_kit_hd.py
+node tools/tests/kit_sim.js
+node tools/tests/publish_sim.js
+bash tools/build_site.sh
+CHROMIUM_BUNDLED_LIBS=1 node tools/check_native_fields_browser.cjs http://localhost:8000/dist
+```
+
+The asset audit needs numpy and Pillow; this task verified Python 3.14, Pillow
+12.1.1 and numpy 2.4.2. Browser dependencies and the preview server follow the
+cosmetic-combo section above. Do not rebuild dist while browser checks are running.
+The browser test covers fifty desktop/390px scenes, travel during an initial native
+load, original animated monster pixels, hero readiness, actual hero/monster floor
+contact, hero traversal across hills in both directions, pet/loot/projectile/aura
+contact at several ground heights, arena cleanup and missing asset fallback. The
+simulation checks outdoor-only prop selection, combat clearance, distinct hill
+profiles, gradual slopes, natural pond depressions, exact triangle contact and
+smooth indexed terrain normals. It also passes the real Three r128 ShaderLib
+source through the prop material hook, checking that unresolved map includes are
+replaced with atlas-bound UV sampling while preserving color conversion. It uses real WebGL through SwiftShader, with paused rAF; it does
+not establish physical-device performance. Shared Preview Chromium lacks WebGL
+in this sandbox. Inspect the generated map screenshots for terrain and scenery.
+
+### Saved map preview and default selection (v196)
+
+New outdoor fields are opt-in via `?nativeFields=1`; plain game URLs use existing
+kit maps. The native browser harness now checks all ten default maps without
+field asset requests, then previews new terrain and returns to the plain URL to
+verify the override was not persisted. Native simulation also executes the real
+activation gate with absent, enabled, disabled and invalid query values. See
+[the handoff](NATIVE-FIELDS-HANDOFF.md) for startup, activation and rollback.

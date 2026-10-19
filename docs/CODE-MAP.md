@@ -21,6 +21,7 @@ measurements remain qualified by their saved source hashes.
 | Fourth-job advancement trial (locked) | `index.html`: `JOB_RITE`, `startJobRite`, `showJobRiteResult`, `tickJobRite`, `finishJobRite`; dark room and three-second animated result/promotion | `job_rite_sim.js`, `fourth_job_sim.js`, `fourth_job_mythic_sim.js` |
 | Gear, class eligibility, cards, autosell | `index.html`: `genGear`, `canUse`, `stowUnfit`, `equipRec`, `CARD_FITS` | `gear_sim.js`, `dual_wield_sim.js`, `card_sim.js`, `autosell_sim.js` |
 | Ascension maps and native mobs | `assets/ascension.js`, `assets/astral-scenery.js`, `assets/mobs/v1/`; `index.html`: `MAPS`, `canTravel`, `ascensionDrops`, `recordMapClear`, `buildAscension`, `syncMobImage`, `V.map`, `ACT.mapseason`; `tools/maps/build_game_exploration.js` | `publish_sim.js`, `panel_layout_smoke.js`, `ascension_scene_sim.js`, `ascension_progression_sim.js`, `astral_scenery_sim.js`, `native_mob_assets.py` |
+| Native fields and reference monster proportions | `assets/native-fields.js`, `assets/reference-mobs.js`, `tools/native-fields/`; `index.html`: `nativeFieldStore`, `mobVisualScale` | `native_fields_sim.js`, `reference_mobs_sim.js`, `native_fields_assets.py`, `tools/check_native_fields_browser.cjs` |
 | Map stages, scenery, Nightmare | `index.html`: `MAPS`, `fieldPlan`, `buildDeco`, `KIT_MAP` | `starter_sim.js`, `scene_sim.js`, `kit_sim.js`, `nightmare_sim.js` |
 | Endless Echo | `index.html`: `TRIAL`, `TRIAL_PAY`, `TRIAL_STORE` | `trial_sim.js` |
 | Pets and training | `index.html`: `PETS`, `petBuff`, `petR`; `assets/pets.js`, `assets/pets/v1/` | `pet_sim.js`, `pet_game_sim.js`, `pet_sprites_sim.js` |
@@ -206,3 +207,10 @@ the Black Market Sigil exchange through `ACT.buymythicscroll`; `TRIAL_STORE` and
 `trialBuy` handle the Echo `mscroll` entry. Both purchases credit `S.mythicScrolls`.
 `ascension_drop_shop_sim.js` covers probability boundaries, currencies, purchase
 gates, both Echo entry points, persistence and refinement consumption.
+
+### Saved outdoor field activation (v196)
+
+The new outdoor renderer is parked behind `NATIVE_FIELDS_DEFAULT=false` in
+`index.html`; `?nativeFields=1` enables a session preview. Original kit maps are
+the default and download no outdoor field geometry/textures. Monster atlases
+remain independent. See [activation/rollback handoff](NATIVE-FIELDS-HANDOFF.md).

@@ -112,11 +112,26 @@ t('the published tree is small enough to stay honest', () => {
   const bytes = walk(out);
   const mb = bytes / 1048576;
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
-  assert.ok(mb < 62.5, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the native packs, fallback game and selected lossless scenery and native Ascension mobs plus six advancement opponents plus the six editable fourth-job wardrobes must fit in 62.5 MiB.');
+  const nativeBytes=walk(path.join(out,'assets/native-fields/v1'));
+  assert.ok((bytes-nativeBytes)/1048576 < 62.5, 'existing runtime assets exceed their original 62.5 MiB budget');
+  assert.ok(nativeBytes/1048576 < 68, 'ten native field sets and seventy lossless monster atlases exceed their separate 68 MiB budget');
+  assert.ok(mb < 130.5, 'combined runtime delivery exceeds 130.5 MiB');
   const fourth=path.join(out,'assets/wardrobe/fourth/v1');assert.ok(walk(fourth)<6.25*1048576,'six fourth jobs share hair and accessory pixels');
   const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<13.5*1048576,'nineteen classes and fifty-two accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));
   for(const r of Object.values(catalog.assets))for(const key of ['meta','image'])assert.ok(fs.existsSync(path.join(wardrobe,r[key])),'native catalog asset is published');
+});
+
+t('native fields ship only pinned runtime outputs byte for byte',()=>{
+ const lock=JSON.parse(fs.readFileSync(path.join(root,'tools/native-fields/source-lock.json')));
+ const crypto=require('node:crypto');
+ for(const [file,record] of Object.entries(lock.outputs)){
+  const bytes=fs.readFileSync(path.join(out,file));
+  assert.equal(bytes.length,record.bytes,file);
+  assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),record.sha256,file);
+ }
+ const files=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?files(path.join(d,e.name)):[path.relative(out,path.join(d,e.name))]);
+ assert.deepStrictEqual(files(path.join(out,'assets/native-fields/v1')).sort(),Object.keys(lock.outputs).sort());
 });
 
 t('kit JSON delivery is smaller with identical values; native contracts and source images stay byte-identical',()=>{
