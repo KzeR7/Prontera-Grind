@@ -30,7 +30,27 @@ const g=createGame(html),ev=g.ev;
  assert.equal(ev('__effects.filter(e=>e[1]==="before").length'),ev('__effects.filter(e=>e[1]==="after").length'));
  assert.equal(ev('captureWardrobeFrame(__sprite,7,false,.5,1000066)'),true,'glint/trail repaint while native pose is unchanged');
  ev('S.eq.weapon.r=0;__effects=[]');assert.equal(ev('captureWardrobeFrame(__sprite,7,false,.5,1000066)'),true,'removing refinement clears cached glow');assert.equal(ev('__effects.length'),0);
- ev('drawNativeWeaponGlow=__glow');
+ // Check all stances and inherited tiers with actual native layers in every fourth-job route.
+ const beforeGlow=ev('JSON.stringify({cls:S.cls,sex:S.sex,appearance:S.appearance})');
+ ev(`window.__armGlow=drawNativeArmGlow;drawNativeArmGlow=(ctx,img,p,phase,glow)=>__effects.push([p[7],phase,glow.at,null])`);
+ let now=1000100;
+ for(const cls of Object.keys(ev('PGFourthJobs.CLASSES')))for(const sex of ['m','f']){
+  ev(`S.cls=${JSON.stringify(cls)};S.sex=${JSON.stringify(sex)};S.appearance=PGWardrobe.defaults(S.sex);wardrobeHero({cls:S.cls})`);await new Promise(r=>setImmediate(r));
+  ev('window.__sprite=mkWardrobeHero(wardrobeEquipped)');
+  for(const rank of [6,7,8,9,10,11,12,13,14,15])for(const stance of ['idle','walk','attack'])for(let dir=0;dir<8;dir++){
+   now+=34;
+   ev(`S.eq.weapon.r=${rank};__effects=[];captureWardrobeFrame(__sprite,${dir},${stance==='walk'},${stance==='attack'?.5:0},${now})`);
+   const context=cls+' '+sex+' +'+rank+' '+stance+' '+dir;
+   if(rank<7){assert.equal(ev('__effects.length'),0,context);continue}
+   const tier=rank<9?7:rank<10?9:rank<13?10:rank;
+   assert.ok(ev('__effects.length')>0,context+' missing glow');
+   assert.equal(ev(`__effects.every(e=>e[2]===${tier})`),true,context+' wrong tier');
+   assert.equal(ev('__effects.filter(e=>e[1]==="before").length'),ev('__effects.filter(e=>e[1]==="after").length'),context);
+   assert.equal(ev(`__effects.every(e=>e[0]==="weapon"||e[0]==="body")`),true,context+' glow touched non-arm/non-weapon art');
+  }
+ }
+ g.window.__beforeGlow=beforeGlow;ev(`Object.assign(S,JSON.parse(__beforeGlow));wardrobeHero({cls:S.cls})`);await new Promise(r=>setImmediate(r));
+ ev('drawNativeWeaponGlow=__glow;drawNativeArmGlow=__armGlow');
  // Every new tree class uses its own native body/clock and preserves the cosmetic save.
  const applied=ev('JSON.stringify(S.appearance)');
  for(const cls of ['Novice','Mage','Wizard','High Wizard','Acolyte','Priest','High Priest','Merchant','Blacksmith','Whitesmith']){

@@ -120,13 +120,12 @@ t('ranked is two a day, practice is unlimited, and only ranked pays', () => {
   assert.strictEqual(A.S.shards, 0, 'practice pays no shards');
   assert.strictEqual(A.trialLeftToday(), 2, 'and spends no ranked tries');
   assert.strictEqual(A.trialState().best, 0, 'and never touches the personal best');
-  // two ranked runs, then the door closes for the day. Each run pays its own total DPS bracket -
-  // a new best does not add a bonus. At 100,000 DPS each completed run pays 3 Echo Shards.
+  // Two ranked completions earn 100 each, then the daily door closes.
   A.trialEnter('ranked'); A.S.dmg = A.S.dmg + 18000000; A.TRIAL.left = 0; A.trialFinish();
-  assert.strictEqual(A.S.shards, 3, 'a ranked run pays its ladder bracket (100,000 DPS -> 3)');
+  assert.strictEqual(A.S.shards, 100, 'every ranked completion pays 100');
   assert.strictEqual(A.trialLeftToday(), 1, 'one try is spent');
   A.trialEnter('ranked'); A.S.dmg = A.S.dmg + 18000000; A.TRIAL.left = 0; A.trialFinish();
-  assert.strictEqual(A.S.shards, 6, 'and the second run pays its own 3 - flat, never stacked');
+  assert.strictEqual(A.S.shards, 200, 'two completed runs pay 200 total');
   assert.strictEqual(A.trialLeftToday(), 0, 'both tries spent');
   const before = A.TRIAL.on;
   A.trialEnter('ranked');
@@ -152,44 +151,36 @@ t('the board metric is the best single run, never a sum', () => {
   A.trialEnter('ranked'); A.S.dmg = 36000000; A.TRIAL.left = 0; A.trialFinish();   // 200,000 DPS
   assert.strictEqual(Math.round(A.trialState().best), 200000, 'the first run sets the best');
   const shards1 = A.S.shards;
-  assert.strictEqual(shards1, 3, '3 for the 100k rung - a new best pays no more than any other run');
+  assert.strictEqual(shards1, 100, 'a new best pays the same 100 as any completed run');
   A.S.dmg = 0;
   A.trialEnter('ranked'); A.S.dmg = 27000000; A.TRIAL.left = 0; A.trialFinish();   // 150,000 DPS
   assert.strictEqual(Math.round(A.trialState().best), 200000, 'a worse second run does not lower the best');
-  assert.strictEqual(A.S.shards - shards1, 3, 'and pays the completion bracket only - nothing is summed');
+  assert.strictEqual(A.S.shards - shards1, 100, 'a lower second score also pays 100');
   assert.strictEqual(A.trialState().runs, 2, 'both runs are counted as runs, not as one total');
   assert.ok(!/st\.best\s*\+=/.test(trialBlock), 'the code never adds a run onto the best');
 });
 
-t('the ladder pays 1-50 Shards per completed ranked run, by DPS', () => {
-  const A = arena();
-  A.TRIAL.result = null;
-  assert.strictEqual(A.trialShardsFor(0), 1, 'a completed ranked run always pays at least 1');
-  assert.strictEqual(A.trialShardsFor(99999), 1, 'under 100k keeps the minimum completion payout');
-  assert.strictEqual(A.trialShardsFor(100000), 3, '100k DPS pays 3');
-  assert.strictEqual(A.trialShardsFor(249999), 3, 'gaps hold the lower total bracket');
-  assert.strictEqual(A.trialShardsFor(250000), 5, '250k pays 5');
-  assert.strictEqual(A.trialShardsFor(500000), 8, '500k pays 8');
-  assert.strictEqual(A.trialShardsFor(750000), 12, '750k pays 12');
-  assert.strictEqual(A.trialShardsFor(1000000), 16, '1M pays 16');
-  assert.strictEqual(A.trialShardsFor(1500000), 22, '1.5M - the no-pet decked build - pays 22');
-  assert.strictEqual(A.trialShardsFor(4500000), 50, '4.5M - three pets out - pays 50');
-  assert.strictEqual(A.trialShardsFor(9000000), 50, 'and nothing above the top bracket pays more');
-  assert.strictEqual(Array.from(A.TRIAL_PAY, r => r[1]).join(','), '1,3,5,8,12,16,22,30,40,50',
-    'all payout brackets stay within the requested 1-50 range');
-  assert.strictEqual(Array.from(A.TRIAL_PAY, r => r[0]).join(','), '0,100000,250000,500000,750000,1000000,1500000,2250000,3000000,4500000',
-    'the DPS rungs are preserved');
+t('every completed ranked run pays 100 regardless of DPS, including zero', () => {
+  for(const dps of [0,99999,100000,249999,250000,500000,750000,1000000,1500000,4500000,9000000]){
+    const A=arena({trial:{day:DAY,used:0,best:0,runs:0,chest:7}});
+    assert.strictEqual(A.trialShardsFor(dps),100);
+    A.trialEnter('ranked');A.S.dmg+=dps*180;A.TRIAL.left=0;A.trialFinish();
+    assert.strictEqual(A.S.shards,100,'actual completed run at '+dps+' DPS');
+    A.trialFinish();assert.strictEqual(A.S.shards,100,'a duplicate finish never pays twice');
+    A.trialLobby();assert.ok(A.trialBody.includes('Earn 100 Echo Shards for completing the run, at any DPS.'));
+    assert.ok(!A.trialBody.includes('DPS bracket'));
+  }
 });
 
-t('the revised exchange prices match the new 1-50 Shard payout scale', () => {
+t('exchange prices are preserved with 100 Shards per completion', () => {
   const A = arena();
   const price = id => A.TRIAL_STORE.find(r => r.id === id).c;
-  // Two ranked attempts at the top rung make 100 Echo Shards on a best-possible day.
+  // Two completed ranked attempts earn 200 Echo Shards.
   const top = A.trialShardsFor(4500000), day = top * 2;
-  assert.strictEqual(top, 50, 'a three-pet top-rank run pays 50 Echo Shards');
-  assert.strictEqual(day, 100, 'two top-rank attempts make 100 per day');
-  assert.strictEqual(Math.floor(day / price('ori')) * 5, 10, 'one top-rank day buys ten Oridecon');
-  assert.strictEqual(Math.floor(day / price('elu')) * 5, 10, 'and ten Elunium');
+  assert.strictEqual(top, 100, 'a completed ranked run pays 100 Echo Shards');
+  assert.strictEqual(day, 200, 'two ranked completions make 200 per day');
+  assert.strictEqual(Math.floor(day / price('ori')) * 5, 20, 'two completed runs buy twenty Oridecon');
+  assert.strictEqual(Math.floor(day / price('elu')) * 5, 20, 'and twenty Elunium');
   assert.strictEqual(price('ori'), 45, 'Oridecon x5 is 45');
   assert.strictEqual(price('elu'), 45, 'Elunium x5 is 45');
   assert.strictEqual(price('zeny'), 35, '500,000 Zeny is 35');
@@ -438,7 +429,7 @@ t('the milestone chests are one-off, in order, and paid by DPS', () => {
   assert.strictEqual(A.S.ore.ori, 5 + 10 + 20, 'their Oridecon lands in the bag');
   assert.strictEqual(A.S.ore.elu, 5 + 10 + 20, 'and so does the Elunium');
   assert.strictEqual(A.zenyAdded, 50000 + 100000 + 250000, 'and their Zeny');
-  assert.strictEqual(A.S.shards, 22 + 100 + 150, 'the run pays its 22 bracket and the first-clear caches add 250');
+  assert.strictEqual(A.S.shards, 100 + 100 + 150, 'the run pays 100 and the first-clear caches add 250');
   assert.strictEqual(A.TRIAL.result.chests.length, 4, 'the result screen lists them');
   assert.ok(A.trialBody.includes('First-clear caches opened'), 'and shows them');
   assert.strictEqual(A.trialChestNext()[0], 2250000, 'the next cache is the 2.25M one');
@@ -447,7 +438,7 @@ t('the milestone chests are one-off, in order, and paid by DPS', () => {
 
   const before = A.S.shards, ori = A.S.ore.ori, chest = A.trialState().chest;
   A.trialEnter('ranked'); A.S.dmg = A.S.dmg + 270000000; A.TRIAL.left = 0; A.trialFinish();
-  assert.strictEqual(A.S.shards - before, 22, 'a matching second run pays the repeatable bracket only');
+  assert.strictEqual(A.S.shards - before, 100, 'a matching second run pays the repeatable 100 only');
   assert.strictEqual(A.S.ore.ori, ori, 'and opens no chest again');
   assert.strictEqual(A.trialState().chest, chest, 'the chest counter stays put');
   assert.strictEqual(A.TRIAL.result.chests.length, 0, 'the result screen lists none');

@@ -15,7 +15,9 @@ panels are open. Away rewards have separate timing and save rules.
 The original ten maps have ten normal stages each. Stage 10 has an immediate boss with escorts;
 do not apply the earlier stages' kill threshold to that encounter. Maps have distinct
 visual identities and recommended progression. The Nightmare band extends endgame
-progression; Endless Echo is a separate damage trial with its own rewards and limits.
+progression; Endless Echo is a separate damage trial with its own rewards and limits. Each completed
+ranked run pays 100 Echo Shards at any DPS, up to two runs per day (200 shards).
+Practice and abandoned runs pay no shards; first-clear DPS caches remain one-time rewards.
 
 ## Ascension fields
 
@@ -58,7 +60,9 @@ selective Mythic reforging. Mythic Protection Scrolls can be exchanged for 100
 Valkyrie’s Sigils each in the Black Market (its existing Base 100 gate applies), or
 600 Echo Shards each in the Echo Shard Store. Both add to the saved Mythic scroll
 reserve used by protected +11–15 attempts. The 0.05% online boss scroll drop remains.
-Equipment → Ascension Forge requires a fourth-job class. Choose a set, then an eligible owned N+ piece. Evolution spends Shards/Catalysts, Sigils and Zeny, preserving the same item ID, refinement, cards and existing affixes while filling to four affixes. It never creates an extra item. Mythic equipment can only be worn by fourth jobs. Character contains working Ascension stats and Skill ascension allocation tabs.
+Equipment → Ascension Forge requires a fourth-job class. Its recipe lists owned/required
+materials and Zeny in green when enough and red with missing amounts when short;
+a disabled forge action explains the shortage. Choose a set, then an eligible owned N+ piece. Evolution spends Shards/Catalysts, Sigils and Zeny, preserving the same item ID, refinement, cards and existing affixes while filling to four affixes. It never creates an extra item. Mythic equipment can only be worn by fourth jobs. Character contains working Ascension stats and Skill ascension allocation tabs.
 Existing maps, pet identities and Nightmare reward values retain their meaning.
 
 ## Ascension progression (v167)
@@ -394,3 +398,15 @@ already exceeded the old timing-only DPS targets, so v187 back-loads existing
 power instead of adding another blanket damage buff. See the qualified paired
 measurements in `reports/endgame-progression-v187/summary.md`; those empty-socket,
 petless stationary fixtures are not fully maxed account or live-field forecasts.
+
+## Update notifications (v198)
+
+The game checks the deployed build once a minute. A different build shows an
+Update available popup while play continues. Keep playing dismisses that deployment
+notice; a later deployment can show a new one. Players choose Refresh & log in
+again; this saves locally and awaits a cloud sync attempt before refreshing.
+Weapon refinement uses the owner's v199 tiers: below +7 none, +7–8 mint, +9 violet,
++10–12 crimson, +13 lime, +14 gold, +15 cyan. Unlisted ranks inherit the closest
+lower tier. Glows persist while idle, walking and attacking. Native poses with a
+weapon use its silhouette/glint; idle/walk poses with stowed weapons glow around
+the arms. Source sprite assets are preserved.

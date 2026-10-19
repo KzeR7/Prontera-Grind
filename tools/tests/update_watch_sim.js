@@ -1,16 +1,10 @@
 // The update watcher and its /api/version endpoint (v88).
 //   node tools/tests/update_watch_sim.js
 //
-// The owner asked: when a Cloudflare deploy lands, every player's browser should hard-refresh by
-// itself, on PC and on mobile. The moving parts, pinned here:
-//
-//   * index.html polls /api/version once a minute with cache:'no-store' and compares the answer
-//     with the BUILD it is running; a mismatch reloads the page, anything else (same build, a
-//     missing endpoint, a dead network) leaves the game alone;
-//   * functions/api/version.js answers with the BUILD string read out of the DEPLOYED index.html
-//     through the Pages asset store, and the answer is no-store so it can never go stale;
-//   * the endpoint never writes, never touches the database and never needs a session.
+// A deployment prompts once and leaves the session running. Refresh is player initiated,
+// saves locally, and waits for the cloud flush before reloading.
 import fs from 'node:fs';
+import { JSDOM } from 'jsdom';
 import vm from 'node:vm';
 import assert from 'node:assert';
 import path from 'node:path';
@@ -21,24 +15,28 @@ const src = fs.readFileSync(path.join(__dirname, '..', '..', 'index.html'), 'utf
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 const T = async (n, f) => { try { await f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + (e && e.message)); fail++; } };
-console.log('update watcher: the page reloads itself when a deploy lands\n');
+console.log('update watcher: a player chooses when to refresh after a deploy\n');
 
 const BUILD = src.match(/const BUILD='([^']+)'/)[1];
 
 // ---- the watcher, pulled out of the real page and driven with stubs --------
-const watcherSrc = src.match(/function updateWatch\(\)\{[\s\S]*?\n\}/)[0];
+const watcherSrc = src.slice(src.indexOf('function showUpdatePrompt(build=BUILD){'),src.indexOf('setInterval(updateWatch,60000);'));
 const harness = (opts) => {
-  const calls = { fetch: [], reloads: 0, timers: [] };
+  const calls = { fetch: [], reloads: 0, timers: [], order: [] };
+  const document = new JSDOM('<body></body>').window.document;
   const box = {
     BUILD,
     Date,
+    document,
+    save: () => calls.order.push("save"),
+    cloudFlushNow: async () => { calls.order.push("flush"); if(opts.flush)await opts.flush(); calls.order.push("flushed"); },
     fetch: async (url, init) => {
       calls.fetch.push({ url, init });
       if (opts.networkDown) throw new Error('offline');
       const r = { ok: opts.status ? opts.status < 400 : true, text: async () => opts.answer };
       return opts.answer === undefined ? (opts.status ? r : Promise.reject(new Error('no endpoint'))) : r;
     },
-    location: { reload: () => { calls.reloads++; } },
+    location: { reload: () => { calls.reloads++; calls.order.push("reload"); } },
     setInterval: (fn, ms) => { calls.timers.push(ms); return 0; },
   };
   vm.createContext(box);
@@ -48,11 +46,11 @@ const harness = (opts) => {
 
 t('the watcher polls /api/version with no-store and compares it with the running BUILD', () => {
   assert.ok(/fetch\('api\/version\?_='\+Date\.now\(\),\{cache:'no-store'\}\)/.test(watcherSrc), 'the poll is cache-busted and never served stale');
-  assert.ok(/txt&&txt!==BUILD\)location\.reload\(\)/.test(watcherSrc), 'only a different build reloads');
+  assert.ok(/txt&&txt!==BUILD\)showUpdatePrompt\(txt\)/.test(watcherSrc), 'only a different build prompts');
   assert.ok(src.includes('setInterval(updateWatch,60000)'), 'and it runs once a minute');
 });
 
-t('a matching build changes nothing; a different build reloads the page', async () => {
+await T('a matching build changes nothing; a different build prompts once without reloading', async () => {
   const same = harness({ answer: BUILD });
   await same.box.updateWatch();
   assert.strictEqual(same.calls.reloads, 0, 'the same build never reloads');
@@ -62,10 +60,15 @@ t('a matching build changes nothing; a different build reloads the page', async 
 
   const next = harness({ answer: '2026-10-09 grind-v99 some future deploy' });
   await next.box.updateWatch();
-  assert.strictEqual(next.calls.reloads, 1, 'a deployed build reloads the page (the hard refresh)');
+  assert.strictEqual(next.calls.reloads, 0, 'a deploy never reloads automatically');
+  assert.strictEqual(next.box.document.querySelectorAll('#updatePrompt').length,1);
+  assert.strictEqual(next.box.document.querySelector('#updatePrompt').getAttribute('role'),'dialog');
+  await next.box.updateWatch();
+  assert.strictEqual(next.box.document.querySelectorAll('#updatePrompt').length,1,'polls do not duplicate notices');
+  assert.deepStrictEqual(next.calls.order,[],'no save, sync or session change before the player clicks');
 });
 
-t('a missing endpoint, a dead network or an empty answer never interrupts play', async () => {
+await T('a missing endpoint, a dead network or an empty answer never interrupts play', async () => {
   const noApi = harness({ answer: undefined });
   await noApi.box.updateWatch();
   assert.strictEqual(noApi.calls.reloads, 0, 'a static host (404/empty) never reloads');
@@ -77,6 +80,33 @@ t('a missing endpoint, a dead network or an empty answer never interrupts play',
   const blank = harness({ answer: '   ' });
   await blank.box.updateWatch();
   assert.strictEqual(blank.calls.reloads, 0, 'an empty answer is not a build');
+});
+
+await T('Keep playing dismisses this deployment without re-prompting, and a later deployment prompts again',async()=>{
+  const opts={answer:'new build'},h=harness(opts);await h.box.updateWatch();
+  h.box.document.querySelector('[data-update-later]').click();await h.box.updateWatch();
+  assert.strictEqual(h.box.document.querySelector('#updatePrompt'),null);
+  assert.strictEqual(h.calls.reloads,0);assert.deepStrictEqual(h.calls.order,[]);
+  opts.answer='next build';await h.box.updateWatch();
+  assert.ok(h.box.document.querySelector('#updatePrompt'));
+});
+
+await T('refresh saves locally and waits for cloud sync; double clicks only refresh once',async()=>{
+  let finish;
+  const pending=new Promise(resolve=>{finish=resolve});
+  const h=harness({answer:'new build',flush:()=>pending});await h.box.updateWatch();
+  const button=h.box.document.querySelector('#updatePrompt button');
+  const clicked=button.onclick();await button.onclick();
+  assert.strictEqual(button.disabled,true);assert.strictEqual(h.calls.reloads,0);
+  assert.deepStrictEqual(h.calls.order,['save','flush']);
+  finish();await clicked;
+  assert.deepStrictEqual(h.calls.order,['save','flush','flushed','reload']);
+  assert.strictEqual(h.calls.reloads,1);
+});
+await T('offline cloud sync still permits a chosen refresh after saving locally',async()=>{
+  const h=harness({answer:'new build',flush:async()=> 'offline'});await h.box.updateWatch();
+  await h.box.document.querySelector('button').onclick();
+  assert.deepStrictEqual(h.calls.order,['save','flush','flushed','reload']);
 });
 
 // ---- the endpoint itself ----------------------------------------------------
