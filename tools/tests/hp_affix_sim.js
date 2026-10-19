@@ -19,10 +19,10 @@ try{
  ev("S=fresh();S.cls='Rune Knight';S.lv=150;S.eq.armor={id:301,slot:'armor',sec:3,tier:4,val:0,aff:[{k:'hp',v:100}],cards:[{card:1,stat:'hp',v:30,g:0}]};");
  assert.equal(ev("cardEffects(S.eq.armor.cards[0])[0].v"),30);
  assert.equal(ev("bon('hp')"),230,'double gear affix plus unchanged card HP');
- // Off-hand daggers apply their normal half contribution after HP conversion.
+ // Off-hand daggers apply their 35% contribution after HP conversion.
  ev("S.cls='Guillotine Cross';S.eq={off:{id:302,slot:'weapon',wt:'dagger',sec:6,val:0,aff:[{k:'hp',v:100},{k:'crit',v:40},{k:'luk',v:80}],cards:[]}};");
- assert.equal(ev("bon('hp')"),100);assert.equal(ev("bon('crit')"),20);assert.equal(ev("bon('luk')"),40);
- assert.equal(ev('mythicCrit()'),20,'direct Mythic crit retains its existing half-weighted value');
+ assert.equal(ev("bon('hp')"),70);assert.equal(ev("bon('crit')"),14);assert.equal(ev("bon('luk')"),28);
+ assert.equal(ev('mythicCrit()'),14,'direct Mythic crit uses the same 35% weight');
  // A preexisting raw-value sell filter must keep its semantics after the stat buff.
  ev("S=fresh();S.autoSell=RARALL.map(()=>true);S.autoSellRules={...defaultAutoSellRules(),affixes:[{k:'hp',min:150}],affixAction:'keep'};window.filterItem={id:303,slot:'armor',name:'Filter fixture',tier:0,sec:0,r:0,aff:[{k:'hp',v:100}],cards:[],slots:0};");
  assert.equal(ev('autoSellReason(filterItem)'),'', 'effective +200 does not alter saved raw minimum 150');

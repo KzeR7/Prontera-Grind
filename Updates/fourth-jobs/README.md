@@ -27,7 +27,7 @@ open; the native review pack is a fixed composition and stays out of production.
 ## Advancement trial (16 October 2026; parked)
 
 First advancement at Base 150 and Transcendent Job 50 enters a dark Crucible arena
-from the Class Tree. Defeat the single opponent within **60 real seconds** to advance.
+from the Class Tree. Defeat the single opponent within **30 real seconds** to advance.
 Pausing or hiding the page does not extend the timer. Timeout, defeat, leaving or
 reload does not unlock the job; retry from the Class Tree. Previously played jobs
 still restore directly. The arena grants no loot, EXP, materials or field progress.
@@ -45,8 +45,9 @@ field position, HP and pending drops return when the trial ends.
 | Sniper | Sniper Shecil / 1638 | Ranger |
 | High Wizard | High Wizard Katrinn / 1639 | Warlock |
 
-All six share the first ordinary Astral mob's combat values, obtained from
-`ascensionCombatStats(10,1)` and its template: currently **446,707,925 HP / 71,820 ATK**.
+All six use three times the first ordinary Astral mob's HP and its original ATK,
+obtained from `ascensionCombatStats(10,1)`: currently **45,028,158 HP / 15,235 ATK**,
+with a **30-second** limit (v198).
 The native sprites retain their own pixels and action timing; class-specific boss
 stats are not imported. `tools/tests/job_rite_sim.js` exercises all six fights and
 save/account boundaries. `FOURTH_JOBS_LIVE=false` remains the release gate.

@@ -69,7 +69,13 @@ t('Assassin jobs keep the Katar, or a dagger in each hand, and still stow a shie
   H.S=mk({cls:'Assassin',lv:100,jobs,eq:{weapon:katar,armor:null,head:null,off:dagger,leg:null,acc1:null,acc2:null}});
   H.changeClass('Assassin Cross');
   assert.strictEqual(H.S.eq.weapon.id,katar.id,'the Katar should remain equipped');
-  assert.strictEqual(H.S.eq.off.id,dagger.id,'v80: a dagger in the left hand is legal now and stays on');
+  assert.strictEqual(H.S.eq.off,null,'a Katar occupies both hands on promotion');
+  assert.ok(H.S.inv.some(i=>i.id===dagger.id),'the displaced dagger stays in the bag');
+  const second={...dagger,id:704};
+  H.S=mk({cls:'Assassin',lv:100,jobs,eq:{weapon:dagger,armor:null,head:null,off:second,leg:null,acc1:null,acc2:null}});
+  H.changeClass('Assassin Cross');
+  assert.strictEqual(H.S.eq.weapon.id,dagger.id);
+  assert.strictEqual(H.S.eq.off.id,second.id,'a legal dagger pair survives promotion');
   H.S=mk({cls:'Assassin',lv:100,jobs,eq:{weapon:dagger,armor:null,head:null,off:shield,leg:null,acc1:null,acc2:null}});
   H.changeClass('Assassin Cross');
   assert.strictEqual(H.S.eq.weapon.id,dagger.id,'the main-hand dagger should remain equipped');

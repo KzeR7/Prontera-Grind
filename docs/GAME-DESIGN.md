@@ -27,9 +27,13 @@ Ascension combat scales from the Nightmare Abyss Stage 5 regular mob (internal
 Stage 15). Astral HP multipliers by stage are 2/3/4.5/6.5/9 and ATK multipliers
 are 1.5/1.9/2.4/3/3.8. Thor HP multipliers are 7/9/11/14/18 and ATK multipliers
 are 4/4.8/5.6/6.6/8. The stage-5 boss retains three times its original stage
-regular HP and ATK. In v191, only its five escorts receive half the original
+regular HP. Boss ATK is 3× for Astral and 2.25× for Thor (v198). In v191, only its five escorts receive half the original
 stage regular HP; their ATK is unchanged. Stages 1–4 and boss HP are unchanged.
-The first fourth-job trial uses Astral stage-1 regular HP/ATK and retains its HIT.
+The first fourth-job trial uses 3× Astral stage-1 regular HP, its original ATK, a
+30-second limit and its retained HIT. Thor bosses deal 25% less damage in v198
+(2.25× the original stage regular ATK); Astral bosses retain 3× ATK.
+Nightmare Abyss Dark Lord has 25% more HP; its escorts and the regular-mob
+anchor used for Ascension are unchanged.
 Ordinary Ascension mobs and escorts have 45 HIT; v191 lowers boss HIT from 55 to
 50. At 80 Flee, ordinary/escort hit chance is 65% and boss hit chance is 70%,
 before blind/block. The existing 5% dodge floor still applies.
@@ -227,7 +231,12 @@ apply through their existing rules.
 
 ## Equipment, cards and currency
 
-Gear eligibility depends on class, weapon family and progression tier. Switching
+Gear eligibility depends on class, weapon family and progression tier. Assassin, Assassin Cross and Guillotine Cross use one two-handed katar or two
+daggers. Equipping a katar stows the left-hand item; a dagger cannot be added to
+the left hand while a katar is worn. Two daggers contribute 100% main-hand plus
+35% off-hand refined weapon value to one combined ATK; off-hand affixes/cards
+also contribute at 35%. Dual wield itself does not create a separate second hit.
+Switching
 classes stows incompatible equipment safely and can restore the same item IDs on
 return. Inventory, class snapshots, equipment locks and autosell must agree.
 Selecting bag equipment always inspects it, including on saves with the retired click-sell flag. Manual sales ask for confirmation; bulk sales preview their contents. Drop auto-sell settings do not sell existing inventory.
@@ -235,7 +244,7 @@ Ordinary core crit caps at 60%. Above 45%,
 each additional point contributes half. Hunt Title Index Crit adds up to 40%
 after the core cap, with a 100% normal total ceiling. Mythic direct crit affixes
 and set crit bonuses then add without that cap: 100% + 20% = 120%. Socketed cards
-and LUK keep their ordinary rules. Off-hand dagger bonuses keep their 50% weighting.
+and LUK keep their ordinary rules. Off-hand dagger bonuses use 35% weighting.
 Boss resistance reduces the full result, for both basic attacks and skills. Astral and Thor drop no equipment; Mythic gear comes from the Forge.
 Cards, refining, ores and Nightmare materials interact with gear and the economy.
 Check the corresponding tests before changing eligibility, rolls, prices or rewards.
@@ -275,9 +284,9 @@ Rolling Cutter casts five times in one slot at 0.2-second spacing before advanci
 other attacks retain ordinary combo timing. Support runs outside offensive slots.
 See [research and adaptations](../Updates/fourth-jobs/SKILL-RESEARCH.md).
 
-First fourth-job advancement also requires a 60-second Crucible fight in a dark
-arena, using the matching native Biolabs opponent and first ordinary Astral mob
-combat stats. Animated victory/defeat/timeout wording stays in the dark room for three
+First fourth-job advancement also requires a 30-second Crucible fight in a dark
+arena, using the matching native Biolabs opponent and three times the first ordinary Astral mob
+HP with its original ATK. Animated victory/defeat/timeout wording stays in the dark room for three
 real seconds with combat stopped, followed by automatic return and, on victory,
 automatic job change. Timeout, defeat or leaving allows retry
 without field rewards/progress. Played classes return directly. The local test build uses `FOURTH_JOBS_LIVE=true`; see the [matchups and rules](../Updates/fourth-jobs/README.md#advancement-trial-16-october-2026-parked).
@@ -322,7 +331,7 @@ In v170 the owner approved **HP affix ×2 at every equipment grade**, for both
 existing and future items, including inherited rolls after evolution. Stored roll
 numbers are preserved; `bon('hp')` doubles only equipment affixes when reading
 stats. Cards, VIT, equipment base values and set bonuses retain their own rules.
-The existing off-hand dagger contribution remains 50%. Item details and reforge
+Off-hand dagger contributions use the owner-approved 35% weighting (v200). Item details and reforge
 comparisons show effective HP plus the stored roll; autosell minimums retain
 stored-roll units so saved filters keep their behavior.
 

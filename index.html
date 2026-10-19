@@ -1124,7 +1124,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-19 haven-v197 native atlas UV clamp';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-19 haven-v200 off-hand dagger balance';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3855,11 +3855,11 @@ const skillDetailCard=sel=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&sk
 const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f(lv(s.id)):0)+(s.training&&s.training[k]||0)*lv(s.id):0),0)+(typeof skillBonus==='function'?skillBonus(k):0);
 // v81 dual wield (owner): "let set that assasin & assassin cross can wield daggers. 2 hands."
 // A two-handed katar is TWO_HANDED weapons and a left-hand dagger is DUAL of one, so a pair of
-// equal daggers is 1.5 weapons of base value - exactly what a katar is. Both rules live here,
+// equal daggers is 1.35 weapons of base value versus a katar's 1.5. Both rules live here,
 // in the one reader every stat formula already calls, so nothing new has to be wired into
 // atk(): it reads the left hand as eqv('off'), which is only non-zero for a dagger. A shield
 // still reads as its own DEF, which is why def() keeps its slot==='off' guard.
-const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,DUAL=.5,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
+const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,DUAL=.35,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
 const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f*(k==='hp'?2:1);for(const c of it.cards||[])for(const e of cardEffects(c))if(e.k===k)v+=e.v*f}
   // haven-v158: Ascension set bonuses add percentage stats on top of gear and cards.
   if(typeof ascensionSetBonuses==='function')for(const a of Object.values(ascensionSetBonuses()))if(a.tier.stats[k])v+=a.tier.stats[k];
@@ -4090,7 +4090,8 @@ function ascensionCombatStats(m,stage,boss=false){
   const atkRamp=(m===10?[1.5,1.9,2.4,3,3.8]:[4,4.8,5.6,6.6,8])[stage-1];
   // v191: only stage-5 escorts lose half HP; the boss keeps its original HP/ATK.
   const hp=Math.floor(anchorHp*hpRamp*(boss?3:stage===5?.5:1));
-  return {hp,max:hp,atk:Math.floor(anchorAtk*atkRamp*(boss?3:1))};
+  // v198: Thor boss damage is 25% lower; ordinary mobs and escorts keep their ATK.
+  return {hp,max:hp,atk:Math.floor(anchorAtk*atkRamp*(boss?(m===11?2.25:3):1))};
 }
 // One field monster, before it is placed. Shared by the wave builder and by every camp refill, so a
 // monster that walks back in is exactly the monster the field started with.
@@ -4132,7 +4133,9 @@ function spawn(){
   mobs=[];activePack=0;camps=[];engageTgt=null;
   const bossWave=!!F.boss;
   if(bossWave){
-    const hp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(S.lvl):1));
+    const baseHp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(S.lvl):1));
+    // v198: only Nightmare Abyss Dark Lord gains HP; the regular-mob Ascension anchor is unchanged.
+    const hp=S.mp===9&&S.lvl===15?Math.floor(baseHp*1.25):baseHp;
     mobs.push({...F.boss,mapIndex:S.mp,hitBonus:S.mp===10||S.mp===11?10:0,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),
       ...ascensionCombatStats(S.mp,S.lvl,true),exp:fieldExpReward(S.mp,S.lvl,true),zeny:fieldZenyReward(S.mp,S.lvl,true),
       size:1.3,mag:true,lvl:l,sec:F.sec});
@@ -4192,7 +4195,7 @@ function offlineMobForCurrentField(m=S.mp,stage=S.lvl){
 }
 // v88 (owner: "my assassin's off-hand dagger keeps coming off by itself"): auto-equip now knows
 // dual wield. A dropped dagger on one of the two Assassin jobs is offered to BOTH hands and takes
-// whichever slot raises the pair's total (the off-hand counts at DUAL x.5, the same rate atk() uses),
+// whichever slot raises the pair's total (the off-hand counts at DUAL x.35, the same rate atk() uses),
 // and a katar that beats the whole pair takes the main hand and stows the off-hand blade, because the
 // katar occupies both hands. Every other drop behaves exactly as before: one slot, better value wins.
 function autoEquip(it){
@@ -5069,7 +5072,9 @@ function collect(it){
   if(S.auto!==false&&canUse(it))autoEquip(it);ui();
 }
 function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.name}.`);return}
-  S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];transferEquipmentCards(old,it,k);if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it),'','gear');selB=null;ui();save()}
+  const k=ekey(it),old=S.eq[k];
+  if(k==='weapon'&&it.wt==='katar'&&old&&S.eq.off&&S.inv.length>=BAGMAX){log('Make bag space for the off-hand item first.');return}
+  S.inv.splice(i,1);transferEquipmentCards(old,it,k);if(old)S.inv.push(old);S.eq[k]=it;stowKatarOffHand();S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it),'','gear');selB=null;ui();save()}
 // Selling is pocket money, deliberately: it scales with numeric field quality, the gear section
 // and level, but stays far below the Zeny a field actually pays - a Common starter piece sells
 // for ~50z and the best normal Abyss gear for under 2,000z, so dumping a full bag never funds an
@@ -5257,7 +5262,7 @@ function levelingGuide(){return `<header class="handbook-intro"><small>02 / YOUR
  ['80–99','Prepare your transcendent job',[8,9],'Niflheim offers second-job then high-tier gear; Abyss offers third-job gear and ascended gear from Stage 6. Parent Job 50 unlocks a transcendent promotion. Check equipment eligibility before farming a replacement.'],
  ['100–119','Strengthen the whole build',[8,9],'Stat allocation cap rises from 99 to 120 at Base 100. Stay on the strongest normal field you can clear repeatedly. Fill useful card sockets, deploy pets and refine good equipment. A slow MVP can earn less EXP than ordinary mobs.'],
  [`${NMLV[0]}–139`,'Enter Nightmare',[0,1,2,3,4],'Nightmare Prontera through Payon unlocks at Base 120 and offers N equipment. Start at NM 1; target NM 4–5 for equipment once stable. NM 5 is the MVP stage. Compare income with Normal Stage 10 before committing.'],
- [`${NMLV[1]}–150`,'Prepare for the Crucible',[5,6,7,8,9],'Nightmare Comodo through Abyss unlocks at Base 140 and offers N+ equipment. Farm compatible N+ pieces and useful cards. At Base 150 and parent Job 50, open Jobs and challenge the 60-second fourth-job trial. Failure or timeout allows a retry.'],
+ [`${NMLV[1]}–150`,'Prepare for the Crucible',[5,6,7,8,9],'Nightmare Comodo through Abyss unlocks at Base 140 and offers N+ equipment. Farm compatible N+ pieces and useful cards. At Base 150 and parent Job 50, open Jobs and challenge the 30-second fourth-job trial. Failure or timeout allows a retry.'],
  ['150 / fourth job','Begin Ascension',[10,11],'After successful promotion, both maps unlock without prerequisite boss clears. Start at Stage 1. Stages 1–2 are arrival, 3 crossing, 4 approach and 5 an MVP with five escorts. Farm materials here; keep using Nightmare for equipment.']
  ].map(([level,title,maps,body])=>`<article><span class="route-level">${level}</span><div><h3>${title}</h3><p>${body}</p><div class="guide-actions">${maps.map(m=>`<button data-a="guidemap" data-v="${m}:${level.includes('139')||level.includes('140')?11:1}">${MAPS[m].n}</button>`).join('')}</div></div></article>`).join('')}</div><section class="guide-note"><h3>When should I move?</h3><p>Watch a full minute of EXP/min and Zeny/min after each change. If deaths, travel or slow kills lower your income, return to your previous field. Turn Auto-advance off to camp a card or material. Drops are random; a listed chance is per monster kill, not a promise.</p><p>Nightmare MVPs across all regions supply Void Core. Craft a Refine Protection Scroll with ${DPS_MATS} Void Cores. Selected-affix N/N+ reforges also use Void Core.</p></section>`;}
 const GUIDE_LESSONS={
@@ -5329,7 +5334,7 @@ function beginnerGuide(){const chapters=[
  ['Wardrobe, Settings & the log','Wardrobe changes appearance without changing combat stats. All classes support native hairstyles, colors and accessories, including the six fourth jobs. Settings adjusts combat display and preferences. Display controls the screen layout; Log helps you inspect drops, levels and events.'],
  ['Saving & time away','Watch the cloud badge when using an online account. Browser-only previews save on this browser. Hidden tabs continue fighting; they are not away time. Away rewards use a measured farming sample at 50% efficiency, capped at four hours per claim, after at least three minutes without a save. Let a stable field run for a full minute to refresh its sample.']
  ];return `<header class="handbook-intro"><small>01 / START HERE</small><h2>Your adventure, one step at a time</h2><p>Fight → spend points → equip upgrades → choose a better field. You do not need to master every system on your first day.</p><button data-a="guidereplay" data-v="beginner">Replay first-login tour</button></header><div class="guide-chapters">${chapters.map(([title,body],i)=>`<details data-ui-disclosure="handbook-beginner-${i}" ${i===0?'open':''}><summary>${String(i+1).padStart(2,'0')} · ${title}</summary><p>${body}</p></details>`).join('')}</div>`;}
-function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 60-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(([title,body])=>`<article class="guide-note"><h3>${title}</h3><p>${body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>${['Might','Precision','Ferocity','Slayer'].includes(x.n)?'Late-rank offensive growth; rank 5 grants 25% of the maximum':'+'+x.step+x.unit+' per rank'} · ${x.text}. Rank 10: +${10*x.step}${x.unit}.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts each have a 0.2% chance per kill on their own map. Valkyrie’s Sigils roll at 0.05% on ordinary enemies and 1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses, or cost 100 Valkyrie’s Sigils in the Black Market or 600 Echo Shards in Echo. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Unprotected failures at +5–9 lose one rank. Mythic +10 is a checkpoint; higher failures lose one rank unless protected. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
+function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 30-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(([title,body])=>`<article class="guide-note"><h3>${title}</h3><p>${body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>${['Might','Precision','Ferocity','Slayer'].includes(x.n)?'Late-rank offensive growth; rank 5 grants 25% of the maximum':'+'+x.step+x.unit+' per rank'} · ${x.text}. Rank 10: +${10*x.step}${x.unit}.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts each have a 0.2% chance per kill on their own map. Valkyrie’s Sigils roll at 0.05% on ordinary enemies and 1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses, or cost 100 Valkyrie’s Sigils in the Black Market or 600 Echo Shards in Echo. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Unprotected failures at +5–9 lose one rank. Mythic +10 is a checkpoint; higher failures lose one rank unless protected. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
 function handbook(){return `<section class="handbook"><nav class="guide-nav" aria-label="Guide chapters">${[['beginner','Beginner'],['leveling','Leveling route'],['build','Your build'],['cards','Card targets'],['ascension','Ascension Forge']].map(([id,label])=>`<button data-a="guidepage" data-v="${id}" aria-pressed="${guidePage===id}">${label}</button>`).join('')}</nav>${guideTourPanel()}${guidePage==='beginner'?beginnerGuide():guidePage==='leveling'?levelingGuide():guidePage==='ascension'?ascensionGuide():buildGuide(true)}</section>`;}
 function guideBuildPlan(){
  const main=INT_CLASSES.includes(S.cls)?'INT':C().main.toUpperCase(),power=INT_CLASSES.includes(S.cls)?'MATK':'ATK';
@@ -5390,11 +5395,18 @@ function snapClass(){
   if(!S.cls)return;S.base=S.base||{};
   const eq={};for(const k in S.eq)eq[k]=S.eq[k]?S.eq[k].id:null;
   S.base[S.cls]={lv:S.lv,exp:S.exp,pts:S.pts,hp:S.hp,st:Object.assign({},S.st),eq}}
+// A katar occupies both hands. Keep the displaced item and its cards in the bag.
+function stowKatarOffHand(){
+  if(S.eq.weapon?.wt!=='katar'||!S.eq.off)return;
+  const off=S.eq.off;if(!S.inv.some(it=>it&&String(it.id)===String(off.id)))S.inv.push(off);
+  S.eq.off=null;
+}
 function equipRec(ids){                       // put the stored loadout back on, by id: never creates items
   const off=[];for(const k in S.eq){const it=S.eq[k];S.eq[k]=null;if(it)off.push(it)}
   if(off.length)S.inv.push(...off);
   for(const k in ids){const id=ids[k];if(id==null||!(k in S.eq))continue;
-    const i=S.inv.findIndex(x=>x&&String(x.id)===String(id));if(i>=0)S.eq[k]=S.inv.splice(i,1)[0]}}
+    const i=S.inv.findIndex(x=>x&&String(x.id)===String(id));if(i>=0)S.eq[k]=S.inv.splice(i,1)[0]}
+  stowKatarOffHand()}
 function freshBuild(){for(const k in S.st)S.st[k]=1;S.pts=totalPts()}
 function clearClassSkills(n){for(const id in S.sk){const s=SKILLS.find(x=>x.id===id);if(id!=='aid'&&s&&s.cls.includes(n))delete S.sk[id]}}
 function noviceRun(){                         // a real restart: 25 Base Lv, Job Lv 0, stats refunded
@@ -5438,6 +5450,7 @@ function classStatus(n){return n===S.cls?'cur':n!=='Novice'&&playedClass(n)?'pla
 // switches back. `from` decides whether the wearer label is honest: a piece the departing class
 // could not legally wear (a legacy save) gets no name and just states its requirement.
 function stowUnfit(from){
+  stowKatarOffHand();
   let n=0;const names=[];
   for(const k in S.eq){const it=S.eq[k];if(!it||canUse(it))continue;
     if(!S.inv.some(x=>x&&String(x.id)===String(it.id)))S.inv.push(it);
@@ -5471,9 +5484,10 @@ const JOB_RITE_OPPONENTS={
   Sniper:{n:'Sniper Shecil',spriteId:1638},
   'High Wizard':{n:'High Wizard Katrinn',spriteId:1639}
 };
+const JOB_RITE_SECS=30,JOB_RITE_HP_MULT=3;
 const JOB_RITE_RESULT_MS=3000;
 const JOB_RITE={on:false,passed:null,result:null};
-function jobRiteLeft(){return JOB_RITE.on?Math.max(0,Math.min(60-(t-JOB_RITE.started),(JOB_RITE.deadline-Date.now())/1000)):0}
+function jobRiteLeft(){return JOB_RITE.on?Math.max(0,Math.min(JOB_RITE_SECS-(t-JOB_RITE.started),(JOB_RITE.deadline-Date.now())/1000)):0}
 function jobRiteHud(){
   const host=document.getElementById('jobRiteHud');if(!host)return;
   const showing=JOB_RITE.on&&!!JOB_RITE.outcome,result=document.getElementById('jobRiteResult');
@@ -5496,7 +5510,8 @@ function startJobRite(target){
   if(!FOURTH_JOBS_LIVE||JOB_RITE.on||TRIAL.on||!CLASSES[target]||CLASSES[target].tier!==4||playedClass(target)||classBlock(target)||S.cls!==CLASSES[target].par)return false;
   const opponent=JOB_RITE_OPPONENTS[S.cls];if(!opponent)return false;
   const template=fieldOf(10,1).mobs[0],stats=ascensionCombatStats(10,1);
-  Object.assign(JOB_RITE,{on:true,owner:S,user:currentUser,parent:S.cls,target,started:t,deadline:Date.now()+60000,outcome:null,exitAt:0,result:null,
+  stats.hp=stats.max=Math.floor(stats.hp*JOB_RITE_HP_MULT);
+  Object.assign(JOB_RITE,{on:true,owner:S,user:currentUser,parent:S.cls,target,started:t,deadline:Date.now()+JOB_RITE_SECS*1000,outcome:null,exitAt:0,result:null,
     home:{mobs,mob,camps,activePack,respawn,engageTgt,drops,position:{...pl},hp:S.hp,tb,petBuff:{...petBuff},petBuffSrc:{...petBuffSrc}},
     enemy:{...template,...opponent,...stats,x:0,z:-4,hx:0,hz:-4,a:0,size:.6,pack:0,boss:false,spawn:1,mapIndex:10,sec:fieldOf(10,1).sec,
       spriteSize:'Medium',spriteScale:.92,lvl:fieldPower(10,1),at:1.5,stun:0,mag:['demon','tree','blob'].includes(template.shape),drops:[],cardCh:0,exp:0,zeny:0}});
@@ -5504,7 +5519,7 @@ function startJobRite(target){
   swing=null;resetSkillRuntime();for(const id in skCd)delete skCd[id];tb={};farmSession=null;
   S.hp=maxHp();pl.x=0;pl.z=-1;pl.wx=null;pl.wz=-1;pl.wt=0;pAtkT=.2;
   tabs.length=0;lastKey='';jobRiteHud();
-  log(`Crucible: defeat ${opponent.n} within 60 seconds to become ${target}.`,'r4');ui();return true;
+  log(`Crucible: defeat ${opponent.n} within ${JOB_RITE_SECS} seconds to become ${target}.`,'r4');ui();return true;
 }
 function showJobRiteResult(passed,reason){
   if(!JOB_RITE.on||JOB_RITE.outcome)return;
@@ -5777,7 +5792,7 @@ const V={
     return`<div class="atabs" aria-label="Jobs views"><button data-a="jobview" data-v="lineage" class="${!eclipseJobsBrowse?'on':''}">Current lineage</button><button data-a="jobview" data-v="browse" class="${eclipseJobsBrowse?'on':''}">Class tree</button></div>${eclipseJobsBrowse?overview:design}
     <div class="class-path-focus"><div class="ui-inspector">
     <div class="mob-card"><small>${future?'4TH JOB · COMING SOON':{cur:'CURRENT CLASS',played:'PLAYED CLASS',ok:'AVAILABLE CLASS',lock:'LOCKED CLASS'}[classStatus(k)]}</small><h3>${k}</h3>
-    ${future?`<p>Advance from <b>${planned[1]}</b> at Base Lv 150 and Job Lv 50.</p><p>Defeat ${JOB_RITE_OPPONENTS[planned[1]].n} in a 60-second Crucible trial. Victory completes the job change automatically.</p><button disabled>Coming soon</button>`:
+    ${future?`<p>Advance from <b>${planned[1]}</b> at Base Lv 150 and Job Lv 50.</p><p>Defeat ${JOB_RITE_OPPONENTS[planned[1]].n} in a 30-second Crucible trial. Victory completes the job change automatically.</p><button disabled>Coming soon</button>`:
     `<small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' · Next: <b>'+c.kids.join(', ')+'</b>':''}</small><p>${pj?`Saved ${rec?`Base Lv ${rec.lv} · `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${playedClass(k)&&k!==S.cls?' · Your saved build is ready to return.':''}</p><small>Weapons: ${c.wt.join(', ')} · Main stat ${SU(c.main)}<br>ATK ×${c.atk} · ASPD ×${c.aspd} · HP ×${c.hp}</small>
     <div class="row"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':c.tier===4&&!playedClass(k)?'Enter advancement trial':'Change to '+k}</button>${blk&&k!==S.cls?`<small>${blk}</small>`:''}</div>`}</div>
     </div>${future?'':`<div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="classPreview" width="126" height="134" role="img" aria-label="${S.sex==='f'?'female':'male'} ${k} class skin preview"></canvas><span class="hair-preview-loading" id="classPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">CLASS PREVIEW</span><b>${k}</b><span>${S.sex==='f'?'Female':'Male'}</span></div></div>`}</div>
@@ -5916,7 +5931,7 @@ function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return f
   if(k==='acc1'||k==='acc2')return it.slot==='acc';
   // v81 dual wield: the left hand takes a shield for the classes that may hold one, and a
   // dagger - and only a dagger - for the two Assassin jobs.
-  if(k==='off')return it.slot==='off'?canShield():(it.wt==='dagger'&&dualWield());
+  if(k==='off')return it.slot==='off'?canShield():(it.wt==='dagger'&&dualWield()&&S.eq.weapon?.wt!=='katar');
   return it.slot===k}
 // Choosing a slot keeps the Loadout open and moves compatible equipment to the top.
 // V.bag0 rings those items green and wires their click to equip.
@@ -5928,7 +5943,9 @@ function equipChooser(k){
 
 function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
-  const old=S.eq[k];transferEquipmentCards(old,it,k);S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
+  const old=S.eq[k];
+  if(k==='weapon'&&it.wt==='katar'&&old&&S.eq.off&&S.inv.length>=BAGMAX){log('Make bag space for the off-hand item first.');return}
+  transferEquipmentCards(old,it,k);S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);stowKatarOffHand();
   S.hp=Math.min(S.hp,maxHp());log('Equipped '+iname(it)+' ('+EQK.find(x=>x[0]===k)[1].toLowerCase()+').','','gear');ui();save()}
 const SUBS={equip:[['equip0','Loadout'],['refine','Refine (R)'],['reforge','Reforge'],['ascension','Ascension Forge']],status:[['stats','Stats'],['ascstats','Ascension stats']],bag:[['bag','Items'],['cards','Cards']],skills:[['skilllist','Skills'],['skillasc','Ascension Skills']]};
 const subBar=t=>`<div class="atabs">${SUBS[t].map(([k,n])=>`<button data-a="sub" data-v="${t}:${k}" class="${sub[t]===k?'on':''}">${n}</button>`).join('')}</div>`;
@@ -6578,7 +6595,7 @@ const ACT={
     log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{if(!Number.isInteger(+v)||+v<1||+v>(mapM>=10?5:15))return;mapL=+v;renderWin('[data-win="map"] .map-node.picked')},go:()=>{if(canTravel(mapM,mapL)){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
-  jobview:v=>{eclipseJobsBrowse=v==='browse';renderWin()},jobbranch:v=>{if(!CLASSES.Novice.kids.includes(v))return;jobBranch=jobBranch===v?null:v;selK=v;renderWin()},selk:v=>{if(!CLASSES[v]&&!CD4.some(row=>row[0]===v))return;selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else if(CLASSES[n]?.tier===4&&!playedClass(n))ask(`Enter the Crucible? Defeat ${JOB_RITE_OPPONENTS[CLASSES[n].par]?.n} within 60 seconds to become ${n}.`,()=>changeClass(n),{yes:'Enter trial',no:'Stay'});else changeClass(n)},
+  jobview:v=>{eclipseJobsBrowse=v==='browse';renderWin()},jobbranch:v=>{if(!CLASSES.Novice.kids.includes(v))return;jobBranch=jobBranch===v?null:v;selK=v;renderWin()},selk:v=>{if(!CLASSES[v]&&!CD4.some(row=>row[0]===v))return;selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else if(CLASSES[n]?.tier===4&&!playedClass(n))ask(`Enter the Crucible? Defeat ${JOB_RITE_OPPONENTS[CLASSES[n].par]?.n} within ${JOB_RITE_SECS} seconds to become ${n}.`,()=>changeClass(n),{yes:'Enter trial',no:'Stay'});else changeClass(n)},
   rstat:()=>{const c=statResetCost();if(S.zeny<c)return denied(c,'stats');S.zeny-=c;if(S.skillRespec)delete S.skillRespec[S.cls];for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.'+(c?' -'+c.toLocaleString()+'z':''));ui();save()},
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(!s||s.ascensionOnly||!s.cls.includes(S.cls))return;const nx=lv(id)+1,c=skCost(nx);
     if(nx>s.max||!lineOf(S.cls).includes(s.from))return;

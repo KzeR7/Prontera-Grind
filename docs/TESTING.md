@@ -491,3 +491,11 @@ field asset requests, then previews new terrain and returns to the plain URL to
 verify the override was not persisted. Native simulation also executes the real
 activation gate with absent, enabled, disabled and invalid query values. See
 [the handoff](NATIVE-FIELDS-HANDOFF.md) for startup, activation and rollback.
+
+## v198 trial and boss tuning
+
+Run `node tools/tests/job_rite_sim.js`, `node tools/tests/encounter_retune_sim.js`
+and `node tools/tests/ascension_progression_sim.js` for triple trial HP, the
+30-second simulation/wall-clock deadline, all six promotion routes, scoped
+Nightmare Abyss boss HP and real Thor incoming damage. Include reward/offline,
+class/save/account, guide and build-mirror checks for these boundaries.

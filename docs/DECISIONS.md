@@ -14,7 +14,7 @@ the implementation/tests together. Read the linked sources for exact details.
 | Daggers count as katars for katar skills | Owner decision (Milestone 4), to avoid problems with the Assassin Cross dagger. Skill execution does not check weapon type, so a dagger already triggers katar skills; any future weapon gate must accept a dagger wherever it accepts a katar. Guillotine Cross wears a katar, or a dagger in each hand, through `katarOnly()` and `dualWield()`. See `tools/tests/dual_wield_sim.js` and `tools/tests/fourth_job_skills_sim.js`. |
 | Lv 150+ is an Ascension level, not Base Level | Owner clarification (Milestone 4/5). Base Level 150 and above is a separate Ascension level with its own stats; Job Level continues as normal and a later Ascension skill tab raises skill boost. The fourth-job unlock gate uses Base Lv 150; v163 adds separate Ascension tracks without extending Base Level. See `Updates/fourth-jobs/README.md`. |
 | Fourth-job visuals use the latest skills and original native art | Owner approval (15 October 2026) uses five core RO skills per class (superseding the provisional three-skill package), authorizes recovery of all six native progression bodies and keeps classes locked during preparation. The fixed-look review pack does not authorize wardrobe costumes or a release. See `Updates/fourth-jobs/VISUALS.md`. |
-| First fourth-job unlock requires a timed class trial | Owner decision (16 October 2026): dark arena, one matching native Biolabs opponent, 60 seconds, first Astral ordinary mob combat stats. Victory, defeat and timeout show animated result wording for three real seconds in the dark room, then return automatically; victory promotes automatically on return. Leaving returns immediately. No trial rewards. Previously played classes return directly. See `tools/tests/job_rite_sim.js` and the fourth-job README. |
+| First fourth-job unlock requires a timed class trial | Owner decision (16 October 2026): dark arena, one matching native Biolabs opponent, 30 seconds, 3× first Astral ordinary mob HP with its original ATK (owner update, 19 October 2026). Victory, defeat and timeout show animated result wording for three real seconds in the dark room, then return automatically; victory promotes automatically on return. Leaving returns immediately. No trial rewards. Previously played classes return directly. See `tools/tests/job_rite_sim.js` and the fourth-job README. |
 | Current combat limits and Ascension difficulty (v168) | Owner requests a hard 192 ASPD cap, applied after Haste and all speed sources. Ordinary/Mythic flee remains 60%/80%. Owner clarified HP reductions only: original Ascension ATK restored, bosses use 3× regular HP / 4× ATK. Owner selected +15 HIT for Astral/Thor field enemies; original maps and trial HIT retain their rules. See Game design for stage values. The v179 material wallet consolidates Nightmare materials into Void Core. |
 | Discuss balance changes before implementation | Owner requests suggestions and a choice before further retuning. v170 adopts all-grade HP ×2 only; Crit and LUK remain ×1, and saved raw affixes retain their values. Consider existing Mythic gear and indirect farming/economy effects in any proposed conversion. |
 | Physical headgear options at every grade (v169) | Owner extends the Mythic STR/DEX/INT/VIT/HP/ATK/MATK affix pool to all headgear grades. New rolls and paid reforges use it; saved rolls, counts and numeric ranges retain their rules. Owner subsequently approved all-grade HP ×2 with Crit/LUK ×1 after reviewing the comparisons. |
@@ -118,3 +118,16 @@ cost 100 Sigils each in the Black Market and 600 Echo Shards each in Echo.
 The existing market gate applies; Echo retains its existing access rules. Purchases
 use the existing saved Mythic scroll reserve, retaining refinement behavior and the
 0.05% online boss scroll drop. Echo Shards are separate from Astral Shards.
+
+### 2026-10-19 — Crucible and boss tuning (v198)
+
+The owner selects 3× trial HP and a 30-second limit, +25% HP for Nightmare
+Abyss Dark Lord only, and 25% less Thor boss damage. Trial ATK, other field
+HP/ATK, rewards and the three-second trial result pause retain their rules.
+
+## Off-hand dagger balance (v200)
+
+The owner chose 35% for off-hand dagger refined weapon ATK, affixes and cards,
+including Mythic direct crit. Main-hand daggers stay at 100%; katars stay at 150%
+with four sockets. Equal daggers contribute 135% weapon value and at most 4.05
+full-card equivalents from six sockets. Stored rolls, sockets and IDs are preserved.
