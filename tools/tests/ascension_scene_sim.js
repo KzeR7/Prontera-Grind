@@ -5,10 +5,12 @@ const source=fs.readFileSync(require('path').join(__dirname,'../../index.html'),
 const start=source.indexOf('let ascensionWorld=null,'),end=source.indexOf('function buildDeco(m)',start);
 const pending=[],scene=new THREE.Scene(),ground={visible:true},hemi={intensity:.8},sun={intensity:.9};
 const context={ASTRAL_FOCUS:[-8,-40,-74,-140,-208],astralOriginStage:0,astralJourney:null,THREE,scene,ground,hemi,sun,KIT:{ground:{visible:true}},townObjs:[{visible:true}],road:{visible:true},Z0:-28,Z1:12,S:{mp:10,lvl:4},TRIAL:{on:false},JOB_RITE:{on:false},log(){},PGAscension:{build:()=>new Promise(resolve=>pending.push(resolve))}};context.window=context;vm.createContext(context);
-vm.runInContext(source.slice(start,end)+'\nglobalThis.api={clearAscension,buildAscension,get world(){return ascensionWorld}};',context);
+const cleanupStart=source.indexOf('function clearNativeField(){'),cleanupEnd=source.indexOf('const KIT_S=',cleanupStart);
+vm.runInContext(source.slice(cleanupStart,cleanupEnd)+source.slice(start,end)+'\nglobalThis.api={clearAscension,buildAscension,get world(){return ascensionWorld}};',context);
 function world(focus=-140){let disposed=0;const w={scene:new THREE.Scene(),view:{focus},dispose(){disposed++;this.scene.clear()},get disposed(){return disposed}};w.scene.add(new THREE.Group());return w;}
 (async()=>{
- const stale=world(),live=world();context.api.buildAscension(10,4);context.api.clearAscension();context.api.buildAscension(10,4);
+ let nativeDisposed=0;context.KIT.nativeWorld={dispose(){nativeDisposed++}};
+ const stale=world(),live=world();context.api.buildAscension(10,4);context.api.clearAscension();assert.equal(nativeDisposed,1);assert.equal(context.KIT.nativeWorld,null);context.api.buildAscension(10,4);
  pending.shift()(stale);await Promise.resolve();assert.equal(stale.disposed,1);assert.equal(scene.children.length,0);
  pending.shift()(live);await Promise.resolve();assert.equal(context.api.world,live);assert.equal(ground.visible,false);assert.equal(scene.children[0].position.z,132);assert.equal(hemi.intensity,0);
  context.api.clearAscension();assert.equal(live.disposed,1);assert.equal(scene.children.length,0);assert.equal(ground.visible,true);assert.equal(hemi.intensity,.8);
@@ -31,7 +33,8 @@ function world(focus=-140){let disposed=0;const w={scene:new THREE.Scene(),view:
  const start=source.indexOf('function eclipseDrawMinimap(){'),end=source.indexOf('// Atlas thumbnails',start),operations=[];
  const g={fillRect(){},beginPath(){},moveTo(x,y){operations.push([x,y])},lineTo(x,y){operations.push([x,y])},closePath(){},arc(){},fill(){},stroke(){},drawImage(){throw Error('Original map texture leaked into Ascension minimap')}};
  const world=require('../../assets/astral-scenery.js')(THREE).build(3);
- const ctx={S:{mp:10},Z0:-28,Z1:12,ascensionWorld:world,mobs:[],pl:{x:0,z:-8},document:{body:{classList:{contains:()=>false}}},$:()=>({width:448,height:192,getContext:()=>g})};vm.createContext(ctx);vm.runInContext(source.slice(start,end)+'\neclipseDrawMinimap();',ctx);
+ const ctx={S:{mp:10},Z0:-28,Z1:12,ascensionWorld:world,mobs:[],pl:{x:0,z:-8},document:{body:{classList:{contains:()=>false}}},$:()=>({width:448,height:192,getContext:()=>g})};vm.createContext(ctx);const cleanupStart=source.indexOf('function clearNativeField(){'),cleanupEnd=source.indexOf('const KIT_S=',cleanupStart);
+vm.runInContext(source.slice(cleanupStart,cleanupEnd)+source.slice(start,end)+'\neclipseDrawMinimap();',ctx);
  assert.equal(operations.length,world.route.outline.length);const expected=(world.route.outline[0][1]-world.view.focus)*7+96;
  assert.equal(operations[0][1],expected);world.dispose();
  ctx.S.mp=11;ctx.ascensionWorld=require('../maps/endgame-scenes.js')(THREE).build('thor',4);operations.length=0;vm.runInContext('eclipseDrawMinimap()',ctx);assert.ok(operations.length>20);ctx.ascensionWorld.dispose();

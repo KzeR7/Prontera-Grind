@@ -1,0 +1,21 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),THREE=require('three');
+const M=require('../../assets/reference-mobs.js'),catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../../assets/native-fields/v1/mobs.json'))),poring=catalog.monsters['1002'];
+assert.equal(M.frameAt(poring,'idle',0,0),0);assert.equal(M.frameAt(poring,'idle',0,99),0);assert.equal(M.frameAt(poring,'idle',0,100),1);assert.equal(M.frameAt(poring,'idle',0,400),0);
+assert.equal(M.frameAt(poring,'idle',2,0),4,'authored direction frame');assert.equal(M.frameAt(poring,'walk',0,25),17,'native 25ms walking delay');
+assert.notEqual(M.frameAt(catalog.monsters['1268'],'attack',7,100,.5),null,'idle-only source retains its authored pose for unavailable actions');
+const attack=poring.actions[16].frames;assert.equal(M.frameAt(poring,'attack',0,0,0),attack[0]);assert.equal(M.frameAt(poring,'attack',0,0,1),attack.at(-1));assert.equal(M.frameAt(poring,'idle',0,-2),0);
+(async()=>{
+ let requested=[],fail=false;const store=M.createStore({fetcher:async url=>({ok:true,json:async()=>catalog}),loadImage:async url=>{requested.push(url);if(fail)throw Error('offline');return{src:url}}});await store.init();assert.equal(requested.length,0,'catalog does not preload PNGs');
+ assert.equal(store.height(1002),poring.idleHeight/(91/2.16),'native Novice ratio');assert.equal(store.height(1112),0,'missing source keeps existing scale');
+ assert(store.height(1063)<store.height(1039),'Lunatic and Baphomet keep individual proportions');
+ await Promise.all([store.request(1002),store.request(1002)]);assert.equal(requested.length,1,'one decode shared by creatures');
+ const calls=[],cv={width:0,height:0,getContext:()=>({clearRect(){},drawImage(...a){calls.push(a)}})};global.document={createElement:()=>cv};
+ const spr=new THREE.Sprite(new THREE.SpriteMaterial()),view={spr,official:false,image:{style:{}}};
+ assert(store.draw(THREE,view,{spriteId:1002,run:false,atkAnim:0},0,0));assert.equal(calls.length,1);store.draw(THREE,view,{spriteId:1002},0,1);assert.equal(calls.length,1,'unchanged frames do not repaint');store.draw(THREE,view,{spriteId:1002},0,100);assert.equal(calls.length,2);
+ const f=poring.frames[1],call=calls.at(-1);assert.deepEqual(call.slice(1,5),[f.x,f.y,f.width,f.height]);assert.deepEqual(call.slice(5),[f.left-poring.bounds[0]+2,f.top-poring.bounds[1]+2,f.width,f.height],'source offsets and original pixel dimensions retained');
+ assert.equal(spr.center.x,(2-poring.bounds[0])/cv.width);assert.equal(spr.center.y,1-(2-poring.bounds[1])/cv.height);assert.equal(spr.scale.y,cv.height*3.05/poring.idleHeight,'fixed canvas scale across actions');
+ for(const id of Object.keys(catalog.monsters).slice(0,12))await store.request(id);assert(store.diagnostics().loaded.length<=8,'bounded sprite atlas cache');
+ const id=Object.keys(catalog.monsters).at(-1);fail=true;assert.equal(await store.request(id),null);assert(store.diagnostics().failed.includes(String(id)));assert(!store.draw(THREE,{spr}, {spriteId:999999},0,1),'unavailable sprite uses fallback');
+ console.log('reference monsters: native timing, eight-direction routing, attack completion, pixel placement, individual scale, shared downloads, fallback and cache limits passed');
+})().catch(e=>{console.error(e);process.exitCode=1});

@@ -884,6 +884,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/fourth-jobs.js?v=179"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
+<script src="assets/native-fields.js?v=195"></script>
+<script src="assets/reference-mobs.js?v=193"></script>
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-materials.js?v=147"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
@@ -1122,7 +1124,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-18 haven-v192 ascension drops and scroll exchanges';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-19 haven-v196 outdoor maps saved for preview';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1438,7 +1440,10 @@ const MOB_SIZE_SCALE={Small:.62,Medium:.92,Large:1.28};
 // to 70% of their old height: Fabre ≈1.32 and Poring ≈1.96 units against a 2.92-unit
 // hero. Bosses keep the exact v29 height. This changes visual art only, not hitboxes.
 const MOB_REGULAR_VISUAL=.7;
-const mobVisualScale=m=>Math.max(.05,(m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)*(m.spawn||0));
+const referenceMobStore=typeof PGReferenceMobs==='object'?PGReferenceMobs.createStore():null;
+if(referenceMobStore)referenceMobStore.init().catch(()=>{});
+// Match original pixel proportions to the reference Novice; unavailable atlases retain their existing scale.
+const mobVisualScale=m=>Math.max(.05,(((!ASCENSION_MOB_IDS.has(m.spriteId)&&referenceMobStore?.height(m.spriteId))/3.05)||((m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)))*(m.spawn||0));
 const ASCENSION_MOB_IDS=new Set([1702,1705,1700,1706,1707,1708,1836,1837,1833,1831,1366,1832,1634,1635,1636,1637,1638,1639]);
 const mobSpriteUrl=id=>ASCENSION_MOB_IDS.has(+id)?`assets/mobs/v1/${+id}-0.png`:Number.isInteger(+id)&&+id>0?`https://static.divine-pride.net/images/mobs/png/${+id}.png`:'';
 // ---------- equipment database ----------
@@ -2221,6 +2226,7 @@ function trialCourtDetails(){return [
 ]}
 function trialArena(){
   if(typeof deco==='undefined')return;
+  clearNativeField();
   while(deco.children.length)deco.remove(deco.children[0]);
   if(typeof townObjs!=='undefined')townObjs.forEach(o=>o.visible=false);
   if(typeof road!=='undefined')road.visible=false;
@@ -4425,7 +4431,7 @@ function dotTick(o,d,col,skill){
 // above even a Small mob's head (1.32), so a number printed on a spawning mob is never on it.
 function mobDamageY(o,crit=false){
   const s=mobVisualScale(o),head=3.05*s;
-  const half=(crit?80:20*1.2)/2+6,b=scr(o.x,0,o.z),t=scr(o.x,Math.max(head,.5),o.z);
+  const floor=typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY(o.x,o.z)-.035:0,half=(crit?80:20*1.2)/2+6,b=scr(o.x,floor,o.z),t=scr(o.x,floor+Math.max(head,.5),o.z);
   const ppu=Math.abs(b[1]-t[1])/Math.max(head,.5);
   return Math.max(1.7,head+Math.min(2,half/Math.max(1e-6,ppu)));
 }
@@ -4433,7 +4439,7 @@ function mobDamageY(o,crit=false){
 // chest. The drawn hero's head is at 2.92 world (the 1.95x2.92 billboard, anchored at the feet),
 // so the number's box is lifted clear of it in screen px, exactly like the mob numbers.
 function heroDamageY(){
-  const half=16*1.2/2+4,b=scr(pl.x,0,pl.z),t=scr(pl.x,1,pl.z);
+  const floor=typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY()-.035:0,half=16*1.2/2+4,b=scr(pl.x,floor,pl.z),t=scr(pl.x,floor+1,pl.z);
   return 2.92+Math.min(2,half/Math.max(1e-6,Math.abs(b[1]-t[1])));
 }
 // Skill labels track the moving player, rather than floating away from the cast location.
@@ -6388,7 +6394,7 @@ function eclipseDrawMinimap(){
     for(const actor of [...mobs.filter(m=>m.hp>0),{...pl,player:true}]){const [x,y]=point(actor.x,actor.z);g.beginPath();g.arc(x,y,actor.player?5:3,0,Math.PI*2);g.fillStyle=actor.player?'#fff0b3':'#eaa18e';g.fill();}
     return;
   }
-  const terrain=KIT.ground?.material.map?.image;g.clearRect(0,0,w,h);
+  const terrain=(KIT.nativeWorld?.floorMap||KIT.ground?.material.map)?.image;g.clearRect(0,0,w,h);
   if(!terrain){g.fillStyle='#182b29';g.fillRect(0,0,w,h);g.fillStyle='#a6b8cb';g.font='18px sans-serif';g.fillText('Terrain loading',16,h/2);return}
   const span=KIT_FAR,scale=w/span,visible=h/scale,center=(Z0+Z1)/2;
   g.drawImage(terrain,0,(center-visible/2+span/2)/span*terrain.height,terrain.width,visible/span*terrain.height,0,0,w,h);
@@ -7123,7 +7129,7 @@ function landmark(G,k,c1,c2,r){
   else{mk(G,BX(2.2,1.6,1.8),c1,0,.8,0);mk(G,BX(1.5,1.1,1.3),c1,1.1,1.5,.4);mk(G,BX(1.2,.9,1.1),c2,-.9,1.3,-.5)}
 }
 let ascensionWorld=null,ascensionRoot=null,ascensionEpoch=0;
-function clearAscension(){ascensionEpoch++;if(ascensionRoot)scene.remove(ascensionRoot);ascensionRoot=null;if(ascensionWorld)ascensionWorld.dispose();ascensionWorld=null;ground.visible=true;hemi.intensity=.8;sun.intensity=.9;}
+function clearAscension(){clearNativeField();ascensionEpoch++;if(ascensionRoot)scene.remove(ascensionRoot);ascensionRoot=null;if(ascensionWorld)ascensionWorld.dispose();ascensionWorld=null;ground.visible=true;hemi.intensity=.8;sun.intensity=.9;}
 function buildAscension(m,stage){
   if(m===10&&!astralJourney)astralOriginStage=stage;
   const epoch=ascensionEpoch;townObjs.forEach(o=>o.visible=false);road.visible=false;if(KIT.ground)KIT.ground.visible=false;
@@ -7188,6 +7194,12 @@ function buildDeco(m){if(JOB_RITE.on)return jobRiteArena();if(m===10&&ascensionW
 // laid out in code from the RO recipe - see `payonPlan` below - out of the same kit tiles and
 // billboards. Morocc still uses its attached design. The other eight are `fieldPlan` recipes.
 const KIT={ok:0,png:null,man:null,des:{},srcMan:{},tex:new Map(),water:[],wt:0,ground:null,built:null};
+// Parked outdoor redesign: docs/NATIVE-FIELDS-HANDOFF.md. URL override is tab-local, never saved.
+const NATIVE_FIELDS_DEFAULT=false;
+const nativeFieldChoice=typeof location==='object'?new URLSearchParams(location.search).get('nativeFields'):null;
+const nativeFieldsEnabled=nativeFieldChoice==='1'||(NATIVE_FIELDS_DEFAULT&&nativeFieldChoice!=='0');
+const nativeFieldStore=nativeFieldsEnabled&&typeof PGNativeFields==='object'?PGNativeFields.createStore():null;
+function clearNativeField(){if(typeof KIT!=='undefined'&&KIT.nativeWorld){KIT.nativeWorld.dispose();KIT.nativeWorld=null;KIT.water=[]}}
 const KIT_S=.85,KIT_ZC=(Z0+Z1)/2,KIT_PX=2048,KIT_FAR=90;
 // Prop size. The kit ships its own character: 80px per frame (v2 kept the v1 strip pixel for
 // pixel, so this did not move). This game's hero stands 2.9 world units, so **one atlas pixel is
@@ -8211,6 +8223,20 @@ function kit3DDetails(plan,m,root){
 function buildKit(m,planOverride){
   const plan=planOverride||kitPlan(m,S.lvl);if(!plan)return null;
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
+  if(!planOverride&&nativeFieldStore&&m>=0&&m<10){
+    const asset=nativeFieldStore.ready(m);
+    if(asset){
+      clearNativeField();KIT.nativeWorld=PGNativeFields.build(THREE,asset,m,S.lvl,plan);deco.add(KIT.nativeWorld.root);
+      ground.visible=false;if(KIT.ground)KIT.ground.visible=false;
+      for(const w of KIT.water)for(const tex of w.maps)if(tex.dispose)tex.dispose();
+      KIT.water=[]; // Natural ponds and sloping ground belong to the native world.
+      KIT.built={map:m,stage:S.lvl,design:plan.design,placed:KIT.nativeWorld.props.length,missing:{},native:true};return plan;
+    }
+    KIT.nativePending=KIT.nativePending||new Set();
+    if(!KIT.nativePending.has(m)){KIT.nativePending.add(m);nativeFieldStore.ensure(m).then(()=>{
+      if(S&&S.mp===m&&!TRIAL.on&&!JOB_RITE.on)buildDeco(m);
+    }).catch(()=>{}).finally(()=>KIT.nativePending.delete(m));}
+  }
   if(!KIT.ground){KIT.ground=new THREE.Mesh(new THREE.PlaneGeometry(KIT_FAR,KIT_FAR),new THREE.MeshLambertMaterial({map:null}));KIT.ground.rotation.x=-Math.PI/2;KIT.ground.position.y=.004;KIT.ground.receiveShadow=true;scene.add(KIT.ground)}
   KIT.ground.visible=true;
   if(KIT.ground.material.map&&KIT.ground.material.map.dispose)KIT.ground.material.map.dispose();
@@ -8757,7 +8783,7 @@ function syncLevelAura(){
     }
     levelAura=buildLevelAura(a);scene.add(levelAura);
   }
-  levelAura.visible=!!heroSpr&&heroSpr.visible;levelAura.position.set(pl.x,.045,pl.z);
+  levelAura.visible=!!heroSpr&&heroSpr.visible;levelAura.position.set(pl.x,.045+(typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY()-.035:0),pl.z);
   levelAura.scale.setScalar(1+Math.sin(t*2)*.025);
   // Cosmetic rotation follows real time even while simulation time is paused.
   const spin=skinNow()/1000;
@@ -8976,13 +9002,15 @@ function mobMotion(m,clock){
   o.lunge=out*(m.boss?.62:.45)-hitS*.2+own*.45;
   o.dir=Math.atan2(pl.z-m.z,pl.x-m.x);
   return o}
-function syncMobImage(v,m,s){if(v.nativeMob){
+function syncMobImage(v,m,s){
+  if(!m.pet&&!ASCENSION_MOB_IDS.has(m.spriteId)&&referenceMobStore&&referenceMobStore.draw(THREE,v,m,viewDir(Math.atan2(pl.z-m.z,pl.x-m.x)),skinNow())){if(v.image)v.image.style.display='none';return}
+  if(v.nativeMob){
     v.spr.visible=false;const im=v.image;if(!im)return;
     const direction=viewDir(Math.atan2(pl.z-m.z,pl.x-m.x)),action=(m.atkAnim>0?16:m.run?8:0)+direction;
     const url='assets/mobs/v1/'+m.spriteId+'-'+action+'.png';
     if(v.nativeAction!==action){v.nativeAction=action;im.src=url;v.imageFailed=false;}
     const ready=!v.imageFailed&&im.complete&&im.naturalWidth>0;im.style.display=ready?'block':'none';if(!ready)return;
-    const base=scr(m.x,0,m.z),top=scr(m.x,3.05*s,m.z),height=Math.max(1,Math.abs(base[1]-top[1]))*512/(window.PGNativeMobHeights?.[m.spriteId]||160);
+    const floor=KIT.nativeWorld?actorFloorY(m.x,m.z)-.035:0,base=scr(m.x,floor,m.z),top=scr(m.x,floor+3.05*s,m.z),height=Math.max(1,Math.abs(base[1]-top[1]))*512/(window.PGNativeMobHeights?.[m.spriteId]||160);
     im.style.left=base[0]+'px';im.style.top=base[1]+'px';im.style.width=height+'px';im.style.height=height+'px';im.style.transform='translate(-50%,-78.125%)';im.style.filter='none';im.style.zIndex=String(Math.max(1,Math.round(base[1])));return;
   }if(v.nativePet){if(v.image)v.image.style.display='none';v.spr.visible=true;return}const im=v.image,motion=mobMotion(m,t);
   if(v.official){if(im)im.style.display='none';v.spr.visible=true;
@@ -8994,7 +9022,7 @@ function syncMobImage(v,m,s){if(v.nativeMob){
   v.spr.position.y=0;if(!im)return;
   const ready=!v.imageFailed&&im.complete&&im.naturalWidth>0;
   im.style.display=ready?'block':'none';v.spr.visible=!ready;if(!ready)return;
-  const base=scr(m.x,0,m.z),mid=scr(m.x,1.525*s,m.z),top=scr(m.x,3.05*s,m.z),h=Math.max(14,Math.min(240,Math.abs(base[1]-top[1]))),ratio=im.naturalWidth/Math.max(1,im.naturalHeight);
+  const floor=KIT.nativeWorld?actorFloorY(m.x,m.z)-.035:0,base=scr(m.x,floor,m.z),mid=scr(m.x,floor+1.525*s,m.z),top=scr(m.x,floor+3.05*s,m.z),h=Math.max(14,Math.min(240,Math.abs(base[1]-top[1]))),ratio=im.naturalWidth/Math.max(1,im.naturalHeight);
   im.style.left=mid[0]+'px';im.style.top=(base[1]-motion.hop*h/3.05)+'px';im.style.width=Math.max(12,h*ratio*motion.sx)+'px';im.style.height=h*motion.sy+'px';im.style.zIndex=String(Math.max(1,Math.round(base[1])));
   if(motion.tilt)im.style.transform='translate(-50%,-100%) rotate('+(motion.tilt*57.3).toFixed(1)+'deg)';
   im.style.filter=m.flash?`brightness(${1+m.flash*.55}) saturate(${1+m.flash})`:'none'}
@@ -9005,8 +9033,9 @@ function buildMob(m){
   const spr=mkBillboard(tex,2.05,3.05);G.add(spr);mkShadow(G,.42);scene.add(G);
   const v={G,spr,pending:null,monster:m,spriteId:m.spriteId||0,nativeMob,official:false,image:null,imageFailed:false};
   const url=m.pet?'assets/pets/v1/thumb-'+v.spriteId+'.png':mobSpriteUrl(v.spriteId);
+  const referenceLocal=!m.pet&&!nativeMob&&referenceMobStore?.has(v.spriteId);
   if(url){const im=document.createElement('img');im.className='mob-sprite-img';im.alt='';im.draggable=false;im.decoding='async';im.style.display='none';
-    im.onerror=()=>{v.imageFailed=true;im.style.display='none'};im.src=url;mobSpriteLayer.appendChild(im);v.image=im;if(nativeMob){v.nativeAction=0;spr.visible=false;}else requestMobTexture(v.spriteId,m.pet?url:undefined)}
+    im.onerror=()=>{v.imageFailed=true;im.style.display='none'};if(referenceLocal)referenceMobStore.request(v.spriteId).then(asset=>{if(!asset){im.src=url;requestMobTexture(v.spriteId)}});else im.src=url;mobSpriteLayer.appendChild(im);v.image=im;if(nativeMob){v.nativeAction=0;spr.visible=false;}else if(!referenceLocal)requestMobTexture(v.spriteId,m.pet?url:undefined)}
   return v}
 let slashM=null;
 // The uploaded attack animation is the whole swing.  The old melee cue - a white arc stroked in
@@ -9018,7 +9047,7 @@ function drawSlashFX(x,z,wt){
     g.strokeStyle='#fff6c8';g.lineWidth=7;g.beginPath();g.arc(40,48,28,-1.4,.9);g.stroke();g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.arc(40,48,24,-1.25,.7);g.stroke();
     slashM=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));slashM.center.set(.5,.25);scene.add(slashM)}
   slashM.visible=HERO_SWING_ARC&&atkAnim>.12&&wt!=='bow'&&wt!=='staff';if(!slashM.visible)return;
-  slashM.position.set(x,1.15,z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
+  slashM.position.set(x,1.15+(KIT.nativeWorld?actorFloorY(x,z)-.035:0),z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
 // Native frames retain relative timing; playback is calmer and measured bounds clear the ground.
 const PET_VISUAL_SCALE=.42;
 // Follow the hero's AGI, gear, pet and skill movement bonuses, with the same long-distance run boost.
@@ -9075,7 +9104,7 @@ function drawPetPreviews(){
  }
  petSpriteStore.pin(pins);
 }
-function disposeCreatureVisual(v){scene.remove(v.G);if(v.image)v.image.remove();if(v.official&&v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose();if(v.nativePet)v.nativePet.cv.width=v.nativePet.cv.height=0}
+function disposeCreatureVisual(v){scene.remove(v.G);if(v.image)v.image.remove();if(v.official&&v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose();if(v.nativePet)v.nativePet.cv.width=v.nativePet.cv.height=0;if(v.referenceMob)v.referenceMob.cv.width=v.referenceMob.cv.height=0}
 const mobMesh=new Map(),petMesh=new Map();let curMob=null,mobG=null,mobMats=[],lastBoss=null,dmesh=new Map(),tmp=new THREE.Vector3(),lastProg='';
 function scr(x,y,z){tmp.set(x,y,z).project(cam);return[(tmp.x+1)/2*R.domElement.clientWidth,(1-tmp.y)/2*R.domElement.clientHeight]}
 // Facing-away views (NW 3, N 4, NE 5): the item icon is front-view art and reads wrong there.
@@ -9858,7 +9887,7 @@ function getSkillAfterglow(){
   const renderer=PGSkillAfterglow.create(canvas);if(!renderer)return null;
   renderer.aura=(x,z,time)=>{
     if(typeof PGFourthJobVisuals==='undefined')return;
-    const g=canvas.getContext('2d'),at=scr(x,.04,z),top=scr(x,3.05,z),ratio=Math.min(2,Math.max(1,devicePixelRatio||1));
+    const ground=typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY(x,z)-.035:0,g=canvas.getContext('2d'),at=scr(x,ground+.04,z),top=scr(x,ground+3.05,z),ratio=Math.min(2,Math.max(1,devicePixelRatio||1));
     g.save();g.setTransform(ratio,0,0,ratio,0,0);
     PGFourthJobVisuals.aura(g,at[0],at[1],time,'#dfc582',Math.max(.01,Math.hypot(top[0]-at[0],top[1]-at[1])/120));g.restore();
   };
@@ -9884,11 +9913,13 @@ function tickSkillFx(dt){for(let i=skillFx.length-1;i>=0;i--){const fx=skillFx[i
 function syncSkillFx(){
   const ascended=FOURTH_JOBS_LIVE&&typeof S!=='undefined'&&S&&CLASSES[S.cls]?.tier===4;
   if(ascended)getSkillAfterglow();
-  if(skillAfterglow)skillAfterglow.draw(skillFx,R.domElement.clientWidth,R.domElement.clientHeight,scr,devicePixelRatio||1);
+  const floor=(x,z)=>typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY(x,z)-.035:0;
+  if(skillAfterglow)skillAfterglow.draw(skillFx,R.domElement.clientWidth,R.domElement.clientHeight,(x,y,z)=>scr(x,y+floor(x,z),z),devicePixelRatio||1);
   if(ascended)skillAfterglow?.aura(pl.x,pl.z,t);
   for(const fx of skillFx){if(fx.afterglow)continue;if(!fx.group)makeSkillFxNode(fx);const q=cl(fx.age/fx.life,0,1),ease=1-Math.pow(1-q,2);
     if(fx.at==='path')fx.group.position.set(fx.x0+(fx.x1-fx.x0)*ease,.95+Math.sin(q*Math.PI)*.34,fx.z0+(fx.z1-fx.z0)*ease);
     else{const x=fx.at==='caster'?fx.x0:fx.x1,z=fx.at==='caster'?fx.z0:fx.z1;fx.group.position.set(x,0,z)}
+    fx.group.position.y+=floor(fx.group.position.x,fx.group.position.z);
     for(const p of fx.parts){const m=p.mesh;
       if(p.spr){const lp=cl((q-p.d0)/Math.max(.001,p.d1-p.d0),0,1),le=1-Math.pow(1-lp,2);
         const s=p.sc0+(p.sc1-p.sc0)*le;m.scale.set(s,s,1);
@@ -9932,7 +9963,7 @@ dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(zoo
 // pushed the avatar down into the lower third of the view.
 const CAMERA_FOCUS_Y=.28,CAMERA_LEAD_Z=.25,ct=new THREE.Vector3(0,CAMERA_FOCUS_Y,0);let lastKey='';
 // Astral paving reaches 0.091; other fields sit just above zero. Keep native sprite pivots intact.
-function actorFloorY(){return !TRIAL.on&&!JOB_RITE.on&&S.mp===10?.12:.035;}
+function actorFloorY(x=pl.x,z=pl.z){if(!TRIAL.on&&!JOB_RITE.on&&KIT.nativeWorld)return PGNativeFields.heightAt(S.mp,x,z)+.035;return !TRIAL.on&&!JOB_RITE.on&&S.mp===10?.12:.035;}
 function draw(){
   if(!S)return;const bn=isBoss(),key=(JOB_RITE.on?'rite:':TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;
@@ -9959,11 +9990,11 @@ function draw(){
   const alive=new Set(mobs);mobMesh.forEach((v,m)=>{if(!alive.has(m)){disposeCreatureVisual(v);mobMesh.delete(m)}});
   for(const m of mobs){let v=mobMesh.get(m);if(!v){v=buildMob(m);mobMesh.set(m,v)}const s=mobVisualScale(m);
     const rec=v.spriteId&&mobTextureCache.get(v.spriteId);if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
-    v.G.scale.set(s,s,s);v.G.position.set(m.x,0,m.z);
+    v.G.scale.set(s,s,s);v.G.position.set(m.x,KIT.nativeWorld?actorFloorY(m.x,m.z)-.035:0,m.z);
     const mFace=Math.atan2(pl.z-m.z,pl.x-m.x);
     if(!v.official)setCell(v.spr,viewDir(mFace),animRow(m.run,m.atkAnim||0,t+m.a,8));
     const fl=m.flash||0;v.spr.material.color.setRGB(1,1-fl*.8,1-fl*.8)}
-  if(mob){const s=mobVisualScale(mob),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';// v77 (owner): "i want all boss to just have names, no (boss), no showing cri res". The tag is the
+  if(mob){const s=mobVisualScale(mob),[qx,qy]=scr(mob.x,(KIT.nativeWorld?actorFloorY(mob.x,mob.z)-.035:0)+3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';// v77 (owner): "i want all boss to just have names, no (boss), no showing cri res". The tag is the
   // bare name. The MVP FIGHT line on the HUD and the oversized health bar still say what you are up
   // against, and crit resistance stays a hidden number only the damage roll sees.
   $('tn').textContent=mob.n;$('th').style.width=(hudTrial?'100%':Math.max(0,mob.hp/mob.max*100)+'%')}else tag.style.display='none';
@@ -9971,13 +10002,13 @@ function draw(){
   // one small transparent gold seal from below the hero's feet every frame so it follows
   // movement and camera rotation just like the skill names do. The rank mark rides on the left.
   const equipped=HUNT_TITLES.find(t=>t.id===S.equippedTitle&&titleUnlocked(t));
-  if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,0.16,pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';if(heroTitleMark&&heroTitleMark.dataset.title!==equipped.id){heroTitleMark.innerHTML=titleIcon(equipped);heroTitleMark.dataset.title=equipped.id;}heroTitleText.textContent=equipped.name;heroTitle.title='Index title · '+(equipped.xp??equipped.kills).toLocaleString()+' Index XP'}else heroTitle.style.display='none'}
+  if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,.16+(KIT.nativeWorld?actorFloorY()-.035:0),pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';if(heroTitleMark&&heroTitleMark.dataset.title!==equipped.id){heroTitleMark.innerHTML=titleIcon(equipped);heroTitleMark.dataset.title=equipped.id;}heroTitleText.textContent=equipped.name;heroTitle.title='Index title · '+(equipped.xp??equipped.kills).toLocaleString()+' Index XP'}else heroTitle.style.display='none'}
   const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){disposeCreatureVisual(v);petMesh.delete(id)}});
   S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!sp||!r)return;let v=petMesh.get(p.id);
     const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,pet:true,flash:0,lunge:r.lunge||0};
     if(!v){v=buildMob(pet);petMesh.set(p.id,v)}
     const rec=mobTextureCache.get('assets/pets/v1/thumb-'+sp.spriteId+'.png');if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
-    v.G.position.set(r.x,actorFloorY(),r.z);v.G.scale.setScalar(PET_VISUAL_SCALE);
+    v.G.position.set(r.x,actorFloorY(r.x,r.z),r.z);v.G.scale.setScalar(PET_VISUAL_SCALE);
     const pf=Number.isFinite(r.face)?r.face:pFace;drawNativePet(v,sp.spriteId,r,viewDir(pf));
     if(!v.official)setCell(v.spr,viewDir(pf),animRow(r.run,r.lunge||0,t,12));
     v.spr.material.color.set(0xffffff); // keep the original RO art even when mutated
@@ -9987,13 +10018,15 @@ function draw(){
     if(!m){const i=d.it,sl=i.card?'card':i.ore?'ore':i.slot,col=i.ore?(i.ore==='ori'?0xff9d3c:0x6cd3ff):TC[rarIdx(i)];
       m=mk(scene,sl==='weapon'?BX(.14,.75,.14):sl==='armor'?BX(.45,.45,.25):sl==='card'?BX(.3,.42,.04):sl==='ore'?new THREE.OctahedronGeometry(.22):SP(.24),col);
       m.material.emissive.setHex(col).multiplyScalar(.45);dmesh.set(d,m)}
-    m.position.set(d.wx,.35+Math.max(0,-d.y)/60,d.wz);m.rotation.y=t*3});
+    m.position.set(d.wx,.35+Math.max(0,-d.y)/60+(KIT.nativeWorld?actorFloorY(d.wx,d.wz)-.035:0),d.wz);m.rotation.y=t*3});
   dmesh.forEach((m,d)=>{if(!live.has(d)){scene.remove(m);dmesh.delete(d)}});
   shots.forEach(s=>{if(!s.m){s.m=mk(scene,s.arrow?BX(.5,.04,.04):SP(.14),s.col);s.m.material.emissive.set(s.col);s.m.castShadow=false;s.m.rotation.y=-Math.atan2(s.z1-s.z0,s.x1-s.x0)}
-    const k=Math.min(1,s.t);s.m.position.set(s.x0+(s.x1-s.x0)*k,1.4,s.z0+(s.z1-s.z0)*k)});
+    const k=Math.min(1,s.t),x=s.x0+(s.x1-s.x0)*k,z=s.z0+(s.z1-s.z0)*k;s.m.position.set(x,1.4+(KIT.nativeWorld?actorFloorY(x,z)-.035:0),z)});
+  ct.y+=(CAMERA_FOCUS_Y+(KIT.nativeWorld?actorFloorY()-.035:0)-ct.y)*.1;
   ct.x+=(pl.x*.6-ct.x)*.05;ct.z+=(pl.z-CAMERA_LEAD_Z-ct.z)*.05;
-  const dd=(cam.aspect<1.5?26:18)/zoom,sk=S.cameraShake===false?0:shake*.03;
-  cam.position.set(ct.x+Math.sin(az)*Math.cos(el)*dd+rnd(-sk,sk),Math.sin(el)*dd+.5,ct.z+Math.cos(az)*Math.cos(el)*dd+rnd(-sk,sk));
+  const pitch=KIT.nativeWorld?Math.max(.45,el-.17):el,dd=(KIT.nativeWorld?(cam.aspect<1?40:44):(cam.aspect<1.5?26:18))/zoom,sk=S.cameraShake===false?0:shake*.03;
+  if(KIT.nativeWorld&&scene.fog){scene.fog.near=Math.max(55,dd*1.1);scene.fog.far=dd*2.6}
+  cam.position.set(ct.x+Math.sin(az)*Math.cos(pitch)*dd+rnd(-sk,sk),Math.sin(pitch)*dd+.5,ct.z+Math.cos(az)*Math.cos(pitch)*dd+rnd(-sk,sk));
   cam.lookAt(ct);cam.updateMatrixWorld(true);
   for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
   for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=PETS[p.sp];
@@ -10023,7 +10056,7 @@ function draw(){
     }else e.textContent=f.txt;
     if(f.col)e.style.color=f.col;ov.appendChild(e);f.el=e}
     if(f.dirty&&f.el){f.dirty=0;const nd=f.el.querySelector('.fnum')||f.el;nd.textContent=f.txt}   // a merged DoT tick updates in place
-    const[a,b]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';
+    const fx=f.anchor==='hero'?pl.x:f.x,fz=f.anchor==='hero'?pl.z:f.z,[a,b]=scr(fx,f.y+(KIT.nativeWorld?actorFloorY(fx,fz)-.035:0),fz);f.el.style.left=a+'px';f.el.style.top=b+'px';
     const dk=f.kind==='damage'||f.kind==='skill-damage'||f.kind==='critical'||f.kind==='skill-critical'||f.kind==='dot';
     if(dk){ // v83.3 (owner): v82's motion, back and untouched - the arc punch on spawn, the sway up
              // (10px right, then drifting 38px left), and the hold-then-fade. v73 (the owner's retune):

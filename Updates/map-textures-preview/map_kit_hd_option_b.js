@@ -19,6 +19,12 @@
 // laid out in code from the RO recipe - see `payonPlan` below - out of the same kit tiles and
 // billboards. Morocc still uses its attached design. The other eight are `fieldPlan` recipes.
 const KIT={ok:0,png:null,man:null,des:{},srcMan:{},tex:new Map(),water:[],wt:0,ground:null,built:null};
+// Parked outdoor redesign: docs/NATIVE-FIELDS-HANDOFF.md. URL override is tab-local, never saved.
+const NATIVE_FIELDS_DEFAULT=false;
+const nativeFieldChoice=typeof location==='object'?new URLSearchParams(location.search).get('nativeFields'):null;
+const nativeFieldsEnabled=nativeFieldChoice==='1'||(NATIVE_FIELDS_DEFAULT&&nativeFieldChoice!=='0');
+const nativeFieldStore=nativeFieldsEnabled&&typeof PGNativeFields==='object'?PGNativeFields.createStore():null;
+function clearNativeField(){if(typeof KIT!=='undefined'&&KIT.nativeWorld){KIT.nativeWorld.dispose();KIT.nativeWorld=null;KIT.water=[]}}
 const KIT_S=.85,KIT_ZC=(Z0+Z1)/2,KIT_PX=2048,KIT_FAR=90;
 // Prop size. The kit ships its own character: 80px per frame (v2 kept the v1 strip pixel for
 // pixel, so this did not move). This game's hero stands 2.9 world units, so **one atlas pixel is
@@ -1042,6 +1048,20 @@ function kit3DDetails(plan,m,root){
 function buildKit(m,planOverride){
   const plan=planOverride||kitPlan(m,S.lvl);if(!plan)return null;
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
+  if(!planOverride&&nativeFieldStore&&m>=0&&m<10){
+    const asset=nativeFieldStore.ready(m);
+    if(asset){
+      clearNativeField();KIT.nativeWorld=PGNativeFields.build(THREE,asset,m,S.lvl,plan);deco.add(KIT.nativeWorld.root);
+      ground.visible=false;if(KIT.ground)KIT.ground.visible=false;
+      for(const w of KIT.water)for(const tex of w.maps)if(tex.dispose)tex.dispose();
+      KIT.water=[]; // Natural ponds and sloping ground belong to the native world.
+      KIT.built={map:m,stage:S.lvl,design:plan.design,placed:KIT.nativeWorld.props.length,missing:{},native:true};return plan;
+    }
+    KIT.nativePending=KIT.nativePending||new Set();
+    if(!KIT.nativePending.has(m)){KIT.nativePending.add(m);nativeFieldStore.ensure(m).then(()=>{
+      if(S&&S.mp===m&&!TRIAL.on&&!JOB_RITE.on)buildDeco(m);
+    }).catch(()=>{}).finally(()=>KIT.nativePending.delete(m));}
+  }
   if(!KIT.ground){KIT.ground=new THREE.Mesh(new THREE.PlaneGeometry(KIT_FAR,KIT_FAR),new THREE.MeshLambertMaterial({map:null}));KIT.ground.rotation.x=-Math.PI/2;KIT.ground.position.y=.004;KIT.ground.receiveShadow=true;scene.add(KIT.ground)}
   KIT.ground.visible=true;
   if(KIT.ground.material.map&&KIT.ground.material.map.dispose)KIT.ground.material.map.dispose();

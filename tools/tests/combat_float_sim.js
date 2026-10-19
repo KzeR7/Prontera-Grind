@@ -106,7 +106,7 @@ t('the starburst is centred on the digits, re-jittered every hit, and dies with 
 t('damage numbers START above the head - the whole crit frame clears it - and fly the owner\'s retuned arc: 70px over ~1.15s, hold-then-fade from 75%', () => {
   assert.ok(src.includes('function mobDamageY(o,crit=false){'), 'the spawn height is crit-aware: a crit clears its burst box, an ordinary hit clears its digits');
   assert.ok(src.includes('const s=mobVisualScale(o),head=3.05*s;'), 'the head line is the sprite\'s own top (syncMobImage draws the sprite exactly 3.05*scale tall)');
-  assert.ok(src.includes('const half=(crit?80:20*1.2)/2+6,b=scr(o.x,0,o.z),t=scr(o.x,Math.max(head,.5),o.z);'), 'the clearance is measured in screen px through the same projection the floats use, so it holds at every zoom (v74: 80px burst box, 20px digits)');
+  assert.ok(src.includes("const floor=typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY(o.x,o.z)-.035:0,half=(crit?80:20*1.2)/2+6,b=scr(o.x,floor,o.z),t=scr(o.x,floor+Math.max(head,.5),o.z);"), 'the clearance is measured in screen px through the same projection the floats use, so it holds at every zoom (v74: 80px burst box, 20px digits)');
   assert.ok(src.includes('return Math.max(1.7,head+Math.min(2,half/Math.max(1e-6,ppu)));'), 'the spawn sits that many px above the head, following the mob\'s drawn scale (bosses start higher), with the old 1.7 floor kept for mobs still spawning in');
   assert.ok(src.includes("showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill)"), 'AoE and hurt numbers spawn above the head, crit-aware');
   assert.ok(src.includes("showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill)"), 'strike numbers spawn above the head, crit-aware');
@@ -132,6 +132,8 @@ t('damage numbers START above the head - the whole crit frame clears it - and fl
   assert.ok(incomingRule.includes('-webkit-text-stroke:.4px') && incomingRule.includes('animation:hit-pop .18s ease-out both'),
     'incoming damage keeps v82\'s 16px digits and its little hit pop (MISS/DODGE keep their own)');
 });
+
+t('native terrace clearance uses the elevated projection',()=>{const calls=[];box.KIT={nativeWorld:{}};box.actorFloorY=()=>3.635;const old=box.scr;box.scr=(x,y,z)=>{calls.push(y);return old(x,y,z)};box.__d.mobDamageY({x:0,z:-20},true);assert.equal(calls.length,2);assert.ok(calls.every(y=>y>=3.6-1e-9));box.scr=old;delete box.KIT;delete box.actorFloorY;});
 
 t('v73: the spread is real - every damage number rolls its own +-14px offset at spawn', () => {
   assert.ok(src.includes('rate:isDamageFloat(kind)?DMG_RATE:0,sp:isDamageFloat(kind)?rnd(-DMG_SPREAD,DMG_SPREAD):0}'),
