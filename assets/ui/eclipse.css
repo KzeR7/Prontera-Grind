@@ -1808,6 +1808,10 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #trial :is(.trial-head,.trial-close,.trial-choice-timer,.trial-rung,.trial-reward-details>summary){background:var(--e-raised);border-color:var(--edge2);color:var(--ink)}
 #trial .trial-rung.next{background:var(--e-soft);border-color:var(--gold)}
 
+/* Combat positioning preference below Auto-advance. */
+#rangedMovement{display:flex;flex-direction:column;gap:5px;margin-top:9px;color:var(--e-muted);font-size:9px}
+#rangedMovementMode{width:100%;min-width:0;min-height:30px;padding:5px 4px;font-size:10px;background:var(--e-bg);color:var(--ink);border:1px solid var(--edge);border-radius:4px}
+#rangedMovementMode:disabled{opacity:.55}
 /* Update notices leave the battlefield running until the player chooses to refresh. */
 #updatePrompt{position:fixed;right:16px;bottom:16px;z-index:2500;width:min(360px,calc(100vw - 32px));box-sizing:border-box;padding:20px;border:1px solid var(--gold,#d8ba76);border-radius:12px;background:#18202b;color:#f2eadb;box-shadow:0 12px 40px #0009;font:14px/1.5 sans-serif}
 #updatePrompt h2{margin:0 0 8px;font-size:19px;color:#edce8e}

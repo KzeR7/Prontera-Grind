@@ -20,7 +20,7 @@ function canvas(){
 const layers=[],box={THREE,console,Image:MaterialImage,document:{createElement:canvas},
   $:()=>({after(c){layers.push(c)}}),R:{domElement:{clientWidth:1200,clientHeight:800}},devicePixelRatio:1,
   scr:(x,y,z)=>[400+x*30,500+z*12-y*60],scene:new THREE.Scene(),cam:new THREE.PerspectiveCamera(),
-  pl:{x:0,z:0},skillFx:[],simVisualsOff:()=>false,cl:(v,a,b)=>Math.max(a,Math.min(b,v))};
+  pl:{x:0,z:0},skillFx:[],skillState:()=>({fields:[]}),simVisualsOff:()=>false,cl:(v,a,b)=>Math.max(a,Math.min(b,v))};
 vm.createContext(box);
 vm.runInContext(grab('const MOB_REGULAR_VISUAL=','const mobSpriteUrl=')+grab('const CD=[','const pm=s=>')+grab('const SKILL_FX_GEOMETRY=','let drag=null;const dom=R.domElement;'),box);
 for(const file of ['assets/skill-materials.js','assets/afterglow-animations.js','assets/skill-afterglow.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),box);
@@ -82,9 +82,9 @@ ev('PGAfterglowAnimations.create=originalCreate;playSkillFx("bash",{x:5,z:-2});t
 assert.equal(box.skillFx.length,1);ev('tickSkillFx(.02)');assert.equal(box.skillFx.length,0);
 
 // Magic area scale matches gameplay reach; the caster seal fades before the spell ends.
-ev('playSkillFx("storm",{x:5,z:-2})');assert.equal(box.skillFx[0].magic,true);assert.equal(box.skillFx[0].areaScale,1.5);
+ev('playSkillFx("storm",{x:5,z:-2})');assert.equal(box.skillFx[0].magic,true);assert.equal(box.skillFx[0].areaScale,ev('SKILLS.find(s=>s.id==="storm").areaScale'));
 transforms=[];ev('syncSkillFx()');assert.equal(transforms.length,3,'clear, caster seal, then spell');
-assert(Math.abs(transforms[2][0]-(3.05*60/120)*1.5)<1e-8,'area spell scale');
+assert(Math.abs(transforms[2][0]-(3.05*60/120)*ev('SKILLS.find(s=>s.id==="storm").areaScale'))<1e-8,'area spell scale');
 box.skillFx[0].age=1;transforms=[];ev('syncSkillFx()');assert.equal(transforms.length,2,'caster seal expires');ev('tickSkillFx(4)');
 // Single-target effects hit a small creature's body and scale up for bosses.
 for(const target of [{x:5,z:-2,spriteScale:.62,spawn:1},{x:5,z:-2,spriteScale:1.28,boss:true,spawn:1}]){
@@ -134,3 +134,16 @@ console.log('Fourth-job ward/Rune Burst caster anchors and class-gated aura pass
 // A flag-on fourth-job effect must not re-anchor an earlier class radial skill.
 box.id=ev('SKILLS.find(s=>s.shape==="radial"&&!SKILLS4.includes(s)).id');
 ev('playSkillFx(id,{x:5,z:-2})');assert.equal(box.skillFx[0].x1,5);assert.equal(box.skillFx[0].z1,-2);ev('tickSkillFx(4)');
+
+// Ground markers follow the gameplay footprint through camera reversal and terrain projection.
+for(const width of [1280,390])for(const facing of [1,-1]){
+ const points=[];box.markerPoints=points;box.markerWidth=width;box.markerFacing=facing;
+ marks=0;transforms=[];
+ ev(`getSkillAfterglow().fields([{x:2,z:3,radius:7,age:2,sk:{col:'#ff9955',field:{duration:5}}}],(x,y,z)=>{markerPoints.push([x,y,z]);return [markerWidth/2+markerFacing*x*30,500+z*12-y*60]},1);`);
+ assert(points.some(p=>p[0]===9)&&points.some(p=>p[0]===-5),'marker radius drifted');
+ assert(marks>=3&&depth===0,'marker missing or leaked canvas state');
+}
+// A field's effects end with its runtime token, including travel/reset during a storm.
+ev(`var fieldToken={x:0,z:0,age:4,sk:{field:{duration:5}}};playSkillFx('amp',fieldToken);`);
+assert.equal(box.skillFx[0].life,1);ev('tickSkillFx(.01)');assert.equal(box.skillFx.length,0,'field effect outlived reset');
+console.log('Ground marker projection, desktop/mobile, radius and field effect cleanup passed.');

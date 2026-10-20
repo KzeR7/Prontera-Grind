@@ -73,7 +73,7 @@ const fakeThree={RingGeometry:FakeGeometry,TorusGeometry:FakeGeometry,Icosahedro
   Mesh:FakeMesh,Line:FakeLine,Group:FakeObject,BufferGeometry:FakeBufferGeometry,Vector3:FakeVec3,DoubleSide:2,AdditiveBlending:3};
 const vfxBox={SKILLS:K.SKILLS,SKILLS4:K.run('SKILLS4'),FOURTH_JOBS_LIVE:K.run('FOURTH_JOBS_LIVE'),simVisualsOff:()=>false,THREE:fakeThree,removed:[],scene:{add(){},remove(o){vfxBox.removed.push(o)}},cam:{quaternion:{}},pl:{x:0,z:0},cl:(v,a,b)=>Math.max(a,Math.min(b,v)),
   document:{createElement:t=>t==='canvas'?fakeCanvas():{}},
-  skillFx:[],SKILL_VFX:JSON.parse(JSON.stringify(K.SKILL_VFX))};
+  skillFx:[],skillState:()=>({fields:[]}),SKILL_VFX:JSON.parse(JSON.stringify(K.SKILL_VFX))};
 vm.createContext(vfxBox);
 vm.runInContext(grab('function skillFxSpec(id,color)', '// ---------- world:')+'\n'+grab('const SKILL_FX_GEOMETRY=', 'let drag=null;const dom=R.domElement;')+
   '\nthis.__renderer={playSkillFx,tickSkillFx,syncSkillFx,get effects(){return skillFx},get sprRecipes(){return SKILL_FX_SPR},get sheets(){return SKILL_FX_SHEETS}};',vfxBox);

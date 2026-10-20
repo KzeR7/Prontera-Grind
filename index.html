@@ -815,7 +815,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=198">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=202">
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 </head>
 <body>
@@ -832,7 +832,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>HORIZON HAVEN / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
 <div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Horizon <small>HAVEN</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover">&#9679; <b id="zeny">0</b> Zeny</div>
-<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="true" aria-controls="eclipseCombatDetails" aria-label="Minimize auto combat bar">− Hide</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
+<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="true" aria-controls="eclipseCombatDetails" aria-label="Minimize auto combat bar">− Hide</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
 <div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd">Speed x1</button></div><div id="wins"></div></div></div>
 <div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health"><span>HP</span> <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
 </div></div>
@@ -912,6 +912,7 @@ eclipseSetPalette(document.documentElement.dataset.palette);
 $('eclipseMinimize').onclick=()=>{const minimized=$('eclipseCombat').classList.toggle('minimized'),b=$('eclipseMinimize');b.textContent=minimized?'+ Show':'− Hide';b.setAttribute('aria-expanded',String(!minimized));b.setAttribute('aria-label',(minimized?'Expand':'Minimize')+' auto combat bar')};
 $('eclipseShowPassword').onclick=()=>{const input=$('password'),show=input.type==='password';input.type=show?'text':'password';$('eclipseShowPassword').textContent=show?'Hide':'Show';$('eclipseShowPassword').setAttribute('aria-pressed',String(show))};
 $('eclipseAdvance').onclick=()=>{if(S)ACT.adv()};
+$('rangedMovementMode').onchange=e=>{if(S)ACT.kite(e.target.value)};
 
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
 // v76.2 (owner): Nightmare equipment has its own N rarity category, separate from Legendary.
@@ -1124,7 +1125,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-20 haven-v201 integrated gameplay updates';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-20 haven-v202 integrated tactical combat';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1205,11 +1206,11 @@ const SKILLS=[
  {"id":"soulb","n":"Soul Breaker","max":10,"type":"act","col":"#ff5a8a","text":"A ranged blade-energy strike powered by physical attack.","from":"Assassin Cross","cd":3.0,"hits":1,"power":2.0,"shape":"single","rng":5},
  {"id":"sdestroy","n":"Deathmark","max":10,"type":"act","col":"#ff5a8a","text":"Strike and mark the target. The mark bursts after three more direct hits or 1.5 seconds.","from":"Assassin Cross","cd":4.0,"hits":1,"power":1.771,"shape":"single","death":0.25},
  {"id":"holy","n":"Holy Light","max":10,"type":"act","col":"#fff3a0","text":"A focused holy beam that damages every enemy type.","from":"Acolyte","cd":2.0,"hits":1,"power":2.0,"shape":"single"},
- {"id":"heal","n":"Searing Light","max":10,"type":"act","col":"#fff3a0","text":"A holy impact with nearby splash. Successful hits also heal you when below 60% health.","from":"Acolyte","cd":2.5,"hits":1,"power":2.2,"shape":"splash","heal":0.012,"training":{"hpreg":0.15}},
+ {"id":"heal","n":"Searing Light","max":10,"type":"act","col":"#fff3a0","text":"A holy impact with nearby splash. Successful hits also heal you when below 60% health.","from":"Acolyte","cd":2.5,"hits":1,"power":2.2,"shape":"splash","heal":0.012},
  {"id":"bless","n":"Blessing","max":10,"type":"buff","col":"#fff3a0","text":"Increase your direct damage.","from":"Acolyte","key":"damage","rate":1.5,"duration":12,"cd":12,"training":{"atk":1.5}},
  {"id":"iagi","n":"Zeal","max":5,"type":"buff","col":"#b8f3ff","text":"Increase attack speed. At maximum attack speed, also increase direct skill damage.","from":"Acolyte","key":"speed","rate":3,"duration":12,"cd":12},
  {"id":"magnus","n":"Holy Nova","max":10,"type":"act","col":"#ffe0ff","text":"A holy burst around the target.","from":"Priest","cd":4.0,"hits":1,"power":3.227,"shape":"splash"},
- {"id":"sanct","n":"Judgment Pillar","max":10,"type":"act","col":"#fff3a0","text":"A column of holy light hits the target and nearby enemies.","from":"Priest","cd":3.0,"hits":1,"power":2.2,"shape":"splash","training":{"hpreg":0.2}},
+ {"id":"sanct","n":"Judgment Pillar","max":10,"type":"act","col":"#fff3a0","text":"A column of holy light hits the target and nearby enemies.","from":"Priest","cd":3.0,"hits":1,"power":2.2,"shape":"splash"},
  {"id":"asp","n":"Sacred Weapon","max":10,"type":"buff","col":"#fff3a0","text":"Empower normal mace attacks with holy damage.","from":"Priest","key":"sacred","rate":2,"duration":12,"cd":12,"training":{"atk":2}},
  {"id":"kyrie","n":"Penance","max":5,"type":"act","col":"#fff3a0","text":"A holy strike marks the target. Your next three holy skill hits within 3 seconds deal extra damage.","from":"Priest","cd":3.5,"hits":1,"power":2.2,"shape":"single","mark":0.1,"markHits":3},
  {"id":"judex","n":"Divine Barrage","max":10,"type":"act","col":"#ffffff","text":"A rapid sequence of focused holy beams.","from":"High Priest","cd":2.5,"hits":4,"power":1.972,"shape":"single"},
@@ -1298,7 +1299,7 @@ SKILLS4.push(
  {"id": "wl_vortex", "n": "Tetra Vortex", "type": "act", "col": "#bd9aff", "cd": 12, "hits": 4, "power": 4, "shape": "single", "icon": "nap", "visual": "lightning", "text": "Four elemental strikes converge on one enemy.", "from": "Warlock", "max": 10, "ascensionOnly": true},
  {"id": "rg_unlimit", "n": "Unlimit", "type": "buff", "col": "#9ce5b0", "cd": 25, "key": "ascRanged", "flat": 0, "rate": 0, "duration": 8, "icon": "ashower", "text": "Ascension: empower ranged physical attacks for 8 seconds.", "from": "Ranger", "max": 10, "ascensionOnly": true},
  {"id": "gc_claw", "n": "Dark Claw", "type": "act", "col": "#d89dff", "cd": 20, "hits": 1, "power": 0, "shape": "single", "icon": "vdust", "visual": "cross", "text": "Mark the target for 5 seconds, increasing damage from your character.", "from": "Guillotine Cross", "max": 10, "ascensionOnly": true},
- {"id": "ab_epiclesis", "n": "Epiclesis", "type": "buff", "col": "#fff0b7", "cd": 25, "key": "ascRegen", "flat": 0, "rate": 0, "duration": 5, "icon": "heal", "text": "Create a five-second healing field. Replaces the previous field.", "from": "Arch Bishop", "max": 10, "ascensionOnly": true},
+ {"id": "ab_epiclesis", "n": "Epiclesis", "type": "buff", "col": "#fff0b7", "cd": 25, "key": "ascRegen", "flat": 0, "rate": 0, "duration": 5, "icon": "heal", "text": "Create a five-second holy field with modest damage and Ascension recovery. Replaces the previous field.", "from": "Arch Bishop", "max": 10, "ascensionOnly": true},
  {"id": "mc_magma", "n": "Magma Eruption", "type": "act", "col": "#ffbd77", "cd": 10, "hits": 1, "power": 3, "shape": "splash", "icon": "fireball", "visual": "fireburst", "text": "A blast followed by four seconds of damage in the eruption area.", "from": "Mechanic", "max": 10, "ascensionOnly": true},
 );
 if(FOURTH_JOBS_LIVE)SKILLS.push(...SKILLS4);
@@ -1312,6 +1313,26 @@ for(const s of SKILLS){
     s.type==='heal'?`Auto: heals ${s.healBase?Math.round((s.healBase+s.healRank*L)*100):10+5*L}% HP below half · ${s.cd}s cooldown.`:
     `${s.text} ${s.key}: +${s.f(L).toFixed(1)}${['range','echo','momentum'].includes(s.key)?'':'%'}${s.type==='buff'?' · '+(s.id==='dpois'?5+L:['ovthrust','thrust'].includes(s.id)?8+2*Math.min(5,L):s.duration)+'s duration / '+rotationCooldown()+'s rotation cooldown':''}`;
   const describe=s.d;s.d=L=>describe(L)+(s.training?' Training: '+Object.entries(s.training).map(([key,rate])=>'+'+(rate*L).toFixed(1)+' '+key.toUpperCase()+(key==='def'?'':'%')).join(', ')+'.':'');
+}
+
+// Ground spells retain a declared total cast budget; radius growth never multiplies power.
+const GROUND_SKILLS={
+  amp:{duration:5,interval:1,cooldown:12,budget:1.4},
+  storm:{duration:4,interval:.5,cooldown:6,budget:1},
+  fnova:{duration:4,interval:.5,cooldown:6,budget:1},
+  grav:{duration:4,interval:1,cooldown:5,budget:1},
+  sanct:{duration:3,interval:1,cooldown:6,budget:1.35},
+  assum:{duration:5,interval:1,cooldown:10,budget:1.4},
+  ashower:{duration:2,interval:.5,cooldown:5,budget:1.5}
+};
+for(const sk of SKILLS){const field=GROUND_SKILLS[sk.id];if(!field)continue;
+  sk.field=field;sk.power*=field.budget;sk.cd=field.cooldown;sk.areaScale=(sk.areaScale||1)*1.35;
+  delete sk.pulse;delete sk.delay;
+  if(sk.id==='ashower')sk.shape='splash';
+  if(sk.id==='amp')sk.col='#ff9955';
+  if(sk.id==='fnova')sk.col='#ffdc75';
+  if(sk.id==='storm'){delete sk.stun;sk.slow=.2;}
+  sk.text=`A marked ground area deals its total damage over ${field.duration}s. Enemies must remain inside. At most two ground spells can be active.`;
 }
 
 function cleanSkillCombos(value){const out={};if(!value||typeof value!=='object'||Array.isArray(value))return out;
@@ -3014,7 +3035,7 @@ function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},labels={damage:'
  return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*ascUpgradeScale(k,rank)).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
-const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
+const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -3039,6 +3060,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   for(const k of['lv','exp','hp','zeny','kills','indexXp','dmg','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);if(!hadIndexXp)delete f.indexXp;
   if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
   if(f.cameraShake!==true&&f.cameraShake!==false)f.cameraShake=true;
+  f.kite=f.kite===true;
   if(typeof PGWardrobe!=='undefined'){f.appearance=PGWardrobe.normalize(f.appearance);if(f.appearance)f.sex=f.appearance.sex;}
   if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;      // and the floats are shown unless switched off
   if(!f.bgm||typeof f.bgm!=='object')f.bgm={enabled:true,volume:.05,muted:false};
@@ -3835,7 +3857,7 @@ function rotationCooldown(){return 3;}
 function comboStatus(){const c=comboConfig(),r=skillState();if(!c.enabled)return 'Combo paused';if(t<(r.recoverUntil||0))return 'Recovering · '+Math.max(0,r.recoverUntil-t).toFixed(1)+'s';
   if(!rotationSkills().length)return 'Choose an attack to begin';return r.comboSlots?'Combo · '+Math.min(r.cursor+1,r.comboSlots.length)+' / '+r.comboSlots.length:'Ready for next combo';}
 function rotationBar(){const c=comboConfig(),available=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
-  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, then recover for 3 seconds.${FOURTH_JOBS_LIVE&&S.cls==='Guillotine Cross'?' Rolling Cutter spins five times in its slot at 0.2s spacing.':' Each attack casts once.'} Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · visual-only swings between skills</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"${sk?` title="${esc(sk.n+' · Lv '+lv(sk.id)+' · '+sk.cd+'s cooldown — '+(sk.text||''))}"`:''}><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
+  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, then recover for 3 seconds.${FOURTH_JOBS_LIVE&&S.cls==='Guillotine Cross'?' Rolling Cutter spins five times in its slot at 0.2s spacing.':' Each attack casts once.'} Buffs and emergency healing run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · visual-only swings between skills</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"${sk?` title="${esc(sk.n+' · Lv '+lv(sk.id)+' · '+sk.cd+'s cooldown — '+(sk.text||''))}"`:''}><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
 }
 // v39: the master auto-cast switch. It covers every learned skill of the current line that
 // auto-casts (everything except passives), reads ON only while ALL of them are ON, and clears
@@ -4499,7 +4521,7 @@ function log(m,cls,cat,visual){const e={m,cls,cat,id:++logSequence};logs.push(e)
 
 // ---------- combat ----------
 // Magic lines hold six tiles even between casts; bows hold four, melee closes in.
-const CLASS_BAND=cls=>cls&&/^(Mage|Wizard|High Wizard|Acolyte|Priest|High Priest)$/.test(cls.n)?6:cls&&cls.rng?4:0;
+const CLASS_BAND=cls=>cls&&INT_CLASSES.includes(cls.n)?6:cls&&cls.rng?4:0;
 let standC={t:-9,r:0},engageTgt=null,engageWait=0;   // engageTgt: latched into a stand-and-trade fight (v83.1); engageWait: seconds latched while out of reach (v88.4)
 function heroStandoff(m){
   let r=CLASS_BAND(C());if(r&&C().wt.includes('bow'))r+=Math.min(.5,pv('range'));
@@ -4510,6 +4532,30 @@ function heroStandoff(m){
   // the old, longer stand-off forever, which is how a melee class could get stuck at bow range.
   if(r>standC.r||t-standC.t>=1.5)standC={t,r};
   return standC.r;
+}
+function heroKite(dt,target,reach){
+  const r=skillState();
+  if(S.kite!==true||!CLASS_BAND(C())||TRIAL.on){delete r.kite;return null;}
+  if(!r.kite||r.kite.pack!==activePack)r.kite={pack:activePack,elapsed:0,step:0};
+  const k=r.kite;k.elapsed=(k.elapsed+dt)%5;
+  if(k.elapsed<3)return null;
+  const threats=mobs.filter(o=>o.hp>0&&o.pack===activePack),nearest=Math.min(...threats.map(o=>Math.hypot(o.x-pl.x,o.z-pl.z)));
+  if(nearest>=Math.min(reach*.85,4.5)||swing||atkAnim>0)return null;
+  k.step=k.elapsed-3;
+  // Short planted attacks between steps keep this a mobile fight, with an uptime cost.
+  if(k.step% .8>.55)return {x:pl.x,z:pl.z,attack:true};
+  let best=null,score=-Infinity;
+  const away=Math.atan2(pl.z-target.z,pl.x-target.x);
+  for(let i=0;i<12;i++){
+    const a=away+i*Math.PI/6,x=cl(pl.x+Math.cos(a)*1.4,-BX_+.6,BX_-.6),z=cl(pl.z+Math.sin(a)*1.4,Z0+.6,Z1-.6);
+    if(Math.hypot(x-pl.x,z-pl.z)<.3||Math.hypot(x-target.x,z-target.z)>Math.min(reach,AGGRO-.3))continue;
+    let value=Math.min(...threats.map(o=>Math.hypot(o.x-x,o.z-z)));
+    // Do not dodge into a sleeping pack.
+    for(const o of mobs)if(o.pack!==activePack&&Math.hypot(o.x-x,o.z-z)<2.8)value-=4;
+    value+=.08*Math.cos(a-away);
+    if(value>score){score=value;best={x,z,attack:false};}
+  }
+  return best;
 }
 function shot(col){if(!mob)return;const magic=INT_CLASSES.includes(S.cls),arrow=heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)==='bow';if(!magic&&!arrow)return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||(magic?'#d9b9ff':'#fff'),arrow:!magic&&arrow})}
@@ -4530,7 +4576,7 @@ const SWING_MIN_T=.14,SWING_MAX_T=.55;     // seconds: the shortest and longest 
 // v97 combat skills: transient state is never serialized into a save.
 let skillRuntime;
 function resetSkillRuntime(keepBuffs=false){if(typeof mobs!=='undefined')for(const o of mobs){delete o.ascClaw;if(o.dots)o.dots=o.dots.filter(d=>!d.ascSource);}const previous=keepBuffs&&skillRuntime&&skillRuntime.owner===(S&&S.cls)&&skillRuntime.save===S?skillRuntime:null;
-  skillRuntime={owner:S&&S.cls,save:S,buffs:previous?previous.buffs:{},events:[],casts:{},echo:0,momentum:0,lastHit:-99,follow:0,dash:0,approach:null,
+  skillRuntime={owner:S&&S.cls,save:S,buffs:previous?previous.buffs:{},fields:[],events:[],casts:{},echo:0,momentum:0,lastHit:-99,follow:0,dash:0,approach:null,
     repeatCount:previous?previous.repeatCount:0,comboSlots:previous?previous.comboSlots:null,cursor:previous?previous.cursor:0,nextCastAt:previous?previous.nextCastAt:0,recoverUntil:previous?previous.recoverUntil:0};}
 function skillState(){if(!skillRuntime||skillRuntime.owner!==(S&&S.cls)||skillRuntime.save!==S)resetSkillRuntime();return skillRuntime;}
 function finishCombo(r){r.comboSlots=null;r.cursor=0;r.repeatCount=0;r.recoverUntil=t+3;}
@@ -4541,7 +4587,7 @@ function comboSwingWait(){const r=skillState(),sk=SKILLS.find(s=>s.id===r.comboS
 function nextComboSkill(target){const r=skillState(),c=comboConfig();if(!c.enabled||t<r.recoverUntil||comboSwingWait()>1e-8)return null;
   if(!r.comboSlots){r.comboSlots=rotationSkills().map(s=>s.id);r.cursor=0;if(!r.comboSlots.length){r.comboSlots=null;return null;}}
   while(r.cursor<r.comboSlots.length){const id=r.comboSlots[r.cursor],sk=SKILLS.find(s=>s.id===id);
-    if(sk&&skillOn(id)&&skillStackReady(sk)&&(skCd[id]||0)<=(sk.repeat?swingLength(Math.min(sk.spacing||.5,aspd()))*SWING_CONTACT+1e-8:0)&&Math.hypot(target.x-pl.x,target.z-pl.z)<=skillRange(sk,target)+.6)return sk;
+    if(sk&&skillOn(id)&&skillStackReady(sk)&&fieldReady(sk)&&(skCd[id]||0)<=(sk.repeat?swingLength(Math.min(sk.spacing||.5,aspd()))*SWING_CONTACT+1e-8:0)&&Math.hypot(target.x-pl.x,target.z-pl.z)<=skillRange(sk,target)+.6)return sk;
     r.cursor++;r.repeatCount=0;}
   finishCombo(r);return null;
 }
@@ -4808,6 +4854,34 @@ function skillTargets(sk,target,origin=pl){const area=sk.areaScale||1,shape=sk.s
     if(shape==='cone')return Math.hypot(x,z)<=5*area&&along>=0&&side<=along*1.5+.4;
     if(shape==='cross')return dist<=3.5*area&&Math.min(Math.abs((o.x-center.x)-(o.z-center.z)),Math.abs((o.x-center.x)+(o.z-center.z)))<=1.2;
     return dist<=3.5*area;});}
+function fieldReady(sk){if(!sk.field)return true;const fields=skillState().fields;return fields.length<2&&!fields.some(f=>f.sk.id===sk.id);}
+function startSkillField(sk,target,raw,L,primary=target){
+  const r=skillState();if(!fieldReady(sk))return false;
+  const config=sk.field,interval=config.interval;
+  r.fields.push({sk,primary,L,raw,x:target.x,z:target.z,pack:target.pack,map:S.mp,stage:S.lvl,
+    radius:3.5*(sk.areaScale||1),age:0,next:0,ticks:Math.round(config.duration/interval)});
+  return true;
+}
+function tickSkillFields(dt){const r=skillState();
+  for(const f of r.fields.slice()){
+    if(f.pack!==activePack||f.map!==S.mp||f.stage!==S.lvl||!skillOn(f.sk.id)){r.fields=r.fields.filter(x=>x!==f);continue;}
+    f.age+=dt;
+    while(r===skillRuntime&&f.ticks>0&&f.age+1e-8>=f.next){
+      const opening=f.next===0;f.next+=f.sk.field.interval;f.ticks--;
+      const total=Math.round(f.sk.field.duration/f.sk.field.interval),area=.8*skillTuning(true,f.sk,f.L)/skillTuning(false,f.sk,f.L);
+      for(const o of mobs.slice()){
+        if(o.hp<=0||o.pack!==f.pack||Math.hypot(o.x-f.x,o.z-f.z)>f.radius)continue;
+        const dealt=skillHit(o,f.raw/total*(o===f.primary?1:area),f.sk,!opening);
+        if(dealt>0&&o.hp>0){
+          if(f.sk.slow)o.slow={left:f.sk.field.interval+.1,power:f.sk.slow};
+          if(f.sk.pull&&!o.boss&&!o.fixed&&!o.root){const dx=f.x-o.x,dz=f.z-o.z,d=Math.hypot(dx,dz);if(d>.5){const v=Math.min(f.sk.pull/total,d-.5);o.x+=dx/d*v;o.z+=dz/d*v;}}
+        }
+      }
+      if(!simVisualsOff())playSkillFx(f.sk.id,f,f.sk.col);
+    }
+    if(f.age+1e-8>=f.sk.field.duration)r.fields=r.fields.filter(x=>x!==f);
+  }
+}
 function skillQueue(delay,fn){skillState().events.push({left:delay,owner:S.cls,fn});}
 function skillRoot(target,duration){if(!target||target.hp<=0||target.fixed||target.root>0||target.rootResist>0)return false;
   target.root=target.boss?Math.min(1.25,duration):duration;return true;}
@@ -4831,8 +4905,8 @@ function skillHit(target,raw,sk,proc=false){if(!target||target.hp<=0||!mobs.incl
 }
 function castSkill(sk,k){
   sk=ascSkillVariant(sk);
-  const target=mob;if(!target||target.hp<=0||!mobs.includes(target)||!skillStackReady(sk))return;
-  const r=skillState(),L=lv(sk.id);if(sk.id==='gc_claw'){target.ascClaw={owner:S.cls,left:5,power:ascSkillValue(sk.id,'vulnerable')};playSkillFx(sk.id,target,sk.col);return;}skillDash(sk,target);playSkillFx(sk.id,target,sk.col);
+  const target=mob;if(!target||target.hp<=0||!mobs.includes(target)||!skillStackReady(sk)||!fieldReady(sk))return;
+  const r=skillState(),L=lv(sk.id);if(sk.id==='gc_claw'){target.ascClaw={owner:S.cls,left:5,power:ascSkillValue(sk.id,'vulnerable')};playSkillFx(sk.id,target,sk.col);return;}skillDash(sk,target);if(!sk.field)playSkillFx(sk.id,target,sk.col);
   const bonus=pv('damage')+(sk.falcon?pv('falcon'):0)+(['cart','cartrev','meltdown'].includes(sk.id)?Math.min(3,r.momentum)*pv('momentum'):0);
   // INT multiplies caster skills. Physical training is folded into rank coefficients
   // before interpolation so increasing an attack rank never lowers its damage.
@@ -4848,6 +4922,12 @@ function castSkill(sk,k){
   if(sk.id==='mc_magma'){
     const token={},fieldRaw=raw;r.magma=token;const anchor={x:target.x,z:target.z,pack:target.pack};
     for(let i=1;i<=4;i++)skillQueue(i,()=>{if(r.magma!==token||activePack!==anchor.pack)return;for(const o of skillTargets(sk,anchor))skillHit(o,fieldRaw*.125,sk,true);});raw*=.5;
+  }
+  if(sk.field){
+    startSkillField(sk,target,raw,L);tickSkillFields(0);
+    holyCastEcho(sk,target,raw);
+    // Only the opening pulse is direct damage; later ticks cannot consume holy marks.
+    r.momentum=Math.min(3,r.momentum+1);r.lastHit=t;return;
   }
   const targets=skillTargets(sk,target),pulse=sk.pulse||0,death=sk.death||0;
   let dealt=0;for(const o of targets){const amount=raw*(o===target?1:.8*skillTuning(true,sk,L)/skillTuning(false,sk,L))*(1-pulse-death-(sk.dot||0));
@@ -4872,8 +4952,11 @@ function castSkill(sk,k){
   }
   if(sk.follow){r.follow=sk.follow;r.followUntil=t+3;}
   if(sk.heal&&dealt>0&&S.hp<maxHp()*.6){const h=Math.min(maxHp()-S.hp,maxHp()*sk.heal*(.5+L/sk.max));S.hp+=h;addFloat(pl.x,2.6,pl.z,'+'+Math.round(h),'#7dff7d');}
-  if(pv('echo')&&sk.magic&&++r.echo>=4&&(r.echoCd||0)<=0){r.echo=0;r.echoCd=2;skillHit(target,raw*.04*pv('echo'),sk,true);playSkillFx('judex',target,'#fff3a0');}
+  holyCastEcho(sk,target,raw);
   r.momentum=Math.min(3,r.momentum+1);r.lastHit=t;
+}
+function holyCastEcho(sk,target,raw){const r=skillState();
+  if(pv('echo')&&sk.magic&&++r.echo>=4&&(r.echoCd||0)<=0){r.echo=0;r.echoCd=2;skillHit(target,raw*.04*pv('echo'),sk,true);playSkillFx('judex',target,'#fff3a0');}
 }
 function tickCombatSkills(dt){const r=skillState();r.counter=Math.max(0,(r.counter||0)-dt);r.dash=Math.max(0,r.dash-dt);r.echoCd=Math.max(0,(r.echoCd||0)-dt);if(t-r.lastHit>5)r.momentum=0;
   for(const id in r.buffs){r.buffs[id].left-=dt;if(r.buffs[id].left<=0||!skillOn(id))delete r.buffs[id];}
@@ -4882,7 +4965,9 @@ function tickCombatSkills(dt){const r=skillState();r.counter=Math.max(0,(r.count
     const duration=ascSkillValue(sk.id,'duration')+(sk.id==='dpois'?5+lv(sk.id):['ovthrust','thrust'].includes(sk.id)?8+2*Math.min(5,lv(sk.id)):sk.duration);
     if(sk.absorb)startAbsorb({...sk.absorb,pct:sk.absorb.pct+ascSkillValue(sk.id,'barrier')/100},lv(sk.id));
     r.buffs[sk.id]={key:sk.key,value:sk.f(lv(sk.id))+ascSkillValue(sk.id,'buff'),left:duration};skCd[sk.id]=ascCooldown(sk);
-    if(sk.id==='ab_epiclesis')r.regen={left:5,pool:maxHp()*ascSkillValue(sk.id,'regen')/100,rate:maxHp()*ascSkillValue(sk.id,'regen')/500};playSkillFx(sk.id,null,sk.col);
+    if(sk.id==='ab_epiclesis'){r.regen={left:5,pool:maxHp()*ascSkillValue(sk.id,'regen')/100,rate:maxHp()*ascSkillValue(sk.id,'regen')/500};
+      if(mob&&fieldReady({field:true,id:sk.id}))startSkillField({...sk,field:{duration:5,interval:1},shape:'splash',areaScale:1.25,magic:true},mob,matk()*.8*ascUpgradeScale('damage',ascRank(sk.id)),lv(sk.id));
+    }playSkillFx(sk.id,null,sk.col);
   }
   for(const sk of SKILLS4){if(!FOURTH_JOBS_LIVE||sk.type!=='heal'||!skillOn(sk.id)||S.hp>=maxHp()*.5||(skCd[sk.id]||0)>0)continue;
     const h=Math.ceil(maxHp()*(sk.healBase+sk.healRank*lv(sk.id))*(1+ascSkillValue(sk.id,'heal')/100));S.hp=Math.min(maxHp(),S.hp+h);skCd[sk.id]=ascCooldown(sk);playSkillFx(sk.id,null,sk.col);skillNameFloat(sk.n);addFloat(pl.x,2.6,pl.z,'+'+h,sk.col);
@@ -4890,6 +4975,7 @@ function tickCombatSkills(dt){const r=skillState();r.counter=Math.max(0,(r.count
   if(r.regen&&!skillOn('ab_epiclesis'))delete r.regen;
   if(r.regen){const heal=Math.min(r.regen.pool,r.regen.rate*Math.min(dt,r.regen.left));S.hp=Math.min(maxHp(),S.hp+heal);r.regen.pool-=heal;r.regen.left-=dt;if(r.regen.left<=0)delete r.regen;}
   const events=r.events;r.events=[];for(const e of events){e.left-=dt;if(e.owner!==S.cls)continue;if(e.left<=0)e.fn();else r.events.push(e);}
+  tickSkillFields(dt);
   for(const o of mobs.slice()){
     if(o.ascClaw&&(o.ascClaw.owner!==S.cls||(o.ascClaw.left-=dt)<=0))delete o.ascClaw;
     const rooted=(o.root||0)>0;o.root=Math.max(0,(o.root||0)-dt);o.rootResist=Math.max(0,(o.rootResist||0)-dt);
@@ -4961,7 +5047,7 @@ function resolveSwing(s){
   dmgGroup=new Map();
   if(s.casts.length){
     const c=s.casts[0];
-    if(skillOn(c.sk.id)&&skillStackReady(c.sk)&&r.comboSlots&&r.comboSlots[r.cursor]===c.sk.id&&mob.pack===s.pack&&Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(c.sk,mob)+.6){
+    if(skillOn(c.sk.id)&&skillStackReady(c.sk)&&fieldReady(c.sk)&&r.comboSlots&&r.comboSlots[r.cursor]===c.sk.id&&mob.pack===s.pack&&Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(c.sk,mob)+.6){
       skCd[c.sk.id]=ascCooldown(c.sk);r.casts[c.sk.id]=t;r.nextCastAt=t+(c.sk.spacing||.5);r.repeatCount=(r.repeatCount||0)+1;if(r.repeatCount>=(c.sk.repeat||1)){r.cursor++;r.repeatCount=0;}skillNameFloat(c.sk.n);castSkill(c.sk,1);
       if(r.cursor>=r.comboSlots.length)finishCombo(r);
     }
@@ -6701,6 +6787,7 @@ const ACT={
   prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);clearPetCd(p.id);earnZeny(z);ui();save()})},
   claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){earnZeny(q.z||0);earnExp(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3','quest');S.q.splice(+i,1);checkLevel();ui();save()}},
   auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},
+  kite:v=>{S.kite=v==='kite';delete skillState().kite;ui();save()},
 
   feed:()=>{S.feed=!feedOn();feedTab();ui();save()},
   logf:v=>{if(!S.logOff||typeof S.logOff!=='object')S.logOff={};if(S.logOff[v])delete S.logOff[v];else S.logOff[v]=1;feedDraw();ui();save()},
@@ -6837,6 +6924,7 @@ function bars(){if(!S||simVisualsOff())return;applyDisplay();
   if($('eclipseJobFill')){$('eclipseJobFill').style.width=jp+'%';$('eclipseJobLevel').textContent=j.jl}
   if($('eclipseStagePips')){const host=$('eclipseStagePips'),count=S.lvl>10?5:normalStages(S.mp),stage=S.lvl>10?S.lvl-10:S.lvl;if(host.children.length!==count)host.innerHTML='<i></i>'.repeat(count);[...host.children].forEach((el,i)=>{el.className=i<stage-1?'done':i===stage-1?'now':''});host.setAttribute('aria-label',(S.lvl>10?'Nightmare ':'')+'Stage '+stage+' of '+count)}
   if($('eclipsePlayerName'))$('eclipsePlayerName').textContent=currentUser||'Adventurer';if($('eclipseAdvance'))$('eclipseAdvance').setAttribute('aria-pressed',String(S.adv!==false));
+  if($('rangedMovementMode')){const el=$('rangedMovementMode');el.value=S.kite===true?'kite':'stand';el.disabled=!CLASS_BAND(C());el.title=el.disabled?'Available to ranged classes':'Kite: attack for 3s, reposition for up to 2s. Stand still: maximum attack uptime.';}
   $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();
   const title=HUNT_TITLES.find(t=>t.id===S.equippedTitle&&titleUnlocked(t)),titleLabel=$('titleLabel');if(titleLabel){titleLabel.textContent=title?'✦ '+title.name:'';titleLabel.style.display=title?'inline-block':'none';titleLabel.title=title?'Index title · '+(title.xp??title.kills).toLocaleString()+' Index XP':''}
   $('kills').textContent=rates.kills.toFixed(1);
@@ -6898,7 +6986,7 @@ function update(dt){
   if(pv('hpreg')&&S.hp<maxHp())S.hp=Math.min(maxHp(),S.hp+dt*maxHp()*pv('hpreg')/100);
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   tickSkillFx(dt);
-  if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');skillNameFloat('First Aid');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
+  if(skillOn('aid')&&!skillOn('ab_highness')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');skillNameFloat('First Aid');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
   // the swing lands on the animation's contact frame (see playerAttack): the cast(s), the extra hits
   // and the normal strike all resolve here, and they print one number per monster.
   if(swing){swing.t-=dt;if(swing.t<=0){const sw=swing;swing=null;resolveSwing(sw);if(mob&&mob.hp<=0&&mobs.includes(mob))kill()}}
@@ -6970,7 +7058,7 @@ function update(dt){
         else{const raw=m.mag?mdef():def(),md=raw*(1-prOf(m)),cut=Math.min(.75,md/(md+4000));
           const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)*(1-Math.min(.25,skillBonus('guard')/100))*(1-ascStat('guard')/100)));const dAbs=absorbSoak(d);S.hp-=dAbs;skillState().counter=2;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,heroDamageY(),pl.z,dAbs,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
-if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(false,'defeat');return;}log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};
+if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(false,'defeat');return;}log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};resetSkillRuntime(true);
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
     // Awake monsters keep their own approach angle and are pushed apart, so a camp surrounds the hero
@@ -6987,16 +7075,8 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
       const dashReady=comboConfig().enabled&&t>=skillState().recoverUntil&&rotationSkills().some(s=>s.dash&&(skCd[s.id]||0)<=0&&dist<=s.dash+.6);
       if(!swing&&pAtkT<=0&&dist>2.3&&dashReady)playerAttack();
       if(dist>reach+.6&&dashReady)pAtkT=Math.max(0,pAtkT-dt);
-      // v83.1 (owner): HOLD means hold, and the hero has to be latched into the fight to do it. The
-      // walk target used to be a ring AROUND the monster, recomputed from its position every frame:
-      // as the monster closed in, the hero re-walked out to the ring and retreated for as long as the
-      // monster chased it (measured before this fix: 112 units of retreat in 30s, ending pinned on
-      // the lane edge with the monster still outside its attack range - i.e. a ranged class could
-      // never be hit). Walking in now ends when the target is in range and only restarts when the
-      // target really gets away (or is a different monster), so both sides settle into a stand-and-
-      // trade fight: the monster walks into its own stand-off and hits back.
-      // The break radius is kept inside the 6.5-unit wake radius, so a latched hero can never stand
-      // still watching a monster that has gone back to sleep.
+      // Stand mode holds position in range. Kite mode has a bounded 3s/2s rhythm.
+      const kite=heroKite(dt,mob,reach);
       if(dist<=reach+.6)engageTgt=mob;
       else if(engageTgt!==mob||dist>reach+1.2)engageTgt=null;
       if(engageTgt===mob){
@@ -7004,7 +7084,7 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
         // A latched target can drift just outside attack range as its camp spreads out.
         // Close that gap immediately: the old one-second walk-in wait paused combat
         // even when the hero only needed to move a few pixels. Hold still while in range.
-        if(dist<=reach+.6){tx=pl.x;tz=pl.z;pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}
+        if(dist<=reach+.6){tx=kite?kite.x:pl.x;tz=kite?kite.z:pl.z;pAtkT-=dt;if(pAtkT<=0&&(!kite||kite.attack)){playerAttack();if(mob&&mob.hp<=0){kill();return}}}
         else{engageWait+=dt;const k=reach*.85/dist;tx=mob.x+(pl.x-mob.x)*k;tz=mob.z+(pl.z-mob.z)*k}}
       else{engageWait=0;pl.orb+=dt*.8;const r=reach*.85;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r}}
   }
@@ -9930,6 +10010,28 @@ function getSkillAfterglow(){
     g.save();g.setTransform(ratio,0,0,ratio,0,0);
     PGFourthJobVisuals.aura(g,at[0],at[1],time,'#dfc582',Math.max(.01,Math.hypot(top[0]-at[0],top[1]-at[1])/120));g.restore();
   };
+  renderer.fields=(fields,project,dpr=1)=>{const g=canvas.getContext('2d'),ratio=Math.min(2,Math.max(1,dpr));
+    // Mark exactly the gameplay circle, projected on the current terrain/camera.
+    // Fields come from the combat runtime, so reset/travel removes them immediately.
+    for(const field of fields){
+      const alpha=Math.min(1,(field.sk.field.duration-field.age)*4);
+      g.save();g.setTransform(ratio,0,0,ratio,0,0);
+      g.globalAlpha=alpha*.18;g.fillStyle=field.sk.col;g.strokeStyle=field.sk.col;g.lineWidth=2;
+      g.beginPath();
+      for(let i=0;i<=64;i++){
+        const a=i*Math.PI/32,p=project(field.x+Math.cos(a)*field.radius,.045,field.z+Math.sin(a)*field.radius);
+        if(i)g.lineTo(...p);else g.moveTo(...p);
+      }
+      g.closePath();g.fill();g.globalAlpha=alpha*.85;g.stroke();
+      // Inset rune ring makes overlapping spells readable without obscuring mobs.
+      g.globalAlpha=alpha*.35;g.lineWidth=1;g.beginPath();
+      for(let i=0;i<=48;i++){
+        const a=i*Math.PI/24,p=project(field.x+Math.cos(a)*field.radius*.85,.05,field.z+Math.sin(a)*field.radius*.85);
+        if(i)g.lineTo(...p);else g.moveTo(...p);
+      }
+      g.closePath();g.stroke();g.restore();
+    }
+  };
   $('weaponSpriteLayer').after(canvas);skillAfterglow=renderer;return renderer;
 }
 function playSkillFx(id,target,color){
@@ -9944,16 +10046,19 @@ function playSkillFx(id,target,color){
   if(typeof PGSkillAfterglow!=='undefined'&&PGSkillAfterglow.has(id)&&getSkillAfterglow()){
     fx.afterglow=true;fx.life=PGSkillAfterglow.life;
   }
+  if(target?.sk?.field){fx.field=target;fx.life=Math.min(fx.life,Math.max(0,target.sk.field.duration-target.age));}
   if(skillFx.length>=28){const old=skillFx.shift();disposeSkillFx(old)}skillFx.push(fx);
 }
 function disposeSkillFx(fx){if(!fx||!fx.group)return;scene.remove(fx.group);fx.group.traverse(o=>{
   if(o.material)o.material.dispose();if(o.userData&&o.userData.skillFxOwnGeometry&&o.geometry)o.geometry.dispose()});fx.group=null}
-function tickSkillFx(dt){for(let i=skillFx.length-1;i>=0;i--){const fx=skillFx[i];fx.age+=dt;if(fx.age>=fx.life){disposeSkillFx(fx);skillFx.splice(i,1)}}}
+function tickSkillFx(dt){for(let i=skillFx.length-1;i>=0;i--){const fx=skillFx[i];fx.age+=dt;if(fx.age>=fx.life||fx.field&&!skillState().fields.includes(fx.field)){disposeSkillFx(fx);skillFx.splice(i,1)}}}
 function syncSkillFx(){
   const ascended=FOURTH_JOBS_LIVE&&typeof S!=='undefined'&&S&&CLASSES[S.cls]?.tier===4;
-  if(ascended)getSkillAfterglow();
+  const fields=skillState().fields;
+  if(ascended||fields.length)getSkillAfterglow();
   const floor=(x,z)=>typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY(x,z)-.035:0;
   if(skillAfterglow)skillAfterglow.draw(skillFx,R.domElement.clientWidth,R.domElement.clientHeight,(x,y,z)=>scr(x,y+floor(x,z),z),devicePixelRatio||1);
+  if(skillAfterglow)skillAfterglow.fields(fields,(x,y,z)=>scr(x,y+floor(x,z),z),devicePixelRatio||1);
   if(ascended)skillAfterglow?.aura(pl.x,pl.z,t);
   for(const fx of skillFx){if(fx.afterglow)continue;if(!fx.group)makeSkillFxNode(fx);const q=cl(fx.age/fx.life,0,1),ease=1-Math.pow(1-q,2);
     if(fx.at==='path')fx.group.position.set(fx.x0+(fx.x1-fx.x0)*ease,.95+Math.sin(q*Math.PI)*.34,fx.z0+(fx.z1-fx.z0)*ease);

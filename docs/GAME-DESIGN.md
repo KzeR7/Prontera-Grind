@@ -177,7 +177,30 @@ starter combo with inherited openers and attacks from newer jobs. Field transiti
 preserve combo/recovery timing, while class and account changes clear transient
 combat state. Melee classes close to normal attack range even when a ranged skill
 is learned. During a fight, characters immediately close any gap when their
-target drifts just outside attack range, and hold position once back in range.
+target drifts just outside attack range. Movement below Auto-advance selects Stand still
+(the default, maximum attack uptime) or Kite for all ranged classes. Kite attacks
+for three seconds, then repositions for up to two seconds when enemies are close,
+with short planted attacks between steps. It stops at a safe distance and avoids
+field edges and sleeping packs. The choice is saved per character/account; Endless
+Echo stays stationary. Melee classes use their ordinary movement.
+
+Meteor Storm, Storm Gust, Lord of Vermilion, Gravity Well, Judgment Pillar,
+Consecration and Arrow Shower leave marked ground areas with repeated damage.
+Their radius is 35% larger; damage checks the current enemies inside the circle
+and stays within the engaged pack. Each cast has one total damage budget split
+between ticks; moving out avoids subsequent ticks. The original target can die
+without removing the field. At most two ground spells are active, with at most
+one of each spell; blocked entries skip forward in the combo. Meteor Storm lasts
+five seconds with a 12-second cooldown (at least seven seconds without meteors).
+Ground cooldowns and ordinary combo recovery survive field travel. Travel,
+class/account replacement, defeat, resets and disabling a spell clear its field.
+
+The holy tree uses offensive holy spells with modest solo recovery. Searing Light
+heals at most once per cast below 60% HP; Searing Light and Judgment Pillar no
+longer add passive regeneration. Highness Heal takes priority over First Aid when
+learned and enabled. Epiclesis retains its earned five-second recovery and adds
+modest Ascension-scaled holy ground damage if a ground slot is free. Repeated
+field ticks cannot consume Penance repeatedly or trigger recursive Holy Echoes.
 Bow range passives extend both normal attacks and skills.
 Mage and Acolyte lines attack with magic at six tiles; their area skills
 have increased reach and damage, especially Mage. Read each skill's current definition:
