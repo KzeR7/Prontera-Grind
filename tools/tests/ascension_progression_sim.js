@@ -76,17 +76,17 @@ try{
    assert.equal(regular.hp,Math.floor(anchor.hp*hpScale*(stage===5?.5:1)),`map ${m} stage ${stage} HP; only stage-5 escorts are halved`);
    assert.equal(regular.max,regular.hp,'maximum HP matches current HP at spawn');
    assert.equal(regular.atk,Math.floor(anchor.atk*atkScale),`map ${m} stage ${stage} ATK`);
-   assert.equal(ev(`ascensionCombatStats(${m},${stage},true).atk`),Math.floor(anchor.atk*atkScale*3),`map ${m} stage ${stage} boss ATK (3x its mob)`);
+   assert.equal(ev(`ascensionCombatStats(${m},${stage},true).atk`),Math.floor(anchor.atk*atkScale*(m===11?2.25:3)),`map ${m} stage ${stage} boss ATK (Astral 3x / Thor 2.25x its mob)`);
    if(stage===1){
     console.log(`${ev('MAPS[S.mp].n')} entry: ${regular.hp} HP, ${regular.atk} ATK; ${(regular.hp/32000000).toFixed(2)}s at 32M DPS (HP only).`);
    }
    if(stage===5){
     const boss=ev('mobs.find(x=>x.boss)');
     assert.equal(boss.hp,Math.floor(anchor.hp*hpScales[m][4]*3),'stage boss retains its original HP after the escort reduction');
-    assert.equal(boss.atk,Math.floor(anchor.atk*atkScales[m][4]*3),'stage boss retains its original ATK');
+    assert.equal(boss.atk,Math.floor(anchor.atk*atkScales[m][4]*(m===11?2.25:3)),'stage boss uses its map-specific ATK multiplier');
    }
   }
  }
  ev("S.cls='Lord Knight';S.lv=150;S.mp=11;lsPut(saveKey(),JSON.stringify(S));S=load()");assert.equal(ev('S.mp'),9);
- console.log('PASS: independent fourth-job access without clears, reload/locked-save repair, stage-5 escort HP halved, unchanged ordinary/boss HP and ATK, boss HIT50/ordinary HIT45.');
+ console.log('PASS: independent fourth-job access without clears, reload/locked-save repair, stage-5 escort HP halved, unchanged ordinary/boss HP and ordinary ATK, Thor boss ATK reduced 25%, boss HIT50/ordinary HIT45.');
 }finally{balance.close();}

@@ -17,10 +17,14 @@ function setup(parent='Lord Knight'){
 function test(name,fn){fn();passed++;console.log('ok '+name)}
 try{
  for(const [parent,target,enemy,id] of expected){
-  test(parent+' enters its own Astral-strength fight and advances only after the kill',()=>{
+  test(parent+' enters its own triple-HP Astral fight and advances only after the kill',()=>{
    setup(parent);ev(`changeClass(${JSON.stringify(target)})`);
    assert.equal(ev('S.cls'),parent);assert.equal(ev('JOB_RITE.on'),true);
-   assert.deepEqual(probe('return {name:mob.n,id:mob.spriteId,hp:mob.hp,atk:mob.atk,count:mobs.length}'),{name:enemy,id,hp:ev('ascensionCombatStats(10,1).hp'),atk:ev('ascensionCombatStats(10,1).atk'),count:1});
+   assert.deepEqual(probe('return {name:mob.n,id:mob.spriteId,hp:mob.hp,atk:mob.atk,count:mobs.length}'),{name:enemy,id,hp:ev('ascensionCombatStats(10,1).hp')*3,atk:ev('ascensionCombatStats(10,1).atk'),count:1});
+   assert.equal(ev('JOB_RITE.enemy.max'),ev('JOB_RITE.enemy.hp'));
+   assert.equal(ev('JOB_RITE.deadline-Date.now()'),30000);
+   assert.equal(ev('jobRiteLeft()'),30);
+   assert.equal(g.window.document.querySelector('#jobRiteHud time').textContent,'0:30');
    assert.equal(ev('S.hp'),ev('maxHp()'));
    assert.equal(ev('mhOf(mob)'),30,'field-only +15 HIT does not change the advancement opponent');
    assert.equal(ev('mob.size'),.6);assert.equal(ev("mob.mag===['demon','tree','blob'].includes(fieldOf(10,1).mobs[0].shape)"),true);
@@ -42,20 +46,20 @@ try{
   ev("S.lv=150;S.jobs['Lord Knight'].jl=49;changeClass('Rune Knight')");assert.equal(ev('JOB_RITE.on'),false);
   ev("S.jobs['Lord Knight'].jl=50;S.cls='Novice'");assert.equal(ev("startJobRite('Rune Knight')"),false);
  });
- test('timeout at exactly 60 seconds restores field, HP and class without rewards',()=>{
-  setup();ev("changeClass('Rune Knight');t=60;update(0)");
+ test('timeout at exactly 30 seconds restores field, HP and class without rewards',()=>{
+  setup();ev("changeClass('Rune Knight');t=30;update(0)");
   assert.equal(ev('JOB_RITE.on'),true);assert.equal(ev('JOB_RITE.outcome'),'timeout');settle();
   assert.equal(ev('JOB_RITE.on'),false);assert.equal(ev('S.cls'),'Lord Knight');assert.equal(ev('JOB_RITE.result.reason'),'timeout');
   assert.equal(ev('mobs===oldMobs&&mob===oldMob&&S.hp===oldHp&&pl.x===1&&pl.z===2'),true);
  });
- test('wall-clock deadline prevents pausing or hiding from extending the minute',()=>{
-  setup();ev("changeClass('Rune Knight');JOB_RITE.deadline=Date.now()-1;update(0)");settle();assert.equal(ev('JOB_RITE.result.reason'),'timeout');
+ test('wall-clock deadline prevents pausing or hiding from extending the 30 seconds',()=>{
+  setup();ev("changeClass('Rune Knight');riteClock+=30000;update(0)");settle();assert.equal(ev('JOB_RITE.result.reason'),'timeout');
  });
  test('a kill before the deadline passes even if the next tick is after it',()=>{
-  setup();ev("changeClass('Rune Knight');t=59.999;JOB_RITE.enemy.hp=0;kill(JOB_RITE.enemy);t=60.1;update(0)");settle();assert.equal(ev('S.cls'),'Rune Knight');
+  setup();ev("changeClass('Rune Knight');t=29.999;JOB_RITE.enemy.hp=0;kill(JOB_RITE.enemy);t=30.1;update(0)");settle();assert.equal(ev('S.cls'),'Rune Knight');
  });
  test('a kill at the deadline cannot advance',()=>{
-  setup();ev("changeClass('Rune Knight');t=60;JOB_RITE.enemy.hp=0;kill(JOB_RITE.enemy);tickJobRite()");settle();assert.equal(ev('S.cls'),'Lord Knight');assert.equal(ev('JOB_RITE.result.reason'),'timeout');
+  setup();ev("changeClass('Rune Knight');t=30;JOB_RITE.enemy.hp=0;kill(JOB_RITE.enemy);tickJobRite()");settle();assert.equal(ev('S.cls'),'Lord Knight');assert.equal(ev('JOB_RITE.result.reason'),'timeout');
  });
  test('real combat damage can defeat the trial opponent',()=>{
   setup();ev("changeClass('Rune Knight');JOB_RITE.enemy.hp=1;Math.random=()=>.5;for(let i=0;i<300&&JOB_RITE.on;i++)update(1/60)");assert.equal(ev('JOB_RITE.outcome'),'passed');settle();assert.equal(ev('S.cls'),'Rune Knight');
@@ -105,7 +109,7 @@ try{
  test('dark arena hides field scenery and HUD exposes countdown and leave',()=>{
   setup();ev("changeClass('Rune Knight');jobRiteArena();jobRiteHud()");
   assert.equal(ev('scene.background.getHex()'),0x05050b);assert.equal(ev('road.visible'),false);
-  const hud=g.window.document.getElementById('jobRiteHud');assert.equal(g.window.document.body.classList.contains('job-rite'),true);assert.equal(hud.hidden,false);assert.equal(hud.querySelector('time').textContent,'1:00');assert.match(hud.textContent,/Seyren/);
+  const hud=g.window.document.getElementById('jobRiteHud');assert.equal(g.window.document.body.classList.contains('job-rite'),true);assert.equal(hud.hidden,false);assert.equal(hud.querySelector('time').textContent,'0:30');assert.match(hud.textContent,/Seyren/);
   hud.querySelector('button').click();assert.equal(ev('JOB_RITE.on'),false);assert.equal(hud.hidden,true);assert.equal(g.window.document.body.classList.contains('job-rite'),false);
  });
  console.log(passed+' job rite checks passed');

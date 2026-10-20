@@ -1,25 +1,8 @@
-// v81 dual wield: the two Assassin jobs hold a dagger in each hand.
-//   node tools/tests/dual_wield_sim.js
-//
-// The rules being tested, in the owner's words - "let set that assasin & assassin cross can
-// wield daggers. 2 hands. ... the 2nd dagger reduces damage ... compensated by more cards.
-// katar stays two-handed":
-//   * ONLY Assassin and Assassin Cross gain the dagger, and only they may hold one in the
-//     left hand. A Thief stays single-blade, and no class gets a shield it did not have.
-//   * Scheme A, the tax that keeps the second blade from being free: the left-hand dagger
-//     counts at DUAL (x0.5) of its base value and the two-handed katar at TWO_HANDED (x1.5),
-//     so a pair of equal daggers is worth exactly the same weapon value as one katar - the
-//     katar's multiplier is drawn from the dagger's, not added on top of it.
-//   * The same half rate applies to the second dagger's affixes and cards, which is the leak
-//     that actually matters: bon() runs over every equipped slot, so without the factor an
-//     off-hand dagger would donate full card power for free.
-//   * The extra sockets are what pay the second blade back. A dagger rolls at most three, so
-//     a pair tops out at six cards - three at full rate plus three at half, which is 4.5 cards
-//     of power against a katar's four. Short of that the pair is simply the weaker choice.
-//   * The left hand is a WEAPON slot, not a shield slot: a dagger there adds no DEF, and a
-//     shield still adds its full DEF for the classes allowed to hold one.
-//   * A dagger keeps its own 1-3 socket roll. The second blade is paid for with cards, not
-//     with sockets: a dual pair holds 2-6 cards against a katar's 4.
+// Assassin jobs may use a katar or two daggers. Run: node tools/tests/dual_wield_sim.js
+// v200 owner-approved weighting: main-hand 100%, off-hand 35%, katar 150%.
+// Off-hand weapon value, affixes and cards share the same weight. Three sockets
+// per dagger yield at most 4.05 full-card equivalents versus a katar's four.
+// An off-hand dagger grants no DEF; shields and ordinary main-hand gear keep full value.
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
@@ -60,7 +43,7 @@ const H = sb.__d;
 
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
-console.log('dual wield: a dagger in each hand for the two Assassin jobs\n');
+console.log('dual wield: a dagger in each hand for the three Assassin jobs\n');
 
 // ---- fixtures ---------------------------------------------------------------
 const empty = () => ({ weapon: null, armor: null, head: null, off: null, leg: null, acc1: null, acc2: null });
@@ -72,7 +55,7 @@ const mkS = (cls, eq) => ({ cls, lv: 60, st: { str: 40, agi: 40, dex: 40, luk: 2
 const wear = (cls, eq) => { H.S = mkS(cls, Object.assign(empty(), eq)); };
 
 // ---- 1. who may hold two blades -------------------------------------------
-t('only the two Assassin jobs wield a dagger alongside the katar, and only they dual-wield', () => {
+t('only the three Assassin jobs support katars and daggers, and only they dual-wield', () => {
   const both = Object.keys(H.CLASSES).filter(c => H.CLASSES[c].wt.includes('dagger') && H.CLASSES[c].wt.includes('katar'));
   assert.deepStrictEqual(both.sort(), ['Assassin', 'Assassin Cross', 'Guillotine Cross'], 'nobody else holds a dagger and a katar');
   for (const cls of both) {
@@ -92,7 +75,7 @@ t('only the two Assassin jobs wield a dagger alongside the katar, and only they 
 // a katar, or a dagger in each hand. Daggers count as katars for katar skills (owner decision).
 t('Guillotine Cross (4th job, dark-launched) uses the katar-or-dagger rule like the Assassins', () => {
   assert.ok(/\['Guillotine Cross','Assassin Cross',[^\n]*?\['katar','dagger'\]/.test(src), 'its roster row keeps katar then dagger');
-  assert.ok(H.katarOnly('Guillotine Cross'), 'it is a two-handed katar class, so a dagger pair is the same weapon value');
+  assert.ok(H.katarOnly('Guillotine Cross'), 'it is a two-handed katar class, so a katar occupies both hands');
   assert.ok(!H.katarOnly('Rune Knight') && !H.katarOnly('Thief'), 'other classes are unaffected');
 });
 
@@ -126,7 +109,7 @@ t('the left hand takes a second dagger for the Assassins and a shield for everyo
 });
 
 // ---- 2. the base-value tax --------------------------------------------------
-t('a katar counts as 1.5 weapons and a left-hand dagger as half of one', () => {
+t('a katar counts as 1.5 weapons and a left-hand dagger as 35% of one', () => {
   wear('Assassin', { weapon: katar() });
   assert.strictEqual(H.eqv('weapon'), H.ev(katar()) * 1.5, 'the katar is the two-handed multiplier on its base value');
 
@@ -134,28 +117,21 @@ t('a katar counts as 1.5 weapons and a left-hand dagger as half of one', () => {
   assert.strictEqual(H.eqv('weapon'), H.ev(dagger()), 'a main-hand dagger is worth one weapon');
 
   wear('Assassin', { weapon: dagger(), off: dagger({ id: 2 }) });
-  assert.strictEqual(H.eqv('off'), H.ev(dagger()) * 0.5, 'the second dagger is half a weapon');
+  assert.strictEqual(H.eqv('off'), H.ev(dagger()) * 0.35, 'the second dagger is 35% of a weapon');
 
   wear('Assassin', { off: shield() });
   assert.strictEqual(H.eqv('off'), H.ev(shield()), 'a shield is not taxed - it is not a weapon');
 });
 
-t('a pair of equal daggers is worth exactly one katar of the same value', () => {
-  H.S = mkS('Assassin', { weapon: katar({ val: 80 }) });
-  const single = H.atk();
-  H.S = mkS('Assassin', { weapon: dagger({ val: 80 }), off: dagger({ id: 2, val: 80 }) });
-  assert.strictEqual(H.atk(), single, 'the second blade must not add weapon value beyond the katar');
-  // and it holds at every refine, because ev() is the same function on both items
-  for (const r of [0, 1, 2, 3]) {
-    H.S = mkS('Assassin', { weapon: katar({ val: 80, r }) });
-    const k = H.atk();
-    H.S = mkS('Assassin', { weapon: dagger({ val: 80, r }), off: dagger({ id: 2, val: 80, r }) });
-    assert.strictEqual(H.atk(), k, 'refine +' + r + ' must stay at parity');
+t('equal daggers give 135% refined weapon value versus a katar at 150%', () => {
+  for (const cls of ['Assassin', 'Assassin Cross', 'Guillotine Cross']) for (const r of [0, 1, 2, 3, 10]) {
+    wear(cls, { weapon: katar({ val: 80, r }) });
+    const k = H.atk(), refined = H.ev(H.S.eq.weapon);
+    assert.strictEqual(H.eqv('weapon'), refined * 1.5);
+    wear(cls, { weapon: dagger({ val: 80, r }), off: dagger({ id: 2, val: 80, r }) });
+    assert.ok(Math.abs(H.eqv('weapon') + H.eqv('off') - refined * 1.35) < 1e-9);
+    assert.ok(H.atk() < k, cls + ' refine +' + r + ' matched pair has lower ATK');
   }
-  // ...while a katar that is one grade better than BOTH daggers is still ahead, so the
-  // dual pair is not a free upgrade to chase
-  H.S = mkS('Assassin', { weapon: katar({ val: 120 }) });
-  assert.ok(H.atk() > single, 'a better katar still beats a matched dagger pair');
 });
 
 t('a left-hand dagger adds no DEF, but a shield still adds its own', () => {
@@ -168,7 +144,7 @@ t('a left-hand dagger adds no DEF, but a shield still adds its own', () => {
 });
 
 // ---- 3. the card and affix tax ---------------------------------------------
-t('the second dagger pays half rate on its affixes and its cards', () => {
+t('the second dagger pays 35% on its affixes and its cards', () => {
   const atkCard = { stat: 'atk', v: 8 }, strAff = { k: 'str', v: 5 };
   wear('Assassin', { weapon: dagger({ cards: [atkCard], aff: [strAff] }) });
   const alone = H.bon('atk');
@@ -176,18 +152,18 @@ t('the second dagger pays half rate on its affixes and its cards', () => {
   assert.strictEqual(H.st('str'), 40 + 5, 'and its affixes count in full');
 
   wear('Assassin', { weapon: dagger(), off: dagger({ id: 2, cards: [atkCard], aff: [strAff] }) });
-  assert.strictEqual(H.bon('atk'), 4, 'the off-hand dagger is taxed to half');
-  assert.strictEqual(H.st('str'), 40 + 2.5, 'so are its affixes');
+  assert.strictEqual(H.bon('atk'), 2.8, 'the off-hand dagger contributes 35%');
+  assert.strictEqual(H.st('str'), 40 + 1.75, 'so are its affixes');
 
-  // the tax is per item, not a global halving: the main hand still pays full rate
+  // the tax is per item, not a global reduction: the main hand still pays full rate
   wear('Assassin', { weapon: dagger({ cards: [atkCard] }), off: dagger({ id: 2, cards: [atkCard] }) });
-  assert.strictEqual(H.bon('atk'), 12, 'one full card plus one half card');
+  assert.strictEqual(H.bon('atk'), 10.8, 'one full card plus one 35% card');
   // and a shield in the left hand is never taxed, because it is not a weapon
   wear('Swordman', { weapon: wpn({ wt: 'sword', cards: [atkCard] }), off: shield({ cards: [atkCard] }) });
   assert.strictEqual(H.bon('atk'), 16, 'a shield card is not a weapon card and pays full rate');
 });
 
-t('the extra sockets are the compensation: a full pair out-cards the katar by one half card', () => {
+t('the extra sockets are the compensation: a full pair out-cards the katar by 0.05 full-card equivalents', () => {
   const g2 = { stat: 'atk', v: 8 };   // a grade-2 ATK weapon card
   const pair = (n) => ({ weapon: dagger({ cards: Array.from({ length: n }, () => g2) }),
                          off: dagger({ id: 2, cards: Array.from({ length: n }, () => g2) }) });
@@ -195,31 +171,31 @@ t('the extra sockets are the compensation: a full pair out-cards the katar by on
   const katarCards = H.bon('atk');
   assert.strictEqual(katarCards, 32, 'a katar donates all four of its cards');
   // a dagger rolls at most three sockets, so a pair tops out at six cards: three at full
-  // rate plus three at half = 4.5 cards of power against the katar's four
+  // rate plus three at 35% = 4.05 cards of power against the katar's four
   for (const n of [1, 2]) {
     wear('Assassin', pair(n));
-    assert.strictEqual(H.bon('atk'), n * 8 + n * 4, n + '+' + n + ' sockets pays ' + (n + n / 2) + ' cards');
+    assert.strictEqual(H.bon('atk'), n * 8 + n * 8 * .35, n + '+' + n + ' sockets pays ' + (n + n * .35) + ' cards');
     assert.ok(H.bon('atk') < katarCards, 'and is short of the katar until both hands are full');
   }
   wear('Assassin', pair(3));
-  assert.strictEqual(H.bon('atk'), 36, 'a full pair is 4.5 cards of power');
+  assert.ok(Math.abs(H.bon('atk') - 32.4) < 1e-9, 'a full pair is 4.05 cards of power');
   assert.ok(H.bon('atk') > katarCards, 'and that is what pays for the second blade');
 });
 
-t('ATK: the pair is level on weapon value, ahead only once both hands are carded', () => {
+t('ATK: equal daggers stay below a katar even with six matching ATK cards', () => {
   const g2 = { stat: 'atk', v: 8 };
   H.S = mkS('Assassin', { weapon: katar({ val: 80 }) });
   const bare = H.atk();                                    // a katar with no cards
   H.S = mkS('Assassin', { weapon: dagger({ val: 80 }), off: dagger({ id: 2, val: 80 }) });
-  assert.strictEqual(H.atk(), bare, 'weapon value alone is exactly level');
+  assert.ok(H.atk() < bare, '135% weapon value is below the katar\'s 150%');
   H.S = mkS('Assassin', { weapon: katar({ val: 80, cards: [g2, g2, g2, g2] }) });
   const carded = H.atk();
   assert.ok(carded > bare, 'four cards are worth a great deal to a katar');
   H.S = mkS('Assassin', { weapon: dagger({ val: 80 }), off: dagger({ id: 2, val: 80 }) });
   assert.ok(H.atk() < carded, 'an uncarded pair is behind a carded katar - the damage reduction');
-  // both hands full of cards: the extra sockets win it back
+  // Six cards have only 0.05 extra card equivalents; the lower weapon value still matters.
   H.S = mkS('Assassin', { weapon: dagger({ val: 80, cards: [g2, g2, g2] }), off: dagger({ id: 2, val: 80, cards: [g2, g2, g2] }) });
-  assert.ok(H.atk() > carded, 'a fully carded pair is ahead of the katar');
+  assert.ok(H.atk() < carded, 'matching fully carded daggers stay below the katar');
 });
 
 // ---- 4. sockets -------------------------------------------------------------
@@ -290,7 +266,7 @@ t('v88b: auto-equip is dual-wield aware - a dagger takes the better hand, a kata
   // dualWield() reads S from its own scope, so the box runs the REAL function source against the
   // box's own S - not the outer harness's copy, which would answer for the wrong class.
   const dw = pick(/function dualWield\(cls=S\.cls\)\{[^}]*\}/, 'dualWield');
-  const box = { canUse:it=>H.CLASSES[box.S.cls].wt.includes(it.wt), CLASSES: H.CLASSES, ev: H.ev, ekey: it => it.slot, DUAL: .5, TWO_HANDED: 1.5, maxHp: () => 100 };
+  const box = { canUse:it=>H.CLASSES[box.S.cls].wt.includes(it.wt), CLASSES: H.CLASSES, ev: H.ev, ekey: it => it.slot, DUAL: Number(src.match(/DUAL=([.\d]+)/)[1]), TWO_HANDED: 1.5, maxHp: () => 100 };
   vm.createContext(box);
   vm.runInContext(dw + '\n' + grab('function transferEquipmentCards(', 'const CARD_MERGE_COST=') + '\n' + fn + '\nthis.__ae=autoEquip;', box);
   const ae = box.__ae;
@@ -312,6 +288,8 @@ t('v88b: auto-equip is dual-wield aware - a dagger takes the better hand, a kata
   r = run('Assassin', { weapon: dagger({ id: 1, val: 60 }), off: dagger({ id: 2, val: 50 }) }, [], { wt: 'katar', val: 100 });
   assert.ok(r.S.eq.weapon.wt === 'katar' && !r.S.eq.off, 'a winning katar occupies both hands');
   assert.ok(r.S.inv.some(x => x.id === 2), 'the off-hand blade is kept in the bag');
+  r = run('Assassin', { weapon: dagger({ id: 1, val: 100 }), off: dagger({ id: 2, val: 100 }) }, [], { wt: 'katar', val: 95 });
+  assert.ok(r.moved && r.S.eq.weapon.wt === 'katar' && !r.S.eq.off, '142.5 katar beats the 135 dagger pair');
   // a worse drop is not equipped at all
   r = run('Assassin', { weapon: dagger({ id: 1, val: 100 }), off: dagger({ id: 2, val: 90 }) }, [], { val: 10 });
   assert.ok(!r.moved && r.dropStillInBag, 'a worse dagger stays in the bag');

@@ -6975,6 +6975,28 @@ The owner's second pass over v77, six notes, all built.
 * **Delivery:** Local repair only; runtime handles commit/push. No prepared local merge exists; no PR merge or publication performed by this turn.
 * **Final checks:** Real WebGL2/SwiftShader passed twenty preview scenes across all ten maps at desktop/portrait widths with zero page/shader errors, default-map/no-field-download checks before and after preview, actor/effect floor contact, native animation, arena cleanup and missing-asset fallback. GitHub reports no required checks on the branch. Physical-device performance is unmeasured.
 
+### 2026-10-19 — `haven-v198 trial and boss balance`
+* **Changed:** Job trials have 3× Astral-entry HP and a 30-second limit. Nightmare Abyss Dark Lord has 25% more HP. Thor boss ATK is 25% lower. Prompts and current guides reflect the trial timer. Other enemies, Astral HP, per-kill rewards and the three-second result pause retain their rules.
+* **Try it:** Enter a first fourth-job trial from Class Tree; challenge Nightmare Abyss Stage 5 and Thor Stage 5.
+* **Checks:** Affected checks and encounter comparison in progress; final results follow below.
+* **Delivery:** Local changes only.
+* **Final checks:** All 19 affected simulation suites passed, including 20 trial lifecycle checks, scoped original-map boss/escort pins, real Thor incoming damage, rewards/offline, class/save/account, guide, build mirrors and publishing. Two initial test-fixture failures were corrected (const override and stale 1:00 HUD expectation). All 189 post-change encounter simulations completed; completed N+ trials cleared in 3.5–18.3 seconds, and all 21 third-job Nightmare Abyss boss attempts passed. All 42 Astral boss outcomes match baseline exactly. Comparisons exclude only timestamp-generated card IDs; combat fixtures/effects match. Renderer/FX are stubbed; owner-save and GPU acceptance were not performed. Local changes only.
+
+### 2026-10-19 — `haven-v199 Assassin weapon exclusivity`
+* **Changed:** Manual bag/slot equip and saved class-loadout restoration now enforce one katar with an empty left hand. A katar safely stows the off-hand item; the left-hand chooser refuses daggers while a katar is worn. Manual katar swaps needing extra bag space are refused before changing equipment. Dual-dagger damage weights remain 100% main hand / 50% off hand.
+* **Try it:** As Assassin, Assassin Cross or Guillotine Cross, equip two daggers, switch to a katar, then try adding a left-hand dagger. Switch back to dagger main hand to equip the second dagger.
+* **Checks:** Regression checks in progress; final results follow.
+* **Delivery:** Local changes only; earlier v198 balance changes retained.
+* **Final checks:** 17 affected suites passed: Assassin equipment, dual wield, equipment cards, gear, class change, save/load, save owner, cloud, loadout UI, fourth-job Mythic/skills, HP affixes, panel layout, update watcher, publishing and GM presets/tools. Corrected a historical class-change assertion that explicitly allowed katar plus dagger; all 27 class-change checks now pass. The broader isolated UI suite has three existing failures (two missing KIT dependencies and an old title-seal position pin), reproduced unchanged against the pre-fix source. Actual before/after manual equip reproduction preserves all three items while removing the invalid combination. No attack/damage coefficients changed. Local changes only.
+
+
+### 2026-10-19 — `haven-v200 off-hand dagger balance`
+* **Changed:** Reduced off-hand dagger refined weapon value, affixes and cards from 50% to the owner-selected 35%, including Mythic direct crit. Main-hand daggers contribute 100% and katars 150%. Equal dagger pairs now give 135% weapon value and at most 4.05 full-card equivalents from six sockets. Existing rolls, cards, sockets and item IDs are preserved; auto-equip uses the same rate.
+* **Try it:** Compare equal refined daggers with a katar as any Assassin job; switch weapons and reload to check both equipment rules and stats.
+* **Checks:** Affected regression checks in progress; results follow.
+* **Delivery:** Local changes only; previous trial/boss balance and weapon exclusivity fixes retained.
+* **Final checks:** All 19 affected suites passed: dual wield, Assassin equipment, HP affixes, crit, gear, equipment cards, cards, autosell, class change, save/load, save owner, cloud, fourth-job Mythic/skills, combat damage, Ascension attack, pet gameplay, update watcher and publishing. Tests cover all three Assassin jobs, refined weapon weighting, card/affix values after reload, stored raw rolls and auto-equip's changed comparison. Whitespace check passed. No browser/GPU or full push gate performed. Local changes only.
+
 ### 2026-10-19 — `haven-v198 update prompt and gameplay fixes`
 * **Changed:** Deployments show an update popup; players choose when to save, refresh and log in again. Weapons have distinct +10–15 glow colors and no longer shrink their glint above +10. Every completed ranked Endless Echo run pays 100 Echo Shards (two daily attempts); practice, abandoned runs and one-time caches retain their rules. Ascension Forge shows owned/required costs, red shortages, green availability and a clear reason when materials or Zeny are insufficient.
 * **Try it:** Open Equipment → Ascension Forge and select an N+ item with insufficient resources, then compare an affordable recipe. Inspect +10–15 weapons; finish a ranked Echo run. A new deployment offers Refresh & log in again without reloading automatically.
@@ -6988,3 +7010,11 @@ The owner's second pass over v77, six notes, all built.
 * **Checks:** Effect helpers (14), expanded native gameplay integration, all 19-class wardrobe combinations, fourth-job runtime, update watcher (9), site build and publishing (16) passed. Actual browser Canvas pixel and visual verification in progress.
 * **Delivery:** Local workspace changes; no commit, push or deployment.
 * **Final checks:** Actual shared-browser Canvas output passed for all 25 classes, both genders, eight directions and idle/walk/attack (1,200 routes): +15 visibly differs from +6 and +12 matches +10. This exposed weaponless Swordman attack windups; the arm fallback now covers those frames as well. Arm masks were tightened to stay around the forearms. Final effect/gameplay integration reruns, publishing and whitespace checks passed. Captured and inspected the updated idle/walk/attack comparison at desktop and 390px; zero page errors. These checks use actual Canvas compositing; WebGL/3D appearance remains unverified in this sandbox.
+
+### 2026-10-20 — `haven-v201 integrated gameplay updates`
+* **Changed:** Resolved PR #2 against main, retaining the optional update refresh, persistent refinement glows, flat Echo completion rewards and Forge feedback alongside the newer trial/boss balance and Assassin equipment rules. Synchronized the build label and preserved every historical log entry.
+* **Try it:** Compare the Forge costs, finish a ranked Echo run, inspect refined native weapons and enter a fourth-job trial.
+* **Checks:** Integration validation in progress; results follow.
+* **Delivery:** Local resolution on the assigned task branch.
+* **Final checks:** 116 of 121 JavaScript simulation/smoke suites and all three generated asset checks passed. The full gate exposed a stale animation-code backup; regenerated it and all 40 class-skin assertions passed. Five inherited suite failures remain: display camera extraction, endgame camera pin, stale balance fixtures and three UI assertions also fail on main; the journey capture manifest mismatch is already present in PR #2's wardrobe source. Publishing build/audit, all 1,200 native Canvas routes, desktop/390px Forge and update-prompt checks, history preservation, build mirrors and whitespace checks passed. Shared-browser WebGL is unavailable; UI/Canvas checks used the documented renderer stub.
+* **Delivery status:** Resolved on the local task branch. Push remains blocked by the repository's full-gate requirement; creating the replacement PR requires Full access.
