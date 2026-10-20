@@ -815,7 +815,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=188">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=198">
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 </head>
 <body>
@@ -880,7 +880,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="comboFieldStatus" data-combo-status aria-label="Combat combo status"></div>
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
-<script src="assets/wardrobe.js?v=179"></script>
+<script src="assets/wardrobe.js?v=199"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
@@ -1124,7 +1124,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-19 haven-v200 off-hand dagger balance';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-20 haven-v201 integrated gameplay updates';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1616,11 +1616,12 @@ function ascensionForgePanel(){
   const set=ASC_SETS[ascensionSetPick]||ASC_SETS.celestial,key=Object.keys(ASC_SETS).find(k=>ASC_SETS[k]===set),unlocked=fourthJob(),candidates=ascensionCandidates();
   const it=candidates.find(it=>String(it.id)===ascensionItemPick),cost=it?set.cost[it.slot]:null,mat=ASCENSION_MATERIALS[set.mat],active=ascensionSetBonuses()[key];
   const affordable=cost&&(S.ascensionMat?.[set.mat]||0)>=cost[0]&&(S.ascensionMat?.[2]||0)>=cost[1]&&S.zeny>=cost[2];
+  const costs=cost?[[mat,cost[0],S.ascensionMat?.[set.mat]||0],["Valkyrie's Sigil",cost[1],S.ascensionMat?.[2]||0],['Zeny',cost[2],S.zeny]]:[];
   return `<section class="ascension-forge"><header><span class="ui-eyebrow">EQUIPMENT EVOLUTION</span><h2>Ascension Forge</h2><p>${unlocked?'Evolve one N+ item into its Mythic set piece.':'Unlocks when you become a fourth-job class.'}</p></header>
   <div class="ascension-set-picker" aria-label="Mythic sets">${Object.entries(ASC_SETS).map(([id,v])=>`<button data-a="ascset" data-v="${id}" aria-pressed="${id===key}"><b>${v.name}</b><small>${v.mat===0?'Astral':'Primal'}</small></button>`).join('')}</div>
   <div class="ascension-forge-body"><section class="ascension-set-info"><h3>${set.name} set</h3><p>Listed offense is the +15 maximum. ATK, MATK, Crit, Crit DMG and Field DMG start at 40% of that bonus through +10; +11–15 progressively unlock the rest. Defensive and speed set bonuses are unchanged.</p><p>${active?active.count+' pieces equipped':'No set bonus active'}</p><ul>${set.bonuses.map(b=>`<li class="${active&&active.count>=b.count?'active':''}"><b>${b.count} pieces</b><span>${b.desc}</span></li>`).join('')}</ul>${active?'<p>Active set stats: '+Object.entries(active.tier.stats).map(([k,v])=>esc(k)+' +'+Number(v.toFixed(2))+'%').join(' · ')+'</p>':''}</section>
   <section class="ascension-evolution"><label>Choose N+ equipment<select data-ascension-item ${unlocked?'':'disabled'}><option value="">Select an owned item…</option>${candidates.map(x=>`<option value="${x.id}" ${it===x?'selected':''}>${esc(iname(x))}${items().includes(x)?' · Equipped':' · Bag'}</option>`).join('')}</select></label>
-  ${it?`<div class="ascension-item-change"><div>${itemIconMarkup(it)}<strong>${esc(iname(it))}</strong><small>Current N+ item</small></div><span aria-hidden="true">→</span><div>${itemIconMarkup({...it,sec:6,ascSet:key})}<strong>Mythic ${esc(it.slot==='weapon'?set.pieces.weapon[it.wt]:set.pieces[it.slot])}</strong><small>${set.name} set · Fourth jobs only</small></div></div><div class="ascension-current-affixes"><b>Current affixes</b>${(it.aff||[]).map(a=>`<p>${affTxt(a)}</p>`).join('')||'<p>No affixes</p>'}</div><p>Keeps refinement, cards, existing affixes and item identity. Fills up to four affixes.</p><dl class="ascension-costs"><div><dt>${mat}</dt><dd>${cost[0]} / ${S.ascensionMat?.[set.mat]||0}</dd></div><div><dt>Valkyrie's Sigil</dt><dd>${cost[1]} / ${S.ascensionMat?.[2]||0}</dd></div><div><dt>Zeny</dt><dd>${cost[2].toLocaleString()} / ${S.zeny.toLocaleString()}</dd></div></dl><button class="full" data-a="transformasc" data-v="${key}:${it.id}" ${unlocked&&affordable?'':'disabled'}>Ascend selected equipment</button>`:`<p class="ascension-empty">${candidates.length?'Choose equipment to preview the result and exact material cost.':'No eligible N+ equipment. Only equipment your current class can wear is listed; finish any pending reforge first.'}</p>`}
+  ${it?`<div class="ascension-item-change"><div>${itemIconMarkup(it)}<strong>${esc(iname(it))}</strong><small>Current N+ item</small></div><span aria-hidden="true">→</span><div>${itemIconMarkup({...it,sec:6,ascSet:key})}<strong>Mythic ${esc(it.slot==='weapon'?set.pieces.weapon[it.wt]:set.pieces[it.slot])}</strong><small>${set.name} set · Fourth jobs only</small></div></div><div class="ascension-current-affixes"><b>Current affixes</b>${(it.aff||[]).map(a=>`<p>${affTxt(a)}</p>`).join('')||'<p>No affixes</p>'}</div><p>Keeps refinement, cards, existing affixes and item identity. Fills up to four affixes.</p><dl class="ascension-costs">${costs.map(([name,need,have])=>`<div class="${have>=need?'ascension-enough':'ascension-missing'}"><dt>${name}</dt><dd>${have.toLocaleString()} / ${need.toLocaleString()} <small>owned / required · ${have>=need?'Enough':'Missing '+(need-have).toLocaleString()}</small></dd></div>`).join('')}</dl><p class="ascension-forge-status ${affordable?'ascension-enough':'ascension-missing'}" role="status">${!unlocked?'Requires a fourth-job class.':affordable?'All materials and Zeny available. Ready to forge.':'Unable to forge: not enough materials or Zeny. Collect the missing amounts shown in red.'}</p><button class="full" data-a="transformasc" data-v="${key}:${it.id}" ${unlocked&&affordable?'':'disabled'}>Ascend selected equipment</button>`:`<p class="ascension-empty">${candidates.length?'Choose equipment to preview the result and exact material cost.':'No eligible N+ equipment. Only equipment your current class can wear is listed; finish any pending reforge first.'}</p>`}
   </section></div></section>`;
 }
 // Detect how many pieces of each Ascension set are currently worn and return the active bonuses.
@@ -2067,25 +2068,23 @@ const prOf=m=>Math.min(.6,Math.max(0,((m.lvl|0)-60)*.02))+(m.boss?.1:0);
 // stays unlimited; ranked stays capped at two runs a day. The character and target hold still -
 // this is a measurement, not a fight.
 const TRIAL_SECS=180,TRIAL_RANKED_PER_DAY=2;
-// A completed ranked run pays its total DPS bracket, never a personal-best bonus. The best record
-// still updates independently; this keeps the reward predictable and respects the earlier owner call.
+// Every completed ranked run pays 100 Echo Shards. DPS still determines personal records
+// and one-time milestone caches, independently of the repeatable completion reward.
 // Leaving a ranked run inside the ten-second grace returns the attempt; after that it is spent, and
-// an unfinished run earns neither the bracket payout nor milestone caches.
+// an unfinished run earns neither the completion payout nor milestone caches.
 const TRIAL_GRACE=10;
 // The ranked day rolls over on the same clock the boards use (Asia/Singapore), so "2 a day"
 // means the same thing everywhere.
 const trialDay=()=>new Date(Date.now()+8*3600000).toISOString().slice(0,10);
 const trialLeftToday=()=>{const t=S&&S.trial;return t&&t.day===trialDay()?Math.max(0,TRIAL_RANKED_PER_DAY-(t.used|0)):TRIAL_RANKED_PER_DAY};
 const trialClock=()=>{const s=Math.max(0,Math.ceil(TRIAL.left));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
-// Repeatable total payout ladder, in DPS. The completion bracket ensures a finished ranked attempt
-// always pays something; higher DPS replaces that amount with the matching bracket (it does not stack).
-const TRIAL_PAY=[[0,1],[100000,3],[250000,5],[500000,8],[750000,12],[1000000,16],[1500000,22],[2250000,30],[3000000,40],[4500000,50]];
+// One completion reward at every DPS; keep the shared payout helpers for the lobby and result.
+const TRIAL_PAY=[[0,100]];
 const trialShardsFor=dps=>{let v=TRIAL_PAY[0][1];for(const[at,pay]of TRIAL_PAY)if(dps>=at)v=pay;return v};
-const trialPayNext=()=>{const st=trialState();return TRIAL_PAY.find(([at])=>at>st.best)||null};
 const trialShortDps=n=>n>=1e6?(Math.round(n/1e4)/100)+'M':(n>=1e3?Math.round(n/1e3)+'k':String(Math.round(n)));
 const trialPayLabel=at=>at===0?'Completed run':trialShortDps(at)+' DPS';
 const trialLadderHtml=()=>`<div class="trial-ladder" aria-label="Repeatable Echo Shard payouts">${TRIAL_PAY.map(([at,pay])=>`<span class="trial-rung"><b>${trialPayLabel(at)}</b><small>${pay} Echo Shards</small></span>`).join('')}</div>`;
-const trialLadderText=()=>'Repeatable total payout per ranked run: '+TRIAL_PAY.map(([at,pay])=>trialPayLabel(at)+' -> '+pay+' Echo Shards').join(' · ')+' · one bracket, not stacked; a personal best does not add a bonus.';
+const trialLadderText=()=>'Repeatable total payout per ranked run: '+TRIAL_PAY.map(([at,pay])=>trialPayLabel(at)+' -> '+pay+' Echo Shards').join(' · ')+' · any DPS; up to two ranked runs per day. A personal best does not add a bonus.';
 // One-off chests (owner: "the store price & chests should be readjust for endless"), claimed in order
 // the first time a ranked run reaches the mark, so one huge run can open several at once. The two
 // named rungs are his own yardsticks: 1.5M is a fully decked Lv 150 character on its own, 4.5M is that
@@ -2106,8 +2105,7 @@ function trialGrantChest(c){
   if(c.z)earnZeny(c.z);
   if(c.ori)S.ore.ori=(S.ore.ori|0)+c.ori;
   if(c.elu)S.ore.elu=(S.ore.elu|0)+c.elu}
-// Store prices are balanced around a 1-50 Shard ranked payout (100/day at the two-run cap):
-// about two top-rank days for a random Legendary card and four for Nightmare gear.
+// Exchange prices are unchanged; two completed ranked runs now earn 200 Shards per day.
 const TRIAL_STORE=[
   {id:'ori',   c:45,  n:'Oridecon x5',                   d:'Weapon refine material. Five Oridecon for 45 Echo Shards.'},
   {id:'elu',   c:45,  n:'Elunium x5',                    d:'Armour refine material. Five Elunium for 45 Echo Shards.'},
@@ -2142,7 +2140,7 @@ function trialLobby(view){
       <div class="trial-foot"><button data-trial="store">Back to Exchange</button></div>`;
     el.classList.add('on');return el}
   if(view==='result'){body.innerHTML=trialResultHtml();el.classList.add('on');return el}
-  const next=trialChestNext(),nx=trialPayNext(),top=TRIAL_PAY[TRIAL_PAY.length-1][1],floor=TRIAL_PAY[0][1];
+  const next=trialChestNext(),pay=trialShardsFor(0);
   body.innerHTML=`
     <div class="trial-intro"><b>Three minutes of pure damage</b><span>Lord of Death Illusion never dies or attacks. Your character and the target both stay in place.</span></div>
     <div class="trial-stats">
@@ -2155,7 +2153,7 @@ function trialLobby(view){
     <div class="trial-row">
       <button class="trial-act" data-trial="ranked" ${left?'':'disabled'}>
         <span class="trial-choice-mark" aria-hidden="true">&#9733;</span>
-        <span class="trial-choice-copy"><b>Ranked attempt</b><small>${left?`Earn ${floor}-${top} Echo Shards from the completed-run DPS bracket.`:'Your ranked attempts are used for today.'}</small><small>${left?`${left}/2 ranked attempts remain today.`:'Attempts reset at the daily rollover.'}</small></span>
+        <span class="trial-choice-copy"><b>Ranked attempt</b><small>${left?`Earn ${pay} Echo Shards for completing the run, at any DPS.`:'Your ranked attempts are used for today.'}</small><small>${left?`${left}/2 ranked attempts remain today.`:'Attempts reset at the daily rollover.'}</small></span>
         <span class="trial-choice-timer">3:00</span></button>
       <button class="trial-act" data-trial="training">
         <span class="trial-choice-mark" aria-hidden="true">&#9655;</span>
@@ -2166,7 +2164,7 @@ function trialLobby(view){
         <span class="trial-choice-copy"><b>Shard Store</b><small>Exchange Echo Shards for refine supplies, Zeny, cards and Nightmare gear.</small></span>
         <span class="trial-choice-timer">OPEN</span></button>
     </div>
-    <details class="trial-reward-details" open><summary>Repeatable DPS payout <small>one total bracket per completed ranked run</small></summary>${trialLadderHtml()}</details>
+    <details class="trial-reward-details" open><summary>Ranked completion payout <small>100 Echo Shards per completed ranked run</small></summary>${trialLadderHtml()}</details>
     <p class="trial-note">Milestone caches are one-time rewards. Ranked payouts repeat; a new personal best updates your record but adds no bonus.</p>
     <div class="trial-foot"><button data-trial="close">Close</button></div>`;
   el.classList.add('on');
@@ -8727,7 +8725,7 @@ function skinWeaponPlacement(p,clsRec,view,fi){
 }
 // Cosmetic milestones; no stat bonuses and no changes to the source art.
 const LEVEL_AURAS=[{at:50,color:'#79dcff',pattern:'compass'},{at:99,color:'#b897ff',pattern:'arcane'},{at:150,color:'#ffd779',pattern:'sunburst'}];
-const REFINE_GLOWS=[{at:7,color:'#71ffae',edge:.65,alpha:.6},{at:9,color:'#a78bfa',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95},{at:11,color:'#ff9500',edge:1.6,alpha:1},{at:13,color:'#ffa500',edge:1.8,alpha:1},{at:15,color:'#ffcc00',edge:2,alpha:1}];
+const REFINE_GLOWS=[{at:7,color:'#71ffae',edge:.65,alpha:.6},{at:9,color:'#a78bfa',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95},{at:13,color:'#a3ff32',edge:1.8,alpha:1},{at:14,color:'#ffcc00',edge:1.9,alpha:1},{at:15,color:'#32e6ff',edge:2,alpha:1}];
 const milestone=(rows,value)=>rows.filter(x=>value>=x.at).at(-1)||null;
 let levelAura=null;
 // Ribbon geometry keeps the sigil strokes crisp on both WebGL and mobile renderers.
@@ -8849,8 +8847,8 @@ function weaponTip(im,gx,gy){
   return tips.get(key);
 }
 function drawWeaponGlint(ctx,glow,x,y,now){
-  const radius=(glow.at===10?9:glow.at===7?7:5)*(.85+.15*Math.sin(now*.006));
-  ctx.save();ctx.translate(x,y);ctx.globalCompositeOperation='lighter';ctx.fillStyle=glow.color;ctx.shadowColor=glow.color;ctx.shadowBlur=glow.at===10?7:4;
+  const radius=(glow.at>=10?9+(glow.at-10)*.6:glow.at===7?7:5)*(.85+.15*Math.sin(now*.006));
+  ctx.save();ctx.translate(x,y);ctx.globalCompositeOperation='lighter';ctx.fillStyle=glow.color;ctx.shadowColor=glow.color;ctx.shadowBlur=glow.at>=10?7:4;
   const star=r=>{ctx.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,rr=i%2?r*.18:r;const px=Math.sin(a)*rr,py=Math.cos(a)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();ctx.fill();};
   star(radius);ctx.shadowBlur=0;ctx.fillStyle='#fff5ed';star(radius*.62);ctx.restore();
 }
@@ -8864,6 +8862,30 @@ function nativeWeaponCrop(image,p){
   const tip=weaponTip(cv,.5,.9),crop={cv,tip};
   if(frames.size>=32){const oldest=frames.keys().next().value;frames.get(oldest).cv.width=0;frames.delete(oldest)}
   frames.set(key,crop);return crop;
+}
+// Native idle/walk poses can stow the weapon. Use only the lateral arm regions of the
+// current body layer for a soft glow; attachment positions and source pixels stay native.
+const nativeArmCrops=new WeakMap();
+function nativeArmCrop(image,p){
+  let frames=nativeArmCrops.get(image);if(!frames){frames=new Map();nativeArmCrops.set(image,frames)}
+  const key=p.slice(0,4).join(':');if(frames.has(key))return frames.get(key);
+  const cv=document.createElement('canvas');cv.width=p[2];cv.height=p[3];const ctx=cv.getContext('2d');
+  ctx.drawImage(image,p[0],p[1],p[2],p[3],0,0,p[2],p[3]);
+  ctx.globalCompositeOperation='destination-in';ctx.beginPath();
+  for(const side of [.16,.84]){ctx.moveTo((side+.18)*p[2],.43*p[3]);ctx.ellipse(side*p[2],.43*p[3],.18*p[2],.16*p[3],0,0,Math.PI*2)}
+  ctx.fill();
+  if(frames.size>=32){const oldest=frames.keys().next().value;frames.get(oldest).width=0;frames.delete(oldest)}
+  frames.set(key,cv);return cv;
+}
+function drawNativeArmGlow(ctx,image,p,phase,glow,now){
+  const cv=nativeArmCrop(image,p),pulse=.85+.15*Math.sin(now*.005);
+  if(phase==='before'){
+    drawWeaponEdge(ctx,cv,{...glow,edge:glow.edge+1,alpha:glow.alpha*.4*pulse},p[4],p[5],p[2],p[3]);
+    drawWeaponEdge(ctx,cv,{...glow,alpha:glow.alpha*pulse},p[4],p[5],p[2],p[3]);
+  }else{
+    ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha*=.2*glow.alpha*pulse;
+    ctx.drawImage(weaponGlowMask(cv,glow.color),p[4],p[5]);ctx.restore();
+  }
 }
 function drawNativeWeaponGlow(ctx,image,p,phase,glow,trail,progress,now){
   const {cv,tip}=nativeWeaponCrop(image,p),x=p[4]+tip[0]*p[2],y=p[5]+tip[1]*p[3];
@@ -10170,24 +10192,32 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();el
 setInterval(bgTick,SIM_BG_MS);
 resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();
 if(typeof BGM!=='undefined')BGM.playLogin();
-// ---------- update watcher (v88) ---------------------------------------------------------------
-// The owner asked: when a Cloudflare deploy lands, every player's browser should hard-refresh by
-// itself, on PC and on mobile. /api/version (functions/api/version.js) answers with the BUILD
-// string of the DEPLOYED index.html - read through the deployment's own asset store, so it is
-// always the live build - and its response is no-store, so this poll can never be served a stale
-// copy. Once a minute the page compares it with the BUILD it is running; on a mismatch the page
-// reloads itself, and Cloudflare's must-revalidate cache policy makes that reload a hard refresh
-// (new HTML, new scripts). A missing or failing endpoint (a plain static host, file://, the offline
-// dev server) simply never fires - local play is never interrupted.
+// ---------- update watcher ---------------------------------------------------------------
+// Deployments notify players once; only their button click saves and refreshes the page.
+function showUpdatePrompt(build=BUILD){
+  if(document.getElementById('updatePrompt')||showUpdatePrompt.build===build)return;
+  showUpdatePrompt.build=build;
+  const prompt=document.createElement('section');prompt.id='updatePrompt';
+  prompt.setAttribute('role','dialog');prompt.setAttribute('aria-labelledby','updatePromptTitle');
+  prompt.innerHTML='<h2 id="updatePromptTitle">Update available</h2><p>A new game update is ready. Refresh when you are ready, then log in again.</p><button type="button">Refresh &amp; log in again</button><button type="button" data-update-later>Keep playing</button>';
+  prompt.querySelector('button').onclick=async()=>{
+    const button=prompt.querySelector('button');if(button.disabled)return;
+    button.disabled=true;button.textContent='Saving and refreshing…';
+    save();
+    try{await cloudFlushNow()}finally{location.reload()}
+  };
+  prompt.querySelector('[data-update-later]').onclick=()=>prompt.remove();
+  document.body.appendChild(prompt);
+}
 function updateWatch(){
   if(typeof fetch!=='function'||typeof location==='undefined'||!location.reload)return;
-  fetch('api/version?_='+Date.now(),{cache:'no-store'}).then(r=>r&&r.ok?r.text():null).then(txt=>{
+  return fetch('api/version?_='+Date.now(),{cache:'no-store'}).then(r=>r&&r.ok?r.text():null).then(txt=>{
     txt=String(txt||'').trim();
-    if(txt&&txt!==BUILD)location.reload();
+    if(txt&&txt!==BUILD)showUpdatePrompt(txt);
   }).catch(()=>{});
 }
 setInterval(updateWatch,60000);
 </script>
-<script src="assets/wardrobe-ui.js?v=179"></script>
+<script src="assets/wardrobe-ui.js?v=199"></script>
 </body>
 </html>

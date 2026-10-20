@@ -627,9 +627,19 @@ space without changing any native pixels, placement or animation timing.
 ## Refine effects (v134)
 
 The live hero supplies an optional `weaponEffect(ctx, image, layer, phase)` callback
-as the last argument to `PGWardrobe.draw`. It runs before and after each native
+as the eighth argument to `PGWardrobe.draw`. It runs before and after each native
 `weapon` layer, preserving native layer order and source pixels. The game crops
 those layers for refine edging/glints and a 120ms swing-tip trail, bounded to 32
 cached crops per source image. Refined heroes repaint at up to 30 FPS for glints
 and fading trails even when the native pose is unchanged. Native idle/walk art
-keeps its stowed weapons; the effect appears wherever the source draws a weapon.
+keeps its stowed weapons. In v199, the ninth optional `stowedEffect` callback runs
+before/after the body layer for frames without a native weapon, including attack
+windups.
+The game masks two lateral arm regions from the current body frame, adds a pulsing
+edge and a faint additive overlay, and keeps hair/accessories and native source
+assets unchanged. Arm crops have their own 32-frame-per-image bound. Weapon-bearing
+frames use only the weapon effect, so the two effects do not overlap.
+The live adapter repaints and resets trails when the pose or glow tier changes.
+
+Owner glow tiers: below +7 none; +7–8 mint; +9 violet; +10–12 crimson; +13 lime;
++14 gold; +15 cyan. Unlisted ranks inherit the closest lower tier.

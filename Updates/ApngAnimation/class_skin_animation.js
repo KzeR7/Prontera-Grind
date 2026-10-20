@@ -301,7 +301,7 @@ function skinWeaponPlacement(p,clsRec,view,fi){
 }
 // Cosmetic milestones; no stat bonuses and no changes to the source art.
 const LEVEL_AURAS=[{at:50,color:'#79dcff',pattern:'compass'},{at:99,color:'#b897ff',pattern:'arcane'},{at:150,color:'#ffd779',pattern:'sunburst'}];
-const REFINE_GLOWS=[{at:7,color:'#71ffae',edge:.65,alpha:.6},{at:9,color:'#a78bfa',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95},{at:11,color:'#ff9500',edge:1.6,alpha:1},{at:13,color:'#ffa500',edge:1.8,alpha:1},{at:15,color:'#ffcc00',edge:2,alpha:1}];
+const REFINE_GLOWS=[{at:7,color:'#71ffae',edge:.65,alpha:.6},{at:9,color:'#a78bfa',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95},{at:13,color:'#a3ff32',edge:1.8,alpha:1},{at:14,color:'#ffcc00',edge:1.9,alpha:1},{at:15,color:'#32e6ff',edge:2,alpha:1}];
 const milestone=(rows,value)=>rows.filter(x=>value>=x.at).at(-1)||null;
 let levelAura=null;
 // Ribbon geometry keeps the sigil strokes crisp on both WebGL and mobile renderers.
@@ -374,7 +374,7 @@ function syncLevelAura(){
     }
     levelAura=buildLevelAura(a);scene.add(levelAura);
   }
-  levelAura.visible=!!heroSpr&&heroSpr.visible;levelAura.position.set(pl.x,.045,pl.z);
+  levelAura.visible=!!heroSpr&&heroSpr.visible;levelAura.position.set(pl.x,.045+(typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY()-.035:0),pl.z);
   levelAura.scale.setScalar(1+Math.sin(t*2)*.025);
   // Cosmetic rotation follows real time even while simulation time is paused.
   const spin=skinNow()/1000;
@@ -423,8 +423,8 @@ function weaponTip(im,gx,gy){
   return tips.get(key);
 }
 function drawWeaponGlint(ctx,glow,x,y,now){
-  const radius=(glow.at===10?9:glow.at===7?7:5)*(.85+.15*Math.sin(now*.006));
-  ctx.save();ctx.translate(x,y);ctx.globalCompositeOperation='lighter';ctx.fillStyle=glow.color;ctx.shadowColor=glow.color;ctx.shadowBlur=glow.at===10?7:4;
+  const radius=(glow.at>=10?9+(glow.at-10)*.6:glow.at===7?7:5)*(.85+.15*Math.sin(now*.006));
+  ctx.save();ctx.translate(x,y);ctx.globalCompositeOperation='lighter';ctx.fillStyle=glow.color;ctx.shadowColor=glow.color;ctx.shadowBlur=glow.at>=10?7:4;
   const star=r=>{ctx.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,rr=i%2?r*.18:r;const px=Math.sin(a)*rr,py=Math.cos(a)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();ctx.fill();};
   star(radius);ctx.shadowBlur=0;ctx.fillStyle='#fff5ed';star(radius*.62);ctx.restore();
 }
@@ -438,6 +438,30 @@ function nativeWeaponCrop(image,p){
   const tip=weaponTip(cv,.5,.9),crop={cv,tip};
   if(frames.size>=32){const oldest=frames.keys().next().value;frames.get(oldest).cv.width=0;frames.delete(oldest)}
   frames.set(key,crop);return crop;
+}
+// Native idle/walk poses can stow the weapon. Use only the lateral arm regions of the
+// current body layer for a soft glow; attachment positions and source pixels stay native.
+const nativeArmCrops=new WeakMap();
+function nativeArmCrop(image,p){
+  let frames=nativeArmCrops.get(image);if(!frames){frames=new Map();nativeArmCrops.set(image,frames)}
+  const key=p.slice(0,4).join(':');if(frames.has(key))return frames.get(key);
+  const cv=document.createElement('canvas');cv.width=p[2];cv.height=p[3];const ctx=cv.getContext('2d');
+  ctx.drawImage(image,p[0],p[1],p[2],p[3],0,0,p[2],p[3]);
+  ctx.globalCompositeOperation='destination-in';ctx.beginPath();
+  for(const side of [.16,.84]){ctx.moveTo((side+.18)*p[2],.43*p[3]);ctx.ellipse(side*p[2],.43*p[3],.18*p[2],.16*p[3],0,0,Math.PI*2)}
+  ctx.fill();
+  if(frames.size>=32){const oldest=frames.keys().next().value;frames.get(oldest).width=0;frames.delete(oldest)}
+  frames.set(key,cv);return cv;
+}
+function drawNativeArmGlow(ctx,image,p,phase,glow,now){
+  const cv=nativeArmCrop(image,p),pulse=.85+.15*Math.sin(now*.005);
+  if(phase==='before'){
+    drawWeaponEdge(ctx,cv,{...glow,edge:glow.edge+1,alpha:glow.alpha*.4*pulse},p[4],p[5],p[2],p[3]);
+    drawWeaponEdge(ctx,cv,{...glow,alpha:glow.alpha*pulse},p[4],p[5],p[2],p[3]);
+  }else{
+    ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha*=.2*glow.alpha*pulse;
+    ctx.drawImage(weaponGlowMask(cv,glow.color),p[4],p[5]);ctx.restore();
+  }
 }
 function drawNativeWeaponGlow(ctx,image,p,phase,glow,trail,progress,now){
   const {cv,tip}=nativeWeaponCrop(image,p),x=p[4]+tip[0]*p[2],y=p[5]+tip[1]*p[3];

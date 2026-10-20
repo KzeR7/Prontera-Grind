@@ -76,7 +76,8 @@ function captureWardrobeFrame(spr,dir,run,attack,now=performance.now()){const sk
  if(sk.paint===paint)return false;
  if(sk.trailRoute!==route||sk.trailTier!==glow?.at){sk.refineTrails=[];sk.trailRoute=route;sk.trailTier=glow?.at}
  let weaponIndex=0;const effect=glow?(ctx,image,p,phase)=>{const trail=sk.refineTrails[weaponIndex]||(sk.refineTrails[weaponIndex]={points:[],progress:null});drawNativeWeaponGlow(ctx,image,p,phase,glow,trail,progress,now);if(phase==='after')weaponIndex++}:null;
- PGWardrobe.draw(sk.cv.getContext('2d'),sk.look,stance,dir,ms,progress,now,effect);sk.paint=paint;sk.tex.needsUpdate=true;return true}
+ const arms=glow?(ctx,image,p,phase)=>drawNativeArmGlow(ctx,image,p,phase,glow,now):null;
+ PGWardrobe.draw(sk.cv.getContext('2d'),sk.look,stance,dir,ms,progress,now,effect,arms);sk.paint=paint;sk.tex.needsUpdate=true;return true}
 function wardrobePortrait(cv,cls){
  if(!wardrobeSupported(cls)){cv._wardrobePaint='';return false}
  let look=wardrobeEquipped&&wardrobeEquipped.cls===cls?wardrobeEquipped:null;
