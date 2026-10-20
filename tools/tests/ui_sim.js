@@ -664,6 +664,8 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
     // the pet buff chips bars() now draws: no pet buff is running in this fixture
     let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={};
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
+    ${pick(/const INT_CLASSES=[^\n]*/, 'INT_CLASSES')}
+    ${pick(/const CLASS_BAND=[^\n]*/, 'ranged class band')}
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
     const esc=s=>String(s),applyDisplay=()=>{},safeCount=n=>Math.max(0,Number(n)||0),eclipseSetMarkup=(node,html)=>{node.innerHTML=html};
@@ -1442,6 +1444,8 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
     let S={lv:20,exp:90,hp:80,kills:0,zeny:0},hudRate=null,zenyEarned=0,expEarned=0,currentUser='A';
     const HUNT_TITLES=[{id:'field-scout',name:'Field Scout',kills:500}],titleUnlocked=t=>S.kills>=t.kills;
     let petBuff={atk:20,matk:0,hp:20,leech:0,atkT:12.4,matkT:0,hpT:3.2,leechT:0},petBuffSrc={atk:'Poring',hp:'Drops'};
+    ${pick(/const INT_CLASSES=[^\n]*/, 'INT_CLASSES')}
+    ${pick(/const CLASS_BAND=[^\n]*/, 'ranged class band')}
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
     ${grab('const SKILL_PICTO=', '// The CDM affix stays in the roll pool')}

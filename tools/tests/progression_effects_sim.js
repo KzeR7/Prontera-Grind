@@ -61,6 +61,23 @@ try{
   assert.equal(game.ev('milestone(REFINE_GLOWS,6)'),null);
   for(const [rank,tier] of [[7,7],[8,7],[9,9],[10,10]])assert.equal(game.ev(`milestone(REFINE_GLOWS,${rank}).at`),tier);
  });
+ test('owner glow tiers inherit the closest earlier rank, with nothing below +7',()=>{
+  const expected=[null,null,null,null,null,null,null,7,7,9,10,10,10,13,14,15];
+  for(let rank=0;rank<=15;rank++)assert.equal(game.ev(`milestone(REFINE_GLOWS,${rank})?.at??null`),expected[rank]);
+  assert.deepEqual(JSON.parse(game.ev('JSON.stringify(REFINE_GLOWS.map(g=>[g.at,g.color]))')),[[7,'#71ffae'],[9,'#a78bfa'],[10,'#ff3049'],[13,'#a3ff32'],[14,'#ffcc00'],[15,'#32e6ff']]);
+  const sizes=[];
+  for(const rank of [10,13,14,15])sizes.push(game.ev(`(()=>{let extent=0;const ctx={save(){},restore(){},translate(){},beginPath(){},closePath(){},moveTo(x,y){extent=Math.max(extent,Math.hypot(x,y))},lineTo(x,y){extent=Math.max(extent,Math.hypot(x,y))},fill(){}};drawWeaponGlint(ctx,milestone(REFINE_GLOWS,${rank}),0,0,1000);return extent})()`));
+  for(let i=1;i<sizes.length;i++)assert.ok(sizes[i]>sizes[i-1]);
+ });
+ test('arm crops are frame-specific, bounded, and draw in both native layer phases',()=>{
+  game.ev(`window.armImage={};window.armLayer=[0,0,40,70,130,120,10000,'body'];window.armMask=nativeArmCrop(armImage,armLayer)`);
+  assert.equal(game.ev('nativeArmCrop(armImage,armLayer)===window.armMask'),true);
+  assert.equal(game.ev('window.armMask.width'),40);assert.equal(game.ev('window.armMask.height'),70);
+  const result=JSON.parse(game.ev(`JSON.stringify((()=>{const calls=[],ctx={globalAlpha:.8,save(){},restore(){},drawImage:(...args)=>calls.push(args.slice(1))};drawNativeArmGlow(ctx,armImage,armLayer,'before',REFINE_GLOWS[2],1000);const alpha=ctx.globalAlpha;drawNativeArmGlow(ctx,armImage,armLayer,'after',REFINE_GLOWS[2],1000);return {calls,alpha}})())`));
+  assert.equal(result.calls.length,9);assert.equal(result.alpha,.8);
+  game.ev('for(let i=0;i<40;i++)nativeArmCrop(armImage,[i,0,40,70,130,120])');
+  assert.equal(game.ev('nativeArmCrops.get(armImage).size'),32);
+ });
  test('weapon palette is independent of aura colors and +10 is crimson',()=>{
   assert.equal(game.ev('REFINE_GLOWS.every(w=>!LEVEL_AURAS.some(a=>a.color===w.color))'),true);
   assert.equal(game.ev('milestone(REFINE_GLOWS,10).color'),'#ff3049');
