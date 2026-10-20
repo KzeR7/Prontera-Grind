@@ -499,3 +499,42 @@ and `node tools/tests/ascension_progression_sim.js` for triple trial HP, the
 30-second simulation/wall-clock deadline, all six promotion routes, scoped
 Nightmare Abyss boss HP and real Thor incoming damage. Include reward/offline,
 class/save/account, guide and build-mirror checks for these boundaries.
+
+## v201 tactical movement and ground spells
+
+Run `node tools/tests/ground_combat_sim.js` for the saved selector, all ranged
+class tiers, real-loop 3s/2s movement, bounds, fixed total field damage, current
+radius membership, target death, two-field limit, Meteor cooldown/recovery,
+travel/class/account/reset cleanup, holy procs and capped healing.
+`afterglow_sim.js` includes terrain/camera projection, marker radius, Canvas state
+and effect cleanup. The reviewed Afterglow adapter and generated choreography
+remain pinned; the combat runtime adds the ground marker pass.
+
+Paired measurements against the pre-retune revision (a26d15d2) can be reproduced
+without overwriting historical balance fixtures:
+
+```sh
+node tools/compare_ground_skills.cjs /tmp/ground-balance.json --seconds=120 --seeds=123,987
+node tools/compare_tactical_encounters.cjs /tmp/tactical-encounters.json
+```
+
+The former uses three legal rank/stat/gear profiles, one/three targets, 20s
+warm-up and the real 30Hz combat loop. The latter is a bounded diagnostic at
+seed 789: 60s farming and a 90s boss limit for High Wizard/High Priest/Sniper in
+intermediate and Nightmare gear, comparing the old game, Stand still and Kite.
+These are samples, not exhaustive balance proof. Historical `skill_balance_sim`
+fixtures hash the whole combat source and need fresh historical measurements
+before their separate gate can pass; do not edit their hashes to accept new code.
+
+After building, use the documented optional browser dependencies:
+
+```sh
+CHROMIUM_BUNDLED_LIBS=1 node tools/check_ground_combat_browser.cjs http://localhost:8788/ node_modules/.arena-checks/ground-browser
+node tools/check_ground_combat_browser.cjs http://localhost:8788/ node_modules/.arena-checks/ground-shared --shared
+```
+
+The shared mode attaches to Preview, using a renderer stub where shared Chromium
+cannot create WebGL. The ordinary mode uses real WebGL through software Chromium.
+Both exercise the control at 1280px/390px, saving/reloading, melee disabling,
+marker pixels, damage, radius and class cleanup. Shared mode intentionally pauses
+rAF for reproducible checks; reload the Preview afterward to resume normal play.

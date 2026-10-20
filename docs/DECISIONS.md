@@ -131,3 +131,13 @@ The owner chose 35% for off-hand dagger refined weapon ATK, affixes and cards,
 including Mythic direct crit. Main-hand daggers stay at 100%; katars stay at 150%
 with four sockets. Equal daggers contribute 135% weapon value and at most 4.05
 full-card equivalents from six sockets. Stored rolls, sockets and IDs are preserved.
+
+## Tactical ranged movement and persistent AoE (v201)
+
+The owner approved a saved Kite / Stand still option below Auto-advance, the solo
+holy-tree proposal and larger, marked, lingering AoE with tuned total DPS.
+Meteor must have downtime and cannot fill the map continuously. Implementation
+uses a five-second Meteor Storm with a 12-second cooldown, one instance of each
+spell and at most two ground spells. Ordinary combo timing and recovery remain.
+Holy attacks retain fixed per-cast healing limits; repeated ground ticks cannot
+multiply holy marks/echoes. Existing skill IDs, ranks, loadouts and saves survive.
