@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind — Equipment Prototype</title>
+<style>
+:root{--bg:#0d1411;--panel:#16231e;--panel2:#1b3028;--edge:#3a5046;--edge2:#56705b;--gold:#c8ae79;--gold2:#e7d2a0;--ink:#e8ece6;--muted:#9fb3a7;--r0:#a8b4ac;--r1:#68df9b;--r2:#6aafff;--r3:#c18aff;--r4:#ffd26e;--r5:#9d8dff;--r6:#ff85cf}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 50% 0%,#1a2f28, #0d1411 70%);color:var(--ink);font:13px/1.5 'Trebuchet MS',system-ui}
+a{color:var(--gold)}
+.top{position:sticky;top:0;z-index:5;background:#0f1c18cc;backdrop-filter:blur(8px);border-bottom:1px solid var(--edge);padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.top h1{margin:0;font:600 16px Georgia,serif;color:var(--gold2)} .top small{opacity:.7}
+.wrap{max-width:1280px;margin:0 auto;padding:14px;display:grid;grid-template-columns:260px 1fr 320px;gap:12px}
+@media(max-width:1020px){.wrap{grid-template-columns:1fr} .panel.sticky{position:static}}
+.panel{background:var(--panel);border:1px solid var(--edge);border-radius:10px;overflow:hidden}
+.panel h2{margin:0;padding:10px 12px;background:#1a2a24;border-bottom:1px solid var(--edge);font:700 11px/1.2 system-ui;letter-spacing:.8px;color:var(--gold)}
+.panel .body{padding:10px}
+.doll{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.cell{aspect-ratio:1;display:grid;place-items:center;background:#111d18;border:1px solid var(--edge);border-bottom:3px solid var(--c,#5a6e64);border-radius:7px;position:relative;cursor:pointer}
+.cell.sel{outline:2px solid #fff0c6;outline-offset:2px}
+.cell .ico{font-size:22px} .cell .lbl{position:absolute;left:2px;top:2px;font:600 8px system-ui;background:#0f1c18;color:#ddd;padding:1px 4px;border-radius:3px}
+.cell .rf{position:absolute;right:4px;top:4px;background:#0f1c18;color:#f5eed7;font:700 10px system-ui;padding:0 4px;border-radius:3px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.stat{background:var(--panel2);border:1px solid var(--edge);border-radius:7px;padding:8px;text-align:center}
+.stat b{font-size:16px;color:#ece2c1}
+.stat small{display:block;font-size:9px;color:var(--muted)}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.toolbar input{flex:1;min-width:160px;background:#0f1c18;border:1px solid var(--edge2);color:var(--ink);border-radius:6px;padding:8px 10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:5px 9px;border:1px solid var(--edge);background:#0f1c18;border-radius:999px;font-size:11px;cursor:pointer}
+.chip.on{background:#465442;border-color:#bda773;color:#f1d9a4}
+.sort{display:flex;gap:6px;align-items:center;margin-left:auto}
+.sort select{background:#0f1c18;border:1px solid var(--edge);color:var(--ink);border-radius:6px;padding:6px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+@media(max-width:560px){.grid{grid-template-columns:repeat(3,1fr)}}
+.tile{background:#111d18;border:1px solid var(--edge);border-bottom:3px solid var(--c);border-radius:7px;padding:6px;display:flex;flex-direction:column;gap:4px;cursor:pointer;position:relative}
+.tile.sel{outline:2px solid #fff0c6}
+.tile .name{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .sub{font-size:10px;color:var(--muted)}
+.tile .check{position:absolute;left:4px;top:4px;width:16px;height:16px;border:1px solid var(--edge);border-radius:3px;background:#0f1c18;display:grid;place-items:center;font-size:10px}
+.tile .check.on{background:var(--gold);color:#111;border-color:var(--gold)}
+.list .tile{flex-direction:row;align-items:center;gap:8px;padding:8px}
+.list .tile .name{flex:1}
+.delta{font-weight:700} .delta.up{color:#68df9b} .delta.down{color:#ff8e8e}
+.inspector .hero{width:100%;aspect-ratio:1.1;border-radius:8px;border:1px solid var(--edge);background:radial-gradient(#2a463c,#16231e);display:grid;place-items:center}
+.tabs{display:flex;border-bottom:1px solid var(--edge)}
+.tabs button{flex:1;background:none;border:0;border-bottom:2px solid transparent;padding:8px;color:var(--muted);cursor:pointer}
+.tabs button.on{color:var(--gold2);border-bottom-color:var(--gold)}
+.tray{position:sticky;bottom:10px;background:#16231e;border:1px solid var(--gold);border-radius:10px;padding:8px;display:flex;gap:8px;align-items:center;box-shadow:0 8px 24px #0008}
+.tray .thumbs{display:flex;gap:6px}
+.thumb{width:36px;height:36px;border:1px solid var(--edge);border-bottom:3px solid var(--c);border-radius:6px;display:grid;place-items:center;background:#111d18}
+.sheet{border-top:1px solid var(--edge);background:#111d18}
+.rule{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px dashed #ffffff1a}
+.rule select,.rule input{background:#0f1c18;border:1px solid var(--edge);color:var(--ink);border-radius:4px;padding:4px}
+.preview{padding:8px;background:#1e3128;border:1px solid #5a705b;border-radius:6px}
+.pill{font-size:10px;padding:2px 6px;border-radius:999px;border:1px solid var(--edge);background:#0f1c18}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Prontera Grind — Equipment Prototype (Interactive)</h1>
+  <small>Search, stack filters, grid/list toggle, 3-item compare, auto-sell rules with preview. Click tiles to inspect → check to compare.</small>
+  <span style="margin-left:auto"><button onclick="location.href='../README.md'">← Proposal doc</button> <button onclick="reset()">Reset demo</button></span>
+</div>
+
+<div class="wrap">
+  <!-- LEFT -->
+  <div class="panel sticky" style="position:sticky;top:58px;height:fit-content">
+    <h2>EQUIPPED LOADOUT — LORD KNIGHT · Lv 99</h2>
+    <div class="body">
+      <div class="doll" id="doll"></div>
+      <div class="stats">
+        <div class="stat"><b id="sAtk">2,841</b><small>ATK</small></div>
+        <div class="stat"><b>726</b><small>DEF</small></div>
+        <div class="stat"><b>42.8%</b><small>CRIT</small></div>
+        <div class="stat"><b>186</b><small>ASPD</small></div>
+        <div class="stat"><b>14,200</b><small>HP</small></div>
+        <div class="stat"><b>214</b><small>FLEE</small></div>
+      </div>
+      <p style="font-size:11px;color:var(--muted)">Click a slot to filter inventory to that slot. Weapons show weapon-type filter automatically.</p>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="panel">
+    <h2>FIELD INVENTORY <small id="count" style="float:right;opacity:.8"></small></h2>
+    <div class="body">
+      <div class="toolbar">
+        <input id="q" placeholder="Find equipment… try: katar +7 crit poring" oninput="render()">
+        <div class="sort"><label>Sort <select id="sort" onchange="render()"><option value="power">Power ↓</option><option value="recent">Recent</option><option value="name">Name A→Z</option><option value="value">Value ↓</option><option value="refine">Refine ↓</option></select></label>
+        <button onclick="toggleView()" id="viewBtn">☰ List</button></div>
+      </div>
+      <div class="chips" id="slotChips" style="margin:8px 0"></div>
+      <div class="chips" id="rarChips" style="margin-bottom:8px"></div>
+      <div id="grid" class="grid"></div>
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:8px">
+        <button id="prev" onclick="page--,render()">← Prev</button><span id="pg" style="padding:6px 8px;border:1px solid var(--edge);border-radius:6px;background:#0f1c18"></span><button id="next" onclick="page++,render()">Next →</button>
+        <button onclick="showNew()" style="margin-left:auto">Show new drops (6)</button>
+      </div>
+      <div class="tray" id="tray"></div>
+      <div class="sheet" style="margin-top:10px;border:1px solid var(--edge);border-radius:8px;overflow:hidden">
+        <div style="padding:8px 10px;background:#1a2a24;border-bottom:1px solid var(--edge);display:flex;gap:8px;align-items:center"><b>Auto-Sell Rules</b><span class="pill">2 active</span><span style="margin-left:auto" class="pill">Farming preset</span><button onclick="sheetToggle()">Expand</button></div>
+        <div id="sheetBody" style="padding:10px;display:none">
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="chip on">Farming</button><button class="chip">Boss</button><button class="chip">Collector</button><span style="margin-left:auto"><button onclick="previewRules()">Preview</button> <button style="background:var(--gold);color:#111" onclick="saveRules()">Save Rules</button></span></div>
+          <div id="rules"></div>
+          <div style="margin-top:6px"><button onclick="addRule()">+ Add condition</button></div>
+          <div class="preview" id="preview" style="margin-top:8px">Preview: 18 items → <b>+7,840z</b>, 3 kept (Locked, +9, Named). <a href="#" onclick="event.preventDefault();alert('Would mark 18 tiles with $ and dim kept ones.')">Highlight in grid</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="panel sticky" style="position:sticky;top:58px;height:fit-content">
+    <div class="tabs"><button class="on">Inspector</button><button>Compare</button></div>
+    <div class="body inspector" id="inspector"></div>
+  </div>
+</div>
+
+<!-- Compare overlay -->
+<div id="overlay" style="position:fixed;inset:0;background:#07120fd9;backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px;z-index:50">
+  <div style="background:var(--panel);border:1px solid var(--gold);border-radius:12px;max-width:960px;width:100%;overflow:hidden">
+    <div style="padding:10px 12px;border-bottom:1px solid var(--edge);display:flex;gap:8px;align-items:center"><h3 style="margin:0">Compare Weapons (3 selected)</h3><span style="margin-left:auto" class="pill">Equipped: +7 Excalibur</span><button onclick="overlayClose()">✕ Close</button></div>
+    <div id="compareGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0"></div>
+    <div style="padding:10px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--edge)"><button onclick="overlayClose()">Cancel</button><button style="background:var(--gold);color:#111" onclick="alert('Equipped best (DPS) — demo')">Equip Best (DPS)</button></div>
+  </div>
+</div>
+
+<script>
+const RAR=['Common','Fine','Rare','Epic','Legendary','Mythic','Transcendent']
+const RARCOL=['#a8b4ac','#68df9b','#6aafff','#c18aff','#ffd26e','#9d8dff','#ff85cf']
+const SLOTS=['Head','Weapon','Armor','Shield','Legs','Acc']
+const ITEMS=[ // demo inventory
+{id:1,name:'+7 Excalibur',slot:'Weapon',type:'Sword',rar:4,ref:7,atk:291,crit:12,power:1820,val:2400,locked:false,sockets:'◆◇',icon:'⚔️'},
+{id:2,name:'+5 Storm Blade',slot:'Weapon',type:'Katar',rar:2,ref:5,atk:247,crit:6,power:1510,val:1100,locked:false,sockets:'◆◆◇',icon:'🗡️'},
+{id:3,name:'+9 Thanatos Katar',slot:'Weapon',type:'Katar',rar:6,ref:9,atk:334,crit:18,power:2100,val:4200,locked:true,sockets:'◆◆',icon:'🔪'},
+{id:4,name:'Pheonix Armor +4',slot:'Armor',rar:3,ref:4,atk:0,crit:0,power:900,val:800,icon:'🛡️'},
+{id:5,name:'Baphomet Helm',slot:'Head',rar:5,ref:6,atk:12,crit:2,power:980,val:1600,icon:'👑'},
+{id:6,name:'Thanatos Ring',slot:'Acc',rar:4,ref:7,atk:28,crit:4,power:760,val:900,icon:'💍'},
+{id:7,name:'Katar +6 Ghost',slot:'Weapon',type:'Dagger',rar:2,ref:6,atk:221,crit:8,power:1430,val:950,icon:'🗡️'},
+{id:8,name:'Elven Bow +3',slot:'Weapon',type:'Bow',rar:1,ref:3,atk:198,crit:3,power:1200,val:700,icon:'🏹'},
+{id:9,name:'Valkyrie Shield +8',slot:'Shield',rar:4,ref:8,atk:5,crit:0,power:1100,val:1800,icon:'🛡️'},
+{id:10,name:'Mighty Boots',slot:'Legs',rar:2,ref:4,atk:8,crit:1,power:600,val:500,icon:'👢'},
+{id:11,name:'+4 Claymore',slot:'Weapon',type:'Sword',rar:1,ref:4,atk:205,crit:4,power:1280,val:650,icon:'⚔️'},
+{id:12,name:'Crown of Deceit',slot:'Head',rar:3,ref:5,atk:15,crit:3,power:820,val:1100,icon:'👑'},
+{id:13,name:'Sword +10 Holy Avenger',slot:'Weapon',type:'Sword',rar:5,ref:10,atk:362,crit:20,power:2350,val:5600,locked:true,icon:'✨'},
+{id:14,name:'Guard Coat',slot:'Armor',rar:1,ref:2,atk:0,crit:0,power:420,val:300,icon:'🥼'},
+{id:15,name:'Poring Card Ring',slot:'Acc',rar:0,ref:1,atk:6,crit:0,power:200,val:120,icon:'🃏'},
+{id:16,name:'Muramasa +8',slot:'Weapon',type:'Katar',rar:4,ref:8,atk:312,crit:15,power:1920,val:3100,icon:'🗡️'},
+{id:17,name:'Sniper Goggles',slot:'Head',rar:2,ref:4,atk:18,crit:5,power:700,val:750,icon:'🥽'},
+{id:18,name:'Boots of Swiftness',slot:'Legs',rar:3,ref:6,atk:12,crit:2,power:880,val:950,icon:'👢'},
+{id:19,name:'Mage Coat +5',slot:'Armor',rar:2,ref:5,atk:0,crit:1,power:760,val:820,icon:'🧥'},
+{id:20,name:'Ring of Flame Lord',slot:'Acc',rar:6,ref:9,atk:42,crit:7,power:1400,val:3800,locked:true,icon:'🔥'},
+]
+let slotFilter='All', rarFilter=new Set(), q='', sort='power', page=0, view='grid', compare=new Set(), selected=ITEMS[0]
+let rules=[{field:'rarity',op:'in',val:[0,1],then:'sell'},{field:'emptySockets',op:'<',val:2,then:'sell'},{field:'refined',op:'>=',val:9,then:'keep'}]
+
+function reset(){slotFilter='All';rarFilter.clear();q='';sort='power';page=0;view='grid';compare.clear();selected=ITEMS[0];document.getElementById('q').value='';render()}
+
+const slotChipsEl=document.getElementById('slotChips'), rarChipsEl=document.getElementById('rarChips')
+function renderChips(){
+  const slots=['All','Head','Weapon','Armor','Shield','Legs','Acc']
+  slotChipsEl.innerHTML=slots.map(s=>`<button class="chip ${slotFilter===s?'on':''}" onclick="slotFilter='${s}';page=0;render()">${s}</button>`).join('')
+  rarChipsEl.innerHTML=RAR.map((r,i)=>`<button class="chip ${rarFilter.has(i)?'on':''}" onclick="if(rarFilter.has(${i}))rarFilter.delete(${i});else rarFilter.add(${i});page=0;render()" style="border-color:${RARCOL[i]}">${r}</button>`).join('') + `<button class="chip" onclick="rarFilter.clear();render()">Clear</button>`
+}
+
+function filtered(){
+  let arr=[...ITEMS]
+  if(slotFilter!=='All') arr=arr.filter(it=>it.slot===slotFilter)
+  if(rarFilter.size) arr=arr.filter(it=>rarFilter.has(it.rar))
+  if(q){const s=q.toLowerCase(); arr=arr.filter(it=> (it.name+it.type+it.slot).toLowerCase().includes(s) )}
+  if(sort==='power') arr.sort((a,b)=>b.power-a.power)
+  if(sort==='recent') arr.sort((a,b)=>b.id-a.id)
+  if(sort==='name') arr.sort((a,b)=>a.name.localeCompare(b.name))
+  if(sort==='value') arr.sort((a,b)=>b.val-a.val)
+  if(sort==='refine') arr.sort((a,b)=>b.ref-a.ref)
+  return arr
+}
+
+function render(){
+  q=document.getElementById('q').value
+  renderChips()
+  const arr=filtered()
+  document.getElementById('count').textContent=arr.length+' / 1000 items'
+  const pages=Math.max(1,Math.ceil(arr.length/5))
+  page=Math.max(0,Math.min(pages-1,page))
+  document.getElementById('pg').textContent=`Page ${page+1} / ${pages}`
+  document.getElementById('prev').disabled=page===0
+  document.getElementById('next').disabled=page===pages-1
+  document.getElementById('viewBtn').textContent= view==='grid' ? '☰ List' : '▦ Grid'
+  const start=page*5, shown=arr.slice(start,start+5)
+  const grid=document.getElementById('grid')
+  grid.className= view==='grid' ? 'grid' : 'grid list'
+  grid.innerHTML=shown.map(it=>{
+    const isSel=selected && selected.id===it.id
+    const isCmp=compare.has(it.id)
+    return `<div class="tile ${isSel?'sel':''}" style="--c:${RARCOL[it.rar]}" onclick="select(${it.id})">
+      <div class="check ${isCmp?'on':''}" onclick="event.stopPropagation();toggleCompare(${it.id})">${isCmp?'✓':''}</div>
+      <div style="font-size:22px">${it.icon}</div>
+      <div class="name">${it.name}</div>
+      <div class="sub">${it.slot} · ${RAR[it.rar]} · +${it.ref} · ${it.sockets||'—'}</div>
+      <div class="sub">Power ${it.power} · <b>${it.val}z</b> ${it.locked?'★':''}</div>
+      ${deltaHtml(it)}
+    </div>`
+  }).join('') || '<div style="grid-column:1/-1;padding:12px;border:1px dashed var(--edge);border-radius:8px;text-align:center;color:var(--muted)">No equipment matches your filters. <button onclick="reset()">Clear filters</button></div>'
+
+  // doll
+  document.getElementById('doll').innerHTML=['Head','Weapon','Armor','Shield','Legs','Acc'].map(slot=>{
+    const eq = slot==='Weapon' ? ITEMS.find(x=>x.id===1) : null
+    const c = RARCOL[eq?eq.rar:0]
+    return `<div class="cell ${selected.slot===slot?'sel':''}" style="--c:${c}" onclick="slotFilter='${slot}';page=0;render()" title="Filter to ${slot}"><span class="lbl">${slot}</span><span class="ico">${eq?eq.icon:'＋'}</span>${eq?`<span class="rf">+${eq.ref}</span>`:''}</div>`
+  }).join('')
+
+  // tray
+  const t=document.getElementById('tray')
+  if(compare.size){
+    t.style.display='flex'
+    t.innerHTML=`<b>Compare Tray (${compare.size}/3)</b><div class="thumbs">${[...compare].map(id=>{const it=ITEMS.find(x=>x.id===id);return `<div class="thumb" style="--c:${RARCOL[it.rar]}">${it.icon}</div>`}).join('')}</div><button onclick="openOverlay()" style="margin-left:auto;background:var(--gold);color:#111;padding:6px 12px;border-radius:6px;border:1px solid var(--gold)">Compare now →</button><button onclick="compare.clear();render()">✕ Clear</button>`
+  } else { t.style.display='none' }
+
+  renderInspector()
+  renderRules()
+}
+
+function deltaHtml(it){
+  if(it.slot!=='Weapon' || !ITEMS[0]) return ''
+  const base=ITEMS[0]
+  const d=it.atk - base.atk
+  if(d===0) return ''
+  return `<span class="delta ${d>0?'up':'down'}">${d>0?'▲ +'+d:'▼ '+d} ATK</span>`
+}
+
+function select(id){ selected=ITEMS.find(x=>x.id===id); render() }
+function toggleCompare(id){ if(compare.has(id)) compare.delete(id); else if(compare.size<3) compare.add(id); else alert('Compare supports up to 3 items — remove one first.'); render() }
+function toggleView(){ view= view==='grid' ? 'list':'grid'; render() }
+function showNew(){ slotFilter='All'; rarFilter.clear(); sort='recent'; page=0; render(); document.getElementById('grid').scrollIntoView({behavior:'smooth'}) }
+
+function renderInspector(){
+  const el=document.getElementById('inspector')
+  if(!selected){el.innerHTML='<p>Select an item.</p>';return}
+  const it=selected
+  const base=ITEMS.find(x=>x.name==='+7 Excalibur')
+  const atkD=it.atk - base.atk
+  el.innerHTML=`
+  <div style="display:flex;gap:10px;align-items:center"><div style="width:56px;height:56px;display:grid;place-items:center;background:#111d18;border:1px solid ${RARCOL[it.rar]};border-radius:7px;font-size:28px">${it.icon}</div><div><b>${it.name}</b><br><small>${it.slot} · ${RAR[it.rar]} · +${it.ref}</small><br><span class="pill">Power ${it.power}</span></div></div>
+  <div style="margin-top:10px;padding:8px;background:#0f1c18;border:1px solid var(--edge);border-radius:7px">
+    <div style="display:flex;justify-content:space-between"><span>Physical Attack</span><b>${it.atk} <span class="delta ${atkD>0?'up':atkD<0?'down':''}">${atkD? (atkD>0?'▲ +'+atkD:'▼ '+atkD):''}</span></b></div>
+    <div style="display:flex;justify-content:space-between"><span>Crit DMG</span><b>${it.crit}% <span class="delta ${it.crit>12?'up':it.crit<12?'down':''}">${it.crit!==12?(it.crit>12?'▲ +'+(it.crit-12)+'%':'▼ '+(it.crit-12)+'%'):''}</span></b></div>
+    <div style="display:flex;justify-content:space-between"><span>Card Sockets</span><b>${it.sockets||'—'}</b></div>
+    <div style="display:flex;justify-content:space-between"><span>Value</span><b>${it.val}z</b></div>
+  </div>
+  <div style="display:flex;gap:6px;margin-top:8px"><button style="flex:1;background:var(--gold);color:#111;padding:8px;border-radius:6px;border:1px solid var(--gold)" onclick="alert('Equipped '+selected.name)">✓ Equip</button><button onclick="alert('Locked ★')">★ Lock</button><button onclick="alert('Sold')">Sell ${it.val}z</button></div>
+  <small style="color:var(--muted)">DPS est. ${(8200+it.power*0.3).toFixed(0)} · vs equipped ${atkD>0?'+':''}${atkD} ATK · ${it.locked?'Protected from auto-sell':''}</small>
+  `
+}
+
+function renderRules(){
+  const host=document.getElementById('rules')
+  host.innerHTML=rules.map((r,i)=>`<div class="rule"><span><select onchange="rules[${i}].field=this.value;render()"><option ${r.field==='rarity'?'selected':''} value="rarity">rarity</option><option ${r.field==='emptySockets'?'selected':''} value="emptySockets">emptySockets</option><option ${r.field==='refined'?'selected':''} value="refined">refined</option><option ${r.field==='affix'?'selected':''} value="affix">affix ATK</option><option ${r.field==='name'?'selected':''} value="name">name contains</option></select>
+  <select onchange="rules[${i}].op=this.value"><option ${r.op==='in'?'selected':''} value="in">in</option><option ${r.op==='<'?'selected':''} value="<"><</option><option ${r.op==='>='?'selected':''} value=">=">>=</option><option ${r.op==='='?'selected':''} value="=">=</option></select>
+  <input value="${Array.isArray(r.val)?r.val.join(','):r.val}" onchange="rules[${i}].val=this.value" style="width:90px"></span><span><select onchange="rules[${i}].then=this.value"><option ${r.then==='sell'?'selected':''} value="sell">Sell</option><option ${r.then==='keep'?'selected':''} value="keep">Keep</option></select> <button onclick="rules.splice(${i},1);render()">✕</button></span></div>`).join('')
+}
+function addRule(){ rules.push({field:'affix',op:'<',val:4,then:'sell'}); render() }
+function sheetToggle(){ const b=document.getElementById('sheetBody'); b.style.display= b.style.display==='none' ? 'block':'none' }
+function previewRules(){ document.getElementById('preview').innerHTML='Preview: <b>8 items → +3,420z</b> · 2 kept (★ Locked, +9 Thanatos Katar) · <span style="color:#68df9b">Would sell 8 dimmed tiles</span>'}
+function saveRules(){ alert('Rules saved to S.autoSellRules — inventory re-renders with $ badges.')}
+
+function openOverlay(){
+  document.getElementById('overlay').style.display='flex'
+  const ids=[...compare]
+  const grid=document.getElementById('compareGrid')
+  grid.innerHTML=ids.map(id=>{
+    const it=ITEMS.find(x=>x.id===id)
+    const base=ITEMS[0]; const d=it.atk-base.atk
+    return `<div style="padding:12px;border-right:1px solid var(--edge)">
+      <div style="display:grid;place-items:center;width:64px;height:64px;background:#111d18;border:1px solid ${RARCOL[it.rar]};border-radius:8px;font-size:32px;margin:0 auto">${it.icon}</div>
+      <h4 style="text-align:center;margin:8px 0 2px">${it.name}</h4><small style="display:block;text-align:center;color:var(--muted)">${RAR[it.rar]} · +${it.ref} · ${it.type||it.slot}</small>
+      <div style="margin-top:10px;background:#0f1c18;border:1px solid var(--edge);border-radius:7px;padding:8px">
+        <div style="display:flex;justify-content:space-between"><span>Attack</span><b>${it.atk} <span class="delta ${d>0?'up':d<0?'down':''}">${d? (d>0?'▲ +'+d:'▼ '+d):''}</span></b></div>
+        <div style="display:flex;justify-content:space-between"><span>Crit</span><b>${it.crit}%</b></div>
+        <div style="display:flex;justify-content:space-between"><span>Sockets</span><b>${it.sockets}</b></div>
+        <div style="display:flex;justify-content:space-between"><span>DPS est.</span><b>${(8200+it.power*0.3).toFixed(0)}</b></div>
+      </div>
+      <button style="width:100%;margin-top:8px;background:var(--gold);color:#111;padding:8px;border-radius:6px;border:1px solid var(--gold)" onclick="alert('Equipped ${it.name}')">Equip This</button>
+    </div>`
+  }).join('')
+}
+function overlayClose(){ document.getElementById('overlay').style.display='none' }
+
+render()
+</script>
+</body>
+</html>

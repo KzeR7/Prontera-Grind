@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comms Dock Prototype — World / Whisper / Log</title>
+<style>
+:root{--bg:#0d1411;--panel:#16231e;--panel2:#1b3028;--edge:#3a5046;--gold:#c8ae79;--gold2:#e7d2a0;--ink:#e8ece6;--muted:#9fb3a7;--world:#e7d2a0;--whisper:#7ec8ff;--log:#b8c7b8;--system:#ffad7a}
+*{box-sizing:border-box}body{margin:0;background:#0a1410;color:var(--ink);font:12px/1.4 'Trebuchet MS',system-ui}
+a{color:var(--gold)}
+.top{position:sticky;top:0;z-index:5;background:#0f1c18;border-bottom:1px solid var(--edge);padding:10px 14px;display:flex;gap:10px;align-items:center}
+.top h1{margin:0;font:600 15px Georgia,serif;color:var(--gold2)}
+.field{height:52vh;background:linear-gradient(#243a2d,#1a2f28);border-bottom:1px solid var(--edge);position:relative;overflow:hidden}
+.field::after{content:'Prontera Field · Auto Combat Stage 08/10 · 36/50 defeats';position:absolute;left:12px;top:12px;background:#0f1c18cc;border:1px solid #ffffff22;padding:6px 10px;border-radius:6px;font-size:11px}
+.hero{position:absolute;left:50%;top:50%;transform:translate(-50%,-45%);width:64px;height:64px;background:radial-gradient(#ffd7a8,#8a6a3a);border-radius:50%;display:grid;place-items:center;font-size:28px;border:2px solid var(--gold)}
+.mob{position:absolute;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:20px;border:2px solid #ffffff44}
+.mob.p1{left:18%;top:32%;background:#ffb3b8} .mob.p2{left:64%;top:58%;background:#ffc3e3} .mob.p3{left:76%;top:28%;background:#b8f3ff}
+.dock{display:flex;gap:8px;justify-content:center;padding:8px;background:#0f1c18;border-top:1px solid var(--edge);border-bottom:1px solid var(--edge);overflow-x:auto}
+.dock button{flex:0 0 auto;padding:6px 10px;border-radius:6px;border:1px solid var(--edge);background:#16231e;color:var(--muted)}
+.dock button.on{background:#465442;color:#f1d9a4;border-color:#bda773}
+.hud{display:flex;gap:10px;align-items:center;padding:6px 14px;background:#141f1c;border-top:1px solid var(--edge);font-size:11px}
+.hud .bar{flex:1;height:10px;background:#0f1c18;border:1px solid var(--edge);border-radius:6px;overflow:hidden}
+.hud .bar i{display:block;height:100%;background:linear-gradient(90deg,#7ec8ff,#4aa3df)}
+.comms{max-width:1280px;margin:12px auto;padding:0 10px;display:grid;grid-template-columns:1fr 320px;gap:12px}
+@media(max-width:860px){.comms{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--edge);border-radius:10px;overflow:hidden}
+.panel h2{margin:0;padding:10px 12px;background:#1a2a24;border-bottom:1px solid var(--edge);font:700 11px/1.2 system-ui;letter-spacing:.8px;color:var(--gold);display:flex;gap:8px;align-items:center}
+.panel h2 small{margin-left:auto;font-weight:400;color:var(--muted)}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--edge);overflow-x:auto}
+.tabs button{flex:1;white-space:nowrap;background:none;border:0;border-bottom:2px solid transparent;padding:8px 6px;color:var(--muted);cursor:pointer;font-size:11px}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--gold);background:#1b3028}
+.badge{background:#e5484d;color:#fff;font:700 10px/1 system-ui;padding:2px 5px;border-radius:999px}
+.feed{height:260px;overflow:auto;padding:6px;background:#0f1c18;scrollbar-width:thin}
+.line{padding:4px 6px;border-radius:5px;display:flex;gap:6px;align-items:baseline}
+.line.world{background:#1a2416} .line.whisper{background:#162235} .line.log{background:#141f1c;opacity:.9} .line.system{background:#241a16}
+.line .t{color:var(--muted);font-size:10px;white-space:nowrap} .line .who{font-weight:700;white-space:nowrap} .line .msg{flex:1;min-width:0;word-break:break-word}
+.line.world .who{color:var(--world)} .line.whisper .who{color:var(--whisper)} .line.system .who{color:var(--system)}
+.inputbar{display:flex;gap:6px;padding:8px;background:#141f1c;border-top:1px solid var(--edge)}
+.inputbar select,.inputbar input{background:#0f1c18;border:1px solid var(--edge);color:var(--ink);border-radius:6px;padding:8px}
+.inputbar input{flex:1} .inputbar button{background:var(--gold);color:#111;border:1px solid var(--gold);border-radius:6px;padding:8px 12px;font-weight:700;cursor:pointer}
+.hint{padding:6px 10px;background:#111d18;border-top:1px dashed var(--edge);font-size:10px;color:var(--muted)}
+.toast{position:fixed;left:12px;bottom:72px;background:#16231ef2;border:1px solid var(--gold);border-radius:8px;padding:8px 10px;box-shadow:0 8px 24px #0008;display:none;gap:8px;align-items:center;z-index:40}
+.toast.on{display:flex}
+</style>
+</head>
+<body>
+<div class="top"><h1>Prontera Grind — Comms Dock Prototype</h1><small>World · Whisper · Log in one bottom-left panel. Resize, toast, unread badges, slash commands.</small><span style="margin-left:auto"><button onclick="history.back()">← Proposal doc</button> <button onclick="reset()">Reset demo</button></span></div>
+
+<div class="field">
+  <div class="mob p1">🐰</div><div class="mob p2">🦇</div><div class="mob p3">👻</div>
+  <div class="hero">🦸</div>
+  <div style="position:absolute;left:12px;bottom:12px;background:#0f1c18cc;border:1px solid #ffffff22;padding:6px 10px;border-radius:6px;font-size:11px;max-width:42%">#feedWrap → now <b>Comms Dock</b>. Tabs: World 127 ● / Whisper 3 ● / Log. Toasts when minimized.</div>
+  <div style="position:absolute;right:12px;top:12px;background:#0f1c18cc;border:1px solid #ffffff22;padding:6px;border-radius:6px;font-size:11px">Prontera · Stage 08 · 1,248,650z</div>
+</div>
+
+<div class="dock">
+  <button>🌍 World</button><button class="on">🦺 Character</button><button class="on" style="position:relative">⚔️ Equipment<span style="position:absolute;top:-6px;right:-6px" class="badge">2</span></button><button>🎓 Jobs</button><button>✨ Skills</button><button>🎒 Bag</button><button>🐾 Pets</button><button>🏪 Market</button><button>📜 Log</button><button>⚙️ Settings</button>
+</div>
+
+<div class="comms">
+  <div class="panel" id="comms">
+    <h2>💬 COMMS DOCK — Prontera Field <small>Drag handle: 220px · <button onclick="toggleSize()" id="sizeBtn">Expand to 380px</button> · <button onclick="minimize()">${'▾'} Minimize</button></small></h2>
+    <div class="tabs" id="tabs"></div>
+    <div class="feed" id="feed"></div>
+    <div class="inputbar">
+      <select id="chan"><option value="world">World ▾</option><option value="whisper">Whisper ▾</option><option value="party">Party ▾</option><option value="log">Log</option></select>
+      <input id="msg" placeholder="Type message…  /w Name hi  •  @Name mentions  •  /r to reply" maxlength="120" onkeydown="if(event.key==='Enter')send()">
+      <button onclick="send()">Send ↵</button>
+      <span id="counter" style="padding:6px 2px;color:var(--muted)">120/120</span>
+    </div>
+    <div class="hint">Commands: <b>/w Ragnar hello</b> whisper · <b>/r</b> reply · <b>/world</b> switch · <b>/clear</b> clear · <b>/block Name</b> · <b>/mute world</b> · Click a name in World to whisper.</div>
+  </div>
+
+  <div class="panel">
+    <h2>SETTINGS <small>Notifications</small></h2>
+    <div style="padding:10px;display:grid;gap:8px">
+      <label><input type="checkbox" checked> Toast new Whispers when minimized</label>
+      <label><input type="checkbox" checked> Toast World (throttled 1/10s)</label>
+      <label><input type="checkbox"> Never toast Log (combat spam)</label>
+      <label><input type="checkbox" checked> Play whisper sound (respects SFX setting)</label>
+      <label><input type="checkbox" checked> Show timestamps</label>
+      <div style="display:flex;gap:6px"><button onclick="alert('Blocked: Ragnar, Bot123')">Manage blocks (3)</button><button onclick="alert('Report sent')">Report</button></div>
+      <p style="font-size:11px;color:var(--muted)">Server: World messages go through <code>api/chat</code> → rate limit 1/2s, word filter. Whisper via <code>api/whisper</code> with block list. Log lines never leave device.</p>
+      <p style="font-size:11px">Try: click any <b>World</b> name → auto-fills Whisper. Type <b>/r thanks!</b></p>
+    </div>
+  </div>
+</div>
+
+<div class="hud"><span>BASE 99</span><div class="bar"><i style="width:62%"></i></div><span>62.4%</span><span style="margin-left:auto">JOB 42 38.7%</span><div class="bar" style="max-width:160px"><i style="width:38%;background:linear-gradient(90deg,#c8ae79,#ffd26e)"></i></div></div>
+
+<div class="toast" id="toast"><span>💬</span><div><b>Whisper from Ragnar:</b> wanna trade? <a href="#" onclick="event.preventDefault();openWhisper()">Open</a></div><button onclick="this.parentElement.classList.remove('on')">✕</button></div>
+
+<script>
+const LINES=[
+  {t:'14:32',chan:'world',who:'Kingz',msg:'LFG Thor Volcano 5 — need priest!',self:false},
+  {t:'14:32',chan:'world',who:'Sakura',msg:'selling +7 Excalibur 12k z — pm offers',self:false},
+  {t:'14:33',chan:'whisper',who:'Ragnar',msg:'wanna trade? I have Thanatos Ring +6',self:false,dir:'in'},
+  {t:'14:33',chan:'log',who:'System',msg:'You defeated Poring +120 EXP · +42z',self:false},
+  {t:'14:33',chan:'world',who:'Admin',msg:'Double EXP weekend! +50% Base & Job — have fun!',self:false,sys:true},
+  {t:'14:34',chan:'whisper',who:'You → Ragnar',msg:'maybe after this stage — brb',self:true},
+  {t:'14:34',chan:'log',who:'Loot',msg:'Found Fine Katar · sold by auto-sell for 420z',self:false},
+  {t:'14:35',chan:'world',who:'Kingz',msg:'nice crit 42.8%!',self:false},
+]
+const TABS=[
+  {id:'world',label:'World',badge:127,dot:true},
+  {id:'whisper',label:'Whisper',badge:3,dot:true},
+  {id:'party',label:'Party',badge:0,dot:false,disabled:true},
+  {id:'log',label:'Log',badge:0,dot:false},
+  {id:'system',label:'System',badge:0,dot:false},
+]
+let active='world', minimized=false
+let unread={world:2,whisper:3}
+
+function render(){
+  document.getElementById('tabs').innerHTML=TABS.map(t=>{
+    const on=active===t.id
+    const dis=t.disabled?`disabled title="Coming Soon"`:''
+    const badge=t.badge?`<span class="badge">${t.badge}</span>`: (t.dot && unread[t.id]?'<span class="badge">●</span>':'')
+    return `<button class="${on?'on':''}" ${dis} onclick="active='${t.id}';render()">${t.label} ${badge}</button>`
+  }).join('')
+  const feed=document.getElementById('feed')
+  const shown = active==='world' ? LINES.filter(l=>l.chan==='world') :
+                active==='whisper' ? LINES.filter(l=>l.chan==='whisper') :
+                active==='log' ? LINES.filter(l=>l.chan==='log') :
+                active==='system' ? LINES.filter(l=>l.sys||l.chan==='system') : LINES
+  feed.innerHTML= shown.map(l=>`
+    <div class="line ${l.chan}">
+      <span class="t">${l.t}</span>
+      <span class="who" onclick="whisperTo('${l.who}')" title="Click to whisper">${l.who}:</span>
+      <span class="msg">${esc(l.msg)}</span>
+    </div>`).join('') + `<div style="padding:6px;color:var(--muted);text-align:center;border-top:1px dashed var(--edge);margin-top:6px">${shown.length} messages · <a href="#" onclick="event.preventDefault();feed.scrollTop=0">Back to top</a> · Filter active</div>`
+  document.getElementById('comms').style.height= minimized? '42px' : (document.getElementById('comms').dataset.size==='large' ? '380px':'260px')
+  document.getElementById('sizeBtn').textContent= document.getElementById('comms').dataset.size==='large' ? 'Compact to 220px':'Expand to 380px'
+}
+function esc(s){return s.replace(/[&<>]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function whisperTo(name){
+  if(name==='You → Ragnar' || name==='System' || name==='Loot') return
+  active='whisper'; document.getElementById('chan').value='whisper'; document.getElementById('msg').value=`@`+name+` `; document.getElementById('msg').focus(); render()
+}
+function send(){
+  const chan=document.getElementById('chan').value
+  const input=document.getElementById('msg')
+  let txt=input.value.trim(); if(!txt) return
+  // slash commands
+  if(txt.startsWith('/w ')||txt.startsWith('/whisper ')){ const parts=txt.split(' '); const name=parts[1]; const body=parts.slice(2).join(' '); LINES.push({t:now(),chan:'whisper',who:`You → ${name}`,msg:body||'(empty)',self:true}); active='whisper'; input.value=''; render(); toast(`Whisper to ${name} sent`); return}
+  if(txt==='/r' || txt.startsWith('/r ')){ const body=txt===' /r'?'':txt.slice(3); LINES.push({t:now(),chan:'whisper',who:'You → Ragnar',msg:body||'thanks!',self:true}); active='whisper'; input.value=''; render(); return}
+  if(txt==='/clear'){ LINES.length=0; input.value=''; render(); return}
+  // normal
+  LINES.push({t:now(),chan,who: chan==='world'?'Kingz': chan==='whisper'?'You → World':'Kingz',msg:txt,self:chan!=='world'}); input.value=''; document.getElementById('counter').textContent='120/120'; render(); if(chan==='whisper') toast('Whisper sent — Ragnar will toast when minimized')
+}
+function now(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function reset(){ LINES.splice(0,LINES.length,
+  {t:'14:32',chan:'world',who:'Kingz',msg:'LFG Thor Volcano 5 — need priest!',self:false},
+  {t:'14:32',chan:'world',who:'Sakura',msg:'selling +7 Excalibur 12k z — pm offers',self:false},
+  {t:'14:33',chan:'whisper',who:'Ragnar',msg:'wanna trade? I have Thanatos Ring +6',self:false,dir:'in'},
+  {t:'14:33',chan:'log',who:'System',msg:'You defeated Poring +120 EXP · +42z',self:false},
+  {t:'14:33',chan:'world',who:'Admin',msg:'Double EXP weekend! +50% Base & Job — have fun!',self:false,sys:true},
+ ); render()}
+function toast(msg){ const t=document.getElementById('toast'); t.querySelector('div').innerHTML=`<b>${esc(msg)}</b> <a href="#" onclick="event.preventDefault();openWhisper()">Open</a>`; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),4000)}
+function openWhisper(){ active='whisper'; minimized=false; render()}
+function minimize(){ minimized=!minimized; render(); if(minimized) toast('Comms minimized — whispers will toast here · Log still hidden')}
+function toggleSize(){ const c=document.getElementById('comms'); c.dataset.size = c.dataset.size==='large' ? '':'large'; render()}
+document.getElementById('msg').addEventListener('input',e=>{ document.getElementById('counter').textContent=(120-e.target.value.length)+'/120'; if(e.target.value.startsWith('@')){ /* autocomplete would filter player list */ }})
+render()
+</script>
+</body>
+</html>
