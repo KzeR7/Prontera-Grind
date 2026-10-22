@@ -61,7 +61,7 @@ const g=createGame(html),ev=g.ev;
   ev('window.__sprite=mkWardrobeHero(wardrobeEquipped)');
   for(let d=0;d<8;d++) assert.equal(ev(`captureWardrobeFrame(__sprite,${d},false,1,1000)`),true);
  }
- assert.deepEqual(Array.from(ev('DOCK_TABS.slice(-2)')),['wardrobe','set']);
+ assert.ok(ev("SIDE_TABS.includes('wardrobe')&&SIDE_TABS.includes('set')&&!DOCK_TABS.includes('wardrobe')&&!DOCK_TABS.includes('set')"));
  // Wardrobe is bound to the active class; obsolete selectors cannot change the preview.
  const currentJob=ev('S.cls'),gear=ev('JSON.stringify(S.eq)');
  ev(`wardrobeChange('class','Acolyte')`);await new Promise(r=>setImmediate(r));

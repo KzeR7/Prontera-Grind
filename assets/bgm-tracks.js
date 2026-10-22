@@ -16,5 +16,6 @@ window.BGM_TRACKS = {
     { title: 'Theme of Gonryun', type: 'youtube', id: 'https://www.youtube.com/watch?v=pcqhSMT0jZk' },
     { title: 'Theme of Prontera', type: 'youtube', id: 'https://www.youtube.com/watch?v=D30M_vLMvWk' }
   ],
+  social: [{ title: 'Theme of Prontera', type: 'youtube', id: 'https://www.youtube.com/watch?v=D30M_vLMvWk' }],
   default: []
 };

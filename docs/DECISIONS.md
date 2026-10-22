@@ -144,5 +144,5 @@ multiply holy marks/echoes. Existing skill IDs, ranks, loadouts and saves surviv
 
 Social hub (owner, 22 October 2026): farming continues while visiting the plaza.
 The social view has no enemies/combat; it does not pause or replace field farming.
-Emoji is an independent chat tab; native emotions appear overhead and as smaller
+Emoji opens beside Send; messages and emotions share a three-second delay. Native emotions appear overhead and as smaller
 entries in plaza-local chat. World/Whisper/Log replace the bottom-left log area.

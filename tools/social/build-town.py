@@ -13,7 +13,7 @@ lock=root/'tools/social/town-lock.json'
 if lock.exists():
  assert json.loads(lock.read_text())['sources']==source,'Native source changed'
 data=np.frombuffer((cache/'models.bin').read_bytes(),dtype='<f4').reshape(-1,10);chunks={};arrays=[];offset=0
-for name,index in {'fountain':912,'tree':164,'house':174,'tower':144,'hall':1046,'lamp':0,'bench':1293}.items():
+for name,index in {'fountain':912,'tree':164,'house':174,'tower':144,'hall':1046,'lamp':0,'bench':430,'stall':214,'cart':610}.items():
  c=manifest['modelChunks'][index];a=data[c['first']:c['first']+c['count']].copy();a[:,:3]-=[(c['min'][0]+c['max'][0])/2,c['min'][1],(c['min'][2]+c['max'][2])/2]
  chunks[name]={'first':offset,'count':len(a),'size':(np.array(c['max'])-c['min']).tolist(),'sourceChunk':index};offset+=len(a);arrays.append(a)
 p=np.concatenate(arrays);original=Image.open(cache/'models.webp').convert('RGBA');sw,sh=original.size
