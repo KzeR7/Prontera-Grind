@@ -1,17 +1,20 @@
 # Endgame rewards — Nightmare Abyss, the two Ascension maps, and the job trial
 
-**Read-only measurement.** Every number below is produced from the live game by
-`tools/compare_endgame_rewards.js` and `tools/compare_job_trial.js`; re-run either command to
-regenerate its tables. Build `2026-10-22 haven-v210`.
+**Read-only measurement** except where marked applied. Every number is produced from the live game by
+`tools/compare_endgame_rewards.js`, `tools/compare_job_trial.js` and `tools/compare_ascension_economy.js`;
+re-run those commands to regenerate their tables. Build `2026-10-22 haven-v211`.
 
-## What changed in v210
+## What changed in v210 and v211
 
 The Nightmare Abyss Stage 15 MVP (Dark Lord) lost the v198 "+25% HP, this boss only" special case:
 **111,676,981 → 89,341,585 HP**, the band's own boss HP on every other Nightmare map. That is the
 owner's requested 20% cut of the live value (×1.25 then ×0.8 is exactly ×1). Its EXP (33,908),
 Zeny (17,581), ATK (14,364), escorts and drops are untouched, and it is still the deepest boss in
-the game (Niflheim's Lord of Death: 78,853,659). Every table below shows the post-change state; the
-"before v210" rows are kept where the history matters.
+the game (Niflheim's Lord of Death: 78,853,659).
+
+**v211** then made the job-change trial (Crucible of the Valkyrie) harder than that boss: its opponent
+is now **1.25× the Dark Lord's HP (111,676,981)** instead of 3× the Astral Stage 1 mob (45,028,158).
+See the trial section below.
 
 ## How to read the numbers
 
@@ -217,67 +220,166 @@ trap.** If you ever want a flat ladder, Stage 4's ramp is the one to move.
 
 ## The job trial (Crucible of the Valkyrie)
 
-The trial opponent is built in `startJobRite()` from Astral Citadel Stage 1's first monster template
-plus `ascensionCombatStats(10,1)`, with `JOB_RITE_HP_MULT` applied to HP. It spawns with no EXP, no
-Zeny and no drops; dying ends the trial as a defeat.
+**v211 (owner: "job change should be hard and stronger than abyss nightmare boss").** The opponent is
+built in `startJobRite()` from Astral Citadel Stage 1's first monster template plus
+`ascensionCombatStats(10,1)`, and its HP is now anchored to the Nightmare Abyss Stage 15 MVP through
+the boss's own formula: **1.25× 89,341,585 = 111,676,981 HP**. It spawns with no EXP, no Zeny and no
+drops; dying ends the trial as a defeat.
 
 | Crucible opponent | Value |
 |---|---:|
 | Template | an Astral Citadel Stage 1 monster (chosen at random each entry), power 140 |
-| HP | 45,028,158 (3× the stage's 15,009,386 HP mob) |
-| ATK | 15,235 (the stage mob's own 15,235) |
+| Nightmare Abyss 15 MVP for reference | 89,341,585 HP, 14,364 ATK |
+| HP | 111,676,981 (1.25× the Nightmare Abyss 15 MVP's 89,341,585 HP) |
+| ATK | 15,235 (the Astral Stage 1 mob's value, above the Abyss NM boss's 14,364) |
 | Time limit | 30s, and dying ends the trial as a defeat |
 | Rewards | none: the opponent spawns with 0 EXP, 0 Zeny and no drops |
 
 | Gear tier | Class | DPS | Clear time | Max HP | Damage per hit taken | Hits to die | Wins in 30s |
 |---|---|---:|---:|---:|---:|---:|---|
-| early | Lord Knight | 161,174 | 279.4s | 89,978 | 9,149 | 10 | **no** |
-| early | Assassin Cross | 467,255 | 96.4s | 53,861 | 10,315 | 5 | **no** |
-| early | Whitesmith | 160,038 | 281.4s | 95,977 | 9,155 | 10 | **no** |
-| early | High Priest | 109,615 | 410.8s | 62,485 | 9,144 | 7 | **no** |
-| early | Sniper | 241,090 | 186.8s | 49,178 | 10,315 | 5 | **no** |
-| early | High Wizard | 265,447 | 169.6s | 49,708 | 10,311 | 5 | **no** |
-| mid | Lord Knight | 515,156 | 87.4s | 226,517 | 5,566 | 41 | **no** |
-| mid | Assassin Cross | 1,563,294 | 28.8s | 135,378 | 6,792 | 20 | yes |
-| mid | Whitesmith | 487,180 | 92.4s | 241,619 | 5,568 | 43 | **no** |
-| mid | High Priest | 364,569 | 123.5s | 157,304 | 5,564 | 28 | **no** |
-| mid | Sniper | 707,488 | 63.6s | 123,606 | 6,792 | 18 | **no** |
-| mid | High Wizard | 927,018 | 48.6s | 125,283 | 6,787 | 18 | **no** |
-| N+ | Lord Knight | 3,012,582 | 14.9s | 686,866 | 3,809 | 180 | yes |
-| N+ | Assassin Cross | 8,817,031 | 5.1s | 373,359 | 3,809 | 98 | yes |
-| N+ | Whitesmith | 3,042,660 | 14.8s | 721,556 | 3,809 | 189 | yes |
-| N+ | High Priest | 2,401,403 | 18.8s | 476,990 | 3,809 | 125 | yes |
-| N+ | Sniper | 3,268,556 | 13.8s | 340,893 | 3,809 | 90 | yes |
-| N+ | High Wizard | 6,040,083 | 7.5s | 345,942 | 3,809 | 91 | yes |
+| early | Lord Knight | 161,174 | 692.9s | 89,978 | 9,149 | 10 | **no** |
+| early | Assassin Cross | 467,255 | 239.0s | 53,861 | 10,315 | 5 | **no** |
+| early | Whitesmith | 160,038 | 697.8s | 95,977 | 9,155 | 10 | **no** |
+| early | High Priest | 109,615 | 1018.8s | 62,485 | 9,144 | 7 | **no** |
+| early | Sniper | 241,090 | 463.2s | 49,178 | 10,315 | 5 | **no** |
+| early | High Wizard | 265,447 | 420.7s | 49,708 | 10,311 | 5 | **no** |
+| mid | Lord Knight | 515,156 | 216.8s | 226,517 | 5,566 | 41 | **no** |
+| mid | Assassin Cross | 1,563,294 | 71.4s | 135,378 | 6,792 | 20 | **no** |
+| mid | Whitesmith | 487,180 | 229.2s | 241,619 | 5,568 | 43 | **no** |
+| mid | High Priest | 364,569 | 306.3s | 157,304 | 5,564 | 28 | **no** |
+| mid | Sniper | 707,488 | 157.9s | 123,606 | 6,792 | 18 | **no** |
+| mid | High Wizard | 927,018 | 120.5s | 125,283 | 6,787 | 18 | **no** |
+| N+ | Lord Knight | 3,012,582 | 37.1s | 686,866 | 3,809 | 180 | **no** |
+| N+ | Assassin Cross | 8,817,031 | 12.7s | 373,359 | 3,809 | 98 | yes |
+| N+ | Whitesmith | 3,042,660 | 36.7s | 721,556 | 3,809 | 189 | **no** |
+| N+ | High Priest | 2,401,403 | 46.5s | 476,990 | 3,809 | 125 | **no** |
+| N+ | Sniper | 3,268,556 | 34.2s | 340,893 | 3,809 | 90 | **no** |
+| N+ | High Wizard | 6,040,083 | 18.5s | 345,942 | 3,809 | 91 | yes |
 
-early: 0/6 classes clear inside 30s, fastest 96.4s, slowest 410.8s.
+early: 0/6 classes clear inside 30s, fastest 239.0s, slowest 1018.8s.
 
-mid: 1/6 classes clear inside 30s, fastest 28.8s, slowest 123.5s.
+mid: 0/6 classes clear inside 30s, fastest 71.4s, slowest 306.3s.
 
-N+: 6/6 classes clear inside 30s, fastest 5.1s, slowest 18.8s.
-**Verdict: it is fair for a completed third-job build and impossible without one.** With N+ benchmark
-gear (the +10 refinement, N+ card, max-mastery build the repository uses to mean "finished") all six
-classes clear with 11-25 seconds to spare and take 3,809 damage a hit against 90-189 hits of HP, so
-the fight is a pure damage check with no death risk. One tier down — +6 refinement, high-tier gear —
-only Assassin Cross squeezes in at 28.8s and everyone else needs 49-124s. At +3 gear nobody can win,
-and the opponent's 15,235 ATK kills those characters in 5-10 hits, so the trial fails twice over.
+N+: 2/6 classes clear inside 30s, fastest 12.7s, slowest 46.5s.
 
-The 30-second limit is therefore effectively "you must own roughly N+ benchmark gear", and the class
-spread is wide: Assassin Cross 5.1s against High Priest 18.8s. Nothing in the Class Tree tells the
-player that.
 
-If that gate is too tight, the single dial is `JOB_RITE_HP_MULT` (2 = 30.0M HP, 1 = the plain 15.0M
-Astral Stage 1 mob):
+**Verdict: it is now harder than the Abyss Nightmare boss, and only a finished build can win.**
+Against the same benchmark fixtures (see the tier definitions in `tools/progression_balance.js`):
 
-| `JOB_RITE_HP_MULT` | Opponent HP | early gear | mid gear | N+ gear |
-|---|---:|---|---|---|
-| 3 (current) | 45,028,158 | 0/6 clear (96-411s) | 1/6 clear (28.8s) | 6/6 clear (5.1-18.8s) |
-| 2 | 30,018,772 | 0/6 clear (64-274s) | 1/6 clear (19.2s) | 6/6 clear (3.4-12.5s) |
-| 1 | 15,009,386 | 0/6 clear (32-137s) | 4/6 clear (9.6-41.2s) | 6/6 clear (1.7-6.3s) |
+* **N+ gear (a completed build): 2 of 6 classes clear inside 30s.** Assassin Cross 12.7s and High
+  Wizard 18.5s win; Sniper needs 34.2s, Whitesmith 36.7s, Lord Knight 37.1s and High Priest 46.5s.
+  Nobody dies (3,809 damage a hit against 90-189 hits of HP), so it is a pure damage check.
+* **Mid gear: 0 of 6** (fastest 71.4s). **Early gear: 0 of 6** (fastest 239s, slowest 1,019s).
+* The opponent swings 15,235 ATK - above the Dark Lord's own 14,364 - so it is stronger than the
+  Abyss Nightmare boss on both axes.
 
-Raising `JOB_RITE_SECS` instead would help the mid tier only if it went past ~50s, which turns a
-30-second rite into a long fight. Lowering the multiplier to 1 keeps the "kill an Ascension mob"
-idea and lets a mid-geared player pass with four of six classes.
+Read the DPS numbers as a benchmark, not a ceiling: they come from a stationary single-target harness
+with fixed six-slot combos, no pets and no over-cap refinement, so a fully invested third job does
+more than this table shows. If the gate turns out too strict in play, the two dials are
+`JOB_RITE_BOSS_MULT` (1.0 puts the opponent exactly at the Dark Lord's HP) and `JOB_RITE_SECS`
+(45s lets five of six classes through at benchmark gear; 60s lets all six).
+
+## The Ascension economy — Zeny and drop rates
+
+Measured by `tools/compare_ascension_economy.js`. Drop chances are the game's own percentages;
+everything per hour is `DPS / HP × 60` kills a minute at a fixed DPS, so read it as "same player,
+different field" rather than as a promise.
+
+| Field | Mob HP | Zeny per kill | Zeny / M HP | EXP / M HP | Gear drops / kill | Card | Map material | Sigil | Ore |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Abyss NM15 | 7,504,693 | 1,933 | 258 | 3,613 | 0.42% | 0.15% | 0.2% (undefined) | 0.05% | 0.01% |
+| Astral Citadel S1 | 15,009,386 | 5,026 | 335 | 5,420 | none | 0.15% | 0.2% (Astral Shard) | 0.05% | 0.01% |
+| Astral Citadel S2 | 22,514,079 | 5,277 | 234 | 4,818 | none | 0.15% | 0.2% (Astral Shard) | 0.05% | 0.01% |
+| Astral Citadel S3 | 33,771,118 | 5,529 | 164 | 4,015 | none | 0.15% | 0.2% (Astral Shard) | 0.05% | 0.01% |
+| Astral Citadel S4 | 48,780,504 | 5,780 | 118 | 3,613 | none | 0.15% | 0.2% (Astral Shard) | 0.05% | 0.01% |
+| Astral Citadel S5 | 33,771,118 | 6,031 | 179 | 6,423 | none | 0.15% | 0.2% (Astral Shard) | 0.05% | 0.01% |
+| Thor Volcano S1 | 52,532,851 | 6,031 | 115 | 3,613 | none | 0.15% | 0.2% (Primal Catalyst) | 0.05% | 0.01% |
+| Thor Volcano S2 | 67,542,237 | 6,408 | 94.9 | 3,412 | none | 0.15% | 0.2% (Primal Catalyst) | 0.05% | 0.01% |
+| Thor Volcano S3 | 82,551,623 | 6,785 | 82.2 | 3,285 | none | 0.15% | 0.2% (Primal Catalyst) | 0.05% | 0.01% |
+| Thor Volcano S4 | 105,065,702 | 7,162 | 68.2 | 3,097 | none | 0.15% | 0.2% (Primal Catalyst) | 0.05% | 0.01% |
+| Thor Volcano S5 | 67,542,237 | 7,539 | 112 | 6,022 | none | 0.15% | 0.2% (Primal Catalyst) | 0.05% | 0.01% |
+
+### Per hour at 1M DPS
+
+| Field | Kills / min | Zeny / hour | Map material / hour | Sigils / hour | Ore / hour | Cards / hour | Gear / hour |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Abyss NM15 | 8.0 | 927,295 | 0.96 | 0.24 | 0.05 | 0.72 | 2.0 |
+| Astral Citadel S1 | 4.0 | 1,205,485 | 0.48 | 0.12 | 0.02 | 0.36 | — |
+| Astral Citadel S2 | 2.7 | 843,806 | 0.32 | 0.08 | 0.02 | 0.24 | — |
+| Astral Citadel S3 | 1.8 | 589,355 | 0.21 | 0.05 | 0.01 | 0.16 | — |
+| Astral Citadel S4 | 1.2 | 426,553 | 0.15 | 0.04 | 0.01 | 0.11 | — |
+| Astral Citadel S5 | 1.8 | 642,919 | 0.21 | 0.05 | 0.01 | 0.16 | — |
+| Thor Volcano S1 | 1.1 | 413,305 | 0.14 | 0.03 | 0.01 | 0.10 | — |
+| Thor Volcano S2 | 0.89 | 341,555 | 0.11 | 0.03 | 0.01 | 0.08 | — |
+| Thor Volcano S3 | 0.73 | 295,887 | 0.09 | 0.02 | 0.00 | 0.07 | — |
+| Thor Volcano S4 | 0.57 | 245,401 | 0.07 | 0.02 | 0.00 | 0.05 | — |
+| Thor Volcano S5 | 0.89 | 401,831 | 0.11 | 0.03 | 0.01 | 0.08 | — |
+
+### Per hour at 4M DPS
+
+| Field | Kills / min | Zeny / hour | Map material / hour | Sigils / hour | Ore / hour | Cards / hour | Gear / hour |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Abyss NM15 | 32.0 | 3,709,182 | 3.8 | 0.96 | 0.19 | 2.9 | 8.1 |
+| Astral Citadel S1 | 16.0 | 4,821,939 | 1.9 | 0.48 | 0.10 | 1.4 | — |
+| Astral Citadel S2 | 10.7 | 3,375,223 | 1.3 | 0.32 | 0.06 | 0.96 | — |
+| Astral Citadel S3 | 7.1 | 2,357,420 | 0.85 | 0.21 | 0.04 | 0.64 | — |
+| Astral Citadel S4 | 4.9 | 1,706,211 | 0.59 | 0.15 | 0.03 | 0.44 | — |
+| Astral Citadel S5 | 7.1 | 2,571,675 | 0.85 | 0.21 | 0.04 | 0.64 | — |
+| Thor Volcano S1 | 4.6 | 1,653,219 | 0.55 | 0.14 | 0.03 | 0.41 | — |
+| Thor Volcano S2 | 3.6 | 1,366,219 | 0.43 | 0.11 | 0.02 | 0.32 | — |
+| Thor Volcano S3 | 2.9 | 1,183,549 | 0.35 | 0.09 | 0.02 | 0.26 | — |
+| Thor Volcano S4 | 2.3 | 981,605 | 0.27 | 0.07 | 0.01 | 0.21 | — |
+| Thor Volcano S5 | 3.6 | 1,607,323 | 0.43 | 0.11 | 0.02 | 0.32 | — |
+
+### What a set costs
+
+| Set | Map | Material | Shards / catalysts | Sigils | Zeny |
+|---|---|---|---:|---:|---:|
+| Celestial | Astral | Astral Shard | 108 | 11 | 410,000,000 |
+| Voidwalker | Astral | Astral Shard | 119 | 11 | 458,000,000 |
+| Ethereal | Astral | Astral Shard | 112 | 11 | 428,000,000 |
+| Primal | Thor | Primal Catalyst | 133 | 11 | 500,000,000 |
+| Molten | Thor | Primal Catalyst | 145 | 11 | 560,000,000 |
+| Infernal | Thor | Primal Catalyst | 153 | 11 | 600,000,000 |
+
+Reference: at 1M DPS the best Ascension drop field (Astral Citadel S1) pays 0.48 Astral Shard an hour, and at 4M DPS 1.9.
+
+
+### What this says
+
+**1. Neither new map drops equipment at all.** Astral Citadel and Thor Volcano have an empty gear
+table on every monster and on both MVPs: 0 items an hour, where Nightmare Abyss 15 still drops 0.42%
+a kill on mobs (2.0 an hour at 1M DPS) and 1.56% on its boss. The two maps pay in materials only.
+
+**2. Zeny per HP falls down both ladders, so every deeper stage is a worse Zeny farm.** Astral runs
+335 → 118 Zeny per million HP from Stage 1 to Stage 4; Thor runs 115 → 68. At the same DPS that is
+1.21M Zeny an hour on Astral Stage 1 against 0.43M on Astral Stage 4, and Thor's whole ladder sits
+about 3× under Astral's. The Zeny bonus (`ascZenyBonus`) grows 2.0 → 2.4 on Astral while HP grows
+3.25×, which is the mechanism.
+
+**3. Material odds are flat while HP is not, so depth punishes the drop too.** The map material is a
+flat 0.2% a kill and a Sigil 0.05%, whatever the monster's HP. Astral Stage 1 therefore yields 0.48
+Astrals an hour at 1M DPS and Thor Stage 4 yields 0.07 - a 7× spread between the best and worst
+field of the same expansion.
+
+**4. A Mythic set costs 108-153 materials, 11 Sigils and 410-600M Zeny.** At 1M DPS on Astral Stage 1
+that is about 225 hours of shards, 92 hours of Sigils and 341 hours of Zeny; at 4M DPS, 57 / 23 / 85
+hours. Zeny is the binding constraint, materials are second, and at Thor's rates every number is
+about 3-7× worse. (High-DPS rows assume kills never wait on travel, packs or respawns, so treat the
+4M figures as a floor on time.)
+
+### Options (not applied)
+
+| Knob | Option | What it does |
+|---|---|---|
+| Zeny | **Z1** hold each map's own Stage 1 rate | Astral 335/M HP on every stage, Thor 115/M on every stage. Depth stops being a Zeny penalty; Thor still pays about 3× less a minute than Astral. Astral S4 ×2.8, Thor S4 ×1.7. |
+| Zeny | **Z2** one rate for both maps at 260/M HP | The Nightmare Abyss 15 capstone rate, so the two maps pay the same a minute. Astral S1 −22% and S4 ×2.2; Thor S1 ×2.3 and S4 ×3.8. |
+| Zeny | **Z3** only remove the dip | Astral S3/S4 up to 234/M HP, Thor S3/S4 up to 95/M. Keeps Stage 1 the best field; depth stops being a straight downgrade. |
+| Drops | **D1** scale the chance with HP | Astral Shard chance = 0.2% × (mob HP / 15.0M); Thor = 0.2% × (HP / 52.5M). Every stage then yields the same 0.48 shards an hour at 1M DPS instead of 0.48 → 0.07. Total material supply unchanged. |
+| Drops | **D2** D1 with a 5× base (1% / 0.25%) | 2.4 shards and 0.6 Sigils an hour at 1M DPS, ~9.6 and 2.4 at 4M: a Celestial set's 108 shards in about 45 hours (11 at 4M) instead of 225. |
+| Drops | **D3** give the two maps equipment drops | A Nightmare-style table (about 0.42% a kill, 1.5% an MVP) so Astral and Thor are not the only fields that never drop gear. |
+
+Zeny and drops are independent: any Z with any D. Nothing here is applied yet.
 
 ## Remaining options — Nightmare Stage 15 (historical, for reference)
 

@@ -49,6 +49,7 @@ that case honestly; the pages may not).
 | How does the pacing curve behave at a given kills/hour? | `node tools/tune_pacing.js` |
 | What do the endgame fields pay in HP / EXP / Zeny — Nightmare Abyss, Astral Citadel, Thor Volcano? | `node tools/compare_endgame_rewards.js` (read-only; tables written up in `reports/endgame-rewards/comparison.md`) |
 | Is the job-change trial (Crucible) winnable, and how long does each class need? | `node tools/compare_job_trial.js` (read-only; reads `startJobRite()` and measures the six third jobs at three gear tiers) |
+| What do the two Ascension maps pay in Zeny, ore, cards and Mythic materials per hour? | `node tools/compare_ascension_economy.js` (read-only; live drop tables and set costs, at 1M and 4M DPS) |
 | What are the weapon/gear affix ranges the game rolls? | `Updates/cards-gear-audit/affix-ranges.html` |
 | What is in the gear/card catalogue, and can I edit it? | `Updates/cards-gear-audit/equipment-cards-tuning.html` |
 

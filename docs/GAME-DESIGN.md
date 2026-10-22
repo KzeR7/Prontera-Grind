@@ -31,8 +31,10 @@ are 1.5/1.9/2.4/3/3.8. Thor HP multipliers are 7/9/11/14/18 and ATK multipliers
 are 4/4.8/5.6/6.6/8. The stage-5 boss retains three times its original stage
 regular HP. Boss ATK is 3× for Astral and 2.25× for Thor (v198). In v191, only its five escorts receive half the original
 stage regular HP; their ATK is unchanged. Stages 1–4 and boss HP are unchanged.
-The first fourth-job trial uses 3× Astral stage-1 regular HP, its original ATK, a
-30-second limit and its retained HIT. Thor bosses deal 25% less damage in v198
+The first fourth-job trial uses 1.25× the Nightmare Abyss Stage 15 MVP's own HP
+(111,676,981, deliberately above that boss), the Astral stage-1 ATK, a 30-second
+limit and its retained HIT. Before v211 it was 3× the Astral stage-1 regular mob,
+which left it weaker than the boss it is meant to outclass. Thor bosses deal 25% less damage in v198
 (2.25× the original stage regular ATK); Astral bosses retain 3× ATK.
 Nightmare Abyss Dark Lord carries the band's own boss HP: the v198 +25% was
 retired in v210, which is a 20% cut of the value players had been fighting

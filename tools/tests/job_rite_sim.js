@@ -17,10 +17,10 @@ function setup(parent='Lord Knight'){
 function test(name,fn){fn();passed++;console.log('ok '+name)}
 try{
  for(const [parent,target,enemy,id] of expected){
-  test(parent+' enters its own triple-HP Astral fight and advances only after the kill',()=>{
+  test(parent+' enters its own Crucible fight (1.25x the Nightmare Abyss boss HP) and advances only after the kill',()=>{
    setup(parent);ev(`changeClass(${JSON.stringify(target)})`);
    assert.equal(ev('S.cls'),parent);assert.equal(ev('JOB_RITE.on'),true);
-   assert.deepEqual(probe('return {name:mob.n,id:mob.spriteId,hp:mob.hp,atk:mob.atk,count:mobs.length}'),{name:enemy,id,hp:ev('ascensionCombatStats(10,1).hp')*3,atk:ev('ascensionCombatStats(10,1).atk'),count:1});
+   assert.deepEqual(probe('return {name:mob.n,id:mob.spriteId,hp:mob.hp,atk:mob.atk,count:mobs.length}'),{name:enemy,id,hp:Math.floor(ev('nmBossHpOf(9,15)')*ev('JOB_RITE_BOSS_MULT')),atk:ev('ascensionCombatStats(10,1).atk'),count:1});
    assert.equal(ev('JOB_RITE.enemy.max'),ev('JOB_RITE.enemy.hp'));
    assert.equal(ev('JOB_RITE.deadline-Date.now()'),30000);
    assert.equal(ev('jobRiteLeft()'),30);

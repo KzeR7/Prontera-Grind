@@ -1127,7 +1127,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-22 haven-v210 nightmare abyss boss hp -20%';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-22 haven-v211 harder crucible trial';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -5574,7 +5574,15 @@ const JOB_RITE_OPPONENTS={
   Sniper:{n:'Sniper Shecil',spriteId:1638},
   'High Wizard':{n:'High Wizard Katrinn',spriteId:1639}
 };
-const JOB_RITE_SECS=30,JOB_RITE_HP_MULT=3;
+const JOB_RITE_SECS=30,JOB_RITE_BOSS_MULT=1.25;
+// v211 (owner: "job change should be hard and stronger than abyss nightmare boss"): the Crucible
+// opponent's HP is anchored to the Nightmare Abyss Stage 15 MVP - the deepest boss in the game - and
+// set 25% above it, so the trial is always the hardest single fight a third job can meet. nmBossHpOf
+// repeats spawn()'s own boss formula (that map's map bonus, NMBOSSHP and the Stage 15 +30%) so the
+// trial follows the boss instead of pinning a number: 89,341,585 -> 111,676,981 HP. Its ATK stays the
+// Astral Stage 1 value (15,235), already above the Dark Lord's 14,364. Before v211 it was 3x the
+// Astral Stage 1 regular mob (45,028,158 HP) - weaker than the boss it is meant to outclass.
+const nmBossHpOf=(m,l)=>Math.floor(500*(1+m*.15+Math.max(0,m-4)*.2)*Math.pow(fieldPower(m,l),HPE)*(l>10?NMBOSSHP*nm15Of(l):1));
 const JOB_RITE_RESULT_MS=3000;
 const JOB_RITE={on:false,passed:null,result:null};
 function jobRiteLeft(){return JOB_RITE.on?Math.max(0,Math.min(JOB_RITE_SECS-(t-JOB_RITE.started),(JOB_RITE.deadline-Date.now())/1000)):0}
@@ -5600,7 +5608,7 @@ function startJobRite(target){
   if(!FOURTH_JOBS_LIVE||JOB_RITE.on||TRIAL.on||!CLASSES[target]||CLASSES[target].tier!==4||playedClass(target)||classBlock(target)||S.cls!==CLASSES[target].par)return false;
   const opponent=JOB_RITE_OPPONENTS[S.cls];if(!opponent)return false;
   const template=fieldOf(10,1).mobs[0],stats=ascensionCombatStats(10,1);
-  stats.hp=stats.max=Math.floor(stats.hp*JOB_RITE_HP_MULT);
+  stats.hp=stats.max=Math.floor(nmBossHpOf(9,15)*JOB_RITE_BOSS_MULT);
   Object.assign(JOB_RITE,{on:true,owner:S,user:currentUser,parent:S.cls,target,started:t,deadline:Date.now()+JOB_RITE_SECS*1000,outcome:null,exitAt:0,result:null,
     home:{mobs,mob,camps,activePack,respawn,engageTgt,drops,position:{...pl},hp:S.hp,tb,petBuff:{...petBuff},petBuffSrc:{...petBuffSrc}},
     enemy:{...template,...opponent,...stats,x:0,z:-4,hx:0,hz:-4,a:0,size:.6,pack:0,boss:false,spawn:1,mapIndex:10,sec:fieldOf(10,1).sec,
