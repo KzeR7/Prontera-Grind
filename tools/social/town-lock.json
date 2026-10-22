@@ -23,20 +23,20 @@
   },
   "outputs": {
     "models.webp": {
-      "sha256": "9497d3344e28ad882d614b2d9acdfc5e4b7d81b79f066f01a45ae595233f227c",
-      "bytes": 3385904
+      "sha256": "bdfba1fbbafa3b24c01080be31300f7087b30ce497c1d628b3a7938efa71fa67",
+      "bytes": 3916646
     },
     "models.bin": {
-      "sha256": "6ecbdec9a5a46cb6137c412f3d4d18bc600639d5cca0200490209d917fc2b5dc",
-      "bytes": 311520
+      "sha256": "54db7e8a5f418586158f033d02659fe1746dd45870d2aff640f1cd45c78165fe",
+      "bytes": 359280
     },
     "paving.webp": {
       "sha256": "ecaeb21393a02e32d77d937af726807ccce1ae66a897880abfa633c3fdae0d4c",
       "bytes": 183522
     },
     "catalog.json": {
-      "sha256": "3c738a4f1517581983e7c7010b44b2ad3a828655be0461dfa59275c56e91ecbf",
-      "bytes": 873
+      "sha256": "4c137f642e29e9e9bf26934556078632f4794d50b0e7cc5f86a6360a9df46a02",
+      "bytes": 1103
     }
   }
 }

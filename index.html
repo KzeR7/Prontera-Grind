@@ -817,7 +817,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="assets/ui/eclipse.css?v=202">
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=203">
+<link rel="stylesheet" href="assets/social.css?v=206">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2>Welcome back.</h2><p class="login-intro">Your adventure is right where you left it.</p><div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -892,8 +892,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-afterglow.js?v=147"></script>
 <script src="assets/pets.js?v=130"></script>
-<script src="assets/bgm-tracks.js?v=1"></script>
-<script src="assets/bgm.js?v=188"></script>
+<script src="assets/bgm-tracks.js?v=206"></script>
+<script src="assets/bgm.js?v=206"></script>
 <script src="assets/combat-audio.js?v=190"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
@@ -1126,7 +1126,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-22 haven-v203 world chat and fountain plaza';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-22 haven-v206 desktop chat baseline';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -5657,7 +5657,7 @@ function jobRiteArena(){
 // ---------- UI ----------
 // Index, Black Market and Leaderboard share an independent dropdown below Quests.
 // instead of taking dock slots. The keys X and V still open them. v91: the World Map tab uses a tower icon.
-const SIDE_TABS=['index','market','board','guide','gm'];
+const SIDE_TABS=['index','market','board','guide','log','wardrobe','set','gm'];
 const TABS={map:['🗼','World Map','M'],wardrobe:['♧','Wardrobe','W'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],equip:['🛡️','Equipment','E'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],guide:['📖','Build & Farming Guide','H'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const expandedPanels=new Set();
 let collectionGrade=-1;
@@ -6397,7 +6397,7 @@ function arrangePanel(k,root){
   }
 }
 
-const DOCK_TABS=['map','status','equip','job','skills','bag','pet','market','log','wardrobe','set'];
+const DOCK_TABS=['map','status','equip','job','skills','bag','pet'];
 const DOCK_LABEL={wardrobe:'Wardrobe',map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Class Tree',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
 function eclipsePositionMore(){
   const menu=$('sideMenu'),button=$('dock').querySelector('.eclipse-more');if(!sideOpen||!button)return;
@@ -6414,6 +6414,8 @@ function eclipseMeasureDock(){
     let gap=12;                                  // #dock{bottom:12px}, plus the safe-area inset on a phone
     try{const b=parseFloat(getComputedStyle(dk).bottom);if(isFinite(b))gap=b}catch(_){}
     document.documentElement.style.setProperty('--docktop',Math.round(dh?dh+gap+6:76)+'px');
+    document.documentElement.style.setProperty('--dockbottom',gap+'px');
+    document.documentElement.style.setProperty('--dockhalfwidth',dk.offsetWidth/2+'px');
   }
 }
 function renderDock(){
@@ -10325,8 +10327,8 @@ function updateWatch(){
 setInterval(updateWatch,60000);
 </script>
 <script src="assets/wardrobe-ui.js?v=199"></script>
-<script src="assets/social-rules.js?v=203"></script>
-<script src="assets/social-scene.js?v=203"></script>
-<script src="assets/social.js?v=203"></script>
+<script src="assets/social-rules.js?v=206"></script>
+<script src="assets/social-scene.js?v=206"></script>
+<script src="assets/social.js?v=206"></script>
 </body>
 </html>

@@ -19,3 +19,36 @@ body.social-open #eclipseCombat,body.social-open #hudBuffs,body.social-open #hin
 @media(max-width:600px){#socialChat{left:6px;max-width:calc(100% - 12px);width:340px;height:185px;font-size:11px}#socialTabs button{padding:5px 6px}#socialHubHeader{left:12px;top:12px}#socialHubHeader h2{font-size:20px}#socialHubHeader p{max-width:175px}#socialHubControls{right:8px;top:12px}#socialHubHint{bottom:auto;top:100px;right:8px;font-size:10px;max-width:150px}#socialEmoji{grid-template-columns:repeat(6,1fr)}}
 
 body.social-open #hud{visibility:hidden!important}body.hide-feed #socialChat{display:none}#socialHubHeader{z-index:2}#socialHubHeader h2{color:#fff}
+
+/* Narrow screens stack chat above navigation; desktop shares its lower baseline. */
+#socialChat{left:12px;bottom:var(--docktop,80px)}
+#socialResize{right:-5px;top:35%;width:10px;height:40%;min-height:26px;max-height:72px;padding:0!important;border:0!important;background:transparent!important;cursor:nesw-resize!important;border-radius:6px}
+#socialResize::after{content:'';position:absolute;left:3px;top:25%;bottom:25%;width:3px;border-radius:3px;background:#a4b3b2}
+#socialEmoji{position:absolute;bottom:62px;left:6px;right:6px;max-height:210px;background:#182b32;border:1px solid #90a5a6;box-shadow:0 -4px 16px #0006;border-radius:5px;z-index:2}
+#socialCompose button:disabled,#socialEmoji button:disabled{opacity:.5;cursor:wait}
+#socialSend{min-width:58px}
+#wins .social-panel{display:flex!important;flex-direction:column;align-items:center;justify-content:center;padding:clamp(20px,5vw,64px);min-width:0}
+#wins .social-destination{box-sizing:border-box;width:100%;max-width:860px;padding:clamp(24px,5vw,60px);text-align:center;box-shadow:0 16px 45px #0002}
+#wins .social-destination h2{font-size:clamp(28px,4vw,42px);margin:20px 0}
+#wins .social-destination p{max-width:620px;margin:16px auto;font-size:14px;color:#405c5a}
+#wins .social-destination small{color:#486b67}
+#wins .social-destination button{padding:14px 28px;min-width:220px}
+.social-player-label[data-loading=true]::after{content:'Loading character…';display:block;font-size:10px;color:#e9e3c8}
+body.social-open #sideMenu.eclipse-more-open{visibility:visible!important}
+@media(min-width:1120px){#socialChat{bottom:var(--dockbottom,15px);max-width:calc(50% - var(--dockhalfwidth,274px) - 24px)}}
+@media(max-width:600px){#socialChat{left:8px;max-width:calc(100% - 16px)}#wins .social-panel{padding:16px}#wins .social-destination{padding:24px 18px}#socialCompose #socialTo{flex-basis:70px;width:70px}#socialCompose{gap:3px}#socialCompose button{padding:5px}#socialSend{min-width:50px}}
+#wins .wp[data-win=map] .ui-content.social-panel{align-items:center!important;padding:clamp(20px,5vw,64px)!important}
+#wins .social-destination{margin-inline:auto!important}
+@media(max-width:600px){#wins .wp[data-win=map] .ui-content.social-panel{padding:16px!important}}
+
+/* One quiet toolbar; help is available on demand instead of covering the town. */
+#socialHubToolbar{position:absolute;z-index:3;top:12px;left:50%;transform:translateX(-50%);box-sizing:border-box;display:flex;align-items:center;gap:22px;max-width:calc(100% - 24px);padding:8px 12px;background:#172a30ed;border:1px solid #7e9391;border-radius:6px;color:#f2ecdb;box-shadow:0 3px 12px #0003;font:12px "Trebuchet MS",sans-serif}
+#socialHubHeader{position:static;white-space:nowrap;text-shadow:none}
+#socialHubHeader h2{margin:0;font:18px Georgia,serif}
+#socialHubHeader p{margin:3px 0 0;font-size:10px;color:#b9cbc7}
+#socialHubControls{position:static;display:flex;align-items:center;flex-wrap:nowrap;max-width:none;gap:6px}
+#socialHubControls button,#socialHubHelp summary{white-space:nowrap;border:1px solid #7e9391;background:#294147;border-radius:3px;padding:7px 9px;font:11px "Trebuchet MS",sans-serif;color:#f2ecdb;cursor:pointer}
+#socialHubHelp{position:relative}#socialHubHelp summary{list-style:none}#socialHubHelp summary::-webkit-details-marker{display:none}
+#socialHubHelp p{position:absolute;top:100%;right:0;width:225px;padding:12px;background:#172a30f5;border:1px solid #7e9391;border-radius:4px;line-height:1.7;box-shadow:0 4px 12px #0004}
+body.social-open #bgmPlayer{display:none!important}
+@media(max-width:600px){#socialHubToolbar{top:8px;gap:10px;width:max-content;padding:7px 9px}#socialHubHeader h2{font-size:15px}#socialHubHeader p{font-size:9px}#socialHubControls{gap:4px}#socialHubControls button,#socialHubHelp summary{padding:7px 6px;font-size:10px}}

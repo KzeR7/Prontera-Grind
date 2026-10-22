@@ -169,7 +169,7 @@
       this.init();
       this.loadPrefs();
       this._applyVolume();
-      this.currentMap = (mp === undefined ? this.currentMap : mp);
+      this.currentMap = document.body.classList.contains('social-open') ? 'social' : (mp === undefined ? this.currentMap : mp);
       if (!this.enabled) { this.stopMedia(); this.playingMap = this.currentMap; this.currentTrack = null; this.renderUI(); return; }
       if (this.mode !== 'map') { this.playingMap = this.currentMap; this.renderUI(); return; }
       const list = this.listFor(this.currentMap);

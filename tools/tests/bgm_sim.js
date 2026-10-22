@@ -140,8 +140,8 @@ test('every map plus the login screen carries its exact configured track', () =>
   // the two bonus selections players can pick by hand
   assert.equal(vid('extras'), 'pcqhSMT0jZk', 'Theme of Gonryun');
   assert.equal(sandbox.window.BGM_TRACKS.extras[1].id.match(/v=([A-Za-z0-9_-]{6,})/)[1], 'D30M_vLMvWk', 'Theme of Prontera');
-  // keys: maps 0-11 + login + extras (2 bonus selections) + the 'default' fallback playlist
-  assert.equal(Object.keys(sandbox.window.BGM_TRACKS).length, 15);
+  // keys: maps 0-11 + login + social + extras (2 bonus selections) + default fallback
+  assert.equal(Object.keys(sandbox.window.BGM_TRACKS).length, 16);
   assert.ok(Array.isArray(sandbox.window.BGM_TRACKS.default), 'fallback playlist exists');
 });
 
@@ -174,6 +174,10 @@ test('map BGM is the default: entering maps plays their tracks, travel switches'
   assert.equal(yt.loaded, EXPECTED[10], 'Astral Citadel');
   assert.equal(BGM.currentTitle(), 'Astral Citadel');
   assert.equal(BGM.mode, 'map');
+});
+
+test('plaza uses Theme of Prontera and restores the current farming map on exit',()=>{
+ document.body.classList.add('social-open');BGM.sync(4);assert.equal(BGM.currentMap,'social');assert.equal(yt.loaded,'D30M_vLMvWk');BGM.sync(7);assert.equal(BGM.currentMap,'social');document.body.classList.remove('social-open');BGM.sync(7);assert.equal(yt.loaded,EXPECTED[7]);BGM.sync(10);
 });
 
 test('the widget builds minimized, showing what plays, with the list hidden until pressed', () => {

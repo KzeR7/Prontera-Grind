@@ -61,7 +61,9 @@ python tools/social/build-town.py <cache>
 
 The generator retains original model geometry and native texture regions, changing
 only the atlas layout/UV coordinates. Every copied texture region is compared
-byte-for-byte. Scene placements are our own fountain plaza layout. Paving samples
+byte-for-byte. Scene placements are our own fountain plaza layout. The seating model is the
+original green slatted park bench at source chunk 430. Chunk 1293 is a hanging
+noticeboard and must not be used as a chair. Paving samples
 native atlas tiles; surrounding trees/shrubs reuse the existing pinned Prontera
 field asset pack. Native town and sitting art has a separate 10 MiB delivery budget.
 

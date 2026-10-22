@@ -105,7 +105,7 @@ t('quest collapse and the independent navigation dropdown retain separate state'
   ev("tabs.length=0;qOpen=true;sideOpen=true;renderQ()");
   const doc=window.document;
   assert.ok(!doc.querySelector('#qp').contains(doc.querySelector('#sideMenu')));
-  assert.strictEqual(doc.querySelectorAll('#sideMenu [data-t]').length,ev('S.gm?5:4'));
+  assert.strictEqual(doc.querySelectorAll('#sideMenu [data-t]').length,ev('S.gm?8:7'));
   doc.querySelector('#qp [data-q="t"]').click();
   assert.strictEqual(ev('qOpen'),false);assert.strictEqual(ev('sideOpen'),true);
   assert.strictEqual(doc.querySelector('#sideLinks').hidden,false);
