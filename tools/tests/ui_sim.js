@@ -704,7 +704,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
     'the shared Base/Job bar must be slimmer than before');
   assert.ok(src.includes('skillNameFloat(c.sk.n)')&&src.includes("skillNameFloat('First Aid')"),
     'active, healing and buff skills must show a name above the caster');
-  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
+  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false,KIT:{nativeWorld:false}}));
   vm.runInContext(`
     let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4},rnd=(a,b)=>(a+b)/2,scr=(x,y,z)=>[x*10,600-y*50];
     ${grab('const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;', 'function log(m,cls,cat,visual){')}
@@ -734,7 +734,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   F.damageFloat(1,2,3,1000000,false);F.damageFloat(1,2,3,1896,true);
   assert.strictEqual(F.floats[4].txt,'1000000','the Settings switch shows every digit');
   assert.strictEqual(F.floats[5].txt,'1896','critical digits come back too');
-  const strikeBox={};vm.createContext(Object.assign(strikeBox,{simVisualsOff:()=>false}));
+  const strikeBox={};vm.createContext(Object.assign(strikeBox,{simVisualsOff:()=>false,KIT:{nativeWorld:false}}));
   vm.runInContext(`
     const fieldDamage=()=>1,ascDamage=()=>1,skillBonus=()=>0,applyLeech=()=>0,cardMasteryStat=()=>0;
     let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null,S={dmg:0};
@@ -751,7 +751,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   assert.strictEqual(F.floats[3].anchor,'hero');assert.strictEqual(F.floats[3].y,4.03); // 3.65 base + .38 per slot (v68: banner above the head)
   const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=');
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
-  vm.createContext(Object.assign(scene,{simVisualsOff:()=>false}));
+  vm.createContext(Object.assign(scene,{simVisualsOff:()=>false,KIT:{nativeWorld:false}}));
   vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10],
     DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;${draw}`,scene);
   assert.strictEqual(F.floats[3].el.style.left,'20px');
@@ -768,7 +768,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
 });
 
 t('the short-form option (100K / 1M) goes well with the floats: labels size the burst, the fill carries the suffix', () => {
-  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
+  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false,KIT:{nativeWorld:false}}));
   vm.runInContext(`
     let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4},rnd=(a,b)=>(a+b)/2,scr=(x,y,z)=>[x*10,600-y*50];
     ${grab('const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;', 'function log(m,cls,cat,visual){')}
@@ -787,7 +787,7 @@ t('the short-form option (100K / 1M) goes well with the floats: labels size the 
   assert.deepStrictEqual(Array.from(F.lifts),[0,36,72,0],'a same-spot volley stacks through the real addFloat path too (v171: damage lifts, incoming does not)');
   const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=');
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
-  vm.createContext(Object.assign(scene,{simVisualsOff:()=>false}));
+  vm.createContext(Object.assign(scene,{simVisualsOff:()=>false,KIT:{nativeWorld:false}}));
   vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10],
     DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;${draw}`,scene);
   const html=i=>F.floats[i].el.innerHTML;
@@ -1719,7 +1719,7 @@ t('the Index remembers every map ledger you opened, across re-renders', () => {
 
 t('the equipped title is a small transparent gold seal under the feet, with its rank mark', () => {
   assert.ok(/id="heroTitleMark"/.test(src) && /heroTitleMark\.innerHTML=titleIcon\(equipped\)/.test(src), 'the title glyph rides on the left as the logo');
-  assert.ok(/scr\(pl\.x,0\.16,pl\.z\)/.test(src), 'the seal is projected at the feet, not above the head');
+  assert.ok(src.includes('scr(pl.x,.16+(KIT.nativeWorld?actorFloorY()-.035:0),pl.z)'), 'the seal follows the current field floor beneath the feet');
   assert.ok(/\.hero-title\{[^}]*background:#101f23e8/.test(src), 'dark backing keeps the title readable on every field');
   assert.ok(/\.hero-title\{[^}]*border:1px solid #d9c68b70/.test(src), 'a thin gold frame instead');
   assert.ok(/\.hero-title\{[^}]*transform:translate\(-50%,8px\)/.test(src), 'and it hangs below the anchor point');

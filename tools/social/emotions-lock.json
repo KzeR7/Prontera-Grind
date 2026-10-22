@@ -81,6 +81,126 @@
       "delay": 50,
       "frames": 29,
       "sha256": "795ec71368099ef9547a651d75d4f8cd56b284cbe17021c10a81d64e0f67cbfd"
+    },
+    "scissors": {
+      "action": 12,
+      "delay": 50,
+      "frames": 28,
+      "sha256": "6297282c2d5ab9c0ee13d85aa6e0e8ec64edaa0df763620b9434e38062a516c9"
+    },
+    "paper": {
+      "action": 13,
+      "delay": 50,
+      "frames": 28,
+      "sha256": "14def53baf02e60ff8da1f1dfed8e115b5c8f4023db5c33f556a6ee318e4832d"
+    },
+    "kiss": {
+      "action": 14,
+      "delay": 100,
+      "frames": 27,
+      "sha256": "5f29b253050ee7ea7141d0f26fe3a751e3caed1677d425f69efbc55df4ea76a1"
+    },
+    "ok": {
+      "action": 15,
+      "delay": 50,
+      "frames": 28,
+      "sha256": "6b7f2d8bdee83efa7cbbb4b4299f8b634c0e0ab4c939e1fbb3fc57da6b17a754"
+    },
+    "dead": {
+      "action": 16,
+      "delay": 50,
+      "frames": 28,
+      "sha256": "7dc106fe359d210fb448a94d4ae9df7d4a1c09d0e21670481eddda60e7ab5795"
+    },
+    "sorry": {
+      "action": 17,
+      "delay": 50,
+      "frames": 28,
+      "sha256": "a6b793e115065f1571e87f0e93b5f9039c142bf16f1a41abfef57440d873ac40"
+    },
+    "laugh": {
+      "action": 18,
+      "delay": 50,
+      "frames": 28,
+      "sha256": "b69fc5c7d79555d9be8790512842ecd99914db83255b38edb548a3fa6a313660"
+    },
+    "smile": {
+      "action": 22,
+      "delay": 50,
+      "frames": 28,
+      "sha256": "bb1e0ab88ab1f124c184873d16faeb13cadd4752937d64a31e3a434418db5c71"
+    },
+    "cry": {
+      "action": 28,
+      "delay": 50,
+      "frames": 28,
+      "sha256": "7c3c37fe7e62922ffe7cd3b23798cd66333c6214248a15f209206a3cb52e4e72"
+    },
+    "shy": {
+      "action": 29,
+      "delay": 100,
+      "frames": 28,
+      "sha256": "bff2ad869f749b96624979660e7ba883d4710c455d8dc3b1b95d2af21eb3147a"
+    },
+    "kissheart": {
+      "action": 30,
+      "delay": 75,
+      "frames": 28,
+      "sha256": "d361b3b5e9ff0fb54f7086d828f056bc61c263642608234f1f1d3f7ae42dd61f"
+    },
+    "think": {
+      "action": 31,
+      "delay": 75,
+      "frames": 28,
+      "sha256": "73e5118ce549aff4cededb550b2e228e6fdfa152b44024cc1cf9e8dac9b81da4"
+    },
+    "hmm": {
+      "action": 32,
+      "delay": 50,
+      "frames": 28,
+      "sha256": "53d7d51738e012af8267d93a090af20e7813f8ce0c72ccd201a3e7ffe4e463ab"
+    },
+    "blush": {
+      "action": 33,
+      "delay": 50,
+      "frames": 28,
+      "sha256": "655ec28948f9e8b556e213b7ace17e6bf59cdde6ca1a54bf057b9a625cfe8014"
+    },
+    "drool": {
+      "action": 38,
+      "delay": 100,
+      "frames": 19,
+      "sha256": "17251786d12db1a904ce3482432fa71c17948a41330b989890082ad510901bbd"
+    },
+    "meh": {
+      "action": 39,
+      "delay": 100,
+      "frames": 30,
+      "sha256": "904642900792cefc04bc1a05571d60ba3b72600e339ab987fc4d282011533d86"
+    },
+    "panic": {
+      "action": 44,
+      "delay": 100,
+      "frames": 37,
+      "sha256": "247b412d0a932842df4b91afda0b0c7c3f23e6e1432a632ff535808f7c51b6fa"
+    },
+    "sleep": {
+      "action": 67,
+      "delay": 50,
+      "frames": 23,
+      "sha256": "bd9cf97205bad8f98c10d320249c0c148ccce95662c2126d9d25976b618d6864"
+    },
+    "mail": {
+      "action": 68,
+      "delay": 50,
+      "frames": 17,
+      "sha256": "1f0c9e2770dd49e66902cd57cae7de95c19f66a17842f8e7fdfe1cb6ddc52a3d"
+    },
+    "gg": {
+      "action": 78,
+      "delay": 100,
+      "frames": 14,
+      "sha256": "4e4457c6c999c9ca5bb6c5d34d448489fc117909de5cf928ee188d51d9c5e3b7"
     }
   }
 }

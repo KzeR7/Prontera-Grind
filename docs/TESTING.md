@@ -546,3 +546,22 @@ Install it alongside the dependencies above (`npm install --no-save
 --package-lock=false jsdom three@0.128.0 ws`). Production uses Cloudflare's native
 WebSocket implementation, not the Node adapter. See [Social hub](SOCIAL-HUB.md)
 for the room, API, Cloudflare runtime, browser and native asset checks.
+
+
+## Social controls and artwork (v207)
+
+Run `social_sim.js`, `social_scene_sim.js`, `social_ui_sim.js`,
+`social_api_sim.mjs`, `fourth_job_skills_sim.js`, `display_polish_sim.js`,
+`panel_layout_smoke.js` and `publish_sim.js` under `tools/tests/`.
+The scene suite uses the real Three projection and model geometry with a renderer
+stub; it does not certify GPU pixels. `node tools/check_social_browser.cjs` checks
+two actual software WebGL sessions at 1440px and 390px, camera controls, close zoom,
+model-click seating, names/titles, transparent emotes, pointer/keyboard resizing and the integrated minimize line,
+background farming and channel isolation. Shared Preview can use the documented
+renderer stub for DOM/Canvas checks when its Chromium cannot create WebGL.
+
+Supplemental icon generation and exact-pixel checks are documented in
+[skill icons](../tools/native-skill-icons/README.md). Native emotion regeneration
+compares all 32 APNG timelines to pinned native renderer exports; see
+[social assets](../tools/social/README.md). The original 12 emotion files and all
+standing/sitting sprite packs remain byte-identical.

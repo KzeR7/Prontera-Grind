@@ -4,7 +4,7 @@ The bottom-left chat replaces the short field feed. World, Whisper and Log
 are available from the field; entering Maps → Social Hub adds Local. On desktop (1120px and wider), its bottom aligns with the centered navigation bar.
 Its width is capped to the space on the left, so resizing never shifts or covers
 the navigation. Narrower screens stack chat above the bar. Market, Log, Wardrobe and Settings are in More (one Market entry).
-Resize with the slim right-edge marker (or its arrow keys); dimensions persist on this device.
+The minimize line and resize grip are drawn inside the chat border, with no detached button or protruding handle. Click the header line to collapse/expand; its Enter/Space keys work too. Drag the right-edge grip (or use its arrow keys); preferred dimensions persist across device resizing and reloads. Chat grows to the centered navigation on desktop and to the available screen edge on narrower views.
 Enter focuses/sends, Escape leaves typing. Names offer Whisper/Mute. Log retains
 the existing category filters and history. Muted IDs are stored per account.
 
@@ -15,16 +15,14 @@ leaving/rejoining. Whispers are delivered only to sender and online recipient.
 World has a volatile 100-message backlog, and clients retain at most 400 lines.
 This is not permanent chat storage or offline mail.
 
-Click/tap to walk; drag to rotate; wheel/pinch to zoom. Insert or `/sit` toggles
-sitting; walking stands up. Click one of twelve chairs to walk to it and sit.
-The camera follows your character; names follow native head height. A larger castle,
+Click/tap to walk; drag to rotate and tilt; wheel/pinch to zoom from a close character view to a plaza overview. Right/Shift-drag or two fingers pan. Camera exposes rotation, tilt, distance, follow and directional pan controls; Reset view restores the defaults. Your character is framed in the upper center. Names appear below the feet, with an equipped Hunt title underneath. Appearance, title and refinement updates preserve your position. Insert or `/sit` toggles sitting; walking stands up. Click one of twelve benches to reserve it, walk to it and sit. Reservations are per plaza and clear on standing, walking or disconnecting. A larger castle,
 flanking houses, two market stalls and four bounded corner gardens surround the expanded avenues.
 Twelve native slatted park benches form four groups along the fountain promenade; trees stay inside
 the gardens, clear of paths. The shared layout defines building/garden collision.
-One compact toolbar holds the plaza population, Sit, help and Return to field.
-Walking/camera hints are in its help control; Emoji remains beside Send in chat. The Emoji button beside Send opens 12 original RO animations with slash commands
+One compact toolbar holds the plaza population, Sit, Camera, Reset view, help and Return to field.
+Walking/camera hints are in its help control; Emoji remains beside Send in chat. The Emoji button beside Send opens 32 original RO animations with slash commands
 shown on each button. A smaller animation appears with the sender in Local, and a
-six-second bubble appears overhead. World and private messages never bubble.
+six-second animation appears overhead with its original transparent pixels and no outer box. Spoken text keeps its speech box. World and private messages never bubble.
 
 ## Farming and state
 
@@ -98,10 +96,14 @@ node tools/tests/social_worker_sim.mjs
 node tools/check_social_browser.cjs
 ```
 
-The browser check attaches to the shared preview Chromium with
-`coderabbit-agent-browser get cdp-url` and uses two disposable accounts. Enable
-software WebGL in that browser when hardware rendering is unavailable. It checks native standing/sitting pixels, Local chat/bubbles/emotion
-entries, movement, World/Whisper delivery, farming kills, mobile bounds and exit.
+The browser check uses standalone software WebGL through the optional
+`@sparticuz/chromium` package and two disposable accounts. It checks real native
+standing/sitting pixels, all 32 emotion choices, transparent overhead animations,
+close zoom/tilt/rotation/reset, names/titles below the feet, bench clicks/arrival,
+chat pointer/keyboard resizing and integrated minimizing, centered desktop dock
+alignment, phone bounds, refinement glows, music, channel delivery and reentry.
+Shared Preview can verify DOM/Canvas controls with the documented renderer stub
+when its Chromium cannot create WebGL; that does not certify rendered pixels.
 It uses synthetic weak enemies for a bounded farming assertion; it is not a
 balance or physical-phone performance test. `social_sim.js` checks 21 simultaneous
 room clients and isolation/overflow; it is not a 20-browser FPS benchmark.

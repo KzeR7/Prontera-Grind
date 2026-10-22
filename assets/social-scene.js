@@ -3,7 +3,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
  const T=THREE,R=PGSocialRules,scene=new T.Scene();scene.background=new T.Color(0xb9cbbb);scene.fog=new T.Fog(0xb9cbbb,120,230);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));host.append(renderer.domElement);
  try {
- const camera=new T.PerspectiveCamera(40,1,.1,350),players=new Map();let angle=0,zoom=52,active=false,last=0,focused=false;const focus=new T.Vector3(0,1,12);
+ const camera=new T.PerspectiveCamera(40,1,.1,350),players=new Map();let angle=0,pitch=48,distance=48,panX=0,panZ=0,follow=true,active=false,last=0,focused=false;const focus=new T.Vector3(0,.8,12);
  scene.add(new T.HemisphereLight(0xffffff,0x66775a,1));
  const [catalog,data,atlas,paving]=await Promise.all([fetch('assets/social/town/catalog.json').then(r=>{if(!r.ok)throw Error('Town metadata unavailable');return r.json()}),fetch('assets/social/town/models.bin').then(r=>{if(!r.ok)throw Error('Town models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/social/town/models.webp'),new T.TextureLoader().loadAsync('assets/social/town/paving.webp')]);
  atlas.flipY=false;atlas.magFilter=T.LinearFilter;const modelMat=new T.MeshBasicMaterial({map:atlas,vertexColors:true,side:T.DoubleSide,alphaTest:.35});
@@ -33,7 +33,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
  const water=new T.Mesh(new T.CircleGeometry(3.7,48),new T.MeshBasicMaterial({color:0x60c9dc,transparent:true,opacity:.65}));water.rotation.x=-Math.PI/2;water.position.y=.7;scene.add(water);
  const sprayGeo=new T.BufferGeometry(),spray=new Float32Array(72*3);sprayGeo.setAttribute('position',new T.BufferAttribute(spray,3));const drops=new T.Points(sprayGeo,new T.PointsMaterial({color:0xd6f8ff,size:.14,transparent:true,opacity:.8}));scene.add(drops);
  const allClasses={...PGWardrobe.CLASSES,...PGFourthJobs.CLASSES};const stores=[new PGWardrobe.Store({budget:96*1024*1024}),new PGFourthJobs.Store({budget:64*1024*1024}),new PGWardrobe.Store({base:'assets/social/sitting/',classes:allClasses,budget:48*1024*1024,stances:['sit']})];
- function removePlayer(id){const p=players.get(id);if(!p)return;for(const s of stores)s.release('social-'+id);scene.remove(p.sprite);p.sprite.material.dispose();p.texture.dispose();p.label.remove();players.delete(id)}
+ function removePlayer(id){const p=players.get(id);if(!p)return;for(const s of stores)s.release('social-'+id);scene.remove(p.sprite);p.sprite.material.dispose();p.texture.dispose();p.label.remove();p.bubble.remove();players.delete(id)}
  function loadLooks(p,now){
   if(p.loading||now<p.retryAt)return;
   const appearance=PGWardrobe.normalize(p.state.look?.appearance)||PGWardrobe.defaults('m'),cls=Object.hasOwn(allClasses,p.state.look?.cls)?p.state.look.cls:'Novice';
@@ -48,22 +48,43 @@ window.PGSocialScene={async create(host,labels,callbacks){
  function putPlayer(state){let p=players.get(state.id);if(!p){
   const canvas=document.createElement('canvas');canvas.width=320;canvas.height=280;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.userData.socialId=state.id;sprite.center.set(.5,80/280);scene.add(sprite);
-  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';const bubble=document.createElement('div');bubble.className='social-bubble';const name=document.createElement('button');name.textContent=state.name;name.onclick=()=>callbacks.menu(state.name,state.id);label.append(bubble,name);labels.append(label);
-  p={canvas,texture,sprite,label,bubble,state,loaded:'',looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
+  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');name.textContent=state.name;name.onclick=()=>callbacks.menu(state.name,state.id);const title=document.createElement('small');title.className='social-player-title';label.append(name,title);labels.append(label,bubble);
+  p={canvas,texture,sprite,label,bubble,title,state,loaded:'',looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
  }
+ p.title.textContent=state.look?.title||'';p.title.hidden=!p.title.textContent;
  p.state={...state,path:(state.path||[]).map(v=>({...v})),at:performance.now()};
  const key=JSON.stringify([Object.hasOwn(allClasses,state.look?.cls)?state.look.cls:'Novice',PGWardrobe.normalize(state.look?.appearance)||PGWardrobe.defaults('m')]);
  if(p.requested!==key){p.requested=key;p.seq++;p.loading=false;p.retryAt=0;loadLooks(p,performance.now())}
  }
- function bubble(id,m){const p=players.get(id);if(!p)return;p.bubble.replaceChildren();if(m.emotion){const img=document.createElement('img');img.src='assets/social/emotions/'+m.emotion+'.png';img.alt='/'+m.emotion;p.bubble.append(img)}else p.bubble.textContent=m.body;p.bubbleUntil=performance.now()+6000}
+ function bubble(id,m){const p=players.get(id);if(!p)return;p.bubble.replaceChildren();p.bubble.classList.toggle('social-emotion',!!m.emotion);if(m.emotion){const img=document.createElement('img');img.src='assets/social/emotions/'+m.emotion+'.png';img.alt='/'+m.emotion;p.bubble.append(img)}else p.bubble.textContent=m.body;p.bubbleUntil=performance.now()+6000}
+ // Keep camera state separate from both farming and authoritative player coordinates.
+ const cameraState=()=>({angle,pitch,distance,panX,panZ,follow});
+ function setCamera(values={}){const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
+ if(Number.isFinite(values.angle))angle=((values.angle+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
+ if(Number.isFinite(values.pitch))pitch=clamp(values.pitch,25,78);
+ if(Number.isFinite(values.distance))distance=clamp(values.distance,12,100);
+ if(Number.isFinite(values.panX))panX=clamp(values.panX,-R.LIMIT,R.LIMIT);
+ if(Number.isFinite(values.panZ))panZ=clamp(values.panZ,-R.LIMIT,R.LIMIT);
+ if(typeof values.follow==='boolean'&&follow!==values.follow){if(values.follow){panX=panZ=0}else{panX=focus.x;panZ=focus.z}follow=values.follow}
+ callbacks.camera?.(cameraState());}
+ function resetCamera(){setCamera({angle:0,pitch:48,distance:48,panX:0,panZ:0,follow:true})}
+ function pan(dx,dy){const k=distance/Math.max(1,host.clientHeight)*.8;setCamera({panX:panX-dx*Math.cos(angle)*k-dy*Math.sin(angle)*k,panZ:panZ+dx*Math.sin(angle)*k-dy*Math.cos(angle)*k})}
  const ray=new T.Raycaster(),plane=new T.Plane(new T.Vector3(0,1,0),0);let down=null;const touches=new Map();
- host.onpointerdown=e=>{down={x:e.clientX,y:e.clientY,angle,moved:false};host.setPointerCapture(e.pointerId);touches.set(e.pointerId,{x:e.clientX,y:e.clientY})};host.onpointermove=e=>{if(!down)return;touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const a=[...touches.values()],distance=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);if(down.pinch)zoom=Math.max(35,Math.min(95,zoom*down.pinch/distance));down.pinch=distance;down.moved=true}else if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7){angle=down.angle-(e.clientX-down.x)*.008;down.moved=true}};
- host.onpointerup=e=>{touches.delete(e.pointerId);if(down&&!down.moved){const rect=host.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);const seat=seats.map(mesh=>{const point=ray.ray.intersectBox(mesh.userData.seatBounds,new T.Vector3());return point?{mesh,distance:point.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];if(seat){callbacks.seat(seat.mesh.userData.seat);down=null;return}const point=new T.Vector3();if(ray.ray.intersectPlane(plane,point)&&R.walkable(point.x,point.z))callbacks.move(point.x,point.z)}down=null};host.onpointercancel=()=>{down=null;touches.clear()};host.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(35,Math.min(95,zoom+e.deltaY*.04))},{passive:false});
- const observer=new ResizeObserver(()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()});observer.observe(host);
+ function startDrag(e,moved=false){return {x:e.clientX,y:e.clientY,angle,pitch,moved,pan:e.button===1||e.button===2||e.shiftKey}}
+ host.oncontextmenu=e=>e.preventDefault();
+ host.onpointerdown=e=>{e.preventDefault();host.setPointerCapture(e.pointerId);touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===1)down=startDrag(e);else if(down){down.moved=true;down.pinch=null}};
+ host.onpointermove=e=>{if(!down||!touches.has(e.pointerId))return;const previous=touches.get(e.pointerId);touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(touches.size===2){const a=[...touches.values()],span=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),cx=(a[0].x+a[1].x)/2,cy=(a[0].y+a[1].y)/2;if(down.pinch&&span>0){setCamera({distance:distance*down.pinch/span});pan(cx-down.cx,cy-down.cy)}down.pinch=span;down.cx=cx;down.cy=cy;down.moved=true}
+ else if(down.moved||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7){if(down.pan)pan(e.clientX-previous.x,e.clientY-previous.y);else setCamera({angle:down.angle-(e.clientX-down.x)*.008,pitch:down.pitch+(e.clientY-down.y)*.18});down.moved=true}};
+ host.onpointerup=e=>{if(!touches.has(e.pointerId))return;touches.delete(e.pointerId);if(down&&!down.moved){const rect=host.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
+ const seat=seats.map(mesh=>{const point=ray.ray.intersectBox(mesh.userData.seatBounds,new T.Vector3());return point?{mesh,distance:point.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];if(seat)callbacks.seat(seat.mesh.userData.seat);else{const point=new T.Vector3();if(ray.ray.intersectPlane(plane,point)&&R.walkable(point.x,point.z))callbacks.move(point.x,point.z)}}
+ if(touches.size){const p=[...touches.values()][0];down=startDrag({...p,clientX:p.x,clientY:p.y},true)}else down=null};
+ host.onpointercancel=()=>{down=null;touches.clear()};host.addEventListener('wheel',e=>{e.preventDefault();setCamera({distance:distance*Math.exp(e.deltaY*.001)})},{passive:false});
+ const observer=new ResizeObserver(()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h);camera.aspect=w/h;camera.setViewOffset(w,h,0,h*.16,w,h);camera.updateProjectionMatrix()});observer.observe(host);
  function frame(now){requestAnimationFrame(frame);if(!active||document.hidden||now-last<1000/30)return;const dt=Math.min(.1,(now-last)/1000);last=now;
  for(const p of players.values())R.advance(p.state,now);
- const self=players.get(callbacks.self());if(self){const target=new T.Vector3(self.state.x,1,self.state.z-6);if(!focused){focus.copy(target);focused=true}else focus.lerp(target,1-Math.exp(-dt*8))}
- camera.position.set(focus.x+Math.sin(angle)*zoom,focus.y+zoom*.88,focus.z+Math.cos(angle)*zoom);camera.lookAt(focus);
+ const self=players.get(callbacks.self()),target=new T.Vector3(follow&&self?self.state.x+panX:panX,.8,follow&&self?self.state.z+panZ:panZ);if(!focused){focus.copy(target);focused=true}else focus.lerp(target,1-Math.exp(-dt*8));
+ const tilt=pitch*Math.PI/180;camera.position.set(focus.x+Math.sin(angle)*distance*Math.cos(tilt),focus.y+Math.sin(tilt)*distance,focus.z+Math.cos(angle)*distance*Math.cos(tilt));camera.lookAt(focus);camera.updateMatrixWorld();
  for(let i=0;i<72;i++){const t=(now/1500+i/72)%1,a=i*2.399;spray[i*3]=Math.cos(a)*t*2.6;spray[i*3+1]=1.5+Math.sin(t*Math.PI)*3;spray[i*3+2]=Math.sin(a)*t*2.6}sprayGeo.attributes.position.needsUpdate=true;
  for(const p of players.values()){
   const state=p.state;if(state.id===callbacks.self()&&p.wasSitting!==state.sit){p.wasSitting=state.sit;callbacks.sitting?.(state.sit)}if(p.loaded!==p.requested||!p.looks.normal||!p.looks.sit)loadLooks(p,now);
@@ -80,11 +101,12 @@ window.PGSocialScene={async create(host,labels,callbacks){
    const top=Math.min(...[look.base,look.hair].flatMap(part=>{const action=part.metadata.actions[stance+facing];return action.frames[PGWardrobe.frameIndex(action,now)].filter(l=>l[7]!=='shadow').map(l=>l[5])}));height=(200-top)*scale+.25;
   }
   // Put the native ground-sitting pose on the seat deck, forward of its backrest.
-  p.sprite.position.set(state.x+(chair?Math.sin(chair.rotation)*.35:0),floor,state.z+(chair?Math.cos(chair.rotation)*.35:0));const v=p.sprite.position.clone();v.y+=height;v.project(camera);
-  p.label.style.left=(v.x+1)*host.clientWidth/2+'px';p.label.style.top=(1-v.y)*host.clientHeight/2+'px';p.label.hidden=v.z>1||v.z< -1||Math.abs(v.x)>1||Math.abs(v.y)>1;
+  p.sprite.position.set(state.x+(chair?Math.sin(chair.rotation)*.35:0),floor,state.z+(chair?Math.cos(chair.rotation)*.35:0));const feet=p.sprite.position.clone().project(camera),head=p.sprite.position.clone();head.y+=height;head.project(camera);
+  p.label.style.left=(feet.x+1)*host.clientWidth/2+'px';p.label.style.top=(1-feet.y)*host.clientHeight/2+8+'px';p.label.hidden=feet.z>1||feet.z< -1||Math.abs(feet.x)>1||Math.abs(feet.y)>1;
+  p.bubble.style.left=(head.x+1)*host.clientWidth/2+'px';p.bubble.style.top=(1-head.y)*host.clientHeight/2+'px';p.bubble.hidden=head.z>1||head.z< -1||Math.abs(head.x)>1||Math.abs(head.y)>1;
   if(p.bubbleUntil<now)p.bubble.replaceChildren();
  }
  renderer.render(scene,camera)}requestAnimationFrame(frame);
- return {putPlayer,removePlayer,bubble,clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){last=performance.now();focused=false}},scene,camera,renderer};
+ return {putPlayer,removePlayer,bubble,setCamera,resetCamera,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){last=performance.now();focused=false}},scene,camera,renderer};
  }catch(error){renderer.dispose();renderer.domElement.remove();throw error}
 }};
