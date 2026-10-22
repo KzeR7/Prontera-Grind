@@ -7074,3 +7074,9 @@ The owner's second pass over v77, six notes, all built.
 * **Delivery:** Local workspace and Live Preview updated; no push or deployment.
 
 
+### 2026-10-22 — `endgame reward comparison (read-only tool)`
+
+* **Changed:** Added a read-only measurement, not a balance change. `tools/compare_endgame_rewards.js` reads the live `spawn()`, `fieldExpReward()`, `fieldZenyReward()` and `nmZenyRoll()` and prints HP, EXP and Zeny for the Nightmare Abyss band, the two newest maps (Astral Citadel, Thor Volcano) and every Nightmare Stage 15 MVP, normalised per million HP and per minute at an illustrative 1M DPS. The findings are written up in `reports/endgame-rewards/comparison.md`. No constant, save or player-facing value changed, so `BUILD` is unchanged.
+* **Try it:** `node tools/compare_endgame_rewards.js` (add `--json` for raw numbers), then read `reports/endgame-rewards/comparison.md`. It needs the optional local `jsdom`/`three` packages described in `docs/TESTING.md`.
+* **Checks:** The generator ran twice with identical output (fixed pseudo-random sequence for the Zeny roll); values match the numbers `tools/tests/nightmare_sim.js` prints for field power and EXP per HP. No game suites were re-run because no game file changed.
+* **Delivery:** Local workspace only; no push or deployment.
