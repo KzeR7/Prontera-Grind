@@ -381,6 +381,82 @@ about 3-7× worse. (High-DPS rows assume kills never wait on travel, packs or re
 
 Zeny and drops are independent: any Z with any D. Nothing here is applied yet.
 
+## Proposed Thor Volcano tuning (Zeny and drops — not applied)
+
+The two complaints have one cause each, and both are one-line formulas in `index.html`.
+
+**Zeny.** `fieldZenyReward()` pays every Ascension kill `NM Abyss 15 regular-mob Zeny × ascZenyBonus`.
+The bonus ladder rises 25% from Stage 1 to 5 (Thor `2.4 → 3.0`, both ×1.3), while Thor's monster HP
+rises 157% (`52.5M → 105.1M` at Stage 4). Zeny per kill therefore crawls up while the time per kill
+balloons, and Zeny per million HP collapses from 115 to 68. Thor is the hardest field in the game and
+the worst Zeny farm in it.
+
+**Drops.** `ascensionDrops()` rolls a flat `0.2%` for the map material and `0.05%` for a Sigil
+regardless of the monster's HP. Stage 4 is 2× the HP of Stage 1 for the same odds, so depth pays
+exactly half the materials an hour, and Thor pays 3.5× less than Astral.
+
+### Zeny — index the bonus to the stage's HP
+
+Give `ascZenyBonus` a value proportional to the stage's HP ramp, so a kill's Zeny tracks its cost.
+Two calibrations:
+
+| | Target | Astral S1 | Astral S4 | Thor S1 | Thor S2 | Thor S3 | Thor S4 | Thor S5 | Zeny/hour @1M DPS |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| now | — | 5,026 | 5,780 | 6,031 | 6,408 | 6,785 | 7,162 | 7,539 | Astral 1.21M → 0.43M; Thor 0.41M → 0.25M |
+| **Z-A** | 335 / M HP (Astral S1's rate) | 5,026 | 16,341 | 17,599 | 22,627 | 27,655 | 35,197 | 22,627 | **1.21M on every stage of both maps** |
+| **Z-B** | 500 / M HP | 5,026 | 24,390 | 26,266 | 33,771 | 41,276 | 52,533 | 33,771 | **1.81M on every stage of both maps** |
+
+Z-A is "Thor pays at least as well as Astral, and depth stops being a penalty"; Z-B adds 50% on top
+of that to compensate for Thor's monsters being 3.5× tankier, which would make Thor the deliberate
+Zeny farm rather than only the catalyst farm. Both are implemented by replacing the two arrays in
+`ascZenyBonus` (Thor `[2.4,2.55,2.7,2.85,3]` → `[9.1,11.7,14.3,18.2,11.7]` for Z-A, or
+`[13.6,17.5,21.4,27.2,17.5]` for Z-B; Astral `→ [2.6,3.9,5.85,8.45,5.85]` for Z-A if Astral is
+included, otherwise unchanged). The `×1.3` at the end of the line already covers the Zeny bonus the
+game applies on top, so the arrays above are the raw multiplier.
+
+### Drops — index the chance to the monster's HP
+
+Replace the flat chances with `base × (mob.max / 15,009,386)`, the Astral Stage 1 mob's HP, so the
+chance rises exactly as fast as the kill rate falls and **every stage of both maps pays the same
+materials per hour**. Bosses keep their 1% / 0.05% odds (they already pay 20× a mob for 3× the HP).
+
+| Field | HP index | Chance now | **D-A** base 0.2% | **D-B** base 0.5% | **D-C** base 1.0% | Materials/h @1M | Materials/h @4M |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Astral Citadel S1 | 1.00× | 0.20% | 0.20% | 0.50% | 1.00% | 0.48 / 1.20 / 2.40 | 1.9 / 4.8 / 9.6 |
+| Astral Citadel S2 | 1.50× | 0.20% | 0.30% | 0.75% | 1.50% | same | same |
+| Astral Citadel S3 | 2.25× | 0.20% | 0.45% | 1.12% | 2.25% | same | same |
+| Astral Citadel S4 | 3.25× | 0.20% | 0.65% | 1.62% | 3.25% | same | same |
+| Astral Citadel S5 | 2.25× | 0.20% | 0.45% | 1.12% | 2.25% | same | same |
+| Thor Volcano S1 | 3.50× | 0.20% | 0.70% | 1.75% | 3.50% | same | same |
+| Thor Volcano S2 | 4.50× | 0.20% | 0.90% | 2.25% | 4.50% | same | same |
+| Thor Volcano S3 | 5.50× | 0.20% | 1.10% | 2.75% | 5.50% | same | same |
+| Thor Volcano S4 | 7.00× | 0.20% | 1.40% | 3.50% | 7.00% | same | same |
+| Thor Volcano S5 | 4.50× | 0.20% | 0.90% | 2.25% | 4.50% | same | same |
+
+Sigils use the same index at ¼ of the material base (0.05% / 0.125% / 0.25%), i.e. 0.12 / 0.30 / 0.60
+an hour at 1M DPS and 0.48 / 1.20 / 2.40 at 4M. "Same" means every stage of both maps converges on
+one rate — that is the point of the indexing: Stage 4 stops being a downgrade.
+
+### What each package does to the set grind
+
+One Mythic set is 108-153 materials, 11 Sigils and 410-600M Zeny. At 4M DPS (a completed N+ build on
+the benchmark harness) the time to one set is:
+
+| Package | Materials | Sigils | Zeny | Binding cost |
+|---|---|---|---|---|
+| now (Astral S1 / Thor S4) | 56-80h / 225-319h | 23h / 92h | 85-124h | Zeny |
+| **Z-A + D-B** | **23-32h** | **12h** | **85-124h** | Zeny |
+| Z-B + D-B | 23-32h | 12h | 57-83h | Zeny, then materials |
+| Z-A + D-C | 11-16h | 6h | 85-124h | Zeny |
+
+Zeny stays the long pole because the sets themselves cost 410-600M; that is a set-price question,
+not a farm-rate one, and raising the rate further (Z-B) is the only lever on this list that moves it.
+
+**Caveat on all per-hour figures:** they are `DPS ÷ HP × 3600` kills an hour, i.e. a player who never
+walks, never waits for a respawn and never loses a pack. Real rates on Thor's 5-mob packs with AoE
+will differ by kit; treat the tables as relative comparisons between fields, which is what the tuning
+turns on.
+
 ## Remaining options — Nightmare Stage 15 (historical, for reference)
 
 The options that were priced before v210 was chosen. v210 is **A-variant "cut the HP by 20% with no
