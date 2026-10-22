@@ -538,3 +538,11 @@ cannot create WebGL. The ordinary mode uses real WebGL through software Chromium
 Both exercise the control at 1280px/390px, saving/reloading, melee disabling,
 marker pixels, damage, radius and class cleanup. Shared mode intentionally pauses
 rAF for reproducible checks; reload the Preview afterward to resume normal play.
+
+## World chat / social plaza (v203)
+
+The local API server now also needs `ws` for authenticated WebSocket upgrades.
+Install it alongside the dependencies above (`npm install --no-save
+--package-lock=false jsdom three@0.128.0 ws`). Production uses Cloudflare's native
+WebSocket implementation, not the Node adapter. See [Social hub](SOCIAL-HUB.md)
+for the room, API, Cloudflare runtime, browser and native asset checks.

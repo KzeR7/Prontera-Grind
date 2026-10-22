@@ -22,7 +22,7 @@ Practice and abandoned runs pay no shards; first-clear DPS caches remain one-tim
 ## Ascension fields
 
 Maps → Ascension Map contains Astral Citadel and Thor Volcano, beside the
-World Atlas destination list. Endless Echo has its own tab between Ascension Map and the locked Social Hub tab.
+World Atlas destination list. Endless Echo has its own tab between Ascension Map and Social Hub. The hub opens a social fountain plaza; field farming continues while players visit. See [Social hub](SOCIAL-HUB.md).
 Astral and Thor have illustrated destination previews. Travel enters the main battlefield with the current
 character, combat and drops. Both maps require a fourth-job class, with no prerequisite boss clears.
 Ascension combat scales from the Nightmare Abyss Stage 5 regular mob (internal

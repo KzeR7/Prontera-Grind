@@ -333,8 +333,8 @@ t('World Atlas and Ascension Map have separate destination grids and normal trav
  const before=ev('JSON.stringify(S)');
  assert.ok(html.includes('map-season-tabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))'),'v174: the season strip is four columns so Social sits beside Ascension, not below');
  assert.deepStrictEqual([...doc.querySelectorAll('.map-season-tabs [role=tab]')].map(b=>b.id),['map-tab-atlas','map-tab-ascension','map-tab-echo','map-tab-social']);
- const social=doc.querySelector('#map-tab-social');assert.ok(social.disabled);assert.strictEqual(social.getAttribute('aria-disabled'),'true');assert.match(social.textContent,/Social Hub.*Coming Soon/);
- social.click();ev("ACT.mapseason('social')");assert.strictEqual(ev('mapSeason'),'atlas');assert.strictEqual(ev('JSON.stringify(S)'),before);
+ const social=doc.querySelector('#map-tab-social');assert.ok(!social.disabled);assert.match(social.textContent,/Social Hub/);
+ social.click();assert.strictEqual(ev('mapSeason'),'social');assert.match(doc.querySelector('.social-destination').textContent,/farming keeps going/);assert.strictEqual(ev('JSON.stringify(S)'),before);ev("ACT.mapseason('atlas')");
  assert.strictEqual(doc.querySelectorAll('[data-a=selm]').length,10);
  doc.querySelector('#map-tab-atlas').dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
  assert.strictEqual(ev('mapSeason'),'ascension');assert.strictEqual(doc.activeElement.id,'map-tab-ascension');

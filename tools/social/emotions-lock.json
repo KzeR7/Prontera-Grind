@@ -1,0 +1,86 @@
+{
+  "sources": {
+    "act": {
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8C%C3%86%C3%91%C3%86%C2%AE/emotion.act",
+      "sha256": "0a322f3cdbac00281fda5e1bada221b08bc69dfd76c309da0229603ab36316b6"
+    },
+    "spr": {
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8C%C3%86%C3%91%C3%86%C2%AE/emotion.spr",
+      "sha256": "fb9850fb7d5513a39931328608eacbfd9c64387557ee233798f2ba14ceae7200"
+    }
+  },
+  "outputs": {
+    "surprise": {
+      "action": 0,
+      "delay": 50,
+      "frames": 29,
+      "sha256": "121ae6869367cfa517cd8c549218e722bdf79998464a3bf2ee36270720844bb6"
+    },
+    "question": {
+      "action": 1,
+      "delay": 50,
+      "frames": 29,
+      "sha256": "8f28bd519fbbc8e5965bdcf5b274ea3943d3539a8f9ccd0b3cc7aa8793a3f14a"
+    },
+    "music": {
+      "action": 2,
+      "delay": 50,
+      "frames": 29,
+      "sha256": "cfc6c1e25b91335314c410deb552375b717e113fc6809c77ac446216cd954acc"
+    },
+    "heart": {
+      "action": 3,
+      "delay": 50,
+      "frames": 29,
+      "sha256": "3059c8db83994ed5c28f6a9c2387c5d6ed49e43000f40cd6b8b2b6e603005381"
+    },
+    "love": {
+      "action": 4,
+      "delay": 25,
+      "frames": 29,
+      "sha256": "91d3efd456ec96f97de2c28a1b0084dd8573389a8d11b5c420e67334c574eed4"
+    },
+    "sweat": {
+      "action": 5,
+      "delay": 50,
+      "frames": 29,
+      "sha256": "cb5a7fdf2b10d32c9475ef46a030f788bc0f80b900ecfbc60fb681ced01ad663"
+    },
+    "idea": {
+      "action": 6,
+      "delay": 50,
+      "frames": 29,
+      "sha256": "824b95fccf93112fb9c0708389f97b241be987003b02d842e6726471e0ae11cd"
+    },
+    "anger": {
+      "action": 7,
+      "delay": 25,
+      "frames": 29,
+      "sha256": "ea4b569715b32711ad313b39047ccae0e5771b82cd9ca2b2d22a08c5d28bcb39"
+    },
+    "cloud": {
+      "action": 8,
+      "delay": 50,
+      "frames": 23,
+      "sha256": "429742a12ad1c29fdf90b859035265aea47f9e3e6804898824c964e854788b40"
+    },
+    "money": {
+      "action": 9,
+      "delay": 50,
+      "frames": 29,
+      "sha256": "7b0d044ba89113ad9c02624f4832b718e1e241d41299c8f42b943071fe38f5c7"
+    },
+    "dots": {
+      "action": 10,
+      "delay": 50,
+      "frames": 29,
+      "sha256": "8632a63a9bac0bfc0dae968a9ba6fc7d033069cfd372a12b4ca300fcb49505b5"
+    },
+    "rock": {
+      "action": 11,
+      "delay": 50,
+      "frames": 29,
+      "sha256": "795ec71368099ef9547a651d75d4f8cd56b284cbe17021c10a81d64e0f67cbfd"
+    }
+  }
+}

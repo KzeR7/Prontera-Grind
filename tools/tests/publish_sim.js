@@ -113,9 +113,11 @@ t('the published tree is small enough to stay honest', () => {
   const mb = bytes / 1048576;
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
   const nativeBytes=walk(path.join(out,'assets/native-fields/v1'));
-  assert.ok((bytes-nativeBytes)/1048576 < 62.5, 'existing runtime assets exceed their original 62.5 MiB budget');
+  const socialBytes=walk(path.join(out,'assets/social'));
+  assert.ok(socialBytes/1048576 < 10, 'native social assets exceed their separate 10 MiB budget');
+  assert.ok((bytes-nativeBytes-socialBytes)/1048576 < 62.5, 'existing runtime assets exceed their original 62.5 MiB budget');
   assert.ok(nativeBytes/1048576 < 68, 'ten native field sets and seventy lossless monster atlases exceed their separate 68 MiB budget');
-  assert.ok(mb < 130.5, 'combined runtime delivery exceeds 130.5 MiB');
+  assert.ok(mb < 140.5, 'combined runtime delivery exceeds 140.5 MiB');
   const fourth=path.join(out,'assets/wardrobe/fourth/v1');assert.ok(walk(fourth)<6.25*1048576,'six fourth jobs share hair and accessory pixels');
   const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<13.5*1048576,'nineteen classes and fifty-two accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));
