@@ -195,14 +195,19 @@ highlight, and desktop/mobile resize/scroll events reposition it.
 Ascension v191: `ascensionCombatStats` halves only stage-5 escort HP while retaining
 boss HP and all ATK. `spawn` gives Ascension bosses +10 field HIT (50 total), while
 `minionDef` keeps +15 (45 total). `ascZenyBonus` raises all stage/enemy payouts by
-30%. `ASC_REWARD_VERSION=6` invalidates stale Ascension income at load/claim.
+30% on top of `ascZenyLadder`, the original per-stage ladder (v214 restored it). `ASC_THOR_ZENY`
+(1.4) multiplies map 11 only, so Thor Volcano pays 40% more than it used to and Astral is
+unchanged; that one constant is the Thor Zeny dial. `ASC_REWARD_VERSION=6` invalidates stale Ascension income at load/claim.
 Cover these boundaries with `ascension_progression_sim.js`,
 `ascension_rewards_sim.js`, `ascension_tracks_sim.js`, `combat_damage_sim.js`,
 `offline_sim.js` and `job_rite_sim.js`.
 
 ### Ascension drop and scroll exchanges (v192)
 
-`ascensionDrops` supplies online/offline material rolls. `buyMythicScroll` handles
+`ascensionDrops` supplies online/offline material rolls. v212: `ascMaterialChance` and
+`ascSigilChance` scale `ASC_MAT_CH` (0.5%) and `ASC_SIGIL_CH` (0.125%) by the monster's
+max HP against `ascDropIndex`'s Astral Stage 1 anchor, so every stage pays the same
+materials an hour; update the map card, the handbook and both sims if those constants move. `buyMythicScroll` handles
 the Black Market Sigil exchange through `ACT.buymythicscroll`; `TRIAL_STORE` and
 `trialBuy` handle the Echo `mscroll` entry. Both purchases credit `S.mythicScrolls`.
 `ascension_drop_shop_sim.js` covers probability boundaries, currencies, purchase

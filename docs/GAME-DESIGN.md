@@ -31,11 +31,15 @@ are 1.5/1.9/2.4/3/3.8. Thor HP multipliers are 7/9/11/14/18 and ATK multipliers
 are 4/4.8/5.6/6.6/8. The stage-5 boss retains three times its original stage
 regular HP. Boss ATK is 3× for Astral and 2.25× for Thor (v198). In v191, only its five escorts receive half the original
 stage regular HP; their ATK is unchanged. Stages 1–4 and boss HP are unchanged.
-The first fourth-job trial uses 3× Astral stage-1 regular HP, its original ATK, a
-30-second limit and its retained HIT. Thor bosses deal 25% less damage in v198
+The first fourth-job trial uses 1.25× the Nightmare Abyss Stage 15 MVP's own HP
+(111,676,981, deliberately above that boss), the Astral stage-1 ATK, a 30-second
+limit and its retained HIT. Before v211 it was 3× the Astral stage-1 regular mob,
+which left it weaker than the boss it is meant to outclass. Thor bosses deal 25% less damage in v198
 (2.25× the original stage regular ATK); Astral bosses retain 3× ATK.
-Nightmare Abyss Dark Lord has 25% more HP; its escorts and the regular-mob
-anchor used for Ascension are unchanged.
+Nightmare Abyss Dark Lord carries the band's own boss HP: the v198 +25% was
+retired in v210, which is a 20% cut of the value players had been fighting
+(111,676,981 → 89,341,585). Its escorts, pay, ATK and the regular-mob anchor used
+for Ascension are unchanged.
 Ordinary Ascension mobs and escorts have 45 HIT; v191 lowers boss HIT from 55 to
 50. At 80 Flee, ordinary/escort hit chance is 65% and boss hit chance is 70%,
 before blind/block. The existing 5% dodge floor still applies.
@@ -56,8 +60,12 @@ including away-income source stages. Recorded clears, materials and owned items 
 
 Native mobs use local original APNGs for idle, walk and attack in eight directions.
 Materials are saved separately from equipment: Astral Shard (Astral) and Primal
-Catalyst (Thor) each roll at 0.2% per kill; Valkyrie's Sigil rolls at 0.05% per
-ordinary mob/escort and 1% per MVP. The map's Field intelligence shows the wallet.
+Catalyst (Thor) roll 0.5% on a Stage 1 monster and more on every tankier one, because
+both chances scale with the monster's max HP against Astral Stage 1's mob, so all five
+stages of both maps pay the same materials an hour. Valkyrie's Sigil rolls at a quarter
+of that rate per ordinary mob/escort and 1% per MVP. Thor Volcano's Zeny payout carries a
+flat ×1.4 over its original ladder; Astral Citadel's Zeny is unchanged. The map's Field intelligence shows the live odds
+and the wallet.
 Online and server-budgeted offline kills share these rolls. Materials are collected
 for N+ equipment evolution (Shards/Catalysts plus Sigils). Shards/Catalysts also fund
 selective Mythic reforging. Mythic Protection Scrolls can be exchanged for 100

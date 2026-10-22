@@ -119,6 +119,61 @@ The existing market gate applies; Echo retains its existing access rules. Purcha
 use the existing saved Mythic scroll reserve, retaining refinement behavior and the
 0.05% online boss scroll drop. Echo Shards are separate from Astral Shards.
 
+### 2026-10-22 — Nightmare Abyss boss HP (v210)
+
+The owner asked for a 20% cut of the Nightmare Abyss Dark Lord's live HP after the
+endgame reward comparison. The v198 "+25% HP, this boss only" special case is
+retired, so the boss spawns at the Nightmare band's own boss HP: 89,341,585
+(111,676,981 before). EXP, Zeny, ATK, escorts and drops are unchanged. The reward
+comparison in `reports/endgame-rewards/comparison.md` explains what that does and
+what is left (the Stage 15 MVP still pays 1.25× an escort for 14.9× an escort's HP).
+
+### 2026-10-22 — Crucible trial HP and Thor Volcano economy (v211, v212)
+
+**v211.** After the reward comparison the owner asked for the job-change trial to be
+harder than the Nightmare Abyss boss and chose 1.25× its HP with the existing
+30-second limit: 111,676,981 HP, ATK 15,235, no rewards. `JOB_RITE_BOSS_MULT`
+replaces the old HP multiplier and `nmBossHpOf()` mirrors `spawn()`'s boss formula so
+the trial keeps tracking the boss if its HP is ever retuned.
+
+**v212.** The owner's brief for Thor Volcano was "dont mind the exp. i want to tune
+the zeny, and drop rates", so EXP, monster HP, ATK, equipment drops and set prices
+are untouched. Two mechanisms changed:
+
+* Zeny follows each stage's monster-HP ramp (`ascZenyRamp`, the same numbers
+  `ascensionCombatStats` uses, Stage 5 halved because its escorts are) instead of a
+  flat 25% ladder. Every stage of both maps pays the same Zeny a minute: 1.21M an
+  hour per 1M DPS, 4.82M at 4M. Astral Stage 1 is unchanged; Thor Stage 1 rises 2.9×
+  and Thor Stage 4 4.9×.
+* Material chances scale with the monster's max HP against the Astral Stage 1 mob:
+  `ASC_MAT_CH` 0.5% and `ASC_SIGIL_CH` 0.125% of that index, so all five stages of
+  both maps pay 1.2 materials and 0.3 Sigils an hour per 1M DPS. Bosses keep their 1%
+  Sigil roll and roll 3× a mob's material chance because they carry 3× its HP.
+
+Consequence for saves: no save format change, no item or ID change. Old away-income
+Ascension samples keep their recorded rates until they expire; the reward version is
+unchanged because the payout formula reads live values. `ASC_REWARD_VERSION` stays 6.
+
+**v213.** Follow-up on the same brief: "make thor zeny payout 1.2". Thor Volcano's Zeny
+ramp carries a flat ×1.2 on top of the shared HP ramp (`[8.4,10.8,13.2,16.8,21.6]`
+before the Stage-5 halving), so Thor pays **402 Zeny per million HP** against Astral's
+335 — 1.45M an hour against 1.21M at 1M DPS, 5.79M against 4.82M at 4M. Astral Citadel,
+EXP, drops, monster HP/ATK and set prices are untouched.
+
+**v214 — the settled rule.** The owner reviewed v212/v213 and corrected the scope: "maybe up
+thor map by 40% zeny only. drop rates are remain". So the HP-ramp Zeny indexing is
+**reverted** — Astral Citadel is byte-identical to the pre-v212 game (`2/2.1/2.2/2.3/2.4`)
+— and Thor Volcano keeps its original ladder (`2.4/2.55/2.7/2.85/3`) with a flat
+**`ASC_THOR_ZENY = 1.4`** on map 11 only. Thor's kills go 6,031-7,539 → **8,444-10,555**;
+Astral's Zeny is untouched. The drop-rate change from v212 stands: both material chances
+still scale with the monster's HP, which is why materials and Sigils per hour are flat
+across stages. EXP, monster HP/ATK, equipment tables and `ASC_SETS` prices remain
+untouched in all three versions.
+
+Consequence for saves: no save format change, no item or ID change. Old away-income
+Ascension samples keep their recorded rates until they expire; the reward version is
+unchanged because the payout formula reads live values. `ASC_REWARD_VERSION` stays 6.
+
 ### 2026-10-19 — Crucible and boss tuning (v198)
 
 The owner selects 3× trial HP and a 30-second limit, +25% HP for Nightmare

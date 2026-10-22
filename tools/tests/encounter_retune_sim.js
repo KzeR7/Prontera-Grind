@@ -1,4 +1,5 @@
 // Pin encounter scope and exercise Thor's real incoming-damage path.
+// v210: the Nightmare Abyss boss HP bump is gone; every row's boss HP is the plain spawn() value.
 'use strict';
 const assert=require('node:assert/strict'),{createGame}=require('./helpers/game');
 const g=createGame(),ev=g.ev;
@@ -8,7 +9,9 @@ try{
  for(const row of baseline){
   ev(`S.mp=${row.m};S.lvl=${row.l};spawn()`);
   const boss=ev('mobs.find(x=>x.boss)'),regular=ev('mobs.find(x=>!x.boss)');
-  assert.equal(boss.hp,row.m===9&&row.l===15?Math.floor(row.hp*1.25):row.hp,`map ${row.m} stage ${row.l} boss HP`);
+  // v210 (owner): the Nightmare Abyss boss no longer carries the v198 +25% HP; its baseline is the
+  // value every other Nightmare Stage 15 MVP spawns with, so every boss matches its own row.
+  assert.equal(boss.hp,row.hp,`map ${row.m} stage ${row.l} boss HP`);
   assert.equal(boss.max,boss.hp);assert.equal(boss.atk,row.atk);
   assert.equal(regular.hp,row.regularHp);assert.equal(regular.atk,row.regularAtk);
  }
@@ -22,5 +25,5 @@ try{
  assert.equal(ev('beforeHp-S.hp'),expected,'Thor swing applies reduced ATK through real defense');
  assert.equal(ev('ascensionCombatStats(11,5).atk'),81256,'Thor escorts retain ATK');
  assert.equal(ev('ascensionCombatStats(10,5,true).atk'),115789,'Astral boss retains ATK');
- console.log('PASS: all original-map bosses/escorts pinned, only Abyss Nightmare boss HP +25%, real Thor boss swing -25%, unchanged escorts/Astral.');
+ console.log('PASS: all original-map bosses/escorts pinned, Nightmare Abyss boss HP back to the band baseline, real Thor boss swing -25%, unchanged escorts/Astral.');
 }finally{g.close()}

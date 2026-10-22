@@ -19,14 +19,24 @@ try{
    for(const boss of [false,true])for(const roll of [0,.5,.999999]){
     ev(`Math.random=()=>${roll}`);
     const base=ev(`fieldZenyReward(9,15,${boss})`),actual=ev(`fieldZenyReward(${m},${s},${boss})`);
-    assert.ok(actual/base>=2.6-1/base&&actual/base<=3.9+1/base,'Zeny is 2.6–3.9× per kill after the approved 30% increase');
-    const oldBonus=(m===10?[2,2.1,2.2,2.3,2.4]:[2.4,2.55,2.7,2.85,3])[s-1];
-    assert.equal(actual,Math.round(base*(oldBonus*1.3)),'all stages and enemy types receive exactly the 30% base Zeny increase');
+    // v214: the original ladder is back (Astral unchanged, Thor x1.4), on top of the approved 30%.
+    const bonus=ev(`ascZenyBonus(${m},${s})`);
+    assert.ok(bonus>=2.6&&bonus<=5.6,'the Zeny bonus stays inside the approved band');
+    assert.ok(actual/base>=bonus-1/base&&actual/base<=bonus+1/base,'Zeny per kill is the stage bonus');
+    assert.equal(actual,Math.round(base*bonus),'all stages and enemy types receive exactly the stage bonus');
    }
    ev('Math.random=()=>.5');
    if(s===5){const boss=ev('mobs.find(o=>o.boss)');assert.ok(Math.abs(boss.exp-regular.exp*4)<=3);ev('Math.random=()=>0');assert.equal(ev('offlineMobForCurrentField().boss'),true);assert.equal(ev('offlineMobForCurrentField().zeny'),ev('fieldZenyReward(S.mp,S.lvl,true)'));ev('Math.random=()=>.5');}
   }
  }
+ // v214: the same roll on both Stage 1 fields, so the comparison is the ladder and nothing else.
+ ev('Math.random=()=>.5');
+ for(let s=1;s<=5;s++){
+  const t=ev(`fieldZenyReward(11,${s})/fieldZenyReward(10,${s})`),want=ev('ASC_THOR_ZENY')*[2.4,2.55,2.7,2.85,3][s-1]/[2,2.1,2.2,2.3,2.4][s-1];
+  assert.ok(Math.abs(t-want)<.01,`Thor Stage ${s} pays exactly ${want.toFixed(2)}x Astral's original stage payout`);
+ }
+ assert.equal(ev('ascZenyBonus(10,1)'),2.6,'Astral Stage 1 is back to its pre-v212 payout (2.0 x 1.3)');
+ assert.equal(ev('ascZenyBonus(11,1)'),2.4*1.4*1.3,'Thor Stage 1 is its original ladder x 1.4');
  // Ordinary maps retain the original random ranges, multipliers and integer rounding.
  for(let m=0;m<10;m++)for(let s=1;s<=15;s++)for(const boss of [false,true]){
   const actual=ev(`fieldZenyReward(${m},${s},${boss})`);
