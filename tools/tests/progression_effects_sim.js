@@ -97,6 +97,11 @@ try{
   game.ev("drawNativeWeaponGlow(ctx,nativeImage,layer,'before',REFINE_GLOWS[2],trail,0,1233)");assert.equal(game.ev('trail.points.length'),1,'new swing clears old trail');
   game.ev("drawNativeWeaponGlow(ctx,nativeImage,layer,'before',REFINE_GLOWS[2],trail,null,1266)");assert.equal(game.ev('trail.points.length'),0,'idle clears trail');
   game.ev('for(let i=0;i<40;i++)nativeWeaponCrop(nativeImage,[i,0,8,8,0,0])');assert.equal(game.ev('nativeWeaponCrops.get(nativeImage).size'),32);
+  assert.equal(game.ev('nativeWeaponTips.get(nativeImage).size'),40,'weapon tips stay cached across 8-direction walk crop evictions');
+ });
+ test('hidden field WebGL render pauses while social-open covers the view and resumes on return',()=>{
+  const counts=JSON.parse(game.ev(`JSON.stringify((()=>{let renders=0;const orig=R.render;R.render=function(...a){renders++;return orig.apply(this,a)};try{document.body.classList.add('social-open');draw();const duringSocial=renders;document.body.classList.remove('social-open');draw();return {duringSocial,afterLeave:renders}}finally{R.render=orig;document.body.classList.remove('social-open')}})())`));
+  assert.equal(counts.duringSocial,0);assert.equal(counts.afterLeave,1);
  });
  console.log(`${passed} passed`);
 }finally{game.close()}

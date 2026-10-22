@@ -4,7 +4,7 @@ The bottom-left chat replaces the short field feed. World, Whisper and Log
 are available from the field; entering Maps → Social Hub adds Local. On desktop (1120px and wider), its bottom aligns with the centered navigation bar.
 Its width is capped to the space on the left, so resizing never shifts or covers
 the navigation. Narrower screens stack chat above the bar. Market, Log, Wardrobe and Settings are in More (one Market entry).
-The minimize line and resize grip are drawn inside the chat border, with no detached button or protruding handle. Click the header line to collapse/expand; its Enter/Space keys work too. Drag the right-edge grip (or use its arrow keys); preferred dimensions persist across device resizing and reloads. Chat grows to the centered navigation on desktop and to the available screen edge on narrower views.
+The minimize line and resize grips are drawn inside the chat border, with no detached button or protruding handle. Click the header line to collapse/expand; its Enter/Space keys work too. Drag the top-right corner grip, the full right inner edge, or the top inner edge (or use arrow keys on `#socialResize`); preferred dimensions persist across device resizing and reloads down to a compact `220×120` floor, with the message scrollbar and Send button spaced clear of the right-edge resize strip. Chat grows to the centered navigation on desktop and to the available screen edge on narrower views.
 Enter focuses/sends, Escape leaves typing. Names offer Whisper/Mute. Log retains
 the existing category filters and history. Muted IDs are stored per account.
 
@@ -28,7 +28,9 @@ six-second animation appears overhead with its original transparent pixels and n
 
 Social is a separate renderer and transient network state. It never replaces `S`,
 `pl`, `mob`, `mobs`, the selected field, combat clocks or save ownership. The real
-farming simulation, loot, EXP, deaths and auto-advance keep running. Returning to
+farming simulation, loot, EXP, deaths and auto-advance keep running, while hidden
+3D field WebGL/canvas rendering pauses behind `#socialHub` and resumes immediately
+on return (open window previews still update live). Returning to
 the field reveals its current state, including any automatic stage progression.
 Movement, sitting and social presence are not saved into farming coordinates.
 Map BGM uses Theme of Prontera while visiting and restores the current farming
@@ -37,6 +39,14 @@ refinement glows reuse the native weapon/arm effect hooks in standing, walking a
 sitting poses. Character downloads retry automatically, retaining the standing
 sprite while sitting assets load; reentry uses fresh player labels and sprites.
 Arrivals spread across free entry positions so players do not spawn on top of one another.
+When visiting from a local/offline character or before the multiplayer room handshake finishes,
+the plaza renders your character locally with full click-to-walk, bench sitting, Sit/Insert toggle
+and live wardrobe/refinement updates, then seamlessly hands presence over once a room snapshot arrives.
+On throwaway `tools/dev_server.js --gm-all` preview hosts (including cross-site iframe previews that
+drop third-party cookies or omit `x-forwarded-proto` on WebSocket upgrades), same-host `Origin`
+checks accept `http`/`https` host matches, `Set-Cookie` uses `SameSite=None; Partitioned` over HTTPS,
+and `X-Preview-Session` / `preview_session` preserves authenticated cloud + plaza sessions without
+affecting production Pages cookie-only ingress.
 
 The server computes walking paths/speed and room capacity. Sender IDs/names come
 from the existing session, never a client payload. Input is bounded and displayed

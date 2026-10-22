@@ -817,7 +817,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="assets/ui/eclipse.css?v=202">
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=207">
+<link rel="stylesheet" href="assets/social.css?v=209">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2>Welcome back.</h2><p class="login-intro">Your adventure is right where you left it.</p><div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1127,7 +1127,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-22 haven-v207 social controls and skill artwork';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-22 haven-v209 social hub live preview and solo character';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3356,7 +3356,7 @@ const cloudSay=(m,cls)=>log(m,cls||'r3','cloud');
 const cloudHidden=()=>{try{return typeof document!=='undefined'&&!!document.hidden}catch(e){return false}};
 function cloudBadge(txt,tip){const e=$('cloudBadge');if(e){e.textContent=txt||'';e.title=tip||''}}
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
-async function cloudFetch(path,opt){return fetch(cloudUrl(path),Object.assign({credentials:'same-origin',headers:{'Content-Type':'application/json'}},opt||{}))}
+async function cloudFetch(path,opt){const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});const res=await fetch(cloudUrl(path),Object.assign({credentials:'same-origin'},o,{headers:hdrs}));const pt=res&&res.headers&&typeof res.headers.get==='function'?res.headers.get('x-preview-session'):null;if(pt)CLOUD.previewToken=pt;return res}
 async function boardRefresh(period=boardPeriod){
   if(!['daily','weekly','all'].includes(period))return;
   const seq=++boardRequest;
@@ -3717,7 +3717,7 @@ function cloudLogout(){
   if(!CLOUD.on)return;
   cloudFlushNow();
   cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}).catch(()=>{});
-  CLOUD.on=false;CLOUD.user=null;
+  CLOUD.on=false;CLOUD.user=null;CLOUD.previewToken=null;
 }
 
 // Sync on the way out (hidden tab, closing page) and pull again if a tab was away for a while.
@@ -6413,9 +6413,13 @@ function eclipseMeasureDock(){
     const dh=dk.offsetHeight||0;
     let gap=12;                                  // #dock{bottom:12px}, plus the safe-area inset on a phone
     try{const b=parseFloat(getComputedStyle(dk).bottom);if(isFinite(b))gap=b}catch(_){}
-    document.documentElement.style.setProperty('--docktop',Math.round(dh?dh+gap+6:76)+'px');
-    document.documentElement.style.setProperty('--dockbottom',gap+'px');
-    document.documentElement.style.setProperty('--dockhalfwidth',dk.offsetWidth/2+'px');
+    const top=Math.round(dh?dh+gap+6:76)+'px',bot=gap+'px',half=dk.offsetWidth/2+'px',dockSig=top+'|'+bot+'|'+half;
+    if(dockSig!==eclipseMeasureDock.last){
+      eclipseMeasureDock.last=dockSig;
+      document.documentElement.style.setProperty('--docktop',top);
+      document.documentElement.style.setProperty('--dockbottom',bot);
+      document.documentElement.style.setProperty('--dockhalfwidth',half);
+    }
   }
 }
 function renderDock(){
@@ -6592,7 +6596,8 @@ function renderWin(anchor){
     if(body){const er=el.getBoundingClientRect(),br=body.getBoundingClientRect();
       if(er.top<br.top)body.scrollTop+=er.top-br.top;
       else if(er.bottom>br.bottom)body.scrollTop+=er.bottom-br.bottom}}
-  eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview();if(typeof wardrobeSync==='function')wardrobeSync();if(typeof guideFinderSync==='function')guideFinderSync()}
+  const inSocial=!!(document.body&&document.body.classList&&document.body.classList.contains('social-open'));
+  if(!inSocial)eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();if(!inSocial)drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview();if(typeof wardrobeSync==='function')wardrobeSync();if(typeof guideFinderSync==='function')guideFinderSync()}
 let winPress=false,winDirty=false;
 const winUp=()=>{winPress=false;if(winDirty){winDirty=false;renderWin()}};
 // Guarded so the headless UI harness (which pulls this slice into a bare vm) still loads.
@@ -8924,7 +8929,7 @@ function weaponTipFromPixels(data,w,h,gx,gy){
 function weaponTip(im,gx,gy){
   let tips=weaponTipCache.get(im);if(!tips){tips=new Map();weaponTipCache.set(im,tips)}const key=gx+':'+gy;
   if(!tips.has(key)){
-    const cv=document.createElement('canvas');cv.width=im.naturalWidth||im.width;cv.height=im.naturalHeight||im.height;const g=cv.getContext('2d');g.drawImage(im,0,0);
+    const cv=document.createElement('canvas');cv.width=im.naturalWidth||im.width;cv.height=im.naturalHeight||im.height;const g=cv.getContext('2d',{willReadFrequently:true})||cv.getContext('2d');g.drawImage(im,0,0);
     tips.set(key,weaponTipFromPixels(g.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height,gx,gy));
   }
   return tips.get(key);
@@ -8936,13 +8941,21 @@ function drawWeaponGlint(ctx,glow,x,y,now){
   star(radius);ctx.shadowBlur=0;ctx.fillStyle='#fff5ed';star(radius*.62);ctx.restore();
 }
 // Crop only the native weapon layer; body, hair and accessories keep their original pixels.
-const nativeWeaponCrops=new WeakMap();
+const nativeWeaponCrops=new WeakMap(),nativeWeaponTips=new WeakMap();
 function nativeWeaponCrop(image,p){
   let frames=nativeWeaponCrops.get(image);if(!frames){frames=new Map();nativeWeaponCrops.set(image,frames)}
   const key=p.slice(0,4).join(':');if(frames.has(key))return frames.get(key);
+  let tips=nativeWeaponTips.get(image);if(!tips){tips=new Map();nativeWeaponTips.set(image,tips)}
   const cv=document.createElement('canvas');cv.width=p[2];cv.height=p[3];
-  cv.getContext('2d').drawImage(image,p[0],p[1],p[2],p[3],0,0,p[2],p[3]);
-  const tip=weaponTip(cv,.5,.9),crop={cv,tip};
+  let tip=tips.get(key);
+  if(!tip){
+    const g=cv.getContext('2d',{willReadFrequently:true})||cv.getContext('2d');
+    g.drawImage(image,p[0],p[1],p[2],p[3],0,0,p[2],p[3]);
+    tip=weaponTipFromPixels(g.getImageData(0,0,p[2],p[3]).data,p[2],p[3],.5,.9);
+    if(tips.size>=256)tips.delete(tips.keys().next().value);
+    tips.set(key,tip);
+  }else cv.getContext('2d').drawImage(image,p[0],p[1],p[2],p[3],0,0,p[2],p[3]);
+  const crop={cv,tip};
   if(frames.size>=32){const oldest=frames.keys().next().value;frames.get(oldest).cv.width=0;frames.delete(oldest)}
   frames.set(key,crop);return crop;
 }
@@ -10112,7 +10125,12 @@ const CAMERA_FOCUS_Y=.28,CAMERA_LEAD_Z=.25,ct=new THREE.Vector3(0,CAMERA_FOCUS_Y
 // Astral paving reaches 0.091; other fields sit just above zero. Keep native sprite pivots intact.
 function actorFloorY(x=pl.x,z=pl.z){if(!TRIAL.on&&!JOB_RITE.on&&KIT.nativeWorld)return PGNativeFields.heightAt(S.mp,x,z)+.035;return !TRIAL.on&&!JOB_RITE.on&&S.mp===10?.12:.035;}
 function draw(){
-  if(!S)return;const bn=isBoss(),key=(JOB_RITE.on?'rite:':TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
+  if(!S)return;
+  if(document.body&&document.body.classList&&document.body.classList.contains('social-open')){
+    if(tabs.length){if(typeof eclipseDrawAtlas==='function'&&tabs.includes('map'))eclipseDrawAtlas();if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview();if(typeof wardrobePreview==='function'&&tabs.includes('wardrobe'))wardrobePreview();if(tabs.includes('pet'))drawPetPreviews();}
+    return;
+  }
+  const bn=isBoss(),key=(JOB_RITE.on?'rite:':TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;
     // v77: the trial is a scene of its own. Entering and leaving changes the key, so the arena is
     // built on the way in and the real field is rebuilt on the way out - exactly like a map move.
@@ -10327,8 +10345,8 @@ function updateWatch(){
 setInterval(updateWatch,60000);
 </script>
 <script src="assets/wardrobe-ui.js?v=199"></script>
-<script src="assets/social-rules.js?v=207"></script>
-<script src="assets/social-scene.js?v=207"></script>
-<script src="assets/social.js?v=207"></script>
+<script src="assets/social-rules.js?v=209"></script>
+<script src="assets/social-scene.js?v=209"></script>
+<script src="assets/social.js?v=209"></script>
 </body>
 </html>
