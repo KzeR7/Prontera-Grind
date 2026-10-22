@@ -12,14 +12,38 @@ app.messages=Array.from({length:400},(_,i)=>({channel:'whisper',body:'old'+i,nam
 w.PGSocial.select('world');socket.onmessage({data:JSON.stringify({type:'message',channel:'world',body:'<img src=x onerror=alert(1)>',name:'<script>',from:3,at:0})});assert.equal(w.document.querySelectorAll('#socialLines img,#socialLines script').length,0);assert(w.document.getElementById('socialLines').textContent.includes('<img'));
 w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='first';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'first');const count=socket.sent.length;w.document.getElementById('socialInput').value='second';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count);assert.equal(w.document.getElementById('socialInput').value,'second');assert(w.document.getElementById('socialSend').disabled);w.PGSocial.select('world');w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count,'changing channel cannot evade cooldown');app.nextChat=0;w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'second');
 // Pointer and keyboard resizing uses the actual view bounds and restores a preferred size.
-const view=w.document.getElementById('view'),chat=w.document.getElementById('socialChat'),handle=w.document.getElementById('socialResize');
+const view=w.document.getElementById('view'),chat=w.document.getElementById('socialChat'),handle=w.document.getElementById('socialResize'),topHandle=w.document.getElementById('socialResizeTop'),cornerHandle=w.document.getElementById('socialResizeCorner');
+assert.equal(topHandle.tagName,'SPAN','top resize uses the border');assert.equal(cornerHandle.tagName,'SPAN','corner resize uses the header corner');
 let width=1280,height=800;view.getBoundingClientRect=()=>({width,height,left:0,top:0});Object.defineProperties(chat,{offsetWidth:{get:()=>parseFloat(chat.style.width)||390},offsetHeight:{get:()=>parseFloat(chat.style.height)||214},offsetLeft:{get:()=>12}});handle.setPointerCapture=()=>{};
 const pointer=(x,y)=>({pointerId:1,clientX:x,clientY:y,preventDefault(){},stopPropagation(){}});handle.onpointerdown(pointer(400,400));handle.onpointermove(pointer(700,300));handle.onpointerup();assert.equal(chat.style.width,'346px');assert.equal(chat.style.height,'314px');
 handle.onkeydown({key:'ArrowLeft',preventDefault(){}});assert.equal(chat.style.width,'326px');assert.equal(JSON.parse(w.localStorage.getItem('pg_chat_size'))[0],326);
+// Top edge adjusts height only; corner and window pointer fallback adjust both axes down to compact bounds.
+topHandle.onpointerdown(pointer(200,300));topHandle.onpointermove(pointer(260,260));topHandle.onpointerup();assert.equal(chat.style.width,'326px','top border resize keeps width unchanged');assert.equal(chat.style.height,'354px');
+cornerHandle.onpointerdown(pointer(320,260));const winMove=new w.Event('pointermove');Object.assign(winMove,{pointerId:1,clientX:120,clientY:520});w.dispatchEvent(winMove);const winUp=new w.Event('pointerup');Object.assign(winUp,{pointerId:1});w.dispatchEvent(winUp);assert.equal(chat.style.width,'220px','compact minimum width allows resizing on 1280px desktops');assert.equal(chat.style.height,'120px');
+handle.onpointerdown(pointer(220,400));handle.onpointermove(pointer(326,206));handle.onpointerup();assert.equal(chat.style.width,'326px');assert.equal(chat.style.height,'314px');
 width=300;w.dispatchEvent(new w.Event('resize'));assert.equal(chat.style.width,'276px');width=1280;w.dispatchEvent(new w.Event('resize'));assert.equal(chat.style.width,'326px','desktop preference survives phone resizing');
 let cameraValues,reset=0;app.scene={cameraState:{angle:0,pitch:48,distance:48,panX:0,panZ:0,follow:true},setCamera:v=>{cameraValues=v},resetCamera:()=>reset++,clearPlayers(){},putPlayer(){}};
 w.document.getElementById('socialCamera').click();assert(!w.document.getElementById('socialCameraPanel').hidden);const tilt=w.document.getElementById('socialTilt');tilt.value=65;tilt.dispatchEvent(new w.Event('input'));assert.equal(cameraValues.pitch,65);w.document.getElementById('socialCameraReset').click();assert.equal(reset,1);
 const sent=[];socket.send=s=>sent.push(JSON.parse(s));app.room=1;w.S.equippedTitle='poring';w.sessionTick();w.S.equippedTitle=null;w.sessionTick();assert(sent.some(m=>m.type==='look'&&m.look.title===''));assert(!sent.some(m=>m.type==='leave'),'appearance/title updates must preserve seat and coordinates');
 w.PGSocial.select('emoji');assert.equal(w.document.querySelectorAll('#socialEmoji button').length,32);
-
-console.log('PASS chat UI: disconnected account cleanup, Local privacy on exit, Emoji gate, recipient control, minimize, history cap and text-only message rendering');dom.window.close();
+// Solo plaza fallback spawns the local character when offline or before room join, supports walk/sit, and yields cleanly to multiplayer room state.
+w.PGSocial.leave();w.CLOUD.on=false;w.CLOUD.user=null;w.currentUser='local_hero';app.socket=null;app.connected=false;app.room=0;
+let sceneCallbacks=null;const scenePlayers=new Map();
+w.PGSocialScene={create:async(_host,_labels,cb)=>{sceneCallbacks=cb;return{active:false,cameraState:{angle:0,pitch:48,distance:48,panX:0,panZ:0,follow:true},setCamera:v=>{cameraValues=v},resetCamera:()=>reset++,clearPlayers(){scenePlayers.clear()},putPlayer(p){scenePlayers.set(p.id,{...p,path:(p.path||[]).map(pt=>({...pt}))})},removePlayer(id){scenePlayers.delete(id)}}}};
+app.scene=null;
+(async()=>{
+ await w.PGSocial.enter();
+ assert.equal(app.players.size,1,'offline/reconnecting plaza spawns solo character');
+ assert.equal(scenePlayers.get(0).name,'local_hero');assert.equal(sceneCallbacks.self(),0);
+ sceneCallbacks.move(6,12);assert(scenePlayers.get(0).path.length>0,'solo click-to-walk computes local path');
+ w.document.getElementById('socialSit').click();assert.equal(scenePlayers.get(0).sit,true,'solo sit button toggles sitting');
+ assert.equal(w.document.getElementById('socialSit').getAttribute('aria-pressed'),'true');
+ w.CLOUD.on=true;w.CLOUD.user='new';w.CLOUD.previewToken='tok_abc';app.nextConnect=0;
+ let wsUrl='';w.WebSocket=class{constructor(u){wsUrl=u;socket=this;this.readyState=1;this.sent=[]}close(){}send(m){this.sent.push(JSON.parse(m))}};
+ await w.PGSocial.enter();w.sessionTick();assert.match(wsUrl,/\?preview_session=tok_abc$/);
+ socket.onmessage({data:JSON.stringify({type:'hello',id:9,history:[]})});
+ socket.onmessage({data:JSON.stringify({type:'room',room:1,players:[{id:9,name:'new',room:1,x:0,z:12,dir:0,sit:false,seat:null,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:0,title:''}}]})});
+ assert.equal(scenePlayers.has(0),false,'multiplayer room join replaces solo placeholder');
+ assert.equal(scenePlayers.get(9).name,'new');assert.equal(sceneCallbacks.self(),9);
+ console.log('PASS chat UI: disconnected account cleanup, Local privacy on exit, Emoji gate, recipient control, minimize, history cap, solo/preview plaza fallback and text-only message rendering');dom.window.close();
+})().catch(e=>{console.error(e);process.exit(1)});

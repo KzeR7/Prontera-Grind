@@ -1,15 +1,15 @@
 /* Compact RO-inspired chat, shared by the field and fountain plaza. */
-#socialChat{position:absolute;z-index:40;left:12px;bottom:var(--docktop,76px);width:390px;height:214px;max-width:calc(100% - 24px);max-height:65%;display:flex;flex-direction:column;background:rgba(17,25,30,.88);border:1px solid #849b9c;border-radius:4px;color:#edf2e9;box-shadow:0 4px 20px #0006;box-sizing:border-box;font:12px/1.45 "Trebuchet MS",sans-serif;pointer-events:auto;text-shadow:0 1px #000;overflow:visible}
+#socialChat{position:absolute;z-index:40;left:12px;bottom:var(--docktop,76px);width:390px;height:214px;max-width:calc(100% - 24px);max-height:72%;display:flex;flex-direction:column;background:rgba(17,25,30,.88);border:1px solid #849b9c;border-radius:4px;color:#edf2e9;box-shadow:0 4px 20px #0006;box-sizing:border-box;font:12px/1.45 "Trebuchet MS",sans-serif;pointer-events:auto;cursor:default;text-shadow:0 1px #000;overflow:visible}
 #socialChat button{font:inherit;color:inherit;border:0;border-radius:2px;background:transparent;padding:5px 8px;cursor:pointer;text-shadow:inherit;box-shadow:none}
 #socialChat button:hover,#socialChat button:focus-visible{background:#ffffff1c;outline:1px solid #b7b691}
-#socialTabs{display:flex;gap:1px;min-height:29px;box-sizing:border-box;flex-shrink:0;background:#26383d;border-bottom:1px solid #6d8084;padding:2px 3px}
+#socialTabs{display:flex;gap:1px;min-height:29px;box-sizing:border-box;flex-shrink:0;background:#26383d;border-bottom:1px solid #6d8084;padding:2px 22px 2px 3px}
 #socialTabs button[aria-selected=true]{background:#ded5b5;color:#222c31;text-shadow:none}
 #socialTabs .unread::after{content:' •';color:#ffcb6a}
-#socialMin{position:relative;margin-left:auto;align-self:stretch;flex:0 0 28px;cursor:pointer}#socialMin::after{content:'';position:absolute;top:50%;left:6px;right:6px;height:2px;background:#b8c8c7;border-radius:1px}#socialMin:focus-visible{outline:0}#socialMin:focus-visible::after{height:3px;background:#ffe0a0}#socialChat.minimized{height:auto!important}#socialChat.minimized>*:not(#socialTabs){display:none!important}
-#socialLines{overflow:auto;flex:1;padding:7px 9px;min-height:0;overflow-wrap:anywhere;scrollbar-width:thin;scrollbar-color:#839091 transparent}
+#socialMin{position:relative;margin-left:auto;align-self:stretch;flex:0 0 26px;cursor:pointer}#socialMin::after{content:'';position:absolute;top:50%;left:6px;right:6px;height:2px;background:#b8c8c7;border-radius:1px}#socialMin:focus-visible{outline:0}#socialMin:focus-visible::after{height:3px;background:#ffe0a0}#socialChat.minimized{height:auto!important}#socialChat.minimized #socialTabs{padding-right:3px}#socialChat.minimized>*:not(#socialTabs){display:none!important}
+#socialLines{overflow:auto;flex:1;padding:7px 9px;margin-right:10px;min-height:0;overflow-wrap:anywhere;scrollbar-width:thin;scrollbar-color:#839091 transparent}
 .social-line{margin:1px 0}.social-line time{color:#91a4ab;font-size:10px;margin-right:6px}.social-line[data-channel=whisper]{color:#e7b7fb}.social-line[data-channel=local]{color:#e9e3c8}.social-line[data-channel=world]{color:#9ed7ed}.social-line button{padding:0!important;color:inherit!important;font-weight:bold!important}.social-line img{width:28px;height:28px;vertical-align:middle;object-fit:contain;image-rendering:pixelated}.social-notice{color:#c8c4b2;font-style:italic}
-#socialCompose{display:flex;gap:5px;padding:5px;border-top:1px solid #627074;background:#18252c}#socialCompose input{min-width:0;flex:1;background:#0e161d;border:1px solid #697d84;color:#fff;border-radius:2px;font:12px "Trebuchet MS",sans-serif;padding:6px}#socialCompose #socialTo{flex:0 1 100px;width:100px}#socialCompose button{background:#3e5559}
-#socialStatus{font-size:10px;color:#acbfc1;padding:2px 8px;display:flex;justify-content:space-between}
+#socialCompose{display:flex;gap:5px;padding:5px 11px 5px 5px;border-top:1px solid #627074;background:#18252c}#socialCompose input{min-width:0;flex:1;background:#0e161d;border:1px solid #697d84;color:#fff;border-radius:2px;font:12px "Trebuchet MS",sans-serif;padding:6px}#socialCompose #socialTo{flex:0 1 100px;width:100px}#socialCompose button{background:#3e5559}
+#socialStatus{font-size:10px;color:#acbfc1;padding:2px 12px 2px 8px;display:flex;justify-content:space-between}
 #socialEmoji{overflow:auto;flex:1;display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:8px}#socialEmoji button{display:flex;flex-direction:column;align-items:center;font-size:9px}#socialEmoji img{width:36px;height:36px;object-fit:contain;image-rendering:pixelated}#socialEmoji[hidden],#socialCompose[hidden],#socialLines[hidden],#socialTo[hidden]{display:none}
 #socialPeople{position:absolute;bottom:100%;left:0;background:#1b2c33;border:1px solid #90a5a6;padding:8px;display:flex;gap:8px;align-items:center;max-width:100%;flex-wrap:wrap}#socialPeople[hidden]{display:none}
 #socialHub{position:absolute;inset:0;z-index:26;background:#b7c6b3;pointer-events:auto;overflow:hidden}#socialHub[hidden]{display:none}#socialScene{position:absolute;inset:0;touch-action:none}#socialScene canvas{display:block;width:100%!important;height:100%!important}#socialLabels{position:absolute;inset:0;pointer-events:none;overflow:hidden}.social-player-label{position:absolute;transform:translateX(-50%);line-height:1.4;text-align:center;color:#fff;font:12px "Trebuchet MS",sans-serif;text-shadow:0 1px 3px #000;white-space:nowrap}.social-player-label button{border:0;background:#17252d99;color:#fff;font:inherit;border-radius:3px;padding:2px 7px;pointer-events:auto}.social-bubble{position:absolute;transform:translate(-50%,-100%);font:12px/1.4 "Trebuchet MS",sans-serif;text-align:center;max-width:210px;white-space:normal;overflow-wrap:anywhere;background:#fffdf0;color:#2c3030;text-shadow:none;padding:7px 10px;border:1px solid #757f80;border-radius:9px;box-shadow:0 2px 5px #0003;margin-bottom:7px}.social-bubble:empty{display:none}.social-bubble img{width:48px;height:48px;object-fit:contain;image-rendering:pixelated}
@@ -18,12 +18,20 @@
 body.social-open #eclipseCombat,body.social-open #hudBuffs,body.social-open #hint,body.social-open #sideRail,body.social-open #heroTitle,body.social-open #tag{visibility:hidden!important}
 @media(max-width:600px){#socialChat{left:6px;max-width:calc(100% - 12px);width:340px;height:185px;font-size:11px}#socialTabs button{padding:5px 6px}#socialHubHeader{left:12px;top:12px}#socialHubHeader h2{font-size:20px}#socialHubHeader p{max-width:175px}#socialHubControls{right:8px;top:12px}#socialHubHint{bottom:auto;top:100px;right:8px;font-size:10px;max-width:150px}#socialEmoji{grid-template-columns:repeat(6,1fr)}}
 
-body.social-open #hud{visibility:hidden!important}body.hide-feed #socialChat{display:none}#socialHubHeader{z-index:2}#socialHubHeader h2{color:#fff}
+body.social-open #hud,body.social-open #afterglowCanvas,body.social-open #mobSpriteLayer,body.social-open #weaponSpriteLayer{visibility:hidden!important}body.hide-feed #socialChat{display:none}#socialHubHeader{z-index:2}#socialHubHeader h2{color:#fff}
 
 /* Narrow screens stack chat above navigation; desktop shares its lower baseline. */
 #socialChat{left:12px;bottom:var(--docktop,80px)}
-#socialResize{position:absolute;box-sizing:border-box;right:0;top:35%;bottom:auto;width:12px;height:40%;min-height:26px;max-height:72px;z-index:3;touch-action:none;padding:0;border:0;background:transparent;cursor:nesw-resize;border-radius:0}
-#socialResize::after{content:'';position:absolute;right:3px;top:35%;height:30%;width:2px;border-radius:2px;background:#8fa7a8}
+#socialResizeTop,#socialResizeCorner,#socialResize{position:absolute;box-sizing:border-box;z-index:5;touch-action:none;user-select:none;padding:0;border:0;background:transparent;border-radius:0}
+#socialResizeTop{left:0;right:20px;top:0;height:6px;cursor:ns-resize}
+#socialResizeTop:hover{border-top:2px solid #ffe0a0aa}
+#socialResizeCorner{right:0;top:0;width:20px;height:29px;z-index:6;cursor:nesw-resize}
+#socialResizeCorner::after{content:'';position:absolute;top:5px;right:4px;width:11px;height:11px;background:repeating-linear-gradient(45deg,transparent 0 2px,#9fb6b7 2px 3.4px);clip-path:polygon(15% 0,100% 0,100% 85%);opacity:.9}
+#socialResizeCorner:hover::after{background:repeating-linear-gradient(45deg,transparent 0 2px,#ffe0a0 2px 3.5px);opacity:1}
+#socialResize{right:0;top:29px;bottom:0;width:10px;cursor:nesw-resize}
+#socialResize::after{content:'';position:absolute;right:3px;top:calc(50% - 16px);height:32px;width:2px;border-radius:2px;background:#9fb6b7}
+#socialResize:hover::after,#socialResize:focus-visible::after{background:#ffe0a0;width:3px;right:2px}
+#socialResize:hover{border-right:1px solid #ffe0a088}
 #socialResize:focus-visible{outline:1px solid #d8ca93;outline-offset:-2px}
 #socialEmoji{position:absolute;bottom:62px;left:6px;right:6px;max-height:210px;background:#182b32;border:1px solid #90a5a6;box-shadow:0 -4px 16px #0006;border-radius:5px;z-index:2}
 #socialCompose button:disabled,#socialEmoji button:disabled{opacity:.5;cursor:wait}

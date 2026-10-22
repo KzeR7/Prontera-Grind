@@ -163,18 +163,27 @@ export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = f
       const chunks = [];
       for await (const c of req) chunks.push(c);
       const body = Buffer.concat(chunks);
+      const isHttps = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https' || /^https:\/\//i.test(String(req.headers.origin || req.headers.referer || ''));
+      const proto = isHttps ? 'https' : 'http';
+      const psIn = gmAll && req.headers['x-preview-session'] && !/\bpg_session=/.test(req.headers.cookie || '')
+        ? (req.headers.cookie ? req.headers.cookie + '; ' : '') + 'pg_session=' + encodeURIComponent(String(req.headers['x-preview-session']))
+        : req.headers.cookie;
       const request = {
         method: req.method,
-        url: 'http://' + (req.headers.host || host + ':' + port) + req.url,
-        headers: { get: k => req.headers[String(k).toLowerCase()] ?? null },
+        url: proto + '://' + (req.headers.host || host + ':' + port) + req.url,
+        headers: { get: k => { const lk = String(k).toLowerCase(); return (lk === 'cookie' ? psIn : req.headers[lk]) ?? null; } },
         text: async () => body.toString('utf8'),
         json: async () => JSON.parse(body.toString('utf8')),
       };
       const out = await app(request);
       const headers = {};
       for (const [k, v] of out.headers) {
-        if (k.toLowerCase() === 'set-cookie') (headers['set-cookie'] = headers['set-cookie'] || []).push(v);
-        else headers[k] = v;
+        if (k.toLowerCase() === 'set-cookie') {
+          const cookieOut = isHttps ? v.replace(/;\s*SameSite=Lax/i, '; SameSite=None; Partitioned') : v.replace(/;\s*Secure/i, '');
+          (headers['set-cookie'] = headers['set-cookie'] || []).push(cookieOut);
+          const m = gmAll && /\bpg_session=([^;]*)/.exec(v);
+          if (m) headers['x-preview-session'] = decodeURIComponent(m[1]);
+        } else headers[k] = v;
       }
       const buf = Buffer.from(await out.arrayBuffer());
       res.writeHead(out.status, headers);
@@ -184,7 +193,7 @@ export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = f
       res.end(JSON.stringify({ err: String(e && e.message || e) }));
     }
   });
-  attachSocial(server, makeD1(sqlite));
+  attachSocial(server, makeD1(sqlite), { previewAuth: !!gmAll });
   return new Promise(resolve => server.listen(port, host, () => resolve({
     server, sqlite, port: server.address().port, close: () => new Promise(r => server.close(r)),
   })));
