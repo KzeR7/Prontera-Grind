@@ -64,7 +64,8 @@ Catalyst (Thor) roll 0.5% on a Stage 1 monster and more on every tankier one, be
 both chances scale with the monster's max HP against Astral Stage 1's mob, so all five
 stages of both maps pay the same materials an hour. Valkyrie's Sigil rolls at a quarter
 of that rate per ordinary mob/escort and 1% per MVP. Zeny follows each stage's
-monster-HP ramp for the same reason. The map's Field intelligence shows the live odds
+monster-HP ramp for the same reason, and Thor Volcano's payout carries a further ×1.2
+(402 Zeny per million HP against Astral's 335). The map's Field intelligence shows the live odds
 and the wallet.
 Online and server-budgeted offline kills share these rolls. Materials are collected
 for N+ equipment evolution (Shards/Catalysts plus Sigils). Shards/Catalysts also fund

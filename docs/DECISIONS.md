@@ -154,6 +154,16 @@ Consequence for saves: no save format change, no item or ID change. Old away-inc
 Ascension samples keep their recorded rates until they expire; the reward version is
 unchanged because the payout formula reads live values. `ASC_REWARD_VERSION` stays 6.
 
+**v213.** Follow-up on the same brief: "make thor zeny payout 1.2". Thor Volcano's Zeny
+ramp carries a flat ×1.2 on top of the shared HP ramp (`[8.4,10.8,13.2,16.8,21.6]`
+before the Stage-5 halving), so Thor pays **402 Zeny per million HP** against Astral's
+335 — 1.45M an hour against 1.21M at 1M DPS, 5.79M against 4.82M at 4M. Astral Citadel,
+EXP, drops, monster HP/ATK and set prices are untouched.
+
+Consequence for saves: no save format change, no item or ID change. Old away-income
+Ascension samples keep their recorded rates until they expire; the reward version is
+unchanged because the payout formula reads live values. `ASC_REWARD_VERSION` stays 6.
+
 ### 2026-10-19 — Crucible and boss tuning (v198)
 
 The owner selects 3× trial HP and a 30-second limit, +25% HP for Nightmare
