@@ -239,6 +239,42 @@ Two smaller dials, independent of the packages:
   should pay for their HP, that is an `ascZenyBonus` change (currently 2.7-2.85x, times the 1.3 global
   Ascension factor), not a Nightmare change.
 
+## Scenario: Dark Lord HP −30% (requested, not applied)
+
+Rewards stay exactly as they are; only Nightmare Abyss Stage 15's MVP loses 30% of its HP
+(`111,676,981 → 78,173,887`). The escorts, their pay, the MVP's EXP (33,908) and Zeny (17,581) and its
+14,364 ATK are unchanged.
+
+| Cut | MVP HP | MVP sec¹ | MVP EXP / M HP | MVP Zeny / M HP | Wave HP | Wave sec¹ | Wave EXP / M HP | vs exp-optimal² | Wave EXP / min¹ | Wave Zeny / min¹ |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| none | 111,676,981 | 111.7 | 304 | 157 | 149,200,446 | 149.2 | 1,136 | 0.31x | 68,158 | 10,957 |
+| −20% | 89,341,585 | 89.3 | 380 | 197 | 126,865,050 | 126.9 | 1,336 | 0.37x | 80,157 | 12,886 |
+| **−30%** | **78,173,887** | **78.2** | **434** | **225** | **115,697,352** | **115.7** | **1,465** | **0.41x** | **87,895** | **14,130** |
+| −50% | 55,838,491 | 55.8 | 607 | 315 | 93,361,956 | 93.4 | 1,815 | 0.50x | 108,922 | 17,510 |
+
+¹ at an illustrative 1M DPS, so the wave drops from about 2.5 minutes to about 1.9 minutes.
+² the 3,610 EXP per million HP `nightmare_sim.js` calls the exp-optimal camp (Abyss Stage 10 MVP wave).
+
+What a 30% cut does and does not do:
+
+* **It is a real gain, but a partial one.** Wave income per minute rises 29% (68,158 → 87,895 EXP/min and
+  10,957 → 14,130 Zeny/min) and the MVP's own rate rises from 304 to 434 EXP per million HP. The wave is
+  still 0.41x of the game's own optimal camp and the MVP still pays **0.12** of its mobs' rate, against the
+  0.67-0.70 every other MVP pays. Reaching full parity by HP alone would need about **−92%**
+  (9.4M HP), which is why this is a nudge and not a fix.
+* **The deepest map stops having the tankiest MVP.** At −30% the Dark Lord (78.2M HP) is level with
+  Niflheim's Nightmare MVP, Lord of Death (78.9M), while still paying 13% more EXP and swinging 13% harder
+  (14,364 against 12,721 ATK). If Abyss should stay visibly the deepest map, a −15% to −20% cut keeps that
+  ordering.
+* **Material farming speeds up.** Void Core drops from this boss only, at 1% a kill, so a 30% shorter fight
+  is roughly 1.4x more attempts an hour, and each attempt costs 30% less incoming damage because ATK does
+  not change.
+
+Implementation is one line: `spawn()` currently gives this boss `Math.floor(baseHp*1.25)`; a 30% cut is
+`Math.floor(baseHp*0.875)`. `tools/tests/encounter_retune_sim.js` pins the current `×1.25`, so its
+expectation (and its summary line) changes with it; no other suite pins the Dark Lord's HP.
+
+
 ## Caveats
 
 * This is a static measurement at Base Lv 150 with ordinary rewards, no pets, no gear, no card bonuses and

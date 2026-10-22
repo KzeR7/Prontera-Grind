@@ -7080,3 +7080,9 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** `node tools/compare_endgame_rewards.js` (add `--json` for raw numbers), then read `reports/endgame-rewards/comparison.md`. It needs the optional local `jsdom`/`three` packages described in `docs/TESTING.md`.
 * **Checks:** The generator ran twice with identical output (fixed pseudo-random sequence for the Zeny roll); values match the numbers `tools/tests/nightmare_sim.js` prints for field power and EXP per HP. No game suites were re-run because no game file changed.
 * **Delivery:** Local workspace only; no push or deployment.
+### 2026-10-22 — `endgame reward comparison: Dark Lord HP scenario`
+
+* **Changed:** Documentation only — added a "Dark Lord HP −30%" scenario section to `reports/endgame-rewards/comparison.md`, showing what cutting Nightmare Abyss Stage 15's MVP HP by 20/30/50% does to its EXP and Zeny per million HP, the wave's rate and the per-minute income at an illustrative 1M DPS. No game value changed.
+* **Try it:** Read the scenario section; it also records the one-line implementation (`spawn()`'s `×1.25` becomes `×0.875`) and that `tools/tests/encounter_retune_sim.js` pins the current multiplier.
+* **Checks:** The figures use the same live values and fixed Zeny sampling as the tables above them (MVP 33,908 EXP / 17,581 Zeny, wave 169,486 EXP / 27,247 Zeny). No suites were run because no game file changed.
+* **Delivery:** Local workspace only; no push or deployment.
