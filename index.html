@@ -1127,7 +1127,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-22 haven-v213 thor pays 1.2';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-22 haven-v214 thor zeny +40%';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4079,16 +4079,14 @@ const starterAtk=l=>6+3*(l-1);
 // v172 (owner: 1.05x pay for 15x danger): Astral pays 3-8x the anchor per kill, Thor 7-15x,
 // so the top field sustains ~1.4M EXP/min and the rescaled ascension curve below lands on time.
 const ascRewardBonus=(m,stage)=>(m===10?[3,4,5,6.5,8]:[7,8.5,10,12,15])[stage-1];
-// v212 (owner: "dont mind the exp. i want to tune the zeny"): the old ladder raised Zeny 25% from
-// Stage 1 to 5 while monster HP rose 57%, so the deeper a field the less Zeny a minute it paid, and
-// Thor Volcano - the tankiest content in the game - was its worst Zeny farm (68 Zeny per M HP
-// against Astral Stage 1's 335). Zeny now follows the stage's HP ramp from ascensionCombatStats
-// (Stage 5's escorts are half HP, so its ramp halves too), which holds every stage of a map at the
-// same Zeny a minute at equal DPS.
-// v213 (owner: "make thor zeny payout 1.2"): Thor's ramp carries a flat x1.2 on top, so its tankier
-// monsters pay 402 Zeny per M HP against Astral's 335 - 1.45M an hour against 1.21M at 1M DPS.
-const ascZenyRamp=(m,stage)=>(m===10?[2,3,4.5,6.5,9]:[8.4,10.8,13.2,16.8,21.6])[stage-1]*(stage===5?.5:1);
-const ascZenyBonus=(m,stage)=>ascZenyRamp(m,stage)*1.3;
+// v214 (owner: "maybe up thor map by 40% zeny only. drop rates are remain"): the v212 HP-ramp
+// experiment is reverted - Astral Citadel is back to its original 2/2.1/2.2/2.3/2.4 ladder and pays
+// exactly what it always did. Thor Volcano keeps its original 2.4/2.55/2.7/2.85/3 ladder with a flat
+// x1.4 on top, so every Thor kill pays 40% more than before v212 and nothing else about the map moves.
+// A one-line change to ASC_THOR_ZENY moves Thor alone; Astral never reads it.
+const ascZenyLadder=(m,stage)=>(m===10?[2,2.1,2.2,2.3,2.4]:[2.4,2.55,2.7,2.85,3])[stage-1];
+const ASC_THOR_ZENY=1.4;
+const ascZenyBonus=(m,stage)=>ascZenyLadder(m,stage)*(m===11?ASC_THOR_ZENY:1)*1.3;
 function ascRewardRatio(m,stage,boss=false){return ascRewardBonus(m,stage)*(boss?4:1)}
 function fieldZenyReward(m,stage,boss=false){
  const l=fieldPower(m,stage),range=boss?BZK:ZK;

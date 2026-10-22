@@ -160,6 +160,16 @@ before the Stage-5 halving), so Thor pays **402 Zeny per million HP** against As
 335 — 1.45M an hour against 1.21M at 1M DPS, 5.79M against 4.82M at 4M. Astral Citadel,
 EXP, drops, monster HP/ATK and set prices are untouched.
 
+**v214 — the settled rule.** The owner reviewed v212/v213 and corrected the scope: "maybe up
+thor map by 40% zeny only. drop rates are remain". So the HP-ramp Zeny indexing is
+**reverted** — Astral Citadel is byte-identical to the pre-v212 game (`2/2.1/2.2/2.3/2.4`)
+— and Thor Volcano keeps its original ladder (`2.4/2.55/2.7/2.85/3`) with a flat
+**`ASC_THOR_ZENY = 1.4`** on map 11 only. Thor's kills go 6,031-7,539 → **8,444-10,555**;
+Astral's Zeny is untouched. The drop-rate change from v212 stands: both material chances
+still scale with the monster's HP, which is why materials and Sigils per hour are flat
+across stages. EXP, monster HP/ATK, equipment tables and `ASC_SETS` prices remain
+untouched in all three versions.
+
 Consequence for saves: no save format change, no item or ID change. Old away-income
 Ascension samples keep their recorded rates until they expire; the reward version is
 unchanged because the payout formula reads live values. `ASC_REWARD_VERSION` stays 6.

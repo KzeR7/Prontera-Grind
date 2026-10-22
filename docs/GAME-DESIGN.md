@@ -63,9 +63,8 @@ Materials are saved separately from equipment: Astral Shard (Astral) and Primal
 Catalyst (Thor) roll 0.5% on a Stage 1 monster and more on every tankier one, because
 both chances scale with the monster's max HP against Astral Stage 1's mob, so all five
 stages of both maps pay the same materials an hour. Valkyrie's Sigil rolls at a quarter
-of that rate per ordinary mob/escort and 1% per MVP. Zeny follows each stage's
-monster-HP ramp for the same reason, and Thor Volcano's payout carries a further ×1.2
-(402 Zeny per million HP against Astral's 335). The map's Field intelligence shows the live odds
+of that rate per ordinary mob/escort and 1% per MVP. Thor Volcano's Zeny payout carries a
+flat ×1.4 over its original ladder; Astral Citadel's Zeny is unchanged. The map's Field intelligence shows the live odds
 and the wallet.
 Online and server-budgeted offline kills share these rolls. Materials are collected
 for N+ equipment evolution (Shards/Catalysts plus Sigils). Shards/Catalysts also fund

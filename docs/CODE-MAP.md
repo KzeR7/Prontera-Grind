@@ -195,9 +195,9 @@ highlight, and desktop/mobile resize/scroll events reposition it.
 Ascension v191: `ascensionCombatStats` halves only stage-5 escort HP while retaining
 boss HP and all ATK. `spawn` gives Ascension bosses +10 field HIT (50 total), while
 `minionDef` keeps +15 (45 total). `ascZenyBonus` raises all stage/enemy payouts by
-30% on top of `ascZenyRamp` (v212), the stage's monster-HP ramp, so every stage of a map
-pays the same Zeny a minute; v213 applies a flat ×1.2 to Thor's ramp, so Thor pays 20%
-more per million HP than Astral (402 against 335). `ASC_REWARD_VERSION=6` invalidates stale Ascension income at load/claim.
+30% on top of `ascZenyLadder`, the original per-stage ladder (v214 restored it). `ASC_THOR_ZENY`
+(1.4) multiplies map 11 only, so Thor Volcano pays 40% more than it used to and Astral is
+unchanged; that one constant is the Thor Zeny dial. `ASC_REWARD_VERSION=6` invalidates stale Ascension income at load/claim.
 Cover these boundaries with `ascension_progression_sim.js`,
 `ascension_rewards_sim.js`, `ascension_tracks_sim.js`, `combat_damage_sim.js`,
 `offline_sim.js` and `job_rite_sim.js`.
