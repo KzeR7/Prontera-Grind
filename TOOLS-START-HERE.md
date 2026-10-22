@@ -48,6 +48,7 @@ that case honestly; the pages may not).
 | What does the game's own combat output look like, offline? | `python3 tools/preview_ingame.py` |
 | How does the pacing curve behave at a given kills/hour? | `node tools/tune_pacing.js` |
 | What do the endgame fields pay in HP / EXP / Zeny — Nightmare Abyss, Astral Citadel, Thor Volcano? | `node tools/compare_endgame_rewards.js` (read-only; tables written up in `reports/endgame-rewards/comparison.md`) |
+| Is the job-change trial (Crucible) winnable, and how long does each class need? | `node tools/compare_job_trial.js` (read-only; reads `startJobRite()` and measures the six third jobs at three gear tiers) |
 | What are the weapon/gear affix ranges the game rolls? | `Updates/cards-gear-audit/affix-ranges.html` |
 | What is in the gear/card catalogue, and can I edit it? | `Updates/cards-gear-audit/equipment-cards-tuning.html` |
 

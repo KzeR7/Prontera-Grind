@@ -1127,7 +1127,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-22 haven-v209 social hub live preview and solo character';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-22 haven-v210 nightmare abyss boss hp -20%';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4155,8 +4155,13 @@ function spawn(){
   const bossWave=!!F.boss;
   if(bossWave){
     const baseHp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(S.lvl):1));
-    // v198: only Nightmare Abyss Dark Lord gains HP; the regular-mob Ascension anchor is unchanged.
-    const hp=S.mp===9&&S.lvl===15?Math.floor(baseHp*1.25):baseHp;
+    // v210 (owner): the v198 "+25% Dark Lord HP only" special case is retired. The owner asked for a
+    // 20% cut of the then-live 111,676,981 HP, and x1.25 then x0.8 is exactly x1, so Nightmare Abyss
+    // Stage 15's MVP now spawns at the band's own boss HP - 89,341,585 - like every other Nightmare
+    // Stage 15 MVP. It is still the deepest boss in the game (Niflheim's Lord of Death: 78,853,659)
+    // and it keeps its 14,364 ATK; only the HP changed. The regular-mob Ascension anchor never read
+    // this line and is untouched.
+    const hp=baseHp;
     mobs.push({...F.boss,mapIndex:S.mp,hitBonus:S.mp===10||S.mp===11?10:0,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),
       ...ascensionCombatStats(S.mp,S.lvl,true),exp:fieldExpReward(S.mp,S.lvl,true),zeny:fieldZenyReward(S.mp,S.lvl,true),
       size:1.3,mag:true,lvl:l,sec:F.sec});

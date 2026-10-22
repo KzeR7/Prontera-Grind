@@ -34,8 +34,10 @@ stage regular HP; their ATK is unchanged. Stages 1–4 and boss HP are unchanged
 The first fourth-job trial uses 3× Astral stage-1 regular HP, its original ATK, a
 30-second limit and its retained HIT. Thor bosses deal 25% less damage in v198
 (2.25× the original stage regular ATK); Astral bosses retain 3× ATK.
-Nightmare Abyss Dark Lord has 25% more HP; its escorts and the regular-mob
-anchor used for Ascension are unchanged.
+Nightmare Abyss Dark Lord carries the band's own boss HP: the v198 +25% was
+retired in v210, which is a 20% cut of the value players had been fighting
+(111,676,981 → 89,341,585). Its escorts, pay, ATK and the regular-mob anchor used
+for Ascension are unchanged.
 Ordinary Ascension mobs and escorts have 45 HIT; v191 lowers boss HIT from 55 to
 50. At 80 Flee, ordinary/escort hit chance is 65% and boss hit chance is 70%,
 before blind/block. The existing 5% dodge floor still applies.

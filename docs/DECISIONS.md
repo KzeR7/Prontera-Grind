@@ -119,6 +119,15 @@ The existing market gate applies; Echo retains its existing access rules. Purcha
 use the existing saved Mythic scroll reserve, retaining refinement behavior and the
 0.05% online boss scroll drop. Echo Shards are separate from Astral Shards.
 
+### 2026-10-22 — Nightmare Abyss boss HP (v210)
+
+The owner asked for a 20% cut of the Nightmare Abyss Dark Lord's live HP after the
+endgame reward comparison. The v198 "+25% HP, this boss only" special case is
+retired, so the boss spawns at the Nightmare band's own boss HP: 89,341,585
+(111,676,981 before). EXP, Zeny, ATK, escorts and drops are unchanged. The reward
+comparison in `reports/endgame-rewards/comparison.md` explains what that does and
+what is left (the Stage 15 MVP still pays 1.25× an escort for 14.9× an escort's HP).
+
 ### 2026-10-19 — Crucible and boss tuning (v198)
 
 The owner selects 3× trial HP and a 30-second limit, +25% HP for Nightmare

@@ -147,6 +147,20 @@ console.log('Seconds per kill is the monster HP divided by 1M DPS. Real builds d
 console.log(paceTable([...nm, ...astral, ...thor], false) + '\n');
 console.log('## At a steady 1M DPS — boss waves\n');
 console.log(paceTable([...nm, ...astral, ...thor], true) + '\n');
+// Fairness read for the Ascension maps: the same pay measured against the Nightmare Abyss 15 mob,
+// which is what a Lv150 player can already farm when they unlock Astral and Thor.
+const anchor = nm[4];
+const premiumTable = rows => {
+  const head = '| Field | EXP / M HP | vs NM Abyss 15 mob | EXP per kill | vs NM Abyss 15 mob | Zeny per kill | vs NM Abyss 15 mob |';
+  const sep = '|---|---:|---:|---:|---:|---:|---:|';
+  const body = rows.map(r => `| ${r.name} S${r.stage} | ${comma(r.mobExpPerM)} | ${(r.mobExpPerM / anchor.mobExpPerM).toFixed(2)}x | ${comma(r.mobExpPaid)} | ${(r.mobExpPaid / anchor.mobExpPaid).toFixed(2)}x | ${comma(r.mobZeny)} | ${(r.mobZeny / anchor.mobZeny).toFixed(2)}x |`).join('\n');
+  return head + '\n' + sep + '\n' + body;
+};
+console.log('## Ascension premium — Astral Citadel and Thor Volcano mobs against the Nightmare Abyss 15 mob\n');
+console.log(`Nightmare Abyss 15 mob: ${comma(anchor.mobExpPerM)} EXP / M HP, ${comma(anchor.mobExpPaid)} EXP and ${comma(anchor.mobZeny)} Zeny a kill.\n`);
+console.log(premiumTable([...astral, ...thor]) + '\n');
+console.log('## Ascension MVPs against the Nightmare Abyss 15 MVP\n');
+console.log(bossTable([...nm.slice(-1), ...astral.slice(-1), ...thor.slice(-1)]) + '\n');
 console.log('## Every Nightmare Stage 15 MVP (context)\n');
 console.log(bossTable(nm15Bosses) + '\n');
 console.log('## MVPs on the compared fields\n');
