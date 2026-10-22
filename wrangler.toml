@@ -45,3 +45,9 @@ database_id = "50a6448b-1f12-466c-a28a-10544bedf750"   # printed by `wrangler d1
 #   CF_D1_ID            optional: scope the D1 numbers to the `pg` database alone
 # Without them the card still works, reporting our own ledger instead of the metered numbers.
 # Deployment steps: tools/cloudflare-deploy-steps.md §8.
+
+# Deploy workers/social first; Pages connects privately to its Durable Object.
+[[durable_objects.bindings]]
+name = "SOCIAL"
+class_name = "Social"
+script_name = "prontera-social"

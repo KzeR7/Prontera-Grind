@@ -1,0 +1,42 @@
+{
+  "sources": {
+    "manifest.json": {
+      "sha256": "ebab1f4ee1fc1e94307543b137fa1b81941f14d4972760f225c06074e2a83684",
+      "bytes": 188850,
+      "url": "https://play.ragnago.com/maps/prontera/manifest.json"
+    },
+    "models.bin": {
+      "sha256": "93ea34fea0a088741e1c653dc01f90699769dbb06912f6161d16b9bb12227302",
+      "bytes": 7435320,
+      "url": "https://play.ragnago.com/maps/prontera/699ad48b539b100cd0b8/models.bin"
+    },
+    "models.webp": {
+      "sha256": "584a8f001277e724582e90d216d255e207492238b3d3c2f7d94771a64392bb1b",
+      "bytes": 2554710,
+      "url": "https://play.ragnago.com/maps/prontera/699ad48b539b100cd0b8/models.webp"
+    },
+    "atlas.webp": {
+      "sha256": "ecaeb21393a02e32d77d937af726807ccce1ae66a897880abfa633c3fdae0d4c",
+      "bytes": 183522,
+      "url": "https://play.ragnago.com/maps/prontera/699ad48b539b100cd0b8/atlas.webp"
+    }
+  },
+  "outputs": {
+    "models.webp": {
+      "sha256": "9497d3344e28ad882d614b2d9acdfc5e4b7d81b79f066f01a45ae595233f227c",
+      "bytes": 3385904
+    },
+    "models.bin": {
+      "sha256": "6ecbdec9a5a46cb6137c412f3d4d18bc600639d5cca0200490209d917fc2b5dc",
+      "bytes": 311520
+    },
+    "paving.webp": {
+      "sha256": "ecaeb21393a02e32d77d937af726807ccce1ae66a897880abfa633c3fdae0d4c",
+      "bytes": 183522
+    },
+    "catalog.json": {
+      "sha256": "3c738a4f1517581983e7c7010b44b2ad3a828655be0461dfa59275c56e91ecbf",
+      "bytes": 873
+    }
+  }
+}

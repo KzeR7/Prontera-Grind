@@ -15,6 +15,7 @@
 // and the data is gone), and it binds to localhost by default. Cloudflare's runtime still has the
 // last word on the platform questions — CPU limits, the real D1 binding, cookie behaviour — and
 // `wrangler pages dev` remains the check for those.
+import { attachSocial } from './social/dev-sockets.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { createServer } from 'node:http';
 import { spawnSync } from 'node:child_process';
@@ -183,6 +184,7 @@ export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = f
       res.end(JSON.stringify({ err: String(e && e.message || e) }));
     }
   });
+  attachSocial(server, makeD1(sqlite));
   return new Promise(resolve => server.listen(port, host, () => resolve({
     server, sqlite, port: server.address().port, close: () => new Promise(r => server.close(r)),
   })));

@@ -12,7 +12,7 @@ function normalize(v){if(!v||typeof v!=='object'||v.version!==1)return null;cons
 function key(v){const a=normalize(v);return a?a.sex+'-'+a.heads[a.sex]+'-'+a.colors[a.sex]:''}
 function selectionKey(v){const a=normalize(v);return a?key(a)+'|'+Object.keys(ACCESSORIES).map(k=>a[k]).join(','):''}
 function frameIndex(view,ms,progress){const n=view.frames.length;return progress==null?Math.floor(Math.max(0,ms)/view.delay)%n:Math.min(n-1,Math.floor(Math.max(0,Math.min(1,progress))*n))}
-function validateMeta(m,rec){
+function validateMeta(m,rec,stances=['idle','walk','attack']){
  if(!m||m.version!==2||m.width!==rec.width||m.height!==rec.height||!m.actions)throw Error('Invalid atlas metadata');
  const slots=['body','hair','weapon','shadow',...Object.values(ACCESSORIES).flatMap(s=>Object.keys(s.items).filter(k=>k!=='none'))];
  if(!Array.isArray(m.poses)||m.poses.length>20000)throw Error('Invalid poses');
@@ -20,7 +20,7 @@ function validateMeta(m,rec){
  if(m.clock!==undefined&&!['independent','component'].includes(m.clock))throw Error('Invalid animation clock');
  const prefixes=new Set(Object.keys(m.actions).map(k=>k.includes(':')?k.split(':')[0]+':':''));
  if(!prefixes.size||prefixes.size>RENDER_JOBS.length||[...prefixes].some(p=>p&&!RENDER_JOBS.includes(Number(p.slice(0,-1)))))throw Error('Invalid class routes');
- for(const prefix of prefixes)for(const stance of ['idle','walk','attack'])for(let d=0;d<8;d++){
+ for(const prefix of prefixes)for(const stance of stances)for(let d=0;d<8;d++){
   const v=m.actions[prefix+stance+d];if(!v||!Number.isFinite(v.delay)||v.delay<=0||v.delay>60000||!Array.isArray(v.frames)||v.frames.length<1||v.frames.length>(m.clock==='independent'?96:32))throw Error('Invalid action');
   v.frames=v.frames.map(i=>{if(!Number.isInteger(i)||!m.poses[i])throw Error('Invalid pose reference');return m.poses[i]});
   for(const f of v.frames){if(!Array.isArray(f)||f.length>20)throw Error('Invalid layers');for(const p of f){
@@ -30,7 +30,7 @@ function validateMeta(m,rec){
 }
 const digest=async b=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',b)),x=>x.toString(16).padStart(2,'0')).join('');
 class Store{
- constructor({base='assets/wardrobe/v5/',classes=CLASSES,fetcher=(...a)=>fetch(...a),decode=b=>createImageBitmap(new Blob([b],{type:'image/png'})),budget=16*1024*1024}={}){this.base=base;this.classes=classes;this.fetcher=fetcher;this.decode=decode;this.budget=budget;this.cache=new Map();this.clients=new Map();this.queue=Promise.resolve();this.serial=0;this.catalog=null;this.metadataCache=new Map();this.metadataBytes=0;this.metadataBudget=1024*1024}
+ constructor({base='assets/wardrobe/v5/',classes=CLASSES,fetcher=(...a)=>fetch(...a),decode=b=>createImageBitmap(new Blob([b],{type:'image/png'})),budget=16*1024*1024,stances=['idle','walk','attack']}={}){this.stances=stances;this.base=base;this.classes=classes;this.fetcher=fetcher;this.decode=decode;this.budget=budget;this.cache=new Map();this.clients=new Map();this.queue=Promise.resolve();this.serial=0;this.catalog=null;this.metadataCache=new Map();this.metadataBytes=0;this.metadataBudget=1024*1024}
  async bytes(path,limit,sha){const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),15000);try{
   const r=await this.fetcher(this.base+path,{signal:abort.signal});if(!r.ok)throw Error('Sprite download failed ('+r.status+')');if(+(r.headers.get('content-length')||0)>limit)throw Error('Oversized sprite');
   let b;if(r.body&&r.body.getReader){const reader=r.body.getReader(),parts=[];let n=0;try{for(;;){const {done,value}=await reader.read();if(done)break;n+=value.length;if(n>limit)throw Error('Oversized sprite');parts.push(value)}}catch(e){await reader.cancel().catch(()=>{});throw e}b=new Uint8Array(n);let at=0;for(const p of parts){b.set(p,at);at+=p.length}}else{b=new Uint8Array(await r.arrayBuffer());if(b.length>limit)throw Error('Oversized sprite')}
@@ -43,7 +43,7 @@ class Store{
  pinned(extra=[]){return new Set([...extra,...[...this.clients.values()].flatMap(c=>c.ready?c.ready.ids:[])])}
  trim(extra=[],incoming=0){const pin=this.pinned(extra);let total=[...this.cache.values()].reduce((s,r)=>s+r.bytes,0);for(const [k,v] of this.cache){if(total+incoming<=this.budget&&this.cache.size<6)break;if(!pin.has(k)){v.image.close();this.cache.delete(k);total-=v.bytes}}if(total+incoming>this.budget)throw Error('Wardrobe memory limit reached')}
  async metadata(rec){const cached=this.metadataCache.get(rec.metaSha256);if(cached){if(cached.bytes!==rec.metaBytes||cached.value.width!==rec.width||cached.value.height!==rec.height)throw Error('Mismatched atlas metadata');this.metadataCache.delete(rec.metaSha256);this.metadataCache.set(rec.metaSha256,cached);return cached.value}
-  const value=JSON.parse(new TextDecoder().decode(await this.bytes(rec.meta,rec.metaBytes,rec.metaSha256)));validateMeta(value,rec);
+  const value=JSON.parse(new TextDecoder().decode(await this.bytes(rec.meta,rec.metaBytes,rec.metaSha256)));validateMeta(value,rec,this.stances);
   while(this.metadataBytes+rec.metaBytes>this.metadataBudget&&this.metadataCache.size){const [key,old]=this.metadataCache.entries().next().value;this.metadataCache.delete(key);this.metadataBytes-=old.bytes}
   if(rec.metaBytes<=this.metadataBudget){this.metadataCache.set(rec.metaSha256,{value,bytes:rec.metaBytes});this.metadataBytes+=rec.metaBytes}return value;
  }

@@ -141,3 +141,8 @@ uses a five-second Meteor Storm with a 12-second cooldown, one instance of each
 spell and at most two ground spells. Ordinary combo timing and recovery remain.
 Holy attacks retain fixed per-cast healing limits; repeated ground ticks cannot
 multiply holy marks/echoes. Existing skill IDs, ranks, loadouts and saves survive.
+
+Social hub (owner, 22 October 2026): farming continues while visiting the plaza.
+The social view has no enemies/combat; it does not pause or replace field farming.
+Emoji is an independent chat tab; native emotions appear overhead and as smaller
+entries in plaza-local chat. World/Whisper/Log replace the bottom-left log area.

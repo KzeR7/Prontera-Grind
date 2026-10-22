@@ -1,0 +1,10 @@
+name = "prontera-social"
+main = "index.mjs"
+compatibility_date = "2026-10-01"
+workers_dev = false
+[[durable_objects.bindings]]
+name = "SOCIAL"
+class_name = "Social"
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Social"]
