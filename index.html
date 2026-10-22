@@ -1127,7 +1127,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-22 haven-v211 harder crucible trial';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-22 haven-v212 thor pay and ascension drops';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4079,7 +4079,14 @@ const starterAtk=l=>6+3*(l-1);
 // v172 (owner: 1.05x pay for 15x danger): Astral pays 3-8x the anchor per kill, Thor 7-15x,
 // so the top field sustains ~1.4M EXP/min and the rescaled ascension curve below lands on time.
 const ascRewardBonus=(m,stage)=>(m===10?[3,4,5,6.5,8]:[7,8.5,10,12,15])[stage-1];
-const ascZenyBonus=(m,stage)=>(m===10?[2,2.1,2.2,2.3,2.4]:[2.4,2.55,2.7,2.85,3])[stage-1]*1.3;
+// v212 (owner: "dont mind the exp. i want to tune the zeny"): the old ladder raised Zeny 25% from
+// Stage 1 to 5 while monster HP rose 57%, so the deeper a field the less Zeny a minute it paid, and
+// Thor Volcano - the tankiest content in the game - was its worst Zeny farm (68 Zeny per M HP
+// against Astral Stage 1's 335). Zeny now follows the stage's HP ramp from ascensionCombatStats
+// (Stage 5's escorts are half HP, so its ramp halves too), which holds every stage of both maps at
+// the same Zeny a minute at equal DPS: ~1.21M an hour per 1M DPS. Astral Stage 1 is unchanged.
+const ascZenyRamp=(m,stage)=>(m===10?[2,3,4.5,6.5,9]:[7,9,11,14,18])[stage-1]*(stage===5?.5:1);
+const ascZenyBonus=(m,stage)=>ascZenyRamp(m,stage)*1.3;
 function ascRewardRatio(m,stage,boss=false){return ascRewardBonus(m,stage)*(boss?4:1)}
 function fieldZenyReward(m,stage,boss=false){
  const l=fieldPower(m,stage),range=boss?BZK:ZK;
@@ -5078,9 +5085,19 @@ function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEa
 // a quest reward adds to it - both would confuse a reader of the save field itself).
 function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarned+=n}
 const ASCENSION_MATERIALS=['Astral Shard','Primal Catalyst',"Valkyrie's Sigil"];
+// v212 (owner: "and drop rates"): the flat 0.2% material / 0.05% Sigil roll ignored the monster's
+// HP, so Stage 4 of either map paid half the materials an hour of Stage 1 and Thor paid 3.5x less
+// than Astral. Both chances now scale with the monster's max HP against the Astral Citadel Stage 1
+// mob, which flattens every stage of both maps onto one rate: 1.2 materials and 0.3 Sigils an hour
+// per 1M DPS. Bosses keep their 1% Sigil roll and, at 3x a mob's HP, roll 3x its material chance.
+const ASC_MAT_CH=.5,ASC_SIGIL_CH=.125;
+let ascDropAnchor=0;
+function ascDropIndex(mob){if(!ascDropAnchor)ascDropAnchor=ascensionCombatStats(10,1).hp;return Math.max(1,(mob.max||mob.hp||ascDropAnchor)/ascDropAnchor)}
+function ascMaterialChance(mob){return ASC_MAT_CH*ascDropIndex(mob)}
+function ascSigilChance(mob){return mob.boss?1:ASC_SIGIL_CH*ascDropIndex(mob)}
 function ascensionDrops(mob){
   const m=mob.mapIndex??S.mp;if(m<10)return [];
-  return [[m-10,.2],[2,mob.boss?1:.05]].filter(([,chance])=>Math.random()*100<chance).map(([ascMat])=>({ascMat,id:uid(),n:ASCENSION_MATERIALS[ascMat]}));
+  return [[m-10,ascMaterialChance(mob)],[2,ascSigilChance(mob)]].filter(([,chance])=>Math.random()*100<chance).map(([ascMat])=>({ascMat,id:uid(),n:ASCENSION_MATERIALS[ascMat]}));
 }
 function recordMapClear(m,l){if(l===normalStages(m)){if(!S.mapClears)S.mapClears=MAPS.map(()=>false);S.mapClears[m]=true;}}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
@@ -5424,7 +5441,7 @@ function beginnerGuide(){const chapters=[
  ['Wardrobe, Settings & the log','Wardrobe changes appearance without changing combat stats. All classes support native hairstyles, colors and accessories, including the six fourth jobs. Settings adjusts combat display and preferences. Display controls the screen layout; Log helps you inspect drops, levels and events.'],
  ['Saving & time away','Watch the cloud badge when using an online account. Browser-only previews save on this browser. Hidden tabs continue fighting; they are not away time. Away rewards use a measured farming sample at 50% efficiency, capped at four hours per claim, after at least three minutes without a save. Let a stable field run for a full minute to refresh its sample.']
  ];return `<header class="handbook-intro"><small>01 / START HERE</small><h2>Your adventure, one step at a time</h2><p>Fight → spend points → equip upgrades → choose a better field. You do not need to master every system on your first day.</p><button data-a="guidereplay" data-v="beginner">Replay first-login tour</button></header><div class="guide-chapters">${chapters.map(([title,body],i)=>`<details data-ui-disclosure="handbook-beginner-${i}" ${i===0?'open':''}><summary>${String(i+1).padStart(2,'0')} · ${title}</summary><p>${body}</p></details>`).join('')}</div>`;}
-function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 30-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(([title,body])=>`<article class="guide-note"><h3>${title}</h3><p>${body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>${['Might','Precision','Ferocity','Slayer'].includes(x.n)?'Late-rank offensive growth; rank 5 grants 25% of the maximum':'+'+x.step+x.unit+' per rank'} · ${x.text}. Rank 10: +${10*x.step}${x.unit}.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts each have a 0.2% chance per kill on their own map. Valkyrie’s Sigils roll at 0.05% on ordinary enemies and 1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses, or cost 100 Valkyrie’s Sigils in the Black Market or 600 Echo Shards in Echo. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Unprotected failures at +5–9 lose one rank. Mythic +10 is a checkpoint; higher failures lose one rank unless protected. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
+function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 30-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(([title,body])=>`<article class="guide-note"><h3>${title}</h3><p>${body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>${['Might','Precision','Ferocity','Slayer'].includes(x.n)?'Late-rank offensive growth; rank 5 grants 25% of the maximum':'+'+x.step+x.unit+' per rank'} · ${x.text}. Rank 10: +${10*x.step}${x.unit}.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts roll 0.5% on the lightest Stage 1 monster and more on every tankier one, so all five stages of both maps pay the same materials an hour. Valkyrie’s Sigils roll at a quarter of that rate on ordinary enemies and 1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses, or cost 100 Valkyrie’s Sigils in the Black Market or 600 Echo Shards in Echo. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Unprotected failures at +5–9 lose one rank. Mythic +10 is a checkpoint; higher failures lose one rank unless protected. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
 function handbook(){return `<section class="handbook"><nav class="guide-nav" aria-label="Guide chapters">${[['beginner','Beginner'],['leveling','Leveling route'],['build','Your build'],['cards','Card targets'],['ascension','Ascension Forge']].map(([id,label])=>`<button data-a="guidepage" data-v="${id}" aria-pressed="${guidePage===id}">${label}</button>`).join('')}</nav>${guideTourPanel()}${guidePage==='beginner'?beginnerGuide():guidePage==='leveling'?levelingGuide():guidePage==='ascension'?ascensionGuide():buildGuide(true)}</section>`;}
 function guideBuildPlan(){
  const main=INT_CLASSES.includes(S.cls)?'INT':C().main.toUpperCase(),power=INT_CLASSES.includes(S.cls)?'MATK':'ATK';
@@ -5872,7 +5889,7 @@ const V={
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${cardEffects(F.boss.card).map(cardEffectText).join(', ')}, ${GRADE[F.boss.card.g]})</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
         </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage '+normalStages(mapM)}.</small>`}
-        ${mapM>=10?`<div class="sec">Ascension materials</div><p>${ASCENSION_MATERIALS[mapM-10]}: 0.2% per kill<br>Valkyrie's Sigil: 0.05% per mob / 1% per MVP</p><small>Stored: ${ASCENSION_MATERIALS.map((n,i)=>esc(n)+' × '+safeCount(S.ascensionMat?.[i])).join(' · ')}</small>`:''}<div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from MVPs. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
+        ${mapM>=10?(()=>{const ah=ascensionCombatStats(mapM,mapL).hp,pc=ch=>String(+ch.toFixed(3)),mc=pc(ascMaterialChance({max:ah})),bc=pc(ascMaterialChance({max:ah*3})),sc=pc(ascSigilChance({max:ah}));return`<div class="sec">Ascension materials</div><p>${ASCENSION_MATERIALS[mapM-10]}: ${mc}% per kill (${bc}% from the MVP)<br>Valkyrie's Sigil: ${sc}% per mob / 1% per MVP</p><small>Both chances scale with this stage's monster HP, so every stage pays the same materials an hour.</small><small>Stored: ${ASCENSION_MATERIALS.map((n,i)=>esc(n)+' × '+safeCount(S.ascensionMat?.[i])).join(' · ')}</small>`})():''}<div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from MVPs. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'',idxC=typeof indexCrit==='function'?indexCrit():0;
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
     +(petBonusList().length?`<small><b>Pet bonuses</b> (the fighting pets): ${petBonusList().join(' &middot; ')}</small>`:'')

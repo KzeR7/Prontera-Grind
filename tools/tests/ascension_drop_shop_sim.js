@@ -7,8 +7,9 @@ const test=(name,fn)=>{ev('S=fresh();Math.random=window.originalRandom');fn();pa
 const data=code=>JSON.parse(ev('JSON.stringify('+code+')'));
 ev('window.originalRandom=Math.random');
 try{
+ const MAT=ev('ASC_MAT_CH'),SIG=ev('ASC_SIGIL_CH');
  test('material thresholds on both maps, ordinary enemies and bosses',()=>{
-  for(const map of [10,11])for(const boss of [false,true])for(const [mat,chance] of [[map-10,.2],[2,boss?1:.05]]){
+  for(const map of [10,11])for(const boss of [false,true])for(const [mat,chance] of [[map-10,MAT],[2,boss?1:SIG]]){
    for(const [roll,expected] of [[(chance-1e-8)/100,true],[chance/100,false],[(chance+1e-8)/100,false]]){
     // The two probabilities roll before uid() is called; avoid matching the other material.
     assert.equal(ev(`(()=>{let n=0;Math.random=()=>[${mat===2?.9:roll},${mat===2?roll:.9}][n++]??.5;return ascensionDrops({mapIndex:${map},boss:${boss}}).some(x=>x.ascMat===${mat})})()`),expected);
@@ -17,11 +18,14 @@ try{
   ev('Math.random=()=>0');assert.equal(ev('ascensionDrops({mapIndex:9,boss:true}).length'),0);
  });
  test('online collection and offline kills share the approved material rates',()=>{
-  for(const map of [10,11])for(const boss of [false,true])for(const roll of [.0004,.001,.005,.02]){
-   ev(`S=fresh();S.mp=${map};S.lvl=${boss?5:1};S.cls='Rune Knight';S.lv=150;spawn();window.target=mobs.find(m=>m.boss===${boss});Math.random=()=>${roll};`);
+  for(const map of [10,11])for(const boss of [false,true])for(const roll of [.0004,.001,.005,.02,.03]){
+   ev(`S=fresh();S.mp=${map};S.lvl=${boss?5:1};S.cls='Rune Knight';S.lv=150;spawn();window.target=mobs.find(m=>m.boss===${boss})`);
+   // v212: the chances track the monster's own HP, so read them off the live target.
+   const matCh=ev('ascMaterialChance(window.target)'),sigCh=ev('ascSigilChance(window.target)');
+   ev(`Math.random=()=>${roll};`);
    // Exercise the online drop producer and collection path.
    ev('ascensionDrops(window.target).forEach(collect)');const online=data('S.ascensionMat');
-   assert.deepEqual(online,[map===10&&roll<.002?1:0,map===11&&roll<.002?1:0,roll<(boss?.01:.0005)?1:0]);
+   assert.deepEqual(online,[map===10&&roll*100<matCh?1:0,map===11&&roll*100<matCh?1:0,roll*100<sigCh?1:0]);
    ev('S.ascensionMat=[0,0,0];offlineAwardKill(window.target,{measured:true,kills:0,zeny:0,exp:0,cards:0,drops:0,ori:0,elu:0,pets:0,petFolds:0,petRefunds:0})');
    assert.deepEqual(data('S.ascensionMat'),online);
   }
@@ -51,7 +55,11 @@ try{
   ev('S.ascensionMat[2]=100');market.innerHTML=ev('V.market()');assert.equal(market.querySelector('[data-a=buymythicscroll]').disabled,false);
   market.innerHTML=ev('trialShopHtml(true)');assert.equal(market.querySelector('[data-buy=mscroll]').textContent,'600 Shards');
   for(const map of [10,11]){
-   ev(`mapM=${map};mapL=1`);assert.match(ev('V.map()'),/0\.2% per kill/);assert.match(ev('V.map()'),/0\.05% per mob \/ 1% per MVP/);
+   ev(`mapM=${map};mapL=1`);
+   // v212: the map card prints the live, HP-scaled odds instead of a constant.
+   const hp=ev(`ascensionCombatStats(${map},1).hp`),p=v=>String(+v.toFixed(3)),html=ev('V.map()');
+   assert.ok(html.includes(`${p(ev(`ascMaterialChance({max:${hp}})`))}% per kill (${p(ev(`ascMaterialChance({max:${hp*3}})`))}% from the MVP)`),'the map card shows the live material odds');
+   assert.ok(html.includes(`${p(ev(`ascSigilChance({max:${hp}})`))}% per mob / 1% per MVP`),'the map card shows the live Sigil odds');
   }
   assert.match(ev('ascensionGuide()'),/600 Echo Shards/);assert.doesNotMatch(ev('refineProtectionUI()'),/boss drop only/);
  });

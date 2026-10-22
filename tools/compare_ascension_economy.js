@@ -18,6 +18,7 @@ const J = process.argv.includes('--json');
 const NP = 20000;
 const comma = n => n == null ? '—' : Math.round(n).toLocaleString('en-US');
 const one = n => n == null ? '—' : (n >= 100 ? Math.round(n).toLocaleString('en-US') : n.toFixed(n < 1 ? 2 : 1));
+const pct = n => n == null ? '—' : String(+n.toFixed(3));
 
 const g = createGame();
 const ev = g.ev;
@@ -37,8 +38,9 @@ try {
       gear:(o.drops||[]).map(([T,ch])=>({n:T.n||T.k,ch})),tier:o.tier,sec:o.sec};})()`);
     const mapMat = m - 10;                        // 0 = Astral Shard, 1 = Primal Catalyst
     const drops = {
-      mapMat: m < 10 ? 0 : 0.2,                     // ascensionDrops: Math.random()*100 < .2
-      sigil: m < 10 ? 0 : 0.05,                     // ascensionDrops: Math.random()*100 < .05
+      // v212: both chances scale with the monster's max HP, so read them from the live helpers.
+      mapMat: m < 10 ? 0 : ev(`ascMaterialChance({max:${mob.hp}})`),
+      sigil: m < 10 ? null : ev(`ascSigilChance({max:${mob.hp}})`),
       ore: mob.oreCh * 2 * 100,                     // ori and elu rolled separately, as a percentage
       card: mob.cardCh,
       gear: mob.gear.reduce((s, d) => s + d.ch, 0),
@@ -83,7 +85,7 @@ if (J) {
 console.log('| Field | Mob HP | Zeny per kill | Zeny / M HP | EXP / M HP | Gear drops / kill | Card | Map material | Sigil | Ore |');
 console.log('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
 for (const r of out.rows) {
-  console.log(`| ${r.name} ${r.map >= 10 ? 'S' + r.stage : 'NM' + r.stage} | ${comma(r.hp)} | ${comma(r.zeny)} | ${one(r.zeny / (r.hp / 1e6))} | ${one(r.exp / (r.hp / 1e6))} | ${r.drops.gear ? r.drops.gear.toFixed(2) + '%' : 'none'} | ${r.drops.card}% | ${r.drops.mapMat ? r.drops.mapMat + '% (' + r.matName + ')' : '—'} | ${r.drops.sigil}% | ${r.drops.ore}% |`);
+  console.log(`| ${r.name} ${r.map >= 10 ? 'S' + r.stage : 'NM' + r.stage} | ${comma(r.hp)} | ${comma(r.zeny)} | ${one(r.zeny / (r.hp / 1e6))} | ${one(r.exp / (r.hp / 1e6))} | ${r.drops.gear ? r.drops.gear.toFixed(2) + '%' : 'none'} | ${r.drops.card}% | ${r.drops.mapMat ? pct(r.drops.mapMat) + '% (' + r.matName + ')' : '—'} | ${r.drops.sigil==null?'—':pct(r.drops.sigil)+'%'} | ${pct(r.drops.ore)}% |`);
 }
 
 for (const dps of DPS) {

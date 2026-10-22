@@ -60,8 +60,12 @@ including away-income source stages. Recorded clears, materials and owned items 
 
 Native mobs use local original APNGs for idle, walk and attack in eight directions.
 Materials are saved separately from equipment: Astral Shard (Astral) and Primal
-Catalyst (Thor) each roll at 0.2% per kill; Valkyrie's Sigil rolls at 0.05% per
-ordinary mob/escort and 1% per MVP. The map's Field intelligence shows the wallet.
+Catalyst (Thor) roll 0.5% on a Stage 1 monster and more on every tankier one, because
+both chances scale with the monster's max HP against Astral Stage 1's mob, so all five
+stages of both maps pay the same materials an hour. Valkyrie's Sigil rolls at a quarter
+of that rate per ordinary mob/escort and 1% per MVP. Zeny follows each stage's
+monster-HP ramp for the same reason. The map's Field intelligence shows the live odds
+and the wallet.
 Online and server-budgeted offline kills share these rolls. Materials are collected
 for N+ equipment evolution (Shards/Catalysts plus Sigils). Shards/Catalysts also fund
 selective Mythic reforging. Mythic Protection Scrolls can be exchanged for 100
