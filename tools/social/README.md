@@ -44,10 +44,12 @@ class/gender/accessory. The live normal wardrobe packs are unchanged.
 `emotions-lock.json` pins the original ACT/SPR URLs and hashes. Recover those bytes
 as `/tmp/emotion.act` and `/tmp/emotion.spr`. Install `emotions.go` as
 `gateway/cmd/social-emotions/main.go` in the pinned renderer and run it. It exports
-12 original action timelines into `/tmp/social-emotions` using the renderer's
+all 93 original action timelines into `/tmp/social-emotions` using the renderer's
 native layer transforms. `python tools/social/pack-emotions.py /tmp/social-emotions`
 creates APNGs and verifies decoded frames/timing against those exports. Identical
-consecutive PNG frames may coalesce with the summed delay. The 12 IDs are mapped
+consecutive PNG frames may coalesce with the summed delay. Existing PNG encoding
+is retained when decoded pixels and timing already agree, preserving the original
+12 files byte-for-byte. The 32 shipped IDs in `emotion-map.json` are mapped
 by inspecting the original animations, not substituting Unicode glyphs.
 
 ## Town

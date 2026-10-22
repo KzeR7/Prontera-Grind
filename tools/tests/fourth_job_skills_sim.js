@@ -29,6 +29,7 @@ try{
   assert(ev('SKILLS4.every(s=>s.max===10&&s.cd>0&&s.d(1).length>20)'));
  });
  test('all new skills resolve preserved native icons and FX',()=>{for(const s of probe('return SKILLS4.map(s=>({id:s.id,icon:!!PGSkillIcons[s.id],fx:!!skillFxSpec(s.id)}))'))assert(s.icon&&s.fx,s.id)});
+ test('fourth-job artwork is distinct from inherited skills and other fourth jobs',()=>{const files=probe('return SKILLS4.map(s=>PGSkillIcons[s.id].file)');assert.equal(new Set(files).size,36);assert(files.every(f=>f.startsWith('extra/')))});
  test('five attacks plus an inherited opener fit the six-slot bar; support uses no slots',()=>{
   for(const c of ev('CD4.map(c=>c[0])')){setup(c);assert(ev('rotationSkills().length<=6&&rotationSkills().every(s=>s.type==="act")'));}
   setup();assert(ev('suggestedCombo().includes("gc_roll")&&suggestedCombo().includes("gc_ripper")&&suggestedCombo().indexOf("gc_roll")<suggestedCombo().indexOf("gc_ripper")'));

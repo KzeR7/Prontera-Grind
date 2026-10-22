@@ -1,0 +1,472 @@
+{
+  "version": 1,
+  "reference": "https://www.pinterest.com/pin/799881583851444759/",
+  "sources": {
+    "12": {
+      "file": "icons-12.jpg",
+      "url": "https://previews.customer.envatousercontent.com/files/390274732/demo_ff12.jpg",
+      "sha256": "2873799a9a2bd1d2765d4f82191b707bf924eaa8dff77f6bc4368fc74acf448f",
+      "bytes": 651767,
+      "collection": "RPG Skills Icons 12",
+      "artist": "a-ravlik / Olekzandr Zahorulko"
+    },
+    "10": {
+      "file": "icons-10.jpg",
+      "url": "https://previews.customer.envatousercontent.com/files/356741413/demo_ff10.jpg",
+      "sha256": "96b5241c4b93aa1dd562c70aa1f7c30ffde2b2e74e382a845cc5d34e60ad7ed1",
+      "bytes": 691642,
+      "collection": "RPG Skills Icons 10",
+      "artist": "a-ravlik / Olekzandr Zahorulko"
+    },
+    "08": {
+      "file": "icons-08.jpg",
+      "url": "https://previews.customer.envatousercontent.com/files/322071599/demo_ff8.jpg",
+      "sha256": "a958984d3d6e7853a62913810ff86591ea69fd37427af047447075e9e45d26d8",
+      "bytes": 677732,
+      "collection": "RPG Skills Icons 08",
+      "artist": "a-ravlik / Olekzandr Zahorulko"
+    }
+  },
+  "items": {
+    "rk_charge": {
+      "source": "08",
+      "box": [
+        472,
+        313,
+        519,
+        360
+      ],
+      "subject": "blue cutting blade wave",
+      "family": "sword"
+    },
+    "rk_burst": {
+      "source": "08",
+      "box": [
+        12,
+        658,
+        59,
+        705
+      ],
+      "subject": "circular fiery blast",
+      "family": "sword"
+    },
+    "rk_ward": {
+      "source": "08",
+      "box": [
+        12,
+        716,
+        59,
+        763
+      ],
+      "subject": "fire breathing dragon",
+      "family": "sword"
+    },
+    "rk_spear": {
+      "source": "08",
+      "box": [
+        184,
+        370,
+        231,
+        417
+      ],
+      "subject": "piercing arrow-like spear volley",
+      "family": "sword"
+    },
+    "rk_wind": {
+      "source": "08",
+      "box": [
+        530,
+        313,
+        577,
+        360
+      ],
+      "subject": "lightning edged sweeping blade",
+      "family": "sword"
+    },
+    "rk_enchant": {
+      "source": "08",
+      "box": [
+        414,
+        773,
+        461,
+        820
+      ],
+      "subject": "red enchanted sword",
+      "family": "sword"
+    },
+    "wl_chain": {
+      "source": "08",
+      "box": [
+        414,
+        313,
+        461,
+        360
+      ],
+      "subject": "branching blue lightning",
+      "family": "magic"
+    },
+    "wl_seal": {
+      "source": "10",
+      "box": [
+        184,
+        428,
+        231,
+        475
+      ],
+      "subject": "purple soul burst",
+      "family": "magic"
+    },
+    "wl_det": {
+      "source": "08",
+      "box": [
+        127,
+        716,
+        174,
+        763
+      ],
+      "subject": "falling blazing rock",
+      "family": "magic"
+    },
+    "wl_frost": {
+      "source": "08",
+      "box": [
+        184,
+        313,
+        231,
+        360
+      ],
+      "subject": "ice eruption",
+      "family": "magic"
+    },
+    "wl_comet": {
+      "source": "08",
+      "box": [
+        242,
+        658,
+        289,
+        705
+      ],
+      "subject": "descending fire comet",
+      "family": "magic"
+    },
+    "wl_vortex": {
+      "source": "08",
+      "box": [
+        530,
+        428,
+        577,
+        475
+      ],
+      "subject": "four elemental spheres",
+      "family": "magic"
+    },
+    "rg_hunt": {
+      "source": "08",
+      "box": [
+        127,
+        313,
+        174,
+        360
+      ],
+      "subject": "focused blue arrow",
+      "family": "archer"
+    },
+    "rg_warg": {
+      "source": "12",
+      "box": [
+        12,
+        773,
+        59,
+        820
+      ],
+      "subject": "spectral blue wolf",
+      "family": "archer"
+    },
+    "rg_storm": {
+      "source": "08",
+      "box": [
+        300,
+        428,
+        347,
+        475
+      ],
+      "subject": "broad arrow volley",
+      "family": "archer"
+    },
+    "rg_bite": {
+      "source": "12",
+      "box": [
+        184,
+        486,
+        231,
+        533
+      ],
+      "subject": "snarling wolf",
+      "family": "archer"
+    },
+    "rg_cluster": {
+      "source": "08",
+      "box": [
+        300,
+        658,
+        347,
+        705
+      ],
+      "subject": "fire bomb with falling fragments",
+      "family": "archer"
+    },
+    "rg_unlimit": {
+      "source": "08",
+      "box": [
+        530,
+        716,
+        577,
+        763
+      ],
+      "subject": "empowered red arrow",
+      "family": "archer"
+    },
+    "gc_cross": {
+      "source": "12",
+      "box": [
+        12,
+        313,
+        59,
+        360
+      ],
+      "subject": "crossing violet slashes",
+      "family": "shadow"
+    },
+    "gc_slip": {
+      "source": "10",
+      "box": [
+        300,
+        486,
+        347,
+        533
+      ],
+      "subject": "shadow dash blades",
+      "family": "shadow"
+    },
+    "gc_veil": {
+      "source": "10",
+      "box": [
+        530,
+        486,
+        577,
+        533
+      ],
+      "subject": "sinister purple illusion",
+      "family": "shadow"
+    },
+    "gc_roll": {
+      "source": "08",
+      "box": [
+        472,
+        830,
+        519,
+        877
+      ],
+      "subject": "purple radial blade burst",
+      "family": "shadow"
+    },
+    "gc_ripper": {
+      "source": "12",
+      "box": [
+        184,
+        313,
+        231,
+        360
+      ],
+      "subject": "spinning purple blade",
+      "family": "shadow"
+    },
+    "gc_claw": {
+      "source": "12",
+      "box": [
+        300,
+        370,
+        347,
+        417
+      ],
+      "subject": "raking dark claws",
+      "family": "shadow"
+    },
+    "ab_chain": {
+      "source": "08",
+      "box": [
+        414,
+        600,
+        461,
+        647
+      ],
+      "subject": "rays of golden judgment",
+      "family": "holy"
+    },
+    "ab_judge": {
+      "source": "08",
+      "box": [
+        357,
+        600,
+        404,
+        647
+      ],
+      "subject": "focused golden holy beam",
+      "family": "holy"
+    },
+    "ab_ward": {
+      "source": "08",
+      "box": [
+        300,
+        543,
+        347,
+        590
+      ],
+      "subject": "green protective shield",
+      "family": "holy"
+    },
+    "ab_duple": {
+      "source": "12",
+      "box": [
+        357,
+        773,
+        404,
+        820
+      ],
+      "subject": "paired luminous spirits",
+      "family": "holy"
+    },
+    "ab_highness": {
+      "source": "08",
+      "box": [
+        472,
+        486,
+        519,
+        533
+      ],
+      "subject": "leaves with healing cross",
+      "family": "holy"
+    },
+    "ab_epiclesis": {
+      "source": "10",
+      "box": [
+        70,
+        830,
+        117,
+        877
+      ],
+      "subject": "four leaf life blessing",
+      "family": "holy"
+    },
+    "mc_gat": {
+      "source": "10",
+      "box": [
+        472,
+        716,
+        519,
+        763
+      ],
+      "subject": "mechanical gun barrel",
+      "family": "forge"
+    },
+    "mc_over": {
+      "source": "10",
+      "box": [
+        414,
+        600,
+        461,
+        647
+      ],
+      "subject": "cannon launching a shell",
+      "family": "forge"
+    },
+    "mc_rocket": {
+      "source": "08",
+      "box": [
+        414,
+        543,
+        461,
+        590
+      ],
+      "subject": "axe sweeping in an arc",
+      "family": "forge"
+    },
+    "mc_boomerang": {
+      "source": "08",
+      "box": [
+        127,
+        486,
+        174,
+        533
+      ],
+      "subject": "flying axe",
+      "family": "forge"
+    },
+    "mc_swing": {
+      "source": "12",
+      "box": [
+        242,
+        428,
+        289,
+        475
+      ],
+      "subject": "heavy hammer impact",
+      "family": "forge"
+    },
+    "mc_magma": {
+      "source": "08",
+      "box": [
+        127,
+        658,
+        174,
+        705
+      ],
+      "subject": "column of erupting fire",
+      "family": "forge"
+    },
+    "pet_warcry": {
+      "source": "08",
+      "box": [
+        242,
+        428,
+        289,
+        475
+      ],
+      "subject": "crossed steel swords",
+      "family": "support"
+    },
+    "pet_arcane": {
+      "source": "12",
+      "box": [
+        12,
+        830,
+        59,
+        877
+      ],
+      "subject": "enchanted blue spellbook",
+      "family": "support"
+    },
+    "pet_siphon": {
+      "source": "12",
+      "box": [
+        242,
+        370,
+        289,
+        417
+      ],
+      "subject": "red flowing blood essence",
+      "family": "support"
+    },
+    "pet_vital": {
+      "source": "08",
+      "box": [
+        357,
+        773,
+        404,
+        820
+      ],
+      "subject": "radiant red heart",
+      "family": "support"
+    }
+  }
+}

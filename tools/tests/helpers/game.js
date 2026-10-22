@@ -37,7 +37,7 @@ const dom = new JSDOM(html, {
     window.eval(`THREE.WebGLRenderer=function(){this.domElement=document.createElement('canvas');this.shadowMap={enabled:false};
       this.setSize=()=>{};this.setPixelRatio=()=>{};this.render=()=>{};this.dispose=()=>{};
       this.outputEncoding=0;this.toneMapping=0;this.getContext=()=>({})}`);
-    for (const f of ['assets/skill-icons.js', 'assets/pets.js', 'assets/sprite_pack_data.js', 'assets/class_skins_data.js', 'assets/weapon_joints_data.js'])
+    for (const f of ['assets/skill-icons.js', 'assets/skill-icons-extra.js', 'assets/pets.js', 'assets/sprite_pack_data.js', 'assets/class_skins_data.js', 'assets/weapon_joints_data.js'])
       window.eval(fs.readFileSync(path.join(ROOT, f), 'utf8'));
   },
 });

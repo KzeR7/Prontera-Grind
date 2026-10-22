@@ -16,7 +16,7 @@ test('Display can disable shake immediately, save it and restore it after login'
  ev('delete S.cameraShake;save()');assert.equal(ev('load().cameraShake'),true,'older saves retain the default');
 });
 test('rendered camera ignores a critical impulse with shake off and responds with it on',()=>{
- const start=src.indexOf('const dd=(cam.aspect<1.5?26:18)/zoom,sk='),end=src.indexOf('cam.lookAt(ct)',start),camera=src.slice(start,end);
+ const start=src.indexOf('const pitch=KIT.nativeWorld?'),end=src.indexOf('cam.lookAt(ct)',start),camera=src.slice(start,end);
  assert.ok(start>0&&end>start);
  ev('shake=6;S.cameraShake=false');ev(`(()=>{${camera}})()`);const off=ev('cam.position.clone()');
  ev('shake=0');ev(`(()=>{${camera}})()`);assert.equal(ev('cam.position.x'),off.x);assert.equal(ev('cam.position.z'),off.z);
@@ -34,15 +34,19 @@ test('feed keeps filters, escapes names and allocates no hidden rows',()=>{
  ev(`S.logOff={gear:1};feedDraw()`);assert.equal(doc.querySelectorAll('#feed .feed-entry').length,1);assert.match(doc.querySelector('.feed-zeny').textContent,/42 Zeny/);
  Object.defineProperty(doc,'hidden',{value:true,configurable:true});const before=ev('feedLive.length');ev(`log('Hidden loot','','gear',{item:S.eq.weapon})`);assert.equal(ev('feedLive.length'),before);assert.equal(ev('logs.at(-1).m'),'Hidden loot');Object.defineProperty(doc,'hidden',{value:false,configurable:true});
 });
-test('field buffs keep distinct colored artwork, countdowns, descriptions and expiry',()=>{
+test('field buffs keep distinct supplied-theme artwork, countdowns, descriptions and expiry',()=>{
  ev('bars=window.realBars;petBuff={};petBuffSrc={}');
  for(const id of ['warcry','arcane','siphon','vital']){
   ev(`petBuff={};petBuffSrc={};{const s=PET_SKILLS.find(x=>x.id==='${id}');petBuff[s.stat]=s.power;petBuff[s.stat+'T']=12.2;petBuffSrc[s.stat]='Poring'};ui()`);
-  const tile=doc.querySelector('#hudBuffs .pbx'),art=tile.querySelector('svg.buff-art');
-  assert.equal(art.dataset.buff,id);assert.equal(art.querySelector('g').getAttribute('color'),ev(`PET_SKILLS.find(x=>x.id==='${id}').color`));
+  const tile=doc.querySelector('#hudBuffs .pbx'),art=tile.querySelector('img.buff-art');
+  assert.equal(art.dataset.buff,id);assert.equal(art.getAttribute('src'),`assets/skill-icons/extra/pet_${id}.png`);
   assert.equal(tile.querySelector('.s').textContent,'13');assert.match(tile.querySelector('[role=tooltip]').textContent,/Poring/);assert.ok(tile.getAttribute('aria-label').includes(ev(`PET_SKILLS.find(x=>x.id==='${id}').n`)));assert.equal(tile.tabIndex,0);
  }
  ev('petBuff={};petBuffSrc={};ui()');assert.equal(doc.querySelectorAll('#hudBuffs .pbx').length,0);assert.equal(doc.getElementById('hudBuffs').style.display,'none');
+});
+test('pet buff icons retain original local artwork if the supplemental registry is unavailable',()=>{
+ const registry=g.window.PGSkillIcons;g.window.eval(fs.readFileSync(__dirname+'/../../assets/skill-icons.js','utf8'));
+ try{for(const id of ['warcry','arcane','siphon','vital']){const html=ev(`petBuffIcon(PET_SKILLS.find(s=>s.id==='${id}'))`);assert.match(html,/src="assets\/skill-icons\/sheet-/);assert.match(html,new RegExp(`data-buff="${id}"`));}}finally{g.window.PGSkillIcons=registry}
 });
 test('buff countdown updates retain the hovered and focused tile, even when another buff expires',()=>{
  ev("bars=window.realBars;petBuff={atk:15,atkT:15,hp:15,hpT:20};petBuffSrc={atk:'Poring',hp:'Drops'};ui()");

@@ -817,7 +817,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="assets/ui/eclipse.css?v=202">
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=206">
+<link rel="stylesheet" href="assets/social.css?v=207">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2>Welcome back.</h2><p class="login-intro">Your adventure is right where you left it.</p><div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -888,6 +888,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/native-fields.js?v=197"></script>
 <script src="assets/reference-mobs.js?v=193"></script>
 <script src="assets/skill-icons.js?v=130"></script>
+<script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-materials.js?v=147"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-afterglow.js?v=147"></script>
@@ -1072,9 +1073,9 @@ const SKILL_EMBLEM={aid:'cross',hprec:'heart',bash:'shock',frenzy:'flame',tblow:
 const skillIcon=id=>{const art=typeof PGSkillIcons!=='undefined'&&PGSkillIcons[id];
   if(!art)return '<span class="skill-art skill-icon-missing" aria-hidden="true">✦</span>';
   return `<img class="skill-art family-${art.family}" data-skill="${id}" data-family="${art.family}" src="assets/skill-icons/${art.file}" alt="" width="46" height="46" loading="lazy" decoding="async">`};
-// Field buffs use the same filled artwork as skills, in each buff's own color.
-const petBuffIcon=s=>{const motif={warcry:'blades',arcane:'orb',siphon:'water',vital:'heart'}[s.id]||'rune';
-  return `<svg class="buff-art" data-buff="${s.id}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="1" y="1" width="46" height="46" rx="9" fill="#101724" stroke="${s.color}"/><path d="M3 10Q3 3 10 3H38Q45 3 45 10V29L3 42Z" fill="${s.color}" opacity=".2"/><g color="${s.color}" fill="currentColor" stroke="${s.color}" stroke-width=".8" stroke-linecap="round" stroke-linejoin="round">${SKILL_PICTO[motif]}</g><path d="M7 3h12M3 7v9" fill="none" stroke="#fff" opacity=".55"/></svg>`};
+// Pet buff artwork uses distinct original cells from the same artist as skills.
+const petBuffIcon=s=>{const art=typeof PGSkillIcons!=='undefined'&&(PGSkillIcons['pet_'+s.id]||PGSkillIcons[{warcry:'aura',arcane:'mystic',siphon:'vermilion',vital:'aid'}[s.id]]);
+  return art?`<img class="buff-art" data-buff="${s.id}" src="assets/skill-icons/${art.file}" alt="" width="46" height="46" decoding="async">`:''};
 // The CDM affix stays in the roll pool, but v73 (owner: "players only target cri damage on all
 // equipments") changed who can roll it and what it pays: the affix is now a weapon/accessory roll
 // like the cdm CARD, and its gear weight is AB.cdm .7 -> .45. The final GEAR-AFFIX output is still
@@ -1126,7 +1127,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-22 haven-v206 desktop chat baseline';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-22 haven-v207 social controls and skill artwork';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1386,8 +1387,7 @@ const SKILL_VISUAL_REDESIGN={aura:'holyAura',mystic:'holyAura',sight:'windAura',
  env:'multiSlash',dodge:'multiSlash',sandat:'arrowRain',vdust:'multiSlash',vsplash:'shadow',sdestroy:'soulBolt',dpois:'frenzyAura',akatar:'multiSlash',
  heal:'holyBolt',signum:'holyNova',sanct:'holyBolt',kyrie:'holyBolt',judex:'holyBolt',assum:'holyNova',basilica:'holyNova',wperf:'impact',meltdown:'impact'};
 for(const [id,kind] of Object.entries(SKILL_VISUAL_REDESIGN))SKILL_VFX[id]={kind,at:SKILLS.find(s=>s.id===id).type==='buff'?'caster':'target',life:.6,redesigned:true};
-// Milestone 4 (dark-launched): the 30 4th-job skills reuse native icon art and existing effect kinds.
-// No new sprites are painted; their own art is an open item for the owner (see Updates/fourth-jobs/).
+// Fourth-job skills have distinct supplied-theme artwork; effects retain their existing kinds.
 if(FOURTH_JOBS_LIVE){
   for(const sk of SKILLS4){
     if(typeof SKILL_ICON!=='undefined')SKILL_ICON[sk.id]=SKILL_ICON[sk.icon];
@@ -10327,8 +10327,8 @@ function updateWatch(){
 setInterval(updateWatch,60000);
 </script>
 <script src="assets/wardrobe-ui.js?v=199"></script>
-<script src="assets/social-rules.js?v=206"></script>
-<script src="assets/social-scene.js?v=206"></script>
-<script src="assets/social.js?v=206"></script>
+<script src="assets/social-rules.js?v=207"></script>
+<script src="assets/social-scene.js?v=207"></script>
+<script src="assets/social.js?v=207"></script>
 </body>
 </html>

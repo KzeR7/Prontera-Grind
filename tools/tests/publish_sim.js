@@ -164,7 +164,8 @@ t('all supplied skill crops and native pet states ship within their bounded pack
  const icons=require('../../assets/skill-icons.js');assert.equal(Object.keys(icons).length,91);for(const r of Object.values(icons))assert.ok(fs.existsSync(path.join(iconRoot,r.file)));
  const pets=JSON.parse(fs.readFileSync(path.join(petRoot,'catalog.json')));assert.equal(Object.keys(pets.species).length,20);
  for(const r of Object.values(pets.assets))for(const key of ['image','meta','thumbnail'])assert.ok(fs.existsSync(path.join(petRoot,r[key])));
- const size=d=>fs.readdirSync(d).reduce((n,f)=>n+fs.statSync(path.join(d,f)).size,0);assert.ok(size(iconRoot)<2*1048576);assert.ok(size(petRoot)<2*1048576);
+ require('../../assets/skill-icons-extra.js');assert.equal(Object.keys(icons).length,131);for(const r of Object.values(icons))assert.ok(fs.existsSync(path.join(iconRoot,r.file)));assert.ok(fs.existsSync(path.join(out,'assets/skill-icons-extra.js')));
+ const size=d=>fs.readdirSync(d).reduce((n,f)=>n+(fs.statSync(path.join(d,f)).isDirectory()?size(path.join(d,f)):fs.statSync(path.join(d,f)).size),0);assert.ok(size(iconRoot)<2.5*1048576);assert.ok(size(petRoot)<2*1048576);
 });
 
 t('.assetsignore includes dev material (dist is the tested publish boundary)', () => {
