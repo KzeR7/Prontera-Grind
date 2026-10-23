@@ -1,0 +1,35 @@
+/* Cash Shop panel (haven-v215). Same vocabulary as the Wardrobe: .hd headers, .atabs tabs, the
+   --e-* surfaces, so the panel reads as part of the game and not a bolted-on store. */
+.shop{display:grid;gap:14px;min-width:0}.shop .hd{margin:0 0 5px}
+.shop-intro small{display:block;max-width:60ch;line-height:1.6;color:var(--e-muted)}
+.shop-sub{display:block;margin:-4px 0 2px;font-size:10px;line-height:1.5;color:var(--e-muted)}
+.shop-notice{margin:0;padding:8px 10px;border:1px dashed var(--edge2);border-radius:8px;background:var(--e-bg);font-size:11px;line-height:1.5;color:var(--ink)}
+.shop-note{margin:0;padding:8px 10px;border:1px solid var(--edge2);border-radius:8px;background:var(--e-bg);font-size:11px;line-height:1.5;color:var(--ink)}
+.shop-note.good{border-color:#4f8a5a;background:#1f3324;color:#d7f2dc}.shop-note.bad{border-color:#a35858;background:#36201f;color:#f4d6d2}
+.shop-note button{margin-left:6px;min-height:26px;padding:2px 8px;font-size:10px}
+.shop-pending{display:grid;gap:4px;padding:10px 12px;border:1px solid var(--gold);border-radius:10px;background:var(--e-raised);font-size:11px;line-height:1.5;color:var(--ink)}
+.shop-pending-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
+.shop-pending-actions button{min-height:30px;padding:4px 10px;font-size:11px}
+.shop-link{color:var(--gold);font-weight:700;text-decoration:underline}
+.shop-views.atabs{margin-bottom:0}.shop-slots.atabs{margin-bottom:0;flex-wrap:wrap}.shop-slots.atabs button{flex:1 1 120px}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.shop-group{display:grid;gap:8px}
+.shop-card{display:grid;gap:6px;align-content:start;min-height:112px;padding:10px 12px;border:1px solid var(--edge2);border-radius:10px;background:var(--e-bg)}
+.shop-card.owned{border-color:var(--gold)}
+.shop-card-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.shop-card-head b{font-size:12px;line-height:1.3;color:var(--ink)}
+.shop-card small{font-size:10px;line-height:1.5;color:var(--e-muted)}
+.shop-price{flex:0 0 auto;font-size:12px;font-weight:800;color:var(--gold);white-space:nowrap}
+.shop-card.owned .shop-price{color:#8fcf9b}
+.shop-card-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:auto}
+.shop-card-actions button{min-height:32px;padding:4px 10px;font-size:11px}
+.shop-buy{font-weight:800;border-color:var(--gold)}
+.shop-qty{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--e-muted)}
+.shop-qty select{min-height:32px;padding:2px 4px;border:1px solid var(--edge2);border-radius:6px;background:var(--e-bg);color:var(--ink)}
+.shop-fine summary{cursor:pointer;font-size:11px;color:var(--e-muted)}
+.shop-fine ul{margin:6px 0 0;padding-left:18px;font-size:10px;line-height:1.6;color:var(--e-muted)}
+.wardrobe-buy{font-weight:800;border-color:var(--gold)}
+/* Back from the payment page: a line on the login card. */
+.shop-return{margin:10px 0 0;padding:9px 12px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center}
+.shop-return.good{background:#1f3324;border:1px solid #4f8a5a;color:#d7f2dc}.shop-return.bad{background:#36201f;border:1px solid #a35858;color:#f4d6d2}
+@media (max-width:640px){.shop-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}

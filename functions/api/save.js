@@ -18,6 +18,7 @@
 // again on top, i.e. 2 rows written per sync; tools/tests/api_sim.js now pins this at 1.
 
 import { currentUser } from '../_lib/auth.js';
+import { lockedCosmetics } from '../_lib/shop.js';
 import { json, guard, readJson, fail } from '../_lib/http.js';
 import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, SAVE_MISMATCH } from '../_lib/validate.js';
 import * as db from '../_lib/db.js';
@@ -140,6 +141,14 @@ export const onRequestPut = guard(async ({ request, env }) => {
   const stamp = saveOwnerStamp(save);
   if (!stamp) return fail('This page is out of date. Reload it before saving again.', 400);
   if (!sameAccount(stamp, user.username)) return saveMismatch(user);
+  // haven-v215: Cash Shop cosmetics are owned per account, server-side. A save wearing a paid item the
+  // account does not own is refused before anything is written; the client takes those slots off and
+  // pushes again (cloudPush's cosmeticLocked branch), so a hand-edited save cannot wear what it never
+  // bought and a revoked unlock heals itself on the next sync.
+  const locked = await lockedCosmetics(D, user.id, save);
+  if (locked.length) {
+    return json({ err: 'This look uses Cash Shop items this account does not own.', cosmeticLocked: true, locked }, 409);
+  }
   const pub = publicFields(save);
   const savedAt = Date.now(); // ignore client time for cloud-save ordering and audit timestamps
   const clientVersion = Math.floor(Number(body.version) || 0);

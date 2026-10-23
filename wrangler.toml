@@ -46,6 +46,13 @@ database_id = "50a6448b-1f12-466c-a28a-10544bedf750"   # printed by `wrangler d1
 # Without them the card still works, reporting our own ledger instead of the metered numbers.
 # Deployment steps: tools/cloudflare-deploy-steps.md §8.
 
+# Cash Shop (haven-v215). Two SECRETS, set with `npx wrangler pages secret put <NAME>` or in the
+# dashboard (Settings -> Variables and Secrets), never here:
+#   STRIPE_SECRET_KEY      sk_test_... while rehearsing, sk_live_... when selling
+#   STRIPE_WEBHOOK_SECRET  whsec_... from the webhook endpoint pointed at /api/shop/webhook
+# Without the first the shop is browse-only; without the second the webhook answers 503 and the
+# order poll delivers instead. Database: migrations/0005_shop.sql. Guide: docs/MONETIZATION-SETUP.md.
+
 # Deploy workers/social first; Pages connects privately to its Durable Object.
 [[durable_objects.bindings]]
 name = "SOCIAL"

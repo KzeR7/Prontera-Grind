@@ -13,7 +13,13 @@ const wardrobeState={owner:null,cls:'',sex:'',draft:null,look:null,status:'',loa
 let wardrobeEquipped=null,wardrobeRequested='',wardrobeFailure='';
 let wardrobeClassLook=null,wardrobeClassRequest='';
 function wardrobeOwner(){if(wardrobeState.owner===S)return;wardrobeStore.release('preview');wardrobeStore.release('hero');wardrobeStore.release('portrait');wardrobeClassLook=null;wardrobeClassRequest='';wardrobeState.owner=S;wardrobeState.canvas=null;wardrobeState.paint='';wardrobeState.draft=null;wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.seq++;wardrobeEquipped=null;wardrobeRequested='';wardrobeFailure=''}
-function wardrobeAppearance(){return PGWardrobe.normalize(S.appearance)||PGWardrobe.defaults(S.sex)}
+// haven-v215: the look everything renders from. Cash Shop slots this account does not own are taken
+// off here (shopSanitize, assets/shop.js), so the hero, the Social Hub and the Wardrobe draft all
+// agree with what the server would accept. Without the shop script the look is used as saved.
+function wardrobeAppearance(){const a=PGWardrobe.normalize(S.appearance)||PGWardrobe.defaults(S.sex);return typeof shopSanitize==='function'?shopSanitize(a):a}
+// Which paid items a draft wears that may not be worn yet (empty without the shop script).
+function wardrobeLocked(a){return typeof shopLockedIn==='function'&&a?shopLockedIn(a):[]}
+function wardrobeTag(field,id){return typeof shopOptionTag==='function'?shopOptionTag(field,id):''}
 function wardrobeSupported(cls){return Object.hasOwn(PGWardrobe.CLASSES,cls)||Object.hasOwn(PGFourthJobs.CLASSES,cls)}
 function wardrobePending(cls){return Object.hasOwn(PGFourthJobs.CLASSES,cls)||wardrobeSupported(cls)&&!wardrobeFailure}
 function wardrobePanel(){wardrobeOwner();if(wardrobeState.cls!==S.cls||wardrobeState.sex!==S.sex){wardrobeState.cls=S.cls;wardrobeState.sex=S.sex;wardrobeState.seq++;wardrobeStore.release('preview');wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.draft=null;wardrobeState.canvas=null}
@@ -26,12 +32,16 @@ function wardrobePanel(){wardrobeOwner();if(wardrobeState.cls!==S.cls||wardrobeS
  <fieldset class="wardrobe-section"><h3>Hair</h3><div class="wardrobe-fields">
  <label>Hairstyle<select data-wardrobe="head">${PGWardrobe.HAIRS[sex].map((h,i)=>option(h,'Style '+(i+1),a.heads[sex])).join('')}</select></label>
  <label>Color<select data-wardrobe="color">${Array.from({length:9},(_,i)=>option(i,'Color '+(i+1),a.colors[sex])).join('')}</select></label></div></fieldset>
- <fieldset class="wardrobe-section"><h3>Accessories</h3><div class="wardrobe-fields">${Object.entries(PGWardrobe.ACCESSORIES).map(([field,slot])=>`<label>${slot.label}<select data-wardrobe="${field}">${Object.entries(slot.items).map(([id,label])=>option(id,label,a[field])).join('')}</select></label>`).join('')}</div></fieldset>
+ <fieldset class="wardrobe-section"><h3>Accessories</h3><div class="wardrobe-fields">${Object.entries(PGWardrobe.ACCESSORIES).map(([field,slot])=>`<label>${slot.label}<select data-wardrobe="${field}">${Object.entries(slot.items).map(([id,label])=>option(id,label+wardrobeTag(field,id),a[field])).join('')}</select></label>`).join('')}</div></fieldset>
  <small class="wardrobe-note">Preview male or female appearance, then apply your look.</small></div></div>
- <div class="wardrobe-footer"><p id="wardrobeStatus" class="wardrobe-status" role="status" aria-live="polite"></p><div class="wardrobe-actions"><button data-wardrobe-action="apply" id="wardrobeApply" class="wardrobe-apply">Apply look</button><button data-wardrobe-action="cancel">Cancel changes</button><button data-wardrobe-action="retry" id="wardrobeRetry" hidden>Try again</button></div><button data-wardrobe-action="original" class="wardrobe-reset">Reset look</button></div></div>`;
+ <div class="wardrobe-footer"><p id="wardrobeStatus" class="wardrobe-status" role="status" aria-live="polite"></p><div class="wardrobe-actions"><button data-wardrobe-action="apply" id="wardrobeApply" class="wardrobe-apply">Apply look</button><button data-wardrobe-action="cancel">Cancel changes</button><button data-wardrobe-action="retry" id="wardrobeRetry" hidden>Try again</button><button data-wardrobe-action="buy" id="wardrobeBuy" class="wardrobe-buy" hidden>Buy</button></div><button data-wardrobe-action="original" class="wardrobe-reset">Reset look</button></div></div>`;
 }
 V.wardrobe=wardrobePanel;
-function wardrobeStatus(){const el=$('wardrobeStatus');if(el)el.textContent=wardrobeState.loading?'Loading appearance…':wardrobeState.status||'Preview your changes, then apply your look.';const retry=$('wardrobeRetry');if(retry)retry.hidden=!wardrobeState.status.includes('could not load');const button=$('wardrobeApply');if(button)button.disabled=wardrobeState.loading||!wardrobeState.look||(wardrobeState.look.cls!==S.cls||(PGWardrobe.selectionKey(wardrobeState.look.selection)!==PGWardrobe.selectionKey(wardrobeState.draft)||wardrobeState.look.selection.outfit!==wardrobeState.draft.outfit))}
+function wardrobeStatus(){const locked=wardrobeLocked(wardrobeState.draft),lockedItem=locked.length&&typeof shopItem==='function'?shopItem(locked[0]):null;
+ const lockText=!locked.length?'':typeof CLOUD!=='undefined'&&!CLOUD.on?'Cash Shop items need a cloud account. Sign in to buy and wear them.':typeof shopReady==='function'&&!shopReady()?'Checking your Cash Shop purchases…':(lockedItem?lockedItem.name+' is a Cash Shop item ('+shopPrice(lockedItem)+'). ':'')+'Buy it to apply this look, or pick a free style.';
+ const el=$('wardrobeStatus');if(el)el.textContent=wardrobeState.loading?'Loading appearance…':wardrobeState.status||lockText||'Preview your changes, then apply your look.';const retry=$('wardrobeRetry');if(retry)retry.hidden=!wardrobeState.status.includes('could not load');
+ const buy=$('wardrobeBuy');if(buy){const can=!!lockedItem&&typeof CLOUD!=='undefined'&&CLOUD.on&&(typeof shopReady!=='function'||shopReady());buy.hidden=!can;if(can)buy.textContent='Buy '+lockedItem.name+' · '+shopPrice(lockedItem)}
+ const button=$('wardrobeApply');if(button)button.disabled=wardrobeState.loading||!wardrobeState.look||locked.length>0||(wardrobeState.look.cls!==S.cls||(PGWardrobe.selectionKey(wardrobeState.look.selection)!==PGWardrobe.selectionKey(wardrobeState.draft)||wardrobeState.look.selection.outfit!==wardrobeState.draft.outfit))}
 function wardrobeLoad(){const a=PGWardrobe.normalize(wardrobeState.draft);if(!a)return;const owner=S,cls=wardrobeState.cls,activeCls=S.cls,seq=++wardrobeState.seq;wardrobeState.loading=true;wardrobeStatus();
  wardrobeStore.select('preview',a,cls).then(look=>{if(!look||seq!==wardrobeState.seq||S!==owner||S.cls!==activeCls||wardrobeState.cls!==cls||!tabs.includes('wardrobe'))return;wardrobeState.look=look;wardrobeState.loading=false;wardrobeState.paint='';wardrobeState.start=performance.now();wardrobeState.status='';wardrobeStatus();wardrobePreview()}).catch(()=>{if(seq!==wardrobeState.seq||S!==owner||S.cls!==activeCls||wardrobeState.cls!==cls)return;wardrobeState.loading=false;wardrobeState.status='This appearance could not load. Your saved look is unchanged. Try again.';wardrobeStatus()})}
 function wardrobeSync(){wardrobeOwner();if(!tabs.includes('job')){wardrobeStore.release('portrait');wardrobeClassLook=null;wardrobeClassRequest=''}if(!tabs.includes('wardrobe')){if(wardrobeState.draft){wardrobeState.seq++;wardrobeStore.release('preview');wardrobeState.draft=null;wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.canvas=null}return}
@@ -56,8 +66,9 @@ function wardrobeAction(action){const st=wardrobeState;if(!st.draft)return;
  if(action==='retry'){wardrobeRequested='';wardrobeFailure='';wardrobeLoad();return}
  if(action==='cancel'){st.draft=wardrobeAppearance();wardrobeLoad();renderWin();return}
  if(action==='original'){S.appearance=null;wardrobeEquipped=null;wardrobeRequested='';wardrobeFailure='';wardrobeStore.release('hero');heroKey='';st.draft=wardrobeAppearance();st.status='Default hair and costume restored.';wardrobeLoad();save();ui();return}
+ if(action==='buy'){const locked=wardrobeLocked(st.draft);if(locked.length&&typeof shopBuy==='function')shopBuy(locked[0],1);return}
  if(action==='apply'){
-  if(st.loading||!st.look||st.look.cls!==S.cls||(PGWardrobe.selectionKey(st.look.selection)!==PGWardrobe.selectionKey(st.draft)||st.look.selection.outfit!==st.draft.outfit))return;
+  if(st.loading||!st.look||st.look.cls!==S.cls||wardrobeLocked(st.draft).length||(PGWardrobe.selectionKey(st.look.selection)!==PGWardrobe.selectionKey(st.draft)||st.look.selection.outfit!==st.draft.outfit))return;
   S.sex=st.draft.sex;st.sex=S.sex;S.appearance=PGWardrobe.normalize(st.draft);wardrobeRequested='';wardrobeFailure='';heroKey='';st.status='Look applied.';save();ui();
  }
 }

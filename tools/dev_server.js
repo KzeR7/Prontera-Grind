@@ -81,6 +81,13 @@ export const ROUTES = {
   'POST /api/gm/player': ['onRequestPost', 'api/gm/player.js'],
   'GET /api/gm/log': ['onRequestGet', 'api/gm/log.js'],
   'GET /api/gm/usage': ['onRequestGet', 'api/gm/usage.js'],
+  'GET /api/shop/catalog': ['onRequestGet', 'api/shop/catalog.js'],
+  'POST /api/shop/checkout': ['onRequestPost', 'api/shop/checkout.js'],
+  'GET /api/shop/order': ['onRequestGet', 'api/shop/order.js'],
+  'POST /api/shop/webhook': ['onRequestPost', 'api/shop/webhook.js'],
+  'GET /api/shop/webhook': ['onRequestGet', 'api/shop/webhook.js'],
+  'GET /api/gm/shop': ['onRequestGet', 'api/gm/shop.js'],
+  'POST /api/gm/shop': ['onRequestPost', 'api/gm/shop.js'],
 };
 
 const TYPES = {
@@ -95,12 +102,18 @@ const TYPES = {
 // DEV_GM_ALL is only ever set by this tool (see --gm-all below), never by Cloudflare. It makes every
 // account registered against this process an owner, which is what a throwaway preview server wants:
 // the database dies with the process, so "the account I made last time" is always gone.
-export function makeEnv(sqlite, { gmAll = false } = {}) {
-  return gmAll ? { DB: makeD1(sqlite), DEV_GM_ALL: 'all' } : { DB: makeD1(sqlite) };
+// SHOP_FAKE_CHECKOUT (--fake-payments) makes the Cash Shop deliver an order the moment it is placed,
+// with no Stripe account: the same code path a real payment ends in, minus the card. Production
+// never sets it; there the shop is off until STRIPE_SECRET_KEY exists (docs/MONETIZATION-SETUP.md).
+export function makeEnv(sqlite, { gmAll = false, fakePayments = false } = {}) {
+  const env = { DB: makeD1(sqlite) };
+  if (gmAll) env.DEV_GM_ALL = 'all';
+  if (fakePayments) env.SHOP_FAKE_CHECKOUT = '1';
+  return env;
 }
 
-export function createApp({ sqlite, site, gmAll = false }) {
-  const env = makeEnv(sqlite, { gmAll });
+export function createApp({ sqlite, site, gmAll = false, fakePayments = false }) {
+  const env = makeEnv(sqlite, { gmAll, fakePayments });
   const dir = site || path.join(root, 'dist');
   // The Pages asset store, shimmed locally: /api/version reads the served index.html through it,
   // exactly like the real binding does on Cloudflare.
@@ -153,9 +166,9 @@ function serveStatic(url, dir) {
 }
 
 // ------------------------------------------------------------------- boot -----
-export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = false } = {}) {
+export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = false, fakePayments = false } = {}) {
   const sqlite = freshDb(dbFile);
-  const app = createApp({ sqlite, site, gmAll });
+  const app = createApp({ sqlite, site, gmAll, fakePayments });
   const server = createServer(async (req, res) => {
     try {
       // Node's IncomingMessage is close enough to a Request for the handlers: they read method,
@@ -216,7 +229,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   // losing them with the process. Both are for the preview; the default stays the production rule.
   const gmAll = process.argv.includes('--gm-all') || process.env.DEV_GM_ALL === 'all';
   const dbFile = arg('--db') || process.env.DEV_DB || undefined;
-  const { port: got, close } = await start({ port, host, gmAll, dbFile });
+  // --fake-payments: Cash Shop purchases complete instantly without Stripe (preview/rehearsal only).
+  const fakePayments = process.argv.includes('--fake-payments') || process.env.SHOP_FAKE_CHECKOUT === '1';
+  const { port: got, close } = await start({ port, host, gmAll, dbFile, fakePayments });
   console.log('Prontera Grind — local server (Pages Functions + D1 shim, in memory)');
   console.log('  game    http://localhost:' + got + '/');
   console.log('  console http://localhost:' + got + '/gm.html');
@@ -225,5 +240,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   console.log(gmAll
     ? '  gm      EVERY account registered here is an owner (gm=2) - this is a preview server'
     : '  gm      the first account you register becomes the owner (gm=2); --gm-all makes every account one');
+  console.log(fakePayments
+    ? '  shop    FAKE payments: every Cash Shop order is delivered instantly, no card, no Stripe'
+    : '  shop    Cash Shop in preview mode (no payments); add --fake-payments to rehearse purchases');
   for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, async () => { await close(); process.exit(0); });
 }

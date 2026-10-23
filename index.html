@@ -881,7 +881,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="comboFieldStatus" data-combo-status aria-label="Combat combo status"></div>
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
+<link rel="stylesheet" href="assets/shop.css?v=215">
 <script src="assets/wardrobe.js?v=199"></script>
+<script src="assets/shop-catalog.js?v=215"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
@@ -976,6 +978,7 @@ const UI_ICONS={
  quest:'<path d="M8 4H4v18h16V4h-4M8 2h8v5H8ZM8 12l2 2 5-5m-7 9h8"/>',
  set:'<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/>',
  gm:'<path d="m14 5 5-3a7 7 0 0 1-8 10L4 21l-3-3 9-8a7 7 0 0 1 4-8Z"/>',
+ shop:'<path d="M5 8h14l1 13H4L5 8Z"/><path d="M9 11V6a3 3 0 0 1 6 0v5"/>',
  crown:'<path d="m3 6 5 4 4-7 4 7 5-4-2 13H5ZM5 15h14"/>',
  gem:'<path d="m3 8 4-5h10l4 5-9 13ZM3 8h18M7 3l5 18 5-18"/>',
  card:'<rect x="5" y="2" width="14" height="20" rx="2"/><path d="m12 6 4 5-4 5-4-5ZM9 19h6"/>',
@@ -1127,7 +1130,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-22 haven-v214 thor zeny +40%';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-23 haven-v215 cash shop';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3374,6 +3377,7 @@ function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;CLOUD.dirty=true;cloudBa
 
 // Push the current save. Returns 'ok' | 'conflict' | 'offline' | 'idle'; never throws, because a dead
 // network must not interrupt play - it only leaves the local copy leading, and the badge says so.
+let cloudLockWarned=false;   // haven-v215: the cosmetic refusal is explained once, not once a minute
 async function cloudPush(push){
   if(!CLOUD.on||!S||!currentUser||CLOUD.paused)return 'idle';
   // A forced push (the tab is going away, a 428 round trip, the player chose a save) always sends.
@@ -3392,6 +3396,9 @@ async function cloudPush(push){
     if(r.status===409){const c=await r.json();
       if(c.saveMismatch){cloudSaveRefused(c.err);return 'idle'}
       if(c.accountMismatch){cloudAccountMismatch(c.owner);return 'idle'}
+      // haven-v215: the look wears a Cash Shop item this account does not own. Those slots come off
+      // and the save goes straight back up; the character itself is never refused.
+      if(c.cosmeticLocked){if(typeof shopLockedByServer==='function'&&shopLockedByServer(c.locked)){CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'locked'}if(!cloudLockWarned){cloudLockWarned=true;cloudSay((c.err||'This look uses Cash Shop items this account does not own.')+' Reload the page to pick up the latest build, then open the Wardrobe and reset the look.','r0')}CLOUD.dirty=true;return 'locked'}
       cloudBadge('☁ ⚠','Two saves - choose which to keep');cloudConflict(c);return 'conflict'}
     if(r.status===428){const d=await r.json().catch(()=>({}));if(d.offlineClaim){applyOfflineProgress(Date.now(),d.offlineClaim);CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'offline-claim'}throw new Error(d.err||'A server-timed offline claim is required.')}
     if(!r.ok)throw new Error('HTTP '+r.status);
@@ -3581,7 +3588,7 @@ function cloudApplyGrants(list){
       const p=g.payload||{};
       if(!Array.isArray(S.gmReceipts))S.gmReceipts=[];
       if(S.gmReceipts.includes(g.id)){ids.push(g.id);continue}
-      if(g.kind==='gift'){gmApplyGift(p);log('🎁 GM gift received.','r1','cloud')}
+      if(g.kind==='gift'){gmApplyGift(p);log(g.from==='Cash Shop'?'🛒 Cash Shop delivery: '+String(g.note||'your order').replace(/^Cash Shop: /,'')+'.':'🎁 GM gift received.','r1','cloud')}
       else if(g.kind==='equipment'){gmApplyGear(p);log('GM equipment change applied.','r1','cloud')}
       else if(g.kind==='zeny'&&Number.isFinite(p.amount)){S.zeny=Math.max(0,S.zeny+Math.floor(p.amount));log('🎁 GM'+(g.from?' '+g.from:'')+' sent you '+Math.abs(Math.floor(p.amount)).toLocaleString()+' Zeny.','r1','cloud')}
       else if(g.kind==='level'&&Number.isFinite(p.amount)){const n=Math.floor(p.amount);S.lv=Math.max(1,Math.min(150,S.lv+n));S.pts=Math.max(0,totalPts()-ptsSpent());log('🎁 GM sent you '+Math.abs(n)+' base level'+(Math.abs(n)===1?'':'s')+'.','r1','cloud')}
@@ -3600,6 +3607,7 @@ function ptsSpent(){let c=0;for(const k of['str','agi','dex','luk','int','vit'])
 
 function cloudSession(u,gm){
   CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;
+  if(typeof shopSession==='function')shopSession(u);   // haven-v215: what this account owns in the Cash Shop
   cloudBadge('☁ ✓','Signed in as '+u);
   const badge=$('userBadge');if(badge)badge.textContent=(gm?'🛠 ':'👤 ')+u;
   const gbtn=$('gmBtn');if(gbtn)gbtn.style.display=gm?'inline-block':'none';
@@ -3718,6 +3726,7 @@ function cloudLogout(){
   cloudFlushNow();
   cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}).catch(()=>{});
   CLOUD.on=false;CLOUD.user=null;CLOUD.previewToken=null;
+  if(typeof shopReset==='function')shopReset();
 }
 
 // Sync on the way out (hidden tab, closing page) and pull again if a tab was away for a while.
@@ -5687,8 +5696,8 @@ function jobRiteArena(){
 // ---------- UI ----------
 // Index, Black Market and Leaderboard share an independent dropdown below Quests.
 // instead of taking dock slots. The keys X and V still open them. v91: the World Map tab uses a tower icon.
-const SIDE_TABS=['index','market','board','guide','log','wardrobe','set','gm'];
-const TABS={map:['🗼','World Map','M'],wardrobe:['♧','Wardrobe','W'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],equip:['🛡️','Equipment','E'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],guide:['📖','Build & Farming Guide','H'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
+const SIDE_TABS=['index','market','board','guide','log','wardrobe','shop','set','gm'];
+const TABS={map:['🗼','World Map','M'],wardrobe:['♧','Wardrobe','W'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],equip:['🛡️','Equipment','E'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],guide:['📖','Build & Farming Guide','H'],shop:['💎','Cash Shop','T'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const expandedPanels=new Set();
 let collectionGrade=-1;
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
@@ -6428,7 +6437,7 @@ function arrangePanel(k,root){
 }
 
 const DOCK_TABS=['map','status','equip','job','skills','bag','pet'];
-const DOCK_LABEL={wardrobe:'Wardrobe',map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Class Tree',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
+const DOCK_LABEL={wardrobe:'Wardrobe',shop:'Shop',map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Class Tree',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
 function eclipsePositionMore(){
   const menu=$('sideMenu'),button=$('dock').querySelector('.eclipse-more');if(!sideOpen||!button)return;
   const rect=$('dock').getBoundingClientRect(),width=menu.offsetWidth||225;
@@ -10375,6 +10384,7 @@ function updateWatch(){
 setInterval(updateWatch,60000);
 </script>
 <script src="assets/wardrobe-ui.js?v=199"></script>
+<script src="assets/shop.js?v=215"></script>
 <script src="assets/social-rules.js?v=209"></script>
 <script src="assets/social-scene.js?v=209"></script>
 <script src="assets/social.js?v=209"></script>
