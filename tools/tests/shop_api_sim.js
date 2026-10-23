@@ -400,6 +400,39 @@ await T('GM console: list, grant and revoke cosmetics; a revoked item is refused
   assert.deepStrictEqual(kinds, ['shop-fulfilled', 'shop-grant', 'shop-grant', 'shop-revoke']);
 });
 
+// -------------------------------------------------------- before migration ----
+await T('a database without migration 0005 behaves exactly like the build before the shop (safe to deploy first)', async () => {
+  const sqlite = new DatabaseSync(':memory:');
+  for (const name of migrationFiles().filter(n => !n.startsWith('0005'))) sqlite.exec(fs.readFileSync(path.join(root, 'migrations', name), 'utf8'));
+  const env = { DB: makeD1(sqlite), STRIPE_SECRET_KEY: KEY, STRIPE_WEBHOOK_SECRET: WHSEC };
+  const owner = (await api.register(env, { u: 'KzeR', p: 'owner-password-1' })).cookie;
+  const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
+  const cat = await api.catalog(env, c);
+  assert.strictEqual(cat.status, 200); assert.strictEqual(cat.data.installed, false); assert.strictEqual(cat.data.mode, 'off'); assert.deepStrictEqual(cat.data.owned, []);
+  assert.strictEqual((await api.catalog(env)).data.installed, false, 'anonymous callers learn it too');
+  const buy = await api.checkout(env, c, { sku: 'cos:backwear:wings' });
+  assert.strictEqual(buy.status, 503); assert.strictEqual(buy.data.installed, false); assert.strictEqual(buy.data.shopOff, true);
+  assert.strictEqual((await api.order(env, c, 'ord_abcdefghjkmnpqrs')).status, 503);
+  const raw = event('checkout.session.completed', paidSession('ord_x', 499));
+  assert.strictEqual((await api.webhook(env, raw, await signStripePayload(raw, WHSEC))).status, 503, 'Stripe is told to retry, not that it succeeded');
+  // the one that matters: a player wearing paid items keeps syncing, untouched
+  const put = await api.putSave(env, c, saveWith({ version: 1, headwear: 'halo', backwear: 'wings' }));
+  assert.strictEqual(put.status, 200, 'nothing is refused before the tables exist: ' + JSON.stringify(put.data));
+  assert.strictEqual(put.data.cosmeticLocked, undefined);
+  const gm = await api.gmShop(env, owner, 2);
+  assert.strictEqual(gm.status, 503); assert.match(gm.data.err, /0005_shop\.sql/, 'the GM console says which step is missing');
+  assert.strictEqual((await api.gmShopAct(env, owner, { id: 2, action: 'grant', sku: 'cos:backwear:wings' })).status, 503);
+  // ... and the moment the migration runs, the worn items are grandfathered and the lock engages
+  sqlite.exec(fs.readFileSync(path.join(root, 'migrations', migrationFiles().find(n => n.startsWith('0005'))), 'utf8'));
+  const after = await api.catalog(env, c);
+  assert.strictEqual(after.data.installed, true); assert.deepStrictEqual(after.data.owned.sort(), ['cos:backwear:wings', 'cos:headwear:halo']);
+  const me = await api.me(env, c);
+  let r = await call('onRequestPut', 'api/save.js', { request: req('PUT', '/api/save', { cookie: c, body: { owner: me.data.u, version: 1, blob: JSON.stringify({ ...saveWith({ version: 1, headwear: 'halo', backwear: 'wings' }), owner: me.data.u }) } }), env });
+  assert.strictEqual(r.status, 200, 'what they wore is theirs');
+  r = await call('onRequestPut', 'api/save.js', { request: req('PUT', '/api/save', { cookie: c, body: { owner: me.data.u, version: 2, blob: JSON.stringify({ ...saveWith({ version: 1, headwear: 'halo', backwear: 'wings', facewear: 'glasses' }), owner: me.data.u }) } }), env });
+  assert.strictEqual(r.status, 409); assert.deepStrictEqual(r.data.locked, ['cos:facewear:glasses'], 'anything new is not');
+});
+
 // ------------------------------------------------------------- grandfather ----
 await T('migration 0005 grandfathers what cloud saves were already wearing, and only that', async () => {
   const sqlite = new DatabaseSync(':memory:');

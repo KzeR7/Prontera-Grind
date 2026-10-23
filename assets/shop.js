@@ -8,7 +8,7 @@
    Nothing here can unlock anything: PUT /api/save refuses a look wearing an unowned item, and the
    client then takes it off (shopLockedByServer). Paid items are the four accessory slots; hair,
    hair colour and gender stay free. */
-const SHOP={user:null,owned:new Set(),cached:false,loaded:false,loading:false,mode:'off',currency:'usd',catalog:null,error:'',view:'cosmetics',slot:'headwear',pending:null,note:'',noteKind:'',poll:0,lockRetries:0,popupUrl:''};
+const SHOP={user:null,owned:new Set(),cached:false,loaded:false,loading:false,installed:true,mode:'off',currency:'usd',catalog:null,error:'',view:'cosmetics',slot:'headwear',pending:null,note:'',noteKind:'',poll:0,lockRetries:0,popupUrl:''};
 const SHOP_POLL_MS=5000,SHOP_PENDING_MAX_MS=45*60*1000;
 const shopKey=(what,u)=>'pg_shop_'+what+'_'+String(u||'').toLowerCase();
 const shopRead=(k,fallback)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?fallback:v}catch(e){return fallback}};
@@ -39,7 +39,7 @@ async function shopRefresh(){
   const d=await r.json();
   if(SHOP.user!==user)return;                       // signed out (or in as someone else) meanwhile
   if(d.user&&String(d.user).toLowerCase()!==String(user).toLowerCase())return;   // the cookie belongs to another tab's account
-  SHOP.catalog=d;SHOP.mode=d.mode||'off';SHOP.currency=d.currency||'usd';
+  SHOP.catalog=d;SHOP.mode=d.mode||'off';SHOP.currency=d.currency||'usd';SHOP.installed=d.installed!==false;   // false until migrations/0005_shop.sql has run on the server
   SHOP.owned=new Set(Array.isArray(d.owned)?d.owned:[]);SHOP.loaded=true;SHOP.cached=true;SHOP.error='';
   shopWrite(shopKey('owned',user),[...SHOP.owned]);
  }catch(e){if(SHOP.user===user)SHOP.error='The Cash Shop could not be reached ('+e.message+').'}
@@ -48,12 +48,17 @@ async function shopRefresh(){
 function shopRepaint(){if(typeof tabs!=='undefined'&&(tabs.includes('shop')||tabs.includes('wardrobe'))&&typeof renderWin==='function')renderWin()}
 // ------------------------------------------------------------------ the gate ----
 // SKUs a look is wearing that this account may not wear. Without a cloud account nothing paid can be
-// verified, so nothing paid is worn; before the owned list is known the cached copy answers.
+// verified, so nothing paid is worn. With one, the server is the judge: until it has answered (and
+// no earlier answer is cached), or while its tables are not installed, nothing is locked here - the
+// save is trusted as it was before v215, and PUT /api/save has the final say either way.
 function shopLockedIn(appearance){
  const worn=PGShop.wornSkus(PGWardrobe,appearance);if(!worn.length)return [];
  if(!CLOUD.on)return worn;
+ if(!shopReady()||!SHOP.installed)return [];
  return worn.filter(sku=>!shopOwns(sku));
 }
+// True while the first answer is still on its way and the look would depend on it.
+function shopChecking(appearance){return !!(CLOUD.on&&SHOP.loading&&!shopReady()&&PGShop.wornSkus(PGWardrobe,appearance).length)}
 function shopSanitize(a){const locked=shopLockedIn(a);return locked.length?PGShop.strip(PGWardrobe,a,sku=>!locked.includes(sku))||a:a}
 // The server refused the save over these SKUs: take them off for real (S.appearance), say so, retry.
 function shopLockedByServer(locked){
@@ -73,12 +78,13 @@ function shopLockedByServer(locked){
  shopRepaint();return true;
 }
 // Pretty label for a wardrobe <option>: price when locked, a tick when owned, nothing for None.
-function shopOptionTag(field,id){if(id==='none')return '';const sku='cos:'+field+':'+id,item=shopItem(sku);if(!item)return '';return !CLOUD.on||!shopOwns(sku)?' · '+shopPrice(item)+' 🔒':' · owned ✓'}
+function shopOptionTag(field,id){if(id==='none')return '';const sku='cos:'+field+':'+id,item=shopItem(sku);if(!item)return '';if(CLOUD.on&&(!shopReady()||!SHOP.installed))return '';return !CLOUD.on||!shopOwns(sku)?' · '+shopPrice(item)+' 🔒':' · owned ✓'}
 // -------------------------------------------------------------------- buying ----
 function shopSay(msg,kind){SHOP.note=msg||'';SHOP.noteKind=kind||'';shopRepaint()}
 async function shopBuy(sku,qty){
  const item=shopItem(sku);if(!item)return;
  if(!CLOUD.on){shopSay('Sign in with a cloud account to use the Cash Shop.','bad');return}
+ if(!SHOP.installed){shopSay('The Cash Shop is not switched on for this server yet.','bad');return}
  if(item.kind==='cosmetic'&&shopOwns(sku)){shopSay('You already own '+item.name+'. Put it on in the Wardrobe.','');return}
  if(SHOP.pending){shopSay('Finish or cancel the payment that is already open first.','bad');return}
  qty=Math.max(1,Math.min(item.maxQty||1,Math.floor(Number(qty)||1)));
@@ -142,7 +148,9 @@ function shopTryOn(sku){
 function shopPanel(){
  const items=shopItems(),cur=SHOP.currency,slots=PGWardrobe.ACCESSORIES;
  if(!Object.hasOwn(slots,SHOP.slot))SHOP.slot=Object.keys(slots)[0];
+ const canBuy=CLOUD.on&&SHOP.installed&&!SHOP.pending;
  const modeLine=!CLOUD.on?'<p class="shop-notice">Sign in with a cloud account to buy and keep Cash Shop items. Local saves cannot hold them.</p>'
+  :!SHOP.installed?'<p class="shop-notice">The Cash Shop is not switched on for this server yet. Everything you wear stays exactly as it is.</p>'
   :SHOP.mode==='off'&&SHOP.loaded?'<p class="shop-notice">Browsing only for now: payments are not switched on yet.</p>'
   :SHOP.mode==='fake'?'<p class="shop-notice">Test mode: orders are delivered instantly and nothing is charged.</p>':'';
  const pending=SHOP.pending?`<div class="shop-pending"><b>⏳ Waiting for your payment</b><span>${shopEsc(SHOP.pending.name)} · the secure page is open in another tab.</span><span class="shop-pending-actions">${SHOP.popupUrl?`<a class="shop-link" href="${shopEsc(SHOP.popupUrl)}" target="_blank" rel="noopener">Open the payment page</a>`:''}<button data-a="shop" data-v="check">Check now</button><button data-a="shop" data-v="dismiss">Dismiss</button></span></div>`:'';
@@ -154,10 +162,10 @@ function shopPanel(){
   const list=items.filter(i=>i.kind==='cosmetic'&&i.slot===SHOP.slot);
   const ownedCount=items.filter(i=>i.kind==='cosmetic'&&shopOwns(i.sku)).length;
   body=`<div class="atabs shop-slots">${slotTabs}</div><small class="shop-sub">${shopEsc(slots[SHOP.slot].label)} · ${list.length} styles · you own ${ownedCount} cosmetic${ownedCount===1?'':'s'}. Hair, hair colour and gender are always free in the Wardrobe.</small>
-  <div class="shop-grid">${list.map(i=>{const owned=shopOwns(i.sku),locked=!owned;return `<div class="shop-card${owned?' owned':''}" data-sku="${shopEsc(i.sku)}"><div class="shop-card-head"><b>${shopEsc(i.name)}</b><span class="shop-price">${owned?'Owned ✓':PGShop.money(i.price,cur)}</span></div><small>${shopEsc(i.slotLabel)} · permanent unlock for this account</small><div class="shop-card-actions"><button data-a="shop" data-v="try:${shopEsc(i.sku)}">${owned?'Wear':'Try on'}</button>${locked?`<button class="shop-buy" data-a="shop" data-v="buy:${shopEsc(i.sku)}"${!CLOUD.on||SHOP.pending?' disabled':''}>Buy</button>`:''}</div></div>`}).join('')}</div>`;
+  <div class="shop-grid">${list.map(i=>{const owned=shopOwns(i.sku),locked=!owned;return `<div class="shop-card${owned?' owned':''}" data-sku="${shopEsc(i.sku)}"><div class="shop-card-head"><b>${shopEsc(i.name)}</b><span class="shop-price">${owned?'Owned ✓':PGShop.money(i.price,cur)}</span></div><small>${shopEsc(i.slotLabel)} · permanent unlock for this account</small><div class="shop-card-actions"><button data-a="shop" data-v="try:${shopEsc(i.sku)}">${owned?'Wear':'Try on'}</button>${locked?`<button class="shop-buy" data-a="shop" data-v="buy:${shopEsc(i.sku)}"${canBuy?'':' disabled'}>Buy</button>`:''}</div></div>`}).join('')}</div>`;
  }else{
   const groups=[];for(const i of items.filter(i=>i.kind==='supply')){let g=groups.find(x=>x.name===i.group);if(!g){g={name:i.group,items:[]};groups.push(g)}g.items.push(i)}
-  body=`<small class="shop-sub">Supplies are delivered to your character the moment the payment is confirmed - the same way GM gifts arrive.</small>`+groups.map(g=>`<div class="shop-group"><div class="hd">${shopEsc(g.name)}</div><div class="shop-grid">${g.items.map(i=>`<div class="shop-card" data-sku="${shopEsc(i.sku)}"><div class="shop-card-head"><b>${shopEsc(i.name)}</b><span class="shop-price">${PGShop.money(i.price,cur)}</span></div><small>${shopEsc(i.blurb||'')}</small><div class="shop-card-actions"><label class="shop-qty">Qty <select data-shop-qty="${shopEsc(i.sku)}">${Array.from({length:i.maxQty||1},(_,n)=>`<option value="${n+1}">${n+1}</option>`).join('')}</select></label><button class="shop-buy" data-a="shop" data-v="buy:${shopEsc(i.sku)}"${!CLOUD.on||SHOP.pending?' disabled':''}>Buy</button></div></div>`).join('')}</div></div>`).join('');
+  body=`<small class="shop-sub">Supplies are delivered to your character the moment the payment is confirmed - the same way GM gifts arrive.</small>`+groups.map(g=>`<div class="shop-group"><div class="hd">${shopEsc(g.name)}</div><div class="shop-grid">${g.items.map(i=>`<div class="shop-card" data-sku="${shopEsc(i.sku)}"><div class="shop-card-head"><b>${shopEsc(i.name)}</b><span class="shop-price">${PGShop.money(i.price,cur)}</span></div><small>${shopEsc(i.blurb||'')}</small><div class="shop-card-actions"><label class="shop-qty">Qty <select data-shop-qty="${shopEsc(i.sku)}">${Array.from({length:i.maxQty||1},(_,n)=>`<option value="${n+1}">${n+1}</option>`).join('')}</select></label><button class="shop-buy" data-a="shop" data-v="buy:${shopEsc(i.sku)}"${canBuy?'':' disabled'}>Buy</button></div></div>`).join('')}</div></div>`).join('');
  }
  return `<div class="shop"><div class="shop-intro"><div class="hd">Cash Shop</div><small>Support the game and dress your character. Prices in USD; payments are handled by Stripe on a secure page, and your card details never reach Prontera Grind. Cosmetics unlock forever on this account; supplies are delivered to your character.</small></div>
  ${modeLine}${pending}${note}

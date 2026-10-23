@@ -11,9 +11,14 @@ Python 3 for the preview/check scripts. The game itself does not need an npm ins
 DOM integration suites require optional local packages:
 
 ```sh
-npm install --no-save --package-lock=false jsdom three@0.128.0
-node -e "require('jsdom'); require('three'); require('node:sqlite'); console.log('test dependencies ready')"
+npm install --no-save --package-lock=false jsdom three@0.128.0 ws
+node -e "require('jsdom'); require('three'); require('ws'); require('node:sqlite'); console.log('test dependencies ready')"
 ```
+
+Install all three in the one command: with no `package.json` in the repository,
+`npm install --no-save <one package>` removes whatever was installed before it.
+`ws` is needed by anything that loads `tools/dev_server.js` (`dev_server_sim.js`,
+`social_api_sim.mjs`).
 
 Sprite tooling needs a Python virtual environment with Pillow; the legacy pack
 pipeline also needs numpy and scipy. Install only the dependencies of the selected
@@ -565,3 +570,30 @@ Supplemental icon generation and exact-pixel checks are documented in
 compares all 32 APNG timelines to pinned native renderer exports; see
 [social assets](../tools/social/README.md). The original 12 emotion files and all
 standing/sitting sprite packs remain byte-identical.
+
+
+## Cash Shop (v215)
+
+Two suites own the shop, and both run in the normal `*_sim.js` loop:
+
+* `shop_api_sim.js` — the Pages Functions against an in-memory D1 shim
+  (`node:sqlite`) with the real migrations applied: catalog modes, checkout with a
+  fake Stripe (form-encoded body, idempotency key, price from the server's list),
+  signed and replayed webhooks, amount mismatch, refunds, the `PUT /api/save`
+  409 `cosmeticLocked` refusal, the GM grant/revoke routes, the grandfather clause
+  in `0005_shop.sql`, and the **not-installed** case — a database with
+  `0001`–`0004` only, where everything must behave like the build before the
+  shop (saves accepted, catalog `installed:false`, checkout/order/webhook/GM
+  shop 503) until 0005 is applied mid-test.
+* `shop_sim.js` — the page in jsdom: the Cash Shop panel, the Wardrobe lock and
+  price tags, `wardrobeAppearance()` stripping unowned items, Buy → new tab →
+  poll → delivered, the 409 self-heal, the per-account owned cache, the
+  `installed:false` / unreachable-catalog cases (nothing locked or stripped),
+  and the return banner.
+
+`dev_server_sim.js` covers the same routes over HTTP, including
+`--fake-payments`. To rehearse by hand: `node tools/dev_server.js --gm-all
+--fake-payments`, register, Wardrobe (W) → pick a paid item, Cash Shop (T) → Buy,
+then `gm.html` → player → Cash Shop → Revoke. A real Stripe round trip needs the
+owner's account and is not covered by any suite; `docs/MONETIZATION-SETUP.md` §7
+is the manual check.

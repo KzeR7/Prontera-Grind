@@ -131,9 +131,32 @@ const settle=async(n=6)=>{for(let i=0;i<n;i++)await tick()};
  assert.equal(ev("shopLockedByServer(['cos:backwear:wings'])"),true);assert.equal(ev('S.appearance.backwear'),'none');
  assert.equal(ev("shopLockedByServer(['cos:backwear:wings'])"),false,'nothing left to strip: no retry loop');
 
- // ---- 7. sign out clears the mirror; back from Stripe shows a line on the login card -------------------
+ // ---- 7. server says the shop is not installed (migration pending): the game is exactly v214 --------------
+ ev(`shopReset();S.appearance={...PGWardrobe.defaults('f'),headwear:'halo',backwear:'wings'};window.__installed=false;
+  const prev=cloudFetch;cloudFetch=async(p,o)=>{if(p==='/shop/catalog')return {ok:true,status:200,json:async()=>({currency:'usd',mode:'off',installed:__installed,slots:Object.keys(PGWardrobe.ACCESSORIES),items:PGShop.catalog(PGWardrobe).items,owned:[],user:'skill-test'})};return prev(p,o)};
+  localStorage.removeItem('pg_shop_owned_skill-test');shopSession('skill-test')`);await settle();
+ assert.equal(ev('SHOP.installed'),false);assert.equal(ev('SHOP.loaded'),true);
+ assert.deepEqual(Array.from(ev("[wardrobeAppearance().headwear,wardrobeAppearance().backwear]")),['halo','wings'],'nothing is stripped before the tables exist');
+ assert.equal(ev("shopLockedIn(S.appearance).length"),0);
+ ev(`tabs.length=0;tabs.push('wardrobe');renderWin();wardrobeLoad();`);await settle();
+ assert.equal(ev("wardrobeState.draft.backwear"),'wings');
+ ev(`wardrobeChange('facewear','glasses')`);await settle();
+ assert.equal(ev("$('wardrobeApply').disabled"),false,'the wardrobe is not locked either');assert.equal(ev("$('wardrobeBuy').hidden"),true);
+ assert.equal([...g.window.document.querySelector('[data-wardrobe="backwear"]').options].find(o=>o.value==='wings').textContent,'Archangel wings','no price tags while nothing is for sale');
+ ev(`tabs.length=0;tabs.push('shop');SHOP.view='cosmetics';renderWin()`);h=ev("$('wins').innerHTML");
+ assert.ok(h.includes('not switched on for this server yet'),'the panel says so');assert.ok(!/data-v="buy:[^"]+">/.test(h)&&/data-v="buy:[^"]+" disabled/.test(h),'every Buy is disabled');
+ const tabsBefore=ev('__tabs.length');ev(`shopBuy('cos:headwear:halo')`);await settle();assert.match(ev('SHOP.note'),/not switched on/);assert.equal(ev('__tabs.length'),tabsBefore,'no tab is opened');
+ // the catalog could not be fetched at all and nothing is cached: the save is trusted, the server decides
+ ev(`shopReset();cloudFetch=async()=>{throw new Error('offline')};localStorage.removeItem('pg_shop_owned_skill-test');shopSession('skill-test')`);await settle();
+ assert.equal(ev('SHOP.loaded'),false);assert.equal(ev('SHOP.cached'),false);assert.match(ev('SHOP.error'),/could not be reached/);
+ assert.equal(ev("shopLockedIn(S.appearance).length"),0);assert.equal(ev('wardrobeAppearance().backwear'),'wings');
+ // once the migration has run, the same answer with installed:true engages the lock (owned is empty here: nothing grandfathered)
+ ev(`shopReset();window.__installed=true;cloudFetch=async(p,o)=>{if(p==='/shop/catalog')return {ok:true,status:200,json:async()=>({currency:'usd',mode:'off',installed:true,slots:Object.keys(PGWardrobe.ACCESSORIES),items:PGShop.catalog(PGWardrobe).items,owned:['cos:backwear:wings'],user:'skill-test'})};throw new Error('nope')};shopSession('skill-test')`);await settle();
+ assert.equal(ev('SHOP.installed'),true);assert.deepEqual(Array.from(ev("[wardrobeAppearance().headwear,wardrobeAppearance().backwear]")),['none','wings'],'grandfathered wings stay, the halo they never owned comes off');
+
+ // ---- 8. sign out clears the mirror; back from Stripe shows a line on the login card -------------------
  ev(`shopReset()`);assert.equal(ev('SHOP.owned.size'),0);assert.equal(ev('SHOP.user'),null);
- assert.equal(ev("JSON.parse(localStorage.getItem('pg_shop_owned_skill-test')).length"),0,'the per-account cache stays on disk for the next sign-in');
+ assert.deepEqual(Array.from(ev("JSON.parse(localStorage.getItem('pg_shop_owned_skill-test'))")),['cos:backwear:wings'],'the per-account cache stays on disk for the next sign-in');
  ev(`history.replaceState(null,'','/?shop=success&order=ord_1');shopReturnBanner()`);
  assert.match(ev("$('shopReturn').textContent"),/Payment received[^]*ord_1/);assert.equal(ev('location.search'),'','the address is cleaned');
  ev(`$('shopReturn').remove();history.replaceState(null,'','/?shop=cancel&order=%3Cb%3Ex');shopReturnBanner()`);

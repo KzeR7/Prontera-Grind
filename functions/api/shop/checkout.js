@@ -8,7 +8,7 @@
 import { currentUser } from '../../_lib/auth.js';
 import { json, guard, readJson, fail } from '../../_lib/http.js';
 import * as db from '../../_lib/db.js';
-import { findSku, newOrderId, orderShape, fulfillOrder, createCheckoutSession, returnUrls, paymentsLive, fakeCheckout, ownedSkus, CATALOG } from '../../_lib/shop.js';
+import { findSku, newOrderId, orderShape, fulfillOrder, createCheckoutSession, returnUrls, paymentsLive, fakeCheckout, ownedSkus, shopInstalled, NOT_INSTALLED, CATALOG } from '../../_lib/shop.js';
 import PGShop from '../../../assets/shop-catalog.js';
 
 export const onRequestPost = guard(async ({ request, env }) => {
@@ -16,6 +16,7 @@ export const onRequestPost = guard(async ({ request, env }) => {
   const user = await currentUser(request, D);
   if (!user) return fail('Not logged in.', 401);
   if (user.banned) return fail('This account is suspended.', 403);
+  if (!(await shopInstalled(D))) return fail(NOT_INSTALLED, 503, { shopOff: true, installed: false });
   const live = paymentsLive(env), fake = !live && fakeCheckout(env);
   if (!live && !fake) return fail('The Cash Shop is not taking payments yet.', 503, { shopOff: true });
 

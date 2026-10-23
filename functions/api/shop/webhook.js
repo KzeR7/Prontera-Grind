@@ -3,12 +3,13 @@
 // retry is a no-op. Only Checkout Session events matter to delivery; refunds are logged for the GM.
 
 import { json, guard, fail } from '../../_lib/http.js';
-import { verifyStripeSignature, settleSession, markOrder, orderById } from '../../_lib/shop.js';
+import { verifyStripeSignature, settleSession, markOrder, shopInstalled, NOT_INSTALLED } from '../../_lib/shop.js';
 
 export const onRequestPost = guard(async ({ request, env }) => {
   const D = env.DB;
   const whsec = env.STRIPE_WEBHOOK_SECRET;
   if (!whsec) return fail('Webhook not configured.', 503);
+  if (!(await shopInstalled(D))) return fail(NOT_INSTALLED, 503);   // Stripe retries later; nothing is lost
   const raw = await request.text();
   if (raw.length > 256_000) return fail('Too large.', 413);
   if (!(await verifyStripeSignature(raw, request.headers.get('Stripe-Signature'), whsec))) return fail('Bad signature.', 400);

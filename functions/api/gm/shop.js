@@ -8,9 +8,10 @@
 import { currentUser, isGm } from '../../_lib/auth.js';
 import { json, guard, readJson, fail } from '../../_lib/http.js';
 import * as db from '../../_lib/db.js';
-import { CATALOG, findSku, orderShape } from '../../_lib/shop.js';
+import { CATALOG, findSku, orderShape, shopInstalled } from '../../_lib/shop.js';
 
 const userIdFrom = v => { const id = Number(v); return Number.isInteger(id) && id > 0 ? id : null; };
+const NOT_INSTALLED_GM = 'The Cash Shop tables are not installed on this database yet - apply migrations/0005_shop.sql (docs/MONETIZATION-SETUP.md §3).';
 
 export const onRequestGet = guard(async ({ request, env }) => {
   const D = env.DB;
@@ -18,6 +19,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
   if (!isGm(user)) return fail('GM only.', 403);
   const id = userIdFrom(new URL(request.url).searchParams.get('id'));
   if (!id) return fail('Which player?', 400);
+  if (!(await shopInstalled(D))) return fail(NOT_INSTALLED_GM, 503, { installed: false });
   const ent = await D.prepare('SELECT sku, source, order_id, granted_at FROM entitlements WHERE user_id = ? ORDER BY granted_at DESC').bind(id).all();
   const orders = await D.prepare('SELECT * FROM shop_orders WHERE user_id = ? ORDER BY created_at DESC LIMIT 100').bind(id).all();
   return json({
@@ -33,6 +35,7 @@ export const onRequestPost = guard(async ({ request, env }) => {
   const user = await currentUser(request, D);
   if (!isGm(user)) return fail('GM only.', 403);
   const body = await readJson(request, 4096);
+  if (!(await shopInstalled(D))) return fail(NOT_INSTALLED_GM, 503, { installed: false });
   const id = userIdFrom(body.id);
   const target = id ? await db.userById(D, id) : null;
   if (!target) return fail('No such player.', 404);

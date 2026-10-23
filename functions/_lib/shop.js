@@ -24,16 +24,30 @@ export const fakeCheckout = env => !!env && String(env.SHOP_FAKE_CHECKOUT || '')
 export const shopMode = env => paymentsLive(env) ? 'stripe' : fakeCheckout(env) ? 'fake' : 'off';
 
 // ------------------------------------------------------------ ownership ----
+// The shop's tables arrive with migrations/0005_shop.sql, which the owner applies by hand (Pages
+// never runs SQL). Until that has happened this build must behave exactly like the one before it:
+// nothing is refused, nothing is for sale. `ownedSkus` answers null in that state and every caller
+// treats null as "not installed", so deploying v215 before or after the migration is equally safe —
+// the lock, and the grandfather snapshot, both start the moment the migration runs.
+const missingTable = e => /no such table/i.test(String(e && e.message || e));
 export async function ownedSkus(D, userId) {
-  const rows = await D.prepare('SELECT sku FROM entitlements WHERE user_id = ?').bind(userId).all();
-  return new Set((rows.results || []).map(r => r.sku));
+  try {
+    const rows = await D.prepare('SELECT sku FROM entitlements WHERE user_id = ?').bind(userId).all();
+    return new Set((rows.results || []).map(r => r.sku));
+  } catch (e) {
+    if (missingTable(e)) return null;
+    throw e;
+  }
 }
+export const shopInstalled = async D => (await ownedSkus(D, 0)) !== null;
+export const NOT_INSTALLED = 'The Cash Shop is not set up on this server yet.';
 
 // Paid items a look is wearing that this account does not own. Empty = the save may be stored.
 export async function lockedCosmetics(D, userId, save) {
   const worn = wornSkus(save && save.appearance);
   if (!worn.length) return [];
   const owned = await ownedSkus(D, userId);
+  if (owned === null) return [];        // tables not installed yet: the save is accepted as before v215
   return worn.filter(sku => !owned.has(sku));
 }
 

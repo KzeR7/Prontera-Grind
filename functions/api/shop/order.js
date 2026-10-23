@@ -6,12 +6,13 @@
 
 import { currentUser } from '../../_lib/auth.js';
 import { json, guard, fail } from '../../_lib/http.js';
-import { orderById, orderShape, settleSession, stripeRequest, paymentsLive, markOrder } from '../../_lib/shop.js';
+import { orderById, orderShape, settleSession, stripeRequest, paymentsLive, markOrder, shopInstalled, NOT_INSTALLED } from '../../_lib/shop.js';
 
 export const onRequestGet = guard(async ({ request, env }) => {
   const D = env.DB;
   const user = await currentUser(request, D);
   if (!user) return fail('Not logged in.', 401);
+  if (!(await shopInstalled(D))) return fail(NOT_INSTALLED, 503, { installed: false });
   const id = String(new URL(request.url).searchParams.get('id') || '');
   if (!/^ord_[a-z0-9]{16,32}$/.test(id)) return fail('Unknown order.', 404);
   let order = await orderById(D, id);

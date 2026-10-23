@@ -12,6 +12,36 @@ purchase land on a real cloud account without a single real charge.
 > pointing at `https://<your site>/api/shop/webhook` → `STRIPE_WEBHOOK_SECRET` secret → redeploy →
 > buy something with card `4242 4242 4242 4242` → switch both secrets to the live keys.
 
+## 0. Where things stand (parked)
+
+The v215 code is merged and can be deployed **now, with nothing else done**. It was built to be
+safe in that state:
+
+| State of the server | What players see |
+|---|---|
+| v215 deployed, `0005_shop.sql` **not** run yet | **Exactly the previous build.** Nothing is locked, no prices shown, every save is accepted as before. The 💎 Cash Shop tab exists but says *"not switched on for this server yet"* with every Buy greyed out. The GM Cash Shop tab says which step is missing. |
+| `0005_shop.sql` run, no Stripe secrets | Lock on. Whatever each cloud account was **wearing when the migration ran** is theirs for free (the grandfather clause); anything new in the four paid slots shows its price and cannot be applied. Shop is browse-only (*"payments are not switched on yet"*). |
+| Both secrets set (test keys) | Real Checkout with Stripe's fake cards. No real money. |
+| Both secrets set (live keys) | Open for business. |
+
+So the order of the deploy and the migration **does not matter** for safety. What *does* matter: the
+migration is the moment the lock and the grandfather snapshot start, so run it when you are ready for
+players to be told that new accessories cost money — not before.
+
+**Activation checklist, when the Stripe account exists** (each line is a section below):
+
+- [ ] §2 — optional: rehearse locally with `--fake-payments` (no Stripe needed).
+- [ ] §3 — run `migrations/0005_shop.sql` on `pg` (lock + grandfather). Check `entitlements` filled.
+- [ ] §4 — Stripe account; copy the **test** secret key (`sk_test_…`).
+- [ ] §5 — Pages project → Settings → Variables and Secrets → `STRIPE_SECRET_KEY` (Production). Redeploy.
+- [ ] §6 — Stripe webhook → `https://<your site>/api/shop/webhook`, event `checkout.session.completed` (+ the refund/expiry ones listed there); copy its signing secret into `STRIPE_WEBHOOK_SECRET`. Redeploy.
+- [ ] §7 — buy one cosmetic and one supply bundle with `4242 4242 4242 4242` on a test account; check the GM Cash Shop tab and the player's log line.
+- [ ] §8 — swap both secrets for the **live** keys and a live webhook; redeploy; one real purchase of the cheapest item, then refund it in Stripe.
+- [ ] §9 — adjust prices in `assets/shop-catalog.js` if you want to, bump `BUILD`, deploy.
+
+Nothing in this document needs to be done to merge or deploy v215. Nothing here is ever a secret in
+the repository: the two keys live only in the Pages project's secrets.
+
 ---
 
 ## 1. What you are turning on
@@ -91,10 +121,12 @@ npx wrangler d1 execute pg --remote --file=migrations/0005_shop.sql
 
 **This is also the grandfather step.** Any cloud account that is *wearing* a paid accessory at the
 moment you run it gets that item as a free `legacy` unlock — the decision you made so nobody loses
-what they already had on. Run it **before** deploying the new build; a save pushed by the new build
-is refused if it wears something the account does not own, and the migration is what makes those
-accounts own it. It reads the current `saves` table, so run it after the last deploy of the old build
-has had a few minutes for players to sync.
+what they already had on. Until it has run, the v215 build behaves like the build before it (no
+lock, no prices, every save accepted — see §0), so it is safe to deploy first and migrate later, or
+the other way round. The moment the tables exist the lock is on, and the migration is what makes
+those accounts own what they wear — the two happen in the same statement, so there is no window in
+which a player is refused for an item they had on. It reads the current `saves` table, so pick a
+moment when players have had a few minutes to sync.
 
 Two limits of the clause, so you are not surprised: it covers what is **equipped** in the cloud save
 (not items a player tried on and took off), and it covers **cloud accounts only** — a player who only

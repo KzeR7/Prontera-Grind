@@ -20,9 +20,12 @@ npx wrangler d1 execute pg --remote --file=migrations/0004_gm_gift_batches.sql
 npx wrangler d1 execute pg --remote --file=migrations/0005_shop.sql
 ```
 
-**haven-v215 (Cash Shop):** `0005_shop.sql` must run **before** the v215 build is deployed — it is
-also the one-off grandfather step that keeps every cloud account's currently worn accessories
-unlocked. Turning payments on is a separate, later job: `docs/MONETIZATION-SETUP.md`.
+**haven-v215 (Cash Shop):** `0005_shop.sql` can run before **or** after the v215 build is deployed —
+until it has run, v215 behaves exactly like the previous build (no lock, no prices, every save
+accepted; the Cash Shop tab says it is not switched on yet). Running it is the moment the lock
+starts **and** the one-off grandfather step that keeps every cloud account's currently worn
+accessories unlocked, so do it when you are ready for that. Turning payments on is a separate,
+later job: `docs/MONETIZATION-SETUP.md` (§0 has the checklist).
 
 Both migrations are additive and safe to rerun. Migration 0002 backfills all-time totals without
 pretending old kills happened today or this week; 0003 adds only the persistent, one-pending-claim
