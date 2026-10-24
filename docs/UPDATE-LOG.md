@@ -7267,3 +7267,53 @@ The owner's second pass over v77, six notes, all built.
   which this checkout does not contain (`git show d164bd0:index.html` fails); no Chromium is
   available here, so the live browser/WebGL look of the new sizes is unverified by screenshot.
 * **Delivery:** local changes on `arena/063469a7-prontera-grind`; no merge or deployment.
+
+### 2026-10-24 — `haven-v223 bigger ascension monsters, no drawn-to-screen mobs`
+
+* **Changed (player-visible), Astral Citadel and Thor Volcano only:** v222 put every ordinary monster at
+  the character's own height (2.16 units) and that read **small** beside the smallest class sprite, so
+  the field moves up a quarter. Ordinary monsters now stand **2.70 units (1.25x the hero)** and both
+  MVPs **4.60 units (1.7x the field, 2.1x the hero)**; the two species the owner had confirmed (Agony
+  Demon, Magma Slag) ride the same lift so they keep their place in the line-up - **1.10 → 1.375** and
+  **.86 → 1.075**. Nothing else about them changes: same art, same frames, same anchors.
+* **Fixed: the "distortion" the owner photographed.** The Ascension draw path is a DOM `<img>` sized
+  from the projection of a 3.05-unit body, then multiplied by `512 / art-height` because a 512px export
+  is mostly empty frame around a small sprite (Fire Imp's art is 89px of that 512). That multiplier has
+  no ceiling: zoom in (`zoom` reaches 2) or let a monster come up to the lens and the art itself asks
+  for several hundred screen pixels, which at 5.75x becomes a rectangle well over a thousand - and, on
+  `image-rendering: pixelated`, several screens - which is exactly what the two screenshots show: flat
+  bands in **the monster's own palette** (the sampled `#ed6447`, `#be4330`, `#8f2218` and `#610000`
+  occur only in `assets/mobs/v1/1705-*`, `1837-*` and `1366-*`), the hero nowhere, and the name tags,
+  damage numbers and HUD still readable on top because they are separate layers. `nativeMobArtPx` now
+  bounds the drawn art to **320px or a third of the field, whichever is smaller**, and hides the frame
+  outright when the projection is not finite instead of writing `NaNpx` into the style. The same guard
+  covers the non-native DOM path (`Math.max(14, Math.min(240, ...))` and the `floor`/`mid` writes).
+  This is **not** the critical-damage bug the owner remembered: that one (`grind-v83.2`) was the
+  `.fbubble` radial gradient painting its corners, fixed with `border-radius:50%` and `.fflash`; the
+  crit frame today is absolutely-positioned, `pointer-events:none`, transform/opacity only.
+* **Hardened:** `mobVisualScale` (which every field height reads - bodies, name tags, damage heights,
+  crit floats, skill-FX scaling) is now `boundMobScale`-guarded: non-finite input becomes `.05`, and
+  anything above `MOB_VISUAL_MAX` (6) is clamped. A broken species row or a monster mid-spawn can no
+  longer ask for a screen-sized body anywhere in the renderer.
+* **Try it:** Maps → Ascension Map → Astral Citadel / Thor Volcano, then zoom in on a pack (scroll or
+  pinch) - monsters stay monsters. The to-scale sheet is
+  `docs/updates/ascension-monster-sizes/before-after-v223.png` (both fields, v222 row and v223 row,
+  one 2.16-unit Novice for both).
+* **Files touched:** `index.html` (`BUILD` haven-v223; `ASCENSION_MONSTER_VISUAL`, `ASCENSION_BOSS_VISUAL`,
+  `ASCENSION_KEPT_VISUAL`, `MOB_VISUAL_MAX`, `boundMobScale`; `NATIVE_MOB_MAX_PX`,
+  `NATIVE_MOB_MAX_SHARE`, `nativeMobArtPx`, and both DOM draw paths in `syncMobImage`),
+  `tools/tests/sprite_sim.js` (new heights, the 1.25x/1.7x relationships, `boundMobScale` fuzzing and
+  five `nativeMobArtPx` cases including the NaN guard), `tools/tests/ascension_attack_sim.js` (reads
+  the field height instead of the character height), `tools/tests/shop_sim.js` (build assertion),
+  `docs/GAME-DESIGN.md`, `docs/CODE-MAP.md`, the three build-tag mirrors, the new sheet, and this log.
+* **Checks:** `sprite_sim` **15/15** (it re-decodes every shipped idle PNG and cross-checks the
+  height table), `ascension_attack_sim` **24/24** on the live `spawn()` of all five stages of both
+  fields plus six classes, `shop_sim`, `eclipse_ui_sim` (50), `ui_sim` (64), `combat_float_sim` (19), `panel_layout_smoke` (42),
+  `publish_sim` (16), `field_loop_smoke` (9), `gear_sim` (43), `loadout_update_sim`,
+  `offline_sim`, `pet_game_sim`, `stat_sim`, `ascension_scene_sim`, `ascension_progression_sim`
+  and `astral_scenery_sim`; inline game JavaScript passes
+  `node --check`, `git diff --check` is clean. **Not run:** `skill_balance_sim` /
+  `card_star_balance_sim` (they need the historical baseline commit `d164bd0`, absent from this
+  checkout), and no Chromium is available here, so the on-screen look of the new sizes is verified by
+  geometry and by the to-scale sheet, not by a live screenshot.
+* **Delivery:** local changes on `arena/063469a7-prontera-grind`; no merge or deployment.

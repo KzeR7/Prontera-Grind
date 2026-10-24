@@ -1183,7 +1183,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-24 haven-v222 ascension monster sizes';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-24 haven-v223 bigger ascension monsters, no drawn-to-screen mobs';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1529,16 +1529,27 @@ if(referenceMobStore)referenceMobStore.init().catch(()=>{});
 // Ascension fields stands about as tall as the character and both MVPs clearly taller.
 // The renderer draws 3.05*scale world units across a sheet's tallest frame, so the visible art is
 // 3.05*scale*(idle art / tallest frame) - each species carries both measured from its shipped PNG.
+// v223: standing *at* the character's 2.16 read small next to the smallest class sprite, so the
+// field moves up a quarter - monsters 2.70 (1.25x the hero), MVPs 4.60 (1.7x the field, 2.1x the
+// hero). Agony Demon and Magma Slag were pinned at v222 because their old height looked right, and
+// they ride the same 1.25x so they keep their place in the line-up (1.10 -> 1.375, .86 -> 1.075).
 const ASCENSION_FRAME_PX={1700:[127,179],1702:[124,154],1705:[170,180],1706:[139,148],1707:[48,58],1708:[122,188],1831:[119,156],1832:[162,184],1833:[154,205],1836:[50,77],1837:[81,89],1366:[153,177]};
 const HERO_VISUAL_HEIGHT=2.16;                    // SKIN_H: the character's own figure height
-const ASCENSION_BOSS_VISUAL=3.46;                 // 1.6x the hero - an MVP still dwarfs the field
-const ASCENSION_KEPT_VISUAL={1707:1.10,1836:.86}; // owner: these two already looked right
+const ASCENSION_MONSTER_VISUAL=2.70;              // 1.25x the hero - a field monster now reads bigger
+const ASCENSION_BOSS_VISUAL=4.60;                 // 1.7x the field monsters, 2.1x the hero
+const ASCENSION_KEPT_VISUAL={1707:1.375,1836:1.075}; // the two approved species, same 1.25x lift
+// Nothing drawn through this function may ever leave the world scale it is sized for: a bad species
+// row, a missing frame measurement or a monster mid-spawn must not turn one billboard into a screen
+// full of flat art. Everything the field draws (bodies, name tags, damage heights, skill FX) reads
+// this one number, so the ceiling lives here.
+const MOB_VISUAL_MAX=6;
+const boundMobScale=v=>Number.isFinite(v)?Math.min(MOB_VISUAL_MAX,Math.max(.05,v)):.05;
 const mobVisualScale=m=>{
   // Ascension fields only: the same native sheet also dresses ordinary maps (Lava Slime, Chaos Imp,
   // Amatsu's Shiranui), and those keep the size class they have always used.
   const frame=m.mapIndex>=10?ASCENSION_FRAME_PX[m.spriteId]:null;
-  if(frame)return Math.max(.05,(m.boss?ASCENSION_BOSS_VISUAL:ASCENSION_KEPT_VISUAL[m.spriteId]||HERO_VISUAL_HEIGHT)/(3.05*frame[0]/frame[1])*(m.spawn||0));
-  return Math.max(.05,(((!ASCENSION_MOB_IDS.has(m.spriteId)&&referenceMobStore?.height(m.spriteId))/3.05)||((m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)))*(m.spawn||0));};
+  if(frame)return boundMobScale((m.boss?ASCENSION_BOSS_VISUAL:ASCENSION_KEPT_VISUAL[m.spriteId]||ASCENSION_MONSTER_VISUAL)/(3.05*frame[0]/frame[1])*(m.spawn||0));
+  return boundMobScale((((!ASCENSION_MOB_IDS.has(m.spriteId)&&referenceMobStore?.height(m.spriteId))/3.05)||((m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)))*(m.spawn||0));};
 const ASCENSION_MOB_IDS=new Set([1702,1705,1700,1706,1707,1708,1836,1837,1833,1831,1366,1832,1634,1635,1636,1637,1638,1639]);
 const mobSpriteUrl=id=>ASCENSION_MOB_IDS.has(+id)?`assets/mobs/v1/${+id}-0.png`:Number.isInteger(+id)&&+id>0?`https://static.divine-pride.net/images/mobs/png/${+id}.png`:'';
 // ---------- equipment database ----------
@@ -9255,15 +9266,36 @@ function mobMotion(m,clock){
   o.lunge=out*(m.boss?.62:.45)-hitS*.2+own*.45;
   o.dir=Math.atan2(pl.z-m.z,pl.x-m.x);
   return o}
+// v223: how large one native body may be drawn, whatever the camera does. The Ascension path draws
+// a 512px sheet whose art sits in a small part of the frame, so the element is scaled up by
+// 512/art-height and can end up several screens tall while the art inside is still "legal". These
+// two numbers are the ceiling: a third of the field, never more than 320px of art. They also bound
+// the DOM layer (#mobSpriteLayer) that paints above the WebGL canvas.
+const NATIVE_MOB_MAX_PX=320,NATIVE_MOB_MAX_SHARE=.34;
+function nativeMobArtPx(base,top){
+  const px=Math.abs(base[1]-top[1]);
+  if(!Number.isFinite(px)||!Number.isFinite(base[0])||!Number.isFinite(base[1]))return 0;
+  const cap=Math.min(NATIVE_MOB_MAX_PX,Math.max(120,(R.domElement.clientHeight||600)*NATIVE_MOB_MAX_SHARE));
+  return Math.max(1,Math.min(cap,px));
+}
 function syncMobImage(v,m,s){
-  if(!m.pet&&!ASCENSION_MOB_IDS.has(m.spriteId)&&referenceMobStore&&referenceMobStore.draw(THREE,v,m,viewDir(Math.atan2(pl.z-m.z,pl.x-m.x)),skinNow())){if(v.image)v.image.style.display='none';return}
-  if(v.nativeMob){
+  if(!m.pet&&!ASCENSION_MOB_IDS.has(m.spriteId)&&referenceMobStore&&referenceMobStore.draw(THREE,v,m,viewDir(Math.atan2(pl.z-m.z,pl.x-m.x)),skinNow())){if(v.image)v.image.style.display='none';return}  if(v.nativeMob){
     v.spr.visible=false;const im=v.image;if(!im)return;
     const direction=viewDir(Math.atan2(pl.z-m.z,pl.x-m.x)),action=(m.atkAnim>0?16:m.run?8:0)+direction;
     const url='assets/mobs/v1/'+m.spriteId+'-'+action+'.png';
     if(v.nativeAction!==action){v.nativeAction=action;im.src=url;v.imageFailed=false;}
     const ready=!v.imageFailed&&im.complete&&im.naturalWidth>0;im.style.display=ready?'block':'none';if(!ready)return;
-    const floor=KIT.nativeWorld?actorFloorY(m.x,m.z)-.035:0,base=scr(m.x,floor,m.z),top=scr(m.x,floor+3.05*s,m.z),height=Math.max(1,Math.abs(base[1]-top[1]))*512/(window.PGNativeMobHeights?.[m.spriteId]||160);
+    // v223 (owner's "distortion" screenshots): a native sheet is 512px of mostly empty frame around
+    // the art, so the element is sized up by 512/art-height and the art lands at the projected
+    // height. That projection has no ceiling - zoom in, or let a monster walk up to the lens, and
+    // |base-top| asks for a rectangle taller than the field. The browser then paints one flat chunk
+    // of the sheet across the whole view (solid bands in the monster's own palette, hero buried
+    // under them). Clamp the art to a real on-screen size, and hide the frame outright when the
+    // projection is not finite instead of writing 'NaNpx' into the style.
+    const floor=KIT.nativeWorld?actorFloorY(m.x,m.z)-.035:0,base=scr(m.x,floor,m.z),top=scr(m.x,floor+3.05*s,m.z);
+    const artPx=nativeMobArtPx(base,top);
+    if(!artPx){im.style.display='none';return}
+    const height=artPx*512/(window.PGNativeMobHeights?.[m.spriteId]||160);
     im.style.left=base[0]+'px';im.style.top=base[1]+'px';im.style.width=height+'px';im.style.height=height+'px';im.style.transform='translate(-50%,-78.125%)';im.style.filter='none';im.style.zIndex=String(Math.max(1,Math.round(base[1])));return;
   }if(v.nativePet){if(v.image)v.image.style.display='none';v.spr.visible=true;return}const im=v.image,motion=mobMotion(m,t);
   if(v.official){if(im)im.style.display='none';v.spr.visible=true;
@@ -9275,7 +9307,11 @@ function syncMobImage(v,m,s){
   v.spr.position.y=0;if(!im)return;
   const ready=!v.imageFailed&&im.complete&&im.naturalWidth>0;
   im.style.display=ready?'block':'none';v.spr.visible=!ready;if(!ready)return;
-  const floor=KIT.nativeWorld?actorFloorY(m.x,m.z)-.035:0,base=scr(m.x,floor,m.z),mid=scr(m.x,floor+1.525*s,m.z),top=scr(m.x,floor+3.05*s,m.z),h=Math.max(14,Math.min(240,Math.abs(base[1]-top[1]))),ratio=im.naturalWidth/Math.max(1,im.naturalHeight);
+  const floor=KIT.nativeWorld?actorFloorY(m.x,m.z)-.035:0,base=scr(m.x,floor,m.z),mid=scr(m.x,floor+1.525*s,m.z),top=scr(m.x,floor+3.05*s,m.z);
+  const artPx=Math.abs(base[1]-top[1]);
+  // v223: same guard as the native path - an unprojectable frame must hide, never write 'NaNpx'.
+  if(!Number.isFinite(artPx)||!Number.isFinite(base[0])||!Number.isFinite(base[1])||!Number.isFinite(mid[0])){im.style.display='none';v.spr.visible=true;return}
+  const h=Math.max(14,Math.min(240,artPx)),ratio=im.naturalWidth/Math.max(1,im.naturalHeight);
   im.style.left=mid[0]+'px';im.style.top=(base[1]-motion.hop*h/3.05)+'px';im.style.width=Math.max(12,h*ratio*motion.sx)+'px';im.style.height=h*motion.sy+'px';im.style.zIndex=String(Math.max(1,Math.round(base[1])));
   if(motion.tilt)im.style.transform='translate(-50%,-100%) rotate('+(motion.tilt*57.3).toFixed(1)+'deg)';
   im.style.filter=m.flash?`brightness(${1+m.flash*.55}) saturate(${1+m.flash})`:'none'}

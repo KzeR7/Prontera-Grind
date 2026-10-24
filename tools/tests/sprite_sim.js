@@ -21,13 +21,15 @@ const petRosterSrc = src.match(/const PETS=\[[\s\S]*?\];/)?.[0];
 if (!petRosterSrc) throw new Error('cannot find pet monster sprite roster');
 const mapBox = {};
 vm.createContext(mapBox);
-vm.runInContext(mapCode + '\n' + petRosterSrc + '\n' + grab('const petIcon=', 'const RN=') + '\nthis.__data={MAPS,MOB_SPRITES,MOB_SIZE_BY_ID,MOB_SIZE_SCALE,MOB_REGULAR_VISUAL,mobVisualScale,mobSpriteUrl,PETS,petIcon,ASCENSION_FRAME_PX,ASCENSION_KEPT_VISUAL,HERO_VISUAL_HEIGHT,ASCENSION_BOSS_VISUAL};', mapBox);
+vm.runInContext(mapCode + '\n' + petRosterSrc + '\n' + grab('const petIcon=', 'const RN=') + '\nthis.__data={MAPS,MOB_SPRITES,MOB_SIZE_BY_ID,MOB_SIZE_SCALE,MOB_REGULAR_VISUAL,mobVisualScale,mobSpriteUrl,PETS,petIcon,ASCENSION_FRAME_PX,ASCENSION_KEPT_VISUAL,HERO_VISUAL_HEIGHT,ASCENSION_MONSTER_VISUAL,ASCENSION_BOSS_VISUAL,MOB_VISUAL_MAX,boundMobScale};', mapBox);
 const MAPS = mapBox.__data.MAPS, MOB_SPRITES = mapBox.__data.MOB_SPRITES, MOB_SIZE_BY_ID = mapBox.__data.MOB_SIZE_BY_ID,
       MOB_SIZE_SCALE = mapBox.__data.MOB_SIZE_SCALE, MOB_REGULAR_VISUAL = mapBox.__data.MOB_REGULAR_VISUAL,
       mobVisualScale = mapBox.__data.mobVisualScale, mobSpriteUrl = mapBox.__data.mobSpriteUrl, PETS = mapBox.__data.PETS,
       petIcon = mapBox.__data.petIcon, ASCENSION_FRAME_PX = mapBox.__data.ASCENSION_FRAME_PX,
       ASCENSION_KEPT_VISUAL = mapBox.__data.ASCENSION_KEPT_VISUAL, HERO_VISUAL_HEIGHT = mapBox.__data.HERO_VISUAL_HEIGHT,
-      ASCENSION_BOSS_VISUAL = mapBox.__data.ASCENSION_BOSS_VISUAL;
+      ASCENSION_MONSTER_VISUAL = mapBox.__data.ASCENSION_MONSTER_VISUAL,
+      ASCENSION_BOSS_VISUAL = mapBox.__data.ASCENSION_BOSS_VISUAL,
+      MOB_VISUAL_MAX = mapBox.__data.MOB_VISUAL_MAX, boundMobScale = mapBox.__data.boundMobScale;
 
 const weaponCode = grab('const WEAPON_ITEM_IDS=', 'const STATS=');
 const weaponBox = {};
@@ -174,7 +176,7 @@ t('Poring, Fabre and all regular mobs render below player height while bosses ke
     'GPU and HTML sprite paths must agree on size');
 });
 
-t('Ascension fields stand every monster at character height and keep both MVPs above the field', () => {
+t('Ascension fields stand every monster above the character, both MVPs above the field, and nothing at screen scale', () => {
   const zlib = require('node:zlib');
   // Owner request (2026-10-24): on Astral Citadel and Thor Volcano ordinary monsters should look
   // about as tall as the character, and both MVPs clearly taller. The two fields draw native
@@ -224,23 +226,31 @@ t('Ascension fields stand every monster at character height and keep both MVPs a
   //    confirmed were already right; both MVPs are well above every monster on their field.
   assert.strictEqual(HERO_VISUAL_HEIGHT, 2.16, 'the character stands 2.16 world units (SKIN_H)');
   assert.ok(src.includes('const SKIN_H=72*PACK_K') && src.includes('PACK_K=.03'), 'SKIN_H moved; HERO_VISUAL_HEIGHT must follow it');
-  assert.ok(ASCENSION_BOSS_VISUAL > HERO_VISUAL_HEIGHT, 'an MVP must stay taller than the character');
+  // v223 (owner): standing exactly at the character's height read small beside the smallest class
+  // sprite, so the field moved up a quarter - 2.70 against the 2.16 hero, MVPs at 4.60.
+  assert.ok(Math.abs(ASCENSION_MONSTER_VISUAL - 2.7) < 1e-9, 'ordinary Ascension monsters stand at 2.70 world units');
+  assert.ok(Math.abs(ASCENSION_MONSTER_VISUAL - HERO_VISUAL_HEIGHT * 1.25) < 1e-9, 'the field is 1.25x the character');
+  assert.ok(Math.abs(ASCENSION_BOSS_VISUAL - 4.6) < 1e-9, 'both MVPs stand at 4.60 world units');
+  assert.ok(ASCENSION_BOSS_VISUAL > ASCENSION_MONSTER_VISUAL * 1.6, 'an MVP must dwarf the field monsters, not just top them');
+  assert.ok(ASCENSION_MONSTER_VISUAL > HERO_VISUAL_HEIGHT, 'a field monster must read bigger than the character');
   for (const mapIndex of [10, 11]) {
     const map = MAPS[mapIndex];
     for (const m of map.mobs) {
-      const target = ASCENSION_KEPT_VISUAL[m.spriteId] || HERO_VISUAL_HEIGHT;
+      const target = ASCENSION_KEPT_VISUAL[m.spriteId] || ASCENSION_MONSTER_VISUAL;
       assert.ok(Math.abs(drawn(fieldMob(m, mapIndex)) - target) < 1e-9, map.n + ': ' + m.n + ' is not at its target height');
-      if (!ASCENSION_KEPT_VISUAL[m.spriteId]) assert.ok(Math.abs(drawn(fieldMob(m, mapIndex)) - HERO_VISUAL_HEIGHT) < 1e-9, map.n + ': ' + m.n + ' should stand at character height');
+      if (!ASCENSION_KEPT_VISUAL[m.spriteId]) assert.ok(Math.abs(drawn(fieldMob(m, mapIndex)) - ASCENSION_MONSTER_VISUAL) < 1e-9, map.n + ': ' + m.n + ' should stand at the field height');
     }
     const bossDrawn = drawn(fieldMob(map.boss, mapIndex));
     assert.ok(Math.abs(bossDrawn - ASCENSION_BOSS_VISUAL) < 1e-9, map.n + ': MVP is not at the Ascension boss height');
     for (const m of map.mobs) assert.ok(bossDrawn > drawn(fieldMob(m, mapIndex)) * 1.4, map.n + ': ' + map.boss.n + ' is not clearly bigger than ' + m.n);
   }
-  // 3. The two approved species keep exactly the height they shipped with (Small x .7 regular).
+  // 3. The two approved species keep their place in the line-up: they were pinned because the old
+  //    (Small x .7 regular) height looked right, and v223 lifts them by the field's own 1.25x.
   for (const [id, target] of Object.entries(ASCENSION_KEPT_VISUAL)) {
     const [art, extent] = ASCENSION_FRAME_PX[id];
     const shipped = 3.05 * (MOB_SIZE_SCALE[MOB_SIZE_BY_ID[id]] * MOB_REGULAR_VISUAL) * art / extent;
-    assert.ok(Math.abs(shipped - target) < .01, 'approved height for sprite ' + id + ' no longer matches the shipped size');
+    assert.ok(Math.abs(shipped * 1.25 - target) < .01, 'approved height for sprite ' + id + ' no longer follows the field lift');
+    assert.ok(target < ASCENSION_MONSTER_VISUAL && target > HERO_VISUAL_HEIGHT * .3, 'approved height for sprite ' + id + ' left the field line-up');
   }
   // 4. Ordinary maps that reuse the same native sheets (Lava Slime, Chaos Imp, Amatsu's Shiranui)
   //    keep their size class: the new rule is an Ascension-field rule, not a sprite rule.
@@ -254,7 +264,34 @@ t('Ascension fields stand every monster at character height and keep both MVPs a
   // 5. The rule reaches the renderer through the live mob's map index.
   assert.ok(src.includes('m.mapIndex>=10?ASCENSION_FRAME_PX[m.spriteId]:null'), 'the Ascension rule must be gated to its own fields');
   assert.ok(src.includes('window.PGNativeMobHeights?.[m.spriteId]'), 'the native draw path must keep using the generated heights');
-  console.log('       Hero 2.16 · ordinary Ascension monsters 2.16 · MVPs ' + ASCENSION_BOSS_VISUAL + ' (kept: Agony Demon 1.10, Magma Slag .86)');
+  // 6. Every number the field draws goes through mobVisualScale, so it is finite and bounded: a
+  //    broken species row or a monster mid-spawn can never ask the renderer for a screen-sized body.
+  //    v223 clamp, added after the owner's "distortion" screenshots.
+  assert.ok(MOB_VISUAL_MAX > 0 && MOB_VISUAL_MAX < 20, 'the mob scale ceiling must be a sane world scale');
+  for (const bad of [NaN, Infinity, -Infinity, 1e9, -4, undefined]) {
+    const v = boundMobScale(bad);
+    assert.ok(Number.isFinite(v) && v >= .05 && v <= MOB_VISUAL_MAX, 'boundMobScale(' + bad + ') = ' + v);
+  }
+  assert.ok(mobVisualScale({ spriteId: 1705, mapIndex: 10, spawn: 1 }) <= MOB_VISUAL_MAX, 'a live monster exceeds the ceiling');
+  assert.ok(mobVisualScale({ spriteId: 999999, mapIndex: 10, spawn: 1e6 }) <= MOB_VISUAL_MAX, 'a broken species row exceeds the ceiling');
+  assert.ok(src.includes('const boundMobScale=v=>Number.isFinite(v)'), 'mobVisualScale must stay behind the finite guard');
+  // 7. The Ascension native image is sized from the art inside its 512px sheet, and that projection
+  //    is unbounded (zoom in, or a monster at the lens). It may never cover the whole field.
+  const clampBox = {};
+  vm.createContext(clampBox);
+  vm.runInContext(grab('const NATIVE_MOB_MAX_PX=', 'function syncMobImage(') + '\nthis.__clamp={nativeMobArtPx,NATIVE_MOB_MAX_PX,NATIVE_MOB_MAX_SHARE};', clampBox);
+  const nativeMobArtPx = clampBox.__clamp.nativeMobArtPx;
+  clampBox.R = { domElement: { clientHeight: 964 } };
+  assert.strictEqual(nativeMobArtPx([600, 500], [600, 100]), 320, 'a close monster is clamped to the 320px ceiling');
+  assert.strictEqual(nativeMobArtPx([600, 900], [600, -400]), 320, 'a screen-tall projection must not exceed 320px of art');
+  assert.strictEqual(nativeMobArtPx([600, 500], [600, 460]), 40, 'a normal monster keeps its projected height');
+  assert.strictEqual(nativeMobArtPx([NaN, 500], [600, 100]), 0, 'an unprojectable frame is dropped, not drawn');
+  assert.strictEqual(nativeMobArtPx([600, 500], [600, NaN]), 0, 'a NaN top is dropped, not drawn');
+  clampBox.R = { domElement: { clientHeight: 390 } };
+  assert.ok(nativeMobArtPx([600, 500], [600, 100]) <= 390 * .34, 'phones get the same ceiling');
+  assert.ok(src.includes('const artPx=nativeMobArtPx(base,top);') && src.includes("if(!artPx){im.style.display='none';return}"), 'the native draw path must use the clamp');
+  console.log('       Hero 2.16 · field monsters ' + ASCENSION_MONSTER_VISUAL + ' (1.25x) · MVPs ' + ASCENSION_BOSS_VISUAL +
+    ' · approved: Agony Demon ' + ASCENSION_KEPT_VISUAL[1707] + ', Magma Slag ' + ASCENSION_KEPT_VISUAL[1836]);
 });
 
 t('Divine Pride item icons cover every weapon type used by all 19 classes', () => {

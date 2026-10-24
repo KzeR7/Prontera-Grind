@@ -19,7 +19,7 @@ try{
  // renderer reads is proved to be on the live objects.
  for(const map of [10,11])for(const stage of [1,3,5]){
   ev(`S=fresh();S.cls='Rune Knight';S.lv=150;S.mp=${map};S.lvl=${stage};TRIAL.on=false;JOB_RITE.on=false;spawn();mobs.forEach(m=>m.spawn=1)`);
-  const probe=JSON.parse(ev(`JSON.stringify({kept:ASCENSION_KEPT_VISUAL,hero:HERO_VISUAL_HEIGHT,boss:ASCENSION_BOSS_VISUAL,
+  const probe=JSON.parse(ev(`JSON.stringify({kept:ASCENSION_KEPT_VISUAL,hero:ASCENSION_MONSTER_VISUAL,boss:ASCENSION_BOSS_VISUAL,
     mobs:mobs.map(m=>({n:m.n,boss:!!m.boss,mapIndex:m.mapIndex,spriteId:m.spriteId,
       drawn:3.05*mobVisualScale(m)*ASCENSION_FRAME_PX[m.spriteId][0]/ASCENSION_FRAME_PX[m.spriteId][1]}))})`));
   const regulars=probe.mobs.filter(m=>!m.boss),boss=probe.mobs.find(m=>m.boss);
