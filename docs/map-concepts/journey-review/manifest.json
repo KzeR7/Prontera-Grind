@@ -7,7 +7,7 @@
       "weathered-stone-b2af8375d71a.webp",
       "astral-void-2821e53955c8.webp"
     ],
-    "initialLocalResponseBodyBytes": 3318653,
+    "initialLocalResponseBodyBytes": 3318917,
     "initialMaterialResponses": [
       {
         "path": "/tools/maps/textures/weathered-stone-b2af8375d71a.webp",
@@ -40,8 +40,8 @@
       }
     ]
   },
-  "quickArrivalWallMs": 7502,
-  "quickTripWallMs": 8900,
+  "quickArrivalWallMs": 6121,
+  "quickTripWallMs": 7675,
   "sources": {
     "tools/map_journey.html": "82a5b380be5609e403e00d86cc9016b41bedd9279294d18538f764ccf9967f96",
     "tools/maps/endgame-scenes.js": "91e995bd735d54b7d82e2fa18b29ba0fde6b2716eb8a9878d23c2b314c4fd993",
@@ -52,7 +52,7 @@
     "tools/maps/journey-details.js": "a7298c503af7074471e8d42b0bbb4c32cc2a5cfb371684c31c74412156d58e52",
     "tools/maps/journey-hero.js": "befd05894b5b1285f6051ae27138f4eb061f51df20fde969e3f3fa70dd79502a",
     "tools/maps/mob-catalog.json": "61e96471514ead01b75b2c7399198bb60bdb09089ebc02d1b3db8335c23f651c",
-    "assets/wardrobe.js": "edc14c97138a77d22c4d753420b513ba56a109ff89646c56cd1dcafff30526e0",
+    "assets/wardrobe.js": "10728efedd9b199b1a2b47471c9be757b731700eda4907b5651f95947d6c7dd4",
     "assets/wardrobe/v5/catalog.json": "8c5cb0c9fc0b709ce32d72c8bcf0daf10bfb9e2c13149772085b4442299eec87",
     "tools/maps/textures/weathered-stone-b2af8375d71a.webp": "b2af8375d71a6184bec621d3e23e3050ea9435dbfb97637a104cdb651abb8872",
     "tools/maps/textures/molten-basalt-33dab0df2735.webp": "33dab0df2735fcd5d7b6b8bbd6f2851da76279e3bb2c68775ece1c8af77b36e6",
@@ -66,11 +66,11 @@
   "failed": [],
   "transportCompletionNotices": [
     {
-      "url": "http://127.0.0.1:8000/assets/wardrobe/v5/atlas-010a29d6f92604fd264e.png",
+      "url": "http://127.0.0.1:8001/assets/wardrobe/v5/atlas-010a29d6f92604fd264e.png",
       "reason": "net::ERR_ABORTED"
     },
     {
-      "url": "http://127.0.0.1:8000/assets/wardrobe/v5/poses-b1039314111bfacaaf2b.json",
+      "url": "http://127.0.0.1:8001/assets/wardrobe/v5/poses-b1039314111bfacaaf2b.json",
       "reason": "net::ERR_ABORTED"
     }
   ],
@@ -80,29 +80,29 @@
   "captures": [
     {
       "image": "journey-walk.png",
-      "sha256": "1f60abe3b8f539ea8dd449ac07e4e543f7a89471c02e84fdfe57602d18c26955",
-      "bytes": 1043456,
+      "sha256": "b0ca69b6232e740f93ce1c3fd1f7701d0d0f8d19d119f6018154bdd9e1845650",
+      "bytes": 1043946,
       "width": 930,
       "height": 812
     },
     {
       "image": "journey-overview.png",
-      "sha256": "f53f5fde36b6b8e2482aee43cf345e28663b4e282c394a2f80cfaf6326e4583d",
-      "bytes": 637155,
+      "sha256": "025d57237597765b763f448c99600322fdde57a1494a33c2b2f111dc6bdb8c51",
+      "bytes": 636847,
       "width": 930,
       "height": 812
     },
     {
       "image": "journey-astral-boss.png",
-      "sha256": "1d7638182df8177d5b8c859dd853f413812763a53bbbff55ff979440fc6cfdb1",
-      "bytes": 875170,
+      "sha256": "34fef34ef5c02c35bb15fd8fd58415dd2ecd12577317c67ee5f6817fad2d7dfc",
+      "bytes": 875403,
       "width": 930,
       "height": 812
     },
     {
       "image": "journey-thor.png",
-      "sha256": "231c51ba31f4f7cbba40257e19015717c5728a9861ff1b4ed4e2b12e69e55534",
-      "bytes": 1031850,
+      "sha256": "e33006cdfeee0b064e83562b2aacbfbba5f5de8f3e5e5c75e445afeac21715bb",
+      "bytes": 1031846,
       "width": 930,
       "height": 812
     }

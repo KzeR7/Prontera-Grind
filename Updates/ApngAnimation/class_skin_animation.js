@@ -417,7 +417,7 @@ function weaponTipFromPixels(data,w,h,gx,gy){
 function weaponTip(im,gx,gy){
   let tips=weaponTipCache.get(im);if(!tips){tips=new Map();weaponTipCache.set(im,tips)}const key=gx+':'+gy;
   if(!tips.has(key)){
-    const cv=document.createElement('canvas');cv.width=im.naturalWidth||im.width;cv.height=im.naturalHeight||im.height;const g=cv.getContext('2d');g.drawImage(im,0,0);
+    const cv=document.createElement('canvas');cv.width=im.naturalWidth||im.width;cv.height=im.naturalHeight||im.height;const g=cv.getContext('2d',{willReadFrequently:true})||cv.getContext('2d');g.drawImage(im,0,0);
     tips.set(key,weaponTipFromPixels(g.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height,gx,gy));
   }
   return tips.get(key);
@@ -429,13 +429,21 @@ function drawWeaponGlint(ctx,glow,x,y,now){
   star(radius);ctx.shadowBlur=0;ctx.fillStyle='#fff5ed';star(radius*.62);ctx.restore();
 }
 // Crop only the native weapon layer; body, hair and accessories keep their original pixels.
-const nativeWeaponCrops=new WeakMap();
+const nativeWeaponCrops=new WeakMap(),nativeWeaponTips=new WeakMap();
 function nativeWeaponCrop(image,p){
   let frames=nativeWeaponCrops.get(image);if(!frames){frames=new Map();nativeWeaponCrops.set(image,frames)}
   const key=p.slice(0,4).join(':');if(frames.has(key))return frames.get(key);
+  let tips=nativeWeaponTips.get(image);if(!tips){tips=new Map();nativeWeaponTips.set(image,tips)}
   const cv=document.createElement('canvas');cv.width=p[2];cv.height=p[3];
-  cv.getContext('2d').drawImage(image,p[0],p[1],p[2],p[3],0,0,p[2],p[3]);
-  const tip=weaponTip(cv,.5,.9),crop={cv,tip};
+  let tip=tips.get(key);
+  if(!tip){
+    const g=cv.getContext('2d',{willReadFrequently:true})||cv.getContext('2d');
+    g.drawImage(image,p[0],p[1],p[2],p[3],0,0,p[2],p[3]);
+    tip=weaponTipFromPixels(g.getImageData(0,0,p[2],p[3]).data,p[2],p[3],.5,.9);
+    if(tips.size>=256)tips.delete(tips.keys().next().value);
+    tips.set(key,tip);
+  }else cv.getContext('2d').drawImage(image,p[0],p[1],p[2],p[3],0,0,p[2],p[3]);
+  const crop={cv,tip};
   if(frames.size>=32){const oldest=frames.keys().next().value;frames.get(oldest).cv.width=0;frames.delete(oldest)}
   frames.set(key,crop);return crop;
 }

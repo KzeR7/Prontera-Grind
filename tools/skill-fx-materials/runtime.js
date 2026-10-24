@@ -13,6 +13,8 @@ const PGSkillMaterials=(()=>{
     let source=atlas,sx=f*size,sy=row*size;
     if(tint){
       const key=name+f+':'+tint.join(',');let cached=tinted.get(key);
+      // Refresh recency on hits so a varied cast sequence cannot evict just-used colours.
+      if(cached){tinted.delete(key);tinted.set(key,cached)}
       if(!cached){
         cached=document.createElement('canvas');cached.width=cached.height=size;
         const ctx=cached.getContext('2d');if(!ctx)return false;
