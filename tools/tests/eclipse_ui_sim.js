@@ -190,7 +190,7 @@ test('PR review: reordered keyed siblings retain distinct original nodes',()=>{
 test('Eclipse shell uses real currencies, experience, pets and compact journal navigation',()=>{
  ev(`S.shards=123;S.exp=42;S.pets=[{id:50001,sp:0,on:true,mut:2,eq:[0,0,0],skills:[]}];window.eclipseRealBars();renderWin()`);
  assert.equal(doc.getElementById('eclipseShards').textContent,'123');assert.match(doc.getElementById('eclipseBaseValue').textContent,/42 \/ /);assert.equal(doc.querySelectorAll('#eclipsePetStrip button').length,1);
- assert.equal(doc.querySelectorAll('#dock > [data-t]').length,11);assert.ok(doc.querySelector('#dock [data-t=wardrobe]'));assert.equal(doc.querySelector('#dock [data-t=index]'),null);doc.querySelector('#dock .eclipse-more').click();assert.ok(doc.getElementById('sideMenu').classList.contains('eclipse-more-open'));assert.ok(doc.querySelector('#sideLinks [data-t=index]'));
+ assert.deepEqual([...doc.querySelectorAll('#dock > [data-t]')].map(b=>b.dataset.t),['map','status','equip','job','skills','bag','pet']);assert.equal(doc.querySelector('#dock [data-t=wardrobe]'),null);assert.equal(doc.querySelector('#dock [data-t=index]'),null);doc.querySelector('#dock .eclipse-more').click();assert.ok(doc.getElementById('sideMenu').classList.contains('eclipse-more-open'));assert.ok(doc.querySelector('#sideLinks [data-t=wardrobe]'));assert.ok(doc.querySelector('#sideLinks [data-t=index]'));
  ev('qOpen=true;eclipseQuestAll=false;renderQ()');assert.equal(doc.querySelectorAll('#qp .quest-entry').length,3);doc.querySelector('[data-q=viewall]').click();assert.ok(doc.querySelectorAll('#qp .quest-entry').length>3);
 });
 test('card collection tiles expose names and retain keyboard selection',()=>{

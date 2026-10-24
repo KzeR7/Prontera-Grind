@@ -78,10 +78,27 @@ its own block directly from the page; a separate `/tmp/pack_block.js` extraction
 not required. `PACK_BLOCK` and `PACK_DATA` are optional explicit overrides.
 
 For skill FX changes, run `python3 tools/build_skill_materials.py --check`,
-`python3 tools/tests/skill_materials.py`, `python3 tools/build_afterglow.py --check` and
-`node tools/tests/afterglow_sim.js` alongside the affected combat checks. The latter
-exercises all 75 generated animations, the real cast lifecycle, projection at
-reversed/vertical camera angles, canvas state, resize, expiry and dense-cast limits.
+`python3 tools/tests/skill_materials.py`, `python3 tools/build_afterglow.py --check`,
+`node tools/tests/overdrive_sim.js`, `node tools/tests/overdrive_preview_sim.js` and
+`node tools/tests/afterglow_sim.js` alongside the affected combat checks. The renderer
+and adapter simulations exercise all 111 Overdrive effects (including six Ascension
+signatures), the real cast lifecycle, projection at reversed/vertical camera angles,
+canvas state, resize, expiry, dense-cast limits and the preserved legacy fallback. The
+preview simulation executes the real proposal controls, library filters and timeline.
+The Overdrive simulation also pins the v217 clarity contract: minimal First Aid,
+unique self-buff variants, sword/spear construction, reduced Wizard AoE scales and
+twelve distinct Assassin pattern families. The v218 contracts retain substantial
+late hero frames for Shadow Dash and Soul Breaker. The v219/v220 contracts pin the
+restored Meteor Assault `nova`, fast Rolling Cutter `spin` and approved Cross Slash
+`crossCut`, while Sonic Blow now requires eight alternating split-edge arcs, its
+neon-orchid/glacial-cyan palette, rapid 1.65 cadence, deterministic hero-frame output,
+reduced Balanced secondary work and a retained legacy fallback. The preview
+simulation checks Sonic Blow's enabled NEW/OVERDRIVE versus OLD/LEGACY A/B, plus the
+default Prontera game-field backdrop, its Studio alternative and the captured asset.
+It also pins both External Sources links and the honest inaccessible-frame note. For
+visual blend review, use the real proposal in Chromium and inspect both backdrops;
+the Prontera image itself is captured from the game's actual WebGL field, not a
+repainted or AI-generated substitute.
 The material checks require Pillow 11.3.0 and numpy 2.0.2 in the selected Python
 environment; see the [material pipeline](../tools/skill-fx-materials/README.md).
 They decode all 64 cells and check alpha isolation, detail and the asset size budget.
@@ -174,7 +191,7 @@ The owner testing build has `FOURTH_JOBS_LIVE=true`. Use the normal static previ
 30 core skill effects. This page is excluded from the production build.
 
 Run `python3 tools/build_fourth_job_review.py --check`,
-`node tools/tests/afterglow_sim.js` (now covers 105 effects on a flag-on page copy),
+`node tools/tests/afterglow_sim.js` (now covers 111 effects, including six Ascension signatures),
 `node tools/tests/owner_fx_sim.js` and the existing fourth-job skill suite. The
 normal skill material checks above remain required. With Pillow installed, run
 `python tools/tests/fourth_job_assets.py --native <native-root> --proof <export-root>`;
@@ -269,7 +286,7 @@ The v170 PR preparation also refreshes progression `after` measurements with
 `--encounters` modes; historical `before` rows stay intact. `pet_sim.js` uses
 its old rotation estimate as a diagnostic only and checks the actual Pack Leader
 +10% limit and duplicate-species protection through `petDmg()`. Generated
-Afterglow covers ordinary skills; Ascension skills use the generic FX lifecycle.
+The preserved generated Afterglow remains the legacy fallback; Prismatic Overdrive covers ordinary, fourth-job and six Ascension skill signatures through the same FX lifecycle.
 
 
 ## v179 travel, materials, class/skill layout and fourth-job wardrobe

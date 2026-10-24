@@ -28,7 +28,7 @@ measurements remain qualified by their saved source hashes.
 | Wardrobe and native hero sprites | `assets/wardrobe.js`, `assets/wardrobe-ui.js`, `assets/wardrobe.css`, `assets/wardrobe/v5/`; `index.html`: `PGWardrobe` | `wardrobe_sim.js`, `wardrobe_game_sim.js`, native asset audits |
 | Fourth-job native visual preparation (locked) | `Updates/fourth-jobs/review.html`, `review.js`, `native/`; `tools/native-fourth-jobs/`; `tools/skill-fx-proposals/fourth-job-fx.js` feeds the existing Afterglow generator | `fourth_job_assets.py --native <sources> --proof <exports>`, `build_fourth_job_review.py --check`, expanded `afterglow_sim.js`, `fourth_job_motion_sim.js`, `check_fourth_job_browser.js`, `check_fourth_job_playback_browser.js`; see `Updates/fourth-jobs/VISUALS.md` |
 | Skill artwork | `assets/skill-icons.js`, `assets/skill-icons/`; `tools/native-skill-icons/` | source crop audit; `tools/check_skill_pets_browser.js` |
-| Skill casting effects | `assets/skill-afterglow.js`, generated `assets/afterglow-animations.js` and `assets/skill-materials.js`; `index.html`: `playSkillFx`, `tickSkillFx`, `syncSkillFx` | `afterglow_sim.js`, `skill_sim.js`; `python3 tools/build_afterglow.py --check` |
+| Skill casting effects | `assets/skill-overdrive.js`, `assets/skill-afterglow.js`, generated `assets/afterglow-animations.js` and `assets/skill-materials.js`; `index.html`: `playSkillFx`, `tickSkillFx`, `syncSkillFx`; interactive review at `tools/skill-fx-proposals/prismatic-overdrive.html` | `overdrive_sim.js`, `overdrive_preview_sim.js`, `afterglow_sim.js`, `skill_sim.js`; `python3 tools/build_afterglow.py --check` |
 | Panels, buttons and hotkeys | `index.html`: `V`, `ACT`, `TABS`, `SIDE_TABS`; `assets/ui/` and wardrobe UI module | `ui_sim.js`, `panel_layout_smoke.js`, `eclipse_ui_sim.js` |
 | Cash Shop (Stripe Checkout, cosmetics + supplies) | `assets/shop-catalog.js` (the price list, shared), `assets/shop.js`, `assets/shop.css`; `functions/_lib/shop.js`, `functions/api/shop/{catalog,checkout,order,webhook}.js`, `functions/api/gm/shop.js`, `migrations/0005_shop.sql`; `functions/api/save.js` (`lockedCosmetics`), `assets/wardrobe-ui.js` (`wardrobeLocked`), `gm.html` (Cash Shop tab) | `shop_api_sim.js`, `shop_sim.js`, `dev_server_sim.js`; setup in [MONETIZATION-SETUP.md](MONETIZATION-SETUP.md) |
 | Browser saves, login, cloud sync, away rewards | `index.html`: `fresh`, `load`, `save`, `saveKey`, `CLOUD`, `offlinePlan` | `save_load_sim.js`, `save_owner_sim.js`, `cloud_sim.js`, `offline_sim.js`, `migration_sim.js` |
@@ -97,6 +97,48 @@ No camera shake or gameplay timing changes are involved. The existing 28-effect 
 and lower particle detail on narrow screens/dense casts bound work. The original
 Three renderer remains the fallback when the adapter is unavailable; its source
 backup is under `tools/skill-fx-backups/pre-afterglow/`.
+
+Prismatic Overdrive is the hand-authored presentation layer in
+`assets/skill-overdrive.js`. It explicitly defines all 105 ordinary/fourth-job effects
+and six Ascension signatures in shared and skill-specific pattern families, with deterministic
+particles, class palettes and textured material layers. It wraps the generated catalog
+rather than regenerating or rewriting the reviewed owner choices. The shared adapter
+uses Overdrive's caster/travel metadata while enabled; `PGSkillOverdrive.setEnabled(false)`
+selects the preserved legacy renderer, and an unknown id still falls back safely.
+`/overdrive` (also `/fx`) serves the interactive native-sprite proposal with all 111
+skills, current/Overdrive A/B (with an honest SAME state for preserved current FX),
+replay/pause/speed, timeline scrubbing, play-all and Ultra/Balanced detail. Normal gameplay keeps the existing mobile/dense-cast policy;
+forced detail is review-only. See `overdrive_sim.js` and `overdrive_preview_sim.js`.
+
+The v217 clarity pass removes the shared seal/helix/burst preamble from self-buffs;
+every aura variant now has its own readable symbol and motion, while First Aid uses a
+minimal dedicated pattern. Knight sword thrusts draw complete guarded blades, Hundred
+Spears draws full shafts, Sonic Wave is a broad pressure wave and Dragon Breath is a
+textured fire cone rather than a creature body. Storm Gust, Meteor Storm and Lord of
+Vermilion have explicit reduced composition scales. The Assassin tree retains
+distinct pattern families rather than recoloured duplicates. Jupitel Thunder and Chain
+Lightning use travel/junction choreography instead of recoloured sky bolts. Material
+tint hits refresh LRU recency; regenerate with `tools/build_skill_materials.py` after
+editing `tools/skill-fx-materials/runtime.js`.
+
+The v218 spectacle remains on Shadow Dash (five shadow bodies, a broad wake and a
+horizontal sever) and Soul Breaker (twin soul katars, a spectral reaper and a
+diagonal cleave). The v219 restoration pins Meteor Assault to its caster-centred
+`nova` and Rolling Cutter to its fast caster-centred `spin`; approved Cross Slash
+remains on its unchanged `crossCut` choreography. In v220, Sonic Blow keeps its
+rapid eight-contact concept but alternates neon-orchid and glacial-cyan split-edge
+arcs with tapered trails and compact prismatic contacts. Current mode still uses
+the preserved legacy Sonic painter, so its NEW/OVERDRIVE versus OLD/LEGACY A/B is
+enabled and visually meaningful. The other 110 effects, combat mechanics and
+detail/cap policies are untouched by the v220 follow-up.
+
+For blend review, `/overdrive` defaults to the un-tinted
+`tools/skill-fx-proposals/prontera-field.webp` backdrop. This is a 1440×841 capture
+of the actual Prontera stage-1 WebGL field (45 placed props, no missing art), with
+combat actors hidden only in the capture. The **Prontera / Studio** selector switches
+between that map and the neutral procedural stage without reloading the selected
+skill or changing its timing. The capture and selector are review-only; neither is
+included in the production game build.
 
 ## Development helpers and historical material
 

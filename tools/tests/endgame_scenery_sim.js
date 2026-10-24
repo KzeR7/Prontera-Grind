@@ -11,7 +11,7 @@ const gameSource=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert.ok(gameSource.includes('BX_=13,Z0=-28,Z1=12'),'Game arena contract changed; review scenery bounds');
 assert.ok(gameSource.includes('PerspectiveCamera(38,2,.1,200)'),'Game camera projection changed');
 assert.ok(gameSource.includes('let az=0,el=.95,zoom=1'),'Game camera defaults changed');
-assert.ok(gameSource.includes('(cam.aspect<1.5?26:18)/zoom'),'Game camera distance changed');
+assert.ok(gameSource.includes('(KIT.nativeWorld?(cam.aspect<1?40:44):(cam.aspect<1.5?26:18))/zoom'),'Game camera distance changed');
 assert.ok(gameSource.includes('CAMERA_FOCUS_Y=.28,CAMERA_LEAD_Z=.25'),'Game focus contract changed');
 const source=fs.readFileSync(path.join(root,'tools/maps/endgame-scenes.js'),'utf8');
 const api=require('../maps/endgame-scenes.js')(THREE);

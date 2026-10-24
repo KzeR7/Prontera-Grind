@@ -23,11 +23,11 @@ const layers=[],box={THREE,console,Image:MaterialImage,document:{createElement:c
   pl:{x:0,z:0},skillFx:[],skillState:()=>({fields:[]}),simVisualsOff:()=>false,cl:(v,a,b)=>Math.max(a,Math.min(b,v))};
 vm.createContext(box);
 vm.runInContext(grab('const MOB_REGULAR_VISUAL=','const mobSpriteUrl=')+grab('const CD=[','const pm=s=>')+grab('const SKILL_FX_GEOMETRY=','let drag=null;const dom=R.domElement;'),box);
-for(const file of ['assets/skill-materials.js','assets/afterglow-animations.js','assets/skill-afterglow.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),box);
+for(const file of ['assets/skill-materials.js','assets/afterglow-animations.js','assets/skill-overdrive.js','assets/skill-afterglow.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),box);
 const ev=code=>vm.runInContext(code,box);
-assert.equal(ev('PGAfterglowAnimations.catalog.length'),105);
-// The generated catalog covers ordinary skills; the six Ascension skills use
-// the game's generic lifecycle, exercised by ascension_combat_sim.
+assert.equal(ev('PGAfterglowAnimations.catalog.length'),111);
+// Overdrive covers all 105 ordinary/fourth-job effects and the six Ascension
+// signatures through the same lifecycle.
 assert.equal(ev('SKILLS.filter(s=>s.type!=="pas"&&!s.ascensionOnly).every(s=>PGSkillAfterglow.has(s.id))'),true,'missing ordinary game skill');
 assert.equal(ev('PGSkillAfterglow.has("concept-venom")'),false);
 assert.equal(ev('SKILLS.filter(s=>s.type==="pas").some(s=>PGSkillAfterglow.has(s.id))'),false);
@@ -58,6 +58,8 @@ for(const detail of [.6,.35])for(const id of ev('PGAfterglowAnimations.catalog.m
   ev('var paint=PGAfterglowAnimations.create(document.createElement("canvas").getContext("2d")); for(let age=0;age<2.2;age+=.08)paint(id,age*1.65,detail)');
   assert(marks>0,id+' disappears at detail '+detail);assert.equal(depth,0);
 }
+// Preserve the original material-specific fallback proofs with Overdrive disabled.
+ev('PGSkillOverdrive.setEnabled(false)');
 // The maw surrounds the mob with small teeth at every detail level, reusing three baked surfaces.
 for(const detail of [1,.6,.35]){
   toothDraws=[];box.detail=detail;
@@ -74,6 +76,7 @@ for(const detail of [1,.6,.35]){
   assert.equal(new Set(stoneDraws.map(a=>a[0])).size,3,'stone surfaces rebuilt every frame');
   assert(stoneDraws.every(a=>a[3]===78&&a[4]>0&&a[4]<=138),'rock projection size drifted');
 }
+ev('PGSkillOverdrive.setEnabled(true)');
 // The adapter compresses only artwork time, and the real lifecycle expires on simulation time.
 ev('var originalCreate=PGAfterglowAnimations.create; var paintTimes=[]; PGAfterglowAnimations.create=()=>((id,age,detail)=>paintTimes.push({id,age,detail}));');
 box.probe=canvas();ev('var probe=PGSkillAfterglow.create(probe); probe.draw([{id:"bash",afterglow:true,age:.5,x0:0,z0:0,x1:5,z1:-2}],390,700,scr,1)');
@@ -115,9 +118,9 @@ ev('syncSkillFx();tickSkillFx(4);syncSkillFx()');assert.equal(box.skillFx.length
 const narrow=canvas();box.narrow=narrow;ev('PGSkillAfterglow.create(narrow).draw([],390,700,scr,3)');
 assert.equal(narrow.width,780);assert.equal(narrow.height,1400);
 box.simVisualsOff=()=>true;ev('playSkillFx("fire",target)');assert.equal(box.skillFx.length,0);
-assert(src.includes('assets/afterglow-animations.js?v=151')&&src.includes('assets/skill-afterglow.js?v=147'));
+assert(src.includes('assets/afterglow-animations.js?v=151')&&src.includes('assets/skill-materials.js?v=220')&&src.includes('assets/skill-overdrive.js?v=220')&&src.includes('assets/skill-afterglow.js?v=220'));
 assert(src.includes(':not(#skillAfterglowLayer)'),'clean-screen hides effects');
-console.log('Afterglow: 105 skills (including all 30 parked fourth-job skills), loaded/pending/failed materials, full/mobile/dense detail, compressed timing, drawing/state, projection/reversal/vertical paths, expiry, cap, resize, hidden catch-up passed (Canvas operations; no GPU).');
+console.log('Afterglow + Overdrive: 111 skills (75 ordinary, 30 fourth-job, six Ascension), loaded/pending/failed materials, full/mobile/dense detail, compressed timing, drawing/state, projection/reversal/vertical paths, expiry, cap, resize, hidden catch-up and legacy material fallback passed (Canvas operations; no GPU).');
 
 box.simVisualsOff=()=>false;
 // Wards and Rune Burst follow the caster, without changing the hit target in combat.

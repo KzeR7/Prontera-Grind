@@ -12,11 +12,11 @@
     },
     "adapter": {
       "path": "assets/skill-afterglow.js",
-      "sha256": "1f0a1535aafd2f33e472f71c5748fa26a2c87d520a3330f9608357b46ac1088a"
+      "sha256": "aa78ca1715b22c81c7be51278c541e3972397ffaa42473e97537a44d2e5bd927"
     },
     "materials": {
       "path": "assets/skill-materials.js",
-      "sha256": "c47c315d2f1721afad202b9651179682b7294ab8ef09482f57c50e1ef7edbd1b"
+      "sha256": "b3db54fac430f7dc8659a39507badcb4f3d232e8f8d2024e96442698e501a972"
     }
   },
   "instruction": "Apply only explicit old/new FX choices. Leave undecided skills and combat mechanics unchanged.",

@@ -38,6 +38,8 @@ PAGES = {'/': _root_page,
          '/game': 'index.html',
          # the tuner pages (PR #29/#30) keep their own routes - they are tools, not the game
          '/skillfx': 'tools/skill_fx_preview.html',
+         '/overdrive': 'tools/skill-fx-proposals/prismatic-overdrive.html',
+         '/fx': 'tools/skill-fx-proposals/prismatic-overdrive.html',
          '/damage': 'Updates/damage-floats-proposal/index.html',
          '/crit': 'Updates/crit-frame-compare/index.html',
          # the v83 RO-feel confirmation pages (proposal only - nothing in the game reads them)

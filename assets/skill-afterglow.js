@@ -7,25 +7,28 @@ const PGSkillAfterglow=(()=>{
     'wwalk','bless','iagi','asp','gloria','adren','thrust','cboost','dpois','ovthrust']);
   const path=new Set(['bowl','pierce','fireball','jup','meteor','dstr','blitz','sharp','falcon',
     'focus','soulb','sandat','vsplash','heal','cart','fdiver']);
+  const overdrive=()=>typeof PGSkillOverdrive!=='undefined'&&PGSkillOverdrive.enabled?PGSkillOverdrive:null;
+  const atCaster=id=>overdrive()?overdrive().anchor(id)==='caster':caster.has(id);
+  const onPath=id=>overdrive()?overdrive().travel(id):path.has(id);
   return {
     has:id=>catalog.has(id),life:2.2,
     create(canvas){
       const g=canvas.getContext('2d');if(!g)return null;
       const paint=PGAfterglowAnimations.create(g);
-      return {draw(effects,width,height,project,dpr=1){
+      return {draw(effects,width,height,project,dpr=1,forcedDetail=0){
         const ratio=Math.min(2,Math.max(1,dpr));
         const w=Math.max(1,Math.round(width*ratio)),h=Math.max(1,Math.round(height*ratio));
         if(canvas.width!==w)canvas.width=w;if(canvas.height!==h)canvas.height=h;
         g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,w,h);
         const active=effects.filter(f=>f.afterglow);
-        const detail=active.length>=16?.35:active.length>=8||width<760?.6:1;
+        const detail=forcedDetail|| (active.length>=16?.35:active.length>=8||width<760?.6:1);
         for(const fx of active){
           const a=project(fx.x0,0,fx.z0),b=project(fx.x1,0,fx.z1);
-          const at=caster.has(fx.id)?a:b;
-          const x=caster.has(fx.id)?fx.x0:fx.x1,z=caster.has(fx.id)?fx.z0:fx.z1;
+          const self=atCaster(fx.id),at=self?a:b;
+          const x=self?fx.x0:fx.x1,z=self?fx.z0:fx.z1;
           const top=project(x,3.05,z);
           // Single-target casts follow the monster's drawn size; area footprints retain their world scale.
-          const scale=Math.max(.01,Math.hypot(top[0]-at[0],top[1]-at[1])/120)*(fx.areaScale||1)*(caster.has(fx.id)?1:(fx.targetScale||1));
+          const scale=Math.max(.01,Math.hypot(top[0]-at[0],top[1]-at[1])/120)*(fx.areaScale||1)*(self?1:(fx.targetScale||1));
           // A projected ground seal at the caster; no sprite art is modified.
           if(fx.magic&&fx.age<.4){
             const sealColor=/Acolyte|Priest/.test(catalog.get(fx.id)?.from||'')?[246,223,164]:[159,205,244];
@@ -40,8 +43,8 @@ const PGSkillAfterglow=(()=>{
             }
             g.restore();
           }
-          const traveling=path.has(fx.id)&&Math.hypot(b[0]-a[0],b[1]-a[1])>1;
-          const anchor=caster.has(fx.id)?252:785;
+          const traveling=onPath(fx.id)&&Math.hypot(b[0]-a[0],b[1]-a[1])>1;
+          const anchor=self?252:785;
           let sx=scale,sy=0,yx=0,yy=scale,tx=at[0]-anchor*scale,ty=at[1]-500*scale;
           if(traveling){
             // Map both feet anchors onto the real flight path, including camera reversal.

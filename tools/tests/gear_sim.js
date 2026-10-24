@@ -894,7 +894,7 @@ t('a fighting pet widens the gear and ore windows, and nothing else (v75)', () =
   // Hoarded Flame (+gear chance) and Sand Tracker (+ore chance) are the only companion effects
   // that bend a drop table, and this proves they bend exactly the windows they claim: a die that
   // misses at 0% lands at +10%, and the card gate does not move with it.
-  const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], boss: false, lvl: 5, sec: F.sec, tier: F.tier, ore: true, oreCh: 0.004 };
+  const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], mapIndex: 2, boss: false, lvl: 5, sec: F.sec, tier: F.tier, ore: true, oreCh: 0.004 };
   G.S = { st: { luk: 0 }, eq: {} };
   // The field's three gear gates are 1.5 / 1.2 / 0.9 percent. A 0.98% die misses the last one...
   G.PETPASSIVE = 0;
@@ -915,7 +915,7 @@ t('a fighting pet widens the gear and ore windows, and nothing else (v75)', () =
 
 t('LUK does not touch drop odds, cards, ores or pets any more', () => {
   for (const l of [0, 99]) {
-    const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], boss: false, lvl: 5, sec: F.sec, tier: F.tier, ore: false };
+    const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], mapIndex: 2, boss: false, lvl: 5, sec: F.sec, tier: F.tier, ore: false };
     G.S = { st: { luk: l }, eq: {} };
     // A die of .008 (0.8%) clears all three gear gates (1.5/1.2/0.9%) under both builds.
     const drops = G.executeGearRoll(mob, .008);
