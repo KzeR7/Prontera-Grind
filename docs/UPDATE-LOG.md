@@ -7405,3 +7405,48 @@ The owner's second pass over v77, six notes, all built.
   available, so the aura's on-screen look is verified by geometry and scene assertions, not by a live
   screenshot.
 * **Delivery:** local changes on `arena/0a47aa5f-prontera-grind`; no merge or deployment.
+
+### 2026-10-24 — `haven-v226 mail announcements + daily roulette`
+* **User request:** add a mail system in announcement form where GMs can select an announcement with
+  a gift attached, accessible from a small icon on the main screen to the left of the minimap; and
+  add a daily reward system in spinning roulette form that refreshes every day and drops materials.
+* **What changed:**
+  * **Main-screen icons left of the minimap (`#minimapTools`):** added compact `#mailBtn` and
+    `#dailyBtn` icon buttons directly to the left of `#sideRail` / `#eclipseMapCard`, with live
+    badges (`#mailBadge` for unread announcements or unclaimed gifts, and `#dailyBadge` when today's
+    free roulette spin is ready).
+  * **Mail & Announcement system with attached gifts:** announcements (`notice`, `event`, `welcome`)
+    render as official announcement cards inside `#mailDailyModal` with sender, timestamp, `NEW`
+    status, and any attached gift (`Claim Gift` / `Claim All Gifts`). GMs can attach equipment,
+    cards, materials, or Zeny to announcements in `gm.html` (under the `Announce` tab) as well as via
+    the in-game GM announcement composer inside the Mail window.
+  * **Daily Reward Roulette:** added a 7-slice SVG spinning roulette wheel (`#dailyRouletteWheel`)
+    that refreshes daily on `trialDay()` (00:00 UTC+8) with weighted rates totalling 100%:
+    `15 × Oridecon` (33%), `15 × Elunium` (33%), `+30% Zeny Gain for 30 mins` (11%),
+    `+30% Base & Job EXP for 30 mins` (11%), `Instant Zeny Pouch (500,000 Zeny)` (7%),
+    `1 × Random Monster Card` (4%), and `1 × Refine Protection Scroll` (1%). Active 30-minute
+    roulette buffs apply on monster kills via `applyDailyKillBuffs` and show a live countdown in
+    `#dailyBuffPill` next to the minimap.
+* **How:** `POST /api/gm/player` (`action: 'announce'`) accepts optional `body.gift` (`gift` from
+  `GM_CATALOG` or `zeny`), inserts the announcement via `db.insertMessageWithId`, and queues a grant
+  carrying `messageId` and `giftLabel` (single-player via `db.insertGrant` or server-wide via
+  `db.insertMassGrants` with `batch_id = 'ann:' + msgId`). `GET /api/messages` returns `messages`
+  (unread) plus `inbox` (recent announcements paired with their gift grant state). On the client,
+  `cloudPull()` routes direct grants to `cloudApplyGrants` and announcement-linked grants to
+  `syncCloudMail()`, while `S.dailyWheel` persists `{day, spun, lastReward, totalSpins, buffs}` and
+  resets `spun`/`lastReward` when `S.dailyWheel.day !== trialDay()`.
+* **Try it:** click the **Mail** or **Daily** icon to the left of the minimap on the main screen.
+  In **Announcements & Mail**, read the welcome notice (or as a GM, compose an announcement with an
+  attached gift and click **Claim Gift**). Switch to **Daily Reward Roulette** and press **Spin
+  Roulette** to spin the 7-slice wheel for Oridecon, Elunium, 30-minute Zeny/EXP boosts, Instant Zeny
+  Pouch, a Random Monster Card, or a Refine Protection Scroll.
+* **Files touched:** `index.html`, `assets/ui/eclipse.css`, `gm.html`, `functions/_lib/db.js`,
+  `functions/api/gm/player.js`, `functions/api/messages.js`, `tools/tests/api_sim.js`,
+  `tools/tests/eclipse_ui_sim.js`, `tools/tests/shop_sim.js`, `Updates/cards-gear-audit/affix-ranges.html`,
+  `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`, and
+  this log.
+* **Checks:** `ui_sim` **64/64**, `eclipse_ui_sim` **52/52**, `api_sim` **44/44**, `gm_console_sim`
+  **12/12**, `gm_tools_sim` **14/14**, `save_load_sim` **27/27**, `cloud_sim` **52/52**, `shop_sim`
+  PASS, `publish_sim` **16/16**, `field_loop_smoke` **9/9**, `panel_layout_smoke` **42/42**,
+  `save_owner_boot_smoke` **5/5**, inline script `vm.Script` syntax check, and `git diff --check`.
+* **Delivery:** local changes on `arena/a1bdf1ae-prontera-grind`; no merge or deployment.

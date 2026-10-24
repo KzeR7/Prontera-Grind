@@ -889,7 +889,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>HORIZON HAVEN / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
 <div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Horizon <small>HAVEN</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover">&#9679; <b id="zeny">0</b> Zeny</div>
-<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
+<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="minimapTools" aria-label="Mail and daily rewards"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button><div id="dailyBuffPill" class="minimap-buff-pill" hidden></div></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
 <div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd">Speed x1</button></div><div id="wins"></div></div></div>
 <div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health"><span>HP</span> <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
 </div></div>
@@ -908,7 +908,24 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
     <button class="trial-close" data-trial="close" aria-label="Close Endless Echo">&times;</button>
   </div>
   <div id="trialBody"></div>
-</div></div><!-- The cloud conflict chooser. Two saves exist (this device and the account) and only the player can
+</div></div>
+<div id="mailDailyModal" role="dialog" aria-modal="true" aria-labelledby="mailDailyTitle">
+  <div class="login-card trial-card mail-daily-card">
+    <div class="trial-head mail-daily-head">
+      <span class="trial-seal" id="mailDailySeal" aria-hidden="true">✉</span>
+      <div class="trial-brand">
+        <b id="mailDailyTitle">Announcements &amp; Mail</b>
+        <small id="mailDailySub">OFFICIAL NOTICES, EVENT GIFTS &amp; DAILY ROULETTE</small>
+      </div>
+      <button type="button" class="trial-close" data-a="closemaildaily" aria-label="Close Mail and Daily Rewards">&times;</button>
+    </div>
+    <div class="mail-daily-tabs" role="tablist" aria-label="Mail and Daily Roulette tabs">
+      <button type="button" role="tab" id="tabBtnMail" data-a="maildailytab" data-v="mail" aria-selected="true" class="on">📣 Announcements &amp; Mail <span id="tabMailCount" class="md-pill" hidden>0</span></button>
+      <button type="button" role="tab" id="tabBtnDaily" data-a="maildailytab" data-v="daily" aria-selected="false">🎡 Daily Material Roulette <span id="tabDailyReady" class="md-pill is-gold" hidden>SPIN!</span></button>
+    </div>
+    <div id="mailDailyBody" class="mail-daily-body"></div>
+  </div>
+</div><!-- The cloud conflict chooser. Two saves exist (this device and the account) and only the player can
      say which one is real, so it is a three-way question, not a yes/no: keep this device, keep the
      cloud, or decide later. Every path keeps both copies, so no answer can lose progress. -->
 <div id="conflict" style="display:none;position:fixed;inset:0;background:rgba(20,14,8,.72);z-index:60;align-items:center;justify-content:center"><div class="login-card" style="max-width:560px">
@@ -1202,7 +1219,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-24 haven-v225 plaza walk speed + level auras';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-24 haven-v226 mail announcements + daily roulette';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3139,7 +3156,7 @@ function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},labels={damage:'
  return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*ascUpgradeScale(k,rank)).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
-const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
+const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,lastReward:null,totalSpins:0},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -3198,6 +3215,14 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   f.trial.day=typeof f.trial.day==='string'?f.trial.day.slice(0,10):trialDay();
   f.trial.used=Math.max(0,Math.min(TRIAL_RANKED_PER_DAY,Math.floor(num_(f.trial.used,0))));
   f.trial.best=Math.max(0,num_(f.trial.best,0));f.trial.runs=Math.max(0,Math.floor(num_(f.trial.runs,0)));
+  if(!f.dailyWheel||typeof f.dailyWheel!=='object'||Array.isArray(f.dailyWheel))f.dailyWheel={day:trialDay(),spun:0,lastReward:null,totalSpins:0,buffs:{zenyUntil:0,expUntil:0}};
+  f.dailyWheel.day=typeof f.dailyWheel.day==='string'?f.dailyWheel.day.slice(0,10):trialDay();
+  f.dailyWheel.spun=Math.max(0,Math.min(1,Math.floor(num_(f.dailyWheel.spun,0))));
+  f.dailyWheel.totalSpins=Math.max(0,Math.floor(num_(f.dailyWheel.totalSpins,0)));
+  f.dailyWheel.buffs={zenyUntil:Math.max(0,Math.floor(num_(f.dailyWheel.buffs?.zenyUntil,0))),expUntil:Math.max(0,Math.floor(num_(f.dailyWheel.buffs?.expUntil,0)))};
+  if(f.dailyWheel.day!==trialDay()){f.dailyWheel.day=trialDay();f.dailyWheel.spun=0;f.dailyWheel.lastReward=null;}
+  if(!Array.isArray(f.mail))f.mail=[];else f.mail=f.mail.filter(m=>m&&typeof m==='object'&&typeof m.body==='string').slice(0,50);
+  f.mailSeeded=f.mailSeeded===true;
   f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
   while(f.prog.length<MAPS.length)f.prog.push(1);
@@ -3622,16 +3647,22 @@ async function cloudRefresh(){
 // overwrite what is being played. Called at login and every few minutes after it.
 async function cloudPull(){
   if(!CLOUD.on||CLOUD.paused)return;
+  let mailGrants=[];
   try{const g=await (await cloudFetch('/grants')).json();
     // another account's gifts are never applied to this tab's character
     if(!cloudOwnedBy(g,CLOUD.user)){cloudAccountMismatch(g.owner);return}
-    if(g.grants&&g.grants.length)cloudApplyGrants(g.grants)}catch(e){}
+    if(g.grants&&g.grants.length){
+      const direct=g.grants.filter(x=>!(x&&x.payload&&Number.isInteger(Number(x.payload.messageId))&&Number(x.payload.messageId)>0));
+      mailGrants=g.grants.filter(x=>x&&x.payload&&Number.isInteger(Number(x.payload.messageId))&&Number(x.payload.messageId)>0);
+      if(direct.length)cloudApplyGrants(direct);
+    }}catch(e){}
   try{
     const m=await (await cloudFetch('/messages')).json();
     if(m.messages&&m.messages.length){
       for(const x of m.messages)log('📣 '+(x.from?'GM '+x.from+': ':'')+x.body,x.kind==='event'?'r4':'r1','cloud');
       cloudFetch('/messages',{method:'POST',body:JSON.stringify({ids:m.messages.map(x=>x.id)})}).catch(()=>{});
     }
+    if(typeof syncCloudMail==='function')syncCloudMail(m,mailGrants);
   }catch(e){}
 }
 
@@ -5213,7 +5244,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){if(mob===JOB_RITE.enemy&&mob.hp<=0&&JOB_RITE.owner===S&&JOB_RITE.user===currentUser){if(!JOB_RITE.outcome){if(jobRiteLeft()>0)showJobRiteResult(true,'victory');else showJobRiteResult(false,'timeout');}mobs=[];mob=null;}else mob=keep;return;}
   const g=gx();S.kills++;recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
   const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100)*nmZenyRoll(mob))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);gainAscension(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));recordFarmIncome(xp,z,Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));questEvent('hunt',1,mob.n);questEvent('maps',1,S.mp);if(S.lvl>10)questEvent('nightmare');
-  addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny',{title:mob.n+' defeated',label:'+'+xp.toLocaleString()+' EXP',zeny:z});
+  addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');if(typeof applyDailyKillBuffs==='function')applyDailyKillBuffs(z,xp,mob);log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny',{title:mob.n+' defeated',label:'+'+xp.toLocaleString()+' EXP',zeny:z});
   // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
   // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
   // what it is for).
@@ -6116,6 +6147,7 @@ const V={
     <div class="hd" style="margin-top:10px">Skill accounting test controls</div><small>Max the current class line, then use the normal Auto-allocate all skills button or let GM do both steps.</small><div class="row"><button data-a="gmskill" data-v="maxjobs">Max current line jobs</button><button data-a="gmskill" data-v="maxallocate">Max jobs + auto allocate</button><button data-a="gmskill" data-v="reset">Reset current line skills</button></div>
     <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmbond" data-v="1">+1 duplicate on the selected pet (Bond)</button><button data-a="gmbond" data-v="5">+5 duplicates</button></div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>
     <div class="hd" style="margin-top:10px">Ascension test controls</div><small>Stats levels are account-wide; skill levels belong to the current class. Spend the points in Character → Ascension stats and Skills → Ascension.</small><div class="row"><button data-a="gmascstats" data-v="max">Max Stats Ascension 50</button><button data-a="gmascstats" data-v="reset">Reset Stats Ascension</button><button data-a="gmascskills" data-v="max">Max Skill Ascension 30</button><button data-a="gmascskills" data-v="reset">Reset Skill Ascension</button></div>
+    <div class="hd" style="margin-top:10px">Mail &amp; Daily Roulette controls</div><small>Open the announcement Mail box (with GM announcement + gift composer) or reset today's Daily Material Roulette spin.</small><div class="row"><button data-a="openmail">Open Mail &amp; Announcements</button><button data-a="opendaily">Open Daily Roulette</button><button data-a="gmdailyreset">Reset daily roulette spin</button></div>
     <div class="hd" style="margin-top:10px">Level test controls</div><small>Set Base level and clear Base EXP. Unspent points are recalculated; allocated stats, gear and jobs stay untouched.</small><div class="row">${[1,99,120].map(n=>`<button data-a="gmresetlv" data-v="${n}">Reset Base Lv → ${n}</button>`).join('')}</div>`}};
 // v90: the Black Market panel. Locked until Base Lv 100; ore is bought one at a time and a reforge is
 // offered for every worn piece that has an affix.
@@ -6809,7 +6841,234 @@ const gotoField=(m,l)=>{
   // instead of appearing in the middle of it. The roam logic will then walk them forward.
   if(walk)startAstralJourney(from,l);else if(m>=10){pl.x=0;pl.z=Z1-1.5;pl.wz=Z1-1.5;pl.wx=null;}
   qRefresh();ui();save()};
+// ---------- Mail & Announcements + Daily Reward Roulette ----------
+const DAILY_WHEEL_SEGMENTS=[
+  {id:'ori',resource:'ori',amount:15,badge:'×15',rate:33,label:'15 × Oridecon',short:'Oridecon',desc:'Weapon refinement ore (33%)',weight:33,color:'#9c3b16',colorInner:'#42160a',accent:'#ffd08a',tier:'common',icon:'⛏'},
+  {id:'elu',resource:'elu',amount:15,badge:'×15',rate:33,label:'15 × Elunium',short:'Elunium',desc:'Armor refinement ore (33%)',weight:33,color:'#1b4f8c',colorInner:'#0d213d',accent:'#9ad4ff',tier:'common',icon:'🛡'},
+  {id:'buff_zeny',buff:'zeny',durationMin:30,pct:30,badge:'+30%',rate:11,label:'+30% Zeny Gain for 30 mins',short:'+30% Zeny',desc:'30-minute monster Zeny boost (11%)',weight:11,color:'#8f6510',colorInner:'#382605',accent:'#ffe885',tier:'uncommon',icon:'💰'},
+  {id:'buff_exp',buff:'exp',durationMin:30,pct:30,badge:'+30%',rate:11,label:'+30% Base & Job EXP for 30 mins',short:'+30% EXP',desc:'30-minute Base & Job EXP boost (11%)',weight:11,color:'#146c52',colorInner:'#092b21',accent:'#88f7cb',tier:'uncommon',icon:'⚡'},
+  {id:'zeny_pouch',zeny:500000,badge:'500K',rate:7,label:'Instant Zeny Pouch (500,000 Zeny)',short:'Zeny Pouch',desc:'Instant 500,000 Zeny (7%)',weight:7,color:'#552b94',colorInner:'#21103d',accent:'#dec4ff',tier:'rare',icon:'🪙'},
+  {id:'random_card',randomCard:true,amount:1,badge:'×1 Card',rate:4,label:'1 × Random Monster Card',short:'Monster Card',desc:'Random non-boss Monster Card (4%)',weight:4,color:'#8a225a',colorInner:'#360c24',accent:'#ffb8df',tier:'epic',icon:'🃏'},
+  {id:'refineScrolls',resource:'refineScrolls',amount:1,badge:'×1 Scroll',rate:1,label:'1 × Refine Protection Scroll',short:'Refine Scroll',desc:'Prevents +5..+10 refine loss (1%)',weight:1,color:'#b86b11',colorInner:'#472404',accent:'#fff3b0',tier:'jackpot',icon:'📜'}
+];
+function dailyRouletteCardPool(){
+  if(typeof CARD_CATALOG!=='undefined'&&Array.isArray(CARD_CATALOG)&&CARD_CATALOG.length){const nb=CARD_CATALOG.filter(c=>!c.bossCard&&!c.nightmare);if(nb.length)return nb;}
+  return[{n:'Poring Card',s:'luk',v:1,g:0,bossCard:false,nightmare:false}];
+}
+const MAIL_GIFT_OPTIONS=[
+  {key:'none',label:'No gift (announcement only)',kind:'none',defaultAmt:1},
+  {key:'ori',label:'Oridecon (Weapon Ore)',kind:'gift',resource:'ori',catalogId:'ori',defaultAmt:20},
+  {key:'elu',label:'Elunium (Armor Ore)',kind:'gift',resource:'elu',catalogId:'elu',defaultAmt:20},
+  {key:'shards',label:'Echo Shards',kind:'gift',resource:'shards',catalogId:'shards',defaultAmt:150},
+  {key:'nmat0',label:'Void Core (Nightmare Material)',kind:'gift',resource:'nmat0',catalogId:'nmat0',defaultAmt:5},
+  {key:'refineScrolls',label:'Refine Protection Scroll',kind:'gift',resource:'refineScrolls',catalogId:'refineScrolls',defaultAmt:2},
+  {key:'mythicScrolls',label:'Mythic Protection Scroll',kind:'gift',resource:'mythicScrolls',catalogId:'mythicScrolls',defaultAmt:1},
+  {key:'ascMat0',label:'Astral Shard (Ascension)',kind:'gift',resource:'ascMat0',catalogId:'ascMat0',defaultAmt:10},
+  {key:'ascMat1',label:'Primal Catalyst (Ascension)',kind:'gift',resource:'ascMat1',catalogId:'ascMat1',defaultAmt:10},
+  {key:'ascMat2',label:"Valkyrie's Sigil (Mythic)",kind:'gift',resource:'ascMat2',catalogId:'ascMat2',defaultAmt:3},
+  {key:'zeny',label:'Zeny',kind:'zeny',defaultAmt:500000}
+];
+let mailDailyMode='mail',dailyWheelAngle=0,dailyWheelSpinning=false,dailyWheelTimer=null;
+function dailyWheelState(){
+  if(!S)return{day:trialDay(),spun:0,lastReward:null,totalSpins:0,buffs:{zenyUntil:0,expUntil:0}};
+  const today=trialDay();
+  if(!S.dailyWheel||typeof S.dailyWheel!=='object'||Array.isArray(S.dailyWheel))S.dailyWheel={day:today,spun:0,lastReward:null,totalSpins:0,buffs:{zenyUntil:0,expUntil:0}};
+  if(!S.dailyWheel.buffs||typeof S.dailyWheel.buffs!=='object'||Array.isArray(S.dailyWheel.buffs))S.dailyWheel.buffs={zenyUntil:0,expUntil:0};
+  if(S.dailyWheel.day!==today){S.dailyWheel.day=today;S.dailyWheel.spun=0;S.dailyWheel.lastReward=null;}
+  return S.dailyWheel;
+}
+function dailyBuffLeftMs(kind){if(!S)return 0;const st=dailyWheelState(),u=kind==='zeny'?Number(st.buffs?.zenyUntil||0):kind==='exp'?Number(st.buffs?.expUntil||0):0;return Math.max(0,u-Date.now());}
+function dailyBuffActive(kind){return dailyBuffLeftMs(kind)>0;}
+function formatDailyBuffTimer(ms){const sec=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(sec/60),s=sec%60;return `${m}:${String(s).padStart(2,'0')}`;}
+function applyDailyKillBuffs(baseZ,baseXp,targetMob){
+  if(!S)return;
+  if(dailyBuffActive('zeny')&&baseZ>0){const bz=Math.max(1,Math.round(baseZ*0.30));earnZeny(bz);if(typeof recordFarmIncome==='function')recordFarmIncome(0,bz,0);}
+  if(dailyBuffActive('exp')&&baseXp>0){const bx=Math.max(1,Math.round(baseXp*0.30)),bj0=targetMob?Math.round(Math.round(targetMob.exp*0.7)*expRate()*(1+petPassive('exp')/100)):Math.round(baseXp*0.7),bj=Math.max(1,Math.round(bj0*0.30));earnExp(bx);if(typeof gainAscension==='function')gainAscension(bx);addJob(bj);if(typeof recordFarmIncome==='function')recordFarmIncome(bx,0,bj);}
+}
+function dailySpinsLeft(){return Math.max(0,1-(dailyWheelState().spun||0));}
+function dailyResetCountdownText(){const now=Date.now()+8*3600000,next=Math.floor(now/86400000+1)*86400000,rem=Math.max(0,Math.floor((next-now)/1000));return `${Math.floor(rem/3600)}h ${String(Math.floor((rem%3600)/60)).padStart(2,'0')}m`;}
+function ensureMailState(){
+  if(!S)return[];if(!Array.isArray(S.mail))S.mail=[];
+  if(!S.mailSeeded&&S.mail.length===0){S.mailSeeded=true;S.mail.push({id:'welcome-1',kind:'welcome',from:'Horizon Haven',at:Date.now(),body:'Welcome to Horizon Haven! Official announcements, event notices, and GM gifts are delivered here in announcement form. Spin the Daily Reward Roulette every day for free ores, boosts, Zeny, cards, and scrolls!',read:false,gift:null});}
+  return S.mail;
+}
+function formatMailGiftLabel(gift){
+  if(!gift)return'';if(gift.label)return String(gift.label);
+  const p=gift.payload||{};if(p.giftLabel)return String(p.giftLabel);
+  const amt=Math.max(1,Math.floor(Number(p.amount)||1));
+  if(gift.kind==='zeny')return amt.toLocaleString()+' Zeny';
+  if(p.resource){const opt=MAIL_GIFT_OPTIONS.find(x=>x.resource===p.resource);return amt.toLocaleString()+' × '+(opt?opt.label.replace(/\s*\(.*\)$/,''):p.resource);}
+  if(p.item)return amt.toLocaleString()+' × '+(p.item.name||p.item.n||'Item');
+  return 'Attached Gift';
+}
+function unreadMailCount(){return S?ensureMailState().filter(m=>!m.read||(m.gift&&!m.gift.claimed)).length:0;}
+function unclaimedMailGiftCount(){return S?ensureMailState().filter(m=>m.gift&&!m.gift.claimed).length:0;}
+function syncCloudMail(m,mailGrants=[]){
+  if(!S||!m)return;
+  const list=ensureMailState(),byId=new Map(list.map(x=>[String(x.id),x])),grantByMsg=new Map();
+  for(const g of mailGrants||[]){const mid=Number(g?.payload?.messageId);if(Number.isInteger(mid)&&mid>0&&!grantByMsg.has(mid))grantByMsg.set(mid,g);}
+  const unreadSet=new Set((m.messages||[]).map(x=>Number(x.id))),source=Array.isArray(m.inbox)&&m.inbox.length?m.inbox:(m.messages||[]);
+  let changed=false;
+  for(const row of source){
+    const key='srv:'+row.id,g=grantByMsg.get(Number(row.id))||row.gift||null;
+    let giftObj=null;
+    if(g){const gid=g.grantId??g.id??null,rec=gid!=null&&Array.isArray(S.gmReceipts)&&S.gmReceipts.includes(gid);giftObj={grantId:gid,kind:g.kind||'gift',payload:g.payload||{},label:g.label||g.payload?.giftLabel||formatMailGiftLabel(g),claimed:!!(g.claimed||rec)};}
+    const ex=byId.get(key);
+    if(ex){if(giftObj&&!ex.gift){ex.gift=giftObj;changed=true;}else if(giftObj&&ex.gift&&giftObj.claimed&&!ex.gift.claimed){ex.gift.claimed=true;changed=true;}}
+    else{const entry={id:key,serverId:row.id,kind:row.kind||'notice',from:row.from||'GM',at:row.at||Date.now(),body:String(row.body||''),read:unreadSet.has(Number(row.id))?false:!!row.read,gift:giftObj};list.unshift(entry);byId.set(key,entry);changed=true;}
+  }
+  if(list.length>50)list.length=50;
+  if(changed){try{save()}catch(e){}}
+  updateMailDailyHud();if(typeof $==='function'&&$('mailDailyModal')?.classList.contains('on'))renderMailDailyModal();
+}
+function claimSingleMailEntry(mail){
+  if(!mail||!mail.gift||mail.gift.claimed)return false;
+  const g=mail.gift,p=g.payload||{};if(!Array.isArray(S.gmReceipts))S.gmReceipts=[];
+  if(!(g.grantId!=null&&S.gmReceipts.includes(g.grantId))){
+    if(g.kind==='zeny')S.zeny=Math.max(0,(Number(S.zeny)||0)+Math.max(1,Math.floor(Number(p.amount)||0)));
+    else gmApplyGift(p);
+    if(g.grantId!=null)S.gmReceipts.push(g.grantId);
+  }
+  g.claimed=true;mail.read=true;log('🎁 Announcement gift claimed: '+formatMailGiftLabel(g)+'!','r4','loot');
+  if(g.grantId!=null&&typeof CLOUD!=='undefined'&&CLOUD.on){const gid=g.grantId;cloudPush(true).then(res=>{if(res==='ok')return cloudFetch('/grants',{method:'POST',body:JSON.stringify({ids:[gid]})})}).catch(()=>{});}
+  return true;
+}
+function claimMailGift(mailId){
+  if(!S)return false;const mail=ensureMailState().find(x=>String(x.id)===String(mailId));
+  if(!mail||!mail.gift||mail.gift.claimed)return false;
+  try{if(claimSingleMailEntry(mail)){save();ui();renderMailDailyModal();return true;}}catch(err){log('Could not claim gift: '+err.message,'r0','cloud');}
+  return false;
+}
+function claimAllMailGifts(){
+  if(!S)return 0;let count=0;
+  for(const mail of ensureMailState())if(mail.gift&&!mail.gift.claimed){try{if(claimSingleMailEntry(mail))count++;}catch(err){log('Could not claim gift: '+err.message,'r0','cloud');break;}}
+  if(count>0){save();ui();renderMailDailyModal();}
+  return count;
+}
+function markAllMailRead(){if(!S)return;let ch=false;for(const m of ensureMailState())if(!m.read){m.read=true;ch=true;}if(ch){save();updateMailDailyHud();renderMailDailyModal();}}
+async function refreshCloudMail(){if(typeof CLOUD!=='undefined'&&CLOUD.on){await cloudPull();renderMailDailyModal();}}
+async function gmSendMailAnnouncement(){
+  if(!S||!S.gm)return false;
+  const bodyEl=typeof $==='function'?$('gmMailBody'):null,kindEl=typeof $==='function'?$('gmMailKind'):null,giftEl=typeof $==='function'?$('gmMailGift'):null,amtEl=typeof $==='function'?$('gmMailAmt'):null,allEl=typeof $==='function'?$('gmMailToAll'):null;
+  const text=String(bodyEl?.value||'').trim();if(!text){log('Write an announcement message first.','r0','misc');return false;}
+  const kind=['notice','event','welcome'].includes(kindEl?.value)?kindEl.value:'notice',opt=MAIL_GIFT_OPTIONS.find(x=>x.key===(giftEl?.value||'none'))||MAIL_GIFT_OPTIONS[0];
+  const amount=Math.max(1,Math.min(1000000000,Math.floor(Number(amtEl?.value)||opt.defaultAmt||1))),toAll=allEl?!!allEl.checked:true;
+  if(typeof CLOUD!=='undefined'&&CLOUD.on&&CLOUD.gm){
+    try{const req={action:'announce',body:text,kind,toAll};if(opt.kind!=='none')req.gift={kind:opt.kind,catalogId:opt.catalogId,amount};const res=await cloudFetch('/gm/player',{method:'POST',body:JSON.stringify(req)}),data=await res.json();if(res.ok&&data.ok){log('📣 Server announcement sent'+(data.giftLabel?' with '+data.giftLabel:'')+'.','r4','cloud');if(bodyEl)bodyEl.value='';await cloudPull();renderMailDailyModal();return true;}}catch(e){}
+  }
+  const list=ensureMailState();let giftObj=null;
+  if(opt.kind==='zeny')giftObj={grantId:null,kind:'zeny',payload:{amount},label:amount.toLocaleString()+' Zeny',claimed:false};
+  else if(opt.kind==='gift')giftObj={grantId:null,kind:'gift',payload:{resource:opt.resource,amount},label:amount.toLocaleString()+' × '+opt.label.replace(/\s*\(.*\)$/,''),claimed:false};
+  list.unshift({id:'local-'+Date.now()+'-'+Math.floor(Math.random()*1000),kind,from:currentUser||'GM',at:Date.now(),body:text,read:false,gift:giftObj});
+  if(list.length>50)list.length=50;if(bodyEl)bodyEl.value='';
+  log('📣 Announcement posted'+(giftObj?' (+ '+giftObj.label+')':'')+'.','r4','misc');save();updateMailDailyHud();renderMailDailyModal();return true;
+}
+function pickDailyWheelIndex(forcedIdx){
+  if(Number.isInteger(forcedIdx)&&forcedIdx>=0&&forcedIdx<DAILY_WHEEL_SEGMENTS.length)return forcedIdx;
+  let roll=Math.random()*DAILY_WHEEL_SEGMENTS.reduce((s,x)=>s+(x.weight||1),0);
+  for(let i=0;i<DAILY_WHEEL_SEGMENTS.length;i++){roll-=DAILY_WHEEL_SEGMENTS[i].weight||1;if(roll<=0)return i;}
+  return 0;
+}
+function spinDailyRoulette(forcedIdx){
+  if(!S||dailyWheelSpinning)return false;
+  const st=dailyWheelState();
+  if(dailySpinsLeft()<=0){log("You have already used today's free roulette spin. Refreshes daily at 00:00 UTC+8!",'r0','misc');return false;}
+  const winIdx=pickDailyWheelIndex(forcedIdx!==undefined&&forcedIdx!==''&&forcedIdx!==null?Number(forcedIdx):undefined);
+  const seg=DAILY_WHEEL_SEGMENTS[winIdx]||DAILY_WHEEL_SEGMENTS[0];
+  let rewardLabel=seg.label,rewardDetail='Delivered to your inventory!';
+  if(seg.resource){gmApplyGift({resource:seg.resource,amount:seg.amount});rewardDetail='Delivered to your material inventory!';}
+  else if(seg.buff==='zeny'){st.buffs.zenyUntil=Math.max(Date.now(),Number(st.buffs?.zenyUntil||0))+(seg.durationMin||30)*60000;rewardDetail='+30% Zeny Gain active for 30 minutes!';}
+  else if(seg.buff==='exp'){st.buffs.expUntil=Math.max(Date.now(),Number(st.buffs?.expUntil||0))+(seg.durationMin||30)*60000;rewardDetail='+30% Base & Job EXP active for 30 minutes!';}
+  else if(seg.zeny){earnZeny(seg.zeny);rewardDetail='+'+Number(seg.zeny).toLocaleString()+' Zeny added to your pouch!';}
+  else if(seg.randomCard){const pool=dailyRouletteCardPool(),card=newCard(pool[Math.floor(Math.random()*pool.length)]);if(!Array.isArray(S.cards))S.cards=[];S.cards.push(card);rewardLabel=`1 × Random Monster Card (${card.n})`;rewardDetail=`${card.n} added to your Cards collection!`;}
+  st.spun=1;st.totalSpins=(st.totalSpins||0)+1;
+  st.lastReward={id:seg.id,index:winIdx,label:rewardLabel,detail:rewardDetail,resource:seg.resource||null,amount:seg.amount||1,at:Date.now()};
+  log('🎡 Daily Roulette: won '+rewardLabel+'!','r4','loot');save();updateMailDailyHud();
+  const prevAngle=dailyWheelAngle,sliceDeg=360/DAILY_WHEEL_SEGMENTS.length,targetMod=((360-winIdx*sliceDeg)%360+360)%360,currentMod=((dailyWheelAngle%360)+360)%360;
+  dailyWheelAngle=dailyWheelAngle+360*5+((targetMod-currentMod+360)%360);dailyWheelSpinning=false;ui();renderMailDailyModal(prevAngle);
+  if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>{const rotor=typeof $==='function'?$('rouletteWheelRotor'):null;if(rotor){rotor.getBoundingClientRect();rotor.style.transition='transform 2.6s cubic-bezier(0.12, 0.82, 0.16, 1)';rotor.style.transform=`rotate(${dailyWheelAngle}deg)`;}});
+  return true;
+}
+function gmResetDailyRoulette(){if(!S||!S.gm)return;const st=dailyWheelState();st.spun=0;st.lastReward=null;save();log('🛠 GM: Daily Roulette spin reset for today.','r1','misc');ui();renderMailDailyModal();}
+function renderDailyRouletteWheelSvg(initialAngle=dailyWheelAngle){
+  const cx=140,cy=140,r=116,n=DAILY_WHEEL_SEGMENTS.length,sliceDeg=360/n,halfDeg=sliceDeg/2;
+  const defs=DAILY_WHEEL_SEGMENTS.map((seg,i)=>`<radialGradient id="rwSlice${i}" cx="50%" cy="50%" r="65%"><stop offset="0%" stop-color="${seg.colorInner||'#1a1426'}"/><stop offset="58%" stop-color="${seg.color}"/><stop offset="100%" stop-color="${seg.colorInner||'#140f1e'}"/></radialGradient>`).join('');
+  const slices=DAILY_WHEEL_SEGMENTS.map((seg,i)=>{
+    const cDeg=i*sliceDeg,a1=((cDeg-halfDeg-90)*Math.PI)/180,a2=((cDeg+halfDeg-90)*Math.PI)/180,x1=(cx+r*Math.cos(a1)).toFixed(2),y1=(cy+r*Math.sin(a1)).toFixed(2),x2=(cx+r*Math.cos(a2)).toFixed(2),y2=(cy+r*Math.sin(a2)).toFixed(2),bTxt=seg.badge||(seg.amount?`×${seg.amount}`:'');
+    return `<g class="wheel-slice" data-slice="${i}"><path d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z" fill="url(#rwSlice${i})" stroke="url(#rwRimGrad)" stroke-width="1.6"/><g transform="rotate(${cDeg.toFixed(2)} ${cx} ${cy})"><circle cx="${cx}" cy="46" r="11.5" fill="rgba(12,9,20,0.42)" stroke="${seg.accent}" stroke-opacity="0.45" stroke-width="1"/><text x="${cx}" y="50.5" text-anchor="middle" fill="#fff9e6" font-size="14" font-weight="800">${seg.icon}</text><text x="${cx}" y="68" text-anchor="middle" fill="${seg.accent}" font-size="10.2" font-weight="900">${esc(bTxt)}</text><text x="${cx}" y="80" text-anchor="middle" fill="#fbf3dc" font-size="8.2" font-weight="700">${esc(seg.short)}</text><text x="${cx}" y="91.5" text-anchor="middle" fill="rgba(255,236,185,0.88)" font-size="7.2" font-weight="800">${seg.rate??seg.weight}%</text></g></g>`;
+  }).join('');
+  const pegs=Array.from({length:n*2},(_,i)=>{const a=((i*(180/n)-90)*Math.PI)/180;return `<circle cx="${(cx+123.5*Math.cos(a)).toFixed(2)}" cy="${(cy+123.5*Math.sin(a)).toFixed(2)}" r="${i%2===0?3.4:2.3}" fill="url(#rwPegGrad)" stroke="#4a2e08" stroke-width="0.9"/>`;}).join('');
+  return `<svg id="dailyRouletteWheel" class="roulette-svg" viewBox="0 0 280 280" role="img" aria-label="Daily Reward Roulette Wheel"><defs><linearGradient id="rwRimGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fff0b3"/><stop offset="35%" stop-color="#e3b655"/><stop offset="70%" stop-color="#9e6d1a"/><stop offset="100%" stop-color="#f7d784"/></linearGradient><radialGradient id="rwPegGrad" cx="35%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#ffe58f"/><stop offset="100%" stop-color="#b57c1e"/></radialGradient><radialGradient id="rwHubGrad" cx="38%" cy="35%" r="68%"><stop offset="0%" stop-color="#3c2a56"/><stop offset="65%" stop-color="#1d142b"/><stop offset="100%" stop-color="#0f0a18"/></radialGradient>${defs}</defs><circle cx="140" cy="140" r="134" fill="#120d1d" stroke="url(#rwRimGrad)" stroke-width="3.5"/><circle cx="140" cy="140" r="123.5" fill="none" stroke="rgba(255,223,142,0.28)" stroke-width="6"/><g id="rouletteWheelRotor" style="transform-origin:140px 140px;transform:rotate(${initialAngle}deg);transition:transform 2.6s cubic-bezier(0.12, 0.82, 0.16, 1)">${slices}<circle cx="140" cy="140" r="106" fill="none" stroke="rgba(255,235,179,0.22)" stroke-width="1" stroke-dasharray="3 3"/><circle cx="140" cy="140" r="34" fill="none" stroke="rgba(255,224,142,0.35)" stroke-width="1.2"/></g>${pegs}<circle cx="140" cy="140" r="28" fill="url(#rwHubGrad)" stroke="url(#rwRimGrad)" stroke-width="3"/><circle cx="140" cy="140" r="21" fill="none" stroke="rgba(255,228,158,0.45)" stroke-width="1"/><polygon points="140,123 144,136 157,140 144,144 140,157 136,144 123,140 136,136" fill="url(#rwRimGrad)"/><circle cx="140" cy="140" r="4.2" fill="#fff8dc"/></svg>`;
+}
+function renderDailyRouletteView(initialAngle=dailyWheelAngle){
+  const st=dailyWheelState(),spinsLeft=dailySpinsLeft(),zenyLeft=dailyBuffLeftMs('zeny'),expLeft=dailyBuffLeftMs('exp');
+  const stock=[['Oridecon',safeCount(S.ore?.ori).toLocaleString()],['Elunium',safeCount(S.ore?.elu).toLocaleString()],['Refine Scroll',safeCount(S.refineScrolls).toLocaleString()],['Zeny',Math.floor(S.zeny||0).toLocaleString()],['Monster Cards',(Array.isArray(S.cards)?S.cards.length:0).toLocaleString()],['Zeny Buff',zenyLeft>0?`+30% (${formatDailyBuffTimer(zenyLeft)})`:'Inactive'],['EXP Buff',expLeft>0?`+30% (${formatDailyBuffTimer(expLeft)})`:'Inactive']];
+  return `<div class="roulette-banner"><div><small>DAILY REWARD ROULETTE · ${esc(st.day)}</small><b>${spinsLeft>0?'1 Free Spin Available Today':'Today\'s Spin Claimed'}</b></div><span class="roulette-reset-clock" title="Resets every day at 00:00 UTC+8">⟳ Refreshes daily · ${dailyResetCountdownText()}</span></div><div class="roulette-layout"><div class="roulette-wheel-col"><div class="roulette-stage"><div class="roulette-pointer" aria-hidden="true"><svg viewBox="0 0 36 32" width="32" height="28"><polygon points="18,30 4,6 18,12 32,6" fill="#f7d274" stroke="#4a2e08" stroke-width="2" stroke-linejoin="round"/><circle cx="18" cy="9" r="3.5" fill="#fff8dc" stroke="#8a5a14" stroke-width="1.2"/></svg></div>${renderDailyRouletteWheelSvg(initialAngle)}</div><div id="dailySpinStatus" class="roulette-status" role="status" aria-live="polite">${st.lastReward?`<div class="roulette-won-banner"><small>TODAY'S REWARD WON</small><b>🎉 ${esc(st.lastReward.label)}</b><span>${esc(st.lastReward.detail||'Delivered to your inventory!')}</span></div>`:`<b>Spin for Ores, 30-Min Boosts, Zeny, Cards &amp; Scrolls!</b><span>Refreshes every day at 00:00 UTC+8.</span>`}</div><div class="roulette-actions"><button type="button" id="dailySpinBtn" data-a="spindaily" class="eclipse-primary roulette-spin-btn" ${spinsLeft<=0||dailyWheelSpinning?'disabled':''}>${dailyWheelSpinning?'🎡 Spinning...':spinsLeft>0?'🎡 Spin Roulette (Free Daily Spin)':'✓ Spun Today · Refreshes Tomorrow'}</button>${S.gm?`<button type="button" data-a="gmdailyreset" class="roulette-gm-reset">🛠 GM: Reset Spin</button>`:''}</div></div><div class="roulette-prizes-col"><div class="roulette-section-title">ROULETTE REWARD POOL &amp; DROP RATES</div><div class="roulette-prize-grid">${DAILY_WHEEL_SEGMENTS.map((seg,i)=>`<div class="roulette-prize-item tier-${esc(seg.tier||'common')}${st.lastReward&&st.lastReward.index===i?' is-won':''}" data-wheel-prize="${esc(seg.id)}" data-wheel-rate="${seg.rate??seg.weight}"><span class="rp-icon" style="background:linear-gradient(145deg,${seg.color},${seg.colorInner||seg.color});color:${seg.accent};border-color:${seg.accent}55">${seg.icon}</span><div class="rp-copy"><b>${esc(seg.label)}</b><small>${esc(seg.desc)}</small></div><span class="rp-rate-tag" style="color:${seg.accent};border-color:${seg.accent}44">${seg.rate??seg.weight}%</span>${st.lastReward&&st.lastReward.index===i?'<span class="rp-won-tag">WON</span>':''}</div>`).join('')}</div><div class="roulette-section-title" style="margin-top:10px">YOUR RESERVES &amp; ACTIVE BUFFS</div><div class="roulette-mat-stock">${stock.map(([name,val])=>`<div class="rm-cell"><small>${esc(name)}</small><b>${esc(String(val))}</b></div>`).join('')}</div></div></div>`;
+}
+function renderMailView(){
+  const list=ensureMailState(),unclaimed=unclaimedMailGiftCount(),unread=unreadMailCount();
+  const gmComposer=S.gm?`<details class="gm-mail-composer" data-ui-disclosure="gm-mail-composer" open><summary>🛠 GM: Send Announcement &amp; Attach Gift</summary><div class="gm-mail-form"><textarea id="gmMailBody" rows="2" placeholder="Write an official announcement or event notice..."></textarea><div class="gm-mail-controls"><label>Type <select id="gmMailKind"><option value="notice">Notice</option><option value="event">Event</option><option value="welcome">Welcome</option></select></label><label>Attach Gift <select id="gmMailGift">${MAIL_GIFT_OPTIONS.map(o=>`<option value="${esc(o.key)}">${esc(o.label)}</option>`).join('')}</select></label><label>Quantity <input id="gmMailAmt" type="number" min="1" max="1000000000" step="1" value="20"></label><label class="gm-mail-check"><input type="checkbox" id="gmMailToAll" checked> To everyone</label><button type="button" data-a="gmcomposemail" class="eclipse-primary">📣 Send Announcement</button></div></div></details>`:'';
+  const cards=list.length?list.map(m=>{const kind=m.kind||'notice',kindLabel=kind==='event'?'🎉 EVENT':kind==='welcome'?'🌟 WELCOME':'📢 NOTICE',timeStr=m.at?new Date(m.at).toLocaleString():'Official',hasUnclaimed=!!(m.gift&&!m.gift.claimed);return `<article class="mail-ann-card kind-${esc(kind)}${!m.read||hasUnclaimed?' is-unread':''}" data-mail-id="${esc(m.id)}"><header class="mail-ann-head"><span class="mail-kind-badge kind-${esc(kind)}">${kindLabel}</span><strong class="mail-from">${esc(m.from||'Horizon Haven')}</strong>${!m.read?'<span class="mail-new-pill">NEW</span>':''}<time class="mail-time">${esc(timeStr)}</time></header><div class="mail-ann-body">${esc(m.body)}</div>${m.gift?`<footer class="mail-ann-gift${m.gift.claimed?' is-claimed':''}"><div class="mail-gift-info"><span class="mail-gift-icon" aria-hidden="true">🎁</span><div><small>Attached Gift</small><b>${esc(formatMailGiftLabel(m.gift))}</b></div></div>${m.gift.claimed?`<span class="mail-claimed-tag">✓ Gift Claimed</span>`:`<button type="button" data-a="claimmail" data-v="${esc(m.id)}" class="eclipse-primary mail-claim-btn">Claim Gift</button>`}</footer>`:''}</article>`;}).join(''):`<div class="mail-empty">No announcements yet. Official server notices and event gifts will appear here.</div>`;
+  return `<div class="mail-toolbar"><div class="mail-summary"><b>${list.length} Announcement${list.length===1?'':'s'}</b><span>${unclaimed>0?`${unclaimed} unclaimed gift${unclaimed===1?'':'s'} waiting`:unread>0?`${unread} unread`:'All caught up'}</span></div><div class="mail-toolbar-actions">${unclaimed>0?`<button type="button" data-a="claimallmail" class="eclipse-primary">🎁 Claim All Gifts (${unclaimed})</button>`:''}<button type="button" data-a="readallmail">Mark All Read</button>${typeof CLOUD!=='undefined'&&CLOUD.on?`<button type="button" data-a="refreshmail">↻ Sync</button>`:''}</div></div>${gmComposer}<div class="mail-ann-list">${cards}</div>`;
+}
+function updateMailDailyHud(){
+  if(!S||typeof $!=='function')return;
+  const mBadge=$('mailBadge'),dBadge=$('dailyBadge'),buffPill=$('dailyBuffPill'),mCount=unreadMailCount(),dLeft=dailySpinsLeft();
+  if(mBadge){mBadge.hidden=mCount<=0;mBadge.textContent=mCount>99?'99+':String(mCount);}
+  if(dBadge){dBadge.hidden=dLeft<=0;dBadge.textContent=dLeft>0?'!':'';}
+  if(buffPill){const zMs=dailyBuffLeftMs('zeny'),xMs=dailyBuffLeftMs('exp'),parts=[];if(zMs>0)parts.push(`💰 +30% Zeny ${formatDailyBuffTimer(zMs)}`);if(xMs>0)parts.push(`⚡ +30% EXP ${formatDailyBuffTimer(xMs)}`);buffPill.hidden=parts.length===0;buffPill.textContent=parts.join(' · ');}
+  const tabM=$('tabMailCount'),tabD=$('tabDailyReady');
+  if(tabM){tabM.hidden=mCount<=0;tabM.textContent=String(mCount);}
+  if(tabD){tabD.hidden=dLeft<=0;}
+}
+function renderMailDailyModal(initialAngle=dailyWheelAngle){
+  if(!S||typeof $!=='function')return;
+  const modal=$('mailDailyModal'),body=$('mailDailyBody');
+  if(!modal||!body)return;
+  const isMail=mailDailyMode!=='daily';
+  const seal=$('mailDailySeal'),title=$('mailDailyTitle'),subEl=$('mailDailySub');
+  if(seal)seal.textContent=isMail?'✉':'🎡';
+  if(title)title.textContent=isMail?'Announcements & Mail':'Daily Reward Roulette';
+  if(subEl)subEl.textContent=isMail?'OFFICIAL NOTICES & EVENT GIFT DELIVERIES':'SPIN ONCE EVERY DAY FOR ORES, BUFFS, ZENY, CARDS & SCROLLS';
+  const tMail=$('tabBtnMail'),tDaily=$('tabBtnDaily');
+  if(tMail){tMail.classList.toggle('on',isMail);tMail.setAttribute('aria-selected',String(isMail));}
+  if(tDaily){tDaily.classList.toggle('on',!isMail);tDaily.setAttribute('aria-selected',String(!isMail));}
+  body.innerHTML=isMail?renderMailView():renderDailyRouletteView(initialAngle);
+  updateMailDailyHud();
+}
+function openMailDaily(mode='mail'){
+  if(!S)return;
+  mailDailyMode=mode==='daily'?'daily':'mail';
+  if(mailDailyMode==='mail'){
+    const list=ensureMailState();
+    let marked=false;
+    for(const m of list){
+      if(!m.read&&!(m.gift&&!m.gift.claimed)){m.read=true;marked=true;}
+    }
+    if(marked)save();
+    if(typeof CLOUD!=='undefined'&&CLOUD.on)cloudPull().catch(()=>{});
+  }
+  const modal=typeof $==='function'?$('mailDailyModal'):null;
+  if(modal)modal.classList.add('on');
+  renderMailDailyModal();
+}
+function closeMailDaily(){
+  const modal=typeof $==='function'?$('mailDailyModal'):null;
+  if(modal)modal.classList.remove('on');
+  updateMailDailyHud();
+}
 const ACT={
+  openmail:()=>openMailDaily('mail'),
+  opendaily:()=>openMailDaily('daily'),
+  closemaildaily:()=>closeMailDaily(),
+  maildailytab:v=>openMailDaily(v),
+  claimmail:v=>claimMailGift(v),
+  claimallmail:()=>claimAllMailGifts(),
+  readallmail:()=>markAllMailRead(),
+  refreshmail:()=>refreshCloudMail(),
+  gmcomposemail:()=>gmSendMailAnnouncement(),
+  spindaily:v=>spinDailyRoulette(v),
+  gmdailyreset:()=>gmResetDailyRoulette(),
   workslot:v=>{if(EQK.some(([k])=>k===v)){selE=v;renderWin()}},
   bgm:v=>{if(typeof BGM!=='undefined'){if(v==='toggle')BGM.setEnabled(!BGM.enabled);else BGM.setEnabled(true);BGM.savePrefs&&BGM.savePrefs();if(typeof ui==='function')ui()}},
   sfx:()=>{S.sfx=S.sfx===false;ui();save()},bgmshuffle:()=>{BGM.toggleShuffle();ui()},bgmmute:()=>{if(typeof BGM!=='undefined'){BGM.setMuted(!BGM.muted);if(typeof ui==='function')ui()}},
@@ -6964,6 +7223,8 @@ $('ov').append($('sideMenu'));
 $('sideMenu').onclick=$('sideRail').onclick;
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
 $('feedTab').onclick=()=>ACT.feed();
+if($('minimapTools'))$('minimapTools').onclick=e=>{const b=e.target.closest('[data-a]');if(b&&!b.disabled&&ACT[b.dataset.a]){e.stopPropagation();ACT[b.dataset.a](b.dataset.v)}};
+if($('mailDailyModal')){$('mailDailyModal').onclick=e=>{if(e.target===$('mailDailyModal')){closeMailDaily();return}const b=e.target.closest('[data-a]');if(b&&!b.disabled&&ACT[b.dataset.a]){e.stopPropagation();ACT[b.dataset.a](b.dataset.v)}};$('mailDailyModal').addEventListener('change',e=>{if(e.target.id==='gmMailGift'){const opt=MAIL_GIFT_OPTIONS.find(x=>x.key===e.target.value),amtEl=$('gmMailAmt');if(opt&&amtEl)amtEl.value=String(opt.defaultAmt||1)}});}
 $('wins').addEventListener('click',e=>{if(e.target.closest('[data-eclipse-refine]'))ACT.sub('equip:refine')});
 $('wins').addEventListener('keydown',e=>{if(e.target.matches('.map-season-tabs [role=tab]')&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const ids=['atlas','ascension','echo','social'],at=ids.indexOf(e.target.dataset.v),v=e.key==='Home'?ids[0]:e.key==='End'?ids.at(-1):ids[(at+(e.key==='ArrowRight'?1:ids.length-1))%ids.length];ACT.mapseason(v);return}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-a]')){e.preventDefault();e.target.click()}});
 $('wins').addEventListener('input',e=>{if(e.target.hasAttribute('data-eclipse-search')){eclipseSearch=e.target.value;renderWin()}});
@@ -7011,6 +7272,7 @@ document.addEventListener('click',e=>{
 addEventListener('pg-exploration-close',()=>{if(S)ui();});
 function escapeUI(){
   if($('modal').style.display==='flex'){$('mn').click();return}
+  if($('mailDailyModal')?.classList.contains('on')){closeMailDaily();return}
   if(tabs.length){tabs.length=0;expandedPanels.clear();eqPick=null;selS=null;sideOpen=false;renderWin();return}
   if(typeof guideFindStage!=='undefined'&&['more','guide'].includes(guideFindStage)){guideFinderFinish();return}
   if(sideOpen||!$('screenOptions').hidden){sideOpen=false;$('screenOptions').hidden=true;$('screenBtn').setAttribute('aria-expanded','false');renderQ();return}
@@ -7120,7 +7382,7 @@ function ui(anchor){if(!S)return;const returned=repairEquippedCards(S);if(return
   // parentheticals - the MVP FIGHT line on the HUD carries that.
   $('stageTitle').textContent=JOB_RITE.on?'Crucible of the Valkyrie':hudTrial?`Endless Echo · ${trialClock()}`:fieldName();
   if($('echoLeave'))$('echoLeave').hidden=!TRIAL.on;
-  $('grindStatus').textContent=JOB_RITE.on?'Job advancement trial':hudTrial?(TRIAL.mode==='ranked'?'🏛 Ranked run':'🏛 Training'):(S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier');renderWin(anchor);polishIcons($('hud'));polishIcons($('grindStatus'));polishIcons($('feedTab'));polishIcons($('hudBuffs'))}
+  $('grindStatus').textContent=JOB_RITE.on?'Job advancement trial':hudTrial?(TRIAL.mode==='ranked'?'🏛 Ranked run':'🏛 Training'):(S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier');renderWin(anchor);updateMailDailyHud();polishIcons($('hud'));polishIcons($('grindStatus'));polishIcons($('feedTab'));polishIcons($('hudBuffs'))}
 
 // The owner felt the prior slowdown was too aggressive, so this is exactly halfway between
 // the original `6.5 + 0.05*AGI` pace and v66's proposed curve. It is 8.12 at AGI 99

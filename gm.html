@@ -247,13 +247,46 @@ function renderTab() {
     $('kind').onchange=paint;paint();
   } else if (TAB === 'announce') {
     body.innerHTML = `
-      <p class="small">A banner in every player's log. “Everyone” is stored once and read by all; “just this player” is private.</p>
-      <textarea id="abody" placeholder="e.g. Server restarts at 22:00 tonight — save your progress."></textarea>
+      <p class="small">Deliver an official announcement to the in-game Mail box and player log. You may optionally attach a gift (equipment, cards, materials, or Zeny) for recipients to claim inside the announcement mail.</p>
+      <textarea id="abody" placeholder="e.g. Weekend Event is live! Claim your bonus refinement materials below."></textarea>
       <div class="row" style="margin-top:6px">
-        <select id="akind"><option value="notice">Notice</option><option value="event">Event</option><option value="welcome">Welcome</option></select>
+        <label>Type <select id="akind"><option value="notice">Notice</option><option value="event">Event</option><option value="welcome">Welcome</option></select></label>
+        <label>Attach gift <select id="agiftkind"><option value="none">No gift (announcement only)</option><option value="gift">Equipment, cards &amp; materials</option><option value="zeny">Zeny</option></select></label>
         <label class="small"><input type="checkbox" id="atoall"> to everyone</label>
-        <button class="primary" data-act="announce">Send</button>
+      </div>
+      <div id="agiftbody" style="margin-top:6px"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="primary" data-act="announce">Send announcement</button>
       </div>`;
+    const paintAnnGift = () => {
+      const gk = $('agiftkind').value;
+      if (gk === 'none') {
+        $('agiftbody').innerHTML = '';
+        return;
+      }
+      if (gk === 'zeny') {
+        $('agiftbody').innerHTML = `<div class="row"><label>Zeny amount <input id="agiftamount" type="number" min="1" max="1000000000000" step="1" value="100000"></label></div>`;
+        return;
+      }
+      $('agiftbody').innerHTML = `<div class="row"><label>Search <input id="agiftsearch" type="search" placeholder="Name, map, weapon type…"></label><label>Category <select id="agiftcategory"><option value="">All</option><option value="resource">Materials &amp; currency</option><option value="gear">Equipment</option><option value="card">Cards</option></select></label></div><label>Gift item <select id="agiftitem" style="width:100%"></select></label><p id="agiftdetail" class="small"></p><label>Quantity <input id="agiftamount" type="number" min="1" max="1000000" step="1" value="1"></label>`;
+      const detail = () => {
+        const entry = (CATALOG.entries || []).find(x => x.id === $('agiftitem').value);
+        $('agiftdetail').innerHTML = entry?.item ? gearDescription(entry.item) : esc(entry?.label || 'No matches');
+        $('agiftamount').max = entry?.resource ? 1000000 : 100;
+      };
+      const filter = () => {
+        const q = $('agiftsearch').value.toLowerCase(), c = $('agiftcategory').value;
+        const rows = (CATALOG.entries || []).filter(x => (!c || x.type === c) && x.label.toLowerCase().includes(q));
+        $('agiftitem').innerHTML = rows.map(x => `<option value="${esc(x.id)}">${esc(x.label)}</option>`).join('');
+        detail();
+      };
+      $('agiftsearch').oninput = filter;
+      $('agiftcategory').onchange = filter;
+      $('agiftitem').onchange = detail;
+      filter();
+    };
+    $('agiftkind').onchange = paintAnnGift;
+    paintAnnGift();
   } else if (TAB === 'history') {
     body.innerHTML = s && s.history.length
       ? `<p class="small">Saved copies of this account. Restoring one makes it the live save (a new version on top) and keeps the current one as a backup, so a mistake is reversible.</p>
@@ -384,9 +417,22 @@ $('detail').addEventListener('click', async e => {
       try{const r=await api('/gm/player',{method:'POST',body:JSON.stringify({id,action:'equipment',mode,itemId:btn.dataset.item,slot:$('editslot')?.value,aff,refine:+$('editrefine').value})});say(r.note);}finally{btn.disabled=false;}
     } else if (act === 'announce') {
       const body = $('abody').value, toAll = $('atoall').checked, kind = $('akind').value;
+      const giftKind = $('agiftkind') ? $('agiftkind').value : 'none';
       if (!body.trim()) return say('Write something first.', 1);
-      await api('/gm/player', { method: 'POST', body: JSON.stringify({ id, action: 'announce', body, kind, toAll }) });
-      say(toAll ? 'Announced to everyone.' : 'Sent to ' + SEL.account.u + '.');
+      const reqBody = { id, action: 'announce', body, kind, toAll };
+      if (giftKind && giftKind !== 'none') {
+        const amount = +($('agiftamount')?.value || 0);
+        const entry = giftKind === 'gift' ? (CATALOG.entries || []).find(x => x.id === $('agiftitem')?.value) : null;
+        if (giftKind === 'gift' && !entry) return say('Select a gift item.', 1);
+        if (!Number.isInteger(amount) || amount < 1 || (giftKind === 'gift' && amount > (entry.resource ? 1000000 : 100))) {
+          return say('Enter a valid whole-number gift quantity.', 1);
+        }
+        const giftLabel = giftKind === 'zeny' ? amount.toLocaleString() + ' Zeny' : amount + ' × ' + entry.label;
+        if (!confirm('Send announcement + ' + giftLabel + ' to ' + (toAll ? 'everyone' : SEL.account.u) + '?')) return;
+        reqBody.gift = { kind: giftKind, catalogId: entry?.id, amount };
+      }
+      const r = await api('/gm/player', { method: 'POST', body: JSON.stringify(reqBody) });
+      say(r.note || (toAll ? 'Announced to everyone.' : 'Sent to ' + SEL.account.u + '.'));
     } else if (act === 'restore') {
       const v = +btn.dataset.v;
       if (!confirm('Restore version ' + v + ' as their live save? The current save is kept as a backup.')) return;

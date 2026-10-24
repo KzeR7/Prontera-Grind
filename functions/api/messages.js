@@ -12,8 +12,35 @@ export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
   if (!user) return fail('Not logged in.', 401);
   const rows = await db.unreadMessages(env.DB, user.id, 20);
+  const inboxRows = await db.inboxMessages(env.DB, user.id, 30);
+  const grantRows = await db.grantsFor(env.DB, user.id);
+  const giftByMessageId = new Map();
+  for (const g of grantRows.results || []) {
+    try {
+      const payload = JSON.parse(g.payload || '{}');
+      const mid = Number(payload?.messageId);
+      if (Number.isInteger(mid) && mid > 0 && !giftByMessageId.has(mid)) {
+        giftByMessageId.set(mid, {
+          grantId: g.id,
+          kind: g.kind,
+          payload,
+          label: payload.giftLabel || null,
+          claimed: !!g.claimed_at,
+        });
+      }
+    } catch {}
+  }
   return json({
     messages: rows.results.map(m => ({ id: m.id, body: m.body, kind: m.kind, at: m.created_at, from: m.created_by })),
+    inbox: (inboxRows.results || []).map(m => ({
+      id: m.id,
+      body: m.body,
+      kind: m.kind,
+      at: m.created_at,
+      from: m.created_by,
+      read: !!m.read_at,
+      gift: giftByMessageId.get(Number(m.id)) || null,
+    })),
   });
 });
 

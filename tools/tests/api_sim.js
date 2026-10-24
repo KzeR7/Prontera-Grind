@@ -413,6 +413,46 @@ await T('announcements reach everyone, and a message can be aimed at one player'
   assert.strictEqual((await api.messages(env, friend)).data.messages.length, 2, 'and only for the reader');
 });
 
+await T('GM announcements can attach a gift (materials, gear, or Zeny) for one player or everyone', async () => {
+  const owner = globalThis.__owner, friend = globalThis.__friend;
+  const friendId = sqlite.prepare('SELECT id FROM users WHERE username = ?').get('FRIEND').id;
+
+  const bad = await api.act(env, owner, {
+    id: friendId,
+    action: 'announce',
+    body: 'Invalid gift test',
+    kind: 'event',
+    toAll: false,
+    gift: { kind: 'gift', catalogId: 'resource:ori', amount: 0 },
+  });
+  assert.strictEqual(bad.status, 400, 'invalid gift quantity must be rejected');
+
+  const res = await api.act(env, owner, {
+    id: friendId,
+    action: 'announce',
+    body: 'Weekend refinement event! Enjoy free Oridecon.',
+    kind: 'event',
+    toAll: true,
+    gift: { kind: 'gift', catalogId: 'resource:ori', amount: 25 },
+  });
+  assert.strictEqual(res.status, 200, JSON.stringify(res.data));
+  assert.ok(res.data.messageId > 0);
+  assert.match(res.data.giftLabel, /25 × Oridecon/);
+
+  const msgRes = (await api.messages(env, friend)).data;
+  const ann = (msgRes.inbox || []).find(x => x.id === res.data.messageId);
+  assert.ok(ann, 'inbox includes the announcement');
+  assert.ok(ann.gift, 'inbox entry carries the attached gift');
+  assert.strictEqual(ann.gift.claimed, false);
+  assert.strictEqual(ann.gift.payload.resource, 'ori');
+  assert.strictEqual(ann.gift.payload.amount, 25);
+  assert.strictEqual(ann.gift.payload.messageId, res.data.messageId);
+
+  await api.readMsgs(env, friend, [res.data.messageId]);
+  // Clear the queued announcement grants so subsequent tests see clean grants state
+  sqlite.prepare('DELETE FROM grants WHERE payload LIKE ?').run('%"messageId":%');
+});
+
 await T('only the owner may change a password or a GM level', async () => {
   const owner = globalThis.__owner;
   const friendId = sqlite.prepare('SELECT id FROM users WHERE username = ?').get('FRIEND').id;

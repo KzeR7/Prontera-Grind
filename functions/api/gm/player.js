@@ -21,6 +21,7 @@ import { currentUser, isGm, hashPassword } from '../../_lib/auth.js';
 import { json, guard, readJson, fail } from '../../_lib/http.js';
 import { checkGrant, checkAnnouncement, GRANT_KINDS, checkSaveBlob, publicFields, savedElsewhere } from '../../_lib/validate.js';
 import { inspectSave, giftPayload, equipmentPayload } from '../../_lib/gm-tools.js';
+import { GM_CATALOG } from '../../_lib/gm-catalog.js';
 import * as db from '../../_lib/db.js';
 
 async function loadAccount(D, id) {
@@ -64,8 +65,8 @@ export const onRequestPost = guard(async ({ request, env }) => {
   if (!isGm(user)) return fail('Not a GM.', 403);
   const D = env.DB;
   const body = await readJson(request, 8192);
-  const id = Math.floor(Number(body.id));
   const action = String(body.action || '');
+  const id = (action === 'announce' && body.toAll && !body.id) ? user.id : Math.floor(Number(body.id));
   if (!Number.isInteger(id)) return fail('Which player? (id)', 400);
   const target = await db.userById(D, id);
   if (!target) return fail('No such account.', 404);
@@ -132,9 +133,45 @@ export const onRequestPost = guard(async ({ request, env }) => {
     case 'announce': {
       const { text, kind } = checkAnnouncement(body.body, body.kind);
       const target2 = body.toAll ? null : id;
-      await db.insertMessage(D, text, kind, target2, user.username);
-      await audit('gm-announce', (target2 ? 'to ' + target.u + ': ' : 'to all: ') + text.slice(0, 120));
-      return json({ ok: true });
+      const rawGift = body.gift && typeof body.gift === 'object' ? body.gift : null;
+      const giftKind = rawGift ? String(rawGift.kind || 'none') : 'none';
+      if (giftKind !== 'none' && giftKind !== 'gift' && giftKind !== 'zeny') {
+        return fail('Announcement gift must be gift, zeny, or none.', 400);
+      }
+      let basePayload = null;
+      let giftLabel = '';
+      if (giftKind === 'zeny') {
+        basePayload = checkGrant('zeny', { amount: rawGift.amount });
+        giftLabel = `${Number(basePayload.amount).toLocaleString()} Zeny`;
+      } else if (giftKind === 'gift') {
+        const cid = String(rawGift.catalogId || '').trim().replace(/^resource:/, '');
+        basePayload = giftPayload({ catalogId: cid, amount: rawGift.amount });
+        const entry = GM_CATALOG.entries.find(item => item.id === cid);
+        giftLabel = `${basePayload.amount} × ${entry ? entry.label : (basePayload.resource || basePayload.item?.name || 'Gift')}`;
+      }
+      const msgId = await db.insertMessageWithId(D, text, kind, target2, user.username);
+      let recipients = target2 ? 1 : 0;
+      if (basePayload && msgId) {
+        const payload = { ...basePayload, messageId: msgId, giftLabel };
+        const note = `Announcement: ${text.slice(0, 140)}`;
+        if (target2 !== null) {
+          await db.insertGrant(D, id, giftKind, payload, note, user.username);
+        } else {
+          recipients = await db.insertMassGrants(D, `ann:${msgId}`, user.username, giftKind, payload, note);
+        }
+      }
+      const who = target2 ? 'to ' + (target.username || target.u || id) + ': ' : 'to all: ';
+      const giftSuffix = giftLabel ? ` (+ ${giftLabel})` : '';
+      await audit('gm-announce', (who + text.slice(0, 120) + giftSuffix).slice(0, 500));
+      return json({
+        ok: true,
+        messageId: msgId,
+        giftLabel: giftLabel || null,
+        recipients,
+        note: giftLabel
+          ? (target2 ? `Announcement & gift (${giftLabel}) sent.` : `Announcement & gift (${giftLabel}) queued for ${recipients} account(s).`)
+          : 'Announcement sent.',
+      });
     }
     case 'restore': {
       const version = Math.floor(Number(body.version));

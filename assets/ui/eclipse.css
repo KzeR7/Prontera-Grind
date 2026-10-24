@@ -1822,3 +1822,121 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .ascension-evolution .ascension-enough{color:#8fe0a4}
 #wins .ascension-costs dd small{display:block;color:inherit}
 #wins .ascension-forge-status{font-size:12px;line-height:1.5}
+
+/* Minimap-left quick icons: Mail (Announcements & Gifts) + Daily Material Roulette */
+#minimapTools{position:absolute;right:254px;top:19px;z-index:6;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+body.social-open #minimapTools{display:none!important}
+.minimap-tool-btn{position:relative;width:44px;height:42px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--panel);border:1px solid var(--edge2);border-radius:8px;color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,.42);cursor:pointer;transition:border-color .15s,background .15s,transform .12s}
+.minimap-tool-btn:hover{border-color:var(--gold);background:var(--e-raised);color:var(--gold);transform:translateY(-1px)}
+.minimap-tool-btn svg{width:18px;height:18px;flex:none;color:var(--gold)}
+.minimap-tool-label{font-size:8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1;color:var(--e-muted)}
+.minimap-tool-btn:hover .minimap-tool-label{color:var(--ink)}
+.minimap-tool-badge{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#d94848;border:1.5px solid #161822;color:#fff;font-size:9px;font-weight:900;line-height:13px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.minimap-tool-badge[hidden]{display:none!important}
+.minimap-tool-badge.is-dot{background:var(--gold);color:#17151c}
+
+/* Mail & Daily Roulette Modal */
+#mailDailyModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(12,12,16,.82);z-index:1160;padding:14px}
+#mailDailyModal.on{display:flex}
+#mailDailyModal *{pointer-events:auto;box-sizing:border-box}
+#mailDailyModal .mail-daily-card{width:min(760px,100%);max-height:calc(100dvh - 28px);display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:1px solid var(--gold);border-radius:12px;color:var(--ink);box-shadow:0 25px 70px #0009}
+#mailDailyModal .mail-daily-head{background:var(--e-raised);border-bottom:1px solid var(--edge2);color:var(--ink);flex:none}
+#mailDailyModal .mail-daily-head .trial-brand b{color:var(--ink)}
+#mailDailyModal .mail-daily-head .trial-brand small{color:var(--e-muted)}
+#mailDailyModal .mail-daily-head .trial-seal{background:var(--e-soft);border-color:var(--gold);color:var(--gold);font-size:18px}
+#mailDailyModal .mail-daily-head .trial-close{background:var(--e-bg);border:1px solid var(--edge2);color:var(--ink)}
+.mail-daily-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 14px;background:var(--e-bg);border-bottom:1px solid var(--edge2);flex:none}
+.mail-daily-tabs button{min-height:34px;padding:6px 10px;border-radius:7px;border:1px solid var(--edge2);background:var(--panel);color:var(--e-muted);font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.mail-daily-tabs button.on{background:var(--e-soft);border-color:var(--gold);color:var(--gold)}
+.md-pill{padding:1px 6px;border-radius:999px;background:#d94848;color:#fff;font-size:9px;font-weight:900}
+.md-pill.is-gold{background:var(--gold);color:#18151f}
+.md-pill[hidden]{display:none!important}
+.mail-daily-body{padding:14px 16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px}
+
+/* Mail / Announcement View */
+.mail-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--edge2);border-radius:8px;background:var(--e-bg)}
+.mail-summary{display:flex;flex-direction:column;gap:2px}
+.mail-summary b{font-size:13px;color:var(--ink)}
+.mail-summary span{font-size:11px;color:var(--e-muted)}
+.mail-toolbar-actions{display:flex;gap:6px;flex-wrap:wrap}
+.mail-toolbar-actions button{min-height:30px;padding:4px 10px;font-size:11px;font-weight:700}
+.gm-mail-composer{border:1px solid var(--gold);border-radius:8px;background:var(--e-bg);overflow:hidden}
+.gm-mail-composer>summary{padding:8px 12px;background:var(--e-soft);color:var(--gold);font-size:12px;font-weight:800;cursor:pointer}
+.gm-mail-form{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.gm-mail-form textarea{width:100%;min-height:54px;padding:7px 9px;border-radius:6px;border:1px solid var(--edge2);background:var(--panel);color:var(--ink);font:inherit;font-size:12px;resize:vertical}
+.gm-mail-controls{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}
+.gm-mail-controls label{display:flex;flex-direction:column;gap:3px;font-size:10px;font-weight:700;color:var(--e-muted)}
+.gm-mail-controls select,.gm-mail-controls input[type=number]{min-height:30px;padding:4px 7px;border-radius:5px;border:1px solid var(--edge2);background:var(--panel);color:var(--ink);font-size:11px}
+.gm-mail-controls .gm-mail-check{flex-direction:row;align-items:center;gap:5px;min-height:30px;font-size:11px;color:var(--ink)}
+.gm-mail-controls button{min-height:30px;padding:5px 12px;font-size:11px;font-weight:800}
+.mail-ann-list{display:flex;flex-direction:column;gap:8px}
+.mail-ann-card{border:1px solid var(--edge2);border-left:4px solid var(--gold);border-radius:8px;background:var(--e-bg);padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.mail-ann-card.kind-event{border-left-color:#b794f4}
+.mail-ann-card.kind-welcome{border-left-color:#68d391}
+.mail-ann-card.is-unread{background:linear-gradient(135deg,var(--e-raised),var(--e-bg));border-color:var(--gold)}
+.mail-ann-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.mail-kind-badge{padding:2px 7px;border-radius:4px;font-size:9px;font-weight:900;letter-spacing:.05em;background:var(--e-soft);color:var(--gold);border:1px solid var(--edge2)}
+.mail-kind-badge.kind-event{color:#d6bcfa;border-color:#805ad5}
+.mail-kind-badge.kind-welcome{color:#9ae6b4;border-color:#38a169}
+.mail-from{font-size:12px;color:var(--ink)}
+.mail-new-pill{padding:1px 6px;border-radius:999px;background:#d94848;color:#fff;font-size:9px;font-weight:900}
+.mail-time{margin-left:auto;font-size:10px;color:var(--e-muted)}
+.mail-ann-body{font-size:12px;line-height:1.45;color:var(--ink);white-space:pre-wrap}
+.mail-ann-gift{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:7px;border:1px dashed var(--gold);background:var(--panel)}
+.mail-ann-gift.is-claimed{border-style:solid;border-color:var(--edge2);opacity:.82}
+.mail-gift-info{display:flex;align-items:center;gap:8px;min-width:0}
+.mail-gift-icon{font-size:18px;line-height:1}
+.mail-gift-info small{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--e-muted)}
+.mail-gift-info b{font-size:12px;color:var(--gold)}
+.mail-claim-btn{min-height:30px;padding:5px 12px;font-size:11px;font-weight:800;white-space:nowrap}
+.mail-claimed-tag{font-size:11px;font-weight:800;color:#8fe0a4;white-space:nowrap}
+.mail-empty{padding:24px 12px;text-align:center;color:var(--e-muted);font-size:12px;border:1px dashed var(--edge2);border-radius:8px}
+
+/* Daily Reward Roulette View */
+.roulette-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;border:1px solid var(--gold);border-radius:9px;background:linear-gradient(135deg,rgba(232,193,104,.16),var(--e-soft) 52%,var(--e-bg));box-shadow:inset 0 1px 0 rgba(255,244,209,.18)}
+.roulette-banner small{display:block;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--e-muted)}
+.roulette-banner b{font-size:14px;color:var(--gold)}
+.roulette-reset-clock{padding:4px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--gold);font-size:10px;font-weight:800;color:var(--gold)}
+.roulette-layout{display:grid;grid-template-columns:minmax(258px,308px) minmax(0,1fr);gap:14px;align-items:start}
+.roulette-wheel-col{display:flex;flex-direction:column;align-items:center;gap:11px;padding:14px 12px;border:1px solid rgba(230,192,104,.42);border-radius:12px;background:radial-gradient(circle at 50% 38%,rgba(235,193,96,.18),rgba(24,18,36,.92) 68%,var(--e-bg));box-shadow:inset 0 1px 0 rgba(255,243,204,.15),0 10px 24px rgba(0,0,0,.38)}
+.roulette-stage{position:relative;width:254px;height:254px;display:grid;place-items:center;padding:3px;border-radius:50%;background:radial-gradient(circle,rgba(255,216,120,.22) 0%,rgba(255,216,120,0) 72%)}
+.roulette-pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:3;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.85))}
+.roulette-svg{width:100%;height:100%;display:block;filter:drop-shadow(0 10px 22px rgba(0,0,0,.65))}
+.roulette-status{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--edge2);background:linear-gradient(180deg,var(--panel),var(--e-bg));text-align:center;display:flex;flex-direction:column;gap:2px}
+.roulette-status b{font-size:12px;color:var(--ink)}
+.roulette-status span{font-size:10px;color:var(--e-muted)}
+.roulette-won-banner{display:flex;flex-direction:column;gap:2px}
+.roulette-won-banner small{font-size:9px;font-weight:900;letter-spacing:.06em;color:var(--e-muted)}
+.roulette-won-banner b{font-size:14px;color:var(--gold)}
+.roulette-actions{width:100%;display:flex;flex-direction:column;gap:6px}
+.roulette-spin-btn{width:100%;min-height:40px;font-size:13px;font-weight:900;letter-spacing:.02em;box-shadow:0 4px 14px rgba(212,175,90,.28)}
+.roulette-gm-reset{width:100%;min-height:28px;font-size:10px;opacity:.85}
+.roulette-prizes-col{display:flex;flex-direction:column;gap:6px;min-width:0}
+.roulette-section-title{font-size:10px;font-weight:900;letter-spacing:.07em;color:var(--gold)}
+.roulette-prize-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.roulette-prize-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--edge2);border-radius:8px;background:linear-gradient(135deg,var(--panel),var(--e-bg));min-width:0;transition:border-color .15s ease,transform .15s ease}
+.roulette-prize-item.tier-jackpot{border-color:rgba(255,215,112,.68);background:linear-gradient(135deg,rgba(184,107,17,.26),var(--panel) 65%);grid-column:1 / -1}
+.roulette-prize-item.tier-epic{border-color:rgba(255,156,214,.45)}
+.roulette-prize-item.tier-rare{border-color:rgba(198,162,255,.42)}
+.roulette-prize-item.is-won{border-color:var(--gold);background:linear-gradient(135deg,rgba(235,196,104,.24),var(--e-soft));box-shadow:0 0 12px rgba(235,196,104,.24)}
+.rp-icon{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;font-size:14px;flex:none;border:1px solid rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 2px 6px rgba(0,0,0,.35)}
+.rp-copy{display:flex;flex-direction:column;min-width:0;flex:1}
+.rp-copy b{font-size:11px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-copy small{font-size:9px;color:var(--e-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-rate-tag{padding:2px 7px;border-radius:999px;background:rgba(15,11,24,.65);border:1px solid var(--edge2);color:var(--gold);font-size:9.5px;font-weight:900;font-variant-numeric:tabular-nums;flex:none}
+.rp-won-tag{padding:2px 6px;border-radius:4px;background:var(--gold);color:#17151c;font-size:8px;font-weight:900;flex:none}
+.minimap-buff-pill{padding:3px 7px;border-radius:6px;background:var(--panel);border:1px solid var(--gold);color:var(--gold);font-size:9px;font-weight:800;line-height:1.25;white-space:nowrap;box-shadow:0 6px 14px var(--shadow);text-align:right}
+.minimap-buff-pill[hidden]{display:none!important}
+.roulette-mat-stock{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.rm-cell{padding:5px 6px;border:1px solid var(--edge2);border-radius:6px;background:var(--e-bg);display:flex;flex-direction:column;gap:1px;text-align:center}
+.rm-cell small{font-size:9px;color:var(--e-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rm-cell b{font-size:11px;color:var(--ink);font-variant-numeric:tabular-nums}
+
+@media(max-width:980px){
+  #minimapTools{right:188px;top:19px}
+}
+@media(max-width:740px){
+  .roulette-layout{grid-template-columns:1fr}
+  .roulette-prize-grid{grid-template-columns:1fr}
+  .roulette-mat-stock{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
