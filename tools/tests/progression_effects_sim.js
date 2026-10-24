@@ -46,6 +46,14 @@ try{
   assert.equal(game.ev('levelAura.children.every(x=>Number.isFinite(x.rotation.y)&&Math.abs(x.rotation.y)<Math.PI*2)'),true);
   game.ev('skinNow=window.originalSkinNow');
  });
+ test('level aura stands on the real surface, including raised Astral paving',()=>{
+  game.ev('S.lv=150;S.mp=0;KIT.nativeWorld=null;syncLevelAura()');
+  assert.ok(Math.abs(game.ev('levelAura.position.y')-.045)<1e-9,'normal fields keep the old clearance');
+  game.ev('S.mp=10;syncLevelAura()');
+  assert.equal(game.ev('actorFloorY()'),.12,'Astral keeps its raised deck height');
+  assert.ok(Math.abs(game.ev('levelAura.position.y')-.13)<1e-9,'the sigil clears the highest Astral slab (.091)');
+  game.ev('S.mp=0;S.lv=150;syncLevelAura()');
+ });
  test('weapon mask cache is per image and per tier color',()=>{
   game.ev(`window.testWeapon={naturalWidth:20,naturalHeight:60};window.mask=weaponGlowMask(window.testWeapon,'#ffe19a')`);
   assert.equal(game.ev("window.mask===weaponGlowMask(window.testWeapon,'#ffe19a')"),true);

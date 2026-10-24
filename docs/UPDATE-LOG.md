@@ -7317,3 +7317,91 @@ The owner's second pass over v77, six notes, all built.
   checkout), and no Chromium is available here, so the on-screen look of the new sizes is verified by
   geometry and by the to-scale sheet, not by a live screenshot.
 * **Delivery:** local changes on `arena/063469a7-prontera-grind`; no merge or deployment.
+
+### 2026-10-24 — `haven-v224 no drag-highlight, no browser menu`
+
+* **Changed (player-visible):** the game page behaves like a game window, not a document. **A
+  left-button drag no longer paints a text selection** over the field, the HUD, the windows or the
+  login card, **a right-click no longer opens the browser menu** - so "Save image as…", "Inspect"
+  and "Reload" are gone from the field, the dock, every tab and panel - and a **long-press on a
+  phone** no longer opens the callout sheet. Sprites, item icons and the field canvas also refuse
+  the browser's native image drag. **Text fields are the one exception**: the account form, the
+  equipment search and the auto-sell name list keep normal selection and the paste menu.
+* **How:** selection is switched off for `*,*::before,*::after` (`user-select` / `-webkit-user-select`
+  and `-webkit-touch-callout`) and switched back on for `input, textarea, [contenteditable]`; a
+  document-level `contextmenu` listener calls `preventDefault()` wherever `isTextField()` is false
+  (only text-entry fields, textareas and contenteditable text are exempt - checkboxes, buttons and
+  selects stay covered), and a capture-phase `dragstart` listener does the same. No game input, save, account or combat
+  path reads either event, and the guard stores nothing.
+* **Try it:** open the game, drag the left button across the field or a panel (nothing highlights),
+  then right-click the field, the dock, a window tab, an equipment icon and the login card (no
+  browser menu anywhere). Right-click the account name or the equipment search box - those still
+  paste, as before.
+* **Files touched:** `index.html` (`BUILD` haven-v224; the `user-select` / drag CSS block;
+  `isTextField` and the `contextmenu` / `dragstart` listeners), `tools/tests/interaction_guard_sim.js`
+  (new), `tools/tests/shop_sim.js` (build assertion), the three build-tag mirrors,
+  `tools/cloudflare-deploy-steps.md`, `docs/CODE-MAP.md`, and this log.
+* **Checks:** new `interaction_guard_sim` **6/6** on a real page booted in jsdom: right-click blocked
+  on the field canvas, auto-combat bar, dock tab, window panel and title, equipment panel, login card,
+  remember-user checkbox and body; shipped images blocked from the "Save image" menu and from
+  `dragstart`; account name, password, equipment search, textarea, contenteditable and a number field
+  keep their menu; the shipped stylesheet
+  rules are read back exactly; save and session are unchanged. Full JavaScript gate **124/126**
+  pass - the only failures are the two documented historical-baseline suites (`skill_balance_sim`,
+  `card_star_balance_sim`) that need commit `d164bd0`, absent from this checkout - plus all **3/3**
+  smoke suites (`field_loop_smoke` 9/9, `panel_layout_smoke` 42/42, `save_owner_boot_smoke` 5/5).
+  Targeted reruns: `shop_sim`, `ui_sim` (64), `eclipse_ui_sim` (50), `display_polish_sim` (10),
+  `update_watch_sim` (9, build-tag mirrors) and `publish_sim` (16). The three generated-asset checks
+  report current, `bash tools/build_site.sh` writes 133 MB / 3,108 files, both inline scripts pass
+  `node --check`, and `git diff --check` is clean. **Not verified:** the real browser/phone rendering
+  of these events (no Chromium in this checkout); jsdom proves the listeners and the shipped CSS, not
+  GPU or browser-specific behaviour.
+* **Delivery:** local changes on `arena/0a47aa5f-prontera-grind`; no merge or deployment.
+
+### 2026-10-24 — `haven-v225 plaza walk speed + level auras`
+
+* **Changed (player-visible):** a Base 50/99/150 character now shows the **level aura in Astral
+  Citadel** - it was drawn a few centimetres above the floor while Astral's paving sits at 0.066-0.091,
+  so the raised slabs hid it - and the **Fountain Plaza** now draws the same sigil under every Base
+  50+ player, standing, walking or sitting, instead of no aura at all. **Plaza walking uses the
+  character's own field run speed** instead of the old flat 5 u/s, so a plaza visit no longer feels
+  slower than farming; the speed follows AGI, movement affixes, pets, movement buffs and the
+  running/click-to-move factor, exactly like the field.
+* **How:** the field sigil's height is now `actorFloorY()+.01` for every map (that helper already
+  knows the native, Astral and trial floors, so it clears both normal ground and Astral paving).
+  The plaza gets the level through the existing look payload: `currentLook()` adds `lv` (0 when
+  Display's aura switch is off or the HUD is hidden) and `speed` (`moveSpd(true)`, the run speed);
+  `cleanLook` in the Durable Object clamps `lv` to 0-999 and `speed` to the shared 2-13 u/s band, and
+  `PGSocialRules.walkSpeed()` lets both the browser and the room advance each player at their own
+  value (older looks fall back to 5 u/s). `assets/social-scene.js` builds the aura with the field's
+  own `buildLevelAura(tier)`/`LEVEL_AURAS`, animates its layers and motes like the field, rebuilds it
+  only when the tier changes, and disposes its geometry, materials and private textures on leave.
+* **Try it:** stand in Astral Citadel with a Base 50+ character (aura under the feet, visible while
+  walking), turn Display's aura off and back on; then enter the plaza from a field and walk - your
+  character, and other Base 50+ players, should carry their sigil, and click-to-walk should cover the
+  same distance per second as the field.
+* **Files touched:** `index.html` (`BUILD` haven-v225; the `syncLevelAura` position line; the three
+  `?v=210` social asset tags), `assets/social-rules.js` (`MIN_SPEED`/`MAX_SPEED`, `walkSpeed`,
+  `advance`), `assets/social.js` (look `lv`/`speed`), `workers/social/room.mjs` (`cleanLook`
+  whitelist), `assets/social-scene.js` (`disposeAura`, `auraTier`, `syncAura`, `animateAura`, aura
+  disposal on leave), `tools/tests/social_sim.js`, `social_scene_sim.js`, `social_ui_sim.js`,
+  `progression_effects_sim.js`, `tools/tests/shop_sim.js` (build assertion), the three build-tag
+  mirrors, `tools/cloudflare-deploy-steps.md`, `docs/SOCIAL-HUB.md`, `docs/CODE-MAP.md`,
+  `docs/TESTING.md`, and this log.
+* **Checks:** `social_sim` (per-character walk speed: reported speed kept, clamped above 13 and below
+  2, an older look without `speed` walks at the shared default, and `advance()` covers
+  `speed * elapsed`), `social_scene_sim` (aura appears at Base 150, disappears below 50, changes tier
+  at 99, is disposed on tier change and on leaving, and is restored on re-entry, on the real Three
+  scene), `social_ui_sim` (solo look carries `lv` and `speed`, and Display's aura switch sends `lv`
+  0), `progression_effects_sim` **16/16** (the sigil stands on the real surface, including raised
+  Astral paving at 0.091), `social_api_sim.mjs` (real WebSockets still join and whisper). Full
+  JavaScript gate **125/127** pass - the only failures are the two documented historical-baseline
+  suites (`skill_balance_sim`, `card_star_balance_sim`) that need commit `d164bd0`, absent from this
+  checkout - plus all **3/3** smoke suites (`field_loop_smoke` 9/9, `panel_layout_smoke` 42/42,
+  `save_owner_boot_smoke` 5/5). `class_skin_sim` **40/40** after refreshing the animation backup that
+  the Astral change had made stale, both inline scripts and every edited asset pass `node --check`,
+  and `git diff --check` is clean. **Not run:** `social_worker_sim.mjs` needs the optional
+  `miniflare` + `wrangler --dry-run` build, which this checkout does not have; no Chromium is
+  available, so the aura's on-screen look is verified by geometry and scene assertions, not by a live
+  screenshot.
+* **Delivery:** local changes on `arena/0a47aa5f-prontera-grind`; no merge or deployment.

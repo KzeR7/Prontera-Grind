@@ -10,7 +10,10 @@ export class SocialRoom {
  const c={id:identity.id,name:identity.username,send,close,room:0,at:this.now(),path:[],x:0,z:12,dir:0,sit:false,nextChat:0,seat:null,moveAt:0,lookAt:0,expires:this.now()+300000};
  this.clients.set(c.id,c);this.send(c,{type:'hello',id:c.id,name:c.name,history:this.history});return c;
  }
- cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):''};}
+ // v225: lv drives the level aura and speed is the character's field run speed. Both are
+ // presentation hints: lv is clamped to a display tier input, speed to the shared walk band, so a
+ // client cannot make itself faster than the fastest legal character in the plaza.
+ cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED))};}
  snapshot(c){R.advance(c,this.now());return {id:c.id,name:c.name,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat};}
  leave(c){const room=c.room;c.room=0;c.path=[];c.seat=null;if(room)this.broadcast({type:'left',id:c.id,room},p=>p.room===room);}
  disconnect(c){if(this.clients.get(c.id)!==c)return;this.leave(c);this.clients.delete(c.id)}

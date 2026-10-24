@@ -30,6 +30,7 @@ measurements remain qualified by their saved source hashes.
 | Skill artwork | `assets/skill-icons.js`, `assets/skill-icons/`; `tools/native-skill-icons/` | source crop audit; `tools/check_skill_pets_browser.js` |
 | Skill casting effects | `assets/skill-overdrive.js`, `assets/skill-afterglow.js`, generated `assets/afterglow-animations.js` and `assets/skill-materials.js`; `index.html`: `playSkillFx`, `tickSkillFx`, `syncSkillFx`; interactive review at `tools/skill-fx-proposals/prismatic-overdrive.html` | `overdrive_sim.js`, `overdrive_preview_sim.js`, `afterglow_sim.js`, `skill_sim.js`; `python3 tools/build_afterglow.py --check` |
 | Panels, buttons and hotkeys | `index.html`: `V`, `ACT`, `TABS`, `SIDE_TABS`; `assets/ui/` and wardrobe UI module | `ui_sim.js`, `panel_layout_smoke.js`, `eclipse_ui_sim.js` |
+| Page interaction: selection, right-click, image drag | `index.html`: `isTextField`; the document `contextmenu` / capture-phase `dragstart` listeners; the `user-select` and `-webkit-touch-callout` rules on `*,*::before,*::after` with the text-field exception | `interaction_guard_sim.js` |
 | Cash Shop (Stripe Checkout, cosmetics + supplies) | `assets/shop-catalog.js` (the price list, shared), `assets/shop.js`, `assets/shop.css`; `functions/_lib/shop.js`, `functions/api/shop/{catalog,checkout,order,webhook}.js`, `functions/api/gm/shop.js`, `migrations/0005_shop.sql`; `functions/api/save.js` (`lockedCosmetics`), `assets/wardrobe-ui.js` (`wardrobeLocked`), `gm.html` (Cash Shop tab) | `shop_api_sim.js`, `shop_sim.js`, `dev_server_sim.js`; setup in [MONETIZATION-SETUP.md](MONETIZATION-SETUP.md) |
 | Browser saves, login, cloud sync, away rewards | `index.html`: `fresh`, `load`, `save`, `saveKey`, `CLOUD`, `offlinePlan` | `save_load_sim.js`, `save_owner_sim.js`, `cloud_sim.js`, `offline_sim.js`, `migration_sim.js` |
 | API accounts, sessions and saves | `functions/api/`, `functions/_lib/auth.js`, `functions/_lib/db.js`, `functions/_lib/validate.js` | `api_sim.js`, `registration_sim.js`, `dev_server_sim.js` |
@@ -266,7 +267,10 @@ remain independent. See [activation/rollback handoff](NATIVE-FIELDS-HANDOFF.md).
 World/Whisper/Local chat and social plaza (v203): `assets/social.js`,
 `assets/social-scene.js`, `assets/social-rules.js`, `functions/api/social.js`,
 `workers/social/`; see [Social hub](SOCIAL-HUB.md) for architecture, deployment and
-checks. The independent scene leaves the real farming simulation running.
+checks. The independent scene leaves the real farming simulation running. Since
+v225 the validated look also carries `lv` (field level aura) and `speed` (field run
+speed); `PGSocialRules.walkSpeed` clamps and advances every player with it, and the
+plaza reuses `buildLevelAura`/`LEVEL_AURAS` for the Base 50/99/150 sigil.
 
 Cash Shop (v215): `assets/shop-catalog.js` is the single price list, imported by the
 Pages Functions the same way `workers/social` imports `assets/social-rules.js`, so

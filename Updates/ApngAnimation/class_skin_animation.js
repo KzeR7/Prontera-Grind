@@ -374,7 +374,10 @@ function syncLevelAura(){
     }
     levelAura=buildLevelAura(a);scene.add(levelAura);
   }
-  levelAura.visible=!!heroSpr&&heroSpr.visible;levelAura.position.set(pl.x,.045+(typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY()-.035:0),pl.z);
+  // v225: the sigil sits on the surface the hero actually stands on. A flat .045 put it under
+  // Astral Citadel's raised paving (slabs reach .091), so a level-50+ character showed no aura on
+  // that map; actorFloorY() already knows the native, Astral and trial floors.
+  levelAura.visible=!!heroSpr&&heroSpr.visible;levelAura.position.set(pl.x,actorFloorY()+.01,pl.z);
   levelAura.scale.setScalar(1+Math.sin(t*2)*.025);
   // Cosmetic rotation follows real time even while simulation time is paused.
   const spin=skinNow()/1000;

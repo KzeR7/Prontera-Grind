@@ -14,6 +14,14 @@
    overscroll-behavior:none stops the pull-to-refresh gesture from reloading a farming session,
    and the tap highlight is removed because every button in here is a game control. */
 html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; overflow:hidden; overscroll-behavior:none; -webkit-tap-highlight-color:transparent; background:#2b3a55; font-family:"Trebuchet MS",Verdana,sans-serif; color:var(--ink); }
+/* Owner request (2026-10-24): the page is a game, not a document. A left-button drag must not
+   paint a blue text selection across the field or a panel and a long-press on a phone must not
+   open the callout sheet, so selection is off for everything and turned back on only for text
+   fields - the account form, the equipment search and the auto-sell name list stay editable.
+   Sprites and item icons also stop starting the browser's native image drag. */
+*,*::before,*::after{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,[contenteditable=""],[contenteditable="true"]{-webkit-user-select:text;-moz-user-select:text;user-select:text}
+img,canvas{-webkit-user-drag:none}
 
 .win{background:var(--panel);border:3px solid var(--edge);border-radius:6px;box-shadow:0 0 0 2px var(--edge2),0 4px 0 2px var(--edge2)}
 .title{font-weight:bold;background:linear-gradient(#f3d98b,#d9b25c);border-bottom:2px solid var(--edge2);padding:4px 10px;font-size:14px;display:flex;justify-content:space-between;align-items:center}
@@ -957,6 +965,17 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
+// Owner request (2026-10-24): no browser menu anywhere in the game - a right-click used to offer
+// "Save image as…", "Inspect" and "Reload" over the field and every panel, which is a web page
+// behaviour, not a game one. Only text-entry fields keep their own menu (paste); checkboxes,
+// buttons and selects are game controls and stay covered. Nothing in the page can begin a native
+// image drag either, and the CSS above handles the left-drag highlight.
+const isTextField=el=>{
+  const field=el&&el.closest?el.closest('input,textarea,[contenteditable=""],[contenteditable="true"]'):null;
+  return !!field&&(field.tagName==='TEXTAREA'||field.hasAttribute('contenteditable')||/^(text|password|search|number|email|url|tel)$/.test(field.type||''));
+};
+document.addEventListener('contextmenu',event=>{if(!isTextField(event.target))event.preventDefault()});
+document.addEventListener('dragstart',event=>{if(!isTextField(event.target))event.preventDefault()},true);
 // Eclipse presentation preferences are device-local; game saves and combat colors are untouched.
 function eclipsePaletteControls(){return '<div class="eclipse-palettes" role="group" aria-label="Interface palette">'+['moonstone','aurora','ember'].map(p=>'<button type="button" data-palette="'+p+'" aria-pressed="'+(document.documentElement.dataset.palette===p)+'">'+p[0].toUpperCase()+p.slice(1)+'</button>').join('')+'</div>'}
 function eclipseSetPalette(value){const p=['moonstone','aurora','ember'].includes(value)?value:'moonstone';document.documentElement.dataset.palette=p;try{localStorage.setItem('pg_ui_palette',p)}catch{}document.querySelectorAll('button[data-palette]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.palette===p)))}
@@ -1183,7 +1202,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-24 haven-v223 bigger ascension monsters, no drawn-to-screen mobs';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-24 haven-v225 plaza walk speed + level auras';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -9015,7 +9034,10 @@ function syncLevelAura(){
     }
     levelAura=buildLevelAura(a);scene.add(levelAura);
   }
-  levelAura.visible=!!heroSpr&&heroSpr.visible;levelAura.position.set(pl.x,.045+(typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY()-.035:0),pl.z);
+  // v225: the sigil sits on the surface the hero actually stands on. A flat .045 put it under
+  // Astral Citadel's raised paving (slabs reach .091), so a level-50+ character showed no aura on
+  // that map; actorFloorY() already knows the native, Astral and trial floors.
+  levelAura.visible=!!heroSpr&&heroSpr.visible;levelAura.position.set(pl.x,actorFloorY()+.01,pl.z);
   levelAura.scale.setScalar(1+Math.sin(t*2)*.025);
   // Cosmetic rotation follows real time even while simulation time is paused.
   const spin=skinNow()/1000;
@@ -10500,8 +10522,8 @@ setInterval(updateWatch,60000);
 </script>
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=215"></script>
-<script src="assets/social-rules.js?v=209"></script>
-<script src="assets/social-scene.js?v=209"></script>
-<script src="assets/social.js?v=209"></script>
+<script src="assets/social-rules.js?v=210"></script>
+<script src="assets/social-scene.js?v=210"></script>
+<script src="assets/social.js?v=210"></script>
 </body>
 </html>

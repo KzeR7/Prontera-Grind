@@ -38,5 +38,20 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  room.disconnect(b);assert(!room.clients.has(b.id));assert(clients[2].events.some(e=>e.type==='left'&&e.id===b.id));
  let closed=false;const old=room.connect({id:100,username:'Replacement'},()=>{},()=>closed=true);room.connect({id:100,username:'Replacement'},()=>{},()=>{});assert(closed);room.disconnect(old);assert(room.clients.has(100));
  now+=301000;room.sweep();assert.equal(room.clients.size,0);
- console.log('PASS social room: channel privacy, 20-player overflow, native emotion events, collision, movement/sit, rate limit, session expiry and tab replacement');
+ // v225: each character walks at its own field run speed; the room clamps the reported value into
+ // the shared band and both server and client read it back through PGSocialRules.walkSpeed.
+ const walkRoom=new SocialRoom({now:()=>now});
+ const walkJoin=(id,look)=>{const events=[];const c=walkRoom.connect({id,username:'Walker'+id},s=>events.push(JSON.parse(s)),()=>{});c.events=events;walkRoom.receive(c,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'},...look}}));return c};
+ const fast=walkJoin(201,{speed:99,lv:150}),slow=walkJoin(202,{speed:1,lv:-5}),plain=walkJoin(203,{});
+ assert.equal(fast.look.speed,R.MAX_SPEED,'a client cannot report more than the fastest legal walk');
+ assert.equal(fast.look.lv,150,'level is kept for the plaza aura');
+ assert.equal(slow.look.speed,R.MIN_SPEED,'a client cannot report below the minimum walk');
+ assert.equal(slow.look.lv,0,'invalid levels fall back to no aura');
+ assert.equal(plain.look.speed,R.SPEED,'older looks without speed use the shared default');
+ assert.equal(R.walkSpeed({look:{speed:9}}),9,'the shared rules honour the validated speed');
+ const walker={x:0,z:40,path:[{x:0,z:0}],at:0,look:{speed:9}};R.advance(walker,1000);assert.equal(walker.z,31,'advance honours the character speed for clients and the room');
+ fast.x=0;fast.z=12;fast.at=now;fast.path=[{x:0,z:-24}];const fastBefore=fast.z;now+=1000;walkRoom.snapshot(fast);
+ assert.equal(fastBefore-fast.z,R.MAX_SPEED,'the room itself advances at the validated speed');
+ walkRoom.disconnect(fast);walkRoom.disconnect(slow);walkRoom.disconnect(plain);
+ console.log('PASS social room: channel privacy, 20-player overflow, native emotion events, collision, movement/sit, rate limit, session expiry, per-character walk speed and tab replacement');
 })().catch(e=>{console.error(e);process.exitCode=1});
