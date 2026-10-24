@@ -7221,3 +7221,48 @@ The owner's second pass over v77, six notes, all built.
 * **Files touched:** `index.html` (`BUILD` haven-v221 and title rendering/styles), `tools/tests/ui_sim.js`, `tools/tests/shop_sim.js` (build assertion), the three `tools/tests/fixtures/progression_*.json` benchmark metadata files (refreshed against this source; measured rows are unchanged), current build-tag mirrors in `Updates/cards-gear-audit/affix-ranges.html` and `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`, and this log.
 * **Checks:** All **132/132** required checks pass: three generated-asset checks, 126 JavaScript simulations and three smoke suites. `bash tools/build_site.sh` (133 MB / 3,108 files) and `git diff --check` pass. Chromium/SwiftShader verified all ten rows, the active and next ranks, the 1,000 / 2,000 Rank XP label, gradient progress, and a 390px mobile layout with no horizontal overflow or page errors. This is software-rendered QA, not a physical-device performance claim.
 * **Delivery:** `arena/fd83a5b4-prontera-grind`; preview available on port 8788. No deployment.
+
+### 2026-10-24 — `haven-v222 ascension monster sizes`
+
+* **Changed (player-visible), Astral Citadel and Thor Volcano only:** every ordinary monster on the two
+  Ascension fields now **stands about as tall as the character** (2.16 world units, the hero's own
+  figure height) and the **MVP stands at 3.46 units - 1.6x the hero** - instead of following the
+  Divine Pride Small/Medium/Large label. The two species the owner confirmed already looked right keep
+  their shipped size: **Agony Demon 1.10** and **Magma Slag 0.86**. The other eight ordinary monsters
+  were all off: Retribution Angel, Tower Watcher, Death Whisperer and Fire Imp were knee-to-chest high
+  (1.20-1.84), Despair Phantom, Salamander, Kasa and Obsidian Golem already reached 2.05-2.58, and
+  Memory of Thanatos (2.99) / Ifrit (4.06) were not consistently larger than the field.
+* **Why the old rule could not do it:** the native 512px exports hold very different silhouettes. The
+  Agony Demon's idle art fills 48 of its sheet's 58-pixel extent while the Obsidian Golem's fills 153 of
+  177, so one size class produced both a knee-high demon and a golem taller than the hero. Each
+  species is now scaled from **its own idle art against the tallest frame of the same sheet**
+  (`ASCENSION_FRAME_PX`, measured from the shipped PNGs and `assets/native-mob-heights.js`), so the
+  visible height - not the canvas - is what matches the character.
+* **Unchanged:** every other map (the same sheets also dress Abyss's Lava Slime and Chaos Imp and
+  Amatsu's Shiranui, which keep their size class), hitboxes, aggro, attack range, rewards, drops,
+  saves and art files. The rule is gated on `mapIndex>=10`, so it applies to Ascension fields only.
+* **Also changed (player-visible):** the on-screen **auto combat bar now always opens minimized**
+  (`+ Show`), so the field starts without a panel over the fight; the stage label stays and the button
+  still expands it. The **`Pack 1/3 ·` counter is gone** from that bar - it described the retired pack
+  system; the stage line now reads `Monsters 0/15`.
+* **Try it:** Maps → Ascension Map → Astral Citadel or Thor Volcano (stage 3/4 shows Agony Demon,
+  stage 3/5 shows Obsidian Golem, stage 5 shows a boss), and open the game normally to see the
+  collapsed auto combat bar.
+* **Files touched:** `index.html` (`BUILD` haven-v222; `mobVisualScale` + `ASCENSION_FRAME_PX`,
+  `HERO_VISUAL_HEIGHT`, `ASCENSION_BOSS_VISUAL`, `ASCENSION_KEPT_VISUAL`; auto-combat markup,
+  `setCombatBarMinimized`, `prog` text), `tools/tests/sprite_sim.js` (new Ascension sizing test, PNG
+  alpha decoding and heights-file cross-check), `tools/tests/ascension_attack_sim.js` (real `spawn()`
+  heights), `tools/tests/eclipse_ui_sim.js` (collapsed bar and the retired pack counter),
+  `tools/tests/shop_sim.js` (build assertion), `docs/GAME-DESIGN.md`, `docs/CODE-MAP.md`, the three
+  build-tag mirrors, and this log.
+* **Checks:** 124 of the 126 JavaScript simulations and all 3 smoke suites pass, including the new
+  Ascension-height test (it decodes the shipped PNG alpha bounds, cross-checks them against
+  `assets/native-mob-heights.js`, and proves both fields and both MVPs), the live-`spawn()` height
+  check on all five stages of both maps, `sprite_sim` (15), `eclipse_ui_sim` (50), `ui_sim` (64),
+  `panel_layout_smoke` (42), `field_loop_smoke` (9) and `publish_sim`. The three generated-asset
+  checks (`make_sprite_viewer`, `make_class_skins`, `make_weapon_pack`) report current and
+  `git diff --check` is clean; inline game JavaScript passes `node --check`. **Not run:**
+  `skill_balance_sim` and `card_star_balance_sim` need the historical baseline commit `d164bd0`,
+  which this checkout does not contain (`git show d164bd0:index.html` fails); no Chromium is
+  available here, so the live browser/WebGL look of the new sizes is unverified by screenshot.
+* **Delivery:** local changes on `arena/063469a7-prontera-grind`; no merge or deployment.

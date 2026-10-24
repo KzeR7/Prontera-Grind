@@ -21,11 +21,13 @@ const petRosterSrc = src.match(/const PETS=\[[\s\S]*?\];/)?.[0];
 if (!petRosterSrc) throw new Error('cannot find pet monster sprite roster');
 const mapBox = {};
 vm.createContext(mapBox);
-vm.runInContext(mapCode + '\n' + petRosterSrc + '\n' + grab('const petIcon=', 'const RN=') + '\nthis.__data={MAPS,MOB_SPRITES,MOB_SIZE_BY_ID,MOB_SIZE_SCALE,MOB_REGULAR_VISUAL,mobVisualScale,mobSpriteUrl,PETS,petIcon};', mapBox);
+vm.runInContext(mapCode + '\n' + petRosterSrc + '\n' + grab('const petIcon=', 'const RN=') + '\nthis.__data={MAPS,MOB_SPRITES,MOB_SIZE_BY_ID,MOB_SIZE_SCALE,MOB_REGULAR_VISUAL,mobVisualScale,mobSpriteUrl,PETS,petIcon,ASCENSION_FRAME_PX,ASCENSION_KEPT_VISUAL,HERO_VISUAL_HEIGHT,ASCENSION_BOSS_VISUAL};', mapBox);
 const MAPS = mapBox.__data.MAPS, MOB_SPRITES = mapBox.__data.MOB_SPRITES, MOB_SIZE_BY_ID = mapBox.__data.MOB_SIZE_BY_ID,
       MOB_SIZE_SCALE = mapBox.__data.MOB_SIZE_SCALE, MOB_REGULAR_VISUAL = mapBox.__data.MOB_REGULAR_VISUAL,
       mobVisualScale = mapBox.__data.mobVisualScale, mobSpriteUrl = mapBox.__data.mobSpriteUrl, PETS = mapBox.__data.PETS,
-      petIcon = mapBox.__data.petIcon;
+      petIcon = mapBox.__data.petIcon, ASCENSION_FRAME_PX = mapBox.__data.ASCENSION_FRAME_PX,
+      ASCENSION_KEPT_VISUAL = mapBox.__data.ASCENSION_KEPT_VISUAL, HERO_VISUAL_HEIGHT = mapBox.__data.HERO_VISUAL_HEIGHT,
+      ASCENSION_BOSS_VISUAL = mapBox.__data.ASCENSION_BOSS_VISUAL;
 
 const weaponCode = grab('const WEAPON_ITEM_IDS=', 'const STATS=');
 const weaponBox = {};
@@ -147,7 +149,8 @@ t('all 100 unique native/Divine Pride mob IDs match their database size class an
 t('Poring, Fabre and all regular mobs render below player height while bosses keep their old size', () => {
   const hero=2.92,frame=3.05;
   assert.strictEqual(MOB_REGULAR_VISUAL,.7,'the regular-only visual multiplier changed');
-  const height=(m,boss=false)=>frame*mobVisualScale({...m,boss,spawn:1});
+  // mapIndex reaches the renderer with every spawned monster, so include it (see the Ascension test).
+  const height=(m,boss=false,mapIndex=0)=>frame*mobVisualScale({...m,boss,spawn:1,mapIndex});
   const poring=MAPS[0].mobs.find(m=>m.n==='Poring');
   const fabre=MAPS[0].mobs.find(m=>m.n==='Fabre');
   assert.ok(fabre && poring,'starter monster samples not found');
@@ -155,17 +158,103 @@ t('Poring, Fabre and all regular mobs render below player height while bosses ke
     'Fabre and Poring should be visibly shorter than the player');
   assert.ok(height(fabre)<hero*.55,'Fabre is still oversized');
   assert.ok(height(poring)<hero*.75,'Poring is still oversized');
-  for(const map of MAPS){
-    for(const m of map.mobs)assert.ok(height(m)<hero, map.n+': '+m.n+' exceeds player height');
+  MAPS.forEach((map,mapIndex)=>{
+    // The two Ascension fields draw native frames, so they are measured on their visible art
+    // height against the character in the next test instead of on this sprite box.
+    if(mapIndex>=10)return;
+    for(const m of map.mobs)assert.ok(height(m,false,mapIndex)<hero, map.n+': '+m.n+' exceeds player height');
     const boss=map.boss;
-    assert.ok(Math.abs(height(boss,true)-frame*boss.spriteScale*1.18)<1e-9,
+    assert.ok(Math.abs(height(boss,true,mapIndex)-frame*boss.spriteScale*1.18)<1e-9,
       map.n+' boss size was changed');
-  }
+  });
   // The same scale must reach the GPU group, DOM sprite, target tag and sync path.
   assert.ok(src.includes('const s=mobVisualScale(m)') && src.includes('const s=mobVisualScale(mob)'),
     'rendered mobs or target tag still use the old scale');
   assert.ok(src.includes('v.G.scale.set(s,s,s)') && src.includes('syncMobImage(v,m,mobVisualScale(m))'),
     'GPU and HTML sprite paths must agree on size');
+});
+
+t('Ascension fields stand every monster at character height and keep both MVPs above the field', () => {
+  const zlib = require('node:zlib');
+  // Owner request (2026-10-24): on Astral Citadel and Thor Volcano ordinary monsters should look
+  // about as tall as the character, and both MVPs clearly taller. The two fields draw native
+  // 512px frames whose silhouettes fill very different shares of the sheet, so the shipped size
+  // classes alone produced everything from a knee-high demon to a golem taller than the hero.
+  // Visible art = 3.05*scale*(idle art / tallest frame); the table below is measured from the
+  // shipped PNGs and the generated heights file, never guessed.
+  const alphaBox = file => {
+    const buf = fs.readFileSync(file);
+    let pos = 8, w = 0, h = 0, depth = 0, color = 0; const idat = [];
+    while (pos < buf.length) {
+      const len = buf.readUInt32BE(pos), type = buf.toString('ascii', pos + 4, pos + 8), data = buf.subarray(pos + 8, pos + 8 + len);
+      if (type === 'IHDR') { w = data.readUInt32BE(0); h = data.readUInt32BE(4); depth = data[8]; color = data[9]; assert.strictEqual(data[12], 0, file + ' is interlaced'); }
+      else if (type === 'IDAT') idat.push(data);
+      else if (type === 'IEND') break;
+      pos += len + 12;
+    }
+    assert.strictEqual(depth, 8, file + ' is not 8-bit'); assert.strictEqual(color, 6, file + ' is not RGBA');
+    const raw = zlib.inflateSync(Buffer.concat(idat)), stride = w * 4, prev = Buffer.alloc(stride);
+    let top = -1, bottom = -1;
+    for (let y = 0, o = 0; y < h; y++) {
+      const filter = raw[o++], line = Buffer.from(raw.subarray(o, o + stride)); o += stride;
+      for (let x = 0; x < stride; x++) {
+        const a = x >= 4 ? line[x - 4] : 0, b = prev[x], c = x >= 4 ? prev[x - 4] : 0;
+        if (filter === 1) line[x] = (line[x] + a) & 255;
+        else if (filter === 2) line[x] = (line[x] + b) & 255;
+        else if (filter === 3) line[x] = (line[x] + ((a + b) >> 1)) & 255;
+        else if (filter === 4) { const q = a + b - c, pa = Math.abs(q - a), pb = Math.abs(q - b), pc = Math.abs(q - c); line[x] = (line[x] + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c)) & 255; }
+        else assert.strictEqual(filter, 0, file + ' uses PNG filter ' + filter);
+      }
+      line.copy(prev);
+      if (top < 0) for (let x = 3; x < stride; x += 4) if (line[x]) { top = y; break; }
+      if (top >= 0) for (let x = 3; x < stride; x += 4) if (line[x]) { bottom = y; break; }
+    }
+    return { top, bottom, height: bottom - top + 1 };
+  };
+  const heightsFile = fs.readFileSync(root + '/assets/native-mob-heights.js', 'utf8');
+  const nativeHeights = JSON.parse(/PGNativeMobHeights\s*=\s*Object\.freeze\((\{[^)]*\})\)/.exec(heightsFile)[1]);
+  const drawn = m => { const [art, extent] = ASCENSION_FRAME_PX[m.spriteId]; return 3.05 * mobVisualScale({ ...m, boss: !!m.boss, spawn: 1 }) * art / extent; };
+  const fieldMob = (m, mapIndex) => ({ ...m, boss: m === MAPS[mapIndex].boss, mapIndex });
+  // 1. The table is the shipped art: idle-frame pixels and the generated tallest frame extent.
+  for (const [id, [art, extent]] of Object.entries(ASCENSION_FRAME_PX)) {
+    assert.strictEqual(alphaBox(root + '/assets/mobs/v1/' + id + '-0.png').height, art, id + ' idle art height changed');
+    assert.strictEqual(nativeHeights[id], extent, id + ' tallest frame extent disagrees with assets/native-mob-heights.js');
+  }
+  // 2. Ordinary monsters of both fields stand at the character's height, except the two the owner
+  //    confirmed were already right; both MVPs are well above every monster on their field.
+  assert.strictEqual(HERO_VISUAL_HEIGHT, 2.16, 'the character stands 2.16 world units (SKIN_H)');
+  assert.ok(src.includes('const SKIN_H=72*PACK_K') && src.includes('PACK_K=.03'), 'SKIN_H moved; HERO_VISUAL_HEIGHT must follow it');
+  assert.ok(ASCENSION_BOSS_VISUAL > HERO_VISUAL_HEIGHT, 'an MVP must stay taller than the character');
+  for (const mapIndex of [10, 11]) {
+    const map = MAPS[mapIndex];
+    for (const m of map.mobs) {
+      const target = ASCENSION_KEPT_VISUAL[m.spriteId] || HERO_VISUAL_HEIGHT;
+      assert.ok(Math.abs(drawn(fieldMob(m, mapIndex)) - target) < 1e-9, map.n + ': ' + m.n + ' is not at its target height');
+      if (!ASCENSION_KEPT_VISUAL[m.spriteId]) assert.ok(Math.abs(drawn(fieldMob(m, mapIndex)) - HERO_VISUAL_HEIGHT) < 1e-9, map.n + ': ' + m.n + ' should stand at character height');
+    }
+    const bossDrawn = drawn(fieldMob(map.boss, mapIndex));
+    assert.ok(Math.abs(bossDrawn - ASCENSION_BOSS_VISUAL) < 1e-9, map.n + ': MVP is not at the Ascension boss height');
+    for (const m of map.mobs) assert.ok(bossDrawn > drawn(fieldMob(m, mapIndex)) * 1.4, map.n + ': ' + map.boss.n + ' is not clearly bigger than ' + m.n);
+  }
+  // 3. The two approved species keep exactly the height they shipped with (Small x .7 regular).
+  for (const [id, target] of Object.entries(ASCENSION_KEPT_VISUAL)) {
+    const [art, extent] = ASCENSION_FRAME_PX[id];
+    const shipped = 3.05 * (MOB_SIZE_SCALE[MOB_SIZE_BY_ID[id]] * MOB_REGULAR_VISUAL) * art / extent;
+    assert.ok(Math.abs(shipped - target) < .01, 'approved height for sprite ' + id + ' no longer matches the shipped size');
+  }
+  // 4. Ordinary maps that reuse the same native sheets (Lava Slime, Chaos Imp, Amatsu's Shiranui)
+  //    keep their size class: the new rule is an Ascension-field rule, not a sprite rule.
+  const reused = [[9, 'Lava Slime'], [9, 'Chaos Imp'], [7, 'Shiranui']];
+  for (const [mapIndex, name] of reused) {
+    const m = [MAPS[mapIndex].boss, ...MAPS[mapIndex].mobs].find(x => x.n === name);
+    assert.ok(m && ASCENSION_FRAME_PX[m.spriteId], name + ' is no longer drawn with a native sheet');
+    const scaled = mobVisualScale({ ...m, boss: m === MAPS[mapIndex].boss, spawn: 1, mapIndex });
+    assert.strictEqual(scaled, m.spriteScale * (m === MAPS[mapIndex].boss ? 1.18 : MOB_REGULAR_VISUAL), name + ' left its size class');
+  }
+  // 5. The rule reaches the renderer through the live mob's map index.
+  assert.ok(src.includes('m.mapIndex>=10?ASCENSION_FRAME_PX[m.spriteId]:null'), 'the Ascension rule must be gated to its own fields');
+  assert.ok(src.includes('window.PGNativeMobHeights?.[m.spriteId]'), 'the native draw path must keep using the generated heights');
+  console.log('       Hero 2.16 · ordinary Ascension monsters 2.16 · MVPs ' + ASCENSION_BOSS_VISUAL + ' (kept: Agony Demon 1.10, Magma Slag .86)');
 });
 
 t('Divine Pride item icons cover every weapon type used by all 19 classes', () => {

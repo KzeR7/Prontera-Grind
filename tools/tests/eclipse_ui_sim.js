@@ -123,8 +123,18 @@ test('closing inventory resets view; auto-equip and auto-sale retain authoritati
  ev(`S.auto=false;S.autoSell=Array(7).fill(true);S.autoSellRules=defaultAutoSellRules();const dropped={...S.eq.weapon,id:20003,val:1,locked:false,r:0,cards:[],aff:[]};window.beforeSale=S.zeny;collect(dropped)`);
  assert.ok(ev('!S.inv.some(it=>it.id===20003)&&S.zeny>window.beforeSale'));
 });
-test('minimized center HUD does not pause or mutate combat state',()=>{
- const before=ev('JSON.stringify(S)');const b=doc.getElementById('eclipseMinimize');b.click();assert.equal(b.getAttribute('aria-expanded'),'false');assert.ok(doc.getElementById('eclipseCombat').classList.contains('minimized'));assert.equal(ev('JSON.stringify(S)'),before);b.click();assert.equal(b.getAttribute('aria-expanded'),'true');
+test('the auto combat bar starts collapsed, expands on demand and never mutates combat state',()=>{
+ const before=ev('JSON.stringify(S)'),b=doc.getElementById('eclipseMinimize'),bar=doc.getElementById('eclipseCombat');
+ // Owner request (2026-10-24): the field opens with the bar minimized instead of over the fight.
+ // Nothing in this file clicks the button before this check, so this is the delivered page state.
+ assert.ok(bar.classList.contains('minimized'),'the auto combat bar starts minimized');
+ assert.equal(b.getAttribute('aria-expanded'),'false');assert.equal(b.textContent,'+ Show');
+ b.click();assert.equal(b.getAttribute('aria-expanded'),'true');assert.ok(!bar.classList.contains('minimized'));assert.equal(b.textContent,'− Hide');
+ assert.equal(ev('JSON.stringify(S)'),before);b.click();
+ assert.equal(b.getAttribute('aria-expanded'),'false');assert.ok(bar.classList.contains('minimized'));
+ // The old pack counter is gone; the stage's monster count stays.
+ assert.equal(/Pack \$\{activePack/.test(html),false,'the retired pack counter must not return');
+ assert.ok(html.includes('Monsters ${Math.min(S.kl,MPS)}/${MPS}'),'the stage monster counter stays');
 });
 test('workshop routes preserve Reforge offers and do not duplicate the store in supplies',()=>{
  ev(`ACT.openreforge();S.eq.weapon.aff=[{k:'str',v:10},{k:'agi',v:10}];renderWin()`);
