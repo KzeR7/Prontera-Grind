@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind — Mob Spawn Lab (proposal)</title>
+<style>
+:root{--parch:#e9d39a;--edge:#5a4a2c;--bg:#141210;--panel:#1e1a14;--live:#7fd6ff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -100px,#2a2317,#141210 70%);color:#e8dfc8;font:13px/1.5 "Trebuchet MS",Verdana,sans-serif}
+header{padding:16px 22px 6px;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+header h1{margin:0;font-size:18px;color:var(--parch)}
+.tag{font-size:11px;border:1px solid #5a4a2c;border-radius:4px;padding:2px 8px;background:#00000040;color:#b9a97f}
+main{max-width:1320px;margin:0 auto;padding:8px 18px 40px}
+.note{background:#26201780;border:1px solid #5a4a2c;border-radius:8px;padding:10px 14px;margin:8px 0 14px}
+.note b{color:var(--parch)}
+#deck{background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end;margin-bottom:12px}
+.ctl{display:flex;flex-direction:column;gap:3px;min-width:130px}
+.ctl label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#b9a97f}
+.ctl .val{color:#ffe9ad}
+.ctl select,.ctl input[type=range]{width:100%}
+.ctl select{background:#2b2418;color:#efe3c0;border:1px solid #5a4a2c;border-radius:5px;padding:4px 6px}
+button{background:linear-gradient(#3a3021,#2a2317);color:#efe3c0;border:1px solid #6b5730;border-radius:6px;padding:7px 12px;font:700 13px "Trebuchet MS",sans-serif;cursor:pointer}
+button.gold{background:linear-gradient(#7a5b1d,#4d3a12);border-color:#b98d3e;color:#ffe9ad}
+button:disabled{opacity:.45;cursor:not-allowed}
+#panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.panel{background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:8px 10px 10px}
+.panel h2{font-size:12px;margin:2px 0 2px;color:var(--parch)}
+.panel .sub{font-size:11px;color:#b9a97f;min-height:34px}
+.panel canvas{width:100%;height:auto;display:block;border:1px solid #00000055;border-radius:8px;background:#4d9442}
+.stats{font-size:11px;color:#cfc19a;margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+.stats b{color:#ffe9ad}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:#b9a97f}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.opt{border:1px solid #5a4a2c;border-radius:8px;padding:10px 12px;background:#1a160f}
+.opt h3{margin:0 0 4px;font-size:13px;color:#f0d9a0}
+.opt p{margin:4px 0;font-size:12px;color:#c9b99a}
+.opt ul{margin:6px 0 0 16px;font-size:11px}
+footer{color:#8f8266;font-size:11px;padding:10px 22px 30px;max-width:1320px;margin:0 auto}
+a{color:#d4a937}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌀 Mob Spawn Lab — proposal playground</h1>
+  <span class="tag">proposal only · nothing changed in game</span>
+  <span class="tag">camps = live · tick/wave/rupture = previews</span>
+</header>
+<main>
+<div class="note">
+  <b>What this is:</b> Your live field is <b>26×40</b> (x −13…13, z −28…12) with water bands; we animate 4 variants side-by-side with the same hero walk/kill math.
+  <b>Camps (Live)</b> is exactly your shipped logic: 8/10/12 scattered camps, 1–3 mobs 1.6–3.2u from camp, deterministic 4–8s refill, idle wander, AGGRO 6.5, push-apart.
+  The other three preview <b>what you could add</b>: <b>Tick</b> (Maple 7.56s global wave), <b>Wave</b> (VS 60s escalating pools), <b>Rupture</b> (Diablo tear bursts + elite). Toggle nodes/frenzy to see density shift. Try Prontera (open) vs Payon (creek) vs Izlude (shoreline) — same as <code>Updates/spawn-field/index.html</code>, just with new knobs.
+</div>
+
+<div id="deck">
+  <div class="ctl"><label>Map</label>
+    <select id="mapSel">
+      <option value="0">Prontera st1 — open, no water</option>
+      <option value="4" selected>Payon st1 — creek</option>
+      <option value="1">Izlude st5 — shoreline</option>
+      <option value="9">Abyss st8 — dark lake</option>
+    </select></div>
+  <div class="ctl"><label>Kill rate <span class="val" id="vK"></span></label><input type="range" id="k" min="0.3" max="3" step="0.1" value="1.2"></div>
+  <div class="ctl"><label>Speed <span class="val" id="vT"></span></label><input type="range" id="tm" min="1" max="6" step="1" value="2"></div>
+  <div class="ctl"><label>Frenzy</label>
+    <select id="frenzy"><option value="1">Off (1.0×)</option><option value="1.3">Mild 1.3×</option><option value="1.6">Hot 1.6×</option></select></div>
+  <div class="ctl"><label>Placement</label>
+    <select id="place"><option value="scatter">Pure scatter</option><option value="nodes" selected>Hotspots (70% nodes / 30% scatter)</option></select></div>
+  <div class="ctl" style="flex-direction:row;gap:8px;align-items:center">
+    <button class="gold" id="pause">Pause</button><button id="reset">Reset</button><button id="burst">Trigger Rupture</button>
+  </div>
+  <div class="ctl" style="flex-direction:row;gap:8px;align-items:center">
+    <a href="../docs/proposals/mob-spawn-redesign-2026-10-24.md" target="_blank"><button>📄 Read full proposal</button></a>
+    <a href="../Updates/spawn-field/index.html" target="_blank"><button>↗ Original spawn-field lab</button></a>
+  </div>
+</div>
+
+<div id="panels">
+  <div class="panel"><h2>1 · Camps (Live — your game)</h2><div class="sub">8/10/12 camps 5.5u apart, 1–3 mobs 1.6–3.2u ring, per-camp 4–8s wait (sin-stable), wander, aggro 6.5, push 1.1u</div><canvas id="cLive" width="360" height="380"></canvas><div class="stats" id="sLive"></div></div>
+  <div class="panel"><h2>2 · Tick (Maple — global wave)</h2><div class="sub">Same camps, but refill only on global tick every <b>2.5s</b> (shortened for demo; Maple is 7.56s) — all empty camps refill together</div><canvas id="cTick" width="360" height="380"></canvas><div class="stats" id="sTick"></div></div>
+  <div class="panel"><h2>3 · Wave (Vampire Survivors)</h2><div class="sub">60s swarms → chasers → <b>elite event</b>: min/max & interval shift, frenzy shortens interval, cap 30</div><canvas id="cWave" width="360" height="380"></canvas><div class="stats" id="sWave"></div></div>
+  <div class="panel"><h2>4 · Rupture (Diablo — burst)</h2><div class="sub">Base camps + periodic 12-s <b>tear</b> pouring 12–18 mobs in 3 pulses + 1 elite (ritual hold = +2s). Bursts are bonus kills.</div><canvas id="cRup" width="360" height="380"></canvas><div class="stats" id="sRup"></div></div>
+</div>
+
+<div class="legend">
+  <span><i style="background:#ffd23f"></i>hero + 6.5 aggro</span>
+  <span><i style="background:#e0574a"></i>idle mob</span>
+  <span><i style="background:#ff9ec4"></i>aggro mob</span>
+  <span><i style="background:#ff6b3d"></i>elite (brute)</span>
+  <span><i style="background:#7fd6ff"></i>water (+margin)</span>
+  <span><i style="background:#f0d060"></i>node hotspot</span>
+  <span><i style="background:#ff3f8a"></i>rupture tear</span>
+  <span>Watch <b>mobs within 10u</b> (feels empty?) and <b>walk/10 kills</b> (how much field you see)</span>
+</div>
+
+<section style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px">
+  <div class="opt"><h3>Option 1 — Hotspots (RO)</h3><p>Author 8–14 nodes per map; 70% spawns inside, 30% scatter. Sentry/roamer/lurker assist. Same counts, better texture.</p><ul><li>Prontera brick plaza, Payon creek bridge, Geffen groves become real hotspots</li><li>Toggle <b>Placement → Hotspots</b> above to preview</li></ul></div>
+  <div class="opt"><h3>Option 3 — Wave Director (VS)</h3><p>Every 60s swap family mix + interval. Faster clears → more spawns; cap prevents melt.</p><ul><li>Panel 3 cycles: Swarm (8/24 1.5s) → Chase (10/28 1.2s) → Elite (6+1)</li><li>Frenzy = VS Curse: interval /= 1+frenzy</li></ul></div>
+  <div class="opt"><h3>Option 4 — Rupture (Diablo)</h3><p>Helltide 90m pick-a-map +80% density; mid-fight tears pour adds + elite. Bonus kills (don't count to MPS=15).</p><ul><li>Press <b>Trigger Rupture</b> to force a tear now</li><li>Elites roll Swift/Armored/Vampiric (red ring)</li></ul></div>
+  <div class="opt"><h3>Option 6 — Player Dial</h3><p>Frenzy slider + Lure consumable. Off=1.0×, Mild=1.3×, Hot=1.6× spawns, +20% mob ATK/HP, +18% EXP; gated to active play.</p><ul><li>Try Prontera open vs Payon creek — frenzy cost shows in walk/10 kills</li></ul></div>
+</section>
+</main>
+<footer>
+  Live constants: <code>BX_=13 Z0=-28 Z1=12 AGGRO=6.5 CAMP_GAP=5.5 NEIGHBOUR_GAP=2.7 CAMP_REFILL 4–8s campCount 8/10/12</code> from <code>index.html</code>.
+  Maple 7.56s tick: <a href="https://meowdb.com/msclassic/guides/spawn-engine-respawn-and-map-capacity" target="_blank">meowdb global tick</a> / <a href="https://github.com/Francesco149/mapleguide" target="_blank">mapleguide</a>.
+  VS waves 1/min min/max/cap/curse: <a href="https://vampire-survivors.fandom.com/wiki/Enemies" target="_blank">VS Enemies</a> + <a href="https://vampire.survivors.wiki/w/Curse" target="_blank">Curse</a>.
+  D4 density endgame + ruptures: <a href="https://www.pcgamesn.com/diablo-4/monster-density" target="_blank">Blizz density</a> + <a href="https://timesaver.gg/blog/diablo-4-pandemonium-ruptures-guide" target="_blank">ruptures</a>.
+  Full write-up: <a href="../docs/proposals/mob-spawn-redesign-2026-10-24.md" target="_blank">mob-spawn-redesign-2026-10-24.md</a>
+</footer>
+<script>
+const BX=13,Z0=-28,Z1=12,AGGRO=6.5,NEIGH=2.7;
+const rnd=(a,b)=>a+Math.random()*(b-a), ri=(a,b)=>Math.floor(rnd(a,b+1));
+const FIELDS={
+  '0':{name:'Prontera st1',map:0,band:null,camps:8,per:[1,2]},
+  '4':{name:'Payon st1',map:4,band:[-7.8,-5],camps:10,per:[2,3]},
+  '1':{name:'Izlude st5',map:1,band:[-32,-24],camps:8,per:[1,2]},
+  '9':{name:'Abyss st8',map:9,band:[-32,-23],camps:12,per:[2,3]},
+};
+const field=()=>FIELDS[document.getElementById('mapSel').value]||FIELDS['4'];
+const frenzy=()=>parseFloat(document.getElementById('frenzy').value)||1;
+const placement=()=>document.getElementById('place').value;
+let timeMul=2, killRate=1.2, paused=false;
+
+// hotspot nodes: 3–5 authored spots per map demo
+function makeNodes(F){
+  // deterministic pseudo-nodes around lane, avoiding water center
+  const seeds={0:[[-6,-10],[6,-8],[0,4]],4:[[ -7, -12],[0,-2],[7,6]],1:[[-8,0],[0,-18],[9,-6]],9:[[-5,2],[4,-12],[8,3]]}[F.map]||[[-5,0],[5,0],[0,6]];
+  return seeds.map(([x,z])=>({x,z,r:6+Math.random()*2}));
+}
+
+function dry(x,z,band){
+  if(Math.abs(x)>=BX-0.6) return false;
+  if(z<=Z0+0.6||z>=Z1-0.6) return false;
+  if(band && z>=band[0]-1.2 && z<=band[1]+1.2) return false;
+  return true;
+}
+
+function campPos(F,nodes,band){
+  const useNodes = placement()==='nodes' && nodes.length;
+  // 70% jitter inside a random node's radius, 30% pure scatter
+  if(useNodes && Math.random()<0.7){
+    const nd=nodes[ri(0,nodes.length-1)];
+    for(let i=0;i<80;i++){
+      const a=rnd(0,Math.PI*2), r=Math.random()*nd.r;
+      const x=nd.x+Math.cos(a)*r, z=nd.z+Math.sin(a)*r;
+      if(dry(x,z,band)) return {x,z};
+    }
+  }
+  for(let i=0;i<200;i++){ const x=rnd(-BX+0.9,BX-0.9), z=rnd(Z0+0.9,Z1-0.9); if(dry(x,z,band)) return {x,z};}
+  return {x:rnd(-4,4),z:rnd(-6,0)};
+}
+
+function mkSim(mode,F){
+  const band=F.band, nodes=makeNodes(F);
+  const s={mode,band,nodes,F,camps:[],mobs:[],player:{x:rnd(-3,3),z:rnd(-6,0)},kills:0,bonusKills:0,walk:0,refills:0,killCd:0,
+    hist:{alive:0,near:0,samples:0,empty:0}, waveT:0, waveId:0, elapsed:0, tickT:0, tickCount:0, ruptureT:0, rupturePulse:0};
+  const gap=5.5;
+  for(let attempt=0,need=F.camps; s.camps.length<need && attempt<6000; attempt++){
+    const p=campPos(F,nodes,band);
+    if(s.camps.some(c=>Math.hypot(c.x-p.x,c.z-p.z)<gap)) continue;
+    const wait=4+Math.abs(Math.sin(p.x*12.9898+p.z*78.233))*3;
+    s.camps.push({x:p.x,z:p.z, i:s.camps.length, t:0, wait:wait/compF(), mobs:[]});
+  }
+  // tighten gap fallback like live
+  if(s.camps.length<F.camps){
+    s.camps=[];
+    for(let gap2=gap;gap2>=2.6;gap2-=.6){
+      s.camps=[];
+      for(let i=0;i<6000 && s.camps.length<F.camps;i++){
+        const p=campPos(F,nodes,band);
+        if(s.camps.some(c=>Math.hypot(c.x-p.x,c.z-p.z)<gap2)) continue;
+        const wait=4+Math.abs(Math.sin(p.x*12.9898+p.z*78.233))*3;
+        s.camps.push({x:p.x,z:p.z,i:s.camps.length,t:0,wait:wait/compF(),mobs:[]});
+      }
+      if(s.camps.length>=F.camps) break;
+    }
+  }
+  s.camps.forEach(c=>fillCamp(s,c,false));
+  // mode extras
+  if(mode==='wave'){ s.waveT=0; s.waveId=0; s.waveCap=24; s.waveMin=8; s.waveInterval=1.5/compF(); }
+  if(mode==='rupture'){ s.ruptureT=rnd(14,22); s.inRupture=false; }
+  return s;
+}
+function compF(){ return frenzy(); } // frenzy speeds refill (wait/=frenzy)
+function fillCamp(s,c,isRefill){
+  const n=ri(s.F.per[0], s.F.per[1]);
+  for(let k=0;k<n;k++){
+    let bx=c.x,bz=c.z,best=-1;
+    for(let a=0;a<24;a++){
+      const ang=rnd(0,Math.PI*2), r=rnd(1.6,3.2);
+      let x=c.x+Math.cos(ang)*r, z=c.z+Math.sin(ang)*r;
+      if(s.band && z>=s.band[0]-1.2 && z<=s.band[1]+1.2) continue;
+      x=Math.max(-BX+0.6,Math.min(BX-0.6,x)); z=Math.max(Z0+0.6,Math.min(Z1-0.6,z));
+      let near=Infinity; for(const o of s.mobs) near=Math.min(near, Math.hypot(o.x-x,o.z-z));
+      if(near>best){best=near;bx=x;bz=z}
+      if(near>=NEIGH) break;
+    }
+    const elite = s.mode==='rupture' && isRefill && Math.random()<0.06 ? {elite:true, hp:2} : (s.mode==='wave' && s.waveId===2 && k===0 && s.mobs.length<4 ? {elite:true,hp:1.8}:null);
+    const m={x:bx,z:bz,hx:bx,hz:bz,wt:rnd(1,4),tx:bx,tz:bz,awake:false, camp:c, bonus:false, ...elite};
+    c.mobs.push(m); s.mobs.push(m);
+  }
+  if(isRefill) s.refills++;
+}
+
+function stepSim(s,dt){
+  s.elapsed+=dt;
+  const fz=compF(), band=s.band;
+  // --- spawner per mode ---
+  if(s.mode==='live'){
+    for(const c of s.camps){
+      if(c.mobs.length===0){ c.t+=dt; if(c.t>=c.wait){ c.t=0; c.wait=(4+Math.abs(Math.sin(c.x*12.9898+c.z*78.233))*3)/fz; fillCamp(s,c,true); } }
+    }
+  } else if(s.mode==='tick'){
+    s.tickT+=dt; // global tick 2.5s demo (real Maple 7.56s)
+    if(s.tickT>=2.5){
+      s.tickT=0; s.tickCount++;
+      // refill up to 1 per empty camp, up to density cap
+      const cap=Math.round(s.camps.length * 1.9); // ~75-100% of points
+      // only tick-refill together (the bus)
+      if(s.mobs.length<cap){
+        for(const c of s.camps){
+          if(c.mobs.length===0 && s.mobs.length<cap){
+            c.t=0; c.wait=(4+Math.abs(Math.sin(c.x*12.9898+c.z*78.233))*3)/fz;
+            fillCamp(s,c,true);
+          }
+        }
+      }
+    }
+  } else if(s.mode==='wave'){
+    // VS: 60s phases, interval /= frenzy, alive cap
+    const phase=Math.floor(s.elapsed/20)%3; // speed up for demo: 20s per phase
+    if(phase!==s.waveId){
+      s.waveId=phase;
+      const cfg=[{min:8,max:24,interval:1.5},{min:10,max:28,interval:1.15},{min:6,max:18,interval:1.0}][phase];
+      s.waveMin=cfg.min; s.waveMax=cfg.max; s.waveInterval=cfg.interval/fz;
+      s.waveT=0;
+    }
+    // spawn rhythm: if below min, spawn fast; if below max, spawn on interval
+    const needMin=s.waveMin - s.mobs.length;
+    if(needMin>0){
+      // burst to min quickly
+      for(let i=0;i<Math.min(needMin,2);i++){
+        const c=s.camps[ri(0,s.camps.length-1)];
+        // pick a camp that has room: reuse empty or just push a scatter mob
+        fillCamp(s,c,true);
+      }
+    } else {
+      s.waveT+=dt;
+      if(s.waveT>=s.waveInterval && s.mobs.length < s.waveMax){
+        s.waveT=0;
+        const c=s.camps[ri(0,s.camps.length-1)];
+        fillCamp(s,c,true);
+        if(s.waveId===2 && s.mobs.filter(m=>m.elite).length===0 && Math.random()<0.35){
+          // occasional elite in phase 3
+          const e=s.mobs[s.mobs.length-1]; e.elite=true;
+        }
+      }
+    }
+  } else if(s.mode==='rupture'){
+    // base camps like live
+    for(const c of s.camps){
+      if(c.mobs.length===0){ c.t+=dt; if(c.t>=c.wait){ c.t=0; c.wait=(4+Math.abs(Math.sin(c.x*12.9898+c.z*78.233))*3)/fz; fillCamp(s,c,true);} }
+    }
+    if(s.inRupture){
+      s.ruptureT-=dt;
+      s.rupturePulse-=dt;
+      if(s.rupturePulse<=0){
+        s.rupturePulse=0.45;
+        // pour 4-6 mobs near tear
+        const tear=s.rupturePos;
+        for(let i=0;i<ri(3,5);i++){
+          const a=rnd(0,Math.PI*2), r=rnd(1.2,3.2);
+          let x=tear.x+Math.cos(a)*r, z=tear.z+Math.sin(a)*r;
+          x=Math.max(-BX+0.6,Math.min(BX-0.6,x)); z=Math.max(Z0+0.6,Math.min(Z1-0.6,z));
+          if(tear.band && z>=tear.band[0]-1.2 && z<=tear.band[1]+1.2) continue;
+          const elite = s.mobs.filter(m=>m.bonus).length===0 && i===0 ? {elite:true}:null;
+          const m={x,z,hx:x,hz:z,wt:rnd(1,3),tx:x,tz:z,awake:true,bonus:true,...elite};
+          s.mobs.push(m);
+        }
+      }
+      if(s.ruptureT<=0){ s.inRupture=false; s.rupturePos=null; s.ruptureT=rnd(18,30); }
+    } else {
+      s.ruptureT-=dt;
+      if(s.ruptureT<=0){
+        s.inRupture=true; s.ruptureT=3+Math.random()*2; // 3-5s demo burst (real 12s)
+        s.rupturePulse=0;
+        // tear near hero far edge
+        const px=s.player.x, pz=s.player.z;
+        const a=Math.atan2(pz-Z0, px);
+        const tx= px + Math.cos(a+Math.PI)*6, tz= pz + Math.sin(a+Math.PI)*6;
+        s.rupturePos={x:Math.max(-BX+1,Math.min(BX-1,tx)), z:Math.max(Z0+2,Math.min(Z1-2,tz)), band};
+        // add elite at tear
+        const x=s.rupturePos.x, z=s.rupturePos.z;
+        s.mobs.push({x,z,hx:x,hz:z,wt:1,tx:x,tz:z,awake:true,elite:true,bonus:true});
+      }
+    }
+  }
+
+  // --- mob idle/wake + movement ---
+  for(const m of s.mobs){
+    m.awake = Math.hypot(m.x - s.player.x, m.z - s.player.z) < AGGRO;
+    if(!m.awake){
+      m.wt-=dt;
+      if(m.wt<=0){ m.wt=rnd(2,5); m.tx=m.hx+rnd(-1.6,1.6); m.tz=m.hz+rnd(-1.6,1.6); }
+      const ex=m.tx-m.x, ez=m.tz-m.z, ed=Math.hypot(ex,ez);
+      if(ed>.05){ const v=Math.min(ed, dt*0.55); m.x+=ex/ed*v; m.z+=ez/ed*v; }
+    } else {
+      const ex=s.player.x - m.x, ez=s.player.z - m.z, ed=Math.hypot(ex,ez)||0.01;
+      // stand-off 2.6u for idle mobs charging
+      if(ed>2.7){ const v=Math.min(ed-2.6, dt*(m.elite?1.9:1.55)); m.x+=ex/ed*v; m.z+=ez/ed*v; }
+    }
+    m.x=Math.max(-BX+0.4,Math.min(BX-0.4,m.x)); m.z=Math.max(Z0+0.4,Math.min(Z1-0.4,m.z));
+  }
+  // push apart same-camp
+  for(let i=0;i<s.mobs.length;i++) for(let j=i+1;j<s.mobs.length;j++){
+    const a=s.mobs[i], b=s.mobs[j];
+    if(a.camp && b.camp && a.camp!==b.camp) continue;
+    const dx=a.x-b.x, dz=a.z-b.z, dd=Math.hypot(dx,dz);
+    if(dd>0.01 && dd<1.1){ const push=(1.1-dd)*dt*0.9; a.x+=dx/dd*push; a.z+=dz/dd*push; b.x-=dx/dd*push; b.z-=dz/dd*push; }
+  }
+
+  // --- hero: nearest mob, walk, kill ---
+  let tgt=null,bd=1e9;
+  for(const m of s.mobs){ const d=Math.hypot(m.x-s.player.x,m.z-s.player.z); if(d<bd){bd=d;tgt=m;} }
+  const REACH=1.55, STAND=1.25;
+  if(tgt && bd>REACH){
+    const ex=tgt.x - s.player.x, ez=tgt.z - s.player.z, ed=Math.hypot(ex,ez)||0.01;
+    const v=Math.min(Math.max(0,ed-STAND), dt*3.2);
+    if(v>0){ s.player.x+=ex/ed*v; s.player.z+=ez/ed*v; s.walk+=v; }
+  }
+  s.killCd-=dt;
+  if(tgt && bd<=REACH && s.killCd<=0){
+    s.killCd=1/killRate;
+    s.kills++;
+    if(tgt.bonus) s.bonusKills++;
+    // remove from mobs and from camp ledger
+    s.mobs = s.mobs.filter(m=>m!==tgt);
+    if(tgt.camp) tgt.camp.mobs = tgt.camp.mobs.filter(m=>m!==tgt);
+  }
+
+  // stats
+  s.sampleT=(s.sampleT||0)+dt;
+  if(s.sampleT>=0.25){
+    s.sampleT=0;
+    let near=0; for(const m of s.mobs) if(Math.hypot(m.x-s.player.x,m.z-s.player.z)<10) near++;
+    s.hist.alive+=s.mobs.length; s.hist.near+=near; s.hist.samples++;
+    if(s.mobs.length<=1) s.hist.empty++;
+  }
+}
+
+function drawCanvas(cv,s){
+  const g=cv.getContext('2d'), W=cv.width, H=cv.height;
+  const VIEW={x0:-BX-3.5, x1:BX+3.5, z0:Z0, z1:Z1};
+  const proj=(x,z)=>[(x-VIEW.x0)/(VIEW.x1-VIEW.x0)*W, (z-VIEW.z0)/(VIEW.z1-VIEW.z0)*H];
+  g.clearRect(0,0,W,H);
+  // scenery belt
+  g.fillStyle='#352f20'; g.fillRect(0,0,W,H);
+  const [lx0]=proj(-BX-0.9,0), [lx1]=proj(BX+0.9,0);
+  const [,tz]=proj(0,Z0), [,bz]=proj(0,Z1);
+  const grd=g.createLinearGradient(0,0,0,H); grd.addColorStop(0,'#5aa64d'); grd.addColorStop(1,'#4d9442');
+  g.fillStyle=grd; g.fillRect(lx0,tz,lx1-lx0,bz-tz);
+  // water
+  if(s.band){
+    const [,y0]=proj(0,s.band[0]), [,y1]=proj(0,s.band[1]);
+    const h=Math.abs(y1-y0);
+    g.fillStyle='#7fd6ff'; g.fillRect(lx0,Math.min(y0,y1),lx1-lx0,h);
+    g.strokeStyle='#ffffff66'; g.setLineDash([4,3]);
+    const [,m0]=proj(0,s.band[0]-2), [,m1]=proj(0,s.band[1]+2);
+    g.strokeRect(lx0,Math.min(m0,m1),lx1-lx0,Math.abs(m1-m0)); g.setLineDash([]);
+  }
+  g.strokeStyle='#00000055'; g.strokeRect(lx0+0.5,tz+0.5,lx1-lx0-1,bz-tz-1);
+  // nodes (if enabled)
+  if(placement()==='nodes' && s.nodes){
+    for(const nd of s.nodes){
+      const [px,py]=proj(nd.x, nd.z);
+      g.beginPath(); g.arc(px,py, nd.r/(VIEW.x1-VIEW.x0)*W, 0, Math.PI*2);
+      g.fillStyle='#f0d06022'; g.fill(); g.strokeStyle='#f0d06044'; g.stroke();
+    }
+  }
+  // rupture tear
+  if(s.rupturePos){
+    const [rx,ry]=proj(s.rupturePos.x, s.rupturePos.z);
+    g.beginPath(); g.arc(rx,ry,20,0,Math.PI*2); g.fillStyle='#ff3f8a55'; g.fill();
+    g.strokeStyle='#ff6b9a'; g.lineWidth=2; g.stroke();
+    g.fillStyle='#ff3f8a'; g.font='10px sans-serif'; g.fillText('TEAR', rx-14, ry-28);
+    g.lineWidth=1;
+  }
+  // mobs
+  for(const m of s.mobs){
+    const [px,py]=proj(m.x,m.z);
+    g.beginPath(); g.arc(px,py, m.elite?5.5: (m.awake?4.1:3.4), 0, Math.PI*2);
+    g.fillStyle = m.elite ? '#ff6b3d' : (m.bonus?'#ffcc66':(m.awake?'#ff9ec4':'#e0574a'));
+    g.fill();
+    g.strokeStyle='#00000088'; g.lineWidth=1; g.stroke();
+    if(m.elite){ g.beginPath(); g.arc(px,py,7.5,0,Math.PI*2); g.strokeStyle='#ffcc00aa'; g.stroke(); }
+  }
+  // hero + ring
+  const [hx,hy]=proj(s.player.x, s.player.z);
+  g.beginPath(); g.arc(hx,hy, (AGGRO)/(VIEW.x1-VIEW.x0)*W, 0, Math.PI*2); g.strokeStyle='#ffd23f44'; g.setLineDash([3,4]); g.stroke(); g.setLineDash([]);
+  g.beginPath(); g.arc(hx,hy,5.5,0,Math.PI*2); g.fillStyle='#ffd23f'; g.fill(); g.strokeStyle='#3a2a05'; g.lineWidth=1.2; g.stroke();
+  // camps dots
+  for(const c of s.camps){
+    const [cx,cy]=proj(c.x,c.z);
+    g.beginPath(); g.arc(cx,cy,2,0,Math.PI*2); g.fillStyle= c.mobs.length? '#ffffff66':'#ffffff22'; g.fill();
+  }
+}
+
+function updateStats(){
+  for(const p of Sims){
+    const s=p.s, el=document.getElementById(p.statId);
+    const avgAlive = s.hist.samples? (s.hist.alive/s.hist.samples).toFixed(1):'0';
+    const avgNear = s.hist.samples? (s.hist.near/s.hist.samples).toFixed(1):'0';
+    const killsPerMin = s.elapsed>0? ((s.kills/s.elapsed)*60).toFixed(1):'0';
+    const walkPer10 = s.kills>0? ((s.walk/Math.max(1,s.kills))*10).toFixed(1):'0';
+    const emptyPct = s.hist.samples? ((s.hist.empty/s.hist.samples)*100).toFixed(0):'0';
+    const phase = p.s.mode==='wave'? ['Swarm 8/24','Chase 10/28','Elite 6+1'][p.s.waveId] : (p.s.mode==='rupture'?(p.s.inRupture?'BURST!':'idle'): 'steady');
+    el.innerHTML = `<span>Kills <b>${s.kills}</b> (${killsPerMin}/min)</span><span>Mobs now <b>${s.mobs.length}</b> avg ${avgAlive}</span><span>Within 10u <b>${avgNear}</b></span><span>Walk/10 kills <b>${walkPer10}u</b></span><span>Empty ticks <b>${emptyPct}%</b></span><span>Phase <b>${phase}</b></span>` +
+      (p.s.mode==='rupture'? `<span>Bonus kills <b>${s.bonusKills}</b></span><span>Tear in <b>${s.inRupture?('active '+s.ruptureT.toFixed(1)+'s'): s.ruptureT.toFixed(1)+'s'}</b></span>` : `<span>Refills <b>${s.refills}</b></span><span>Frenzy <b>${frenzy().toFixed(1)}×</b></span>`);
+  }
+}
+
+const Sims=[]; let raf=null,lastT=0;
+function buildAll(){
+  const F=field();
+  Sims.length=0;
+  Sims.push({s:mkSim('live',F), cv:document.getElementById('cLive'), statId:'sLive'});
+  Sims.push({s:mkSim('tick',F), cv:document.getElementById('cTick'), statId:'sTick'});
+  Sims.push({s:mkSim('wave',F), cv:document.getElementById('cWave'), statId:'sWave'});
+  Sims.push({s:mkSim('rupture',F), cv:document.getElementById('cRup'), statId:'sRup'});
+}
+function tick(now){
+  if(paused){ raf=requestAnimationFrame(tick); return; }
+  const dt=Math.min(0.05, ((now-lastT)/1000||0) * timeMul);
+  lastT=now;
+  for(const p of Sims){ stepSim(p.s, dt); drawCanvas(p.cv, p.s); }
+  updateStats();
+  raf=requestAnimationFrame(tick);
+}
+function start(){
+  buildAll();
+  lastT=performance.now();
+  if(raf) cancelAnimationFrame(raf);
+  raf=requestAnimationFrame(tick);
+  Sims.forEach(p=>drawCanvas(p.cv,p.s));
+}
+
+// controls
+document.getElementById('mapSel').addEventListener('change',start);
+document.getElementById('k').addEventListener('input',e=>{ killRate=parseFloat(e.target.value); document.getElementById('vK').textContent=killRate.toFixed(1)+'/s'; });
+document.getElementById('tm').addEventListener('input',e=>{ timeMul=parseInt(e.target.value,10); document.getElementById('vT').textContent=timeMul+'×'; });
+document.getElementById('frenzy').addEventListener('change',start);
+document.getElementById('place').addEventListener('change',()=>{ buildAll(); });
+document.getElementById('pause').addEventListener('click',()=>{
+  paused=!paused; document.getElementById('pause').textContent=paused?'Resume':'Pause';
+  if(!paused) lastT=performance.now();
+});
+document.getElementById('reset').addEventListener('click',start);
+document.getElementById('burst').addEventListener('click',()=>{
+  const r=Sims.find(p=>p.s.mode==='rupture');
+  if(r && !r.s.inRupture){ r.s.inRupture=true; r.s.ruptureT=4; r.s.rupturePulse=0;
+    const px=r.s.player.x, pz=r.s.player.z;
+    const a=Math.atan2(pz-Z0,px); const tx=px+Math.cos(a+Math.PI)*6, tz=pz+Math.sin(a+Math.PI)*6;
+    r.s.rupturePos={x:Math.max(-BX+1,Math.min(BX-1,tx)), z:Math.max(Z0+2,Math.min(Z1-2,tz)), band:r.s.band};
+  }
+});
+document.getElementById('vK').textContent=killRate.toFixed(1)+'/s';
+document.getElementById('vT').textContent=timeMul+'×';
+document.getElementById('k').value=killRate; document.getElementById('tm').value=timeMul;
+start();
+</script>
+</body>
+</html>
