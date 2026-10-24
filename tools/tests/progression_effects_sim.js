@@ -48,7 +48,7 @@ try{
  });
  test('level aura stands on the real surface, including raised Astral paving',()=>{
   game.ev('S.lv=150;S.mp=0;KIT.nativeWorld=null;syncLevelAura()');
-  assert.equal(game.ev('levelAura.position.y'),game.ev('actorFloorY()+.01'),'normal fields keep the old clearance');
+  assert.ok(Math.abs(game.ev('levelAura.position.y')-.045)<1e-9,'normal fields keep the old clearance');
   game.ev('S.mp=10;syncLevelAura()');
   assert.equal(game.ev('actorFloorY()'),.12,'Astral keeps its raised deck height');
   assert.ok(Math.abs(game.ev('levelAura.position.y')-.13)<1e-9,'the sigil clears the highest Astral slab (.091)');
