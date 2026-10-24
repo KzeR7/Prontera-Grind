@@ -7317,3 +7317,43 @@ The owner's second pass over v77, six notes, all built.
   checkout), and no Chromium is available here, so the on-screen look of the new sizes is verified by
   geometry and by the to-scale sheet, not by a live screenshot.
 * **Delivery:** local changes on `arena/063469a7-prontera-grind`; no merge or deployment.
+
+### 2026-10-24 — `haven-v224 no drag-highlight, no browser menu`
+
+* **Changed (player-visible):** the game page behaves like a game window, not a document. **A
+  left-button drag no longer paints a text selection** over the field, the HUD, the windows or the
+  login card, **a right-click no longer opens the browser menu** - so "Save image as…", "Inspect"
+  and "Reload" are gone from the field, the dock, every tab and panel - and a **long-press on a
+  phone** no longer opens the callout sheet. Sprites, item icons and the field canvas also refuse
+  the browser's native image drag. **Text fields are the one exception**: the account form, the
+  equipment search and the auto-sell name list keep normal selection and the paste menu.
+* **How:** selection is switched off for `*,*::before,*::after` (`user-select` / `-webkit-user-select`
+  and `-webkit-touch-callout`) and switched back on for `input, textarea, [contenteditable]`; a
+  document-level `contextmenu` listener calls `preventDefault()` wherever `isTextField()` is false
+  (only text-entry fields, textareas and contenteditable text are exempt - checkboxes, buttons and
+  selects stay covered), and a capture-phase `dragstart` listener does the same. No game input, save, account or combat
+  path reads either event, and the guard stores nothing.
+* **Try it:** open the game, drag the left button across the field or a panel (nothing highlights),
+  then right-click the field, the dock, a window tab, an equipment icon and the login card (no
+  browser menu anywhere). Right-click the account name or the equipment search box - those still
+  paste, as before.
+* **Files touched:** `index.html` (`BUILD` haven-v224; the `user-select` / drag CSS block;
+  `isTextField` and the `contextmenu` / `dragstart` listeners), `tools/tests/interaction_guard_sim.js`
+  (new), `tools/tests/shop_sim.js` (build assertion), the three build-tag mirrors,
+  `tools/cloudflare-deploy-steps.md`, `docs/CODE-MAP.md`, and this log.
+* **Checks:** new `interaction_guard_sim` **6/6** on a real page booted in jsdom: right-click blocked
+  on the field canvas, auto-combat bar, dock tab, window panel and title, equipment panel, login card,
+  remember-user checkbox and body; shipped images blocked from the "Save image" menu and from
+  `dragstart`; account name, password, equipment search, textarea, contenteditable and a number field
+  keep their menu; the shipped stylesheet
+  rules are read back exactly; save and session are unchanged. Full JavaScript gate **124/126**
+  pass - the only failures are the two documented historical-baseline suites (`skill_balance_sim`,
+  `card_star_balance_sim`) that need commit `d164bd0`, absent from this checkout - plus all **3/3**
+  smoke suites (`field_loop_smoke` 9/9, `panel_layout_smoke` 42/42, `save_owner_boot_smoke` 5/5).
+  Targeted reruns: `shop_sim`, `ui_sim` (64), `eclipse_ui_sim` (50), `display_polish_sim` (10),
+  `update_watch_sim` (9, build-tag mirrors) and `publish_sim` (16). The three generated-asset checks
+  report current, `bash tools/build_site.sh` writes 133 MB / 3,108 files, both inline scripts pass
+  `node --check`, and `git diff --check` is clean. **Not verified:** the real browser/phone rendering
+  of these events (no Chromium in this checkout); jsdom proves the listeners and the shipped CSS, not
+  GPU or browser-specific behaviour.
+* **Delivery:** local changes on `arena/0a47aa5f-prontera-grind`; no merge or deployment.
