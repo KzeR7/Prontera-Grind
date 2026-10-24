@@ -14,6 +14,28 @@ function setup(cls,map,boss){
   pl.x=0;pl.z=0;standC={t:-9,r:0};mob.x=mob.hx=heroStandoff(mob)+.64;engageTgt=mob;engageWait=0;pAtkT=0;S.hp=maxHp();S.dmg=0;`);
 }
 try{
+ // Owner request (2026-10-24): the monsters the Ascension fields actually spawn must be sized
+ // against the character. This runs the real spawn() - not a fixture - so the map index the
+ // renderer reads is proved to be on the live objects.
+ for(const map of [10,11])for(const stage of [1,3,5]){
+  ev(`S=fresh();S.cls='Rune Knight';S.lv=150;S.mp=${map};S.lvl=${stage};TRIAL.on=false;JOB_RITE.on=false;spawn();mobs.forEach(m=>m.spawn=1)`);
+  const probe=JSON.parse(ev(`JSON.stringify({kept:ASCENSION_KEPT_VISUAL,hero:ASCENSION_MONSTER_VISUAL,boss:ASCENSION_BOSS_VISUAL,
+    mobs:mobs.map(m=>({n:m.n,boss:!!m.boss,mapIndex:m.mapIndex,spriteId:m.spriteId,
+      drawn:3.05*mobVisualScale(m)*ASCENSION_FRAME_PX[m.spriteId][0]/ASCENSION_FRAME_PX[m.spriteId][1]}))})`));
+  const regulars=probe.mobs.filter(m=>!m.boss),boss=probe.mobs.find(m=>m.boss);
+  assert.ok(probe.mobs.length>=2,`map ${map} stage ${stage}: the field must have monsters`);
+  assert.ok(probe.mobs.every(m=>m.mapIndex===map),`map ${map} stage ${stage}: live monsters must carry their map index`);
+  for(const m of regulars){
+   const target=probe.kept[m.spriteId]||probe.hero;
+   assert.ok(Math.abs(m.drawn-target)<1e-9,`map ${map} stage ${stage}: ${m.n} stands at ${m.drawn.toFixed(2)}, not ${target}`);
+  }
+  if(boss){
+   assert.ok(Math.abs(boss.drawn-probe.boss)<1e-9,`map ${map} stage ${stage}: ${boss.n} is not at the Ascension MVP height`);
+   for(const m of regulars)assert.ok(boss.drawn>m.drawn*1.4,`map ${map}: ${boss.n} is not clearly bigger than ${m.n}`);
+  }
+  const shown=[...new Map([...regulars,...(boss?[boss]:[])].map(m=>[m.n,m])).values()];
+  console.log(`ok map ${map} stage ${stage}: live spawn ${shown.map(m=>m.n+' '+m.drawn.toFixed(2)).join(', ')}`);
+ }
  for(const cls of ['Rune Knight','Warlock','Ranger','Guillotine Cross','Arch Bishop','Mechanic'])for(const map of [10,11])for(const boss of [false,true]){
   setup(cls,map,boss);
   assert.ok(ev('Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6'),'target starts just outside reach');

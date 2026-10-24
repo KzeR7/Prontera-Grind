@@ -7221,3 +7221,99 @@ The owner's second pass over v77, six notes, all built.
 * **Files touched:** `index.html` (`BUILD` haven-v221 and title rendering/styles), `tools/tests/ui_sim.js`, `tools/tests/shop_sim.js` (build assertion), the three `tools/tests/fixtures/progression_*.json` benchmark metadata files (refreshed against this source; measured rows are unchanged), current build-tag mirrors in `Updates/cards-gear-audit/affix-ranges.html` and `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`, and this log.
 * **Checks:** All **132/132** required checks pass: three generated-asset checks, 126 JavaScript simulations and three smoke suites. `bash tools/build_site.sh` (133 MB / 3,108 files) and `git diff --check` pass. Chromium/SwiftShader verified all ten rows, the active and next ranks, the 1,000 / 2,000 Rank XP label, gradient progress, and a 390px mobile layout with no horizontal overflow or page errors. This is software-rendered QA, not a physical-device performance claim.
 * **Delivery:** `arena/fd83a5b4-prontera-grind`; preview available on port 8788. No deployment.
+
+### 2026-10-24 — `haven-v222 ascension monster sizes`
+
+* **Changed (player-visible), Astral Citadel and Thor Volcano only:** every ordinary monster on the two
+  Ascension fields now **stands about as tall as the character** (2.16 world units, the hero's own
+  figure height) and the **MVP stands at 3.46 units - 1.6x the hero** - instead of following the
+  Divine Pride Small/Medium/Large label. The two species the owner confirmed already looked right keep
+  their shipped size: **Agony Demon 1.10** and **Magma Slag 0.86**. The other eight ordinary monsters
+  were all off: Retribution Angel, Tower Watcher, Death Whisperer and Fire Imp were knee-to-chest high
+  (1.20-1.84), Despair Phantom, Salamander, Kasa and Obsidian Golem already reached 2.05-2.58, and
+  Memory of Thanatos (2.99) / Ifrit (4.06) were not consistently larger than the field.
+* **Why the old rule could not do it:** the native 512px exports hold very different silhouettes. The
+  Agony Demon's idle art fills 48 of its sheet's 58-pixel extent while the Obsidian Golem's fills 153 of
+  177, so one size class produced both a knee-high demon and a golem taller than the hero. Each
+  species is now scaled from **its own idle art against the tallest frame of the same sheet**
+  (`ASCENSION_FRAME_PX`, measured from the shipped PNGs and `assets/native-mob-heights.js`), so the
+  visible height - not the canvas - is what matches the character.
+* **Unchanged:** every other map (the same sheets also dress Abyss's Lava Slime and Chaos Imp and
+  Amatsu's Shiranui, which keep their size class), hitboxes, aggro, attack range, rewards, drops,
+  saves and art files. The rule is gated on `mapIndex>=10`, so it applies to Ascension fields only.
+* **Also changed (player-visible):** the on-screen **auto combat bar now always opens minimized**
+  (`+ Show`), so the field starts without a panel over the fight; the stage label stays and the button
+  still expands it. The **`Pack 1/3 ·` counter is gone** from that bar - it described the retired pack
+  system; the stage line now reads `Monsters 0/15`.
+* **Try it:** Maps → Ascension Map → Astral Citadel or Thor Volcano (stage 3/4 shows Agony Demon,
+  stage 3/5 shows Obsidian Golem, stage 5 shows a boss), and open the game normally to see the
+  collapsed auto combat bar. A to-scale before/after sheet built from the shipped PNGs against the
+  character is in `docs/updates/ascension-monster-sizes/before-after.png`.
+* **Files touched:** `index.html` (`BUILD` haven-v222; `mobVisualScale` + `ASCENSION_FRAME_PX`,
+  `HERO_VISUAL_HEIGHT`, `ASCENSION_BOSS_VISUAL`, `ASCENSION_KEPT_VISUAL`; auto-combat markup,
+  `setCombatBarMinimized`, `prog` text), `tools/tests/sprite_sim.js` (new Ascension sizing test, PNG
+  alpha decoding and heights-file cross-check), `tools/tests/ascension_attack_sim.js` (real `spawn()`
+  heights), `tools/tests/eclipse_ui_sim.js` (collapsed bar and the retired pack counter),
+  `tools/tests/shop_sim.js` (build assertion), `docs/GAME-DESIGN.md`, `docs/CODE-MAP.md`,
+  `docs/updates/ascension-monster-sizes/before-after.png`, the three build-tag mirrors, and this log.
+* **Checks:** 124 of the 126 JavaScript simulations and all 3 smoke suites pass, including the new
+  Ascension-height test (it decodes the shipped PNG alpha bounds, cross-checks them against
+  `assets/native-mob-heights.js`, and proves both fields and both MVPs), the live-`spawn()` height
+  check on all five stages of both maps, `sprite_sim` (15), `eclipse_ui_sim` (50), `ui_sim` (64),
+  `panel_layout_smoke` (42), `field_loop_smoke` (9) and `publish_sim`. The three generated-asset
+  checks (`make_sprite_viewer`, `make_class_skins`, `make_weapon_pack`) report current and
+  `git diff --check` is clean; inline game JavaScript passes `node --check`. **Not run:**
+  `skill_balance_sim` and `card_star_balance_sim` need the historical baseline commit `d164bd0`,
+  which this checkout does not contain (`git show d164bd0:index.html` fails); no Chromium is
+  available here, so the live browser/WebGL look of the new sizes is unverified by screenshot.
+* **Delivery:** local changes on `arena/063469a7-prontera-grind`; no merge or deployment.
+
+### 2026-10-24 — `haven-v223 bigger ascension monsters, no drawn-to-screen mobs`
+
+* **Changed (player-visible), Astral Citadel and Thor Volcano only:** v222 put every ordinary monster at
+  the character's own height (2.16 units) and that read **small** beside the smallest class sprite, so
+  the field moves up a quarter. Ordinary monsters now stand **2.70 units (1.25x the hero)** and both
+  MVPs **4.60 units (1.7x the field, 2.1x the hero)**; the two species the owner had confirmed (Agony
+  Demon, Magma Slag) ride the same lift so they keep their place in the line-up - **1.10 → 1.375** and
+  **.86 → 1.075**. Nothing else about them changes: same art, same frames, same anchors.
+* **Fixed: the "distortion" the owner photographed.** The Ascension draw path is a DOM `<img>` sized
+  from the projection of a 3.05-unit body, then multiplied by `512 / art-height` because a 512px export
+  is mostly empty frame around a small sprite (Fire Imp's art is 89px of that 512). That multiplier has
+  no ceiling: zoom in (`zoom` reaches 2) or let a monster come up to the lens and the art itself asks
+  for several hundred screen pixels, which at 5.75x becomes a rectangle well over a thousand - and, on
+  `image-rendering: pixelated`, several screens - which is exactly what the two screenshots show: flat
+  bands in **the monster's own palette** (the sampled `#ed6447`, `#be4330`, `#8f2218` and `#610000`
+  occur only in `assets/mobs/v1/1705-*`, `1837-*` and `1366-*`), the hero nowhere, and the name tags,
+  damage numbers and HUD still readable on top because they are separate layers. `nativeMobArtPx` now
+  bounds the drawn art to **320px or a third of the field, whichever is smaller**, and hides the frame
+  outright when the projection is not finite instead of writing `NaNpx` into the style. The same guard
+  covers the non-native DOM path (`Math.max(14, Math.min(240, ...))` and the `floor`/`mid` writes).
+  This is **not** the critical-damage bug the owner remembered: that one (`grind-v83.2`) was the
+  `.fbubble` radial gradient painting its corners, fixed with `border-radius:50%` and `.fflash`; the
+  crit frame today is absolutely-positioned, `pointer-events:none`, transform/opacity only.
+* **Hardened:** `mobVisualScale` (which every field height reads - bodies, name tags, damage heights,
+  crit floats, skill-FX scaling) is now `boundMobScale`-guarded: non-finite input becomes `.05`, and
+  anything above `MOB_VISUAL_MAX` (6) is clamped. A broken species row or a monster mid-spawn can no
+  longer ask for a screen-sized body anywhere in the renderer.
+* **Try it:** Maps → Ascension Map → Astral Citadel / Thor Volcano, then zoom in on a pack (scroll or
+  pinch) - monsters stay monsters. The to-scale sheet is
+  `docs/updates/ascension-monster-sizes/before-after-v223.png` (both fields, v222 row and v223 row,
+  one 2.16-unit Novice for both).
+* **Files touched:** `index.html` (`BUILD` haven-v223; `ASCENSION_MONSTER_VISUAL`, `ASCENSION_BOSS_VISUAL`,
+  `ASCENSION_KEPT_VISUAL`, `MOB_VISUAL_MAX`, `boundMobScale`; `NATIVE_MOB_MAX_PX`,
+  `NATIVE_MOB_MAX_SHARE`, `nativeMobArtPx`, and both DOM draw paths in `syncMobImage`),
+  `tools/tests/sprite_sim.js` (new heights, the 1.25x/1.7x relationships, `boundMobScale` fuzzing and
+  five `nativeMobArtPx` cases including the NaN guard), `tools/tests/ascension_attack_sim.js` (reads
+  the field height instead of the character height), `tools/tests/shop_sim.js` (build assertion),
+  `docs/GAME-DESIGN.md`, `docs/CODE-MAP.md`, the three build-tag mirrors, the new sheet, and this log.
+* **Checks:** `sprite_sim` **15/15** (it re-decodes every shipped idle PNG and cross-checks the
+  height table), `ascension_attack_sim` **24/24** on the live `spawn()` of all five stages of both
+  fields plus six classes, `shop_sim`, `eclipse_ui_sim` (50), `ui_sim` (64), `combat_float_sim` (19), `panel_layout_smoke` (42),
+  `publish_sim` (16), `field_loop_smoke` (9), `gear_sim` (43), `loadout_update_sim`,
+  `offline_sim`, `pet_game_sim`, `stat_sim`, `ascension_scene_sim`, `ascension_progression_sim`
+  and `astral_scenery_sim`; inline game JavaScript passes
+  `node --check`, `git diff --check` is clean. **Not run:** `skill_balance_sim` /
+  `card_star_balance_sim` (they need the historical baseline commit `d164bd0`, absent from this
+  checkout), and no Chromium is available here, so the on-screen look of the new sizes is verified by
+  geometry and by the to-scale sheet, not by a live screenshot.
+* **Delivery:** local changes on `arena/063469a7-prontera-grind`; no merge or deployment.

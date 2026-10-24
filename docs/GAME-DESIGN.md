@@ -58,7 +58,18 @@ Thor retains the approved volcanic scenes.
 Old ten-stage Ascension saves migrate once (1/2–3/4–6/7–9/10 → 1/2/3/4/5),
 including away-income source stages. Recorded clears, materials and owned items survive.
 
-Native mobs use local original APNGs for idle, walk and attack in eight directions.
+Native mobs use local original 512px frames for idle, walk and attack in eight directions.
+Both Ascension fields draw them at a height measured against the character instead of the
+Divine Pride size class: an ordinary monster stands 2.70 world units tall (1.25x the hero's
+own 2.16 figure) and the MVP 4.60 (1.7x the field, 2.1x the hero). Standing exactly at the
+character's height read small beside the smallest class sprite, so the whole field moved up a
+quarter; Agony Demon (1.375) and Magma Slag (1.075) ride the same lift and keep their place in
+the line-up. Each species' scale is derived from the height of its idle frame against the
+tallest frame of the same sheet, because the 512px exports hold very different silhouettes -
+this is presentation only; hitboxes, aggro, rewards and every other map are unchanged.
+`mobVisualScale` is finite-guarded and capped (`MOB_VISUAL_MAX`), and the native image the
+renderer projects is clamped (`nativeMobArtPx`) to a third of the field and 320px of art, so a
+monster can never be drawn at screen scale whatever the camera does.
 Materials are saved separately from equipment: Astral Shard (Astral) and Primal
 Catalyst (Thor) roll 0.5% on a Stage 1 monster and more on every tankier one, because
 both chances scale with the monster's max HP against Astral Stage 1's mob, so all five
