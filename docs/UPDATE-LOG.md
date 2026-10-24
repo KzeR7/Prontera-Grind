@@ -7247,14 +7247,15 @@ The owner's second pass over v77, six notes, all built.
   system; the stage line now reads `Monsters 0/15`.
 * **Try it:** Maps → Ascension Map → Astral Citadel or Thor Volcano (stage 3/4 shows Agony Demon,
   stage 3/5 shows Obsidian Golem, stage 5 shows a boss), and open the game normally to see the
-  collapsed auto combat bar.
+  collapsed auto combat bar. A to-scale before/after sheet built from the shipped PNGs against the
+  character is in `docs/updates/ascension-monster-sizes/before-after.png`.
 * **Files touched:** `index.html` (`BUILD` haven-v222; `mobVisualScale` + `ASCENSION_FRAME_PX`,
   `HERO_VISUAL_HEIGHT`, `ASCENSION_BOSS_VISUAL`, `ASCENSION_KEPT_VISUAL`; auto-combat markup,
   `setCombatBarMinimized`, `prog` text), `tools/tests/sprite_sim.js` (new Ascension sizing test, PNG
   alpha decoding and heights-file cross-check), `tools/tests/ascension_attack_sim.js` (real `spawn()`
   heights), `tools/tests/eclipse_ui_sim.js` (collapsed bar and the retired pack counter),
-  `tools/tests/shop_sim.js` (build assertion), `docs/GAME-DESIGN.md`, `docs/CODE-MAP.md`, the three
-  build-tag mirrors, and this log.
+  `tools/tests/shop_sim.js` (build assertion), `docs/GAME-DESIGN.md`, `docs/CODE-MAP.md`,
+  `docs/updates/ascension-monster-sizes/before-after.png`, the three build-tag mirrors, and this log.
 * **Checks:** 124 of the 126 JavaScript simulations and all 3 smoke suites pass, including the new
   Ascension-height test (it decodes the shipped PNG alpha bounds, cross-checks them against
   `assets/native-mob-heights.js`, and proves both fields and both MVPs), the live-`spawn()` height
