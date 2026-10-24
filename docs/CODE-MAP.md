@@ -267,7 +267,10 @@ remain independent. See [activation/rollback handoff](NATIVE-FIELDS-HANDOFF.md).
 World/Whisper/Local chat and social plaza (v203): `assets/social.js`,
 `assets/social-scene.js`, `assets/social-rules.js`, `functions/api/social.js`,
 `workers/social/`; see [Social hub](SOCIAL-HUB.md) for architecture, deployment and
-checks. The independent scene leaves the real farming simulation running.
+checks. The independent scene leaves the real farming simulation running. Since
+v225 the validated look also carries `lv` (field level aura) and `speed` (field run
+speed); `PGSocialRules.walkSpeed` clamps and advances every player with it, and the
+plaza reuses `buildLevelAura`/`LEVEL_AURAS` for the Base 50/99/150 sigil.
 
 Cash Shop (v215): `assets/shop-catalog.js` is the single price list, imported by the
 Pages Functions the same way `workers/social` imports `assets/social-rules.js`, so

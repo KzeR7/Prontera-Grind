@@ -27,14 +27,18 @@ w.document.getElementById('socialCamera').click();assert(!w.document.getElementB
 const sent=[];socket.send=s=>sent.push(JSON.parse(s));app.room=1;w.S.equippedTitle='poring';w.sessionTick();w.S.equippedTitle=null;w.sessionTick();assert(sent.some(m=>m.type==='look'&&m.look.title===''));assert(!sent.some(m=>m.type==='leave'),'appearance/title updates must preserve seat and coordinates');
 w.PGSocial.select('emoji');assert.equal(w.document.querySelectorAll('#socialEmoji button').length,32);
 // Solo plaza fallback spawns the local character when offline or before room join, supports walk/sit, and yields cleanly to multiplayer room state.
-w.PGSocial.leave();w.CLOUD.on=false;w.CLOUD.user=null;w.currentUser='local_hero';app.socket=null;app.connected=false;app.room=0;
+w.PGSocial.leave();w.CLOUD.on=false;w.CLOUD.user=null;w.currentUser='local_hero';app.socket=null;app.user=null;app.connected=false;app.room=0;
 let sceneCallbacks=null;const scenePlayers=new Map();
 w.PGSocialScene={create:async(_host,_labels,cb)=>{sceneCallbacks=cb;return{active:false,cameraState:{angle:0,pitch:48,distance:48,panX:0,panZ:0,follow:true},setCamera:v=>{cameraValues=v},resetCamera:()=>reset++,clearPlayers(){scenePlayers.clear()},putPlayer(p){scenePlayers.set(p.id,{...p,path:(p.path||[]).map(pt=>({...pt}))})},removePlayer(id){scenePlayers.delete(id)}}}};
 app.scene=null;
+w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
 (async()=>{
  await w.PGSocial.enter();
  assert.equal(app.players.size,1,'offline/reconnecting plaza spawns solo character');
  assert.equal(scenePlayers.get(0).name,'local_hero');assert.equal(sceneCallbacks.self(),0);
+ assert.equal(scenePlayers.get(0).look.lv,150,'solo plaza carries the level aura tier');
+ assert.equal(scenePlayers.get(0).look.speed,9.5,'solo plaza walks at the field run speed');
+ w.sessionTick();w.S.auraShow=false;w.sessionTick();assert.equal(scenePlayers.get(0).look.lv,0,'the Display aura switch also hides it in the plaza');w.S.auraShow=true;w.sessionTick();
  sceneCallbacks.move(6,12);assert(scenePlayers.get(0).path.length>0,'solo click-to-walk computes local path');
  w.document.getElementById('socialSit').click();assert.equal(scenePlayers.get(0).sit,true,'solo sit button toggles sitting');
  assert.equal(w.document.getElementById('socialSit').getAttribute('aria-pressed'),'true');

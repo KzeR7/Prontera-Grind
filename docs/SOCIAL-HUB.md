@@ -15,7 +15,7 @@ leaving/rejoining. Whispers are delivered only to sender and online recipient.
 World has a volatile 100-message backlog, and clients retain at most 400 lines.
 This is not permanent chat storage or offline mail.
 
-Click/tap to walk; drag to rotate and tilt; wheel/pinch to zoom from a close character view to a plaza overview. Right/Shift-drag or two fingers pan. Camera exposes rotation, tilt, distance, follow and directional pan controls; Reset view restores the defaults. Your character is framed in the upper center. Names appear below the feet, with an equipped Hunt title underneath. Appearance, title and refinement updates preserve your position. Insert or `/sit` toggles sitting; walking stands up. Click one of twelve benches to reserve it, walk to it and sit. Reservations are per plaza and clear on standing, walking or disconnecting. A larger castle,
+Click/tap to walk at your character's own field run speed (AGI, movement affixes, pets and movement buffs, including the 1.4 running factor); the room clamps the reported value to 2–13 u/s and both client and server advance with it, so the plaza no longer feels slower than farming. Drag to rotate and tilt; wheel/pinch to zoom from a close character view to a plaza overview. Right/Shift-drag or two fingers pan. Camera exposes rotation, tilt, distance, follow and directional pan controls; Reset view restores the defaults. Your character is framed in the upper center. Names appear below the feet, with an equipped Hunt title underneath. Appearance, title and refinement updates preserve your position. Insert or `/sit` toggles sitting; walking stands up. Click one of twelve benches to reserve it, walk to it and sit. Reservations are per plaza and clear on standing, walking or disconnecting. A larger castle,
 flanking houses, two market stalls and four bounded corner gardens surround the expanded avenues.
 Twelve native slatted park benches form four groups along the fountain promenade; trees stay inside
 the gardens, clear of paths. The shared layout defines building/garden collision.
@@ -36,7 +36,9 @@ Movement, sitting and social presence are not saved into farming coordinates.
 Map BGM uses Theme of Prontera while visiting and restores the current farming
 map on exit; manual track choice and volume preferences remain available. Weapon
 refinement glows reuse the native weapon/arm effect hooks in standing, walking and
-sitting poses. Character downloads retry automatically, retaining the standing
+sitting poses. Base 50/99/150 level auras reuse the field's `buildLevelAura`/
+`LEVEL_AURAS` sigil on the plaza floor; they follow the Display aura switch, and an
+aura is created and disposed with its player. Character downloads retry automatically, retaining the standing
 sprite while sitting assets load; reentry uses fresh player labels and sprites.
 Arrivals spread across free entry positions so players do not spawn on top of one another.
 When visiting from a local/offline character or before the multiplayer room handshake finishes,
@@ -48,7 +50,7 @@ checks accept `http`/`https` host matches, `Set-Cookie` uses `SameSite=None; Par
 and `X-Preview-Session` / `preview_session` preserves authenticated cloud + plaza sessions without
 affecting production Pages cookie-only ingress.
 
-The server computes walking paths/speed and room capacity. Sender IDs/names come
+The server validates each character's reported walk speed (2–13 u/s) and level (0–999), then computes walking paths, walking speed and room capacity. Sender IDs/names come
 from the existing session, never a client payload. Input is bounded and displayed
 as text. Messages and emotions share a three-second cooldown across channels, enforced by
 the client and server; movement, chair selection and sitting are bounded to ten

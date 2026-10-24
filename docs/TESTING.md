@@ -576,7 +576,11 @@ Run `social_sim.js`, `social_scene_sim.js`, `social_ui_sim.js`,
 `social_api_sim.mjs`, `fourth_job_skills_sim.js`, `display_polish_sim.js`,
 `panel_layout_smoke.js` and `publish_sim.js` under `tools/tests/`.
 The scene suite uses the real Three projection and model geometry with a renderer
-stub; it does not certify GPU pixels. `node tools/check_social_browser.cjs` checks
+stub; it does not certify GPU pixels. Since v225 `social_sim.js` also checks the
+per-character plaza walk speed (shared clamp and server advance), `social_scene_sim.js`
+checks level-aura creation, movement and disposal, `social_ui_sim.js` checks the
+solo look payload, and `progression_effects_sim.js` checks the aura floor on raised
+Astral paving. `node tools/check_social_browser.cjs` checks
 two actual software WebGL sessions at 1440px and 390px, camera controls, close zoom,
 model-click seating, names/titles, transparent emotes, pointer/keyboard resizing and the integrated minimize line,
 background farming and channel isolation. Shared Preview can use the documented

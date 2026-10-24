@@ -7357,3 +7357,51 @@ The owner's second pass over v77, six notes, all built.
   of these events (no Chromium in this checkout); jsdom proves the listeners and the shipped CSS, not
   GPU or browser-specific behaviour.
 * **Delivery:** local changes on `arena/0a47aa5f-prontera-grind`; no merge or deployment.
+
+### 2026-10-24 — `haven-v225 plaza walk speed + level auras`
+
+* **Changed (player-visible):** a Base 50/99/150 character now shows the **level aura in Astral
+  Citadel** - it was drawn a few centimetres above the floor while Astral's paving sits at 0.066-0.091,
+  so the raised slabs hid it - and the **Fountain Plaza** now draws the same sigil under every Base
+  50+ player, standing, walking or sitting, instead of no aura at all. **Plaza walking uses the
+  character's own field run speed** instead of the old flat 5 u/s, so a plaza visit no longer feels
+  slower than farming; the speed follows AGI, movement affixes, pets, movement buffs and the
+  running/click-to-move factor, exactly like the field.
+* **How:** the field sigil's height is now `actorFloorY()+.01` for every map (that helper already
+  knows the native, Astral and trial floors, so it clears both normal ground and Astral paving).
+  The plaza gets the level through the existing look payload: `currentLook()` adds `lv` (0 when
+  Display's aura switch is off or the HUD is hidden) and `speed` (`moveSpd(true)`, the run speed);
+  `cleanLook` in the Durable Object clamps `lv` to 0-999 and `speed` to the shared 2-13 u/s band, and
+  `PGSocialRules.walkSpeed()` lets both the browser and the room advance each player at their own
+  value (older looks fall back to 5 u/s). `assets/social-scene.js` builds the aura with the field's
+  own `buildLevelAura(tier)`/`LEVEL_AURAS`, animates its layers and motes like the field, rebuilds it
+  only when the tier changes, and disposes its geometry, materials and private textures on leave.
+* **Try it:** stand in Astral Citadel with a Base 50+ character (aura under the feet, visible while
+  walking), turn Display's aura off and back on; then enter the plaza from a field and walk - your
+  character, and other Base 50+ players, should carry their sigil, and click-to-walk should cover the
+  same distance per second as the field.
+* **Files touched:** `index.html` (`BUILD` haven-v225; the `syncLevelAura` position line; the three
+  `?v=210` social asset tags), `assets/social-rules.js` (`MIN_SPEED`/`MAX_SPEED`, `walkSpeed`,
+  `advance`), `assets/social.js` (look `lv`/`speed`), `workers/social/room.mjs` (`cleanLook`
+  whitelist), `assets/social-scene.js` (`disposeAura`, `auraTier`, `syncAura`, `animateAura`, aura
+  disposal on leave), `tools/tests/social_sim.js`, `social_scene_sim.js`, `social_ui_sim.js`,
+  `progression_effects_sim.js`, `tools/tests/shop_sim.js` (build assertion), the three build-tag
+  mirrors, `tools/cloudflare-deploy-steps.md`, `docs/SOCIAL-HUB.md`, `docs/CODE-MAP.md`,
+  `docs/TESTING.md`, and this log.
+* **Checks:** `social_sim` (per-character walk speed: reported speed kept, clamped above 13 and below
+  2, an older look without `speed` walks at the shared default, and `advance()` covers
+  `speed * elapsed`), `social_scene_sim` (aura appears at Base 150, disappears below 50, changes tier
+  at 99, is disposed on tier change and on leaving, and is restored on re-entry, on the real Three
+  scene), `social_ui_sim` (solo look carries `lv` and `speed`, and Display's aura switch sends `lv`
+  0), `progression_effects_sim` **16/16** (the sigil stands on the real surface, including raised
+  Astral paving at 0.091), `social_api_sim.mjs` (real WebSockets still join and whisper). Full
+  JavaScript gate **125/127** pass - the only failures are the two documented historical-baseline
+  suites (`skill_balance_sim`, `card_star_balance_sim`) that need commit `d164bd0`, absent from this
+  checkout - plus all **3/3** smoke suites (`field_loop_smoke` 9/9, `panel_layout_smoke` 42/42,
+  `save_owner_boot_smoke` 5/5). `class_skin_sim` **40/40** after refreshing the animation backup that
+  the Astral change had made stale, both inline scripts and every edited asset pass `node --check`,
+  and `git diff --check` is clean. **Not run:** `social_worker_sim.mjs` needs the optional
+  `miniflare` + `wrangler --dry-run` build, which this checkout does not have; no Chromium is
+  available, so the aura's on-screen look is verified by geometry and scene assertions, not by a live
+  screenshot.
+* **Delivery:** local changes on `arena/0a47aa5f-prontera-grind`; no merge or deployment.
