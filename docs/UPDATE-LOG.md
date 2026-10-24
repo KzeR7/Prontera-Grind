@@ -7450,3 +7450,16 @@ The owner's second pass over v77, six notes, all built.
   PASS, `publish_sim` **16/16**, `field_loop_smoke` **9/9**, `panel_layout_smoke` **42/42**,
   `save_owner_boot_smoke` **5/5**, inline script `vm.Script` syntax check, and `git diff --check`.
 * **Delivery:** local changes on `arena/a1bdf1ae-prontera-grind`; no merge or deployment.
+
+### 2026-10-24 — `haven-v227 hit-wake AoE5`
+
+* **Changed (player-visible):** Mobs now fight as a field, not as one camp.
+  * **Hit = wake:** damaging any mob wakes it for **6s** and its neighbours within **3.2u** for **4s**. A provoked mob chases regardless of its camp. If dragged **>12u** from its anchor it walks home while healing ~18% max HP/s and clears provoke when back within 1.2u.
+  * **AoE cap 5, across camps:** `Bowling Bash`, `Storm Gust`, `Meteor Storm`, `Heaven’s Drive` etc now hit up to **5** targets by distance within the shape, not just the target's pack. `Chain`/`Bounce` also hop across camps (capped). Ground fields no longer cancel when you switch camps.
+  * **Pets & push follow the fight:** pets and push-apart now consider every engaged (activePack or provoked) mob, not just the nearest camp.
+* **How:** new constants `WAKE_HIT_DUR=6,WAKE_ASSIST_DUR=4,WAKE_ASSIST_R=3.2,WAKE_LEASH=12,AOE_CAP=5` and helpers `provokeMob/isProvoked/isEngaged`; `hurt()` and `strike()` call `provokeNearby()`; main loop `wake = (activePack+inAggro) || provoked && !leashed`; `skillTargets()` sorts by `dist(center)` and caps at `AOE_CAP`; `tickSkillFields` / `skillDash` / `chainHit` / `bounceStrike` / pet & hero targeting updated to `isEngaged`.
+* **Try it:** Payon Stage 1 (tight 10 camps + creek) — hit an AoE on the edge of 2 camps, both should wake and hit back. Pull a mob 12u and watch it leash home. Boss stages unchanged (boss wave already pack 0).
+* **Files touched:** `index.html` (`BUILD` haven-v227; constants + helpers `provokeMob/provokeNearby/isProvoked/isEngaged`; `minionDef` unchanged; `fillCamp/spawn` + `skillTargets` + `tickSkillFields/skillDash/chainHit/bounceStrike` + hero/pet loop + `heroKite` + `BUILD` bump), `docs/UPDATE-LOG.md`.
+* **Checks:** inline script `node --check` ok; `field_loop_smoke` **9/9** (camps/scatter/refill/wipe/stand-off/kite), `combat_damage_sim` **10/10** (pierce/ATK/flee), `combo_rotation_sim` **18/18**, `attack_sync_sim` **8/8**, `ascension_attack_sim` **24/24**, `economy_sim` **24/24** (pacing/Zeny sinks); `git diff --check` clean. **Not run:** full 126-suite gate + browser/WebGL visual of multi-aggro.
+* **Delivery:** local changes on `arena/e6ab6025-prontera-grind`; no merge or deployment.
+

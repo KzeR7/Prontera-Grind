@@ -1219,7 +1219,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-24 haven-v226 mail announcements + daily roulette';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-24 haven-v227 hit-wake AoE5';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4176,6 +4176,8 @@ let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0,activePack=0,camps=[];
 const CAMP_GAP=5.5,CAMP_REFILL_MIN=4,CAMP_REFILL_MAX=7;   // v87 owner: worst camp wait 7s, so a wiped field is fully restocked inside 8s
 const NEIGHBOUR_GAP=2.7;                 // and NEIGHBOUR_GAP keeps two camps from touching
 const campCount=m=>m<3?8:m<7?10:12;      // the 8 / 10 / 12 the owner picked on /spawn
+// v227 — hit-wake: damage wakes the victim + nearby assist, leash, and AoE cap
+const WAKE_HIT_DUR=6,WAKE_ASSIST_DUR=4,WAKE_ASSIST_R=3.2,WAKE_LEASH=12,AOE_CAP=5;
 const campMobs=(m,l)=>starterStage(m,l)?ri(1,2):ri(2,3);
 // 4-8 seconds, but the SAME number every time for a given camp (the /spawn page's own timer), so a
 // camp the player is watching comes back on a rhythm instead of rolling a new dice.
@@ -4205,7 +4207,10 @@ const nearestPack=()=>{
 };
 const packMob=()=>{
   let target=null,dist=Infinity;
-  for(const m of mobs)if(m.pack===activePack){const d=Math.hypot(pl.x-m.x,pl.z-m.z);if(d<dist){dist=d;target=m}}
+  for(const m of mobs) if(isEngaged(m)){const d=Math.hypot(pl.x-m.x,pl.z-m.z);if(d<dist){dist=d;target=m}}
+  if(target) return target;
+  // fallback to nearest pack if nothing engaged (e.g. just spawned)
+  for(const m of mobs) if(m.pack===activePack){const d=Math.hypot(pl.x-m.x,pl.z-m.z);if(d<dist){dist=d;target=m}}
   return target;
 };
 // Starter stages share combat strength across the first five maps; loot/reward power stays map-specific.
@@ -4294,6 +4299,17 @@ function fillCamp(i,c){
     mobs.push(m);
   }
 }
+// v227 hit=wake: damage wakes victim 6s + neighbours 3.2u 4s, leash 12u
+function provokeMob(o,dur){ if(!o||o.hp<=0) return; o.provokeUntil=Math.max(o.provokeUntil||0, t+dur); }
+function provokeNearby(src){
+  if(!src||src.hp<=0) return;
+  provokeMob(src, WAKE_HIT_DUR);
+  for(const p of mobs){ if(p===src||p.hp<=0) continue;
+    if(Math.hypot(p.x - src.x, p.z - src.z) <= WAKE_ASSIST_R) provokeMob(p, WAKE_ASSIST_DUR);
+  }
+}
+const isProvoked=m=>m&&m.provokeUntil&&t<m.provokeUntil;
+const isEngaged=m=>m&&(m.pack===activePack||isProvoked(m));
 function spawn(){
   if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on)return;
   if(typeof resetSkillRuntime==='function')resetSkillRuntime(true);
@@ -4499,9 +4515,10 @@ function applyDot(o,dps,dur,col,skill=false){if(!o||!(dur>0))return;const dot={d
 function applyStun(o,dur){if(!o||!(dur>0)||o.boss&&(o.stunResist||0)>0)return;
   if(o.boss)o.stunResist=3;
   const d=dur*(o.boss?.5:1);o.stun=Math.min(o.boss?1:2,Math.max(o.stun||0,d))}
-// Chain bounces a share of the hit onto the nearest other mobs - the pack-clearing tool.
+// Chain bounces a share of the hit onto the nearest other mobs - the pack-clearing tool. v227: can bounce across camps (capped).
 function chainHit(src,dmg,col,n,skill=false){if(!src||!(dmg>0)||mobs.length<2)return;
-  const near=mobs.filter(o=>o!==src&&o.hp>0&&o.pack===src.pack).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
+  const cap=Math.min(n||2, AOE_CAP-1);
+  const near=mobs.filter(o=>o!==src&&o.hp>0).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,cap);
   for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col,false,skill)}}
 // Milestone 4 mechanics (dark-launched with SKILLS4). Each helper does nothing for a skill that lacks its field,
 // so the live skills never reach these lines' effects. Stacks expire against the game clock `t`.
@@ -4519,9 +4536,10 @@ function strikeMilestone(o,sk,raw,primary){
     if(sk.roulette.effect==='stun')applyStun(o,sk.roulette.value);
     else if(sk.roulette.effect==='strike'&&o.hp>0)skillHit(o,raw*sk.roulette.value/sk.hits,sk,true);}
 }
-// Bounce: the n nearest other living enemies in the same pack take `share` of one hit (a proc: no mark or deathmark re-trigger).
+// Bounce: the n nearest other living enemies in the same pack take `share` of one hit (a proc: no mark or deathmark re-trigger). v227: can bounce across camps, capped.
 function bounceStrike(from,sk,raw){const b=sk.bounce;
-  const near=mobs.filter(o=>o!==from&&o.hp>0&&o.pack===from.pack).sort((a,c)=>Math.hypot(a.x-from.x,a.z-from.z)-Math.hypot(c.x-from.x,c.z-from.z)).slice(0,b.n);
+  const cap=Math.min(b.n, AOE_CAP-1);
+  const near=mobs.filter(o=>o!==from&&o.hp>0).sort((a,c)=>Math.hypot(a.x-from.x,a.z-from.z)-Math.hypot(c.x-from.x,c.z-from.z)).slice(0,cap);
   for(const o of near){shots.push({x0:from.x,z0:from.z,x1:o.x,z1:o.z,t:0,col:sk.col||'#fff'});skillHit(o,raw*b.share/sk.hits,sk,true)}
 }
 // Absorb: a new ward replaces any ward still up. It soaks incoming player damage until spent or it expires.
@@ -4689,10 +4707,10 @@ function heroStandoff(m){
 function heroKite(dt,target,reach){
   const r=skillState();
   if(S.kite!==true||!CLASS_BAND(C())||TRIAL.on){delete r.kite;return null;}
-  if(!r.kite||r.kite.pack!==activePack)r.kite={pack:activePack,elapsed:0,step:0};
+  if(!r.kite||!mobs.some(o=>o.pack===r.kite.pack && isEngaged(o)))r.kite={pack:activePack,elapsed:0,step:0};
   const k=r.kite;k.elapsed=(k.elapsed+dt)%5;
   if(k.elapsed<3)return null;
-  const threats=mobs.filter(o=>o.hp>0&&o.pack===activePack),nearest=Math.min(...threats.map(o=>Math.hypot(o.x-pl.x,o.z-pl.z)));
+  const threats=mobs.filter(o=>o.hp>0&&isEngaged(o)),nearest=Math.min(...threats.map(o=>Math.hypot(o.x-pl.x,o.z-pl.z)));
   if(nearest>=Math.min(reach*.85,4.5)||swing||atkAnim>0)return null;
   k.step=k.elapsed-3;
   // Short planted attacks between steps keep this a mobile fight, with an uptime cost.
@@ -4703,8 +4721,8 @@ function heroKite(dt,target,reach){
     const a=away+i*Math.PI/6,x=cl(pl.x+Math.cos(a)*1.4,-BX_+.6,BX_-.6),z=cl(pl.z+Math.sin(a)*1.4,Z0+.6,Z1-.6);
     if(Math.hypot(x-pl.x,z-pl.z)<.3||Math.hypot(x-target.x,z-target.z)>Math.min(reach,AGGRO-.3))continue;
     let value=Math.min(...threats.map(o=>Math.hypot(o.x-x,o.z-z)));
-    // Do not dodge into a sleeping pack.
-    for(const o of mobs)if(o.pack!==activePack&&Math.hypot(o.x-x,o.z-z)<2.8)value-=4;
+    // Do not dodge into a sleeping pack. v227: consider engaged only
+    for(const o of mobs)if(!isEngaged(o)&&Math.hypot(o.x-x,o.z-z)<2.8)value-=4;
     value+=.08*Math.cos(a-away);
     if(value>score){score=value;best={x,z,attack:false};}
   }
@@ -4712,14 +4730,14 @@ function heroKite(dt,target,reach){
 }
 function shot(col){if(!mob)return;const magic=INT_CLASSES.includes(S.cls),arrow=heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)==='bow';if(!magic&&!arrow)return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||(magic?'#d9b9ff':'#fff'),arrow:!magic&&arrow})}
-function hurt(o,d,col,c,skill=false,soundWeapon=S.eq.weapon?.wt,soundKind=skill?'skill':'normal'){if(d>0&&typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false,soundWeapon,soundKind);S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill);if(o.hp<=0)kill(o)}
+function hurt(o,d,col,c,skill=false,soundWeapon=S.eq.weapon?.wt,soundKind=skill?'skill':'normal'){if(d>0&&typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false,soundWeapon,soundKind);S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill);try{provokeNearby(o);}catch(e){}if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false,skill=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'MISS','#dfe5ed',false,'miss');return}
   // v73: the crit roll answers to the target - a boss carries its map's crit resistance
   // (BOSS_CRIT_RES) and every other monster resists nothing.
   const c=Math.random()*100<Math.max(0,crit()*(1-(mob.critRes||0))),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)*(mob.boss?1+petPassive('boss')/100:1)*fieldDamage(mob)*ascDamage(mob)*(1+skillBonus('ascBlade')/100)*(1+(!magic?skillBonus('ascRanged'):0)/100)));
   if(typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false,S.eq.weapon?.wt,skill?'skill':'normal');
-  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;mob.hitAnim=1;shake=c?6:2;applyLeech(Math.min(d,Math.max(0,mob.hp+d)),cardMasteryStat('leech')*.5);showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill);
+  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;mob.hitAnim=1;shake=c?6:2;applyLeech(Math.min(d,Math.max(0,mob.hp+d)),cardMasteryStat('leech')*.5);showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill);try{provokeNearby(mob);}catch(e){}
 }
 // Legacy coefficient helpers retained for damage simulations; combo casts use full power.
 const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
@@ -5001,12 +5019,16 @@ function skillRange(sk,target){const range=(sk.rng||sk.dash||CLASS_BAND(C()))+as
   return range?range+(C().wt.includes('bow')?Math.min(.5,pv('range')):0):1.8+.45*(target&&target.size||1);}
 function skillTargets(sk,target,origin=pl){const area=sk.areaScale||1,shape=sk.shape||'single',center=shape==='radial'?origin:target;
   const dx=target.x-origin.x,dz=target.z-origin.z,len=Math.hypot(dx,dz)||1,ux=dx/len,uz=dz/len;
-  return mobs.slice().filter(o=>{if(o.hp<=0||o.pack!==target.pack)return false;if(o===target)return true;if(shape==='single')return false;
+  const hits=mobs.slice().filter(o=>{if(o.hp<=0) return false;if(o===target) return true;if(shape==='single')return false;
     const x=o.x-origin.x,z=o.z-origin.z,along=x*ux+z*uz,side=Math.abs(x*uz-z*ux),dist=Math.hypot(o.x-center.x,o.z-center.z);
     if(shape==='line')return along>=-.5&&along<=Math.max(4*area,len+1.5)&&side<=1.4*area;
     if(shape==='cone')return Math.hypot(x,z)<=5*area&&along>=0&&side<=along*1.5+.4;
     if(shape==='cross')return dist<=3.5*area&&Math.min(Math.abs((o.x-center.x)-(o.z-center.z)),Math.abs((o.x-center.x)+(o.z-center.z)))<=1.2;
-    return dist<=3.5*area;});}
+    return dist<=3.5*area;});
+  // v227: AoE can hit across camps, capped at 5
+  hits.sort((a,b)=>Math.hypot(a.x-center.x,a.z-center.z)-Math.hypot(b.x-center.x,b.z-center.z));
+  if(shape==='single') return hits.slice(0,1);
+  return hits.slice(0,AOE_CAP);}
 function fieldReady(sk){if(!sk.field)return true;const fields=skillState().fields;return fields.length<2&&!fields.some(f=>f.sk.id===sk.id);}
 function startSkillField(sk,target,raw,L,primary=target){
   const r=skillState();if(!fieldReady(sk))return false;
@@ -5017,13 +5039,13 @@ function startSkillField(sk,target,raw,L,primary=target){
 }
 function tickSkillFields(dt){const r=skillState();
   for(const f of r.fields.slice()){
-    if(f.pack!==activePack||f.map!==S.mp||f.stage!==S.lvl||!skillOn(f.sk.id)){r.fields=r.fields.filter(x=>x!==f);continue;}
+    if(f.map!==S.mp||f.stage!==S.lvl||!skillOn(f.sk.id)){r.fields=r.fields.filter(x=>x!==f);continue;}
     f.age+=dt;
     while(r===skillRuntime&&f.ticks>0&&f.age+1e-8>=f.next){
       const opening=f.next===0;f.next+=f.sk.field.interval;f.ticks--;
       const total=Math.round(f.sk.field.duration/f.sk.field.interval),area=.8*skillTuning(true,f.sk,f.L)/skillTuning(false,f.sk,f.L);
       for(const o of mobs.slice()){
-        if(o.hp<=0||o.pack!==f.pack||Math.hypot(o.x-f.x,o.z-f.z)>f.radius)continue;
+        if(o.hp<=0||Math.hypot(o.x-f.x,o.z-f.z)>f.radius)continue;
         const dealt=skillHit(o,f.raw/total*(o===f.primary?1:area),f.sk,!opening);
         if(dealt>0&&o.hp>0){
           if(f.sk.slow)o.slow={left:f.sk.field.interval+.1,power:f.sk.slow};
@@ -5038,7 +5060,7 @@ function tickSkillFields(dt){const r=skillState();
 function skillQueue(delay,fn){skillState().events.push({left:delay,owner:S.cls,fn});}
 function skillRoot(target,duration){if(!target||target.hp<=0||target.fixed||target.root>0||target.rootResist>0)return false;
   target.root=target.boss?Math.min(1.25,duration):duration;return true;}
-function skillDash(sk,target){const r=skillState();if(!sk.dash||r.dash>0||TRIAL.on||!mobs.includes(target)||target.pack!==activePack)return;
+function skillDash(sk,target){const r=skillState();if(!sk.dash||r.dash>0||TRIAL.on||!mobs.includes(target)||(!isEngaged(target)&&Math.hypot(target.x-pl.x,target.z-pl.z)>AGGRO))return;
   const dx=target.x-pl.x,dz=target.z-pl.z,dist=Math.hypot(dx,dz),stop=1.4+.4*(target.size||1);
   if(dist<=stop+.3||dist>sk.dash+.6)return;
   const travel=dist-stop;pl.x=cl(pl.x+dx/dist*travel,-BX_+.6,BX_-.6);pl.z=cl(pl.z+dz/dist*travel,Z0+.6,Z1-.6);r.dash=.75;engageTgt=target;engageWait=0;
@@ -7448,7 +7470,10 @@ function update(dt){
       // v83 owner: 1.9 + 0.25*size instead of 2.6 + 0.3*size - monsters used to swing from about
       // three units away, further than the hero's own reach, which is half of what looked wrong
       // about close combat. The lunge (mobMotion) carries the hit across the last of the gap.
-      const ms=1.9+.25*m.size,wake=m.pack===activePack&&(isBoss()||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO),stn=m.stun>0;
+      const ms=1.9+.25*m.size,provoked=m.provokeUntil&&t<m.provokeUntil,leashed=provoked&&m.hx!=null&&Math.hypot(m.x-m.hx,m.z-m.hz)>WAKE_LEASH;
+      if(leashed) m.provokeUntil=0;
+      const inAggro=isBoss()||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO,aggroWake=m.pack===activePack&&inAggro;
+      const wake=(aggroWake||(m.provokeUntil&&t<m.provokeUntil))&&!leashed,stn=m.stun>0;
       // An idle monster drifts around its own anchor instead of standing frozen on it - that is most
       // of what makes a stocked field read as alive.
       if(!wake&&!stn&&!m.root&&!m.fixed&&m.hx!=null){
@@ -7456,6 +7481,9 @@ function update(dt){
         if(m.wt<=0){m.wt=rnd(2,5);m.wx=cl(m.hx+rnd(-1.6,1.6),-BX_+.6,BX_-.6);m.wz=cl(m.hz+rnd(-1.6,1.6),Z0+.6,Z1-.6)}
         const wx=m.wx==null?m.hx:m.wx,wz=m.wz==null?m.hz:m.wz,dx3=wx-m.x,dz3=wz-m.z,dd=Math.hypot(dx3,dz3);
         m.run=dd>.15;if(dd>.05){const v=Math.min(dd,dt*.7);m.x+=dx3/dd*v;m.z+=dz3/dd*v}
+        if(leashed) m.hp=Math.min(m.max, m.hp+ m.max*dt*0.18);
+        // if back home, clear leash faster
+        if(leashed && Math.hypot(m.x-m.hx,m.z-m.hz)<1.2) m.provokeUntil=0;
       }else{
         const gx2=wake?pl.x+Math.cos(m.a)*ms:m.hx,gz2=wake?pl.z+Math.sin(m.a)*ms*.6:m.hz;
         const ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);m.run=ed>.12&&!stn&&!m.root;
@@ -7480,14 +7508,14 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
     // Awake monsters keep their own approach angle and are pushed apart, so a camp surrounds the hero
-    // instead of stacking on one pixel (the other half of "all sticking together").
+    // instead of stacking on one pixel (the other half of "all sticking together"). v227: engaged includes provoked
     for(const m of mobs){
-      if(m.pack!==activePack||m.boss||m.fixed)continue;
-      for(const o of mobs){if(o===m||o.pack!==activePack)continue;
+      if(!isEngaged(m)||m.boss||m.fixed)continue;
+      for(const o of mobs){if(o===m||!isEngaged(o))continue;
         const dx=m.x-o.x,dz=m.z-o.z,dd=Math.hypot(dx,dz);
         if(dd>.001&&dd<1.1){const push=(1.1-dd)*dt*1.6;m.x+=dx/dd*push;m.z+=dz/dd*push}}
     }
-    if(!mob||!mobs.includes(mob)||mob.pack!==activePack)mob=mobs.find(m=>m.boss)||packMob();
+    if(!mob||!mobs.includes(mob)||!isEngaged(mob))mob=mobs.find(m=>m.boss)||packMob();
     if(mob){reach=heroStandoff(mob);
       let dist=Math.hypot(mob.x-pl.x,mob.z-pl.z)||.01;
       const dashReady=comboConfig().enabled&&t>=skillState().recoverUntil&&rotationSkills().some(s=>s.dash&&(skCd[s.id]||0)<=0&&dist<=s.dash+.6);
@@ -7507,7 +7535,7 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
       else{engageWait=0;pl.orb+=dt*.8;const r=reach*.85;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r}}
   }
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
-    for(const m of mobs){if(m.pack!==activePack)continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
+    for(const m of mobs){if(!isEngaged(m))continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
     if(ed>.05){const v=Math.min(ed,petMoveSpeed(ed)*dt);r.face=Math.atan2(ez,ex);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
     if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;r.face=Math.atan2(o.z-r.z,o.x-r.x);if(petAnimationState(PETS[p.sp].spriteId,r,viewDir(r.face||0)).stance!=='attack')r.attackStarted=skinNow();petHit(p,o)}}}
