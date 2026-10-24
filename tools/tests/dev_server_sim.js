@@ -208,6 +208,46 @@ try {
     assert.strictEqual(r.status, 404);
     assert.ok(r.type.includes('json'), 'a JSON 404 keeps the client from misreading an error as a static host');
   });
+
+  // haven-v215: the Cash Shop over the wire. The shop ships with the site (catalog + scripts), is
+  // read-only until a Stripe key exists, and --fake-payments rehearses a purchase end to end.
+  await t('the Cash Shop is served, browsable, and off until payments are configured', async () => {
+    for (const f of ['assets/shop-catalog.js', 'assets/shop.js', 'assets/shop.css']) assert.strictEqual((await fetch(base + '/' + f)).status, 200, f + ' must ship with the site');
+    const cat = await call('friend', 'GET', '/api/shop/catalog');
+    assert.strictEqual(cat.status, 200); assert.strictEqual(cat.data.mode, 'off'); assert.ok(cat.data.items.length > 60);
+    const buy = await call('friend', 'POST', '/api/shop/checkout', { sku: 'cos:backwear:wings' });
+    assert.strictEqual(buy.status, 503); assert.strictEqual(buy.data.shopOff, true);
+    const hook = await fetch(base + '/api/shop/webhook', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    assert.strictEqual(hook.status, 503, 'the webhook refuses everything until its secret exists');
+    assert.strictEqual((await fetch(base + '/api/shop/webhook')).status, 405);
+    const put = await call('friend', 'PUT', '/api/save', { owner: 'friend', version: (await call('friend', 'GET', '/api/save')).data.version, blob: JSON.stringify({ ...JSON.parse(save(30)), appearance: { version: 1, backwear: 'wings' } }), savedAt: Date.now() });
+    assert.strictEqual(put.status, 409); assert.strictEqual(put.data.cosmeticLocked, true);
+  });
+
+  await t('--fake-payments rehearses a purchase: instant delivery, owned in the catalog, worn in a save', async () => {
+    const preview = await start({ port: 0, host: '127.0.0.1', site, gmAll: true, fakePayments: true });
+    try {
+      const host = 'http://127.0.0.1:' + preview.port;
+      const reg = await fetch(host + '/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ u: 'Buyer', p: 'a-long-buyer-password' }) });
+      const cookie = reg.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
+      const h = { 'Content-Type': 'application/json', cookie };
+      const buy = await (await fetch(host + '/api/shop/checkout', { method: 'POST', headers: h, body: JSON.stringify({ sku: 'cos:backwear:wings' }) })).json();
+      assert.strictEqual(buy.ok, true); assert.strictEqual(buy.fulfilled, true); assert.strictEqual(buy.mode, 'fake');
+      assert.match(buy.url, new RegExp('^http://127\\.0\\.0\\.1:' + preview.port + '/\\?shop=success&order=ord_'));
+      const order = await (await fetch(host + '/api/shop/order?id=' + buy.order, { headers: h })).json();
+      assert.strictEqual(order.order.status, 'fulfilled');
+      const cat = await (await fetch(host + '/api/shop/catalog', { headers: h })).json();
+      assert.deepStrictEqual(cat.owned, ['cos:backwear:wings']); assert.strictEqual(cat.mode, 'fake');
+      const put = await fetch(host + '/api/save', { method: 'PUT', headers: h, body: JSON.stringify({ owner: 'Buyer', version: 0, blob: JSON.stringify({ ...JSON.parse(save(30)), owner: 'Buyer', appearance: { version: 1, backwear: 'wings' } }), savedAt: Date.now() }) });
+      assert.strictEqual(put.status, 200, 'owned: the look is accepted');
+      const gm = await (await fetch(host + '/api/gm/shop?id=1', { headers: h })).json();
+      assert.strictEqual(gm.entitlements.length, 1); assert.strictEqual(gm.orders.length, 1);
+      const sup = await (await fetch(host + '/api/shop/checkout', { method: 'POST', headers: h, body: JSON.stringify({ sku: 'sup:mythicScrolls:1', qty: 2 }) })).json();
+      assert.strictEqual(sup.fulfilled, true);
+      const grants = await (await fetch(host + '/api/grants', { headers: h })).json();
+      assert.deepStrictEqual(grants.grants.map(g => [g.kind, g.payload.resource, g.payload.amount, g.from]), [['gift', 'mythicScrolls', 2, 'Cash Shop']]);
+    } finally { await preview.close(); }
+  });
 } finally {
   await close();
   fs.rmSync(site, { recursive: true, force: true });

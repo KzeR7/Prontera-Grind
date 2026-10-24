@@ -450,3 +450,20 @@ Weapon refinement uses the owner's v199 tiers: below +7 none, +7–8 mint, +9 vi
 lower tier. Glows persist while idle, walking and attacking. Native poses with a
 weapon use its silhouette/glint; idle/walk poses with stowed weapons glow around
 the arms. Source sprite assets are preserved.
+
+## Cash Shop (v215)
+
+The game sells two things, both through Stripe Checkout, one item per payment, in USD:
+
+* **Cosmetics** — every Wardrobe accessory (Head, Face, Mouth, Wings). A purchase is a
+  permanent unlock for the account. Hair, hair colour and gender remain free, so a
+  character is never gated on its basic look. Paid items can still be *tried on* in the
+  Wardrobe; Apply is what requires ownership.
+* **Supplies** — Oridecon, Elunium, Astral Shards, Primal Catalysts, Valkyrie's Sigils and
+  both protection scrolls in fixed bundles, priced against farming time (a bundle is
+  convenience, never something the Black Market cannot also produce). Delivered through
+  the GM-gift queue, so they land on the next sync.
+
+No stat-changing item is exclusive to the shop, and nothing in it affects combat
+except by saving time. Prices live in `assets/shop-catalog.js`; the owner tunes them
+there (see [MONETIZATION-SETUP.md](MONETIZATION-SETUP.md) §9).

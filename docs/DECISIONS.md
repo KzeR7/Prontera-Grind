@@ -201,3 +201,13 @@ Social hub (owner, 22 October 2026): farming continues while visiting the plaza.
 The social view has no enemies/combat; it does not pause or replace field farming.
 Emoji opens beside Send; messages and emotions share a three-second delay. Native emotions appear overhead and as smaller
 entries in plaza-local chat. World/Whisper/Log replace the bottom-left log area.
+
+Cash Shop (owner, 23 October 2026): direct pay-per-item through Stripe Checkout —
+no premium currency, no points (the owner rejected that model). Prices in USD. All
+four Wardrobe accessory slots (Head, Face, Mouth, Wings) are paid; hair, hair colour
+and gender stay free. Supplies for sale: Oridecon, Elunium, Astral Shard, Primal
+Catalyst, Valkyrie's Sigil, Refine Protection Scroll, Mythic Protection Scroll.
+Existing cloud accounts keep whatever paid accessory they were wearing when the shop
+arrived (grandfathered by `migrations/0005_shop.sql`), never reset. Stripe is set up
+by the owner later; until then the shop is browse-only and the code must keep working.
+Refunds never auto-revoke an unlock; revoking is a GM decision in the console.

@@ -30,6 +30,7 @@ measurements remain qualified by their saved source hashes.
 | Skill artwork | `assets/skill-icons.js`, `assets/skill-icons/`; `tools/native-skill-icons/` | source crop audit; `tools/check_skill_pets_browser.js` |
 | Skill casting effects | `assets/skill-afterglow.js`, generated `assets/afterglow-animations.js` and `assets/skill-materials.js`; `index.html`: `playSkillFx`, `tickSkillFx`, `syncSkillFx` | `afterglow_sim.js`, `skill_sim.js`; `python3 tools/build_afterglow.py --check` |
 | Panels, buttons and hotkeys | `index.html`: `V`, `ACT`, `TABS`, `SIDE_TABS`; `assets/ui/` and wardrobe UI module | `ui_sim.js`, `panel_layout_smoke.js`, `eclipse_ui_sim.js` |
+| Cash Shop (Stripe Checkout, cosmetics + supplies) | `assets/shop-catalog.js` (the price list, shared), `assets/shop.js`, `assets/shop.css`; `functions/_lib/shop.js`, `functions/api/shop/{catalog,checkout,order,webhook}.js`, `functions/api/gm/shop.js`, `migrations/0005_shop.sql`; `functions/api/save.js` (`lockedCosmetics`), `assets/wardrobe-ui.js` (`wardrobeLocked`), `gm.html` (Cash Shop tab) | `shop_api_sim.js`, `shop_sim.js`, `dev_server_sim.js`; setup in [MONETIZATION-SETUP.md](MONETIZATION-SETUP.md) |
 | Browser saves, login, cloud sync, away rewards | `index.html`: `fresh`, `load`, `save`, `saveKey`, `CLOUD`, `offlinePlan` | `save_load_sim.js`, `save_owner_sim.js`, `cloud_sim.js`, `offline_sim.js`, `migration_sim.js` |
 | API accounts, sessions and saves | `functions/api/`, `functions/_lib/auth.js`, `functions/_lib/db.js`, `functions/_lib/validate.js` | `api_sim.js`, `registration_sim.js`, `dev_server_sim.js` |
 | GM console and grants | `gm.html`, `functions/api/gm/`, `functions/api/grants.js`, `functions/_lib/gm-tools.js` | `gm_console_sim.js`, `gm_tools_sim.js`, `gm_auth_sim.js` |
@@ -224,3 +225,11 @@ World/Whisper/Local chat and social plaza (v203): `assets/social.js`,
 `assets/social-scene.js`, `assets/social-rules.js`, `functions/api/social.js`,
 `workers/social/`; see [Social hub](SOCIAL-HUB.md) for architecture, deployment and
 checks. The independent scene leaves the real farming simulation running.
+
+Cash Shop (v215): `assets/shop-catalog.js` is the single price list, imported by the
+Pages Functions the same way `workers/social` imports `assets/social-rules.js`, so
+the game and the server can never disagree on a price. Ownership is server-side
+(`entitlements`); `PUT /api/save` refuses a look wearing an unowned cosmetic and
+the client strips it. With no `STRIPE_SECRET_KEY` the shop is browse-only;
+`node tools/dev_server.js --fake-payments` rehearses purchases without Stripe. See
+[Cash Shop setup](MONETIZATION-SETUP.md).

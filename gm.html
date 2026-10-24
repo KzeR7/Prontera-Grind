@@ -200,7 +200,7 @@ function renderDetail() {
       <div class="stat"><b>${s ? nfmt(s.kills) : '—'}</b><span class="small">lifetime kills</span></div>
     </div>
     <div class="tabs">
-      ${['character', 'equipment', 'account', 'send', 'announce', 'history', 'log'].map(t => `<button data-tab="${t}" class="${TAB === t ? 'on' : ''}">${({ character:'Full stats',equipment:'Equipment & affixes',account: 'Account', send: 'Send items & Zeny', announce: 'Announce', history: 'Backups', log: "This player's log" })[t]}</button>`).join('')}
+      ${['character', 'equipment', 'account', 'send', 'shop', 'announce', 'history', 'log'].map(t => `<button data-tab="${t}" class="${TAB === t ? 'on' : ''}">${({ character:'Full stats',equipment:'Equipment & affixes',account: 'Account', send: 'Send items & Zeny', shop: 'Cash Shop', announce: 'Announce', history: 'Backups', log: "This player's log" })[t]}</button>`).join('')}
     </div>
     <div id="tabbody"></div>`;
   renderTab();
@@ -265,6 +265,9 @@ function renderTab() {
       ? `<table><thead><tr><th>#</th><th>Kind</th><th>When</th><th>State</th><th>Note</th></tr></thead><tbody>
          ${d.grants.map(g => `<tr><td>${g.id}</td><td>${esc(g.kind)}</td><td>${when(g.at)}</td><td>${g.claimed ? '✅ collected' : '⏳ waiting'}</td><td class="small">${esc(g.note || '')}</td></tr>`).join('')}</tbody></table>`
       : `<p class="small">Nothing sent yet.</p>`);
+  } else if (TAB === 'shop') {
+    body.innerHTML = '<p class="small">Loading Cash Shop records…</p>';
+    renderShop(body, a.id);
   } else {
     body.innerHTML = d.events.length
       ? `<table><thead><tr><th>When</th><th>Action</th><th>Detail</th><th>By</th></tr></thead><tbody>
@@ -272,6 +275,32 @@ function renderTab() {
          </tbody></table>`
       : `<p class="small">Nothing logged for this player yet.</p>`;
   }
+}
+
+// Cash Shop (haven-v215): what the account owns and has paid for, with grant/revoke for cosmetics.
+// Supplies are deliberately absent - the Send tab already gifts any resource through the same queue.
+const money = (cents, cur) => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: String(cur || 'usd').toUpperCase() }).format((Number(cents) || 0) / 100); } catch (e) { return (Number(cents) || 0) / 100 + ' ' + cur; } };
+async function renderShop(body, id) {
+  let d;
+  try { d = await api('/gm/shop?id=' + id); } catch (err) { body.innerHTML = `<p class="small">Could not load: ${esc(err.message)}</p>`; return; }
+  if (!SEL || SEL.account.id !== id || TAB !== 'shop') return;
+  const sourceLabel = { stripe: 'paid', gm: 'GM grant', legacy: 'grandfathered' };
+  const statusLabel = { pending: '⏳ awaiting payment', fulfilled: '✅ paid & delivered', expired: 'expired', failed: 'failed', refunded: '↩ refunded' };
+  body.innerHTML = `
+    <p class="small">Cosmetics are permanent per-account unlocks checked on every save. Grant one as a prize or an apology; revoke one after a refund or chargeback - the player's look drops it on their next sync. Payments themselves live in the Stripe dashboard (search the order id).</p>
+    <h2>Owned cosmetics (${d.entitlements.length})</h2>
+    ${d.entitlements.length ? `<table><thead><tr><th>Item</th><th>SKU</th><th>How</th><th>Since</th><th></th></tr></thead><tbody>
+      ${d.entitlements.map(e => `<tr><td>${esc(e.name)}</td><td class="small">${esc(e.sku)}</td><td>${esc(sourceLabel[e.source] || e.source)}${e.orderId ? ` <span class="small">${esc(e.orderId)}</span>` : ''}</td><td>${when(e.at)}</td><td><button data-act="shop-revoke" data-sku="${esc(e.sku)}">Revoke</button></td></tr>`).join('')}
+      </tbody></table>` : '<p class="small">Nothing owned yet.</p>'}
+    <div class="row" style="margin-top:10px;align-items:flex-end;flex-wrap:wrap;gap:8px">
+      <label>Grant a cosmetic <select id="shopsku" style="min-width:260px">${d.catalog.map(i => `<option value="${esc(i.sku)}">${esc(i.slot + ' · ' + i.name + ' · ' + money(i.price, d.currency))}</option>`).join('')}</select></label>
+      <label>Why <input id="shopnote" placeholder="prize, refund-and-keep, apology…" style="min-width:220px"></label>
+      <button data-act="shop-grant">Grant</button>
+    </div>
+    <h2 style="margin-top:14px">Orders (${d.orders.length})</h2>
+    ${d.orders.length ? `<table><thead><tr><th>Order</th><th>Item</th><th>Amount</th><th>State</th><th>Placed</th><th>Payment</th></tr></thead><tbody>
+      ${d.orders.map(o => `<tr><td class="small">${esc(o.id)}</td><td>${esc(o.item)}${o.quantity > 1 ? ' ×' + esc(o.quantity) : ''}</td><td>${esc(money(o.amount, o.currency))}</td><td>${esc(statusLabel[o.status] || o.status)}</td><td>${when(o.createdAt)}</td><td class="small">${esc(o.payment || '—')}</td></tr>`).join('')}
+      </tbody></table>` : '<p class="small">No orders yet.</p>'}`;
 }
 
 function statRows(o){return Object.entries(o||{}).map(([k,v])=>`<div class="stat">${esc(CATALOG.affixes[k]||CATALOG.skills[k]||k)}<b>${typeof v==='number'?nfmt(Math.round(v*100)/100):esc(v)}</b></div>`).join('')}
@@ -363,6 +392,17 @@ $('detail').addEventListener('click', async e => {
       if (!confirm('Restore version ' + v + ' as their live save? The current save is kept as a backup.')) return;
       const r = await api('/gm/player', { method: 'POST', body: JSON.stringify({ id, action: 'restore', version: v }) });
       say('Restored as version ' + r.version + '.');
+    } else if (act === 'shop-grant') {
+      const sku = $('shopsku').value, note = $('shopnote').value;
+      const r = await api('/gm/shop', { method: 'POST', body: JSON.stringify({ id, action: 'grant', sku, note }) });
+      say(r.granted ? 'Granted ' + sku + '.' : 'They already own ' + sku + '.');
+      TAB = 'shop';
+    } else if (act === 'shop-revoke') {
+      const sku = btn.dataset.sku;
+      if (!confirm('Take ' + sku + ' away from ' + SEL.account.u + '? Their look drops it on the next sync.')) return;
+      await api('/gm/shop', { method: 'POST', body: JSON.stringify({ id, action: 'revoke', sku, note: prompt('Why? (goes in the audit log)') || '' }) });
+      say('Revoked ' + sku + '.');
+      TAB = 'shop';
     }
     await openPlayer(id);
   } catch (err) { say(err.message, 1); }

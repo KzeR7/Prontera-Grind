@@ -16,7 +16,16 @@ then apply v67's server-offline claim schema before deploying the new Functions 
 ```sh
 npx wrangler d1 execute pg --remote --file=migrations/0002_leaderboard.sql
 npx wrangler d1 execute pg --remote --file=migrations/0003_server_timed_offline_claims.sql
+npx wrangler d1 execute pg --remote --file=migrations/0004_gm_gift_batches.sql
+npx wrangler d1 execute pg --remote --file=migrations/0005_shop.sql
 ```
+
+**haven-v215 (Cash Shop):** `0005_shop.sql` can run before **or** after the v215 build is deployed —
+until it has run, v215 behaves exactly like the previous build (no lock, no prices, every save
+accepted; the Cash Shop tab says it is not switched on yet). Running it is the moment the lock
+starts **and** the one-off grandfather step that keeps every cloud account's currently worn
+accessories unlocked, so do it when you are ready for that. Turning payments on is a separate,
+later job: `docs/MONETIZATION-SETUP.md` (§0 has the checklist).
 
 Both migrations are additive and safe to rerun. Migration 0002 backfills all-time totals without
 pretending old kills happened today or this week; 0003 adds only the persistent, one-pending-claim
@@ -102,7 +111,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-22 haven-v214 thor zeny +40%` |
+| Build tag at the bottom of the card | `2026-10-23 haven-v215 cash shop` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
