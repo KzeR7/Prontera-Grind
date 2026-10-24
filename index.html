@@ -806,6 +806,54 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 /* Adventurer handbook: compact navigation, readable chapters and a single route. */
 .handbook{max-width:1000px;margin:auto;line-height:1.65;font-size:13px}.guide-nav,.guide-actions{display:flex;flex-wrap:wrap;gap:8px}.guide-nav{border-bottom:1px solid #716349;padding-bottom:12px;margin-bottom:18px}.guide-nav button{flex:1 1 110px;padding:10px}.guide-nav button[aria-pressed="true"]{background:#59492e;color:#fff2c8;border-color:#d5b477}.handbook h2{font-size:23px;line-height:1.25;margin:8px 0 12px}.handbook h3{font-size:16px;margin:0 0 8px}.handbook p{margin:8px 0 14px;font-size:14px;line-height:1.7;color:#cbd2dc}.handbook-intro{padding:8px 0 18px}.handbook-intro>small,.guide-tour>small{letter-spacing:1.5px;color:#dbbe7c}.guide-chapters{display:grid;gap:10px}.guide-chapters details,.guide-note{background:#221e29;border:1px solid #514758;border-radius:9px;padding:16px}.guide-chapters summary{cursor:pointer;font-weight:bold;font-size:14px}.guide-tour{padding:20px;margin-bottom:20px;border:1px solid #c4a460;border-radius:10px;background:linear-gradient(120deg,#383128,#252033)}.guide-route{display:grid;gap:12px}.guide-route article{display:grid;grid-template-columns:100px minmax(0,1fr);gap:16px;padding:18px;border:1px solid #514758;border-radius:9px;background:#221e29}.route-level{color:#e3c17d;font-weight:bold;font-size:17px}.guide-note{margin-top:16px}.handbook .mob-card{padding:14px;line-height:1.6}.handbook .mob-card small{font-size:11px}.card-purpose{color:#ddc68b}.handbook button{white-space:normal;min-height:34px}.handbook small{line-height:1.5}.guide-card-section .guide-grid{margin-top:12px}@media(max-width:600px){.guide-route article{grid-template-columns:1fr;gap:6px;padding:14px}.handbook h2{font-size:20px}.guide-nav{gap:5px}.guide-nav button{flex-basis:90px}.guide-tour{padding:14px}}
 .guide-build-plan dl{display:grid;gap:8px;margin:0}.guide-build-plan dt{font-weight:bold;color:#e3c17d;margin-top:8px}.guide-build-plan dd{margin:0;line-height:1.65}.guide-card-section{margin:22px 0}.guide-tier-plan{margin-bottom:20px}#guideFinder{position:fixed;z-index:10010;box-sizing:border-box;width:min(300px,calc(100vw - 16px));padding:16px;background:#1b2835;border:1px solid #e3c17d;border-radius:10px;box-shadow:0 8px 30px #0009;color:#e5ebf1;font:13px/1.6 system-ui}#guideFinder h3{font-size:17px;margin:6px 0}#guideFinder p{margin:8px 0 12px}#guideFinder small{color:#e3c17d;font-size:10px;letter-spacing:1px}#guideFinder button{padding:6px 12px}#guideFinder::after{content:'';position:absolute;left:var(--pointer-x);margin-left:-8px;border:8px solid transparent}#guideFinder[data-direction="down"]::after{top:100%;border-top-color:#e3c17d}#guideFinder[data-direction="up"]::after{bottom:100%;border-bottom-color:#e3c17d}#guideFinderRing{position:fixed;z-index:10009;pointer-events:none;border:2px solid #ffe29b;border-radius:7px;box-shadow:0 0 0 4px #e3c17d44;box-sizing:border-box}
+/* v221: Hunt Title ranks borrow the deep-space glass, violet/cyan runes and restrained energy glow of the skill FX UI. */
+.ui-panel[data-layout="index"] .mastery-title-list{gap:8px;max-height:min(62vh,480px);padding:3px 3px 6px;scrollbar-color:#505271 #101720;scrollbar-width:thin}
+.ui-panel[data-layout="index"] .mastery-title{--rank-violet:#b98aff;--rank-cyan:#6ee7ff;position:relative;isolation:isolate;overflow:hidden;grid-template-columns:42px minmax(0,1fr) 72px;gap:9px;padding:9px;min-height:76px;border:1px solid #3a455a!important;border-left-color:#3a455a!important;border-radius:8px;background:radial-gradient(140px 90px at 100% 0%,#a77dff20,transparent 72%),linear-gradient(112deg,#101923 0%,#162130 61%,#1d1b30 100%)!important;box-shadow:inset 0 1px #ffffff0b,0 5px 14px #02050b55!important;opacity:1;filter:none;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.ui-panel[data-layout="index"] .mastery-title::before{content:"";position:absolute;z-index:0;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:linear-gradient(180deg,var(--foil-hi,#e7d3a0),var(--foil,#877b6a),#6ee7ff);box-shadow:0 0 12px var(--foil,#877b6a);pointer-events:none}
+.ui-panel[data-layout="index"] .mastery-title::after{content:"";position:absolute;z-index:0;right:-20px;top:-34px;width:106px;height:106px;border-radius:50%;background:radial-gradient(circle,#b98aff20 0%,#6ee7ff0d 43%,transparent 72%);opacity:.55;transform:scale(.82);transition:opacity .2s,transform .2s;pointer-events:none}
+.ui-panel[data-layout="index"] .mastery-title>*{position:relative;z-index:1}
+.ui-panel[data-layout="index"] .mastery-title.earned{opacity:1;border-color:#46564f!important}
+.ui-panel[data-layout="index"] .mastery-title.locked{opacity:.76;filter:none}
+.ui-panel[data-layout="index"] .mastery-title.next{border-color:#745b9a!important;background:radial-gradient(140px 90px at 100% 0%,#b98aff2a,transparent 72%),linear-gradient(112deg,#111a27 0%,#192236 61%,#211b35 100%)!important;box-shadow:inset 0 1px #ffffff12,0 0 19px #9b68eb22!important}
+.ui-panel[data-layout="index"] .mastery-title.next::after{background:radial-gradient(circle,#6ee7ff2b 0%,#b98aff20 42%,transparent 72%);opacity:.9;animation:index-title-aura 3.8s ease-in-out infinite}
+.ui-panel[data-layout="index"] .mastery-title.equipped{border-color:#58a9b9!important;box-shadow:inset 0 1px #ffffff12,0 0 18px #6ee7ff21!important}
+.ui-panel[data-layout="index"] .mastery-title.equipped::after{background:radial-gradient(circle,#6ee7ff2b 0%,#b98aff17 42%,transparent 72%);opacity:.85}
+.ui-panel[data-layout="index"] .mastery-title:hover,.ui-panel[data-layout="index"] .mastery-title:focus-within{transform:translateY(-1px);border-color:#8a72b1!important;box-shadow:inset 0 1px #ffffff12,0 5px 18px #080b13aa,0 0 13px #a87aff22!important}
+.ui-panel[data-layout="index"] .mastery-title-sigil{position:relative;isolation:isolate;display:grid;place-items:center;width:42px;height:42px;border:1px solid var(--foil,#66778c);border-radius:9px;background:linear-gradient(145deg,#202b3b,#101822);box-shadow:inset 0 1px #ffffff12,0 0 14px #a881f01a}
+.ui-panel[data-layout="index"] .mastery-title-sigil::before,.ui-panel[data-layout="index"] .mastery-title-sigil::after{content:"";position:absolute;z-index:0;display:block;transform:rotate(45deg);border-radius:3px;pointer-events:none}
+.ui-panel[data-layout="index"] .mastery-title-sigil::before{width:25px;height:25px;border:1px solid var(--foil-hi,#e7d3a0);opacity:.72;box-shadow:0 0 10px #b98aff24}
+.ui-panel[data-layout="index"] .mastery-title-sigil::after{width:16px;height:16px;border:1px solid #6ee7ff9c;opacity:.8}
+.ui-panel[data-layout="index"] .mastery-title-sigil>span{position:relative;z-index:1;display:grid;place-items:center;filter:drop-shadow(0 0 6px var(--rank-violet))}
+.ui-panel[data-layout="index"] .mastery-title-sigil .ui-icon{width:18px;height:18px}
+.ui-panel[data-layout="index"] .mastery-title-sigil>small{position:absolute;right:-5px;bottom:-5px;display:grid;place-items:center;min-width:18px;height:14px;padding:0 3px;border:1px solid #607089;border-radius:4px;background:#0c141d;color:#e0e8f5;font:700 7px/1 ui-monospace,SFMono-Regular,monospace;letter-spacing:.3px}
+.ui-panel[data-layout="index"] .tone-valkyrie .mastery-title-sigil{border-color:#d5a52f;box-shadow:inset 0 1px #ffffff18,0 0 16px #d4a82c44}
+.ui-panel[data-layout="index"] .mastery-title-copy{gap:2px}
+.ui-panel[data-layout="index"] .mastery-title-kicker{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;color:#98a5ba;font:700 7px/1.15 ui-monospace,SFMono-Regular,monospace;letter-spacing:.7px;text-transform:uppercase}
+.ui-panel[data-layout="index"] .mastery-title-kicker>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ui-panel[data-layout="index"] .mastery-title-bonus{flex:none;padding:2px 4px;border:1px solid #486176;border-radius:4px;background:#142633;color:#9deeff;text-shadow:0 0 8px #6ee7ff33;letter-spacing:.25px;white-space:nowrap}
+.ui-panel[data-layout="index"] .mastery-title-copy>b{color:#edf2fa!important;font-size:11px;line-height:1.15;overflow-wrap:anywhere}
+.ui-panel[data-layout="index"] .mastery-title-progress-row{display:flex;align-items:baseline;justify-content:space-between;gap:6px;min-width:0;line-height:1.1}
+.ui-panel[data-layout="index"] .mastery-title-progress-row>small:first-child{min-width:0;overflow:hidden;color:#a4afc0;font-size:8px;font-variant-numeric:tabular-nums;text-overflow:ellipsis;white-space:nowrap}
+.ui-panel[data-layout="index"] .mastery-title-state{flex:none;color:#91a0b3;font:700 7px/1.1 ui-monospace,SFMono-Regular,monospace;letter-spacing:.25px;text-align:right;text-transform:uppercase;white-space:nowrap}
+.ui-panel[data-layout="index"] .mastery-title.earned .mastery-title-state{color:#81d7c3}
+.ui-panel[data-layout="index"] .mastery-title.next .mastery-title-state{color:#cfabff}
+.ui-panel[data-layout="index"] .mastery-title.equipped .mastery-title-state{color:#83e6f5}
+.ui-panel[data-layout="index"] .mastery-title-track{height:4px;margin:2px 0 0;border:1px solid #334156;border-radius:999px;background:#0b121a}
+.ui-panel[data-layout="index"] .mastery-title-track>i{border-radius:999px;background:linear-gradient(90deg,var(--foil,#877b6a),#b98aff 62%,#6ee7ff);box-shadow:0 0 8px #8edfff55;transition:width .25s ease}
+.ui-panel[data-layout="index"] .mastery-title>button{position:relative;z-index:1;min-width:72px;padding:6px 5px;border:1px solid #8665af;border-radius:6px;background:linear-gradient(135deg,#704ba8,#412c5d);color:#f2eaff;box-shadow:0 0 13px #a978ff1c;font:700 8px/1.2 ui-monospace,SFMono-Regular,monospace;letter-spacing:.55px;text-transform:uppercase;white-space:nowrap;transition:transform .16s,border-color .16s,background .16s}
+.ui-panel[data-layout="index"] .mastery-title>button:hover:not(:disabled){transform:translateY(-1px);border-color:#c2a3ff;background:linear-gradient(135deg,#8d5bd0,#6941ad)}
+.ui-panel[data-layout="index"] .mastery-title.equipped>button{border-color:#67cddd;background:linear-gradient(135deg,#1b7083,#314d79);color:#e5fbff;box-shadow:0 0 13px #6ee7ff22}
+.ui-panel[data-layout="index"] .mastery-title.locked>button:disabled{border-color:#3b4659;background:#19212c;color:#8794a8;box-shadow:none;opacity:.82}
+@keyframes index-title-aura{0%,100%{opacity:.5;transform:scale(.82)}50%{opacity:1;transform:scale(1.04)}}
+@container(min-width:560px){.ui-panel[data-layout="index"] .mastery-title-list{grid-template-columns:repeat(2,minmax(0,1fr));max-height:min(70vh,560px)}.ui-panel[data-layout="index"] .mastery-title{grid-template-columns:40px minmax(0,1fr) 68px;gap:8px;padding:8px}.ui-panel[data-layout="index"] .mastery-title-sigil{width:40px;height:40px}.ui-panel[data-layout="index"] .mastery-title>button{min-width:68px}}
+@media(max-width:420px){.ui-panel[data-layout="index"] .mastery-title{grid-template-columns:38px minmax(0,1fr) 62px;gap:7px;padding:8px}.ui-panel[data-layout="index"] .mastery-title-sigil{width:38px;height:38px}.ui-panel[data-layout="index"] .mastery-title>button{min-width:62px;padding:5px 3px;font-size:7px}.ui-panel[data-layout="index"] .mastery-title-kicker{font-size:6.5px}}
+@media(prefers-reduced-motion:reduce){.ui-panel[data-layout="index"] .mastery-title,.ui-panel[data-layout="index"] .mastery-title::after,.ui-panel[data-layout="index"] .mastery-title-track>i,.ui-panel[data-layout="index"] .mastery-title>button{animation:none!important;transition:none!important}}
+/* eclipse.css is loaded after this page stylesheet; these ID-scoped rules outrank its shared Index colors. */
+#wins .ui-panel[data-layout="index"] .mastery-title{border-color:#3a455a!important;background:radial-gradient(140px 90px at 100% 0%,#a77dff20,transparent 72%),linear-gradient(112deg,#101923 0%,#162130 61%,#1d1b30 100%)!important;box-shadow:inset 0 1px #ffffff0b,0 5px 14px #02050b55!important}
+#wins .ui-panel[data-layout="index"] .mastery-title.earned{border-color:#46564f!important}
+#wins .ui-panel[data-layout="index"] .mastery-title.next{border-color:#745b9a!important;background:radial-gradient(140px 90px at 100% 0%,#b98aff2a,transparent 72%),linear-gradient(112deg,#111a27 0%,#192236 61%,#211b35 100%)!important;box-shadow:inset 0 1px #ffffff12,0 0 19px #9b68eb22!important}
+#wins .ui-panel[data-layout="index"] .mastery-title.equipped{border-color:#58a9b9!important;box-shadow:inset 0 1px #ffffff12,0 0 18px #6ee7ff21!important}
+#wins .ui-panel[data-layout="index"] .mastery-title-track>i{background:linear-gradient(90deg,var(--foil,#877b6a),var(--rank-violet) 62%,var(--rank-cyan))!important}
 </style>
 <link rel="preload" href="assets/ui/fonts/font-0.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-1.ttf" as="font" type="font/ttf" crossorigin>
@@ -1131,7 +1179,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-24 haven-v220 sonic blow redesign';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-24 haven-v221 prismatic index titles';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6101,15 +6149,24 @@ V.bagItems=()=>`<section class="bag-items"><div class="hd">Items &amp; materials
 ].map(([n,count,help])=>`<article class="mob-card"><b>${n}</b><strong>${safeCount(count).toLocaleString()}</strong><small>${help}</small></article>`).join('')}</div><div class="row"><button data-t="equip">Open Loadout</button><button data-a="sub" data-v="bag:cards">Loose cards · ${S.cards.length}</button><button data-t="market">Get supplies</button></div></section>`;
 V.bag=()=>subBar('bag')+V[sub.bag==='bag'?'bagItems':sub.bag]();
 function renderTitleTrack(){
-  const xp=indexExperience();
+  const xp=indexExperience(),earned=indexRankForXp(xp);
   return INDEX_TITLES.map((t,i)=>{
-    const done=titleUnlocked(t),equipped=S.equippedTitle===t.id;
-    const pct=done?100:Math.min(100,Math.max(0,xp/t.xp*100));
-    const progress=(done?`${t.xp.toLocaleString()} Index XP · earned`: `${xp.toLocaleString()} / ${t.xp.toLocaleString()} Index XP`)+` · +${INDEX_CRIT[i]}% Crit`;
-    return `<article class="mastery-title tone-${t.tone}${done?' earned':' locked'}">
-      <div class="mastery-medal" aria-hidden="true"><span>${titleIcon(t)}</span><small>${String(i+1).padStart(2,'0')}</small></div>
-      <div class="mastery-title-copy"><b>${t.name}</b><small>Rank ${i+1} · ${progress}</small><div class="mastery-track"><i style="width:${pct.toFixed(1)}%"></i></div></div>
-      <button data-a="titleequip" data-v="${equipped?'none':t.id}" ${done?'':'disabled'} aria-label="${equipped?'Remove equipped title':done?'Equip '+t.name:'Unlock '+t.name+' at '+t.xp.toLocaleString()+' Index XP'}">${equipped?'Equipped':done?'Equip':'Locked'}</button>
+    const done=titleUnlocked(t),equipped=S.equippedTitle===t.id,next=i===earned;
+    const previous=i?INDEX_TITLES[i-1].xp:0,span=Math.max(1,t.xp-previous);
+    const progressXp=Math.max(0,Math.min(span,xp-previous));
+    const pct=done?100:Math.min(100,Math.max(0,progressXp/span*100));
+    const remaining=Math.max(0,t.xp-xp),rank=String(i+1).padStart(2,'0');
+    const progress=done?`${t.xp.toLocaleString()} XP · milestone earned`:`Rank XP ${progressXp.toLocaleString()} / ${span.toLocaleString()}`;
+    const state=done?(equipped?'Active title':'Unlocked'):`${next?'Next · ':''}${remaining.toLocaleString()} XP to go`;
+    return `<article class="mastery-title tone-${t.tone}${done?' earned':' locked'}${next?' next':''}${equipped?' equipped':''}" data-rank="${i+1}" aria-label="Index title rank ${i+1}: ${t.name}">
+      <div class="mastery-title-sigil" aria-hidden="true"><span>${titleIcon(t)}</span><small>${rank}</small></div>
+      <div class="mastery-title-copy">
+        <div class="mastery-title-kicker"><span>Rank ${rank}${next&&!done?' · Next':''}</span><span class="mastery-title-bonus">+${INDEX_CRIT[i]}% Crit</span></div>
+        <b>${t.name}</b>
+        <div class="mastery-title-progress-row"><small>${progress}</small><small class="mastery-title-state">${state}</small></div>
+        <div class="mastery-track mastery-title-track" role="progressbar" aria-label="${t.name} unlock progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-valuetext="${done?'Unlocked':`Rank segment: ${progressXp.toLocaleString()} of ${span.toLocaleString()} Index XP; ${remaining.toLocaleString()} remaining`}"><i style="width:${pct.toFixed(1)}%"></i></div>
+      </div>
+      <button data-a="titleequip" data-v="${equipped?'none':t.id}" ${done?'':'disabled'} aria-pressed="${equipped?'true':'false'}" aria-label="${equipped?'Remove equipped title':done?'Equip '+t.name:'Unlock '+t.name+' at '+t.xp.toLocaleString()+' Index XP'}">${equipped?'Equipped':done?'Equip':'Locked'}</button>
     </article>`;
   }).join('');
 }
@@ -6122,7 +6179,7 @@ function renderMobIndex(){
     <small><b>Album:</b> ${albumDone}/${MONSTER_INDEX.length} species hunted to their last rung (50,000 kills) - ${(MONSTER_INDEX.length*50279).toLocaleString()} Index XP in total, kept separate from the title ranks so there is always one more hunt.</small></div>
     <div class="mastery-progress-card index-xp-card"><div><b>Index Mastery Lv ${Math.max(1,rank)}</b> <small>· ${next?`${(next.xp-xp).toLocaleString()} XP to ${next.name}`:'all title ranks complete'}</small></div><div class="mastery-track"><i style="width:${pct.toFixed(1)}%"></i></div><small>${xp.toLocaleString()}${next?` / ${next.xp.toLocaleString()}`:''} Index XP${next?' · next title: '+next.name:''} · <b>Index Crit +${indexCrit()}% / +40%</b></small>
     <small>Index Crit adds beyond the ordinary 60% core cap: every Hunt Title you unlock adds its slice (+1/+1/+2/+2/+3/+4/+5/+6/+7/+9), and all ten put a fully capped build on exactly 100% crit. Mythic crit affixes and set bonuses add after the normal 100% total cap.</small></div>
-    <div class="mastery-section-title">🏅 Index Title Ranks <small>Equip any rank you have earned</small></div><div class="mastery-title-list">${renderTitleTrack()}</div>
+    <div class="mastery-section-title">🏅 Index Title Ranks <small>Equip an earned title · up to +40% Crit</small></div><div class="mastery-title-list">${renderTitleTrack()}</div>
     <div class="mastery-section-title">📖 Monster Index <small>${MONSTER_INDEX.length} entries across ${MAPS.length} maps · 8 mastery rungs each</small></div>
     ${MAPS.map((mp,map)=>{const rows=MONSTER_INDEX.filter(m=>m.map===map),mapFound=rows.filter(m=>safeCount(counts[m.id])>0).length,mapKills=rows.reduce((n,m)=>n+safeCount(counts[m.id]),0);
       return `<details class="mastery-map" data-a="idxmap" data-v="mobs:${map}" ${indexSectionOpen('mobs',map)?'open':''}><summary><b>${mp.n}</b><small>${mapFound}/${rows.length} indexed · ${mapKills.toLocaleString()} species kills</small></summary><div class="mastery-roster">${rows.map(m=>{const n=safeCount(counts[m.id]),level=indexMasteryLevel(n),nextMob=indexNextMilestone(n),at=nextMob||INDEX_MOB_MILESTONES[INDEX_MOB_MILESTONES.length-1],before=level?INDEX_MOB_MILESTONES[level-1]:0,mpct=nextMob?Math.min(100,Math.max(0,(n-before)/(nextMob-before)*100)):100;return `<div class="mastery-mob${n?' found':''}"><span class="mastery-mob-icon">${m.boss?'👑':'✦'}</span><span><b>${m.name}${m.boss?' · BOSS':''}</b><small>Mastery Lv ${level}/${INDEX_MOB_MILESTONES.length} · ${n.toLocaleString()} kills recorded · individual species kills${nextMob?` · ${nextMob-n} to next rung`:' · fully indexed'}</small><span class="mastery-track mob-track"><i style="width:${mpct.toFixed(1)}%"></i></span></span><b class="mastery-count">${n.toLocaleString()}</b></div>`}).join('')}</div></details>`;

@@ -463,7 +463,14 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   assert.ok(h.includes('12 kills recorded')&&h.includes('Mastering · BOSS'),'regular mobs and bosses both get species rows');
   assert.ok(h.includes('Field Scout')&&h.includes('data-a="titleequip"'),'Index XP ranks unlock an equippable title');
   assert.strictEqual((h.match(/class="mastery-title tone-/g)||[]).length,10,'the ladder has ten designed rank seals');
-  U.indexMode='cards';U.S.cardIndex={donated:1,byName:{'Poring Card':1},mastery:{'Poring Card':1},rewards:{},stats:{str:0,agi:0,dex:0,int:0,vit:0,luk:0}};
+  assert.ok(h.includes('mastery-title-sigil')&&h.includes('mastery-title-bonus')&&h.includes('mastery-title-track'),'rank rows use the skill-FX-inspired prism, bonus and progress treatment');
+  assert.ok(h.includes('class="mastery-title tone-silver locked next" data-rank="3"'),'the next unearned title is called out at the earned-rank boundary');
+  assert.ok(h.includes('aria-label="Rune-Midgarts Vanguard unlock progress"')&&h.includes('aria-valuenow="0"')&&h.includes('aria-valuetext="Rank segment: 0 of 2,000 Index XP; 2,000 remaining"')&&h.includes('Rank XP 0 / 2,000'),'rank progress exposes an accessible value at the next milestone');
+  U.S.indexXp=2000;h=U.V.index();
+  assert.ok(h.includes('data-rank="3" aria-label="Index title rank 3: Rune-Midgarts Vanguard"')&&h.includes('aria-valuenow="50"')&&h.includes('Rank XP 1,000 / 2,000'),'each new rank bar starts from its previous XP threshold');
+  U.S.indexXp=1000;U.S.equippedTitle='field-scout';h=U.V.index();
+  assert.ok(h.includes('class="mastery-title tone-copper earned equipped" data-rank="2"')&&h.includes('aria-pressed="true"'),'the equipped rank receives a distinct active state');
+  U.S.equippedTitle=null;U.indexMode='cards';U.S.cardIndex={donated:1,byName:{'Poring Card':1},mastery:{'Poring Card':1},rewards:{},stats:{str:0,agi:0,dex:0,int:0,vit:0,luk:0}};
   h=U.V.index();
   assert.ok(h.includes('1/102 cards discovered')&&h.includes('<b>1/510</b> card mastery ranks'),'the album and five-rank-per-card progress are visible');
   assert.ok(h.includes('data-a="indexcard"')&&h.includes('Dedicate one'),'a loose card can advance an individual card');
