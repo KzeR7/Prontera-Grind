@@ -371,5 +371,85 @@ test('v174: Skills has Skills/Combo/Ascension sub-tabs; Character keeps stats on
  ev("sub.status='stats'");
  assert.ok(!ev('V.status()').includes('status:ascskills'),'Character no longer lists Skill ascension');
 });
+test('minimap-left Mail icon opens announcement mail, GM can send announcement with gift, and player claims gift',()=>{
+ const tools=doc.getElementById('minimapTools'),mailBtn=doc.getElementById('mailBtn'),dailyBtn=doc.getElementById('dailyBtn');
+ assert.ok(tools&&mailBtn&&dailyBtn,'minimapTools holds both Mail and Daily icons on the main screen');
+ assert.equal(tools.nextElementSibling?.id,'sideRail','minimapTools sits directly to the left of the minimap sideRail');
+ ev('S.gm=true;S.ore.ori=10;ui()');
+ assert.equal(doc.getElementById('mailBadge').hidden,false,'initial welcome announcement shows unread badge');
+ mailBtn.click();
+ const modal=doc.getElementById('mailDailyModal');
+ assert.ok(modal.classList.contains('on'),'clicking mailBtn opens the Mail & Announcements modal');
+ assert.equal(doc.getElementById('mailBadge').hidden,true,'viewing announcement without gift marks it read');
+ doc.getElementById('gmMailBody').value='Weekend Event: Free Oridecon for all adventurers!';
+ doc.getElementById('gmMailKind').value='event';
+ doc.getElementById('gmMailGift').value='ori';
+ doc.getElementById('gmMailAmt').value='35';
+ doc.querySelector('[data-a=gmcomposemail]').click();
+ assert.equal(doc.getElementById('mailBadge').hidden,false,'unclaimed gift keeps mail badge visible');
+ assert.equal(doc.getElementById('mailBadge').textContent,'1');
+ const claimBtn=modal.querySelector('[data-a=claimmail]');
+ assert.ok(claimBtn,'announcement displays Claim Gift button');
+ claimBtn.click();
+ assert.equal(ev('S.ore.ori'),45,'claiming announcement gift adds 35 Oridecon');
+ assert.equal(doc.getElementById('mailBadge').hidden,true,'mail badge clears once gift is claimed');
+ assert.ok(modal.querySelector('.mail-claimed-tag'),'claimed announcement shows Gift Claimed badge');
+ doc.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+ assert.ok(!modal.classList.contains('on'),'Escape closes the Mail modal');
+});
+test('Daily Reward Roulette has 33% Ori, 33% Elu, 11% Zeny buff, 11% EXP buff, 7% Zeny Pouch, 4% Random Card, 1% Refine Scroll, spins once per day, and refreshes daily',()=>{
+ ev('S.ore.ori=0;S.ore.elu=0;S.refineScrolls=0;S.zeny=1000;S.cards=[];S.dailyWheel={day:trialDay(),spun:0,lastReward:null,totalSpins:0,buffs:{zenyUntil:0,expUntil:0}};ui()');
+ const dailyBtn=doc.getElementById('dailyBtn'),dailyBadge=doc.getElementById('dailyBadge'),buffPill=doc.getElementById('dailyBuffPill');
+ assert.equal(dailyBadge.hidden,false,'daily badge shows spin is available today');
+ assert.equal(buffPill.hidden,true,'buff pill is hidden when no roulette buffs are active');
+ dailyBtn.click();
+ const modal=doc.getElementById('mailDailyModal');
+ assert.ok(modal.classList.contains('on'));
+ assert.ok(doc.getElementById('dailyRouletteWheel'),'SVG roulette wheel is rendered');
+ assert.equal(doc.querySelectorAll('#dailyRouletteWheel .wheel-slice').length,7,'wheel has 7 reward slices');
+ const rates=JSON.parse(ev('JSON.stringify(DAILY_WHEEL_SEGMENTS.map(s=>({id:s.id,weight:s.weight,rate:s.rate})))'));
+ assert.deepEqual(rates,[
+  {id:'ori',weight:33,rate:33},
+  {id:'elu',weight:33,rate:33},
+  {id:'buff_zeny',weight:11,rate:11},
+  {id:'buff_exp',weight:11,rate:11},
+  {id:'zeny_pouch',weight:7,rate:7},
+  {id:'random_card',weight:4,rate:4},
+  {id:'refineScrolls',weight:1,rate:1}
+ ]);
+ assert.equal(rates.reduce((a,b)=>a+b.weight,0),100,'rates sum to 100%');
+ for(const removed of['shards','nmat0','ascMat0','ascMat1','ascMat2']){
+  assert.equal(modal.querySelector(`[data-wheel-prize="${removed}"]`),null,`${removed} is removed from roulette pool`);
+ }
+ ev('ACT.spindaily(0)');
+ assert.equal(ev('S.ore.ori'),15,'slice 0 awards 15 Oridecon');
+ assert.equal(ev('dailySpinsLeft()'),0,'no spins left today');
+ assert.equal(dailyBadge.hidden,true,'daily badge hides after today\'s spin is used');
+ assert.equal(doc.getElementById('dailySpinBtn').disabled,true,'spin button is disabled until tomorrow');
+ assert.equal(ev('ACT.spindaily(0)'),false,'cannot spin a second time on the same day');
+ assert.equal(ev('S.ore.ori'),15);
+ ev("S.dailyWheel.day='2000-01-01';ui();renderMailDailyModal()");
+ assert.equal(ev('dailySpinsLeft()'),1,'new day refreshes the daily spin');
+ assert.equal(dailyBadge.hidden,false,'daily badge reappears on the new day');
+ assert.equal(doc.getElementById('dailySpinBtn').disabled,false);
+ ev('ACT.spindaily(2)');
+ assert.equal(ev('dailyBuffActive("zeny")'),true,'slice 2 activates +30% Zeny Gain for 30 mins');
+ assert.equal(buffPill.hidden,false,'HUD buff pill shows active Zeny buff');
+ assert.match(buffPill.textContent,/\+30% Zeny/);
+ const zBefore=ev('S.zeny');
+ ev('applyDailyKillBuffs(1000,500,null)');
+ assert.equal(ev('S.zeny'),zBefore+300,'active Zeny buff grants +30% bonus Zeny on kill');
+ ev("S.dailyWheel.day='2000-01-01';ACT.spindaily(3)");
+ assert.equal(ev('dailyBuffActive("exp")'),true,'slice 3 activates +30% Base & Job EXP for 30 mins');
+ assert.match(buffPill.textContent,/\+30% EXP/);
+ ev("S.dailyWheel.day='2000-01-01';const zb=S.zeny;ACT.spindaily(4);window._zDiff=S.zeny-zb");
+ assert.equal(ev('window._zDiff'),500000,'slice 4 awards Instant Zeny Pouch (500,000 Zeny)');
+ assert.equal(ev('dailyRouletteCardPool().length>0&&dailyRouletteCardPool().every(c=>!c.bossCard&&!c.nightmare)'),true,'roulette card pool excludes all Boss/MVP and Nightmare cards');
+ ev("S.dailyWheel.day='2000-01-01';ACT.spindaily(5)");
+ assert.equal(ev('S.cards.length'),1,'slice 5 awards 1 Random Monster Card');
+ assert.equal(ev('!S.cards[0].bossCard&&!S.cards[0].nightmare'),true,'awarded card is a regular non-boss monster card');
+ ev("S.dailyWheel.day='2000-01-01';ACT.spindaily(6)");
+ assert.equal(ev('S.refineScrolls'),1,'slice 6 awards 1 Refine Protection Scroll');
+});
 console.log(`${passed} passed`);
 }finally{g.close()}

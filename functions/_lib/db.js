@@ -184,10 +184,39 @@ export const insertMessage = (db, body, kind, targetUser, createdBy) =>
   db.prepare('INSERT INTO messages(body, kind, target_user, created_by, created_at) VALUES(?, ?, ?, ?, ?)')
     .bind(body, kind, targetUser ?? null, createdBy ?? null, now()).run();
 
+export const insertMessageWithId = async (db, body, kind, targetUser, createdBy) => {
+  const res = await db.prepare('INSERT INTO messages(body, kind, target_user, created_by, created_at) VALUES(?, ?, ?, ?, ?)')
+    .bind(body, kind, targetUser ?? null, createdBy ?? null, now()).run();
+  const lid = res?.meta?.last_row_id ?? res?.meta?.lastInsertRowid;
+  if (lid) return Number(lid);
+  const row = await db.prepare('SELECT id FROM messages ORDER BY id DESC LIMIT 1').first();
+  return row ? Number(row.id) : null;
+};
+
+export const insertMassGrants = async (db, batchId, actor, kind, payload, note) => {
+  const at = now();
+  const payloadJson = JSON.stringify(payload ?? {});
+  await db.prepare(
+    `INSERT OR IGNORE INTO grants(user_id, kind, payload, note, created_by, created_at, batch_id)
+     SELECT u.id, ?, ?, ?, ?, ?, ?
+     FROM users u
+     WHERE COALESCE(u.banned, 0) = 0`
+  ).bind(kind, payloadJson, note ?? null, actor ?? 'GM', at, batchId).run();
+  const countRow = await db.prepare('SELECT COUNT(*) AS n FROM grants WHERE batch_id = ?').bind(batchId).first();
+  return Number(countRow?.n) || 0;
+};
+
 export const unreadMessages = (db, userId, limit = 20) =>
   db.prepare(`SELECT m.id, m.body, m.kind, m.created_at, m.created_by FROM messages m
               WHERE (m.target_user IS NULL OR m.target_user = ?)
                 AND NOT EXISTS (SELECT 1 FROM message_reads r WHERE r.message_id = m.id AND r.user_id = ?)
+              ORDER BY m.id DESC LIMIT ?`).bind(userId, userId, limit).all();
+
+export const inboxMessages = (db, userId, limit = 30) =>
+  db.prepare(`SELECT m.id, m.body, m.kind, m.created_at, m.created_by,
+                     (SELECT r.read_at FROM message_reads r WHERE r.message_id = m.id AND r.user_id = ?) AS read_at
+              FROM messages m
+              WHERE (m.target_user IS NULL OR m.target_user = ?)
               ORDER BY m.id DESC LIMIT ?`).bind(userId, userId, limit).all();
 
 export const markRead = (db, userId, ids) => {
