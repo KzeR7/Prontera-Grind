@@ -22,7 +22,17 @@ const KIT={ok:0,png:null,man:null,des:{},srcMan:{},tex:new Map(),water:[],wt:0,g
 // Parked outdoor redesign: docs/NATIVE-FIELDS-HANDOFF.md. URL override is tab-local, never saved.
 const NATIVE_FIELDS_DEFAULT=false;
 const nativeFieldChoice=typeof location==='object'?new URLSearchParams(location.search).get('nativeFields'):null;
-const nativeFieldsEnabled=nativeFieldChoice==='1'||(NATIVE_FIELDS_DEFAULT&&nativeFieldChoice!=='0');
+// v232: an explicit URL value always wins; otherwise the tab's Display-panel choice is used; the
+// shipping constant is the last word. Reading it here (rather than only from the URL) is what
+// lets the toggle survive its own reload without touching the player's save.
+const nativeFieldStored=(()=>{try{return typeof sessionStorage==='object'?sessionStorage.getItem('pg-native-fields'):null}catch(_){return null}})();
+const nativeFieldsEnabled=
+  nativeFieldChoice==='1'?true:        // an explicit link always wins
+  nativeFieldChoice==='0'?false:
+  nativeFieldChoice!==null?NATIVE_FIELDS_DEFAULT:   // any other value defers to the build
+  nativeFieldStored==='1'?true:        // then this tab's Display-panel choice
+  nativeFieldStored==='0'?false:
+  NATIVE_FIELDS_DEFAULT;
 const nativeFieldStore=nativeFieldsEnabled&&typeof PGNativeFields==='object'?PGNativeFields.createStore():null;
 // v231 (owner: "it loads the old map & old mob sprite then jumps into the new map"): that was a
 // real load-order bug, not a transition. A cold entry painted the procedural town first, then the
@@ -1131,11 +1141,29 @@ function placeNativeTheme(m,world){
 function buildKit(m,planOverride){
   const plan=planOverride||kitPlan(m,S.lvl);if(!plan)return null;
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
-  if(!planOverride&&nativeFieldStore&&m>=0&&m<10){
+  // A map whose native build threw is not retried: it falls back to the kit map for the rest of
+  // the session instead of throwing again on every rebuild.
+  const nativeBlocked=KIT.nativeFailed&&KIT.nativeFailed.has(m);
+  if(!planOverride&&nativeFieldStore&&!nativeBlocked&&m>=0&&m<10){
     const asset=nativeFieldStore.ready(m);
     if(asset){
-      clearNativeField();KIT.nativeWorld=PGNativeFields.build(THREE,asset,m,S.lvl,plan);deco.add(KIT.nativeWorld.root);
-      KIT.nativeThemeProps=placeNativeTheme(m,KIT.nativeWorld);
+      // v232: a throw here used to leave a half-built scene behind (the old ground already hidden,
+      // the new world never added) - an empty arena with no way back. Build first, and only hide
+      // the classic scenery once the new world exists.
+      try{
+        clearNativeField();KIT.nativeWorld=PGNativeFields.build(THREE,asset,m,S.lvl,plan);
+      }catch(e){
+        if(typeof console!=='undefined')console.warn('native field build failed, keeping the kit map',e);
+        clearNativeField();
+        // Re-enter with the native branch disabled, so the kit map for this field is built now
+        // rather than the scene falling through to the procedural town.
+        (KIT.nativeFailed=KIT.nativeFailed||new Set()).add(m);
+        if(typeof fieldLoading==='function')fieldLoading(false);
+        return buildKit(m,planOverride);
+      }
+      deco.add(KIT.nativeWorld.root);
+      try{KIT.nativeThemeProps=placeNativeTheme(m,KIT.nativeWorld)}
+      catch(e){KIT.nativeThemeProps=[];if(typeof console!=='undefined')console.warn('themed props skipped',e)}
       // Prefetch the next map while the player is busy here, so travelling does not have to wait
       // on a download. The store keeps two decoded fields, which is exactly this pair.
       if(nativeFieldsEnabled&&m+1<10&&!nativeFieldStore.ready(m+1)){

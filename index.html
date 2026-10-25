@@ -1230,7 +1230,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-25 haven-v231 field detail & camp spread';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-25 haven-v232 new fields by default';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6411,11 +6411,24 @@ function applyDisplay(){
  document.body.classList.toggle('hide-labels',S.labelsShow===false);
 }
 function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidden;$('screenBtn').setAttribute('aria-expanded',String(!panel.hidden));
- panel.innerHTML=[['cameraShake','Camera shake'],['dmgShow','Damage numbers'],['auraShow','Character aura'],['feedShow','Activity log'],['labelsShow','Character / monster labels'],['hideUI','Hide all screen UI (Display stays available)']].map(([key,label])=>`<label><input type="checkbox" data-display="${key}" ${key==='hideUI'?S[key]?'checked':'':S[key]!==false?'checked':''}>${label}</label>`).join('');
+ panel.innerHTML=[['cameraShake','Camera shake'],['dmgShow','Damage numbers'],['auraShow','Character aura'],['feedShow','Activity log'],['labelsShow','Character / monster labels'],['hideUI','Hide all screen UI (Display stays available)']].map(([key,label])=>`<label><input type="checkbox" data-display="${key}" ${key==='hideUI'?S[key]?'checked':'':S[key]!==false?'checked':''}>${label}</label>`).join('')
+  // v232 (owner: "game preview is not showing your proposed maps. still the old map"): the new
+  // outdoor fields were only reachable by hand-editing the URL, so the preview looked unchanged.
+  // This is the switch in the UI. It is a page reload because the field renderer is chosen at
+  // boot - cheaper and far less risky than rebuilding a live world mid-fight - and the choice is
+  // tab-local (sessionStorage), exactly like the URL override it stands in for.
+  +`<label><input type="checkbox" data-display="nativeFields" ${nativeFieldsEnabled?'checked':''}>New outdoor terrain (reloads)</label>`;
 }
 document.addEventListener('input',e=>{if(e.target.id?.startsWith('oreQty-')){const o=e.target.id.slice(7),n=Number(e.target.value),out=$('oreTotal-'+o);marketQty[o]=e.target.value;if(out)out.textContent=Number.isSafeInteger(n)&&n>0?(n*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity';}});
 $('screenBtn').onclick=()=>{if(S)screenOptions()};
-$('screenOptions').onchange=e=>{const key=e.target.dataset.display;if(!['cameraShake','dmgShow','auraShow','feedShow','labelsShow','hideUI'].includes(key))return;S[key]=e.target.checked;applyDisplay();save()};
+$('screenOptions').onchange=e=>{const key=e.target.dataset.display;
+  if(key==='nativeFields'){
+    // Remember the choice for this tab and reload into it. `nativeFields` in the URL wins, so a
+    // link someone was handed keeps working; otherwise the stored tab choice is used at boot.
+    try{sessionStorage.setItem('pg-native-fields',e.target.checked?'1':'0')}catch(_){}
+    const u=new URL(location.href);u.searchParams.set('nativeFields',e.target.checked?'1':'0');location.replace(u.toString());return;
+  }
+  if(!['cameraShake','dmgShow','auraShow','feedShow','labelsShow','hideUI'].includes(key))return;S[key]=e.target.checked;applyDisplay();save()};
 function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display='none';return}rail.style.display='flex';rail.classList.toggle('with-panels',!!tabs.length);e.style.display='block';
   $('eclipseMapCard').classList.toggle('other-map',S.mp!==0);$('eclipseMapName').textContent=MAPS[S.mp].n;$('eclipseMapStage').textContent=fieldName()+' · '+(S.mp>=10?'Ascension Map':'World atlas');
   const questHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?contractPanel(eclipseQuestAll?Infinity:3)+(S.q||[]).map((q,i)=>q.prog<q.goal?'':`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
@@ -7838,7 +7851,17 @@ const KIT={ok:0,png:null,man:null,des:{},srcMan:{},tex:new Map(),water:[],wt:0,g
 // Parked outdoor redesign: docs/NATIVE-FIELDS-HANDOFF.md. URL override is tab-local, never saved.
 const NATIVE_FIELDS_DEFAULT=false;
 const nativeFieldChoice=typeof location==='object'?new URLSearchParams(location.search).get('nativeFields'):null;
-const nativeFieldsEnabled=nativeFieldChoice==='1'||(NATIVE_FIELDS_DEFAULT&&nativeFieldChoice!=='0');
+// v232: an explicit URL value always wins; otherwise the tab's Display-panel choice is used; the
+// shipping constant is the last word. Reading it here (rather than only from the URL) is what
+// lets the toggle survive its own reload without touching the player's save.
+const nativeFieldStored=(()=>{try{return typeof sessionStorage==='object'?sessionStorage.getItem('pg-native-fields'):null}catch(_){return null}})();
+const nativeFieldsEnabled=
+  nativeFieldChoice==='1'?true:        // an explicit link always wins
+  nativeFieldChoice==='0'?false:
+  nativeFieldChoice!==null?NATIVE_FIELDS_DEFAULT:   // any other value defers to the build
+  nativeFieldStored==='1'?true:        // then this tab's Display-panel choice
+  nativeFieldStored==='0'?false:
+  NATIVE_FIELDS_DEFAULT;
 const nativeFieldStore=nativeFieldsEnabled&&typeof PGNativeFields==='object'?PGNativeFields.createStore():null;
 // v231 (owner: "it loads the old map & old mob sprite then jumps into the new map"): that was a
 // real load-order bug, not a transition. A cold entry painted the procedural town first, then the
@@ -8947,11 +8970,29 @@ function placeNativeTheme(m,world){
 function buildKit(m,planOverride){
   const plan=planOverride||kitPlan(m,S.lvl);if(!plan)return null;
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
-  if(!planOverride&&nativeFieldStore&&m>=0&&m<10){
+  // A map whose native build threw is not retried: it falls back to the kit map for the rest of
+  // the session instead of throwing again on every rebuild.
+  const nativeBlocked=KIT.nativeFailed&&KIT.nativeFailed.has(m);
+  if(!planOverride&&nativeFieldStore&&!nativeBlocked&&m>=0&&m<10){
     const asset=nativeFieldStore.ready(m);
     if(asset){
-      clearNativeField();KIT.nativeWorld=PGNativeFields.build(THREE,asset,m,S.lvl,plan);deco.add(KIT.nativeWorld.root);
-      KIT.nativeThemeProps=placeNativeTheme(m,KIT.nativeWorld);
+      // v232: a throw here used to leave a half-built scene behind (the old ground already hidden,
+      // the new world never added) - an empty arena with no way back. Build first, and only hide
+      // the classic scenery once the new world exists.
+      try{
+        clearNativeField();KIT.nativeWorld=PGNativeFields.build(THREE,asset,m,S.lvl,plan);
+      }catch(e){
+        if(typeof console!=='undefined')console.warn('native field build failed, keeping the kit map',e);
+        clearNativeField();
+        // Re-enter with the native branch disabled, so the kit map for this field is built now
+        // rather than the scene falling through to the procedural town.
+        (KIT.nativeFailed=KIT.nativeFailed||new Set()).add(m);
+        if(typeof fieldLoading==='function')fieldLoading(false);
+        return buildKit(m,planOverride);
+      }
+      deco.add(KIT.nativeWorld.root);
+      try{KIT.nativeThemeProps=placeNativeTheme(m,KIT.nativeWorld)}
+      catch(e){KIT.nativeThemeProps=[];if(typeof console!=='undefined')console.warn('themed props skipped',e)}
       // Prefetch the next map while the player is busy here, so travelling does not have to wait
       // on a download. The store keeps two decoded fields, which is exactly this pair.
       if(nativeFieldsEnabled&&m+1<10&&!nativeFieldStore.ready(m+1)){

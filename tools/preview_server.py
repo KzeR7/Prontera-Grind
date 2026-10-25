@@ -59,14 +59,39 @@ PAGES = {'/': _root_page,
          '/gmsetup': 'tools/gm_setup.html'}
 
 
+# The game ships with the new outdoor fields OPT-IN (`NATIVE_FIELDS_DEFAULT=false`, a recorded
+# owner decision - see docs/DECISIONS.md), so the plain game URL shows the classic kit maps. That
+# is correct for players and wrong for this preview: the owner opens the preview to look at the
+# new fields and saw "still the old map". The server therefore flips that one constant ON while
+# it serves the game, and only while it serves the game.
+#
+# `?nativeFields=0` still forces the classic maps, so both are one URL away from the preview.
+_SHIPPING_FIELD_FLAG = b'const NATIVE_FIELDS_DEFAULT=false;'
+_PREVIEW_FIELD_FLAG = b'const NATIVE_FIELDS_DEFAULT=true;'
+
+
+def _preview_html(rel, body, query):
+    """Apply preview-only defaults to a served page. Never writes to disk."""
+    if rel != 'index.html' or 'nativeFields=0' in query:
+        return body
+    if _SHIPPING_FIELD_FLAG not in body:
+        # The game stopped shipping that exact line. Serve it untouched rather than pretend:
+        # a silent no-op here would look exactly like the bug this exists to fix.
+        sys.stderr.write('WARNING: %s is missing %r - the new fields are not the preview default\n'
+                         % (rel, _SHIPPING_FIELD_FLAG.decode()))
+        return body
+    return body.replace(_SHIPPING_FIELD_FLAG, _PREVIEW_FIELD_FLAG, 1)
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
-    def _page(self, rel):
+    def _page(self, rel, query=''):
         path = os.path.join(ROOT, rel)
         try:
             with open(path, 'rb') as fh:
                 body = fh.read()
         except OSError as e:
             return self._err(500, 'cannot read %s (%s)' % (rel, e))
+        body = _preview_html(rel, body, query)
         ctype = 'text/html; charset=utf-8' if rel.endswith('.html') else 'application/octet-stream'
         self.send_response(200)
         self.send_header('Content-Type', ctype)
@@ -86,15 +111,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        path = self.path.split('?')[0]
+        path, _, query = self.path.partition('?')
         if path in PAGES:
-            return self._page(PAGES[path])
+            return self._page(PAGES[path], query)
         return super().do_GET()
 
     def do_HEAD(self):
-        path = self.path.split('?')[0]
+        path, _, query = self.path.partition('?')
         if path in PAGES:
-            return self._page(PAGES[path])
+            return self._page(PAGES[path], query)
         return super().do_HEAD()
 
     def end_headers(self):
@@ -110,6 +135,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get('PORT', '8000'))
     handler = functools.partial(Handler, directory=ROOT)
-    print('serving %s on 0.0.0.0:%d   ( / game, /gmsetup local GM, /weapons proposal, /picker pose picker )'
-          % (ROOT, port), file=sys.stderr, flush=True)
+    print('serving %s on 0.0.0.0:%d   ( / game WITH the new fields, /game?nativeFields=0 classic maps, '
+          '/weapons proposal, /picker pose picker )' % (ROOT, port), file=sys.stderr, flush=True)
     http.server.ThreadingHTTPServer(('0.0.0.0', port), handler).serve_forever()

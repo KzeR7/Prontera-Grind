@@ -261,7 +261,10 @@ gates, both Echo entry points, persistence and refinement consumption.
 ### Saved outdoor field activation (v196)
 
 The new outdoor renderer is parked behind `NATIVE_FIELDS_DEFAULT=false` in
-`index.html`; `?nativeFields=1` enables a session preview. Original kit maps are
+`index.html`; `?nativeFields=1` enables a session preview, and Display ▸ "New outdoor terrain"
+is the in-game switch for it. `tools/preview_server.py` serves **the game** with the constant
+flipped ON, so the review preview shows the new fields without a query string; `?nativeFields=0`
+there still gives the classic maps. Original kit maps are
 the default and download no outdoor field geometry/textures. Monster atlases
 remain independent. See [activation/rollback handoff](NATIVE-FIELDS-HANDOFF.md).
 
