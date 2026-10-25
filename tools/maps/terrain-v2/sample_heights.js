@@ -1,4 +1,4 @@
-/* Dump height grids for the shipped v1 field and the v2 proposal, for the reviewer.
+/* Dump height grids for the v195 landform and the shipped v2 landform, for the reviewer.
  *
  *   node tools/maps/terrain-v2/sample_heights.js /tmp/heights.json [gridPoints]
  *
@@ -9,8 +9,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '../../..');
-const v1 = require(path.join(root, 'assets/native-fields.js'));
-const v2 = require(path.join(__dirname, 'prototype.js'));
+const F = require(path.join(root, 'assets/native-fields.js'));
 
 const out = process.argv[2] || '/tmp/heights.json';
 const N = Number(process.argv[3] || 181);
@@ -26,11 +25,12 @@ const grids = (fn) => {
   return all;
 };
 
+// v1 = the v195 landform kept in the module as `legacyHeight`; v2 = the shipped default.
 const payload = {
   N, R, step,
-  names: v1.NAMES,
-  v1: { grids: grids((m, x, z) => v1.terrainHeight(m, x, z)), designs: v1.DESIGNS },
-  v2: { grids: grids((m, x, z) => v2.terrainHeight(m, x, z)), designs: v2.DESIGNS, lane: v2.LANE }
+  names: F.NAMES,
+  v1: { grids: grids((m, x, z) => F.legacyHeight(m, x, z)), designs: F.LEGACY },
+  v2: { grids: grids((m, x, z) => F.terrainHeight(m, x, z)), designs: F.DESIGNS, lane: F.LANE }
 };
 fs.writeFileSync(out, JSON.stringify(payload));
 console.log(`${out}: 10 x ${N}x${N} grids for v1 and v2`);

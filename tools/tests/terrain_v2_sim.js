@@ -1,6 +1,6 @@
-// Regression checks for the terrain-v2 proposal module and its preview page.
-// Mirrors the style of tools/tests/native_fields_sim.js: the real module, the real
-// Three objects, the shipped module as the compatibility baseline.
+// Regression checks for the v2 field landform (shipped in assets/native-fields.js)
+// and its review page. Mirrors the style of tools/tests/native_fields_sim.js: the real
+// module, the real Three objects, and the v195 landform as the compatibility baseline.
 'use strict';
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -9,8 +9,9 @@ const root = path.resolve(__dirname, '../..');
 let THREE;
 try { THREE = require('three'); }
 catch (e) { THREE = require(path.resolve(__dirname, '../../node_modules/three')); }
-const V1 = require(path.join(root, 'assets/native-fields.js'));
-const V2 = require(path.join(root, 'tools/maps/terrain-v2/prototype.js'));
+const V2 = require(path.join(root, 'assets/native-fields.js'));
+// v195 baseline, addressed through the same module's legacy path.
+const V1 = { NAMES: V2.NAMES, GRID: V2.GRID, terrainHeight: V2.legacyHeight, DESIGNS: V2.LEGACY };
 const src = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
 const deg = v => Math.atan(v) * 180 / Math.PI;
@@ -19,7 +20,7 @@ const ok = (cond, msg) => { assert(cond, msg); checks++; };
 
 // ---- 1. deterministic, finite, and a drop-in for the shipped contract ----------
 for (let m = 0; m < 10; m++) {
-  ok(V2.NAMES[m] === V1.NAMES[m], 'map order matches the shipped module: ' + m);
+  ok(V2.NAMES[m] === V1.NAMES[m], 'map order matches the v195 field list: ' + m);
   for (const [x, z] of [[0, 0], [-13.7, 11.2], [44, -44], [31.5, -6.25]]) {
     const a = V2.terrainHeight(m, x, z), b = V2.terrainHeight(m, x, z);
     ok(Number.isFinite(a), 'finite height ' + [m, x, z]);
@@ -168,23 +169,39 @@ for (let m = 0; m < 10; m++) {
   ok(V2.GRID === (V1.GRID || 72), 'same grid density as the shipped field: ' + V2.GRID);
 }
 
-// ---- 8. the proposal stays out of the shipped game --------------------------
+// ---- 8. wiring: still opt-in, and the old landform is reachable for comparison --
 {
-  ok(!/PGTerrainV2|terrain-v2\/prototype/.test(src), 'game does not load the prototype');
-  ok(src.includes('PGNativeFields'), 'game still uses the shipped native-fields module');
-  ok(/NATIVE_FIELDS_DEFAULT=false/.test(src), 'shipped outdoor fields remain opt-in');
+  ok(src.includes('PGNativeFields'), 'game uses the native-fields module');
+  ok(/NATIVE_FIELDS_DEFAULT=false/.test(src), 'outdoor fields remain opt-in');
+  ok(src.includes('PGNativeFields.heightAt'), 'actors read the field height through the module');
+  ok(V2.TERRAIN === 'v2', 'v2 is the default landform');
+  // ?nativeFields=1&terrain=v1 keeps the v195 shape reachable without a second module
+  const scope8 = { URLSearchParams, location: { search: '?nativeFields=1&terrain=v1' } };
+  const vm8 = require('node:vm');
+  vm8.createContext(scope8);
+  const mod = fs.readFileSync(path.join(root, 'assets/native-fields.js'), 'utf8');
+  // The factory wrapper is stripped: the selector only needs the header block.
+  const head = mod.slice(mod.indexOf("'use strict';") + 13, mod.indexOf('const NAMES='));
+  vm8.runInContext(head + ';this.T=TERRAIN;', scope8);
+  ok(scope8.T === 'v1', 'terrain=v1 selects the v195 landform');
+  const scope9 = { URLSearchParams, location: { search: '?nativeFields=1' } };
+  vm8.createContext(scope9); vm8.runInContext(head + ';this.T=TERRAIN;', scope9);
+  ok(scope9.T === 'v2', 'no terrain flag means v2');
+  // legacy and v2 must be genuinely different fields
+  let differs = 0;
+  for (let m = 0; m < 10; m++) if (Math.abs(V2.legacyHeight(m, 6, -8) - V2.terrainHeight(m, 6, -8)) > .2) differs++;
+  ok(differs === 10, 'every field changed shape, not just its numbers');
   const page = fs.readFileSync(path.join(root, 'tools/maps/terrain_v2_preview.html'), 'utf8');
-  ok(page.includes('terrain-v2/prototype.js'), 'preview page loads the prototype');
-  ok(page.includes('../../assets/native-fields.js'), 'preview page can render the shipped baseline');
-  ok(/state\.v2/.test(page), 'preview page toggles shipped vs proposed');
+  ok(page.includes('../../assets/native-fields.js'), 'review page loads the shipped module');
+  ok(/legacyHeight/.test(page) && /state\.v2/.test(page), 'review page toggles v195 vs v2');
 }
 
 // ---- 9. Ascension maps keep their own renderer ------------------------------
 {
   ok(/buildAscension|ascension/.test(src), 'Ascension scenery path untouched');
   const asc = fs.readFileSync(path.join(root, 'assets/ascension.js'), 'utf8');
-  ok(!/PGNativeFields|PGTerrainV2/.test(asc), 'Ascension does not consume field terrain');
+  ok(!/PGNativeFields/.test(asc), 'Ascension does not consume field terrain');
 }
 
-console.log('terrain v2: ' + checks + ' checks passed (determinism, triangle contact, lane walkability,'
+console.log('field landform v2: ' + checks + ' checks passed (determinism, triangle contact, lane walkability,'
   + ' seam-free surface, distinct landforms, splat weights, geometry contract, isolation from the game)');

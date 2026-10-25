@@ -248,10 +248,10 @@ def main():
     W = 340
     im = Image.new('RGB', (W * 5, W * 4 + 78), (16, 17, 19))
     dr = ImageDraw.Draw(im)
-    dr.text((8, 8), 'SHIPPED (assets/native-fields.js): 1.1 + 3 Gaussian mounds + 1 valley + one sine ripple, same recipe x10', fill=(235, 235, 235))
+    dr.text((8, 8), 'v195 landform (kept as legacyHeight): 1.1 + 3 Gaussian mounds + 1 valley + one sine ripple, same recipe x10', fill=(235, 235, 235))
     for m in range(10):
         im.paste(topdown(h1[m], step, d['v1']['designs'][m], LABEL[m]), ((m % 5) * W, 26 + (m // 5) * W))
-    dr.text((8, 26 + 2 * W + 12), 'PROPOSED (tools/maps/terrain-v2): ridged landform + benches + drainage + per-map signature, lane-aware', fill=(235, 235, 235))
+    dr.text((8, 26 + 2 * W + 12), 'SHIPPED v2 (assets/native-fields.js): ridged landform + benches + drainage + per-map signature, lane-aware', fill=(235, 235, 235))
     for m in range(10):
         im.paste(topdown(h2[m], step, d['v2']['designs'][m], LABEL[m]), ((m % 5) * W, 26 + 2 * W + 30 + (m // 5) * W))
     p1 = os.path.join(OUT, 'board-topdown.png')
@@ -261,7 +261,7 @@ def main():
     only = [int(v) for v in a.only.split(',')] if a.only else [0, 2, 3, 6, 9]
     im = Image.new('RGB', (520 * len(only), 300 * 2 + 34), (16, 17, 19))
     dr = ImageDraw.Draw(im)
-    dr.text((8, 9), 'GAME CAMERA - shipped (top) vs proposed (bottom): 38 deg FOV, distance 44, pitch .78', fill=(235, 235, 235))
+    dr.text((8, 9), 'GAME CAMERA - v195 landform (top) vs shipped v2 (bottom): 38 deg FOV, distance 44, pitch .78', fill=(235, 235, 235))
     for k, m in enumerate(only):
         im.paste(ingame(h1[m], step, d['v1']['designs'][m]), (k * 520, 30))
         im.paste(ingame(h2[m], step, d['v2']['designs'][m]), (k * 520, 330))
@@ -282,26 +282,9 @@ def variant_board(out_path, maps=(0, 5, 6)):
     """Same landform at three intensities, so the owner can pick a dial position.
     'subtle' keeps the shipped calm feel, 'proposed' is the tuned recipe,
     'dramatic' pushes relief and cliffs for a bolder silhouette."""
-    import copy
-    sys.path.insert(0, os.path.dirname(__file__))
-    V2 = None
-    js = """
-    const V2=require('%(p)s');const maps=%(m)s;const out={};
-    for(const mul of [0.55,1,1.7]){
-      out[mul]=maps.map(m=>{const d=Object.assign({},V2.DESIGNS[m]);d.amp=(d.amp||1)*mul;
-        if(d.bench)d.bench=Object.assign({},d.bench,{amount:d.bench.amount*(mul>1?1.25:mul<1?0.7:1)});
-        d.ridgeAmp=d.ridgeAmp*(mul>1?1.15:1);
-        const N=121,R=45,st=2*R/(N-1),g=new Float64Array(N*N);
-        for(let j=0;j<N;j++)for(let i=0;i<N;i++){g[j*N+i]=V2.terrainHeight.__wrapped?0:0;}
-        return {name:d.name,amp:d.amp};
-      });
-    }
-    console.log(JSON.stringify(out));
-    """ % {'p': os.path.join(ROOT, 'tools/maps/terrain-v2/prototype.js'), 'm': json.dumps(list(maps))}
-    # simpler: sample in-process by loading the module through node once per variant
     def sample(mul):
         njs = """
-const V2=require(%(p)s);
+const V2=require(%(p)s);   // the shipped module; amp is a real dial in DESIGNS
 const maps=%(m)s, N=141, R=45, st=2*R/(N-1), out=[];
 for(const m of maps){
   const src=V2.DESIGNS[m];
@@ -316,15 +299,13 @@ for(const m of maps){
   out.push(Array.from(g));
 }
 console.log(JSON.stringify({N,step:st,grids:out}));
-""" % {'p': json.dumps(os.path.join(ROOT, 'tools/maps/terrain-v2/prototype.js')),
+""" % {'p': json.dumps(os.path.join(ROOT, 'assets/native-fields.js')),
        'm': json.dumps(list(maps)), 'mul': mul,
        'bench': 0.7 if mul < 1 else (1.25 if mul > 1 else 1),
        'ridge': 1 if mul <= 1 else 1.15}
         return json.loads(subprocess.run(['node', '-e', njs], capture_output=True, text=True, check=True).stdout)
 
-    import importlib.util
-    spec = importlib.util.spec_from_file_location('v2proto', os.path.join(ROOT, 'tools/maps/terrain-v2/prototype.js'))
-    designs = json.load(open('/tmp/heights.json'))['v2']['designs'] if os.path.exists('/tmp/heights.json') else None
+    designs = json.load(open('/tmp/heights.json'))['v2']['designs']
 
     variants = [(0.55, 'SUBTLE  (amp x0.55)'), (1.0, 'PROPOSED  (amp x1.0)'), (1.7, 'DRAMATIC  (amp x1.7)')]
     cell_w, cell_h = 400, 230

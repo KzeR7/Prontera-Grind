@@ -32,7 +32,7 @@
 <body>
 <div id="stage">
   <div id="hud">
-    <h1>Terrain v2 — landform preview</h1>
+    <h1>Field landform — v195 vs v2</h1>
     <p id="subtitle">Drag to orbit, wheel to zoom. The starting camera matches the in-game field camera (pitch 0.78 rad, ~44 units back, 38° FOV).</p>
   </div>
 </div>
@@ -40,15 +40,15 @@
 <div id="side">
   <h2>Version</h2>
   <div class="seg">
-    <button id="btnShipped">Shipped (v1)</button>
-    <button id="btnProposed" class="on">Proposed (v2)</button>
+    <button id="btnShipped">v195 (old)</button>
+    <button id="btnProposed" class="on">v2 (current)</button>
   </div>
 
   <h2>Map</h2>
   <div class="grid" id="maps"></div>
 
   <h2>Terrain recipe</h2>
-  <label class="row">Relief intensity <input id="intensity" type="range" min="0.4" max="1.8" step="0.05" value="1"></label>
+  <label class="row">Relief dial <input id="intensity" type="range" min="0.4" max="1.8" step="0.05" value="1"></label>
   <label class="row"><input id="laneflat" type="checkbox" checked> Keep the fight lane walkable</label>
   <label class="row"><input id="contours" type="checkbox"> Contour lines every 0.5</label>
   <label class="row"><input id="wire" type="checkbox"> Wireframe</label>
@@ -56,16 +56,16 @@
   <h2>This field</h2>
   <div id="stats"></div>
 
-  <p class="note" id="foot">Dev-only proposal page. Terrain only — the real fields keep their native
-  trees, rocks and ground textures; those are the next step (splat weights, prop slope rules).</p>
+  <p class="note" id="foot">Terrain preview only: no props, natives or ground textures on this page.
+  Walk the real fields in game with <code>?nativeFields=1</code>, or compare against the old landform
+  with <code>?nativeFields=1&amp;terrain=v1</code>.</p>
 </div>
 
 <script src="vendor/three-r128.min.js"></script>
 <script src="../../assets/native-fields.js"></script>
-<script src="terrain-v2/prototype.js"></script>
 <script>
 'use strict';
-const P = PGTerrainV2, V1 = PGNativeFields;
+const P = PGNativeFields;   // the shipped module: terrainHeight (v2), legacyHeight (v195)
 const NAMES = ['Prontera meadow','Izlude coastal','Geffen ridge','Morocc dunes','Payon forest hills','Comodo hollow','Louyang mountain','Amatsu meadow','Niflheim hollow','Abyss basin'];
 
 // ---- renderer / scene --------------------------------------------------------
@@ -110,22 +110,23 @@ const SPLAT = {
 const state = { map: 0, v2: true, intensity: 1, lane: true, contour: false, wire: false };
 let world = null;
 
+function h1(x, z) { return P.legacyHeight(state.map, x, z); }
+function h2(x, z) { return P.terrainHeight(state.map, x, z); }
+
 function buildGeometry() {
   if (state.v2) {
     // intensity: scale the landform amplitude without touching the lane flattening
-    const design = P.DESIGNS[state.map];
-    const saved = design.amp, savedLane = P.LANE;
+    const design = P.DESIGNS[state.map], saved = design.amp;
     design.amp = saved * state.intensity;
-    if (!state.lane) { /* laneWeight reads LANE; widen it away for the "no flattening" view */ }
     const g = P.terrainGeometry(THREE, state.map);
     design.amp = saved;
     return g;
   }
-  // Shipped v1 field, same mesh contract
-  const GRID = V1.GRID ?? 72, STEP = 90 / GRID;
+  // v195 landform, same mesh contract
+  const GRID = 72, STEP = 90 / GRID;
   const pos = [], uv = [], col = [], idx = [];
   for (let z = 0; z <= GRID; z++) for (let x = 0; x <= GRID; x++) {
-    const xx = x * STEP - 45, zz = z * STEP - 45, y = V1.terrainHeight(state.map, xx, zz);
+    const xx = x * STEP - 45, zz = z * STEP - 45, y = h1(xx, zz);
     const shade = .9 + .075 * Math.sin(xx * .065 + zz * .047 + state.map) + .025 * y;
     pos.push(xx, y, zz); uv.push(x / GRID, 1 - z / GRID); col.push(shade, shade, shade);
   }
@@ -164,7 +165,7 @@ function splatColors(geo) {
 function contourTexture() {
   // Sample the field once (it is expensive), then march the sampled grid.
   const G = 240, size = 1024, span = 90, st = span / G;
-  const hgt = state.v2 ? (x, z) => P.terrainHeight(state.map, x, z) : (x, z) => V1.terrainHeight(state.map, x, z);
+  const hgt = state.v2 ? h2 : h1;
   const grid = new Float32Array((G + 1) * (G + 1));
   for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++) grid[j * (G + 1) + i] = hgt(-45 + i * st, -45 + j * st);
   const c = document.createElement('canvas'); c.width = c.height = size;
@@ -224,7 +225,7 @@ function rebuild() {
 function stats() {
   const box = document.getElementById('stats');
   let minY = 1e9, maxY = -1e9, laneMin = 1e9, laneMax = -1e9, steep = 0, n = 0;
-  const h = (x, z) => state.v2 ? P.terrainHeight(state.map, x, z) : V1.terrainHeight(state.map, x, z);
+  const h = state.v2 ? h2 : h1;
   for (let x = -44; x <= 44; x += 1) for (let z = -44; z <= 44; z += 1) {
     const y = h(x, z); minY = Math.min(minY, y); maxY = Math.max(maxY, y);
     if (Math.abs(x) < 13 && z > -28 && z < 12) { laneMin = Math.min(laneMin, y); laneMax = Math.max(laneMax, y); }
@@ -235,7 +236,7 @@ function stats() {
     ['relief over the whole field', (maxY - minY).toFixed(2) + ' u'],
     ['relief inside the fight lane', (laneMax - laneMin).toFixed(2) + ' u'],
     ['ground steeper than 35°', (100 * steep / n).toFixed(1) + '%'],
-    ['version', state.v2 ? 'proposed v2' : 'shipped v1']
+    ['landform', state.v2 ? 'v2 (shipped default)' : 'v195 (legacyHeight)']
   ];
   box.innerHTML = rows.map(([k, v]) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`).join('');
 }

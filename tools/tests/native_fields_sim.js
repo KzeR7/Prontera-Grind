@@ -26,7 +26,12 @@ for(let map=0;map<10;map++)for(const stage of [1,4,7,10,15]){
  }
  const samples=[];let maxSlope=0;
  for(let x=-13;x<=13;x+=2)for(let z=-28;z<=12;z+=2){const y=F.heightAt(map,x,z);samples.push(y);maxSlope=Math.max(maxSlope,Math.abs(F.heightAt(map,x+.01,z)-y)/.01,Math.abs(F.heightAt(map,x,z+.01)-y)/.01)}
- assert(Math.max(...samples)-Math.min(...samples)>2,'relief must reach playable field');assert(maxSlope<1.1,'walkable hills must remain gradual without stair jumps');
+ // The lane is deliberately the calm part of the field (the landform carries the
+ // relief outside it - see terrain_v2_sim). It must still read as sloped ground.
+ const laneRelief=Math.max(...samples)-Math.min(...samples);
+ assert(laneRelief>.35&&laneRelief<3.6,'lane relief stays readable but walkable: '+laneRelief.toFixed(2));assert(maxSlope<1.1,'walkable hills must remain gradual without stair jumps');
+ let outer=[1e9,-1e9];for(let x=-42;x<=42;x+=2)for(let z=-42;z<=42;z+=2){if(Math.abs(x)<14&&z>-30&&z<14)continue;const y=F.heightAt(map,x,z);outer=[Math.min(outer[0],y),Math.max(outer[1],y)]}
+ assert(outer[1]-outer[0]>2.5,'relief must reach the field outside the lane');
  const world=F.build(THREE,{record,vertices,terrain:{},atlas:{}},map,stage,plan);scenes++;maxTriangles=Math.max(maxTriangles,world.diagnostics.triangles);
  if(map===0&&stage===1){
   // onBeforeCompile receives unresolved ShaderLib includes in Three r128.

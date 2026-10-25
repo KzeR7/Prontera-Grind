@@ -1,6 +1,11 @@
 # Terrain v2 — making the outdoor fields stop looking repetitive
 
-**Status:** proposal + working prototype. Nothing here is wired into the game.
+**Status (2026-10-25, after owner review):** **P1 + P2 are implemented** in
+`assets/native-fields.js` — the v2 landform is the shipped field terrain (still parked
+behind `NATIVE_FIELDS_DEFAULT=false`, i.e. `?nativeFields=1`), the floor is painted from
+the landform, the trail follows the terrain and ponds keep their shape with a real beach.
+Owner picked **mixed per-field intensity**, **keep trail and ponds (terrain-aware)** and
+**P1+P2 together**. P3 (prop rules) and P5 (flip the default) are still open.
 **Owner's brief (2026-10-25):** *"the maps have slope which I asked for, but it came out
 repetitive and not realistic — give me a proposal on how we adjust it."*
 **Applies to:** the ten World Atlas fields (Prontera → Abyss). Ascension/Astral and
@@ -66,9 +71,10 @@ y += .16 * Math.sin(x*.17 + map) * Math.cos(z*.13 - map*.4);
 
 ## 3. The proposal — six workstreams
 
-Working prototype of A–C is already in this branch
-(`tools/maps/terrain-v2/prototype.js`, drop-in for `terrainHeight`/`heightAt`/
-`terrainGeometry`/`surfaceWeights`).
+A–C are implemented in `assets/native-fields.js` (`terrainHeight`, `heightAt`,
+`terrainGeometry`, `surfaceWeights`, `slopeAt`). The v195 landform is kept beside them as
+`legacyHeight` + `LEGACY`, so `?nativeFields=1&terrain=v1` still shows the old fields for
+comparison — the prototype file is gone; the module is the prototype now.
 
 ### A. Replace the landform generator (the core fix)
 
@@ -152,38 +158,47 @@ one extra `computeVertexNormals` cost the game already pays. Splat weights add ~
 calls per vertex, comfortably inside the current field build (< 30 ms measured in the
 sim). The 90×90 ground plane, fog, camera and disposables are unchanged.
 
-## 4. Measured effect of the prototype
+## 4. Measured effect (shipped module, `metrics.json`)
 
 Higher is not always better — the point is *structure*: more separate landforms, fewer flat
 patches, sharper max slopes, less sameness. Raw amplitude inside the view band is lower than
 the shipped domes because v2 spends its height on shelves and a rim instead of one dome in
 the middle; the `board-intensity.png` dial goes from 0.55× to 1.7× if you want more.
 
-| field | relief (whole field) | relief in view band | slope p95 | max slope | landforms | flat <3° | grain |
-|---|---|---|---|---|---|---|---|
-| Prontera | 5.42 → 7.49 | 5.27 → 3.0 | 15.8 → 16.6 | 19.1 → 30.7 | 3 → 12 | 42.7 % → 23.2 % | 0.29 → 0.19 |
-| Izlude | 6.74 → 6.47 | 6.74 → 6.0 | 16.4 → 17.7 | 31.0 → 28.7 | 2 → 15 | 36.7 % → 28.3 % | 0.37 → 0.11 |
-| Geffen | 6.63 → 4.39 | 6.62 → 4.2 | 19.6 → 18.3 | 28.9 → 30.6 | 3 → 21 | 36.9 % → 21.3 % | 0.37 → 0.23 |
-| Morocc | 6.31 → 4.68 | 6.31 → 3.3 | 22.8 → 13.3 | 32.1 → 24.0 | 3 → 15 | 37.1 % → 27.7 % | 0.59 → 0.11 |
-| Payon | 6.67 → 5.42 | 6.43 → 2.2 | 20.4 → 18.4 | 25.3 → 31.1 | 3 → 30 | 34.2 % → 18.8 % | 0.22 → 0.29 |
-| Comodo | 7.97 → 5.53 | 7.97 → 3.0 | 23.3 → 18.5 | 44.8 → 35.9 | 3 → 22 | 33.0 % → 26.5 % | 0.12 → 0.28 |
-| Louyang | 7.94 → 5.42 | 7.88 → 2.2 | 23.2 → 21.7 | 29.8 → 38.4 | 3 → 29 | 28.0 % → 15.0 % | 0.27 → 0.15 |
-| Amatsu | 7.12 → 5.97 | 7.12 → 4.0 | 15.0 → 15.1 | 58.8 → 28.1 | 3 → 21 | 34.0 % → 23.8 % | 0.40 → 0.22 |
-| Niflheim | 6.08 → 4.85 | 5.78 → 2.7 | 20.3 → 15.3 | 26.6 → 28.0 | 3 → 23 | 34.8 % → 28.2 % | 0.26 → 0.13 |
-| Abyss | 9.08 → 5.68 | 9.08 → 3.7 | 22.6 → 20.0 | 47.2 → 38.4 | 3 → 29 | 32.0 % → 12.4 % | 0.14 → 0.21 |
+| field | relief | relief in view band | slope p95 | max slope | landforms | flat <3° | grain | radial sym |
+|---|---|---|---|---|---|---|---|---|
+| Prontera | 5.42 → 6.86 | 5.27 → 3.09 | 15.8 → 17.1 | 19.1 → 35.7 | 3 → 9 | 42.7 % → 21.8 % | .29 → .13 | .17 → .17 |
+| Izlude | 6.74 → 6.33 | 6.74 → 6.30 | 16.4 → 17.5 | 31.0 → 28.9 | 2 → 12 | 36.7 % → 33.8 % | .37 → .17 | -.02 → -.18 |
+| Geffen | 6.63 → 5.34 | 6.62 → 4.68 | 19.6 → 18.0 | 28.9 → 27.1 | 3 → 18 | 36.9 % → 23.1 % | .37 → .30 | .18 → -.19 |
+| Morocc | 6.31 → 4.03 | 6.31 → 1.92 | 22.8 → 11.8 | 32.1 → 18.0 | 3 → 20 | 37.1 % → 27.9 % | .59 → .01 | .14 → -.20 |
+| Payon | 6.67 → 4.85 | 6.43 → 2.82 | 20.4 → 18.2 | 25.3 → 29.9 | 3 → 23 | 34.2 % → 18.6 % | .22 → .22 | .41 → .51 |
+| Comodo | 7.97 → 5.50 | 7.97 → 3.46 | 23.3 → 16.4 | 44.8 → 34.8 | 3 → 21 | 33.0 % → 25.1 % | .12 → .24 | .34 → .38 |
+| Louyang | 7.94 → 5.17 | 7.88 → 3.18 | 23.2 → 20.1 | 29.8 → 38.2 | 3 → 28 | 28.0 % → 13.6 % | .27 → .13 | .29 → .40 |
+| Amatsu | 7.12 → 5.76 | 7.12 → 3.56 | 15.0 → 15.0 | 58.8 → 28.4 | 3 → 16 | 34.0 % → 20.1 % | .40 → .11 | .15 → -.14 |
+| Niflheim | 6.08 → 4.14 | 5.78 → 2.32 | 20.3 → 13.6 | 26.6 → 24.8 | 3 → 24 | 34.8 % → 21.1 % | .26 → .21 | .35 → .35 |
+| Abyss | 9.08 → 4.32 | 9.08 → 3.72 | 22.6 → 20.2 | 47.2 → 36.4 | 3 → 36 | 32.0 % → 13.9 % | .14 → .13 | -.29 → .05 |
 
-Mean pairwise correlation between fields: **0.47 → 0.28** (and the remaining 0.28 is the
-shared *intentional* rim, which the test removes before comparing patterns — the test fails
-if two fields share a landform at r ≥ 0.6).
+Mean pairwise correlation between fields: **0.47 → 0.18**, and the test removes the shared
+*intentional* rim before comparing patterns and fails if two fields correlate at r ≥ 0.6
+(worst pair today: 0.52).
+
+Two honest notes on that table:
+
+- **Peak relief inside the visible band went down, not up.** v195 put one 6–9 unit dome in
+  the middle of the field; v2 spreads relief into shelves, spurs and a rim. That is the
+  trade the owner asked for (structure instead of blobs), but if a field feels too calm it
+  is one number — `amp` — and the review page's Relief dial previews it live.
+- **Morocc and Niflheim are deliberately the flattest.** Dunes and a dead hollow are not
+  supposed to have cliffs; their identity is grain and a bowl, not relief.
 
 ## 5. Rollout plan
 
 | phase | work | gate | rough size |
 |---|---|---|---|
-| **P0** | land this document + prototype + preview page + `terrain_v2_sim.js` (done) | your read of the three boards | — |
-| **P1** | swap `terrainHeight`/`terrainGeometry` in `assets/native-fields.js` for the v2 module; keep v1 behind `?nativeFields=v1` for side-by-side; regenerate the native-field sim expectations | fields walkable, zero contact drift, all four existing field tests green | ~1 session |
-| **P2** | splat floor: weights → texture/vertex colour, 4-tile blend using the kit tiles already shipped; trail follows `trailCenter()` | no visible tiling in a walk test; ≤ 2 extra ms per field build | ~1 session |
-| **P3** | prop placement by slope/mask; pond shore from the shaped bowl; cliff-face rock band | trees never on >40°, no prop in lane/pond, shoreline has no rim | ~1 session |
+| **P0** | proposal + prototype + preview page + `terrain_v2_sim.js` | owner read the boards | **done** |
+| **P1** | v2 landform inside `assets/native-fields.js`; v195 kept as `legacyHeight` behind `?nativeFields=1&terrain=v1`; native-field sim expectations updated | fields walkable, zero contact drift, existing field tests green | **done** |
+| **P2** | floor painted from the landform: per-vertex slope weights + a 192² mask driving dirt/rock/beach over the base tile, plus a terrain-following trail | no visible tiling; field build ≈125–160 ms | **done** |
+| **P3** | prop placement by slope (done: nothing on >32°, rock up to 42°) and a denser, mask-driven scatter; cliff-face rock band; optional shore bands | trees never on >32°, no prop in lane/pond | partly done |
 | **P4** | per-map art pass on the dial (intensity, bench amount, trail width, signature size) using the live page | you approve each of the ten fields on desktop + portrait | review loop |
 | **P5** | flip `NATIVE_FIELDS_DEFAULT=true`, `BUILD` bump, update-log entry, kit backup sync | full pre-push suite + browser harness | ~1 session |
 
@@ -201,23 +216,27 @@ untouched; this is scenery only.
 | Perf on phones | same grid, same vertex count; weights are 4 fBm per vertex, measured in the sim; no extra draw calls until P2 |
 | Two agents editing the terrain | `assets/native-fields.js` is the only file P1 changes; the prototype stays in `tools/maps/terrain-v2/` until then |
 
-## 7. Decisions I need from you
+## 7. Decisions taken (owner, 2026-10-25)
 
-1. **Intensity:** which column of `board-intensity.png` feels right — subtle (0.55×),
-   proposed (1×) or dramatic (1.7×)? I can also mix (e.g. dramatic for Louyang/Abyss,
-   subtle for Prontera/Izlude).
-2. **Trail vs no trail:** the shipped pass paints one dirt road. v2 assumes the trail follows
-   the terrain and wanders (Amatsu/Izlude/Payon) — keep it, widen it, or drop it for some
-   fields (Morocc currently has none)?
-3. **Water:** keep the existing ponds (reshaped) or drop them from some fields?
-4. **Go/no-go on P2 (splat floor).** Without it the hills read but the ground still looks
-   like printed wallpaper; with it, the floor changes material on slopes and hollows. I
-   recommend doing P1 + P2 together before you judge the result.
+1. **Intensity: mixed per field.** Each destination now carries its own `amp`; Louyang and
+   Abyss are the steepest, Morocc and Niflheim the calmest.
+2. **Trail and ponds: keep both, terrain-aware.** The trail wanders and follows hollows
+   (Morocc stays trailless); ponds keep their shape but the ground under them is dug as a
+   bowl with a wide beach instead of a vertical rim.
+3. **P1 + P2 together**, so the floor changes material on slopes rather than staying one
+   tile — implemented above.
+
+Still open for you: **P5**, flipping `NATIVE_FIELDS_DEFAULT=true` so a plain game URL gets
+these fields, and whether any single field's dial needs a nudge after you walk it.
 
 ## 8. How to review it now
 
 ```sh
-# interactive: shipped vs proposed, all ten fields, intensity/lane/contour dials
+# in the real game (fields are opt-in): walk all ten with the new landform
+python3 tools/preview_server.py 8000   # then /game?nativeFields=1
+# ...and the same URL with &terrain=v1 for the old shape, side by side
+
+# landform-only review page: v195 vs v2, relief/lane/contour/wireframe dials
 PREVIEW_PAGE=tools/maps/terrain_v2_preview.html python3 tools/preview_server.py 8000
 
 # regenerate the static boards (needs numpy + Pillow)
@@ -228,8 +247,8 @@ python3 tools/maps/terrain-v2/render_preview.py --heights /tmp/heights.json --va
 NODE_PATH=<dir with three@0.128> node tools/tests/terrain_v2_sim.js
 ```
 
-`terrain_v2_sim.js` (251 assertions) covers: pure/deterministic heights, exact rendered-triangle
+`terrain_v2_sim.js` (254 assertions) covers: pure/deterministic heights, exact rendered-triangle
 contact, lane walkability and relief outside it, no height discontinuity anywhere, ten
 distinct landforms, no short-period repetition, normalised splat weights, rock on steep
-faces, a wandering trail, the mesh contract the game relies on, and that the game still
-loads only the shipped module.
+faces, a wandering trail, the mesh contract the game relies on, and that `terrain=v1`
+really selects the old landform while a plain URL selects v2.

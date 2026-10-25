@@ -1,7 +1,8 @@
-# terrain-v2 — proposal prototype (dev only)
+# terrain-v2 — landform review (dev only)
 
-Terrain prototype for the ten World Atlas fields. **Nothing here is imported by the game.**
-`index.html` still loads only `assets/native-fields.js`. The proposal that explains it:
+Review tooling for the v2 landform of the ten World Atlas fields. The landform itself now
+lives in `assets/native-fields.js` (v195 is kept there as `legacyHeight`); this folder only
+samples and renders it. The proposal that explains it:
 
 [docs/proposals/map-terrain-upgrade-2026-10-25.md](../../../docs/proposals/map-terrain-upgrade-2026-10-25.md)
 
@@ -9,10 +10,9 @@ Terrain prototype for the ten World Atlas fields. **Nothing here is imported by 
 
 | file | what it is |
 |---|---|
-| `prototype.js` | the candidate replacement for `terrainHeight` / `heightAt` / `terrainGeometry`, plus `surfaceWeights` (draft floor splat) and `slopeAt`. Same exports style as `assets/native-fields.js`, so P1 is a swap, not a rewrite. |
-| `sample_heights.js` | dumps 181×181 height grids for the shipped module and the prototype to JSON. |
+| `sample_heights.js` | dumps 181×181 height grids for both landforms (v195 `legacyHeight` and shipped `terrainHeight`) to JSON. |
 | `render_preview.py` | renders the comparison boards (top-down hillshade, the real field camera ray-marched over the heightfield, and the intensity variants) into `docs/proposals/terrain-v2/`. Needs numpy + Pillow; not a runtime dependency. |
-| `../terrain_v2_preview.html` | live page: shipped vs proposed on all ten fields, with intensity / lane / contour / wireframe dials and live slope + relief readout. |
+| `../terrain_v2_preview.html` | live page: v195 vs v2 on all ten fields, with relief / lane / contour / wireframe dials and a live slope + relief readout. |
 
 ## Review
 
@@ -39,10 +39,11 @@ NODE_PATH=<dir with three@0.128.0> node tools/tests/terrain_v2_sim.js
    level mixed in over a short radius — that is what produced the vertical rims in the shipped
    pond.
 
-## Tuning dials (per map, in `DESIGNS`)
+## Tuning dials (per map, in `DESIGNS` in `assets/native-fields.js`)
 
 `amp` overall relief · `frame` perimeter rise · `bench.{at,step,sharp,amount,warp}` shelves ·
 `ridgeAmp`/`ridgeScale` skyline · `carve.{freq,depth}` drainage · `micro` close-up relief ·
 `rotate` grain direction · `signature` the field's landmark · `trail.{bend,phase,width}` ·
 `pathInfluence` how strong the trail's dirt is · `water` pond. `laneCfg.mix` is global
-(0.6 now; 0 turns the arena into ordinary terrain).
+(0.55 now; 0 turns the arena into ordinary terrain). `TERRAIN` is `v2` unless the URL says
+`terrain=v1`.

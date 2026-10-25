@@ -7543,3 +7543,44 @@ The owner's second pass over v77, six notes, all built.
   the boards come from a Python ray-march of the same heightfields, not a browser capture), and
   no physical-device performance measurement. The existing native-field suites were not re-run
   because no shipped file changed.
+
+### 2026-10-25 — `haven-v229 field landform v2`
+* **Changed:** The ten outdoor fields now use the v2 landform described in the previous entry.
+  `assets/native-fields.js` replaces `1.1 + three Gaussian mounds + one valley + one sine
+  ripple` with a layered landform per destination — warped noise, ridged skyline, drainage
+  swales, rocky benches (shelf/escarpment/shelf), a per-map landmark (terrace, bluff, spur,
+  dune sea, gorge, basin, plateau, shelf), a perimeter rise so the horizon is land, and a
+  noise-ragged clearing for the fight lane. The floor is painted from the landform: per-vertex
+  `surfaceWeights` (grass/dirt/rock/beach) plus a 192² slope mask drive a dirt/rock/beach
+  blend and a terrain-following trail; props respect the slope (nothing on >32°, rock up to
+  42°); ponds keep their shape but the ground under them is dug as a bowl with a wide beach
+  instead of a vertical rim. The v195 landform is kept as `legacyHeight`/`LEGACY` and is
+  reachable with `?nativeFields=1&terrain=v1`, so nothing was lost. Fields stay opt-in
+  (`NATIVE_FIELDS_DEFAULT=false`); Ascension/Astral and Thor scenery are untouched, and no
+  save, combat, drop or mob data changed.
+* **Corrects the previous entry:** that entry said this was proposal-only and listed
+  `tools/maps/terrain-v2/prototype.js`, which has been deleted — the module is now the
+  implementation, and the folder only samples/renders it.
+* **Try it:** `python3 tools/preview_server.py 8000` → `/game?nativeFields=1` to walk all ten
+  fields, add `&terrain=v1` for the old landform. Landform-only review page:
+  `PREVIEW_PAGE=tools/maps/terrain_v2_preview.html python3 tools/preview_server.py 8000`.
+  Boards + numbers: [docs/proposals/map-terrain-upgrade-2026-10-25.md](proposals/map-terrain-upgrade-2026-10-25.md).
+* **Files touched:** `assets/native-fields.js`, `index.html` (`BUILD`), the three build-tag
+  mirrors, `tools/tests/terrain_v2_sim.js` (new pins), `tools/tests/native_fields_sim.js`
+  (lane relief replaced the old "full relief in the lane" pin), `tools/maps/terrain_v2_preview.html`,
+  `tools/maps/terrain-v2/*` (sampler/renderer/README), `docs/proposals/terrain-v2/*` (boards,
+  metrics), `docs/proposals/map-terrain-upgrade-2026-10-25.md`, `docs/CODE-MAP.md`,
+  `docs/TESTING.md`, this log.
+* **Checks:** `terrain_v2_sim` **PASS** (254 assertions), `native_fields_sim` **PASS** (50
+  scenes, contact, ponds, lifecycle, lazy loading), `kit_sim` 37/37, `reference_mobs_sim`,
+  `ascension_scene_sim`, `astral_scenery_sim`, `update_watch_sim` 9/9, `panel_layout_smoke`
+  42/42, `field_loop_smoke` 9/9, `save_owner_boot_smoke` 5/5, `bash tools/build_site.sh` +
+  `publish_sim` 15/16 — the one failure ("existing runtime assets exceed their original
+  62.5 MiB budget") **also fails on the untouched baseline commit `d26906c`**, so it is not
+  caused by this change. Field build cost measured in-process: 124–156 ms for terrain +
+  floor canvas, ~10.8k triangles, unchanged draw-call count.
+  **Not verified:** in-browser WebGL pixels of the new fields — Playwright Chromium cannot be
+  downloaded in this sandbox, so `check_native_fields_browser.cjs` could not run; the review
+  page's scripts were executed against stubs and the boards come from a Python ray-march of
+  the same heightfields. No physical-device frame rate measured.
+* **Delivery:** local changes on `arena/783b0e96-prontera-grind`; no merge or deployment.
