@@ -7726,3 +7726,52 @@ the owner about but could not put in the link they click.
   `/game?nativeFields=0`) and the false→true flip, plus the on-disk file still reading `false`.
   Still **not** verified: WebGL pixels in a browser — this sandbox has no browser. The owner's
   own report is the pixel check, and it should now pass.
+
+## 2026-10-25 — sunken props, and real detail under them (haven-v233)
+
+Two reports from the owner: *"some of the houses are under half way"* and *"can u use new details
+sprites? i dont like the old ones… i want more details."*
+
+**1. The houses were literally half underground — a bug, not a look.** `kitPropMeshes` placed
+every prop at `y=0`. That is correct on the flat kit ground, but the native fields are real
+heightfields: measured over the props actually placed, the ground under them reaches **5.7 units**
+(Prontera), 5.2 (Izlude), 4.7 (Geffen). So on the approach band — the average ground height there
+is 2.5 — the bottom of every house and tree was buried. Across 308 measured props the old
+placement left **26.7% of the average sprite underground, and one was 100% buried**. Props now
+carry `y` from `PGNativeFields.heightAt(map,x,z,stage)` (the same heightfield the field was built
+from), sunk 0.06 so the sprite's own transparent feet do not float, and the slope ceilings were
+tightened (landmarks 18°, middle 20°, clutter 22°) because a billboard on a bank reads as buried
+no matter what its y is. Verified by replay: **0 of 671 props** now stands off its ground.
+
+**2. More detail, without inventing or substituting art.** The owner asked for new sprites found
+online. That is the one thing this change does *not* do, deliberately: `AGENTS.md` says
+"do not invent, repaint, recolour or substitute sprite art", and RO's field art is Gravity's.
+Downloading a sprite sheet and swapping it in would break the repo rule and the licence. What the
+build does instead is add detail that is legitimately ours to make:
+
+* **The whole kit is now in use** — 21 of 34 sprites before, **34 of 34** now, each still
+  culturally honest (Amatsu `torii_gate`/`bridge_red_arch`/`tree_cherry`, Louyang
+  `shrine_stone`/`lantern_stone`, Payon bamboo and mountain stone, Morocc ruins and cacti,
+  Niflheim graves, Abyss crags and crystal).
+* **A new middle tier.** Budgets per band went `2+6 / 1+4 / 4+10 / 2+2` → **`3+4+10 / 2+3+8 /
+  5+6+16 / 3+2+6`** (landmarks + a new mid-ground layer + clutter). 308 → **671** props across the
+  forty fields, with the outskirts still the plain way in.
+* **A 3D bedding layer** (`nativeThemeDetail3D`, 40 piece types). Real geometry under and around
+  each billboard, from the primitives the rest of the scenery uses: stone footings under a torii,
+  a stepped base and votive lamps at a shrine, glowing fire-boxes in the stone lanterns, six bamboo
+  stalks per grove, petals under a cherry, moss and rubble at a ruin, a fence and a stepping path
+  at a house. **2,137 pieces** across the forty fields, none in the hunting lane, none floating.
+* **It does not cost what it looks like it should.** The first cut allocated a geometry and a
+  material per mesh (≈2,360 of each). Geometry and material are now cached by shape and colour —
+  the whole kit fits in **175 geometries and 31 materials** — and the clutter tier yields once a
+  field passes `THEME_MESH_CAP` (72), so the busiest field cannot quietly become a hundred extra
+  draw calls.
+* **Tests:** new `tools/tests/native_theme_sim.js` pins the ground-planting (the actual regression),
+  the lane and slope exclusions, the sprite-name validity of all four tables, the per-band budgets,
+  the mesh ceiling and the bounded caches.
+* **Checks:** full suite **126 pass / 6 fail**, and the six
+  (`fourth_job_skills`, `ground_combat`, `rotation_updates`, `skill_redesign` ×2, `skill_balance`'s
+  stale gear hash, `publish_sim`'s asset budget) are the same pre-existing failures verified in a
+  clean worktree two commits ago. `kit_sim` 37/37 with the regenerated mirror.
+* **Not verified:** the pixels. No browser in this sandbox — the placement, planting, counts and
+  mesh bounds are measured, not seen. The live preview at `/game` is the check.

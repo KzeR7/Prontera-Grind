@@ -1230,7 +1230,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-25 haven-v232 new fields by default';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-25 haven-v233 grounded detail';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -8639,7 +8639,11 @@ function kitPropMeshes(plan,root){
     const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.18}));
     const k=kitPropScale(p.type,p.scale),w=e.w*k,h=e.h*k;
     sp.center.set(e.anchorX===undefined?.5:e.anchorX/e.w,1-(e.anchorY===undefined?e.h:e.anchorY)/e.h);
-    sp.scale.set(w,h,1);sp.position.set(p.x,0,p.z);root.add(sp);placed++;
+    // v233 (owner: "some of the houses are under half way"): y was hardcoded to 0. That is
+    // correct on the flat kit ground, but the native fields are real heightfields - the approach
+    // band averages 2.5 units above zero - so every themed prop was planted at sea level and the
+    // hills swallowed the bottom half of the houses. p.y is the ground height under the prop.
+    sp.scale.set(w,h,1);sp.position.set(p.x,p.y||0,p.z);root.add(sp);placed++;
   }
   return {placed,missing};
 }
@@ -8917,21 +8921,195 @@ function kit3DDetails(plan,m,root){
 //  Niflheim - a city of the dead: grave markers, dead trees, ruined walls.
 //  Abyss    - crystal tunnels and crags: stalagmites and crystal clusters.
 const NATIVE_THEME=[
-  {land:['house_prontera','lantern_stone'],arch:['house_prontera'],small:['tree_bush_bright','river_stone_post']},
-  {land:['palm_giant','pier_post'],arch:['palm_giant'],small:['palm_double','pier_post']},
-  {land:['tower_geffen','standing_stone'],arch:['tower_geffen'],small:['standing_stone','crystal_cluster']},
-  {land:['ruin_pillar','palm_giant'],arch:['ruin_pillar'],small:['cactus_flower','ruin_stump']},
-  {land:['bamboo_grove','shrine_stone'],arch:['shrine_stone'],small:['bamboo_grove','tree_bush_bright']},
-  {land:['palm_giant','ruin_stump'],arch:['palm_giant'],small:['palm_double','river_stone_post']},
-  {land:['shrine_stone','lantern_stone'],arch:['shrine_stone'],small:['bamboo_grove','lantern_stone']},
-  {land:['torii_gate','shrine_stone'],arch:['torii_gate'],small:['tree_cherry','bamboo_grove','lantern_stone']},
-  {land:['tombstone','tree_dead'],arch:['tombstone'],small:['tombstone','tree_dead']},
-  {land:['stalagmite','crystal_cluster'],arch:['rock_cliff_crag'],small:['stalagmite','crystal_cluster']},
+  // v233: every destination now draws on the whole kit instead of a token four (21 -> 34 sprites
+  // in use). Each row stays culturally honest - Amatsu is Japanese, Louyang Chinese, Payon's
+  // Korean mountain village, Morocc desert, Niflheim dead, Abyss ruin - because the point of the
+  // list is that a field reads as its own place, not that it has more trees.
+  {arch:['house_prontera','tree_ancient_large'],land:['house_ruin','tree_tall_cluster'],small:['tree_bush_bright','river_stone_post','tree_sapling','ruin_curb']},
+  {arch:['palm_giant','house_prontera'],land:['palm_tall','pier_post'],small:['palm_double','rock_boulder_mossy','pier_post']},
+  {arch:['tower_geffen','tree_dark_gnarled'],land:['standing_stone','tree_ancient_variant'],small:['crystal_cluster','tree_sapling','ruin_curb']},
+  {arch:['ruin_pillar','palm_tall'],land:['ruin_column_fallen','desert_bone'],small:['cactus_flower','cactus_small','ruin_stump','ruin_curb']},
+  {arch:['shrine_stone','house_prontera'],land:['bamboo_grove','tree_tall_cluster'],small:['bamboo_grove','tree_bush_bright','tree_sapling','rock_boulder_mossy']},
+  {arch:['palm_giant','palm_tall'],land:['palm_double','rock_boulder_mossy'],small:['palm_double','rock_boulder_mossy','pier_post']},
+  {arch:['shrine_stone','lantern_stone'],land:['lantern_stone','tree_dark_gnarled'],small:['bamboo_grove','lantern_stone','tree_sapling','ruin_curb']},
+  {arch:['torii_gate','bridge_red_arch'],land:['shrine_stone','tree_cherry'],small:['tree_cherry','bamboo_grove','lantern_stone','tree_sapling']},
+  {arch:['tombstone','tree_dead'],land:['tree_dark_gnarled','ruin_column_fallen'],small:['tombstone','tree_dead','ruin_curb','ruin_stump']},
+  {arch:['rock_cliff_crag','ruin_pillar'],land:['stalagmite','crystal_cluster'],small:['stalagmite','crystal_cluster','rock_boulder_mossy','ruin_column_fallen']},
 ];
 // How much architecture a stage group carries. The outskirts are the open way in (a gate or
 // two, no crowd); the approach is the settled, decorated part; the sanctum frames the fight
 // with a matched pair of landmarks, the same silhouette left and right.
-const NATIVE_THEME_BUDGET=[{arch:2,small:6},{arch:1,small:4},{arch:4,small:10},{arch:2,small:2}];
+// v233 (owner: "i want more details"): the old budgets were 2/6, 1/4, 4/10, 2/2 - a token
+// dressing. `land` is a new middle tier between the far landmarks and the treeline clutter, so a
+// field now carries 13-27 pieces instead of 4-14, with the outskirts staying the plain way in.
+const NATIVE_THEME_BUDGET=[{arch:3,land:4,small:10},{arch:2,land:3,small:8},{arch:5,land:6,small:16},{arch:3,land:2,small:6}];
+// ---------------------------------------------------------------------------------------------
+// v233 (owner: "i want more details", "some of the houses are under half way").
+//
+// The cultural props above are billboards: flat, camera-facing, and on their own they read as
+// stickers standing in a field. Two things fix that. First, the sinking bug - they were planted
+// at y=0 on ground that rises to almost 6 units, so a third of every sprite was underground on
+// average. Second, this layer: real geometry bedding each piece into the ground. Stone footings
+// under a torii, a stepped base and votive posts at a shrine, glowing fire-boxes in the stone
+// lanterns, stalks for the bamboo, moss and rubble at a ruin, petals under the cherry.
+//
+// This does NOT repaint, recolour or substitute any sprite - AGENTS.md forbids that, and it is
+// also why no third-party art is downloaded here. It is new geometry *around* the existing art,
+// built from the same primitives (BX/SP/CN) the rest of the scenery uses.
+const THEME_BED={
+  torii_gate:{w:4.4,foot:1,step:1},      bridge_red_arch:{w:5.2,foot:1,step:1},
+  house_prontera:{w:4.2,foundation:1,path:1,fence:1}, house_ruin:{w:3.6,foundation:1,rubble:1},
+  shrine_stone:{w:2.6,steps:1,posts:2},  lantern_stone:{base:1,glow:1},
+  tower_geffen:{w:1.7,plinth:1},         standing_stone:{base:1,moss:1},
+  tombstone:{mound:1,rails:1},           tree_dead:{roots:1},
+  tree_dark_gnarled:{roots:1},           tree_cherry:{petals:1,roots:1},
+  tree_ancient_large:{roots:1},          tree_ancient_variant:{roots:1},
+  tree_tall_cluster:{roots:1},           tree_bush_bright:{stones:1},
+  tree_sapling:{stones:1},               bamboo_grove:{stalks:6,stones:1},
+  crystal_cluster:{shards:4},            stalagmite:{shards:3},
+  rock_cliff_crag:{rubble:1,moss:1},     rock_boulder_mossy:{moss:1,stones:1},
+  palm_giant:{sand:1},                   palm_tall:{sand:1},
+  palm_double:{sand:1},                  pier_post:{plank:1},
+  ruin_pillar:{foot:1,rubble:1},         ruin_column_fallen:{rubble:1,moss:1},
+  ruin_curb:{rubble:1},                  ruin_stump:{rubble:1,moss:1},
+  cactus_flower:{stones:1},              cactus_small:{stones:1},
+  desert_bone:{stones:1},                river_stone_post:{rubble:1},
+};
+// Stone, moss, timber, lamp glow and blossom per destination - the same regional reading as the
+// palettes in assets/native-fields.js, so the dressing belongs to the field it stands in.
+const THEME_BED_PAL=[
+  {stone:0x9c978b,moss:0x5f8c3a,wood:0x8a5433,glow:0xffd27f,petal:0xf6b8cf},
+  {stone:0xa8a294,moss:0x5f8c3a,wood:0x8a5433,glow:0xffe0a0,petal:0xf6c8d8},
+  {stone:0x7f8797,moss:0x4e7a56,wood:0x5a4a3a,glow:0x9fd8ff,petal:0xc8b8e8},
+  {stone:0xc2a478,moss:0x7a8a4a,wood:0x9c6b3a,glow:0xffb070,petal:0xf0c8a0},
+  {stone:0x8e8a7c,moss:0x4f7f34,wood:0x7a3b26,glow:0xffd8a0,petal:0xf6b8cf},
+  {stone:0xb0a894,moss:0x6a9a4a,wood:0x8a5a34,glow:0xffe0a0,petal:0xffc8d8},
+  {stone:0x8d8b84,moss:0x55803c,wood:0x9c3b28,glow:0xffcf7a,petal:0xffb4c8},
+  {stone:0x9a978f,moss:0x5a8a44,wood:0xb03a2a,glow:0xffd9a0,petal:0xf7b6cd},
+  {stone:0x585060,moss:0x3f5a44,wood:0x3c3548,glow:0xb866ff,petal:0x9a88b8},
+  {stone:0x4e5a66,moss:0x3a5a50,wood:0x39434e,glow:0x3ce8ff,petal:0x6ad8e0},
+];
+// Geometry and materials are shared by shape and colour. Without this the layer allocated ~2400
+// geometries and ~2400 materials across the ten fields, and every field rebuild threw them away
+// and allocated fresh ones - GPU churn on a phone for scenery the player walks past. Both caches
+// are bounded so a long session cannot grow them without limit.
+const THEME_GEO=new Map(),THEME_MAT=new Map();
+function themeGeo(kind,args){
+  const key=kind+':'+args.map(v=>Math.round(v*100)/100).join(',');
+  let g=THEME_GEO.get(key);
+  if(!g){
+    if(THEME_GEO.size>600)THEME_GEO.clear();
+    g=kind==='box'?BX(args[0],args[1],args[2]):kind==='sphere'?SP(args[0])
+     :kind==='cone'?CN(args[0],args[1]):CY(args[0],args[1],args[2]);
+    THEME_GEO.set(key,g);
+  }
+  return g;
+}
+function themeMat(col,emissive){
+  const key=col+(emissive?':e':'');
+  let m=THEME_MAT.get(key);
+  if(!m){
+    if(THEME_MAT.size>200)THEME_MAT.clear();
+    m=M(col);
+    // Only the lamp/fire materials carry emissive, and the colour is the cache key, so setting it
+    // once here can never leak a glow onto a shared stone or timber material.
+    if(emissive&&m.emissive)m.emissive=new THREE.Color(col).multiplyScalar(.55);
+    THEME_MAT.set(key,m);
+  }
+  return m;
+}
+// Ceiling on pieces per field. The landmarks and the middle tier always get their bedding; the
+// small treeline clutter only while there is budget left, so the worst field cannot quietly turn
+// into a hundred extra draw calls.
+const THEME_MESH_CAP=72;
+function nativeThemeDetail3D(m,props){
+  if(!props||!props.length)return 0;
+  // Check the real THREE, not the local aliases below - reading those here would be a
+  // temporal-dead-zone error, because they are declared further down this same function.
+  if(typeof THREE!=='object'||typeof THREE.BoxGeometry!=='function')return 0;
+  const P=THEME_BED_PAL[m]||THEME_BED_PAL[0];
+  const G=new THREE.Group();G.userData={themeDetail:1};
+  // Local aliases so every geometry below comes from the shared cache instead of allocating.
+  const BX=(a,b,c)=>themeGeo('box',[a,b,c]),SP=r=>themeGeo('sphere',[r]),
+        CN=(r,h)=>themeGeo('cone',[r,h]),CY=(a,b,h)=>themeGeo('cyl',[a,b,h]);
+  let n=0;
+  const put=(geo,col,x,y,z,ry,ry2)=>{
+    const me=new THREE.Mesh(geo,themeMat(col));me.position.set(x,y,z);
+    if(ry)me.rotation.y=ry;if(ry2)me.rotation.z=ry2;
+    me.castShadow=false;me.receiveShadow=false;G.add(me);n++;return me;
+  };
+  const box=(w,h,d,col,x,y,z,ry,rz)=>put(BX(w,h,d),col,x,y+h/2,z,ry,rz);
+  const ball=(r,col,x,y,z,sy)=>put(SP(r),col,x,y+r*(sy||1),z,0,0).scale.set(1,sy||1,1);
+  // A lamp's fire-box uses the cached emissive material, so the glow never leaks onto a shared
+  // stone or timber material.
+  const glow=(w,h,d,col,x,y,z)=>{const me=new THREE.Mesh(BX(w,h,d),themeMat(col,true));me.position.set(x,y+h/2,z);me.castShadow=me.receiveShadow=false;G.add(me);n++;return me};
+  for(const p of props){
+    const bed=THEME_BED[p.type];if(!bed)continue;
+    if(n>THEME_MESH_CAP&&(p.scale||1)<.9)continue;   // small clutter yields once the field is busy
+    const s=p.scale||1,Y=p.y,x=p.x,z=p.z,w=(bed.w||2)*s;
+    if(bed.foot){                                  // stone footings under the two uprights
+      for(const sx of [-1,1])box(.55*w*.42,.42*s,.55*s,P.stone,x+sx*w*.30,Y-.02,z);
+    }
+    if(bed.step)box(w*.9,.16*s,1.5*s,P.stone,x,Y,z+.9*s);
+    if(bed.foundation)box(w,.34,1.5*s,P.stone,x,Y-.05,z);
+    if(bed.plinth){box(w*.8,.5*s,w*.8,P.stone,x,Y,z);box(w*.55,.34*s,w*.55,P.stone,x,Y+.5*s,z)}
+    if(bed.steps){
+      box(w*1.15,.22*s,w*.85,P.stone,x,Y,z);
+      box(w*.9,.24*s,w*.66,P.stone,x,Y+.22*s,z-.06*s);
+    }
+    if(bed.posts){                                 // votive posts flanking a shrine
+      for(let i=0;i<bed.posts;i++){const sx=i%2?1:-1;
+        box(.22*s,1.15*s,.22*s,P.wood,x+sx*w*.62,Y,z+.15*s);
+        glow(.3*s,.26*s,.3*s,P.glow,x+sx*w*.62,Y+1.15*s,z+.15*s);}
+    }
+    if(bed.base)box(w*.7,.26*s,w*.7,P.stone,x,Y,z);
+    if(bed.glow)glow(.46*s,.5*s,.46*s,P.glow,x,Y+1.02*s,z);
+    if(bed.mound)ball(.55*s,P.stone,x,Y-.04*s,z,.35);
+    if(bed.rails)for(const sx of[-1,1])box(.1*s,.6*s,w*.7,P.wood,x+sx*w*.55,Y,z);
+    if(bed.roots)for(let i=0;i<4;i++){const a=i*1.57+.6;
+      box(.5*s,.2*s,.34*s,P.stone,x+Math.cos(a)*.5*s,Y-.03,z+Math.sin(a)*.5*s,a);}
+    if(bed.petals){                                // fallen blossom under a cherry
+      for(let i=0;i<3;i++){const a=i*2.1,r=(.9+i*.5)*s;
+        put(SP(r*.5),P.petal,x+Math.cos(a)*r*.5,Y+.02,z+Math.sin(a)*r*.5,0,0).scale.set(1,.08,1);}
+    }
+    if(bed.stalks){                                // bamboo: real stalks give the grove volume
+      for(let i=0;i<bed.stalks;i++){
+        const a=i*2.399+.4,r=(.3+((i*37)%10)/14)*s,h=(2.4+((i*53)%10)/6)*s;
+        const st=put(CY(.075*s,.09*s,h),i%3?0x6f9a3c:0x88b04a,x+Math.cos(a)*r,Y+h/2,z+Math.sin(a)*r);
+        st.rotation.z=(i%2?1:-1)*.03;st.castShadow=false;
+      }
+    }
+    if(bed.shards){
+      for(let i=0;i<bed.shards;i++){
+        const a=i*1.9,r=(.25+i*.16)*s,h=(.7+i*.28)*s;
+        const sh=new THREE.Mesh(CN(.16*s+.05*s*i,h),themeMat(i%2?P.glow:P.stone,!!(i%2)));
+        sh.position.set(x+Math.cos(a)*r,Y+h/2,z+Math.sin(a)*r);sh.rotation.z=(i%2?.16:-.12);
+        sh.castShadow=sh.receiveShadow=false;G.add(sh);n++;
+      }
+    }
+    if(bed.moss)put(SP(.42*s),P.moss,x,Y+.3*s,z,0,0).scale.set(1,.3,1);
+    if(bed.rubble)for(let i=0;i<3;i++){const a=i*2.4+.9;
+      ball((.16+i*.04)*s,P.stone,x+Math.cos(a)*.7*s,Y,z+Math.sin(a)*.7*s,.6);}
+    if(bed.sand)put(SP(.75*s),P.stone,x,Y+.02,z,0,0).scale.set(1,.1,1);
+    if(bed.plank)box(.7*s,.12*s,.34*s,P.wood,x,Y+.5*s,z);
+    if(bed.fence){                                 // a short fence line, posts + two rails
+      for(let i=0;i<3;i++){const fx=x+(i-1)*.9*s;
+        box(.12*s,.7*s,.12*s,P.wood,fx,Y,z+.9*s);}
+      box(2.0*s,.1*s,.09*s,P.wood,x,Y+.55*s,z+.9*s);
+      box(2.0*s,.1*s,.09*s,P.wood,x,Y+.3*s,z+.9*s);
+    }
+    if(bed.path){                                  // stepping stones leading to the door
+      for(let i=0;i<5;i++){
+        const px=x+(i-2)*.62*s,pz=z+(1.0+i*.52)*s;
+        put(CY(.3*s,.34*s,.09*s),P.stone,px,Y+.045,pz);
+      }
+    }
+    if(bed.stones)for(let i=0;i<2;i++){const a=i*3.1+1.2;
+      ball(.13*s,P.stone,x+Math.cos(a)*.45*s,Y,z+Math.sin(a)*.45*s,.7);}
+  }
+  if(n){deco.add(G)}
+  return n;
+}
 function placeNativeTheme(m,world){
   if(typeof kitPropMeshes!=='function'||!KIT.ok)return 0;
   const theme=NATIVE_THEME[m];if(!theme)return 0;
@@ -8947,23 +9125,47 @@ function placeNativeTheme(m,world){
     return true;
   };
   const props=[];
-  const put=(type,x,z,scale,flip)=>{if(props.some(p=>Math.hypot(p.x-x,p.z-z)<3.4))return false;props.push({type,x,z,scale,flip});return true};
+  // Ground height under a prop. Read from the same heightfield the native world was built from,
+  // with the stage passed explicitly so it can never answer for a different band.
+  const groundY=(x,z)=>{
+    try{const h=PGNativeFields.heightAt(m,x,z,S.lvl);return Number.isFinite(h)?h:0}catch(_){return 0}
+  };
+  // A billboard is flat, so on a slope its uphill corner still cuts into the ground. Sink it a
+  // touch (the sprite's own feet are a few transparent rows) and keep the slope ceilings tight:
+  // a house on a 20-degree bank reads as half-buried no matter what the y is.
+  const put=(type,x,z,scale,flip,slopeMax=18)=>{
+    if(props.some(p=>Math.hypot(p.x-x,p.z-z)<3.4))return false;
+    if(PGNativeFields.slopeAt(m,x,z)>slopeMax)return false;
+    props.push({type,x,z,scale,flip,y:groundY(x,z)-.06});
+    return true;
+  };
   // Landmarks: far out, tall, framing the field. Left and right are placed as a pair so the
-  // composition stays symmetric without looking stamped.
-  for(let i=0;i<budget.arch&&props.length<budget.arch;i++){
-    for(let a=0;a<40;a++){
-      const side=i%2?1:-1,x=side*(20+r()*13),z=-30+r()*42;
-      if(!ok(x,z))continue;
-      if(put(theme.arch[i%theme.arch.length],x,z,.95+r()*.45,r()>.5))break;
-    }
+  // composition stays symmetric without looking stamped. Explicit counters rather than a count of
+  // what came back, so each tier fills its own budget instead of stealing from the next.
+  let na=0;
+  for(let i=0;i<budget.arch*6&&na<budget.arch;i++){
+    const side=i%2?1:-1,x=side*(20+r()*13),z=-30+r()*42;
+    if(!ok(x,z))continue;
+    if(put(theme.arch[i%theme.arch.length],x,z,.95+r()*.45,r()>.5))na++;
+  }
+  // Middle tier: between the skyline and the lane. This is the layer that makes a field look
+  // inhabited rather than decorated at its edges.
+  let nl=0;
+  for(let i=0;i<(budget.land|0)*6&&nl<budget.land;i++){
+    const side=i%2?-1:1,x=side*(18+r()*13),z=-32+r()*44;
+    if(!ok(x,z))continue;
+    if(put(theme.land[Math.floor(r()*theme.land.length)],x,z,.8+r()*.3,r()>.5,20))nl++;
   }
   // Detail: small pieces tucked along the treeline, the layer you notice when you walk past.
-  for(let i=0;i<budget.small*4&&props.filter(p=>p.scale<.9).length<budget.small;i++){
+  let ns=0;
+  for(let i=0;i<budget.small*5&&ns<budget.small;i++){
     const side=i%2?-1:1,x=side*(16.4+r()*12),z=-28+r()*40;
     if(!ok(x,z))continue;
-    put(theme.small[Math.floor(r()*theme.small.length)],x,z,.55+r()*.3,r()>.5);
+    if(put(theme.small[Math.floor(r()*theme.small.length)],x,z,.55+r()*.3,r()>.5,22))ns++;
   }
   kitPropMeshes({src:'payon',props},deco);
+  // v233: real geometry around the billboards, so they sit in the ground instead of on it.
+  try{nativeThemeDetail3D(m,props)}catch(e){if(typeof console!=='undefined')console.warn('theme detail skipped',e)}
   return props.length;
 }
 
