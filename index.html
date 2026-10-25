@@ -7762,7 +7762,18 @@ function buildDeco(m){if(JOB_RITE.on)return jobRiteArena();if(m===10&&ascensionW
       fieldLoading(true,'Loading '+(PGNativeFields.NAMES[m]||'field')+'…');
       if(!KIT.nativePending.has(m)){
         KIT.nativePending.add(m);
+        const token={};KIT.nativeToken=token;
+        // Safety net. Holding the field is only better than a swap while the wait is short; a
+        // stalled request or an offline client would otherwise leave the player looking at a
+        // loading pill forever. After 6 s show the ordinary scenery, and if the native field does
+        // still arrive it replaces it (a late swap beats a permanent wait).
+        setTimeout(()=>{
+          if(KIT.nativeToken!==token||!S||S.mp!==m||TRIAL.on||JOB_RITE.on)return;
+          if(nativeFieldStore.ready(m))return;
+          KIT.nativeHold=true;fieldLoading(false);buildDeco(m);KIT.nativeHold=false;
+        },6000);
         nativeFieldStore.ensure(m).then(()=>{
+          if(KIT.nativeToken===token)KIT.nativeToken=null;
           if(S&&S.mp===m&&!TRIAL.on&&!JOB_RITE.on)buildDeco(m);
         }).catch(()=>{
           // The field genuinely cannot load: fall back to the old scenery rather than an empty

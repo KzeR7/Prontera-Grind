@@ -7675,3 +7675,13 @@ Four owner reports in one build.
   bands and the themed props were verified by replaying the placement maths and by the offline
   board render, not by watching the game. That check is the owner's: `/game?nativeFields=1`.
 * **Delivery:** local changes on `arena/783b0e96-prontera-grind`; no merge or deployment.
+
+## 2026-10-25 — loading-pill safety net (haven-v231)
+
+Holding the field behind the "Loading <field>…" pill is only an improvement while the wait is
+short. A stalled request or an offline client would have left the player looking at the pill
+with no map at all, which is worse than the swap it replaced. `buildDeco` now arms a 6-second
+timer when it starts holding: if the native field has still not arrived it shows the ordinary
+scenery, and a native field that turns up later still replaces it. The timer is keyed to the
+request that armed it (`KIT.nativeToken`), so a resolved, cancelled or superseded load never
+fires it.
