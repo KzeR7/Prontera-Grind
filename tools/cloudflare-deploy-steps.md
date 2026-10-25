@@ -202,22 +202,41 @@ In the dashboard (**Workers & Pages → Create → Worker**):
 1. Name it **`prontera-social`** — exactly that. The root `wrangler.toml` binds it by that name
    (`script_name`), and `tools/tests/social_config_sim.js` fails if the two files disagree.
 2. Connect it to this GitHub repository, production branch **`main`**.
-3. Build settings: root directory **`workers/social`**, build command **empty**, deploy command
-   **`npx wrangler deploy`**, non-production deploy command **`npx wrangler versions upload`**.
+3. Build settings — **these two commands must point at the worker's own config**, because the repo
+   root holds the *Pages* `wrangler.toml` (which has no Worker entry point):
+
+   | Field | Value |
+   |---|---|
+   | Root directory | `workers/social` |
+   | Build command | *(empty)* |
+   | Deploy command | `npx wrangler deploy` |
+   | Non-production deploy command | `npx wrangler versions upload` |
+
+   If you would rather leave the root directory at the repository root, then both commands need the
+   config path: `npx wrangler deploy --config workers/social/wrangler.toml` and
+   `npx wrangler versions upload --config workers/social/wrangler.toml`. The non-production command
+   is the one that matters most: it is the **only** reason a branch build goes red, and leaving it
+   at its default while the production command is customized is the exact shape of that failure
+   (production green, every PR red, the build failing within seconds).
 4. Deploy. It has no public route on purpose (`workers_dev = false`): the only way in is the
    `SOCIAL` binding from Pages, and its own `fetch` answers 404 to anything else.
 5. Then let Pages deploy as usual (§3, or merge to `main`).
 
 `workers/social/wrangler.toml` also sets `preview_urls = true` and an empty `[previews]` block. That
-is deliberate: Cloudflare defaults preview URLs to match `workers_dev`, so with `workers_dev = false`
-and no preview setting, every non-production branch build failed and each PR/commit showed a red
-**Workers Builds: prontera-social** check while `main` stayed green. Previews only publish
-`*.workers.dev` version URLs for branch builds; this script's default handler is a 404 and the Durable
-Object stays reachable only through the Pages binding, so nothing new becomes public. Keep both lines.
+is deliberate: Cloudflare defaults preview URLs to *match* `workers_dev`, which is `false` here, so
+without them a branch build has no preview URL to publish. Previews only publish `*.workers.dev`
+version URLs for branch builds; this script's default handler is a 404 and the Durable Object stays
+reachable only through the Pages binding, so nothing new becomes public. Keep both lines — but do not
+expect them alone to turn the branch check green; the command in step 3 is what does that.
 
 Checks that do not need an account: `npx wrangler deploy --dry-run --config workers/social/wrangler.toml`
 and `npx wrangler versions upload --config workers/social/wrangler.toml --dry-run` (the second is the
 one a feature-branch build runs). The database needs no extra migration for chat.
+
+**Reading the check.** *Workers Builds: prontera-social* is the `workers/social` build, and it runs
+twice per PR: once for the branch (a preview version, no production effect) and once for `main` after
+merge. A branch-only red is a build-setting problem, never a chat bug. *Cloudflare Pages* is the game
+itself.
 
 **If chat says "unavailable":** `503 Social service is not configured` in the browser's Network panel
 means the Pages project has no `SOCIAL` binding; `401` means the player is not signed in; `403` means

@@ -6,12 +6,19 @@ compatibility_date = "2026-10-01"
 # root wrangler.toml, and its own `fetch` answers 404 to everything else.
 workers_dev = false
 
-# v235: Workers Builds runs a *preview* build (a version upload) for every non-production branch,
-# and a Worker with `workers_dev = false` and no preview setting defaults previews to off - so every
-# feature branch got a red "Workers Builds: prontera-social" check while `main` stayed green.
-# Enabling previews only publishes *.workers.dev version URLs for branch builds; this script has no
-# public ingress (its default handler is a 404 and the Durable Object is reachable only through the
-# Pages binding), so nothing new becomes reachable. Leaving these out brings the red check back.
+# v235: preview deployments are enabled on purpose. Cloudflare defaults preview URLs to *match*
+# `workers_dev`, so with `workers_dev = false` and neither key set, a branch build has no preview URL
+# and `wrangler versions upload --preview-alias` has nothing to publish. Only *.workers.dev version
+# URLs are affected: this script's default handler is a 404 and the Durable Object stays reachable
+# only through the Pages binding, so no new ingress appears.
+#
+# This does NOT by itself fix the red "Workers Builds: prontera-social" check on branches. That check
+# fails because the service's non-production deploy command must run against THIS file; a bare
+# `npx wrangler versions upload` in the repo root hits the Pages config there and fails instantly with
+# "Missing entry-point to Worker script or to assets directory". Set the Worker's root directory to
+# `workers/social`, or give the non-production deploy command
+# `npx wrangler versions upload --config workers/social/wrangler.toml`.
+# Steps: tools/cloudflare-deploy-steps.md §9.
 preview_urls = true
 [previews]
 

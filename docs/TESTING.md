@@ -598,7 +598,9 @@ model-click seating, names/titles, transparent emotes, pointer/keyboard resizing
 background farming and channel isolation. `social_config_sim.js` is dependency-free
 and pins the Cloudflare wiring: the Pages `SOCIAL` binding and the Worker's script
 name, class and SQLite migration must agree, the Worker stays off `workers.dev`, and
-`preview_urls` + `[previews]` stay set so branch builds are not red (v235). Shared
+`preview_urls` + `[previews]` stay set so a branch preview has a URL at all (v235).
+The red branch check itself is a Cloudflare build setting, not a repo file: see
+[deploy steps §9](../tools/cloudflare-deploy-steps.md). Shared
 Preview can use the documented renderer stub for DOM/Canvas checks when its Chromium
 cannot create WebGL.
 

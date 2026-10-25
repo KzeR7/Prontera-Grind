@@ -82,13 +82,23 @@ when the Durable Object restarts; clients reconnect and rejoin. This first servi
 uses one coordinating Durable Object for the world and numbered plazas, intended
 for the current small community rather than an unbounded global population.
 
-**Branch builds (v235).** The Worker keeps `workers_dev = false` because it has no
-public ingress, so it also sets `preview_urls = true` and an empty `[previews]`
-block. Without them Cloudflare defaults preview URLs to match `workers_dev` and
-every non-production branch build (a `wrangler versions upload`) fails, which is
-what put a red *Workers Builds: prontera-social* check on every PR while `main`
-stayed green. Previews expose nothing new: the script's default handler is a 404
-and the Durable Object is reachable only through the Pages binding.
+**Branch builds (v235).** Two settings decide whether a feature branch gets a
+green *Workers Builds: prontera-social* check; production (`main`) is green either
+way, so read both before debugging chat.
+
+1. The service's build must run against **this** file. A bare
+   `npx wrangler versions upload` in the repo root finds the Pages config there and
+   fails instantly with *Missing entry-point to Worker script or to assets
+   directory* — that is the red check on every PR. Set the Worker's root directory
+   to `workers/social`, or give the non-production deploy command
+   `npx wrangler versions upload --config workers/social/wrangler.toml`.
+2. `preview_urls = true` and an empty `[previews]` block are set here because
+   Cloudflare defaults preview URLs to *match* `workers_dev`, which is `false` for
+   this Worker (it has no public ingress). Without them a branch build has no
+   preview URL to publish. Previews expose nothing new: the script's default
+   handler is a 404 and the Durable Object is reachable only through the Pages
+   binding.
+
 `tools/tests/social_config_sim.js` pins both files' agreement on the script name,
 class, migration and those preview settings.
 

@@ -7879,3 +7879,33 @@ marking an issue there. The flag was real and it was **not** in the chat code.
   non-production branch and dashboard access) — the red check should turn green on the next branch
   push of this session.
 * **Delivery:** local changes on `arena/c4538d5e-prontera-grind`; no deployment performed.
+
+## 2026-10-25 — correction: the red `prontera-social` check is the branch *deploy command*
+
+The entry above guessed that the missing preview settings were what failed the branch builds. Pushing
+the fix disproved it: the check was still red on this branch's first push, so I re-diagnosed instead
+of stopping at the first plausible cause.
+
+* **Reproduced the failure shape.** A bare `npx wrangler versions upload` in the repository root ends
+  immediately with *Missing entry-point to Worker script or to assets directory* — because the root
+  `wrangler.toml` is the **Pages** config and has no Worker entry point. That matches the observed
+  signature exactly: the branch build failed within seconds, while `main`'s build succeeded and
+  produced a Version ID.
+* **What that means.** The `prontera-social` service's production deploy command points at
+  `workers/social/wrangler.toml` (so `main` is green), but its **non-production** deploy command runs
+  the default, without that path (so every branch push is red). Nothing about world chat is at fault,
+  and production is unaffected.
+* **Preview settings re-scoped, not reverted.** `preview_urls = true` and `[previews]` stay, because
+  Cloudflare defaults preview URLs to match `workers_dev = false` and a branch build would otherwise
+  have no URL to publish — but they are not the cause and the docs now say so plainly.
+* **The fix is a dashboard setting** (no repo file can set it): Worker → Settings → Build → either set
+  **Root directory** to `workers/social`, or set **Non-production deploy command** to
+  `npx wrangler versions upload --config workers/social/wrangler.toml`. Turning off *Builds for
+  non-production branches* also removes the red check if branch previews are not wanted.
+  `tools/cloudflare-deploy-steps.md` §9 now tables both fields and explains the "production green,
+  every PR red, fails in seconds" pattern.
+* **Checks:** `social_config_sim.js` 7/7, `social_sim.js`, `social_api_sim.mjs`,
+  `social_worker_sim.mjs` pass; `wrangler deploy --dry-run`, `wrangler versions upload --dry-run` and
+  a root-level `versions upload` (the failing case, reproduced) behave as described.
+* **Delivery:** local changes on `arena/c4538d5e-prontera-grind`; the dashboard change is the
+  owner's, and the check stays red until it is made.
