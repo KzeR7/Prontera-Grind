@@ -7584,3 +7584,18 @@ The owner's second pass over v77, six notes, all built.
   page's scripts were executed against stubs and the boards come from a Python ray-march of
   the same heightfields. No physical-device frame rate measured.
 * **Delivery:** local changes on `arena/783b0e96-prontera-grind`; no merge or deployment.
+
+## 2026-10-25 — field colour identity (haven-v230)
+
+Ten outdoor fields shared six source crops, two of them byte-identical (Prontera and Izlude
+both used `prt_fild08` with the same crop indices), and eight of ten base tiles sat in the
+40-98° hue band. That is why every field looked the same colour: nothing in the pipeline
+ever changed the colour. `DESIGNS[].palette` now grades each field's own crop toward its
+destination (`tint`/`tintA`/`sat`/`lum`) and `groundDetail` adds per-material ground marks.
+The floor tile is now high-passed and laid down stochastically instead of mirrored-repeated,
+which removes the visible quilt. Measured pairwise distance across the ten floors went from
+min 0.0 / median 55.2 to min 28.5 / median 87.5. Evidence and numbers:
+`docs/proposals/map-terrain-upgrade-2026-10-25.md` §4b,
+`docs/proposals/terrain-v2/board-color.png`, `board-floor-real.png`, `color-audit.json`.
+New tooling: `tools/maps/terrain-v2/render_floor_real.js` (runs the shipping `build()`
+against a real canvas) and `render_color_audit.py`.

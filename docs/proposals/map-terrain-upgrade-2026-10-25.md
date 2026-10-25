@@ -134,6 +134,11 @@ Runtime: one RGBA splat texture (or the four weights packed into vertex colours 
 current 72² grid, which costs nothing) and a 4-way blend of the existing kit tiles. This is
 what makes the *same* geometry read as meadow / scree / shore instead of one green field.
 
+**Shipped in P2** (see §4b for the colour work): the four roles blend through masks computed
+from the landform, the trail is drawn terrain-aware with a soft shoulder, each field is
+graded toward its own destination, ground detail is drawn per material, and the tile is
+laid down stochastically so the floor has neither a seam nor a repeat rhythm.
+
 ### D. Props that respect the terrain (Phase 3)
 
 - Place by weight: trees on gentle grass, rock on slope > 25°, shrubs anywhere, **nothing**
@@ -191,6 +196,162 @@ Two honest notes on that table:
 - **Morocc and Niflheim are deliberately the flattest.** Dunes and a dead hollow are not
   supposed to have cliffs; their identity is grain and a bowl, not relief.
 
+## 4b. Why all ten fields looked the same — the colour answer
+
+You asked: *"why does all the maps look the same? why colours are same."*
+Both parts are real, and both are measurable. Two separate faults, not one.
+
+### Fault 1 — the ten fields are painted from six pictures, and two of them are the same picture
+
+Each field's floor is built from a 1024x256 atlas holding four 256² crops of a real RO
+ground texture: `base`, `patch`, `road`, `cliff`. `tools/native-fields/selection.json`
+records which source field and which crops each destination got. Reading it, plus the mean
+RGB of every crop, gives this:
+
+| Destination | Source fild | Base crop mean RGB | Hue | Sat | Val |
+|---|---|---|---|---|---|
+| Prontera | `prt_fild08` | 138,149,62 | 68° | 0.58 | 0.59 |
+| Izlude | `prt_fild08` | 138,149,62 | 68° | 0.58 | 0.59 |
+| Geffen | `gef_fild04` | 109,150,54 | 86° | 0.64 | 0.59 |
+| Morocc | `moc_fild07` | 202,175,122 | 40° | 0.39 | 0.79 |
+| Payon | `pay_fild02` | 77,114,56 | 98° | 0.51 | 0.45 |
+| Comodo | `cmd_fild02` | 126,126,54 | 60° | 0.57 | 0.50 |
+| Louyang | `lou_fild01` | 174,162,83 | 52° | 0.52 | 0.68 |
+| Amatsu | `ama_fild01` | 168,175,90 | 65° | 0.48 | 0.69 |
+| Niflheim | `gl_chyard` | 130,124,98 | 49° | 0.25 | 0.51 |
+| Abyss | `hu_fild05` | 161,144,122 | 35° | 0.24 | 0.63 |
+
+Three facts drop out of that table:
+
+1. **Prontera and Izlude are byte-identical.** Same source fild, same four crop indices, so
+   base-tile colour distance is **0.0**. Two of the ten most-visited fields were literally the
+   same texture.
+2. **Eight of ten base tiles sit in the 40–98° hue band**, i.e. yellow-green to
+   yellow-brown. Only Niflheim (49°, sat .25) and Abyss (35°, sat .24) were desaturated at
+   all. Median pairwise distance across the ten was **55.2**, but the minimum was **0.0**
+   and Louyang/Amatsu were only **16.2** apart.
+3. **In 8 of 10 fields the `patch` and `road` crops are the same tile**, so the trail was
+   exactly the colour of the dirt it ran through — a third of the surface with no contrast
+   anywhere.
+
+So the answer to "why are the colours the same" is: *because nothing in the pipeline ever
+changed them.* The selection step picked a base crop and the floor composited it; the only
+per-field variation was geometry. As long as the geometry was subtle (Prontera, Izlude,
+Geffen), two fields differed only by the shapes of hills drawn in the same green.
+
+### Fault 2 — one tile, repeated flat, with no grading and no break-up
+
+Even where the tiles did differ, the composer drew them as a plain 2D pattern across one
+2048² canvas: no lighting, no large-scale variation, no distance detail. The field was a
+carpet of the same 256px picture at the same phase everywhere — which is exactly what a
+tiled carpet looks like. Landform varied; *material* did not.
+
+### The fix
+
+**a. Per-field colour grading (`DESIGNS[].palette`).** Every destination now carries
+`{tint, tintA, sat, lum, detail}`. `sat`/`lum` grade the tile at source (via canvas
+`filter`); `tint` sets the hue family in `'color'` blend mode with an `'overlay'` pass to
+keep shadows in that family. The rule is *correct the field's own art, never repaint it* —
+no native pixel is substituted, the existing crop is only pushed toward its destination.
+
+| Field | Tint | Amount | Sat | Lum | Ground detail |
+|---|---|---|---|---|---|
+| Prontera | `#f2e2b0` | .16 | 1.06 | 1.04 | grass |
+| Izlude | `#9fd7c8` | .26 | 0.88 | 1.10 | grass |
+| Geffen | `#2f7f86` | .32 | 1.14 | 1.12 | leaves |
+| Morocc | `#f6dca4` | .30 | 0.74 | 1.14 | sand |
+| Payon | `#2f5c46` | .26 | 1.10 | 0.86 | leaves |
+| Comodo | `#8a9a30` | .26 | 1.22 | 1.04 | leaves |
+| Louyang | `#b9812f` | .32 | 1.06 | 0.96 | rock |
+| Amatsu | `#c2d894` | .30 | 0.82 | 1.02 | grass |
+| Niflheim | `#6e6472` | .34 | 0.42 | 0.74 | ash |
+| Abyss | `#37538a` | .36 | 0.62 | 0.80 | rock |
+
+**b. Per-field ground detail (`groundDetail`).** 5,476 marks per field on a jittered grid,
+sized in world units and clipped to the material that owns them: grass blades skipped on
+rock, sand ripples skipped on rock, angular chips on rock only, leaf litter under canopy,
+cracks and pale ash drifts on Niflheim. Native tiles have no close-up story; this gives
+each field one at gameplay zoom without touching the crop.
+
+**c. Macro variation and structure break-up.** Two fBm layers synthesised at field
+resolution — 18–45 unit drifts (`soft-light`, .85) and 2–8 unit grain (`overlay`, .20 plus
+a rotated .14 copy). Nothing in either lines up with the tile grid, so they reorganise the
+light and shade on the floor without changing the painted colour underneath.
+
+**d. Honest tiling.** The source crops are *not* seamless: opposite edges disagree by
+4–5% brightness, and the tile carries a slow tonal gradient. Three approaches were tried
+and two rejected on evidence:
+
+- *mirror 2x2* — seamless by construction, but on a low-contrast tile the four-fold
+  symmetry reads as a **kaleidoscope** at gameplay zoom. Rejected.
+- *edge feathering / fade to mean* — leaves a ring of flattened tone around every cell; at
+  gameplay zoom that ring is a **dark lattice** across the field. Rejected.
+- *stochastic tiling* (shipped) — a high-pass first (`mean + (pixel − blur) × 1.5`) to
+  flatten the gradient that could never line up, then ~90 randomly rotated, randomly
+  offset copies with 22% feathered edges per material. No seam, no symmetry, no rhythm.
+
+Measured on the finished 2048² floor: column-to-column difference at former cell
+boundaries is **6.1–8.1**, *below* the interior median of **7.8–9.5** — i.e. the cell
+structure is gone entirely rather than merely hidden.
+
+### Result
+
+| Field | Floor mean RGB | Hue | Sat | Val |
+|---|---|---|---|---|
+| Prontera | 134,135,51 | 61° | 0.62 | 0.53 |
+| Izlude | 122,149,84 | 85° | 0.44 | 0.58 |
+| Geffen | 68,131,68 | 120° | 0.48 | 0.51 |
+| Morocc | 212,184,120 | 42° | 0.43 | 0.83 |
+| Payon | 40,66,32 | 107° | 0.51 | 0.26 |
+| Comodo | 101,106,27 | 64° | 0.75 | 0.42 |
+| Louyang | 147,110,36 | 40° | 0.75 | 0.58 |
+| Amatsu | 150,161,79 | 68° | 0.51 | 0.63 |
+| Niflheim | 70,64,66 | 346° | 0.08 | 0.28 |
+| Abyss | 65,73,92 | 222° | 0.30 | 0.36 |
+
+Pairwise distance across the ten: **minimum 28.5** (was 0.0), **median 87.5** (was 55.2).
+Every pair is now further apart than the closest pair was before, and the two hues that
+were missing entirely — blue (222°) and cool violet (346°) — now exist.
+
+**Evidence boards** (all in `docs/proposals/terrain-v2/`):
+
+- `board-color.png` — raw native tiles vs shipped floor, ten fields, with RGB/HSV printed
+  under each swatch. This is the "why" picture.
+- `board-floor-real.png` — the ten floors as the shipping compositor actually produces
+  them. Not a mock-up: `render_floor_real.js` stubs `document.createElement('canvas')` with
+  a real skia canvas and calls the game's own `build()`, so these pixels are the code path.
+- `board-floor-before.png` — the previous pass, for comparison.
+- `color-audit.json` — the numbers above.
+
+The per-field `floor-<map>.png` renders are regenerated by the two commands below and are
+git-ignored (ten 8 MB PNGs is not something to carry in the repo); the three boards are
+committed so the comparison survives without a rebuild.
+
+Regenerate any of them with:
+
+```sh
+node tools/maps/terrain-v2/render_floor_real.js          # needs three@0.128 + @napi-rs/canvas
+python3 tools/maps/terrain-v2/render_color_audit.py      # needs numpy + Pillow
+```
+
+### Cost
+
+The grading and detail work happens once per field, on the same 2048² canvas that already
+existed, at load time. Build cost is **0.33–0.49 s per field** in Node (was ~0.45 s for the
+landform alone before the palette pass; the extra layers are paid for by computing the
+material weights once instead of three times and sampling height on a 192² grid instead of
+384²). No new texture memory: the four 256² crops and one 2048² floor are unchanged.
+
+### What is still open on colour
+
+- **Izlude vs Prontera assets.** The grade now separates them (85° vs 61°, distance 28.5),
+  but they still share one source fild. If you want Izlude to be *coastal* rather than
+  *graded meadow*, the clean fix is to point it at a sea-adjacent fild in
+  `selection.json` and re-crop — that is an asset decision, so it is your call, not mine.
+- **Louyang and Morocc are both in the 40° hue band** (147,110,36 vs 212,184,120). They are
+  84 apart on value and sat, so they read differently side by side, but they are the closest
+  surviving pair on hue. Louyang could go further toward red rock if you want more distance.
+
 ## 5. Rollout plan
 
 | phase | work | gate | rough size |
@@ -215,6 +376,9 @@ untouched; this is scenery only.
 | Ground still looks flat because the floor is one tile | P2 is not optional — geometry alone only buys the silhouette; the material split is what sells slope |
 | Perf on phones | same grid, same vertex count; weights are 4 fBm per vertex, measured in the sim; no extra draw calls until P2 |
 | Two agents editing the terrain | `assets/native-fields.js` is the only file P1 changes; the prototype stays in `tools/maps/terrain-v2/` until then |
+| Per-field grading tints a native texture | the crop is never repainted or substituted, only graded; `filter`/`overlay` moves saturation and hue, every stroke and edge of the original art stays exactly where it was |
+| Grading makes two fields look like recolours of each other | guarded by `color-audit.json`: all 45 pairs must stay >25 apart (min is 28.5). If a future tint pushes any pair under that, the audit fails loudly rather than shipping two same-looking fields |
+| Stochastic tiling costs load time | ~90 feathered blits per material, four materials, measured at 0.33–0.49 s per field together with the rest of the floor; skip on `canSample()===false` (headless shims) so `build()` never throws |
 
 ## 7. Decisions taken (owner, 2026-10-25)
 
@@ -243,12 +407,19 @@ PREVIEW_PAGE=tools/maps/terrain_v2_preview.html python3 tools/preview_server.py 
 node tools/maps/terrain-v2/sample_heights.js /tmp/heights.json
 python3 tools/maps/terrain-v2/render_preview.py --heights /tmp/heights.json --variants
 
+# the REAL floor pixels: runs the shipping build() against a skia canvas
+# (needs three@0.128 and @napi-rs/canvas)
+node tools/maps/terrain-v2/render_floor_real.js
+python3 tools/maps/terrain-v2/render_color_audit.py
+
 # regression
 NODE_PATH=<dir with three@0.128> node tools/tests/terrain_v2_sim.js
 ```
 
-`terrain_v2_sim.js` (254 assertions) covers: pure/deterministic heights, exact rendered-triangle
+`terrain_v2_sim.js` (256 assertions) covers: pure/deterministic heights, exact rendered-triangle
 contact, lane walkability and relief outside it, no height discontinuity anywhere, ten
 distinct landforms, no short-period repetition, normalised splat weights, rock on steep
 faces, a wandering trail, the mesh contract the game relies on, and that `terrain=v1`
-really selects the old landform while a plain URL selects v2.
+really selects the old landform while a plain URL selects v2. `native_fields_sim.js` (50
+scenes) additionally covers the floor compositor: props, ponds, prop shadows, the life of
+the world object, lazy loading and retry.

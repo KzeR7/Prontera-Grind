@@ -27,16 +27,16 @@ function ridged(x,z,s,oct=3,lac=2.07,gain=.5){let v=0,amp=1,f=1,n=0,w=1;
 // hill recipe with new numbers. `amp` is the relief dial, `frame` the perimeter rise
 // (so the horizon is land, not the edge of the plane), `rotate` the noise rotation.
 const DESIGNS=[
- {name:'Prontera meadow',amp:2.17,seed:1291,rotate:0,pathInfluence:1,frame:2.2,trail:{bend:9.5,phase:0.4,width:3.4},tilt:[0.3,0.75],landAmp:1.5,landScale:40,ridgeAmp:1.5,ridgeScale:46,bench:{at:2.4,step:1.1,sharp:0.5,amount:0.55,warp:0.55},carve:{freq:0.05,depth:0.32},micro:0.1,water:null,signature:{kind:'terrace',level:2.4,x:24,z:-18,r:15,drop:1}},
- {name:'Izlude coastal grassland',amp:0.98,seed:2262,rotate:0.9,pathInfluence:0.9,frame:1.7,trail:{bend:8.5,phase:1.6,width:3},tilt:[-0.55,-0.35],landAmp:1.1,landScale:44,ridgeAmp:1,ridgeScale:52,bench:{at:1.8,step:0.9,sharp:0.45,amount:0.5,warp:0.5},carve:{freq:0.045,depth:0.26},micro:0.09,water:{x:-27,z:-14,rx:9,rz:15,level:0.3},signature:{kind:'bluff',x:-21,z:16,r:17,top:3.2,face:1}},
- {name:'Geffen wooded ridge',amp:0.56,seed:3370,rotate:1.9,pathInfluence:0.85,frame:2.4,trail:{bend:7.5,phase:2.4,width:2.8},tilt:[0.5,-0.2],landAmp:1.3,landScale:34,ridgeAmp:2.9,ridgeScale:30,ridgeBias:0.16,bench:{at:3,step:1.15,sharp:0.6,amount:0.6,warp:0.8},carve:{freq:0.06,depth:0.5},micro:0.12,water:null,signature:{kind:'spur',x:19,z:8,r:14,top:3.2,face:1}},
- {name:'Morocc dunes',amp:3.25,seed:4458,rotate:2.6,pathInfluence:0,frame:1.8,tilt:[0.7,0.45],landAmp:0.45,landScale:50,ridgeAmp:1.9,ridgeScale:26,ridgeBias:0.2,bench:null,dune:true,duneFreq:0.115,carve:{freq:0.035,depth:0.16},micro:0.07,water:null,signature:{kind:'dunefield',major:0.11,minor:0.035,amp:1.1}},
- {name:'Payon forest hills',amp:0.47,seed:7206,rotate:0.35,pathInfluence:0.95,frame:2.6,trail:{bend:9,phase:0.9,width:3},tilt:[-0.25,0.6],landAmp:1.4,landScale:32,ridgeAmp:3.1,ridgeScale:26,ridgeBias:0.2,bench:{at:3.2,step:1.25,sharp:0.65,amount:0.6,warp:0.85},carve:{freq:0.062,depth:0.6},micro:0.13,water:{x:28,z:6,rx:7,rz:11,level:0.45},signature:{kind:'gorge',x:-20,z:4,r:18,depth:1.5}},
- {name:'Comodo jungle hollow',amp:0.67,seed:10903,rotate:2.1,pathInfluence:0.7,frame:2.8,trail:{bend:7,phase:3.5,width:2.6},tilt:[0.1,0.15],landAmp:1.2,landScale:30,ridgeAmp:2,ridgeScale:28,bench:{at:2.6,step:1.3,sharp:0.8,amount:0.55,warp:0.9},carve:{freq:0.05,depth:0.4},micro:0.12,water:{x:25,z:0,rx:8,rz:12,level:0.25},signature:{kind:'basin',x:24,z:0,r:22,depth:1.9}},
- {name:'Louyang mountain field',amp:0.61,seed:8302,rotate:1.3,pathInfluence:0.6,frame:3,trail:{bend:8.5,phase:2,width:2.6},tilt:[-0.6,-0.5],landAmp:1.6,landScale:30,ridgeAmp:3.8,ridgeScale:24,ridgeBias:0.24,bench:{at:3.6,step:1.25,sharp:0.62,amount:0.66,warp:1.1},carve:{freq:0.065,depth:0.75},micro:0.15,water:null,signature:{kind:'terrace',level:3.6,x:-20,z:-20,r:16,drop:1.4}},
- {name:'Amatsu wild meadow',amp:1.34,seed:8868,rotate:3.6,pathInfluence:0.85,frame:1.9,trail:{bend:8,phase:4.2,width:3},tilt:[0.4,-0.6],landAmp:1.5,landScale:36,ridgeAmp:1.8,ridgeScale:42,bench:{at:2.6,step:1,sharp:0.45,amount:0.5,warp:0.6},carve:{freq:0.045,depth:0.3},micro:0.1,water:{x:26,z:-18,rx:8,rz:12,level:0.28},signature:{kind:'plateau',x:-7,z:-20,r:16,top:2.8,face:0.9}},
- {name:'Niflheim dead hollow',amp:1.63,seed:10637,rotate:4.4,pathInfluence:0.5,frame:2,trail:{bend:7,phase:2.8,width:2.8},tilt:[-0.15,-0.25],landAmp:1.3,landScale:34,ridgeAmp:1.6,ridgeScale:38,bench:{at:2.2,step:1.2,sharp:0.75,amount:0.6,warp:0.75},carve:{freq:0.055,depth:0.45},micro:0.1,water:null,signature:{kind:'basin',x:-8,z:-14,r:24,depth:1.6}},
- {name:'Abyss rocky basin',amp:0.78,seed:11867,rotate:5.1,pathInfluence:0.35,frame:2.8,trail:{bend:8,phase:1.2,width:3.2},tilt:[0.5,0.35],landAmp:1.5,landScale:28,ridgeAmp:3.2,ridgeScale:24,ridgeBias:0.18,bench:{at:3,step:1.35,sharp:0.7,amount:0.72,warp:1.2},carve:{freq:0.07,depth:0.65},micro:0.17,water:{x:-26,z:2,rx:9,rz:13,level:0.2},signature:{kind:'shelf',x:10,z:14,r:20,drop:1.7}}
+ {name:'Prontera meadow',amp:2.17,palette:{tint:'#f2e2b0',tintA:.16,sat:1.06,lum:1.04,detail:'grass'},seed:1291,rotate:0,pathInfluence:1,frame:2.2,trail:{bend:9.5,phase:0.4,width:3.4},tilt:[0.3,0.75],landAmp:1.5,landScale:40,ridgeAmp:1.5,ridgeScale:46,bench:{at:2.4,step:1.1,sharp:0.5,amount:0.55,warp:0.55},carve:{freq:0.05,depth:0.32},micro:0.1,water:null,signature:{kind:'terrace',level:2.4,x:24,z:-18,r:15,drop:1}},
+ {name:'Izlude coastal grassland',amp:0.98,palette:{tint:'#9fd7c8',tintA:.26,sat:.88,lum:1.10,detail:'grass'},seed:2262,rotate:0.9,pathInfluence:0.9,frame:1.7,trail:{bend:8.5,phase:1.6,width:3},tilt:[-0.55,-0.35],landAmp:1.1,landScale:44,ridgeAmp:1,ridgeScale:52,bench:{at:1.8,step:0.9,sharp:0.45,amount:0.5,warp:0.5},carve:{freq:0.045,depth:0.26},micro:0.09,water:{x:-27,z:-14,rx:9,rz:15,level:0.3},signature:{kind:'bluff',x:-21,z:16,r:17,top:3.2,face:1}},
+ {name:'Geffen wooded ridge',amp:0.56,palette:{tint:'#2f7f86',tintA:.32,sat:1.14,lum:1.12,detail:'leaves'},seed:3370,rotate:1.9,pathInfluence:0.85,frame:2.4,trail:{bend:7.5,phase:2.4,width:2.8},tilt:[0.5,-0.2],landAmp:1.3,landScale:34,ridgeAmp:2.9,ridgeScale:30,ridgeBias:0.16,bench:{at:3,step:1.15,sharp:0.6,amount:0.6,warp:0.8},carve:{freq:0.06,depth:0.5},micro:0.12,water:null,signature:{kind:'spur',x:19,z:8,r:14,top:3.2,face:1}},
+ {name:'Morocc dunes',amp:3.25,palette:{tint:'#f6dca4',tintA:.30,sat:.74,lum:1.14,detail:'sand'},seed:4458,rotate:2.6,pathInfluence:0,frame:1.8,tilt:[0.7,0.45],landAmp:0.45,landScale:50,ridgeAmp:1.9,ridgeScale:26,ridgeBias:0.2,bench:null,dune:true,duneFreq:0.115,carve:{freq:0.035,depth:0.16},micro:0.07,water:null,signature:{kind:'dunefield',major:0.11,minor:0.035,amp:1.1}},
+ {name:'Payon forest hills',amp:0.47,palette:{tint:'#2f5c46',tintA:.26,sat:1.10,lum:.86,detail:'leaves'},seed:7206,rotate:0.35,pathInfluence:0.95,frame:2.6,trail:{bend:9,phase:0.9,width:3},tilt:[-0.25,0.6],landAmp:1.4,landScale:32,ridgeAmp:3.1,ridgeScale:26,ridgeBias:0.2,bench:{at:3.2,step:1.25,sharp:0.65,amount:0.6,warp:0.85},carve:{freq:0.062,depth:0.6},micro:0.13,water:{x:28,z:6,rx:7,rz:11,level:0.45},signature:{kind:'gorge',x:-20,z:4,r:18,depth:1.5}},
+ {name:'Comodo jungle hollow',amp:0.67,palette:{tint:'#8a9a30',tintA:.26,sat:1.22,lum:1.04,detail:'leaves'},seed:10903,rotate:2.1,pathInfluence:0.7,frame:2.8,trail:{bend:7,phase:3.5,width:2.6},tilt:[0.1,0.15],landAmp:1.2,landScale:30,ridgeAmp:2,ridgeScale:28,bench:{at:2.6,step:1.3,sharp:0.8,amount:0.55,warp:0.9},carve:{freq:0.05,depth:0.4},micro:0.12,water:{x:25,z:0,rx:8,rz:12,level:0.25},signature:{kind:'basin',x:24,z:0,r:22,depth:1.9}},
+ {name:'Louyang mountain field',amp:0.61,palette:{tint:'#b9812f',tintA:.32,sat:1.06,lum:.96,detail:'rock'},seed:8302,rotate:1.3,pathInfluence:0.6,frame:3,trail:{bend:8.5,phase:2,width:2.6},tilt:[-0.6,-0.5],landAmp:1.6,landScale:30,ridgeAmp:3.8,ridgeScale:24,ridgeBias:0.24,bench:{at:3.6,step:1.25,sharp:0.62,amount:0.66,warp:1.1},carve:{freq:0.065,depth:0.75},micro:0.15,water:null,signature:{kind:'terrace',level:3.6,x:-20,z:-20,r:16,drop:1.4}},
+ {name:'Amatsu wild meadow',amp:1.34,palette:{tint:'#c2d894',tintA:.30,sat:.82,lum:1.02,detail:'grass'},seed:8868,rotate:3.6,pathInfluence:0.85,frame:1.9,trail:{bend:8,phase:4.2,width:3},tilt:[0.4,-0.6],landAmp:1.5,landScale:36,ridgeAmp:1.8,ridgeScale:42,bench:{at:2.6,step:1,sharp:0.45,amount:0.5,warp:0.6},carve:{freq:0.045,depth:0.3},micro:0.1,water:{x:26,z:-18,rx:8,rz:12,level:0.28},signature:{kind:'plateau',x:-7,z:-20,r:16,top:2.8,face:0.9}},
+ {name:'Niflheim dead hollow',amp:1.63,palette:{tint:'#6e6472',tintA:.34,sat:.42,lum:.74,detail:'ash'},seed:10637,rotate:4.4,pathInfluence:0.5,frame:2,trail:{bend:7,phase:2.8,width:2.8},tilt:[-0.15,-0.25],landAmp:1.3,landScale:34,ridgeAmp:1.6,ridgeScale:38,bench:{at:2.2,step:1.2,sharp:0.75,amount:0.6,warp:0.75},carve:{freq:0.055,depth:0.45},micro:0.1,water:null,signature:{kind:'basin',x:-8,z:-14,r:24,depth:1.6}},
+ {name:'Abyss rocky basin',amp:0.78,palette:{tint:'#37538a',tintA:.36,sat:.62,lum:.80,detail:'rock'},seed:11867,rotate:5.1,pathInfluence:0.35,frame:2.8,trail:{bend:8,phase:1.2,width:3.2},tilt:[0.5,0.35],landAmp:1.5,landScale:28,ridgeAmp:3.2,ridgeScale:24,ridgeBias:0.18,bench:{at:3,step:1.35,sharp:0.7,amount:0.72,warp:1.2},carve:{freq:0.07,depth:0.65},micro:0.17,water:{x:-26,z:2,rx:9,rz:13,level:0.2},signature:{kind:'shelf',x:10,z:14,r:20,drop:1.7}}
 ];
 // The v195 landform, kept so `?nativeFields=v1` can show it side by side (see
 // docs/proposals/map-terrain-upgrade-2026-10-25.md). Not selected by default.
@@ -213,58 +213,286 @@ function placements(map,stage,plan,record){
  for(let i=0;i<14;i++)add(i%3?'shrub':'detail',(i%2?-1:1)*(14.8+hash(i,1,map)), -25+hash(i,7,map)*37,.55+hash(i,9,map)*.65,hash(i,2,map)*6.28);
  return result;
 }
-function surface(plan,image,map,props){
- const S=2048,MS=192,cv=document.createElement('canvas');cv.width=cv.height=S;
- const ctx=cv.getContext('2d'),patterns={};
- // Four crops from the source atlas, mirrored per tile so their edges join.
- for(const [i,role] of ['base','patch','road','cliff'].entries()){
-  const c=document.createElement('canvas');c.width=c.height=512;const tile=c.getContext('2d');
-  const inset=role==='road'?64:0;for(let z=0;z<2;z++)for(let x=0;x<2;x++){tile.save();tile.translate(x?512:0,z?512:0);tile.scale(x?-1:1,z?-1:1);tile.drawImage(image,i*256+inset,inset,256-inset*2,256-inset*2,0,0,256,256);tile.restore()}
-  patterns[role]=ctx.createPattern(c,'repeat');
+// The source crops are NOT seamless: opposite edges differ by 4-5% brightness and the
+// tile carries a slow tonal gradient, so plain tiling draws a visible grid and the old
+// mirror trick drew butterfly symmetry instead. Two cheap fixes, in order:
+//   1. high-pass: subtract a heavily blurred copy, then re-centre on the tile's mean.
+//      This flattens the low-frequency tone that could never line up across tiles while
+//      keeping every bit of the painted texture.
+//   2. feather: cross-fade a narrow band at each edge with the opposite edge, so the two
+//      edges meet at the same average.
+// Result: the tile repeats without a seam and without mirroring, and the broad tone the
+// floor needs comes back from the macro-variation layer drawn over it.
+// Some environments (the headless test harness, older canvas shims) can draw but cannot
+// read pixels back. Every layer that samples the canvas is skipped there: the floor still
+// composes from the tiles and the grade, so build() keeps working everywhere.
+function canSample(ctx){
+ try{return !!ctx&&typeof ctx.getImageData==='function'&&typeof ctx.putImageData==='function'
+   &&typeof ctx.createImageData==='function'&&!!ctx.getImageData(0,0,1,1).data;}
+ catch(e){return false;}
+}
+
+function flattenTile(ctx,w,h){
+ if(!canSample(ctx))return;
+
+ const img=ctx.getImageData(0,0,w,h),src=new Uint8ClampedArray(img.data);
+ const small=document.createElement('canvas');small.width=small.height=Math.max(4,Math.round(w/14));
+ const sg=small.getContext('2d');sg.imageSmoothingEnabled=true;const bw=small.width;sg.drawImage(ctx.canvas,0,0,w,h,0,0,bw,bw);
+ const blurCv=document.createElement('canvas');blurCv.width=w;blurCv.height=h;
+ const bg=blurCv.getContext('2d');bg.imageSmoothingEnabled=true;bg.drawImage(small,0,0,bw,bw,0,0,w,h);
+ const blur=bg.getImageData(0,0,w,h).data;
+ const mean=[0,0,0],n=w*h;
+ for(let i=0;i<n;i++)for(let c=0;c<3;c++)mean[c]+=src[i*4+c]/n;
+ for(let i=0;i<n;i++)for(let c=0;c<3;c++)
+  img.data[i*4+c]=clamp(mean[c]+(src[i*4+c]-blur[i*4+c])*1.5,0,255);
+ ctx.putImageData(img,0,0);
+ ctx.canvas.__mean=mean;
+}
+
+// Stochastic tiling beats both previous attempts. The source crops are not seamless (their
+// opposite edges disagree by 4-5%), so this places many randomly rotated, randomly offset
+// copies of the tile with feathered edges. The feather means a copy's border is never a
+// hard line - it fades into its neighbours - so the texture has no seam, and because every
+// copy is at a different angle and offset there is no repeat rhythm for the eye to catch.
+// Mirroring was tried first: it is seamless by construction, but on a low-contrast tile the
+// four-fold symmetry reads as a kaleidoscope at gameplay zoom.
+function stochasticFill(target,tile,seed,spacing){
+ const S=target.width,g=target.getContext('2d'),w=tile.width;
+ // feather mask: alpha 1 in the middle, easing to 0 over the outer 22%
+ const mask=document.createElement('canvas');mask.width=mask.height=w;
+ const mcg=mask.getContext('2d'),mp=mcg.createImageData(w,w);
+ for(let y=0;y<w;y++)for(let x=0;x<w;x++){
+  const dx=Math.min(x,w-1-x)/(w*.22),dy=Math.min(y,w-1-y)/(w*.22);
+  const e=Math.min(1,Math.min(dx,dy));
+  mp.data[(y*w+x)*4+3]=Math.round(smooth(0,1,e)*255);
  }
- ctx.fillStyle=patterns.base;ctx.fillRect(0,0,S,S);
- // Slope/slope-based material masks, computed at MS x MS and upscaled: the floor
- // changes material on a hill face instead of painting one tile across it.
- const orders=[['dirt',patterns.patch],['rock',patterns.cliff],['beach',patterns.patch]];
+ mcg.putImageData(mp,0,0);
+ const soft=document.createElement('canvas');soft.width=soft.height=w;
+ const sg=soft.getContext('2d');
+ sg.drawImage(tile,0,0);sg.globalCompositeOperation='destination-in';sg.drawImage(mask,0,0);
+ // jittered grid of placements, each at one of eight angles
+ const n=Math.ceil(S/spacing)+2;
+ for(let j=0;j<n;j++)for(let i=0;i<n;i++){
+  const h=(Math.imul(i+3,73856093)^Math.imul(j+5,19349663)^Math.imul(seed+17,2654435761))>>>0;
+  const x=i*spacing+(h%spacing)-w*.2,y=j*spacing+((h>>>8)%spacing)-w*.2;
+  g.save();g.translate(x+w/2,y+w/2);g.rotate((h>>>16&7)*Math.PI/4);
+  g.drawImage(soft,-w/2,-w/2);g.restore();
+ }
+ return target;
+}
+
+// Ground detail: small deterministic marks drawn into the floor, clipped to the material
+// that owns them. Native tiles carry no close-up story, so without this the field is one
+// continuous fabric wherever you stand. Sizes are in WORLD UNITS and converted once with
+// ppu (pixels per unit) - the first version mixed the two and painted huge pale blobs.
+function groundDetail(ctx,map,S){
+ const d=DESIGNS[map]||DESIGNS[0],kind=(d.palette&&d.palette.detail)||'grass',seed=d.seed;
+ const rnd=(i,k)=>{const h=Math.imul(i+1,374761393)^Math.imul(k+7,668265263)^Math.imul(seed,1442695041);return ((Math.imul(h^(h>>>13),1274126177)^(h>>>16))>>>0)/4294967295};
+ const ppu=S/90;
+ // One mark per jittered grid cell. A linear index with two correlated hashes laid the
+ // marks out as a visible lattice; a grid guarantees even coverage, the jitter hides it.
+ const N=74,cell=90/N;
+ for(let gy=0;gy<N;gy++)for(let gx=0;gx<N;gx++){
+  const i=gy*N+gx;
+  const x=-45+(gx+.5+rnd(i,1)-.5)*cell,z=-45+(gy+.5+rnd(i,2)-.5)*cell,px=(x+45)*ppu,pz=(z+45)*ppu;
+  const w=surfaceWeights(map,x,z);
+  const inRock=w.rock>.35,inDirt=w.dirt>.45;
+  // keep the detail on the material it belongs to
+  if(kind==='grass'&&inRock)continue;
+  if(kind==='sand'&&inRock)continue;
+  ctx.save();
+  if(kind==='sand'){
+   const rad=(5+rnd(i,4)*16)*ppu*.06;
+   ctx.strokeStyle='rgba(120,92,52,.13)';ctx.lineWidth=Math.max(1,ppu*.05);
+   ctx.beginPath();ctx.arc(px,pz,rad,-Math.PI*.15,Math.PI*1.15);ctx.stroke();
+   ctx.strokeStyle='rgba(255,246,212,.15)';
+   ctx.beginPath();ctx.arc(px,pz-1.5,rad,-Math.PI*.15,Math.PI*1.15);ctx.stroke();
+  }else if(kind==='rock'){
+   if(inRock&&rnd(i,5)>.5){
+    const rr=(.35+rnd(i,6)*.8)*ppu,n=3+Math.floor(rnd(i,7)*3);
+    ctx.fillStyle='rgba(38,40,44,.20)';ctx.beginPath();
+    for(let k=0;k<n;k++){const a=k/n*6.283+rnd(i,k+8);ctx.lineTo(px+Math.cos(a)*rr,pz+Math.sin(a)*rr)}
+    ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(226,228,232,.13)';ctx.lineWidth=1;ctx.stroke();
+   }else{
+    ctx.fillStyle='rgba(30,32,36,'+(inDirt?.13:.09)+')';
+    ctx.beginPath();ctx.arc(px,pz,(.12+rnd(i,9)*.35)*ppu,0,6.283);ctx.fill();
+   }
+  }else if(kind==='leaves'){
+   ctx.translate(px,pz);ctx.rotate(rnd(i,4)*6.283);
+   ctx.fillStyle=['rgba(58,74,32,.26)','rgba(112,86,40,.22)','rgba(34,50,28,.28)'][Math.floor(rnd(i,5)*3)];
+   ctx.beginPath();ctx.ellipse(0,0,(.22+rnd(i,6)*.4)*ppu,(.1+rnd(i,7)*.16)*ppu,0,0,6.283);ctx.fill();
+  }else if(kind==='ash'){
+   if(rnd(i,5)>.62){
+    ctx.strokeStyle='rgba(26,24,28,.22)';ctx.lineWidth=Math.max(1,ppu*.035);
+    ctx.beginPath();let cx=px,cz=pz;ctx.moveTo(cx,cz);
+    for(let k=0;k<4;k++){cx+=(rnd(i,k+10)-.5)*ppu*.9;cz+=(rnd(i,k+20)-.5)*ppu*.9;ctx.lineTo(cx,cz)}ctx.stroke();
+   }else{
+    ctx.fillStyle='rgba(206,200,210,.10)';
+    ctx.beginPath();ctx.arc(px,pz,(.3+rnd(i,6)*.7)*ppu,0,6.283);ctx.fill();
+   }
+  }else{
+   // grass tufts: three short blades, pale on top so they catch the eye at game zoom
+   ctx.strokeStyle=['rgba(74,100,42,.30)','rgba(132,152,78,.24)'][Math.floor(rnd(i,5)*2)];
+   ctx.lineWidth=Math.max(1,ppu*.05);
+   const bl=(.35+rnd(i,6)*.55)*ppu;
+   for(let k=-1;k<=1;k++){ctx.beginPath();ctx.moveTo(px+k*ppu*.09,pz);ctx.quadraticCurveTo(px+k*ppu*.15,pz-bl*.6,px+k*ppu*.2,pz-bl);ctx.stroke()}
+  }
+  ctx.restore();
+ }
+}
+
+// Per-field colour grade. Ten fields were drawn from crops that cluster into three
+// colour families (two of them identical), so the floor is graded per destination:
+// the field's own art, corrected - never repainted. `color` sets the hue family,
+// `overlay` the warmth, and sat/lum balance them against each other.
+function gradeFloor(ctx,S,d){
+ const p=d.palette;if(!p)return;
+ ctx.save();
+ if(p.tint){
+  ctx.globalCompositeOperation='color';ctx.globalAlpha=clamp(p.tintA||.2,0,.5);
+  ctx.fillStyle=p.tint;ctx.fillRect(0,0,S,S);        // hue family
+ }
+ ctx.globalCompositeOperation='overlay';ctx.globalAlpha=.16;
+ ctx.fillStyle=p.tint||'#808080';ctx.fillRect(0,0,S,S); // keep shadows in that family
+ ctx.restore();
+}
+
+function surface(plan,image,map,props){
+ const S=2048,MS=384,cv=document.createElement('canvas');cv.width=cv.height=S;
+ const ctx=cv.getContext('2d'),d=DESIGNS[map]||DESIGNS[0],pal=d.palette||{};
+ const PIX=canSample(ctx);
+ // The field's own four crops, graded at tile level so the materials stay consistent.
+ const filter='saturate('+(pal.sat||1)+') brightness('+(pal.lum||1)+')';
+ const tiles={};
+ for(const [i,role] of ['base','patch','road','cliff'].entries()){
+  const src=document.createElement('canvas');src.width=src.height=256;
+  const sg0=src.getContext('2d');
+  if('filter' in sg0)sg0.filter=filter;
+  const inset=role==='road'?48:0;
+  sg0.drawImage(image,i*256+inset,inset,256-inset*2,256-inset*2,0,0,256,256);
+  flattenTile(sg0,256,256);
+  tiles[role]=src;
+ }
+ // One stochastic fill per material. Spacing is 0.62 of the tile so the feathered copies
+ // overlap enough to leave no gaps.
+ const tex={};
+ for(const role of ['base','patch','road','cliff']){
+  const c=document.createElement('canvas');c.width=c.height=S;
+  const g0=c.getContext('2d'),t=tiles[role];
+  // under-fill with the tile mean so feathered gaps never show through as transparency
+  const m=t.__mean||[128,128,128];
+  g0.fillStyle='rgb('+Math.round(m[0])+','+Math.round(m[1])+','+Math.round(m[2])+')';
+  g0.fillRect(0,0,S,S);
+  tex[role]=stochasticFill(c,t,d.seed+(role==='base'?31:role==='patch'?37:role==='road'?41:43),Math.round(256*.62));
+ }
+ ctx.drawImage(tex.base,0,0);
+
+ // Material masks: computed at MS and upscaled, so the floor changes material on a hill
+ // face instead of painting one tile across it.
  const scratch=document.createElement('canvas');scratch.width=scratch.height=S;
  const sg=scratch.getContext('2d');
  const maskCv=document.createElement('canvas');maskCv.width=maskCv.height=MS;
- const mg=maskCv.getContext('2d'),px=mg.createImageData(MS,MS);
- // One coarse height grid drives every material mask: rock from the local gradient,
- // dirt/beach from the landform-independent noise and the pond.
- const hs=new Float64Array((MS+1)*(MS+1)),mstep=90/MS;
- for(let j=0;j<=MS;j++)for(let q=0;q<=MS;q++)hs[j*(MS+1)+q]=activeHeight(map,-45+q*mstep,-45+j*mstep);
- const weightsAt=(q,j)=>{
-  const x=-45+(q+.5)*mstep,z=-45+(j+.5)*mstep;
-  const a=hs[j*(MS+1)+q],b=hs[j*(MS+1)+q+1],c=hs[(j+1)*(MS+1)+q];
-  return surfaceWeights(map,x,z,Math.atan(Math.hypot((b-a)/mstep,(c-a)/mstep))*180/Math.PI);
+ const mg=maskCv.getContext('2d'),px=PIX?mg.createImageData(MS,MS):null;
+ // Heights on a coarser grid than the masks: the slope only needs to be right to a few
+ // degrees, and `activeHeight` is the single most expensive call in this function.
+ const HG=192,hstep=90/HG,hs=new Float64Array((HG+1)*(HG+1)),mstep=90/MS;
+ for(let j=0;j<=HG;j++)for(let q=0;q<=HG;q++)hs[j*(HG+1)+q]=activeHeight(map,-45+q*hstep,-45+j*hstep);
+ const heightAt=(x,z)=>{
+  const fx=(x+45)/hstep,fz=(z+45)/hstep,q=Math.min(HG-1,Math.max(0,Math.floor(fx))),j=Math.min(HG-1,Math.max(0,Math.floor(fz)));
+  const tx=clamp(fx-q,0,1),tz=clamp(fz-j,0,1),i=j*(HG+1)+q;
+  return hs[i]*(1-tx)*(1-tz)+hs[i+1]*tx*(1-tz)+hs[i+HG+1]*(1-tx)*tz+hs[i+HG+2]*tx*tz;
  };
- for(const [i,k] of orders.entries()){
+ // One pass over the grid, not one per material: `surfaceWeights` is the expensive part
+ // (fbm per sample) and all three masks read the same numbers.
+ const W=new Float32Array(MS*MS*4);
+ for(let j=0;j<MS;j++)for(let q=0;q<MS;q++){
+  const x=-45+(q+.5)*mstep,z=-45+(j+.5)*mstep;
+  const a=heightAt(x,z),b=heightAt(x+mstep*.5,z),c=heightAt(x,z+mstep*.5);
+  const w=surfaceWeights(map,x,z,Math.atan(Math.hypot((b-a)/(mstep*.5),(c-a)/(mstep*.5)))*180/Math.PI);
+  const idx=(j*MS+q)*4;
+  W[idx]=w.dirt;W[idx+1]=w.rock;W[idx+2]=w.beach;W[idx+3]=0;
+ }
+ const orders=[['dirt','patch',0,1],['rock','cliff',1,1],['beach','patch',2,.55]];
+ for(const [k,role,slot,gain] of (PIX?orders:[])){
   for(let j=0;j<MS;j++)for(let q=0;q<MS;q++){
    const idx=(j*MS+q)*4;
    px.data[idx]=px.data[idx+1]=px.data[idx+2]=255;
-   px.data[idx+3]=Math.round(clamp(weightsAt(q,j)[k],0,1)*255);
+   px.data[idx+3]=Math.round(clamp(W[idx+slot],0,1)*255*gain);
   }
   mg.putImageData(px,0,0);
-  // beach is a weaker wash of the same dirt tile
   sg.globalCompositeOperation='source-over';sg.clearRect(0,0,S,S);
-  sg.fillStyle=patterns[k==='beach'?'patch':(k==='dirt'?'patch':'cliff')];sg.fillRect(0,0,S,S);
-  sg.globalCompositeOperation='destination-in';sg.globalAlpha=k==='beach'?.55:1;
-  sg.imageSmoothingEnabled=true;sg.drawImage(maskCv,0,0,S,S);
-  sg.globalAlpha=1;sg.globalCompositeOperation='source-over';
+  sg.drawImage(tex[role],0,0);
+  sg.globalCompositeOperation='destination-in';sg.imageSmoothingEnabled=true;
+  sg.drawImage(maskCv,0,0,S,S);
+  sg.globalCompositeOperation='source-over';
   ctx.drawImage(scratch,0,0);
  }
  // A single winding trail that follows the landform, with a soft shoulder.
- if(plan.design&&DESIGNS[map].pathInfluence>0){
-  const layer=document.createElement('canvas');layer.width=layer.height=S;const g=layer.getContext('2d');g.fillStyle=patterns.road;g.fillRect(0,0,S,S);
-  const mask=document.createElement('canvas');mask.width=mask.height=512;const tg=mask.getContext('2d'),pixels=tg.createImageData(512,512);
-  const width=(DESIGNS[map].trail?DESIGNS[map].trail.width:3)*(.85+.25*DESIGNS[map].pathInfluence);
-  for(let j=0;j<512;j++){const z=j/512*90-45,c=trailCenter(map,z),ww=width*(1+.12*Math.sin(z*.11));for(let i=0;i<512;i++){const x=i/512*90-45,k=(j*512+i)*4,edge=Math.abs(x-c),alpha=(1-smooth(ww*.65,ww+1.6,edge))*.72*DESIGNS[map].pathInfluence;pixels.data[k]=pixels.data[k+1]=pixels.data[k+2]=255;pixels.data[k+3]=Math.round(alpha*255)}}
-  tg.putImageData(pixels,0,0);g.globalCompositeOperation='destination-in';g.drawImage(mask,0,0,S,S);ctx.drawImage(layer,0,0);
+ if(d.pathInfluence>0){
+  const layer=document.createElement('canvas');layer.width=layer.height=S;
+  const g=layer.getContext('2d');g.drawImage(tex.road,0,0);
+  const mask=document.createElement('canvas');mask.width=mask.height=512;
+  const tg=mask.getContext('2d'),pixels=tg.createImageData(512,512);
+  const width=(d.trail?d.trail.width:3)*(.85+.25*d.pathInfluence);
+  for(let j=0;j<512;j++){const z=j/512*90-45,c=trailCenter(map,z),ww=width*(1+.12*Math.sin(z*.11));
+   for(let i=0;i<512;i++){const x=i/512*90-45,k=(j*512+i)*4,edge=Math.abs(x-c);
+    const alpha=(1-smooth(ww*.65,ww+1.6,edge))*.72*d.pathInfluence;
+    pixels.data[k]=pixels.data[k+1]=pixels.data[k+2]=255;pixels.data[k+3]=Math.round(alpha*255)}}
+  tg.putImageData(pixels,0,0);
+  g.globalCompositeOperation='destination-in';g.imageSmoothingEnabled=true;
+  g.drawImage(mask,0,0,S,S);
+  ctx.drawImage(layer,0,0);
  }
- for(const p of props){const x=(p.x+45)*S/90,z=(p.z+45)*S/90,r=S/90*Math.max(.4,Math.min(4,p.rx)),g=ctx.createRadialGradient(x,z,0,x,z,r);g.addColorStop(0,'rgba(16,23,14,.24)');g.addColorStop(1,'rgba(16,23,14,0)');ctx.fillStyle=g;ctx.fillRect(x-r,z-r,r*2,r*2)}
+ // Macro variation: broad, slope-independent drifts at 18-45 world units. The native
+ // tiles are uniform on their own, and this is what stops a field reading as one swatch
+ // of fabric.
+ if(PIX){
+  const macro=document.createElement('canvas');macro.width=macro.height=256;
+  const mgc=macro.getContext('2d'),mpx=mgc.createImageData(256,256);
+  for(let j=0;j<256;j++)for(let q=0;q<256;q++){
+   const x=-45+(q+.5)/256*90,z=-45+(j+.5)/256*90;
+   // two octaves: 18-unit patches and 45-unit drifts, so the eye never settles on one scale
+   const v=fbm(x*.055,z*.055,d.seed+1201,4)*.5+.5,v2=fbm(x*.022+31,z*.022-17,d.seed+1211,3)*.5+.5;
+   const wet=fbm(x*.13+9,z*.13-5,d.seed+1301,3)*.5+.5;
+   const m=v*.62+v2*.38,idx=(j*256+q)*4;
+   // dark, slightly green damp patches; light dry patches
+   mpx.data[idx]=wet>.55?22:104;mpx.data[idx+1]=wet>.55?32:96;mpx.data[idx+2]=wet>.55?16:60;
+   mpx.data[idx+3]=Math.round(clamp((m-.40)*1.9,0,.66)*255);
+  }
+  mgc.putImageData(mpx,0,0);
+  ctx.save();ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=.85;
+  ctx.imageSmoothingEnabled=true;ctx.drawImage(macro,0,0,S,S);ctx.restore();
+
+  // Structure break-up, synthesised at field resolution so nothing in it lines up with
+  // the tile grid: it reorganises the light and shade without touching the painted crop.
+  // `overlay` keeps the native colours, it only moves their level.
+  const grain=document.createElement('canvas');grain.width=grain.height=512;
+  const gg=grain.getContext('2d'),gpx=gg.createImageData(512,512);
+  for(let j=0;j<512;j++)for(let q=0;q<512;q++){
+   const x=-45+q/512*90,z=-45+j/512*90;
+   const n=fbm(x*.42+3,z*.42-8,d.seed+1409,3)-.5;      // 2-3 unit clumps
+   const n2=fbm(x*.13-21,z*.13+14,d.seed+1423,2)-.5;   // 8 unit bands
+   const idx=(j*512+q)*4;
+   gpx.data[idx]=gpx.data[idx+1]=gpx.data[idx+2]=Math.round(clamp(.5+n*1.5+n2*.9,0,1)*255);
+   gpx.data[idx+3]=255;
+  }
+  gg.putImageData(gpx,0,0);
+  ctx.save();ctx.globalCompositeOperation='overlay';ctx.globalAlpha=.20;
+  ctx.imageSmoothingEnabled=true;ctx.drawImage(grain,0,0,S,S);
+  // a second copy at a different scale and quarter turn so its own repeat never lines up
+  ctx.translate(S*.5,S*.5);ctx.rotate(Math.PI/2);ctx.globalAlpha=.14;
+  ctx.drawImage(grain,-S*.6,-S*.6,S*1.2,S*1.2);
+  ctx.restore();
+ }
+ groundDetail(ctx,map,S);
+ // Contact shadows under props: tight and light. Large soft gradients read as brown clouds
+ // across the floor rather than shade.
+ for(const p of props){const x=(p.x+45)*S/90,z=(p.z+45)*S/90,r=S/90*Math.max(.5,Math.min(1.6,p.rx)),g=ctx.createRadialGradient(x,z,0,x,z,r);g.addColorStop(0,'rgba(16,23,14,.20)');g.addColorStop(1,'rgba(16,23,14,0)');ctx.fillStyle=g;ctx.fillRect(x-r,z-r,r*2,r*2)}
+ gradeFloor(ctx,S,d);
  return cv;
 }
+
 function terrainGeometry(THREE,map){
  const positions=[],uv=[],colors=[],indices=[],N=GRID+1,hs=new Float64Array(N*N);
  // Sample the heightfield once; slope for the floor materials comes from the same
@@ -317,7 +545,7 @@ function build(THREE,asset,map,stage,plan){
   const positions=[water.x,water.level,water.z],indices=[],segments=80;
   for(let i=0;i<=segments;i++){const a=i/segments*Math.PI*2,r=1.3*(1+.09*Math.sin(a*3)+.05*Math.cos(a*5));positions.push(water.x+Math.cos(a)*water.rx*r,water.level,water.z+Math.sin(a)*water.rz*r);if(i)indices.push(0,i+1,i)}
   const geometry=ownGeo(new THREE.BufferGeometry());geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();
-  const mesh=new THREE.Mesh(geometry,ownMat(new THREE.MeshPhongMaterial({color:map===9?0x345d62:0x528a8c,shininess:70,transparent:true,opacity:.85})));mesh.userData.nativePond=true;root.add(mesh);
+  const mesh=new THREE.Mesh(geometry,ownMat(new THREE.MeshPhongMaterial({color:water.color||(map===9?0x345d62:0x528a8c),shininess:70,transparent:true,opacity:.85})));mesh.userData.nativePond=true;root.add(mesh);
  }
  const atlas=ownTex(new THREE.Texture(asset.atlas));atlas.flipY=false;atlas.magFilter=THREE.LinearFilter;atlas.minFilter=THREE.LinearMipmapLinearFilter;atlas.anisotropy=4;atlas.needsUpdate=true;
  const mat=ownMat(new THREE.MeshBasicMaterial({map:atlas,vertexColors:true,side:THREE.DoubleSide,alphaTest:.35}));

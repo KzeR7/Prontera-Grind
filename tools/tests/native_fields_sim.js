@@ -3,7 +3,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),THREE=require('three');
 const F=require('../../assets/native-fields.js'),root=path.resolve(__dirname,'../..'),src=fs.readFileSync(root+'/index.html','utf8');
 const catalog=JSON.parse(fs.readFileSync(root+'/assets/native-fields/v1/catalog.json'));
-const canvas=()=>({width:0,height:0,getContext:()=>({save(){},restore(){},translate(){},scale(){},beginPath(){},arc(){},stroke(){},createImageData(w,h){return{data:new Uint8ClampedArray(w*h*4)}},putImageData(){},drawImage(){},fillRect(){},clearRect(){},createPattern(){return{}},createRadialGradient(){return{addColorStop(){}}}})});
+const canvas=()=>({width:0,height:0,getContext:()=>({save(){},restore(){},translate(){},scale(){},rotate(){},clip(){},beginPath(){},arc(){},ellipse(){},moveTo(){},lineTo(){},quadraticCurveTo(){},closePath(){},stroke(){},fill(){},createImageData(w,h){return{data:new Uint8ClampedArray(w*h*4)}},putImageData(){},drawImage(){},fillRect(){},clearRect(){},createPattern(){return{}},createRadialGradient(){return{addColorStop(){}}},measureText(){return{width:0}},fillText(){}})});
 global.document={createElement:canvas};
 const scope={THREE,console,document:global.document,scene:new THREE.Group(),deco:new THREE.Group(),BX_:13,Z0:-28,Z1:12,S:{lvl:1},Map,Set};
 vm.createContext(scope);vm.runInContext(src.slice(src.indexOf('// ----- The map kit'),src.indexOf('// ----- Ragnarok-style 8-dir sprites'))+`;this.K={kitPlan,KIT};`,scope);

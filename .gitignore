@@ -8,3 +8,7 @@ node_modules/
 
 # Local endgame scenery browser captures and reports
 tools/preview/endgame-captures/
+
+# terrain-v2 review renders: regenerate with tools/maps/terrain-v2/render_floor.py +
+# render_floor_real.js. The summary boards are committed, the per-field 2048² floors are not.
+docs/proposals/terrain-v2/floor-*.png
