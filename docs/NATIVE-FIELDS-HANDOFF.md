@@ -98,11 +98,13 @@ the query to verify the choice did not persist. Omit `NATIVE_QUICK=1` for all
 the pipeline README. Previous full v195 checks cover the preserved geometry and
 pixels; physical-device frame rate has not been measured.
 
-## Composition pass (v234) — parked, not merged
+## Composition pass (v234) — merged, switched off
 
-**Status: parked on `arena/783b0e96-prontera-grind`, not merged, not deployed.**
-The owner asked to set this aside for another time. Nothing here changes the default
-(`NATIVE_FIELDS_DEFAULT=false`); nothing was pushed to `main`.
+**Status: merged to `main` and deliberately disabled.** The owner asked to land the work
+and keep the new maps aside for future edits. `NATIVE_FIELDS_DEFAULT=false` is unchanged, so
+ordinary play still uses the existing kit maps; the native fields load only with
+`?nativeFields=1`. The branch `arena/783b0e96-prontera-grind` is kept, and the merge was a real
+merge commit rather than a squash, so any single step can be reverted on its own.
 
 What the pass did, in one line each:
 
