@@ -585,18 +585,25 @@ for the room, API, Cloudflare runtime, browser and native asset checks.
 ## Social controls and artwork (v207)
 
 Run `social_sim.js`, `social_scene_sim.js`, `social_ui_sim.js`,
-`social_api_sim.mjs`, `fourth_job_skills_sim.js`, `display_polish_sim.js`,
+`social_api_sim.mjs`, `social_config_sim.js`, `fourth_job_skills_sim.js`, `display_polish_sim.js`,
 `panel_layout_smoke.js` and `publish_sim.js` under `tools/tests/`.
 The scene suite uses the real Three projection and model geometry with a renderer
 stub; it does not certify GPU pixels. Since v225 `social_sim.js` also checks the
-per-character plaza walk speed (shared clamp and server advance), `social_scene_sim.js`
+per-character plaza walk speed (shared clamp and server advance) and, since v236, the
+sliding idle window with its 30-minute re-authentication, `social_scene_sim.js`
 checks level-aura creation, movement and disposal, `social_ui_sim.js` checks the
-solo look payload, and `progression_effects_sim.js` checks the aura floor on raised
+dead-socket watchdog and the seat-preserving rejoin, the solo look payload, and `progression_effects_sim.js` checks the aura floor on raised
 Astral paving. `node tools/check_social_browser.cjs` checks
 two actual software WebGL sessions at 1440px and 390px, camera controls, close zoom,
 model-click seating, names/titles, transparent emotes, pointer/keyboard resizing and the integrated minimize line,
-background farming and channel isolation. Shared Preview can use the documented
-renderer stub for DOM/Canvas checks when its Chromium cannot create WebGL.
+background farming and channel isolation. `social_config_sim.js` is dependency-free
+and pins the Cloudflare wiring: the Pages `SOCIAL` binding and the Worker's script
+name, class and SQLite migration must agree, the Worker stays off `workers.dev`, and
+`preview_urls` + `[previews]` stay set so a branch preview has a URL at all (v235).
+The red branch check itself is a Cloudflare build setting, not a repo file: see
+[deploy steps §9](../tools/cloudflare-deploy-steps.md). Shared
+Preview can use the documented renderer stub for DOM/Canvas checks when its Chromium
+cannot create WebGL.
 
 Supplemental icon generation and exact-pixel checks are documented in
 [skill icons](../tools/native-skill-icons/README.md). Native emotion regeneration

@@ -49,5 +49,41 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  socket.onmessage({data:JSON.stringify({type:'room',room:1,players:[{id:9,name:'new',room:1,x:0,z:12,dir:0,sit:false,seat:null,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:0,title:''}}]})});
  assert.equal(scenePlayers.has(0),false,'multiplayer room join replaces solo placeholder');
  assert.equal(scenePlayers.get(9).name,'new');assert.equal(sceneCallbacks.self(),9);
- console.log('PASS chat UI: disconnected account cleanup, Local privacy on exit, Emoji gate, recipient control, minimize, history cap, solo/preview plaza fallback and text-only message rendering');dom.window.close();
+ // v236: a socket that stops answering is spotted and replaced, and the server's planned
+ // re-authentication keeps the plaza on screen and puts the player back in their seat.
+ let liveDate=1e12;const realNow=Date.now;w.Date.now=()=>liveDate;
+ const sockets=[];w.WebSocket=class{constructor(){sockets.push(this);socket=this;this.readyState=1;this.sent=[];this.closed=null}close(){this.readyState=3;this.closed=(this.closed??'client')}send(m){this.sent.push(JSON.parse(m))}};
+ socket.onmessage({data:JSON.stringify({type:'room',room:1,players:[{id:9,name:'new',room:1,x:0,z:12,dir:0,sit:true,seat:3,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:0,title:''}}]})});
+ app.connected=true;app.id=9;app.room=1;app.lastSeen=liveDate;
+ const before=sockets.length;
+ w.sessionTick();w.sessionTick();assert.equal(sockets.length,before,'a socket that is still answering is left alone');
+ liveDate+=25000;w.sessionTick();assert(socket.sent.at(-1).type==='ping','silence past the watchdog window asks for one ping');
+ assert.equal(sockets.length,before,'the probe does not reconnect on its own');
+ liveDate+=7000;w.sessionTick();assert.equal(app.socket,null,'an unanswered probe drops the dead socket');
+ assert.equal(app.room,1,'the plaza stays on screen while the dead socket is replaced');
+ assert.equal(app.resume.seat,3,'the seat survives the replacement');
+ w.sessionTick();assert.equal(sockets.length,before+1,'a dead socket is replaced within one beat');
+ socket.onmessage({data:JSON.stringify({type:'hello',id:9,history:[]})});
+ socket.onmessage({data:JSON.stringify({type:'room',room:1,players:[{id:9,name:'new',room:1,x:0,z:12,dir:0,sit:true,seat:3,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:0,title:''}}]})});
+ assert(socket.sent.some(m=>m.type==='seat'&&m.id===3),'the rejoin asks for the same bench');
+ assert.equal(app.resume,null,'the saved seat is used once');
+ // A planned refresh is the server's 4000 close: reconnect at once, no failure message, no reset.
+ app.room=1;app.lastSeen=liveDate;socket.onmessage({data:JSON.stringify({type:'reauth'})});
+ assert.equal(app.socket,null,'the reauth notice drops the socket before the server closes it');
+ assert.equal(app.room,1,'a planned refresh does not empty the plaza');
+ liveDate+=1000;w.sessionTick();assert.equal(sockets.length,before+2,'a planned refresh reconnects immediately');
+ const player=[{id:9,name:'new',room:1,x:0,z:12,dir:0,sit:true,seat:3,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:0,title:''}}];
+ socket.onmessage({data:JSON.stringify({type:'hello',id:9,history:[]})});
+ socket.onmessage({data:JSON.stringify({type:'room',room:1,players:player})});
+ assert.equal(app.connected,true);assert(socket.sent.some(m=>m.type==='seat'&&m.id===3),'the reconnect reseats');
+ // ...and the same close arriving without the notice (a server on the older build) behaves the same.
+ socket.onclose({code:4000});
+ assert.equal(app.room,1,'a 4000 close keeps the plaza on screen too');
+ assert.equal(app.connected,false);
+ assert.equal(app.resume.seat,3,'a 4000 close remembers the bench');
+ assert(!/unavailable/i.test(w.document.getElementById('socialConnection').textContent),'a planned refresh is never reported as a failure');
+ assert.equal(app.nextConnect,0,'a planned refresh does not back off');
+ w.WebSocket=class{constructor(u){wsUrl=u;socket=this;this.readyState=1;this.sent=[]}close(){}send(m){this.sent.push(JSON.parse(m))}};
+ w.Date.now=realNow;
+ console.log('PASS chat UI: dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local privacy on exit, Emoji gate, recipient control, minimize, history cap, solo/preview plaza fallback and text-only message rendering');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1)});

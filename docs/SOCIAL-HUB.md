@@ -54,9 +54,24 @@ The server validates each character's reported walk speed (2–13 u/s) and level
 from the existing session, never a client payload. Input is bounded and displayed
 as text. Messages and emotions share a three-second cooldown across channels, enforced by
 the client and server; movement, chair selection and sitting are bounded to ten
-commands per second. Connections reauthenticate
-through Pages every five minutes. Another tab replaces the account's old socket;
+commands per second. Another tab replaces the account's old socket;
 the replaced tab stays disconnected until reload. Disconnects remove presence.
+
+**Two clocks, since v236.** A connection used to be closed five minutes after it
+opened no matter how busy it was, so every player was bounced once per five
+minutes. The age of a connection is now only a security bound: it has to go back
+through Pages (which re-checks the session and the ban flag) every **30 minutes**.
+That refresh is announced to the client first, so the socket is replaced and the
+player rejoins their plaza and bench without a failure message or a cleared room.
+Separately, a connection that says nothing for **five minutes** is swept, which is
+what clears half-open sockets; every frame the player sends slides that window
+forward, so an active player is never swept.
+
+The client also watches its own socket. If the server has been silent for 20
+seconds it asks for one ping/pong round trip and gives the answer six seconds to
+arrive; when it does not, the socket is treated as dead and replaced at the next
+beat, keeping the plaza and the seat. Without this a socket that died silently
+still reported itself as open, and chat stayed quiet until the page was reloaded.
 
 ## Runtime and production configuration
 
@@ -82,6 +97,26 @@ when the Durable Object restarts; clients reconnect and rejoin. This first servi
 uses one coordinating Durable Object for the world and numbered plazas, intended
 for the current small community rather than an unbounded global population.
 
+**Branch builds (v235).** Two settings decide whether a feature branch gets a
+green *Workers Builds: prontera-social* check; production (`main`) is green either
+way, so read both before debugging chat.
+
+1. The service's build must run against **this** file. A bare
+   `npx wrangler versions upload` in the repo root finds the Pages config there and
+   fails instantly with *Missing entry-point to Worker script or to assets
+   directory* — that is the red check on every PR. Set the Worker's root directory
+   to `workers/social`, or give the non-production deploy command
+   `npx wrangler versions upload --config workers/social/wrangler.toml`.
+2. `preview_urls = true` and an empty `[previews]` block are set here because
+   Cloudflare defaults preview URLs to *match* `workers_dev`, which is `false` for
+   this Worker (it has no public ingress). Without them a branch build has no
+   preview URL to publish. Previews expose nothing new: the script's default
+   handler is a 404 and the Durable Object is reachable only through the Pages
+   binding.
+
+`tools/tests/social_config_sim.js` pins both files' agreement on the script name,
+class, migration and those preview settings.
+
 ## Local preview and checks
 
 Use Node 24 and the existing test dependencies; add `ws` for the local WebSocket
@@ -103,7 +138,9 @@ node tools/tests/social_sim.js
 node tools/tests/social_ui_sim.js
 node tools/tests/social_scene_sim.js
 node tools/tests/social_api_sim.mjs
+node tools/tests/social_config_sim.js
 npx wrangler deploy --dry-run --config workers/social/wrangler.toml --outdir /tmp/social-worker-build
+npx wrangler versions upload --config workers/social/wrangler.toml --dry-run
 node tools/tests/social_worker_sim.mjs
 node tools/check_social_browser.cjs
 ```

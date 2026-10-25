@@ -111,7 +111,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-25 haven-v234 composed detail` |
+| Build tag at the bottom of the card | `2026-10-25 haven-v236 chat reconnects` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
@@ -189,7 +189,69 @@ first thing to look at is how many tabs are left open: each one syncs while hidd
 the town atlas and index.html itself. Static file requests are free and unlimited on every plan, so
 "the download is big" is a player's data plan, never a bill. The card is the only place worth looking.
 
-## If you lose the owner (GM) account
+## 9. World chat: the Fountain Plaza worker
+
+World chat is the one part of the game that is not a Pages Function. It is a separate Worker with a
+Durable Object (`workers/social/`), and Pages reaches it privately through the `SOCIAL` binding in the
+root `wrangler.toml`. **Deploy the worker first, then publish Pages** — a Pages site whose binding
+points at a worker that does not exist fails to deploy, and a worker that exists without the binding
+leaves chat saying *unavailable* while the rest of the game plays normally.
+
+In the dashboard (**Workers & Pages → Create → Worker**):
+
+1. Name it **`prontera-social`** — exactly that. The root `wrangler.toml` binds it by that name
+   (`script_name`), and `tools/tests/social_config_sim.js` fails if the two files disagree.
+2. Connect it to this GitHub repository, production branch **`main`**.
+3. Build settings — **these two commands must point at the worker's own config**, because the repo
+   root holds the *Pages* `wrangler.toml` (which has no Worker entry point):
+
+   | Field | Value |
+   |---|---|
+   | Root directory | `workers/social` |
+   | Build command | *(empty)* |
+   | Deploy command | `npx wrangler deploy` |
+   | Non-production deploy command | `npx wrangler versions upload` |
+
+   If you would rather leave the root directory at the repository root, then both commands need the
+   config path: `npx wrangler deploy --config workers/social/wrangler.toml` and
+   `npx wrangler versions upload --config workers/social/wrangler.toml`. The non-production command
+   is the one that matters most: it is the **only** reason a branch build goes red, and leaving it
+   at its default while the production command is customized is the exact shape of that failure
+   (production green, every PR red, the build failing within seconds).
+4. Deploy. It has no public route on purpose (`workers_dev = false`): the only way in is the
+   `SOCIAL` binding from Pages, and its own `fetch` answers 404 to anything else.
+5. Then let Pages deploy as usual (§3, or merge to `main`).
+
+`workers/social/wrangler.toml` also sets `preview_urls = true` and an empty `[previews]` block. That
+is deliberate: Cloudflare defaults preview URLs to *match* `workers_dev`, which is `false` here, so
+without them a branch build has no preview URL to publish. Previews only publish `*.workers.dev`
+version URLs for branch builds; this script's default handler is a 404 and the Durable Object stays
+reachable only through the Pages binding, so nothing new becomes public. Keep both lines — but do not
+expect them alone to turn the branch check green; the command in step 3 is what does that.
+
+Checks that do not need an account: `npx wrangler deploy --dry-run --config workers/social/wrangler.toml`
+and `npx wrangler versions upload --config workers/social/wrangler.toml --dry-run` (the second is the
+one a feature-branch build runs). The database needs no extra migration for chat.
+
+**Which of the two is failing here?** The build log is behind the *View logs* link on the PR comment
+(`cloudflare-workers-and-pages` bot), and only the dashboard holds the text. Match it to the fix:
+
+| Build log says | Fix |
+|---|---|
+| `Missing entry-point to Worker script or to assets directory` | Step 3: the command is running in the repo root. Set the root directory to `workers/social`, or add `--config workers/social/wrangler.toml` to the non-production deploy command. |
+| Anything about preview URLs, `workers.dev`, or previews being disabled | Previews have to be switched on for the Worker itself. `wrangler deploy` writes that state from `preview_urls = true` — so a production deploy of this repo (merge to `main`) is what turns it on; until one has run with those lines, branch builds stay red. |
+
+**Reading the check.** *Workers Builds: prontera-social* is the `workers/social` build, and it runs
+twice per PR: once for the branch (a preview version, no production effect) and once for `main` after
+merge. A branch-only red is a build-setting problem, never a chat bug. *Cloudflare Pages* is the game
+itself.
+
+**If chat says "unavailable":** `503 Social service is not configured` in the browser's Network panel
+means the Pages project has no `SOCIAL` binding; `401` means the player is not signed in; `403` means
+the `Origin` did not match the page's own host. A green production build with a red branch build is
+the preview setting above, not a chat fault.
+
+
 
 The owner is **the first account registered against that database** (`users.gm = 2`); every later
 account is a normal player. There are three separate ways back in, in order of how fast they are:
