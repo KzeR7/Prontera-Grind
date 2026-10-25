@@ -9,6 +9,11 @@ This folder keeps the review material. The live effect system is `assets/boss-fx
 is `/bossfx` (`tools/boss_fx_preview.html`); `sheet-all-moves.png` is one representative frame of
 every move, rendered straight from the module by `tools/render_boss_fx_sheet.js`.
 
+The second, stricter review sheet is generated on demand instead of being committed (it is ~14 MB at
+full height): `node tools/render_boss_fx_field_sheet.js out.png` composites every move over the real
+Prontera field capture at true game scale, one row per move. Crispness and "does this leave a hard
+edge on the ground" can only be judged against the actual field, not against a transparent plate.
+
 ## The roster
 
 | # | Map | Boss | Tier | Move 1 | Move 2 |
@@ -61,4 +66,24 @@ node tools/render_boss_fx_sheet.js Updates/boss-skill-fx/sheet-all-moves.png 0.4
 ```
 
 The third argument is the fraction of each move's life to capture (0.46 is roughly the impact frame).
+The field sheet is produced by `tools/render_boss_fx_field_sheet.js`; it draws each move over
+`tools/skill-fx-proposals/prontera-field.webp` at the game's reference camera.
+
+```sh
+node tools/render_boss_fx_field_sheet.js /tmp/sheet-field.png          # all 24 moves
+node tools/render_boss_fx_field_sheet.js /tmp/tide.png kk_tide,kk_tentacle 3 250
+```
+
+## Crispness rules the module now follows
+
+* Ground contact is an additive, heavily feathered `pool()` - never a flat `disc()` and never a dark
+  plate, which is what painted a hard ellipse (with a visible rim) under the boss.
+* Every closed shape gets a thin dark `contour()` plus a `hotEdge()` hairline, so it separates from
+  bright grass without a fat black outline.
+* Widths are floored in device pixels (`minW`), so hairlines stay hairlines instead of blurring.
+* Slashes are built from one saturated body, one light band and one hot core - not stacked
+  translucent ribbons, which read as a smear.
+* Cracks taper to a hairline at the tip and each segment is stroked separately.
+* A ring or fill style is never allowed to be a non-string; the canvas silently keeps the previous
+  colour when it is, which is how a black ellipse appeared on Anchor Typhoon.
 `node tools/tests/boss_fx_sim.js` is the regression suite; `/bossfx` plays all of it live.

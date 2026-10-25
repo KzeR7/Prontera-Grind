@@ -20,8 +20,19 @@ const PGBossFx=(()=>{
   const out=t=>1-Math.pow(1-cl(t),3);
   const inQ=t=>cl(t)*cl(t)*cl(t);
   const hash=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453123;return x-Math.floor(x)};
-  const rgb=hex=>{const h=String(hex||'#ffffff').replace('#',''),v=h.length===3?[...h].map(x=>x+x).join(''):h;
-    return [parseInt(v.slice(0,2),16)||0,parseInt(v.slice(2,4),16)||0,parseInt(v.slice(4,6),16)||0]};
+  // Accepts '#abc', '#aabbcc' AND the 'rgb(...)'/'rgba(...)' strings this module itself produces.
+  // (darken()/lighten() return rgb() strings; feeding one back into rgba() used to parse as black,
+  // which is what turned several bright bands into heavy black stripes.)
+  const rgb=value=>{
+    if(Array.isArray(value))return value.map(v=>cl(Math.round(+v)||0,0,255));
+    const str=String(value==null?'#ffffff':value).trim();
+    if(/^rgba?\(/i.test(str)){
+      const n=(str.match(/[\d.]+/g)||[]).map(Number);
+      return [n[0]||0,n[1]||0,n[2]||0].map(v=>cl(Math.round(v),0,255));
+    }
+    const h=str.replace('#',''),v=h.length===3?[...h].map(x=>x+x).join(''):h;
+    return [parseInt(v.slice(0,2),16)||0,parseInt(v.slice(2,4),16)||0,parseInt(v.slice(4,6),16)||0];
+  };
   const rgba=(hex,a=1)=>{const c=rgb(hex);return `rgba(${c[0]},${c[1]},${c[2]},${cl(a)})`};
   const lighten=(hex,k=.5)=>{const c=rgb(hex);return `rgb(${c.map(v=>Math.round(v+(255-v)*k)).join(',')})`};
   const darken=(hex,k=.45)=>{const c=rgb(hex);return `rgb(${c.map(v=>Math.round(v*(1-k))).join(',')})`};
@@ -91,13 +102,15 @@ const PGBossFx=(()=>{
     if(glowCache.has(key))return glowCache.get(key);
     let cv=null;
     if(typeof document!=='undefined'&&document.createElement){
-      cv=document.createElement('canvas');cv.width=cv.height=96;
+      // 192px with a tight falloff: a light source with a readable centre, not a milky haze.
+      cv=document.createElement('canvas');cv.width=cv.height=192;
       const x=cv.getContext('2d');
       if(x){
-        const r=x.createRadialGradient(48,48,0,48,48,48);
-        r.addColorStop(0,rgba(core,1));r.addColorStop(.12,rgba(hex,.95));
-        r.addColorStop(.34,rgba(hex,.42));r.addColorStop(.68,rgba(hex,.1));r.addColorStop(1,rgba(hex,0));
-        x.fillStyle=r;x.fillRect(0,0,96,96);
+        const r=x.createRadialGradient(96,96,0,96,96,96);
+        r.addColorStop(0,rgba(core,1));r.addColorStop(.07,rgba(hex,.96));
+        r.addColorStop(.18,rgba(hex,.52));r.addColorStop(.42,rgba(hex,.14));
+        r.addColorStop(.72,rgba(hex,.03));r.addColorStop(1,rgba(hex,0));
+        x.fillStyle=r;x.fillRect(0,0,192,192);
       }
     }
     glowCache.set(key,cv);return cv;
@@ -117,6 +130,11 @@ const PGBossFx=(()=>{
       const g=canvas&&canvas.getContext?canvas.getContext('2d'):null;
       if(!g)return null;
       let quality=1,detail=1;
+      // Device pixels per design unit, set by draw(). Stroke widths are clamped to at least one
+      // device pixel so a thin outline stays a crisp line instead of a translucent smear when the
+      // camera is far out or the screen is dense.
+      let pxPerUnit=1;
+      const minW=w=>Math.max(w,1.15/Math.max(.06,pxPerUnit));
 
       // ---- primitives -------------------------------------------------------------------
       function glow(x,y,r,hex,a=1,ry=1,core='#ffffff'){
@@ -137,13 +155,39 @@ const PGBossFx=(()=>{
         if(stroke){g.strokeStyle=stroke;g.lineWidth=w;g.lineJoin='round';g.stroke()}
         g.restore();
       }
-      function stroke(pts,color,w,a=1,blend='lighter'){
+      function stroke(pts,color,w,a=1,blend='lighter',cap='round'){
         if(a<=0||pts.length<2)return;
         g.save();g.globalCompositeOperation=blend;g.globalAlpha*=cl(a);
-        g.strokeStyle=color;g.lineWidth=Math.max(.1,w);g.lineCap='round';g.lineJoin='round';
+        g.strokeStyle=color;g.lineWidth=minW(w);g.lineCap=cap;g.lineJoin='round';
         g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();g.restore();
       }
       function line(a,b,color,w,alpha=1){stroke([a,b],color,w,alpha)}
+      // A grounded contact patch: a radial gradient that fades to nothing before its rim, so it can
+      // never draw the hard elliptical edge a flat fill leaves on the ground. Every pattern used to
+      // open with a flat `disc`, which read as a grey plate with a visible bottom line.
+      function pool(rx,hex,a=.3,ry=.26,cy=0,cx=0){
+        if(a<=.004||rx<=0)return;
+        const safe=cl(a,0,1)*.82;
+        g.save();
+        const grad=g.createRadialGradient(cx,cy,Math.max(1,rx*.05),cx,cy,Math.max(2,rx));
+        grad.addColorStop(0,rgba(hex,safe));
+        grad.addColorStop(.3,rgba(hex,safe*.62));
+        grad.addColorStop(.55,rgba(hex,safe*.3));
+        grad.addColorStop(.74,rgba(hex,safe*.11));
+        grad.addColorStop(.88,rgba(hex,safe*.03));
+        grad.addColorStop(1,rgba(hex,0));
+        g.fillStyle=grad;g.beginPath();g.ellipse(cx,cy,Math.max(.1,rx),Math.max(.1,rx*ry),0,0,TAU);g.fill();
+        g.restore();
+      }
+      // A dark contour plus a one-pixel hot edge: what makes a shape read as a shape at game scale.
+      function contour(pts,hex,w=2,a=.6){
+        if(a<=0||pts.length<2)return;
+        stroke(pts,rgba(darken(hex,.86),a),Math.max(.9,w),a,'source-over','butt');
+      }
+      function hotEdge(pts,w=1,a=.9,hex='#ffffff'){
+        if(a<=0||pts.length<2)return;
+        stroke(pts,rgba(hex,a),Math.max(.55,w),a,'lighter','butt');
+      }
       // A tapered flat ribbon: the workhorse for slashes, waves, tails and dragon bodies.
       function ribbon(pts,w,fill,a=1){
         if(a<=0||pts.length<2)return;
@@ -162,20 +206,39 @@ const PGBossFx=(()=>{
       // Broad coloured body + narrow white-hot core, both tapered.
       // `w` is either a half-width in design units or a callback of the path parameter, so a
       // slash can taper along its own curve. Both forms are normalised here.
+      // A slash is built to stay legible: a dark contour, one saturated body, a narrow core and a
+      // crisp hot line down the middle. The old version stacked two wide translucent ribbons, which
+      // read as a pink smear on bright grass.
       function blade(pts,w,hex,a=1,core='#ffffff'){
         if(a<=0||pts.length<2)return;
         const half=typeof w==='function'?q=>cl(w(q),0,1e4):()=>w;
         const taper=(q,p)=>half(q)*Math.pow(Math.sin(Math.PI*cl(q)),p);
-        // Dark contour instead of a wide dark band: keeps the slash readable on pale ground
-        // without turning it into a grey stripe.
-        stroke(pts,rgba(darken(hex,.8),a*.45),Math.max(1.6,taper(.5,.62)*.95),a*.6,'source-over');
-        ribbon(pts,q=>taper(q,.62)*1.5,rgba(hex,a*.2));
-        ribbon(pts,q=>taper(q,.62),rgba(hex,a*.92));
-        ribbon(pts,q=>taper(q,.7)*.3,rgba(core,a*.95));
+        // Thin contour for separation, then one saturated body, a bright inner band and a hot core
+        // line. Saturation and contrast - not a wide black outline - are what make it read as a cut.
+        contour(pts,hex,Math.max(1.2,taper(.45,.6)*.42),a*.5);
+        ribbon(pts,q=>taper(q,.55)*1.9,rgba(hex,a*.11));
+        ribbon(pts,q=>taper(q,.55),rgba(hex,a*.97));
+        ribbon(pts,q=>taper(q,.66)*.5,rgba(lighten(hex,.42),a*.92));
+        ribbon(pts,q=>taper(q,.7)*.2,rgba(core,a));
+        hotEdge(pts,Math.max(.8,taper(.5,.62)*.26),a*.95,core);
+      }
+      // A volumetric ribbon: contour, saturated body, offset specular and a fine core. Used where a
+      // wave or a tentacle has to read as an object rather than a flat colour band.
+      function body(pts,w,hex,a=1,core='#ffffff'){
+        if(a<=0||pts.length<2)return;
+        const width=typeof w==='function'?w:(()=>w);
+        contour(pts,hex,Math.max(1.2,width(.5)*.22),a*.55);
+        ribbon(pts,width,rgba(hex,a*.95));
+        ribbon(pts,q=>width(q)*.5,rgba(lighten(hex,.28),a*.55));
+        ribbon(pts,q=>width(q)*.16,rgba(lighten(hex,.62),a*.45));
+        hotEdge(pts,Math.max(.7,width(.5)*.12),a*.6,core);
       }
       function ring(x,y,r,color,a=1,w=2,rot=0,start=0,end=TAU,ry=.27){
         if(a<=0||r<=0)return;
-        g.save();g.globalAlpha*=cl(a);g.strokeStyle=color;g.lineWidth=Math.max(.1,w);
+        // An argument shifted by one used to leave strokeStyle as a number, which the canvas
+        // silently ignores - the ring then inherits whatever colour was set last (usually black).
+        const col=typeof color==='string'?color:rgba('#ffffff',a*.5);
+        g.save();g.globalAlpha*=cl(a);g.strokeStyle=col;g.lineWidth=minW(w);
         g.beginPath();g.ellipse(x,y,Math.max(.1,r),Math.max(.1,r*ry),rot,start,end);g.stroke();g.restore();
       }
       function disc(x,y,rx,ry,color,a=1){
@@ -213,9 +276,14 @@ const PGBossFx=(()=>{
             const q=j/seg,off=(hash(base+j*5)-.5)*max*.24;
             pts.push([x+Math.cos(ang)*max*q+Math.cos(ang+Math.PI/2)*off,y+Math.sin(ang)*max*q*.34+Math.sin(ang+Math.PI/2)*off*.34]);
           }
-          stroke(pts,rgba(darken(hex,.55),a*.85),3.4*grow,1);
-          stroke(pts,rgba(hex,a*.9),1.6*grow,1);
-          stroke(pts,rgba('#ffffff',a*.5),.6*grow,1);
+          // Drawn segment by segment so each crack tapers to a hairline at its tip. A constant-width
+          // web of bright lines reads as scribble, not as broken ground.
+          for(let j=0;j<pts.length-1;j++){
+            const w0=1-cl(j/(pts.length-1))*.72;
+            line(pts[j],pts[j+1],rgba(darken(hex,.55),a*.75),3.2*grow*w0,.9);
+            line(pts[j],pts[j+1],rgba(hex,a*.85),1.5*grow*w0,.9);
+            if(j<2)line(pts[j],pts[j+1],rgba('#ffffff',a*.4),.55*grow*w0,.9);
+          }
         }
       }
       // Digital tear: horizontal bars offset in RGB, used by the tier-3 fracture moves.
@@ -253,7 +321,7 @@ const PGBossFx=(()=>{
       // Perspective rune: flat concentric mechanics on the ground, with optional star polygon.
       function rune(x,y,r,t,hex,a=1,sides=6,spin=1,star=true){
         if(a<=0)return;
-        disc(x,y,r*1.02,r*.28,rgba(darken(hex,.8),a*.34));
+        pool(r*1.02,darken(hex,.8),a*.3,.27,y,x);
         ring(x,y,r,rgba(hex,a*.55),a*.8,2);
         ring(x,y,r*.76,rgba(hex,a*.4),a*.5,1,0,0,TAU,.27);
         const pts=[];
@@ -279,8 +347,10 @@ const PGBossFx=(()=>{
         const grad=g.createLinearGradient(0,y,0,y-h);
         grad.addColorStop(0,rgba(hex,a*.85));grad.addColorStop(.45,rgba(hex,a*.5));grad.addColorStop(1,rgba(hex,0));
         const pts=[[x-w,y],[x-w*.35,y-h],[x+w*.35,y-h],[x+w,y]];
-        poly(pts,grad,a,hex,a*.35);
-        line([x,y],[x,y-h],rgba('#ffffff',a*.6),Math.max(.7,w*.16),a*.9);
+        poly(pts,grad,a);
+        contour([[x-w,y],[x-w*.35,y-h],[x+w*.35,y-h],[x+w,y]],hex,Math.max(1.1,w*.12),a*.5);
+        hotEdge([[x-w*.35,y-h],[x+w*.35,y-h]],Math.max(.9,w*.2),a*.8);
+        line([x,y],[x,y-h],rgba('#ffffff',a*.7),Math.max(.8,w*.18),a*.95);
         glow(x,y-h*.55,w*2.2,hex,a*.32,2.1);
       }
       function flame(x,y,size,hex,accent,a=1,t=0){
@@ -297,8 +367,12 @@ const PGBossFx=(()=>{
         if(a<=0)return;
         g.save();g.translate(x,y);g.rotate(rot);g.globalAlpha*=cl(a);
         const shape=()=>{g.beginPath();g.moveTo(0,0);g.bezierCurveTo(size*.75,-size*.55,size*.9,size*.2,0,size*.85);g.bezierCurveTo(-size*.55,size*.25,-size*.5,-size*.4,0,0);g.closePath()};
-        if(edge){g.strokeStyle=rgba(edge,cl(a*.9));g.lineWidth=Math.max(1,size*.22);shape();g.stroke()}
+        if(edge){g.strokeStyle=rgba(edge,cl(a*.95));g.lineWidth=Math.min(size*.3,minW(size*.26));shape();g.stroke()}
         g.fillStyle=rgba(hex,a);shape();g.fill();
+        // A short bright crease down the petal: reads as a petal, not a dot, at game scale.
+        g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ffffff',a*.5);
+        g.lineWidth=Math.min(size*.16,minW(size*.1));
+        g.beginPath();g.moveTo(0,size*.06);g.quadraticCurveTo(size*.1,size*.34,size*.02,size*.7);g.stroke();
         g.restore();
       }
       function arrow(x,y,ang,size,hex,a=1){
@@ -319,19 +393,11 @@ const PGBossFx=(()=>{
       // (Prontera green, Izlude surf) otherwise swallow additive light; this is a colour grade, not
       // an opaque card, so the terrain and the hero stay visible under it.
       function stageWash(s,t,a){
-        const tier=s.tier,rad=150+s.tierScale*70,fade=Math.pow(1-cl(t/(s.life*.92)),.7)*a;
-        if(fade<=.01)return;
-        g.save();
-        const grad=g.createRadialGradient(0,-6,10,0,-6,rad);
-        grad.addColorStop(0,rgba(darken(s.colors[0],.62),.26*fade));
-        grad.addColorStop(.45,rgba(darken(s.colors[0],.55),.13*fade));
-        grad.addColorStop(.78,rgba(s.colors[3]||s.colors[0],.09*fade));
-        grad.addColorStop(1,rgba(s.colors[3]||s.colors[0],0));
-        g.fillStyle=grad;g.beginPath();g.ellipse(0,-6,rad,rad*.26,0,0,TAU);g.fill();
-        // A rim of the boss's own colour keeps the pool from reading as grey smoke.
-        ring(0,-6,rad*.92,rgba(s.colors[1],.16*fade),1,1.4+tier*.6,0,0,TAU,.34);
-        if(tier>=2)glow(0,-10,rad*.7,s.colors[0],.1*fade,1,.05);
-        g.restore();
+        const fade=Math.pow(1-cl(t/(s.life*.95)),.8)*a;
+        if(fade<=.02)return;
+        // Contact light only: a small additive glow under the boss. Nothing tints or darkens the
+        // field itself, so the terrain keeps its own colour and the effect keeps its definition.
+        glow(0,-4,120+s.tierScale*54,s.colors[0],.1*fade,1,.06);
       }
       // Luminous shapes get a dark outer rim so they keep their silhouette on pale terrain.
       function rim(pts,hex,a=.5,w=3){
@@ -344,7 +410,7 @@ const PGBossFx=(()=>{
       // Prontera · Mastering
       P.jellyBarrage=(s,t)=>{
         const [c1,c2,core]=s.colors,q=t/s.life,a=1-cl((q-.86)/.14);
-        disc(0,0,250,68,rgba('#2a4a1a',.34*a));
+        pool(250,'#2a4a1a',.34*a);
         glow(0,-90,130,c1,.2*a,1.1);
         const n=9;
         for(let i=0;i<n;i++){
@@ -357,7 +423,11 @@ const PGBossFx=(()=>{
           // squash on impact, stretch mid-flight
           const st2=1+arc*.22;
           g.save();g.translate(x,y-bounce);g.rotate(fall*2+i);g.scale(st2,2-st2);
-          poly([[-r,0],[-r*.72,-r*.92],[0,-r*1.24],[r*.82,-r*.82],[r,0],[r*.62,r*.72],[0,r*.94],[-r*.72,r*.62]],rgba(c1,.78),1,rgba(darken(c1,.45),.85),2.2);
+          const jshape=[[-r,0],[-r*.72,-r*.92],[0,-r*1.24],[r*.82,-r*.82],[r,0],[r*.62,r*.72],[0,r*.94],[-r*.72,r*.62]];
+          const jgrad=g.createRadialGradient(-r*.28,-r*.52,r*.1,0,0,r*1.35);
+          jgrad.addColorStop(0,rgba(lighten(c1,.5),.95));jgrad.addColorStop(.45,rgba(c1,.9));
+          jgrad.addColorStop(1,rgba(darken(c1,.3),.92));
+          poly(jshape,jgrad,1,rgba(darken(c1,.55),.9),2.4);
           poly([[-r*.34,0],[-r*.2,-r*.7],[r*.16,-r*.5],[r*.34,0],[r*.16,r*.5],[-r*.2,r*.34]],rgba(core,.5),1);
           poly([[-r*.5,-r*.5],[r*.05,-r*.78],[-r*.12,-r*.28]],rgba('#ffffff',.75),1);
           g.restore();
@@ -370,13 +440,23 @@ const PGBossFx=(()=>{
       P.kingsBounce=(s,t)=>{
         const [c1,c2,core,accent]=s.colors,a=1-cl((t/s.life-.88)/.12),p=out(cl(t/.42));
         const yBase=-20,yTop=-330,drop=t<.42?lerp(yTop,yBase,inQ(cl(t/.42))):yBase;
-        disc(0,0,300,80,rgba(c1,.12*a));
+        pool(300,c1,.12*a);
         rune(0,0,190*(0.5+.5*p),t,c1,a*.6,8,1.2,true);
         // crown
         g.save();g.translate(0,drop);g.rotate(Math.sin(t*5)*.03);
         const w=112,h=64;
-        poly([[-w,-h*.2],[-w*.72,-h],[-w*.3,-h*.45],[0,-h*1.15],[w*.3,-h*.45],[w*.72,-h],[w,-h*.2]],rgba(c2,a*.35),1,rgba(core,a*.9),2);
-        poly([[-w,-h*.2],[w,-h*.2],[w*.86,h*.35],[-w*.86,h*.35]],rgba(c1,a*.25),1,rgba(c2,a*.9),1.6);
+        const crown=[[-w,-h*.2],[-w*.72,-h],[-w*.3,-h*.45],[0,-h*1.15],[w*.3,-h*.45],[w*.72,-h],[w,-h*.2]];
+        const cg=g.createLinearGradient(0,-h*1.15,0,h*.1);
+        cg.addColorStop(0,rgba(lighten(c2,.45),a*.98));cg.addColorStop(.55,rgba(c2,a*.98));
+        cg.addColorStop(1,rgba(darken(c2,.35),a*.98));
+        poly(crown,cg,1,rgba(darken(c2,.55),a*.95),2);
+        contour(crown,lighten(c2,.15),Math.max(1.6,w*.05),a*.9);
+        hotEdge([[-w*.72,-h],[0,-h*1.15],[w*.72,-h]],Math.max(1.2,w*.03),a*.85,core);
+        const band=[[-w,-h*.2],[w,-h*.2],[w*.86,h*.35],[-w*.86,h*.35]];
+        const bg=g.createLinearGradient(0,-h*.2,0,h*.35);
+        bg.addColorStop(0,rgba(lighten(c1,.25),a*.9));bg.addColorStop(1,rgba(darken(c1,.4),a*.95));
+        poly(band,bg);contour(band,darken(c2,.3),Math.max(1.3,w*.04),a*.8);
+        hotEdge([[-w,-h*.2],[w,-h*.2]],Math.max(1,w*.028),a*.7,core);
         for(const [gx,gy] of [[-.72,-.5],[0,-1.12],[.72,-.5]])sparkle(gx*w,gy*h,13,accent,a*.9,t);
         glow(0,-h*.2,w*1.9,accent,a*.35,1);
         g.restore();
@@ -394,11 +474,11 @@ const PGBossFx=(()=>{
       // Izlude · Drake
       P.anchorTyphoon=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.85)/.15),slam=cl((t-.55)/.28);
-        disc(0,0,330,88,rgba(deep,.3*a));
+        pool(330,deep,.3*a);
         rune(0,0,240,t,c1,a*.35,8,1.3,false);
         for(let i=0;i<3;i++){
           const an=t*2.4+i*TAU/3,rr=120+i*34;
-          ring(0,-14,rr,rr,rgba(c1,a*.5),a*.6,2.4+t%1,an,an+2.4,.3);
+          ring(0,-14,rr,rgba(c1,a*.5),a*.6,2.4+t%1,an,an+2.4,.3);
           glow(Math.cos(an)*rr,-14+Math.sin(an)*rr*.3,24,c2,a*.55,1);
           for(let j=0;j<6;j++){const q=an+j*.4;glow(Math.cos(q)*rr,-14+Math.sin(q)*rr*.3,4,c1,a*.35,1)}
         }
@@ -409,8 +489,8 @@ const PGBossFx=(()=>{
         stroke([[0,-92],[0,96]],rgba(c2,a*.9),7,a*.9);
         stroke([[0,-92],[0,96]],rgba(core,a*.55),2,a*.8);
         line([-42,-66],[42,-66],rgba(c2,a*.85),5,a*.9);
-        ring(0,-104,20,24,rgba(c1,a*.5),a*.8,3);
-        ring(0,-104,9,12,rgba(core,a*.7),a*.9,2);
+        ring(0,-104,24,rgba(c1,a*.5),a*.8,3,0,0,TAU,.84);
+        ring(0,-104,10,rgba(core,a*.7),a*.9,2,0,0,TAU,.84);
         for(const side of [-1,1]){
           const pts=[];for(let i=0;i<=18;i++){const q=i/18,an=lerp(-.25,Math.PI*.92,q);pts.push([side*Math.cos(an)*84,q*52+22+Math.sin(an)*26])}
           stroke(pts,rgba(deep,a*.7),9,a*.8,'source-over');
@@ -436,14 +516,16 @@ const PGBossFx=(()=>{
       P.cutlassCross=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.84)/.16);
         const p1=out(cl(t/.3)),p2=out(cl((t-.14)/.3));
-        disc(0,0,340,92,rgba(deep,.14*a));
-        const sweep=(dir,p,off)=>{
-          const pts=[];for(let i=0;i<=22;i++){const q=i/22*Math.min(1,p*1.05);const an=lerp(-2.3,.55,q),rr=lerp(60,520,Math.sin(q*Math.PI*.8));
-            pts.push([dir*Math.cos(an)*rr*dir,off+Math.sin(an)*rr*.5+70*q])}
+        pool(340,deep,.14*a);
+        // Two diagonal cuts that genuinely cross at the boss, so the move reads as an X, not two
+        // stacked arcs. Each one bows away from the other, which is what sells it as a slash.
+        const sweep=(flip,p)=>{
+          const pts=[];for(let i=0;i<=26;i++){const q=i/26*Math.min(1,p*1.04),u=lerp(-1,1,q);
+            pts.push([u*300,-6+flip*(u*74)+flip*Math.sin(Math.PI*cl(q))*30])}
           return pts;
         };
-        blade(sweep(1,p1,-40),17,c1,a*.95);
-        blade(sweep(-1,p2,10),14,c2,a*.9);
+        blade(sweep(1,p1),18,c1,a*.97,core);
+        blade(sweep(-1,p2),15,c2,a*.94,core);
         if(t>.28){
           const f=cl((t-.28)/.3);
           glow(0,20,90*(1-f)+20,c2,a*.5*(1-f),1);
@@ -451,14 +533,18 @@ const PGBossFx=(()=>{
           if(f>=1||f>.2)shock(0,0,cl((t-.32)/.6),c1,a*.7,300);
           sparks(0,16,t-.3,s.seed+33,c2,a*.85,26,1.1);
         }
-        if(t>.5)for(let i=0;i<5;i++){const q=cl((t-.5)/.7),x=Math.cos(i*1.7)*420*q,y=-160*q+80*q*q;glow(x,y,7,c1,a*(1-q)*.5,1)}
+        for(let i=0;i<Math.ceil(16*quality);i++){
+          const born=.3+hash(s.seed+i)*.5,age=t-born;if(age<0||age>.9)continue;
+          const ang=hash(s.seed+i*3)*TAU,rr2=age*240,q=age/.9;
+          glow(Math.cos(ang)*rr2,-40+Math.sin(ang)*rr2*.5+age*age*130,3+hash(s.seed+i*5)*4,core,a*(1-q)*.75,1);
+        }
       };
 
       // Geffen · Baphomet
       P.goatSigil=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.85)/.15);
         const ign=out(cl(t/.34));
-        disc(0,0,400,110,rgba(deep,.2*a));
+        pool(340,deep,.13*a);
         rune(0,0,204*ign,t,c1,a*.9,5,-1.1,true);
         ring(0,0,330*ign,rgba(c2,a*.35),a*.5,1.5,0,0,TAU,.26);
         // pentagram strokes draw themselves
@@ -467,12 +553,16 @@ const PGBossFx=(()=>{
         for(let i=0;i<order.length-1;i++){
           const bp=cl((t-.1-i*.055)/.18);if(bp<=0)continue;
           const a1=pts[order[i]],a2=pts[order[i+1]];
-          line(a1,[lerp(a1[0],a2[0],bp),lerp(a1[1],a2[1],bp)],rgba(c2,a*.85),2.4,a*.9);
+          const seg=[a1,[lerp(a1[0],a2[0],bp),lerp(a1[1],a2[1],bp)]];
+          contour(seg,c1,Math.max(2.4,5.2/Math.max(.06,pxPerUnit)),a*.6);
+          line(seg[0],seg[1],rgba(c2,a),3.4,a*.95);
+          hotEdge(seg,1.1,a*.8,core);
         }
         for(let i=0;i<5;i++){
           const bp=cl((t-.32-i*.07)/.22);if(bp<=0)continue;
           const an=-Math.PI/2+i*TAU/5,px=Math.cos(an)*270*ign,py=Math.sin(an)*270*.26*ign;
-          flame(px,py,70*bp*out(bp+0.1),c2,c1,a*.9*(1-bp*.35),t+i);
+          flame(px,py,88*bp*out(bp+0.1),c2,c1,a*.95*(1-bp*.3),t+i);
+          glow(px,py-30,34,c2,a*.4,1);
           shock(px,py,bp,c2,a*.45,90);
         }
         // horned crest above the seal
@@ -489,29 +579,29 @@ const PGBossFx=(()=>{
       };
       P.hellRam=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.85)/.15);
-        disc(0,0,270,72,rgba(deep,.34*a));
+        pool(270,deep,.34*a);
         rune(0,0,200,t,c2,a*.28,5,-1.4,true);
         const cres=(dir,p,off)=>{
           const pts=[];for(let i=0;i<=22;i++){const q=i/22*cl(p*1.06);const an=lerp(.1,Math.PI*.95,q);
-            pts.push([dir*(56+Math.cos(an)*238),off+Math.sin(an)*124-q*30])}
+            pts.push([dir*(50+Math.cos(an)*208),off+Math.sin(an)*112-q*26])}
           return pts;
         };
         const p1=out(cl(t/.28)),p2=out(cl((t-.13)/.28));
-        if(p1>0){ribbon(cres(1,p1,-120),q=>Math.sin(Math.PI*q)*44,rgba(c2,a*.18));blade(cres(1,p1,-120),22,c2,a*.95,core)}
-        if(p2>0){ribbon(cres(-1,p2,-70),q=>Math.sin(Math.PI*q)*38,rgba(c1,a*.16));blade(cres(-1,p2,-70),19,c1,a*.95,core)}
+        if(p1>0){ribbon(cres(1,p1,-172),q=>Math.sin(Math.PI*q)*44,rgba(c2,a*.18));blade(cres(1,p1,-172),20,c2,a*.95,core)}
+        if(p2>0){ribbon(cres(-1,p2,-116),q=>Math.sin(Math.PI*q)*38,rgba(c1,a*.16));blade(cres(-1,p2,-116),17,c1,a*.95,core)}
         if(t>.2)sparks(0,-120,t-.2,s.seed+11,c2,a*.8,18,.9);
-        if(t>.26&&t<.6){const f=cl((t-.26)/.34);glow(0,-110,110*(1-f),c2,a*.45*(1-f),1)}
+        if(t>.26&&t<.6){const f=cl((t-.26)/.34);glow(0,-150,120*(1-f),c2,a*.5*(1-f),1)}
         shock(0,0,cl((t-.3)/.6),c2,a*.6,250);
         for(let i=0;i<Math.ceil(10*quality);i++){
           const born=.3+hash(s.seed+i)*.5,age=t-born;if(age<0||age>.9)continue;
-          const x=(hash(s.seed+i*5)-.5)*440,y=-130*age-20+age*age*170;
+          const x=(hash(s.seed+i*5)-.5)*440,y=-130*age-90+age*age*170;
           glow(x,y,3+hash(s.seed+i*3)*5,c2,a*(1-age/.9)*.75,1);
         }
       }
       P.sandMaw=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.84)/.16);
         const open=out(cl(t/.5)),shut=cl((t-1.55)/.36),r=196*open*(1-shut*.92);
-        disc(0,0,258,72,rgba(deep,.42*a));
+        pool(258,deep,.42*a);
         for(let i=0;i<4;i++){
           ring(0,0,r*(1-i*.16),rgba(c1,a*(.72-i*.1)),a*.88,3.2+i,t*(2.2+i*.5)*(i%2?-1:1),0,TAU,.28);
         }
@@ -524,19 +614,21 @@ const PGBossFx=(()=>{
         // ring of sand teeth
         for(let i=0;i<12;i++){
           const ang=i*TAU/12+t*.3,px=Math.cos(ang)*r,py=Math.sin(ang)*r*.28;
-          const hh=(48+hash(s.seed+i)*30)*open*(1-shut);
-          poly([[px-9,py],[px,py-hh],[px+9,py]],rgba(c2,a*.45),1,rgba(core,a*.7),1);
+          const hh=(64+hash(s.seed+i)*38)*open*(1-shut);
+          const tooth=[[px-11,py],[px,py-hh],[px+11,py]];
+          poly(tooth,rgba(c2,a*.9));contour(tooth,darken(c2,.45),Math.max(1.4,3/Math.max(.06,pxPerUnit)),a*.7);
+          hotEdge([[px-3,py],[px,py-hh],[px+3,py]],1.1,a*.75,core);
         }
         if(shut>0&&shut<1){
           glow(0,0,180*shut,c2,a*.5,1);
           shock(0,0,shut,c2,a*.95,330);
           sparks(0,0,shut,s.seed+77,c1,a*.9,34,1.3);
         }
-        if(t>.2)cracks(0,0,t-.2,s.seed+9,c1,a*.4,8,220);
+        if(t>.2)cracks(0,0,t-.2,s.seed+9,c1,a*.34,6,190);
       };
       P.desertFang=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.85)/.15);
-        disc(0,0,300,80,rgba(deep,.24*a));
+        pool(300,deep,.24*a);
         for(let i=0;i<3;i++){
           const start=.05+i*.16,p=out(cl((t-start)/.3));if(p<=0)continue;
           const baseX=-170+i*74,ang=-.55+i*.35;
@@ -562,14 +654,14 @@ const PGBossFx=(()=>{
       }
       P.tigerRampage=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.85)/.15);
-        disc(0,0,300,78,rgba(deep,.34*a));
+        pool(300,deep,.34*a);
         for(let k=0;k<3;k++){
           const start=.06+k*.17,p=out(cl((t-start)/.34));if(p<=0)continue;
           const dir=k%2?-1:1,base=-120+k*44;
-          for(let i=0;i<4;i++){
+          for(let i=0;i<3;i++){
             const pts=[];for(let j=0;j<=16;j++){const q=j/16*cl(p*1.04);
-              pts.push([dir*lerp(-330,300,q),base+i*17+Math.sin(q*2.2+k)*44-q*50])}
-            blade(pts,q=>10*Math.sin(Math.PI*cl(q))*(1-cl(q)*.3)+1.2,i%2?c1:c2,a*(1-i*.1),core);
+              pts.push([dir*lerp(-300,282,q),base+i*24+Math.sin(q*2.2+k)*40-q*44])}
+            blade(pts,q=>15*Math.sin(Math.PI*cl(q))*(1-cl(q)*.25)+1.8,i%2?c1:c2,a*(1-i*.1),core);
           }
           sparks(dir*220,base+40,t-start-.22,s.seed+k*19,c2,a*.75,16,.9);
           ring(0,0,lerp(90,300,p),rgba(c1,a*.28*(1-p*.5)),a*.4,2,0,0,TAU,.3);
@@ -578,7 +670,7 @@ const PGBossFx=(()=>{
       }
       P.rampartQuake=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.84)/.16);
-        disc(0,0,300,80,rgba(deep,.34*a));
+        pool(300,deep,.34*a);
         const stomp=cl((t-.2)/.2);
         if(t<.2){const p=t/.2;glow(0,-330+280*inQ(p),100,c1,a*.35,1);ring(0,0,90*p,rgba(c2,a*.4),a*.5,3)}
         if(stomp>0){
@@ -588,13 +680,19 @@ const PGBossFx=(()=>{
           if(stomp<.5)glow(0,0,190*(1-stomp),core,a*.5,1);
           sparks(0,0,stomp,s.seed+41,c2,a*.9,34,1.2);
           for(let i=0;i<11;i++){
-            const ang=i*TAU/11+.2,dist=130+hash(s.seed+i)*120,rp=cl((t-.28-hash(s.seed+i*3)*.14)/.28);
-            if(rp<=0||rp>=1)continue;
-            const hh=lerp(0,86+hash(s.seed+i*5)*80,rp)*(1-cl((rp-.7)/.3));
+            const ang=i*TAU/11+.2,dist=130+hash(s.seed+i)*120,rp=out(cl((t-.28-hash(s.seed+i*3)*.14)/.3));
+            if(rp<=0)continue;
+            const hh=lerp(0,58+hash(s.seed+i*5)*54,rp)*(1-cl((t-1.8)/.5));
             const px=Math.cos(ang)*dist,py=Math.sin(ang)*dist*.28;
-            poly([[px-20,py],[px-7,py-hh],[px+7,py-hh*.72],[px+22,py]],rgba(darken(c2,.42),a*.95),1,rgba(c2,a*.55),1.4);
-            poly([[px-7,py-hh],[px+1,py-hh*.4],[px+7,py-hh*.72]],rgba(core,a*.28),1);
-            glow(px,py-hh,20,c1,a*.24,1);
+            const shard=[[px-21,py],[px-8,py-hh],[px+7,py-hh*.74],[px+23,py]];
+            // Lit two-facet rock: a dark silhouette plus one bright face is what stops it reading
+            // as a flat coloured triangle.
+            poly(shard,rgba(darken(c2,.5),a*.96));
+            poly([[px-8,py-hh],[px+7,py-hh*.74],[px+2,py]],rgba(c2,a*.8));
+            poly([[px-8,py-hh],[px-1,py-hh*.3],[px-3,py]],rgba(lighten(c2,.28),a*.55));
+            contour(shard,darken(c2,.62),Math.max(1.2,2.6/Math.max(.06,pxPerUnit)),a*.85);
+            hotEdge([[px-8,py-hh],[px+7,py-hh*.74]],1.2,a*.85,core);
+            glow(px,py-hh,22,c1,a*.26,1);
           }
           if(t>.5)for(let i=0;i<20;i++){const q=(t-.5)/.8,ang=hash(s.seed+i)*TAU,rr=lerp(70,270,q);
             glow(Math.cos(ang)*rr,Math.sin(ang)*rr*.28,4+hash(s.seed+i*3)*6,q<.6?c2:c1,a*(1-q)*.5,1)}
@@ -602,19 +700,25 @@ const PGBossFx=(()=>{
       }
       P.tidalMaw=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.86)/.14);
-        disc(0,0,420,116,rgba(deep,.22*a));
+        pool(400,deep,.18*a);
         // whirlpool
         for(let i=0;i<4;i++)ring(0,0,90+i*54,rgba(c1,a*.35),a*.5,1.6+i*.4,t*(2+i*.4)*(i%2?-1:1),0,TAU,.27);
         for(let k=0;k<3;k++){
           const start=.08+k*.22,p=out(cl((t-start)/.45));if(p<=0)continue;
           const dir=k%2?-1:1;
-          const pts=[];for(let j=0;j<=24;j++){const q=j/24*cl(p*1.05);pts.push([dir*lerp(-520,540,q),-20-k*26+Math.sin(q*5+k*2)*26-q*20])}
-          ribbon(pts,q=>Math.sin(Math.PI*q)*46*(1-q*.35),rgba(c2,a*.22));
-          ribbon(pts,q=>Math.sin(Math.PI*q)*34*(1-q*.45),rgba(c1,a*.5));
-          // foam crest
-          const crest=pts.slice(-9).map(([x,y])=>[x,y-16*Math.sin(cl((x+520)/1060)*Math.PI)]);
-          ribbon(crest,q=>Math.sin(Math.PI*q)*12,rgba(core,a*.62));
-          for(let j=0;j<8;j++){const pt=pts[Math.floor(j*pts.length/8)];glow(pt[0],pt[1]-6,8,c2,a*.4,1)}
+          // A cresting arch, not a horizontal band: the wave has to lift and curl or it reads as a
+          // flat stripe across the field.
+          // Nested crests receding into the field - each one shorter and higher than the last, so
+          // they read as a swell rather than three parallel lanes.
+          const span=330-k*64,peak=96-k*22,base=-6-k*34;
+          const pts=[];for(let j=0;j<=24;j++){const q=j/24*cl(p*1.05),bq=Math.pow(Math.sin(Math.PI*q),.8);
+            pts.push([dir*lerp(-span,span+18,q),base-bq*peak-q*6+(q>.86?(q-.86)*70:0)])}
+          body(pts,q=>Math.sin(Math.PI*q)*22*(1-q*.5)*(1-k*.12),c2,a*(1-k*.14),core);
+          ribbon(pts,q=>Math.sin(Math.PI*q)*13*(1-q*.55),rgba(c1,a*.5*(1-k*.14)));
+          // foam along the lip of the curl
+          const lip=pts.slice(4,21).map(([x,y])=>[x,y-9]);
+          ribbon(lip,q=>Math.sin(Math.PI*q)*7,rgba(core,a*.85));
+          for(let j=0;j<10;j++){const pt=pts[Math.floor(j*pts.length/10)];glow(pt[0],pt[1]-8,9,c2,a*.5,1)}
         }
         if(t>.5){
           const q=cl((t-.5)/.5);
@@ -625,7 +729,7 @@ const PGBossFx=(()=>{
       };
       P.abyssTentacles=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.85)/.15);
-        disc(0,0,420,116,rgba(deep,.24*a));
+        pool(420,deep,.24*a);
         for(let i=0;i<6;i++){
           const start=i*.07,rise=out(cl((t-start)/.4)),slam=cl((t-start-.55)/.2);
           if(rise<=0)continue;
@@ -637,11 +741,10 @@ const PGBossFx=(()=>{
             const sway=Math.sin(q*4+t*3+i)*(46*(1-q*.4));
             pts.push([lerp(bx,Math.cos(ang)*baseR*.22,q)+Math.cos(ang+Math.PI/2)*sway,by*lerp(1,.2,q)-hh*Math.sin(q*Math.PI*.92)]);
           }
-          ribbon(pts,q=>26*(1-q*.72)*Math.sin(Math.PI*cl(q*1.1))*.9,rgba(c2,a*.5));
-          ribbon(pts,q=>17*(1-q*.7),rgba(c1,a*.75));
-          stroke(pts,rgba(core,a*.45),1.2,a*.55);
+          body(pts,q=>27*(1-q*.72)*Math.sin(Math.PI*cl(q*1.1))*.95,c2,a*.97,core);
+          ribbon(pts,q=>7*(1-q*.75),rgba(lighten(c1,.28),a*.5));
           // suckers
-          for(let j=2;j<16;j+=3){const pt=pts[j];glow(pt[0],pt[1],4.5,c1,a*.45,1)}
+          for(let j=2;j<16;j+=3){const pt=pts[j];glow(pt[0],pt[1],5,c1,a*.55,1);disc(pt[0],pt[1],2.4,2.4,rgba(deep,a*.5),a*.5)}
           if(slam>0&&slam<1){const tip=pts[pts.length-1];
             glow(tip[0],tip[1],34*(1-slam),c2,a*.5,1);
             shock(tip[0],0,slam,c1,a*.6,180);
@@ -656,7 +759,7 @@ const PGBossFx=(()=>{
       // Louyang · Dragon Lord
       P.dragonAscension=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.86)/.14);
-        disc(0,0,340,94,rgba(deep,.5*a));
+        pool(340,deep,.5*a);
         const rise=out(cl(t/.85)),dive=cl((t-1.15)/.65);
         // Spiral body: two ribbons (body and belly) plus scale glints along its spine.
         const spine=[],inner=[];
@@ -706,7 +809,7 @@ const PGBossFx=(()=>{
       }
       P.skyfallPillar=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.85)/.15);
-        disc(0,0,430,116,rgba(deep,.25*a));
+        pool(430,deep,.25*a);
         rune(0,0,300,t,c2,a*.55,8,1.4,true);
         for(let i=0;i<5;i++){
           const start=.05+i*.1,rise=out(cl((t-start)/.34));if(rise<=0)continue;
@@ -735,7 +838,7 @@ const PGBossFx=(()=>{
       // Amatsu · Shiranui
       P.foxfireBloom=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.86)/.14);
-        disc(0,0,400,108,rgba(deep,.2*a));
+        pool(400,deep,.2*a);
         rune(0,0,250,t,c2,a*.5,6,-1.6,false);
         // nine tails
         for(let i=0;i<9;i++){
@@ -768,7 +871,7 @@ const PGBossFx=(()=>{
       };
       P.sakuraStorm=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.86)/.14);
-        disc(0,0,340,92,rgba(darken(c1,.72),.5*a));
+        pool(330,darken(c1,.78),.24*a);
         // A petal cyclone crosses the map from the left. Each petal keeps a dark rim so the pinks
         // still read on Amatsu's own pink field.
         for(let i=0;i<Math.ceil(64*quality);i++){
@@ -797,7 +900,7 @@ const PGBossFx=(()=>{
       }
       P.soulHarvest=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.86)/.14);
-        disc(0,0,330,92,rgba(deep,.5*a));
+        pool(330,deep,.5*a);
         rune(0,0,210,t,c2,a*.3,6,-1.2,false);
         for(let k=0;k<3;k++){
           const start=.04+k*.24,p=out(cl((t-start)/.42));if(p<=0)continue;
@@ -830,7 +933,7 @@ const PGBossFx=(()=>{
       }
       P.deathVerdict=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.85)/.15);
-        disc(0,0,330,90,rgba(deep,.34*a));
+        pool(330,deep,.34*a);
         const stamp=cl((t-.3)/.25);
         rune(0,0,250,t,c1,a*.6,8,1.8,true);
         if(t>.12){
@@ -879,7 +982,7 @@ const PGBossFx=(()=>{
       }
       P.abyssalCross=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.88)/.12);
-        disc(0,0,400,104,rgba(deep,.5*a));
+        pool(400,deep,.5*a);
         glitch(0,-170,900,340,t,s.seed,c2,a*.85);
         const p1=out(cl(t/.3)),p2=out(cl((t-.12)/.3));
         // TWO crossing greatcut slashes: one descends left-to-right, the other mirrors it.
@@ -924,7 +1027,7 @@ const PGBossFx=(()=>{
       }
       P.chaosRequiem=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.88)/.12);
-        disc(0,0,400,104,rgba(deep,.5*a));
+        pool(400,deep,.5*a);
         rune(0,0,250*out(cl(t/.5)),t,c2,a*.4,7,-1.6,true);
         const collapse=cl((t-1.05)/.3);
         const cy=-190;
@@ -967,14 +1070,14 @@ const PGBossFx=(()=>{
       }
       P.memoryFracture=(s,t)=>{
         const [c1,c2,core,accent]=s.colors,a=1-cl((t/s.life-.88)/.12);
-        disc(0,0,520,140,rgba('#1a2340',.42*a));
+        pool(520,'#1a2340',.42*a);
         glitch(0,-200,1200,520,t*1.3,s.seed,c2,a*.7);
         const p=out(cl(t/.26));
         // single colossal diagonal slash
         const pts=[];for(let j=0;j<=30;j++){const q=j/30*cl(p*1.04);pts.push([lerp(-720,700,q),lerp(-420,300,q)+Math.sin(q*Math.PI)*40])}
-        ribbon(pts,q=>Math.sin(Math.PI*q)*80,rgba(c1,a*.16));
-        ribbon(pts,q=>Math.sin(Math.PI*q)*46,rgba(c2,a*.28));
-        blade(pts,24,c1,a*.95,core);
+        ribbon(pts,q=>Math.sin(Math.PI*q)*62,rgba(c1,a*.2));
+        blade(pts,19,c1,a*.97,core);
+        hotEdge(pts,2.4,a*.9,core);
         // chromatic split echoes
         stroke(pts.map(([x,y])=>[x+7,y-4]),rgba('#66e6ff',a*.45),2.2,a*.5);
         stroke(pts.map(([x,y])=>[x-7,y+4]),rgba(accent,a*.4),1.8,a*.45);
@@ -995,7 +1098,7 @@ const PGBossFx=(()=>{
       };
       P.thanatosJudgment=(s,t)=>{
         const [c1,c2,core,accent]=s.colors,a=1-cl((t/s.life-.88)/.12);
-        disc(0,0,520,140,rgba('#1a2340',.4*a));
+        pool(520,'#1a2340',.4*a);
         const open=out(cl(t/.45));
         // celestial gate
         for(let i=0;i<3;i++){
@@ -1040,7 +1143,7 @@ const PGBossFx=(()=>{
       // Thor Volcano · Ifrit (tier 3)
       P.primalEruption=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.88)/.12);
-        disc(0,0,540,146,rgba(deep,.4*a));
+        pool(540,deep,.4*a);
         // glowing fissures widen first
         cracks(0,0,t,s.seed+3,c1,a*.8,10,560);
         for(let i=0;i<8;i++){
@@ -1075,7 +1178,7 @@ const PGBossFx=(()=>{
       };
       P.ifritBlaze=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.9)/.1);
-        disc(0,0,560,150,rgba(deep,.42*a));
+        pool(560,deep,.42*a);
         // burning trench ahead of the cut
         const trench=out(cl(t/.4));
         if(trench>0){
@@ -1164,27 +1267,41 @@ const PGBossFx=(()=>{
         if(!Number.isFinite(t)||!Number.isFinite(at[0])||!Number.isFinite(at[1])||!Number.isFinite(k))return;
         const a=Math.min(1,t/.14)*cl((s.life-t)/.4);
         if(!(a>.01))return;
-        const tier=s.tier>=3,pop=1+.14*Math.pow(1-cl(t/.3),2);
-        const fs=Math.round(Math.min(46,Math.max(15,14+k*17)));
-        const lift=Math.min(320,Math.max(96,k*235));
-        const y=Math.max(46,at[1]-lift-14*out(cl(t/.9)));
+        const tier=s.tier>=3,pop=1+.1*Math.pow(1-cl(t/.3),2);
+        const fs=Math.round(cl(15,24+k*10,38));
+        // Keep it above the head and the rising damage numbers, but never under the top HUD.
+        const lift=cl(k*330,170,400);
+        const y=cl(at[1]-lift-10*out(cl(t/.9)),72,at[1]-120);
         g.save();g.setTransform(ratio,0,0,ratio,0,0);
         g.globalAlpha*=cl(a);g.textAlign='center';g.textBaseline='middle';
-        g.font='700 '+Math.max(9,Math.round(fs*.4))+'px "Trebuchet MS",Verdana,sans-serif';
-        g.fillStyle=rgba(s.colors[3]||s.colors[0],.95);
-        g.fillText(spaced(tier?'CATACLYSM SKILL':'BOSS SKILL'),at[0],y-fs*1.02);
+        // Measure the real type so the plate hugs the name; guard for a canvas without measureText.
+        let titleW=fs*Math.min(7.4,s.name.length*.62);
+        try{const m=g.measureText&&g.measureText(s.name);if(m&&Number.isFinite(m.width)&&m.width>0)titleW=m.width*.5}catch(_){}
+        const pad=titleW+fs*.5;
+        const plateA=cl(a*.34);
+        const grad=g.createLinearGradient(at[0]-pad,0,at[0]+pad,0);
+        grad.addColorStop(0,rgba('#07050d',0));
+        grad.addColorStop(.12,rgba('#07050d',plateA));
+        grad.addColorStop(.88,rgba('#07050d',plateA));
+        grad.addColorStop(1,rgba('#07050d',0));
+        g.fillStyle=grad;
+        g.fillRect(at[0]-pad,y-fs*1.28,pad*2,fs*1.92);
+        g.font='700 '+Math.max(9,Math.round(fs*.38))+'px "Trebuchet MS",Verdana,sans-serif';
+        g.fillStyle=rgba(s.colors[1],.95);
+        g.fillText(spaced(tier?'CATACLYSM SKILL':'BOSS SKILL'),at[0],y-fs*.98);
         g.translate(at[0],y);g.scale(pop,pop);
         g.font='900 '+fs+'px "Trebuchet MS",Verdana,sans-serif';
         if(tier){
-          g.fillStyle=rgba('#59e8ff',.5);g.fillText(s.name,fs*.1,0);
-          g.fillStyle=rgba('#ff4f88',.5);g.fillText(s.name,-fs*.1,0);
+          g.fillStyle=rgba('#59e8ff',.55);g.fillText(s.name,fs*.09,0);
+          g.fillStyle=rgba('#ff4f88',.45);g.fillText(s.name,-fs*.09,0);
         }
-        g.lineWidth=Math.max(3,fs*.16);g.strokeStyle=rgba('#120a18',.8);g.lineJoin='round';
+        g.lineWidth=Math.max(3,fs*.17);g.strokeStyle=rgba('#0a0713',.85);g.lineJoin='round';
         g.strokeText(s.name,0,0);
-        g.fillStyle=rgba(s.colors[2],.98);g.fillText(s.name,0,0);
-        const hw=Math.min(300,fs*Math.min(6.2,s.name.length*.62));
-        g.strokeStyle=rgba(s.colors[1],.7);g.lineWidth=1.6;
-        g.beginPath();g.moveTo(-hw,y+fs*.56);g.lineTo(hw,y+fs*.56);g.stroke();
+        g.fillStyle=rgba(s.colors[2],1);g.fillText(s.name,0,0);
+        // Hairline rules either side, sized to the name.
+        g.strokeStyle=rgba(s.colors[1],.55);g.lineWidth=minW(1);
+        const ry=y+fs*.62,hw=Math.min(260,fs*Math.min(5.4,s.name.length*.56));
+        g.beginPath();g.moveTo(-hw,ry);g.lineTo(-fs*.7,ry);g.moveTo(fs*.7,ry);g.lineTo(hw,ry);g.stroke();
         g.restore();
       }
       return {
@@ -1211,8 +1328,10 @@ const PGBossFx=(()=>{
             const k=cl(Math.hypot(top[0]-at[0],top[1]-at[1])/120,.05,3)*s.tierScale*(c.scale||1);
             if(![at[0],at[1],k].every(Number.isFinite)||k<=0)continue;
             g.save();
+            pxPerUnit=k*ratio;
             g.setTransform(k*ratio,0,0,k*ratio,at[0]*ratio,at[1]*ratio);
             paint(c.id,c.age,d,c.seed||0);
+            pxPerUnit=1;
             g.restore();
             namePlate(s,c,at,k,ratio);
           }
