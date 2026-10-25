@@ -192,7 +192,10 @@ for (let m = 0; m < 10; m++) {
   for (let m = 0; m < 10; m++) if (Math.abs(V2.legacyHeight(m, 6, -8) - V2.terrainHeight(m, 6, -8)) > .2) differs++;
   ok(differs === 10, 'every field changed shape, not just its numbers');
   const page = fs.readFileSync(path.join(root, 'tools/maps/terrain_v2_preview.html'), 'utf8');
-  ok(page.includes('../../assets/native-fields.js'), 'review page loads the shipped module');
+  // Root-absolute, because / shows this page directly (PREVIEW_PAGE) - relative paths 404 there.
+  ok(page.includes('src="/assets/native-fields.js"'), 'review page loads the shipped module from the site root');
+  ok(page.includes('src="/tools/maps/vendor/three-r128.min.js"'), 'review page loads three from the site root');
+  ok(!/src="\.\.?\//.test(page), 'review page has no relative script paths');
   ok(/legacyHeight/.test(page) && /state\.v2/.test(page), 'review page toggles v195 vs v2');
 }
 
