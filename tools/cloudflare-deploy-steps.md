@@ -233,6 +233,14 @@ Checks that do not need an account: `npx wrangler deploy --dry-run --config work
 and `npx wrangler versions upload --config workers/social/wrangler.toml --dry-run` (the second is the
 one a feature-branch build runs). The database needs no extra migration for chat.
 
+**Which of the two is failing here?** The build log is behind the *View logs* link on the PR comment
+(`cloudflare-workers-and-pages` bot), and only the dashboard holds the text. Match it to the fix:
+
+| Build log says | Fix |
+|---|---|
+| `Missing entry-point to Worker script or to assets directory` | Step 3: the command is running in the repo root. Set the root directory to `workers/social`, or add `--config workers/social/wrangler.toml` to the non-production deploy command. |
+| Anything about preview URLs, `workers.dev`, or previews being disabled | Previews have to be switched on for the Worker itself. `wrangler deploy` writes that state from `preview_urls = true` — so a production deploy of this repo (merge to `main`) is what turns it on; until one has run with those lines, branch builds stay red. |
+
 **Reading the check.** *Workers Builds: prontera-social* is the `workers/social` build, and it runs
 twice per PR: once for the branch (a preview version, no production effect) and once for `main` after
 merge. A branch-only red is a build-setting problem, never a chat bug. *Cloudflare Pages* is the game

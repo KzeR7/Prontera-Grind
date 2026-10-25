@@ -7909,3 +7909,20 @@ of stopping at the first plausible cause.
   a root-level `versions upload` (the failing case, reproduced) behave as described.
 * **Delivery:** local changes on `arena/c4538d5e-prontera-grind`; the dashboard change is the
   owner's, and the check stays red until it is made.
+
+## 2026-10-25 — the branch build has two possible causes; the log decides
+
+Narrowing further needs a file I cannot read. The branch build fails in seconds and its log lives only
+behind the *View logs* link that the `cloudflare-workers-and-pages` bot posts on the PR.
+
+* **Possibly still the deploy command** (previous entry): `npx wrangler versions upload` in the repo
+  root fails in seconds with *Missing entry-point to Worker script or to assets directory*, which is
+  the right shape for what is observed.
+* **Possibly the preview flag on the Worker itself:** Cloudflare stores `previews_enabled` per Worker
+  subdomain, and only `wrangler deploy` writes it from `preview_urls = true` — `versions upload` just
+  reads it. Since `preview_urls` is new here and this branch has not been deployed to production,
+  previews may simply not be switched on yet; merging to `main` would switch them on.
+* **Clearer note for the owner:** the decision table in `tools/cloudflare-deploy-steps.md` §9 maps the
+  exact log line to the fix, so one look at the build log settles it. Both candidate causes are
+  settings, not chat code, and neither affects players: production `main` has been deploying fine.
+* **Checks:** unchanged from the previous entry; no code changed here beyond documentation.
