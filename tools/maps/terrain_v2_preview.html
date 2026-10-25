@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terrain v2 — field landform preview</title>
+<style>
+  :root{--bg:#12151a;--panel:#1b2029;--line:#2c3441;--txt:#e7ecf3;--dim:#93a0b4;--acc:#6fd08c}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;height:100vh;display:flex;overflow:hidden}
+  #stage{flex:1;position:relative;min-width:0}
+  canvas{display:block}
+  #hud{position:absolute;left:12px;top:12px;background:rgba(18,22,28,.78);border:1px solid var(--line);border-radius:10px;padding:10px 12px;backdrop-filter:blur(6px);max-width:min(360px,70vw)}
+  #hud h1{margin:0 0 4px;font-size:13px;letter-spacing:.02em}
+  #hud p{margin:4px 0 0;color:var(--dim);font-size:11.5px}
+  #side{width:308px;background:var(--panel);border-left:1px solid var(--line);padding:14px;overflow:auto}
+  h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin:16px 0 6px}
+  h2:first-child{margin-top:0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  button{background:#232b36;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 8px;font:inherit;cursor:pointer;text-align:left}
+  button:hover{background:#2b3542}
+  button.on{background:#274433;border-color:var(--acc);color:#d9ffe6}
+  label.row{display:flex;align-items:center;gap:8px;margin:7px 0;color:#cdd7e5}
+  input[type=range]{width:100%}
+  .kv{display:flex;justify-content:space-between;gap:8px;color:var(--dim);font-size:11.5px;padding:2px 0;border-bottom:1px dotted #263041}
+  .kv b{color:var(--txt);font-weight:600}
+  .note{color:var(--dim);font-size:11px;margin-top:8px}
+  .seg{display:flex;gap:6px}
+  .seg button{flex:1;text-align:center}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="hud">
+    <h1>Field landform — v195 vs v2</h1>
+    <p id="subtitle">Drag to orbit, wheel to zoom. The starting camera matches the in-game field camera (pitch 0.78 rad, ~44 units back, 38° FOV).</p>
+    <p style="margin:.4em 0 0;font-size:12.5px"><a href="/tools/maps/terrain_v2_proposal.html" style="color:#8fd0a0">Read the full proposal &rsaquo;</a> &nbsp;·&nbsp; <a href="/game?nativeFields=1" style="color:#8fd0a0">walk it in game &rsaquo;</a></p>
+  </div>
+</div>
+
+<div id="side">
+  <h2>Version</h2>
+  <div class="seg">
+    <button id="btnShipped">v195 (old)</button>
+    <button id="btnProposed" class="on">v2 (current)</button>
+  </div>
+
+  <h2>Map</h2>
+  <div class="grid" id="maps"></div>
+
+  <h2>Terrain recipe</h2>
+  <label class="row">Relief dial <input id="intensity" type="range" min="0.4" max="1.8" step="0.05" value="1"></label>
+  <label class="row"><input id="laneflat" type="checkbox" checked> Keep the fight lane walkable</label>
+  <label class="row"><input id="contours" type="checkbox"> Contour lines every 0.5</label>
+  <label class="row"><input id="wire" type="checkbox"> Wireframe</label>
+
+  <h2>This field</h2>
+  <div id="stats"></div>
+
+  <p class="note" id="foot">Terrain preview only: no props, natives or ground textures on this page.
+  Walk the real fields in game with <code>?nativeFields=1</code>, or compare against the old landform
+  with <code>?nativeFields=1&amp;terrain=v1</code>.</p>
+</div>
+
+<script src="/tools/maps/vendor/three-r128.min.js"></script>
+<script src="/assets/native-fields.js"></script>
+<script>
+'use strict';
+const P = PGNativeFields;   // the shipped module: terrainHeight (v2), legacyHeight (v195)
+const NAMES = ['Prontera meadow','Izlude coastal','Geffen ridge','Morocc dunes','Payon forest hills','Comodo hollow','Louyang mountain','Amatsu meadow','Niflheim hollow','Abyss basin'];
+
+// ---- renderer / scene --------------------------------------------------------
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+renderer.setSize(stage.clientWidth, stage.clientHeight);
+stage.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e1218);
+scene.fog = new THREE.Fog(0x0e1218, 70, 150);
+const cam = new THREE.PerspectiveCamera(38, stage.clientWidth/stage.clientHeight, .1, 400);
+scene.add(new THREE.HemisphereLight(0xdfe9ff, 0x2a3326, .95));
+const sun = new THREE.DirectionalLight(0xfff0d0, 1.05);
+sun.position.set(-28, 44, 26);
+scene.add(sun);
+
+// Grayscale detail so the landform reads; colour comes from the splat weights.
+const detail = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d');
+  const img = g.createImageData(256, 256);
+  let s = 12345;
+  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 256 * 256; i++) {
+    const v = 196 + (rnd() - .5) * 46;
+    img.data[i*4] = img.data[i*4+1] = img.data[i*4+2] = v; img.data[i*4+3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(26, 26);
+  return t;
+})();
+
+const SPLAT = {
+  grass: new THREE.Color(0x6f9a4c),
+  dirt:  new THREE.Color(0x9c8a63),
+  rock:  new THREE.Color(0x7c7a76),
+  beach: new THREE.Color(0xcfc294)
+};
+
+const state = { map: 0, v2: true, intensity: 1, lane: true, contour: false, wire: false };
+let world = null;
+
+function h1(x, z) { return P.legacyHeight(state.map, x, z); }
+function h2(x, z) { return P.terrainHeight(state.map, x, z); }
+
+function buildGeometry() {
+  if (state.v2) {
+    // intensity: scale the landform amplitude without touching the lane flattening
+    const design = P.DESIGNS[state.map], saved = design.amp;
+    design.amp = saved * state.intensity;
+    const g = P.terrainGeometry(THREE, state.map);
+    design.amp = saved;
+    return g;
+  }
+  // v195 landform, same mesh contract
+  const GRID = 72, STEP = 90 / GRID;
+  const pos = [], uv = [], col = [], idx = [];
+  for (let z = 0; z <= GRID; z++) for (let x = 0; x <= GRID; x++) {
+    const xx = x * STEP - 45, zz = z * STEP - 45, y = h1(xx, zz);
+    const shade = .9 + .075 * Math.sin(xx * .065 + zz * .047 + state.map) + .025 * y;
+    pos.push(xx, y, zz); uv.push(x / GRID, 1 - z / GRID); col.push(shade, shade, shade);
+  }
+  for (let z = 0; z < GRID; z++) for (let x = 0; x < GRID; x++) {
+    const a = z * (GRID + 1) + x, b = a + 1, c = a + GRID + 1, e = c + 1;
+    idx.push(a, c, b, b, c, e);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+
+function splatColors(geo) {
+  // v2 gets real surface weights; v1 keeps its flat green with a light vertex shade.
+  if (!state.v2) {
+    const n = geo.attributes.position.count, out = new Float32Array(n * 3), base = new THREE.Color(0x78a95a);
+    for (let i = 0; i < n; i++) { out[i*3] = base.r; out[i*3+1] = base.g; out[i*3+2] = base.b; }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(out, 3));
+    return;
+  }
+  const pos = geo.attributes.position, n = pos.count, out = new Float32Array(n * 3), c = new THREE.Color();
+  const design = P.DESIGNS[state.map], saved = design.amp;
+  design.amp = saved * state.intensity;
+  for (let i = 0; i < n; i++) {
+    const w = P.surfaceWeights(state.map, pos.getX(i), pos.getZ(i));
+    c.setRGB(0, 0, 0);
+    for (const k of ['grass','dirt','rock','beach']) c.r += SPLAT[k].r * (w[k] || 0), c.g += SPLAT[k].g * (w[k] || 0), c.b += SPLAT[k].b * (w[k] || 0);
+    out[i*3] = c.r; out[i*3+1] = c.g; out[i*3+2] = c.b;
+  }
+  design.amp = saved;
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(out, 3));
+}
+
+function contourTexture() {
+  // Sample the field once (it is expensive), then march the sampled grid.
+  const G = 240, size = 1024, span = 90, st = span / G;
+  const hgt = state.v2 ? h2 : h1;
+  const grid = new Float32Array((G + 1) * (G + 1));
+  for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++) grid[j * (G + 1) + i] = hgt(-45 + i * st, -45 + j * st);
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d');
+  g.fillStyle = '#000'; g.fillRect(0, 0, size, size);
+  g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 1;
+  const px = v => (v + 45) / span * size;
+  for (let level = -2; level < 14; level += .5) {
+    g.beginPath();
+    for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+      const a = grid[j * (G + 1) + i] - level, b = grid[j * (G + 1) + i + 1] - level;
+      const d = grid[(j + 1) * (G + 1) + i] - level;
+      const x = -45 + i * st, z = -45 + j * st;
+      if ((a < 0) !== (b < 0)) { g.moveTo(px(x), px(z)); g.lineTo(px(x + st), px(z)); }
+      if ((a < 0) !== (d < 0)) { g.moveTo(px(x), px(z)); g.lineTo(px(x), px(z + st)); }
+    }
+    g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c); t.flipY = false; return t;
+}
+
+let overlay = null;
+function rebuild() {
+  if (world) { scene.remove(world); world.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); }
+  world = new THREE.Group();
+  const geo = buildGeometry();
+  splatColors(geo);
+  const flat = state.v2 ? P.surfaceWeights(state.map, 0, 0) : null;
+  const mat = new THREE.MeshLambertMaterial({ map: state.contour || state.wire ? null : detail, vertexColors: true, wireframe: state.wire });
+  if (state.wire) mat.color.set(0x8ad0ff);
+  world.add(new THREE.Mesh(geo, mat));
+
+  if (state.contour && !state.wire) {
+    const t = contourTexture();
+    overlay = new THREE.Mesh(geo.clone(), new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: .55, depthWrite: false }));
+    overlay.position.y = .02;
+    world.add(overlay);
+  }
+
+  const d = P.DESIGNS[state.map];
+  const w = d.water;
+  if (w) {
+    const segs = 96, pos = [w.x, w.level, w.z], idx = [];
+    for (let i = 0; i <= segs; i++) {
+      const a = i / segs * Math.PI * 2, r = 1.3 * (1 + .09 * Math.sin(a * 3) + .05 * Math.cos(a * 5));
+      pos.push(w.x + Math.cos(a) * w.rx * r, w.level, w.z + Math.sin(a) * w.rz * r);
+      if (i) idx.push(0, i + 1, i);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+    world.add(new THREE.Mesh(g, new THREE.MeshPhongMaterial({ color: 0x3f7b8c, shininess: 80, transparent: true, opacity: .82 })));
+  }
+  scene.add(world);
+  stats();
+}
+
+function stats() {
+  const box = document.getElementById('stats');
+  let minY = 1e9, maxY = -1e9, laneMin = 1e9, laneMax = -1e9, steep = 0, n = 0;
+  const h = state.v2 ? h2 : h1;
+  for (let x = -44; x <= 44; x += 1) for (let z = -44; z <= 44; z += 1) {
+    const y = h(x, z); minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    if (Math.abs(x) < 13 && z > -28 && z < 12) { laneMin = Math.min(laneMin, y); laneMax = Math.max(laneMax, y); }
+    const s = Math.atan(Math.hypot((h(x + .8, z) - y) / .8, (h(x, z + .8) - y) / .8)) * 180 / Math.PI;
+    if (s > 35) steep++; n++;
+  }
+  const rows = [
+    ['relief over the whole field', (maxY - minY).toFixed(2) + ' u'],
+    ['relief inside the fight lane', (laneMax - laneMin).toFixed(2) + ' u'],
+    ['ground steeper than 35°', (100 * steep / n).toFixed(1) + '%'],
+    ['landform', state.v2 ? 'v2 (shipped default)' : 'v195 (legacyHeight)']
+  ];
+  box.innerHTML = rows.map(([k, v]) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`).join('');
+}
+
+// ---- camera -----------------------------------------------------------------
+let az = 0, el = .78, dist = 44;
+const focus = new THREE.Vector3(0, 1.1, -4);
+function placeCamera() {
+  const pitch = Math.max(.12, Math.min(1.35, el));
+  cam.position.set(
+    focus.x + Math.sin(az) * Math.cos(pitch) * dist,
+    focus.y + Math.sin(pitch) * dist,
+    focus.z + Math.cos(az) * Math.cos(pitch) * dist
+  );
+  cam.lookAt(focus);
+}
+let drag = null;
+renderer.domElement.addEventListener('pointerdown', e => drag = { x: e.clientX, y: e.clientY });
+addEventListener('pointerup', () => drag = null);
+addEventListener('pointermove', e => {
+  if (!drag) return;
+  az -= (e.clientX - drag.x) * .006;
+  el = Math.max(.12, Math.min(1.35, el + (e.clientY - drag.y) * .004));
+  drag = { x: e.clientX, y: e.clientY }; placeCamera();
+});
+renderer.domElement.addEventListener('wheel', e => {
+  e.preventDefault();
+  dist = Math.max(12, Math.min(120, dist * (1 + Math.sign(e.deltaY) * .08)));
+  placeCamera();
+}, { passive: false });
+
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+
+// ---- UI ---------------------------------------------------------------------
+const mapsEl = document.getElementById('maps');
+NAMES.forEach((n, i) => {
+  const b = document.createElement('button');
+  b.textContent = n;
+  b.onclick = () => { state.map = i; [...mapsEl.children].forEach(c => c.classList.remove('on')); b.classList.add('on'); rebuild(); };
+  if (i === 0) b.classList.add('on');
+  mapsEl.appendChild(b);
+});
+document.getElementById('btnShipped').onclick = e => { state.v2 = false; toggleSeg(e.target); rebuild(); };
+document.getElementById('btnProposed').onclick = e => { state.v2 = true; toggleSeg(e.target); rebuild(); };
+function toggleSeg(btn) {
+  for (const b of btn.parentNode.children) b.classList.remove('on');
+  btn.classList.add('on');
+}
+document.getElementById('intensity').oninput = e => { state.intensity = +e.target.value; if (state.v2) rebuild(); };
+document.getElementById('laneflat').onchange = e => { state.lane = e.target.checked; syncLane(); if (state.v2) rebuild(); };
+document.getElementById('contours').onchange = e => { state.contour = e.target.checked; rebuild(); };
+document.getElementById('wire').onchange = e => { state.wire = e.target.checked; rebuild(); };
+
+// lane flattening is a real dial in the module, not a page-local hack
+P.laneCfg.mix = 0.60;
+const syncLane = () => { P.laneCfg.mix = state.lane ? 0.60 : 0; };
+
+placeCamera();
+rebuild();
+renderer.setAnimationLoop(() => renderer.render(scene, cam));
+</script>
+</body>
+</html>

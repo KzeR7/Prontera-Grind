@@ -22,8 +22,31 @@ const KIT={ok:0,png:null,man:null,des:{},srcMan:{},tex:new Map(),water:[],wt:0,g
 // Parked outdoor redesign: docs/NATIVE-FIELDS-HANDOFF.md. URL override is tab-local, never saved.
 const NATIVE_FIELDS_DEFAULT=false;
 const nativeFieldChoice=typeof location==='object'?new URLSearchParams(location.search).get('nativeFields'):null;
-const nativeFieldsEnabled=nativeFieldChoice==='1'||(NATIVE_FIELDS_DEFAULT&&nativeFieldChoice!=='0');
+// v232: an explicit URL value always wins; otherwise the tab's Display-panel choice is used; the
+// shipping constant is the last word. Reading it here (rather than only from the URL) is what
+// lets the toggle survive its own reload without touching the player's save.
+const nativeFieldStored=(()=>{try{return typeof sessionStorage==='object'?sessionStorage.getItem('pg-native-fields'):null}catch(_){return null}})();
+const nativeFieldsEnabled=
+  nativeFieldChoice==='1'?true:        // an explicit link always wins
+  nativeFieldChoice==='0'?false:
+  nativeFieldChoice!==null?NATIVE_FIELDS_DEFAULT:   // any other value defers to the build
+  nativeFieldStored==='1'?true:        // then this tab's Display-panel choice
+  nativeFieldStored==='0'?false:
+  NATIVE_FIELDS_DEFAULT;
 const nativeFieldStore=nativeFieldsEnabled&&typeof PGNativeFields==='object'?PGNativeFields.createStore():null;
+// v231 (owner: "it loads the old map & old mob sprite then jumps into the new map"): that was a
+// real load-order bug, not a transition. A cold entry painted the procedural town first, then the
+// kit map when its atlas arrived, then the native field when its geometry arrived - three scenery
+// swaps. The gate below holds the field instead of painting a wrong one, and this pill explains
+// the wait. It only ever appears while a native field is genuinely still downloading.
+function fieldLoading(on,label){
+  const el=typeof document!=='undefined'&&document.getElementById?document.getElementById('fieldLoading'):null;
+  if(!el)return;
+  // Idempotent on purpose: buildDeco can run several times while one wait is outstanding, and a
+  // counter would then never come back down and the pill would stick on screen.
+  el.classList.toggle('on',!!on);el.hidden=!on;
+  const span=el.querySelector('span');if(on&&label&&span)span.textContent=label;
+}
 function clearNativeField(){if(typeof KIT!=='undefined'&&KIT.nativeWorld){KIT.nativeWorld.dispose();KIT.nativeWorld=null;KIT.water=[]}}
 const KIT_S=.85,KIT_ZC=(Z0+Z1)/2,KIT_PX=2048,KIT_FAR=90;
 // Prop size. The kit ships its own character: 80px per frame (v2 kept the v1 strip pixel for
@@ -288,7 +311,11 @@ function kitFetch(){
   // The kit is an enhancement: no fetch, no atlas, no design - the game keeps its own scenery.
   if(typeof fetch!=='function'||typeof Image!=='function')return;
   try{
-    const rebuildActiveScenery=()=>{if(!S)return;if(JOB_RITE.on)jobRiteArena();else if(TRIAL.on)trialArena();else buildDeco(S.mp)};
+    // v231: the kit atlas arriving late must not repaint a field that the native world already
+    // owns - that second swap was the last half of the "old map jumps to the new map" report.
+    const rebuildActiveScenery=()=>{if(!S)return;if(JOB_RITE.on)jobRiteArena();else if(TRIAL.on)trialArena();
+      else if(KIT.built&&KIT.built.native)return;
+      else buildDeco(S.mp)};
     const j=n=>fetch('assets/kit/'+n).then(r=>r&&r.ok?r.json():null).catch(()=>null);
     Promise.all([j('ro-spritesheet.json'),j('ro-map-payon.json'),j('ro-map-morocc.json'),j('ro-tiles-hd.json')]).then(([man,pay,mor,hdMan])=>{
       if(!man||!pay)return; KIT.man=man; KIT.des.payon=pay; if(mor)KIT.des.morocc=mor; if(hdMan)KIT.hdMan=hdMan;
@@ -783,7 +810,11 @@ function kitPropMeshes(plan,root){
     const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.18}));
     const k=kitPropScale(p.type,p.scale),w=e.w*k,h=e.h*k;
     sp.center.set(e.anchorX===undefined?.5:e.anchorX/e.w,1-(e.anchorY===undefined?e.h:e.anchorY)/e.h);
-    sp.scale.set(w,h,1);sp.position.set(p.x,0,p.z);root.add(sp);placed++;
+    // v233 (owner: "some of the houses are under half way"): y was hardcoded to 0. That is
+    // correct on the flat kit ground, but the native fields are real heightfields - the approach
+    // band averages 2.5 units above zero - so every themed prop was planted at sea level and the
+    // hills swallowed the bottom half of the houses. p.y is the ground height under the prop.
+    sp.scale.set(w,h,1);sp.position.set(p.x,p.y||0,p.z);root.add(sp);placed++;
   }
   return {placed,missing};
 }
@@ -1045,13 +1076,554 @@ function kit3DDetails(plan,m,root){
     }
   }
 }
+// v231 (owner: "i want u to add more details into the map. example amatsu will have japanese
+// stuff"). The native field brings only what the RO field models carry - trees, rock, shrubs -
+// so every destination was the same *kind* of place with a different colour. The kit already
+// ships the regional architecture (torii, cherry, bamboo, hanzi lanterns, grave markers...),
+// and the kit side of the game has always dressed its tiers with them. This gives the native
+// field the same dressing: the same sprites, placed by the same rules, so Amatsu reads as
+// Amatsu and Louyang as Louyang without inventing any new art.
+//
+// Reference for the choices (RO field identity):
+//  Amatsu   - a Japanese island: sakura in constant bloom, bamboo and pine, a stone shrine
+//             half-sunken in the middle of the field, red torii gates.
+//  Louyang  - ancient Chinese, mountainous: rice paddies, stone sanctuaries, lantern posts.
+//  Payon    - Korean mountain forest: bamboo groves, forest shrines, graves.
+//  Niflheim - a city of the dead: grave markers, dead trees, ruined walls.
+//  Abyss    - crystal tunnels and crags: stalagmites and crystal clusters.
+// ---------------------------------------------------------------------------------------------
+// v234 (owner: "maps details are bad… buildings are small, random bridge, random trees mixed
+// together, details not in theme with the maps, repetitive… arrange the details nicer").
+//
+// What was wrong was not the number of props, it was that there was no *design*: every prop was
+// dropped independently at a random point on a ring, at a random scale. The screenshots show the
+// result - five torii at five different sizes stacked on each other, a bridge standing in a field
+// with nothing to cross, identical bamboo clumps repeated, a mage tower dwarfed by saplings.
+//
+// Three things replace that, following ordinary environment-art practice:
+//   1. A target HEIGHT per sprite. Scale is derived from it, so a temple is never smaller than a
+//      cherry tree and two copies of a gate are never 2x apart.
+//   2. Designed set pieces, one per destination: a single hero, an optional avenue (the leading
+//      line), flanks, and a backdrop. One dominant per view - not five.
+//   3. Clusters and negative space. Grouped dressing with real gaps between groups, instead of an
+//      even sprinkle of unrelated pieces.
+//
+// RO reference for Amatsu: the field's shrine sits in the middle of the water, in a grove of
+// bamboo, pine and cherry, and a path of torii gates leads to it. The gates line up, and they get
+// grander as you approach. That is the layout below.
+// ---------------------------------------------------------------------------------------------
+
+// Target world height, in units, for every sprite the kit ships. A person is ~2.9 units, so these
+// read at gameplay distance: a temple is 4x a person, a lantern is person-height, a boulder is low.
+const THEME_BED={
+  torii_gate:{w:4.4,foot:1,step:1},      bridge_red_arch:{w:5.2,foot:1,step:1},
+  house_prontera:{w:4.2,foundation:1,path:1,fence:1}, house_ruin:{w:3.6,foundation:1,rubble:1},
+  shrine_stone:{w:2.6,steps:1,posts:2},  lantern_stone:{base:1,glow:1},
+  tower_geffen:{w:1.7,plinth:1},         standing_stone:{base:1,moss:1},
+  tombstone:{mound:1,rails:1},           tree_dead:{roots:1},
+  tree_dark_gnarled:{roots:1},           tree_cherry:{petals:1,roots:1},
+  tree_ancient_large:{roots:1},          tree_ancient_variant:{roots:1},
+  tree_tall_cluster:{roots:1},           tree_bush_bright:{stones:1},
+  tree_sapling:{stones:1},               bamboo_grove:{stalks:6,stones:1},
+  crystal_cluster:{shards:4},            stalagmite:{shards:3},
+  rock_cliff_crag:{rubble:1,moss:1},     rock_boulder_mossy:{moss:1,stones:1},
+  palm_giant:{sand:1},                   palm_tall:{sand:1},
+  palm_double:{sand:1},                  pier_post:{plank:1},
+  ruin_pillar:{foot:1,rubble:1},         ruin_column_fallen:{rubble:1,moss:1},
+  ruin_curb:{rubble:1},                  ruin_stump:{rubble:1,moss:1},
+  cactus_flower:{stones:1},              cactus_small:{stones:1},
+  desert_bone:{stones:1},                river_stone_post:{rubble:1},
+};
+// Stone, moss, timber, lamp glow and blossom per destination - the same regional reading as the
+// palettes in assets/native-fields.js, so the dressing belongs to the field it stands in.
+const THEME_BED_PAL=[
+  {stone:0x9c978b,moss:0x5f8c3a,wood:0x8a5433,glow:0xffd27f,petal:0xf6b8cf},
+  {stone:0xa8a294,moss:0x5f8c3a,wood:0x8a5433,glow:0xffe0a0,petal:0xf6c8d8},
+  {stone:0x7f8797,moss:0x4e7a56,wood:0x5a4a3a,glow:0x9fd8ff,petal:0xc8b8e8},
+  {stone:0xc2a478,moss:0x7a8a4a,wood:0x9c6b3a,glow:0xffb070,petal:0xf0c8a0},
+  {stone:0x8e8a7c,moss:0x4f7f34,wood:0x7a3b26,glow:0xffd8a0,petal:0xf6b8cf},
+  {stone:0xb0a894,moss:0x6a9a4a,wood:0x8a5a34,glow:0xffe0a0,petal:0xffc8d8},
+  {stone:0x8d8b84,moss:0x55803c,wood:0x9c3b28,glow:0xffcf7a,petal:0xffb4c8},
+  {stone:0x9a978f,moss:0x5a8a44,wood:0xb03a2a,glow:0xffd9a0,petal:0xf7b6cd},
+  {stone:0x585060,moss:0x3f5a44,wood:0x3c3548,glow:0xb866ff,petal:0x9a88b8},
+  {stone:0x4e5a66,moss:0x3a5a50,wood:0x39434e,glow:0x3ce8ff,petal:0x6ad8e0},
+];
+// Geometry and materials are shared by shape and colour. Without this the layer allocated ~2400
+// geometries and ~2400 materials across the ten fields, and every field rebuild threw them away
+// and allocated fresh ones - GPU churn on a phone for scenery the player walks past. Both caches
+// are bounded so a long session cannot grow them without limit.
+const THEME_GEO=new Map(),THEME_MAT=new Map();
+function themeGeo(kind,args){
+  const key=kind+':'+args.map(v=>Math.round(v*100)/100).join(',');
+  let g=THEME_GEO.get(key);
+  if(!g){
+    if(THEME_GEO.size>600)THEME_GEO.clear();
+    g=kind==='box'?BX(args[0],args[1],args[2]):kind==='sphere'?SP(args[0])
+     :kind==='cone'?CN(args[0],args[1]):CY(args[0],args[1],args[2]);
+    THEME_GEO.set(key,g);
+  }
+  return g;
+}
+function themeMat(col,emissive){
+  const key=col+(emissive?':e':'');
+  let m=THEME_MAT.get(key);
+  if(!m){
+    if(THEME_MAT.size>200)THEME_MAT.clear();
+    m=M(col);
+    // Only the lamp/fire materials carry emissive, and the colour is the cache key, so setting it
+    // once here can never leak a glow onto a shared stone or timber material.
+    if(emissive&&m.emissive)m.emissive=new THREE.Color(col).multiplyScalar(.55);
+    THEME_MAT.set(key,m);
+  }
+  return m;
+}
+// Ceiling on pieces per field. The landmarks and the middle tier always get their bedding; the
+// small treeline clutter only while there is budget left, so the worst field cannot quietly turn
+// into a hundred extra draw calls.
+const THEME_MESH_CAP=72;
+function nativeThemeDetail3D(m,props){
+  if(!props||!props.length)return 0;
+  // Check the real THREE, not the local aliases below - reading those here would be a
+  // temporal-dead-zone error, because they are declared further down this same function.
+  if(typeof THREE!=='object'||typeof THREE.BoxGeometry!=='function')return 0;
+  const P=THEME_BED_PAL[m]||THEME_BED_PAL[0];
+  const G=new THREE.Group();G.userData={themeDetail:1};
+  // Local aliases so every geometry below comes from the shared cache instead of allocating.
+  const BX=(a,b,c)=>themeGeo('box',[a,b,c]),SP=r=>themeGeo('sphere',[r]),
+        CN=(r,h)=>themeGeo('cone',[r,h]),CY=(a,b,h)=>themeGeo('cyl',[a,b,h]);
+  let n=0;
+  const put=(geo,col,x,y,z,ry,ry2)=>{
+    const me=new THREE.Mesh(geo,themeMat(col));me.position.set(x,y,z);
+    if(ry)me.rotation.y=ry;if(ry2)me.rotation.z=ry2;
+    me.castShadow=false;me.receiveShadow=false;G.add(me);n++;return me;
+  };
+  // Bedding that reaches outward (a house's stepping path, a shrine's posts) can land on ground
+  // that has fallen away, so each piece is lifted to the surface under its own footprint. It only
+  // ever lifts - a piece deliberately set high on a wall or a lantern is left alone.
+  const seat=(x,y,z)=>Math.max(y,PGNativeFields.heightAt(m,x,z,S.lvl)-.12);
+  const box=(w,h,d,col,x,y,z,ry,rz)=>put(BX(w,h,d),col,x,seat(x,y,z)+h/2,z,ry,rz);
+  const ball=(r,col,x,y,z,sy)=>put(SP(r),col,x,seat(x,y,z)+r*(sy||1),z,0,0).scale.set(1,sy||1,1);
+  // A lamp's fire-box uses the cached emissive material, so the glow never leaks onto a shared
+  // stone or timber material.
+  const glow=(w,h,d,col,x,y,z)=>{const me=new THREE.Mesh(BX(w,h,d),themeMat(col,true));me.position.set(x,seat(x,y,z)+h/2,z);me.castShadow=me.receiveShadow=false;G.add(me);n++;return me};
+  for(const p of props){
+    const bed=THEME_BED[p.type];if(!bed)continue;
+    // A hard ceiling. Props arrive hero-first, so the landmark's footing always survives and it
+    // is the far treeline clutter that yields. It used to test p.scale, which scaleFor() has
+    // since redefined as "atlas crop x scale", so the ceiling had stopped biting at all.
+    if(n>=THEME_MESH_CAP)break;
+    const s=p.scale||1,Y=p.y,x=p.x,z=p.z,w=(bed.w||2)*s;
+    if(bed.foot){                                  // stone footings under the two uprights
+      for(const sx of [-1,1])box(.55*w*.42,.42*s,.55*s,P.stone,x+sx*w*.30,Y-.02,z);
+    }
+    if(bed.step)box(w*.9,.16*s,1.5*s,P.stone,x,Y,z+.9*s);
+    if(bed.foundation)box(w,.34,1.5*s,P.stone,x,Y-.05,z);
+    if(bed.plinth){box(w*.8,.5*s,w*.8,P.stone,x,Y,z);box(w*.55,.34*s,w*.55,P.stone,x,Y+.5*s,z)}
+    if(bed.steps){
+      box(w*1.15,.22*s,w*.85,P.stone,x,Y,z);
+      box(w*.9,.24*s,w*.66,P.stone,x,Y+.22*s,z-.06*s);
+    }
+    if(bed.posts){                                 // votive posts flanking a shrine
+      for(let i=0;i<bed.posts;i++){const sx=i%2?1:-1;
+        box(.22*s,1.15*s,.22*s,P.wood,x+sx*w*.62,Y,z+.15*s);
+        glow(.3*s,.26*s,.3*s,P.glow,x+sx*w*.62,Y+1.15*s,z+.15*s);}
+    }
+    if(bed.base)box(w*.7,.26*s,w*.7,P.stone,x,Y,z);
+    if(bed.glow)glow(.46*s,.5*s,.46*s,P.glow,x,Y+1.02*s,z);
+    if(bed.mound)ball(.55*s,P.stone,x,Y-.04*s,z,.35);
+    if(bed.rails)for(const sx of[-1,1])box(.1*s,.6*s,w*.7,P.wood,x+sx*w*.55,Y,z);
+    if(bed.roots)for(let i=0;i<4;i++){const a=i*1.57+.6;
+      box(.5*s,.2*s,.34*s,P.stone,x+Math.cos(a)*.5*s,Y-.03,z+Math.sin(a)*.5*s,a);}
+    if(bed.petals){                                // fallen blossom under a cherry
+      for(let i=0;i<3;i++){const a=i*2.1,r=(.9+i*.5)*s;
+        put(SP(r*.5),P.petal,x+Math.cos(a)*r*.5,Y+.02,z+Math.sin(a)*r*.5,0,0).scale.set(1,.08,1);}
+    }
+    if(bed.stalks){                                // bamboo: real stalks give the grove volume
+      for(let i=0;i<bed.stalks;i++){
+        const a=i*2.399+.4,r=(.3+((i*37)%10)/14)*s,h=(2.4+((i*53)%10)/6)*s;
+        const bx2=x+Math.cos(a)*r,bz2=z+Math.sin(a)*r;
+        const st=put(CY(.075*s,.09*s,h),i%3?0x6f9a3c:0x88b04a,bx2,seat(bx2,Y,bz2)+h/2,bz2);
+        st.rotation.z=(i%2?1:-1)*.03;st.castShadow=false;
+      }
+    }
+    if(bed.shards){
+      for(let i=0;i<bed.shards;i++){
+        const a=i*1.9,r=(.25+i*.16)*s,h=(.7+i*.28)*s;
+        const sh=new THREE.Mesh(CN(.16*s+.05*s*i,h),themeMat(i%2?P.glow:P.stone,!!(i%2)));
+        sh.position.set(x+Math.cos(a)*r,Y+h/2,z+Math.sin(a)*r);sh.rotation.z=(i%2?.16:-.12);
+        sh.castShadow=sh.receiveShadow=false;G.add(sh);n++;
+      }
+    }
+    if(bed.moss)put(SP(.42*s),P.moss,x,Y+.3*s,z,0,0).scale.set(1,.3,1);
+    if(bed.rubble)for(let i=0;i<3;i++){const a=i*2.4+.9;
+      ball((.16+i*.04)*s,P.stone,x+Math.cos(a)*.7*s,Y,z+Math.sin(a)*.7*s,.6);}
+    if(bed.sand)put(SP(.75*s),P.stone,x,Y+.02,z,0,0).scale.set(1,.1,1);
+    if(bed.plank)box(.7*s,.12*s,.34*s,P.wood,x,Y+.5*s,z);
+    if(bed.fence){                                 // a short fence line, posts + two rails
+      for(let i=0;i<3;i++){const fx=x+(i-1)*.9*s;
+        box(.12*s,.7*s,.12*s,P.wood,fx,Y,z+.9*s);}
+      box(2.0*s,.1*s,.09*s,P.wood,x,Y+.55*s,z+.9*s);
+      box(2.0*s,.1*s,.09*s,P.wood,x,Y+.3*s,z+.9*s);
+    }
+    if(bed.path){                                  // stepping stones leading to the door
+      for(let i=0;i<5;i++){
+        const px=x+(i-2)*.62*s,pz=z+(1.0+i*.52)*s;
+        put(CY(.3*s,.34*s,.09*s),P.stone,px,seat(px,Y+.045,pz),pz);
+      }
+    }
+    if(bed.stones)for(let i=0;i<2;i++){const a=i*3.1+1.2;
+      ball(.13*s,P.stone,x+Math.cos(a)*.45*s,Y,z+Math.sin(a)*.45*s,.7);}
+  }
+  if(n){deco.add(G)}
+  return n;
+}
+const PROP_H={
+  house_prontera:10, house_ruin:8, shrine_stone:10.5, tower_geffen:18, torii_gate:9.5,
+  bridge_red_arch:5, standing_stone:5, ruin_pillar:8, ruin_column_fallen:1.8, ruin_curb:.9,
+  ruin_stump:1.6, tombstone:2.4, lantern_stone:2.8,
+  tree_cherry:7, tree_ancient_large:9, tree_ancient_variant:8.5, tree_tall_cluster:7.5,
+  tree_dark_gnarled:7.5, tree_dead:6.5, tree_sapling:2.6, tree_bush_bright:1.6,
+  bamboo_grove:5.5, palm_giant:9, palm_tall:8, palm_double:7,
+  cactus_flower:2.2, cactus_small:1.4, desert_bone:1.1,
+  rock_cliff_crag:6, rock_boulder_mossy:1.8, stalagmite:5, crystal_cluster:3,
+  pier_post:2.4, river_stone_post:1.4,
+};
+
+// The scene recipe per destination. Read it as a sentence: "a <hero> at <where>, reached by an
+// <avenue> of <type>, flanked by <flank>, with <backdrop> behind it, and <accent> along the way."
+// `side` is which half of the field the piece lives in (-1 left, +1 right); the lane between them
+// stays empty on purpose, so there is always a clean sightline across the fight.
+// v234b: explicit skeletons. The first pass used generated rows and avenues; the picture showed
+// they collided with the hero and never lined up, so every set piece now has a hand-placed
+// coordinate. `atx` entries are mirrored to both sides of the field (the same piece at -x and +x),
+// which is what makes a shrine precinct or an avenue read as designed rather than sprinkled.
+//   x is across the field (lane is |x| < 16.6), z is depth (lane is z -28..12, far end is z < -28).
+//   Height is the target world height, in units; a person is ~2.9.
+const NATIVE_SCENE=[
+  // Each entry is a hand-placed sketch of one destination, because generated rows drifted and
+  // collided. Two rules shape every one of them:
+  //  1. the landmark group sits at z<=-30 and is the payoff you walk into;
+  //  2. a themed cluster of that map's own props straddles the lane at |x| 19..25, z +7..-20,
+  //     because that is the band the camera actually shows from the spawn point (it sees about
+  //     thirty units ahead). Everything in between is the field layer's job.
+  { // Prontera: the village at the head of the lane, and the town's first houses already standing
+    // either side of the player. A capital's outskirts should read as a street, not a meadow.
+    at:[{type:'house_prontera',x:0,z:-33,h:12},
+        {type:'house_prontera',x:-13,z:-31,h:10},{type:'house_prontera',x:13,z:-31,h:10}],
+    atx:[{type:'house_prontera',x:21,z:-8,h:9.5},{type:'tree_ancient_large',x:19,z:4,h:9},
+         {type:'tree_bush_bright',x:22.5,z:-1,h:1.7},{type:'rock_boulder_mossy',x:20,z:9,h:1.8},
+         {type:'tree_bush_bright',x:24,z:-15,h:1.6},{type:'tree_ancient_large',x:25,z:-20,h:8.5}],
+    fence:{side:1,x:9.5,z:-30,n:4},
+    rows:[{type:'river_stone_post',x:18.5,z:6,h:1.4,n:3,dz:-5}],
+    field:{types:['tree_ancient_large','tree_tall_cluster','tree_bush_bright','rock_boulder_mossy'],clusters:7}},
+  { // Izlude: the harbour house at the head, and a palm-lined shore walk either side of the lane.
+    at:[{type:'house_prontera',x:0,z:-33,h:12.5}],
+    atx:[{type:'palm_giant',x:20,z:-7,h:9},{type:'palm_double',x:19,z:3,h:7},
+         {type:'tree_bush_bright',x:23,z:-2,h:1.6},{type:'palm_tall',x:23,z:-14,h:8},
+         {type:'rock_boulder_mossy',x:21,z:7,h:1.8},{type:'palm_double',x:25,z:-20,h:7}],
+    pier:{n:3}, rows:[{type:'rock_boulder_mossy',x:18.5,z:-17,h:1.8,n:2,dz:-5}],
+    field:{types:['palm_giant','palm_double','palm_tall','rock_boulder_mossy'],clusters:7}},
+  { // Geffen: the mage tower on its ring of standing stones at the head, with the wood and its
+    // crystal seams closing in from both sides of the approach.
+    at:[{type:'tower_geffen',x:0,z:-33,h:20}],
+    ring:{type:'standing_stone',cx:0,cz:-33,r:10,n:6,h:5},
+    atx:[{type:'tree_dark_gnarled',x:20,z:-6,h:7.5},{type:'crystal_cluster',x:23,z:0,h:3},
+         {type:'tree_sapling',x:19,z:5,h:2.4},{type:'crystal_cluster',x:24,z:-14,h:3.2},
+         {type:'tree_dark_gnarled',x:22,z:-19,h:7},{type:'rock_boulder_mossy',x:20.5,z:10,h:1.8}],
+    rows:[{type:'standing_stone',x:18,z:-11,h:4.5,n:2,dz:-6}],
+    field:{types:['tree_dark_gnarled','crystal_cluster','rock_boulder_mossy','tree_sapling'],clusters:6}},
+  { // Morocc: the ruined gate at the head, a broken colonnade either side, and the dunes'
+    // cacti and bones carrying the theme up to the player.
+    at:[{type:'ruin_pillar',x:0,z:-33,h:13}],
+    atx:[{type:'ruin_pillar',x:13,z:-31,h:9},{type:'ruin_pillar',x:13,z:-23,h:8},
+         {type:'ruin_pillar',x:21,z:-8,h:9.5},{type:'ruin_column_fallen',x:19,z:2,h:1.8},
+         {type:'cactus_flower',x:23,z:-2,h:2.2},{type:'cactus_small',x:24,z:-15,h:1.6},
+         {type:'desert_bone',x:20,z:8,h:1.1}],
+    rows:[{type:'cactus_small',x:18,z:-18,h:1.4,n:2,dz:-5}],
+    field:{types:['cactus_flower','cactus_small','desert_bone','rock_boulder_mossy'],clusters:7}},
+  { // Payon: a mountainside village on the far rise, bamboo thickets walling the lane either side.
+    at:[{type:'house_prontera',x:0,z:-33,h:11},{type:'house_prontera',x:-12,z:-30,h:9}],
+    atx:[{type:'bamboo_grove',x:19,z:2,h:5.5},{type:'house_prontera',x:23,z:-10,h:8.5},
+         {type:'tree_tall_cluster',x:21,z:-4,h:7.5},{type:'bamboo_grove',x:24,z:-18,h:5},
+         {type:'tree_sapling',x:19,z:9,h:2.6}],
+    path:{from:[-19.5,-26],to:[-23,-7],n:5},
+    rows:[{type:'river_stone_post',x:18,z:-13,h:1.4,n:3,dz:-5}],
+    field:{types:['bamboo_grove','tree_tall_cluster','tree_sapling','rock_boulder_mossy'],clusters:7}},
+  { // Comodo: a palm grove at the head, the shore walk carrying palms and warm rock to the player.
+    at:[{type:'palm_giant',x:0,z:-33,h:10}],
+    atx:[{type:'palm_double',x:20,z:-6,h:7},{type:'palm_tall',x:19,z:4,h:8},
+         {type:'tree_bush_bright',x:23,z:-1,h:1.6},{type:'palm_double',x:23,z:-14,h:7},
+         {type:'rock_boulder_mossy',x:21,z:8,h:1.8},{type:'palm_tall',x:25,z:-19,h:7.5}],
+    pier:{n:3}, rows:[{type:'rock_boulder_mossy',x:18.5,z:-16,h:1.8,n:2,dz:-5}],
+    field:{types:['palm_double','palm_tall','rock_boulder_mossy','tree_bush_bright'],clusters:7}},
+  { // Louyang: the shrine gate at the head, and a lantern avenue that runs the full depth of the
+    // approach on both sides - the clearest leading line in the set.
+    at:[{type:'shrine_stone',x:0,z:-33,h:12}],
+    atx:[{type:'ruin_curb',x:19,z:-2,h:.9},{type:'bamboo_grove',x:23,z:-9,h:5.5},
+         {type:'tree_dark_gnarled',x:22,z:-19,h:7.5},{type:'bamboo_grove',x:20,z:6,h:5},
+         {type:'rock_boulder_mossy',x:24,z:1,h:1.8}],
+    rows:[{type:'lantern_stone',x:20.5,z:8,h:2.8,n:4,dz:-6}],
+    field:{types:['bamboo_grove','tree_dark_gnarled','tree_sapling','ruin_curb'],clusters:7}},
+  { // Amatsu: a shrine precinct. Four gate pairs at x=+/-20.5 walk from z=+5 up to z=-22, growing
+    // toward the shrine the way a real sando does, lanterns outside them, cherries and bamboo
+    // beyond. The shrine is the payoff at the head of the walk.
+    at:[{type:'shrine_stone',x:0,z:-34,h:13},
+        {type:'torii_gate',x:-14,z:-31,h:11},{type:'torii_gate',x:14,z:-31,h:11}],
+    atx:[{type:'torii_gate',x:20.5,z:5,h:9.5},{type:'torii_gate',x:20.5,z:-4,h:10},
+         {type:'torii_gate',x:20.5,z:-13,h:10.5},{type:'torii_gate',x:20.5,z:-22,h:11},
+         {type:'lantern_stone',x:24,z:9,h:2.7},{type:'lantern_stone',x:24,z:0,h:2.8},
+         {type:'lantern_stone',x:24,z:-9,h:2.8},{type:'lantern_stone',x:24,z:-18,h:2.9},
+         {type:'tree_cherry',x:28,z:2,h:7},{type:'tree_cherry',x:27,z:-11,h:6.5},
+         {type:'tree_cherry',x:29,z:-20,h:7},
+         {type:'bamboo_grove',x:18,z:-36,h:5.5},{type:'bamboo_grove',x:27,z:-33,h:5},
+         {type:'rock_boulder_mossy',x:30,z:-3,h:1.8}],
+    bridge:1, shore:{type:'tree_cherry',n:3,h:6.5},
+    field:{types:['tree_cherry','bamboo_grove','tree_sapling','rock_boulder_mossy'],clusters:8}},
+  { // Niflheim: a ruined mausoleum at the head of the graves. The rows are the place's character,
+    // but they cannot be its focal point - a tombstone is person-height. The mausoleum is.
+    at:[{type:'house_ruin',x:0,z:-35,h:11}],
+    grid:{type:'tombstone',cx:0,cz:-31,w:24,d:7,cols:7,rows:2,h:2.4},
+    atx:[{type:'tree_dead',x:21,z:-6,h:6.5},{type:'tombstone',x:19,z:2,h:2.4},
+         {type:'ruin_column_fallen',x:23,z:-2,h:1.8},{type:'tree_dead',x:24,z:-16,h:6},
+         {type:'ruin_stump',x:20,z:8,h:1.2},{type:'tombstone',x:25,z:-21,h:2.4}],
+    rows:[{type:'ruin_curb',x:18.5,z:-12,h:.9,n:3,dz:-5}],
+    field:{types:['tree_dead','tree_dark_gnarled','tombstone','ruin_stump'],clusters:6}},
+  { // Abyss: a crag at the head, crystal seams mirrored, and deliberately little else - the
+    // emptiness is the point here, so the theme is carried by rock and seam, not by furniture.
+    at:[{type:'rock_cliff_crag',x:0,z:-33,h:15}],
+    atx:[{type:'stalagmite',x:20,z:-7,h:5},{type:'crystal_cluster',x:23,z:-1,h:3},
+         {type:'rock_boulder_mossy',x:19,z:6,h:1.9},{type:'stalagmite',x:24,z:-17,h:5.5},
+         {type:'crystal_cluster',x:21,z:10,h:2.6},{type:'ruin_column_fallen',x:25,z:-22,h:1.8}],
+    rows:[{type:'rock_boulder_mossy',x:18,z:-13,h:1.8,n:2,dz:-6}],
+    field:{types:['stalagmite','rock_boulder_mossy','crystal_cluster','ruin_column_fallen'],clusters:6}}
+];
+// How much of the recipe a stage group carries. The outskirts are the open way in; the approach
+// is the settled part; the sanctum keeps only the hero and its framing, because a boss arena
+// wants a clean silhouette, not clutter.
+const SCENE_BAND=[{full:.6,accent:1},{full:1,accent:1},{full:1,accent:1},{full:.7,accent:0}];
+function placeNativeTheme(m,world){
+  if(typeof kitPropMeshes!=='function'||!KIT.ok)return 0;
+  const scene=NATIVE_SCENE[m];if(!scene)return 0;
+  const g=(typeof PGNativeFields.stageGroup==='function')?PGNativeFields.stageGroup(S.lvl):0;
+  const band=SCENE_BAND[g]||SCENE_BAND[0];
+  const design=PGNativeFields.designOf(m),water=design.water;
+  let q=(m*7919+g*104729+13)|0;const r=()=>(q=(q*16807)%2147483647)/2147483647;
+
+  // Scale from a target height, so two copies of a building are never 2x apart and a temple is
+  // never smaller than a cherry tree. This is the "buildings are small / random" fix.
+  const atlas=(typeof kitAtlas==='function')?kitAtlas('payon'):null;
+  const scaleFor=(type,h)=>{
+    const e=atlas&&atlas.sprites?atlas.sprites[type]:null;
+    if(!e||!e.h)return 1;
+    const per=e.h*KIT_PK*((typeof KIT_PS==='object'&&KIT_PS[type])||1);
+    return per>0?h/per:1;
+  };
+  const props=[];
+  const groundY=(x,z)=>{
+    try{const h=PGNativeFields.heightAt(m,x,z,S.lvl);return Number.isFinite(h)?h:0}catch(_){return 0}
+  };
+  const inWater=(x,z,pad)=>{
+    if(!water)return false;
+    return Math.hypot((x-water.x)/(water.rx+(pad||0)),(z-water.z)/(water.rz+(pad||0)))<1;
+  };
+  // The lane is a RECTANGLE (|x| < 16.6, z -28..12), not a band across the whole map, so the far
+  // end behind it is free for the hero and its framing.
+  const inLane=(x,z)=>Math.abs(x)<16.6&&z>Z0-1&&z<Z1+1;
+  const legal=(x,z,tall,allowWater)=>{
+    if(inLane(x,z))return false;
+    if(Math.abs(x)>39||z<-38.5||z>19)return false;
+    if(!allowWater&&inWater(x,z,-1.2))return false;
+    if(PGNativeFields.slopeAt(m,x,z)>(tall?16:22))return false;
+    return true;
+  };
+  const put=(type,x,z,h,flip,minGap,allowWater)=>{
+    if(!type)return false;
+    const gap=minGap===undefined?2.6:minGap;
+    if(!legal(x,z,h>=4,allowWater))return false;
+    for(const p of props){
+      const d=Math.hypot(p.x-x,p.z-z);
+      if(d<gap)return false;
+      if(p.type===type&&d<Math.max(gap,4.4))return false;   // no stamped duplicates
+    }
+    props.push({type,x,z,h,scale:scaleFor(type,h),flip:!!flip,y:groundY(x,z)-.06});
+    return true;
+  };
+  // Nudge: try a few nearby spots before giving up, so one bad slope cannot empty a designed spot.
+  const nudge=(type,x,z,h,flip,minGap,tries)=>{
+    if(put(type,x,z,h,flip,minGap))return true;
+    for(let i=0;i<(tries||7);i++){
+      const a=r()*Math.PI*2,d=.8+r()*2.2;
+      if(put(type,x+Math.cos(a)*d,z+Math.sin(a)*d,h,flip,minGap))return true;
+    }
+    return false;
+  };
+  const rowAt=(row)=>{
+    const n=Math.max(1,Math.round((row.n||1)*band.full));
+    for(let i=0;i<n;i++){
+      const z=row.z+(row.dz||0)*i;
+      nudge(row.type,row.x,z,row.h||4,i%2,row.gap||3);
+      if(row.mirror!==false)nudge(row.type,-row.x,z,row.h||4,i%2,row.gap||3);
+    }
+  };
+
+  // --- 1. the hero, at the far end: the one dominant the camera looks at ------------------------
+  // The hero is not optional. A designed site that lands on a bank or a shoreline must not simply
+  // vanish (Abyss's crag and Morocc's colonnade both did), so search outward for the flattest
+  // legal spot near the intended one - nearest first, so the composition still holds.
+  const hero=(scene.at&&scene.at[0])||scene.hero||null;
+  const placeHero=(type,x,z,h,flip)=>{
+    if(put(type,x,z,h,flip,0))return true;
+    let best=null;
+    for(let ring=1;ring<=7&&!best;ring++){
+      const rad=ring*1.4;
+      for(let i=0;i<12;i++){
+        const a=i/12*Math.PI*2,px2=x+Math.cos(a)*rad,pz=z+Math.sin(a)*rad;
+        if(!legal(px2,pz,h>=4,false))continue;
+        const sl=PGNativeFields.slopeAt(m,px2,pz);
+        if(!best||sl<best.sl)best={x:px2,z:pz,sl};
+      }
+      if(best){put(type,best.x,best.z,h,flip,0);return true}
+    }
+    // Last resort: relax the slope rule for the hero only. A missing focal point is a worse
+    // failure than a focal point standing on a slight bank.
+    for(let i=0;i<24;i++){
+      const a=i/24*Math.PI*2,rad=2+i*.9,px2=x+Math.cos(a)*rad,pz=z+Math.sin(a)*rad;
+      if(!inLane(px2,pz)&&Math.abs(px2)<=39&&pz>-38.5&&pz<19&&!inWater(px2,pz,-1.2)){
+        props.push({type,x:px2,z:pz,h,scale:scaleFor(type,h),flip:!!flip,y:groundY(px2,pz)-.06});
+        return true;
+      }
+    }
+    return false;
+  };
+  for(const a of (scene.at||[])){
+    placeHero(a.type,a.x,a.z,a.h,a.flip);
+    // the rest of the at[] group is secondary - it may sit slightly further out
+    if(a!==hero)nudge(a.type,a.x,a.z,a.h,a.flip,2.8);
+  }
+  // --- 2. mirrored framing: the same piece both sides, so the field reads balanced ------------
+  for(const a of (scene.atx||[])){
+    nudge(a.type,a.x,a.z,a.h,a.flip,2.8);
+    nudge(a.type,-a.x,a.z,a.h,a.flip===undefined?a.x>0:!a.flip,2.8);
+  }
+  // --- 3. structures that belong to the hero --------------------------------------------------
+  if(scene.ring){
+    const {cx,cz,r:rad,n,h}=scene.ring;
+    for(let i=0;i<n;i++){const a=i/n*Math.PI*2+.3;
+      // nudge outward a little if the exact ring point is on a bank, so the ring stays a ring
+      nudge(scene.ring.type,cx+Math.cos(a)*rad,cz+Math.sin(a)*rad,h,i%2,3.4,3);}
+  }
+  if(scene.grid){
+    const {cx,cz,w,d,cols,rows,h}=scene.grid;
+    for(let c=0;c<cols;c++)for(let rw=0;rw<rows;rw++){
+      const x=cx-w/2+w*(cols>1?c/(cols-1):.5),z=cz-d/2+d*(rows>1?rw/(rows-1):.5);
+      nudge(scene.grid.type,x,z,h,0,2.4,3);
+    }
+  }
+  if(scene.fence){        // a fence line beside the village, posts + a rail run
+    const f=scene.fence,sd=f.side<0?-1:1;
+    for(let i=0;i<f.n;i++)nudge('river_stone_post',sd*f.x,f.z+i*1.5,f.h||1.4,i%2,1.7,4);
+  }
+  if(scene.path){         // stepping stones: the implied line from the open ground to the hero
+    for(let i=0;i<scene.path.n;i++){
+      const t=i/(scene.path.n-1),x=scene.path.from[0]+(scene.path.to[0]-scene.path.from[0])*t,
+            z=scene.path.from[1]+(scene.path.to[1]-scene.path.from[1])*t;
+      nudge('river_stone_post',x,z,1.2,i%2,2.4,4);
+    }
+  }
+  for(const row of (scene.rows||[]))if(band.accent)rowAt(row);
+
+  // --- 4. water, and only what belongs to it --------------------------------------------------
+  // One bridge, only when there is a pond, spanning its short axis on the near side so the
+  // crossing is on the way somewhere. That is the "random bridge in a field" fix.
+  if(scene.bridge&&water){
+    const bh=Math.max(4.6,Math.min(6,water.rx*1.15));
+    const bx=water.x,bz=water.z+water.rz*.35;
+    put('bridge_red_arch',bx,bz,bh,0,0,true);
+    for(let i=0;i<3;i++)nudge('river_stone_post',bx+((i%2)?1.9:-1.9),bz+water.rz*.45+i*2.4,1.3,i%2,2.4,4);
+    if(scene.shore)for(let i=0;i<scene.shore.n;i++){
+      const a=Math.PI*.15+i*Math.PI*.5;
+      nudge(scene.shore.type,water.x+Math.cos(a)*(water.rx+3.4),
+        water.z+Math.sin(a)*(water.rz+3.4),scene.shore.h,i%2,3.2,6);
+    }
+  }
+  if(scene.pier&&water){
+    for(let i=0;i<scene.pier.n;i++){
+      const z=water.z-water.rz*.5+i*(water.rz*.5);
+      const x=water.x+(water.x<0?1:-1)*(water.rx*.3+i*.8);
+      nudge('pier_post',x,z,2.4,i%2,3,5);
+    }
+  }
+
+  // --- 5. the field itself --------------------------------------------------------------------
+  // The set pieces alone left the near two-thirds of the map as bare grass, which is why the
+  // field read as "everything crammed at the back". This layer is the ordinary outdoors: a few
+  // CLUSTERS of the destination's natural dressing, with real gaps between the clusters and room
+  // left around the hero, so a walk across the field always has something to pass. Grouped, not
+  // scattered - the research is blunt that an even sprinkle is what reads as noise.
+  const fld=scene.field;
+  if(fld){
+    // Fixed anchor points, walked in order, both sides of the field - so coverage is guaranteed
+    // and reproducible rather than depending on where the dice land.
+    // Ordered so any prefix spreads across both sides AND across the whole visible depth band
+    // (the camera sees roughly z=+16 down to z=-20 from the spawn point, so z=+16 is foreground,
+    // z=-9 is midground and z=-22 is the treeline).
+    const areas=[[25,-22,6],[30,3,6],[26,16,5],[-25,-22,6],[-30,3,6],[-26,16,5],
+                 [34,-9,5],[-34,-9,5],[20,12,5],[-20,12,5]];
+    let made=0;
+    for(let i=0;i<areas.length&&made<Math.round(fld.clusters*band.full);i++){
+      const [cx,cz,rad]=areas[i];
+      // keep clear of the hero precinct so the focal point stays uncluttered
+      if(Math.hypot(cx-(hero?hero.x:0),cz-(hero?hero.z:-33))<13)continue;
+      const n=2+Math.floor(r()*3);                        // 2-4 pieces in this group
+      let got=0;
+      for(let k=0;k<n*7&&got<n;k++){
+        const a=r()*Math.PI*2,d=(.25+r()*.75)*rad;
+        const type=fld.types[Math.floor(r()*fld.types.length)];
+        const h=(PROP_H[type]||4)*(.85+r()*.3);
+        if(nudge(type,cx+Math.cos(a)*d,cz+Math.sin(a)*d,h,r()>.5,2.6,3))got++;
+      }
+      if(got>=2)made++;
+    }
+  }
+
+  kitPropMeshes({src:'payon',props},deco);
+  try{nativeThemeDetail3D(m,props)}catch(e){if(typeof console!=='undefined')console.warn('theme detail skipped',e)}
+  return props.length;
+}
+
 function buildKit(m,planOverride){
   const plan=planOverride||kitPlan(m,S.lvl);if(!plan)return null;
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
-  if(!planOverride&&nativeFieldStore&&m>=0&&m<10){
+  // A map whose native build threw is not retried: it falls back to the kit map for the rest of
+  // the session instead of throwing again on every rebuild.
+  const nativeBlocked=KIT.nativeFailed&&KIT.nativeFailed.has(m);
+  if(!planOverride&&nativeFieldStore&&!nativeBlocked&&m>=0&&m<10){
     const asset=nativeFieldStore.ready(m);
     if(asset){
-      clearNativeField();KIT.nativeWorld=PGNativeFields.build(THREE,asset,m,S.lvl,plan);deco.add(KIT.nativeWorld.root);
+      // v232: a throw here used to leave a half-built scene behind (the old ground already hidden,
+      // the new world never added) - an empty arena with no way back. Build first, and only hide
+      // the classic scenery once the new world exists.
+      try{
+        clearNativeField();KIT.nativeWorld=PGNativeFields.build(THREE,asset,m,S.lvl,plan);
+      }catch(e){
+        if(typeof console!=='undefined')console.warn('native field build failed, keeping the kit map',e);
+        clearNativeField();
+        // Re-enter with the native branch disabled, so the kit map for this field is built now
+        // rather than the scene falling through to the procedural town.
+        (KIT.nativeFailed=KIT.nativeFailed||new Set()).add(m);
+        if(typeof fieldLoading==='function')fieldLoading(false);
+        return buildKit(m,planOverride);
+      }
+      deco.add(KIT.nativeWorld.root);
+      try{KIT.nativeThemeProps=placeNativeTheme(m,KIT.nativeWorld)}
+      catch(e){KIT.nativeThemeProps=[];if(typeof console!=='undefined')console.warn('themed props skipped',e)}
+      // Prefetch the next map while the player is busy here, so travelling does not have to wait
+      // on a download. The store keeps two decoded fields, which is exactly this pair.
+      if(nativeFieldsEnabled&&m+1<10&&!nativeFieldStore.ready(m+1)){
+        const warm=()=>nativeFieldStore.ensure(m+1).catch(()=>{});
+        if(typeof requestIdleCallback==='function')requestIdleCallback(warm,{timeout:4000});else setTimeout(warm,1200);
+      }
+      if(typeof fieldLoading==='function')fieldLoading(false);
       ground.visible=false;if(KIT.ground)KIT.ground.visible=false;
       for(const w of KIT.water)for(const tex of w.maps)if(tex.dispose)tex.dispose();
       KIT.water=[]; // Natural ponds and sloping ground belong to the native world.

@@ -4,7 +4,15 @@ dist/
 
 tools/.devdb/
 # tools/tests/town_smoke.js installs these with --no-save; the game itself has no build step
+# The bare pattern also covers a node_modules SYMLINK: `node_modules/` only matches a real
+# directory, so a symlink (the floor-render harness uses one) used to slip through and get
+# committed as a machine-specific absolute path.
+node_modules
 node_modules/
 
 # Local endgame scenery browser captures and reports
 tools/preview/endgame-captures/
+
+# terrain-v2 review renders: regenerate with tools/maps/terrain-v2/render_floor.py +
+# render_floor_real.js. The summary boards are committed, the per-field 2048² floors are not.
+docs/proposals/terrain-v2/floor-*.png

@@ -374,7 +374,12 @@ t('the Echo Court reuses the game\'s Niflheim HD map kit instead of mismatched b
   assert.ok(src.includes("key=(JOB_RITE.on?'rite:':TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn"), 'the scene key switches on the run');
   assert.ok(src.includes('new THREE.Color(0x171020)') && src.includes('new THREE.Fog(col,22,64)'), 'the arena uses a deep violet sky and closer, darker fog');
   assert.ok(src.includes('hemi.intensity=.52;sun.intensity=.48') && src.includes('hemi.intensity=.8;sun.intensity=.9'), 'arena lighting dims and the field lighting restores on exit');
-  assert.ok(src.includes('if(TRIAL.on)trialArena();else buildDeco(S.mp)'), 'late HD asset loads rebuild the Echo Court, not the player\'s current field');
+  // v231 moved this into a helper, because a native field must not be rebuilt at all when the HD
+  // atlas lands late (that rebuild was the second half of the "old map jumps to the new map" bug).
+  const rebuild = grab('const rebuildActiveScenery=()=>{', 'const j=n=>fetch(');
+  assert.ok(rebuild.includes('else if(TRIAL.on)trialArena()'), 'late HD asset loads rebuild the Echo Court, not the player\'s current field');
+  assert.ok(rebuild.indexOf('TRIAL.on') < rebuild.indexOf('KIT.built&&KIT.built.native'), 'the run is checked before the native-field guard');
+  assert.ok(rebuild.includes('else buildDeco(S.mp)'), 'a non-native field still picks up the late atlas');
 });
 
 t('a ranked try is only spent after the ten-second grace', () => {

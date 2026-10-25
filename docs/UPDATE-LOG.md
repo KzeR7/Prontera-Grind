@@ -7514,3 +7514,325 @@ The owner's second pass over v77, six notes, all built.
   untouched). **Not verified:** GPU/WebGL pixels of the in-game layer and a phone viewport; the FX
   were reviewed through an offline Canvas renderer and the `/bossfx` page.
 * **Delivery:** local changes on `arena/d2c0537a-prontera-grind`; no merge or deployment.
+
+### 2026-10-25 — `terrain-v2 proposal` (dev only, no game change)
+* **Changed:** Proposed and prototyped a replacement landform generator for the ten outdoor
+  fields. The shipped v195 field is `1.1 + three Gaussian mounds + one Gaussian valley + one
+  sine ripple` for all ten destinations — no ridges, creases, shelves or drainage — and the
+  floor is one 2048² canvas with no slope information. The prototype layers a warped landform,
+  ridged skyline, drainage swales, rocky benches, a per-map signature feature and a perimeter
+  frame, with noise-ragged lane flattening; it also drafts per-vertex floor splat weights
+  (grass/dirt/rock/beach). Nothing in the game changed: `index.html` still loads only
+  `assets/native-fields.js`, and Ascension scenery is untouched.
+* **Try it:** `PREVIEW_PAGE=tools/maps/terrain_v2_preview.html python3 tools/preview_server.py 8000`
+  — shipped vs proposed on all ten fields with intensity, lane, contour and wireframe dials.
+  Static boards and the written proposal:
+  [docs/proposals/map-terrain-upgrade-2026-10-25.md](proposals/map-terrain-upgrade-2026-10-25.md).
+* **Files touched:** `tools/maps/terrain-v2/prototype.js`, `tools/maps/terrain-v2/sample_heights.js`,
+  `tools/maps/terrain-v2/render_preview.py`, `tools/maps/terrain-v2/README.md`,
+  `tools/maps/terrain_v2_preview.html`, `tools/tests/terrain_v2_sim.js`,
+  `docs/proposals/map-terrain-upgrade-2026-10-25.md`, `docs/proposals/terrain-v2/*` (boards,
+  metrics), this log. No shipped asset or game file was edited.
+* **Checks:** `terrain_v2_sim` **PASS** — 251 assertions (pure deterministic heights, exact
+  rendered-triangle contact, lane < 26° with relief outside it, max height jump < 0.75 units,
+  ten distinct landforms with pairwise r < 0.6, no short-period repetition, normalised splat
+  weights, rock on steep faces, wandering trail, mesh contract, and the game still loading only
+  the shipped module). Preview page executed against stubs with every dial path exercised.
+  `docs/proposals/terrain-v2/metrics.json` holds the numbers quoted in the proposal.
+  **Not verified:** in-browser WebGL pixels of the preview page (no Chromium in this sandbox;
+  the boards come from a Python ray-march of the same heightfields, not a browser capture), and
+  no physical-device performance measurement. The existing native-field suites were not re-run
+  because no shipped file changed.
+
+### 2026-10-25 — `haven-v229 field landform v2`
+* **Changed:** The ten outdoor fields now use the v2 landform described in the previous entry.
+  `assets/native-fields.js` replaces `1.1 + three Gaussian mounds + one valley + one sine
+  ripple` with a layered landform per destination — warped noise, ridged skyline, drainage
+  swales, rocky benches (shelf/escarpment/shelf), a per-map landmark (terrace, bluff, spur,
+  dune sea, gorge, basin, plateau, shelf), a perimeter rise so the horizon is land, and a
+  noise-ragged clearing for the fight lane. The floor is painted from the landform: per-vertex
+  `surfaceWeights` (grass/dirt/rock/beach) plus a 192² slope mask drive a dirt/rock/beach
+  blend and a terrain-following trail; props respect the slope (nothing on >32°, rock up to
+  42°); ponds keep their shape but the ground under them is dug as a bowl with a wide beach
+  instead of a vertical rim. The v195 landform is kept as `legacyHeight`/`LEGACY` and is
+  reachable with `?nativeFields=1&terrain=v1`, so nothing was lost. Fields stay opt-in
+  (`NATIVE_FIELDS_DEFAULT=false`); Ascension/Astral and Thor scenery are untouched, and no
+  save, combat, drop or mob data changed.
+* **Corrects the previous entry:** that entry said this was proposal-only and listed
+  `tools/maps/terrain-v2/prototype.js`, which has been deleted — the module is now the
+  implementation, and the folder only samples/renders it.
+* **Try it:** `python3 tools/preview_server.py 8000` → `/game?nativeFields=1` to walk all ten
+  fields, add `&terrain=v1` for the old landform. Landform-only review page:
+  `PREVIEW_PAGE=tools/maps/terrain_v2_preview.html python3 tools/preview_server.py 8000`.
+  Boards + numbers: [docs/proposals/map-terrain-upgrade-2026-10-25.md](proposals/map-terrain-upgrade-2026-10-25.md).
+* **Files touched:** `assets/native-fields.js`, `index.html` (`BUILD`), the three build-tag
+  mirrors, `tools/tests/terrain_v2_sim.js` (new pins), `tools/tests/native_fields_sim.js`
+  (lane relief replaced the old "full relief in the lane" pin), `tools/maps/terrain_v2_preview.html`,
+  `tools/maps/terrain-v2/*` (sampler/renderer/README), `docs/proposals/terrain-v2/*` (boards,
+  metrics), `docs/proposals/map-terrain-upgrade-2026-10-25.md`, `docs/CODE-MAP.md`,
+  `docs/TESTING.md`, this log.
+* **Checks:** `terrain_v2_sim` **PASS** (254 assertions), `native_fields_sim` **PASS** (50
+  scenes, contact, ponds, lifecycle, lazy loading), `kit_sim` 37/37, `reference_mobs_sim`,
+  `ascension_scene_sim`, `astral_scenery_sim`, `update_watch_sim` 9/9, `panel_layout_smoke`
+  42/42, `field_loop_smoke` 9/9, `save_owner_boot_smoke` 5/5, `bash tools/build_site.sh` +
+  `publish_sim` 15/16 — the one failure ("existing runtime assets exceed their original
+  62.5 MiB budget") **also fails on the untouched baseline commit `d26906c`**, so it is not
+  caused by this change. Field build cost measured in-process: 124–156 ms for terrain +
+  floor canvas, ~10.8k triangles, unchanged draw-call count.
+  **Not verified:** in-browser WebGL pixels of the new fields — Playwright Chromium cannot be
+  downloaded in this sandbox, so `check_native_fields_browser.cjs` could not run; the review
+  page's scripts were executed against stubs and the boards come from a Python ray-march of
+  the same heightfields. No physical-device frame rate measured.
+* **Delivery:** local changes on `arena/783b0e96-prontera-grind`; no merge or deployment.
+
+## 2026-10-25 — field colour identity (haven-v230)
+
+Ten outdoor fields shared six source crops, two of them byte-identical (Prontera and Izlude
+both used `prt_fild08` with the same crop indices), and eight of ten base tiles sat in the
+40-98° hue band. That is why every field looked the same colour: nothing in the pipeline
+ever changed the colour. `DESIGNS[].palette` now grades each field's own crop toward its
+destination (`tint`/`tintA`/`sat`/`lum`) and `groundDetail` adds per-material ground marks.
+The floor tile is now high-passed and laid down stochastically instead of mirrored-repeated,
+which removes the visible quilt. Measured pairwise distance across the ten floors went from
+min 0.0 / median 55.2 to min 28.5 / median 87.5. Evidence and numbers:
+`docs/proposals/map-terrain-upgrade-2026-10-25.md` §4b,
+`docs/proposals/terrain-v2/board-color.png`, `board-floor-real.png`, `color-audit.json`.
+New tooling: `tools/maps/terrain-v2/render_floor_real.js` (runs the shipping `build()`
+against a real canvas) and `render_color_audit.py`.
+
+## 2026-10-25 — proposal viewer (haven-v230)
+
+The proposal was only reachable as raw `text/markdown`. Added
+`tools/maps/terrain_v2_proposal.html`: it fetches the same document and renders it, with
+the colour and floor boards placed inside the colour section, and links to the live
+landform viewer and the game. The live viewer links back, so neither page is a dead end.
+`tools/tests/terrain_proposal_sim.js` (27 checks) guards the wiring: renderer present and
+loadable, every table/list/code construct surviving, no unrendered markdown, every
+referenced asset existing, and the measured colour evidence still in the document.
+
+## 2026-10-25 — camp spacing, per-tier field types, honest loading, regional detail (haven-v231)
+
+Four owner reports in one build.
+
+* **"mobs now spawn very tightly together, is it the maps spawn or usable area is too small?"**
+  Both, and the area was the smaller half. The lane is 26 × 40 units and the camp ring reached
+  3.2 units from the camp site with no floor between monsters, so a camp could pack itself into
+  1.9-unit pairs. `CAMP_RING_MIN/MAX` 1.6/3.2 → **1.7/2.9**, `MOB_GAP` is now a hard **2.6**
+  floor, `CAMP_GAP` 5.5 → **6.4**, and `fillCamp` places camp-mates on even angles so three of
+  them sit ~4.4 apart instead of on one blob. Two details mattered more than the numbers:
+  candidates that had to be **clamped** by the lane edge are rejected (every clamped candidate
+  lands on the same edge line, which is how two camps folded onto each other), and the ring
+  widens in three tiers — ring, ×1.45, ×1.75 — before giving up. If a camp still cannot fit a
+  member it drops that member rather than overlapping, but its **first** monster is never
+  dropped; an unstocked camp is a visible hole in the field. Measured over 400 seeds with the
+  real `fillCamp`: closest pair of any two monsters on a 12-camp field p1 2.0 / p50 3.0
+  (Abyss), 1/400 fields have any pair under 2.0 (was 123/400 during the intermediate version and
+  1.94 at p1 before the change). Boss escorts moved out with it: ring 2.3–2.95 → **3.0–3.7**.
+* **"i want each 3 stage to have different type of map & a boss map"** — the kit side already
+  swapped scenery per stage band; the native fields did not, so every stage of a field was one
+  terrain. `TIER_GROUPS` now drives landform scale, ridgeline scale/amplitude and surface detail
+  per band: **1-3 base, 4-6 outskirts** (broad and open, low skyline, ×1.45 land), **7-9 approach**
+  (tighter, higher, wooded — leaves instead of grass), **10/boss sanctum** (flat stone floor, ×1.60
+  framing ring, no water). Colour is pushed per band with `tierTint` on top of the v230 per-map
+  palette, because height alone cannot separate them: the fight lane is deliberately flat, so
+  measured mean |dh| between bands was only 0.12–0.30. `placements()` now calls `setStage()` so it
+  can never read the previous build's design. Four-band proof board:
+  `docs/proposals/terrain-v2/board-tiers-7.png`.
+* **"it loads the old map & old mob sprite then it jumps into the new proposed map, is that an
+  error?"** It was — three scenery swaps on a cold entry (procedural town → kit map when the
+  atlas landed → native field when the geometry landed). `buildDeco` now **holds** the field and
+  shows a small "Loading <field>…" pill while the native geometry is genuinely still arriving,
+  and the late-atlas rebuild is skipped once a native field owns the scene, so nothing repaints
+  underneath the player. Prefetched fields resolve instantly and the pill never appears.
+* **"add more details into the map — amatsu will have japanese stuff?"** Yes, Amatsu is
+  Japanese-style in RO: a shrine half-sunken in a lake of bamboo, pine and cherry, straw huts,
+  torii. `NATIVE_THEME` now dresses every destination with the kit's own regional props —
+  Amatsu gets `torii_gate`, `tree_cherry`, `bamboo_grove`, `lantern_stone`; Louyang
+  `shrine_stone`, `lantern_stone`, `bamboo_grove`; Payon bamboo; Prontera houses and stone posts;
+  and so on for all ten fields. Budget per band (2-4 landmarks + 2-10 small props), never inside
+  the fight lane (|x| < 16.2), never on a slope over 26°, never in the pond — checked by
+  replaying the placement maths: Amatsu 8/5/14/4 props across the four bands, **0** in-lane.
+  Reference: ragnarok.fandom.com Amatsu/Payon/Luoyang pages, ratemyserver `ama_fild01`,
+  iRO Wiki "Places" for the culture mapping. No new art was drawn and no native sprite pixels
+  were repainted — the props are kit sprites placed by the existing `kitPropMeshes` path.
+* **Files touched:** `index.html` (`BUILD`, camp population, boss escort ring, `fieldLoading`,
+  `NATIVE_THEME`/`placeNativeTheme`, `KI.nativeThemeProps`, `actorFloorY`), `assets/native-fields.js`
+  (`TIER_GROUPS`, `tierDesign`, `tierTint`/`tierGrade`, stage-authoritative `placements`,
+  `heightAt(map,x,z,stage)`), `tools/maps/terrain-v2/render_floor_real.js` (single-tier board
+  mode), `Updates/map-textures-preview/map_kit_hd_option_b.js` (regenerated), the build-tag
+  mirrors, `docs/proposals/terrain-v2/board-tiers-7.png` (new), and the tests below.
+* **Tests:** `starter_sim` **11/11** (it now reads `CAMP_GAP`/`CAMP_RING_MAX`/`MOB_GAP` from
+  `index.html` instead of pinning old numbers, and three assertions that were pinning source
+  shapes removed by earlier work — the AoE-per-pack rules from v227, the pack gate on waking,
+  and the late-atlas rebuild — were rewritten against what the code actually guarantees today).
+  `native_fields_sim` 50 scenes, `terrain_v2_sim` 256, `kit_sim` 37/37, `trial_sim` 18/18,
+  `update_watch_sim` 9/9, `save_load_sim` 27/27, `shop_sim` PASS. Pre-existing failures not
+  touched by this change and reproduced on the untouched baseline commit `d26906c`:
+  `fourth_job_skills_sim`, `ground_combat_sim`, `rotation_updates_sim`, `skill_redesign_sim` (2),
+  `publish_sim` (asset budget), `dev_server_sim`/`gm_tools_sim` (the `ws` package is not
+  installed in this sandbox).
+* **Not verified:** in-browser WebGL pixels — this sandbox cannot run a browser, so the four
+  bands and the themed props were verified by replaying the placement maths and by the offline
+  board render, not by watching the game. That check is the owner's: `/game?nativeFields=1`.
+* **Delivery:** local changes on `arena/783b0e96-prontera-grind`; no merge or deployment.
+
+## 2026-10-25 — loading-pill safety net (haven-v231)
+
+Holding the field behind the "Loading <field>…" pill is only an improvement while the wait is
+short. A stalled request or an offline client would have left the player looking at the pill
+with no map at all, which is worse than the swap it replaced. `buildDeco` now arms a 6-second
+timer when it starts holding: if the native field has still not arrived it shows the ordinary
+scenery, and a native field that turns up later still replaces it. The timer is keyed to the
+request that armed it (`KIT.nativeToken`), so a resolved, cancelled or superseded load never
+fires it.
+
+## 2026-10-25 — the preview now actually shows the new fields (haven-v232)
+
+Owner: *"game preview is not showing your proposed maps. still the old map."* Correct, and not a
+rendering bug — an **opt-in default** doing exactly what it was told. `NATIVE_FIELDS_DEFAULT=false`
+is a recorded owner decision (`docs/DECISIONS.md`: park the outdoor redesign), so the plain game
+URL serves the classic kit maps. The preview opens the plain URL, and the preview server's log
+confirms it: the browser loaded `/` and never requested a single
+`assets/native-fields/v1/<map>/terrain.png`. Everything I built was behind a query string I told
+the owner about but could not put in the link they click.
+
+* **The preview serves the new fields.** `tools/preview_server.py` flips that one constant while
+  it serves *the game* (`_preview_html`), so `/` and `/game` come up on the new terrain and
+  `/game?nativeFields=0` still shows the classic maps. It is a server-side rewrite of the served
+  bytes — **the shipped file is untouched** and still defaults to off, so players are unaffected
+  and the recorded decision stands. Any other page routed through the preview server is served
+  verbatim; if the game ever stops shipping that exact line the server prints a WARNING and
+  serves it unchanged rather than pretending.
+* **A switch in the game, not just a URL.** Display ▸ **"New outdoor terrain (reloads)"** toggles
+  between the new fields and the classic maps. It is a reload because the field renderer is
+  picked at boot — far safer than rebuilding a live world mid-fight — and the choice is kept in
+  `sessionStorage`, tab-local exactly like the URL override it stands in for. Precedence, now
+  written as an explicit truth table instead of one nested expression:
+  **URL value → this tab's toggle → the shipping constant**. All eight combinations are checked.
+* **A failed field build no longer leaves an empty arena.** `buildKit`'s native branch used to
+  `return null` on a throw, which dropped the scene through to the *procedural town* — the old
+  ground already hidden and nothing added. It now builds before hiding anything, and on failure
+  marks that map (`KIT.nativeFailed`) and re-enters the kit path, so a broken native field
+  degrades to the kit map and is not retried every rebuild.
+* **Tests:** new `tools/tests/preview_fields_sim.js` (5 checks: preview enables, escape hatch,
+  explicit enable, other pages untouched, missing flag warns). `kit_sim` 37/37 with the
+  regenerated byte-identical mirror, `update_watch_sim` 9/9 with the build-tag mirrors on v232.
+  Full suite **128 pass**; the 6 failures (`fourth_job_skills`, `ground_combat`,
+  `rotation_updates`, `skill_redesign` ×2, `skill_balance`'s stale gear hash, `publish_sim`'s
+  asset budget) were re-checked in a clean worktree at the previous commit and fail there too —
+  none are from this change. `card_star_balance`/`skill_balance` also needed commit `d164bd0`,
+  which the sandbox reset had dropped from the local object store; re-fetching it fixed the first.
+* **Verified how:** the served bytes (`curl` on 8000/8001 for `/`, `/game`,
+  `/game?nativeFields=0`) and the false→true flip, plus the on-disk file still reading `false`.
+  Still **not** verified: WebGL pixels in a browser — this sandbox has no browser. The owner's
+  own report is the pixel check, and it should now pass.
+
+## 2026-10-25 — sunken props, and real detail under them (haven-v233)
+
+Two reports from the owner: *"some of the houses are under half way"* and *"can u use new details
+sprites? i dont like the old ones… i want more details."*
+
+**1. The houses were literally half underground — a bug, not a look.** `kitPropMeshes` placed
+every prop at `y=0`. That is correct on the flat kit ground, but the native fields are real
+heightfields: measured over the props actually placed, the ground under them reaches **5.7 units**
+(Prontera), 5.2 (Izlude), 4.7 (Geffen). So on the approach band — the average ground height there
+is 2.5 — the bottom of every house and tree was buried. Across 308 measured props the old
+placement left **26.7% of the average sprite underground, and one was 100% buried**. Props now
+carry `y` from `PGNativeFields.heightAt(map,x,z,stage)` (the same heightfield the field was built
+from), sunk 0.06 so the sprite's own transparent feet do not float, and the slope ceilings were
+tightened (landmarks 18°, middle 20°, clutter 22°) because a billboard on a bank reads as buried
+no matter what its y is. Verified by replay: **0 of 671 props** now stands off its ground.
+
+**2. More detail, without inventing or substituting art.** The owner asked for new sprites found
+online. That is the one thing this change does *not* do, deliberately: `AGENTS.md` says
+"do not invent, repaint, recolour or substitute sprite art", and RO's field art is Gravity's.
+Downloading a sprite sheet and swapping it in would break the repo rule and the licence. What the
+build does instead is add detail that is legitimately ours to make:
+
+* **The whole kit is now in use** — 21 of 34 sprites before, **34 of 34** now, each still
+  culturally honest (Amatsu `torii_gate`/`bridge_red_arch`/`tree_cherry`, Louyang
+  `shrine_stone`/`lantern_stone`, Payon bamboo and mountain stone, Morocc ruins and cacti,
+  Niflheim graves, Abyss crags and crystal).
+* **A new middle tier.** Budgets per band went `2+6 / 1+4 / 4+10 / 2+2` → **`3+4+10 / 2+3+8 /
+  5+6+16 / 3+2+6`** (landmarks + a new mid-ground layer + clutter). 308 → **671** props across the
+  forty fields, with the outskirts still the plain way in.
+* **A 3D bedding layer** (`nativeThemeDetail3D`, 40 piece types). Real geometry under and around
+  each billboard, from the primitives the rest of the scenery uses: stone footings under a torii,
+  a stepped base and votive lamps at a shrine, glowing fire-boxes in the stone lanterns, six bamboo
+  stalks per grove, petals under a cherry, moss and rubble at a ruin, a fence and a stepping path
+  at a house. **2,137 pieces** across the forty fields, none in the hunting lane, none floating.
+* **It does not cost what it looks like it should.** The first cut allocated a geometry and a
+  material per mesh (≈2,360 of each). Geometry and material are now cached by shape and colour —
+  the whole kit fits in **175 geometries and 31 materials** — and the clutter tier yields once a
+  field passes `THEME_MESH_CAP` (72), so the busiest field cannot quietly become a hundred extra
+  draw calls.
+* **Tests:** new `tools/tests/native_theme_sim.js` pins the ground-planting (the actual regression),
+  the lane and slope exclusions, the sprite-name validity of all four tables, the per-band budgets,
+  the mesh ceiling and the bounded caches.
+* **Checks:** full suite **126 pass / 6 fail**, and the six
+  (`fourth_job_skills`, `ground_combat`, `rotation_updates`, `skill_redesign` ×2, `skill_balance`'s
+  stale gear hash, `publish_sim`'s asset budget) are the same pre-existing failures verified in a
+  clean worktree two commits ago. `kit_sim` 37/37 with the regenerated mirror.
+* **Not verified:** the pixels. No browser in this sandbox — the placement, planting, counts and
+  mesh bounds are measured, not seen. The live preview at `/game` is the check.
+
+## 2026-10-25 — the maps get composed, not sprinkled (haven-v234)
+
+The owner: *"maps details are bad, especially amatsu, building are small, random bridge, other maps
+are with random trees mix together, the details are not in the theme with the maps, repetitive
+details."* This replaces the random-pool dressing with hand-placed scenes.
+
+* **`NATIVE_SCENE` replaces `NATIVE_THEME`/`NATIVE_THEME_BUDGET`.** Those tables were pools of
+  sprite names drawn at random per band with a random scale - which is exactly how you get five
+  torii of five different sizes piled on each other, and the same mixed treeline on ten different
+  maps. Each destination now gets an explicit sketch: `at` (the hero group), `atx` (its mirrored
+  flank), and optional `ring`, `grid`, `fence`, `path`, `rows`, `bridge`, `shore`, `pier`, `field`.
+* **"building are small".** `PROP_H` gives every one of the 34 sprites a target world height, and
+  `scaleFor()` divides that by the atlas crop - so a house is 10-12 units (a person is 2.9), a
+  tower is 18-20, a lantern is 2.8. The random `0.8-1.2` scale multiplier that hid the bug is gone.
+* **"random bridge".** The bridge is only placed when the map actually has water, and it spans the
+  pond's short axis on the near side. Seven of the ten maps have no water and now have no bridge.
+* **"repetitive details".** Flank pieces are nudged through seven jittered retries with a 2.6-unit
+  minimum gap and no same-type piece within 4.4 units, so a mirrored pair never lands as a stamp.
+* **The empty-field problem the first cut created.** A top-down audit said the fields were covered.
+  They were not: the camera sees about **thirty units ahead of the spawn point**, so a set piece
+  parked at `z<=-28` is off the top of the screen on first frame. Amatsu's torii avenue was moved
+  into the visible band (`z=+5..-22`, four gate pairs, growing toward the shrine the way a real
+  sando does) and every other destination got a themed cluster in the same band. The landmark
+  group stays at `z<=-30` as the payoff you walk into.
+* **Field layer.** Per-map `{types, clusters}`, eight fixed anchors walked in order across both
+  sides and the whole visible depth so coverage cannot depend on where the dice land, with 2-4
+  related pieces per cluster and the hero precinct kept clear.
+* **Bedding layer restored.** The v233 3D detail layer (`THEME_BED`, palettes, `themeGeo`/`themeMat`,
+  `nativeThemeDetail3D`) had been silently deleted by the recipe rewrite - the `try/catch` around
+  its call swallowed the `ReferenceError`. Restored verbatim, and each bedding piece is now seated
+  on the ground under its own footprint, which also fixes the outward-reaching pieces (a house's
+  stepping path, a shrine's posts) sinking on a slope.
+* **The mesh ceiling was dead.** It skipped bedding only when `p.scale<0.9`, and `scaleFor()` has
+  since redefined `scale` as *atlas crop x multiplier*, so it never bit: Prontera ran to 130 pieces
+  against a cap of 72. It is now a hard ceiling; props arrive hero-first so the landmark's footing
+  always survives and the far treeline yields.
+* **Verification is no longer pixel-blind.** `tools/` now has a dependency-free software renderer
+  (`/tmp` scratch, not shipped) that decodes `assets/kit/ro-spritesheet.png` itself and renders the
+  real in-game camera - perspective from `cam.position`/`lookAt` with `fov 38`, `dd=44`, `el=.95`,
+  the map's own palette and its winding `trailCenter` path. It reads the live `index.html`, so the
+  renders are of the shipped code. Ten spawn views and three mid-map views were reviewed this way.
+* **Tests:** `native_theme_sim.js` rewritten for the new contract - every recipe names only sprites
+  that exist, every placed sprite has a `PROP_H`, every hero is >= 9 units, every field carries 4+
+  pieces in the camera's visible band, no prop in the lane rectangle or on a bank steeper than 22
+  degrees, every prop planted on its own ground, bedding seated and under the ceiling, caches
+  bounded. Also fixed: the lane test only checked `|x|` (no `z`), and the stepping-stone paths
+  crossed the lane - both now correct.
+* **Checks:** `kit_sim` 37/37 with the regenerated mirror; full suite **127 pass / 8 fail**, and
+  all eight (`fourth_job_skills`, `ground_combat`, `field_loop_smoke`, `publish_sim`,
+  `rotation_updates`, `skill_balance`, `skill_redesign` x2) reproduce on `HEAD`'s `index.html`.
+* **Not verified:** the real 3D renderer. The software renderer is a faithful approximation of the
+  camera and the sprite art, but it is not WebGL - lighting, shadows, fog and the 25 terrain tiles
+  are not in it. The live preview at `/game` remains the check.
+* **Status: merged and switched off.** The owner asked to land the work and keep the new maps
+  aside for future edits, so this is merged to `main` with `NATIVE_FIELDS_DEFAULT` still `false` -
+  ordinary play keeps the existing kit maps, and the native fields only load with
+  `?nativeFields=1`. The work continues on `arena/783b0e96-prontera-grind`, which is kept. Review boards
+  are `Updates/map-textures-preview/board-11-composed-fields-from-spawn.png` and
+  `board-12-amatsu-approach-walk.png`; resume notes are in `docs/NATIVE-FIELDS-HANDOFF.md`
+  under *Composition pass (v234) - parked, not merged*.

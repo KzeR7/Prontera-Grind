@@ -3,7 +3,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),THREE=require('three');
 const F=require('../../assets/native-fields.js'),root=path.resolve(__dirname,'../..'),src=fs.readFileSync(root+'/index.html','utf8');
 const catalog=JSON.parse(fs.readFileSync(root+'/assets/native-fields/v1/catalog.json'));
-const canvas=()=>({width:0,height:0,getContext:()=>({save(){},restore(){},translate(){},scale(){},beginPath(){},arc(){},stroke(){},createImageData(w,h){return{data:new Uint8ClampedArray(w*h*4)}},putImageData(){},drawImage(){},fillRect(){},clearRect(){},createPattern(){return{}},createRadialGradient(){return{addColorStop(){}}}})});
+const canvas=()=>({width:0,height:0,getContext:()=>({save(){},restore(){},translate(){},scale(){},rotate(){},clip(){},beginPath(){},arc(){},ellipse(){},moveTo(){},lineTo(){},quadraticCurveTo(){},closePath(){},stroke(){},fill(){},createImageData(w,h){return{data:new Uint8ClampedArray(w*h*4)}},putImageData(){},drawImage(){},fillRect(){},clearRect(){},createPattern(){return{}},createRadialGradient(){return{addColorStop(){}}},measureText(){return{width:0}},fillText(){}})});
 global.document={createElement:canvas};
 const scope={THREE,console,document:global.document,scene:new THREE.Group(),deco:new THREE.Group(),BX_:13,Z0:-28,Z1:12,S:{lvl:1},Map,Set};
 vm.createContext(scope);vm.runInContext(src.slice(src.indexOf('// ----- The map kit'),src.indexOf('// ----- Ragnarok-style 8-dir sprites'))+`;this.K={kitPlan,KIT};`,scope);
@@ -22,11 +22,18 @@ for(let map=0;map<10;map++)for(const stage of [1,4,7,10,15]){
  for(const p of props){
   assert(['tree','tree2','rock','shrub','stump','detail'].includes(p.role),'town prop in outdoor field');
   assert(!(Math.abs(p.x)-p.rx<13.39&&p.z+p.rz>-29&&p.z-p.rz<14),'model intrudes into combat field');assert(Number.isFinite(p.y));assert(record.models[p.role].size[1]*p.scale<=8.00001,'oversized field scenery');
-  const w=F.DESIGNS[map].water;if(w)assert(Math.hypot((p.x-w.x)/w.rx,(p.z-w.z)/w.rz)>1.1,'prop inside pond');
+  // The pond is per stage group (the sanctum has none, the approach widens it), so the
+  // invariant has to be checked against the design this stage actually builds.
+  const w=F.designOf(map).water;if(w)assert(Math.hypot((p.x-w.x)/w.rx,(p.z-w.z)/w.rz)>1.1,'prop inside pond');
  }
  const samples=[];let maxSlope=0;
  for(let x=-13;x<=13;x+=2)for(let z=-28;z<=12;z+=2){const y=F.heightAt(map,x,z);samples.push(y);maxSlope=Math.max(maxSlope,Math.abs(F.heightAt(map,x+.01,z)-y)/.01,Math.abs(F.heightAt(map,x,z+.01)-y)/.01)}
- assert(Math.max(...samples)-Math.min(...samples)>2,'relief must reach playable field');assert(maxSlope<1.1,'walkable hills must remain gradual without stair jumps');
+ // The lane is deliberately the calm part of the field (the landform carries the
+ // relief outside it - see terrain_v2_sim). It must still read as sloped ground.
+ const laneRelief=Math.max(...samples)-Math.min(...samples);
+ assert(laneRelief>.35&&laneRelief<3.6,'lane relief stays readable but walkable: '+laneRelief.toFixed(2));assert(maxSlope<1.1,'walkable hills must remain gradual without stair jumps');
+ let outer=[1e9,-1e9];for(let x=-42;x<=42;x+=2)for(let z=-42;z<=42;z+=2){if(Math.abs(x)<14&&z>-30&&z<14)continue;const y=F.heightAt(map,x,z);outer=[Math.min(outer[0],y),Math.max(outer[1],y)]}
+ assert(outer[1]-outer[0]>2.5,'relief must reach the field outside the lane');
  const world=F.build(THREE,{record,vertices,terrain:{},atlas:{}},map,stage,plan);scenes++;maxTriangles=Math.max(maxTriangles,world.diagnostics.triangles);
  if(map===0&&stage===1){
   // onBeforeCompile receives unresolved ShaderLib includes in Three r128.
@@ -45,7 +52,10 @@ for(let map=0;map<10;map++)for(const stage of [1,4,7,10,15]){
   const ids=[0,1,2].map(j=>floor.index.getX(k+j)),x=ids.reduce((n,i)=>n+a.getX(i),0)/3,z=ids.reduce((n,i)=>n+a.getZ(i),0)/3,y=ids.reduce((n,i)=>n+a.getY(i),0)/3;
   assert(Math.abs(F.heightAt(map,x,z)-y)<2e-6,'height function differs from rendered slope');
  }
- const w=F.DESIGNS[map].water;if(w){assert(F.heightAt(map,w.x,w.z)<w.level-.9,'pond is below its natural shore');assert(world.root.children.some(o=>o.userData.nativePond),'missing natural pond')}
+ // Stage groups change the pond (the approach widens it, the sanctum has none), so read the
+ // design this stage actually built rather than the base recipe.
+ const w=F.designOf(map).water;if(w){assert(F.heightAt(map,w.x,w.z)<w.level-.9,'pond is below its natural shore');assert(world.root.children.some(o=>o.userData.nativePond),'missing natural pond')}
+ else{assert(!world.root.children.some(o=>o.userData.nativePond),'pond mesh drawn for a field with no water')}
  const extra=new THREE.Texture();let extraDisposed=0;extra.addEventListener('dispose',()=>extraDisposed++);world.trackTextures([extra]);
  const owned=new Set();world.root.traverse(o=>{if(o.geometry)owned.add(o.geometry);if(o.material)for(const material of (Array.isArray(o.material)?o.material:[o.material])){owned.add(material);if(material.map)owned.add(material.map)}});let disposed=0;for(const r of owned)r.addEventListener('dispose',()=>disposed++);
  const parent=new THREE.Group();parent.add(world.root);world.dispose();assert.equal(parent.children.length,0);assert.equal(extraDisposed,1,'inactive water frame texture is disposed');assert.equal(disposed,owned.size,'all owned GPU resources are disposed once');
