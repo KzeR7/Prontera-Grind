@@ -55,19 +55,20 @@ const box = {
 vm.createContext(box);
 vm.runInContext(`
 var S={mp:0,lvl:1};const KIT={ok:1};
+// arena bounds the placer reads (they live elsewhere in index.html)
+const Z0=-28,Z1=12,BX_=13;
 var __detail=null;
 const deco={add(o){__detail=o}};
 const kitPropMeshes=(plan)=>{for(const p of plan.props)__out.push(p)};
-${grab('const NATIVE_THEME=[', '// How much architecture')}
-${grab('const NATIVE_THEME_BUDGET=', 'function placeNativeTheme')}
+${grab('const THEME_BED={', 'function placeNativeTheme')}
 ${grab('function placeNativeTheme', 'function buildKit(')}
 `, box);
 
 const manifest = JSON.parse(fs.readFileSync(path.join(repo, 'assets/kit/ro-spritesheet.json'), 'utf8'));
 const SPRITES = manifest.sprites || manifest;
-const THEME = vm.runInContext('NATIVE_THEME', box);
-const BUDGET = vm.runInContext('NATIVE_THEME_BUDGET', box);
 const CAP = vm.runInContext('THEME_MESH_CAP', box);
+// the arena lane, same numbers the placer uses
+const Z0 = -28, Z1 = 12;
 
 const place = (m, lvl) => {
   captured.length = 0;
@@ -78,20 +79,63 @@ const place = (m, lvl) => {
   return { props: captured.slice(), meshes: g ? g.children : [] };
 };
 
-// --- the tables ---------------------------------------------------------------------------
+// --- the recipes ---------------------------------------------------------------------------
+// The old tables were random pools per band, and they produced exactly what the owner
+// complained about: five torii of different sizes piled on each other, a bridge over dry
+// grass, and the same group of trees on every map. A recipe is now an explicit sketch.
+const SCENE = vm.runInContext('NATIVE_SCENE', box);
+const BAND = vm.runInContext('SCENE_BAND', box);
+const PH = vm.runInContext('PROP_H', box);
 {
-  const named = new Set(), unknown = [];
-  for (const row of THEME) for (const k of ['arch', 'land', 'small']) {
-    assert.ok(Array.isArray(row[k]) && row[k].length, `every theme has a ${k} pool`);
-    for (const t of row[k]) { named.add(t); if (!SPRITES[t]) unknown.push(t); }
+  assert.strictEqual(SCENE.length, 10, 'all ten destinations carry a scene');
+  assert.strictEqual(BAND.length, 4, 'one dressing band per stage group');
+  const used = new Set(), unknown = [];
+  const LANDMARK = [];
+  for (let m = 0; m < 10; m++) {
+    const sc = SCENE[m];
+    assert.ok(sc && Array.isArray(sc.at) && sc.at.length, `${F.NAMES[m]} has a hero group`);
+    assert.ok(sc.field && Array.isArray(sc.field.types) && sc.field.types.length >= 3,
+      `${F.NAMES[m]} declares the natural dressing that fills its outer ground`);
+    // every type named anywhere in the recipe must exist in the atlas - a typo places nothing
+    const named = [];
+    for (const a of sc.at || []) named.push(a.type);
+    for (const a of sc.atx || []) named.push(a.type);
+    for (const k of ['ring', 'grid', 'fence', 'path', 'bridge', 'shore', 'pier']) if (sc[k] && sc[k].type) named.push(sc[k].type);
+    for (const r of sc.rows || []) named.push(r.type);
+    for (const t of sc.field.types) named.push(t);
+    if (sc.bridge) named.push('bridge_red_arch');
+    for (const t of named) { used.add(t); if (!SPRITES[t]) unknown.push(t); }
+    LANDMARK.push(sc.at[0].type);
   }
-  assert.deepEqual(unknown, [], 'every themed sprite exists in the kit atlas - a typo would place nothing and look like "no details"');
-  assert.ok(named.size >= 30, `the tables draw on the whole kit (${named.size}/34), not a token few`);
-  assert.strictEqual(THEME.length, 10, 'all ten destinations carry a theme');
-  // more detail than the reported version, per band
-  // cross-realm array, so compare as a string
-  const totals = Array.from(BUDGET, b => b.arch + b.land + b.small);
-  assert.strictEqual(totals.join(','), '17,13,27,11', 'budgets per stage band (landmarks + middle + clutter)');
+  assert.deepEqual(unknown, [], 'every sprite a recipe names exists in the kit atlas');
+  // The kit is 34 sprites; the recipes should still draw on most of it across the ten maps.
+  assert.ok(used.size >= 26, `the ten recipes draw on the kit (${used.size}/34 sprites)`);
+  // Every prop needs a height, or scaleFor() has nothing to normalise against and the old
+  // random-scale "buildings are small" bug comes back.
+  const missing = Array.from(used).filter(t => !(PH[t] > 0));
+  assert.deepEqual(missing, [], 'every placed sprite has a target height in PROP_H');
+  // A person is ~2.9 units. A house has to be several people tall or it reads as a shed.
+  for (const t of ['house_prontera', 'tower_geffen', 'shrine_stone', 'torii_gate'])
+    assert.ok(PH[t] >= 9, `${t} is building-scale (${PH[t]}), not player-scale`);
+  // A person is 2.9 units. Every hero the recipes place has to tower over the player, or the
+  // walking reveal at the head of the lane is a shed.
+  for (let m = 0; m < 10; m++)
+    assert.ok(SCENE[m].at[0].h >= 9, `${F.NAMES[m]} hero is ${SCENE[m].at[0].h} tall`);
+}
+
+// --- hero dominance, and the camera band the props actually land in ------------------------
+{
+  // The in-game camera sees roughly thirty units ahead of the player's spawn point, so a
+  // recipe whose set piece all sits at z<-28 is invisible on the first frame - that was the
+  // "everything is crammed at the far end" report. Each field must put something in the
+  // visible band as well as the landmark at the back.
+  for (let m = 0; m < 10; m++) {
+    const sc = SCENE[m];
+    const flank = (sc.atx || []).concat(sc.rows || []);
+    const visible = flank.filter(a => a.z > -24 && a.z < 10).length;
+    assert.ok(visible >= 4,
+      `${F.NAMES[m]} carries ${visible} pieces in the band the camera can see from spawn (needs 4+)`);
+  }
 }
 
 // --- planting: the "houses under half way" regression -------------------------------------
@@ -108,7 +152,8 @@ const place = (m, lvl) => {
       assert.ok(Math.abs(p.y - (ground - .06)) < 1e-6,
         `${F.NAMES[m]} ${p.type} must stand on its own ground (y=${p.y.toFixed(2)}, ground=${ground.toFixed(2)})`);
       assert.ok(p.y > -3, `${F.NAMES[m]} ${p.type} is not sunk below the world`);
-      if (Math.abs(p.x) < 16.2) inLane++;
+      // the lane is a rectangle, not a strip: the backdrop group behind it (z<-29) is fine
+      if (Math.abs(p.x) < 16.2 && p.z > Z0 - 1 && p.z < Z1 + 1) inLane++;
       if (F.slopeAt(m, p.x, p.z) > 22.01) steep++;
       checked++;
     }

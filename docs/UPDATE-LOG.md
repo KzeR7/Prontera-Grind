@@ -7775,3 +7775,57 @@ build does instead is add detail that is legitimately ours to make:
   clean worktree two commits ago. `kit_sim` 37/37 with the regenerated mirror.
 * **Not verified:** the pixels. No browser in this sandbox — the placement, planting, counts and
   mesh bounds are measured, not seen. The live preview at `/game` is the check.
+
+## 2026-10-25 — the maps get composed, not sprinkled (haven-v234)
+
+The owner: *"maps details are bad, especially amatsu, building are small, random bridge, other maps
+are with random trees mix together, the details are not in the theme with the maps, repetitive
+details."* This replaces the random-pool dressing with hand-placed scenes.
+
+* **`NATIVE_SCENE` replaces `NATIVE_THEME`/`NATIVE_THEME_BUDGET`.** Those tables were pools of
+  sprite names drawn at random per band with a random scale - which is exactly how you get five
+  torii of five different sizes piled on each other, and the same mixed treeline on ten different
+  maps. Each destination now gets an explicit sketch: `at` (the hero group), `atx` (its mirrored
+  flank), and optional `ring`, `grid`, `fence`, `path`, `rows`, `bridge`, `shore`, `pier`, `field`.
+* **"building are small".** `PROP_H` gives every one of the 34 sprites a target world height, and
+  `scaleFor()` divides that by the atlas crop - so a house is 10-12 units (a person is 2.9), a
+  tower is 18-20, a lantern is 2.8. The random `0.8-1.2` scale multiplier that hid the bug is gone.
+* **"random bridge".** The bridge is only placed when the map actually has water, and it spans the
+  pond's short axis on the near side. Seven of the ten maps have no water and now have no bridge.
+* **"repetitive details".** Flank pieces are nudged through seven jittered retries with a 2.6-unit
+  minimum gap and no same-type piece within 4.4 units, so a mirrored pair never lands as a stamp.
+* **The empty-field problem the first cut created.** A top-down audit said the fields were covered.
+  They were not: the camera sees about **thirty units ahead of the spawn point**, so a set piece
+  parked at `z<=-28` is off the top of the screen on first frame. Amatsu's torii avenue was moved
+  into the visible band (`z=+5..-22`, four gate pairs, growing toward the shrine the way a real
+  sando does) and every other destination got a themed cluster in the same band. The landmark
+  group stays at `z<=-30` as the payoff you walk into.
+* **Field layer.** Per-map `{types, clusters}`, eight fixed anchors walked in order across both
+  sides and the whole visible depth so coverage cannot depend on where the dice land, with 2-4
+  related pieces per cluster and the hero precinct kept clear.
+* **Bedding layer restored.** The v233 3D detail layer (`THEME_BED`, palettes, `themeGeo`/`themeMat`,
+  `nativeThemeDetail3D`) had been silently deleted by the recipe rewrite - the `try/catch` around
+  its call swallowed the `ReferenceError`. Restored verbatim, and each bedding piece is now seated
+  on the ground under its own footprint, which also fixes the outward-reaching pieces (a house's
+  stepping path, a shrine's posts) sinking on a slope.
+* **The mesh ceiling was dead.** It skipped bedding only when `p.scale<0.9`, and `scaleFor()` has
+  since redefined `scale` as *atlas crop x multiplier*, so it never bit: Prontera ran to 130 pieces
+  against a cap of 72. It is now a hard ceiling; props arrive hero-first so the landmark's footing
+  always survives and the far treeline yields.
+* **Verification is no longer pixel-blind.** `tools/` now has a dependency-free software renderer
+  (`/tmp` scratch, not shipped) that decodes `assets/kit/ro-spritesheet.png` itself and renders the
+  real in-game camera - perspective from `cam.position`/`lookAt` with `fov 38`, `dd=44`, `el=.95`,
+  the map's own palette and its winding `trailCenter` path. It reads the live `index.html`, so the
+  renders are of the shipped code. Ten spawn views and three mid-map views were reviewed this way.
+* **Tests:** `native_theme_sim.js` rewritten for the new contract - every recipe names only sprites
+  that exist, every placed sprite has a `PROP_H`, every hero is >= 9 units, every field carries 4+
+  pieces in the camera's visible band, no prop in the lane rectangle or on a bank steeper than 22
+  degrees, every prop planted on its own ground, bedding seated and under the ceiling, caches
+  bounded. Also fixed: the lane test only checked `|x|` (no `z`), and the stepping-stone paths
+  crossed the lane - both now correct.
+* **Checks:** `kit_sim` 37/37 with the regenerated mirror; full suite **127 pass / 8 fail**, and
+  all eight (`fourth_job_skills`, `ground_combat`, `field_loop_smoke`, `publish_sim`,
+  `rotation_updates`, `skill_balance`, `skill_redesign` x2) reproduce on `HEAD`'s `index.html`.
+* **Not verified:** the real 3D renderer. The software renderer is a faithful approximation of the
+  camera and the sprite art, but it is not WebGL - lighting, shadows, fog and the 25 terrain tiles
+  are not in it. The live preview at `/game` remains the check.

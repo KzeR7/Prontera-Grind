@@ -18,6 +18,8 @@ This directory is the canonical backup of all extracted `Data.grf` textures, `25
 - `board-8-hd-512-native-tiles-catalog.png` — 16 native `512x512` (`prontera_re`) and modern (`lasagna`, `eclage`, `rockridge`) HD ground swatches.
 - `board-9-ingame-hd-option-b-verification.png` — All 10 live game maps rendered directly from `kitPlan(m, 1)` + `ro-tiles-hd.png` + Option B splatmap & canopy shadows.
 - `board-10-3d-details-and-sprites-audit.png` — Audit of harmonized billboard sprites + new RO1/RO3 3D ground details (`kit3DDetails`).
+- `board-11-composed-fields-from-spawn.png` — haven-v234. The ten native fields as the player sees them on the first frame at stage 5, painted from the real atlas plus each map's own palette and winding trail.
+- `board-12-amatsu-approach-walk.png` — haven-v234. Amatsu at three points of the walk (spawn, mid-lane, at the shrine): the torii avenue lives inside the camera band, and the bridge crosses the pond.
 
 ## Subfolders
 - `hd/` — Individual `256x256` HD seamless swatches and `stage_0..9_hd_ro3.png` stage renders.
