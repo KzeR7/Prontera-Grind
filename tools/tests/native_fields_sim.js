@@ -22,7 +22,9 @@ for(let map=0;map<10;map++)for(const stage of [1,4,7,10,15]){
  for(const p of props){
   assert(['tree','tree2','rock','shrub','stump','detail'].includes(p.role),'town prop in outdoor field');
   assert(!(Math.abs(p.x)-p.rx<13.39&&p.z+p.rz>-29&&p.z-p.rz<14),'model intrudes into combat field');assert(Number.isFinite(p.y));assert(record.models[p.role].size[1]*p.scale<=8.00001,'oversized field scenery');
-  const w=F.DESIGNS[map].water;if(w)assert(Math.hypot((p.x-w.x)/w.rx,(p.z-w.z)/w.rz)>1.1,'prop inside pond');
+  // The pond is per stage group (the sanctum has none, the approach widens it), so the
+  // invariant has to be checked against the design this stage actually builds.
+  const w=F.designOf(map).water;if(w)assert(Math.hypot((p.x-w.x)/w.rx,(p.z-w.z)/w.rz)>1.1,'prop inside pond');
  }
  const samples=[];let maxSlope=0;
  for(let x=-13;x<=13;x+=2)for(let z=-28;z<=12;z+=2){const y=F.heightAt(map,x,z);samples.push(y);maxSlope=Math.max(maxSlope,Math.abs(F.heightAt(map,x+.01,z)-y)/.01,Math.abs(F.heightAt(map,x,z+.01)-y)/.01)}
@@ -50,7 +52,10 @@ for(let map=0;map<10;map++)for(const stage of [1,4,7,10,15]){
   const ids=[0,1,2].map(j=>floor.index.getX(k+j)),x=ids.reduce((n,i)=>n+a.getX(i),0)/3,z=ids.reduce((n,i)=>n+a.getZ(i),0)/3,y=ids.reduce((n,i)=>n+a.getY(i),0)/3;
   assert(Math.abs(F.heightAt(map,x,z)-y)<2e-6,'height function differs from rendered slope');
  }
- const w=F.DESIGNS[map].water;if(w){assert(F.heightAt(map,w.x,w.z)<w.level-.9,'pond is below its natural shore');assert(world.root.children.some(o=>o.userData.nativePond),'missing natural pond')}
+ // Stage groups change the pond (the approach widens it, the sanctum has none), so read the
+ // design this stage actually built rather than the base recipe.
+ const w=F.designOf(map).water;if(w){assert(F.heightAt(map,w.x,w.z)<w.level-.9,'pond is below its natural shore');assert(world.root.children.some(o=>o.userData.nativePond),'missing natural pond')}
+ else{assert(!world.root.children.some(o=>o.userData.nativePond),'pond mesh drawn for a field with no water')}
  const extra=new THREE.Texture();let extraDisposed=0;extra.addEventListener('dispose',()=>extraDisposed++);world.trackTextures([extra]);
  const owned=new Set();world.root.traverse(o=>{if(o.geometry)owned.add(o.geometry);if(o.material)for(const material of (Array.isArray(o.material)?o.material:[o.material])){owned.add(material);if(material.map)owned.add(material.map)}});let disposed=0;for(const r of owned)r.addEventListener('dispose',()=>disposed++);
  const parent=new THREE.Group();parent.add(world.root);world.dispose();assert.equal(parent.children.length,0);assert.equal(extraDisposed,1,'inactive water frame texture is disposed');assert.equal(disposed,owned.size,'all owned GPU resources are disposed once');

@@ -109,11 +109,11 @@ function signature(s,x,z){
 // A single winding trail, not a painted road down the middle of the lane. Width and
 // wander come from the recipe.
 function trailCenter(map,z){
- const d=(DESIGNS[map]||DESIGNS[0]),t=d.trail||{bend:0,phase:0};
+ const d=designOf(map),t=d.trail||{bend:0,phase:0};
  return t.bend*Math.sin(z*.052+t.phase)+.4*t.bend*Math.sin(z*.13+t.phase*.7);
 }
 function terrainHeight(map,x,z){
- const d=DESIGNS[map]||DESIGNS[0],s=d.seed,amp=d.amp||1;
+ const d=designOf(map),s=d.seed,amp=d.amp||1;
  // One noise rotation per destination: two fields can share an amplitude and still
  // never share a silhouette or a crest direction.
  const ca=Math.cos(d.rotate||0),sa=Math.sin(d.rotate||0),rx=x*ca-z*sa,rz=x*sa+z*ca;
@@ -159,11 +159,104 @@ function terrainHeight(map,x,z){
  return h;
 }
 // Kept for callers that used the legacy helper.
-const pathCenter=(map,z)=>(DESIGNS[map]&&DESIGNS[map].trail?trailCenter(map,z):0);
+const pathCenter=(map,z)=>(designOf(map).trail?trailCenter(map,z):0);
+// ---------------------------------------------------------------------------
+// Stage groups (v231, owner): "one stage 1-3 a map, 4-6 another type, 7-9 another
+// map & boss map. i want each 3 stage to have different type of map & a boss map."
+//
+// The ten destinations used to have exactly one look each, so every stage inside a
+// destination was the same field. Each destination now carries three tier recipes on top
+// of its stages 1-3 base:
+//
+//   1-3   base        the destination as originally drawn
+//   4-6   outskirts   calmer and more open, wider trail: the approach to the settlement
+//   7-9   approach   deeper, more relief, bigger water, tighter trail
+//   10-15 sanctum    a flat fighting floor with a heavy perimeter, for the MVP wave
+//
+// A tier changes the seed (so the landform is genuinely a different field, not a recolour),
+// the relief, the trail, the water and the colour grade. Region identity is preserved: the
+// destination's own crops and its hue family stay.
+// A reseed alone was not enough: Prontera's outskirts and sanctum came out only 0.22 units
+// apart on average, which is a different hill, not a different field. Each group therefore
+// also changes the *kind* of ground - how broad the landform is, how sharp the skyline is,
+// how wide the way through is, and how hard the perimeter closes in.
+const TIER_GROUPS=[
+ {key:'base',      label:'',          seed:0,    ampX:1,    trailX:1,    frameX:1,   waterX:1,
+  landX:1,    ridgeX:1,    detail:null},
+ {key:'outskirts', label:'outskirts', seed:911,  ampX:.70,  trailX:1.20, frameX:.85, waterX:1,
+  landX:1.45, ridgeX:.55,  detail:null},     // broad, open, low skyline: the way in
+ {key:'approach',  label:'approach',  seed:1777, ampX:1.05, trailX:.85,  frameX:1.20,waterX:1.25,
+  landX:.72,  ridgeX:1.55, detail:'leaves'}, // tighter, higher, wooded: deep country
+ {key:'sanctum',   label:'sanctum',   seed:2611, ampX:.50,  trailX:.70,  frameX:1.60,waterX:0,
+  landX:1.70, ridgeX:.40,  detail:'rock'},   // wide flat floor ringed by walls: the boss arena
+];
+function stageGroup(stage){const s=stage|0;return s<=3?0:s<=6?1:s<=9?2:3}
+let ACTIVE_STAGE=1;
+const DESIGN_CACHE=new Map();
+function tierDesign(map,g){
+ const base=DESIGNS[map]||DESIGNS[0],T=TIER_GROUPS[g];
+ const key=map+':'+g;
+ let d=DESIGN_CACHE.get(key);
+ if(d)return d;
+ d=Object.assign({},base);
+ d.seed=base.seed+T.seed;
+ d.amp=(base.amp||1)*T.ampX;
+ d.frame=(base.frame||2)*T.frameX;
+ if(base.landScale)d.landScale=base.landScale*T.landX;
+ if(base.ridgeScale)d.ridgeScale=base.ridgeScale*T.ridgeX;
+ if(base.ridgeAmp)d.ridgeAmp=base.ridgeAmp*T.ridgeX;
+ d.tierKey=T.key;d.tierLabel=T.label;
+ d.palette=Object.assign({},base.palette);
+ if(base.trail)d.trail=Object.assign({},base.trail,{width:(base.trail.width||3)*T.trailX,bend:(base.trail.bend||8)*T.trailX});
+ if(base.pathInfluence!==undefined)d.pathInfluence=T.key==='sanctum'?base.pathInfluence*.6:base.pathInfluence;
+ // The sanctum is a fighting floor: no pond to fall into, and a much stronger perimeter so
+ // the arena reads as enclosed.
+ if(T.key==='sanctum')d.water=null;
+ else if(base.water&&T.waterX!==1)d.water=Object.assign({},base.water,{rx:base.water.rx*T.waterX,rz:base.water.rz*T.waterX});
+ if(base.signature&&T.key==='sanctum')d.signature=Object.assign({},base.signature);
+ // Ground detail follows the group's character, but only between the two "walkable ground"
+ // kinds - a desert must not sprout leaves because it is stage 7.
+ if(T.detail&&base.palette&&['grass','leaves'].includes(base.palette.detail))d.palette=Object.assign({},base.palette,{detail:T.detail});
+ // Each tier leans the destination's own hue slightly, so the four fields of one region are
+ // recognisably relatives rather than four unrelated maps.
+ d.palette=Object.assign({},d.palette,tierGrade(base.palette,T.key));
+ DESIGN_CACHE.set(key,d);return d;
+}
+// A destination's four fields must be obviously different at a glance, and inside the flat
+// hunting lane colour is the main thing that can carry that. So each group moves the grade
+// hard in one direction rather than nudging it: airy midday, deep dusk, and a grim arena.
+function tierTint(hex,target,amount){
+ const a=parseInt(String(hex).replace('#',''),16),b=parseInt(String(target).replace('#',''),16);
+ if(!Number.isFinite(a)||!Number.isFinite(b))return hex;
+ const ch=(v,sh)=>Math.max(0,Math.min(255,Math.round(((v>>sh)&255)*(1-amount)+(((b>>sh)&255))*amount)));
+ return '#'+((ch(a,16)<<16)|(ch(a,8)<<8)|ch(a,0)).toString(16).padStart(6,'0');
+}
+function tierGrade(p,key){
+ if(!p)return {};
+ if(key==='outskirts')return {tint:tierTint(p.tint||'#ffffff','#fff4d8',.28),
+   tintA:Math.min(.5,(p.tintA||.2)*.72),sat:(p.sat||1)*.92,lum:(p.lum||1)*1.15};
+ if(key==='approach')return {tint:tierTint(p.tint||'#ffffff','#16301e',.22),
+   tintA:Math.min(.5,(p.tintA||.2)*1.10),sat:(p.sat||1)*1.18,lum:(p.lum||1)*.82};
+ if(key==='sanctum')return {tint:tierTint(p.tint||'#ffffff','#2a3444',.34),
+   tintA:Math.min(.55,(p.tintA||.2)*1.30),sat:(p.sat||1)*.72,lum:(p.lum||1)*.84};
+ return {};
+}
+// Every reader of a design goes through here, so a stage change really does change the field.
+function designOf(map){const g=stageGroup(ACTIVE_STAGE);return g===0?((DESIGNS[map]||DESIGNS[0])):tierDesign(map,g)}
+function setStage(stage){const s=stage|0||1;if(stageGroup(s)!==stageGroup(ACTIVE_STAGE))ACTIVE_STAGE=s;else ACTIVE_STAGE=s}
+function designLabel(map,stage){const g=stageGroup(stage),base=(DESIGNS[map]||DESIGNS[0]);return g===0?(base.label||base.name):((base.label||base.name)+' · '+TIER_GROUPS[g].label)}
+
 function activeHeight(map,x,z){return TERRAIN==='v1'?legacyHeight(map,x,z):terrainHeight(map,x,z)}
 const GRID=72,STEP=90/GRID;
 // Interpolate the exact rendered triangles so feet meet the sloping mesh, diagonals included.
-function heightAt(map,x,z){
+function heightAt(map,x,z,stage){
+ // Optional stage so callers outside the module (the actor floor height in index.html) ask about
+ // the field that is actually built, not whichever stage was queried last.
+ if(stage!==undefined&&stageGroup(stage)!==stageGroup(ACTIVE_STAGE)){
+  const prev=ACTIVE_STAGE;ACTIVE_STAGE=stage|0||1;
+  try{return heightAt(map,x,z)}finally{ACTIVE_STAGE=prev}
+ }
+
  const gx=Math.max(0,Math.min(GRID-1e-8,(x+45)/STEP)),gz=Math.max(0,Math.min(GRID-1e-8,(z+45)/STEP)),ix=Math.floor(gx),iz=Math.floor(gz),u=gx-ix,v=gz-iz,xx=ix*STEP-45,zz=iz*STEP-45;
  const a=activeHeight(map,xx,zz),b=activeHeight(map,xx+STEP,zz),c=activeHeight(map,xx,zz+STEP),e=activeHeight(map,xx+STEP,zz+STEP);
  return u+v<=1?a+(b-a)*u+(c-a)*v:e+(c-e)*(1-u)+(b-e)*(1-v);
@@ -177,7 +270,7 @@ function slopeAt(map,x,z,e=.6){
 // Floor materials per vertex: rock on steep faces, dirt in hollows/along the trail,
 // sand at the pond shore, grass everywhere else. Sums to 1.
 function surfaceWeights(map,x,z,slope){
- const d=DESIGNS[map]||DESIGNS[0];slope=slope===undefined?slopeAt(map,x,z):slope;const rock=smooth(17,32,slope);
+ const d=designOf(map);slope=slope===undefined?slopeAt(map,x,z):slope;const rock=smooth(17,32,slope);
  const patch=smooth(.5,.9,fbm(x*.06,z*.06,d.seed+811,3)*.5+.5)*.7;
  const trail=d.pathInfluence>0&&d.trail?(1-smooth(d.trail.width*.55,d.trail.width+1.4,Math.abs(x-trailCenter(map,z))))*d.pathInfluence*.85:0;
  const beach=d.water?1-smooth(1,1.45,pondRadius(d.water,x,z)):0;
@@ -185,7 +278,8 @@ function surfaceWeights(map,x,z,slope){
  return{grass:grass/total,dirt:dirt/total,rock:rock/total,beach:beach/total};
 }
 function placements(map,stage,plan,record){
- const result=[],d=DESIGNS[map];
+ setStage(stage);   // placements is asked for a stage, so it must not trust the last build's
+ const result=[],d=designOf(map);
  function add(role,x,z,width,angle){
   const model=record.models[role];if(!model)return;
   const maxHeight=role==='tree'||role==='tree2'?8:role==='rock'?4:role==='stump'?2.5:1.8,scale=Math.min(width/Math.max(model.size[0],model.size[2]),maxHeight/Math.max(.01,model.size[1])),co=Math.abs(Math.cos(angle)),si=Math.abs(Math.sin(angle)),rx=(model.size[0]*co+model.size[2]*si)*scale/2,rz=(model.size[0]*si+model.size[2]*co)*scale/2;
@@ -202,12 +296,24 @@ function placements(map,stage,plan,record){
   result.push({role,x,z,rx,rz,scale,angle,y});
  }
  const roles=Object.keys(record.models).filter(r=>['tree','tree2','rock','shrub','stump','detail'].includes(r));
- // Sparse asymmetric groups, varied spacing and scale; never rows of town plots.
+ // v231: each stage group dresses the ring differently, so "4-6 / 7-9 / 10-15" are different
+ // kinds of place and not the same field with the hills moved. The outskirts are an open,
+ // thinly wooded way in; the approach is deep country, thick with trees; the sanctum is a
+ // cleared floor braced with rock.
+ const g=stageGroup(stage),PROP_RECIPE=[
+  {count:42,tree:1.00,rock:1.00,small:1.00},   // 1-3  base
+  {count:30,tree:0.55,rock:1.30,small:1.60},   // 4-6  outskirts: open, low, bushy
+  {count:54,tree:1.65,rock:1.15,small:0.70},   // 7-9  approach: wooded, enclosed
+  {count:26,tree:0.25,rock:2.20,small:0.45},   // 10-15 sanctum: bare floor, stone ring
+ ][g];
+ const weightOf=r=>r==='tree'||r==='tree2'?PROP_RECIPE.tree:r==='rock'||r==='stump'?PROP_RECIPE.rock:PROP_RECIPE.small;
+ const pickRole=k=>{let tot=0;for(const r of roles)tot+=weightOf(r);let t=hash(k,13,map+71)*tot;
+  for(const r of roles){t-=weightOf(r);if(t<=0)return r}return roles[roles.length-1]};
  for(let i=0;i<140;i++){
-  const r=hash(i,13,map+71),side=i%2?-1:1,x=side*(17+hash(i,2,map+3)*22),z=-38+hash(i,5,map+7)*74;
-  const role=roles[Math.floor(r*roles.length)],width=role==='tree'||role==='tree2'?4.3+hash(i,4,map)*3:role==='rock'?3+hash(i,6,map)*3.5:role==='stump'?1.6+hash(i,8,map):.65+hash(i,9,map)*1.3;
+  const side=i%2?-1:1,x=side*(17+hash(i,2,map+3)*22),z=-38+hash(i,5,map+7)*74;
+  const role=pickRole(i),width=role==='tree'||role==='tree2'?4.3+hash(i,4,map)*3:role==='rock'?3+hash(i,6,map)*3.5:role==='stump'?1.6+hash(i,8,map):.65+hash(i,9,map)*1.3;
   add(role,x,z,width,hash(i,3,map)*Math.PI*2);
-  if(result.length>=42)break;
+  if(result.length>=PROP_RECIPE.count)break;
  }
  // A few low native plants along the field edge give close-up detail without hiding mobs.
  for(let i=0;i<14;i++)add(i%3?'shrub':'detail',(i%2?-1:1)*(14.8+hash(i,1,map)), -25+hash(i,7,map)*37,.55+hash(i,9,map)*.65,hash(i,2,map)*6.28);
@@ -286,7 +392,7 @@ function stochasticFill(target,tile,seed,spacing){
 // continuous fabric wherever you stand. Sizes are in WORLD UNITS and converted once with
 // ppu (pixels per unit) - the first version mixed the two and painted huge pale blobs.
 function groundDetail(ctx,map,S){
- const d=DESIGNS[map]||DESIGNS[0],kind=(d.palette&&d.palette.detail)||'grass',seed=d.seed;
+ const d=designOf(map),kind=(d.palette&&d.palette.detail)||'grass',seed=d.seed;
  const rnd=(i,k)=>{const h=Math.imul(i+1,374761393)^Math.imul(k+7,668265263)^Math.imul(seed,1442695041);return ((Math.imul(h^(h>>>13),1274126177)^(h>>>16))>>>0)/4294967295};
  const ppu=S/90;
  // One mark per jittered grid cell. A linear index with two correlated hashes laid the
@@ -360,7 +466,7 @@ function gradeFloor(ctx,S,d){
 
 function surface(plan,image,map,props){
  const S=2048,MS=384,cv=document.createElement('canvas');cv.width=cv.height=S;
- const ctx=cv.getContext('2d'),d=DESIGNS[map]||DESIGNS[0],pal=d.palette||{};
+ const ctx=cv.getContext('2d'),d=designOf(map),pal=d.palette||{};
  const PIX=canSample(ctx);
  // The field's own four crops, graded at tile level so the materials stay consistent.
  const filter='saturate('+(pal.sat||1)+') brightness('+(pal.lum||1)+')';
@@ -533,12 +639,13 @@ function createStore(options={}){
  return{ensure,ready:map=>entries.get(map)?.ready||null,diagnostics:()=>({cached:[...entries].filter(([,v])=>v.ready).map(([k])=>k)})};
 }
 function build(THREE,asset,map,stage,plan){
+ setStage(stage);   // every design read below depends on the stage group
  const root=new THREE.Group(),geometries=new Set(),materials=new Set(),textures=new Set();root.userData.nativeField={map,stage,source:NAMES[map]};
  const ownGeo=g=>(geometries.add(g),g),ownMat=m=>(materials.add(m),m),ownTex=t=>(textures.add(t),t);
  const props=placements(map,stage,plan,asset.record),floor=ownGeo(terrainGeometry(THREE,map));
  const floorMap=ownTex(new THREE.CanvasTexture(surface(plan,asset.terrain,map,props)));floorMap.anisotropy=4;floorMap.magFilter=THREE.LinearFilter;floorMap.minFilter=THREE.LinearMipmapLinearFilter;
  const floorMesh=new THREE.Mesh(floor,ownMat(new THREE.MeshLambertMaterial({map:floorMap,color:0xb0b0b0,vertexColors:true})));floorMesh.receiveShadow=true;root.add(floorMesh);
- const water=DESIGNS[map].water;
+ const water=designOf(map).water;
  if(water){
   // Irregular natural pond. The sloping ground occludes the disk to form the shore;
   // terrainHeight digs a bowl under it with a wide beach instead of a vertical rim.
@@ -573,5 +680,5 @@ function build(THREE,asset,map,stage,plan){
   for(const g of geometries)g.dispose();for(const m of materials)m.dispose();for(const t of textures)t.dispose();if(root.parent)root.parent.remove(root);
  }};
 }
-return{NAMES,DESIGNS,LEGACY,LANE,laneCfg,TERRAIN,GRID,STEP,heightAt,terrainHeight,activeHeight,legacyHeight,slopeAt,surfaceWeights,pathCenter,trailCenter,placements,terrainGeometry,createStore,build};
+return{NAMES,DESIGNS,LEGACY,LANE,laneCfg,TERRAIN,GRID,STEP,heightAt,setStage,stageGroup,designOf,designLabel,TIER_GROUPS,terrainHeight,activeHeight,legacyHeight,slopeAt,surfaceWeights,pathCenter,trailCenter,placements,terrainGeometry,createStore,build};
 });

@@ -656,7 +656,10 @@ t('the Echo Court overlays its crypt floor onto a normal Niflheim kit plan', () 
   assert.ok(arenaFn.includes('m.color.setHex(0x796e84)') && arenaFn.includes('KIT.ground.material.color.setHex(0x5c5269)'), 'both HD props and terrain get the darker violet/slate palette');
   assert.ok(!/RingGeometry|CylinderGeometry|BoxGeometry/.test(arenaFn), 'the court adds no mismatched block-built art');
   const loader = grab('function kitFetch(){', '// v2 is ONE atlas');
-  assert.ok(loader.includes('if(JOB_RITE.on)jobRiteArena();else if(TRIAL.on)trialArena();else buildDeco(S.mp)'), 'late HD tile downloads rebuild whichever scene is active');
+  // v231: the kit atlas arriving late must not repaint a field the native world already owns,
+  // so the rebuild skips a native field. Both halves of that rule are asserted.
+  assert.ok(loader.includes('if(JOB_RITE.on)jobRiteArena();else if(TRIAL.on)trialArena();'), 'late HD tile downloads still rebuild the trial arena');
+  assert.ok(loader.includes('KIT.built&&KIT.built.native)return;'), 'a late atlas download never replaces a native field');
 
   K.setAssets(); K.setStage(1);
   const original = JSON.stringify(K.kitPlan(8,1));

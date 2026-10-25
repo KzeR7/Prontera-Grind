@@ -24,6 +24,19 @@ const NATIVE_FIELDS_DEFAULT=false;
 const nativeFieldChoice=typeof location==='object'?new URLSearchParams(location.search).get('nativeFields'):null;
 const nativeFieldsEnabled=nativeFieldChoice==='1'||(NATIVE_FIELDS_DEFAULT&&nativeFieldChoice!=='0');
 const nativeFieldStore=nativeFieldsEnabled&&typeof PGNativeFields==='object'?PGNativeFields.createStore():null;
+// v231 (owner: "it loads the old map & old mob sprite then jumps into the new map"): that was a
+// real load-order bug, not a transition. A cold entry painted the procedural town first, then the
+// kit map when its atlas arrived, then the native field when its geometry arrived - three scenery
+// swaps. The gate below holds the field instead of painting a wrong one, and this pill explains
+// the wait. It only ever appears while a native field is genuinely still downloading.
+function fieldLoading(on,label){
+  const el=typeof document!=='undefined'&&document.getElementById?document.getElementById('fieldLoading'):null;
+  if(!el)return;
+  // Idempotent on purpose: buildDeco can run several times while one wait is outstanding, and a
+  // counter would then never come back down and the pill would stick on screen.
+  el.classList.toggle('on',!!on);el.hidden=!on;
+  const span=el.querySelector('span');if(on&&label&&span)span.textContent=label;
+}
 function clearNativeField(){if(typeof KIT!=='undefined'&&KIT.nativeWorld){KIT.nativeWorld.dispose();KIT.nativeWorld=null;KIT.water=[]}}
 const KIT_S=.85,KIT_ZC=(Z0+Z1)/2,KIT_PX=2048,KIT_FAR=90;
 // Prop size. The kit ships its own character: 80px per frame (v2 kept the v1 strip pixel for
@@ -288,7 +301,11 @@ function kitFetch(){
   // The kit is an enhancement: no fetch, no atlas, no design - the game keeps its own scenery.
   if(typeof fetch!=='function'||typeof Image!=='function')return;
   try{
-    const rebuildActiveScenery=()=>{if(!S)return;if(JOB_RITE.on)jobRiteArena();else if(TRIAL.on)trialArena();else buildDeco(S.mp)};
+    // v231: the kit atlas arriving late must not repaint a field that the native world already
+    // owns - that second swap was the last half of the "old map jumps to the new map" report.
+    const rebuildActiveScenery=()=>{if(!S)return;if(JOB_RITE.on)jobRiteArena();else if(TRIAL.on)trialArena();
+      else if(KIT.built&&KIT.built.native)return;
+      else buildDeco(S.mp)};
     const j=n=>fetch('assets/kit/'+n).then(r=>r&&r.ok?r.json():null).catch(()=>null);
     Promise.all([j('ro-spritesheet.json'),j('ro-map-payon.json'),j('ro-map-morocc.json'),j('ro-tiles-hd.json')]).then(([man,pay,mor,hdMan])=>{
       if(!man||!pay)return; KIT.man=man; KIT.des.payon=pay; if(mor)KIT.des.morocc=mor; if(hdMan)KIT.hdMan=hdMan;
@@ -1045,6 +1062,72 @@ function kit3DDetails(plan,m,root){
     }
   }
 }
+// v231 (owner: "i want u to add more details into the map. example amatsu will have japanese
+// stuff"). The native field brings only what the RO field models carry - trees, rock, shrubs -
+// so every destination was the same *kind* of place with a different colour. The kit already
+// ships the regional architecture (torii, cherry, bamboo, hanzi lanterns, grave markers...),
+// and the kit side of the game has always dressed its tiers with them. This gives the native
+// field the same dressing: the same sprites, placed by the same rules, so Amatsu reads as
+// Amatsu and Louyang as Louyang without inventing any new art.
+//
+// Reference for the choices (RO field identity):
+//  Amatsu   - a Japanese island: sakura in constant bloom, bamboo and pine, a stone shrine
+//             half-sunken in the middle of the field, red torii gates.
+//  Louyang  - ancient Chinese, mountainous: rice paddies, stone sanctuaries, lantern posts.
+//  Payon    - Korean mountain forest: bamboo groves, forest shrines, graves.
+//  Niflheim - a city of the dead: grave markers, dead trees, ruined walls.
+//  Abyss    - crystal tunnels and crags: stalagmites and crystal clusters.
+const NATIVE_THEME=[
+  {land:['house_prontera','lantern_stone'],arch:['house_prontera'],small:['tree_bush_bright','river_stone_post']},
+  {land:['palm_giant','pier_post'],arch:['palm_giant'],small:['palm_double','pier_post']},
+  {land:['tower_geffen','standing_stone'],arch:['tower_geffen'],small:['standing_stone','crystal_cluster']},
+  {land:['ruin_pillar','palm_giant'],arch:['ruin_pillar'],small:['cactus_flower','ruin_stump']},
+  {land:['bamboo_grove','shrine_stone'],arch:['shrine_stone'],small:['bamboo_grove','tree_bush_bright']},
+  {land:['palm_giant','ruin_stump'],arch:['palm_giant'],small:['palm_double','river_stone_post']},
+  {land:['shrine_stone','lantern_stone'],arch:['shrine_stone'],small:['bamboo_grove','lantern_stone']},
+  {land:['torii_gate','shrine_stone'],arch:['torii_gate'],small:['tree_cherry','bamboo_grove','lantern_stone']},
+  {land:['tombstone','tree_dead'],arch:['tombstone'],small:['tombstone','tree_dead']},
+  {land:['stalagmite','crystal_cluster'],arch:['rock_cliff_crag'],small:['stalagmite','crystal_cluster']},
+];
+// How much architecture a stage group carries. The outskirts are the open way in (a gate or
+// two, no crowd); the approach is the settled, decorated part; the sanctum frames the fight
+// with a matched pair of landmarks, the same silhouette left and right.
+const NATIVE_THEME_BUDGET=[{arch:2,small:6},{arch:1,small:4},{arch:4,small:10},{arch:2,small:2}];
+function placeNativeTheme(m,world){
+  if(typeof kitPropMeshes!=='function'||!KIT.ok)return 0;
+  const theme=NATIVE_THEME[m];if(!theme)return 0;
+  const g=(typeof PGNativeFields.stageGroup==='function')?PGNativeFields.stageGroup(S.lvl):0;
+  const budget=NATIVE_THEME_BUDGET[g]||NATIVE_THEME_BUDGET[0];
+  const design=PGNativeFields.designOf(m),water=design.water;
+  let q=(m*7919+g*104729+13)|0;const r=()=>(q=(q*16807)%2147483647)/2147483647;
+  const ok=(x,z)=>{
+    if(Math.abs(x)<16.2)return false;                       // never inside the hunting lane
+    if(Math.abs(x)>40||z<-38||z>20)return false;
+    if(PGNativeFields.slopeAt(m,x,z)>26)return false;        // not on a cliff face
+    if(water&&Math.hypot((x-water.x)/water.rx,(z-water.z)/water.rz)<1.5)return false;
+    return true;
+  };
+  const props=[];
+  const put=(type,x,z,scale,flip)=>{if(props.some(p=>Math.hypot(p.x-x,p.z-z)<3.4))return false;props.push({type,x,z,scale,flip});return true};
+  // Landmarks: far out, tall, framing the field. Left and right are placed as a pair so the
+  // composition stays symmetric without looking stamped.
+  for(let i=0;i<budget.arch&&props.length<budget.arch;i++){
+    for(let a=0;a<40;a++){
+      const side=i%2?1:-1,x=side*(20+r()*13),z=-30+r()*42;
+      if(!ok(x,z))continue;
+      if(put(theme.arch[i%theme.arch.length],x,z,.95+r()*.45,r()>.5))break;
+    }
+  }
+  // Detail: small pieces tucked along the treeline, the layer you notice when you walk past.
+  for(let i=0;i<budget.small*4&&props.filter(p=>p.scale<.9).length<budget.small;i++){
+    const side=i%2?-1:1,x=side*(16.4+r()*12),z=-28+r()*40;
+    if(!ok(x,z))continue;
+    put(theme.small[Math.floor(r()*theme.small.length)],x,z,.55+r()*.3,r()>.5);
+  }
+  kitPropMeshes({src:'payon',props},deco);
+  return props.length;
+}
+
 function buildKit(m,planOverride){
   const plan=planOverride||kitPlan(m,S.lvl);if(!plan)return null;
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
@@ -1052,6 +1135,14 @@ function buildKit(m,planOverride){
     const asset=nativeFieldStore.ready(m);
     if(asset){
       clearNativeField();KIT.nativeWorld=PGNativeFields.build(THREE,asset,m,S.lvl,plan);deco.add(KIT.nativeWorld.root);
+      KIT.nativeThemeProps=placeNativeTheme(m,KIT.nativeWorld);
+      // Prefetch the next map while the player is busy here, so travelling does not have to wait
+      // on a download. The store keeps two decoded fields, which is exactly this pair.
+      if(nativeFieldsEnabled&&m+1<10&&!nativeFieldStore.ready(m+1)){
+        const warm=()=>nativeFieldStore.ensure(m+1).catch(()=>{});
+        if(typeof requestIdleCallback==='function')requestIdleCallback(warm,{timeout:4000});else setTimeout(warm,1200);
+      }
+      if(typeof fieldLoading==='function')fieldLoading(false);
       ground.visible=false;if(KIT.ground)KIT.ground.visible=false;
       for(const w of KIT.water)for(const tex of w.maps)if(tex.dispose)tex.dispose();
       KIT.water=[]; // Natural ponds and sloping ground belong to the native world.

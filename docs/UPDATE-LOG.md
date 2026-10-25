@@ -7609,3 +7609,69 @@ landform viewer and the game. The live viewer links back, so neither page is a d
 `tools/tests/terrain_proposal_sim.js` (27 checks) guards the wiring: renderer present and
 loadable, every table/list/code construct surviving, no unrendered markdown, every
 referenced asset existing, and the measured colour evidence still in the document.
+
+## 2026-10-25 — camp spacing, per-tier field types, honest loading, regional detail (haven-v231)
+
+Four owner reports in one build.
+
+* **"mobs now spawn very tightly together, is it the maps spawn or usable area is too small?"**
+  Both, and the area was the smaller half. The lane is 26 × 40 units and the camp ring reached
+  3.2 units from the camp site with no floor between monsters, so a camp could pack itself into
+  1.9-unit pairs. `CAMP_RING_MIN/MAX` 1.6/3.2 → **1.7/2.9**, `MOB_GAP` is now a hard **2.6**
+  floor, `CAMP_GAP` 5.5 → **6.4**, and `fillCamp` places camp-mates on even angles so three of
+  them sit ~4.4 apart instead of on one blob. Two details mattered more than the numbers:
+  candidates that had to be **clamped** by the lane edge are rejected (every clamped candidate
+  lands on the same edge line, which is how two camps folded onto each other), and the ring
+  widens in three tiers — ring, ×1.45, ×1.75 — before giving up. If a camp still cannot fit a
+  member it drops that member rather than overlapping, but its **first** monster is never
+  dropped; an unstocked camp is a visible hole in the field. Measured over 400 seeds with the
+  real `fillCamp`: closest pair of any two monsters on a 12-camp field p1 2.0 / p50 3.0
+  (Abyss), 1/400 fields have any pair under 2.0 (was 123/400 during the intermediate version and
+  1.94 at p1 before the change). Boss escorts moved out with it: ring 2.3–2.95 → **3.0–3.7**.
+* **"i want each 3 stage to have different type of map & a boss map"** — the kit side already
+  swapped scenery per stage band; the native fields did not, so every stage of a field was one
+  terrain. `TIER_GROUPS` now drives landform scale, ridgeline scale/amplitude and surface detail
+  per band: **1-3 base, 4-6 outskirts** (broad and open, low skyline, ×1.45 land), **7-9 approach**
+  (tighter, higher, wooded — leaves instead of grass), **10/boss sanctum** (flat stone floor, ×1.60
+  framing ring, no water). Colour is pushed per band with `tierTint` on top of the v230 per-map
+  palette, because height alone cannot separate them: the fight lane is deliberately flat, so
+  measured mean |dh| between bands was only 0.12–0.30. `placements()` now calls `setStage()` so it
+  can never read the previous build's design. Four-band proof board:
+  `docs/proposals/terrain-v2/board-tiers-7.png`.
+* **"it loads the old map & old mob sprite then it jumps into the new proposed map, is that an
+  error?"** It was — three scenery swaps on a cold entry (procedural town → kit map when the
+  atlas landed → native field when the geometry landed). `buildDeco` now **holds** the field and
+  shows a small "Loading <field>…" pill while the native geometry is genuinely still arriving,
+  and the late-atlas rebuild is skipped once a native field owns the scene, so nothing repaints
+  underneath the player. Prefetched fields resolve instantly and the pill never appears.
+* **"add more details into the map — amatsu will have japanese stuff?"** Yes, Amatsu is
+  Japanese-style in RO: a shrine half-sunken in a lake of bamboo, pine and cherry, straw huts,
+  torii. `NATIVE_THEME` now dresses every destination with the kit's own regional props —
+  Amatsu gets `torii_gate`, `tree_cherry`, `bamboo_grove`, `lantern_stone`; Louyang
+  `shrine_stone`, `lantern_stone`, `bamboo_grove`; Payon bamboo; Prontera houses and stone posts;
+  and so on for all ten fields. Budget per band (2-4 landmarks + 2-10 small props), never inside
+  the fight lane (|x| < 16.2), never on a slope over 26°, never in the pond — checked by
+  replaying the placement maths: Amatsu 8/5/14/4 props across the four bands, **0** in-lane.
+  Reference: ragnarok.fandom.com Amatsu/Payon/Luoyang pages, ratemyserver `ama_fild01`,
+  iRO Wiki "Places" for the culture mapping. No new art was drawn and no native sprite pixels
+  were repainted — the props are kit sprites placed by the existing `kitPropMeshes` path.
+* **Files touched:** `index.html` (`BUILD`, camp population, boss escort ring, `fieldLoading`,
+  `NATIVE_THEME`/`placeNativeTheme`, `KI.nativeThemeProps`, `actorFloorY`), `assets/native-fields.js`
+  (`TIER_GROUPS`, `tierDesign`, `tierTint`/`tierGrade`, stage-authoritative `placements`,
+  `heightAt(map,x,z,stage)`), `tools/maps/terrain-v2/render_floor_real.js` (single-tier board
+  mode), `Updates/map-textures-preview/map_kit_hd_option_b.js` (regenerated), the build-tag
+  mirrors, `docs/proposals/terrain-v2/board-tiers-7.png` (new), and the tests below.
+* **Tests:** `starter_sim` **11/11** (it now reads `CAMP_GAP`/`CAMP_RING_MAX`/`MOB_GAP` from
+  `index.html` instead of pinning old numbers, and three assertions that were pinning source
+  shapes removed by earlier work — the AoE-per-pack rules from v227, the pack gate on waking,
+  and the late-atlas rebuild — were rewritten against what the code actually guarantees today).
+  `native_fields_sim` 50 scenes, `terrain_v2_sim` 256, `kit_sim` 37/37, `trial_sim` 18/18,
+  `update_watch_sim` 9/9, `save_load_sim` 27/27, `shop_sim` PASS. Pre-existing failures not
+  touched by this change and reproduced on the untouched baseline commit `d26906c`:
+  `fourth_job_skills_sim`, `ground_combat_sim`, `rotation_updates_sim`, `skill_redesign_sim` (2),
+  `publish_sim` (asset budget), `dev_server_sim`/`gm_tools_sim` (the `ws` package is not
+  installed in this sandbox).
+* **Not verified:** in-browser WebGL pixels — this sandbox cannot run a browser, so the four
+  bands and the themed props were verified by replaying the placement maths and by the offline
+  board render, not by watching the game. That check is the owner's: `/game?nativeFields=1`.
+* **Delivery:** local changes on `arena/783b0e96-prontera-grind`; no merge or deployment.

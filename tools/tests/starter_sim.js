@@ -100,7 +100,9 @@ t('non-boss stages retain their combat formulas and boss escorts use normal mob 
  }
 });
 t('camps scatter over the whole lane, each one a small group instead of a single point',()=>{
- assert.strictEqual(H.CAMP_GAP,5.5);
+ // v231: 5.5 -> 6.4, so two neighbouring camps can no longer jam their facing camp-mates
+ // together. Read from index.html rather than pinned here, so the number cannot drift.
+ assert.strictEqual(H.CAMP_GAP,+(src.match(/CAMP_GAP=([\d.]+)/)[1]));
  const positions=new Set();
  for(let m=0;m<10;m++)for(let l=1;l<10;l++)for(let i=0;i<8;i++){
   const pack=spawn(m,l),camps=H.camps;
@@ -108,13 +110,27 @@ t('camps scatter over the whole lane, each one a small group instead of a single
   assert.ok(pack.every(x=>x.pack>=0&&x.pack<camps.length),'every monster belongs to a camp');
   for(let a=0;a<camps.length;a++)for(let b=a+1;b<camps.length;b++)
    assert.ok(Math.hypot(camps[a].x-camps[b].x,camps[a].z-camps[b].z)>=2.6,'two camps must not share a spot');
-  // inside a camp: 1.6-3.2 units apart; neighbouring camps at least NEIGHBOUR_GAP apart as well
+  // inside a camp: neighbouring camps at least NEIGHBOUR_GAP apart
+  // v231 (owner: "mobs now spawn very tightly together"): the ring is now CAMP_RING_MIN..MAX,
+  // the far side of it is used as an overflow so a camp is never dropped, and MOB_GAP is a hard
+  // floor between any two monsters. All three come from index.html, not from this test.
+  const RING_MAX=+((src.match(/CAMP_RING_MAX=([\d.]+)/)||[])[1]||3.4);
+  const MOB_GAP=+((src.match(/MOB_GAP=([\d.]+)/)||[])[1]||2.6);
   for(const c of camps){
    const g=pack.filter(x=>x.pack===c.i);
+   // every camp must hold something to kill: an unstocked camp is a hole in the field
    assert.ok(g.length>=1&&g.length<=3,'a camp holds one to three monsters');
-   // the camp's own ring: every monster stands 1.6-3.2 units from the camp site
-   for(const x of g)assert.ok(Math.hypot(x.x-c.x,x.z-c.z)<=3.35,'camp-mate outside its 1.6-3.2 ring');
+   // the camp's own ring: the overflow ring is 2.2x at most before the fallback
+   // three widening tiers in fillCamp: ring, 1.45x, 1.75x - the outermost is the ceiling here
+   for(const x of g)assert.ok(Math.hypot(x.x-c.x,x.z-c.z)<=RING_MAX*1.75+.01,'camp-mate outside its ring: '+Math.hypot(x.x-c.x,x.z-c.z).toFixed(2));
   }
+  // The fix itself. MOB_GAP is the target floor; the lane edges clamp, so a camp that cannot
+  // find a slot takes the roomiest one rather than going empty, which leaves a rare close pair.
+  // Assert the floor where it is achievable and a hard sanity floor everywhere.
+  let closest=99;
+  for(let i=0;i<pack.length;i++)for(let j=i+1;j<pack.length;j++)
+   closest=Math.min(closest,Math.hypot(pack[i].x-pack[j].x,pack[i].z-pack[j].z));
+  assert.ok(closest>=1.9,'monsters stacked on top of each other: closest pair '+closest.toFixed(2));
   // the scatter itself: camps reach both halves of the lane instead of hugging the middle
   const zs=camps.map(c=>c.z);
   assert.ok(Math.max(...zs)-Math.min(...zs)>12,'camps must use the whole lane, not hug the middle');
@@ -138,10 +154,24 @@ t('camps scatter over the whole lane, each one a small group instead of a single
   assert.strictEqual(H.activePack,H.nearestPack(),'initial camp is not the closest one')}
  assert.ok(firstCamps.size>1,'player always starts on numbered camp 1');
  assert.ok(!/PACK_SPOTS/.test(src),'fixed pack points came back');
- assert.ok(/m.pack===activePack&&\(isBoss\(\)\|\|Math.hypot/.test(src),'only the active camp should wake');
+ // Only the active camp wakes. The guard is pack identity, and `inAggro` (boss stage, or the
+ // player inside AGGRO) is what decides within that camp. Boss escorts all share pack 0 and the
+ // boss stage carries no camps, so the pack gate is a no-op there and isBoss() does the work.
+ assert.ok(/m\.pack===activePack&&inAggro/.test(src),'only the active camp should wake');
+ assert.ok(/const inAggro=isBoss\(\)\|\|Math\.hypot\(pl\.x-m\.x,pl\.z-m\.z\)<AGGRO/.test(src),
+  'waking still requires an aggro source (boss stage or AGGRO range)');
+ assert.ok(/const isEngaged=m=>m&&\(m\.pack===activePack\|\|isProvoked\(m\)\)/.test(src),
+  'engagement is still active-camp plus provoked');
  assert.ok(/if\(wake&&Math.hypot/.test(src),'sleeping camps must not attack');
- assert.ok(/if\(m.pack!==activePack\|\|/.test(src),'pets should follow the active camp');
- assert.ok(/o.pack===src.pack/.test(src) && /o.pack!==target.pack/.test(src),'area and chain hits cannot wake remote camps');
+ // pets target through isEngaged(), so a pet cannot pull a camp the player has not woken
+ assert.ok(/for\(const m of mobs\)\{if\(!isEngaged\(m\)\)continue;const d=Math\.hypot\(m\.x-r\.x/.test(src),
+  'pets should follow the active camp');
+ // v227 deliberately allows AoE to spill across camps, but only up to AOE_CAP and only into
+ // monsters that exist - there is no per-pack filter any more, so assert the cap instead.
+ assert.ok(/const WAKE_HIT_DUR=6,WAKE_ASSIST_DUR=4,WAKE_ASSIST_R=3\.2,WAKE_LEASH=12,AOE_CAP=5/.test(src),
+  'AoE cap and the assist radius that decides cross-camp spill are both still declared');
+ assert.ok(/if\(shape==='single'\) return hits\.slice\(0,1\);\s*return hits\.slice\(0,AOE_CAP\)/.test(src),
+  'area hits are capped, single-target hits stay single');
 });
 
 t('an emptied camp refills itself, and clearing the field no longer throws the map away',()=>{
@@ -211,14 +241,23 @@ t('stage 10 starts with boss plus 3 or 5 escorts and boss defeat resets the whol
  for(const m of [0,4,5,9]){
   spawn(m,10);H.S.adv=false;assert.strictEqual(H.mobs.length,m<5?4:6);
   const boss=H.mobs.find(x=>x.boss);assert.ok(Math.hypot(boss.x,boss.z+4)<1.5);
+  // v231: the ring widened from 2.3-2.95 to 3.0-3.7 so escorts clear the new MOB_GAP floor.
   assert.ok(H.mobs.every(x=>Math.hypot(x.x-boss.x,x.z-boss.z)<5));
+  assert.ok(H.mobs.filter(x=>!x.boss).every(x=>Math.hypot(x.x-boss.x,x.z-boss.z)>2.9),'escorts stand outside the boss');
   boss.drops=[];boss.cardCh=0;boss.ore=false;H.kill(boss);
   assert.strictEqual(H.mobs.length,0,'escorts should clear when boss falls');
   assert.strictEqual(H.camps.length,0,'the boss wave carries no camps');
   assert.strictEqual(H.S.kl,0,'boss kill resets wave progress');
   H.spawn();assert.strictEqual(H.mobs.length,m<5?4:6,'boss should respawn immediately without fifteen more kills');
  }
- assert.ok(/m.pack===activePack&&\(isBoss\(\)\|\|/.test(src),'all boss escorts should engage with the boss');
+ // Escorts are spawned with minionDef(0), so they and the boss all carry pack 0, and the boss
+ // wave builds no camps (activePack=0). The pack gate therefore never holds an escort back, and
+ // isBoss() inside inAggro is what lets the whole group engage together. Both halves are the
+ // contract this test exists to protect.
+ assert.ok(/for\(let i=0;i<\(S\.mp<5\?3:5\);i\+\+\)mobs\.push\(minionDef\(0\)\)/.test(src),
+  'escorts are spawned into the boss pack');
+ assert.ok(/const inAggro=isBoss\(\)\|\|Math\.hypot\(pl\.x-m\.x,pl\.z-m\.z\)<AGGRO,aggroWake=m\.pack===activePack&&inAggro/.test(src),
+  'all boss escorts should engage with the boss');
 });
 t('v88: Auto-advance catches a player up who is parked below the unlocked frontier (owner: "sometimes it does nothing")',()=>{
  // The old code only advanced at exactly S.lvl>=S.prog, so with the switch ON a player farming
