@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind — boss skill FX review</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/assets/boss-fx.js"></script>
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0b0d12;color:#e8ecf4;font:14px/1.45 "Trebuchet MS",Verdana,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  header{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#12151d;border-bottom:1px solid #262c3a;flex-wrap:wrap}
+  header h1{font-size:14px;margin:0;letter-spacing:.4px;white-space:nowrap}
+  header h1 small{color:#7f889e;font-weight:400}
+  .ctl{display:flex;align-items:center;gap:6px;font-size:12px;color:#a9b2c5;background:#181c26;border:1px solid #2a3040;border-radius:8px;padding:3px 8px}
+  .ctl select{background:#0f1219;color:#e8ecf4;border:1px solid #333a4c;border-radius:6px;padding:2px 4px;font:inherit}
+  .ctl input[type=range]{width:96px;accent-color:#e8bd4d}
+  .ctl b{color:#e8bd4d;min-width:32px;text-align:right}
+  button{background:linear-gradient(160deg,#e8bd4d,#b9862e);border:0;border-radius:8px;color:#221703;font:700 12px/1 "Trebuchet MS",sans-serif;padding:7px 12px;cursor:pointer}
+  button.dim{background:#222836;color:#aab3c5;border:1px solid #2a3040}
+  button.on{background:linear-gradient(160deg,#7de06a,#2f8f2a);color:#08150a}
+  main{flex:1;display:grid;grid-template-columns:250px 1fr 288px;min-height:0}
+  aside{overflow:auto;background:#10131a;border-right:1px solid #232836;padding:6px}
+  aside.right{border-right:0;border-left:1px solid #232836}
+  .bossrow{display:flex;align-items:center;gap:8px;padding:5px 9px;border-radius:8px;cursor:pointer;border:1px solid transparent;font-size:12.5px}
+  .bossrow:hover{background:#181d28}
+  .bossrow.on{background:#212a3d;border-color:#3b4763}
+  .bossrow .dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 6px currentColor;flex:0 0 auto}
+  .bossrow small{color:#78819a;margin-left:auto;font-size:10.5px}
+  .tier{font:700 9px/1 "Trebuchet MS",sans-serif;letter-spacing:.5px;padding:2px 5px;border-radius:4px;background:#1d2432;color:#8fd0ff;border:1px solid #263349}
+  .tier.t3{color:#ffb0c8;border-color:#5a2436;background:#2a1620}
+  .tier.t2{color:#ffd98f;border-color:#4d3a1c;background:#241d10}
+  #stage{position:relative;min-width:0;min-height:0;background:#0d0f14}
+  #stage canvas{display:block;width:100%;height:100%}
+  #fx{position:absolute;inset:0;pointer-events:none}
+  #hud{position:absolute;left:12px;top:10px;font-size:11.5px;color:#93a0b8;pointer-events:none;background:#0b0d12aa;border:1px solid #212838;border-radius:8px;padding:5px 9px}
+  #hud b{color:#ffd98f}
+  .note{background:#151a24;border:1px solid #242b3b;border-radius:10px;padding:9px 11px;margin:6px 3px}
+  .note h3{margin:0 0 3px;font-size:12.5px;color:#ffe18b;display:flex;gap:6px;align-items:center}
+  .note p{margin:3px 0;font-size:11.8px;color:#aeb7cb}
+  .note .sig{color:#8fd0ff}
+  .skillrow{display:flex;gap:8px;align-items:flex-start;padding:7px 9px;border-radius:9px;cursor:pointer;border:1px solid transparent}
+  .skillrow:hover{background:#181d28}
+  .skillrow.on{background:#212a3d;border-color:#3b4763}
+  .skillrow b{display:block;font-size:12.5px}
+  .skillrow small{color:#7f889e;font-size:10.5px}
+  #status{font-size:11px;color:#7f889e;padding:5px 10px;border-top:1px solid #232836;background:#10131a}
+  .kbd{color:#c9d2e6;background:#1b2130;border:1px solid #2b3345;border-radius:4px;padding:0 4px;font-size:10.5px}
+</style>
+</head>
+<body>
+<header>
+  <h1>💥 Boss skill FX <small>— the real <code>assets/boss-fx.js</code>, on a live 3D field</small></h1>
+  <span class="ctl">boss <select id="bossSel"></select></span>
+  <span class="ctl">speed <input type="range" id="speed" min="0.15" max="1.6" step="0.05" value="1"><b id="speedVal">1.0×</b></span>
+  <span class="ctl">camera <select id="camSel">
+      <option value="game">game angle</option>
+      <option value="low">low &amp; close</option>
+      <option value="high">high overview</option>
+      <option value="side">side on</option>
+  </select></span>
+  <button id="castBtn">▶ Cast</button>
+  <button class="dim" id="altBtn">⟳ Other move</button>
+  <button class="dim on" id="autoBtn">⏱ Auto (boss timer)</button>
+  <button class="dim" id="allBtn">▶ Play every skill</button>
+</header>
+<main>
+  <aside id="bossList"></aside>
+  <div id="stage">
+    <canvas id="fx"></canvas>
+    <div id="hud">boss <b id="hudBoss">—</b> · casting <b id="hudSkill">—</b> · <span id="hudState">idle</span></div>
+  </div>
+  <aside class="right">
+    <div class="note" id="specNote"></div>
+    <div id="skillList"></div>
+    <div class="note">
+      <h3>How this page works</h3>
+      <p>It loads the game's own <code>/assets/boss-fx.js</code> and calls <code>PGBossFx.create(canvas).draw(...)</code> exactly as
+      <code>index.html</code> does, replacing only the <code>project()</code> callback with this page's Three.js camera.</p>
+      <p>Press <span class="kbd">C</span> to cast, <span class="kbd">A</span> for the other move, <span class="kbd">space</span> to pause.</p>
+    </div>
+  </aside>
+</main>
+<div id="status">ready</div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const BOSSES=PGBossFx.BOSSES;
+const SKY=[0x8ecff5,0x8ee0f0,0x9a90c8,0xf0d9a0,0x8fc8a0,0x7fe0e0,0xc8e0a0,0xf0c0d8,0x4a3a5a,0x1a1020,0x100c23,0x230c10];
+const GROUND=[0x7cc46a,0x6fc2b0,0x8c8caa,0xdcc78e,0x4f8f4a,0x3fae9a,0x7aa85a,0xd88aa8,0x6a6a8a,0x3a2a3a,0x302b42,0x231715];
+const BOSSCOL=['#7de06a','#4fa8ff','#b06bff','#ffcf5c','#ff8a3d','#3fd8d0','#ff5a2a','#ff7ad0','#8dffb0','#ff2e55','#ffffff','#ff7a1a'];
+
+// ---- Three.js field -----------------------------------------------------------------------
+const stage=$('stage'),fx=$('fx'),fxc=fx.getContext('2d');
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,1,.1,400);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+stage.insertBefore(renderer.domElement,stage.firstChild);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),new THREE.MeshLambertMaterial({color:0x7cc46a}));
+ground.rotation.x=-Math.PI/2;scene.add(ground);
+const grid=new THREE.GridHelper(120,40,0x000000,0x000000);
+grid.material.opacity=.07;grid.material.transparent=true;scene.add(grid);
+scene.add(new THREE.HemisphereLight(0xffffff,0x404040,.95));
+const sun=new THREE.DirectionalLight(0xffffff,.6);sun.position.set(8,16,10);scene.add(sun);
+// A boss silhouette so the FX has something to sit on. Not the game's art - just a marker.
+const bossG=new THREE.Group();scene.add(bossG);
+const bossBody=new THREE.Mesh(new THREE.IcosahedronGeometry(1.05,1),new THREE.MeshLambertMaterial({color:0x7de06a}));
+bossBody.position.y=1.35;bossG.add(bossBody);
+const bossRing=new THREE.Mesh(new THREE.RingGeometry(1.05,1.35,48),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.18,side:THREE.DoubleSide}));
+bossRing.rotation.x=-Math.PI/2;bossRing.position.y=.02;bossG.add(bossRing);
+const heroGeo=THREE.CapsuleGeometry?new THREE.CapsuleGeometry(.32,.9,4,8):new THREE.CylinderGeometry(.32,.32,1.5,8);
+const hero=new THREE.Mesh(heroGeo,new THREE.MeshLambertMaterial({color:0xdfc582}));
+hero.position.set(0,1,6);scene.add(hero);
+
+const CAMERAS={
+  game:{dist:24,pitch:.52,yaw:0,focusY:1.4},
+  low:{dist:16,pitch:.26,yaw:.35,focusY:1.6},
+  high:{dist:34,pitch:.85,yaw:0,focusY:.6},
+  side:{dist:22,pitch:.42,yaw:1.35,focusY:1.6}
+};
+let camMode='game',camT=CAMERAS.game;
+const ct=new THREE.Vector3(0,1.4,-4),tmp=new THREE.Vector3();
+function project(x,y,z){tmp.set(x,y,z).project(cam);return[(tmp.x+1)/2*fx.clientWidth,(1-tmp.y)/2*fx.clientHeight]}
+function placeCamera(){
+  const c=camT,dd=c.dist;
+  cam.position.set(ct.x+Math.sin(c.yaw)*Math.cos(c.pitch)*dd,Math.sin(c.pitch)*dd+.5,ct.z+Math.cos(c.yaw)*Math.cos(c.pitch)*dd);
+  cam.lookAt(ct);cam.updateMatrixWorld(true);
+}
+function resize(){
+  const w=stage.clientWidth,h=stage.clientHeight;
+  renderer.setSize(w,h,false);cam.aspect=w/Math.max(1,h);cam.updateProjectionMatrix();
+  fx.width=Math.round(w*Math.min(2,devicePixelRatio||1));fx.height=Math.round(h*Math.min(2,devicePixelRatio||1));
+  fx.style.width=w+'px';fx.style.height=h+'px';
+}
+addEventListener('resize',()=>{resize();});
+
+// ---- state ----------------------------------------------------------------------------------
+let mapIndex=9,skillId=null,cast=null,auto=true,last=performance.now(),acc=0,nextCast=1.2,speed=1,paused=false,queue=null;
+const layer=PGBossFx.create(fx);
+if(!layer)$('status').textContent='canvas 2d is unavailable in this browser - nothing can be drawn';
+function setMap(i){
+  mapIndex=i;
+  const b=BOSSES[i];
+  scene.background=new THREE.Color(SKY[i]);
+  scene.fog=new THREE.Fog(SKY[i],40,120);
+  ground.material.color.setHex(GROUND[i]);
+  bossBody.material.color.set(b.colors[0]);bossBody.material.emissive=new THREE.Color(b.colors[0]).multiplyScalar(.25);
+  bossRing.material.color.set(b.colors[1]);
+  $('hudBoss').textContent=b.name;
+  renderBossList();renderSkills();pickSkill(b.skills[0].id,true);
+}
+function pickSkill(id,silent){
+  skillId=id;cast=null;
+  renderSkills();renderSpec();
+  if(!silent)castNow();
+}
+function castNow(forceId){
+  const id=forceId||skillId;
+  cast={id,start:performance.now(),x:bossG.position.x,z:bossG.position.z,seed:Math.floor(Math.random()*99991)};
+  $('hudSkill').textContent=PGBossFx.spec(id).name;
+  $('hudState').textContent='casting';
+  nextCast=last+ (3200+Math.random()*1400);
+}
+function otherSkill(){
+  const b=BOSSES[mapIndex],other=b.skills.find(s=>s.id!==skillId);
+  if(other)pickSkill(other.id);
+}
+function renderBossList(){
+  const el=$('bossList');el.innerHTML='';
+  BOSSES.forEach((b,i)=>{
+    const row=document.createElement('div');
+    row.className='bossrow'+(i===mapIndex?' on':'');
+    row.innerHTML=`<span class="dot" style="color:${b.colors[0]};background:${b.colors[0]}"></span>
+      <span><b style="font-weight:600">${b.name}</b><br><small style="color:#78819a">${b.skills.map(s=>s.name).join(' · ')}</small></span>
+      <span class="tier ${b.tier===3?'t3':b.tier===2?'t2':''}">T${b.tier}</span>`;
+    row.onclick=()=>setMap(i);
+    el.appendChild(row);
+  });
+  $('bossSel').innerHTML=BOSSES.map((b,i)=>`<option value="${i}"${i===mapIndex?' selected':''}>${b.name}</option>`).join('');
+}
+function renderSkills(){
+  const b=BOSSES[mapIndex],el=$('skillList');el.innerHTML='<div class="note" style="margin:2px 3px 6px"><h3 style="color:#8fd0ff">Signature moves</h3></div>';
+  b.skills.forEach(s=>{
+    const row=document.createElement('div');
+    row.className='skillrow'+(s.id===skillId?' on':'');
+    row.innerHTML=`<span class="dot" style="width:9px;height:9px;border-radius:50%;background:${b.colors[0]};box-shadow:0 0 6px ${b.colors[0]};margin-top:5px;flex:0 0 auto"></span>
+      <span><b>${s.name}</b><small>${s.life.toFixed(2)}s · ${s.pattern}</small></span>`;
+    row.onclick=()=>pickSkill(s.id);
+    el.appendChild(row);
+  });
+}
+function renderSpec(){
+  const b=BOSSES[mapIndex],s=b.skills.find(x=>x.id===skillId);
+  $('specNote').innerHTML=`<h3><span class="dot" style="width:9px;height:9px;border-radius:50%;background:${b.colors[0]};box-shadow:0 0 6px ${b.colors[0]}"></span>${b.name} · ${s.name}</h3>
+    <p class="sig">${s.signature}</p>
+    <p>${b.tier===1?'Tier 1 — a tidy local burst: the boss\'s own ground only.':b.tier===2?'Tier 2 — layered, map-wide: a sweep plus a second motif.':'Tier 3 — cataclysm: full-field slash/structure, shards, glitch and camera shake.'}</p>
+    <p style="color:#7f889e">palette ${b.colors.map(c=>`<span style="display:inline-block;width:12px;height:9px;border-radius:2px;background:${c};margin-right:3px;vertical-align:middle"></span>`).join('')}</p>`;
+}
+
+// ---- the loop -------------------------------------------------------------------------------
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt=Math.min(.1,(now-last)/1000);last=now;
+  if(paused)return;
+  const step=dt*speed;
+  if(auto){
+    acc+=step*1000;
+    if(!cast&&now>=nextCast)castNow();
+  }
+  if(cast){
+    const age=(now-cast.start)/1000*speed;
+    const life=PGBossFx.life(cast.id);
+    if(age>=life){cast=null;$('hudState').textContent='idle';if(auto)nextCast=now+3200+Math.random()*1400}
+  }
+  // camera easing
+  const target=CAMERAS[camMode];
+  for(const k of ['dist','pitch','yaw','focusY'])camT[k]+=((target[k]??camT[k])-camT[k])*.08;
+  ct.y+=((camT.focusY+ (0))-ct.y)*.1;
+  placeCamera();
+  bossG.rotation.y+=dt*.25;bossBody.position.y=1.35+Math.sin(now/700)*.09;
+  renderer.render(scene,cam);
+  const casts=[];
+  if(!layer)return;
+  if(cast)casts.push({id:cast.id,age:(now-cast.start)/1000*speed,x:cast.x,z:cast.z,seed:cast.seed,scale:1.15});
+  fxc.clearRect(0,0,fx.width,fx.height);
+  const ratio=Math.min(2,devicePixelRatio||1);
+  fxc.setTransform(1,0,0,1,0,0);
+  layer.draw(casts,fx.clientWidth,fx.clientHeight,project,ratio);
+  if(cast){
+    const s=PGBossFx.spec(cast.id),age=(now-cast.start)/1000*speed;
+    $('hudState').textContent=`casting · ${Math.min(100,Math.round(age/s.life*100))}%`;
+  }
+}
+// ---- controls -------------------------------------------------------------------------------
+$('bossSel').onchange=e=>setMap(+e.target.value);
+$('camSel').onchange=e=>{camMode=e.target.value};
+$('speed').oninput=e=>{speed=+e.target.value;$('speedVal').textContent=speed.toFixed(2)+'×'};
+$('castBtn').onclick=()=>castNow();
+$('altBtn').onclick=otherSkill;
+$('autoBtn').onclick=e=>{auto=!auto;e.target.classList.toggle('on',auto);$('hudState').textContent=auto?'auto':'manual';if(auto)nextCast=performance.now()+600};
+$('allBtn').onclick=()=>{
+  const list=BOSSES.flatMap(b=>b.skills.map(s=>s.id));
+  let i=0;auto=false;$('autoBtn').classList.remove('on');
+  const nextOne=()=>{
+    if(i>=list.length){$('status').textContent='played every skill';return}
+    const id=list[i++];
+    const b=BOSSES.find(m=>m.skills.some(s=>s.id===id));
+    if(b&&BOSSES.indexOf(b)!==mapIndex)setMap(BOSSES.indexOf(b));
+    castNow(id);pickSkillSilent(id);
+    $('status').textContent=`${i}/${list.length} · ${PGBossFx.spec(id).boss} — ${PGBossFx.spec(id).name}`;
+    setTimeout(nextOne,(PGBossFx.life(id)+.35)*1000);
+  };
+  nextOne();
+};
+function pickSkillSilent(id){skillId=id;renderSkills();renderSpec()}
+addEventListener('keydown',e=>{
+  if(e.key==='c'||e.key==='C')castNow();
+  if(e.key==='a'||e.key==='A')otherSkill();
+  if(e.code==='Space'){paused=!paused;e.preventDefault();$('hudState').textContent=paused?'paused':(auto?'auto':'manual')}
+});
+
+resize();setMap(9);
+renderer.render(scene,cam);
+requestAnimationFrame(frame);
+$('status').textContent='ready — pick a boss, hit Cast, or let the boss timer run';
+</script>
+</body>
+</html>
