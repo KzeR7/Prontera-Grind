@@ -7514,3 +7514,32 @@ The owner's second pass over v77, six notes, all built.
   untouched). **Not verified:** GPU/WebGL pixels of the in-game layer and a phone viewport; the FX
   were reviewed through an offline Canvas renderer and the `/bossfx` page.
 * **Delivery:** local changes on `arena/d2c0537a-prontera-grind`; no merge or deployment.
+
+### 2026-10-25 — `terrain-v2 proposal` (dev only, no game change)
+* **Changed:** Proposed and prototyped a replacement landform generator for the ten outdoor
+  fields. The shipped v195 field is `1.1 + three Gaussian mounds + one Gaussian valley + one
+  sine ripple` for all ten destinations — no ridges, creases, shelves or drainage — and the
+  floor is one 2048² canvas with no slope information. The prototype layers a warped landform,
+  ridged skyline, drainage swales, rocky benches, a per-map signature feature and a perimeter
+  frame, with noise-ragged lane flattening; it also drafts per-vertex floor splat weights
+  (grass/dirt/rock/beach). Nothing in the game changed: `index.html` still loads only
+  `assets/native-fields.js`, and Ascension scenery is untouched.
+* **Try it:** `PREVIEW_PAGE=tools/maps/terrain_v2_preview.html python3 tools/preview_server.py 8000`
+  — shipped vs proposed on all ten fields with intensity, lane, contour and wireframe dials.
+  Static boards and the written proposal:
+  [docs/proposals/map-terrain-upgrade-2026-10-25.md](proposals/map-terrain-upgrade-2026-10-25.md).
+* **Files touched:** `tools/maps/terrain-v2/prototype.js`, `tools/maps/terrain-v2/sample_heights.js`,
+  `tools/maps/terrain-v2/render_preview.py`, `tools/maps/terrain-v2/README.md`,
+  `tools/maps/terrain_v2_preview.html`, `tools/tests/terrain_v2_sim.js`,
+  `docs/proposals/map-terrain-upgrade-2026-10-25.md`, `docs/proposals/terrain-v2/*` (boards,
+  metrics), this log. No shipped asset or game file was edited.
+* **Checks:** `terrain_v2_sim` **PASS** — 251 assertions (pure deterministic heights, exact
+  rendered-triangle contact, lane < 26° with relief outside it, max height jump < 0.75 units,
+  ten distinct landforms with pairwise r < 0.6, no short-period repetition, normalised splat
+  weights, rock on steep faces, wandering trail, mesh contract, and the game still loading only
+  the shipped module). Preview page executed against stubs with every dial path exercised.
+  `docs/proposals/terrain-v2/metrics.json` holds the numbers quoted in the proposal.
+  **Not verified:** in-browser WebGL pixels of the preview page (no Chromium in this sandbox;
+  the boards come from a Python ray-march of the same heightfields, not a browser capture), and
+  no physical-device performance measurement. The existing native-field suites were not re-run
+  because no shipped file changed.
