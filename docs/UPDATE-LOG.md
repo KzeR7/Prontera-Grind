@@ -7836,3 +7836,46 @@ details."* This replaces the random-pool dressing with hand-placed scenes.
   are `Updates/map-textures-preview/board-11-composed-fields-from-spawn.png` and
   `board-12-amatsu-approach-walk.png`; resume notes are in `docs/NATIVE-FIELDS-HANDOFF.md`
   under *Composition pass (v234) - parked, not merged*.
+
+## 2026-10-25 — world chat: why GitHub flagged `prontera-social` on every PR
+
+The owner asked for a check of "the world chat, the server Cloudflare side", because GitHub kept
+marking an issue there. The flag was real and it was **not** in the chat code.
+
+* **What the flag was.** The repo's two Cloudflare integrations both report checks. `Cloudflare Pages`
+  is green everywhere. `Workers Builds: prontera-social` succeeded on every `main` commit and failed
+  on every feature-branch commit — verified across PR #119, #123, #124, #125, #126 and #127 (merge
+  commit `success`, PR head `failure`, consistently). So the red X the owner sees is the *preview*
+  build of the plaza Worker, not a production fault.
+* **Cause.** `workers/social/wrangler.toml` sets `workers_dev = false` because the plaza Worker has no
+  public route. Cloudflare now defaults preview URLs to *match* `workers_dev`, so with no explicit
+  preview setting the non-production build (a `wrangler versions upload`) had no preview deployment to
+  upload to and failed. Production was unaffected, which is exactly why only branches were red.
+* **Fix.** `preview_urls = true` plus an empty `[previews]` block in
+  `workers/social/wrangler.toml`, with a comment saying why they must stay. Previews only publish
+  `*.workers.dev` version URLs for branch builds; this script's default handler is a 404 and the
+  Durable Object is reachable only through the Pages `SOCIAL` binding, so no new ingress appears and
+  chat stays private.
+* **Also confirmed working, so nobody re-debugs it:** the whole production chain was run locally in
+  Cloudflare's real runtime (workerd via Miniflare), not the repo's Node socket shim — a Pages
+  Function receiving a WebSocket, forwarding `Upgrade` + authenticated `X-Social-Identity` to the
+  external Durable Object bound by `script_name = "prontera-social"`, then `hello` → `join` → world
+  message round trip. `social_sim.js`, `social_api_sim.mjs` and `social_worker_sim.mjs` all pass.
+* **New check.** `tools/tests/social_config_sim.js` (dependency-free, 7 assertions) pins the wiring
+  that this incident turned on: the Pages binding and the Worker agree on script name, class and the
+  SQLite migration; the Worker stays off `workers.dev`; `preview_urls`/`[previews]` stay set.
+* **Docs.** `tools/cloudflare-deploy-steps.md` gained §9 — it is referenced by `wrangler.toml` and
+  `SOCIAL-HUB.md` for the Social Worker but never actually described deploying it, which is how a
+  missing binding would be discovered only by players. `docs/SOCIAL-HUB.md` explains the preview
+  settings; `docs/TESTING.md` lists the new suite and both dry-run commands.
+* **Two real chat defects found and left for the owner's decision (not changed here):** a healthy
+  connection is force-closed after exactly 5 minutes (`expires` is set at connect and never renewed,
+  reproduced: close code 4000 at 302 s), which drops plaza seating and shows "Chat unavailable" every
+  five minutes; and the client has no dead-socket watchdog, so a half-open socket keeps
+  `readyState === 1` and chat silently stops until reload.
+* **Checks:** `social_config_sim.js` 7/7; `social_sim.js`, `social_api_sim.mjs`,
+  `social_worker_sim.mjs` pass; `wrangler deploy --dry-run` and `wrangler versions upload --dry-run`
+  both build the Worker. **Not verified:** the Cloudflare-side branch build itself (needs a push to a
+  non-production branch and dashboard access) — the red check should turn green on the next branch
+  push of this session.
+* **Delivery:** local changes on `arena/c4538d5e-prontera-grind`; no deployment performed.

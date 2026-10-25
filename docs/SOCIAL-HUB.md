@@ -82,6 +82,16 @@ when the Durable Object restarts; clients reconnect and rejoin. This first servi
 uses one coordinating Durable Object for the world and numbered plazas, intended
 for the current small community rather than an unbounded global population.
 
+**Branch builds (v235).** The Worker keeps `workers_dev = false` because it has no
+public ingress, so it also sets `preview_urls = true` and an empty `[previews]`
+block. Without them Cloudflare defaults preview URLs to match `workers_dev` and
+every non-production branch build (a `wrangler versions upload`) fails, which is
+what put a red *Workers Builds: prontera-social* check on every PR while `main`
+stayed green. Previews expose nothing new: the script's default handler is a 404
+and the Durable Object is reachable only through the Pages binding.
+`tools/tests/social_config_sim.js` pins both files' agreement on the script name,
+class, migration and those preview settings.
+
 ## Local preview and checks
 
 Use Node 24 and the existing test dependencies; add `ws` for the local WebSocket
@@ -103,7 +113,9 @@ node tools/tests/social_sim.js
 node tools/tests/social_ui_sim.js
 node tools/tests/social_scene_sim.js
 node tools/tests/social_api_sim.mjs
+node tools/tests/social_config_sim.js
 npx wrangler deploy --dry-run --config workers/social/wrangler.toml --outdir /tmp/social-worker-build
+npx wrangler versions upload --config workers/social/wrangler.toml --dry-run
 node tools/tests/social_worker_sim.mjs
 node tools/check_social_browser.cjs
 ```

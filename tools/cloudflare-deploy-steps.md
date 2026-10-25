@@ -189,7 +189,42 @@ first thing to look at is how many tabs are left open: each one syncs while hidd
 the town atlas and index.html itself. Static file requests are free and unlimited on every plan, so
 "the download is big" is a player's data plan, never a bill. The card is the only place worth looking.
 
-## If you lose the owner (GM) account
+## 9. World chat: the Fountain Plaza worker
+
+World chat is the one part of the game that is not a Pages Function. It is a separate Worker with a
+Durable Object (`workers/social/`), and Pages reaches it privately through the `SOCIAL` binding in the
+root `wrangler.toml`. **Deploy the worker first, then publish Pages** — a Pages site whose binding
+points at a worker that does not exist fails to deploy, and a worker that exists without the binding
+leaves chat saying *unavailable* while the rest of the game plays normally.
+
+In the dashboard (**Workers & Pages → Create → Worker**):
+
+1. Name it **`prontera-social`** — exactly that. The root `wrangler.toml` binds it by that name
+   (`script_name`), and `tools/tests/social_config_sim.js` fails if the two files disagree.
+2. Connect it to this GitHub repository, production branch **`main`**.
+3. Build settings: root directory **`workers/social`**, build command **empty**, deploy command
+   **`npx wrangler deploy`**, non-production deploy command **`npx wrangler versions upload`**.
+4. Deploy. It has no public route on purpose (`workers_dev = false`): the only way in is the
+   `SOCIAL` binding from Pages, and its own `fetch` answers 404 to anything else.
+5. Then let Pages deploy as usual (§3, or merge to `main`).
+
+`workers/social/wrangler.toml` also sets `preview_urls = true` and an empty `[previews]` block. That
+is deliberate: Cloudflare defaults preview URLs to match `workers_dev`, so with `workers_dev = false`
+and no preview setting, every non-production branch build failed and each PR/commit showed a red
+**Workers Builds: prontera-social** check while `main` stayed green. Previews only publish
+`*.workers.dev` version URLs for branch builds; this script's default handler is a 404 and the Durable
+Object stays reachable only through the Pages binding, so nothing new becomes public. Keep both lines.
+
+Checks that do not need an account: `npx wrangler deploy --dry-run --config workers/social/wrangler.toml`
+and `npx wrangler versions upload --config workers/social/wrangler.toml --dry-run` (the second is the
+one a feature-branch build runs). The database needs no extra migration for chat.
+
+**If chat says "unavailable":** `503 Social service is not configured` in the browser's Network panel
+means the Pages project has no `SOCIAL` binding; `401` means the player is not signed in; `403` means
+the `Origin` did not match the page's own host. A green production build with a red branch build is
+the preview setting above, not a chat fault.
+
+
 
 The owner is **the first account registered against that database** (`users.gm = 2`); every later
 account is a normal player. There are three separate ways back in, in order of how fast they are:

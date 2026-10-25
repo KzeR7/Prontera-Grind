@@ -1,7 +1,20 @@
 name = "prontera-social"
 main = "index.mjs"
 compatibility_date = "2026-10-01"
+
+# The plaza Worker has no public route: only Pages reaches it, through the `SOCIAL` binding in the
+# root wrangler.toml, and its own `fetch` answers 404 to everything else.
 workers_dev = false
+
+# v235: Workers Builds runs a *preview* build (a version upload) for every non-production branch,
+# and a Worker with `workers_dev = false` and no preview setting defaults previews to off - so every
+# feature branch got a red "Workers Builds: prontera-social" check while `main` stayed green.
+# Enabling previews only publishes *.workers.dev version URLs for branch builds; this script has no
+# public ingress (its default handler is a 404 and the Durable Object is reachable only through the
+# Pages binding), so nothing new becomes reachable. Leaving these out brings the red check back.
+preview_urls = true
+[previews]
+
 [[durable_objects.bindings]]
 name = "SOCIAL"
 class_name = "Social"
