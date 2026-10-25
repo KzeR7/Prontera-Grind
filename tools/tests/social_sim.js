@@ -53,5 +53,28 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  fast.x=0;fast.z=12;fast.at=now;fast.path=[{x:0,z:-24}];const fastBefore=fast.z;now+=1000;walkRoom.snapshot(fast);
  assert.equal(fastBefore-fast.z,R.MAX_SPEED,'the room itself advances at the validated speed');
  walkRoom.disconnect(fast);walkRoom.disconnect(slow);walkRoom.disconnect(plain);
- console.log('PASS social room: channel privacy, 20-player overflow, native emotion events, collision, movement/sit, rate limit, session expiry, per-character walk speed and tab replacement');
+ // v236: two clocks. Activity slides the idle window, so a player who is actually there is never
+ // dropped for being there; the only planned drop is the 30-minute re-authentication through Pages,
+ // announced with a `reauth` event first so the client can reconnect and reseat without a failure.
+ let beatNow=0;const refreshed=[];
+ const beatRoom=new SocialRoom({now:()=>beatNow});
+ const beat=beatRoom.connect({id:301,username:'Beater'},raw=>{const e=JSON.parse(raw);if(e.type==='reauth')refreshed.push(['reauth',beatNow])},(code,why)=>refreshed.push([code,beatNow]));
+ beatRoom.receive(beat,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));
+ for(let t=0;t<=29*60;t+=2){beatNow=t*1000;beatRoom.receive(beat,JSON.stringify({type:'ping'}));beatRoom.sweep();assert(beatRoom.clients.has(301),'an active connection survives past five minutes')}
+ assert.deepEqual(refreshed,[],'nothing has asked for re-authentication yet');
+ for(let t=29*60+2;t<=31*60&&beatRoom.clients.has(301);t+=2){beatNow=t*1000;beatRoom.receive(beat,JSON.stringify({type:'ping'}))}
+ assert(!beatRoom.clients.has(301),'a connection older than 30 minutes is refreshed through Pages');
+ assert.equal(refreshed[0][0],'reauth','the client is told before the socket closes');
+ assert.equal(refreshed.at(-1)[0],4000,'the refresh closes with code 4000');
+ assert(refreshed.at(-1)[1]>=1800000,'the refresh happens at the 30-minute bound, not at five');
+ // A socket that stops talking is still swept, so a half-open connection cannot hold a plaza slot.
+ const idle=beatRoom.connect({id:302,username:'Idle'},()=>{},()=>{});
+ beatRoom.receive(idle,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));
+ beatNow+=299000;beatRoom.sweep();assert(beatRoom.clients.has(302),'a silent socket is still inside the idle window');
+ beatNow+=2000;beatRoom.sweep();assert(!beatRoom.clients.has(302),'a silent socket is swept after five minutes');
+ // Activity, not just age, is what keeps it open: one ping inside the window restarts the clock.
+ const chatty=beatRoom.connect({id:303,username:'Chatty'},()=>{},()=>{});
+ for(let i=0;i<6;i++){beatNow+=240000;beatRoom.receive(chatty,JSON.stringify({type:'ping'}));assert(beatRoom.clients.has(303),'each message slides the idle window forward')}
+ beatNow+=400000;beatRoom.receive(chatty,JSON.stringify({type:'ping'}));assert(!beatRoom.clients.has(303),'activity cannot outrun the re-authentication bound');
+ console.log('PASS social room: channel privacy, 20-player overflow, native emotion events, collision, movement/sit, rate limit, sliding idle window with a 30-minute re-authentication, per-character walk speed and tab replacement');
 })().catch(e=>{console.error(e);process.exitCode=1});

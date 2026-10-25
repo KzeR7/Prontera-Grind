@@ -1,13 +1,23 @@
 import '../../assets/social-rules.js';
 const R=globalThis.PGSocialRules;
+// v236: two different clocks. IDLE_MS is how long a silent connection may sit before the sweep
+// removes it - that is what kills half-open sockets. REAUTH_MS is the security bound: a connection
+// has to go back through Pages (which re-checks the D1 session and the ban flag) this often, because
+// the socket itself is the only thing that proves who the player is. The age of a connection is
+// measured from when it was accepted, and activity slides the idle window forward, so an active
+// player is no longer dropped every five minutes the way REAUTH_MS alone used to force.
+const IDLE_MS=300000,REAUTH_MS=1800000;
 // A service binding is the only ingress. Identity is supplied by authenticated Pages.
 export class SocialRoom {
  constructor({now=()=>Date.now()}={}){this.now=now;this.clients=new Map();this.history=[];this.serial=0;}
  send(c,event){try{c.send(JSON.stringify(event))}catch{this.disconnect(c)}}
+ // A planned refresh tells the client before the socket closes, so it can reconnect and rejoin
+ // without showing a failure or losing the player's seat.
+ refresh(c){this.disconnect(c);this.send(c,{type:'reauth'});c.close(4000,'Refresh session')}
  broadcast(event,filter=()=>true){for(const c of this.clients.values())if(filter(c))this.send(c,event)}
  connect(identity,send,close){
  const prior=this.clients.get(identity.id);if(prior){this.disconnect(prior);prior.close(4001,'Connected in another tab');}
- const c={id:identity.id,name:identity.username,send,close,room:0,at:this.now(),path:[],x:0,z:12,dir:0,sit:false,nextChat:0,seat:null,moveAt:0,lookAt:0,expires:this.now()+300000};
+ const c={id:identity.id,name:identity.username,send,close,room:0,at:this.now(),path:[],x:0,z:12,dir:0,sit:false,nextChat:0,seat:null,moveAt:0,lookAt:0,expires:this.now()+IDLE_MS,reauthAt:this.now()+REAUTH_MS};
  this.clients.set(c.id,c);this.send(c,{type:'hello',id:c.id,name:c.name,history:this.history});return c;
  }
  // v225: lv drives the level aura and speed is the character's field run speed. Both are
@@ -19,7 +29,9 @@ export class SocialRoom {
  disconnect(c){if(this.clients.get(c.id)!==c)return;this.leave(c);this.clients.delete(c.id)}
  receive(c,raw){
  if(this.clients.get(c.id)!==c)return;
- if(this.now()>c.expires){this.disconnect(c);c.close(4000,'Refresh session');return;}
+ const now=this.now();
+ if(now>c.reauthAt||now>c.expires)return this.refresh(c);
+ c.expires=now+IDLE_MS;
  if(typeof raw!=='string'||raw.length>4096)return this.send(c,{type:'error',message:'Message is too large.'});
  let m;try{m=JSON.parse(raw)}catch{return}if(!m||typeof m!=='object')return;
  if(m.type==='ping')return this.send(c,{type:'pong'});
@@ -51,5 +63,5 @@ export class SocialRoom {
  else if(channel==='local')this.broadcast(event,p=>p.room===c.room);
  else {this.send(c,event);if(recipient!==c)this.send(recipient,event)}
  }
- sweep(){for(const c of this.clients.values())if(this.now()>c.expires){this.disconnect(c);c.close(4000,'Refresh session')}}
+ sweep(){const now=this.now();for(const c of [...this.clients.values()])if(now>c.reauthAt||now>c.expires)this.refresh(c)}
 }

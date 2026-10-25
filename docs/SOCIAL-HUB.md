@@ -54,9 +54,24 @@ The server validates each character's reported walk speed (2–13 u/s) and level
 from the existing session, never a client payload. Input is bounded and displayed
 as text. Messages and emotions share a three-second cooldown across channels, enforced by
 the client and server; movement, chair selection and sitting are bounded to ten
-commands per second. Connections reauthenticate
-through Pages every five minutes. Another tab replaces the account's old socket;
+commands per second. Another tab replaces the account's old socket;
 the replaced tab stays disconnected until reload. Disconnects remove presence.
+
+**Two clocks, since v236.** A connection used to be closed five minutes after it
+opened no matter how busy it was, so every player was bounced once per five
+minutes. The age of a connection is now only a security bound: it has to go back
+through Pages (which re-checks the session and the ban flag) every **30 minutes**.
+That refresh is announced to the client first, so the socket is replaced and the
+player rejoins their plaza and bench without a failure message or a cleared room.
+Separately, a connection that says nothing for **five minutes** is swept, which is
+what clears half-open sockets; every frame the player sends slides that window
+forward, so an active player is never swept.
+
+The client also watches its own socket. If the server has been silent for 20
+seconds it asks for one ping/pong round trip and gives the answer six seconds to
+arrive; when it does not, the socket is treated as dead and replaced at the next
+beat, keeping the plaza and the seat. Without this a socket that died silently
+still reported itself as open, and chat stayed quiet until the page was reloaded.
 
 ## Runtime and production configuration
 

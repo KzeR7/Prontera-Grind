@@ -7926,3 +7926,40 @@ behind the *View logs* link that the `cloudflare-workers-and-pages` bot posts on
   exact log line to the fix, so one look at the build log settles it. Both candidate causes are
   settings, not chat code, and neither affects players: production `main` has been deploying fine.
 * **Checks:** unchanged from the previous entry; no code changed here beyond documentation.
+
+## 2026-10-25 — `haven-v236 chat that stops dropping`
+
+* **Changed:** World chat no longer disconnects everybody once every five minutes. The chat server
+  used to stamp every connection with a five-minute deadline at login and never move it, so even a
+  player standing in the plaza chatting was closed (code 4000) — the plaza cleared, the bench was
+  lost and the status line said "Chat unavailable" until the automatic reconnect finished. There are
+  now two clocks. A connection has to go back through Pages — which re-checks the session and the ban
+  flag — every **30 minutes**; that refresh is announced to the client first, so the socket is quietly
+  replaced and the player rejoins their plaza and their bench with no error and no cleared room. A
+  connection that sends nothing for **five minutes** is still swept, which is what clears half-open
+  sockets, and every message slides that window forward, so an active player is never swept. The
+  client also now notices a socket that has died silently: after 20 seconds of silence it asks for one
+  ping/pong round trip and gives the reply six seconds; if nothing comes back the socket is replaced
+  on the next beat, keeping the plaza and seat. Before this, a dead socket still reported itself as
+  open, chat stayed quiet, and only a page reload brought it back.
+* **Try it:** Sign in, open Maps → Social Hub → Enter Fountain Plaza, sit on a bench and stay there.
+  Chat should stay connected for as long as you are in the plaza instead of bouncing every five
+  minutes, and the login card should read `haven-v236 chat reconnects`.
+* **Checks:** `social_sim.js` (new: an active connection survives past 5 minutes, is refreshed at the
+  30-minute bound with a `reauth` event and close code 4000, a silent socket is swept, and activity
+  cannot outrun the re-authentication), `social_ui_sim.js` (new: the watchdog probes before
+  reconnecting, replaces a socket that never answers, keeps the plaza and reseats the bench after both
+  a watchdog reconnect and a planned refresh, and never reports a planned refresh as a failure),
+  `social_scene_sim.js`, `social_config_sim.js` (7/7), `social_api_sim.mjs`, `social_worker_sim.mjs`
+  and two-account `check_social_browser.cjs` (real software WebGL: presence, chat, sit, emotion, chair,
+  farming, glow) pass. The full `*_sim.js`/`*_smoke.js` loop is **129 pass / 8 fail**, and those same 8
+  fail on the untouched base commit `e4da439` (`card_star_balance`, `fourth_job_skills`,
+  `ground_combat`, `field_loop_smoke`, `publish_sim`, `rotation_updates`, `skill_balance`,
+  `skill_redesign`). The build bump also touched its three mirrors (`affix-ranges.html`,
+  `equipment-cards-tuning.html`, `cloudflare-deploy-steps.md`); without them `update_watch_sim.js`,
+  `gear_sim.js` and `drop_card_sheet_sim.js` fail, which is the point of that check. **Not verified:**
+  the 30-minute bound against a real Cloudflare Durable Object (that needs half an hour of wall
+  clock); it is covered by the room simulation instead.
+* **Delivery:** Local changes, committed and pushed to `arena/c4538d5e-prontera-grind` (PR #128); no
+  deployment. The Worker change ships when `workers/social` is deployed and Pages is published after
+  it.
