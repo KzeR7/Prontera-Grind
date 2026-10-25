@@ -9,6 +9,7 @@ Routes:
                  set in the environment, that page instead (e.g. the skill-fx preview)
     /game        explicit alias for the game, always index.html
     /skillfx     the skill-effect sprite preview (every skill's RO-style effect, on demand)
+    /bossfx      the boss skill-effect review (all twelve MVPs, two signature moves each)
     /damage      the damage-floats proposal page (on-screen damage numbers: 3 options)
     /crit        a live crit-frame comparison: the old misaligned burst vs the current one
     /weapons     the weapon proposal page (weapons on the class sprites)
@@ -38,6 +39,8 @@ PAGES = {'/': _root_page,
          '/game': 'index.html',
          # the tuner pages (PR #29/#30) keep their own routes - they are tools, not the game
          '/skillfx': 'tools/skill_fx_preview.html',
+         # every MVP's signature moves, on a live 3D field (loads the real assets/boss-fx.js)
+         '/bossfx': 'tools/boss_fx_preview.html',
          '/overdrive': 'tools/skill-fx-proposals/prismatic-overdrive.html',
          '/fx': 'tools/skill-fx-proposals/prismatic-overdrive.html',
          '/damage': 'Updates/damage-floats-proposal/index.html',

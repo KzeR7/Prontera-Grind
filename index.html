@@ -782,7 +782,7 @@ button:focus-visible{outline:2px solid #e7d4a1;outline-offset:3px}
 #screenOptions label{display:block;padding:7px;color:#e6dbbd}#screenOptions input{margin-right:8px}
 body.hide-damage .fl.damage,body.hide-damage .fl.critical,body.hide-damage .fl.skill-damage,body.hide-damage .fl.skill-critical,body.hide-damage .fl.dot,body.hide-damage .fl.incoming{display:none!important}
 body.hide-feed #feedWrap,body.hide-labels #heroTitle,body.hide-labels #tag{display:none!important}
-body.clean-screen #wrap>.title,body.clean-screen #ov>*:not(#mobSpriteLayer):not(#weaponSpriteLayer):not(#skillAfterglowLayer),body.clean-screen #xp-dock,body.clean-screen #hud>*,body.clean-screen #hud>div:last-child>*:not(#screenBtn){visibility:hidden!important}
+body.clean-screen #wrap>.title,body.clean-screen #ov>*:not(#mobSpriteLayer):not(#weaponSpriteLayer):not(#skillAfterglowLayer):not(#bossSkillLayer),body.clean-screen #xp-dock,body.clean-screen #hud>*,body.clean-screen #hud>div:last-child>*:not(#screenBtn){visibility:hidden!important}
 body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud{background:transparent;border:0;pointer-events:none}body.clean-screen #screenBtn{pointer-events:auto}
 #qp{max-height:55vh;overflow:auto}.quest-tabs{display:flex;gap:5px;margin:6px 0}.quest-tabs button{flex:1}.ore-quantity{width:100%;box-sizing:border-box}
 .bag-item-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.bag-item-list article{display:grid;grid-template-columns:1fr auto;gap:6px}.bag-item-list small{grid-column:1/-1}.eclipse-bag>.bag-tools{flex-shrink:0}.eclipse-bag>.chooser{font-size:11px}
@@ -968,6 +968,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
 <script src="assets/skill-afterglow.js?v=220"></script>
+<script src="assets/boss-fx.js?v=1"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=206"></script>
@@ -1219,7 +1220,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-24 haven-v227 hit-wake AoE5';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-25 haven-v228 boss skill fx';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4315,6 +4316,7 @@ function spawn(){
   if(typeof resetSkillRuntime==='function')resetSkillRuntime(true);
   const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP*nm15Of(S.lvl):1,na=nm1?NMATK*nm15Of(S.lvl):1,nz=nm1?NMZENY*nmPayOf(S.mp,S.lvl,2):1;
   mobs=[];activePack=0;camps=[];engageTgt=null;
+  if(typeof resetBossSkill==='function')resetBossSkill();
   const bossWave=!!F.boss;
   if(bossWave){
     const baseHp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(S.lvl):1));
@@ -7426,6 +7428,7 @@ function update(dt){
   if(pv('hpreg')&&S.hp<maxHp())S.hp=Math.min(maxHp(),S.hp+dt*maxHp()*pv('hpreg')/100);
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   tickSkillFx(dt);
+  tickBossSkill();
   if(skillOn('aid')&&!skillOn('ab_highness')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');skillNameFloat('First Aid');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
   // the swing lands on the animation's contact frame (see playerAttack): the cast(s), the extra hits
   // and the normal strike all resolve here, and they print one number per monster.
@@ -10516,6 +10519,78 @@ function getSkillAfterglow(){
   };
   $('weaponSpriteLayer').after(canvas);skillAfterglow=renderer;return renderer;
 }
+// ---------- boss skills ---------------------------------------------------------------------
+// Every MVP gets two signature moves (assets/boss-fx.js). This is presentation only: the boss's
+// swings, damage, cooldowns and drops are untouched. The cast clock is the game's own `t`, so a
+// skill pauses with the fight, travels with a map change and never changes any simulation speed.
+// A boss casts on its own 3.2-4.6s timer (per boss, re-rolled after every cast) so two casts never
+// line up, and nothing is drawn while the tab is hidden or the sim is catching up.
+const BOSS_CAST_MIN=3.2,BOSS_CAST_MAX=4.6;
+let bossSkillLayer=null,bossCast=null,bossCastNext=0,bossCastId=null,bossCastLast=null;
+function getBossSkillLayer(){
+  if(bossSkillLayer)return bossSkillLayer;
+  if(typeof PGBossFx==='undefined')return null;
+  const canvas=document.createElement('canvas');canvas.id='bossSkillLayer';
+  canvas.setAttribute('aria-hidden','true');
+  canvas.style.cssText='position:absolute;inset:0;pointer-events:none';
+  const renderer=PGBossFx.create(canvas);if(!renderer)return null;
+  $('weaponSpriteLayer').after(canvas);bossSkillLayer=renderer;return renderer;
+}
+// The MVP on the field: the boss wave's own boss, or the Stage-15 wave's. Never an escort.
+function bossSkillTarget(){
+  if(!mobs||!mobs.length)return null;
+  return mobs.find(m=>m.boss&&m.hp>0)||null;
+}
+function resetBossSkill(){
+  bossCast=null;bossCastId=null;bossCastLast=null;bossCastNext=t+BOSS_CAST_MIN*.6;
+}
+function tickBossSkill(){
+  const boss=bossSkillTarget();
+  if(!boss){
+    if(bossCast||bossCastId!==null){bossCast=null;bossCastId=null}
+    bossCastNext=Math.max(bossCastNext,t+1.2);
+    return;
+  }
+  const map=boss.mapIndex??S.mp,list=typeof PGBossFx==='object'?PGBossFx.skillsOfMap(map):[];
+  if(!list.length)return;
+  // A new boss (wave, map or Nightmare stage) restarts the timer and forgets the last move.
+  if(bossCastId!==null&&boss!==bossCastId){bossCast=null;bossCastNext=t+1.2;bossCastLast=null}
+  bossCastId=boss;
+  if(!bossCast){if(t>=bossCastNext)castBossSkill(boss,list);return}
+  if(t-bossCast.start>=bossCast.life){bossCast=null;bossCastNext=t+BOSS_CAST_MIN+Math.random()*(BOSS_CAST_MAX-BOSS_CAST_MIN)}
+}
+function castBossSkill(boss,list){
+  if(simVisualsOff()||!getBossSkillLayer())return;
+  // Alternate the boss's two moves, but never the same one twice in a row.
+  const fresh=list.filter(id=>id!==bossCastLast),id=(fresh.length?fresh:list)[Math.floor(Math.random()*((fresh.length?fresh:list).length))];
+  const life=PGBossFx.life(id)||2.6;
+  bossCast={id,start:t,age:0,life,x:boss.x,z:boss.z,seed:Math.floor(Math.random()*99991)};
+  bossCastLast=id;
+  const power=PGBossFx.shake(id);
+  if(power>0&&S.cameraShake!==false)shake=Math.max(shake,power);
+  // No combat-log line: a move every few seconds would bury the drops and level-ups. The floating
+  // name and the FX's own title card already say which move is on the field.
+  const skill=PGBossFx.spec(id);
+  if(typeof CombatAudio!=='undefined'&&CombatAudio.hit)CombatAudio.hit(true,S.sfx!==false,'axe','skill');
+  if(skill)skillNameFloat(skill.name);
+}
+function syncBossSkillFx(){
+  const layer=bossSkillLayer;if(!layer)return;
+  const boss=bossSkillTarget();
+  const casts=[];
+  if(bossCast&&boss&&casts.length<1){
+    const age=t-bossCast.start;
+    if(age>=0&&age<bossCast.life){
+      bossCast.age=age;
+      bossCast.x=boss.x;bossCast.z=boss.z;
+      casts.push({id:bossCast.id,age,x:bossCast.x,z:bossCast.z,seed:bossCast.seed,
+        scale:typeof mobVisualScale==='function'?cl(mobVisualScale(boss)/1.4,.75,1.6):1});
+    }else if(age>=bossCast.life){bossCast=null}
+  }
+  const floor=(x,z)=>typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY(x,z)-.035:0;
+  layer.draw(casts,R.domElement.clientWidth,R.domElement.clientHeight,
+    (x,y,z)=>scr(x,y+floor(x,z),z),devicePixelRatio||1);
+}
 function playSkillFx(id,target,color){
   if(simVisualsOff())return;
   const r=skillFxSpec(id,color);if(!r)return;
@@ -10662,7 +10737,7 @@ function draw(){
   for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
   for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=PETS[p.sp];
     if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0,lunge:r.lunge||0},PET_VISUAL_SCALE)}
-  syncSkillFx();syncWeaponSprites(pFace,c);syncLevelAura();
+  syncSkillFx();syncBossSkillFx();syncWeaponSprites(pFace,c);syncLevelAura();
   eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();
   if(tabs.includes('job'))drawClassPreview();
   if(typeof wardrobePreview==='function')wardrobePreview();

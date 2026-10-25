@@ -77,6 +77,15 @@ inspect those boundaries and include the real dependencies. `pack_sim.js` now re
 its own block directly from the page; a separate `/tmp/pack_block.js` extraction is
 not required. `PACK_BLOCK` and `PACK_DATA` are optional explicit overrides.
 
+For boss skill FX changes (`assets/boss-fx.js`) run `node tools/tests/boss_fx_sim.js` and open
+`/bossfx` in a real browser. The suite pins the 12-boss/24-move roster, two distinct
+choreographies per boss, the tier escalation (size and camera shake), real Canvas output at every
+frame of every move in two detail levels, no leaked canvas state, no non-finite geometry,
+invalid casts as no-ops, and the adapter's clock: a 3.2-4.6s re-rolled gap, never the same move
+twice, a reset on a new boss, nothing painted in a hidden tab, and the player's camera-shake
+setting. It extracts the adapter out of `index.html`, so moving those functions needs its
+anchors updated (`const BOSS_CAST_MIN=` … `function playSkillFx(`).
+
 For skill FX changes, run `python3 tools/build_skill_materials.py --check`,
 `python3 tools/tests/skill_materials.py`, `python3 tools/build_afterglow.py --check`,
 `node tools/tests/overdrive_sim.js`, `node tools/tests/overdrive_preview_sim.js` and

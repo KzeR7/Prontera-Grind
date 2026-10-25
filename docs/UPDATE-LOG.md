@@ -7463,3 +7463,54 @@ The owner's second pass over v77, six notes, all built.
 * **Checks:** inline script `node --check` ok; `field_loop_smoke` **9/9** (camps/scatter/refill/wipe/stand-off/kite), `combat_damage_sim` **10/10** (pierce/ATK/flee), `combo_rotation_sim` **18/18**, `attack_sync_sim` **8/8**, `ascension_attack_sim` **24/24**, `economy_sim` **24/24** (pacing/Zeny sinks); `git diff --check` clean. **Not run:** full 126-suite gate + browser/WebGL visual of multi-aggro.
 * **Delivery:** local changes on `arena/e6ab6025-prontera-grind`; no merge or deployment.
 
+### 2026-10-25 — `haven-v228 boss skill fx`
+
+* **Changed (player-visible):** every MVP now casts a **signature skill effect** of its own.
+  Twelve bosses, **two unique moves each (24 in total)**, drawn on a new effect layer that sits with
+  the class skill layer, so nothing about damage, cooldowns, drops or the swings moved.
+  * **One cast every 3.2-4.6s per boss**, re-rolled after every cast (never a metronome) and never
+    the same move twice in a row. The clock pauses with the fight, resets on a new boss, map or
+    Nightmare stage, and paints nothing while the tab is hidden or the sim is catching up.
+  * **Tiered by map band.** Maps 0-4 (Prontera → Payon) are tier 1: a tidy local burst on the boss's
+    own ground. Maps 5-8 (Comodo → Niflheim) are tier 2: map-wide sweeps plus a second motif. Maps
+    9-11 (Abyss, Astral Citadel, Thor) are tier 3, "cataclysm": full-field slashes, fracture, glitch
+    shards and a camera shake.
+  * **The moves:** Mastering · *Jelly Barrage* / *King's Bounce* — Drake · *Anchor Typhoon* /
+    *Cutlass Cross* — Baphomet · *Goat Sigil* / *Hell Ram* — Phreeoni · *Sand Maw* / *Desert Fang* —
+    Eddga · *Tiger Rampage* / *Rampart Quake* — Kraken · *Tidal Maw* / *Abyss Tentacles* — Dragon Lord
+    · *Dragon Ascension* / *Skyfall Pillar* — Shiranui · *Foxfire Bloom* / *Sakura Storm* — Lord of
+    Death · *Soul Harvest* / *Death Verdict* — Dark Lord · *Abyssal Cross* / *Chaos Requiem* — Memory
+    of Thanatos · *Memory Fracture* / *Thanatos Judgment* — Ifrit · *Primal Eruption* / *Ifrit Blaze*.
+  * Each cast shows a small **title card** over the field ("BOSS SKILL" / "CATACLYSM SKILL" plus the
+    move's name, in the boss's own palette), names the move over the hero, and plays one skill-channel
+    impact sound. No combat-log line, so the log is not buried.
+* **How:** new `assets/boss-fx.js` (`PGBossFx`) holds the roster, the tiers and a procedural Canvas
+  renderer — 24 hand-written choreographies built from shared primitives (tapered blades, ribbons,
+  perspective runes, flames, petals, glass shards, glitch bars, sparks, shockwaves). `index.html`
+  gains the `#bossSkillLayer` canvas beside `#skillAfterglowLayer`, the cast clock
+  (`tickBossSkill` / `castBossSkill` / `syncBossSkillFx`, `BOSS_CAST_MIN=3.2`, `BOSS_CAST_MAX=4.6`),
+  and `resetBossSkill()` on a fresh wave. Effects are anchored on the boss's projected feet, scaled by
+  the tier's composition size against the same 3.05-world-units-to-120px reference the class effects
+  use, and drawn above the boss's spawn point rather than below it, so the ground-level moves never
+  sit behind the terrain. Presentation only: no damage, no cooldowns, no aggro, no sprite changes.
+* **Try it:** `/bossfx` on the preview server — every boss and both of its moves on a live Three.js
+  field, with the game/close/overview/side cameras, slow motion, "cast", "other move", an auto mode on
+  the real boss timer and "play every skill". In game, walk into any Stage 10 (or Stage 15 Nightmare)
+  boss arena and wait a few seconds. `docs/CODE-MAP.md` and `TOOLS-START-HERE.md` carry the new route.
+* **Files touched:** `assets/boss-fx.js` (new), `index.html` (layer, clock, `BUILD`,
+  clean-screen allowance), `tools/boss_fx_preview.html` (new review page),
+  `tools/preview_server.py` (`/bossfx`), `tools/tests/boss_fx_sim.js` (new),
+  `docs/CODE-MAP.md`, `TOOLS-START-HERE.md`, `docs/TESTING.md`, the three `BUILD` mirrors and this log.
+* **Checks:** `boss_fx_sim` **PASS** (24 moves, every frame at two detail levels and three seeds,
+  canvas-state and non-finite-geometry guards, tier escalation, the 3.2-4.6s anti-metronome clock,
+  no repeats, boss-change reset, hidden-tab and camera-shake respect, page wiring); the full
+  `tools/tests/*_sim.js` loop — the same twelve suites that already failed on the untouched baseline
+  commit (card_star_balance, drop_card_sheet, fourth_job_skills, gear, ground_combat, publish,
+  rotation_updates, shop, skill_balance, skill_redesign, starter, update_watch) — with
+  `update_watch_sim` now **9/9 after the BUILD mirrors were updated**; all three `*_smoke.js`
+  (`field_loop_smoke` 9/9, `panel_layout_smoke` 42/42, `save_owner_boot_smoke` 5/5);
+  `overdrive_sim`, `afterglow_sim`, `python3 tools/build_afterglow.py --check`. **Blocked:**
+  `build_skill_materials.py --check` needs numpy/Pillow, unavailable in this sandbox (skill materials
+  untouched). **Not verified:** GPU/WebGL pixels of the in-game layer and a phone viewport; the FX
+  were reviewed through an offline Canvas renderer and the `/bossfx` page.
+* **Delivery:** local changes on `arena/d2c0537a-prontera-grind`; no merge or deployment.
