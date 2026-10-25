@@ -218,9 +218,11 @@ const PGBossFx=(()=>{
         contour(pts,hex,Math.max(1.2,taper(.45,.6)*.42),a*.5);
         ribbon(pts,q=>taper(q,.55)*1.9,rgba(hex,a*.11));
         ribbon(pts,q=>taper(q,.55),rgba(hex,a*.97));
-        ribbon(pts,q=>taper(q,.66)*.5,rgba(lighten(hex,.42),a*.92));
-        ribbon(pts,q=>taper(q,.7)*.2,rgba(core,a));
-        hotEdge(pts,Math.max(.8,taper(.5,.62)*.26),a*.95,core);
+        // The light bands are capped in absolute width: on a 2x tier-3 greatcut an uncapped core
+        // became a 26px white stripe, which is what made those slashes look like flat strips.
+        ribbon(pts,q=>Math.min(taper(q,.66)*.5,6.5),rgba(lighten(hex,.42),a*.92));
+        ribbon(pts,q=>Math.min(taper(q,.7)*.2,2.6),rgba(core,a));
+        hotEdge(pts,Math.max(.8,Math.min(taper(.5,.62)*.26,2)),a*.95,core);
       }
       // A volumetric ribbon: contour, saturated body, offset specular and a fine core. Used where a
       // wave or a tentacle has to read as an object rather than a flat colour band.
@@ -982,7 +984,7 @@ const PGBossFx=(()=>{
       }
       P.abyssalCross=(s,t)=>{
         const [c1,c2,core,deep]=s.colors,a=1-cl((t/s.life-.88)/.12);
-        pool(400,deep,.5*a);
+        pool(400,deep,.32*a);
         glitch(0,-170,900,340,t,s.seed,c2,a*.85);
         const p1=out(cl(t/.3)),p2=out(cl((t-.12)/.3));
         // TWO crossing greatcut slashes: one descends left-to-right, the other mirrors it.

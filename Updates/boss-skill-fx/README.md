@@ -9,6 +9,11 @@ This folder keeps the review material. The live effect system is `assets/boss-fx
 is `/bossfx` (`tools/boss_fx_preview.html`); `sheet-all-moves.png` is one representative frame of
 every move, rendered straight from the module by `tools/render_boss_fx_sheet.js`.
 
+`before-after-sakura-storm.png` is the receipt for the owner's report: the same move, same ages,
+rendered from the previous module on the top row and the current one below. The old version laid a
+flat tinted ellipse over the field, which is the hard-edged dark shape (with a visible rim) that
+appeared under the boss.
+
 The second, stricter review sheet is generated on demand instead of being committed (it is ~14 MB at
 full height): `node tools/render_boss_fx_field_sheet.js out.png` composites every move over the real
 Prontera field capture at true game scale, one row per move. Crispness and "does this leave a hard
