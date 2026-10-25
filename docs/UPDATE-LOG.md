@@ -7829,3 +7829,9 @@ details."* This replaces the random-pool dressing with hand-placed scenes.
 * **Not verified:** the real 3D renderer. The software renderer is a faithful approximation of the
   camera and the sprite art, but it is not WebGL - lighting, shadows, fog and the 25 terrain tiles
   are not in it. The live preview at `/game` remains the check.
+* **Status: parked.** The owner asked to set this aside for another time, so this build stays on
+  `arena/783b0e96-prontera-grind` in a pull request and is **not merged and not deployed**.
+  `NATIVE_FIELDS_DEFAULT` is still `false`, so ordinary play is untouched either way. Review boards
+  are `Updates/map-textures-preview/board-11-composed-fields-from-spawn.png` and
+  `board-12-amatsu-approach-walk.png`; resume notes are in `docs/NATIVE-FIELDS-HANDOFF.md`
+  under *Composition pass (v234) - parked, not merged*.

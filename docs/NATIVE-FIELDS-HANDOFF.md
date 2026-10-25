@@ -97,3 +97,40 @@ the query to verify the choice did not persist. Omit `NATIVE_QUICK=1` for all
 50 stage/viewport scenes. Pixel/source audit commands and cache options are in
 the pipeline README. Previous full v195 checks cover the preserved geometry and
 pixels; physical-device frame rate has not been measured.
+
+## Composition pass (v234) — parked, not merged
+
+**Status: parked on `arena/783b0e96-prontera-grind`, not merged, not deployed.**
+The owner asked to set this aside for another time. Nothing here changes the default
+(`NATIVE_FIELDS_DEFAULT=false`); nothing was pushed to `main`.
+
+What the pass did, in one line each:
+
+- `NATIVE_SCENE` replaced the random `NATIVE_THEME`/`NATIVE_THEME_BUDGET` pools with one
+  hand-placed sketch per destination — `at` (hero group), `atx` (mirrored flank), and optional
+  `ring`/`grid`/`fence`/`path`/`rows`/`bridge`/`shore`/`pier`/`field`.
+- `PROP_H` plus `scaleFor()` give each of the 34 sprites a target world height (a person is 2.9),
+  so houses are 10-12 units and the Geffen tower 18-20. The random scale multiplier is gone.
+- A bridge is placed only where the map has water, across the pond's short axis. Seven maps
+  have no water and no bridge.
+- The camera sees roughly **thirty units ahead of the spawn point**; a set piece at `z<=-28` is
+  off-screen on the first frame. Every map now carries a themed cluster inside that band, with
+  the landmark kept at `z<=-30` as the payoff you walk into.
+- The v233 bedding layer was restored after the recipe rewrite deleted it inside a `try/catch`;
+  each bedding piece is now seated on the ground under its own footprint, and
+  `THEME_MESH_CAP` is a hard ceiling again.
+
+Review material: `Updates/map-textures-preview/board-11-composed-fields-from-spawn.png` (all ten
+fields, first frame at stage 5) and `board-12-amatsu-approach-walk.png` (Amatsu at spawn,
+mid-lane and at the shrine). Both are painted from the real atlas with each map's own palette
+and winding trail, using a scratch software renderer — not WebGL. Server-side lighting, fog and
+the 25 terrain tiles are not in them.
+
+To resume:
+
+1. Enable the preview (`?nativeFields=1`, see *Preview now* above) and walk all ten fields,
+   including the boss band, which carries the least dressing by design (`SCENE_BAND`).
+2. The open half of the owner's request is **new sprite art**: the atlas is still the same 34
+   supplied pieces, and he dislikes the old art. Any addition must join
+   `assets/kit/ro-spritesheet.json` without repainting existing pixels (AGENTS.md).
+3. Then follow *Enable later* above — it is unchanged and still the activation path.
