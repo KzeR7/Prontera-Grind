@@ -395,6 +395,11 @@ these fields, and whether any single field's dial needs a nudge after you walk i
 
 ## 8. How to review it now
 
+**Rendered proposal with the boards inline:** `/tools/maps/terrain_v2_proposal.html`
+(served from the repo root — it renders this same document, so the two cannot drift).
+**Live landform viewer, all ten fields, v195 vs v2:** `/tools/maps/terrain_v2_preview.html`.
+**Walk them yourself:** `/game?nativeFields=1`.
+
 ```sh
 # in the real game (fields are opt-in): walk all ten with the new landform
 python3 tools/preview_server.py 8000   # then /game?nativeFields=1

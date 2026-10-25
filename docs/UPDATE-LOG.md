@@ -7599,3 +7599,13 @@ min 0.0 / median 55.2 to min 28.5 / median 87.5. Evidence and numbers:
 `docs/proposals/terrain-v2/board-color.png`, `board-floor-real.png`, `color-audit.json`.
 New tooling: `tools/maps/terrain-v2/render_floor_real.js` (runs the shipping `build()`
 against a real canvas) and `render_color_audit.py`.
+
+## 2026-10-25 — proposal viewer (haven-v230)
+
+The proposal was only reachable as raw `text/markdown`. Added
+`tools/maps/terrain_v2_proposal.html`: it fetches the same document and renders it, with
+the colour and floor boards placed inside the colour section, and links to the live
+landform viewer and the game. The live viewer links back, so neither page is a dead end.
+`tools/tests/terrain_proposal_sim.js` (27 checks) guards the wiring: renderer present and
+loadable, every table/list/code construct surviving, no unrendered markdown, every
+referenced asset existing, and the measured colour evidence still in the document.
