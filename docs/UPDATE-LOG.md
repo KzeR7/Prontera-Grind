@@ -7963,3 +7963,44 @@ behind the *View logs* link that the `cloudflare-workers-and-pages` bot posts on
 * **Delivery:** Local changes, committed and pushed to `arena/c4538d5e-prontera-grind` (PR #128); no
   deployment. The Worker change ships when `workers/social` is deployed and Pages is published after
   it.
+
+## 2026-10-26 — documentation cleanup (no game change)
+
+* **Changed:** The docs now describe the current game instead of three older ones.
+  1. `READ-ME-FIRST.md` was 1,596 lines / 134 KB of build notes that stopped at v91 while the
+     game is at v236, and it opened with "read me first" while calling itself historical. It is now
+     a short map of where things live (architecture, the two preview commands, GM access, art
+     pages, history), and the old file is kept verbatim as
+     [docs/history/READ-ME-FIRST-archive.md](history/READ-ME-FIRST-archive.md) with an archive banner.
+  2. The 2026-10-13 attack-speed/movement bundle no longer sits at the repo root pretending to be a
+     live brief. `HANDOFF.md` (whose "Current user intent" still read as if ASPD 182 and a 30%
+     movement cut were outstanding), `validation-record.md`, `local-movement-changes.patch`,
+     `manifest.json`, `research/` and `original-research-scripts/` moved together into
+     [docs/history/aspd-research-2026-10-13/](history/aspd-research-2026-10-13/README.md), which
+     states the fork, revision, what was actually done (the movement cap, uncommitted) and what was
+     never done (no ASPD formula reached source).
+  3. Two stale instructions are gone. The `/tmp/pack_block.js` extraction is no longer listed as a
+     prerequisite anywhere — `tools/tests/pack_sim.js` reads its own `PACK_BODY` block out of
+     `index.html`, which `docs/TESTING.md` already said; `TOOLS-START-HERE.md` contradicted it.
+     And the game's preview command is `tools/preview_server.py` (0.0.0.0, no redirects, real
+     `/game` `/weapons` `/skillfx` routes) rather than the bare `python3 -m http.server` the old
+     read-me gave.
+  4. Pointers that sent readers to the wrong file are corrected: `AGENTS.md` no longer implies
+     `READ-ME-FIRST.md` is current and now lists the two archives; the four `Updates/` notes that
+     linked to old `READ-ME-FIRST.md` sections for `## BUILD v77`, the v75 pet traits and the
+     `BUILD`-bump checklist point at the archive or at `docs/UPDATE-LOG.md`; `docs/CODE-MAP.md`
+     lists `docs/history/` as history. No link in the edited files is broken (checked).
+  No game code, asset, save, balance value or `BUILD` label changed.
+* **Try it:** Read [AGENTS.md](../AGENTS.md) then [READ-ME-FIRST.md](../READ-ME-FIRST.md) — it now
+  fits on two screens. The old build prose is still readable in the archive.
+* **Deliberately not changed:** the "all suites and the required checks must pass before a push"
+  gate and the Node 24 / Pillow version pins. The v236 entry records 8 suites that fail on the
+  untouched base commit as well, so that gate cannot currently be met as written; rewording it to
+  "no new failures against the recorded baseline" is an owner decision, not a doc tidy-up. This
+  sandbox also has Node 22.22.3, Python 3.11.2 and no `jsdom`/`three`/`ws`, so the three smoke
+  suites and the API/shop sims could not run here at all.
+* **Checks:** documentation-only, so no suite was required. A relative-link check over every file
+  touched here reports zero broken links. `git status` shows only renames and doc edits; no
+  `*_sim.js`/`*_smoke.js` run is claimed — `tools/tests/publish_sim.js` only asserts that
+  `AGENTS.md`/`READ-ME-FIRST.md` stay out of `dist/`, which still holds.
+* **Delivery:** Local changes on `arena/9c239248-prontera-grind`; no merge, push or deployment.

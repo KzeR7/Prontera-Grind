@@ -43,7 +43,7 @@ that case honestly; the pages may not).
 | What does a **boss's** signature move look like, and does it fit its map? | `/bossfx` → boss skill FX review (12 MVPs × 2 moves, live 3D field, auto timer, play-all) |
 | What do the damage numbers look like, and how do I change them? | `/damage` → the damage-floats tuner; hand back with **📋 Copy my selection** (see `Updates/damage-floats-proposal/README.md`) |
 | What did the numbers look like *before* this tuning, side by side? | `/tmp/venv/bin/python tools/render_float_volley.py` → `Updates/damage-floats-proposal/volley-before-after-v74.png` (two tunings, from the game's own motion maths — no browser needed) |
-| The critical frame looks wrong / not like the proposal | `/crit` → the two frames side by side, live (see the v71 section of `READ-ME-FIRST.md` for the cause) |
+| The critical frame looks wrong / not like the proposal | `/crit` → the two frames side by side, live (see the v71 section of the [archived read-me](docs/history/READ-ME-FIRST-archive.md) for the cause) |
 | Where does a weapon sit in the hand for each attack frame? | `/review` (older, per-frame tiles) |
 | Which map layout does stage N build? | `node tools/preview/dump_plans.js /tmp/plans.json 10` then `/tmp/venv/bin/python tools/preview/render_plans.py /tmp/plans.json /tmp/out` |
 | What do the class skins look like, frame by frame, per class? | `python3 tools/preview_class_skins.py` (writes QC sheets) |
@@ -78,18 +78,15 @@ that case honestly; the pages may not).
   `_shot.html` and `_login.html` were removed during the 2026-10-12 cleanup. Use the game,
   `/gmsetup`, and the smoke suites for current previews and login checks.
 * **`UPDATE-BOOTSTRAP.py` does not exist and must not come back** (see `READ-ME-FIRST.md`).
+  Historical build notes now live in [the archived read-me](docs/history/READ-ME-FIRST-archive.md).
 
 ## The suites
 
 `for t in tools/tests/*_sim.js; do node "$t" || exit 1; done` — all of them, before every push.
-Two need a file prepared first:
-
-```sh
-python3 - <<'PY'
-h=open('index.html').read()
-open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
-PY
-```
+`pack_sim.js` now reads its own `PACK_BODY` block straight out of `index.html`; the old
+`/tmp/pack_block.js` extraction is **not** needed (`PACK_BLOCK`/`PACK_DATA` remain optional
+explicit overrides). The suites need the optional dependencies from
+[Testing](docs/TESTING.md#dependencies) (`jsdom`, `three@0.128.0`, `ws`) and Node 24.
 
 **The smoke suites live outside that loop:** `node tools/tests/field_loop_smoke.js` boots the real
 `index.html` in jsdom with the real Three.js r128 and drives the farming loop end to end (camps,

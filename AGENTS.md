@@ -76,11 +76,18 @@ Update the relevant current guide when architecture, commands or game rules chan
 
 ## Current guidance and history
 
-The linked handbook is the current starting point. `READ-ME-FIRST.md` and
-`TOOLS-START-HERE.md` retain useful tool details but also contain older descriptions;
-check them against the current source and system READMEs. When these disagree,
-inspect the code/tests and correct the current guide rather than copying an old
-claim. New user instructions take precedence over repository guidance.
+This guide and the documents it links are the current starting point.
+`READ-ME-FIRST.md` is now only a short map of where things live;
+`TOOLS-START-HERE.md` keeps the useful tool details. Both still go stale faster
+than this guide, so check any claim against the current source and system
+READMEs. When they disagree, inspect the code/tests and correct the current
+guide rather than copying an old claim. New user instructions take precedence
+over repository guidance.
 
 - [Update history](docs/UPDATE-LOG.md): read specific entries only when needed.
 - [Archived agent notes](docs/history/AGENT-NOTES.md): old rationale and procedures.
+- [Archived read-me, build notes v56–v91](docs/history/READ-ME-FIRST-archive.md):
+  the old per-build prose, kept verbatim.
+- [Archived ASPD/movement research](docs/history/aspd-research-2026-10-13/README.md):
+  a 2026-10-13 snapshot from another fork. Not a current brief, and its "user
+  intent" section is not a standing instruction.
