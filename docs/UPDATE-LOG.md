@@ -8194,3 +8194,40 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Delivery:** Local validation completed on `arena/bf5d2c28-prontera-grind` for
   the requested proposal-only PR into `main`. Publication details are reported in
   the handoff after the push and PR creation; no merge or deployment is requested.
+
+
+### 2026-10-26 — Equipment, affixes & auto-sell visual proposal
+* **Changed:** Added an isolated Eclipse-theme design review with static Loadout,
+  Affixes, Auto-sell and paid-reforge-result mockups, two phone captures and a
+  five-page PDF. The proposal gives one equipped item focus, explicit keep/reroll
+  rows and complete costs, plus a rarity → keep conditions → plain-English review
+  flow for auto-sell. Only presentation navigation works; game actions are visual
+  illustrations. Example reforge prices/ranges match the current helpers.
+* **Try it:** Read [the visual proposal](proposals/equipment-2026-10-26/README.md),
+  or run `PREVIEW_PAGE=tools/equipment-proposal/index.html python3 tools/preview_server.py 8000`.
+  Use the four numbered views and Desktop / Phone preview buttons. This is for
+  design approval before implementation, not a replacement equipment screen.
+* **Checks:** `node tools/check_equipment_proposal_browser.cjs http://127.0.0.1:8000 --capture`
+  passes 13 checks and 24 screen/viewport combinations at 320–1440px. No checked
+  label clipping, document overflow, action collision, page/resource error, API
+  request, gameplay submission or persistence access; native art loads and the
+  five-page PDF has complete notes above its footers. Existing `ui_sim` (64),
+  `eclipse_ui_sim` (52), `autosell_sim` (13), `equipment_selection_sim` and
+  `update_watch_sim` (9) pass. JavaScript syntax, whitespace and unchanged-runtime
+  checks pass. Full pre-push gate, cloud/account behavior and physical-device
+  performance were not tested; no push was requested.
+* **Delivery:** Local proposal files under `tools/` and `docs/` only, on
+  `arena/06fef50b-prontera-grind`. Live game files, native assets, prices, saves,
+  APIs and BUILD are unchanged. No commit, push, PR, merge or deployment.
+
+### 2026-10-26 — Equipment proposal: character placement & rarity badges
+* **Changed:** Revised the static loadout proposal so the native Rune Knight is positioned by its visible pixel bounds: centered, grounded on the preview ring, undistorted and clear of equipment slots. Added compact, color-coded rarity badges (`C`, `F`, `R`, `E`, `L`, `N`, `N+`, `M`) to occupied equipment tiles across the loadout, inventory, affix picker, inspector and auto-sell examples, with full-name tooltips and a rarity key. Rarity is separate from refinement, lock and selection indicators. Added a phone loadout capture and refreshed every PNG and the five-page PDF.
+* **Try it:** Open [the revised loadout](proposals/equipment-2026-10-26/01-loadout.png), [phone loadout](proposals/equipment-2026-10-26/07-loadout-phone.png) or [full proposal PDF](proposals/equipment-2026-10-26/equipment-redesign-proposal.pdf). The live preview's Loadout view shows the same placement and badges.
+* **Checks:** Browser audit passes 15 checks, 24 viewport/screen combinations and 9 captures, including centered/grounded character geometry, undistorted native pixels, slot clearance, all eight rarity grades, 32 occupied tile badges, badge/lock/refinement separation and empty-slot behavior. No clipped labels, overflow, collisions, page/resource errors, API calls, gameplay submissions or persistence accesses. Existing `ui_sim` (64), `eclipse_ui_sim` (52), `autosell_sim` (13), `equipment_selection_sim` and `update_watch_sim` (9) pass. JavaScript syntax, whitespace, five-page PDF and unchanged-runtime checks pass.
+* **Delivery:** Local documentation and development-only proposal tooling on `arena/06fef50b-prontera-grind`. Live game files, native assets, game behavior, saves, APIs and BUILD remain unchanged. No commit, push, PR, merge or deployment.
+
+### 2026-10-26 — Equipment proposal: Mythic cyan & card system coverage
+* **Changed:** Replaced the proposal's gold-adjacent orange Mythic badge with an accessible bright cyan (`#3ddad9`) filled gradient badge, while keeping the `M` code and full name for non-color identification. Added a first-class **Cards** workspace to the static review: real-catalog card examples, grade filters, effects/fit/copies, selected-card actions, equipment sockets, merge costs, family/boss/Crit-DMG limits, replacement-transfer safety, Card Mastery separation and auto-sell protection. Added desktop and phone card captures, a sixth PDF page, and refreshed all existing PNGs and the PDF.
+* **Try it:** Open [the updated loadout](proposals/equipment-2026-10-26/01-loadout.png), [Cards workspace](proposals/equipment-2026-10-26/08-cards.png), [Cards phone](proposals/equipment-2026-10-26/09-cards-phone.png) or [six-page PDF](proposals/equipment-2026-10-26/equipment-redesign-proposal.pdf). The live preview's fifth view is Cards.
+* **Checks:** `node tools/check_equipment_card_system.cjs` passes 8 action-level checks against the real game helpers: catalog definitions, collection UI, compatibility/socket limits, insert/remove/fee, replacement transfer, merge, Card Mastery protections and auto-sell/bulk-sale card return. `node tools/check_equipment_proposal_browser.cjs http://127.0.0.1:8000 --capture` passes 19 checks, 30 screen/viewport combinations and 11 captures; it also verifies the card examples against the live catalog, Mythic-vs-Legendary color separation/contrast, six complete print sheets and a six-page PDF. Card-related suites pass: `card_sim` (13), `card_comparison_sim`, `card_star_balance_sim`, `drop_card_sheet_sim` (14), `equipment_cards_sim`, `gear_sim` (43), `crit_sim` (6), `save_load_sim` (27), `autosell_sim` (13), `ui_sim` (64), `eclipse_ui_sim` (52), `equipment_selection_sim` and `update_watch_sim` (9). `card_star_balance_sim`'s documented historical commit was fetched into the shallow checkout before it passed. JavaScript syntax, whitespace and unchanged-runtime checks pass. Full pre-push gate, cloud/account behavior, live game integration and physical-device performance were not tested; no push was requested.
+* **Delivery:** Local proposal files under `tools/` and `docs/` only, on `arena/06fef50b-prontera-grind`. Live game files, native assets, game behavior, saves, APIs and BUILD remain unchanged. No commit, push, PR, merge or deployment.

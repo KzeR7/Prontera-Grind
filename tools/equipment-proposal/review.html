@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Equipment Workbench — visual review</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/assets/ui/fonts.css">
+<style>
+@page { size: A4 landscape; margin: 0; }
+* { box-sizing: border-box; }
+html { color-scheme: dark; background: #0b121b; }
+body { margin: 0; color: #e8edf4; font: 12px/1.5 'DM Sans',sans-serif; }
+h1,h2,p { margin: 0; }
+.sheet { width: 297mm; height: 210mm; padding: 11mm 15mm 13mm; position: relative; page-break-after: always; background: #0b121b; overflow: hidden; }
+.sheet:last-child { page-break-after: auto; }
+.top { display: flex; justify-content: space-between; align-items: center; padding-bottom: 4mm; border-bottom: 1px solid #ffffff15; margin-bottom: 4mm; color: #8a9bab; font-size: 7px; letter-spacing: .16em; }
+.top b { color: #d7b77a; font-weight: 500; }
+.heading { display: flex; justify-content: space-between; align-items: end; gap: 8mm; margin-bottom: 4mm; }
+.eyebrow { color: #d7b77a; font-size: 7px; letter-spacing: .13em; margin-bottom: 1mm; }
+h2 { font: 600 23px/1.2 'Manrope',sans-serif; letter-spacing: -.6px; }
+.heading > p { color: #8a9bab; font-size: 10px; text-align: right; max-width: 108mm; }
+.capture { width: 100%; height: 139mm; display: flex; align-items: start; justify-content: center; }
+.capture > img { display: block; max-width: 100%; max-height: 139mm; object-fit: contain; }
+.notes { margin-top: 4mm; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7mm; }
+.notes p { color: #8a9bab; font-size: 9px; line-height: 1.6; }
+.notes b { display: block; color: #e8edf4; font-size: 10px; font-weight: 500; margin-bottom: 1mm; }
+.foot { position: absolute; bottom: 6mm; left: 15mm; right: 15mm; display: flex; justify-content: space-between; color: #6f8193; font-size: 7px; border-top: 1px solid #ffffff12; padding-top: 2mm; }
+.phone-layout { display: grid; grid-template-columns: 1fr 1fr 1fr 70mm; gap: 6mm; align-items: start; padding-inline: 8mm; }
+.phone { display: flex; flex-direction: column; align-items: center; }
+.phone small { color: #d7b77a; font-size: 8px; margin-bottom: 3mm; }
+.phone img { max-height: 137mm; max-width: 100%; object-fit: contain; }
+.phone-notes { padding-top: 10mm; }
+.phone-notes h3 { font: 500 17px/1.5 'Manrope',sans-serif; margin: 0 0 5mm; }
+.phone-notes p { color: #8a9bab; font-size: 11px; line-height: 1.8; margin-bottom: 5mm; }
+.phone-notes b { color: #d7b77a; font-weight: 500; }
+@media screen { body { width: max-content; margin: 20px auto; } .sheet { margin-bottom: 22px; border: 1px solid #ffffff20; border-radius: 6px; } }
+@media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<section class="sheet">
+  <header class="top"><b>HORIZON HAVEN / EQUIPMENT WORKBENCH</b><span>26 OCTOBER 2026 · VISUAL PROPOSAL ONLY</span></header>
+  <div class="heading"><div><p class="eyebrow">01 / AFFIXES &amp; REFORGING</p><h2>Keep what works. Reroll what doesn’t.</h2></div><p>One selected item. Clearly protected affixes.<br>The full price before any commitment.</p></div>
+  <div class="capture"><img src="/docs/proposals/equipment-2026-10-26/02-affixes.png" alt="Affixes workbench with one selected affix, three kept affixes and the complete reforge cost"></div>
+  <div class="notes"><p><b>Choose one piece</b>A compact gear picker replaces the long stack of every item’s reforge controls.</p><p><b>Make the intent visible</b>Green means keep for this attempt; gold means reroll. Ranges describe the current stat, not guaranteed replacement types.</p><p><b>Make the price explicit</b>7.2M Zeny + 32 Oridecon + 5 Astral Shards is the current game quote for this example. No balance change.</p></div>
+  <footer class="foot"><span>Browser-rendered mockups · Existing theme, fonts and native artwork · No game integration</span><span id="page01">01 / 06</span></footer>
+</section>
+<section class="sheet">
+  <header class="top"><b>HORIZON HAVEN / EQUIPMENT WORKBENCH</b><span>26 OCTOBER 2026 · VISUAL PROPOSAL ONLY</span></header>
+  <div class="heading"><div><p class="eyebrow">02 / AUTO-SELL</p><h2>Sell these. Keep these. Review first.</h2></div><p>Turn a dense filter form into three clear decisions.<br>Readable rules, not a wall of checkboxes.</p></div>
+  <div class="capture"><img src="/docs/proposals/equipment-2026-10-26/03-auto-sell.png" alt="Auto-sell proposal with rarity choices, keep conditions and a plain-English rule summary"></div>
+  <div class="notes"><p><b>Start with what can go</b>Show all eight rarity bands. Put slots, exact names, weapon families and empty-socket thresholds in Advanced.</p><p><b>Protect what matters</b>Only show affix conditions the player adds. Explain ANY as “or” and ALL as “and”; retain the alternate sell-matches mode.</p><p><b>No accidental bag sale</b>Draft edits apply only on confirmation. Future-drop rules and selling the current bag remain separate actions.</p></div>
+  <footer class="foot"><span>Sample preview counts and equipment are illustrative · No actual gear is evaluated or sold</span><span id="page02">02 / 06</span></footer>
+</section>
+<section class="sheet">
+  <header class="top"><b>HORIZON HAVEN / EQUIPMENT WORKBENCH</b><span>26 OCTOBER 2026 · VISUAL PROPOSAL ONLY</span></header>
+  <div class="heading"><div><p class="eyebrow">03 / PAID REFORGE OFFER</p><h2>A clear decision, not a guess.</h2></div><p>Current affixes stay equipped until accepted.<br>A different stat is not a guaranteed upgrade.</p></div>
+  <div class="capture"><img src="/docs/proposals/equipment-2026-10-26/04-reforge-result.png" alt="Current-versus-new affixes, three unchanged rows and an AGI-to-ASPD replacement offer"></div>
+  <div class="notes"><p><b>Compare only what changed</b>Three unchanged affixes remain neutral. The offered AGI → ASPD change is highlighted without inventing a DPS score.</p><p><b>Use honest cost wording</b>The roll is already paid. Keeping the old affixes does not refund it. A second roll needs another full quote.</p><p><b>Two unmistakable choices</b>Keep current or use new affixes. Preserve the existing paid offer across reloads and account-safe save handling.</p></div>
+  <footer class="foot"><span>The offer is a fixed visual example, not a random roll or a live purchase</span><span id="page03">03 / 06</span></footer>
+</section>
+<section class="sheet">
+  <header class="top"><b>HORIZON HAVEN / EQUIPMENT WORKBENCH</b><span>26 OCTOBER 2026 · VISUAL PROPOSAL ONLY</span></header>
+  <div class="heading"><div><p class="eyebrow">04 / EQUIPMENT HOME · REVISED</p><h2>Everything where you expect it.</h2></div><p>A centered character and readable rarity badges.<br>Original sprite and equipment artwork, unchanged.</p></div>
+  <div class="capture"><img src="/docs/proposals/equipment-2026-10-26/01-loadout.png" alt="Loadout showing the existing native Rune Knight, inventory and selected item inspector"></div>
+  <div class="notes"><p><b>Character placement corrected</b>Center the visible pose, not the transparent frame. Ground the feet on the preview ring and keep every slot clear.</p><p><b>Rarity without guessing</b>C / F / R / E / L / N / N+ / M chips identify each grade. Mythic now uses a bright cyan badge, separate from Legendary gold.</p><p><b>Cards have a clear route</b>The socket summary links to a dedicated Cards workspace. Insert, remove, merge and Mastery actions remain separate.</p></div>
+  <footer class="foot"><span>Original native idle pose via the unchanged renderer · Example stats, not a gameplay capture</span><span id="page04">04 / 06</span></footer>
+</section>
+<section class="sheet">
+  <header class="top"><b>HORIZON HAVEN / EQUIPMENT WORKBENCH</b><span>26 OCTOBER 2026 · VISUAL PROPOSAL ONLY</span></header>
+  <div class="heading"><div><p class="eyebrow">05 / CARD SYSTEM</p><h2>Every card has a place and a rule.</h2></div><p>Collection, compatible sockets and merge safety<br>share one readable workspace.</p></div>
+  <div class="capture"><img src="/docs/proposals/equipment-2026-10-26/08-cards.png" alt="Card collection, selected card, compatible slots and socket workspace"></div>
+  <div class="notes"><p><b>Keep the real catalog</b>Examples use current card names, grades, effects and fit slots. Grades remain separate from equipment rarity.</p><p><b>Show rules before actions</b>Only compatible cards are offered. One card per monster family, two boss cards and two Crit DMG cards per item.</p><p><b>No silent losses</b>Removal returns cards, replacement transfers compatible cards and auto-sell protects socketed gear. Card Mastery stays separate.</p></div>
+  <footer class="foot"><span>Real game card helpers and action handlers verified separately · No card actions in this static study</span><span id="page05">05 / 06</span></footer>
+</section>
+<section class="sheet">
+  <header class="top"><b>HORIZON HAVEN / EQUIPMENT WORKBENCH</b><span>26 OCTOBER 2026 · VISUAL PROPOSAL ONLY</span></header>
+  <div class="heading"><div><p class="eyebrow">06 / PHONE LAYOUT</p><h2>Reflow the layout. Don’t shrink the text.</h2></div><p>Full scrolling examples at a 390px content width.<br>Not a physical-device or gameplay performance test.</p></div>
+  <div class="phone-layout"><div class="phone"><small>AFFIXES</small><img src="/docs/proposals/equipment-2026-10-26/05-affixes-phone.png" alt="Phone affix proposal"></div><div class="phone"><small>AUTO-SELL</small><img src="/docs/proposals/equipment-2026-10-26/06-auto-sell-phone.png" alt="Phone auto-sell proposal"></div><div class="phone"><small>CARDS</small><img src="/docs/proposals/equipment-2026-10-26/09-cards-phone.png" alt="Phone card workspace"></div><div class="phone-notes"><h3>One comfortable column.</h3><p><b>Affixes:</b> replace the left sidebar with a compact gear picker. Stack the quote below the affixes.</p><p><b>Auto-sell:</b> use four rarity chips per row. Put the summary after the keep conditions, not in a tiny side panel.</p><p><b>Cards:</b> stack collection, selected card, rules and sockets without hiding the fit or cost.</p><p><b>When integrated:</b> use a viewport-bounded panel with a reachable bottom action bar. No new game behavior has been built; approve the direction before implementation.</p></div></div>
+  <footer class="foot"><span>Checked at 320–1440px browser widths · Review navigation only; game controls are static illustrations</span><span id="page06">06 / 06</span></footer>
+</section>
+</body>
+</html>

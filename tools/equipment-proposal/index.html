@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b27">
+  <meta name="description" content="A visual-only proposal for Horizon Haven's equipment, affixes, cards and auto-sell interface. No game changes or save access.">
+  <title>Equipment Workbench — Horizon Haven design proposal</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23131d29'/%3E%3Cpath d='m16 5 9 5v9l-9 8-9-8v-9z' fill='none' stroke='%23d7b77a' stroke-width='1.5'/%3E%3Cpath d='M12 12h8m-4-3v13' stroke='%23d7b77a' stroke-width='1.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/assets/ui/fonts.css">
+  <link rel="stylesheet" href="/tools/equipment-proposal/proposal.css">
+  <script src="/assets/wardrobe.js" defer></script>
+  <script src="/assets/fourth-jobs.js" defer></script>
+  <script src="/tools/equipment-proposal/proposal.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#visual">Skip to the visual proposal</a>
+  <div class="studio">
+    <header class="studio-header">
+      <a href="#affixes" class="brand"><span class="crest" aria-hidden="true">H<span>H</span></span><span>HORIZON HAVEN<small>INTERFACE DESIGN STUDY</small></span></a>
+      <span class="proposal-badge"><i></i> VISUAL PROPOSAL <span> / No game changes</span></span>
+    </header>
+    <section class="intro">
+      <div><p class="eyebrow">EQUIPMENT WORKBENCH <span>/</span> DESIGN DIRECTION 01</p><h1>Your gear, <em>at a glance.</em></h1></div>
+      <p>Same Eclipse theme. A clearer way to upgrade.<br><span>Including cards, sockets and auto-sell protection.</span></p>
+    </section>
+    <nav class="review-nav" aria-label="Visual proposal screens">
+      <div class="review-tabs">
+        <a href="#loadout" data-view="loadout"><span>01</span> Loadout</a>
+        <a href="#affixes" data-view="affixes" aria-current="page"><span>02</span> Affixes</a>
+        <a href="#autosell" data-view="autosell"><span>03</span> Auto-sell</a>
+        <a href="#offer" data-view="offer"><span>04</span> Reforge result</a>
+        <a href="#cards" data-view="cards"><span>05</span> Cards</a>
+      </div>
+      <div class="device-switch" role="group" aria-label="Visual preview width">
+        <button type="button" data-device="desktop" aria-pressed="true">Desktop</button>
+        <button type="button" data-device="phone" aria-pressed="false">Phone</button>
+      </div>
+    </nav>
+    <div class="stage-caption"><span id="stageLabel">02 / AFFIXES — KEEP WHAT WORKS. REROLL WHAT DOESN’T.</span><span>STATIC MOCKUP · ILLUSTRATIVE ITEMS</span></div>
+    <main id="visual" class="preview-stage" tabindex="-1" aria-label="Equipment visual proposal"></main>
+    <section id="designNotes" class="design-notes" aria-label="Proposed improvements"></section>
+    <footer class="studio-footer"><p>◇ Existing navy-and-gold palette, distinct rarity colors and original artwork.</p><p>Visuals only. No account access, saves, sales, rerolls or balance changes.</p></footer>
+  </div>
+</body>
+</html>
