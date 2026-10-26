@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs');
 const {createGame}=require('./helpers/game');
 let html=fs.readFileSync(__dirname+'/../../index.html','utf8').replace('</body>','<script>window.realUI=ui;window.realBars=bars;window.realLog=log;window.realFx=playSkillFx;</script></body>');
 const g=createGame(html),ev=g.ev,doc=g.window.document;let pass=0;
-function test(name,fn){ev(`S=fresh();S.auto=false;S.cls='Thief';S.inv=[];tabs.splice(0,tabs.length,'equip');sub.equip='equip0';eclipseInventoryState=null;eclipseRarity=-1;eclipseSearch='';eqPick=null;selB=null;autoSellDraft=null;autoSellPreview=null;bulkSellSelection=null;ui=window.realUI;`);fn();pass++;console.log('ok '+name)}
+function test(name,fn){ev(`S=fresh();S.auto=false;S.cls='Thief';S.inv=[];tabs.splice(0,tabs.length,'equip');sub.equip='equip0';eclipseInventoryState=null;eclipseRarity=-1;eclipseSlotFilter='all';eclipseSearch='';eclipseInspectBag=false;eqPick=null;selB=null;autoSellDraft=null;autoSellPreview=null;bulkSellSelection=null;ui=window.realUI;`);fn();pass++;console.log('ok '+name)}
 ev(`window.gear=(id,name,slot='weapon',wt='dagger',aff=[])=>({id,name,slot,wt,aff,tier:0,sec:0,val:12,r:0,slots:0,cards:[]});`);
 try{
 test('compatible gear leads across rarities, followed by grouped type and names',()=>{
@@ -10,6 +10,30 @@ test('compatible gear leads across rarities, followed by grouped type and names'
  assert.deepEqual([...doc.querySelectorAll('.eclipse-bag .grid [data-tip]')].map(x=>x.dataset.tip),['4','2','3','5','1']);
  ev(`ACT.seleq('armor')`);assert.deepEqual([...doc.querySelectorAll('.eclipse-bag .grid [data-tip]')].map(x=>x.dataset.tip),['5','1','4','2','3']);
  assert.equal(ev('S.inv.map(x=>x.id).join()'),'1,2,3,4,5');
+});
+test('Loadout filters by gear family and rarity without changing inventory state',()=>{
+ ev(`S.inv=[gear(101,'Blade','weapon','sword'),gear(102,'Chain','armor',''),gear(103,'Cap','head',''),gear(104,'Shield','off',''),gear(105,'Boots','leg',''),gear(106,'Rare Ring','acc',''),gear(107,'Necklace','acc','')];S.inv[5].tier=2;renderWin()`);
+ const before=ev('JSON.stringify(S)'),all=()=>[...doc.querySelectorAll('.eclipse-bag .grid [data-tip]')].map(tile=>tile.dataset.tip);
+ assert.equal(doc.querySelectorAll('.eclipse-rarity-legend .eclipse-rarity-key').length,8);
+ assert.deepEqual(all(),['101','102','103','104','105','107','106']);
+ doc.querySelector('[data-a=filtergearslot][data-v=armor]').click();assert.deepEqual(all(),['102','103','104','105']);
+ assert.equal(doc.querySelector('[data-a=filtergearslot][data-v=armor]').getAttribute('aria-pressed'),'true');
+ doc.querySelector('[data-a=filtergearslot][data-v=acc]').click();assert.deepEqual(all(),['107','106']);
+ doc.querySelector('[data-a=filtergearslot][data-v=weapon]').click();assert.deepEqual(all(),['101']);
+ doc.querySelector('[data-a=filtergearslot][data-v=all]').click();doc.querySelector('[data-a=filtergear][data-v="2"]').click();assert.deepEqual(all(),['106']);
+ assert.equal(ev('JSON.stringify(S)'),before,'filtering must be presentation-only');
+});
+test('Loadout inspection and the footer auto-sell shortcut retain explicit protected actions',()=>{
+ ev(`S.eq.weapon=gear(301,'Worn Blade');S.eq.weapon.locked=true;S.inv=[gear(302,'Bag Blade')];selE='weapon';selB=null;renderWin()`);
+ const before=ev('JSON.stringify(S)'),tile=doc.querySelector('.eclipse-bag .grid [data-tip="302"]');assert.ok(tile);
+ tile.click();assert.equal(ev('JSON.stringify(S)'),before,'selecting a tile is inspection only');
+ const inspector=doc.querySelector('.eclipse-equipment .ui-inspector');assert.ok(inspector.querySelector('[data-a=equip][data-v="302"]'));
+ assert.ok(inspector.querySelector('[data-a=sell][data-v="302"]'));
+ assert.ok(inspector.querySelector('[data-a=lockgear][data-v="302"]'));
+ const selectedTile=doc.querySelector('.eclipse-bag .grid [data-tip="302"]');assert.equal(selectedTile.getAttribute('aria-pressed'),'true');assert.equal(doc.querySelectorAll('.eclipse-item-heading .eclipse-rarity-chip').length,2);
+ const shortcut=doc.querySelector('.eclipse-loadout-autosell');assert.ok(shortcut);shortcut.click();
+ assert.equal(doc.querySelector('.eclipse-bag>.bag-tools').open,true);assert.equal(doc.querySelector('.autosell-editor').open,true);
+ assert.equal(ev('JSON.stringify(S)'),before,'opening the rule editor must not sell or unlock anything');
 });
 test('Loadout exposes independent bulk selection, affix actions, preview and protected confirmation',()=>{
  ev(`S.inv=[gear(11,'Keep STR','weapon','dagger',[{k:'str',v:6}]),gear(12,'Sell AGI','weapon','dagger',[{k:'agi',v:2}]),{...gear(13,'Locked'),locked:true}];renderWin()`);
