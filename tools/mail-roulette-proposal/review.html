@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Royal Dispatch — Visual proposal</title>
+<link rel="stylesheet" href="/assets/ui/fonts.css">
+<style>
+  @page { size: 1440px 1100px; margin: 0; }
+  * { box-sizing: border-box; }
+  html,body { margin: 0; color: #eceee9; background: #0b1017; font-family: 'DM Sans',sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 1440px; height: 1100px; padding: 38px 64px 30px; display: flex; flex-direction: column; break-after: page; page-break-after: always; overflow: hidden; }
+  .page:last-child { break-after: auto; page-break-after: auto; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 30px; border-top: 1px solid #d6b77e60; padding-top: 21px; margin-bottom: 17px; }
+  .eyebrow { margin: 0 0 9px; font-size: 10px; letter-spacing: .19em; color: #d6b77e; }
+  h1 { margin: 0; font: 35px/1.2 Georgia,serif; }
+  h1 em { color: #d6b77e; font-weight: 400; }
+  .page-num { color: #d6b77e; font: italic 36px Georgia,serif; display: block; text-align: right; }
+  .status { display: block; color: #93a2b0; font-size: 9px; letter-spacing: .11em; margin-top: 8px; }
+  .visual { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+  .visual img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+  .notes { display: grid; grid-template-columns: repeat(3,1fr); gap: 30px; padding: 20px 0 17px; }
+  .notes h2 { font-size: 13px; font-weight: 500; color: #dbdfdc; margin: 0 0 7px; }
+  .notes p { font-size: 12px; color: #8f9eac; line-height: 1.65; margin: 0; }
+  footer { border-top: 1px solid #ffffff14; padding-top: 12px; display: flex; justify-content: space-between; gap: 30px; font-size: 9px; color: #718292; }
+  footer b { color: #bba67f; font-weight: 400; }
+  footer a { color: #bba67f; text-decoration: none; }
+  @media screen { .page { margin: 0 auto 32px; box-shadow: 0 0 50px #0004; } }
+</style>
+</head>
+<body>
+<section class="page">
+  <header><div><p class="eyebrow">HORIZON HAVEN / THE ROYAL DISPATCH</p><h1>Mail, with a little <em>breathing room.</em></h1></div><div><span class="page-num">01 / 04</span><span class="status">VISUAL PROPOSAL · NOT APPLIED</span></div></header>
+  <div class="visual"><img src="/docs/proposals/mail-roulette-2026-10-26/01-mail.png" alt="Proposed mailbox with compact message list on the left, full letter on the right and a dedicated reward claim action."></div>
+  <div class="notes"><div><h2>Scan the list. Read the letter.</h2><p>A compact index replaces the long feed. Open one message without marking everything else as read.</p></div><div><h2>Make rewards easy to find.</h2><p>Separate notices and unclaimed rewards. Clear claimed states, a single claim button and bulk claiming.</p></div><div><h2>Keep GM tools out of player mail.</h2><p>The composer gets its own screen. On phones, tap a message to open a full-width reading view.</p></div></div>
+  <footer><span>Concept 01 · Navy, warm gold, restrained fantasy details · 26 October 2026</span><b>Interactive preview: Mail → choose a message → claim a demo reward.</b></footer>
+</section>
+<section class="page">
+  <header><div><p class="eyebrow">HORIZON HAVEN / THE ROYAL DISPATCH</p><h1>A bigger wheel. <em>Nothing cut off.</em></h1></div><div><span class="page-num">02 / 04</span><span class="status">VISUAL PROPOSAL · NOT APPLIED</span></div></header>
+  <div class="visual"><img src="/docs/proposals/mail-roulette-2026-10-26/02-roulette.png" alt="Large daily roulette wheel with seven readable reward rows and full percentage rates, without a reserves or active-buff panel."></div>
+  <div class="notes"><div><h2>Give the daily reward some room.</h2><p>1184px-wide desktop proposal with an approximately 400px wheel, replacing the current 254px wheel.</p></div><div><h2>Every reward, every chance.</h2><p>Full-width rows with wrapping labels and descriptions. Odds have their own column; all seven total 100%.</p></div><div><h2>Remove the unnecessary panels.</h2><p>No reserves or active-buff section. The seven rewards, one free daily spin and UTC+8 reset stay unchanged.</p></div></div>
+  <footer><span>Chances: 33% · 33% · 11% · 11% · 7% · 4% · 1% — unchanged</span><b>Demo spin is scripted to show an EXP boost. No real reward is granted.</b></footer>
+</section>
+<section class="page">
+  <header><div><p class="eyebrow">HORIZON HAVEN / THE ROYAL DISPATCH</p><h1>Pet buffs and roulette boosts. <em>Just the icons.</em></h1></div><div><span class="page-num">03 / 04</span><span class="status">REVISED · NO PANEL OR FRAME</span></div></header>
+  <div class="visual"><img src="/docs/proposals/mail-roulette-2026-10-26/03-shared-buffs.png" alt="Original pet icons and roulette boosts floating above the lower HUD without a panel or frame. Hovering reveals a translucent details popup."></div>
+  <div class="notes"><div><h2>Keep the current floating-icon look.</h2><p>Just original-sized icons and countdowns. No background panel, frame, heading, divider or tile boxes.</p></div><div><h2>A more transparent hover popup.</h2><p>A 65%-opaque surface lets the field show through; the text stays fully readable. Opens only on hover, focus or tap.</p></div><div><h2>No buffs means nothing visible.</h2><p>When the last buff expires, everything disappears. No empty-state box, frame, message or placeholder remains.</p></div></div>
+  <footer><span>Existing field artwork shown only for HUD context. Native pet artwork is unchanged.</span><b>Interactive preview: Active buffs → All effects / Expiring soon / No buffs.</b></footer>
+</section>
+<section class="page">
+  <header><div><p class="eyebrow">HORIZON HAVEN / THE ROYAL DISPATCH</p><h1>Write. Preview. <em>Send with confidence.</em></h1></div><div><span class="page-num">04 / 04</span><span class="status">GM-ONLY WORKSPACE · DEMO SENDS ONLY</span></div></header>
+  <div class="visual"><img src="/docs/proposals/mail-roulette-2026-10-26/04-gm-studio.png" alt="Dedicated GM announcement composer with audience selection, message and reward fields, player preview and a review-before-send action."></div>
+  <div class="notes"><div><h2>Three clear steps.</h2><p>Choose everyone or a selected player, write the message, then add an optional reward.</p></div><div><h2>Preview the player’s letter.</h2><p>One consistent mail design, with the real 500-character budget. The headline is the message’s first line.</p></div><div><h2>Review before sending.</h2><p>Confirm the audience and gift quantity. Demo sends only add a local sample message, never a real announcement.</p></div></div>
+  <footer><span>Pinterest inspiration: <a href="https://www.pinterest.com/pin/315111305155016551/">[1] Fantasy mailbox</a> · <a href="https://in.pinterest.com/pin/spin-wheel-game-ui-in-2024--44543483810163030/">[2] Spin-wheel UI</a> · <a href="https://www.pinterest.com/ideas/spin-wheel-ui-design/953971608209/">[3] Wheel references</a></span><b>Original coded design · For approval before game integration.</b></footer>
+</section>
+</body>
+</html>

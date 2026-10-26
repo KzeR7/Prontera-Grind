@@ -8123,3 +8123,74 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   recorded in this log. No game or `BUILD` change.
 * **Delivery:** Local changes on `arena/72d32198-prontera-grind`; committed and pushed, no merge
   or deployment.
+
+### 2026-10-26 — Mail, roulette & shared-buff visual proposal
+* **Changed:** Added an approval-first, interactive “Royal Dispatch” design study,
+  five browser-captured visuals and a four-page PDF. Player mail separates a message
+  list from the reading pane; GM announcements move to a dedicated preview/confirm
+  workspace. Roulette has a roughly 400px wheel, seven wrapping reward rows and no
+  reserves/buff section. Its EXP/Zeny timers share the lower pet-buff strip in the
+  HUD proposal. Pinterest references and their access limits are documented. All
+  claims, spins and sends are explicitly local demonstrations; the actual game,
+  native pet art, saves, drop rates, API and BUILD mirrors are unchanged.
+* **Try it:** Open the “Mail & roulette design proposal” live preview, or run
+  `PREVIEW_PAGE=tools/mail-roulette-proposal/index.html python3 tools/preview_server.py 8000`.
+  Switch between Mail, Daily roulette, Active buffs and GM studio; Phone switches
+  to a narrow preview. The [design review](proposals/mail-roulette-2026-10-26/README.md)
+  links the PDF, PNGs, Pinterest sources and integration notes.
+* **Checks:** `node tools/check_mail_roulette_proposal_browser.cjs http://127.0.0.1:8000 --capture`
+  passes 14 checks across 20 screen/viewport combinations (320–1440px), with no
+  page/resource errors. It pins the real reward pool and verifies read/claim flows,
+  wrapping text, one demo spin, shared timers and focus-safe expiry, GM validation,
+  safe preview text, review/cancel, responsive navigation and no save/API writes.
+  The four-page PDF was generated and its first/last pages rendered for review.
+  Existing `ui_sim` (64), `eclipse_ui_sim` (52), `gm_console_sim` (12),
+  `display_polish_sim` (10) and `update_watch_sim` (9) pass. `bash tools/build_site.sh`
+  succeeds; explicit checks exclude all proposal files from `dist/`. JavaScript
+  syntax and `git diff --check` pass. The full known-red pre-push gate, production
+  GM delivery and physical-device performance were not tested; no push is requested.
+* **Delivery:** Local proposal files on `arena/bf5d2c28-prontera-grind`, with a live
+  review preview. No runtime integration, commit, push, PR, merge or deployment.
+
+### 2026-10-26 — Buff proposal: floating icons, no empty panel
+* **Changed:** Revised only the shared-buff proposal to match the current icon-only
+  HUD. Removed the background panel, borders, title/count, source divider, added
+  icon frames and progress rails. Original 38px pet art and small countdowns float
+  directly over the field. No buffs now means no visible buff region, popup,
+  placeholder or empty-state message. Hover/focus/tap opens a lighter popup with
+  a 65%-opaque background and fully readable text; it is closed by default and
+  dismisses on pointer leave, keyboard blur, outside tap or Escape as appropriate.
+* **Try it:** Refresh the design preview → Active buffs. Compare All effects with
+  No buffs and hover an icon. Updated the four-page PDF and added separate
+  floating-icon and completely empty buff-state screenshots to the design review.
+* **Checks:** Proposal browser runner with `--capture`: 17 passing checks across
+  20 screen/viewport combinations (320–1440px), zero page/resource errors. New
+  assertions verify transparent/frame-free wrappers and icons, no empty-state
+  placeholder, a 65%-opaque popup without faded text, hover dismissal, and expiry
+  without disturbing the dock or a surviving focused icon. Existing `ui_sim`
+  (64) and `display_polish_sim` (10) pass. JavaScript syntax, `git diff --check`,
+  unchanged-runtime diff and updated four-page PDF checks pass. Full pre-push
+  gate and real-device/cloud behavior were not tested; no push was requested.
+* **Delivery:** Local proposal revision on `arena/bf5d2c28-prontera-grind` only.
+  Live game, saves, native assets, rewards and BUILD remain unchanged. No commit,
+  push, PR or deployment.
+
+### 2026-10-26 — Mail/roulette proposal: requested PR validation
+* **Changed:** Prepared the existing design study, revised frameless-buff visuals,
+  PDF and browser checks for the owner's requested pull request. Updated the
+  proposal's current verification notes; no prototype behavior, runtime file,
+  reward, save, API or BUILD change was added in this delivery step.
+* **Try it:** Use the [design review](proposals/mail-roulette-2026-10-26/README.md)
+  for the interactive preview command, seven screenshots and four-page PDF.
+* **Checks:** Full pre-push gate completed on the `ea98e83` base plus this proposal:
+  all three generated-asset checks pass; all 136 `*_sim.js` / `*_smoke.js` suites
+  ran, with **129 pass / 7 known failures**, no skips and no new failures. The
+  seven match the baseline in Testing: `field_loop_smoke`, `ground_combat_sim`,
+  `rotation_updates_sim`, `skill_redesign_sim`, `fourth_job_skills_sim`,
+  `skill_balance_sim` and `publish_sim`. No assertion or budget was weakened.
+  Proposal browser checks rerun: 17/17, 20 screen/viewport combinations, zero
+  page/resource errors. Syntax and whitespace checks pass; staged changes are
+  limited to documentation and development-only tooling.
+* **Delivery:** Local validation completed on `arena/bf5d2c28-prontera-grind` for
+  the requested proposal-only PR into `main`. Publication details are reported in
+  the handoff after the push and PR creation; no merge or deployment is requested.

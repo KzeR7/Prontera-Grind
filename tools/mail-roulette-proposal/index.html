@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1017">
+  <meta name="description" content="An interactive, proposal-only redesign of Horizon Haven's mail, daily roulette, GM announcements and shared buff HUD.">
+  <title>The Royal Dispatch — Horizon Haven UI proposal</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23131d29'/%3E%3Cpath d='M6 10h20v14H6zM6 10l10 8 10-8' fill='none' stroke='%23d7b77a' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/assets/ui/fonts.css">
+  <link rel="stylesheet" href="/tools/mail-roulette-proposal/proposal.css">
+  <script src="/tools/mail-roulette-proposal/proposal.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#screen">Skip to the preview</a>
+  <div class="studio">
+    <header class="studio-header">
+      <a href="#mail" class="studio-brand" aria-label="Horizon Haven, mail proposal">
+        <span class="brand-crest" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="m18 2 15 8v16l-15 8-15-8V10Z"/><path d="M10 11v14m16-14v14M10 18h16m-8-9v18"/></svg></span>
+        <span>HORIZON HAVEN<small>INTERFACE DESIGN STUDY</small></span>
+      </a>
+      <span class="proposal-status"><i></i> PROPOSAL ONLY <span>· No game changes</span></span>
+    </header>
+
+    <section class="intro" aria-labelledby="proposalTitle">
+      <div><p class="eyebrow">CONCEPT 01 <span>/</span> MAIL, REWARDS &amp; ACTIVE EFFECTS</p><h1 id="proposalTitle">The Royal <em>Dispatch.</em></h1></div>
+      <p>Less clutter. More room for the good stuff.<br><span>A familiar world, with a clearer interface.</span></p>
+    </section>
+
+    <div class="preview-toolbar">
+      <nav class="view-tabs" role="tablist" aria-label="Design proposals">
+        <button id="tab-mail" type="button" role="tab" aria-selected="true" aria-controls="screen" data-view="mail"><span>01</span> Mail</button>
+        <button id="tab-roulette" type="button" role="tab" aria-selected="false" aria-controls="screen" tabindex="-1" data-view="roulette"><span>02</span> Daily roulette</button>
+        <button id="tab-buffs" type="button" role="tab" aria-selected="false" aria-controls="screen" tabindex="-1" data-view="buffs"><span>03</span> Active buffs</button>
+        <button id="tab-gm" type="button" role="tab" aria-selected="false" aria-controls="screen" tabindex="-1" data-view="gm"><span>04</span> GM studio</button>
+      </nav>
+      <div class="device-switch" role="group" aria-label="Preview width">
+        <button type="button" data-device="desktop" aria-pressed="true" title="Full width preview"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 21h8m-4-5v5"/></svg><span>Desktop</span></button>
+        <button type="button" data-device="phone" aria-pressed="false" title="390 pixel phone preview"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg><span>Phone</span></button>
+      </div>
+    </div>
+
+    <div class="stage-caption"><span id="stageLabel">PLAYER VIEW · MAIL &amp; ANNOUNCEMENTS</span><button id="resetDemo" type="button">Reset demo <span aria-hidden="true">↺</span></button></div>
+    <div id="contextActions" class="context-actions" hidden></div>
+    <div id="previewStage" class="preview-stage">
+      <main id="screen" role="tabpanel" aria-labelledby="tab-mail" tabindex="-1"></main>
+    </div>
+    <section id="designNotes" class="design-notes" aria-label="What changes in this proposal"></section>
+
+    <footer class="studio-footer">
+      <p><span class="footer-diamond" aria-hidden="true">◇</span> Built for the existing navy &amp; gold interface. Original pet artwork, unchanged.</p>
+      <details class="references">
+        <summary>Pinterest references &amp; scope <span aria-hidden="true">↗</span></summary>
+        <div>
+          <p>Layout inspiration, not copied game assets:</p>
+          <a href="https://www.pinterest.com/pin/315111305155016551/" target="_blank" rel="noopener noreferrer">[1] League of Angels · fantasy mailbox</a>
+          <a href="https://in.pinterest.com/pin/spin-wheel-game-ui-in-2024--44543483810163030/" target="_blank" rel="noopener noreferrer">[2] Himanshu Rawat · spin wheel game UI</a>
+          <a href="https://www.pinterest.com/ideas/spin-wheel-ui-design/953971608209/" target="_blank" rel="noopener noreferrer">[3] Spin wheel UI · visual reference collection</a>
+          <p>Pinterest pages blocked direct fetching; search-indexed descriptions and image previews were available. This is an original, coded proposal. All messages, claims, spins and sends are in-memory demonstrations. Nothing connects to accounts or changes a save.</p>
+        </div>
+      </details>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+  <dialog id="sendDialog" class="send-dialog" aria-labelledby="sendDialogTitle" aria-describedby="sendDialogDescription">
+    <form method="dialog">
+      <span class="dialog-seal" aria-hidden="true">✦</span>
+      <p class="eyebrow">ONE LAST LOOK</p>
+      <h2 id="sendDialogTitle">Ready to send?</h2>
+      <p id="sendDialogDescription">This is a local preview. No announcement will be sent to real players.</p>
+      <div id="sendSummary" class="send-summary"></div>
+      <div class="dialog-actions"><button value="cancel" class="button secondary">Keep editing</button><button id="confirmDemoSend" value="send" class="button primary">Send demo announcement</button></div>
+    </form>
+  </dialog>
+  <noscript><p class="noscript">Enable JavaScript to explore the interactive proposal. This page is a demo, not the live game.</p></noscript>
+</body>
+</html>
