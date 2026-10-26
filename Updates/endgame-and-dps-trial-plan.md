@@ -4,8 +4,8 @@
 > ladder. Endless Echo remains a **180-second (3:00) run**. This revision names the stationary target
 > **Lord of Death Illusion**, keeps the darker Echo Court, sets the repeatable ranked payout to
 > **1–50 Shards**, and sets the requested store prices. The Refine Scroll is a saved, inert
-> placeholder and is not the Drop Protection Scroll; the append-only history remains in `AGENTS.md`
-> and `READ-ME-FIRST.md`.
+> placeholder and is not the Drop Protection Scroll; the append-only history remains in the
+> [update log](../docs/UPDATE-LOG.md) and the [archived read-me](../docs/history/READ-ME-FIRST-archive.md).
 
 ## 1. Endgame field ladder
 

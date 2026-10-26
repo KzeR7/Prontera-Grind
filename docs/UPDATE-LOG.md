@@ -7963,3 +7963,104 @@ behind the *View logs* link that the `cloudflare-workers-and-pages` bot posts on
 * **Delivery:** Local changes, committed and pushed to `arena/c4538d5e-prontera-grind` (PR #128); no
   deployment. The Worker change ships when `workers/social` is deployed and Pages is published after
   it.
+
+## 2026-10-26 — documentation cleanup (no game change)
+
+* **Changed:** The docs now describe the current game instead of three older ones.
+  1. `READ-ME-FIRST.md` was 1,596 lines / 134 KB of build notes that stopped at v91 while the
+     game is at v236, and it opened with "read me first" while calling itself historical. It is now
+     a short map of where things live (architecture, the two preview commands, GM access, art
+     pages, history), and the old file is kept verbatim as
+     [docs/history/READ-ME-FIRST-archive.md](history/READ-ME-FIRST-archive.md) with an archive banner.
+  2. The 2026-10-13 attack-speed/movement bundle no longer sits at the repo root pretending to be a
+     live brief. `HANDOFF.md` (whose "Current user intent" still read as if ASPD 182 and a 30%
+     movement cut were outstanding), `validation-record.md`, `local-movement-changes.patch`,
+     `manifest.json`, `research/` and `original-research-scripts/` moved together into
+     [docs/history/aspd-research-2026-10-13/](history/aspd-research-2026-10-13/README.md), which
+     states the fork, revision, what was actually done (the movement cap, uncommitted) and what was
+     never done (no ASPD formula reached source).
+  3. Two stale instructions are gone. The `/tmp/pack_block.js` extraction is no longer listed as a
+     prerequisite anywhere — `tools/tests/pack_sim.js` reads its own `PACK_BODY` block out of
+     `index.html`, which `docs/TESTING.md` already said; `TOOLS-START-HERE.md` contradicted it.
+     And the game's preview command is `tools/preview_server.py` (0.0.0.0, no redirects, real
+     `/game` `/weapons` `/skillfx` routes) rather than the bare `python3 -m http.server` the old
+     read-me gave.
+  4. Pointers that sent readers to the wrong file are corrected: `AGENTS.md` no longer implies
+     `READ-ME-FIRST.md` is current and now lists the two archives; the four `Updates/` notes that
+     linked to old `READ-ME-FIRST.md` sections for `## BUILD v77`, the v75 pet traits and the
+     `BUILD`-bump checklist point at the archive or at `docs/UPDATE-LOG.md`; `docs/CODE-MAP.md`
+     lists `docs/history/` as history. No link in the edited files is broken (checked).
+  No game code, asset, save, balance value or `BUILD` label changed.
+* **Try it:** Read [AGENTS.md](../AGENTS.md) then [READ-ME-FIRST.md](../READ-ME-FIRST.md) — it now
+  fits on two screens. The old build prose is still readable in the archive.
+* **Deliberately not changed:** the "all suites and the required checks must pass before a push"
+  gate and the Node 24 / Pillow version pins. The v236 entry records 8 suites that fail on the
+  untouched base commit as well, so that gate cannot currently be met as written; rewording it to
+  "no new failures against the recorded baseline" is an owner decision, not a doc tidy-up. This
+  sandbox also has Node 22.22.3, Python 3.11.2 and no `jsdom`/`three`/`ws`, so the three smoke
+  suites and the API/shop sims could not run here at all.
+* **Checks:** documentation-only, so no suite was required. A relative-link check over every file
+  touched here reports zero broken links. `git status` shows only renames and doc edits; no
+  `*_sim.js`/`*_smoke.js` run is claimed — `tools/tests/publish_sim.js` only asserts that
+  `AGENTS.md`/`READ-ME-FIRST.md` stay out of `dist/`, which still holds.
+* **Delivery:** Local changes on `arena/9c239248-prontera-grind`; no merge, push or deployment.
+
+## 2026-10-26 — docs: real gate baseline, BUILD mirrors, shorter guides
+
+Corrects the "deliberately not changed" bullet in the previous entry: the owner asked for
+the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
+
+* **Changed:**
+  1. **The push gate is measurable again.** `AGENTS.md` no longer demands that every suite
+     pass — it demands **no new failures** against a known-red baseline, and names the red
+     suites in [docs/TESTING.md](TESTING.md#the-known-red-baseline-measured-2026-10-26).
+     Measured today on this checkout: **129 pass / 7 fail of 136 checks**, and all seven
+     fail identically on the untouched base commit `ae3897d`, so they are a standing
+     baseline rather than fallout from any patch. The seven: `field_loop_smoke`
+     (camp monster drifts off its camp ring), `ground_combat_sim` (kiting windows),
+     `rotation_updates_sim` ("expanded area stays within its camp"), `skill_redesign_sim`
+     (extraction `SyntaxError` plus a dash assertion), `fourth_job_skills_sim` (skill-slot
+     deep-equal), `skill_balance_sim` ("gear measurements stale" — hash-pinned on purpose)
+     and `publish_sim` (15/16, runtime assets over the 62.5 MiB budget). The rule now also
+     says plainly: do not delete an assertion, loosen a budget or re-hash a balance fixture
+     to turn a row green, and report a green row that went red.
+  2. **Dependencies corrected.** Node **22.22.3** runs the whole gate here; `node:sqlite`
+     is present from Node 22.5 and only prints an `ExperimentalWarning`, so Node 24 is no
+     longer stated as a hard requirement (it remains a supported choice). Added the step
+     that a shallow clone must `git fetch` the pinned `d164bd0` revision or two suite rows
+     fail with `Command failed: git show` — that was the whole difference between the 8-fail
+     figure in the v236 entry and today's 7.
+  3. **`BUILD` mirrors are now in `AGENTS.md`**, not just in this log: `index.html`,
+     `Updates/cards-gear-audit/affix-ranges.html`,
+     `Updates/cards-gear-audit/equipment-cards-tuning.html` and
+     `tools/cloudflare-deploy-steps.md` must carry the same tag, and `update_watch_sim`,
+     `gear_sim` and `drop_card_sheet_sim` are what fail when one is missed.
+  4. **Less to read.** `docs/TESTING.md` went from 639 to ~200 lines: dependencies, the two
+     previews, the gate with its baseline table, a one-table suite map (system → suites),
+     and the visual-verification rules. The 551 lines of per-build notes it used to carry
+     (v163–v215, including the only recorded browser-check commands and fixture arguments)
+     are preserved verbatim in
+     [docs/history/TESTING-version-notes.md](history/TESTING-version-notes.md). `AGENTS.md`
+     gained a short **reading budget** line saying which documents are orientation and which
+     are reference-only.
+  No game code, asset, save or balance value changed, so `BUILD` is untouched.
+* **Try it:** Read [AGENTS.md](../AGENTS.md) (about 95 lines), then
+  [docs/TESTING.md](TESTING.md). The old per-build notes are still in the archive if a task
+  needs a specific browser command.
+* **Checks:** The gate itself was run, not quoted: the three generated-asset checks pass
+  (`make_sprite_viewer.py --check`, `make_class_skins.py --check`,
+  `make_weapon_pack.py --check`), then all 133 `*_sim.js` and 3 `*_smoke.js` — **129 pass /
+  7 fail**, the seven listed above. The same seven were re-run in a worktree of base commit
+  `ae3897d` with the gate's own dependency install and failed there too. Test dependencies
+  (`jsdom`, `three@0.128.0`, `ws`) were installed for Node 22.22.3. Documentation links
+  checked: zero broken in the edited files. **Not run:** the Python asset audits that need
+  external source sheets/renderer exports, and the `tools/check_*_browser` checks (no
+  browser in this sandbox).
+* **Cash Shop status (for the record):** the shop is implemented in this tree — 
+  `assets/shop.js`, `assets/shop-catalog.js`, `functions/api/shop/{catalog,checkout,order,webhook}.js`,
+  `functions/api/gm/shop.js` and `migrations/0005_shop.sql`, with `shop_api_sim.js`,
+  `shop_sim.js`, `ascension_drop_shop_sim.js` and `dev_server_sim.js` all green above. What is
+  still the owner's to do is the Stripe account/keys and the live checkout rehearsal in
+  [MONETIZATION-SETUP.md](MONETIZATION-SETUP.md) §7; until then the shop is browse-only by design.
+* **Delivery:** Local changes on `arena/9c239248-prontera-grind`; committed and pushed, no
+  merge or deployment.

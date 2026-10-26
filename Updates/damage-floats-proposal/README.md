@@ -166,7 +166,7 @@ machinery comes free once B is in.
    `fresh()`/`fixSave` defaults, CSS-var size hook, auto-fitted burst markup.
 2. `tools/tests/combat_float_sim.js`: flip the "no ornaments" assertions to assert the new
    frame; add skill-critical class-split, pop-up-type and font/size setting checks.
-3. `BUILD` bump + `READ-ME-FIRST.md` + the log in `AGENTS.md`; run all `tools/tests/*_sim.js`.
+3. `BUILD` bump (and its three mirrors) plus a new entry in `docs/UPDATE-LOG.md`; run all `tools/tests/*_sim.js`.
 4. Sanity-run behind the preview server first; Cloudflare deploy unchanged (no API/migration
    work).
 

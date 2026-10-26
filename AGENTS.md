@@ -16,6 +16,13 @@ keep it short and keep detailed explanations in the linked documents.
 Read only the relevant system details after this orientation. Do not load the
 entire update log or large generated sprite data to discover how the game works.
 
+**Reading budget.** This guide, [Decisions](docs/DECISIONS.md) and the section of
+[Code map](docs/CODE-MAP.md) for your system are enough to start; add the
+[Testing](docs/TESTING.md) gate when you are ready to run checks. Everything under
+`docs/history/`, `docs/proposals/` and `Updates/` is reference — open it when a task
+needs the *why* or an old measurement, not as orientation. If a document is longer
+than the task needs, use its headings and stop.
+
 ## Current architecture
 
 Prontera Grind is a browser Ragnarok-flavoured idle/grind game. Most game logic,
@@ -43,8 +50,12 @@ There is no root package manifest and no JavaScript bundler.
   balance changes as part of an unrelated fix. Tests extract source by string
   boundaries, so moving code can require updating the real-code harness.
 - Add meaningful regression coverage when adding/changing game behavior. Run
-  affected checks during development. Before any push, all suites and the required
-  checks in [Testing](docs/TESTING.md#before-pushing) must pass. A skip is not a pass.
+  affected checks during development. Before any push, run the gate in
+  [Testing](docs/TESTING.md#before-pushing) and add **no new failures** to its
+  known-red baseline (7 suites are already red on `main` at `ae3897d`; the table
+  and the reason for each are in Testing). Never delete an assertion, loosen a
+  budget or re-hash a balance fixture to make a red row green — and say in the
+  handoff if a green row turned red. A skip is not a pass.
 - Do not put secrets in the repo or change the shared GM password for a preview.
   Use the disposable local server described in Testing.
 - Respect the user's delivery instructions and the environment's permitted branch.
@@ -61,6 +72,12 @@ For a player-visible change, also bump `const BUILD` in `index.html`. Coordinate
 that label with overlapping work; do not guess a version from an old log entry.
 Documentation-only changes do not need a game build bump.
 
+The tag is mirrored in three files and all four must carry the same string:
+`index.html`, `Updates/cards-gear-audit/affix-ranges.html`,
+`Updates/cards-gear-audit/equipment-cards-tuning.html` and
+`tools/cloudflare-deploy-steps.md`. Forgetting a mirror is what makes
+`update_watch_sim.js`, `gear_sim.js` and `drop_card_sheet_sim.js` fail.
+
 Use plain English for the owner:
 
 ```markdown
@@ -76,11 +93,18 @@ Update the relevant current guide when architecture, commands or game rules chan
 
 ## Current guidance and history
 
-The linked handbook is the current starting point. `READ-ME-FIRST.md` and
-`TOOLS-START-HERE.md` retain useful tool details but also contain older descriptions;
-check them against the current source and system READMEs. When these disagree,
-inspect the code/tests and correct the current guide rather than copying an old
-claim. New user instructions take precedence over repository guidance.
+This guide and the documents it links are the current starting point.
+`READ-ME-FIRST.md` is now only a short map of where things live;
+`TOOLS-START-HERE.md` keeps the useful tool details. Both still go stale faster
+than this guide, so check any claim against the current source and system
+READMEs. When they disagree, inspect the code/tests and correct the current
+guide rather than copying an old claim. New user instructions take precedence
+over repository guidance.
 
 - [Update history](docs/UPDATE-LOG.md): read specific entries only when needed.
 - [Archived agent notes](docs/history/AGENT-NOTES.md): old rationale and procedures.
+- [Archived read-me, build notes v56–v91](docs/history/READ-ME-FIRST-archive.md):
+  the old per-build prose, kept verbatim.
+- [Archived ASPD/movement research](docs/history/aspd-research-2026-10-13/README.md):
+  a 2026-10-13 snapshot from another fork. Not a current brief, and its "user
+  intent" section is not a standing instruction.

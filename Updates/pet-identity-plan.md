@@ -4,7 +4,7 @@
 > species signature passives plus duplicate Bond. Lever 1 was tuned down to his rule — *"i dont want
 > any buff go above 10%"* — so every passive is worth **5% at Bond 0 and 10% at Bond 5** (the table
 > in Lever 1 below still shows the original, stronger draft; the shipped numbers live in
-> `index.html`'s `PET_TRAIT` and in the v75 section of READ-ME-FIRST.md). **Lever 2 (per-map species
+> `index.html`'s `PET_TRAIT` and in the v75 section of the [archived read-me](../docs/history/READ-ME-FIRST-archive.md)). **Lever 2 (per-map species
 > tables) and Lever 3 (pity / habitat)** were not chosen and are not in the build; the notes are kept
 > here in case the owner revisits hunting later. Lever 5's extra ideas (leaning gacha, field
 > synergy, rarity flattening) are likewise unbuilt.
