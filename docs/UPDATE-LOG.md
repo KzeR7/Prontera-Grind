@@ -8104,3 +8104,22 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   and re-fetching the pinned `d164bd0` revision.
 * **Delivery:** Local changes on `arena/72d32198-prontera-grind`; committed and pushed, no merge or
   deployment.
+
+## 2026-10-26 — docs: a suspicious run is checked before the code
+
+* **Changed:** `docs/TESTING.md` opens its *Before pushing* section with the mistake that cost
+  real time in this session: `node_modules` is not kept between sandbox sessions, 77 of the 136
+  suites load `jsdom`/`three`/`ws`, and without them the run reports dozens of
+  `Cannot find module 'jsdom'` errors plus a few smokes that *skip and exit 0* — a wall of red
+  and a handful of fake green at the same time. The same commit measured **71 failures** with the
+  packages absent and **7** once they were installed, so the guide now says to install the
+  dependencies and re-run before suspecting any code, and that a huge count spread across
+  unrelated systems is the environment, not the patch. Five lines, no new document.
+* **Try it:** [Development and testing](TESTING.md#before-pushing).
+* **Checks:** documentation-only. The claim was measured first: with `node_modules` moved aside,
+  `field_loop_smoke` and `save_owner_boot_smoke` printed a skip and exited 0 while `ui_sim`
+  failed 1 of its 64 assertions with `Cannot find module 'jsdom'`; restored, they returned 8/9
+  real steps, 5/5 and 64/64. The gate figures quoted (71 → 7) are the two full runs already
+  recorded in this log. No game or `BUILD` change.
+* **Delivery:** Local changes on `arena/72d32198-prontera-grind`; committed and pushed, no merge
+  or deployment.
