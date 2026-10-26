@@ -81,6 +81,14 @@ The gate is: the three generated-asset checks, every `*_sim.js` and every `*_smo
 Read the output, not just the exit code — a suite that prints a dependency skip and exits
 0 has not passed.
 
+**A wall of failures usually means the tools are not installed.** `node_modules` is not
+kept between sandbox sessions, and 77 of the 136 suites load `jsdom`/`three`/`ws`; without
+them you get dozens of `Cannot find module 'jsdom'` errors (and a few smokes that *skip and
+exit 0*, which look like passes). Install the [dependencies](#dependencies) and re-run
+before suspecting any code. Measured on 2026-10-26: the same commit went from **71 failures**
+to **7** purely by installing them — so if the count is huge and spread across unrelated
+systems, it is the environment, not the patch.
+
 ```sh
 python3 tools/make_sprite_viewer.py --check
 python3 tools/make_class_skins.py --check

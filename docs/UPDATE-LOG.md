@@ -8064,3 +8064,62 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   [MONETIZATION-SETUP.md](MONETIZATION-SETUP.md) §7; until then the shop is browse-only by design.
 * **Delivery:** Local changes on `arena/9c239248-prontera-grind`; committed and pushed, no
   merge or deployment.
+
+## 2026-10-26 — stale files removed (no game change)
+
+* **Changed:** Removed 10 files (18.3 MB) that nothing read, wrote or tested, following the
+  [stale-file audit](../reports/stale-files-audit-2026-10-26.md):
+  * `UI redesign/prontera-ui-redesign-v2.zip` (17.9 MB) — an editor's UI mockup export with no
+    reference anywhere in the repo, left behind when the folder's blank placeholder was deleted
+    in the earlier cleanup. The empty `UI redesign/` folder is gone with it.
+  * `tools/maps/thief_body.json` and `thief_full.json` — crop configs for the retired
+    layered-thief hero body. They are not map data; their named outputs
+    (`assets/herobody_thief_m.png`, `herobody_thief_f.png`) do not exist and the preview that
+    used them was deleted as broken.
+  * `tools/native-wardrobe/event-source-manifest.json` — the one manifest in that folder no
+    script reads (the other twelve are referenced by the fetchers/builders, and the
+    `fetch_accessory_sources.py` manifests are untouched).
+  * `tools/tests/fixtures/skill_balance_{before,after}_seed987.json` and
+    `skill_encounters_{before,after}_nightmare.json` — superseded balance evidence. The live
+    fixtures are `progression_*.json` (read by `skill_balance_sim.js`) and the seed-123 pair
+    (read by `tools/skill_balance.js`); nothing referenced these four, and no suite lists the
+    fixtures directory.
+  * `tools/check_wardrobe_collection_browser.js` and `check_wardrobe_trees_browser.js` — two
+    unlisted, undocumented browser checks superseded by the `check_appearance_*` pair. No doc,
+    route, suite or script named them.
+  **Kept:** `.trae-html-share-packages/` (52 MB of duplicate share zips), `assets/wardrobe/v1`,
+  `v3`, `v4` (20.6 MB, superseded native wardrobe generations) and `image-search/` (7.9 MB of raw
+  map downloads) — each is the owner's call, and they are still documented with their evidence in
+  the audit. Every deletion is recoverable from git history.
+* **Try it:** `git log --diff-filter=D --name-only -1` lists the ten paths. Nothing changes in the
+  game, in `dist/` or on the preview: all ten were repo-only files, never shipped by
+  `tools/build_site.sh`, so no player-visible or `BUILD` change.
+* **Checks:** Full gate re-run after the deletions: the three generated-asset checks pass
+  (`make_sprite_viewer.py --check`, `make_class_skins.py --check`, `make_weapon_pack.py --check`),
+  then **129 pass / 7 fail of 136** — exactly the [known-red baseline](TESTING.md#the-known-red-baseline-measured-2026-10-26),
+  so no new failures. A reference sweep after the delete finds no dangling mention of any removed
+  name outside this log and the audit. **Note:** the first attempt at the gate reported 71 failures
+  because the sandbox had lost `node_modules` between sessions (every suite printed a dependency
+  skip); the numbers above are from the run after reinstalling `jsdom`, `three@0.128.0`, `ws`
+  and re-fetching the pinned `d164bd0` revision.
+* **Delivery:** Local changes on `arena/72d32198-prontera-grind`; committed and pushed, no merge or
+  deployment.
+
+## 2026-10-26 — docs: a suspicious run is checked before the code
+
+* **Changed:** `docs/TESTING.md` opens its *Before pushing* section with the mistake that cost
+  real time in this session: `node_modules` is not kept between sandbox sessions, 77 of the 136
+  suites load `jsdom`/`three`/`ws`, and without them the run reports dozens of
+  `Cannot find module 'jsdom'` errors plus a few smokes that *skip and exit 0* — a wall of red
+  and a handful of fake green at the same time. The same commit measured **71 failures** with the
+  packages absent and **7** once they were installed, so the guide now says to install the
+  dependencies and re-run before suspecting any code, and that a huge count spread across
+  unrelated systems is the environment, not the patch. Five lines, no new document.
+* **Try it:** [Development and testing](TESTING.md#before-pushing).
+* **Checks:** documentation-only. The claim was measured first: with `node_modules` moved aside,
+  `field_loop_smoke` and `save_owner_boot_smoke` printed a skip and exited 0 while `ui_sim`
+  failed 1 of its 64 assertions with `Cannot find module 'jsdom'`; restored, they returned 8/9
+  real steps, 5/5 and 64/64. The gate figures quoted (71 → 7) are the two full runs already
+  recorded in this log. No game or `BUILD` change.
+* **Delivery:** Local changes on `arena/72d32198-prontera-grind`; committed and pushed, no merge
+  or deployment.
