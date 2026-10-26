@@ -86,7 +86,7 @@ that case honestly; the pages may not).
 `pack_sim.js` now reads its own `PACK_BODY` block straight out of `index.html`; the old
 `/tmp/pack_block.js` extraction is **not** needed (`PACK_BLOCK`/`PACK_DATA` remain optional
 explicit overrides). The suites need the optional dependencies from
-[Testing](docs/TESTING.md#dependencies) (`jsdom`, `three@0.128.0`, `ws`) and Node 24.
+[Testing](docs/TESTING.md#dependencies) (`jsdom`, `three@0.128.0`, `ws`) and Node 22.22+ (24 also works).
 
 **The smoke suites live outside that loop:** `node tools/tests/field_loop_smoke.js` boots the real
 `index.html` in jsdom with the real Three.js r128 and drives the farming loop end to end (camps,

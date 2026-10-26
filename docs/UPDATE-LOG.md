@@ -8004,3 +8004,63 @@ behind the *View logs* link that the `cloudflare-workers-and-pages` bot posts on
   `*_sim.js`/`*_smoke.js` run is claimed — `tools/tests/publish_sim.js` only asserts that
   `AGENTS.md`/`READ-ME-FIRST.md` stay out of `dist/`, which still holds.
 * **Delivery:** Local changes on `arena/9c239248-prontera-grind`; no merge, push or deployment.
+
+## 2026-10-26 — docs: real gate baseline, BUILD mirrors, shorter guides
+
+Corrects the "deliberately not changed" bullet in the previous entry: the owner asked for
+the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
+
+* **Changed:**
+  1. **The push gate is measurable again.** `AGENTS.md` no longer demands that every suite
+     pass — it demands **no new failures** against a known-red baseline, and names the red
+     suites in [docs/TESTING.md](TESTING.md#the-known-red-baseline-measured-2026-10-26).
+     Measured today on this checkout: **129 pass / 7 fail of 136 checks**, and all seven
+     fail identically on the untouched base commit `ae3897d`, so they are a standing
+     baseline rather than fallout from any patch. The seven: `field_loop_smoke`
+     (camp monster drifts off its camp ring), `ground_combat_sim` (kiting windows),
+     `rotation_updates_sim` ("expanded area stays within its camp"), `skill_redesign_sim`
+     (extraction `SyntaxError` plus a dash assertion), `fourth_job_skills_sim` (skill-slot
+     deep-equal), `skill_balance_sim` ("gear measurements stale" — hash-pinned on purpose)
+     and `publish_sim` (15/16, runtime assets over the 62.5 MiB budget). The rule now also
+     says plainly: do not delete an assertion, loosen a budget or re-hash a balance fixture
+     to turn a row green, and report a green row that went red.
+  2. **Dependencies corrected.** Node **22.22.3** runs the whole gate here; `node:sqlite`
+     is present from Node 22.5 and only prints an `ExperimentalWarning`, so Node 24 is no
+     longer stated as a hard requirement (it remains a supported choice). Added the step
+     that a shallow clone must `git fetch` the pinned `d164bd0` revision or two suite rows
+     fail with `Command failed: git show` — that was the whole difference between the 8-fail
+     figure in the v236 entry and today's 7.
+  3. **`BUILD` mirrors are now in `AGENTS.md`**, not just in this log: `index.html`,
+     `Updates/cards-gear-audit/affix-ranges.html`,
+     `Updates/cards-gear-audit/equipment-cards-tuning.html` and
+     `tools/cloudflare-deploy-steps.md` must carry the same tag, and `update_watch_sim`,
+     `gear_sim` and `drop_card_sheet_sim` are what fail when one is missed.
+  4. **Less to read.** `docs/TESTING.md` went from 639 to ~200 lines: dependencies, the two
+     previews, the gate with its baseline table, a one-table suite map (system → suites),
+     and the visual-verification rules. The 551 lines of per-build notes it used to carry
+     (v163–v215, including the only recorded browser-check commands and fixture arguments)
+     are preserved verbatim in
+     [docs/history/TESTING-version-notes.md](history/TESTING-version-notes.md). `AGENTS.md`
+     gained a short **reading budget** line saying which documents are orientation and which
+     are reference-only.
+  No game code, asset, save or balance value changed, so `BUILD` is untouched.
+* **Try it:** Read [AGENTS.md](../AGENTS.md) (about 95 lines), then
+  [docs/TESTING.md](TESTING.md). The old per-build notes are still in the archive if a task
+  needs a specific browser command.
+* **Checks:** The gate itself was run, not quoted: the three generated-asset checks pass
+  (`make_sprite_viewer.py --check`, `make_class_skins.py --check`,
+  `make_weapon_pack.py --check`), then all 133 `*_sim.js` and 3 `*_smoke.js` — **129 pass /
+  7 fail**, the seven listed above. The same seven were re-run in a worktree of base commit
+  `ae3897d` with the gate's own dependency install and failed there too. Test dependencies
+  (`jsdom`, `three@0.128.0`, `ws`) were installed for Node 22.22.3. Documentation links
+  checked: zero broken in the edited files. **Not run:** the Python asset audits that need
+  external source sheets/renderer exports, and the `tools/check_*_browser` checks (no
+  browser in this sandbox).
+* **Cash Shop status (for the record):** the shop is implemented in this tree — 
+  `assets/shop.js`, `assets/shop-catalog.js`, `functions/api/shop/{catalog,checkout,order,webhook}.js`,
+  `functions/api/gm/shop.js` and `migrations/0005_shop.sql`, with `shop_api_sim.js`,
+  `shop_sim.js`, `ascension_drop_shop_sim.js` and `dev_server_sim.js` all green above. What is
+  still the owner's to do is the Stripe account/keys and the live checkout rehearsal in
+  [MONETIZATION-SETUP.md](MONETIZATION-SETUP.md) §7; until then the shop is browse-only by design.
+* **Delivery:** Local changes on `arena/9c239248-prontera-grind`; committed and pushed, no
+  merge or deployment.
