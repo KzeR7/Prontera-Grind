@@ -8290,3 +8290,28 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   therefore unmeasured; run that check where Chromium works before relying on the layout.
 * **Delivery:** Local changes on `arena/2c44e24f-prontera-grind`; no commit, push, PR or
   deployment.
+
+
+### 2026-10-27 — `2026-10-27 haven-v245 royal dispatch mail studio & HUD fixes`
+* **Changed:** Follow-up from the owner's preview feedback on PR #136. Mail had
+  inherited the roulette card's very wide, content-height sizing, so it looked like
+  a short letterbox at desktop. The mail card now has its own **980px × 680px**
+  desktop shape (still bounded by the viewport); roulette keeps its 1184px width.
+  The GM Compose button had no visible effect because the new `#gmStudioModal` root
+  never received fixed-overlay/display rules. It is now a proper hidden-by-default,
+  viewport-bounded top-level modal above the mail window, with a scrollable card and
+  narrow-screen sizing. Finally, daily boost SVGs were inheriting SVG's default black
+  fill because their outline styling was scoped to mail; they now explicitly use
+  `fill:none; stroke:currentColor`, so Zeny/EXP icons inherit the intended gold/green.
+  Bumped the build tag and all three mirrors to v245 and the Eclipse stylesheet query
+  to v210. Gameplay, saves, rewards and expiry logic are unchanged.
+* **Try it:** Open Mail at desktop width: its reader should feel taller and less
+  letterbox-wide. Click **Compose** as a GM: the announcement studio should open over
+  the inbox; close it to return to mail. On a live Zeny/EXP boost, the lower-HUD
+  symbols should be colored outlines rather than black silhouettes.
+* **Checks:** `mail_roulette_ui_sim` now guards the mail-specific shape, the GM modal
+  overlay and viewport-bounded card, and explicit colored SVG strokes; the suite and
+  `eclipse_ui_sim` pass. Full regression gate and real-browser limitations are recorded
+  in the preceding v244 entry; browser geometry remains to be confirmed in Chromium.
+* **Delivery:** PR #136 follow-up on `arena/2c44e24f-prontera-grind`; not merged or
+  deployed.

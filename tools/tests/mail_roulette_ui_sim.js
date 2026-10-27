@@ -23,7 +23,9 @@ test('mail is a compact index beside a reading pane, and no GM form lives inside
   const modal=mailModal();
   assert.ok(modal.classList.contains('on'),'the Mail shortcut opens the inbox');
   assert.ok(css.includes('#mailDailyModal .mail-daily-card{--rd-serif')&&css.includes('width:min(1184px,100%)'),
-    'the card is the proposed ~1184px desktop panel, not the old 760px');
+    'the card keeps the proposed ~1184px roulette width');
+  assert.ok(css.includes('#mailDailyModal .mail-daily-card.is-mail{width:min(980px,100%);height:min(680px,calc(100dvh - 28px));}'),
+    'mail gets a taller, narrower reader window instead of a short wide card');
   assert.ok(css.includes('.rd-mail-layout{display:grid;grid-template-columns:306px minmax(0,1fr)'),
     'a 306px message index sits beside the reading pane');
   assert.ok(modal.querySelector('.rd-list-panel')&&modal.querySelector('.rd-reader'),'both panes render');
@@ -157,6 +159,8 @@ test('roulette boosts join the pet buff strip; the pill and any empty-state box 
   assert.match(zeny.querySelector('.s').textContent,/^\d+:\d\d$/,'each carries a countdown');
   assert.match(zeny.getAttribute('aria-label'),/\+30% Zeny gain/,'and a screen-reader description');
   assert.equal(zeny.querySelectorAll('b,p,time').length>=3,true,'the detail waits behind the tile');
+  assert.ok(css.includes('#hudBuffs .efx-art .rd-ico{width:30px;height:30px;fill:none;stroke:currentColor;'),
+    'the boost SVG has an explicit colored outline instead of inheriting a black fill');
   assert.ok(css.includes('#hudBuffs .efx-fly{')&&css.includes('background:rgba(17,29,41,.65)'),
     'the popup surface is 65% opaque, not nearly solid');
   assert.ok(css.includes('#hudBuffs .efx:hover .efx-fly,#hudBuffs .efx:focus .efx-fly'),'and stays closed until hover or focus');
@@ -188,6 +192,10 @@ test('the GM studio is a separate screen: three steps, a live preview, then a co
   const compose=click('[data-a=opengmstudio]');
   const studio=doc.getElementById('gmStudioModal');
   assert.ok(studio.classList.contains('on'),'Compose opens the studio');
+  assert.ok(css.includes('#gmStudioModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;')&&css.includes('#gmStudioModal.on{display:flex}'),
+    'the studio root is a hidden-by-default fixed overlay that appears when opened');
+  assert.ok(css.includes('#gmStudioModal .mail-daily-card{')&&css.includes('height:min(780px,calc(100dvh - 28px))'),
+    'the studio has a viewport-bounded, scrollable modal card');
   assert.equal(studio.querySelectorAll('.rd-step').length,3,'audience, message and attachment steps');
   assert.ok(doc.getElementById('gmStudioPreview'),'with a player-side preview');
   assert.match(doc.getElementById('gmStudioPreview').textContent,/20 × Oridecon/,'the preview follows the form, attachment included');

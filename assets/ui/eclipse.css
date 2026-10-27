@@ -1835,6 +1835,17 @@ body.social-open #minimapTools{display:none!important}
 .minimap-tool-badge[hidden]{display:none!important}
 .minimap-tool-badge.is-dot{background:var(--gold);color:#17151c}
 
+/* The studio is a real top-level modal. Its root was missing its fixed overlay rules,
+   which made the Compose action add a class without ever bringing a visible dialog up. */
+#gmStudioModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(12,12,16,.84);z-index:1210;padding:14px}
+#gmStudioModal.on{display:flex}
+#gmStudioModal *{pointer-events:auto;box-sizing:border-box}
+#gmStudioModal .mail-daily-card{--rd-serif:Georgia,'Times New Roman',serif;width:min(1184px,100%);height:min(780px,calc(100dvh - 28px));max-height:calc(100dvh - 28px);display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:1px solid var(--gold);border-radius:12px;color:var(--ink);box-shadow:0 25px 70px #0009;text-align:left}
+#gmStudioModal .mail-daily-head{background:linear-gradient(110deg,var(--e-raised),var(--e-bg) 75%);border-bottom:1px solid var(--e-line);color:var(--ink);flex:none;padding:20px 26px 18px}
+#gmStudioModal .mail-daily-head .trial-brand b{color:var(--ink);font:26px/1.2 Georgia,'Times New Roman',serif;letter-spacing:-.01em}
+#gmStudioModal .mail-daily-head .trial-brand small{color:var(--e-muted);font-size:11px;margin-top:5px}
+#gmStudioModal .mail-daily-head .trial-seal{background:var(--e-soft);border-color:var(--gold);color:var(--gold);font-size:18px;width:48px;height:48px;border-radius:8px;transform:rotate(-3deg)}
+#gmStudioModal .mail-daily-head .trial-close{background:#0c141c4d;border:1px solid var(--edge2);color:var(--e-muted);width:32px;height:32px}
 /* Mail & Daily Roulette — "The Royal Dispatch" presentation (2026-10-27).
    A compact message index beside a dedicated reading pane, a 408px wheel with one
    untruncated row per reward, and no reserves panel. Presentation only: claim
@@ -1858,6 +1869,9 @@ body.social-open #minimapTools{display:none!important}
 .mail-daily-body>*{flex:1;min-height:0}
 
 /* Shared primitives inside the mail/roulette card. */
+/* Mail uses a more balanced reading-window shape; roulette keeps its wider proposal width. */
+#mailDailyModal .mail-daily-card.is-mail{width:min(980px,100%);height:min(680px,calc(100dvh - 28px));}
+
 #mailDailyModal .rd-btn{border:1px solid var(--edge2);padding:9px 14px;border-radius:5px;font-size:12px;font-weight:600;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1.35;background:#ffffff04;color:#c5cdd2;cursor:pointer}
 #mailDailyModal .rd-btn:hover:not(:disabled){background:#ffffff09}
 #mailDailyModal .rd-btn:disabled{opacity:.48;cursor:default}
@@ -2050,7 +2064,7 @@ body.social-open #minimapTools{display:none!important}
    focus or tap. No empty-state box: the region disappears entirely when it is clear. */
 #hudBuffs .efx{position:relative;width:44px;height:44px;padding:0;display:grid;place-items:center;border:0;background:none;border-radius:0;box-shadow:none;cursor:help}
 #hudBuffs .efx-art{width:38px;height:38px;display:grid;place-items:center;border:0;background:none;filter:drop-shadow(0 2px 3px #0005)}
-#hudBuffs .efx-art .rd-ico{width:30px;height:30px;stroke-width:1.8}
+#hudBuffs .efx-art .rd-ico{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #hudBuffs .efx.is-zeny{color:#d7b77a}
 #hudBuffs .efx.is-exp{color:#94c6ac}
 #hudBuffs .efx .s{right:3px;bottom:3px;font-size:9px;border-color:var(--e-frame);background:#101b27;color:#f5e5bd}
@@ -2068,6 +2082,8 @@ body.social-open #minimapTools{display:none!important}
 .pbx-fly b{color:#e5c68e}
 
 @media(max-width:1040px){
+  #gmStudioModal .mail-daily-head{padding:18px 22px 16px}
+  #gmStudioModal .mail-daily-head .trial-brand b{font-size:24px}
   .rd-mail-layout{grid-template-columns:275px minmax(0,1fr)}
   .rd-reader{padding:24px 24px 0}
   .rd-reader h3{font-size:24px}
@@ -2103,6 +2119,10 @@ body.social-open #minimapTools{display:none!important}
   .rd-send{margin-top:18px}
 }
 @media(max-width:620px){
+  #gmStudioModal{padding:10px}
+  #gmStudioModal .mail-daily-card{width:100%;height:calc(100dvh - 20px);max-height:calc(100dvh - 20px)}
+  #gmStudioModal .mail-daily-head{padding:16px 18px 14px}
+  #gmStudioModal .mail-daily-head .trial-brand b{font-size:21px}
   #mailDailyModal .mail-daily-head{padding:16px 18px 14px}
   #mailDailyModal .mail-daily-head .trial-brand b{font-size:21px}
   #mailDailyModal .mail-daily-head .trial-brand small{font-size:10px;line-height:1.6}
