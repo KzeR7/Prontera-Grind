@@ -89,5 +89,36 @@ try{
   assert.equal(ev('JSON.stringify(S.eq.weapon.aff)'),before);assert.equal(ev('S.reforgePending'),undefined);
   assert.ok(pending);
  });
+ test('Workspace title bars no longer repeat the player Zeny',()=>{
+  for(const k of ['reforge','cardsWork','autosell']){
+   ev(`S.zeny=48923924963;tabs.push('equip');sub.equip='${k}';renderWin()`);
+   const tools=doc.querySelector('[data-win=equip] .ui-window-tools');
+   assert.ok(tools,'window tools stay available');
+   assert.equal(doc.querySelector('[data-win=equip] .eclipse-workspace-wallet'),null,`${k} shows no duplicate Zeny wallet`);
+   assert.equal(doc.querySelectorAll('[data-win=equip] .ui-window-tools .eclipse-workspace-wallet').length,0);
+   assert.equal(doc.querySelector('[data-win=equip] .title').textContent.includes('48,923,924,963'),false,'the equipment header carries no Zeny figure');
+   assert.ok(doc.querySelector('[data-win=equip] [data-x]'),'the close button stays in the title bar');
+  }
+ });
+ test('Paid reforge decisions sit in the Affixes rail for quick repeats',()=>{
+  ev(`S.eq.weapon.aff=[{k:'str',v:10},{k:'agi',v:10}];S.zeny=1e9;S.ore.ori=1000;tabs.push('equip');sub.equip='reforge';renderWin()`);
+  doc.querySelector('[data-a=bmref][data-v="weapon:selected"]').click();ev('renderWin()');
+  assert.ok(ev('!!S.reforgePending'),'the reforge produced a paid offer');
+  const rail=doc.querySelector('.eclipse-affix-aside.eclipse-affix-decision');assert.ok(rail,'the decision rail is the Affixes aside');
+  assert.ok(rail.querySelector('[data-a=refaccept][data-v=yes]'),'use the new affixes is in the rail');
+  assert.ok(rail.querySelector('[data-a=refaccept][data-v=no]'),'keep current is in the rail');
+  assert.ok(rail.querySelector('[data-a=refagain]'),'try again is in the rail');
+  assert.equal(rail.querySelector('[data-a=refagain]').disabled,false,'the repeat action is available');
+  const footer=doc.querySelector('[data-win=equip] .eclipse-window-footer');
+  assert.equal(footer.querySelectorAll('[data-a=refaccept],[data-a=refagain]').length,0,'the footer no longer duplicates the decisions');
+  assert.equal(doc.querySelector('.eclipse-affix-main [data-a=refagain]'),null,'try again is not buried under the comparison');
+ });
+ test('Workspace styling keeps the Loadout frame, height and tool icons',()=>{
+  const css=require('node:fs').readFileSync(__dirname+'/../../assets/ui/eclipse.css','utf8');
+  assert.match(css,/body\.equipment-workspace-open #wins\{[^}]*max-height:none/,'workspace windows use the Loadout window height instead of the old 618px clamp');
+  assert.match(css,/\.eclipse-equipment-workspace-window\{[^}]*border:2px solid var\(--e-screen-edge\)/,'workspace windows carry the same gold frame as Loadout');
+  assert.match(css,/\.title \.ui-window-tools \.ui-icon\{width:18px!important;height:18px!important/,'window tool icons stay inside their buttons');
+  assert.doesNotMatch(css,/\.title \.ui-icon\{display:grid;width:38px/,'the framed title badge no longer applies to the close button');
+ });
  console.log(`${passed} equipment workspace checks passed`);
 }finally{g.close()}

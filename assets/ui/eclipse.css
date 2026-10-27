@@ -2641,15 +2641,15 @@ body.social-open #minimapTools{display:none!important}
    supplies the framed-window sizing. The game state and handlers stay the same. */
 #wins>.wp.eclipse-equipment-workspace-window>.title{height:76px;min-height:76px;flex:none;justify-content:space-between;gap:14px;padding:12px 24px;background:linear-gradient(120deg,var(--e-surface-start),var(--e-surface-end) 82%);border-bottom:1px solid var(--e-line)}
 #wins>.wp.eclipse-equipment-workspace-window>.title>span:first-child{gap:12px;min-width:0}
-#wins .eclipse-equipment-workspace-window .title .ui-icon{display:grid;width:38px!important;height:38px!important;place-items:center;padding:8px;color:var(--gold);background:var(--e-raised);border:1px solid color-mix(in srgb,var(--gold) 20%,transparent);border-radius:8px}
+#wins .eclipse-equipment-workspace-window .title>span:first-child>.ui-icon{display:grid;width:38px!important;height:38px!important;place-items:center;padding:8px;color:var(--gold);background:var(--e-raised);border:1px solid color-mix(in srgb,var(--gold) 20%,transparent);border-radius:8px}
+/* The window tools keep their own compact icon: the framed 38px badge above must never
+   apply to the close/expand glyphs, which otherwise grew out of their 30px buttons and
+   overlapped each other at the top-right corner. */
+#wins .eclipse-equipment-workspace-window .title .ui-window-tools .ui-icon{width:18px!important;height:18px!important;padding:0;color:inherit;background:none;border:0;border-radius:0}
 #wins .eclipse-equipment-workspace-window .eclipse-window-heading{gap:4px;min-width:0}
 #wins .eclipse-equipment-workspace-window .eclipse-window-heading small{color:var(--e-muted);font-size:8px;letter-spacing:1.4px}
 #wins .eclipse-equipment-workspace-window .eclipse-window-heading b{font:650 21px/1.05 var(--e-display);letter-spacing:-.4px;color:var(--ink)}
 #wins .eclipse-equipment-workspace-window .eclipse-farming,#wins .eclipse-equipment-workspace-window [data-ui-expand]{display:none}
-#wins .eclipse-workspace-wallet{display:flex;align-items:center;gap:8px;margin-right:7px;padding:0 7px;color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums}
-#wins .eclipse-workspace-wallet-icon{font-size:14px}
-#wins .eclipse-workspace-wallet b{font-size:12px;font-weight:500}
-#wins .eclipse-workspace-wallet small{display:none}
 #wins .eclipse-equipment-workspace-window .ui-window-tools{gap:8px}
 #wins .eclipse-equipment-workspace-window .ui-window-tools [data-x]{width:36px;height:36px;padding:9px;color:var(--ink);border-color:var(--e-line);border-radius:7px}
 #wins .eclipse-equipment-workspace-window>.wbody{display:flex;flex:1 1 auto;flex-direction:column;min-height:0;max-height:none;overflow-x:hidden;overflow-y:auto;background:transparent}
@@ -2889,6 +2889,33 @@ body.social-open #minimapTools{display:none!important}
 #wins .eclipse-affix-repeat>small{font-size:10px;line-height:1.5}
 #wins .eclipse-affix-repeat>button{min-height:39px;font-size:10px}
 
+/* Paid-offer decisions: the right-hand rail holds keep / use / repeat so the player can
+   roll again from the same place instead of scrolling back down the comparison. */
+#wins .eclipse-affix-workbench.has-paid-offer .eclipse-affix-aside{display:flex;flex-direction:column;align-self:start;gap:9px;padding:13px 12px;background:linear-gradient(160deg,color-mix(in srgb,var(--e-raised) 92%,transparent),color-mix(in srgb,var(--e-bg) 92%,transparent))}
+#wins .eclipse-affix-decision>h3{margin:3px 0 0;font-size:16px}
+#wins .eclipse-affix-decision>p{margin:0;color:var(--e-muted);font-size:8.5px;line-height:1.45}
+#wins .eclipse-affix-decision .eclipse-affix-paid{display:grid;gap:3px;padding:9px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:7px}
+#wins .eclipse-affix-decision .eclipse-affix-paid>.ui-eyebrow{margin-bottom:2px;color:var(--gold);font-size:7.5px;letter-spacing:1.1px}
+#wins .eclipse-affix-decision .eclipse-affix-resource{margin:0;padding:5px 8px;border-radius:4px}
+#wins .eclipse-affix-decision .eclipse-affix-resource>span{font-size:8.5px}
+#wins .eclipse-affix-decision .eclipse-affix-resource>b{font-size:9.5px}
+#wins .eclipse-affix-decision .eclipse-affix-resource.eclipse-affix-total>b{font-size:12px}
+#wins .eclipse-affix-decision .eclipse-affix-protection{margin:2px 0 0;padding:6px 8px;font-size:7.5px;line-height:1.4}
+#wins .eclipse-affix-decision-actions{display:grid;gap:6px;width:100%}
+#wins .eclipse-affix-decision-actions>button{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:36px;padding:7px 12px;border-radius:6px;font-size:10px;font-weight:600;text-align:center;white-space:nowrap}
+#wins .eclipse-affix-decision-actions>button .ui-icon{width:15px;height:15px;flex:none}
+#wins .eclipse-affix-take{color:var(--e-bg);background:linear-gradient(110deg,var(--e-action-start),var(--e-action-end));border:1px solid var(--gold);box-shadow:0 4px 14px color-mix(in srgb,var(--gold) 18%,transparent)}
+#wins .eclipse-affix-take:hover:not(:disabled),#wins .eclipse-affix-take:focus-visible{filter:brightness(1.08)}
+#wins .eclipse-affix-take:disabled{color:var(--e-muted);background:var(--e-soft);border-color:var(--e-line);box-shadow:none}
+#wins .eclipse-affix-keep{color:var(--ink);background:var(--e-raised);border:1px solid var(--e-line2)}
+#wins .eclipse-affix-keep:hover,#wins .eclipse-affix-keep:focus-visible{border-color:var(--gold);color:var(--gold)}
+#wins .eclipse-affix-decision .eclipse-affix-repeat{margin-top:0;gap:5px;padding:9px;background:var(--e-bg)}
+#wins .eclipse-affix-decision .eclipse-affix-repeat>b{font-size:9.5px}
+#wins .eclipse-affix-decision .eclipse-affix-repeat>small{font-size:7.5px;line-height:1.4;color:var(--e-muted)}
+#wins .eclipse-affix-decision .eclipse-affix-repeat>button{min-height:34px;color:var(--gold);border:1px solid var(--e-line2);background:var(--e-soft);font-size:9.5px;font-weight:600}
+#wins .eclipse-affix-decision .eclipse-affix-repeat>button:hover:not(:disabled),#wins .eclipse-affix-decision .eclipse-affix-repeat>button:focus-visible{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 18%,transparent)}
+#wins .eclipse-affix-decision .eclipse-affix-repeat>button:disabled{color:var(--e-muted);border-color:var(--e-line);background:transparent}
+
 @media(max-width:900px){
  #wins .eclipse-card-workspace-grid{grid-template-columns:minmax(225px,270px) minmax(0,1fr) minmax(240px,285px)}
  #wins .eclipse-affix-workbench{grid-template-columns:minmax(215px,260px) minmax(0,1fr) minmax(250px,295px)}
@@ -2897,12 +2924,9 @@ body.social-open #minimapTools{display:none!important}
 }
 @media(max-width:700px){
  #wins>.wp.eclipse-equipment-workspace-window>.title{height:70px;min-height:70px;padding:10px 16px}
- #wins .eclipse-equipment-workspace-window .title .ui-icon{width:35px!important;height:35px!important;padding:7px}
+ #wins .eclipse-equipment-workspace-window .title>span:first-child>.ui-icon{width:35px!important;height:35px!important;padding:7px}
  #wins .eclipse-equipment-workspace-window .eclipse-window-heading small{font-size:7px;letter-spacing:1px}
  #wins .eclipse-equipment-workspace-window .eclipse-window-heading b{font-size:19px}
- #wins .eclipse-workspace-wallet{gap:5px;margin-right:0;padding:0 2px}
- #wins .eclipse-workspace-wallet-icon{font-size:12px}
- #wins .eclipse-workspace-wallet b{font-size:10px}
  #wins .eclipse-equipment-workspace-window .ui-window-tools{gap:5px}
  #wins .eclipse-equipment-workspace-window .ui-window-tools [data-x]{width:32px;height:32px;padding:7px}
  #wins .eclipse-equipment-workspace-window>.wbody>.ui-content{overflow:visible}
@@ -3124,8 +3148,6 @@ body.social-open #minimapTools{display:none!important}
  #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.eclipse-affix-resource.eclipse-affix-total{grid-column:1/-1;display:flex;justify-content:space-between;gap:8px;margin:0;padding:9px}
  #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.eclipse-affix-resource.eclipse-affix-total>b{text-align:right}
 }
-#wins .eclipse-workspace-wallet-icon{display:grid;place-items:center;width:15px;height:15px;border:1px solid currentColor;border-radius:50%;font-size:8px;line-height:1;font-weight:700}
-@media(max-width:700px){#wins .eclipse-workspace-wallet-icon{width:13px;height:13px;font-size:7px}}
 /* Keep workspace symbols legible in the bundled display font, and let phone footer guidance wrap. */
 #wins .eclipse-workspace-pills .ui-icon{display:inline-block;width:11px;height:11px;margin-right:5px;vertical-align:-2px}
 #wins .eclipse-autosell-rarity>span .ui-icon{width:10px;height:10px}
@@ -3152,7 +3174,7 @@ body.equipment-workspace-open #wins{
   left:50%;right:auto;transform:translateX(-50%);
   width:min(1120px,calc(100% - 32px));
   top:22px;bottom:calc(var(--docktop,76px) + 12px);
-  height:auto;max-height:min(618px,calc(100% - 219px));
+  height:auto;max-height:none;
   align-items:stretch;background:none;backdrop-filter:none;
   overflow:visible;z-index:47;padding:0;
   --pad:0;
@@ -3161,7 +3183,7 @@ body.equipment-workspace-open #wins>*{display:none}
 body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window{
   display:flex;flex:1 1 0;width:100%;min-width:0;
   height:100%;max-height:100%;
-  border:1px solid var(--e-frame);border-radius:10px;
+  border:2px solid var(--e-screen-edge);border-radius:10px;
   background:linear-gradient(120deg,var(--e-surface-start),var(--e-surface-end) 82%);
   box-shadow:0 10px 28px #030d1740,inset 0 1px 0 #ffffff09;
   overflow:hidden;
@@ -3329,6 +3351,11 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
 }
 
 /* 5) Responsive: keep tabs 1-row (wording + gold line), workspace columns collapse */
+@media(max-width:900px){
+ /* Loadout's phone/tablet #wins is calc(100% - 16px); the workspaces used the wider
+    desktop inset and rendered 8px in on both sides. Match the Loadout box exactly. */
+ body.equipment-workspace-open #wins{width:min(1120px,calc(100% - 16px))}
+}
 @media(max-width:1040px){
  #wins [data-win="equip"] .wbody>.atabs{padding:0 8px}
  #wins [data-win="equip"] .wbody>.atabs>button{font-size:8.5px;letter-spacing:.06em}
@@ -3341,7 +3368,9 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
 @media(max-width:760px){
  body.equipment-workspace-open #wins{
    width:min(1120px,calc(100% - 16px));
-   top:64px;bottom:calc(var(--docktop,76px) + 4px);
+   /* Same phone box as Loadout: left:8px, top:22px above the dock. The old 64px top
+      made the workspace windows start lower and end higher than every other tab. */
+   left:8px;right:auto;transform:none;top:22px;bottom:calc(var(--docktop,76px) + 12px);
    max-height:none;
  }
  #wins [data-win="equip"] .wbody>.atabs{height:34px;min-height:34px;padding:0 4px}
