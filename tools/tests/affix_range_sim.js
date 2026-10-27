@@ -4,7 +4,7 @@ const g=createGame(),ev=g.ev;
 try{
  ev(`S=fresh();S.cls='Rune Knight';S.lv=150;window.mask={...makeMythicEquipment('infernal','head').item,aff:[{k:'str',v:89},{k:'atk',v:62},{k:'luk',v:60},{k:'int',v:74}]};S.eq.head=mask`);
  assert.match(ev('affixRangeText(mask.aff[0],mask)'),/STR \+89 \[44~69\] · saved roll outside current range$/);
- assert.match(ev('affixRangeText(mask.aff[1],mask)'),/ATK % \+62 \[42~66\]$/);
+ assert.match(ev('affixRangeText(mask.aff[1],mask)'),/ATK % \+62 \[42~66%\]$/);
  assert.match(ev('affixRangeText(mask.aff[2],mask)'),/LUK \+60 \[44~69\]$/);
  assert.match(ev('affixRangeText(mask.aff[3],mask)'),/INT \+74 \[44~69\] · saved roll outside current range$/);
  // Every grade, pool, quality, rounding and movement cap: endpoints must be attainable.
@@ -12,7 +12,7 @@ try{
  for(let sec=0;sec<=6;sec++)for(let tier=0;tier<=4;tier++)for(const quality of [1,1.25,1.5])for(const slot of ['weapon','head','armor','off','leg','acc']){
   ev(`window.profile={sec:${sec},tier:${tier},quality:${quality},slot:'${slot}',wt:'staff',mp:9}`);
   for(const k of Array.from(ev('affixPool(profile)'))){
-   const range=ev(`affixRangeText({k:'${k}',v:0},profile)`),match=range.match(/\[(\d+)~(\d+)( effective)?\]/);
+   const range=ev(`affixRangeText({k:'${k}',v:0},profile)`),match=range.match(/\[(\d+)~(\d+)%?( effective)?\]/);
    assert.ok(match,range);const scale=k==='hp'?2:1;
    for(const [random,bound]of [[0,1],[.9999999999999999,2]]){
     const value=ev(`Math.random=()=>${random};rollAffix('${k}',profile).v`);

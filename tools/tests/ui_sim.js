@@ -144,7 +144,7 @@ let skinBroken=false,skinNote='';   // the Appearance panel's class-skin state (
 const skCost=x=>x;
 let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
-let S=null,mapM=0,mapL=1,selB=null,selC=null,collectionGrade=-1;   // remaining panel state comes in with the V grab
+let S=null,mapM=0,mapL=1,selB=null,selC=null,collectionGrade=-1,equipmentCardSearch='',equipmentCardFilter='all',equipmentCardPickId=null;   // remaining panel state comes in with the V grab
 const document={addEventListener(){}};
 const mobs=[],drops=[],logs=[];
 let boardPeriod='daily',boardCache={},boardLoading=false,boardError='';
@@ -1114,7 +1114,7 @@ t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one a
   assert.ok(h.includes('data-a="bmore" data-v="ori"')&&h.includes('data-a="bmore" data-v="elu"'),'Oridecon and Elunium are both for sale from Base Lv 100');
   assert.ok(h.includes('100,000z'),'ore is priced at 100,000z');
   assert.ok(U.V.reforge().includes('data-a="bmref" data-v="armor:all"'),'a worn piece with affixes can be reforged');
-  assert.ok(U.V.reforge().includes('Full · 1,050,000z'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
+  assert.ok(U.V.reforge().includes('Full reforge · 1,050,000 Zeny'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
   assert.ok(!U.V.reforge().includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
   // v90.8: the ten Nightmare materials are sold here, one Buy 1 button each
   assert.ok(h.includes('Nightmare materials') && h.includes('3,000,000z each'),'the Nightmare materials are listed and priced at 3,000,000z');

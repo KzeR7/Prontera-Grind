@@ -1,6 +1,6 @@
 @import url('fonts.css');
 /* Eclipse: presentation tokens are intentionally independent of rarity and combat effects. */
-:root{--ink:#e8edf4;--panel:#131d29;--edge:#ffffff12;--edge2:#ffffff25;--gold:#d7b77a;--e-bg:#101b27;--e-raised:#1b2834;--e-muted:#8a9bab;--e-soft:#d7b77a16;--e-glass:#101b27f7;--e-font:'DM Sans',system-ui,sans-serif;--e-display:'Manrope',system-ui,sans-serif}
+:root{--ink:#e8edf4;--panel:#131d29;--edge:#ffffff12;--edge2:#ffffff25;--gold:#d7b77a;--e-bg:#101b27;--e-raised:#1b2834;--e-muted:#8a9bab;--e-soft:#d7b77a16;--e-glass:#101b27f7;--e-font:'DM Sans',system-ui,sans-serif;--e-display:'Manrope',system-ui,sans-serif;--danger:#d7887e;--danger-soft:#e5a59b;--danger-line:#d99c92}
 
 :root[data-palette=aurora]{--ink:#e7f3ed;--panel:#182b25;--edge:#365447;--edge2:#638f7c;--gold:#a2dfbf;--e-bg:#0e1a16;--e-raised:#253d33;--e-muted:#a5c2b5;--e-soft:#a2dfbf1a;--e-glass:#182b25f5}
 
@@ -1176,10 +1176,10 @@ body.clean-screen #eclipseCompanions{display:none}
 #wins .eclipse-workshop-stage [data-a=refine]{margin-top:12px;padding:10px}
 #wins .ui-panel>.atabs{background:var(--panel)}
 
-/* Rarity filtering keeps its familiar equipment colors in every palette. */
-#wins .eclipse-filters .eclipse-rarity-filter{--filter-color:#b5c2ce;color:var(--filter-color);border:1px solid color-mix(in srgb,var(--filter-color) 30%,transparent);background:color-mix(in srgb,var(--filter-color) 5%,transparent)}
-#wins .eclipse-filters .r1{--filter-color:#68df9b}#wins .eclipse-filters .r2{--filter-color:#6aafff}#wins .eclipse-filters .r3{--filter-color:#c18aff}#wins .eclipse-filters .r4{--filter-color:#ffd26e}#wins .eclipse-filters .r5{--filter-color:#9d8dff}#wins .eclipse-filters .r6{--filter-color:#ff85cf}
-#wins .eclipse-filters .eclipse-rarity-filter[aria-pressed=true]{border-color:var(--filter-color);background:color-mix(in srgb,var(--filter-color) 20%,transparent);box-shadow:inset 0 -2px var(--filter-color)}
+/* Clickable Loadout rarity chips retain the existing equipment rarity palette. */
+#wins .eclipse-rarity-filter{--filter-color:#b5c2ce;color:var(--filter-color);border:1px solid color-mix(in srgb,var(--filter-color) 45%,transparent);background:color-mix(in srgb,var(--filter-color) 5%,transparent)}
+#wins .eclipse-rarity-filter:hover{border-color:var(--filter-color);background:color-mix(in srgb,var(--filter-color) 13%,transparent)}
+#wins .eclipse-rarity-filter[aria-pressed=true]{border-color:var(--filter-color);background:color-mix(in srgb,var(--filter-color) 20%,transparent);box-shadow:inset 0 -2px var(--filter-color)}
 
 /* Compact windows grow only as far as their content and available viewport require. */
 
@@ -1940,3 +1940,1417 @@ body.social-open #minimapTools{display:none!important}
   .roulette-prize-grid{grid-template-columns:1fr}
   .roulette-mat-stock{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* Loadout workbench — live equipment and inventory controls, styled without changing game rules. */
+#wins .eclipse-equipment{grid-template-columns:minmax(185px,.78fr) minmax(0,1.78fr) minmax(235px,.94fr)!important;gap:18px;align-items:start;overflow:visible}
+#wins .eclipse-equipment>.ui-section{min-width:0;align-self:stretch;padding:16px 13px}
+#wins .eclipse-equipment .ui-section-label{display:flex;align-items:center;gap:8px;padding:0 0 12px;color:var(--e-muted);font-size:9px;letter-spacing:1.25px;line-height:1.3}
+#wins .eclipse-equipment .eclipse-section-count{margin-left:auto;color:var(--gold);font:600 9px var(--e-font);letter-spacing:.04em;white-space:nowrap}
+#wins .eclipse-equipped{background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%);border:1px solid var(--e-line);border-radius:8px}
+#wins .eclipse-equipped .ui-loadout-slots{margin:5px auto 0;max-width:235px}
+#wins .eclipse-doll-preview{filter:drop-shadow(0 8px 14px #0005)}
+#wins .eclipse-doll-caption{padding:12px 0 16px}
+#wins .eclipse-loadout-facts{gap:12px 10px;padding-top:14px}
+#wins .eclipse-loadout-facts>div{align-items:baseline}
+#wins .eclipse-loadout-facts b{font-variant-numeric:tabular-nums;color:var(--ink)}
+#wins .eclipse-bag{background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 28%,transparent),transparent 78%);border:1px solid var(--e-line);border-radius:8px}
+#wins .eclipse-bag .bag-top{margin:0 0 10px;padding:8px 0;border:0;border-bottom:1px solid var(--e-line);gap:6px;align-items:center}
+#wins .eclipse-bag .bag-top .row{display:flex;flex-wrap:wrap;gap:6px}
+#wins .eclipse-bag .bag-top .chip{font-variant-numeric:tabular-nums;white-space:nowrap}
+#wins .eclipse-bag>.row:has(.r4){padding:7px 9px;margin:0 0 9px;border:1px solid color-mix(in srgb,#f08a79 45%,var(--e-line));border-radius:5px;background:color-mix(in srgb,#f08a79 9%,var(--panel));color:#f3aaa0;font-size:9px}
+#wins .eclipse-inventory-tools{display:flex;flex-direction:column;gap:8px;min-width:0}
+#wins .eclipse-search-label{display:block;position:relative;min-width:0}
+#wins .eclipse-search-label input{box-sizing:border-box;width:100%;height:36px;padding:0 11px;border:1px solid var(--e-line-bright);border-radius:5px;background:color-mix(in srgb,var(--e-bg) 70%,transparent);color:var(--ink);font:11px var(--e-font);outline:none}
+#wins .eclipse-search-label input:focus{border-color:var(--gold);box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 18%,transparent)}
+#wins .eclipse-search-label input::placeholder{color:var(--e-muted);opacity:.78}
+.eclipse-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#wins .eclipse-slot-filters{display:flex;gap:5px;overflow-x:auto;padding:1px 0 3px;scrollbar-width:thin}
+#wins .eclipse-slot-filters button{flex:1 0 auto;min-height:30px;padding:5px 8px;border:1px solid var(--e-line);border-radius:5px;background:transparent;color:var(--e-muted);font:600 9px var(--e-font);white-space:nowrap}
+#wins .eclipse-slot-filters button:hover,#wins .eclipse-slot-filters button[aria-pressed=true]{border-color:var(--edge2);background:var(--e-soft);color:var(--gold)}
+#wins .eclipse-rarity-legend{display:flex;flex-wrap:nowrap;justify-content:stretch;align-items:center;gap:5px;width:100%;padding:6px 0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;border-top:1px solid var(--e-line);border-bottom:1px solid var(--e-line)}
+#wins .eclipse-rarity-legend::-webkit-scrollbar{display:none}
+#wins .eclipse-rarity-legend .eclipse-rarity-filter{box-sizing:border-box;display:inline-flex;flex:1 1 0;min-width:34px;align-items:center;justify-content:center;min-height:24px;padding:4px 6px;border-radius:5px;font:600 8px/1 var(--e-font);white-space:nowrap;cursor:pointer;transition:background-color .15s,border-color .15s,color .15s}
+#wins .eclipse-rarity-legend .eclipse-rarity-filter:focus-visible{outline:2px solid var(--filter-color);outline-offset:2px}
+.eclipse-rarity-chip{box-sizing:border-box;display:inline-grid;place-items:center;min-width:18px;height:15px;padding:0 3px;border:1px solid color-mix(in srgb,var(--rarity-color) 80%,white);border-radius:3px;background:color-mix(in srgb,var(--rarity-color) 22%,var(--e-bg));color:var(--rarity-color);font:900 7px/1 var(--e-font);letter-spacing:.02em;text-shadow:0 1px 2px #0009;white-space:nowrap;flex:none}
+.eclipse-rarity-chip[data-eclipse-rarity="5"]{box-shadow:0 0 7px color-mix(in srgb,var(--rarity-color) 38%,transparent)}
+.eclipse-rarity-chip[data-eclipse-rarity="6"]{box-shadow:0 0 8px color-mix(in srgb,var(--rarity-color) 46%,transparent)}
+.eclipse-rarity-chip[data-eclipse-rarity="7"]{background:color-mix(in srgb,var(--rarity-color) 22%,var(--e-bg));border-color:var(--rarity-color);color:#8ffff7;box-shadow:0 0 9px color-mix(in srgb,var(--rarity-color) 54%,transparent)}
+#wins .eclipse-new-drops{height:auto;min-height:34px;margin:0;padding:4px 0;border-color:var(--e-line);font-size:8px;line-height:1.35}
+#wins .eclipse-new-drops span{min-width:0;color:var(--e-muted)}
+#wins .eclipse-new-drops button{width:auto;min-height:28px;padding:5px 3px 5px 8px;color:var(--gold);font:700 8px var(--e-font);text-align:right}
+#wins .eclipse-new-drops button:disabled{opacity:.65;cursor:default}
+#wins .eclipse-bag .ui-item-scroll{box-sizing:border-box;height:275px;max-height:275px;min-height:135px;overflow:auto;padding:3px;scrollbar-width:thin;scrollbar-gutter:stable}
+#wins .eclipse-bag .grid{grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:56px;gap:6px;align-content:start;margin:0;width:100%;padding:0}
+#wins .eclipse-bag .grid>.cell{box-sizing:border-box;position:relative;display:grid;place-items:center;width:100%;height:56px;min-width:0;min-height:0;max-width:none;margin:0;padding:8px 5px;border:1px solid var(--e-line);border-bottom:2px solid color-mix(in srgb,var(--e-item-rarity,var(--edge2)) 68%,var(--e-line));border-radius:5px;background:linear-gradient(145deg,var(--e-raised),var(--panel));box-shadow:none;overflow:hidden;cursor:pointer}
+#wins .eclipse-bag .grid>.cell[data-eclipse-rarity]{border-color:color-mix(in srgb,var(--e-item-rarity) 40%,var(--e-line));border-bottom-color:var(--e-item-rarity)}
+#wins .eclipse-bag .grid>.cell.sel{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold);z-index:1}
+#wins .eclipse-bag .grid>.cell.empty{opacity:.28;cursor:default}
+#wins .eclipse-bag .grid>.cell img.ro-item-icon{width:32px;height:32px;max-width:100%;max-height:32px;object-fit:contain}
+#wins .eclipse-bag .grid>.cell .eclipse-rarity-chip{position:absolute;left:3px;top:3px;z-index:2;min-width:15px;height:13px;padding:0 2px;font-size:6px}
+#wins .eclipse-bag .grid>.cell .lockstar{left:auto!important;right:3px!important;top:3px!important;bottom:auto!important;z-index:3;font-size:11px}
+#wins .eclipse-bag .grid>.cell .rf{left:auto!important;right:3px!important;top:auto!important;bottom:3px!important;z-index:3;font-size:7px}
+#wins .eclipse-bag .cell .rarity-label{display:none}
+#wins .eclipse-bag .grid>.cell .eclipse-tile-sockets{left:3px;right:auto;bottom:3px;text-align:left;font-size:6px;letter-spacing:0;line-height:1;pointer-events:none}
+#wins .eclipse-equipment .ui-loadout-slots>.cell[data-eclipse-rarity]{position:absolute;border-color:color-mix(in srgb,var(--e-item-rarity) 54%,var(--e-line));border-bottom-color:var(--e-item-rarity);background:linear-gradient(145deg,color-mix(in srgb,var(--e-item-rarity) 16%,var(--e-raised)),var(--panel));box-shadow:0 3px 10px #0004}
+#wins .eclipse-equipment .ui-loadout-slots>.cell .eclipse-rarity-chip{position:absolute;left:auto;right:2px;top:2px;z-index:3;min-width:15px;height:13px;padding:0 2px;font-size:6px}
+#wins .eclipse-equipment .ui-loadout-slots>.cell .lockstar{left:2px!important;right:auto!important;top:auto!important;bottom:2px!important;z-index:4;font-size:10px}
+#wins .eclipse-equipment .ui-loadout-slots>.cell .rf{right:2px;bottom:2px;top:auto;z-index:4}
+#wins .eclipse-bag .grid>.cell.nm:after,#wins .eclipse-equipment .ui-loadout-slots>.cell.nm:after{display:none}
+#wins .eclipse-equipment .ui-loadout-slots>.cell.sel{outline:2px solid var(--gold)!important;outline-offset:2px!important;z-index:5}
+#wins .eclipse-equipment .ui-inspector{padding:15px 14px;background:linear-gradient(155deg,color-mix(in srgb,var(--e-raised) 50%,transparent),color-mix(in srgb,var(--e-bg) 75%,transparent));border:1px solid var(--e-line);border-radius:8px;min-width:0}
+#wins .eclipse-equipment .ui-inspector>.ui-section-label{padding-bottom:11px}
+#wins .eclipse-equipment .ui-inspector>[hidden]{display:none!important}
+#wins .eclipse-item-heading{align-items:flex-start;flex-wrap:nowrap;gap:10px;margin-bottom:12px;min-width:0}
+#wins .eclipse-item-icon{position:relative;overflow:hidden;background:color-mix(in srgb,var(--e-item-rarity,var(--e-bg)) 12%,var(--e-bg));border-color:color-mix(in srgb,var(--e-item-rarity,var(--e-line-bright)) 55%,var(--e-line));flex:0 0 58px}
+#wins .eclipse-item-icon .eclipse-rarity-chip{position:absolute;top:3px;right:3px}
+#wins .eclipse-item-title{min-width:0;flex:1}
+#wins .eclipse-item-title>small{display:block;color:var(--e-muted);font-size:7px;line-height:1.4;letter-spacing:.6px}
+#wins .eclipse-item-title h3{overflow-wrap:anywhere;line-height:1.2}
+#wins .eclipse-item-power{gap:8px;padding:9px 0}
+#wins .eclipse-item-power strong{font-size:15px;color:var(--gold);font-variant-numeric:tabular-nums}
+#wins .eclipse-item-power small{display:block;text-align:right;color:var(--e-muted);font-size:7px}
+#wins .eclipse-item-affixes{display:flex;flex-direction:column;gap:5px;padding:10px 0;color:var(--ink);font-size:9px;line-height:1.4}
+#wins .eclipse-item-affixes>div{display:flex;gap:7px;align-items:flex-start}
+#wins .eclipse-item-affixes>div>span{color:var(--gold);flex:none}
+#wins .eclipse-sockets{padding:9px 0;border-top:1px solid var(--e-line);border-bottom:1px solid var(--e-line)}
+#wins .eclipse-sockets .ui-section-title{display:flex;justify-content:space-between;gap:6px;color:var(--e-muted);font-size:7px;letter-spacing:.7px}
+#wins .eclipse-socket-summary{display:flex;flex-direction:column;gap:3px;margin:7px 0;color:var(--e-muted);font-size:8px}
+#wins .eclipse-text-action{padding:5px 0;border:0;background:none;color:var(--gold);font:700 9px var(--e-font);text-align:left;cursor:pointer}
+#wins .eclipse-item-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:11px 0 3px}
+#wins .eclipse-item-actions>button{box-sizing:border-box;min-width:0;min-height:34px;padding:7px 8px;font:700 9px var(--e-font);line-height:1.3;overflow-wrap:anywhere}
+#wins .eclipse-item-actions>.eclipse-primary{grid-column:1/-1}
+#wins .eclipse-item-actions>.eclipse-secondary{background:var(--e-raised);border:1px solid var(--e-line-bright);border-radius:5px;color:var(--ink)}
+#wins .eclipse-item-actions [data-a=sell]{border-color:color-mix(in srgb,#ee8076 45%,var(--e-line));color:#f0aaa2}
+#wins .eclipse-item-actions [data-a=lockgear]{color:var(--e-muted)}
+#wins .eclipse-equipment .ui-fold{margin-top:9px;border-color:var(--e-line);background:transparent}
+#wins .eclipse-equipment .ui-fold>summary{padding:8px 4px;color:var(--e-muted);font-size:8px;cursor:pointer}
+#wins .eclipse-equipment .ui-fold-body{padding:8px 2px}
+#wins .eclipse-equipment .eclipse-full-detail-source{display:flex;flex-direction:column;gap:7px}
+#wins .eclipse-equipment .eclipse-full-detail-source button{min-height:30px;padding:6px 8px;font-size:9px}
+#wins .eclipse-empty-item{padding:18px 5px;text-align:center;color:var(--e-muted);font-size:9px;line-height:1.5}
+#wins .eclipse-bag>.bag-auto,#wins .eclipse-bag>.bag-tools{margin-top:8px}
+#wins .eclipse-bag .bag-tools>summary,#wins .eclipse-bag .bag-auto>summary{color:var(--e-muted);font-size:9px}
+#wins .eclipse-bag .autosell-editor{border-color:var(--e-line);border-radius:6px;background:var(--e-bg)}
+#wins .eclipse-bag .sell-help{font-size:9px;line-height:1.45}
+#wins .eclipse-window-footer.eclipse-loadout-footer{gap:8px}
+#wins .eclipse-loadout-footer .eclipse-footer-message{flex:1;text-align:center;font-size:7px}
+#wins .eclipse-loadout-autosell{flex:none;min-height:24px;padding:4px 7px;border:1px solid var(--e-line);border-radius:4px;background:var(--e-soft);color:var(--gold);font:700 8px var(--e-font);white-space:nowrap;cursor:pointer}
+#wins .eclipse-loadout-autosell:hover,#wins .eclipse-loadout-autosell:focus-visible{border-color:var(--gold);background:var(--e-raised)}
+#wins .eclipse-loadout-autosell:focus-visible,#wins .eclipse-equipment :is(button,[role=button],input,summary):focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+@container (max-width: 900px) and (min-width: 701px){
+  #wins .eclipse-equipment{grid-template-columns:minmax(175px,.78fr) minmax(220px,1.55fr) minmax(215px,1fr)!important;gap:12px}
+  #wins .eclipse-equipment>.ui-section{padding:14px 10px}
+  #wins .eclipse-bag .grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
+@container (max-width: 700px){
+  #wins .wbody[data-layout=equip]:has(.eclipse-equipment){display:block!important;overflow:auto!important}
+  #wins .wbody[data-layout=equip]>.ui-content:has(.eclipse-equipment){display:block!important}
+  #wins .eclipse-equipment{display:flex!important;flex-direction:column!important;grid-template-columns:minmax(0,1fr)!important;gap:0!important;min-height:0;overflow:visible!important}
+  #wins .eclipse-equipment>.eclipse-equipped{order:1;width:auto;max-width:none;margin:0;padding:16px 14px 13px;border:0;border-bottom:1px solid var(--e-line);border-radius:0;background:none}
+  #wins .eclipse-equipment>.eclipse-bag{order:2;width:auto;max-width:none;margin:0;padding:16px 14px;border:0;border-bottom:1px solid var(--e-line);border-radius:0;background:none;overflow:visible!important}
+  #wins .eclipse-equipment>.ui-inspector{order:3;width:auto;max-width:none;margin:0;padding:16px 14px;border:0;border-radius:0;background:none;overflow:visible!important}
+  #wins .eclipse-equipped .ui-loadout-slots{height:230px;max-width:245px;margin:8px auto 0}
+  #wins .eclipse-equipped .ui-loadout-slots>[data-a=seleq]{width:42px;height:44px;padding:6px}
+  #wins .eclipse-equipped .ui-loadout-slots [data-a=seleq] img{width:29px;height:29px}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=head]{left:calc(50% - 21px);top:0}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=weapon]{left:12px;top:63px}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=armor]{right:12px;top:63px}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=off]{left:12px;top:119px}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=leg]{right:12px;top:119px}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=acc1]{left:calc(50% - 49px);top:177px}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=acc2]{right:calc(50% - 49px);top:177px}
+  #wins .eclipse-equipped .eclipse-doll-preview{top:35px;width:148px;height:165px}
+  #wins .eclipse-equipped .eclipse-doll-preview canvas{width:148px;height:158px}
+  #wins .eclipse-loadout-facts{max-width:360px;margin:0 auto;gap:10px 22px;padding-top:12px}
+  #wins .eclipse-loadout-facts span{font-size:8px}
+  #wins .eclipse-loadout-facts b{font-size:9px}
+  #wins .eclipse-bag .ui-item-scroll{height:auto;max-height:none;min-height:0;overflow:visible;flex:none}
+  #wins .eclipse-bag .grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:58px;gap:7px}
+  #wins .eclipse-bag .grid>.cell{height:58px}
+  #wins .eclipse-inventory-tools{gap:9px}
+  #wins .eclipse-slot-filters button{min-height:34px;font-size:10px}
+  #wins .eclipse-rarity-legend{gap:4px;padding:6px 0}
+  #wins .eclipse-rarity-legend .eclipse-rarity-filter{min-height:25px;font-size:8px}
+  #wins .eclipse-new-drops{min-height:38px}
+  #wins .eclipse-new-drops button{font-size:9px}
+  #wins .eclipse-item-heading{gap:10px}
+  #wins .eclipse-item-icon{flex-basis:58px;width:58px!important;height:60px!important}
+  #wins .eclipse-item-title h3{font-size:16px}
+  #wins .eclipse-item-title>small{font-size:8px}
+  #wins .eclipse-item-actions{grid-template-columns:repeat(2,minmax(0,1fr));max-width:460px}
+  #wins .eclipse-item-actions>button{min-height:40px;font-size:10px}
+  #wins .eclipse-equipment .ui-fold>summary{min-height:30px;font-size:9px}
+  #wins .eclipse-window-footer.eclipse-loadout-footer{gap:5px;padding:0 8px}
+  #wins .eclipse-loadout-footer .eclipse-footer-message{display:none}
+  #wins .eclipse-loadout-autosell{min-height:28px;font-size:8px}
+}
+@container (max-width: 380px){
+  #wins .eclipse-equipped .ui-loadout-slots{max-width:225px}
+  #wins .eclipse-equipped .ui-loadout-slots>[data-a=seleq]{width:38px;height:40px;padding:5px}
+  #wins .eclipse-equipped .ui-loadout-slots [data-a=seleq] img{width:26px;height:26px}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=head]{left:calc(50% - 19px)}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=weapon],#wins .eclipse-equipped .ui-loadout-slots [data-v=off]{left:9px}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=armor],#wins .eclipse-equipped .ui-loadout-slots [data-v=leg]{right:9px}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=acc1]{left:calc(50% - 45px)}
+  #wins .eclipse-equipped .ui-loadout-slots [data-v=acc2]{right:calc(50% - 45px)}
+  #wins .eclipse-rarity-legend{gap:3px;padding:5px 0}
+  #wins .eclipse-rarity-legend .eclipse-rarity-filter{min-height:23px;min-width:auto;padding:4px 4px;font-size:7px}
+  #wins .eclipse-loadout-autosell{padding:4px 5px}
+}
+
+/* Equipment Cards workspace — owned cards, socket fits and established card actions. */
+#wins .wbody[data-view=cardsWork]{display:flex;flex-direction:column;overflow:hidden}
+#wins .eclipse-card-workspace{display:flex;flex:1;min-height:0;flex-direction:column;background:linear-gradient(135deg,#14202b,#111923 55%,#171e26)}
+#wins .eclipse-card-workspace-head,#wins .eclipse-autosell-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none;padding:15px 19px 13px;border-bottom:1px solid var(--e-line)}
+#wins .eclipse-card-workspace-head h2,#wins .eclipse-autosell-head h2{margin:0;color:var(--ink);font:600 16px/1.2 var(--e-display);letter-spacing:-.35px}
+#wins .eclipse-card-workspace-head p,#wins .eclipse-autosell-head p{margin:4px 0 0;color:var(--e-muted);font-size:8px}
+#wins .eclipse-card-workspace-head .ui-eyebrow,#wins .eclipse-autosell-head .ui-eyebrow{font-size:7px;letter-spacing:1.5px;color:var(--gold)}
+#wins .eclipse-card-summary{display:flex;align-items:center;gap:14px;flex:none;color:var(--e-muted);font-size:8px}
+#wins .eclipse-card-summary b{color:var(--gold);font-size:10px;font-variant-numeric:tabular-nums}
+#wins .eclipse-card-summary>span{display:grid;gap:2px;text-align:right}
+#wins .eclipse-card-workspace-grid{display:grid;grid-template-columns:minmax(190px,245px) minmax(235px,1fr) minmax(220px,270px);flex:1;min-height:0}
+#wins .eclipse-card-collection,#wins .eclipse-card-detail,#wins .eclipse-card-sockets{min-width:0;padding:14px 15px;overflow:auto;scrollbar-width:thin}
+#wins .eclipse-card-collection,#wins .eclipse-card-detail{border-right:1px solid var(--e-line)}
+#wins .eclipse-card-panel-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 9px;color:var(--e-muted);font-size:7px;letter-spacing:1.25px;text-transform:uppercase}
+#wins .eclipse-card-panel-title small{font-size:7px;letter-spacing:0}
+#wins .eclipse-card-search{width:100%;min-height:34px;margin:0 0 8px;padding:7px 9px;font-size:9px}
+#wins .eclipse-card-filter-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0 0 9px}
+#wins .eclipse-card-filter-row button{min-height:28px;padding:4px;font-size:7px;color:var(--e-muted);background:transparent;border-color:var(--e-line)}
+#wins .eclipse-card-filter-row button[aria-pressed=true]{color:var(--gold);background:var(--e-soft);border-color:var(--e-line2)}
+#wins .eclipse-card-list{display:flex;flex-direction:column;gap:6px;min-height:0}
+#wins .eclipse-card-entry{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:7px;width:100%;min-height:54px;padding:7px;text-align:left;background:linear-gradient(130deg,var(--e-raised),var(--panel));border:1px solid var(--e-line);border-radius:6px}
+#wins .eclipse-card-entry:hover,#wins .eclipse-card-entry[aria-pressed=true]{border-color:var(--e-line2);background:var(--e-soft)}
+#wins .eclipse-card-entry-icon{display:grid;place-items:center;width:32px;height:32px;color:#e7c583;background:#d7b77a12;border:1px solid #d7b77a34;border-radius:6px}
+#wins .eclipse-card-entry-icon svg{width:20px;height:20px}
+#wins .eclipse-card-entry-copy{display:grid;min-width:0;gap:3px}
+#wins .eclipse-card-entry-copy b{overflow:hidden;color:var(--ink);font-size:8px;text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-card-entry-copy small{overflow:hidden;font-size:7px;text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-card-entry-count{color:var(--gold);font-size:8px;font-weight:600}
+#wins .eclipse-card-entry-state{grid-column:2/-1;margin-top:-3px;color:var(--e-muted);font-size:6px;letter-spacing:.4px;text-transform:uppercase}
+#wins .eclipse-card-empty{padding:18px 10px;color:var(--e-muted);font-size:8px;text-align:center;line-height:1.6}
+#wins .eclipse-card-focus{display:flex;align-items:flex-start;gap:13px;margin:4px 0 14px;padding:12px;background:linear-gradient(135deg,#d7b77a12,transparent);border:1px solid #d7b77a30;border-radius:7px}
+#wins .eclipse-card-art{display:grid;place-items:center;width:57px;height:57px;flex:none;color:#e7c583;background:#d7b77a13;border:1px solid #d7b77a35;border-radius:8px}
+#wins .eclipse-card-art svg{width:32px;height:32px}
+#wins .eclipse-card-info{min-width:0;flex:1}
+#wins .eclipse-card-info .ui-eyebrow{font-size:7px}
+#wins .eclipse-card-info h3{margin:4px 0 3px;font:600 14px/1.2 var(--e-display);overflow-wrap:anywhere}
+#wins .eclipse-card-info p{margin:0;color:var(--e-muted);font-size:8px}
+#wins .eclipse-card-copycount{flex:none;padding:4px 6px;color:var(--gold);background:var(--e-soft);border:1px solid var(--e-line);border-radius:5px;font-size:7px;white-space:nowrap}
+#wins .eclipse-card-effect-label{margin:14px 0 6px;color:var(--e-muted);font-size:7px;letter-spacing:1px;text-transform:uppercase}
+#wins .eclipse-card-effect-list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+#wins .eclipse-card-effect-list li{display:flex;align-items:flex-start;gap:7px;padding:8px 9px;background:var(--panel);border:1px solid var(--e-line);border-radius:5px;color:var(--ink);font-size:8px;line-height:1.5}
+#wins .eclipse-card-effect-list li:before{content:'✦';flex:none;color:var(--gold)}
+#wins .eclipse-card-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:13px}
+#wins .eclipse-card-actions button{min-height:30px;padding:5px 8px;font-size:7px}
+#wins .eclipse-card-actions button[data-a=sellcard]{color:#e6a79a;border-color:#e6a79a42}
+#wins .eclipse-card-actions .eclipse-card-mastery-action{color:var(--gold);border-color:var(--e-line2)}
+#wins .eclipse-card-detail-note{margin:12px 0 0;padding:9px 10px;color:var(--e-muted);background:var(--e-bg);border-left:2px solid var(--gold);font-size:7px;line-height:1.6}
+#wins .eclipse-card-slot-select{width:100%;min-height:34px;margin:0 0 8px;font-size:8px}
+#wins .eclipse-card-fit-note{margin:0 0 11px;color:var(--e-muted);font-size:7px;line-height:1.5}
+#wins .eclipse-card-gear-list{display:grid;gap:7px}
+#wins .eclipse-card-gear{display:grid;grid-template-columns:34px minmax(0,1fr);gap:7px;align-items:center;padding:8px;background:var(--panel);border:1px solid var(--e-line);border-radius:6px}
+#wins .eclipse-card-gear-art{display:grid;place-items:center;width:32px;height:34px;color:var(--gold);background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-card-gear-art img{max-width:28px;max-height:28px;object-fit:contain;image-rendering:pixelated}
+#wins .eclipse-card-gear-copy{display:grid;min-width:0;gap:2px}
+#wins .eclipse-card-gear-copy b{overflow:hidden;font-size:8px;text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-card-gear-copy small{font-size:7px}
+#wins .eclipse-card-gear button{grid-column:1/-1;min-height:30px;padding:5px;font-size:7px}
+#wins .eclipse-card-gear button[data-a=sock]{color:var(--e-bg);background:var(--gold);border-color:var(--gold)}
+#wins .eclipse-card-socket-row{display:flex;align-items:center;gap:7px;margin-top:9px;padding:8px;color:var(--e-muted);background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px;font-size:7px}
+#wins .eclipse-card-socket-glyph{color:var(--gold);font-size:12px}
+#wins .eclipse-card-socket-row b{margin-left:auto;color:var(--ink);font-variant-numeric:tabular-nums}
+#wins .eclipse-card-removal-note{margin-top:10px;padding:8px;color:var(--e-muted);border:1px solid var(--e-line);border-radius:5px;font-size:7px;line-height:1.5}
+#wins .eclipse-card-removal-note b{color:var(--gold)}
+#wins .eclipse-card-no-equipment{padding:14px 8px;color:var(--e-muted);font-size:8px;text-align:center;line-height:1.6;border:1px dashed var(--e-line2);border-radius:6px}
+
+/* Auto-sell edits only future-drop filters; current bag sales stay a separate reviewed action. */
+#wins .wbody[data-view=autosell]{display:flex;flex-direction:column;overflow:auto}
+#wins .eclipse-autosell-workspace{display:flex;flex:1;min-height:0;flex-direction:column;background:linear-gradient(135deg,#14202b,#111923 55%,#171e26)}
+#wins .eclipse-autosell-safe{display:flex;align-items:center;gap:7px;flex:none;padding:8px 10px;color:#a5dbbc;background:#a5dbbc0d;border:1px solid #a5dbbc27;border-radius:6px;font-size:7px;line-height:1.4}
+#wins .eclipse-autosell-safe svg{width:14px;height:14px}
+#wins .eclipse-autosell-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(215px,270px);align-items:start;gap:14px;padding:14px 16px 18px}
+#wins .eclipse-autosell-main,#wins .eclipse-autosell-aside{min-width:0}
+#wins .eclipse-autosell-card{margin:0 0 11px;padding:12px;background:linear-gradient(140deg,var(--e-raised),var(--panel));border:1px solid var(--e-line);border-radius:7px}
+#wins .eclipse-autosell-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}
+#wins .eclipse-autosell-section-head h3{margin:0;color:var(--ink);font-size:9px;font-weight:600}
+#wins .eclipse-autosell-section-head small{font-size:7px;text-align:right}
+#wins .eclipse-autosell-rarities{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+#wins .eclipse-autosell-rarity{display:grid;grid-template-columns:15px minmax(0,1fr);align-items:center;gap:5px;min-height:37px;padding:5px 6px;text-align:left;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-autosell-rarity>span{display:grid;place-items:center;width:14px;height:14px;color:var(--e-muted);border:1px solid var(--e-line2);border-radius:4px;font-size:8px}
+#wins .eclipse-autosell-rarity>b{overflow:hidden;color:var(--e-muted);font-size:7px;text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-autosell-rarity>i{grid-column:2;height:2px;margin-top:-4px;background:var(--rarity-color,var(--e-line2));opacity:.5}
+#wins .eclipse-autosell-rarity.on{background:var(--e-soft);border-color:var(--rarity-color,var(--gold))}
+#wins .eclipse-autosell-rarity.on>span{color:var(--rarity-color,var(--gold));border-color:var(--rarity-color,var(--gold))}
+#wins .eclipse-autosell-rarity.on>b{color:var(--ink)}
+#wins .eclipse-autosell-mode{display:flex;align-items:center;gap:8px;margin-top:9px;color:var(--e-muted);font-size:7px}
+#wins .eclipse-autosell-mode select{min-height:29px;margin-left:auto;padding:4px 7px;font-size:8px}
+#wins .eclipse-autosell-preset-row{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 9px}
+#wins .eclipse-autosell-preset-row button{min-height:27px;padding:4px 8px;color:var(--e-muted);font-size:7px}
+#wins .eclipse-autosell-preset-row button:hover{color:var(--gold);border-color:var(--e-line2)}
+#wins .eclipse-autosell-filter-summary{display:flex;align-items:center;gap:8px;padding:8px 9px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-autosell-filter-summary>span{color:var(--gold);font-size:10px}
+#wins .eclipse-autosell-filter-summary p{margin:0;color:var(--e-muted);font-size:7px;line-height:1.45}
+#wins .eclipse-autosell-protections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+#wins .eclipse-autosell-protections label{display:grid;grid-template-columns:15px minmax(0,1fr);align-items:start;gap:6px;min-height:49px;padding:8px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px;cursor:pointer}
+#wins .eclipse-autosell-protections input{width:13px;height:13px;margin:2px 0 0;padding:0}
+#wins .eclipse-autosell-protections label>span{display:grid;gap:2px;color:var(--ink);font-size:7px;font-weight:600}
+#wins .eclipse-autosell-protections label small{font-size:6px;font-weight:400;line-height:1.4}
+#wins .eclipse-autosell-affix-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+#wins .eclipse-autosell-affix{display:grid;grid-template-columns:14px minmax(0,1fr) 58px;align-items:center;gap:5px;padding:6px 7px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-autosell-affix input[type=checkbox]{width:12px;height:12px;margin:0;padding:0}
+#wins .eclipse-autosell-affix b{overflow:hidden;color:var(--ink);font-size:7px;text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-autosell-affix input[type=number]{width:58px;min-height:25px;padding:3px 5px;text-align:right;font-size:7px;font-variant-numeric:tabular-nums}
+#wins .eclipse-autosell-editor{margin:0 0 11px;padding:0;background:none;border:0}
+#wins .eclipse-autosell-editor>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;color:var(--ink);background:var(--panel);border:1px solid var(--e-line);border-radius:6px;cursor:pointer;font-size:8px;list-style:none}
+#wins .eclipse-autosell-editor>summary::-webkit-details-marker{display:none}
+#wins .eclipse-autosell-editor>summary:after{content:'+';color:var(--gold);font-size:12px}
+#wins .eclipse-autosell-editor[open]>summary:after{content:'−'}
+#wins .eclipse-autosell-editor>.autosell-editor{margin:0;padding:10px;background:var(--panel);border:1px solid var(--e-line);border-top:0;border-radius:0 0 6px 6px}
+#wins .eclipse-autosell-editor .autosell-editor fieldset{padding:9px;border-color:var(--e-line);border-radius:5px}
+#wins .eclipse-autosell-editor .autosell-editor legend{color:var(--gold);font-size:7px}
+#wins .eclipse-autosell-editor .autosell-editor label{font-size:7px}
+#wins .eclipse-autosell-editor .autosell-editor input,#wins .eclipse-autosell-editor .autosell-editor select{min-height:29px;padding:5px;font-size:8px}
+#wins .eclipse-autosell-simulation{position:sticky;top:10px;padding:12px;background:linear-gradient(155deg,#1b2934,#121c26);border:1px solid var(--e-line2);border-radius:7px}
+#wins .eclipse-autosell-simulation>h3{margin:0;color:var(--ink);font:600 10px var(--e-display)}
+#wins .eclipse-autosell-simulation>p{margin:4px 0 10px;color:var(--e-muted);font-size:7px;line-height:1.5}
+#wins .eclipse-autosell-total{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:baseline;padding:9px 0;border-top:1px solid var(--e-line);border-bottom:1px solid var(--e-line)}
+#wins .eclipse-autosell-total span{color:var(--e-muted);font-size:7px}
+#wins .eclipse-autosell-total b{color:var(--gold);font-size:14px;font-variant-numeric:tabular-nums}
+#wins .eclipse-autosell-total small{grid-column:1/-1;font-size:7px}
+#wins .eclipse-autosell-example{display:grid;gap:5px;margin:10px 0}
+#wins .eclipse-autosell-example>h4{margin:0 0 2px;color:var(--e-muted);font-size:7px;letter-spacing:.7px;text-transform:uppercase}
+#wins .eclipse-autosell-example-row{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:6px;align-items:center;padding:6px 7px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-autosell-example-row>span{color:var(--gold);font-size:9px}
+#wins .eclipse-autosell-example-row>div{display:grid;min-width:0;gap:1px}
+#wins .eclipse-autosell-example-row b{overflow:hidden;color:var(--ink);font-size:7px;text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-autosell-example-row small{font-size:6px}
+#wins .eclipse-autosell-example-row>strong{font-size:7px;white-space:nowrap}
+#wins .eclipse-autosell-example-row>.keep{color:#90cda8}
+#wins .eclipse-autosell-example-row>.sell{color:#e0aa76}
+#wins .eclipse-autosell-safety{display:grid;gap:5px;margin:10px 0 0;padding:9px 0 0;border-top:1px solid var(--e-line)}
+#wins .eclipse-autosell-safety li{list-style:none;display:flex;align-items:flex-start;gap:5px;color:var(--e-muted);font-size:6px;line-height:1.5}
+#wins .eclipse-autosell-safety li:before{content:'✓';color:#91c8a8}
+#wins .eclipse-autosell-rules-active{margin-top:7px;padding:6px 7px;color:var(--e-muted);background:var(--e-bg);border-radius:4px;font-size:6px;line-height:1.5}
+#wins .eclipse-autosell-rules-active b{color:var(--gold)}
+
+/* Affix workbench and paid reforge offer review. */
+#wins .wbody[data-view=reforge]{display:flex;flex-direction:column;overflow:auto}
+#wins .eclipse-affix-workbench{display:grid;grid-template-columns:minmax(150px,190px) minmax(260px,1fr) minmax(195px,245px);flex:1;min-height:0;background:linear-gradient(135deg,#14202b,#111923 55%,#171e26)}
+#wins .eclipse-affix-menu,#wins .eclipse-affix-center,#wins .eclipse-affix-quote{min-width:0;padding:14px;overflow:auto;scrollbar-width:thin}
+#wins .eclipse-affix-menu,#wins .eclipse-affix-center{border-right:1px solid var(--e-line)}
+#wins .eclipse-affix-menu-heading{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:0 0 9px;padding:0 0 8px;border-bottom:1px solid var(--e-line);color:var(--e-muted);font-size:7px;letter-spacing:1px}
+#wins .eclipse-affix-menu-heading small{font-size:7px;letter-spacing:0}
+#wins .eclipse-affix-gear-select{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#wins .eclipse-affix-menu>button[data-a=workslot]{display:grid;grid-template-columns:32px minmax(0,1fr) 10px;align-items:center;gap:7px;width:100%;margin:0 0 6px;padding:7px;text-align:left;background:transparent;border:1px solid transparent;border-radius:5px}
+#wins .eclipse-affix-menu>button[data-a=workslot]:hover,#wins .eclipse-affix-menu>button[data-a=workslot].on{background:var(--e-soft);border-color:var(--e-line2)}
+#wins .eclipse-affix-menu-icon{display:grid;place-items:center;width:31px;height:32px;color:var(--gold);background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-affix-menu-icon img{max-width:27px;max-height:27px;object-fit:contain;image-rendering:pixelated}
+#wins .eclipse-affix-menu>button>span:nth-child(2){display:grid;min-width:0;gap:2px}
+#wins .eclipse-affix-menu>button small{font-size:6px}
+#wins .eclipse-affix-menu>button b{overflow:hidden;font-size:7px;text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-affix-menu-note{display:block;margin-top:9px;color:var(--e-muted);font-size:6px;line-height:1.5}
+#wins .eclipse-affix-center{display:flex;flex-direction:column;gap:10px}
+#wins .eclipse-affix-card{padding:10px;background:linear-gradient(140deg,var(--e-raised),var(--panel));border:1px solid var(--e-line);border-radius:7px}
+#wins .eclipse-affix-item{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:9px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:6px}
+#wins .eclipse-affix-item-art{display:grid;place-items:center;width:45px;height:45px;flex:none;color:var(--gold);background:var(--e-raised);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-affix-item-art img{max-width:38px;max-height:38px;object-fit:contain;image-rendering:pixelated}
+#wins .eclipse-affix-item-copy{display:grid;min-width:0;gap:3px}
+#wins .eclipse-affix-item-copy small{color:var(--gold);font-size:6px;letter-spacing:.8px;text-transform:uppercase}
+#wins .eclipse-affix-item-copy b{overflow:hidden;font:600 10px var(--e-display);text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-affix-item-copy span{color:var(--e-muted);font-size:7px}
+#wins .eclipse-affix-row{display:grid;grid-template-columns:19px minmax(0,1fr) auto;align-items:center;gap:6px;min-height:37px;padding:6px 7px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-affix-row+.eclipse-affix-row{margin-top:5px}
+#wins .eclipse-affix-row>label{display:grid;place-items:center;width:15px;height:15px;background:var(--e-raised);border:1px solid var(--e-line2);border-radius:4px;cursor:pointer}
+#wins .eclipse-affix-row>label input{width:11px;height:11px;margin:0;padding:0}
+#wins .eclipse-affix-row>span{display:grid;min-width:0;gap:2px}
+#wins .eclipse-affix-row>span b{font-size:7px}
+#wins .eclipse-affix-row>span small{font-size:6px}
+#wins .eclipse-affix-row>strong{color:var(--gold);font-size:8px;white-space:nowrap}
+#wins .eclipse-affix-card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;color:var(--e-muted);font-size:6px}
+#wins .eclipse-affix-card-foot b{color:var(--gold)}
+#wins .eclipse-affix-controls{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
+#wins .eclipse-affix-controls button{min-height:29px;padding:5px 8px;font-size:7px}
+#wins .eclipse-affix-controls button[data-a=refpick]{color:var(--gold);border-color:var(--e-line2)}
+#wins .eclipse-affix-controls .eclipse-reforge-primary{color:var(--e-bg);background:var(--gold);border-color:var(--gold);font-weight:700}
+#wins .eclipse-affix-reroll-note{margin:7px 0 0;color:var(--e-muted);font-size:6px;line-height:1.5}
+#wins .eclipse-affix-quote{background:linear-gradient(150deg,#182634,#121a24)}
+#wins .eclipse-affix-quote>.ui-eyebrow{color:var(--gold);font-size:6px;letter-spacing:1px}
+#wins .eclipse-affix-quote h3{margin:5px 0 9px;font:600 12px var(--e-display)}
+#wins .eclipse-affix-quote>p{margin:0 0 9px;color:var(--e-muted);font-size:7px;line-height:1.5}
+#wins .eclipse-affix-cost-list{display:grid;gap:5px}
+#wins .eclipse-affix-cost-row{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:7px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-affix-cost-row>span{display:grid;gap:2px;color:var(--e-muted);font-size:7px}
+#wins .eclipse-affix-cost-row>span small{font-size:6px}
+#wins .eclipse-affix-cost-row>b{color:var(--ink);font-size:7px;text-align:right;font-variant-numeric:tabular-nums}
+#wins .eclipse-affix-cost-row.total{background:var(--e-soft);border-color:var(--e-line2)}
+#wins .eclipse-affix-cost-row.total>b{color:var(--gold);font-size:10px}
+#wins .eclipse-affix-material-note{margin-top:8px;padding:7px;color:var(--e-muted);background:var(--e-bg);border-left:2px solid var(--gold);font-size:6px;line-height:1.5}
+#wins .eclipse-affix-guarantee{margin-top:8px;padding:8px;color:#a5dbbc;background:#a5dbbc0d;border:1px solid #a5dbbc20;border-radius:5px;font-size:6px;line-height:1.5}
+#wins .eclipse-affix-guarantee b{color:#a5dbbc}
+#wins .eclipse-affix-offer{padding:12px;background:linear-gradient(135deg,#21302e,var(--panel));border:1px solid #a5dbbc55;border-radius:7px}
+#wins .eclipse-affix-offer>.ui-eyebrow{color:#a5dbbc;font-size:7px;letter-spacing:1px}
+#wins .eclipse-affix-offer h3{margin:5px 0;color:var(--ink);font:600 13px var(--e-display)}
+#wins .eclipse-affix-offer>p{margin:0 0 9px;color:var(--e-muted);font-size:7px;line-height:1.5}
+#wins .eclipse-affix-offer-cost{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;color:var(--e-muted);border-top:1px solid var(--e-line);font-size:7px}
+#wins .eclipse-affix-offer-cost>b{color:var(--gold);font-size:8px}
+#wins .eclipse-affix-offer-compare{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}
+#wins .eclipse-affix-offer-compare>div{display:grid;gap:5px;padding:8px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-affix-offer-compare>div>small{font-size:6px;letter-spacing:.7px}
+#wins .eclipse-affix-offer-compare>div>span{font-size:7px;line-height:1.45}
+#wins .eclipse-affix-offer-compare .after{border-color:#a5dbbc50}
+#wins .eclipse-affix-offer-compare .after>small{color:#a5dbbc}
+#wins .eclipse-affix-locked,.eclipse-affix-empty{grid-column:1/-1;display:flex;align-items:center;justify-content:center;min-height:220px;padding:22px;color:var(--e-muted);text-align:center;font-size:9px;line-height:1.6}
+#wins .eclipse-affix-empty{flex-direction:column;gap:8px}
+#wins .eclipse-affix-empty>svg{width:28px;height:28px;color:var(--gold)}
+#wins .eclipse-affix-locked{background:var(--e-bg);border:1px dashed var(--e-line2);border-radius:7px}
+#wins .eclipse-affix-locked strong{display:block;color:var(--ink);font-size:11px}
+#wins .eclipse-affix-locked button{margin:10px auto 0;min-height:31px;color:var(--gold);border-color:var(--e-line2)}
+
+#wins .eclipse-window-footer.eclipse-workspace-footer{height:auto;min-height:48px;justify-content:flex-start;flex-wrap:wrap;gap:8px;padding:7px 14px}
+#wins .eclipse-workspace-footer .eclipse-footer-message{flex:1;min-width:155px;line-height:1.4;font-size:7px}
+#wins .eclipse-footer-action{flex:none;min-height:31px;padding:6px 10px;color:var(--ink);background:var(--panel);border:1px solid var(--e-line2);font-size:8px;white-space:nowrap}
+#wins .eclipse-footer-action.primary{color:var(--e-bg);background:var(--gold);border-color:var(--gold);font-weight:700}
+#wins .eclipse-workspace-player{color:var(--gold)}
+
+@container (max-width:850px){
+  #wins .eclipse-card-workspace-grid{grid-template-columns:minmax(175px,215px) minmax(210px,1fr) minmax(190px,230px)}
+  #wins .eclipse-affix-workbench{grid-template-columns:minmax(135px,165px) minmax(230px,1fr) minmax(180px,215px)}
+  #wins .eclipse-autosell-layout{grid-template-columns:minmax(0,1fr) minmax(190px,225px);gap:10px;padding:11px}
+}
+@container (max-width:700px){
+  #wins .wbody[data-view=cardsWork],#wins .wbody[data-view=autosell],#wins .wbody[data-view=reforge]{display:block;overflow:auto;scrollbar-gutter:auto}
+  #wins .eclipse-card-workspace,#wins .eclipse-autosell-workspace{min-height:0}
+  #wins .eclipse-card-workspace-head,#wins .eclipse-autosell-head{padding:13px 13px 11px;gap:10px}
+  #wins .eclipse-card-workspace-head h2,#wins .eclipse-autosell-head h2{font-size:14px}
+  #wins .eclipse-card-summary{gap:8px;font-size:7px}
+  #wins .eclipse-card-workspace-grid{display:flex;flex-direction:column;min-height:0}
+  #wins .eclipse-card-collection,#wins .eclipse-card-detail,#wins .eclipse-card-sockets{width:auto;max-width:none;padding:13px;border:0;border-bottom:1px solid var(--e-line);overflow:visible}
+  #wins .eclipse-card-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  #wins .eclipse-card-entry{grid-template-columns:28px minmax(0,1fr) auto;min-height:50px;padding:6px}
+  #wins .eclipse-card-entry-icon{width:27px;height:28px}
+  #wins .eclipse-card-entry-icon svg{width:17px;height:17px}
+  #wins .eclipse-card-entry-copy b{font-size:7px}
+  #wins .eclipse-card-entry-copy small{font-size:6px}
+  #wins .eclipse-card-detail{min-height:190px}
+  #wins .eclipse-card-sockets{min-height:190px}
+  #wins .eclipse-card-gear-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #wins .eclipse-card-focus{padding:9px}
+  #wins .eclipse-card-art{width:47px;height:47px}
+  #wins .eclipse-autosell-head{align-items:flex-start}
+  #wins .eclipse-autosell-safe{max-width:132px;padding:6px;font-size:6px}
+  #wins .eclipse-autosell-layout{grid-template-columns:minmax(0,1fr);gap:0;padding:10px}
+  #wins .eclipse-autosell-simulation{position:static;margin:0 0 10px;order:-1}
+  #wins .eclipse-autosell-rarities{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+  #wins .eclipse-autosell-rarity{grid-template-columns:13px minmax(0,1fr);gap:3px;min-height:33px;padding:4px}
+  #wins .eclipse-autosell-rarity>b{font-size:6px}
+  #wins .eclipse-autosell-protections{gap:5px}
+  #wins .eclipse-autosell-protections label{min-height:46px;padding:6px}
+  #wins .eclipse-autosell-affix-list{gap:5px}
+  #wins .eclipse-autosell-affix{grid-template-columns:13px minmax(0,1fr) 51px;gap:4px;padding:5px}
+  #wins .eclipse-autosell-affix input[type=number]{width:51px}
+  #wins .eclipse-affix-workbench{display:flex;flex-direction:column;min-height:0}
+  #wins .eclipse-affix-menu,#wins .eclipse-affix-center,#wins .eclipse-affix-quote{padding:12px;border:0;border-bottom:1px solid var(--e-line);overflow:visible}
+  #wins .eclipse-affix-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  #wins .eclipse-affix-menu-heading{grid-column:1/-1;margin:0}
+  #wins .eclipse-affix-menu>button[data-a=workslot]{margin:0}
+  #wins .eclipse-affix-menu-note{grid-column:1/-1}
+  #wins .eclipse-affix-center{gap:8px}
+  #wins .eclipse-affix-quote{min-height:160px}
+  #wins .eclipse-window-footer.eclipse-workspace-footer{min-height:42px;gap:5px;padding:5px 8px}
+  #wins .eclipse-workspace-footer .eclipse-footer-message{display:none}
+  #wins .eclipse-footer-action{min-height:30px;padding:5px 7px;font-size:7px}
+}
+@container (max-width:380px){
+  #wins .eclipse-card-workspace-head{align-items:flex-start}
+  #wins .eclipse-card-summary{gap:5px}
+  #wins .eclipse-card-list{grid-template-columns:1fr}
+  #wins .eclipse-autosell-rarities{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #wins .eclipse-autosell-protections{grid-template-columns:1fr}
+  #wins .eclipse-autosell-affix-list{grid-template-columns:1fr}
+  #wins .eclipse-affix-menu{grid-template-columns:1fr 1fr}
+  #wins .eclipse-affix-item{gap:7px}
+  #wins .eclipse-footer-action{padding:5px 6px}
+}
+
+/* Layout details for the workspace markup. */
+#wins .eclipse-card-workspace-heading,#wins .eclipse-autosell-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none;padding:15px 19px 13px;border-bottom:1px solid var(--e-line)}
+#wins .eclipse-card-workspace-heading h2,#wins .eclipse-autosell-heading h2{margin:0;color:var(--ink);font:600 16px/1.2 var(--e-display);letter-spacing:-.35px}
+#wins .eclipse-card-workspace-heading p,#wins .eclipse-autosell-heading p{margin:4px 0 0;color:var(--e-muted);font-size:8px}
+#wins .eclipse-workspace-pills{display:flex;align-items:center;gap:7px;flex:none}
+#wins .eclipse-workspace-pills span{padding:6px 8px;color:var(--e-muted);background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px;font-size:7px;white-space:nowrap}
+#wins .eclipse-workspace-pills .protected{color:#9fd2b1;border-color:#9fd2b133}
+#wins .eclipse-card-search{display:block;position:relative;margin:0 0 8px}
+#wins .eclipse-card-search input{width:100%;min-height:34px;padding:7px 9px;font-size:9px}
+#wins .eclipse-card-ownership,#wins .eclipse-card-grade-filters{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 7px}
+#wins .eclipse-card-ownership button,#wins .eclipse-card-grade-filters button{min-height:26px;padding:4px 7px;color:var(--e-muted);background:transparent;border-color:var(--e-line);font-size:7px}
+#wins .eclipse-card-ownership button[aria-pressed=true],#wins .eclipse-card-grade-filters button[aria-pressed=true]{color:var(--gold);background:var(--e-soft);border-color:var(--e-line2)}
+#wins .eclipse-card-entry{grid-template-columns:30px minmax(0,1fr) auto;position:relative}
+#wins .eclipse-card-entry-icon{position:relative}
+#wins .eclipse-card-entry-icon i{position:absolute;right:-4px;top:-5px;color:var(--gold);font-size:7px;font-style:normal;white-space:nowrap}
+#wins .eclipse-card-entry-copy{grid-column:2;grid-row:1 / span 2}
+#wins .eclipse-card-entry-copy b{display:flex;align-items:center;gap:4px}
+#wins .eclipse-card-entry-copy b>small{color:#e4aa7d;font-size:6px;letter-spacing:.5px}
+#wins .eclipse-card-entry>strong{grid-column:3;grid-row:1;color:var(--gold);font-size:8px;white-space:nowrap}
+#wins .eclipse-card-entry>.eclipse-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+#wins .eclipse-card-entry.selected{background:var(--e-soft);border-color:var(--gold)}
+#wins .eclipse-card-collection-note{display:block;margin-top:9px;color:var(--e-muted);font-size:6px;line-height:1.5}
+#wins .eclipse-card-panel-title{min-height:22px}
+#wins .eclipse-selected-card{display:grid;gap:11px}
+#wins .eclipse-selected-card-heading{display:flex;align-items:flex-start;gap:10px;padding:11px;background:linear-gradient(135deg,#d7b77a12,transparent);border:1px solid #d7b77a30;border-radius:7px}
+#wins .eclipse-card-large-icon{display:grid;place-items:center;width:49px;height:49px;flex:none;color:#e7c583;background:#d7b77a13;border:1px solid #d7b77a35;border-radius:8px}
+#wins .eclipse-card-large-icon svg{width:29px;height:29px}
+#wins .eclipse-selected-card-heading>div{min-width:0;flex:1}
+#wins .eclipse-selected-card-heading>div>small:first-child{color:var(--gold);font-size:6px;letter-spacing:.8px}
+#wins .eclipse-selected-card-heading h3{margin:3px 0;color:var(--ink);font:600 13px var(--e-display);overflow-wrap:anywhere}
+#wins .eclipse-selected-card-heading p{margin:0 0 3px;color:var(--e-muted);font-size:7px}
+#wins .eclipse-selected-card-heading>div>small:last-child{color:var(--e-muted);font-size:6px}
+#wins .eclipse-card-grade-pill{flex:none;padding:4px 6px;color:var(--gold);background:var(--e-soft);border:1px solid var(--e-line2);border-radius:4px;font-size:6px;white-space:nowrap}
+#wins .eclipse-card-info-block{display:grid;gap:6px}
+#wins .eclipse-card-info-block>small,#wins .eclipse-card-safety>small{color:var(--e-muted);font-size:7px;letter-spacing:.9px}
+#wins .eclipse-card-info-block>div{display:flex;flex-wrap:wrap;gap:5px}
+#wins .eclipse-card-effect,#wins .eclipse-card-fit{display:inline-flex;align-items:center;padding:6px 8px;color:var(--ink);background:var(--panel);border:1px solid var(--e-line);border-radius:5px;font-size:7px}
+#wins .eclipse-card-effect{color:#b8d9c4;border-color:#a5dbbc24;background:#a5dbbc09}
+#wins .eclipse-card-actions{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+#wins .eclipse-card-actions button{min-height:31px;padding:5px 8px;font-size:7px}
+#wins .eclipse-card-actions button.eclipse-primary{color:var(--e-bg);background:var(--gold);border-color:var(--gold)}
+#wins .eclipse-card-actions button.eclipse-card-sell{color:#e6a79a;border-color:#e6a79a42}
+#wins .eclipse-card-action-note{flex-basis:100%;margin:0;color:var(--e-muted);font-size:7px}
+#wins .eclipse-card-safety{padding:9px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:6px}
+#wins .eclipse-card-safety>div{display:grid;grid-template-columns:17px minmax(0,1fr);gap:7px 6px;margin-top:7px}
+#wins .eclipse-card-safety>div>b{color:var(--gold);font-size:7px}
+#wins .eclipse-card-safety>div>span{display:grid;gap:2px;color:var(--ink);font-size:7px}
+#wins .eclipse-card-safety>div>span>small{color:var(--e-muted);font-size:6px;line-height:1.4}
+#wins .eclipse-card-mastery-note{display:grid;gap:3px;padding:9px;background:#d7b77a0a;border:1px solid #d7b77a26;border-radius:5px}
+#wins .eclipse-card-mastery-note b{color:var(--gold);font-size:7px}
+#wins .eclipse-card-mastery-note small{font-size:6px;line-height:1.5}
+#wins .eclipse-card-gear-select{display:grid;gap:5px;margin:0 0 9px;color:var(--e-muted);font-size:7px}
+#wins .eclipse-card-gear-select select{width:100%;min-height:31px;padding:5px 7px;font-size:8px}
+#wins .eclipse-card-equipped-item{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-card-equipped-item>svg,#wins .eclipse-card-equipped-item>img{width:31px;height:31px;flex:none;object-fit:contain;color:var(--gold)}
+#wins .eclipse-card-equipped-item>span{display:grid;min-width:0;gap:2px}
+#wins .eclipse-card-equipped-item b{overflow:hidden;font-size:8px;text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-card-equipped-item small{font-size:7px}
+#wins .eclipse-card-socket-list{display:grid;gap:6px}
+#wins .eclipse-card-socket{display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:6px;padding:7px;background:var(--panel);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-card-socket>span:nth-child(2){display:grid;min-width:0;gap:2px}
+#wins .eclipse-card-socket>span>b{overflow:hidden;font-size:7px;text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-card-socket>span>small{font-size:6px;line-height:1.4}
+#wins .eclipse-socket-card-icon,#wins .eclipse-card-socket.empty>span:first-child{display:grid;place-items:center;width:27px;height:28px;color:var(--gold);background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-socket-card-icon svg{width:17px;height:17px}
+#wins .eclipse-card-socket>button{grid-column:1/-1;min-height:28px;padding:4px;font-size:7px}
+#wins .eclipse-card-socket.filled>button{color:#e3b5a5;border-color:#e3b5a533}
+#wins .eclipse-card-socket.empty{border-style:dashed}
+#wins .eclipse-card-socket.empty>button{color:var(--e-bg);background:var(--gold);border-color:var(--gold)}
+#wins .eclipse-card-remove-note{display:block;margin:8px 0;color:var(--e-muted);font-size:6px;line-height:1.5}
+#wins .eclipse-card-autosell-note{display:grid;gap:3px;margin-top:12px;padding:8px;background:#a5dbbc09;border:1px solid #a5dbbc22;border-radius:5px}
+#wins .eclipse-card-autosell-note b{color:#a5dbbc;font-size:7px}
+#wins .eclipse-card-autosell-note small{font-size:6px;line-height:1.5}
+#wins .eclipse-card-link{width:100%;min-height:29px;margin-top:7px;color:var(--gold);border-color:var(--e-line2);font-size:7px}
+#wins .eclipse-card-empty{padding:12px;color:var(--e-muted);font-size:7px;text-align:center;line-height:1.55}
+
+/* Auto-sell editor: real rule controls, preview-only bag simulation and always-on protections. */
+#wins .eclipse-autosell-heading{align-items:center}
+#wins .eclipse-autosell-draft-status{flex:none;padding:6px 8px;color:var(--gold);background:var(--e-soft);border:1px solid var(--e-line2);border-radius:5px;font-size:7px;white-space:nowrap}
+#wins .eclipse-autosell-draft-status.is-active{color:#a5dbbc;border-color:#a5dbbc33;background:#a5dbbc09}
+#wins .eclipse-autosell-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(215px,270px);align-items:start;gap:14px;padding:14px 16px 18px}
+#wins .eclipse-autosell-main,#wins .eclipse-autosell-aside{min-width:0}
+#wins .eclipse-autosell-section{margin:0 0 11px;padding:12px;background:linear-gradient(140deg,var(--e-raised),var(--panel));border:1px solid var(--e-line);border-radius:7px}
+#wins .eclipse-autosell-section-head{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+#wins .eclipse-step{display:grid;place-items:center;width:21px;height:21px;flex:none;color:var(--gold);background:var(--e-soft);border:1px solid var(--e-line2);border-radius:50%;font-size:8px}
+#wins .eclipse-autosell-section-head>div{display:grid;gap:1px;min-width:0}
+#wins .eclipse-autosell-section-head h3{margin:0;color:var(--ink);font-size:9px;font-weight:600}
+#wins .eclipse-autosell-section-head small{font-size:7px}
+#wins .eclipse-autosell-rarities{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+#wins .eclipse-autosell-rarity{grid-template-columns:14px minmax(0,1fr);min-height:36px;padding:5px}
+#wins .eclipse-autosell-rarity>i{grid-column:2}
+#wins .eclipse-autosell-help{margin:7px 0 0;color:var(--e-muted);font-size:6px;line-height:1.5}
+#wins .eclipse-autosell-protections{grid-template-columns:1fr 1fr}
+#wins .eclipse-autosell-protections label{position:relative;grid-template-columns:minmax(0,1fr) 14px;align-items:start;min-height:48px;padding:7px}
+#wins .eclipse-autosell-protections label>span{display:grid;grid-template-columns:15px 1fr;align-items:center;gap:4px}
+#wins .eclipse-autosell-protections label>span svg{width:13px;height:13px;color:var(--gold)}
+#wins .eclipse-autosell-protections label>span>b{font-size:7px}
+#wins .eclipse-autosell-protections label>span>small{grid-column:1/-1}
+#wins .eclipse-autosell-protections input{grid-column:2;grid-row:1;width:13px;height:13px}
+#wins .eclipse-autosell-rule-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:9px}
+#wins .eclipse-autosell-rule-head>div:first-child{display:grid;gap:4px}
+#wins .eclipse-autosell-rule-head label,.eclipse-autosell-match>span{color:var(--e-muted);font-size:7px}
+#wins .eclipse-autosell-rule-head select{min-height:30px;padding:4px 7px;font-size:8px}
+#wins .eclipse-autosell-match{display:flex;align-items:center;gap:4px}
+#wins .eclipse-autosell-match button{min-height:26px;padding:4px 6px;color:var(--e-muted);font-size:7px}
+#wins .eclipse-autosell-match button.on{color:var(--gold);border-color:var(--e-line2)}
+#wins .eclipse-autosell-match small{font-size:6px}
+#wins .eclipse-autosell-affix-list{grid-template-columns:1fr 1fr}
+#wins .eclipse-autosell-affix{grid-template-columns:minmax(70px,.8fr) minmax(0,1.2fr);gap:6px;padding:6px}
+#wins .eclipse-autosell-affix>span{display:flex;align-items:center;gap:4px;min-width:0;color:var(--e-muted);font-size:6px;white-space:nowrap}
+#wins .eclipse-autosell-affix>span:first-child{color:var(--ink)}
+#wins .eclipse-autosell-affix>span>input[type=checkbox]{width:11px;height:11px;flex:none}
+#wins .eclipse-autosell-affix>span>input[type=number]{width:47px;min-height:24px;margin-left:auto;padding:3px;text-align:right;font-size:7px}
+#wins .eclipse-autosell-summary{display:block;margin-top:7px;color:var(--e-muted);font-size:6px}
+#wins .eclipse-autosell-main>.autosell-editor{margin:0 0 11px;padding:0;background:transparent;border:0}
+#wins .eclipse-autosell-main>.autosell-editor>summary{padding:9px 11px;color:var(--ink);background:var(--panel);border:1px solid var(--e-line);border-radius:6px;font-size:8px;cursor:pointer}
+#wins .eclipse-autosell-main>.autosell-editor>p,#wins .eclipse-autosell-main>.autosell-editor fieldset,#wins .eclipse-autosell-main>.autosell-editor>.row,#wins .eclipse-autosell-main>.autosell-editor>.sell-label{margin-top:8px}
+#wins .eclipse-autosell-aside{padding:12px;background:linear-gradient(150deg,#182634,#121a24);border:1px solid var(--e-line);border-radius:7px}
+#wins .eclipse-autosell-rule-summary{margin:0 0 8px;color:var(--e-muted);font-size:7px;line-height:1.5}
+#wins .eclipse-autosell-always{display:grid;gap:3px;padding:8px;background:#a5dbbc09;border:1px solid #a5dbbc24;border-radius:5px}
+#wins .eclipse-autosell-always b{color:#a5dbbc;font-size:7px}
+#wins .eclipse-autosell-always small{font-size:6px;line-height:1.5}
+#wins .eclipse-autosell-simulation{margin-top:9px;padding:9px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-autosell-sim-head{display:flex;align-items:center;justify-content:space-between;gap:7px;color:var(--gold);font-size:6px;letter-spacing:.6px}
+#wins .eclipse-autosell-sim-head small{font-size:6px;letter-spacing:0}
+#wins .eclipse-autosell-sim-counts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+#wins .eclipse-autosell-sim-counts>div{display:grid;justify-items:center;gap:2px;padding:7px;background:var(--panel);border:1px solid var(--e-line);border-radius:4px}
+#wins .eclipse-autosell-sim-counts b{color:var(--ink);font-size:13px}
+#wins .eclipse-autosell-sim-counts small{font-size:6px}
+#wins .eclipse-autosell-sim-row{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:6px 0;border-top:1px solid var(--e-line)}
+#wins .eclipse-autosell-sim-row>span{display:grid;min-width:0;gap:2px}
+#wins .eclipse-autosell-sim-row b{overflow:hidden;color:var(--ink);font-size:7px;text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-autosell-sim-row small{font-size:6px}
+#wins .eclipse-autosell-sim-row>strong{flex:none;color:#9fcaaa;font-size:6px;text-align:right}
+#wins .eclipse-autosell-sim-value{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:7px;padding-top:7px;border-top:1px solid var(--e-line)}
+#wins .eclipse-autosell-sim-value span{color:var(--e-muted);font-size:6px}
+#wins .eclipse-autosell-sim-value b{color:var(--gold);font-size:8px;white-space:nowrap}
+#wins .eclipse-autosell-empty{color:var(--e-muted);font-size:7px}
+#wins .eclipse-autosell-fineprint{margin:8px 0 0;color:var(--e-muted);font-size:6px;line-height:1.5}
+
+/* Affix UI detail selectors for the production workbench and paid result comparison. */
+#wins .eclipse-affix-main{min-width:0;padding:14px;overflow:auto;scrollbar-width:thin}
+#wins .eclipse-affix-item{margin:0 0 12px}
+#wins .eclipse-affix-item-icon{display:grid;place-items:center;width:47px;height:47px;flex:none;color:var(--gold);background:var(--e-bg);border:1px solid var(--e-line);border-radius:6px}
+#wins .eclipse-affix-item-icon img{max-width:39px;max-height:39px;object-fit:contain;image-rendering:pixelated}
+#wins .eclipse-affix-item>div{display:grid;min-width:0;gap:2px}
+#wins .eclipse-affix-item>div>small{color:var(--gold);font-size:6px;letter-spacing:.6px}
+#wins .eclipse-affix-item h2{margin:1px 0;font:600 12px var(--e-display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#wins .eclipse-affix-item p{margin:0;color:var(--e-muted);font-size:7px}
+#wins .eclipse-affix-set{margin-left:auto;color:var(--gold);font-size:7px}
+#wins .eclipse-affix-prompt{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+#wins .eclipse-affix-prompt h3{margin:0;color:var(--ink);font-size:9px}
+#wins .eclipse-affix-prompt p{margin:2px 0 0;color:var(--e-muted);font-size:7px}
+#wins .eclipse-affix-prompt>small{color:var(--gold);font-size:7px;white-space:nowrap}
+#wins .eclipse-affix-rows{display:grid;gap:5px}
+#wins .eclipse-affix-row{grid-template-columns:18px minmax(0,1fr) auto;width:100%;text-align:left;cursor:pointer}
+#wins .eclipse-affix-row.selected{border-color:var(--gold);background:var(--e-soft)}
+#wins .eclipse-affix-row-icon{color:var(--gold);font-size:11px}
+#wins .eclipse-affix-row strong{color:var(--e-muted);font-size:7px}
+#wins .eclipse-affix-pool{margin-top:9px;border:1px solid var(--e-line);border-radius:5px;overflow:hidden}
+#wins .eclipse-affix-pool>button{display:flex;justify-content:space-between;width:100%;min-height:31px;text-align:left;background:var(--e-bg);border:0;font-size:7px}
+#wins .eclipse-affix-pool>button span{color:var(--gold)}
+#wins .eclipse-affix-pool-list{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:8px;border-top:1px solid var(--e-line)}
+#wins .eclipse-affix-pool-list>span{padding:5px;color:var(--e-muted);background:var(--e-bg);border:1px solid var(--e-line);border-radius:4px;font-size:6px}
+#wins .eclipse-affix-footnote{margin:8px 0 0;color:var(--e-muted);font-size:6px;line-height:1.5}
+#wins .eclipse-affix-aside{min-width:0;padding:14px;background:linear-gradient(150deg,#182634,#121a24);overflow:auto}
+#wins .eclipse-affix-aside>.ui-eyebrow{color:var(--gold);font-size:6px;letter-spacing:1px}
+#wins .eclipse-affix-aside>h3{margin:5px 0 9px;color:var(--ink);font:600 12px var(--e-display)}
+#wins .eclipse-affix-aside>p{color:var(--e-muted);font-size:7px;line-height:1.5}
+#wins .eclipse-affix-selection-counts{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}
+#wins .eclipse-affix-selection-counts>div{display:grid;justify-items:center;gap:2px;padding:7px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-affix-selection-counts b{color:var(--gold);font-size:12px}
+#wins .eclipse-affix-selection-counts small{font-size:6px}
+#wins .eclipse-affix-resource{display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center;margin:5px 0;padding:7px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-affix-resource>span{color:var(--e-muted);font-size:7px}
+#wins .eclipse-affix-resource>b{color:var(--ink);font-size:8px;text-align:right;font-variant-numeric:tabular-nums}
+#wins .eclipse-affix-resource>small{grid-column:1/-1;font-size:6px}
+#wins .eclipse-affix-resource.eclipse-affix-total{background:var(--e-soft);border-color:var(--e-line2)}
+#wins .eclipse-affix-resource.eclipse-affix-total>b{color:var(--gold);font-size:11px}
+#wins .eclipse-affix-protection{padding:8px;color:#a5dbbc;background:#a5dbbc09;border:1px solid #a5dbbc24;border-radius:5px;font-size:7px;line-height:1.5}
+#wins .eclipse-affix-primary{width:100%;min-height:36px;margin:4px 0 7px;font-size:8px}
+#wins .eclipse-affix-full{display:grid;gap:4px;width:100%;min-height:60px;padding:8px;text-align:left;background:var(--e-bg);border:1px solid var(--e-line2)}
+#wins .eclipse-affix-full>span{font-size:7px}
+#wins .eclipse-affix-full>small{font-size:6px}
+#wins .eclipse-affix-full>b{color:var(--gold);font-size:7px}
+#wins .eclipse-reforge-offer{margin-bottom:10px;padding:11px;background:linear-gradient(140deg,#1c2d2b,var(--panel));border:1px solid #a5dbbc45;border-radius:7px}
+#wins .eclipse-offer-banner{margin:-11px -11px 9px;padding:8px 10px;color:#a5dbbc;background:#a5dbbc0b;border-bottom:1px solid #a5dbbc25;font-size:7px}
+#wins .reforge-comparison{display:grid;gap:4px}
+#wins .reforge-comparison-row{display:grid;grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr);align-items:center;gap:5px;padding:6px 7px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:4px;font-size:7px}
+#wins .reforge-comparison-labels{color:var(--e-muted);font-size:6px;letter-spacing:.7px}
+#wins .reforge-comparison-row>span:first-child,#wins .reforge-comparison-row>strong{display:grid;gap:2px;min-width:0}
+#wins .reforge-comparison-row>strong{color:#a5dbbc;font-weight:600}
+#wins .reforge-comparison-row small{color:var(--e-muted);font-size:6px;font-weight:400}
+#wins .reforge-comparison-row.unchanged>strong{color:var(--e-muted)}
+#wins .reforge-comparison-row>span:nth-child(2){color:var(--gold);text-align:center}
+#wins .eclipse-offer-note{color:var(--e-muted);font-size:6px;line-height:1.5}
+#wins .eclipse-affix-paid{padding:11px;background:var(--panel);border:1px solid var(--e-line);border-radius:7px}
+#wins .eclipse-affix-paid>h3{margin:4px 0 8px;font:600 12px var(--e-display)}
+#wins .eclipse-affix-paid>p{color:var(--e-muted);font-size:7px;line-height:1.5}
+#wins .eclipse-affix-warning{padding:8px;color:#e5b38e;background:#e5b38e0c;border:1px solid #e5b38e30;border-radius:5px}
+#wins .eclipse-affix-repeat{display:grid;gap:5px;margin-top:9px;padding:9px;background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px}
+#wins .eclipse-affix-repeat>b{font-size:7px}
+#wins .eclipse-affix-repeat>small{font-size:6px;line-height:1.5}
+#wins .eclipse-affix-repeat>button{min-height:30px;color:var(--gold);border-color:var(--e-line2);font-size:7px}
+
+@container (max-width:850px){
+  #wins .eclipse-card-workspace-grid{grid-template-columns:minmax(175px,215px) minmax(210px,1fr) minmax(190px,230px)}
+  #wins .eclipse-affix-workbench{grid-template-columns:minmax(135px,165px) minmax(230px,1fr) minmax(180px,215px)}
+  #wins .eclipse-autosell-layout{grid-template-columns:minmax(0,1fr) minmax(190px,225px);gap:10px;padding:11px}
+}
+@container (max-width:700px){
+  #wins .wbody[data-view=cardsWork],#wins .wbody[data-view=autosell],#wins .wbody[data-view=reforge]{display:block;overflow:auto;scrollbar-gutter:auto}
+  #wins .eclipse-card-workspace,#wins .eclipse-autosell-workspace{min-height:0}
+  #wins .eclipse-card-workspace-heading,#wins .eclipse-autosell-heading{padding:12px;gap:8px}
+  #wins .eclipse-card-workspace-heading h2,#wins .eclipse-autosell-heading h2{font-size:13px}
+  #wins .eclipse-workspace-pills{flex-direction:column;align-items:flex-end;gap:4px}
+  #wins .eclipse-workspace-pills span{padding:4px 5px;font-size:6px}
+  #wins .eclipse-card-summary{gap:7px;font-size:7px}
+  #wins .eclipse-card-workspace-grid{display:flex;flex-direction:column;min-height:0}
+  #wins .eclipse-card-collection,#wins .eclipse-card-detail,#wins .eclipse-card-sockets{width:auto;max-width:none;padding:12px;border:0;border-bottom:1px solid var(--e-line);overflow:visible}
+  #wins .eclipse-card-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  #wins .eclipse-card-entry{grid-template-columns:27px minmax(0,1fr) auto;min-height:48px;padding:5px}
+  #wins .eclipse-card-entry-icon{width:26px;height:27px}
+  #wins .eclipse-card-entry-icon svg{width:16px;height:16px}
+  #wins .eclipse-card-entry-copy b{font-size:7px}
+  #wins .eclipse-card-entry-copy small{font-size:6px}
+  #wins .eclipse-card-detail{min-height:190px}
+  #wins .eclipse-card-sockets{min-height:160px}
+  #wins .eclipse-card-selected-card{gap:8px}
+  #wins .eclipse-card-gear-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #wins .eclipse-card-large-icon{width:43px;height:43px}
+  #wins .eclipse-selected-card-heading{padding:8px;gap:7px}
+  #wins .eclipse-autosell-heading{align-items:flex-start}
+  #wins .eclipse-autosell-draft-status{max-width:110px;padding:5px;font-size:6px;text-align:center;white-space:normal}
+  #wins .eclipse-autosell-layout{grid-template-columns:minmax(0,1fr);gap:0;padding:9px}
+  #wins .eclipse-autosell-aside{order:-1;margin-bottom:9px}
+  #wins .eclipse-autosell-rarities{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+  #wins .eclipse-autosell-rarity{grid-template-columns:12px minmax(0,1fr);gap:3px;min-height:31px;padding:4px}
+  #wins .eclipse-autosell-rarity>b{font-size:6px}
+  #wins .eclipse-autosell-protections{gap:5px}
+  #wins .eclipse-autosell-protections label{min-height:45px;padding:5px}
+  #wins .eclipse-autosell-affix-list{gap:5px}
+  #wins .eclipse-autosell-affix{grid-template-columns:minmax(60px,.8fr) minmax(0,1.2fr);gap:3px;padding:5px}
+  #wins .eclipse-affix-workbench{display:flex;flex-direction:column;min-height:0}
+  #wins .eclipse-affix-menu,#wins .eclipse-affix-main,#wins .eclipse-affix-aside{padding:11px;border:0;border-bottom:1px solid var(--e-line);overflow:visible}
+  #wins .eclipse-affix-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  #wins .eclipse-affix-menu-heading{grid-column:1/-1;margin:0}
+  #wins .eclipse-affix-menu>button[data-a=workslot]{margin:0}
+  #wins .eclipse-affix-menu-note{grid-column:1/-1}
+  #wins .eclipse-affix-main{padding-top:10px}
+  #wins .eclipse-affix-aside{min-height:160px}
+  #wins .eclipse-window-footer.eclipse-workspace-footer{min-height:42px;gap:5px;padding:5px 8px}
+  #wins .eclipse-workspace-footer .eclipse-footer-message{display:none}
+  #wins .eclipse-footer-action{min-height:30px;padding:5px 7px;font-size:7px}
+}
+@container (max-width:380px){
+  #wins .eclipse-card-workspace-heading{align-items:flex-start}
+  #wins .eclipse-card-list{grid-template-columns:1fr}
+  #wins .eclipse-autosell-rarities,#wins .eclipse-autosell-protections,#wins .eclipse-autosell-affix-list{grid-template-columns:1fr 1fr}
+  #wins .eclipse-affix-menu{grid-template-columns:1fr 1fr}
+}
+#wins .atabs>button .ui-tab-tag{display:inline-flex;align-items:center;margin-left:5px;padding:2px 4px;color:#9fd2b1;background:#9fd2b10d;border:1px solid #9fd2b128;border-radius:3px;font-size:5px;letter-spacing:.3px;vertical-align:middle}
+
+/* Equipment workspace chrome: title bar, wallet, window tools and body.
+   Full-screen positioning was removed; the PR133 parity block further down
+   supplies the framed-window sizing. The game state and handlers stay the same. */
+#wins>.wp.eclipse-equipment-workspace-window>.title{height:76px;min-height:76px;flex:none;justify-content:space-between;gap:14px;padding:12px 24px;background:linear-gradient(120deg,var(--e-surface-start),var(--e-surface-end) 82%);border-bottom:1px solid var(--e-line)}
+#wins>.wp.eclipse-equipment-workspace-window>.title>span:first-child{gap:12px;min-width:0}
+#wins .eclipse-equipment-workspace-window .title .ui-icon{display:grid;width:38px!important;height:38px!important;place-items:center;padding:8px;color:var(--gold);background:var(--e-raised);border:1px solid color-mix(in srgb,var(--gold) 20%,transparent);border-radius:8px}
+#wins .eclipse-equipment-workspace-window .eclipse-window-heading{gap:4px;min-width:0}
+#wins .eclipse-equipment-workspace-window .eclipse-window-heading small{color:var(--e-muted);font-size:8px;letter-spacing:1.4px}
+#wins .eclipse-equipment-workspace-window .eclipse-window-heading b{font:650 21px/1.05 var(--e-display);letter-spacing:-.4px;color:var(--ink)}
+#wins .eclipse-equipment-workspace-window .eclipse-farming,#wins .eclipse-equipment-workspace-window [data-ui-expand]{display:none}
+#wins .eclipse-workspace-wallet{display:flex;align-items:center;gap:8px;margin-right:7px;padding:0 7px;color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums}
+#wins .eclipse-workspace-wallet-icon{font-size:14px}
+#wins .eclipse-workspace-wallet b{font-size:12px;font-weight:500}
+#wins .eclipse-workspace-wallet small{display:none}
+#wins .eclipse-equipment-workspace-window .ui-window-tools{gap:8px}
+#wins .eclipse-equipment-workspace-window .ui-window-tools [data-x]{width:36px;height:36px;padding:9px;color:var(--ink);border-color:var(--e-line);border-radius:7px}
+#wins .eclipse-equipment-workspace-window>.wbody{display:flex;flex:1 1 auto;flex-direction:column;min-height:0;max-height:none;overflow-x:hidden;overflow-y:auto;background:transparent}
+#wins .eclipse-equipment-workspace-window>.wbody>.ui-hero{display:none}
+/* Sub-tab styling for the Equipment window lives in the single canonical
+   #wins [data-win="equip"] .atabs block further down, so Loadout, Refine,
+   Affixes, Cards, Auto-sell and Ascension Forge share one tab design. */
+#wins .eclipse-equipment-workspace-window>.wbody>.atabs::-webkit-scrollbar{display:none}
+#wins .eclipse-equipment-workspace-window>.wbody>.ui-content{display:flex;flex:1 0 auto;flex-direction:column;min-width:0;min-height:0;gap:0;padding:0;overflow:visible;background:transparent}
+#wins .eclipse-equipment-workspace-window>.eclipse-window-footer{height:auto;min-height:74px;flex:none;align-items:center;gap:12px;padding:14px 24px;background:linear-gradient(120deg,var(--e-surface-start),var(--e-surface-end) 82%);border-top:1px solid var(--e-line)}
+#wins .eclipse-equipment-workspace-window .eclipse-save-status{flex:none;color:var(--e-muted);font-size:9px;white-space:nowrap}
+#wins .eclipse-equipment-workspace-window .eclipse-footer-message{flex:1;min-width:160px;color:var(--e-muted);font-size:11px;line-height:1.45}
+#wins .eclipse-equipment-workspace-window .eclipse-workspace-footer .eclipse-footer-action{min-width:150px;min-height:43px;padding:9px 15px;border-radius:7px;font-size:11px}
+#wins .eclipse-equipment-workspace-window .eclipse-workspace-footer .eclipse-footer-action.primary{box-shadow:0 4px 14px color-mix(in srgb,var(--gold) 14%,transparent)}
+#wins .eclipse-equipment-workspace-window .eclipse-workspace-footer kbd{color:var(--e-muted);font-size:9px}
+
+/* Cards: three readable work areas with their own scroll; the phone stacks the same data. */
+#wins .eclipse-card-workspace{display:flex;flex:1 0 auto;flex-direction:column;min-width:0;min-height:0;height:auto;background:transparent}
+#wins .eclipse-card-workspace-heading{flex:none;min-height:91px;padding:20px 30px;gap:20px;background:var(--e-raised);border-bottom:1px solid var(--e-line)}
+#wins .eclipse-card-workspace-heading h2{font:620 22px/1.15 var(--e-display);letter-spacing:-.55px}
+#wins .eclipse-card-workspace-heading p{margin-top:6px;font-size:12px;line-height:1.4}
+#wins .eclipse-workspace-pills{flex-flow:row wrap;justify-content:flex-end;gap:8px}
+#wins .eclipse-workspace-pills span{padding:8px 10px;font-size:10px}
+#wins .eclipse-card-workspace-grid{display:grid;grid-template-columns:minmax(260px,310px) minmax(0,1fr) minmax(270px,330px);grid-auto-rows:min-content;flex:0 0 auto;min-height:0;overflow:visible}
+#wins .eclipse-card-collection,#wins .eclipse-card-detail,#wins .eclipse-card-sockets{min-width:0;padding:22px 22px;overflow:visible}
+#wins .eclipse-card-collection,#wins .eclipse-card-detail{border-right:1px solid var(--e-line);border-bottom:0}
+#wins .eclipse-card-panel-title{min-height:30px;margin-bottom:10px;color:var(--e-muted);font-size:9px;letter-spacing:1.4px}
+#wins .eclipse-card-panel-title small{font-size:9px;letter-spacing:0}
+#wins .eclipse-card-search{margin-bottom:10px}
+#wins .eclipse-card-search input{min-height:40px;padding:9px 12px;font-size:12px}
+#wins .eclipse-card-ownership,#wins .eclipse-card-grade-filters{gap:6px;margin-bottom:9px}
+#wins .eclipse-card-ownership button,#wins .eclipse-card-grade-filters button{min-height:31px;padding:6px 9px;font-size:10px}
+#wins .eclipse-card-entry{grid-template-columns:38px minmax(0,1fr) auto;gap:9px;min-height:65px;padding:9px;border-radius:7px}
+#wins .eclipse-card-entry-icon{width:36px;height:36px}
+#wins .eclipse-card-entry-icon svg{width:23px;height:23px}
+#wins .eclipse-card-entry-copy{gap:4px}
+#wins .eclipse-card-entry-copy b{font-size:12px}
+#wins .eclipse-card-entry-copy b>small{font-size:9px}
+#wins .eclipse-card-entry-copy small{font-size:10px;line-height:1.35}
+#wins .eclipse-card-entry>strong{font-size:11px}
+#wins .eclipse-card-list{gap:8px}
+#wins .eclipse-card-collection-note{margin-top:12px;font-size:9px;line-height:1.5}
+#wins .eclipse-selected-card{gap:16px}
+#wins .eclipse-selected-card-heading{align-items:center;gap:14px;padding:16px;border-radius:9px}
+#wins .eclipse-card-large-icon{width:60px;height:60px}
+#wins .eclipse-card-large-icon svg{width:35px;height:35px}
+#wins .eclipse-selected-card-heading>div>small:first-child{font-size:9px;letter-spacing:1px}
+#wins .eclipse-selected-card-heading h3{margin:5px 0;font-size:19px}
+#wins .eclipse-selected-card-heading p{font-size:11px}
+#wins .eclipse-selected-card-heading>div>small:last-child{font-size:10px}
+#wins .eclipse-card-grade-pill{padding:5px 8px;font-size:9px}
+#wins .eclipse-card-info-block{gap:9px}
+#wins .eclipse-card-info-block>small,#wins .eclipse-card-safety>small{font-size:9px;letter-spacing:1.2px}
+#wins .eclipse-card-effect,#wins .eclipse-card-fit{padding:8px 10px;font-size:11px}
+#wins .eclipse-card-actions{gap:8px}
+#wins .eclipse-card-actions button{min-height:39px;padding:8px 11px;font-size:11px}
+#wins .eclipse-card-action-note{font-size:11px}
+#wins .eclipse-card-safety{padding:13px;border-radius:8px}
+#wins .eclipse-card-safety>div{grid-template-columns:24px minmax(0,1fr);gap:11px 8px;margin-top:10px}
+#wins .eclipse-card-safety>div>b{font-size:10px}
+#wins .eclipse-card-safety>div>span{font-size:11px;line-height:1.35}
+#wins .eclipse-card-safety>div>span>small{font-size:10px}
+#wins .eclipse-card-mastery-note{gap:5px;padding:12px}
+#wins .eclipse-card-mastery-note b{font-size:11px}
+#wins .eclipse-card-mastery-note small{font-size:10px;line-height:1.5}
+#wins .eclipse-card-gear-select{gap:7px;margin-bottom:12px;font-size:10px}
+#wins .eclipse-card-gear-select select{min-height:40px;padding:7px 10px;font-size:11px}
+#wins .eclipse-card-equipped-item{gap:10px;margin-bottom:11px;padding:11px;border-radius:7px}
+#wins .eclipse-card-equipped-item>svg,#wins .eclipse-card-equipped-item>img{width:39px;height:39px}
+#wins .eclipse-card-equipped-item b{font-size:11px}
+#wins .eclipse-card-equipped-item small{font-size:10px}
+#wins .eclipse-card-socket-list{gap:8px}
+#wins .eclipse-card-socket{grid-template-columns:38px minmax(0,1fr);gap:9px;padding:10px;border-radius:7px}
+#wins .eclipse-socket-card-icon,#wins .eclipse-card-socket.empty>span:first-child{width:36px;height:36px}
+#wins .eclipse-socket-card-icon svg{width:22px;height:22px}
+#wins .eclipse-card-socket>span>b{font-size:11px}
+#wins .eclipse-card-socket>span>small{font-size:9px}
+#wins .eclipse-card-socket>button{min-height:35px;padding:7px;font-size:10px}
+#wins .eclipse-card-remove-note{margin:11px 0;font-size:9px}
+#wins .eclipse-card-autosell-note{gap:5px;margin-top:14px;padding:11px}
+#wins .eclipse-card-autosell-note b{font-size:10px}
+#wins .eclipse-card-autosell-note small{font-size:9px;line-height:1.5}
+#wins .eclipse-card-link{min-height:37px;margin-top:9px;font-size:10px}
+#wins .eclipse-card-empty{padding:18px;font-size:11px}
+
+/* Auto-sell: real active rules, plain-English summary, explicit drafts and a preview-only bag check. */
+#wins .eclipse-autosell-workspace{display:flex;flex:1 0 auto!important;flex-direction:column;min-width:0;min-height:0;height:auto;background:transparent}
+#wins .eclipse-autosell-heading{flex:none;min-height:91px;padding:20px 30px;gap:20px;background:var(--e-raised);border-bottom:1px solid var(--e-line)}
+#wins .eclipse-autosell-heading h2{font:620 22px/1.15 var(--e-display);letter-spacing:-.55px}
+#wins .eclipse-autosell-heading p{margin-top:6px;font-size:12px}
+#wins .eclipse-autosell-draft-status{padding:8px 10px;font-size:10px}
+#wins .eclipse-autosell-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(310px,370px);align-items:stretch;gap:24px;flex:0 0 auto;min-height:0;padding:22px 30px;overflow:visible}
+#wins .eclipse-autosell-main,#wins .eclipse-autosell-aside{min-width:0;min-height:0;overflow:visible}
+#wins .eclipse-autosell-section{margin:0 0 16px;padding:18px;background:var(--e-raised);border-color:var(--e-line);border-radius:9px}
+#wins .eclipse-autosell-section-head{gap:12px;margin-bottom:14px}
+#wins .eclipse-step{width:28px;height:28px;font-size:12px}
+#wins .eclipse-autosell-section-head h3{font-size:14px}
+#wins .eclipse-autosell-section-head small{font-size:10px}
+#wins .eclipse-autosell-pause{margin-left:auto;min-height:32px;padding:6px 10px;color:var(--e-muted);background:transparent;border-color:var(--e-line);font-size:10px;white-space:nowrap}
+#wins .eclipse-autosell-pause:hover:not(:disabled){color:var(--gold);border-color:var(--e-line2)}
+#wins .eclipse-autosell-pause:disabled{opacity:.48;cursor:not-allowed}
+#wins .eclipse-autosell-rarities{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#wins .eclipse-autosell-rarity{display:grid;grid-template-columns:22px minmax(0,1fr);align-items:center;gap:7px;min-height:52px;padding:9px 11px;border-radius:7px}
+#wins .eclipse-autosell-rarity>span{display:grid;place-items:center;width:19px;height:19px;border:1px solid var(--e-line);border-radius:4px;font-size:11px}
+#wins .eclipse-autosell-rarity>b{font-size:11px}
+#wins .eclipse-autosell-rarity>i{grid-column:1/-1;height:3px;border-radius:3px}
+#wins .eclipse-autosell-help{margin-top:11px;font-size:10px;line-height:1.5}
+#wins .eclipse-autosell-protections{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#wins .eclipse-autosell-protections label{grid-template-columns:minmax(0,1fr) 19px;align-items:center;min-height:72px;padding:13px;border-radius:7px}
+#wins .eclipse-autosell-protections label>span{grid-template-columns:25px 1fr;gap:5px 8px}
+#wins .eclipse-autosell-protections label>span svg{width:20px;height:20px}
+#wins .eclipse-autosell-protections label>span>b{font-size:12px}
+#wins .eclipse-autosell-protections label>span>small{font-size:10px;line-height:1.4}
+#wins .eclipse-autosell-protections input{width:17px;height:17px}
+#wins .eclipse-autosell-rule-head{align-items:center;gap:18px;margin-bottom:12px}
+#wins .eclipse-autosell-rule-head>div:first-child{gap:7px}
+#wins .eclipse-autosell-rule-head label,.eclipse-autosell-match>span{font-size:10px}
+#wins .eclipse-autosell-rule-head select{min-width:215px;min-height:39px;padding:8px 11px;font-size:12px}
+#wins .eclipse-autosell-match{gap:6px}
+#wins .eclipse-autosell-match button{min-height:34px;padding:6px 10px;font-size:10px}
+#wins .eclipse-autosell-match small{font-size:9px}
+#wins .eclipse-autosell-affix-list{display:grid;grid-template-columns:1fr;gap:8px}
+#wins .eclipse-autosell-affix{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,.7fr) 36px;align-items:end;gap:10px;padding:10px 12px;background:var(--e-raised);border:1px solid var(--e-line);border-radius:7px}
+#wins .eclipse-autosell-affix>label{display:grid;gap:6px;min-width:0;color:var(--e-muted);font-size:10px}
+#wins .eclipse-autosell-affix>label>span{color:var(--e-muted);font-size:10px}
+#wins .eclipse-autosell-affix>label select,#wins .eclipse-autosell-affix>label input[type=number]{width:100%;min-height:38px;margin:0;padding:7px 9px;text-align:left;font-size:11px}
+#wins .eclipse-autosell-condition-remove{width:36px;min-height:38px;padding:5px;color:var(--danger-line);border-color:color-mix(in srgb,var(--danger-line) 25%,transparent);font-size:19px}
+#wins .eclipse-autosell-condition-add{min-height:36px;margin-top:10px;padding:7px 10px;color:var(--gold);background:transparent;border-color:var(--e-line2);font-size:11px}
+#wins .eclipse-autosell-condition-limit{display:block;margin-top:10px;color:var(--e-muted);font-size:10px}
+#wins .eclipse-autosell-no-affix{margin:0;padding:13px;color:var(--e-muted);background:var(--e-raised);border:1px dashed var(--e-line);border-radius:7px;font-size:11px;line-height:1.5}
+#wins .eclipse-autosell-summary{display:block;margin-top:10px;color:var(--e-muted);font-size:11px;line-height:1.55}
+#wins .eclipse-autosell-main>.autosell-editor{margin:0 0 12px;padding:0;background:transparent;border:0}
+#wins .eclipse-autosell-main>.autosell-editor>summary{padding:13px 15px;font-size:12px}
+#wins .eclipse-autosell-main>.autosell-editor>p,#wins .eclipse-autosell-main>.autosell-editor fieldset,#wins .eclipse-autosell-main>.autosell-editor>.row,#wins .eclipse-autosell-main>.autosell-editor>.sell-label{margin-top:10px;font-size:11px}
+#wins .eclipse-autosell-aside{align-self:stretch;padding:20px;background:var(--e-raised);border:1px solid var(--e-line);border-radius:9px}
+#wins .eclipse-autosell-rule-summary{margin:0 0 14px;color:var(--gold);font-size:13px;line-height:1.6}
+#wins .eclipse-autosell-always{gap:5px;padding:12px;border-radius:7px}
+#wins .eclipse-autosell-always b{font-size:11px}
+#wins .eclipse-autosell-always small{font-size:10px;line-height:1.5}
+#wins .eclipse-autosell-simulation{margin-top:14px;padding:13px;border-radius:7px}
+#wins .eclipse-autosell-sim-head{font-size:9px;letter-spacing:1px}
+#wins .eclipse-autosell-sim-head small{font-size:9px}
+#wins .eclipse-autosell-sim-counts{gap:9px;margin:12px 0}
+#wins .eclipse-autosell-sim-counts>div{padding:12px}
+#wins .eclipse-autosell-sim-counts b{font-size:22px}
+#wins .eclipse-autosell-sim-counts small{font-size:9px}
+#wins .eclipse-autosell-sim-row{gap:10px;padding:10px 0}
+#wins .eclipse-autosell-sim-row b{font-size:10px}
+#wins .eclipse-autosell-sim-row small{font-size:9px;line-height:1.4}
+#wins .eclipse-autosell-sim-row>strong{font-size:9px}
+#wins .eclipse-autosell-sim-value{margin-top:10px;padding-top:10px}
+#wins .eclipse-autosell-sim-value span{font-size:9px}
+#wins .eclipse-autosell-sim-value b{font-size:11px}
+#wins .eclipse-autosell-empty{font-size:10px;line-height:1.5}
+#wins .eclipse-autosell-fineprint{margin-top:12px;font-size:9px;line-height:1.55}
+
+/* Affixes: native item data and costs with the proposed range meter and result review. */
+#wins .wbody[data-view=reforge]>.ui-content{overflow:visible}
+#wins .eclipse-affix-workbench{display:grid;grid-template-columns:minmax(250px,310px) minmax(0,1fr) minmax(285px,340px);grid-auto-rows:min-content;flex:0 0 auto;min-height:0;height:auto;background:transparent}
+#wins .eclipse-affix-menu,#wins .eclipse-affix-main,#wins .eclipse-affix-aside{min-width:0;min-height:0;padding:22px 23px;overflow:visible}
+#wins .eclipse-affix-menu,#wins .eclipse-affix-main{border-right:1px solid var(--e-line);border-bottom:0}
+#wins .eclipse-affix-menu-heading{margin-bottom:12px;padding-bottom:11px;font-size:9px;letter-spacing:1.3px}
+#wins .eclipse-affix-menu-heading small{font-size:10px}
+#wins .eclipse-affix-gear-select{position:static;display:block;width:auto;height:auto;overflow:visible;clip-path:none;white-space:normal;margin:0 0 10px}
+#wins .eclipse-affix-mobile-label{display:none}
+#wins .eclipse-affix-gear-select select{width:100%;min-height:43px;padding:8px 11px;color:var(--gold);font-size:12px}
+#wins .eclipse-affix-menu>button[data-a=workslot]{grid-template-columns:42px minmax(0,1fr) 15px;gap:10px;margin-bottom:7px;padding:9px;border-radius:7px}
+#wins .eclipse-affix-menu-icon{width:40px;height:40px}
+#wins .eclipse-affix-menu-icon img{max-width:34px;max-height:34px}
+#wins .eclipse-affix-menu>button small{font-size:9px;letter-spacing:.25px}
+#wins .eclipse-affix-menu>button b{font-size:12px}
+#wins .eclipse-affix-menu-note{margin-top:12px;font-size:9px;line-height:1.5}
+#wins .eclipse-affix-main{padding:23px 27px}
+#wins .eclipse-affix-item{gap:14px;margin-bottom:18px;padding:14px;background:var(--e-raised);border-radius:8px}
+#wins .eclipse-affix-item-icon{width:62px;height:62px;border-radius:8px}
+#wins .eclipse-affix-item-icon img{max-width:50px;max-height:50px}
+#wins .eclipse-affix-item>div{gap:4px}
+#wins .eclipse-affix-item>div>small{font-size:9px;letter-spacing:1px}
+#wins .eclipse-affix-item h2{font-size:19px;line-height:1.2}
+#wins .eclipse-affix-item p{font-size:11px}
+#wins .eclipse-affix-set{font-size:10px}
+#wins .eclipse-affix-prompt{margin-bottom:14px}
+#wins .eclipse-affix-prompt h3{font-size:16px}
+#wins .eclipse-affix-prompt p{margin-top:5px;font-size:11px}
+#wins .eclipse-affix-prompt>small{font-size:10px}
+#wins .eclipse-affix-rows{gap:9px}
+#wins .eclipse-affix-row{grid-template-columns:35px minmax(0,1fr) auto;gap:11px;min-height:76px;padding:11px 13px;border-radius:8px}
+#wins .eclipse-affix-row.selected{box-shadow:inset 3px 0 var(--gold)}
+#wins .eclipse-affix-row-icon{display:grid;place-items:center;width:32px;height:32px;background:var(--e-raised);border:1px solid var(--e-line);border-radius:6px;font-size:15px}
+#wins .eclipse-affix-row-copy{display:grid;min-width:0;gap:5px}
+#wins .eclipse-affix-row-copy>b{font-size:14px}
+#wins .eclipse-affix-row-status{font-size:9px}
+#wins .eclipse-affix-row.outside-range .eclipse-affix-row-status{color:var(--danger-soft)}
+#wins .eclipse-affix-meter{display:block;width:min(100%,320px);height:5px;overflow:hidden;background:var(--e-raised);border-radius:6px}
+#wins .eclipse-affix-meter>i{display:block;height:100%;background:var(--gold);border-radius:6px}
+#wins .eclipse-affix-row.selected .eclipse-affix-meter>i{background:var(--gold)}
+#wins .eclipse-affix-row.outside-range .eclipse-affix-meter>i{background:var(--danger)}
+#wins .eclipse-affix-range-label{color:var(--e-muted);font-size:9px}
+#wins .eclipse-affix-row>strong{min-width:62px;padding:7px 8px;color:var(--e-muted);font-size:10px;border:1px solid var(--e-line);border-radius:5px;text-align:center}
+#wins .eclipse-affix-row.selected>strong{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 33%,transparent)}
+#wins .eclipse-affix-pool{margin-top:15px;border-radius:7px}
+#wins .eclipse-affix-pool>button{min-height:42px;padding:8px 12px;font-size:11px}
+#wins .eclipse-affix-pool-list{gap:7px;padding:10px}
+#wins .eclipse-affix-pool-list>span{padding:7px;font-size:9px}
+#wins .eclipse-affix-footnote{margin-top:13px;font-size:10px;line-height:1.5}
+#wins .eclipse-affix-aside{background:var(--e-raised)}
+#wins .eclipse-affix-aside>.ui-eyebrow{font-size:9px;letter-spacing:1.2px}
+#wins .eclipse-affix-aside>h3{margin:8px 0 14px;font-size:18px}
+#wins .eclipse-affix-aside>p{font-size:10px;line-height:1.55}
+#wins .eclipse-affix-selection-counts{gap:9px;margin-bottom:12px}
+#wins .eclipse-affix-selection-counts>div{padding:11px}
+#wins .eclipse-affix-selection-counts b{font-size:20px}
+#wins .eclipse-affix-selection-counts small{font-size:9px}
+#wins .eclipse-affix-resource{gap:5px 10px;margin:7px 0;padding:11px;border-radius:7px}
+#wins .eclipse-affix-resource>span{font-size:10px}
+#wins .eclipse-affix-resource>b{font-size:11px}
+#wins .eclipse-affix-resource>small{font-size:9px}
+#wins .eclipse-affix-resource.eclipse-affix-total>b{font-size:15px}
+#wins .eclipse-affix-protection{padding:11px;font-size:10px}
+#wins .eclipse-affix-full{gap:6px;min-height:90px;margin-top:10px;padding:13px;border-radius:7px}
+#wins .eclipse-affix-full>span{font-size:11px}
+#wins .eclipse-affix-full>small{font-size:10px;line-height:1.4}
+#wins .eclipse-affix-full>b{font-size:11px}
+#wins .eclipse-reforge-offer{margin-bottom:14px;padding:15px;border-radius:9px}
+#wins .eclipse-offer-banner{margin:-15px -15px 13px;padding:11px 14px;font-size:11px}
+#wins .reforge-comparison{gap:7px}
+#wins .reforge-comparison-row{grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr);gap:9px;padding:10px;font-size:11px}
+#wins .reforge-comparison-labels{font-size:9px;letter-spacing:1px}
+#wins .reforge-comparison-row small{font-size:9px}
+#wins .eclipse-offer-note{font-size:10px;line-height:1.5}
+#wins .eclipse-affix-paid{padding:15px;border-radius:9px}
+#wins .eclipse-affix-paid>h3{margin:6px 0 12px;font-size:18px}
+#wins .eclipse-affix-paid>p{font-size:10px;line-height:1.55}
+#wins .eclipse-affix-warning{padding:11px}
+#wins .eclipse-affix-repeat{gap:8px;margin-top:13px;padding:13px;border-radius:7px}
+#wins .eclipse-affix-repeat>b{font-size:11px}
+#wins .eclipse-affix-repeat>small{font-size:10px;line-height:1.5}
+#wins .eclipse-affix-repeat>button{min-height:39px;font-size:10px}
+
+@media(max-width:900px){
+ #wins .eclipse-card-workspace-grid{grid-template-columns:minmax(225px,270px) minmax(0,1fr) minmax(240px,285px)}
+ #wins .eclipse-affix-workbench{grid-template-columns:minmax(215px,260px) minmax(0,1fr) minmax(250px,295px)}
+ #wins .eclipse-autosell-layout{grid-template-columns:minmax(0,1fr) minmax(270px,315px);gap:14px;padding:18px}
+ #wins .eclipse-card-collection,#wins .eclipse-card-detail,#wins .eclipse-card-sockets,#wins .eclipse-affix-menu,#wins .eclipse-affix-main,#wins .eclipse-affix-aside{padding:16px}
+}
+@media(max-width:700px){
+ #wins>.wp.eclipse-equipment-workspace-window>.title{height:70px;min-height:70px;padding:10px 16px}
+ #wins .eclipse-equipment-workspace-window .title .ui-icon{width:35px!important;height:35px!important;padding:7px}
+ #wins .eclipse-equipment-workspace-window .eclipse-window-heading small{font-size:7px;letter-spacing:1px}
+ #wins .eclipse-equipment-workspace-window .eclipse-window-heading b{font-size:19px}
+ #wins .eclipse-workspace-wallet{gap:5px;margin-right:0;padding:0 2px}
+ #wins .eclipse-workspace-wallet-icon{font-size:12px}
+ #wins .eclipse-workspace-wallet b{font-size:10px}
+ #wins .eclipse-equipment-workspace-window .ui-window-tools{gap:5px}
+ #wins .eclipse-equipment-workspace-window .ui-window-tools [data-x]{width:32px;height:32px;padding:7px}
+ #wins .eclipse-equipment-workspace-window>.wbody>.ui-content{overflow:visible}
+ #wins .eclipse-equipment-workspace-window>.eclipse-window-footer{min-height:74px;flex-wrap:wrap;gap:6px 8px;padding:9px 14px max(9px,env(safe-area-inset-bottom))}
+ #wins .eclipse-equipment-workspace-window .eclipse-save-status{font-size:8px}
+ #wins .eclipse-equipment-workspace-window .eclipse-footer-message{order:0;flex:1 0 100%;min-width:0;font-size:9px;line-height:1.4}
+ #wins .eclipse-equipment-workspace-window .eclipse-workspace-footer .eclipse-footer-action{flex:1;min-width:0;min-height:38px;padding:7px 8px;font-size:10px}
+ #wins .eclipse-equipment-workspace-window .eclipse-workspace-footer kbd{display:none}
+ #wins .eclipse-card-workspace{height:auto;min-height:100%;flex:none}
+ #wins .eclipse-card-workspace-heading,#wins .eclipse-autosell-heading{align-items:flex-start;padding:17px 17px 14px;gap:11px}
+ #wins .eclipse-card-workspace-heading h2,#wins .eclipse-autosell-heading h2{font-size:18px}
+ #wins .eclipse-card-workspace-heading p,#wins .eclipse-autosell-heading p{font-size:10px;line-height:1.45}
+ #wins .eclipse-workspace-pills{flex-direction:column;align-items:flex-end;gap:5px}
+ #wins .eclipse-workspace-pills span{max-width:138px;padding:5px 6px;font-size:8px;text-align:right;white-space:normal}
+ #wins .eclipse-card-workspace-grid{display:flex;flex-direction:column;min-height:0;overflow:visible}
+ #wins .eclipse-card-collection,#wins .eclipse-card-detail,#wins .eclipse-card-sockets{width:auto;max-width:none;min-height:0;padding:17px;border:0;border-bottom:1px solid var(--e-line);overflow:visible}
+ #wins .eclipse-card-panel-title{min-height:24px;margin-bottom:9px;font-size:8px}
+ #wins .eclipse-card-panel-title small{font-size:8px}
+ #wins .eclipse-card-search input{min-height:39px;font-size:11px}
+ #wins .eclipse-card-ownership,#wins .eclipse-card-grade-filters{gap:5px;margin-bottom:7px}
+ #wins .eclipse-card-ownership button,#wins .eclipse-card-grade-filters button{min-height:29px;padding:5px 7px;font-size:9px}
+ #wins .eclipse-card-list{display:grid;grid-template-columns:1fr;gap:7px}
+ #wins .eclipse-card-entry{grid-template-columns:33px minmax(0,1fr) auto;min-height:58px;padding:8px}
+ #wins .eclipse-card-entry-icon{width:32px;height:33px}
+ #wins .eclipse-card-entry-icon svg{width:21px;height:21px}
+ #wins .eclipse-card-entry-copy b{font-size:11px}
+ #wins .eclipse-card-entry-copy small{font-size:9px;line-height:1.35}
+ #wins .eclipse-card-entry>strong{font-size:10px}
+ #wins .eclipse-card-collection-note{font-size:9px}
+ #wins .eclipse-selected-card-heading{gap:10px;padding:12px}
+ #wins .eclipse-card-large-icon{width:47px;height:47px}
+ #wins .eclipse-card-large-icon svg{width:29px;height:29px}
+ #wins .eclipse-selected-card-heading>div>small:first-child{font-size:8px}
+ #wins .eclipse-selected-card-heading h3{font-size:16px}
+ #wins .eclipse-selected-card-heading p{font-size:10px}
+ #wins .eclipse-selected-card-heading>div>small:last-child{font-size:9px}
+ #wins .eclipse-card-info-block>small,#wins .eclipse-card-safety>small{font-size:8px}
+ #wins .eclipse-card-effect,#wins .eclipse-card-fit{padding:6px 8px;font-size:9px}
+ #wins .eclipse-card-actions{display:grid;grid-template-columns:1fr;gap:7px}
+ #wins .eclipse-card-actions button{min-height:37px;font-size:10px}
+ #wins .eclipse-card-safety{padding:11px}
+ #wins .eclipse-card-safety>div{grid-template-columns:21px minmax(0,1fr);gap:9px 6px}
+ #wins .eclipse-card-safety>div>span{font-size:10px}
+ #wins .eclipse-card-safety>div>span>small{font-size:9px}
+ #wins .eclipse-card-mastery-note{padding:10px}
+ #wins .eclipse-card-mastery-note b{font-size:10px}
+ #wins .eclipse-card-mastery-note small{font-size:9px}
+ #wins .eclipse-card-gear-select{font-size:9px}
+ #wins .eclipse-card-gear-select select{min-height:38px;font-size:10px}
+ #wins .eclipse-card-equipped-item{padding:9px}
+ #wins .eclipse-card-equipped-item b{font-size:10px}
+ #wins .eclipse-card-equipped-item small{font-size:9px}
+ #wins .eclipse-card-socket{grid-template-columns:33px minmax(0,1fr);padding:8px}
+ #wins .eclipse-socket-card-icon,#wins .eclipse-card-socket.empty>span:first-child{width:31px;height:31px}
+ #wins .eclipse-card-socket>span>b{font-size:10px}
+ #wins .eclipse-card-socket>span>small{font-size:8px}
+ #wins .eclipse-card-socket>button{min-height:32px;font-size:9px}
+ #wins .eclipse-card-remove-note,#wins .eclipse-card-autosell-note small{font-size:8px}
+ #wins .eclipse-card-autosell-note b{font-size:9px}
+ #wins .eclipse-card-link{min-height:34px;font-size:9px}
+ #wins .eclipse-autosell-workspace{height:auto;min-height:100%;flex:none}
+ #wins .eclipse-autosell-heading{align-items:flex-start}
+ #wins .eclipse-autosell-draft-status{max-width:120px;padding:6px 8px;font-size:8px;white-space:normal;text-align:center}
+ #wins .eclipse-autosell-layout{display:flex;flex-direction:column;gap:0;min-height:0;padding:12px 14px;overflow:visible}
+ #wins .eclipse-autosell-main,#wins .eclipse-autosell-aside{width:100%;overflow:visible}
+ #wins .eclipse-autosell-aside{order:0;margin:0 0 13px;padding:14px}
+ #wins .eclipse-autosell-section{margin-bottom:12px;padding:13px;border-radius:8px}
+ #wins .eclipse-autosell-section-head{gap:9px;margin-bottom:11px}
+ #wins .eclipse-step{width:24px;height:24px;font-size:10px}
+ #wins .eclipse-autosell-section-head h3{font-size:12px}
+ #wins .eclipse-autosell-section-head small{font-size:9px}
+ #wins .eclipse-autosell-pause{min-height:29px;padding:5px 7px;font-size:9px}
+ #wins .eclipse-autosell-rarities{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+ #wins .eclipse-autosell-rarity{grid-template-columns:17px minmax(0,1fr);gap:4px;min-height:58px;padding:7px 5px}
+ #wins .eclipse-autosell-rarity>span{width:15px;height:15px;font-size:9px}
+ #wins .eclipse-autosell-rarity>b{font-size:8px;line-height:1.15;overflow-wrap:anywhere}
+ #wins .eclipse-autosell-help{font-size:9px}
+ #wins .eclipse-autosell-protections{grid-template-columns:1fr;gap:7px}
+ #wins .eclipse-autosell-protections label{min-height:61px;padding:9px}
+ #wins .eclipse-autosell-protections label>span{grid-template-columns:22px 1fr;gap:4px 7px}
+ #wins .eclipse-autosell-protections label>span svg{width:18px;height:18px}
+ #wins .eclipse-autosell-protections label>span>b{font-size:11px}
+ #wins .eclipse-autosell-protections label>span>small{font-size:9px}
+ #wins .eclipse-autosell-protections input{width:16px;height:16px}
+ #wins .eclipse-autosell-rule-head{align-items:flex-end;gap:8px}
+ #wins .eclipse-autosell-rule-head>div:first-child{flex:1;min-width:0}
+ #wins .eclipse-autosell-rule-head label,.eclipse-autosell-match>span{font-size:9px}
+ #wins .eclipse-autosell-rule-head select{min-width:0;width:100%;min-height:37px;padding:6px 8px;font-size:10px}
+ #wins .eclipse-autosell-match{gap:4px}
+ #wins .eclipse-autosell-match button{min-height:30px;padding:5px 7px;font-size:9px}
+ #wins .eclipse-autosell-match small{font-size:8px}
+ #wins .eclipse-autosell-affix{grid-template-columns:minmax(0,1fr) minmax(90px,.8fr) 32px;gap:6px;padding:8px}
+ #wins .eclipse-autosell-affix>label{gap:4px;font-size:8px}
+ #wins .eclipse-autosell-affix>label>span{font-size:8px}
+ #wins .eclipse-autosell-affix>label select,#wins .eclipse-autosell-affix>label input[type=number]{min-height:34px;padding:5px;font-size:9px}
+ #wins .eclipse-autosell-condition-remove{width:32px;min-height:34px;font-size:17px}
+ #wins .eclipse-autosell-condition-add{min-height:33px;margin-top:8px;font-size:10px}
+ #wins .eclipse-autosell-summary{font-size:10px}
+ #wins .eclipse-autosell-main>.autosell-editor>summary{padding:11px 12px;font-size:10px}
+ #wins .eclipse-autosell-rule-summary{font-size:11px;line-height:1.55}
+ #wins .eclipse-autosell-always b{font-size:10px}
+ #wins .eclipse-autosell-always small{font-size:9px}
+ #wins .eclipse-autosell-sim-head,#wins .eclipse-autosell-sim-head small{font-size:8px}
+ #wins .eclipse-autosell-sim-counts b{font-size:20px}
+ #wins .eclipse-autosell-sim-counts small{font-size:8px}
+ #wins .eclipse-autosell-sim-row b{font-size:9px}
+ #wins .eclipse-autosell-sim-row small,#wins .eclipse-autosell-sim-row>strong{font-size:8px}
+ #wins .eclipse-autosell-sim-value span{font-size:8px}
+ #wins .eclipse-autosell-sim-value b{font-size:10px}
+ #wins .eclipse-autosell-fineprint{font-size:8px}
+ #wins .eclipse-affix-workbench{display:flex;flex-direction:column;gap:0;min-height:0;height:auto}
+ #wins .eclipse-affix-menu,#wins .eclipse-affix-main,#wins .eclipse-affix-aside{width:auto;min-height:0;padding:15px 17px;border:0;border-bottom:1px solid var(--e-line);overflow:visible}
+ #wins .eclipse-affix-menu{display:flex;flex-direction:column;gap:0}
+ #wins .eclipse-affix-menu-heading{display:none}
+ #wins .eclipse-affix-gear-select{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;margin:0}
+ #wins .eclipse-affix-mobile-label{display:block;color:var(--e-muted);font-size:8px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+ #wins .eclipse-affix-gear-select select{min-width:0;min-height:39px;padding:6px 10px;font-size:11px}
+ #wins .eclipse-affix-menu>button[data-a=workslot],#wins .eclipse-affix-menu-note{display:none}
+ #wins .eclipse-affix-main{padding:17px}
+ #wins .eclipse-affix-item{gap:11px;margin-bottom:17px;padding:11px;border-radius:8px}
+ #wins .eclipse-affix-item-icon{width:49px;height:49px}
+ #wins .eclipse-affix-item-icon img{max-width:40px;max-height:40px}
+ #wins .eclipse-affix-item>div>small{font-size:8px;letter-spacing:.7px;line-height:1.3}
+ #wins .eclipse-affix-item h2{font-size:17px}
+ #wins .eclipse-affix-item p{font-size:10px}
+ #wins .eclipse-affix-prompt{align-items:flex-start;margin-bottom:12px}
+ #wins .eclipse-affix-prompt h3{font-size:14px}
+ #wins .eclipse-affix-prompt p{font-size:10px;line-height:1.4}
+ #wins .eclipse-affix-prompt>small{font-size:8px}
+ #wins .eclipse-affix-rows{gap:7px}
+ #wins .eclipse-affix-row{grid-template-columns:28px minmax(0,1fr) auto;gap:8px;min-height:64px;padding:9px;border-radius:7px}
+ #wins .eclipse-affix-row-icon{width:26px;height:27px;font-size:12px}
+ #wins .eclipse-affix-row-copy{gap:4px}
+ #wins .eclipse-affix-row-copy>b{font-size:13px}
+ #wins .eclipse-affix-row-status{font-size:8px}
+ #wins .eclipse-affix-meter{height:4px}
+ #wins .eclipse-affix-range-label{font-size:8px}
+ #wins .eclipse-affix-row>strong{min-width:56px;padding:6px;font-size:9px}
+ #wins .eclipse-affix-pool{margin-top:12px}
+ #wins .eclipse-affix-pool>button{min-height:39px;padding:7px 9px;font-size:10px}
+ #wins .eclipse-affix-pool-list{grid-template-columns:1fr 1fr}
+ #wins .eclipse-affix-pool-list>span{font-size:8px}
+ #wins .eclipse-affix-footnote{font-size:9px}
+ #wins .eclipse-affix-aside>.ui-eyebrow{font-size:8px}
+ #wins .eclipse-affix-aside>h3{margin:6px 0 10px;font-size:16px}
+ #wins .eclipse-affix-aside>p{font-size:9px}
+ #wins .eclipse-affix-selection-counts{margin-bottom:9px}
+ #wins .eclipse-affix-selection-counts b{font-size:18px}
+ #wins .eclipse-affix-resource{padding:9px}
+ #wins .eclipse-affix-resource>span{font-size:9px}
+ #wins .eclipse-affix-resource>b{font-size:10px}
+ #wins .eclipse-affix-resource>small{font-size:8px}
+ #wins .eclipse-affix-resource.eclipse-affix-total>b{font-size:13px}
+ #wins .eclipse-affix-protection{padding:9px;font-size:9px}
+ #wins .eclipse-affix-full{min-height:78px;margin-top:8px;padding:10px}
+ #wins .eclipse-affix-full>span{font-size:10px}
+ #wins .eclipse-affix-full>small,#wins .eclipse-affix-full>b{font-size:9px}
+ #wins .eclipse-reforge-offer{padding:11px}
+ #wins .eclipse-offer-banner{margin:-11px -11px 9px;padding:8px;font-size:9px}
+ #wins .reforge-comparison-row{grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr);gap:5px;padding:8px;font-size:9px}
+ #wins .reforge-comparison-row small{font-size:8px}
+ #wins .eclipse-affix-paid{padding:11px}
+ #wins .eclipse-affix-paid>h3{font-size:16px}
+ #wins .eclipse-affix-paid>p{font-size:9px}
+ #wins .eclipse-affix-repeat{padding:10px}
+ #wins .eclipse-affix-repeat>b{font-size:10px}
+ #wins .eclipse-affix-repeat>small{font-size:9px}
+ #wins .eclipse-affix-repeat>button{min-height:36px;font-size:9px}
+}
+@media(max-width:380px){
+ #wins .eclipse-workspace-pills span{max-width:110px}
+ #wins .eclipse-autosell-rarity{grid-template-columns:15px minmax(0,1fr);gap:3px;padding:6px 4px}
+ #wins .eclipse-autosell-rarity>b{font-size:7px}
+ #wins .eclipse-autosell-affix{grid-template-columns:minmax(0,1fr) minmax(75px,.75fr) 29px;gap:4px;padding:6px}
+ #wins .eclipse-autosell-condition-remove{width:29px}
+ #wins .eclipse-affix-row{grid-template-columns:25px minmax(0,1fr) auto;gap:6px;padding:8px}
+ #wins .eclipse-affix-row>strong{min-width:48px;padding:5px 4px}
+ #wins .eclipse-affix-mobile-label{font-size:7px}
+}
+
+/* Phone workspaces are document-flow stacks inside the scrolling content area; do not let the
+   desktop three-column flex bases collapse/overlap as they become vertical sections. */
+@media(max-width:700px){
+ #wins .eclipse-card-workspace-grid{flex:0 0 auto;height:auto;min-height:0}
+ #wins .eclipse-card-collection,#wins .eclipse-card-detail,#wins .eclipse-card-sockets{flex:0 0 auto;height:auto;min-height:0}
+ #wins .eclipse-autosell-layout{flex:0 0 auto;height:auto;min-height:0}
+ #wins .eclipse-autosell-main,#wins .eclipse-autosell-aside{flex:0 0 auto;align-self:stretch;height:auto;min-height:0}
+ #wins .eclipse-affix-workbench{flex:0 0 auto;height:auto;min-height:100%}
+ #wins .eclipse-affix-menu,#wins .eclipse-affix-main,#wins .eclipse-affix-aside{flex:0 0 auto;height:auto;min-height:0}
+}
+
+/* Fine-grain refinements after comparing 390px captures with the proposal screens. */
+#wins .eclipse-affix-row>span.eclipse-affix-row-copy>b{font-size:14px;line-height:1.2}
+#wins .eclipse-affix-row>span.eclipse-affix-row-copy>.eclipse-affix-row-status{font-size:10px;line-height:1.2}
+#wins .eclipse-affix-row>span.eclipse-affix-row-copy>.eclipse-affix-range-label{font-size:9px;line-height:1.2}
+@media(max-width:700px){
+ #wins .eclipse-equipment-workspace-window>.eclipse-window-footer{min-height:92px}
+ #wins .eclipse-equipment-workspace-window .eclipse-save-status{display:none}
+ #wins .eclipse-equipment-workspace-window .eclipse-footer-message{display:block;order:0;flex:1 0 100%;min-width:0;font-size:9px;line-height:1.4}
+ #wins .eclipse-card-workspace-heading{flex-direction:column;align-items:flex-start}
+ #wins .eclipse-card-workspace-heading>div:first-child{width:100%}
+ #wins .eclipse-card-workspace-heading h2{white-space:nowrap;font-size:17px;letter-spacing:-.5px}
+ #wins .eclipse-workspace-pills{flex-direction:row;align-items:flex-start;align-self:flex-start}
+ #wins .eclipse-workspace-pills span{max-width:none;text-align:left;white-space:nowrap}
+ #wins .eclipse-affix-menu{padding-top:9px;padding-bottom:9px}
+ #wins .eclipse-affix-row>span.eclipse-affix-row-copy>b{font-size:13px}
+ #wins .eclipse-affix-row>span.eclipse-affix-row-copy>.eclipse-affix-row-status{font-size:8px}
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:7px;padding:13px 17px}
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.ui-eyebrow,
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>h3,
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.eclipse-affix-protection,
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>p:not(.eclipse-affix-protection),
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.eclipse-affix-full{grid-column:1/-1}
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.eclipse-affix-selection-counts{display:none}
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.eclipse-affix-resource:not(.eclipse-affix-total){display:block;align-self:stretch;margin:0;padding:8px;border-radius:6px}
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.eclipse-affix-resource:not(.eclipse-affix-total)>span{display:block;margin-bottom:5px;font-size:8px}
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.eclipse-affix-resource:not(.eclipse-affix-total)>b{display:block;text-align:left;font-size:10px;line-height:1.35}
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.eclipse-affix-resource:not(.eclipse-affix-total)>small{display:block;margin-top:4px;font-size:8px;line-height:1.35}
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.eclipse-affix-resource.eclipse-affix-total{grid-column:1/-1;display:flex;justify-content:space-between;gap:8px;margin:0;padding:9px}
+ #wins .eclipse-affix-workbench:not(.has-paid-offer) .eclipse-affix-aside>.eclipse-affix-resource.eclipse-affix-total>b{text-align:right}
+}
+#wins .eclipse-workspace-wallet-icon{display:grid;place-items:center;width:15px;height:15px;border:1px solid currentColor;border-radius:50%;font-size:8px;line-height:1;font-weight:700}
+@media(max-width:700px){#wins .eclipse-workspace-wallet-icon{width:13px;height:13px;font-size:7px}}
+/* Keep workspace symbols legible in the bundled display font, and let phone footer guidance wrap. */
+#wins .eclipse-workspace-pills .ui-icon{display:inline-block;width:11px;height:11px;margin-right:5px;vertical-align:-2px}
+#wins .eclipse-autosell-rarity>span .ui-icon{width:10px;height:10px}
+#wins .eclipse-autosell-always b,#wins .eclipse-card-autosell-note b{display:flex;align-items:center;gap:5px}
+#wins .eclipse-autosell-always b .ui-icon,#wins .eclipse-card-autosell-note b .ui-icon{width:13px;height:13px;flex:none}
+#wins .eclipse-affix-row-icon .ui-icon{width:14px;height:14px}
+#wins .eclipse-affix-footnote>.ui-icon{display:inline-block;width:12px;height:12px;margin-right:4px;vertical-align:-2px;color:var(--gold)}
+#wins .eclipse-offer-banner .ui-icon{display:inline-block;width:13px;height:13px;margin-right:5px;vertical-align:-3px}
+#wins .eclipse-workspace-footer .eclipse-footer-action .ui-icon{display:inline-block;width:13px;height:13px;margin-right:6px;vertical-align:-3px}
+@media(max-width:700px){
+ #wins .eclipse-equipment-workspace-window .eclipse-footer-message{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;}
+}
+
+/* ── PR133 parity: unify Affix / Card / Auto-sell workspaces with Loadout ──
+   Goal: same size (grid columns, gaps, padding), same gradient & design,
+   and the equipment tab bar arranged nicely within a grid. This block
+   intentionally overrides the earlier proposal fullscreen + dark-flat styles
+   so all four Loadout/Affixes/Cards/Auto-sell panels share one product frame. */
+
+/* 1) Workspace window: share Loadout's framed window (undo fullscreen) */
+body.equipment-workspace-open #wins{
+  position:absolute;
+  inset:auto;
+  left:50%;right:auto;transform:translateX(-50%);
+  width:min(1120px,calc(100% - 32px));
+  top:22px;bottom:calc(var(--docktop,76px) + 12px);
+  height:auto;max-height:min(618px,calc(100% - 219px));
+  align-items:stretch;background:none;backdrop-filter:none;
+  overflow:visible;z-index:47;padding:0;
+  --pad:0;
+}
+body.equipment-workspace-open #wins>*{display:none}
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window{
+  display:flex;flex:1 1 0;width:100%;min-width:0;
+  height:100%;max-height:100%;
+  border:1px solid var(--e-frame);border-radius:10px;
+  background:linear-gradient(120deg,var(--e-surface-start),var(--e-surface-end) 82%);
+  box-shadow:0 10px 28px #030d1740,inset 0 1px 0 #ffffff09;
+  overflow:hidden;
+}
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.whead{
+  min-height:60px;border-radius:10px 10px 0 0;
+}
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.title{
+  height:60px!important;min-height:60px!important;flex:none!important;
+  padding:8px 14px!important;gap:10px!important;
+}
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window .ui-window-tools{gap:6px!important}
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window .ui-window-tools [data-x]{
+  width:28px!important;height:28px!important;min-width:28px!important;padding:6px!important;border-radius:6px!important;
+}
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.wbody{
+  background:transparent!important;
+  display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;
+}
+/* Unified window sizing: Loadout and all workspaces fill same frame */
+#wins [data-win="equip"]{display:flex!important;flex-direction:column!important;min-height:0!important}
+#wins [data-win="equip"]>.title{height:60px!important;min-height:60px!important;padding:8px 14px!important}
+#wins [data-win="equip"]>.wbody{
+  flex:1 1 auto;min-height:0;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+/* Workspace modes (Cards / Auto-sell / Affixes) opt into seamless single
+   scroll below; Loadout and Refine keep their original internal-scroll design. */
+#wins .wp.eclipse-equipment-workspace-window>.wbody{overflow-x:hidden;overflow-y:auto}
+#wins [data-win="equip"] .wbody>.atabs{flex:none}
+/* Seamless single-scroll model: workspaces flow at natural height inside the
+   one wbody scroll container; panels never carry their own scrollbar. */
+#wins .eclipse-card-workspace,
+#wins .eclipse-affix-workbench,
+#wins .eclipse-autosell-layout,
+#wins .eclipse-affix-empty,
+#wins .eclipse-equipment-workspace-window .eclipse-affix-gate{
+  flex:1 0 auto;min-height:0;overflow:visible;
+}
+#wins .eclipse-card-workspace{overflow:visible}
+/* Loadout keeps the parity-era framed scroll behavior it shipped with. */
+#wins .eclipse-equipment{flex:1 1 auto!important;min-height:0!important;overflow:auto!important}
+#wins .eclipse-card-workspace-grid,
+#wins .eclipse-affix-workbench{flex:0 0 auto;min-height:0;overflow:visible}
+#wins .wbody[data-layout=equip]{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+/* Keep footer sizing consistent with Loadout */
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.eclipse-window-footer{
+  min-height:52px;
+}
+#wins [data-win="equip"]>.eclipse-window-footer{min-height:52px}
+
+/* 2) Equipment sub-tabs: one canonical spec for every Equipment view
+   (Loadout, Refine, Affixes, Cards, Auto-sell, Ascension Forge): equal
+   flex widths, same height/gradient, gold underline for the active tab. */
+#wins [data-win="equip"] .wbody>.atabs{
+  display:flex;
+  position:sticky;
+  top:0;
+  z-index:3;
+  flex:none;
+  gap:0;
+  padding:0 14px;
+  margin:0;
+  height:40px;min-height:40px;
+  background:linear-gradient(120deg,var(--e-surface-start),var(--e-surface-end) 82%);
+  border:0;
+  border-bottom:1px solid color-mix(in srgb,var(--e-line) 75%,transparent);
+  overflow:hidden;
+}
+#wins [data-win="equip"] .wbody>.atabs>button{
+  flex:1 1 0;
+  min-width:0;
+  height:40px;min-height:40px;
+  padding:0 6px;
+  display:flex;align-items:center;justify-content:center;
+  background:none;
+  border:0;
+  border-bottom:2px solid transparent;
+  border-radius:0;
+  color:var(--e-muted);
+  font-size:10px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;line-height:1;text-align:center;
+  box-shadow:none;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#wins [data-win="equip"] .wbody>.atabs>button:not(:first-child){
+  border-left:1px solid color-mix(in srgb,var(--gold) 13%,transparent);
+}
+#wins [data-win="equip"] .wbody>.atabs>button.on{
+  background:none;
+  color:var(--gold);
+  border-bottom-color:var(--gold);
+  box-shadow:none;
+}
+#wins [data-win="equip"] .wbody>.atabs>button:hover:not(.on){
+  color:var(--ink);
+  border-bottom-color:color-mix(in srgb,var(--gold) 30%,transparent);
+}
+
+/* 3) Workspace content grids: same size/gap as Loadout's 3-col layout */
+#wins .eclipse-card-workspace-grid,
+#wins .eclipse-affix-workbench,
+#wins .eclipse-autosell-layout{
+  gap:18px;padding:18px;background:transparent;
+}
+#wins .eclipse-card-workspace-grid{
+  grid-template-columns:minmax(185px,.78fr) minmax(0,1.78fr) minmax(235px,.94fr);
+  align-items:stretch;
+}
+#wins .eclipse-affix-workbench{
+  grid-template-columns:minmax(185px,.78fr) minmax(0,1.78fr) minmax(235px,.94fr);
+}
+#wins .eclipse-autosell-layout{
+  grid-template-columns:minmax(0,1.62fr) minmax(235px,.94fr);
+}
+
+/* 4) Workspace panels: same gradient & gold frame as Loadout */
+#wins .eclipse-card-collection,
+#wins .eclipse-card-detail,
+#wins .eclipse-card-sockets{
+  background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%);
+  border:1px solid color-mix(in srgb,var(--gold) 18%,var(--e-line));
+  border-radius:8px;
+  box-shadow:inset 0 1px 0 #ffffff0c,0 1px 10px #0003;
+  padding:16px 14px;
+}
+#wins .eclipse-autosell-section,
+#wins .eclipse-autosell-aside{
+  background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%);
+  border:1px solid color-mix(in srgb,var(--gold) 18%,var(--e-line));
+  border-radius:8px;
+  box-shadow:inset 0 1px 0 #ffffff0c,0 1px 10px #0003;
+  padding:16px 14px;
+}
+#wins .eclipse-affix-menu,
+#wins .eclipse-affix-main,
+#wins .eclipse-affix-aside{
+  background:linear-gradient(155deg,color-mix(in srgb,var(--e-raised) 50%,transparent),color-mix(in srgb,var(--e-bg) 75%,transparent));
+  background-color:transparent;
+  border:1px solid color-mix(in srgb,var(--gold) 18%,var(--e-line));
+  border-radius:8px;
+  box-shadow:inset 0 1px 0 #ffffff0c,0 1px 10px #0003;
+}
+#wins .ascension-progression,
+#wins .ascension-upgrade{
+  background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%);
+  border:1px solid color-mix(in srgb,var(--gold) 18%,var(--e-line));
+}
+#wins .eclipse-affix-menu{padding:14px 12px}
+#wins .eclipse-affix-main{padding:14px 14px}
+#wins .eclipse-affix-aside{padding:16px 14px}
+
+/* Keep headings & pills consistent across workspaces */
+#wins .eclipse-card-workspace-heading{
+  background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%);
+  border:1px solid var(--e-line);
+  border-radius:8px;
+  padding:14px 16px;
+  margin-bottom:0;
+}
+#wins .eclipse-autosell-intro{
+  background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%);
+  border:1px solid var(--e-line);
+  border-radius:8px;
+}
+
+/* 5) Responsive: keep tabs 1-row (wording + gold line), workspace columns collapse */
+@media(max-width:1040px){
+ #wins [data-win="equip"] .wbody>.atabs{padding:0 8px}
+ #wins [data-win="equip"] .wbody>.atabs>button{font-size:8.5px;letter-spacing:.06em}
+ #wins .eclipse-card-workspace-grid{grid-template-columns:minmax(0,.95fr) minmax(0,1.45fr)}
+ #wins .eclipse-card-sockets{grid-column:1/-1}
+ #wins .eclipse-affix-workbench{grid-template-columns:minmax(185px,.78fr) minmax(0,1.78fr)}
+ #wins .eclipse-affix-aside{grid-column:1/-1}
+ #wins .eclipse-autosell-layout{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+ body.equipment-workspace-open #wins{
+   width:min(1120px,calc(100% - 16px));
+   top:64px;bottom:calc(var(--docktop,76px) + 4px);
+   max-height:none;
+ }
+ #wins [data-win="equip"] .wbody>.atabs{height:34px;min-height:34px;padding:0 4px}
+ #wins [data-win="equip"] .wbody>.atabs>button{height:34px;min-height:34px;font-size:8px;padding:0 3px;letter-spacing:.02em}
+ #wins .eclipse-card-workspace-grid,
+ #wins .eclipse-affix-workbench,
+ #wins .eclipse-autosell-layout{grid-template-columns:1fr;padding:10px;gap:10px}
+}
+/* Ensure all workspace tab contents share the same window height — fill, not capped */
+#wins .wp.eclipse-equipment-workspace-window .wbody,
+#wins [data-win="equip"]>.wbody{min-height:0;flex:1 1 auto}
+#wins .eclipse-affix-empty{place-content:center;flex:1;min-height:0}
