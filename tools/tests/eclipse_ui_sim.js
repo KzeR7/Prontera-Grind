@@ -16,9 +16,11 @@ test('focus expands one retained workspace and restore reveals the other open ta
  doc.querySelector('[data-ui-expand=job]').click();doc.querySelector('#dock [data-t=equip]').click();assert.equal(panels[0].hidden,false);assert.equal(panels[1].hidden,true);
  doc.querySelector('[data-x=equip]').click();assert.ok([...doc.querySelectorAll('#wins>[data-win]')].every(p=>!p.hidden));assert.equal(ev('tabs.length'),2);
 });
-test('Refine and Cards shortcuts reveal their destination from another focused panel',()=>{
+test('Refine keeps its shortcut, and Cards no longer has one to collide with',()=>{
  ev("tabs.push('equip','job','bag');sub.bag='cards';expandedPanels.add('job');renderWin()");
- doc.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'c',bubbles:true}));assert.equal(doc.querySelector('[data-win=bag]').hidden,false);assert.equal(ev('tabs.length'),3);
+ // v2 (owner): the C hotkey collided with the Cards tab at the loadout card, so it is gone -
+ // pressing C in the field must not open anything, and the Cards UI is reached by its own button.
+ doc.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'c',bubbles:true}));assert.equal(ev('tabs.length'),3);
  doc.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'r',bubbles:true}));assert.equal(doc.querySelector('[data-win=equip]').hidden,false);assert.equal(ev('sub.equip'),'refine');
  assert.ok(doc.querySelector('[data-a=refine]').closest('.eclipse-workshop-action'));assert.equal(doc.querySelector('[data-a=refine]').closest('.slot'),null);
  ev("S.eq.armor={...S.eq.weapon,id:7000,slot:'armor',wt:null};renderWin()");const picker=doc.querySelector('[data-workslot]');picker.value='armor';picker.dispatchEvent(new g.window.Event('change',{bubbles:true}));assert.equal(doc.querySelector('[data-a=refine]').dataset.v,'armor');
@@ -147,8 +149,11 @@ test('slot selection stays inside the combined equipment workbench and retains n
  ev(`S.inv=[{...S.eq.weapon,id:21001,val:999,cards:[],aff:[]}];tabs.push('equip');renderWin();ACT.seleq('weapon')`);
  assert.equal(ev('tabs.join()'),'equip');assert.ok(doc.querySelector('.fit[data-a=selb]'));doc.querySelector('.fit[data-a=selb]').click();assert.notEqual(ev('S.eq.weapon.id'),21001);doc.querySelector('[data-a=equip][data-v="21001"]').click();assert.equal(ev('S.eq.weapon.id'),21001);assert.ok(doc.querySelector('#eclipseDoll'));
 });
-test('Moonstone login retains account registration, remember-ID and backup/restore controls',()=>{
- for(const id of ['tabLogin','tabReg','username','password','password2','rememberUser','saveDl','saveUp','saveFile','loginCloud','authBtn'])assert.ok(doc.getElementById(id),id);
+test('Moonstone login keeps account registration and remember-ID, with no device-save choice left',()=>{
+ for(const id of ['tabLogin','tabReg','username','password','password2','rememberUser','loginCloud','loginHint','authBtn'])assert.ok(doc.getElementById(id),id);
+ // v2 (owner): cloud is the only save, so the pick-a-save links are gone from the card entirely.
+ for(const gone of ['saveDl','saveUp','saveFile','conflict','conflictCards','cfThis','cfCloud','cfLater'])assert.equal(doc.getElementById(gone),null,gone);
+ assert.ok(doc.getElementById('cloudGate'),'the connection gate still exists for a dropped connection');
  ev("setMode('reg')");assert.equal(doc.getElementById('password2').required,true);ev("setMode('login')");assert.equal(doc.getElementById('password2').required,false);
 });
 test('workshop selection refreshes presentation even when native source markup is unchanged',()=>{

@@ -17,6 +17,8 @@ export const CATALOG = PGShop.catalog(W);
 const BY_SKU = new Map(CATALOG.items.map(i => [i.sku, i]));
 export const findSku = sku => BY_SKU.get(String(sku || '')) || null;
 export const wornSkus = appearance => PGShop.wornSkus(W, appearance);
+// v2 bundles: WHAT a bundle hands over is decided on the server, from what the account does not own.
+export const bundleSkus = (bundle, owned) => PGShop.bundleSkus(W, bundle, owned);
 export const money = PGShop.money;
 
 export const paymentsLive = env => !!(env && env.STRIPE_SECRET_KEY);
@@ -81,7 +83,21 @@ export async function fulfillOrder(D, orderId, { payment = null, at = Date.now()
     return { ok: false, reason: 'unknown-sku', order: await orderById(D, orderId) };
   }
   const qty = Math.max(1, Number(order.quantity) || 1);
-  const label = item.name + (qty > 1 ? ' x' + qty : '');
+  // A bundle (v2) resolves to ordinary `cos:` entitlements HERE, when the payment clears, out of
+  // whatever the account does not own yet. That keeps ownership, the save gate and the GM console
+  // exactly as they were: a bundle is only a way to buy several cosmetics at once.
+  let bundle = [];
+  if (item.kind === 'bundle') {
+    const owned = await ownedSkus(D, order.user_id);
+    bundle = PGShop.bundleSkus(W, item, owned || new Set());
+    if (!bundle.length) {
+      await D.prepare("UPDATE shop_orders SET status = 'failed' WHERE id = ? AND status = 'pending'").bind(orderId).run();
+      await D.prepare("INSERT INTO events(at, actor, user_id, kind, detail) VALUES(?, 'Cash Shop', ?, 'shop-bundle-empty', ?)")
+        .bind(at, order.user_id, orderId + ' ' + order.sku + ' - nothing left to unlock').run();
+      return { ok: false, reason: 'bundle-empty', order: await orderById(D, orderId) };
+    }
+  }
+  const label = item.kind === 'bundle' ? item.name + ' (' + bundle.length + ' unlocks)' : item.name + (qty > 1 ? ' x' + qty : '');
   const stmts = [
     D.prepare(`UPDATE shop_orders SET status = 'fulfilled', paid_at = ?, fulfilled_at = ?, stripe_payment = COALESCE(?, stripe_payment)
                WHERE id = ? AND status = 'pending'`).bind(at, at, payment, orderId),
@@ -91,12 +107,22 @@ export async function fulfillOrder(D, orderId, { payment = null, at = Date.now()
   if (item.kind === 'cosmetic') {
     stmts.push(D.prepare(`INSERT OR IGNORE INTO entitlements(user_id, sku, source, order_id, granted_at) SELECT ?, ?, 'stripe', ?, ? WHERE changes() > 0`)
       .bind(order.user_id, order.sku, orderId, at));
+  } else if (item.kind === 'bundle') {
+    // Each row is guarded by the order's own status, not by changes(): one already-owned SKU in the
+    // list must not stop the rest of the bundle from being delivered. The status flip above has
+    // already committed by the time these run, and `status = 'fulfilled'` is what makes them safe to
+    // repeat (a webhook retry is a no-op because the order is no longer pending).
+    for (const sku of bundle) {
+      stmts.push(D.prepare(`INSERT OR IGNORE INTO entitlements(user_id, sku, source, order_id, granted_at)
+        SELECT o.user_id, ?, 'stripe', o.id, ? FROM shop_orders o WHERE o.id = ? AND o.status = 'fulfilled'`)
+        .bind(sku, at, orderId));
+    }
   } else {
     stmts.push(D.prepare(`INSERT INTO grants(user_id, kind, payload, note, created_by, created_at) SELECT ?, 'gift', ?, ?, 'Cash Shop', ? WHERE changes() > 0`)
       .bind(order.user_id, JSON.stringify({ resource: item.resource, amount: item.amount * qty }), 'Cash Shop: ' + label, at));
   }
   await D.batch(stmts);
-  return { ok: true, order: await orderById(D, orderId) };
+  return { ok: true, order: await orderById(D, orderId), bundle: bundle.length ? bundle : null };
 }
 
 export async function markOrder(D, orderId, status, payment = null) {
@@ -158,7 +184,9 @@ export async function createCheckoutSession(env, request, { order, item, user })
         unit_amount: item.price,
         product_data: {
           name: 'Prontera Grind: ' + item.name,
-          description: item.kind === 'cosmetic' ? item.slotLabel + ' cosmetic, unlocked forever for ' + user.username : 'Delivered to ' + user.username + ' on the next sync',
+          description: item.kind === 'cosmetic' ? item.slotLabel + ' cosmetic, unlocked forever for ' + user.username
+            : item.kind === 'bundle' ? 'Unlocks picked for ' + user.username + ' from what is still locked'
+            : 'Delivered to ' + user.username + ' on the next sync',
           metadata: { sku: item.sku },
         },
       },

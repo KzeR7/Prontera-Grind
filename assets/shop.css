@@ -33,3 +33,6 @@
 .shop-return{margin:10px 0 0;padding:9px 12px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center}
 .shop-return.good{background:#1f3324;border:1px solid #4f8a5a;color:#d7f2dc}.shop-return.bad{background:#36201f;border:1px solid #a35858;color:#f4d6d2}
 @media (max-width:640px){.shop-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+/* v2 bundles: a bundle card lists what its price buys, so nobody has to guess. */
+.shop-bundle-list{margin:2px 0 0;padding-left:16px;font-size:10px;line-height:1.6;color:var(--ink)}
+.shop-bundle .shop-card-head b{font-size:13px}

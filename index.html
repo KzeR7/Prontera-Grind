@@ -569,7 +569,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 .dungeoncard .echo-mark,.trial-seal,.trial-card button.trial-act .trial-choice-mark{background:#493e53;border:1px solid #9c86ad;color:#e5d4ee;box-shadow:none;text-shadow:none}
 .trial-close{background:#364b3b}.trial-shop,.trial-shop .shopline{border-color:var(--edge)}
 .offline-card .eyebrow,.offline-stat small,#offlineExplanation{color:#b8c8ac}#offlineDetails{background:#2c3e2e;border-color:#697d58}
-#modal,#offlineModal,#conflict{background:#0a160ed9!important;backdrop-filter:blur(5px)}
+#modal,#offlineModal,#cloudGate{background:#0a160ed9!important;backdrop-filter:blur(5px)}
 .login-card{max-height:calc(100dvh - 24px);overflow:auto}
 /* Login: a quiet atlas, with a separate brand area on wide screens. */
 #loginOverlay{background:radial-gradient(ellipse at 18% 20%,#57714a55,transparent 55%),radial-gradient(ellipse at 85% 90%,#9a7c3433,transparent 50%),#13231c;backdrop-filter:none;gap:80px;padding:30px;overflow:auto;isolation:isolate}
@@ -586,7 +586,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 .form-group label{font-size:10px;letter-spacing:1px;color:#b7c8a8}.form-group input{padding:10px 11px}
 .remember-user{font-size:10px;color:#b5c6a6}.remember-user input{accent-color:var(--gold)}
 .login-btn:hover{background:#e0c793;color:#18241b}.login-err{color:#f09b87}.login-card a{color:#dcc38b}
-#loginHint{display:block;font-size:10px;line-height:1.6}#saveTools{padding-top:13px;border-top:1px solid var(--edge)}
+#loginHint{display:block;font-size:10px;line-height:1.6}
 @media(min-width:901px){.wp{max-height:100%}}
 @media(max-width:900px){.wp,.wp.wide,.wp[data-win="skills"]{flex:1 1 auto;width:100%;max-width:100%}}
 @media(max-width:760px){#loginOverlay{gap:0;padding:16px}.login-brand{display:none}#loginOverlay>.login-card{width:min(360px,100%)}.title{padding:8px 10px}.body{padding:8px}}
@@ -893,9 +893,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div class="form-group" id="regRow" style="display:none"><label for="password2">Confirm Password</label><input type="password" id="password2" autocomplete="new-password"></div>
 <label class="remember-user" for="rememberUser"><input type="checkbox" id="rememberUser"> Remember user ID on this device</label>
 <button type="submit" id="authBtn" class="login-btn">Login</button><div id="loginErr" class="login-err"></div></form>
-<small id="loginHint">Local accounts log in each time; an active cloud session may resume automatically.</small>
+<small id="loginHint">Your character lives on the server. Sign in on any device and continue exactly where you left off.</small>
 <div id="loginCloud" style="margin-top:8px;font-size:11px;opacity:.75;text-align:center"></div>
-<div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
+<!-- v2 (2026-10-27): the device-save backup/restore links are gone. Cloud is the only save,
+     so there is nothing here to choose between. The functions behind them remain for tooling. -->
 <div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>HORIZON HAVEN / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
 <div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Horizon <small>HAVEN</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover">&#9679; <b id="zeny">0</b> Zeny</div>
@@ -952,15 +953,16 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
     </div>
     <div id="gmStudioBody" class="mail-daily-body"></div>
   </div>
-</div><!-- The cloud conflict chooser. Two saves exist (this device and the account) and only the player can
-     say which one is real, so it is a three-way question, not a yes/no: keep this device, keep the
-     cloud, or decide later. Every path keeps both copies, so no answer can lose progress. -->
-<div id="conflict" style="display:none;position:fixed;inset:0;background:rgba(20,14,8,.72);z-index:60;align-items:center;justify-content:center"><div class="login-card" style="max-width:560px">
-<h2 style="font-size:16px">☁ Two different saves</h2>
-<p id="conflictWhy" style="font-size:13px;opacity:1;margin:0 0 10px"></p>
-<div id="conflictCards" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px"></div>
-<p style="font-size:11px;opacity:.8;margin:0">Nothing is deleted: the copy you do not pick stays in the account's save history and the GM console can restore it.</p>
-<div class="row" style="justify-content:center;margin-top:10px"><button id="cfThis">Keep this device</button><button id="cfCloud">Keep the cloud save</button><button id="cfLater" style="opacity:.8">Decide later</button></div>
+</div><!-- Connection gate (v2, 2026-10-27 owner): the account on the server is the ONLY save. When the
+     connection drops there is no "keep this device or keep the cloud" question any more - the
+     character stops, the time counts as time away, and the away rate pays for it on reconnect. -->
+<div id="cloudGate" style="display:none;position:fixed;inset:0;background:rgba(20,14,8,.82);z-index:60;align-items:center;justify-content:center">
+<div class="login-card" style="max-width:520px">
+<h2 style="font-size:16px">📡 Connection lost</h2>
+<p style="font-size:13px;opacity:1;margin:0 0 10px">Your character is saved on the server, so it is <b>away</b> while this tab cannot reach it - not farming.</p>
+<p style="font-size:12px;line-height:1.6;margin:0 0 10px">The time you are disconnected is paid as <b>away rewards</b> when you reconnect (50% of your measured income, up to four hours), exactly like closing the game. Nothing earned while the tab is disconnected is uploaded, so a dropped connection can never inflate your progress.</p>
+<p id="cloudGateDetail" style="font-size:11px;opacity:.85;margin:0"></p>
+<div class="row" style="justify-content:center;margin-top:12px"><button id="cloudGateRetry" class="login-btn">Reconnect</button></div>
 </div></div>
 <div id="offlineModal" role="dialog" aria-modal="true" aria-labelledby="offlineTitle" aria-describedby="offlineExplanation">
   <div class="offline-card"><div class="eyebrow">WELCOME BACK</div><h2 id="offlineTitle">Your offline grind is ready</h2><p>Your character kept earning while you were away. These rewards have already been added to your save.</p>
@@ -981,9 +983,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="comboFieldStatus" data-combo-status aria-label="Combat combo status"></div>
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
-<link rel="stylesheet" href="assets/shop.css?v=215">
+<link rel="stylesheet" href="assets/shop.css?v=216">
 <script src="assets/wardrobe.js?v=199"></script>
-<script src="assets/shop-catalog.js?v=215"></script>
+<script src="assets/shop-catalog.js?v=216"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
@@ -1248,7 +1250,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-27 haven-v246 royal dispatch icon polish';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-27 haven-v247 cloud-only saves, cash shop bundles, GM quick tools';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3491,7 +3493,15 @@ $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>s
 // debounced push. Nothing here can lose progress - every conflict keeps both copies, and the loser
 // stays in the account's save history where the GM console can restore it.
 const CLOUD={api:false,on:false,user:null,gm:false,ver:0,dirty:false,lastPush:0,pushing:false,
-  offline:false,paused:false};
+  offline:false,paused:false,
+  // v2: set when the server cannot be reached at all. While it is true the character is treated as
+  // AWAY (the simulation stops), and reconnecting adopts the account's save and pays the gap at the
+  // away rate - a dropped connection never becomes "normal progress" that syncs later.
+  lost:false,
+  // v2: true from the moment the gate opens until the account save has been adopted again. The away
+  // claim that arrives on reconnect covers a window the simulation did NOT grind (it was frozen), so
+  // it must be paid - see the `covered` test in applyOfflineProgress().
+  gate:false};
 let boardPeriod='daily',boardCache=Object.create(null),boardLoading=false,boardError='',boardRequest=0;
 // ---------- the sync cadence (v82 usage diet) ----------
 // Every push is one Function request and one D1 row written on the free plan, so the numbers here
@@ -3534,6 +3544,7 @@ function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;CLOUD.dirty=true;cloudBa
 let cloudLockWarned=false;   // haven-v215: the cosmetic refusal is explained once, not once a minute
 async function cloudPush(push){
   if(!CLOUD.on||!S||!currentUser||CLOUD.paused)return 'idle';
+  if(CLOUD.lost)return 'idle';   // the character is away until /api/save answers again
   // A forced push (the tab is going away, a 428 round trip, the player chose a save) always sends.
   // An ordinary flush waits for the debounce that fits where the tab is: a minute while it is being
   // played, five while it is hidden - the game keeps grinding while hidden, but nobody is watching
@@ -3553,7 +3564,13 @@ async function cloudPush(push){
       // haven-v215: the look wears a Cash Shop item this account does not own. Those slots come off
       // and the save goes straight back up; the character itself is never refused.
       if(c.cosmeticLocked){if(typeof shopLockedByServer==='function'&&shopLockedByServer(c.locked)){CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'locked'}if(!cloudLockWarned){cloudLockWarned=true;cloudSay((c.err||'This look uses Cash Shop items this account does not own.')+' Reload the page to pick up the latest build, then open the Wardrobe and reset the look.','r0')}CLOUD.dirty=true;return 'locked'}
-      cloudBadge('☁ ⚠','Two saves - choose which to keep');cloudConflict(c);return 'conflict'}
+      // v2 (owner): cloud is the only save, so the ACCOUNT's copy always wins. cloudAdopt keeps the
+      // copy this device held under a backup key, so nothing is deleted - there is just no question
+      // to answer any more.
+      cloudBadge('☁ ⚠','The account has a newer save - loading it');
+      await cloudAdopt(c);
+      cloudSay('Your account had a newer save, so it was loaded. The copy this device held was kept as a backup.','r1');
+      return 'adopted'}
     if(r.status===428){const d=await r.json().catch(()=>({}));if(d.offlineClaim){applyOfflineProgress(Date.now(),d.offlineClaim);CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'offline-claim'}throw new Error(d.err||'A server-timed offline claim is required.')}
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=false;CLOUD.lastPush=Date.now();CLOUD.offline=false;
@@ -3562,8 +3579,8 @@ async function cloudPush(push){
   }catch(e){
     // The save is NOT on the server, so it stays dirty: the next flush (or the next tab-hide) retries
     // it. Clearing the flag here would silently drop the sync until the player changed something.
-    CLOUD.dirty=true;CLOUD.offline=true;cloudBadge('☁ ✕','Offline - progress is safe on this device');
-    cloudSay('Cloud sync failed ('+e.message+'). Your progress is safe on this device and will sync when the connection returns.','r0');
+    CLOUD.dirty=true;CLOUD.offline=true;
+    await cloudConnectionLost(e&&e.message);
     return 'offline';
   }finally{CLOUD.pushing=false}
 }
@@ -3600,21 +3617,59 @@ function cloudSaveRefused(why){
 function cloudFlush(){return cloudPush(false)}
 function cloudFlushNow(){return cloudPush(true)}
 
-// The two-saves screen: the player decides, and both copies survive whatever they choose.
-function cloudConflict(server,initial=false){
-  const box=$('conflict');if(!box)return;
-  CLOUD.paused=true;
-  const read=b=>{try{if(!b)return null;const s=JSON.parse(b);return s&&s.lv?s:null}catch(e){return null}};
-  const sSrv=read(server.blob)||{lv:'?',cls:'?',zeny:0,kills:0};
-  const when=t=>t?new Date(t).toLocaleString():'unknown time';
-  const card=(title,s,sub)=>'<div class="mob-card" style="flex:1 1 220px"><div class="hd">'+title+'</div><small>Level <b>'+s.lv+'</b> · '+(s.cls||'?')+' · '+(s.zeny||0).toLocaleString()+' Zeny · '+(s.kills||0).toLocaleString()+' kills<br>'+sub+'</small></div>';
-  $('conflictWhy').textContent='This device and your account both have progress, and they are different - so I will not guess which one is real.';
-  $('conflictCards').innerHTML=card('📱 This device',S,'local copy')+card('☁ Cloud save',sSrv,when(server.savedAt));
-  box.style.display='flex';
-  const done=()=>{box.style.display='none'};
-  $('cfThis').onclick=async()=>{done();CLOUD.paused=false;CLOUD.ver=server.version;CLOUD.dirty=true;if(server.offlineClaim)applyOfflineProgress(Date.now(),server.offlineClaim);await cloudPush(true);cloudSay('Kept this device\'s progress and uploaded it as version '+CLOUD.ver+'.','r1')};
-  $('cfCloud').onclick=async()=>{done();CLOUD.paused=false;await cloudAdopt(server,initial)};
-  $('cfLater').onclick=()=>{done();CLOUD.paused=true;cloudBadge('☁ ⏸','Sync paused for this session');cloudSay('Sync is paused for this session so neither copy is touched. Any server-timed offline claim is waiting until you choose a save.','r0')};
+// ---------- the connection gate (v2, 2026-10-27 owner) ----------
+// The account on the server is the only save, so there is no "which copy is real?" screen any more.
+// When /api/save cannot be reached the character is AWAY: the simulation stops (see loop()), nothing
+// is uploaded, and reconnecting adopts the account's save and pays the gap at the away rate. That is
+// the owner's rule: a lost connection is offline time, never normal progress that syncs later.
+const cloudGateEl=()=>$('cloudGate');
+function cloudGateShow(detail){
+  CLOUD.gate=true;
+  const box=cloudGateEl();if(box){box.style.display='flex'}
+  const d=$('cloudGateDetail');if(d)d.textContent=detail||'';
+  const retry=$('cloudGateRetry');if(retry)retry.onclick=()=>cloudReconnect();   // idempotent: one handler, always this one
+  try{simAt=performance.now();simPending=0}catch(e){}
+}
+function cloudGateHide(){const box=cloudGateEl();if(box)box.style.display='none'}
+// A failed sync is not automatically a lost connection: one flaky request should not freeze a
+// session. So the failure is confirmed with a cheap /me call before the gate opens.
+async function cloudConnectionLost(reason){
+  let alive=false;
+  try{const r=await cloudFetch('/me',{cache:'no-store'});alive=!!r&&(r.ok||r.status===401)}catch(e){alive=false}
+  if(alive){
+    cloudBadge('☁ ⚠','Sync failed - retrying');
+    cloudSay('Cloud sync failed ('+(reason||'network')+'). The character keeps playing on this device until the next sync retry.','r0');
+    return;
+  }
+  CLOUD.lost=true;
+  cloudBadge('☁ ✕','Offline - your character is away');
+  cloudSay('Connection lost ('+(reason||'no answer from the server')+'). Your character is away until you reconnect; that time is paid as away rewards.','r0','cloud');
+  cloudGateShow('Last attempt: '+(reason||'no answer')+' · '+(CLOUD.user?'signed in as '+CLOUD.user:''));
+}
+// Reconnect: pull the account's save, adopt it (the device copy is stashed as a backup), let the
+// server's away claim pay for the gap, then resume. Never uploads what was drawn while offline.
+async function cloudReconnect(){
+  if(!CLOUD.on||!CLOUD.user){cloudGateHide();return false}
+  const detail=$('cloudGateDetail');if(detail)detail.textContent='Reconnecting…';
+  const got=await cloudReadSave();
+  if(got.offline){
+    if(detail)detail.textContent='Still no answer from the server. Check your connection and try again.';
+    cloudGateShow(detail?detail.textContent:'');
+    return false;
+  }
+  if(got.refused){cloudGateHide();cloudSaveRefused(got.refused.err);return false}
+  const data=got.data||null;
+  if(!cloudOwnedBy(data,CLOUD.user)){cloudGateHide();cloudAccountMismatch(data&&data.owner);return false}
+  CLOUD.lost=false;CLOUD.paused=false;CLOUD.offline=false;CLOUD.dirty=false;
+  cloudGateHide();
+  if(data&&data.blob){await cloudAdopt(data)}
+  else{CLOUD.dirty=true;await cloudPush(true)}          // an account with no save yet (should not happen)
+  CLOUD.gate=false;                                    // the gap has now been paid (or was too short to pay)
+  try{simAt=performance.now();simPending=0}catch(e){}
+  cloudBadge('☁ ✓','Reconnected · v'+CLOUD.ver);
+  cloudSay('Reconnected. The time you were away was paid at the away rate.','r1','cloud');
+  cloudPull();
+  return true;
 }
 
 // Take the server's copy as the live save. This device's copy is stashed under its own backup key
@@ -3634,12 +3689,13 @@ async function cloudAdopt(server,resumeOffline=false){
 
 // Announcements, GM gifts, and the save itself. Called after every login and when a long-hidden tab
 // comes back.
-// The one place the device's copy and the cloud copy are reconciled, used at every login. It never
-// guesses: identical copies just agree on the version, an empty cloud adopts this device's progress,
-// and two different copies open the chooser (which keeps BOTH of them whatever the player decides).
+// The one place the device's copy and the cloud copy meet, used at every login. v2 (owner: "cloud is
+// the only save"): identical copies just agree on the version, an EMPTY account is seeded from this
+// device once (so a character that predates the cloud is not lost), and otherwise the account's copy
+// is loaded with the device copy stashed as a backup. No chooser, no paused session.
 async function cloudJoin(u,localBlob){
   const got=await cloudReadSave();
-  if(got.offline){cloudBadge('☁ ✕','Offline - playing from this device');return}
+  if(got.offline){cloudBadge('☁ ✕','Offline - away');return}
   if(got.refused){cloudSaveRefused(got.refused.err);return}
   const data=got.data||null;
   if(!cloudOwnedBy(data,u)){cloudAccountMismatch(data.owner);return}
@@ -3647,7 +3703,10 @@ async function cloudJoin(u,localBlob){
   if(saveRefusal(data.blob,u)){cloudSaveRefused();return}
   if(sameSave(data.blob,localBlob)){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadge('☁ ✓','In sync · v'+data.version);
     if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
-  cloudConflict(data,true);
+  // v2 (owner): the account's save is the real one. Whatever this browser held is stashed by
+  // cloudAdopt, so "always resume where you left off" needs no decision from the player.
+  await cloudAdopt(data);
+  cloudSay('Loaded your account save (Lv '+(S&&S.lv)+'). The copy this device had was kept as a backup.','r1');
 }
 
 // A tab that was away for a while asks what changed. Another device's save is adopted silently when
@@ -3655,7 +3714,7 @@ async function cloudJoin(u,localBlob){
 async function cloudRefresh(){
   if(!CLOUD.on||CLOUD.paused)return;
   const got=await cloudReadSave();
-  if(got.offline){cloudBadge('☁ ✕','Offline - progress is safe on this device');return}
+  if(got.offline){cloudBadge('☁ ✕','Offline - away');return}
   if(got.refused){cloudSaveRefused(got.refused.err);return}
   const data=got.data||null;
   if(!cloudOwnedBy(data,CLOUD.user)){cloudAccountMismatch(data.owner);return}
@@ -3669,7 +3728,11 @@ async function cloudRefresh(){
   // dialog with one right answer. (The normal cause is a tab the browser suspended for an hour: it
   // wakes up holding an unsynced save and an old version number.) Push instead of prompting.
   if(CLOUD.dirty&&Number(data.version)===Number(CLOUD.ver)){await cloudPush(true);return}
-  if(CLOUD.dirty)cloudConflict(data);else await cloudAdopt(data);
+  // v2: the account always wins, including over unsynced work in this tab. Between the server saving
+  // and the connection dropping a tab can hold at most one sync interval of play, and a copy that
+  // disagrees with the account is a copy another device already moved past.
+  await cloudAdopt(data);
+  cloudSay('Another device moved this account on, so the account save was loaded. The copy this device held was kept as a backup.','r1');
 }
 
 // Announcements and gifts, on their own cadence - deliberately NOT the save, so that a poll can never
@@ -3787,7 +3850,13 @@ async function cloudProbe(){
   // A static host answers /api/me with its 404 page (or hands back the game itself), so the content
   // type is what tells us whether a real API is behind this address. Never treat HTML as a server.
   const ct=(r.headers.get('Content-Type')||'');
-  if(!ct.includes('json')){CLOUD.api=false;cloudLoginLine('');return false}
+  if(!ct.includes('json')){
+    CLOUD.api=false;
+    // v2: cloud is the only save. A host without the API (a static preview, a file, a broken deploy)
+    // says so plainly instead of quietly inviting a browser-only character.
+    cloudLoginLine('⚠ This address is not connected to the cloud, so saves here stay in this browser only. Open the real game address to continue your character.');
+    return false;
+  }
   CLOUD.api=(r.status===200||r.status===401);
   const line='☁ Cloud accounts are on - '+($('username')&&$('username').value?'sign in to continue.':'register or sign in to play on any device.');
   if(r.status===200)cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}).catch(()=>{});
@@ -3886,15 +3955,20 @@ function cloudLogout(){
   cloudFlushNow();
   cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}).catch(()=>{});
   CLOUD.on=false;CLOUD.user=null;CLOUD.previewToken=null;
+  CLOUD.lost=false;CLOUD.gate=false;CLOUD.paused=false;CLOUD.offline=false;CLOUD.dirty=false;
+  cloudGateHide();
   if(typeof shopReset==='function')shopReset();
 }
 
 // Sync on the way out (hidden tab, closing page) and pull again if a tab was away for a while.
 addEventListener('visibilitychange',()=>{
   if(!CLOUD.on)return;
-  if(document.visibilityState==='hidden')cloudFlushNow();
-  else if(Date.now()-CLOUD.lastPush>CLOUD_MAX_AGE)cloudRefresh();
+  if(document.visibilityState==='hidden'){if(!CLOUD.lost)cloudFlushNow();return}
+  if(CLOUD.lost){cloudReconnect();return}          // v2: a returning tab asks the server straight away
+  if(Date.now()-CLOUD.lastPush>CLOUD_MAX_AGE)cloudRefresh();
 });
+// While the gate is up, keep trying quietly: the player should not have to press anything twice.
+setInterval(()=>{if(CLOUD.lost)cloudReconnect()},20000);
 addEventListener('pagehide',()=>{if(CLOUD.on&&CLOUD.dirty)cloudFlushNow()});
 setInterval(cloudFlush,CLOUD_DEBOUNCE/2);
 // ---------- carrying saves between addresses ----------
@@ -3958,12 +4032,9 @@ function restoreBackup(file){
   r.readAsText(file);
 }
 
-// Bound once, and only if the card is on the page (the GM console and the test harness have no card).
-{const dl=$('saveDl'),up=$('saveUp'),fi=$('saveFile');
- if(dl)dl.onclick=e=>{e.preventDefault();saveBackup()};
- if(up)up.onclick=e=>{e.preventDefault();if(fi)fi.click()};
- if(fi)fi.onchange=()=>{const f=fi.files&&fi.files[0];fi.value='';if(f)restoreBackup(f)};
-}
+// v2 (2026-10-27 owner): the card's backup/restore links are gone, so there is nothing to bind here
+// any more. saveBackup()/restoreBackup() stay in the file - the GM console and the test suites still
+// use them to carry a device's characters by hand when a machine dies.
 addEventListener('load',()=>{setTimeout(cloudProbe,80)});
 setInterval(cloudPollTick,60000);   // announcements and gifts on cloudPollTick's clock - never the save itself
 
@@ -4574,7 +4645,10 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
   // "welcome back" for ordinary background farming. Acknowledge the claim, pay nothing, stay
   // quiet - but still advance the timestamps so the same window can never be paid later.
   const awayStart=now-Math.max(0,Number(plan.awayMs)||0);
-  const covered=!!plan.show&&Number.isFinite(awayStart)&&awayStart>=PAGE_BOOT_AT&&plan.awayMs<=OFFLINE_SIM_COVER_MS;
+  // v2: a gate window is the one exception - the sim was frozen while the gate was up, so those
+  // minutes were never ground here and the server's claim must pay them. That is exactly the
+  // owner's rule: a lost connection is away time, not progress.
+  const covered=!CLOUD.gate&&!!plan.show&&Number.isFinite(awayStart)&&awayStart>=PAGE_BOOT_AT&&plan.awayMs<=OFFLINE_SIM_COVER_MS;
   const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
   if(plan.show&&!covered){
     const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
@@ -6230,6 +6304,92 @@ function eclipseInventoryTools(){const known=new Set(eclipseInventoryState?.owne
 // Map collection tabs are UI-only; never saved as farming-map IDs/unlocks.
 let mapSeason='atlas';
 function mapCollectionTabs(){return `<div class="atabs map-season-tabs" role="tablist" aria-label="Map collections">${[['atlas','World Atlas'],['ascension','Ascension Map'],['echo','Endless Echo'],['social','Social Hub']].map(([id,label])=>`<button type="button" id="map-tab-${id}" role="tab" aria-selected="${mapSeason===id}" aria-controls="map-panel-${id}" tabindex="${mapSeason===id?0:-1}" class="${mapSeason===id?'on':''}" data-a="mapseason" data-v="${id}">${label}</button>`).join('')}</div>`;}
+// ---------- GM tools (v2, 2026-10-27 owner request) ----------
+// The panel used to be one long scroll of headings. It is now a row of clickable sections, and the
+// first one is a single button that makes this account a complete test account: every class, every
+// job level, every map, and a testing fortune of Zeny and materials.
+//
+// Everything here changes only the GM's own character and is saved with it. It is client-side
+// tooling for the GM account (S.gm), never a server authority: the GM console at /gm.html is what
+// touches other players.
+const GM_SECTIONS=[['quick','⚡ Unlock all'],['level','Levels & jobs'],['gear','Gear & supplies'],['test','Cards & index'],['world','Ascension & pets'],['mail','Mail & daily']];
+let gmSection='quick';
+// One click. Deliberately generous: the point is to reach any screen in seconds, not to play fairly.
+function gmUnlockAll(){
+ if(!S||!S.gm)return false;
+ const before={lv:S.lv,cls:S.cls,zeny:S.zeny};
+ S.lv=150;S.exp=0;S.gmnm=true;
+ // Every class: remembered at Base 150 (so Class Path treats it as played and skips the Crucible),
+ // job level maxed. The class you are standing on keeps its own stats and gear.
+ S.base=S.base||{};
+ for(const n in CLASSES){
+  const c=CLASSES[n],j=S.jobs[n]||(S.jobs[n]={jl:1,jx:0});
+  j.jl=c.mj;j.jx=0;
+  if(n===S.cls)continue;
+  const keep=S.base[n]||{};
+  S.base[n]={lv:150,exp:0,pts:Math.max(0,totalPts()-ptsSpent()),hp:0,st:Object.assign({},S.st),eq:Object.assign({},keep.eq||{})};
+ }
+ S.pts=Math.max(0,totalPts()-ptsSpent());
+ // Every field and stage, so any map can be opened from the World Atlas.
+ S.prog=MAPS.map(()=>10);
+ // A testing fortune. `+=` so an existing test account only ever gains.
+ S.zeny+=1000000000;
+ S.ore.ori=safeCount(S.ore.ori)+100000;S.ore.elu=safeCount(S.ore.elu)+100000;
+ S.shards=safeCount(S.shards)+100000;S.refineScrolls=safeCount(S.refineScrolls)+10000;S.mythicScrolls=safeCount(S.mythicScrolls)+1000;
+ S.ascensionMat=[100000,100000,100000];
+ S.nmMat=(Array.isArray(S.nmMat)?S.nmMat:[0]).map(v=>Math.max(safeCount(v),100000));
+ // Ascension tracks: stat ranks are account-wide, so they can be maxed from any class.
+ const a=ascState();a.level=50;a.xp=0;
+ S.hp=maxHp();
+ ui();save();
+ log('⚡ GM: every class and job maxed, all maps unlocked, Base Lv 150, and a testing fortune added (1,000,000,000 Zeny, 100,000 ore/shards, 100,000 Ascension materials).','r1','misc');
+ log('Was Base Lv '+before.lv+' '+before.cls+' with '+Math.round(before.zeny).toLocaleString()+' Zeny. Open Class Path to switch into any class - the Crucible is skipped.','','misc');
+ return true;
+}
+function gmToolsPanel(){
+ const section=GM_SECTIONS.some(([k])=>k===gmSection)?gmSection:'quick';
+ const tab=([k,label])=>`<button type="button" data-a="gmsub" data-v="${k}" class="${section===k?'on':''}" aria-pressed="${section===k}">${label}</button>`;
+ const head=`<div class="hd">Player management</div><p><a href="/gm.html" target="_blank" rel="noopener">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Everything on this panel changes <b>your</b> character only, and is saved with it.</small>`;
+ let body='';
+ const bodies={};if(1){bodies.quick=`<div class="hd">One click: a complete test account</div>
+   <small>Base Lv 150 with its stat points, every job level maxed, every class unlocked (the fourth jobs included - no Crucible trial), every map and stage unlocked, and a testing fortune: <b>1,000,000,000 Zeny</b>, 100,000 Oridecon and Elunium, 100,000 Echo Shards, 10,000 Refine Protection Scrolls, 1,000 Mythic Protection Scrolls, 100,000 of every Ascension material and Nightmare material, and Stats Ascension rank 50. Nothing is erased - the other sections reset one system at a time.</small>
+   <div class="row" style="margin-top:8px"><button class="primary" data-a="gmall">⚡ Unlock everything for testing</button></div>
+   <div class="hd" style="margin-top:10px">GM multiplier (EXP, Job EXP, Zeny, quests)</div>
+   <div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
+   <div class="hd" style="margin-top:10px">Auras &amp; weapon glow</div>
+   <small>Auras: Base 50 / 99 / 150. Weapon glow: +7 / +9 / +10. Mythic glow lives in Gear &amp; supplies.</small>
+   <div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="9">Weapon +9</button><button data-a="gmglow" data-v="10">Weapon +10</button></div>`;
+ }if(1){bodies.level=`<div class="hd">Base level</div><small>Set Base level and clear Base EXP. Unspent points are recalculated; allocated stats, gear and jobs stay untouched.</small>
+   <div class="row">${[1,99,120].map(n=>`<button data-a="gmresetlv" data-v="${n}">Reset Base Lv → ${n}</button>`).join('')}<button data-a="gml">+10 Base Levels</button><button data-a="gmnm">Unlock Nightmare (Base Lv 150)</button></div>
+   <div class="hd" style="margin-top:10px">Jobs &amp; map levels</div><small>Jobs are per class; the one-click button on ⚡ Unlock all maxes every class at once.</small>
+   <div class="row"><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
+   <div class="hd" style="margin-top:10px">Skill accounting</div><small>Max the current class line, then use the normal Auto-allocate all skills button or let GM do both steps.</small>
+   <div class="row"><button data-a="gmskill" data-v="maxjobs">Max current line jobs</button><button data-a="gmskill" data-v="maxallocate">Max jobs + auto allocate</button><button data-a="gmskill" data-v="reset">Reset current line skills</button></div>`;
+ }if(1){bodies.gear=`<div class="hd">Zeny &amp; refining ore</div>
+   <div class="row"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gmo" data-v="1000">+1,000 Oridecon &amp; Elunium</button></div>
+   <div class="hd" style="margin-top:10px">Ascension testing</div><small>Base 150 + crafting/refine supplies in one button, or grant a complete Mythic set for your current weapons.</small>
+   <button data-a="gmendgame">Base 150 + crafting/refine supplies</button>
+   <div class="row">${Object.entries(ASC_SETS).map(([k,v])=>`<button data-a="gmset" data-v="${k}">${v.name}</button>`).join('')}</div>
+   <div class="row">${[11,12,13,14,15].map(n=>`<button data-a="gmglow" data-v="${n}">Mythic weapon +${n}</button>`).join('')}</div>
+   <div class="hd" style="margin-top:10px">Maxed Ascension equipment by class</div><p>Grant to bag: +15 Mythic gear, maximum base values and four maximum affix rolls per item. Includes each class weapon option and a second dagger for Guillotine Cross. Cards are empty; equip after reaching the matching fourth job.</p>
+   <div class="row">${Object.entries(GM_ASC_PRESETS).map(([cls,p])=>`<button data-a="gmmaxset" data-v="${cls}">${cls} · ${ASC_SETS[p.set].name} +15</button>`).join('')}</div>`;
+ }if(1){bodies.test=`<div class="hd">Index mastery</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small>
+   <div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
+   <div class="hd" style="margin-top:10px">Card mastery</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small>
+   <div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>`;
+ }if(1){bodies.world=`<div class="hd">Ascension tracks</div><small>Stats levels are account-wide; skill levels belong to the current class. Spend the points in Character → Ascension stats and Skills → Ascension.</small>
+   <div class="row"><button data-a="gmascstats" data-v="max">Max Stats Ascension 50</button><button data-a="gmascstats" data-v="reset">Reset Stats Ascension</button><button data-a="gmascskills" data-v="max">Max Skill Ascension 30</button><button data-a="gmascskills" data-v="reset">Reset Skill Ascension</button></div>
+   <div class="hd" style="margin-top:10px">Pets</div>
+   <div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div>
+   <div class="row" style="margin-top:6px"><button data-a="gmbond" data-v="1">+1 duplicate on the selected pet (Bond)</button><button data-a="gmbond" data-v="5">+5 duplicates</button></div>
+   <div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>`;
+ }if(1){bodies.mail=`<div class="hd">Mail &amp; Daily Roulette</div><small>Open the announcement Mail box (with GM announcement + gift composer) or reset today's Daily Material Roulette spin.</small>
+   <div class="row"><button data-a="openmail">Open Mail &amp; Announcements</button><button data-a="opendaily">Open Daily Roulette</button><button data-a="gmdailyreset">Reset daily roulette spin</button></div>`;
+ }
+ // Every section is rendered and the inactive ones are hidden, so the panel keeps all of its
+ // controls in one place: the tabs are a way to jump between them, not a way to unload them.
+ return `<div class="gm-tools"><div class="atabs gm-sections" role="tablist" aria-label="GM tool sections">${GM_SECTIONS.map(tab).join('')}</div>${head}${GM_SECTIONS.map(([k])=>`<section class="gm-section" data-gmsec="${k}"${section===k?'':' hidden'}>${bodies[k]||''}</section>`).join('')}</div>`;
+}
 const V={
   map(){const navigation=mapCollectionTabs();if(mapSeason==='social')return navigation+`<section class="social-destination"><small>PRONTERA · SOCIAL HUB</small><h2>Meet at the fountain</h2><p>A quiet plaza for conversation, company, and a moment beneath the trees.</p><p>Walk freely, sit with friends, and share your favourite RO emotions. Up to 20 adventurers in each plaza.</p><p><b>Your farming keeps going.</b> World and Whisper follow you here; Local chat stays in this plaza.</p><button type="button" onclick="PGSocial.enter()">Enter Fountain Plaza →</button></section>`;if(mapSeason==='echo')return navigation+`<section class="echo-destination"><div class="echo-scene" role="img" aria-label="A moonlit underworld court with ruined pillars and a ritual stone floor"><span>ENDLESS ECHO</span><strong>The silent court</strong><small>Three minutes. One unbroken challenge.</small></div><div class="hd">Endless Echo</div><p>Face the Lord of Death Illusion in a three-minute damage trial.</p><div class="trial-stats"><span>Personal best <b>${Math.round(trialState().best||0).toLocaleString()} DPS</b></span><span><b>${trialLeftToday()}/2</b> ranked attempts left</span><span><b>${S.shards|0}</b> Echo Shards</span></div><button data-trial="lobby">Enter Endless Echo</button></section>`;const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM));
     // The map tab is a compact 450px, two-band panel: pick a map on the top band, walk its fields on the
@@ -6386,16 +6546,8 @@ const V={
     <small>Current track: ${typeof BGM!=='undefined'?esc(BGM.currentTitle()):'No track'} · Volume ${typeof BGM!=='undefined'?Math.round(BGM.volume*100):5}%. On PC the player under the HP box lists every track (map BGM is the default; press ▾ to pick any song); phones just autoplay the map's track. Tracks are configured per map in assets/bgm-tracks.js.</small>
     <div class="hd">Interface palette</div>${typeof eclipsePaletteControls==='function'?eclipsePaletteControls():''}<div class="hd" style="margin-top:10px">Gameplay</div><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
     <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it. Auto-equip lives on the <b>Bag</b> tab and Auto-advance on the <b>World Map</b> tab, next to what they control.</small>
-    <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
-  gm(){return`<div class="hd">Player management</div><p><a href="/gm.html" target="_blank" rel="noopener">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Auras: Base 50 / 99 / 150. Weapon glow: +7 / +9 / +10.</small><div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="9">Weapon +9</button><button data-a="gmglow" data-v="10">Weapon +10</button></div><div class="hd">Ascension testing</div><button data-a="gmendgame">Base 150 + crafting/refine supplies</button><p>Max your current job, then use Class Path to enter its fourth-job trial. Grant a complete Mythic set for your current weapons:</p><div class="row">${Object.entries(ASC_SETS).map(([k,v])=>`<button data-a="gmset" data-v="${k}">${v.name}</button>`).join('')}</div><div class="row">${[11,12,13,14,15].map(n=>`<button data-a="gmglow" data-v="${n}">Mythic weapon +${n}</button>`).join('')}</div><div class="hd">Maxed Ascension equipment by class</div><p>Grant to bag: +15 Mythic gear, maximum base values and four maximum affix rolls per item. Includes each class weapon option and a second dagger for Guillotine Cross. Cards are empty; equip after reaching the matching fourth job.</p><div class="row">${Object.entries(GM_ASC_PRESETS).map(([cls,p])=>`<button data-a="gmmaxset" data-v="${cls}">${cls} · ${ASC_SETS[p.set].name} +15</button>`).join('')}</div><div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
-    <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gmo" data-v="1000">+1,000 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmnm">Unlock Nightmare (Base Lv 150)</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
-    <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
-    <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
-    <div class="hd" style="margin-top:10px">Skill accounting test controls</div><small>Max the current class line, then use the normal Auto-allocate all skills button or let GM do both steps.</small><div class="row"><button data-a="gmskill" data-v="maxjobs">Max current line jobs</button><button data-a="gmskill" data-v="maxallocate">Max jobs + auto allocate</button><button data-a="gmskill" data-v="reset">Reset current line skills</button></div>
-    <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmbond" data-v="1">+1 duplicate on the selected pet (Bond)</button><button data-a="gmbond" data-v="5">+5 duplicates</button></div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>
-    <div class="hd" style="margin-top:10px">Ascension test controls</div><small>Stats levels are account-wide; skill levels belong to the current class. Spend the points in Character → Ascension stats and Skills → Ascension.</small><div class="row"><button data-a="gmascstats" data-v="max">Max Stats Ascension 50</button><button data-a="gmascstats" data-v="reset">Reset Stats Ascension</button><button data-a="gmascskills" data-v="max">Max Skill Ascension 30</button><button data-a="gmascskills" data-v="reset">Reset Skill Ascension</button></div>
-    <div class="hd" style="margin-top:10px">Mail &amp; Daily Roulette controls</div><small>Open the announcement Mail box (with GM announcement + gift composer) or reset today's Daily Material Roulette spin.</small><div class="row"><button data-a="openmail">Open Mail &amp; Announcements</button><button data-a="opendaily">Open Daily Roulette</button><button data-a="gmdailyreset">Reset daily roulette spin</button></div>
-    <div class="hd" style="margin-top:10px">Level test controls</div><small>Set Base level and clear Base EXP. Unspent points are recalculated; allocated stats, gear and jobs stay untouched.</small><div class="row">${[1,99,120].map(n=>`<button data-a="gmresetlv" data-v="${n}">Reset Base Lv → ${n}</button>`).join('')}</div>`}};
+    <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E Q R L P I V O, Esc to close. Cards has no hotkey - use its tab.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
+  gm(){return gmToolsPanel()}};;
 // v90: the Black Market panel. Locked until Base Lv 100; ore is bought one at a time and a reforge is
 // offered for every worn piece that has an affix.
 V.guide=()=>handbook();
@@ -7811,6 +7963,8 @@ const ACT={
   costume:()=>{log('Costumes arrive in a future patch - they will restyle a class without changing its stats.','','misc');ui()},
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
   reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;expEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
+  gmsub:v=>{if(!S||!S.gm)return;if(GM_SECTIONS.some(([k])=>k===v)){gmSection=v}renderWin()},
+  gmall:()=>{if(!S||!S.gm)return;ask('Unlock everything on this account for testing?\n\nBase Lv 150, every job maxed, every class unlocked, every map open, and a testing fortune of Zeny and materials. Nothing is erased.',()=>gmUnlockAll(),{yes:'Unlock everything',no:'Cancel'})},
   gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:(v=20)=>{if(!S.gm||![20,1000].includes(+v))return;S.ore.ori+=+v;S.ore.elu+=+v;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
   gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmindex:v=>gmIndexTest(v),gmcard:v=>gmCardTest(v),gmskill:v=>gmSkillTest(v),gmpet:v=>gmPetTest(v),gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
 $('eclipseCompanions').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
@@ -7897,7 +8051,10 @@ function escapeUI(){
 }
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();
   if(k==='F12'){e.preventDefault();if(e.repeat)return;toggleFullscreen();return}
-  if(k==='ESCAPE'){e.preventDefault();escapeUI();return}if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={R:['equip','refine'],C:['bag','cards']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1]&&(!expandedPanels.size||expandedPanels.has(X[0]));sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(expandedPanels.size){expandedPanels.clear();expandedPanels.add(X[0])}if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
+  if(k==='ESCAPE'){e.preventDefault();escapeUI();return}if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(k==='Q'){qOpen=!qOpen;renderQ();return}
+  // v2 (owner): the C key used to jump to Cards, where it fought the Cards tab at the loadout card.
+  // Only R is left as a shortcut; Cards is opened by its own button.
+  const X={R:['equip','refine']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1]&&(!expandedPanels.size||expandedPanels.has(X[0]));sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(expandedPanels.size){expandedPanels.clear();expandedPanels.add(X[0])}if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 
 async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{log('Fullscreen is unavailable in this browser. Try the browser fullscreen control.')}}
 document.addEventListener('change',e=>{const el=e.target;if(S&&el.matches('select[data-combo-slot]'))ACT.comboassign(el.dataset.comboSlot+':'+el.value)});
@@ -12027,7 +12184,7 @@ function simAdvance(now=performance.now()){
     if(awayReturnAt&&!document.hidden)finishAway();
   }
 }
-function loop(now){try{simAdvance(now);if(!document.hidden&&simPending===0)draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
+function loop(now){try{if(CLOUD.lost){simAt=now;simPending=0}else simAdvance(now);if(!document.hidden&&simPending===0)draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
 
 // ---------- grinding while the tab is hidden ----------
 // Background grinding is permanent. Timers and frames share the same pending-time queue.
@@ -12089,7 +12246,7 @@ function updateWatch(){
 setInterval(updateWatch,60000);
 </script>
 <script src="assets/wardrobe-ui.js?v=199"></script>
-<script src="assets/shop.js?v=215"></script>
+<script src="assets/shop.js?v=216"></script>
 <script src="assets/social-rules.js?v=210"></script>
 <script src="assets/social-scene.js?v=210"></script>
 <script src="assets/social.js?v=236"></script>
