@@ -8237,3 +8237,100 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** Refresh the preview → **Equipment**. Switch between Loadout and Affixes/Cards/Auto-sell: the window no longer shrinks, the top-right corner has one close button on the gold frame, and no Zeny figure sits beside it. Open **Affixes**, select an affix and press **Reforge**, then use **Use new affixes / Keep current / Keep current & reforge** from the right rail without scrolling.
 * **Checks:** `equipment_workspaces_sim` grew from 8 to 11 checks (no workspace Zeny wallet, footer carries no offer decisions, rail carries all three, plus CSS guards for the height, gold frame and tool-icon sizing) and passes; `eclipse_ui_sim` (52), `equipment_cards_sim`, `equipment_selection_sim`, `autosell_sim` (13), `gear_sim` (43), `panel_layout_smoke` (42), `ui_sim` (64), `display_polish_sim` (10) and `update_watch_sim` (9, all four build-tag mirrors) pass. The full 137-file gate reports 129 pass / 8 fail: the seven known-red baseline suites in [Testing](TESTING.md#the-known-red-baseline-measured-2026-10-26) plus `card_star_balance_sim`, which needs the pinned `d164bd0` history that this shallow clone lacked — after `git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26` it passes (36 comparisons), so the baseline is unchanged. `skill_balance_sim` is still red for its documented "measurements stale" fixture; the hashed combat slice covers the reforge helpers, so its computed hash moves with this edit without any combat constant changing. `css-tree` parses all 3,038 rules and `git diff --check` is clean. Headless Chromium geometry probes at 1826x963, 1440x900, 900x900 and 390x844 confirm zero overlapping window-tool elements, identical window boxes for all six tabs on every viewport (desktop 1120x657, phone 374x621 like Loadout), and the try-again button inside the visible rail on desktop.
 * **Delivery:** Local changes on `arena/42fc7598-prontera-grind`; no commit, push, PR or deployment.
+
+### 2026-10-27 — `2026-10-27 haven-v244 royal dispatch mail & roulette`
+* **Changed:** Applied the [mail, roulette & shared-buff design study](proposals/mail-roulette-2026-10-26/README.md)
+  to the real game. Mail is now a 306px message index beside a dedicated reading pane,
+  with **All mail / Notices / Rewards** filters, a search box, and the attachment and
+  claim action at the foot of the letter — and opening the inbox no longer marks
+  anything read, only opening a message does. Below 620px it becomes list → letter →
+  Back. Daily roulette grew to the ~1184px panel with a 408px wheel (from 254px),
+  seven full-width reward rows at 14px/12px with a dedicated rate column, normal
+  wrapping and no ellipses; **the "Your reserves & active buffs" panel is removed
+  entirely** rather than hidden in a disclosure. The roulette EXP and Zeny timers moved
+  out of the pill under the Daily button and into the shared lower strip beside the pet
+  buffs, as frameless 38px icons with 44px hit areas and a 65%-opaque hover popup; with
+  no buffs, nothing at all is displayed. GM announcements left the inbox for their own
+  three-step **announcement studio** with a live player-side preview and an explicit
+  confirmation; the headline is the first line of the existing body, so no stored
+  message needed migrating and the text still obeys the API's 500-character budget.
+  A single player is chosen from the authorised GM player list, so a typed name is
+  never posted as an id. **No reward, drop rate, spin limit, reset time or reward
+  calculation changed** — `DAILY_WHEEL_SEGMENTS`, `pickDailyWheelIndex`,
+  `spinDailyRoulette`, `claimSingleMailEntry`, `syncCloudMail` and the cloud contract
+  are untouched, and `gm.html` keeps its full catalogue and permissions.
+* **Try it:** Open **Mail** on the minimap: pick a message, filter to Rewards, and search.
+  Open **Daily** for the larger wheel and the untruncated reward pool. Win a boost and
+  watch its timer float beside your pet buffs at the bottom right. As a GM, use
+  **Compose** in the mail toolbar for the announcement studio. On a phone the mail list
+  drills into the letter and back.
+* **Checks:** New suite `mail_roulette_ui_sim` (12 checks) covers the index/reader split,
+  read semantics, mark-read vs. claim-all independence, the three filters, search that
+  redraws without replacing the input, the untruncated reward pool with the reserves
+  panel gone, an unchanged roll and reward set, buffs in the shared strip with focus-safe
+  ticking and no empty-state placeholder, the studio's preview/confirmation/500-character
+  budget and recipient resolution, and that every claim/sync/roll function still exists.
+  It found two real defects during writing, both fixed: the studio's Review button never
+  re-enabled while typing from an empty draft, and validation messages were only rendered
+  inside the confirmation branch. `eclipse_ui_sim` was updated for the two behaviours this
+  proposal deliberately changes (opening the inbox no longer marks mail read; the GM form
+  and buff pill are gone) and passes 52; `ui_sim` (64) and `display_polish_sim` (10) pass
+  unchanged. The three generated-asset checks pass; `css-tree` parses
+  `assets/ui/eclipse.css` (3222 rules, 0 errors). Full gate over all 138 `*_sim.js` /
+  `*_smoke.js` files: **131 pass, 7 fail** — exactly the
+  [known-red baseline](TESTING.md#the-known-red-baseline-measured-2026-10-26), each
+  confirmed red on the untouched base commit `52caf26` as well. `card_star_balance_sim`
+  was red only until `git fetch --unshallow` restored the pinned `d164bd0` history; it now
+  passes (36 comparisons). All four build-tag mirrors were bumped together and
+  `update_watch_sim` (9), `gear_sim` (43) and `drop_card_sheet_sim` (14) confirm it.
+  **Not verified here:** `tools/check_mail_roulette_integration_browser.cjs` was written
+  for the real game at 1440/1024/768/390px but could not run in this sandbox — the bundled
+  Chromium aborts on missing `libnspr4.so`/`libnss3.so` and no reachable package source
+  supplies them. Real-browser geometry, hover popups and physical-phone behaviour are
+  therefore unmeasured; run that check where Chromium works before relying on the layout.
+* **Delivery:** Local changes on `arena/2c44e24f-prontera-grind`; no commit, push, PR or
+  deployment.
+
+
+### 2026-10-27 — `2026-10-27 haven-v245 royal dispatch mail studio & HUD fixes`
+* **Changed:** Follow-up from the owner's preview feedback on PR #136. Mail had
+  inherited the roulette card's very wide, content-height sizing, so it looked like
+  a short letterbox at desktop. The mail card now has its own **980px × 680px**
+  desktop shape (still bounded by the viewport); roulette keeps its 1184px width.
+  The GM Compose button had no visible effect because the new `#gmStudioModal` root
+  never received fixed-overlay/display rules. It is now a proper hidden-by-default,
+  viewport-bounded top-level modal above the mail window, with a scrollable card and
+  narrow-screen sizing. Finally, daily boost SVGs were inheriting SVG's default black
+  fill because their outline styling was scoped to mail; they now explicitly use
+  `fill:none; stroke:currentColor`, so Zeny/EXP icons inherit the intended gold/green.
+  Bumped the build tag and all three mirrors to v245 and the Eclipse stylesheet query
+  to v210. Gameplay, saves, rewards and expiry logic are unchanged.
+* **Try it:** Open Mail at desktop width: its reader should feel taller and less
+  letterbox-wide. Click **Compose** as a GM: the announcement studio should open over
+  the inbox; close it to return to mail. On a live Zeny/EXP boost, the lower-HUD
+  symbols should be colored outlines rather than black silhouettes.
+* **Checks:** `mail_roulette_ui_sim` now guards the mail-specific shape, the GM modal
+  overlay and viewport-bounded card, and explicit colored SVG strokes; the suite and
+  `eclipse_ui_sim` pass. Full regression gate and real-browser limitations are recorded
+  in the preceding v244 entry; browser geometry remains to be confirmed in Chromium.
+* **Delivery:** PR #136 follow-up on `arena/2c44e24f-prontera-grind`; not merged or
+  deployed.
+
+
+### 2026-10-27 — `2026-10-27 haven-v246 royal dispatch icon polish`
+* **Changed:** Follow-up to the GM studio screenshot. Its custom SVGs were missing the
+  mail view's base `.rd-ico` rule because that rule was scoped only under
+  `#mailDailyModal`. Browsers therefore used their default SVG dimensions and black
+  fill: small action symbols appeared as black dots, and the review arrow expanded
+  into a giant triangle. The shared icon base now applies to both modal roots, explicitly
+  sizing each icon to 15px and setting `fill:none; stroke:currentColor` with rounded
+  joins. Existing contextual sizes still override it. Updated the build tag and all
+  three mirrors to v246; Eclipse CSS query to v211. No gameplay or modal flow changed.
+* **Try it:** Re-open the GM studio. Audience, notice, gift, and preview icons should be
+  small colored outlines; the Review announcement control should have a compact arrow,
+  not a large black triangle. No stray black glyphs/dots should remain.
+* **Checks:** `mail_roulette_ui_sim` adds a guard for the shared SVG styling; it and
+  `eclipse_ui_sim` pass. `css-tree` parses the stylesheet without errors; `git diff --check`
+  clean. Real-browser screenshot verification remains unavailable in this sandbox.
+* **Delivery:** PR #136 follow-up on `arena/2c44e24f-prontera-grind`; not merged or
+  deployed.

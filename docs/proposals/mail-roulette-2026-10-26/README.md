@@ -2,6 +2,14 @@
 
 **26 October 2026 · Visual proposal, not applied to the game.**
 
+> **Status — 27 October 2026: approved and integrated.** The mail, roulette, shared-buff
+> and GM-studio presentation below is now live in `index.html` and
+> `assets/ui/eclipse.css` (build `2026-10-27 haven-v244 royal dispatch mail & roulette`).
+> Everything in "Prototype boundaries" still describes this folder's prototype, which
+> remains a standalone demo and is still excluded from `dist/`. See the
+> [update log](../../UPDATE-LOG.md) entry of the same date for what shipped, and
+> `tools/tests/mail_roulette_ui_sim.js` for the regressions that now hold it in place.
+
 A calmer version of the existing navy-and-gold Eclipse interface, with restrained fantasy details, clear headings and more room for reading. The in-game branding remains **Horizon Haven**; “The Royal Dispatch” is the design concept, not a game rename.
 
 ## Review the visuals
