@@ -899,7 +899,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>HORIZON HAVEN / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
 <div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Horizon <small>HAVEN</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover">&#9679; <b id="zeny">0</b> Zeny</div>
-<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="fieldLoading" hidden role="status" aria-live="polite"><i></i><span>Loading field…</span></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="minimapTools" aria-label="Mail and daily rewards"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button><div id="dailyBuffPill" class="minimap-buff-pill" hidden></div></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
+<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="fieldLoading" hidden role="status" aria-live="polite"><i></i><span>Loading field…</span></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs and daily roulette boosts - hover an icon for what it does"></div><div id="minimapTools" aria-label="Mail and daily rewards"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
 <div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd">Speed x1</button></div><div id="wins"></div></div></div>
 <div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health"><span>HP</span> <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
 </div></div>
@@ -934,6 +934,23 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
       <button type="button" role="tab" id="tabBtnDaily" data-a="maildailytab" data-v="daily" aria-selected="false">🎡 Daily Material Roulette <span id="tabDailyReady" class="md-pill is-gold" hidden>SPIN!</span></button>
     </div>
     <div id="mailDailyBody" class="mail-daily-body"></div>
+  </div>
+</div>
+<!-- GM announcement studio (2026-10-27). The composer no longer lives inside the player
+     inbox: three steps, a live player-side preview, then an explicit confirmation. The
+     headline is the first line of the existing body, so no stored message needs migrating,
+     and the combined text stays inside the API's own 500-character budget. -->
+<div id="gmStudioModal" role="dialog" aria-modal="true" aria-labelledby="gmStudioTitle">
+  <div class="login-card trial-card mail-daily-card">
+    <div class="trial-head mail-daily-head">
+      <span class="trial-seal" aria-hidden="true">📣</span>
+      <div class="trial-brand">
+        <b id="gmStudioTitle">Announcement studio</b>
+        <small>WRITE CLEARLY · PREVIEW FIRST · SEND WITH CONFIDENCE</small>
+      </div>
+      <button type="button" class="trial-close" data-a="closegmstudio" aria-label="Close the announcement studio">&times;</button>
+    </div>
+    <div id="gmStudioBody" class="mail-daily-body"></div>
   </div>
 </div><!-- The cloud conflict chooser. Two saves exist (this device and the account) and only the player can
      say which one is real, so it is a three-way question, not a yes/no: keep this device, keep the
@@ -1231,7 +1248,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-27 haven-v243 equipment workspace polish';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-27 haven-v244 royal dispatch mail & roulette';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -7234,19 +7251,51 @@ function markAllMailRead(){if(!S)return;let ch=false;for(const m of ensureMailSt
 async function refreshCloudMail(){if(typeof CLOUD!=='undefined'&&CLOUD.on){await cloudPull();renderMailDailyModal();}}
 async function gmSendMailAnnouncement(){
   if(!S||!S.gm)return false;
-  const bodyEl=typeof $==='function'?$('gmMailBody'):null,kindEl=typeof $==='function'?$('gmMailKind'):null,giftEl=typeof $==='function'?$('gmMailGift'):null,amtEl=typeof $==='function'?$('gmMailAmt'):null,allEl=typeof $==='function'?$('gmMailToAll'):null;
-  const text=String(bodyEl?.value||'').trim();if(!text){log('Write an announcement message first.','r0','misc');return false;}
-  const kind=['notice','event','welcome'].includes(kindEl?.value)?kindEl.value:'notice',opt=MAIL_GIFT_OPTIONS.find(x=>x.key===(giftEl?.value||'none'))||MAIL_GIFT_OPTIONS[0];
-  const amount=Math.max(1,Math.min(1000000000,Math.floor(Number(amtEl?.value)||opt.defaultAmt||1))),toAll=allEl?!!allEl.checked:true;
+  const d=gmStudioDraft;
+  if(d.sending)return false;                       // one press, one announcement
+  gmStudioSyncDraft();
+  const text=gmStudioMessage();
+  if(!text){d.status='Write a headline or a message first.';log('Write a headline or a message first.','r0','misc');renderGmStudio();return false;}
+  if(text.length>500){d.status='Keep announcements under 500 characters.';log('Keep announcements under 500 characters.','r0','misc');renderGmStudio();return false;}
+  const kind=['notice','event','welcome'].includes(d.kind)?d.kind:'notice';
+  const opt=MAIL_GIFT_OPTIONS.find(x=>x.key===d.gift)||MAIL_GIFT_OPTIONS[0];
+  const amount=Math.max(1,Math.min(1000000000,Math.floor(Number(d.amount)||opt.defaultAmt||1)));
+  const toAll=d.audience!=='player';
+  // A single-player send resolves the authorised account id from the GM player
+  // list; a typed name is never posted as an id.
+  const target=toAll?null:(gmStudioPlayers||[]).find(x=>String(x.id)===String(d.player))||null;
+  if(!toAll&&!target){d.status='Choose the player who should receive it.';log('Choose the player who should receive it.','r0','cloud');renderGmStudio();return false;}
+  d.sending=true;d.status='Sending…';renderGmStudio();
+  const sentWhere=toAll?'everyone':target.u;
   if(typeof CLOUD!=='undefined'&&CLOUD.on&&CLOUD.gm){
-    try{const req={action:'announce',body:text,kind,toAll};if(opt.kind!=='none')req.gift={kind:opt.kind,catalogId:opt.catalogId,amount};const res=await cloudFetch('/gm/player',{method:'POST',body:JSON.stringify(req)}),data=await res.json();if(res.ok&&data.ok){log('📣 Server announcement sent'+(data.giftLabel?' with '+data.giftLabel:'')+'.','r4','cloud');if(bodyEl)bodyEl.value='';await cloudPull();renderMailDailyModal();return true;}}catch(e){}
+    try{
+      const req={action:'announce',body:text,kind,toAll};
+      if(!toAll)req.id=Number(target.id);
+      if(opt.kind!=='none')req.gift={kind:opt.kind,catalogId:opt.catalogId,amount};
+      const res=await cloudFetch('/gm/player',{method:'POST',body:JSON.stringify(req)}),data=await res.json();
+      if(res.ok&&data.ok){
+        d.sending=false;d.confirm=false;d.status='';d.headline='';d.body='';
+        log('📣 Server announcement sent'+(data.giftLabel?' with '+data.giftLabel:'')+' to '+sentWhere+'.','r4','cloud');
+        await cloudPull();renderGmStudio();renderMailDailyModal();return true;
+      }
+      d.sending=false;d.status=String(data?.error||'The server refused the announcement. Your draft is still here.');
+      log('Announcement not sent: '+d.status,'r0','cloud');renderGmStudio();return false;
+    }catch(err){
+      d.sending=false;d.status='Could not reach the server. Your draft is still here.';
+      log('Announcement not sent: '+err.message,'r0','cloud');renderGmStudio();return false;
+    }
   }
+  if(!toAll){d.sending=false;d.status='Sending to one player needs a cloud sign-in.';log('Sign in to the cloud to send to one player.','r0','cloud');renderGmStudio();return false;}
+  // Offline fallback, unchanged in substance: the announcement lands in this
+  // player's own inbox as a local message.
   const list=ensureMailState();let giftObj=null;
   if(opt.kind==='zeny')giftObj={grantId:null,kind:'zeny',payload:{amount},label:amount.toLocaleString()+' Zeny',claimed:false};
   else if(opt.kind==='gift')giftObj={grantId:null,kind:'gift',payload:{resource:opt.resource,amount},label:amount.toLocaleString()+' × '+opt.label.replace(/\s*\(.*\)$/,''),claimed:false};
   list.unshift({id:'local-'+Date.now()+'-'+Math.floor(Math.random()*1000),kind,from:currentUser||'GM',at:Date.now(),body:text,read:false,gift:giftObj});
-  if(list.length>50)list.length=50;if(bodyEl)bodyEl.value='';
-  log('📣 Announcement posted'+(giftObj?' (+ '+giftObj.label+')':'')+'.','r4','misc');save();updateMailDailyHud();renderMailDailyModal();return true;
+  if(list.length>50)list.length=50;
+  d.sending=false;d.confirm=false;d.status='';d.headline='';d.body='';
+  log('📣 Announcement posted'+(giftObj?' (+ '+giftObj.label+')':'')+'.','r4','misc');
+  save();updateMailDailyHud();renderGmStudio();renderMailDailyModal();return true;
 }
 function pickDailyWheelIndex(forcedIdx){
   if(Number.isInteger(forcedIdx)&&forcedIdx>=0&&forcedIdx<DAILY_WHEEL_SEGMENTS.length)return forcedIdx;
@@ -7275,36 +7324,181 @@ function spinDailyRoulette(forcedIdx){
   return true;
 }
 function gmResetDailyRoulette(){if(!S||!S.gm)return;const st=dailyWheelState();st.spun=0;st.lastReward=null;save();log('🛠 GM: Daily Roulette spin reset for today.','r1','misc');ui();renderMailDailyModal();}
-function renderDailyRouletteWheelSvg(initialAngle=dailyWheelAngle){
-  const cx=140,cy=140,r=116,n=DAILY_WHEEL_SEGMENTS.length,sliceDeg=360/n,halfDeg=sliceDeg/2;
-  const defs=DAILY_WHEEL_SEGMENTS.map((seg,i)=>`<radialGradient id="rwSlice${i}" cx="50%" cy="50%" r="65%"><stop offset="0%" stop-color="${seg.colorInner||'#1a1426'}"/><stop offset="58%" stop-color="${seg.color}"/><stop offset="100%" stop-color="${seg.colorInner||'#140f1e'}"/></radialGradient>`).join('');
-  const slices=DAILY_WHEEL_SEGMENTS.map((seg,i)=>{
-    const cDeg=i*sliceDeg,a1=((cDeg-halfDeg-90)*Math.PI)/180,a2=((cDeg+halfDeg-90)*Math.PI)/180,x1=(cx+r*Math.cos(a1)).toFixed(2),y1=(cy+r*Math.sin(a1)).toFixed(2),x2=(cx+r*Math.cos(a2)).toFixed(2),y2=(cy+r*Math.sin(a2)).toFixed(2),bTxt=seg.badge||(seg.amount?`×${seg.amount}`:'');
-    return `<g class="wheel-slice" data-slice="${i}"><path d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z" fill="url(#rwSlice${i})" stroke="url(#rwRimGrad)" stroke-width="1.6"/><g transform="rotate(${cDeg.toFixed(2)} ${cx} ${cy})"><circle cx="${cx}" cy="46" r="11.5" fill="rgba(12,9,20,0.42)" stroke="${seg.accent}" stroke-opacity="0.45" stroke-width="1"/><text x="${cx}" y="50.5" text-anchor="middle" fill="#fff9e6" font-size="14" font-weight="800">${seg.icon}</text><text x="${cx}" y="68" text-anchor="middle" fill="${seg.accent}" font-size="10.2" font-weight="900">${esc(bTxt)}</text><text x="${cx}" y="80" text-anchor="middle" fill="#fbf3dc" font-size="8.2" font-weight="700">${esc(seg.short)}</text><text x="${cx}" y="91.5" text-anchor="middle" fill="rgba(255,236,185,0.88)" font-size="7.2" font-weight="800">${seg.rate??seg.weight}%</text></g></g>`;
-  }).join('');
-  const pegs=Array.from({length:n*2},(_,i)=>{const a=((i*(180/n)-90)*Math.PI)/180;return `<circle cx="${(cx+123.5*Math.cos(a)).toFixed(2)}" cy="${(cy+123.5*Math.sin(a)).toFixed(2)}" r="${i%2===0?3.4:2.3}" fill="url(#rwPegGrad)" stroke="#4a2e08" stroke-width="0.9"/>`;}).join('');
-  return `<svg id="dailyRouletteWheel" class="roulette-svg" viewBox="0 0 280 280" role="img" aria-label="Daily Reward Roulette Wheel"><defs><linearGradient id="rwRimGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fff0b3"/><stop offset="35%" stop-color="#e3b655"/><stop offset="70%" stop-color="#9e6d1a"/><stop offset="100%" stop-color="#f7d784"/></linearGradient><radialGradient id="rwPegGrad" cx="35%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#ffe58f"/><stop offset="100%" stop-color="#b57c1e"/></radialGradient><radialGradient id="rwHubGrad" cx="38%" cy="35%" r="68%"><stop offset="0%" stop-color="#3c2a56"/><stop offset="65%" stop-color="#1d142b"/><stop offset="100%" stop-color="#0f0a18"/></radialGradient>${defs}</defs><circle cx="140" cy="140" r="134" fill="#120d1d" stroke="url(#rwRimGrad)" stroke-width="3.5"/><circle cx="140" cy="140" r="123.5" fill="none" stroke="rgba(255,223,142,0.28)" stroke-width="6"/><g id="rouletteWheelRotor" style="transform-origin:140px 140px;transform:rotate(${initialAngle}deg);transition:transform 2.6s cubic-bezier(0.12, 0.82, 0.16, 1)">${slices}<circle cx="140" cy="140" r="106" fill="none" stroke="rgba(255,235,179,0.22)" stroke-width="1" stroke-dasharray="3 3"/><circle cx="140" cy="140" r="34" fill="none" stroke="rgba(255,224,142,0.35)" stroke-width="1.2"/></g>${pegs}<circle cx="140" cy="140" r="28" fill="url(#rwHubGrad)" stroke="url(#rwRimGrad)" stroke-width="3"/><circle cx="140" cy="140" r="21" fill="none" stroke="rgba(255,228,158,0.45)" stroke-width="1"/><polygon points="140,123 144,136 157,140 144,144 140,157 136,144 123,140 136,136" fill="url(#rwRimGrad)"/><circle cx="140" cy="140" r="4.2" fill="#fff8dc"/></svg>`;
+/* ---------------------------------------------------------------------------
+   The Royal Dispatch (2026-10-27) - mail, daily roulette and shared effects.
+   Presentation only. Claim receipts (claimSingleMailEntry / claimMailGift /
+   claimAllMailGifts), cloud sync (syncCloudMail / refreshCloudMail), the reward
+   roll (pickDailyWheelIndex / spinDailyRoulette) and every saved balance keep
+   their original functions; only how they are drawn and where they live changed.
+   --------------------------------------------------------------------------- */
+const RD_ICON={
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/>',
+  notice:'<path d="m4 10 14-6v16L4 14v-4ZM7 15v5h4l-2-4m12-7v6"/>',
+  star:'<path d="m12 2 2.7 6.3 6.8.7-5.1 4.5 1.6 6.7-6-3.5-6 3.5 1.6-6.7L2.5 9l6.8-.7L12 2Z"/>',
+  spark:'<path d="m12 3 2.7 6.3L21 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7L12 3Zm7-1v4m-2-2h4"/>',
+  gift:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13"/><path d="M12 8S4 8 5 4s7 1 7 4Zm0 0s8 0 7-4-7 1-7 4Z"/>',
+  search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
+  check:'<path d="m5 12 4 4L19 6"/>',
+  checkCircle:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+  shield:'<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 11 3 3 5-5"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>',
+  arrow:'<path d="M4 12h16m-6-6 6 6-6 6"/>',
+  back:'<path d="M20 12H4m6-6-6 6 6 6"/>',
+  pickaxe:'<path d="m4 20 9-9m-7-7c5-1 10 2 14 7l-3 3C15 8 10 5 6 4Zm8 5-9 9 2 2 9-9"/>',
+  gem:'<path d="m8 3 8 1 5 8-7 9-9-4-2-8 5-6Z"/><path d="m8 3 1 7 7-6M3 9l6 1-4 7m4-7 5 11 7-9-12-2Z"/>',
+  coins:'<ellipse cx="10" cy="7" rx="7" ry="3"/><path d="M3 7v4c0 1.7 3.1 3 7 3s7-1.3 7-3V7M3 11v4c0 1.7 3.1 3 7 3m7-8c2.5.4 4 1.4 4 2.8 0 1.7-3.1 3-7 3m7-3v4c0 1.7-3.1 3-7 3-1.5 0-3-.2-4-.6"/>',
+  exp:'<path d="m13 2-9 12h7l-1 8 10-13h-7l1-7Z"/>',
+  pouch:'<path d="m8 3 2 5h4l2-5H8Zm2 5C6 11 3 14 5 18c2 4 12 4 14 0 2-4-1-7-5-10M8 8h8"/><path d="M10 12h4l-4 5h4"/>',
+  card:'<rect x="5" y="3" width="14" height="18" rx="2" transform="rotate(9 12 12)"/><path d="m12 8 3 4-3 4-3-4 3-4Z"/>',
+  scroll:'<path d="M7 4h12a2 2 0 0 1 2 2v3h-5V6a2 2 0 0 1 3-1M7 4a3 3 0 0 0-3 3v11m0 0H2v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M4 18h8v1a2 2 0 0 0 2 2"/><path d="m8 10 2 3 3-3"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.2"/>',
+  lock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>',
+  eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+  user:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+  users:'<circle cx="9" cy="7" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2m1-16a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5v1"/>',
+  send:'<path d="m22 2-7 20-4-9-9-4L22 2ZM11 13 22 2"/>',
+  bag:'<rect x="5" y="7" width="14" height="14" rx="3"/><path d="M9 7V5a3 3 0 0 1 6 0v2M5 12h14m-7-2v5"/>',
+  refresh:'<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5 8a8 8 0 0 1 14-3l1 7M4 12l1 7a8 8 0 0 0 14-3"/>'
+};
+function rdIcon(n){return `<svg class="rd-ico" viewBox="0 0 24 24" aria-hidden="true">${RD_ICON[n]||RD_ICON.spark}</svg>`}
+/* Wheel-face and reward-row artwork per segment id, plus the attachment icon per
+   gift key. Unknown ids fall back to a spark so a future reward still renders. */
+const RD_SEG_ART={ori:'pickaxe',elu:'gem',buff_zeny:'coins',buff_exp:'exp',zeny_pouch:'pouch',random_card:'card',refineScrolls:'scroll'};
+const RD_GIFT_ART={none:'mail',ori:'pickaxe',elu:'gem',shards:'gem',nmat0:'gem',refineScrolls:'scroll',mythicScrolls:'scroll',ascMat0:'gem',ascMat1:'gem',ascMat2:'gem',zeny:'coins'};
+const RD_KIND={notice:{label:'Official notice',icon:'notice'},event:{label:'Event notice',icon:'star'},welcome:{label:'Welcome',icon:'spark'}};
+function rdKind(k){return RD_KIND[k]||RD_KIND.notice}
+/* The rate already has its own column, so the trailing "(33%)" in the stored
+   description is trimmed for display. The saved segment data is untouched. */
+function rdRewardCopy(seg){return String(seg?.desc||'').replace(/\s*\(\d+(?:\.\d+)?%\)\s*$/,'').trim()||String(seg?.desc||'')}
+function rdGiftDetail(gift){
+  if(!gift)return'Enclosed reward';
+  if(gift.kind==='zeny')return'Added straight to your Zeny balance';
+  const opt=MAIL_GIFT_OPTIONS.find(o=>o.resource===(gift.payload||{}).resource);
+  return opt?opt.label.replace(/\s*\(.*\)$/,''):'Enclosed reward';
 }
-function renderDailyRouletteView(initialAngle=dailyWheelAngle){
-  const st=dailyWheelState(),spinsLeft=dailySpinsLeft(),zenyLeft=dailyBuffLeftMs('zeny'),expLeft=dailyBuffLeftMs('exp');
-  const stock=[['Oridecon',safeCount(S.ore?.ori).toLocaleString()],['Elunium',safeCount(S.ore?.elu).toLocaleString()],['Refine Scroll',safeCount(S.refineScrolls).toLocaleString()],['Zeny',Math.floor(S.zeny||0).toLocaleString()],['Monster Cards',(Array.isArray(S.cards)?S.cards.length:0).toLocaleString()],['Zeny Buff',zenyLeft>0?`+30% (${formatDailyBuffTimer(zenyLeft)})`:'Inactive'],['EXP Buff',expLeft>0?`+30% (${formatDailyBuffTimer(expLeft)})`:'Inactive']];
-  return `<div class="roulette-banner"><div><small>DAILY REWARD ROULETTE · ${esc(st.day)}</small><b>${spinsLeft>0?'1 Free Spin Available Today':'Today\'s Spin Claimed'}</b></div><span class="roulette-reset-clock" title="Resets every day at 00:00 UTC+8">⟳ Refreshes daily · ${dailyResetCountdownText()}</span></div><div class="roulette-layout"><div class="roulette-wheel-col"><div class="roulette-stage"><div class="roulette-pointer" aria-hidden="true"><svg viewBox="0 0 36 32" width="32" height="28"><polygon points="18,30 4,6 18,12 32,6" fill="#f7d274" stroke="#4a2e08" stroke-width="2" stroke-linejoin="round"/><circle cx="18" cy="9" r="3.5" fill="#fff8dc" stroke="#8a5a14" stroke-width="1.2"/></svg></div>${renderDailyRouletteWheelSvg(initialAngle)}</div><div id="dailySpinStatus" class="roulette-status" role="status" aria-live="polite">${st.lastReward?`<div class="roulette-won-banner"><small>TODAY'S REWARD WON</small><b>🎉 ${esc(st.lastReward.label)}</b><span>${esc(st.lastReward.detail||'Delivered to your inventory!')}</span></div>`:`<b>Spin for Ores, 30-Min Boosts, Zeny, Cards &amp; Scrolls!</b><span>Refreshes every day at 00:00 UTC+8.</span>`}</div><div class="roulette-actions"><button type="button" id="dailySpinBtn" data-a="spindaily" class="eclipse-primary roulette-spin-btn" ${spinsLeft<=0||dailyWheelSpinning?'disabled':''}>${dailyWheelSpinning?'🎡 Spinning...':spinsLeft>0?'🎡 Spin Roulette (Free Daily Spin)':'✓ Spun Today · Refreshes Tomorrow'}</button>${S.gm?`<button type="button" data-a="gmdailyreset" class="roulette-gm-reset">🛠 GM: Reset Spin</button>`:''}</div></div><div class="roulette-prizes-col"><div class="roulette-section-title">ROULETTE REWARD POOL &amp; DROP RATES</div><div class="roulette-prize-grid">${DAILY_WHEEL_SEGMENTS.map((seg,i)=>`<div class="roulette-prize-item tier-${esc(seg.tier||'common')}${st.lastReward&&st.lastReward.index===i?' is-won':''}" data-wheel-prize="${esc(seg.id)}" data-wheel-rate="${seg.rate??seg.weight}"><span class="rp-icon" style="background:linear-gradient(145deg,${seg.color},${seg.colorInner||seg.color});color:${seg.accent};border-color:${seg.accent}55">${seg.icon}</span><div class="rp-copy"><b>${esc(seg.label)}</b><small>${esc(seg.desc)}</small></div><span class="rp-rate-tag" style="color:${seg.accent};border-color:${seg.accent}44">${seg.rate??seg.weight}%</span>${st.lastReward&&st.lastReward.index===i?'<span class="rp-won-tag">WON</span>':''}</div>`).join('')}</div><div class="roulette-section-title" style="margin-top:10px">YOUR RESERVES &amp; ACTIVE BUFFS</div><div class="roulette-mat-stock">${stock.map(([name,val])=>`<div class="rm-cell"><small>${esc(name)}</small><b>${esc(String(val))}</b></div>`).join('')}</div></div></div>`;
+
+/* --- Player mail: a compact index beside a dedicated reading pane. --------- */
+let mailFilter='all',mailQuery='',mailSel=null,mailDetail=false;
+function mailHeadline(m){const b=String(m?.body||''),i=b.indexOf('\n');return i<0?'':b.slice(0,i).trim()}
+function mailBodyCopy(m){const b=String(m?.body||''),i=b.indexOf('\n');return (i<0?b:b.slice(i+1)).trim()}
+/* Old single-line announcements keep their whole text as the letter body and get
+   their type as the heading, so nothing needs a migration to stay readable. */
+function mailTitleOf(m){return mailHeadline(m)||rdKind(m?.kind).label}
+function mailTimeLabel(m){return m?.at?new Date(m.at).toLocaleString():'Official'}
+function mailWhen(m){
+  if(!m?.at)return'Official';
+  const d=new Date(m.at);
+  return d.toDateString()===new Date().toDateString()?'Today':d.toLocaleDateString(undefined,{day:'numeric',month:'short'});
+}
+function noticesMailCount(){return S?ensureMailState().filter(m=>!m.gift).length:0}
+function unreadOnlyMailCount(){return S?ensureMailState().filter(m=>!m.read).length:0}
+function filteredMail(){
+  const q=String(mailQuery||'').trim().toLocaleLowerCase();
+  return ensureMailState().filter(m=>(mailFilter!=='notices'||!m.gift)&&(mailFilter!=='rewards'||(m.gift&&!m.gift.claimed))&&(!q||`${m.body} ${m.from}`.toLocaleLowerCase().includes(q)));
+}
+function selectedMail(){
+  const rows=filteredMail();
+  if(!rows.some(m=>String(m.id)===String(mailSel)))mailSel=rows[0]?rows[0].id:null;
+  return rows.find(m=>String(m.id)===String(mailSel))||null;
+}
+function rdAttachmentMarkup(gift,preview){
+  const p=gift?.payload||{},art=RD_GIFT_ART[p.resource||(gift?.kind==='zeny'?'zeny':'none')]||'gift';
+  return `<div class="rd-attachment-block"><p class="rd-section-label">${rdIcon('gift')} ENCLOSED REWARD</p><div class="rd-attachment${gift?.claimed?' is-claimed':''}"><span class="rd-attachment-icon">${rdIcon(art)}</span><div class="rd-attachment-copy"><b>${esc(formatMailGiftLabel(gift))}</b><small>${esc(rdGiftDetail(gift))}</small></div><span class="rd-attachment-state">${gift?.claimed?'✓ Claimed':'Ready to claim'}</span></div>${preview?'<span class="rd-draft-btn">Claim reward →</span>':''}</div>`;
+}
+function rdReaderMarkup(m){
+  if(!m)return `<div class="rd-empty">${rdIcon('mail')}<h3>A little room to breathe.</h3><p>Select a message on the left to read it here.</p></div>`;
+  const k=rdKind(m.kind);
+  return `<button type="button" class="rd-link rd-back" data-a="mailback">${rdIcon('back')} Back to inbox</button><div class="rd-topline"><span class="rd-kind">${rdIcon(k.icon)}${esc(k.label.toUpperCase())}</span><time>${esc(mailTimeLabel(m))}</time></div><h3 tabindex="-1">${esc(mailTitleOf(m))}</h3><div class="rd-sender"><span class="rd-seal" aria-hidden="true">H</span><span>${esc(m.from||'Horizon Haven')}</span>${rdIcon('shield')}<span class="rd-to">To: You</span></div><div class="rd-rule"></div><p class="rd-copy">${esc(mailBodyCopy(m))}</p>${m.gift?rdAttachmentMarkup(m.gift):''}<footer class="rd-actions">${m.gift?`<span class="rd-hint${m.gift.claimed?' success':''}">${rdIcon(m.gift.claimed?'checkCircle':'bag')}${m.gift.claimed?'Reward delivered to your inventory.':'Rewards go straight to your inventory.'}</span>${m.gift.claimed?'<span class="mail-claimed-tag">✓ Gift claimed</span>':`<button type="button" class="rd-btn primary" data-a="claimmail" data-v="${esc(m.id)}">Claim reward ${rdIcon('arrow')}</button>`}`:`<span class="rd-hint">${rdIcon('checkCircle')}${m.read?'Message read':'Open this message to mark it read'}</span><span class="rd-pill">No attachment</span>`}</footer>`;
+}
+function rdListMarkup(){
+  const rows=filteredMail();
+  if(!rows.length)return `<div class="rd-empty">${rdIcon(mailQuery?'search':mailFilter==='rewards'?'gift':'mail')}<h3>${mailQuery?'No matching messages':mailFilter==='rewards'?'All gifts claimed':'Nothing here yet'}</h3><p>${mailQuery?'Try another word, or clear your search.':'New announcements will appear here.'}</p>${mailFilter!=='all'||mailQuery?`<button type="button" class="rd-link" data-a="mailfilterclear">Show all mail ${rdIcon('arrow')}</button>`:''}</div>`;
+  return rows.map(m=>{
+    const k=rdKind(m.kind),kind=String(m.kind||'notice'),sel=String(m.id)===String(mailSel),ready=!!(m.gift&&!m.gift.claimed);
+    return `<button type="button" class="rd-item${sel?' selected':''}" data-a="openmailmsg" data-v="${esc(m.id)}" aria-pressed="${sel}" aria-label="${esc(mailTitleOf(m))}${!m.read?', unread':''}${ready?', gift ready to claim':''}"><span class="rd-item-meta"><span class="kind ${esc(kind)}">${rdIcon(k.icon)}${esc(kind.toUpperCase())}</span><span>${esc(mailWhen(m))}</span></span><span class="rd-item-title">${!m.read?'<i class="rd-dot" aria-hidden="true"></i>':''}${esc(mailTitleOf(m))}</span><span class="rd-item-preview">${esc(mailBodyCopy(m).replaceAll('\n',' '))}</span>${m.gift?`<span class="rd-item-gift${m.gift.claimed?' claimed':''}">${rdIcon(m.gift.claimed?'check':'gift')}${m.gift.claimed?'Reward claimed':esc(formatMailGiftLabel(m.gift))}</span>`:''}</button>`;
+  }).join('');
 }
 function renderMailView(){
-  const list=ensureMailState(),unclaimed=unclaimedMailGiftCount(),unread=unreadMailCount();
-  const gmComposer=S.gm?`<details class="gm-mail-composer" data-ui-disclosure="gm-mail-composer" open><summary>🛠 GM: Send Announcement &amp; Attach Gift</summary><div class="gm-mail-form"><textarea id="gmMailBody" rows="2" placeholder="Write an official announcement or event notice..."></textarea><div class="gm-mail-controls"><label>Type <select id="gmMailKind"><option value="notice">Notice</option><option value="event">Event</option><option value="welcome">Welcome</option></select></label><label>Attach Gift <select id="gmMailGift">${MAIL_GIFT_OPTIONS.map(o=>`<option value="${esc(o.key)}">${esc(o.label)}</option>`).join('')}</select></label><label>Quantity <input id="gmMailAmt" type="number" min="1" max="1000000000" step="1" value="20"></label><label class="gm-mail-check"><input type="checkbox" id="gmMailToAll" checked> To everyone</label><button type="button" data-a="gmcomposemail" class="eclipse-primary">📣 Send Announcement</button></div></div></details>`:'';
-  const cards=list.length?list.map(m=>{const kind=m.kind||'notice',kindLabel=kind==='event'?'🎉 EVENT':kind==='welcome'?'🌟 WELCOME':'📢 NOTICE',timeStr=m.at?new Date(m.at).toLocaleString():'Official',hasUnclaimed=!!(m.gift&&!m.gift.claimed);return `<article class="mail-ann-card kind-${esc(kind)}${!m.read||hasUnclaimed?' is-unread':''}" data-mail-id="${esc(m.id)}"><header class="mail-ann-head"><span class="mail-kind-badge kind-${esc(kind)}">${kindLabel}</span><strong class="mail-from">${esc(m.from||'Horizon Haven')}</strong>${!m.read?'<span class="mail-new-pill">NEW</span>':''}<time class="mail-time">${esc(timeStr)}</time></header><div class="mail-ann-body">${esc(m.body)}</div>${m.gift?`<footer class="mail-ann-gift${m.gift.claimed?' is-claimed':''}"><div class="mail-gift-info"><span class="mail-gift-icon" aria-hidden="true">🎁</span><div><small>Attached Gift</small><b>${esc(formatMailGiftLabel(m.gift))}</b></div></div>${m.gift.claimed?`<span class="mail-claimed-tag">✓ Gift Claimed</span>`:`<button type="button" data-a="claimmail" data-v="${esc(m.id)}" class="eclipse-primary mail-claim-btn">Claim Gift</button>`}</footer>`:''}</article>`;}).join(''):`<div class="mail-empty">No announcements yet. Official server notices and event gifts will appear here.</div>`;
-  return `<div class="mail-toolbar"><div class="mail-summary"><b>${list.length} Announcement${list.length===1?'':'s'}</b><span>${unclaimed>0?`${unclaimed} unclaimed gift${unclaimed===1?'':'s'} waiting`:unread>0?`${unread} unread`:'All caught up'}</span></div><div class="mail-toolbar-actions">${unclaimed>0?`<button type="button" data-a="claimallmail" class="eclipse-primary">🎁 Claim All Gifts (${unclaimed})</button>`:''}<button type="button" data-a="readallmail">Mark All Read</button>${typeof CLOUD!=='undefined'&&CLOUD.on?`<button type="button" data-a="refreshmail">↻ Sync</button>`:''}</div></div>${gmComposer}<div class="mail-ann-list">${cards}</div>`;
+  const list=ensureMailState(),unclaimed=unclaimedMailGiftCount(),unread=unreadOnlyMailCount(),sel=selectedMail();
+  return `<div class="rd-mail${mailDetail?' is-detail':''}"><div class="rd-toolbar"><div class="rd-filters" role="group" aria-label="Filter mail"><button type="button" data-a="mailfilter" data-v="all" aria-pressed="${mailFilter==='all'}">All mail <span>${list.length}</span></button><button type="button" data-a="mailfilter" data-v="notices" aria-pressed="${mailFilter==='notices'}">Notices <span>${noticesMailCount()}</span></button><button type="button" data-a="mailfilter" data-v="rewards" aria-pressed="${mailFilter==='rewards'}">Rewards <span>${unclaimed}</span></button></div><div class="rd-tools"><button type="button" class="rd-link" data-a="readallmail" ${unread?'':'disabled'}>${rdIcon('check')} Mark all read</button>${typeof CLOUD!=='undefined'&&CLOUD.on?`<button type="button" class="rd-link" data-a="refreshmail">${rdIcon('refresh')} Sync</button>`:''}${S.gm?`<button type="button" class="rd-btn small" data-a="opengmstudio">${rdIcon('send')} Compose</button>`:''}<button type="button" class="rd-btn primary small" data-a="claimallmail" ${unclaimed?'':'disabled'}>${rdIcon('gift')}<span>Claim all · ${unclaimed}</span></button></div></div><div class="rd-mail-layout"><aside class="rd-list-panel" aria-label="Message list"><label class="rd-search">${rdIcon('search')}<input type="search" id="mailSearch" placeholder="Find a message…" aria-label="Search mail" value="${esc(mailQuery)}"></label><div class="rd-list-eyebrow">RECENT DISPATCHES</div><div class="rd-list" id="mailList">${rdListMarkup()}</div><div class="rd-list-footer">${rdIcon('lock')} Official mail from Horizon Haven</div></aside><article class="rd-reader" id="mailReader" aria-label="Selected message">${rdReaderMarkup(sel)}</article></div></div>`;
+}
+/* Re-draw only the list, reader and counters so the search box keeps focus and
+   its caret while the player types. */
+function rdRefreshMail(){
+  if(typeof $!=='function'||mailDailyMode==='daily')return;
+  const body=$('mailDailyBody'),list=$('mailList'),reader=$('mailReader');
+  if(!body||!list||!reader){renderMailDailyModal();return}
+  const sel=selectedMail();
+  list.innerHTML=rdListMarkup();
+  reader.innerHTML=rdReaderMarkup(sel);
+  const nums=[ensureMailState().length,noticesMailCount(),unclaimedMailGiftCount()];
+  body.querySelectorAll('.rd-filters button').forEach((b,i)=>{if(nums[i]!=null){const s=b.querySelector('span');if(s)s.textContent=String(nums[i]);}b.setAttribute('aria-pressed',String(b.dataset.v===mailFilter));});
+  body.querySelector('.rd-mail')?.classList.toggle('is-detail',mailDetail);
+  const readAll=body.querySelector('[data-a=readallmail]');if(readAll)readAll.disabled=unreadOnlyMailCount()<=0;
+  const claimAll=body.querySelector('[data-a=claimallmail]');
+  if(claimAll){const n=unclaimedMailGiftCount();claimAll.disabled=n<=0;const s=claimAll.querySelector('span');if(s)s.textContent='Claim all · '+n;}
+  updateMailDailyHud();
+}
+function openMailMessage(id){
+  if(!S)return;
+  const m=ensureMailState().find(x=>String(x.id)===String(id));
+  if(m)mailSel=m.id;
+  mailDetail=true;
+  if(m&&!m.read){m.read=true;save();updateMailDailyHud();}
+  renderMailDailyModal();
+  // On a narrow screen the list is gone, so hand focus to the letter that replaced it.
+  if(mailDetail&&window.innerWidth<=620)typeof $==='function'&&$('mailReader')?.querySelector('h3')?.focus({preventScroll:true});
+}
+function closeMailDetail(){mailDetail=false;renderMailDailyModal();if(typeof $==='function')$('mailList')?.querySelector('.rd-item')?.focus({preventScroll:true});}
+function setMailFilter(v){if(!['all','notices','rewards'].includes(v))return;mailFilter=v;mailDetail=false;renderMailDailyModal();}
+function clearMailFilter(){mailFilter='all';mailQuery='';mailDetail=false;renderMailDailyModal();}
+
+/* --- Daily roulette: a 408px wheel and one untruncated row per reward. ----- */
+function renderDailyRouletteWheelSvg(initialAngle=dailyWheelAngle){
+  const C=220,R=182,n=DAILY_WHEEL_SEGMENTS.length,step=360/n;
+  const pt=(r,a)=>[C+r*Math.cos(a*Math.PI/180),C+r*Math.sin(a*Math.PI/180)];
+  const co=p=>p.map(v=>v.toFixed(3)).join(' ');
+  const slices=DAILY_WHEEL_SEGMENTS.map((seg,i)=>{
+    const center=-90+i*step,a=pt(R,center-step/2),b=pt(R,center+step/2),lb=pt(124,center);
+    const art=seg.accent||'#d7b77a',path=RD_ICON[RD_SEG_ART[seg.id]]||RD_ICON.spark;
+    return `<g class="wheel-slice" data-slice="${i}" data-wheel-prize="${esc(seg.id)}"><path d="M${C} ${C} L${co(a)} A${R} ${R} 0 0 1 ${co(b)}Z" fill="${seg.colorInner||'#14101f'}" stroke="#b79c6540" stroke-width="1"/><g transform="translate(${co(lb)})" fill="${art}"><svg x="-15" y="-30" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="${art}" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">${path}</svg><text class="wheel-amount" text-anchor="middle" y="19">${esc(seg.badge||(seg.amount?`×${seg.amount}`:''))}</text><text class="wheel-name" text-anchor="middle" y="34">${esc(seg.short)}</text></g></g>`;
+  }).join('');
+  const dots=Array.from({length:42},(_,i)=>{const p=pt(196,i*360/42);return `<circle cx="${p[0].toFixed(2)}" cy="${p[1].toFixed(2)}" r="${i%3===0?2.3:1}" fill="${i%3===0?'#dec48d':'#8b7953'}"/>`}).join('');
+  return `<svg id="dailyRouletteWheel" class="rd-wheel-svg" viewBox="0 0 440 440" role="img" aria-label="Daily Reward Roulette wheel. The visual slices are equal; the exact chance for each reward is listed beside the wheel."><defs><linearGradient id="rwRimGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0dfb1"/><stop offset=".45" stop-color="#a18551"/><stop offset="1" stop-color="#dfbe7e"/></linearGradient><radialGradient id="rwHubGrad"><stop offset="0" stop-color="#28343c"/><stop offset="1" stop-color="#14212c"/></radialGradient></defs><circle cx="220" cy="220" r="211" fill="none" stroke="#d7b77a16"/><circle cx="220" cy="220" r="204" fill="#0c151d" stroke="url(#rwRimGrad)" stroke-width="2"/><circle cx="220" cy="220" r="187" fill="none" stroke="#d7b77a55"/>${dots}<g id="rouletteWheelRotor" style="transform-origin:220px 220px;transform:rotate(${initialAngle}deg);transition:transform 2.6s cubic-bezier(0.12, 0.82, 0.16, 1)">${slices}<circle cx="220" cy="220" r="172" fill="none" stroke="#d7b77a25" stroke-dasharray="1 5"/></g><circle cx="220" cy="220" r="58" fill="#0c151d" stroke="#d7b77a55" stroke-width="2"/><circle cx="220" cy="220" r="51" fill="url(#rwHubGrad)" stroke="url(#rwRimGrad)" stroke-width="1.5"/><circle cx="220" cy="220" r="43" fill="none" stroke="#d7b77a1c"/><path d="m220 178 4 5-4 5-4-5Z" fill="#d7b77a"/><text x="220" y="225" text-anchor="middle" fill="#e7d5ae" class="wheel-wordmark">H H</text><text x="220" y="244" text-anchor="middle" fill="#a89470" class="wheel-hub-copy">GOOD FORTUNE</text><path d="m220 44-12-28h24Z" fill="url(#rwRimGrad)" stroke="#f4deb0" stroke-width="1"/><path d="m220 37-6-16h12Z" fill="#5c4727"/><circle cx="220" cy="12" r="4" fill="#eddaaa"/></svg>`;
+}
+function renderDailyRouletteView(initialAngle=dailyWheelAngle){
+  const st=dailyWheelState(),spinsLeft=dailySpinsLeft(),ready=spinsLeft>0&&!dailyWheelSpinning;
+  const total=DAILY_WHEEL_SEGMENTS.reduce((s,x)=>s+Number(x.rate??x.weight??0),0);
+  const rows=DAILY_WHEEL_SEGMENTS.map(seg=>{
+    const rate=Number(seg.rate??seg.weight??0),won=st.lastReward&&st.lastReward.index===DAILY_WHEEL_SEGMENTS.indexOf(seg);
+    return `<div class="rd-reward-row${seg.tier==='jackpot'?' legendary':''}${won?' is-won':''}" data-wheel-prize="${esc(seg.id)}" data-wheel-rate="${rate}" style="--reward-color:${esc(seg.accent||'#d7b77a')}"><span class="rd-reward-icon">${rdIcon(RD_SEG_ART[seg.id]||'spark')}</span><div class="rd-reward-copy"><b>${esc(seg.label)}</b><small>${esc(rdRewardCopy(seg))}</small>${seg.tier==='jackpot'?'<em>RARE FIND</em>':''}</div><div class="rd-reward-rate"><b>${rate}<span>%</span></b><small>CHANCE</small></div></div>`;
+  }).join('');
+  return `<div class="rd-roulette"><div class="rd-roulette-content"><div class="rd-wheel-col"><div class="rd-available"><i></i>${dailyWheelSpinning?'SPINNING…':ready?'1 FREE SPIN AVAILABLE':"TODAY'S SPIN CLAIMED"}</div><div class="rd-wheel-stage">${renderDailyRouletteWheelSvg(initialAngle)}</div><div class="rd-wheel-under"><div id="dailySpinStatus" role="status" aria-live="polite">${st.lastReward?`<div class="rd-spin-result"><small>TODAY'S REWARD WON</small><b>${esc(st.lastReward.label)}</b><span>${esc(st.lastReward.detail||'Delivered to your inventory!')}</span></div>`:''}</div><button type="button" id="dailySpinBtn" data-a="spindaily" class="rd-btn primary" ${ready?'':'disabled'}>${dailyWheelSpinning?'Spinning…':ready?'Spin for free':"Spun today · come back tomorrow"}</button>${S.gm?`<button type="button" data-a="gmdailyreset" class="rd-btn small">🛠 GM: Reset today's spin</button>`:''}<p class="rd-helper">${ready?'Free, once a day. No tickets needed.':'Resets daily at 00:00 UTC+8.'}<br><span>Next reset in ${dailyResetCountdownText()} · 00:00 UTC+8</span></p><p class="rd-disclaimer">Equal visual slices. Exact chances are listed in the reward pool.</p></div></div><div class="rd-reward-col"><header class="rd-reward-head"><div><h3>Every reward, every chance.</h3><p>${DAILY_WHEEL_SEGMENTS.length} possibilities. One is yours.</p></div><span class="rd-odds">TOTAL<strong>${total}%</strong></span></header><div class="rd-reward-list">${rows}</div><p class="rd-reward-foot">${rdIcon('info')}Rewards are delivered immediately. Boosts activate when won.<br>Your reserves stay on the status bar, and active boosts float beside your pet buffs.</p></div></div></div>`;
+}
+
+/* --- Shared active effects: pet artwork plus the two roulette boosts. ------ */
+const RD_DAILY_FX=[
+  {id:'zeny',kind:'zeny',cls:'is-zeny',icon:'coins',name:'+30% Zeny gain',desc:'Earn 30% more Zeny from monsters. Activates automatically when you win it.'},
+  {id:'exp',kind:'exp',cls:'is-exp',icon:'exp',name:'+30% Base & Job EXP',desc:'Earn 30% more Base and Job EXP from monsters. Activates automatically when you win it.'}
+];
+function dailyEffectTilesHTML(){
+  if(!S)return'';
+  return RD_DAILY_FX.map(e=>{
+    const ms=dailyBuffLeftMs(e.kind);if(ms<=0)return'';
+    const t=formatDailyBuffTimer(ms);
+    return `<span class="efx ${e.cls}${ms<=60000?' expiring':''}" id="daily-fx-${e.id}" tabindex="0" role="status" aria-label="${esc(e.name)}: ${esc(e.desc)}"><span class="efx-art" aria-hidden="true">${rdIcon(e.icon)}</span><i class="s">${t}</i><span class="efx-fly" role="tooltip"><b>${esc(e.name)}</b><p>${esc(e.desc)}</p><time>Time remaining<b>${t}</b></time></span></span>`;
+  }).join('');
 }
 function updateMailDailyHud(){
   if(!S||typeof $!=='function')return;
-  const mBadge=$('mailBadge'),dBadge=$('dailyBadge'),buffPill=$('dailyBuffPill'),mCount=unreadMailCount(),dLeft=dailySpinsLeft();
+  const mBadge=$('mailBadge'),dBadge=$('dailyBadge'),mCount=unreadMailCount(),dLeft=dailySpinsLeft();
   if(mBadge){mBadge.hidden=mCount<=0;mBadge.textContent=mCount>99?'99+':String(mCount);}
   if(dBadge){dBadge.hidden=dLeft<=0;dBadge.textContent=dLeft>0?'!':'';}
-  if(buffPill){const zMs=dailyBuffLeftMs('zeny'),xMs=dailyBuffLeftMs('exp'),parts=[];if(zMs>0)parts.push(`💰 +30% Zeny ${formatDailyBuffTimer(zMs)}`);if(xMs>0)parts.push(`⚡ +30% EXP ${formatDailyBuffTimer(xMs)}`);buffPill.hidden=parts.length===0;buffPill.textContent=parts.join(' · ');}
   const tabM=$('tabMailCount'),tabD=$('tabDailyReady');
   if(tabM){tabM.hidden=mCount<=0;tabM.textContent=String(mCount);}
   if(tabD){tabD.hidden=dLeft<=0;}
+  // The roulette boost timers live in the shared lower strip beside the pet buffs
+  // now, so the Mail/Daily shortcuts carry a badge and nothing else.
 }
 function renderMailDailyModal(initialAngle=dailyWheelAngle){
   if(!S||typeof $!=='function')return;
@@ -7313,8 +7507,8 @@ function renderMailDailyModal(initialAngle=dailyWheelAngle){
   const isMail=mailDailyMode!=='daily';
   const seal=$('mailDailySeal'),title=$('mailDailyTitle'),subEl=$('mailDailySub');
   if(seal)seal.textContent=isMail?'✉':'🎡';
-  if(title)title.textContent=isMail?'Announcements & Mail':'Daily Reward Roulette';
-  if(subEl)subEl.textContent=isMail?'OFFICIAL NOTICES & EVENT GIFT DELIVERIES':'SPIN ONCE EVERY DAY FOR ORES, BUFFS, ZENY, CARDS & SCROLLS';
+  if(title)title.textContent=isMail?'Mail & announcements':'Daily roulette';
+  if(subEl)subEl.textContent=isMail?'NOTES FROM THE WORLD · GIFTS FOR YOUR JOURNEY':'ONE FREE SPIN · SOMETHING WORTH COMING BACK FOR';
   const tMail=$('tabBtnMail'),tDaily=$('tabBtnDaily');
   if(tMail){tMail.classList.toggle('on',isMail);tMail.setAttribute('aria-selected',String(isMail));}
   if(tDaily){tDaily.classList.toggle('on',!isMail);tDaily.setAttribute('aria-selected',String(!isMail));}
@@ -7324,15 +7518,8 @@ function renderMailDailyModal(initialAngle=dailyWheelAngle){
 function openMailDaily(mode='mail'){
   if(!S)return;
   mailDailyMode=mode==='daily'?'daily':'mail';
-  if(mailDailyMode==='mail'){
-    const list=ensureMailState();
-    let marked=false;
-    for(const m of list){
-      if(!m.read&&!(m.gift&&!m.gift.claimed)){m.read=true;marked=true;}
-    }
-    if(marked)save();
-    if(typeof CLOUD!=='undefined'&&CLOUD.on)cloudPull().catch(()=>{});
-  }
+  // Opening the inbox no longer marks anything read: only opening a message does.
+  if(mailDailyMode==='mail'&&typeof CLOUD!=='undefined'&&CLOUD.on)cloudPull().catch(()=>{});
   const modal=typeof $==='function'?$('mailDailyModal'):null;
   if(modal)modal.classList.add('on');
   renderMailDailyModal();
@@ -7342,6 +7529,102 @@ function closeMailDaily(){
   if(modal)modal.classList.remove('on');
   updateMailDailyHud();
 }
+
+/* --- GM announcement studio: its own screen, never inside the player inbox. -
+   The headline is the first line of the existing body, not a new field, so every
+   message already stored keeps reading correctly. The combined text is held to
+   the API's own 500-character budget (functions/_lib/validate.js). ----------- */
+let gmStudioPlayers=null,gmStudioLoading=false;
+const gmStudioDraft={audience:'all',player:'',kind:'notice',headline:'',body:'',gift:'ori',amount:20,confirm:false,sending:false,status:''};
+function gmStudioMessage(){return [String(gmStudioDraft.headline||'').trim(),String(gmStudioDraft.body||'').trim()].filter(Boolean).join('\n\n')}
+function gmStudioAudienceLabel(){
+  if(gmStudioDraft.audience!=='player')return'all players';
+  const p=(gmStudioPlayers||[]).find(x=>String(x.id)===String(gmStudioDraft.player));
+  return p?p.u:'one selected player';
+}
+function gmStudioPreviewGift(){
+  const opt=MAIL_GIFT_OPTIONS.find(o=>o.key===gmStudioDraft.gift)||MAIL_GIFT_OPTIONS[0];
+  if(!opt||opt.kind==='none')return null;
+  const amount=Math.max(1,Math.min(1000000000,Math.floor(Number(gmStudioDraft.amount)||opt.defaultAmt||1)));
+  return {kind:opt.kind,payload:opt.kind==='zeny'?{amount}:{resource:opt.resource,amount},claimed:false};
+}
+function gmStudioPreviewMarkup(){
+  const gift=gmStudioPreviewGift(),kind=rdKind(gmStudioDraft.kind);
+  return `<div class="rd-draft-card"><article class="rd-reader"><div class="rd-topline"><span class="rd-kind">${rdIcon(kind.icon)}${esc(kind.label.toUpperCase())}</span></div><h3>${esc(String(gmStudioDraft.headline||'').trim()||'Your announcement headline')}</h3><div class="rd-sender"><span class="rd-seal" aria-hidden="true">H</span><span>${esc(currentUser||'Horizon Haven')}</span>${rdIcon('shield')}</div><div class="rd-rule"></div><p class="rd-copy">${esc(String(gmStudioDraft.body||'').trim()||'Your message will appear here as you write it.')}</p>${gift?rdAttachmentMarkup(gift,true):'<span class="rd-pill">Announcement only · no attachment</span>'}</article></div>`;
+}
+function renderGmStudioView(){
+  const d=gmStudioDraft,msg=gmStudioMessage(),over=msg.length>500,players=gmStudioPlayers||[];
+  const gift=gmStudioPreviewGift();
+  return `<div class="rd-gm-layout"><form class="rd-composer" id="gmStudioForm"><fieldset class="rd-step"><legend><span>1</span> Choose your audience</legend><div class="rd-audience" role="group" aria-label="Announcement audience"><button type="button" data-a="gmstudioaudience" data-v="all" aria-pressed="${d.audience==='all'}">${rdIcon('users')}Everyone</button><button type="button" data-a="gmstudioaudience" data-v="player" aria-pressed="${d.audience==='player'}">${rdIcon('user')}One player</button></div><label class="rd-field" ${d.audience==='all'?'hidden':''}><span>Player <small>Authorised accounts only</small></span><select id="gmStudioPlayer" ${d.audience==='all'?'disabled':''}>${players.length?players.map(p=>`<option value="${esc(String(p.id))}"${String(p.id)===String(d.player)?' selected':''}>${esc(p.u)}${p.level!=null?' · Lv '+p.level:''}</option>`).join(''):`<option value="">${esc(gmStudioLoading?'Loading players…':'No cloud connection - sign in to target one player')}</option>`}</select></label></fieldset>
+  <fieldset class="rd-step"><legend><span>2</span> Write your message</legend><div class="rd-form-row"><label class="rd-field"><span>Headline <small>First line of the message</small></span><input id="gmStudioHeadline" value="${esc(d.headline)}" placeholder="Give your message a clear heading" maxlength="140"></label><label class="rd-field"><span>Type</span><select id="gmStudioKind">${['notice','event','welcome'].map(k=>`<option value="${k}"${d.kind===k?' selected':''}>${k[0].toUpperCase()+k.slice(1)}</option>`).join('')}</select></label></div><label class="rd-field"><span>Message</span><textarea id="gmStudioBody" rows="5" maxlength="500" placeholder="Write an official announcement or event notice…">${esc(d.body)}</textarea></label><div class="rd-meta"><span>Plain text. The headline and message are sent together as one body.</span><span id="gmStudioCount"${over?' class="invalid"':''}>${msg.length} / 500</span></div></fieldset>
+  <fieldset class="rd-step"><legend><span>3</span> Attach a reward <em>Optional</em></legend><div class="rd-form-row"><label class="rd-field"><span>Reward</span><select id="gmStudioGift">${MAIL_GIFT_OPTIONS.map(o=>`<option value="${esc(o.key)}"${d.gift===o.key?' selected':''}>${esc(o.label)}</option>`).join('')}</select></label><label class="rd-field" ${d.gift==='none'?'hidden':''}><span>Quantity</span><input id="gmStudioAmount" type="number" min="1" max="1000000000" step="1" value="${esc(String(d.amount))}" ${d.gift==='none'?'disabled':''}></label></div><p class="rd-note">${rdIcon('info')}One optional attachment per message, as in the previous composer.</p></fieldset></form>
+  <aside class="rd-gm-preview" aria-label="Player-side announcement preview"><div class="rd-preview-label"><span>${rdIcon('eye')} WHAT THE PLAYER SEES</span><em>● LIVE PREVIEW</em></div><div id="gmStudioPreview">${gmStudioPreviewMarkup()}</div><p class="rd-assurance">${rdIcon('shield')}The same letter layout players see in their inbox.<br>No GM tools appear in player mail.</p><div class="rd-send"><p id="gmStudioSummary">This announcement goes to <b>${esc(gmStudioAudienceLabel())}</b>.</p><p class="rd-meta" id="gmStudioStatus"${d.status?'':' hidden'}><span class="invalid">${esc(d.status)}</span></p>${d.confirm?`<div class="rd-confirm"><div class="rd-confirm-row"><span>Audience</span><b>${esc(gmStudioAudienceLabel())}</b></div><div class="rd-confirm-row"><span>Attachment</span><b>${esc(gift?formatMailGiftLabel(gift):'None')}</b></div><div class="rd-confirm-row"><span>Message</span><b>${msg.length} / 500 characters</b></div><div class="rd-confirm-actions"><button type="button" class="rd-btn" data-a="gmstudiocancel">Keep editing</button><button type="button" class="rd-btn primary" data-a="gmstudiosend" ${d.sending||over?'disabled':''}>${d.sending?'Sending…':rdIcon('send')+' Send now'}</button></div></div>`:`<button type="button" class="rd-btn primary" data-a="gmstudioreview" ${!msg.trim()||over?'disabled':''}>Review announcement ${rdIcon('arrow')}</button>`}<small>${d.confirm?'Confirm the audience and reward before it goes out.':'Nothing is sent until you confirm on the next step.'}</small></div></aside></div>`;
+}
+function renderGmStudio(){
+  if(!S||typeof $!=='function')return;
+  const body=$('gmStudioBody');if(!body)return;
+  body.innerHTML=renderGmStudioView();
+}
+function gmStudioSyncDraft(){
+  if(typeof $!=='function')return;
+  const d=gmStudioDraft,g=id=>$(id);
+  if(g('gmStudioHeadline'))d.headline=g('gmStudioHeadline').value;
+  if(g('gmStudioBody'))d.body=g('gmStudioBody').value;
+  if(g('gmStudioKind'))d.kind=g('gmStudioKind').value;
+  if(g('gmStudioGift'))d.gift=g('gmStudioGift').value;
+  if(g('gmStudioAmount'))d.amount=Number(g('gmStudioAmount').value)||d.amount;
+  if(g('gmStudioPlayer'))d.player=g('gmStudioPlayer').value;
+}
+/* The composer keeps its caret, so only the preview, counter and summary redraw. */
+function gmStudioRefreshPreview(){
+  if(typeof $!=='function')return;
+  const msg=gmStudioMessage(),pv=$('gmStudioPreview'),ct=$('gmStudioCount'),sum=$('gmStudioSummary');
+  if(pv)pv.innerHTML=gmStudioPreviewMarkup();
+  if(ct){ct.textContent=msg.length+' / 500';ct.classList.toggle('invalid',msg.length>500);}
+  if(sum)sum.innerHTML='This announcement goes to <b>'+esc(gmStudioAudienceLabel())+'</b>.';
+  // The action buttons live outside the preview, so their enabled state has to follow
+  // the text too - otherwise a draft typed from empty could never be reviewed.
+  const st=$('gmStudioStatus'),note=String(gmStudioDraft.status||'');
+  if(st){st.hidden=!note;const sp=st.querySelector('span');if(sp)sp.textContent=note;}
+  const ok=!!msg.trim()&&msg.length<=500,body=$('gmStudioBody');
+  const review=body?.querySelector('[data-a=gmstudioreview]');if(review)review.disabled=!ok;
+  const send=body?.querySelector('[data-a=gmstudiosend]');if(send)send.disabled=gmStudioDraft.sending||!ok;
+}
+async function gmStudioLoadPlayers(){
+  if(gmStudioPlayers||gmStudioLoading)return;
+  if(typeof CLOUD==='undefined'||!CLOUD.on||!CLOUD.gm)return;
+  gmStudioLoading=true;renderGmStudio();
+  try{const res=await cloudFetch('/gm/players'),data=await res.json();if(res.ok&&Array.isArray(data.players))gmStudioPlayers=data.players;}catch(e){}
+  gmStudioLoading=false;
+  if(gmStudioDraft.audience==='player')renderGmStudio();
+}
+function openGmStudio(){
+  if(!S||!S.gm)return;
+  gmStudioDraft.confirm=false;gmStudioDraft.status='';
+  const modal=typeof $==='function'?$('gmStudioModal'):null;
+  if(modal)modal.classList.add('on');
+  renderGmStudio();gmStudioLoadPlayers();
+}
+function closeGmStudio(){
+  const modal=typeof $==='function'?$('gmStudioModal'):null;
+  if(modal)modal.classList.remove('on');   // the draft is kept, so a cancel loses nothing
+}
+function gmStudioSetAudience(v){
+  if(!['all','player'].includes(v))return;
+  gmStudioSyncDraft();
+  gmStudioDraft.audience=v;gmStudioDraft.confirm=false;gmStudioDraft.status='';
+  if(v==='player')gmStudioLoadPlayers();
+  renderGmStudio();
+  if(v==='player'&&typeof $==='function')$('gmStudioPlayer')?.focus({preventScroll:true});
+}
+function gmStudioReview(){
+  gmStudioSyncDraft();
+  if(!gmStudioMessage().trim()){gmStudioDraft.status='Write a headline or a message first.';renderGmStudio();return}
+  if(gmStudioMessage().length>500){gmStudioDraft.status='Keep it under 500 characters.';renderGmStudio();return}
+  if(gmStudioDraft.audience==='player'&&!gmStudioDraft.player){gmStudioDraft.status='Choose the player to receive it.';renderGmStudio();return}
+  gmStudioDraft.status='';gmStudioDraft.confirm=true;renderGmStudio();
+}
+function gmStudioCancelConfirm(){gmStudioDraft.confirm=false;gmStudioDraft.status='';renderGmStudio();}
 const ACT={
   openmail:()=>openMailDaily('mail'),
   opendaily:()=>openMailDaily('daily'),
@@ -7351,7 +7634,16 @@ const ACT={
   claimallmail:()=>claimAllMailGifts(),
   readallmail:()=>markAllMailRead(),
   refreshmail:()=>refreshCloudMail(),
-  gmcomposemail:()=>gmSendMailAnnouncement(),
+  openmailmsg:v=>openMailMessage(v),
+  mailback:()=>closeMailDetail(),
+  mailfilter:v=>setMailFilter(v),
+  mailfilterclear:()=>clearMailFilter(),
+  opengmstudio:()=>openGmStudio(),
+  closegmstudio:()=>closeGmStudio(),
+  gmstudioaudience:v=>gmStudioSetAudience(v),
+  gmstudioreview:()=>gmStudioReview(),
+  gmstudiocancel:()=>gmStudioCancelConfirm(),
+  gmstudiosend:()=>gmSendMailAnnouncement(),
   spindaily:v=>spinDailyRoulette(v),
   gmdailyreset:()=>gmResetDailyRoulette(),
   workslot:v=>{if(EQK.some(([k])=>k===v)){selE=v;renderWin()}},
@@ -7527,7 +7819,25 @@ $('sideMenu').onclick=$('sideRail').onclick;
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
 $('feedTab').onclick=()=>ACT.feed();
 if($('minimapTools'))$('minimapTools').onclick=e=>{const b=e.target.closest('[data-a]');if(b&&!b.disabled&&ACT[b.dataset.a]){e.stopPropagation();ACT[b.dataset.a](b.dataset.v)}};
-if($('mailDailyModal')){$('mailDailyModal').onclick=e=>{if(e.target===$('mailDailyModal')){closeMailDaily();return}const b=e.target.closest('[data-a]');if(b&&!b.disabled&&ACT[b.dataset.a]){e.stopPropagation();ACT[b.dataset.a](b.dataset.v)}};$('mailDailyModal').addEventListener('change',e=>{if(e.target.id==='gmMailGift'){const opt=MAIL_GIFT_OPTIONS.find(x=>x.key===e.target.value),amtEl=$('gmMailAmt');if(opt&&amtEl)amtEl.value=String(opt.defaultAmt||1)}});}
+if($('mailDailyModal')){$('mailDailyModal').onclick=e=>{if(e.target===$('mailDailyModal')){closeMailDaily();return}const b=e.target.closest('[data-a]');if(b&&!b.disabled&&ACT[b.dataset.a]){e.stopPropagation();ACT[b.dataset.a](b.dataset.v)}};
+  // Typing in the search box re-draws only the list, reader and counters, so the box
+  // keeps both focus and caret position.
+  $('mailDailyModal').addEventListener('input',e=>{if(e.target.id==='mailSearch'){mailQuery=e.target.value;rdRefreshMail();}});}
+if($('gmStudioModal')){$('gmStudioModal').onclick=e=>{if(e.target===$('gmStudioModal')){closeGmStudio();return}const b=e.target.closest('[data-a]');if(b&&!b.disabled&&ACT[b.dataset.a]){e.stopPropagation();ACT[b.dataset.a](b.dataset.v)}};
+  $('gmStudioModal').addEventListener('change',e=>{
+    if(e.target.id!=='gmStudioGift')return;
+    gmStudioSyncDraft();
+    const opt=MAIL_GIFT_OPTIONS.find(x=>x.key===e.target.value);
+    if(opt&&$('gmStudioAmount'))$('gmStudioAmount').value=String(opt.defaultAmt||1);
+    gmStudioSyncDraft();gmStudioDraft.confirm=false;
+    // The quantity field appears and disappears with the reward, so this redraws.
+    renderGmStudio();$('gmStudioGift')?.focus({preventScroll:true});
+  });
+  // Headline, message, quantity and player redraw only the preview: the composer
+  // keeps its caret while the GM is still typing.
+  $('gmStudioModal').addEventListener('input',e=>{if(String(e.target.id||'').indexOf('gmStudio')===0){gmStudioSyncDraft();
+    // Editing again retires the previous validation message instead of leaving it stale.
+    gmStudioDraft.status='';gmStudioRefreshPreview();}});}
 $('wins').addEventListener('click',e=>{if(e.target.closest('[data-eclipse-refine]'))ACT.sub('equip:refine')});
 $('wins').addEventListener('keydown',e=>{if(e.target.matches('.map-season-tabs [role=tab]')&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const ids=['atlas','ascension','echo','social'],at=ids.indexOf(e.target.dataset.v),v=e.key==='Home'?ids[0]:e.key==='End'?ids.at(-1):ids[(at+(e.key==='ArrowRight'?1:ids.length-1))%ids.length];ACT.mapseason(v);return}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-a]')){e.preventDefault();e.target.click()}});
 $('wins').addEventListener('input',e=>{if(e.target.hasAttribute('data-eclipse-search')){eclipseSearch=e.target.value;renderWin()}else if(e.target.hasAttribute('data-card-search')){equipmentCardSearch=e.target.value;renderWin()}});
@@ -7576,6 +7886,7 @@ document.addEventListener('click',e=>{
 addEventListener('pg-exploration-close',()=>{if(S)ui();});
 function escapeUI(){
   if($('modal').style.display==='flex'){$('mn').click();return}
+  if($('gmStudioModal')?.classList.contains('on')){closeGmStudio();return}
   if($('mailDailyModal')?.classList.contains('on')){closeMailDaily();return}
   if(tabs.length){tabs.length=0;expandedPanels.clear();eqPick=null;selS=null;sideOpen=false;renderWin();return}
   if(typeof guideFindStage!=='undefined'&&['more','guide'].includes(guideFindStage)){guideFinderFinish();return}
@@ -7665,8 +7976,13 @@ function bars(){if(!S||simVisualsOff())return;applyDisplay();
     return`<span class="pbx" id="pet-buff-${s.id}" tabindex="0" role="status" aria-label="${s.n}: ${s.desc}">${petBuffIcon(s)}<i class="s">${t}</i><span class="pbx-fly" role="tooltip"><b>${s.n}</b> <i>${esc(petBuffSrc[s.stat]||'pet')}</i><br>${s.desc}<br>${t}s left</span></span>`}).join('');
   const hb=$('hudBuffs');if(hb){
     // Remove expired siblings first so a surviving focused/hovered tile never needs reparenting.
-    for(const node of [...hb.children])if(!PET_SKILLS.some(s=>node.id==='pet-buff-'+s.id&&petBuff[s.stat]>0))node.remove();
-    hb.style.display=pbf?'flex':'none';eclipseSetMarkup(hb,pbf)}
+    // Daily roulette tiles (daily-fx-*) are exempt: they are re-supplied by dailyEffectTilesHTML
+    // in the same patch, and reparenting them would drop focus from a hovered countdown.
+    for(const node of [...hb.children])if(!(node.id&&node.id.indexOf('daily-fx-')===0)&&!PET_SKILLS.some(s=>node.id==='pet-buff-'+s.id&&petBuff[s.stat]>0))node.remove();
+    // Pet buffs keep their original artwork; the roulette EXP/Zeny timers join the same
+    // strip as symbolic icons. typeof guard keeps the stripped bars() test harness working.
+    const dfx=(typeof dailyEffectTilesHTML==='function')?dailyEffectTilesHTML():'';
+    hb.style.display=(pbf||dfx)?'flex':'none';eclipseSetMarkup(hb,pbf+dfx)}
   $('hpb').style.width=hp+'%';$('hpb').classList.toggle('critical',hp<=30);
   $('hpPct').textContent=Math.round(hp)+'%';$('hpMeter').setAttribute('aria-valuenow',Math.round(hp));
   for(const[id,label,pct,lv]of[['job','Job Level',jp,j.jl],['base','Base Level',bp,S.lv]]){
