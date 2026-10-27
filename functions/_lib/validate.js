@@ -79,6 +79,22 @@ export function publicFields(save) {
     zeny: Math.min(CAPS.maxZeny, num(save.zeny)),
     kills: Math.min(Number.MAX_SAFE_INTEGER, num(save.kills)),
     playtime: num(save.playtime ?? save.play),   // optional field; harmless if absent
+    // Endless Echo board scores (haven-v248): the all-time personal best plus the client's own
+    // best for its stamped day/week, so an old best is never re-attributed to a new period.
+    ...echoFields(save),
+  };
+}
+
+const DAY_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+function echoFields(save) {
+  const trial = save && typeof save.trial === 'object' && save.trial ? save.trial : {};
+  const board = trial.echoBoard && typeof trial.echoBoard === 'object' ? trial.echoBoard : {};
+  const dps = v => Math.min(100_000_000, Math.max(0, Number(v) || 0));
+  const key = v => (typeof v === 'string' && DAY_KEY_RE.test(v) ? v : null);
+  return {
+    echoBest: dps(trial.best),
+    echoDayDps: dps(board.dayDps), echoDayKey: key(board.day),
+    echoWeekDps: dps(board.weekDps), echoWeekKey: key(board.week),
   };
 }
 

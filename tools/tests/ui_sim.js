@@ -147,7 +147,7 @@ const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
 let S=null,mapM=0,mapL=1,selB=null,selC=null,collectionGrade=-1,equipmentCardSearch='',equipmentCardFilter='all',equipmentCardPickId=null;   // remaining panel state comes in with the V grab
 const document={addEventListener(){}};
 const mobs=[],drops=[],logs=[];
-let boardPeriod='daily',boardCache={},boardLoading=false,boardError='';
+let boardPeriod='daily',boardKind='kills',boardCache={},boardLoading=false,boardError='';
 const CLOUD={api:false,on:false};
 const lsGet=()=>null,mem={};   // no browser storage in here
 const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){return globalThis['h_'+id]||''},textContent:'',onclick:null});
@@ -439,7 +439,7 @@ t('the 3D view pinch-zooms on touch and still wheel-zooms on a mouse', () => {
 });
 
 t('the leaderboard renders daily, weekly and all-time stamps with kills and Base Lv',()=>{
-  U.boardPeriod='weekly';U.boardStatus={api:true,on:true};U.boardCache={weekly:{label:'This week · 2026-10-05 to 2026-10-06 SGT',entries:[{rank:1,name:'Knight_One',level:42,kills:12345}]}};
+  U.boardPeriod='weekly';U.boardStatus={api:true,on:true};U.boardCache={'kills:weekly':{label:'This week · 2026-10-05 to 2026-10-06 SGT',entries:[{rank:1,name:'Knight_One',level:42,kills:12345}]}};
   const h=U.V.board();
   for(const p of ['Daily','Weekly','All-time'])assert.ok(h.includes(p),p+' leaderboard stamp is missing');
   assert.ok(h.includes('Knight_One')&&h.includes('Lv 42')&&h.includes('12,345 kills'),'the player row shows name, current level and period kills');
