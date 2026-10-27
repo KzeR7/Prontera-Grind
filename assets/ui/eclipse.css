@@ -3141,3 +3141,168 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window{displ
 @media(max-width:700px){
  #wins .eclipse-equipment-workspace-window .eclipse-footer-message{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere;}
 }
+
+/* ── PR133 parity: unify Affix / Card / Auto-sell workspaces with Loadout ──
+   Goal: same size (grid columns, gaps, padding), same gradient & design,
+   and the equipment tab bar arranged nicely within a grid. This block
+   intentionally overrides the earlier proposal fullscreen + dark-flat styles
+   so all four Loadout/Affixes/Cards/Auto-sell panels share one product frame. */
+
+/* 1) Workspace window: share Loadout's framed window (undo fullscreen) */
+body.equipment-workspace-open #wins{
+  position:absolute!important;
+  inset:auto!important;
+  left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+  width:min(1120px,calc(100% - 32px))!important;
+  top:22px!important;bottom:calc(var(--docktop,76px) + 12px)!important;
+  height:auto!important;max-height:min(618px,calc(100% - 219px))!important;
+  align-items:stretch!important;background:none!important;backdrop-filter:none!important;
+  overflow:visible!important;z-index:47!important;padding:0!important;
+  --pad:0;
+}
+body.equipment-workspace-open #wins>*{display:none!important}
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window{
+  display:flex!important;flex:1 1 0!important;width:0!important;min-width:0!important;
+  height:100%!important;max-height:100%!important;
+  border:1px solid var(--e-frame)!important;border-radius:10px!important;
+  background:linear-gradient(120deg,var(--e-surface-start),var(--e-surface-end) 82%)!important;
+  box-shadow:0 10px 28px #030d1740,inset 0 1px 0 #ffffff09!important;
+  overflow:hidden!important;
+}
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.whead{
+  min-height:60px!important;border-radius:10px 10px 0 0!important;
+}
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.wbody{
+  background:transparent!important;
+}
+/* Keep footer sizing consistent with Loadout */
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.eclipse-window-footer{
+  min-height:52px!important;
+}
+
+/* 2) Equipment tab bar: tidy grid, equal size + gradient design (Loadout parity) */
+#wins .wbody[data-layout=equip]>.atabs,
+#wins .eclipse-equipment-workspace-window>.wbody>.atabs,
+body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.atabs{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;
+  padding:12px 18px 0!important;
+  margin:0!important;
+  height:auto!important;min-height:0!important;
+  background:transparent!important;
+  border:0!important;
+  overflow:visible!important;
+}
+#wins .wbody[data-layout=equip]>.atabs>button,
+#wins .eclipse-equipment-workspace-window>.wbody>.atabs>button,
+body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.atabs>button{
+  min-height:42px!important;
+  padding:8px 10px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  gap:4px!important;
+  background:linear-gradient(135deg,var(--e-raised),color-mix(in srgb,var(--e-raised) 86%,var(--panel)))!important;
+  border:1px solid var(--e-line)!important;
+  border-radius:8px!important;
+  color:var(--e-muted)!important;
+  font-size:10px!important;font-weight:700!important;letter-spacing:.06em!important;
+  text-transform:uppercase!important;line-height:1.2!important;text-align:center!important;
+  box-shadow:inset 0 1px 0 #ffffff0f!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;
+}
+#wins .wbody[data-layout=equip]>.atabs>button.on,
+#wins .eclipse-equipment-workspace-window>.wbody>.atabs>button.on,
+body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.atabs>button.on{
+  background:linear-gradient(110deg,var(--e-action-start),var(--e-action-end))!important;
+  color:#17232e!important;
+  border-color:color-mix(in srgb,var(--gold) 72%,#fff)!important;
+  box-shadow:0 4px 12px #0002,inset 0 1px 0 #fff4!important;
+}
+
+/* 3) Workspace content grids: same size/gap as Loadout's 3-col layout */
+#wins .eclipse-card-workspace-grid,
+#wins .eclipse-affix-workbench,
+#wins .eclipse-autosell-layout{
+  gap:18px!important;padding:18px!important;background:transparent!important;
+}
+#wins .eclipse-card-workspace-grid{
+  grid-template-columns:minmax(185px,.78fr) minmax(0,1.78fr) minmax(235px,.94fr)!important;
+  align-items:start!important;
+}
+#wins .eclipse-affix-workbench{
+  grid-template-columns:minmax(185px,.78fr) minmax(0,1.78fr) minmax(235px,.94fr)!important;
+}
+#wins .eclipse-autosell-layout{
+  grid-template-columns:minmax(0,1.62fr) minmax(235px,.94fr)!important;
+}
+
+/* 4) Workspace panels: same gradient & design as Loadout's equipped/bag/inspector */
+#wins .eclipse-card-collection,
+#wins .eclipse-card-detail,
+#wins .eclipse-card-sockets{
+  background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%)!important;
+  border:1px solid var(--e-line)!important;
+  border-radius:8px!important;
+  box-shadow:inset 0 1px 0 #ffffff0c!important;
+  padding:16px 14px!important;
+}
+#wins .eclipse-autosell-section,
+#wins .eclipse-autosell-aside{
+  background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%)!important;
+  border:1px solid var(--e-line)!important;
+  border-radius:8px!important;
+  box-shadow:inset 0 1px 0 #ffffff0c!important;
+  padding:16px 14px!important;
+}
+#wins .eclipse-affix-menu,
+#wins .eclipse-affix-main,
+#wins .eclipse-affix-aside{
+  background:linear-gradient(155deg,color-mix(in srgb,var(--e-raised) 50%,transparent),color-mix(in srgb,var(--e-bg) 75%,transparent))!important;
+  background-color:transparent!important;
+  border:1px solid var(--e-line)!important;
+  border-radius:8px!important;
+  box-shadow:inset 0 1px 0 #ffffff0c!important;
+}
+#wins .eclipse-affix-menu{padding:14px 12px!important}
+#wins .eclipse-affix-main{padding:14px 14px!important}
+#wins .eclipse-affix-aside{padding:16px 14px!important}
+
+/* Keep headings & pills consistent across workspaces */
+#wins .eclipse-card-workspace-heading{
+  background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%)!important;
+  border:1px solid var(--e-line)!important;
+  border-radius:8px!important;
+  padding:14px 16px!important;
+  margin-bottom:0!important;
+}
+#wins .eclipse-autosell-intro{
+  background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%)!important;
+  border:1px solid var(--e-line)!important;
+  border-radius:8px!important;
+}
+
+/* 5) Responsive: tab grid + workspace columns collapse like Loadout does */
+@media(max-width:1040px){
+ #wins .wbody[data-layout=equip]>.atabs,
+ #wins .eclipse-equipment-workspace-window>.wbody>.atabs{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ #wins .eclipse-card-workspace-grid{grid-template-columns:minmax(0,.95fr) minmax(0,1.45fr)!important}
+ #wins .eclipse-card-sockets{grid-column:1/-1!important}
+ #wins .eclipse-affix-workbench{grid-template-columns:minmax(185px,.78fr) minmax(0,1.78fr)!important}
+ #wins .eclipse-affix-aside{grid-column:1/-1!important}
+ #wins .eclipse-autosell-layout{grid-template-columns:1fr!important}
+}
+@media(max-width:760px){
+ body.equipment-workspace-open #wins{
+   width:min(1120px,calc(100% - 16px))!important;
+   top:64px!important;bottom:calc(var(--docktop,76px) + 4px)!important;
+   max-height:none!important;
+ }
+ #wins .wbody[data-layout=equip]>.atabs,
+ #wins .eclipse-equipment-workspace-window>.wbody>.atabs{grid-template-columns:repeat(2,minmax(0,1fr))!important;padding:10px 12px 0!important;gap:6px!important}
+ #wins .wbody[data-layout=equip]>.atabs>button,
+ #wins .eclipse-equipment-workspace-window>.wbody>.atabs>button{min-height:38px!important;font-size:9px!important}
+ #wins .eclipse-card-workspace-grid,
+ #wins .eclipse-affix-workbench,
+ #wins .eclipse-autosell-layout{grid-template-columns:1fr!important;padding:12px!important;gap:12px!important}
+}
