@@ -881,7 +881,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=206">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=208">
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 <link rel="stylesheet" href="assets/social.css?v=209">
 </head>
@@ -1231,7 +1231,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-27 haven-v240 clickable Loadout rarity filters';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-27 haven-v242 seamless workspace scrolling';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6427,7 +6427,7 @@ function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(k==='weapon'&&it.wt==='katar'&&old&&S.eq.off&&S.inv.length>=BAGMAX){log('Make bag space for the off-hand item first.');return}
   transferEquipmentCards(old,it,k);S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);stowKatarOffHand();
   S.hp=Math.min(S.hp,maxHp());log('Equipped '+iname(it)+' ('+EQK.find(x=>x[0]===k)[1].toLowerCase()+').','','gear');ui();save()}
-const SUBS={equip:[['equip0','Loadout'],['refine','Refine'],['reforge','Affixes'],['cardsWork','Cards'],['autosell','Auto-sell'],['ascension','Ascension Forge']],status:[['stats','Stats'],['ascstats','Ascension stats']],bag:[['bag','Items'],['cards','Cards']],skills:[['skilllist','Skills'],['skillasc','Ascension Skills']]};
+const SUBS={equip:[['equip0','Loadout'],['refine','Refine'],['reforge','Affixes'],['cardsWork','Cards'],['autosell','Auto-sell'],['ascension','Ascension']],status:[['stats','Stats'],['ascstats','Ascension stats']],bag:[['bag','Items'],['cards','Cards']],skills:[['skilllist','Skills'],['skillasc','Ascension Skills']]};
 const subBar=t=>`<div class="atabs">${SUBS[t].map(([k,n,badge])=>`<button data-a="sub" data-v="${t}:${k}" class="${sub[t]===k?'on':''}">${n}${badge?`<small class="ui-tab-tag">${badge}</small>`:''}</button>`).join('')}</div>`;
 V.ascension=()=>ascensionForgePanel();
 function ascensionProgressPanel(skills=false){
