@@ -3172,6 +3172,14 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window{
 body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.whead{
   min-height:60px!important;border-radius:10px 10px 0 0!important;
 }
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.title{
+  height:60px!important;min-height:60px!important;flex:none!important;
+  padding:8px 14px!important;gap:10px!important;
+}
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window .ui-window-tools{gap:6px!important}
+body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window .ui-window-tools [data-x]{
+  width:28px!important;height:28px!important;min-width:28px!important;padding:6px!important;border-radius:6px!important;
+}
 body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.wbody{
   background:transparent!important;
   display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;
@@ -3193,37 +3201,40 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
   min-height:52px!important;
 }
 
-/* 2) Equipment tab bar: one-row, equal size + gradient design (Loadout parity) */
+/* 2) Equipment tab bar: 1-row compact — covers Loadout + workspace windows */
+#wins [data-win="equip"] .atabs,
 #wins .wbody[data-layout=equip]>.atabs,
 #wins .eclipse-equipment-workspace-window>.wbody>.atabs,
 body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.atabs{
   display:grid!important;
   grid-template-columns:repeat(6,minmax(0,1fr))!important;
   gap:6px!important;
-  padding:8px 14px 0!important;
+  padding:8px 12px 0!important;
   margin:0!important;
   height:auto!important;min-height:0!important;
   background:transparent!important;
   border:0!important;
   overflow:visible!important;
 }
+#wins [data-win="equip"] .atabs>button,
 #wins .wbody[data-layout=equip]>.atabs>button,
 #wins .eclipse-equipment-workspace-window>.wbody>.atabs>button,
 body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.atabs>button{
-  min-height:30px!important;
-  padding:6px 8px!important;
+  min-height:28px!important;
+  padding:5px 6px!important;
   display:flex!important;align-items:center!important;justify-content:center!important;
-  gap:4px!important;
+  gap:3px!important;
   background:linear-gradient(135deg,var(--e-raised),color-mix(in srgb,var(--e-raised) 86%,var(--panel)))!important;
   border:1px solid var(--e-line)!important;
   border-radius:6px!important;
   color:var(--e-muted)!important;
-  font-size:8.5px!important;font-weight:700!important;letter-spacing:.05em!important;
+  font-size:7.5px!important;font-weight:700!important;letter-spacing:.04em!important;
   text-transform:uppercase!important;line-height:1.1!important;text-align:center!important;
   box-shadow:inset 0 1px 0 #ffffff0f!important;
   white-space:nowrap!important;
   overflow:hidden!important;text-overflow:ellipsis!important;
 }
+#wins [data-win="equip"] .atabs>button.on,
 #wins .wbody[data-layout=equip]>.atabs>button.on,
 #wins .eclipse-equipment-workspace-window>.wbody>.atabs>button.on,
 body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.atabs>button.on{
@@ -3295,10 +3306,10 @@ body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.
   border-radius:8px!important;
 }
 
-/* 5) Responsive: tab grid + workspace columns collapse like Loadout does */
+/* 5) Responsive: keep tabs 1-row, workspace columns collapse */
 @media(max-width:1040px){
- #wins .wbody[data-layout=equip]>.atabs,
- #wins .eclipse-equipment-workspace-window>.wbody>.atabs{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ #wins [data-win="equip"] .atabs{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:4px!important;padding:6px 8px 0!important}
+ #wins [data-win="equip"] .atabs>button{font-size:7px!important;min-height:26px!important;padding:4px!important}
  #wins .eclipse-card-workspace-grid{grid-template-columns:minmax(0,.95fr) minmax(0,1.45fr)!important}
  #wins .eclipse-card-sockets{grid-column:1/-1!important}
  #wins .eclipse-affix-workbench{grid-template-columns:minmax(185px,.78fr) minmax(0,1.78fr)!important}
@@ -3311,13 +3322,11 @@ body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.
    top:64px!important;bottom:calc(var(--docktop,76px) + 4px)!important;
    max-height:none!important;
  }
- #wins .wbody[data-layout=equip]>.atabs,
- #wins .eclipse-equipment-workspace-window>.wbody>.atabs{grid-template-columns:repeat(3,minmax(0,1fr))!important;padding:8px 10px 0!important;gap:6px!important}
- #wins .wbody[data-layout=equip]>.atabs>button,
- #wins .eclipse-equipment-workspace-window>.wbody>.atabs>button{min-height:30px!important;font-size:8px!important}
+ #wins [data-win="equip"] .atabs{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:3px!important;padding:6px 6px 0!important}
+ #wins [data-win="equip"] .atabs>button{min-height:24px!important;font-size:6.5px!important;padding:4px 3px!important;letter-spacing:.02em!important}
  #wins .eclipse-card-workspace-grid,
  #wins .eclipse-affix-workbench,
- #wins .eclipse-autosell-layout{grid-template-columns:1fr!important;padding:12px!important;gap:12px!important}
+ #wins .eclipse-autosell-layout{grid-template-columns:1fr!important;padding:10px!important;gap:10px!important}
 }
 /* Ensure all workspace tab contents share the same window height */
 #wins .wp.eclipse-equipment-workspace-window .wbody{min-height:420px!important}
