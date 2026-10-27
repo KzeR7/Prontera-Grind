@@ -60,27 +60,38 @@ export function echoPeriodKeys({ dayKey, weekKey } = {}) {
 // echoWeekDps, echoWeekKey }. Each period keeps the higher DPS; stale day/week stamps (period
 // already over) are still recorded under their own key, where they can only help that period.
 // Deploy-first safety (same rule as the shop's 0005): code may reach a database that has not
-// run migration 0006 yet. Echo scoring then quietly no-ops instead of failing the player's save.
-async function echoTablesReady(DB) {
-  try {
-    const row = await DB.prepare(
-      "SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('leaderboard_echo','leaderboard_echo_rewards','leaderboard_echo_settlements')").first();
-    return Number(row?.n) >= 3;
-  } catch { return false; }
-}
+// run migration 0006 yet. Echo scoring and settlement quietly no-op on missing tables instead of
+// failing the player's save or board read, without scanning sqlite_master on every sync.
+const missingTable = e => /no such table/i.test(String(e && e.message || e));
 
 export async function recordEchoScores(DB, userId, pub) {
-  if (!await echoTablesReady(DB)) return;
-  const rows = [
+  const candidates = [
     ['all', pub.echoBest],
     ['day:' + (pub.echoDayKey || ''), pub.echoDayDps],
     ['week:' + (pub.echoWeekKey || ''), pub.echoWeekDps],
-  ];
-  for (const [key, raw] of rows) {
-    const dps = Math.min(ECHO_MAX_DPS, Math.max(0, Number(raw) || 0));
-    if (!dps || key.endsWith(':')) continue;
+  ].map(([key, raw]) => [key, Math.min(ECHO_MAX_DPS, Math.max(0, Number(raw) || 0))])
+   .filter(([key, dps]) => dps > 0 && !key.endsWith(':'));
+  if (!candidates.length) return;
+
+  // Read existing personal bests first so ordinary field syncs spend zero D1 writes when DPS has
+  // not risen; the WHERE guard below also prevents a raced write from rewriting an equal/higher row.
+  const existing = new Map();
+  try {
+    const marks = candidates.map(() => '?').join(', ');
+    const rows = await DB.prepare(
+      `SELECT period_key, dps FROM leaderboard_echo WHERE user_id = ? AND period_key IN (${marks})`
+    ).bind(userId, ...candidates.map(([key]) => key)).all();
+    for (const r of rows.results || []) existing.set(r.period_key, Number(r.dps) || 0);
+  } catch (e) {
+    if (missingTable(e)) return;
+    throw e;
+  }
+
+  for (const [key, dps] of candidates) {
+    if (dps <= (existing.get(key) || 0)) continue;
     await DB.prepare(`INSERT INTO leaderboard_echo(user_id, period_key, dps) VALUES(?, ?, ?)
-      ON CONFLICT(user_id, period_key) DO UPDATE SET dps = MAX(dps, excluded.dps)`).bind(userId, key, dps).run();
+      ON CONFLICT(user_id, period_key) DO UPDATE SET dps = excluded.dps
+      WHERE excluded.dps > leaderboard_echo.dps`).bind(userId, key, dps).run();
   }
 }
 
@@ -105,32 +116,58 @@ export function echoSettleTargets(at = Date.now()) {
 // row is claimed first, and reward rows are keyed (period, user), so a retry pays nobody twice.
 // Returns how many accounts were paid. Safe to call on any board read / save sync.
 export async function settleEchoRewards(DB, at = Date.now()) {
+  const targets = echoSettleTargets(at);
+  if (!targets.length) return 0;
+  // Filter to unsettled periods that actually have a positive score in one covering-index check,
+  // avoiding 11 Top-100 queries and 11 INSERT OR IGNORE writes on every 60s save sync.
+  let dueKeys;
+  try {
+    const values = targets.map(() => '(?)').join(', ');
+    const due = await DB.prepare(`
+      WITH targets(period_key) AS (VALUES ${values})
+      SELECT period_key FROM targets t
+      WHERE NOT EXISTS (SELECT 1 FROM leaderboard_echo_settlements s WHERE s.period_key = t.period_key)
+        AND EXISTS (SELECT 1 FROM leaderboard_echo e WHERE e.period_key = t.period_key AND e.dps > 0)
+    `).bind(...targets.map(t => t.periodKey)).all();
+    dueKeys = new Set((due.results || []).map(r => r.period_key));
+  } catch (e) {
+    if (missingTable(e)) return 0;
+    throw e;
+  }
+  if (!dueKeys.size) return 0;
+
   let paid = 0;
-  for (const target of echoSettleTargets(at)) {
-    const rows = await DB.prepare(`
-      SELECT e.user_id, e.dps FROM leaderboard_echo e
-      WHERE e.period_key = ? AND e.dps > 0
-      ORDER BY e.dps DESC, e.user_id ASC LIMIT ?`).bind(target.periodKey, ECHO_LIMIT).all();
-    const winners = rows.results || [];
-    // An empty period is NOT marked settled: a player whose first sync of the new day carries
-    // yesterday's best can still be paid by the next read or sync (their own save sync records
-    // the score before it settles, so they are included in that settlement).
-    if (!winners.length) continue;
-    const claim = await DB.prepare(
-      'INSERT OR IGNORE INTO leaderboard_echo_settlements(period_key, settled_at) VALUES(?, ?)').bind(target.periodKey, at).run();
-    if (!Number(claim?.meta?.changes ?? claim?.meta?.rows_written ?? 0)) continue;
-    for (let i = 0; i < winners.length; i++) {
-      const rank = i + 1, prizes = echoRewardFor(target.kind, rank);
-      if (!prizes.length) continue;
-      await DB.prepare(`INSERT OR IGNORE INTO leaderboard_echo_rewards(period_key, user_id, rank, dps, prizes, settled_at)
-        VALUES(?, ?, ?, ?, ?, ?)`).bind(target.periodKey, winners[i].user_id, rank, Number(winners[i].dps) || 0, JSON.stringify(prizes), at).run();
-      for (const prize of prizes) {
-        await DB.prepare(`INSERT INTO grants(user_id, kind, payload, note, created_by, created_at) VALUES(?, 'gift', ?, ?, 'Endless Echo', ?)`)
-          .bind(winners[i].user_id, JSON.stringify(prize),
-            `Endless Echo ${target.label} — rank #${rank}: ${echoPrizeText([prize])}.`, at).run();
+  try {
+    for (const target of targets) {
+      if (!dueKeys.has(target.periodKey)) continue;
+      const rows = await DB.prepare(`
+        SELECT e.user_id, e.dps FROM leaderboard_echo e
+        WHERE e.period_key = ? AND e.dps > 0
+        ORDER BY e.dps DESC, e.user_id ASC LIMIT ?`).bind(target.periodKey, ECHO_LIMIT).all();
+      const winners = rows.results || [];
+      // An empty period is NOT marked settled: a player whose first sync of the new day carries
+      // yesterday's best can still be paid by the next read or sync (their own save sync records
+      // the score before it settles, so they are included in that settlement).
+      if (!winners.length) continue;
+      const claim = await DB.prepare(
+        'INSERT OR IGNORE INTO leaderboard_echo_settlements(period_key, settled_at) VALUES(?, ?)').bind(target.periodKey, at).run();
+      if (!Number(claim?.meta?.changes ?? claim?.meta?.rows_written ?? 0)) continue;
+      for (let i = 0; i < winners.length; i++) {
+        const rank = i + 1, prizes = echoRewardFor(target.kind, rank);
+        if (!prizes.length) continue;
+        await DB.prepare(`INSERT OR IGNORE INTO leaderboard_echo_rewards(period_key, user_id, rank, dps, prizes, settled_at)
+          VALUES(?, ?, ?, ?, ?, ?)`).bind(target.periodKey, winners[i].user_id, rank, Number(winners[i].dps) || 0, JSON.stringify(prizes), at).run();
+        for (const prize of prizes) {
+          await DB.prepare(`INSERT INTO grants(user_id, kind, payload, note, created_by, created_at) VALUES(?, 'gift', ?, ?, 'Endless Echo', ?)`)
+            .bind(winners[i].user_id, JSON.stringify(prize),
+              `Endless Echo ${target.label} — rank #${rank}: ${echoPrizeText([prize])}.`, at).run();
+        }
+        paid++;
       }
-      paid++;
     }
+  } catch (e) {
+    if (missingTable(e)) return paid;
+    throw e;
   }
   return paid;
 }

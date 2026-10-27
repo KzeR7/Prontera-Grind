@@ -8432,3 +8432,50 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Delivery:** Committed and pushed on `arena/3bd42327-prontera-grind`, then merged into `main`
   through this branch's pull request (see the merge commit in git history). No separate deploy was
   run by the agent.
+
+
+### 2026-10-27 — `2026-10-27 haven-v250 cloud usage diet`
+* **Changed:** Four Cloudflare Free Tier usage optimizations and a pre-migration guard, with
+  no gameplay, sync-cadence, leaderboard or chat-responsiveness changes:
+  * **Pre-`0006` table safety (`functions/_lib/echo-board.js`):** `settleEchoRewards()` now
+    no-ops cleanly on `no such table` just like `recordEchoScores()` and the shop's `0005`
+    helpers, so `PUT /api/save` and `GET /api/board` never 500 when deployed before
+    `migrations/0006_echo_leaderboard.sql` runs on D1.
+  * **Endless Echo D1 diet (`functions/_lib/echo-board.js`):** Removed the per-save
+    `sqlite_master` scan; `recordEchoScores()` reads at most the 3 candidate primary-key rows
+    and only runs `INSERT … ON CONFLICT DO UPDATE … WHERE excluded.dps > leaderboard_echo.dps`
+    when a personal best actually rises (zero Echo D1 writes on ordinary field syncs).
+    `settleEchoRewards()` checks all 11 past daily/weekly targets in one covering-index
+    `EXISTS` query before loading Top 100 winners, avoiding 11 `SELECT`s and 11
+    `INSERT OR IGNORE` writes on every 60-second save sync once periods are settled.
+  * **Static deploy watcher (`tools/build_site.sh`, `tools/dev_server.js`, `index.html`):**
+    `tools/build_site.sh` emits `dist/version.txt` directly from `index.html`'s `const BUILD`
+    plus `dist/_headers` (`Cache-Control: no-store` on `/version.txt`), and `updateWatch()`
+    now polls `version.txt?_=<ts>` from the unmetered static CDN instead of invoking a Pages
+    Function every minute (`functions/api/version.js` stays in place so already-open pre-v250
+    tabs detect the deploy and refresh once).
+  * **World chat WebSocket & ingress (`assets/social.js`, `functions/api/social.js`):**
+    Removed the duplicate 2-second `send({type:'ping'})` beside the 20-second idle watchdog
+    `heartbeat()` (cutting idle WebSocket ping traffic by ~90% while still refreshing well
+    inside the room's 5-minute idle window), bumped `social.js?v=250`, and moved the
+    `Upgrade` / `env.SOCIAL` checks ahead of `currentUser(request, env.DB)` so unbound chat
+    retries spend zero D1 reads. Added `migrations/0006_echo_leaderboard.sql` to
+    `tools/cloudflare-deploy-steps.md` and bumped `BUILD` + its three mirrors to v250.
+* **Try it:** Run `bash tools/build_site.sh && node tools/dev_server.js`, sign in, play and
+  chat normally; inspect Network for `version.txt` (`Cache-Control: no-store`) once per minute
+  and WebSocket `ping` frames only after 20s of chat silence. Remember to apply
+  `migrations/0006_echo_leaderboard.sql` on live D1 (`pg`) to turn on Endless Echo persistence.
+* **Checks:** `echo_board_sim` 6/6 (new coverage: zero Echo writes/`sqlite_master` scans on
+  unchanged field syncs, plus 15-table pre-`0006` save & board compatibility),
+  `update_watch_sim` 10/10 (static `version.txt` + `_headers` + legacy `/api/version` +
+  `BUILD` mirrors), `social_ui_sim` PASS (asserts no 2s ping inside the 20s watchdog window),
+  `social_api_sim.mjs` PASS (asserts `503` without querying D1 when `SOCIAL` is unbound),
+  `social_sim`, `social_config_sim`, `api_sim` 44/44, `leaderboard_sim` 6/6,
+  `dev_server_sim` 19/19, `cloud_sim` 56/56, `cloud_only_smoke` 10/10, `shop_api_sim` 23/23,
+  `shop_sim`, `gear_sim` 43/43, `drop_card_sheet_sim` 14/14, and all three generated-asset
+  `--check` scripts pass. Full JS gate: 140 suites, **133 green, 7 red, 0 skipped — no new
+  failures** (only the 7 documented known-red baseline suites in `docs/TESTING.md`).
+  `social_worker_sim.mjs` was not run (`miniflare` not installed in this sandbox).
+* **Delivery:** Committed and pushed on `arena/e5d1c8f2-prontera-grind`, then merged into `main`
+  through this branch's pull request (see the merge commit in git history). No separate deploy was
+  run by the agent.

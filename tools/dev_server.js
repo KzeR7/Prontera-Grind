@@ -93,6 +93,7 @@ export const ROUTES = {
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
   '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon', '.ogg': 'audio/ogg', '.mp3': 'audio/mpeg',
 };
@@ -159,10 +160,9 @@ function serveStatic(url, dir) {
       : new Response('Not found', { status: 404 });
   }
   const body = fs.readFileSync(file);
-  return new Response(body, {
-    status: 200,
-    headers: { 'Content-Type': TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream' },
-  });
+  const headers = { 'Content-Type': TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream' };
+  if (rel === '/version.txt') headers['Cache-Control'] = 'no-store';
+  return new Response(body, { status: 200, headers });
 }
 
 // ------------------------------------------------------------------- boot -----
