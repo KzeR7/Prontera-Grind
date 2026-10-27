@@ -38,6 +38,10 @@ const PGBossFx=(()=>{
   const darken=(hex,k=.45)=>{const c=rgb(hex);return `rgb(${c.map(v=>Math.round(v*(1-k))).join(',')})`};
 
   // One row per map, in MAPS order. Two moves each; `colors` is [primary, secondary, core, accent].
+  // `life` is the on-screen cast length the game clock sees. Wide moves also carry `choreo`, the
+  // length their hand-written animation was designed for; paint() fast-forwards the choreography
+  // into the shorter `life` so the whole move still plays but the field clears quickly. See the
+  // screen-time note above TIER.
   const BOSSES=[
     {map:0,name:'Mastering',shape:'blob',tier:1,colors:['#7de06a','#ffd45c','#f2ffe8','#ff9ad5'],skills:[
       {id:'bj_jelly',name:'Jelly Barrage',pattern:'jellyBarrage',life:2.15,signature:'Nine jelly blobs bounce in on separate arcs and pop in a ring of green sparks.'},
@@ -60,40 +64,51 @@ const PGBossFx=(()=>{
       {id:'ed_quake',name:'Rampart Quake',pattern:'rampartQuake',life:2.3,signature:'A paw slams the ground: radiating cracks, rock spikes and a dust ring.'}
     ]},
     {map:5,name:'Kraken',shape:'blob',tier:2,colors:['#3fd8d0','#2a6ad8','#eaffff','#0d3f5a'],skills:[
-      {id:'kk_tide',name:'Tidal Maw',pattern:'tidalMaw',life:2.8,signature:'Three cresting waves sweep the map while a whirlpool drags foam into the boss.'},
-      {id:'kk_tentacle',name:'Abyss Tentacles',pattern:'abyssTentacles',life:2.7,signature:'Six sucker-lined tentacles erupt from the ground and hammer the centre.'}
+      {id:'kk_tide',name:'Tidal Maw',pattern:'tidalMaw',life:2.2,choreo:2.8,signature:'Three cresting waves sweep the map while a whirlpool drags foam into the boss.'},
+      {id:'kk_tentacle',name:'Abyss Tentacles',pattern:'abyssTentacles',life:2.2,choreo:2.7,signature:'Six sucker-lined tentacles erupt from the ground and hammer the centre.'}
     ]},
     {map:6,name:'Dragon Lord',shape:'demon',tier:2,colors:['#ff5a2a','#ffd166','#fff6df','#8a1a10'],skills:[
-      {id:'dl_ascend',name:'Dragon Ascension',pattern:'dragonAscension',life:3.0,signature:'A flame dragon spirals up around the boss, then dives across the field burning a trench.'},
-      {id:'dl_skyfall',name:'Skyfall Pillar',pattern:'skyfallPillar',life:2.7,signature:'Five fire pillars rise in sequence beneath a crown of falling meteors.'}
+      {id:'dl_ascend',name:'Dragon Ascension',pattern:'dragonAscension',life:2.2,choreo:3.0,signature:'A flame dragon spirals up around the boss, then dives across the field burning a trench.'},
+      {id:'dl_skyfall',name:'Skyfall Pillar',pattern:'skyfallPillar',life:2.2,choreo:2.7,signature:'Five fire pillars rise in sequence beneath a crown of falling meteors.'}
     ]},
     {map:7,name:'Shiranui',shape:'demon',tier:2,colors:['#ff7ad0','#7ae6ff','#fff2ff','#7a2a6a'],skills:[
-      {id:'sn_foxfire',name:'Foxfire Bloom',pattern:'foxfireBloom',life:2.75,signature:'Nine kitsune tails and pale spirit flames bloom in a ring of drifting petals.'},
-      {id:'sn_sakura',name:'Sakura Storm',pattern:'sakuraStorm',life:2.8,signature:'A petal cyclone crosses the map and is cut open by a pink crescent.'}
+      {id:'sn_foxfire',name:'Foxfire Bloom',pattern:'foxfireBloom',life:2.2,choreo:2.75,signature:'Nine kitsune tails and pale spirit flames bloom in a ring of drifting petals.'},
+      {id:'sn_sakura',name:'Sakura Storm',pattern:'sakuraStorm',life:2.2,choreo:2.8,signature:'A petal cyclone crosses the map and is cut open by a pink crescent.'}
     ]},
     {map:8,name:'Lord of Death',shape:'demon',tier:2,colors:['#8dffb0','#7a5aff','#eafff0','#1f3a2a'],skills:[
-      {id:'lod_harvest',name:'Soul Harvest',pattern:'soulHarvest',life:2.85,signature:'Three spectral scythes reap across the field while harvested souls rise.'},
-      {id:'lod_verdict',name:'Death Verdict',pattern:'deathVerdict',life:2.8,signature:'A skull seal stamps the ground under a descending spectral judgment beam.'}
+      {id:'lod_harvest',name:'Soul Harvest',pattern:'soulHarvest',life:2.2,choreo:2.85,signature:'Three spectral scythes reap across the field while harvested souls rise.'},
+      {id:'lod_verdict',name:'Death Verdict',pattern:'deathVerdict',life:2.2,choreo:2.8,signature:'A skull seal stamps the ground under a descending spectral judgment beam.'}
     ]},
     {map:9,name:'Dark Lord',shape:'demon',tier:3,colors:['#ff2e55','#a94dff','#ffe6ee','#3a0a1a'],skills:[
-      {id:'abyss_cross',name:'Abyssal Cross',pattern:'abyssalCross',life:3.05,signature:'An enormous crimson X opens the field, splitting air and ground with glitch shards.'},
-      {id:'abyss_requiem',name:'Chaos Requiem',pattern:'chaosRequiem',life:3.1,signature:'A void sphere collapses into three shockwaves and a ring of blood-red spikes.'}
+      {id:'abyss_cross',name:'Abyssal Cross',pattern:'abyssalCross',life:1.7,choreo:3.05,signature:'An enormous crimson X opens the field, splitting air and ground with glitch shards.'},
+      {id:'abyss_requiem',name:'Chaos Requiem',pattern:'chaosRequiem',life:1.7,choreo:3.1,signature:'A void sphere collapses into three shockwaves and a ring of blood-red spikes.'}
     ]},
     {map:10,name:'Memory of Thanatos',shape:'demon',tier:3,colors:['#ffffff','#8fe6ff','#fff6d8','#c9a24a'],skills:[
-      {id:'tnt_fracture',name:'Memory Fracture',pattern:'memoryFracture',life:3.05,signature:'One white slash shatters the air into falling glass panes and digital echoes.'},
-      {id:'tnt_judge',name:'Thanatos Judgment',pattern:'thanatosJudgment',life:3.15,signature:'A celestial gate opens and drives a pillar of white light through a clock seal.'}
+      {id:'tnt_fracture',name:'Memory Fracture',pattern:'memoryFracture',life:1.7,choreo:3.05,signature:'One white slash shatters the air into falling glass panes and digital echoes.'},
+      {id:'tnt_judge',name:'Thanatos Judgment',pattern:'thanatosJudgment',life:1.7,choreo:3.15,signature:'A celestial gate opens and drives a pillar of white light through a clock seal.'}
     ]},
     {map:11,name:'Ifrit',shape:'demon',tier:3,colors:['#ff7a1a','#ffd34d','#fffbe8','#5a1408'],skills:[
-      {id:'ifr_eruption',name:'Primal Eruption',pattern:'primalEruption',life:3.1,signature:'A ring of lava geysers erupts beneath black smoke and glowing fissures.'},
-      {id:'ifr_blaze',name:'Ifrit Blaze',pattern:'ifritBlaze',life:3.2,signature:'One colossal horizontal fire slash spans the entire map and leaves a burning trench.'}
+      {id:'ifr_eruption',name:'Primal Eruption',pattern:'primalEruption',life:1.7,choreo:3.1,signature:'A ring of lava geysers erupts beneath black smoke and glowing fissures.'},
+      {id:'ifr_blaze',name:'Ifrit Blaze',pattern:'ifritBlaze',life:1.7,choreo:3.2,signature:'One colossal horizontal fire slash spans the entire map and leaves a burning trench.'}
     ]}
   ];
   // Reference camera: 3.05 world units project to 120 screen px, so one design unit is 1px there.
   // The tier size is what turns "a tidy local burst" into "a slash across the whole map":
   // tier 1 covers roughly the boss's own ground, tier 3 spans the field.
-  const TIER={1:{size:.92,detail:1,shake:.3,name:'simple'},2:{size:1.42,detail:1,shake:.75,name:'layered'},3:{size:2.02,detail:1,shake:1.2,name:'cataclysm'}};
+  //
+  // Screen time: a tier-3 slash/glitch band is wider than the viewport and used to stay at full
+  // brightness for over three seconds, hiding the hero and the drops. `fadeAt` is the fraction of
+  // the cast that stays at full brightness; after it the whole layer dims to nothing, instead of
+  // only fading in its last 10-15%. Tier 1 stays as authored (fadeAt 1 = no early fade).
+  const TIER={
+    1:{size:.92,detail:1,shake:.3,name:'simple',fadeAt:1},
+    2:{size:1.42,detail:1,shake:.75,name:'layered',fadeAt:.5},
+    3:{size:2.02,detail:1,shake:1.2,name:'cataclysm',fadeAt:.34}
+  };
   const SKILLS=new Map();
-  for(const b of BOSSES)for(const s of b.skills)SKILLS.set(s.id,{...s,map:b.map,boss:b.name,tier:b.tier,colors:b.colors,tierScale:TIER[b.tier].size,tierShake:TIER[b.tier].shake});
+  for(const b of BOSSES)for(const s of b.skills)SKILLS.set(s.id,{...s,choreo:s.choreo||s.life,
+    map:b.map,boss:b.name,tier:b.tier,colors:b.colors,fadeAt:TIER[b.tier].fadeAt,
+    tierScale:TIER[b.tier].size,tierShake:TIER[b.tier].shake});
 
   // Glow sprites are cached per colour: one drawImage instead of a fresh radial gradient each frame.
   const glowCache=new Map();
@@ -1253,12 +1268,19 @@ const PGBossFx=(()=>{
         const pattern=P[s.pattern];
         if(!pattern)return;
         quality=cl(detailLevel,.25,1);
+        // Wide moves get less screen time than their animation needs. Fast-forward the pattern's
+        // clock so the whole choreography still plays (nothing is cut off), and dim the entire
+        // layer from `fadeAt` on so a full-field slash stops covering the fight shortly after
+        // its impact frame. `stage` carries the choreography's own length/seed; the title card
+        // and the cast clock keep using the real, shorter `s.life`.
+        const rate=s.choreo/s.life,pt=Math.min(time*rate,s.choreo+.05);
+        const stage={...s,life:s.choreo,seed:seed||0};
+        const dim=1-smooth(cl((time/s.life-s.fadeAt)/Math.max(.001,1-s.fadeAt)));
         g.save();
         try{
-          g.globalAlpha=1;
-          s.seed=seed||0;
-          stageWash(s,time,cl((s.life-time)/.5));
-          pattern(s,time);
+          g.globalAlpha=cl(dim);
+          stageWash(stage,pt,cl((s.choreo-pt)/.5));
+          pattern(stage,pt);
         }finally{quality=1;g.restore()}
       }
 

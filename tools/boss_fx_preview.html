@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Prontera Grind — boss skill FX review</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="/assets/boss-fx.js"></script>
+<script src="/assets/boss-fx.js?v=249"></script>
 <style>
   :root{color-scheme:dark}
   *{box-sizing:border-box}
@@ -185,7 +185,7 @@ function renderSkills(){
     const row=document.createElement('div');
     row.className='skillrow'+(s.id===skillId?' on':'');
     row.innerHTML=`<span class="dot" style="width:9px;height:9px;border-radius:50%;background:${b.colors[0]};box-shadow:0 0 6px ${b.colors[0]};margin-top:5px;flex:0 0 auto"></span>
-      <span><b>${s.name}</b><small>${s.life.toFixed(2)}s · ${s.pattern}</small></span>`;
+      <span><b>${s.name}</b><small>${s.life.toFixed(2)}s on screen${s.choreo?` · ${s.choreo.toFixed(2)}s art at ${(s.choreo/s.life).toFixed(2)}× fast-forward`:''} · ${s.pattern}</small></span>`;
     row.onclick=()=>pickSkill(s.id);
     el.appendChild(row);
   });
@@ -194,7 +194,7 @@ function renderSpec(){
   const b=BOSSES[mapIndex],s=b.skills.find(x=>x.id===skillId);
   $('specNote').innerHTML=`<h3><span class="dot" style="width:9px;height:9px;border-radius:50%;background:${b.colors[0]};box-shadow:0 0 6px ${b.colors[0]}"></span>${b.name} · ${s.name}</h3>
     <p class="sig">${s.signature}</p>
-    <p>${b.tier===1?'Tier 1 — a tidy local burst: the boss\'s own ground only.':b.tier===2?'Tier 2 — layered, map-wide: a sweep plus a second motif.':'Tier 3 — cataclysm: full-field slash/structure, shards, glitch and camera shake.'}</p>
+    <p>${b.tier===1?'Tier 1 — a tidy local burst: the boss\'s own ground only, at full brightness.':b.tier===2?'Tier 2 — layered, map-wide: a sweep plus a second motif. 2.2s on screen; dims from halfway.':'Tier 3 — cataclysm: full-field slash/structure, shards, glitch and camera shake. 1.7s on screen; dims right after the impact so the field stays playable.'}</p>
     <p style="color:#7f889e">palette ${b.colors.map(c=>`<span style="display:inline-block;width:12px;height:9px;border-radius:2px;background:${c};margin-right:3px;vertical-align:middle"></span>`).join('')}</p>`;
 }
 

@@ -48,10 +48,48 @@ Tier 1/2/3 also carry composition sizes 0.92 / 1.42 / 2.02 against the game's re
 (3.05 world units drawn as 120px), so the same 500-unit slash that reads "local" on a tier-1 boss
 covers the whole lane on a tier-3 boss.
 
+## Screen time — full-field moves clear fast
+
+Owner report (2026-10-27): *"skills fx like Ifrit Blaze & Memory Fracture which covers the whole
+map. having in on screen for 3 secs block the gameplay. can we adjust the fx to disappear faster?"*
+
+Measured at the reference camera, the six tier-3 moves paint shapes reaching **1298-2025 screen
+px out from the boss's feet** (2.6-4.0k px across, so a 1200px-wide viewport is completely
+covered) and used to hold them at full brightness for **3.05-3.2s**. All six have the problem,
+not just the two named: **Abyssal Cross, Chaos Requiem** (Dark Lord), **Memory Fracture,
+Thanatos Judgment** (Memory of Thanatos), **Primal Eruption, Ifrit Blaze** (Ifrit). The eight
+tier-2 sweeps are smaller (524-822 px out from the boss) but also sat on the field for 2.7-3.0s,
+so they got a milder version of the same treatment.
+
+The fix is a **screen-time policy**, not a cut — every beat of every animation still plays:
+
+| tier | moves | `life` (on screen) | `choreo` (art length) | playback | `fadeAt` |
+| --- | --- | --- | --- | --- | --- |
+| 1 — local | 10 | 2.15-2.65s (unchanged) | same as `life` | 1× | 1 (no early fade) |
+| 2 — map-wide | 8 | **2.2s** (was 2.7-3.0s) | 2.7-3.0s | 1.23-1.36× | 0.5 |
+| 3 — full-field | 6 | **1.7s** (was 3.05-3.2s) | 3.05-3.2s | 1.79-1.88× | 0.34 |
+
+* `life` is what `PGBossFx.life(id)` and the game's cast clock see; `choreo` is the length the
+  choreography was designed for. `paint()` fast-forwards pattern time by `choreo/life`, so the
+  glass panes, second glitch wave, ember storm and trench fade all still happen — nothing is
+  chopped off. Contact sheets sampled at a fraction of `life` therefore show the same impact
+  frame as before the change.
+* `fadeAt` is the fraction of the cast that stays at full brightness; after it the **whole layer**
+  dims on a smoothstep to nothing, instead of the old per-pattern fade that only covered the last
+  10-16%. Tier 3 is full brightness for its first ~0.58s, ~half dim by ~1.0s, gone at 1.7s. Tier 2
+  is full until ~1.1s and gone at 2.2s. Tier 1 is untouched.
+* The title card, stage wash, camera shake and the 3.2-4.6s gap after a cast are unchanged. A
+  shorter cast only makes that gap start sooner: a tier-3 boss now shows an effect roughly every
+  4.9-6.3s instead of 6.3-7.8s.
+
+`node tools/tests/boss_fx_sim.js` checks the roster values, the fast-forward specs, the peak
+brightness of a full-field cast at 20%/70%/95% of its life, and that a tier-1 burst still plays
+at full brightness. `/bossfx` shows both times in each move's row.
+
 ## The clock
 
-* First cast ~1.9s after the boss wave starts; then **one cast every 3.2-4.6s**, re-rolled after
-  every single cast so it never becomes a metronome.
+* First cast ~1.9s after the boss wave starts; then **a 3.2-4.6s gap after each effect ends**,
+  re-rolled after every single cast so it never becomes a metronome.
 * The two moves alternate but **the same move never plays twice in a row**.
 * A new boss wave, map or Nightmare stage resets the clock. A dead boss casts nothing.
 * Nothing is painted while the tab is hidden or the sim is catching up; the clock still advances.

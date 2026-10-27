@@ -8394,3 +8394,41 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Daily Roulette rolls:** Echo prizes bank as `dailyWheel.bonusRolls`. The normal free daily spin is used first, banked rolls are spent after it, and unspent banked rolls survive the 00:00 UTC+8 reset. The roulette now shows the total spins available.
 * **Checks:** `echo_board_sim` now pins every revised daily/weekly band and the #1 grant payloads; `eclipse_ui_sim` covers granting 2 rolls, spending them after the free spin and carrying an unspent roll into the next day.
 * **Delivery:** Local changes on `arena/73071e3c-prontera-grind`; not committed, pushed, merged or deployed. This entry corrects the reward table in the previous entry, which remains unchanged above.
+
+### 2026-10-27 — `2026-10-27 haven-v249 faster full-field boss skill FX`
+* **Changed (player-visible):** the six tier-3 ("cataclysm") boss effects covered the whole field
+  at full brightness for 3.05-3.2s, hiding the hero and drops. Owner report: *"skills fx like
+  Ifrit Blaze & Memory Fracture which covers the whole map. having in on screen for 3 secs block
+  the gameplay. can we adjust the fx to disappear faster?"* All six full-field moves — Abyssal
+  Cross, Chaos Requiem, Memory Fracture, Thanatos Judgment, Primal Eruption, Ifrit Blaze — now
+  last **1.7s** on screen; the eight tier-2 map-wide sweeps now last **2.2s** (was 2.7-3.0s);
+  the ten tier-1 local bursts are untouched (2.15-2.65s). Nothing is cut off: each wide move keeps
+  its original art length as `choreo` and `paint()` fast-forwards the choreography into the shorter
+  `life` (1.23-1.36× for tier 2, 1.79-1.88× for tier 3), so glass panes, second glitch waves and
+  ember storms all still play. `TIER.fadeAt` adds a whole-layer smoothstep dim (tier 3 from 34% of
+  the cast, tier 2 from 50%, tier 1 no early fade): the impact is full brightness for ~0.58s on
+  tier 3, the layer is ~half dim by ~1.0s and gone at 1.7s. Title card, stage wash, camera shake,
+  alternating moves and the 3.2-4.6s gap after a cast are unchanged; a shorter cast only makes
+  that gap start sooner. Presentation only — no damage, cooldowns or drops moved.
+* **Try it:** `/bossfx` on the preview server (auto mode or "play every skill"), or any Stage 10 /
+  Nightmare Stage-15 boss on maps 5-11. The review page lists both the on-screen time and the
+  fast-forwarded art length per move. `Updates/boss-skill-fx/README.md` has the screen-time table
+  and the measured field coverage.
+* **How:** `assets/boss-fx.js` — `BOSSES` gains `choreo` on the 14 wide moves with shortened
+  `life`; `TIER` gains `fadeAt`; `SKILLS` specs derive `choreo`/`fadeAt`; `paint()` computes
+  `rate=choreo/life`, paints `pattern` and `stageWash` on a spec copy with the choreography clock
+  and multiplies `g.globalAlpha` by the coverage dim. `PGBossFx.life(id)` still returns the on-screen
+  cast length, so `index.html` needed no clock change — only the `BUILD` label and the module's
+  cache-buster (`boss-fx.js?v=1` → `?v=249`).
+* **Checks:** `boss_fx_sim` **PASS** (new coverage: roster `life`/`choreo` per tier, 24 specs,
+  `life()` matches the game clock, peak FX brightness at 20%/70%/95% of Ifrit Blaze, impact frame
+  intact at 46%, nothing drawn past `life`, tier-1 burst still at full brightness, tier-3 adapter
+  cast life <2s). `update_watch_sim` 9/9, `gear_sim` 43/43, `drop_card_sheet_sim` 14/14 (BUILD
+  mirrors), `overdrive_preview_sim`, `afterglow_sim`, all three generated-asset `--check` scripts
+  pass. Full JS gate: 140 suites, **8 red — no new failures**: the 7 documented known-red rows
+  plus `card_star_balance_sim`, whose pinned historical commit `d164bd0` is not fetched in this
+  clone (`skill_balance_sim`, already a baseline red, hits the same missing commit). Real-browser
+  WebGL playback was not automated; `/bossfx` is served for a manual look.
+* **Delivery:** Committed and pushed on `arena/3bd42327-prontera-grind`, then merged into `main`
+  through this branch's pull request (see the merge commit in git history). No separate deploy was
+  run by the agent.
