@@ -127,7 +127,21 @@ function shopDone(order,failure){
  const p=SHOP.pending;SHOP.pending=null;SHOP.popupUrl='';shopPollStop();shopWrite(shopKey('pending',SHOP.user),null);
  if(!order){shopSay(failure,'bad');if(failure)log('🛒 '+failure,'r0','cloud');return}
  const item=shopItem(order.sku)||{name:order.item||order.sku,kind:'supply'};
- if(item.kind==='cosmetic'){
+ if(item.kind==='bundle'){
+  // v2: the server rolled the contents. Show exactly what arrived by diffing ownership around the
+  // refresh, so the player sees 13 names rather than "something happened".
+  const before=new Set(SHOP.owned);
+  log('🛒 '+(p&&p.name||item.name)+' paid - unlocking your items…','r1','cloud');
+  shopSay('Payment received. Unlocking your '+item.name+'…','');
+  shopRefresh().then(()=>{
+   const got=[...SHOP.owned].filter(sku=>!before.has(sku));
+   const names=got.map(sku=>(shopItem(sku)||{}).name||sku);
+   if(!names.length)return;
+   log('🛒 Your '+item.name+' unlocked '+names.length+' item'+(names.length===1?'':'s')+': '+names.join(', ')+'.','r1','cloud');
+   shopSay(item.name+' unlocked '+names.length+' item'+(names.length===1?'':'s')+': '+names.join(', ')+'. Open the Wardrobe (W) to wear them.','good');
+   if(typeof heroKey!=='undefined')heroKey='';
+  }).catch(()=>{});
+ }else if(item.kind==='cosmetic'){
   SHOP.owned.add(order.sku);shopWrite(shopKey('owned',SHOP.user),[...SHOP.owned]);
   log('🛒 '+item.name+' is yours! Open the Wardrobe to put it on.','r1','cloud');
   shopSay(item.name+' is unlocked on this account. Open the Wardrobe (W) to wear it.','good');
@@ -163,20 +177,28 @@ function shopPanel(){
   const ownedCount=items.filter(i=>i.kind==='cosmetic'&&shopOwns(i.sku)).length;
   body=`<div class="atabs shop-slots">${slotTabs}</div><small class="shop-sub">${shopEsc(slots[SHOP.slot].label)} · ${list.length} styles · you own ${ownedCount} cosmetic${ownedCount===1?'':'s'}. Hair, hair colour and gender are always free in the Wardrobe.</small>
   <div class="shop-grid">${list.map(i=>{const owned=shopOwns(i.sku),locked=!owned;return `<div class="shop-card${owned?' owned':''}" data-sku="${shopEsc(i.sku)}"><div class="shop-card-head"><b>${shopEsc(i.name)}</b><span class="shop-price">${owned?'Owned ✓':PGShop.money(i.price,cur)}</span></div><small>${shopEsc(i.slotLabel)} · permanent unlock for this account</small><div class="shop-card-actions"><button data-a="shop" data-v="try:${shopEsc(i.sku)}">${owned?'Wear':'Try on'}</button>${locked?`<button class="shop-buy" data-a="shop" data-v="buy:${shopEsc(i.sku)}"${canBuy?'':' disabled'}>Buy</button>`:''}</div></div>`}).join('')}</div>`;
+ }else if(SHOP.view==='bundles'){
+  const cos=items.filter(i=>i.kind==='cosmetic'),unowned=cos.filter(i=>!shopOwns(i.sku)),remaining=unowned.length;
+  const bundleCards=items.filter(i=>i.kind==='bundle').map(i=>{
+   const full=!remaining,worth=i.all?cos.length:PGShop.bundleSize(i)||0,gets=i.all?remaining:Math.min(worth,remaining);
+   const parts=i.all?[`All ${cos.length} styles the shop sells today`]:Object.entries(i.take||{}).map(([slot,n])=>`${n} × ${(slots[slot]||{}).label||slot}`);
+   return `<div class="shop-card shop-bundle${full?' owned':''}" data-sku="${shopEsc(i.sku)}"><div class="shop-card-head"><b>${shopEsc(i.name)}</b><span class="shop-price">${full?'All owned ✓':PGShop.money(i.price,cur)}</span></div><small>${shopEsc(i.blurb||'')}</small><ul class="shop-bundle-list">${parts.map(x=>`<li>${shopEsc(x)}</li>`).join('')}</ul><small>${full?'You already own every cosmetic in this bundle.':`Rolls ${gets} unlock${gets===1?'':'s'} you do not own yet · ${remaining} still locked for you.`}</small><div class="shop-card-actions"><button class="shop-buy" data-a="shop" data-v="buy:${shopEsc(i.sku)}"${canBuy&&!full?'':' disabled'}>${full?'Nothing left':'Buy'}</button></div></div>`;
+  }).join('');
+  body=`<small class="shop-sub">Bundles are one payment for several permanent unlocks. The exact pieces are rolled on the server from what this account does not own yet, so a bundle can never hand you something you already paid for.</small><div class="shop-grid">${bundleCards}</div>`;
  }else{
   const groups=[];for(const i of items.filter(i=>i.kind==='supply')){let g=groups.find(x=>x.name===i.group);if(!g){g={name:i.group,items:[]};groups.push(g)}g.items.push(i)}
   body=`<small class="shop-sub">Supplies are delivered to your character the moment the payment is confirmed - the same way GM gifts arrive.</small>`+groups.map(g=>`<div class="shop-group"><div class="hd">${shopEsc(g.name)}</div><div class="shop-grid">${g.items.map(i=>`<div class="shop-card" data-sku="${shopEsc(i.sku)}"><div class="shop-card-head"><b>${shopEsc(i.name)}</b><span class="shop-price">${PGShop.money(i.price,cur)}</span></div><small>${shopEsc(i.blurb||'')}</small><div class="shop-card-actions"><label class="shop-qty">Qty <select data-shop-qty="${shopEsc(i.sku)}">${Array.from({length:i.maxQty||1},(_,n)=>`<option value="${n+1}">${n+1}</option>`).join('')}</select></label><button class="shop-buy" data-a="shop" data-v="buy:${shopEsc(i.sku)}"${canBuy?'':' disabled'}>Buy</button></div></div>`).join('')}</div></div>`).join('');
  }
  return `<div class="shop"><div class="shop-intro"><div class="hd">Cash Shop</div><small>Support the game and dress your character. Prices in USD; payments are handled by Stripe on a secure page, and your card details never reach Prontera Grind. Cosmetics unlock forever on this account; supplies are delivered to your character.</small></div>
  ${modeLine}${pending}${note}
- <div class="atabs shop-views">${tabBtn('cosmetics','♧ Cosmetics')}${tabBtn('supplies','⚗ Supplies')}</div>
+ <div class="atabs shop-views">${tabBtn('cosmetics','♧ Cosmetics')}${tabBtn('bundles','❖ Bundles')}${tabBtn('supplies','⚗ Supplies')}</div>
  ${body}
- <details class="shop-fine"><summary>Good to know</summary><ul><li>A cosmetic is a permanent unlock for this account and is not transferable.</li><li>Supplies land on your character on the next cloud sync - within a few seconds of paying.</li><li>Nothing is delivered until the payment is confirmed, and nothing is charged for a cancelled payment.</li><li>Problems with an order? Note the order id from the log and contact the GM.</li></ul></details></div>`;
+ <details class="shop-fine"><summary>Good to know</summary><ul><li>A cosmetic is a permanent unlock for this account and is not transferable.</li><li>A bundle's pieces are rolled from what you do not own yet and unlock the moment the payment clears.</li><li>Supplies land on your character on the next cloud sync - within a few seconds of paying.</li><li>Nothing is delivered until the payment is confirmed, and nothing is charged for a cancelled payment.</li><li>Problems with an order? Note the order id from the log and contact the GM.</li></ul></details></div>`;
 }
 V.shop=shopPanel;
 ACT.shop=v=>{
  const s=String(v||''),i=s.indexOf(':'),k=i<0?s:s.slice(0,i),arg=i<0?'':s.slice(i+1);
- if(k==='view'){SHOP.view=arg==='supplies'?'supplies':'cosmetics';SHOP.note='';renderWin();return}
+ if(k==='view'){SHOP.view=['supplies','bundles'].includes(arg)?arg:'cosmetics';SHOP.note='';renderWin();return}
  if(k==='slot'){if(Object.hasOwn(PGWardrobe.ACCESSORIES,arg))SHOP.slot=arg;renderWin();return}
  if(k==='buy'){const sel=document.querySelector('[data-shop-qty="'+arg.replace(/"/g,'')+'"]');shopBuy(arg,sel?sel.value:1);return}
  if(k==='try'){shopTryOn(arg);return}

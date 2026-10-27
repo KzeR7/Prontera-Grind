@@ -39,6 +39,9 @@ const performance={now:()=>nowMs};
 const document={get hidden(){return hidden},
   addEventListener:(k,f)=>{(docHandlers[k]=docHandlers[k]||[]).push(f)}};
 let simCatchingUp=false;const simVisualsOff=()=>hidden||simCatchingUp;
+// v2: the frame loop parks the clock while the cloud says the character is away (a lost connection
+// is away time, not progress) - so the harness needs the flag the real page has.
+const CLOUD={lost:false};
 function ui(){} function feedDraw(){}
 const jobs=new Map();let jobId=0;
 const setTimeout=f=>{jobs.set(++jobId,f);return jobId};
@@ -79,7 +82,8 @@ console.log('background: the game keeps grinding when the tab is hidden\n');
 t('the clock keeps one entry point and one dt ceiling', () => {
   assert.strictEqual(bg.timerMs(), 1, 'exactly one background interval is registered');
   assert.ok(bg.SIM_STEP === 0.1 && bg.SIM_BG_MS === 1000, 'the step and the wake cadence are the documented ones');
-  assert.ok(src.includes('function loop(now){try{simAdvance(now);if(!document.hidden&&simPending===0)draw()}'), 'the frame loop still drives the same clock and draws');
+  assert.ok(src.includes('function loop(now){try{if(CLOUD.lost){simAt=now;simPending=0}else simAdvance(now);if(!document.hidden&&simPending===0)draw()}'),
+    'the frame loop still drives the same clock and draws, and parks it while the session is away');
   assert.ok(src.includes('for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}'), 'every slice still honours the speed setting');
   assert.ok(src.includes('setInterval(save,5000)'), 'the five-second autosave is untouched');
   assert.ok(src.includes("document.addEventListener('visibilitychange'"), 'the hide/show wiring is in the game');

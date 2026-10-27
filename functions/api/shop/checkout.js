@@ -8,7 +8,7 @@
 import { currentUser } from '../../_lib/auth.js';
 import { json, guard, readJson, fail } from '../../_lib/http.js';
 import * as db from '../../_lib/db.js';
-import { findSku, newOrderId, orderShape, fulfillOrder, createCheckoutSession, returnUrls, paymentsLive, fakeCheckout, ownedSkus, shopInstalled, NOT_INSTALLED, CATALOG } from '../../_lib/shop.js';
+import { findSku, newOrderId, orderShape, fulfillOrder, createCheckoutSession, returnUrls, paymentsLive, fakeCheckout, ownedSkus, shopInstalled, bundleSkus, NOT_INSTALLED, CATALOG } from '../../_lib/shop.js';
 import PGShop from '../../../assets/shop-catalog.js';
 
 export const onRequestPost = guard(async ({ request, env }) => {
@@ -26,7 +26,11 @@ export const onRequestPost = guard(async ({ request, env }) => {
   if (!item) return fail('That item is not for sale.', 400);
   const qty = Number(body.qty ?? 1);
   if (!Number.isInteger(qty) || qty < 1 || qty > item.maxQty) return fail('Choose between 1 and ' + item.maxQty + ' of those.', 400);
-  if (item.kind === 'cosmetic' && (await ownedSkus(D, user.id)).has(sku)) return fail('You already own ' + item.name + '.', 409, { owned: true });
+  const owned = await ownedSkus(D, user.id);
+  if (item.kind === 'cosmetic' && owned.has(sku)) return fail('You already own ' + item.name + '.', 409, { owned: true });
+  // v2: a bundle whose wardrobe is already complete would charge for nothing, so it is refused here
+  // and the panel says why. The server rolls the contents again at delivery - never the client.
+  if (item.kind === 'bundle' && !bundleSkus(item, owned).length) return fail('You already own everything in ' + item.name + '.', 409, { owned: true, bundleEmpty: true });
 
   const rate = await db.hitRate(D, 'shop-checkout:' + user.id, 12, 10 * 60 * 1000);
   if (!rate.ok) return fail('Too many checkout attempts. Try again in a few minutes.', 429);

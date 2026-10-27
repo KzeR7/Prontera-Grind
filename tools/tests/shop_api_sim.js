@@ -108,7 +108,7 @@ await T('catalog is public, lists both kinds, says payments are off until a key 
   const cos = r.data.items.filter(i => i.kind === 'cosmetic'), sup = r.data.items.filter(i => i.kind === 'supply');
   assert.ok(cos.length >= 50 && sup.length >= 10, 'cosmetics ' + cos.length + ' supplies ' + sup.length);
   assert.ok(r.data.items.every(i => Number.isInteger(i.price) && i.price >= 50), 'every price is whole cents >= Stripe minimum');
-  assert.ok(cos.some(i => i.sku === 'cos:backwear:wings' && i.price === 499));
+  assert.ok(cos.some(i => i.sku === 'cos:backwear:wings' && i.price === 200));
   assert.ok(cos.every(i => i.maxQty === 1), 'a cosmetic is bought once');
   assert.ok(sup.every(i => i.resource && i.amount >= 1), 'a supply names the gift it delivers');
 });
@@ -157,6 +157,71 @@ await T('fake mode: a supply bundle becomes one gift grant the game applies like
   assert.strictEqual(sqlite.prepare('SELECT COUNT(*) n FROM entitlements').get().n, 0, 'supplies are not entitlements');
 });
 
+await T('a paid bundle rolls exactly what the account is missing, on the server', async () => {
+  const { env, sqlite } = freshEnv({ SHOP_FAKE_CHECKOUT: '1' });
+  const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
+  const cat = (await api.catalog(env, c)).data;
+  const all = cat.items.filter(i => i.kind === 'cosmetic').map(i => i.sku);
+  assert.strictEqual(all.length, 52, 'the bundle covers the 52 cosmetics that exist today');
+
+  const r = await api.checkout(env, c, { sku: 'bnd:adventurer' });
+  assert.strictEqual(r.status, 200, JSON.stringify(r.data));
+  assert.strictEqual(r.data.fulfilled, true);
+  const owned = (await api.catalog(env, c)).data.owned;
+  assert.strictEqual(owned.length, 13, 'four heads, four faces, two mouths, three backs');
+  const bySlot = { headwear: 0, facewear: 0, mouthwear: 0, backwear: 0 };
+  for (const sku of owned) bySlot[sku.split(':')[1]]++;
+  assert.deepStrictEqual(bySlot, { headwear: 4, facewear: 4, mouthwear: 2, backwear: 3 });
+  assert.ok(owned.every(s => s.startsWith('cos:')), 'a bundle delivers ordinary cosmetics, not a new entitlement kind');
+  assert.strictEqual(sqlite.prepare('SELECT COUNT(*) n FROM entitlements WHERE source = ?').get('stripe').n, 13,
+    'every piece is stamped on the order that paid for it');
+
+  // A second bundle takes the next thirteen, and never repeats one already owned.
+  const r2 = await api.checkout(env, c, { sku: 'bnd:adventurer' });
+  assert.strictEqual(r2.status, 200);
+  const second = (await api.catalog(env, c)).data.owned;
+  assert.strictEqual(second.length, 26);
+  assert.strictEqual(new Set(second).size, 26, 'no piece was delivered twice');
+
+  // The mixed price is 8 dollars, and the order records it.
+  const row = sqlite.prepare('SELECT amount, currency FROM shop_orders WHERE sku = ? ORDER BY created_at DESC LIMIT 1').get('bnd:adventurer');
+  assert.strictEqual(row.amount, 800);
+  assert.strictEqual(row.currency, 'usd');
+});
+
+await T('a bundle that has nothing left to unlock is refused instead of charged for', async () => {
+  const { env, sqlite } = freshEnv({ SHOP_FAKE_CHECKOUT: '1' });
+  const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
+  const cat = (await api.catalog(env, c)).data;
+  const me = sqlite.prepare('SELECT id FROM users WHERE username = ?').get('Alice');
+  for (const i of cat.items.filter(x => x.kind === 'cosmetic'))
+    sqlite.prepare("INSERT INTO entitlements(user_id, sku, source, granted_at) VALUES(?, ?, 'stripe', ?)").run(me.id, i.sku, Date.now());
+  for (const sku of ['bnd:complete', 'bnd:adventurer']) {
+    const r = await api.checkout(env, c, { sku });
+    assert.strictEqual(r.status, 409, sku + ' -> ' + r.status);
+    assert.strictEqual(r.data.bundleEmpty, true);
+    assert.strictEqual(r.data.owned, true);
+  }
+  assert.strictEqual(sqlite.prepare("SELECT COUNT(*) n FROM shop_orders WHERE status = 'pending'").get().n, 0,
+    'no order is created for a bundle that would deliver nothing');
+});
+
+await T('the "unlock all" bundle covers today\'s 52 cosmetics and respects the ones already owned', async () => {
+  const { env, sqlite } = freshEnv({ SHOP_FAKE_CHECKOUT: '1' });
+  const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
+  const first = (await api.checkout(env, c, { sku: 'cos:headwear:halo' })).data;
+  assert.strictEqual(first.fulfilled, true);
+  const r = await api.checkout(env, c, { sku: 'bnd:complete' });
+  assert.strictEqual(r.status, 200);
+  const owned = (await api.catalog(env, c)).data.owned;
+  assert.strictEqual(owned.length, 52, 'everything the shop sells today is unlocked');
+  assert.ok(owned.includes('cos:headwear:halo'));
+  assert.strictEqual(sqlite.prepare('SELECT amount FROM shop_orders WHERE sku = ?').get('bnd:complete').amount, 2000);
+  // and once complete, the same bundle is refused rather than sold twice
+  const again = await api.checkout(env, c, { sku: 'bnd:complete' });
+  assert.strictEqual(again.status, 409);
+});
+
 await T('checkout validates what it is asked for', async () => {
   const { env } = freshEnv({ SHOP_FAKE_CHECKOUT: '1' });
   const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
@@ -193,7 +258,7 @@ await T('live mode: a Checkout Session is created from the server price list, ne
   const q = new URLSearchParams(call0.body);
   assert.strictEqual(q.get('mode'), 'payment');
   assert.strictEqual(q.get('client_reference_id'), r.data.order);
-  assert.strictEqual(q.get('line_items[0][price_data][unit_amount]'), '499');
+  assert.strictEqual(q.get('line_items[0][price_data][unit_amount]'), '200');
   assert.strictEqual(q.get('line_items[0][price_data][currency]'), 'usd');
   assert.strictEqual(q.get('line_items[0][quantity]'), '1');
   assert.strictEqual(q.get('line_items[0][price_data][product_data][name]'), 'Prontera Grind: Archangel wings');
@@ -201,7 +266,7 @@ await T('live mode: a Checkout Session is created from the server price list, ne
   assert.strictEqual(q.get('cancel_url'), 'https://play.example.com/?shop=cancel&order=' + r.data.order);
   assert.strictEqual(q.get('metadata[sku]'), 'cos:backwear:wings');
   const row = sqlite.prepare('SELECT * FROM shop_orders WHERE id=?').get(r.data.order);
-  assert.strictEqual(row.status, 'pending'); assert.strictEqual(row.stripe_session, 'cs_test_a1'); assert.strictEqual(row.amount, 499);
+  assert.strictEqual(row.status, 'pending'); assert.strictEqual(row.stripe_session, 'cs_test_a1'); assert.strictEqual(row.amount, 200);
   assert.strictEqual(sqlite.prepare('SELECT COUNT(*) n FROM entitlements').get().n, 0, 'nothing delivered before payment');
   assert.deepStrictEqual((await api.catalog(env, c)).data.owned, []);
 });
@@ -225,13 +290,13 @@ await T('webhook: needs its secret, rejects a missing, stale or forged signature
   const off = freshEnv({ STRIPE_SECRET_KEY: KEY });
   assert.strictEqual((await api.webhook(off.env, '{}', 't=1,v1=00')).status, 503);
   const { env } = freshEnv({ STRIPE_SECRET_KEY: KEY, STRIPE_WEBHOOK_SECRET: WHSEC });
-  const raw = event('checkout.session.completed', paidSession('ord_x', 499));
+  const raw = event('checkout.session.completed', paidSession('ord_x', 200));
   assert.strictEqual((await api.webhook(env, raw, null)).status, 400);
   assert.strictEqual((await api.webhook(env, raw, 't=' + Math.floor(Date.now() / 1000) + ',v1=' + 'ab'.repeat(32))).status, 400);
   assert.strictEqual((await api.webhook(env, raw, await signStripePayload(raw, 'whsec_' + 'z'.repeat(24)))).status, 400, 'wrong secret');
   assert.strictEqual((await api.webhook(env, raw, await signStripePayload(raw, WHSEC, Date.now() - 3600_000))).status, 400, 'an hour old');
   const good = await signStripePayload(raw, WHSEC);
-  assert.strictEqual((await api.webhook(env, raw.replace('499', '498'), good)).status, 400, 'body edited after signing');
+  assert.strictEqual((await api.webhook(env, raw.replace('200', '498'), good)).status, 400, 'body edited after signing');
   assert.strictEqual((await api.webhook(env, raw, good)).status, 200, 'the genuine article');
 });
 
@@ -241,7 +306,7 @@ await T('webhook: a paid session delivers exactly once, replays and duplicates a
   stripe.answer = () => ({ body: { id: 'cs_test_a1', url: 'https://checkout.stripe.com/c/pay/cs_test_a1' } });
   const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
   const orderId = (await api.checkout(env, c, { sku: 'cos:backwear:wings' })).data.order;
-  const raw = event('checkout.session.completed', paidSession(orderId, 499), 'evt_1');
+  const raw = event('checkout.session.completed', paidSession(orderId, 200), 'evt_1');
   const sig = await signStripePayload(raw, WHSEC);
   const first = await api.webhook(env, raw, sig);
   assert.strictEqual(first.status, 200); assert.strictEqual(first.data.status, 'fulfilled');
@@ -253,7 +318,7 @@ await T('webhook: a paid session delivers exactly once, replays and duplicates a
   const replay = await api.webhook(env, raw, sig);
   assert.strictEqual(replay.status, 200); assert.strictEqual(replay.data.duplicate, true);
   // and sends a second event about the same session (async_payment_succeeded)
-  const raw2 = event('checkout.session.async_payment_succeeded', paidSession(orderId, 499), 'evt_2');
+  const raw2 = event('checkout.session.async_payment_succeeded', paidSession(orderId, 200), 'evt_2');
   assert.strictEqual((await api.webhook(env, raw2, await signStripePayload(raw2, WHSEC))).status, 200);
   assert.strictEqual(sqlite.prepare('SELECT COUNT(*) n FROM entitlements').get().n, 1);
   assert.strictEqual(sqlite.prepare("SELECT COUNT(*) n FROM events WHERE kind='shop-fulfilled'").get().n, 1, 'one delivery event');
@@ -282,7 +347,7 @@ await T('webhook: an amount that does not match the order is NOT delivered, and 
   stripe.answer = () => ({ body: { id: 'cs_test_a1', url: 'https://checkout.stripe.com/c/pay/cs_test_a1' } });
   const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
   const orderId = (await api.checkout(env, c, { sku: 'cos:backwear:wings' })).data.order;
-  for (const s of [paidSession(orderId, 1), paidSession(orderId, 499, { currency: 'eur' }), paidSession(orderId, 499, { id: 'cs_test_other' }), paidSession(orderId, 499, { payment_status: 'unpaid' })]) {
+  for (const s of [paidSession(orderId, 1), paidSession(orderId, 200, { currency: 'eur' }), paidSession(orderId, 200, { id: 'cs_test_other' }), paidSession(orderId, 200, { payment_status: 'unpaid' })]) {
     const raw = event('checkout.session.completed', s);
     assert.strictEqual((await api.webhook(env, raw, await signStripePayload(raw, WHSEC))).status, 200);
     assert.strictEqual(sqlite.prepare('SELECT status FROM shop_orders WHERE id=?').get(orderId).status, 'pending');
@@ -290,7 +355,7 @@ await T('webhook: an amount that does not match the order is NOT delivered, and 
   assert.strictEqual(sqlite.prepare('SELECT COUNT(*) n FROM entitlements').get().n, 0);
   assert.strictEqual(sqlite.prepare("SELECT COUNT(*) n FROM events WHERE kind='shop-amount-mismatch'").get().n, 2);
   // an event for an order that does not exist is acknowledged (so Stripe stops retrying) and ignored
-  const raw = event('checkout.session.completed', paidSession('ord_doesnotexist', 499));
+  const raw = event('checkout.session.completed', paidSession('ord_doesnotexist', 200));
   assert.strictEqual((await api.webhook(env, raw, await signStripePayload(raw, WHSEC))).data.status, 'missing');
 });
 
@@ -304,7 +369,7 @@ await T('webhook: expiry, failure and refunds change the order, never the unlock
   await api.webhook(env, raw, await signStripePayload(raw, WHSEC));
   assert.strictEqual(sqlite.prepare('SELECT status FROM shop_orders WHERE id=?').get(o1).status, 'expired');
   const o2 = (await api.checkout(env, c, { sku: 'cos:backwear:wings' })).data.order;
-  raw = event('checkout.session.completed', paidSession(o2, 499));
+  raw = event('checkout.session.completed', paidSession(o2, 200));
   await api.webhook(env, raw, await signStripePayload(raw, WHSEC));
   raw = event('charge.refunded', { id: 'ch_1', object: 'charge', payment_intent: 'pi_test_1', refunded: true });
   const rf = await api.webhook(env, raw, await signStripePayload(raw, WHSEC));
@@ -323,7 +388,7 @@ await T('order poll: a pending order is checked with Stripe and delivered withou
   let paid = false;
   stripe.answer = (url, init) => (init.method || 'GET') === 'POST'
     ? { body: { id: 'cs_test_a1', url: 'https://checkout.stripe.com/c/pay/cs_test_a1' } }
-    : { body: paidSession(orderId, 249, { payment_status: paid ? 'paid' : 'unpaid', status: paid ? 'complete' : 'open' }) };
+    : { body: paidSession(orderId, 150, { payment_status: paid ? 'paid' : 'unpaid', status: paid ? 'complete' : 'open' }) };
   const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
   var orderId = (await api.checkout(env, c, { sku: 'cos:headwear:catEars' })).data.order;
   let r = await api.order(env, c, orderId);
@@ -413,7 +478,7 @@ await T('a database without migration 0005 behaves exactly like the build before
   const buy = await api.checkout(env, c, { sku: 'cos:backwear:wings' });
   assert.strictEqual(buy.status, 503); assert.strictEqual(buy.data.installed, false); assert.strictEqual(buy.data.shopOff, true);
   assert.strictEqual((await api.order(env, c, 'ord_abcdefghjkmnpqrs')).status, 503);
-  const raw = event('checkout.session.completed', paidSession('ord_x', 499));
+  const raw = event('checkout.session.completed', paidSession('ord_x', 200));
   assert.strictEqual((await api.webhook(env, raw, await signStripePayload(raw, WHSEC))).status, 503, 'Stripe is told to retry, not that it succeeded');
   // the one that matters: a player wearing paid items keeps syncing, untouched
   const put = await api.putSave(env, c, saveWith({ version: 1, headwear: 'halo', backwear: 'wings' }));

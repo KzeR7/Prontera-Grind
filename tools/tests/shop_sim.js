@@ -19,7 +19,7 @@ const settle=async(n=6)=>{for(let i=0;i<n;i++)await tick()};
  // Shape check, not a pinned number: the shop ships with whatever build index.html carries, and a
  // pinned tag (this used to test for haven-v226) goes stale on every bump without proving anything.
  assert.ok(/^20\d\d-\d\d-\d\d haven-v\d{3} \S/.test(ev('BUILD')),'the build tag is a dated, versioned label');
- assert.equal(ev("PGShop.catalog(PGWardrobe).items.length"),66);
+ assert.equal(ev("PGShop.catalog(PGWardrobe).items.length"),68,'52 cosmetics + 2 bundles + 14 supplies');
  // ---- the wardrobe preview loader, as in wardrobe_game_sim ------------------------------------------
  ev(`window.matchMedia=()=>({matches:false});window.__saveCount=0;save=()=>{__saveCount++};window.__logs=[];log=(m,c,cat)=>__logs.push(String(m));S.sex='f';S.cls='Lord Knight';`);
  g.window.__catalogs={};g.window.__metadatas={};
@@ -41,7 +41,7 @@ const settle=async(n=6)=>{for(let i=0;i<n;i++)await tick()};
  assert.match(ev("$('wardrobeStatus').textContent"),/cloud account/,'and the status says why');
  assert.equal(ev("$('wardrobeBuy').hidden"),true,'nothing to buy without an account');
  const wingsOpt=[...g.window.document.querySelector('[data-wardrobe="backwear"]').options].find(o=>o.value==='wings');
- assert.equal(wingsOpt.textContent,'Archangel wings · $4.99 🔒','every paid option carries its price');
+ assert.equal(wingsOpt.textContent,'Archangel wings · $2.00 🔒','every paid option carries its price');
  assert.equal([...g.window.document.querySelector('[data-wardrobe="backwear"]').options][0].textContent,'None');
  assert.equal([...g.window.document.querySelector('[data-wardrobe="head"]').options].every(o=>!/🔒|\$/.test(o.textContent)),true,'hair is free');
  ev(`wardrobeAction('apply')`);assert.equal(ev('__saveCount'),0,'apply is a no-op while locked');
@@ -64,10 +64,10 @@ const settle=async(n=6)=>{for(let i=0;i<n;i++)await tick()};
  ev(`tabs.length=0;tabs.push('shop');renderWin();`);
  let h=ev("$('wins').innerHTML");
  assert.ok(h.includes('Cash Shop')&&h.includes('Test mode'),'the panel says it is in test mode');
- assert.ok(h.includes('data-v="buy:cos:headwear:halo"')&&h.includes('$2.49'),'head cosmetics are listed with prices');
+ assert.ok(h.includes('data-v="buy:cos:headwear:halo"')&&h.includes('$1.50'),'head cosmetics are listed with prices');
  assert.ok(!h.includes('data-v="buy:cos:backwear:wings"'),'one slot at a time');
  ev(`ACT.shop('slot:backwear')`);h=ev("$('wins').innerHTML");
- assert.ok(h.includes('data-v="buy:cos:backwear:wings"')&&h.includes('$4.99')&&h.includes('data-v="try:cos:backwear:wings"'),'wings slot shows its items with Try on');
+ assert.ok(h.includes('data-v="buy:cos:backwear:wings"')&&h.includes('$2.00')&&h.includes('data-v="try:cos:backwear:wings"'),'wings slot shows its items with Try on');
  ev(`ACT.shop('view:supplies')`);h=ev("$('wins').innerHTML");
  assert.ok(h.includes('data-v="buy:sup:ori:50"')&&h.includes('data-shop-qty="sup:ori:50"')&&h.includes('Mythic Protection Scroll')&&h.includes('Valkyrie’s Sigil'),'supplies are listed with a quantity picker');
  assert.ok(!/\$0\.\d\d|\$[0-9]+\.[0-9]$/.test(h),'prices are formatted money');
@@ -77,8 +77,8 @@ const settle=async(n=6)=>{for(let i=0;i<n;i++)await tick()};
  ev(`ACT.shop('try:cos:backwear:wings')`);await settle();
  assert.ok(ev("tabs.includes('wardrobe')"));assert.equal(ev('wardrobeState.draft.backwear'),'wings');
  assert.equal(ev("$('wardrobeApply').disabled"),true,'still locked: not bought yet');
- assert.match(ev("$('wardrobeStatus').textContent"),/Archangel wings is a Cash Shop item \(\$4\.99\)/);
- assert.equal(ev("$('wardrobeBuy').hidden"),false);assert.equal(ev("$('wardrobeBuy').textContent"),'Buy Archangel wings · $4.99');
+ assert.match(ev("$('wardrobeStatus').textContent"),/Archangel wings is a Cash Shop item \(\$2\.00\)/);
+ assert.equal(ev("$('wardrobeBuy').hidden"),false);assert.equal(ev("$('wardrobeBuy').textContent"),'Buy Archangel wings · $2.00');
 
  // ---- 4. buying: tab opened in the click, pointed at Stripe after the server answers ----------------------
  ev(`window.__tabs=[];window.open=()=>{const t={location:{href:''},closed:false,document:{write(){}},close(){t.closed=true}};__tabs.push(t);return t};`);

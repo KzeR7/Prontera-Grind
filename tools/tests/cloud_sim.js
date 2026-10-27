@@ -114,13 +114,12 @@ function harness(opts = {}) {
   sandbox.currentUser = null;          // and the account name it works against
   sandbox.BUILD = '2026-10-06 grind-test';
   // A couple of the game's own element hooks the block writes to.
-  for (const id of ['cloudBadge', 'loginCloud', 'userBadge', 'conflict', 'conflictWhy', 'conflictCards', 'cfThis', 'cfCloud', 'cfLater',
+  for (const id of ['cloudBadge', 'loginCloud', 'userBadge', 'cloudGate', 'cloudGateDetail', 'cloudGateRetry',
     'loginOverlay', 'logoutBtn', 'saveDl', 'saveUp', 'saveFile'])
     els.set(id, { id, textContent: '', title: '', style: {}, set onclick(fn) { this._onclick = fn; }, get onclick() { return this._onclick; }, innerHTML: '' });
-  els.get('cfLater').onclick = null;
   // A top-level `const` inside vm.runInContext does NOT become a property of the sandbox, so the
   // block's bindings are copied onto globalThis explicitly: that is how a suite drives them.
-  const EXPORTS = ['CLOUD','cloudProbe','cloudPush','cloudFlush','cloudFlushNow','cloudConflict',
+  const EXPORTS = ['CLOUD','cloudProbe','cloudPush','cloudFlush','cloudFlushNow','cloudReconnect','cloudConnectionLost',
     'cloudAdopt','cloudPull','cloudApplyGrants','ptsSpent','cloudAuth','cloudLogout','cloudTouch',
     'cloudSession','initSessionFromCloud','saveKeyFor','cloudBadge','cloudSay','cloudFetch',
     'cloudJoin','cloudRefresh','cloudStart','saveBackup','restoreBackup',
@@ -142,8 +141,9 @@ await T('no API on this host: the probe reports "no cloud" and nothing else runs
   assert.strictEqual(found, false);
   assert.strictEqual(h.sandbox.CLOUD.api, false, 'a static host must never look like a server');
   assert.strictEqual(h.sandbox.CLOUD.on, false);
-  // The login line stays empty so the card looks exactly like it always has.
-  assert.strictEqual(h.els.get('loginCloud').textContent, '');
+  // v2: cloud is the only save, so a host without the API says that plainly instead of quietly
+  // offering a browser-only character that can never continue anywhere else.
+  assert.match(h.els.get('loginCloud').textContent, /not connected to the cloud/i);
 });
 
 await T('a network that is simply down is not an error either', async () => {
@@ -194,16 +194,19 @@ await T('cloud login hands the server claim to the reward applier and syncs its 
   assert.strictEqual(body.offlineClaimId,41,'the acknowledged save carries the server claim ID');
 });
 
-await T('playing offline: a failing push keeps the save and says so, and never throws', async () => {
+await T('a failing push never throws, and one bad request does not freeze the session', async () => {
+  // v2: a single failed PUT is not enough to call the connection lost - the gate waits for the
+  // cheap /me probe to fail as well (that pair is covered by its own tests below).
   const h = harness({ routes: { '/save': { throw: 'offline' } } });
   h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.currentUser = 'FRIEND';
   h.state.S = h.sandbox.S;
   const r = await h.sandbox.cloudPush(true);
   assert.strictEqual(r, 'offline');
   assert.strictEqual(h.sandbox.CLOUD.offline, true);
-  assert.strictEqual(h.sandbox.CLOUD.dirty, true, 'the local copy still leads, so it is still dirty');
-  assert.match(h.els.get('cloudBadge').textContent, /✕/);
-  assert.ok(h.state.logs.some(l => /safe on this device/i.test(l.m)), 'the player is told their progress is safe');
+  assert.strictEqual(h.sandbox.CLOUD.lost, false, 'the server still answers /me, so play goes on');
+  assert.strictEqual(h.sandbox.CLOUD.dirty, true, 'the wanted save is still queued');
+  assert.match(h.els.get('cloudBadge').textContent, /⚠/);
+  assert.ok(h.state.logs.some(l => /cloud sync failed/i.test(l.m)), 'the player is told why the badge changed');
 });
 
 await T('a push sends the version it last saw, and stores the new one', async () => {
@@ -227,28 +230,26 @@ await T('the debounce stops a 5-second autosave from becoming a request storm', 
   assert.strictEqual(h.calls.filter(c => c.url === '/api/save').length, 1, 'a forced flush (tab hidden) always sends');
 });
 
-await T('a 409 opens the two-saves chooser and touches neither copy yet', async () => {
-  const h = harness({ routes: { '/save': { status: 409, body: { conflict: true, version: 4, blob: JSON.stringify({ lv: 30, cls: 'Knight', zeny: 9, kills: 3 }), savedAt: 111 } } } });
+await T('a 409 loads the account save instead of asking which copy is real', async () => {
+  // Owner decision (2026-10-27): the account on the server is the only save. There is no chooser,
+  // no paused session and no "keep this device" - the account copy wins and this device's copy is
+  // stashed under a backup key so nothing is destroyed.
+  const serverBlob = JSON.stringify({ lv: 30, cls: 'Knight', zeny: 9, kills: 3, st: { str: 1 } });
+  const h = harness({ storage: { 'pg_save3_X': JSON.stringify({ lv: 12, st: { str: 1 } }) },
+    routes: { '/save': { status: 409, body: { conflict: true, version: 4, blob: serverBlob, savedAt: 111 } } },
+    loadReturn: { lv: 30, cls: 'Knight', q: [] } });
   h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 3; h.sandbox.currentUser = 'X';
-  assert.strictEqual(await h.sandbox.cloudPush(true), 'conflict');
-  assert.strictEqual(h.els.get('conflict').style.display, 'flex');
-  assert.match(h.els.get('conflictCards').innerHTML, /This device/);
-  assert.match(h.els.get('conflictCards').innerHTML, /Cloud save/);
-  assert.match(h.els.get('conflictWhy').textContent, /will not guess/i);
-  assert.strictEqual(h.state.saves, 0, 'nothing is written while the player decides');
+  const result = await h.sandbox.cloudPush(true);
+  assert.strictEqual(result, 'adopted', 'the conflict is resolved by loading the account copy');
+  assert.strictEqual(h.sandbox.CLOUD.paused, false, 'nothing is paused waiting for an answer');
+  assert.strictEqual(h.store.get('pg_save3_X'), serverBlob, 'the account save is now the live save');
+  assert.strictEqual([...h.store.keys()].filter(k => k.startsWith('pg_save3_X_local_')).length, 1,
+    'the copy this device held is kept under a backup key');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 4, 'and the version follows the account');
+  assert.ok(h.state.logs.some(l => /newer save/i.test(l.m)), 'the player is told what happened');
 });
 
-await T('"keep this device" uploads against the server version, so it wins cleanly', async () => {
-  const h = harness({ routes: { '/save': (n, init) => JSON.parse(init.body).version === 4 ? { status: 200, body: { version: 5 } } : { status: 409, body: { conflict: true, version: 4, blob: '{}', savedAt: 1 } } } });
-  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 0; h.sandbox.currentUser = 'X';
-  await h.sandbox.cloudConflict({ version: 4, blob: JSON.stringify({ lv: 30 }), savedAt: 111 });
-  await h.els.get('cfThis').onclick();
-  const last = JSON.parse(h.calls.filter(c => c.url === '/api/save').pop().init.body);
-  assert.strictEqual(last.version, 4, 'it must retry against the version the server reported');
-  assert.strictEqual(h.sandbox.CLOUD.ver, 5);
-});
-
-await T('"keep the cloud save" adopts it and stashes this device\'s copy', async () => {
+await T('"keep the cloud save" - now the only rule - adopts it and stashes this device\'s copy', async () => {
   const cloudBlob = JSON.stringify({ lv: 44, cls: 'Priest', zeny: 1234, kills: 9, st: { str: 1 }, q: [] });
   const h = harness({ storage: { 'pg_save3_X': JSON.stringify({ lv: 12 }) }, loadReturn: { lv: 44, cls: 'Priest', q: [] } });
   h.sandbox.currentUser = 'X';
@@ -259,17 +260,70 @@ await T('"keep the cloud save" adopts it and stashes this device\'s copy', async
   assert.strictEqual(h.state.uiCalls, 1);
 });
 
-await T('"decide later" pauses sync and says so, leaving both copies untouched', async () => {
-  const h = harness({ storage: { 'pg_save3_X': '{"lv":12}' } });
+await T('a lost connection stops the character and says it is away, not "saved on this device"', async () => {
+  const h = harness({ routes: { '/save': { throw: 'offline' }, '/me': { throw: 'offline' } } });
   h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.currentUser = 'X';
-  await h.sandbox.cloudConflict({ version: 4, blob: '{}', savedAt: 1 });
-  h.els.get('cfLater').onclick();
-  assert.strictEqual(h.els.get('conflict').style.display, 'none');
-  assert.strictEqual(h.sandbox.CLOUD.paused, true);
-  h.sandbox.cloudTouch();
-  assert.strictEqual(h.sandbox.CLOUD.dirty, false, 'a paused session must not queue a push');
-  assert.strictEqual(await h.sandbox.cloudPush(true), 'idle', 'and it must refuse to push even when forced');
-  assert.strictEqual(h.store.get('pg_save3_X'), '{"lv":12}', 'the local save is untouched');
+  assert.strictEqual(await h.sandbox.cloudPush(true), 'offline');
+  assert.strictEqual(h.sandbox.CLOUD.lost, true, 'the session is marked as away');
+  assert.strictEqual(h.els.get('cloudGate').style.display, 'flex', 'the gate explains what is happening');
+  assert.match(h.els.get('cloudGateDetail').textContent, /offline/i);
+  assert.match(h.els.get('cloudBadge').title, /away/i);
+  // Nothing more is uploaded while away: the offline play must never become normal progress.
+  h.state.S = h.sandbox.S;
+  assert.strictEqual(await h.sandbox.cloudPush(true), 'idle');
+  assert.strictEqual(h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT').length, 1);
+});
+
+await T('one flaky request is not a lost connection: the gate waits for /me to fail too', async () => {
+  const h = harness({ routes: { '/save': { throw: 'one bad minute' }, '/me': { status: 200, body: { u: 'X' } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.currentUser = 'X';
+  assert.strictEqual(await h.sandbox.cloudPush(true), 'offline');
+  assert.strictEqual(h.sandbox.CLOUD.lost, false, 'the server still answers, so play continues');
+  assert.notStrictEqual(h.els.get('cloudGate').style.display, 'flex');
+  assert.match(h.els.get('cloudBadge').textContent, /⚠/);
+});
+
+await T('reconnecting adopts the account save, pays the away claim and resumes', async () => {
+  const claim = { id: 7, awayMs: 20 * 60000, creditedMs: 20 * 60000, rateKph: 600, kills: 100, remainder: 0 };
+  const serverBlob = JSON.stringify({ lv: 51, cls: 'Priest', zeny: 40, kills: 900, st: { str: 1 }, q: [] });
+  const h = harness({ storage: { 'pg_save3_X': JSON.stringify({ lv: 12, zeny: 5 }) },
+    S: { lv: 12, zeny: 5, st: { str: 1 } }, loadReturn: { lv: 51, cls: 'Priest', q: [] },
+    routes: { '/save': (n, init) => init && init.method === 'PUT'
+      ? { status: 200, body: { version: 9 } }
+      : { status: 200, body: { version: 8, blob: serverBlob, savedAt: 5, offlineClaim: claim } },
+      '/grants': { body: { grants: [] } }, '/messages': { body: { messages: [] } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'X'; h.sandbox.currentUser = 'X';
+  h.sandbox.CLOUD.lost = true;
+  assert.strictEqual(await h.sandbox.cloudReconnect(), true);
+  assert.strictEqual(h.sandbox.CLOUD.lost, false);
+  assert.strictEqual(h.els.get('cloudGate').style.display, 'none', 'the gate closes');
+  assert.strictEqual(h.store.get('pg_save3_X'), serverBlob, 'the account copy is what resumes');
+  assert.strictEqual(h.state.offlineCalls, 1, 'the server-timed away claim is applied');
+  assert.strictEqual(h.state.offlineClaims[0].id, 7);
+  assert.strictEqual(h.sandbox.S.offlineClaimId, 7, 'and recorded in the save');
+});
+
+await T('signing out clears the gate and every connection flag', async () => {
+  const h = harness({ routes: { '/save': { throw: 'offline' }, '/me': { throw: 'offline' }, '/sessions': { status: 200, body: {} } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'X'; h.sandbox.currentUser = 'X';
+  await h.sandbox.cloudPush(true);
+  assert.strictEqual(h.sandbox.CLOUD.lost, true);
+  assert.strictEqual(h.els.get('cloudGate').style.display, 'flex');
+  h.sandbox.cloudLogout();
+  assert.strictEqual(h.sandbox.CLOUD.lost, false, 'a signed-out page is not marked as away');
+  assert.strictEqual(h.sandbox.CLOUD.gate, false);
+  assert.strictEqual(h.sandbox.CLOUD.on, false);
+  assert.strictEqual(h.els.get('cloudGate').style.display, 'none', 'and the gate is gone with it');
+});
+
+await T('a reconnect that still cannot reach the server keeps the gate and touches nothing', async () => {
+  const h = harness({ storage: { 'pg_save3_X': JSON.stringify({ lv: 12 }) }, routes: { '/save': { throw: 'offline' } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'X'; h.sandbox.currentUser = 'X';
+  h.sandbox.CLOUD.lost = true;
+  assert.strictEqual(await h.sandbox.cloudReconnect(), false);
+  assert.strictEqual(h.sandbox.CLOUD.lost, true);
+  assert.strictEqual(h.els.get('cloudGate').style.display, 'flex');
+  assert.strictEqual(h.store.get('pg_save3_X'), JSON.stringify({ lv: 12 }), 'the device copy is untouched');
 });
 
 await T('GM gifts: zeny, levels and an item are applied, then claimed exactly once', async () => {
@@ -404,7 +458,7 @@ await T('registering with progress already in this browser: it is uploaded, neve
   assert.strictEqual(pushed.zeny, 500);
   assert.strictEqual(pushed.kills, 7);
   assert.strictEqual(h.store.get('pg_save3_KzeR'), local, 'and the device keeps its own copy');
-  assert.strictEqual(h.els.get('conflict').style.display || 'none', 'none', 'nothing to choose between here');
+  assert.strictEqual(h.els.get('cloudGate').style.display || 'none', 'none', 'nothing to choose between here');
 });
 
 await T('logging in where the cloud already has the same save: silent, just a version agreed', async () => {
@@ -415,12 +469,15 @@ await T('logging in where the cloud already has the same save: silent, just a ve
   } });
   h.sandbox.CLOUD.api = true;
   await h.sandbox.initSessionFromCloud('X', 0, false);
-  assert.strictEqual(h.els.get('conflict').style.display || 'none', 'none', 'identical copies need no question');
+  assert.strictEqual(h.els.get('cloudGate').style.display || 'none', 'none', 'identical copies need no question');
   assert.strictEqual(h.sandbox.CLOUD.ver, 9, 'the client must adopt the server\'s version');
   assert.strictEqual(h.sandbox.CLOUD.dirty, false);
 });
 
-await T('logging in where the cloud has a DIFFERENT save: the player is asked', async () => {
+await T('logging in where the cloud has a DIFFERENT save: the account save simply loads', async () => {
+  // Owner decision (2026-10-27): "logging in always resumes exactly where the player left off".
+  // The account is the only save, so a newer account copy is loaded and this browser's copy is
+  // stashed under a backup key - no chooser, and nothing destroyed.
   const local = JSON.stringify({ lv: 20, cls: 'Mage', zeny: 10, kills: 1, st: { str: 1 }, q: [] });
   const cloud = JSON.stringify({ lv: 51, cls: 'Sniper', zeny: 90000, kills: 400, st: { str: 1 }, q: [] });
   const h = loginHarness({ storage: { 'pg_save3_X': local }, routes: {
@@ -429,8 +486,11 @@ await T('logging in where the cloud has a DIFFERENT save: the player is asked', 
   } });
   h.sandbox.CLOUD.api = true;
   await h.sandbox.initSessionFromCloud('X', 0, false);
-  assert.strictEqual(h.els.get('conflict').style.display, 'flex', 'two different saves must be the player\'s call');
-  assert.strictEqual(h.store.get('pg_save3_X'), local, 'and nothing is written while they decide');
+  assert.strictEqual(h.store.get('pg_save3_X'), cloud, 'the account save is what resumes');
+  assert.strictEqual([...h.store.keys()].filter(k => k.startsWith('pg_save3_X_local_')).length, 1,
+    'the browser copy is kept as a backup');
+  assert.notStrictEqual(h.els.get('cloudGate').style.display, 'flex', 'nothing asks the player to choose');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 12);
 });
 
 await T('a new device with no local save simply loads the cloud character', async () => {
@@ -443,7 +503,7 @@ await T('a new device with no local save simply loads the cloud character', asyn
   h.sandbox.CLOUD.api = true;
   await h.sandbox.initSessionFromCloud('X', 0, false);
   assert.strictEqual(h.store.get('pg_save3_X'), cloud, 'the cloud save becomes this device\'s save');
-  assert.strictEqual(h.els.get('conflict').style.display || 'none', 'none');
+  assert.strictEqual(h.els.get('cloudGate').style.display || 'none', 'none');
 });
 
 await T('a long-hidden tab adopts another device\'s save when it has nothing of its own to lose', async () => {
@@ -456,14 +516,31 @@ await T('a long-hidden tab adopts another device\'s save when it has nothing of 
   assert.strictEqual(h.sandbox.CLOUD.ver, 8);
 });
 
-await T('but a tab with unsynced progress is asked instead of being overwritten', async () => {
+await T('a tab with unsynced progress also adopts: the account is the only save', async () => {
+  // Whatever this tab was holding is backed up, never played on top of the account's save.
   const cloud = JSON.stringify({ lv: 60, zeny: 5, kills: 1, st: { str: 1 }, q: [] });
-  const h = loginHarness({ storage: { 'pg_save3_X': JSON.stringify({ lv: 41 }) },
+  const local = JSON.stringify({ lv: 41 });
+  const h = loginHarness({ storage: { 'pg_save3_X': local },
     routes: { '/save': { status: 200, body: { version: 8, blob: cloud } }, '/grants': { status: 200, body: {} }, '/messages': { status: 200, body: {} } } });
   h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.dirty = true; h.sandbox.currentUser = 'X';
   await h.sandbox.cloudRefresh();
-  assert.strictEqual(h.els.get('conflict').style.display, 'flex');
-  assert.strictEqual(h.store.get('pg_save3_X'), JSON.stringify({ lv: 41 }), 'the unsynced copy is left alone');
+  assert.strictEqual(h.store.get('pg_save3_X'), cloud, 'the account save wins');
+  assert.strictEqual([...h.store.keys()].filter(k => k.startsWith('pg_save3_X_local_')).length, 1,
+    'and the unsynced copy is stashed, not deleted');
+  assert.notStrictEqual(h.els.get('cloudGate').style.display, 'flex');
+});
+
+await T('the gate freezes the sim and the away claim pays the frozen gap', async () => {
+  // The simulation cannot keep grinding behind the gate, or a dropped connection would quietly
+  // become normal progress. And because it did NOT grind, the server's claim must pay that window
+  // instead of being written off as "already simulated".
+  assert.ok(/function loop\(now\)\{[^}]*CLOUD\.lost[^}]*simAt=now;simPending=0/.test(src),
+    'loop() parks the simulation clock while the session is marked as away');
+  assert.ok(/if\(CLOUD\.lost\)return 'idle'/.test(src), 'nothing is uploaded while away');
+  assert.ok(/const covered=!CLOUD\.gate&&/.test(src),
+    'a claim covering the gate window is paid, not counted as simulated time');
+  assert.ok(/function cloudGateShow\(detail\)\{\s*CLOUD\.gate=true;/.test(src), 'opening the gate marks the window');
+  assert.ok(/CLOUD\.gate=false;/.test(src), 'and reconnecting clears the mark once the gap is settled');
 });
 
 // --------------------------------------------------- carrying saves to a new address ----
@@ -585,7 +662,7 @@ await T('the announcement poll asks every 5 minutes visible, every 15 hidden', a
   } finally { Date.now = realNow; }
 });
 
-await T('a tab that comes back holding unsynced progress pushes it instead of opening the chooser', async () => {
+await T('a tab that comes back pushes its own newer copy, and adopts the account\'s when another device moved on', async () => {
   // The normal cause: the browser suspended the tab (phone in a pocket) so no push happened, and it
   // wakes up with a newer save and an old version number. The server has not moved on, so there is
   // only one right answer - asking would be a dialog with one button.
@@ -598,17 +675,20 @@ await T('a tab that comes back holding unsynced progress pushes it instead of op
   h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 7;
   h.sandbox.CLOUD.dirty = true; h.sandbox.currentUser = 'X';
   await h.sandbox.cloudRefresh();
-  assert.notStrictEqual(h.els.get('conflict').style.display, 'flex', 'no chooser for a dialog with one answer');
+  assert.notStrictEqual(h.els.get('cloudGate').style.display, 'flex', 'nothing is asked when the answer is obvious');
   const put = h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT');
   assert.strictEqual(put.length, 1, 'the newer local copy is pushed');
   assert.ok(JSON.parse(put[0].init.body).blob.includes('"zeny":900'), 'and it is THIS device\'s save that was sent');
-  // A REAL conflict - another device wrote while this one was away - still asks.
+  // A save written by another device - the account wins, and this tab's copy is stashed.
   const h2 = harness({ storage: { 'pg_save3_X': here }, S: { lv: 20, cls: 'Novice', zeny: 900, kills: 40, st: { str: 1 } },
     routes: { '/save': { status: 200, body: { version: 9, blob: onServer, savedAt: 2 } } } });
   h2.sandbox.CLOUD.api = true; h2.sandbox.CLOUD.on = true; h2.sandbox.CLOUD.ver = 7;
   h2.sandbox.CLOUD.dirty = true; h2.sandbox.currentUser = 'X';
   await h2.sandbox.cloudRefresh();
-  assert.strictEqual(h2.els.get('conflict').style.display, 'flex', 'a version we have never seen is the player\'s call');
+  assert.strictEqual(h2.store.get('pg_save3_X'), onServer, 'the account save is loaded');
+  assert.strictEqual([...h2.store.keys()].filter(k => k.startsWith('pg_save3_X_local_')).length, 1,
+    'and the copy this tab held is stashed, not deleted');
+  assert.notStrictEqual(h2.els.get('cloudGate').style.display, 'flex', 'no gate for an ordinary refresh');
 });
 
 await T('v88: the town is fully gone - no code, no card, no atlas, no console hooks', async () => {
@@ -665,7 +745,7 @@ await T('a login does not adopt another account\'s cloud save into this tab', as
   const h = harness({ routes: { '/save': { status: 200, body: { version: 4, blob: JSON.stringify({ lv: 99, cls: 'Merchant' }), owner: 'SECOND' } } } });
   h.sandbox.CLOUD.on = true;
   await h.sandbox.cloudJoin('OWNERGM', JSON.stringify(h.sandbox.S));
-  assert.notStrictEqual(h.els.get('conflict').style.display, 'flex', 'no two-saves chooser offering the other account\'s save');
+  assert.notStrictEqual(h.els.get('cloudGate').style.display, 'flex', 'no two-saves chooser offering the other account\'s save');
   assert.strictEqual(h.sandbox.CLOUD.paused, true);
   assert.strictEqual(h.store.has('pg_save3_OWNERGM'), false, 'nothing is written under this account');
 });
@@ -701,7 +781,7 @@ await T('v88.6: the server refusing a save for its account stops sync and says w
   h.sandbox.currentUser = 'FRIEND'; h.sandbox.CLOUD.user = 'FRIEND';
   assert.strictEqual(await h.sandbox.cloudPush(true), 'idle');
   assert.strictEqual(h.sandbox.CLOUD.paused, true, 'sync is paused in this tab');
-  assert.notStrictEqual(h.els.get('conflict').style.display, 'flex', 'a refusal is not a two-saves question');
+  assert.notStrictEqual(h.els.get('cloudGate').style.display, 'flex', 'a refusal is not a two-saves question');
   assert.match(h.els.get('cloudBadge').textContent, /⛔/, 'the badge says sync stopped');
   assert.ok(h.state.logs.some(l => /nothing was saved or loaded/.test(l.m)), 'the server\'s reason reaches the log');
 });
@@ -713,7 +793,7 @@ await T('v88.6: a cloud save stamped for another account is not joined, and the 
   h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.currentUser = 'X'; h.sandbox.CLOUD.user = 'X';
   await h.sandbox.cloudJoin('X', local);
   assert.strictEqual(h.sandbox.CLOUD.paused, true, 'sync stops');
-  assert.notStrictEqual(h.els.get('conflict').style.display, 'flex', 'and no chooser offers the other save');
+  assert.notStrictEqual(h.els.get('cloudGate').style.display, 'flex', 'and no chooser offers the other save');
   assert.strictEqual(h.store.get('pg_save3_X'), local, 'the device copy is untouched');
   assert.ok(!h.calls.some(c => c.url === '/api/save' && c.init.method === 'PUT'), 'nothing is uploaded over it');
 });
@@ -799,7 +879,7 @@ await T('v88.6: the same progress with and without the stamp is one save, so no 
     '/grants': { status: 200, body: { grants: [] } }, '/messages': { status: 200, body: { messages: [] } } } });
   h.sandbox.CLOUD.api = true;
   await h.sandbox.cloudJoin('X', local);
-  assert.strictEqual(h.els.get('conflict').style.display || 'none', 'none', 'identical progress needs no question');
+  assert.strictEqual(h.els.get('cloudGate').style.display || 'none', 'none', 'identical progress needs no question');
   assert.strictEqual(h.sandbox.CLOUD.ver, 9, 'the version is agreed');
   assert.strictEqual(h.sandbox.CLOUD.dirty, false);
 });

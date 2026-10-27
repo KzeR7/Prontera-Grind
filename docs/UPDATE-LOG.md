@@ -8334,3 +8334,51 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   clean. Real-browser screenshot verification remains unavailable in this sandbox.
 * **Delivery:** PR #136 follow-up on `arena/2c44e24f-prontera-grind`; not merged or
   deployed.
+
+
+### 2026-10-27 — `2026-10-27 haven-v247 cloud-only saves, cash shop bundles, GM quick tools`
+* **Cloud is now the only save (owner).** The "which copy is real?" chooser is deleted, not
+  hidden: `cloudConflict`, `#conflict` and its three cards are gone, and the login card no longer
+  offers a device-save backup/restore pair. Logging in always loads the account's save; whatever
+  the browser was holding is stashed under `pg_save3_<name>_local_<ts>` first, so nothing is ever
+  deleted, and the log says so. The same rule now covers a 409 from a push, a long-hidden tab and
+  a login where the two copies differ — the account wins in all three.
+* **A dropped connection is away time, not progress.** A failed push is confirmed with a cheap
+  `/me` probe (one flaky request must not freeze a session). If the server really is unreachable,
+  `CLOUD.lost` stops the simulation (`loop()` parks `simAt`), nothing more is uploaded, and
+  `#cloudGate` explains the state with a Retry button. Reconnecting loads the account save, adopts
+  it, applies the server's away claim (the gate window is deliberately *not* treated as already
+  simulated time, unlike an ordinary background re-sync) and resumes. Signing out clears the whole
+  state and hides the gate.
+* **Cash Shop repriced (owner):** every Head, Face and Mouth cosmetic is **$1.50**; every Wings
+  item is **$2.00**. `assets/shop-catalog.js` is rewritten around those two slot prices, so a new
+  cosmetic inherits its slot's price instead of needing its own number.
+* **New Bundles tab (owner).** *Adventurer's Bundle* — **$8.00**, hard-slotted to **4 Head, 4
+  Face, 2 Mouth, 3 Wings**, contents **rolled on the server** from what the account does not own
+  yet and delivered as ordinary `cos:` entitlements on the order that paid for them. *Complete
+  Collection* — **$20.00**, every one of today's 52 cosmetics (future items are not included).
+  A bundle with nothing left to unlock is refused at checkout with a 409 (`bundleEmpty`) instead
+  of charging for an empty box. The old catalog's SKUs are untouched, so existing entitlements
+  keep working.
+* **The `C` shortcut is removed (owner).** It opened Cards from the loadout card and collided with
+  the Cards UI there; `R` → Refine is the only remaining letter shortcut in that handler, the
+  Settings hint no longer advertises `C`, and the Cards UI itself is unchanged.
+* **GM Tools rebuilt (owner).** One panel with six directly clickable sections (Quick, Levels,
+  Gear, Testing, World, Mail) — no section dropdown anywhere, and every section stays in the DOM
+  with only the active one visible. Quick starts with **Unlock everything**: Base Lv 150, every
+  class remembered at 150 with its job level at cap, every field/stage open, +1,000,000,000 Zeny,
+  +100,000 ore/elu/shards, +10,000 refine scrolls, +1,000 Mythic scrolls, Ascension materials and
+  Stat Ascension Lv 50 — behind one confirmation, and additive so an existing test account only
+  gains.
+* **Checks:** `cloud_sim` rewritten for the single-save rule (the gate, the `/me` confirmation,
+  the away claim, reconnect, sign-out, and every former "two saves" path); `shop_sim` and
+  `shop_api_sim` extended for the new prices and bundle delivery; new
+  `tools/tests/cloud_only_smoke.js` drives the real page in jsdom (login card, prices, bundle
+  rolls, Bundles tab, `C`/`R`, GM panel and the one-click unlock); `background_sim` pins the
+  frozen-clock behaviour. `save_load_sim`, `save_owner_sim`, `registration_sim`, `api_sim`,
+  `eclipse_ui_sim` and the rest of the suites pass. `ground_combat_sim`,
+  `rotation_updates_sim`, `fourth_job_skills_sim` and `skill_redesign_sim` fail identically on the
+  previous build (checked in a clean `git archive HEAD` tree) and are untouched here; real-browser
+  Chromium verification remains unavailable in this sandbox.
+* **Delivery:** Local changes on `arena/15c3f7d9-prontera-grind`; not committed, pushed, merged
+  or deployed.
