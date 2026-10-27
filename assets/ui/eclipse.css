@@ -3210,47 +3210,45 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
 }
 #wins [data-win="equip"]>.eclipse-window-footer{min-height:52px!important}
 
-/* 2) Equipment tab bar: 1-row compact — covers Loadout + workspace windows */
-#wins [data-win="equip"] .atabs,
-#wins .wbody[data-layout=equip]>.atabs,
-#wins .eclipse-equipment-workspace-window>.wbody>.atabs,
-body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.atabs{
-  display:grid!important;
-  grid-template-columns:repeat(6,minmax(0,1fr))!important;
-  gap:6px!important;
-  padding:8px 12px 0!important;
+/* 2) Equipment sub-tabs: wording + gold line (no boxes) — matches Loadout */
+#wins [data-win="equip"] .atabs{
+  display:flex!important;
+  gap:0!important;
+  padding:0 14px!important;
   margin:0!important;
-  height:auto!important;min-height:0!important;
+  height:38px!important;min-height:38px!important;
   background:transparent!important;
   border:0!important;
-  overflow:visible!important;
+  border-bottom:1px solid color-mix(in srgb,var(--e-line) 75%,transparent)!important;
+  overflow:hidden!important;
 }
-#wins [data-win="equip"] .atabs>button,
-#wins .wbody[data-layout=equip]>.atabs>button,
-#wins .eclipse-equipment-workspace-window>.wbody>.atabs>button,
-body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.atabs>button{
-  min-height:28px!important;
-  padding:5px 6px!important;
+#wins [data-win="equip"] .atabs>button{
+  flex:1 1 0!important;
+  min-height:38px!important;
+  padding:0 10px!important;
   display:flex!important;align-items:center!important;justify-content:center!important;
-  gap:3px!important;
-  background:linear-gradient(135deg,var(--e-raised),color-mix(in srgb,var(--e-raised) 86%,var(--panel)))!important;
-  border:1px solid var(--e-line)!important;
-  border-radius:6px!important;
+  background:none!important;
+  border:0!important;
+  border-bottom:2px solid transparent!important;
+  border-radius:0!important;
   color:var(--e-muted)!important;
-  font-size:7.5px!important;font-weight:700!important;letter-spacing:.04em!important;
-  text-transform:uppercase!important;line-height:1.1!important;text-align:center!important;
-  box-shadow:inset 0 1px 0 #ffffff0f!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;text-overflow:ellipsis!important;
+  font-size:8.5px!important;font-weight:700!important;letter-spacing:.09em!important;
+  text-transform:uppercase!important;line-height:1!important;text-align:center!important;
+  box-shadow:none!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
 }
-#wins [data-win="equip"] .atabs>button.on,
-#wins .wbody[data-layout=equip]>.atabs>button.on,
-#wins .eclipse-equipment-workspace-window>.wbody>.atabs>button.on,
-body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.atabs>button.on{
-  background:linear-gradient(110deg,var(--e-action-start),var(--e-action-end))!important;
-  color:#17232e!important;
-  border-color:color-mix(in srgb,var(--gold) 72%,#fff)!important;
-  box-shadow:0 4px 12px #0002,inset 0 1px 0 #fff4!important;
+#wins [data-win="equip"] .atabs>button:not(:first-child){
+  border-left:1px solid color-mix(in srgb,var(--gold) 13%,transparent)!important;
+}
+#wins [data-win="equip"] .atabs>button.on{
+  background:none!important;
+  color:var(--gold)!important;
+  border-bottom-color:var(--gold)!important;
+  box-shadow:none!important;
+}
+#wins [data-win="equip"] .atabs>button:hover:not(.on){
+  color:var(--ink)!important;
+  border-bottom-color:color-mix(in srgb,var(--gold) 30%,transparent)!important;
 }
 
 /* 3) Workspace content grids: same size/gap as Loadout's 3-col layout */
@@ -3270,22 +3268,22 @@ body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.
   grid-template-columns:minmax(0,1.62fr) minmax(235px,.94fr)!important;
 }
 
-/* 4) Workspace panels: same gradient & design as Loadout's equipped/bag/inspector */
+/* 4) Workspace panels: same gradient & gold frame as Loadout */
 #wins .eclipse-card-collection,
 #wins .eclipse-card-detail,
 #wins .eclipse-card-sockets{
   background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%)!important;
-  border:1px solid var(--e-line)!important;
+  border:1px solid color-mix(in srgb,var(--gold) 18%,var(--e-line))!important;
   border-radius:8px!important;
-  box-shadow:inset 0 1px 0 #ffffff0c!important;
+  box-shadow:inset 0 1px 0 #ffffff0c,0 1px 10px #0003!important;
   padding:16px 14px!important;
 }
 #wins .eclipse-autosell-section,
 #wins .eclipse-autosell-aside{
   background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%)!important;
-  border:1px solid var(--e-line)!important;
+  border:1px solid color-mix(in srgb,var(--gold) 18%,var(--e-line))!important;
   border-radius:8px!important;
-  box-shadow:inset 0 1px 0 #ffffff0c!important;
+  box-shadow:inset 0 1px 0 #ffffff0c,0 1px 10px #0003!important;
   padding:16px 14px!important;
 }
 #wins .eclipse-affix-menu,
@@ -3293,9 +3291,14 @@ body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.
 #wins .eclipse-affix-aside{
   background:linear-gradient(155deg,color-mix(in srgb,var(--e-raised) 50%,transparent),color-mix(in srgb,var(--e-bg) 75%,transparent))!important;
   background-color:transparent!important;
-  border:1px solid var(--e-line)!important;
+  border:1px solid color-mix(in srgb,var(--gold) 18%,var(--e-line))!important;
   border-radius:8px!important;
-  box-shadow:inset 0 1px 0 #ffffff0c!important;
+  box-shadow:inset 0 1px 0 #ffffff0c,0 1px 10px #0003!important;
+}
+#wins .ascension-progression,
+#wins .ascension-upgrade{
+  background:linear-gradient(150deg,color-mix(in srgb,var(--e-raised) 45%,transparent),transparent 75%)!important;
+  border:1px solid color-mix(in srgb,var(--gold) 18%,var(--e-line))!important;
 }
 #wins .eclipse-affix-menu{padding:14px 12px!important}
 #wins .eclipse-affix-main{padding:14px 14px!important}
@@ -3315,10 +3318,10 @@ body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.
   border-radius:8px!important;
 }
 
-/* 5) Responsive: keep tabs 1-row, workspace columns collapse */
+/* 5) Responsive: keep tabs 1-row (wording + gold line), workspace columns collapse */
 @media(max-width:1040px){
- #wins [data-win="equip"] .atabs{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:4px!important;padding:6px 8px 0!important}
- #wins [data-win="equip"] .atabs>button{font-size:7px!important;min-height:26px!important;padding:4px!important}
+ #wins [data-win="equip"] .atabs{padding:0 8px!important}
+ #wins [data-win="equip"] .atabs>button{font-size:7px!important;letter-spacing:.06em!important}
  #wins .eclipse-card-workspace-grid{grid-template-columns:minmax(0,.95fr) minmax(0,1.45fr)!important}
  #wins .eclipse-card-sockets{grid-column:1/-1!important}
  #wins .eclipse-affix-workbench{grid-template-columns:minmax(185px,.78fr) minmax(0,1.78fr)!important}
@@ -3331,8 +3334,8 @@ body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.
    top:64px!important;bottom:calc(var(--docktop,76px) + 4px)!important;
    max-height:none!important;
  }
- #wins [data-win="equip"] .atabs{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:3px!important;padding:6px 6px 0!important}
- #wins [data-win="equip"] .atabs>button{min-height:24px!important;font-size:6.5px!important;padding:4px 3px!important;letter-spacing:.02em!important}
+ #wins [data-win="equip"] .atabs{height:34px!important;min-height:34px!important;padding:0 6px!important}
+ #wins [data-win="equip"] .atabs>button{min-height:34px!important;font-size:6.5px!important;padding:0 5px!important;letter-spacing:.04em!important}
  #wins .eclipse-card-workspace-grid,
  #wins .eclipse-affix-workbench,
  #wins .eclipse-autosell-layout{grid-template-columns:1fr!important;padding:10px!important;gap:10px!important}
