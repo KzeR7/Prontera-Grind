@@ -3184,22 +3184,31 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.wbod
   background:transparent!important;
   display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;
 }
+/* Unified window sizing: Loadout and all workspaces fill same frame */
+#wins [data-win="equip"]{display:flex!important;flex-direction:column!important;min-height:0!important}
+#wins [data-win="equip"]>.title{height:60px!important;min-height:60px!important;padding:8px 14px!important}
+#wins [data-win="equip"]>.wbody{
+  flex:1 1 auto!important;min-height:0!important;
+  display:flex!important;flex-direction:column!important;overflow:hidden!important;
+}
+#wins [data-win="equip"] .wbody>.atabs{flex:none!important}
 #wins .eclipse-equipment,
 #wins .eclipse-card-workspace,
 #wins .eclipse-affix-workbench,
 #wins .eclipse-autosell-layout,
 #wins .eclipse-affix-empty,
 #wins .eclipse-equipment-workspace-window .eclipse-affix-gate{
-  flex:1 1 auto!important;
-  min-height:380px!important;
+  flex:1 1 auto!important;min-height:0!important;overflow:auto!important;
 }
+#wins .eclipse-card-workspace{overflow:hidden!important}
 #wins .eclipse-card-workspace-grid,
-#wins .eclipse-affix-workbench{flex:1 1 auto!important}
-#wins .wbody[data-layout=equip]{display:flex!important;flex-direction:column!important;min-height:0!important}
+#wins .eclipse-affix-workbench{flex:1 1 auto!important;min-height:0!important;overflow:auto!important}
+#wins .wbody[data-layout=equip]{display:flex!important;flex-direction:column!important;min-height:0!important;overflow:hidden!important}
 /* Keep footer sizing consistent with Loadout */
 body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.eclipse-window-footer{
   min-height:52px!important;
 }
+#wins [data-win="equip"]>.eclipse-window-footer{min-height:52px!important}
 
 /* 2) Equipment tab bar: 1-row compact — covers Loadout + workspace windows */
 #wins [data-win="equip"] .atabs,
@@ -3328,6 +3337,7 @@ body.equipment-workspace-open #wins .eclipse-equipment-workspace-window>.wbody>.
  #wins .eclipse-affix-workbench,
  #wins .eclipse-autosell-layout{grid-template-columns:1fr!important;padding:10px!important;gap:10px!important}
 }
-/* Ensure all workspace tab contents share the same window height */
-#wins .wp.eclipse-equipment-workspace-window .wbody{min-height:420px!important}
-#wins .eclipse-affix-empty{place-content:center!important;min-height:360px!important}
+/* Ensure all workspace tab contents share the same window height — fill, not capped */
+#wins .wp.eclipse-equipment-workspace-window .wbody,
+#wins [data-win="equip"]>.wbody{min-height:0!important;flex:1 1 auto!important}
+#wins .eclipse-affix-empty{place-content:center!important;flex:1!important;min-height:0!important}
