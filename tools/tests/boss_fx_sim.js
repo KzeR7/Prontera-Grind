@@ -5,17 +5,25 @@ const root=path.resolve(__dirname,'../..');
 const src=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const grab=(a,b)=>{const i=src.indexOf(a);assert(i>=0,'missing anchor: '+a);const j=src.indexOf(b,i);assert(j>i,'missing end: '+b);return src.slice(i,j)};
 let depth=0,saves=0,marks=0,texts=[];
-// A Canvas stand-in that records real work and refuses non-finite geometry.
+// A Canvas stand-in that records real work and refuses non-finite geometry. `peak` is the
+// brightest FX path fill/stroke of a frame: `measureText` marks the start of the title card,
+// whose own hairlines are drawn in screen space at full alpha and must not count as field cover.
 function canvas(){
   const stack=[];
+  const c={width:0,height:0,style:{},setAttribute(){},getContext:()=>ctx,peak:0,plate:false};
+  const note=()=>{if(!c.plate&&ctx.globalAlpha>.001)c.peak=Math.max(c.peak,ctx.globalAlpha)};
   const ctx={globalAlpha:1,globalCompositeOperation:'source-over',lineWidth:1,font:'',textAlign:'',textBaseline:'',fillStyle:'',strokeStyle:'',lineJoin:'',lineCap:'',canvas:null,
     save(){stack.push([this.globalAlpha,this.globalCompositeOperation]);depth++;saves++},
     restore(){assert(stack.length,'unbalanced restore');[this.globalAlpha,this.globalCompositeOperation]=stack.pop();depth--},
-    setTransform(...a){assert(a.every(Number.isFinite),'non-finite setTransform');assert.equal(a.length,6)},
-    clearRect(){},
+    setTransform(...a){assert(a.every(Number.isFinite),'non-finite setTransform');assert.equal(a.length,6);
+      // The FX layer is drawn in world space (a translated transform); the title card resets to
+      // screen space. Reset the plate flag at the start of each cast, not just at clearRect.
+      if(a[4]!==0||a[5]!==0)c.plate=false},
+    clearRect(){c.plate=false},
     fillRect(...a){assert(a.every(Number.isFinite),'non-finite fillRect');marks++},
-    fill(){if(this.globalAlpha>.001)marks++},
-    stroke(){assert(Number.isFinite(this.lineWidth),'non-finite lineWidth');if(this.globalAlpha>.001)marks++},
+    fill(){note();if(this.globalAlpha>.001)marks++},
+    stroke(){assert(Number.isFinite(this.lineWidth),'non-finite lineWidth');note();if(this.globalAlpha>.001)marks++},
+    measureText(t){c.plate=true;return {width:String(t).length*20}},
     fillText(t,x,y){assert(Number.isFinite(x)&&Number.isFinite(y),'non-finite text');texts.push(String(t));marks++},
     strokeText(t,x,y){assert(Number.isFinite(x)&&Number.isFinite(y),'non-finite strokeText');marks++},
     drawImage(img,...a){assert(a.every(Number.isFinite),'non-finite drawImage');marks++},
@@ -25,7 +33,6 @@ function canvas(){
   for(const name of ['translate','rotate','scale','moveTo','lineTo','bezierCurveTo','quadraticCurveTo','arc','ellipse'])
     ctx[name]=(...a)=>{assert(a.every(Number.isFinite),name+' got non-finite coordinates');assert(a.every(v=>Math.abs(v)<1e7),name+' coordinate blew up')};
   for(const name of ['beginPath','closePath','clip'])ctx[name]=()=>{};
-  const c={width:0,height:0,style:{},setAttribute(){},getContext:()=>ctx};
   ctx.canvas=c;return c;
 }
 const box={console,Math,document:{createElement:canvas},devicePixelRatio:1};
@@ -34,7 +41,7 @@ vm.runInContext(fs.readFileSync(path.join(root,'assets/boss-fx.js'),'utf8'),box)
 const ev=code=>vm.runInContext(code,box);
 
 // ---- the roster ---------------------------------------------------------------------------
-const BOSSES=JSON.parse(ev('JSON.stringify(PGBossFx.BOSSES.map(b=>({map:b.map,name:b.name,tier:b.tier,skills:b.skills.map(s=>({id:s.id,name:s.name,life:s.life,pattern:s.pattern,signature:s.signature}))})))'));
+const BOSSES=JSON.parse(ev('JSON.stringify(PGBossFx.BOSSES.map(b=>({map:b.map,name:b.name,tier:b.tier,skills:b.skills.map(s=>({id:s.id,name:s.name,life:s.life,choreo:s.choreo,pattern:s.pattern,signature:s.signature}))})))'));
 assert.equal(BOSSES.length,12,'one row per map, in MAPS order');
 assert.deepEqual(BOSSES.map(b=>b.map),[...Array(12).keys()],'map indexes stay in order');
 assert.deepEqual(BOSSES.map(b=>b.tier),[1,1,1,1,1,2,2,2,2,3,3,3],'tier follows the map band');
@@ -47,7 +54,32 @@ for(const b of BOSSES){
   for(const s of b.skills){
     assert(s.name.length<=22,b.name+': name fits the title card');
     assert(s.signature.length>30,b.name+'/'+s.name+': needs a design note');
-    assert(s.life>=2&&s.life<=3.4,s.name+': cast life stays 2-3.4s');
+    // Screen time: full-field tier-3 moves clear in under two seconds; tier-2 sweeps get a
+    // shorter window too. Both keep `choreo`, the length the animation was authored for.
+    if(b.tier===3){
+      assert(s.life>=1.5&&s.life<=1.8,s.name+': full-field cast must clear in under 2s');
+      assert(s.choreo>=3&&s.choreo<=3.4,s.name+': keeps its full cataclysm choreography');
+    }else if(b.tier===2){
+      assert(s.life>=2&&s.life<=2.3,s.name+': map-wide cast must clear quickly');
+      assert(s.choreo>=2.7&&s.choreo<=3.1,s.name+': keeps its full layered choreography');
+    }else{
+      assert(s.life>=2&&s.life<=3.4,s.name+': local burst keeps its authored life');
+      assert.equal(s.choreo,undefined,s.name+': local bursts need no fast-forward');
+    }
+  }
+}
+// The spec the renderer/cast clock actually reads agrees with the roster, and only wide moves
+// fast-forward. `fadeAt` is the fraction of the cast that stays at full brightness.
+const SPECS=JSON.parse(ev('JSON.stringify([...PGBossFx.SKILLS.values()].map(s=>({id:s.id,tier:s.tier,life:s.life,choreo:s.choreo,fadeAt:s.fadeAt})))'));
+assert.equal(SPECS.length,24);
+for(const s of SPECS){
+  assert.equal(s.life,ev(`PGBossFx.life(${JSON.stringify(s.id)})`),s.id+': life() drives the cast clock');
+  assert(s.choreo>=s.life,s.id+': art is never longer than the cast on screen');
+  if(s.tier===1){assert.equal(s.choreo,s.life,s.id+': local burst plays at authored speed');assert.equal(s.fadeAt,1,s.id+': local burst keeps full brightness')}
+  else{
+    assert(s.choreo>s.life,s.id+': wide move fast-forwards its art');
+    assert(s.fadeAt<1,s.id+': wide move starts dimming before the cast ends');
+    if(s.tier===3)assert(s.fadeAt<=.35,s.id+': cataclysm dims soon after the impact');
   }
 }
 // The three tiers escalate: low maps stay local and calm, the deepest maps shake the camera.
@@ -91,6 +123,26 @@ for(const id of all){
 {const c=canvasFor(),paint=ev('PGBossFx').create(c);texts.length=0;
  paint.draw([{id:'bj_jelly',age:1,x:0,z:0,seed:1,scale:1}],1200,760,(x,y,z)=>[600,470-y*40],1,1);
  assert(texts.join('|').includes('B O S S   S K I L L'),'tier 1 reads as a boss skill');}
+
+// ---- screen time: a full-field cast clears the fight quickly ------------------------------
+{const c=canvasFor(),p=ev('PGBossFx').create(c),life=ev('PGBossFx.life("ifr_blaze")');
+ const frameAt=(id,age)=>{c.peak=0;marks=0;
+   p.draw([{id,age,x:0,z:0,seed:3,scale:1}],1200,760,(x,y,z)=>[600,470-y*40],1,1);
+   return {peak:c.peak,marks}};
+ const start=frameAt('ifr_blaze',life*.2);
+ assert(start.peak>.8,'the impact is still at full brightness');
+ const mid=frameAt('ifr_blaze',life*.7);
+ assert(mid.peak<start.peak*.6,'a full-field slash dims soon after impact');
+ const end=frameAt('ifr_blaze',life*.95);
+ assert(end.peak<start.peak*.1,'almost nothing is left before the cast ends');
+ const impact=frameAt('ifr_blaze',life*.46);
+ assert(impact.marks>20&&impact.peak>.7,'fast-forwarding keeps the impact frame intact');
+ const gone=frameAt('ifr_blaze',life+.1);
+ assert.equal(gone.marks,0,'nothing paints after the shorter cast life');
+ // Tier-1 local bursts were not touched by the early fade.
+ const local=frameAt('bj_jelly',ev('PGBossFx.life("bj_jelly")')*.8);
+ assert(local.peak>.5,'a local burst still plays at full brightness');
+}
 
 // ---- the adapter's contract ---------------------------------------------------------------
 assert(ev('typeof PGBossFx.create==="function"'));
@@ -144,6 +196,7 @@ function bootAdapter({boss=true,hidden=false,catching=false,cameraShake=true}={}
  // It expires, then re-arms for 3.2-4.6s. (The sim steps in tenths of a second, so the frame
  // that crosses the end of the cast is checked just past it.)
  const life=a.ev('bossCast.life'),start=a.ev('bossCast.start'),end=start+life+.05;
+ assert(life<2,'the game clock uses the shortened tier-3 cast life, not the choreography length');
  a.ev(`t=${end};tickBossSkill()`);assert.equal(a.ev('bossCast'),null,'the cast lasts its own life');
  const wait=a.ev('bossCastNext')-end;
  assert(wait>=3.19&&wait<=4.61,'the next cast is 3.2-4.6s later, not a metronome ('+wait+')');
@@ -177,5 +230,5 @@ assert(src.includes('syncBossSkillFx();'),'the frame draws the boss layer');
 assert(src.includes("$('weaponSpriteLayer').after(canvas);bossSkillLayer=renderer;"),'the canvas joins the effect layers');
 assert(src.includes('not(#bossSkillLayer)'),'clean-screen keeps the boss layer visible');
 console.log('PASS boss skill FX: 12 bosses / 24 unique moves, tiered 1-3, real canvas output at every frame, '
-  +'no leaked state, invalid casts are no-ops, 3.2-4.6s anti-metronome clock, no repeats, boss-change reset, '
-  +'hidden-tab and shake respect, and the page wiring');
+  +'fast-forwarded wide moves that dim and clear the field early, no leaked state, invalid casts are no-ops, '
+  +'3.2-4.6s anti-metronome clock, no repeats, boss-change reset, hidden-tab and shake respect, and the page wiring');
