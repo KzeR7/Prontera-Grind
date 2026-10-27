@@ -36,7 +36,7 @@ const RESOURCES={
 };
 const SUPPLIES=[
  ['ori',50,199],['ori',300,899],['elu',50,199],['elu',300,899],
- ['refineScrolls',1,199],['refineScrolls',5,799],['mythicScrolls',1,499],['mythicScrolls',3,1299],
+ ['refineScrolls',2,100],['refineScrolls',10,299],['mythicScrolls',2,249],['mythicScrolls',10,700],
  ['ascMat0',10,299],['ascMat0',30,799],['ascMat1',10,299],['ascMat1',30,799],['ascMat2',5,399],['ascMat2',15,999],
 ].map(([resource,amount,price])=>({sku:'sup:'+resource+':'+amount,kind:'supply',resource,amount,price,name:RESOURCES[resource].name+' \u00d7'+amount,group:RESOURCES[resource].group,blurb:RESOURCES[resource].blurb,maxQty:MAX_QTY}));
 

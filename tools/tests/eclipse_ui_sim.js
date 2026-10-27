@@ -493,6 +493,19 @@ test('Daily Reward Roulette has 33% Ori, 33% Elu, 11% Zeny buff, 11% EXP buff, 7
  assert.equal(ev('!S.cards[0].bossCard&&!S.cards[0].nightmare'),true,'awarded card is a regular non-boss monster card');
  ev("S.dailyWheel.day='2000-01-01';ACT.spindaily(6)");
  assert.equal(ev('S.refineScrolls'),1,'slice 6 awards 1 Refine Protection Scroll');
+ ev("gmApplyGift({resource:'dailyRolls',amount:2})");
+ assert.equal(ev('dailySpinsLeft()'),2,'Echo board daily rolls bank on top of the used free spin');
+ ev('ACT.spindaily(0)');
+ assert.equal(ev('S.dailyWheel.bonusRolls'),1,'a spin after the free spin spends one banked roll');
+ assert.equal(ev('dailySpinsLeft()'),1);
+ ev("S.dailyWheel.day='2000-01-01';ui();renderMailDailyModal()");
+ assert.equal(ev('dailySpinsLeft()'),2,'the new day restores the free spin and the banked roll survives');
+ assert.equal(ev('S.dailyWheel.bonusRolls'),1,'banked rolls never expire with the daily reset');
+ ev('ACT.spindaily(0)');
+ assert.equal(ev('S.dailyWheel.bonusRolls'),1,'the free spin is spent before banked rolls');
+ ev('ACT.spindaily(0)');
+ assert.equal(ev('S.dailyWheel.bonusRolls'),0,'the last banked roll is then spent');
+ assert.equal(ev('dailySpinsLeft()'),0);
 });
 console.log(`${passed} passed`);
 }finally{g.close()}

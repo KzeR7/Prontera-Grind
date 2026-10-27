@@ -242,7 +242,7 @@ try {
       assert.strictEqual(put.status, 200, 'owned: the look is accepted');
       const gm = await (await fetch(host + '/api/gm/shop?id=1', { headers: h })).json();
       assert.strictEqual(gm.entitlements.length, 1); assert.strictEqual(gm.orders.length, 1);
-      const sup = await (await fetch(host + '/api/shop/checkout', { method: 'POST', headers: h, body: JSON.stringify({ sku: 'sup:mythicScrolls:1', qty: 2 }) })).json();
+      const sup = await (await fetch(host + '/api/shop/checkout', { method: 'POST', headers: h, body: JSON.stringify({ sku: 'sup:mythicScrolls:2', qty: 1 }) })).json();
       assert.strictEqual(sup.fulfilled, true);
       const grants = await (await fetch(host + '/api/grants', { headers: h })).json();
       assert.deepStrictEqual(grants.grants.map(g => [g.kind, g.payload.resource, g.payload.amount, g.from]), [['gift', 'mythicScrolls', 2, 'Cash Shop']]);
