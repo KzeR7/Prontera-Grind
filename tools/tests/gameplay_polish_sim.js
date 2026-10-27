@@ -6,7 +6,7 @@ try{
  assert.match(ev('ascensionForgePanel()'),/Current affixes.*STR \+10/s);
  assert.ok(!ev('V.market()').includes('market:ascension'));
  ev(`reforgePoolOpen='weapon'`);
- const pool=ev('reforgePanel()');assert.match(pool,/Possible affixes/);assert.match(pool,/Crit/);assert.ok(!pool.includes('MATK +0'));
+ const pool=ev('reforgePanel()');assert.match(pool,/Possible (?:replacement )?affixes/);assert.match(pool,/Crit/);assert.ok(!pool.includes('MATK +0'));
  ev(`window.choices=[{id:1,val:1000,r:0,cards:[]},{id:2,val:5,r:10,cards:[]},{id:3,val:10,r:10,cards:[{}]},{id:4,val:20,r:10,cards:[{}]}];window.sorted=choices.sort((a,b)=>equipmentPreference(b,a)).map(x=>x.id)`);
  assert.deepEqual(Array.from(ev('sorted')),[4,3,2,1]);
  ev(`S.mp=10;TRIAL.on=false;JOB_RITE.on=false`);assert.equal(ev('actorFloorY()'),.12);

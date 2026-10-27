@@ -36,13 +36,14 @@ test('cards stack equivalent legacy rolls, keep different effects separate and s
  doc.querySelector('[data-a=cardgrade][data-v="2"]').click();tiles=[...doc.querySelectorAll('.eclipse-card-grid [data-a=selc]')];assert.equal(tiles.length,2);assert.ok(tiles.every(t=>t.textContent.includes('Rare')));assert.equal(ev('JSON.stringify(S.cards)'),before);
  tiles.find(t=>t.dataset.tip==='7001').click();doc.querySelector('[data-a=sellcard]').click();assert.equal(ev('S.cards.length'),3);assert.ok(ev('S.cards.some(c=>c.id===7002)&&S.cards.some(c=>c.id===7003)'));
 });
-test('paid reforge comparisons and keep/replace buttons stay in the main workbench',()=>{
+test('paid reforge comparisons and keep/replace actions stay in the dedicated Affixes workspace',()=>{
  ev("S.eq.weapon.aff=[{k:'str',v:10},{k:'agi',v:10}];tabs.push('equip');sub.equip='reforge';renderWin();reforge('weapon',true)");
- let offer=doc.querySelector('.reforge-offer');assert.ok(offer.closest('.eclipse-workshop-stage'));assert.equal(offer.closest('.eclipse-workshop-aside'),null);assert.equal(offer.querySelectorAll('.reforge-comparison-row').length,3);
- const paid=ev('S.zeny'),old=ev('JSON.stringify(S.eq.weapon.aff)'),proposed=ev('JSON.stringify(S.reforgePending.after)');
- offer.querySelector('[data-v=yes]').click();assert.equal(ev('JSON.stringify(S.eq.weapon.aff)'),proposed);assert.equal(ev('S.zeny'),paid);assert.equal(ev('S.reforgePending'),undefined);
- ev("reforge('weapon',true)");const current=ev('JSON.stringify(S.eq.weapon.aff)');doc.querySelector('.reforge-offer [data-v=no]').click();assert.equal(ev('JSON.stringify(S.eq.weapon.aff)'),current);assert.equal(ev('S.reforgePending'),undefined);
+ let offer=doc.querySelector('.reforge-offer');assert.ok(offer.closest('.eclipse-affix-main'));assert.equal(offer.closest('.eclipse-affix-aside'),null);assert.equal(offer.querySelectorAll('.reforge-comparison-row').length,3);
+ const paid=ev('S.zeny'),proposed=ev('JSON.stringify(S.reforgePending.after)');
+ doc.querySelector('[data-a=refaccept][data-v=yes]').click();assert.equal(ev('JSON.stringify(S.eq.weapon.aff)'),proposed);assert.equal(ev('S.zeny'),paid);assert.equal(ev('S.reforgePending'),undefined);
+ ev("reforge('weapon',true)");const current=ev('JSON.stringify(S.eq.weapon.aff)');doc.querySelector('[data-a=refaccept][data-v=no]').click();assert.equal(ev('JSON.stringify(S.eq.weapon.aff)'),current);assert.equal(ev('S.reforgePending'),undefined);
 });
+
 test('Activity owns preview filters and the floating feed has no options popup',()=>{
  ev("tabs.push('log');renderWin()");assert.equal(doc.getElementById('feedFil'),null);assert.equal(doc.getElementById('feedFilter'),null);
  const panel=doc.querySelector('[data-win=log]');assert.ok(panel.querySelector('[data-a=feed]'));assert.equal(panel.querySelector('[data-a=logf]').closest('details'),null);
@@ -138,7 +139,7 @@ test('the auto combat bar starts collapsed, expands on demand and never mutates 
 });
 test('workshop routes preserve Reforge offers and do not duplicate the store in supplies',()=>{
  ev(`ACT.openreforge();S.eq.weapon.aff=[{k:'str',v:10},{k:'agi',v:10}];renderWin()`);
- assert.equal(ev('sub.equip'),'reforge');assert.ok(doc.querySelector('[data-a=bmref]'));assert.match(doc.querySelector('[data-win=equip]').textContent,/Reforge affixes/);
+ assert.equal(ev('sub.equip'),'reforge');assert.ok(doc.querySelector('[data-a=bmref]'));assert.match(doc.querySelector('[data-win=equip]').textContent,/Affixes/);
  ev(`reforge('weapon',true);renderWin()`);assert.ok(doc.querySelector('[data-a=refaccept]'));const before=ev('JSON.stringify(S.reforgePending)');ev(`sub.equip='refine';renderWin();sub.equip='reforge';renderWin()`);assert.equal(ev('JSON.stringify(S.reforgePending)'),before);
  ev(`tabs.splice(0,tabs.length,'market');renderWin()`);assert.equal(doc.querySelectorAll('[data-win=market] [data-buy]').length,0);doc.querySelector('[data-v="market:echo"]').click();assert.equal(doc.querySelectorAll('[data-win=market] [data-buy]').length,ev('TRIAL_STORE.length'));
 });
@@ -186,7 +187,7 @@ test('PR review: market navigation is visible and cannot exit a ranked run',()=>
 test('PR review: paid offers stay visible across selection, reload and unequip',()=>{
  ev(`S.eq.armor={...S.eq.weapon,id:43001,slot:'armor',wt:null,aff:[{k:'str',v:10}]};S.eq.weapon.aff=[{k:'str',v:10}];tabs.push('equip');sub.equip='reforge';reforge('armor',true);selE='weapon';renderWin()`);
  let offer=doc.querySelector('.reforge-offer');assert.ok(offer);assert.equal(offer.closest('details'),null);
- ev(`S.inv.push(S.eq.armor);S.eq.armor=null;renderWin()`);offer=doc.querySelector('.reforge-offer');assert.ok(offer);assert.equal(offer.closest('details'),null);offer.querySelector('[data-v=no]').click();assert.equal(ev('!!S.reforgePending'),false);
+ ev(`S.inv.push(S.eq.armor);S.eq.armor=null;renderWin()`);offer=doc.querySelector('.reforge-offer');assert.ok(offer);assert.equal(offer.closest('details'),null);doc.querySelector('[data-a=refaccept][data-v=no]').click();assert.equal(ev('!!S.reforgePending'),false);
 });
 test('PR review: scroll controls are unique and Nightmare has five stage markers',()=>{
  ev(`tabs.push('equip');sub.equip='refine';renderWin()`);assert.equal(doc.querySelectorAll('[data-a=refprotect]').length,2);
