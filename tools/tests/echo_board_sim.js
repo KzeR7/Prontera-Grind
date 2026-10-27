@@ -9,20 +9,25 @@ import { boardDayKey, boardWeekStart } from '../../functions/_lib/board.js';
 import { echoRewardFor } from '../../functions/_lib/echo-board.js';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-function makeD1(sqlite) {
-  const wrap = (stmt, args = []) => ({
-    bind: (...more) => wrap(stmt, args.concat(more)),
-    first: async () => stmt.get(...args) ?? null,
-    all: async () => ({ results: stmt.all(...args) }),
-    run: async () => ({ success: true, meta: stmt.run(...args) }),
+function makeD1(sqlite, stats = null) {
+  const wrap = (stmt, args = [], sql = '') => ({
+    bind: (...more) => wrap(stmt, args.concat(more), sql),
+    first: async () => { if (stats) stats.reads.push(sql); return stmt.get(...args) ?? null; },
+    all: async () => { if (stats) stats.reads.push(sql); return { results: stmt.all(...args) }; },
+    run: async () => {
+      const meta = stmt.run(...args);
+      if (stats) stats.writes.push({ sql, changes: Number(meta?.changes) || 0 });
+      return { success: true, meta };
+    },
   });
-  return { prepare: sql => wrap(sqlite.prepare(sql)) };
+  return { prepare: sql => wrap(sqlite.prepare(sql), [], sql) };
 }
+const stats = { reads: [], writes: [] };
 const sqlite = new DatabaseSync(':memory:');
 for (const name of fs.readdirSync(path.join(root, 'migrations')).filter(n => /^\d+_.*\.sql$/.test(n)).sort()) {
   sqlite.exec(fs.readFileSync(path.join(root, 'migrations', name), 'utf8'));
 }
-const env = { DB: makeD1(sqlite) };
+const env = { DB: makeD1(sqlite, stats) };
 function request(method, url, { body, cookie } = {}) {
   const text = body === undefined ? '' : JSON.stringify(body);
   const values = { 'Content-Type': 'application/json' };
@@ -128,6 +133,59 @@ await t('a finished day pays its Top 100 exactly once, through the grants queue'
   await board(beta, 'daily');
   assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM grants WHERE created_by='Endless Echo'").get().n, grants.length);
   assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM leaderboard_echo_rewards').get().n, rewards);
+});
+
+await t('unchanged Echo scores and already-settled periods spend zero Echo D1 writes on field syncs', async () => {
+  const trial = dps => ({ day: today, used: 1, best: dps, runs: 1, chest: 0,
+    echoBoard: { day: today, dayDps: dps, week, weekDps: dps } });
+  const ver = (await call('api/save.js', 'onRequestGet', 'GET', '/api/save', { cookie: alpha })).data.version;
+  stats.reads.length = 0;
+  stats.writes.length = 0;
+  // Alpha already holds 900,000 across today/week/all, and yesterday is already settled above.
+  const same = await put(alpha, ver, 150, trial(900000));
+  assert.equal(same.status, 200);
+  const echoWrites = stats.writes.filter(w => /leaderboard_echo/i.test(w.sql));
+  assert.equal(echoWrites.length, 0, 'unchanged personal bests must not rewrite leaderboard_echo rows: ' + JSON.stringify(echoWrites));
+  assert.ok(!stats.reads.some(sql => /sqlite_master/i.test(sql)), 'save syncs must not scan sqlite_master');
+  const settleReads = stats.reads.filter(sql => /leaderboard_echo/i.test(sql));
+  assert.ok(settleReads.length <= 2, 'expected at most 1 personal-best read + 1 due-period check, got ' + settleReads.length);
+  // Beating a personal best still writes immediately.
+  const beat = await put(alpha, ver + 1, 150, trial(1800000));
+  assert.equal(beat.status, 200);
+  assert.equal((await board(alpha, 'daily')).data.entries[0].name, 'Alpha');
+  assert.equal((await board(alpha, 'daily')).data.entries[0].dps, 1800000);
+});
+
+await t('pre-0006 database (15 tables): save syncs and both leaderboards succeed without 0006 applied', async () => {
+  const preSqlite = new DatabaseSync(':memory:');
+  for (const name of fs.readdirSync(path.join(root, 'migrations')).filter(n => /^000[1-5]_.*\.sql$/.test(n)).sort()) {
+    preSqlite.exec(fs.readFileSync(path.join(root, 'migrations', name), 'utf8'));
+  }
+  const preEnv = { DB: makeD1(preSqlite) };
+  const callPre = async (file, fn, method, url, args = {}) => {
+    const mod = await import(pathToFileURL(path.join(root, 'functions', file)).href);
+    const res = await mod[fn]({ request: request(method, url, args), env: preEnv });
+    const data = (res.headers.get('Content-Type') || '').includes('json') ? await res.json() : null;
+    return { status: res.status, data, res };
+  };
+  const reg = await callPre('api/register.js', 'onRequestPost', 'POST', '/api/register', { body: { u: 'PreUser', p: 'pre-password-123' } });
+  assert.equal(reg.status, 201);
+  const ck = reg.res.headers.get('Set-Cookie').split(';')[0];
+  const trial = { day: today, used: 1, best: 750000, runs: 1, chest: 0, echoBoard: { day: today, dayDps: 750000, week, weekDps: 750000 } };
+  const s1 = await callPre('api/save.js', 'onRequestPut', 'PUT', '/api/save', {
+    cookie: ck, body: { owner: 'PreUser', version: 0, savedAt: Date.now(), blob: JSON.stringify({ lv: 100, kills: 10, cls: 'Novice', zeny: 0, owner: 'PreUser', trial }) },
+  });
+  assert.equal(s1.status, 200, 'initial save succeeds before migration 0006');
+  const s2 = await callPre('api/save.js', 'onRequestPut', 'PUT', '/api/save', {
+    cookie: ck, body: { owner: 'PreUser', version: 1, savedAt: Date.now(), blob: JSON.stringify({ lv: 101, kills: 25, cls: 'Novice', zeny: 0, owner: 'PreUser', trial }) },
+  });
+  assert.equal(s2.status, 200, 'subsequent save syncs succeed before migration 0006');
+  const killsBoard = await callPre('api/board.js', 'onRequestGet', 'GET', '/api/board?period=daily&board=kills', { cookie: ck });
+  assert.equal(killsBoard.status, 200, 'kills board works before migration 0006');
+  const echoBoard = await callPre('api/board.js', 'onRequestGet', 'GET', '/api/board?period=daily&board=echo', { cookie: ck });
+  assert.equal(echoBoard.status, 200, 'echo board returns empty 200 before migration 0006');
+  assert.deepEqual(echoBoard.data.entries, []);
+  preSqlite.close();
 });
 
 console.log('\n' + pass.length + ' passed, ' + fail.length + ' failed');

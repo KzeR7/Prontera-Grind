@@ -56,8 +56,19 @@ node "$ROOT/tools/maps/build_game_exploration.js" "$OUT"
 # The selected vendored renderer ships with its complete MIT license.
 cp "$ROOT/tools/maps/vendor/THREE-LICENSE.txt" "$OUT/assets/endgame/THREE-LICENSE.txt"
 
+# Static build tag for updateWatch() so 60-second deploy checks hit the CDN instead of /api/* Functions.
+node -e '
+  const fs = require("fs");
+  const out = process.argv[1];
+  const html = fs.readFileSync(out + "/index.html", "utf8");
+  const m = html.match(/const BUILD=\x27([^\x27]+)\x27/);
+  if (!m || !m[1]) { console.error("BUILD BROKEN: const BUILD missing in index.html"); process.exit(1); }
+  fs.writeFileSync(out + "/version.txt", m[1]);
+  fs.writeFileSync(out + "/_headers", "/version.txt\n  Cache-Control: no-store\n  Content-Type: text/plain; charset=utf-8\n");
+' "$OUT"
+
 # A build that silently ships the wrong thing is worse than one that fails.
-for must in index.html gm.html _routes.json assets/sprite_pack_data.js assets/class_skins_data.js assets/weapon_joints_data.js; do
+for must in index.html gm.html _routes.json version.txt _headers assets/sprite_pack_data.js assets/class_skins_data.js assets/weapon_joints_data.js; do
   [ -s "$OUT/$must" ] || { echo "BUILD BROKEN: $must is missing or empty in $OUT" >&2; exit 1; }
 done
 for forbidden in _login.html _shot.html logic2.js docs tools Sprite image-search; do

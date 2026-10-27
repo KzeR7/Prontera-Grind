@@ -17,6 +17,7 @@ try{
  a.ws.close();await wait(()=>b.events.some(e=>e.type==='left'));
  let forwarded;const proxy=await onRequestGet({request:new Request(base+'/api/social',{headers:{Origin:base,Cookie:ca,Upgrade:'websocket','X-Social-Identity':'{\"id\":999}'}}),env:{DB:makeD1(service.sqlite),SOCIAL:{idFromName:n=>n,get:()=>({fetch:async request=>{forwarded=request;return new Response('bound')}})}}});assert.equal(proxy.status,200);assert.equal(forwarded.method,'GET');assert.equal(forwarded.headers.get('Upgrade'),'websocket');assert.equal(JSON.parse(forwarded.headers.get('X-Social-Identity')).username,'social_api_a');assert.notEqual(JSON.parse(forwarded.headers.get('X-Social-Identity')).id,999);
  const noOrigin=await onRequestGet({request:new Request(base+'/api/social'),env:{}});assert.equal(noOrigin.status,403);
+ const unboundSocial=await onRequestGet({request:new Request(base+'/api/social',{headers:{Origin:base,Cookie:ca,Upgrade:'websocket'}}),env:{DB:{prepare(){throw new Error('DB must not be queried when SOCIAL is unbound')}}}});assert.equal(unboundSocial.status,503);
  // HTTPS Origin matching Host succeeds without x-forwarded-proto (proxy WebSocket tunnels), while preview_session stays disabled on non-preview servers.
  const httpsOrigin='https://127.0.0.1:'+service.port;
  const httpsClient=await new Promise((resolve,reject)=>{const ws=new WebSocket(base.replace('http','ws')+'/api/social',{headers:{Cookie:ca,Origin:httpsOrigin}});ws.on('error',reject);ws.on('message',raw=>{const e=JSON.parse(raw);if(e.type==='hello')resolve(ws)});sockets.push(ws)});

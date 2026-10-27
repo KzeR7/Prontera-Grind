@@ -18,6 +18,7 @@ npx wrangler d1 execute pg --remote --file=migrations/0002_leaderboard.sql
 npx wrangler d1 execute pg --remote --file=migrations/0003_server_timed_offline_claims.sql
 npx wrangler d1 execute pg --remote --file=migrations/0004_gm_gift_batches.sql
 npx wrangler d1 execute pg --remote --file=migrations/0005_shop.sql
+npx wrangler d1 execute pg --remote --file=migrations/0006_echo_leaderboard.sql
 ```
 
 **haven-v215 (Cash Shop):** `0005_shop.sql` can run before **or** after the v215 build is deployed —
@@ -111,7 +112,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-27 haven-v249 faster full-field boss skill FX` |
+| Build tag at the bottom of the card | `2026-10-27 haven-v250 cloud usage diet` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

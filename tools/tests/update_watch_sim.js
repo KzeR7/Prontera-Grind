@@ -44,8 +44,8 @@ const harness = (opts) => {
   return { box, calls };
 };
 
-t('the watcher polls /api/version with no-store and compares it with the running BUILD', () => {
-  assert.ok(/fetch\('api\/version\?_='\+Date\.now\(\),\{cache:'no-store'\}\)/.test(watcherSrc), 'the poll is cache-busted and never served stale');
+t('the watcher polls static version.txt with no-store and compares it with the running BUILD', () => {
+  assert.ok(/fetch\('version\.txt\?_='\+Date\.now\(\),\{cache:'no-store'\}\)/.test(watcherSrc), 'the poll hits static version.txt, cache-busted and never served stale');
   assert.ok(/txt&&txt!==BUILD\)showUpdatePrompt\(txt\)/.test(watcherSrc), 'only a different build prompts');
   assert.ok(src.includes('setInterval(updateWatch,60000)'), 'and it runs once a minute');
 });
@@ -55,7 +55,7 @@ await T('a matching build changes nothing; a different build prompts once withou
   await same.box.updateWatch();
   assert.strictEqual(same.calls.reloads, 0, 'the same build never reloads');
   assert.strictEqual(same.calls.fetch.length, 1, 'one poll per tick');
-  assert.ok(same.calls.fetch[0].url.startsWith('api/version?_='), 'polled at the endpoint with a cache-buster');
+  assert.ok(same.calls.fetch[0].url.startsWith('version.txt?_='), 'polled at static version.txt with a cache-buster');
   assert.strictEqual(same.calls.fetch[0].init.cache, 'no-store', 'the browser cache is bypassed');
 
   const next = harness({ answer: '2026-10-09 grind-v99 some future deploy' });
@@ -128,9 +128,34 @@ await T('functions/api/version.js answers with the deployed BUILD, no-store, no 
 await T('the endpoint is routed on Cloudflare (_routes.json) and in the local dev server', async () => {
   const routes = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '_routes.json'), 'utf8'));
   assert.ok(routes.include.includes('/api/*'), '/api/* goes through Functions');
+  assert.ok(!routes.include.some(p => p.includes('version.txt')), 'version.txt stays outside Pages Functions routing');
   const dev = fs.readFileSync(path.join(__dirname, '..', '..', 'tools', 'dev_server.js'), 'utf8');
-  assert.ok(dev.includes("'GET /api/version': ['onRequestGet', 'api/version.js']"), 'the offline dev server serves it too');
+  assert.ok(dev.includes("'GET /api/version': ['onRequestGet', 'api/version.js']"), 'the offline dev server keeps legacy /api/version for open pre-v250 tabs');
   assert.ok(dev.includes('env.ASSETS'), 'with the asset store shimmed, so local dev behaves like Pages');
+});
+
+await T('build_site.sh writes static version.txt and no-store _headers matching BUILD, served by dev_server', async () => {
+  const os = await import('node:os');
+  const cp = await import('node:child_process');
+  const { createApp, freshDb } = await import(pathToFileURL(path.join(__dirname, '..', 'dev_server.js')).href);
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'pg-version-txt-'));
+  try {
+    cp.execFileSync('bash', [path.join(__dirname, '..', 'build_site.sh'), out], { stdio: 'pipe' });
+    assert.strictEqual(fs.readFileSync(path.join(out, 'version.txt'), 'utf8'), BUILD, 'dist/version.txt matches BUILD');
+    const hdrs = fs.readFileSync(path.join(out, '_headers'), 'utf8');
+    assert.ok(hdrs.includes('/version.txt') && hdrs.includes('Cache-Control: no-store'), 'dist/_headers marks /version.txt no-store');
+    const sqlite = freshDb();
+    try {
+      const app = createApp({ sqlite, site: out });
+      const res = await app(new Request('http://local/version.txt?_=123'));
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(await res.text(), BUILD);
+      assert.ok((res.headers.get('cache-control') || '').includes('no-store'), 'dev_server serves version.txt with no-store');
+      assert.ok((res.headers.get('content-type') || '').includes('text/plain'), 'dev_server serves version.txt as text/plain');
+    } finally { sqlite.close(); }
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
 });
 
 // The build tag is copied into a few documents so a reader can tell which build a sheet or a note is about.
