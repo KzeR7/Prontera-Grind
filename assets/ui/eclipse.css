@@ -1884,7 +1884,7 @@ body.social-open #minimapTools{display:none!important}
 #mailDailyModal .rd-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;font-size:9px;border-radius:4px;color:var(--gold);background:var(--e-soft);border:1px solid #d7b77a20;line-height:1.4;white-space:nowrap}
 #mailDailyModal .rd-pill.green{color:#94c6ac;border-color:#94c6ac22;background:#94c6ac0b}
 #mailDailyModal .rd-pill i{width:4px;height:4px;border-radius:50%;background:currentColor}
-#mailDailyModal .rd-ico{width:15px;height:15px;stroke:currentColor;stroke-width:1.55;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+:is(#mailDailyModal,#gmStudioModal) .rd-ico{width:15px;height:15px;stroke:currentColor;stroke-width:1.55;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 #mailDailyModal .rd-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:200px;padding:25px;color:#718292;flex:1}
 #mailDailyModal .rd-empty .rd-ico{width:36px;height:36px;color:#d7b77a70;margin-bottom:15px;stroke-width:1}
 #mailDailyModal .rd-empty h3{font:21px var(--rd-serif);color:#d8d9d5;margin:0 0 10px}

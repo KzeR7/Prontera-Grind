@@ -8315,3 +8315,22 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   in the preceding v244 entry; browser geometry remains to be confirmed in Chromium.
 * **Delivery:** PR #136 follow-up on `arena/2c44e24f-prontera-grind`; not merged or
   deployed.
+
+
+### 2026-10-27 — `2026-10-27 haven-v246 royal dispatch icon polish`
+* **Changed:** Follow-up to the GM studio screenshot. Its custom SVGs were missing the
+  mail view's base `.rd-ico` rule because that rule was scoped only under
+  `#mailDailyModal`. Browsers therefore used their default SVG dimensions and black
+  fill: small action symbols appeared as black dots, and the review arrow expanded
+  into a giant triangle. The shared icon base now applies to both modal roots, explicitly
+  sizing each icon to 15px and setting `fill:none; stroke:currentColor` with rounded
+  joins. Existing contextual sizes still override it. Updated the build tag and all
+  three mirrors to v246; Eclipse CSS query to v211. No gameplay or modal flow changed.
+* **Try it:** Re-open the GM studio. Audience, notice, gift, and preview icons should be
+  small colored outlines; the Review announcement control should have a compact arrow,
+  not a large black triangle. No stray black glyphs/dots should remain.
+* **Checks:** `mail_roulette_ui_sim` adds a guard for the shared SVG styling; it and
+  `eclipse_ui_sim` pass. `css-tree` parses the stylesheet without errors; `git diff --check`
+  clean. Real-browser screenshot verification remains unavailable in this sandbox.
+* **Delivery:** PR #136 follow-up on `arena/2c44e24f-prontera-grind`; not merged or
+  deployed.

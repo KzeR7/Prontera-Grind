@@ -196,6 +196,8 @@ test('the GM studio is a separate screen: three steps, a live preview, then a co
     'the studio root is a hidden-by-default fixed overlay that appears when opened');
   assert.ok(css.includes('#gmStudioModal .mail-daily-card{')&&css.includes('height:min(780px,calc(100dvh - 28px))'),
     'the studio has a viewport-bounded, scrollable modal card');
+  assert.ok(css.includes(':is(#mailDailyModal,#gmStudioModal) .rd-ico{width:15px;height:15px;stroke:currentColor;stroke-width:1.55;fill:none;'),
+    'all studio symbols use the same sized outlined SVG styling as mail, preventing black fills and oversized default SVGs');
   assert.equal(studio.querySelectorAll('.rd-step').length,3,'audience, message and attachment steps');
   assert.ok(doc.getElementById('gmStudioPreview'),'with a player-side preview');
   assert.match(doc.getElementById('gmStudioPreview').textContent,/20 × Oridecon/,'the preview follows the form, attachment included');
