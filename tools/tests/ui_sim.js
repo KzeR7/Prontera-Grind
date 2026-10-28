@@ -80,6 +80,7 @@ const code = [
   pick(/const crit=\(bonus=0\)=>[^\n]*/, 'crit/flee/missCh'),
   pick(/const def=\(\)=>[^\n]*/, 'def/mdef/critD/needAt/need/cost'),
   pick(/const totalPts=\(\)=>[^\n]*/, 'totalPts/rcost'),
+  pick(/function ptsSpent\(\)\{[^\n]*/, 'ptsSpent'),          // v255: the guide's first-session checklist reads it
   grab('function classRec(n){', '// ---------- UI ----------'),
   pick(/const dropTxt=[^;]+;/, 'dropTxt'),
   grab('function canShield(){', 'function ekey(it)'),

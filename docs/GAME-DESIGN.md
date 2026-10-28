@@ -488,3 +488,38 @@ The game sells two things, both through Stripe Checkout, one item per payment, i
 No stat-changing item is exclusive to the shop, and nothing in it affects combat
 except by saving time. Prices live in `assets/shop-catalog.js`; the owner tunes them
 there (see [MONETIZATION-SETUP.md](MONETIZATION-SETUP.md) §9).
+
+## Onboarding and new-player tips (v255)
+
+**First session.** A save with no handbook progress opens the Guide on its first login and
+runs a five-step tour (`GUIDE_LESSONS.beginner`): let the character fight, read the dock
+once, spend points and learn an attack, take a first job at Novice Job 10, then collect and
+equip. The tour is the only place the game interrupts on its own; it can be dismissed
+("Read later"), finished, or replayed from the Beginner page.
+
+**Checklist rules.** The Beginner page leads with `beginnerChecklist()`. Every row is derived
+from the save at render time — no stored flags — so it cannot congratulate a player for
+something the save does not show:
+
+| row | done when |
+| --- | --- |
+| Spend your first stat points | `ptsSpent() > 0` |
+| Learn an attack skill | a learned `act` skill in the current class line |
+| Equip a better weapon | the worn weapon is no longer the starter knife (`id !== 1`) |
+| Clear a stage | any `S.prog[] > 1` |
+| Choose your first job at Job 10 | class is no longer Novice |
+| Get a card | a loose card exists or one is socketed |
+| Spin the daily roulette | today's spin is used |
+
+**Coach tips.** Six one-at-a-time cards (`points`, `skills`, `equip`, `card`, `job`, `daily`)
+point at the dock, inventory or header control they are about and ring it. A tip draws only
+while its condition is true, is hidden the moment the player fixes it, and is suppressed
+entirely while the guide, the find-the-guide pointer, a dialog, the job trial or the social
+hub owns the screen. `Got it` writes `S.handbook.tips[id]`, so a tip is shown once per
+account; `Go` opens the panel first. Only accounts that started the beginner page
+(`S.handbook.beginner === true`) **and are still at Base 30 or below** are eligible, so a
+returning save is never told to "spend your first points"; `S.hints === false`
+(Settings → Gameplay → New-player tips) turns the feature off.
+
+Nothing here gates progression, spends currency or changes a rule: the Guide and the tips
+only point at systems that already exist.

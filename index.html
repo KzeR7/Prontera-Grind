@@ -824,6 +824,37 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 /* Adventurer handbook: compact navigation, readable chapters and a single route. */
 .handbook{max-width:1000px;margin:auto;line-height:1.65;font-size:13px}.guide-nav,.guide-actions{display:flex;flex-wrap:wrap;gap:8px}.guide-nav{border-bottom:1px solid #716349;padding-bottom:12px;margin-bottom:18px}.guide-nav button{flex:1 1 110px;padding:10px}.guide-nav button[aria-pressed="true"]{background:#59492e;color:#fff2c8;border-color:#d5b477}.handbook h2{font-size:23px;line-height:1.25;margin:8px 0 12px}.handbook h3{font-size:16px;margin:0 0 8px}.handbook p{margin:8px 0 14px;font-size:14px;line-height:1.7;color:#cbd2dc}.handbook-intro{padding:8px 0 18px}.handbook-intro>small,.guide-tour>small{letter-spacing:1.5px;color:#dbbe7c}.guide-chapters{display:grid;gap:10px}.guide-chapters details,.guide-note{background:#221e29;border:1px solid #514758;border-radius:9px;padding:16px}.guide-chapters summary{cursor:pointer;font-weight:bold;font-size:14px}.guide-tour{padding:20px;margin-bottom:20px;border:1px solid #c4a460;border-radius:10px;background:linear-gradient(120deg,#383128,#252033)}.guide-route{display:grid;gap:12px}.guide-route article{display:grid;grid-template-columns:100px minmax(0,1fr);gap:16px;padding:18px;border:1px solid #514758;border-radius:9px;background:#221e29}.route-level{color:#e3c17d;font-weight:bold;font-size:17px}.guide-note{margin-top:16px}.handbook .mob-card{padding:14px;line-height:1.6}.handbook .mob-card small{font-size:11px}.card-purpose{color:#ddc68b}.handbook button{white-space:normal;min-height:34px}.handbook small{line-height:1.5}.guide-card-section .guide-grid{margin-top:12px}@media(max-width:600px){.guide-route article{grid-template-columns:1fr;gap:6px;padding:14px}.handbook h2{font-size:20px}.guide-nav{gap:5px}.guide-nav button{flex-basis:90px}.guide-tour{padding:14px}}
 .guide-build-plan dl{display:grid;gap:8px;margin:0}.guide-build-plan dt{font-weight:bold;color:#e3c17d;margin-top:8px}.guide-build-plan dd{margin:0;line-height:1.65}.guide-card-section{margin:22px 0}.guide-tier-plan{margin-bottom:20px}#guideFinder{position:fixed;z-index:10010;box-sizing:border-box;width:min(300px,calc(100vw - 16px));padding:16px;background:#1b2835;border:1px solid #e3c17d;border-radius:10px;box-shadow:0 8px 30px #0009;color:#e5ebf1;font:13px/1.6 system-ui}#guideFinder h3{font-size:17px;margin:6px 0}#guideFinder p{margin:8px 0 12px}#guideFinder small{color:#e3c17d;font-size:10px;letter-spacing:1px}#guideFinder button{padding:6px 12px}#guideFinder::after{content:'';position:absolute;left:var(--pointer-x);margin-left:-8px;border:8px solid transparent}#guideFinder[data-direction="down"]::after{top:100%;border-top-color:#e3c17d}#guideFinder[data-direction="up"]::after{bottom:100%;border-bottom-color:#e3c17d}#guideFinderRing{position:fixed;z-index:10009;pointer-events:none;border:2px solid #ffe29b;border-radius:7px;box-shadow:0 0 0 4px #e3c17d44;box-sizing:border-box}
+/* v255: first-session checklist in the guide and the new-player coach card. The card borrows the
+   find-the-guide pointer's shell so a new player sees one consistent "look here" language. */
+.guide-checklist{margin:0 0 18px;padding:14px 16px;border:1px solid #514758;border-radius:9px;background:linear-gradient(120deg,#262031,#1d1a24)}
+.guide-checklist>header{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}
+.guide-checklist>header b{font-size:14px;color:#f0dcae}.guide-checklist>header span{font-size:11px;color:#e3c17d;letter-spacing:.04em}
+.guide-checklist ol{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+.guide-checklist li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid #3d3547}
+.guide-checklist li:first-child{border-top:0}
+.guide-checklist li>span{display:grid;place-items:center;width:23px;height:23px;border:1px solid #6b5f45;border-radius:50%;font-size:10px;color:#e3c17d}
+.guide-checklist li.done>span{background:#2f4735;border-color:#4f7a5b;color:#bfe6c8}
+.guide-checklist li.done b{color:#9fb4a4;text-decoration:line-through;text-decoration-color:#4f7a5b}
+.guide-checklist li b{display:block;font-size:13px;color:#e9e2d2}
+.guide-checklist li small{display:block;color:#b9bdc7;font-size:11px;line-height:1.5}
+.guide-checklist li em{font-style:normal;font-size:10px;letter-spacing:.06em;color:#8fc7a2}
+.guide-checklist li button{min-height:30px;padding:5px 10px;font-size:11px}
+.guide-chapters details>summary{padding:2px 0;color:#f0dcae;line-height:1.45}
+.guide-chapters details[open]>summary{margin-bottom:8px;color:#ffe9b8}
+.guide-chapters details>p{margin:0;color:#cfd6df;font-size:12.5px;line-height:1.65}
+#coachTip{position:fixed;z-index:1100;box-sizing:border-box;width:min(322px,calc(100vw - 16px));padding:15px 17px;background:#12212c;border:1px solid #e3c17d;border-radius:12px;box-shadow:0 12px 34px #000a;color:#e9eef4;font:13px/1.55 system-ui}
+#coachTip small{color:#e3c17d;font-size:9px;letter-spacing:1.4px}
+#coachTip h3{margin:5px 0 6px;font-size:16px;color:#f6e7bb}
+#coachTip p{margin:0 0 12px;color:#c7d2de;font-size:12.5px}
+#coachTip .coach-actions{display:flex;gap:8px;flex-wrap:wrap}
+#coachTip .coach-actions button{min-height:32px;padding:6px 11px;font-size:12px}
+#coachTip .coach-actions [data-coach="dismiss"]{background:transparent;border-color:#3f5060;color:#c7d2de}
+#coachTip::after{content:'';position:absolute;left:var(--pointer-x,50%);margin-left:-8px;border:8px solid transparent}
+#coachTip[data-direction="down"]::after{top:100%;border-top-color:#e3c17d}
+#coachTip[data-direction="up"]::after{bottom:100%;border-bottom-color:#e3c17d}
+#coachTip[data-direction="none"]::after{display:none}
+#coachRing{position:fixed;z-index:1099;pointer-events:none;border:2px solid #ffe29b;border-radius:7px;box-shadow:0 0 0 4px #e3c17d44;box-sizing:border-box}
+@media(max-width:600px){#coachTip{width:calc(100vw - 16px);padding:13px 14px}.guide-checklist li{grid-template-columns:22px minmax(0,1fr)}.guide-checklist li button,.guide-checklist li em{grid-column:2;justify-self:start}}
 /* v221: Hunt Title ranks borrow the deep-space glass, violet/cyan runes and restrained energy glow of the skill FX UI. */
 .ui-panel[data-layout="index"] .mastery-title-list{gap:8px;max-height:min(62vh,480px);padding:3px 3px 6px;scrollbar-color:#505271 #101720;scrollbar-width:thin}
 .ui-panel[data-layout="index"] .mastery-title{--rank-violet:#b98aff;--rank-cyan:#6ee7ff;position:relative;isolation:isolate;overflow:hidden;grid-template-columns:42px minmax(0,1fr) 72px;gap:9px;padding:9px;min-height:76px;border:1px solid #3a455a!important;border-left-color:#3a455a!important;border-radius:8px;background:radial-gradient(140px 90px at 100% 0%,#a77dff20,transparent 72%),linear-gradient(112deg,#101923 0%,#162130 61%,#1d1b30 100%)!important;box-shadow:inset 0 1px #ffffff0b,0 5px 14px #02050b55!important;opacity:1;filter:none;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
@@ -1259,7 +1290,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-10-28 haven-v254 forge, speed and cards';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-28 haven-v255 starter guide and coach tips';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3220,7 +3251,7 @@ function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},labels={damage:'
  return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*ascUpgradeScale(k,rank)).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
-const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
+const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -3248,6 +3279,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   f.kite=f.kite===true;
   if(typeof PGWardrobe!=='undefined'){f.appearance=PGWardrobe.normalize(f.appearance);if(f.appearance)f.sex=f.appearance.sex;}
   if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;      // and the floats are shown unless switched off
+  if(f.hints!==true&&f.hints!==false)f.hints=true;            // v255: new-player tips default on
   if(!f.bgm||typeof f.bgm!=='object')f.bgm={enabled:true,volume:.05,muted:false};
   if(f.bgm.enabled!==true&&f.bgm.enabled!==false)f.bgm.enabled=true;
   if(typeof f.bgm.volume!=='number'||!isFinite(f.bgm.volume))f.bgm.volume=.05;
@@ -5802,10 +5834,11 @@ function levelingGuide(){return `<header class="handbook-intro"><small>02 / YOUR
  ].map(([level,title,maps,body])=>`<article><span class="route-level">${level}</span><div><h3>${title}</h3><p>${body}</p><div class="guide-actions">${maps.map(m=>`<button data-a="guidemap" data-v="${m}:${level.includes('139')||level.includes('140')?11:1}">${MAPS[m].n}</button>`).join('')}</div></div></article>`).join('')}</div><section class="guide-note"><h3>When should I move?</h3><p>Watch a full minute of EXP/min and Zeny/min after each change. If deaths, travel or slow kills lower your income, return to your previous field. Turn Auto-advance off to camp a card or material. Drops are random; a listed chance is per monster kill, not a promise.</p><p>Nightmare MVPs across all regions supply Void Core. Craft a Refine Protection Scroll with ${DPS_MATS} Void Cores. Selected-affix N/N+ reforges also use Void Core.</p></section>`;}
 const GUIDE_LESSONS={
  beginner:[
- ['Welcome to Prontera','Your character fights automatically. Kills earn Base EXP, Job EXP, Zeny and random loot. Start in Prontera, spend points in Character and inspect drops in Bag. The game keeps fighting while you read panels.','status'],
- ['Choose your path','Base level makes your character stronger; Job level unlocks promotions and skill points. Reach Novice Job 10, then choose a first job in Jobs. Later promotions need parent Job 40, then 50. Played classes restore their own saved progress and equipment.','job'],
- ['Make combat work for you','Learn skills in Skills and put offensive attacks into the six-slot Combo. Attacks cast in order when ready; buffs and First Aid work separately. There is no SP resource. Add AGI for speed and VIT if you are dying.','skills'],
- ['Collect, equip, repeat','Inspect Bag items, equip compatible upgrades and keep good cards for sockets. Deploy up to three pets. Open Maps to pick a field; switch Auto-advance off when farming a target. The Leveling route and Card targets pages explain what to farm next.','map']
+ ['Welcome to Prontera','Your character fights on its own. Every kill pays Base EXP, Job EXP, Zeny and loot, and the fight keeps running while you read any panel. Let Prontera Stage 1 run for a minute and watch the numbers.','status'],
+ ['Read the screen once','The dock along the bottom is the game: Map, Character, Equipment, Class Tree, Skills, Inventory and Pets, with More for the rest. The two icons by the minimap hold Mail and the daily roulette, and Display (top right) tunes the screen.','map'],
+ ['Spend points, learn skills','Character → Stats spends the points each level pays. Skills spends Job points on attacks; learned attacks join the six-slot combo that fires by itself, while First Aid heals on its own.','skills'],
+ ['Choose a job at Novice Job 10','Class Tree opens your first job at Novice Job 10. Later promotions ask for parent Job 40, then 50, and a fourth job adds a 30-second Crucible trial at Base 150. Every class keeps its own level, stats and gear.','job'],
+ ['Collect, equip, repeat','Inventory compares drops, equips upgrades and holds the Cards tab. Then open Map, pick the strongest stage you clear quickly and leave Auto-advance on until you want to camp one stage.','bag']
  ],
  ascension:[
  ['Welcome to your fourth job','Base progression ends at 150, but combat EXP now feeds two Ascension tracks in full. Your ordinary Job levels and skill ranks still progress separately. You can earn Ascension EXP on any combat map.','status'],
@@ -5855,20 +5888,134 @@ if(typeof addEventListener==='function')addEventListener('resize',()=>{if(guideF
 $('dock')?.addEventListener?.('scroll',()=>{if(guideFindStage&&guideFindStage!=='waiting')guideFinderSync()});
 function guideTourPanel(){if(!guideTour)return '';const p=guideProgress(),steps=GUIDE_LESSONS[guideTour],i=Math.max(0,Math.min(steps.length-1,Number.isInteger(p[guideTour+'Step'])?p[guideTour+'Step']:0)),[title,body,target]=steps[i];return `<section class="guide-tour" aria-label="Getting started"><small>${guideTour==='ascension'?'ASCENSION ORIENTATION':'FIRST STEPS'} · ${i+1} / ${steps.length}</small><h2>${title}</h2><p>${body}</p><div class="guide-actions"><button data-t="${target}">Open ${TABS[target][1]}</button><button data-a="guidestep" data-v="back" ${i?'':'disabled'}>Back</button><button data-a="guidestep" data-v="next">${i===steps.length-1?'Finish tour':'Next'}</button><button data-a="guidestep" data-v="dismiss">Read later</button></div><small>You can replay this tour from the guide at any time.</small></section>`;}
 function guideStep(action){if(!guideTour||!['next','back','dismiss'].includes(action))return;const kind=guideTour,p={...guideProgress()},key=kind+'Step',last=GUIDE_LESSONS[kind].length-1,i=Math.max(0,Math.min(last,Number.isInteger(p[key])?p[key]:0));if(action==='dismiss'||action==='next'&&i===last){p[kind]=true;guideTour=null;}else p[key]=Math.max(0,Math.min(last,i+(action==='back'?-1:1)));S.handbook=p;save();renderWin();}
-function beginnerGuide(){const chapters=[
- ['Your first ten minutes','Let Prontera Stage 1 run. Open Character and spend points; inspect Bag drops and equip usable upgrades. At Novice Job 10 choose a first job. Learn attacks and put them in Combo. Clear stages gradually, then use the Leveling route to select your next map.'],
- ['Character & class choices','STR supports melee physical builds, DEX supports bows and accuracy, INT supports Mage and Acolyte lines, AGI adds speed and flee, VIT adds durability, and LUK adds critical chance. The allocation cap is 99 before Base 100 and 120 afterward, including with Mythic gear. Jobs shows each promotion requirement. Returning to a played class restores its build; returning to Novice uses a reset path, so read the confirmation.'],
- ['Skills & combos','Spend Job skill points to learn and improve skills. Choose up to six learned offensive attacks in Combo and arrange their order. Ready attacks fire in sequence, then the combo recovers while basic attacks continue. Paused or unavailable attacks are skipped. Buffs refresh separately, passives are always active and First Aid heals automatically when needed.'],
- ['Maps & farming','Normal maps have 10 stages, with an immediate MVP at Stage 10. MVP means a boss. Nightmare adds NM 1–5 at Base 120/140. Select a stage to inspect its enemies and actual drop chances, then Travel. Auto-advance moves you forward on clears; turn it off to keep farming. Ascension maps require fourth jobs. Social Hub is currently locked.'],
- ['Equipment, Bag & auto-sell','Weapon families and equipment tiers depend on your class. Inspect an item before equipping or selling it. Lock valuable equipment. Bag auto-equip can help with replacements; review cards and affixes yourself. Auto-sell rules apply to future drops, so check their filters carefully. Switching jobs stows incompatible worn items safely in Bag.'],
- ['Cards: equip before you sacrifice','Monsters drop their own cards. Bag → Cards shows effects, compatible slots and socket actions. Keep your first useful copy. Each item allows one card per monster family, at most two boss cards and two Crit DMG cards. Normal and Nightmare variants share a family. Merge extra identical unstarred copies: 1, then 3, then 5 donors for stars. Normal and Nightmare merge separately.'],
- ['Refine, reforge & Black Market','Refine raises an item’s upgrade rank using Zeny and ore. Review the success chance and failure result before attempting; protection uses scrolls. Reforge rerolls affixes: inspect the paid offer before keeping or accepting it. Selective reforging preserves unselected affixes and costs more. Black Market sells supplies and offers upgrade tools; it does not sell the farmable equipment listed in this guide.'],
- ['Pets & Bond','Pets join through monster drops, not eggs. Deploy up to three in Pets to use their bonuses. Duplicate species become Bond. Training, Bond and pet battle-skill rolls are separate upgrades; inspect their costs and effects. Only deployed pets provide their applicable battle bonuses.'],
- ['Contracts & Mastery Index','Follow the on-screen contracts and claim completed rewards. Mob Index tracks kills and Index XP, unlocking hunt titles and permanent rewards. Card Mastery consumes loose, unstarred cards to award tokens for random permanent stats. That copy is gone: equip useful cards first and donate spare copies. A Mastery reset consumes a Legendary card and refunds spent tokens.'],
- ['Endless Echo & rankings','Maps → Endless Echo is a three-minute damage trial. Practise in training before using your two daily ranked attempts. Ranked results earn Echo Shards for its reward shop. Leaderboard compares progress with other players when the online service is available.'],
- ['Wardrobe, Settings & the log','Wardrobe changes appearance without changing combat stats. All classes support native hairstyles, colors and accessories, including the six fourth jobs. Settings adjusts combat display and preferences. Display controls the screen layout; Log helps you inspect drops, levels and events.'],
- ['Saving & time away','Watch the cloud badge when using an online account. Browser-only previews save on this browser. Hidden tabs continue fighting; they are not away time. Away rewards use a measured farming sample at 50% efficiency, capped at four hours per claim, after at least three minutes without a save. Let a stable field run for a full minute to refresh its sample.']
- ];return `<header class="handbook-intro"><small>01 / START HERE</small><h2>Your adventure, one step at a time</h2><p>Fight → spend points → equip upgrades → choose a better field. You do not need to master every system on your first day.</p><button data-a="guidereplay" data-v="beginner">Replay first-login tour</button></header><div class="guide-chapters">${chapters.map(([title,body],i)=>`<details data-ui-disclosure="handbook-beginner-${i}" ${i===0?'open':''}><summary>${String(i+1).padStart(2,'0')} · ${title}</summary><p>${body}</p></details>`).join('')}</div>`;}
+// ---------- new-player coach tips (v255) ------------------------------------------------
+// One small card at a time, anchored to the control it is about. A tip hides itself the moment its
+// condition stops being true (points spent, skill learned, card socketed), is remembered per account
+// once dismissed, and can be switched off for good in Settings → Gameplay. Tips never appear while
+// the first-login tour, the find-the-guide pointer or a modal dialog is up.
+let coachTipId='',coachTipSig='';
+function coachSeen(){const h=guideProgress(),t=h.tips;return t&&typeof t==='object'&&!Array.isArray(t)?t:{}}
+function coachOpen(tab,subKey,subTab){if(tab&&!tabs.includes(tab))openTab(tab);if(subKey&&subTab&&sub&&typeof sub==='object')sub[subKey]=subTab;renderWin()}
+function coachTipList(){return [
+ {id:'points',eyebrow:'CHARACTER',anchor:'#dock [data-t="status"]',title:'Spend your first points',body:'Every Base level pays stat points. Character → Stats spends them; nothing is locked in.',go:'Open Character',run:()=>coachOpen('status')},
+ {id:'skills',eyebrow:'SKILLS',anchor:'#dock [data-t="skills"]',title:'Learn your first attack',body:'Job points buy skill ranks. Learned attacks join the combo that already fires for you.',go:'Open Skills',run:()=>coachOpen('skills')},
+ {id:'equip',eyebrow:'INVENTORY',anchor:'#dock [data-t="bag"]',title:'A stronger weapon is waiting',body:'Compare it in Inventory, then press Equip. Lock anything you want to keep safe from bulk sales.',go:'Open Inventory',run:()=>coachOpen('bag')},
+ {id:'card',eyebrow:'CARDS',anchor:'#dock [data-t="bag"]',title:'Socket your first card',body:'Cards drop from monsters. Inventory → Cards shows what fits; extras merge into ★ ranks or feed Card Mastery.',go:'Open Cards',run:()=>coachOpen('bag','bag','cards')},
+ {id:'job',eyebrow:'CLASS TREE',anchor:'#dock [data-t="job"]',title:'Time for your first job',body:'Novice Job 10 unlocks the six first jobs. Your Novice progress is kept, so nothing is lost by choosing.',go:'Open Class Tree',run:()=>coachOpen('job')},
+ {id:'daily',eyebrow:'DAILY',anchor:'#minimapTools #dailyBtn',title:'Your free spin is ready',body:'One spin a day, plus any banked rolls: ore, Zeny, EXP boosts, a card or a refine scroll.',go:'Spin the wheel',run:()=>ACT.opendaily()}
+];}
+function coachBlocked(){
+ if(!S||S.hints===false)return true;
+ if(guideTour||guideFindStage||tabs.includes('guide'))return true;   // never cover the handbook itself
+ if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on)return true;
+ const m=$('modal');if(m&&m.style.display&&m.style.display!=='none')return true;
+ if($('mailDailyModal')?.classList.contains('on'))return true;
+ const trial=$('trial');if(trial&&trial.style.display&&trial.style.display!=='none')return true;
+ if(document.body.classList.contains('social-open'))return true;
+ return false;
+}
+function coachWearingUpgrade(){const w=S.eq.weapon;if(!w||w.id!==1||!S.inv.length)return false;
+ return S.inv.some(it=>{try{return slotAccepts('weapon',it)&&ev(it)>ev(w)}catch(_){return false}})}
+function coachNextTip(){
+ const seen=coachSeen();if(Object.keys(seen).length>=coachTipList().length)return null;
+ for(const t of coachTipList()){
+  if(seen[t.id])continue;
+  let due=false;
+  try{
+   if(t.id==='points')due=S.pts>=5&&ptsSpent()===0;
+   else if(t.id==='skills')due=skpAvail()>=3&&!Object.keys(S.sk||{}).some(id=>id!=='aid'&&Number(S.sk[id])>0);
+   else if(t.id==='equip')due=coachWearingUpgrade();
+   else if(t.id==='card')due=(S.cards||[]).length>0&&!items().some(it=>(it.cards||[]).length>0);
+   else if(t.id==='job')due=S.cls==='Novice'&&((S.jobs?.Novice?.jl)||1)>=10;
+   else if(t.id==='daily')due=dailyWheelState().spun===0&&S.lv>=3;
+  }catch(_){due=false}
+  if(due)return t;
+ }
+ return null;
+}
+function coachSignature(){return [S?S.lv:'',S?S.pts:'',S?.eq?.weapon?.id,Object.keys(S?.sk||{}).length,S?S.inv.length:'',(S?.cards||[]).length,S?.cls,S?.dailyWheel?.spun,S?.hints!==false?1:0,guideTour?1:0,guideFindStage,coachBlocked()?1:0,coachTipId].join('|')}
+function coachHideTip(){document.getElementById('coachTip')?.remove();document.getElementById('coachRing')?.remove();coachTipId=''}
+// Dismissing one tip must not immediately pop the next: the fingerprint is re-armed for the state
+// the player is in right now, so the following tip waits for a real change (a level, a drop, a job).
+function coachDismiss(id){if(!id)return;const p=guideProgress();S.handbook={...p,tips:{...coachSeen(),[id]:true}};coachHideTip();coachTipSig=coachSignature();try{save()}catch(_){} }
+function coachPlace(t){
+ const tip=document.getElementById('coachTip');if(!tip)return;
+ const target=t.anchor?document.querySelector(t.anchor):null;
+ let ring=document.getElementById('coachRing');
+ if(!target){if(ring)ring.remove();tip.dataset.direction='none';Object.assign(tip.style,{left:'50%',top:'auto',bottom:'110px',transform:'translateX(-50%)'});return}
+ tip.style.transform='none';
+ if(!ring){ring=document.createElement('div');ring.id='coachRing';ring.setAttribute('aria-hidden','true');document.body.append(ring)}
+ const r=target.getBoundingClientRect(),w=tip.offsetWidth||300,h=tip.offsetHeight||150;
+ const left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2)),above=r.top-h-16>=8;
+ tip.style.left=left+'px';
+ tip.style.top=Math.max(8,Math.min(innerHeight-h-8,above?r.top-h-16:r.bottom+16))+'px';
+ tip.dataset.direction=above?'down':'up';
+ tip.style.setProperty('--pointer-x',Math.max(16,Math.min(w-16,r.left+r.width/2-left))+'px');
+ Object.assign(ring.style,{left:r.left-3+'px',top:r.top-3+'px',width:r.width+6+'px',height:r.height+6+'px'});
+}
+function coachShowTip(t){
+ if(coachTipId===t.id){coachPlace(t);return}
+ coachTipId=t.id;
+ let tip=document.getElementById('coachTip');
+ if(!tip){
+  tip=document.createElement('aside');tip.id='coachTip';tip.setAttribute('role','dialog');tip.setAttribute('aria-label','New player tip');document.body.append(tip);
+  tip.addEventListener('click',e=>{
+   const b=e.target.closest('[data-coach]');if(!b)return;
+   e.preventDefault();e.stopPropagation();
+   const id=coachTipId,go=b.dataset.coach==='go',t=coachTipList().find(x=>x.id===id);
+   coachDismiss(id);
+   if(go&&t&&t.run){try{t.run()}catch(_){}}
+  });
+ }
+ tip.innerHTML=`<small>NEW PLAYER TIP · ${esc(t.eyebrow)}</small><h3>${esc(t.title)}</h3><p>${esc(t.body)}</p><div class="coach-actions"><button type="button" data-coach="go">${esc(t.go)}</button><button type="button" data-coach="dismiss">Got it</button></div>`;
+ coachPlace(t);
+}
+function coachSync(force){
+ if(!S)return;
+ // Cheap fingerprint first: the tips only need re-testing when one of these actually changes.
+ const sig=coachSignature();
+ if(!force&&sig===coachTipSig)return;
+ coachTipSig=sig;
+ // The tip set is a first-session aid, so it lives inside the opening levels only: an account
+ // past Base 30 has already met the dock, jobs, cards and the wheel, and does not need to be told.
+ if(S.handbook?.beginner!==true||S.lv>30||coachBlocked()){coachHideTip();return}
+ const next=coachNextTip();
+ if(!next){coachHideTip();return}
+ coachShowTip(next);
+}
+if(typeof addEventListener==='function'){
+ addEventListener('resize',()=>{if(!coachTipId)return;const t=coachTipList().find(x=>x.id===coachTipId);if(t)coachPlace(t)});
+ $('dock')?.addEventListener?.('scroll',()=>{if(!coachTipId)return;const t=coachTipList().find(x=>x.id===coachTipId);if(t)coachPlace(t)});
+}
+function beginnerChecklist(){
+ // Live first-session checklist. Every row reads the save, so the guide always shows what is left
+ // instead of a wall of text a new player has to map onto the screen themselves.
+ const worn=items(),cardsInGear=worn.some(it=>(it.cards||[]).length>0),daily=(()=>{try{return dailyWheelState().spun===1}catch(_){return false}})();
+ const attacks=(()=>{try{return SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls)).length}catch(_){return 0}})();
+ return [
+  {id:'points',label:'Spend your first stat points',hint:'Character → Stats. Every level pays points; nothing is lost while you decide.',done:ptsSpent()>0,button:'<button data-t="status">Open Character</button>'},
+  {id:'skill',label:'Learn an attack skill',hint:'Skills → spend Job points on an attack. The combo casts it for you.',done:attacks>0,button:'<button data-t="skills">Open Skills</button>'},
+  {id:'equip',label:'Equip a better weapon',hint:'Inventory → pick a stronger drop → Equip. The starter knife is quickly outgrown.',done:!!(S.eq.weapon&&S.eq.weapon.id!==1),button:'<button data-t="bag">Open Inventory</button>'},
+  {id:'stage',label:'Clear a stage',hint:'Map → choose a stage → Travel. Auto-advance moves you on after a clear.',done:(S.prog||[]).some(v=>v>1),button:'<button data-t="map">Open Map</button>'},
+  {id:'job',label:'Choose your first job at Job 10',hint:'Class Tree opens the six first jobs once Novice reaches Job 10.',done:S.cls!=='Novice',button:'<button data-t="job">Open Class Tree</button>'},
+  {id:'card',label:'Get a card',hint:'Monsters drop their own cards. Inventory → Cards shows what fits where.',done:(S.cards||[]).length>0||cardsInGear,button:'<button data-t="bag">Open Inventory</button>'},
+  {id:'daily',label:'Spin the daily roulette',hint:'The wheel icon beside the minimap has one free spin a day plus banked rolls.',done:daily,button:'<button data-a="opendaily">Open Daily</button>'}
+ ];
+}
+function beginnerGuide(){const check=beginnerChecklist(),done=check.filter(x=>x.done).length;const chapters=[
+ ['The screen in one minute','The <b>dock</b> at the bottom opens Maps, Character, Equipment, Class Tree, Skills, Bag and Pets; <b>More</b> holds Mastery Index, Black Market, Leaderboard, this Guide, Log, Wardrobe, Cash Shop and Settings. The bar at the top carries your Zeny, Echo Shards, the cloud badge, fullscreen, field-only view and <b>Display</b>. The two round icons by the minimap are <b>Mail</b> and the <b>daily roulette</b>.'],
+ ['Combat runs itself','Your character attacks on its own, and learned attacks fire from the six-slot combo in Skills. <b>Auto-advance</b> (in the auto-combat pill above the field) moves you to the next stage on a clear; turn it off to camp one stage for a card or material. <b>Movement</b> there switches ranged classes between standing still (max damage) and kiting. The fight keeps going while the tab is in the background.'],
+ ['Stats and jobs','Each Base level pays stat points; <b>Character → Stats</b> spends them, the cap is 99 before Base 100 and 120 after, and the first reset after a class change is free. <b>Class Tree</b> is the whole job ladder: first job at Novice Job 10, then parent Job 40 and 50 for the next two. A fourth job also needs Base 150 and a 30-second <b>Crucible</b> win. Every class you have played keeps its own level, stats, gear and skills, so switching back is free.'],
+ ['Skills and the combo','<b>Skills</b> spends Job points and shows what each rank does. Up to six attacks fill the combo, left to right, then a 3-second recovery while basic attacks continue. Buffs cast on their own, First Aid heals below half health, and paused skills are skipped. There is no SP resource to manage.'],
+ ['Equipment and its six workspaces','<b>Equipment</b> is one window with six tabs: <b>Loadout</b> compares gear and sockets cards, <b>Refine</b> raises an item’s rank, <b>Affixes</b> rerolls rolls for a listed price, <b>Cards</b> is the full card workspace, <b>Auto-sell</b> decides what future drops to sell automatically, and <b>Ascension</b> is the Mythic Forge. The Forge only works for a fourth job and only on owned N+ gear; it keeps the item, its refinement, cards and affixes.'],
+ ['Bag, cards and selling','<b>Inventory</b> lists what you own: inspect before you equip or sell, <b>lock</b> anything valuable so a bulk sale skips it, and use auto-equip if you want help choosing. <b>Bag → Cards</b> sockets cards and merges copies — ★ +9%, ★★ +12%, ★★★ +15% for 1 / 3 / 5 extra unstarred copies — and its <b>Mergeable now</b> filter lists only the cards that already have their copies, so nothing has to be checked one by one. Normal and Nightmare copies merge separately.'],
+ ['Maps, Nightmare and Ascension','The atlas has ten stages per map and Stage 10 is always an MVP. Nightmare stages (NM 1–5) open on the same maps at Base 120 and 140 and drop N and N+ gear. <b>Ascension Map</b> holds Astral Citadel and Thor Volcano: five stages, fourth job only, no equipment drops — just materials for the Forge. <b>Endless Echo</b> is a three-minute damage trial with two ranked attempts a day, and its Echo Shards buy supplies. <b>Social Hub</b> opens the Fountain Plaza; farming continues while you are there.'],
+ ['Pets, contracts and the Mastery Index','Pets drop from monsters, not eggs: deploy up to three for their bonuses and let duplicates raise that species’ Bond. The quest rail above the dock lists contracts with claimable rewards. <b>Mastery Index</b> tracks kills per monster, unlocks hunt titles and pays permanent rewards, while Card Mastery turns spare loose cards into permanent stats — equip the useful copies first.'],
+ ['Mail, daily wheel and the Cash Shop','<b>Mail</b> carries announcements and gift attachments; claim them from the same window. The <b>daily roulette</b> gives one free spin a day (plus any banked rolls) for ore, Zeny or EXP boosts, a random card or a refine scroll. <b>Cash Shop</b> sells cosmetics and supply bundles for real money and never premium currency — everything it sells also exists in game.'],
+ ['Refine, reforge and protection','Refining costs Zeny plus Oridecon for weapons and Elunium for everything else, and each attempt shows its success chance and the failure result. A <b>Refine Protection Scroll</b> covers +0–10 and keeps your rank on a failed attempt (one scroll per attempt, success included); craft it from Void Cores or buy it in the Black Market, Echo or the daily wheel. A <b>Mythic Protection Scroll</b> covers +11–15 on Mythic gear and drops from Ascension bosses or costs Sigils in the Black Market or Echo Shards in Echo. Reforging always shows the paid offer before you accept it.'],
+ ['Saving, time away and one login','The cloud badge in the header shows whether a save is synced; browser-only play saves to this browser. Hidden tabs keep fighting but are never “away”. The welcome-back reward needs at least three minutes without a save, pays 50% of your measured farming sample and caps at four hours per claim. One account plays from one device at a time — signing in elsewhere ends the older session.'],
+ ['Display, phone and hotkeys','<b>Display</b> (top right) toggles camera shake, damage numbers, the character aura, the activity log, labels and a fully hidden UI; it also holds fullscreen, <b>field only</b> view, and a <b>Layout</b> switch that cycles Auto → Phone → Desk on this device. Every panel prints its letter on its dock button: M S J K B E and P for Pets, plus R for Refine and Q for the quest rail. In More: I V X T W L O. <b>H</b> opens this guide and Esc closes whatever is on top. Cards has no hotkey — use its tab.']
+ ];return `<header class="handbook-intro"><small>01 / START HERE</small><h2>Your first session</h2><p>Fight → spend points → equip upgrades → pick a better field. You do not need to master every system on day one, and the guide is always one key away (<b>H</b>).</p><button data-a="guidereplay" data-v="beginner">Replay first-login tour</button></header><section class="guide-checklist" aria-label="Getting started checklist"><header><b>Getting started</b><span>${done} / ${check.length} done</span></header><ol>${check.map((x,i)=>`<li class="${x.done?'done':''}"><span aria-hidden="true">${x.done?'✓':String(i+1).padStart(2,'0')}</span><div><b>${x.label}</b><small>${x.hint}</small></div>${x.done?'<em>Done</em>':x.button}</li>`).join('')}</ol></section><div class="guide-chapters">${chapters.map(([title,body],i)=>`<details data-ui-disclosure="handbook-beginner-${i}" ${i===0?'open':''}><summary>${String(i+1).padStart(2,'0')} · ${title}</summary><p>${body}</p></details>`).join('')}</div>`;}
 function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 30-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(([title,body])=>`<article class="guide-note"><h3>${title}</h3><p>${body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>${['Might','Precision','Ferocity','Slayer'].includes(x.n)?'Late-rank offensive growth; rank 5 grants 25% of the maximum':'+'+x.step+x.unit+' per rank'} · ${x.text}. Rank 10: +${10*x.step}${x.unit}.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts roll 0.5% on the lightest Stage 1 monster and more on every tankier one, so all five stages of both maps pay the same materials an hour. Valkyrie’s Sigils roll at a quarter of that rate on ordinary enemies and 1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses, or cost 100 Valkyrie’s Sigils in the Black Market or 600 Echo Shards in Echo. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Unprotected failures at +5–9 lose one rank. Mythic +10 is a checkpoint; higher failures lose one rank unless protected. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
 function handbook(){return `<section class="handbook"><nav class="guide-nav" aria-label="Guide chapters">${[['beginner','Beginner'],['leveling','Leveling route'],['build','Your build'],['cards','Card targets'],['ascension','Ascension Forge']].map(([id,label])=>`<button data-a="guidepage" data-v="${id}" aria-pressed="${guidePage===id}">${label}</button>`).join('')}</nav>${guideTourPanel()}${guidePage==='beginner'?beginnerGuide():guidePage==='leveling'?levelingGuide():guidePage==='ascension'?ascensionGuide():buildGuide(true)}</section>`;}
 function guideBuildPlan(){
@@ -6609,7 +6756,9 @@ const V={
     <div class="row"><button data-a="bgm" data-v="toggle" class="${typeof BGM!=='undefined'&&BGM.enabled?'on':''}" aria-pressed="${typeof BGM!=='undefined'&&BGM.enabled}">${typeof BGM!=='undefined'&&BGM.enabled?'BGM: On':'BGM: Off'}</button></div>
     <div class="row" style="margin-top:4px"><button data-a="bgmvol" data-v="-">Vol -</button><button data-a="bgmvol" data-v="+">Vol +</button><button data-a="bgmprev">Prev</button><button data-a="bgmnext">Next</button><button data-a="bgmshuffle" aria-pressed="${typeof BGM!=='undefined'&&BGM.shuffle}">Shuffle</button></div>
     <small>Current track: ${typeof BGM!=='undefined'?esc(BGM.currentTitle()):'No track'} · Volume ${typeof BGM!=='undefined'?Math.round(BGM.volume*100):5}%. On PC the player under the HP box lists every track (map BGM is the default; press ▾ to pick any song); phones just autoplay the map's track. Tracks are configured per map in assets/bgm-tracks.js.</small>
-    <div class="hd">Interface palette</div>${typeof eclipsePaletteControls==='function'?eclipsePaletteControls():''}<div class="hd" style="margin-top:10px">Gameplay</div><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
+    <div class="hd">Interface palette</div>${typeof eclipsePaletteControls==='function'?eclipsePaletteControls():''}<div class="hd" style="margin-top:10px">Gameplay</div>
+    <div class="row"><button data-a="hints" data-v="on" class="${S.hints!==false?'on':''}" aria-pressed="${S.hints!==false}">New-player tips: On</button><button data-a="hints" data-v="off" class="${S.hints===false?'on':''}" aria-pressed="${S.hints===false}">Off</button></div>
+    <small>Small cards that point at the control a new player needs next. Each one appears once, disappears when you have done it, and the Guide keeps the full explanation.</small><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
     <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it. Auto-equip lives on the <b>Bag</b> tab and Auto-advance on the <b>World Map</b> tab, next to what they control.</small>
     <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E Q R L P I V O, Esc to close. Cards has no hotkey - use its tab.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return gmToolsPanel()}};;
@@ -7343,7 +7492,7 @@ function renderWin(anchor){
       if(er.top<br.top)body.scrollTop+=er.top-br.top;
       else if(er.bottom>br.bottom)body.scrollTop+=er.bottom-br.bottom}}
   const inSocial=!!(document.body&&document.body.classList&&document.body.classList.contains('social-open'));
-  if(!inSocial)eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();if(!inSocial)drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview();if(typeof wardrobeSync==='function')wardrobeSync();if(typeof guideFinderSync==='function')guideFinderSync()}
+  if(!inSocial)eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();if(!inSocial)drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview();if(typeof wardrobeSync==='function')wardrobeSync();if(typeof guideFinderSync==='function')guideFinderSync();if(typeof coachSync==='function')coachSync()}
 let winPress=false,winDirty=false;
 const winUp=()=>{winPress=false;if(winDirty){winDirty=false;renderWin()}};
 // Guarded so the headless UI harness (which pulls this slice into a bare vm) still loads.
@@ -7918,7 +8067,7 @@ const ACT={
   gmdailyreset:()=>gmResetDailyRoulette(),
   workslot:v=>{if(EQK.some(([k])=>k===v)){selE=v;renderWin()}},
   bgm:v=>{if(typeof BGM!=='undefined'){if(v==='toggle')BGM.setEnabled(!BGM.enabled);else BGM.setEnabled(true);BGM.savePrefs&&BGM.savePrefs();if(typeof ui==='function')ui()}},
-  sfx:()=>{S.sfx=S.sfx===false;ui();save()},bgmshuffle:()=>{BGM.toggleShuffle();ui()},bgmmute:()=>{if(typeof BGM!=='undefined'){BGM.setMuted(!BGM.muted);if(typeof ui==='function')ui()}},
+  sfx:()=>{S.sfx=S.sfx===false;ui();save()},hints:v=>{S.hints=v!=='off';if(S.hints===false)coachHideTip();coachTipSig='';log('New-player tips '+(S.hints?'on':'off')+'.','','misc');ui();save()},bgmshuffle:()=>{BGM.toggleShuffle();ui()},bgmmute:()=>{if(typeof BGM!=='undefined'){BGM.setMuted(!BGM.muted);if(typeof ui==='function')ui()}},
   bgmvol:v=>{if(typeof BGM!=='undefined'){BGM.setVolume(BGM.volume+(v==='+'?.1:-.1));if(typeof ui==='function')ui()}},
   bgmnext:()=>{if(typeof BGM!=='undefined'){BGM.next();if(typeof ui==='function')ui()}},
   bgmprev:()=>{if(typeof BGM!=='undefined'){BGM.prev();if(typeof ui==='function')ui()}},
