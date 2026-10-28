@@ -11,6 +11,7 @@ const ROOT = path.resolve(__dirname, '../..');
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(ROOT, 'assets/ui/mobile.css'), 'utf8');
 const mobileJs = fs.readFileSync(path.join(ROOT, 'assets/ui/mobile.js'), 'utf8');
+const socialJs = fs.readFileSync(path.join(ROOT, 'assets/social.js'), 'utf8');
 
 let pass = 0, fail = 0, pending = Promise.resolve();
 const test = (name, fn) => {
@@ -108,7 +109,17 @@ test('the floating layer sits above the dock from the first frame', () => {
   assert.equal(declOf('html.pg-mobile #wins', 'bottom'), 'var(--docktop)');
   assert.match(declOf('html.pg-mobile #feedWrap', 'bottom'), /var\(--docktop\)/);
   assert.match(declOf('html.pg-mobile #sideRail', 'bottom'), /var\(--docktop\)/);
-  assert.match(declOf('html.pg-mobile #pgQuests', 'bottom'), /var\(--docktop\)/);
+});
+
+test('the quest chip lives in the right rail, clear of the world chat', () => {
+  // The bottom-left corner is the chat (the game's own log lives in it), so the
+  // chip sits under Mail and Daily instead of on top of the chat's tabs.
+  assert.equal(declOf('html.pg-mobile #pgQuests', 'left'), 'auto');
+  assert.match(declOf('html.pg-mobile #pgQuests', 'right'), /--pg-safe-r/);
+  assert.match(declOf('html.pg-mobile #pgQuests', 'top'), /36px/, 'just under the 36px Mail / Daily buttons');
+  assert.equal(declOf('html.pg-mobile #pgQuests', 'bottom'), 'auto');
+  // Landscape keeps the same corner with the smaller 32px tools.
+  assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)[\s\S]*#pgQuests\{height:24px;top:calc\(4px \+ 32px \+ 6px\)/, 'landscape keeps the chip off the chat');
 });
 
 test('the player card clears the header and the combat pill clears the player card', () => {
@@ -357,6 +368,17 @@ if (game) {
     assert.ok(!d.documentElement.classList.contains('pg-focus'));
   });
 
+  testAsync('an open panel stands the chat down instead of stacking on it', async () => {
+    assert.match(mobileJs, /root\.classList\.toggle\('pg-panel', open\)/);
+    assert.equal(declOf('html.pg-mobile.pg-panel #socialChat', 'display'), 'none');
+    ev("S=fresh();S.auto=false;tabs.length=0;tabs.push('map');renderWin()");
+    await Promise.resolve(); await Promise.resolve();
+    assert.ok(d.documentElement.classList.contains('pg-panel'), 'the panel is open, so the chat steps aside');
+    ev("tabs.length=0;renderWin()");
+    await Promise.resolve(); await Promise.resolve();
+    assert.ok(!d.documentElement.classList.contains('pg-panel'), 'closing the panel brings the chat back');
+  });
+
   testAsync('the dock More button opens the destinations list through the rail', async () => {
     ev("S=fresh();S.auto=false;tabs.length=0;sideOpen=false;renderQ()");
     const rail = d.getElementById('sideRail');
@@ -384,6 +406,30 @@ if (game) {
   test('mail and the daily roulette sit in one corner row on a phone', () => {
     assert.equal(declOf('html.pg-mobile #minimapTools', 'flex-direction'), 'row');
     assert.equal(declOf('html.pg-mobile .minimap-tool-btn', 'width'), '36px');
+  });
+
+  test('a landscape phone gets one scrollable column, not a cut-off desktop grid', () => {
+    // A landscape phone is SHORT (~250px of panel). The desktop map page is a
+    // three-column composition; stacking it put every section below the fold,
+    // which is what "the other UI basically does not appear" looked like.
+    assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)[\s\S]*#wins \.ui-panel\[data-layout=map\] \.ui-content\{\s*grid-template-columns:minmax\(150px,180px\) minmax\(0,1fr\)/,
+      'destinations on the left, the chosen field on the right');
+    assert.equal(declOf('html.pg-mobile #wins>.wp>.eclipse-window-footer', 'display', 'landscape'), 'none',
+      'the hint footer is the first thing to go when height is scarce');
+    assert.equal(declOf('html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs', 'position', 'landscape'), 'sticky',
+      'the tab strip stays reachable while a panel scrolls');
+    // index.html pins these four tabs at 44px; on a 250px panel that is a fifth of the screen.
+    assert.equal(declOf('html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs button', 'min-height', 'landscape'), '30px');
+    assert.equal(declOf('html.pg-mobile #wrap', 'height'), 'var(--pg-vh,100dvh)',
+      'fullscreen follows the visible height, not the layout viewport');
+  });
+
+  test('the world chat cannot grow over the dock or off a small screen', () => {
+    // social.js writes inline width/height, so the cap has to live there.
+    assert.match(socialJs, /const phone=document\.documentElement\.classList\.contains\('pg-mobile'\)/);
+    assert.match(socialJs, /capHeight=phone\?Math\.min\(maxHeight,Math\.max\(120,Math\.min\(150,/);
+    assert.match(socialJs, /capWidth=phone\?Math\.min\(maxWidth,340\)/);
+    assert.match(css, /html\.pg-mobile #socialChat\{/);
   });
 
   test('the activity log shows whole lines instead of a clipped box', () => {

@@ -157,6 +157,12 @@ export const deleteSession = (db, hash) =>
 export const deleteUserSessions = (db, userId) =>
   db.prepare('DELETE FROM sessions WHERE user_id = ?').bind(userId).run();
 
+// One live session per account (owner, 2026-10-28): a sign-in on a second device ends the first
+// device's session, so the two copies are never both playing and pushing saves at each other. The
+// keeper is the token that was just created; everything else the account holds is deleted.
+export const deleteOtherSessions = (db, userId, keepHash) =>
+  db.prepare('DELETE FROM sessions WHERE user_id = ? AND token_hash <> ?').bind(userId, keepHash).run();
+
 export const expireSessions = (db) =>
   db.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now()).run();
 

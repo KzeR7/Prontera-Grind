@@ -569,7 +569,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 .dungeoncard .echo-mark,.trial-seal,.trial-card button.trial-act .trial-choice-mark{background:#493e53;border:1px solid #9c86ad;color:#e5d4ee;box-shadow:none;text-shadow:none}
 .trial-close{background:#364b3b}.trial-shop,.trial-shop .shopline{border-color:var(--edge)}
 .offline-card .eyebrow,.offline-stat small,#offlineExplanation{color:#b8c8ac}#offlineDetails{background:#2c3e2e;border-color:#697d58}
-#modal,#offlineModal,#cloudGate{background:#0a160ed9!important;backdrop-filter:blur(5px)}
+#modal,#offlineModal,#cloudGate,#sessionGate{background:#0a160ed9!important;backdrop-filter:blur(5px)}
 .login-card{max-height:calc(100dvh - 24px);overflow:auto}
 /* Login: a quiet atlas, with a separate brand area on wide screens. */
 #loginOverlay{background:radial-gradient(ellipse at 18% 20%,#57714a55,transparent 55%),radial-gradient(ellipse at 85% 90%,#9a7c3433,transparent 50%),#13231c;backdrop-filter:none;gap:80px;padding:30px;overflow:auto;isolation:isolate}
@@ -966,6 +966,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <p id="cloudGateDetail" style="font-size:11px;opacity:.85;margin:0"></p>
 <div class="row" style="justify-content:center;margin-top:12px"><button id="cloudGateRetry" class="login-btn">Reconnect</button></div>
 </div></div>
+<div id="sessionGate" role="dialog" aria-modal="true" aria-labelledby="sessionGateTitle" aria-describedby="sessionGateText" style="display:none;position:fixed;inset:0;background:rgba(20,14,8,.86);z-index:61;align-items:center;justify-content:center">
+<div class="login-card" style="max-width:520px">
+<h2 id="sessionGateTitle" style="font-size:16px">🔐 Signed in on another device</h2>
+<p style="font-size:13px;opacity:1;margin:0 0 10px">This account was signed in somewhere else, so this tab has stopped playing. Only one device can play a character at a time.</p>
+<p id="sessionGateText" style="font-size:12px;line-height:1.6;margin:0 0 10px">Everything up to this moment is safe. The other device is playing the account now - sign in again here only when you want to take it back (that will end the other device's session in turn).</p>
+<div class="row" style="justify-content:center;margin-top:12px"><button id="sessionGateBack" class="login-btn" onclick="location.reload()">Sign in again</button></div>
+</div></div>
 <div id="offlineModal" role="dialog" aria-modal="true" aria-labelledby="offlineTitle" aria-describedby="offlineExplanation">
   <div class="offline-card"><div class="eyebrow">WELCOME BACK</div><h2 id="offlineTitle">Your offline grind is ready</h2><p>Your character kept earning while you were away. These rewards have already been added to your save.</p>
     <div class="offline-stats">
@@ -1252,7 +1259,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-10-28 haven-v252 phone layout';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-28 haven-v253 mobile polish';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3538,7 +3545,11 @@ const cloudSay=(m,cls)=>log(m,cls||'r3','cloud');
 const cloudHidden=()=>{try{return(typeof document!=='undefined'&&!!document.hidden)||(typeof simOccluded!=='undefined'&&!!simOccluded)}catch(e){return false}};
 function cloudBadge(txt,tip){const e=$('cloudBadge');if(e){e.textContent=txt||'';e.title=tip||''}}
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
-async function cloudFetch(path,opt){const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});const res=await fetch(cloudUrl(path),Object.assign({credentials:'same-origin'},o,{headers:hdrs}));const pt=res&&res.headers&&typeof res.headers.get==='function'?res.headers.get('x-preview-session'):null;if(pt)CLOUD.previewToken=pt;return res}
+async function cloudFetch(path,opt){const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});const res=await fetch(cloudUrl(path),Object.assign({credentials:'same-origin'},o,{headers:hdrs}));
+  // v253: one live session per account (functions/api/sessions.js). A 401 while this tab holds a
+  // session means another device signed in as this player, so this tab stops instead of grinding
+  // a copy nobody will ever see and losing it to the next save conflict.
+  if(res&&res.status===401&&CLOUD.on&&!CLOUD.signingOut)cloudSessionReplaced();const pt=res&&res.headers&&typeof res.headers.get==='function'?res.headers.get('x-preview-session'):null;if(pt)CLOUD.previewToken=pt;return res}
 async function boardRefresh(period=boardPeriod,kind=boardKind){
   if(!['daily','weekly','all'].includes(period)||!['kills','echo'].includes(kind))return;
   const seq=++boardRequest;
@@ -3643,6 +3654,8 @@ function cloudFlushNow(){return cloudPush(true)}
 const cloudGateEl=()=>$('cloudGate');
 function cloudGateShow(detail){
   CLOUD.gate=true;
+  // An ended session explains itself; the connection dialog would be the wrong story.
+  if(typeof cloudReplaced!=='undefined'&&cloudReplaced){const box=$('sessionGate');if(box)box.style.display='flex';return}
   const box=cloudGateEl();if(box){box.style.display='flex'}
   const d=$('cloudGateDetail');if(d)d.textContent=detail||'';
   const retry=$('cloudGateRetry');if(retry)retry.onclick=()=>cloudReconnect();   // idempotent: one handler, always this one
@@ -3664,10 +3677,27 @@ async function cloudConnectionLost(reason){
   cloudSay('Connection lost ('+(reason||'no answer from the server')+'). Your character is away until you reconnect; that time is paid as away rewards.','r0','cloud');
   cloudGateShow('Last attempt: '+(reason||'no answer')+' · '+(CLOUD.user?'signed in as '+CLOUD.user:''));
 }
+// One session per account: a sign-in on another device ended this one. The tab cannot keep
+// playing - another device owns the character now - so it stops the simulation, keeps the local
+// copy, and says so plainly. It never uploads (that would race the device that just signed in).
+let cloudReplaced=false;
+function cloudSessionReplaced(){
+  if(cloudReplaced)return;
+  cloudReplaced=true;
+  CLOUD.paused=true;CLOUD.lost=true;CLOUD.gate=true;
+  try{save()}catch(e){}
+  cloudBadge('☁ ⛔','Signed out: your account signed in on another device');
+  const box=$('sessionGate');
+  if(box)box.style.display='flex';
+  try{simAt=performance.now();simPending=0}catch(e){}
+}
 // Reconnect: pull the account's save, adopt it (the device copy is stashed as a backup), let the
 // server's away claim pay for the gap, then resume. Never uploads what was drawn while offline.
 async function cloudReconnect(){
   if(!CLOUD.on||!CLOUD.user){cloudGateHide();return false}
+  // The session was ended by a sign-in elsewhere: reconnecting would only 401 again, and the
+  // tab must never adopt a save while the other device is playing it.
+  if(cloudReplaced){const box=$('sessionGate');if(box)box.style.display='flex';return false}
   const detail=$('cloudGateDetail');if(detail)detail.textContent='Reconnecting…';
   const got=await cloudReadSave();
   if(got.offline){
@@ -3971,6 +4001,7 @@ async function cloudAuth(u,p,isReg){
 }
 function cloudLogout(){
   if(!CLOUD.on)return;
+  CLOUD.signingOut=true;      // the session is being ended on purpose; do not report a kick
   cloudFlushNow();
   cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}).catch(()=>{});
   CLOUD.on=false;CLOUD.user=null;CLOUD.previewToken=null;
@@ -6745,7 +6776,7 @@ function applyDisplay(){
  document.body.classList.toggle('hide-feed',S.feedShow===false);
  document.body.classList.toggle('hide-labels',S.labelsShow===false);
 }
-// v252: on the local preview server the phone layout can be checked at a true phone size. The link
+// v253: on the local preview server the phone layout can be checked at a true phone size. The link
 // to that page is offered ONLY when /phone answers with the dev server's marker header, so a static
 // host - which may answer an unknown path with this very page - can never show a link that loops.
 let pgPreviewOk=null;
@@ -6762,7 +6793,7 @@ function pgPreviewProbe(){
 function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidden;$('screenBtn').setAttribute('aria-expanded',String(!panel.hidden));
  // Never link the frame from inside the frame (the preview page loads this game with ?phone=1).
  if(/[?&]phone=/.test(location.search))pgPreviewOk=false;else pgPreviewProbe();
- // v252: on a phone this panel is a sheet under the header rather than a bubble over the dock,
+ // v253: on a phone this panel is a sheet under the header rather than a bubble over the dock,
  // so it gets its own title row and a close button (assets/ui/mobile.css). The same markup is
  // fine on the desk, where the row simply reads as a caption.
  const pg=window.PGMobile,pgMode=pg?pg.getPhoneLayout():'auto',pgFocus=!!(pg&&pg.fieldOnly()),pgLayout=pgMode==='on'?'Phone':pgMode==='off'?'Desk':'Auto';
@@ -6774,7 +6805,7 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
   // boot - cheaper and far less risky than rebuilding a live world mid-fight - and the choice is
   // tab-local (sessionStorage), exactly like the URL override it stands in for.
   +`<label><input type="checkbox" data-display="nativeFields" ${nativeFieldsEnabled?'checked':''}>New outdoor terrain (reloads)</label>`
-  // v252: the phone block. "Layout" is a device-local choice, so a phone can drop back to the
+  // v253: the phone block. "Layout" is a device-local choice, so a phone can drop back to the
   // desk arrangement (or a desk browser can preview the phone one) without touching the save.
   +`<div class="pg-sheet-head pg-phone-head"><span>Phone</span></div>
     <div class="pg-actions">
@@ -8396,7 +8427,7 @@ function resize(){
   eclipseMeasureDock();
 }
 addEventListener('resize',resize);
-// v252: the phone layout changes what is painted over the field (the HUD card and the dock change
+// v253: the phone layout changes what is painted over the field (the HUD card and the dock change
 // size), and it can flip at runtime from Display -> Layout. Re-measure both caches when it does.
 addEventListener('pg-mobile-change',()=>{resize();renderDock();try{eclipseMeasureDock()}catch(_){}});
 // v74.1: on a phone the visual viewport changes when the URL bar slides away or the device is

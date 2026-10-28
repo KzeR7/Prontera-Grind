@@ -8570,3 +8570,45 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   generated-asset `--check` scripts pass. `card_star_balance_sim` needs `git fetch origin d164bd0` in a fresh
   clone; with it fetched the suite is green (36 comparisons).
 * **Delivery:** Committed and pushed on `arena/de3e0bec-prontera-grind`. No separate deploy was run by the agent.
+
+### 2026-10-28 — `2026-10-28 haven-v253 mobile polish`
+* **Changed:** Fixes from playing the phone build on a real handset, plus one session per account.
+  * **Landscape fullscreen was unreadable (`assets/ui/mobile.css`):** a 740×360 phone gives a panel
+    about 250px of height. The map page's three stacked sections (01 Destination / 02 Choose your
+    stage / 03 Field intelligence) put two of them below the fold, so it looked like "the rest of the
+    UI never appears" — and the same for every other panel whose desktop composition is taller than
+    the field. Landscape now keeps the map page's own two-column shape (a 150–180px destination rail
+    on the left, the chosen field, its stages and the drop tables on the right), every panel becomes
+    one scrolling column, the 29px window footer (a hint line) is dropped, the four collection tabs
+    shrink from the 44px touch target to 30px, the hero art from 156px to 58px, and the tab strip
+    sticks to the top of the panel.
+  * **Everything half cut off along the bottom:** `#wrap` is now sized by `--pg-vh` (the
+    `visualViewport` height that `mobile.js` already publishes) instead of `100dvh`, which is what the
+    layout viewport reports inside Android fullscreen with the URL bar gone.
+  * **The world chat covered the phone screen:** it is a desktop 390×214 panel, and `assets/social.js`
+    writes that size inline — now capped on a phone to 340px wide and ~150px tall (drag-resize still
+    works up to the cap), and hidden entirely while a panel window is open, because the two used to
+    stack. `mobile.js` mirrors "a panel is open" onto `<html>` as `pg-panel` with a MutationObserver.
+  * **Portrait overlaps:** the ❖ Quests chip sat on the chat's tab strip and its own send row. It now
+    lives in the right rail directly under Mail and Daily, in both orientations. The four map
+    collection tabs became one even 30px row (they were wrapping "Ascension Map" onto two lines), and
+    the atlas hero is 58px in landscape.
+  * **One session per account (`functions/api/sessions.js`, `functions/api/register.js`,
+    `functions/_lib/db.js`):** a sign-in on a second device now deletes the account's other session
+    rows, so two devices can never both play the character and push saves at each other. The device
+    that was signed out learns it on its next request (401) and `index.html` shows a dedicated
+    "Signed in on another device" dialog (`#sessionGate`), parks the simulation, keeps the local copy
+    and uploads nothing — the connection-lost dialog would have been the wrong story. Signing in again
+    takes the account back and ends the other device in turn.
+* **Try it:** `bash tools/build_site.sh && node tools/dev_server.js`, open `/phone`, pick a device,
+  press ⟳ Rotate, then open Maps: the destinations, the stages and the drop tables are all reachable in
+  landscape. Sign in on a second browser with the same account and the first one stops with the new
+  dialog.
+* **Checks:** `mobile_layout_sim` 28/28 (adds the landscape map composition, the sticky tab strip, the
+  viewport-sized shell, the chat caps, the chip's new corner and the `pg-panel` mirror); `api_sim`
+  46/46 (adds "a second sign-in ends the first device", and the suite now refreshes its account cookies
+  the way a browser does); `dev_server_sim` 19/19 (the second browser is signed out over real HTTP);
+  `cloud_sim` 59/59 (adds the 401 → "signed in elsewhere" path, and that a replaced session reconnects
+  into nothing and uploads nothing). Full JS gate: 141 suites, **134 green, 7 red** — the documented
+  known-red baseline, no new failures.
+* **Delivery:** Committed and pushed on `arena/30cfab02-prontera-grind`. No separate deploy was run.

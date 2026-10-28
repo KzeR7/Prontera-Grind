@@ -80,7 +80,10 @@ html.pg-mobile body{background:#101820;}
    dock height + gap + 6. Publishing our own value keeps the floating layer
    correct on the very first frame, before the first measurement runs. */
 html.pg-mobile{--docktop:calc(var(--pg-dockh) + var(--pg-dockgap) + 6px)}
-html.pg-mobile #wrap{height:100vh;height:100dvh;overflow:hidden}
+/* --pg-vh is the visualViewport height published by mobile.js. In fullscreen on
+   Android the layout viewport can stay taller than the visible area, which is
+   how the EXP bar ended up half cut off along the bottom edge. */
+html.pg-mobile #wrap{height:var(--pg-vh,100dvh);overflow:hidden}
 html.pg-mobile #view{min-height:0}
 
 /* ── 1. Header ───────────────────────────────────────────────────────────── */
@@ -191,9 +194,13 @@ html.pg-mobile .minimap-tool-label{
 }
 html.pg-mobile .minimap-tool-badge{top:-4px;right:-4px;min-width:14px;height:14px;font-size:8px;line-height:11px}
 
-/* Quests: one thumb-sized chip at the bottom-left opens the rail sheet. */
+/* Quests: one thumb-sized chip that opens the rail sheet. It sits in the RIGHT
+   rail, directly under Mail and Daily, because the bottom-left corner belongs
+   to the world chat - the chip used to land on the chat's tab strip and on its
+   own send row (owner: "few overlapping ui"). */
 html.pg-mobile #pgQuests{
-  position:absolute;left:calc(6px + var(--pg-safe-l));bottom:calc(var(--docktop) + 2px);
+  position:absolute;right:calc(6px + var(--pg-safe-r));left:auto;
+  top:calc(6px + 36px + 8px);bottom:auto;
   z-index:45;display:inline-flex;align-items:center;gap:5px;
   height:28px;padding:0 10px 0 8px;border-radius:999px;
   background:var(--e-glass,#1b2b24f5);border:1px solid var(--e-line-bright,#61725b);
@@ -208,7 +215,7 @@ html.pg-mobile #pgQuests .pg-q-dot{
 html.pg-mobile #pgQuests .pg-q-dot[hidden]{display:none!important}
 html.pg-mobile #pgQuests[aria-expanded="true"]{background:#ffe08a;color:#2a2114;border-color:#e8c06a}
 
-/* Activity log: three lines, above the quest chip, and never wider than the
+/* Activity log: three lines at the bottom-left, and never wider than the
    field. The "Logs ▾" tab is redundant next to the Log tab in the dock. */
 html.pg-mobile #feedWrap{
   left:calc(6px + var(--pg-safe-l));right:auto;bottom:calc(var(--docktop) + 34px);
@@ -226,6 +233,22 @@ html.pg-mobile #feed>div,
 html.pg-mobile #feed>.feed-entry{font-size:9px}
 html.pg-mobile #feedBar{display:none!important}
 html.pg-mobile #hint{display:none!important}
+
+/* World chat: the desktop panel is 390x214 - wider than a 390px phone and a
+   quarter of its field. On a phone it is a card above the dock with its own
+   minimize, so it never covers the log or the quest chip. */
+html.pg-mobile #socialChat{
+  left:calc(6px + var(--pg-safe-l));right:auto;
+  font-size:11px;border-radius:10px;
+}
+html.pg-mobile #socialChat #socialTabs button{font-size:11px;padding:5px 8px}
+html.pg-mobile #socialChat #socialCompose{font-size:11px}
+html.pg-mobile #socialChat #socialCompose button{font-size:11px;padding:5px 8px}
+html.pg-mobile #socialChat.minimized{height:auto!important}
+
+/* An open panel owns the field; the chat card (and its tab strip) would float
+   on top of it. It comes back the moment the panel closes. */
+html.pg-mobile.pg-panel #socialChat{display:none}
 
 /* Pet buffs: small tiles tucked above the dock on the right. */
 html.pg-mobile #hudBuffs{
@@ -380,6 +403,17 @@ html.pg-mobile #screenOptions{
   max-width:none;max-height:min(70vh,420px);overflow-y:auto;z-index:121;
   border-radius:12px;padding:10px;box-shadow:0 16px 40px #0009;
 }
+/* index.html pins these tabs at min-height:44px with a wrapping label; a 390px
+   field (and a 250px-tall landscape panel) wants one even row instead. The
+   selector is matched to that rule's weight, or it would lose to it. */
+html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;min-height:0;padding:0 6px;
+  position:sticky;top:0;z-index:3;background:var(--e-raised,#1a231d);
+}
+html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs button{
+  min-height:30px;height:30px;padding:0 2px;font-size:9px;line-height:1.15;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
+}
 html.pg-mobile #screenOptions label{padding:9px 6px;font-size:11px;border-radius:8px}
 html.pg-mobile #screenOptions label:active{background:#22392f}
 html.pg-mobile #screenOptions input{width:17px;height:17px;margin-right:9px;vertical-align:-3px}
@@ -439,7 +473,7 @@ html.pg-mobile .modal-card{max-width:calc(100vw - 20px)}
   html.pg-mobile #hudBuffs{bottom:calc(var(--docktop) + 2px);right:calc(4px + var(--pg-safe-r))}
   html.pg-mobile #hudBuffs .pbx{width:26px;height:26px;font-size:13px}
   html.pg-mobile #eclipseCompanions{bottom:calc(var(--docktop) + 30px);right:calc(4px + var(--pg-safe-r))}
-  html.pg-mobile #pgQuests{height:24px;bottom:calc(var(--docktop) + 1px);left:calc(4px + var(--pg-safe-l));font-size:8px}
+  html.pg-mobile #pgQuests{height:24px;top:calc(4px + 32px + 6px);right:calc(4px + var(--pg-safe-r));font-size:8px}
 
   html.pg-mobile #xp-dock{padding:2px calc(6px + var(--pg-safe-r)) calc(2px + var(--pg-safe-b)) calc(6px + var(--pg-safe-l))}
   html.pg-mobile #xp-track{height:18px;border-radius:5px}
@@ -453,8 +487,66 @@ html.pg-mobile .modal-card{max-width:calc(100vw - 20px)}
   html.pg-mobile #dock .ib .ui-nav-icon .ui-icon{width:16px;height:16px}
   html.pg-mobile #dock .ui-nav-label{font-size:6.5px}
 
-  html.pg-mobile #wins{top:3px;bottom:var(--docktop)}
-  html.pg-mobile #wins>.wp>.title{height:38px;min-height:38px;font-size:10px}
+  /* A landscape phone is SHORT, not narrow: a panel has ~250px of height, so the
+     desktop 3-column composition (a 145px destination rail, a two-column field
+     guide) put most of every panel below the fold and read as cut-off columns.
+     Here every panel is one column that scrolls, the window footer (a hint line)
+     is dropped, and the tab strip sticks to the top so a jump between panels is
+     always one tap away. */
+  html.pg-mobile #wins{top:2px;bottom:var(--docktop)}
+  html.pg-mobile #wins>.wp>.title{height:34px;min-height:34px;font-size:10px;padding:0 10px}
+  html.pg-mobile #wins>.wp>.eclipse-window-footer{display:none}
+  html.pg-mobile #wins .wbody>.ui-content{padding:10px 12px;gap:12px}
+  html.pg-mobile #wins .ui-content>.ui-section,
+  html.pg-mobile #wins .ui-content>section{padding-block:8px}
+  /* A short landscape panel keeps the map page's own shape: the destination
+     rail on the LEFT, the chosen field, its stages and the drop tables on the
+     right. Stacking the three sections (01 / 02 / 03) put two of them below a
+     ~210px fold, which is what "the other UI does not appear" looked like. */
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-content{
+    grid-template-columns:minmax(150px,180px) minmax(0,1fr);gap:10px 12px;align-items:start;
+  }
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-destinations{grid-column:1;grid-row:1}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route{grid-column:2;grid-row:1}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-field-guide{grid-column:1/-1;grid-row:2;border-top:1px solid color-mix(in srgb,var(--gold) 55%,transparent)}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .eclipse-atlas-hero{margin-bottom:8px}
+  /* The desktop destination rail is a 5-across grid at this width; in a 150px
+     column it reads as a plain list. */
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-destinations .mapgrid{
+    display:flex;flex-direction:column;gap:3px;
+  }
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-destinations .mapcard{
+    flex-direction:row;align-items:baseline;justify-content:space-between;gap:6px;
+    min-height:26px;padding:4px 7px;
+  }
+  html.pg-mobile #wins .ui-destinations .mapgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+  html.pg-mobile #wins .ui-destinations .mapcard{flex-direction:column;align-items:flex-start;gap:2px;min-height:0;padding:6px 7px}
+  html.pg-mobile #wins .ui-destinations .mapcard>b{font-size:9px}
+  html.pg-mobile #wins .ui-destinations .mapcard small{font-size:7px}
+  html.pg-mobile #wins .ui-field-guide .mapcols{display:block}
+  html.pg-mobile #wins .eclipse-stages{gap:3px}
+  html.pg-mobile #wins .eclipse-stages .map-node{min-height:34px;padding:5px 2px}
+  html.pg-mobile #wins .ui-route .lvgrid{margin:8px 0}
+  /* 110px of hero art left ~60px for the actual stage picker; 76px still shows
+     the destination and keeps the stages one short scroll away. */
+  html.pg-mobile #wins .eclipse-atlas-hero{height:58px;min-height:58px;margin-bottom:8px}
+  html.pg-mobile #wins .eclipse-atlas-hero>img,
+  html.pg-mobile #wins .eclipse-atlas-hero>canvas{height:58px;object-fit:cover}
+  html.pg-mobile #wins .eclipse-atlas-hero h2{font-size:15px;margin:2px 0}
+  html.pg-mobile #wins .eclipse-atlas-hero p{font-size:8px}
+  /* The four collection tabs are a 44px touch target in index.html's own CSS
+     (a rule this file outranks only by matching it more precisely), and on a
+     252px-tall panel that is a fifth of the screen. 30px still taps cleanly. */
+  html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs{min-height:30px;gap:8px;padding:0 8px}
+  html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs button{
+    position:sticky;top:0;min-height:30px;height:30px;padding:0 2px;font-size:9px;line-height:1.2;
+  }
+  html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs{position:sticky;top:0;z-index:3;background:var(--e-raised,#1a231d)}
+  /* The world chat is a desktop panel: 390x214 is taller than half of a 360px
+     field. It becomes a phone-sized card here and keeps its own minimize. */
+  html.pg-mobile #socialChat{font-size:10px}
+  html.pg-mobile #socialChat #socialTabs button{font-size:10px;padding:4px 7px}
+  html.pg-mobile #socialCompose button{font-size:10px;padding:4px 6px}
   html.pg-mobile #screenOptions{top:calc(var(--pg-header) + 3px);max-height:calc(100% - var(--pg-header) - var(--docktop) - 8px)}
 }
 

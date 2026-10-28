@@ -41,8 +41,13 @@ export const onRequestPost = guard(async ({ request, env }) => {
   if (upgrade) await db.setPassword(D, user.id, upgrade);   // raise the cost of an old hash
 
   const token = newToken();
-  await db.insertSession(D, await tokenHash(token), user.id, Date.now() + SESSION_DAYS * 86400000,
+  const hash = await tokenHash(token);
+  await db.insertSession(D, hash, user.id, Date.now() + SESSION_DAYS * 86400000,
     userAgent(request), ip);
+  // One session per account: signing in here ends the session the account held on any other
+  // device, so a phone and a laptop can never both farm the same character and overwrite each
+  // other's saves. The other device finds out on its next request (401) and stops playing.
+  await db.deleteOtherSessions(D, user.id, hash);
   await db.noteLogin(D, user.id);
   await db.clearRate(D, `login-ip:${ip || 'noip'}`);
   // NO touchSeen here. saves.last_seen is the OFFLINE away baseline (a claim pays for
