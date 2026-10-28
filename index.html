@@ -1249,8 +1249,8 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
-const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-27 haven-v250 cloud usage diet';   // shown on the login card - confirms which file you loaded
+const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
+const BUILD='2026-10-28 haven-v251 background grinding';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3533,7 +3533,7 @@ const cloudUrl=p=>'/api'+p;
 const cloudSay=(m,cls)=>log(m,cls||'r3','cloud');
 // Is this tab in the background? Guarded so the headless suites (which run this block with no real
 // document) still load it.
-const cloudHidden=()=>{try{return typeof document!=='undefined'&&!!document.hidden}catch(e){return false}};
+const cloudHidden=()=>{try{return(typeof document!=='undefined'&&!!document.hidden)||(typeof simOccluded!=='undefined'&&!!simOccluded)}catch(e){return false}};
 function cloudBadge(txt,tip){const e=$('cloudBadge');if(e){e.textContent=txt||'';e.title=tip||''}}
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
 async function cloudFetch(path,opt){const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});const res=await fetch(cloudUrl(path),Object.assign({credentials:'same-origin'},o,{headers:hdrs}));const pt=res&&res.headers&&typeof res.headers.get==='function'?res.headers.get('x-preview-session'):null;if(pt)CLOUD.previewToken=pt;return res}
@@ -3550,7 +3550,9 @@ async function boardRefresh(period=boardPeriod,kind=boardKind){
   }catch(e){if(seq===boardRequest)boardError=e&&e.message||'Could not load the leaderboard.'}
   if(seq===boardRequest){boardLoading=false;if(tabs.includes('board'))renderWin()}
 }
-function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;CLOUD.dirty=true;cloudBadge('☁ …','Waiting to sync')}
+var cloudAfterAway=false;
+let cloudTouchSeq=0;
+function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;cloudTouchSeq++;CLOUD.dirty=true;cloudBadge('☁ …','Waiting to sync')}
 
 // Push the current save. Returns 'ok' | 'conflict' | 'offline' | 'idle'; never throws, because a dead
 // network must not interrupt play - it only leaves the local copy leading, and the badge says so.
@@ -3566,6 +3568,7 @@ async function cloudPush(push){
   if(CLOUD.pushing)return 'idle';
   // v88.6: a save that belongs to another account is never uploaded; this tab stops syncing instead.
   if(S.owner&&!sameAccount(S.owner,currentUser)){cloudSaveRefused();return 'idle'}
+  const seq=cloudTouchSeq;
   S.owner=currentUser;                 // the stamp: the save names the account it is uploaded for
   S.gmStats=gmStatSnapshot();
   CLOUD.pushing=true;cloudBadge('☁ ⇅','Syncing…');
@@ -3586,8 +3589,8 @@ async function cloudPush(push){
       return 'adopted'}
     if(r.status===428){const d=await r.json().catch(()=>({}));if(d.offlineClaim){applyOfflineProgress(Date.now(),d.offlineClaim);CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'offline-claim'}throw new Error(d.err||'A server-timed offline claim is required.')}
     if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=false;CLOUD.lastPush=Date.now();CLOUD.offline=false;
-    cloudBadge('☁ ✓','Saved to your account · v'+CLOUD.ver+' · '+new Date().toLocaleTimeString());
+    const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=cloudTouchSeq!==seq;CLOUD.lastPush=Date.now();CLOUD.offline=false;
+    cloudBadge(CLOUD.dirty?'☁ …':'☁ ✓',CLOUD.dirty?'Waiting to sync':'Saved to your account · v'+CLOUD.ver+' · '+new Date().toLocaleTimeString());
     return 'ok';
   }catch(e){
     // The save is NOT on the server, so it stays dirty: the next flush (or the next tab-hide) retries
@@ -3977,9 +3980,11 @@ function cloudLogout(){
 // Sync on the way out (hidden tab, closing page) and pull again if a tab was away for a while.
 addEventListener('visibilitychange',()=>{
   if(!CLOUD.on)return;
-  if(document.visibilityState==='hidden'){if(!CLOUD.lost)cloudFlushNow();return}
-  if(CLOUD.lost){cloudReconnect();return}          // v2: a returning tab asks the server straight away
-  if(Date.now()-CLOUD.lastPush>CLOUD_MAX_AGE)cloudRefresh();
+  if(document.visibilityState==='hidden'){cloudAfterAway=false;if(!CLOUD.lost)cloudFlushNow();return}
+  if(CLOUD.lost){cloudAfterAway=false;cloudReconnect();return}          // v2: a returning tab asks the server straight away
+  if(Date.now()-CLOUD.lastPush>CLOUD_MAX_AGE){
+    setTimeout(()=>{if(!CLOUD.on||CLOUD.lost)return;if((typeof awayReturnAt!=='undefined'&&awayReturnAt)||(typeof simPending!=='undefined'&&simPending>1e-6))cloudAfterAway=true;else cloudRefresh()},0);
+  }
 });
 // While the gate is up, keep trying quietly: the player should not have to press anything twice.
 setInterval(()=>{if(CLOUD.lost)cloudReconnect()},20000);
@@ -4676,8 +4681,8 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
     earnExp(r.exp);earnZeny(r.zeny);if(valid){gainAscension(r.exp,source[0]);}if(valid)addJob(safeCount(income.job*minutes));checkLevel();
     S.offlineKillRemainder=plan.remainder;
   }
-  farmSession=null;
-  S.offlineAt=now;S.offlineRateAt=now;S.offlineRateKills=safeCount(S.kills);save();zenyEarned=0;expEarned=0;
+  if(!covered)farmSession=null;
+  S.offlineAt=now;S.offlineRateAt=now;S.offlineRateKills=safeCount(S.kills);save();if(!covered){zenyEarned=0;expEarned=0;}
   if(plan.show&&!covered)showOfflineReward(r);return r;
 }
 // ---------- skill effects: damage over time, stun, chain ----------
@@ -12182,49 +12187,77 @@ const SIM_BG_MS=1000; // ms between hidden-tab wake-ups (a hidden tab clamps tim
                       // this is the cadence the browser actually gives a background page)
 // Keep combat debt, but yield between short batches so inputs can run. Leave the last
 // rendered frame in place until the debt is settled; drawing each batch visibly fast-forwards combat.
-const SIM_BATCH_STEPS=50,SIM_BUDGET_MS=8;
+const SIM_BATCH_STEPS=50,SIM_BUDGET_MS=8,SIM_BLUR_GAP_MS=1500,SIM_STALL_GAP_MS=5000;
+var simOccluded=false;
 let simAt=performance.now(),simPending=0,simOwner=null,simTimer=null,simNeedsUI=false;
+let simFrameAt=simAt,simFocused=true,simBgSaveAt=simAt,simWorker=null,simWorkerAt=0,simWorkerDrain=false;
+const simWinFocused=()=>{try{return typeof document!=='undefined'&&typeof document.hasFocus==='function'?document.hasFocus():simFocused}catch(e){return simFocused}};
+const simFrameStarved=(now=performance.now())=>!document.hidden&&(now-simFrameAt)>=(simWinFocused()?SIM_STALL_GAP_MS:SIM_BLUR_GAP_MS);
 function simSteps(dt){for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}}
 function simAdvance(now=performance.now()){
   if(simOwner!==S){simOwner=S;simPending=0;simNeedsUI=false;}
   const elapsed=Math.min(SIM_CATCHUP,Math.max(0,(now-simAt)/1000));simAt=Math.max(simAt,now);
   simPending=Math.min(SIM_CATCHUP,simPending+elapsed);
-  const started=performance.now();let steps=0;
-  simCatchingUp=simPending>.25;simNeedsUI=simNeedsUI||simCatchingUp||document.hidden;
+  const started=performance.now(),bg=document.hidden||simOccluded;let steps=0;
+  simCatchingUp=simPending>.25;simNeedsUI=simNeedsUI||simCatchingUp||bg;
   try{while(simPending>1e-6&&steps<SIM_BATCH_STEPS){
     const dt=Math.min(SIM_STEP,simPending);simPending=Math.max(0,simPending-dt);simSteps(dt);steps++;
-    if(performance.now()-started>=SIM_BUDGET_MS)break;
+    if(!bg&&performance.now()-started>=SIM_BUDGET_MS)break;
   }}finally{simCatchingUp=false;}
   if(simPending>1e-6){
     if(simTimer===null)simTimer=setTimeout(()=>{simTimer=null;try{simAdvance()}catch(e){console.error(e)}},0);
+    if(bg&&simWorker&&!simWorkerDrain){simWorkerDrain=true;try{simWorker.postMessage(1)}catch(e){simWorkerDrain=false}}
   }else{
     simPending=0;
     if(simTimer!==null){clearTimeout(simTimer);simTimer=null;}
-    if(!document.hidden&&simNeedsUI){simNeedsUI=false;ui();feedDraw();}
-    if(awayReturnAt&&!document.hidden)finishAway();
+    if(!bg&&simNeedsUI){simNeedsUI=false;ui();feedDraw();}
+    if(awayReturnAt&&!bg)finishAway();
+    else if(!bg&&typeof cloudAfterAway!=='undefined'&&cloudAfterAway&&typeof cloudRefresh==='function'){cloudAfterAway=false;save();cloudRefresh()}
+    else if(bg&&simAt-simBgSaveAt>=5000){simBgSaveAt=simAt;save();if(typeof cloudFlush==='function')cloudFlush()}
   }
 }
-function loop(now){try{if(CLOUD.lost){simAt=now;simPending=0}else simAdvance(now);if(!document.hidden&&simPending===0)draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
+function simNoteFrame(now){
+  simFrameAt=Math.max(simFrameAt,now);
+  if(simOccluded){
+    simOccluded=false;
+    if(!document.hidden&&awayAt&&!awayReturnAt)awayReturnAt=now;
+    if(!document.hidden&&simPending===0){
+      if(simNeedsUI){simNeedsUI=false;ui();feedDraw();}
+      if(awayReturnAt)finishAway();
+    }
+  }
+}
+function loop(now){try{if(CLOUD.lost){simAt=now;simPending=0}else simAdvance(now);if(!document.hidden&&simPending===0)draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}simNoteFrame(now);requestAnimationFrame(loop)}
 
 // ---------- grinding while the tab is hidden ----------
 // Background grinding is permanent. Timers and frames share the same pending-time queue.
-// On return, report rewards only after the outstanding batches finish.
+// A tiny inline Web Worker supplies unthrottled 1s wakes (including when the window is Alt+Tabbed
+// or covered so requestAnimationFrame stops while document.hidden stays false), and bounces queued
+// catch-up batches back without waiting on throttled main-thread setTimeout timers.
 const bgOn=()=>true;
 let awayAt=0,awayReturnAt=0,awayKills=0,awayZeny=0,awayLv=0;
 function awayTxt(sec){sec=Math.max(0,Math.round(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
   if(h)return h+'h'+(m?' '+m+'m':'');      // "3h", "1h 12m"
   if(m)return m+'m'+(s?' '+s+'s':'');      // "10m", "3m 12s"
   return s+'s'}
-function bgTick(){
-  if(!document.hidden)return;           // a visible tab is driven by its frames, not by this
-  if(!bgOn()){simAt=performance.now();return}
-  try{simAdvance()}catch(e){if(!bgTick.e){bgTick.e=1;console.error(e);log('Error: '+e.message,'r0')}}}
+function bgTick(fromWorker=false){
+  const now=performance.now();
+  if(fromWorker===true)simWorkerAt=now;
+  else if(simWorker&&simWorkerAt>0&&now-simWorkerAt<SIM_BG_MS*2)return;
+  if(CLOUD.lost){simAt=now;simPending=0;return}
+  if(!document.hidden){
+    if(!simFrameStarved(now))return;        // a visible tab getting frames is driven by loop(), not by this
+    if(!simOccluded){simOccluded=true;if(!awayAt){awayAt=simAt;awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0}}
+  }
+  if(!bgOn()){simAt=now;return}
+  try{simAdvance(now)}catch(e){if(!bgTick.e){bgTick.e=1;console.error(e);log('Error: '+e.message,'r0')}}}
 function bgHide(){                      // the tab went to the background: note the moment, then save
-  awayReturnAt=0;awayAt=performance.now();awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0;
-  simAdvance(awayAt);save()}
+  const now=performance.now();awayReturnAt=0;if(!awayAt){awayAt=now;awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0}
+  simAdvance(now);save();simBgSaveAt=now}
 function bgShow(){
+  const now=performance.now();simOccluded=false;simFrameAt=now;
   if(!awayAt)return;
-  awayReturnAt=performance.now();simAdvance(awayReturnAt);
+  awayReturnAt=now;simAdvance(awayReturnAt);
 }
 function finishAway(){
   const away=(awayReturnAt-awayAt)/1000;awayAt=0;awayReturnAt=0;
@@ -12233,8 +12266,21 @@ function finishAway(){
     log('Away '+awayTxt(away)+(counted<away-1?' ('+awayTxt(counted)+' of grinding)':'')
       +(kills>0?' · +'+kills.toLocaleString()+' kills':'')+(zeny>0?' · +'+zeny.toLocaleString()+' Zeny':'')
       +(S.lv>awayLv?' · Base Lv '+awayLv+' → '+S.lv:''),'r3','misc,zeny')}
-  save();ui();
+  save();simBgSaveAt=performance.now();ui();
+  if(typeof cloudAfterAway!=='undefined'&&cloudAfterAway&&typeof cloudRefresh==='function'){cloudAfterAway=false;cloudRefresh()}
 }
+if(typeof addEventListener==='function'){
+  addEventListener('blur',()=>{simFocused=false});
+  addEventListener('focus',()=>{simFocused=true});
+}
+try{
+  if(typeof Worker==='function'&&typeof Blob==='function'&&typeof URL!=='undefined'&&typeof URL.createObjectURL==='function'){
+    const u=URL.createObjectURL(new Blob([`setInterval(()=>postMessage(0),${SIM_BG_MS});onmessage=()=>postMessage(1)`],{type:'text/javascript'}));
+    simWorker=new Worker(u);if(typeof URL.revokeObjectURL==='function')URL.revokeObjectURL(u);
+    simWorker.onmessage=e=>{if(e&&e.data===1){simWorkerDrain=false;if(simPending>1e-6&&!CLOUD.lost)try{simAdvance()}catch(err){console.error(err)}}else bgTick(true)};
+    simWorker.onerror=e=>{if(e&&e.preventDefault)e.preventDefault();simWorker=null;simWorkerDrain=false};
+  }
+}catch(e){simWorker=null}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();else bgShow()});
 setInterval(bgTick,SIM_BG_MS);
 resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();

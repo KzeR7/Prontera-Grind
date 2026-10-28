@@ -884,5 +884,39 @@ await T('v88.6: the same progress with and without the stamp is one save, so no 
   assert.strictEqual(h.sandbox.CLOUD.dirty, false);
 });
 
+await T('v251: an occluded / Alt+Tabbed window uses the 5-minute background cloud diet too', async () => {
+  const h = harness({ routes: { '/save': { status: 200, body: { version: 2 } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 1; h.sandbox.currentUser = 'X';
+  h.sandbox.document.hidden = false;
+  h.sandbox.simOccluded = true;
+  assert.strictEqual(h.sandbox.cloudHidden(), true, 'occluded window is treated as background for cloud sync');
+  const realNow = Date.now;
+  try {
+    let t = realNow();
+    Date.now = () => t;
+    h.sandbox.CLOUD.lastPush = t; h.sandbox.CLOUD.dirty = true;
+    t += 120000;
+    assert.strictEqual(await h.sandbox.cloudFlush(), 'idle', 'two minutes occluded stays inside the 5m background debounce');
+    t += 185000;
+    assert.strictEqual(await h.sandbox.cloudFlush(), 'ok', 'past five minutes occluded syncs cleanly');
+  } finally { Date.now = realNow; }
+});
+
+await T('v251: background progress saved while PUT /api/save is in flight stays dirty after upload', async () => {
+  let h = null;
+  h = harness({ routes: { '/save': () => {
+    // Simulate a background tick saving newer kills while the network PUT is still in flight.
+    h.sandbox.S.kills = 99;
+    h.sandbox.cloudTouch();
+    return { status: 200, body: { version: 5 } };
+  } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 4; h.sandbox.currentUser = 'X';
+  h.sandbox.cloudTouch();
+  assert.strictEqual(await h.sandbox.cloudPush(true), 'ok');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 5, 'accepted upload advances the known cloud version');
+  assert.strictEqual(h.sandbox.CLOUD.dirty, true, 'newer save touched mid-upload remains marked dirty so cloudRefresh cannot discard it');
+  assert.strictEqual(h.els.get('cloudBadge').textContent, '☁ …');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

@@ -8479,3 +8479,40 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Delivery:** Committed and pushed on `arena/e5d1c8f2-prontera-grind`, then merged into `main`
   through this branch's pull request (see the merge commit in git history). No separate deploy was
   run by the agent.
+
+### 2026-10-28 — `2026-10-28 haven-v251 background grinding`
+* **Changed:** Kept combat, movement, loot, auto-advance and autosaves running in real time when
+  players switch tabs, Alt+Tab to another app, or cover the browser window:
+  * **Inline Web Worker heartbeat & debt drain (`index.html`):** Added a tiny inline `Blob` Web
+    Worker (`simWorker`, URL immediately revoked) that delivers unthrottled 1-second background
+    wakes and bounces queued `SIM_BATCH_STEPS` catch-up batches over `postMessage` without waiting
+    on Chromium's 60-second throttled `setTimeout(..., 0)` timer queue, falling back cleanly to
+    main-thread `setInterval(bgTick, SIM_BG_MS)` / `setTimeout` when Workers are unavailable.
+  * **Alt+Tab / occluded-window grinding (`index.html`):** `bgTick()` now steps the simulation
+    whenever the tab is hidden **or** `requestAnimationFrame` stops arriving (`>= 1.5s` when
+    unfocused, `>= 5s` if focused without frames), while dual-monitor unfocused windows that keep
+    receiving frames stay live at full frame rate without double-stepping. Occluded grinding
+    suppresses rendering, floats, skill/boss particles and DOM rebuilds via `simVisualsOff()`,
+    runs periodic 5-second local saves, respects `CLOUD.lost`, and uses the 5-minute
+    `CLOUD_HIDDEN_DEBOUNCE` / 15-minute `CLOUD_HIDDEN_POLL_MS` cloud diet via `cloudHidden()`.
+  * **Cloud sync & Away-summary safety (`index.html`):** Tracked `cloudTouchSeq` across in-flight
+    `PUT /api/save` requests so background saves written mid-upload stay marked dirty, deferred
+    returning `cloudRefresh()` until `bgShow()` / `finishAway()` finishes saving caught-up progress,
+    and preserved `zenyEarned` and `farmSession` when acknowledging covered 5-minute background
+    claims in `applyOfflineProgress()`. Bumped `BUILD` and its three mirrors to v251.
+* **Try it:** Run `bash tools/build_site.sh && node tools/dev_server.js`, sign in, and either
+  switch to another browser tab or Alt+Tab / cover the game window with another app for a minute;
+  return to see kills, Zeny and stage progress already advanced with no freeze and an `Away …`
+  summary line in the log.
+* **Checks:** `background_sim` 19/19 (4 new tests: occluded/Alt+Tabbed grinding + Away summary,
+  dual-monitor unfocused live frames, `CLOUD.lost` parking in `bgTick`, and inline Web Worker
+  heartbeat + 60s debt drain with `setTimeout` frozen), `cloud_sim` 58/58 (2 new tests: occluded
+  5-minute cloud diet and mid-upload `cloudTouch` dirty preservation), `offline_sim` 13/13
+  (asserts covered 5m claim acknowledgement preserves `zenyEarned` and `farmSession`),
+  `cloud_only_smoke` 10/10, `update_watch_sim` 10/10, `gear_sim` 43/43, `drop_card_sheet_sim`
+  14/14, `social_api_sim.mjs` PASS, and all three generated-asset `--check` scripts pass. Full JS
+  gate: 140 suites, **133 green, 7 red, 0 skipped — no new failures** (only the 7 documented
+  known-red baseline suites in `docs/TESTING.md`). `social_worker_sim.mjs` was not run
+  (`miniflare` not installed in this sandbox).
+* **Delivery:** Committed and pushed on `arena/7580a8c0-prontera-grind`, with a pull request
+  opened against `main` (not merged or deployed by the agent).

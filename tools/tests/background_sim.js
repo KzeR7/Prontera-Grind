@@ -68,7 +68,8 @@ this.__bg={SIM_STEP,SIM_CATCHUP,SIM_BG_MS,logs,
   show:()=>{hidden=false;(docHandlers.visibilitychange||[]).forEach(f=>f());drain()},
   frame:()=>{frames++;if(!frameCb)throw new Error('the loop stopped asking for frames');const f=frameCb;frameCb=null;f(nowMs);drain()},
   wake:()=>{ticks++;for(const f of timers)f();drain()},
-  advanceAt:at=>{simAdvance(at);drain()},rawWake:()=>{for(const f of timers)f()},rawShow:()=>{hidden=false;(docHandlers.visibilitychange||[]).forEach(f=>f())},rawFrame:()=>loop(nowMs),pending:()=>simPending,drain, timerMs:()=>timers.length};
+  advanceAt:at=>{simAdvance(at);drain()},rawWake:()=>{for(const f of timers)f()},rawShow:()=>{hidden=false;(docHandlers.visibilitychange||[]).forEach(f=>f())},rawFrame:()=>loop(nowMs),pending:()=>simPending,drain, timerMs:()=>timers.length,
+  blur:()=>{simFocused=false},focus:()=>{simFocused=true},occluded:()=>simOccluded,setLost:v=>{CLOUD.lost=!!v}};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -235,6 +236,103 @@ t('a stale animation timestamp cannot rewind a timer-advanced clock',()=>{
   bg.pass(16);bg.advanceAt(bg.wall());const a=bg.stat(),at=bg.clock();
   bg.advanceAt(bg.wall()-8);assert.equal(bg.clock(),at);bg.pass(8);bg.frame();
   near(bg.stat().simWall-a.simWall,.008,1e-9,'only new time is credited');
+});
+
+t('an unfocused / covered window whose animation frames stop keeps grinding via bgTick',()=>{
+  bg.focus();bg.pass(16);bg.frame();
+  const a=bg.stat(),k0=bg.S.kills,z0=bg.zeny(),before=bg.logs.length;
+  bg.blur();                                       // Alt+Tab to another app; document.hidden stays false
+  bg.pass(1500);bg.wake();                         // 1.5s with no rAF frame triggers occluded background mode
+  assert.strictEqual(bg.occluded(),true,'frame-starved unfocused window enters occluded mode');
+  for(let s=0;s<10;s++){bg.pass(1000);bg.wake();}
+  const mid=bg.stat();
+  near(mid.simWall-a.simWall,11.5,.002,'all 11.5 occluded seconds were simulated in real time');
+  assert.strictEqual(mid.draws-a.draws,0,'nothing is drawn while occluded');
+  assert.ok(mid.saves>a.saves,'5-second background autosave still runs while occluded');
+  assert.ok(bg.S.kills>k0&&bg.zeny()>z0,'kills and Zeny keep growing while Alt+Tabbed');
+  bg.focus();bg.pass(500);bg.frame();              // window uncovered: next animation frame settles away state
+  assert.strictEqual(bg.occluded(),false,'next animation frame clears occluded mode');
+  assert.strictEqual(bg.stat().draws-mid.draws,1,'drawing resumes immediately');
+  assert.strictEqual(bg.logs.length,before+1,'returning from occluded grinding logs an Away summary');
+  assert.match(bg.logs[bg.logs.length-1].m,/^Away 12s · \+/);
+});
+
+t('an unfocused window on a second monitor that still gets frames is not double-driven',()=>{
+  bg.blur();
+  const a=bg.stat();
+  for(let s=0;s<3;s++){
+    for(let f=0;f<10;f++){bg.pass(100);bg.frame();}
+    bg.wake();
+  }
+  assert.strictEqual(bg.occluded(),false,'live frames prevent occluded fallback even while blurred');
+  near(bg.stat().simWall-a.simWall,3,.002,'only frame time is simulated');
+  assert.strictEqual(bg.stat().draws-a.draws,30,'every visible frame still draws');
+  bg.focus();
+});
+
+t('CLOUD.lost parks bgTick so a lost connection never grinds in the background',()=>{
+  bg.hide();
+  const a=bg.stat();
+  bg.setLost(true);
+  for(let s=0;s<10;s++){bg.pass(1000);bg.wake();}
+  assert.strictEqual(bg.stat().simWall,a.simWall,'no combat steps run while CLOUD.lost is true');
+  bg.setLost(false);
+  bg.pass(16);bg.show();bg.frame();
+});
+
+t('the inline Web Worker ticker drives hidden wakes and drains 60s debt when setTimeout is frozen',()=>{
+  let nowMs=1000,hidden=false,saves=0,simWall=0,createdScript='',revokedUrl='';
+  let workerInstance=null;
+  class FakeBlob{constructor(parts){this.text=parts.join('')}}
+  class FakeWorker{
+    constructor(url){this.url=url;this.onmessage=null;this.onerror=null;workerInstance=this;}
+    postMessage(msg){
+      // Mirror the inline worker: `onmessage=()=>postMessage(1)` bounces drain requests immediately
+      // without touching main-thread setTimeout/setInterval queues.
+      if(msg===1&&this.onmessage)this.onmessage({data:1});
+    }
+  }
+  const wBox={console};
+  const wHarness=`
+    let S={lv:1,exp:0,hp:100,zeny:0,kills:0},speed=1,zenyEarned=0;
+    const docHandlers={};
+    const performance={now:()=>nowMs};
+    const document={get hidden(){return hidden},addEventListener:(k,f)=>{(docHandlers[k]=docHandlers[k]||[]).push(f)}};
+    let simCatchingUp=false;const simVisualsOff=()=>hidden||simCatchingUp||simOccluded;
+    const CLOUD={lost:false};
+    function ui(){} function feedDraw(){} function kitTick(){} function draw(){} function log(){}
+    function save(){saves++}
+    // Intentionally freeze main-thread setTimeout and setInterval callbacks (simulating Chromium's
+    // background timer freeze) so ONLY the Web Worker can drive and drain the simulation.
+    const setTimeout=()=>1,clearTimeout=()=>{},setInterval=()=>1,requestAnimationFrame=()=>{};
+    function update(dt){simWall+=dt/speed;S.kills=Math.floor(simWall)}
+    ${clock}
+    this.__w={
+      hide:()=>{hidden=true;(docHandlers.visibilitychange||[]).forEach(f=>f())},
+      pending:()=>simPending,
+    };
+  `;
+  Object.assign(wBox,{
+    Blob:FakeBlob,Worker:FakeWorker,
+    URL:{createObjectURL:b=>{createdScript=b.text;return 'blob:sim-worker'},revokeObjectURL:u=>{revokedUrl=u}},
+  });
+  Object.defineProperties(wBox,{
+    nowMs:{get:()=>nowMs,set:v=>{nowMs=v}},
+    hidden:{get:()=>hidden,set:v=>{hidden=v}},
+    saves:{get:()=>saves,set:v=>{saves=v}},
+    simWall:{get:()=>simWall,set:v=>{simWall=v}},
+  });
+  vm.createContext(wBox);vm.runInContext(wHarness,wBox);
+  assert.ok(workerInstance,'inline Web Worker was instantiated');
+  assert.strictEqual(revokedUrl,'blob:sim-worker','Blob object URL is revoked immediately to avoid leaking');
+  assert.match(createdScript,/setInterval\(\(\)=>postMessage\(0\),1000\)/,'worker runs the 1s heartbeat');
+  wBox.__w.hide();
+  const s0=saves,w0=simWall;
+  nowMs+=60000;                                    // 60s elapsed while main-thread timers never fire
+  workerInstance.onmessage({data:0});              // one worker heartbeat + immediate message-channel drain
+  near(simWall-w0,60,.00001,'worker heartbeat + postMessage drain simulated all 60s with setTimeout frozen');
+  assert.strictEqual(wBox.__w.pending(),0,'no pending combat debt left behind');
+  assert.ok(saves>s0,'periodic background save still ran at settlement');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
