@@ -219,6 +219,7 @@
     // The dock's More button opens the destinations menu, which lives inside the
     // rail. Mirror that state onto the rail so the sheet can host it without :has().
     watchMore();
+    watchPanels();
 
     // The dock's More button opens the same rail; any tab tap closes the sheet
     // so the panel the player asked for is visible on a small screen.
@@ -245,6 +246,24 @@
 
     syncButtons();
     startQuestDot();
+  }
+
+  /* A panel window (#wins) covers the field, and the world chat floats over the
+     field - so on a phone the two end up on top of each other (the chat's tab
+     strip landed on a map card). Mirror "a panel is open" onto <html> and let
+     the stylesheet stand the chat down while it is. */
+  function watchPanels() {
+    var wins = document.getElementById('wins');
+    if (!wins || typeof MutationObserver !== 'function') return;
+    var open = false;
+    var sync = function () {
+      var next = wins.style.display !== 'none' && !!wins.querySelector('.wp');
+      if (next === open) return;
+      open = next;
+      root.classList.toggle('pg-panel', open);
+    };
+    new MutationObserver(sync).observe(wins, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'hidden', 'class'] });
+    sync();
   }
 
   /* #sideMenu.eclipse-more-open is the game's own "destinations are open" state.

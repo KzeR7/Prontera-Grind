@@ -50,8 +50,10 @@ export const onRequestPost = guard(async ({ request, env }) => {
   const user = await db.userByName(D, username);
 
   const token = newToken();
-  await db.insertSession(D, await tokenHash(token), user.id, Date.now() + SESSION_DAYS * 86400000,
+  const hash = await tokenHash(token);
+  await db.insertSession(D, hash, user.id, Date.now() + SESSION_DAYS * 86400000,
     userAgent(request), ip);
+  await db.deleteOtherSessions(D, user.id, hash);   // one live session per account, see sessions.js
   await db.noteLogin(D, user.id);
   await db.logEvent(D, username, user.id, 'register', first ? 'first account — owner' : devAll ? 'preview account — GM (dev server)' : '');
 

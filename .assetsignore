@@ -24,6 +24,11 @@ Updates/Sprite/index.html
 Updates/maps sprite.html
 Updates/ro_atlas.js
 
+# --- dev-only art inside assets/ (read only by pages above) ------------------
+assets/weapons/
+assets/weapons_manifest.json
+assets/mob_*.png
+
 # --- legacy pages, harnesses and screenshots ----------------------------------
 _login.html
 _shot.html

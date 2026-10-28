@@ -97,12 +97,25 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
-### The known-red baseline (measured 2026-10-26)
+### The known-red baseline (measured 2026-10-26, re-measured 2026-10-28)
 
 136 checks: **129 pass, 7 fail.** Those seven fail identically on the untouched base
 commit `ae3897d` (`main`), so they are a standing baseline, not something a new patch
 broke. The gate is therefore **"no new failures, and no suite gets quieter"** — not "all
 green", which this tree has not been since v221.
+
+**2026-10-28 (`haven-v253`): `publish_sim.js` is green again — 17/17, so the baseline is 6.**
+Two things changed, and neither one moved a ceiling out of the way of a real byte:
+
+- `tools/build_site.sh` stopped copying art that only unpublished dev pages read (152 KiB:
+  `assets/mob_*.png`, `assets/weapons/**`, `weapons_manifest.json`), and `publish_sim` now
+  asserts those paths stay out.
+- The map-exploration sub-app (`assets/endgame`) is measured against its own 4.25 MiB ceiling
+  instead of being counted a second time inside the classic-game bucket — the same treatment
+  native fields and social portraits already had. To keep the bucket as tight as it was, that
+  line went **62.5 → 59 MiB** (measured 58.59), so the classic game gained ~0.4 MiB of headroom,
+  not the 3.9 MiB that leaving 62.5 would have handed back. The combined 140.5 MiB ceiling still
+  covers every shipped byte.
 
 | suite | what it reports | why it is red |
 | --- | --- | --- |
@@ -112,7 +125,6 @@ green", which this tree has not been since v221.
 | `skill_redesign_sim.js` | `SyntaxError: Unterminated template` in an extracted span, plus a dash assertion | source-extraction anchor and dash behaviour both stale |
 | `fourth_job_skills_sim.js` | strict deep-equal on a skill-id/slot sequence | fourth-job skill list moved past the fixture |
 | `skill_balance_sim.js` | "gear measurements stale: rerun progression_balance.js" | historical measurement fixture, hash-pinned on purpose |
-| `publish_sim.js` | 15/16, "existing runtime assets exceed their original 62.5 MiB budget" | the runtime asset budget was already over before v229 |
 
 Rules for that table:
 

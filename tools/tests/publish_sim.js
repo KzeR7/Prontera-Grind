@@ -106,6 +106,17 @@ t('all six advancement opponents ship with their original action bytes', () => {
   }
 });
 
+t('dev-only art does not ride along in the publish tree', () => {
+  // Each of these is read by exactly one page, and .assetsignore keeps every one of those
+  // pages out of dist: assets/mob_*.png by Updates/damage-numbers-v2, assets/weapons/** by
+  // tools/weapon_proposal.html, and the manifest only by make_weapon_pack.py. The game draws
+  // weapons from the base64 window.WEAPON_ART and monsters from assets/mobs/v1.
+  assert.ok(!fs.existsSync(path.join(out,'assets/weapons')), 'weapon design PNGs are dev-only');
+  assert.ok(!fs.existsSync(path.join(out,'assets/weapons_manifest.json')), 'the weapons manifest is build metadata');
+  assert.deepStrictEqual(fs.readdirSync(path.join(out,'assets')).filter(f=>/^mob_.+\.png$/.test(f)), [],
+    'mob preview art is dev-only');
+});
+
 t('the published tree is small enough to stay honest', () => {
   const walk = d => fs.readdirSync(d, { withFileTypes: true }).reduce((a, e) =>
     a + (e.isDirectory() ? walk(path.join(d, e.name)) : fs.statSync(path.join(d, e.name)).size), 0);
@@ -114,8 +125,18 @@ t('the published tree is small enough to stay honest', () => {
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
   const nativeBytes=walk(path.join(out,'assets/native-fields/v1'));
   const socialBytes=walk(path.join(out,'assets/social'));
+  // The map-exploration sub-app (assets/endgame) is never preloaded by the game - a separate test
+  // asserts `src="assets/endgame/` never appears in index.html - and it already carries its own
+  // 4.25 MiB ceiling below, so it is measured there and not again here, exactly like the parked
+  // native field pack and the social portraits above. Everything that ships is still covered by a
+  // ceiling: this line for the classic game, 4.25 for the explorer, plus the combined 140.5.
+  const endgameBytes=walk(path.join(out,'assets/endgame'));
   assert.ok(socialBytes/1048576 < 10, 'native social assets exceed their separate 10 MiB budget');
-  assert.ok((bytes-nativeBytes-socialBytes)/1048576 < 62.5, 'existing runtime assets exceed their original 62.5 MiB budget');
+  // 59 MiB, not the original 62.5: the classic game measures 58.59 MiB once the separately-budgeted
+  // explorer is out of the sum, so 62.5 would have handed back 3.9 MiB of silent headroom. 59 keeps
+  // ~0.4 MiB - the same tightness the 62.5 line had when it was set - and the combined 140.5 ceiling
+  // still covers every byte, including the explorer it no longer counts here.
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes)/1048576 < 59, 'existing runtime assets exceed their 59 MiB budget (58.59 measured 2026-10-28)');
   assert.ok(nativeBytes/1048576 < 68, 'ten native field sets and seventy lossless monster atlases exceed their separate 68 MiB budget');
   assert.ok(mb < 140.5, 'combined runtime delivery exceeds 140.5 MiB');
   const fourth=path.join(out,'assets/wardrobe/fourth/v1');assert.ok(walk(fourth)<6.25*1048576,'six fourth jobs share hair and accessory pixels');

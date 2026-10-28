@@ -93,10 +93,24 @@ const call = async (mod, fn, args) => {
   return { status: res.status, data, res, cookie: cookieFrom(res) };
 };
 
+// One live session per account (v252) means a login anywhere ends the session that account held
+// before. The tests below keep long-lived cookies in globals between cases, so a successful login
+// refreshes the global for that account - exactly what a browser would see, where the new cookie
+// replaces the old one.
+const TRACKED = { FRIEND: '__friend', KZER: '__owner' };
+const login = async (env, body) => {
+  const r = await call('onRequestPost', 'api/sessions.js', { request: req('POST', '/api/sessions', { body }), env });
+  if (r.status === 200 && r.cookie) {
+    const key = TRACKED[String((r.data && r.data.u) || body.u || '').toUpperCase()];
+    if (key) globalThis[key] = r.cookie;
+  }
+  return r;
+};
+
 // Every handler in one place, so a rename fails here rather than in production.
 const api = {
   register: (env, body) => call('onRequestPost', 'api/register.js', { request: req('POST', '/api/register', { body }), env }),
-  login: (env, body) => call('onRequestPost', 'api/sessions.js', { request: req('POST', '/api/sessions', { body }), env }),
+  login,
   logout: (env, cookie) => call('onRequestDelete', 'api/sessions.js', { request: req('DELETE', '/api/sessions', { cookie }), env }),
   me: (env, cookie) => call('onRequestGet', 'api/me.js', { request: req('GET', '/api/me', { cookie }), env }),
   getSave: (env, cookie) => call('onRequestGet', 'api/save.js', { request: req('GET', '/api/save', { cookie }), env }),
@@ -200,6 +214,9 @@ await T('no cookie, a forged cookie and a logged-out cookie are all 401', async 
   const { cookie } = await api.login(env, { u: 'FRIEND', p: 'friend-password' });
   await api.logout(env, cookie);
   assert.strictEqual((await api.me(env, cookie)).status, 401, 'logout must invalidate the token server-side');
+  // Leave the account signed in for the cases below: one live session per account means the login
+  // above already replaced the cookie this suite keeps in __friend.
+  await api.login(env, { u: 'FRIEND', p: 'friend-password' });
 });
 
 await T('saves: first upload, then versions bump, and the blob is stored verbatim', async () => {
@@ -340,6 +357,7 @@ await T('a logged-out device cannot touch the save', async () => {
   await api.logout(env, cookie);
   assert.strictEqual((await api.getSave(env, cookie)).status, 401);
   assert.strictEqual((await api.putSave(env, cookie, { version: 3, blob: saveBlob(99, 0) })).status, 401);
+  await api.login(env, { u: 'FRIEND', p: 'friend-password' });   // leave a live session for the GM cases
 });
 
 // ------------------------------------------------------------------- GM ----
@@ -463,6 +481,29 @@ await T('only the owner may change a password or a GM level', async () => {
   assert.strictEqual((await api.act(env, gmCookie, { id: friendId, action: 'set-password', password: 'hacked-password' })).status, 403);
   assert.strictEqual((await api.act(env, gmCookie, { id: owner ? 1 : 1, action: 'set-gm', level: 2 })).status, 403);
   assert.strictEqual((await api.act(env, gmCookie, { id: friendId, action: 'note', text: 'checking reports' })).status, 200, 'notes are allowed');
+});
+
+await T('a second sign-in ends the first device: one live session per account', async () => {
+  const first = await api.login(env, { u: 'FRIEND', p: 'friend-password' });
+  assert.strictEqual(first.status, 200);
+  assert.strictEqual((await api.me(env, first.cookie)).status, 200, 'the first device works');
+  const second = await api.login(env, { u: 'FRIEND', p: 'friend-password' });
+  assert.strictEqual(second.status, 200, 'the second device signs in normally');
+  assert.strictEqual((await api.me(env, second.cookie)).status, 200, 'the second device is live');
+  assert.strictEqual((await api.me(env, first.cookie)).status, 401, 'the first device is signed out');
+  assert.strictEqual((await api.getSave(env, first.cookie)).status, 401,
+    'and cannot touch the save - the whole point of one session per account');
+  // The kicked device can take the account back by signing in again; that ends the other one.
+  const again = await api.login(env, { u: 'FRIEND', p: 'friend-password' });
+  assert.strictEqual((await api.me(env, again.cookie)).status, 200);
+  assert.strictEqual((await api.me(env, second.cookie)).status, 401, 'taking it back ends the other device');
+  // A registration signs in too, and holds exactly one session for its new account.
+  const reg = await api.register(env, { u: 'SOLOPLAYER', p: 'soloplayer-password' });
+  assert.strictEqual(reg.status, 201);
+  assert.strictEqual((await api.me(env, reg.cookie)).status, 200);
+  const rows = sqlite.prepare("SELECT COUNT(*) AS n FROM sessions WHERE user_id = (SELECT id FROM users WHERE username = 'SOLOPLAYER')").get();
+  assert.strictEqual(rows.n, 1, 'a fresh account holds one session row');
+  globalThis.__friend = again.cookie;
 });
 
 await T('a password reset revokes every session and the new password works', async () => {

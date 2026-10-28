@@ -115,7 +115,7 @@ function harness(opts = {}) {
   sandbox.BUILD = '2026-10-06 grind-test';
   // A couple of the game's own element hooks the block writes to.
   for (const id of ['cloudBadge', 'loginCloud', 'userBadge', 'cloudGate', 'cloudGateDetail', 'cloudGateRetry',
-    'loginOverlay', 'logoutBtn', 'saveDl', 'saveUp', 'saveFile'])
+    'sessionGate', 'loginOverlay', 'logoutBtn', 'saveDl', 'saveUp', 'saveFile'])
     els.set(id, { id, textContent: '', title: '', style: {}, set onclick(fn) { this._onclick = fn; }, get onclick() { return this._onclick; }, innerHTML: '' });
   // A top-level `const` inside vm.runInContext does NOT become a property of the sandbox, so the
   // block's bindings are copied onto globalThis explicitly: that is how a suite drives them.
@@ -128,9 +128,13 @@ function harness(opts = {}) {
     'cloudPollTick','cloudHidden',
     // v88.6: the save-owner stamp - the helpers the cloud paths use to refuse another account's save
     'saveRefusal','sameAccount','sameSave','saveOwnerOf','cloudReadSave','cloudSaveRefused',
-    'saveBlockedText','cloudRefusedText','accountOfSaveKey'];
+    'saveBlockedText','cloudRefusedText','accountOfSaveKey',
+    // v252: a 401 mid-session means the account signed in on another device.
+    'cloudSessionReplaced','cloudReplaced'];
   vm.createContext(sandbox);
-  vm.runInContext(cloudCode + '\n;' + EXPORTS.map(n => `globalThis.${n}=${n};`).join(''), sandbox);
+  // A `let` is copied BY VALUE above; a getter keeps the flag observable after it changes.
+  vm.runInContext(cloudCode + '\n;' + EXPORTS.map(n => `globalThis.${n}=${n};`).join('') +
+    ';globalThis.sessionWasReplaced=()=>cloudReplaced;', sandbox);
   return { sandbox, state, calls, els, store };
 }
 
@@ -528,6 +532,27 @@ await T('a tab with unsynced progress also adopts: the account is the only save'
   assert.strictEqual([...h.store.keys()].filter(k => k.startsWith('pg_save3_X_local_')).length, 1,
     'and the unsynced copy is stashed, not deleted');
   assert.notStrictEqual(h.els.get('cloudGate').style.display, 'flex');
+});
+
+await T('a 401 while signed in means another device took over: this tab stops and says so', async () => {
+  // functions/api/sessions.js keeps ONE session per account, so a sign-in elsewhere ends this one.
+  // The client must not treat that as a flaky network: it stops, keeps its copy, and never uploads
+  // over the device that just signed in.
+  const h = harness({ routes: { '/save': { status: 401, body: { err: 'Not logged in.' } }, '/me': { status: 401, body: { err: 'Not logged in.' } } } });
+  h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'FRIEND'; h.sandbox.currentUser = 'FRIEND';
+  h.sandbox.S = { lv: 12, zeny: 100, kills: 5, st: { str: 9 }, q: [] };
+  await h.sandbox.cloudPush(true);
+  assert.strictEqual(h.sandbox.sessionWasReplaced(), true, 'the tab knows the session was replaced');
+  assert.strictEqual(h.els.get('sessionGate').style.display, 'flex', 'and says so in its own dialog');
+  assert.strictEqual(h.sandbox.CLOUD.lost, true, 'the simulation parks (the other device owns the character)');
+  assert.strictEqual(h.sandbox.CLOUD.paused, true, 'and nothing is uploaded from here');
+  const gate = h.els.get('cloudGate').style && h.els.get('cloudGate').style.display;
+  assert.notStrictEqual(gate, 'flex', 'the connection dialog would be the wrong story');
+  // Reconnecting must not adopt a save the other device is playing.
+  assert.strictEqual(await h.sandbox.cloudReconnect(), false);
+  const before = h.calls.length;
+  await h.sandbox.cloudPush(true);
+  assert.strictEqual(h.calls.length, before, 'no request is made after the session was replaced');
 });
 
 await T('the gate freezes the sim and the away claim pays the frozen gap', async () => {

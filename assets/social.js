@@ -35,8 +35,14 @@ function setSize(w,h,persist=true){const view=$id('view'),box=view.getBoundingCl
  const dock=$id('dock')?.getBoundingClientRect(),edge=width>=1120?(dock?.width?dock.left-box.left-8:width/2-282):width-left;
  const maxWidth=Math.max(0,edge-left),bottom=parseFloat(getComputedStyle(chat).bottom)||76,maxHeight=Math.max(0,Math.min(height*.72,height-bottom-24));
  if(!Number.isFinite(w)||!Number.isFinite(h))return;
+ // Phone layout: the 390x214 desktop default is a quarter of a phone's field and
+ // taller than half of a landscape one. Cap it there (drag-resize still works up
+ // to the cap), so the log, the quests chip and the field stay visible.
+ const phone=document.documentElement.classList.contains('pg-mobile');
+ const capWidth=phone?Math.min(maxWidth,340):maxWidth;
+ const capHeight=phone?Math.min(maxHeight,Math.max(120,Math.min(150,Math.round(height*.36)))):maxHeight;
  if(persist){preferredSize=[Math.max(220,w),Math.max(120,h)];try{localStorage.setItem('pg_chat_size',JSON.stringify(preferredSize))}catch{}}
- chat.style.width=Math.max(Math.min(220,maxWidth),Math.min(maxWidth,w))+'px';chat.style.height=Math.max(Math.min(120,maxHeight),Math.min(maxHeight,h))+'px';}
+ chat.style.width=Math.max(Math.min(220,capWidth),Math.min(capWidth,w))+'px';chat.style.height=Math.max(Math.min(120,capHeight),Math.min(capHeight,h))+'px';}
 try{const size=JSON.parse(localStorage.getItem('pg_chat_size'));if(Array.isArray(size)&&size.length===2&&size.every(Number.isFinite))preferredSize=size}catch{}
 let drag=null;
 const onMove=e=>{if(!drag||(e.pointerId??0)!==drag.id)return;e.preventDefault?.();e.stopPropagation?.();setSize(drag.xAxis?drag.w+e.clientX-drag.x:drag.w,drag.yAxis?drag.h+drag.y-e.clientY:drag.h)};

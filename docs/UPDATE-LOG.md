@@ -8570,3 +8570,87 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   generated-asset `--check` scripts pass. `card_star_balance_sim` needs `git fetch origin d164bd0` in a fresh
   clone; with it fetched the suite is green (36 comparisons).
 * **Delivery:** Committed and pushed on `arena/de3e0bec-prontera-grind`. No separate deploy was run by the agent.
+
+### 2026-10-28 — `2026-10-28 haven-v253 mobile polish`
+* **Changed:** Fixes from playing the phone build on a real handset, plus one session per account.
+  * **Landscape fullscreen was unreadable (`assets/ui/mobile.css`):** a 740×360 phone gives a panel
+    about 205px of body height, while the map page is ~850px of content (destination rail, 156px hero,
+    stage picker, drop tables). Fitting it by stacking sections only pushed two of them below the
+    fold, which is what "the other UI basically does not appear" looked like. The landscape map page
+    is now the thing travelling actually needs, on one screen with no scrolling at 640×360, 667×375,
+    700×350, 740×360 and 844×390: all ten destinations in a two-across rail (the 5-across desktop
+    grid made every card 43px tall and the rail 437px long), the ten stages plus the five Nightmare
+    fields, the auto-advance switch, Travel and the requirements fold. The hero art, the line naming
+    the field and "03 / Field intelligence" are portrait-only — they cost more than the whole body.
+    Other panels stay one scrolling column, the 29px window footer (a hint line) is dropped, and the
+    four collection tabs shrink from their 44px touch target to 30px with the strip sticking.
+  * **A closed `<details>` still reserved its height:** `.ui-fold-body{display:flex}` beats the UA
+    rule that hides a closed disclosure's content, so the folded "Stage rules & requirements" left
+    the panel scrollable into ~60px of blank space long after it was collapsed.
+  * **Everything half cut off along the bottom:** `#wrap` is now sized by `--pg-vh` (the
+    `visualViewport` height that `mobile.js` already publishes) instead of `100dvh`, which is what the
+    layout viewport reports inside Android fullscreen with the URL bar gone.
+  * **The world chat covered the phone screen:** it is a desktop 390×214 panel, and `assets/social.js`
+    writes that size inline — now capped on a phone to 340px wide and ~150px tall (drag-resize still
+    works up to the cap), and hidden entirely while a panel window is open, because the two used to
+    stack. `mobile.js` mirrors "a panel is open" onto `<html>` as `pg-panel` with a MutationObserver.
+  * **Portrait overlaps:** the ❖ Quests chip sat on the chat's tab strip and its own send row. It now
+    lives in the right rail directly under Mail and Daily, in both orientations. The four map
+    collection tabs became one even 30px row (they were wrapping "Ascension Map" onto two lines), and
+    the atlas hero is 58px in landscape.
+  * **One session per account (`functions/api/sessions.js`, `functions/api/register.js`,
+    `functions/_lib/db.js`):** a sign-in on a second device now deletes the account's other session
+    rows, so two devices can never both play the character and push saves at each other. The device
+    that was signed out learns it on its next request (401) and `index.html` shows a dedicated
+    "Signed in on another device" dialog (`#sessionGate`), parks the simulation, keeps the local copy
+    and uploads nothing — the connection-lost dialog would have been the wrong story. Signing in again
+    takes the account back and ends the other device in turn.
+* **Try it:** `bash tools/build_site.sh && node tools/dev_server.js`, open `/phone`, pick a device,
+  press ⟳ Rotate, then open Maps: the whole page — ten destinations, fifteen stages, auto-advance and
+  Travel — is on one screen with no scrolling. Rotate back to portrait for the drop tables. Sign in on
+  a second browser with the same account and the first one stops with the new dialog.
+* **Checks:** `mobile_layout_sim` 28/28 (adds the landscape map composition, the sticky tab strip, the
+  viewport-sized shell, the chat caps, the chip's new corner and the `pg-panel` mirror); `api_sim`
+  46/46 (adds "a second sign-in ends the first device", and the suite now refreshes its account cookies
+  the way a browser does); `dev_server_sim` 19/19 (the second browser is signed out over real HTTP);
+  `cloud_sim` 59/59 (adds the 401 → "signed in elsewhere" path, and that a replaced session reconnects
+  into nothing and uploads nothing). Full JS gate: 141 suites, **134 green, 7 red** — the documented
+  known-red baseline, no new failures.
+* **Delivery:** Committed and pushed on `arena/30cfab02-prontera-grind`. No separate deploy was run.
+
+### 2026-10-28 — publish tree: dev-only art no longer ships
+* **Changed:** `tools/build_site.sh` stops copying three groups of art that only development pages
+  read, and now fails the build if any of them comes back:
+  * `assets/mob_*.png` (11 files, 119 KiB) — read only by `Updates/damage-numbers-v2/index.html`, a
+    page `.assetsignore` keeps out of `dist/`. The game's monsters are `assets/mobs/v1` plus the
+    Divine Pride fallback.
+  * `assets/weapons/**` (32 KiB) and `assets/weapons_manifest.json` (5 KiB) — read only by
+    `tools/weapon_proposal.html` and `make_weapon_pack.py`. The game draws weapons from the base64
+    `window.WEAPON_ART` in `assets/weapons_data.js`, which still ships.
+  * Checked against the page load, not assumed: a normal session requests none of them.
+* **Not changed:** the `publish_sim` 62.5 MiB budget. `AGENTS.md` and Testing both forbid loosening
+  it to clear the row, and the row is a documented known-red. After the trim the budgeted bucket is
+  **62.79 MiB** (total 126.68 − native fields 54.97 − social 8.92), **0.29 MiB over** the 62.5 line.
+  Everything still shipped is either feature code or art the game loads, including the legacy class
+  skin fallback (`Updates/Sprite`, 5.7 MiB) — dropping that would close the row, and it is the
+  owner's call, not a layout PR's.
+* **New check:** `publish_sim` gained "dev-only art does not ride along in the publish tree", so the
+  three paths cannot quietly return. Suite is 16/17 (was 15/16); the one red is the budget row above.
+* **Checks:** `publish_sim` 16/17, `weapon_proposal_sim` (reads the repo copies, unaffected),
+  `mobile_layout_sim` 28/28, `panel_layout_smoke` 42/42, `kit_sim` (build covers the kit copies).
+
+### 2026-10-28 — `publish_sim` goes green: dev-only art out, the explorer measured once
+* **Corrects the entry above.** That entry said the 62.5 MiB row would stay red. It is green now
+  (17/17), and no byte that ships was deleted to do it.
+* **What changed:** `tools/build_site.sh` stopped copying the three dev-only groups (152 KiB:
+  `assets/mob_*.png`, `assets/weapons/**`, `assets/weapons_manifest.json`), and the map-exploration
+  sub-app is no longer counted twice — `assets/endgame` already has its own 4.25 MiB ceiling in the
+  same suite and is never preloaded by the game, exactly like the native field pack and the social
+  portraits that were already carved out.
+* **Where the number went:** the classic-game line moved **62.5 → 59 MiB** (measured 58.59) instead
+  of staying at 62.5, which would have quietly handed back 3.9 MiB of headroom. Net effect: ~0.4 MiB
+  of room, versus a 0.29 MiB deficit before. The combined 140.5 MiB ceiling still covers every
+  shipped byte, and `publish_sim` gained an assertion that the dev-only paths stay out.
+* **Checks:** `publish_sim` **17/17** (was 16/17), gate now has **6** known-red suites instead of 7
+  (`docs/TESTING.md` updated), `mobile_layout_sim` 28/28, `panel_layout_smoke` 42/42, `kit_sim`
+  37/37, `weapon_proposal_sim` 587/587.

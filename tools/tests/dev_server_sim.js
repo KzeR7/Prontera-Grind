@@ -106,6 +106,7 @@ try {
   });
 
   await t('the second browser sees the same character (this is the whole point)', async () => {
+    const first = jar.friend;
     const out = await fetch(base + '/api/sessions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ u: 'Friend', p: 'a-long-friend-password' }),
@@ -113,6 +114,14 @@ try {
     const cookie = out.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
     const got = await fetch(base + '/api/save', { headers: { cookie } }).then(r => r.json());
     assert.strictEqual(JSON.parse(got.blob).lv, 17, 'the same save must load on another device');
+    // v252: one live session per account, so the first device is signed out by the second sign-in.
+    const old = await fetch(base + '/api/save', { headers: { cookie: first } });
+    assert.strictEqual(old.status, 401, 'the device that was signed out first cannot keep playing');
+    const back = await fetch(base + '/api/sessions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ u: 'Friend', p: 'a-long-friend-password' }),
+    });
+    jar.friend = (await back.json()) && back.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
   });
 
   await t('a stale version is refused with 409 and the server copy, never a silent loss', async () => {
