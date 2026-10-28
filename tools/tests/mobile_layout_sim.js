@@ -408,12 +408,29 @@ if (game) {
     assert.equal(declOf('html.pg-mobile .minimap-tool-btn', 'width'), '36px');
   });
 
-  test('a landscape phone gets one scrollable column, not a cut-off desktop grid', () => {
-    // A landscape phone is SHORT (~250px of panel). The desktop map page is a
-    // three-column composition; stacking it put every section below the fold,
+  test('a landscape phone shows the whole map page without scrolling', () => {
+    // A landscape phone is SHORT: the panel body is ~200px, while the desktop map
+    // page is ~850px (destination rail, 156px hero, stage picker, drop tables).
+    // Fitting it by stacking sections only pushed two of them below the fold,
     // which is what "the other UI basically does not appear" looked like.
     assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)[\s\S]*#wins \.ui-panel\[data-layout=map\] \.ui-content\{\s*grid-template-columns:minmax\(150px,180px\) minmax\(0,1fr\)/,
       'destinations on the left, the chosen field on the right');
+    // Five rows of two, one line each: the 5-across desktop grid made every card
+    // 43px tall and the destination rail 437px long.
+    assert.equal(declOf('html.pg-mobile #wins .ui-panel[data-layout=map] .ui-destinations .mapgrid', 'grid-template-columns', 'landscape'),
+      'repeat(2,minmax(0,1fr))');
+    assert.equal(declOf('html.pg-mobile #wins .ui-panel[data-layout=map] .ui-destinations .mapcard', 'min-height', 'landscape'), '20px');
+    // The hero art, the line naming the field and the drop tables cost more than
+    // the whole body; the highlighted destination and Travel carry the name.
+    for (const sel of ['eclipse-atlas-hero', 'ui-field-guide']) {
+      assert.equal(declOf('html.pg-mobile #wins .ui-panel[data-layout=map] .' + sel, 'display', 'landscape'), 'none',
+        sel + ' does not fit a 200px body');
+    }
+    assert.equal(declOf('html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .mapband-t', 'display', 'landscape'), 'none');
+    // A closed <details> hides its body through a UA rule that this stylesheet
+    // defeats by setting display:flex on it - so the folded requirements still
+    // reserved 60px inside the panel and left it scrollable into blank space.
+    assert.equal(declOf('html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .ui-fold:not([open])>.ui-fold-body', 'display', 'landscape'), 'none');
     assert.equal(declOf('html.pg-mobile #wins>.wp>.eclipse-window-footer', 'display', 'landscape'), 'none',
       'the hint footer is the first thing to go when height is scarce');
     assert.equal(declOf('html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs', 'position', 'landscape'), 'sticky',
@@ -422,6 +439,10 @@ if (game) {
     assert.equal(declOf('html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs button', 'min-height', 'landscape'), '30px');
     assert.equal(declOf('html.pg-mobile #wrap', 'height'), 'var(--pg-vh,100dvh)',
       'fullscreen follows the visible height, not the layout viewport');
+    // The stage picker keeps its two rows (10 fields + 5 Nightmare) and the
+    // auto-advance switch that a phone farms with; both must stay in the body.
+    assert.equal(declOf('html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .lvgrid .map-node', 'height', 'landscape'), '27px');
+    assert.equal(declOf('html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .row', 'font-size', 'landscape'), '9px');
   });
 
   test('the world chat cannot grow over the dock or off a small screen', () => {

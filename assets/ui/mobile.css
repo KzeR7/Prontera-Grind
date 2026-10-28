@@ -499,41 +499,58 @@ html.pg-mobile .modal-card{max-width:calc(100vw - 20px)}
   html.pg-mobile #wins .wbody>.ui-content{padding:10px 12px;gap:12px}
   html.pg-mobile #wins .ui-content>.ui-section,
   html.pg-mobile #wins .ui-content>section{padding-block:8px}
-  /* A short landscape panel keeps the map page's own shape: the destination
-     rail on the LEFT, the chosen field, its stages and the drop tables on the
-     right. Stacking the three sections (01 / 02 / 03) put two of them below a
-     ~210px fold, which is what "the other UI does not appear" looked like. */
+  /* A landscape phone is SHORT: the panel body is about 200px. The map page is
+     ~850px of content on a desktop (destination rail, 156px hero, stage picker,
+     drop tables) and it only appeared to fit by pushing two of its three
+     sections below the fold - which is what "the other UI does not appear"
+     looked like. The landscape page is now exactly what travelling needs, in
+     one screen with no scrolling: every destination, every stage, the
+     auto-advance switch, Travel and the requirements fold. "03 / Field
+     intelligence" (the drop tables) stays in portrait, where there is room. */
   html.pg-mobile #wins .ui-panel[data-layout=map] .ui-content{
-    grid-template-columns:minmax(150px,180px) minmax(0,1fr);gap:10px 12px;align-items:start;
+    grid-template-columns:minmax(150px,180px) minmax(0,1fr);
+    gap:6px 12px;padding:3px 10px;align-items:start;
+  }
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-content>.ui-section{padding-block:0}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-section-label{
+    font-size:8px;line-height:1;letter-spacing:.09em;margin:0 0 3px;padding:0;
   }
   html.pg-mobile #wins .ui-panel[data-layout=map] .ui-destinations{grid-column:1;grid-row:1}
-  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route{grid-column:2;grid-row:1}
-  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-field-guide{grid-column:1/-1;grid-row:2;border-top:1px solid color-mix(in srgb,var(--gold) 55%,transparent)}
-  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .eclipse-atlas-hero{margin-bottom:8px}
-  /* The desktop destination rail is a 5-across grid at this width; in a 150px
-     column it reads as a plain list. */
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route{
+    grid-column:2;grid-row:1;padding:0;background:none;border:0;
+  }
+  /* No room for the hero art, a second line naming the field, or the drop
+     tables; the highlighted destination and the Travel button name the field. */
+  html.pg-mobile #wins .ui-panel[data-layout=map] .eclipse-atlas-hero,
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .mapband-t,
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-field-guide{display:none}
+  /* Ten destinations, two per row, one line each. The 5-across desktop grid in a
+     180px rail made every card 43px tall and the rail 437px long. */
   html.pg-mobile #wins .ui-panel[data-layout=map] .ui-destinations .mapgrid{
-    display:flex;flex-direction:column;gap:3px;
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;margin:0;
   }
   html.pg-mobile #wins .ui-panel[data-layout=map] .ui-destinations .mapcard{
-    flex-direction:row;align-items:baseline;justify-content:space-between;gap:6px;
-    min-height:26px;padding:4px 7px;
+    flex-direction:row;align-items:center;gap:4px;min-height:20px;padding:0 4px;
   }
-  html.pg-mobile #wins .ui-destinations .mapgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
-  html.pg-mobile #wins .ui-destinations .mapcard{flex-direction:column;align-items:flex-start;gap:2px;min-height:0;padding:6px 7px}
-  html.pg-mobile #wins .ui-destinations .mapcard>b{font-size:9px}
-  html.pg-mobile #wins .ui-destinations .mapcard small{font-size:7px}
-  html.pg-mobile #wins .ui-field-guide .mapcols{display:block}
-  html.pg-mobile #wins .eclipse-stages{gap:3px}
-  html.pg-mobile #wins .eclipse-stages .map-node{min-height:34px;padding:5px 2px}
-  html.pg-mobile #wins .ui-route .lvgrid{margin:8px 0}
-  /* 110px of hero art left ~60px for the actual stage picker; 76px still shows
-     the destination and keeps the stages one short scroll away. */
-  html.pg-mobile #wins .eclipse-atlas-hero{height:58px;min-height:58px;margin-bottom:8px}
-  html.pg-mobile #wins .eclipse-atlas-hero>img,
-  html.pg-mobile #wins .eclipse-atlas-hero>canvas{height:58px;object-fit:cover}
-  html.pg-mobile #wins .eclipse-atlas-hero h2{font-size:15px;margin:2px 0}
-  html.pg-mobile #wins .eclipse-atlas-hero p{font-size:8px}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-destinations .mapcard small{display:none}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-destinations .mapcard>b{font-size:9px}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-destinations .eclipse-map-number{font-size:7px}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .lvgrid{margin:0;gap:4px}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .lvgrid .eclipse-stages{gap:3px}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .lvgrid .map-node{
+    min-height:27px;height:27px;padding:0 1px;font-size:9px;line-height:1.1;
+  }
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .row{margin:2px 0;font-size:9px}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .ui-fold{margin-top:2px}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .ui-fold>summary{padding:2px 6px;font-size:9px}
+  /* A closed <details> normally hides its body through a UA rule, but this
+     stylesheet sets .ui-fold-body{display:flex}, which defeats it - so the
+     collapsed requirements text still reserved height inside a 205px panel. */
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .ui-fold:not([open])>.ui-fold-body{display:none}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .ui-primary-action{margin-top:4px}
+  html.pg-mobile #wins .ui-panel[data-layout=map] .ui-route .ui-primary-action button{
+    padding:5px!important;font-size:10px;
+  }
   /* The four collection tabs are a 44px touch target in index.html's own CSS
      (a rule this file outranks only by matching it more precisely), and on a
      252px-tall panel that is a fifth of the screen. 30px still taps cleanly. */

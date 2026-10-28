@@ -8574,14 +8574,19 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 ### 2026-10-28 — `2026-10-28 haven-v253 mobile polish`
 * **Changed:** Fixes from playing the phone build on a real handset, plus one session per account.
   * **Landscape fullscreen was unreadable (`assets/ui/mobile.css`):** a 740×360 phone gives a panel
-    about 250px of height. The map page's three stacked sections (01 Destination / 02 Choose your
-    stage / 03 Field intelligence) put two of them below the fold, so it looked like "the rest of the
-    UI never appears" — and the same for every other panel whose desktop composition is taller than
-    the field. Landscape now keeps the map page's own two-column shape (a 150–180px destination rail
-    on the left, the chosen field, its stages and the drop tables on the right), every panel becomes
-    one scrolling column, the 29px window footer (a hint line) is dropped, the four collection tabs
-    shrink from the 44px touch target to 30px, the hero art from 156px to 58px, and the tab strip
-    sticks to the top of the panel.
+    about 205px of body height, while the map page is ~850px of content (destination rail, 156px hero,
+    stage picker, drop tables). Fitting it by stacking sections only pushed two of them below the
+    fold, which is what "the other UI basically does not appear" looked like. The landscape map page
+    is now the thing travelling actually needs, on one screen with no scrolling at 640×360, 667×375,
+    700×350, 740×360 and 844×390: all ten destinations in a two-across rail (the 5-across desktop
+    grid made every card 43px tall and the rail 437px long), the ten stages plus the five Nightmare
+    fields, the auto-advance switch, Travel and the requirements fold. The hero art, the line naming
+    the field and "03 / Field intelligence" are portrait-only — they cost more than the whole body.
+    Other panels stay one scrolling column, the 29px window footer (a hint line) is dropped, and the
+    four collection tabs shrink from their 44px touch target to 30px with the strip sticking.
+  * **A closed `<details>` still reserved its height:** `.ui-fold-body{display:flex}` beats the UA
+    rule that hides a closed disclosure's content, so the folded "Stage rules & requirements" left
+    the panel scrollable into ~60px of blank space long after it was collapsed.
   * **Everything half cut off along the bottom:** `#wrap` is now sized by `--pg-vh` (the
     `visualViewport` height that `mobile.js` already publishes) instead of `100dvh`, which is what the
     layout viewport reports inside Android fullscreen with the URL bar gone.
@@ -8601,9 +8606,9 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
     and uploads nothing — the connection-lost dialog would have been the wrong story. Signing in again
     takes the account back and ends the other device in turn.
 * **Try it:** `bash tools/build_site.sh && node tools/dev_server.js`, open `/phone`, pick a device,
-  press ⟳ Rotate, then open Maps: the destinations, the stages and the drop tables are all reachable in
-  landscape. Sign in on a second browser with the same account and the first one stops with the new
-  dialog.
+  press ⟳ Rotate, then open Maps: the whole page — ten destinations, fifteen stages, auto-advance and
+  Travel — is on one screen with no scrolling. Rotate back to portrait for the drop tables. Sign in on
+  a second browser with the same account and the first one stops with the new dialog.
 * **Checks:** `mobile_layout_sim` 28/28 (adds the landscape map composition, the sticky tab strip, the
   viewport-sized shell, the chat caps, the chip's new corner and the `pg-panel` mirror); `api_sim`
   46/46 (adds "a second sign-in ends the first device", and the suite now refreshes its account cookies
