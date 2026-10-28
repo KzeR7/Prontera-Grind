@@ -61,7 +61,9 @@ function harness() {
       mapSelection(){return[mapM,mapL]},
       OFFLINE_POPUP_MIN_MS, OFFLINE_SIM_COVER_MS, OFFLINE_CAP_MS,
       setState(v){S=v;farmSession=null;if(!Object.hasOwn(S,'offlineIncome'))S.offlineIncome={version:1,key:farmKey(),at:S.offlineAt,xp:60,zeny:60,job:42,kph:30000};}, getState(){return S}, setNow(v){clock.now=v}, setCloud(v){CLOUD.on=!!v},
-      setPageBoot(v){PAGE_BOOT_AT=v}, getPageBoot(){return PAGE_BOOT_AT}, elements, $, state
+      setPageBoot(v){PAGE_BOOT_AT=v}, getPageBoot(){return PAGE_BOOT_AT},
+      addSessionZeny(n){zenyEarned+=n}, getSessionZeny(){return zenyEarned},
+      recordFarmIncome, hasFarmSession(){return !!farmSession}, elements, $, state
     };
   `;
   const box = { console, Math: stableMath, Date: FakeDate, JSON, Number, String, Object, Array, state, clock, elements, $ };
@@ -212,6 +214,9 @@ t('a claim this page has been alive for is acknowledged, never paid again (v73)'
   h.setPageBoot(1);                                  // the page has been open since the beginning
   h.$('offlineModal').style.display = 'none';
   const writes = h.state.saves;
+  h.addSessionZeny(4200);
+  h.recordFarmIncome(100, 200, 50, 3, now - 10000);
+  assert.strictEqual(h.hasFarmSession(), true);
   // a five-minute window inside this page's lifetime: the sim replayed it (or ground it while
   // hidden) at full rate, so paying the server budget too would double those minutes
   const r = h.applyOfflineProgress(now, { id:44, awayMs:5 * 60000, creditedMs:5 * 60000, rateKph:100, kills:5, remainder:0 });
@@ -222,6 +227,8 @@ t('a claim this page has been alive for is acknowledged, never paid again (v73)'
   assert.strictEqual(S.offlineClaimId, 44, 'the claim is still acknowledged so the server clears it');
   assert.strictEqual(S.offlineAt, now, 'the timestamp advances so the window can never pay later');
   assert.strictEqual(h.state.saves, writes + 1, 'the acknowledgement is saved');
+  assert.strictEqual(h.getSessionZeny(), 4200, 'acknowledging a covered 5m sync does not wipe the background Away Zeny counter');
+  assert.strictEqual(h.hasFarmSession(), true, 'acknowledging a covered 5m sync preserves the live farming rate session');
   assert.strictEqual(h.$('offlineModal').style.display, 'none', 'no welcome-back card');
   // the old one-minute throttled-tab gap no longer even reaches the popup floor
   const tiny = h.applyOfflineProgress(now, { id:43, awayMs:60000, creditedMs:60000, rateKph:100, kills:1, remainder:0 });
