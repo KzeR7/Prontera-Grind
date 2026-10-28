@@ -56,6 +56,20 @@ have not been deleted or weakened; authoritative scoring and safe payout need to
 implemented and these suites reconciled before re-enabling competition. This is in
 addition to the six recorded baseline failures below.
 
+## Password-recovery UI
+
+`node tools/tests/recovery_ui_sim.js` checks recovery validation, cancellation,
+rotated-code acknowledgement and the return to login without touching a real account.
+For an additional Chromium check, install `playwright-core` and `@sparticuz/chromium`
+together with the packages above (no root package manifest means an npm install can
+prune earlier packages), build the site and start `HOST=127.0.0.1 node
+tools/dev_server.js --port 8793`. In another terminal run `node
+tools/check_recovery_browser.cjs`. It creates synthetic accounts only and rejects
+non-loopback test URLs; never use real account credentials. It checks desktop and
+phone-width layouts, errors, success and signing in again without a refresh. Stop the
+server after testing. This check was run with bundled headless Chromium in Linux; it
+is not a substitute for hosted staging or physical-device checks.
+
 ## Isolated Pages/D1 rehearsal
 
 Use `bash tools/build_site.sh && node tools/staging/local.mjs test` for a fresh,

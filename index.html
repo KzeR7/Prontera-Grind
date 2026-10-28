@@ -912,14 +912,14 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=211">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=212">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=1">
 <script src="assets/ui/mobile.js?v=1"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 <link rel="stylesheet" href="assets/social.css?v=209">
 </head>
 <body>
-<div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2>Welcome back.</h2><p class="login-intro">Your adventure is right where you left it.</p><div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
+<div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
 <form id="loginForm" autocomplete="on">
 <div class="form-group"><label for="username">Account Name</label><input type="text" id="username" required autocomplete="username"></div>
 <div class="form-group"><label for="password">Password</label><div class="eclipse-password"><input type="password" id="password" required autocomplete="current-password"><button type="button" id="eclipseShowPassword" aria-pressed="false" aria-label="Password visibility">Show</button></div></div>
@@ -927,17 +927,24 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div class="form-group" id="regRow" style="display:none"><label for="password2">Confirm Password</label><input type="password" id="password2" autocomplete="new-password"></div>
 <label class="remember-user" for="rememberUser"><input type="checkbox" id="rememberUser"> Remember user ID on this device</label>
 <button type="submit" id="authBtn" class="login-btn">Login</button><div id="loginErr" class="login-err"></div></form>
-<button type="button" id="recoveryOpen">Forgot password?</button>
+<button type="button" id="recoveryOpen" class="recovery-link">Forgot password?</button>
 <form id="recoveryForm" hidden>
-  <h3>Recover account</h3><p>Email and your saved recovery code are both required. Existing accounts without email need GM help.</p>
-  <label for="recoverUser">Account name</label><input id="recoverUser" autocomplete="username" required>
-  <label for="recoverEmail">Registration email</label><input id="recoverEmail" type="email" autocomplete="email" required>
-  <label for="recoverCode">Recovery code</label><input id="recoverCode" autocomplete="off" required>
-  <label for="recoverPassword">New password</label><input id="recoverPassword" type="password" autocomplete="new-password" minlength="10" maxlength="200" required>
-  <label for="recoverConfirm">Confirm new password</label><input id="recoverConfirm" type="password" autocomplete="new-password" minlength="10" maxlength="200" required>
-  <button type="submit" id="recoverSubmit">Reset password</button><button type="button" id="recoverClose">Back to login</button>
-  <p id="recoverStatus" role="status"></p>
+  <p class="recovery-intro">Enter your registered email and saved recovery code. Accounts without email need GM help.</p>
+  <div class="form-group"><label for="recoverUser">Account name</label><input id="recoverUser" autocomplete="username" required></div>
+  <div class="form-group"><label for="recoverEmail">Registration email</label><input id="recoverEmail" type="email" autocomplete="email" required></div>
+  <div class="form-group"><label for="recoverCode">Recovery code</label><input id="recoverCode" autocomplete="off" required></div>
+  <div class="form-group"><label for="recoverPassword">New password</label><input id="recoverPassword" type="password" autocomplete="new-password" minlength="10" maxlength="200" required></div>
+  <div class="form-group"><label for="recoverConfirm">Confirm new password</label><input id="recoverConfirm" type="password" autocomplete="new-password" minlength="10" maxlength="200" required></div>
+  <p id="recoverStatus" class="recovery-status" role="status" aria-live="polite"></p>
+  <button type="submit" id="recoverSubmit" class="login-btn">Reset password</button>
+  <button type="button" id="recoverClose" class="recovery-back">Back to login</button>
 </form>
+<section id="recoverySuccess" class="recovery-success" hidden aria-labelledby="recoverySuccessTitle">
+  <h3 id="recoverySuccessTitle">Password reset</h3>
+  <p id="recoverSuccessDetail">Save your NEW recovery code somewhere private. The old code no longer works. You will need the new code for your next password reset.</p>
+  <code id="recoverNewCode"></code>
+  <button type="button" id="recoverDone" class="login-btn">I saved it — back to login</button>
+</section>
 <small id="loginHint">Your character lives on the server. Sign in on any device and continue exactly where you left off.</small>
 <div id="loginCloud" style="margin-top:8px;font-size:11px;opacity:.75;text-align:center"></div>
 <!-- v2 (2026-10-27): the device-save backup/restore links are gone. Cloud is the only save,
@@ -1302,7 +1309,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-10-28 haven-v257 session safety';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-28 haven-v258 recovery flow';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -12552,19 +12559,45 @@ setInterval(bgTick,SIM_BG_MS);
 resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();
 if(typeof BGM!=='undefined')BGM.playLogin();
 // Recovery never sends the password or code to an email provider. A code is rotated on use.
-$('recoveryOpen').onclick=()=>{if(!CLOUD.api)return showErr('Cloud account recovery is unavailable here.');$('loginForm').hidden=true;$('recoveryOpen').hidden=true;$('recoveryForm').hidden=false;$('recoverUser').value=$('username').value;};
-$('recoverClose').onclick=()=>{$('recoveryForm').hidden=true;$('loginForm').hidden=false;$('recoveryOpen').hidden=false;$('recoverCode').value='';$('recoverPassword').value='';$('recoverConfirm').value='';$('recoverStatus').textContent='';};
+function recoveryShowLogin(){
+  $('recoveryForm').hidden=true;$('recoverySuccess').hidden=true;$('recoverNewCode').textContent='';
+  $('recoveryForm').reset();$('recoverStatus').textContent='';$('loginForm').hidden=false;
+  $('authTabs').hidden=false;$('recoveryOpen').hidden=false;$('loginHint').hidden=false;$('loginCloud').hidden=false;
+  $('authHeading').textContent='Welcome back.';$('authIntro').hidden=false;
+  setMode('login');$('password').value='';$('password2').value='';$('password').focus();
+}
+$('recoveryOpen').onclick=()=>{
+  if(!CLOUD.api)return showErr('Cloud account recovery is unavailable here.');
+  $('recoverUser').value=$('username').value.trim();$('recoverStatus').textContent='';
+  $('loginForm').hidden=true;$('authTabs').hidden=true;$('recoveryOpen').hidden=true;
+  $('loginHint').hidden=true;$('loginCloud').hidden=true;$('authIntro').hidden=true;
+  $('authHeading').textContent='Recover account';$('recoverySuccess').hidden=true;$('recoveryForm').hidden=false;
+  $('recoverUser').focus();
+};
+$('recoverClose').onclick=recoveryShowLogin;
+$('recoverDone').onclick=recoveryShowLogin;
 $('recoveryForm').onsubmit=async e=>{
   e.preventDefault();const status=$('recoverStatus'),btn=$('recoverSubmit');
+  if(btn.disabled)return;
   if($('recoverPassword').value.trim()!==$('recoverConfirm').value.trim()){status.textContent='Passwords do not match.';return}
-  btn.disabled=true;status.textContent='Resetting password…';
+  const username=$('recoverUser').value.trim();
+  btn.disabled=true;$('recoverClose').disabled=true;status.textContent='Resetting password…';
+  let outcomeUncertain=true;
   try{
-    const r=await cloudFetch('/recover',{method:'POST',body:JSON.stringify({u:$('recoverUser').value.trim(),email:$('recoverEmail').value.trim(),code:$('recoverCode').value.trim(),p:$('recoverPassword').value.trim()})});
-    const data=await r.json().catch(()=>({}));
+    const r=await cloudFetch('/recover',{method:'POST',body:JSON.stringify({u:username,email:$('recoverEmail').value.trim(),code:$('recoverCode').value.trim(),p:$('recoverPassword').value.trim()})});
+    outcomeUncertain=r.status>=500;const data=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(data.err||'Could not reset password.');
-    $('recoverCode').value='';$('recoverPassword').value='';$('recoverConfirm').value='';
-    status.textContent='Password reset. Save your NEW recovery code now; the old code no longer works: '+data.recovery+'. Then return to login.';
-  }catch(err){status.textContent=err.message||'Could not reach the server.'}finally{btn.disabled=false}
+    // The old code has been consumed. Keep the new one visible until the player explicitly
+    // acknowledges it; never redirect automatically or allow the old form to be submitted again.
+    $('username').value=username;$('recoverCode').value='';$('recoverPassword').value='';$('recoverConfirm').value='';
+    const validCode=typeof data.recovery==='string'&&/^[A-Z0-9]{4}(?:-[A-Z0-9]{4}){3}$/.test(data.recovery);
+    $('recoverNewCode').textContent=validCode?data.recovery:'';
+    $('recoverNewCode').hidden=!validCode;
+    $('recoverSuccessDetail').textContent=validCode?'Save your NEW recovery code somewhere private. The old code no longer works. You will need the new code for your next password reset.':'Your password was reset, but the new recovery code could not be displayed. Contact an owner if you need account recovery later.';
+    $('recoverDone').textContent=validCode?'I saved it — back to login':'Back to login';
+    $('authHeading').textContent='Password reset';$('recoveryForm').hidden=true;$('recoverySuccess').hidden=false;
+    $('recoverDone').focus();
+  }catch(err){status.textContent=(err.message||'Could not reach the server.')+(outcomeUncertain?' The reset may have completed. If your old code no longer works, contact an owner for help.':'')}finally{btn.disabled=false;$('recoverClose').disabled=false}
 };
 // ---------- update watcher ---------------------------------------------------------------
 // Deployments notify players once; only their button click saves and refreshes the page.
