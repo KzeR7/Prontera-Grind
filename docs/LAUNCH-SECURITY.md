@@ -26,7 +26,11 @@ verified the column and index. This agent did not access or change production.
    registration an owner, so never expose that preview to untrusted users or connect it
    to production data. The current `wrangler.toml` names the production D1 database;
    do not test branch previews until they have a separately configured staging database.
-4. Test registration, login, recovery, session revocation, chat, save, GM access and
+4. The disposable [local Pages/D1 rehearsal](ISOLATED-STAGING.md) exercises the real
+   local Wrangler runtime and synthetic accounts, but is not hosted staging. Configure a
+   separately isolated Cloudflare staging project/database and verify its binding before
+   running platform-specific tests; do not use a branch preview wired to live `pg`.
+5. Test registration, login, recovery, session revocation, chat, save, GM access and
    password reset on the actual Pages/D1 runtime. The local SQLite shim cannot prove
    Cloudflare CPU limits, D1 behavior, cookie policies or browser email delivery.
 

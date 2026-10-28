@@ -56,6 +56,14 @@ have not been deleted or weakened; authoritative scoring and safe payout need to
 implemented and these suites reconciled before re-enabling competition. This is in
 addition to the six recorded baseline failures below.
 
+## Isolated Pages/D1 rehearsal
+
+Use `bash tools/build_site.sh && node tools/staging/local.mjs test` for a fresh,
+synthetic, local-only Wrangler Pages/D1 rehearsal; `node tools/staging/local.mjs serve`
+starts the same isolated setup for manual testing with a synthetic GM owner. See
+[Isolated staging](ISOLATED-STAGING.md) for Windows steps, credentials, safety boundaries
+and limitations. This is not hosted Cloudflare staging.
+
 ## Choose the preview for the task
 
 ### Game plus accounts, cloud saves and GM tools
