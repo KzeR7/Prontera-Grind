@@ -8516,3 +8516,48 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   (`miniflare` not installed in this sandbox).
 * **Delivery:** Committed and pushed on `arena/7580a8c0-prontera-grind`, then merged into `main`
   through PR #141. No separate deploy was run by the agent.
+
+### 2026-10-28 — `2026-10-28 haven-v252 phone layout`
+* **Changed:** Readjusted the field for phone-sized screens and added a landscape fullscreen mode. The desk
+  layout is untouched: every rule lives in a new `assets/ui/mobile.css`, is scoped to `html.pg-mobile`, and a
+  desktop browser never matches one byte of it.
+  * **Layout decision (`assets/ui/mobile.js`, new):** loaded from `<head>` before the game script, so the class
+    is on the document before the first paint. A phone is a *touch* device whose short side is ≤ 900px; a
+    narrow desktop window with a mouse keeps the desk layout (which already has its own 700/740px rules).
+    The choice is re-made on resize and orientation change, and Display → Phone layout can force Auto / Phone /
+    Desk. `?phone=1` / `?phone=0` forces one page load for reviewing the phone screen from a desk browser.
+  * **Overlap root cause fixed:** at ≤560px `#hud` was `top:54;height:77` while `#eclipseCombat` sat at
+    `top:93` with a lower z-index, so the auto-combat pill painted underneath the player card. The phone shell
+    now stacks header → player card → combat pill from named tokens (`--pg-header`, `--pg-hud-top`,
+    `--pg-hud-h`), and the card is a fixed 54px box (13/11/11px rows) so a longer name or level can never push
+    it down into the pill again.
+  * **Decluttering:** the portrait art, the job line, the title label, the grind status, the cloud/user/GM
+    badges, the "Logs ▾" tab, the hint line and the DPS/kill counters no longer render on a phone; the header
+    drops the wordmark, the mail and daily-roulette buttons become two 36px squares, and the player card is one
+    compact block. Two modes go further: **Field only** (`#pgFocusBtn`, `pg-focus`) hides the log, pet buffs,
+    quest chip, mail/daily buttons and the combat pill but keeps HP, both EXP bars and the dock, and **phone
+    fullscreen** (`#fsBtn`) requests element fullscreen plus `screen.orientation.lock('landscape')`, with the
+    button switching into an "exit" state when the browser reports a fullscreen element.
+  * **Quest sheet instead of a second column:** the quest tracker and the "more destinations" list used to take
+    the right half of a 390px field. They now live in `#sideRail` as a sheet that opens from the ❖ Quests chip
+    (`#pgQuests`, with a gold dot when a quest is claimable) or from the dock's More button, and closes on the
+    scrim, a destination tap or Escape. `#sideMenu.eclipse-more-open` is mirrored onto the rail as `.pg-more`
+    by a MutationObserver, so the sheet does not need `:has()` support.
+  * **Bars:** the dock is one 45px-per-item scrolling row; the EXP bar keeps its 40px content height and grows by
+    the `env(safe-area-inset-bottom)` inset instead of being squeezed by a 34px home indicator. The activity log
+    is three whole lines above the quest chip (the fourth row is hidden, not clipped, because `#feed` is a
+    bottom-packed 220px column in `eclipse.css`).
+  * **Display panel:** `screenOptions()` gained a Phone block (Layout: Auto → Phone → Desk, Fullscreen, Field
+    only) plus a one-line note. It is the same panel as before, so nothing on the desk side moved.
+* **Try it:** Run `bash tools/build_site.sh && node tools/dev_server.js`, then open the game on a phone (or a
+  desktop browser at `/?phone=1`) and rotate the device; use ☷ → Phone layout to switch back to the desk
+  arrangement, ⛶ for landscape fullscreen and ⊞ for Field only.
+* **Checks:** `mobile_layout_sim` 21/21 (new: CSS scope and load order, z-stack ordering, the fixed player-card
+  box, landscape tokens, phone/tablet/narrow-desk detection, `?phone=`, persistence, field-only closing the sheet
+  while keeping the More menu reachable, fullscreen, chip → scrim → Escape → tab flow, Display-panel cycling,
+  the live quest list in the sheet, the dock More → rail mirror, and the log row rule). Full JS gate: 141 suites, **134 green, 7 red** — exactly the documented known-red baseline in
+  [Testing](TESTING.md) (`field_loop_smoke`, `ground_combat_sim`, `rotation_updates_sim`, `skill_redesign_sim`,
+  `fourth_job_skills_sim`, `skill_balance_sim`, `publish_sim` budget), no new failures. All three
+  generated-asset `--check` scripts pass. `card_star_balance_sim` needs `git fetch origin d164bd0` in a fresh
+  clone; with it fetched the suite is green (36 comparisons).
+* **Delivery:** Committed and pushed on `arena/de3e0bec-prontera-grind`. No separate deploy was run by the agent.
