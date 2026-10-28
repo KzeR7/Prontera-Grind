@@ -8654,3 +8654,32 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Checks:** `publish_sim` **17/17** (was 16/17), gate now has **6** known-red suites instead of 7
   (`docs/TESTING.md` updated), `mobile_layout_sim` 28/28, `panel_layout_smoke` 42/42, `kit_sim`
   37/37, `weapon_proposal_sim` 587/587.
+
+### 2026-10-28 — `2026-10-28 haven-v254 forge, speed & cards`
+* **Fixed — Ascension Forge (owner: "once i selected the equipment for ascension the proceed
+  button is not selectable").** Two separate causes, one of them a real gate bug:
+  * `canShield()` still read the pre-fourth-job class list, so **Rune Knight, Arch Bishop and
+    Mechanic had no off-hand slot at all** — the doll showed an empty cell, an equipped shield
+    was invisible and un-swappable, and an N+ shield could never appear in the Forge (the
+    load-time repair in `stowUnfit` has treated those three as shield classes all along). The
+    list now matches.
+  * The action no longer just greys out: while a recipe is short it reads **"Ascend · missing
+    Astral Shard +15 · Valkyrie's Sigil +1 · Zeny +49,999,000"**, so a shortage can never be
+    mistaken for a dead button. Switching the Mythic set keeps the chosen N+ piece selected
+    (the old code cleared it to `''`), and a legacy item without a saved `.slot` still finds its
+    recipe through `gearSlot()`. No cost, gate or spending rule changed.
+* **Changed — simulation speed is GM-only.** The `x1/x2/x4` button above the dock ships hidden,
+  appears only for `S.gm` accounts, and `simSteps()` refuses any multiplier for everyone else;
+  a save that carried a rate from an earlier build is dropped to 1x on the next refresh.
+  Players always play at normal speed.
+* **New — Bag → Cards "Mergeable now" filter.** One shared predicate (`cardMergeable`) backs both
+  the filter and the detail button, so the list can never disagree with `mergeCard()`. The
+  filter counts mergeable card kinds, keeps the grade filter working alongside it, and the
+  detail button reports `3 extra copies` or `need 2 more`. Normal and Nightmare copies still
+  merge separately.
+* **Checks:** new `forge_speed_cards_sim` 4/4; `ascension_evolution_sim` 8/8,
+  `panel_layout_smoke` 42/42, `mobile_layout_sim` 28/28, `eclipse_ui_sim` 52/52,
+  `publish_sim` 17/17, `card_sim` 13/13, `card_comparison_sim`, `dual_wield_sim` 14/14,
+  `assassin_equipment_sim`, `mythic_testing_sim` 10/10, `gameplay_polish_sim` and
+  `class_weapon_sim` all pass. Known-red count is unchanged at 6 (`card_star_balance_sim`
+  still needs the pinned `d164bd0` revision, which this shallow clone does not have).
