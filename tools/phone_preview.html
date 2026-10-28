@@ -110,7 +110,7 @@
   </div>
 
   <div class="group">
-    <button type="button" id="rotate" title="Rotate the device (or press R)">⟳ Rotate</button>
+    <button type="button" id="rotate" title="Rotate the device">⟳ Rotate</button>
     <button type="button" id="layout" aria-pressed="false" title="Force the desk layout instead of the phone one">Layout · Phone</button>
     <button type="button" id="reload" title="Reload the game inside the frame">↻ Reload</button>
     <button type="button" id="reset" class="ghost" title="Forget the layout choice this browser saved for the game">Reset saved layout</button>
@@ -262,10 +262,9 @@
     }
   });
 
-  document.addEventListener('keydown', function (e) {
-    if (e.target && /input|select|textarea/i.test(e.target.tagName)) return;
-    if (e.key === 'r' || e.key === 'R') { state.landscape = !state.landscape; applyFrame(false); }
-  });
+  // No page-level keyboard shortcuts on purpose: the game inside the frame plays with single
+  // letters (R = refine, V = panels, ...), and a key pressed while the frame does not hold focus
+  // would silently do two different things - or the mirror of it, when the frame does hold it.
 
   window.addEventListener('resize', fit);
   if (window.ResizeObserver) new ResizeObserver(fit).observe(stage);
