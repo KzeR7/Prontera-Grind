@@ -8718,3 +8718,9 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   dialog blocking, Go opening the right panel); `ui_sim` 64/64 after adding `ptsSpent` to its
   renderer harness; `panel_layout_smoke` 42/42, `mobile_layout_sim` 28/28, `eclipse_ui_sim`
   52/52, `gameplay_polish_sim` pass. Known-red count is unchanged at 6.
+
+### 2026-10-28 — `haven-v256 account security`
+* **Changed:** New cloud accounts require a unique, unverified email; password recovery requires email and a one-use recovery code. Public registration no longer grants owner access. Atomic application rate counters, bounded request streaming, origin checks and CDN integrity pinning add defenses. Client-derived leaderboards and leaderboard prizes are paused pending authoritative scoring. Existing accounts and saves are retained.
+* **Try it:** Read `docs/LAUNCH-SECURITY.md`, back up and apply migration 0007 exactly once before deploying. Use the disposable local server for testing; provision a real owner only through authorized D1 administration.
+* **Checks:** Local security/migration/recovery, social API, build, generated-asset checks, API and Chromium desktop/phone registration/recovery passed. The full JS gate had six documented baseline failures and three additional leaderboard suites red because their existing assertions require the intentionally paused competition; the shallow-history card test passed after fetching its fixture. Cloudflare deployment, email verification, production load tests and authoritative gameplay remain unverified/unimplemented.
+* **Delivery:** Local branch changes only; no deployment, production migration, commit or push.

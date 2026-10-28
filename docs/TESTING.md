@@ -39,6 +39,22 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```
 
+## Account security and paused competitive boards (haven-v256)
+
+Apply `0007_account_email.sql` once to disposable databases before testing the
+new registration/recovery flow. The local server applies migrations automatically.
+`node tools/tests/launch_security_sim.js` exercises legacy accounts, concurrent email
+registration, recovery races and session revocation, request limits and the leaderboard
+pause. New registrations are ordinary players; for a disposable local GM preview,
+use `--gm-all`. See [Launch security](LAUNCH-SECURITY.md) before any real migration.
+
+The existing `dev_server_sim.js`, `leaderboard_sim.js` and `echo_board_sim.js`
+still assert the old public ranking/payout behaviour and therefore fail while those
+features are deliberately paused. They were green before this change. Their assertions
+have not been deleted or weakened; authoritative scoring and safe payout need to be
+implemented and these suites reconciled before re-enabling competition. This is in
+addition to the six recorded baseline failures below.
+
 ## Choose the preview for the task
 
 ### Game plus accounts, cloud saves and GM tools

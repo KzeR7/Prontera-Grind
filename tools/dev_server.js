@@ -64,6 +64,7 @@ export function freshDb(file) {
 export const ROUTES = {
   'GET /api/version': ['onRequestGet', 'api/version.js'],
   'POST /api/register': ['onRequestPost', 'api/register.js'],
+  'POST /api/recover': ['onRequestPost', 'api/recover.js'],
   'POST /api/sessions': ['onRequestPost', 'api/sessions.js'],
   'DELETE /api/sessions': ['onRequestDelete', 'api/sessions.js'],
   'GET /api/me': ['onRequestGet', 'api/me.js'],
@@ -253,7 +254,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   console.log('  data    ' + (dbFile ? 'kept in ' + dbFile + ' (accounts and saves survive a restart)' : 'in memory - restarting this process wipes accounts and saves'));
   console.log(gmAll
     ? '  gm      EVERY account registered here is an owner (gm=2) - this is a preview server'
-    : '  gm      the first account you register becomes the owner (gm=2); --gm-all makes every account one');
+    : '  gm      public registrations are players; --gm-all is for disposable local testing only');
   console.log(fakePayments
     ? '  shop    FAKE payments: every Cash Shop order is delivered instantly, no card, no Stripe'
     : '  shop    Cash Shop in preview mode (no payments); add --fake-payments to rehearse purchases');

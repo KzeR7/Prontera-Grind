@@ -42,7 +42,7 @@ async function call(file, fn, method, url, args = {}) {
   return { status: res.status, data, res };
 }
 async function register(u, p) {
-  const out = await call('api/register.js', 'onRequestPost', 'POST', '/api/register', { body: { u, p } });
+  const out = await call('api/register.js', 'onRequestPost', 'POST', '/api/register', { body: { u, p, email: u+'@example.test' } });
   assert.equal(out.status, 201, out.data?.err);
   return out.res.headers.get('Set-Cookie').split(';')[0];
 }

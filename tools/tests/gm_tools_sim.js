@@ -11,7 +11,7 @@ const require=createRequire(import.meta.url),{createGame}=require('./helpers/gam
 const sqlite=freshDb(),env=makeEnv(sqlite);let count=0;
 const call=async(fn,cookie,body,url='/api/test')=>{const res=await fn({env,request:new Request('https://pg.local'+url,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',Cookie:cookie||''},...(body?{body:JSON.stringify(body)}:{})})});return {res,data:await res.json()}};
 const test=async(name,fn)=>{await fn();count++;console.log('ok '+name)};
-const account=async u=>{const r=await call(register,'',{u,p:'test-password-only'});assert.equal(r.res.status,201,'registration');return r.res.headers.get('set-cookie').split(';')[0]};
+const account=async u=>{const r=await call(register,'',{u,p:'test-password-only',email:u+'@example.test'});assert.equal(r.res.status,201,'registration');return r.res.headers.get('set-cookie').split(';')[0]};
 try{
  const owner=await account('OwnerTest'),normal=await account('PlayerTest'),banned=await account('SuspendedTest');
  sqlite.prepare('UPDATE users SET gm=2 WHERE id=1').run();sqlite.prepare('UPDATE users SET banned=1 WHERE id=3').run();

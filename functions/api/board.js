@@ -10,7 +10,7 @@
 import { currentUser } from '../_lib/auth.js';
 import { json, guard, fail } from '../_lib/http.js';
 import { BOARD_PERIODS, boardWindow, boardWeekStart } from '../_lib/board.js';
-import { ECHO_LIMIT, ECHO_REWARDS, echoPrizeText, settleEchoRewards } from '../_lib/echo-board.js';
+import { ECHO_LIMIT, ECHO_REWARDS, echoPrizeText } from '../_lib/echo-board.js';
 
 const LIMIT = 50;
 const rewardTiers = kind => {
@@ -34,8 +34,9 @@ export const onRequestGet = guard(async ({ request, env }) => {
   if (!['kills', 'echo'].includes(board)) return fail('Choose the kills or Endless Echo board.', 400);
   const window = boardWindow(period);
 
-  // Pay any finished Echo period before answering, whichever board was asked for.
-  await settleEchoRewards(env.DB);
+  // Both kills and Echo scores come from editable client saves. Do not present them as
+  // competitive results or award prizes until an authoritative scoring service exists.
+  return fail('Leaderboards and Echo leaderboard prizes are temporarily paused while fair scoring is developed.', 503);
 
   if (board === 'echo') {
     const key = period === 'all' ? 'all' : period === 'daily' ? 'day:' + window.start : 'week:' + boardWeekStart(window.start);

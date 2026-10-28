@@ -19,6 +19,8 @@ npx wrangler d1 execute pg --remote --file=migrations/0003_server_timed_offline_
 npx wrangler d1 execute pg --remote --file=migrations/0004_gm_gift_batches.sql
 npx wrangler d1 execute pg --remote --file=migrations/0005_shop.sql
 npx wrangler d1 execute pg --remote --file=migrations/0006_echo_leaderboard.sql
+# Apply 0007 once only, after backing up and checking it has not already run:
+npx wrangler d1 execute pg --remote --file=migrations/0007_account_email.sql
 ```
 
 **haven-v215 (Cash Shop):** `0005_shop.sql` can run before **or** after the v215 build is deployed —
@@ -50,9 +52,9 @@ Two facts to hold on to while you do this:
 * **Render remains a deliberate backup.** Nothing here touches `prontera-grind.onrender.com` or
   changes its deployment. Keep it available as your fallback; it is not a problem that it may serve
   an older build.
-* **You register the first account.** The first account created on the new site becomes the **owner**
-  (GM level 2, the one who can reset passwords and hand out GM rights). Do that before you tell
-  anyone the address, or one of your friends will become the owner.
+* **Public registration never creates an owner.** Provision a verified owner account through the
+  Cloudflare D1 dashboard as described in [Launch security](../docs/LAUNCH-SECURITY.md). Existing
+  owner accounts retain their permissions; review them before opening registration.
 
 ---
 
@@ -112,11 +114,11 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-28 haven-v255 starter guide and coach tips` |
-| Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
+| Build tag at the bottom of the card | `2026-10-28 haven-v256 account security` |
+| Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
-| `/gm.html` | the GM console, listing players; your account shows as **👑 owner** |
+| `/gm.html` | after deliberate D1 owner provisioning, the GM console lists players and shows **👑 owner** |
 | `https://<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player
@@ -254,8 +256,9 @@ the preview setting above, not a chat fault.
 
 
 
-The owner is **the first account registered against that database** (`users.gm = 2`); every later
-account is a normal player. There are three separate ways back in, in order of how fast they are:
+The cloud owner is an account deliberately promoted by a trusted D1 administrator (`users.gm = 2`).
+Public registration never grants that role. See [Launch security](../docs/LAUNCH-SECURITY.md). The
+legacy local GM option below is browser-local and does not grant cloud GM API permissions.
 
 **1. Right now, in the game, without touching the server.** The game has a local GM login that has
 nothing to do with cloud accounts: type the username **`GM`** (exactly that) and the GM password on
@@ -299,7 +302,7 @@ node tools/dev_server.js --gm-all --db tools/.devdb/preview.sqlite   # ...and th
 ```
 
 `--gm-all` is a preview-only switch: **never** set `DEV_GM_ALL` on the Cloudflare project, because on
-the real server the first-account rule is exactly what protects your owner account.
+it would grant owner privileges to every new account on the real server.
 
 ## If something goes wrong
 

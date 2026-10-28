@@ -44,7 +44,7 @@ async function call(file, fn, method, url, args = {}) {
   return { status: res.status, data, res };
 }
 async function register(u, p) {
-  const out = await call('api/register.js', 'onRequestPost', 'POST', '/api/register', { body: { u, p } });
+  const out = await call('api/register.js', 'onRequestPost', 'POST', '/api/register', { body: { u, p, email: u+'@example.test' } });
   assert.equal(out.status, 201, out.data?.err);
   return out.res.headers.get('Set-Cookie').split(';')[0];
 }
@@ -158,7 +158,7 @@ await t('unchanged Echo scores and already-settled periods spend zero Echo D1 wr
 
 await t('pre-0006 database (15 tables): save syncs and both leaderboards succeed without 0006 applied', async () => {
   const preSqlite = new DatabaseSync(':memory:');
-  for (const name of fs.readdirSync(path.join(root, 'migrations')).filter(n => /^000[1-5]_.*\.sql$/.test(n)).sort()) {
+  for (const name of fs.readdirSync(path.join(root, 'migrations')).filter(n => /^(000[1-5]|0007)_.*\.sql$/.test(n)).sort()) {
     preSqlite.exec(fs.readFileSync(path.join(root, 'migrations', name), 'utf8'));
   }
   const preEnv = { DB: makeD1(preSqlite) };
@@ -168,7 +168,7 @@ await t('pre-0006 database (15 tables): save syncs and both leaderboards succeed
     const data = (res.headers.get('Content-Type') || '').includes('json') ? await res.json() : null;
     return { status: res.status, data, res };
   };
-  const reg = await callPre('api/register.js', 'onRequestPost', 'POST', '/api/register', { body: { u: 'PreUser', p: 'pre-password-123' } });
+  const reg = await callPre('api/register.js', 'onRequestPost', 'POST', '/api/register', { body: { u: 'PreUser', p: 'pre-password-123', email:'preuser@example.test' } });
   assert.equal(reg.status, 201);
   const ck = reg.res.headers.get('Set-Cookie').split(';')[0];
   const trial = { day: today, used: 1, best: 750000, runs: 1, chest: 0, echoBoard: { day: today, dayDps: 750000, week, weekDps: 750000 } };

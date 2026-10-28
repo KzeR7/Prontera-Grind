@@ -923,9 +923,21 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <form id="loginForm" autocomplete="on">
 <div class="form-group"><label for="username">Account Name</label><input type="text" id="username" required autocomplete="username"></div>
 <div class="form-group"><label for="password">Password</label><div class="eclipse-password"><input type="password" id="password" required autocomplete="current-password"><button type="button" id="eclipseShowPassword" aria-pressed="false" aria-label="Password visibility">Show</button></div></div>
+<div class="form-group" id="emailRow" style="display:none"><label for="email">Email (one account per address)</label><input type="email" id="email" autocomplete="email" maxlength="254"><small>Used with your recovery code; email is not verified yet.</small></div>
 <div class="form-group" id="regRow" style="display:none"><label for="password2">Confirm Password</label><input type="password" id="password2" autocomplete="new-password"></div>
 <label class="remember-user" for="rememberUser"><input type="checkbox" id="rememberUser"> Remember user ID on this device</label>
 <button type="submit" id="authBtn" class="login-btn">Login</button><div id="loginErr" class="login-err"></div></form>
+<button type="button" id="recoveryOpen">Forgot password?</button>
+<form id="recoveryForm" hidden>
+  <h3>Recover account</h3><p>Email and your saved recovery code are both required. Existing accounts without email need GM help.</p>
+  <label for="recoverUser">Account name</label><input id="recoverUser" autocomplete="username" required>
+  <label for="recoverEmail">Registration email</label><input id="recoverEmail" type="email" autocomplete="email" required>
+  <label for="recoverCode">Recovery code</label><input id="recoverCode" autocomplete="off" required>
+  <label for="recoverPassword">New password</label><input id="recoverPassword" type="password" autocomplete="new-password" minlength="10" maxlength="200" required>
+  <label for="recoverConfirm">Confirm new password</label><input id="recoverConfirm" type="password" autocomplete="new-password" minlength="10" maxlength="200" required>
+  <button type="submit" id="recoverSubmit">Reset password</button><button type="button" id="recoverClose">Back to login</button>
+  <p id="recoverStatus" role="status"></p>
+</form>
 <small id="loginHint">Your character lives on the server. Sign in on any device and continue exactly where you left off.</small>
 <div id="loginCloud" style="margin-top:8px;font-size:11px;opacity:.75;text-align:center"></div>
 <!-- v2 (2026-10-27): the device-save backup/restore links are gone. Cloud is the only save,
@@ -1049,7 +1061,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <!-- v1 Morocc atlas generator deleted (2026-10-04): retired to Updates/retired-v1-kit/ when map
      kit v2 shipped, and this tag pointed at a file that no longer exists in the tree. kit_sim
      asserts it is never loaded again. -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
 <script>
 const $=id=>document.getElementById(id);
 // Owner request (2026-10-24): no browser menu anywhere in the game - a right-click used to offer
@@ -1290,7 +1302,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-10-28 haven-v255 starter guide and coach tips';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-28 haven-v256 account security';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2394,7 +2406,7 @@ function trialLobby(view){
         <span class="trial-choice-timer">OPEN</span></button>
     </div>
     <details class="trial-reward-details" open><summary>Ranked completion payout <small>100 Echo Shards per completed ranked run</small></summary>${trialLadderHtml()}</details>
-    <p class="trial-note">Milestone caches are one-time rewards. Ranked payouts repeat; a new personal best updates your record but adds no bonus. Ranked DPS also enters the Endless Echo leaderboard (Community → Leaderboard): its Top 100 win Echo Shards and protection scrolls every day and every week.</p>
+    <p class="trial-note">Milestone caches are one-time rewards. Ranked payouts repeat; a new personal best updates your record but adds no bonus. Competitive leaderboards and leaderboard prizes are temporarily paused while fair scoring is developed. Personal trial rewards are unchanged.</p>
     <div class="trial-foot"><button data-trial="close">Close</button></div>`;
   el.classList.add('on');
   return el}
@@ -3493,6 +3505,7 @@ restoreRememberedUser();
 let authMode='login';
 function showErr(m,ok){const e=$('loginErr');e.textContent=m;e.style.color=ok?'#2a9d3f':'#e5484d'}
 function setMode(m){authMode=m;$('tabLogin').classList.toggle('on',m==='login');$('tabReg').classList.toggle('on',m==='reg');$('regRow').style.display=m==='reg'?'block':'none';
+  if($('emailRow'))$('emailRow').style.display=m==='reg'?'block':'none';if($('email'))$('email').required=m==='reg'&&CLOUD.api;
   $('authBtn').textContent=m==='reg'?'Create Account':'Login';$('password').autocomplete=m==='reg'?'new-password':'current-password';$('password2').required=m==='reg';showErr('')}
 function submitAuth(e,confirmed=false){
   if(e)e.preventDefault();
@@ -3505,6 +3518,7 @@ function submitAuth(e,confirmed=false){
       if(p.length<(CLOUD.api?10:4))return showErr(CLOUD.api?'Cloud passwords must be at least 10 characters.':'Password must be at least 4 characters.');
       if(p.length>200)return showErr('Password is too long.');
       if($('password2').value.trim()!==p)return showErr('Passwords do not match.');
+      if(CLOUD.api&&!$('email')?.value.trim())return showErr('Enter an email address for this account.');
       if(!confirmed){
         const where=CLOUD.api?'This cloud account can be used on other devices.':'This local account is stored in this browser only.';
         return ask(`Create the account “${u}”?\n\n${where}`,()=>submitAuth(null,true),{yes:'Create account',no:'Cancel'});
@@ -4013,7 +4027,7 @@ async function cloudAuth(u,p,isReg){
   showErr(isReg?'Creating your account…':'Signing in…',true);
   if(btn)btn.disabled=true;
   try{
-    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:JSON.stringify({u,p}),signal:ac.signal});
+    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:isReg?JSON.stringify({u,p,email:$('email').value.trim()}):JSON.stringify({u,p}),signal:ac.signal});
     const d=await r.json().catch(()=>null);
     clearTimeout(timer);
     if(!r.ok)return showErr((d&&d.err)||('Error '+r.status));
@@ -4024,9 +4038,9 @@ async function cloudAuth(u,p,isReg){
     if(isReg&&d.recovery){
       // Shown exactly once ever: the server keeps only its hash. It is the only way back in without
       // the GM, so it is treated as seriously as the password itself.
-      ask('Account created. Save this recovery code somewhere safe - it is the only way to reset your password without the GM:\n\n📋  '+d.recovery,
+      ask('Account created. Save this recovery code somewhere safe. You need it AND your registration email to reset your password without the GM:\n\n📋  '+d.recovery,
         ()=>initSessionFromCloud(d.u,d.gm,true).catch(e=>showErr('Account created, but the game could not start: '+e.message)),
-        {yes:'I saved it — enter the game',no:'Not now'});
+        {yes:'I saved it — enter the game',requireConfirm:true});
       return;
     }
     // Awaited on purpose. Without the await, a throw while the session starts (a save that will not
@@ -6736,7 +6750,7 @@ const V={
     return`<div class="board-panel"><div class="board-periods">${[['kills','Kills'],['echo','Endless Echo']].map(([k,l])=>`<button data-a="boardkind" data-v="${k}" class="${boardKind===k?'on':''}" aria-pressed="${boardKind===k}">${l}</button>`).join('')}</div><div class="board-periods">${periods.map(p=>`<button data-a="boardperiod" data-v="${p}" class="${boardPeriod===p?'on':''}" aria-pressed="${boardPeriod===p}">${labels[p]}</button>`).join('')}</div>
       <div class="board-head"><small>${data?esc(data.label):'Periods use Singapore time'}${boardLoading&&data?' · refreshing…':''}</small><button data-a="boardrefresh" title="Refresh the scores" aria-label="Refresh leaderboard">↻</button></div>
       <div class="board-row" style="font-weight:bold;border-bottom:1px solid var(--edge)"><span>#</span><span>Player</span><span>Base</span><span>${echo?'Best DPS':'Kills'}</span></div>${state}${rewards}
-      <small class="board-note">${echo?'Ranked by your best ranked Endless Echo DPS in the period, then current Base Lv. Top 100 shown; daily and weekly Top 100 are paid when the period ends (Singapore time), as gifts on your next sync. Scores sync with your cloud save.':'Ranked by kills, then current Base Lv. Daily and weekly scores count kills synced since the leaderboard launched; all-time starts from existing cloud saves. Scores are self-reported.'}</small></div>`},
+      <small class="board-note">${echo?'Competitive leaderboards and their prizes are temporarily paused while fair scoring is developed.':'Competitive leaderboards are temporarily paused while fair scoring is developed.'}</small></div>`},
   log(){const cats=LOGCATS.map(([k,n])=>`<label class="logf"><input type="checkbox" data-a="logf" data-v="${k}" ${logOn(k)?'checked':''} aria-label="Show ${n} lines"> ${n}</label>`).join('');
     const shown=logShown();
     return`<div class="log-preview-controls"><button data-a="feed" aria-pressed="${feedOn()}">${feedOn()?"Hide":"Show"} on-screen log</button><small>Choose event types below for the on-screen preview and activity history.</small></div><div class="logfbar">${cats}<span class="sp"><button data-a="logfall" data-v="on">All</button><button data-a="logfall" data-v="off">None</button></span></div>
@@ -7054,7 +7068,7 @@ function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(
   +(rollingSet.has(p.id)?`<div class="slot roll-status" id="rf${p.id}"><span>🎲 Rolling...</span></div>`:p.last?`<div class="roll-status"><span>Last roll: Grade ${p.last}</span></div>`:`<div class="roll-status"><span>&nbsp;</span></div>`)
   +(p.roll?`<div class="slot"><span>Rolled <b>Grade ${p.roll}</b> (x${MUT[p.roll]})</span><span><button data-a="pkeep" data-v="${p.id}">Keep new</button> <button data-a="pdisc" data-v="${p.id}">Keep old</button></span></div>`:'')
   +`<small>Odds: G1 50% &middot; G2 30% &middot; G3 16.5% &middot; G4 2.5% &middot; G5 0.8% &middot; G6 0.2%</small></div>`}
-function ask(msg,yes,labels={}){$('mt').textContent=msg;$('my').textContent=labels.yes||'Yes';$('mn').textContent=labels.no||'Cancel';$('modal').style.display='flex';$('my').onclick=()=>{$('modal').style.display='none';yes()};$('mn').onclick=()=>{$('modal').style.display='none'}}
+function ask(msg,yes,labels={}){$('mt').textContent=msg;$('my').textContent=labels.yes||'Yes';$('mn').textContent=labels.no||'Cancel';$('mn').style.display=labels.requireConfirm?'none':'';$('modal').style.display='flex';$('my').onclick=()=>{$('modal').style.display='none';yes()};$('mn').onclick=()=>{$('modal').style.display='none'}}
 function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this item.</small>';if((sel.cards||[]).length>=sel.slots)return'';const fit=S.cards.filter(c=>cardFits(c,sel));
   return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[cardGroup(c),c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${esc(cardName(c))} <small>${cardEffects(c).map(cardEffectText).join(', ')} &middot; x${fit.filter(x=>cardGroup(x)===cardGroup(c)).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
 // v76.2: `anchor` is a selector for the control the player just pressed (a stage node, a map card).
@@ -12537,6 +12551,21 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();el
 setInterval(bgTick,SIM_BG_MS);
 resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();
 if(typeof BGM!=='undefined')BGM.playLogin();
+// Recovery never sends the password or code to an email provider. A code is rotated on use.
+$('recoveryOpen').onclick=()=>{if(!CLOUD.api)return showErr('Cloud account recovery is unavailable here.');$('loginForm').hidden=true;$('recoveryOpen').hidden=true;$('recoveryForm').hidden=false;$('recoverUser').value=$('username').value;};
+$('recoverClose').onclick=()=>{$('recoveryForm').hidden=true;$('loginForm').hidden=false;$('recoveryOpen').hidden=false;$('recoverCode').value='';$('recoverPassword').value='';$('recoverConfirm').value='';$('recoverStatus').textContent='';};
+$('recoveryForm').onsubmit=async e=>{
+  e.preventDefault();const status=$('recoverStatus'),btn=$('recoverSubmit');
+  if($('recoverPassword').value.trim()!==$('recoverConfirm').value.trim()){status.textContent='Passwords do not match.';return}
+  btn.disabled=true;status.textContent='Resetting password…';
+  try{
+    const r=await cloudFetch('/recover',{method:'POST',body:JSON.stringify({u:$('recoverUser').value.trim(),email:$('recoverEmail').value.trim(),code:$('recoverCode').value.trim(),p:$('recoverPassword').value.trim()})});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.err||'Could not reset password.');
+    $('recoverCode').value='';$('recoverPassword').value='';$('recoverConfirm').value='';
+    status.textContent='Password reset. Save your NEW recovery code now; the old code no longer works: '+data.recovery+'. Then return to login.';
+  }catch(err){status.textContent=err.message||'Could not reach the server.'}finally{btn.disabled=false}
+};
 // ---------- update watcher ---------------------------------------------------------------
 // Deployments notify players once; only their button click saves and refreshes the page.
 function showUpdatePrompt(build=BUILD){

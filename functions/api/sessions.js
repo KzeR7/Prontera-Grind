@@ -23,6 +23,10 @@ export const onRequestPost = guard(async ({ request, env }) => {
   const byIp = await db.hitRate(D, `login-ip:${ip || 'noip'}`, MAX_IP_TRIES, WINDOW);
   if (!byIp.ok) return fail('Too many login attempts. Try again in a few minutes.', 429, { retryAfter: byIp.retryAfter });
 
+  // Atomic per-name window complements the legacy failure counter under concurrency.
+  const byName = await db.hitRate(D, `login-name:${name.toLowerCase()}`, MAX_NAME_TRIES, WINDOW);
+  if (!byName.ok) return fail('Too many attempts for this account. Wait 15 minutes.', 429);
+
   const user = await db.userByName(D, name);
   // Same message for "no such user" and "wrong password": never confirm which names exist.
   const reject = async () => {
@@ -50,6 +54,7 @@ export const onRequestPost = guard(async ({ request, env }) => {
   await db.deleteOtherSessions(D, user.id, hash);
   await db.noteLogin(D, user.id);
   await db.clearRate(D, `login-ip:${ip || 'noip'}`);
+  await db.clearRate(D, `login-name:${name.toLowerCase()}`);
   // NO touchSeen here. saves.last_seen is the OFFLINE away baseline (a claim pays for
   // now - last_seen), and a returning player signs in BEFORE the game asks for its claim - a
   // login that moved the baseline erased the player's own away window, so cloud accounts

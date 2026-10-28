@@ -120,7 +120,7 @@ t('cloud password length is checked before confirmation or any API call', () => 
 
 t('valid cloud registration confirms the cross-device account before calling the server', () => {
   const h = harness(); h.box.CLOUD.api = true; h.box.setMode('reg');
-  h.node('username').value = 'Ranger'; h.node('password').value = 'a-good-password'; h.node('password2').value = 'a-good-password';
+  h.node('username').value = 'Ranger'; h.node('password').value = 'a-good-password'; h.node('password2').value = 'a-good-password'; h.node('email').value = 'ranger@example.test';
   submit(h);
   assert.match(h.state.confirmations[0].msg, /can be used on other devices/);
   assert.strictEqual(h.state.cloudCalls.length, 0, 'the API is not called before confirmation');

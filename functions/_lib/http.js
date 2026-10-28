@@ -3,17 +3,36 @@
 export const json = (data, status = 200, headers = {}) =>
   new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers },
+    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers },
   });
 
 export const fail = (message, status = 400, extra = {}) => json({ err: message, ...extra }, status);
 
 // Read a JSON body with a hard size cap before parsing: a 100 MB body must never reach JSON.parse.
 export async function readJson(request, maxBytes = 600_000) {
+  const origin = request.headers.get('Origin');
+  if (origin && origin !== new URL(request.url).origin) throw new HttpError(403, 'Origin rejected.');
+  const type = request.headers.get('Content-Type');
+  if (type && !/^application\/json(?:\s*;|$)/i.test(type)) throw new HttpError(415, 'Expected JSON.');
   const len = Number(request.headers.get('Content-Length') || 0);
   if (len && len > maxBytes) throw new HttpError(413, 'That is too large.');
-  const text = await request.text();
-  if (text.length > maxBytes) throw new HttpError(413, 'That is too large.');
+  let text = '';
+  if (request.body && typeof request.body.getReader === 'function') {
+    const reader = request.body.getReader(), decoder = new TextDecoder();
+    let bytes = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > maxBytes) { reader.cancel().catch(() => {}); throw new HttpError(413, 'That is too large.'); }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+  } else {
+    // Local shim / test requests have no stream.
+    text = await request.text();
+    if (new TextEncoder().encode(text).byteLength > maxBytes) throw new HttpError(413, 'That is too large.');
+  }
   if (!text) return {};
   try {
     const v = JSON.parse(text);

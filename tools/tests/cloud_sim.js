@@ -381,6 +381,7 @@ await T('registration shows the recovery code once, and only through the real as
     '/messages': { status: 200, body: { messages: [] } },
   } });
   h.sandbox.CLOUD.api = true;
+  h.els.set('email', {value:'new@example.test'});
   await h.sandbox.cloudAuth('NEW', 'a-good-password', true);
   assert.strictEqual(h.state.asks.length, 1, 'exactly one dialog');
   assert.strictEqual(h.state.remembered, 'NEW', 'a successful cloud registration remembers its username');

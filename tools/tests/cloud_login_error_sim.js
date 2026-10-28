@@ -24,7 +24,7 @@ function harness(opts = {}) {
   const box = {
     console, Promise, Error, Object, JSON, AbortController, setTimeout, clearTimeout,
     CLOUD: { ver: 7, dirty: true },
-    $: id => (id === 'authBtn' ? btn : {}),
+    $: id => (id === 'authBtn' ? btn : id === 'email' ? {value:'ranger@example.test'} : {}),
     showErr: (m, ok) => { state.errors.push(m); },
     rememberUserId: (id, force) => { state.remembered.push(id); },
     ask: (msg, yes) => { state.asked = { msg, yes }; },

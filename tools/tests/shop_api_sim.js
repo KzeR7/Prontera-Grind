@@ -59,7 +59,7 @@ const call = async (mod, fn, args) => {
   return { status: res.status, data: type.includes('json') ? await res.clone().json() : null, cookie: cookieFrom(res) };
 };
 const api = {
-  register: (env, body) => call('onRequestPost', 'api/register.js', { request: req('POST', '/api/register', { body }), env }),
+  register: (env, body) => call('onRequestPost', 'api/register.js', { request: req('POST', '/api/register', { body: { email: String(body.u || 'fixture').replace(/[^A-Za-z0-9]/g, '') + '@example.test', ...body } }), env }),
   me: (env, cookie) => call('onRequestGet', 'api/me.js', { request: req('GET', '/api/me', { cookie }), env }),
   catalog: (env, cookie) => call('onRequestGet', 'api/shop/catalog.js', { request: req('GET', '/api/shop/catalog', { cookie }), env }),
   checkout: (env, cookie, body, headers) => call('onRequestPost', 'api/shop/checkout.js', { request: req('POST', '/api/shop/checkout', { cookie, body, headers }), env }),
@@ -439,6 +439,7 @@ await T('PUT /api/save refuses a look wearing a paid item the account does not o
 await T('GM console: list, grant and revoke cosmetics; a revoked item is refused on the next save', async () => {
   const { env, sqlite } = freshEnv({ SHOP_FAKE_CHECKOUT: '1' });
   const owner = (await api.register(env, { u: 'KzeR', p: 'owner-password-1' })).cookie;   // first account = owner
+  sqlite.prepare("UPDATE users SET gm=2 WHERE username='KzeR'").run();
   const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
   const aliceId = sqlite.prepare("SELECT id FROM users WHERE username='Alice'").get().id;
   assert.strictEqual((await api.gmShop(env, c, aliceId)).status, 403);
@@ -471,6 +472,7 @@ await T('a database without migration 0005 behaves exactly like the build before
   for (const name of migrationFiles().filter(n => !n.startsWith('0005'))) sqlite.exec(fs.readFileSync(path.join(root, 'migrations', name), 'utf8'));
   const env = { DB: makeD1(sqlite), STRIPE_SECRET_KEY: KEY, STRIPE_WEBHOOK_SECRET: WHSEC };
   const owner = (await api.register(env, { u: 'KzeR', p: 'owner-password-1' })).cookie;
+  sqlite.prepare("UPDATE users SET gm=2 WHERE username='KzeR'").run();
   const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
   const cat = await api.catalog(env, c);
   assert.strictEqual(cat.status, 200); assert.strictEqual(cat.data.installed, false); assert.strictEqual(cat.data.mode, 'off'); assert.deepStrictEqual(cat.data.owned, []);

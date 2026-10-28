@@ -17,6 +17,17 @@ export function checkUsername(name) {
   return u;
 }
 
+// Email addresses are identifiers, not proof of ownership. Fold case consistently and
+// reject controls/whitespace; do not apply provider-specific alias or dot rewriting.
+export function checkEmail(value) {
+  const email = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (email.length > 254 || !/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,63}$/.test(email) ||
+      email.includes('..') || email.split('@')[0].length > 64) {
+    throw new HttpError(400, 'Enter a valid email address.');
+  }
+  return email;
+}
+
 export function checkPassword(pass, min) {
   const p = String(pass || '');
   if (p.length < min) throw new HttpError(400, `Password must be at least ${min} characters.`);

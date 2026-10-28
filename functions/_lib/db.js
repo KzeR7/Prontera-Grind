@@ -16,10 +16,10 @@ export const userById = (db, id) =>
 export const countUsers = async (db) =>
   (await db.prepare('SELECT COUNT(*) AS n FROM users').first())?.n ?? 0;
 
-export const insertUser = (db, { username, passHash, recoveryHash, gm = 0 }) =>
-  db.prepare(`INSERT INTO users(username, pass_hash, recovery_hash, gm, created_at, fail_count, fail_at)
-              VALUES(?, ?, ?, ?, ?, 0, 0)`)
-    .bind(username, passHash, recoveryHash, gm, now()).run();
+export const insertUser = (db, { username, email, passHash, recoveryHash, gm = 0 }) =>
+  db.prepare(`INSERT INTO users(username, email, pass_hash, recovery_hash, gm, created_at, fail_count, fail_at)
+              VALUES(?, ?, ?, ?, ?, ?, 0, 0)`)
+    .bind(username, email, passHash, recoveryHash, gm, now()).run();
 
 export const setPassword = (db, userId, passHash) =>
   db.prepare('UPDATE users SET pass_hash = ?, fail_count = 0, fail_at = 0 WHERE id = ?')
@@ -273,16 +273,15 @@ export const usageLedger = async (db, sinceMs) => {
 // ----------------------------------------------------------- rate limits ----
 // Windows are fixed-size: cheap, good enough, and it keeps the SQL tiny.
 export async function hitRate(db, key, limit, windowMs) {
-  const row = await db.prepare('SELECT * FROM rate_limits WHERE key = ?').bind(key).first();
   const t = now();
-  if (!row || t - row.window_start > windowMs) {
-    await db.prepare('INSERT OR REPLACE INTO rate_limits(key, count, window_start) VALUES(?, 1, ?)')
-      .bind(key, t).run();
-    return { ok: true, count: 1 };
-  }
-  if (row.count >= limit) return { ok: false, count: row.count, retryAfter: Math.ceil((row.window_start + windowMs - t) / 1000) };
-  await db.prepare('UPDATE rate_limits SET count = count + 1 WHERE key = ?').bind(key).run();
-  return { ok: true, count: row.count + 1 };
+  // A single upsert prevents concurrent requests from passing the same counter value.
+  const row = await db.prepare(`INSERT INTO rate_limits(key, count, window_start) VALUES(?, 1, ?)
+    ON CONFLICT(key) DO UPDATE SET
+      count = CASE WHEN ? - window_start >= ? THEN 1 ELSE count + 1 END,
+      window_start = CASE WHEN ? - window_start >= ? THEN ? ELSE window_start END
+    RETURNING count, window_start`).bind(key, t, t, windowMs, t, windowMs, t).first();
+  const ok = row.count <= limit;
+  return { ok, count: row.count, ...(ok ? {} : { retryAfter: Math.max(1, Math.ceil((row.window_start + windowMs - t) / 1000)) }) };
 }
 
 export const clearRate = (db, key) =>

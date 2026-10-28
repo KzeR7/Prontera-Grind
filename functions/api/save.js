@@ -22,7 +22,6 @@ import { lockedCosmetics } from '../_lib/shop.js';
 import { json, guard, readJson, fail } from '../_lib/http.js';
 import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, SAVE_MISMATCH } from '../_lib/validate.js';
 import * as db from '../_lib/db.js';
-import { recordEchoScores, settleEchoRewards } from '../_lib/echo-board.js';
 
 const HISTORY_EVERY = 10;
 const OFFLINE_CAP_MS = 4 * 60 * 60 * 1000;
@@ -157,7 +156,6 @@ export const onRequestPut = guard(async ({ request, env }) => {
   const row = await db.saveByUser(D, user.id);
   if (!row) {
     await db.insertSave(D, user.id, body.blob, savedAt, pub);
-    await recordEchoScores(D, user.id, pub);
     await db.pushHistory(D, user.id, 1, body.blob, savedAt);
     return json({ version: 1, bytes: body.blob.length });
   }
@@ -216,10 +214,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
     }
   }
 
-  // Endless Echo scores ride along on the accepted save; settled period prizes are queued as
-  // grants here too, so winners who never open the board still get paid on their next sync.
-  await recordEchoScores(D, user.id, pub);
-  await settleEchoRewards(D, savedAt);
+  // Competitive Echo scoring and prize settlement are paused: the save is client-controlled.
   if (next % HISTORY_EVERY === 0) {
     await db.pushHistory(D, user.id, next, body.blob, savedAt);
     await db.trimHistory(D, user.id, 5);
