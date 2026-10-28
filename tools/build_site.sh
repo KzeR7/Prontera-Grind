@@ -47,6 +47,14 @@ cp "$ROOT/_routes.json" "$OUT/_routes.json"
 cp -r "$ROOT/assets" "$OUT/assets"
 # The preserved first fitting is a development reference; v5 is the live shared class/outfit pack.
 rm -rf "$OUT/assets/wardrobe/v1" "$OUT/assets/wardrobe/v3" "$OUT/assets/wardrobe/v4" "$OUT/assets/fourth-jobs"
+# Development-only art that would otherwise ride along with cp -r assets. Measured with the page
+# load, not guessed: a normal session never asks for any of these.
+#   assets/mob_*.png        only Updates/damage-numbers-v2/index.html, a page that is not published
+#   assets/weapons/**       only tools/weapon_proposal.html - the game draws weapons from the
+#                           base64 window.WEAPON_ART in assets/weapons_data.js
+#   weapons_manifest.json   build metadata for make_weapon_pack.py, never fetched
+rm -rf "$OUT/assets/weapons" "$OUT/assets/weapons_manifest.json"
+rm -f "$OUT"/assets/mob_*.png
 mkdir -p "$OUT/Updates"
 cp -r "$ROOT/Updates/Sprite" "$OUT/Updates/Sprite"
 
@@ -71,10 +79,11 @@ node -e '
 for must in index.html gm.html _routes.json version.txt _headers assets/sprite_pack_data.js assets/class_skins_data.js assets/weapon_joints_data.js; do
   [ -s "$OUT/$must" ] || { echo "BUILD BROKEN: $must is missing or empty in $OUT" >&2; exit 1; }
 done
-for forbidden in _login.html _shot.html logic2.js docs tools Sprite image-search; do
+for forbidden in _login.html _shot.html logic2.js docs tools Sprite image-search assets/weapons assets/weapons_manifest.json; do
   [ -e "$OUT/$forbidden" ] && { echo "BUILD BROKEN: $forbidden must never be published" >&2; exit 1; }
 done
 [ -d "$OUT/tools" ] && { echo "BUILD BROKEN: tools/ leaked into the publish directory" >&2; exit 1; }
+compgen -G "$OUT/assets/mob_*.png" > /dev/null && { echo "BUILD BROKEN: dev-only mob previews leaked into the publish directory" >&2; exit 1; }
 
 # Cloudflare Pages Free: keep the generated tree below 20,000 files and 25 MiB/file.
 FILE_COUNT=$(find "$OUT" -type f | wc -l)

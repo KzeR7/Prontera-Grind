@@ -8617,3 +8617,24 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   into nothing and uploads nothing). Full JS gate: 141 suites, **134 green, 7 red** — the documented
   known-red baseline, no new failures.
 * **Delivery:** Committed and pushed on `arena/30cfab02-prontera-grind`. No separate deploy was run.
+
+### 2026-10-28 — publish tree: dev-only art no longer ships
+* **Changed:** `tools/build_site.sh` stops copying three groups of art that only development pages
+  read, and now fails the build if any of them comes back:
+  * `assets/mob_*.png` (11 files, 119 KiB) — read only by `Updates/damage-numbers-v2/index.html`, a
+    page `.assetsignore` keeps out of `dist/`. The game's monsters are `assets/mobs/v1` plus the
+    Divine Pride fallback.
+  * `assets/weapons/**` (32 KiB) and `assets/weapons_manifest.json` (5 KiB) — read only by
+    `tools/weapon_proposal.html` and `make_weapon_pack.py`. The game draws weapons from the base64
+    `window.WEAPON_ART` in `assets/weapons_data.js`, which still ships.
+  * Checked against the page load, not assumed: a normal session requests none of them.
+* **Not changed:** the `publish_sim` 62.5 MiB budget. `AGENTS.md` and Testing both forbid loosening
+  it to clear the row, and the row is a documented known-red. After the trim the budgeted bucket is
+  **62.79 MiB** (total 126.68 − native fields 54.97 − social 8.92), **0.29 MiB over** the 62.5 line.
+  Everything still shipped is either feature code or art the game loads, including the legacy class
+  skin fallback (`Updates/Sprite`, 5.7 MiB) — dropping that would close the row, and it is the
+  owner's call, not a layout PR's.
+* **New check:** `publish_sim` gained "dev-only art does not ride along in the publish tree", so the
+  three paths cannot quietly return. Suite is 16/17 (was 15/16); the one red is the budget row above.
+* **Checks:** `publish_sim` 16/17, `weapon_proposal_sim` (reads the repo copies, unaffected),
+  `mobile_layout_sim` 28/28, `panel_layout_smoke` 42/42, `kit_sim` (build covers the kit copies).

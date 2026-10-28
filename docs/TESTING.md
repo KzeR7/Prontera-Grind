@@ -112,7 +112,7 @@ green", which this tree has not been since v221.
 | `skill_redesign_sim.js` | `SyntaxError: Unterminated template` in an extracted span, plus a dash assertion | source-extraction anchor and dash behaviour both stale |
 | `fourth_job_skills_sim.js` | strict deep-equal on a skill-id/slot sequence | fourth-job skill list moved past the fixture |
 | `skill_balance_sim.js` | "gear measurements stale: rerun progression_balance.js" | historical measurement fixture, hash-pinned on purpose |
-| `publish_sim.js` | 15/16, "existing runtime assets exceed their original 62.5 MiB budget" | the runtime asset budget was already over before v229 |
+| `publish_sim.js` | 16/17, "existing runtime assets exceed their original 62.5 MiB budget" | the runtime asset budget was already over before v229. Re-measured 2026-10-28 at `74e1c0e`: the budgeted bucket is **62.79 MiB** (total 126.68 − native fields 54.97 − social 8.92), i.e. **0.29 MiB over**. Dev-only art was already taken out of `dist/` (152 KiB: `assets/mob_*.png`, `assets/weapons/**`, `weapons_manifest.json`), so what is left is feature code and fallback art — closing it means dropping the legacy class-skin fallback (`Updates/Sprite`, 5.7 MiB) or re-baselining the number, both an owner decision |
 
 Rules for that table:
 

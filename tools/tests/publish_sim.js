@@ -106,6 +106,17 @@ t('all six advancement opponents ship with their original action bytes', () => {
   }
 });
 
+t('dev-only art does not ride along in the publish tree', () => {
+  // Each of these is read by exactly one page, and .assetsignore keeps every one of those
+  // pages out of dist: assets/mob_*.png by Updates/damage-numbers-v2, assets/weapons/** by
+  // tools/weapon_proposal.html, and the manifest only by make_weapon_pack.py. The game draws
+  // weapons from the base64 window.WEAPON_ART and monsters from assets/mobs/v1.
+  assert.ok(!fs.existsSync(path.join(out,'assets/weapons')), 'weapon design PNGs are dev-only');
+  assert.ok(!fs.existsSync(path.join(out,'assets/weapons_manifest.json')), 'the weapons manifest is build metadata');
+  assert.deepStrictEqual(fs.readdirSync(path.join(out,'assets')).filter(f=>/^mob_.+\.png$/.test(f)), [],
+    'mob preview art is dev-only');
+});
+
 t('the published tree is small enough to stay honest', () => {
   const walk = d => fs.readdirSync(d, { withFileTypes: true }).reduce((a, e) =>
     a + (e.isDirectory() ? walk(path.join(d, e.name)) : fs.statSync(path.join(d, e.name)).size), 0);
