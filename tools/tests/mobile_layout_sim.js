@@ -80,7 +80,7 @@ test('every rule in mobile.css is scoped to html.pg-mobile except the four phone
   // Only the elements this change introduces may sit outside the phone scope:
   // the four phone-only controls and the Display sheet's own new chrome.
   const base = new Set(['#fsBtn', '#pgFocusBtn', '#pgQuests', '#pgScrim', '#pgScrim[hidden]', '#pgQuests[hidden]']);
-  const introduced = /^#screenOptions \.(pg-sheet-head|pg-actions|pg-note)(\s|\[|$)/;
+  const introduced = /^#screenOptions \.(pg-sheet-head|pg-actions|pg-note|pg-link)([\s:[.]|$)/;
   const leaked = [];
   for (const r of rules) for (const s of r.selectors) {
     if (s.startsWith('html.pg-mobile')) continue;
@@ -286,6 +286,42 @@ if (game) {
     assert.ok(d.querySelector('#screenOptions [data-pg=fullscreen]'), 'Fullscreen button is in the Display panel');
     assert.ok(d.querySelector('#screenOptions [data-pg=focus]'), 'Field only button is in the Display panel');
     assert.ok(d.querySelector('#screenOptions [data-pg=close]'), 'the sheet has a close button');
+  });
+
+  test('the phone-frame link is offered only where a real preview server answers', () => {
+    // A static host can answer an unknown path with the game itself, so the page must not
+    // decide from the status code alone: tools/dev_server.js marks /phone with a header.
+    assert.match(html, /get\('X-Phone-Preview'\)==='1'/, 'the probe asks for the dev-server marker');
+    assert.match(html, /pgPreviewOk\?'<a class="pg-link" id="pgPhonePreview" href="\/phone">/,
+      'the link is rendered from the probe result, not unconditionally');
+    assert.ok(!/id="pgPhonePreview"/.test(html.split('function pgPreviewProbe')[0]),
+      'no hard-coded link before the probe runs');
+    // Inside the frame itself (the preview page loads ?phone=1) the link is suppressed, so a
+    // click there can never nest the game inside itself.
+    assert.match(html, /if\(\/\[\?&\]phone=\/\.test\(location\.search\)\)pgPreviewOk=false/);
+    assert.equal(declOf('#screenOptions .pg-link', 'display'), 'block');
+    assert.equal(declOf('#screenOptions .pg-link[hidden]', 'display'), 'none');
+  });
+
+  testAsync('the phone-frame link appears only when the preview server marks /phone', async () => {
+    const seen = [];
+    w.fetch = url => { seen.push(String(url)); return Promise.resolve({ ok: true, headers: { get: k => String(k).toLowerCase() === 'x-phone-preview' ? '1' : null } }); };
+    ev('pgPreviewOk=null');
+    d.getElementById('screenOptions').hidden = true;
+    d.getElementById('screenBtn').click();
+    for (let i = 0; i < 4; i++) await Promise.resolve();
+    const link = d.getElementById('pgPhonePreview');
+    assert.ok(link, 'the panel redraws itself when the marker answers, so the link is not missing until reopened');
+    assert.equal(link.getAttribute('href'), '/phone');
+    assert.deepStrictEqual(seen, ['/phone'], 'one probe, not one per render');
+
+    // A static host that answers every unknown path with the game has no marker: no link.
+    w.fetch = () => Promise.resolve({ ok: true, headers: { get: () => null } });
+    ev('pgPreviewOk=null');
+    d.getElementById('screenOptions').hidden = true;
+    d.getElementById('screenBtn').click();
+    for (let i = 0; i < 4; i++) await Promise.resolve();
+    assert.equal(d.getElementById('pgPhonePreview'), null, 'no marker, no link');
   });
 
   test('Layout cycles Auto -> Phone -> Desk and re-measures the field each time', () => {

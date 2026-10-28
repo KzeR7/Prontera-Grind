@@ -177,7 +177,10 @@ included in the production game build.
   Serve through the static preview; set `PREVIEW_PAGE` to this path to open it at `/`.
 
 - `tools/dev_server.js`: built static site plus actual API handlers and a SQLite
-  D1 shim. Local development only, not the Cloudflare production runtime.
+  D1 shim. Local development only, not the Cloudflare production runtime. `/phone`
+  serves `tools/phone_preview.html` — the game inside a phone-sized frame, for reviewing
+  the small-screen layout in a desktop browser (`?d=se|13|max|pixel|galaxy|mini`,
+  `&o=landscape`). That page stays out of `dist/` on purpose.
 - `tools/preview_server.py`: game and dev-only art/effect pages; see
   [tool directory](../TOOLS-START-HERE.md) for routes.
 - `assets/ui/mobile.css` + `assets/ui/mobile.js`: the phone and small-tablet layout. `mobile.js` runs before the game

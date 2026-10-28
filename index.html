@@ -6745,7 +6745,23 @@ function applyDisplay(){
  document.body.classList.toggle('hide-feed',S.feedShow===false);
  document.body.classList.toggle('hide-labels',S.labelsShow===false);
 }
+// v252: on the local preview server the phone layout can be checked at a true phone size. The link
+// to that page is offered ONLY when /phone answers with the dev server's marker header, so a static
+// host - which may answer an unknown path with this very page - can never show a link that loops.
+let pgPreviewOk=null;
+function pgPreviewProbe(){
+  if(pgPreviewOk!==null)return;
+  pgPreviewOk=false;
+  try{fetch('/phone',{method:'GET',cache:'no-store'}).then(r=>{
+    if(!(r.ok&&r.headers.get('X-Phone-Preview')==='1'))return;
+    pgPreviewOk=true;
+    // The panel was drawn before this answer arrived, so redraw it (once) while it is open.
+    const l=$('pgPhonePreview');if(l)l.hidden=false;else if($('screenOptions')&&!$('screenOptions').hidden)screenOptions();
+  }).catch(()=>{})}catch(_){}
+}
 function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidden;$('screenBtn').setAttribute('aria-expanded',String(!panel.hidden));
+ // Never link the frame from inside the frame (the preview page loads this game with ?phone=1).
+ if(/[?&]phone=/.test(location.search))pgPreviewOk=false;else pgPreviewProbe();
  // v252: on a phone this panel is a sheet under the header rather than a bubble over the dock,
  // so it gets its own title row and a close button (assets/ui/mobile.css). The same markup is
  // fine on the desk, where the row simply reads as a caption.
@@ -6768,7 +6784,9 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
     <div class="pg-actions">
       <button type="button" data-pg="focus" aria-pressed="${pgFocus}">Field only · ${pgFocus?'on':'off'}</button>
     </div>
-    <div class="pg-note">Field only clears the log, quests, mail, buffs and the auto-combat pill so the fight has the screen; the header and the two bottom bars stay. Layout cycles Auto → Phone → Desk and is remembered on this device.</div>`;
+    <div class="pg-note">Field only clears the log, quests, mail, buffs and the auto-combat pill so the fight has the screen; the header and the two bottom bars stay. Layout cycles Auto → Phone → Desk and is remembered on this device.</div>`
+  // Only rendered on the dev server (see pgPreviewProbe): a phone frame on this desktop browser.
+  +(pgPreviewOk?'<a class="pg-link" id="pgPhonePreview" href="/phone">Open the phone preview — the game at a real phone size →</a>':'');
 }
 // The phone block's buttons live in the same panel but are not save-backed settings, so they
 // are handled here instead of in the data-display change handler below.

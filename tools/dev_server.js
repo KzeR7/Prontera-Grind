@@ -128,6 +128,19 @@ export function createApp({ sqlite, site, gmAll = false, fakePayments = false })
 
   return async function app(request) {
     const url = new URL(request.url);
+    // Dev-only: /phone puts the game in a phone-sized frame (tools/phone_preview.html) so the
+    // small-screen layout can be reviewed in a desktop browser. It is repo material, never part
+    // of dist/, so it is read from the checkout and no static host can serve it.
+    if (url.pathname === '/phone' || url.pathname === '/phone/') {
+      const page = path.join(root, 'tools', 'phone_preview.html');
+      if (!fs.existsSync(page)) return new Response('Not found', { status: 404, headers: { 'Content-Type': 'text/plain' } });
+      // The X-Phone-Preview marker is how the game tells a real preview server from a static host
+      // that answers every unknown path with the game itself: only this header shows the link.
+      return new Response(fs.readFileSync(page), {
+        status: 200,
+        headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Phone-Preview': '1' },
+      });
+    }
     if (!url.pathname.startsWith('/api/')) return serveStatic(url, dir);
     const route = ROUTES[request.method + ' ' + url.pathname];
     if (!route) {
@@ -235,6 +248,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   console.log('Prontera Grind — local server (Pages Functions + D1 shim, in memory)');
   console.log('  game    http://localhost:' + got + '/');
   console.log('  console http://localhost:' + got + '/gm.html');
+  console.log('  phone   http://localhost:' + got + '/phone   (the game in a phone-sized frame)');
   console.log('  api     ' + Object.keys(ROUTES).length + ' endpoints under /api/*');
   console.log('  data    ' + (dbFile ? 'kept in ' + dbFile + ' (accounts and saves survive a restart)' : 'in memory - restarting this process wipes accounts and saves'));
   console.log(gmAll

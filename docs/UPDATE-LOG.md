@@ -8549,13 +8549,22 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
     bottom-packed 220px column in `eclipse.css`).
   * **Display panel:** `screenOptions()` gained a Phone block (Layout: Auto → Phone → Desk, Fullscreen, Field
     only) plus a one-line note. It is the same panel as before, so nothing on the desk side moved.
+* **Review it without a phone (`tools/phone_preview.html`, served at `/phone`):** the dev server now serves a
+  frame page that puts the game in a real phone-sized viewport — 375×667, 390×844, 430×932, 412×915, 360×800 or
+  744×1134, portrait or landscape, scaled to fit the browser and linkable with `?d=13&o=landscape`. It is an
+  iframe, not a shrunken copy, so `window.innerWidth`, `100dvh` and every `@media` query inside it behave exactly
+  as they do on the phone. The frame page is repo material and never enters `dist/`; the game only shows its
+  "Open the phone preview" link when `/phone` answers with an `X-Phone-Preview` header, which a static host cannot
+  fake. ⛶ fullscreen and the orientation lock still need a real device.
 * **Try it:** Run `bash tools/build_site.sh && node tools/dev_server.js`, then open the game on a phone (or a
-  desktop browser at `/?phone=1`) and rotate the device; use ☷ → Phone layout to switch back to the desk
-  arrangement, ⛶ for landscape fullscreen and ⊞ for Field only.
+  desktop browser at `/phone`, or `/?phone=1` for the plain page) and rotate the device; use ☷ → Phone layout to
+  switch back to the desk arrangement, ⛶ for landscape fullscreen and ⊞ for Field only.
 * **Checks:** `mobile_layout_sim` 22/22 (new: CSS scope and load order, z-stack ordering, the fixed player-card
   box, landscape tokens, phone/tablet/narrow-desk detection, `?phone=`, persistence, field-only closing the sheet
   while keeping the More menu reachable, fullscreen, chip → scrim → Escape → tab flow, Display-panel cycling,
-  the live quest list in the sheet, the dock More → rail mirror, the log row rule and the corner buttons). Full JS gate: 141 suites, **134 green, 7 red** — exactly the documented known-red baseline in
+  the live quest list in the sheet, the dock More → rail mirror, the log row rule, the corner buttons, and the
+  dev-server-only phone-frame link); `dev_server_sim` 19/19 (adds `/phone`: served from the checkout, marked with
+  its header, absent from `dist/`). Full JS gate: 141 suites, **134 green, 7 red** — exactly the documented known-red baseline in
   [Testing](TESTING.md) (`field_loop_smoke`, `ground_combat_sim`, `rotation_updates_sim`, `skill_redesign_sim`,
   `fourth_job_skills_sim`, `skill_balance_sim`, `publish_sim` budget), no new failures. All three
   generated-asset `--check` scripts pass. `card_star_balance_sim` needs `git fetch origin d164bd0` in a fresh

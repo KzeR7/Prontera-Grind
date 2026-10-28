@@ -54,6 +54,12 @@
 #screenOptions .pg-actions button{min-height:32px;padding:6px 10px;font-size:10px;line-height:1.3;white-space:normal}
 #screenOptions .pg-actions button[aria-pressed="true"]{background:#4a4038;color:#ffe9a8;border-color:#c9a35b}
 #screenOptions .pg-note{padding:4px 6px 0;font-size:9px;line-height:1.45;color:#a9bbae}
+/* "Open the phone preview" is dev-server only (index.html hides it everywhere else). */
+#screenOptions .pg-link{display:block;margin:8px 4px 2px;padding:7px 9px;border-radius:8px;
+  border:1px dashed #6f7f5f;background:#1b2a22;color:#ffe9a8;font-size:10px;line-height:1.35;
+  text-decoration:none;text-align:center}
+#screenOptions .pg-link:hover{background:#24382b;border-color:#c9a35b}
+#screenOptions .pg-link[hidden]{display:none}
 
 /* ── 0. Shell ────────────────────────────────────────────────────────────── */
 

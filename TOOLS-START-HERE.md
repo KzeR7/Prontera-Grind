@@ -34,6 +34,24 @@ which once left the owner staring at a blank page). It also serves the whole rep
 pages decode the frames themselves — a `file://` open loses the animation (the game handles
 that case honestly; the pages may not).
 
+## Reviewing the phone layout without a phone
+
+`tools/phone_preview.html` puts the game in a real phone-sized frame: 375×667, 390×844,
+430×932, 412×915, 360×800 or 744×1134, portrait or landscape, scaled to fit the browser.
+It is an `<iframe>` at the device's exact CSS size, so the game's own `@media` queries,
+`innerWidth` and `100dvh` behave as they do on the phone — a shrunken copy would not.
+
+```sh
+node tools/dev_server.js --port 8788     # then open /phone  (the game's Display sheet links to it)
+python3 tools/preview_server.py 8000     # then open /tools/phone_preview.html
+```
+
+Add `?d=se|13|max|pixel|galaxy|mini` and `&o=landscape` to link a particular view. The page is
+repo material — `build_site.sh` never copies it into `dist/` — and the link inside the game only
+appears when `/phone` answers with its `X-Phone-Preview` marker, so a static host cannot show a
+link that loops back into itself. Real-device-only parts: browser fullscreen and the orientation
+lock.
+
 ## The pages, by the question they answer
 
 | question | page / tool |

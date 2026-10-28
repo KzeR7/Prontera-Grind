@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind · phone preview</title>
+<!--
+  tools/phone_preview.html — a dev-only page that puts the game in a phone-sized
+  frame, so the small-screen layout can be reviewed in an ordinary desktop
+  browser (served by tools/dev_server.js at /phone).
+
+  Why an <iframe> and not a CSS-shrunk copy of the page: the phone layout is
+  chosen from the real viewport. A frame of 390x844 CSS px makes window.innerWidth,
+  100dvh and every @media query inside it behave exactly as they do on the phone,
+  which is the thing being checked. Scaling the frame with `transform` afterwards
+  changes only its painted size, never its layout.
+
+  This file is repo material, not game material: build_site.sh never copies it
+  into dist/, so nothing here is published.
+-->
+<style>
+  :root{
+    --bg:#0b1116;--panel:#141d24;--line:#2b3a44;--ink:#e7dfcb;--muted:#93a4ae;
+    --gold:#c9a35b;--gold-lit:#ffe9a8;--ok:#6f9a72;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:radial-gradient(ellipse at 50% -10%,#16242c,var(--bg) 60%);
+    color:var(--ink);font:13px/1.45 "Trebuchet MS",Verdana,sans-serif;
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  header{
+    flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;
+    padding:9px 12px;background:linear-gradient(#18242c,#111a20);
+    border-bottom:1px solid var(--line);
+  }
+  h1{margin:0;font:600 13px/1.2 Georgia,serif;letter-spacing:.02em;white-space:nowrap}
+  h1 a{color:var(--muted);text-decoration:none;font:400 11px/1 "Trebuchet MS",Verdana,sans-serif;margin-right:7px}
+  h1 a:hover{color:var(--gold-lit)}
+  h1 small{font:400 10px/1 "Trebuchet MS",Verdana,sans-serif;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-left:6px}
+  .group{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+  .group>span{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-right:2px}
+  button,select{
+    font:inherit;font-size:11px;line-height:1;color:var(--ink);background:#1d2a33;
+    border:1px solid var(--line);border-radius:7px;padding:7px 9px;cursor:pointer;
+  }
+  button:hover{background:#243440;border-color:#3d5260}
+  button[aria-pressed="true"]{background:#3f4f32;border-color:var(--gold);color:var(--gold-lit)}
+  button.ghost{background:transparent;color:var(--muted)}
+  button.ghost:hover{color:var(--ink)}
+  .spacer{flex:1 1 auto}
+  .meta{font-size:11px;color:var(--muted);white-space:nowrap}
+  .meta b{color:var(--ink);font-weight:600}
+
+  main{
+    flex:1 1 auto;min-height:0;display:flex;position:relative;overflow:auto;
+    padding:10px;scrollbar-width:thin;
+  }
+  main::before{
+    content:'';position:absolute;inset:0;pointer-events:none;opacity:.35;
+    background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);
+    background-size:28px 28px;
+  }
+  /* #holder carries the SCALED size, so the scroll area matches what is drawn.
+     #phone is the device body at its real size and is only painted smaller: the
+     iframe inside keeps the exact CSS viewport of the phone it imitates, which
+     a width/height shrink would destroy. */
+  .holder{position:relative;margin:auto;flex:none}
+  .phone{
+    position:absolute;left:0;top:0;flex:none;padding:9px;border-radius:26px;
+    background:linear-gradient(#1b242b,#0d1418);
+    box-shadow:0 0 0 1px #3a4a55,0 18px 50px #000a,inset 0 0 0 1px #ffffff10;
+    transform-origin:top left;
+  }
+  .phone::after{      /* the speaker slot, purely decorative */
+    content:'';position:absolute;left:50%;top:3px;transform:translateX(-50%);
+    width:52px;height:3px;border-radius:2px;background:#2c3a43;
+  }
+  iframe{
+    display:block;border:0;border-radius:18px;background:#0e151a;
+    width:var(--w,390px);height:var(--h,844px);
+  }
+  footer{
+    flex:none;padding:7px 12px;border-top:1px solid var(--line);background:#111a20;
+    font-size:11px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  }
+  footer code{color:var(--gold);font-family:Consolas,monospace}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);flex:none}
+  .note{max-width:70ch}
+  @media (max-width:720px){
+    h1 small,.meta{display:none}
+    header{padding:7px 8px;gap:6px}
+    footer{font-size:10px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="/" title="Back to the game at this browser's own size">← Game</a>Prontera Grind<small>phone preview</small></h1>
+
+  <div class="group" role="group" aria-label="Device">
+    <span>Device</span>
+    <button type="button" data-device="se">iPhone SE</button>
+    <button type="button" data-device="13">iPhone 13/14</button>
+    <button type="button" data-device="max">14 Pro Max</button>
+    <button type="button" data-device="pixel">Pixel 7</button>
+    <button type="button" data-device="galaxy">Galaxy S20</button>
+    <button type="button" data-device="mini">iPad mini</button>
+  </div>
+
+  <div class="group">
+    <button type="button" id="rotate" title="Rotate the device (or press R)">⟳ Rotate</button>
+    <button type="button" id="layout" aria-pressed="false" title="Force the desk layout instead of the phone one">Layout · Phone</button>
+    <button type="button" id="reload" title="Reload the game inside the frame">↻ Reload</button>
+    <button type="button" id="reset" class="ghost" title="Forget the layout choice this browser saved for the game">Reset saved layout</button>
+  </div>
+
+  <div class="spacer"></div>
+  <div class="meta" id="meta"></div>
+</header>
+
+<main id="stage">
+  <div class="holder" id="holder">
+    <div class="phone" id="phone">
+      <iframe id="game" src="/index.html?phone=1" title="Prontera Grind in a phone-sized frame"
+              allow="fullscreen; accelerometer; gyroscope" allowfullscreen loading="eager"></iframe>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="dot" aria-hidden="true"></span>
+  <span class="note">
+    The game runs in a real <b>390 × 844</b> viewport, so its own CSS sees a phone.
+    Sign in inside the frame — this preview server keeps accounts in <code>tools/.devdb/</code> and every
+    account has GM tools. Fullscreen and orientation lock need a real device; everything else is live.
+  </span>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // CSS pixels, portrait. These are the numbers the game's CSS sees.
+  var DEVICES = {
+    se:      { name: 'iPhone SE',        w: 375, h: 667 },
+    '13':    { name: 'iPhone 13/14',     w: 390, h: 844 },
+    max:     { name: 'iPhone 14 Pro Max',w: 430, h: 932 },
+    pixel:   { name: 'Pixel 7',          w: 412, h: 915 },
+    galaxy:  { name: 'Galaxy S20',       w: 360, h: 800 },
+    mini:    { name: 'iPad mini',        w: 744, h: 1134 }
+  };
+  var STORE = 'pg_phone_preview';           // { device:'13', landscape:false, desk:false }
+
+  var frame = document.getElementById('game');
+  var phone = document.getElementById('phone');
+  var holder = document.getElementById('holder');
+  var stage = document.getElementById('stage');
+  var meta = document.getElementById('meta');
+  var layoutBtn = document.getElementById('layout');
+
+  function read() {
+    var state = { device: '13', landscape: false, desk: false };
+    try {
+      var raw = localStorage.getItem(STORE);
+      if (raw) {
+        var got = JSON.parse(raw);
+        if (got && DEVICES[got.device]) state.device = got.device;
+        state.landscape = !!(got && got.landscape);
+        state.desk = !!(got && got.desk);
+      }
+    } catch (_) {}
+    // ?d=13&o=landscape&layout=desk makes a particular view linkable.
+    try {
+      var q = new URLSearchParams(location.search);
+      if (DEVICES[q.get('d')]) state.device = q.get('d');
+      if (q.get('o') === 'landscape') state.landscape = true;
+      if (q.get('o') === 'portrait') state.landscape = false;
+      if (q.get('layout') === 'desk') state.desk = true;
+      if (q.get('layout') === 'phone') state.desk = false;
+    } catch (_) {}
+    return state;
+  }
+  function save(state) {
+    try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (_) {}
+  }
+
+  var state = read();
+
+  function size() {
+    var d = DEVICES[state.device];
+    return state.landscape ? { w: d.h, h: d.w } : { w: d.w, h: d.h };
+  }
+
+  // The frame is laid out at the device size and painted scaled to fit the
+  // stage, so a short browser window shows the whole phone instead of cropping
+  // it. Below 62% the 7-9px UI text stops being readable, so there the phone
+  // keeps that size and the stage scrolls instead - a legible half of the
+  // screen beats a thumbnail of all of it.
+  var MIN_SCALE = 0.62;
+  function fit() {
+    var s = size();
+    var bezel = 18;                                   // 9px padding on each side
+    var availW = Math.max(160, stage.clientWidth - 24);
+    var availH = Math.max(160, stage.clientHeight - 20);
+    var fits = Math.min(1, availW / (s.w + bezel), availH / (s.h + bezel));
+    var scale = Math.max(fits, MIN_SCALE);
+    holder.style.width = Math.round((s.w + bezel) * scale) + 'px';
+    holder.style.height = Math.round((s.h + bezel) * scale) + 'px';
+    phone.style.transform = 'scale(' + scale.toFixed(4) + ')';
+    meta.textContent = s.w + ' × ' + s.h + ' · ' + DEVICES[state.device].name +
+      ' · ' + (state.desk ? 'desk layout' : 'phone layout') +
+      (scale < 0.999
+        ? ' · ' + Math.round(scale * 100) + '%' + (scale > fits ? ' (scroll for the rest)' : '')
+        : '');
+  }
+
+  function applyFrame(forceReload) {
+    var s = size();
+    frame.style.width = s.w + 'px';
+    frame.style.height = s.h + 'px';
+    // ?phone=1 / ?phone=0 is the game's own override: it forces one load into
+    // the phone or the desk arrangement on any browser, which is exactly what
+    // "compare the two" needs. The game never stores it.
+    var src = '/index.html?phone=' + (state.desk ? '0' : '1');
+    if (forceReload || frame.getAttribute('src') !== src) frame.setAttribute('src', src);
+    layoutBtn.textContent = 'Layout · ' + (state.desk ? 'Desk' : 'Phone');
+    layoutBtn.setAttribute('aria-pressed', String(state.desk));
+    syncChips();
+    fit();
+    save(state);
+  }
+
+  function syncChips() {
+    var chips = document.querySelectorAll('[data-device]');
+    for (var i = 0; i < chips.length; i++) {
+      chips[i].setAttribute('aria-pressed', String(chips[i].dataset.device === state.device));
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var chip = e.target.closest && e.target.closest('[data-device]');
+    if (chip) { state.device = chip.dataset.device; applyFrame(false); return; }
+    var id = e.target && e.target.id;
+    if (id === 'rotate') { state.landscape = !state.landscape; applyFrame(false); }
+    if (id === 'layout') { state.desk = !state.desk; applyFrame(true); }
+    if (id === 'reload') {
+      try { frame.contentWindow.location.reload(); }
+      catch (_) { frame.setAttribute('src', '/index.html?phone=' + (state.desk ? '0' : '1')); }
+    }
+    if (id === 'reset') {
+      // Layout and field-only are remembered per browser by the game itself
+      // (assets/ui/mobile.js). A frame used for a two-minute look must not
+      // leave the desk preview stuck in the phone arrangement afterwards.
+      try {
+        localStorage.removeItem('pg_phone_layout');
+        localStorage.removeItem('pg_field_only');
+        meta.textContent = 'Saved layout choice cleared — the game is back to Auto.';
+        setTimeout(fit, 2200);
+      } catch (_) {}
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.target && /input|select|textarea/i.test(e.target.tagName)) return;
+    if (e.key === 'r' || e.key === 'R') { state.landscape = !state.landscape; applyFrame(false); }
+  });
+
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(stage);
+
+  applyFrame(false);
+})();
+</script>
+</body>
+</html>
