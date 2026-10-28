@@ -31,6 +31,7 @@ measurements remain qualified by their saved source hashes.
 | Boss skill effects (MVP signature moves) | `assets/boss-fx.js`: `PGBossFx` (the `BOSSES` roster with `life`/`choreo` screen-time and `TIER.fadeAt`, `SKILLS`, `create`, `paint`, `draw`, `skillsOfMap`); `index.html`: `bossSkillLayer`, `tickBossSkill`, `castBossSkill`, `syncBossSkillFx`, `resetBossSkill`, `BOSS_CAST_MIN/MAX` | `boss_fx_sim.js`; interactive review at `/bossfx` (`tools/boss_fx_preview.html`); timing notes in `Updates/boss-skill-fx/README.md` |
 | Skill casting effects | `assets/skill-overdrive.js`, `assets/skill-afterglow.js`, generated `assets/afterglow-animations.js` and `assets/skill-materials.js`; `index.html`: `playSkillFx`, `tickSkillFx`, `syncSkillFx`; interactive review at `tools/skill-fx-proposals/prismatic-overdrive.html` | `overdrive_sim.js`, `overdrive_preview_sim.js`, `afterglow_sim.js`, `skill_sim.js`; `python3 tools/build_afterglow.py --check` |
 | Panels, buttons and hotkeys | `index.html`: `V`, `ACT`, `TABS`, `SIDE_TABS`; `assets/ui/` and wardrobe UI module | `ui_sim.js`, `panel_layout_smoke.js`, `eclipse_ui_sim.js`, `mail_roulette_ui_sim.js` |
+| Small-screen / phone shell and landscape fullscreen | `assets/ui/mobile.js` (`window.PGMobile`: layout detection, `html.pg-mobile`, rail sheet, field-only, `toggleFullscreen`), `assets/ui/mobile.css` (the whole phone shell, scoped to `html.pg-mobile` and loaded after `eclipse.css`), `index.html`: `#pgQuests`, `#pgScrim`, `#fsBtn`, `#pgFocusBtn`, `screenOptions()` phone block | `mobile_layout_sim.js`, `eclipse_ui_sim.js`, `ui_sim.js`, `panel_layout_smoke.js` |
 | Page interaction: selection, right-click, image drag | `index.html`: `isTextField`; the document `contextmenu` / capture-phase `dragstart` listeners; the `user-select` and `-webkit-touch-callout` rules on `*,*::before,*::after` with the text-field exception | `interaction_guard_sim.js` |
 | Cash Shop (Stripe Checkout, cosmetics + supplies) | `assets/shop-catalog.js` (the price list, shared), `assets/shop.js`, `assets/shop.css`; `functions/_lib/shop.js`, `functions/api/shop/{catalog,checkout,order,webhook}.js`, `functions/api/gm/shop.js`, `migrations/0005_shop.sql`; `functions/api/save.js` (`lockedCosmetics`), `assets/wardrobe-ui.js` (`wardrobeLocked`), `gm.html` (Cash Shop tab) | `shop_api_sim.js`, `shop_sim.js`, `dev_server_sim.js`; setup in [MONETIZATION-SETUP.md](MONETIZATION-SETUP.md) |
 | Browser saves, login, cloud sync, away rewards | `index.html`: `fresh`, `load`, `save`, `saveKey`, `CLOUD`, `offlinePlan` | `save_load_sim.js`, `save_owner_sim.js`, `cloud_sim.js`, `offline_sim.js`, `migration_sim.js` |
@@ -176,9 +177,16 @@ included in the production game build.
   Serve through the static preview; set `PREVIEW_PAGE` to this path to open it at `/`.
 
 - `tools/dev_server.js`: built static site plus actual API handlers and a SQLite
-  D1 shim. Local development only, not the Cloudflare production runtime.
+  D1 shim. Local development only, not the Cloudflare production runtime. `/phone`
+  serves `tools/phone_preview.html` — the game inside a phone-sized frame, for reviewing
+  the small-screen layout in a desktop browser (`?d=se|13|max|pixel|galaxy|mini`,
+  `&o=landscape`). That page stays out of `dist/` on purpose.
 - `tools/preview_server.py`: game and dev-only art/effect pages; see
   [tool directory](../TOOLS-START-HERE.md) for routes.
+- `assets/ui/mobile.css` + `assets/ui/mobile.js`: the phone and small-tablet layout. `mobile.js` runs before the game
+  script, puts `pg-mobile`/`pg-focus` on `<html>` and exposes `window.PGMobile`; every selector in `mobile.css` is
+  scoped to those classes, so the desk layout cannot be affected. Do not add phone rules to the middle of
+  `assets/ui/eclipse.css` - its late `<=700px` blocks would override them.
 - `tools/tests/helpers/game.js`: jsdom/Three harness with a WebGL renderer stub.
 - `tools/check_*_browser.js`: task-specific browser checks. Read their required
   server URLs and fixtures before running; they are not all one generic gate.

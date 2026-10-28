@@ -1,0 +1,498 @@
+/* ============================================================================
+   assets/ui/mobile.css — the phone / small-tablet layout.
+
+   Loaded AFTER assets/ui/eclipse.css, and every rule is scoped to
+   `html.pg-mobile`, the class assets/ui/mobile.js puts on <html> when the page
+   is running on a touch device with a short side. A desktop browser never
+   matches one byte of this file, so the desk layout cannot regress from here.
+
+   Why a separate layer instead of another @media block in eclipse.css: that
+   file already carries the phone rules of five different builds stacked on top
+   of each other (700px, 740px and 380px blocks that overwrite one another), and
+   the last word on a 390px screen was an overlap - #hud is `top:54 height:77`
+   while #eclipseCombat is `top:93` with a lower z-index, so the auto-combat bar
+   sat under the player card. This file declares the whole phone shell in one
+   place instead of patching that pile.
+
+   The shape, top to bottom:
+
+     portrait                          landscape
+     ┌──────────────────────┐          ┌───────────────────────────────┐
+     │ header 40            │          │ header 30                     │
+     ├──────────────────────┤          ├───────────────────────────────┤
+     │ [HUD card]     ✉ ✦   │          │ [HUD card]              ✉ ✦   │
+     │ [auto combat pill]   │          │ [auto combat pill]            │
+     │                      │          │                               │
+     │        FIELD         │          │            FIELD              │
+     │                      │          │                               │
+     │ log          buffs   │          │                               │
+     │ ❖ Quests             │          │ ❖ Quests                      │
+     ├──────────────────────┤          ├───────────────────────────────┤
+     │ xp bars 40           │          │ xp bars 22                    │
+     ├──────────────────────┤          ├───────────────────────────────┤
+     │ dock 52              │          │ dock 44                       │
+     └──────────────────────┘          └───────────────────────────────┘
+
+   The quest tracker and the "more destinations" list no longer take half of the
+   field: they live in a sheet (#sideRail) that opens from the ❖ Quests chip or
+   from the dock's More button, and closes on the scrim, a tab or Escape.
+   ========================================================================== */
+
+/* The four phone-only controls and the sheet scrim exist in index.html for
+   every layout, so they are hidden here until the phone layout asks for them. */
+#fsBtn,#pgFocusBtn,#pgQuests,#pgScrim{display:none}
+#pgScrim[hidden],#pgQuests[hidden]{display:none!important}
+
+/* The Display sheet's own chrome (title row, action row, note) is markup this
+   change adds to the panel that both layouts share, so it needs a base look
+   outside the phone scope - the phone block below only resizes it. These class
+   names exist nowhere else, so no desk element can be affected by them. */
+#screenOptions .pg-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:2px 6px 8px;color:#e6dbbd;font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+#screenOptions .pg-sheet-head button{height:26px;min-width:26px;padding:0 8px;font-size:11px;line-height:1}
+#screenOptions .pg-actions{display:flex;flex-wrap:wrap;gap:6px;padding:6px 4px 2px}
+#screenOptions .pg-actions button{min-height:32px;padding:6px 10px;font-size:10px;line-height:1.3;white-space:normal}
+#screenOptions .pg-actions button[aria-pressed="true"]{background:#4a4038;color:#ffe9a8;border-color:#c9a35b}
+#screenOptions .pg-note{padding:4px 6px 0;font-size:9px;line-height:1.45;color:#a9bbae}
+/* "Open the phone preview" is dev-server only (index.html hides it everywhere else). */
+#screenOptions .pg-link{display:block;margin:8px 4px 2px;padding:7px 9px;border-radius:8px;
+  border:1px dashed #6f7f5f;background:#1b2a22;color:#ffe9a8;font-size:10px;line-height:1.35;
+  text-decoration:none;text-align:center}
+#screenOptions .pg-link:hover{background:#24382b;border-color:#c9a35b}
+#screenOptions .pg-link[hidden]{display:none}
+
+/* ── 0. Shell ────────────────────────────────────────────────────────────── */
+
+html.pg-mobile{
+  --pg-header: 40px;          /* #eclipseHeader height, portrait */
+  --pg-hud-top: 6px;          /* #hud distance under the header */
+  --pg-hud-h: 54px;           /* #hud height - fixed so a growing name never re-flows */
+  --pg-xp: 40px;              /* #xp-dock height, portrait */
+  --pg-dockh: 52px;           /* #dock height, portrait */
+  --pg-dockgap: 6px;          /* #dock distance from the bottom of the field */
+  --pg-r: 10px;               /* the one corner radius used by the chrome */
+  --pg-safe-l: env(safe-area-inset-left,0px);
+  --pg-safe-r: env(safe-area-inset-right,0px);
+  --pg-safe-b: env(safe-area-inset-bottom,0px);
+}
+html.pg-mobile body{background:#101820;}
+/* The measured --docktop from eclipseMeasureDock() already equals
+   dock height + gap + 6. Publishing our own value keeps the floating layer
+   correct on the very first frame, before the first measurement runs. */
+html.pg-mobile{--docktop:calc(var(--pg-dockh) + var(--pg-dockgap) + 6px)}
+html.pg-mobile #wrap{height:100vh;height:100dvh;overflow:hidden}
+html.pg-mobile #view{min-height:0}
+
+/* ── 1. Header ───────────────────────────────────────────────────────────── */
+
+html.pg-mobile #eclipseHeader{
+  height:var(--pg-header);min-height:var(--pg-header);flex:none;
+  padding:0 calc(6px + var(--pg-safe-r)) 0 calc(8px + var(--pg-safe-l));
+  gap:6px;font-size:9px;line-height:1.2;
+}
+html.pg-mobile #eclipseHeader .title{font-size:9px;gap:4px;min-width:0;flex:1 1 auto;overflow:hidden}
+html.pg-mobile #eclipseHeader .title>span:first-child{display:flex;align-items:center;gap:4px;min-width:0}
+html.pg-mobile #stageTitle{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.pg-mobile #grindStatus{display:none}
+html.pg-mobile .eclipse-wordmark{display:none}
+html.pg-mobile .eclipse-shards{font-size:8px;opacity:.85}
+html.pg-mobile .eclipse-shards small{display:none}
+html.pg-mobile #eclipseHeader .hud-zeny{font-size:9px}
+html.pg-mobile #eclipseHeader .hud-zeny>b{font-size:10px}
+html.pg-mobile #eclipseHeader>div:last-child{gap:4px!important;margin-left:0!important;flex:none}
+html.pg-mobile #cloudBadge,
+html.pg-mobile #eclipseHeader #userBadge,
+html.pg-mobile #eclipseHeader #logoutBtn,
+html.pg-mobile #eclipseHeader #gmBtn{display:none!important}
+html.pg-mobile #eclipseHeader button{
+  font-size:8px;padding:0;height:28px;min-width:28px;border-radius:7px;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+html.pg-mobile #screenBtn{font-size:0!important;width:28px}
+html.pg-mobile #screenBtn::after{content:'☷';font-size:13px;line-height:1}
+/* #fsBtn and #pgFocusBtn are added in index.html; both stay out of the desk
+   layout by only being displayed inside this scope. */
+html.pg-mobile #fsBtn,
+html.pg-mobile #pgFocusBtn{display:inline-flex;width:28px;font-size:13px;line-height:1}
+html.pg-mobile #fsBtn[aria-pressed="true"]{background:#3f5a45;color:#ffe9a8;border-color:#c9a35b}
+
+/* ── 2. Field overlays ───────────────────────────────────────────────────── */
+
+/* Player card: one compact block in the top-left corner instead of a 218x86
+   panel. Portrait art is hidden (the field already shows the character), the
+   job bar moves into the EXP bar below, so what is left is name, level, HP. */
+html.pg-mobile #hud{
+  left:calc(6px + var(--pg-safe-l));top:calc(var(--pg-header) + var(--pg-hud-top));
+  width:auto;min-width:150px;max-width:min(58vw,232px);
+  height:var(--pg-hud-h);overflow:hidden;
+  display:block;padding:5px 8px;gap:0;border-radius:var(--pg-r);
+  z-index:45;line-height:1.2;
+}
+html.pg-mobile #hud .eclipse-portrait-frame,
+html.pg-mobile #hud #eclipsePortrait{display:none!important}
+html.pg-mobile #hud .eclipse-vitals{display:grid;grid-template-columns:1fr;gap:2px;width:100%}
+html.pg-mobile #hud .eclipse-vitals>div:first-child{display:flex;align-items:baseline;gap:5px;min-width:0;flex-wrap:nowrap}
+html.pg-mobile #eclipsePlayerName{font-size:10px;line-height:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.pg-mobile #cls2{font-size:7.5px;line-height:13px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.pg-mobile #hud .eclipse-levels{font-size:8px;line-height:11px;letter-spacing:.02em;margin:0}
+html.pg-mobile #hud .hud-health{
+  display:grid;grid-template-columns:16px minmax(0,1fr) 30px;gap:4px;align-items:center;
+  height:11px;margin:0;
+}
+html.pg-mobile #hud .hud-health>span{font-size:7px;width:auto}
+html.pg-mobile #hud .hud-health .bar{width:100%;height:6px;margin:0}
+html.pg-mobile #hud .hud-health small{font-size:8px;line-height:11px;min-width:0;text-align:right}
+html.pg-mobile #hud .eclipse-job-line{display:none}
+html.pg-mobile #titleLabel{display:none!important}
+
+/* Auto-combat: the stage readout collapses to a single pill under the player
+   card. Tapping + Show still opens the real panel, which is allowed to be as
+   tall as it needs because it only exists while it is open. */
+html.pg-mobile #eclipseCombat,
+html.pg-mobile #eclipseCombat.minimized{
+  left:calc(6px + var(--pg-safe-l));right:auto;
+  top:calc(var(--pg-hud-top) + var(--pg-hud-h) + 6px);
+  width:auto;max-width:calc(100% - 24px);transform:none;
+  padding:4px 8px;border-radius:999px;font-size:8px;line-height:1.2;z-index:44;
+}
+html.pg-mobile #eclipseCombat>div:first-child{flex-wrap:nowrap;gap:5px;align-items:center}
+html.pg-mobile .eclipse-live{font-size:7px;letter-spacing:.06em;white-space:nowrap}
+html.pg-mobile #eclipseStageLabel{
+  order:0;width:auto;max-width:96px;margin:0;font-size:7.5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+html.pg-mobile #eclipseMinimize{
+  min-width:0;height:20px;margin-left:0;padding:0 7px;font-size:8px;border-radius:999px;
+}
+html.pg-mobile #eclipseCombat:not(.minimized){
+  top:calc(var(--pg-hud-top) + var(--pg-hud-h) + 6px);width:min(246px,calc(100vw - 24px));
+  padding:8px 10px;border-radius:12px;z-index:49;
+}
+html.pg-mobile #eclipseCombat:not(.minimized) #eclipseCombatDetails{display:grid;gap:2px;margin-top:4px}
+html.pg-mobile #eclipseCombat #prog{font-size:9px;padding:4px 0 2px;min-height:0;white-space:normal}
+html.pg-mobile #eclipseAdvance{font-size:9px;min-height:26px;margin-top:2px}
+html.pg-mobile #rangedMovement{font-size:8px}
+html.pg-mobile #rangedMovement select{font-size:9px;min-height:26px;max-width:100%}
+
+/* Mail and the daily roulette keep their badges but lose their labels and
+   become two square buttons in the top-right corner. */
+/* Mail and the daily roulette: one row of two squares in the top-right corner
+   instead of a 200px column with labels. */
+html.pg-mobile #minimapTools{
+  right:calc(6px + var(--pg-safe-r));top:6px;gap:5px;z-index:46;
+  flex-direction:row;align-items:flex-start;
+}
+html.pg-mobile .minimap-tool-btn{
+  width:36px;height:36px;border-radius:9px;padding:3px 2px;gap:0;
+}
+html.pg-mobile .minimap-tool-btn svg{width:16px;height:16px}
+html.pg-mobile .minimap-tool-label{
+  font-size:6px;letter-spacing:.02em;line-height:1;margin-top:2px;
+}
+html.pg-mobile .minimap-tool-badge{top:-4px;right:-4px;min-width:14px;height:14px;font-size:8px;line-height:11px}
+
+/* Quests: one thumb-sized chip at the bottom-left opens the rail sheet. */
+html.pg-mobile #pgQuests{
+  position:absolute;left:calc(6px + var(--pg-safe-l));bottom:calc(var(--docktop) + 2px);
+  z-index:45;display:inline-flex;align-items:center;gap:5px;
+  height:28px;padding:0 10px 0 8px;border-radius:999px;
+  background:var(--e-glass,#1b2b24f5);border:1px solid var(--e-line-bright,#61725b);
+  color:#eee0b8;font-size:9px;line-height:1;pointer-events:auto;
+  box-shadow:0 4px 14px #0006;
+}
+html.pg-mobile #pgQuests[hidden]{display:none!important}
+html.pg-mobile #pgQuests b{font-size:9px;letter-spacing:.03em;font-weight:600}
+html.pg-mobile #pgQuests .pg-q-dot{
+  width:7px;height:7px;border-radius:50%;background:#ffd35c;box-shadow:0 0 7px #ffd35c;
+}
+html.pg-mobile #pgQuests .pg-q-dot[hidden]{display:none!important}
+html.pg-mobile #pgQuests[aria-expanded="true"]{background:#ffe08a;color:#2a2114;border-color:#e8c06a}
+
+/* Activity log: three lines, above the quest chip, and never wider than the
+   field. The "Logs ▾" tab is redundant next to the Log tab in the dock. */
+html.pg-mobile #feedWrap{
+  left:calc(6px + var(--pg-safe-l));right:auto;bottom:calc(var(--docktop) + 34px);
+  max-width:min(64%,300px);gap:2px;
+}
+/* #feed is a bottom-packed column of up to four rows, so a plain max-height
+   would slice the fourth one in half. Hiding it is exact: three whole lines,
+   newest at the bottom, and the box measures itself. */
+html.pg-mobile #feed{
+  height:auto;max-height:none;overflow:visible;padding:0;background:none;border:0;border-radius:0;
+  font-size:9px;line-height:1.35;
+}
+html.pg-mobile #feed>div:nth-last-child(n+4){display:none}
+html.pg-mobile #feed>div,
+html.pg-mobile #feed>.feed-entry{font-size:9px}
+html.pg-mobile #feedBar{display:none!important}
+html.pg-mobile #hint{display:none!important}
+
+/* Pet buffs: small tiles tucked above the dock on the right. */
+html.pg-mobile #hudBuffs{
+  right:calc(6px + var(--pg-safe-r));bottom:calc(var(--docktop) + 2px);gap:4px;z-index:45;
+}
+html.pg-mobile #hudBuffs .pbx{width:30px;height:30px;font-size:15px;border-width:1px;border-radius:8px}
+html.pg-mobile #hudBuffs .pbx .s{font-size:8px;padding:0 3px}
+
+/* Companions: the pet strip and the speed button stay, the "Companions ↗"
+   shortcut goes (Pets is a dock tab) so the row fits in one line. */
+html.pg-mobile #eclipseCompanions{
+  right:calc(6px + var(--pg-safe-r));bottom:calc(var(--docktop) + 36px);gap:4px;z-index:44;
+}
+html.pg-mobile #eclipseCompanions>button[data-t]{display:none}
+html.pg-mobile #eclipseCompanions button{font-size:7.5px;padding:5px 7px;border-radius:8px}
+html.pg-mobile #eclipsePetStrip{gap:3px}
+html.pg-mobile #eclipsePetStrip button{padding:2px}
+html.pg-mobile #eclipsePetStrip small{font-size:6px}
+
+/* Floating name/label art keeps its colour but shrinks a step. */
+html.pg-mobile #tag{font-size:10px}
+html.pg-mobile #tag .bar{width:72px;height:6px}
+html.pg-mobile .hero-title{font-size:8px;padding:2px 7px;max-width:min(52vw,200px)}
+html.pg-mobile .hero-title .ht-mark,
+html.pg-mobile .hero-title .ui-icon{width:12px;height:12px}
+
+/* ── 3. Rail sheet (quest tracker + more destinations) ───────────────────── */
+
+html.pg-mobile #pgScrim{
+  position:absolute;inset:0;z-index:56;background:rgba(4,9,14,.55);
+  -webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px);
+}
+html.pg-mobile #pgScrim:not([hidden]){display:block}
+html.pg-mobile #pgScrim[hidden]{display:none!important}
+
+html.pg-mobile #sideRail{
+  left:calc(6px + var(--pg-safe-l));right:calc(6px + var(--pg-safe-r));top:6px;
+  width:auto;max-height:none;bottom:calc(var(--docktop) + 2px);
+  gap:8px;z-index:58;overflow-y:auto;overscroll-behavior:contain;
+  padding:0;background:transparent;scrollbar-width:thin;
+}
+/* Closed unless the sheet was opened from the chip, or the dock's More button
+   asked for the destinations list - mobile.js mirrors #sideMenu.eclipse-more-open
+   onto the rail as .pg-more, so this needs no :has() support. In the second case
+   the rail is only a backdrop for the floating menu and takes no taps. */
+html.pg-mobile #sideRail{display:none!important;pointer-events:none}
+html.pg-mobile #sideRail.pg-open{display:flex!important;pointer-events:auto}
+html.pg-mobile #sideRail.pg-more{display:flex!important}
+html.pg-mobile #sideRail.pg-more>#qp{display:none!important}
+html.pg-mobile #sideRail.pg-more>#sideMenu{pointer-events:auto}
+html.pg-mobile #sideRail.with-panels{display:none!important}
+html.pg-mobile #sideRail #qp{
+  width:100%;max-height:none;padding:10px 12px;border-radius:var(--pg-r);
+}
+html.pg-mobile #qp .qp-head{font-size:10px}
+html.pg-mobile #qp .qp-actions button{min-width:30px;min-height:30px}
+html.pg-mobile #qp .quest-entry{font-size:10px;min-height:0;padding:7px 0}
+html.pg-mobile #qp .quest-entry b{font-size:10px}
+html.pg-mobile #qp .quest-entry small{font-size:9px}
+html.pg-mobile #qp .quest-entry button{font-size:9px;padding:5px 9px;min-height:26px}
+html.pg-mobile #qp .quest-tabs{gap:8px}
+html.pg-mobile #qp .quest-tabs button{font-size:9px;padding:5px 8px;min-height:26px}
+html.pg-mobile #sideMenu{
+  width:100%;border-radius:var(--pg-r);max-height:none;overflow:visible;
+}
+html.pg-mobile #sideMenu button{font-size:11px;padding:10px 12px}
+html.pg-mobile #eclipseMapCard{display:none}
+/* The dock's More button opens the same sheet; the menu keeps its measured
+   position from eclipsePositionMore() unless the sheet is open, so the inline
+   left/bottom it writes are dropped only while the sheet is up. */
+html.pg-mobile #sideRail.pg-open #sideMenu{position:static!important;left:auto!important;bottom:auto!important;right:auto!important}
+html.pg-mobile #sideMenu.eclipse-more-open{
+  width:min(240px,86vw);max-height:min(56vh,400px);overflow-y:auto;
+  border-radius:var(--pg-r);z-index:70;pointer-events:auto;
+  box-shadow:0 14px 34px #0008;
+}
+
+/* ── 4. Bottom bars ──────────────────────────────────────────────────────── */
+
+/* EXP: two full-width halves with a centred label. The DPS/kill counters stay
+   in the Character panel - they were already hidden on phones. The bar keeps
+   its 40px content height and grows by the home-indicator inset, so the two
+   halves are never squeezed by a 34px safe area. */
+html.pg-mobile #xp-dock{
+  height:auto;min-height:var(--pg-xp);flex:none;
+  padding:5px calc(8px + var(--pg-safe-r)) calc(5px + var(--pg-safe-b)) calc(8px + var(--pg-safe-l));
+  z-index:47;
+}
+html.pg-mobile #eclipseMetrics{display:none!important}
+html.pg-mobile #xp-track{
+  gap:0;height:26px;border-radius:7px;align-items:stretch;overflow:hidden;
+}
+html.pg-mobile #xp-track .xp-side{
+  flex:1 1 50%;width:auto;height:auto;min-width:0;
+}
+html.pg-mobile #xp-track .xp-side:first-child{border-right:1px solid #6d6470}
+html.pg-mobile #xp-track .xp-label,
+html.pg-mobile #xp-track .xp-label.job{
+  left:0;right:0;top:2px;text-align:center;font-size:7.5px;line-height:1.1;
+}
+html.pg-mobile #xp-track .xp-pct{
+  left:0;right:0;top:11px;transform:none;text-align:center;font-size:7px;line-height:1.1;
+}
+html.pg-mobile .eclipse-xp-value{display:none}
+
+/* Dock: one scrolling row, icons and labels, no wrapping. */
+html.pg-mobile #dock{
+  left:50%;right:auto;transform:translateX(-50%);
+  bottom:calc(var(--pg-dockgap) + var(--pg-safe-b));
+  max-width:calc(100% - 12px);width:auto;height:var(--pg-dockh);
+  padding:3px 5px;gap:1px;flex-wrap:nowrap;justify-content:flex-start;
+  overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+  align-items:stretch;border-radius:12px;z-index:60;scrollbar-width:none;
+}
+html.pg-mobile #dock::-webkit-scrollbar{display:none}
+html.pg-mobile #dock .ib{
+  width:45px;min-width:45px;height:auto;align-self:stretch;flex:none;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;
+  padding:0;border-radius:8px;
+}
+html.pg-mobile #dock .ib .ui-nav-icon .ui-icon{width:18px;height:18px}
+html.pg-mobile #dock .ui-nav-label{font-size:7px;line-height:1.1;letter-spacing:.01em}
+html.pg-mobile #dock .ib .k{display:none}
+html.pg-mobile #dock .ib.on{background:#46543b;border-color:#978b5d}
+
+/* ── 5. Panel windows ────────────────────────────────────────────────────── */
+
+/* Panels fill the field between the header and the dock, and scroll inside. */
+html.pg-mobile #wins{
+  left:calc(4px + var(--pg-safe-l));right:calc(4px + var(--pg-safe-r));
+  top:4px;bottom:var(--docktop);transform:none;width:auto;max-width:none;
+  flex-direction:column;align-items:stretch;overflow-y:auto;overscroll-behavior:contain;
+  gap:6px;z-index:50;
+}
+html.pg-mobile #wins>.wp,
+html.pg-mobile #wins>.wp.wide,
+html.pg-mobile #wins>.wp.ui-expanded{
+  flex:1 1 auto;width:100%;max-width:100%;min-height:0;min-width:0;border-radius:var(--pg-r);
+}
+html.pg-mobile #wins>.wp>.title{height:44px;min-height:44px;padding:0 12px;font-size:11px}
+html.pg-mobile #wins>.wp>.wbody{min-height:0;flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain}
+html.pg-mobile body.equipment-workspace-open #wins{
+  left:calc(4px + var(--pg-safe-l));right:calc(4px + var(--pg-safe-r));
+  width:auto;transform:none;top:4px;bottom:var(--docktop);
+}
+
+/* ── 6. Display sheet ────────────────────────────────────────────────────── */
+
+html.pg-mobile #screenOptions{
+  position:fixed;left:calc(6px + var(--pg-safe-l));right:calc(6px + var(--pg-safe-r));
+  bottom:auto;top:calc(var(--pg-header) + 4px);transform:none;
+  max-width:none;max-height:min(70vh,420px);overflow-y:auto;z-index:121;
+  border-radius:12px;padding:10px;box-shadow:0 16px 40px #0009;
+}
+html.pg-mobile #screenOptions label{padding:9px 6px;font-size:11px;border-radius:8px}
+html.pg-mobile #screenOptions label:active{background:#22392f}
+html.pg-mobile #screenOptions input{width:17px;height:17px;margin-right:9px;vertical-align:-3px}
+html.pg-mobile #screenOptions .pg-sheet-head{padding:0 2px 6px;font-size:9px}
+html.pg-mobile #screenOptions .pg-sheet-head button{height:30px;min-width:30px;font-size:12px}
+html.pg-mobile #screenOptions .pg-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px 0}
+html.pg-mobile #screenOptions .pg-actions button{min-height:40px;font-size:10px;padding:6px}
+
+/* Dialogs drawn by the game (ask/confirm) are centred and never wider than
+   the screen they sit on. */
+html.pg-mobile .eclipse-confirm,
+html.pg-mobile .modal-card{max-width:calc(100vw - 20px)}
+
+/* ── 7. Landscape: the horizontal phone layout ───────────────────────────── */
+
+@media (orientation:landscape) and (max-height:560px){
+  html.pg-mobile{
+    --pg-header:30px;
+    --pg-xp:22px;
+    --pg-dockh:44px;
+    --pg-dockgap:4px;
+    --pg-hud-top:4px;
+    --pg-hud-h:46px;
+  }
+  html.pg-mobile #eclipseHeader{
+    padding:0 calc(6px + var(--pg-safe-r)) 0 calc(6px + var(--pg-safe-l));gap:8px;font-size:8px;
+  }
+  html.pg-mobile #eclipseHeader .title{font-size:8px}
+  html.pg-mobile #eclipseHeader button{height:24px;min-width:24px;border-radius:6px}
+  html.pg-mobile #screenBtn{width:24px}
+  html.pg-mobile #fsBtn,
+  html.pg-mobile #pgFocusBtn{width:24px}
+  html.pg-mobile .eclipse-shards{font-size:7px}
+
+  /* Player card: a narrow block in the corner, two lines tall. */
+  html.pg-mobile #hud{
+    top:calc(var(--pg-header) + var(--pg-hud-top));left:calc(4px + var(--pg-safe-l));
+    min-width:138px;max-width:min(34vw,190px);padding:4px 7px;
+  }
+  html.pg-mobile #eclipsePlayerName{font-size:9px;line-height:12px}
+  html.pg-mobile #cls2{font-size:7px;line-height:12px}
+  html.pg-mobile #hud .eclipse-levels{font-size:7px;line-height:9px}
+  html.pg-mobile #hud .hud-health{grid-template-columns:14px minmax(0,1fr) 26px;gap:3px;height:9px}
+  html.pg-mobile #hud .hud-health .bar{height:5px}
+  html.pg-mobile #hud .hud-health small{font-size:7px;line-height:9px}
+
+  html.pg-mobile #eclipseCombat,
+  html.pg-mobile #eclipseCombat.minimized{left:calc(4px + var(--pg-safe-l));padding:3px 7px}
+  html.pg-mobile #eclipseCombat:not(.minimized){max-height:calc(100% - 70px);overflow-y:auto}
+
+  html.pg-mobile #minimapTools{top:4px;right:calc(4px + var(--pg-safe-r));flex-direction:row;gap:4px}
+  html.pg-mobile .minimap-tool-btn{width:32px;height:30px}
+  html.pg-mobile .minimap-tool-label{display:none}
+
+  /* The log would cover the middle of a short field; the Log tab has it all. */
+  html.pg-mobile #feedWrap{display:none!important}
+  html.pg-mobile #hudBuffs{bottom:calc(var(--docktop) + 2px);right:calc(4px + var(--pg-safe-r))}
+  html.pg-mobile #hudBuffs .pbx{width:26px;height:26px;font-size:13px}
+  html.pg-mobile #eclipseCompanions{bottom:calc(var(--docktop) + 30px);right:calc(4px + var(--pg-safe-r))}
+  html.pg-mobile #pgQuests{height:24px;bottom:calc(var(--docktop) + 1px);left:calc(4px + var(--pg-safe-l));font-size:8px}
+
+  html.pg-mobile #xp-dock{padding:2px calc(6px + var(--pg-safe-r)) calc(2px + var(--pg-safe-b)) calc(6px + var(--pg-safe-l))}
+  html.pg-mobile #xp-track{height:18px;border-radius:5px}
+  html.pg-mobile #xp-track .xp-label,
+  html.pg-mobile #xp-track .xp-label.job{top:1px;font-size:7px}
+  html.pg-mobile #xp-track .xp-pct{top:auto;bottom:1px;font-size:6.5px}
+  html.pg-mobile #xp-track .xp-side:first-child{border-right-width:1px}
+
+  html.pg-mobile #dock{height:var(--pg-dockh);padding:2px 4px;border-radius:10px}
+  html.pg-mobile #dock .ib{width:44px;min-width:44px;height:38px;gap:1px}
+  html.pg-mobile #dock .ib .ui-nav-icon .ui-icon{width:16px;height:16px}
+  html.pg-mobile #dock .ui-nav-label{font-size:6.5px}
+
+  html.pg-mobile #wins{top:3px;bottom:var(--docktop)}
+  html.pg-mobile #wins>.wp>.title{height:38px;min-height:38px;font-size:10px}
+  html.pg-mobile #screenOptions{top:calc(var(--pg-header) + 3px);max-height:calc(100% - var(--pg-header) - var(--docktop) - 8px)}
+}
+
+/* A phone held in landscape but taller than 560px (a tablet on its side) keeps
+   the portrait arrangement - it has the room for it. */
+
+/* ── 8. Field-only mode (#pgFocusBtn / Display → Hide field panels) ──────── */
+
+html.pg-mobile.pg-focus #eclipseCombat,
+html.pg-mobile.pg-focus #minimapTools,
+html.pg-mobile.pg-focus #pgQuests,
+html.pg-mobile.pg-focus #feedWrap,
+html.pg-mobile.pg-focus #hudBuffs,
+html.pg-mobile.pg-focus #eclipseCompanions,
+html.pg-mobile.pg-focus #heroTitle,
+html.pg-mobile.pg-focus #pgScrim,
+html.pg-mobile.pg-focus #sideRail:not(.pg-more){display:none!important}
+/* The player card also drops to the two numbers a fight needs: level + HP,
+   and shrinks to them instead of keeping an empty half. */
+html.pg-mobile.pg-focus #hud{
+  height:auto;background:rgba(12,18,24,.55);border-color:rgba(255,255,255,.14);
+}
+html.pg-mobile.pg-focus #cls2,
+html.pg-mobile.pg-focus #hud .eclipse-levels{display:none}
+html.pg-mobile #pgFocusBtn[aria-pressed="true"]{background:#3f5a45;color:#ffe9a8;border-color:#c9a35b}
+
+/* ── 9. Login screen on a phone ──────────────────────────────────────────── */
+
+@media (orientation:landscape) and (max-height:560px){
+  html.pg-mobile #loginOverlay{overflow-y:auto;align-items:flex-start}
+  html.pg-mobile #loginOverlay .eclipse-login-header{height:auto;min-height:0;padding:8px 12px}
+  html.pg-mobile #loginOverlay .eclipse-login-footer{display:none}
+  html.pg-mobile .eclipse-login-layout{width:calc(100% - 24px);margin:10px auto;gap:10px}
+  html.pg-mobile #loginOverlay .login-card{padding:14px 16px;border-radius:10px}
+  html.pg-mobile #loginOverlay .login-card h2{font-size:18px;margin:2px 0 6px}
+  html.pg-mobile #loginOverlay .login-intro{display:none}
+  html.pg-mobile #loginOverlay .form-group{margin:8px 0}
+  html.pg-mobile #loginOverlay .form-group input{height:36px;font-size:12px}
+  html.pg-mobile #loginOverlay .login-btn{padding:9px;font-size:11px}
+  html.pg-mobile #loginOverlay .atabs{margin-bottom:10px}
+}

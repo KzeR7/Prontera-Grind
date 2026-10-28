@@ -882,6 +882,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="assets/ui/eclipse.css?v=211">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=1">
+<script src="assets/ui/mobile.js?v=1"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 <link rel="stylesheet" href="assets/social.css?v=209">
 </head>
@@ -900,8 +902,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>HORIZON HAVEN / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
 <div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Horizon <small>HAVEN</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover">&#9679; <b id="zeny">0</b> Zeny</div>
-<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="fieldLoading" hidden role="status" aria-live="polite"><i></i><span>Loading field…</span></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs and daily roulette boosts - hover an icon for what it does"></div><div id="minimapTools" aria-label="Mail and daily rewards"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
-<div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd">Speed x1</button></div><div id="wins"></div></div></div>
+<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="fsBtn" type="button" aria-pressed="false" aria-label="Toggle fullscreen" title="Fullscreen (landscape on a phone)">⛶</button><button id="pgFocusBtn" type="button" aria-pressed="false" aria-label="Toggle field only mode" title="Hide field panels (field only)">◎</button><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="fieldLoading" hidden role="status" aria-live="polite"><i></i><span>Loading field…</span></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs and daily roulette boosts - hover an icon for what it does"></div><div id="minimapTools" aria-label="Mail and daily rewards"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
+<div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd">Speed x1</button></div><div id="wins"></div></div><div id="pgScrim" hidden aria-hidden="true"></div><button id="pgQuests" type="button" aria-controls="sideRail" aria-expanded="false" title="Quests and destinations"><span aria-hidden="true">❖</span><b>Quests</b><span class="pg-q-dot" id="pgQuestDot" hidden aria-hidden="true"></span></button></div>
 <div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health"><span>HP</span> <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
 </div></div>
 <section id="bgmPlayer" hidden aria-label="Background music player"></section>
@@ -1250,7 +1252,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-10-28 haven-v251 background grinding';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-28 haven-v252 phone layout';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6743,15 +6745,58 @@ function applyDisplay(){
  document.body.classList.toggle('hide-feed',S.feedShow===false);
  document.body.classList.toggle('hide-labels',S.labelsShow===false);
 }
+// v252: on the local preview server the phone layout can be checked at a true phone size. The link
+// to that page is offered ONLY when /phone answers with the dev server's marker header, so a static
+// host - which may answer an unknown path with this very page - can never show a link that loops.
+let pgPreviewOk=null;
+function pgPreviewProbe(){
+  if(pgPreviewOk!==null)return;
+  pgPreviewOk=false;
+  try{fetch('/phone',{method:'GET',cache:'no-store'}).then(r=>{
+    if(!(r.ok&&r.headers.get('X-Phone-Preview')==='1'))return;
+    pgPreviewOk=true;
+    // The panel was drawn before this answer arrived, so redraw it (once) while it is open.
+    const l=$('pgPhonePreview');if(l)l.hidden=false;else if($('screenOptions')&&!$('screenOptions').hidden)screenOptions();
+  }).catch(()=>{})}catch(_){}
+}
 function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidden;$('screenBtn').setAttribute('aria-expanded',String(!panel.hidden));
- panel.innerHTML=[['cameraShake','Camera shake'],['dmgShow','Damage numbers'],['auraShow','Character aura'],['feedShow','Activity log'],['labelsShow','Character / monster labels'],['hideUI','Hide all screen UI (Display stays available)']].map(([key,label])=>`<label><input type="checkbox" data-display="${key}" ${key==='hideUI'?S[key]?'checked':'':S[key]!==false?'checked':''}>${label}</label>`).join('')
+ // Never link the frame from inside the frame (the preview page loads this game with ?phone=1).
+ if(/[?&]phone=/.test(location.search))pgPreviewOk=false;else pgPreviewProbe();
+ // v252: on a phone this panel is a sheet under the header rather than a bubble over the dock,
+ // so it gets its own title row and a close button (assets/ui/mobile.css). The same markup is
+ // fine on the desk, where the row simply reads as a caption.
+ const pg=window.PGMobile,pgMode=pg?pg.getPhoneLayout():'auto',pgFocus=!!(pg&&pg.fieldOnly()),pgLayout=pgMode==='on'?'Phone':pgMode==='off'?'Desk':'Auto';
+ panel.innerHTML=`<div class="pg-sheet-head"><span>Display</span><button type="button" data-pg="close" aria-label="Close display options">✕</button></div>`
+  +[['cameraShake','Camera shake'],['dmgShow','Damage numbers'],['auraShow','Character aura'],['feedShow','Activity log'],['labelsShow','Character / monster labels'],['hideUI','Hide all screen UI (Display stays available)']].map(([key,label])=>`<label><input type="checkbox" data-display="${key}" ${key==='hideUI'?S[key]?'checked':'':S[key]!==false?'checked':''}>${label}</label>`).join('')
   // v232 (owner: "game preview is not showing your proposed maps. still the old map"): the new
   // outdoor fields were only reachable by hand-editing the URL, so the preview looked unchanged.
   // This is the switch in the UI. It is a page reload because the field renderer is chosen at
   // boot - cheaper and far less risky than rebuilding a live world mid-fight - and the choice is
   // tab-local (sessionStorage), exactly like the URL override it stands in for.
-  +`<label><input type="checkbox" data-display="nativeFields" ${nativeFieldsEnabled?'checked':''}>New outdoor terrain (reloads)</label>`;
+  +`<label><input type="checkbox" data-display="nativeFields" ${nativeFieldsEnabled?'checked':''}>New outdoor terrain (reloads)</label>`
+  // v252: the phone block. "Layout" is a device-local choice, so a phone can drop back to the
+  // desk arrangement (or a desk browser can preview the phone one) without touching the save.
+  +`<div class="pg-sheet-head pg-phone-head"><span>Phone</span></div>
+    <div class="pg-actions">
+      <button type="button" data-pg="layout" aria-pressed="${pgMode!=='auto'}">Layout · ${pgLayout}</button>
+      <button type="button" data-pg="fullscreen" aria-pressed="${!!(document.fullscreenElement||document.webkitFullscreenElement)}">⛶ Fullscreen</button>
+    </div>
+    <div class="pg-actions">
+      <button type="button" data-pg="focus" aria-pressed="${pgFocus}">Field only · ${pgFocus?'on':'off'}</button>
+    </div>
+    <div class="pg-note">Field only clears the log, quests, mail, buffs and the auto-combat pill so the fight has the screen; the header and the two bottom bars stay. Layout cycles Auto → Phone → Desk and is remembered on this device.</div>`
+  // Only rendered on the dev server (see pgPreviewProbe): a phone frame on this desktop browser.
+  +(pgPreviewOk?'<a class="pg-link" id="pgPhonePreview" href="/phone">Open the phone preview — the game at a real phone size →</a>':'');
 }
+// The phone block's buttons live in the same panel but are not save-backed settings, so they
+// are handled here instead of in the data-display change handler below.
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#screenOptions [data-pg]');if(!b)return;e.preventDefault();
+  const pg=window.PGMobile,what=b.dataset.pg;
+  if(what==='close'){$('screenOptions').hidden=true;$('screenBtn').setAttribute('aria-expanded','false');return}
+  if(what==='fullscreen'){if(pg)pg.toggleFullscreen();else toggleFullscreen();screenOptions();$('screenOptions').hidden=false;return}
+  if(what==='focus'){if(pg)pg.setFieldOnly(!pg.fieldOnly());screenOptions();$('screenOptions').hidden=false;return}
+  if(what==='layout'){if(pg){const now=pg.getPhoneLayout();pg.setPhoneLayout(now==='auto'?'on':now==='on'?'off':'auto')}screenOptions();$('screenOptions').hidden=false;setTimeout(()=>{try{resize()}catch(_){}},0);return}
+});
 document.addEventListener('input',e=>{if(e.target.id?.startsWith('oreQty-')){const o=e.target.id.slice(7),n=Number(e.target.value),out=$('oreTotal-'+o);marketQty[o]=e.target.value;if(out)out.textContent=Number.isSafeInteger(n)&&n>0?(n*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity';}});
 $('screenBtn').onclick=()=>{if(S)screenOptions()};
 $('screenOptions').onchange=e=>{const key=e.target.dataset.display;
@@ -8351,6 +8396,9 @@ function resize(){
   eclipseMeasureDock();
 }
 addEventListener('resize',resize);
+// v252: the phone layout changes what is painted over the field (the HUD card and the dock change
+// size), and it can flip at runtime from Display -> Layout. Re-measure both caches when it does.
+addEventListener('pg-mobile-change',()=>{resize();renderDock();try{eclipseMeasureDock()}catch(_){}});
 // v74.1: on a phone the visual viewport changes when the URL bar slides away or the device is
 // turned, and iOS does not always follow that with a window resize event. Re-measure both.
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);

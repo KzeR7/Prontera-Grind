@@ -201,6 +201,16 @@ try {
     assert.strictEqual((await fetch(base + '/tools/dev_server.js')).status, 404, 'dev files must not be reachable');
     assert.ok(fs.existsSync(path.join(site, 'index.html')), 'the fixture must be built before the server starts');
     assert.ok(!fs.existsSync(path.join(site, 'tools')), 'the published tree must not contain tools/');
+    // /phone is the dev-only frame used to review the small-screen layout on a desktop: it is read
+    // from the checkout (never from dist/), and it must force the phone layout in its iframe.
+    const preview = await fetch(base + '/phone');
+    assert.strictEqual(preview.status, 200, '/phone must serve the phone preview page');
+    const previewHtml = await preview.text();
+    assert.match(previewHtml, /data-device="13"/, 'the preview offers device sizes');
+    assert.ok(/index\.html\?phone=1/.test(previewHtml), 'the frame must load the game with ?phone=1');
+    assert.strictEqual(preview.headers.get('x-phone-preview'), '1',
+      'the marker header is what tells the game a real preview server is behind this address');
+    assert.ok(!fs.existsSync(path.join(site, 'phone')), 'the preview page is not part of the published tree');
   });
 
   await t('an unknown API path answers JSON 404, never the index page', async () => {

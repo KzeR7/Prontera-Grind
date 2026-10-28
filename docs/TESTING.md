@@ -152,7 +152,7 @@ the page or the server.
 | Class art, sprites, pets | `pack_sim`, `sprite_sim`, `class_skin_sim`, `sprite_viewer_sim`, `pet_sim`, `pet_game_sim`, `pet_sprites_sim` |
 | Skill, boss and combat FX | `overdrive_sim`, `overdrive_preview_sim`, `afterglow_sim`, `boss_fx_sim` (+ the Python material/afterglow `--check` scripts) |
 | Audio | `combat_audio_sim`, `attack_audio_sim`, `bgm_sim` |
-| UI, panels, interaction, guides | `ui_sim`, `eclipse_ui_sim`, `mail_roulette_ui_sim`, `display_polish_sim`, `haven_redesign_sim`, `gameplay_polish_sim`, `interaction_guard_sim`, `guide_sim`, `activity_scroll_sim`, `progression_effects_sim` |
+| UI, panels, interaction, guides | `ui_sim`, `eclipse_ui_sim`, `mail_roulette_ui_sim`, `display_polish_sim`, `haven_redesign_sim`, `gameplay_polish_sim`, `interaction_guard_sim`, `guide_sim`, `activity_scroll_sim`, `progression_effects_sim`, `mobile_layout_sim` (phone shell, `assets/ui/mobile.css` + `mobile.js`) |
 | Shop | `shop_api_sim` (Pages Functions + in-memory D1), `shop_sim` (the page in jsdom), `ascension_drop_shop_sim`, `dev_server_sim` |
 | GM tools and leaderboard | `gm_console_sim`, `gm_tools_sim`, `gm_auth_sim`, `gm_presets_sim`, `gm_setup_sim`, `leaderboard_sim` |
 | Social hub | `social_sim`, `social_ui_sim`, `social_scene_sim`, `social_config_sim`, `social_api_sim.mjs`, `social_worker_sim.mjs` |
