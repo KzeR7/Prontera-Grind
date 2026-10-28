@@ -8514,5 +8514,5 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   gate: 140 suites, **133 green, 7 red, 0 skipped — no new failures** (only the 7 documented
   known-red baseline suites in `docs/TESTING.md`). `social_worker_sim.mjs` was not run
   (`miniflare` not installed in this sandbox).
-* **Delivery:** Committed and pushed on `arena/7580a8c0-prontera-grind`, with a pull request
-  opened against `main` (not merged or deployed by the agent).
+* **Delivery:** Committed and pushed on `arena/7580a8c0-prontera-grind`, then merged into `main`
+  through PR #141. No separate deploy was run by the agent.
