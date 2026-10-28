@@ -157,6 +157,19 @@ broke. The gate is therefore **"no new failures, and no suite gets quieter"** �
 green", which this tree has not been since v221.
 
 **2026-10-28 (`haven-v253`): `publish_sim.js` is green again — 17/17, so the baseline is 6.**
+
+**2026-10-29 (draft after `haven-v258`): `skill_balance_sim.js` now passes** after
+fully rerunning the original benchmark against both its pinned historical revision and
+the current game. The old baseline rows and measurement tool were identical; all 126
+current rows were remeasured, and the existing budgets were not changed. The 21 moving
+encounter rows differed from the previously saved sample; a second run reproduced the
+new values exactly in this environment. Current-vs-prior sample kills ranged from
+−18.10% to +30.26%, while sampled death and boss-win outcomes stayed the same. These
+are fixed-seed 120-second samples, not real-world guarantees or a retuning decision.
+Five original game suites remain red, plus three competition suites paused on this
+branch. `combat_field_contract_sim.js` adds current-rule checks without removing the
+older, conflicting assertions.
+
 Two things changed, and neither one moved a ceiling out of the way of a real byte:
 
 - `tools/build_site.sh` stopped copying art that only unpublished dev pages read (152 KiB:
@@ -176,7 +189,7 @@ Two things changed, and neither one moved a ceiling out of the way of a real byt
 | `rotation_updates_sim.js` | "expanded area stays within its camp" | v227 deliberately allowed in-range cross-camp AoE |
 | `skill_redesign_sim.js` | area-pack assertion plus dash assertion (24 pass/2 fail) | v227 allows cross-camp hits and dashing to nearby non-engaged targets; Node's assertion-source formatting previously obscured the first failure with a SyntaxError |
 | `fourth_job_skills_sim.js` | Chain Lightning expected `[0,1]`, got `[0,1,2]` | v227 deliberately allowed cross-camp bounces; a diagnostic run reached 15 other passing cases |
-| `skill_balance_sim.js` | "gear measurements stale: rerun progression_balance.js" | historical measurement fixture is hash-pinned; the hash includes some non-combat code, but current measurements have not been revalidated |
+| `skill_balance_sim.js` | formerly "gear measurements stale"; **now passes** | both historical and current measurements were rerun against the unchanged tool and budgets; see the 2026-10-29 note above |
 
 Rules for that table:
 
@@ -208,7 +221,7 @@ the page or the server.
 | --- | --- |
 | Accounts, saves, login, away rewards | `api_sim`, `registration_sim`, `cloud_sim`, `cloud_login_error_sim`, `offline_sim`, `migration_sim`, `save_load_sim`, `save_owner_sim`, `dev_server_sim` |
 | Classes, stats, EXP, pacing | `class_change_sim`, `loadout_update_sim`, `stat_sim`, `base_pacing_sim`, `economy_sim`, `progression_sim`, `progression_refresh_sim`, `mvp_exp_sim` |
-| Combat, skills, floats | `skill_sim`, `combo_rotation_sim`, `cosmetic_combo_sim`, `combat_damage_sim`, `combat_float_sim`, `attack_sync_sim`, `crit_sim`, `hp_affix_sim`, `retune_sim`, `combat_retune_sim`, `background_sim`, `ascension_attack_sim` |
+| Combat, skills, floats | `skill_sim`, `combo_rotation_sim`, `cosmetic_combo_sim`, `combat_damage_sim`, `combat_float_sim`, `combat_field_contract_sim`, `ground_aoe_sim`, `attack_sync_sim`, `crit_sim`, `hp_affix_sim`, `retune_sim`, `combat_retune_sim`, `background_sim`, `ascension_attack_sim` |
 | Fourth jobs, trials, Mythic | `fourth_job_sim`, `fourth_job_runtime_sim`, `fourth_job_mythic_sim`, `fourth_job_motion_sim`, `job_rite_sim`, `mythic_rules_sim`, `mythic_gift_base_sim`, `mythic_testing_sim`, `owner_fx_sim` |
 | Ascension and endgame | `ascension_progression_sim`, `ascension_combat_sim`, `ascension_tracks_sim`, `ascension_rewards_sim`, `ascension_evolution_sim`, `endgame_progression_sim`, `encounter_retune_sim`, `material_sim`, `zeny_sink_sim`, `nightmare_sim`, `trial_sim` |
 | Fields, maps, scenery | `scene_sim`, `starter_sim`, `kit_sim`, `native_fields_sim`, `terrain_v2_sim`, `terrain_proposal_sim`, `reference_mobs_sim`, `ascension_scene_sim`, `astral_scenery_sim`, `endgame_scenery_sim`, `native_theme_sim`, `map_journey_sim`, `map_delivery_sim`, `map_scene_review_sim`, `map_proposal_sim`, `field_report_sim`, `preview_fields_sim` |
