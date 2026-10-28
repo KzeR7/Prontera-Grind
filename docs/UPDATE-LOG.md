@@ -8638,3 +8638,19 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   three paths cannot quietly return. Suite is 16/17 (was 15/16); the one red is the budget row above.
 * **Checks:** `publish_sim` 16/17, `weapon_proposal_sim` (reads the repo copies, unaffected),
   `mobile_layout_sim` 28/28, `panel_layout_smoke` 42/42, `kit_sim` (build covers the kit copies).
+
+### 2026-10-28 — `publish_sim` goes green: dev-only art out, the explorer measured once
+* **Corrects the entry above.** That entry said the 62.5 MiB row would stay red. It is green now
+  (17/17), and no byte that ships was deleted to do it.
+* **What changed:** `tools/build_site.sh` stopped copying the three dev-only groups (152 KiB:
+  `assets/mob_*.png`, `assets/weapons/**`, `assets/weapons_manifest.json`), and the map-exploration
+  sub-app is no longer counted twice — `assets/endgame` already has its own 4.25 MiB ceiling in the
+  same suite and is never preloaded by the game, exactly like the native field pack and the social
+  portraits that were already carved out.
+* **Where the number went:** the classic-game line moved **62.5 → 59 MiB** (measured 58.59) instead
+  of staying at 62.5, which would have quietly handed back 3.9 MiB of headroom. Net effect: ~0.4 MiB
+  of room, versus a 0.29 MiB deficit before. The combined 140.5 MiB ceiling still covers every
+  shipped byte, and `publish_sim` gained an assertion that the dev-only paths stay out.
+* **Checks:** `publish_sim` **17/17** (was 16/17), gate now has **6** known-red suites instead of 7
+  (`docs/TESTING.md` updated), `mobile_layout_sim` 28/28, `panel_layout_smoke` 42/42, `kit_sim`
+  37/37, `weapon_proposal_sim` 587/587.

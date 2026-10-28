@@ -125,8 +125,18 @@ t('the published tree is small enough to stay honest', () => {
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
   const nativeBytes=walk(path.join(out,'assets/native-fields/v1'));
   const socialBytes=walk(path.join(out,'assets/social'));
+  // The map-exploration sub-app (assets/endgame) is never preloaded by the game - a separate test
+  // asserts `src="assets/endgame/` never appears in index.html - and it already carries its own
+  // 4.25 MiB ceiling below, so it is measured there and not again here, exactly like the parked
+  // native field pack and the social portraits above. Everything that ships is still covered by a
+  // ceiling: this line for the classic game, 4.25 for the explorer, plus the combined 140.5.
+  const endgameBytes=walk(path.join(out,'assets/endgame'));
   assert.ok(socialBytes/1048576 < 10, 'native social assets exceed their separate 10 MiB budget');
-  assert.ok((bytes-nativeBytes-socialBytes)/1048576 < 62.5, 'existing runtime assets exceed their original 62.5 MiB budget');
+  // 59 MiB, not the original 62.5: the classic game measures 58.59 MiB once the separately-budgeted
+  // explorer is out of the sum, so 62.5 would have handed back 3.9 MiB of silent headroom. 59 keeps
+  // ~0.4 MiB - the same tightness the 62.5 line had when it was set - and the combined 140.5 ceiling
+  // still covers every byte, including the explorer it no longer counts here.
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes)/1048576 < 59, 'existing runtime assets exceed their 59 MiB budget (58.59 measured 2026-10-28)');
   assert.ok(nativeBytes/1048576 < 68, 'ten native field sets and seventy lossless monster atlases exceed their separate 68 MiB budget');
   assert.ok(mb < 140.5, 'combined runtime delivery exceeds 140.5 MiB');
   const fourth=path.join(out,'assets/wardrobe/fourth/v1');assert.ok(walk(fourth)<6.25*1048576,'six fourth jobs share hair and accessory pixels');
