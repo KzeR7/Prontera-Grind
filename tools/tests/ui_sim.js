@@ -144,7 +144,7 @@ let skinBroken=false,skinNote='';   // the Appearance panel's class-skin state (
 const skCost=x=>x;
 let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
-let S=null,mapM=0,mapL=1,selB=null,selC=null,collectionGrade=-1,equipmentCardSearch='',equipmentCardFilter='all',equipmentCardPickId=null;   // remaining panel state comes in with the V grab
+let S=null,mapM=0,mapL=1,selB=null,selC=null,collectionGrade=-1,collectionMergeOnly=false,equipmentCardSearch='',equipmentCardFilter='all',equipmentCardPickId=null;   // remaining panel state comes in with the V grab
 const document={addEventListener(){}};
 const mobs=[],drops=[],logs=[];
 let boardPeriod='daily',boardKind='kills',boardCache={},boardLoading=false,boardError='';

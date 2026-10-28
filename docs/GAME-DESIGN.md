@@ -85,7 +85,10 @@ Valkyrie’s Sigils each in the Black Market (its existing Base 100 gate applies
 reserve used by protected +11–15 attempts. The 0.05% online boss scroll drop remains.
 Equipment → Ascension Forge requires a fourth-job class. Its recipe lists owned/required
 materials and Zeny in green when enough and red with missing amounts when short;
-a disabled forge action explains the shortage. Choose a set, then an eligible owned N+ piece. Evolution spends Shards/Catalysts, Sigils and Zeny, preserving the same item ID, refinement, cards and existing affixes while filling to four affixes. It never creates an extra item. Mythic equipment can only be worn by fourth jobs. Character contains working Ascension stats and Skill ascension allocation tabs.
+a closed forge action names the exact shortfall (for example "Ascend · missing
+Astral Shard +15") instead of only greying out, and switching the Mythic set keeps the
+chosen N+ piece selected. The off-hand shield stays available to every shield class,
+including Rune Knight, Arch Bishop and Mechanic. Choose a set, then an eligible owned N+ piece. Evolution spends Shards/Catalysts, Sigils and Zeny, preserving the same item ID, refinement, cards and existing affixes while filling to four affixes. It never creates an extra item. Mythic equipment can only be worn by fourth jobs. Character contains working Ascension stats and Skill ascension allocation tabs.
 Existing maps, pet identities and Nightmare reward values retain their meaning.
 
 ## Ascension progression (v167)
@@ -293,6 +296,10 @@ and set crit bonuses then add without that cap: 100% + 20% = 120%. Socketed card
 and LUK keep their ordinary rules. Off-hand dagger bonuses use 35% weighting.
 Boss resistance reduces the full result, for both basic attacks and skills. Astral and Thor drop no equipment; Mythic gear comes from the Forge.
 Cards, refining, ores and Nightmare materials interact with gear and the economy.
+Bag → Cards merges identical copies (★ +9%, ★★ +12%, ★★★ +15%, costing 1 / 3 / 5 extra
+unstarred copies) and its **Mergeable now** filter lists only the cards that already hold
+those copies, so a merge never has to be checked card by card. The detail button states
+how many copies are still missing. Normal and Nightmare copies still merge separately.
 Check the corresponding tests before changing eligibility, rolls, prices or rewards.
 
 Zeny funds upgrades and several random systems. Kill speed, monster health, EXP,
@@ -353,6 +360,9 @@ insufficient bag capacity rejects the entire grant. Additional GM controls add 1
 of both ores alongside the existing +20, and set Base level to 1, 99 or 120 while
 clearing Base EXP and recalculating unspent points without resetting allocated stats.
 The Forge evolves compatible owned N+ equipment; maps do not drop gear.
+The simulation speed control (x1/x2/x4) above the dock is a GM testing tool: players
+always run at 1x, never see the button, and a save that carried a higher rate is reset
+to 1x at login.
 Mythic refines reach +15 (15 ores per attempt; +11…+15 chances 30/21/12/5/2%).
 Four-affix reforges retain their paid offer across reloads. The cloud GM console
 includes all crafted gear, materials and Mythic scrolls, and supports +15/four-affix edits.
