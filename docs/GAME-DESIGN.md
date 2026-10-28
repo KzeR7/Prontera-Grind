@@ -209,9 +209,10 @@ Echo stays stationary. Melee classes use their ordinary movement.
 Meteor Storm, Storm Gust, Lord of Vermilion, Gravity Well, Judgment Pillar,
 Consecration and Arrow Shower leave marked ground areas with repeated damage.
 Their radius is 35% larger; damage checks the current enemies inside the circle,
-including other camps. The v227 update log specifies a five-target cap, but ground
-field pulses currently hit every enemy in range; this discrepancy is under review and
-changing it would affect balance. Each cast has one total damage budget split
+including other camps. The owner chose to retain the current behavior: ground field
+pulses hit every living enemy in range, with no five-target cap. This supersedes the
+v227 log's cap for ground fields only; ordinary direct AoE remains capped at five.
+Each cast has one total damage budget split
 between ticks; moving out avoids subsequent ticks. The original target can die
 without removing the field. At most two ground spells are active, with at most
 one of each spell; blocked entries skip forward in the combo. Meteor Storm lasts

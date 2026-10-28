@@ -72,15 +72,14 @@ phone-width layouts, errors, success and signing in again without a refresh. Sto
 server after testing. This check was run with bundled headless Chromium in Linux; it
 is not a substitute for hosted staging or physical-device checks.
 
-## Ground-spell target cap investigation
+## Ground-spell target behavior
 
-The v227 update log says area attacks, including Meteor Storm, are capped at five
-nearest targets across camps. `node tools/check_ground_aoe_cap.cjs` is a separate,
-currently **failing** diagnostic: in a deterministic in-memory scenario direct AoE
-selects five targets, but Meteor's opening field pulse hits all eight, including four
-in another camp. The implementation has no target cap in `tickSkillFields`. An owner
-decision is required before changing this behavior because it affects gameplay balance.
-This audit is not counted as a passing gate suite and its failure remains open.
+The owner chose on 2026-10-28 to retain the existing behavior: ground field pulses
+hit every living enemy inside their radius across camps, without a five-target cap.
+This supersedes the v227 update log's five-target claim for ground fields only;
+direct AoE remains capped at five. `node tools/tests/ground_aoe_sim.js` checks both,
+including range, movement, target death and switching active camps, using synthetic
+in-memory game state. No damage formulas or balance settings were changed.
 
 ## Isolated Pages/D1 rehearsal
 
