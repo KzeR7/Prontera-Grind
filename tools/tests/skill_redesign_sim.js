@@ -44,12 +44,12 @@ test('multi-hit total scales every hit and honors reduced later-cast power',()=>
  assert.ok(Math.abs(values[0]-values[1])<=8);
  assert.ok(Math.abs(values[2]-values[1]*.3)<=8);
 });
-test('area damage stays in the engaged pack and respects shape/range',()=>{
- setup();const withinPack=ev(`(()=>{const target=mob;const near={...target,x:1,hp:1e6},sleep={...target,x:1,pack:1,hp:1e6},far={...target,x:20,hp:1e6};mobs.push(near,sleep,far);
- castSkill(SKILLS.find(s=>s.id==='mAss'),1);return near.hp<1e6&&sleep.hp===1e6&&far.hp===1e6;})()`);
+test('area damage reaches nearby camps but respects shape/range',()=>{
+ setup();const areaCorrect=ev(`(()=>{const target=mob;const near={...target,x:1,hp:1e6},sleep={...target,x:1,pack:1,hp:1e6},far={...target,x:20,hp:1e6};mobs.push(near,sleep,far);
+ castSkill(SKILLS.find(s=>s.id==='mAss'),1);return near.hp<1e6&&sleep.hp<1e6&&sleep.provokeUntil>t&&far.hp===1e6&&!far.provokeUntil;})()`);
  // Store the eval result separately: Node 22's assert source parser otherwise throws an
  // unrelated "Unterminated template" error while formatting this failing assertion.
- assert.ok(withinPack,'area must remain in the engaged pack and within range');
+ assert.ok(areaCorrect,'area must damage and wake nearby targets across camps without hitting distant enemies');
 });
 test('dash closes distance and leaves the player in melee',()=>{
  setup();ev(`pl.z=4;skillDash(SKILLS.find(s=>s.id==='vsplash'),mob)`);
@@ -65,9 +65,11 @@ test('dash hits in place in melee and the stationary trial',()=>{
  setup();ev(`pl.z=4;TRIAL.on=true;castSkill(SKILLS.find(s=>s.id==='akatar'),1)`);
  assert.equal(ev('pl.z'),4);assert.ok(ev('S.dmg>0'));ev('TRIAL.on=false');
 });
-test('dash refuses sleeping packs and never grants invulnerability',()=>{
+test('dash reaches nearby camps but refuses distant sleeping targets and grants no invulnerability',()=>{
  setup();ev(`pl.z=4;mob.pack=1;skillDash(SKILLS.find(s=>s.id==='vsplash'),mob)`);
- assert.equal(ev('pl.z'),4);assert.equal(ev('skillBonus("guard")'),0);
+ assert.ok(ev('pl.z<4'),'nearby enemy can be approached');assert.equal(ev('skillBonus("guard")'),0);
+ setup();ev(`pl.z=8;mob.pack=1;skillDash({...SKILLS.find(s=>s.id==='vsplash'),dash:10},mob)`);
+ assert.equal(ev('pl.z'),8,'distant sleeping target cannot be approached');assert.equal(ev('skillBonus("guard")'),0);
 });
 test('boss root stops movement but leaves its attack timer running',()=>{
  setup('Sniper','bow');ev(`S.sk={pharrow:5};Math.random=()=>.99;skillRoot(mob,2);var __rootHp=S.hp,__rootX=mob.x,__rootZ=mob.z;update(.2)`);

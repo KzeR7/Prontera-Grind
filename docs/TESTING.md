@@ -166,9 +166,15 @@ encounter rows differed from the previously saved sample; a second run reproduce
 new values exactly in this environment. Current-vs-prior sample kills ranged from
 −18.10% to +30.26%, while sampled death and boss-win outcomes stayed the same. These
 are fixed-seed 120-second samples, not real-world guarantees or a retuning decision.
-Five original game suites remain red, plus three competition suites paused on this
-branch. `combat_field_contract_sim.js` adds current-rule checks without removing the
-older, conflicting assertions.
+At that point, five original game suites remained red, plus three competition suites
+paused on this branch. `combat_field_contract_sim.js` adds current-rule checks.
+
+**2026-10-29 (later draft):** The owner explicitly approved replacing the outdated
+pack-only expectations in four combat suites with the current cross-camp rules. The
+four suites now pass with checks for shape, range, target limits, waking, timing and
+cancellation retained or strengthened; no gameplay code or combat balance changed.
+The separate 3.35-unit camp-spacing assertion was not changed and remains red.
+The three competition suites remain red while their features are paused.
 
 Two things changed, and neither one moved a ceiling out of the way of a real byte:
 
@@ -182,13 +188,13 @@ Two things changed, and neither one moved a ceiling out of the way of a real byt
   not the 3.9 MiB that leaving 62.5 would have handed back. The combined 140.5 MiB ceiling still
   covers every shipped byte.
 
-| suite | what it reports | why it is red |
+| suite | status | context |
 | --- | --- | --- |
 | `field_loop_smoke.js` | "a camp monster drifted off its camp ring" (8/9 steps) | old 3.35-unit limit conflicts with v231's widened candidate rings; do not relax the assertion without reconciling the intended layout |
-| `ground_combat_sim.js` | ground field radius/pack assertion | v227 deliberately allowed cross-camp area damage and fields that persist when the active camp changes; a diagnostic run reached both conflicts |
-| `rotation_updates_sim.js` | "expanded area stays within its camp" | v227 deliberately allowed in-range cross-camp AoE |
-| `skill_redesign_sim.js` | area-pack assertion plus dash assertion (24 pass/2 fail) | v227 allows cross-camp hits and dashing to nearby non-engaged targets; Node's assertion-source formatting previously obscured the first failure with a SyntaxError |
-| `fourth_job_skills_sim.js` | Chain Lightning expected `[0,1]`, got `[0,1,2]` | v227 deliberately allowed cross-camp bounces; a diagnostic run reached 15 other passing cases |
+| `ground_combat_sim.js` | formerly ground field radius/pack assertion; **now passes** | owner-approved cross-camp expectation; radius, target movement, death and cancellation checks remain |
+| `rotation_updates_sim.js` | formerly "expanded area stays within its camp"; **now passes** | owner-approved cross-camp expectation; nearby and out-of-range targets are explicitly checked |
+| `skill_redesign_sim.js` | formerly area-pack and dash assertions; **now passes** | owner-approved cross-camp expectation; damage, waking, range, distant sleeping targets and no-invulnerability checks remain |
+| `fourth_job_skills_sim.js` | formerly expected same-camp Chain Lightning; **now passes** | owner-approved cross-camp bounces, with nearest-target and bounce-cap checks |
 | `skill_balance_sim.js` | formerly "gear measurements stale"; **now passes** | both historical and current measurements were rerun against the unchanged tool and budgets; see the 2026-10-29 note above |
 
 Rules for that table:

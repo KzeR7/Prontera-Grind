@@ -11,7 +11,9 @@ try{
     assert.equal(ev(`SKILLS.filter(s=>s.type==='act'&&s.cls.includes(S.cls)).every(s=>skillRange(s,mob)===6)`),true);
   }
   ev(`S.cls='Mage';mob={x:6,z:0,hp:100,pack:1};mobs.splice(0,mobs.length,mob,{x:10.5,z:0,hp:100,pack:1},{x:12,z:0,hp:100,pack:1},{x:7,z:0,hp:100,pack:2});`);
-  assert.equal(ev(`skillTargets(SKILLS.find(s=>s.id==='fireball'),mob).length`),2,'expanded area stays within its camp');
+  assert.equal(ev(`skillTargets(SKILLS.find(s=>s.id==='fireball'),mob).length`),3,'expanded area includes nearby targets across camps');
+  assert.deepEqual(JSON.parse(ev(`JSON.stringify(skillTargets(SKILLS.find(s=>s.id==='fireball'),mob).map(o=>[o.x,o.pack]))`)),
+    [[6,1],[7,2],[10.5,1]],'nearby targets in both camps are hit, but the out-of-range target is not');
   ev(`S=fresh();S.cls='Mage';S.sk={fire:1,nap:1,coat:1};ACT.skmove('nap:-1');window.order=comboConfig().slots.join();lsPut(saveKey(),JSON.stringify(S));S=load();`);
   assert.equal(ev('comboConfig().slots.join()'),ev('order'));
   ev(`currentUser='other-rotation-account';S=load()`);assert.equal(ev('Object.keys(S.skillCombos).length'),0);
