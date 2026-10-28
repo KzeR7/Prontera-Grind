@@ -208,14 +208,17 @@ Echo stays stationary. Melee classes use their ordinary movement.
 
 Meteor Storm, Storm Gust, Lord of Vermilion, Gravity Well, Judgment Pillar,
 Consecration and Arrow Shower leave marked ground areas with repeated damage.
-Their radius is 35% larger; damage checks the current enemies inside the circle
-and stays within the engaged pack. Each cast has one total damage budget split
+Their radius is 35% larger; damage checks the current enemies inside the circle,
+including other camps. The v227 update log specifies a five-target cap, but ground
+field pulses currently hit every enemy in range; this discrepancy is under review and
+changing it would affect balance. Each cast has one total damage budget split
 between ticks; moving out avoids subsequent ticks. The original target can die
 without removing the field. At most two ground spells are active, with at most
 one of each spell; blocked entries skip forward in the combo. Meteor Storm lasts
 five seconds with a 12-second cooldown (at least seven seconds without meteors).
-Ground cooldowns and ordinary combo recovery survive field travel. Travel,
-class/account replacement, defeat, resets and disabling a spell clear its field.
+Ground cooldowns and ordinary combo recovery survive field travel. Switching active
+camps does not clear a field. Map/stage travel, class/account replacement, defeat,
+resets and disabling a spell clear its field.
 
 The holy tree uses offensive holy spells with modest solo recovery. Searing Light
 heals at most once per cast below 60% HP; Searing Light and Judgment Pillar no

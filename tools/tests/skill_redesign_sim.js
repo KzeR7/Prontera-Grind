@@ -45,8 +45,11 @@ test('multi-hit total scales every hit and honors reduced later-cast power',()=>
  assert.ok(Math.abs(values[2]-values[1]*.3)<=8);
 });
 test('area damage stays in the engaged pack and respects shape/range',()=>{
- setup();assert.ok(ev(`(()=>{const target=mob;const near={...target,x:1,hp:1e6},sleep={...target,x:1,pack:1,hp:1e6},far={...target,x:20,hp:1e6};mobs.push(near,sleep,far);
- castSkill(SKILLS.find(s=>s.id==='mAss'),1);return near.hp<1e6&&sleep.hp===1e6&&far.hp===1e6;})()`));
+ setup();const withinPack=ev(`(()=>{const target=mob;const near={...target,x:1,hp:1e6},sleep={...target,x:1,pack:1,hp:1e6},far={...target,x:20,hp:1e6};mobs.push(near,sleep,far);
+ castSkill(SKILLS.find(s=>s.id==='mAss'),1);return near.hp<1e6&&sleep.hp===1e6&&far.hp===1e6;})()`);
+ // Store the eval result separately: Node 22's assert source parser otherwise throws an
+ // unrelated "Unterminated template" error while formatting this failing assertion.
+ assert.ok(withinPack,'area must remain in the engaged pack and within range');
 });
 test('dash closes distance and leaves the player in melee',()=>{
  setup();ev(`pl.z=4;skillDash(SKILLS.find(s=>s.id==='vsplash'),mob)`);

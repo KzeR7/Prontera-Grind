@@ -14,7 +14,15 @@ function makeD1(sqlite) {
     all: async () => ({ results: stmt.all(...args) }),
     run: async () => ({ success: true, meta: stmt.run(...args) }),
   });
-  return { prepare: sql => wrap(sqlite.prepare(sql)) };
+  return {
+    prepare: sql => wrap(sqlite.prepare(sql)),
+    // Match D1's ordered, all-or-nothing batch, including connection-local changes().
+    batch: async statements => {
+      sqlite.exec('BEGIN IMMEDIATE');
+      try { const out = []; for (const q of statements) out.push(await q.run()); sqlite.exec('COMMIT'); return out; }
+      catch (e) { sqlite.exec('ROLLBACK'); throw e; }
+    },
+  };
 }
 const sqlite = new DatabaseSync(':memory:');
 const migrations = path.join(root, 'migrations');
@@ -70,6 +78,24 @@ await t('day and week keys use Singapore calendar boundaries (Monday week start)
   assert.equal(boardDayKey(Date.UTC(2026, 9, 5, 16, 0, 0)), '2026-10-06');
   assert.equal(boardWeekStart('2026-10-04'), '2026-09-28');
   assert.equal(boardWeekStart('2026-10-05'), '2026-10-05');
+});
+
+await t('the D1 shim executes batches in order and rolls back on failure', async () => {
+  sqlite.exec('CREATE TEMP TABLE batch_probe (id INTEGER PRIMARY KEY)');
+  try {
+    const db = env.DB;
+    const result = await db.batch([
+      db.prepare('INSERT INTO batch_probe(id) VALUES (?)').bind(1),
+      db.prepare('INSERT INTO batch_probe(id) SELECT 2 WHERE changes() = 1'),
+    ]);
+    assert.equal(result[0].meta.changes, 1);
+    assert.equal(result[1].meta.changes, 1);
+    await assert.rejects(db.batch([
+      db.prepare('INSERT INTO batch_probe(id) VALUES (?)').bind(3),
+      db.prepare('INSERT INTO batch_probe(id) VALUES (?)').bind(1),
+    ]));
+    assert.deepEqual(sqlite.prepare('SELECT id FROM batch_probe ORDER BY id').all().map(row => row.id), [1, 2]);
+  } finally { sqlite.exec('DROP TABLE batch_probe'); }
 });
 
 const alpha = await register('Alpha', 'alpha-password-1');

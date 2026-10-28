@@ -51,10 +51,12 @@ use `--gm-all`. See [Launch security](LAUNCH-SECURITY.md) before any real migrat
 
 The existing `dev_server_sim.js`, `leaderboard_sim.js` and `echo_board_sim.js`
 still assert the old public ranking/payout behaviour and therefore fail while those
-features are deliberately paused. They were green before this change. Their assertions
-have not been deleted or weakened; authoritative scoring and safe payout need to be
-implemented and these suites reconciled before re-enabling competition. This is in
-addition to the six recorded baseline failures below.
+features are deliberately paused. They were green before this change. The latter two
+previously stopped in account setup because their local D1 shims lacked transactional
+`batch`; their helpers now support ordered batches and rollback, allowing the old
+assertions to run. Those assertions have not been deleted or weakened; authoritative
+scoring and safe payout need to be implemented before re-enabling competition. This is
+in addition to the six recorded baseline failures below.
 
 ## Password-recovery UI
 
@@ -69,6 +71,16 @@ non-loopback test URLs; never use real account credentials. It checks desktop an
 phone-width layouts, errors, success and signing in again without a refresh. Stop the
 server after testing. This check was run with bundled headless Chromium in Linux; it
 is not a substitute for hosted staging or physical-device checks.
+
+## Ground-spell target cap investigation
+
+The v227 update log says area attacks, including Meteor Storm, are capped at five
+nearest targets across camps. `node tools/check_ground_aoe_cap.cjs` is a separate,
+currently **failing** diagnostic: in a deterministic in-memory scenario direct AoE
+selects five targets, but Meteor's opening field pulse hits all eight, including four
+in another camp. The implementation has no target cap in `tickSkillFields`. An owner
+decision is required before changing this behavior because it affects gameplay balance.
+This audit is not counted as a passing gate suite and its failure remains open.
 
 ## Isolated Pages/D1 rehearsal
 
@@ -160,12 +172,12 @@ Two things changed, and neither one moved a ceiling out of the way of a real byt
 
 | suite | what it reports | why it is red |
 | --- | --- | --- |
-| `field_loop_smoke.js` | "a camp monster drifted off its camp ring" (8/9 steps) | camp-ring layout assertion no longer matches the spawn helper |
-| `ground_combat_sim.js` | `assert(r.near<r.opening&&…)` | kiting movement windows; retune against the current combat loop |
-| `rotation_updates_sim.js` | "expanded area stays within its camp" | area-expansion geometry vs. camp layout |
-| `skill_redesign_sim.js` | `SyntaxError: Unterminated template` in an extracted span, plus a dash assertion | source-extraction anchor and dash behaviour both stale |
-| `fourth_job_skills_sim.js` | strict deep-equal on a skill-id/slot sequence | fourth-job skill list moved past the fixture |
-| `skill_balance_sim.js` | "gear measurements stale: rerun progression_balance.js" | historical measurement fixture, hash-pinned on purpose |
+| `field_loop_smoke.js` | "a camp monster drifted off its camp ring" (8/9 steps) | old 3.35-unit limit conflicts with v231's widened candidate rings; do not relax the assertion without reconciling the intended layout |
+| `ground_combat_sim.js` | ground field radius/pack assertion | v227 deliberately allowed cross-camp area damage and fields that persist when the active camp changes; a diagnostic run reached both conflicts |
+| `rotation_updates_sim.js` | "expanded area stays within its camp" | v227 deliberately allowed in-range cross-camp AoE |
+| `skill_redesign_sim.js` | area-pack assertion plus dash assertion (24 pass/2 fail) | v227 allows cross-camp hits and dashing to nearby non-engaged targets; Node's assertion-source formatting previously obscured the first failure with a SyntaxError |
+| `fourth_job_skills_sim.js` | Chain Lightning expected `[0,1]`, got `[0,1,2]` | v227 deliberately allowed cross-camp bounces; a diagnostic run reached 15 other passing cases |
+| `skill_balance_sim.js` | "gear measurements stale: rerun progression_balance.js" | historical measurement fixture is hash-pinned; the hash includes some non-combat code, but current measurements have not been revalidated |
 
 Rules for that table:
 
