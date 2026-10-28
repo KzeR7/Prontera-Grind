@@ -345,6 +345,11 @@ if (game) {
       'the card drops the rows it no longer shows instead of keeping an empty half');
   });
 
+  test('mail and the daily roulette sit in one corner row on a phone', () => {
+    assert.equal(declOf('html.pg-mobile #minimapTools', 'flex-direction'), 'row');
+    assert.equal(declOf('html.pg-mobile .minimap-tool-btn', 'width'), '36px');
+  });
+
   test('the activity log shows whole lines instead of a clipped box', () => {
     // eclipse.css pins #feed to 220px (170px under 740px) and packs it bottom-up,
     // so a phone max-height used to cut the fourth row in half.

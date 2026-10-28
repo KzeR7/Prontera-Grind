@@ -8552,10 +8552,10 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** Run `bash tools/build_site.sh && node tools/dev_server.js`, then open the game on a phone (or a
   desktop browser at `/?phone=1`) and rotate the device; use ☷ → Phone layout to switch back to the desk
   arrangement, ⛶ for landscape fullscreen and ⊞ for Field only.
-* **Checks:** `mobile_layout_sim` 21/21 (new: CSS scope and load order, z-stack ordering, the fixed player-card
+* **Checks:** `mobile_layout_sim` 22/22 (new: CSS scope and load order, z-stack ordering, the fixed player-card
   box, landscape tokens, phone/tablet/narrow-desk detection, `?phone=`, persistence, field-only closing the sheet
   while keeping the More menu reachable, fullscreen, chip → scrim → Escape → tab flow, Display-panel cycling,
-  the live quest list in the sheet, the dock More → rail mirror, and the log row rule). Full JS gate: 141 suites, **134 green, 7 red** — exactly the documented known-red baseline in
+  the live quest list in the sheet, the dock More → rail mirror, the log row rule and the corner buttons). Full JS gate: 141 suites, **134 green, 7 red** — exactly the documented known-red baseline in
   [Testing](TESTING.md) (`field_loop_smoke`, `ground_combat_sim`, `rotation_updates_sim`, `skill_redesign_sim`,
   `fourth_job_skills_sim`, `skill_balance_sim`, `publish_sim` budget), no new failures. All three
   generated-asset `--check` scripts pass. `card_star_balance_sim` needs `git fetch origin d164bd0` in a fresh

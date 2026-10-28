@@ -170,8 +170,11 @@ html.pg-mobile #rangedMovement select{font-size:9px;min-height:26px;max-width:10
 
 /* Mail and the daily roulette keep their badges but lose their labels and
    become two square buttons in the top-right corner. */
+/* Mail and the daily roulette: one row of two squares in the top-right corner
+   instead of a 200px column with labels. */
 html.pg-mobile #minimapTools{
   right:calc(6px + var(--pg-safe-r));top:6px;gap:5px;z-index:46;
+  flex-direction:row;align-items:flex-start;
 }
 html.pg-mobile .minimap-tool-btn{
   width:36px;height:36px;border-radius:9px;padding:3px 2px;gap:0;
