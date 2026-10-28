@@ -42,24 +42,21 @@ export const onRequestPost = guard(async ({ request, env }) => {
 
   const { ok, upgrade } = await verifyPassword(String(p), user.pass_hash);
   if (!ok) return reject();
-  if (upgrade) await db.setPassword(D, user.id, upgrade);   // raise the cost of an old hash
-
   const token = newToken();
   const hash = await tokenHash(token);
-  await db.insertSession(D, hash, user.id, Date.now() + SESSION_DAYS * 86400000,
-    userAgent(request), ip);
-  // One session per account: signing in here ends the session the account held on any other
-  // device, so a phone and a laptop can never both farm the same character and overwrite each
-  // other's saves. The other device finds out on its next request (401) and stops playing.
-  await db.deleteOtherSessions(D, user.id, hash);
-  await db.noteLogin(D, user.id);
+  const created = await db.startVerifiedSession(D, {
+    tokenHash: hash, userId: user.id, expectedHash: user.pass_hash, upgradeHash: upgrade,
+    expiresAt: Date.now() + SESSION_DAYS * 86400000, ua: userAgent(request), ipHash: ip,
+  });
+  // Password, ban or account state changed while password verification was in flight.
+  if (!created) return fail('Account details changed. Please sign in again.', 401);
   await db.clearRate(D, `login-ip:${ip || 'noip'}`);
   await db.clearRate(D, `login-name:${name.toLowerCase()}`);
   // NO touchSeen here. saves.last_seen is the OFFLINE away baseline (a claim pays for
   // now - last_seen), and a returning player signs in BEFORE the game asks for its claim - a
   // login that moved the baseline erased the player's own away window, so cloud accounts
   // silently stopped receiving offline rewards (the local no-cloud path was never affected).
-  // The sign-in itself is recorded in users.last_login_at (noteLogin, above) for the GM player
+  // The sign-in itself is recorded in users.last_login_at (in the verified-session transaction) for the GM player
   // list, and the away baseline moves on the first save exchange of the session (GET/PUT
   // /api/save), which is the server-observed return the offline reward is timed from.
   await db.logEvent(D, user.username, user.id, 'login', null);

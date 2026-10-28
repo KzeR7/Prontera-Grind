@@ -1,16 +1,19 @@
 # Launch security and accounts
 
 This is a staged hardening change, **not** a security certification. Do not deploy
-until the migration and a staging rehearsal have been completed. No Cloudflare
-settings or production data were changed by this work.
+until staging and the remaining security work have been completed. The owner reported
+a production backup and manual application of migration 0007 on 2026-10-28, and
+verified the column and index. This agent did not access or change production.
 
 ## Required deployment order
 
-1. Back up D1 and rehearse restoration. Apply `migrations/0007_account_email.sql`
-   **once** to a staging copy, then to production before deploying the new code.
-   Unlike `CREATE IF NOT EXISTS`, SQLite's `ALTER TABLE ADD COLUMN` is not safe to
-   rerun. Use your migration ledger/dashboard to check first. Old accounts retain
-   `NULL` email and continue to sign in. Never edit existing save blobs for this.
+1. Back up D1 and rehearse restoration on an isolated copy. The owner reported that
+   0007 was applied manually to production and verified; **do not run it again** there.
+   Apply it once to each new staging database only after inspecting its schema. SQLite's
+   `ALTER TABLE ADD COLUMN` is not rerunnable. Manual SQL does not update Wrangler's
+   migration ledger, so do not blindly use `wrangler d1 migrations apply` against an
+   installation with manually applied migrations. Old accounts retain `NULL` email and
+   continue to sign in. Never edit existing save blobs for this.
 2. Audit existing `users.gm` values, especially if a database was ever exposed
    before its first owner signed up. Registration now creates players only. Existing
    owners are not demoted. If an owner must be established, an authorized operator
@@ -18,8 +21,11 @@ settings or production data were changed by this work.
    promote that exact account through D1's authenticated console (`gm=2`). Confirm
    exactly one intended row changed and review access logs; don't publish passwords.
    Protect the Cloudflare account with MFA and least-privilege access.
-3. Never set `DEV_GM_ALL` on a real deployment. `--gm-all` exists only for a
-   disposable local preview and deliberately makes every registered account an owner.
+3. `--gm-all` is implemented only by the disposable Node preview router; the deployed
+   registration handler ignores `DEV_GM_ALL`. It deliberately makes every local preview
+   registration an owner, so never expose that preview to untrusted users or connect it
+   to production data. The current `wrangler.toml` names the production D1 database;
+   do not test branch previews until they have a separately configured staging database.
 4. Test registration, login, recovery, session revocation, chat, save, GM access and
    password reset on the actual Pages/D1 runtime. The local SQLite shim cannot prove
    Cloudflare CPU limits, D1 behavior, cookie policies or browser email delivery.

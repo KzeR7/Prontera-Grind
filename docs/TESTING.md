@@ -45,7 +45,8 @@ Apply `0007_account_email.sql` once to disposable databases before testing the
 new registration/recovery flow. The local server applies migrations automatically.
 `node tools/tests/launch_security_sim.js` exercises legacy accounts, concurrent email
 registration, recovery races and session revocation, request limits and the leaderboard
-pause. New registrations are ordinary players; for a disposable local GM preview,
+pause. `node tools/tests/session_race_sim.js` covers password-reset and ban races, atomic
+reset rollback, concurrent sign-ins and local-only GM promotion. New registrations are ordinary players; for a disposable local GM preview,
 use `--gm-all`. See [Launch security](LAUNCH-SECURITY.md) before any real migration.
 
 The existing `dev_server_sim.js`, `leaderboard_sim.js` and `echo_board_sim.js`
@@ -69,7 +70,9 @@ actual API handlers through a local SQLite D1 shim and applies local migrations.
 `dist/` after changing client files; restart after changing API handlers (the server
 caches imported modules).
 
-For disposable GM testing use `node tools/dev_server.js --gm-all` and register a
+For disposable GM testing on your own computer, bind to localhost (for example,
+`HOST=127.0.0.1 node tools/dev_server.js --gm-all` on macOS/Linux, or
+`$env:HOST="127.0.0.1"; node tools/dev_server.js --gm-all` in PowerShell) and register a
 synthetic account in that local instance — it grants owner access only there. The
 database is in memory by default; `--db tools/.devdb/preview.sqlite` keeps local test
 data across restarts. Do not change the shared GM password or use production credentials

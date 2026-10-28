@@ -85,8 +85,7 @@ export const onRequestPost = guard(async ({ request, env }) => {
       if (!isOwner) return fail('Only the owner can change a password.', 403);
       const pw = String(body.password || '');
       if (pw.length < 10) return fail('Use at least 10 characters.', 400);
-      await db.setPassword(D, id, await hashPassword(pw));
-      await db.deleteUserSessions(D, id);          // a new password invalidates old sessions
+      await db.setPasswordAndRevoke(D, id, await hashPassword(pw));  // atomic with session revocation
       await audit('gm-set-password', 'password changed; sessions revoked');
       return json({ ok: true, note: 'Password set. All their devices must log in again.' });
     }

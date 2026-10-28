@@ -1,5 +1,10 @@
 # Putting Prontera Grind on Cloudflare (initial setup + v67 server-timed offline claims)
 
+**Historical setup guide:** the current account security changes remain a draft and are not
+launch-ready. For the existing live `pg`, the owner reported applying and verifying 0007
+manually on 2026-10-28; do not rerun it or blindly run Wrangler migrations. Use
+[Launch security](../docs/LAUNCH-SECURITY.md) for the current checklist.
+
 The click-by-click. **Nothing here costs money** and none of it needs a credit card: the whole point
 of choosing Cloudflare was that the free plan never expires, unlike the Render free database.
 
@@ -19,8 +24,8 @@ npx wrangler d1 execute pg --remote --file=migrations/0003_server_timed_offline_
 npx wrangler d1 execute pg --remote --file=migrations/0004_gm_gift_batches.sql
 npx wrangler d1 execute pg --remote --file=migrations/0005_shop.sql
 npx wrangler d1 execute pg --remote --file=migrations/0006_echo_leaderboard.sql
-# Apply 0007 once only, after backing up and checking it has not already run:
-npx wrangler d1 execute pg --remote --file=migrations/0007_account_email.sql
+# 0007 was reported applied to the existing production pg; do not run it again.
+# For a different database, inspect its schema and follow docs/LAUNCH-SECURITY.md.
 ```
 
 **haven-v215 (Cash Shop):** `0005_shop.sql` can run before **or** after the v215 build is deployed —
@@ -114,7 +119,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-28 haven-v256 account security` |
+| Build tag at the bottom of the card | `2026-10-28 haven-v257 session safety` |
 | Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
@@ -297,12 +302,13 @@ account you registered last time is gone and the new one may not be the first. S
 that cannot happen again:
 
 ```sh
-node tools/dev_server.js --gm-all               # every account registered here is an owner
-node tools/dev_server.js --gm-all --db tools/.devdb/preview.sqlite   # ...and the database survives restarts
+HOST=127.0.0.1 node tools/dev_server.js --gm-all  # local-only; every registration is an owner
+HOST=127.0.0.1 node tools/dev_server.js --gm-all --db tools/.devdb/preview.sqlite   # ...and the database survives restarts
 ```
 
-`--gm-all` is a preview-only switch: **never** set `DEV_GM_ALL` on the Cloudflare project, because on
-it would grant owner privileges to every new account on the real server.
+`--gm-all` is a preview-only switch, implemented in the local Node router. It grants
+owner privileges to every preview registration. Never expose that preview to untrusted
+users or use real accounts/data; the deployed registration handler ignores `DEV_GM_ALL`.
 
 ## If something goes wrong
 

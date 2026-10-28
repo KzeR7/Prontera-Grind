@@ -1302,7 +1302,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-10-28 haven-v256 account security';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-28 haven-v257 session safety';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6750,7 +6750,7 @@ const V={
     return`<div class="board-panel"><div class="board-periods">${[['kills','Kills'],['echo','Endless Echo']].map(([k,l])=>`<button data-a="boardkind" data-v="${k}" class="${boardKind===k?'on':''}" aria-pressed="${boardKind===k}">${l}</button>`).join('')}</div><div class="board-periods">${periods.map(p=>`<button data-a="boardperiod" data-v="${p}" class="${boardPeriod===p?'on':''}" aria-pressed="${boardPeriod===p}">${labels[p]}</button>`).join('')}</div>
       <div class="board-head"><small>${data?esc(data.label):'Periods use Singapore time'}${boardLoading&&data?' · refreshing…':''}</small><button data-a="boardrefresh" title="Refresh the scores" aria-label="Refresh leaderboard">↻</button></div>
       <div class="board-row" style="font-weight:bold;border-bottom:1px solid var(--edge)"><span>#</span><span>Player</span><span>Base</span><span>${echo?'Best DPS':'Kills'}</span></div>${state}${rewards}
-      <small class="board-note">${echo?'Competitive leaderboards and their prizes are temporarily paused while fair scoring is developed.':'Competitive leaderboards are temporarily paused while fair scoring is developed.'}</small></div>`},
+      <small class="board-note">${echo?'Competitive leaderboards and their prizes are temporarily paused while fair scoring is developed.':'Competitive leaderboards are temporarily paused while fair scoring is developed. Previously self-reported scores are not verified.'}</small></div>`},
   log(){const cats=LOGCATS.map(([k,n])=>`<label class="logf"><input type="checkbox" data-a="logf" data-v="${k}" ${logOn(k)?'checked':''} aria-label="Show ${n} lines"> ${n}</label>`).join('');
     const shown=logShown();
     return`<div class="log-preview-controls"><button data-a="feed" aria-pressed="${feedOn()}">${feedOn()?"Hide":"Show"} on-screen log</button><small>Choose event types below for the on-screen preview and activity history.</small></div><div class="logfbar">${cats}<span class="sp"><button data-a="logfall" data-v="on">All</button><button data-a="logfall" data-v="off">None</button></span></div>

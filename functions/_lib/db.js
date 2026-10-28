@@ -139,6 +139,34 @@ export const blobBytes = (db, userId) =>
   db.prepare('SELECT LENGTH(blob) AS n FROM saves WHERE user_id = ?').bind(userId).first();
 
 // -------------------------------------------------------------- sessions ----
+// A session must be created against the *same* password that was verified. D1 batches are
+// transactional: a concurrent password reset/ban either happens first (this inserts nothing),
+// or afterwards (its session revocation removes the new session). The guarded delete/note only
+// run for an inserted token, keeping a failed stale login from affecting a newer session.
+export async function startVerifiedSession(db, { tokenHash, userId, expectedHash, upgradeHash, expiresAt, ua, ipHash }) {
+  const statements = [];
+  if (upgradeHash) statements.push(db.prepare(`UPDATE users SET pass_hash = ? WHERE id = ? AND pass_hash = ? AND banned = 0`)
+    .bind(upgradeHash, userId, expectedHash));
+  const insertIndex = statements.length;
+  statements.push(db.prepare(`INSERT INTO sessions(token_hash, user_id, created_at, expires_at, ua, ip_hash)
+    SELECT ?, id, ?, ?, ?, ? FROM users WHERE id = ? AND pass_hash = ? AND banned = 0`)
+    .bind(tokenHash, now(), expiresAt, ua, ipHash, userId, upgradeHash || expectedHash));
+  statements.push(db.prepare(`DELETE FROM sessions WHERE user_id = ? AND token_hash <> ?
+    AND EXISTS (SELECT 1 FROM sessions WHERE user_id = ? AND token_hash = ?)`)
+    .bind(userId, tokenHash, userId, tokenHash));
+  statements.push(db.prepare(`UPDATE users SET last_login_at = ?, fail_count = 0, fail_at = 0
+    WHERE id = ? AND EXISTS (SELECT 1 FROM sessions WHERE user_id = ? AND token_hash = ?)`)
+    .bind(now(), userId, userId, tokenHash));
+  const result = await db.batch(statements);
+  return Number(result?.[insertIndex]?.meta?.changes ?? result?.[insertIndex]?.meta?.rows_written ?? 0) === 1;
+}
+
+// The password change and session invalidation must commit together.
+export const setPasswordAndRevoke = (db, userId, passHash) => db.batch([
+  db.prepare('UPDATE users SET pass_hash = ?, fail_count = 0, fail_at = 0 WHERE id = ?').bind(passHash, userId),
+  db.prepare('DELETE FROM sessions WHERE user_id = ?').bind(userId),
+]);
+
 export const insertSession = (db, tokenHash, userId, expiresAt, ua, ipHash) =>
   db.prepare(`INSERT INTO sessions(token_hash, user_id, created_at, expires_at, ua, ip_hash)
               VALUES(?, ?, ?, ?, ?, ?)`)

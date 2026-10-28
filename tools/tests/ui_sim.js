@@ -446,6 +446,7 @@ t('the leaderboard renders daily, weekly and all-time stamps with kills and Base
   assert.ok(h.includes('Knight_One')&&h.includes('Lv 42')&&h.includes('12,345 kills'),'the player row shows name, current level and period kills');
   assert.ok(h.includes('data-a="boardperiod"')&&h.includes('data-a="boardrefresh"'),'the period and refresh buttons are wired');
   assert.ok(h.includes('self-reported')&&!h.includes('undefined'),'the leaderboard is honest about browser-simulated scores');
+  assert.ok(h.includes('temporarily paused'),'the client explains the competition pause even for a cached result');
   U.boardStatus={api:false,on:false};U.boardCache={};U.boardPeriod='daily';
   assert.ok(U.V.board().includes('Sign in to a cloud account'),'the offline static game explains why no board is available');
 });

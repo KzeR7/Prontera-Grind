@@ -28,14 +28,12 @@ export const onRequestPost = guard(async ({ request, env }) => {
 
   if (await db.userByName(D, username)) return fail('That username is already taken.', 409);
 
-  // Public registrations never grant privileges, even on an empty database. Existing
-  // owners are unaffected. Only the explicitly disposable preview can grant GM.
-  const devAll = String(env.DEV_GM_ALL || '') === 'all';
+  // The deployed handler never grants privileges, including via environment flags.
   const code = recoveryCode();
+  const passHash = await hashPassword(password);
   try {
     await db.insertUser(D, { username, email: address,
-      passHash: await hashPassword(password), recoveryHash: await hashRecovery(code),
-      gm: devAll ? 2 : 0 });
+      passHash, recoveryHash: await hashRecovery(code), gm: 0 });
   } catch (e) {
     if (/unique constraint/i.test(String(e?.message || e))) return fail('That username or email is already in use.', 409);
     throw e;
@@ -44,11 +42,12 @@ export const onRequestPost = guard(async ({ request, env }) => {
 
   const token = newToken();
   const hash = await tokenHash(token);
-  await db.insertSession(D, hash, user.id, Date.now() + SESSION_DAYS * 86400000,
-    userAgent(request), ip);
-  await db.deleteOtherSessions(D, user.id, hash);   // one live session per account, see sessions.js
-  await db.noteLogin(D, user.id);
-  await db.logEvent(D, username, user.id, 'register', devAll ? 'preview account — GM (dev server)' : '');
+  const created = await db.startVerifiedSession(D, {
+    tokenHash: hash, userId: user.id, expectedHash: passHash,
+    expiresAt: Date.now() + SESSION_DAYS * 86400000, ua: userAgent(request), ipHash: ip,
+  });
+  if (!created) return fail('Account details changed. Please sign in again.', 401);
+  await db.logEvent(D, username, user.id, 'register', '');
 
   return json({ u: user.username, gm: user.gm, recovery: code },
     201, { 'Set-Cookie': sessionCookie(token) });
