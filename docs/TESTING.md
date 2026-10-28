@@ -178,8 +178,8 @@ The three competition suites remain red while their features are paused.
 
 **2026-10-29 (camp/auth audit):** The original 3.35-unit camp smoke was not changed.
 An in-memory bounded-ring prototype and a local workerd password-cost probe are
-measured in [Camp and auth audit](CAMP-AUTH-AUDIT.md); the gameplay option is not
-approved. `recovery_hash_sim.js` covers skipping an otherwise discarded legacy
+measured in [Camp and auth audit](CAMP-AUTH-AUDIT.md). The owner chose to retain
+the current camp layout; the tighter prototype is not approved. `recovery_hash_sim.js` covers skipping an otherwise discarded legacy
 recovery-hash upgrade while retaining password upgrades, rotation and revocation.
 The full gate had 144 passing and the same four failing suites, with no new
 failures; all three generated-asset checks passed.

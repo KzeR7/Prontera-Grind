@@ -54,10 +54,10 @@ node -r ./tools/audits/camp_prototype_preload.cjs tools/tests/starter_sim.js
 
 The preload is solely for local experiments; never use it for a build or deployment.
 Without the preload, the current game and original camp smoke remain unchanged.
-**Proposed next step:** if the owner wants tighter camps, implement a bounded-ring
-change, add deterministic radius/stocking/spacing regressions including water and
-refill, inspect gameplay visually, and rerun combat/progression checks before
-considering staging. Do not make that gameplay change without the owner's decision.
+**Owner decision (2026-10-29):** Keep the current camp layout; do not implement
+the tighter prototype. The original 3.35-unit assertion remains unchanged and
+its conflict with the existing layout remains unresolved. Do not alter gameplay or
+weaken the assertion without further owner approval.
 
 ## Password hashing: local results, not a hosted limit
 

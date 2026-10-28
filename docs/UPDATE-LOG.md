@@ -8772,3 +8772,9 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** See `docs/CAMP-AUTH-AUDIT.md` for the sampled trade-offs, prototype-only test commands, benchmark limitations and pending owner decision. Run `node tools/tests/recovery_hash_sim.js` for legacy upgrade/rotation/revocation coverage.
 * **Checks:** 3,000 seeded layouts per version showed no sample above 3.35 with the prototype, empty camps, pairs below 2.6 or water/lane violations; five prototype-only field smokes passed 9/9 and the starter suite passed 11/11. These samples do not establish visual, long-term or balance equivalence. Local workerd accepted the tested iteration counts, but open-source workerd bypasses the hosted limit and wall time is not hosted CPU. Full JS gate: 144 passing, the same four failing, no newly red suites; all three generated-asset checks passed. The gate's three apparent skip flags were success descriptions containing the word “skipped”, not skipped suites.
 * **Delivery:** Work on the existing draft PR branch; no gameplay change, hosted benchmark, staging deployment, production deployment or account data access by the agent. Hosted authentication limits and any game-layout change remain decisions for the owner.
+
+### 2026-10-29 — `retain current camp layout`
+* **Changed:** Recorded the owner's decision to retain the existing camp layout instead of implementing the tighter prototype. No gameplay code or test assertion changed.
+* **Try it:** See `docs/CAMP-AUTH-AUDIT.md` for the measured trade-offs and `docs/DECISIONS.md` for the owner decision.
+* **Checks:** Full gate: 144 passing and the same four failing, including the unresolved original 3.35-unit camp smoke; no previously green suite regressed and all three generated-asset checks passed. Competition remains paused.
+* **Delivery:** Documentation on the existing draft PR; no staging or production deployment.
