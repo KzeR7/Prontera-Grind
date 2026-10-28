@@ -8683,3 +8683,38 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   `assassin_equipment_sim`, `mythic_testing_sim` 10/10, `gameplay_polish_sim` and
   `class_weapon_sim` all pass. Known-red count is unchanged at 6 (`card_star_balance_sim`
   still needs the pinned `d164bd0` revision, which this shallow clone does not have).
+
+### 2026-10-28 — `2026-10-28 haven-v255 starter guide and coach tips`
+* **Rewrote the first-login guide for someone who has never played** (owner: "can u rework my
+  starting guide to guide players that just started"). The beginner chapter is a first session,
+  not a systems reference:
+  * `GUIDE_LESSONS.beginner` is now five steps — welcome/let it fight, read the dock once, spend
+    points and learn an attack, take a job at Novice Job 10, collect and equip — and every step
+    still points at the panel it is talking about.
+  * The page opens on a **live checklist** (`beginnerChecklist()`): stat points spent, an attack
+    learned, a weapon better than the starter knife equipped, a stage cleared, a job chosen, a
+    card owned and the daily spin used. Each row reads the save, so it ticks itself; finished
+    rows keep a tick instead of a button and the rest keep a one-click jump to the right panel.
+  * Twelve short chapters replace the old wall of text, all copy checked against this build: the
+    six Equipment workspaces, Bag → Cards star bonuses (+9 / +12 / +15%) with 1 / 3 / 5 merge
+    costs and the "Mergeable now" filter, Nightmare and Ascension maps, Endless Echo, the
+    Forge's fourth-job and N+ rules, protection scrolls, the three-minute away window, the
+    one-login device rule and the real hotkey list.
+* **New — new-player coach tips.** One small card at a time, pinned to the control it is about,
+  with that control ringed. Six tips (`points`, `skills`, `equip`, `card`, `job`, `daily`) fire
+  only while their condition is true: unspent points, an unlearned attack, a drop that beats the
+  worn weapon, loose cards with none socketed, Novice Job 10 reached, an unspun daily wheel.
+  Spare copies merge into cards only when the action is done, so a tip disappears by itself.
+  * Remembered per account in `S.handbook.tips`; **Got it** records the tip, **Go** opens the
+    panel it is about, and dismissing re-arms the fingerprint so the next card waits for a real
+    change instead of appearing immediately.
+  * Never drawn over the guide, the find-the-guide pointer, a dialog, the job trial or the
+    social hub; **Settings → Gameplay → New-player tips** (`S.hints`) switches them off for
+    good. Only accounts that started the beginner page (`S.handbook.beginner`) and are still
+    **Base 30 or below** are eligible, so a returning save never gets a "spend your first
+    points" card.
+* **Checks:** `guide_sim` now pins the five beginner steps, the checklist (seven rows, progress
+  and buttons) and the whole tip engine (anchor ring, dismiss, re-arm, hints switch, guide and
+  dialog blocking, Go opening the right panel); `ui_sim` 64/64 after adding `ptsSpent` to its
+  renderer harness; `panel_layout_smoke` 42/42, `mobile_layout_sim` 28/28, `eclipse_ui_sim`
+  52/52, `gameplay_polish_sim` pass. Known-red count is unchanged at 6.
