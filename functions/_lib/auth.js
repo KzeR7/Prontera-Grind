@@ -1,10 +1,9 @@
 // _lib/auth.js — passwords, sessions, cookies, and the GM gate.
 //
-// Password hashing runs in WebCrypto (PBKDF2-SHA256). The free Workers/Pages plan allows 10ms of CPU
-// per request, so the iteration count is chosen to fit with room to spare: measured in Node,
-// 20,000 iterations costs ~6ms. The count is stored INSIDE each hash, so it can be raised later
-// without breaking anyone — verify() reads the count from the stored string, and login upgrades an
-// old hash to the current one when the password is correct.
+// Password hashing runs in WebCrypto (PBKDF2-SHA256). The current 20,000 iterations are below
+// modern OWASP password-storage guidance. Local timings do NOT establish hosted CPU headroom or
+// the hosted PBKDF2 limit; see docs/LAUNCH-SECURITY.md before changing the work factor.
+// Each stored hash contains its own iteration count; successful login can upgrade an old hash.
 //
 // Everything here is deliberately boring: no clever crypto, no home-made MACs, constant-time
 // comparison, and the session token is never stored (only its SHA-256).
@@ -41,7 +40,7 @@ function timingSafeEqual(a, b) {
 }
 
 // -> {ok:boolean, upgrade:string|null}  (upgrade is a fresh hash when the stored cost is behind)
-export async function verifyPassword(password, stored) {
+export async function verifyPassword(password, stored, { upgrade = true } = {}) {
   const parts = String(stored || '').split('$');
   if (parts.length !== 4 || parts[0] !== 'pbkdf2') return { ok: false, upgrade: null };
   const iterations = Number(parts[1]);
@@ -49,15 +48,17 @@ export async function verifyPassword(password, stored) {
   let bits;
   try { bits = await pbkdf2(password, fromB64(parts[2]), iterations); } catch { return { ok: false, upgrade: null }; }
   const ok = timingSafeEqual(toB64(bits), parts[3]);
-  const upgrade = ok && iterations < ITER ? await hashPassword(password) : null;
-  return { ok, upgrade };
+  const upgradedHash = ok && upgrade && iterations < ITER ? await hashPassword(password) : null;
+  return { ok, upgrade: upgradedHash };
 }
 
 // A recovery code is a password-like secret: 20 chars, hash it the same way and compare types.
 export const hashRecovery = code => hashPassword(String(code).toUpperCase(), ITER);
 export async function verifyRecovery(code, stored) {
   if (!stored) return false;
-  return (await verifyPassword(String(code).toUpperCase(), stored)).ok;
+  // Recovery always rotates the code after a successful reset. A legacy hash does not
+  // need an additional upgrade hash that would be discarded before rotation.
+  return (await verifyPassword(String(code).toUpperCase(), stored, { upgrade: false })).ok;
 }
 
 // --------------------------------------------------------------- sessions ----

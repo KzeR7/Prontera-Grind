@@ -176,6 +176,14 @@ cancellation retained or strengthened; no gameplay code or combat balance change
 The separate 3.35-unit camp-spacing assertion was not changed and remains red.
 The three competition suites remain red while their features are paused.
 
+**2026-10-29 (camp/auth audit):** The original 3.35-unit camp smoke was not changed.
+An in-memory bounded-ring prototype and a local workerd password-cost probe are
+measured in [Camp and auth audit](CAMP-AUTH-AUDIT.md); the gameplay option is not
+approved. `recovery_hash_sim.js` covers skipping an otherwise discarded legacy
+recovery-hash upgrade while retaining password upgrades, rotation and revocation.
+The full gate had 144 passing and the same four failing suites, with no new
+failures; all three generated-asset checks passed.
+
 Two things changed, and neither one moved a ceiling out of the way of a real byte:
 
 - `tools/build_site.sh` stopped copying art that only unpublished dev pages read (152 KiB:

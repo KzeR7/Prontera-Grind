@@ -60,11 +60,14 @@ removed. Do not re-enable rankings or payout from those records: build server-au
 scoring, a trustworthy period cut-off and atomic, retryable prize settlement first.
 Client-side anti-cheat, a numerical cap or AI detection alone cannot make scores fair.
 
-PBKDF2 remains at 20,000 iterations for now. OWASP recommends a stronger password KDF;
-Cloudflare Workers has had a 100,000 iteration PBKDF2 ceiling, and the free CPU budget
-may also constrain registration/login. **Do not simply raise the constant:** benchmark
-and test the target runtime, choose a suitably provisioned authentication service or
-plan, and migrate old hashes on successful login. See
+PBKDF2 remains at 20,000 iterations for now, below OWASP guidance. The local
+[password-hashing audit](CAMP-AUTH-AUDIT.md) demonstrates operation-shaped costs,
+but cannot establish hosted CPU headroom or the hosted iteration ceiling: open-source
+workerd overrides that limit. **Do not simply raise the constant:** evaluate a
+suitably provisioned authentication service or plan, test the actual hosted runtime,
+and safely migrate old hashes. Legacy recovery verification no longer computes a
+password-style upgrade that would be discarded before recovery rotates the code;
+legacy password login still upgrades. See
 https://github.com/cloudflare/workerd/issues/1346 and
 https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html.
 
