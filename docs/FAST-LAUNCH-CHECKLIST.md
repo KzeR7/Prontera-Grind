@@ -54,9 +54,18 @@ synthetic row on staging and investigate. The few test calls and D1 reads/writes
 count toward the owner's Cloudflare quota. This script does not deploy, change any
 existing account, or prove sustained load, CPU or rollback safety.
 
+The owner ran the first probe version: the staging identity check passed, but a later
+step failed and cleanup could not be confirmed. The owner then ran a scoped read-only
+query showing zero `users` rows for that synthetic username. This does not prove which
+step failed or whether any unrelated test artifacts remain. No scrypt endpoint success
+was established. The probe now invokes npm with separate arguments instead of wrapping
+its command in `cmd.exe`, adds a read-only SQL/quoting preflight before creating an account,
+and reports the failure phase without SQL or credentials. Windows hosted execution of
+the revised version remains unverified; the original failure's cause is not established.
+
 The loopback protocol test passes with real Functions and in-memory SQLite, including
-cleanup on an injected failure. The Windows/Wrangler path and actual hosted run remain
-unverified until the owner runs them. Never run against a production host or database.
+cleanup on an injected failure. Direct npm CLI argument handling also passed with local
+Wrangler/D1 on Linux; this is not Windows or hosted proof. Never run against production.
 
 ## 2. Backup and restore
 
@@ -126,9 +135,9 @@ unverified until the owner runs them. Never run against a production host or dat
   browser behavior. Test a bounded load with owner permission and budget, observe hosted
   errors/CPU/D1 and edge events, and include an independent security review. Do not use
   production as a load-test target or assume local wall time measures hosted CPU.
-- The latest full JS gate was 151 pass / 3 failures: three tests still expect competition
-  to be live. The camp-spacing smoke passed this run, but it failed previous runs and its
-  historical disagreement with the chosen layout is not resolved. A previous run exposed
+- The latest full JS gate was 150 pass / 4 failures: three tests still expect competition
+  to be live and the camp-spacing smoke failed again. The camp smoke passed the previous
+  run, but its historical disagreement with the chosen layout is not resolved. A previous run exposed
   the intermittent GM preset item-ID collision, which remains unresolved; assess its item
   identity impact before opening real accounts.
 - The latest draft changes after v258 have not been deployed to staging. Production merge

@@ -31,7 +31,7 @@ export function makeCase(){
     cleanup:`DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE ${where});\nDELETE FROM events WHERE user_id IN (SELECT id FROM users WHERE ${where});\nDELETE FROM rate_limits WHERE key IN ('login-name:${username.toLowerCase()}','recover-name:${username.toLowerCase()}') AND EXISTS (SELECT 1 FROM users WHERE ${where});\nDELETE FROM users WHERE ${where};`};
 }
 export async function runProbe({exec,request,testCase,report=()=>{}}){
-  const c=testCase, results=[];let seedAttempted=false, cleanupOk=false, failure;
+  const c=testCase, results=[];let seedAttempted=false, cleanupOk=false, failure, cleanupFailure, phase='seed';
   async function check(name,route,options,expected){
     const r=await request(route,options);
     if(r.status!==expected)throw Error(`${name}: expected HTTP ${expected}, received HTTP ${r.status}`);
@@ -39,28 +39,28 @@ export async function runProbe({exec,request,testCase,report=()=>{}}){
   }
   try{
     seedAttempted=true;await exec(c.seed);
-    const before=await exec(c.check);
+    phase='verify seeded row';const before=await exec(c.check);
     assert.equal(before[0]?.n,1,'synthetic account must exist once');
     assert.equal(before[0]?.scrypt_pass,1);assert.equal(before[0]?.scrypt_recovery,1);
-    const login=await check('scrypt login','/api/sessions',{method:'POST',data:{u:c.username,p:c.password}},200);
+    phase='scrypt login';const login=await check('scrypt login','/api/sessions',{method:'POST',data:{u:c.username,p:c.password}},200);
     assert.equal(login.data?.gm,0,'synthetic account must not have GM privileges');
     assert(login.cookie?.startsWith('pg_session='),'login must return a session');
-    await check('session active','/api/me',{cookie:login.cookie},200);
-    await check('competition paused','/api/board?board=echo',{cookie:login.cookie},503);
-    const afterLogin=await exec(c.check);assert.equal(afterLogin[0]?.scrypt_pass,1,'login must preserve scrypt hash');
-    const reset=await check('scrypt recovery','/api/recover',{method:'POST',data:{u:c.username,email:c.email,code:c.code,p:c.newPassword}},200);
+    phase='session active';await check('session active','/api/me',{cookie:login.cookie},200);
+    phase='competition pause';await check('competition paused','/api/board?board=echo',{cookie:login.cookie},503);
+    phase='verify login hash';const afterLogin=await exec(c.check);assert.equal(afterLogin[0]?.scrypt_pass,1,'login must preserve scrypt hash');
+    phase='scrypt recovery';const reset=await check('scrypt recovery','/api/recover',{method:'POST',data:{u:c.username,email:c.email,code:c.code,p:c.newPassword}},200);
     assert(typeof reset.data?.recovery==='string'&&reset.data.recovery!==c.code,'recovery must rotate the synthetic code');
-    await check('old session revoked','/api/me',{cookie:login.cookie},401);
-    await check('new password login','/api/sessions',{method:'POST',data:{u:c.username,p:c.newPassword}},200);
-    const afterReset=await exec(c.check);
+    phase='session revocation';await check('old session revoked','/api/me',{cookie:login.cookie},401);
+    phase='new password login';await check('new password login','/api/sessions',{method:'POST',data:{u:c.username,p:c.newPassword}},200);
+    phase='verify reset hashes';const afterReset=await exec(c.check);
     assert.equal(afterReset[0]?.pbkdf2_pass,1,'reader-only reset must write PBKDF2');
     assert.equal(afterReset[0]?.pbkdf2_recovery,1,'reader-only recovery code must be PBKDF2');
   }catch(e){failure=e}
   finally{
-    if(seedAttempted){try{await exec(c.cleanup);const rows=await exec(c.check);cleanupOk=rows[0]?.n===0}catch{cleanupOk=false}}
+    if(seedAttempted){try{await exec(c.cleanup);const rows=await exec(c.check);cleanupOk=rows[0]?.n===0}catch(e){cleanupFailure=e;cleanupOk=false}}
   }
-  if(!cleanupOk)throw Error(`Synthetic account cleanup was not confirmed (${c.username}); contact the operator. Earlier failure: ${failure?'yes':'no'}.`);
-  if(failure)throw Error(`Synthetic test failed: ${failure.message}. Cleanup confirmed.`);
+  if(!cleanupOk)throw Error(`Synthetic account cleanup was not confirmed (${c.username}). Test phase: ${failure?phase:'completed'}; cleanup phase: ${cleanupFailure?'execution failed':'row still present'}. Do not rerun until checked.`);
+  if(failure)throw Error(`Synthetic test failed at ${phase}: ${failure.message}. Cleanup confirmed.`);
   report({results,cleanup:'confirmed',note:'Only isolated staging and synthetic data. A few requests are not a load, CPU, cost or production rollback test.'});
 }
 
@@ -69,6 +69,25 @@ export function safeSql(sql){
   if(!/^[A-Za-z0-9_@$.*'(),;:= -]+$/.test(single))throw Error('Unsafe generated staging SQL');
   return single;
 }
+// Invoke npm's JavaScript entry point with separate argv entries, avoiding our own
+// cmd.exe wrapper. npm may use a shell internally. Fail closed if npm cannot be located.
+export function npxCliCandidates(nodePath,cmdPaths=[]){
+  const dirs=[path.dirname(nodePath),...cmdPaths.map(p=>path.dirname(p))];
+  return [...new Set(dirs.flatMap(d=>[
+    path.join(d,'node_modules','npm','bin','npx-cli.js'),
+    path.resolve(d,'..','lib','node_modules','npm','bin','npx-cli.js'),
+  ]))];
+}
+function findNpxCli(){
+  let found=[];
+  if(process.platform==='win32'){
+    const r=spawnSync('where.exe',['npx.cmd'],{encoding:'utf8',timeout:5000});
+    if(r.status===0)found=r.stdout.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  }
+  const candidate=npxCliCandidates(process.execPath,found).find(p=>fs.existsSync(p));
+  if(!candidate)throw Error('Could not find npm npx-cli.js; no staging data was changed');
+  return candidate;
+}
 function makeRemote(){
   const temp=fs.mkdtempSync(path.join(os.tmpdir(),'pg-reader-stage-'));
   fs.writeFileSync(path.join(temp,'wrangler.jsonc'),JSON.stringify({name:'pg-staging-probe',compatibility_date:'2026-10-01',
@@ -76,18 +95,11 @@ function makeRemote(){
   const env={...process.env,WRANGLER_SEND_METRICS:'false'};
   function wrangler(args,sql){
     const words=['--yes','wrangler@4.154.0',...args,'--config','wrangler.jsonc'];
-    // Only fixed SQL with generated alphanumeric/base64url inputs is allowed. Quote it
-    // for Windows cmd.exe; no interpolated shell metacharacters, user input or paths.
-    if(sql!==undefined){
-      sql=safeSql(sql);
-      words.push('--command',sql);
-    }
-    const windowsWords=sql===undefined?words:[...words.slice(0,-1),'"'+sql+'"'];
-    const p=process.platform==='win32'
-      ?spawnSync(process.env.ComSpec||'cmd.exe',['/d','/v:off','/s','/c','npx.cmd '+windowsWords.join(' ')],{cwd:temp,env,encoding:'utf8',timeout:120000})
-      :spawnSync('npx',words,{cwd:temp,env,encoding:'utf8',timeout:120000});
+    // Pass arguments separately to npm; its own execution layer may still use a shell.
+    if(sql!==undefined)words.push('--command',safeSql(sql));
+    const p=spawnSync(process.execPath,[findNpxCli(),...words],{cwd:temp,env,encoding:'utf8',timeout:120000});
     // Child output may contain SQL or account details. Do not print it.
-    if(p.error||p.status!==0)throw Error(`Wrangler ${args.slice(0,2).join(' ')} failed; check your Cloudflare login and staging access privately`);
+    if(p.error||p.status!==0)throw Error(`Wrangler ${args.slice(0,2).join(' ')} failed (exit ${Number.isInteger(p.status)?p.status:'unavailable'}); check staging access privately`);
     try{return JSON.parse(p.stdout)}catch{throw Error('Wrangler did not return valid JSON')}
   }
   return {
@@ -108,11 +120,17 @@ async function stageRequest(route,{method='GET',data,cookie}={}){
   const text=await r.text();let json;try{json=JSON.parse(text)}catch{json=null}
   return {status:r.status,data:json,cookie:(r.headers.get('set-cookie')||'').split(';')[0]};
 }
+export function verifyReadOnly(exec){
+  try{
+    const rows=exec("SELECT 1 AS n, 'pg-scrypt-v1$*' AS marker;");
+    if(rows?.[0]?.n!==1 || rows[0].marker!=='pg-scrypt-v1$*')throw Error('unexpected query result');
+  }catch(e){throw Error(`Read-only D1 preflight failed; no synthetic account was created. ${e.message}`)}
+}
 async function main(){
   if(process.argv.length!==2)throw Error('This fixed staging-only probe takes no arguments');
   const db=makeRemote();let c;
   try{
-    db.verify();c=makeCase();
+    db.verify();verifyReadOnly(db.exec);c=makeCase();
     console.log(`Verified fixed staging database; synthetic account ${c.username} will be removed after the test.`);
     await runProbe({exec:db.exec,request:stageRequest,testCase:c,report:r=>console.log(JSON.stringify(r,null,2))});
   }finally{db.dispose()}
