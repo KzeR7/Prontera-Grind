@@ -3,12 +3,14 @@
 // Password hashing runs in WebCrypto (PBKDF2-SHA256). The current 20,000 iterations are below
 // modern OWASP password-storage guidance. Local timings do NOT establish hosted CPU headroom or
 // the hosted PBKDF2 limit; see docs/LAUNCH-SECURITY.md before changing the work factor.
-// Each stored hash contains its own iteration count; successful login can upgrade an old hash.
+// Each PBKDF2 hash contains its iteration count; successful login can upgrade an old hash.
+// A bounded scrypt reader is present for a future staged rollback, but no scrypt hashes are written.
 //
 // Everything here is deliberately boring: no clever crypto, no home-made MACs, constant-time
 // comparison, and the session token is never stored (only its SHA-256).
 
 import * as db from './db.js';
+import { verifyScryptV1 } from './scrypt-reader.js';
 
 const ITER = 20000;                     // current work factor (see above)
 const MIN_PASS = 10;                    // a server account is worth 10 characters
@@ -41,6 +43,9 @@ function timingSafeEqual(a, b) {
 
 // -> {ok:boolean, upgrade:string|null}  (upgrade is a fresh hash when the stored cost is behind)
 export async function verifyPassword(password, stored, { upgrade = true } = {}) {
+  // Reader-only migration groundwork: never creates or upgrades to scrypt yet.
+  if (typeof stored === 'string' && stored.startsWith('pg-scrypt-v1$'))
+    return { ok: verifyScryptV1(password, stored), upgrade: null };
   const parts = String(stored || '').split('$');
   if (parts.length !== 4 || parts[0] !== 'pbkdf2') return { ok: false, upgrade: null };
   const iterations = Number(parts[1]);

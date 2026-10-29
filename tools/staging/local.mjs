@@ -1,5 +1,5 @@
 // Disposable local Pages/D1 rehearsal. Never points Wrangler at the repository's production config.
-// node tools/staging/local.mjs test | test-strong | test-scrypt | serve
+// node tools/staging/local.mjs test | test-strong | test-scrypt | test-reader | serve
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -11,8 +11,8 @@ import { fileURLToPath } from 'node:url';
 import { hashPassword, hashRecovery } from '../../functions/_lib/auth.js';
 
 const mode = process.argv[2] || 'test';
-if (!['test', 'test-strong', 'test-scrypt', 'serve'].includes(mode) || process.argv.length > 3) {
-  console.error('Usage: node tools/staging/local.mjs [test|test-strong|test-scrypt|serve]');
+if (!['test', 'test-strong', 'test-scrypt', 'test-reader', 'serve'].includes(mode) || process.argv.length > 3) {
+  console.error('Usage: node tools/staging/local.mjs [test|test-strong|test-scrypt|test-reader|serve]');
   process.exit(1);
 }
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -167,6 +167,17 @@ async function test(base) {
       assert.equal((await request(base,'/api/sessions',{method:'POST',data:{u:'StageLegacy',p:'GM-legacy-synthetic-123!'}})).status,200);
     }
   }
+  if (mode === 'test-reader') {
+    const hold=await request(base,'/api/sessions',{method:'POST',data:{u:'ReaderHold',p:ownerPass}});
+    assert.equal(hold.status,200,'scrypt reader signs in a synthetic account');
+    const resetLogin=await request(base,'/api/sessions',{method:'POST',data:{u:'ReaderReset',p:ownerPass}});
+    assert.equal(resetLogin.status,200,'scrypt reader signs in a recovery test account');
+    const resetResult=await request(base,'/api/recover',{method:'POST',data:{u:'ReaderReset',email:'reader@example.test',code:legacyCode,p:'Reader-new-synthetic-123!'}});
+    assert.equal(resetResult.status,200,'scrypt recovery code is accepted');
+    assert.notEqual(resetResult.data.recovery,legacyCode);
+    assert.equal((await request(base,'/api/me',{cookie:resetLogin.cookie})).status,401,'reader reset revokes session');
+    assert.equal((await request(base,'/api/sessions',{method:'POST',data:{u:'ReaderReset',p:'Reader-new-synthetic-123!'}})).status,200);
+  }
   console.log('PASS: real local Pages runtime, legacy owner/migration, player registration, unique email, GM authorization, save, paused board, recovery, session revocation and origin rejection.');
 }
 try {
@@ -215,6 +226,13 @@ try {
     if (!/^pbkdf2\$20000\$[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+$/.test(legacyRecovery)) throw new Error('Unexpected synthetic legacy recovery hash');
     seed+=`INSERT INTO users(username, pass_hash, recovery_hash, gm, created_at) VALUES ('StageLegacy', '${pwHash}', '${legacyRecovery}', 0, ${Date.now()});\n`;
   }
+  if (mode === 'test-reader') {
+    const {hashCandidate}=await import('../prototypes/scrypt_passwords.mjs');
+    const candidatePass=hashCandidate(ownerPass), candidateCode=hashCandidate(legacyCode);
+    assert(/^pg-scrypt-v1\$[A-Za-z0-9_-]+\$[A-Za-z0-9_-]+$/.test(candidatePass));
+    assert(/^pg-scrypt-v1\$[A-Za-z0-9_-]+\$[A-Za-z0-9_-]+$/.test(candidateCode));
+    seed+=`INSERT INTO users(username, pass_hash, recovery_hash, gm, created_at) VALUES ('ReaderHold', '${candidatePass}', '${candidateCode}', 0, ${Date.now()}), ('ReaderReset', '${candidatePass}', '${candidateCode}', 0, ${Date.now()});\n`;
+  }
   fs.writeFileSync(path.join(temp,'seed.sql'),seed);
   const seeded=run(['d1','execute',testName,'--local','--persist-to','./state','--file','seed.sql']);
   if (!seeded.includes('local database')) throw new Error('Owner seed did not confirm local D1');
@@ -223,6 +241,10 @@ try {
   if (mode === 'test-strong' || mode === 'test-scrypt') {
     const updated=run(['d1','execute',testName,'--local','--persist-to','./state','--command',"UPDATE users SET email='legacy@example.test' WHERE username='StageLegacy'"]);
     if (!updated.includes('local database')) throw new Error('Legacy synthetic email update did not confirm local D1');
+  }
+  if (mode === 'test-reader') {
+    const updated=run(['d1','execute',testName,'--local','--persist-to','./state','--command',"UPDATE users SET email='reader@example.test' WHERE username='ReaderReset'"]);
+    if (!updated.includes('local database')) throw new Error('Reader synthetic email update did not confirm local D1');
   }
   const again=migrationApply();
   assert.match(again,/No migrations to apply/i,'reapplying via local migration ledger must be a no-op');
@@ -234,6 +256,16 @@ try {
   await startServer(port,host);
   if (mode!=='serve') {
     await test(`http://127.0.0.1:${port}`);
+    if (mode==='test-reader') {
+      await stopServer(); child=undefined;
+      const sql="SELECT username, pass_hash GLOB 'pg-scrypt-v1$*' AS scrypt_pass, recovery_hash GLOB 'pg-scrypt-v1$*' AS scrypt_recovery, pass_hash GLOB 'pbkdf2$20000$*' AS pbkdf2_pass, recovery_hash GLOB 'pbkdf2$20000$*' AS pbkdf2_recovery FROM users WHERE username IN ('ReaderHold','ReaderReset','StagePlayer') ORDER BY username";
+      const rows=JSON.parse(run(['d1','execute',testName,'--local','--persist-to','./state','--json','--command',sql]))[0].results;
+      assert.equal(rows.length,3);
+      assert.equal(rows[0].username,'ReaderHold');assert.equal(rows[0].scrypt_pass,1);assert.equal(rows[0].scrypt_recovery,1);
+      assert.equal(rows[1].username,'ReaderReset');assert.equal(rows[1].pbkdf2_pass,1);assert.equal(rows[1].pbkdf2_recovery,1);
+      assert.equal(rows[2].username,'StagePlayer');assert.equal(rows[2].pbkdf2_pass,1);assert.equal(rows[2].pbkdf2_recovery,1);
+      console.log('PASS: reader-only local candidate accepts synthetic scrypt but writes PBKDF2 on registration/recovery. NOT hosted proof.');
+    }
     if (mode==='test-strong' || mode==='test-scrypt') {
       // Shut down before querying the isolated store; SQL returns only booleans, never hashes.
       await stopServer(); child=undefined;

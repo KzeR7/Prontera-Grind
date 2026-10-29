@@ -43,11 +43,20 @@ A disconnected research adapter is in `tools/prototypes/scrypt_passwords.mjs` wi
 synthetic coverage in `tools/tests/scrypt_password_prototype_sim.js`. It exercises a
 fixed bounded candidate profile, legacy PBKDF2 verification followed by upgrade only
 on success, and a recovery-style verification without a discarded upgrade. It is not
-imported by the repository's Functions and has not changed real stored hashes. A
-separate local Pages/D1 experiment wires it into a temporary Functions copy only; see
-[isolated staging](ISOLATED-STAGING.md). The format and code are not yet approved for
-production; hosted endpoint integration, migration, rollback, CPU, memory and load tests
-remain necessary.
+imported by the repository's Functions. The draft now includes a separately implemented
+bounded **reader only** for the same synthetic format; password and recovery writes still
+use PBKDF2 at 20,000. A local Pages/D1 experiment also wires the prototype writer into a
+temporary Functions copy only; see [isolated staging](ISOLATED-STAGING.md). Neither has
+changed real stored hashes. The format and code are not yet approved for production;
+hosted endpoint integration, migration, rollback, CPU, memory and load tests remain necessary.
+
+If this reader-only revision is ever deployed before a later writer, it could be a
+rollback candidate for already-upgraded accounts. That is **not yet a tested rollback**:
+its resets, recoveries and new registrations still create PBKDF2 hashes at the weaker
+20,000 setting, and rollback to earlier versions without the reader would lock out scrypt
+accounts. Any rollback would therefore temporarily weaken hashes on those write paths;
+monitor, communicate and re-upgrade after the issue is resolved. Reader compatibility,
+release ordering and rollback must be verified on isolated hosted staging first.
 
 ## Options, not yet approved for deployment
 

@@ -11,7 +11,8 @@ backup contents or screenshots showing them should be shared in chat.
 PBKDF2-SHA256 at 600,000 was rejected by the owner's remote preview. The next
 candidate is **scrypt N=16384, r=8, p=5** (an OWASP-listed profile), not a claim
 that a lower PBKDF2 work factor meets the recommendation. The repository's actual
-authentication still uses 20,000 PBKDF2 iterations and is unchanged.
+authentication still writes 20,000 PBKDF2 iterations; the draft now includes a
+fixed-profile scrypt reader, but cannot create scrypt hashes.
 
 The owner ran `tools/audits/hosted_scrypt_probe.mjs` twice using their existing Wrangler
 login. Both runs accepted the vector and one, two and three synthetic candidate-profile
@@ -27,8 +28,8 @@ still count toward the account's quota. `--local` is only a harness test.
 A pass checks this preview's acceptance, not CPU quota headroom, actual Pages
 integration, full registration/recovery, concurrency, sustained load or pricing. A
 rejection (including timeout or runtime error) does not identify a safe alternative by
-itself. No password algorithm change until implementation and migration/rollback are
-reviewed and synthetic hosted staging tests pass; see [Password KDF plan](PASSWORD-KDF-PLAN.md).
+itself. Do not change the password write algorithm until implementation and migration/rollback
+are reviewed and synthetic hosted staging tests pass; see [Password KDF plan](PASSWORD-KDF-PLAN.md).
 
 ## 2. Backup and restore
 
@@ -63,10 +64,15 @@ reviewed and synthetic hosted staging tests pass; see [Password KDF plan](PASSWO
   Authentication**, enable an authenticator app or security keys if needed, securely store
   recovery methods, and check every administrator has MFA and least-privilege access.
   Do not share codes. [Cloudflare MFA](https://developers.cloudflare.com/fundamentals/account/account-security/2fa/).
-- Confirm the actual public hostname(s), Cloudflare zone, available plan, and whether the
-  owner can attach rules to each hostname. Zone-level rules for a custom domain must not
-  be assumed to cover a direct `pages.dev` hostname or other bypass routes. Do not assume
-  the staging project and production have identical rules or bindings.
+- The owner reports that the public game uses `pages.dev`. Zone-level WAF rules are
+  normally configured on a domain/zone the owner controls; do not assume they cover the
+  shared `pages.dev` host or its preview/deployment hostnames. Cloudflare community
+  guidance reports that a custom domain rule does not protect the direct Pages address:
+  [Pages/WAF discussion](https://community.cloudflare.com/t/waf-for-cloudflare-pages/516494).
+  Confirm the account's available controls and each actual host; a custom domain without
+  protecting or closing direct/preview access can be bypassed. Do not buy a domain, change
+  access or block players without approval. The application rate limits still need hosted
+  testing and do not replace edge controls.
 - For an applicable zone, evaluate a narrowly scoped rule for `/api/sessions`,
   `/api/register` and `/api/recover`, grouped by IP, with **Block** and an HTTP 429
   response rather than an interactive challenge that an API fetch cannot solve. Select
@@ -93,7 +99,7 @@ reviewed and synthetic hosted staging tests pass; see [Password KDF plan](PASSWO
   browser behavior. Test a bounded load with owner permission and budget, observe hosted
   errors/CPU/D1 and edge events, and include an independent security review. Do not use
   production as a load-test target or assume local wall time measures hosted CPU.
-- The latest full JS gate was 148 pass / 4 failures: three tests still expect competition
+- The latest full JS gate was 149 pass / 4 failures: three tests still expect competition
   to be live and one retains the old camp-spacing assertion. A previous full run exposed
   the previously documented intermittent GM preset item-ID collision, which remains
   unresolved; assess its item identity impact before opening real accounts.

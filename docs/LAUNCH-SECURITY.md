@@ -69,8 +69,9 @@ This is not an end-to-end Pages CPU/quota test. The local
 [password-hashing audit](CAMP-AUTH-AUDIT.md) cannot establish hosted limits because
 open-source workerd overrides them; see [Password KDF plan](PASSWORD-KDF-PLAN.md).
 The owner also ran two remote scrypt previews that accepted the tested OWASP-listed
-profile. This is not a real Pages endpoint, capacity, CPU or migration test; the
-existing PBKDF2 authentication is still unchanged.
+profile. This is not a real Pages endpoint, capacity, CPU or migration test. The draft
+adds a fixed-profile scrypt **reader only**; password and recovery writes remain PBKDF2
+at 20,000. See [Password KDF plan](PASSWORD-KDF-PLAN.md) for rollback limitations.
 **Do not simply raise the constant:** evaluate a suitably provisioned
 authentication service or plan, test the actual hosted runtime,
 and safely migrate old hashes. Legacy recovery verification no longer computes a

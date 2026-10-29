@@ -13,7 +13,7 @@ backups, production credentials or secrets into it.
   those Functions import, then generates a separate Wrangler configuration there. It does
   not pass the production database ID/configuration to Wrangler. Local D1 is selected
   explicitly for all database commands, with a separate temporary persistence directory.
-- It accepts only `test`, `test-strong`, `test-scrypt` or `serve` and never runs deploy or a remote D1 command. It
+- It accepts only `test`, `test-strong`, `test-scrypt`, `test-reader` or `serve` and never runs deploy or a remote D1 command. It
   removes Cloudflare credential environment variables from Wrangler's environment; local
   execution does not require Cloudflare login. Wrangler/npm may still use the network to
   install or perform their own local-runtime setup.
@@ -76,6 +76,21 @@ or deploy the experiment until compatibility, migration and rollback are verifie
 A separate, owner-run, synthetic [hosted preview probe](HOSTED-AUTH-PROBE.md) can
 check iteration acceptance without touching the game or D1; it is not full staging.
 
+## Local reader-only compatibility experiment (no deployment)
+
+```sh
+bash tools/build_site.sh
+node tools/staging/local.mjs test-reader
+```
+
+This tests the draft's fixed-profile scrypt **reader** with two synthetic scrypt
+accounts in a disposable local D1. It checks login and recovery, session revocation,
+that an unchanged login preserves the scrypt hash, and that recovery and new account
+writes still use PBKDF2 at 20,000. This is not hosted staging or a safe rollout/rollback
+proof. Reader-only rollback can keep scrypt accounts readable but will temporarily write
+weaker PBKDF2 on recovery, registration and GM password resets. A still older version
+without this reader cannot authenticate upgraded accounts. See [Password KDF plan](PASSWORD-KDF-PLAN.md).
+
 ## Local scrypt integration experiment (no deployment)
 
 ```sh
@@ -87,8 +102,8 @@ This opts into patching **only a temporary Functions copy** with the disconnecte
 scrypt adapter and uses a new, local-only D1 containing synthetic accounts. It exercises
 registration, legacy 20k password upgrade, legacy recovery-code rotation, recovery
 races, session revocation, a GM password reset and one simultaneous login/reset
-schedule, email uniqueness, save and the paused board. It checks candidate hash prefixes without printing hashes. The repository's
-actual Functions continue to use 20k PBKDF2; no hosted or real account is changed.
+schedule, email uniqueness, save and the paused board. It checks candidate hash prefixes without printing hashes. The repository's actual Functions still **write** 20k PBKDF2 and include only a
+scrypt reader; no hosted or real account is changed.
 
 The owner separately reported two successful remote-preview scrypt acceptance probes.
 This local integrated experiment does **not** test hosted Pages/D1, CPU and memory
