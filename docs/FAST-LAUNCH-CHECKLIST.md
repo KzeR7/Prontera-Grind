@@ -45,10 +45,11 @@ reviewed and synthetic hosted staging tests pass; see [Password KDF plan](PASSWO
 - `node tools/audits/local_d1_restore.mjs` has already exported a fully migrated,
   synthetic local D1 and imported it into a separate local D1, verifying the owner,
   email, save and partial unique email index. It also exercised the in-memory checker.
-  The owner ran the checker on the reported backup path, but it failed at the initial
-  file-read stage before opening or testing the SQL. The reason is not yet known; a
-  missing, inaccessible or empty file is possible. Therefore the actual backup
-  has not been verified.
+  The owner located the historical 6,018,686-byte export after the first path was not
+  found, ran the checker on their own computer and reported an in-memory restore with
+  integrity and foreign-key checks OK and core tables present. The email column was
+  absent, as expected for a snapshot created before 0007. This is not a current backup,
+  a full per-save verification, or a hosted D1 restore test.
 - Before a production change, create a fresh, securely stored backup and rehearse a
   suitable restore procedure using an isolated copy, with permission and access controls.
   D1 Time Travel restores **in place**, cancels in-flight queries and can overwrite newer
@@ -92,10 +93,10 @@ reviewed and synthetic hosted staging tests pass; see [Password KDF plan](PASSWO
   browser behavior. Test a bounded load with owner permission and budget, observe hosted
   errors/CPU/D1 and edge events, and include an independent security review. Do not use
   production as a load-test target or assume local wall time measures hosted CPU.
-- The latest full JS gate was 147 pass / 5 failures: three tests still expect competition
-  to be live, one retains the old camp-spacing assertion, and the previously documented
-  intermittent GM preset item-ID collision recurred (a GM-only rerun passed). The ID
-  collision remains unresolved; assess its item identity impact before opening real accounts.
+- The latest full JS gate was 148 pass / 4 failures: three tests still expect competition
+  to be live and one retains the old camp-spacing assertion. A previous full run exposed
+  the previously documented intermittent GM preset item-ID collision, which remains
+  unresolved; assess its item identity impact before opening real accounts.
 - The latest draft changes after v258 have not been deployed to staging. Production merge
   and deployment require a separate explicit decision, after the above and a compatible
   rollback plan. Never reapply migration 0007 to live `pg`; it was applied manually and

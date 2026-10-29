@@ -1,5 +1,5 @@
 // Disposable local Pages/D1 rehearsal. Never points Wrangler at the repository's production config.
-// node tools/staging/local.mjs test | test-strong | serve
+// node tools/staging/local.mjs test | test-strong | test-scrypt | serve
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -11,8 +11,8 @@ import { fileURLToPath } from 'node:url';
 import { hashPassword, hashRecovery } from '../../functions/_lib/auth.js';
 
 const mode = process.argv[2] || 'test';
-if (!['test', 'test-strong', 'serve'].includes(mode) || process.argv.length > 3) {
-  console.error('Usage: node tools/staging/local.mjs [test|test-strong|serve]');
+if (!['test', 'test-strong', 'test-scrypt', 'serve'].includes(mode) || process.argv.length > 3) {
+  console.error('Usage: node tools/staging/local.mjs [test|test-strong|test-scrypt|serve]');
   process.exit(1);
 }
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -127,7 +127,7 @@ async function test(base) {
   const relog=await request(base,'/api/sessions',{method:'POST',data:{u:'StagePlayer',p:'Changed-password-123!'}});
   assert.equal(relog.status,200); assert.equal((await request(base,'/api/save',{cookie:relog.cookie})).data.blob,save);
   assert.equal((await request(base,'/api/sessions',{method:'POST',origin:'https://not-the-game.invalid',data:{u:'StagePlayer',p:'Changed-password-123!'}})).status,403);
-  if (mode === 'test-strong') {
+  if (mode === 'test-strong' || mode === 'test-scrypt') {
     const legacy=await request(base,'/api/sessions',{method:'POST',data:{u:'StageLegacy',p:ownerPass}});
     assert.equal(legacy.status,200,'legacy synthetic account can log in');
     const legacyReset=await request(base,'/api/recover',{method:'POST',data:{u:'StageLegacy',email:'legacy@example.test',code:legacyCode,p:'Legacy-changed-123!'}});
@@ -141,7 +141,31 @@ async function test(base) {
     const race=await Promise.all([request(base,'/api/recover',{method:'POST',data}),request(base,'/api/recover',{method:'POST',data})]);
     assert.deepEqual(race.map(x=>x.status).sort(),[200,400],'stronger hash must preserve single-use recovery');
     assert.equal((await request(base,'/api/me',{cookie:relog.cookie})).status,401,'winning recovery revokes the previous session');
-    assert.equal((await request(base,'/api/sessions',{method:'POST',data:{u:'StagePlayer',p:'Second-change-123!'}})).status,200);
+    const playerSession=await request(base,'/api/sessions',{method:'POST',data:{u:'StagePlayer',p:'Second-change-123!'}});
+    assert.equal(playerSession.status,200);
+    if (mode === 'test-scrypt') {
+      const list=await request(base,'/api/gm/players',{cookie:owner.cookie});
+      const target=list.data?.players?.find(p=>p.u==='StagePlayer');
+      assert(Number.isInteger(target?.id),'synthetic player must appear in GM console');
+      const gmReset=await request(base,'/api/gm/player',{method:'POST',cookie:owner.cookie,
+        data:{id:target.id,action:'set-password',password:'GM-reset-synthetic-123!'}});
+      assert.equal(gmReset.status,200,'synthetic GM reset works with the candidate');
+      assert.equal((await request(base,'/api/me',{cookie:playerSession.cookie})).status,401,'GM reset revokes player session');
+      assert.equal((await request(base,'/api/sessions',{method:'POST',data:{u:'StagePlayer',p:'Second-change-123!'}})).status,401);
+      assert.equal((await request(base,'/api/sessions',{method:'POST',data:{u:'StagePlayer',p:'GM-reset-synthetic-123!'}})).status,200);
+      const legacyTarget=list.data.players.find(p=>p.u==='StageLegacy');
+      assert(Number.isInteger(legacyTarget?.id));
+      const [racingLogin,racingReset]=await Promise.all([
+        request(base,'/api/sessions',{method:'POST',data:{u:'StageLegacy',p:'Legacy-changed-123!'}}),
+        request(base,'/api/gm/player',{method:'POST',cookie:owner.cookie,
+          data:{id:legacyTarget.id,action:'set-password',password:'GM-legacy-synthetic-123!'}}),
+      ]);
+      assert([200,401].includes(racingLogin.status),'racing old login may succeed only before reset');
+      assert.equal(racingReset.status,200,'concurrent GM reset succeeds');
+      if (racingLogin.status===200) assert.equal((await request(base,'/api/me',{cookie:racingLogin.cookie})).status,401,'racing old session must not survive reset');
+      assert.equal((await request(base,'/api/sessions',{method:'POST',data:{u:'StageLegacy',p:'Legacy-changed-123!'}})).status,401);
+      assert.equal((await request(base,'/api/sessions',{method:'POST',data:{u:'StageLegacy',p:'GM-legacy-synthetic-123!'}})).status,200);
+    }
   }
   console.log('PASS: real local Pages runtime, legacy owner/migration, player registration, unique email, GM authorization, save, paused board, recovery, session revocation and origin rejection.');
 }
@@ -154,6 +178,24 @@ try {
     assert.equal(text.split(current).length,2,'expected the unchanged live work factor');
     fs.writeFileSync(auth,text.replace(current,'const ITER = 600000;'));
     console.log('EXPERIMENT: PBKDF2-SHA256 600,000 in disposable local copy only; hosted limits are NOT tested.');
+  }
+  if (mode === 'test-scrypt') {
+    // Patch ONLY the disposable Functions copy. The unmodified original is kept in the
+    // same temporary directory as a legacy verifier; real repository auth is untouched.
+    const auth=path.join(temp,'functions','_lib','auth.js'), source=fs.readFileSync(auth,'utf8');
+    fs.writeFileSync(path.join(temp,'functions','_lib','auth-legacy.js'),source);
+    const prototypeDir=path.join(temp,'tools','prototypes');fs.mkdirSync(prototypeDir,{recursive:true});
+    const prototype=fs.readFileSync(path.join(root,'tools','prototypes','scrypt_passwords.mjs'),'utf8');
+    const legacyImport="../../functions/_lib/auth.js";
+    assert.equal(prototype.split(legacyImport).length,2,'expected prototype legacy import');
+    fs.writeFileSync(path.join(prototypeDir,'scrypt_passwords.mjs'),prototype.replace(legacyImport,'../../functions/_lib/auth-legacy.js'));
+    const start=source.indexOf('// ---------------------------------------------------------------- hashing ----');
+    const end=source.indexOf('// --------------------------------------------------------------- sessions ----');
+    assert(start>=0&&end>start,'expected temporary auth boundaries');
+    const candidate=`// TEMPORARY EXPERIMENT ONLY: never deploy this patched copy.\nconst enc = new TextEncoder();\nexport async function hashPassword(password){return hashCandidate(password)}\nexport async function verifyPassword(password,stored,options){return verifyCandidate(password,stored,options)}\nexport async function hashRecovery(code){return hashCandidate(String(code).toUpperCase())}\nexport async function verifyRecovery(code,stored){return !!stored && (await verifyCandidate(String(code).toUpperCase(),stored,{upgrade:false})).ok}\n\n`;
+    const candidateImport="import { hashCandidate, verifyCandidate } from '../../tools/prototypes/scrypt_passwords.mjs';\n";
+    fs.writeFileSync(auth,candidateImport+source.slice(0,start)+candidate+source.slice(end));
+    console.log('EXPERIMENT: scrypt candidate is wired only into disposable local Functions and D1; NOT a hosted test or deployment.');
   }
   fs.mkdirSync(path.join(temp,'assets')); fs.mkdirSync(migrationsDir);
   for (const file of ['wardrobe.js','shop-catalog.js']) fs.copyFileSync(path.join(root,'assets',file),path.join(temp,'assets',file));
@@ -168,7 +210,7 @@ try {
   const pwHash=await hashPassword(ownerPass, 20000); // synthetic legacy account, including in stronger-hash rehearsal
   if (!/^pbkdf2\$[0-9]+\$[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+$/.test(pwHash)) throw new Error('Unexpected synthetic password hash');
   let seed=`INSERT INTO users(username, pass_hash, gm, created_at) VALUES ('${ownerName}', '${pwHash}', 2, ${Date.now()});\n`;
-  if (mode === 'test-strong') {
+  if (mode === 'test-strong' || mode === 'test-scrypt') {
     const legacyRecovery=await hashRecovery(legacyCode); // current 20k, synthetic only
     if (!/^pbkdf2\$20000\$[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+$/.test(legacyRecovery)) throw new Error('Unexpected synthetic legacy recovery hash');
     seed+=`INSERT INTO users(username, pass_hash, recovery_hash, gm, created_at) VALUES ('StageLegacy', '${pwHash}', '${legacyRecovery}', 0, ${Date.now()});\n`;
@@ -178,7 +220,7 @@ try {
   if (!seeded.includes('local database')) throw new Error('Owner seed did not confirm local D1');
   names.filter(n=>n>='0007_account_email.sql').forEach(copyMigration);
   migrationApply();
-  if (mode === 'test-strong') {
+  if (mode === 'test-strong' || mode === 'test-scrypt') {
     const updated=run(['d1','execute',testName,'--local','--persist-to','./state','--command',"UPDATE users SET email='legacy@example.test' WHERE username='StageLegacy'"]);
     if (!updated.includes('local database')) throw new Error('Legacy synthetic email update did not confirm local D1');
   }
@@ -192,17 +234,18 @@ try {
   await startServer(port,host);
   if (mode!=='serve') {
     await test(`http://127.0.0.1:${port}`);
-    if (mode==='test-strong') {
+    if (mode==='test-strong' || mode==='test-scrypt') {
       // Shut down before querying the isolated store; SQL returns only booleans, never hashes.
       await stopServer(); child=undefined;
-      const sql="SELECT username, pass_hash GLOB 'pbkdf2$600000$*' AS pass_upgraded, recovery_hash GLOB 'pbkdf2$600000$*' AS recovery_upgraded FROM users WHERE username IN ('StageLegacy','StageOwner','StagePlayer') ORDER BY username";
+      const prefix=mode==='test-scrypt'?'pg-scrypt-v1$*':'pbkdf2$600000$*';
+      const sql=`SELECT username, pass_hash GLOB '${prefix}' AS pass_upgraded, recovery_hash GLOB '${prefix}' AS recovery_upgraded FROM users WHERE username IN ('StageLegacy','StageOwner','StagePlayer') ORDER BY username`;
       const out=run(['d1','execute',testName,'--local','--persist-to','./state','--json','--command',sql]);
       const rows=JSON.parse(out)[0].results;
       assert.equal(rows.length,3);
       assert.equal(rows[0].username,'StageLegacy');assert.equal(rows[0].pass_upgraded,1);assert.equal(rows[0].recovery_upgraded,1);
       assert.equal(rows[1].username,ownerName);assert.equal(rows[1].pass_upgraded,1,'legacy owner password was upgraded');
       assert.equal(rows[2].username,'StagePlayer');assert.equal(rows[2].pass_upgraded,1);assert.equal(rows[2].recovery_upgraded,1);
-      console.log('PASS: disposable local candidate upgrades a 20k legacy owner and creates/rotates 600k hashes. NOT hosted proof.');
+      console.log(`PASS: disposable local ${mode} candidate upgrades a 20k legacy owner and creates/rotates candidate hashes. NOT hosted proof.`);
     }
   } else {
     console.log(`\nLocal test game: http://127.0.0.1:${port}/\nSynthetic GM owner: ${ownerName}\nSynthetic password: ${ownerPass}\nUse test data only. Ctrl+C stops and deletes this disposable database.\n`);

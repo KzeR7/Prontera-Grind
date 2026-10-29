@@ -13,7 +13,7 @@ backups, production credentials or secrets into it.
   those Functions import, then generates a separate Wrangler configuration there. It does
   not pass the production database ID/configuration to Wrangler. Local D1 is selected
   explicitly for all database commands, with a separate temporary persistence directory.
-- It accepts only `test`, `test-strong` or `serve` and never runs deploy or a remote D1 command. It
+- It accepts only `test`, `test-strong`, `test-scrypt` or `serve` and never runs deploy or a remote D1 command. It
   removes Cloudflare credential environment variables from Wrangler's environment; local
   execution does not require Cloudflare login. Wrangler/npm may still use the network to
   install or perform their own local-runtime setup.
@@ -75,6 +75,27 @@ may lock out accounts already upgraded by a newer runtime. Do not change live ha
 or deploy the experiment until compatibility, migration and rollback are verified.
 A separate, owner-run, synthetic [hosted preview probe](HOSTED-AUTH-PROBE.md) can
 check iteration acceptance without touching the game or D1; it is not full staging.
+
+## Local scrypt integration experiment (no deployment)
+
+```sh
+bash tools/build_site.sh
+node tools/staging/local.mjs test-scrypt
+```
+
+This opts into patching **only a temporary Functions copy** with the disconnected
+scrypt adapter and uses a new, local-only D1 containing synthetic accounts. It exercises
+registration, legacy 20k password upgrade, legacy recovery-code rotation, recovery
+races, session revocation, a GM password reset and one simultaneous login/reset
+schedule, email uniqueness, save and the paused board. It checks candidate hash prefixes without printing hashes. The repository's
+actual Functions continue to use 20k PBKDF2; no hosted or real account is changed.
+
+The owner separately reported two successful remote-preview scrypt acceptance probes.
+This local integrated experiment does **not** test hosted Pages/D1, CPU and memory
+quotas, sustained/concurrent resource usage, costs, real account migration, or a safe
+rollback. A production release that cannot verify new scrypt hashes can lock out
+upgraded accounts; a staged compatible-reader-first release and rehearsed rollback
+must precede any live writes. No deployment based on this experiment alone.
 
 ## Try the game manually
 

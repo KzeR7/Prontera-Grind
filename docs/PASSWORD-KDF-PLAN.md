@@ -43,9 +43,11 @@ A disconnected research adapter is in `tools/prototypes/scrypt_passwords.mjs` wi
 synthetic coverage in `tools/tests/scrypt_password_prototype_sim.js`. It exercises a
 fixed bounded candidate profile, legacy PBKDF2 verification followed by upgrade only
 on success, and a recovery-style verification without a discarded upgrade. It is not
-imported by Functions and has not changed stored hashes. The format and code are not
-yet approved for production; actual endpoint integration, migration, race, rollback,
-hosted CPU, memory and load tests remain necessary.
+imported by the repository's Functions and has not changed real stored hashes. A
+separate local Pages/D1 experiment wires it into a temporary Functions copy only; see
+[isolated staging](ISOLATED-STAGING.md). The format and code are not yet approved for
+production; hosted endpoint integration, migration, rollback, CPU, memory and load tests
+remain necessary.
 
 ## Options, not yet approved for deployment
 
