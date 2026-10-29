@@ -51,6 +51,29 @@ case-insensitive and concurrent email uniqueness, save/reload, the leaderboard p
 recovery/code rotation, session revocation and cross-origin rejection. A failed test exits
 nonzero. Both the migrations and test data are strictly local to that temporary directory.
 
+## Local stronger-hash experiment (no deployment)
+
+```sh
+bash tools/build_site.sh
+node tools/staging/local.mjs test-strong
+```
+
+This opt-in experiment changes PBKDF2-SHA256 from 20,000 to 600,000 iterations
+**only in the disposable temporary Functions copy**. The repository's actual
+work factor stays at 20,000. It seeds a synthetic 20,000-iteration legacy owner,
+then checks login upgrade, registration, 20,000-iteration legacy recovery-code
+rotation, racing one-time recovery, session revocation and isolated D1 hash
+prefixes without printing hashes.
+It removes the local database at exit and does not connect to hosted staging.
+
+Local workerd does **not** enforce the hosted PBKDF2 ceiling or hosted CPU quotas.
+A pass does not show that 600,000 is deployable, affordable or accepted by the
+owner's plan. Never run a hosted test on production accounts or expose a public
+benchmark. A separate approved hosted staging experiment is still required.
+Rollback also needs planning: a previous runtime that cannot verify 600,000 hashes
+may lock out accounts already upgraded by a newer runtime. Do not change live hashes
+or deploy the experiment until compatibility, migration and rollback are verified.
+
 ## Try the game manually
 
 ```sh

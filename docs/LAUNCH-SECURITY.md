@@ -59,6 +59,9 @@ saves and personal gameplay continue. Existing recorded scores and grants are no
 removed. Do not re-enable rankings or payout from those records: build server-authoritative
 scoring, a trustworthy period cut-off and atomic, retryable prize settlement first.
 Client-side anti-cheat, a numerical cap or AI detection alone cannot make scores fair.
+The old Echo scoring and settlement entry points now fail closed even if accidentally
+called. See [Competition security](COMPETITION-SECURITY.md) for untrusted legacy
+records, server-authority requirements and the disconnected settlement prototype.
 
 PBKDF2 remains at 20,000 iterations for now, below OWASP guidance. The local
 [password-hashing audit](CAMP-AUTH-AUDIT.md) demonstrates operation-shaped costs,
@@ -67,7 +70,9 @@ workerd overrides that limit. **Do not simply raise the constant:** evaluate a
 suitably provisioned authentication service or plan, test the actual hosted runtime,
 and safely migrate old hashes. Legacy recovery verification no longer computes a
 password-style upgrade that would be discarded before recovery rotates the code;
-legacy password login still upgrades. See
+legacy password login still upgrades. A disposable local 600,000-iteration candidate
+passed account and recovery checks, but this is not hosted proof. Plan rollback for
+already-upgraded hashes before any change. See
 https://github.com/cloudflare/workerd/issues/1346 and
 https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html.
 

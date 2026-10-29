@@ -58,6 +58,11 @@ assertions to run. Those assertions have not been deleted or weakened; authorita
 scoring and safe payout need to be implemented before re-enabling competition. This is
 in addition to the six recorded baseline failures below.
 
+`competition_pause_sim.js` verifies that forged saves and direct legacy scoring or
+payout calls cannot award competitive results. `competition_settlement_prototype_sim.js`
+exercises a disconnected synthetic SQLite settlement model; it is not production
+scoring or proof of D1 concurrency. See [Competition security](COMPETITION-SECURITY.md).
+
 ## Password-recovery UI
 
 `node tools/tests/recovery_ui_sim.js` checks recovery validation, cancellation,
@@ -88,6 +93,11 @@ synthetic, local-only Wrangler Pages/D1 rehearsal; `node tools/staging/local.mjs
 starts the same isolated setup for manual testing with a synthetic GM owner. See
 [Isolated staging](ISOLATED-STAGING.md) for Windows steps, credentials, safety boundaries
 and limitations. This is not hosted Cloudflare staging.
+The optional `node tools/staging/local.mjs test-strong` uses 600,000 PBKDF2
+iterations in a temporary copy only, testing legacy upgrade and recovery races. It
+does not alter the production candidate or prove hosted limits. The 2026-10-29
+gate after this work had 146 passes and the same four failures; both new competition
+checks and all three generated-asset checks passed.
 
 ## Choose the preview for the task
 
