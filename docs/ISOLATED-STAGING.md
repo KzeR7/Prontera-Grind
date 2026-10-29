@@ -13,7 +13,7 @@ backups, production credentials or secrets into it.
   those Functions import, then generates a separate Wrangler configuration there. It does
   not pass the production database ID/configuration to Wrangler. Local D1 is selected
   explicitly for all database commands, with a separate temporary persistence directory.
-- It accepts only `test` or `serve` and never runs deploy or a remote D1 command. It
+- It accepts only `test`, `test-strong` or `serve` and never runs deploy or a remote D1 command. It
   removes Cloudflare credential environment variables from Wrangler's environment; local
   execution does not require Cloudflare login. Wrangler/npm may still use the network to
   install or perform their own local-runtime setup.
@@ -73,6 +73,8 @@ benchmark. A separate approved hosted staging experiment is still required.
 Rollback also needs planning: a previous runtime that cannot verify 600,000 hashes
 may lock out accounts already upgraded by a newer runtime. Do not change live hashes
 or deploy the experiment until compatibility, migration and rollback are verified.
+A separate, owner-run, synthetic [hosted preview probe](HOSTED-AUTH-PROBE.md) can
+check iteration acceptance without touching the game or D1; it is not full staging.
 
 ## Try the game manually
 

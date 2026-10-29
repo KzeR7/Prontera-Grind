@@ -62,6 +62,8 @@ in addition to the six recorded baseline failures below.
 payout calls cannot award competitive results. `competition_settlement_prototype_sim.js`
 exercises a disconnected synthetic SQLite settlement model; it is not production
 scoring or proof of D1 concurrency. See [Competition security](COMPETITION-SECURITY.md).
+`echo_basic_attack_prototype_sim.js` checks 1,200 synthetic basic hits against the
+current game but is not a full run or a trustworthy score source.
 
 ## Password-recovery UI
 
@@ -185,6 +187,16 @@ four suites now pass with checks for shape, range, target limits, waking, timing
 cancellation retained or strengthened; no gameplay code or combat balance changed.
 The separate 3.35-unit camp-spacing assertion was not changed and remains red.
 The three competition suites remain red while their features are paused.
+
+**2026-10-29 GM identity observation:** `gm_presets_sim.js` intermittently fails
+its unchanged item-ID uniqueness assertion. The game and suite matched the prior
+PR head when reproduced. `node tools/audits/gm_item_id_collision.cjs` deliberately
+forces the same clock and random values in a disposable game and demonstrates that
+all eight preset items can receive the same ID. This is a potential item identity
+bug, not a reason to weaken that test; investigate/fix separately without changing
+existing saves or removing GM testing. The full-gate recheck returned 147 passing
+and the same four known failures, while the preceding run hit this intermittent GM
+failure.
 
 **2026-10-29 (camp/auth audit):** The original 3.35-unit camp smoke was not changed.
 An in-memory bounded-ring prototype and a local workerd password-cost probe are

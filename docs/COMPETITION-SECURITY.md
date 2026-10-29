@@ -13,7 +13,9 @@ server-authoritative gameplay and do not authorize re-enabling competition.
   still collect kill deltas from those saves even while the board is paused.
   Historical kill/Echo rows can therefore contain forged data. The current offline
   claim uses server time but its farming rate is derived from client-supplied kill
-  deltas; it is not a competitive proof either.
+  deltas; it is not a competitive proof either. The separate personal Echo completion
+  shards and milestone chests still run in the browser; the leaderboard prize pause
+  does not disable them, and they cannot establish trusted competitive inventory.
 - The old Echo settlement function selected from those scores, claimed a period,
   then wrote awards and grants separately. A failure after claiming could leave a
   partially paid period that could not safely retry. An `INSERT OR IGNORE` on the
@@ -63,9 +65,28 @@ Cloudflare D1 concurrency, cross-period replay handling, recipient delivery, acc
 authoritative score generation or live safety. The real grant system and D1 behavior
 need independent end-to-end race/crash tests before any release.
 
+`tools/prototypes/competition_d1_settlement.mjs` and the opt-in
+`tools/audits/competition_d1_local.mjs` explore an atomic D1 `batch`: a conditional
+period claim, deterministic placements, synthetic grants and period closure commit
+together. A local Miniflare/D1 audit exercised concurrent settlement attempts,
+retry and injected mid-batch failure; only one attempt awarded grants. The schema,
+score data and clock are synthetic, and it is not part of the application. It does
+not establish hosted D1 concurrency, live grant delivery, trusted scores, cutoff
+policy, empty-period policy or production safety. The audit needs Miniflare (set
+`PG_MINIFLARE_MODULE` to an installed copy if it is not in `node_modules`).
+
 `node tools/tests/competition_pause_sim.js` tests the actual paused handlers and
 fail-closed old write entry points with synthetic accounts, forged saves and old
 untrusted rows. Passing it does not make scores trustworthy.
+
+`tools/prototypes/echo_basic_attack.mjs` is a second disconnected experiment for
+one physical basic hit against the non-boss Echo dummy. Its test compares 1,200
+synthetic hits to the current browser's real `strike()` across four character
+fixtures. It is **not** a complete 180-second run: it omits skills, pets, cast and
+attack scheduling, server-owned random numbers, authoritative loadout/progression,
+identity, persistence and rewards. Its inputs and test random rolls are supplied
+by the harness, so it must never be wired to public requests or ranking as-is. It
+is a parity starting point, not a verified score source.
 
 ## Suggested milestones
 
