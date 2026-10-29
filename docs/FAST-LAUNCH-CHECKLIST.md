@@ -31,6 +31,33 @@ rejection (including timeout or runtime error) does not identify a safe alternat
 itself. Do not change the password write algorithm until implementation and migration/rollback
 are reviewed and synthetic hosted staging tests pass; see [Password KDF plan](PASSWORD-KDF-PLAN.md).
 
+## Hosted staging result and next reader check
+
+The owner reported enabling MFA for their own Cloudflare login and deploying draft
+commit `7511a03` to the separate staging Pages project at
+`https://56968bf2.prontera-grind-staging.pages.dev`. Their dashboard showed D1
+binding `DB` to `pg-staging`. They report that synthetic registration, recovery and
+login, the paused leaderboard, and existing staging GM tools all work. These ordinary
+account flows still write PBKDF2 and did not test the scrypt reader.
+
+`tools/staging/hosted_scrypt_reader_probe.mjs` is an owner-run, fixed-target synthetic
+check for that reader. It creates a fresh random **non-GM** account in the fixed
+`pg-staging` database, signs in and recovers it against the fixed staging deployment,
+checks the pause and session revocation, confirms the reader-only reset writes PBKDF2,
+then deletes only its uniquely identified synthetic row and related sessions/events.
+It also confirms the remote D1 name and UUID before writing. It uses an isolated
+Wrangler config and the D1 query API, not import, production DB or repository config.
+It logs no passwords, recovery codes, hashes or cookies; it does print the temporary
+synthetic username so an operator can locate it if interrupted. If cleanup is not
+confirmed or the process is interrupted, do not guess at cleanup: inspect the exact
+synthetic row on staging and investigate. The few test calls and D1 reads/writes may
+count toward the owner's Cloudflare quota. This script does not deploy, change any
+existing account, or prove sustained load, CPU or rollback safety.
+
+The loopback protocol test passes with real Functions and in-memory SQLite, including
+cleanup on an injected failure. The Windows/Wrangler path and actual hosted run remain
+unverified until the owner runs them. Never run against a production host or database.
+
 ## 2. Backup and restore
 
 - The owner reported exporting live `pg` before migration 0007. It is a historical
@@ -99,10 +126,11 @@ are reviewed and synthetic hosted staging tests pass; see [Password KDF plan](PA
   browser behavior. Test a bounded load with owner permission and budget, observe hosted
   errors/CPU/D1 and edge events, and include an independent security review. Do not use
   production as a load-test target or assume local wall time measures hosted CPU.
-- The latest full JS gate was 149 pass / 4 failures: three tests still expect competition
-  to be live and one retains the old camp-spacing assertion. A previous full run exposed
-  the previously documented intermittent GM preset item-ID collision, which remains
-  unresolved; assess its item identity impact before opening real accounts.
+- The latest full JS gate was 151 pass / 3 failures: three tests still expect competition
+  to be live. The camp-spacing smoke passed this run, but it failed previous runs and its
+  historical disagreement with the chosen layout is not resolved. A previous run exposed
+  the intermittent GM preset item-ID collision, which remains unresolved; assess its item
+  identity impact before opening real accounts.
 - The latest draft changes after v258 have not been deployed to staging. Production merge
   and deployment require a separate explicit decision, after the above and a compatible
   rollback plan. Never reapply migration 0007 to live `pg`; it was applied manually and

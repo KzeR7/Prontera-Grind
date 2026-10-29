@@ -112,6 +112,14 @@ rollback. A production release that cannot verify new scrypt hashes can lock out
 upgraded accounts; a staged compatible-reader-first release and rehearsed rollback
 must precede any live writes. No deployment based on this experiment alone.
 
+## Owner-run hosted scrypt reader probe
+
+See [Fast launch checklist](FAST-LAUNCH-CHECKLIST.md#hosted-staging-result-and-next-reader-check)
+for the fixed-target synthetic probe, its cleanup behavior and limits. It is a **remote**
+check using the owner's Wrangler login and an existing isolated staging D1, unlike every
+`local.mjs` mode; it never loads the production Wrangler config. Only use it after the
+owner has verified the hosted `DB` binding for the target deployment.
+
 ## Try the game manually
 
 ```sh
