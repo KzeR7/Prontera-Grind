@@ -6,15 +6,17 @@ before making claims about production. Do not merge or deploy until the owner ex
 approves the final candidate. No Cloudflare credentials, passwords, recovery codes,
 backup contents or screenshots showing them should be shared in chat.
 
-## 1. Password hashing — decision pending hosted test
+## 1. Password hashing — hosted preview accepted; integration pending
 
 PBKDF2-SHA256 at 600,000 was rejected by the owner's remote preview. The next
 candidate is **scrypt N=16384, r=8, p=5** (an OWASP-listed profile), not a claim
 that a lower PBKDF2 work factor meets the recommendation. The repository's actual
 authentication still uses 20,000 PBKDF2 iterations and is unchanged.
 
-The owner can run `tools/audits/hosted_scrypt_probe.mjs` with their existing Wrangler
-login in the same way as the earlier PBKDF2 preview. It uses a separately named remote
+The owner ran `tools/audits/hosted_scrypt_probe.mjs` twice using their existing Wrangler
+login. Both runs accepted the vector and one, two and three synthetic candidate-profile
+derivations. They are preview acceptance tests, not CPU or real authentication tests.
+The probe uses a separately named remote
 preview Worker with no bindings, a random in-memory access token and only synthetic
 inputs. It tests the RFC 7914 known-answer vector, one candidate derivation and, only
 if that succeeds, two and three sequential derivations. It runs at most four authorized
@@ -43,7 +45,10 @@ reviewed and synthetic hosted staging tests pass; see [Password KDF plan](PASSWO
 - `node tools/audits/local_d1_restore.mjs` has already exported a fully migrated,
   synthetic local D1 and imported it into a separate local D1, verifying the owner,
   email, save and partial unique email index. It also exercised the in-memory checker.
-  Neither tool has tested the real backup unless the owner explicitly runs it locally.
+  The owner ran the checker on the reported backup path, but it failed at the initial
+  file-read stage before opening or testing the SQL. The reason is not yet known; a
+  missing, inaccessible or empty file is possible. Therefore the actual backup
+  has not been verified.
 - Before a production change, create a fresh, securely stored backup and rehearse a
   suitable restore procedure using an isolated copy, with permission and access controls.
   D1 Time Travel restores **in place**, cancels in-flight queries and can overwrite newer
@@ -87,10 +92,10 @@ reviewed and synthetic hosted staging tests pass; see [Password KDF plan](PASSWO
   browser behavior. Test a bounded load with owner permission and budget, observe hosted
   errors/CPU/D1 and edge events, and include an independent security review. Do not use
   production as a load-test target or assume local wall time measures hosted CPU.
-- The latest full JS gate was 147 pass / 4 known failures: three tests still expect
-  competition to be live, and one retains the old camp-spacing assertion. A separately
-  observed intermittent GM preset item-ID collision remains unresolved; assess its item
-  identity impact before opening real accounts.
+- The latest full JS gate was 147 pass / 5 failures: three tests still expect competition
+  to be live, one retains the old camp-spacing assertion, and the previously documented
+  intermittent GM preset item-ID collision recurred (a GM-only rerun passed). The ID
+  collision remains unresolved; assess its item identity impact before opening real accounts.
 - The latest draft changes after v258 have not been deployed to staging. Production merge
   and deployment require a separate explicit decision, after the above and a compatible
   rollback plan. Never reapply migration 0007 to live `pg`; it was applied manually and

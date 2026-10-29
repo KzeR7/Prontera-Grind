@@ -7,7 +7,7 @@ if(process.argv.length!==3){console.error('Usage: node verify_backup_in_memory.m
 let sql, db, stage='read trusted export';
 try{
   sql=fs.readFileSync(process.argv[2],'utf8');
-  if(!sql.trim())throw Error('empty input');
+  if(!sql.trim())throw Object.assign(new Error('empty input'),{code:'EMPTY'});
   db=new DatabaseSync(':memory:');
   db.exec('PRAGMA temp_store=MEMORY');
   stage='restore SQL in memory';db.exec(sql);sql='';
@@ -22,8 +22,10 @@ try{
   console.log(JSON.stringify({restoredInMemory:true,integrity:'ok',foreignKeyCheck:'ok',coreTables:'present',
     emailColumn:columns.includes('email')?'present':'absent',
     note:'This checks only the supplied snapshot. It does not verify recency, every player save, hosted restore, production or the ability to recover updates after the export.'},null,2));
-}catch{
-  // Errors may contain SQL and private account data; never echo them or the path.
-  console.error(`Backup check failed at: ${stage}. No account rows or file contents printed.`);
+}catch(error){
+  // Do not echo error messages or paths: they can include SQL or private account data.
+  const safeReadReasons={ENOENT:'file not found',EACCES:'permission denied',EPERM:'permission denied',EISDIR:'path is a directory',EMPTY:'file is empty'};
+  const detail=stage==='read trusted export'&&Object.hasOwn(safeReadReasons,error?.code)?`: ${safeReadReasons[error.code]}`:'';
+  console.error(`Backup check failed at: ${stage}${detail}. No account rows or file contents printed.`);
   process.exitCode=1;
 }finally{if(db)db.close()}

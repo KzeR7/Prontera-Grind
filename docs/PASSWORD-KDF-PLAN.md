@@ -29,7 +29,25 @@ rules out assuming 600,000 PBKDF2 works there. 100,000 is not equivalent to
 and was not tested as a full registration, legacy upgrade or recovery under
 production CPU limits. Do not raise the live constant on the strength of this probe.
 
-## Options, still unapproved
+## Owner-reported hosted scrypt preview (2026-10-29)
+
+The owner ran `tools/audits/hosted_scrypt_probe.mjs` twice. Both synthetic remote
+preview runs returned HTTP 200 for the RFC 7914 vector and for one, two and three
+sequential candidate-profile scrypt derivations (N=16384, r=8, p=5). All requests
+were accepted. Reported elapsed times included the network and proxy, so they do not
+measure hosted CPU. No D1 or production accounts were involved. These are isolated
+acceptance checks, **not** real Pages integration, sustained capacity, a concurrent
+resource test or proof of sufficient quota and affordability.
+
+A disconnected research adapter is in `tools/prototypes/scrypt_passwords.mjs` with
+synthetic coverage in `tools/tests/scrypt_password_prototype_sim.js`. It exercises a
+fixed bounded candidate profile, legacy PBKDF2 verification followed by upgrade only
+on success, and a recovery-style verification without a discarded upgrade. It is not
+imported by Functions and has not changed stored hashes. The format and code are not
+yet approved for production; actual endpoint integration, migration, race, rollback,
+hosted CPU, memory and load tests remain necessary.
+
+## Options, not yet approved for deployment
 
 1. **Argon2id on a suitable service/runtime.** OWASP prefers Argon2id (one minimum
    profile: 19 MiB, two passes, one lane). Cloudflare documents that its Node
@@ -38,8 +56,9 @@ production CPU limits. Do not raise the live constant on the strength of this pr
    concurrency, dependencies, pricing and migration/rollback on the intended platform.
 2. **scrypt where supported and provisioned.** OWASP lists several memory/parallelism
    combinations, including N=2^14, r=8, p=5. Cloudflare documents support for Node
-   crypto APIs, including scrypt, but acceptance and CPU/memory limits for this exact
-   configuration on the owner's hosted account have not been verified. The
+   crypto APIs, including scrypt. The owner's synthetic remote preview accepted this
+   profile, but its CPU/memory limits, capacity and actual Pages integration have not
+   been verified. The
    2026-10-01 compatibility date must retain the appropriate Node compatibility.
    `scrypt` has memory-amplification and CPU costs; test concurrency and denial of
    service as well as individual calls. Using a lower setting solely to fit an
