@@ -47,8 +47,10 @@ imported by the repository's Functions. The draft now includes a separately impl
 bounded **reader only** for the same synthetic format; password and recovery writes still
 use PBKDF2 at 20,000. A local Pages/D1 experiment also wires the prototype writer into a
 temporary Functions copy only; see [isolated staging](ISOLATED-STAGING.md). Neither has
-changed real stored hashes. The format and code are not yet approved for production;
-hosted endpoint integration, migration, rollback, CPU, memory and load tests remain necessary.
+changed real stored hashes. The owner subsequently verified synthetic scrypt reader login
+and recovery, session revocation, the paused board and cleanup on hosted Pages/D1. The format and code are not
+yet approved for production; hosted scrypt writing, real account migration, rollback,
+CPU, memory and load tests remain necessary.
 
 If this reader-only revision is ever deployed before a later writer, it could be a
 rollback candidate for already-upgraded accounts. That is **not yet a tested rollback**:

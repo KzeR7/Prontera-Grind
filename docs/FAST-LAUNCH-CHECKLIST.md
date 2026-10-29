@@ -54,18 +54,20 @@ synthetic row on staging and investigate. The few test calls and D1 reads/writes
 count toward the owner's Cloudflare quota. This script does not deploy, change any
 existing account, or prove sustained load, CPU or rollback safety.
 
-The owner ran the first probe version: the staging identity check passed, but a later
-step failed and cleanup could not be confirmed. The owner then ran a scoped read-only
-query showing zero `users` rows for that synthetic username. This does not prove which
-step failed or whether any unrelated test artifacts remain. No scrypt endpoint success
-was established. The probe now invokes npm with separate arguments instead of wrapping
-its command in `cmd.exe`, adds a read-only SQL/quoting preflight before creating an account,
-and reports the failure phase without SQL or credentials. Windows hosted execution of
-the revised version remains unverified; the original failure's cause is not established.
+The first probe version passed its staging identity check, but a later step failed and
+cleanup could not be confirmed. The owner then ran a scoped query showing zero `users`
+rows for that synthetic username; the original failure's cause remains unknown.
 
-The loopback protocol test passes with real Functions and in-memory SQLite, including
-cleanup on an injected failure. Direct npm CLI argument handling also passed with local
-Wrangler/D1 on Linux; this is not Windows or hosted proof. Never run against production.
+The owner subsequently ran the revised probe successfully on Windows against the
+staging deployment. Synthetic scrypt login (200), session (200), paused Echo board (503),
+scrypt recovery (200), old-session revocation (401) and new-password login (200) all
+passed; cleanup was confirmed. It checked that the reader-only reset wrote PBKDF2.
+This proves those individual synthetic hosted flows, not CPU, memory, sustained load,
+actual scrypt writing, cost or a complete rollback. No production deployment occurred.
+
+A staging-only writer candidate is prepared by `tools/staging/prepare_hosted_scrypt.mjs`;
+see [Hosted scrypt writer experiment](HOSTED-SCRYPT-WRITER.md). Never deploy that temporary
+candidate to production or point it at real accounts.
 
 ## 2. Backup and restore
 
