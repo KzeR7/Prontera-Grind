@@ -104,9 +104,11 @@ probe cannot establish the hosted ceiling. Cloudflare documents a 10 ms CPU limi
 for Workers Free and a higher, configurable paid limit, with some flexibility for
 infrequent overages: [Workers limits](https://developers.cloudflare.com/workers/platform/limits/).
 Pages Functions are billed as Workers; see [pricing](https://developers.cloudflare.com/workers/platform/pricing/).
-The account's actual plan, hosted CPU usage, iteration limit, error behavior and
-cost under load have **not** been verified. Do not assume local elapsed time is
-hosted CPU time or that a short successful trial proves sustained quota safety.
+The owner's later Cloudflare remote preview accepted 100,000 and explicitly rejected
+100,001 and 600,000; see [Password KDF plan](PASSWORD-KDF-PLAN.md). The account's
+actual plan, Pages Functions CPU usage and cost under load have **not** been
+verified. Do not assume local elapsed time is hosted CPU time or that a short
+successful trial proves sustained quota safety.
 
 To reproduce locally, install a compatible Miniflare separately or set
 `PG_MINIFLARE_MODULE` to an existing local module directory, then run

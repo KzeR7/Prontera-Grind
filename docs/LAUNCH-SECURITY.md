@@ -63,11 +63,13 @@ The old Echo scoring and settlement entry points now fail closed even if acciden
 called. See [Competition security](COMPETITION-SECURITY.md) for untrusted legacy
 records, server-authority requirements and the disconnected settlement prototype.
 
-PBKDF2 remains at 20,000 iterations for now, below OWASP guidance. The local
-[password-hashing audit](CAMP-AUTH-AUDIT.md) demonstrates operation-shaped costs,
-but cannot establish hosted CPU headroom or the hosted iteration ceiling: open-source
-workerd overrides that limit. **Do not simply raise the constant:** evaluate a
-suitably provisioned authentication service or plan, test the actual hosted runtime,
+PBKDF2 remains at 20,000 iterations for now, below OWASP guidance. The owner-reported
+Cloudflare remote preview accepted 100,000 but explicitly rejected 100,001 and 600,000.
+This is not an end-to-end Pages CPU/quota test. The local
+[password-hashing audit](CAMP-AUTH-AUDIT.md) cannot establish hosted limits because
+open-source workerd overrides them; see [Password KDF plan](PASSWORD-KDF-PLAN.md).
+**Do not simply raise the constant:** evaluate a suitably provisioned
+authentication service or plan, test the actual hosted runtime,
 and safely migrate old hashes. Legacy recovery verification no longer computes a
 password-style upgrade that would be discarded before recovery rotates the code;
 legacy password login still upgrades. A disposable local 600,000-iteration candidate

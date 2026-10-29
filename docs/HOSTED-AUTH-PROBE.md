@@ -24,6 +24,16 @@ Keep password cost unchanged until a separate controlled staging test of real
 registration, login, recovery and session races with synthetic data has succeeded,
 with hosted CPU/error telemetry and a safe rollback plan.
 
+## Owner-reported result (2026-10-29)
+
+The owner ran the remote preview and reported 20,000 and 100,000 accepted;
+100,001 and 600,000 returned `NotSupportedError` with an explicit 100,000 cap.
+No game or database was deployed or modified by the probe. The subsequent
+`MODULE_NOT_FOUND` was a combined PowerShell command, not a new probe result.
+See [Password KDF plan](PASSWORD-KDF-PLAN.md) for the distinction between this
+preview and actual Pages CPU/quota testing. There is no need to repeat this probe
+unless the runtime or the specific question changes.
+
 ## Run on Windows using the existing Git and Wrangler login
 
 These commands fetch the script from the current PR branch without checking it out
