@@ -1,0 +1,26 @@
+name = "prontera-gate"
+main = "index.mjs"
+compatibility_date = "2026-10-01"
+
+# The write-pause switch, deliberately in its own script with no D1 binding: a D1 Time Travel
+# restore overwrites the `pg` database in place, so a flag stored there would be rolled back by the
+# restore it is meant to guard. This script has no route and no workers.dev address — the Pages
+# project reaches the Durable Object through its `GATE` binding only.
+workers_dev = false
+
+[[durable_objects.bindings]]
+name = "GATE"
+class_name = "WriteGate"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["WriteGate"]
+
+# GATE_TOKEN is a SECRET, not a variable: set it with
+#   npx wrangler secret put GATE_TOKEN --config workers/gate/wrangler.toml
+# It must be at least 32 characters of random text (`openssl rand -base64 48`). Shorter values are
+# refused by the object itself (`not-configured`), because a short secret is not a secret. Without it
+# the gate stays closed and the API answers maintenance, so set it before wiring the binding.
+#
+# No `[env.preview]` block: a preview deployment of this Worker would only host the same object, and
+# Pages previews never receive the binding (see the root wrangler.toml's `[env.preview]`).

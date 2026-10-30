@@ -7,6 +7,11 @@ The earlier paused-board staging results below are historical. Do not merge or d
 approves the final candidate. No Cloudflare credentials, passwords, recovery codes,
 backup contents or screenshots showing them should be shared in chat.
 
+> **2026-10-30:** the remaining launch steps are now ordered in
+> [Launch runbook](LAUNCH-RUNBOOK.md): fresh verified backup → additive 0008–0011 on live
+> `pg` → staging deploy and hosted checks → launch decision. Read that first; this file
+> keeps the background and the evidence behind each item.
+
 ## 1. Password hashing — hosted preview accepted; integration pending
 
 PBKDF2-SHA256 at 600,000 was rejected by the owner's remote preview. The next
@@ -157,3 +162,49 @@ schema, and fails closed on uncertain imports. Remote file imports can interrupt
 production service. At this point the tool has only passed synthetic local tests;
 production execution has not been reported. Do not run Wrangler's migration
 runner against this manually migrated DB without separately reconciling its ledger.
+
+**Later on 2026-10-30 the live picture changed.** A second fresh backup passed the
+same integrity, foreign-key and core-table checks, but its schema report listed all
+eight launch tables as already present (`damage_samples`, `damage_alerts`,
+`competition_periods`, `competition_scores`, `competition_placements`,
+`competition_prize_ledger`, `competition_baselines`, `unverified_echo_config`). The
+read-only [launch schema check](../tools/staging/live_launch_schema_check.mjs) then
+found every table column, all five triggers, all three indexes and the launch config
+matching 0008–0011 — with `boardState: activated`, i.e. `starts_at` no longer 0.
+`unverifiedConfig` only writes that value when the new board or save code serves a
+request, so this is evidence that 0008–0011 are applied **and** that production is
+already serving a build containing that code. `starts_at` holds the board's opening
+boundary. Consequences: do not run the additive migration tool (it cannot re-apply and
+cannot repair), and the assumption that production has never run the launch code is no
+longer supportable. Still unverified from here: which build production serves, and
+whether any prize period has settled — both need the owner's deployment list and GM
+console, not a schema reading.
+
+**The read-only check then passed, and `startsAt` resolves the prize question:**
+`1793376000000` is `2026-10-31 00:00 Asia/Singapore`, the next midnight after the first
+request reached the board code, and it was still in the future when read (about eleven
+hours out). Only `unverified-echo.js` inserts `competition_periods`, and it skips any
+window whose start is before `starts_at`; `competition-settlement.js` only advances rows
+that already exist and are past `ends_at`. So no unverified-Echo period can have opened,
+no settlement can have run and no prize can have been paid **before that boundary**. Two
+consequences: the previous paragraph's "already serving" is confirmed without implying
+payouts, and the ladder is armed to begin scoring at 00:00 SGT on 2026-10-31 whether or
+not the remaining launch checks are finished. Anything that should happen before the
+ladder starts — or a decision to move `starts_at` — is a production write that needs its
+own reviewed, fixed-target tool; nothing in this repository can change it.
+
+**What production actually serves (owner screenshot, 2026-10-30).** The live login card
+reads `build 2026-10-29 haven-v262 unverified rankings`. So the deployed build is `main`
+at v262: the unverified-rankings client and the 0008–0011 read paths are already in front
+of real players, and the `haven-v263` write pause in PR #147 is **not** deployed. This is
+consistent with the schema reading — the board code served requests, and the first one set
+`starts_at`. The practical consequences:
+
+- "Launch" as *shipping the code* has already happened. Records here that describe the
+  launch as pending are describing the remaining **hardening**: MFA and least privilege, a
+  bounded load test, an independent security review, and the write pause.
+- Merging PR #147 is a deploy to a **live** game, not a dark one. It is also not urgent in
+  the way the checklist implies: the pause only matters for recovery-speed restores.
+- The unverified ladder begins counting at 2026-10-31 00:00 SGT under the accepted
+  trade-off that client-reported scores can be falsified. Nothing in the schema check
+  changes that decision; it only dates it.

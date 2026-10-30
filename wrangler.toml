@@ -52,6 +52,19 @@ database_id = "50a6448b-1f12-466c-a28a-10544bedf750"   # printed by `wrangler d1
 # Without the first the shop is browse-only; without the second the webhook answers 503 and the
 # order poll delivers instead. Database: migrations/0005_shop.sql. Guide: docs/MONETIZATION-SETUP.md.
 
+# THE WRITE PAUSE (optional; docs/RECOVERY.md § "The write pause"). Nothing below is active yet: the
+# API runs unpaused until all of it is added, after `workers/gate` exists and its GATE_TOKEN secret is
+# set. Add the variable and the binding in the SAME Pages deployment, or the API fails closed on
+# purpose (that is what "required" means). Exact runbook: docs/RECOVERY.md.
+#
+# [vars]
+# WRITE_GATE = "required"          # unset means "no pause exists" (local dev, tests, previews)
+#
+# [[durable_objects.bindings]]     # the switch itself: no D1, no route, not rollback-able by a restore
+# name = "GATE"
+# class_name = "WriteGate"
+# script_name = "prontera-gate"
+
 # Deploy workers/social first; Pages connects privately to its Durable Object.
 [[durable_objects.bindings]]
 name = "SOCIAL"

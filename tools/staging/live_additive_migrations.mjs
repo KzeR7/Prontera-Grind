@@ -28,14 +28,14 @@ export const TABLES={
  competition_baselines:['user_id','save_version','save_updated_at','cutoff_at','captured_at','policy','save_blob'],
  unverified_echo_config:['singleton','starts_at','ruleset'],
 };
-const TRIGGERS=['competition_score_insert_window','competition_score_update_window','competition_prize_requires_settlement',
+export const TRIGGERS=['competition_score_insert_window','competition_score_update_window','competition_prize_requires_settlement',
  'competition_prize_create_grant','competition_baseline_immutable'];
-const INDEXES=['idx_damage_alerts_last_seen','idx_competition_scores_rank','competition_due_idx'];
-const TABLE_QUERY="SELECT name FROM sqlite_master WHERE type='table';";
-const TRIGGER_QUERY="SELECT name FROM sqlite_master WHERE type='trigger';";
-const INDEX_QUERY="SELECT name FROM sqlite_master WHERE type='index';";
+export const INDEXES=['idx_damage_alerts_last_seen','idx_competition_scores_rank','competition_due_idx'];
+export const TABLE_QUERY="SELECT name FROM sqlite_master WHERE type='table';";
+export const TRIGGER_QUERY="SELECT name FROM sqlite_master WHERE type='trigger';";
+export const INDEX_QUERY="SELECT name FROM sqlite_master WHERE type='index';";
 const EMAIL_INFO='PRAGMA table_info(users);',EMAIL_INDEX='PRAGMA index_list(users);',EMAIL_XINFO='PRAGMA index_xinfo(idx_users_email);';
-const CONFIG_QUERY='SELECT starts_at,ruleset FROM unverified_echo_config WHERE singleton=1;';
+export const CONFIG_QUERY='SELECT starts_at,ruleset FROM unverified_echo_config WHERE singleton=1;';
 const ALLOWED=new Set([TABLE_QUERY,TRIGGER_QUERY,INDEX_QUERY,EMAIL_INFO,EMAIL_INDEX,EMAIL_XINFO,CONFIG_QUERY,
  ...Object.keys(TABLES).map(n=>`PRAGMA table_info(${n});`)]);
 export const verifyIdentity=x=>x?.name===NAME&&x?.uuid===ID;
@@ -101,7 +101,7 @@ function npxCli(){
  const result=dirs.flatMap(d=>[path.join(d,'node_modules','npm','bin','npx-cli.js'),path.resolve(d,'..','lib','node_modules','npm','bin','npx-cli.js')]).find(p=>fs.existsSync(p));
  if(!result)throw Error('Could not locate npm npx-cli.js; no live operation performed');return result;
 }
-function createRemote(temp){
+export function createRemote(temp){
  fs.writeFileSync(path.join(temp,'wrangler.jsonc'),JSON.stringify({name:'pg-live-migration',compatibility_date:'2026-10-01',
   d1_databases:[{binding:'DB',database_name:NAME,database_id:ID}]},null,2));
  const cli=npxCli();const wrangler=args=>run(process.execPath,[cli,'--yes','wrangler@4.154.0',...args,'--config','wrangler.jsonc'],temp);

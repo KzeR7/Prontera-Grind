@@ -65,6 +65,28 @@ None proves browser score integrity or hosted launch readiness. See
 [Competition security](COMPETITION-SECURITY.md) for cutoffs and remaining risks.
 
 
+## Write pause (the recovery switch)
+
+`node tools/tests/write_gate_sim.mjs` covers the pause state machine and the Durable
+Object (closed by default, exact phrases, constant-time token, lockout, restart,
+corrupt storage loading as closed). `node tools/tests/write_gate_middleware_sim.js`
+proves no `/api` path — save, grants, GM, shop webhook, and the reads that write as a
+side effect — reaches a handler while the pause is on, and that an unreachable switch
+fails closed. `node tools/tests/write_gate_api_sim.js` covers the `/api/gate` control
+endpoint; `node tools/tests/write_gate_cli_sim.mjs` covers the owner's CLI. All four
+use stubs; none contacts Cloudflare, and the switch is off unless
+`WRITE_GATE = "required"` is set, so the existing suites are unaffected.
+
+## D1 Time Travel selection (read-only)
+
+`node tools/tests/recovery_point_sim.mjs` exercises the owner-only seven-day
+bookmark selector. `node tools/tests/recovery_rehearsal_sim.mjs` exercises a
+synthetic SQLite recovery sequence; `node tools/tests/hosted_disposable_rehearsal_sim.mjs`
+tests target guards and a mocked CLI driver for the separately prepared hosted
+drill. `node tools/audits/local_d1_restore.mjs` rehearses synthetic local D1
+export/import, not Time Travel. These tests do not contact production or prove a
+hosted restore. See [Recovery](RECOVERY.md).
+
 ## Password-recovery UI
 
 `node tools/tests/recovery_ui_sim.js` checks recovery validation, cancellation,
@@ -203,6 +225,40 @@ bug, not a reason to weaken that test; investigate/fix separately without changi
 existing saves or removing GM testing. The full-gate recheck returned 147 passing
 and the same four known failures, while the preceding run hit this intermittent GM
 failure.
+
+**2026-10-30 (`haven-v263`): the camp smoke is green, and its budget was recomputed, not
+relaxed.** `field_loop_smoke.js` had been red on a 3.35-unit camp-mate budget since v231
+replaced the single 1.6–3.2 ring with three widening tiers (up to `CAMP_RING_MAX × 1.75`
+= 5.075) for camps that cannot fit a member legally. The number was stale against the
+code, not a monster drifting: measured over 880 seeded farming fields on all 12 maps,
+the furthest camp-mate was 5.0750, exactly the documented bound, with no exceptions. The
+check now derives its bound from the source constants, is seeded (it used to be
+intermittent), and runs crowded fields (maps 9 and 11 put 17–18 camp-mates past the tight
+ring, which is what gives it teeth — a single roomy field let a deliberately broken bound
+pass). Two new assertions were added rather than removed: pairwise monster distance
+against v231's `MOB_GAP` 2.6 floor (nothing asserted it before), and that at least one
+sampled field actually uses a widened ring. Mutation-tested: widening the tier to 2.60×
+or dropping `MOB_GAP` to 0.2 both fail it with the field and seed named.
+
+The same run found a second, unrelated flake in that smoke: "every swing showed something"
+failed about once in eight runs **on the untouched base**, because Assassin Cross printed
+42–46 numbers+misses for 47 attacks (the band is 90%). The thresholds were left alone and
+the block was seeded instead, so the result is reproducible. Whether 1–5 high-ASPD swings
+genuinely resolving with no float is acceptable is still an open question for a follow-up;
+it is not covered by this change.
+
+**2026-10-30 gate result (after the read-only launch schema check):** 179 suites,
+**178 pass**. The one failure is
+`social_worker_sim.mjs`, which imports `convertV4MiniflareOptions` — the installed
+miniflare 4.20260730.0 does not export it, so this is a harness/version problem, not a
+code failure. `skill_balance_sim.js`, `card_star_balance_sim.js` and
+`hosted_launch_stage_sim.js` are green (the balance fixtures were regenerated in the
+previous entry with identical measurements). `live_launch_schema_check_sim.js` is new:
+it proves the read-only schema check accepts a complete 0008–0011 application, reports
+missing tables, columns, triggers, indexes and launch config separately, changes nothing
+when it reads, and cannot acquire a write path (source-level guard). All 179 suites need
+`npm install --no-save --package-lock=false jsdom three@0.128.0 ws` first; without it the
+client-side suites fail to load rather than fail assertions.
 
 **2026-10-29 (camp/auth audit):** The original 3.35-unit camp smoke was not changed.
 An in-memory bounded-ring prototype and a local workerd password-cost probe are
