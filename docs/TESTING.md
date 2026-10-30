@@ -65,6 +65,18 @@ None proves browser score integrity or hosted launch readiness. See
 [Competition security](COMPETITION-SECURITY.md) for cutoffs and remaining risks.
 
 
+## Write pause (the recovery switch)
+
+`node tools/tests/write_gate_sim.mjs` covers the pause state machine and the Durable
+Object (closed by default, exact phrases, constant-time token, lockout, restart,
+corrupt storage loading as closed). `node tools/tests/write_gate_middleware_sim.js`
+proves no `/api` path — save, grants, GM, shop webhook, and the reads that write as a
+side effect — reaches a handler while the pause is on, and that an unreachable switch
+fails closed. `node tools/tests/write_gate_api_sim.js` covers the `/api/gate` control
+endpoint; `node tools/tests/write_gate_cli_sim.mjs` covers the owner's CLI. All four
+use stubs; none contacts Cloudflare, and the switch is off unless
+`WRITE_GATE = "required"` is set, so the existing suites are unaffected.
+
 ## D1 Time Travel selection (read-only)
 
 `node tools/tests/recovery_point_sim.mjs` exercises the owner-only seven-day

@@ -1309,7 +1309,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-10-29 haven-v262 unverified rankings';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-30 haven-v263 write pause';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3712,6 +3712,11 @@ async function cloudReadSave(){
   let r;
   try{r=await cloudFetch('/save')}catch(e){return{offline:true}}
   try{
+    // v263: the write pause (docs/RECOVERY.md) answers every API request with 503 while the gate is
+    // closed. That is not a lost connection - the server is deliberately not writing - but the right
+    // client behaviour is the same: stay away, upload nothing, and adopt the account save on
+    // reconnect. The flag only changes what the player is told.
+    if(r.status===503){const d=await r.json().catch(()=>({}));return{offline:true,maintenance:!!(d&&d.maintenance)}}
     if(r.status===409){const d=await r.json().catch(()=>({}));return d&&d.saveMismatch?{refused:d}:{data:null}}
     return{data:r.ok?await r.json():null};
   }catch(e){return{offline:true}}
@@ -3746,7 +3751,11 @@ function cloudGateHide(){const box=cloudGateEl();if(box)box.style.display='none'
 // session. So the failure is confirmed with a cheap /me call before the gate opens.
 async function cloudConnectionLost(reason){
   let alive=false;
-  try{const r=await cloudFetch('/me',{cache:'no-store'});alive=!!r&&(r.ok||r.status===401)}catch(e){alive=false}
+  try{const r=await cloudFetch('/me',{cache:'no-store'});alive=!!r&&(r.ok||r.status===401);
+    // A maintenance pause is confirmed the same way a dropped connection is: with one cheap /me. If
+    // the server says it is paused, say that instead of blaming the player's network.
+    if(r&&r.status===503){const d=await r.json().catch(()=>({}));if(d&&d.maintenance){cloudMaintenance(reason);return}}
+  }catch(e){alive=false}
   if(alive){
     cloudBadge('☁ ⚠','Sync failed - retrying');
     cloudSay('Cloud sync failed ('+(reason||'network')+'). The character keeps playing on this device until the next sync retry.','r0');
@@ -3756,6 +3765,17 @@ async function cloudConnectionLost(reason){
   cloudBadge('☁ ✕','Offline - your character is away');
   cloudSay('Connection lost ('+(reason||'no answer from the server')+'). Your character is away until you reconnect; that time is paid as away rewards.','r0','cloud');
   cloudGateShow('Last attempt: '+(reason||'no answer')+' · '+(CLOUD.user?'signed in as '+CLOUD.user:''));
+}
+// The write pause (v263). The server is up but has stopped writing, so the character is AWAY exactly
+// as it is when the connection drops: the simulation stops, nothing is uploaded, and reconnecting
+// adopts the account's save. Reloading is what the player should do when maintenance ends - a tab
+// that synced before the pause still holds the older copy - so no automatic retry is scheduled.
+function cloudMaintenance(reason){
+  CLOUD.lost=true;CLOUD.offline=true;
+  cloudBadge('☁ ⏸','Server maintenance - your character is paused');
+  cloudSay('The server is in maintenance, so the game is paused and nothing was uploaded. Reload this page when maintenance ends; your account is the only save.','r0','cloud');
+  cloudGateShow('Server maintenance'+(reason?' (last attempt: '+reason+')':'')+'. Nothing is being saved. Reload this page when maintenance ends.');
+  try{simAt=performance.now();simPending=0}catch(e){}
 }
 // One session per account: a sign-in on another device ended this one. The tab cannot keep
 // playing - another device owns the character now - so it stops the simulation, keeps the local
@@ -3781,7 +3801,7 @@ async function cloudReconnect(){
   const detail=$('cloudGateDetail');if(detail)detail.textContent='Reconnecting…';
   const got=await cloudReadSave();
   if(got.offline){
-    if(detail)detail.textContent='Still no answer from the server. Check your connection and try again.';
+    if(detail)detail.textContent=got.maintenance?'The server is still in maintenance. Nothing was uploaded; try again when it is back.':'Still no answer from the server. Check your connection and try again.';
     cloudGateShow(detail?detail.textContent:'');
     return false;
   }

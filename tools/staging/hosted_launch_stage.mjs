@@ -17,7 +17,9 @@ const PROJECT = 'prontera-grind-staging';
 const FILES = ['index.html','gm.html','functions/_lib/db.js','functions/_lib/echo-board.js',
   'functions/_lib/validate.js','functions/_lib/damage-monitor.js','functions/_lib/competition-baseline.js',
   'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js','functions/api/save.js',
-  'functions/api/board.js','functions/api/_middleware.js','functions/api/gm/damage.js','migrations/0008_damage_monitoring.sql',
+  'functions/api/board.js','functions/api/_middleware.js','functions/api/gm/damage.js',
+  // v263: the write-pause control endpoint travels with the candidate; it 404s without the GATE binding.
+  'functions/api/gate.js','migrations/0008_damage_monitoring.sql',
   'migrations/0009_competition_settlement.sql','migrations/0010_competition_baseline.sql',
   'migrations/0011_unverified_echo_launch.sql'];
 const CONFIG = `name = "${PROJECT}"\ncompatibility_date = "2026-10-01"\npages_build_output_dir = "dist"\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "${DB_NAME}"\ndatabase_id = "${DB_ID}"\n`;

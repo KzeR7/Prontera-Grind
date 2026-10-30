@@ -130,7 +130,9 @@ function harness(opts = {}) {
     'saveRefusal','sameAccount','sameSave','saveOwnerOf','cloudReadSave','cloudSaveRefused',
     'saveBlockedText','cloudRefusedText','accountOfSaveKey',
     // v252: a 401 mid-session means the account signed in on another device.
-    'cloudSessionReplaced','cloudReplaced'];
+    'cloudSessionReplaced','cloudReplaced',
+    // v263: a 503 with {maintenance:true} is the write pause, not a dropped connection.
+    'cloudMaintenance'];
   vm.createContext(sandbox);
   // A `let` is copied BY VALUE above; a getter keeps the flag observable after it changes.
   vm.runInContext(cloudCode + '\n;' + EXPORTS.map(n => `globalThis.${n}=${n};`).join('') +
@@ -289,6 +291,43 @@ await T('a lost connection stops the character and says it is away, not "saved o
   h.state.S = h.sandbox.S;
   assert.strictEqual(await h.sandbox.cloudPush(true), 'idle');
   assert.strictEqual(h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT').length, 1);
+});
+
+await T('a server in maintenance is named as such, and nothing is uploaded or retried', async () => {
+  let paused = true;
+  const serverBlob = JSON.stringify({ lv: 31, cls: 'Priest', zeny: 7, kills: 12, st: { str: 1 }, q: [], owner: 'X' });
+  const h = harness({
+    storage: { 'pg_save3_X': JSON.stringify({ lv: 12, zeny: 5, owner: 'X' }) },
+    routes: {
+      '/save': () => paused
+        ? { status: 503, body: { maintenance: true, err: 'The server is paused for maintenance.' } }
+        : { status: 200, body: { version: 9, blob: serverBlob, savedAt: 3, owner: 'X' } },
+      '/me': () => paused ? { status: 503, body: { maintenance: true } } : { status: 200, body: { u: 'X' } },
+    },
+  });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.currentUser = 'X'; h.sandbox.CLOUD.user = 'X';
+  assert.strictEqual(await h.sandbox.cloudPush(true), 'offline');
+  assert.strictEqual(h.sandbox.CLOUD.lost, true, 'the character is away, so local play cannot be uploaded later');
+  assert.strictEqual(h.els.get('cloudGate').style.display, 'flex', 'the player is told');
+  assert.match(h.els.get('cloudGateDetail').textContent, /maintenance/i);
+  assert.match(h.els.get('cloudBadge').title, /maintenance/i, 'the badge says why');
+  assert.ok(h.state.logs.some(l => /maintenance/i.test(l.m)), 'and it is logged as maintenance, not as a bad network');
+  assert.strictEqual(h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT').length, 1,
+    'the attempt is not retried into a paused server');
+
+  // Reconnecting while it is still paused is refused, and still says maintenance.
+  assert.strictEqual(await h.sandbox.cloudReconnect(), false);
+  assert.match(h.els.get('cloudGateDetail').textContent, /still in maintenance/i);
+  assert.strictEqual(h.sandbox.CLOUD.lost, true);
+
+  // When the pause lifts, the account's save is adopted (it is the real one) and play resumes.
+  paused = false;
+  assert.strictEqual(await h.sandbox.cloudReconnect(), true);
+  assert.strictEqual(h.els.get('cloudGate').style.display, 'none');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 9, 'the server version is the one this tab follows now');
+  assert.strictEqual(JSON.parse(h.store.get('pg_save3_X')).lv, 31, 'the account save became the live save');
+  assert.strictEqual(h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT').length, 1,
+    'nothing drawn during the pause was uploaded over the restored save');
 });
 
 await T('one flaky request is not a lost connection: the gate waits for /me to fail too', async () => {
