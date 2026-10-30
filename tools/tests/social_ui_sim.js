@@ -87,5 +87,32 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  assert.equal(app.nextConnect,0,'a planned refresh does not back off');
  w.WebSocket=class{constructor(u){wsUrl=u;socket=this;this.readyState=1;this.sent=[]}close(){}send(m){this.sent.push(JSON.parse(m))}};
  w.Date.now=realNow;
- console.log('PASS chat UI: dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local privacy on exit, Emoji gate, recipient control, minimize, history cap, solo/preview plaza fallback and text-only message rendering');dom.window.close();
+ // v265: Activity log (`hide-feed` / `S.feedShow===false`) hides only the Log tab and never
+ // hides World/Whisper/Local player chat; Chat box (`hide-chat`) hides chat on the field while
+ // keeping Fountain Plaza (`social-open`) chat accessible.
+ const cssTag=w.document.createElement('style');
+ cssTag.textContent=fs.readFileSync('assets/social.css','utf8');
+ w.document.head.append(cssTag);
+ w.PGSocial.leave();
+ w.S.feedShow=true;w.document.body.classList.remove('hide-feed','hide-chat','clean-screen','social-open');
+ w.PGSocial.syncDisplay();
+ assert(w.document.querySelector('#socialTabs [data-channel="log"]'),'Log tab renders when Activity log is enabled');
+ w.PGSocial.select('log');assert.equal(app.channel,'log');
+ w.S.feedShow=false;w.document.body.classList.add('hide-feed');
+ w.PGSocial.syncDisplay();
+ assert.equal(w.getComputedStyle(chat).display,'flex','unchecking Activity log never hides the chat box');
+ assert.equal(w.document.querySelector('#socialTabs [data-channel="log"]'),null,'unchecking Activity log removes only the Log tab');
+ assert.equal(app.channel,'world','hiding Activity log switches active channel off log to world');
+ app.room=1;app.channel='log';w.PGSocial.syncDisplay();
+ assert.equal(app.channel,'local','hiding Activity log inside a plaza room switches off log to local');
+ app.room=0;w.S.feedShow=true;w.document.body.classList.remove('hide-feed');w.PGSocial.syncDisplay();
+ assert(w.document.querySelector('#socialTabs [data-channel="log"]'),'re-enabling Activity log restores the Log tab');
+ w.document.body.classList.add('hide-chat');
+ assert.equal(w.getComputedStyle(chat).display,'none','Chat box toggle hides #socialChat on the field');
+ w.document.body.classList.add('social-open');
+ assert.equal(w.getComputedStyle(chat).display,'flex','Fountain Plaza keeps #socialChat visible even when field chat is hidden');
+ w.document.body.classList.add('clean-screen');
+ assert.equal(w.getComputedStyle(chat).display,'none','clean-screen hides #socialChat everywhere');
+ w.document.body.classList.remove('hide-chat','social-open','clean-screen');
+ console.log('PASS chat UI: dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local privacy on exit, Emoji gate, recipient control, minimize, history cap, solo/preview plaza fallback, decoupled chat/log visibility and text-only message rendering');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1)});

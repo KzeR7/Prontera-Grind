@@ -1715,22 +1715,37 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 @container(max-width:620px){#wins .class-lineage-overview .trow{gap:3px}#wins .class-lineage-overview .tn b{font-size:9px}#wins .class-lineage-overview .tn small{font-size:8px}#wins .class-path-track{grid-template-columns:repeat(2,minmax(0,1fr))}#wins .class-path-track>.tn:last-child{grid-column:auto}}
 
 /* One Mythic set and one owned source item at a time. */
-#wins .ascension-forge{max-width:100%;padding:4px}
-#wins .ascension-set-picker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin:20px 0}
-#wins .ascension-set-picker button{display:flex;flex-direction:column;gap:5px;min-width:0;padding:12px 5px}
+#wins .ascension-forge{max-width:100%;padding:2px}
+#wins .ascension-forge>header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;margin:0 0 8px}
+#wins .ascension-forge>header .ui-eyebrow{font-size:9px;letter-spacing:.14em;color:var(--gold)}
+#wins .ascension-forge>header h2{margin:0;font-size:15px;line-height:1.2}
+#wins .ascension-forge>header p{margin:0;font-size:11px;color:var(--e-muted)}
+#wins .ascension-set-picker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:8px 0 12px}
+#wins .ascension-set-picker button{display:flex;flex-direction:column;gap:3px;min-width:0;padding:8px 5px}
 #wins .ascension-set-picker [aria-pressed=true]{border-color:var(--gold);color:var(--gold);background:var(--e-soft)}
-#wins .ascension-forge-body{display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,2fr);gap:22px}
-#wins .ascension-set-info ul{padding:0;list-style:none;display:grid;gap:18px}
-#wins .ascension-set-info li{display:grid;gap:6px;padding-bottom:14px;border-bottom:1px solid var(--e-line);font-size:12px;line-height:1.7}
+#wins .ascension-forge-body{display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,2fr);gap:18px;align-items:start}
+#wins .ascension-set-info h3{margin:0 0 6px;font-size:14px}
+#wins .ascension-set-info p{margin:0 0 8px;line-height:1.45}
+#wins .ascension-set-info ul{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:10px}
+#wins .ascension-set-info li{display:grid;gap:3px;padding-bottom:9px;border-bottom:1px solid var(--e-line);font-size:12px;line-height:1.5}
+#wins .ascension-set-info li:last-child{padding-bottom:2px;border-bottom:0}
 #wins .ascension-set-info li.active{color:var(--gold)}
-#wins .ascension-evolution label{display:grid;gap:8px;font-size:12px}
-#wins .ascension-evolution select{width:100%;min-width:0;padding:12px}
-#wins .ascension-item-change{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:12px;align-items:center;margin:24px 0;text-align:center}
-#wins .ascension-item-change>div{display:grid;justify-items:center;gap:10px;min-width:0}
-#wins .ascension-item-change img{width:64px;height:64px;object-fit:contain;image-rendering:pixelated}
-#wins .ascension-costs>div{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--e-line)}
+#wins .ascension-evolution{display:flex;flex-direction:column;gap:8px;min-width:0}
+#wins .ascension-evolution>p{margin:0;line-height:1.4}
+#wins .ascension-evolution label{display:grid;gap:6px;font-size:12px}
+#wins .ascension-evolution select{width:100%;min-width:0;padding:9px 12px}
+#wins .ascension-item-change{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:10px;align-items:center;margin:2px 0;padding:10px;border:1px solid var(--e-line);border-radius:8px;background:color-mix(in srgb,var(--e-raised) 55%,transparent);text-align:center}
+#wins .ascension-item-change>div{display:grid;justify-items:center;gap:6px;min-width:0}
+#wins .ascension-item-change img{width:48px;height:48px;object-fit:contain;image-rendering:pixelated}
+#wins .ascension-current-affixes{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+#wins .ascension-current-affixes>b{width:100%;font-size:11px;color:var(--ink)}
+#wins .ascension-current-affixes>p{margin:0;padding:3px 9px;border:1px solid var(--e-line);border-radius:999px;background:var(--e-bg);color:var(--ink);font-size:11px;line-height:1.35}
+#wins .ascension-costs{margin:2px 0}
+#wins .ascension-costs>div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--e-line)}
 #wins .ascension-costs dd{margin:0;text-align:right}
-#wins .ascension-empty{padding:24px 0;line-height:1.8;color:var(--e-muted)}
+#wins .ascension-evolution button[data-a="transformasc"]{width:100%;min-height:40px;margin-top:4px;padding:9px 14px;font-weight:700;font-size:12px;line-height:1.35;white-space:normal;border:1px solid var(--gold);border-radius:6px;background:var(--gold);color:var(--e-bg)}
+#wins .ascension-evolution button[data-a="transformasc"]:disabled{background:var(--e-raised);color:var(--ink);border-color:var(--edge2);opacity:.78;cursor:not-allowed}
+#wins .ascension-empty{padding:18px 0;line-height:1.7;color:var(--e-muted)}
 #wins .echo-panel{display:block!important}#wins .echo-destination{padding:24px;max-width:800px;margin:auto}
 #wins .ascension-progression{padding:20px;line-height:1.8}
 #wins .ascension-skill-preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}
@@ -3452,6 +3467,22 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.wbod
 #wins .eclipse-card-workspace-grid,
 #wins .eclipse-affix-workbench{flex:0 0 auto;min-height:0;overflow:visible}
 #wins .wbody[data-layout=equip]{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+/* Ascension Forge has no internal scroller of its own; let its window body scroll
+   smoothly beneath the sticky Equipment sub-tab strip so set bonuses, material
+   costs, and the Ascend action button are never clipped. */
+#wins [data-win="equip"]>.wbody[data-view="ascension"]{
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+#wins [data-win="equip"]>.wbody[data-view="ascension"]>.ui-content{
+  display:block;
+  flex:0 0 auto;
+  min-height:0;
+  overflow:visible;
+  padding:12px 18px 20px;
+}
 /* Keep footer sizing consistent with Loadout */
 body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.eclipse-window-footer{
   min-height:52px;
