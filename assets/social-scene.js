@@ -3,7 +3,8 @@ window.PGSocialScene={async create(host,labels,callbacks){
  const T=THREE,R=PGSocialRules,scene=new T.Scene();scene.background=new T.Color(0xb9cbbb);scene.fog=new T.Fog(0xb9cbbb,120,230);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));host.append(renderer.domElement);
  try {
- const camera=new T.PerspectiveCamera(40,1,.1,350),players=new Map();let angle=0,pitch=48,distance=48,panX=0,panZ=0,follow=true,active=false,last=0,clock=0,focused=false,viewW=0,viewH=0;
+ const DEFAULT_PITCH=45,DEFAULT_DISTANCE=44;
+ const camera=new T.PerspectiveCamera(38,1,.1,350),players=new Map();let angle=0,pitch=DEFAULT_PITCH,distance=DEFAULT_DISTANCE,active=false,last=0,clock=0,focused=false,viewW=0,viewH=0;
  const focus=new T.Vector3(0,.8,12),target=new T.Vector3(),feet=new T.Vector3(),head=new T.Vector3();
  const freeze=mesh=>{mesh.updateMatrix();mesh.matrixAutoUpdate=false;return mesh};
  scene.add(new T.HemisphereLight(0xffffff,0x66775a,1));
@@ -38,11 +39,167 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const shrubs=makeBatch();for(const offset of [-4,0,4])for(const side of [-1,1])pushModel(shrubs,'shrub',g.x+offset,g.z+side*5,2.4,0,garden,gardenFloats);addBatch(shrubs,gardenMat);
  }
  for(const {x,z,size} of R.TREES)model('tree2',x,z,size,0,garden,gardenFloats,gardenMat);
- const seats=R.SEATS.map(s=>{const mesh=model('bench',s.x,s.z,s.size,s.rotation);mesh.userData.seat=s.id;mesh.userData.seatBounds=new T.Box3().setFromObject(mesh).expandByScalar(.25);return mesh});
+ // 12 physical metal park benches, each split into 2 side-by-side seat targets (24 seats total).
+ const benches=(R.BENCHES||R.SEATS).map(b=>{
+  const mesh=model('bench',b.x,b.z,b.size,b.rotation);
+  mesh.userData.bench=b.id;
+  mesh.userData.seat=Array.isArray(b.seats)?b.seats[0]:b.id;
+  mesh.userData.seatBounds=new T.Box3().setFromObject(mesh).expandByScalar(.25);
+  return mesh;
+ });
+ const seatTargets=R.BENCHES?benches.flatMap(mesh=>{
+  const b=R.BENCHES[mesh.userData.bench],bb=mesh.userData.seatBounds;
+  return [
+   {seat:b.seats[0],bench:b.id,bounds:new T.Box3(new T.Vector3(bb.min.x,bb.min.y,bb.min.z),new T.Vector3(b.x,bb.max.y,bb.max.z))},
+   {seat:b.seats[1],bench:b.id,bounds:new T.Box3(new T.Vector3(b.x,bb.min.y,bb.min.z),new T.Vector3(bb.max.x,bb.max.y,bb.max.z))}
+  ];
+ }):benches.map(mesh=>({seat:mesh.userData.seat,bench:mesh.userData.seat,bounds:mesh.userData.seatBounds}));
 
  const water=new T.Mesh(new T.CircleGeometry(3.7,48),new T.MeshBasicMaterial({color:0x60c9dc,transparent:true,opacity:.65}));water.rotation.x=-Math.PI/2;water.position.y=.7;scene.add(freeze(water));
  const sprayGeo=new T.BufferGeometry(),spray=new Float32Array(72*3);sprayGeo.setAttribute('position',new T.BufferAttribute(spray,3));const drops=new T.Points(sprayGeo,new T.PointsMaterial({color:0xd6f8ff,size:.14,transparent:true,opacity:.8}));scene.add(drops);
  const allClasses={...PGWardrobe.CLASSES,...PGFourthJobs.CLASSES};const stores=[new PGWardrobe.Store({budget:96*1024*1024}),new PGFourthJobs.Store({budget:64*1024*1024}),new PGWardrobe.Store({base:'assets/social/sitting/',classes:allClasses,budget:48*1024*1024,stances:['sit']})];
+
+ // v266: Two Plaza Hold'em tables along the West Promenade, 12 cushioned stools and 2 native Dealers.
+ const woodDark=new T.MeshLambertMaterial({color:0x4b2e1b}),woodRail=new T.MeshLambertMaterial({color:0x633a22}),brassMat=new T.MeshLambertMaterial({color:0xcba458}),velvetRed=new T.MeshLambertMaterial({color:0x8d2630}),velvetBlue=new T.MeshLambertMaterial({color:0x274d78}),feltBaseMat=new T.MeshLambertMaterial({color:0x17583b});
+ const tableSpecs=R.POKER.tables||[{id:0,label:'Table 1',table:R.POKER.table,dealer:R.POKER.dealer,seats:R.POKER.seats}];
+ const pokerUnits=tableSpecs.map(spec=>{
+  const t=spec.table,dSpec=spec.dealer;
+  const grp=new T.Group();grp.position.set(t.x,0,t.z);grp.userData.pokerTable=spec.id;
+  // Single-mesh woven carpet with hardware depth offset so it never Z-fights with road/plaza or a trim layer.
+  const rugCanvas=document.createElement('canvas');rugCanvas.width=256;rugCanvas.height=192;
+  const rCtx=rugCanvas.getContext('2d');
+  const rugHex='#'+Number(dSpec.rugColor||0x4a2127).toString(16).padStart(6,'0');
+  const trimHex='#'+Number(dSpec.trimColor||0xb89652).toString(16).padStart(6,'0');
+  if(rCtx&&typeof rCtx.fillRect==='function'){
+   rCtx.fillStyle=trimHex;rCtx.fillRect(0,0,256,192);
+   rCtx.fillStyle=rugHex;rCtx.fillRect(9,9,238,174);
+   rCtx.strokeStyle='rgba(236,206,134,0.45)';rCtx.lineWidth=3;
+   if(typeof rCtx.strokeRect==='function')rCtx.strokeRect(18,18,220,156);
+  }
+  const rugTex=new T.CanvasTexture(rugCanvas);
+  const rugMat=new T.MeshBasicMaterial({
+   ...(rCtx&&typeof rCtx.fillRect==='function'?{map:rugTex}:{color:dSpec.rugColor||0x4a2127}),
+   polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4
+  });
+  const rug=new T.Mesh(new T.PlaneGeometry(7.05,5.15),rugMat);
+  rug.rotation.x=-Math.PI/2;rug.position.y=.042;rug.renderOrder=1;grp.add(rug);
+  for(const sx of [-1.05,1.05]){const ped=new T.Mesh(new T.CylinderGeometry(.28,.46,.9,12),woodDark);ped.position.set(sx,.46,0);grp.add(ped)}
+  const beam=new T.Mesh(new T.BoxGeometry(2.1,.15,.2),woodDark);beam.position.set(0,.28,0);grp.add(beam);
+  const outerDeck=new T.Mesh(new T.CylinderGeometry(1.48,1.42,.15,36),woodRail);outerDeck.scale.set(1.48,1,.95);outerDeck.position.y=.91;grp.add(outerDeck);
+  const brassRim=new T.Mesh(new T.CylinderGeometry(1.36,1.36,.16,36),brassMat);brassRim.scale.set(1.45,1,.92);brassRim.position.y=.93;grp.add(brassRim);
+  const feltDeck=new T.Mesh(new T.CylinderGeometry(1.31,1.31,.17,36),feltBaseMat);feltDeck.scale.set(1.44,1,.91);feltDeck.position.y=.95;grp.add(feltDeck);
+  for(const [cx,cz,col,ch] of [[-.32,-.92,0xd94444,.14],[-.16,-.94,0xf0c95c,.18],[0,-.94,0x3c89d9,.12],[.18,-.92,0xf2ede2,.16]]){
+   const stackMesh=new T.Mesh(new T.CylinderGeometry(.065,.065,ch,12),new T.MeshBasicMaterial({color:col}));stackMesh.position.set(cx,1.055+ch/2,cz);grp.add(stackMesh);
+  }
+  const feltCanvas=document.createElement('canvas');feltCanvas.width=512;feltCanvas.height=304;
+  const feltCtx=feltCanvas.getContext('2d'),feltTex=new T.CanvasTexture(feltCanvas);
+  const feltPlane=new T.Mesh(new T.PlaneGeometry(3.15,1.86),new T.MeshBasicMaterial({map:feltTex,transparent:true,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+  feltPlane.rotation.x=-Math.PI/2;feltPlane.position.y=1.056;feltPlane.renderOrder=2;grp.add(feltPlane);
+  scene.add(freeze(grp));
+  const tableBounds=new T.Box3().setFromObject(grp);tableBounds.min.x=t.minX;tableBounds.max.x=t.maxX;tableBounds.min.z=t.minZ+.4;tableBounds.max.z=t.maxZ;tableBounds.max.y=1.4;
+
+  const dCanvas=document.createElement('canvas');dCanvas.width=320;dCanvas.height=280;
+  const dCtx=dCanvas.getContext('2d'),dTex=new T.CanvasTexture(dCanvas);dTex.magFilter=dTex.minFilter=T.NearestFilter;dTex.generateMipmaps=false;
+  const dSprite=new T.Sprite(new T.SpriteMaterial({map:dTex,transparent:true,depthTest:true,alphaTest:.05}));
+  dSprite.userData.npcId=dSpec.id;dSprite.userData.tableId=spec.id;dSprite.center.set(.5,80/280);dSprite.position.set(dSpec.x,.06,dSpec.z);scene.add(dSprite);
+  const dealerBounds=new T.Box3(new T.Vector3(dSpec.x-.9,0,dSpec.z-.85),new T.Vector3(dSpec.x+.9,2.9,dSpec.z+.85));
+
+  const npcLabel=document.createElement('div');npcLabel.className='social-npc-label';npcLabel.dataset.npc=dSpec.id;npcLabel.dataset.table=spec.id;
+  const npcTag=document.createElement('span');npcTag.className='social-npc-tag';npcTag.textContent=`${(spec.label||'TABLE').toUpperCase()} · HOLD'EM`;
+  const npcBtn=document.createElement('button');npcBtn.type='button';npcBtn.textContent='🃏 '+dSpec.name;npcBtn.onclick=()=>callbacks.pokerOpen?.(spec.id);
+  const npcSub=document.createElement('small');npcSub.className='social-npc-sub';npcSub.textContent='0 / 6 seated';
+  npcLabel.append(npcTag,npcBtn,npcSub);
+  const npcBubble=document.createElement('div');npcBubble.className='social-npc-bubble';npcBubble.dataset.npc=dSpec.id;npcBubble.hidden=true;
+  labels.append(npcLabel,npcBubble);
+
+  const unit={
+   id:spec.id,spec,dSpec,feltCtx,feltTex,lastFeltKey:'',tableBounds,dealerBounds,
+   dSprite,dCtx,dTex,npcLabel,npcSub,npcBubble,
+   look:null,loading:false,retryAt:0,paint:'',height:3.2,lx:'',ly:'',lhid:null,bx:'',by:'',bhid:true,bubbleUntil:0
+  };
+  return unit;
+ });
+
+ function paintUnitFelt(u,snap){
+  const key=snap?`${snap.phase}:${(snap.community||[]).join(',')}:${snap.pot||0}:${snap.seatedCount||0}`:'idle';
+  if(key===u.lastFeltKey)return;u.lastFeltKey=key;
+  const ctx=u.feltCtx;if(!ctx||typeof ctx.fillRect!=='function')return;
+  ctx.clearRect(0,0,512,304);
+  ctx.fillStyle='#196141';ctx.fillRect(0,0,512,304);
+  ctx.strokeStyle='rgba(232,199,118,0.58)';ctx.lineWidth=4;ctx.strokeRect(18,18,476,268);
+  ctx.strokeStyle='rgba(232,199,118,0.25)';ctx.lineWidth=2;ctx.strokeRect(28,28,456,248);
+  ctx.fillStyle='rgba(240,219,165,0.78)';ctx.font='bold 18px Georgia, serif';ctx.textAlign='center';
+  ctx.fillText(`${(u.spec.label||'TABLE 1').toUpperCase()} · PLAZA HOLD'EM`,256,58);
+  const cards=snap?.community||[];
+  const suitGlyph={s:'♠',h:'♥',d:'♦',c:'♣'};
+  for(let i=0;i<5;i++){
+   const x=78+i*74,y=92,w=60,h=86,code=cards[i];
+   if(code){
+    ctx.fillStyle='#fcfaf2';ctx.fillRect(x,y,w,h);
+    ctx.strokeStyle='#d4b16a';ctx.lineWidth=2;ctx.strokeRect(x,y,w,h);
+    const red=code[1]==='h'||code[1]==='d';
+    ctx.fillStyle=red?'#c2272d':'#1c252c';
+    ctx.font='bold 24px Trebuchet MS, sans-serif';
+    ctx.fillText(code[0]==='T'?'10':code[0],x+30,y+38);
+    ctx.font='26px Georgia, serif';
+    ctx.fillText(suitGlyph[code[1]]||'',x+30,y+70);
+   }else{
+    ctx.strokeStyle='rgba(232,199,118,0.34)';ctx.lineWidth=2;ctx.strokeRect(x,y,w,h);
+   }
+  }
+  ctx.fillStyle='#ffe49c';ctx.font='bold 20px Trebuchet MS, sans-serif';
+  const pot=Number(snap?.pot||0);
+  ctx.fillText(pot>0?`POT · ${pot.toLocaleString()} CHIPS`:'CLICK ANY STOOL TO SIT',256,222);
+  ctx.fillStyle='rgba(225,238,229,0.78)';ctx.font='15px Trebuchet MS, sans-serif';
+  ctx.fillText('BLINDS 10 / 20 · NO-LIMIT HOLD\'EM',256,252);
+  u.feltTex.needsUpdate=true;
+ }
+ for(const u of pokerUnits)paintUnitFelt(u,null);
+
+ const pokerStools=R.POKER.seats.map(s=>{
+  const g=new T.Group();g.position.set(s.x,0,s.z);
+  const base=new T.Mesh(new T.CylinderGeometry(.12,.33,.58,12),woodDark);base.position.y=.29;g.add(base);
+  const ring=new T.Mesh(new T.TorusGeometry(.26,.024,6,16),brassMat);ring.rotation.x=Math.PI/2;ring.position.y=.22;g.add(ring);
+  const pan=new T.Mesh(new T.CylinderGeometry(.42,.39,.08,18),woodRail);pan.position.y=.61;g.add(pan);
+  const pad=new T.Mesh(new T.CylinderGeometry(.39,.41,.09,18),s.tableId===1?velvetBlue:velvetRed);pad.position.y=.68;g.add(pad);
+  g.userData.pokerSeat=s.id;g.userData.tableId=s.tableId||0;
+  scene.add(freeze(g));
+  g.userData.pokerSeatBounds=new T.Box3().setFromObject(g).expandByScalar(.32);
+  return g;
+ });
+
+ function loadDealers(now){
+  if(players.size&&![...players.values()].some(p=>p.looks.normal))return;
+  for(const u of pokerUnits){
+   if(u.look||u.loading||now<u.retryAt)continue;
+   const cls=Object.hasOwn(allClasses,u.dSpec.cls)?u.dSpec.cls:'Novice';
+   const app=PGWardrobe.normalize(u.dSpec.appearance)||PGWardrobe.defaults('m');
+   const store=Object.hasOwn(PGFourthJobs.CLASSES,cls)?stores[1]:stores[0];
+   u.loading=true;
+   store.select('social-npc-'+u.dSpec.id,app,cls).then(look=>{
+    if(look){u.look=look;u.paint='';}
+   }).catch(()=>{u.retryAt=performance.now()+3000;}).finally(()=>{u.loading=false;});
+  }
+ }
+ function dealerBubble(text,ms=6500,tableId=0){
+  if(!text)return;
+  const u=pokerUnits[tableId]||pokerUnits[0];if(!u)return;
+  u.npcBubble.textContent=text;u.npcBubble.hidden=false;u.bhid=false;
+  u.bubbleUntil=Math.max(performance.now(),clock)+ms;
+ }
+ function updatePoker(tablesOrSnap){
+  const list=Array.isArray(tablesOrSnap)?tablesOrSnap:tablesOrSnap?[tablesOrSnap]:[];
+  for(const snap of list){
+   if(!snap)continue;
+   const u=pokerUnits[snap.tableId||0];if(!u)continue;
+   paintUnitFelt(u,snap);
+   const n=Number(snap.seatedCount||0);
+   const phase=snap.phase&&snap.phase!=='idle'?` · ${snap.phase[0].toUpperCase()+snap.phase.slice(1)}`:'';
+   const nextText=`${n} / 6 seated${phase}`;
+   if(u.npcSub.textContent!==nextText)u.npcSub.textContent=nextText;
+  }
+ }
+
  function disposeAura(group){if(!group)return;const textures=new Set();group.traverse(o=>{if(o.isMesh||o.isPoints)o.geometry.dispose();if(o.material){if(o.material.map)textures.add(o.material.map);o.material.dispose()}});textures.forEach(t=>t.dispose())}
  // v225 (owner): the plaza reuses the field's own Base 50/99/150 sigil, so a character's level aura
  // is the same object and animation here. Textures are private to one player and freed on leave.
@@ -74,41 +231,81 @@ window.PGSocialScene={async create(host,labels,callbacks){
  if(p.requested!==key){p.requested=key;p.paint='';p.seq++;p.loading=false;p.retryAt=0;loadLooks(p,performance.now())}
  }
  function bubble(id,m){const p=players.get(id);if(!p)return;p.bubble.replaceChildren();p.bubble.classList.toggle('social-emotion',!!m.emotion);if(m.emotion){const img=document.createElement('img');img.src='assets/social/emotions/'+m.emotion+'.png';img.alt='/'+m.emotion;p.bubble.append(img)}else p.bubble.textContent=m.body;p.bubbleUntil=Math.max(performance.now(),clock)+6000;p.bhid=null}
- // Keep camera state separate from both farming and authoritative player coordinates.
- const cameraState=()=>({angle,pitch,distance,panX,panZ,follow});
+ // Player-locked camera matching the main field game: drag orbits/tilts, pinch/wheel zooms, no map-roaming pan.
+ const cameraState=()=>({angle,pitch,distance,panX:0,panZ:0,follow:true});
  function setCamera(values={}){const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
  if(Number.isFinite(values.angle))angle=((values.angle+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
- if(Number.isFinite(values.pitch))pitch=clamp(values.pitch,25,78);
- if(Number.isFinite(values.distance))distance=clamp(values.distance,12,100);
- if(Number.isFinite(values.panX))panX=clamp(values.panX,-R.LIMIT,R.LIMIT);
- if(Number.isFinite(values.panZ))panZ=clamp(values.panZ,-R.LIMIT,R.LIMIT);
- if(typeof values.follow==='boolean'&&follow!==values.follow){if(values.follow){panX=panZ=0}else{panX=focus.x;panZ=focus.z}follow=values.follow}
+ if(Number.isFinite(values.pitch))pitch=clamp(values.pitch,26,77);
+ if(Number.isFinite(values.distance))distance=clamp(values.distance,22,72);
  callbacks.camera?.(cameraState());}
- function resetCamera(){setCamera({angle:0,pitch:48,distance:48,panX:0,panZ:0,follow:true})}
- function pan(dx,dy){const k=distance/Math.max(1,viewH||host.clientHeight)*.8;setCamera({panX:panX-dx*Math.cos(angle)*k-dy*Math.sin(angle)*k,panZ:panZ+dx*Math.sin(angle)*k-dy*Math.cos(angle)*k})}
+ function resetCamera(){setCamera({angle:0,pitch:DEFAULT_PITCH,distance:DEFAULT_DISTANCE})}
  const ray=new T.Raycaster(),plane=new T.Plane(new T.Vector3(0,1,0),0);let down=null;const touches=new Map();
- function startDrag(e,moved=false){return {x:e.clientX,y:e.clientY,angle,pitch,moved,pan:e.button===1||e.button===2||e.shiftKey}}
+ function startDrag(e,moved=false){return {x:e.clientX,y:e.clientY,angle,pitch,moved}}
  host.oncontextmenu=e=>e.preventDefault();
  host.onpointerdown=e=>{e.preventDefault();host.setPointerCapture(e.pointerId);touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===1)down=startDrag(e);else if(down){down.moved=true;down.pinch=null}};
- host.onpointermove=e=>{if(!down||!touches.has(e.pointerId))return;const previous=touches.get(e.pointerId);touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
- if(touches.size===2){const a=[...touches.values()],span=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),cx=(a[0].x+a[1].x)/2,cy=(a[0].y+a[1].y)/2;if(down.pinch&&span>0){setCamera({distance:distance*down.pinch/span});pan(cx-down.cx,cy-down.cy)}down.pinch=span;down.cx=cx;down.cy=cy;down.moved=true}
- else if(down.moved||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7){if(down.pan)pan(e.clientX-previous.x,e.clientY-previous.y);else setCamera({angle:down.angle-(e.clientX-down.x)*.008,pitch:down.pitch+(e.clientY-down.y)*.18});down.moved=true}};
- host.onpointerup=e=>{if(!touches.has(e.pointerId))return;touches.delete(e.pointerId);if(down&&!down.moved){const rect=host.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
- const seat=seats.map(mesh=>{const point=ray.ray.intersectBox(mesh.userData.seatBounds,new T.Vector3());return point?{mesh,distance:point.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];if(seat)callbacks.seat(seat.mesh.userData.seat);else{const point=new T.Vector3();if(ray.ray.intersectPlane(plane,point)&&R.walkable(point.x,point.z))callbacks.move(point.x,point.z)}}
+ host.onpointermove=e=>{if(!down||!touches.has(e.pointerId))return;touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(touches.size===2){const a=[...touches.values()],span=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);if(down.pinch&&span>0)setCamera({distance:distance*down.pinch/span});down.pinch=span;down.moved=true}
+ else if(down.moved||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7){setCamera({angle:down.angle-(e.clientX-down.x)*.006,pitch:down.pitch+(e.clientY-down.y)*.28});down.moved=true}};
+ host.onpointerup=e=>{if(!touches.has(e.pointerId))return;touches.delete(e.pointerId);if(down&&!down.moved&&!(e.button>0)){const rect=host.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
+ const pokerSeatHit=pokerStools.map(mesh=>{const point=ray.ray.intersectBox(mesh.userData.pokerSeatBounds,new T.Vector3());return point?{mesh,distance:point.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];
+ const tableHit=pokerUnits.map(u=>{const dp=ray.ray.intersectBox(u.dealerBounds,new T.Vector3()),tp=ray.ray.intersectBox(u.tableBounds,new T.Vector3());const pt=dp||tp;return pt?{u,dealerDist:dp?dp.distanceTo(ray.ray.origin):Infinity,distance:pt.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];
+ const seatHit=seatTargets.map(target=>{const point=ray.ray.intersectBox(target.bounds,new T.Vector3());return point?{target,distance:point.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];
+ if(pokerSeatHit&&(!tableHit||pokerSeatHit.distance<=tableHit.dealerDist+.4)){if(callbacks.pokerSeat)callbacks.pokerSeat(pokerSeatHit.mesh.userData.pokerSeat);else callbacks.pokerOpen?.(pokerSeatHit.mesh.userData.tableId);}
+ else if(tableHit)callbacks.pokerOpen?.(tableHit.u.id);
+ else if(seatHit){
+  let chosen=seatHit.target.seat;
+  const selfId=callbacks.self(),otherTaken=id=>[...players.values()].some(pl=>pl.state.id!==selfId&&pl.state.seat===id);
+  const partner=chosen^1;
+  if(otherTaken(chosen)&&R.SEATS[partner]&&R.SEATS[partner].bench===R.SEATS[chosen]?.bench&&!otherTaken(partner))chosen=partner;
+  callbacks.seat(chosen);
+ }
+ else{const point=new T.Vector3();if(ray.ray.intersectPlane(plane,point)&&R.walkable(point.x,point.z))callbacks.move(point.x,point.z)}}
  if(touches.size){const p=[...touches.values()][0];down=startDrag({...p,clientX:p.x,clientY:p.y},true)}else down=null};
  host.onpointercancel=()=>{down=null;touches.clear()};host.addEventListener('wheel',e=>{e.preventDefault();setCamera({distance:distance*Math.exp(e.deltaY*.001)})},{passive:false});
- function syncSize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h||(w===viewW&&h===viewH))return;viewW=w;viewH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.setViewOffset(w,h,0,h*.16,w,h);camera.updateProjectionMatrix()}
+ // Subtle +5.5% optical offset keeps the player slightly higher than vertical screen center (~44% from top).
+ function syncSize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h||(w===viewW&&h===viewH))return;viewW=w;viewH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.setViewOffset(w,h,0,h*.055,w,h);camera.updateProjectionMatrix()}
  syncSize();const observer=new ResizeObserver(syncSize);observer.observe(host);
  function frame(now){requestAnimationFrame(frame);if(!active||document.hidden)return;if(!viewW||!viewH)syncSize();const dt=last?Math.min(.1,Math.max(0,(now-last)/1000)):0;last=clock=now;
  for(const p of players.values())R.advance(p.state,now);
- const self=players.get(callbacks.self());target.set(follow&&self?self.state.x+panX:panX,.8,follow&&self?self.state.z+panZ:panZ);if(!focused){focus.copy(target);focused=true}else focus.lerp(target,1-Math.exp(-dt*8));
+ const self=players.get(callbacks.self()),selfChair=self?.state.sit&&!Number.isInteger(self?.state.pokerSeat)&&R.SEATS[self?.state.seat];
+ const focusX=self?(Number.isFinite(selfChair?.sitX)?selfChair.sitX:self.state.x):0,focusZ=self?self.state.z:12;
+ target.set(focusX,.8,focusZ);if(!focused||focus.distanceTo(target)>12){focus.copy(target);focused=true}else focus.lerp(target,1-Math.exp(-dt*12));
  const tilt=pitch*Math.PI/180;camera.position.set(focus.x+Math.sin(angle)*distance*Math.cos(tilt),focus.y+Math.sin(tilt)*distance,focus.z+Math.cos(angle)*distance*Math.cos(tilt));camera.lookAt(focus);camera.updateMatrixWorld();
  for(let i=0;i<72;i++){const t=(now/1500+i/72)%1,a=i*2.399;spray[i*3]=Math.cos(a)*t*2.6;spray[i*3+1]=1.5+Math.sin(t*Math.PI)*3;spray[i*3+2]=Math.sin(a)*t*2.6}sprayGeo.attributes.position.needsUpdate=true;
  const w=viewW||host.clientWidth,h=viewH||host.clientHeight;
+ // Render table Dealers first so cached frames stay quiet and player stance draws remain authoritative.
+ loadDealers(now);
+ for(const u of pokerUnits){
+  if(u.look){
+   const dfacing=(u.dSpec.dir+Math.round(angle/(Math.PI/4))+8)%8;
+   const danim=PGWardrobe.animationKey&&Array.isArray(u.look.pieces)?PGWardrobe.animationKey(u.look,'idle',dfacing,now,null,now):PGWardrobe.frameIndex(u.look.base.metadata.actions['idle'+dfacing],now);
+   const dpaint=(u.look.key||u.dSpec.id)+':idle'+dfacing+':'+danim;
+   if(u.paint!==dpaint){
+    u.paint=dpaint;
+    PGWardrobe.draw(u.dCtx,u.look,'idle',dfacing,now,null,now,null,null);
+    u.dTex.needsUpdate=true;
+    const dscale=2.6/u.look.base.figureHeight;u.dSprite.scale.set(320*dscale,280*dscale,1);
+    const dtop=Math.min(...[u.look.base,u.look.hair].flatMap(part=>{const act=part.metadata.actions['idle'+dfacing];return act.frames[PGWardrobe.frameIndex(act,now)].filter(l=>l[7]!=='shadow').map(l=>l[5])}));
+    u.height=(200-dtop)*dscale+.25;
+   }
+  }
+  // Anchor dealer nameplate above the dealer's head so it never covers the 3D table felt.
+  head.copy(u.dSprite.position);head.y+=u.height+.12;head.project(camera);
+  const dlhid=head.z>1||head.z<-1||Math.abs(head.x)>1||Math.abs(head.y)>1;
+  if(u.lhid!==dlhid){u.lhid=dlhid;u.npcLabel.hidden=dlhid}
+  if(!dlhid){const lx=((head.x+1)*w*.5).toFixed(1)+'px',ly=((1-head.y)*h*.5).toFixed(1)+'px';if(u.lx!==lx){u.lx=lx;u.npcLabel.style.left=lx}if(u.ly!==ly){u.ly=ly;u.npcLabel.style.top=ly}}
+  if(u.bubbleUntil>now){
+   if(u.bhid===dlhid){}
+   const dbhid=dlhid;
+   if(u.bhid!==dbhid){u.bhid=dbhid;u.npcBubble.hidden=dbhid}
+   if(!dbhid){const bx=((head.x+1)*w*.5).toFixed(1)+'px',by=((1-head.y)*h*.5-52).toFixed(1)+'px';if(u.bx!==bx){u.bx=bx;u.npcBubble.style.left=bx}if(u.by!==by){u.by=by;u.npcBubble.style.top=by}}
+  }else if(u.bubbleUntil){u.bubbleUntil=0;u.bhid=true;u.npcBubble.hidden=true;u.npcBubble.textContent=''}
+ }
  for(const p of players.values()){
   const state=p.state;if(state.id===callbacks.self()&&p.wasSitting!==state.sit){p.wasSitting=state.sit;callbacks.sitting?.(state.sit)}if(p.loaded!==p.requested||!p.looks.normal||!p.looks.sit)loadLooks(p,now);
   const look=(state.sit?p.looks.sit:null)||p.looks.normal;let height=p.height;
-  const chair=state.sit&&R.SEATS[state.seat],floor=chair?chair.height:.06;
+  const pokerChair=state.sit&&Number.isInteger(state.pokerSeat)&&R.POKER?.seats[state.pokerSeat];
+  const chair=pokerChair||(state.sit&&R.SEATS[state.seat]),floor=chair?chair.height:.06;
   if(look){
    const facing=(state.dir+Math.round(angle/(Math.PI/4))+8)%8,stance=state.sit&&p.looks.sit?'sit':state.path.length?'walk':'idle';
    const glow=milestone(REFINE_GLOWS,Math.max(0,Math.min(15,Number(state.look?.refine)||0)));
@@ -126,9 +323,11 @@ window.PGSocialScene={async create(host,labels,callbacks){
    }
    height=p.height;
   }
-  // Put the native ground-sitting pose on the seat deck, forward of its backrest.
-  p.sprite.position.set(state.x+(chair?Math.sin(chair.rotation)*.35:0),floor,state.z+(chair?Math.cos(chair.rotation)*.35:0));
-  animateAura(p,now,state.x,state.z);
+  // Put the native ground-sitting pose on the seat deck, forward of a park bench backrest or centered on a poker stool.
+  const baseX=chair&&!pokerChair&&Number.isFinite(chair.sitX)?chair.sitX:state.x;
+  const seatOffset=pokerChair?0:chair?.35:0;
+  p.sprite.position.set(baseX+(chair?Math.sin(chair.rotation)*seatOffset:0),floor,state.z+(chair?Math.cos(chair.rotation)*seatOffset:0));
+  animateAura(p,now,baseX,state.z);
   feet.copy(p.sprite.position).project(camera);
   const lhid=feet.z>1||feet.z< -1||Math.abs(feet.x)>1||Math.abs(feet.y)>1;
   if(p.lhid!==lhid){p.lhid=lhid;p.label.hidden=lhid}
@@ -141,6 +340,6 @@ window.PGSocialScene={async create(host,labels,callbacks){
   }else if(p.bubbleUntil){p.bubbleUntil=0;p.bhid=true;p.bubble.hidden=true;p.bubble.replaceChildren()}
  }
  renderer.render(scene,camera)}requestAnimationFrame(frame);
- return {putPlayer,removePlayer,bubble,setCamera,resetCamera,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
+ return {putPlayer,removePlayer,bubble,dealerBubble,updatePoker,setCamera,resetCamera,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
  }catch(error){renderer.dispose();renderer.domElement.remove();throw error}
 }};

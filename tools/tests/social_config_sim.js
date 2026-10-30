@@ -44,6 +44,7 @@ t('the Worker builds the room plus the shared social rules', () => {
   assert(fs.existsSync(path.join(root, 'workers/social/index.mjs')), 'main entry point exists');
   assert(fs.existsSync(path.join(root, 'workers/social/room.mjs')), 'room.mjs exists');
   assert(fs.existsSync(path.join(root, 'assets/social-rules.js')), 'shared social rules exist');
+  assert(fs.existsSync(path.join(root, 'assets/social-poker.js')), 'shared Hold\'em engine exists');
 });
 
 t('the Worker exports the Durable Object class it declares', () => {

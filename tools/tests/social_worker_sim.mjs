@@ -45,6 +45,7 @@ const mf=new Miniflare({
   {type:'ESModule',path:'workers/social/index.mjs'},
   {type:'ESModule',path:'workers/social/room.mjs'},
   {type:'ESModule',path:'assets/social-rules.js'},
+  {type:'ESModule',path:'assets/social-poker.js'},
  ],
  modulesRoot:'.',
  compatibilityDate:useDate,

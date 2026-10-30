@@ -187,7 +187,7 @@ function serveStatic(url, dir) {
   }
   const body = fs.readFileSync(file);
   const headers = { 'Content-Type': TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream' };
-  if (rel === '/version.txt') headers['Cache-Control'] = 'no-store';
+  if (rel === '/version.txt' || /\.(html|js|css)$/i.test(rel)) headers['Cache-Control'] = 'no-store';
   return new Response(body, { status: 200, headers });
 }
 
