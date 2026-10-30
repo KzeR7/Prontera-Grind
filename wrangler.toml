@@ -1,4 +1,4 @@
-# Prontera Grind — Cloudflare configuration
+# Horizon Haven — Cloudflare configuration
 #
 # Static client: `bash tools/build_site.sh` -> dist/  (see tools/server-shift-plan.md §7b)
 # Server:        functions/  (Pages Functions: /api/* only — see _routes.json in the build)

@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary & Design Vision
 
-Currently, Horizon Haven (Prontera Grind) caps progression at **Base Lv 150** with Transcendent
+Currently, Horizon Haven caps progression at **Base Lv 150** with Transcendent
 Job Lv 50, standard stats capped at 120, 10 core maps (Prontera through Abyss), two tiers of
 Nightmare fields (N at Lv 120+, N+ at Lv 140+), and Endless Echo as a 3-minute single-dummy DPS
 trial.

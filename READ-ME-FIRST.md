@@ -1,4 +1,4 @@
-# Prontera Grind — read me first
+# Horizon Haven — read me first
 
 > **Agents: read [AGENTS.md](AGENTS.md) first.** It is the shared rulebook and it
 > links to the current guide for each system. This file is only a map of where

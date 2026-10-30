@@ -8,13 +8,13 @@ import assert from 'node:assert/strict';
 import { onRequest } from '../../functions/api/gate.js';
 
 const TOKEN = 'q'.repeat(48);
-const call = (line, { body, token = TOKEN, origin = 'https://prontera-grind.pages.dev', env } = {}) => {
+const call = (line, { body, token = TOKEN, origin = 'https://horizonhaven.pages.dev', env } = {}) => {
   const [method, path] = line.split(' ');
   const headers = { 'Content-Type': 'application/json' };
   if (body !== undefined) headers['Content-Length'] = String(Buffer.byteLength(JSON.stringify(body)));
   if (token) headers['X-Recovery-Token'] = token;
   if (origin) headers.Origin = origin;
-  return onRequest({ request: new Request('https://prontera-grind.pages.dev' + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) }), env });
+  return onRequest({ request: new Request('https://horizonhaven.pages.dev' + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) }), env });
 };
 // Shaped like the real binding: a DurableObjectNamespace with idFromName() and get(),
 // and deliberately no top-level fetch(). See the note in write_gate_middleware_sim.js.

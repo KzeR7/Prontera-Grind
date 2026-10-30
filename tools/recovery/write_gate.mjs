@@ -38,11 +38,11 @@ export function targetUrl(env = {}) {
   try { url = new URL(raw); } catch { throw new Stop('PG_GATE_URL is not a URL.'); }
   if (url.protocol !== 'https:') throw new Stop('The write pause is only controlled over https.');
   const host = url.hostname.toLowerCase();
-  // Production (horizonhaven.pages.dev; legacy prontera-grind.pages.dev kept only for transition)
-  // and the separately named staging project (plus staging's own preview hostnames).
-  // Production preview deployments (*.horizonhaven.pages.dev / *.prontera-grind.pages.dev) are
-  // deliberately NOT allowed: their API is disabled anyway.
-  const allowed = host === 'horizonhaven.pages.dev' || host === 'prontera-grind.pages.dev'
+  // Production (horizonhaven.pages.dev) and the separately named staging project
+  // (plus staging's own preview hostnames). Production preview deployments
+  // (*.horizonhaven.pages.dev) and the retired prontera-grind.pages.dev host are
+  // deliberately NOT allowed.
+  const allowed = host === 'horizonhaven.pages.dev'
     || host === 'prontera-grind-staging.pages.dev'
     || /^[a-z0-9-]+\.prontera-grind-staging\.pages\.dev$/.test(host);
   if (!allowed) throw new Stop('Refusing that host: use horizonhaven.pages.dev or the isolated staging project.');

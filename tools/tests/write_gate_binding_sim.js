@@ -64,7 +64,7 @@ function namespace({verdict = {ok: true}, status = 200, throwOn = '', body = nul
 
 const req = (line, headers = {}) => {
   const [method, path] = line.split(' ');
-  return new Request('https://prontera-grind.pages.dev' + path, {method, headers});
+  return new Request('https://horizonhaven.pages.dev' + path, {method, headers});
 };
 const ctxFor = (request, env) => {
   const waited = [];
@@ -124,7 +124,7 @@ await ok('a binding of the wrong shape fails closed and is named misconfigured',
 await ok('the control endpoint reaches the switch through the namespace', async () => {
   const ns = namespace({verdict: {state: 'closed', safeToRestore: false}, status: 200});
   const r = await controlEndpoint(ctxFor(
-    new Request('https://prontera-grind.pages.dev/api/gate', {headers: {'X-Recovery-Token': 'x'.repeat(64)}}),
+    new Request('https://horizonhaven.pages.dev/api/gate', {headers: {'X-Recovery-Token': 'x'.repeat(64)}}),
     {GATE: ns}));
   assert.equal(r.status, 200);
   assert.equal(ns.calls[0].path, '/status');

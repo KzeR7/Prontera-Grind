@@ -9,7 +9,7 @@ first** — Stripe gives every account a complete sandbox with fake cards, so yo
 purchase land on a real cloud account without a single real charge.
 
 > The short version: `0005_shop.sql` on the database → `STRIPE_SECRET_KEY` secret → a webhook
-> pointing at `https://<your site>/api/shop/webhook` → `STRIPE_WEBHOOK_SECRET` secret → redeploy →
+> pointing at `https://horizonhaven.pages.dev/api/shop/webhook` → `STRIPE_WEBHOOK_SECRET` secret → redeploy →
 > buy something with card `4242 4242 4242 4242` → switch both secrets to the live keys.
 
 ## 0. Where things stand (parked)
@@ -33,8 +33,8 @@ players to be told that new accessories cost money — not before.
 - [ ] §2 — optional: rehearse locally with `--fake-payments` (no Stripe needed).
 - [ ] §3 — run `migrations/0005_shop.sql` on `pg` (lock + grandfather). Check `entitlements` filled.
 - [ ] §4 — Stripe account; copy the **test** secret key (`sk_test_…`).
-- [ ] §5 — Pages project → Settings → Variables and Secrets → `STRIPE_SECRET_KEY` (Production). Redeploy.
-- [ ] §6 — Stripe webhook → `https://<your site>/api/shop/webhook`, event `checkout.session.completed` (+ the refund/expiry ones listed there); copy its signing secret into `STRIPE_WEBHOOK_SECRET`. Redeploy.
+- [ ] §5 — Pages project (`horizonhaven`) → Settings → Variables and Secrets → `STRIPE_SECRET_KEY` (Production). Redeploy.
+- [ ] §6 — Stripe webhook → `https://horizonhaven.pages.dev/api/shop/webhook`, event `checkout.session.completed` (+ the refund/expiry ones listed there); copy its signing secret into `STRIPE_WEBHOOK_SECRET`. Redeploy.
 - [ ] §7 — buy one cosmetic and one supply bundle with `4242 4242 4242 4242` on a test account; check the GM Cash Shop tab and the player's log line.
 - [ ] §8 — swap both secrets for the **live** keys and a live webhook; redeploy; one real purchase of the cheapest item, then refund it in Stripe.
 - [ ] §9 — adjust prices in `assets/shop-catalog.js` if you want to, bump `BUILD`, deploy.
@@ -158,7 +158,7 @@ Never paste a key into the repo, a commit message, a screenshot or this document
 
 ## 5. Put the secret key on the Pages project
 
-**Workers & Pages → prontera-grind → Settings → Variables and Secrets → Add**:
+**Workers & Pages → horizonhaven → Settings → Variables and Secrets → Add**:
 
 | Name | Type | Value |
 |---|---|---|
@@ -167,7 +167,7 @@ Never paste a key into the repo, a commit message, a screenshot or this document
 Or from the terminal:
 
 ```sh
-npx wrangler pages secret put STRIPE_SECRET_KEY --project-name prontera-grind
+npx wrangler pages secret put STRIPE_SECRET_KEY --project-name horizonhaven
 ```
 
 Add it to the **Production** environment (and Preview if you want preview deployments to sell — you
@@ -181,8 +181,8 @@ commit, or *Deployments → ⋯ → Retry deployment*).
 ## 6. Point a Stripe webhook at the site
 
 1. **Developers → Webhooks → Add endpoint** (still in Test mode).
-2. Endpoint URL: `https://<your Pages domain>/api/shop/webhook` — the real domain players use,
-   e.g. `https://prontera-grind.pages.dev/api/shop/webhook` or your custom domain.
+2. Endpoint URL: `https://horizonhaven.pages.dev/api/shop/webhook` — the real domain players use
+   (or `https://<your custom domain>/api/shop/webhook` if you add one later).
 3. **Events to send** — pick exactly these:
    * `checkout.session.completed`
    * `checkout.session.async_payment_succeeded`
@@ -230,8 +230,8 @@ Cancelling on Stripe's page returns to `/?shop=cancel` and the order expires on 
 ## 8. Go live
 
 1. Finish Stripe's business verification; add your bank account; make sure **Settings → Business →
-   Customer-facing name / statement descriptor** says something players recognise (e.g. *PRONTERA
-   GRIND*), because that is what appears on their card statement.
+   Customer-facing name / statement descriptor** says something players recognise (e.g. *HORIZON
+   HAVEN*), because that is what appears on their card statement.
 2. Switch the dashboard toggle to **Live mode** and repeat §4 (copy the **live** secret key) and §6
    (create a **live** webhook endpoint — test and live endpoints are separate, with separate signing
    secrets).

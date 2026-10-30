@@ -636,14 +636,15 @@ await T('the backup file holds this device\'s characters and NOTHING else', asyn
     'exactly the saves and the browser account list');
   assert.ok(!('pg_gm_local' in dump.keys), 'the GM marker must never leave the browser in a backup file');
   assert.ok(!('unrelated_key' in dump.keys));
-  assert.match(dump.download || h.state.downloads[0].name, /prontera-grind-saves-\d{4}-\d{2}-\d{2}\.json/);
+  assert.strictEqual(dump.app, 'horizon-haven');
+  assert.match(dump.download || h.state.downloads[0].name, /horizon-haven-saves-\d{4}-\d{2}-\d{2}\.json/);
   assert.ok(dump.at > 0 && dump.kind === 'save-backup');
 });
 
 await T('restoring writes the saves - and cannot write anything else, however the file is built', async () => {
   const h = loginHarness({ storage: {}, answerAsk: true });
   const file = { text: JSON.stringify({
-    kind: 'save-backup', v: 1, keys: {
+    app: 'prontera-grind', kind: 'save-backup', v: 1, keys: {
       'pg_save3_KzeR': '{"lv":70}', 'pg_acc4': '{}',
       'pg_gm_local': 'deadbeef',                      // a hostile "backup" trying to grant itself GM
       'pg_something_else': 'x',
@@ -994,6 +995,37 @@ await T('v251: background progress saved while PUT /api/save is in flight stays 
   assert.strictEqual(h.sandbox.CLOUD.ver, 5, 'accepted upload advances the known cloud version');
   assert.strictEqual(h.sandbox.CLOUD.dirty, true, 'newer save touched mid-upload remains marked dirty so cloudRefresh cannot discard it');
   assert.strictEqual(h.els.get('cloudBadge').textContent, '☁ …');
+});
+
+await T('v264: opening and closing the GM console keeps the live session open without ending /sessions', async () => {
+  const h = harness({
+    storage: { 'pg_save3_GM': '{"owner":"GM","lv":50}' },
+    routes: {
+      '/save': (seq, init) => (init && init.method === 'PUT'
+        ? { status: 200, body: { version: 2 } }
+        : { status: 200, body: { owner: 'GM', version: 2, blob: '{"owner":"GM","lv":50}' } }),
+      '/grants': { status: 200, body: { owner: 'GM', grants: [{ id: 77, kind: 'zeny', payload: { amount: 250 } }] } },
+      '/announcements': { status: 200, body: { messages: [] } },
+    },
+  });
+  const modal = { hidden: true }, frame = { src: 'about:blank' };
+  h.els.set('gmConsoleModal', modal);
+  h.els.set('gmConsoleFrame', frame);
+  h.sandbox.currentUser = 'GM';
+  h.sandbox.cloudSession('GM', 2);
+
+  h.sandbox.openGmConsole();
+  assert.strictEqual(modal.hidden, false, 'GM console modal opens over the live game');
+  assert.strictEqual(frame.src, 'gm.html', 'iframe loads gm.html');
+  assert.strictEqual(h.sandbox.CLOUD.on, true, 'session stays live');
+
+  h.sandbox.closeGmConsole();
+  await new Promise(r => setTimeout(r, 20));
+  assert.strictEqual(modal.hidden, true, 'Back to the game hides the GM overlay');
+  assert.strictEqual(frame.src, 'about:blank', 'iframe unloads cleanly');
+  assert.strictEqual(h.sandbox.CLOUD.on, true, 'GM remains signed in');
+  assert.ok(!h.calls.some(c => c.url === '/api/sessions' && c.init.method === 'DELETE'), 'no session DELETE occurs on return');
+  assert.strictEqual(h.sandbox.S.zeny, 350, 'any grant sent during the GM console visit lands immediately on close');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

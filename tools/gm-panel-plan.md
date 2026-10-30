@@ -1,4 +1,4 @@
-# Prontera Grind — the GM panel plan
+# Horizon Haven — the GM panel plan
 
 *Written 2026-10-06 for BUILD `2026-10-06 grind-v61 local GM password + publish-only build`.*
 *Companion to `tools/server-shift-plan.md` (the Cloudflare migration). Nothing here is built yet.*
@@ -61,9 +61,9 @@ cannot do the three things the owner listed (edit accounts, mail, announce).
 
 Every private RO server ships an atcommand set (`@item`, `@zeny`, `@jobchange`, … — see the rAthena /
 Hercules docs). Those names are the natural design vocabulary for this game, and players who know RO
-will read them instantly. Mapping onto Prontera Grind's actual save fields:
+will read them instantly. Mapping onto Horizon Haven's actual save fields:
 
-| RO command | Prontera Grind equivalent | Touches (in the save) |
+| RO command | Horizon Haven equivalent | Touches (in the save) |
 |---|---|---|
 | `@who` / `@users` | online list, last sync, map+stage | server presence + `S.mp`,`S.lvl` |
 | `@accinfo <name>` | account card: created, last login, save size, sync count, flags | `users`, `saves` |

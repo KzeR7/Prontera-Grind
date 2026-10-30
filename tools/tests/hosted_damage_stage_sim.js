@@ -16,7 +16,7 @@ assert.notEqual(retired.status,0);assert.match(retired.stderr,/historic damage-o
 assert.throws(()=>unpackPayload(zipped.toString('base64'),'bad'));
 assert.throws(()=>safeSql('DROP TABLE users > file'));assert.equal(safeSql('SELECT  1;'),'SELECT 1;');
 assert.equal(deployedUrl('Deployment complete! https://abcdef12.prontera-grind-staging.pages.dev'),'https://abcdef12.prontera-grind-staging.pages.dev');
-assert.throws(()=>deployedUrl('https://prontera-grind.pages.dev'));assert.throws(()=>deployedUrl('https://branch.prontera-grind-staging.pages.dev'));
+assert.throws(()=>deployedUrl('https://horizonhaven.pages.dev'));assert.throws(()=>deployedUrl('https://prontera-grind.pages.dev'));assert.throws(()=>deployedUrl('https://branch.prontera-grind-staging.pages.dev'));
 // Same schema and constraints as migration 0008, using the Windows-safe DDL.
 const scratch=new DatabaseSync(':memory:');scratch.exec('PRAGMA foreign_keys=ON; CREATE TABLE users(id INTEGER PRIMARY KEY);');
 scratch.exec(safeSql(DDL));for(const name of ['damage_samples','damage_alerts'])verifySchema(name,scratch.prepare(`PRAGMA table_info(${name})`).all());

@@ -261,7 +261,7 @@ await T('live mode: a Checkout Session is created from the server price list, ne
   assert.strictEqual(q.get('line_items[0][price_data][unit_amount]'), '200');
   assert.strictEqual(q.get('line_items[0][price_data][currency]'), 'usd');
   assert.strictEqual(q.get('line_items[0][quantity]'), '1');
-  assert.strictEqual(q.get('line_items[0][price_data][product_data][name]'), 'Prontera Grind: Archangel wings');
+  assert.strictEqual(q.get('line_items[0][price_data][product_data][name]'), 'Horizon Haven: Archangel wings');
   assert.strictEqual(q.get('success_url'), 'https://play.example.com/?shop=success&order=' + r.data.order);
   assert.strictEqual(q.get('cancel_url'), 'https://play.example.com/?shop=cancel&order=' + r.data.order);
   assert.strictEqual(q.get('metadata[sku]'), 'cos:backwear:wings');

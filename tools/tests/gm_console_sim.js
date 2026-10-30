@@ -104,5 +104,43 @@ t('the usage card is wired to the GM-only usage endpoint', () => {
   assert.ok(!/CF_ANALYTICS_TOKEN\s*=\s*['"]/.test(server), 'no token may be hard-coded in the handler');
 });
 
+t('Back to the game returns to the live game overlay instead of reloading / into the login card', () => {
+  const game = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert.match(game, /id="gmBtn"\s+onclick="openGmConsole\(\)"/, 'in-game GM button must open the overlay, not unload index.html');
+  assert.ok(!/id="gmBtn"[^>]*location\.href/.test(game), 'gmBtn must not navigate index.html away');
+  assert.match(game, /id="gmConsoleModal"[\s\S]{0,200}id="gmConsoleFrame"/, 'overlay frame must exist in index.html');
+  assert.ok(!/id="back"[^>]*onclick=/.test(src), 'gm.html #back must not hard-code an inline reload to /');
+
+  const fnSrc = src.slice(src.indexOf('function backToGame()'), src.indexOf("$('back').onclick = backToGame;"));
+  assert.ok(fnSrc.length > 40, 'backToGame() helper must exist in gm.html');
+  const makeBack = (win, loc) => new Function('window', 'location', fnSrc + ';return backToGame;')(win, loc);
+
+  let closedOverlay = 0;
+  const embeddedLoc = { href: 'gm.html' };
+  const parentWin = { closeGmConsole() { closedOverlay++; } };
+  const embeddedWin = { parent: parentWin, opener: null };
+  makeBack(embeddedWin, embeddedLoc)();
+  assert.strictEqual(closedOverlay, 1, 'embedded GM console must close the parent overlay');
+  assert.strictEqual(embeddedLoc.href, 'gm.html', 'embedded GM console must not reload /');
+
+  let focused = 0, closedTab = 0;
+  const tabLoc = { href: 'gm.html' };
+  const tabWin = {};
+  tabWin.parent = tabWin;
+  tabWin.opener = { closed: false, focus() { focused++; } };
+  tabWin.close = () => { closedTab++; };
+  makeBack(tabWin, tabLoc)();
+  assert.strictEqual(focused, 1, 'popup/tab GM console focuses opener');
+  assert.strictEqual(closedTab, 1, 'popup/tab GM console closes itself');
+  assert.strictEqual(tabLoc.href, 'gm.html', 'popup/tab GM console does not reload /');
+
+  const standaloneLoc = { href: 'gm.html' };
+  const standaloneWin = {};
+  standaloneWin.parent = standaloneWin;
+  standaloneWin.opener = null;
+  makeBack(standaloneWin, standaloneLoc)();
+  assert.strictEqual(standaloneLoc.href, '/', 'standalone /gm.html visit falls back to /');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
