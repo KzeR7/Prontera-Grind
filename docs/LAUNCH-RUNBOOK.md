@@ -113,7 +113,14 @@ node tools/staging/live_launch_schema_check.mjs
 
 - `PASS: live pg already matches the full 0008–0011 contract` — nothing to apply. Skip
   to step 3. Do not run the migration tool "to be sure"; it cannot re-run by design.
-- `STOP:` with a list — the earlier application was **partial**. It names what is missing
+  It also reports `boardState`:
+  - `not started` — applied, and no request has reached the new board or save code yet.
+  - `activated` — applied **and already serving**: `starts_at` stops being 0 the first
+    time that code serves a request, so production is running a build that reads this
+    schema. `startsAt` is the board's opening boundary (the next Singapore midnight after
+    that first request). This is expected, not damage — only a value the launch code could
+    not have written fails (1, negative, non-integer, or before 2020).
+- `STOP:` with a list — something is missing or impossible. It names what is missing
   (tables, columns, triggers, indexes, launch config). Do **not** retry the migration
   tool, do not edit a migration file, and do not merge. Send the printed JSON; a partial
   schema is repaired by a reviewed, specific script, not by re-running an additive one.

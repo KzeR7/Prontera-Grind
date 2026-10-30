@@ -10,6 +10,10 @@ import path from 'node:path';
 import {TABLES,TRIGGERS,INDEXES,TABLE_QUERY,TRIGGER_QUERY,INDEX_QUERY,CONFIG_QUERY,createRemote}
  from './live_additive_migrations.mjs';
 
+// Anything below this cannot be a value the launch code wrote, because it derives
+// starts_at from the current time. So it is damage, not an earlier launch.
+export const MIN_LAUNCH_MS=1600000000000;
+
 // Reads the live schema. Uses only queries the migration tool already allowlists,
 // all of them SELECT/PRAGMA. Returns name lists, never row data.
 export function collectLaunchSchema(db){
@@ -37,15 +41,24 @@ export function evaluateLaunchSchema(snapshot){
  }
  const missingTriggers=TRIGGERS.filter(n=>!triggers.includes(n));
  const missingIndexes=INDEXES.filter(n=>!indexes.includes(n));
+ // starts_at stays 0 until the first request through the new board or save code
+ // sets it to the next Singapore midnight (see unverifiedConfig). So 0 means
+ // "applied, not started" and a real millisecond value means "applied and already
+ // serving". Only values that can be neither are treated as damage.
  const configProblems=[];
+ let startsAt=null,startsAtOk=false;
  if(missingTables.includes('unverified_echo_config'))configProblems.push('config table is missing');
  else if(config.length!==1)configProblems.push('expected exactly one config row, found '+config.length);
  else{
-  if(Number(config[0].starts_at)!==0)configProblems.push('starts_at is not 0');
+  startsAt=Number(config[0].starts_at);
+  if(!Number.isInteger(startsAt))configProblems.push('starts_at is not an integer');
+  else if(startsAt!==0&&startsAt<MIN_LAUNCH_MS)configProblems.push('starts_at is neither 0 nor a plausible millisecond timestamp');
+  else startsAtOk=true;
   if(config[0].ruleset!=='unverified-save-v1')configProblems.push('ruleset is not unverified-save-v1');
  }
+ const boardState=startsAt===null?'unknown':!startsAtOk?'invalid':startsAt===0?'not started':'activated';
  const ok=!missingTables.length&&!badColumns.length&&!missingTriggers.length&&!missingIndexes.length&&!configProblems.length;
- return {ok,missingTables,badColumns,missingTriggers,missingIndexes,configProblems};
+ return {ok,boardState,startsAt,missingTables,badColumns,missingTriggers,missingIndexes,configProblems};
 }
 function main(){
  assert.equal(process.platform,'win32','This fixed check is for the owner Windows setup');
@@ -63,6 +76,8 @@ function main(){
    return;
   }
   console.log('PASS: live pg already matches the full 0008–0011 contract (tables, columns, triggers, indexes and launch config). Do NOT run live_additive_migrations.mjs — there is nothing left to apply.');
+  if(result.boardState==='activated')
+   console.log('Note: the board has been serving since starts_at, which is the next Singapore midnight after the first request that reached it. That means production is already running code that reads this schema.');
  }finally{fs.rmSync(temp,{recursive:true,force:true})}
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))

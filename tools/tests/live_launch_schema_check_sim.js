@@ -33,6 +33,48 @@ try{
  assert.deepEqual(result.configProblems,[]);
 }finally{db.sqlite.close()}
 
+// 1b. An already-activated board is complete, not damaged: starts_at stops being 0
+//     as soon as the new board or save code serves its first request.
+db=makeDb();
+try{
+ db.sqlite.exec('UPDATE unverified_echo_config SET starts_at=1793000000000 WHERE singleton=1');
+ const result=evaluateLaunchSchema(collectLaunchSchema(db));
+ assert.equal(result.ok,true,JSON.stringify(result));
+ assert.equal(result.boardState,'activated');
+ assert.equal(result.startsAt,1793000000000);
+ assert.deepEqual(result.configProblems,[]);
+}finally{db.sqlite.close()}
+
+// 1c. Values the launch code cannot have written are still refused.
+for(const [label,value] of [['one',1],['negative',-5],['before 2020',1600000000000-1]]){
+ db=makeDb();
+ try{
+  db.sqlite.exec('UPDATE unverified_echo_config SET starts_at='+value+' WHERE singleton=1');
+  const result=evaluateLaunchSchema(collectLaunchSchema(db));
+  assert.equal(result.ok,false,label+' should be refused');
+  assert.equal(result.boardState,'invalid',label+' should not read as activated');
+  assert(result.configProblems.some(x=>/plausible millisecond/.test(x)),label+': '+JSON.stringify(result.configProblems));
+ }finally{db.sqlite.close()}
+}
+db=makeDb();
+try{
+ db.sqlite.exec("UPDATE unverified_echo_config SET starts_at='not a number' WHERE singleton=1");
+ const result=evaluateLaunchSchema(collectLaunchSchema(db));
+ assert.equal(result.ok,false);
+ assert.equal(result.boardState,'invalid');
+ assert(result.configProblems.some(x=>/not an integer/.test(x)),JSON.stringify(result.configProblems));
+}finally{db.sqlite.close()}
+
+// 1d. The right timestamp with the wrong ruleset is still a failure.
+db=makeDb();
+try{
+ db.sqlite.exec("PRAGMA ignore_check_constraints=ON;UPDATE unverified_echo_config SET starts_at=1793000000000,ruleset='unverified-save-v2' WHERE singleton=1");
+ const result=evaluateLaunchSchema(collectLaunchSchema(db));
+ assert.equal(result.ok,false);
+ assert.equal(result.boardState,'activated');
+ assert(result.configProblems.some(x=>/ruleset/.test(x)),JSON.stringify(result.configProblems));
+}finally{db.sqlite.close()}
+
 // 2. The check itself writes nothing: catalogue and row counts are unchanged.
 db=makeDb();
 try{

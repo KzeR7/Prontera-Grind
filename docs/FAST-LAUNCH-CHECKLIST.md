@@ -162,3 +162,20 @@ schema, and fails closed on uncertain imports. Remote file imports can interrupt
 production service. At this point the tool has only passed synthetic local tests;
 production execution has not been reported. Do not run Wrangler's migration
 runner against this manually migrated DB without separately reconciling its ledger.
+
+**Later on 2026-10-30 the live picture changed.** A second fresh backup passed the
+same integrity, foreign-key and core-table checks, but its schema report listed all
+eight launch tables as already present (`damage_samples`, `damage_alerts`,
+`competition_periods`, `competition_scores`, `competition_placements`,
+`competition_prize_ledger`, `competition_baselines`, `unverified_echo_config`). The
+read-only [launch schema check](../tools/staging/live_launch_schema_check.mjs) then
+found every table column, all five triggers, all three indexes and the launch config
+matching 0008–0011 — with `boardState: activated`, i.e. `starts_at` no longer 0.
+`unverifiedConfig` only writes that value when the new board or save code serves a
+request, so this is evidence that 0008–0011 are applied **and** that production is
+already serving a build containing that code. `starts_at` holds the board's opening
+boundary. Consequences: do not run the additive migration tool (it cannot re-apply and
+cannot repair), and the assumption that production has never run the launch code is no
+longer supportable. Still unverified from here: which build production serves, and
+whether any prize period has settled — both need the owner's deployment list and GM
+console, not a schema reading.
