@@ -912,11 +912,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=212">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=265">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=1">
 <script src="assets/ui/mobile.js?v=1"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=209">
+<link rel="stylesheet" href="assets/social.css?v=265">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1309,7 +1309,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-10-30 haven-v264 horizon haven';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-30 haven-v265 chat and ascension forge';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -7009,8 +7009,10 @@ function applyDisplay(){
  if(S.cameraShake===false)shake=0;
  document.body.classList.toggle('clean-screen',!!S.hideUI);
  document.body.classList.toggle('hide-damage',S.dmgShow===false||!!S.hideUI);
+ document.body.classList.toggle('hide-chat',S.chatShow===false);
  document.body.classList.toggle('hide-feed',S.feedShow===false);
  document.body.classList.toggle('hide-labels',S.labelsShow===false);
+ if(typeof window!=='undefined'&&window.PGSocial?.syncDisplay)window.PGSocial.syncDisplay();
 }
 // v253: on the local preview server the phone layout can be checked at a true phone size. The link
 // to that page is offered ONLY when /phone answers with the dev server's marker header, so a static
@@ -7034,7 +7036,7 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
  // fine on the desk, where the row simply reads as a caption.
  const pg=window.PGMobile,pgMode=pg?pg.getPhoneLayout():'auto',pgFocus=!!(pg&&pg.fieldOnly()),pgLayout=pgMode==='on'?'Phone':pgMode==='off'?'Desk':'Auto';
  panel.innerHTML=`<div class="pg-sheet-head"><span>Display</span><button type="button" data-pg="close" aria-label="Close display options">✕</button></div>`
-  +[['cameraShake','Camera shake'],['dmgShow','Damage numbers'],['auraShow','Character aura'],['feedShow','Activity log'],['labelsShow','Character / monster labels'],['hideUI','Hide all screen UI (Display stays available)']].map(([key,label])=>`<label><input type="checkbox" data-display="${key}" ${key==='hideUI'?S[key]?'checked':'':S[key]!==false?'checked':''}>${label}</label>`).join('')
+  +[['cameraShake','Camera shake'],['dmgShow','Damage numbers'],['auraShow','Character aura'],['chatShow','Chat box'],['feedShow','Activity log'],['labelsShow','Character / monster labels'],['hideUI','Hide all screen UI (Display stays available)']].map(([key,label])=>`<label><input type="checkbox" data-display="${key}" ${key==='hideUI'?S[key]?'checked':'':S[key]!==false?'checked':''}>${label}</label>`).join('')
   // v232 (owner: "game preview is not showing your proposed maps. still the old map"): the new
   // outdoor fields were only reachable by hand-editing the URL, so the preview looked unchanged.
   // This is the switch in the UI. It is a page reload because the field renderer is chosen at
@@ -7073,7 +7075,7 @@ $('screenOptions').onchange=e=>{const key=e.target.dataset.display;
     try{sessionStorage.setItem('pg-native-fields',e.target.checked?'1':'0')}catch(_){}
     const u=new URL(location.href);u.searchParams.set('nativeFields',e.target.checked?'1':'0');location.replace(u.toString());return;
   }
-  if(!['cameraShake','dmgShow','auraShow','feedShow','labelsShow','hideUI'].includes(key))return;S[key]=e.target.checked;applyDisplay();save()};
+  if(!['cameraShake','dmgShow','auraShow','chatShow','feedShow','labelsShow','hideUI'].includes(key))return;S[key]=e.target.checked;applyDisplay();save()};
 function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display='none';return}rail.style.display='flex';rail.classList.toggle('with-panels',!!tabs.length);e.style.display='block';
   $('eclipseMapCard').classList.toggle('other-map',S.mp!==0);$('eclipseMapName').textContent=MAPS[S.mp].n;$('eclipseMapStage').textContent=fieldName()+' · '+(S.mp>=10?'Ascension Map':'World atlas');
   const questHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?contractPanel(eclipseQuestAll?Infinity:3)+(S.q||[]).map((q,i)=>q.prog<q.goal?'':`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
@@ -7530,10 +7532,10 @@ function renderWin(anchor){
     // The header HUD already shows it, so the wallet is cleared instead of re-created.
     win.querySelector('.ui-window-tools .eclipse-workspace-wallet')?.remove();
     const status=win.querySelector('.eclipse-save-status');if(status)status.textContent=CLOUD.on?(CLOUD.paused?'Cloud sync paused':CLOUD.dirty?'Cloud sync pending':'Cloud connected'):'Local save';
-    const footer=win.querySelector('.eclipse-window-footer'),loadoutFooter=k==='equip'&&sub.equip==='equip0',cardsFooter=k==='equip'&&sub.equip==='cardsWork',autosellFooter=k==='equip'&&sub.equip==='autosell',offer= k==='equip'&&sub.equip==='reforge'?validReforgeOffer(S):null,offerFooter=!!offer,affixesFooter=k==='equip'&&sub.equip==='reforge'&&!offerFooter,workspaceFooter=cardsFooter||autosellFooter||offerFooter||affixesFooter;
+    const footer=win.querySelector('.eclipse-window-footer'),loadoutFooter=k==='equip'&&sub.equip==='equip0',cardsFooter=k==='equip'&&sub.equip==='cardsWork',autosellFooter=k==='equip'&&sub.equip==='autosell',ascensionFooter=k==='equip'&&sub.equip==='ascension',offer= k==='equip'&&sub.equip==='reforge'?validReforgeOffer(S):null,offerFooter=!!offer,affixesFooter=k==='equip'&&sub.equip==='reforge'&&!offerFooter,workspaceFooter=cardsFooter||autosellFooter||offerFooter||affixesFooter;
     if(footer){
       footer.classList.toggle('eclipse-loadout-footer',loadoutFooter);footer.classList.toggle('eclipse-workspace-footer',workspaceFooter);
-      const message=footer.querySelector('.eclipse-footer-message');if(message)message.textContent=loadoutFooter?'Selecting gear only inspects it. Equip, lock and sale controls are separate actions.':cardsFooter?'Compatible cards transfer when gear is replaced. Inserting, removing, merging and selling are explicit actions.':autosellFooter?'Rules affect future drops, including offline loot. Existing items are not sold here; bulk sales need a separate preview and confirmation.':offerFooter?'Nothing changes until you decide. Keeping the current affixes does not refund the paid cost.':affixesFooter?'You pay when you roll, not when you accept. Your current affixes stay until you choose a new offer; costs are not refunded.':'Select an item to inspect or manage it.';
+      const message=footer.querySelector('.eclipse-footer-message');if(message)message.textContent=loadoutFooter?'Selecting gear only inspects it. Equip, lock and sale controls are separate actions.':cardsFooter?'Compatible cards transfer when gear is replaced. Inserting, removing, merging and selling are explicit actions.':autosellFooter?'Rules affect future drops, including offline loot. Existing items are not sold here; bulk sales need a separate preview and confirmation.':ascensionFooter?'Evolving an N+ item keeps its refinement, socketed cards, and existing affixes.':offerFooter?'Nothing changes until you decide. Keeping the current affixes does not refund the paid cost.':affixesFooter?'You pay when you roll, not when you accept. Your current affixes stay until you choose a new offer; costs are not refunded.':'Select an item to inspect or manage it.';
       let configure=footer.querySelector('[data-a="loadoutAutosell"]');if(loadoutFooter&&!configure){configure=document.createElement('button');configure.type='button';configure.className='eclipse-loadout-autosell';configure.dataset.a='loadoutAutosell';configure.setAttribute('aria-label','Configure auto-sell rules');configure.textContent='Configure auto-sell →';footer.insertBefore(configure,footer.querySelector('kbd'))}else if(!loadoutFooter&&configure)configure.remove();
       footer.querySelectorAll('[data-eclipse-footer-action]').forEach(b=>b.remove());
       const footerButton=(label,action,value,primary=false,disabled=false)=>{const b=document.createElement('button');b.type='button';b.dataset.eclipseFooterAction='';b.dataset.a=action;if(value!=null)b.dataset.v=value;b.className='eclipse-footer-action'+(primary?' primary':'');b.disabled=disabled;b.textContent=label;footer.insertBefore(b,footer.querySelector('kbd'));return b;};
@@ -12680,6 +12682,6 @@ setInterval(updateWatch,60000);
 <script src="assets/shop.js?v=264"></script>
 <script src="assets/social-rules.js?v=210"></script>
 <script src="assets/social-scene.js?v=210"></script>
-<script src="assets/social.js?v=250"></script>
+<script src="assets/social.js?v=265"></script>
 </body>
 </html>

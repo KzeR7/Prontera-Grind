@@ -507,5 +507,48 @@ test('Daily Reward Roulette has 33% Ori, 33% Elu, 11% Zeny buff, 11% EXP buff, 7
  assert.equal(ev('S.dailyWheel.bonusRolls'),0,'the last banked roll is then spent');
  assert.equal(ev('dailySpinsLeft()'),0);
 });
+test('v265: Display separates Chat box from Activity log and Ascension Forge scrolls without clipping',()=>{
+ // 1. Legacy saves with S.feedShow===false keep player chat visible (`hide-chat` stays false).
+ ev('S.feedShow=false;delete S.chatShow;applyDisplay()');
+ assert.equal(doc.body.classList.contains('hide-feed'),true);
+ assert.equal(doc.body.classList.contains('hide-chat'),false,'saved feedShow=false no longer hides player chat');
+ ev("$('screenOptions').hidden=true;screenOptions()");
+ const chatCb=doc.querySelector('#screenOptions input[data-display="chatShow"]');
+ const feedCb=doc.querySelector('#screenOptions input[data-display="feedShow"]');
+ assert.ok(chatCb&&feedCb,'Display renders separate Chat box and Activity log checkboxes');
+ assert.equal(chatCb.checked,true);
+ assert.equal(feedCb.checked,false);
+ chatCb.checked=false;chatCb.dispatchEvent(new g.window.Event('change',{bubbles:true}));
+ assert.equal(ev('S.chatShow'),false);
+ assert.equal(doc.body.classList.contains('hide-chat'),true);
+ chatCb.checked=true;chatCb.dispatchEvent(new g.window.Event('change',{bubbles:true}));
+ feedCb.checked=true;feedCb.dispatchEvent(new g.window.Event('change',{bubbles:true}));
+ assert.equal(doc.body.classList.contains('hide-chat'),false);
+ assert.equal(doc.body.classList.contains('hide-feed'),false);
+ // 2. Equipment -> Ascension Forge opts .wbody[data-view="ascension"] into vertical scrolling
+ // after #wins .wbody[data-layout=equip]{overflow:hidden}, keeping 2/4/6-piece set text,
+ // material costs, and the Ascend button reachable.
+ const eclipseCss=require('node:fs').readFileSync(__dirname+'/../../assets/ui/eclipse.css','utf8');
+ const lockIdx=eclipseCss.indexOf('#wins .wbody[data-layout=equip]{display:flex;flex-direction:column;min-height:0;overflow:hidden}');
+ const scrollIdx=eclipseCss.indexOf('#wins [data-win="equip"]>.wbody[data-view="ascension"]');
+ assert.ok(lockIdx>=0&&scrollIdx>lockIdx,'Ascension Forge scroll override follows the generic equip overflow:hidden rule with higher specificity');
+ const styleEl=doc.createElement('style');styleEl.textContent=eclipseCss;doc.head.appendChild(styleEl);
+ ev("S.cls='Rune Knight';S.lv=150;S.zeny=5000;S.ascensionMat=[2,0,1];S.eq.weapon={id:888,slot:'weapon',wt:'sword',sec:5,name:'Dragon Lance',r:10,aff:[{k:'def',v:48},{k:'vit',v:58},{k:'vit',v:63}],cards:[],val:120};tabs.length=0;openTab('equip');sub.equip='ascension';ascensionSetPick='celestial';ascensionItemPick='888';renderWin()");
+ const wbody=doc.querySelector('#wins [data-win="equip"]>.wbody');
+ assert.equal(wbody.dataset.view,'ascension');
+ assert.equal(g.window.getComputedStyle(wbody).overflowY,'auto','Ascension Forge window body scrolls vertically');
+ assert.equal(g.window.getComputedStyle(wbody.querySelector(':scope>.ui-content')).overflow,'visible','Ascension Forge content flows without inner clipping');
+ assert.equal(wbody.querySelectorAll('.ascension-set-info li').length,3,'all 2/4/6-piece set bonuses render');
+ assert.match(wbody.querySelectorAll('.ascension-set-info li')[2].textContent,/6 pieces/,'6-piece set bonus description is intact');
+ assert.equal(wbody.querySelectorAll('.ascension-costs>div').length,3,'all three material/Zeny cost rows render');
+ const btn=wbody.querySelector('button[data-a="transformasc"]');
+ assert.ok(btn,'proceed button renders below costs');
+ assert.equal(btn.disabled,true,'button disables with clear shortage text when materials are missing');
+ assert.match(btn.textContent,/Ascend · missing/);
+ ev('S.zeny=1e12;S.ascensionMat=[100,100,100];renderWin()');
+ assert.equal(wbody.querySelector('button[data-a="transformasc"]').disabled,false,'button enables immediately once materials and Zeny are met');
+ assert.match(doc.querySelector('#wins [data-win="equip"] .eclipse-footer-message').textContent,/refinement, socketed cards, and existing affixes/);
+ styleEl.remove();
+});
 console.log(`${passed} passed`);
 }finally{g.close()}

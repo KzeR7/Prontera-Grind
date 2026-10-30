@@ -18,7 +18,7 @@
 body.social-open #eclipseCombat,body.social-open #hudBuffs,body.social-open #hint,body.social-open #sideRail,body.social-open #heroTitle,body.social-open #tag{visibility:hidden!important}
 @media(max-width:600px){#socialChat{left:6px;max-width:calc(100% - 12px);width:340px;height:185px;font-size:11px}#socialTabs button{padding:5px 6px}#socialHubHeader{left:12px;top:12px}#socialHubHeader h2{font-size:20px}#socialHubHeader p{max-width:175px}#socialHubControls{right:8px;top:12px}#socialHubHint{bottom:auto;top:100px;right:8px;font-size:10px;max-width:150px}#socialEmoji{grid-template-columns:repeat(6,1fr)}}
 
-body.social-open #hud,body.social-open #afterglowCanvas,body.social-open #mobSpriteLayer,body.social-open #weaponSpriteLayer{visibility:hidden!important}body.hide-feed #socialChat{display:none}#socialHubHeader{z-index:2}#socialHubHeader h2{color:#fff}
+body.social-open #hud,body.social-open #afterglowCanvas,body.social-open #mobSpriteLayer,body.social-open #weaponSpriteLayer{visibility:hidden!important}body.hide-chat:not(.social-open) #socialChat,body.clean-screen #socialChat{display:none}body.hide-feed #socialTabs button[data-channel="log"]{display:none}#socialHubHeader{z-index:2}#socialHubHeader h2{color:#fff}
 
 /* Narrow screens stack chat above navigation; desktop shares its lower baseline. */
 #socialChat{left:12px;bottom:var(--docktop,80px)}

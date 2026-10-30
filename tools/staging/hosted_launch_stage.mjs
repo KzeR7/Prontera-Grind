@@ -14,7 +14,8 @@ const PAYLOAD_SHA256 = '__LAUNCH_PACKAGE_SHA256__';
 const BASE = '7511a03c0787ec9b8d94cfc6658570ac402dc297';
 const DB_NAME = 'pg-staging', DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
 const PROJECT = 'prontera-grind-staging';
-const FILES = ['index.html','gm.html','assets/shop.js','functions/_lib/db.js','functions/_lib/echo-board.js',
+const FILES = ['index.html','gm.html','assets/shop.js','assets/social.css','assets/social.js','assets/ui/eclipse.css',
+  'functions/_lib/db.js','functions/_lib/echo-board.js',
   'functions/_lib/validate.js','functions/_lib/damage-monitor.js','functions/_lib/competition-baseline.js',
   'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js',
   'functions/_lib/gate-binding.js','functions/_lib/shop.js','functions/api/save.js',
