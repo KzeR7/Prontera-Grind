@@ -23,9 +23,18 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  send(a,{type:'move',x:0,z:0});assert.equal(a.path.length,0);send(a,{type:'move',x:0,z:-12});now+=101;send(a,{type:'move',x:0,z:-12});assert(a.path.length>0);assert(a.path.every(p=>R.walkable(p.x,p.z)));for(let t=0;t<300;t++){now+=50;R.advance(a,now);assert(R.walkable(a.x,a.z))}assert.equal(a.z,-12);
  send(a,{type:'sit'});assert(a.sit);assert.equal(a.path.length,0);now+=200;send(a,{type:'move',x:10,z:-12});assert(!a.sit);
  // Real server walking settles into a reserved bench, with per-plaza occupancy.
+ assert.equal(R.BENCHES.length,12);assert.equal(R.SEATS.length,24,'12 metal benches each seat 2 adventurers');
  for(const seat of R.SEATS){assert(R.walkable(seat.x,seat.z));assert(R.path(a,seat).length>0)}
  now+=200;send(a,{type:'seat',id:0});assert.equal(a.seat,0);assert(a.path.length>0);assert(!a.sit);
  send(b,{type:'seat',id:0});assert.equal(b.seat,null);assert(b.events.some(e=>e.message==='That bench is occupied.'));
+ // Second spot on the same metal bench (id:1, bench:0) is open for a friend to sit side-by-side!
+ now+=200;send(b,{type:'seat',id:1});assert.equal(b.seat,1);assert.equal(R.SEATS[0].bench,R.SEATS[1].bench);
+ now+=200;send(clients[2],{type:'seat',id:1});assert.equal(clients[2].seat,null);assert(clients[2].events.some(e=>e.message==='That bench is occupied.'));
+ now+=200;send(b,{type:'move',x:0,z:12});assert.equal(b.seat,null);
+ // Full Plaza 1 blocks outsider from switching into Plaza 1, while a Plaza 1 member can hop to Plaza 2 and back once space opens.
+ now+=200;send(outsider,{type:'switch_room',room:1});assert.equal(outsider.room,2);assert(outsider.events.some(e=>/Plaza 1 is full/.test(e.message||'')));
+ now+=200;send(clients[2],{type:'switch_room',room:2});assert.equal(clients[2].room,2);assert(outsider.events.some(e=>e.type==='player'&&e.player.id===clients[2].id));
+ now+=200;send(clients[2],{type:'switch_room',room:1});assert.equal(clients[2].room,1);
  send(outsider,{type:'seat',id:0});assert.equal(outsider.seat,0,'seats belong to each plaza');
  now+=30000;const arrived=room.snapshot(a);assert(arrived.sit);assert.equal(arrived.path.length,0);assert.equal(arrived.z,R.SEATS[0].z);assert.equal(arrived.dir,R.SEATS[0].dir);
  now+=200;send(a,{type:'look',look:{cls:'Novice',appearance:{version:1,sex:'m'},title:'Poring Hunter',refine:10}});assert.equal(a.look.title,'Poring Hunter');assert.equal(a.look.refine,10);assert.equal(a.seat,0);assert.equal(a.z,R.SEATS[0].z);assert(b.events.some(e=>e.player?.look?.title==='Poring Hunter'));

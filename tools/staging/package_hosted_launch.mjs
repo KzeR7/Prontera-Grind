@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
-const files=['index.html','gm.html','assets/shop.js','assets/social.css','assets/social.js','assets/ui/eclipse.css',
+const files=['index.html','gm.html','assets/shop.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js','assets/ui/eclipse.css',
  'functions/_lib/db.js','functions/_lib/echo-board.js',
  'functions/_lib/validate.js','functions/_lib/damage-monitor.js','functions/_lib/competition-baseline.js',
  'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js',

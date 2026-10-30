@@ -8,18 +8,19 @@ The minimize line and resize grips are drawn inside the chat border, with no det
 Enter focuses/sends, Escape leaves typing. Names offer Whisper/Mute. Log retains
 the existing category filters and history. Muted IDs are stored per account.
 
-The plaza holds 20 authenticated players; additional arrivals get another numbered
-plaza. World spans plazas and fields. Local messages/emotions go only to current
-members of that plaza; no Local replay is sent to newcomers. Local lines clear on
+The plaza holds 20 authenticated players per room; additional arrivals automatically open
+`Plaza 2`, `Plaza 3`, and so on, and online visitors can also hop between open numbered plazas
+via the `#socialRoomSelect` switcher in the plaza header. World spans all plazas and fields.
+Local messages, emotions, bench seats, and each room's two West Avenue Hold'em tables belong to
+that numbered plaza; no Local replay is sent to newcomers. Local lines clear on
 leaving/rejoining. Whispers are delivered only to sender and online recipient.
 World has a volatile 100-message backlog, and clients retain at most 400 lines.
 This is not permanent chat storage or offline mail.
 
-Click/tap to walk at your character's own field run speed (AGI, movement affixes, pets and movement buffs, including the 1.4 running factor); the room clamps the reported value to 2–13 u/s and both client and server advance with it, so the plaza no longer feels slower than farming. Drag to rotate and tilt; wheel/pinch to zoom from a close character view to a plaza overview. Right/Shift-drag or two fingers pan. Camera exposes rotation, tilt, distance, follow and directional pan controls; Reset view restores the defaults. Your character is framed in the upper center. Names appear below the feet, with an equipped Hunt title underneath. Appearance, title and refinement updates preserve your position. Insert or `/sit` toggles sitting; walking stands up. Click one of twelve benches to reserve it, walk to it and sit. Reservations are per plaza and clear on standing, walking or disconnecting. A larger castle,
-flanking houses, two market stalls and four bounded corner gardens surround the expanded avenues.
-Twelve native slatted park benches form four groups along the fountain promenade; trees stay inside
-the gardens, clear of paths. The shared layout defines building/garden collision.
-One compact toolbar holds the plaza population, Sit, Camera, Reset view, help and Return to field.
+Click/tap to walk at your character's own field run speed (AGI, movement affixes, pets and movement buffs, including the 1.4 running factor); the room clamps the reported value to 2–13 u/s and both client and server advance with it, so the plaza no longer feels slower than farming. Like the main field camera (`PerspectiveCamera(38)`), the camera stays smoothly locked to your character without map-wide free-panning: drag (mouse or 1 finger) to rotate and tilt (`26°–77°`, default `45°`), and scroll or pinch to zoom (`22–72` distance, default `44`). Camera exposes Rotate, Tilt, and Zoom sliders, and Reset view restores defaults. Your character is framed slightly higher than the middle of the screen (`~44–46%` from the top) so overhead bubbles, the top toolbar, and the bottom dock/chat all stay clear. Names appear below the feet, with an equipped Hunt title underneath. Appearance, title and refinement updates preserve your position. Insert or `/sit` toggles sitting; walking stands up. Twelve native slatted metal park benches form four groups along the fountain promenade, and each bench seats **2 adventurers side-by-side** (`24` bench seats total; clicking a half-occupied bench automatically claims the open partner spot beside them). Reservations are per plaza and clear on standing, walking, switching rooms or disconnecting. A larger castle,
+flanking houses, two market stalls, two West Avenue Hold'em tables and four bounded corner gardens surround the expanded avenues; trees stay inside
+the gardens, clear of paths. The shared layout defines building/garden/table collision.
+One compact toolbar holds the plaza population and room switcher, Hold'em, Sit, Camera, Reset view, help and Return to field.
 Walking/camera hints are in its help control; Emoji remains beside Send in chat. The Emoji button beside Send opens 32 original RO animations with slash commands
 shown on each button. A smaller animation appears with the sender in Local, and a
 six-second animation appears overhead with its original transparent pixels and no outer box. Spoken text keeps its speech box. World and private messages never bubble.

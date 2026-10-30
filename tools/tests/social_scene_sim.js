@@ -17,26 +17,45 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const state={id:1,name:'Synthetic',x:0,z:12,dir:0,sit:true,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:10,title:'Poring Hunter',lv:150}};
  scene.active=true;scene.putPlayer(state);await flush();frame(now+=100);assert.equal(draws.length,0);frame(now+=3100);await flush();frame(now+=100);assert(draws.length,'failed download automatically retries without network movement');assert.equal(draws.at(-1)[2],'idle','pending sitting atlas falls back to visible standing sprite');assert.equal(typeof draws.at(-1)[7],'function','native weapon glow hook');assert.equal(typeof draws.at(-1)[8],'function','stowed weapon glow hook');
  sitReady=true;frame(now+=100);await flush();frame(now+=100);assert.equal(draws.at(-1)[2],'sit');
- const before=scene.camera.position.clone();scene.putPlayer({...state,sit:false,x:34,z:25});frame(now+=100);assert(scene.camera.position.x>before.x,'camera follows self');assert(scene.camera.position.z>before.z);const label=w.document.querySelector('.social-player-label');assert.equal(label.hidden,false);const sprite=scene.scene.children.find(o=>o.userData.socialId===1),feet=sprite.position.clone().project(scene.camera);assert(parseFloat(label.style.top)>(1-feet.y)*350,'name starts below feet');assert.equal(label.querySelector('small').textContent,'Poring Hunter');assert(feet.y>0,'player is above center');
+ const before=scene.camera.position.clone();scene.putPlayer({...state,sit:false,x:34,z:25});frame(now+=100);assert(scene.camera.position.x>before.x,'camera follows self');assert(scene.camera.position.z>before.z);const label=w.document.querySelector('.social-player-label');assert.equal(label.hidden,false);const sprite=scene.scene.children.find(o=>o.userData.socialId===1),feet=sprite.position.clone().project(scene.camera);assert(parseFloat(label.style.top)>(1-feet.y)*350,'name starts below feet');assert.equal(label.querySelector('small').textContent,'Poring Hunter');assert(feet.y>.03&&feet.y<.22,'player stands slightly higher than the middle of the screen by default');
  // v225: the field's own level sigil appears under the character and moves with them.
  const aura=scene.scene.children.find(o=>o.userData.tier===150);assert.ok(aura,'Base 150 character has a level aura');assert.equal(aura.position.y,.07);assert.equal(aura.position.x,34);assert.equal(aura.position.z,25);
  scene.putPlayer({...state,x:0,z:12,look:{...state.look,lv:49}});frame(now+=100);assert.equal(scene.scene.children.some(o=>o.userData.tier),false,'no aura below Base 50');assert.ok(w.auraDisposals>0,'removing a tier disposes its geometry and material');
  scene.putPlayer({...state,x:0,z:12,look:{...state.look,lv:99}});frame(now+=100);assert.ok(scene.scene.children.some(o=>o.userData.tier===99),'the sigil follows the character level tier');
 
- const frontBench=scene.scene.children.find(o=>o.userData.seat===0),benchSize=new T.Box3().setFromObject(frontBench).getSize(new T.Vector3());assert(benchSize.z>1&&benchSize.x>3&&benchSize.y<2.2,'native park bench has a full seat and back at character scale, not a flat noticeboard');
- const chair=scene.scene.children.find(o=>o.userData.seat===5);scene.camera.updateMatrixWorld();const point=chair.userData.seatBounds.getCenter(new T.Vector3()).project(scene.camera),event={clientX:(point.x+1)*500,clientY:(1-point.y)*350,pointerId:1,preventDefault(){}};host.onpointerdown(event);host.onpointerup(event);assert.equal(selectedSeat,5,'open chair backs have a usable full-outline click target');
- scene.putPlayer({...state,x:w.PGSocialRules.SEATS[0].x,z:w.PGSocialRules.SEATS[0].z,seat:0});frame(now+=100);const seatedSprite=scene.scene.children.find(o=>o.userData.socialId===1);assert.equal(seatedSprite.position.y,.95,'ground-sitting pose rests on the bench deck');assert(seatedSprite.position.z>w.PGSocialRules.SEATS[0].z,'sprite stays forward of the backrest');
+ // v269: 12 physical metal park benches, each seating 2 players side-by-side (24 seats total).
+ assert.equal(w.PGSocialRules.BENCHES.length,12);assert.equal(w.PGSocialRules.SEATS.length,24);
+ const frontBench=scene.scene.children.find(o=>o.userData.bench===0),benchSize=new T.Box3().setFromObject(frontBench).getSize(new T.Vector3());assert(benchSize.z>1&&benchSize.x>3&&benchSize.y<2.2,'native park bench has a full seat and back at character scale, not a flat noticeboard');
+ const chair=scene.scene.children.find(o=>o.userData.bench===5);scene.camera.updateMatrixWorld();
+ const bCenter=chair.userData.seatBounds.getCenter(new T.Vector3());
+ const leftPt=new T.Vector3(bCenter.x-.8,bCenter.y,bCenter.z).project(scene.camera),rightPt=new T.Vector3(bCenter.x+.8,bCenter.y,bCenter.z).project(scene.camera);
+ const clickAt=pt=>{const ev={clientX:(pt.x+1)*500,clientY:(1-pt.y)*350,pointerId:1,button:0,preventDefault(){}};host.onpointerdown(ev);host.onpointerup(ev);};
+ clickAt(leftPt);assert.equal(selectedSeat,10,'left half of metal bench selects first seat');
+ clickAt(rightPt);assert.equal(selectedSeat,11,'right half of metal bench selects second seat');
+ scene.putPlayer({id:2,name:'Buddy',x:w.PGSocialRules.SEATS[10].x,z:w.PGSocialRules.SEATS[10].z,dir:0,sit:true,seat:10,path:[],look:state.look});
+ clickAt(leftPt);assert.equal(selectedSeat,11,'clicking occupied bench half auto-picks free partner seat on same bench');
+ scene.removePlayer(2);
+ scene.putPlayer({...state,x:w.PGSocialRules.SEATS[0].x,z:w.PGSocialRules.SEATS[0].z,sit:true,seat:0});
+ scene.putPlayer({id:2,name:'Buddy',x:w.PGSocialRules.SEATS[1].x,z:w.PGSocialRules.SEATS[1].z,dir:0,sit:true,seat:1,path:[],look:state.look});
+ frame(now+=100);
+ const seatedSprite=scene.scene.children.find(o=>o.userData.socialId===1),buddySprite=scene.scene.children.find(o=>o.userData.socialId===2);
+ assert.equal(seatedSprite.position.y,.95,'ground-sitting pose rests on the bench deck');assert.equal(buddySprite.position.y,.95);
+ assert(seatedSprite.position.z>w.PGSocialRules.SEATS[0].z,'sprite stays forward of the backrest');
+ assert(Math.abs(buddySprite.position.x-seatedSprite.position.x)>1.2,'two players sit side-by-side on one metal bench');
+ scene.removePlayer(2);
 
- scene.setCamera({distance:0,pitch:100,panX:100,angle:-20*Math.PI});assert.equal(scene.cameraState.distance,12);assert.equal(scene.cameraState.pitch,78);assert.equal(scene.cameraState.panX,w.PGSocialRules.LIMIT);assert(Math.abs(scene.cameraState.angle)<1e-10);
+ // v269: Game-style player-locked camera (orbit, tilt, zoom — never pans off across the map).
+ scene.setCamera({distance:0,pitch:100,panX:100,follow:false,angle:-20*Math.PI});
+ assert.equal(scene.cameraState.distance,22);assert.equal(scene.cameraState.pitch,77);assert.equal(scene.cameraState.panX,0);assert.equal(scene.cameraState.follow,true);assert(Math.abs(scene.cameraState.angle)<1e-10);
  scene.resetCamera();frame(now+=100);const pointer=(x,y,id=1,extra={})=>({clientX:x,clientY:y,pointerId:id,button:0,preventDefault(){},...extra});
- host.onpointerdown(pointer(200,200));host.onpointermove(pointer(250,240));host.onpointerup(pointer(250,240));assert.notEqual(scene.cameraState.angle,0);assert.notEqual(scene.cameraState.pitch,48);
- host.onpointerdown(pointer(200,200,1,{button:2}));host.onpointermove(pointer(250,240));host.onpointerup(pointer(250,240));assert.notEqual(scene.cameraState.panX,0);
- scene.resetCamera();host.onpointerdown(pointer(200,200));host.onpointerdown(pointer(300,200,2));host.onpointermove(pointer(320,200,2));host.onpointermove(pointer(360,220,2));host.onpointerup(pointer(360,220,2));host.onpointerup(pointer(200,200));assert(scene.cameraState.distance<48);assert.equal(moves.length,0,'camera gestures do not walk');
+ host.onpointerdown(pointer(200,200));host.onpointermove(pointer(250,240));host.onpointerup(pointer(250,240));assert.notEqual(scene.cameraState.angle,0);assert.notEqual(scene.cameraState.pitch,45);assert.equal(scene.cameraState.panX,0);
+ scene.resetCamera();host.onpointerdown(pointer(200,200,1,{button:2}));host.onpointermove(pointer(250,240,1,{button:2}));host.onpointerup(pointer(250,240,1,{button:2}));assert.notEqual(scene.cameraState.angle,0,'right-drag orbits like the main game instead of map panning');assert.equal(scene.cameraState.panX,0);
+ scene.resetCamera();host.onpointerdown(pointer(200,200));host.onpointerdown(pointer(300,200,2));host.onpointermove(pointer(320,200,2));host.onpointermove(pointer(360,220,2));host.onpointerup(pointer(360,220,2));host.onpointerup(pointer(200,200));assert(scene.cameraState.distance<44);assert.equal(scene.cameraState.panX,0);assert.equal(moves.length,0,'camera gestures do not walk');
  scene.bubble(1,{emotion:'cry'});const bubble=w.document.querySelector('.social-bubble');assert(bubble.classList.contains('social-emotion'));assert.equal(bubble.parentElement.id,'labels');scene.bubble(1,{body:'Hello'});assert(!bubble.classList.contains('social-emotion'));
  // High-refresh frames within 16ms render without dropping, and unchanged sprite frames skip redundant 2D redraws.
  scene.putPlayer({...state,look:{...state.look,refine:0},sit:false});await flush();frame(now+=16);const steadyDraws=draws.length;frame(now+=16);assert.equal(draws.length,steadyDraws,'unchanged sprite frame reuses cached GPU texture');
  frame(now+=7000);assert.equal(bubble.childNodes.length,0,'expired bubble clears once');assert.equal(bubble.hidden,true);
- scene.setCamera({follow:false});const fixed=scene.camera.position.clone();scene.putPlayer({...state,x:40,z:30});for(let n=0;n<30;n++)frame(now+=100);const stopped=scene.camera.position.clone();scene.putPlayer({...state,x:60,z:30});for(let n=0;n<30;n++)frame(now+=100);assert(scene.camera.position.distanceTo(stopped)<.01,'free camera does not follow player');scene.resetCamera();
+ const startCam=scene.camera.position.clone();scene.putPlayer({...state,sit:false,x:40,z:30});for(let n=0;n<30;n++)frame(now+=100);assert(scene.camera.position.distanceTo(startCam)>5,'locked camera always tracks the player across the plaza');scene.resetCamera();
  scene.clearPlayers();assert.equal(w.document.querySelectorAll('.social-player-label,.social-bubble').length,0);assert.equal(scene.scene.children.some(o=>o.userData.tier),false,'leaving removes the aura');scene.putPlayer(state);await flush();frame(now+=100);assert.equal(w.document.querySelectorAll('.social-player-label').length,1,'reenter restores character');assert.ok(scene.scene.children.some(o=>o.userData.tier===150),'reenter restores the aura');dom.window.close();
  console.log('PASS social scene: download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor and reentry');
 })().catch(e=>{console.error(e);process.exitCode=1});
