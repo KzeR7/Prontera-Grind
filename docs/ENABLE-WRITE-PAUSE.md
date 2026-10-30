@@ -1,8 +1,10 @@
 # Enabling the write pause — exact steps
 
-> For the owner on the Windows machine. Prepared 2026-10-30 against `main` at `f025b0e`
-> (`haven-v263`). Read the whole page once before starting: **step 4 is time-sensitive**,
-> and the API is down between step 3 and step 5.
+> **Status (2026-10-30): ENABLED AND LIVE.** `prontera-gate` deployed (`81e80ce4-6b99-4dcf-ac71-b6a95f931b40`),
+> `GATE_TOKEN` set (64 chars), `WRITE_GATE = "required"` + `GATE` binding active on `main`
+> (PR #148 + PR #149 `1448d9b`), writes opened at `2026-10-30T08:50:38.885Z` (`epoch: 2`,
+> `writes open: YES`), and live game sign-in verified by the owner. Kept as the reference
+> for rotating `GATE_TOKEN` or re-enabling after a deployment rollback.
 
 ## What you are buying
 
@@ -20,7 +22,7 @@ Do these **first**. Steps 3–5 should run back to back without hunting for anyt
    ```powershell
    cd $HOME\Desktop\Prontera-Grind
    git status --short          # must be clean before you start changing anything
-   npx.cmd wrangler whoami     # must name the account that owns prontera-grind
+   npx.cmd wrangler whoami     # must name the account that owns horizonhaven
    ```
    If `whoami` says you are not authenticated, run `npx.cmd wrangler login` once. Do this
    before step 1, not between step 3 and step 5.
@@ -68,8 +70,8 @@ Do these **first**. Steps 3–5 should run back to back without hunting for anyt
    run step 2 again with a fresh value. The gate keeps working either way, and rotating it
    costs one command.
 
-4. Know your rollback: Cloudflare dashboard → Workers & Pages → `prontera-grind` →
-   Deployments → the **⋯** menu on the older Production row (`f025b0e`) → **Rollback to
+4. Know your rollback: Cloudflare dashboard → Workers & Pages → `horizonhaven` →
+   Deployments → the **⋯** menu on the older Production row → **Rollback to
    this deployment**. No data is lost.
 
 ## Step 1 — deploy the switch itself (no downtime)
@@ -107,12 +109,22 @@ you cannot open it until step 4/5, and nothing calls it until step 3.
 
 ## Step 2 — set its secret
 
+Set `$env:PG_GATE_TOKEN` first, verify its length is 64, and pipe it directly into
+`wrangler secret put` via Node rather than pasting into Wrangler's interactive prompt (on
+2026-10-30 a multi-line PowerShell paste truncated the interactive prompt input below
+`TOKEN_MIN = 32`, leaving `WriteGate` answering `not-configured` / `"The switch has no
+GATE_TOKEN secret"`):
+
 ```powershell
-npx.cmd wrangler secret put GATE_TOKEN --config workers/gate/wrangler.toml
+$env:PG_GATE_TOKEN = 'PASTE_YOUR_SAVED_64_CHAR_TOKEN_HERE'; "length=$($env:PG_GATE_TOKEN.Length)"
+# expect: length=64
+node -e 'const s=process.env.PG_GATE_TOKEN;if(!s||s.length<32)throw Error(`short`);const r=require(`child_process`).spawnSync(`cmd.exe`,[`/d`,`/s`,`/c`,`npx.cmd wrangler secret put GATE_TOKEN --config workers/gate/wrangler.toml`],{input:s,stdio:[`pipe`,`inherit`,`inherit`]});process.exit(r.status??1)'
 ```
 
-**Done 2026-10-30** (`✨ Success! Uploaded secret GATE_TOKEN`). Still no player impact —
-nothing calls it until step 3.
+**Done 2026-10-30** (`✨ Success! Uploaded secret GATE_TOKEN`). That one-liner uses only
+backticks inside single quotes so Windows PowerShell 5.1 does not strip inner `"` quotes,
+and sends the exact 64 bytes with no trailing `\r\n` — guaranteeing the Worker secret and
+`$env:PG_GATE_TOKEN` are byte-for-byte identical. Still no player impact until step 3.
 
 ## Step 3 — wire the binding and the binding/CLI fix
 
@@ -168,6 +180,10 @@ node tools/recovery/write_gate.mjs status
 
 The first command needs the confirmation phrase in quotes; it is a guard against typos
 during an incident. Expect the state to change to `open`.
+
+**Done 2026-10-30 (`2026-10-30T08:50:38.885Z`).** Observed transition: `closed` (`reason:
+never-opened`, `epoch: 1`) → `open` (`reason: operator opened writes`, `epoch: 2`,
+`writes open: YES`, `safe to restore: NO`), followed by live game login verification.
 
 ## Verify (2 minutes)
 

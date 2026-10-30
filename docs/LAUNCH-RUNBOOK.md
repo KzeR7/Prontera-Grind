@@ -186,10 +186,17 @@ Then click through the deployed staging URL as a player and confirm:
 Record what you saw. Staging is not production: CPU limits, real D1 behaviour and load
 are still unmeasured.
 
-## Shipping the `haven-v263` write pause (PR #147)
+## Shipping the `haven-v263` write pause (PR #147 — completed 2026-10-30)
 
-This is a **separate decision** from steps 1–3, and it can be taken at any time. The
-branch is behaviourally inert on merge, which is why it does not need to wait:
+> **Status (2026-10-30):** Shipped and enabled. PR #147 (`f025b0e`) shipped `haven-v263`,
+> `prontera-gate` was deployed (`81e80ce4-6b99-4dcf-ac71-b6a95f931b40`) with `GATE_TOKEN`,
+> PR #148 (`e704f2b`) and PR #149 (`1448d9b`) enabled `WRITE_GATE = "required"` + the
+> `GATE` binding on `main` and fixed namespace/CLI plumbing, writes were opened at
+> `2026-10-30T08:50:38.885Z` (`epoch: 2`), and live login was verified. See
+> [ENABLE-WRITE-PAUSE.md](ENABLE-WRITE-PAUSE.md).
+
+This was a **separate decision** from steps 1–3, and could be taken at any time. PR #147
+was behaviourally inert on merge, which is why it did not need to wait:
 
 - `wrangler.toml` adds the gate's variable and binding **commented out**. Uncommenting is
   a later, separate deploy.

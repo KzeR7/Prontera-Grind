@@ -24,7 +24,7 @@
 # Nothing in functions/ is a secret: the D1 binding is injected by Cloudflare, and there is no API
 # key anywhere in this repo.
 
-name = "prontera-grind"
+name = "horizonhaven"
 compatibility_date = "2026-10-01"
 pages_build_output_dir = "dist"
 

@@ -35,9 +35,13 @@ function harness(answers, { env = {} } = {}) {
 const status = (extra = {}) => ({ body: { state: 'closed', reason: 'drill', epoch: 4, changedAt: 1, open: false, safeToRestore: true, drain: { liveLeases: 0, quietMs: 90000, requiredMs: 90000 }, audit: [], ...extra } });
 
 await T('the target is fixed, encrypted, and cannot be pointed somewhere else', () => {
+  assert.equal(DEFAULT_URL, 'https://horizonhaven.pages.dev/api/gate');
   assert.equal(targetUrl({}), DEFAULT_URL);
+  assert.throws(() => targetUrl({ PG_GATE_URL: 'http://horizonhaven.pages.dev/api/gate' }), /https/);
   assert.throws(() => targetUrl({ PG_GATE_URL: 'http://prontera-grind.pages.dev/api/gate' }), /https/);
+  assert.throws(() => targetUrl({ PG_GATE_URL: 'https://02df8a40.horizonhaven.pages.dev/api/gate' }), /Refusing that host/);
   assert.throws(() => targetUrl({ PG_GATE_URL: 'https://evil.example/api/gate' }), /Refusing that host/);
+  assert.throws(() => targetUrl({ PG_GATE_URL: 'https://horizonhaven.pages.dev/api/save' }), /Refusing that path/);
   assert.throws(() => targetUrl({ PG_GATE_URL: 'https://prontera-grind.pages.dev/api/save' }), /Refusing that path/);
   assert.equal(targetUrl({ PG_GATE_URL: 'https://prontera-grind-staging.pages.dev/api/gate' }), 'https://prontera-grind-staging.pages.dev/api/gate');
 });

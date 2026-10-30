@@ -21,7 +21,7 @@
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-export const DEFAULT_URL = 'https://prontera-grind.pages.dev/api/gate';
+export const DEFAULT_URL = 'https://horizonhaven.pages.dev/api/gate';
 export const TOKEN_ENV = 'PG_GATE_TOKEN';
 export const TOKEN_MIN = 32;
 export const PHRASES = { close: 'CLOSE WRITES', seal: 'SEAL WRITES', open: 'OPEN WRITES' };
@@ -38,11 +38,14 @@ export function targetUrl(env = {}) {
   try { url = new URL(raw); } catch { throw new Stop('PG_GATE_URL is not a URL.'); }
   if (url.protocol !== 'https:') throw new Stop('The write pause is only controlled over https.');
   const host = url.hostname.toLowerCase();
-  // Production and the separately named staging project (plus staging's own preview hostnames).
-  // Production preview deployments are deliberately NOT allowed: their API is disabled anyway.
-  const allowed = host === 'prontera-grind.pages.dev' || host === 'prontera-grind-staging.pages.dev'
+  // Production (horizonhaven.pages.dev; legacy prontera-grind.pages.dev kept only for transition)
+  // and the separately named staging project (plus staging's own preview hostnames).
+  // Production preview deployments (*.horizonhaven.pages.dev / *.prontera-grind.pages.dev) are
+  // deliberately NOT allowed: their API is disabled anyway.
+  const allowed = host === 'horizonhaven.pages.dev' || host === 'prontera-grind.pages.dev'
+    || host === 'prontera-grind-staging.pages.dev'
     || /^[a-z0-9-]+\.prontera-grind-staging\.pages\.dev$/.test(host);
-  if (!allowed) throw new Stop('Refusing that host: use prontera-grind.pages.dev or the isolated staging project.');
+  if (!allowed) throw new Stop('Refusing that host: use horizonhaven.pages.dev or the isolated staging project.');
   if (url.pathname !== '/api/gate') throw new Stop('Refusing that path: the switch lives at /api/gate.');
   return url.toString();
 }

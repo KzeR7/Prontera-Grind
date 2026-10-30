@@ -225,13 +225,13 @@ await ok('Cloudflare local runtime: closed on boot, CLI opens writes, saves pass
     const fetchViaPages = (url, init) => pages.fetch(url, init);
 
     // Boot state: closed -> /api/save is 503 maintenance (state: closed, NOT unknown).
-    const rBoot = await pages.fetch('https://prontera-grind.pages.dev/api/save', {method: 'PUT'});
+    const rBoot = await pages.fetch('https://horizonhaven.pages.dev/api/save', {method: 'PUT'});
     assert.equal(rBoot.status, 503);
     const bootBody = await rBoot.json();
     assert.equal(bootBody.maintenance, true);
     assert.equal(bootBody.state, 'closed', 'reaches the real WriteGate DO and reads its closed state');
 
-    // CLI status -> closed
+    // CLI status -> closed (uses DEFAULT_URL: https://horizonhaven.pages.dev/api/gate)
     const statusOut = [];
     assert.equal(await runCli(['status'], {env: {[TOKEN_ENV]: token}, fetchImpl: fetchViaPages, print: s => statusOut.push(s)}), 0);
     assert.match(statusOut.join('\n'), /state:\s+closed/);
@@ -241,16 +241,19 @@ await ok('Cloudflare local runtime: closed on boot, CLI opens writes, saves pass
     assert.equal(await runCli(['open', 'OPEN WRITES'], {env: {[TOKEN_ENV]: token}, fetchImpl: fetchViaPages, print: s => openOut.push(s)}), 0);
     assert.match(openOut.join('\n'), /writes open:\s+YES/);
 
-    // /api/save now passes through to the handler!
-    const rOpen = await pages.fetch('https://prontera-grind.pages.dev/api/save', {method: 'PUT'});
+    // /api/save on horizonhaven.pages.dev passes through, while a preview subdomain stays disabled!
+    const rOpen = await pages.fetch('https://horizonhaven.pages.dev/api/save', {method: 'PUT'});
     assert.equal(rOpen.status, 200);
     assert.deepEqual(await rOpen.json(), {saved: true});
+    const rPreview = await pages.fetch('https://02df8a40.horizonhaven.pages.dev/api/save', {method: 'PUT'});
+    assert.equal(rPreview.status, 503);
+    assert.match((await rPreview.json()).err, /disabled/);
 
     // CLI close "CLOSE WRITES" --reason drill -> /api/save immediately refused again
     const closeOut = [];
     assert.equal(await runCli(['close', 'CLOSE WRITES', '--reason', 'drill'], {env: {[TOKEN_ENV]: token}, fetchImpl: fetchViaPages, print: s => closeOut.push(s)}), 0);
     assert.match(closeOut.join('\n'), /state:\s+closing/);
-    const rClosedAgain = await pages.fetch('https://prontera-grind.pages.dev/api/save', {method: 'PUT'});
+    const rClosedAgain = await pages.fetch('https://horizonhaven.pages.dev/api/save', {method: 'PUT'});
     assert.equal(rClosedAgain.status, 503);
   } finally {
     await mf.dispose();
