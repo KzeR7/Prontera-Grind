@@ -14,6 +14,17 @@ nothing is lost invisibly. It does nothing until the day you need a restore.
 
 Do these **first**. Steps 3–5 should run back to back without hunting for anything.
 
+0. **Work in the repository, not in `C:\WINDOWS\system32`.** Wrangler resolves
+   `--config` and `main` relative to the current directory, so a deploy started from
+   anywhere else fails with `ENOENT ... open 'C:\WINDOWS\system32\workers\gate\wrangler.toml'`.
+   ```powershell
+   cd $HOME\Desktop\Prontera-Grind
+   git status --short          # must be clean before you start changing anything
+   npx.cmd wrangler whoami     # must name the account that owns prontera-grind
+   ```
+   If `whoami` says you are not authenticated, run `npx.cmd wrangler login` once. Do this
+   before step 1, not between step 3 and step 5.
+
 1. Install the test dependencies and confirm the switch is green:
    ```powershell
    npm install --no-save --package-lock=false jsdom three@0.128.0 ws miniflare

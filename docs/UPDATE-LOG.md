@@ -9111,3 +9111,9 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** `npx.cmd wrangler deploy --config workers/gate/wrangler.toml`.
 * **Checks:** `tools/staging/live_additive_migrations.mjs`, `live_backup_preflight.mjs`, `tools/audits/hosted_pbkdf2_probe.mjs`, `hosted_scrypt_probe.mjs` and `local_d1_restore.mjs` all invoke `npx.cmd` on `win32`; `docs/ISOLATED-STAGING.md` states the same. Documentation only.
 * **Delivery:** Local documentation only.
+
+### 2026-10-30 — `run wrangler from the repository root`
+* **Changed:** The runbook's preflight now starts by changing into the repository. Wrangler resolves `--config` and `main` relative to the current directory, so a deploy started from `C:\WINDOWS\system32` fails with `ENOENT: no such file or directory, open 'C:\WINDOWS\system32\workers\gate\wrangler.toml'`. The same block adds `git status --short` (clean before editing) and `npx.cmd wrangler whoami`, with `wrangler login` named as the remedy — so an authentication problem is found in the preflight rather than between step 3 and step 5, where the API is down.
+* **Try it:** `cd $HOME\Desktop\Prontera-Grind` before any `wrangler` command.
+* **Checks:** `workers/gate/wrangler.toml` sets `main = "index.mjs"`, which wrangler resolves relative to the config file's own directory, while a `--config` path is resolved relative to the shell's working directory — hence the failure from `C:\WINDOWS\system32`. Documentation only.
+* **Delivery:** Local documentation only.
