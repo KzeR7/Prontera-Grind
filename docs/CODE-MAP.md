@@ -41,8 +41,8 @@ measurements remain qualified by their saved source hashes.
 | SQL and leaderboard | `migrations/`, `functions/api/board.js`, `functions/_lib/board.js` | `api_sim.js`, `leaderboard_sim.js` |
 | Launch runbook | [LAUNCH-RUNBOOK.md](LAUNCH-RUNBOOK.md): order, commands and stop conditions for the last four launch steps | `live_backup_preflight_sim.js`, `live_additive_migrations_sim.js`, `live_launch_schema_check_sim.js`, `hosted_launch_stage_sim.js`, `pages_preview_config_sim.py` |
 | Launch schema state | `tools/staging/live_launch_schema_check.mjs`: read-only, fixed-target comparison of live `pg` against the 0008–0011 contract, for when the tables already exist | `live_launch_schema_check_sim.js` |
-| Write pause enablement | [ENABLE-WRITE-PAUSE.md](ENABLE-WRITE-PAUSE.md): the ordered owner steps, verification gates and per-step rollback for turning the pause on | `write_gate_sim.mjs`, `write_gate_middleware_sim.js`, `write_gate_api_sim.js`, `write_gate_cli_sim.mjs` |
-| Recovery: write pause | `workers/gate/` (`policy.mjs` is the state machine, `index.mjs` the Durable Object), `functions/api/_middleware.js` (admission), `functions/api/gate.js` (control endpoint), `tools/recovery/write_gate.mjs` (owner CLI); off unless `WRITE_GATE = "required"` | `write_gate_sim.mjs`, `write_gate_middleware_sim.js`, `write_gate_api_sim.js`, `write_gate_cli_sim.mjs`; runbook in [RECOVERY.md](RECOVERY.md) |
+| Write pause enablement | [ENABLE-WRITE-PAUSE.md](ENABLE-WRITE-PAUSE.md): the ordered owner steps, verification gates and per-step rollback for turning the pause on | `write_gate_sim.mjs`, `write_gate_middleware_sim.js`, `write_gate_api_sim.js`, `write_gate_cli_sim.mjs`, `write_gate_binding_sim.js` |
+| Recovery: write pause | `workers/gate/` (`policy.mjs` is the state machine, `index.mjs` the Durable Object), `functions/_lib/gate-binding.js` (`DurableObjectNamespace` resolution), `functions/api/_middleware.js` (admission), `functions/api/gate.js` (control endpoint), `tools/recovery/write_gate.mjs` (owner CLI); enabled in root `wrangler.toml` (`WRITE_GATE = "required"`) | `write_gate_sim.mjs`, `write_gate_middleware_sim.js`, `write_gate_api_sim.js`, `write_gate_cli_sim.mjs`, `write_gate_binding_sim.js`; runbook in [RECOVERY.md](RECOVERY.md) |
 | Static publishing and routing | `tools/build_site.sh`, `tools/optimize_delivery.js`, `wrangler.toml`, `_routes.json`, `.assetsignore`; [cloud-data audit](CLOUD-DATA.md) | `publish_sim.js` |
 
 Simulation/smoke filenames above are under `tools/tests/`. These are starting points, not
@@ -295,11 +295,12 @@ plaza reuses `buildLevelAura`/`LEVEL_AURAS` for the Base 50/99/150 sigil.
 Recovery (v263): the write pause is a separate Worker, `workers/gate/`, holding one
 Durable Object with no D1 binding. A D1 Time Travel restore overwrites the database
 in place, so a pause flag stored in D1 would be rolled back by the restore it guards;
-this one cannot be. `functions/api/_middleware.js` asks the object to admit every
-`/api` request while `WRITE_GATE = "required"`, and refuses everything (reads
-included — `GET /api/save` writes) unless the answer is "open". `tools/recovery/
-write_gate.mjs` is the owner's close/seal/open tool. Nothing is deployed or enabled
-yet: see [Recovery](RECOVERY.md).
+this one cannot be. `functions/api/_middleware.js` and `functions/api/gate.js` resolve the `GATE`
+`DurableObjectNamespace` through `functions/_lib/gate-binding.js`, admit every `/api`
+request while `WRITE_GATE = "required"`, and refuse everything (reads included —
+`GET /api/save` writes) unless the answer is "open". `tools/recovery/write_gate.mjs`
+is the owner's close/seal/open tool: see [Recovery](RECOVERY.md) and
+[ENABLE-WRITE-PAUSE.md](ENABLE-WRITE-PAUSE.md).
 
 Cash Shop (v215): `assets/shop-catalog.js` is the single price list, imported by the
 Pages Functions the same way `workers/social` imports `assets/social-rules.js`, so

@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const files=['index.html','gm.html','functions/_lib/db.js','functions/_lib/echo-board.js',
  'functions/_lib/validate.js','functions/_lib/damage-monitor.js','functions/_lib/competition-baseline.js',
- 'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js','functions/api/save.js',
+ 'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js',
+ 'functions/_lib/gate-binding.js','functions/api/save.js',
  'functions/api/board.js','functions/api/_middleware.js','functions/api/gm/damage.js',
  // v263: the write-pause control endpoint. It answers 404 without the `GATE` binding, so packaging it
  // does not enable anything; it is listed because it is a runtime file this candidate contains.

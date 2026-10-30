@@ -81,12 +81,20 @@ await T('every state change needs its exact phrase (and the phrase is not enough
   }
 });
 
-await T('close sends the phrase and reason, and points at the seal', async () => {
+await T('close, seal and open send action + phrase + reason matching /api/gate', async () => {
   const h = harness([status({ state: 'closing', safeToRestore: false })]);
   assert.equal(await h.exec(['close', 'CLOSE WRITES', '--reason', 'restore 12:00 SGT']), 0);
-  assert.deepEqual(h.calls[0].body, { confirm: 'CLOSE WRITES', reason: 'restore 12:00 SGT' });
+  assert.deepEqual(h.calls[0].body, { action: 'close', confirm: 'CLOSE WRITES', reason: 'restore 12:00 SGT' });
   assert.match(h.text(), /seal "SEAL WRITES"/);
   assert.equal(h.text().includes(TOKEN), false);
+
+  const hSeal = harness([status({ state: 'closed', safeToRestore: true })]);
+  assert.equal(await hSeal.exec(['seal', 'SEAL WRITES']), 0);
+  assert.deepEqual(hSeal.calls[0].body, { action: 'seal', confirm: 'SEAL WRITES', reason: '' });
+
+  const hOpen = harness([status({ state: 'open', open: true, safeToRestore: false })]);
+  assert.equal(await hOpen.exec(['open', 'OPEN WRITES']), 0);
+  assert.deepEqual(hOpen.calls[0].body, { action: 'open', confirm: 'OPEN WRITES', reason: '' });
 });
 
 await T('close --wait polls until the pause has drained, then stops', async () => {

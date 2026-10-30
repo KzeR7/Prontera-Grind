@@ -19,6 +19,8 @@
 //   * /api/gate is exempt, because it is how the pause is lifted again.
 //
 // Unset (local dev, tests, `wrangler pages dev`) the pause does not exist and nothing changes.
+import { gateStub } from '../_lib/gate-binding.js';
+
 const CONTROL_PATH = '/api/gate';
 const RETRY_AFTER = '30';
 
@@ -59,8 +61,14 @@ export async function onRequest(context) {
   if (url.pathname === CONTROL_PATH) return context.next();
   if (!gateRequired(context.env)) return context.next();
 
-  const gate = context.env && context.env.GATE;
-  if (!gate) return maintenance({ gateUnavailable: true, state: 'unconfigured' });
+  const namespace = context.env && context.env.GATE;
+  if (!namespace) return maintenance({ gateUnavailable: true, state: 'unconfigured' });
+  // env.GATE is a DurableObjectNamespace, not a callable stub: see _lib/gate-binding.js.
+  // A binding of the wrong shape fails closed like a missing one, but reports a distinct
+  // state so it is diagnosable from a log line instead of only from a maintenance screen.
+  let gate;
+  try { gate = gateStub(namespace); }
+  catch { return maintenance({ gateUnavailable: true, state: 'misconfigured' }); }
 
   const id = crypto.randomUUID();
   let admitted = false;

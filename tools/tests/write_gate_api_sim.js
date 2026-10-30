@@ -16,10 +16,11 @@ const call = (line, { body, token = TOKEN, origin = 'https://prontera-grind.page
   if (origin) headers.Origin = origin;
   return onRequest({ request: new Request('https://prontera-grind.pages.dev' + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) }), env });
 };
+// Shaped like the real binding: a DurableObjectNamespace with idFromName() and get(),
+// and deliberately no top-level fetch(). See the note in write_gate_middleware_sim.js.
 const gateStub = (answer, { throwOn = false } = {}) => {
   const calls = [];
-  return {
-    calls,
+  const stub = {
     async fetch(request) {
       const body = request.method === 'POST' ? await request.json() : null;
       calls.push({ method: request.method, path: new URL(request.url).pathname, body, token: request.headers.get('X-Gate-Token') });
@@ -27,6 +28,7 @@ const gateStub = (answer, { throwOn = false } = {}) => {
       return typeof answer === 'function' ? answer(request) : new Response(JSON.stringify(answer.body), { status: answer.status, headers: answer.headers });
     },
   };
+  return { calls, idFromName: name => 'id-for:' + name, get: () => stub };
 };
 let pass = 0;
 const T = async (n, fn) => { await fn(); console.log('  ok   ' + n); pass++; };
