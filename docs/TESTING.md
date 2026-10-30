@@ -19,13 +19,20 @@ installed in **one** command — with no `package.json`, installing one at a tim
 the previous one:
 
 ```sh
-npm install --no-save --package-lock=false jsdom three@0.128.0 ws
+npm install --no-save --package-lock=false jsdom three@0.128.0 ws miniflare
 node -e "require('jsdom');require('three');require('ws');require('node:sqlite');console.log('test dependencies ready')"
 ```
 
 `jsdom` + `three` are needed by anything that boots `index.html`; `ws` by anything that
-loads `tools/dev_server.js` (`dev_server_sim.js`, `social_api_sim.mjs`). The game itself
-needs no npm install.
+loads `tools/dev_server.js` (`dev_server_sim.js`, `social_api_sim.mjs`); `miniflare` by
+`social_worker_sim.mjs`, which now runs the plaza Worker's real modules in the local
+Cloudflare runtime. The game itself needs no npm install.
+
+**Full git history.** A few suites read old revisions (`skill_balance_sim.js`,
+`card_star_balance_sim.js`, `hosted_launch_stage_sim.js`, `hosted_scrypt_prepare_sim.js`)
+and fail with `exists on disk, but not in <sha>` in a shallow clone. Run
+`git fetch --unshallow origin` once. That failure is environmental, not a regression —
+check it before blaming the code.
 
 **Python.** Sprite/asset checks need Python 3 with Pillow; the legacy pack pipeline also
 needs numpy and scipy. Install only the selected pipeline's dependencies and follow its
@@ -247,7 +254,19 @@ the block was seeded instead, so the result is reproducible. Whether 1–5 high-
 genuinely resolving with no float is acceptable is still an open question for a follow-up;
 it is not covered by this change.
 
-**2026-10-30 gate result (after the read-only launch schema check):** 179 suites,
+**2026-10-30 gate result (all suites green):** 179 suites, **179 pass, 0 fail**. The last
+known-red suite, `social_worker_sim.mjs`, was a harness defect rather than a code failure:
+it imported `convertV4MiniflareOptions`, a wrangler helper current miniflare no longer
+exports, and read a bundle that only existed after a manual `wrangler deploy --dry-run`.
+It now drives the Worker's real modules through miniflare's `modules` array (no build step),
+reads the compatibility date from `workers/social/wrangler.toml`, and clamps only the
+runtime date — the bundled workerd accepts at most `2026-08-06` while the Worker is
+configured `2026-10-01`, and it says so on the console when it clamps. Assertions are
+unchanged: 101 upgrade, a socket, and `room === 1`, with the anti-vacuity timeout kept.
+Proven able to fail: renaming the Worker's `room` message type or asserting an impossible
+room both turn it red.
+
+**2026-10-30 gate result (earlier, after the read-only launch schema check):** 179 suites,
 **178 pass**. The one failure is
 `social_worker_sim.mjs`, which imports `convertV4MiniflareOptions` — the installed
 miniflare 4.20260730.0 does not export it, so this is a harness/version problem, not a
