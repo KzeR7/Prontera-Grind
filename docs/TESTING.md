@@ -65,6 +65,13 @@ None proves browser score integrity or hosted launch readiness. See
 [Competition security](COMPETITION-SECURITY.md) for cutoffs and remaining risks.
 
 
+## D1 Time Travel selection (read-only)
+
+`node tools/tests/recovery_point_sim.mjs` exercises the owner-only seven-day
+bookmark selector with synthetic responses. `node tools/audits/local_d1_restore.mjs`
+separately rehearses synthetic D1 export/import, not Time Travel. Neither connects
+to production or proves a hosted restore. See [Recovery](RECOVERY.md).
+
 ## Password-recovery UI
 
 `node tools/tests/recovery_ui_sim.js` checks recovery validation, cancellation,
