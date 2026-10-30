@@ -9105,3 +9105,9 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** `node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"` prints 64 characters, comfortably above the minimum.
 * **Checks:** Generated output is 64 characters (48 bytes base64-encoded, no padding needed); `TOKEN_MIN = 32` read from `workers/gate/policy.mjs`; the worker compares the `X-Gate-Token` header against the stored secret with `tokensMatch` (constant time) and returns `not-configured` when the stored value is shorter than the minimum. Documentation only.
 * **Delivery:** Local documentation only.
+
+### 2026-10-30 — `npx.cmd, and never paste the token`
+* **Changed:** The runbook used bare `npx`, which fails on a default Windows install because PowerShell's execution policy blocks `npx.ps1` (`running scripts is disabled on this system`). Every command now uses `npx.cmd`, which is what all existing tools in this repository call on Windows for the same reason, with `cmd.exe` and a one-command `-ExecutionPolicy Bypass` as fallbacks — explicitly not a machine-wide policy change. The page also warns never to paste `GATE_TOKEN` into chat, an issue, a commit or a screenshot, and says what to do in each case: regenerate before the secret is set, re-run step 2 with a fresh value afterwards.
+* **Try it:** `npx.cmd wrangler deploy --config workers/gate/wrangler.toml`.
+* **Checks:** `tools/staging/live_additive_migrations.mjs`, `live_backup_preflight.mjs`, `tools/audits/hosted_pbkdf2_probe.mjs`, `hosted_scrypt_probe.mjs` and `local_d1_restore.mjs` all invoke `npx.cmd` on `win32`; `docs/ISOLATED-STAGING.md` states the same. Documentation only.
+* **Delivery:** Local documentation only.

@@ -24,7 +24,15 @@ Do these **first**. Steps 3–5 should run back to back without hunting for anyt
    ```
    Each prints one `PASS` line. Verified green on 2026-10-30.
 
-2. Generate the token and **keep it in a password manager now**. You cannot read it back
+2. **Use `npx.cmd`, not `npx`, in every command below.** PowerShell's execution policy
+   blocks `npx.ps1` on a default Windows install and the command fails with
+   `running scripts is disabled on this system`. The `.cmd` shim is not affected. Every
+   tool in this repository already calls `npx.cmd` on Windows for the same reason. If
+   `npx.cmd` is also blocked, run the command from `cmd.exe` instead, or prefix it with
+   `powershell -ExecutionPolicy Bypass -Command "..."` for that one command only — do not
+   widen the machine-wide policy to get a deploy out.
+
+3. Generate the token and **keep it in a password manager now**. You cannot read it back
    after step 2, and step 5 needs it. Windows usually has no `openssl`; Node is already
    installed for this repository, so use it:
    ```powershell
@@ -43,13 +51,18 @@ Do these **first**. Steps 3–5 should run back to back without hunting for anyt
    ```
    Do **not** use `Get-Random` for this; it is not a cryptographic source.
 
-3. Know your rollback: Cloudflare dashboard → Workers & Pages → `prontera-grind` →
+   **Never paste the token into chat, an issue, a commit or a screenshot.** If it is exposed
+   before step 2, generate a new one and use that; if it is exposed after the secret is set,
+   run step 2 again with a fresh value. The gate keeps working either way, and rotating it
+   costs one command.
+
+4. Know your rollback: Cloudflare dashboard → Workers & Pages → `prontera-grind` →
    Deployments → the deployment before this change → **Rollback**. No data is lost.
 
 ## Step 1 — deploy the switch itself (no downtime)
 
 ```powershell
-npx wrangler deploy --config workers/gate/wrangler.toml
+npx.cmd wrangler deploy --config workers/gate/wrangler.toml
 ```
 
 **Nothing changes for players.** This Worker has no route and `workers_dev = false`; the
@@ -62,7 +75,7 @@ Expected: a deploy summary naming `prontera-gate` and one Durable Object class,
 ## Step 2 — set its secret
 
 ```powershell
-npx wrangler secret put GATE_TOKEN --config workers/gate/wrangler.toml
+npx.cmd wrangler secret put GATE_TOKEN --config workers/gate/wrangler.toml
 ```
 
 Paste the value from "Before you start" step 2. Still no player impact — nothing calls it
@@ -159,7 +172,7 @@ sealing is an operator decision recorded in the audit trail.
 
 ## What can still go wrong
 
-- **You lose the token.** There is no way to read it back. `npx wrangler secret put
+- **You lose the token.** There is no way to read it back. `npx.cmd wrangler secret put
   GATE_TOKEN --config workers/gate/wrangler.toml` again with a fresh value; step 5 uses
   the new one. Players are unaffected because the gate only changes state when asked.
 - **You enable it and cannot open it.** Roll back the Pages deployment — that removes the
