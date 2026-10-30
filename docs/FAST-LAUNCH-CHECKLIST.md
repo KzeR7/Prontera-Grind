@@ -179,3 +179,16 @@ cannot repair), and the assumption that production has never run the launch code
 longer supportable. Still unverified from here: which build production serves, and
 whether any prize period has settled — both need the owner's deployment list and GM
 console, not a schema reading.
+
+**The read-only check then passed, and `startsAt` resolves the prize question:**
+`1793376000000` is `2026-10-31 00:00 Asia/Singapore`, the next midnight after the first
+request reached the board code, and it was still in the future when read (about eleven
+hours out). Only `unverified-echo.js` inserts `competition_periods`, and it skips any
+window whose start is before `starts_at`; `competition-settlement.js` only advances rows
+that already exist and are past `ends_at`. So no unverified-Echo period can have opened,
+no settlement can have run and no prize can have been paid **before that boundary**. Two
+consequences: the previous paragraph's "already serving" is confirmed without implying
+payouts, and the ladder is armed to begin scoring at 00:00 SGT on 2026-10-31 whether or
+not the remaining launch checks are finished. Anything that should happen before the
+ladder starts — or a decision to move `starts_at` — is a production write that needs its
+own reviewed, fixed-target tool; nothing in this repository can change it.
