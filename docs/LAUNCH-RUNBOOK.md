@@ -30,8 +30,23 @@ git cat-file -e 9335e56665a2e076b9316205eff332d2483e05f2^{commit}
 git rev-parse --verify origin/arena/a3bbb1f5-prontera-grind
 ```
 
-If `git pull --ff-only` refuses, your clone has diverged or uncommitted work: run
-`git status` and `git stash` before retrying. Do not force-reset the repository.
+If `git pull --ff-only` refuses, your clone has uncommitted work. On 2026-10-30 the
+owner's Desktop clone was at `haven-v143`, roughly 119 builds behind `main`, with local
+edits to `index.html`; the pull is then ~2,490 files and Aborting on that file. Keep the
+edits, do not throw them away:
+
+```powershell
+git status --short
+git diff --stat -- index.html     # how much you would be setting aside
+git stash push -m "local index.html before launch pull" -- index.html
+git pull --ff-only                # now fast-forwards to main
+Test-Path tools\staging\live_backup_preflight.mjs
+git stash list                    # the old edits stay recoverable here
+```
+
+`git stash` keeps those edits; `git checkout -- index.html` and `git reset --hard` do
+not. Do not force-reset the repository to get past this. Replaying a very old stash onto
+the new `index.html` will conflict heavily — save it for reference, not for reuse.
 
 Local preflights that were already run for this candidate and pass: `bash tools/build_site.sh`
 builds (134 MB, 3,069 files — inside the Pages limits), `node tools/staging/package_hosted_launch.mjs <out>`
@@ -43,7 +58,15 @@ The branch you are checked out on does not matter for steps 1–2: the migration
 come from the pinned commit `9335e566`, and the safety diff compares that commit to
 `origin/arena/a3bbb1f5-prontera-grind`, both of which the fetch brings down. Step 3 is
 different — generate the staging package from the candidate branch, the one carrying
-`haven-v263`.
+`haven-v263`:
+
+```powershell
+git switch -c candidate origin/arena/4fe1beea-prontera-grind
+Select-String -Path index.html -Pattern 'haven-v[0-9]+' | Select-Object -First 1
+# must print haven-v263; main alone prints haven-v262 and is NOT the candidate
+```
+
+Come back to `main` (`git switch main`) for anything that only needs the migrations.
 
 ## Step 1 — fresh, verified production backup
 

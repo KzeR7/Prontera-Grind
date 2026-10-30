@@ -9045,3 +9045,9 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** Follow `docs/LAUNCH-RUNBOOK.md` → Preconditions, then step 1.
 * **Checks:** The bytes the migration tool actually loads, `git show 9335e566:migrations/0008–0011`, hash to the four expected values (`1f96e682…`, `a2de7b75…`, `9122fb01…`, `50f9c51b…`); the tool's own precondition, `git diff 9335e566 origin/arena/a3bbb1f5-prontera-grind` over `index.html gm.html functions migrations assets _routes.json tools/build_site.sh`, is empty; the tool files are identical on `main` and this branch. Nothing was deployed, migrated or restored.
 * **Delivery:** Local documentation only.
+
+### 2026-10-30 — `runbook: a refused pull on a very old clone`
+* **Changed:** The owner's second attempt fast-forwarded nothing: `git pull --ff-only` aborted on local `index.html` edits. The Desktop clone turned out to be at `haven-v143`, about 119 builds behind `main`, with no `tools/staging/` directory at all — the incoming pull is 2,490 files. The runbook now covers this case (inspect, stash, pull, verify, keep the stash) and warns that `git checkout --` and `git reset --hard` destroy the edits, which `git stash` preserves. Step 3 gained the exact branch switch, because `main` alone checks out `haven-v262`, not the `haven-v263` candidate.
+* **Try it:** `docs/LAUNCH-RUNBOOK.md` → Preconditions, then step 1.
+* **Checks:** `4b3a41b:index.html` reports `haven-v143` and `git ls-tree 4b3a41b tools/` has no `staging/` entry; `origin/main` is `5174ec1` (`haven-v262`) and the candidate branch is `haven-v263`; the pull spans 2,490 files and 337,023 insertions. Nothing was deployed, migrated or restored.
+* **Delivery:** Local documentation only.
