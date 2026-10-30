@@ -13,7 +13,7 @@ PROD_DB_ID = "50a6448b-1f12-466c-a28a-10544bedf750"
 
 
 def validate(config):
-    assert config.get("name") == "prontera-grind", "unexpected project"
+    assert config.get("name") == "horizonhaven", "unexpected project"
     assert config.get("pages_build_output_dir") == "dist", "unexpected build output"
     # No production override: preserve the existing production binding configuration.
     assert set(config.get("env", {})) == {"preview"}, "missing preview or unexpected environment"
@@ -61,11 +61,12 @@ def main():
             [b for b in c["durable_objects"]["bindings"] if b["name"] == "GATE"][0])),
         ("switch without pause", lambda c: c.pop("vars")),
         ("wrong gate class", lambda c: c["durable_objects"]["bindings"][0].update(class_name="Other")),
+        ("wrong project name", lambda c: c.update(name="prontera-grind")),
     ]:
         altered = copy.deepcopy(config)
         mutate(altered)
         must_reject(altered, name)
-    print("PASS: preview binding policy and 13 unsafe configuration mutations")
+    print("PASS: preview binding policy and 14 unsafe configuration mutations")
 
 
 if __name__ == "__main__":

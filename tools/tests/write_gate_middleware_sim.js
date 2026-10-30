@@ -155,13 +155,15 @@ await T('the control endpoint stays reachable while the pause is on', async () =
 });
 
 await T('the preview refusal still wins, and is unchanged', async () => {
-  const gate = gateStub({ ok: true });
-  const { ctx, state } = context(req('PUT /api/save', 'branch.prontera-grind.pages.dev'), { WRITE_GATE: 'required', GATE: gate });
-  const r = await onRequest(ctx);
-  assert.equal(r.status, 503);
-  assert.match((await r.json()).err, /disabled/);
-  assert.equal(state.reached, 0);
-  assert.equal(gate.calls.length, 0, 'a preview never even asks the switch');
+  for (const previewHost of ['02df8a40.horizonhaven.pages.dev', 'branch.horizonhaven.pages.dev', 'branch.prontera-grind.pages.dev']) {
+    const gate = gateStub({ ok: true });
+    const { ctx, state } = context(req('PUT /api/save', previewHost), { WRITE_GATE: 'required', GATE: gate });
+    const r = await onRequest(ctx);
+    assert.equal(r.status, 503);
+    assert.match((await r.json()).err, /disabled/);
+    assert.equal(state.reached, 0);
+    assert.equal(gate.calls.length, 0, 'a preview never even asks the switch');
+  }
 });
 
 await T('a lost release does not fail an accepted request', async () => {

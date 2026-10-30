@@ -24,6 +24,7 @@ try{
  assert.equal(payload['functions/api/save.js'],fs.readFileSync('functions/api/save.js','utf8'));
  assert.throws(()=>unpackPayload(encoded,'bad'));assert.throws(()=>safeSql('DROP TABLE users > file'));
  assert.equal(deployedUrl('https://abcdef12.prontera-grind-staging.pages.dev'),'https://abcdef12.prontera-grind-staging.pages.dev');
+ assert.throws(()=>deployedUrl('https://horizonhaven.pages.dev'));
  assert.throws(()=>deployedUrl('https://prontera-grind.pages.dev'));
  const sqlite=freshDb(),DB=makeD1(sqlite),app=createApp({sqlite});
  const db={exec(sql){let rows=[];for(const part of sql.split(';').map(x=>x.trim()).filter(Boolean)){

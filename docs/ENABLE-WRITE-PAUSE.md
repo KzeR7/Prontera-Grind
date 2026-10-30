@@ -22,7 +22,7 @@ Do these **first**. Steps 3–5 should run back to back without hunting for anyt
    ```powershell
    cd $HOME\Desktop\Prontera-Grind
    git status --short          # must be clean before you start changing anything
-   npx.cmd wrangler whoami     # must name the account that owns prontera-grind
+   npx.cmd wrangler whoami     # must name the account that owns horizonhaven
    ```
    If `whoami` says you are not authenticated, run `npx.cmd wrangler login` once. Do this
    before step 1, not between step 3 and step 5.
@@ -70,8 +70,8 @@ Do these **first**. Steps 3–5 should run back to back without hunting for anyt
    run step 2 again with a fresh value. The gate keeps working either way, and rotating it
    costs one command.
 
-4. Know your rollback: Cloudflare dashboard → Workers & Pages → `prontera-grind` →
-   Deployments → the **⋯** menu on the older Production row (`f025b0e`) → **Rollback to
+4. Know your rollback: Cloudflare dashboard → Workers & Pages → `horizonhaven` →
+   Deployments → the **⋯** menu on the older Production row → **Rollback to
    this deployment**. No data is lost.
 
 ## Step 1 — deploy the switch itself (no downtime)

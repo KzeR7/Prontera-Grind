@@ -47,7 +47,7 @@ If you need to deploy manually instead, build and upload the production branch e
 
 ```sh
 bash tools/build_site.sh
-npx wrangler pages deploy dist --project-name prontera-grind --branch main
+npx wrangler pages deploy dist --project-name horizonhaven --branch main
 ```
 
 The Render site is deliberately kept as your backup; this update does not change or remove it.
@@ -358,7 +358,7 @@ npx wrangler login
 npx wrangler d1 execute pg --remote --file=migrations/0002_leaderboard.sql
 npx wrangler d1 execute pg --remote --file=migrations/0003_server_timed_offline_claims.sql
 bash tools/build_site.sh
-npx wrangler pages deploy dist --project-name prontera-grind --branch main
+npx wrangler pages deploy dist --project-name horizonhaven --branch main
 ```
 
 For a **brand-new** Pages project, first create `pg`, apply `0001_init.sql`, configure its database ID

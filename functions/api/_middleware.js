@@ -98,5 +98,6 @@ export async function onRequest(context) {
 // Kept in this file (not exported logic elsewhere) so a preview refusal cannot be bypassed by editing
 // one helper: the check above is the only caller.
 function isProductionPreview(host) {
-  return host.toLowerCase().replace(/\.$/, '').endsWith('.prontera-grind.pages.dev');
+  const h = host.toLowerCase().replace(/\.$/, '');
+  return h.endsWith('.horizonhaven.pages.dev') || h.endsWith('.prontera-grind.pages.dev');
 }
