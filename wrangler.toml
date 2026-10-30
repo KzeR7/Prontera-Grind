@@ -52,18 +52,28 @@ database_id = "50a6448b-1f12-466c-a28a-10544bedf750"   # printed by `wrangler d1
 # Without the first the shop is browse-only; without the second the webhook answers 503 and the
 # order poll delivers instead. Database: migrations/0005_shop.sql. Guide: docs/MONETIZATION-SETUP.md.
 
-# THE WRITE PAUSE (optional; docs/RECOVERY.md § "The write pause"). Nothing below is active yet: the
-# API runs unpaused until all of it is added, after `workers/gate` exists and its GATE_TOKEN secret is
-# set. Add the variable and the binding in the SAME Pages deployment, or the API fails closed on
-# purpose (that is what "required" means). Exact runbook: docs/RECOVERY.md.
+# THE WRITE PAUSE — ENABLED 2026-10-30. docs/RECOVERY.md § "The write pause" is the reference;
+# docs/ENABLE-WRITE-PAUSE.md is the ordered owner runbook used to turn it on.
 #
-# [vars]
-# WRITE_GATE = "required"          # unset means "no pause exists" (local dev, tests, previews)
+# Order of operations, because the switch ships CLOSED: `prontera-gate` is deployed and its
+# GATE_TOKEN secret is set BEFORE this binding exists. Once this deployment goes live, every
+# /api/* request is refused with 503 until an operator opens the switch:
+#   node tools/recovery/write_gate.mjs open "OPEN WRITES"
 #
-# [[durable_objects.bindings]]     # the switch itself: no D1, no route, not rollback-able by a restore
-# name = "GATE"
-# class_name = "WriteGate"
-# script_name = "prontera-gate"
+# Removing this block (or rolling the Pages deployment back) removes the pause with it, because
+# WRITE_GATE unset means "no pause exists" - that is the tested rollback.
+#
+# Do not split these two: the variable without the binding, or the binding without the variable,
+# is a misconfiguration that fails closed on purpose (that is what "required" means).
+[vars]
+WRITE_GATE = "required"
+
+# The switch itself: a separate Worker with no D1 binding, no route and workers_dev = false, so a
+# D1 restore cannot roll back the flag that is meant to guard it.
+[[durable_objects.bindings]]
+name = "GATE"
+class_name = "WriteGate"
+script_name = "prontera-gate"
 
 # Deploy workers/social first; Pages connects privately to its Durable Object.
 [[durable_objects.bindings]]

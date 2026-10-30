@@ -75,8 +75,11 @@ t('previews are enabled explicitly, so branch builds are not red (v235)', () => 
 
 t('Pages binds the same script and class', () => {
   assert.equal(pages.values.pages_build_output_dir, 'dist');
-  const binding = (pages.tables['durable_objects.bindings'] || [])[0];
-  assert(binding, 'Pages declares a durable_objects binding');
+  // Look the binding up by name: the table also carries the write-pause GATE binding, and its
+  // position is not part of the contract.
+  const bindings = pages.tables['durable_objects.bindings'] || [];
+  const binding = bindings.find(b => b.name === 'SOCIAL');
+  assert(binding, 'Pages declares a durable_objects binding named SOCIAL');
   assert.equal(binding.name, 'SOCIAL', 'the function reads env.SOCIAL');
   assert.equal(binding.class_name, 'Social');
   assert.equal(binding.script_name, worker.values.name, 'script_name matches the Worker name');

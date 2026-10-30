@@ -76,12 +76,32 @@ Do these **first**. Steps 3–5 should run back to back without hunting for anyt
 npx.cmd wrangler deploy --config workers/gate/wrangler.toml
 ```
 
+**Done 2026-10-30.** Observed output, and how to read it:
+
+```
+Total Upload: 10.44 KiB / gzip: 3.31 KiB
+env.GATE (WriteGate)      Durable Object
+Uploaded prontera-gate (1.91 sec)
+No targets deployed for prontera-gate (0.84 sec)
+Current Version ID: 81e80ce4-6b99-4dcf-ac71-b6a95f931b40
+```
+
+`No targets deployed` is **not** a failure. Wrangler prints it when a Worker has no routes,
+no cron triggers and no `workers.dev` address — which is this Worker's design
+(`workers_dev = false`, no route). The version was still uploaded and promoted; wrangler
+promotes it before that line and before printing the version ID. To confirm the deployment
+itself:
+
 **Nothing changes for players.** This Worker has no route and `workers_dev = false`; the
 only way in is the Pages binding you add in step 3. Confirms nothing yet — it is dark.
 
-Expected: a deploy summary naming `prontera-gate` and one Durable Object class,
-`WriteGate`. A Durable Object that is brand new starts in state `closed` with the reason
-`never-opened`, which is the safe default.
+```powershell
+npx.cmd wrangler deployments status --config workers/gate/wrangler.toml
+```
+
+It must name version `81e80ce4-…` (or whatever your run printed). A brand-new Durable
+Object starts in state `closed` with the reason `never-opened`, which is the safe default —
+you cannot open it until step 4/5, and nothing calls it until step 3.
 
 ## Step 2 — set its secret
 
@@ -94,8 +114,9 @@ yet.
 
 ## Step 3 — wire the binding (THIS is where the API goes down)
 
-Edit the **root** `wrangler.toml` and uncomment the block. There is no existing `[vars]`
-table, so this is safe to add. Replace the commented block with exactly:
+The edit is **already written and tested on branch `arena/4d4177fb-prontera-grind`**
+(PR #148), so there is nothing to type. It uncomments exactly this in the root
+`wrangler.toml`, keeping the `SOCIAL` binding and `[env.preview]` untouched:
 
 ```toml
 [vars]
@@ -107,27 +128,32 @@ class_name = "WriteGate"
 script_name = "prontera-gate"
 ```
 
-Leave the comment above it. Delete nothing else; the `SOCIAL` binding and `[env.preview]`
-stay untouched.
+**Do this only after step 2.** Merging deploys the pause; without the secret the object
+answers `not-configured` and nothing can open it.
 
 ```powershell
-git add wrangler.toml
-git commit -m "Enable the write pause binding"
-git push
+git fetch origin
+gh pr view 148 --json mergeable,mergeStateStatus    # expect MERGEABLE / CLEAN
+gh pr merge 148 --merge
 ```
 
-Pushing to `main` (or merging a PR into it) triggers the Pages build. The `wrangler.toml`
-in the repo is authoritative — the dashboard shows those fields as read-only, so this file
-is the only place the binding can come from.
+Merging to `main` triggers the Pages build. The `wrangler.toml` in the repository is
+authoritative — the dashboard shows those fields as read-only, so the file is the only
+place the binding can come from.
 
 **From the moment that build finishes until step 5, every `/api/*` request answers 503.**
 The public site and the client still load; players see the maintenance message and "your
-character is paused". This is the expected, accepted gap — it is usually one to three
-minutes. Do not start this step if you cannot reach step 5 within ~15 minutes.
+character is paused". Expected, accepted, usually one to three minutes. Do not merge if you
+cannot reach step 5 within ~15 minutes.
 
-**Why it fails closed:** a half-configured deploy (`WRITE_GATE` set, binding missing)
-answers 503 to everything rather than running unprotected. That is deliberate for a safety
-switch, and it is the main thing to be careful about.
+If you would rather make the edit by hand instead, replace the commented block in the root
+`wrangler.toml` with the four lines above and commit; the result must be identical. The
+config test `python3 tools/tests/pages_preview_config_sim.py` checks it parses and that the
+pause is never half-configured.
+
+**Why it fails closed:** a half-configured deploy (variable without the binding, or binding
+without the variable) answers 503 to everything rather than running unprotected. That is
+deliberate for a safety switch, and it is the main thing to be careful about.
 
 ## Step 4 — wait for the build, then confirm it is closed
 
