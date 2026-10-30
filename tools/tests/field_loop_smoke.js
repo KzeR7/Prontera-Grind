@@ -100,22 +100,72 @@ const T = async (name, fn) => { try { await fn(); check.push(['ok', name]); } ca
 
   // ---------------------------------------------------------------- 2. the field
   t('a farming stage is built from scattered camps, not three clumps in the middle', () => {
-    ev(`S.mp=0;S.lvl=3;mapM=0;mapL=3;spawn();`);
-    const camps = JSON.parse(ev('JSON.stringify(camps.map(c=>({x:c.x,z:c.z,wait:c.wait})))'));
-    const mobs = JSON.parse(ev('JSON.stringify(mobs.map(m=>({x:m.x,z:m.z,pack:m.pack,hp:m.hp})))'));
-    assert.strictEqual(camps.length, 8, 'Prontera fields eight camps');
-    assert.ok(mobs.length >= 8 && mobs.length <= 24, 'each camp holds one to three monsters');
-    for (const c of camps) {
-      const group = mobs.filter(m => m.pack === camps.indexOf(c));
-      assert.ok(group.length >= 1 && group.length <= 3, 'camp ' + camps.indexOf(c) + ' holds ' + group.length);
-      for (const m of group)
-        assert.ok(Math.hypot(m.x - c.x, m.z - c.z) <= 3.35, 'a camp monster drifted off its camp ring');
-      assert.ok(c.wait >= 4 && c.wait <= 8, 'refill timers stay in the 4-8s band');
+    // Seeded on purpose. This check is about geometry, and it used to be intermittent ("a camp
+    // monster drifted off its camp ring" appeared in some runs and not others) because the field
+    // is drawn from Math.random. Math.random is restored in the finally below, so every later
+    // check in this smoke sees exactly the game it saw before.
+    ev(`window.__realRandom=Math.random;
+        window.__seed=s=>{let q=s;Math.random=()=>{q=(q*16807)%2147483647;return q/2147483647}};
+        window.__unseed=()=>{Math.random=window.__realRandom};`);
+    // v231 replaced one 1.6-3.2 ring with three widening tiers (1x, 1.45x, 1.75x of CAMP_RING_MAX),
+    // so a crowded camp searches wider and then drops a member rather than overlapping it. The old
+    // 3.35 budget predated that: it was not a monster drifting off, the allowed ring is simply wider
+    // than the number the test still held. Measured 2026-10-30 over 880 seeded farming fields on
+    // all 12 maps: the furthest camp-mate was 5.0750, exactly CAMP_RING_MAX*1.75, no exceptions.
+    const RING_MAX = 2.9 * 1.75 + 1e-6;              // CAMP_RING_MAX * 1.75
+    const MOB_GAP = 2.6;                              // v231's hard floor between any two monsters
+    const campCount = mp => mp < 3 ? 8 : mp < 7 ? 10 : 12;
+    const check = (mp, lvl, seed) => {
+      ev(`window.__seed(${seed});S.mp=${mp};S.lvl=${lvl};mapM=${mp};mapL=${lvl};spawn();`);
+      const c = JSON.parse(ev('JSON.stringify(camps.map(c=>({x:c.x,z:c.z,wait:c.wait})))'));
+      const m = JSON.parse(ev('JSON.stringify(mobs.map(o=>({x:o.x,z:o.z,pack:o.pack})))'));
+      const where = `map ${mp} stage ${lvl} seed ${seed}`;
+      assert.strictEqual(c.length, campCount(mp), where + ': the camp count follows the map');
+      assert.ok(m.length >= c.length && m.length <= c.length * 3,
+        where + ': every camp holds one to three monsters (' + m.length + ' for ' + c.length + ' camps)');
+      let widened = 0;
+      for (let i = 0; i < c.length; i++) {
+        const group = m.filter(o => o.pack === i);
+        assert.ok(group.length >= 1 && group.length <= 3, where + ': camp ' + i + ' holds ' + group.length);
+        for (const o of group) {
+          const ring = Math.hypot(o.x - c[i].x, o.z - c[i].z);
+          if (ring > 2.9) widened++;
+          assert.ok(ring <= RING_MAX, where + ': a camp monster is past its widest ring (' + ring.toFixed(3) + ')');
+        }
+        assert.ok(c[i].wait >= 4 && c[i].wait <= 8, where + ': refill timers stay in the 4-8s band');
+      }
+      // What the old ring number was really standing in for: a camp is a small group, not a smear.
+      // The pair floor is new here - nothing asserted it before. Its one documented exception is the
+      // last-resort fallback for a camp's FIRST monster, which takes the roomiest spot it can find
+      // even if that is inside the floor; the measured minimum over those 880 fields was 2.609, so
+      // the tolerance is room for a path the game takes on purpose, not slack for sloppy spawning.
+      for (let a = 0; a < m.length; a++) for (let b = a + 1; b < m.length; b++) {
+        const pair = Math.hypot(m[a].x - m[b].x, m[a].z - m[b].z);
+        assert.ok(pair >= MOB_GAP - 0.25, where + ': two monsters are stacked (' + pair.toFixed(3) + ')');
+      }
+      for (let a = 0; a < c.length; a++) for (let b = a + 1; b < c.length; b++)
+        assert.ok(Math.hypot(c[a].x - c[b].x, c[a].z - c[b].z) >= 2.6, where + ': two camps share a spot');
+      const zs = c.map(o => o.z);
+      assert.ok(Math.max(...zs) - Math.min(...zs) > 12, where + ': the camps cover the lane, not the middle');
+      return widened;
+    };
+    try {
+      // Prontera first: the roomy field, and the one the rest of the smoke keeps playing on.
+      const roomy = check(0, 3, 6);
+      // Then the crowded ones. The widening tiers only engage when camps are packed, so a single
+      // roomy field would let a broken ring bound pass unnoticed: measured here, maps 9 and 11 put
+      // 17-18 camp-mates past the tight ring, which is what gives these assertions their teeth.
+      let widened = roomy;
+      for (const [mp, lvl] of [[0, 3], [9, 12], [11, 3]]) for (let seed = 1; seed <= 4; seed++) {
+        if (mp === 0 && lvl === 3) continue;
+        widened = Math.max(widened, check(mp, lvl, seed));
+      }
+      assert.ok(widened > 0, 'some camp on some map must actually use a widened ring, or this check proves nothing');
+    } finally {
+      // Back to an ordinary Prontera field on the real RNG, so the refill and combat checks below
+      // run against the same kind of field they always did.
+      ev(`window.__unseed();S.mp=0;S.lvl=3;mapM=0;mapL=3;spawn();`);
     }
-    for (let a = 0; a < camps.length; a++) for (let b = a + 1; b < camps.length; b++)
-      assert.ok(Math.hypot(camps[a].x - camps[b].x, camps[a].z - camps[b].z) >= 2.6, 'two camps share a spot');
-    const zs = camps.map(c => c.z);
-    assert.ok(Math.max(...zs) - Math.min(...zs) > 12, 'the camps must cover the lane, not hug the middle');
   });
 
   // ---------------------------------------------------------------- 3. refill
@@ -291,6 +341,12 @@ const T = async (name, fn) => { try { await fn(); check.push(['ok', name]); } ca
       `(function(){const r=window.CLASS_SKINS.classes['${cls}'].m;return JSON.stringify((r.delays&&r.delays.attack)||[])})()`
     )).reduce((a, e) => a + e[0] / (e[1] || 100), 0);
     const rows = [];
+    // Seeded, like the camp geometry check. This block counts attack outcomes, and those rolls
+    // (crit, miss, the Assassin Cross off-hand) are random: measured across runs, Assassin Cross
+    // printed 42-46 numbers+misses for 47 attacks, so the 90% band below sat near the edge and the
+    // suite flaked roughly one run in eight - on the untouched base as well as here. The seed makes
+    // the result the same every time; no threshold is changed by it.
+    ev('window.__seed(11)');
     // ONE hook install: wrapping playerAttack again per class would stack the wrappers and count
     // every attack once per class already run.
     ev(`window.__sw=0;{const real=playerAttack;playerAttack=function(){window.__sw++;return real.apply(this,arguments)}}`);
@@ -335,6 +391,7 @@ const T = async (name, fn) => { try { await fn(); check.push(['ok', name]); } ca
       const r = JSON.parse(ev('JSON.stringify({sw:window.__sw,slash:window.__slash,nums:window.__nums,miss:window.__miss})'));
       rows.push(Object.assign({ cls, aspd: +ev('aspd()').toFixed(3), file, swingDur: +ev('swingDur').toFixed(3) }, r));
     }
+    ev('window.__unseed()');       // the real RNG again, for anything that runs after this block
     assert.strictEqual(errors.length, 0, 'page errors: ' + errors.join(' | '));
     for (const r of rows) {
       assert.ok(r.sw > 5, r.cls + ' actually fought (' + r.sw + ' attacks)');

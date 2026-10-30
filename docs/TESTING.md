@@ -226,6 +226,34 @@ existing saves or removing GM testing. The full-gate recheck returned 147 passin
 and the same four known failures, while the preceding run hit this intermittent GM
 failure.
 
+**2026-10-30 (`haven-v263`): the camp smoke is green, and its budget was recomputed, not
+relaxed.** `field_loop_smoke.js` had been red on a 3.35-unit camp-mate budget since v231
+replaced the single 1.6–3.2 ring with three widening tiers (up to `CAMP_RING_MAX × 1.75`
+= 5.075) for camps that cannot fit a member legally. The number was stale against the
+code, not a monster drifting: measured over 880 seeded farming fields on all 12 maps,
+the furthest camp-mate was 5.0750, exactly the documented bound, with no exceptions. The
+check now derives its bound from the source constants, is seeded (it used to be
+intermittent), and runs crowded fields (maps 9 and 11 put 17–18 camp-mates past the tight
+ring, which is what gives it teeth — a single roomy field let a deliberately broken bound
+pass). Two new assertions were added rather than removed: pairwise monster distance
+against v231's `MOB_GAP` 2.6 floor (nothing asserted it before), and that at least one
+sampled field actually uses a widened ring. Mutation-tested: widening the tier to 2.60×
+or dropping `MOB_GAP` to 0.2 both fail it with the field and seed named.
+
+The same run found a second, unrelated flake in that smoke: "every swing showed something"
+failed about once in eight runs **on the untouched base**, because Assassin Cross printed
+42–46 numbers+misses for 47 attacks (the band is 90%). The thresholds were left alone and
+the block was seeded instead, so the result is reproducible. Whether 1–5 high-ASPD swings
+genuinely resolving with no float is acceptable is still an open question for a follow-up;
+it is not covered by this change.
+
+**2026-10-30 gate result:** 178 suites, **177 pass**. The one failure is
+`social_worker_sim.mjs`, which imports `convertV4MiniflareOptions` — the installed
+miniflare 4.20260730.0 does not export it, so this is a harness/version problem, not a
+code failure. `skill_balance_sim.js`, `card_star_balance_sim.js` and
+`hosted_launch_stage_sim.js` are green (the balance fixtures were regenerated in the
+previous entry with identical measurements).
+
 **2026-10-29 (camp/auth audit):** The original 3.35-unit camp smoke was not changed.
 An in-memory bounded-ring prototype and a local workerd password-cost probe are
 measured in [Camp and auth audit](CAMP-AUTH-AUDIT.md). The owner chose to retain
