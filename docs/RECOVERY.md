@@ -120,6 +120,10 @@ sealing is an operator judgement recorded in the audit trail — not a guarantee
 
 ### Enabling it (one deployment, in this order)
 
+> **Exact step-by-step, with a verification gate after each stage and the rollback for
+> each:** [ENABLE-WRITE-PAUSE.md](ENABLE-WRITE-PAUSE.md). Read that page rather than the
+> summary below if you are doing it for the first time.
+
 ```powershell
 # 1. the switch, with no database attached
 npx wrangler deploy --config workers/gate/wrangler.toml
