@@ -156,7 +156,7 @@ const dr=()=>1;
 ${code}
 buildGuide=()=>'<section class="build-guide">Build guide (integration tested in progression_sim)</section>';
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
-this.__u={ V, itemDetail, itemMain, changeClass, cell, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
+this.__u={ V, itemDetail, itemMain, changeClass, cell, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardKind(v){boardKind=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
 const addFloat=()=>{},pl={x:0,z:0};
 const questEvent=()=>{};const log=(m,c,k)=>{logs.push(m)},ui=()=>{},save=()=>{};   // the Black Market's writes (stubs here)
@@ -445,8 +445,12 @@ t('the leaderboard renders daily, weekly and all-time stamps with kills and Base
   for(const p of ['Daily','Weekly','All-time'])assert.ok(h.includes(p),p+' leaderboard stamp is missing');
   assert.ok(h.includes('Knight_One')&&h.includes('Lv 42')&&h.includes('12,345 kills'),'the player row shows name, current level and period kills');
   assert.ok(h.includes('data-a="boardperiod"')&&h.includes('data-a="boardrefresh"'),'the period and refresh buttons are wired');
-  assert.ok(h.includes('self-reported')&&!h.includes('undefined'),'the leaderboard is honest about browser-simulated scores');
-  assert.ok(h.includes('temporarily paused'),'the client explains the competition pause even for a cached result');
+  assert.ok(h.includes('browser-reported')&&h.includes('falsified')&&!h.includes('undefined'),'the kills board discloses unverified scores even for cached results');
+  U.boardKind='echo';U.boardCache={'echo:weekly':{label:'This week',entries:[{rank:1,name:'EchoPlayer',level:42,dps:12345}]}};
+  const echo=U.V.board();
+  assert.ok(echo.includes('browser-reported')&&echo.includes('falsified'),'Echo scores disclose the same risk');
+  assert.ok(echo.includes('Flags are for review only')&&echo.includes('sync before')&&echo.includes('Equal scores rank by account ID'),'the prize policy is visible');
+  U.boardKind='kills';
   U.boardStatus={api:false,on:false};U.boardCache={};U.boardPeriod='daily';
   assert.ok(U.V.board().includes('Sign in to a cloud account'),'the offline static game explains why no board is available');
 });

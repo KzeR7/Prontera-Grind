@@ -86,6 +86,7 @@ export const ROUTES = {
   'GET /api/gm/player': ['onRequestGet', 'api/gm/player.js'],
   'POST /api/gm/player': ['onRequestPost', 'api/gm/player.js'],
   'GET /api/gm/log': ['onRequestGet', 'api/gm/log.js'],
+  'GET /api/gm/damage': ['onRequestGet', 'api/gm/damage.js'],
   'GET /api/gm/usage': ['onRequestGet', 'api/gm/usage.js'],
   'GET /api/shop/catalog': ['onRequestGet', 'api/shop/catalog.js'],
   'POST /api/shop/checkout': ['onRequestPost', 'api/shop/checkout.js'],

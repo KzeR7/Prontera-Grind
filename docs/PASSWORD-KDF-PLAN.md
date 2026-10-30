@@ -112,7 +112,7 @@ or safe headroom.
   rehearse restoration separately, monitor failures and costs, and require explicit
   owner approval for deployment.
 - The hosted probe did not change the live setting, execute migrations or access
-  account data. Rankings and leaderboard payouts remain paused on the draft.
+  account data. That historical staging draft had paused rankings and payouts; the later local v262 draft intentionally enables unverified rankings and prizes (see Competition security).
 
 References: [OWASP password storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html),
 [Cloudflare Node crypto support](https://developers.cloudflare.com/workers/runtime-apis/nodejs/crypto/),

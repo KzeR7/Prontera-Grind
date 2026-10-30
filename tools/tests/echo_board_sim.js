@@ -120,6 +120,8 @@ await t('the D1 shim executes batches in order and rolls back on failure', async
 
 const alpha = await register('Alpha', 'alpha-password-1');
 const beta = await register('Beta', 'beta-password-22');
+// Disposable test-only launch override: exercise an already-open full week.
+sqlite.prepare('UPDATE unverified_echo_config SET starts_at=1').run();
 
 await t('ranked DPS syncs into daily, weekly and all-time Echo boards, best-only', async () => {
   const trial = dps => ({ day: today, used: 1, best: dps, runs: 1, chest: 0,
@@ -141,24 +143,29 @@ await t('ranked DPS syncs into daily, weekly and all-time Echo boards, best-only
   assert.equal((await board(alpha, 'daily', 'bogus')).status, 400);
 });
 
-await t('a finished day pays its Top 100 exactly once, through the grants queue', async () => {
+await t('old unverified leaderboard rows never trigger backpay', async () => {
   const yesterday = new Date(Date.parse(today + 'T00:00:00Z') - 86_400_000).toISOString().slice(0, 10);
-  const ids = sqlite.prepare('SELECT id, username FROM users').all();
-  for (const [i, u] of ids.entries()) {
-    sqlite.prepare('INSERT INTO leaderboard_echo(user_id, period_key, dps) VALUES(?, ?, ?)')
-      .run(u.id, 'day:' + yesterday, 2000000 - i * 1000);
-  }
-  await board(alpha, 'daily');           // first read after the period ends settles it
-  const grants = sqlite.prepare("SELECT user_id, payload, note FROM grants WHERE created_by='Endless Echo' ORDER BY user_id, payload").all();
-  assert.ok(grants.length >= 3, 'rank prizes were queued: ' + JSON.stringify(grants));
-  assert.ok(grants.some(g => g.payload === '{"resource":"refineScrolls","amount":3}' && /rank #1/.test(g.note)));
-  assert.ok(grants.some(g => g.payload === '{"resource":"dailyRolls","amount":2}' && /rank #1/.test(g.note)));
-  const rewards = sqlite.prepare('SELECT COUNT(*) n FROM leaderboard_echo_rewards').get().n;
-  assert.equal(rewards, ids.length);
-  await board(alpha, 'weekly');          // settling again must pay nobody twice
-  await board(beta, 'daily');
-  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM grants WHERE created_by='Endless Echo'").get().n, grants.length);
-  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM leaderboard_echo_rewards').get().n, rewards);
+  const ids = sqlite.prepare('SELECT id FROM users').all();
+  for (const [i,u] of ids.entries()) sqlite.prepare('INSERT INTO leaderboard_echo(user_id,period_key,dps) VALUES(?,?,?)').run(u.id,'day:'+yesterday,2000000-i*1000);
+  await board(alpha,'daily');await board(beta,'weekly');
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM grants').get().n,0);
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM leaderboard_echo_rewards').get().n,0);
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM competition_prize_ledger').get().n,0);
+  // A synthetic NEW period must still pay the exact first-place payloads once.
+  const now=Date.now(),end=Math.ceil(now/1000)*1000+1000,key='day:2020-01-02';
+  sqlite.prepare("INSERT INTO competition_periods(period_key,kind,ruleset,starts_at,ends_at) VALUES(?,'daily','unverified-save-v1',?,?)").run(key,now-1000,end);
+  for(const [i,u] of ids.entries())sqlite.prepare('INSERT INTO competition_scores(period_key,user_id,run_id,score,recorded_at) VALUES(?,?,?,?,?)').run(key,u.id,'test:'+u.id,2000000-i*1000,now);
+  await new Promise(resolve=>setTimeout(resolve,Math.max(0,end-Date.now()+100)));
+  await board(alpha,'daily');
+  const grants=sqlite.prepare("SELECT user_id,payload,note FROM grants WHERE created_by='Echo competition' ORDER BY user_id,payload").all();
+  assert.ok(grants.length>=3,'rank prizes were queued: '+JSON.stringify(grants));
+  assert.ok(grants.some(g=>g.payload==='{"resource":"refineScrolls","amount":3}' && /#1/.test(g.note)));
+  assert.ok(grants.some(g=>g.payload==='{"resource":"dailyRolls","amount":2}' && /#1/.test(g.note)));
+  const placements=sqlite.prepare('SELECT COUNT(*) n FROM competition_placements WHERE period_key=?').get(key).n;
+  assert.equal(placements,ids.length);
+  await board(alpha,'weekly');await board(beta,'daily');
+  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM grants WHERE created_by='Echo competition'").get().n,grants.length);
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM competition_placements WHERE period_key=?').get(key).n,placements);
 });
 
 await t('unchanged Echo scores and already-settled periods spend zero Echo D1 writes on field syncs', async () => {
@@ -170,7 +177,7 @@ await t('unchanged Echo scores and already-settled periods spend zero Echo D1 wr
   // Alpha already holds 900,000 across today/week/all, and yesterday is already settled above.
   const same = await put(alpha, ver, 150, trial(900000));
   assert.equal(same.status, 200);
-  const echoWrites = stats.writes.filter(w => /leaderboard_echo/i.test(w.sql));
+  const echoWrites = stats.writes.filter(w => /leaderboard_echo/i.test(w.sql) && w.changes>0);
   assert.equal(echoWrites.length, 0, 'unchanged personal bests must not rewrite leaderboard_echo rows: ' + JSON.stringify(echoWrites));
   assert.ok(!stats.reads.some(sql => /sqlite_master/i.test(sql)), 'save syncs must not scan sqlite_master');
   const settleReads = stats.reads.filter(sql => /leaderboard_echo/i.test(sql));
@@ -182,7 +189,7 @@ await t('unchanged Echo scores and already-settled periods spend zero Echo D1 wr
   assert.equal((await board(alpha, 'daily')).data.entries[0].dps, 1800000);
 });
 
-await t('pre-0006 database (15 tables): save syncs and both leaderboards succeed without 0006 applied', async () => {
+await t('pre-0006 database: save and kills work; Echo fails closed until migrations are applied', async () => {
   const preSqlite = new DatabaseSync(':memory:');
   for (const name of fs.readdirSync(path.join(root, 'migrations')).filter(n => /^(000[1-5]|0007)_.*\.sql$/.test(n)).sort()) {
     preSqlite.exec(fs.readFileSync(path.join(root, 'migrations', name), 'utf8'));
@@ -209,8 +216,7 @@ await t('pre-0006 database (15 tables): save syncs and both leaderboards succeed
   const killsBoard = await callPre('api/board.js', 'onRequestGet', 'GET', '/api/board?period=daily&board=kills', { cookie: ck });
   assert.equal(killsBoard.status, 200, 'kills board works before migration 0006');
   const echoBoard = await callPre('api/board.js', 'onRequestGet', 'GET', '/api/board?period=daily&board=echo', { cookie: ck });
-  assert.equal(echoBoard.status, 200, 'echo board returns empty 200 before migration 0006');
-  assert.deepEqual(echoBoard.data.entries, []);
+  assert.equal(echoBoard.status, 503, 'Echo requires the new launch schema');
   preSqlite.close();
 });
 

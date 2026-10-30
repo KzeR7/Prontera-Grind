@@ -119,7 +119,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-28 haven-v258 recovery flow` |
+| Build tag at the bottom of the card | `2026-10-29 haven-v262 unverified rankings` |
 | Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
@@ -197,6 +197,25 @@ first thing to look at is how many tabs are left open: each one syncs while hidd
 the town atlas and index.html itself. Static file requests are free and unlimited on every plan, so
 "the download is big" is a player's data plan, never a bill. The card is the only place worth looking.
 
+## Pages preview safety (local draft)
+
+The root Pages `wrangler.toml` retains the current production D1 and `SOCIAL` bindings,
+while `[env.preview]` deliberately supplies **no** D1 or Durable Object bindings. A new
+branch preview using this configuration is intended for static/local-game review only;
+cloud accounts, cloud saves, leaderboards and social cannot function there. Use the
+separate synthetic staging project for cloud testing, not production data.
+
+`python3 tools/tests/pages_preview_config_sim.py` checks the TOML and rejects changes to
+this fail-closed policy. `tools/audits/pages_preview_wrangler_config.cjs` additionally
+checks Wrangler's resolved configurations using an installed Wrangler (set
+`PG_WRANGLER_MODULE` to its package directory if not installed locally). Wrangler may warn
+about intentionally omitted preview bindings; never add production resources to silence it.
+
+These local checks do not establish hosted isolation. Deployments created before the change
+may still use production resources, and Pages preview configuration can affect multiple
+branches. Verify actual deployment bindings and handle old previews separately. No code
+push, deployment, production change, or old-preview deletion is implied by this draft.
+
 ## 9. World chat: the Fountain Plaza worker
 
 World chat is the one part of the game that is not a Pages Function. It is a separate Worker with a
@@ -210,49 +229,55 @@ In the dashboard (**Workers & Pages → Create → Worker**):
 1. Name it **`prontera-social`** — exactly that. The root `wrangler.toml` binds it by that name
    (`script_name`), and `tools/tests/social_config_sim.js` fails if the two files disagree.
 2. Connect it to this GitHub repository, production branch **`main`**.
-3. Build settings — **these two commands must point at the worker's own config**, because the repo
-   root holds the *Pages* `wrangler.toml` (which has no Worker entry point):
+3. In **Settings → Build**, check Production and Previews Base separately. For the
+   configuration observed on 2026-10-29 use:
 
-   | Field | Value |
-   |---|---|
-   | Root directory | `workers/social` |
-   | Build command | *(empty)* |
-   | Deploy command | `npx wrangler deploy` |
-   | Non-production deploy command | `npx wrangler versions upload` |
+   | Setting | Production | Previews Base |
+   |---|---|---|
+   | Root directory | `workers/social` | `workers/social` |
+   | Build command | empty | empty |
+   | Deploy / Preview command | `npx wrangler deploy` | `npx wrangler preview` |
 
-   If you would rather leave the root directory at the repository root, then both commands need the
-   config path: `npx wrangler deploy --config workers/social/wrangler.toml` and
-   `npx wrangler versions upload --config workers/social/wrangler.toml`. The non-production command
-   is the one that matters most: it is the **only** reason a branch build goes red, and leaving it
-   at its default while the production command is customized is the exact shape of that failure
-   (production green, every PR red, the build failing within seconds).
-4. Deploy. It has no public route on purpose (`workers_dev = false`): the only way in is the
-   `SOCIAL` binding from Pages, and its own `fetch` answers 404 to anything else.
-5. Then let Pages deploy as usual (§3, or merge to `main`).
+   The observed preview root was `/`, so Cloudflare's default `npx wrangler preview`
+   read the root Pages `wrangler.toml`, proposed a D1 binding and failed for missing
+   preview configuration. It did **not** use the Worker config. The owner showed
+   Previews Base root `workers/social`, but a subsequent retry (`3e9cb973`) still ran
+   from `/` and failed on the Pages config. The owner refreshed Previews Base and it
+   still showed `workers/social`. The existing preview for
+   `arena/a3bbb1f5-prontera-grind` has its own Builds configuration and its Root
+   directory was still `/`. Change that branch preview's root to `workers/social`,
+   save it and retry its failed Worker build; keep the Preview command as
+   `npx wrangler preview`. The owner made this change and retry `470dfaf4` succeeded;
+   GitHub reported `Workers Builds: prontera-social` as successful for PR #146 head
+   `6a03cae`. This did not require changing production or adding a production D1
+   database to Worker previews.
 
-`workers/social/wrangler.toml` also sets `preview_urls = true` and an empty `[previews]` block. That
-is deliberate: Cloudflare defaults preview URLs to *match* `workers_dev`, which is `false` here, so
-without them a branch build has no preview URL to publish. Previews only publish `*.workers.dev`
-version URLs for branch builds; this script's default handler is a 404 and the Durable Object stays
-reachable only through the Pages binding, so nothing new becomes public. Keep both lines — but do not
-expect them alone to turn the branch check green; the command in step 3 is what does that.
+   An alternative when the preview root must stay `/` is `npx wrangler preview --config
+   workers/social/wrangler.toml`. Cloudflare's older `versions upload` creates a Worker
+   version URL rather than an isolated Preview and can share real resource bindings;
+   don't use it as a shortcut without assessing those bindings. See
+   [Workers Builds configuration](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/)
+   and [Preview resource isolation](https://developers.cloudflare.com/workers/previews/resources/).
 
-Checks that do not need an account: `npx wrangler deploy --dry-run --config workers/social/wrangler.toml`
-and `npx wrangler versions upload --config workers/social/wrangler.toml --dry-run` (the second is the
-one a feature-branch build runs). The database needs no extra migration for chat.
+4. Cloudflare applies changed build settings to the next build and to retried builds.
+   A Worker preview retry does not promote it to production. Do not merge the PR or
+   deploy production without the owner's separate approval. A successful Pages branch
+   preview is a different deployment and must not be assumed isolated from production
+   D1 or the production Durable Object: inspect its actual bindings before using it.
 
-**Which of the two is failing here?** The build log is behind the *View logs* link on the PR comment
-(`cloudflare-workers-and-pages` bot), and only the dashboard holds the text. Match it to the fix:
+The Worker has no public route on purpose (`workers_dev = false`); its default handler
+returns 404 and Pages uses the Durable Object through its binding. Local `wrangler deploy
+--dry-run --config workers/social/wrangler.toml` and `wrangler versions upload --dry-run
+--config workers/social/wrangler.toml` passed, but cannot prove the hosted retry or actual
+Preview runtime. The current Worker uses an empty `[previews]` block; its default handler
+does not use an `env` Durable Object binding, and Cloudflare documents automatic namespace
+isolation for a Worker-defined Durable Object class in a Preview.
 
-| Build log says | Fix |
-|---|---|
-| `Missing entry-point to Worker script or to assets directory` | Step 3: the command is running in the repo root. Set the root directory to `workers/social`, or add `--config workers/social/wrangler.toml` to the non-production deploy command. |
-| Anything about preview URLs, `workers.dev`, or previews being disabled | Previews have to be switched on for the Worker itself. `wrangler deploy` writes that state from `preview_urls = true` — so a production deploy of this repo (merge to `main`) is what turns it on; until one has run with those lines, branch builds stay red. |
-
-**Reading the check.** *Workers Builds: prontera-social* is the `workers/social` build, and it runs
-twice per PR: once for the branch (a preview version, no production effect) and once for `main` after
-merge. A branch-only red is a build-setting problem, never a chat bug. *Cloudflare Pages* is the game
-itself.
+A failed branch Worker build does not by itself show that the deployed production chat
+is down; check logs and the running service rather than assuming. Cloudflare Pages is a
+separate build for the game. The owner-observed metrics listed 27 client disconnects,
+zero Worker exceptions and zero CPU/memory-limit errors in the visible status breakdown;
+32 total errors were shown, so not all errors are explained by that breakdown.
 
 **If chat says "unavailable":** `503 Social service is not configured` in the browser's Network panel
 means the Pages project has no `SOCIAL` binding; `401` means the player is not signed in; `403` means

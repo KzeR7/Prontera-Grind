@@ -1,10 +1,12 @@
-// Exercise the hosted-probe protocol against the actual loopback app and SQLite shim.
+// Exercise the historical hosted-probe protocol on loopback, with its old
+// paused-board response explicitly stubbed. Auth and SQLite remain real.
 import assert from 'node:assert/strict';
 import { start } from '../dev_server.js';
 import { makeCase, runProbe, safeSql, verifyInfo, verifyReadOnly, npxCliCandidates } from '../staging/hosted_scrypt_reader_probe.mjs';
 const srv=await start({port:0,host:'127.0.0.1'}), base=`http://127.0.0.1:${srv.port}`;
 async function exec(sql){return /^SELECT\b/i.test(sql)?srv.sqlite.prepare(sql).all():(srv.sqlite.exec(sql),[])}
 async function request(route,{method='GET',data,cookie}={}){
+  if(route==='/api/board?board=echo')return {status:503,data:{err:'historical paused board'}};
   const headers={};if(data!==undefined)headers['Content-Type']='application/json';if(cookie)headers.Cookie=cookie;
   const r=await fetch(base+route,{method,headers,...(data!==undefined?{body:JSON.stringify(data)}:{})});
   let json;try{json=await r.json()}catch{json=null}
@@ -44,5 +46,5 @@ try{
     assert.match(e.message,/cleanup was not confirmed.*Test phase: seed; cleanup phase: execution failed/);
     assert(!e.message.includes('private SQL'));return true;
   });
-  console.log('PASS: hosted-probe protocol on loopback real handlers, staging identity checks, scrypt login/recovery/board pause, guarded cleanup and failure cleanup. No hosted access.');
+  console.log('PASS: hosted-probe protocol on loopback real handlers, staging identity checks, scrypt login/recovery, historical board stub, guarded cleanup and failure cleanup. No hosted access.');
 }finally{await srv.close();srv.sqlite.close()}

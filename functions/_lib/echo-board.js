@@ -1,8 +1,7 @@
 // Endless Echo leaderboard: period scores, the Top-100 reward proposal and lazy settlement.
 //
-// Competition is paused: the old scores came from editable browser saves, and the former
-// settlement was neither authoritative nor atomic. Historical rows and reward definitions
-// are retained, but the old mutation entry points deliberately fail closed.
+// Legacy mutation entry points remain paused: the old settlement was not atomic.
+// A separate launch path accepts explicitly unverified scores and settles them atomically.
 //
 // Reward table (owner, revised 2026-10-27): the top Echo bands pay protection scrolls and
 // banked Daily Roulette rolls ('dailyRolls', spent after the day's free spin and never

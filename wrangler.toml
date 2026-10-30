@@ -17,10 +17,9 @@
 #
 # Step-by-step deploy, including where the database id goes: tools/cloudflare-deploy-steps.md
 #
-# NOTE: when this file is committed, Cloudflare treats it as the source of truth for a Pages
-# project - the fields it sets (the output directory, the D1 binding, the compatibility date) become
-# read-only in the dashboard. That is deliberate: the binding then lives in the repo, and a rebuild
-# from any branch gets the same wiring.
+# NOTE: Cloudflare treats this Pages config as the source of truth. Top-level bindings are
+# for production; the explicit preview section below has NO database or social bindings.
+# This takes effect only after deployment; existing previews must be checked separately.
 #
 # Nothing in functions/ is a secret: the D1 binding is injected by Cloudflare, and there is no API
 # key anywhere in this repo.
@@ -58,3 +57,10 @@ database_id = "50a6448b-1f12-466c-a28a-10544bedf750"   # printed by `wrangler d1
 name = "SOCIAL"
 class_name = "Social"
 script_name = "prontera-social"
+
+# PR/branch Pages previews are static-only by default. Never bind production resources here.
+# Account, cloud save, leaderboard and social APIs are unavailable without isolated bindings.
+# Existing previews and their effective bindings must be reviewed separately.
+[env.preview]
+d1_databases = []
+durable_objects = { bindings = [] }

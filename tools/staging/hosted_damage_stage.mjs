@@ -1,0 +1,183 @@
+// Template for a self-contained, owner-run staging package. PAYLOAD is injected
+// by the local packager, never read from the owner's checkout. Never production.
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { createHash, randomBytes } from 'node:crypto';
+import { gunzipSync } from 'node:zlib';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const PAYLOAD_B64 = '__DAMAGE_PACKAGE_PAYLOAD__';
+const PAYLOAD_SHA256 = '__DAMAGE_PACKAGE_SHA256__';
+const BASE = '7511a03c0787ec9b8d94cfc6658570ac402dc297';
+const DB_NAME = 'pg-staging', DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
+const PROJECT = 'prontera-grind-staging';
+const FILES = ['index.html','gm.html','functions/_lib/db.js','functions/_lib/damage-monitor.js',
+  'functions/api/save.js','functions/api/gm/damage.js','migrations/0008_damage_monitoring.sql'];
+const CONFIG = `name = "${PROJECT}"\ncompatibility_date = "2026-10-01"\npages_build_output_dir = "dist"\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "${DB_NAME}"\ndatabase_id = "${DB_ID}"\n`;
+const schemas = {
+  damage_samples:['user_id','slot','bucket','sampled_at','map','stage','reported_total_damage','reported_echo_best'],
+  damage_alerts:['user_id','kind','first_seen','last_seen','max_reported_dps','observations'],
+};
+// Equivalent to migration 0008: BETWEEN avoids shell metacharacters when npm
+// executes Wrangler on Windows. One --command uses the D1 query API, not import.
+export const DDL = `CREATE TABLE IF NOT EXISTS damage_samples (user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, slot INTEGER NOT NULL CHECK(slot BETWEEN 0 AND 27), bucket INTEGER NOT NULL, sampled_at INTEGER NOT NULL, map INTEGER, stage INTEGER, reported_total_damage REAL, reported_echo_best REAL, PRIMARY KEY (user_id, slot)); CREATE TABLE IF NOT EXISTS damage_alerts (user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL, first_seen INTEGER NOT NULL, last_seen INTEGER NOT NULL, max_reported_dps REAL NOT NULL, observations INTEGER NOT NULL DEFAULT 1, PRIMARY KEY (user_id, kind)); CREATE INDEX IF NOT EXISTS idx_damage_alerts_last_seen ON damage_alerts(last_seen DESC);`;
+
+export function unpackPayload(encoded=PAYLOAD_B64,expected=PAYLOAD_SHA256){
+  const compressed=Buffer.from(encoded,'base64');
+  assert.equal(createHash('sha256').update(compressed).digest('hex'),expected,'Package integrity check failed');
+  const files=JSON.parse(gunzipSync(compressed).toString('utf8'));
+  assert.deepEqual(Object.keys(files).sort(),[...FILES].sort(),'Unexpected package contents');
+  for(const v of Object.values(files))assert.equal(typeof v,'string');
+  return files;
+}
+export function verifySchema(table,rows){
+  assert.deepEqual(rows.map(r=>r.name),schemas[table],`Incompatible existing staging table ${table}`);
+  const types=table==='damage_samples'?['INTEGER','INTEGER','INTEGER','INTEGER','INTEGER','INTEGER','REAL','REAL']:
+    ['INTEGER','TEXT','INTEGER','INTEGER','REAL','INTEGER'];
+  assert.deepEqual(rows.map(r=>String(r.type).toUpperCase()),types,`Unexpected column types in ${table}`);
+  const required=table==='damage_samples'?[1,1,1,1,0,0,0,0]:[1,1,1,1,1,1];
+  assert.deepEqual(rows.map(r=>r.notnull),required,`Unexpected nullability in ${table}`);
+  const pk=rows.filter(r=>r.pk).sort((a,b)=>a.pk-b.pk).map(r=>r.name);
+  assert.deepEqual(pk,table==='damage_samples'?['user_id','slot']:['user_id','kind'],`Unexpected primary key in ${table}`);
+}
+export function safeSql(sql){
+  const text=sql.replace(/\s+/g,' ').trim();
+  assert(/^[A-Za-z0-9_@$.*'(),;:= -]+$/.test(text),'Unsafe staging SQL');
+  return text;
+}
+function run(command,args,{cwd,allowOutput=false}={}){
+  const p=spawnSync(command,args,{cwd,encoding:'utf8',timeout:300000,maxBuffer:20*1024*1024,
+    env:{...process.env,WRANGLER_SEND_METRICS:'false',CI:'true'}});
+  if(p.error||p.status!==0)throw Error(`${path.basename(command)} failed (exit ${p.status??'unavailable'}). ${allowOutput?(p.stderr||p.stdout||'').slice(-2000):'Check staging access and tools privately.'}`);
+  return p.stdout;
+}
+function npxCli(){
+  const found=process.platform==='win32'?run('where.exe',['npx.cmd']).split(/\r?\n/).map(s=>s.trim()).filter(Boolean):[];
+  const dirs=[path.dirname(process.execPath),...found.map(p=>path.dirname(p))];
+  const candidates=dirs.flatMap(d=>[path.join(d,'node_modules','npm','bin','npx-cli.js'),path.resolve(d,'..','lib','node_modules','npm','bin','npx-cli.js')]);
+  const result=candidates.find(p=>fs.existsSync(p));
+  if(!result)throw Error('Could not find npm npx-cli.js. No staging data was changed.');
+  return result;
+}
+// Pages deploy does not expose --config; its cwd contains only our fixed config.
+function wrangler(cwd,args){const config=args[0]==='pages'?[]:['--config','wrangler.toml'];return run(process.execPath,[npxCli(),'--yes','wrangler@4.154.0',...args,...config],{cwd});}
+function remote(cwd){
+  function json(args){try{return JSON.parse(wrangler(cwd,args))}catch(e){throw Error('Staging Wrangler query failed: '+e.message)}}
+  return {
+    verify(){const d=json(['d1','info','DB','--json']);assert(d.uuid===DB_ID&&d.name===DB_NAME,'The remote database is not pg-staging. Stopped.');},
+    exec(sql){const r=json(['d1','execute','DB','--remote','--json','--command',safeSql(sql)]);assert(Array.isArray(r)&&r.every(x=>x.success===true),'Staging database query failed');return r.at(-1).results||[]},
+  };
+}
+async function request(host,route,{method='GET',data,cookie,headers:extraHeaders={}}={}){
+  const headers={...extraHeaders};if(data!==undefined)headers['Content-Type']='application/json';if(cookie)headers.Cookie=cookie;
+  const r=await fetch(host+route,{method,headers,redirect:'manual',signal:AbortSignal.timeout(30000),...(data!==undefined?{body:JSON.stringify(data)}:{})});
+  let value=null;try{value=await r.json()}catch{}
+  return {status:r.status,data:value,cookie:(r.headers.get('set-cookie')||'').split(';')[0]};
+}
+export function deployedUrl(output){
+  const urls=output.match(/https:\/\/[a-z0-9-]+\.prontera-grind-staging\.pages\.dev\b/g)||[];
+  const unique=urls.find(u=>/^https:\/\/[0-9a-f]{8}\.prontera-grind-staging\.pages\.dev$/.test(u));
+  assert(unique,'Could not identify the unique staging deployment URL. Do not repeat until the staging deployment is checked.');
+  return unique;
+}
+// The random token is stored only in the disposable staging Function and in
+// memory. Its guarded read-only probe verifies the deployed Pages DB binding
+// before any synthetic registration is attempted. Wrong/missing tokens do not
+// query the database. The marker row is deleted immediately after the check.
+export function stageCheckSource(token){
+  assert(/^[0-9a-f]{64}$/.test(token));
+  return `export async function onRequestGet({request,env}) {
+`+
+    `  if(request.headers.get('X-Damage-Stage-Token')!=='${token}')return new Response('',{status:404});
+`+
+    `  const row=await env.DB.prepare('SELECT COUNT(*) AS n FROM rate_limits WHERE key = ?').bind('damage-stage:${token}').first();
+`+
+    `  return new Response(JSON.stringify({match:row && row.n===1}),{headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
+`+
+    `}
+`;
+}
+export async function confirmBinding({db,host,token,req=request}){
+  const result=await req(host,'/api/_damage_stage_check',{headers:{'X-Damage-Stage-Token':token}});
+  assert.equal(result.status,200,'Could not verify the deployed staging database binding');
+  assert.equal(result.data?.match,true,'The deployed Pages DB is not the verified staging database');
+}
+
+export async function syntheticProbe({db,host,req=request,report=console.log}){
+  const name='DM'+randomBytes(6).toString('hex'), email=name.toLowerCase()+'@example.test';
+  const password='Synthetic-'+randomBytes(24).toString('hex');
+  const where=`username='${name}' AND email='${email}'`;
+  const count=`SELECT COUNT(*) AS n FROM users WHERE ${where};`;
+  assert.equal(db.exec(count)[0]?.n,0,'Synthetic name already exists; no account created');
+  let attempted=false, failure, cleanup=false;
+  try{
+    attempted=true;
+    const reg=await req(host,'/api/register',{method:'POST',data:{u:name,p:password,email}});
+    assert.equal(reg.status,201,'Synthetic registration failed');assert.equal(reg.data?.gm,0);assert(reg.cookie.startsWith('pg_session='));
+    const blob=JSON.stringify({owner:name,lv:1,cls:'Novice',dmg:-1,trial:{best:100000001}});
+    assert.equal((await req(host,'/api/save',{method:'PUT',cookie:reg.cookie,data:{owner:name,version:0,blob}})).status,200,'Synthetic save failed');
+    assert.equal((await req(host,'/api/gm/damage',{cookie:reg.cookie})).status,403,'Non-GM access must be refused');
+    assert.equal((await req(host,'/api/board?board=echo',{cookie:reg.cookie})).status,503,'Draft competition must remain paused');
+    db.exec(`UPDATE users SET gm=1 WHERE ${where} AND gm=0;`);
+    const rows=db.exec(`SELECT id,gm FROM users WHERE ${where};`);assert.equal(rows.length,1);assert.equal(rows[0].gm,1);
+    const review=await req(host,'/api/gm/damage',{cookie:reg.cookie});assert.equal(review.status,200,'GM flag review failed');
+    const kinds=review.data?.alerts?.filter(a=>a.user_id===rows[0].id).map(a=>a.kind).sort();
+    assert.deepEqual(kinds,['echo-over-100m','invalid-total-damage'],'Expected staging flags were not found');
+    const samples=await req(host,'/api/gm/damage?id='+rows[0].id,{cookie:reg.cookie});
+    assert.equal(samples.status,200);assert.equal(samples.data?.samples?.[0]?.reported_echo_best,100000001);
+    report('PASS: synthetic save, GM-only access, both review flags, sample and paused competition.');
+  }catch(e){failure=e}
+  finally{
+    if(attempted)try{
+      db.exec(`DELETE FROM events WHERE user_id IN (SELECT id FROM users WHERE ${where}); DELETE FROM users WHERE ${where};`);
+      cleanup=db.exec(count)[0]?.n===0;
+    }catch{}
+  }
+  if(!cleanup)throw Error(`Synthetic account cleanup was not confirmed for ${name}. Do not rerun until checked.`);
+  report('Synthetic staging account cleanup confirmed.');
+  if(failure)throw Error('Synthetic staging test failed: '+failure.message+' Cleanup confirmed.');
+}
+async function main(){
+  assert.equal(process.platform,'win32','This package is for the owner’s Windows setup.');
+  assert.equal(process.argv.length,2,'This staging package takes no arguments.');
+  const files=unpackPayload();
+  const repo=path.join(os.homedir(),'Desktop','Prontera-Grind');
+  assert(fs.existsSync(path.join(repo,'.git')),'Cannot find the original Desktop/Prontera-Grind checkout.');
+  const bash='D:\\Git\\bin\\bash.exe';assert(fs.existsSync(bash),'Cannot find D:\\Git\\bin\\bash.exe.');
+  assert.equal(run('git',['-C',repo,'rev-parse','--verify',BASE+'^{commit}']).trim(),BASE,'Expected archived staging base is not present.');
+  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'pg-damage-stage-'));
+  const archive=path.join(temp,'base.tar');
+  console.log('Preparing a new temporary staging copy; your existing checkouts will not be changed.');
+  run('git',['-C',repo,'archive','--format=tar','--output='+archive,BASE]);
+  run('tar.exe',['-xf',archive,'-C',temp]);fs.unlinkSync(archive);
+  for(const [name,text] of Object.entries(files)){const dest=path.join(temp,...name.split('/'));fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,text);}
+  fs.writeFileSync(path.join(temp,'wrangler.toml'),CONFIG);
+  run(bash,['tools/build_site.sh'],{cwd:temp,allowOutput:true});
+  const db=remote(temp);db.verify();
+  for(const table of Object.keys(schemas)){
+    const info=db.exec(`PRAGMA table_info(${table});`);if(info.length)verifySchema(table,info);
+  }
+  db.exec(DDL);
+  for(const table of Object.keys(schemas))verifySchema(table,db.exec(`PRAGMA table_info(${table});`));
+  console.log('Verified pg-staging and applied additive monitoring tables. Deploying staging project only...');
+  const token=randomBytes(32).toString('hex'),marker=`damage-stage:${token}`;
+  const probe=path.join(temp,'functions','api','_damage_stage_check.js');
+  fs.writeFileSync(probe,stageCheckSource(token));
+  let url,removed=false;
+  try {
+    db.exec(`INSERT INTO rate_limits(key,count,window_start) VALUES ('${marker}',1,0);`);
+    url=deployedUrl(wrangler(temp,['pages','deploy','dist','--project-name',PROJECT,'--branch','main']));
+    console.log('Staging deployment: '+url);
+    await confirmBinding({db,host:url,token});
+  } finally {
+    try{db.exec(`DELETE FROM rate_limits WHERE key='${marker}';`);removed=db.exec(`SELECT COUNT(*) AS n FROM rate_limits WHERE key='${marker}';`)[0]?.n===0}catch{}
+    if(!removed)throw Error('Temporary staging binding marker cleanup was not confirmed. Stop and check staging before retrying.');
+  }
+  console.log('Verified that the deployed Pages DB points to the isolated staging database.');
+  await syntheticProbe({db,host:url});
+  console.log('Done. No production database or project was targeted. Temporary staging copy: '+temp);
+}
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(e=>{console.error('STOP: '+String(e.message||e));process.exitCode=1});

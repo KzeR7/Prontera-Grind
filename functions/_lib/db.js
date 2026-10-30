@@ -316,3 +316,25 @@ export const clearRate = (db, key) =>
   db.prepare('DELETE FROM rate_limits WHERE key = ?').bind(key).run();
 
 export { now };
+
+// ---------------------------------------------------------- damage monitor ----
+// Client-reported diagnostics only. Six-hour buckets and fixed slots cap writes
+// and storage; neither a sample nor a flag can change scores, grants or bans.
+export const damageSampleStatement = (db,{userId,slot,bucket,at,map,stage,totalDamage,echoBest}) =>
+  db.prepare(`INSERT INTO damage_samples(user_id,slot,bucket,sampled_at,map,stage,reported_total_damage,reported_echo_best)
+    VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(user_id,slot) DO UPDATE SET bucket=excluded.bucket,
+    sampled_at=excluded.sampled_at,map=excluded.map,stage=excluded.stage,
+    reported_total_damage=excluded.reported_total_damage,reported_echo_best=excluded.reported_echo_best
+    WHERE excluded.bucket>damage_samples.bucket`)
+    .bind(userId,slot,bucket,at,map,stage,totalDamage,echoBest);
+export const damageAlertStatement = (db,{userId,at,kind,value,bucketMs}) =>
+  db.prepare(`INSERT INTO damage_alerts(user_id,kind,first_seen,last_seen,max_reported_dps,observations)
+    VALUES(?,?,?,?,?,1) ON CONFLICT(user_id,kind) DO UPDATE SET
+    last_seen=excluded.last_seen,max_reported_dps=MAX(damage_alerts.max_reported_dps,excluded.max_reported_dps),
+    observations=damage_alerts.observations+1 WHERE excluded.last_seen-damage_alerts.last_seen>=?`)
+    .bind(userId,kind,at,at,value,bucketMs);
+export const recentDamageAlerts = (db,limit=100) => db.prepare(`SELECT a.user_id,u.username,a.kind,a.first_seen,a.last_seen,
+    a.max_reported_dps,a.observations FROM damage_alerts a JOIN users u ON u.id=a.user_id
+    ORDER BY a.last_seen DESC,a.user_id ASC LIMIT ?`).bind(limit).all();
+export const damageSamplesFor = (db,userId) => db.prepare(`SELECT sampled_at,map,stage,reported_total_damage,reported_echo_best
+    FROM damage_samples WHERE user_id=? ORDER BY sampled_at DESC LIMIT 28`).bind(userId).all();

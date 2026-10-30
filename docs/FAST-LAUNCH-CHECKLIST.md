@@ -1,8 +1,9 @@
-# Fast noncompetitive launch checklist
+# Fast launch checklist
 
 2026-10-29. This is a working checklist, **not** an assertion that launch is safe.
-Rankings and payouts remain paused in the draft; verify the actually deployed version
-before making claims about production. Do not merge or deploy until the owner explicitly
+The owner chose unverified rankings and prizes for launch. Local v262 is not yet
+deployed or hosted-tested; verify the actual deployed version before making claims.
+The earlier paused-board staging results below are historical. Do not merge or deploy until the owner explicitly
 approves the final candidate. No Cloudflare credentials, passwords, recovery codes,
 backup contents or screenshots showing them should be shared in chat.
 
@@ -124,8 +125,8 @@ candidate to production or point it at real accounts.
 ## 4. Focused checks
 
 - Local disposable Pages/D1 rehearsal passed registration, uniqueness, legacy GM login,
-  cloud save, paused Echo board, recovery, session revocation and origin rejection.
-  Additional local security tests covered race conditions and forged score rejection.
+  cloud save, damage review, explicitly unverified Echo boards, recovery, session
+  revocation and origin rejection. Scores can be forged; see Competition security.
 - A loopback Node/SQLite smoke test sent 12 concurrent synthetic registrations from one
   IP bucket (10 accepted, 2 rate-limited) and 12 incorrect logins to one synthetic account
   (5 rejected, 7 rate-limited). It is deliberately small, not a capacity benchmark or
@@ -133,16 +134,14 @@ candidate to production or point it at real accounts.
   load. It is reproducible with `node tools/audits/local_abuse_rehearsal.mjs`.
 - Still required: deploy the reviewed candidate only to the **isolated** staging project,
   confirm D1 binding before testing, then exercise synthetic registration, login, legacy
-  GM, save, recovery, racing recovery, paused ranking/payout, rate enforcement and normal
+  GM, save, recovery, racing recovery, unverified ranking and atomic payout, rate enforcement and normal
   browser behavior. Test a bounded load with owner permission and budget, observe hosted
   errors/CPU/D1 and edge events, and include an independent security review. Do not use
   production as a load-test target or assume local wall time measures hosted CPU.
-- The latest full JS gate was 150 pass / 4 failures: three tests still expect competition
-  to be live and the camp-spacing smoke failed again. The camp smoke passed the previous
-  run, but its historical disagreement with the chosen layout is not resolved. A previous run exposed
-  the intermittent GM preset item-ID collision, which remains unresolved; assess its item
-  identity impact before opening real accounts.
-- The latest draft changes after v258 have not been deployed to staging. Production merge
+- The known intermittent camp-spacing smoke disagrees with the owner-approved current
+  layout. The GM preset item-ID collision has a local fix and regression test, not yet
+  deployed. Confirm the current complete test gate before merging.
+- The latest v262 ranking and prize draft has not been deployed to staging. Production merge
   and deployment require a separate explicit decision, after the above and a compatible
   rollback plan. Never reapply migration 0007 to live `pg`; it was applied manually and
   does not automatically update Wrangler's migration ledger.

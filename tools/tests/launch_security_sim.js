@@ -52,7 +52,7 @@ try {
   const oversized = new Request('https://game.test/api/save',{method:'PUT',headers:{'Content-Type':'application/json'},body:bodyStream,duplex:'half'});
   await assert.rejects(()=>readJson(oversized,150),e=>e.status===413);
   const fake=await fetch(base+'/api/save',{method:'PUT',headers:{'Content-Type':'application/json',Cookie:login.cookie},body:JSON.stringify({owner:'firstuser',version:0,blob:JSON.stringify({owner:'firstuser',lv:150,kills:999999999,trial:{best:100000000,echoBoard:{day:'2026-10-28',dayDps:100000000}}})})});assert.equal(fake.status,200);
-  assert.equal(srv.sqlite.prepare('SELECT COUNT(*) n FROM leaderboard_echo').get().n,0,'editable saves must not populate competitive scores');
-  const board=await fetch(base+'/api/board?board=echo',{headers:{Cookie:login.cookie}});assert.equal(board.status,503);
-  console.log('PASS: legacy migration/login, no public owner, unique email (including races), one-time recovery and session revocation, origin, atomic rates, streamed size cap, forged scores not ranked');
+  assert.equal(srv.sqlite.prepare("SELECT dps FROM leaderboard_echo WHERE period_key='all'").get().dps,100000000,'all-time scores are explicitly unverified');
+  const board=await fetch(base+'/api/board?board=echo',{headers:{Cookie:login.cookie}});assert.equal(board.status,200);assert.equal((await board.json()).integrity,'unverified');
+  console.log('PASS: legacy migration/login, no public owner, unique email (including races), one-time recovery and session revocation, origin, atomic rates, streamed size cap, unverified score disclosure');
 } finally { await srv.close();srv.sqlite.close(); }

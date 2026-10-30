@@ -1309,7 +1309,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-10-28 haven-v258 recovery flow';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-29 haven-v262 unverified rankings';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1923,6 +1923,18 @@ function makeMythicEquipment(setKey,slot,weaponType){
   const item={id:uid(),slot,wt:slot==='weapon'?weaponType:undefined,tier,val,name:'Mythic '+name,aff,slots,cards:[],sec:6,lvl:150,quality:1.5,mp:set.map,mythic:true,ascSet:setKey,mythicGiftVersion:1};
   return{item};
 }
+// GM gear can be generated several times within one millisecond. Reserve IDs already
+// present anywhere in the save and in this grant, without changing existing equipment,
+// cards, loadout references or the numeric ID format used by equip().
+function gmGearIdAllocator(state){
+  const used=new Set(),seen=new WeakSet(),todo=[state];
+  for(const record of Object.values(state?.base||{}))for(const id of Object.values(record?.eq||{}))if(id!=null)used.add(String(id));
+  while(todo.length){const obj=todo.pop();if(!obj||typeof obj!=='object'||seen.has(obj))continue;seen.add(obj);
+    if(obj.id!=null)used.add(String(obj.id));
+    for(const value of Object.values(obj))if(value&&typeof value==='object')todo.push(value);
+  }
+  return item=>{let id=item.id;while(used.has(String(id)))id+=1;used.add(String(id));item.id=id;return item;};
+}
 // GM presets grant separate items; selecting a class never changes the player's job or gear.
 const GM_ASC_PRESETS={
   'Rune Knight':{set:'molten',main:'str'},'Warlock':{set:'ethereal',main:'int'},
@@ -1935,8 +1947,9 @@ function gmMaxAscensionGear(cls){
   const recipes=[...c.wt.map(w=>['weapon',w]),...['armor','head','leg','acc','acc'].map(slot=>[slot])];
   if(dualWield(cls))recipes.push(['weapon','dagger']);
   if(S.inv.length+recipes.length>BAGMAX)return log('Make bag space for the complete preset ('+recipes.length+' items).','r0');
+  const reserveId=gmGearIdAllocator(S);
   const gear=recipes.map(([slot,wt])=>{
-    const it=makeMythicEquipment(preset.set,slot,wt).item,magic=preset.main==='int';
+    const it=reserveId(makeMythicEquipment(preset.set,slot,wt).item),magic=preset.main==='int';
     const priority=slot==='weapon'?(wt==='staff'?['matk','int','dex','hp']:magic?['str','atk','aspd','cdm']:[preset.main,'atk','crit','cdm']):
       slot==='head'?[preset.main,magic?'matk':'atk','vit','hp']:
       slot==='acc'?[preset.main,magic?'matk':'atk','crit','cdm']:
@@ -2413,7 +2426,7 @@ function trialLobby(view){
         <span class="trial-choice-timer">OPEN</span></button>
     </div>
     <details class="trial-reward-details" open><summary>Ranked completion payout <small>100 Echo Shards per completed ranked run</small></summary>${trialLadderHtml()}</details>
-    <p class="trial-note">Milestone caches are one-time rewards. Ranked payouts repeat; a new personal best updates your record but adds no bonus. Competitive leaderboards and leaderboard prizes are temporarily paused while fair scoring is developed. Personal trial rewards are unchanged.</p>
+    <p class="trial-note">Milestone caches are one-time rewards. Ranked payouts repeat; a new personal best updates your record but adds no bonus. Leaderboards use browser-reported scores that can be edited; suspicious reports are flagged for review. Personal trial rewards are unchanged.</p>
     <div class="trial-foot"><button data-trial="close">Close</button></div>`;
   el.classList.add('on');
   return el}
@@ -3634,7 +3647,7 @@ function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;cloudTouchSeq++;CLOUD.di
 
 // Push the current save. Returns 'ok' | 'conflict' | 'offline' | 'idle'; never throws, because a dead
 // network must not interrupt play - it only leaves the local copy leading, and the badge says so.
-let cloudLockWarned=false;   // haven-v215: the cosmetic refusal is explained once, not once a minute
+let cloudLockWarned=false,cloudBoardWarned=false;   // warnings are explained once, not once a minute
 async function cloudPush(push){
   if(!CLOUD.on||!S||!currentUser||CLOUD.paused)return 'idle';
   if(CLOUD.lost)return 'idle';   // the character is away until /api/save answers again
@@ -3667,7 +3680,9 @@ async function cloudPush(push){
       return 'adopted'}
     if(r.status===428){const d=await r.json().catch(()=>({}));if(d.offlineClaim){applyOfflineProgress(Date.now(),d.offlineClaim);CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'offline-claim'}throw new Error(d.err||'A server-timed offline claim is required.')}
     if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=cloudTouchSeq!==seq;CLOUD.lastPush=Date.now();CLOUD.offline=false;
+    const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=cloudTouchSeq!==seq||!!d.leaderboardPending;CLOUD.lastPush=Date.now();CLOUD.offline=false;
+    if(d.leaderboardPending&&!cloudBoardWarned){cloudBoardWarned=true;cloudSay('Your cloud save succeeded, but the Echo leaderboard update is pending. It will retry on the next sync; sync before the period ends.','r0')}
+    if(!d.leaderboardPending)cloudBoardWarned=false;
     cloudBadge(CLOUD.dirty?'☁ …':'☁ ✓',CLOUD.dirty?'Waiting to sync':'Saved to your account · v'+CLOUD.ver+' · '+new Date().toLocaleTimeString());
     return 'ok';
   }catch(e){
@@ -3888,8 +3903,8 @@ function gmApplyGift(p){
   if(!Number.isInteger(amount)||amount<1||amount>1000000)throw Error('Invalid gift quantity');
   if(p.resource){
     if(['ori','elu'].includes(p.resource))S.ore[p.resource]+=amount;
-    else if(['shards','dps','refineScrolls','mythicScrolls'].includes(p.resource))S[p.resource]=safeCount(S[p.resource])+amount;
-    else if(p.resource==='dailyRolls'){const st=dailyWheelState();st.bonusRolls=Math.min(10000,(st.bonusRolls||0)+amount);}
+    else if(['shards','dps','refineScrolls','mythicScrolls'].includes(p.resource)){const have=safeCount(S[p.resource]);if(amount>Number.MAX_SAFE_INTEGER-have)throw Error('Not enough room for this gift; it will remain pending');S[p.resource]=have+amount;}
+    else if(p.resource==='dailyRolls'){const st=dailyWheelState();if(amount>10000-st.bonusRolls)throw Error('Use some banked Daily Roulette rolls first; this gift will remain pending');st.bonusRolls+=amount;}
     else if(/^ascMat[0-2]$/.test(p.resource))S.ascensionMat[+p.resource.slice(6)]+=amount;
     else if(/^nmat[0-4]$/.test(p.resource))S.nmMat[0]+=amount;
     else if(/^nm[0-9]$/.test(p.resource))S.nmMat[nmMatIndex(+p.resource.slice(2))]+=amount;
@@ -6757,7 +6772,7 @@ const V={
     return`<div class="board-panel"><div class="board-periods">${[['kills','Kills'],['echo','Endless Echo']].map(([k,l])=>`<button data-a="boardkind" data-v="${k}" class="${boardKind===k?'on':''}" aria-pressed="${boardKind===k}">${l}</button>`).join('')}</div><div class="board-periods">${periods.map(p=>`<button data-a="boardperiod" data-v="${p}" class="${boardPeriod===p?'on':''}" aria-pressed="${boardPeriod===p}">${labels[p]}</button>`).join('')}</div>
       <div class="board-head"><small>${data?esc(data.label):'Periods use Singapore time'}${boardLoading&&data?' · refreshing…':''}</small><button data-a="boardrefresh" title="Refresh the scores" aria-label="Refresh leaderboard">↻</button></div>
       <div class="board-row" style="font-weight:bold;border-bottom:1px solid var(--edge)"><span>#</span><span>Player</span><span>Base</span><span>${echo?'Best DPS':'Kills'}</span></div>${state}${rewards}
-      <small class="board-note">${echo?'Competitive leaderboards and their prizes are temporarily paused while fair scoring is developed.':'Competitive leaderboards are temporarily paused while fair scoring is developed. Previously self-reported scores are not verified.'}</small></div>`},
+      <small class="board-note">${echo?'Scores are browser-reported and can be falsified. Flags are for review only. Finish and sync before the Singapore period ends; late/offline scores are not counted. Equal scores rank by account ID.':'Kills are browser-reported and can be falsified. This leaderboard is not verified.'}</small></div>`},
   log(){const cats=LOGCATS.map(([k,n])=>`<label class="logf"><input type="checkbox" data-a="logf" data-v="${k}" ${logOn(k)?'checked':''} aria-label="Show ${n} lines"> ${n}</label>`).join('');
     const shown=logShown();
     return`<div class="log-preview-controls"><button data-a="feed" aria-pressed="${feedOn()}">${feedOn()?"Hide":"Show"} on-screen log</button><small>Choose event types below for the on-screen preview and activity history.</small></div><div class="logfbar">${cats}<span class="sp"><button data-a="logfall" data-v="on">All</button><button data-a="logfall" data-v="off">None</button></span></div>
@@ -8155,7 +8170,7 @@ const ACT={
   transformasc:v=>{const[key,id]=v.split(':');const it=[...items(),...S.inv].find(x=>String(x.id)===id);if(!it||S.reforgePending&&String(S.reforgePending.id)===id)return;const result=transformToMythic(it,key);if(result?.error){log(result.error,'r0');return}ascensionItemPick='';log('Ascended '+iname(it)+' — your N+ item has evolved.','r4','gear');ui();save()},
   gmendgame:()=>{if(!S.gm)return;S.lv=150;S.pts=Math.max(0,totalPts()-ptsSpent());S.zeny+=10000000000;S.ascensionMat=S.ascensionMat.map(n=>safeCount(n)+1000);S.mythicScrolls=safeCount(S.mythicScrolls)+100;S.refineScrolls=safeCount(S.refineScrolls)+100;S.ore.ori+=1000;S.ore.elu+=1000;ui();save()},
   gmmaxset:cls=>gmMaxAscensionGear(cls),
-  gmset:key=>{if(!S.gm||!Object.hasOwn(ASC_SETS,key))return;const recipes=[...C().wt.map(w=>['weapon',w]),...['armor','head','off','leg','acc','acc'].map(s=>[s,undefined])];if(S.inv.length+recipes.length>BAGMAX)return log('Make bag space for the complete set.','r0');const z=S.zeny,m=S.ascensionMat;try{S.zeny=1e12;S.ascensionMat=[10000,10000,10000];for(const [slot,wt] of recipes){const r=makeMythicEquipment(key,slot,wt);if(r?.item)S.inv.push(r.item)}}finally{S.zeny=z;S.ascensionMat=m}ui();save()},
+  gmset:key=>{if(!S.gm||!Object.hasOwn(ASC_SETS,key))return;const recipes=[...C().wt.map(w=>['weapon',w]),...['armor','head','off','leg','acc','acc'].map(s=>[s,undefined])];if(S.inv.length+recipes.length>BAGMAX)return log('Make bag space for the complete set.','r0');const z=S.zeny,m=S.ascensionMat,reserveId=gmGearIdAllocator(S);try{S.zeny=1e12;S.ascensionMat=[10000,10000,10000];for(const [slot,wt] of recipes){const r=makeMythicEquipment(key,slot,wt);if(r?.item)S.inv.push(reserveId(r.item))}}finally{S.zeny=z;S.ascensionMat=m}ui();save()},
   gmaura:v=>{if(!S.gm)return;S.lv=+v;S.pts=Math.max(0,totalPts()-ptsSpent());ui();save()},
   gmascstats:v=>{if(!S.gm)return;const a=ascState();if(v==='max'){a.level=50;a.xp=0;}else{a.level=0;a.xp=0;a.stats[S.cls]={};}S.hp=Math.min(S.hp,maxHp());ui();save()},
   gmascskills:v=>{if(!S.gm)return;const a=ascState();if(!a.skills[S.cls])a.skills[S.cls]={level:0,xp:0,ranks:{}};const t=a.skills[S.cls];if(v==='max'){t.level=30;t.xp=0;}else{t.level=0;t.xp=0;t.ranks={};resetSkillRuntime();swing=null;for(const id in skCd)delete skCd[id];}ui();save()},

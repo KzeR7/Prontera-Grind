@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hashPassword, hashRecovery } from '../../functions/_lib/auth.js';
+import { boardDayKey, boardWeekStart } from '../../functions/_lib/board.js';
 
 const mode = process.argv[2] || 'test';
 if (!['test', 'test-strong', 'test-scrypt', 'test-reader', 'serve'].includes(mode) || process.argv.length > 3) {
@@ -115,10 +116,23 @@ async function test(base) {
     method:'POST',data:{u,p:'Synthetic-password-123!',email:'race@example.test'},
   })));
   assert.deepEqual(concurrent.map(r=>r.status).sort(),[201,409],'concurrent registrations cannot share one email');
-  const save=JSON.stringify({owner:'StagePlayer',lv:1,cls:'Novice',kills:1});
+  // Disposable local DB ONLY: override the cutoff so today's full periods can
+  // be exercised without waiting until Singapore midnight/Monday.
+  run(['d1','execute',testName,'--local','--persist-to','./state','--command','UPDATE unverified_echo_config SET starts_at=1 WHERE singleton=1']);
+  const day=boardDayKey(),week=boardWeekStart(day);
+  const save=JSON.stringify({owner:'StagePlayer',lv:1,cls:'Novice',kills:1,dmg:-1,trial:{best:100000001,echoBoard:{day,dayDps:100000001,week,weekDps:100000001}}});
   assert.equal((await request(base,'/api/save',{method:'PUT',cookie:a.cookie,data:{owner:'StagePlayer',version:0,blob:save}})).status,200);
   const loaded=await request(base,'/api/save',{cookie:a.cookie}); assert.equal(loaded.status,200); assert.equal(loaded.data.blob,save);
-  assert.equal((await request(base,'/api/board?board=echo',{cookie:a.cookie})).status,503,'untrusted board is paused');
+  assert.equal((await request(base,'/api/gm/damage',{cookie:a.cookie})).status,403,'damage observations are GM-only');
+  const review=await request(base,'/api/gm/damage',{cookie:owner.cookie});
+  assert.equal(review.status,200); assert.deepEqual(review.data.alerts.filter(x=>x.username==='StagePlayer').map(x=>x.kind).sort(),['echo-over-100m','invalid-total-damage']);
+  const targetId=review.data.alerts.find(x=>x.username==='StagePlayer').user_id;
+  const samples=await request(base,'/api/gm/damage?id='+targetId,{cookie:owner.cookie});
+  assert.equal(samples.status,200); assert.equal(samples.data.samples.length,1); assert.equal(samples.data.samples[0].reported_echo_best,100000001);
+  for(const period of ['daily','weekly','all']){
+    const echoBoard=await request(base,'/api/board?board=echo&period='+period,{cookie:a.cookie});
+    assert.equal(echoBoard.status,200);assert.equal(echoBoard.data.integrity,'unverified');assert.equal(echoBoard.data.entries[0].dps,100000001);
+  }
   const reset=await request(base,'/api/recover',{method:'POST',data:{u:'StagePlayer',email:'player@example.test',code:a.data.recovery,p:'Changed-password-123!'}});
   assert.equal(reset.status,200); assert.notEqual(reset.data.recovery,a.data.recovery);
   assert.equal((await request(base,'/api/me',{cookie:a.cookie})).status,401,'recovery revokes the old session');
@@ -178,7 +192,7 @@ async function test(base) {
     assert.equal((await request(base,'/api/me',{cookie:resetLogin.cookie})).status,401,'reader reset revokes session');
     assert.equal((await request(base,'/api/sessions',{method:'POST',data:{u:'ReaderReset',p:'Reader-new-synthetic-123!'}})).status,200);
   }
-  console.log('PASS: real local Pages runtime, legacy owner/migration, player registration, unique email, GM authorization, save, paused board, recovery, session revocation and origin rejection.');
+  console.log('PASS: real local Pages runtime, legacy owner/migration, player registration, unique email, GM authorization, save, damage review, unverified board, recovery, session revocation and origin rejection.');
 }
 try {
   fs.cpSync(path.join(root,'functions'),path.join(temp,'functions'),{recursive:true});

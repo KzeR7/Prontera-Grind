@@ -1,10 +1,32 @@
 # Disposable local Pages/D1 staging
 
+> **Current draft:** The previously generated damage-only staging package targeted a
+> historical paused-board build. Its generator is intentionally retired because the
+> new ranking code needs additional modules and migrations. Do not reuse it to test
+> or deploy v262. The separately packaged launch-stage script below targets only
+> the fixed isolated staging project and database.
+
+
 This is a **local** rehearsal of the draft code with Wrangler's Pages runtime and a
 fresh local D1 database. It is not a Cloudflare-hosted staging deployment and does not
 prove live Cloudflare CPU limits, network/WAF configuration, deployed cookie behavior,
 Durable Object/social functionality, or production readiness. Do not import real players,
 backups, production credentials or secrets into it.
+
+## Hosted launch rehearsal package
+
+Generate with `node tools/staging/package_hosted_launch.mjs <output.mjs>`; generation
+never deploys. The packaged script is intended for the owner's existing Windows setup
+and verifies the fixed `pg-staging` database ID before writing any staging data. It
+archives the previously used base into a fresh temporary folder, overlays only reviewed
+runtime changes, applies additive 0009–0011 to **staging** using remote file import
+(which can temporarily pause staging traffic), deploys only `prontera-grind-staging`,
+and verifies the actual deployment's DB binding using a short-lived marker. It then
+checks a synthetic save, flagged unverified score, and synthetic period payout and
+repeat requests; the synthetic account and period must be confirmed deleted. The
+old monitoring schema is checked and applied idempotently. No live D1 or Pages
+project is targeted. Script preparation and local simulated tests do not establish
+hosted success; inspect any cleanup failure before retrying.
 
 ## Safety boundaries
 
@@ -22,10 +44,12 @@ backups, production credentials or secrets into it.
   temporary folder; inspect and remove it only after stopping the process. Never place
   real data there.
 - This is **not** a safety guarantee for branch previews or arbitrary Wrangler commands.
-  The repository's `wrangler.toml` contains the production D1 ID. A hosted branch preview
-  must not be used for testing until an independent staging Pages project/configuration
-  has been verified to bind a separate D1 database. Do not use the live backup for routine
-  staging; use synthetic data.
+  The repository's `wrangler.toml` retains the production bindings at top level, with a
+  locally tested empty `[env.preview]` resource configuration. It is not hosted-verified;
+  old deployments and actual Cloudflare bindings must be checked separately. Default branch
+  previews have no D1 or social functionality by design once the override is applied. Use
+  a separately verified staging project/config for functional cloud tests and synthetic data;
+  never use the live backup or production credentials for routine staging.
 
 ## Run the automated rehearsal
 
@@ -47,7 +71,7 @@ validated on a Windows machine.
 The test first applies migrations 0001–0006 locally, seeds a synthetic owner with no email,
 then applies 0007 and confirms the migration ledger makes a second apply a no-op. Against
 the local Pages runtime it tests owner login/GM authorization, normal registration,
-case-insensitive and concurrent email uniqueness, save/reload, the leaderboard pause,
+case-insensitive and concurrent email uniqueness, save/reload, unverified Echo standings,
 recovery/code rotation, session revocation and cross-origin rejection. A failed test exits
 nonzero. Both the migrations and test data are strictly local to that temporary directory.
 
@@ -147,3 +171,28 @@ Wrangler can warn that it cannot fetch `Request.cf` in restricted networks; it u
 local placeholder. No `SOCIAL` Durable Object is bound in this rehearsal, so multiplayer
 social is unavailable. The separate `tools/dev_server.js` social tests use their own shim
 and also do not replace hosted staging.
+
+## Owner-run damage-review staging package
+
+`tools/staging/hosted_damage_stage.mjs` is a template, not a ready-to-run
+command. `node tools/staging/package_hosted_damage.mjs <output.mjs>` creates a
+self-contained owner-downloadable Windows script containing the current seven
+reviewed game/API/migration files. It requires the previously used local checkout
+and commit `7511a03`, Git, Node/npm and `D:\Git\bin\bash.exe`. It creates a fresh
+OS-temp source tree, preserves existing checkouts and staging folders, and fixes
+Wrangler config to Pages `prontera-grind-staging` and D1 `pg-staging` UUID
+`3a38c6fc-96a8-491d-b97b-fd536e575ca4`. It verifies that remote identity before
+any hosted writes. It manually applies the equivalent idempotent 0008 DDL via
+D1 query `--command` (not import and not migration tracking), checks the table
+columns and keys, and deploys the staging project only. A guarded, synthetic,
+read-only staging Function verifies the actual deployed Pages DB binding via a
+random marker before registering any account. The marker is then removed; the
+unguessable-token-guarded Function remains in that temporary staging deployment.
+It creates one random test account, briefly promotes that synthetic account to
+GM, tests both flags and access controls, checks that competition is paused, and
+removes the account, saves, flags and associated events. A registration IP rate
+counter may remain until its normal expiry. It stops on any failure and reports
+whether account and marker cleanup were confirmed. Do not rerun blindly after
+unconfirmed cleanup. This is not a production deployment, a production migration,
+a hosted load test, or proof that any flagged player cheated. See
+[Damage monitoring](DAMAGE-MONITORING.md) for limits and retention.

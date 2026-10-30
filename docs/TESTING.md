@@ -39,31 +39,31 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```
 
-## Account security and paused competitive boards (haven-v256)
+## Latest local gate (haven-v262)
 
-Apply `0007_account_email.sql` once to disposable databases before testing the
-new registration/recovery flow. The local server applies migrations automatically.
-`node tools/tests/launch_security_sim.js` exercises legacy accounts, concurrent email
-registration, recovery races and session revocation, request limits and the leaderboard
-pause. `node tools/tests/session_race_sim.js` covers password-reset and ban races, atomic
-reset rollback, concurrent sign-ins and local-only GM promotion. New registrations are ordinary players; for a disposable local GM preview,
-use `--gm-all`. See [Launch security](LAUNCH-SECURITY.md) before any real migration.
+The most recent complete local run had **164 passes / 1 failure** across 165 suites.
+The one failure is the previously known intermittent camp-ring smoke assertion; the
+owner chose to retain the current camp layout, and that assertion was not changed.
+The new preview runtime and hosted launch package tests were added after the run began
+and passed separately; their complete-suite run is still pending. No dependency skips
+were reported. Preview configuration, local workerd preview routing and all three
+generated-asset checks passed. This is local evidence only.
 
-The existing `dev_server_sim.js`, `leaderboard_sim.js` and `echo_board_sim.js`
-still assert the old public ranking/payout behaviour and therefore fail while those
-features are deliberately paused. They were green before this change. The latter two
-previously stopped in account setup because their local D1 shims lacked transactional
-`batch`; their helpers now support ordered batches and rollback, allowing the old
-assertions to run. Those assertions have not been deleted or weakened; authoritative
-scoring and safe payout need to be implemented before re-enabling competition. This is
-in addition to the six recorded baseline failures below.
+## Account security and unverified competitive boards (haven-v262)
 
-`competition_pause_sim.js` verifies that forged saves and direct legacy scoring or
-payout calls cannot award competitive results. `competition_settlement_prototype_sim.js`
-exercises a disconnected synthetic SQLite settlement model; it is not production
-scoring or proof of D1 concurrency. See [Competition security](COMPETITION-SECURITY.md).
-`echo_basic_attack_prototype_sim.js` checks 1,200 synthetic basic hits against the
-current game but is not a full run or a trustworthy score source.
+Apply migrations only to disposable databases when testing. The local server applies
+all of them automatically. `node tools/tests/launch_security_sim.js` covers legacy
+accounts, concurrent email registration, recovery, request limits and unverified
+board disclosure. `node tools/tests/unverified_echo_launch_sim.js` covers launch
+cutoff, >100M review-only flags, retryable score updates, old-period nonpayment,
+atomic rollback, new prizes and retries. `echo_board_sim.js` preserves reward tier
+and HTTP checks under the new season policy; `competition_pause_sim.js` confirms
+legacy non-atomic entry points remain disabled. `prize_delivery_safety_sim.js`
+checks full-cap gift delivery. `node tools/staging/local.mjs test` uses an isolated
+local Pages/D1 project and synthetic accounts, with a test-only start override.
+None proves browser score integrity or hosted launch readiness. See
+[Competition security](COMPETITION-SECURITY.md) for cutoffs and remaining risks.
+
 
 ## Password-recovery UI
 
@@ -105,6 +105,11 @@ checks and all three generated-asset checks passed.
 
 ### Game plus accounts, cloud saves and GM tools
 
+Damage-review draft: run `node tools/tests/damage_monitor_sim.js` for bounded samples, GM authorization, provisional flags and best-effort save behavior. See [Damage monitoring](DAMAGE-MONITORING.md); no browser-reported flag proves cheating or enables payouts.
+
+Prize work: `node tools/tests/competition_settlement_foundation_sim.js` exercises the disabled settlement batch and synthetic prize delivery; `node tools/tests/prize_delivery_safety_sim.js` checks full balances. `tools/audits/competition_settlement_foundation_d1_local.mjs` additionally needs local Miniflare and tests disposable D1 only. The new unverified scorer uses the atomic batch; old period rows remain disconnected. See [Competition security](COMPETITION-SECURITY.md).
+Baseline draft: `node tools/tests/competition_baseline_foundation_sim.js` and the optional disposable `tools/audits/competition_baseline_foundation_d1_local.mjs`. Grandfathered source data is not verified gear, and baseline capture is not activated.
+
 ```sh
 bash tools/build_site.sh
 node tools/dev_server.js
@@ -141,7 +146,7 @@ decoding need HTTP. A platform may provide a different entry URL; use its previe
 
 ## Before pushing
 
-The gate is: the three generated-asset checks, every `*_sim.js` and every `*_smoke.js`.
+The gate is: the three generated-asset checks, the Pages preview config check, every `*_sim.js` and every `*_smoke.js`.
 Read the output, not just the exit code — a suite that prints a dependency skip and exits
 0 has not passed.
 
@@ -154,6 +159,7 @@ to **7** purely by installing them — so if the count is huge and spread across
 systems, it is the environment, not the patch.
 
 ```sh
+python3 tools/tests/pages_preview_config_sim.py  # Python 3.11+ (tomllib)
 python3 tools/make_sprite_viewer.py --check
 python3 tools/make_class_skins.py --check
 python3 tools/make_weapon_pack.py --check

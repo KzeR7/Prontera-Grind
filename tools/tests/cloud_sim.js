@@ -224,6 +224,19 @@ await T('a push sends the version it last saw, and stores the new one', async ()
   assert.strictEqual(h.sandbox.CLOUD.dirty, false);
 });
 
+await T('a saved but pending Echo score warns once and retries on a later save', async () => {
+  const h = harness({routes:{'/save':n=>({status:200,body:{version:n,leaderboardPending:n<3}})}});
+  h.sandbox.CLOUD.api=true;h.sandbox.CLOUD.on=true;h.sandbox.currentUser='FRIEND';
+  assert.strictEqual(await h.sandbox.cloudPush(true),'ok');
+  assert.strictEqual(h.sandbox.CLOUD.ver,1,'the committed cloud version is kept');
+  assert.strictEqual(h.sandbox.CLOUD.dirty,true,'score retry remains queued');
+  assert.strictEqual(await h.sandbox.cloudPush(true),'ok');
+  assert.strictEqual(h.state.logs.filter(l=>/leaderboard update is pending/i.test(l.m)).length,1,'no warning spam');
+  assert.strictEqual(await h.sandbox.cloudPush(true),'ok');
+  assert.strictEqual(h.sandbox.CLOUD.ver,3);
+  assert.strictEqual(h.sandbox.CLOUD.dirty,false,'successful score retry clears pending');
+});
+
 await T('the debounce stops a 5-second autosave from becoming a request storm', async () => {
   const h = harness({ routes: { '/save': { status: 200, body: { version: 2 } } } });
   h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 1; h.sandbox.currentUser = 'X';

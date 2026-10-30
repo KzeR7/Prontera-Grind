@@ -14,12 +14,12 @@ try {
   assert.equal(r.status,201);
   const cookie=r.headers.get('set-cookie').split(';')[0];
   const user=sqlite.prepare("SELECT id FROM users WHERE username='PauseTest'").get();
-  // A malicious personal save remains usable, but its self-reported score is not ranked.
+  // An unverified personal save is accepted and the all-time score can be forged.
   const blob=JSON.stringify({owner:'PauseTest',lv:150,cls:'Novice',kills:999999999,
     trial:{best:100000000,echoBoard:{day:'2026-10-28',dayDps:100000000,week:'2026-10-26',weekDps:100000000}}});
   assert.equal((await save({request:req('save','PUT',{owner:'PauseTest',version:0,blob},cookie),env})).status,200);
-  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM leaderboard_echo').get().n,0);
-  for(const b of ['kills','echo'])assert.equal((await board({request:req('board?board='+b,'GET',null,cookie),env})).status,503);
+  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM leaderboard_echo WHERE period_key='all'").get().n,1);
+  for(const b of ['kills','echo']) {const r=await board({request:req('board?board='+b,'GET',null,cookie),env});assert.equal(r.status,200);assert.equal((await r.json()).integrity,'unverified');}
   // Simulate pre-existing, untrusted Echo data. A future accidental direct call must
   // neither accept another score nor settle existing rows into grants or markers.
   sqlite.prepare('INSERT INTO leaderboard_echo(user_id,period_key,dps) VALUES(?,?,?)').run(user.id,'day:2026-10-28',99999999);
@@ -33,5 +33,5 @@ try {
   assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM leaderboard_echo_settlements').get().n,0);
   assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM grants WHERE created_by='Endless Echo'").get().n,0);
   assert.ok(echoRewardFor('daily',1).length>0,'existing reward definitions remain available for future design');
-  console.log('PASS: boards paused; forged Echo scores and direct/repeated settlement attempts fail closed');
+  console.log('PASS: boards marked unverified; legacy direct/repeated settlement attempts still fail closed');
 } finally {sqlite.close()}

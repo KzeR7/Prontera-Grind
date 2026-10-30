@@ -8838,3 +8838,135 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** See `docs/HOSTED-SCRYPT-WRITER.md`; the candidate is for synthetic staging accounts only, not production. The existing deployed reader-only staging version is a possible rollback candidate, but hosted rollback has not been rehearsed.
 * **Checks:** Archived candidate unit test passed legacy upgrade, new scrypt hashes and reader compatibility; the equivalent local Pages/D1 writer rehearsal passed. The owner's hosted reader check was small and does not prove writer integration, resource limits, costs or rollback. Full JS gate: 151 passed and 4 known failures (three paused-competition suites and intermittent camp spacing); all three asset generator checks passed.
 * **Delivery:** Draft preparation only; no new staging deployment, no production deployment or real account changes. Password writes in the actual draft Functions remain PBKDF2 20k; competitive rankings and prizes remain paused.
+
+### 2026-10-29 — `haven-v259 GM gear identity`
+* **Changed:** GM preset and GM set grants now reserve IDs already present in the current save and in the grant, preventing the reproduced same-millisecond duplicate item IDs. Added a disconnected synthetic direct-skill-hit experiment as one small step toward authoritative Echo scoring. Existing gear, cards and class-loadout references are not rewritten. This scoped fix does not repair already duplicated IDs or replace the separate general drop ID generator.
+* **Try it:** Generate GM gear in the local game; no owner action or staging deployment is needed to run the automated test.
+* **Checks:** Forced identical clock/random values, two GM grant paths, existing items/cards/loadout references, save reload and normal equip passed locally. Full JS gate: 151 passed, 4 known failures (three paused-competition suites and the intermittent chosen-layout camp smoke); all three asset generator checks passed. The existing progression benchmark was fully rerun against the unchanged baseline and budgets; all 126 current scenarios passed. The isolated skill-hit experiment matched 2,400 synthetic game hits; it is not an authoritative run, loadout, score or endpoint.
+* **Delivery:** Local draft only; no production merge or deployment. The owner chose trustworthy competitive rankings; scoring and leaderboard prizes remain paused until authoritative scoring and safe settlement are implemented and tested.
+
+### 2026-10-29 — `synthetic ranking run lifecycle`
+* **Changed:** Added a disconnected local prototype for the owner's chosen trustworthy-ranking path: synthetic server-owned profile snapshots, run timing, attempt limits, replay-safe result handling and atomic score publication. Existing gameplay, GM access and the paused public boards were not changed.
+* **Try it:** `node tools/tests/competition_run_lifecycle_sim.js` runs only against an in-memory synthetic SQLite database; no Cloudflare or owner account is needed.
+* **Checks:** The local simulation passed synthetic ownership, forged-field rejection, early/cutoff attempts, profile changes, retry, abandoned-run expiry and injected score-write rollback. Separate parity, settlement and paused-board tests passed. This is not real combat, authenticated gameplay, actual authoritative inventory, hosted D1 concurrency or production readiness.
+* **Delivery:** Local research only; not pushed, deployed or connected to the game. Eligibility policy and how to handle existing player equipment remain open; the toy prototype's GM exclusion is not a live rule.
+
+### 2026-10-29 — `social preview build settings discrepancy`
+* **Changed:** Recorded the owner's screenshot of the correct Previews Base root and the later failed retry `3e9cb973`, which still used `/`. The cause is not established; the previous assumption that retrying would use the displayed setting did not resolve the issue.
+* **Try it:** No production setting, database or deployment was changed by this documentation update. Avoid repeated retries while checking whether the dashboard value persists and whether a build override applies.
+* **Checks:** The new build log independently shows the root Pages config being selected; the Workers check remains failed. This does not prove the running production social Worker is broken.
+* **Delivery:** Local documentation only; no push or deployment.
+
+### 2026-10-29 — `persisted social preview base`
+* **Changed:** Documented the owner's refreshed screenshot showing the Previews Base root still set to `workers/social`, despite retry `3e9cb973` using `/`. A separate user's report suggests checking the existing branch preview's own build settings; it does not prove that is the cause here.
+* **Try it:** Inspect the existing preview's settings without changing production or triggering another build.
+* **Checks:** The failure remains unresolved; the screenshot does not prove whether the branch preview has a separate override.
+* **Delivery:** Local documentation only; no push or deployment.
+
+### 2026-10-29 — `social preview runbook correction`
+* **Changed:** Updated the build guide to reflect that the preview base setting survived refresh; a branch-specific setting is only a hypothesis.
+* **Try it:** See `tools/cloudflare-deploy-steps.md` §9.
+* **Checks:** Documentation-only correction; no new retry or deployment.
+* **Delivery:** Local documentation only.
+
+### 2026-10-29 — `social branch preview root identified`
+* **Changed:** Corrected the social runbook after the owner showed that the existing `arena/a3bbb1f5-prontera-grind` preview has a separate build root of `/`, while Previews Base shows `workers/social`.
+* **Try it:** Change the existing branch preview root to `workers/social` and save before retrying its Worker preview build. Leave the Preview command as `npx wrangler preview`.
+* **Checks:** The root Pages configuration explains the observed missing D1 preview error; successful hosted retry is not yet confirmed. The checked-in social Worker config has a `[previews]` block and no D1 binding.
+* **Delivery:** Local documentation only; no push, retry, or production deployment performed by the agent.
+
+### 2026-10-29 — `social branch preview build succeeds`
+* **Changed:** Recorded the owner's successful Worker preview retry after correcting the existing branch preview's root directory.
+* **Try it:** The preview used `npx wrangler preview` and produced a branch preview deployment; no production deployment was performed by the agent.
+* **Checks:** Build `470dfaf4-b080-4450-921d-34982d932654` completed successfully; GitHub reports the social Worker and Pages checks successful for PR #146 head `6a03cae`. This does not verify chat functionality or Pages preview resource isolation.
+* **Delivery:** Local documentation update only; not pushed.
+
+### 2026-10-29 — `Pages preview binding risk review`
+* **Changed:** Documented that the owner's Pages Settings screenshot has no visible Production/Preview selector, so it cannot establish the environment of the displayed `DB → pg` and `SOCIAL → prontera-social_Social` bindings. The checked-in Pages Wrangler config has top-level production bindings and no preview override, which creates a significant risk that branch deployments receive those bindings.
+* **Try it:** Avoid signing in or testing through the PR Pages preview until its deployed bindings are verified or isolation is safely implemented; this is separate from the successfully built social Worker preview.
+* **Checks:** Reviewed the repo config and Cloudflare Pages environment configuration documentation; no live deployment bindings were independently queried. A configuration fix would need local validation and hosted verification, including old deployments and shared preview configuration.
+* **Delivery:** Local documentation only; no push or deployment.
+
+### 2026-10-29 — `Pages preview isolation draft`
+* **Changed:** Added an explicit Pages preview environment with no D1 or Durable Object bindings, while retaining the existing production bindings. New branch previews using this config are intended for static/local-game review only; cloud accounts, saves, rankings and social are unavailable there. Added a fail-closed TOML policy test and a Wrangler config-resolution audit.
+* **Try it:** Run `python3 tools/tests/pages_preview_config_sim.py` (Python 3.11+) and, with Wrangler installed, `node tools/audits/pages_preview_wrangler_config.cjs`. See the Pages preview safety section in `tools/cloudflare-deploy-steps.md`.
+* **Checks:** The policy test rejected 10 unsafe mutations. Wrangler 4.154.0 and 4.155.0 resolved the unchanged production bindings and empty preview bindings locally; Wrangler warns about the intentionally omitted resources. This is not hosted verification and does not establish the status of existing previews or any other preview project.
+* **Delivery:** Local draft only; no push, merge, cloud configuration change or deployment.
+
+### 2026-10-29 — `Pages preview isolation local gate`
+* **Changed:** No additional behavior change; recorded the local verification of the isolated-preview draft.
+* **Try it:** See `docs/ISOLATED-STAGING.md` and the Pages preview safety section of the deployment guide. The configuration is still local and not hosted-verified.
+* **Checks:** Isolated local Pages/D1 rehearsal passed registration, unique email, save, GM, paused board, recovery, revocation and origin checks. Full JavaScript gate: 153 suites exited successfully, four known failures (`dev_server_sim.js`, `echo_board_sim.js`, `leaderboard_sim.js`, `field_loop_smoke.js`); no dependency skips were identified. All three generated-asset checks and the new TOML mutation test passed.
+* **Delivery:** Local changes only; no push or deployment.
+
+### 2026-10-29 — `standardized competition loadout decision and timing research`
+* **Changed:** Recorded the owner's selection of server-controlled standardized competitive loadouts: existing equipment and normal gameplay remain intact, but browser-authored gear cannot determine competitive stats. Added a disconnected fresh-Novice, basic-attack-only timing simulation; it is not a competitive preset or score service.
+* **Try it:** `node tools/tests/echo_novice_run_prototype_sim.js` compares per-hit damage, duration and DPS to the real game loop in nine fixed-step synthetic runs. The 30 Hz and 60 Hz sample swing counts differ, so cadence is an explicit future fairness requirement.
+* **Checks:** All nine local parity cases passed, including seeded miss-dependent random consumption. Skills, pets, other classes, secure randomness, auth, trusted timing, persistence and settlement are absent. The draft boards and payouts remain paused; field-kill ranking is a separate unsolved trust problem.
+* **Delivery:** Local research and documentation only; no push, merge, live activation or deployment.
+
+### 2026-10-29 — `server-side competitive reference foundation`
+* **Changed:** Added application-source fixed-cadence reference combat and private D1 run start/completion foundations. The server generates the seed, clock, ruleset and fixed reference preset; writes recheck session and ban, and retries return the same reference result. Added additive migration 0008 for disposable testing. Existing saves and scores are not migrated or altered.
+* **Try it:** `node tools/tests/competition_engine_sim.js`, `node tools/tests/competition_run_foundation_sim.js`, and the optional `tools/audits/competition_foundation_d1_local.mjs` with local Miniflare. See `docs/COMPETITION-SECURITY.md`.
+* **Checks:** Four synthetic 180-second fresh-Novice basic-only runs matched the real game loop with independent HMAC-generated rolls. Local SQLite tests covered legacy data preservation, forged saves, ownership, early finish, revoked/banned/expired sessions, failed writes and concurrent retries. Disposable local Miniflare/D1 and workerd tests passed start/finish races, failure rollback, revocation and crypto parity; the isolated staging rehearsal applied eight migrations locally and passed existing account/security flows.
+* **Delivery:** Local code and migration only; no push, live migration, public endpoint, leaderboard score or payout. This single reference preset is not approved competitive gameplay; skills, pets, classes, real presets, periods, attempt limits, hosted capacity and safe prize settlement remain incomplete. Existing competition pause remains in force in the draft.
+
+### 2026-10-29 — `reference foundation full local gate`
+* **Changed:** Documented the eight-migration disposable rehearsal and expanded the isolated Miniflare audit to execute the unmodified reference modules inside workerd; no real API was added.
+* **Try it:** See `docs/COMPETITION-SECURITY.md`; migration 0008 remains local/staging-only and requires separate approval before live application.
+* **Checks:** The local Pages/D1 account rehearsal passed with all eight migrations. Full JavaScript gate: 156 suites passed, with the same four known failures (`dev_server_sim.js`, `echo_board_sim.js`, `leaderboard_sim.js`, `field_loop_smoke.js`); no dependency skips found. All three generator checks and the Pages preview configuration test passed. Local Miniflare/workerd reference start/finish, auth revocation, injected failure and completion races passed with synthetic data.
+* **Delivery:** Local development only; no push, migration of hosted D1, public rankings, payouts or production deployment.
+
+### 2026-10-29 — `own-equipment leaderboard direction`
+* **Changed:** The owner rejected the proposed standardized competitive loadouts and clarified that rankings should use each player's own equipment. Removed the unpushed, fixed-Novice application-source run foundation and draft migration 0008; they were never deployed. Kept isolated combat parity research, the preview isolation draft, the GM identity fix, and the paused-board safeguards.
+* **Try it:** `node tools/tests/competition_gear_trust_sim.js` demonstrates the current trust boundary: a plausible item generated in a synthetic browser can be accepted in a normal save without server-side proof of a drop, while the draft board remains paused.
+* **Checks:** Real game gear and existing saves are not changed. This result does not prove gear cheating occurred; it shows valid-looking saved gear alone is not proof of provenance. The test does not implement authoritative inventory or rankings.
+* **Delivery:** Local changes only; no push, migration, production deployment, save reset or decision to exclude legacy gear.
+
+### 2026-10-29 — `haven-v260 damage monitoring draft`
+* **Changed:** Added bounded, best-effort collection of browser-reported cumulative damage and Echo personal-best values after accepted cloud saves, plus a GM-only review list and player Damage tab. A negative or non-finite cumulative damage value, or Echo best above the existing 100M board sanity cap, is flagged for review only. This is not a verified legitimacy limit, and no automatic penalty, equipment, gameplay, score or payout behavior changed.
+* **Try it:** In a disposable local database, run `node tools/tests/damage_monitor_sim.js`; see `docs/DAMAGE-MONITORING.md` for sample limits, data trust, D1 cost and rollout caveats.
+* **Checks:** Local synthetic monitoring including GM console, save/API, GM and build-tag tests passed. Disposable local Pages/workerd with eight D1 migrations verified both flags and GM-only reads. Data are client-controlled and incomplete; no flag does not establish legitimacy. Competition remains paused in the draft. Broader gate results, if any, are recorded separately.
+* **Delivery:** Local code and new additive migration 0008 only; no push, hosted migration, deployment or real monitoring activation.
+
+### 2026-10-29 — `owner-run damage-review staging package`
+* **Changed:** Prepared a single downloadable Windows script template for the owner's existing isolated staging project. It archives the previously tested base into a fresh temporary directory, overlays the local monitoring draft, fixes and verifies the staging D1 target, applies equivalent additive 0008 schema, deploys staging, checks the actual Pages DB binding with a temporary marker, and runs/cleans up a synthetic GM review test.
+* **Try it:** Generate with `node tools/staging/package_hosted_damage.mjs <output.mjs>`. See `docs/ISOLATED-STAGING.md`; the template itself is not a ready-to-run package. Stop and investigate if marker or synthetic account cleanup is unconfirmed.
+* **Checks:** Local package integrity, safe target/binding check, real-API synthetic GM flag review and cleanup, and failure cleanup passed in `node tools/tests/hosted_damage_stage_sim.js`. Hosted execution still requires the owner and has not happened.
+* **Delivery:** Local tooling only; no push, hosted migration or deployment performed by the agent.
+
+### 2026-10-29 — `hosted damage-review staging result`
+* **Changed:** Recorded the owner's reported execution of the fixed-target staging package. It deployed the draft to the isolated Pages staging project after applying the additive monitoring tables to `pg-staging`.
+* **Try it:** The reported staging deployment is `https://9a1aba67.prontera-grind-staging.pages.dev`; the GM console has a Damage review card and per-player Damage tab. Synthetic test data was removed, so its test flags will no longer be visible.
+* **Checks:** The owner reported that the deployed Pages database binding was verified, the synthetic save and GM-only access passed, both review flag kinds and a sample were observed, competition was paused, and synthetic-account cleanup was confirmed. This tests the API on isolated hosted staging, not a manual GM UI check, load/cost, real-player validity or production behavior.
+* **Delivery:** Owner-run staging migration/deployment only. No agent push, production migration, deployment, leaderboard enablement or payout occurred.
+
+### 2026-10-29 — `haven-v261 prize delivery and disabled settlement foundation`
+* **Changed:** The owner chose to grandfather existing equipment into future competition, accepting that historic forged gear cannot be proven after the fact. Added separate draft period/score/placement/prize-ledger schema and a transaction builder that links the existing Echo reward tiers to ordinary grants atomically. The settlement entrypoint still fails closed; no endpoint, trusted score producer or automatic payout was enabled. Gifts of prize resources now remain pending instead of being silently clipped when the recipient's Daily Roulette or numeric balance is full.
+* **Try it:** `node tools/tests/competition_settlement_foundation_sim.js` and `node tools/tests/prize_delivery_safety_sim.js`. See `docs/COMPETITION-SECURITY.md` for the unimplemented cutover, post-baseline gear/progression authority, competition policy and payout limitations.
+* **Checks:** Synthetic cutoff, both Top-100 prize tables, ties, actual client gift application and durable claim, rollback, repeated/concurrent settlement, empty periods, full balances, and no exposed endpoint passed in local SQLite. A disposable Miniflare/workerd D1 audit passed transactional failure and concurrent retries. All three combat fixtures were fully remeasured against their historical baseline; before and after rows were unchanged. These tests do not establish trusted scores, authoritative prize balances, hosted race behavior or readiness to award prizes.
+* **Delivery:** Local draft and additive migration 0009 only; no push, hosted migration, rankings, payout activation or deployment.
+
+### 2026-10-29 — `grandfathered-save baseline foundation`
+* **Changed:** Added a disabled, private foundation for taking one immutable, version-checked copy of an existing cloud save at a server-controlled cutoff. It uses the player's own save and does not modify personal equipment or progress. Captured data would be grandfathered, not proven legitimate; there is no public endpoint, automatic snapshot or active cutover.
+* **Try it:** `node tools/tests/competition_baseline_foundation_sim.js`; see `docs/COMPETITION-SECURITY.md` for storage/privacy impact, missed/offline saves, new accounts and the remaining authoritative-gear work. The optional local Miniflare D1 audit is `tools/audits/competition_baseline_foundation_d1_local.mjs`.
+* **Checks:** Synthetic tests passed exact copy of gear/cards/refinement, unchanged personal save, immutable/retry behavior, version and owner checks, post-cutoff/new-account refusal, legacy unstamped saves, and paused rankings. Disposable local workerd/D1 passed concurrent one-copy and later-save checks. These tests do not establish historical provenance or a safe hosted cutover.
+* **Delivery:** Local draft and additive migration 0010 only; no push, hosted migration, scoring, payouts or deployment.
+
+### 2026-10-29 — `prize and baseline draft local regression gate`
+* **Changed:** No additional game behavior; recorded the full local gate for the disabled settlement and grandfathered-save foundations.
+* **Try it:** See `docs/COMPETITION-SECURITY.md`; both foundations remain disconnected and are not ready to enable competition.
+* **Checks:** 160 JavaScript suites passed and the same four known suites failed (`dev_server_sim.js`, `echo_board_sim.js`, `leaderboard_sim.js`, `field_loop_smoke.js`); no dependency skips found. The three generated-asset checks and Pages preview policy test passed. Isolated local Pages/D1 rehearsal applied ten migrations and passed account, save, monitoring and pause checks. Full fixture remeasurement showed unchanged combat scenario rows.
+* **Delivery:** Local tests and documentation only; no push, hosted migration or deployment. The previously reported hosted damage-monitoring staging deployment remains unchanged.
+
+### 2026-10-30 — `haven-v262 unverified rankings and atomic prizes`
+* **Changed:** At the owner's direction, the local draft enables rankings and Echo Top-100 prizes using each player's own equipment and client-reported scores. Scores and gear can be forged; review flags do not punish or exclude anyone. The first request schedules fresh daily competition at the next Singapore midnight and weekly competition at the first full eligible Monday week. Legacy daily/weekly rows are retained but never automatically back-paid; all-time results remain unverified. Equal Echo scores rank by account ID, and runs must finish and sync before the period cutoff. Lazy prize settlement creates placements, ledger entries and gifts atomically and retries safely. A score-write failure leaves an accepted save intact, warns the player and queues a retry. Full-cap Roulette/resource gifts stay pending rather than being clipped. The historical damage-only staging package generator now fails closed instead of mixing incompatible builds.
+* **Try it:** See `docs/COMPETITION-SECURITY.md`. Run `node tools/tests/unverified_echo_launch_sim.js`, `node tools/tests/echo_board_sim.js`, `node tools/tests/prize_delivery_safety_sim.js` and `node tools/staging/local.mjs test` against synthetic, isolated local data.
+* **Checks:** SQLite launch/cutoff, review-only flags, score failure/retry, old-period nonpayment, atomic rollback, new gifts and duplicate settlement passed. Disposable workerd/D1 concurrent rollback/settlement and local Pages/D1 migration, scoring, GM review and account tests passed. Three combat measurements were genuinely rerun, and the balance suite passed. Hosted staging for this candidate, load/cost, real-world monitoring and authoritative score integrity remain unverified. The complete local gate was 162/165; two changed-policy test failures were corrected and passed on targeted rerun, while the known intermittent camp-ring smoke remained red. Asset and preview checks passed; the full gate was not rerun after those test changes.
+* **Delivery:** Local working tree only. No push, production migration, merge or deployment. The existing draft PR does not contain these latest changes.
+
+### 2026-10-30 — `preview safety and hosted launch rehearsal`
+* **Changed:** Added a defence-in-depth API middleware that refuses requests to production-project branch/deployment Pages hostnames, even if bindings are accidentally inherited. The main production hostname and the separately named staging project are not blocked; old preview deployments are unchanged. Prepared a fixed-target owner-run staging package for the v262 ranking and prize draft; its generator rejects incomplete runtime overlays.
+* **Try it:** `node tools/tests/pages_preview_runtime_sim.js` and `node tools/tests/hosted_launch_stage_sim.js`. For packaging and fixed staging boundaries, see `docs/ISOLATED-STAGING.md`.
+* **Checks:** Preview guard unit checks and disposable workerd/D1 test confirmed the synthetic preview made no database write while production/staging hosts worked. Local real-handler package probe tested flags, synthetic prizes, retries and cleanup. Fresh local Pages/D1 rehearsal passed. The most recent full JS gate had 164 passes and the unchanged intermittent camp-ring smoke failure; the two newly added tests passed separately. Hosted Pages routing, actual binding isolation, the packaged hosted rehearsal and production backup/migration remain unverified.
+* **Delivery:** Local files and package only. No push, hosted database operation or deployment at this point.

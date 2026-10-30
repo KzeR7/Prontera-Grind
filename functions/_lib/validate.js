@@ -100,6 +100,8 @@ const DAY_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 function echoFields(save) {
   const trial = save && typeof save.trial === 'object' && save.trial ? save.trial : {};
   const board = trial.echoBoard && typeof trial.echoBoard === 'object' ? trial.echoBoard : {};
+  // Legacy projection only; the new unverified board reads accepted save fields
+  // directly and does not cap scores at this former sanity threshold.
   const dps = v => Math.min(100_000_000, Math.max(0, Number(v) || 0));
   const key = v => (typeof v === 'string' && DAY_KEY_RE.test(v) ? v : null);
   return {

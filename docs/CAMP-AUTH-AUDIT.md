@@ -1,7 +1,7 @@
 # Camp layout and password-hashing investigation
 
 Local investigation, 2026-10-29. Neither the camp layout nor the PBKDF2 work factor
-has been changed. Competition remains paused. This is not a balance guarantee,
+has been changed. At the time of this audit competition was paused; the later local v262 draft enables unverified competition. This is not a balance guarantee,
 hosted performance test or approval to deploy.
 
 ## Camp radius: measurements and a proposed option
