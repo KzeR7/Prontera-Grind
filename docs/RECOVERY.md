@@ -31,6 +31,42 @@ can be restored. If Cloudflare denies a lookup, it stops without making changes.
 An export-free selector does not create separate backups, alerts, audit logs or an
 independent disaster recovery copy. No R2 storage, paid upgrade or cron was created.
 
+On 2026-10-30, the owner ran the updated menu against live `pg`. The fixed identity
+check and current and six-day-old Time Travel bookmark lookups passed, and the owner
+cancelled the menu. No restore or backup was performed. This confirms the read-only
+lookups, not a tested restore, the account's plan, a full seven-day window or the
+compatibility of any historical point.
+
+## Local safety-order rehearsal (not production recovery)
+
+`node tools/tests/recovery_rehearsal_sim.mjs` runs a synthetic-only SQLite
+rehearsal: freeze, confirm drain, capture/verify an emergency snapshot, check the
+selected point, confirm, restore, verify, then resume. It injects failures and
+keeps its **mock** gate closed rather than retrying or resuming. The standalone
+`tools/recovery/rehearsal_protocol.mjs` has no Cloudflare driver or production
+integration. Synthetic snapshots are not Wrangler exports or D1 Time Travel.
+
+This is only an ordering/failure test. The fake gate cannot pause the real game,
+prove a distributed drain, deal with stale preview deployments, or protect against
+external D1 writers. It is not a restore button. A real independent write gate and
+its Cloudflare quota/availability, in-flight request handling, authentication,
+release compatibility and isolated hosted rehearsal are still required.
+
+## Prepared disposable hosted Time Travel drill — not run
+
+`tools/recovery/hosted_disposable_rehearsal.mjs` is an owner-run Windows drill,
+not a production restore tool. It creates a randomly named temporary D1, verifies
+its name and ID, inserts only a synthetic number, captures a bookmark, changes the
+number, uses Time Travel to restore the earlier number, then deletes that temporary
+D1 and checks that it is absent. It rejects the known production and staging IDs.
+The random database name is printed for inspection if creation, restore or cleanup
+fails; do not blindly retry or delete another database. The drill may use Cloudflare
+quota, requires a spare database slot, and has not been run or verified on hosted
+Cloudflare. Its fixed protocol and failure stops have only mock tests. It does not
+read a real account, backup or save, pause the real game, or prove production restore
+safety. Do not run it until reviewed and the owner understands its temporary cloud
+resource creation/deletion.
+
 ## A production restore is NOT automated or rehearsed
 
 A D1 Time Travel restore **overwrites the entire live database in place**, cancels
@@ -66,7 +102,7 @@ nonempty production database is not a supported rollback procedure.
 `node tools/tests/recovery_point_sim.mjs` tests selector boundaries, Singapore time,
 fixed identity and failure stops using synthetic fixtures only. `node
 tools/audits/local_d1_restore.mjs` rehearses synthetic export/import into a separate
-local D1. Neither tests Cloudflare Time Travel, a production restore, or maintenance.
+local D1. Neither tests Cloudflare Time Travel, a production restore, or real maintenance.
 
 Cloudflare: [Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/),
 [D1 limits](https://developers.cloudflare.com/d1/platform/limits/),

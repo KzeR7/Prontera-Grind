@@ -68,9 +68,12 @@ None proves browser score integrity or hosted launch readiness. See
 ## D1 Time Travel selection (read-only)
 
 `node tools/tests/recovery_point_sim.mjs` exercises the owner-only seven-day
-bookmark selector with synthetic responses. `node tools/audits/local_d1_restore.mjs`
-separately rehearses synthetic D1 export/import, not Time Travel. Neither connects
-to production or proves a hosted restore. See [Recovery](RECOVERY.md).
+bookmark selector. `node tools/tests/recovery_rehearsal_sim.mjs` exercises a
+synthetic SQLite recovery sequence; `node tools/tests/hosted_disposable_rehearsal_sim.mjs`
+tests target guards and a mocked CLI driver for the separately prepared hosted
+drill. `node tools/audits/local_d1_restore.mjs` rehearses synthetic local D1
+export/import, not Time Travel. These tests do not contact production or prove a
+hosted restore. See [Recovery](RECOVERY.md).
 
 ## Password-recovery UI
 

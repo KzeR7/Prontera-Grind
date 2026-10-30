@@ -9002,3 +9002,22 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Checks:** Synthetic tests cover missing JSON version, explicit unsupported versions, failed/malformed Time Travel responses, target identity and date bounds. The updated tool has not yet been run against hosted `pg`; seven-day availability and any restore remain unverified.
 * **Delivery:** Local fix; no production changes or restore.
 * **Additional regression checks:** The local full JS gate had 168 passes and the one known intermittent `field_loop_smoke.js` camp-spacing failure, with no dependency skips. Preview configuration, three generated-asset checks and the recovery-specific tests passed.
+
+### 2026-10-30 — `owner-confirmed recovery bookmark lookup`
+* **Changed:** Recorded the owner's successful read-only Time Travel check on live `pg`. Current and six-day-old bookmark lookups passed and the owner cancelled the menu; no restore or backup was performed.
+* **Try it:** See `docs/RECOVERY.md` for the read-only selector and recovery limitations.
+* **Checks:** Owner-reported production identity and bookmark lookup only. The full seven-day window, specific historical data, write pause and hosted restore remain unverified.
+* **Delivery:** Local documentation update; no game deployment, live database change, paid storage or restore.
+
+### 2026-10-30 — `synthetic recovery safety-order rehearsal`
+* **Changed:** Added a synthetic-only local recovery protocol and SQLite test for pause/drain, verified emergency snapshot, selection, explicit confirmation, restore, postchecks and resume, with failure stops. It has no Cloudflare driver and cannot restore a real database.
+* **Try it:** `node tools/tests/recovery_rehearsal_sim.mjs`; see `docs/RECOVERY.md` for the boundaries.
+* **Checks:** Synthetic success, declined confirmation, busy writes and injected backup/restore/postcheck failures passed. This is not a distributed maintenance gate or hosted Time Travel test.
+* **Delivery:** Local changes only. No production writes, backup, maintenance lock, hosted test or restore occurred.
+
+### 2026-10-30 — `prepared disposable hosted Time Travel drill`
+* **Changed:** Prepared a separate owner-run synthetic hosted D1 Time Travel rehearsal that creates a randomly named temporary database, rejects the production and known staging IDs, tests one synthetic value through a restore, and verifies cleanup. No real account data or backup is read.
+* **Try it:** `node tools/tests/hosted_disposable_rehearsal_sim.mjs` uses mocks only; see `docs/RECOVERY.md` before any hosted run.
+* **Checks:** Synthetic name/UUID isolation, restore order, failure and cleanup-refusal checks passed. The actual hosted drill and real maintenance/restore have not been run.
+* **Delivery:** Local preparation only; no database creation, deletion, live restore, or cloud deployment.
+* **Additional regression checks:** 168 of 169 JS suites passed; the one failure was the known intermittent camp-spacing assertion. The preview config, three generated-asset checks, and separate recovery selector/rehearsal/mock-driver tests passed. No dependency skips were reported.
