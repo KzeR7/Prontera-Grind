@@ -145,3 +145,15 @@ candidate to production or point it at real accounts.
   and deployment require a separate explicit decision, after the above and a compatible
   rollback plan. Never reapply migration 0007 to live `pg`; it was applied manually and
   does not automatically update Wrangler's migration ledger.
+
+## Production backup and staged migration preparation (2026-10-30)
+
+The owner reported a fresh `pg` backup saved privately in `Desktop/HH Save` and
+verified in memory, with integrity/foreign-key/core-table checks passing. A
+read-only production preflight found the email column and unique index present,
+no Wrangler migration ledger and no new launch tables. A fixed-target import tool
+is prepared for 0008–0011; it refuses to rerun 0007 or proceed on unexpected
+schema, and fails closed on uncertain imports. Remote file imports can interrupt
+production service. At this point the tool has only passed synthetic local tests;
+production execution has not been reported. Do not run Wrangler's migration
+runner against this manually migrated DB without separately reconciling its ledger.
