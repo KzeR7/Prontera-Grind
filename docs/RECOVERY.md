@@ -75,7 +75,7 @@ historical point with the current code, a production-sized restore, its duration
 the write pause. It also does not confirm the drill's failure paths, which only have
 mock tests.
 
-## The write pause (prepared and tested; not deployed, not enabled)
+## The write pause (live on production; enabled 2026-10-30)
 
 A D1 restore overwrites the whole database in place. The pause flag therefore cannot
 live in D1: a restore would roll it back to "open" at exactly the moment it must stay
@@ -118,21 +118,21 @@ recently; a lease expires on a timer, so a request that outlives its lease could
 still be writing. The window is longer than any handler here can plausibly run, and
 sealing is an operator judgement recorded in the audit trail — not a guarantee.
 
-### Enabling it (one deployment, in this order)
+### Enabling it (completed 2026-10-30; reference for rotation or re-enablement)
 
-> **Exact step-by-step, with a verification gate after each stage and the rollback for
-> each:** [ENABLE-WRITE-PAUSE.md](ENABLE-WRITE-PAUSE.md). Read that page rather than the
-> summary below if you are doing it for the first time.
+> **Exact step-by-step, observed outputs, and per-step rollback:**
+> [ENABLE-WRITE-PAUSE.md](ENABLE-WRITE-PAUSE.md). Production was enabled and opened on
+> `2026-10-30T08:50:38.885Z` (`epoch: 2`, `writes open: YES`).
 
 ```powershell
-# 1. the switch, with no database attached
-npx wrangler deploy --config workers/gate/wrangler.toml
-# 2. its secret (32+ random characters; the object refuses anything shorter)
-node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"   # openssl may be absent on Windows
-npx wrangler secret put GATE_TOKEN --config workers/gate/wrangler.toml
-# 3. in the root wrangler.toml, uncomment WRITE_GATE and the GATE binding, then deploy Pages
+# 1. the switch, with no database attached (npx.cmd avoids PowerShell's npx.ps1 block)
+npx.cmd wrangler deploy --config workers/gate/wrangler.toml
+# 2. its secret (32+ random characters; pipe from $env:PG_GATE_TOKEN so interactive paste cannot truncate it)
+node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
+$env:PG_GATE_TOKEN = 'PASTE_YOUR_SAVED_64_CHAR_TOKEN_HERE'; "length=$($env:PG_GATE_TOKEN.Length)"
+node -e 'const s=process.env.PG_GATE_TOKEN;if(!s||s.length<32)throw Error(`short`);const r=require(`child_process`).spawnSync(`cmd.exe`,[`/d`,`/s`,`/c`,`npx.cmd wrangler secret put GATE_TOKEN --config workers/gate/wrangler.toml`],{input:s,stdio:[`pipe`,`inherit`,`inherit`]});process.exit(r.status??1)'
+# 3. root wrangler.toml sets WRITE_GATE = "required" and binds GATE -> prontera-gate (live on main)
 # 4. open writes once, and check it took
-$env:PG_GATE_TOKEN = "<the same secret>"
 node tools/recovery/write_gate.mjs open "OPEN WRITES"
 node tools/recovery/write_gate.mjs status
 ```
