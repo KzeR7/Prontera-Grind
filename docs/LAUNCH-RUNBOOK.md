@@ -186,6 +186,53 @@ Then click through the deployed staging URL as a player and confirm:
 Record what you saw. Staging is not production: CPU limits, real D1 behaviour and load
 are still unmeasured.
 
+## Shipping the `haven-v263` write pause (PR #147)
+
+This is a **separate decision** from steps 1–3, and it can be taken at any time. The
+branch is behaviourally inert on merge, which is why it does not need to wait:
+
+- `wrangler.toml` adds the gate's variable and binding **commented out**. Uncommenting is
+  a later, separate deploy.
+- `functions/api/_middleware.js` returns `context.next()` on line 60,
+  `if (!gateRequired(context.env)) return context.next();`, *before* any gate logic. With
+  `WRITE_GATE` unset, every `/api` request behaves exactly as it does on `main` today.
+  The production-preview refusal still runs first, unchanged.
+- No migration is touched by the branch; `0008–0011` are already applied and verified.
+- The only always-visible change is the build text: `haven-v262` becomes
+  `haven-v263 write pause`. The rest is client wording that fires only on a 503, which
+  cannot happen while the gate is unconfigured.
+
+### Fast path (justified while the gate is unconfigured)
+
+```powershell
+git fetch origin
+gh pr view 147 --json mergeable,mergeStateStatus   # expect MERGEABLE / CLEAN
+```
+
+Then merge PR #147. **The owner does this**: merging `main` deploys production, and the
+agent working this repository must not perform that step. Verify immediately:
+
+1. Reload the live site — the login card must read `build 2026-10-30 haven-v263 write pause`.
+2. Sign in and complete one save round-trip (play, reload, progress kept).
+3. Confirm no maintenance text appears anywhere. If it does, the gate was somehow
+   switched on — treat that as urgent: the API is failing closed.
+
+Rollback if needed: Pages project → Deployments → the previous deployment → Rollback. No
+data is lost; open tabs pick it up through `version.txt` within 60 seconds.
+
+### Thorough path (use when the gate will actually be turned on)
+
+Run step 3 first. A staged pass proves the deployed binding plumbing, which the fast path
+does not test — but it tests nothing about the pause itself, because the pause is off in
+both cases. The pause is only ever proven by the four-step enable sequence in
+[RECOVERY.md](RECOVERY.md), in this order: deploy `workers/gate` → `wrangler secret put
+GATE_TOKEN` → uncomment `WRITE_GATE` and the `GATE` binding in the **same** Pages
+deployment → `node tools/recovery/write_gate.mjs open "OPEN WRITES"`.
+
+Do not uncomment the variable without the binding, or the binding without the worker: the
+middleware fails closed on purpose, and a half-configured deployment answers 503 to every
+API request.
+
 ## Step 4 — launch decision
 
 Only after steps 1–3 pass. Then, in this order:
