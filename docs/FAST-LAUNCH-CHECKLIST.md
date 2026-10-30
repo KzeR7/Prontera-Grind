@@ -7,6 +7,11 @@ The earlier paused-board staging results below are historical. Do not merge or d
 approves the final candidate. No Cloudflare credentials, passwords, recovery codes,
 backup contents or screenshots showing them should be shared in chat.
 
+> **2026-10-30:** the remaining launch steps are now ordered in
+> [Launch runbook](LAUNCH-RUNBOOK.md): fresh verified backup → additive 0008–0011 on live
+> `pg` → staging deploy and hosted checks → launch decision. Read that first; this file
+> keeps the background and the evidence behind each item.
+
 ## 1. Password hashing — hosted preview accepted; integration pending
 
 PBKDF2-SHA256 at 600,000 was rejected by the owner's remote preview. The next
