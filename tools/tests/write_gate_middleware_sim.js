@@ -18,11 +18,16 @@ const req = (line, host = 'prontera-grind.pages.dev') => {
   return new Request('https://' + host + path, { method, headers: { 'Content-Type': 'application/json' } });
 };
 
-// A stand-in for the GATE binding: records what the middleware asked, answers from `verdict`.
+// A stand-in for the GATE binding, shaped like the real thing.
+//
+// `env.GATE` from [[durable_objects.bindings]] is a DurableObjectNamespace: it has
+// idFromName() and get(), and **no fetch()**. Mocking it as a bare object with fetch()
+// is what let a broken call site pass this suite while production refused every
+// request; the returned namespace therefore has no top-level `fetch` on purpose, so
+// calling one here fails exactly as it does in production.
 function gateStub(verdict = { ok: true }, { throwOn = '', answer = null } = {}) {
   const calls = [];
-  return {
-    calls,
+  const stub = {
     async fetch(request) {
       const { pathname } = new URL(request.url);
       const body = request.method === 'POST' ? await request.json() : {};
@@ -31,6 +36,11 @@ function gateStub(verdict = { ok: true }, { throwOn = '', answer = null } = {}) 
       if (answer) return answer;
       return new Response(JSON.stringify(verdict), { status: verdict.ok === true ? 200 : 503 });
     },
+  };
+  return {
+    calls,
+    idFromName: name => 'id-for:' + name,
+    get: () => stub,
   };
 }
 
@@ -156,7 +166,12 @@ await T('the preview refusal still wins, and is unchanged', async () => {
 
 await T('a lost release does not fail an accepted request', async () => {
   const gate = gateStub({ ok: true });
-  const failing = { fetch: async request => (new URL(request.url).pathname === '/release' ? Promise.reject(new Error('gone')) : gate.fetch(request)) };
+  // Namespace-shaped for the same reason as gateStub: the real binding is never a bare
+  // fetcher, so a test that mocks one would never exercise the code that resolves it.
+  const failing = {
+    idFromName: name => 'id-for:' + name,
+    get: () => ({ fetch: async request => (new URL(request.url).pathname === '/release' ? Promise.reject(new Error('gone')) : gate.get().fetch(request)) }),
+  };
   const { ctx, state } = context(req('PUT /api/save'), { WRITE_GATE: 'required', GATE: failing });
   const r = await onRequest(ctx);
   assert.equal(r.status, 200, 'the save was already written; the lease expires instead');

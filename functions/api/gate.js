@@ -17,6 +17,7 @@
 //
 // Owner tool: node tools/recovery/write_gate.mjs
 import { guard, readJson, json } from '../_lib/http.js';
+import { gateStub } from '../_lib/gate-binding.js';
 
 const ACTIONS = new Set(['status', 'audit', 'close', 'seal', 'open']);
 const notFound = () => json({ err: 'Not found.' }, 404);
@@ -42,7 +43,9 @@ export const onRequest = guard(async ({ request, env }) => {
     };
   let upstream;
   try {
-    upstream = await gate.fetch(new Request('https://gate.internal/' + action, init));
+    // env.GATE is a DurableObjectNamespace: resolve it to the stub first. Passing the
+    // namespace straight to fetch() is what made the switch unreachable on 2026-10-30.
+    upstream = await gateStub(gate).fetch(new Request('https://gate.internal/' + action, init));
   } catch {
     // Unreachable is not a state. Never guess one, and never let this look like "closed".
     return json({ err: 'The write-pause switch did not answer. Treat writes as UNKNOWN and do not restore.',

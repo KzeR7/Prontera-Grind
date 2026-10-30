@@ -32,6 +32,7 @@ Do these **first**. Steps 3–5 should run back to back without hunting for anyt
    node tools/tests/write_gate_middleware_sim.js
    node tools/tests/write_gate_api_sim.js
    node tools/tests/write_gate_cli_sim.mjs
+   node tools/tests/write_gate_binding_sim.js
    ```
    Each prints one `PASS` line. Verified green on 2026-10-30.
 
@@ -68,7 +69,8 @@ Do these **first**. Steps 3–5 should run back to back without hunting for anyt
    costs one command.
 
 4. Know your rollback: Cloudflare dashboard → Workers & Pages → `prontera-grind` →
-   Deployments → the deployment before this change → **Rollback**. No data is lost.
+   Deployments → the **⋯** menu on the older Production row (`f025b0e`) → **Rollback to
+   this deployment**. No data is lost.
 
 ## Step 1 — deploy the switch itself (no downtime)
 
@@ -109,64 +111,53 @@ you cannot open it until step 4/5, and nothing calls it until step 3.
 npx.cmd wrangler secret put GATE_TOKEN --config workers/gate/wrangler.toml
 ```
 
-Paste the value from "Before you start" step 2. Still no player impact — nothing calls it
-yet.
+**Done 2026-10-30** (`✨ Success! Uploaded secret GATE_TOKEN`). Still no player impact —
+nothing calls it until step 3.
 
-## Step 3 — wire the binding (THIS is where the API goes down)
+## Step 3 — wire the binding and the binding/CLI fix
 
-The edit is **already written and tested on branch `arena/4d4177fb-prontera-grind`**
-(PR #148), so there is nothing to type. It uncomments exactly this in the root
-`wrangler.toml`, keeping the `SOCIAL` binding and `[env.preview]` untouched:
+PR #148 (`e704f2b`) wired `[vars] WRITE_GATE = "required"` and the `GATE` binding on
+`main` on 2026-10-30, and exposed two bugs in the first enablement run:
 
-```toml
-[vars]
-WRITE_GATE = "required"
+1. `functions/api/_middleware.js` and `functions/api/gate.js` called `env.GATE.fetch(...)`
+   directly on a `DurableObjectNamespace`, throwing and failing closed with 503.
+2. `tools/recovery/write_gate.mjs` sent `{confirm, reason}` without `action` on `POST
+   /api/gate`, so `open "OPEN WRITES"` answered 404 (`Not found.`) before reaching the
+   switch.
 
-[[durable_objects.bindings]]
-name = "GATE"
-class_name = "WriteGate"
-script_name = "prontera-gate"
-```
-
-**Do this only after step 2.** Merging deploys the pause; without the secret the object
-answers `not-configured` and nothing can open it.
+Both are fixed together on the follow-up PR (`functions/_lib/gate-binding.js` +
+`tools/recovery/write_gate.mjs` + `write_gate_binding_sim.js`). **After merging that PR,
+pull `main` locally before running step 4/5** so your local `write_gate.mjs` includes the
+`action` fix while Cloudflare Pages finishes building the server fix:
 
 ```powershell
-git fetch origin
-gh pr view 148 --json mergeable,mergeStateStatus    # expect MERGEABLE / CLEAN
-gh pr merge 148 --merge
+git checkout main
+git pull
 ```
-
-Merging to `main` triggers the Pages build. The `wrangler.toml` in the repository is
-authoritative — the dashboard shows those fields as read-only, so the file is the only
-place the binding can come from.
-
-**From the moment that build finishes until step 5, every `/api/*` request answers 503.**
-The public site and the client still load; players see the maintenance message and "your
-character is paused". Expected, accepted, usually one to three minutes. Do not merge if you
-cannot reach step 5 within ~15 minutes.
-
-If you would rather make the edit by hand instead, replace the commented block in the root
-`wrangler.toml` with the four lines above and commit; the result must be identical. The
-config test `python3 tools/tests/pages_preview_config_sim.py` checks it parses and that the
-pause is never half-configured.
-
-**Why it fails closed:** a half-configured deploy (variable without the binding, or binding
-without the variable) answers 503 to everything rather than running unprotected. That is
-deliberate for a safety switch, and it is the main thing to be careful about.
 
 ## Step 4 — wait for the build, then confirm it is closed
 
-Watch the Pages deployment finish (dashboard, or the build check on the commit).
+Watch the Pages deployment finish (dashboard, or the build check on the merge commit).
+Set the token in the **same PowerShell window** and check its length before calling the
+switch (so a literal placeholder like `<your token>`, length 12, is caught immediately):
 
 ```powershell
-$env:PG_GATE_TOKEN = "<the token from step 2>"
+$env:PG_GATE_TOKEN = 'PASTE_YOUR_SAVED_64_CHAR_TOKEN_HERE'; "length=$($env:PG_GATE_TOKEN.Length)"
+# expect: length=64
 node tools/recovery/write_gate.mjs status
 ```
 
-Expect a state of `closed` (the object ships closed). If this prints a 404, the token is
-wrong or the binding is missing — a wrong token and a missing binding are deliberately
-indistinguishable. Fix that before step 5.
+Expect `state: closed` (the object ships closed).
+
+- **404 on `status`:** the token does not match `GATE_TOKEN` on `prontera-gate` (or the
+  binding is missing). Do not guess repeatedly: 5 failures inside 10 minutes lock control
+  requests for 5 minutes (`AUTH_MAX = 5`).
+- **404 on `open`/`close`/`seal` while `status` works:** your local checkout is older than
+  the CLI fix (`write_gate.mjs` omitted `action` in POST bodies). Run `git checkout main;
+  git pull` and retry once.
+- **503, "switch did not answer":** either the Pages build with `gateStub(namespace)` has
+  not finished deploying yet, or `prontera-gate` itself is unreachable (`npx.cmd wrangler
+  deployments status --config workers/gate/wrangler.toml`).
 
 ## Step 5 — open writes
 
@@ -216,3 +207,8 @@ sealing is an operator decision recorded in the audit trail.
   binding and the pause with it.
 - **A Durable Object that loses its storage loads as `closed`.** So a catastrophic object
   failure means an API outage, not a silently unprotected API. Same remedy: roll back.
+- **Every `/api` path answers 503 while `/` still loads.** That is the middleware failing
+  closed, not a broken deploy: the static site is fine and only the API layer is gated.
+  `write_gate_binding_sim.js` is the suite that guards this specific failure — run it first
+  (`node tools/tests/write_gate_binding_sim.js`, expect 9 checks including the local
+  Cloudflare runtime rehearsal) when a 503 appears where a state was expected.

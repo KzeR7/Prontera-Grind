@@ -16,7 +16,8 @@ const DB_NAME = 'pg-staging', DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
 const PROJECT = 'prontera-grind-staging';
 const FILES = ['index.html','gm.html','functions/_lib/db.js','functions/_lib/echo-board.js',
   'functions/_lib/validate.js','functions/_lib/damage-monitor.js','functions/_lib/competition-baseline.js',
-  'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js','functions/api/save.js',
+  'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js',
+  'functions/_lib/gate-binding.js','functions/api/save.js',
   'functions/api/board.js','functions/api/_middleware.js','functions/api/gm/damage.js',
   // v263: the write-pause control endpoint travels with the candidate; it 404s without the GATE binding.
   'functions/api/gate.js','migrations/0008_damage_monitoring.sql',

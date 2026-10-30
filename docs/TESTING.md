@@ -80,9 +80,23 @@ corrupt storage loading as closed). `node tools/tests/write_gate_middleware_sim.
 proves no `/api` path — save, grants, GM, shop webhook, and the reads that write as a
 side effect — reaches a handler while the pause is on, and that an unreachable switch
 fails closed. `node tools/tests/write_gate_api_sim.js` covers the `/api/gate` control
-endpoint; `node tools/tests/write_gate_cli_sim.mjs` covers the owner's CLI. All four
-use stubs; none contacts Cloudflare, and the switch is off unless
-`WRITE_GATE = "required"` is set, so the existing suites are unaffected.
+endpoint; `node tools/tests/write_gate_cli_sim.mjs` covers the owner's CLI.
+`node tools/tests/write_gate_binding_sim.js` covers how the code reaches the switch and
+how the CLI talks to `/api/gate`. It exists because the other four were green while
+production was not, for two separate reasons: (1) a Durable Object binding is a
+**namespace** (`idFromName` / `get`), not something with a `fetch` method, and the mocks
+had been written as bare `{fetch}` objects — `env.GATE.fetch(...)` ran in tests and threw
+on Cloudflare, failing closed with 503; (2) `write_gate.mjs` sent `{confirm, reason}`
+without `action` on `POST /api/gate`, while `/api/gate` requires `body.action` and
+answered 404 (`Not found.`) before reaching the switch, which the CLI suite missed because
+its mocked `fetch` never ran `/api/gate`. Every mock in these suites is now
+namespace-shaped with no top-level `fetch`, and `write_gate_binding_sim.js` drives both a
+direct CLI→`/api/gate` wire check and a two-Worker local Cloudflare runtime rehearsal
+(`miniflare` / `workerd`: `pages` Worker + cross-script SQLite `WriteGate` Durable Object
+on `prontera-gate`, driven through `write_gate.mjs` `status` → `open` → `close`).
+Restoring either old bug fails the suites — checked by mutation. None contacts a live
+Cloudflare account, and the switch is off unless `WRITE_GATE = "required"` is set, so the
+existing suites are unaffected.
 
 ## D1 Time Travel selection (read-only)
 
@@ -254,7 +268,13 @@ the block was seeded instead, so the result is reproducible. Whether 1–5 high-
 genuinely resolving with no float is acceptable is still an open question for a follow-up;
 it is not covered by this change.
 
-**2026-10-30 gate result (all suites green):** 179 suites, **179 pass, 0 fail**. The last
+**2026-10-30 gate result (all suites green, after the binding fix):** 180 suites,
+**180 pass, 0 fail**. The count rose by one with `write_gate_binding_sim.js`, which is the
+regression test for the 503 outage described under "Write pause" above.
+
+**2026-10-30 gate result (earlier, before the binding fix):** 179 suites, **179 pass, 0 fail**.
+Those 179 green suites were the reason the outage shipped — they modelled the binding
+wrongly. The last
 known-red suite, `social_worker_sim.mjs`, was a harness defect rather than a code failure:
 it imported `convertV4MiniflareOptions`, a wrangler helper current miniflare no longer
 exports, and read a bundle that only existed after a manual `wrangler deploy --dry-run`.
@@ -275,7 +295,7 @@ code failure. `skill_balance_sim.js`, `card_star_balance_sim.js` and
 previous entry with identical measurements). `live_launch_schema_check_sim.js` is new:
 it proves the read-only schema check accepts a complete 0008–0011 application, reports
 missing tables, columns, triggers, indexes and launch config separately, changes nothing
-when it reads, and cannot acquire a write path (source-level guard). All 179 suites need
+when it reads, and cannot acquire a write path (source-level guard). All 180 suites need
 `npm install --no-save --package-lock=false jsdom three@0.128.0 ws` first; without it the
 client-side suites fail to load rather than fail assertions.
 

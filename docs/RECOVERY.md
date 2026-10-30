@@ -215,12 +215,14 @@ fixed identity and failure stops using synthetic fixtures only. `node
 tools/audits/local_d1_restore.mjs` rehearses synthetic export/import into a separate
 local D1. Neither tests Cloudflare Time Travel, a production restore, or real maintenance.
 
-The write pause has four synthetic suites: `tools/tests/write_gate_sim.mjs` (state
-machine and Durable Object), `write_gate_middleware_sim.js` (every `/api` path
-refused when the pause is on; fail-closed when the switch is unknown),
-`write_gate_api_sim.js` (the `/api/gate` control endpoint) and
-`write_gate_cli_sim.mjs` (the owner's CLI: fixed target, secret handling, phrases,
-refusals). None contacts Cloudflare.
+The write pause has five suites: `tools/tests/write_gate_sim.mjs` (state machine and
+Durable Object), `write_gate_middleware_sim.js` (every `/api` path refused when the
+pause is on; fail-closed when the switch is unknown), `write_gate_api_sim.js` (the
+`/api/gate` control endpoint), `write_gate_cli_sim.mjs` (the owner's CLI: fixed
+target, secret handling, `action` + phrases, refusals) and
+`write_gate_binding_sim.js` (namespace binding resolution, CLI→`/api/gate` wire
+contract, and a local `miniflare`/`workerd` cross-script SQLite Durable Object
+rehearsal). None contacts a live Cloudflare account.
 
 Cloudflare: [Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/),
 [D1 limits](https://developers.cloudflare.com/d1/platform/limits/),

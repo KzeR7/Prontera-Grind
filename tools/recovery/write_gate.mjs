@@ -96,7 +96,7 @@ async function call({ url, token, action, body, fetchImpl }) {
     : {
       method: 'POST',
       headers: { 'X-Recovery-Token': token, 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(body || {}),
+      body: JSON.stringify({ action, ...(body || {}) }),
     };
   const target = readOnly && action === 'audit' ? url + '?action=audit' : url;
   let response;
