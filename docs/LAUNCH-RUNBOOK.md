@@ -15,14 +15,35 @@ requires exactly that path). Backups go to `%USERPROFILE%\Desktop\HH Save`.
 node --version      # 22.5+ (node:sqlite is used by the backup and migration tools)
 npx wrangler whoami # the account that owns the prontera-grind Pages project
 cd $HOME\Desktop\Prontera-Grind
-git status --short  # must be clean; the migration tool diffs the tree
+
+# The tools were added to main on 2026-10-30 (3d3147f, 4083e9b). An older clone
+# simply does not have them, and node reports MODULE_NOT_FOUND. Fetch first:
+git fetch origin
+git pull --ff-only
+Test-Path tools\staging\live_backup_preflight.mjs   # must print True
+Test-Path tools\staging\live_additive_migrations.mjs # must print True
+
+# The migration tool reads the four files out of the pinned commit, not off disk,
+# and compares two commits (not the worktree), so a dirty tree does not stop it.
+# These refs must resolve locally after the fetch:
+git cat-file -e 9335e56665a2e076b9316205eff332d2483e05f2^{commit}
+git rev-parse --verify origin/arena/a3bbb1f5-prontera-grind
 ```
+
+If `git pull --ff-only` refuses, your clone has diverged or uncommitted work: run
+`git status` and `git stash` before retrying. Do not force-reset the repository.
 
 Local preflights that were already run for this candidate and pass: `bash tools/build_site.sh`
 builds (134 MB, 3,069 files — inside the Pages limits), `node tools/staging/package_hosted_launch.mjs <out>`
 generates the staging package, the four migration files hash exactly to what the
 migration tool expects, and `live_additive_migrations_sim.js` / `live_backup_preflight_sim.js`
 pass on synthetic data.
+
+The branch you are checked out on does not matter for steps 1–2: the migration bytes
+come from the pinned commit `9335e566`, and the safety diff compares that commit to
+`origin/arena/a3bbb1f5-prontera-grind`, both of which the fetch brings down. Step 3 is
+different — generate the staging package from the candidate branch, the one carrying
+`haven-v263`.
 
 ## Step 1 — fresh, verified production backup
 
