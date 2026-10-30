@@ -9051,3 +9051,9 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** `docs/LAUNCH-RUNBOOK.md` → Preconditions, then step 1.
 * **Checks:** `4b3a41b:index.html` reports `haven-v143` and `git ls-tree 4b3a41b tools/` has no `staging/` entry; `origin/main` is `5174ec1` (`haven-v262`) and the candidate branch is `haven-v263`; the pull spans 2,490 files and 337,023 insertions. Nothing was deployed, migrated or restored.
 * **Delivery:** Local documentation only.
+
+### 2026-10-30 — `runbook: check the gate before spending a backup`
+* **Changed:** The owner's clone is now current (fast-forward `4b3a41b..5174ec1`, 2,490 files; the v143-era `index.html` edits went to `stash@{0}`, and the `haven-v263` candidate is checked out on a `candidate` branch). Step 1 now first predicts the migration tool's own precondition — the branch ref resolves and the pinned commit still matches it over the gated paths — because that check is free while a backup is not. The step also records that the tool refuses when the launch tables, triggers, indexes or `d1_migrations` are already present, and when 0007's `email` column or its unique index is missing.
+* **Try it:** `docs/LAUNCH-RUNBOOK.md` → Step 1.
+* **Checks:** `live_backup_preflight.mjs` takes no arguments and asserts `win32`; `checkBackup` enforces the filename pattern, a backup under two hours old, in-memory restore, `integrity_check` = ok, empty `foreign_key_check`, and the three core tables; `runMigration` asserts the absence of `d1_migrations` and of every launch table, launch trigger and launch index before applying. Nothing was deployed, migrated or restored.
+* **Delivery:** Local documentation only.

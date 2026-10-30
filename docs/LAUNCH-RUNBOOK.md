@@ -70,11 +70,24 @@ Come back to `main` (`git switch main`) for anything that only needs the migrati
 
 ## Step 1 — fresh, verified production backup
 
+First confirm the repo satisfies the *migration* tool's gate, so a backup you take now
+is not wasted on a run that would refuse later:
+
+```powershell
+git rev-parse --short origin/arena/a3bbb1f5-prontera-grind    # expect 4083e9b
+git diff --quiet 9335e56665a2e076b9316205eff332d2483e05f2 `
+  origin/arena/a3bbb1f5-prontera-grind -- `
+  index.html gm.html functions migrations assets _routes.json tools/build_site.sh
+"gate exit=$LASTEXITCODE   (0 means the migration tool will accept this repo)"
+```
+
+Then:
+
 ```powershell
 node tools/staging/live_backup_preflight.mjs
 ```
 
-It verifies the `pg` name **and** UUID, exports a private `.sql` into
+It takes **no arguments**. It verifies the `pg` name **and** UUID, exports a private `.sql` into
 `Desktop\HH Save`, restores that export into memory, and runs integrity and
 foreign-key checks. Expected: a `PASS:` line and a filename like
 `pg-before-launch-20261030143000-1a2b3c4d.sql`.
@@ -84,6 +97,8 @@ foreign-key checks. Expected: a `PASS:` line and a filename like
 - The file contains real accounts and saves. Keep it private; never upload it to chat,
   Git or staging. If you need me to see something, send the check text, not the file.
 - The migration tool rejects a backup older than **two hours**, so step 2 follows immediately.
+- It prints a JSON schema summary (table, column and index *names*) plus a `PASS:` line.
+  The summary is safe to share; the `.sql` file is not.
 
 ## Step 2 — apply additive migrations 0008–0011 to live `pg`
 
@@ -105,6 +120,11 @@ new tables, triggers and indexes.
   schema first (see below) and decide.
 - If it stops with "Staged migration mismatch", the tree is not the reviewed candidate.
   Stop and tell me; do not edit a migration file.
+The tool refuses, by design, if the live schema already shows the launch tables, their
+triggers or indexes, or a `d1_migrations` table — so a second run cannot double-apply,
+and a half-finished earlier attempt stops instead of retrying. It also refuses if the
+`email` column or its unique index from 0007 is missing.
+
 - **Stop** on any error. A partly applied import is a recovery decision, not a retry:
   see [RECOVERY.md](RECOVERY.md).
 
