@@ -9075,3 +9075,9 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** Nothing to run. Read the last two paragraphs of the production section in `FAST-LAUNCH-CHECKLIST.md`.
 * **Checks:** `startsAt` `1793376000000` = `2026-10-30T16:00:00Z` = `31/10/2026 12:00 am` SGT, confirmed against the sandbox clock at `2026-10-30T05:02Z`; `grep` over `functions/` shows a single `INSERT INTO competition_periods` (unverified-echo.js) and settlement only updating rows in state `open` with `ends_at<=now`. Read-only throughout; no writes.
 * **Delivery:** Local documentation only. Production unchanged by this commit.
+
+### 2026-10-30 — `production is running haven-v262`
+* **Changed:** The owner's screenshot of the live login card shows `build 2026-10-29 haven-v262 unverified rankings`. Production is therefore `main` at v262 — the unverified-rankings client and the 0008–0011 read paths are already in front of real players, and the `haven-v263` write pause in PR #147 is not deployed. The checklist records this, reconciles it with the schema reading (the board code served requests, which is what set `starts_at`), and restates what remains as hardening on a live game: MFA and least privilege, a bounded load test, an independent security review, and the write pause. Merging PR #147 is now a deploy to a live game, and the ladder still begins counting at 2026-10-31 00:00 SGT.
+* **Try it:** Nothing to run. Read the final paragraph of the production section in `FAST-LAUNCH-CHECKLIST.md`.
+* **Checks:** Screenshot build string `2026-10-29 haven-v262 unverified rankings`, cross-checked against the build strings in `index.html` on `main` (`haven-v262`) and on this branch (`haven-v263`); consistent with the read-only schema check reporting a complete 0008–0011 application with `boardState: activated` and `startsAt` `2026-10-31 00:00 SGT`.
+* **Delivery:** Local documentation only. No deploy, no migration, no write.

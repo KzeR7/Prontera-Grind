@@ -192,3 +192,19 @@ payouts, and the ladder is armed to begin scoring at 00:00 SGT on 2026-10-31 whe
 not the remaining launch checks are finished. Anything that should happen before the
 ladder starts — or a decision to move `starts_at` — is a production write that needs its
 own reviewed, fixed-target tool; nothing in this repository can change it.
+
+**What production actually serves (owner screenshot, 2026-10-30).** The live login card
+reads `build 2026-10-29 haven-v262 unverified rankings`. So the deployed build is `main`
+at v262: the unverified-rankings client and the 0008–0011 read paths are already in front
+of real players, and the `haven-v263` write pause in PR #147 is **not** deployed. This is
+consistent with the schema reading — the board code served requests, and the first one set
+`starts_at`. The practical consequences:
+
+- "Launch" as *shipping the code* has already happened. Records here that describe the
+  launch as pending are describing the remaining **hardening**: MFA and least privilege, a
+  bounded load test, an independent security review, and the write pause.
+- Merging PR #147 is a deploy to a **live** game, not a dark one. It is also not urgent in
+  the way the checklist implies: the pause only matters for recovery-speed restores.
+- The unverified ladder begins counting at 2026-10-31 00:00 SGT under the accepted
+  trade-off that client-reported scores can be falsified. Nothing in the schema check
+  changes that decision; it only dates it.
