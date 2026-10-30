@@ -8976,3 +8976,9 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** `node tools/tests/hosted_launch_stage_sim.js`; generate the package again from the isolated temporary copy.
 * **Checks:** A disposable checkout created with `core.autocrlf=true` reproduced CRLF line endings and packaged successfully; a genuine `_routes.json` edit was then rejected. Synthetic staging-probe tests passed. The owner's earlier attempt stopped during package preparation, before any hosted database operation or deployment.
 * **Delivery:** Packaging fix only; no hosted migration, deployment or production data change.
+
+### 2026-10-30 — `hosted launch staging and live-backup preflight`
+* **Changed:** Recorded the owner's successful isolated v262 staging deployment and added a fixed-target, owner-run live backup and read-only schema inspection tool. It verifies the D1 name/ID, exports a private timestamped backup, restores that export in memory for integrity and foreign-key checks, and reports only migration/schema metadata. It does not run migrations or print player data.
+* **Try it:** `node tools/tests/live_backup_preflight_sim.js` uses synthetic SQL only. The owner-run script is `tools/staging/live_backup_preflight.mjs`; it targets the live database and can briefly affect availability during export. The SQL backup must remain private.
+* **Checks:** The owner reported staging binding verification, synthetic save and unverified ranking, review flags, atomic prizes, retries and synthetic account/period cleanup all passed at `https://9a39bb3a.prontera-grind-staging.pages.dev`. Synthetic backup/identity/schema tests passed locally. A hosted live backup, production schema review and production migration have not yet occurred.
+* **Delivery:** Staging deployment was owner-run. No production backup, migration or production deployment was performed by the agent.

@@ -28,6 +28,12 @@ old monitoring schema is checked and applied idempotently. No live D1 or Pages
 project is targeted. Script preparation and local simulated tests do not establish
 hosted success; inspect any cleanup failure before retrying.
 
+**Owner-reported hosted result:** The v262 package deployed to
+`https://9a39bb3a.prontera-grind-staging.pages.dev`. It verified the isolated DB
+binding, synthetic save and unverified score, flags, prize creation and duplicate
+retries, and confirmed synthetic account and period cleanup. This is staging
+only; it does not validate live migration, anti-cheat integrity or load/cost.
+
 ## Safety boundaries
 
 - `tools/staging/local.mjs` creates an OS temporary directory with a freshly generated
