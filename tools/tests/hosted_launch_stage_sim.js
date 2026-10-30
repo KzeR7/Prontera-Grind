@@ -9,6 +9,14 @@ import { freshDb,makeD1,createApp } from '../dev_server.js';
 import { syntheticProbe,unpackPayload,deployedUrl,safeSql } from '../staging/hosted_launch_stage.mjs';
 const target=path.join(os.tmpdir(),'launch-package-test-'+randomUUID()+'.mjs');
 try{
+ // Git's Windows clean filter must accept unchanged CRLF files without
+ // accepting an actual content change as the archived baseline.
+ const routes=fs.readFileSync('_routes.json','utf8').replace(/\r?\n/g,'\r\n');
+ const runGit=(args,input)=>spawnSync('git',args,{encoding:'utf8',input});
+ const original=runGit(['rev-parse','7511a03c0787ec9b8d94cfc6658570ac402dc297:_routes.json']).stdout.trim();
+ const gitArgs=['-c','core.autocrlf=true','hash-object','--path=_routes.json','--stdin'];
+ const clean=runGit(gitArgs,routes);assert.equal(clean.status,0);assert.equal(clean.stdout.trim(),original,'CRLF checkout normalizes to the committed blob');
+ assert.notEqual(runGit(gitArgs,routes+'actual change').stdout.trim(),original,'real edits remain distinct');
  const packaged=spawnSync(process.execPath,['tools/staging/package_hosted_launch.mjs',target],{encoding:'utf8'});
  assert.equal(packaged.status,0,packaged.stderr);const script=fs.readFileSync(target,'utf8');
  const encoded=script.match(/const PAYLOAD_B64 = '([^']+)'/)[1],sha=script.match(/const PAYLOAD_SHA256 = '([^']+)'/)[1];

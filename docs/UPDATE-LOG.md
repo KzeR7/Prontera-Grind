@@ -8970,3 +8970,9 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** `node tools/tests/pages_preview_runtime_sim.js` and `node tools/tests/hosted_launch_stage_sim.js`. For packaging and fixed staging boundaries, see `docs/ISOLATED-STAGING.md`.
 * **Checks:** Preview guard unit checks and disposable workerd/D1 test confirmed the synthetic preview made no database write while production/staging hosts worked. Local real-handler package probe tested flags, synthetic prizes, retries and cleanup. Fresh local Pages/D1 rehearsal passed. The most recent full JS gate had 164 passes and the unchanged intermittent camp-ring smoke failure; the two newly added tests passed separately. Hosted Pages routing, actual binding isolation, the packaged hosted rehearsal and production backup/migration remain unverified.
 * **Delivery:** Local files and package only. No push, hosted database operation or deployment at this point.
+
+### 2026-10-30 — `Windows staging package line endings`
+* **Changed:** Fixed the launch package's archive comparison to use Git's configured clean filters for mismatched files, so unchanged Windows CRLF checkouts don't appear to contain an unbundled runtime change. Actual runtime changes still fail closed.
+* **Try it:** `node tools/tests/hosted_launch_stage_sim.js`; generate the package again from the isolated temporary copy.
+* **Checks:** A disposable checkout created with `core.autocrlf=true` reproduced CRLF line endings and packaged successfully; a genuine `_routes.json` edit was then rejected. Synthetic staging-probe tests passed. The owner's earlier attempt stopped during package preparation, before any hosted database operation or deployment.
+* **Delivery:** Packaging fix only; no hosted migration, deployment or production data change.

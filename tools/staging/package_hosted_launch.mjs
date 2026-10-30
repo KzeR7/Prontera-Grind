@@ -25,7 +25,13 @@ for(const p of new Set(all)){
  if(!relevant(p)||!fs.existsSync(path.join(root,p))||!fs.statSync(path.join(root,p)).isFile())continue;
  const b=fs.readFileSync(path.join(root,p));
  const hash=createHash('sha1').update(Buffer.from(`blob ${b.length}\0`)).update(b).digest('hex');
- if(hash!==baseline.get(p)&&!files.includes(p))throw Error('Unpackaged runtime change: '+p);
+ if(hash!==baseline.get(p)&&!files.includes(p)){
+  // Windows checkouts can have CRLF while the committed blob has LF. Ask Git
+  // to apply its configured clean/eol filters, but ONLY for mismatched files;
+  // a genuinely changed or newly added runtime file still fails closed.
+  const cleaned=execFileSync('git',['hash-object','--path='+p,'--',p],{cwd:root,encoding:'utf8'}).trim();
+  if(cleaned!==baseline.get(p))throw Error('Unpackaged runtime change: '+p);
+ }
 }
 for(const p of baseline.keys())if(relevant(p)&&!fs.existsSync(path.join(root,p)))throw Error('Missing archive runtime file: '+p);
 
