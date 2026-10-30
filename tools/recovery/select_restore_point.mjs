@@ -17,7 +17,10 @@ const ages = [HOUR, 6 * HOUR, DAY, 2 * DAY, 3 * DAY, 6 * DAY];
 
 export function validateIdentity(info) {
   assert(info && info.name === NAME && info.uuid === ID, 'Wrong database or identity; stopped.');
-  assert(info.version === 'production', 'D1 production backend not confirmed; stopped.');
+  // Wrangler 4.154.0 removes `version` from d1 info --json. If present,
+  // reject anything other than production; if absent, readiness requires the
+  // actual time-travel info calls below, which Wrangler rejects for alpha D1.
+  assert(info.version === undefined || info.version === 'production', 'Unsupported D1 backend; stopped.');
 }
 export function validateBookmark(result) {
   assert(result && typeof result.bookmark === 'string' && BOOKMARK.test(result.bookmark),
@@ -91,7 +94,7 @@ async function main() {
     const remote = createRemote(temp);
     console.log('Checking production pg identity and Time Travel. Read-only: no restore or backup is performed.');
     checkReadiness(remote);
-    console.log('PASS: pg identity and production backend confirmed; Cloudflare returned current and six-day-old bookmarks.');
+    console.log('PASS: pg identity confirmed; Cloudflare Time Travel returned current and six-day-old bookmarks.');
     console.log('This does not prove the full seven-day window or your plan.');
     if (process.argv[2] === '--check') return;
     assert(process.stdin.isTTY && process.stdout.isTTY, 'Run in an interactive PowerShell window.');

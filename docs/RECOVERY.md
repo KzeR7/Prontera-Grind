@@ -12,7 +12,7 @@ it must not be blindly imported into the current database.
 ## What is implemented
 
 `tools/recovery/select_restore_point.mjs` is a **read-only Windows owner tool**. It
-checks the fixed `pg` name and UUID and `version=production`, asks Cloudflare for a
+checks the fixed `pg` name and UUID, then asks Cloudflare Time Travel for a
 current and six-day-old bookmark, and offers a menu of times (Singapore time, UTC+8)
 within the past seven days, plus custom date/time. A selected point asks Cloudflare
 for the corresponding bookmark. It does not ask for or print credentials, private
