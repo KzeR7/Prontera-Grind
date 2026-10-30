@@ -183,7 +183,7 @@ export async function createCheckoutSession(env, request, { order, item, user })
         currency: order.currency,
         unit_amount: item.price,
         product_data: {
-          name: 'Prontera Grind: ' + item.name,
+          name: 'Horizon Haven: ' + item.name,
           description: item.kind === 'cosmetic' ? item.slotLabel + ' cosmetic, unlocked forever for ' + user.username
             : item.kind === 'bundle' ? 'Unlocks picked for ' + user.username + ' from what is still locked'
             : 'Delivered to ' + user.username + ' on the next sync',

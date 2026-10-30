@@ -90,7 +90,7 @@ async function shopBuy(sku,qty){
  qty=Math.max(1,Math.min(item.maxQty||1,Math.floor(Number(qty)||1)));
  // Open the tab synchronously, inside the click, so popup blockers let it through; point it later.
  let tab=null;try{tab=window.open('','_blank')}catch(e){tab=null}
- if(tab){try{tab.document.write('<title>Prontera Grind · payment</title><p style="font:14px system-ui;padding:24px">Opening the secure payment page…</p>')}catch(e){}}
+ if(tab){try{tab.document.write('<title>Horizon Haven · payment</title><p style="font:14px system-ui;padding:24px">Opening the secure payment page…</p>')}catch(e){}}
  shopSay('Preparing your order…','');
  try{
   const r=await cloudFetch('/shop/checkout',{method:'POST',body:JSON.stringify({sku,qty})});
@@ -189,7 +189,7 @@ function shopPanel(){
   const groups=[];for(const i of items.filter(i=>i.kind==='supply')){let g=groups.find(x=>x.name===i.group);if(!g){g={name:i.group,items:[]};groups.push(g)}g.items.push(i)}
   body=`<small class="shop-sub">Supplies are delivered to your character the moment the payment is confirmed - the same way GM gifts arrive.</small>`+groups.map(g=>`<div class="shop-group"><div class="hd">${shopEsc(g.name)}</div><div class="shop-grid">${g.items.map(i=>`<div class="shop-card" data-sku="${shopEsc(i.sku)}"><div class="shop-card-head"><b>${shopEsc(i.name)}</b><span class="shop-price">${PGShop.money(i.price,cur)}</span></div><small>${shopEsc(i.blurb||'')}</small><div class="shop-card-actions"><label class="shop-qty">Qty <select data-shop-qty="${shopEsc(i.sku)}">${Array.from({length:i.maxQty||1},(_,n)=>`<option value="${n+1}">${n+1}</option>`).join('')}</select></label><button class="shop-buy" data-a="shop" data-v="buy:${shopEsc(i.sku)}"${canBuy?'':' disabled'}>Buy</button></div></div>`).join('')}</div></div>`).join('');
  }
- return `<div class="shop"><div class="shop-intro"><div class="hd">Cash Shop</div><small>Support the game and dress your character. Prices in USD; payments are handled by Stripe on a secure page, and your card details never reach Prontera Grind. Cosmetics unlock forever on this account; supplies are delivered to your character.</small></div>
+ return `<div class="shop"><div class="shop-intro"><div class="hd">Cash Shop</div><small>Support the game and dress your character. Prices in USD; payments are handled by Stripe on a secure page, and your card details never reach Horizon Haven. Cosmetics unlock forever on this account; supplies are delivered to your character.</small></div>
  ${modeLine}${pending}${note}
  <div class="atabs shop-views">${tabBtn('cosmetics','♧ Cosmetics')}${tabBtn('bundles','❖ Bundles')}${tabBtn('supplies','⚗ Supplies')}</div>
  ${body}

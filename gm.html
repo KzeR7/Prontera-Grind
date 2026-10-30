@@ -67,7 +67,7 @@ tr:hover{background:#2a2014;cursor:pointer}
   <span class="spacer"></span>
   <button id="refresh">↻ Refresh</button>
   <button id="logout">Sign out</button>
-  <button id="back" class="primary" onclick="location.href='/'">← Back to the game</button>
+  <button id="back" class="primary">← Back to the game</button>
 </header>
 
 <main>
@@ -193,7 +193,31 @@ $('players').onclick = e => {
 // Refresh reloads the usage card too: it is the screen the owner checks when they want to know what
 // the game is costing, and a stale number there would be worse than the one extra request.
 $('refresh').onclick = () => Promise.all([loadUsage(), loadDamageAlerts(), SEL ? openPlayer(SEL.account.id) : loadPlayers()]).then(() => say('Refreshed.'));
-$('logout').onclick = async () => { try { await api('/sessions', { method: 'DELETE', body: '{}' }); } catch (e) {} location.href = '/'; };
+function backToGame() {
+  try {
+    if (window.parent && window.parent !== window && typeof window.parent.closeGmConsole === 'function') {
+      window.parent.closeGmConsole();
+      return;
+    }
+    if (window.opener && !window.opener.closed) {
+      window.opener.focus();
+      window.close();
+      return;
+    }
+  } catch (e) {}
+  location.href = '/';
+}
+$('back').onclick = backToGame;
+$('logout').onclick = async () => {
+  try {
+    if (window.parent && window.parent !== window && typeof window.parent.logout === 'function') {
+      window.parent.logout();
+      return;
+    }
+  } catch (e) {}
+  try { await api('/sessions', { method: 'DELETE', body: '{}' }); } catch (e) {}
+  location.href = '/';
+};
 
 async function openPlayer(id) {
   const seq=++playerRequest;
@@ -484,12 +508,12 @@ $('detail').addEventListener('click', async e => {
 (async () => {
   try {
     const me = await api('/me');
-    if (!me.gm) { document.body.innerHTML = '<main><section class="card"><h2>Not a GM</h2><p>Sign in with the owner account in the game first, then come back. <a href="/" style="color:var(--gold)">Back to the game</a></p></section></main>'; return; }
+    if (!me.gm) { document.body.innerHTML = '<main><section class="card"><h2>Not a GM</h2><p>Sign in with the owner account in the game first, then come back. <a href="/" onclick="backToGame();return false" style="color:var(--gold)">Back to the game</a></p></section></main>'; return; }
     CATALOG=await api('/gm/catalog');
     await Promise.all([loadUsage(),loadDamageAlerts()]);
     await loadPlayers();
   } catch (e) {
-    document.body.innerHTML = '<main><section class="card"><h2>Sign in first</h2><p>This console works from the session you already have in the game. <a href="/" style="color:var(--gold)">Open the game and sign in</a>, then return here.</p></section></main>';
+    document.body.innerHTML = '<main><section class="card"><h2>Sign in first</h2><p>This console works from the session you already have in the game. <a href="/" target="_top" style="color:var(--gold)">Open the game and sign in</a>, then return here.</p></section></main>';
   }
 })();
 </script>

@@ -13,7 +13,7 @@ requires exactly that path). Backups go to `%USERPROFILE%\Desktop\HH Save`.
 
 ```powershell
 node --version      # 22.5+ (node:sqlite is used by the backup and migration tools)
-npx wrangler whoami # the account that owns the prontera-grind Pages project
+npx wrangler whoami # the account that owns the horizonhaven Pages project
 cd $HOME\Desktop\Prontera-Grind
 
 # The tools were added to main on 2026-10-30 (3d3147f, 4083e9b). An older clone

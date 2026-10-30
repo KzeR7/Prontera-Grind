@@ -1,4 +1,4 @@
-# Agent guide — Prontera Grind
+# Agent guide — Horizon Haven
 
 Start here before changing the game. This is the shared guide for coding agents;
 keep it short and keep detailed explanations in the linked documents.
@@ -25,7 +25,7 @@ than the task needs, use its headings and stop.
 
 ## Current architecture
 
-Prontera Grind is a browser Ragnarok-flavoured idle/grind game. Most game logic,
+Horizon Haven is a browser Ragnarok-flavoured idle/grind game. Most game logic,
 HTML and CSS are in `index.html`, with Three.js loaded from a CDN. Separate modules
 under `assets/` handle native wardrobe, pets and skill artwork. Cloud accounts,
 saves and GM tools use Cloudflare Pages Functions (`functions/`) and D1 SQL

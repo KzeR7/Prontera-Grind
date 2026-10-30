@@ -13,7 +13,7 @@ const API_PATHS = [
   'POST /api/sessions', 'GET /api/me', 'GET /api/board', 'POST /api/messages', 'POST /api/gm/gifts',
   'POST /api/gm/player', 'POST /api/shop/checkout', 'POST /api/shop/webhook', 'GET /api/social',
 ];
-const req = (line, host = 'prontera-grind.pages.dev') => {
+const req = (line, host = 'horizonhaven.pages.dev') => {
   const [method, path] = line.split(' ');
   return new Request('https://' + host + path, { method, headers: { 'Content-Type': 'application/json' } });
 };

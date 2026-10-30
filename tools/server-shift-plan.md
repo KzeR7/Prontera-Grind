@@ -1,4 +1,4 @@
-# Prontera Grind — the client/server shift plan
+# Horizon Haven — the client/server shift plan
 
 *Originally written 2026-10-06 for BUILD `2026-10-06 grind-v59 deeper skill lines + a free pet skill`.*
 *This plan has been kept current as the cloud-save work shipped. BUILD v65 added client-side away rewards; v66 polished presentation/login. BUILD v67 moves **cloud offline time and kill-budget authorization** to D1 server time, with a persistent one-use claim (4-hour cap, 50% rate). The browser still performs the drop/EXP/item simulation and the overall game save remains client-authoritative.*

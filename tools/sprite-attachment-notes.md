@@ -33,7 +33,7 @@ here changes the game by itself.
    the middle of an attack when the character faces away**. Without that data a renderer
    "simply always draws the weapon in front" — which looks wrong on N/NW/NE attack frames.
 
-## What that means for Prontera Grind
+## What that means for Horizon Haven
 
 * The game **already composite head + body into one sheet at runtime** (`packTex()` in
   `index.html`, per class × sex × hairstyle). "Bake them into one sprite" is therefore not
