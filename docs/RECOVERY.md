@@ -120,11 +120,15 @@ sealing is an operator judgement recorded in the audit trail — not a guarantee
 
 ### Enabling it (one deployment, in this order)
 
+> **Exact step-by-step, with a verification gate after each stage and the rollback for
+> each:** [ENABLE-WRITE-PAUSE.md](ENABLE-WRITE-PAUSE.md). Read that page rather than the
+> summary below if you are doing it for the first time.
+
 ```powershell
 # 1. the switch, with no database attached
 npx wrangler deploy --config workers/gate/wrangler.toml
 # 2. its secret (32+ random characters; the object refuses anything shorter)
-openssl rand -base64 48
+node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"   # openssl may be absent on Windows
 npx wrangler secret put GATE_TOKEN --config workers/gate/wrangler.toml
 # 3. in the root wrangler.toml, uncomment WRITE_GATE and the GATE binding, then deploy Pages
 # 4. open writes once, and check it took
