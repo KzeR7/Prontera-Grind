@@ -22,7 +22,8 @@ import { lockedCosmetics } from '../_lib/shop.js';
 import { json, guard, readJson, fail } from '../_lib/http.js';
 import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, SAVE_MISMATCH } from '../_lib/validate.js';
 import * as db from '../_lib/db.js';
-import { recordEchoScores, settleEchoRewards } from '../_lib/echo-board.js';
+import { recordDamageObservation } from '../_lib/damage-monitor.js';
+import { recordUnverifiedEcho, settleUnverifiedEcho } from '../_lib/unverified-echo.js';
 
 const HISTORY_EVERY = 10;
 const OFFLINE_CAP_MS = 4 * 60 * 60 * 1000;
@@ -152,14 +153,31 @@ export const onRequestPut = guard(async ({ request, env }) => {
   }
   const pub = publicFields(save);
   const savedAt = Date.now(); // ignore client time for cloud-save ordering and audit timestamps
+  // Diagnostics are best-effort after successful saves only. They must never
+  // make an already-committed save appear to fail, even if migration is absent.
+  const observeDamage = async () => {
+    try { await recordDamageObservation(D,user.id,save,savedAt); }
+    catch { console.warn('Damage monitoring unavailable; cloud save remains accepted.'); }
+  };
+  // Leaderboard work happens after the committed save; a monitoring/score
+  // outage must not cause an accepted save to be reported as rejected.
+  const updateLeaderboard = async () => {
+    try { await recordUnverifiedEcho(D,user.id,save,savedAt); }
+    catch { console.warn('Unverified leaderboard update unavailable; cloud save remains accepted.'); return false; }
+    // Settlement is retried independently on later saves and board reads.
+    try { await settleUnverifiedEcho(D,savedAt); }
+    catch { console.warn('Echo prizes temporarily unavailable; settlement will be retried.'); }
+    return true;
+  };
   const clientVersion = Math.floor(Number(body.version) || 0);
 
   const row = await db.saveByUser(D, user.id);
   if (!row) {
     await db.insertSave(D, user.id, body.blob, savedAt, pub);
-    await recordEchoScores(D, user.id, pub);
     await db.pushHistory(D, user.id, 1, body.blob, savedAt);
-    return json({ version: 1, bytes: body.blob.length });
+    await observeDamage();
+    const leaderboardSynced = await updateLeaderboard();
+    return json({ version: 1, bytes: body.blob.length, leaderboardPending: !leaderboardSynced });
   }
   // v88.6: the copy already stored must not belong to someone else either. It is never written over.
   if (savedElsewhere(row.blob, user.username)) return saveMismatch(user);
@@ -216,13 +234,12 @@ export const onRequestPut = guard(async ({ request, env }) => {
     }
   }
 
-  // Endless Echo scores ride along on the accepted save; settled period prizes are queued as
-  // grants here too, so winners who never open the board still get paid on their next sync.
-  await recordEchoScores(D, user.id, pub);
-  await settleEchoRewards(D, savedAt);
+  // This board is explicitly unverified: a browser-authored save is not proof of a score.
+  await observeDamage();
+  const leaderboardSynced = await updateLeaderboard();
   if (next % HISTORY_EVERY === 0) {
     await db.pushHistory(D, user.id, next, body.blob, savedAt);
     await db.trimHistory(D, user.id, 5);
   }
-  return json({ version: next, bytes: body.blob.length, offlineClaimId: appliedClaim ? requestedClaimId : null });
+  return json({ version: next, bytes: body.blob.length, offlineClaimId: appliedClaim ? requestedClaimId : null, leaderboardPending: !leaderboardSynced });
 });

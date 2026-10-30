@@ -53,8 +53,10 @@ There is no root package manifest and no JavaScript bundler.
   affected checks during development. Before any push, run the gate in
   [Testing](docs/TESTING.md#before-pushing) and add **no new failures** to its
   known-red baseline (7 suites were already red on `main` at `ae3897d`; 6 since
-  `haven-v253` turned `publish_sim` green — the table and the reason for each are
-  in Testing). Never delete an assertion, loosen a
+  `haven-v253` turned `publish_sim` green, and 1 original suite on this draft
+  after remeasurement and owner-approved alignment of outdated combat tests —
+  the table and the reason for each are in Testing).
+  Never delete an assertion, loosen a
   budget or re-hash a balance fixture to make a red row green — and say in the
   handoff if a green row turned red. A skip is not a pass.
 - Do not put secrets in the repo or change the shared GM password for a preview.

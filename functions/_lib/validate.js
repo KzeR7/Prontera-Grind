@@ -17,6 +17,17 @@ export function checkUsername(name) {
   return u;
 }
 
+// Email addresses are identifiers, not proof of ownership. Fold case consistently and
+// reject controls/whitespace; do not apply provider-specific alias or dot rewriting.
+export function checkEmail(value) {
+  const email = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (email.length > 254 || !/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,63}$/.test(email) ||
+      email.includes('..') || email.split('@')[0].length > 64) {
+    throw new HttpError(400, 'Enter a valid email address.');
+  }
+  return email;
+}
+
 export function checkPassword(pass, min) {
   const p = String(pass || '');
   if (p.length < min) throw new HttpError(400, `Password must be at least ${min} characters.`);
@@ -89,6 +100,8 @@ const DAY_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 function echoFields(save) {
   const trial = save && typeof save.trial === 'object' && save.trial ? save.trial : {};
   const board = trial.echoBoard && typeof trial.echoBoard === 'object' ? trial.echoBoard : {};
+  // Legacy projection only; the new unverified board reads accepted save fields
+  // directly and does not cap scores at this former sanity threshold.
   const dps = v => Math.min(100_000_000, Math.max(0, Number(v) || 0));
   const key = v => (typeof v === 'string' && DAY_KEY_RE.test(v) ? v : null);
   return {

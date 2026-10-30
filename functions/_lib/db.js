@@ -16,10 +16,10 @@ export const userById = (db, id) =>
 export const countUsers = async (db) =>
   (await db.prepare('SELECT COUNT(*) AS n FROM users').first())?.n ?? 0;
 
-export const insertUser = (db, { username, passHash, recoveryHash, gm = 0 }) =>
-  db.prepare(`INSERT INTO users(username, pass_hash, recovery_hash, gm, created_at, fail_count, fail_at)
-              VALUES(?, ?, ?, ?, ?, 0, 0)`)
-    .bind(username, passHash, recoveryHash, gm, now()).run();
+export const insertUser = (db, { username, email, passHash, recoveryHash, gm = 0 }) =>
+  db.prepare(`INSERT INTO users(username, email, pass_hash, recovery_hash, gm, created_at, fail_count, fail_at)
+              VALUES(?, ?, ?, ?, ?, ?, 0, 0)`)
+    .bind(username, email, passHash, recoveryHash, gm, now()).run();
 
 export const setPassword = (db, userId, passHash) =>
   db.prepare('UPDATE users SET pass_hash = ?, fail_count = 0, fail_at = 0 WHERE id = ?')
@@ -139,6 +139,34 @@ export const blobBytes = (db, userId) =>
   db.prepare('SELECT LENGTH(blob) AS n FROM saves WHERE user_id = ?').bind(userId).first();
 
 // -------------------------------------------------------------- sessions ----
+// A session must be created against the *same* password that was verified. D1 batches are
+// transactional: a concurrent password reset/ban either happens first (this inserts nothing),
+// or afterwards (its session revocation removes the new session). The guarded delete/note only
+// run for an inserted token, keeping a failed stale login from affecting a newer session.
+export async function startVerifiedSession(db, { tokenHash, userId, expectedHash, upgradeHash, expiresAt, ua, ipHash }) {
+  const statements = [];
+  if (upgradeHash) statements.push(db.prepare(`UPDATE users SET pass_hash = ? WHERE id = ? AND pass_hash = ? AND banned = 0`)
+    .bind(upgradeHash, userId, expectedHash));
+  const insertIndex = statements.length;
+  statements.push(db.prepare(`INSERT INTO sessions(token_hash, user_id, created_at, expires_at, ua, ip_hash)
+    SELECT ?, id, ?, ?, ?, ? FROM users WHERE id = ? AND pass_hash = ? AND banned = 0`)
+    .bind(tokenHash, now(), expiresAt, ua, ipHash, userId, upgradeHash || expectedHash));
+  statements.push(db.prepare(`DELETE FROM sessions WHERE user_id = ? AND token_hash <> ?
+    AND EXISTS (SELECT 1 FROM sessions WHERE user_id = ? AND token_hash = ?)`)
+    .bind(userId, tokenHash, userId, tokenHash));
+  statements.push(db.prepare(`UPDATE users SET last_login_at = ?, fail_count = 0, fail_at = 0
+    WHERE id = ? AND EXISTS (SELECT 1 FROM sessions WHERE user_id = ? AND token_hash = ?)`)
+    .bind(now(), userId, userId, tokenHash));
+  const result = await db.batch(statements);
+  return Number(result?.[insertIndex]?.meta?.changes ?? result?.[insertIndex]?.meta?.rows_written ?? 0) === 1;
+}
+
+// The password change and session invalidation must commit together.
+export const setPasswordAndRevoke = (db, userId, passHash) => db.batch([
+  db.prepare('UPDATE users SET pass_hash = ?, fail_count = 0, fail_at = 0 WHERE id = ?').bind(passHash, userId),
+  db.prepare('DELETE FROM sessions WHERE user_id = ?').bind(userId),
+]);
+
 export const insertSession = (db, tokenHash, userId, expiresAt, ua, ipHash) =>
   db.prepare(`INSERT INTO sessions(token_hash, user_id, created_at, expires_at, ua, ip_hash)
               VALUES(?, ?, ?, ?, ?, ?)`)
@@ -273,19 +301,40 @@ export const usageLedger = async (db, sinceMs) => {
 // ----------------------------------------------------------- rate limits ----
 // Windows are fixed-size: cheap, good enough, and it keeps the SQL tiny.
 export async function hitRate(db, key, limit, windowMs) {
-  const row = await db.prepare('SELECT * FROM rate_limits WHERE key = ?').bind(key).first();
   const t = now();
-  if (!row || t - row.window_start > windowMs) {
-    await db.prepare('INSERT OR REPLACE INTO rate_limits(key, count, window_start) VALUES(?, 1, ?)')
-      .bind(key, t).run();
-    return { ok: true, count: 1 };
-  }
-  if (row.count >= limit) return { ok: false, count: row.count, retryAfter: Math.ceil((row.window_start + windowMs - t) / 1000) };
-  await db.prepare('UPDATE rate_limits SET count = count + 1 WHERE key = ?').bind(key).run();
-  return { ok: true, count: row.count + 1 };
+  // A single upsert prevents concurrent requests from passing the same counter value.
+  const row = await db.prepare(`INSERT INTO rate_limits(key, count, window_start) VALUES(?, 1, ?)
+    ON CONFLICT(key) DO UPDATE SET
+      count = CASE WHEN ? - window_start >= ? THEN 1 ELSE count + 1 END,
+      window_start = CASE WHEN ? - window_start >= ? THEN ? ELSE window_start END
+    RETURNING count, window_start`).bind(key, t, t, windowMs, t, windowMs, t).first();
+  const ok = row.count <= limit;
+  return { ok, count: row.count, ...(ok ? {} : { retryAfter: Math.max(1, Math.ceil((row.window_start + windowMs - t) / 1000)) }) };
 }
 
 export const clearRate = (db, key) =>
   db.prepare('DELETE FROM rate_limits WHERE key = ?').bind(key).run();
 
 export { now };
+
+// ---------------------------------------------------------- damage monitor ----
+// Client-reported diagnostics only. Six-hour buckets and fixed slots cap writes
+// and storage; neither a sample nor a flag can change scores, grants or bans.
+export const damageSampleStatement = (db,{userId,slot,bucket,at,map,stage,totalDamage,echoBest}) =>
+  db.prepare(`INSERT INTO damage_samples(user_id,slot,bucket,sampled_at,map,stage,reported_total_damage,reported_echo_best)
+    VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(user_id,slot) DO UPDATE SET bucket=excluded.bucket,
+    sampled_at=excluded.sampled_at,map=excluded.map,stage=excluded.stage,
+    reported_total_damage=excluded.reported_total_damage,reported_echo_best=excluded.reported_echo_best
+    WHERE excluded.bucket>damage_samples.bucket`)
+    .bind(userId,slot,bucket,at,map,stage,totalDamage,echoBest);
+export const damageAlertStatement = (db,{userId,at,kind,value,bucketMs}) =>
+  db.prepare(`INSERT INTO damage_alerts(user_id,kind,first_seen,last_seen,max_reported_dps,observations)
+    VALUES(?,?,?,?,?,1) ON CONFLICT(user_id,kind) DO UPDATE SET
+    last_seen=excluded.last_seen,max_reported_dps=MAX(damage_alerts.max_reported_dps,excluded.max_reported_dps),
+    observations=damage_alerts.observations+1 WHERE excluded.last_seen-damage_alerts.last_seen>=?`)
+    .bind(userId,kind,at,at,value,bucketMs);
+export const recentDamageAlerts = (db,limit=100) => db.prepare(`SELECT a.user_id,u.username,a.kind,a.first_seen,a.last_seen,
+    a.max_reported_dps,a.observations FROM damage_alerts a JOIN users u ON u.id=a.user_id
+    ORDER BY a.last_seen DESC,a.user_id ASC LIMIT ?`).bind(limit).all();
+export const damageSamplesFor = (db,userId) => db.prepare(`SELECT sampled_at,map,stage,reported_total_damage,reported_echo_best
+    FROM damage_samples WHERE user_id=? ORDER BY sampled_at DESC LIMIT 28`).bind(userId).all();

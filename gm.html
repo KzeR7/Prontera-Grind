@@ -78,6 +78,12 @@ tr:hover{background:#2a2014;cursor:pointer}
   </section>
 
   <section class="card">
+    <h2>Damage review</h2>
+    <p class="small">Client-reported values may be wrong or edited. Flags cover invalid cumulative damage or reported Echo best DPS over a provisional 100M threshold; no flag does not mean a player is clean. Flags take no action.</p>
+    <div id="damagealerts" class="small">Loading…</div>
+  </section>
+
+  <section class="card">
     <h2>Players <span id="count" class="small"></span></h2>
     <div class="row"><input id="search" placeholder="filter by name" style="flex:1"></div>
     <div style="max-height:60vh;overflow:auto"><table id="players"><thead>
@@ -144,6 +150,25 @@ async function loadUsage() {
   ].join('');
 }
 
+async function loadDamageAlerts() {
+  const box=$('damagealerts');
+  try {
+    const data=await api('/gm/damage');
+    box.innerHTML=data.alerts.length ? data.alerts.map(a=>`<p><button type="button" data-damage-player="${a.user_id}">${esc(a.username)}</button> · ${a.kind==='invalid-total-damage'?'Invalid cumulative damage reported':'Reported Echo DPS '+esc(damageNumber(a.max_reported_dps))}<br><span class="small">${a.kind==='invalid-total-damage'?'Negative or non-finite total':'Over provisional 100M review threshold'} · ${esc(when(a.last_seen))} · ${nfmt(a.observations)} recorded observations</span></p>`).join('') : 'No flags recorded.';
+  } catch(e) { box.textContent='Damage monitoring unavailable: '+e.message; }
+}
+function damageNumber(n) { return n == null ? '—' : Number(n)>=1e12 ? '≥1,000,000,000,000' : nfmt(Math.round(Number(n))); }
+$('damagealerts').onclick=e=>{const b=e.target.closest('[data-damage-player]');if(b){TAB='damage';openPlayer(+b.dataset.damagePlayer).catch(err=>say(err.message,1));}};
+async function renderDamage(body,id) {
+  body.innerHTML='<p class="small">Loading damage observations…</p>';
+  try {
+    const d=await api('/gm/damage?id='+id);
+    if(SEL?.account.id!==id||TAB!=='damage'||body!==$('tabbody'))return;
+    body.innerHTML=`<p class="small">Reported by the browser, not proof of cheating. Samples are at most one per six-hour period, up to 28 per account. Total damage is cumulative, not field DPS; Echo is a reported personal best. No automatic ban or payout action.</p>` +
+      (d.samples.length?`<table><thead><tr><th>Sampled</th><th>Map / stage</th><th>Total damage</th><th>Echo best DPS</th></tr></thead><tbody>${d.samples.map(r=>`<tr><td>${esc(when(r.sampled_at))}</td><td>${esc(r.map==null?'—':r.map)} / ${esc(r.stage==null?'—':r.stage)}</td><td>${esc(damageNumber(r.reported_total_damage))}</td><td>${esc(damageNumber(r.reported_echo_best))}</td></tr>`).join('')}</tbody></table>`:'<p class="small">No samples recorded yet.</p>');
+  } catch(e) { if(SEL?.account.id===id&&TAB==='damage'&&body===$('tabbody'))body.textContent='Damage monitoring unavailable: '+e.message; }
+}
+
 async function loadPlayers() {
   const d = await api('/gm/players');
   PLAYERS = d.players;
@@ -167,7 +192,7 @@ $('players').onclick = e => {
 };
 // Refresh reloads the usage card too: it is the screen the owner checks when they want to know what
 // the game is costing, and a stale number there would be worse than the one extra request.
-$('refresh').onclick = () => Promise.all([loadUsage(), SEL ? openPlayer(SEL.account.id) : loadPlayers()]).then(() => say('Refreshed.'));
+$('refresh').onclick = () => Promise.all([loadUsage(), loadDamageAlerts(), SEL ? openPlayer(SEL.account.id) : loadPlayers()]).then(() => say('Refreshed.'));
 $('logout').onclick = async () => { try { await api('/sessions', { method: 'DELETE', body: '{}' }); } catch (e) {} location.href = '/'; };
 
 async function openPlayer(id) {
@@ -200,7 +225,7 @@ function renderDetail() {
       <div class="stat"><b>${s ? nfmt(s.kills) : '—'}</b><span class="small">lifetime kills</span></div>
     </div>
     <div class="tabs">
-      ${['character', 'equipment', 'account', 'send', 'shop', 'announce', 'history', 'log'].map(t => `<button data-tab="${t}" class="${TAB === t ? 'on' : ''}">${({ character:'Full stats',equipment:'Equipment & affixes',account: 'Account', send: 'Send items & Zeny', shop: 'Cash Shop', announce: 'Announce', history: 'Backups', log: "This player's log" })[t]}</button>`).join('')}
+      ${['character', 'equipment', 'damage', 'account', 'send', 'shop', 'announce', 'history', 'log'].map(t => `<button data-tab="${t}" class="${TAB === t ? 'on' : ''}">${({ character:'Full stats',equipment:'Equipment & affixes',damage:'Damage',account: 'Account', send: 'Send items & Zeny', shop: 'Cash Shop', announce: 'Announce', history: 'Backups', log: "This player's log" })[t]}</button>`).join('')}
     </div>
     <div id="tabbody"></div>`;
   renderTab();
@@ -210,6 +235,7 @@ function renderTab() {
   const d = SEL, a = d.account, s = d.save, body = $('tabbody');
   if(TAB==='character'){renderCharacter(body,s);
   }else if(TAB==='equipment'){renderEquipment(body,s);
+  }else if(TAB==='damage'){renderDamage(body,a.id);
   }else if (TAB === 'account') {
     body.innerHTML = `
       <div class="row"><button data-act="note">Add a note to the log</button></div>
@@ -218,7 +244,7 @@ function renderTab() {
         <legend class="small">Password (owner only · never readable, only replaceable)</legend>
         <div class="row"><input id="newpw" type="password" placeholder="new password (min 10)" style="flex:1">
         <button data-act="set-password">Set password</button></div>
-        <span class="small">Setting it signs them out everywhere. They can still use their recovery code.</span>
+        <span class="small">Setting it signs them out everywhere. Recovery requires a registered email and recovery code.</span>
       </fieldset>
       <fieldset style="border:1px solid var(--edge);border-radius:6px;padding:8px">
         <legend class="small">GM level (owner only)</legend>
@@ -460,7 +486,7 @@ $('detail').addEventListener('click', async e => {
     const me = await api('/me');
     if (!me.gm) { document.body.innerHTML = '<main><section class="card"><h2>Not a GM</h2><p>Sign in with the owner account in the game first, then come back. <a href="/" style="color:var(--gold)">Back to the game</a></p></section></main>'; return; }
     CATALOG=await api('/gm/catalog');
-    await loadUsage();          // both cards in parallel: the usage call is the slow one (Cloudflare API)
+    await Promise.all([loadUsage(),loadDamageAlerts()]);
     await loadPlayers();
   } catch (e) {
     document.body.innerHTML = '<main><section class="card"><h2>Sign in first</h2><p>This console works from the session you already have in the game. <a href="/" style="color:var(--gold)">Open the game and sign in</a>, then return here.</p></section></main>';

@@ -77,8 +77,8 @@ try{
   setup('Arch Bishop');const r=probe(`S.sk.ab_ward=1;tickCombatSkills(.01);const low=skillState().absorb.amount;S.sk.ab_ward=10;skCd.ab_ward=0;delete skillState().buffs.ab_ward;tickCombatSkills(.01);const high=skillState().absorb.amount;absorbSoak(10);tickCombatSkills(.01);return {low,high,remaining:skillState().absorb.amount}`);
   assert(r.high>r.low);assert.equal(r.remaining,r.high-10);
  });
- test('Chain Lightning bounces inside its pack; Cluster Bomb delays its blast',()=>{
-  setup('Warlock');assert.deepEqual(probe(`mobs.push({...mob,x:1},{...mob,x:2,pack:1});let xs=[];const real=skillHit;skillHit=(o,n)=>{xs.push(o.x);return 1};castSkill(SKILLS.find(s=>s.id==='wl_chain'),1);skillHit=real;return xs`),[0,1]);
+ test('Chain Lightning bounces across camps within its cap; Cluster Bomb delays its blast',()=>{
+  setup('Warlock');assert.deepEqual(probe(`mobs.push({...mob,x:1},{...mob,x:2,pack:1},{...mob,x:3,pack:1},{...mob,x:4,pack:1},{...mob,x:.5,hp:0});let xs=[];const real=skillHit;skillHit=(o,n)=>{xs.push(o.x);return 1};castSkill(SKILLS.find(s=>s.id==='wl_chain'),1);skillHit=real;return xs`),[0,1,2,3]);
   setup('Ranger');assert(ev(`castSkill(SKILLS.find(s=>s.id==='rg_cluster'),1);skillState().events.length===1`));ev('tickCombatSkills(.61)');assert.equal(ev('skillState().events.length'),0);
  });
  test('old ranks and stable IDs survive save reload; converted buffs are removed from attack slots',()=>{

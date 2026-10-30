@@ -72,7 +72,7 @@ node -e '
   const m = html.match(/const BUILD=\x27([^\x27]+)\x27/);
   if (!m || !m[1]) { console.error("BUILD BROKEN: const BUILD missing in index.html"); process.exit(1); }
   fs.writeFileSync(out + "/version.txt", m[1]);
-  fs.writeFileSync(out + "/_headers", "/version.txt\n  Cache-Control: no-store\n  Content-Type: text/plain; charset=utf-8\n");
+  fs.writeFileSync(out + "/_headers", "/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n/version.txt\n  Cache-Control: no-store\n  Content-Type: text/plain; charset=utf-8\n");
 ' "$OUT"
 
 # A build that silently ships the wrong thing is worse than one that fails.

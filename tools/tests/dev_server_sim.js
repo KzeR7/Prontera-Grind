@@ -24,7 +24,7 @@ let pass = 0, fail = 0;
 const t = async (n, fn) => { try { await fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + (e && e.message)); fail++; } };
 console.log('dev server: the real handlers over real HTTP, with cookies\n');
 
-const { port, close } = await start({ port: 0, host: '127.0.0.1', site });
+const { port, close, sqlite } = await start({ port: 0, host: '127.0.0.1', site });
 const base = 'http://127.0.0.1:' + port;
 const jar = {};                                   // one cookie jar per named player
 const call = async (who, method, url, body) => {
@@ -32,7 +32,7 @@ const call = async (who, method, url, body) => {
     method,
     headers: Object.assign({ 'Content-Type': 'application/json' },
       jar[who] ? { cookie: jar[who] } : {}),
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : JSON.stringify(url === '/api/register' ? {email:String(body.u)+'@example.test', ...body} : body),
   });
   const raw = r.headers.getSetCookie ? r.headers.getSetCookie() : [];
   if (raw.length) jar[who] = raw.map(c => c.split(';')[0]).join('; ');
@@ -49,10 +49,11 @@ try {
     assert.ok(me.type.includes('json'), 'a JSON content type on /api/me is the client\'s whole probe, got ' + me.type);
   });
 
-  await t('the first account registered becomes the owner, and gets a recovery code', async () => {
+  await t('the first account is a player and gets a recovery code', async () => {
     const r = await call('owner', 'POST', '/api/register', { u: 'KzeR', p: 'a-long-owner-password' });
     assert.strictEqual(r.status, 201);
-    assert.strictEqual(r.data.gm, 2, 'the first account must be the owner - no bootstrap secret in the repo');
+    assert.strictEqual(r.data.gm, 0, 'first public registration must not create an owner');
+    sqlite.prepare("UPDATE users SET gm=2 WHERE username='KzeR'").run();
     assert.match(r.data.recovery, /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
     assert.ok(jar.owner.includes('pg_session='), 'a session cookie must come back over the wire');
   });
@@ -72,11 +73,11 @@ try {
       const host = 'http://127.0.0.1:' + preview.port;
       const first = await fetch(host + '/api/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ u: 'Owner', p: 'a-long-owner-password' }),
+        body: JSON.stringify({ u: 'Owner', p: 'a-long-owner-password', email:'owner@example.test' }),
       });
       const second = await fetch(host + '/api/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ u: 'Second', p: 'a-long-second-password' }),
+        body: JSON.stringify({ u: 'Second', p: 'a-long-second-password', email:'second@example.test' }),
       });
       const a = await first.json(), b = await second.json();
       assert.strictEqual(a.gm, 2, 'the first preview account is an owner');
@@ -247,7 +248,7 @@ try {
     const preview = await start({ port: 0, host: '127.0.0.1', site, gmAll: true, fakePayments: true });
     try {
       const host = 'http://127.0.0.1:' + preview.port;
-      const reg = await fetch(host + '/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ u: 'Buyer', p: 'a-long-buyer-password' }) });
+      const reg = await fetch(host + '/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ u: 'Buyer', p: 'a-long-buyer-password', email:'buyer@example.test' }) });
       const cookie = reg.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
       const h = { 'Content-Type': 'application/json', cookie };
       const buy = await (await fetch(host + '/api/shop/checkout', { method: 'POST', headers: h, body: JSON.stringify({ sku: 'cos:backwear:wings' }) })).json();

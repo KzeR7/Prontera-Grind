@@ -3606,3 +3606,24 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
 #wins .wp.eclipse-equipment-workspace-window .wbody,
 #wins [data-win="equip"]>.wbody{min-height:0;flex:1 1 auto}
 #wins .eclipse-affix-empty{place-content:center;flex:1;min-height:0}
+
+/* Account recovery: use the same card and fields as sign-in, with an explicit success step. */
+#loginOverlay [hidden]{display:none!important}
+#loginOverlay .recovery-link,#loginOverlay .recovery-back{
+  display:block;width:100%;background:transparent;border:0;box-shadow:none;
+  color:var(--gold);font-size:11px;text-align:center;padding:10px 8px;cursor:pointer;
+}
+#loginOverlay .recovery-link:hover,#loginOverlay .recovery-back:hover{text-decoration:underline}
+#loginOverlay .recovery-link:focus-visible,#loginOverlay .recovery-back:focus-visible{
+  outline:2px solid var(--gold);outline-offset:2px;
+}
+#loginOverlay .recovery-intro,#loginOverlay .recovery-success p{
+  color:var(--e-muted);font-size:11px;line-height:1.6;margin:8px 0 12px;opacity:1;
+}
+#loginOverlay .recovery-status{color:#f09b87;font-size:11px;line-height:1.5;margin:0;min-height:0;opacity:1}
+#loginOverlay .recovery-success h3{color:var(--ink);font-size:15px;margin:8px 0}
+#loginOverlay .recovery-success code{
+  display:block;overflow-wrap:anywhere;text-align:center;color:var(--gold);background:var(--e-bg);
+  border:1px solid var(--edge);border-radius:6px;padding:14px 8px;margin:14px 0;font-size:16px;letter-spacing:1px;
+}
+#loginOverlay .recovery-success .login-btn{white-space:normal}

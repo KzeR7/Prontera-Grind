@@ -912,20 +912,39 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=211">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=212">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=1">
 <script src="assets/ui/mobile.js?v=1"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 <link rel="stylesheet" href="assets/social.css?v=209">
 </head>
 <body>
-<div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2>Welcome back.</h2><p class="login-intro">Your adventure is right where you left it.</p><div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
+<div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
 <form id="loginForm" autocomplete="on">
 <div class="form-group"><label for="username">Account Name</label><input type="text" id="username" required autocomplete="username"></div>
 <div class="form-group"><label for="password">Password</label><div class="eclipse-password"><input type="password" id="password" required autocomplete="current-password"><button type="button" id="eclipseShowPassword" aria-pressed="false" aria-label="Password visibility">Show</button></div></div>
+<div class="form-group" id="emailRow" style="display:none"><label for="email">Email (one account per address)</label><input type="email" id="email" autocomplete="email" maxlength="254"><small>Used with your recovery code; email is not verified yet.</small></div>
 <div class="form-group" id="regRow" style="display:none"><label for="password2">Confirm Password</label><input type="password" id="password2" autocomplete="new-password"></div>
 <label class="remember-user" for="rememberUser"><input type="checkbox" id="rememberUser"> Remember user ID on this device</label>
 <button type="submit" id="authBtn" class="login-btn">Login</button><div id="loginErr" class="login-err"></div></form>
+<button type="button" id="recoveryOpen" class="recovery-link">Forgot password?</button>
+<form id="recoveryForm" hidden>
+  <p class="recovery-intro">Enter your registered email and saved recovery code. Accounts without email need GM help.</p>
+  <div class="form-group"><label for="recoverUser">Account name</label><input id="recoverUser" autocomplete="username" required></div>
+  <div class="form-group"><label for="recoverEmail">Registration email</label><input id="recoverEmail" type="email" autocomplete="email" required></div>
+  <div class="form-group"><label for="recoverCode">Recovery code</label><input id="recoverCode" autocomplete="off" required></div>
+  <div class="form-group"><label for="recoverPassword">New password</label><input id="recoverPassword" type="password" autocomplete="new-password" minlength="10" maxlength="200" required></div>
+  <div class="form-group"><label for="recoverConfirm">Confirm new password</label><input id="recoverConfirm" type="password" autocomplete="new-password" minlength="10" maxlength="200" required></div>
+  <p id="recoverStatus" class="recovery-status" role="status" aria-live="polite"></p>
+  <button type="submit" id="recoverSubmit" class="login-btn">Reset password</button>
+  <button type="button" id="recoverClose" class="recovery-back">Back to login</button>
+</form>
+<section id="recoverySuccess" class="recovery-success" hidden aria-labelledby="recoverySuccessTitle">
+  <h3 id="recoverySuccessTitle">Password reset</h3>
+  <p id="recoverSuccessDetail">Save your NEW recovery code somewhere private. The old code no longer works. You will need the new code for your next password reset.</p>
+  <code id="recoverNewCode"></code>
+  <button type="button" id="recoverDone" class="login-btn">I saved it — back to login</button>
+</section>
 <small id="loginHint">Your character lives on the server. Sign in on any device and continue exactly where you left off.</small>
 <div id="loginCloud" style="margin-top:8px;font-size:11px;opacity:.75;text-align:center"></div>
 <!-- v2 (2026-10-27): the device-save backup/restore links are gone. Cloud is the only save,
@@ -1049,7 +1068,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <!-- v1 Morocc atlas generator deleted (2026-10-04): retired to Updates/retired-v1-kit/ when map
      kit v2 shipped, and this tag pointed at a file that no longer exists in the tree. kit_sim
      asserts it is never loaded again. -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
 <script>
 const $=id=>document.getElementById(id);
 // Owner request (2026-10-24): no browser menu anywhere in the game - a right-click used to offer
@@ -1290,7 +1309,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-10-28 haven-v255 starter guide and coach tips';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-29 haven-v262 unverified rankings';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1904,6 +1923,18 @@ function makeMythicEquipment(setKey,slot,weaponType){
   const item={id:uid(),slot,wt:slot==='weapon'?weaponType:undefined,tier,val,name:'Mythic '+name,aff,slots,cards:[],sec:6,lvl:150,quality:1.5,mp:set.map,mythic:true,ascSet:setKey,mythicGiftVersion:1};
   return{item};
 }
+// GM gear can be generated several times within one millisecond. Reserve IDs already
+// present anywhere in the save and in this grant, without changing existing equipment,
+// cards, loadout references or the numeric ID format used by equip().
+function gmGearIdAllocator(state){
+  const used=new Set(),seen=new WeakSet(),todo=[state];
+  for(const record of Object.values(state?.base||{}))for(const id of Object.values(record?.eq||{}))if(id!=null)used.add(String(id));
+  while(todo.length){const obj=todo.pop();if(!obj||typeof obj!=='object'||seen.has(obj))continue;seen.add(obj);
+    if(obj.id!=null)used.add(String(obj.id));
+    for(const value of Object.values(obj))if(value&&typeof value==='object')todo.push(value);
+  }
+  return item=>{let id=item.id;while(used.has(String(id)))id+=1;used.add(String(id));item.id=id;return item;};
+}
 // GM presets grant separate items; selecting a class never changes the player's job or gear.
 const GM_ASC_PRESETS={
   'Rune Knight':{set:'molten',main:'str'},'Warlock':{set:'ethereal',main:'int'},
@@ -1916,8 +1947,9 @@ function gmMaxAscensionGear(cls){
   const recipes=[...c.wt.map(w=>['weapon',w]),...['armor','head','leg','acc','acc'].map(slot=>[slot])];
   if(dualWield(cls))recipes.push(['weapon','dagger']);
   if(S.inv.length+recipes.length>BAGMAX)return log('Make bag space for the complete preset ('+recipes.length+' items).','r0');
+  const reserveId=gmGearIdAllocator(S);
   const gear=recipes.map(([slot,wt])=>{
-    const it=makeMythicEquipment(preset.set,slot,wt).item,magic=preset.main==='int';
+    const it=reserveId(makeMythicEquipment(preset.set,slot,wt).item),magic=preset.main==='int';
     const priority=slot==='weapon'?(wt==='staff'?['matk','int','dex','hp']:magic?['str','atk','aspd','cdm']:[preset.main,'atk','crit','cdm']):
       slot==='head'?[preset.main,magic?'matk':'atk','vit','hp']:
       slot==='acc'?[preset.main,magic?'matk':'atk','crit','cdm']:
@@ -2394,7 +2426,7 @@ function trialLobby(view){
         <span class="trial-choice-timer">OPEN</span></button>
     </div>
     <details class="trial-reward-details" open><summary>Ranked completion payout <small>100 Echo Shards per completed ranked run</small></summary>${trialLadderHtml()}</details>
-    <p class="trial-note">Milestone caches are one-time rewards. Ranked payouts repeat; a new personal best updates your record but adds no bonus. Ranked DPS also enters the Endless Echo leaderboard (Community → Leaderboard): its Top 100 win Echo Shards and protection scrolls every day and every week.</p>
+    <p class="trial-note">Milestone caches are one-time rewards. Ranked payouts repeat; a new personal best updates your record but adds no bonus. Leaderboards use browser-reported scores that can be edited; suspicious reports are flagged for review. Personal trial rewards are unchanged.</p>
     <div class="trial-foot"><button data-trial="close">Close</button></div>`;
   el.classList.add('on');
   return el}
@@ -3493,6 +3525,7 @@ restoreRememberedUser();
 let authMode='login';
 function showErr(m,ok){const e=$('loginErr');e.textContent=m;e.style.color=ok?'#2a9d3f':'#e5484d'}
 function setMode(m){authMode=m;$('tabLogin').classList.toggle('on',m==='login');$('tabReg').classList.toggle('on',m==='reg');$('regRow').style.display=m==='reg'?'block':'none';
+  if($('emailRow'))$('emailRow').style.display=m==='reg'?'block':'none';if($('email'))$('email').required=m==='reg'&&CLOUD.api;
   $('authBtn').textContent=m==='reg'?'Create Account':'Login';$('password').autocomplete=m==='reg'?'new-password':'current-password';$('password2').required=m==='reg';showErr('')}
 function submitAuth(e,confirmed=false){
   if(e)e.preventDefault();
@@ -3505,6 +3538,7 @@ function submitAuth(e,confirmed=false){
       if(p.length<(CLOUD.api?10:4))return showErr(CLOUD.api?'Cloud passwords must be at least 10 characters.':'Password must be at least 4 characters.');
       if(p.length>200)return showErr('Password is too long.');
       if($('password2').value.trim()!==p)return showErr('Passwords do not match.');
+      if(CLOUD.api&&!$('email')?.value.trim())return showErr('Enter an email address for this account.');
       if(!confirmed){
         const where=CLOUD.api?'This cloud account can be used on other devices.':'This local account is stored in this browser only.';
         return ask(`Create the account “${u}”?\n\n${where}`,()=>submitAuth(null,true),{yes:'Create account',no:'Cancel'});
@@ -3613,7 +3647,7 @@ function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;cloudTouchSeq++;CLOUD.di
 
 // Push the current save. Returns 'ok' | 'conflict' | 'offline' | 'idle'; never throws, because a dead
 // network must not interrupt play - it only leaves the local copy leading, and the badge says so.
-let cloudLockWarned=false;   // haven-v215: the cosmetic refusal is explained once, not once a minute
+let cloudLockWarned=false,cloudBoardWarned=false;   // warnings are explained once, not once a minute
 async function cloudPush(push){
   if(!CLOUD.on||!S||!currentUser||CLOUD.paused)return 'idle';
   if(CLOUD.lost)return 'idle';   // the character is away until /api/save answers again
@@ -3646,7 +3680,9 @@ async function cloudPush(push){
       return 'adopted'}
     if(r.status===428){const d=await r.json().catch(()=>({}));if(d.offlineClaim){applyOfflineProgress(Date.now(),d.offlineClaim);CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'offline-claim'}throw new Error(d.err||'A server-timed offline claim is required.')}
     if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=cloudTouchSeq!==seq;CLOUD.lastPush=Date.now();CLOUD.offline=false;
+    const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=cloudTouchSeq!==seq||!!d.leaderboardPending;CLOUD.lastPush=Date.now();CLOUD.offline=false;
+    if(d.leaderboardPending&&!cloudBoardWarned){cloudBoardWarned=true;cloudSay('Your cloud save succeeded, but the Echo leaderboard update is pending. It will retry on the next sync; sync before the period ends.','r0')}
+    if(!d.leaderboardPending)cloudBoardWarned=false;
     cloudBadge(CLOUD.dirty?'☁ …':'☁ ✓',CLOUD.dirty?'Waiting to sync':'Saved to your account · v'+CLOUD.ver+' · '+new Date().toLocaleTimeString());
     return 'ok';
   }catch(e){
@@ -3867,8 +3903,8 @@ function gmApplyGift(p){
   if(!Number.isInteger(amount)||amount<1||amount>1000000)throw Error('Invalid gift quantity');
   if(p.resource){
     if(['ori','elu'].includes(p.resource))S.ore[p.resource]+=amount;
-    else if(['shards','dps','refineScrolls','mythicScrolls'].includes(p.resource))S[p.resource]=safeCount(S[p.resource])+amount;
-    else if(p.resource==='dailyRolls'){const st=dailyWheelState();st.bonusRolls=Math.min(10000,(st.bonusRolls||0)+amount);}
+    else if(['shards','dps','refineScrolls','mythicScrolls'].includes(p.resource)){const have=safeCount(S[p.resource]);if(amount>Number.MAX_SAFE_INTEGER-have)throw Error('Not enough room for this gift; it will remain pending');S[p.resource]=have+amount;}
+    else if(p.resource==='dailyRolls'){const st=dailyWheelState();if(amount>10000-st.bonusRolls)throw Error('Use some banked Daily Roulette rolls first; this gift will remain pending');st.bonusRolls+=amount;}
     else if(/^ascMat[0-2]$/.test(p.resource))S.ascensionMat[+p.resource.slice(6)]+=amount;
     else if(/^nmat[0-4]$/.test(p.resource))S.nmMat[0]+=amount;
     else if(/^nm[0-9]$/.test(p.resource))S.nmMat[nmMatIndex(+p.resource.slice(2))]+=amount;
@@ -4013,7 +4049,7 @@ async function cloudAuth(u,p,isReg){
   showErr(isReg?'Creating your account…':'Signing in…',true);
   if(btn)btn.disabled=true;
   try{
-    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:JSON.stringify({u,p}),signal:ac.signal});
+    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:isReg?JSON.stringify({u,p,email:$('email').value.trim()}):JSON.stringify({u,p}),signal:ac.signal});
     const d=await r.json().catch(()=>null);
     clearTimeout(timer);
     if(!r.ok)return showErr((d&&d.err)||('Error '+r.status));
@@ -4024,9 +4060,9 @@ async function cloudAuth(u,p,isReg){
     if(isReg&&d.recovery){
       // Shown exactly once ever: the server keeps only its hash. It is the only way back in without
       // the GM, so it is treated as seriously as the password itself.
-      ask('Account created. Save this recovery code somewhere safe - it is the only way to reset your password without the GM:\n\n📋  '+d.recovery,
+      ask('Account created. Save this recovery code somewhere safe. You need it AND your registration email to reset your password without the GM:\n\n📋  '+d.recovery,
         ()=>initSessionFromCloud(d.u,d.gm,true).catch(e=>showErr('Account created, but the game could not start: '+e.message)),
-        {yes:'I saved it — enter the game',no:'Not now'});
+        {yes:'I saved it — enter the game',requireConfirm:true});
       return;
     }
     // Awaited on purpose. Without the await, a throw while the session starts (a save that will not
@@ -6736,7 +6772,7 @@ const V={
     return`<div class="board-panel"><div class="board-periods">${[['kills','Kills'],['echo','Endless Echo']].map(([k,l])=>`<button data-a="boardkind" data-v="${k}" class="${boardKind===k?'on':''}" aria-pressed="${boardKind===k}">${l}</button>`).join('')}</div><div class="board-periods">${periods.map(p=>`<button data-a="boardperiod" data-v="${p}" class="${boardPeriod===p?'on':''}" aria-pressed="${boardPeriod===p}">${labels[p]}</button>`).join('')}</div>
       <div class="board-head"><small>${data?esc(data.label):'Periods use Singapore time'}${boardLoading&&data?' · refreshing…':''}</small><button data-a="boardrefresh" title="Refresh the scores" aria-label="Refresh leaderboard">↻</button></div>
       <div class="board-row" style="font-weight:bold;border-bottom:1px solid var(--edge)"><span>#</span><span>Player</span><span>Base</span><span>${echo?'Best DPS':'Kills'}</span></div>${state}${rewards}
-      <small class="board-note">${echo?'Ranked by your best ranked Endless Echo DPS in the period, then current Base Lv. Top 100 shown; daily and weekly Top 100 are paid when the period ends (Singapore time), as gifts on your next sync. Scores sync with your cloud save.':'Ranked by kills, then current Base Lv. Daily and weekly scores count kills synced since the leaderboard launched; all-time starts from existing cloud saves. Scores are self-reported.'}</small></div>`},
+      <small class="board-note">${echo?'Scores are browser-reported and can be falsified. Flags are for review only. Finish and sync before the Singapore period ends; late/offline scores are not counted. Equal scores rank by account ID.':'Kills are browser-reported and can be falsified. This leaderboard is not verified.'}</small></div>`},
   log(){const cats=LOGCATS.map(([k,n])=>`<label class="logf"><input type="checkbox" data-a="logf" data-v="${k}" ${logOn(k)?'checked':''} aria-label="Show ${n} lines"> ${n}</label>`).join('');
     const shown=logShown();
     return`<div class="log-preview-controls"><button data-a="feed" aria-pressed="${feedOn()}">${feedOn()?"Hide":"Show"} on-screen log</button><small>Choose event types below for the on-screen preview and activity history.</small></div><div class="logfbar">${cats}<span class="sp"><button data-a="logfall" data-v="on">All</button><button data-a="logfall" data-v="off">None</button></span></div>
@@ -7054,7 +7090,7 @@ function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(
   +(rollingSet.has(p.id)?`<div class="slot roll-status" id="rf${p.id}"><span>🎲 Rolling...</span></div>`:p.last?`<div class="roll-status"><span>Last roll: Grade ${p.last}</span></div>`:`<div class="roll-status"><span>&nbsp;</span></div>`)
   +(p.roll?`<div class="slot"><span>Rolled <b>Grade ${p.roll}</b> (x${MUT[p.roll]})</span><span><button data-a="pkeep" data-v="${p.id}">Keep new</button> <button data-a="pdisc" data-v="${p.id}">Keep old</button></span></div>`:'')
   +`<small>Odds: G1 50% &middot; G2 30% &middot; G3 16.5% &middot; G4 2.5% &middot; G5 0.8% &middot; G6 0.2%</small></div>`}
-function ask(msg,yes,labels={}){$('mt').textContent=msg;$('my').textContent=labels.yes||'Yes';$('mn').textContent=labels.no||'Cancel';$('modal').style.display='flex';$('my').onclick=()=>{$('modal').style.display='none';yes()};$('mn').onclick=()=>{$('modal').style.display='none'}}
+function ask(msg,yes,labels={}){$('mt').textContent=msg;$('my').textContent=labels.yes||'Yes';$('mn').textContent=labels.no||'Cancel';$('mn').style.display=labels.requireConfirm?'none':'';$('modal').style.display='flex';$('my').onclick=()=>{$('modal').style.display='none';yes()};$('mn').onclick=()=>{$('modal').style.display='none'}}
 function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this item.</small>';if((sel.cards||[]).length>=sel.slots)return'';const fit=S.cards.filter(c=>cardFits(c,sel));
   return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[cardGroup(c),c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${esc(cardName(c))} <small>${cardEffects(c).map(cardEffectText).join(', ')} &middot; x${fit.filter(x=>cardGroup(x)===cardGroup(c)).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
 // v76.2: `anchor` is a selector for the control the player just pressed (a stage node, a map card).
@@ -8134,7 +8170,7 @@ const ACT={
   transformasc:v=>{const[key,id]=v.split(':');const it=[...items(),...S.inv].find(x=>String(x.id)===id);if(!it||S.reforgePending&&String(S.reforgePending.id)===id)return;const result=transformToMythic(it,key);if(result?.error){log(result.error,'r0');return}ascensionItemPick='';log('Ascended '+iname(it)+' — your N+ item has evolved.','r4','gear');ui();save()},
   gmendgame:()=>{if(!S.gm)return;S.lv=150;S.pts=Math.max(0,totalPts()-ptsSpent());S.zeny+=10000000000;S.ascensionMat=S.ascensionMat.map(n=>safeCount(n)+1000);S.mythicScrolls=safeCount(S.mythicScrolls)+100;S.refineScrolls=safeCount(S.refineScrolls)+100;S.ore.ori+=1000;S.ore.elu+=1000;ui();save()},
   gmmaxset:cls=>gmMaxAscensionGear(cls),
-  gmset:key=>{if(!S.gm||!Object.hasOwn(ASC_SETS,key))return;const recipes=[...C().wt.map(w=>['weapon',w]),...['armor','head','off','leg','acc','acc'].map(s=>[s,undefined])];if(S.inv.length+recipes.length>BAGMAX)return log('Make bag space for the complete set.','r0');const z=S.zeny,m=S.ascensionMat;try{S.zeny=1e12;S.ascensionMat=[10000,10000,10000];for(const [slot,wt] of recipes){const r=makeMythicEquipment(key,slot,wt);if(r?.item)S.inv.push(r.item)}}finally{S.zeny=z;S.ascensionMat=m}ui();save()},
+  gmset:key=>{if(!S.gm||!Object.hasOwn(ASC_SETS,key))return;const recipes=[...C().wt.map(w=>['weapon',w]),...['armor','head','off','leg','acc','acc'].map(s=>[s,undefined])];if(S.inv.length+recipes.length>BAGMAX)return log('Make bag space for the complete set.','r0');const z=S.zeny,m=S.ascensionMat,reserveId=gmGearIdAllocator(S);try{S.zeny=1e12;S.ascensionMat=[10000,10000,10000];for(const [slot,wt] of recipes){const r=makeMythicEquipment(key,slot,wt);if(r?.item)S.inv.push(reserveId(r.item))}}finally{S.zeny=z;S.ascensionMat=m}ui();save()},
   gmaura:v=>{if(!S.gm)return;S.lv=+v;S.pts=Math.max(0,totalPts()-ptsSpent());ui();save()},
   gmascstats:v=>{if(!S.gm)return;const a=ascState();if(v==='max'){a.level=50;a.xp=0;}else{a.level=0;a.xp=0;a.stats[S.cls]={};}S.hp=Math.min(S.hp,maxHp());ui();save()},
   gmascskills:v=>{if(!S.gm)return;const a=ascState();if(!a.skills[S.cls])a.skills[S.cls]={level:0,xp:0,ranks:{}};const t=a.skills[S.cls];if(v==='max'){t.level=30;t.xp=0;}else{t.level=0;t.xp=0;t.ranks={};resetSkillRuntime();swing=null;for(const id in skCd)delete skCd[id];}ui();save()},
@@ -12537,6 +12573,47 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();el
 setInterval(bgTick,SIM_BG_MS);
 resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();
 if(typeof BGM!=='undefined')BGM.playLogin();
+// Recovery never sends the password or code to an email provider. A code is rotated on use.
+function recoveryShowLogin(){
+  $('recoveryForm').hidden=true;$('recoverySuccess').hidden=true;$('recoverNewCode').textContent='';
+  $('recoveryForm').reset();$('recoverStatus').textContent='';$('loginForm').hidden=false;
+  $('authTabs').hidden=false;$('recoveryOpen').hidden=false;$('loginHint').hidden=false;$('loginCloud').hidden=false;
+  $('authHeading').textContent='Welcome back.';$('authIntro').hidden=false;
+  setMode('login');$('password').value='';$('password2').value='';$('password').focus();
+}
+$('recoveryOpen').onclick=()=>{
+  if(!CLOUD.api)return showErr('Cloud account recovery is unavailable here.');
+  $('recoverUser').value=$('username').value.trim();$('recoverStatus').textContent='';
+  $('loginForm').hidden=true;$('authTabs').hidden=true;$('recoveryOpen').hidden=true;
+  $('loginHint').hidden=true;$('loginCloud').hidden=true;$('authIntro').hidden=true;
+  $('authHeading').textContent='Recover account';$('recoverySuccess').hidden=true;$('recoveryForm').hidden=false;
+  $('recoverUser').focus();
+};
+$('recoverClose').onclick=recoveryShowLogin;
+$('recoverDone').onclick=recoveryShowLogin;
+$('recoveryForm').onsubmit=async e=>{
+  e.preventDefault();const status=$('recoverStatus'),btn=$('recoverSubmit');
+  if(btn.disabled)return;
+  if($('recoverPassword').value.trim()!==$('recoverConfirm').value.trim()){status.textContent='Passwords do not match.';return}
+  const username=$('recoverUser').value.trim();
+  btn.disabled=true;$('recoverClose').disabled=true;status.textContent='Resetting password…';
+  let outcomeUncertain=true;
+  try{
+    const r=await cloudFetch('/recover',{method:'POST',body:JSON.stringify({u:username,email:$('recoverEmail').value.trim(),code:$('recoverCode').value.trim(),p:$('recoverPassword').value.trim()})});
+    outcomeUncertain=r.status>=500;const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.err||'Could not reset password.');
+    // The old code has been consumed. Keep the new one visible until the player explicitly
+    // acknowledges it; never redirect automatically or allow the old form to be submitted again.
+    $('username').value=username;$('recoverCode').value='';$('recoverPassword').value='';$('recoverConfirm').value='';
+    const validCode=typeof data.recovery==='string'&&/^[A-Z0-9]{4}(?:-[A-Z0-9]{4}){3}$/.test(data.recovery);
+    $('recoverNewCode').textContent=validCode?data.recovery:'';
+    $('recoverNewCode').hidden=!validCode;
+    $('recoverSuccessDetail').textContent=validCode?'Save your NEW recovery code somewhere private. The old code no longer works. You will need the new code for your next password reset.':'Your password was reset, but the new recovery code could not be displayed. Contact an owner if you need account recovery later.';
+    $('recoverDone').textContent=validCode?'I saved it — back to login':'Back to login';
+    $('authHeading').textContent='Password reset';$('recoveryForm').hidden=true;$('recoverySuccess').hidden=false;
+    $('recoverDone').focus();
+  }catch(err){status.textContent=(err.message||'Could not reach the server.')+(outcomeUncertain?' The reset may have completed. If your old code no longer works, contact an owner for help.':'')}finally{btn.disabled=false;$('recoverClose').disabled=false}
+};
 // ---------- update watcher ---------------------------------------------------------------
 // Deployments notify players once; only their button click saves and refreshes the page.
 function showUpdatePrompt(build=BUILD){

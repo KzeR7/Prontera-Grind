@@ -20,6 +20,26 @@ try{
    if(cls==='Guillotine Cross')assert.equal(ev("S.inv.filter(it=>it.wt==='dagger').length"),2);
   }
  });
+ test('equal clock and random draws cannot duplicate GM gear IDs or existing saved IDs',()=>{
+  const result=ev(`(()=>{const now=Date.now,rand=Math.random;try{
+   Date.now=()=>1700000000000;Math.random=()=>.5;
+   S=fresh();S.gm=true;S.cls='Guillotine Cross';
+   S.inv=[{id:1700000000000.5,slot:'armor',sec:0}];
+   S.eq.weapon={id:1700000000001.5,slot:'weapon',wt:'dagger',sec:0};
+   S.cards=[{id:1700000000002.5,card:1}];
+   S.base.Warlock={eq:{weapon:1700000000003.5}};
+   const before=JSON.stringify([S.inv[0],S.eq.weapon,S.cards,S.base]);
+   ACT.gmmaxset(S.cls);ACT.gmset('voidwalker');
+   const ids=[...S.inv.map(x=>x.id),S.eq.weapon.id,...S.cards.map(x=>x.id),S.base.Warlock.eq.weapon];
+   const preserved=before===JSON.stringify([S.inv[0],S.eq.weapon,S.cards,S.base]);
+   const gear=JSON.stringify(S.inv.map(it=>({...it,locked:false}))),pick=S.inv.find(it=>it.wt==='dagger').id;
+   localStorage.setItem(saveKey(),JSON.stringify(S));S=load();
+   const reloaded=JSON.stringify(S.inv)===gear;ACT.equip(String(pick));
+   return {count:ids.length,unique:new Set(ids.map(String)).size,numeric:ids.every(x=>typeof x==='number'),preserved,reloaded,equipped:S.eq.weapon.id===pick};
+  }finally{Date.now=now;Math.random=rand}})()`);
+  assert.equal(result.unique,result.count,'all generated and existing IDs remain distinct');
+  assert.equal(result.numeric,true,'existing numeric equip contract');assert.equal(result.preserved,true);assert.equal(result.reloaded,true);assert.equal(result.equipped,true);
+ });
  test('grant preserves class, equipment, pending reforge, wallet and existing item identity',()=>{
   ev("S.cls='Novice';S.eq.weapon={id:123,slot:'weapon',wt:'dagger',sec:0};S.inv=[{id:456,slot:'armor',sec:0}];S.reforgePending={id:123};window.oldItem=S.inv[0];window.original=JSON.stringify([S.cls,S.lv,S.st,S.jobs,S.eq,S.zeny,S.ore,S.ascensionMat,S.reforgePending]);ACT.gmmaxset('Warlock')");
   assert.equal(ev('S.inv[0]===window.oldItem'),true);

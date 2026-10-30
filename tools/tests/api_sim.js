@@ -109,7 +109,7 @@ const login = async (env, body) => {
 
 // Every handler in one place, so a rename fails here rather than in production.
 const api = {
-  register: (env, body) => call('onRequestPost', 'api/register.js', { request: req('POST', '/api/register', { body }), env }),
+  register: (env, body) => call('onRequestPost', 'api/register.js', { request: req('POST', '/api/register', { body: { email: String(body.u || 'fixture').replace(/[^A-Za-z0-9]/g, '') + '@example.test', ...body } }), env }),
   login,
   logout: (env, cookie) => call('onRequestDelete', 'api/sessions.js', { request: req('DELETE', '/api/sessions', { cookie }), env }),
   me: (env, cookie) => call('onRequestGet', 'api/me.js', { request: req('GET', '/api/me', { cookie }), env }),
@@ -165,10 +165,11 @@ console.log('server: accounts, sessions, saves, GM actions (real SQL)\n');
 // --------------------------------------------------------------- the story ----
 const { env, sqlite } = freshEnv();
 
-await T('the first account ever registered becomes the owner', async () => {
+await T('public registration creates a player even on a fresh database', async () => {
   const r = await api.register(env, { u: 'KzeR', p: 'owner-password-1' });
   assert.strictEqual(r.status, 201);
-  assert.strictEqual(r.data.gm, 2, 'the first account must be the owner');
+  assert.strictEqual(r.data.gm, 0, 'public registration must not create an owner');
+  sqlite.prepare("UPDATE users SET gm=2 WHERE username='KzeR'").run(); // operator provisions the fixture owner
   assert.ok(r.cookie?.startsWith('pg_session='), 'register must set a session cookie');
   assert.match(r.data.recovery, /^[A-Z0-9]{4}(-[A-Z0-9]{4})+$/, 'a recovery code is returned once');
 });
@@ -717,6 +718,7 @@ await T('v88.6: a save written before the stamp existed still loads, and is stam
 await T('v88.6: the GM cannot restore another account\'s backup onto a player, but can restore that player\'s own', async () => {
   const h = freshEnv();
   const owner = (await api.register(h.env, { u: 'KzeR', p: 'owner-password-1' })).cookie;
+  h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='KzeR'").run();
   const player = await api.register(h.env, { u: 'PLAYERR', p: 'player-password-1' });
   await api.putSave(h.env, player.cookie, { version: 0, blob: saveBlob(15, 5), savedAt: 1 });
   const pid = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('PLAYERR').id;
@@ -767,8 +769,9 @@ await T('a conflict (or a claim demand) still moves the away baseline', async ()
 });
 
 await T('the usage card is GM-only, and without an Analytics token it still answers', async () => {
-  const { env: e4 } = freshEnv();
+  const { env: e4, sqlite: db4 } = freshEnv();
   const owner = (await api.register(e4, { u: 'KzeR', p: 'owner-password-1' })).cookie;
+  db4.prepare("UPDATE users SET gm=2 WHERE username='KzeR'").run();
   const player = (await api.register(e4, { u: 'PLAYER', p: 'player-password' })).cookie;
   assert.strictEqual((await api.usage(e4, null)).status, 401);
   assert.strictEqual((await api.usage(e4, player)).status, 403, 'a player must not read the account usage');
@@ -788,6 +791,7 @@ await T('the usage card is GM-only, and without an Analytics token it still answ
 await T('the usage card reads Cloudflare\'s own counters when the token is set', async () => {
   const h = freshEnv();
   const owner = (await api.register(h.env, { u: 'OWNER', p: 'owner-password-1' })).cookie;
+  h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='OWNER'").run();
   const realFetch = globalThis.fetch;
   let seen = null;
   globalThis.fetch = async (url, init) => {
@@ -820,6 +824,7 @@ await T('the usage card reads Cloudflare\'s own counters when the token is set',
 await T('a broken Analytics token degrades to the ledger instead of breaking the console', async () => {
   const h = freshEnv();
   const owner = (await api.register(h.env, { u: 'OWNER', p: 'owner-password-1' })).cookie;
+  h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='OWNER'").run();
   const realFetch = globalThis.fetch;
   globalThis.fetch = async () => ({ ok: false, status: 403, json: async () => ({ errors: [{ message: 'Authentication error' }] }) });
   try {

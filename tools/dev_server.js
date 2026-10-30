@@ -34,9 +34,14 @@ export function makeD1(sqlite) {
     first: async () => stmt.get(...args) ?? null,
     all: async () => ({ results: stmt.all(...args) }),
     run: async () => ({ success: true, meta: stmt.run(...args) }),
+    _runSync: () => ({ success: true, meta: stmt.run(...args) }),
   });
-  return { prepare: sql => wrap(sqlite.prepare(sql)),batch:async statements=>{
-    sqlite.exec('BEGIN IMMEDIATE');try{const out=[];for(const q of statements)out.push(await q.run());sqlite.exec('COMMIT');return out}catch(e){sqlite.exec('ROLLBACK');throw e}
+  return { prepare: sql => wrap(sqlite.prepare(sql)), batch: async statements => {
+    // Complete a whole transaction without yielding: other requests must not interleave
+    // individual statements on this shared SQLite connection.
+    sqlite.exec('BEGIN IMMEDIATE');
+    try { const out = statements.map(q => q._runSync()); sqlite.exec('COMMIT'); return out; }
+    catch (e) { sqlite.exec('ROLLBACK'); throw e; }
   } };
 }
 
@@ -64,6 +69,7 @@ export function freshDb(file) {
 export const ROUTES = {
   'GET /api/version': ['onRequestGet', 'api/version.js'],
   'POST /api/register': ['onRequestPost', 'api/register.js'],
+  'POST /api/recover': ['onRequestPost', 'api/recover.js'],
   'POST /api/sessions': ['onRequestPost', 'api/sessions.js'],
   'DELETE /api/sessions': ['onRequestDelete', 'api/sessions.js'],
   'GET /api/me': ['onRequestGet', 'api/me.js'],
@@ -80,6 +86,7 @@ export const ROUTES = {
   'GET /api/gm/player': ['onRequestGet', 'api/gm/player.js'],
   'POST /api/gm/player': ['onRequestPost', 'api/gm/player.js'],
   'GET /api/gm/log': ['onRequestGet', 'api/gm/log.js'],
+  'GET /api/gm/damage': ['onRequestGet', 'api/gm/damage.js'],
   'GET /api/gm/usage': ['onRequestGet', 'api/gm/usage.js'],
   'GET /api/shop/catalog': ['onRequestGet', 'api/shop/catalog.js'],
   'POST /api/shop/checkout': ['onRequestPost', 'api/shop/checkout.js'],
@@ -100,21 +107,19 @@ const TYPES = {
 
 // The env a handler sees. DB is the shim; anything else a function might want is a deliberate
 // omission, so it fails loudly here instead of behaving differently in production.
-// DEV_GM_ALL is only ever set by this tool (see --gm-all below), never by Cloudflare. It makes every
-// account registered against this process an owner, which is what a throwaway preview server wants:
-// the database dies with the process, so "the account I made last time" is always gone.
+// GM promotion is implemented only in this local router, never in deployed registration.
+// --gm-all is unsafe for real users, real accounts, and publicly accessible hosts.
 // SHOP_FAKE_CHECKOUT (--fake-payments) makes the Cash Shop deliver an order the moment it is placed,
 // with no Stripe account: the same code path a real payment ends in, minus the card. Production
 // never sets it; there the shop is off until STRIPE_SECRET_KEY exists (docs/MONETIZATION-SETUP.md).
-export function makeEnv(sqlite, { gmAll = false, fakePayments = false } = {}) {
+export function makeEnv(sqlite, { fakePayments = false } = {}) {
   const env = { DB: makeD1(sqlite) };
-  if (gmAll) env.DEV_GM_ALL = 'all';
   if (fakePayments) env.SHOP_FAKE_CHECKOUT = '1';
   return env;
 }
 
 export function createApp({ sqlite, site, gmAll = false, fakePayments = false }) {
-  const env = makeEnv(sqlite, { gmAll, fakePayments });
+  const env = makeEnv(sqlite, { fakePayments });
   const dir = site || path.join(root, 'dist');
   // The Pages asset store, shimmed locally: /api/version reads the served index.html through it,
   // exactly like the real binding does on Cloudflare.
@@ -155,7 +160,15 @@ export function createApp({ sqlite, site, gmAll = false, fakePayments = false })
         status: 501, headers: { 'Content-Type': 'application/json' },
       });
     }
-    return mod[fn]({ request, env, params: {} });
+    const response = await mod[fn]({ request, env, params: {} });
+    if (gmAll && request.method === 'POST' && url.pathname === '/api/register' && response.status === 201) {
+      // This code runs only in the disposable Node preview, not in Pages Functions.
+      const data = await response.clone().json();
+      sqlite.prepare('UPDATE users SET gm = 2 WHERE username = ? COLLATE NOCASE').run(data.u);
+      data.gm = 2;
+      return new Response(JSON.stringify(data), { status: response.status, headers: response.headers });
+    }
+    return response;
   };
 }
 
@@ -244,6 +257,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const dbFile = arg('--db') || process.env.DEV_DB || undefined;
   // --fake-payments: Cash Shop purchases complete instantly without Stripe (preview/rehearsal only).
   const fakePayments = process.argv.includes('--fake-payments') || process.env.SHOP_FAKE_CHECKOUT === '1';
+  if (gmAll && !['127.0.0.1', 'localhost', '::1'].includes(host))
+    console.warn('WARNING: GM preview is reachable beyond localhost; use only disposable data and a trusted network.');
   const { port: got, close } = await start({ port, host, gmAll, dbFile, fakePayments });
   console.log('Prontera Grind — local server (Pages Functions + D1 shim, in memory)');
   console.log('  game    http://localhost:' + got + '/');
@@ -253,7 +268,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   console.log('  data    ' + (dbFile ? 'kept in ' + dbFile + ' (accounts and saves survive a restart)' : 'in memory - restarting this process wipes accounts and saves'));
   console.log(gmAll
     ? '  gm      EVERY account registered here is an owner (gm=2) - this is a preview server'
-    : '  gm      the first account you register becomes the owner (gm=2); --gm-all makes every account one');
+    : '  gm      public registrations are players; --gm-all is for disposable local testing only');
   console.log(fakePayments
     ? '  shop    FAKE payments: every Cash Shop order is delivered instantly, no card, no Stripe'
     : '  shop    Cash Shop in preview mode (no payments); add --fake-payments to rehearse purchases');

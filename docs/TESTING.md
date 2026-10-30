@@ -39,9 +39,76 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```
 
+## Latest local gate (haven-v262)
+
+The most recent complete local run had **164 passes / 1 failure** across 165 suites.
+The one failure is the previously known intermittent camp-ring smoke assertion; the
+owner chose to retain the current camp layout, and that assertion was not changed.
+The new preview runtime and hosted launch package tests were added after the run began
+and passed separately; their complete-suite run is still pending. No dependency skips
+were reported. Preview configuration, local workerd preview routing and all three
+generated-asset checks passed. This is local evidence only.
+
+## Account security and unverified competitive boards (haven-v262)
+
+Apply migrations only to disposable databases when testing. The local server applies
+all of them automatically. `node tools/tests/launch_security_sim.js` covers legacy
+accounts, concurrent email registration, recovery, request limits and unverified
+board disclosure. `node tools/tests/unverified_echo_launch_sim.js` covers launch
+cutoff, >100M review-only flags, retryable score updates, old-period nonpayment,
+atomic rollback, new prizes and retries. `echo_board_sim.js` preserves reward tier
+and HTTP checks under the new season policy; `competition_pause_sim.js` confirms
+legacy non-atomic entry points remain disabled. `prize_delivery_safety_sim.js`
+checks full-cap gift delivery. `node tools/staging/local.mjs test` uses an isolated
+local Pages/D1 project and synthetic accounts, with a test-only start override.
+None proves browser score integrity or hosted launch readiness. See
+[Competition security](COMPETITION-SECURITY.md) for cutoffs and remaining risks.
+
+
+## Password-recovery UI
+
+`node tools/tests/recovery_ui_sim.js` checks recovery validation, cancellation,
+rotated-code acknowledgement and the return to login without touching a real account.
+For an additional Chromium check, install `playwright-core` and `@sparticuz/chromium`
+together with the packages above (no root package manifest means an npm install can
+prune earlier packages), build the site and start `HOST=127.0.0.1 node
+tools/dev_server.js --port 8793`. In another terminal run `node
+tools/check_recovery_browser.cjs`. It creates synthetic accounts only and rejects
+non-loopback test URLs; never use real account credentials. It checks desktop and
+phone-width layouts, errors, success and signing in again without a refresh. Stop the
+server after testing. This check was run with bundled headless Chromium in Linux; it
+is not a substitute for hosted staging or physical-device checks.
+
+## Ground-spell target behavior
+
+The owner chose on 2026-10-28 to retain the existing behavior: ground field pulses
+hit every living enemy inside their radius across camps, without a five-target cap.
+This supersedes the v227 update log's five-target claim for ground fields only;
+direct AoE remains capped at five. `node tools/tests/ground_aoe_sim.js` checks both,
+including range, movement, target death and switching active camps, using synthetic
+in-memory game state. No damage formulas or balance settings were changed.
+
+## Isolated Pages/D1 rehearsal
+
+Use `bash tools/build_site.sh && node tools/staging/local.mjs test` for a fresh,
+synthetic, local-only Wrangler Pages/D1 rehearsal; `node tools/staging/local.mjs serve`
+starts the same isolated setup for manual testing with a synthetic GM owner. See
+[Isolated staging](ISOLATED-STAGING.md) for Windows steps, credentials, safety boundaries
+and limitations. This is not hosted Cloudflare staging.
+The optional `node tools/staging/local.mjs test-strong` uses 600,000 PBKDF2
+iterations in a temporary copy only, testing legacy upgrade and recovery races. It
+does not alter the production candidate or prove hosted limits. The 2026-10-29
+gate after this work had 146 passes and the same four failures; both new competition
+checks and all three generated-asset checks passed.
+
 ## Choose the preview for the task
 
 ### Game plus accounts, cloud saves and GM tools
+
+Damage-review draft: run `node tools/tests/damage_monitor_sim.js` for bounded samples, GM authorization, provisional flags and best-effort save behavior. See [Damage monitoring](DAMAGE-MONITORING.md); no browser-reported flag proves cheating or enables payouts.
+
+Prize work: `node tools/tests/competition_settlement_foundation_sim.js` exercises the disabled settlement batch and synthetic prize delivery; `node tools/tests/prize_delivery_safety_sim.js` checks full balances. `tools/audits/competition_settlement_foundation_d1_local.mjs` additionally needs local Miniflare and tests disposable D1 only. The new unverified scorer uses the atomic batch; old period rows remain disconnected. See [Competition security](COMPETITION-SECURITY.md).
+Baseline draft: `node tools/tests/competition_baseline_foundation_sim.js` and the optional disposable `tools/audits/competition_baseline_foundation_d1_local.mjs`. Grandfathered source data is not verified gear, and baseline capture is not activated.
 
 ```sh
 bash tools/build_site.sh
@@ -53,7 +120,9 @@ actual API handlers through a local SQLite D1 shim and applies local migrations.
 `dist/` after changing client files; restart after changing API handlers (the server
 caches imported modules).
 
-For disposable GM testing use `node tools/dev_server.js --gm-all` and register a
+For disposable GM testing on your own computer, bind to localhost (for example,
+`HOST=127.0.0.1 node tools/dev_server.js --gm-all` on macOS/Linux, or
+`$env:HOST="127.0.0.1"; node tools/dev_server.js --gm-all` in PowerShell) and register a
 synthetic account in that local instance — it grants owner access only there. The
 database is in memory by default; `--db tools/.devdb/preview.sqlite` keeps local test
 data across restarts. Do not change the shared GM password or use production credentials
@@ -77,7 +146,7 @@ decoding need HTTP. A platform may provide a different entry URL; use its previe
 
 ## Before pushing
 
-The gate is: the three generated-asset checks, every `*_sim.js` and every `*_smoke.js`.
+The gate is: the three generated-asset checks, the Pages preview config check, every `*_sim.js` and every `*_smoke.js`.
 Read the output, not just the exit code — a suite that prints a dependency skip and exits
 0 has not passed.
 
@@ -90,6 +159,7 @@ to **7** purely by installing them — so if the count is huge and spread across
 systems, it is the environment, not the patch.
 
 ```sh
+python3 tools/tests/pages_preview_config_sim.py  # Python 3.11+ (tomllib)
 python3 tools/make_sprite_viewer.py --check
 python3 tools/make_class_skins.py --check
 python3 tools/make_weapon_pack.py --check
@@ -105,6 +175,43 @@ broke. The gate is therefore **"no new failures, and no suite gets quieter"** �
 green", which this tree has not been since v221.
 
 **2026-10-28 (`haven-v253`): `publish_sim.js` is green again — 17/17, so the baseline is 6.**
+
+**2026-10-29 (draft after `haven-v258`): `skill_balance_sim.js` now passes** after
+fully rerunning the original benchmark against both its pinned historical revision and
+the current game. The old baseline rows and measurement tool were identical; all 126
+current rows were remeasured, and the existing budgets were not changed. The 21 moving
+encounter rows differed from the previously saved sample; a second run reproduced the
+new values exactly in this environment. Current-vs-prior sample kills ranged from
+−18.10% to +30.26%, while sampled death and boss-win outcomes stayed the same. These
+are fixed-seed 120-second samples, not real-world guarantees or a retuning decision.
+At that point, five original game suites remained red, plus three competition suites
+paused on this branch. `combat_field_contract_sim.js` adds current-rule checks.
+
+**2026-10-29 (later draft):** The owner explicitly approved replacing the outdated
+pack-only expectations in four combat suites with the current cross-camp rules. The
+four suites now pass with checks for shape, range, target limits, waking, timing and
+cancellation retained or strengthened; no gameplay code or combat balance changed.
+The separate 3.35-unit camp-spacing assertion was not changed and remains red.
+The three competition suites remain red while their features are paused.
+
+**2026-10-29 GM identity observation:** `gm_presets_sim.js` intermittently fails
+its unchanged item-ID uniqueness assertion. The game and suite matched the prior
+PR head when reproduced. `node tools/audits/gm_item_id_collision.cjs` deliberately
+forces the same clock and random values in a disposable game and demonstrates that
+all eight preset items can receive the same ID. This is a potential item identity
+bug, not a reason to weaken that test; investigate/fix separately without changing
+existing saves or removing GM testing. The full-gate recheck returned 147 passing
+and the same four known failures, while the preceding run hit this intermittent GM
+failure.
+
+**2026-10-29 (camp/auth audit):** The original 3.35-unit camp smoke was not changed.
+An in-memory bounded-ring prototype and a local workerd password-cost probe are
+measured in [Camp and auth audit](CAMP-AUTH-AUDIT.md). The owner chose to retain
+the current camp layout; the tighter prototype is not approved. `recovery_hash_sim.js` covers skipping an otherwise discarded legacy
+recovery-hash upgrade while retaining password upgrades, rotation and revocation.
+The full gate had 144 passing and the same four failing suites, with no new
+failures; all three generated-asset checks passed.
+
 Two things changed, and neither one moved a ceiling out of the way of a real byte:
 
 - `tools/build_site.sh` stopped copying art that only unpublished dev pages read (152 KiB:
@@ -117,14 +224,14 @@ Two things changed, and neither one moved a ceiling out of the way of a real byt
   not the 3.9 MiB that leaving 62.5 would have handed back. The combined 140.5 MiB ceiling still
   covers every shipped byte.
 
-| suite | what it reports | why it is red |
+| suite | status | context |
 | --- | --- | --- |
-| `field_loop_smoke.js` | "a camp monster drifted off its camp ring" (8/9 steps) | camp-ring layout assertion no longer matches the spawn helper |
-| `ground_combat_sim.js` | `assert(r.near<r.opening&&…)` | kiting movement windows; retune against the current combat loop |
-| `rotation_updates_sim.js` | "expanded area stays within its camp" | area-expansion geometry vs. camp layout |
-| `skill_redesign_sim.js` | `SyntaxError: Unterminated template` in an extracted span, plus a dash assertion | source-extraction anchor and dash behaviour both stale |
-| `fourth_job_skills_sim.js` | strict deep-equal on a skill-id/slot sequence | fourth-job skill list moved past the fixture |
-| `skill_balance_sim.js` | "gear measurements stale: rerun progression_balance.js" | historical measurement fixture, hash-pinned on purpose |
+| `field_loop_smoke.js` | "a camp monster drifted off its camp ring" (8/9 steps) | old 3.35-unit limit conflicts with v231's widened candidate rings; do not relax the assertion without reconciling the intended layout |
+| `ground_combat_sim.js` | formerly ground field radius/pack assertion; **now passes** | owner-approved cross-camp expectation; radius, target movement, death and cancellation checks remain |
+| `rotation_updates_sim.js` | formerly "expanded area stays within its camp"; **now passes** | owner-approved cross-camp expectation; nearby and out-of-range targets are explicitly checked |
+| `skill_redesign_sim.js` | formerly area-pack and dash assertions; **now passes** | owner-approved cross-camp expectation; damage, waking, range, distant sleeping targets and no-invulnerability checks remain |
+| `fourth_job_skills_sim.js` | formerly expected same-camp Chain Lightning; **now passes** | owner-approved cross-camp bounces, with nearest-target and bounce-cap checks |
+| `skill_balance_sim.js` | formerly "gear measurements stale"; **now passes** | both historical and current measurements were rerun against the unchanged tool and budgets; see the 2026-10-29 note above |
 
 Rules for that table:
 
@@ -156,7 +263,7 @@ the page or the server.
 | --- | --- |
 | Accounts, saves, login, away rewards | `api_sim`, `registration_sim`, `cloud_sim`, `cloud_login_error_sim`, `offline_sim`, `migration_sim`, `save_load_sim`, `save_owner_sim`, `dev_server_sim` |
 | Classes, stats, EXP, pacing | `class_change_sim`, `loadout_update_sim`, `stat_sim`, `base_pacing_sim`, `economy_sim`, `progression_sim`, `progression_refresh_sim`, `mvp_exp_sim` |
-| Combat, skills, floats | `skill_sim`, `combo_rotation_sim`, `cosmetic_combo_sim`, `combat_damage_sim`, `combat_float_sim`, `attack_sync_sim`, `crit_sim`, `hp_affix_sim`, `retune_sim`, `combat_retune_sim`, `background_sim`, `ascension_attack_sim` |
+| Combat, skills, floats | `skill_sim`, `combo_rotation_sim`, `cosmetic_combo_sim`, `combat_damage_sim`, `combat_float_sim`, `combat_field_contract_sim`, `ground_aoe_sim`, `attack_sync_sim`, `crit_sim`, `hp_affix_sim`, `retune_sim`, `combat_retune_sim`, `background_sim`, `ascension_attack_sim` |
 | Fourth jobs, trials, Mythic | `fourth_job_sim`, `fourth_job_runtime_sim`, `fourth_job_mythic_sim`, `fourth_job_motion_sim`, `job_rite_sim`, `mythic_rules_sim`, `mythic_gift_base_sim`, `mythic_testing_sim`, `owner_fx_sim` |
 | Ascension and endgame | `ascension_progression_sim`, `ascension_combat_sim`, `ascension_tracks_sim`, `ascension_rewards_sim`, `ascension_evolution_sim`, `endgame_progression_sim`, `encounter_retune_sim`, `material_sim`, `zeny_sink_sim`, `nightmare_sim`, `trial_sim` |
 | Fields, maps, scenery | `scene_sim`, `starter_sim`, `kit_sim`, `native_fields_sim`, `terrain_v2_sim`, `terrain_proposal_sim`, `reference_mobs_sim`, `ascension_scene_sim`, `astral_scenery_sim`, `endgame_scenery_sim`, `native_theme_sim`, `map_journey_sim`, `map_delivery_sim`, `map_scene_review_sim`, `map_proposal_sim`, `field_report_sim`, `preview_fields_sim` |

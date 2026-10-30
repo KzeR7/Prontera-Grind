@@ -59,9 +59,10 @@ try{
   const r=json(`const sk=SKILLS.find(s=>s.id==='amp'),radius=3.5*sk.areaScale;
    const near={...mob,x:radius-.01},outside={...mob,x:radius+.01},sleep={...mob,x:1,pack:1},enter={...mob,x:20};mobs.push(near,outside,sleep,enter);
    castSkill(sk,1);const opening=near.hp;mob.x=20;const targetHp=mob.hp;enter.x=0;tickCombatSkills(1);
-   const stayedOutside=outside.hp===1e15&&sleep.hp===1e15,departed=mob.hp===targetHp,arrived=enter.hp<1e15;
-   mobs=mobs.filter(o=>o!==mob);mob=enter;near.x=0;tickCombatSkills(1);return {radius,opening,near:near.hp,stayedOutside,departed,arrived,x:skillState().fields[0].x};`);
+   const stayedOutside=outside.hp===1e15,crossCampHit=sleep.hp<1e15,departed=mob.hp===targetHp,arrived=enter.hp<1e15;
+   mobs=mobs.filter(o=>o!==mob);mob=enter;near.x=0;tickCombatSkills(1);return {radius,opening,near:near.hp,stayedOutside,crossCampHit,departed,arrived,x:skillState().fields[0].x};`);
   assert.ok(Math.abs(r.radius-3.5*1.5*1.35)<1e-8);assert.equal(r.x,0);assert(r.near<r.opening&&r.stayedOutside&&r.departed&&r.arrived);
+  assert.equal(r.crossCampHit,true,'in-range enemies from another camp are hit');
  });
  test('two-field cap skips blocked combo slots and prevents same-spell stacking',()=>{
   ev(`castSkill(SKILLS.find(s=>s.id==='amp'),1);castSkill(SKILLS.find(s=>s.id==='amp'),1);castSkill(SKILLS.find(s=>s.id==='storm'),1);castSkill(SKILLS.find(s=>s.id==='grav'),1);
@@ -76,8 +77,12 @@ try{
   assert.equal(ev('maxFields'),1);assert(ev('activeFrames/(60*40)<.52'));
   ev('window.cd=skCd.amp;resetSkillRuntime(true);ACT.combopause();ACT.combopause()');assert.equal(ev('skCd.amp'),ev('cd'));
  });
+ test('switching camps preserves an active ground field',()=>{
+  ev(`castSkill(SKILLS.find(s=>s.id==='amp'),1);window.damage=S.dmg;activePack=1;tickCombatSkills(1)`);
+  assert.equal(ev('skillState().fields.length'),1);assert.ok(ev('S.dmg>damage'),'the next pulse still deals damage');
+ });
  test('field damage and markers cancel on travel, class/account replacement, off and reset',()=>{
-  for(const action of ['activePack=1','S.mp++','S.lvl++',"S.cls='Novice'",'S=JSON.parse(JSON.stringify(S))',"S.skOff.amp=true",'resetSkillRuntime(true)']){
+  for(const action of ['S.mp++','S.lvl++',"S.cls='Novice'",'S=JSON.parse(JSON.stringify(S))',"S.skOff.amp=true",'resetSkillRuntime(true)']){
    setup();ev(`castSkill(SKILLS.find(s=>s.id==='amp'),1);window.damage=S.dmg;${action};tickCombatSkills(.1)`);
    assert.equal(ev('skillState().fields.length'),0,action);assert.equal(ev('S.dmg'),ev('damage'),action);
   }

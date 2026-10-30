@@ -5,7 +5,7 @@ import {onRequestGet} from '../../functions/api/social.js';
 const service=await start({port:0}),base='http://127.0.0.1:'+service.port;
 const sockets=[];
 try{
- const make=async u=>{const r=await fetch(base+'/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({u,p:'SyntheticSocial123!'})});assert.equal(r.status,201);return r.headers.get('set-cookie').split(';')[0]};
+ const make=async u=>{const r=await fetch(base+'/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({u,p:'SyntheticSocial123!',email:u+'@example.test'})});assert.equal(r.status,201);return r.headers.get('set-cookie').split(';')[0]};
  const [ca,cb]=await Promise.all([make('social_api_a'),make('social_api_b')]);
  async function rejected(cookie,origin){return new Promise(resolve=>{const ws=new WebSocket(base.replace('http','ws')+'/api/social',{headers:{Cookie:cookie,Origin:origin}});ws.on('unexpected-response',(_,res)=>{ws.terminate();resolve(res.statusCode)});ws.on('error',()=>{});})}
  assert.equal(await rejected('',base),401);assert.equal(await rejected(ca,'https://elsewhere.invalid'),403);
@@ -27,7 +27,7 @@ try{
  // Throwaway --gm-all preview server supports cross-site iframe cookie blocking via X-Preview-Session / preview_session while keeping cross-origin 403.
  const preview=await start({port:0,gmAll:true}),pbase='http://127.0.0.1:'+preview.port,pOrigin='https://127.0.0.1:'+preview.port;
  try{
-  const reg=await fetch(pbase+'/api/register',{method:'POST',headers:{'Content-Type':'application/json',Origin:pOrigin},body:JSON.stringify({u:'preview_iframe_a',p:'SyntheticSocial123!'})});
+  const reg=await fetch(pbase+'/api/register',{method:'POST',headers:{'Content-Type':'application/json',Origin:pOrigin},body:JSON.stringify({u:'preview_iframe_a',p:'SyntheticSocial123!',email:'preview@example.test'})});
   assert.equal(reg.status,201);
   const setCookie=reg.headers.get('set-cookie')||'';assert.match(setCookie,/SameSite=None;\s*Partitioned/i);
   const ptok=reg.headers.get('x-preview-session');assert(ptok&&ptok.length>16);
