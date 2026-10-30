@@ -247,12 +247,18 @@ the block was seeded instead, so the result is reproducible. Whether 1–5 high-
 genuinely resolving with no float is acceptable is still an open question for a follow-up;
 it is not covered by this change.
 
-**2026-10-30 gate result:** 178 suites, **177 pass**. The one failure is
+**2026-10-30 gate result (after the read-only launch schema check):** 179 suites,
+**178 pass**. The one failure is
 `social_worker_sim.mjs`, which imports `convertV4MiniflareOptions` — the installed
 miniflare 4.20260730.0 does not export it, so this is a harness/version problem, not a
 code failure. `skill_balance_sim.js`, `card_star_balance_sim.js` and
 `hosted_launch_stage_sim.js` are green (the balance fixtures were regenerated in the
-previous entry with identical measurements).
+previous entry with identical measurements). `live_launch_schema_check_sim.js` is new:
+it proves the read-only schema check accepts a complete 0008–0011 application, reports
+missing tables, columns, triggers, indexes and launch config separately, changes nothing
+when it reads, and cannot acquire a write path (source-level guard). All 179 suites need
+`npm install --no-save --package-lock=false jsdom three@0.128.0 ws` first; without it the
+client-side suites fail to load rather than fail assertions.
 
 **2026-10-29 (camp/auth audit):** The original 3.35-unit camp smoke was not changed.
 An in-memory bounded-ring prototype and a local workerd password-cost probe are

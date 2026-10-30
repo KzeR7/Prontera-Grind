@@ -102,6 +102,24 @@ foreign-key checks. Expected: a `PASS:` line and a filename like
 
 ## Step 2 — apply additive migrations 0008–0011 to live `pg`
 
+**Stop first and look at step 1's `launchTablesAlreadyPresent`.** If that list is
+non-empty, the launch tables already exist and the migration tool will refuse — correctly.
+Do not run it. Run the read-only check instead, which reports every gap at once and
+writes nothing:
+
+```powershell
+node tools/staging/live_launch_schema_check.mjs
+```
+
+- `PASS: live pg already matches the full 0008–0011 contract` — nothing to apply. Skip
+  to step 3. Do not run the migration tool "to be sure"; it cannot re-run by design.
+- `STOP:` with a list — the earlier application was **partial**. It names what is missing
+  (tables, columns, triggers, indexes, launch config). Do **not** retry the migration
+  tool, do not edit a migration file, and do not merge. Send the printed JSON; a partial
+  schema is repaired by a reviewed, specific script, not by re-running an additive one.
+
+### Only when no launch table exists yet
+
 This uses a fixed-target tool. It refuses to rerun 0007 (`ALTER TABLE ADD COLUMN` is not
 rerunnable), refuses unexpected schema, checks the exact staged migration hashes, and
 fails closed on an uncertain import. **Never** run `wrangler d1 migrations apply`
