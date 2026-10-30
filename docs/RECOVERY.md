@@ -128,7 +128,7 @@ sealing is an operator judgement recorded in the audit trail — not a guarantee
 # 1. the switch, with no database attached
 npx wrangler deploy --config workers/gate/wrangler.toml
 # 2. its secret (32+ random characters; the object refuses anything shorter)
-openssl rand -base64 48
+node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"   # openssl may be absent on Windows
 npx wrangler secret put GATE_TOKEN --config workers/gate/wrangler.toml
 # 3. in the root wrangler.toml, uncomment WRITE_GATE and the GATE binding, then deploy Pages
 # 4. open writes once, and check it took

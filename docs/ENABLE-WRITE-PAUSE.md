@@ -25,11 +25,23 @@ Do these **first**. Steps 3–5 should run back to back without hunting for anyt
    Each prints one `PASS` line. Verified green on 2026-10-30.
 
 2. Generate the token and **keep it in a password manager now**. You cannot read it back
-   after step 2, and step 5 needs it.
+   after step 2, and step 5 needs it. Windows usually has no `openssl`; Node is already
+   installed for this repository, so use it:
    ```powershell
-   openssl rand -base64 48
+   node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
    ```
-   Any 32+ characters of random text works. Shorter is refused by design.
+   That prints 64 characters. `TOKEN_MIN` in `workers/gate/policy.mjs` is 32, and a value
+   shorter than that makes the object answer `not-configured` — set it anyway and the gate
+   stays closed. Base64 is safe here: `+`, `/` and `=` are all legal in an HTTP header, and
+   the worker compares the header with the stored secret in constant time.
+
+   A pure PowerShell alternative if you prefer no Node:
+   ```powershell
+   $b = New-Object byte[] 48
+   [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
+   [Convert]::ToBase64String($b)
+   ```
+   Do **not** use `Get-Random` for this; it is not a cryptographic source.
 
 3. Know your rollback: Cloudflare dashboard → Workers & Pages → `prontera-grind` →
    Deployments → the deployment before this change → **Rollback**. No data is lost.
