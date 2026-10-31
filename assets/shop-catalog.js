@@ -7,9 +7,10 @@
    dashboard work is needed: Checkout Sessions are created with inline price_data from this list.
    Prices are whole cents (USD); Stripe refuses charges under 50 cents.
 
-   v2 (2026-10-27, owner): one flat price per wardrobe slot — Head, Face and Mouth are $1.50, Wings
-   are $2.00 — plus two BUNDLES: a $8 mixed unlock and a $20 complete wardrobe. The old per-item
-   overrides are gone; a slot price is now the whole story.
+   v2 (2026-10-27, owner; updated 2026-10-31): one flat price per wardrobe slot — Head, Face and Mouth
+   are $1.50, Wings are $2.00 — plus two BUNDLES: an $8 mixed unlock and a $25 Wardrobe bundle (all 52
+   cosmetics currently in the shop; does not include future updates). The old per-item overrides are
+   gone; a slot price is now the whole story.
 
    SKU shapes (stable identifiers, stored in D1 entitlements/orders — never rename an existing one):
      cos:<slot>:<accessoryId>   a permanent wardrobe unlock for the account, e.g. cos:backwear:wings
@@ -49,8 +50,8 @@ const BUNDLES=[
  {sku:'bnd:adventurer',name:'Adventurer Bundle',price:800,maxQty:1,group:'Bundles',
   blurb:'13 permanent unlocks rolled for you from what you do not own yet: 4 Head, 4 Face, 2 Mouth and 3 Wings.',
   take:{headwear:4,facewear:4,mouthwear:2,backwear:3}},
- {sku:'bnd:complete',name:'Complete Wardrobe',price:2000,maxQty:1,group:'Bundles',
-  blurb:'Every cosmetic in the shop today, in one purchase \u2014 all Head, Face, Mouth and Wings styles.',
+ {sku:'bnd:complete',name:'Wardrobe',price:2500,maxQty:1,group:'Bundles',
+  blurb:'All 52 cosmetics in one purchase \u2014 Head, Face, Mouth and Wings styles (does not include future updates).',
   all:true},
 ].map(b=>Object.assign({kind:'bundle',slotLabel:'Bundle'},b));
 

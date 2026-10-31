@@ -101,7 +101,7 @@ t('the cash shop prices are the owner\'s: head, face and mouth $1.50, wings $2.0
   assert.strictEqual(cat.items.filter(i => i.kind === 'cosmetic').length, 52, 'the 52 cosmetics that exist today');
 });
 
-t('both bundles exist at $8 and $20, with the developer-picked mix hard-slotted in', () => {
+t('both bundles exist at $8 and $25, with the developer-picked mix hard-slotted in', () => {
   const cat = ev('PGShop.catalog(PGWardrobe)');
   const bundles = cat.items.filter(i => i.kind === 'bundle');
   assert.strictEqual(JSON.stringify(bundles.map(b => b.sku).sort()), JSON.stringify(['bnd:adventurer', 'bnd:complete']));
@@ -109,8 +109,10 @@ t('both bundles exist at $8 and $20, with the developer-picked mix hard-slotted 
   assert.strictEqual(advent.price, 800);
   assert.strictEqual(JSON.stringify(advent.take), JSON.stringify({ headwear: 4, facewear: 4, mouthwear: 2, backwear: 3 }));
   const complete = bundles.find(b => b.sku === 'bnd:complete');
-  assert.strictEqual(complete.price, 2000);
+  assert.strictEqual(complete.name, 'Wardrobe');
+  assert.strictEqual(complete.price, 2500);
   assert.strictEqual(complete.all, true, 'unlock all covers everything that exists today');
+  assert.ok(complete.blurb.includes('52 cosmetics') && complete.blurb.includes('does not include future updates'));
 });
 
 t('a bundle is rolled from what the player does not own yet, and cannot overflow a slot', () => {
@@ -139,7 +141,9 @@ t('the shop shows a Bundles tab, and its cards list what is in the box', () => {
   ev("tabs.length=0;tabs.push('shop');SHOP.view='bundles';renderWin()");
   const body = doc.querySelector('[data-win="shop"] .wbody');
   assert.ok(body.textContent.includes('Bundles'), 'the tab is on screen');
-  assert.ok(body.textContent.includes('$8.00') && body.textContent.includes('$20.00'), 'both prices show');
+  assert.ok(body.textContent.includes('$8.00') && body.textContent.includes('$25.00'), 'both prices show');
+  assert.ok(body.textContent.includes('Wardrobe') && !body.textContent.includes('Complete Wardrobe'), 'Wardrobe bundle name shows');
+  assert.ok(body.textContent.includes('All 52 cosmetics (does not include future updates)'), '52-cosmetic non-future-updates line shows');
   const tab = body.querySelector('[data-a="shop"][data-v="view:bundles"]');
   assert.ok(tab, 'the tab is clickable');
   assert.ok(tab.className.includes('on'), 'and it is the active one');

@@ -216,7 +216,7 @@ await T('the "unlock all" bundle covers today\'s 52 cosmetics and respects the o
   const owned = (await api.catalog(env, c)).data.owned;
   assert.strictEqual(owned.length, 52, 'everything the shop sells today is unlocked');
   assert.ok(owned.includes('cos:headwear:halo'));
-  assert.strictEqual(sqlite.prepare('SELECT amount FROM shop_orders WHERE sku = ?').get('bnd:complete').amount, 2000);
+  assert.strictEqual(sqlite.prepare('SELECT amount FROM shop_orders WHERE sku = ?').get('bnd:complete').amount, 2500);
   // and once complete, the same bundle is refused rather than sold twice
   const again = await api.checkout(env, c, { sku: 'bnd:complete' });
   assert.strictEqual(again.status, 409);
@@ -269,6 +269,12 @@ await T('live mode: a Checkout Session is created from the server price list, ne
   assert.strictEqual(row.status, 'pending'); assert.strictEqual(row.stripe_session, 'cs_test_a1'); assert.strictEqual(row.amount, 200);
   assert.strictEqual(sqlite.prepare('SELECT COUNT(*) n FROM entitlements').get().n, 0, 'nothing delivered before payment');
   assert.deepStrictEqual((await api.catalog(env, c)).data.owned, []);
+  const rBundle = await api.checkout(env, c, { sku: 'bnd:complete' }, { 'X-Forwarded-Host': 'play.example.com', 'X-Forwarded-Proto': 'https' });
+  assert.strictEqual(rBundle.status, 200, JSON.stringify(rBundle.data));
+  const qb = new URLSearchParams(stripe.calls[1].body);
+  assert.strictEqual(qb.get('line_items[0][price_data][unit_amount]'), '2500');
+  assert.strictEqual(qb.get('line_items[0][price_data][product_data][name]'), 'Horizon Haven: Wardrobe');
+  assert.strictEqual(qb.get('line_items[0][price_data][product_data][description]'), 'All 52 cosmetics for Alice (does not include future updates)');
 });
 
 await T('live mode: Stripe refusing the session marks the order failed and tells the player', async () => {

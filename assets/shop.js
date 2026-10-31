@@ -181,7 +181,7 @@ function shopPanel(){
   const cos=items.filter(i=>i.kind==='cosmetic'),unowned=cos.filter(i=>!shopOwns(i.sku)),remaining=unowned.length;
   const bundleCards=items.filter(i=>i.kind==='bundle').map(i=>{
    const full=!remaining,worth=i.all?cos.length:PGShop.bundleSize(i)||0,gets=i.all?remaining:Math.min(worth,remaining);
-   const parts=i.all?[`All ${cos.length} styles the shop sells today`]:Object.entries(i.take||{}).map(([slot,n])=>`${n} × ${(slots[slot]||{}).label||slot}`);
+   const parts=i.all?[`All ${cos.length} cosmetics (does not include future updates)`]:Object.entries(i.take||{}).map(([slot,n])=>`${n} × ${(slots[slot]||{}).label||slot}`);
    return `<div class="shop-card shop-bundle${full?' owned':''}" data-sku="${shopEsc(i.sku)}"><div class="shop-card-head"><b>${shopEsc(i.name)}</b><span class="shop-price">${full?'All owned ✓':PGShop.money(i.price,cur)}</span></div><small>${shopEsc(i.blurb||'')}</small><ul class="shop-bundle-list">${parts.map(x=>`<li>${shopEsc(x)}</li>`).join('')}</ul><small>${full?'You already own every cosmetic in this bundle.':`Rolls ${gets} unlock${gets===1?'':'s'} you do not own yet · ${remaining} still locked for you.`}</small><div class="shop-card-actions"><button class="shop-buy" data-a="shop" data-v="buy:${shopEsc(i.sku)}"${canBuy&&!full?'':' disabled'}>${full?'Nothing left':'Buy'}</button></div></div>`;
   }).join('');
   body=`<small class="shop-sub">Bundles are one payment for several permanent unlocks. The exact pieces are rolled on the server from what this account does not own yet, so a bundle can never hand you something you already paid for.</small><div class="shop-grid">${bundleCards}</div>`;
