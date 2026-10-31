@@ -5,6 +5,9 @@
 **The existing maps are the default.** The outdoor redesign is preserved as an
 opt-in preview. Merging this patch does not select the new terrain for ordinary
 players. `NATIVE_FIELDS_DEFAULT=false` in `index.html` controls that choice.
+As of v272 the Display-panel switch is GM/owner-only (`S.gm`); normal accounts do not
+see it, and its change handler ignores non-GM events. The explicit `?nativeFields=1`
+URL remains a developer preview path.
 The small renderer module is included, but the field catalog, geometry and
 textures are not requested until the preview is enabled. Assets still ship in
 `dist/` so preview links work after a merge.

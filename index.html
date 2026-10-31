@@ -916,7 +916,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=1">
 <script src="assets/ui/mobile.js?v=1"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=269">
+<link rel="stylesheet" href="assets/social.css?v=272">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1309,7 +1309,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-10-31 haven-v270 cash shop wardrobe bundle';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-31 haven-v272 GM terrain preview and steady chat';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6813,7 +6813,7 @@ const V={
     return`<div class="board-panel"><div class="board-periods">${[['kills','Kills'],['echo','Endless Echo']].map(([k,l])=>`<button data-a="boardkind" data-v="${k}" class="${boardKind===k?'on':''}" aria-pressed="${boardKind===k}">${l}</button>`).join('')}</div><div class="board-periods">${periods.map(p=>`<button data-a="boardperiod" data-v="${p}" class="${boardPeriod===p?'on':''}" aria-pressed="${boardPeriod===p}">${labels[p]}</button>`).join('')}</div>
       <div class="board-head"><small>${data?esc(data.label):'Periods use Singapore time'}${boardLoading&&data?' · refreshing…':''}</small><button data-a="boardrefresh" title="Refresh the scores" aria-label="Refresh leaderboard">↻</button></div>
       <div class="board-row" style="font-weight:bold;border-bottom:1px solid var(--edge)"><span>#</span><span>Player</span><span>Base</span><span>${echo?'Best DPS':'Kills'}</span></div>${state}${rewards}
-      <small class="board-note">${echo?'Scores are browser-reported and can be falsified. Flags are for review only. Finish and sync before the Singapore period ends; late/offline scores are not counted. Equal scores rank by account ID.':'Kills are browser-reported and can be falsified. This leaderboard is not verified.'}</small></div>`},
+      <small class="board-note">${echo?'GM and owner accounts are excluded from rankings and prizes. Scores are browser-reported and can be falsified. Flags are for review only. Finish and sync before the Singapore period ends; late/offline scores are not counted. Equal scores rank by account ID.':'Kills are browser-reported and can be falsified. This leaderboard is not verified. GM and owner accounts are excluded.'}</small></div>`},
   log(){const cats=LOGCATS.map(([k,n])=>`<label class="logf"><input type="checkbox" data-a="logf" data-v="${k}" ${logOn(k)?'checked':''} aria-label="Show ${n} lines"> ${n}</label>`).join('');
     const shown=logShown();
     return`<div class="log-preview-controls"><button data-a="feed" aria-pressed="${feedOn()}">${feedOn()?"Hide":"Show"} on-screen log</button><small>Choose event types below for the on-screen preview and activity history.</small></div><div class="logfbar">${cats}<span class="sp"><button data-a="logfall" data-v="on">All</button><button data-a="logfall" data-v="off">None</button></span></div>
@@ -7012,12 +7012,13 @@ function renderCardIndex(){
 const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="sideLinks" aria-expanded="${sideOpen}">${uiIcon('index')} More destinations <span class="side-chevron${sideOpen?' open':''}">${uiIcon('chevron')}</span></button><div id="sideLinks" ${sideOpen?'':'hidden'}>${SIDE_TABS.filter(k=>k!=='gm'||S.gm).map(k=>`<button data-t="${k}" class="qp-side-tab${tabs.includes(k)?' on':''}" aria-pressed="${tabs.includes(k)}">${uiIcon(k)} ${TABS[k][1]} <small>${TABS[k][2]}</small></button>`).join('')}</div>`;
 function applyDisplay(){
  if(S.cameraShake===false)shake=0;
- document.body.classList.toggle('clean-screen',!!S.hideUI);
- document.body.classList.toggle('hide-damage',S.dmgShow===false||!!S.hideUI);
- document.body.classList.toggle('hide-chat',S.chatShow===false);
- document.body.classList.toggle('hide-feed',S.feedShow===false);
- document.body.classList.toggle('hide-labels',S.labelsShow===false);
- if(typeof window!=='undefined'&&window.PGSocial?.syncDisplay)window.PGSocial.syncDisplay();
+ // bars() runs on the HUD tick. Only notify chat when a visibility class actually
+ // changes; otherwise every tick rebuilt/relaid the chat tabs under the pointer.
+ const next=[['clean-screen',!!S.hideUI],['hide-damage',S.dmgShow===false||!!S.hideUI],
+  ['hide-chat',S.chatShow===false],['hide-feed',S.feedShow===false],['hide-labels',S.labelsShow===false]];
+ let changed=false;
+ for(const [name,on] of next){if(document.body.classList.contains(name)!==on){document.body.classList.toggle(name,on);changed=true}}
+ if(changed&&typeof window!=='undefined'&&window.PGSocial?.syncDisplay)window.PGSocial.syncDisplay();
 }
 // v253: on the local preview server the phone layout can be checked at a true phone size. The link
 // to that page is offered ONLY when /phone answers with the dev server's marker header, so a static
@@ -7042,12 +7043,10 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
  const pg=window.PGMobile,pgMode=pg?pg.getPhoneLayout():'auto',pgFocus=!!(pg&&pg.fieldOnly()),pgLayout=pgMode==='on'?'Phone':pgMode==='off'?'Desk':'Auto';
  panel.innerHTML=`<div class="pg-sheet-head"><span>Display</span><button type="button" data-pg="close" aria-label="Close display options">✕</button></div>`
   +[['cameraShake','Camera shake'],['dmgShow','Damage numbers'],['auraShow','Character aura'],['chatShow','Chat box'],['feedShow','Activity log'],['labelsShow','Character / monster labels'],['hideUI','Hide all screen UI (Display stays available)']].map(([key,label])=>`<label><input type="checkbox" data-display="${key}" ${key==='hideUI'?S[key]?'checked':'':S[key]!==false?'checked':''}>${label}</label>`).join('')
-  // v232 (owner: "game preview is not showing your proposed maps. still the old map"): the new
-  // outdoor fields were only reachable by hand-editing the URL, so the preview looked unchanged.
-  // This is the switch in the UI. It is a page reload because the field renderer is chosen at
-  // boot - cheaper and far less risky than rebuilding a live world mid-fight - and the choice is
-  // tab-local (sessionStorage), exactly like the URL override it stands in for.
-  +`<label><input type="checkbox" data-display="nativeFields" ${nativeFieldsEnabled?'checked':''}>New outdoor terrain (reloads)</label>`
+  // v272 (owner): the parked outdoor-terrain preview is a GM/owner tool, not a player
+  // setting. Normal accounts do not see the switch; the explicit URL override remains a
+  // developer preview path. The reload is still required because the renderer is chosen at boot.
+  +(S.gm?`<label><input type="checkbox" data-display="nativeFields" ${nativeFieldsEnabled?'checked':''}>GM preview: New outdoor terrain (reloads)</label>`:'')
   // v253: the phone block. "Layout" is a device-local choice, so a phone can drop back to the
   // desk arrangement (or a desk browser can preview the phone one) without touching the save.
   +`<div class="pg-sheet-head pg-phone-head"><span>Phone</span></div>
@@ -7075,6 +7074,7 @@ document.addEventListener('input',e=>{if(e.target.id?.startsWith('oreQty-')){con
 $('screenBtn').onclick=()=>{if(S)screenOptions()};
 $('screenOptions').onchange=e=>{const key=e.target.dataset.display;
   if(key==='nativeFields'){
+    if(!S||!S.gm)return;   // the control is GM/owner-only; ignore forged player change events
     // Remember the choice for this tab and reload into it. `nativeFields` in the URL wins, so a
     // link someone was handed keeps working; otherwise the stored tab choice is used at boot.
     try{sessionStorage.setItem('pg-native-fields',e.target.checked?'1':'0')}catch(_){}
@@ -12688,6 +12688,6 @@ setInterval(updateWatch,60000);
 <script src="assets/social-rules.js?v=269"></script>
 <script src="assets/social-poker.js?v=269"></script>
 <script src="assets/social-scene.js?v=269"></script>
-<script src="assets/social.js?v=269"></script>
+<script src="assets/social.js?v=272"></script>
 </body>
 </html>

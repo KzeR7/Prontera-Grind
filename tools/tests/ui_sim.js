@@ -446,10 +446,12 @@ t('the leaderboard renders daily, weekly and all-time stamps with kills and Base
   assert.ok(h.includes('Knight_One')&&h.includes('Lv 42')&&h.includes('12,345 kills'),'the player row shows name, current level and period kills');
   assert.ok(h.includes('data-a="boardperiod"')&&h.includes('data-a="boardrefresh"'),'the period and refresh buttons are wired');
   assert.ok(h.includes('browser-reported')&&h.includes('falsified')&&!h.includes('undefined'),'the kills board discloses unverified scores even for cached results');
+  assert.ok(h.includes('GM and owner accounts are excluded'),'the kills board explains staff exclusion');
   U.boardKind='echo';U.boardCache={'echo:weekly':{label:'This week',entries:[{rank:1,name:'EchoPlayer',level:42,dps:12345}]}};
   const echo=U.V.board();
   assert.ok(echo.includes('browser-reported')&&echo.includes('falsified'),'Echo scores disclose the same risk');
   assert.ok(echo.includes('Flags are for review only')&&echo.includes('sync before')&&echo.includes('Equal scores rank by account ID'),'the prize policy is visible');
+  assert.ok(echo.includes('GM and owner accounts are excluded from rankings and prizes'),'Echo explains staff exclusion from prizes too');
   U.boardKind='kills';
   U.boardStatus={api:false,on:false};U.boardCache={};U.boardPeriod='daily';
   assert.ok(U.V.board().includes('Sign in to a cloud account'),'the offline static game explains why no board is available');

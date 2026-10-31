@@ -54,12 +54,26 @@ try{
  assert.equal(row('SELECT score FROM competition_scores WHERE period_key=? AND user_id=?',w.day.key,beta).score,1234);
  r=await put('RankBeta',b,3,t(2000));assert.equal(r.status,200);assert.equal((await r.json()).leaderboardPending,false);
  assert.equal(row('SELECT score FROM competition_scores WHERE period_key=? AND user_id=?',w.day.key,beta).score,2000);
+ // Staff are excluded before the public LIMIT and before prize ranking on all
+ // three Echo views. Their private testing scores remain available for GM review.
+ const gm=await signup('RankGM'),owner=await signup('RankOwner');
+ const gmId=row("SELECT id FROM users WHERE username='RankGM'").id,ownerId=row("SELECT id FROM users WHERE username='RankOwner'").id;
+ sqlite.prepare('UPDATE users SET gm=1 WHERE id=?').run(gmId);sqlite.prepare('UPDATE users SET gm=2 WHERE id=?').run(ownerId);
+ assert.equal((await put('RankGM',gm,0,t(400000000))).status,200);
+ assert.equal((await put('RankOwner',owner,0,t(500000000))).status,200);
+ for(const period of ['daily','weekly','all']){
+   const listing=await (await read(a,period)).json();
+   assert.deepEqual(listing.entries.map(x=>x.name),['RankAlpha','RankBeta'],period);
+   assert.deepEqual(listing.entries.map(x=>x.rank),[1,2],period);
+ }
  // Old legacy scores are not copied or paid. Create a separate synthetic new
  // period with a short deadline; tests use real SQLite/D1 cutoff time.
  sqlite.prepare('INSERT INTO leaderboard_echo(user_id,period_key,dps) VALUES(?,?,?)').run(alpha,'day:2020-01-01',999999);
  const end=Math.ceil(Date.now()/1000)*1000+1000,key='day:2020-01-02';
  sqlite.prepare("INSERT INTO competition_periods(period_key,kind,ruleset,starts_at,ends_at) VALUES(?,'daily','unverified-save-v1',?,?)").run(key,Date.now()-1000,end);
  sqlite.prepare('INSERT INTO competition_scores(period_key,user_id,run_id,score,recorded_at) VALUES(?,?,?,?,?)').run(key,alpha,'sim-run',300,Date.now());
+ sqlite.prepare('INSERT INTO competition_scores(period_key,user_id,run_id,score,recorded_at) VALUES(?,?,?,?,?)').run(key,gmId,'gm-test',400,Date.now());
+ sqlite.prepare('INSERT INTO competition_scores(period_key,user_id,run_id,score,recorded_at) VALUES(?,?,?,?,?)').run(key,ownerId,'owner-test',500,Date.now());
  await new Promise(resolve=>setTimeout(resolve,Math.max(0,end-Date.now()+100)));
  // Force a mid-batch failure: period claim, placements and gifts all roll back.
  sqlite.exec("CREATE TRIGGER reject_echo_test BEFORE INSERT ON grants WHEN NEW.created_by='Echo competition' BEGIN SELECT RAISE(ABORT,'test failure'); END;");
@@ -68,6 +82,7 @@ try{
  sqlite.exec('DROP TRIGGER reject_echo_test');
  const attempts=await Promise.all([read(a),read(b),read(a)]);assert.ok(attempts.every(x=>x.status===200));
  assert.equal(row('SELECT state FROM competition_periods WHERE period_key=?',key).state,'closed');
+ assert.deepEqual(sqlite.prepare('SELECT user_id,rank FROM competition_placements WHERE period_key=? ORDER BY rank').all(key).map(x=>[x.user_id,x.rank]),[[alpha,1]],'hidden staff cannot take a player prize or shift the prize rank');
  assert.equal(row('SELECT count(*) n FROM grants').n,2,'daily first place receives two gifts once');
  assert.equal(row('SELECT count(*) n FROM competition_prize_ledger WHERE period_key=?',key).n,2);
  assert.equal(row('SELECT count(*) n FROM competition_prize_ledger WHERE period_key=?','day:2020-01-01').n,0,'legacy scores never auto-paid');

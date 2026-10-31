@@ -3,6 +3,8 @@
 // Names, levels and scores are public leaderboard fields only. A valid server session is required.
 // Daily/weekly kills count increases observed when cloud saves are accepted; all-time is seeded from
 // existing cloud saves and then maintained by the D1 trigger in migrations/0002_leaderboard.sql.
+// GM/owner accounts (users.gm > 0) are excluded before LIMIT on every public board.
+// They are also excluded from new Echo settlements, so hidden staff cannot take player prizes.
 // Scores are browser-reported and unverified. The new Echo season pays its Top
 // 100 daily/weekly via atomic, lazy settlement (unverified-echo.js); legacy
 // daily/weekly data is retained but never automatically back-paid.
@@ -46,12 +48,12 @@ export const onRequestGet = guard(async ({ request, env }) => {
     if(period==='all'){
       rows=await env.DB.prepare(`SELECT u.username,s.level,s.cls,e.dps FROM leaderboard_echo e
         JOIN users u ON u.id=e.user_id JOIN saves s ON s.user_id=u.id
-        WHERE e.period_key='all' AND e.dps>0 ORDER BY e.dps DESC,u.id ASC LIMIT ?`).bind(ECHO_LIMIT).all();
+        WHERE e.period_key='all' AND e.dps>0 AND u.gm=0 ORDER BY e.dps DESC,u.id ASC LIMIT ?`).bind(ECHO_LIMIT).all();
     }else{
       rows=await env.DB.prepare(`SELECT u.username,s.level,s.cls,c.score AS dps FROM competition_scores c
         JOIN competition_periods p ON p.period_key=c.period_key
         JOIN users u ON u.id=c.user_id JOIN saves s ON s.user_id=u.id
-        WHERE c.period_key=? AND p.ruleset='unverified-save-v1' AND c.score>0
+        WHERE c.period_key=? AND p.ruleset='unverified-save-v1' AND c.score>0 AND u.gm=0
         ORDER BY c.score DESC,c.user_id ASC LIMIT ?`).bind(key,ECHO_LIMIT).all();
     }
     const periodStart=period==='daily'?windows.day.start:windows.week.start;
@@ -75,7 +77,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
       FROM leaderboard_kills k
       JOIN users u ON u.id = k.user_id
       JOIN saves s ON s.user_id = u.id
-      WHERE k.period_key = 'all'
+      WHERE k.period_key = 'all' AND u.gm = 0
       ORDER BY k.kills DESC, s.level DESC, u.username COLLATE NOCASE ASC
       LIMIT ?`).bind(LIMIT).all();
   } else if (period === 'daily') {
@@ -84,7 +86,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
       FROM leaderboard_kills k
       JOIN users u ON u.id = k.user_id
       JOIN saves s ON s.user_id = u.id
-      WHERE k.period_key = ? AND k.kills > 0
+      WHERE k.period_key = ? AND k.kills > 0 AND u.gm = 0
       ORDER BY k.kills DESC, s.level DESC, u.username COLLATE NOCASE ASC
       LIMIT ?`).bind(window.start, LIMIT).all();
   } else {
@@ -93,7 +95,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
       FROM leaderboard_kills k
       JOIN users u ON u.id = k.user_id
       JOIN saves s ON s.user_id = u.id
-      WHERE k.period_key BETWEEN ? AND ? AND k.period_key <> 'all'
+      WHERE k.period_key BETWEEN ? AND ? AND k.period_key <> 'all' AND u.gm = 0
       GROUP BY u.id, u.username, s.level, s.cls
       HAVING SUM(k.kills) > 0
       ORDER BY SUM(k.kills) DESC, s.level DESC, u.username COLLATE NOCASE ASC

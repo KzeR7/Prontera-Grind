@@ -6,6 +6,9 @@ export async function settleCompetitivePeriod() {
   throw new Error('Competitive scoring and payouts are paused: verified runs are not implemented.');
 }
 
+// Staff accounts are excluded before ranking, not merely hidden in the UI: they
+// cannot occupy a Top-100 place or receive a new player prize. Already settled
+// periods are not rewritten; a launch reset clears those separately.
 // Batch construction is not authorization. Callers must enforce a ruleset,
 // use server-generated tokens/timestamps, and let D1 commit the whole batch.
 export function buildSettlementBatch(db,periodKey,at,token,ruleset) {
@@ -29,7 +32,8 @@ export function buildSettlementBatch(db,periodKey,at,token,ruleset) {
         AND (? IS NULL OR ruleset=?)`).bind(token,periodKey,at,ruleset??null,ruleset??null),
     db.prepare(`INSERT INTO competition_placements(period_key,user_id,rank,score,run_id)
       SELECT s.period_key,s.user_id,ROW_NUMBER() OVER(ORDER BY s.score DESC,s.user_id ASC),s.score,s.run_id
-      FROM competition_scores s WHERE s.period_key=? AND s.score>0
+      FROM competition_scores s JOIN users u ON u.id=s.user_id
+      WHERE s.period_key=? AND s.score>0 AND u.gm=0
         AND EXISTS(SELECT 1 FROM competition_periods p WHERE p.period_key=s.period_key
           AND p.state='settling' AND p.claim_token=?)
       ORDER BY s.score DESC,s.user_id ASC LIMIT 100`).bind(periodKey,token),

@@ -507,6 +507,24 @@ test('Daily Reward Roulette has 33% Ori, 33% Elu, 11% Zeny buff, 11% EXP buff, 7
  assert.equal(ev('S.dailyWheel.bonusRolls'),0,'the last banked roll is then spent');
  assert.equal(ev('dailySpinsLeft()'),0);
 });
+test('v272: terrain preview is GM-only and HUD ticks do not rebuild chat tabs',()=>{
+ ev("S.gm=false;$('screenOptions').hidden=true;screenOptions()");
+ assert.equal(doc.querySelector('#screenOptions [data-display=nativeFields]'),null,'normal accounts do not see the terrain preview switch');
+ const store=g.window.sessionStorage;store.setItem('pg-native-fields','sentinel');
+ doc.getElementById('screenOptions').onchange({target:{dataset:{display:'nativeFields'},checked:true}});
+ assert.equal(store.getItem('pg-native-fields'),'sentinel','forged player change events cannot toggle the GM preview');
+ store.removeItem('pg-native-fields');
+ ev("S.gm=true;$('screenOptions').hidden=true;screenOptions()");
+ const cb=doc.querySelector('#screenOptions [data-display=nativeFields]');assert.ok(cb,'GM/owner keeps the terrain preview switch');assert.match(cb.closest('label').textContent,/GM preview/);
+ let calls=0;const prior=g.window.PGSocial;g.window.PGSocial={syncDisplay(){calls++}};
+ try{
+  ev('S.chatShow=true;S.feedShow=true;S.hideUI=false;S.dmgShow=true;S.labelsShow=true;applyDisplay()');
+  const base=calls;for(let i=0;i<20;i++)ev('bars()');
+  assert.equal(calls,base,'unchanged Display state does not resync/rebuild chat on every HUD tick');
+  ev('S.chatShow=false;applyDisplay()');assert.equal(calls,base+1,'a real visibility change still syncs chat once');
+  ev('S.chatShow=true;applyDisplay()');assert.equal(calls,base+2);
+ }finally{if(prior)g.window.PGSocial=prior;else delete g.window.PGSocial}
+});
 test('v265: Display separates Chat box from Activity log and Ascension Forge scrolls without clipping',()=>{
  // 1. Legacy saves with S.feedShow===false keep player chat visible (`hide-chat` stays false).
  ev('S.feedShow=false;delete S.chatShow;applyDisplay()');

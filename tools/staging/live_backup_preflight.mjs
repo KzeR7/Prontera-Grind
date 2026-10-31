@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-const DB_NAME='pg',DB_ID='50a6448b-1f12-466c-a28a-10544bedf750';
+export const DB_NAME='pg',DB_ID='50a6448b-1f12-466c-a28a-10544bedf750';
 export const verifyInfo=info=>info?.name===DB_NAME&&info?.uuid===DB_ID;
 const KNOWN=['damage_samples','damage_alerts','competition_periods','competition_scores','competition_placements',
  'competition_prize_ledger','competition_baselines','unverified_echo_config'];
@@ -46,7 +46,7 @@ function run(command,args,cwd){
  if(p.error||p.status!==0)throw Error('Wrangler '+args.slice(-5, -3).join(' ')+' failed or timed out. Stop; no SQL or credentials were printed.');
  return p.stdout;
 }
-function npxCli(){
+export function npxCli(){
  let found=[];
  if(process.platform==='win32')found=run('where.exe',['npx.cmd'],process.cwd()).split(/\r?\n/).filter(Boolean);
  const dirs=[path.dirname(process.execPath),...found.map(p=>path.dirname(p.trim()))];

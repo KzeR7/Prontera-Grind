@@ -213,3 +213,23 @@ Existing cloud accounts keep whatever paid accessory they were wearing when the 
 arrived (grandfathered by `migrations/0005_shop.sql`), never reset. Stripe is set up
 by the owner later; until then the shop is browse-only and the code must keep working.
 Refunds never auto-revoke an unlock; revoking is a GM decision in the console.
+
+### 2026-10-31 — Preflight reset keeps logins; staff stay off public boards
+
+The owner chose to clear testing game data while keeping account logins. The guarded
+reset preserves the complete account row and shop purchase/ownership records, revokes
+sessions, and replaces progress with fresh owner-stamped saves. Purchased supplies
+already in gameplay inventory reset with the character; ownership does not. GM/owner
+accounts are excluded from every public Kills/Echo period and from new Echo prize
+placement. The live reset remains an explicit owner operation; see
+[Prelaunch reset](PRELAUNCH-RESET.md).
+
+### 2026-10-31 — Terrain preview is staff-only; chat tabs stay steady
+
+The owner asked to remove the new-terrain option from the player Display panel and
+keep it viewable only for a GM account. The switch is now rendered and handled only
+for `S.gm`; the parked renderer still defaults off. The owner also reported chat tabs
+blinking on hover and sometimes not clickable. The cause was the HUD tick calling
+Display sync and rebuilding the tab buttons several times per second. Display now
+notifies chat only when a visibility class changes, and chat reuses tab nodes; resize
+grips no longer sit above the tab buttons.

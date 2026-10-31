@@ -19,7 +19,7 @@ installed in **one** command — with no `package.json`, installing one at a tim
 the previous one:
 
 ```sh
-npm install --no-save --package-lock=false jsdom three@0.128.0 ws miniflare
+npm install --no-save --package-lock=false jsdom three@0.128.0 ws miniflare@4.20260730.0
 node -e "require('jsdom');require('three');require('ws');require('node:sqlite');console.log('test dependencies ready')"
 ```
 
@@ -143,6 +143,17 @@ iterations in a temporary copy only, testing legacy upgrade and recovery races. 
 does not alter the production candidate or prove hosted limits. The 2026-10-29
 gate after this work had 146 passes and the same four failures; both new competition
 checks and all three generated-asset checks passed.
+
+## Preflight reset and staff leaderboard exclusion (haven-v271)
+
+`node tools/tests/launch_reset_sim.js` uses synthetic SQLite only. It exercises the
+real reset transaction, preserved credentials/shop rows, fresh-save loading through
+the real client, old-session/version rejection, rollback, schema guards and mocked
+remote ordering. It also proves an unclaimed Cash Shop grant blocks the reset without
+changing data, while a claimed grant no longer blocks. It never contacts Cloudflare. `leaderboard_sim.js` and
+`unverified_echo_launch_sim.js` cover GM/owner exclusion on every public period and
+new prize placement; `ui_sim.js` checks the player-facing explanation. The owner
+runbook is [Prelaunch reset](PRELAUNCH-RESET.md); hosted execution remains unverified.
 
 ## Choose the preview for the task
 
