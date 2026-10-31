@@ -114,16 +114,18 @@ export function createResetRemote(temp, { execute } = {}) {
     if (result.error || result.status !== 0) throw Error('Wrangler failed or timed out. Keep writes sealed; inspect before any retry. No credentials or SQL were printed.');
     return result.stdout;
   };
-  const json = args => { try { return JSON.parse(run(args)); } catch { throw Error('Fixed database query returned no verified JSON; keep writes sealed'); } };
+  const json = (args, label) => { try { return JSON.parse(run(args)); } catch { throw Error('Fixed database ' + label + ' returned no verified JSON; keep writes sealed'); } };
   const rows = sql => {
-    const result = json(['d1', 'execute', 'DB', '--remote', '--json', '--command', sql]);
+    const result = json(['d1', 'execute', DB_NAME, '--remote', '--json', '--command', sql], 'verification query');
     assert(Array.isArray(result) && result.every(r => r.success === true), 'Database verification query failed');
     return result.at(-1).results || [];
   };
   return {
-    verify() { assert(verifyInfo(json(['d1', 'info', 'DB', '--json'])), 'Fixed production database identity mismatch'); },
+    // Use the fixed database name, not the Pages binding. Some Wrangler versions
+    // resolve `d1 info` by name only; the UUID in wrangler.jsonc still pins the target.
+    verify() { assert(verifyInfo(json(['d1', 'info', DB_NAME, '--json'], 'identity query')), 'Fixed production database identity mismatch'); },
     export() {
-      run(['d1', 'export', 'DB', '--remote', '--skip-confirmation', '--output=private-backup.sql']);
+      run(['d1', 'export', DB_NAME, '--remote', '--skip-confirmation', '--output=private-backup.sql']);
       const file = path.join(temp, 'private-backup.sql');
       assert(fs.statSync(file).size > 0, 'Remote backup is empty');
       return file;
@@ -135,7 +137,7 @@ export function createResetRemote(temp, { execute } = {}) {
       assertResetSql(expectedSql);
       // Pinned Wrangler 4.154.0 uses D1's atomic file-import endpoint for --file.
       // Do not replace this with per-statement --command calls or retry on timeout.
-      run(['d1', 'execute', 'DB', '--remote', '--skip-confirmation', '--file', file]);
+      run(['d1', 'execute', DB_NAME, '--remote', '--skip-confirmation', '--file', file]);
     },
   };
 }

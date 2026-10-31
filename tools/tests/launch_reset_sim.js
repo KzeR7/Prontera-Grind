@@ -216,6 +216,7 @@ try {
   assert.throws(() => guarded.importReset(resetFile, plan.sql), /changed after rehearsal/);
   assert.equal(calls.length, 1, 'guard failures never reach Wrangler');
   assert.match(fs.readFileSync(path.join(fixed, 'wrangler.jsonc'), 'utf8'), /50a6448b-1f12-466c-a28a-10544bedf750/);
+  assert.deepEqual(calls[0], ['d1', 'info', 'pg', '--json'], 'identity query uses the fixed database name, not the Pages binding');
   ok('the remote adapter pins the production identity and refuses a changed reset file');
 
   assert.equal(REQUIRED_TABLES.length, 26);

@@ -9193,3 +9193,9 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** Read `docs/PRELAUNCH-RESET.md` § “Before maintenance: check paid deliveries”. Rehearse with `node tools/tests/launch_reset_sim.js`; it now proves an unclaimed paid grant blocks planning/apply without changing data, and a claimed grant no longer blocks.
 * **Checks:** Pre-push full local gate: **186 checks, 186 pass, 0 dependency skips** (`/home/user/haven-v272-checks/full-final/summary.json`). `launch_reset_sim.js` passed 12 checks. `git diff --check` passed.
 * **Delivery:** Local changes prepared for PR review on `arena/18b69fda-prontera-grind`; no hosted reset, migration, deployment or write-gate change was performed.
+
+### 2026-10-31 — `haven-v272 reset remote identity hotfix`
+* **Changed:** The remote keep-logins reset driver now calls Wrangler D1 commands with the fixed database name `pg` instead of the Pages binding `DB`, while still pinning the production UUID in the temporary Wrangler config. This addresses an owner-run live attempt that stopped before backup/import with “Fixed database query returned no verified JSON”; read-only owner diagnostics showed `reset_events=0`, so no reset had been applied. The sealed-gate requirement, atomic file import, postchecks, and paid-grant guard are unchanged.
+* **Try it:** On the hotfix branch, run `node tools/tests/launch_reset_sim.js`, then retry the remote reset only while the gate remains closed/sealed and safe. If it stops again, keep writes sealed and inspect the error before retrying.
+* **Checks:** `launch_reset_sim.js` (12 checks), `live_backup_preflight_sim.js`, `write_gate_cli_sim.mjs` (11 checks), `update_watch_sim.js` (10 checks), and `git diff --check` passed. No hosted reset, migration, deployment, or write-gate change was performed from this workspace.
+* **Delivery:** Hotfix on `arena/70ba474d-prontera-grind` for the owner’s sealed maintenance window.
