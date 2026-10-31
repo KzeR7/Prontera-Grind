@@ -98,6 +98,37 @@ export async function runLocal(file, { apply = false, confirm, report = console.
   } finally { db.close(); fs.rmSync(temp, { recursive: true, force: true }); }
 }
 
+// Wrangler/npm can print notices around the JSON payload. Accept a balanced JSON
+// object/array only; never guess from partial or non-JSON output.
+export function parseWranglerJson(stdout) {
+  const text = String(stdout ?? '');
+  try { return JSON.parse(text); } catch {}
+  for (let start = 0; start < text.length; start++) {
+    const open = text[start];
+    if (open !== '{' && open !== '[') continue;
+    const close = open === '{' ? '}' : ']';
+    let depth = 0, inString = false, escape = false;
+    for (let i = start; i < text.length; i++) {
+      const ch = text[i];
+      if (inString) {
+        if (escape) escape = false;
+        else if (ch.charCodeAt(0) === 92) escape = true;
+        else if (ch === '"') inString = false;
+        continue;
+      }
+      if (ch === '"') { inString = true; continue; }
+      if (ch === open) depth++;
+      else if (ch === close) {
+        depth--;
+        if (depth === 0) {
+          try { return JSON.parse(text.slice(start, i + 1)); } catch { break; }
+        }
+      }
+    }
+  }
+  throw Error('no verified JSON');
+}
+
 // A separate fixed-target driver keeps live_backup_preflight.mjs read-only.
 export function createResetRemote(temp, { execute } = {}) {
   fs.writeFileSync(path.join(temp, 'wrangler.jsonc'), JSON.stringify({
@@ -114,7 +145,7 @@ export function createResetRemote(temp, { execute } = {}) {
     if (result.error || result.status !== 0) throw Error('Wrangler failed or timed out. Keep writes sealed; inspect before any retry. No credentials or SQL were printed.');
     return result.stdout;
   };
-  const json = (args, label) => { try { return JSON.parse(run(args)); } catch { throw Error('Fixed database ' + label + ' returned no verified JSON; keep writes sealed'); } };
+  const json = (args, label) => { try { return parseWranglerJson(run(args)); } catch { throw Error('Fixed database ' + label + ' returned no verified JSON; keep writes sealed'); } };
   const rows = sql => {
     const result = json(['d1', 'execute', DB_NAME, '--remote', '--json', '--command', sql], 'verification query');
     assert(Array.isArray(result) && result.every(r => r.success === true), 'Database verification query failed');

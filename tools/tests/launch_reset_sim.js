@@ -14,7 +14,7 @@ import { onRequestGet as getSave, onRequestPut as putSave } from '../../function
 import { CONFIRM, CLEARED_TABLES, PRESERVED_TABLES, ACCOUNT_SQL, CHECK_SQL, REQUIRED_TABLES,
   captureState, preservedSnapshot, buildResetSql, assertResetSql, assertResetSchema, assertNoPendingShopGrants, applyReset,
   restoreBackup, runRemoteReset, verifyResetCheck } from '../recovery/launch_reset_core.mjs';
-import { parseArgs, runLocal, createResetRemote } from '../recovery/prelaunch_reset.mjs';
+import { parseArgs, runLocal, createResetRemote, parseWranglerJson } from '../recovery/prelaunch_reset.mjs';
 const { createGame } = createRequire(import.meta.url)('./helpers/game');
 const root = path.resolve(import.meta.dirname, '../..');
 const migrationSql = fs.readdirSync(path.join(root, 'migrations')).filter(n => /^\d+_.*\.sql$/.test(n)).sort()
@@ -218,6 +218,21 @@ try {
   assert.match(fs.readFileSync(path.join(fixed, 'wrangler.jsonc'), 'utf8'), /50a6448b-1f12-466c-a28a-10544bedf750/);
   assert.deepEqual(calls[0], ['d1', 'info', 'pg', '--json'], 'identity query uses the fixed database name, not the Pages binding');
   ok('the remote adapter pins the production identity and refuses a changed reset file');
+
+  assert.deepEqual(parseWranglerJson(`npm notice
+{"name":"pg","uuid":"50a6448b-1f12-466c-a28a-10544bedf750"}
+`), { name: 'pg', uuid: '50a6448b-1f12-466c-a28a-10544bedf750' });
+  assert.deepEqual(parseWranglerJson(`[notice]
+[{"success":true,"results":[]}]`), [{ success: true, results: [] }]);
+  assert.throws(() => parseWranglerJson('not json'), /no verified JSON/);
+  const noisyDir = path.join(temp, 'noisy-remote'); fs.mkdirSync(noisyDir);
+  const noisy = createResetRemote(noisyDir, { execute: args => args[1] === 'info' ? `npm notice
+{"name":"pg","uuid":"50a6448b-1f12-466c-a28a-10544bedf750"}` : '[]' });
+  noisy.verify();
+  const badDir = path.join(temp, 'bad-remote'); fs.mkdirSync(badDir);
+  const bad = createResetRemote(badDir, { execute: () => 'not json' });
+  assert.throws(() => bad.verify(), /no verified JSON/);
+  ok('Wrangler JSON notices are tolerated, but non-JSON output still stops the remote reset');
 
   assert.equal(REQUIRED_TABLES.length, 26);
   assert(PRESERVED_TABLES.includes('users') && PRESERVED_TABLES.includes('entitlements'));
