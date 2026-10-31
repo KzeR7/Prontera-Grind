@@ -146,14 +146,20 @@ export async function run(argv, { env = process.env, fetchImpl = fetch, print = 
     if (command === 'close' && options.wait) {
       const deadline = now() + WAIT_MS;
       let last = result.data;
-      while (!last.safeToRestore && now() < deadline) {
+      // `safeToRestore` only becomes true after an operator seals the gate. The
+      // close --wait step must wait for the drain report, not for the seal itself.
+      const drained = st => {
+        const d = st && st.drain;
+        return !!d && Number(d.liveLeases) === 0 && Number(d.quietMs) >= Number(d.requiredMs);
+      };
+      while (!drained(last) && now() < deadline) {
         await sleep(POLL_MS);
         const poll = await call({ url, token, action: 'status', fetchImpl });
         if (!poll.ok) { print(failure(poll)); return 1; }
         last = poll.data;
         print(`\nwaiting… in flight: ${last.drain?.liveLeases ?? '?'}, quiet for ${short(last.drain?.quietMs)}`);
       }
-      if (!last.safeToRestore) { print('\nStill not quiet. Do not restore; run status again in a minute.'); return 1; }
+      if (!drained(last)) { print('\nStill not quiet. Do not restore; run status again in a minute.'); return 1; }
       print('\nThe pause has drained. Seal it before taking the backup or restoring:');
       print(`  node tools/recovery/write_gate.mjs seal "${PHRASES.seal}"`);
       return 0;

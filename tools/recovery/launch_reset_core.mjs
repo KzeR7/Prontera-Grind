@@ -230,10 +230,10 @@ export async function runRemoteReset({ db, gate, copyBackup, writeSql, confirm, 
   const epoch = assertSealed(await gate.status());
   const source = await db.export(), backup = copyBackup(source);
   const original = restoreBackup(backup);
-  let rehearsal;
+  let rehearsal, importStarted = false, importReturned = false;
   try {
     const before = captureState(original);
-    assert.equal(accountState(await db.accounts()).fingerprint, before.accounts.fingerprint,
+    assert.equal(accountState(await db.accounts('pre-import account comparison')).fingerprint, before.accounts.fingerprint,
       'Live accounts/save versions differ from the verified backup; keep writes sealed');
     const plan = buildResetSql(original, { now });
     rehearsal = restoreBackup(backup);
@@ -241,13 +241,36 @@ export async function runRemoteReset({ db, gate, copyBackup, writeSql, confirm, 
     const expected = captureState(rehearsal);
     const file = writeSql(plan.sql);
     assertSealed(await gate.status(), epoch);
+    importStarted = true;
     await db.importReset(file, plan.sql);
-    const after = verifyRemoteAccounts(before.accounts, await db.accounts());
-    verifyResetCheck(await db.checks());
-    assert.deepEqual(after.rows, expected.accounts.rows, 'Live reset differs from the verified rehearsal');
+    importReturned = true;
+    const after = verifyRemoteAccounts(before.accounts, await db.accounts('post-import account verification'));
+    verifyResetCheck(await db.checks('post-import gameplay verification'));
+    // Compare canonical values, not row object prototypes: node:sqlite returns
+    // null-prototype rows while Wrangler --json returns plain JSON objects.
+    assert.equal(after.fingerprint, expected.accounts.fingerprint, 'Live reset differs from the verified rehearsal');
     assertSealed(await gate.status(), epoch);
     const result = { accounts: after.accounts, backupFile: backup, fingerprint: after.fingerprint, gateEpoch: epoch, writesOpen: false };
     report(result);
     return result;
+  } catch (error) {
+    const state = importReturned ? 'returned; post-import verification incomplete' : importStarted ? 'started; outcome unknown' : 'not started';
+    throw Error(`${error.message} Reset import ${state}; do not reopen writes or retry until inspected.`, { cause: error });
   } finally { original.close(); if (rehearsal) rehearsal.close(); }
+}
+
+// Read-only remote rehearsal of the exact account/check queries. It never exports,
+// writes SQL, imports, or changes the gate; it only proves the transport and shape.
+export async function runRemoteCheck({ db, gate, report = () => {} }) {
+  db.verify();
+  const epoch = assertSealed(await gate.status());
+  const accounts = accountState(await db.accounts('read-only account verification'));
+  const checks = await db.checks('read-only gameplay verification');
+  assert(checks && typeof checks === 'object' && !Array.isArray(checks), 'Read-only gameplay verification returned no row');
+  for (const key of ['sessions', 'invalid_history', 'grants', 'messages', 'leaderboard_kills', 'starts_at', 'invalid_saves', 'missing_fresh_history'])
+    assert(Number.isSafeInteger(Number(checks[key])), 'Read-only gameplay verification is missing ' + key);
+  assertSealed(await gate.status(), epoch);
+  const result = { mode: 'remote-read-only-check', accounts: accounts.accounts, verificationQueries: 'passed', importAttempted: false, gateEpoch: epoch, writesOpen: false };
+  report(result);
+  return result;
 }

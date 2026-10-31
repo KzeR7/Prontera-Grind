@@ -13,8 +13,8 @@ import { onRequestPost as login } from '../../functions/api/sessions.js';
 import { onRequestGet as getSave, onRequestPut as putSave } from '../../functions/api/save.js';
 import { CONFIRM, CLEARED_TABLES, PRESERVED_TABLES, ACCOUNT_SQL, CHECK_SQL, REQUIRED_TABLES,
   captureState, preservedSnapshot, buildResetSql, assertResetSql, assertResetSchema, assertNoPendingShopGrants, applyReset,
-  restoreBackup, runRemoteReset, verifyResetCheck } from '../recovery/launch_reset_core.mjs';
-import { parseArgs, runLocal, createResetRemote } from '../recovery/prelaunch_reset.mjs';
+  restoreBackup, runRemoteCheck, runRemoteReset, verifyResetCheck } from '../recovery/launch_reset_core.mjs';
+import { parseArgs, runLocal, createResetRemote, parseWranglerJson } from '../recovery/prelaunch_reset.mjs';
 const { createGame } = createRequire(import.meta.url)('./helpers/game');
 const root = path.resolve(import.meta.dirname, '../..');
 const migrationSql = fs.readdirSync(path.join(root, 'migrations')).filter(n => /^\d+_.*\.sql$/.test(n)).sort()
@@ -80,8 +80,12 @@ try {
   assert.throws(() => parseArgs(['--remote']), /requires --apply/);
   assert.throws(() => parseArgs(['--remote', '--apply', '--confirm', 'yes']), /Exact confirmation/);
   assert.throws(() => parseArgs(['--remote', '--local', 'x']), /not both/);
+  assert.throws(() => parseArgs(['--check']), /read-only remote/);
+  assert.throws(() => parseArgs(['--remote', '--check', '--apply', '--confirm', CONFIRM]), /not both/);
+  assert.equal(parseArgs(['--remote', '--check']).apply, false);
+  assert.equal(parseArgs(['--remote', '--check']).check, true);
   assert.equal(parseArgs(['--local', 'x']).apply, false);
-  ok('CLI defaults to a local dry run and refuses an unconfirmed remote operation');
+  ok('CLI defaults to a local dry run, separates read-only remote checks, and refuses an unconfirmed remote operation');
 
   const db = fixture(true), env = { DB: makeD1(db) };
   const signedIn = await login({ request: request('sessions', { u: 'ResetPlayer', p: password }), env });
@@ -183,7 +187,9 @@ try {
   const gate = { async status() { gateCalls++; return { state: 'closed', open: false, safeToRestore: true, epoch: changeOn === gateCalls ? 8 : 7 }; } };
   const driver = {
     verify() {}, export() { exported++; return backupFile; },
-    accounts: async () => remote.prepare(ACCOUNT_SQL).all(), checks: async () => remote.prepare(CHECK_SQL).get(),
+    // Mimic Wrangler --json: plain JSON objects, not node:sqlite null-prototype rows.
+    accounts: async () => JSON.parse(JSON.stringify(remote.prepare(ACCOUNT_SQL).all())),
+    checks: async () => JSON.parse(JSON.stringify(remote.prepare(CHECK_SQL).get())),
     importReset(file, expected) { assert.equal(fs.readFileSync(file, 'utf8'), expected); imported++; remote.exec('BEGIN IMMEDIATE'); try { remote.exec(expected); remote.exec('COMMIT'); } catch (e) { remote.exec('ROLLBACK'); throw e; } if (failImport) throw Error('uncertain import'); },
   };
   const run = () => runRemoteReset({ db: driver, gate, confirm: CONFIRM, now: 5000,
@@ -195,12 +201,32 @@ try {
   assert.deepEqual(preservedSnapshot(remote), remoteBefore.preserved); verifyResetCheck(remote.prepare(CHECK_SQL).get());
   ok('the fixed remote workflow backs up, rehearses, compares live identities, imports once, verifies and leaves writes sealed');
 
+  const checkReports = [], importsBeforeCheck = imported, exportsBeforeCheck = exported;
+  const checkResult = await runRemoteCheck({ db: driver, gate, report: x => checkReports.push(x) });
+  assert.equal(checkResult.mode, 'remote-read-only-check'); assert.equal(checkResult.accounts, 3);
+  assert.equal(checkResult.importAttempted, false); assert.equal(checkResult.writesOpen, false);
+  assert.equal(imported, importsBeforeCheck); assert.equal(exported, exportsBeforeCheck);
+  assert.deepEqual(checkReports, [checkResult]);
+  ok('the read-only remote check exercises the fixed queries without export, import, reset or reopen');
+
   remote.close(); remote = fixture();
   gateCalls = 0; changeOn = 2; const importsBefore = imported;
   await assert.rejects(run(), /Gate changed/); assert.equal(imported, importsBefore); changeOn = 0;
-  failImport = true; await assert.rejects(run(), /uncertain import/); failImport = false;
+  failImport = true; await assert.rejects(run(), /uncertain import.*Reset import started; outcome unknown/); failImport = false;
   assert.equal((await gate.status()).state, 'closed');
   ok('a changed gate epoch or uncertain import stops without an automatic retry or reopen');
+
+  const stageWrite = sql => { const file = path.join(temp, 'stage-' + imported + '.sql'); fs.writeFileSync(file, sql); return file; };
+  const preDriver = { ...driver, accounts: async () => { throw Error('pre-import transport failed'); } };
+  const beforePre = imported;
+  await assert.rejects(runRemoteReset({ db: preDriver, gate, confirm: CONFIRM, copyBackup: () => backupFile, writeSql: stageWrite }), /pre-import transport failed.*Reset import not started/);
+  assert.equal(imported, beforePre);
+  remote.close(); remote = fixture();
+  const postDriver = { ...driver, checks: async () => { throw Error('post-import transport failed'); } };
+  const beforePost = imported;
+  await assert.rejects(runRemoteReset({ db: postDriver, gate, confirm: CONFIRM, copyBackup: () => backupFile, writeSql: stageWrite }), /post-import transport failed.*Reset import returned/);
+  assert.equal(imported, beforePost + 1);
+  ok('query failures identify whether the atomic import was not started or already returned; neither case retries or reopens');
 
   const wrong = fixture(), wrongDriver = { ...driver, accounts: async () => wrong.prepare(ACCOUNT_SQL).all() };
   wrong.exec("UPDATE users SET username='Different' WHERE id=10");
@@ -216,7 +242,49 @@ try {
   assert.throws(() => guarded.importReset(resetFile, plan.sql), /changed after rehearsal/);
   assert.equal(calls.length, 1, 'guard failures never reach Wrangler');
   assert.match(fs.readFileSync(path.join(fixed, 'wrangler.jsonc'), 'utf8'), /50a6448b-1f12-466c-a28a-10544bedf750/);
+  assert.deepEqual(calls[0], ['d1', 'info', 'pg', '--json'], 'identity query uses the fixed database name, not the Pages binding');
   ok('the remote adapter pins the production identity and refuses a changed reset file');
+
+  const importDir = path.join(temp, 'import-flags'); fs.mkdirSync(importDir);
+  const importFile = path.join(importDir, 'reset.sql'); fs.writeFileSync(importFile, plan.sql);
+  const importCalls = [];
+  const importer = createResetRemote(importDir, { execute: args => { importCalls.push(args); return '[]'; } });
+  importer.importReset(importFile, plan.sql);
+  assert.deepEqual(importCalls, [['d1', 'execute', 'pg', '--remote', '--yes', '--file', importFile]]);
+  assert(!importCalls[0].includes('--skip-confirmation'), 'd1 execute rejects the export-only confirmation flag');
+  ok('the atomic file import uses the confirmation flag accepted by pinned Wrangler d1 execute');
+
+  const oneLineDir = path.join(temp, 'one-line-remote'); fs.mkdirSync(oneLineDir);
+  const queryCalls = [];
+  const oneLine = createResetRemote(oneLineDir, { execute: args => {
+    queryCalls.push(args);
+    if (args[1] === 'info') return JSON.stringify({ name: 'pg', uuid: '50a6448b-1f12-466c-a28a-10544bedf750' });
+    const sql = args[6];
+    if (sql.startsWith('SELECT u.id')) return JSON.stringify([{ success: true, results: [{ id: 1, username: 'Synthetic', gm: 0, banned: 0, version: 1 }] }]);
+    return JSON.stringify([{ success: true, results: [{ sessions: 0, invalid_history: 0, grants: 0, messages: 0, leaderboard_kills: 0, starts_at: 0, invalid_saves: 0, missing_fresh_history: 0 }] }]);
+  } });
+  oneLine.verify(); await oneLine.accounts('synthetic account verification'); await oneLine.checks('synthetic gameplay verification');
+  assert.equal(queryCalls.length, 3);
+  assert.equal(queryCalls[1][6], ACCOUNT_SQL.replace(/\s+/g, ' ').trim());
+  assert.equal(queryCalls[2][6], CHECK_SQL.replace(/\s+/g, ' ').trim());
+  assert(queryCalls.slice(1).every(args => !/[\r\n]/.test(args[6])));
+  assert(queryCalls[2][6].includes("'Cash Shop'") && queryCalls[2][6].includes("'Novice'"));
+  ok('remote verification SQL is sent as one shell-safe line without changing fixed literals');
+
+  assert.deepEqual(parseWranglerJson(`npm notice
+{"name":"pg","uuid":"50a6448b-1f12-466c-a28a-10544bedf750"}
+`), { name: 'pg', uuid: '50a6448b-1f12-466c-a28a-10544bedf750' });
+  assert.deepEqual(parseWranglerJson(`[notice]
+[{"success":true,"results":[]}]`), [{ success: true, results: [] }]);
+  assert.throws(() => parseWranglerJson('not json'), /no verified JSON/);
+  const noisyDir = path.join(temp, 'noisy-remote'); fs.mkdirSync(noisyDir);
+  const noisy = createResetRemote(noisyDir, { execute: args => args[1] === 'info' ? `npm notice
+{"name":"pg","uuid":"50a6448b-1f12-466c-a28a-10544bedf750"}` : '[]' });
+  noisy.verify();
+  const badDir = path.join(temp, 'bad-remote'); fs.mkdirSync(badDir);
+  const bad = createResetRemote(badDir, { execute: () => 'not json' });
+  assert.throws(() => bad.verify(), /no verified JSON/);
+  ok('Wrangler JSON notices are tolerated, but non-JSON output still stops the remote reset');
 
   assert.equal(REQUIRED_TABLES.length, 26);
   assert(PRESERVED_TABLES.includes('users') && PRESERVED_TABLES.includes('entitlements'));

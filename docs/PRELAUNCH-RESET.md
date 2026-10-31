@@ -114,8 +114,17 @@ node tools/recovery/write_gate.mjs seal  "SEAL WRITES"
 node tools/recovery/write_gate.mjs status
 # Required: state closed, writes open no, safe to restore YES.
 
+# Read-only transport/shape check. This does NOT export, import, reset or reopen.
+node tools/recovery/prelaunch_reset.mjs --remote --check
+# Required: PASS: read-only remote reset checks. If this stops, keep writes sealed.
+
 node tools/recovery/prelaunch_reset.mjs --remote --apply --confirm "RESET GAMEPLAY KEEP LOGINS"
 ```
+
+The read-only check verifies the fixed database identity, sealed gate, and the exact
+account/gameplay verification queries without printing rows. On Windows it sends those
+fixed queries as single-line commands because `npx` uses a shell there; multiline SQL
+arguments can be broken before Wrangler receives them.
 
 The reset command itself performs these steps, in order:
 
@@ -160,9 +169,12 @@ Check a normal account and the owner account:
 ## Stop conditions
 
 On any error, uncertain import, schema mismatch, changed gate epoch or failed postcheck:
-**keep writes closed and do not blindly retry or reopen.** Inspect the gate audit and the
-private backup, then follow [Recovery](RECOVERY.md). A restore is a separate operation;
-this tool never restores a backup or opens the gate automatically.
+**keep writes closed and do not blindly retry or reopen.** The error now states whether
+the atomic import was `not started`, `started; outcome unknown`, or `returned;
+post-import verification incomplete`. Only `not started` means the reset definitely did
+not reach D1 import. Inspect the gate audit and the private backup, then follow
+[Recovery](RECOVERY.md). A restore is a separate operation; this tool never restores a
+backup or opens the gate automatically.
 
 Local tests do not prove hosted D1 availability, actual maintenance duration or the
 owner's Cloudflare authentication. No live reset is claimed until the owner runs the

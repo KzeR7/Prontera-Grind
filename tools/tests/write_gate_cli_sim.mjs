@@ -104,12 +104,13 @@ await T('close --wait polls until the pause has drained, then stops', async () =
   const bus = [
     status({ state: 'closing', safeToRestore: false, drain: { liveLeases: 2, quietMs: 0, requiredMs: 90000 } }),
     status({ state: 'closing', safeToRestore: false, drain: { liveLeases: 0, quietMs: 40000, requiredMs: 90000 } }),
-    status({ state: 'closing', safeToRestore: true }),
+    status({ state: 'closing', safeToRestore: false }),
   ];
   const h = harness(bus);
   assert.equal(await h.exec(['close', 'CLOSE WRITES', '--wait']), 0);
   assert.equal(h.calls.length, 3);
   assert.match(h.text(), /seal "SEAL WRITES"/);
+  assert.equal(h.text().includes('safe to restore: YES'), false, 'close --wait must not require the sealed/safe state');
 });
 
 await T('close --wait gives up instead of sealing something that never drained', async () => {

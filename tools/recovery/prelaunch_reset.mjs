@@ -19,11 +19,12 @@ import { fileURLToPath } from 'node:url';
 import { DB_NAME, DB_ID, verifyInfo, npxCli } from '../staging/live_backup_preflight.mjs';
 import { DEFAULT_URL, tokenFrom } from './write_gate.mjs';
 import { CONFIRM, ACCOUNT_SQL, CHECK_SQL, assertResetSchema, assertResetSql, captureState,
-  buildResetSql, applyReset, restoreBackup, runRemoteReset } from './launch_reset_core.mjs';
+  buildResetSql, applyReset, restoreBackup, runRemoteCheck, runRemoteReset } from './launch_reset_core.mjs';
 
 const USAGE = `Usage:
   node tools/recovery/prelaunch_reset.mjs --local PATH                     (dry run; original untouched)
   node tools/recovery/prelaunch_reset.mjs --local PATH --apply --confirm "${CONFIRM}"
+  node tools/recovery/prelaunch_reset.mjs --remote --check                 (read-only remote verification; no export/import/reset)
   node tools/recovery/prelaunch_reset.mjs --remote --apply --confirm "${CONFIRM}"
 
 Keeps usernames, passwords, recovery codes, emails, roles, bans, purchase records,
@@ -31,23 +32,26 @@ webhook receipts and cosmetic ownership. Resets gameplay, rankings, rewards, mai
 diagnostics and sessions. Everyone must sign in again. Purchased supplies already
 in a character's inventory are gameplay and reset with it; ownership does not.
 Refuses unclaimed Cash Shop grants so paid supplies are not erased from the mail queue.
-Remote mode requires a sealed write gate and PG_GATE_TOKEN in the environment.
+Remote modes require a sealed write gate and PG_GATE_TOKEN in the environment.
 Read docs/PRELAUNCH-RESET.md before using --remote. No mode reopens writes.`;
 
 export function parseArgs(argv) {
-  const options = { local: null, remote: false, apply: false, confirm: '', help: false };
+  const options = { local: null, remote: false, apply: false, check: false, confirm: '', help: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--help') options.help = true;
     else if (arg === '--remote') options.remote = true;
     else if (arg === '--apply') options.apply = true;
+    else if (arg === '--check') options.check = true;
     else if (arg === '--local' && argv[i + 1] && !argv[i + 1].startsWith('--')) options.local = argv[++i];
     else if (arg === '--confirm' && argv[i + 1] && !argv[i + 1].startsWith('--')) options.confirm = argv[++i];
     else throw Error('Unknown or incomplete argument. Use --help; no operation was performed.');
   }
   assert(!(options.remote && options.local), 'Choose local or remote, not both');
+  assert(!options.check || options.remote, '--check is a read-only remote mode');
   assert(options.help || options.remote || options.local, 'Choose --local PATH or --remote');
-  assert(!options.remote || options.apply, 'Remote mode requires --apply and the exact confirmation');
+  assert(!(options.check && options.apply), 'Choose read-only --check or destructive --apply, not both');
+  assert(!options.remote || options.apply || options.check, 'Remote mode requires --apply with the exact confirmation, or read-only --check');
   if (options.apply) assert.equal(options.confirm, CONFIRM, 'Exact confirmation required');
   return options;
 }
@@ -98,6 +102,37 @@ export async function runLocal(file, { apply = false, confirm, report = console.
   } finally { db.close(); fs.rmSync(temp, { recursive: true, force: true }); }
 }
 
+// Wrangler/npm can print notices around the JSON payload. Accept a balanced JSON
+// object/array only; never guess from partial or non-JSON output.
+export function parseWranglerJson(stdout) {
+  const text = String(stdout ?? '');
+  try { return JSON.parse(text); } catch {}
+  for (let start = 0; start < text.length; start++) {
+    const open = text[start];
+    if (open !== '{' && open !== '[') continue;
+    const close = open === '{' ? '}' : ']';
+    let depth = 0, inString = false, escape = false;
+    for (let i = start; i < text.length; i++) {
+      const ch = text[i];
+      if (inString) {
+        if (escape) escape = false;
+        else if (ch.charCodeAt(0) === 92) escape = true;
+        else if (ch === '"') inString = false;
+        continue;
+      }
+      if (ch === '"') { inString = true; continue; }
+      if (ch === open) depth++;
+      else if (ch === close) {
+        depth--;
+        if (depth === 0) {
+          try { return JSON.parse(text.slice(start, i + 1)); } catch { break; }
+        }
+      }
+    }
+  }
+  throw Error('no verified JSON');
+}
+
 // A separate fixed-target driver keeps live_backup_preflight.mjs read-only.
 export function createResetRemote(temp, { execute } = {}) {
   fs.writeFileSync(path.join(temp, 'wrangler.jsonc'), JSON.stringify({
@@ -111,31 +146,48 @@ export function createResetRemote(temp, { execute } = {}) {
       cwd: temp, encoding: 'utf8', timeout: 600000, maxBuffer: 20 * 1024 * 1024,
       env: { ...process.env, WRANGLER_SEND_METRICS: 'false', CI: 'true' },
     });
-    if (result.error || result.status !== 0) throw Error('Wrangler failed or timed out. Keep writes sealed; inspect before any retry. No credentials or SQL were printed.');
+    if (result.error || result.status !== 0) {
+      const reason = result.error?.code === 'ETIMEDOUT' ? 'timed out' : `failed (exit ${result.status ?? 'unknown'})`;
+      throw Error(`Wrangler ${args[1]} ${reason}. Keep writes sealed; inspect before any retry. Raw output was not printed.`);
+    }
     return result.stdout;
   };
-  const json = args => { try { return JSON.parse(run(args)); } catch { throw Error('Fixed database query returned no verified JSON; keep writes sealed'); } };
-  const rows = sql => {
-    const result = json(['d1', 'execute', 'DB', '--remote', '--json', '--command', sql]);
-    assert(Array.isArray(result) && result.every(r => r.success === true), 'Database verification query failed');
+  const json = (args, label) => {
+    const output = run(args);
+    try { return parseWranglerJson(output); }
+    catch { throw Error(`Fixed database ${label} returned no verified JSON (${String(output ?? '').length} stdout chars); keep writes sealed`); }
+  };
+  const rows = (sql, label = 'verification query') => {
+    assert(sql === ACCOUNT_SQL || sql === CHECK_SQL, 'Only fixed read-only verification queries are allowed');
+    // npm exec runs through cmd.exe on Windows. Newlines in an argument can be
+    // interpreted by that shell before Wrangler sees them. These two fixed SQL
+    // constants contain no comments or multiline string literals, so collapsing
+    // whitespace is lossless and keeps the command a single shell argument.
+    const command = sql.replace(/\s+/g, ' ').trim();
+    assert(!/[\r\n]/.test(command), 'Remote verification SQL must be one line');
+    const result = json(['d1', 'execute', DB_NAME, '--remote', '--json', '--command', command], label);
+    assert(Array.isArray(result) && result.every(r => r.success === true), `Database ${label} failed`);
     return result.at(-1).results || [];
   };
   return {
-    verify() { assert(verifyInfo(json(['d1', 'info', 'DB', '--json'])), 'Fixed production database identity mismatch'); },
+    // Use the fixed database name, not the Pages binding. Some Wrangler versions
+    // resolve `d1 info` by name only; the UUID in wrangler.jsonc still pins the target.
+    verify() { assert(verifyInfo(json(['d1', 'info', DB_NAME, '--json'], 'identity query')), 'Fixed production database identity mismatch'); },
     export() {
-      run(['d1', 'export', 'DB', '--remote', '--skip-confirmation', '--output=private-backup.sql']);
+      run(['d1', 'export', DB_NAME, '--remote', '--skip-confirmation', '--output=private-backup.sql']);
       const file = path.join(temp, 'private-backup.sql');
       assert(fs.statSync(file).size > 0, 'Remote backup is empty');
       return file;
     },
-    accounts: () => rows(ACCOUNT_SQL),
-    checks: async () => { const result = await rows(CHECK_SQL); assert.equal(result.length, 1); return result[0]; },
+    accounts: (label = 'account verification') => rows(ACCOUNT_SQL, label),
+    checks: async (label = 'gameplay verification') => { const result = rows(CHECK_SQL, label); assert.equal(result.length, 1, `Database ${label} returned no row`); return result[0]; },
     importReset(file, expectedSql) {
       assert.equal(fs.readFileSync(file, 'utf8'), expectedSql, 'Reset file changed after rehearsal');
       assertResetSql(expectedSql);
       // Pinned Wrangler 4.154.0 uses D1's atomic file-import endpoint for --file.
+      // `d1 execute` uses --yes; --skip-confirmation is only valid on `d1 export`.
       // Do not replace this with per-statement --command calls or retry on timeout.
-      run(['d1', 'execute', 'DB', '--remote', '--skip-confirmation', '--file', file]);
+      run(['d1', 'execute', DB_NAME, '--remote', '--yes', '--file', file]);
     },
   };
 }
@@ -148,10 +200,18 @@ export function createGate(token, fetchImpl = fetch) {
     return response.json();
   } };
 }
-async function remoteMain({ confirm }) {
+async function remoteMain({ confirm, check = false }) {
   assert.equal(process.platform, 'win32', 'The fixed remote tool is for the owner Windows setup');
   const token = tokenFrom(process.env), temp = fs.mkdtempSync(path.join(os.tmpdir(), 'pg-preflight-reset-'));
   try {
+    if (check) {
+      const result = await runRemoteCheck({
+        db: createResetRemote(temp), gate: createGate(token),
+        report: value => console.log(JSON.stringify(value, null, 2)),
+      });
+      console.log('PASS: read-only remote reset checks; no export, import or reset performed. Writes remain SEALED.');
+      return result;
+    }
     const result = await runRemoteReset({
       db: createResetRemote(temp), gate: createGate(token), confirm,
       copyBackup(source) {
