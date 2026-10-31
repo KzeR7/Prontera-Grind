@@ -185,8 +185,9 @@ export function createResetRemote(temp, { execute } = {}) {
       assert.equal(fs.readFileSync(file, 'utf8'), expectedSql, 'Reset file changed after rehearsal');
       assertResetSql(expectedSql);
       // Pinned Wrangler 4.154.0 uses D1's atomic file-import endpoint for --file.
+      // `d1 execute` uses --yes; --skip-confirmation is only valid on `d1 export`.
       // Do not replace this with per-statement --command calls or retry on timeout.
-      run(['d1', 'execute', DB_NAME, '--remote', '--skip-confirmation', '--file', file]);
+      run(['d1', 'execute', DB_NAME, '--remote', '--yes', '--file', file]);
     },
   };
 }

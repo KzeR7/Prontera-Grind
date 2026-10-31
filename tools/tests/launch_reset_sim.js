@@ -243,6 +243,15 @@ try {
   assert.deepEqual(calls[0], ['d1', 'info', 'pg', '--json'], 'identity query uses the fixed database name, not the Pages binding');
   ok('the remote adapter pins the production identity and refuses a changed reset file');
 
+  const importDir = path.join(temp, 'import-flags'); fs.mkdirSync(importDir);
+  const importFile = path.join(importDir, 'reset.sql'); fs.writeFileSync(importFile, plan.sql);
+  const importCalls = [];
+  const importer = createResetRemote(importDir, { execute: args => { importCalls.push(args); return '[]'; } });
+  importer.importReset(importFile, plan.sql);
+  assert.deepEqual(importCalls, [['d1', 'execute', 'pg', '--remote', '--yes', '--file', importFile]]);
+  assert(!importCalls[0].includes('--skip-confirmation'), 'd1 execute rejects the export-only confirmation flag');
+  ok('the atomic file import uses the confirmation flag accepted by pinned Wrangler d1 execute');
+
   const oneLineDir = path.join(temp, 'one-line-remote'); fs.mkdirSync(oneLineDir);
   const queryCalls = [];
   const oneLine = createResetRemote(oneLineDir, { execute: args => {
