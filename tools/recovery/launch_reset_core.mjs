@@ -246,7 +246,9 @@ export async function runRemoteReset({ db, gate, copyBackup, writeSql, confirm, 
     importReturned = true;
     const after = verifyRemoteAccounts(before.accounts, await db.accounts('post-import account verification'));
     verifyResetCheck(await db.checks('post-import gameplay verification'));
-    assert.deepEqual(after.rows, expected.accounts.rows, 'Live reset differs from the verified rehearsal');
+    // Compare canonical values, not row object prototypes: node:sqlite returns
+    // null-prototype rows while Wrangler --json returns plain JSON objects.
+    assert.equal(after.fingerprint, expected.accounts.fingerprint, 'Live reset differs from the verified rehearsal');
     assertSealed(await gate.status(), epoch);
     const result = { accounts: after.accounts, backupFile: backup, fingerprint: after.fingerprint, gateEpoch: epoch, writesOpen: false };
     report(result);

@@ -187,7 +187,9 @@ try {
   const gate = { async status() { gateCalls++; return { state: 'closed', open: false, safeToRestore: true, epoch: changeOn === gateCalls ? 8 : 7 }; } };
   const driver = {
     verify() {}, export() { exported++; return backupFile; },
-    accounts: async () => remote.prepare(ACCOUNT_SQL).all(), checks: async () => remote.prepare(CHECK_SQL).get(),
+    // Mimic Wrangler --json: plain JSON objects, not node:sqlite null-prototype rows.
+    accounts: async () => JSON.parse(JSON.stringify(remote.prepare(ACCOUNT_SQL).all())),
+    checks: async () => JSON.parse(JSON.stringify(remote.prepare(CHECK_SQL).get())),
     importReset(file, expected) { assert.equal(fs.readFileSync(file, 'utf8'), expected); imported++; remote.exec('BEGIN IMMEDIATE'); try { remote.exec(expected); remote.exec('COMMIT'); } catch (e) { remote.exec('ROLLBACK'); throw e; } if (failImport) throw Error('uncertain import'); },
   };
   const run = () => runRemoteReset({ db: driver, gate, confirm: CONFIRM, now: 5000,
