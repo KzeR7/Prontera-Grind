@@ -12,7 +12,19 @@ const hub=document.createElement('section');hub.id='socialHub';hub.hidden=true;h
 const feedHidden=()=>document.body.classList.contains('hide-feed')||(typeof S==='object'&&S&&S.feedShow===false);
 function notice(text){const p=document.createElement('p');p.className='social-notice';p.textContent=text;$id('socialLines').append(p)}
 function status(text){$id('socialConnection').textContent=text}
-function tabsUI(){if(app.channel==='log'&&feedHidden())app.channel=app.room?'local':'world';const el=$id('socialTabs');el.replaceChildren();for(const name of ['world','whisper','local','log']){if(name==='local'&&!app.room)continue;if(name==='log'&&feedHidden())continue;const b=document.createElement('button');b.type='button';b.dataset.channel=name;b.setAttribute('role','tab');b.setAttribute('aria-selected',String(app.channel===name));b.classList.toggle('unread',app.unread.has(name));b.textContent=name==='emoji'?'Emoji':name[0].toUpperCase()+name.slice(1);b.onclick=()=>select(name);el.append(b)}const min=document.createElement('span');min.id='socialMin';min.tabIndex=0;min.setAttribute('role','button');min.setAttribute('aria-label','Minimize or expand chat');min.setAttribute('aria-expanded',String(!chat.classList.contains('minimized')));const toggle=()=>{chat.classList.toggle('minimized');toggleEmojiClosed();tabsUI();syncPokerBounds();$id('socialMin').focus()};min.onclick=toggle;min.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}};el.append(min)}
+// Reuse tab nodes. bars() can call Display sync frequently; replacing the buttons
+// under the pointer made hover flicker and could drop a click between down/up.
+let chatMin=null;
+function makeChatMin(){const min=document.createElement('span');min.id='socialMin';min.tabIndex=0;min.setAttribute('role','button');min.setAttribute('aria-label','Minimize or expand chat');const toggle=()=>{chat.classList.toggle('minimized');toggleEmojiClosed();tabsUI();syncPokerBounds();min.focus()};min.onclick=toggle;min.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}};return min}
+function tabsUI(){if(app.channel==='log'&&feedHidden())app.channel=app.room?'local':'world';const el=$id('socialTabs');
+ const names=['world','whisper','local','log'].filter(name=>(name!=='local'||app.room)&&(name!=='log'||!feedHidden()));
+ const old=new Map();for(const b of el.querySelectorAll('button[data-channel]'))old.set(b.dataset.channel,b);
+ const desired=[];
+ for(const name of names){let b=old.get(name);if(!b){b=document.createElement('button');b.type='button';b.dataset.channel=name;b.setAttribute('role','tab');b.onclick=()=>select(name)}
+  b.setAttribute('aria-selected',String(app.channel===name));b.classList.toggle('unread',app.unread.has(name));const label=name[0].toUpperCase()+name.slice(1);if(b.textContent!==label)b.textContent=label;desired.push(b);old.delete(name)}
+ for(const b of old.values())b.remove();
+ if(!chatMin)chatMin=makeChatMin();chatMin.setAttribute('aria-expanded',String(!chat.classList.contains('minimized')));desired.push(chatMin);
+ if(el.children.length!==desired.length||desired.some((n,i)=>el.children[i]!==n))el.replaceChildren(...desired)}
 function toggleEmojiClosed(){$id('socialEmoji').hidden=true;$id('socialEmojiToggle').setAttribute('aria-expanded','false');$id('socialPeople').hidden=true}
 function toggleEmoji(force){const open=force??$id('socialEmoji').hidden;$id('socialEmoji').hidden=!open;$id('socialEmojiToggle').setAttribute('aria-expanded',String(open));chat.classList.remove('minimized');if(open)renderEmoji();syncPokerBounds()}
 $id('socialEmojiToggle').onclick=()=>toggleEmoji();

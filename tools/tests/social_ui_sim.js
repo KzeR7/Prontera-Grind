@@ -7,6 +7,19 @@ const app=w.PGSocial.app;app.user='previous';app.messages=[{channel:'whisper',na
 w.PGSocial.select('emoji');assert.match(w.document.getElementById('socialEmoji').textContent,/Enter the Social Hub/);assert(!w.document.getElementById('socialCompose').hidden);assert.equal(app.channel,'world');assert(!w.document.querySelector('#socialTabs [data-channel=emoji]'));assert.equal(w.document.getElementById('socialEmojiToggle').nextElementSibling.id,'socialSend');
 w.PGSocial.select('whisper');assert(!w.document.getElementById('socialTo').hidden);w.document.getElementById('socialMin').click();assert(w.document.getElementById('socialChat').classList.contains('minimized'));w.document.getElementById('socialMin').click();assert(!w.document.getElementById('socialChat').classList.contains('minimized'));
 const bar=w.document.getElementById('socialMin');bar.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert(w.document.getElementById('socialChat').classList.contains('minimized'));w.document.getElementById('socialMin').dispatchEvent(new w.KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));assert(!w.document.getElementById('socialChat').classList.contains('minimized'));
+// HUD/Display sync must not replace the tab under the pointer (hover flicker / lost clicks).
+{
+ const d=w.document,world=d.querySelector('#socialTabs [data-channel=world]'),whisper=d.querySelector('#socialTabs [data-channel=whisper]'),min=d.getElementById('socialMin');
+ world.focus();for(let i=0;i<40;i++)w.PGSocial.syncDisplay();
+ assert.equal(d.querySelector('#socialTabs [data-channel=world]'),world);assert.equal(d.activeElement,world);
+ world.dispatchEvent(new w.MouseEvent('mouseover',{bubbles:true}));world.dispatchEvent(new w.MouseEvent('mouseenter',{bubbles:true}));
+ assert.equal(d.querySelector('#socialTabs [data-channel=world]'),world);world.click();assert.equal(app.channel,'world');
+ app.room=1;w.PGSocial.syncDisplay();assert.equal(d.querySelector('#socialTabs [data-channel=world]'),world);assert.ok(d.querySelector('#socialTabs [data-channel=local]'));
+ app.room=0;w.PGSocial.syncDisplay();assert.equal(d.querySelector('#socialTabs [data-channel=world]'),world);assert.equal(d.querySelector('#socialTabs [data-channel=local]'),null);
+ app.unread.add('whisper');w.PGSocial.syncDisplay();assert.equal(d.querySelector('#socialTabs [data-channel=whisper]'),whisper);assert.ok(whisper.classList.contains('unread'));app.unread.delete('whisper');
+ min.click();assert.equal(d.getElementById('socialMin'),min);assert.equal(d.getElementById('socialChat').classList.contains('minimized'),true);min.click();assert.equal(d.getElementById('socialChat').classList.contains('minimized'),false);
+ const socialCss=fs.readFileSync('assets/social.css','utf8');assert.match(socialCss,/#socialTabs button\{position:relative;z-index:7\}/);assert.match(socialCss,/#socialMin\{position:relative;z-index:7;/);
+}
 let socket;w.WebSocket=class {constructor(){socket=this;this.readyState=1;this.sent=[]}close(){}send(m){this.sent.push(JSON.parse(m))}};w.CLOUD.on=true;w.CLOUD.user='new';w.sessionTick();socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:[]})});
 app.messages=Array.from({length:400},(_,i)=>({channel:'whisper',body:'old'+i,name:'Name',at:0}));socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:Array.from({length:100},()=>({channel:'world',body:'world',name:'Name',at:0}))})});assert.equal(app.messages.length,400);
 w.PGSocial.select('world');socket.onmessage({data:JSON.stringify({type:'message',channel:'world',body:'<img src=x onerror=alert(1)>',name:'<script>',from:3,at:0})});assert.equal(w.document.querySelectorAll('#socialLines img,#socialLines script').length,0);assert(w.document.getElementById('socialLines').textContent.includes('<img'));
@@ -114,5 +127,5 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  w.document.body.classList.add('clean-screen');
  assert.equal(w.getComputedStyle(chat).display,'none','clean-screen hides #socialChat everywhere');
  w.document.body.classList.remove('hide-chat','social-open','clean-screen');
- console.log('PASS chat UI: dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local privacy on exit, Emoji gate, recipient control, minimize, history cap, solo/preview plaza fallback, decoupled chat/log visibility and text-only message rendering');dom.window.close();
+ console.log('PASS chat UI: stable hover/click tabs, dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local privacy on exit, Emoji gate, recipient control, minimize, history cap, solo/preview plaza fallback, decoupled chat/log visibility and text-only message rendering');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1)});

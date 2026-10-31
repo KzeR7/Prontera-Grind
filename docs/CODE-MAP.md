@@ -39,6 +39,7 @@ measurements remain qualified by their saved source hashes.
 | GM console and grants | `gm.html`, `functions/api/gm/`, `functions/api/grants.js`, `functions/_lib/gm-tools.js` | `gm_console_sim.js`, `gm_tools_sim.js`, `gm_auth_sim.js` |
 | Mail, daily roulette and shared buffs | `index.html`: `renderMailView`, `rdReaderMarkup`, `renderDailyRouletteView`, `renderDailyRouletteWheelSvg`, `renderGmStudioView`, `dailyEffectTilesHTML`, `updateMailDailyHud`; styling in `assets/ui/eclipse.css` | `mail_roulette_ui_sim.js`, `eclipse_ui_sim.js`, `display_polish_sim.js` |
 | SQL and leaderboard | `migrations/`, `functions/api/board.js`, `functions/_lib/board.js` | `api_sim.js`, `leaderboard_sim.js` |
+| Preflight gameplay reset (keep logins/purchases) | `tools/recovery/prelaunch_reset.mjs`, `launch_reset_core.mjs`; [owner runbook](PRELAUNCH-RESET.md). GM/owner public-board and new-prize exclusion: `functions/api/board.js`, `functions/_lib/competition-settlement.js` | `launch_reset_sim.js`, `leaderboard_sim.js`, `unverified_echo_launch_sim.js`, `competition_settlement_foundation_sim.js` |
 | Launch runbook | [LAUNCH-RUNBOOK.md](LAUNCH-RUNBOOK.md): order, commands and stop conditions for the last four launch steps | `live_backup_preflight_sim.js`, `live_additive_migrations_sim.js`, `live_launch_schema_check_sim.js`, `hosted_launch_stage_sim.js`, `pages_preview_config_sim.py` |
 | Launch schema state | `tools/staging/live_launch_schema_check.mjs`: read-only, fixed-target comparison of live `pg` against the 0008–0011 contract, for when the tables already exist | `live_launch_schema_check_sim.js` |
 | Write pause enablement | [ENABLE-WRITE-PAUSE.md](ENABLE-WRITE-PAUSE.md): the ordered owner steps, verification gates and per-step rollback for turning the pause on | `write_gate_sim.mjs`, `write_gate_middleware_sim.js`, `write_gate_api_sim.js`, `write_gate_cli_sim.mjs`, `write_gate_binding_sim.js` |
@@ -277,8 +278,9 @@ gates, both Echo entry points, persistence and refinement consumption.
 ### Saved outdoor field activation (v196)
 
 The new outdoor renderer is parked behind `NATIVE_FIELDS_DEFAULT=false` in
-`index.html`; `?nativeFields=1` enables a session preview, and Display ▸ "New outdoor terrain"
-is the in-game switch for it. `tools/preview_server.py` serves **the game** with the constant
+`index.html`; `?nativeFields=1` enables a session preview. The in-game Display switch
+is labelled **GM preview: New outdoor terrain (reloads)** and is rendered/handled only for
+GM/owner accounts (`S.gm`); normal players do not see it. `tools/preview_server.py` serves **the game** with the constant
 flipped ON, so the review preview shows the new fields without a query string; `?nativeFields=0`
 there still gives the classic maps. Original kit maps are
 the default and download no outdoor field geometry/textures. Monster atlases

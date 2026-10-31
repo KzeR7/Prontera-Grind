@@ -75,6 +75,14 @@ historical point with the current code, a production-sized restore, its duration
 the write pause. It also does not confirm the drill's failure paths, which only have
 mock tests.
 
+## Preflight gameplay reset (not a restore)
+
+[Prelaunch reset](PRELAUNCH-RESET.md) is the separate owner-run workflow for clearing
+test gameplay while keeping account credentials and shop records. It requires the
+sealed write gate, takes and verifies a fresh private backup, rehearses the exact SQL,
+and leaves writes closed after success or failure. It never selects a restore point,
+restores a backup, or reopens writes automatically.
+
 ## The write pause (live on production; enabled 2026-10-30)
 
 A D1 restore overwrites the whole database in place. The pause flag therefore cannot

@@ -334,6 +334,12 @@ Keep old saves working. Verify load → change → save → reload and switching
 two accounts for state changes. Do not replace real conflict/ownership logic with
 a permissive preview shortcut in production code.
 
+The owner-approved preflight reset clears gameplay, rankings, rewards, mail and
+sessions while preserving account credentials and shop ownership/records. It is an
+explicit owner operation, never a deployment side effect; see
+[Prelaunch reset](PRELAUNCH-RESET.md). GM/owner accounts are excluded from all public
+Kills/Echo periods and from new Echo prize placement, before the ranking limit.
+
 ## Fourth jobs enabled for testing
 
 The six fourth jobs are enabled by owner request (16 October 2026), with five skills each.

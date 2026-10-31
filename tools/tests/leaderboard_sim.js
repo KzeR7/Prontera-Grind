@@ -149,5 +149,31 @@ await t('a reset does not subtract lifetime score, and new kills after it still 
   assert.equal((await board(alpha, 'daily')).data.entries[0].kills, 9 + weeklyExtraToday);
 });
 
+const staff = await register('StaffGM', 'staff-password-1');
+const owner = await register('StaffOwner', 'owner-password-1');
+sqlite.prepare("UPDATE users SET gm=1 WHERE username='StaffGM'").run();
+sqlite.prepare("UPDATE users SET gm=2 WHERE username='StaffOwner'").run();
+await t('GM and owner accounts are hidden from every kills board, without taking player ranks', async () => {
+  const expected = {};
+  for (const period of ['daily', 'weekly', 'all']) expected[period] = (await board(alpha, period)).data.entries;
+  assert.equal((await put(staff, 0, 150, 100000)).status, 200);
+  assert.equal((await put(owner, 0, 150, 200000)).status, 200);
+  assert.equal((await put(staff, 1, 150, 100010)).status, 200);
+  assert.equal((await put(owner, 1, 150, 200010)).status, 200);
+  for (const period of ['daily', 'weekly', 'all']) {
+    const out = await board(staff, period);
+    assert.equal(out.status, 200);
+    assert.deepEqual(out.data.entries, expected[period], period);
+    assert.deepEqual(out.data.entries.map(x => x.rank), [1, 2], period);
+  }
+});
+await t('the server role, not a name or client save flag, controls leaderboard visibility', async () => {
+  sqlite.prepare("UPDATE users SET gm=1 WHERE username='Beta'").run();
+  assert.deepEqual((await board(alpha, 'all')).data.entries.map(x => x.name), ['Alpha']);
+  sqlite.prepare("UPDATE users SET gm=0 WHERE username='Beta'").run();
+  assert.deepEqual((await board(alpha, 'all')).data.entries.map(x => x.name), ['Beta', 'Alpha']);
+  assert.deepEqual((await board(owner, 'all')).data.entries.map(x => x.name), ['Beta', 'Alpha']);
+});
+
 console.log('\n' + pass.length + ' passed, ' + fail.length + ' failed');
 process.exit(fail.length ? 1 : 0);

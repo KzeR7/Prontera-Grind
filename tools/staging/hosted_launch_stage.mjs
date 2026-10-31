@@ -143,6 +143,11 @@ export async function syntheticProbe({db,host,req=request,report=console.log,wai
     const userId=Number(users[0].id);assert(Number.isSafeInteger(userId)&&userId>0);
     const review=await req(host,'/api/gm/damage',{cookie:reg.cookie});assert.equal(review.status,200);
     assert.deepEqual(review.data?.alerts?.filter(a=>a.user_id===userId).map(a=>a.kind).sort(),['echo-over-100m','invalid-total-damage']);
+    const staffBoard=await req(host,'/api/board?board=echo&period=all',{cookie:reg.cookie});
+    assert.equal(staffBoard.status,200);assert(!staffBoard.data?.entries?.some(x=>x.name===name),'GM testing score must be hidden');
+    // The same synthetic account returns to the player role for the prize-path
+    // check. Staff exclusion was checked above; players must still receive prizes.
+    db.exec(`UPDATE users SET gm=0 WHERE ${where} AND gm=1;`);
     // Test-only short period; real scheduled periods/configuration are untouched.
     const now=Date.now(),start=Math.floor(now/1000)*1000-5000,end=Math.ceil(now/1000)*1000+60000;
     db.exec(`INSERT INTO competition_periods(period_key,kind,ruleset,starts_at,ends_at) VALUES('${key}','daily','unverified-save-v1',${start},${end});`);
@@ -159,7 +164,7 @@ export async function syntheticProbe({db,host,req=request,report=console.log,wai
     assert.equal(db.exec(`SELECT COUNT(*) AS n FROM competition_prize_ledger WHERE period_key='${key}';`)[0]?.n,2);
     await req(host,'/api/board?board=echo',{cookie:reg.cookie});
     assert.equal(db.exec(`SELECT COUNT(*) AS n FROM competition_prize_ledger WHERE period_key='${key}';`)[0]?.n,2,'Repeat duplicated a prize');
-    report('PASS: synthetic save, unverified ranking, review flags, atomic prizes and duplicate retries.');
+    report('PASS: synthetic save, unverified ranking, staff exclusion, review flags, atomic player prizes and duplicate retries.');
   }catch(e){failure=e}
   finally{
     if(attempted)try{
