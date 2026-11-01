@@ -270,8 +270,14 @@ export class SocialRoom {
   }
   if(m.type!=='chat'&&m.type!=='emotion')return;
   if(now<c.nextChat)return this.send(c,{type:'error',message:'Please wait 3 seconds between messages and emotions.'});
-  const emotion=m.type==='emotion';const channel=emotion?'local':m.channel;
-  if(!['world','whisper','local'].includes(channel)||(channel==='local'&&!c.room))return this.send(c,{type:'error',message:'Enter a plaza to use Local chat and emotions.'});
+  // An emotion rides the channel it was sent on: the hub's emotion tray is the
+  // same tray on World and Whisper, and an emote that quietly became a Local one
+  // stopped the speaker being seen at all outside a plaza (owner, v274). Only
+  // Local still needs a room, because Local is the room's own broadcast.
+  // A client that predates v274 sends a bare emotion with no channel; that form
+  // has always meant Local, so it keeps meaning Local instead of failing.
+  const emotion=m.type==='emotion';const channel=m.channel??(emotion?'local':undefined);
+  if(!['world','whisper','local'].includes(channel)||(channel==='local'&&!c.room))return this.send(c,{type:'error',message:'Enter a plaza to use Local chat.'});
   if(emotion&&!R.EMOTIONS.includes(m.emotion))return;
   const body=emotion?'':typeof m.body==='string'?m.body.replace(/[\u0000-\u001f\u007f]/g,'').trim():'';if(!emotion&&(!body||body.length>300))return;
   let recipient;if(channel==='whisper'){recipient=[...this.clients.values()].find(p=>p.name.toLowerCase()===String(m.to).toLowerCase());if(!recipient)return this.send(c,{type:'error',message:'That player is offline.'})}

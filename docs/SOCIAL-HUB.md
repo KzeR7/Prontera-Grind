@@ -11,9 +11,19 @@ the existing category filters and history. Muted IDs are stored per account.
 The plaza holds 20 authenticated players per room; additional arrivals automatically open
 `Plaza 2`, `Plaza 3`, and so on, and online visitors can also hop between open numbered plazas
 via the `#socialRoomSelect` switcher in the plaza header. World spans all plazas and fields.
-Local messages, emotions, bench seats, and each room's two West Avenue Hold'em tables belong to
+Local messages, bench seats, and each room's two West Avenue Hold'em tables belong to
 that numbered plaza; no Local replay is sent to newcomers. Local lines clear on
 leaving/rejoining. Whispers are delivered only to sender and online recipient.
+
+**Emotions ride the channel they were sent on (v274).** The tray used to be a plaza
+feature: `room.mjs` rewrote every `emotion` to `channel:'local'` and refused it
+outside a plaza, so an emote from a field silently vanished for anyone not standing
+in the same numbered plaza. The tray now sends on the selected tab:
+`{type:'emotion', emotion, channel:'world'|'whisper'|'local'}` (a whisper also
+carries `to`). World emotions join the same 100-line backlog as text, whisper
+emotions go to that one player, and Local still broadcasts to the room. A bare
+`{type:'emotion'}` with no `channel` - an older cached client - still means Local,
+so nothing that worked before stops working.
 World has a volatile 100-message backlog, and clients retain at most 400 lines.
 This is not permanent chat storage or offline mail.
 
@@ -22,7 +32,7 @@ flanking houses, two market stalls, two West Avenue Hold'em tables and four boun
 the gardens, clear of paths. The shared layout defines building/garden/table collision.
 One compact toolbar holds the plaza population and room switcher, Hold'em, Sit, Camera, Reset view, help and Return to field.
 Walking/camera hints are in its help control; Emoji remains beside Send in chat. The Emoji button beside Send opens 32 original RO animations with slash commands
-shown on each button. A smaller animation appears with the sender in Local, and a
+shown on each button on World, Whisper and Local; only Local (which needs a plaza to be local to) and the activity log have no channel to send on. A smaller animation appears with the sender in Local and in World, and a
 six-second animation appears overhead with its original transparent pixels and no outer box. Spoken text keeps its speech box. World and private messages never bubble.
 
 ## Farming and state
@@ -53,7 +63,8 @@ affecting production Pages cookie-only ingress.
 
 The server validates each character's reported walk speed (2–13 u/s) and level (0–999), then computes walking paths, walking speed and room capacity. Sender IDs/names come
 from the existing session, never a client payload. Input is bounded and displayed
-as text. Messages and emotions share a three-second cooldown across channels, enforced by
+as text. Messages and emotions share a three-second cooldown across channels (an emotion is
+charged the same budget whichever channel carries it), enforced by
 the client and server; movement, chair selection and sitting are bounded to ten
 commands per second. Another tab replaces the account's old socket;
 the replaced tab stays disconnected until reload. Disconnects remove presence.

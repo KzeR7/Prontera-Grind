@@ -131,12 +131,17 @@ function harness(opts = {}) {
     'saveBlockedText','cloudRefusedText','accountOfSaveKey',
     // v252: a 401 mid-session means the account signed in on another device.
     'cloudSessionReplaced','cloudReplaced',
+    // v274: the fast /api/me probe that carries the same kick to a tab that is not
+    // syncing at that moment.
+    'cloudSessionTick','CLOUD_SESSION_CHECK_MS','CLOUD_SESSION_CHECK_HIDDEN_MS',
     // v263: a 503 with {maintenance:true} is the write pause, not a dropped connection.
     'cloudMaintenance'];
   vm.createContext(sandbox);
   // A `let` is copied BY VALUE above; a getter keeps the flag observable after it changes.
   vm.runInContext(cloudCode + '\n;' + EXPORTS.map(n => `globalThis.${n}=${n};`).join('') +
-    ';globalThis.sessionWasReplaced=()=>cloudReplaced;', sandbox);
+    ';globalThis.sessionWasReplaced=()=>cloudReplaced;' +
+    ';globalThis.resetSessionCheck=()=>{cloudLastCheck=0;CLOUD.checking=false};' +
+    ';globalThis.settle=async()=>{for(let i=0;i<12;i++)await Promise.resolve()};', sandbox);
   return { sandbox, state, calls, els, store };
 }
 
@@ -585,6 +590,37 @@ await T('a tab with unsynced progress also adopts: the account is the only save'
   assert.strictEqual([...h.store.keys()].filter(k => k.startsWith('pg_save3_X_local_')).length, 1,
     'and the unsynced copy is stashed, not deleted');
   assert.notStrictEqual(h.els.get('cloudGate').style.display, 'flex');
+});
+
+await T('the session probe notices a sign-in elsewhere within seconds, without touching the save', async () => {
+  // v274 (owner): the second login must kick the first. The server already ends the older token;
+  // this is the client's own /api/me probe, which runs on a much faster clock than the save/poll
+  // traffic so the kicked tab stands down in seconds instead of minutes.
+  const h = harness({ routes: { '/me': { status: 401, body: { err: 'Not logged in.' } } } });
+  h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'FRIEND'; h.sandbox.currentUser = 'FRIEND';
+  h.sandbox.CLOUD.paused = false; h.sandbox.CLOUD.signingOut = false;
+  h.sandbox.resetSessionCheck();
+  await h.sandbox.cloudSessionTick();
+  await h.sandbox.settle();
+  assert.strictEqual(h.sandbox.sessionWasReplaced(), true, 'a 401 from /api/me is the same kick as a 401 from /save');
+  assert.strictEqual(h.els.get('sessionGate').style.display, 'flex');
+  assert.deepStrictEqual(h.calls.map(c => c.url), ['/api/me'], 'the probe is one /api/me and nothing else');
+  // A healthy session keeps playing, and the probe backs off instead of hammering the API.
+  const ok = harness({ routes: { '/me': { status: 200, body: { u: 'FRIEND', gm: false, recoverySet: true } } } });
+  ok.sandbox.CLOUD.on = true; ok.sandbox.CLOUD.user = 'FRIEND';
+  ok.sandbox.resetSessionCheck();
+  await ok.sandbox.cloudSessionTick();
+  await ok.sandbox.settle();
+  assert.strictEqual(ok.sandbox.sessionWasReplaced(), false, 'a live session is not a kick');
+  const asked = ok.calls.length;
+  await ok.sandbox.cloudSessionTick();      // seconds later, inside the 20s window
+  assert.strictEqual(ok.calls.length, asked, 'the probe respects its own interval');
+  // Once this tab has been replaced the probe stops asking entirely.
+  h.sandbox.CLOUD.checking = false;
+  const afterKick = h.calls.length;
+  h.sandbox.resetSessionCheck();
+  await h.sandbox.cloudSessionTick();
+  assert.strictEqual(h.calls.length, afterKick, 'a kicked tab makes no further requests');
 });
 
 await T('a 401 while signed in means another device took over: this tab stops and says so', async () => {

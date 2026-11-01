@@ -248,6 +248,59 @@ test('fullscreen asks the document for real fullscreen and reports the state', (
     'not pressed until the browser confirms it');
 });
 
+test('v274: fullscreen maximizes the portrait view and never asks the platform to rotate', () => {
+  // Owner: "remove the forced horizontal, it should just be vertical". The button used to
+  // call screen.orientation.lock('landscape') on every press, so a handset held upright was
+  // turned on its side by the game itself.
+  const w = boot({ w: 390, h: 844, touch: true, coarse: true });
+  const locked = [];
+  w.screen.orientation = { lock: (o) => { locked.push(o); return Promise.resolve(); } };
+  w.HTMLElement.prototype.requestFullscreen = function () { return Promise.resolve(); };
+  w.document.getElementById('fsBtn').click();
+  assert.deepEqual(locked, [], 'no orientation lock is requested');
+  assert.doesNotMatch(fs.readFileSync('assets/ui/mobile.js', 'utf8'), /orientation\.lock/,
+    'and the lock helper is gone, so nothing can reintroduce it quietly');
+  // The tooltip is written in two places; both must stop promising landscape.
+  assert.doesNotMatch(fs.readFileSync('assets/ui/mobile.js', 'utf8'), /landscape on a phone/);
+  assert.doesNotMatch(fs.readFileSync('index.html', 'utf8'), /fullscreen \(landscape on a phone\)/i);
+  assert.match(w.document.getElementById('fsBtn').title, /fullscreen/i);
+});
+
+test('v274: the pet preview strip is gone on a phone, the speed button still works', () => {
+  const css = fs.readFileSync('assets/ui/mobile.css', 'utf8');
+  assert.match(css, /html\.pg-mobile #eclipsePetStrip\{display:none\}/, 'the pet art is dropped on a phone');
+  // The container hides itself (an ordinary account has nothing left in it) but the GM speed
+  // control opts back in, so a GM phone build keeps Speed x2 / x4.
+  assert.match(css, /html\.pg-mobile #eclipseCompanions\{[^}]*visibility:hidden/);
+  assert.match(css, /html\.pg-mobile #eclipseCompanions>#spd\{visibility:visible/);
+  // The real page still carries both: the strip is hidden by CSS, not deleted, so a desk
+  // layout and the Pets panel keep their markup.
+  const page = fs.readFileSync('index.html', 'utf8');
+  assert.match(page, /<div id="eclipseCompanions"><div id="eclipsePetStrip"><\/div>/);
+  assert.match(page, /<button id="spd" hidden>Speed x1<\/button>/, 'and the speed control is still in the page');
+});
+
+test('v274: a closed sheet is not left covering the field when a panel opens', () => {
+  // The old `.with-panels{display:none!important}` rule came AFTER `.pg-open` in the stylesheet
+  // and beat it at equal specificity: the sheet opened on top of a live scrim that took every
+  // tap, and the player could not get back to the field.
+  const css = fs.readFileSync('assets/ui/mobile.css', 'utf8');
+  assert.match(css, /html\.pg-mobile #sideRail\.with-panels:not\(\.pg-open\)\{display:none!important\}/,
+    'the panel rule only applies while the sheet is closed');
+  const w = boot({ w: 390, h: 844, touch: true, coarse: true });
+  const d = w.document, chip = d.getElementById('pgQuests'), scrim = d.getElementById('pgScrim'), rail = d.getElementById('sideRail');
+  chip.click();
+  assert.ok(rail.classList.contains('pg-open'));
+  assert.equal(scrim.hidden, false);
+  // The chip is the sheet's only visible close control, so it has to sit above the scrim.
+  const z = n => Number((css.match(new RegExp('html\\.pg-mobile #' + n + '\\{[^}]*z-index:(\\d+)')) || [])[1]);
+  assert.ok(z('pgQuests') > z('pgScrim'), 'the chip is above its own scrim');
+  assert.ok(z('pgQuests') > 50, 'and above the panel windows, so it is never buried');
+  chip.click();
+  assert.ok(!rail.classList.contains('pg-open'));
+  assert.equal(scrim.hidden, true, 'closing returns the field');
+});
+
 test('the quest chip opens the sheet and a tab, a scrim tap or Escape closes it', () => {
   const w = boot({ w: 390, h: 844, touch: true, coarse: true });
   const d = w.document, chip = d.getElementById('pgQuests'), scrim = d.getElementById('pgScrim'), rail = d.getElementById('sideRail');
