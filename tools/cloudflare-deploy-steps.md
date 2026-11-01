@@ -446,6 +446,61 @@ separate build for the game. The owner-observed metrics listed 27 client disconn
 zero Worker exceptions and zero CPU/memory-limit errors in the visible status breakdown;
 32 total errors were shown, so not all errors are explained by that breakdown.
 
+### Deploying the Worker from Windows (PowerShell)
+
+This tripped the owner three times in a row, so it is written out here. All three failures are
+environment, not code.
+
+**1. "Cannot find path ... because it does not exist".** An Administrator PowerShell opens in
+`C:\WINDOWS\system32`, not in your repo. `cd workers/social` is then resolved against `system32`.
+Go to the clone by its full path, and note that you do **not** need Administrator for this:
+
+```powershell
+cd C:\Users\<windows-user>\Desktop\Prontera-Grind\workers\social
+```
+
+If you are not sure where the clone is:
+
+```powershell
+Get-ChildItem C:\ -Recurse -Filter "Prontera-Grind" -Directory -ErrorAction SilentlyContinue |
+  Select-Object -First 5 FullName
+```
+
+**2. "npx.ps1 cannot be loaded because running scripts is disabled".** Windows blocks `.ps1` by
+default and `npx` ships as `npx.ps1`. Either call the shim directly — no policy change, nothing to
+undo:
+
+```powershell
+npx.cmd wrangler deploy
+```
+
+or allow signed scripts for your own user only, then reopen PowerShell:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+**3. "Illegal characters in path".** A placeholder was pasted literally — `<you>`, `<windows-user>`
+and anything else in angle brackets must be replaced with a real value. Use `$env:USERNAME` and let
+PowerShell fill it in:
+
+```powershell
+cd C:\Users\$env:USERNAME\Desktop\Prontera-Grind\workers\social
+```
+
+**Confirm you are in the right folder before deploying** — this must print `name = "prontera-social"`:
+
+```powershell
+Get-Content .\wrangler.toml | Select-Object -First 2
+```
+
+Then deploy only the plaza Worker (it does not touch Pages or D1), and confirm:
+
+```powershell
+npx.cmd wrangler deploy
+npx.cmd wrangler deployments list
+```
+
 **If chat says "unavailable":** `503 Social service is not configured` in the browser's Network panel
 means the Pages project has no `SOCIAL` binding; `401` means the player is not signed in; `403` means
 the `Origin` did not match the page's own host. A green production build with a red branch build is
