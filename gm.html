@@ -58,6 +58,80 @@ tr:hover{background:#2a2014;cursor:pointer}
 .meter .fill{height:100%;background:#2a9d3f}
 .meter .fill.warn{background:#e9b949}
 .meter .fill.bad{background:#e5484d}
+/* The player list keeps its own scroller on a desktop so the card stays put
+   while the GM scrolls names; the phone rule below releases it. */
+.players-scroll{max-height:60vh;overflow:auto}
+
+/* ── Phones (owner, v274) ──────────────────────────────────────────────────
+   The console was built as a desktop two-column grid and it did not survive a
+   handset: players could not be picked because the list scrolled inside a
+   60vh box that the card itself also clipped, table cells at 12px cannot be
+   hit with a thumb, and the action row scrolled out of reach the moment a
+   player was opened. These rules only fire below 820px wide - the desktop
+   console is untouched. */
+@media(max-width:820px){
+  body{font-size:15px}
+  main{padding:8px;gap:8px}
+  header{padding:8px 10px;gap:8px;position:sticky;top:0;z-index:6;background:var(--bg);border-bottom:1px solid var(--edge)}
+  header h1{font-size:13px;flex:1 1 100%}
+  /* One tap target size everywhere, and never below it. */
+  button{min-height:40px;padding:8px 12px;font-size:13px}
+  input,select,textarea{min-height:40px;font-size:16px}   /* 16px stops iOS zooming on focus */
+  .card{padding:8px}
+  .card h2{font-size:12px}
+  .col{gap:8px}
+  /* The players card is the way in, so it loses its inner scroller: the page
+     scrolls, one finger, and every row can reach the thumb. A 60vh box nested
+     inside a card that already clips was why the list looked empty. */
+  .players-scroll{max-height:none;overflow:visible}
+  #players{font-size:13px}
+  th,td{padding:10px 8px;border-bottom:1px solid #33291c}
+  /* Four numeric columns do not fit a 360px phone. The list becomes one line
+     per player: the name takes the first row, level/class/last-sync share the
+     second under their own labels. Below 480px the data-label spans carry the
+     label; above it the table header still lines the columns up. */
+  #players tbody tr{height:auto}
+  #players tbody tr:active{background:#3a2d1d}
+  #players tbody td{padding:8px;vertical-align:middle}
+  #players tbody td:first-child{font-size:14px;font-weight:600}
+  /* Wide tables (usage, orders, grants, logs) scroll sideways inside their own
+     card instead of forcing the whole page wider than the phone. The player
+     list is excluded: it is a card-level list, not a data dump, and it stacks
+     its four columns into one line per player instead. */
+  .card>table:not(#players){display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+  .card>table:not(#players) thead,.card>table:not(#players) tbody{display:table;width:100%;min-width:max-content}
+  .grid2{grid-template-columns:1fr}
+  .row{gap:8px}
+  .row>label{flex:1 1 100%}
+  #toast{left:8px;right:8px;bottom:8px;transform:none;text-align:center}
+  /* The detail panel is opened by tapping a player and it is the screen the GM
+     actually works on: it takes the full width and keeps its action buttons on
+     screen while the body scrolls. */
+  #detail{scroll-margin-top:64px}
+  #detail .row:first-child{gap:6px}
+  #detail .tabs{position:sticky;top:52px;z-index:4;background:var(--card);margin:0 -8px 8px;padding:6px 8px;border-bottom:1px solid var(--edge)}
+  #detail .tabs button{flex:1 1 calc(50% - 6px);min-height:38px}
+  #detail .row button:not(.tabs button){flex:1 1 auto}
+}
+@media(max-width:480px){
+  #players thead{display:none}
+  #players,#players tbody{display:block;width:100%}
+  #players tbody tr{
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 8px;
+    padding:8px;border-bottom:1px solid #33291c;
+  }
+  #players tbody td{border:0;padding:2px 0;min-width:0;overflow-wrap:anywhere}
+  #players tbody td:first-child{grid-column:1/-1;font-size:15px;margin-bottom:2px}
+  /* The server's row markup carries no labels, so the three data cells take
+     theirs from their column position - the same order the header uses. */
+  #players tbody td:nth-child(2)::before{content:'Lv '}
+  #players tbody td:nth-child(4){font-size:11px;color:var(--dim)}
+}
+/* Landscape phones have the height of a folded letter; the sticky bands would eat
+   all of it, so they stand down while the console keeps its one column. */
+@media(max-width:820px) and (max-height:560px){
+  header,#detail .tabs{position:static}
+}
 </style>
 </head>
 <body>
@@ -86,7 +160,7 @@ tr:hover{background:#2a2014;cursor:pointer}
   <section class="card">
     <h2>Players <span id="count" class="small"></span></h2>
     <div class="row"><input id="search" placeholder="filter by name" style="flex:1"></div>
-    <div style="max-height:60vh;overflow:auto"><table id="players"><thead>
+    <div class="players-scroll"><table id="players"><thead>
       <tr><th>Name</th><th>Lv</th><th>Class</th><th>Last sync</th></tr>
     </thead><tbody></tbody></table></div>
     <p class="small">Click a player to open them. “never” means they have not synced a save yet.</p>
@@ -226,6 +300,11 @@ async function openPlayer(id) {
   SEL = d;
   renderPlayers();
   renderDetail();
+  // On a phone the detail card sits under the list, so opening a player has to
+  // bring it into view - otherwise the tap looks like it did nothing.
+  if (window.matchMedia && window.matchMedia('(max-width:820px)').matches) {
+    try { $('detail').scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (_) { $('detail').scrollIntoView(); }
+  }
 }
 
 function renderDetail() {
@@ -239,6 +318,7 @@ function renderDetail() {
       <span class="spacer"></span>
       ${a.banned ? `<button data-act="unban">Unsuspend</button>` : `<button class="danger" data-act="ban">Suspend</button>`}
       <button data-act="logout">Force sign-out</button>
+      <button data-act="closedetail" class="detail-close" title="Close this player and go back to the list">✕ Close</button>
     </div>
     <div class="grid2" style="margin-bottom:10px">
       <div class="stat"><b>${s ? nfmt(s.pub.lv) : '—'}</b><span class="small">level${s && s.pub.cls ? ' · ' + esc(s.pub.cls) : ''}</span></div>
@@ -418,11 +498,23 @@ function renderEquipment(body,s){
  $('edititem').onchange=paint;paint();
 }
 
+function closeDetail() {
+  SEL = null;
+  const box = $('detail');
+  box.classList.add('hide');
+  box.innerHTML = '';
+  renderPlayers();
+  try { document.querySelector('.players-scroll, #players').scrollIntoView({ block: 'near' }); } catch (_) {}
+}
 $('detail').addEventListener('click', async e => {
   const tabBtn = e.target.closest('[data-tab]');
   if (tabBtn) { TAB = tabBtn.dataset.tab; renderDetail(); return; }
   const btn = e.target.closest('[data-act]');
-  if (!btn || !SEL) return;
+  if (!btn) return;
+  // Closing the card needs no selection, and it must work even in the moment
+  // between a refresh and a new pick.
+  if (btn.dataset.act === 'closedetail') { closeDetail(); return; }
+  if (!SEL) return;
   const act = btn.dataset.act, id = SEL.account.id;
   try {
     if (act === 'note') {

@@ -913,8 +913,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="assets/ui/eclipse.css?v=265">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=1">
-<script src="assets/ui/mobile.js?v=1"></script>
+<link rel="stylesheet" href="assets/ui/mobile.css?v=274">
+<script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 <link rel="stylesheet" href="assets/social.css?v=273">
 <link rel="stylesheet" href="assets/friends.css?v=273">
@@ -953,7 +953,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>HORIZON HAVEN / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
 <div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Horizon <small>HAVEN</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover">&#9679; <b id="zeny">0</b> Zeny</div>
-<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="fsBtn" type="button" aria-pressed="false" aria-label="Toggle fullscreen" title="Fullscreen (landscape on a phone)">⛶</button><button id="pgFocusBtn" type="button" aria-pressed="false" aria-label="Toggle field only mode" title="Hide field panels (field only)">◎</button><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="openGmConsole()" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="fieldLoading" hidden role="status" aria-live="polite"><i></i><span>Loading field…</span></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs and daily roulette boosts - hover an icon for what it does"></div><div id="minimapTools" aria-label="Mail and daily rewards"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
+<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="fsBtn" type="button" aria-pressed="false" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button><button id="pgFocusBtn" type="button" aria-pressed="false" aria-label="Toggle field only mode" title="Hide field panels (field only)">◎</button><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="openGmConsole()" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="fieldLoading" hidden role="status" aria-live="polite"><i></i><span>Loading field…</span></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs and daily roulette boosts - hover an icon for what it does"></div><div id="minimapTools" aria-label="Mail and daily rewards"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
 <div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd" hidden>Speed x1</button></div><div id="wins"></div></div><div id="pgScrim" hidden aria-hidden="true"></div><button id="pgQuests" type="button" aria-controls="sideRail" aria-expanded="false" title="Quests and destinations"><span aria-hidden="true">❖</span><b>Quests</b><span class="pg-q-dot" id="pgQuestDot" hidden aria-hidden="true"></span></button></div>
 <div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health"><span>HP</span> <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
 </div></div>
@@ -1311,7 +1311,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-01 haven-v273 friends and donations';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-01 haven-v274 mobile chat and one login';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3600,7 +3600,7 @@ $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>s
 // debounced push. Nothing here can lose progress - every conflict keeps both copies, and the loser
 // stays in the account's save history where the GM console can restore it.
 const CLOUD={api:false,on:false,user:null,gm:false,ver:0,dirty:false,lastPush:0,pushing:false,
-  offline:false,paused:false,
+  offline:false,paused:false,checking:false,
   // v2: set when the server cannot be reached at all. While it is true the character is treated as
   // AWAY (the simulation stops), and reconnecting adopts the account's save and pays the gap at the
   // away rate - a dropped connection never becomes "normal progress" that syncs later.
@@ -3622,6 +3622,28 @@ const CLOUD_HIDDEN_DEBOUNCE=300000;  // ...and this often while it is hidden (a 
 const CLOUD_POLL_MS=300000;          // announcements and gifts while the tab is visible
 const CLOUD_HIDDEN_POLL_MS=900000;   // ...and while it is hidden: a message may wait 15 minutes
 const CLOUD_MAX_AGE=900000;          // a tab hidden longer than this re-pulls before pushing again
+// v274 (owner): "no multiple login - the second login kicks the first out". The
+// server has ended the older session for a long time (db.startVerifiedSession
+// deletes every other token in the same transaction as the insert), but the tab
+// that lost the account only found out on its next save exchange - a minute while
+// it is being played, five while hidden - and it kept grinding a character nobody
+// would ever see in the meantime. This is a session probe that writes nothing, so
+// it can run far more often than a save: the kicked copy stops within about a
+// minute of the phone signing in instead of up to five.
+//
+// The interval is part of the v82 usage diet, not a taste: `WRITE_GATE=required`
+// makes every /api call a Durable Object admit/release as well, so a probe is a
+// FUNCTION REQUEST (the tight free-plan line, 100k/day) even though it costs zero
+// D1 rows written and two rows read. Measured per probe: 2 statements, 2 reads,
+// 0 writes. At 45s visible / 120s hidden an always-on tab spends 80 requests/hour
+// fully visible (3600/45), 30 fully hidden (3600/120), or 55 across a half-and-half
+// hour - against the ~84/hour the rest of a played session spends. 20 players at
+// 4 h/day is 80 player-hours: ~11,000-13,000 requests/day, 11-13% of the free
+// line. The 20s/60s it first shipped with was 120/h across that same hour, i.e.
+// 16-21% of the day. Do not shorten these without redoing that sum.
+const CLOUD_SESSION_CHECK_MS=45000;  // one /api/me while the tab is visible
+const CLOUD_SESSION_CHECK_HIDDEN_MS=120000;  // ...and a third as often while hidden
+let cloudLastCheck=0;
 const saveKeyFor=u=>'pg_save3_'+u;
 const cloudUrl=p=>'/api'+p;
 const cloudSay=(m,cls)=>log(m,cls||'r3','cloud');
@@ -3918,9 +3940,26 @@ async function cloudPull(){
 // tab used to cost). The tick itself is a Date.now() compare, so it can run every minute for free.
 let cloudLastPoll=0;
 function cloudPollTick(){
+  // The session probe runs on its own, faster clock and before the poll budget: it
+  // is how a kicked tab stands down (v274). A 401 here is already handled by
+  // cloudFetch, which calls cloudSessionReplaced().
+  cloudSessionTick();
   const wait=cloudHidden()?CLOUD_HIDDEN_POLL_MS:CLOUD_POLL_MS;
   if(Date.now()-cloudLastPoll<wait)return;
   cloudLastPoll=Date.now();cloudPull();
+}
+// One indexed read of the session row; no save, no announcement, no version bump.
+// Quiet fails are ignored on purpose - being offline must not look like being kicked.
+function cloudSessionTick(){
+  if(!CLOUD.on||!CLOUD.user||CLOUD.paused||CLOUD.signingOut||cloudReplaced||CLOUD.checking)return;
+  const wait=cloudHidden()?CLOUD_SESSION_CHECK_HIDDEN_MS:CLOUD_SESSION_CHECK_MS;
+  if(Date.now()-cloudLastCheck<wait)return;
+  cloudLastCheck=Date.now();CLOUD.checking=true;
+  cloudFetch('/me',{cache:'no-store'})
+    .then(r=>{if(r&&r.ok)return r.json().catch(()=>null);return null})
+    .then(d=>{if(!d||!d.u)return;if(String(d.u).toLowerCase()!==String(CLOUD.user).toLowerCase())cloudSessionReplaced()})
+    .catch(()=>{})
+    .then(()=>{CLOUD.checking=false});
 }
 
 // GM gifts: the client owns the save format and its repair rules, so it applies them here and then
@@ -4079,7 +4118,7 @@ async function initSessionFromCloud(u,gm,isNew){
       log('Welcome, '+u+'! Your progress will follow you to any device.','r1','cloud');
     }
   }
-  cloudLastPoll=Date.now();
+  cloudLastPoll=Date.now();cloudLastCheck=Date.now();
   await cloudPull();          // announcements and gifts land at login, then cloudPollTick takes over
 }
 
@@ -4213,7 +4252,7 @@ function restoreBackup(file){
 // any more. saveBackup()/restoreBackup() stay in the file - the GM console and the test suites still
 // use them to carry a device's characters by hand when a machine dies.
 addEventListener('load',()=>{setTimeout(cloudProbe,80)});
-setInterval(cloudPollTick,60000);   // announcements and gifts on cloudPollTick's clock - never the save itself
+setInterval(cloudPollTick,15000);   // announcements/gifts on the poll clock and the kicked-tab session probe on its own faster one - never the save itself
 
 
 addEventListener('load',()=>{if(typeof THREE==='undefined')showErr('3D engine failed to load. Check your internet connection and reload.')});
@@ -12703,6 +12742,6 @@ setInterval(updateWatch,60000);
 <script src="assets/social-rules.js?v=273"></script>
 <script src="assets/social-poker.js?v=273"></script>
 <script src="assets/social-scene.js?v=273"></script>
-<script src="assets/social.js?v=273"></script>
+<script src="assets/social.js?v=274"></script>
 </body>
 </html>

@@ -142,5 +142,30 @@ t('Back to the game returns to the live game overlay instead of reloading / into
   assert.strictEqual(standaloneLoc.href, '/', 'standalone /gm.html visit falls back to /');
 });
 
+t('v274: the console is usable on a phone - stacked layout, reachable players, big targets', () => {
+  // Owner: "GM login UI is broken on the phone, the console cannot be viewed and the players
+  // cannot be selected". The page was a desktop two-column grid with 12px table cells and a
+  // 60vh inner scroller.
+  const page = fs.readFileSync('gm.html', 'utf8');
+  assert.match(page, /@media\(max-width:820px\)\{/, 'a phone breakpoint exists');
+  // One column: the detail card is reachable below the list instead of squeezed beside it.
+  assert.match(page, /@media\(max-width:820px\)[\s\S]*main\{padding:8px;gap:8px\}/);
+  // The nested scroller that hid the list is released on a phone.
+  assert.match(page, /\.players-scroll\{max-height:60vh;overflow:auto\}/, 'desktop keeps its scroller');
+  assert.match(page, /@media\(max-width:820px\)[\s\S]*\.players-scroll\{max-height:none;overflow:visible\}/,
+    'the phone lets the page scroll instead');
+  // Tap targets: at least 40px for every button, and 16px inputs so iOS does not zoom.
+  assert.match(page, /@media\(max-width:820px\)[\s\S]*button\{min-height:40px/);
+  assert.match(page, /@media\(max-width:820px\)[\s\S]*input,select,textarea\{min-height:40px;font-size:16px\}/);
+  // The four columns become one line per player on a narrow handset.
+  assert.match(page, /@media\(max-width:480px\)[\s\S]*#players thead\{display:none\}/);
+  assert.match(page, /#players tbody tr\{\s*display:grid;grid-template-columns:1fr 1fr 1fr/);
+  // Opening a player brings the detail card into view, and it can be closed again.
+  assert.match(page, /scrollIntoView\(\{ block: 'start'/);
+  assert.match(page, /data-act="closedetail"/);
+  assert.match(page, /function closeDetail\(\)/);
+  assert.match(page, /if \(btn\.dataset\.act === 'closedetail'\) \{ closeDetail\(\); return; \}/);
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

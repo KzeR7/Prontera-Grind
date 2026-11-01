@@ -12,7 +12,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  send(a,{type:'chat',channel:'local',body:'Only plaza one'});assert(b.events.some(e=>e.body==='Only plaza one'));assert(!outsider.events.some(e=>e.body==='Only plaza one'));
  now+=3000;send(a,{type:'chat',channel:'whisper',to:b.name,body:'Private'});assert(b.events.some(e=>e.body==='Private'));assert(!clients[2].events.some(e=>e.body==='Private'));
  now+=3000;send(a,{type:'chat',channel:'world',body:'Everyone'});assert(outsider.events.some(e=>e.body==='Everyone'));
- now+=3000;send(a,{type:'emotion',emotion:'heart'});assert(b.events.some(e=>e.emotion==='heart'));assert(!outsider.events.some(e=>e.emotion==='heart'));
+ // v274 (owner): an emotion rides the channel it was sent on - world emotion
+ // reaches the plaza an outsider is standing in, and a whispered emotion goes to
+ // that one player and no further.
+ now+=3000;send(a,{type:'emotion',emotion:'heart',channel:'local'});assert(b.events.some(e=>e.emotion==='heart'));assert(!outsider.events.some(e=>e.emotion==='heart'));
+ now+=3000;assert.equal(a.room,1);send(a,{type:'emotion',emotion:'heart',channel:'world'});assert.equal(b.events.find(e=>e.emotion==='heart'&&e.channel==='world').channel,'world');assert(outsider.events.some(e=>e.emotion==='heart'&&e.channel==='world'),'a world emotion crosses plazas');
+ const before=b.events.filter(e=>e.emotion==='laugh').length;now+=3000;send(a,{type:'emotion',emotion:'laugh',channel:'whisper',to:b.name});const whispered=b.events.filter(e=>e.emotion==='laugh');assert.equal(whispered.length,before+1);assert.equal(whispered.at(-1).channel,'whisper');assert.equal(whispered.at(-1).toName,b.name);assert.equal(b.events.filter(e=>e.emotion==='laugh').length>0&&outsider.events.filter(e=>e.emotion==='laugh').length,0,'a whispered emotion stays between the two');
  const delivered=room.serial;send(a,{type:'chat',channel:'world',body:'too soon'});assert.equal(room.serial,delivered);now+=2999;send(a,{type:'emotion',emotion:'heart'});assert.equal(room.serial,delivered);now++;send(a,{type:'chat',channel:'world',body:'after 3 seconds'});assert.equal(room.serial,delivered+1);
  for(const point of [{x:0,z:65},{x:70,z:30},{x:-70,z:-30},{x:0,z:-34}]){const route=R.path({x:0,z:12},point);assert(route.length,'new avenues reachable');assert(route.every(p=>R.walkable(p.x,p.z)))}
  assert(!R.walkable(56,16),'houses block walking');assert(!R.walkable(0,-61),'castle blocks walking');assert(!R.walkable(75,10));
@@ -41,7 +46,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  now+=200;send(a,{type:'sit'});assert(!a.sit);assert.equal(a.seat,null);
  now+=200;send(b,{type:'seat',id:0});assert.equal(b.seat,0);now+=200;send(b,{type:'move',x:10,z:12});assert.equal(b.seat,null);assert(!b.sit);
  now+=200;send(a,{type:'seat',id:1});const seat=a.seat;now+=200;send(a,{type:'seat',id:'invalid'});assert.equal(a.seat,seat,'invalid seats cannot change state');
- for(const emotion of R.EMOTIONS){now+=R.CHAT_DELAY;send(a,{type:'emotion',emotion});assert(b.events.some(e=>e.emotion===emotion));assert(!outsider.events.some(e=>e.emotion===emotion));}
+ for(const emotion of R.EMOTIONS){now+=R.CHAT_DELAY;send(a,{type:'emotion',emotion});assert(b.events.some(e=>e.emotion===emotion&&e.channel==='local'),'bare emotion still means Local');assert(!outsider.events.some(e=>e.emotion===emotion&&e.channel==='local'));}
  send(a,{type:'leave'});const prior=b.events.length;send(a,{type:'chat',channel:'local',body:'must reject'});assert.equal(b.events.length,prior);
  for(let i=0;i<20;i++)send(a,{type:'chat',channel:'world',body:'flood'});assert(a.events.some(e=>e.type==='error'&&e.message.includes('wait')));
  room.disconnect(b);assert(!room.clients.has(b.id));assert(clients[2].events.some(e=>e.type==='left'&&e.id===b.id));

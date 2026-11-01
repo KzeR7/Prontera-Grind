@@ -221,6 +221,15 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-01 (`haven-v274` gate result): 180 `*_sim.js`/`*_sim.mjs` + 4 `*_smoke.js` suites, 184 pass, 0 fail, 0 dependency skips**
+(the three generated-asset `--check`s and `pages_preview_config_sim.py` pass too). **The known-red baseline below is now
+empty**: every row that used to fail for environmental reasons was fixed at the cause, not skipped.
+`skill_balance_sim.js`, `card_star_balance_sim.js`, `hosted_launch_stage_sim.js` and `hosted_scrypt_prepare_sim.js`
+read pinned revisions and need `git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26` **and**
+`git fetch origin 7511a03c0787ec9b8d94cfc6658570ac402dc297`; `write_gate_binding_sim.js` needs
+`miniflare@4.20260730.0` (in the install line above). If those four red again in a fresh clone, it is the shallow
+history or the missing package, not the patch — check that before touching code.
+
 **2026-11-01 (`haven-v273` gate result): 183 suites, 183 pass, 0 fail, 0 dependency skips.**
 `skill_balance_sim.js` — the last known-red row — is green: the three progression fixtures
 were regenerated with `--reuse-baseline`, and **all 126 measurements came back byte-identical**.

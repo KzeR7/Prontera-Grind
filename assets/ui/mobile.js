@@ -89,7 +89,12 @@
   /* ── Fullscreen ────────────────────────────────────────────────────────
      Real fullscreen hides browser chrome, which is the whole point on a phone.
      When the API refuses (iOS Safari on iPhone, an iframe without
-     allowfullscreen) we say so once instead of pretending it worked. */
+     allowfullscreen) we say so once instead of pretending it worked.
+     v274 (owner): fullscreen maximizes the layout the player already has. It no
+     longer asks the platform to rotate - the phone was being forced into the
+     landscape layout the moment the button was pressed, which is not what a
+     player holding the handset upright wanted. Nothing here touches
+     screen.orientation, so the handset's own rotation setting decides. */
   function fullscreenElement() {
     return document.fullscreenElement || document.webkitFullscreenElement || null;
   }
@@ -100,28 +105,11 @@
     var done;
     try {
       if (fullscreenElement()) { done = ex.call(document); }
-      else if (req) {
-        done = req.call(el, { navigationUI: 'hide' });
-        // Rotate into the wide layout where the platform allows a lock. A
-        // refusal is normal (iOS), so it is swallowed on purpose.
-        if (done && typeof done.then === 'function') {
-          done.then(lockLandscape).catch(function () {});
-        } else {
-          lockLandscape();
-        }
-      } else { done = null; }
+      else if (req) { done = req.call(el, { navigationUI: 'hide' }); }
+      else { done = null; }
     } catch (_) { done = null; }
     if (!done) notice('Fullscreen is unavailable in this browser. Add the page to your home screen for a chrome-free game.');
     syncButtons();
-  }
-  function lockLandscape() {
-    try {
-      var so = screen.orientation;
-      if (so && typeof so.lock === 'function') {
-        var p = so.lock('landscape');
-        if (p && p.catch) p.catch(function () {});
-      }
-    } catch (_) {}
   }
   function notice(text) {
     if (typeof window.log === 'function') { try { window.log(text); return; } catch (_) {} }
@@ -181,7 +169,7 @@
     if (fs) {
       var on = !!fullscreenElement();
       fs.setAttribute('aria-pressed', String(on));
-      fs.title = on ? 'Leave fullscreen' : 'Fullscreen (landscape on a phone)';
+      fs.title = on ? 'Leave fullscreen' : 'Fullscreen';
       fs.textContent = on ? '⤢' : '⛶';
     }
     var focus = document.getElementById('pgFocusBtn');
@@ -231,6 +219,12 @@
     if (dock) dock.addEventListener('click', closeOnNav, true);
     var sideMenu = document.getElementById('sideMenu');
     if (sideMenu) sideMenu.addEventListener('click', closeOnNav, true);
+    // The rail carries the destination list too, and it is the sheet the player
+    // is looking at when they tap one - so it must stand down on the same tap.
+    // Missing this was half of the "quest UI gets stuck" report: the panel
+    // opened underneath a sheet that stayed up over it (owner, v274).
+    var sideRail = document.getElementById('sideRail');
+    if (sideRail) sideRail.addEventListener('click', closeOnNav, true);
 
     // The game's own Escape handler closes panels; close the sheet first so a
     // single Escape does the most local thing.
@@ -251,7 +245,11 @@
   /* A panel window (#wins) covers the field, and the world chat floats over the
      field - so on a phone the two end up on top of each other (the chat's tab
      strip landed on a map card). Mirror "a panel is open" onto <html> and let
-     the stylesheet stand the chat down while it is. */
+     the stylesheet stand the chat down while it is.
+     The same observer closes the quest sheet when a panel arrives from anywhere
+     else - a quest reward, a keyboard shortcut, the dock under the scrim - so a
+     panel is never opened underneath the sheet that is covering it (owner, v274:
+     "it does not come back to the main screen"). */
   function watchPanels() {
     var wins = document.getElementById('wins');
     if (!wins || typeof MutationObserver !== 'function') return;
@@ -261,6 +259,7 @@
       if (next === open) return;
       open = next;
       root.classList.toggle('pg-panel', open);
+      if (open) setRail(false);
     };
     new MutationObserver(sync).observe(wins, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'hidden', 'class'] });
     sync();

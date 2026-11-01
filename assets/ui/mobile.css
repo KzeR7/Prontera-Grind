@@ -198,10 +198,14 @@ html.pg-mobile .minimap-tool-badge{top:-4px;right:-4px;min-width:14px;height:14p
    rail, directly under Mail and Daily, because the bottom-left corner belongs
    to the world chat - the chip used to land on the chat's tab strip and on its
    own send row (owner: "few overlapping ui"). */
+/* 59 puts the chip above the scrim (46) and the rail (58). It is the sheet's
+   only visible close control on a phone, so it has to stay tappable while the
+   sheet it opened is up - at 45 it was buried under its own scrim, and the
+   player was left on a darkened field with no way back (owner, v274). */
 html.pg-mobile #pgQuests{
   position:absolute;right:calc(6px + var(--pg-safe-r));left:auto;
   top:calc(6px + 36px + 8px);bottom:auto;
-  z-index:45;display:inline-flex;align-items:center;gap:5px;
+  z-index:59;display:inline-flex;align-items:center;gap:5px;
   height:28px;padding:0 10px 0 8px;border-radius:999px;
   background:var(--e-glass,#1b2b24f5);border:1px solid var(--e-line-bright,#61725b);
   color:#eee0b8;font-size:9px;line-height:1;pointer-events:auto;
@@ -257,16 +261,24 @@ html.pg-mobile #hudBuffs{
 html.pg-mobile #hudBuffs .pbx{width:30px;height:30px;font-size:15px;border-width:1px;border-radius:8px}
 html.pg-mobile #hudBuffs .pbx .s{font-size:8px;padding:0 3px}
 
-/* Companions: the pet strip and the speed button stay, the "Companions ↗"
-   shortcut goes (Pets is a dock tab) so the row fits in one line. */
+/* Companions: the pet preview art is gone on a phone (owner, v274) - it drew
+   three pet heads over the field's bottom-left corner, on top of the ground the
+   player was fighting on, and the same pets are one tap away in the Pets tab.
+   The row itself stays for the speed label: a GM account toggles the simulation
+   speed from #spd here, and it is a text-only button that costs nothing. The
+   shortcut button and the strip are both dropped, so an ordinary account now
+   renders an empty flex row - visibility:hidden on the container then takes the
+   row, its gap and its tap area out of the field entirely while leaving #spd
+   (a child that opts back in below) live. */
 html.pg-mobile #eclipseCompanions{
   right:calc(6px + var(--pg-safe-r));bottom:calc(var(--docktop) + 36px);gap:4px;z-index:44;
+  visibility:hidden;
 }
 html.pg-mobile #eclipseCompanions>button[data-t]{display:none}
-html.pg-mobile #eclipseCompanions button{font-size:7.5px;padding:5px 7px;border-radius:8px}
-html.pg-mobile #eclipsePetStrip{gap:3px}
-html.pg-mobile #eclipsePetStrip button{padding:2px}
-html.pg-mobile #eclipsePetStrip small{font-size:6px}
+html.pg-mobile #eclipsePetStrip{display:none}
+/* The speed control keeps its own space back after the container hid itself. */
+html.pg-mobile #eclipseCompanions>#spd{visibility:visible;font-size:7.5px;padding:5px 7px;border-radius:8px}
+html.pg-mobile #eclipseCompanions>#spd[hidden]{display:none!important}
 
 /* Floating name/label art keeps its colour but shrinks a step. */
 html.pg-mobile #tag{font-size:10px}
@@ -277,6 +289,10 @@ html.pg-mobile .hero-title .ui-icon{width:12px;height:12px}
 
 /* ── 3. Rail sheet (quest tracker + more destinations) ───────────────────── */
 
+/* The scrim is the sheet's "tap anywhere else to close" target, so it layers
+   between the sheet (58) and everything the sheet covers - the field, the dock
+   and the panel windows (#wins, 50). It is only ever shown while the sheet is
+   open, so a panel under it dims and waits instead of fighting it for taps. */
 html.pg-mobile #pgScrim{
   position:absolute;inset:0;z-index:56;background:rgba(4,9,14,.55);
   -webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px);
@@ -299,7 +315,16 @@ html.pg-mobile #sideRail.pg-open{display:flex!important;pointer-events:auto}
 html.pg-mobile #sideRail.pg-more{display:flex!important}
 html.pg-mobile #sideRail.pg-more>#qp{display:none!important}
 html.pg-mobile #sideRail.pg-more>#sideMenu{pointer-events:auto}
-html.pg-mobile #sideRail.with-panels{display:none!important}
+/* v274 (owner): "when the quest UI is minimized it does not come back to the main
+   screen". This rule used to hide the rail whenever any panel was open, and it
+   sat AFTER the .pg-open rule above - same specificity, so it won the cascade and
+   the sheet the player had just opened was invisible on top of a live scrim: the
+   scrim took every tap, the field was frozen, and the only way out was a reload.
+   The intent (a panel the player opened gets the whole field to itself) is now
+   expressed by .pg-open alone - mobile.js closes the sheet when a destination is
+   tapped and renders it again if the player reopens it - so all this rule does is
+   keep the rail hidden when a panel is up AND the sheet is closed. */
+html.pg-mobile #sideRail.with-panels:not(.pg-open){display:none!important}
 html.pg-mobile #sideRail #qp{
   width:100%;max-height:none;padding:10px 12px;border-radius:var(--pg-r);
 }

@@ -9229,3 +9229,79 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Try it:** `node tools/dev_server.js --gm-all --fake-payments`, register two accounts in two browser profiles, then: World chat ▸ a name ▸ **Add friend** on one, More ▸ Friends ▸ **Accept** on the other, and watch `★`/`Friend ✓` and the dock dot follow. In the plaza, both characters carry the friend mark in each other's view and not in a third account's. Cash Shop ▸ **💝 Donations**: type `35` and press Donate — the order is $35.00; pay again at any amount and it is accepted as a donation.
 * **Checks:** Full local gate: **184 suites, 184 pass, 0 fail, 0 dependency skips** (three generated-asset checks and `pages_preview_config_sim.py` also passed). The one known-red suite, `skill_balance_sim.js`, is green again — see the re-hash note below. New suites `friends_sim.js` (14 checks: migration is additive, missing-table 503 with chat still connecting, auth, one-way request, accept-on-request, addressee-only accept, decline/cancel/unfriend, the 100/50 limits, `?who` flags, case-insensitivity and an injection-shaped name, audit rows, save blob untouched, per-viewer plaza flags) and `friends_ui_sim.js` (the panel in the real page: the signed-out sentence, the grouped list, accept, the trimmed add box and its empty case, unfriend, `PGFriends.addPlayer` from a chat name, the "already a friend" guard, and the sign-out wipe). Both were mutation-checked: dropping `friends` from `SIDE_TABS`, or making Accept post `request`, turns them red. Extended `shop_api_sim.js` (+3: floor/step/ceiling clamp, repeat payment fulfilled with no duplicated entitlement and one `shop-donation` row each, a live-mode session charging the player's amount) → 26 pass; `shop_sim.js` (+1 section: the tab, the box, the chips, typed `35.00` → `amount:3500`, the remembered amount, the thank-you copy and running total, the "already own everything" repeat, a chip, a below-floor clamp and an abandoned payment) → PASS. `launch_reset_sim.js` 27 required tables (17 checks). The three progression fixtures were regenerated with `--reuse-baseline`: **all 126 measurements are byte-identical**; only `sourceHash`/`combatHash` changed, because the hashed slice contains `UI_ICONS` (a new `friends` glyph) and `const BUILD`. Pinned literals updated where the change is real: `ui_sim.js` and `panel_layout_smoke.js` (SIDE_TABS / side-menu count), `shop_sim.js` catalog count 69, and the three `BUILD` mirrors. Both staging packagers now list the new runtime files, and `hosted_launch_stage_sim.js` passes. `bash tools/build_site.sh` passed. No deployment, hosted migration or production data change was performed from this workspace.
 * **Delivery:** `arena/c32c4c68-prontera-grind`. Applying `migrations/0012_friends.sql` to a hosted database (and deploying the Pages build with it) is the owner's step; until then the Friends panel says the server does not have it yet and nothing else changes.
+
+### 2026-11-01 — `haven-v274 mobile chat and one login`
+* **Changed:** Six owner reports, all from playing the phone build. **(1) Fullscreen no longer forces landscape.**
+  `toggleFullscreen()` in `assets/ui/mobile.js` called `screen.orientation.lock('landscape')` on every press, so the
+  game itself turned a handset held upright on its side. The lock helper is deleted rather than guarded: fullscreen
+  now only asks the document for real fullscreen (which is what maximizes the portrait layout) and the handset's own
+  rotation setting decides. Both copies of the "landscape on a phone" tooltip (`#fsBtn` in `index.html` and
+  `syncButtons()`) now just say **Fullscreen**.
+  **(2) The pet preview strip is gone on a phone.** `html.pg-mobile #eclipseCompanions` used to keep
+  `#eclipsePetStrip` visible in the bottom-right corner, over the ground the player was fighting on; it is
+  `display:none` now and the container hides itself (`visibility:hidden`), so an ordinary account has no leftover row
+  and no tap area. The GM-only `#spd` speed control opts back in, so a GM phone build keeps Speed x2 / x4.
+  **(3) The quest sheet could not be closed.** Two separate faults. `html.pg-mobile #sideRail.with-panels` (L302)
+  came *after* `#sideRail.pg-open` (L298) at equal specificity, so the `!important` panel rule beat the open rule: the
+  sheet the player had just opened was invisible while its scrim (shown by `mobile.js`) stayed up and swallowed every
+  tap - a darkened, frozen field with no way out but a reload. The panel rule is now
+  `:not(.pg-open)`, and a panel that arrives from anywhere (`watchPanels()`) closes the sheet. Second, `#pgQuests` sat
+  at `z-index:45`, *below* its own scrim (56), so the sheet's only visible close control was buried; it is 59 now,
+  above the scrim (56) and the rail (58). Tabs tapped inside the rail also close it (`closeOnNav` was wired to the dock
+  and side menu but not the rail).
+  **(4) The GM console on a phone.** `gm.html` had no mobile rules at all: a two-column grid, 12px table cells, and a
+  players list inside a nested `max-height:60vh` scroller - the list looked empty and could not be tapped. It now has
+  its own `@media(max-width:820px)` block: one column, the nested scroller released so the page scrolls, 40px minimum
+  on every button, 16px inputs (so iOS does not zoom on focus), wide tables scrolling sideways inside their own card,
+  a sticky header and tab row, and below 480px the players table becomes one line per player with its header folded
+  into the cells. Tapping a player scrolls the detail card into view, and the card gained a **✕ Close**
+  (`closeDetail()`) so a GM is not stranded on it. The desktop console is untouched.
+  **(5) Emotions work on World and Whisper, not just Local.** `workers/social/room.mjs` rewrote every `emotion` to
+  `channel:'local'` and refused it when the sender had no plaza, so an emote from a field vanished. An emotion now
+  rides the channel it was sent on (`world` joins the normal 100-line backlog, `whisper` goes to that one player,
+  `local` still broadcasts to the room), and a bare `{type:'emotion'}` with no channel still means Local so an older
+  cached client keeps working. `assets/social.js` offers the tray on World, Whisper and Local instead of demanding a
+  plaza, sends the selected channel (plus `to` for a whisper), rebuilds the tray when the tab changes, and the typed
+  `/heart` shortcut follows the same rule.
+  **(6) One login, and the first device notices.** The server has ended the older session for a while
+  (`db.startVerifiedSession` deletes the account's other tokens in the same batch as the insert, verified against a
+  live server: sign in on a second device and the first answers 401 on `/api/me`, `GET /api/save` and
+  `PUT /api/save`). What was missing was how quickly the losing tab *knew*: it only asked on its next save exchange -
+  a minute while visible, five while hidden - and ground a character nobody would ever see in between. A new
+  `cloudSessionTick()` probes `/api/me` on its own clock (45 s visible, 120 s hidden), wired into the existing
+  15-second tick, and stops the tab through the same `cloudSessionReplaced()` gate that a 401 from a save already
+  used. **The interval is priced against the free plan, not chosen by feel.** Measured on the real handlers and schema:
+  one probe is **2 statements, 2 rows read, 0 rows written** - the probe itself cannot spend a write (`currentUser()`
+  only SELECTs; the one UPDATE it can reach, `touchSession`, fires at most once per account per day). But
+  `WRITE_GATE = "required"` makes every `/api` call a Durable Object admit/release as well, so each probe costs one
+  **Function request**, the tight free-plan line (100,000/day). A tab cannot be fully visible and fully hidden in the
+  same hour, so the honest figure is a range: the probe spends 80 requests/hour fully visible (3600/45), 30 fully
+  hidden (3600/120), or 55 across a half-and-half hour - against the ~84/hour the rest of a played session already
+  spends. Twenty players at 4 h/day (80 player-hours) therefore land at **~11,000 requests/day, ~11%**, or ~9,100 at
+  half-and-half; the 20 s/60 s first pass would have spent 8,000-9,600 on the probe alone and reached ~16-18%.
+  Shortening these two constants requires redoing that sum - the constants carry the note, and
+  `tools/server-shift-plan.md` §3b.2 has the measured table.
+* **Try it:** On a phone: press fullscreen (it stays upright), look at the bottom-right (no pet heads, a GM still sees
+  Speed), tap ❖ Quests and then tap it again or tap the scrim (the field comes back), open a destination from the sheet
+  (the panel gets the screen). Continue as the owner and tap 🛠 GM console: the console stacks, players are tappable,
+  and a tapped player scrolls into view with a ✕ Close. In World chat press **Emoji** and send one (it stays in World
+  history for everyone); select Whisper, type a name and send one (only they see it). Sign in as the same account in a
+  second browser profile: the first tab says **🔐 Signed in on another device** within about a minute.
+* **Checks:** Full local gate green with **no known-red rows left**: 180 `*_sim.js`/`*_sim.mjs` suites, 4 `*_smoke.js`,
+  the three generated-asset `--check`s and `pages_preview_config_sim.py` all pass, as does
+  `bash tools/build_site.sh`. Four environment faults were cleared rather than papered over: `git fetch` of the two
+  pinned revisions the balance/launch suites read (`d164bd0`, `7511a03`), `miniflare@4.20260730.0` for
+  `write_gate_binding_sim.js`, and `assets/ui/mobile.css` / `mobile.js` added to both staging packagers (they were
+  already published runtime files, so `hosted_launch_stage_sim.js` refused a mixed-version package - a real gap this
+  change exposed). The three progression fixtures were regenerated with `--reuse-baseline`: **all 126 measurements are
+  byte-identical**, only `sourceHash`/`combatHash` moved, because the hashed slice contains `const BUILD`. Pinned
+  literals updated where the change is real: the three `BUILD` mirrors, and the `?v=` numbers for `mobile.css`,
+  `mobile.js` and `social.js`. New coverage: `mobile_layout_sim.js` (+3: no orientation lock and no landscape tooltip
+  in either copy; the pet strip hidden with `#spd` kept; the `:not(.pg-open)` rule plus the chip above its scrim) -> 31;
+  `gm_console_sim.js` (+1: the phone breakpoint, the released scroller, 40px targets, the 480px stacked players, the
+  scroll-into-view and `closeDetail`) -> 14; `cloud_sim.js` (+1: the probe kicks on a 401 `/api/me`, makes exactly one
+  request, respects its interval on a live session and goes quiet once replaced) -> 63; `social_sim.js` (world and
+  whispered emotions reach the right people and a bare emotion still means Local); `social_ui_sim.js` (the tray is
+  offered on World instead of the old "Enter the Social Hub" gate). No deployment, hosted migration or production
+  data change was performed from this workspace.
+* **Delivery:** `arena/59a0c268-prontera-grind`.
