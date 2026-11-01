@@ -1130,7 +1130,11 @@ await T('v251: background progress saved while PUT /api/save is in flight stays 
   assert.strictEqual(await h.sandbox.cloudPush(true), 'ok');
   assert.strictEqual(h.sandbox.CLOUD.ver, 5, 'accepted upload advances the known cloud version');
   assert.strictEqual(h.sandbox.CLOUD.dirty, true, 'newer save touched mid-upload remains marked dirty so cloudRefresh cannot discard it');
-  assert.strictEqual(h.els.get('cloudBadge').textContent, '☁ …');
+  // v282: what this guards is the FLAG staying set so cloudRefresh cannot discard the newer work. It
+  // used to assert the badge flipped to "☁ …" - that assertion is the bug the owner reported, so it is
+  // now pinned the other way round: the push that landed is what the badge reports.
+  assert.match(h.els.get('cloudBadge').textContent, /^☁ ✓ \d{2}:\d{2}$/, 'the badge reports the push that landed, with its time');
+  assert.strictEqual(h.sandbox.CLOUD.dirty, true, 'while the newer save is still marked unsynced');
 });
 
 await T('v264: opening and closing the GM console keeps the live session open without ending /sessions', async () => {

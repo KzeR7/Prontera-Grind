@@ -304,7 +304,7 @@ body.clean-screen #screenBtn{visibility:visible}
 #grindStatus{display:none}
 #eclipseHeader .hud-zeny{font-size:9px}
 #eclipseHeader .hud-zeny>b{font-size:10px}
-#cloudBadge{max-width:18px;overflow:hidden}
+#cloudBadge{max-width:none;overflow:visible;white-space:nowrap;font-variant-numeric:tabular-nums}   /* v282: it carries a clock time now - 18px could never show one */
 #eclipseHeader #userBadge,#eclipseHeader #logoutBtn,#eclipseHeader #gmBtn{display:none!important}
 #eclipseHeader button{font-size:8px;padding:5px}
 #eclipseHeader #screenBtn{font-size:0}
@@ -1047,7 +1047,7 @@ body.clean-screen #eclipseCompanions{display:none}
 .eclipse-workshop-aside:has(.reforge-offer){display:flex;flex-direction:column;align-items:stretch}.eclipse-workshop-aside:has(.reforge-offer)>.ui-section-label{order:-2}.eclipse-workshop-aside>.reforge-offer{order:-1;margin:0 0 18px;padding:13px;border-color:var(--gold)!important}.eclipse-workshop-aside>.reforge-offer p{font-size:10px;line-height:1.6;margin:10px 0}.eclipse-workshop-aside>.reforge-offer button{font-size:9px;padding:8px}.eclipse-workshop-aside>.reforge-offer small{display:block;font-size:8px;line-height:1.5;margin-top:8px}
 #sideRail:has(.eclipse-more-open){z-index:70}
 #wrap{overflow:clip}#eclipseHeader .hud-flyout{left:auto;right:0;transform:none;max-width:calc(100vw - 24px);white-space:normal}
-@media(max-width:740px){#eclipseHeader>.title{flex:1;min-width:0}#stageTitle{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#eclipseHeader #userBadge,#eclipseHeader #cloudBadge{display:none}#eclipseHeader #logoutBtn{font-size:8px;padding:5px}#eclipseHeader #gmBtn{font-size:0;padding:5px}#eclipseHeader #gmBtn:after{content:'GM';font-size:8px}}
+@media(max-width:740px){#eclipseHeader>.title{flex:1;min-width:0}#stageTitle{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#eclipseHeader #userBadge{display:none}#eclipseHeader #logoutBtn{font-size:8px;padding:5px}#eclipseHeader #gmBtn{font-size:0;padding:5px}#eclipseHeader #gmBtn:after{content:'GM';font-size:8px}}
 @container(max-width:480px){.eclipse-workshop:has(.reforge-offer)>.eclipse-workshop-aside{grid-row:1}.eclipse-workshop:has(.reforge-offer)>.eclipse-workshop-menu{grid-row:2}.eclipse-workshop:has(.reforge-offer)>.eclipse-workshop-stage{grid-row:3}}
 
 /* V2 reference: gold accents and softly lit slate surfaces. */

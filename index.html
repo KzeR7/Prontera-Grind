@@ -912,7 +912,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=265">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=282">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
@@ -1311,7 +1311,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-01 haven-v281 the field survives a lost gpu';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-02 haven-v282 the cloud badge shows when your save landed';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3678,6 +3678,23 @@ const cloudSay=(m,cls)=>log(m,cls||'r3','cloud');
 // document) still load it.
 const cloudHidden=()=>{try{return(typeof document!=='undefined'&&!!document.hidden)||(typeof simOccluded!=='undefined'&&!!simOccluded)}catch(e){return false}};
 function cloudBadge(txt,tip){const e=$('cloudBadge');if(e){e.textContent=txt||'';e.title=tip||''}}
+// v282 (owner: "☁ … always shows while playing, rarely ☁ ✓"): the badge reports the LAST COMPLETED PUSH,
+// not every save. A touch is not a sync - the client saves many times a second and uploads about once a
+// minute - so painting "waiting to sync" on each touch meant the tick flashed for a moment and was wiped
+// immediately, and the one question the badge exists to answer ("is my last minute on the server?")
+// could not be read from it. Now a successful push writes "☁ ✓ Saved 14:32" and nothing else touches it
+// until the next push; only a push that FAILED or was skipped says the save is not up there yet.
+// 24-hour, locale-independent: the badge is narrow and a locale that writes "04:33 PM" would either
+// wrap or be clipped, and the point of this fix is that the time is readable.
+const clockHHMM=ts=>{const d=new Date(ts),h=d.getHours(),m=d.getMinutes();return (h<10?'0':'')+h+':'+(m<10?'0':'')+m};
+function cloudBadgeSaved(){
+  const hhmm=clockHHMM(CLOUD.lastPush||Date.now());
+  cloudBadge('☁ ✓ '+hhmm,'On your account since '+hhmm+' · save v'+CLOUD.ver);
+}
+function cloudBadgeStale(why){
+  const hhmm=CLOUD.lastPush?clockHHMM(CLOUD.lastPush):null;
+  cloudBadge('☁ …',(why||'Not on the server yet')+(hhmm?' - last save reached it at '+hhmm:''));
+}
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
 async function cloudFetch(path,opt){const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});const res=await fetch(cloudUrl(path),Object.assign({credentials:'same-origin'},o,{headers:hdrs}));
   // v253: one live session per account (functions/api/sessions.js). A 401 while this tab holds a
@@ -3699,7 +3716,7 @@ async function boardRefresh(period=boardPeriod,kind=boardKind){
 }
 var cloudAfterAway=false;
 let cloudTouchSeq=0;
-function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;cloudTouchSeq++;CLOUD.dirty=true;cloudBadge('☁ …','Waiting to sync')}
+function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;cloudTouchSeq++;CLOUD.dirty=true}   // v282: no repaint - the badge shows the last push, not the last edit
 
 // Push the current save. Returns 'ok' | 'conflict' | 'offline' | 'idle'; never throws, because a dead
 // network must not interrupt play - it only leaves the local copy leading, and the badge says so.
@@ -3741,7 +3758,9 @@ async function cloudPush(push){
     const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=cloudTouchSeq!==seq||!!d.leaderboardPending;CLOUD.lastPush=Date.now();CLOUD.offline=false;
     if(d.leaderboardPending&&!cloudBoardWarned){cloudBoardWarned=true;cloudSay('Your cloud save succeeded, but the Echo leaderboard update is pending. It will retry on the next sync; sync before the period ends.','r0')}
     if(!d.leaderboardPending)cloudBoardWarned=false;
-    cloudBadge(CLOUD.dirty?'☁ …':'☁ ✓',CLOUD.dirty?'Waiting to sync':'Saved to your account · v'+CLOUD.ver+' · '+new Date().toLocaleTimeString());
+    // v282: this push landed. That is the news the badge reports, even if the player has already
+    // played on past it - the next edit is not information until the next attempt.
+    cloudBadgeSaved();
     return 'ok';
   }catch(e){
     // The save is NOT on the server, so it stays dirty: the next flush (or the next tab-hide) retries
@@ -3815,7 +3834,7 @@ async function cloudConnectionLost(reason){
     if(r&&r.status===503){const d=await r.json().catch(()=>({}));if(d&&d.maintenance){cloudMaintenance(reason);return}}
   }catch(e){alive=false}
   if(alive){
-    cloudBadge('☁ ⚠','Sync failed - retrying');
+    cloudBadge('☁ ⚠','Sync failed - retrying');   // v282: failure states keep their own glyphs
     cloudSay('Cloud sync failed ('+(reason||'network')+'). The character keeps playing on this device until the next sync retry.','r0');
     return;
   }
@@ -3872,7 +3891,7 @@ async function cloudReconnect(){
   else{CLOUD.dirty=true;await cloudPush(true)}          // an account with no save yet (should not happen)
   CLOUD.gate=false;                                    // the gap has now been paid (or was too short to pay)
   try{simAt=performance.now();simPending=0}catch(e){}
-  cloudBadge('☁ ✓','Reconnected · v'+CLOUD.ver);
+  cloudBadgeSaved();   // v282: reconnected - report when the save last reached the account
   cloudSay('Reconnected. The time you were away was paid at the away rate.','r1','cloud');
   cloudPull();
   return true;
@@ -3889,7 +3908,7 @@ async function cloudAdopt(server,resumeOffline=false){
   if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);
   CLOUD.ver=server.version;CLOUD.dirty=false;CLOUD.paused=false;
   if(server.offlineClaim){applyOfflineProgress(Date.now(),server.offlineClaim);await cloudPush(true)}
-  ui();cloudBadge('☁ ✓','Cloud save loaded · v'+CLOUD.ver);
+  ui();cloudBadgeSaved();   // v282
   log('Loaded your cloud save (Lv '+S.lv+'). The copy this device had was kept as a local backup.','r1','cloud');
 }
 
@@ -3907,7 +3926,7 @@ async function cloudJoin(u,localBlob){
   if(!cloudOwnedBy(data,u)){cloudAccountMismatch(data.owner);return}
   if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true);return}
   if(saveRefusal(data.blob,u)){cloudSaveRefused();return}
-  if(sameSave(data.blob,localBlob)){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadge('☁ ✓','In sync · v'+data.version);
+  if(sameSave(data.blob,localBlob)){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadgeSaved();   // v282: same save both sides
     if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
   // v2 (owner): the account's save is the real one. Whatever this browser held is stashed by
   // cloudAdopt, so "always resume where you left off" needs no decision from the player.
@@ -4056,7 +4075,7 @@ function cloudSession(u,gm,id){
   CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;if(id)CLOUD.id=Number(id);
   if(typeof shopSession==='function')shopSession(u);   // haven-v215: what this account owns in the Cash Shop
   if(typeof friendsSession==='function')friendsSession(u);   // haven-v273: the account's friends list
-  cloudBadge('☁ ✓','Signed in as '+u);
+  cloudBadge('☁ ✓',CLOUD.lastPush?'Signed in as '+u+' · last save '+clockHHMM(CLOUD.lastPush):'Signed in as '+u);
   const badge=$('userBadge');if(badge)badge.textContent=(gm?'🛠 ':'👤 ')+u;
   const gbtn=$('gmBtn');if(gbtn)gbtn.style.display=gm?'inline-block':'none';
 }
@@ -4137,7 +4156,7 @@ async function initSessionFromCloud(u,gm,isNew,id){
     if(data&&data.blob){                       // a new device: the cloud has the character
       lsPut(saveKeyFor(u),data.blob);
       cloudStart(u,gm);CLOUD.ver=data.version;CLOUD.dirty=false;
-      cloudBadge('☁ ✓','Cloud save loaded · v'+CLOUD.ver);
+      cloudBadgeSaved();   // v282
       log('Loaded your cloud save (Lv '+S.lv+').','r1','cloud');
       if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}
     }else{
