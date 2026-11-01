@@ -1311,7 +1311,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-01 haven-v276 update prompt and gm chat notes';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-01 haven-v277 owner name and gm chat';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3540,7 +3540,9 @@ function submitAuth(e,confirmed=false){
     const u=$('username').value.trim(),p=$('password').value.trim();if(!u||!p)return showErr('Enter a username and password.');
     const isGM=u.toLowerCase()===String(GM_USER).toLowerCase();
     if(authMode==='reg'){
-      if(isGM){setMode('login');return showErr('That name is reserved. Switched to Login — use the GM password.')}
+      // v277: on a site with the API the GM name may belong to a real (owner-provisioned) cloud account,
+      // so pointing the player at "the GM password" would be wrong. Name what actually applies.
+      if(isGM){setMode('login');return showErr(CLOUD.api?'That name is reserved. Switched to Login — sign in to the GM account.' : 'That name is reserved. Switched to Login — use the GM password.')}
       if(!/^[A-Za-z0-9_.-]{2,16}$/.test(u))return showErr('Username: 2-16 letters, numbers, _ . -');
       if(p.length<(CLOUD.api?10:4))return showErr(CLOUD.api?'Cloud passwords must be at least 10 characters.':'Password must be at least 4 characters.');
       if(p.length>200)return showErr('Password is too long.');
@@ -3554,6 +3556,13 @@ function submitAuth(e,confirmed=false){
       const acc=getAcc();if(Object.keys(acc).some(k=>k.toLowerCase()===u.toLowerCase()))return showErr('That username is already taken.');
       acc[u]=hashPw(p);setAcc(acc);if(!getAcc()[u])return showErr('Could not save the account (browser storage blocked).');
       rememberUserId(u,true);setMode('login');$('password').value='';$('password2').value='';currentUser=u;return initSession(false,true)}
+    // haven-v277 (owner): a real cloud account may hold the name `GM`. Before this, the check below
+    // captured the name before the cloud was ever consulted, so a `GM` row in D1 was unreachable -
+    // the owner could be renamed to GM and then be locked out of their own account forever, because
+    // typing GM always opened the OFFLINE save and the offline password proved nothing to the server.
+    // A cloud login is tried FIRST when an API is present; the offline path stays as the fallback for
+    // the hosted site and is the whole path on a static host, a file, or a preview without the API.
+    if(isGM&&CLOUD.api)return cloudAuth(u,p,false);   // the account, if it exists, wins
     if(isGM){if(!gmOk(p))return showErr('Incorrect GM password.');rememberUserId(u);currentUser=GM_USER;initSession(true);return}
     if(CLOUD.api)return cloudAuth(u,p,false);
     const acc=getAcc(),key=Object.keys(acc).find(k=>k.toLowerCase()===u.toLowerCase());

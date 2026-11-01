@@ -9357,3 +9357,27 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   progression measurements unchanged (only `sourceHash`/`combatHash` moved).
 * **Delivery:** `arena/42732cee-prontera-grind`.
 
+### 2026-11-01 — `haven-v277 owner name and gm chat`
+* **Changed (owner asked for the actual `GM` name):** `submitAuth()` now tries the **cloud first** for a
+  `GM`-shaped name when an API is present, instead of always taking the offline branch. This matters
+  more than it looks: `GM_USER` is matched against the typed name, so the old ordering meant a real
+  account named `GM` in D1 was **unreachable** — renaming the owner to `GM` would have locked them out
+  of their own account permanently, with the offline password proving nothing to the server. The
+  offline path is unchanged and still the whole path where `CLOUD.api` is false (static host, file,
+  preview). Registration still refuses the reserved name; the message now says "sign in to the GM
+  account" instead of "use the GM password" when an API is present.
+* **Route (owner's call):** register a **new** account and rename *that* to `GM`, leaving the existing
+  `KzeR` character untouched. A fresh account has no accumulated save, no leaderboard history and no GM
+  grants, so the rename is one clean statement and the save-restamp step matches zero rows. The
+  migration is written for that route (and still handles an account that already has a save).
+* **Added:** `migrations/0013_gm_owner_name.sql` — rename + promote in one statement, *and* re-stamp
+  `saves.blob`'s `$.owner` with a version bump. The stamp is the non-obvious half: `api/save.js`
+  refuses any blob whose stamp ≠ signed-in username, so renaming alone leaves `"owner":"KzeR"` against a
+  user now called `GM` and every sync 409s — and the client cannot repair it, because it will not write
+  a save stamped for another account. Documented in `tools/cloudflare-deploy-steps.md` §5c.
+* **Checks:** `gm_auth_sim.js` 12 → 13 — pins that the cloud attempt precedes the offline path and is
+  guarded by `CLOUD.api` (mutation-checked: deleting the guard fails it). `migration_sim.js` 7 → 8 —
+  runs the migration against real SQLite and asserts one row moves, the blob is re-stamped, `version`
+  bumps, other fields and other accounts are untouched, and `GM`/`gm`/`Gm` all resolve.
+* **Delivery:** `arena/42732cee-prontera-grind`.
+

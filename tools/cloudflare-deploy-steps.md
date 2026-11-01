@@ -119,7 +119,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-01 haven-v276 update prompt and gm chat notes` |
+| Build tag at the bottom of the card | `2026-11-01 haven-v277 owner name and gm chat` |
 | Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
@@ -236,6 +236,59 @@ npx wrangler d1 execute pg --remote --command "UPDATE users SET gm = 2 WHERE id 
 
 **Do not** promote by name alone, promote more than the one intended row, or add a `GM` user by hand
 to give it a session. Public registration still never creates an owner.
+
+### Using the actual name `GM` (v277)
+
+Registration refuses `GM`, but **login never re-checks the reserved list** and `userByName` matches
+`COLLATE NOCASE`, so an account row named `GM` is a valid login target. Renaming is the safe way to
+create one: an `INSERT` would mean typing a `pbkdf2$20000$<salt>$<hash>` hash into a console, while
+renaming keeps the real password hash and the whole row (saves, sessions, leaderboard entries and GM
+grants all key off `users.id`).
+
+**Recommended: register a brand-new account for this.** A fresh account has nothing to carry across —
+no accumulated save, no leaderboard history, no GM grants — so the rename is a single clean statement.
+Renaming an established character works too, but then step 2 below actually matters.
+
+Prerequisite: **publish the v277 build first.** `submitAuth()` now tries the cloud *before* the offline
+GM path for a `GM`-shaped name. Renaming on an older build sends `GM` down the offline path and the
+account is unreachable until the new client is live.
+
+1. Register a normal account in the game, e.g. `EventMaster`, and confirm you can log in with it.
+2. Run `migrations/0013_gm_owner_name.sql` with the id and old name filled in. It does two things:
+
+   a. **Rename and promote** — `UPDATE users SET username='GM', gm=2 WHERE id=<id> AND username='<old>'`.
+      Bound by id *and* the old name, so a typo changes nothing.
+   b. **Re-stamp any existing save.** Since v88.6 the blob carries its own account stamp (`blob.owner`)
+      and `functions/api/save.js` refuses a PUT whose stamp does not match the signed-in username.
+      Rename an account that has already saved without this and the stored blob keeps the old name:
+      every sync returns `409 saveMismatch`, and the client **cannot** repair it because it refuses to
+      write a save stamped for another account. For a brand-new account this step matches no rows and
+      does nothing — which is exactly why the fresh-account route is the easy one.
+
+   Or by hand in the D1 console:
+
+```sql
+-- 1. find it and confirm the name is free (must be one row, and 'GM' must be absent)
+SELECT id, username, gm, banned FROM users WHERE username = 'EventMaster';
+SELECT id, username FROM users WHERE username = 'GM';
+-- 2. rename + promote that one row
+UPDATE users SET username = 'GM', gm = 2 WHERE id = <id> AND username = 'EventMaster';
+-- 3. re-stamp a save if one exists (no-op for a new account)
+UPDATE saves SET blob = json_set(blob,'$.owner','GM'), version = version + 1
+ WHERE user_id = <id> AND json_extract(blob,'$.owner') = 'EventMaster';
+-- 4. verify
+SELECT id, username, gm FROM users WHERE id = <id>;
+```
+
+After the rename, on the live site:
+
+* typing `GM` (any casing) signs in to the **cloud** account — chat, emotions, whispers, GM console.
+* the **offline GM password no longer opens the hosted game** for that name. It still works on a
+  static host, a file, or a preview without the API, where `CLOUD.api` is false.
+* sessions already open keep working — `currentUser()` re-reads `u.username`/`u.gm` by JOIN per request.
+
+Roll back with the commented statements at the foot of the migration. Verified end to end against a
+real SQLite database in `tools/tests/migration_sim.js`.
 
 ### The `GM` password is not a chat identity, by design
 

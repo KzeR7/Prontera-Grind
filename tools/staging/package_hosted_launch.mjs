@@ -18,6 +18,10 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
  'functions/api/gate.js','migrations/0008_damage_monitoring.sql',
  'migrations/0009_competition_settlement.sql','migrations/0010_competition_baseline.sql',
  'migrations/0011_unverified_echo_launch.sql','migrations/0012_friends.sql',
+ // v277: comment-only playbook for renaming an account to the owner name `GM`. It creates no schema
+ // and changes no rows (tools/tests/migration_sim.js enforces that), but it ships so the packaged
+ // deployment documents the same stop-and-check steps as this repo.
+ 'migrations/0013_gm_owner_name.sql',
  // v275: the build script itself. It generates `_headers`, which decides how long a player's browser
  // may keep the entry point. A staging package built with the old copy would serve a stale
  // index.html and reintroduce exactly the bug the v275 change fixes, so it ships with the package.

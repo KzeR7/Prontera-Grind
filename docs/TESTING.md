@@ -221,6 +221,12 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-01 (`haven-v277` gate result): 184 suites pass.** Login now tries the cloud before the offline
+GM path for a `GM`-shaped name when an API is present, so a cloud account can hold the reserved name
+without becoming unreachable. `gm_auth_sim` 12 → 13 and `migration_sim` 7 → 8 (the latter runs
+`migrations/0013_gm_owner_name.sql`'s statements against real SQLite: one row moves, the save blob is
+re-stamped, `version` bumps, everyone else is untouched).
+
 **2026-11-01 (`haven-v276` gate result): 184 suites pass.** The update watcher now checks at boot
 (`setTimeout(updateWatch,3000)`) and a dismissed prompt snoozes for 30 minutes instead of vanishing for
 the life of the page, escalating to a non-dismissible "out of date" prompt after a day. `update_watch_sim.js`
