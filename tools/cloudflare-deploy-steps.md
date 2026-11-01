@@ -119,7 +119,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-01 haven-v275 cache the entry point safely` |
+| Build tag at the bottom of the card | `2026-11-01 haven-v276 update prompt and gm chat notes` |
 | Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
@@ -166,6 +166,82 @@ and do not add `immutable` or a positive `max-age` to an `.html` rule: that recr
 
 **Note for local testing.** `tools/dev_server.js` already serves HTML and `.js`/`.css` as `no-store`,
 so local behaviour was always fresh; this file only changes the hosted build.
+
+## 5c. Your GM account cannot chat — use a cloud account with owner rights (v276)
+
+The login card has **two unrelated logins**, and only one of them reaches the server.
+
+| What you type | What it does | Chat / emotions |
+|---|---|---|
+| Username exactly `GM` | **Offline GM login.** Checked against `GM_PASS_HASH` in the page plus an optional local password. Loads a save from `localStorage`. | **No.** No server session exists. |
+| Any normal username | **Cloud login.** Real session cookie against D1. | **Yes.** |
+
+`submitAuth()` branches on the name before it ever looks at the cloud:
+
+```js
+const isGM = u.toLowerCase() === String(GM_USER).toLowerCase();   // GM_USER = 'GM'
+if (isGM) { if (!gmOk(p)) return showErr('Incorrect GM password.'); … initSession(true); return }
+if (CLOUD.api) return cloudAuth(u, p, false);
+```
+
+`initSession()` is the single-player start path: it never calls `cloudSession()`, so `CLOUD.on` stays
+`false`. The chat in `assets/social.js` starts its 2-second tick with:
+
+```js
+if (!CLOUD.on) { … status('Sign in to use player chat'); return }
+```
+
+so the socket never opens and **Emoji does nothing** — `send()` refuses everything while
+`app.connected` is false. The banner is accurate: that session has no identity on the wire.
+
+**This cannot be fixed in D1.** Chat identity comes from the session cookie, resolved by
+`functions/api/social.js` and forwarded to the Worker as `X-Social-Identity`
+(`{ id, username, friends }`). Nothing in that path reads `users.gm`, and the reserved name `gm` is
+in `RESERVED` in `functions/_lib/validate.js`, so it can never be registered. A `gm=2` row for a
+`GM` user would authenticate nothing, because the offline login never creates a session row.
+
+### What to do instead (this is the supported path)
+
+Register a **normal** account, then promote that exact row in D1. Chat, emotions, whispers, the
+Cash Shop and the GM console all work together, and you keep your owner powers.
+
+1. Register a normal account in the game (e.g. `EventMaster`) and confirm you can log in with it.
+2. Find its id — verify the name before writing anything:
+
+```sql
+SELECT id, username, gm, banned FROM users WHERE username = 'EventMaster';
+```
+
+3. Promote **that id only**, `gm=2` = owner (`0` user, `1` GM, `2` owner):
+
+```sql
+UPDATE users SET gm = 2 WHERE id = <the id printed above> AND username = 'EventMaster';
+```
+
+4. Confirm exactly one row changed:
+
+```sql
+SELECT id, username, gm FROM users WHERE gm > 0;
+```
+
+No re-login is needed: `currentUser()` re-reads `users.gm` through a JOIN on every request
+(`SELECT s.*, u.username, u.gm, u.banned FROM sessions s JOIN users u …`), so the very next request
+is already an owner. Reload the page to pick up the 🛠 badge.
+
+Run it through Wrangler the same way the migrations are run:
+
+```bash
+npx wrangler d1 execute pg --remote --command "UPDATE users SET gm = 2 WHERE id = 7 AND username = 'EventMaster'"
+```
+
+**Do not** promote by name alone, promote more than the one intended row, or add a `GM` user by hand
+to give it a session. Public registration still never creates an owner.
+
+### The `GM` password is not a chat identity, by design
+
+`GM_PASS_HASH` is a shared secret compiled into a public page. If it could open a server session, it
+would stop being an offline convenience and become a login for anyone who reads the file. Keep it for
+single-player testing; use the promoted cloud account for anything that talks to the server.
 
 ## 6. Bring your existing players over
 

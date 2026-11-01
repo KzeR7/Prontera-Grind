@@ -221,6 +221,11 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-01 (`haven-v276` gate result): 184 suites pass.** The update watcher now checks at boot
+(`setTimeout(updateWatch,3000)`) and a dismissed prompt snoozes for 30 minutes instead of vanishing for
+the life of the page, escalating to a non-dismissible "out of date" prompt after a day. `update_watch_sim.js`
+grew 10 → 12 checks (snooze expiry, newer-build bypass, day-old escalation, boot wiring).
+
 **2026-11-01 (`haven-v275` gate result): 184 suites pass.** Same 180 `*_sim.js`/`*_sim.mjs` + 4
 `*_smoke.js` count as v274. The only behavioural addition is in `bash tools/build_site.sh`, whose
 `dist/_headers` now makes the HTML entry point revalidate (`no-cache, must-revalidate`) so a shipped

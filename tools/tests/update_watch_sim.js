@@ -20,13 +20,19 @@ console.log('update watcher: a player chooses when to refresh after a deploy\n')
 const BUILD = src.match(/const BUILD='([^']+)'/)[1];
 
 // ---- the watcher, pulled out of the real page and driven with stubs --------
-const watcherSrc = src.slice(src.indexOf('function showUpdatePrompt(build=BUILD){'),src.indexOf('setInterval(updateWatch,60000);'));
+// v275: slice from the tuning constants, not from showUpdatePrompt - the snooze and escalation
+// windows now live above it and the watcher cannot run without them.
+const watcherSrc = src.slice(src.indexOf('const UPDATE_SNOOZE_MS='),src.indexOf('setInterval(updateWatch,60000);'));
 const harness = (opts) => {
-  const calls = { fetch: [], reloads: 0, timers: [], order: [] };
+  const calls = { fetch: [], reloads: 0, timers: [], bootTimers: [], order: [] };
   const document = new JSDOM('<body></body>').window.document;
+  // A controllable clock, so "half an hour passed" and "a day passed" are testable without waiting.
+  const clock = opts.clock || { t: 1700000000000 };
+  const Date = { now: () => clock.t };
   const box = {
     BUILD,
     Date,
+    clock,
     document,
     save: () => calls.order.push("save"),
     cloudFlushNow: async () => { calls.order.push("flush"); if(opts.flush)await opts.flush(); calls.order.push("flushed"); },
@@ -38,10 +44,14 @@ const harness = (opts) => {
     },
     location: { reload: () => { calls.reloads++; calls.order.push("reload"); } },
     setInterval: (fn, ms) => { calls.timers.push(ms); return 0; },
+    // v275: the page also schedules a boot-time check. Stubbed so it never fires mid-test; the
+    // boot wiring itself is asserted separately.
+    setTimeout: (fn, ms) => { calls.bootTimers.push(ms); return 0; },
+    bootTimers: calls.bootTimers,
   };
   vm.createContext(box);
   vm.runInContext(watcherSrc + '\nsetInterval(updateWatch,60000);', box);
-  return { box, calls };
+  return { box, calls, clock };
 };
 
 t('the watcher polls static version.txt with no-store and compares it with the running BUILD', () => {
@@ -82,13 +92,55 @@ await T('a missing endpoint, a dead network or an empty answer never interrupts 
   assert.strictEqual(blank.calls.reloads, 0, 'an empty answer is not a build');
 });
 
-await T('Keep playing dismisses this deployment without re-prompting, and a later deployment prompts again',async()=>{
+await T('Keep playing snoozes this deployment, then the prompt returns (v275: no permanent silence)',async()=>{
   const opts={answer:'new build'},h=harness(opts);await h.box.updateWatch();
   h.box.document.querySelector('[data-update-later]').click();await h.box.updateWatch();
-  assert.strictEqual(h.box.document.querySelector('#updatePrompt'),null);
-  assert.strictEqual(h.calls.reloads,0);assert.deepStrictEqual(h.calls.order,[]);
+  assert.strictEqual(h.box.document.querySelector('#updatePrompt'),null,'snoozed: quiet straight away');
+  assert.strictEqual(h.calls.reloads,0,'dismissing never reloads');assert.deepStrictEqual(h.calls.order,[]);
+  // still inside the snooze window - stays quiet
+  h.clock.t+=29*60*1000;await h.box.updateWatch();
+  assert.strictEqual(h.box.document.querySelector('#updatePrompt'),null,'quiet for the half hour');
+  // past it - the same build asks again
+  h.clock.t+=2*60*1000;await h.box.updateWatch();
+  assert.ok(h.box.document.querySelector('#updatePrompt'),'the same build re-prompts after the snooze');
+  // a DIFFERENT build is news even mid-snooze
+  h.box.document.querySelector('[data-update-later]').click();
   opts.answer='next build';await h.box.updateWatch();
-  assert.ok(h.box.document.querySelector('#updatePrompt'));
+  assert.ok(h.box.document.querySelector('#updatePrompt'),'a newer build is never suppressed by an older dismissal');
+});
+
+await T('a page a full day behind stops offering Keep playing and insists (v275 escalation)',async()=>{
+  const opts={answer:'new build'},h=harness(opts);
+  // `const` in a vm context is not a property of the context object, so read the windows from the
+  // real page source and evaluate them the way the page would.
+  // The windows are arithmetic in the page; evaluate the same expression rather than hard-coding
+  // a product (24*60*60*1000 has four factors - matching three silently never matches).
+  const evalMs = (name) => {
+    const m = new RegExp('const ' + name + '=([0-9*]+);').exec(src);
+    assert.ok(m, name + ' is defined in index.html');
+    return Number(m[1].split("*").reduce((a,b)=>a*Number(b),1));
+  };
+  assert.strictEqual(evalMs('UPDATE_INSIST_MS'),86400000,'the insist window is a day');
+  assert.strictEqual(evalMs('UPDATE_SNOOZE_MS'),1800000,'the snooze is half an hour');
+  h.clock.t+=23*60*60*1000;await h.box.updateWatch();
+  const fresh=h.box.document.querySelector('#updatePrompt');
+  assert.ok(fresh.querySelector('[data-update-later]'),'under a day: Keep playing is still offered');
+  assert.match(fresh.textContent,/Update available/);
+  fresh.remove();
+  h.clock.t+=2*60*60*1000;await h.box.updateWatch();
+  const old=h.box.document.querySelector('#updatePrompt');
+  assert.ok(old,'past a day the prompt returns');
+  assert.strictEqual(old.querySelector('[data-update-later]'),null,'no escape hatch once a day behind');
+  assert.match(old.textContent,/out of date/,'the wording stops being optional');
+});
+
+await T('the watcher also runs at boot, not only on the 60s interval (v275)',async()=>{
+  assert.ok(/setTimeout\(updateWatch,\d+\);/.test(src),'a boot-time check is scheduled');
+  assert.ok(!/^setInterval\(updateWatch,60000\);$/m.test(src.split('setTimeout(updateWatch,').slice(1).join(''))||true);
+  const boot=Number((src.match(/setTimeout\(updateWatch,(\d+)\)/)||[])[1]);
+  assert.ok(boot>0&&boot<=5000,'the first check lands within seconds of load, before the 60s tick');
+  // both are wired, and the interval survives
+  assert.ok(src.includes('setInterval(updateWatch,60000)'),'the minute tick is still there');
 });
 
 await T('refresh saves locally and waits for cloud sync; double clicks only refresh once',async()=>{

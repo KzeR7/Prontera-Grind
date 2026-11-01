@@ -9332,3 +9332,28 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Delivery:** `arena/42732cee-prontera-grind`. Applying `dist/_headers` to production is the owner's
   deploy step; until that build is published, existing players keep whatever their browser cached.
 
+### 2026-11-01 — `haven-v276 update prompt and gm chat notes`
+* **Changed (owner asked for both watcher gaps):**
+  1. **The watcher now checks at boot**, not only on its 60 s interval (`setTimeout(updateWatch,3000)`).
+     Before this the first check landed a full minute after load — long enough to be told chat is
+     unavailable, or to hit a bug that was already fixed on the server, with nothing suggesting a reload.
+  2. **"Keep playing" is no longer permanent.** The old guard
+     `if(showUpdatePrompt.build===build)return` silenced a build for the life of the tab after one tap.
+     A dismissal is now a **30-minute snooze** (`UPDATE_SNOOZE_MS`); the prompt returns when it expires.
+     A *different* build is never suppressed by an older dismissal. Past **`UPDATE_INSIST_MS` (a day)**
+     measured from page load, the prompt stops offering any way out and reads "This version is out of
+     date". Staleness is per page load, so a genuinely day-old tab escalates instead of whispering once.
+* **Documented (no code change):** the GM chat question. The reserved `GM` login is the **offline**
+  path — `submitAuth()` routes it to `initSession()`, which never calls `cloudSession()`, so `CLOUD.on`
+  stays false and `assets/social.js` refuses to open the socket. Chat identity is the session cookie,
+  resolved in `functions/api/social.js` and passed to the Worker; **nothing in that path reads
+  `users.gm`**, so a D1 edit cannot give the offline login a chat identity. Wrote up
+  `tools/cloudflare-deploy-steps.md` §5c: register a normal account, `UPDATE users SET gm=2 WHERE id=…`,
+  and note that `currentUser()` re-reads `users.gm` by JOIN on every request so no re-login is needed.
+* **Checks:** `update_watch_sim.js` grew from 10 to **12** checks — snooze expiry, a newer build never
+  suppressed mid-snooze, the day-old escalation dropping the escape hatch, and the boot-time wiring.
+  Mutation-checked twice: restoring the permanent-dismissal guard fails 2 checks; removing
+  `setTimeout(updateWatch,3000)` fails the boot check. Full gate: 184 suites pass, 0 fail; all 126
+  progression measurements unchanged (only `sourceHash`/`combatHash` moved).
+* **Delivery:** `arena/42732cee-prontera-grind`.
+
