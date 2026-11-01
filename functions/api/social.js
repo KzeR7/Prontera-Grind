@@ -12,5 +12,8 @@ export const onRequestGet=guard(async({request,env})=>{
  const user=await currentUser(request,env.DB);if(!user)return json({error:'Sign in to chat'},401);
  let friends=[];
  try{if(await friendsInstalled(env.DB))friends=(await listFor(env.DB,user.id)).friends.map(f=>f.id)}catch(e){friends=[]}
- return env.SOCIAL.get(env.SOCIAL.idFromName('world')).fetch(new Request('https://social/connect',{headers:{Upgrade:'websocket','X-Social-Identity':JSON.stringify({id:user.id,username:user.username,friends})}}));
+ // v279 (owner): the GM tag. `gm` is resolved from the session's own row, exactly like `friends`, so a
+ // client can never claim it - the Worker trusts this header and only this header. It travels as a
+ // boolean so the room never has to care about the 0/1/2 levels, only "is this account staff".
+ return env.SOCIAL.get(env.SOCIAL.idFromName('world')).fetch(new Request('https://social/connect',{headers:{Upgrade:'websocket','X-Social-Identity':JSON.stringify({id:user.id,username:user.username,friends,gm:Number(user.gm)>0})}}));
 });

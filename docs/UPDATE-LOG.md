@@ -9357,6 +9357,23 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   progression measurements unchanged (only `sourceHash`/`combatHash` moved).
 * **Delivery:** `arena/42732cee-prontera-grind`.
 
+### 2026-11-01 — `haven-v279 gm tag in chat and plaza`
+* **Changed (owner asked for a GM tag in chat and the social hub):** the GM flag now travels to the
+  plaza. `functions/api/social.js` adds `gm` to the server-resolved `X-Social-Identity` header (same
+  place `id` and `friends` come from, so a browser cannot claim it); `workers/social/room.mjs` stores
+  it on the client record and includes it in `hello`, `snapshot()` and every chat `message`; the client
+  renders `🛠 Name` in chat lines (`assets/social.js`) and on plaza player labels
+  (`assets/social-scene.js`), styled gold in `assets/social.css`. Messages carry their own `gm` so a
+  tag survives in world/whisper history rather than following the speaker's current rights.
+* **Escalation:** `gm` is `Number(user.gm) > 0`, so `gm=1` (GM) and `gm=2` (owner) are both tagged;
+  the room only ever sees a boolean. A client-supplied `gm` is discarded by the existing identity
+  resolution - verified by test.
+* **Checks:** `social_api_sim.mjs` asserts an ordinary account is *not* tagged, a request claiming
+  `gm:true` is *ignored*, and the same account *is* tagged once promoted to `gm=2` (mutation-checked:
+  removing the header field fails with `actual: undefined`). Driven the real `SocialRoom` directly to
+  confirm `gm=true` reaches messages and the snapshot while `false` and a spoofed `'yes'` do not.
+  Full gate: 184 suites pass, 0 fail; all 126 progression measurements unchanged.
+
 ### 2026-11-01 — `haven-v277 owner name and gm chat`
 * **Changed (owner asked for the actual `GM` name):** `submitAuth()` now tries the **cloud first** for a
   `GM`-shaped name when an API is present, instead of always taking the offline branch. This matters

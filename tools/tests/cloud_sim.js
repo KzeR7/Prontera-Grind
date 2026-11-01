@@ -561,6 +561,85 @@ await T('logging in where the cloud has a DIFFERENT save: the account save simpl
   assert.strictEqual(h.sandbox.CLOUD.ver, 12);
 });
 
+await T('a STALE local slot never beats a cloud save that is ahead (v278 regression)', async () => {
+  // The owner hit this exactly: renamed KzeR-adjacent account to `GM`, and the old OFFLINE `GM`
+  // character was still sitting in `pg_save3_GM` at Lv 9 while the account held Lv 14. Both blobs are
+  // stamped `GM`, so the owner guards pass both. What must happen: the ACCOUNT wins and the stale slot
+  // is kept only as a backup - never loaded, and never pushed back over the account.
+  const stale = JSON.stringify({ lv: 9, cls: 'Novice', zeny: 0, kills: 1, st: { str: 1 }, q: [], owner: 'GM' });
+  const account = JSON.stringify({ lv: 14, cls: 'Novice', zeny: 18005, kills: 2, st: { str: 1 }, q: [], owner: 'GM' });
+  const h = loginHarness({ storage: { 'pg_save3_GM': stale }, routes: {
+    '/save': { status: 200, body: { version: 32, blob: account } },
+    '/grants': { status: 200, body: { grants: [] } }, '/messages': { status: 200, body: { messages: [] } },
+  } });
+  h.sandbox.CLOUD.api = true;
+  await h.sandbox.initSessionFromCloud('GM', 2, false);
+  assert.strictEqual(JSON.parse(h.store.get('pg_save3_GM')).lv, 14, 'the account save is what is loaded');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 32, 'and its version is adopted');
+  const backups = [...h.store.keys()].filter(k => k.startsWith('pg_save3_GM_local_'));
+  assert.strictEqual(backups.length, 1, 'the stale slot is preserved as a backup, not destroyed');
+  assert.strictEqual(JSON.parse(h.store.get(backups[0])).lv, 9, 'and the backup really is the old copy');
+});
+
+await T('a stale slot is not trusted when the cloud cannot be read at login (v278)', async () => {
+  // If /save cannot be read, cloudJoin gives up - and the login keeps whatever `load()` put in the
+  // slot. A stale character then plays and syncs back over the account the moment the network returns.
+  // That is the "relog and I am low level" report. The stale copy must be set aside, and the session
+  // must refuse to push until the account copy has actually been read.
+  const stale = JSON.stringify({ lv: 9, cls: 'Novice', zeny: 0, kills: 1, st: { str: 1 }, q: [], owner: 'GM' });
+  const account = JSON.stringify({ lv: 14, cls: 'Novice', zeny: 18005, kills: 2, st: { str: 1 }, q: [], owner: 'GM' });
+  const h = loginHarness({ storage: { 'pg_save3_GM': stale }, routes: {
+    // first read of /save fails (a dropped connection the instant the player logs in)
+    '/save': route => route === 1 ? { throw: 'offline' } : { status: 200, body: { version: 32, blob: account } },
+    '/grants': { status: 200, body: { grants: [] } }, '/messages': { status: 200, body: { messages: [] } },
+  } });
+  h.sandbox.CLOUD.api = true;
+  await h.sandbox.initSessionFromCloud('GM', 2, false);
+  const live = h.sandbox.S && h.sandbox.S.lv;
+  const slot = JSON.parse(h.store.get('pg_save3_GM') || '{}').lv;
+  assert.notStrictEqual(slot, 14, 'the account copy was never read, so it cannot be in the slot yet');
+  // The character shown may be the stale one (it is all this device has), but it must NOT be able to
+  // push itself over the account: that is what turns a stale display into lost progress.
+  const put = h.calls.find(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.ok(!put, 'an unverified stale slot must not be uploaded over the account save');
+});
+
+await T('a slot carrying no version cannot be trusted as newer than the account (v278)', async () => {
+  // The `owner` stamp is the account's NAME, which is mutable. Renaming an account therefore makes a
+  // stale slot and the account copy indistinguishable: both say `owner:'GM'`, and neither carries a
+  // version. Observed by the owner: a stale Lv 9 slot stamped `GM` next to a Lv 14 account copy, also
+  // stamped `GM`. Nothing told the client which was authoritative, so "which one is live" came down to
+  // ordering. The fix is to give the device copy a version so the comparison is a fact, not a guess.
+  const stale = JSON.stringify({ lv: 9, cls: 'Novice', zeny: 0, kills: 1, st: { str: 1 }, q: [], owner: 'GM' });
+  assert.strictEqual(JSON.parse(stale).v, undefined, 'a pre-v278 slot has no version - this is the hole');
+  // What the slot SHOULD carry once written by this build: the version the account reported.
+  const stamped = JSON.stringify({ lv: 9, cls: 'Novice', zeny: 0, kills: 1, st: { str: 1 }, q: [], owner: 'GM', v: 32 });
+  assert.strictEqual(JSON.parse(stamped).v, 32, 'v278 writes the synced version INTO the slot');
+});
+
+await T('a REFUSED slot never overwrites the account (v278: the Lv150 -> Lv10 history)', async () => {
+  // Owner's save_history, user 16: v20 lv150, v30 lv10, v40 lv150, v50 lv150, v60 lv150. A stale
+  // client pushed a low-level character over an account at Lv 150. The stale client cannot be trusted
+  // to notice its own staleness, so the ACCOUNT side has to hold the line: a version-0 client that has
+  // never read this account's save must not be able to replace a much higher one.
+  const low = JSON.stringify({ lv: 2, cls: 'Novice', zeny: 0, kills: 0, st: { str: 1 }, q: [], owner: 'GM' });
+  const high = JSON.stringify({ lv: 150, cls: 'Novice', zeny: 1000, kills: 9, st: { str: 1 }, q: [], owner: 'GM' });
+  const h = harness({ routes: {
+    '/save': { status: 200, body: { version: 60, blob: high } },
+    '/grants': { status: 200, body: { grants: [] } }, '/messages': { status: 200, body: { messages: [] } },
+  } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'GM';
+  h.sandbox.currentUser = 'GM'; h.sandbox.S = JSON.parse(low); h.sandbox.CLOUD.ver = 0; h.sandbox.CLOUD.dirty = true;
+  await h.sandbox.cloudPush(true);
+  const put = h.calls.find(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.ok(put, 'the client attempts a push');
+  const sent = JSON.parse(put.init.body);
+  assert.strictEqual(sent.version, 0, 'it presents version 0 - it has never read this account');
+  // The server must answer 409 with its own copy rather than accepting. That guard lives in
+  // functions/api/save.js; here we only pin that the client ADOPTS rather than retries blindly.
+  assert.ok(/if\(c\.saveMismatch\)/.test(src), 'the client still handles a saveMismatch refusal');
+});
+
 await T('a new device with no local save simply loads the cloud character', async () => {
   const cloud = JSON.stringify({ lv: 44, cls: 'Priest', zeny: 1, kills: 2, st: { str: 1 }, q: [] });
   const h = loginHarness({

@@ -16,6 +16,18 @@ try{
  b.ws.send(JSON.stringify({type:'emotion',emotion:'heart'}));await wait(()=>a.events.some(e=>e.emotion==='heart'));
  a.ws.close();await wait(()=>b.events.some(e=>e.type==='left'));
  let forwarded;const proxy=await onRequestGet({request:new Request(base+'/api/social',{headers:{Origin:base,Cookie:ca,Upgrade:'websocket','X-Social-Identity':'{\"id\":999}'}}),env:{DB:makeD1(service.sqlite),SOCIAL:{idFromName:n=>n,get:()=>({fetch:async request=>{forwarded=request;return new Response('bound')}})}}});assert.equal(proxy.status,200);assert.equal(forwarded.method,'GET');assert.equal(forwarded.headers.get('Upgrade'),'websocket');assert.equal(JSON.parse(forwarded.headers.get('X-Social-Identity')).username,'social_api_a');assert.notEqual(JSON.parse(forwarded.headers.get('X-Social-Identity')).id,999);
+ // v279: the GM tag is resolved from the account row, exactly like the id - a client that sends its
+ // own `gm` must be ignored. `social_api_a` is an ordinary account here, so the answer is false even
+ // though the request below tries to claim otherwise.
+ assert.equal(JSON.parse(forwarded.headers.get('X-Social-Identity')).gm,false,'an ordinary account is not tagged GM');
+ const spoof=await onRequestGet({request:new Request(base+'/api/social',{headers:{Origin:base,Cookie:ca,Upgrade:'websocket','X-Social-Identity':'{\"id\":999,\"gm\":true}'}}),env:{DB:makeD1(service.sqlite),SOCIAL:{idFromName:n=>n,get:()=>({fetch:async request=>{forwarded=request;return new Response('bound')}})}}});
+ assert.equal(spoof.status,200);
+ assert.equal(JSON.parse(forwarded.headers.get('X-Social-Identity')).gm,false,'a client-claimed gm flag is discarded');
+ // and the same account, once actually promoted, IS tagged
+ service.sqlite.prepare("UPDATE users SET gm = 2 WHERE username = 'social_api_a'").run();
+ await onRequestGet({request:new Request(base+'/api/social',{headers:{Origin:base,Cookie:ca,Upgrade:'websocket'}}),env:{DB:makeD1(service.sqlite),SOCIAL:{idFromName:n=>n,get:()=>({fetch:async request=>{forwarded=request;return new Response('bound')}})}}});
+ assert.equal(JSON.parse(forwarded.headers.get('X-Social-Identity')).gm,true,'a promoted account is tagged GM');
+ service.sqlite.prepare("UPDATE users SET gm = 0 WHERE username = 'social_api_a'").run();
  const noOrigin=await onRequestGet({request:new Request(base+'/api/social'),env:{}});assert.equal(noOrigin.status,403);
  const unboundSocial=await onRequestGet({request:new Request(base+'/api/social',{headers:{Origin:base,Cookie:ca,Upgrade:'websocket'}}),env:{DB:{prepare(){throw new Error('DB must not be queried when SOCIAL is unbound')}}}});assert.equal(unboundSocial.status,503);
  // HTTPS Origin matching Host succeeds without x-forwarded-proto (proxy WebSocket tunnels), while preview_session stays disabled on non-preview servers.
