@@ -9368,6 +9368,12 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Escalation:** `gm` is `Number(user.gm) > 0`, so `gm=1` (GM) and `gm=2` (owner) are both tagged;
   the room only ever sees a boolean. A client-supplied `gm` is discarded by the existing identity
   resolution - verified by test.
+* **Fixed before deploy:** the three assets this build changes (`social.js`, `social.css`,
+  `social-scene.js`) were still referenced at `?v=273`/`274`. Assets keep their long cache, so the page
+  would have asked for the OLD files and shipped the tag invisibly - the same class of miss that made
+  the v274 emoji fix look broken. All three are now `?v=279`, and `update_watch_sim.js` gained a check
+  that pins them (mutation-checked: reverting one bump fails it). Untouched social assets keep their
+  old number on purpose.
 * **Checks:** `social_api_sim.mjs` asserts an ordinary account is *not* tagged, a request claiming
   `gm:true` is *ignored*, and the same account *is* tagged once promoted to `gm=2` (mutation-checked:
   removing the header field fails with `actual: undefined`). Driven the real `SocialRoom` directly to

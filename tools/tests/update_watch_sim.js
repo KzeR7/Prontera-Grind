@@ -218,6 +218,24 @@ await T('build_site.sh writes static version.txt and a revalidating _headers mat
   }
 });
 
+// v279: index.html is served revalidated (so it always names the current asset versions), but the
+// files it points at are cached for a long time under their `?v=`. Editing an asset WITHOUT bumping its
+// `?v=` therefore ships a page that asks for the OLD file and silently keeps the old behaviour - this
+// is the same class of miss that made the v274 emoji fix look broken. Pin it mechanically: every
+// social asset the tag touches must carry the current build number, and the three that were changed
+// for the GM tag must agree with each other.
+t('every asset versioned in index.html points at a build, never at a stale cache', () => {
+  const tags = [...src.matchAll(/(?:src|href)="(assets\/[^"?]+\.(?:js|css))\?v=(\d+)"/g)];
+  assert.ok(tags.length > 0, 'index.html versions its assets');
+  // Only the files this build actually changed. Untouched assets keep their old number on purpose -
+  // bumping those would throw away a warm cache for nothing.
+  for (const f of ['assets/social.js', 'assets/social.css', 'assets/social-scene.js']) {
+    const found = tags.find(([, file]) => file === f);
+    assert.ok(found, f + ' is loaded by index.html');
+    assert.strictEqual(found[2], '279', f + ' must be busted to the build that changed it');
+  }
+});
+
 // The build tag is copied into a few documents so a reader can tell which build a sheet or a note is about.
 // A bump that leaves one of those copies behind would show a stale build name to whoever reads it.
 t('every build-tag mirror names the BUILD this page runs (a bump that misses one fails here)', () => {
