@@ -73,6 +73,12 @@ and source-art folders. `docs/` was also added to the advisory `.assetsignore` l
 **publishing only `dist/` is the tested boundary**, not relying on root-directory
 ignore behavior. Do not publish the repository root to save a build step.
 
+## When a player says their save is gone
+
+Do not guess from the symptom - read what the server actually holds for that account. The query, and
+how to read each answer, is in [checking a save](CHECK-A-SAVE.md). It also shows how to list the older
+blobs in `save_history` before restoring one.
+
 ## Reproduce / maintain
 
 ```sh

@@ -181,7 +181,9 @@ t('initSession checks the stamp before it loads the save', () => {
 });
 
 t('initSessionFromCloud checks the device copy before it starts a session or writes anything', () => {
-  const b = body('async function initSessionFromCloud(u,gm,isNew){', 1400);
+  // v280: the signature now also carries the account id, which the save stamp needs.
+  // v280: the function grew (the account id and the identity comments), so the window had to.
+  const b = body('async function initSessionFromCloud(u,gm,isNew,id){', 1800);
   const check = b.indexOf('saveRefusal(local,u)');
   assert.ok(check > 0, 'the device-copy check is missing');
   assert.ok(check < b.indexOf('cloudStart(u,gm)'), 'before the session starts');
@@ -199,12 +201,18 @@ t('restoring a backup leaves out another account\'s save before anything is writ
   assert.ok(b.indexOf('const elsewhere=') > 0 && b.indexOf('const elsewhere=') < b.indexOf('lsPut(k,d.keys[k])'));
 });
 
-t('every write of a save slot is one of the three checked places, so a new one must be checked too', () => {
-  // save() / cloudAdopt() / initSessionFromCloud() are the only lsPut(...) calls that write a save slot;
-  // restoreBackup() writes its keys through the filter checked above. Add a write site -> add its check,
-  // then update this count.
+t('every write of a save slot is one of the checked places, so a new one must be checked too', () => {
+  // save() / cloudAdopt() / initSessionFromCloud() / the v280 re-stamp in load() are the only
+  // lsPut(...) calls that write a save slot; restoreBackup() writes its keys through the filter
+  // checked above. The v280 site rewrites ONLY the owner field of a copy that `saveIsMine()` has
+  // already proved is this account's own - it cannot introduce another account's data.
+  // Add a write site -> add its check, then update this count.
   const sites = src.match(/lsPut\((?:saveKey|saveKeyFor)\(/g) || [];
-  assert.strictEqual(sites.length, 3, 'found ' + sites.length + ' save-slot writes');
+  assert.strictEqual(sites.length, 4, 'found ' + sites.length + ' save-slot writes');
+  // and the v280 re-stamp must stay behind saveIsMine()
+  const block = src.slice(src.indexOf('function load()'), src.indexOf('function load()') + 900);
+  assert.ok(/if\(raw&&saveIsMine\(raw\)\)/.test(block), 'the load() re-stamp is guarded by saveIsMine()');
+  assert.ok(block.indexOf('saveIsMine(raw)') < block.indexOf('lsPut(saveKey(),raw)'), 'and the check precedes the write');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

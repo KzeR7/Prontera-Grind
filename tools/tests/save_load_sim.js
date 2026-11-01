@@ -43,11 +43,16 @@ const AFF = ['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'
 const AB = {str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:.7};
 const K5 = ['str','agi','dex','luk','int'];
 let RAW = ${JSON.stringify(JSON.stringify(save))};
+let STORE = Object.create(null);
 const lsGet = () => RAW;
+// v280: load() re-stamps this account's own copy when the name changed, so the write must be real here.
+const lsPut = (k, v) => { STORE[k] = v; RAW = v };
 const saveKey = () => 'k';
 currentUser = 'Owner';   // the account this browser is loading (v88.6: a save names its owner); the game's own let declares it
+// v280: the signed-in account's durable id, which outlives a rename. Tests set it per case.
+let CLOUD = { id: 0 };
 const newQuest = () => ({type:'kill', goal:1, prog:0, z:0, xp:0});
-this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v) }, setState:v=>{S=v}, getState:()=>S, emptyCardIndex, recordMonsterKill, donateCardToMastery, cardMasteryTotal, cardMasteryEarned, cardMasteryAvailable, cardMasteryRolled, cardMasteryStat, cardMasteryGacha, cardMasteryReset, cardMasteryLegendaryCard, cardMasteryLegendaryCards, donateAllToMastery, cardMasteryLevel, CARD_REWARD_OPTIONS, indexXpForCount, INDEX_MOB_MILESTONES, INDEX_MILESTONE_XP, INDEX_TITLES, MONSTER_INDEX, CARD_NAMES, CARD_REWARD_CAPS, CARD_REWARD_IDS};
+this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v); STORE = Object.create(null) }, getStored: () => ({ ...STORE }), setAccount: id => { CLOUD.id = Number(id) || 0 }, setState:v=>{S=v}, getState:()=>S, emptyCardIndex, recordMonsterKill, donateCardToMastery, cardMasteryTotal, cardMasteryEarned, cardMasteryAvailable, cardMasteryRolled, cardMasteryStat, cardMasteryGacha, cardMasteryReset, cardMasteryLegendaryCard, cardMasteryLegendaryCards, donateAllToMastery, cardMasteryLevel, CARD_REWARD_OPTIONS, indexXpForCount, INDEX_MOB_MILESTONES, INDEX_MILESTONE_XP, INDEX_TITLES, MONSTER_INDEX, CARD_NAMES, CARD_REWARD_CAPS, CARD_REWARD_IDS};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -484,6 +489,46 @@ t('v88.6: a save written before the stamp existed loads as it always did', () =>
   assert.strictEqual(load().lv, 60);
   assert.strictEqual(load().cls, 'Swordman');
 });
+// v280: a rename must not cost the character. The copy in this browser names the OLD name but carries
+// the account id, so it is this account's own save and is loaded and re-stamped - not thrown away for
+// a fresh Lv 1. Before this, load() refused any copy whose name differed, so a rename meant Lv 1.
+t('v280: a renamed account loads its own copy and the copy is re-stamped with the new name', () => {
+  sb.__l.setAccount(7);
+  sb.__l.setRaw(Object.assign({}, save, { owner: 'OldName', accountId: 7 }));
+  const g = load();
+  assert.strictEqual(g.lv, 60, 'the character survives a rename');
+  assert.strictEqual(g.cls, 'Swordman', 'and so does everything else about it');
+  const stored = sb.__l.getStored();
+  const k = Object.keys(stored)[0];
+  assert.ok(k, 'the re-stamped copy was written back');
+  const blob = JSON.parse(stored[k]);
+  assert.strictEqual(blob.owner, 'Owner', 're-stamped with the name the account has now');
+  assert.strictEqual(blob.accountId, 7, 'and the id is kept, so the next rename is safe too');
+  assert.strictEqual(blob.lv, 60, 'nothing about the character is lost in the rewrite');
+});
+t('v280: a copy carrying ANOTHER account\'s id is still refused, whatever name it has', () => {
+  sb.__l.setAccount(7);
+  sb.__l.setRaw(Object.assign({}, save, { owner: 'Owner', accountId: 99 }));   // its name matches, its id does not
+  const g = load();
+  assert.strictEqual(g.lv, 1, 'another account\'s save is never loaded');
+  // (the store is built inside the vm's realm, so compare its keys, not the object's prototype)
+  assert.strictEqual(Object.keys(sb.__l.getStored()).length, 0, 'and nothing of it is written');
+});
+t('v280: with no id known yet (a save from before v280), the name still decides', () => {
+  sb.__l.setAccount(0);
+  sb.__l.setRaw(Object.assign({}, save, { owner: 'Someone' }));   // legacy blob, no accountId
+  assert.strictEqual(load().lv, 1, 'an unnamed legacy copy for another account is still refused');
+  sb.__l.setRaw(Object.assign({}, save, { owner: 'Owner' }));
+  assert.strictEqual(load().lv, 60, 'and this account\'s own legacy copy still loads');
+});
+t('v280: a copy with a stale name and NO id still follows the old rule (save written before v280)', () => {
+  sb.__l.setAccount(7);
+  sb.__l.setRaw(Object.assign({}, save, { owner: 'SomeoneElse' }));   // no accountId to prove it is ours
+  assert.strictEqual(load().lv, 1, 'a pre-v280 copy naming another account is not adopted on a guess');
+  sb.__l.setAccount(0);
+});
+sb.__l.setAccount(0);
+
 sb.__l.setRaw(save);                         // leave the harness on the ordinary save
 
 console.log(`\n${pass} passed, ${fail} failed`);

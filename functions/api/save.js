@@ -20,7 +20,7 @@
 import { currentUser } from '../_lib/auth.js';
 import { lockedCosmetics } from '../_lib/shop.js';
 import { json, guard, readJson, fail } from '../_lib/http.js';
-import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, SAVE_MISMATCH } from '../_lib/validate.js';
+import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH } from '../_lib/validate.js';
 import * as db from '../_lib/db.js';
 import { recordDamageObservation } from '../_lib/damage-monitor.js';
 import { recordUnverifiedEcho, settleUnverifiedEcho } from '../_lib/unverified-echo.js';
@@ -102,9 +102,11 @@ export const onRequestGet = guard(async ({ request, env }) => {
   let row = await db.saveByUser(D, user.id), offlineClaim = null;
 
   if (row) {
-    // v88.6: a stored save that names another account is never handed out - not even to its own
-    // account's session. Checked before any claim is issued or any baseline moves.
-    if (savedElsewhere(row.blob, user.username)) return saveMismatch(user);
+    // v88.6 / v280: a stored save that belongs to another account is never handed out - not even to
+    // its own account's session. The account id decides where the blob carries one, so a RENAME no
+    // longer looks like somebody else's save; a blob with no id falls back to the name, as before.
+    // Checked before any claim is issued or any baseline moves.
+    if (!saveBelongsTo(row.blob, user)) return saveMismatch(user);
     // Return a pending claim unchanged after a lost response/reload. Otherwise snapshot server time,
     // persisted server rate and remainder once. The authenticated GET advances the baseline itself
     // (it writes no save row, so it must).
@@ -151,7 +153,15 @@ export const onRequestPut = guard(async ({ request, env }) => {
   if (locked.length) {
     return json({ err: 'This look uses Cash Shop items this account does not own.', cosmeticLocked: true, locked }, 409);
   }
-  const pub = publicFields(save);
+  // v280: store the account's durable identity (users.id) alongside the name it was written under.
+  // The name is mutable and a rename used to strand the save; the id never changes. Stamping here
+  // means every save this build writes is rename-proof from now on, whoever renames it and however.
+  const stored = withSaveIdentity(body.blob, user);
+  // `stored` is `body.blob` unless the stamp was stale, so it is still a checked save blob; falling
+  // back keeps a write that reached this point from crashing on a parse it did not need to do.
+  let storedSave;
+  try { storedSave = JSON.parse(stored); } catch { storedSave = save; }
+  const pub = publicFields(storedSave);
   const savedAt = Date.now(); // ignore client time for cloud-save ordering and audit timestamps
   // Diagnostics are best-effort after successful saves only. They must never
   // make an already-committed save appear to fail, even if migration is absent.
@@ -173,14 +183,16 @@ export const onRequestPut = guard(async ({ request, env }) => {
 
   const row = await db.saveByUser(D, user.id);
   if (!row) {
-    await db.insertSave(D, user.id, body.blob, savedAt, pub);
-    await db.pushHistory(D, user.id, 1, body.blob, savedAt);
+    await db.insertSave(D, user.id, stored, savedAt, pub);
+    await db.pushHistory(D, user.id, 1, stored, savedAt);
     await observeDamage();
     const leaderboardSynced = await updateLeaderboard();
-    return json({ version: 1, bytes: body.blob.length, leaderboardPending: !leaderboardSynced });
+    return json({ version: 1, bytes: stored.length, leaderboardPending: !leaderboardSynced });
   }
-  // v88.6: the copy already stored must not belong to someone else either. It is never written over.
-  if (savedElsewhere(row.blob, user.username)) return saveMismatch(user);
+  // v88.6 / v280: the copy already stored must not belong to someone else either. It is never
+  // written over. A blob carrying this account's own id is its own, whatever name it was stamped
+  // with - that is what makes a rename survivable.
+  if (!saveBelongsTo(row.blob, user)) return saveMismatch(user);
 
   const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt);
   const early = earlyReturn(D, user.id, savedAt);
@@ -209,12 +221,12 @@ export const onRequestPut = guard(async ({ request, env }) => {
 
   const next = row.version + 1;
   const rateKph = updatedRate(row, pub, savedAt, appliedClaim);
-  const update = db.updateSaveStatement(D, user.id, next, body.blob, savedAt, pub, rateKph, row.version);
+  const update = db.updateSaveStatement(D, user.id, next, stored, savedAt, pub, rateKph, row.version);
 
   if (appliedClaim) {
     // D1 batch runs both writes atomically. A version race cannot consume a claim without saving
     // the claim ID in the exact blob, and the pending-only index prevents duplicate issue.
-    const ack = db.markOfflineClaimStatement(D, user.id, requestedClaimId, savedAt, next, body.blob);
+    const ack = db.markOfflineClaimStatement(D, user.id, requestedClaimId, savedAt, next, stored);
     const results = await D.batch([update, ack]);
     const changed = Number(results?.[0]?.meta?.changes ?? results?.[0]?.meta?.rows_written ?? 0);
     const acknowledged = Number(results?.[1]?.meta?.changes ?? results?.[1]?.meta?.rows_written ?? 0);
@@ -238,8 +250,8 @@ export const onRequestPut = guard(async ({ request, env }) => {
   await observeDamage();
   const leaderboardSynced = await updateLeaderboard();
   if (next % HISTORY_EVERY === 0) {
-    await db.pushHistory(D, user.id, next, body.blob, savedAt);
+    await db.pushHistory(D, user.id, next, stored, savedAt);
     await db.trimHistory(D, user.id, 5);
   }
-  return json({ version: next, bytes: body.blob.length, offlineClaimId: appliedClaim ? requestedClaimId : null, leaderboardPending: !leaderboardSynced });
+  return json({ version: next, bytes: stored.length, offlineClaimId: appliedClaim ? requestedClaimId : null, leaderboardPending: !leaderboardSynced });
 });

@@ -230,8 +230,11 @@ await T('saves: first upload, then versions bump, and the blob is stored verbati
   const second = await api.putSave(env, c, { version: 1, blob: saveBlob(21, 99999), savedAt: 2 });
   assert.strictEqual(second.data.version, 2);
   const got = await api.getSave(env, c);
-  // the blob is stored as sent, plus the owner stamp the page adds (v88.6)
-  assert.deepStrictEqual(JSON.parse(got.data.blob), Object.assign(JSON.parse(saveBlob(21, 99999)), { owner: 'FRIEND' }));
+  // the blob is stored as sent, plus the identity the server writes: the name stamp (v88.6) and,
+  // since v280, the durable account id that survives a rename.
+  // FRIEND is the second account registered in the fixture database.
+  assert.deepStrictEqual(JSON.parse(got.data.blob),
+    Object.assign(JSON.parse(saveBlob(21, 99999)), { owner: 'FRIEND', accountId: 2 }));
   assert.strictEqual(got.data.version, 2);
 });
 
@@ -675,6 +678,36 @@ await T('v88.6: the stamp is compared without regard to case, like every account
   const me = await api.register(e9, { u: 'CaseName', p: 'case-password-1' });
   const r = await api.putRaw(e9, me.cookie, { owner: 'CASENAME', version: 0, blob: JSON.stringify(Object.assign(JSON.parse(saveBlob(10, 1)), { owner: 'casename' })), savedAt: 1 });
   assert.strictEqual(r.status, 200, 'a stamp in another case is the same account');
+});
+
+// v280 (owner): renaming an account must not lock it out of its own save. The `owner` stamp is the
+// account's NAME, which is mutable data, while the row is already keyed by users.id - so after a
+// rename `savedElsewhere()` fires on the account's OWN save and every read and write 409s forever.
+// Reproduced from the owner's server: register -> sync -> rename -> GET returns saveMismatch.
+await T('v280: an account keeps its save across a rename', async () => {
+  const h = freshEnv();
+  const me = await api.register(h.env, { u: 'BEFORE', p: 'a-long-password-1' });
+  const put = await api.putSave(h.env, me.cookie, { version: 0, blob: saveBlob(14, 18005), savedAt: 1 });
+  assert.strictEqual(put.status, 200, 'the first sync lands');
+
+  // the rename itself, exactly as the D1 console does it
+  h.sqlite.prepare("UPDATE users SET username = 'AFTER', gm = 2 WHERE username = 'BEFORE'").run();
+
+  const got = await api.getSave(h.env, me.cookie);
+  assert.strictEqual(got.status, 200, 'the renamed account can still READ its save');
+  assert.strictEqual(JSON.parse(got.data.blob).lv, 14, 'and it is the same character');
+  assert.strictEqual(got.data.owner, 'AFTER', 'the response names the new account');
+
+  const next = await api.putSave(h.env, me.cookie, { version: got.data.version, blob: saveBlob(15, 18006), savedAt: 2 });
+  assert.strictEqual(next.status, 200, 'and can still WRITE it');
+
+  const id = h.sqlite.prepare("SELECT id FROM users WHERE username = 'AFTER'").get().id;
+  const stored = JSON.parse(h.sqlite.prepare('SELECT blob FROM saves WHERE user_id = ?').get(id).blob);
+  assert.strictEqual(stored.lv, 15, 'the new level is stored');
+  assert.strictEqual(stored.owner, 'AFTER', 'and the stamp has been moved to the new name, exactly once');
+  // The durable half of the stamp. Without this the fix looks green while writing nothing that
+  // survives the NEXT rename - the write has to carry the account id, not just the new name.
+  assert.strictEqual(stored.accountId, id, 'the durable account id is written into the stored save');
 });
 
 await T('v88.6: a stored save that names another account is never handed out, and never written over', async () => {

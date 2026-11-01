@@ -26,7 +26,9 @@ const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css'
   'migrations/0009_competition_settlement.sql','migrations/0010_competition_baseline.sql',
   'migrations/0011_unverified_echo_launch.sql','migrations/0012_friends.sql',
   // v277: comment-only playbook; included so the packaged tree matches the repo's documented steps.
-  'migrations/0013_gm_owner_name.sql','tools/build_site.sh'];
+  'migrations/0013_gm_owner_name.sql',
+  // v280: both now return the durable account id used by the save stamp.
+  'functions/api/me.js','functions/api/sessions.js','tools/build_site.sh'];
 const CONFIG = `name = "${PROJECT}"\ncompatibility_date = "2026-10-01"\npages_build_output_dir = "dist"\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "${DB_NAME}"\ndatabase_id = "${DB_ID}"\n`;
 const schemas = {
   damage_samples:['user_id','slot','bucket','sampled_at','map','stage','reported_total_damage','reported_echo_best'],

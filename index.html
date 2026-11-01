@@ -26,7 +26,7 @@ img,canvas{-webkit-user-drag:none}
 .win{background:var(--panel);border:3px solid var(--edge);border-radius:6px;box-shadow:0 0 0 2px var(--edge2),0 4px 0 2px var(--edge2)}
 .title{font-weight:bold;background:linear-gradient(#f3d98b,#d9b25c);border-bottom:2px solid var(--edge2);padding:4px 10px;font-size:14px;display:flex;justify-content:space-between;align-items:center}
 #wrap{width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;border:none;border-radius:0;box-shadow:none}
-#view{position:relative;flex:1;width:100%;line-height:0;touch-action:none;cursor:grab;overflow:hidden}
+#view{position:relative;flex:1;width:100%;line-height:0;touch-action:none;cursor:grab;overflow:hidden;background:#2b3a55}  /* v281: an absent or blank canvas must show scenery, not the white page */
 #view canvas{width:100% !important;height:100% !important;display:block}
 #ov{position:absolute;inset:0;pointer-events:none;overflow:hidden;line-height:1.2}
 #mobSpriteLayer,#weaponSpriteLayer{position:absolute;inset:0;overflow:hidden;pointer-events:none;user-select:none}
@@ -1311,7 +1311,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-01 haven-v279 gm tag in chat and plaza';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-01 haven-v281 the field survives a lost gpu';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3296,7 +3296,22 @@ const saveKey=()=>'pg_save3_'+currentUser;
 const saveOwnerOf=raw=>{let s=raw;if(typeof raw==='string'){if(!raw)return null;try{s=JSON.parse(raw)}catch(e){return null}}const o=s&&typeof s==='object'&&!Array.isArray(s)?s.owner:null;return typeof o==='string'&&o.trim()?o.trim():null};
 const sameAccount=(a,b)=>!!a&&!!b&&String(a).trim().toLowerCase()===String(b).trim().toLowerCase();
 // The OTHER account a save belongs to, or null when `name` may use it.
-const saveRefusal=(raw,name)=>{const o=saveOwnerOf(raw);return o&&!sameAccount(o,name)?o:null};
+// v280: the save's identity is the account, not its name. When a copy carries `accountId` and it is
+// this account's, a different name means a RENAME - not somebody else's save. Without that, a rename
+// made the game refuse its own cached copy: load() returns fresh() and the player starts at Lv 1, which
+// is exactly the "relog and I am level 1" report. A copy claiming another account's id is still refused.
+const saveAccountIdOf=raw=>{let s=raw;if(typeof raw==='string'){if(!raw)return 0;try{s=JSON.parse(raw)}catch(e){return 0}}const id=s&&typeof s==='object'?Number(s.accountId):NaN;return Number.isInteger(id)&&id>0?id:0};
+const saveRefusal=(raw,name)=>{
+  const o=saveOwnerOf(raw), id=saveAccountIdOf(raw);
+  // A copy that carries an id is judged by the id ALONE: the name beside it is only a leftover from
+  // before the rename. This is what stops a copy whose stale name happens to match from being accepted
+  // when its id says it is somebody else's.
+  if(id)return CLOUD.id&&id===Number(CLOUD.id)?null:(o||'another account');
+  if(!o||sameAccount(o,name))return null;          // no id: the name is all there is, as before v280
+  return o;
+};
+// The same rule for "is this MY save", used where a refusal would destroy the copy.
+const saveIsMine=raw=>{const id=saveAccountIdOf(raw);return !!(id&&CLOUD.id&&id===Number(CLOUD.id))};
 // Two copies of the same progress are the same save even when only one of them carries the stamp.
 const sameSave=(a,b)=>{if(a===b)return true;try{const x=JSON.parse(a),y=JSON.parse(b);delete x.owner;delete y.owner;return JSON.stringify(x)===JSON.stringify(y)}catch(e){return false}};
 // The login card's words when a save in this browser belongs to somebody else.
@@ -3304,7 +3319,10 @@ const saveBlockedText=(who,other,cloud)=>'The save kept in this browser for “'
 // The login card's words when the cloud copy of a save belongs to another account (the server refused it).
 const cloudRefusedText=who=>'The cloud save for “'+who+'” belongs to another account, so it was not loaded and nothing was uploaded over it. Ask the owner to restore it from the save history.';
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
-function load(){try{const raw=lsGet(saveKey());if(saveRefusal(raw,currentUser))return fresh();   // v88.6: another account's save is never loaded
+function load(){try{let raw=lsGet(saveKey());if(saveRefusal(raw,currentUser))return fresh();   // v88.6: another account's save is never loaded
+// v280: this browser's copy is this account's own save under a previous name (a rename). Re-stamp it
+// rather than discarding the character - discarding it is how a rename cost the owner his progress.
+if(raw&&saveIsMine(raw)){try{const o=JSON.parse(raw);if(o&&o.owner!==currentUser){o.owner=currentUser;raw=JSON.stringify(o);lsPut(saveKey(),raw)}}catch(e){}}
 const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadIndexXp=Object.prototype.hasOwnProperty.call(s,'indexXp');f.st=Object.assign(fresh().st,s.st||{});if(!CLASSES[f.cls])f.cls='Novice';
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
   for(const k of['lv','exp','hp','zeny','kills','indexXp','dmg','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);if(!hadIndexXp)delete f.indexXp;
@@ -3481,7 +3499,7 @@ let saveElsewhereSaid=null;   // the last refusal said aloud, so a refused slot 
 function saveElsewhere(other){if(saveElsewhereSaid===other)return;saveElsewhereSaid=other;log('This browser\'s save for '+currentUser+' belongs to '+other+', so nothing was written over it. '+(CLOUD.on?'Your progress still syncs to your account.':'Progress from now on is not kept in this browser.')+' Restore this browser\'s copy from a backup to save here again.','r0')}
 function save(){if(!currentUser||!S)return;const now=Date.now();
   if(S.owner&&!sameAccount(S.owner,currentUser)){saveElsewhere(S.owner);return}   // never write a save stamped for someone else
-  offlineRateSample(now);S.offlineAt=now;S.owner=currentUser;S.gmStats=gmStatSnapshot();
+  offlineRateSample(now);S.offlineAt=now;S.owner=currentUser;S.accountId=CLOUD.id||S.accountId;S.gmStats=gmStatSnapshot();
   const other=saveRefusal(lsGet(saveKey()),currentUser);
   if(other)saveElsewhere(other);else lsPut(saveKey(),JSON.stringify(S));
   cloudTouch()}
@@ -3608,7 +3626,7 @@ $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>s
 // a VAULT, not the running state: localStorage leads during play and the server is kept in step by a
 // debounced push. Nothing here can lose progress - every conflict keeps both copies, and the loser
 // stays in the account's save history where the GM console can restore it.
-const CLOUD={api:false,on:false,user:null,gm:false,ver:0,dirty:false,lastPush:0,pushing:false,
+const CLOUD={api:false,on:false,user:null,id:0,gm:false,ver:0,dirty:false,lastPush:0,pushing:false,
   offline:false,paused:false,checking:false,
   // v2: set when the server cannot be reached at all. While it is true the character is treated as
   // AWAY (the simulation stops), and reconnecting adopts the account's save and pays the gap at the
@@ -3698,7 +3716,9 @@ async function cloudPush(push){
   // v88.6: a save that belongs to another account is never uploaded; this tab stops syncing instead.
   if(S.owner&&!sameAccount(S.owner,currentUser)){cloudSaveRefused();return 'idle'}
   const seq=cloudTouchSeq;
-  S.owner=currentUser;                 // the stamp: the save names the account it is uploaded for
+  // v280: the stamp carries the account's durable id as well as its name. The name is mutable - a
+  // rename used to strand the save so every later sync was refused - while the id never changes.
+  S.owner=currentUser;S.accountId=CLOUD.id||S.accountId;
   S.gmStats=gmStatSnapshot();
   CLOUD.pushing=true;cloudBadge('☁ ⇅','Syncing…');
   try{
@@ -3966,7 +3986,7 @@ function cloudSessionTick(){
   cloudLastCheck=Date.now();CLOUD.checking=true;
   cloudFetch('/me',{cache:'no-store'})
     .then(r=>{if(r&&r.ok)return r.json().catch(()=>null);return null})
-    .then(d=>{if(!d||!d.u)return;if(String(d.u).toLowerCase()!==String(CLOUD.user).toLowerCase())cloudSessionReplaced()})
+    .then(d=>{if(!d||!d.u)return;if(d.id)CLOUD.id=Number(d.id);if(String(d.u).toLowerCase()!==String(CLOUD.user).toLowerCase())cloudSessionReplaced()})
     .catch(()=>{})
     .then(()=>{CLOUD.checking=false});
 }
@@ -4032,8 +4052,8 @@ function cloudApplyGrants(list){
 // player with exactly the points that level is worth.
 function ptsSpent(){let c=0;for(const k of['str','agi','dex','luk','int','vit']){const v=S.st[k]||1;for(let i=1;i<v;i++)c+=(i<ELITELV?1+Math.floor((i-1)/10):10+(i-ELITELV))}return c}
 
-function cloudSession(u,gm){
-  CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;
+function cloudSession(u,gm,id){
+  CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;if(id)CLOUD.id=Number(id);
   if(typeof shopSession==='function')shopSession(u);   // haven-v215: what this account owns in the Cash Shop
   if(typeof friendsSession==='function')friendsSession(u);   // haven-v273: the account's friends list
   cloudBadge('☁ ✓','Signed in as '+u);
@@ -4093,10 +4113,10 @@ function cloudStart(u,gm){
   if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);   // v74: same repair on a cloud login
   if(typeof foldDupPets==='function')foldDupPets();                                // v75: same fold on a cloud login
   if(typeof BGM!=='undefined')BGM.sync(S.mp);
-  cloudSession(u,gm);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
+  cloudSession(u,gm,CLOUD.id);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
 }
-async function initSessionFromCloud(u,gm,isNew){
-  currentUser=u;hudRate=null;zenyEarned=0;expEarned=0;
+async function initSessionFromCloud(u,gm,isNew,id){
+  currentUser=u;if(id)CLOUD.id=Number(id);hudRate=null;zenyEarned=0;expEarned=0;
   const local=localStorage.getItem(saveKeyFor(u));
   // v88.6: a copy in this browser that belongs to another account is not loaded, and nothing is written over it.
   const elsewhere=saveRefusal(local,u);
@@ -4123,7 +4143,7 @@ async function initSessionFromCloud(u,gm,isNew){
     }else{
       S=fresh();S.gm=!!gm;S.q=['kill','loot','boss'].map(newQuest);CLOUD.ver=0;CLOUD.dirty=true;
       if(typeof BGM!=='undefined')BGM.sync(S.mp);
-      cloudSession(u,gm);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
+      cloudSession(u,gm,CLOUD.id);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
       log('Welcome, '+u+'! Your progress will follow you to any device.','r1','cloud');
     }
   }
@@ -4153,14 +4173,14 @@ async function cloudAuth(u,p,isReg){
       // Shown exactly once ever: the server keeps only its hash. It is the only way back in without
       // the GM, so it is treated as seriously as the password itself.
       ask('Account created. Save this recovery code somewhere safe. You need it AND your registration email to reset your password without the GM:\n\n📋  '+d.recovery,
-        ()=>initSessionFromCloud(d.u,d.gm,true).catch(e=>showErr('Account created, but the game could not start: '+e.message)),
+        ()=>initSessionFromCloud(d.u,d.gm,true,d.id).catch(e=>showErr('Account created, but the game could not start: '+e.message)),
         {yes:'I saved it — enter the game',requireConfirm:true});
       return;
     }
     // Awaited on purpose. Without the await, a throw while the session starts (a save that will not
     // load, a UI step) skipped this catch and became an unhandled promise: the server had already
     // signed the player in, but the card stayed open with no message at all.
-    try{await initSessionFromCloud(d.u,d.gm,isReg)}
+    try{await initSessionFromCloud(d.u,d.gm,isReg,d.id)}
     catch(e){showErr('Signed in, but the game could not start: '+e.message+'. Your account is fine - reload the page and log in again.')}
     return;
   }catch(e){
@@ -4177,6 +4197,9 @@ function cloudLogout(){
   cloudFlushNow();
   cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}).catch(()=>{});
   CLOUD.on=false;CLOUD.user=null;CLOUD.previewToken=null;
+  // v280: the signed-in account id is part of the save's identity. It must not outlive the session,
+  // or the next login on this browser would judge that player's own old copy by the wrong account.
+  CLOUD.id=0;
   CLOUD.lost=false;CLOUD.gate=false;CLOUD.paused=false;CLOUD.offline=false;CLOUD.dirty=false;
   cloudGateHide();
   if(typeof shopReset==='function')shopReset();
@@ -8728,7 +8751,61 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
 
 // 3D Scene setup
 const view=$('view'),ov=$('ov'),tag=$('tag'),prog=$('prog'),heroTitle=$('heroTitle'),heroTitleMark=$('heroTitleMark'),heroTitleText=$('heroTitleText');
-const R=new THREE.WebGLRenderer({antialias:true});R.shadowMap.enabled=true;view.prepend(R.domElement);
+// v281: the renderer used to be built by this ONE top-level statement. On a phone the GPU can be
+// unavailable at boot (another app holds it, the tab was restored in the background, an old device is
+// out of contexts): the constructor throws, every statement below it never runs - no HUD, no login
+// card, nothing - and the player is left looking at a white box for ever. `R` is now the result of a
+// helper that can fail, and `R === null` is a state the page knows how to be in.
+let gpuLost=false;   // set by the context handlers below; the loop and the save paths read it
+function buildRenderer(){
+  // antialias first, then a plainer renderer: some mobile GPUs reject the MSAA request but are happy
+  // without it, and a game that draws is worth more than one that is pretty.
+  for(const opt of [{antialias:true},{antialias:false}]){
+    try{return new THREE.WebGLRenderer(opt)}catch(e){console.error('WebGL renderer unavailable',e)}
+  }
+  return null;   // no GPU at all: bootRenderer() shows the notice and the page still works
+}
+function gpuContextLost(e){
+  gpuLost=true;
+  if(e&&e.preventDefault)e.preventDefault();   // without this the browser will not restore it at all
+  try{console.warn('WebGL context lost - pausing until it comes back')}catch(_){}
+  // Whatever the player earned before the GPU went must not depend on the next frames happening.
+  try{if(typeof save==='function')save()}catch(_){}
+  try{if(typeof cloudFlushNow==='function')cloudFlushNow()}catch(_){}
+  noRendererNotice('The graphics device was taken away by your phone or browser. The game is paused and your progress is saved - it comes back on its own in a moment.');
+}
+function gpuContextRestored(){
+  gpuLost=false;
+  noRendererNotice(null);      // take the notice away again
+  try{resize()}catch(_){}
+  try{ui()}catch(_){}
+}
+// v281: one line of plain words on the field when there is no picture. It sits inside #view, so it is
+// visible even when nothing else was ever built, and it is the only UI the no-GPU path needs.
+function noRendererNotice(text){
+  const host=$('view');if(!host)return;
+  let box=$('renderNotice');
+  if(!text){if(box)box.remove();return}
+  if(!box){
+    box=document.createElement('div');box.id='renderNotice';box.setAttribute('role','status');
+    box.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;'
+      +'max-width:min(420px,86vw);padding:14px 18px;border-radius:12px;background:rgba(12,14,16,.9);'
+      +'border:1px solid rgba(255,255,255,.18);color:#e8ecef;font:13px/1.5 "Trebuchet MS",Verdana,sans-serif;'
+      +'text-align:center;pointer-events:none';
+    host.appendChild(box);
+  }
+  box.textContent=text;
+}
+function bootRenderer(){
+  const r=buildRenderer();
+  if(!r){noRendererNotice('This device could not start the 3D view. Reloading usually fixes it - your progress is safe.');return null}
+  r.shadowMap.enabled=true;
+  view.prepend(r.domElement);
+  r.domElement.addEventListener('webglcontextlost',gpuContextLost,false);
+  r.domElement.addEventListener('webglcontextrestored',gpuContextRestored,false);
+  return r;
+}
+const R=bootRenderer();
 const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,2,.1,200);
 let az=0,el=.95,zoom=1;
 
@@ -12620,7 +12697,7 @@ function simNoteFrame(now){
     }
   }
 }
-function loop(now){try{if(CLOUD.lost){simAt=now;simPending=0}else simAdvance(now);if(!document.hidden&&simPending===0)draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}simNoteFrame(now);requestAnimationFrame(loop)}
+function loop(now){try{if(CLOUD.lost||gpuLost){simAt=now;simPending=0}else simAdvance(now);if(!gpuLost&&!document.hidden&&simPending===0)draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}simNoteFrame(now);requestAnimationFrame(loop)}
 
 // ---------- grinding while the tab is hidden ----------
 // Background grinding is permanent. Timers and frames share the same pending-time queue.

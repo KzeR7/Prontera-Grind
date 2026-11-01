@@ -42,6 +42,9 @@ let simCatchingUp=false;const simVisualsOff=()=>hidden||simCatchingUp;
 // v2: the frame loop parks the clock while the cloud says the character is away (a lost connection
 // is away time, not progress) - so the harness needs the flag the real page has.
 const CLOUD={lost:false};
+// v281: and it parks it while the GPU is gone, for the same reason: a frame that cannot be drawn is
+// not a frame the player saw. The harness must be able to raise it.
+let gpuLost=false;
 function ui(){} function feedDraw(){}
 const jobs=new Map();let jobId=0;
 const setTimeout=f=>{jobs.set(++jobId,f);return jobId};
@@ -69,7 +72,7 @@ this.__bg={SIM_STEP,SIM_CATCHUP,SIM_BG_MS,logs,
   frame:()=>{frames++;if(!frameCb)throw new Error('the loop stopped asking for frames');const f=frameCb;frameCb=null;f(nowMs);drain()},
   wake:()=>{ticks++;for(const f of timers)f();drain()},
   advanceAt:at=>{simAdvance(at);drain()},rawWake:()=>{for(const f of timers)f()},rawShow:()=>{hidden=false;(docHandlers.visibilitychange||[]).forEach(f=>f())},rawFrame:()=>loop(nowMs),pending:()=>simPending,drain, timerMs:()=>timers.length,
-  blur:()=>{simFocused=false},focus:()=>{simFocused=true},occluded:()=>simOccluded,setLost:v=>{CLOUD.lost=!!v}};
+  blur:()=>{simFocused=false},focus:()=>{simFocused=true},occluded:()=>simOccluded,setLost:v=>{CLOUD.lost=!!v},setGpuLost:v=>{gpuLost=!!v}};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -83,12 +86,35 @@ console.log('background: the game keeps grinding when the tab is hidden\n');
 t('the clock keeps one entry point and one dt ceiling', () => {
   assert.strictEqual(bg.timerMs(), 1, 'exactly one background interval is registered');
   assert.ok(bg.SIM_STEP === 0.1 && bg.SIM_BG_MS === 1000, 'the step and the wake cadence are the documented ones');
-  assert.ok(src.includes('function loop(now){try{if(CLOUD.lost){simAt=now;simPending=0}else simAdvance(now);if(!document.hidden&&simPending===0)draw()}'),
+  assert.ok(src.includes('function loop(now){try{if(CLOUD.lost||gpuLost){simAt=now;simPending=0}else simAdvance(now);if(!gpuLost&&!document.hidden&&simPending===0)draw()}'),
     'the frame loop still drives the same clock and draws, and parks it while the session is away');
+  assert.ok(src.includes('gpuLost'),
+    'and parks it while the GPU is gone too (v281) - a frame that cannot be drawn is not progress');
   assert.ok(src.includes('for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}'), 'every slice still honours the speed setting');
   assert.ok(src.includes('setInterval(save,5000)'), 'the five-second autosave is untouched');
   assert.ok(src.includes("document.addEventListener('visibilitychange'"), 'the hide/show wiring is in the game');
   assert.ok(src.includes('setInterval(bgTick,SIM_BG_MS)'), 'the hidden-tab ticker is in the game');
+});
+
+t('v281: a lost GPU parks the clock, and nothing advances behind a blank screen', () => {
+  bg.S = { lv: 1, exp: 0, hp: 100, zeny: 0, kills: 0 };
+  bg.show();
+  const a = bg.stat();
+  for (let i = 0; i < 5; i++) { bg.pass(16); bg.frame(); }
+  const drawn = bg.stat();
+  assert.strictEqual(drawn.draws - a.draws, 5, 'frames draw while the GPU is fine');
+  assert.ok(drawn.steps > a.steps, 'and the clock runs');
+  bg.setGpuLost(true);
+  const b = bg.stat();
+  for (let i = 0; i < 10; i++) { bg.pass(16); bg.frame(); }
+  const c = bg.stat();
+  assert.strictEqual(c.draws - b.draws, 0, 'nothing is drawn to a dead canvas');
+  assert.strictEqual(c.steps - b.steps, 0, 'and the clock is parked, so the player does not play a fight they cannot see');
+  bg.setGpuLost(false);
+  const d = bg.stat();
+  for (let i = 0; i < 5; i++) { bg.pass(16); bg.frame(); }
+  const e = bg.stat();
+  assert.strictEqual(e.draws - d.draws, 5, 'and it all comes back when the context does');
 });
 
 t('a visible frame is one small step, not a 0.1s clamp', () => {

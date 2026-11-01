@@ -12,6 +12,8 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
  'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js',
  'functions/_lib/gate-binding.js','functions/_lib/shop.js','functions/api/save.js',
  'functions/api/board.js','functions/api/_middleware.js','functions/api/social.js','functions/api/friends.js',
+ // v280: /api/me and /api/sessions now return the durable account id, which the save stamp needs.
+ 'functions/api/me.js','functions/api/sessions.js',
  'functions/api/shop/checkout.js','functions/api/gm/damage.js',
  // v263: the write-pause control endpoint. It answers 404 without the `GATE` binding, so packaging it
  // does not enable anything; it is listed because it is a runtime file this candidate contains.

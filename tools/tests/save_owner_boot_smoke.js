@@ -125,7 +125,26 @@ t('while playing, a slot that now holds another account\'s save is never written
   assert.strictEqual(ev('S.owner'), 'Alice', 'the live game is still this account\'s');
 });
 
-// ---- 5. the GM local login is covered by the same card: its slot is checked the same way
+// ---- 5. THE v280 REPORT, in the real page: an account that was RENAMED still has its character.
+// This is the "I relog after a few minutes and I am level 1" case. The browser's copy was stamped with
+// the account's OLD name but carries its durable id, so it is this account's own save and must load -
+// not be thrown away for a fresh Lv 1 - and must come back stamped with the name it has now.
+t('v280: a renamed account logs into its own save instead of starting again at Lv 1', () => {
+  // the account this browser holds is now called "Renamed" (it was "Alice" when the copy was written)
+  ls.setItem('pg_acc4', JSON.stringify({ Renamed: window.hashPw(alicePass) }));
+  ls.setItem('pg_save3_Renamed', JSON.stringify({ owner: 'Alice', accountId: 42, lv: 51, cls: 'Hunter', zeny: 8562, kills: 9, st: { str: 1 }, q: [] }));
+  ev('S=null;currentUser=null;CLOUD.id=42');
+  login(window, 'Renamed', alicePass);
+  assert.strictEqual(ev(`$('loginOverlay').style.display`), 'none', 'the game starts (it does not refuse its own save)');
+  assert.strictEqual(ev('S.lv'), 51, 'and the character is the player\'s own, not Lv 1');
+  assert.strictEqual(ev('S.cls'), 'Hunter', 'the class survived the rename too');
+  const stored = JSON.parse(ls.getItem('pg_save3_Renamed'));
+  assert.strictEqual(stored.owner, 'Renamed', 'the browser\'s copy is re-stamped with the new name');
+  assert.strictEqual(stored.accountId, 42, 'and keeps the durable id, so the next rename is safe');
+  assert.strictEqual(stored.lv, 51, 'with the character itself untouched');
+});
+
+// ---- 6. the GM local login is covered by the same card: its slot is checked the same way
 t('the saved-game check sits in the login path, not only in one helper', () => {
   assert.match(ev('initSession.toString()'), /saveRefusal\(/, 'initSession checks the stamp');
 });

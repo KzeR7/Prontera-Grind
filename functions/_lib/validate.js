@@ -80,6 +80,57 @@ export function savedElsewhere(blob, name) {
   return !!stamp && !sameAccount(stamp, name);
 }
 
+// ---- v280: the save's identity is the account, not its name -------------------------------
+//
+// The `owner` stamp holds the account NAME, which is mutable: renaming an account left its own
+// save stamped with the old name, so `savedElsewhere()` fired on the account's OWN row and every
+// GET and PUT answered 409 for ever. The row is already keyed by `users.id`, so the durable
+// identity is available and does not change when somebody is renamed.
+//
+// A save may now carry `accountId`. When it does, that is the identity and the name is ignored.
+// A save without it (every save written before v280) falls back to the name comparison, so nothing
+// old has to be rewritten before it works - but a RENAME is precisely the case the name cannot
+// answer, and that is what the id is for.
+//
+// Why the extra guard: identity must never be inferred from a mismatch alone. `savedElsewhere`
+// returning true for a blob with no id is either "this account was renamed" or "somebody put
+// another player's save in this row", and those must stay different. So a mismatched blob is only
+// re-stamped when the account id it carries is the row's own id; anything else is still refused.
+export function saveAccountId(save) {
+  const id = save && typeof save === 'object' ? Number(save.accountId) : NaN;
+  return Number.isInteger(id) && id > 0 ? id : 0;
+}
+
+export function storedSaveAccountId(blob) {
+  if (typeof blob !== 'string' || !blob) return 0;
+  try { return saveAccountId(JSON.parse(blob)); } catch { return 0; }
+}
+
+// Does this stored save belong to `userId`?
+//   true  - it is this account's own save (by id, or by name when it carries no id)
+//   false - it is somebody else's, and must not be read or written
+export function saveBelongsTo(blob, { id, userId, username }) {
+  const mine = Number(userId ?? id);
+  const stamped = storedSaveAccountId(blob);
+  if (stamped) return stamped === mine;      // the durable identity decides
+  return !savedElsewhere(blob, username);    // legacy save: the name is all there is
+}
+
+// The blob this account should store: re-stamped with its current name and id when either is stale.
+// Returns `blob` unchanged when it is already correct, so the common path rewrites nothing.
+// `id` is what currentUser() returns; `userId` is accepted for callers that already have it named.
+export function withSaveIdentity(blob, { id, userId, username }) {
+  const mine = Number(userId ?? id);
+  if (!Number.isInteger(mine) || mine <= 0) return blob;   // nothing durable to stamp with
+  let save;
+  try { save = JSON.parse(blob); } catch { return blob; }
+  if (!save || typeof save !== 'object' || Array.isArray(save)) return blob;
+  if (saveAccountId(save) === mine && sameAccount(saveOwnerStamp(save), username)) return blob;
+  // Everything else gets the durable identity. A legacy save (no id) whose name still matches is
+  // stamped on its very next write - that is the point: from then on a rename cannot strand it.
+  return JSON.stringify(Object.assign({}, save, { owner: username, accountId: mine }));
+}
+
 // What the server stores for the leaderboard/GM list, taken from the save the client just sent.
 // Never trust a free-form object from the client.
 export function publicFields(save) {
