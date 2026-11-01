@@ -26,7 +26,7 @@ img,canvas{-webkit-user-drag:none}
 .win{background:var(--panel);border:3px solid var(--edge);border-radius:6px;box-shadow:0 0 0 2px var(--edge2),0 4px 0 2px var(--edge2)}
 .title{font-weight:bold;background:linear-gradient(#f3d98b,#d9b25c);border-bottom:2px solid var(--edge2);padding:4px 10px;font-size:14px;display:flex;justify-content:space-between;align-items:center}
 #wrap{width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;border:none;border-radius:0;box-shadow:none}
-#view{position:relative;flex:1;width:100%;line-height:0;touch-action:none;cursor:grab;overflow:hidden}
+#view{position:relative;flex:1;width:100%;line-height:0;touch-action:none;cursor:grab;overflow:hidden;background:#2b3a55}  /* v281: an absent or blank canvas must show scenery, not the white page */
 #view canvas{width:100% !important;height:100% !important;display:block}
 #ov{position:absolute;inset:0;pointer-events:none;overflow:hidden;line-height:1.2}
 #mobSpriteLayer,#weaponSpriteLayer{position:absolute;inset:0;overflow:hidden;pointer-events:none;user-select:none}
@@ -1311,7 +1311,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-01 haven-v280 save follows the account, not the name';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-01 haven-v281 the field survives a lost gpu';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -8751,7 +8751,61 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
 
 // 3D Scene setup
 const view=$('view'),ov=$('ov'),tag=$('tag'),prog=$('prog'),heroTitle=$('heroTitle'),heroTitleMark=$('heroTitleMark'),heroTitleText=$('heroTitleText');
-const R=new THREE.WebGLRenderer({antialias:true});R.shadowMap.enabled=true;view.prepend(R.domElement);
+// v281: the renderer used to be built by this ONE top-level statement. On a phone the GPU can be
+// unavailable at boot (another app holds it, the tab was restored in the background, an old device is
+// out of contexts): the constructor throws, every statement below it never runs - no HUD, no login
+// card, nothing - and the player is left looking at a white box for ever. `R` is now the result of a
+// helper that can fail, and `R === null` is a state the page knows how to be in.
+let gpuLost=false;   // set by the context handlers below; the loop and the save paths read it
+function buildRenderer(){
+  // antialias first, then a plainer renderer: some mobile GPUs reject the MSAA request but are happy
+  // without it, and a game that draws is worth more than one that is pretty.
+  for(const opt of [{antialias:true},{antialias:false}]){
+    try{return new THREE.WebGLRenderer(opt)}catch(e){console.error('WebGL renderer unavailable',e)}
+  }
+  return null;   // no GPU at all: bootRenderer() shows the notice and the page still works
+}
+function gpuContextLost(e){
+  gpuLost=true;
+  if(e&&e.preventDefault)e.preventDefault();   // without this the browser will not restore it at all
+  try{console.warn('WebGL context lost - pausing until it comes back')}catch(_){}
+  // Whatever the player earned before the GPU went must not depend on the next frames happening.
+  try{if(typeof save==='function')save()}catch(_){}
+  try{if(typeof cloudFlushNow==='function')cloudFlushNow()}catch(_){}
+  noRendererNotice('The graphics device was taken away by your phone or browser. The game is paused and your progress is saved - it comes back on its own in a moment.');
+}
+function gpuContextRestored(){
+  gpuLost=false;
+  noRendererNotice(null);      // take the notice away again
+  try{resize()}catch(_){}
+  try{ui()}catch(_){}
+}
+// v281: one line of plain words on the field when there is no picture. It sits inside #view, so it is
+// visible even when nothing else was ever built, and it is the only UI the no-GPU path needs.
+function noRendererNotice(text){
+  const host=$('view');if(!host)return;
+  let box=$('renderNotice');
+  if(!text){if(box)box.remove();return}
+  if(!box){
+    box=document.createElement('div');box.id='renderNotice';box.setAttribute('role','status');
+    box.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;'
+      +'max-width:min(420px,86vw);padding:14px 18px;border-radius:12px;background:rgba(12,14,16,.9);'
+      +'border:1px solid rgba(255,255,255,.18);color:#e8ecef;font:13px/1.5 "Trebuchet MS",Verdana,sans-serif;'
+      +'text-align:center;pointer-events:none';
+    host.appendChild(box);
+  }
+  box.textContent=text;
+}
+function bootRenderer(){
+  const r=buildRenderer();
+  if(!r){noRendererNotice('This device could not start the 3D view. Reloading usually fixes it - your progress is safe.');return null}
+  r.shadowMap.enabled=true;
+  view.prepend(r.domElement);
+  r.domElement.addEventListener('webglcontextlost',gpuContextLost,false);
+  r.domElement.addEventListener('webglcontextrestored',gpuContextRestored,false);
+  return r;
+}
+const R=bootRenderer();
 const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,2,.1,200);
 let az=0,el=.95,zoom=1;
 
@@ -12643,7 +12697,7 @@ function simNoteFrame(now){
     }
   }
 }
-function loop(now){try{if(CLOUD.lost){simAt=now;simPending=0}else simAdvance(now);if(!document.hidden&&simPending===0)draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}simNoteFrame(now);requestAnimationFrame(loop)}
+function loop(now){try{if(CLOUD.lost||gpuLost){simAt=now;simPending=0}else simAdvance(now);if(!gpuLost&&!document.hidden&&simPending===0)draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}simNoteFrame(now);requestAnimationFrame(loop)}
 
 // ---------- grinding while the tab is hidden ----------
 // Background grinding is permanent. Timers and frames share the same pending-time queue.
