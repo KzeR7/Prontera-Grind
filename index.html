@@ -1311,7 +1311,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-01 haven-v274 mobile chat and one login';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-01 haven-v277 owner name and gm chat';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3540,7 +3540,9 @@ function submitAuth(e,confirmed=false){
     const u=$('username').value.trim(),p=$('password').value.trim();if(!u||!p)return showErr('Enter a username and password.');
     const isGM=u.toLowerCase()===String(GM_USER).toLowerCase();
     if(authMode==='reg'){
-      if(isGM){setMode('login');return showErr('That name is reserved. Switched to Login — use the GM password.')}
+      // v277: on a site with the API the GM name may belong to a real (owner-provisioned) cloud account,
+      // so pointing the player at "the GM password" would be wrong. Name what actually applies.
+      if(isGM){setMode('login');return showErr(CLOUD.api?'That name is reserved. Switched to Login — sign in to the GM account.' : 'That name is reserved. Switched to Login — use the GM password.')}
       if(!/^[A-Za-z0-9_.-]{2,16}$/.test(u))return showErr('Username: 2-16 letters, numbers, _ . -');
       if(p.length<(CLOUD.api?10:4))return showErr(CLOUD.api?'Cloud passwords must be at least 10 characters.':'Password must be at least 4 characters.');
       if(p.length>200)return showErr('Password is too long.');
@@ -3554,6 +3556,13 @@ function submitAuth(e,confirmed=false){
       const acc=getAcc();if(Object.keys(acc).some(k=>k.toLowerCase()===u.toLowerCase()))return showErr('That username is already taken.');
       acc[u]=hashPw(p);setAcc(acc);if(!getAcc()[u])return showErr('Could not save the account (browser storage blocked).');
       rememberUserId(u,true);setMode('login');$('password').value='';$('password2').value='';currentUser=u;return initSession(false,true)}
+    // haven-v277 (owner): a real cloud account may hold the name `GM`. Before this, the check below
+    // captured the name before the cloud was ever consulted, so a `GM` row in D1 was unreachable -
+    // the owner could be renamed to GM and then be locked out of their own account forever, because
+    // typing GM always opened the OFFLINE save and the offline password proved nothing to the server.
+    // A cloud login is tried FIRST when an API is present; the offline path stays as the fallback for
+    // the hosted site and is the whole path on a static host, a file, or a preview without the API.
+    if(isGM&&CLOUD.api)return cloudAuth(u,p,false);   // the account, if it exists, wins
     if(isGM){if(!gmOk(p))return showErr('Incorrect GM password.');rememberUserId(u);currentUser=GM_USER;initSession(true);return}
     if(CLOUD.api)return cloudAuth(u,p,false);
     const acc=getAcc(),key=Object.keys(acc).find(k=>k.toLowerCase()===u.toLowerCase());
@@ -12711,20 +12720,38 @@ $('recoveryForm').onsubmit=async e=>{
   }catch(err){status.textContent=(err.message||'Could not reach the server.')+(outcomeUncertain?' The reset may have completed. If your old code no longer works, contact an owner for help.':'')}finally{btn.disabled=false;$('recoverClose').disabled=false}
 };
 // ---------- update watcher ---------------------------------------------------------------
-// Deployments notify players once; only their button click saves and refreshes the page.
+// Deployments notify players; only their button click saves and refreshes the page.
+//
+// v275 (owner): a dismissal is NOT permanent any more. It used to be - one tap on "Keep playing"
+// set showUpdatePrompt.build and that build's prompt never came back for the life of the page, so a
+// player who was mid-fight when a fix shipped could silence it forever and keep running the old
+// client. Now "Keep playing" suppresses the prompt for UPDATE_SNOOZE_MS and then it returns, and
+// past UPDATE_INSIST_MS it stops offering "Keep playing" at all. Staleness is measured from when
+// this page loaded, so a tab that is genuinely a day behind escalates instead of whispering once.
+const UPDATE_SNOOZE_MS=30*60*1000;      // "Keep playing" buys half an hour, not the rest of the session
+const UPDATE_INSIST_MS=24*60*60*1000;   // a full day behind: the update is no longer optional
+const PAGE_STARTED_AT=Date.now();
 function showUpdatePrompt(build=BUILD){
-  if(document.getElementById('updatePrompt')||showUpdatePrompt.build===build)return;
+  if(document.getElementById('updatePrompt'))return;
+  // Same build already dismissed: stay quiet until the snooze expires. A DIFFERENT build is news
+  // even if an older one was dismissed, so it always gets a prompt.
+  if(showUpdatePrompt.build===build&&Date.now()<(showUpdatePrompt.until||0))return;
   showUpdatePrompt.build=build;
+  const insistent=Date.now()-PAGE_STARTED_AT>=UPDATE_INSIST_MS;
+  const text=insistent
+    ?'<h2 id="updatePromptTitle">This version is out of date</h2><p>You have been playing this build for over a day and a newer one is live. Some fixes only arrive with a refresh. Save and reload to continue.</p><button type="button">Save &amp; reload now</button>'
+    :'<h2 id="updatePromptTitle">Update available</h2><p>A new game update is ready. Refresh when you are ready, then log in again.</p><button type="button">Refresh &amp; log in again</button><button type="button" data-update-later>Keep playing</button>';
   const prompt=document.createElement('section');prompt.id='updatePrompt';
   prompt.setAttribute('role','dialog');prompt.setAttribute('aria-labelledby','updatePromptTitle');
-  prompt.innerHTML='<h2 id="updatePromptTitle">Update available</h2><p>A new game update is ready. Refresh when you are ready, then log in again.</p><button type="button">Refresh &amp; log in again</button><button type="button" data-update-later>Keep playing</button>';
+  prompt.innerHTML=text;
   prompt.querySelector('button').onclick=async()=>{
     const button=prompt.querySelector('button');if(button.disabled)return;
-    button.disabled=true;button.textContent='Saving and refreshing…';
+    button.disabled=true;button.textContent=insistent?'Saving and reloading…':'Saving and refreshing…';
     save();
     try{await cloudFlushNow()}finally{location.reload()}
   };
-  prompt.querySelector('[data-update-later]').onclick=()=>prompt.remove();
+  const later=prompt.querySelector('[data-update-later]');
+  if(later)later.onclick=()=>{showUpdatePrompt.until=Date.now()+UPDATE_SNOOZE_MS;prompt.remove()};
   document.body.appendChild(prompt);
 }
 function updateWatch(){
@@ -12734,6 +12761,11 @@ function updateWatch(){
     if(txt&&txt!==BUILD)showUpdatePrompt(txt);
   }).catch(()=>{});
 }
+// v275 (owner): check at boot as well. The interval alone meant the FIRST check landed a full
+// minute after load - long enough for a player to be told chat is unavailable, or to hit a bug
+// that is already fixed on the server, before anything suggested reloading. Deferred a moment so
+// it never competes with the login card or the first frames of the game.
+setTimeout(updateWatch,3000);
 setInterval(updateWatch,60000);
 </script>
 <script src="assets/wardrobe-ui.js?v=199"></script>

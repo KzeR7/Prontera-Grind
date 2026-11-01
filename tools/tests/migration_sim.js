@@ -71,5 +71,68 @@ t('a first save seeds all-time but does not award its existing kills to today', 
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM leaderboard_kills WHERE user_id=? AND period_key<>'all'").get(fresh).n, 0);
 });
 
+// v277: promoting the owner's account to the reserved name `GM`. The migration is run by hand with
+// the id/name filled in, so this pins the two properties that make it safe rather than the exact text:
+// it touches ONE row, and it re-stamps the save blob - without that, the stored blob keeps
+// `"owner":"<old name>"`, the server refuses every sync (409 saveMismatch), and the client cannot
+// repair it because it will not write a save stamped for another account.
+t('the GM rename migration moves one account, re-stamps its save, and spares everyone else', () => {
+  const D = new DatabaseSync(':memory:');
+  D.exec(migration('0001_init.sql'));
+  const owner = D.prepare("INSERT INTO users(username,pass_hash,gm,created_at) VALUES('Bystander','h',2,1)").run().lastInsertRowid;
+  const target = D.prepare("INSERT INTO users(username,pass_hash,gm,created_at) VALUES('KzeR','h',0,1)").run().lastInsertRowid;
+  const put = (id, v, blob) => D.prepare(`INSERT INTO saves(user_id,version,blob,saved_at,updated_at,last_seen,rate_kph,kills_total)
+    VALUES(?,?,?,1,1,1,0,0)`).run(id, v, blob);
+  put(target, 7, JSON.stringify({ owner: 'KzeR', lv: 99, zeny: 1234, cls: 'Knight' }));
+  put(owner, 3, JSON.stringify({ owner: 'Bystander', lv: 5 }));
+
+  // exactly the statements the migration documents, with its placeholders filled in
+  D.exec(`BEGIN TRANSACTION;
+    UPDATE users SET username='GM', gm=2 WHERE id=${target} AND username='KzeR';
+    UPDATE saves SET blob=json_set(blob,'$.owner','GM'), version=version+1
+      WHERE user_id=${target} AND json_valid(blob) AND json_extract(blob,'$.owner')='KzeR';
+  COMMIT;`);
+
+  const renamed = D.prepare('SELECT username, gm FROM users WHERE id=?').get(target);
+  assert.equal(renamed.username, 'GM', 'the account is renamed');
+  assert.equal(renamed.gm, 2, 'and promoted to owner');
+  const row = D.prepare('SELECT version, blob FROM saves WHERE user_id=?').get(target);
+  assert.equal(JSON.parse(row.blob).owner, 'GM', 'the save blob now names its new account');
+  assert.equal(row.version, 8, 'the version is bumped so a stale tab cannot push the old copy back');
+  const kept = JSON.parse(row.blob);
+  assert.equal(kept.lv, 99, 'the rest of the save survives');
+  assert.equal(kept.zeny, 1234, 'including the money');
+  assert.equal(kept.cls, 'Knight', 'and the class');
+  assert.equal(JSON.parse(D.prepare('SELECT blob FROM saves WHERE user_id=?').get(owner).blob).owner, 'Bystander',
+    'an unrelated account is untouched');
+  for (const typed of ['GM', 'gm', 'Gm']) {
+    assert.ok(D.prepare('SELECT id FROM users WHERE username=? COLLATE NOCASE').get(typed),
+      `login lookup finds it when the player types "${typed}"`);
+  }
+});
+
+// Every `NNNN_*.sql` is executed automatically by tools/dev_server.js and by `wrangler d1 execute
+// --file=`. That loader already wraps each file in its own transaction, so a file containing
+// BEGIN/COMMIT fails on a nested transaction - and a file containing a data change would run on every
+// local boot. 0013 is a run-by-hand playbook for renaming an account to the owner name `GM`, so it must
+// stay comment-only.
+t('migrations stay auto-runnable: no file opens its own transaction or edits live rows', () => {
+  const dir = path.join(root, 'migrations');
+  for (const name of fs.readdirSync(dir).filter(n => /^\d+_.*\.sql$/.test(n))) {
+    // Strip comments and trigger bodies first: `BEGIN ... END;` inside a CREATE TRIGGER is SQL, not a
+    // transaction, and several migrations legitimately use it for RAISE(ABORT).
+    const sql = migration(name)
+      .replace(/--[^\n]*/g, '')
+      .replace(/CREATE\s+TRIGGER[\s\S]*?END\s*;/gi, '');
+    assert.ok(!/^\s*BEGIN(\s+(IMMEDIATE|DEFERRED|EXCLUSIVE|TRANSACTION))?\s*;/im.test(sql),
+      name + ' must not open its own transaction (the loader already does)');
+    assert.ok(!/^\s*COMMIT\s*;/im.test(sql), name + ' must not COMMIT inside the loader transaction');
+    if (name.startsWith('0013')) {
+      assert.ok(!/(UPDATE|INSERT|DELETE)\s+users/i.test(sql),
+        '0013 renames and promotes a real account by hand - it must never run automatically');
+    }
+  }
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

@@ -1,0 +1,86 @@
+-- 0013_gm_owner_name.sql — how to give the reserved name `GM` to a real, existing account.
+--
+-- THIS FILE DELIBERATELY CONTAINS NO EXECUTABLE SQL.
+--
+-- Every file in `migrations/` matching `NNNN_*.sql` is executed automatically by `tools/dev_server.js`
+-- (and by `wrangler d1 execute --file=`). A statement here would therefore run on every local boot and
+-- in any dry-run rehearsal — and this one renames a real account and promotes it to owner. It also
+-- cannot use BEGIN/COMMIT, because the loader already wraps each file in its own transaction.
+--
+-- So this is documentation, not a migration. Run the statements by hand against production `pg`.
+--
+-- ---------------------------------------------------------------------------------------------
+-- RECOMMENDED PATH (v277, owner): register a NEW normal account in the game, then rename THAT to
+-- `GM`. A fresh account has nothing to carry across — no accumulated save, no leaderboard history, no
+-- GM grants — so the rename is one clean statement. Your existing characters are left untouched.
+--
+-- WHY RENAME AND NOT INSERT
+-- Registration refuses the reserved name (`RESERVED` in functions/_lib/validate.js contains 'gm'),
+-- but LOGIN never re-checks that list, and `userByName` matches COLLATE NOCASE — so a `GM` row is a
+-- perfectly valid login target. Creating one by hand would mean typing a
+-- `pbkdf2$20000$<b64 salt>$<b64 hash>` password hash into a console. Renaming keeps the real password
+-- hash and the whole row: saves, sessions, leaderboard entries and GM grants all key off `users.id`.
+--
+-- WHY THE SAVE BLOB IS RE-STAMPED
+-- Since v88.6 a save blob carries its own account stamp (`blob.owner`). The server refuses a PUT whose
+-- stamp does not match the signed-in username, and refuses to hand out a save stamped for somebody
+-- else (`functions/api/save.js`). If the account has already saved, renaming alone leaves the stored
+-- blob stamped with the OLD name: every sync returns 409 `saveMismatch`, and the client cannot repair
+-- it from the game because it refuses to write a save stamped for another account. Step 3 below is a
+-- no-op for a brand-new account — which is why the fresh-account route is the easy one.
+--
+-- DEPLOY ORDER MATTERS. The v277 client tries the cloud BEFORE the offline GM path for a GM-shaped
+-- name. Publish that build first. Renaming on an older build sends `GM` down the offline path and the
+-- account becomes unreachable until the new client is live.
+--
+-- ---------------------------------------------------------------------------------------------
+-- STEP 1 — dry run. Run these first and read the result. The first must return exactly one row and it
+-- must be the account you mean (register it in the game first — the name must already exist). The
+-- second must return NO rows, because the name has to be free.
+--
+--   SELECT id, username, gm, banned FROM users WHERE username = 'EventMaster';
+--   SELECT id, username, gm FROM users WHERE username = 'GM';
+--
+-- STEP 2 — rename AND promote in one statement. Bound by id AND the old name so a typo touches no
+-- other row. gm: 0 = user, 1 = GM, 2 = owner (owner is what the GM console and the badge use).
+--
+--   UPDATE users
+--      SET username = 'GM',
+--          gm       = 2
+--    WHERE id = <the id from step 1>
+--      AND username = 'EventMaster';
+--
+-- STEP 3 — re-stamp any existing save (no-op when the account has never saved). `json_set` keeps every
+-- other field byte-for-byte; `version` is bumped so a tab still holding the old copy cannot push it
+-- back. Guarded by the old stamp, so it rewrites nothing if it was already correct.
+--
+--   UPDATE saves
+--      SET blob    = json_set(blob, '$.owner', 'GM'),
+--          version = version + 1
+--    WHERE user_id = <the same id>
+--      AND json_valid(blob)
+--      AND json_extract(blob, '$.owner') = 'EventMaster';
+--
+-- STEP 4 — verify.
+--
+--   SELECT id, username, gm FROM users WHERE id = <the id>;                      -- 'GM', 2
+--   SELECT user_id, json_extract(blob,'$.owner') FROM saves WHERE user_id = <id>; -- 'GM', or no rows
+--
+-- Open sessions keep working: `currentUser()` re-reads `u.username`/`u.gm` through a JOIN on every
+-- request, so the next call is already the owner named `GM`. Nothing to wipe.
+--
+-- ROLLBACK — rename back. The account is otherwise unchanged.
+--
+--   UPDATE users SET username = 'EventMaster', gm = 0 WHERE id = <id> AND username = 'GM';
+--   UPDATE saves SET blob = json_set(blob,'$.owner','EventMaster') WHERE user_id = <id>;
+--
+-- AFTER THIS, on the live site, typing `GM` signs in to this CLOUD account (chat, emotions, whispers
+-- and the GM console all work). The offline GM password no longer opens the hosted game for that
+-- name; it still works on a static host, a file, or a preview without the API, where CLOUD.api is
+-- false.
+--
+-- The statements above are exercised against a real SQLite database in `tools/tests/migration_sim.js`.
+--
+-- Wrangler, for the hosted database:
+--
+--   npx wrangler d1 execute pg --remote --command "UPDATE users SET username='GM', gm=2 WHERE id=<id> AND username='EventMaster'"

@@ -135,6 +135,23 @@ t('the login handler uses gmOk, not a bare hash compare', () => {
   assert.ok(src.includes("localStorage.setItem('pg_gm_local'"), 'the how-to comment for setting the local GM password is gone');
 });
 
+// v277 (owner): a real cloud account may hold the name `GM`. Because `GM_USER` is matched against the
+// typed name, the old ordering captured that name before the cloud was ever consulted - so renaming
+// the owner's account to `GM` would have locked them out permanently, and no D1 edit could fix it.
+t('a cloud GM account wins over the offline GM path (v277 lockout guard)', () => {
+  const submit = src.slice(src.indexOf('function submitAuth('), src.indexOf("$('loginForm').addEventListener('submit',submitAuth)"));
+  const cloudFirst = submit.indexOf('if(isGM&&CLOUD.api)return cloudAuth(u,p,false);');
+  const offline = submit.indexOf('if(isGM){if(!gmOk(p))');
+  assert.ok(cloudFirst > -1, 'a GM-shaped name must try the cloud when an API is present');
+  assert.ok(offline > -1, 'the offline GM path must still exist');
+  assert.ok(cloudFirst < offline, 'the cloud attempt must come BEFORE the offline path, or a renamed owner cannot sign in');
+  // The offline path must still be reachable when there is no API: static host, a file, a preview.
+  assert.ok(/if\(isGM&&CLOUD\.api\)/.test(submit), 'the cloud attempt is guarded by CLOUD.api, so offline play is unchanged');
+  // Registration stays closed to the reserved name: the owner gets `GM` by promotion, never by signing up.
+  assert.ok(/if\(isGM\)\{setMode\('login'\);return showErr\(/.test(src), 'registration must still refuse the reserved name');
+  assert.ok(src.includes('That name is reserved.'), 'the reserved-name message survives');
+});
+
 t('hashing stays fast enough for a login click', () => {
   const game = gameHash();
   const t0 = Date.now();

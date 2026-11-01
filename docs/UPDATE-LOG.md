@@ -9305,3 +9305,79 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   offered on World instead of the old "Enter the Social Hub" gate). No deployment, hosted migration or production
   data change was performed from this workspace.
 * **Delivery:** `arena/59a0c268-prontera-grind`.
+
+### 2026-11-01 — `haven-v275 cache the entry point safely`
+* **Changed:** One owner question, and the bug behind it. The v274 emoji fix "did not work" until the
+  owner **cleared the browser cache by hand** - the code was correct on the server the whole time.
+  That is the more dangerous failure, because most players never clear anything: a stale player would
+  have stayed on the old build indefinitely. **`bash tools/build_site.sh` now writes a `_headers` that
+  makes the HTML entry point revalidate on every load.**
+  The mechanism: `index.html` holds `const BUILD` *and* every asset `?v=` number, so a cached copy is
+  unrescuable - it requests the old `?v=` names, receives the old assets, and keeps the old client.
+  No later asset can repair the page that asked for it. Cloudflare Pages sends no `Cache-Control` on
+  HTML by default, so browsers applied heuristic freshness and could pin a page for days. `no-cache,
+  must-revalidate` covers `/index.html`, `/gm.html`, `/*.html` and `/version.txt`; a returning player
+  now costs one conditional request answered **304** rather than re-downloading ~1.3 MB of HTML.
+  Assets under `assets/` are deliberately **not** given this: they are content-addressed by `?v=`,
+  keep their long cache, and only inherit the existing security headers from `/*`.
+  Local development was never affected - `tools/dev_server.js` already serves HTML and `.js`/`.css`
+  as `no-store`.
+* **Checks:** `update_watch_sim.js` now parses `dist/_headers` as path blocks and asserts each entry
+  carries `no-cache, must-revalidate` and carries neither `immutable` nor a positive `max-age`
+  (mutation-checked: deleting the `/index.html` block turns it red). A layered-rules model confirmed
+  `/assets/social.js` receives no `Cache-Control` while `/index.html`, `/gm.html` and `/version.txt`
+  all do. Full gate: 184 suites pass, 0 fail; all 126 progression measurements unchanged (only
+  `sourceHash`/`combatHash` moved, because the hashed slice contains `const BUILD`); `build_site.sh`
+  passes. No deployment or hosted configuration change was performed from this workspace.
+* **Delivery:** `arena/42732cee-prontera-grind`. Applying `dist/_headers` to production is the owner's
+  deploy step; until that build is published, existing players keep whatever their browser cached.
+
+### 2026-11-01 — `haven-v276 update prompt and gm chat notes`
+* **Changed (owner asked for both watcher gaps):**
+  1. **The watcher now checks at boot**, not only on its 60 s interval (`setTimeout(updateWatch,3000)`).
+     Before this the first check landed a full minute after load — long enough to be told chat is
+     unavailable, or to hit a bug that was already fixed on the server, with nothing suggesting a reload.
+  2. **"Keep playing" is no longer permanent.** The old guard
+     `if(showUpdatePrompt.build===build)return` silenced a build for the life of the tab after one tap.
+     A dismissal is now a **30-minute snooze** (`UPDATE_SNOOZE_MS`); the prompt returns when it expires.
+     A *different* build is never suppressed by an older dismissal. Past **`UPDATE_INSIST_MS` (a day)**
+     measured from page load, the prompt stops offering any way out and reads "This version is out of
+     date". Staleness is per page load, so a genuinely day-old tab escalates instead of whispering once.
+* **Documented (no code change):** the GM chat question. The reserved `GM` login is the **offline**
+  path — `submitAuth()` routes it to `initSession()`, which never calls `cloudSession()`, so `CLOUD.on`
+  stays false and `assets/social.js` refuses to open the socket. Chat identity is the session cookie,
+  resolved in `functions/api/social.js` and passed to the Worker; **nothing in that path reads
+  `users.gm`**, so a D1 edit cannot give the offline login a chat identity. Wrote up
+  `tools/cloudflare-deploy-steps.md` §5c: register a normal account, `UPDATE users SET gm=2 WHERE id=…`,
+  and note that `currentUser()` re-reads `users.gm` by JOIN on every request so no re-login is needed.
+* **Checks:** `update_watch_sim.js` grew from 10 to **12** checks — snooze expiry, a newer build never
+  suppressed mid-snooze, the day-old escalation dropping the escape hatch, and the boot-time wiring.
+  Mutation-checked twice: restoring the permanent-dismissal guard fails 2 checks; removing
+  `setTimeout(updateWatch,3000)` fails the boot check. Full gate: 184 suites pass, 0 fail; all 126
+  progression measurements unchanged (only `sourceHash`/`combatHash` moved).
+* **Delivery:** `arena/42732cee-prontera-grind`.
+
+### 2026-11-01 — `haven-v277 owner name and gm chat`
+* **Changed (owner asked for the actual `GM` name):** `submitAuth()` now tries the **cloud first** for a
+  `GM`-shaped name when an API is present, instead of always taking the offline branch. This matters
+  more than it looks: `GM_USER` is matched against the typed name, so the old ordering meant a real
+  account named `GM` in D1 was **unreachable** — renaming the owner to `GM` would have locked them out
+  of their own account permanently, with the offline password proving nothing to the server. The
+  offline path is unchanged and still the whole path where `CLOUD.api` is false (static host, file,
+  preview). Registration still refuses the reserved name; the message now says "sign in to the GM
+  account" instead of "use the GM password" when an API is present.
+* **Route (owner's call):** register a **new** account and rename *that* to `GM`, leaving the existing
+  `KzeR` character untouched. A fresh account has no accumulated save, no leaderboard history and no GM
+  grants, so the rename is one clean statement and the save-restamp step matches zero rows. The
+  migration is written for that route (and still handles an account that already has a save).
+* **Added:** `migrations/0013_gm_owner_name.sql` — rename + promote in one statement, *and* re-stamp
+  `saves.blob`'s `$.owner` with a version bump. The stamp is the non-obvious half: `api/save.js`
+  refuses any blob whose stamp ≠ signed-in username, so renaming alone leaves `"owner":"KzeR"` against a
+  user now called `GM` and every sync 409s — and the client cannot repair it, because it will not write
+  a save stamped for another account. Documented in `tools/cloudflare-deploy-steps.md` §5c.
+* **Checks:** `gm_auth_sim.js` 12 → 13 — pins that the cloud attempt precedes the offline path and is
+  guarded by `CLOUD.api` (mutation-checked: deleting the guard fails it). `migration_sim.js` 7 → 8 —
+  runs the migration against real SQLite and asserts one row moves, the blob is re-stamped, `version`
+  bumps, other fields and other accounts are untouched, and `GM`/`gm`/`Gm` all resolve.
+* **Delivery:** `arena/42732cee-prontera-grind`.
+

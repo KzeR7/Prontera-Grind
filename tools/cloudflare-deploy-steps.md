@@ -119,7 +119,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-01 haven-v274 mobile chat and one login` |
+| Build tag at the bottom of the card | `2026-11-01 haven-v277 owner name and gm chat` |
 | Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
@@ -128,6 +128,173 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 
 That second-browser line is the entire point of the shift: it is progress following the player
 instead of the browser.
+
+## 5b. Updates reach players without clearing their browser (v275)
+
+`bash tools/build_site.sh` writes a `_headers` file into `dist/` that makes the **HTML entry point
+revalidate on every load**:
+
+```
+/index.html
+  Cache-Control: no-cache, must-revalidate
+/gm.html
+  Cache-Control: no-cache, must-revalidate
+/*.html
+  Cache-Control: no-cache, must-revalidate
+/version.txt
+  Cache-Control: no-cache, must-revalidate
+  Content-Type: text/plain; charset=utf-8
+```
+
+**Why this exists.** `index.html` is where `const BUILD` lives *and* where every asset `?v=` number
+lives. That makes a stale copy of it unrescuable: it asks the CDN for the *old* `?v=` names, gets the
+old assets, and the player keeps the old client — even though the fix is sitting on the server. There
+is no way for a later asset to repair the page that requested it.
+
+Cloudflare Pages sends no `Cache-Control` on HTML by default, so browsers fell back to *heuristic*
+freshness and could keep an old page for days. The first symptom was real: the v274 emoji fix
+appeared not to work until the browser cache was cleared by hand. Most players will never clear
+anything, so they would have stayed on the old build until something unrelated forced a reload.
+
+`no-cache` does **not** mean "don't cache"; it means "store it, but revalidate before reusing it". A
+returning player costs one conditional request answered **304**, and the ~1.3 MB of HTML is not
+re-sent. Assets keep their long cache — they are content-addressed by `?v=`, so they do not need
+this and are not affected by it (`/*` sets only the security headers on them).
+
+**Do not change these to `no-store`** unless you accept re-downloading the whole page on every load,
+and do not add `immutable` or a positive `max-age` to an `.html` rule: that recreates the bug.
+
+**Note for local testing.** `tools/dev_server.js` already serves HTML and `.js`/`.css` as `no-store`,
+so local behaviour was always fresh; this file only changes the hosted build.
+
+## 5c. Your GM account cannot chat — use a cloud account with owner rights (v276)
+
+The login card has **two unrelated logins**, and only one of them reaches the server.
+
+| What you type | What it does | Chat / emotions |
+|---|---|---|
+| Username exactly `GM` | **Offline GM login.** Checked against `GM_PASS_HASH` in the page plus an optional local password. Loads a save from `localStorage`. | **No.** No server session exists. |
+| Any normal username | **Cloud login.** Real session cookie against D1. | **Yes.** |
+
+`submitAuth()` branches on the name before it ever looks at the cloud:
+
+```js
+const isGM = u.toLowerCase() === String(GM_USER).toLowerCase();   // GM_USER = 'GM'
+if (isGM) { if (!gmOk(p)) return showErr('Incorrect GM password.'); … initSession(true); return }
+if (CLOUD.api) return cloudAuth(u, p, false);
+```
+
+`initSession()` is the single-player start path: it never calls `cloudSession()`, so `CLOUD.on` stays
+`false`. The chat in `assets/social.js` starts its 2-second tick with:
+
+```js
+if (!CLOUD.on) { … status('Sign in to use player chat'); return }
+```
+
+so the socket never opens and **Emoji does nothing** — `send()` refuses everything while
+`app.connected` is false. The banner is accurate: that session has no identity on the wire.
+
+**This cannot be fixed in D1.** Chat identity comes from the session cookie, resolved by
+`functions/api/social.js` and forwarded to the Worker as `X-Social-Identity`
+(`{ id, username, friends }`). Nothing in that path reads `users.gm`, and the reserved name `gm` is
+in `RESERVED` in `functions/_lib/validate.js`, so it can never be registered. A `gm=2` row for a
+`GM` user would authenticate nothing, because the offline login never creates a session row.
+
+### What to do instead (this is the supported path)
+
+Register a **normal** account, then promote that exact row in D1. Chat, emotions, whispers, the
+Cash Shop and the GM console all work together, and you keep your owner powers.
+
+1. Register a normal account in the game (e.g. `EventMaster`) and confirm you can log in with it.
+2. Find its id — verify the name before writing anything:
+
+```sql
+SELECT id, username, gm, banned FROM users WHERE username = 'EventMaster';
+```
+
+3. Promote **that id only**, `gm=2` = owner (`0` user, `1` GM, `2` owner):
+
+```sql
+UPDATE users SET gm = 2 WHERE id = <the id printed above> AND username = 'EventMaster';
+```
+
+4. Confirm exactly one row changed:
+
+```sql
+SELECT id, username, gm FROM users WHERE gm > 0;
+```
+
+No re-login is needed: `currentUser()` re-reads `users.gm` through a JOIN on every request
+(`SELECT s.*, u.username, u.gm, u.banned FROM sessions s JOIN users u …`), so the very next request
+is already an owner. Reload the page to pick up the 🛠 badge.
+
+Run it through Wrangler the same way the migrations are run:
+
+```bash
+npx wrangler d1 execute pg --remote --command "UPDATE users SET gm = 2 WHERE id = 7 AND username = 'EventMaster'"
+```
+
+**Do not** promote by name alone, promote more than the one intended row, or add a `GM` user by hand
+to give it a session. Public registration still never creates an owner.
+
+### Using the actual name `GM` (v277)
+
+Registration refuses `GM`, but **login never re-checks the reserved list** and `userByName` matches
+`COLLATE NOCASE`, so an account row named `GM` is a valid login target. Renaming is the safe way to
+create one: an `INSERT` would mean typing a `pbkdf2$20000$<salt>$<hash>` hash into a console, while
+renaming keeps the real password hash and the whole row (saves, sessions, leaderboard entries and GM
+grants all key off `users.id`).
+
+**Recommended: register a brand-new account for this.** A fresh account has nothing to carry across —
+no accumulated save, no leaderboard history, no GM grants — so the rename is a single clean statement.
+Renaming an established character works too, but then step 2 below actually matters.
+
+Prerequisite: **publish the v277 build first.** `submitAuth()` now tries the cloud *before* the offline
+GM path for a `GM`-shaped name. Renaming on an older build sends `GM` down the offline path and the
+account is unreachable until the new client is live.
+
+1. Register a normal account in the game, e.g. `EventMaster`, and confirm you can log in with it.
+2. Run `migrations/0013_gm_owner_name.sql` with the id and old name filled in. It does two things:
+
+   a. **Rename and promote** — `UPDATE users SET username='GM', gm=2 WHERE id=<id> AND username='<old>'`.
+      Bound by id *and* the old name, so a typo changes nothing.
+   b. **Re-stamp any existing save.** Since v88.6 the blob carries its own account stamp (`blob.owner`)
+      and `functions/api/save.js` refuses a PUT whose stamp does not match the signed-in username.
+      Rename an account that has already saved without this and the stored blob keeps the old name:
+      every sync returns `409 saveMismatch`, and the client **cannot** repair it because it refuses to
+      write a save stamped for another account. For a brand-new account this step matches no rows and
+      does nothing — which is exactly why the fresh-account route is the easy one.
+
+   Or by hand in the D1 console:
+
+```sql
+-- 1. find it and confirm the name is free (must be one row, and 'GM' must be absent)
+SELECT id, username, gm, banned FROM users WHERE username = 'EventMaster';
+SELECT id, username FROM users WHERE username = 'GM';
+-- 2. rename + promote that one row
+UPDATE users SET username = 'GM', gm = 2 WHERE id = <id> AND username = 'EventMaster';
+-- 3. re-stamp a save if one exists (no-op for a new account)
+UPDATE saves SET blob = json_set(blob,'$.owner','GM'), version = version + 1
+ WHERE user_id = <id> AND json_extract(blob,'$.owner') = 'EventMaster';
+-- 4. verify
+SELECT id, username, gm FROM users WHERE id = <id>;
+```
+
+After the rename, on the live site:
+
+* typing `GM` (any casing) signs in to the **cloud** account — chat, emotions, whispers, GM console.
+* the **offline GM password no longer opens the hosted game** for that name. It still works on a
+  static host, a file, or a preview without the API, where `CLOUD.api` is false.
+* sessions already open keep working — `currentUser()` re-reads `u.username`/`u.gm` by JOIN per request.
+
+Roll back with the commented statements at the foot of the migration. Verified end to end against a
+real SQLite database in `tools/tests/migration_sim.js`.
+
+### The `GM` password is not a chat identity, by design
+
+`GM_PASS_HASH` is a shared secret compiled into a public page. If it could open a server session, it
+would stop being an offline convenience and become a login for anyone who reads the file. Keep it for
+single-player testing; use the promoted cloud account for anything that talks to the server.
 
 ## 6. Bring your existing players over
 

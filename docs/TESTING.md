@@ -221,6 +221,23 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-01 (`haven-v277` gate result): 184 suites pass.** Login now tries the cloud before the offline
+GM path for a `GM`-shaped name when an API is present, so a cloud account can hold the reserved name
+without becoming unreachable. `gm_auth_sim` 12 → 13 and `migration_sim` 7 → 8 (the latter runs
+`migrations/0013_gm_owner_name.sql`'s statements against real SQLite: one row moves, the save blob is
+re-stamped, `version` bumps, everyone else is untouched).
+
+**2026-11-01 (`haven-v276` gate result): 184 suites pass.** The update watcher now checks at boot
+(`setTimeout(updateWatch,3000)`) and a dismissed prompt snoozes for 30 minutes instead of vanishing for
+the life of the page, escalating to a non-dismissible "out of date" prompt after a day. `update_watch_sim.js`
+grew 10 → 12 checks (snooze expiry, newer-build bypass, day-old escalation, boot wiring).
+
+**2026-11-01 (`haven-v275` gate result): 184 suites pass.** Same 180 `*_sim.js`/`*_sim.mjs` + 4
+`*_smoke.js` count as v274. The only behavioural addition is in `bash tools/build_site.sh`, whose
+`dist/_headers` now makes the HTML entry point revalidate (`no-cache, must-revalidate`) so a shipped
+fix reaches players who never clear their browser cache. `update_watch_sim.js` parses `_headers` as
+path blocks and fails if an `.html` entry is missing that directive or gains `immutable`/`max-age`.
+
 **2026-11-01 (`haven-v274` gate result): 180 `*_sim.js`/`*_sim.mjs` + 4 `*_smoke.js` suites, 184 pass, 0 fail, 0 dependency skips**
 (the three generated-asset `--check`s and `pages_preview_config_sim.py` pass too). **The known-red baseline below is now
 empty**: every row that used to fail for environmental reasons was fixed at the cause, not skipped.
