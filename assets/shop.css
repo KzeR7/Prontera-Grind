@@ -36,3 +36,16 @@
 /* v2 bundles: a bundle card lists what its price buys, so nobody has to guess. */
 .shop-bundle-list{margin:2px 0 0;padding-left:16px;font-size:10px;line-height:1.6;color:var(--ink)}
 .shop-bundle .shop-card-head b{font-size:13px}
+/* v3 Donations (haven-v273): the one card whose price the player chooses. The box is the control;
+   the quick-pick chips are a shortcut into it, never a separate price. */
+.shop-donation{border-color:var(--gold);background:linear-gradient(180deg,#2a2114 0%,var(--e-bg) 62%)}
+.shop-donation .shop-price{font-size:14px}
+.shop-donation-amount{display:grid;gap:6px;margin:2px 0}
+.shop-donation-amount label{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--e-muted)}
+.shop-donation-amount label span{font-weight:800;color:var(--gold)}
+.shop-donation-amount input{flex:1 1 auto;min-width:0;min-height:34px;padding:5px 9px;border:1px solid var(--gold);border-radius:7px;background:var(--e-raised);color:var(--ink);font:800 14px/1.2 "Trebuchet MS",Verdana,sans-serif;font-variant-numeric:tabular-nums}
+.shop-donation-quick{display:flex;flex-wrap:wrap;gap:5px}
+.shop-donation-quick button{min-height:28px;padding:2px 8px;font-size:10px;font-weight:700}
+.shop-donation-quick button.on{border-color:var(--gold);background:#4a3a1c;color:#fff0ca}
+.shop-donation-effect{padding:6px 8px;border-radius:7px;background:#2a3326;font-size:10px;line-height:1.5;color:#d7f2dc}
+.shop-donation .shop-card-actions button{width:100%;min-height:36px;font-size:12px}

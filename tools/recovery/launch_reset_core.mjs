@@ -14,7 +14,9 @@ const MIGRATIONS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..',
 
 // An explicit allowlist is intentional. A future table must get an explicit reset
 // decision rather than silently surviving, or being deleted by a generic loop.
-export const PRESERVED_TABLES = Object.freeze(['users', 'rate_limits', 'shop_orders', 'entitlements', 'shop_webhooks']);
+// `friends` is preserved with the shop's tables: it is a relationship between two ACCOUNTS, not
+// gameplay progress, and the same two people are still friends after a character reset.
+export const PRESERVED_TABLES = Object.freeze(['users', 'rate_limits', 'shop_orders', 'entitlements', 'shop_webhooks', 'friends']);
 export const CLEARED_TABLES = Object.freeze([
   'competition_prize_ledger', 'competition_placements', 'competition_scores', 'competition_periods',
   'leaderboard_echo_rewards', 'leaderboard_echo_settlements', 'leaderboard_echo', 'leaderboard_kills',

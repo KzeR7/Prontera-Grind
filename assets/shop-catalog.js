@@ -12,14 +12,22 @@
    cosmetics currently in the shop; does not include future updates). The old per-item overrides are
    gone; a slot price is now the whole story.
 
+   v3 (2026-10-31, owner): a Donations tab. One donor item — `don:all-cosmetics` — unlocks every
+   cosmetic in the shop on the first payment of $20.00 (2000 cents) or more, and is then simply a
+   donation: the player picks any amount from that floor upward, and may pay as often as they like.
+   Paying it again unlocks nothing new and charges nothing unexpected; the order and the books record
+   every payment. There is no upper limit and no entitlement beyond the one the first payment grants.
+
    SKU shapes (stable identifiers, stored in D1 entitlements/orders — never rename an existing one):
      cos:<slot>:<accessoryId>   a permanent wardrobe unlock for the account, e.g. cos:backwear:wings
      sup:<resource>:<amount>    a consumable bundle delivered through the existing grants queue
      bnd:<bundleId>             a bundle. It resolves to `cos:` entitlements when the order is paid,
-                                so ownership, the save gate and the GM console never change. */
+                                so ownership, the save gate and the GM console never change.
+     don:<donationId>           a pay-what-you-want donation with a floor price. It resolves to the
+                                `cos:` entitlements the tier names, once, and never expires. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;root.PGShop=api})(typeof globalThis==='object'?globalThis:this,function(){
 'use strict';
-const VERSION=2,CURRENCY='usd',MIN_PRICE=50,MAX_QTY=10;
+const VERSION=3,CURRENCY='usd',MIN_PRICE=50,MAX_QTY=10;
 // Every accessory in a wardrobe slot costs the slot price unless it has an override.
 const SLOT_PRICES={headwear:150,facewear:150,mouthwear:150,backwear:200};
 // Kept for compatibility with older callers (and GM tooling): nothing is an exception any more.
@@ -55,6 +63,30 @@ const BUNDLES=[
   all:true},
 ].map(b=>Object.assign({kind:'bundle',slotLabel:'Bundle'},b));
 
+// Donations (v3). `floor` is the least a player may pay and `step` the rounding they are offered;
+// `unlocks` is what the FIRST payment of this tier hands over (resolved to ordinary `cos:` SKUs when
+// the payment clears, exactly like a bundle). A later payment hands over nothing: the server finds
+// every unlock already owned, marks the order fulfilled with `donated:true`, and the books show it.
+// `maxQty` is 1 because one payment is one donation - the amount is the knob, not the quantity.
+const DONATIONS=[
+ {sku:'don:all-cosmetics',name:'Donor: every cosmetic unlocked',price:2000,floor:2000,step:500,max:500000,
+  group:'Donations',blurb:'Unlocks all 52 cosmetics the first time you pay $20.00 or more. Every later payment is a donation - nothing changes, nothing breaks, and you can pay as often as you like.',
+  unlocks:{all:true},donation:true},
+].map(d=>Object.assign({kind:'donation',slotLabel:'Donation',maxQty:1},d));
+// What a donation hands over, using the same rules as a bundle. Idempotent by construction: an
+// account that already owns everything gets an empty list, which is a donation, not an error.
+function donationSkus(W,item,owned){
+ if(!item||!item.unlocks)return [];
+ return bundleSkus(W,{all:!!item.unlocks.all,take:item.unlocks.take||{}},owned);
+}
+// Whole dollars -> cents, then clamp into what this donation actually accepts. The server runs the
+// same function on the amount it is asked to charge, so a hand-made request cannot underpay.
+function donationAmount(item,cents){
+ const step=Math.max(1,Number(item&&item.step)||1),floor=Math.max(MIN_PRICE,Number(item&&item.floor)||MIN_PRICE);
+ const max=Math.max(floor,Number(item&&item.max)||floor);
+ const n=Math.round(Number(cents)||0);
+ return Math.max(floor,Math.min(max,Math.round(n/step)*step));
+}
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=a[i];a[i]=a[j];a[j]=t}return a};
 // Every cosmetic SKU in the wardrobe, in slot order. The single source for "what can a bundle hold".
 function allCosmetics(W){
@@ -91,7 +123,7 @@ function cosmetics(W){
  }
  return out;
 }
-function catalog(W){return {version:VERSION,currency:CURRENCY,slots:Object.keys(W.ACCESSORIES),items:[...cosmetics(W),...BUNDLES,...SUPPLIES]}}
+function catalog(W){return {version:VERSION,currency:CURRENCY,slots:Object.keys(W.ACCESSORIES),items:[...cosmetics(W),...BUNDLES,...SUPPLIES,...DONATIONS]}}
 function find(W,sku){return catalog(W).items.find(i=>i.sku===sku)||null}
 // Which paid items a look is wearing, as SKUs. Legacy saves (halo/glasses/wings booleans) are read
 // through the wardrobe's own normalize(), so the server and the game agree on exactly the same list.
@@ -99,6 +131,6 @@ function wornSkus(W,appearance){const a=W.normalize(appearance);if(!a)return [];
 // The same look with every unowned paid slot set back to None. `owns(sku)` answers ownership.
 function strip(W,appearance,owns){const a=W.normalize(appearance);if(!a)return null;for(const k of Object.keys(W.ACCESSORIES))if(a[k]!=='none'&&!owns('cos:'+k+':'+a[k]))a[k]='none';return W.normalize(a)}
 function money(cents,currency=CURRENCY){const n=Math.max(0,Math.floor(Number(cents)||0))/100;try{return new Intl.NumberFormat('en-US',{style:'currency',currency:currency.toUpperCase()}).format(n)}catch(e){return currency.toUpperCase()+' '+n.toFixed(2)}}
-const SKU_RE=/^(cos:[a-z]+:[A-Za-z0-9]+|sup:[A-Za-z0-9]+:[0-9]+|bnd:[a-z]+)$/;
-return {VERSION,CURRENCY,MIN_PRICE,MAX_QTY,SLOT_PRICES,PRICE_OVERRIDES,RESOURCES,SUPPLIES,BUNDLES,SKU_RE,cosmetics,allCosmetics,bundleSkus,bundleSize,catalog,find,wornSkus,strip,money};
+const SKU_RE=/^(cos:[a-z]+:[A-Za-z0-9]+|sup:[A-Za-z0-9]+:[0-9]+|bnd:[a-z]+|don:[a-z0-9-]+)$/;
+return {VERSION,CURRENCY,MIN_PRICE,MAX_QTY,SLOT_PRICES,PRICE_OVERRIDES,RESOURCES,SUPPLIES,BUNDLES,DONATIONS,SKU_RE,cosmetics,allCosmetics,bundleSkus,bundleSize,donationSkus,donationAmount,catalog,find,wornSkus,strip,money};
 });

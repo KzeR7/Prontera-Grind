@@ -19,6 +19,10 @@ export const findSku = sku => BY_SKU.get(String(sku || '')) || null;
 export const wornSkus = appearance => PGShop.wornSkus(W, appearance);
 // v2 bundles: WHAT a bundle hands over is decided on the server, from what the account does not own.
 export const bundleSkus = (bundle, owned) => PGShop.bundleSkus(W, bundle, owned);
+// v3 donations: the same rolling rules, plus the amount clamp. A donation's first payment unlocks
+// what the tier names; once everything is owned it unlocks nothing and is kept as a plain donation.
+export const donationSkus = (item, owned) => PGShop.donationSkus(W, item, owned);
+export const donationAmount = (item, cents) => PGShop.donationAmount(item, cents);
 export const money = PGShop.money;
 
 export const paymentsLive = env => !!(env && env.STRIPE_SECRET_KEY);
@@ -61,11 +65,19 @@ export function newOrderId() {
   return 'ord_' + s;
 }
 
-export const orderShape = o => o && ({
-  id: o.id, sku: o.sku, quantity: o.quantity, amount: o.amount, currency: o.currency, status: o.status,
-  createdAt: o.created_at, paidAt: o.paid_at, fulfilledAt: o.fulfilled_at,
-  payment: o.stripe_payment || null, item: (findSku(o.sku) || {}).name || o.sku,
-});
+// `kind` and `donation` are derived, not stored: the catalog is the only source for what a SKU is,
+// so adding a kind never needs a column. A donation order is one whose SKU is in the Donations list;
+// a donor's earliest paid donation is the one that actually unlocked the wardrobe.
+export const orderShape = o => {
+  if (!o) return o;
+  const found = findSku(o.sku) || {};
+  return {
+    id: o.id, sku: o.sku, quantity: o.quantity, amount: o.amount, currency: o.currency, status: o.status,
+    kind: found.kind || 'unknown', donation: found.kind === 'donation',
+    createdAt: o.created_at, paidAt: o.paid_at, fulfilledAt: o.fulfilled_at,
+    payment: o.stripe_payment || null, item: found.name || o.sku,
+  };
+};
 
 export const orderById = (D, id) => D.prepare('SELECT * FROM shop_orders WHERE id = ?').bind(id).first();
 
@@ -87,17 +99,22 @@ export async function fulfillOrder(D, orderId, { payment = null, at = Date.now()
   // whatever the account does not own yet. That keeps ownership, the save gate and the GM console
   // exactly as they were: a bundle is only a way to buy several cosmetics at once.
   let bundle = [];
-  if (item.kind === 'bundle') {
+  // A donation is a bundle whose empty case is normal rather than an error: a donor who already owns
+  // everything is exactly the person paying again, so the order still settles - as a donation.
+  const donation = item.kind === 'donation';
+  if (item.kind === 'bundle' || donation) {
     const owned = await ownedSkus(D, order.user_id);
-    bundle = PGShop.bundleSkus(W, item, owned || new Set());
-    if (!bundle.length) {
+    bundle = donation ? PGShop.donationSkus(W, item, owned || new Set()) : PGShop.bundleSkus(W, item, owned || new Set());
+    if (!bundle.length && !donation) {
       await D.prepare("UPDATE shop_orders SET status = 'failed' WHERE id = ? AND status = 'pending'").bind(orderId).run();
       await D.prepare("INSERT INTO events(at, actor, user_id, kind, detail) VALUES(?, 'Cash Shop', ?, 'shop-bundle-empty', ?)")
         .bind(at, order.user_id, orderId + ' ' + order.sku + ' - nothing left to unlock').run();
       return { ok: false, reason: 'bundle-empty', order: await orderById(D, orderId) };
     }
   }
-  const label = item.kind === 'bundle' ? item.name + ' (' + bundle.length + ' unlocks)' : item.name + (qty > 1 ? ' x' + qty : '');
+  const label = donation
+    ? (bundle.length ? item.name + ' (' + bundle.length + ' unlocks)' : 'donation, nothing left to unlock')
+    : item.kind === 'bundle' ? item.name + ' (' + bundle.length + ' unlocks)' : item.name + (qty > 1 ? ' x' + qty : '');
   const stmts = [
     D.prepare(`UPDATE shop_orders SET status = 'fulfilled', paid_at = ?, fulfilled_at = ?, stripe_payment = COALESCE(?, stripe_payment)
                WHERE id = ? AND status = 'pending'`).bind(at, at, payment, orderId),
@@ -107,6 +124,18 @@ export async function fulfillOrder(D, orderId, { payment = null, at = Date.now()
   if (item.kind === 'cosmetic') {
     stmts.push(D.prepare(`INSERT OR IGNORE INTO entitlements(user_id, sku, source, order_id, granted_at) SELECT ?, ?, 'stripe', ?, ? WHERE changes() > 0`)
       .bind(order.user_id, order.sku, orderId, at));
+  } else if (donation) {
+    // An empty list means "thank you": the status flip above is the whole delivery, and the event
+    // below is what makes the donation visible in the books.
+    for (const sku of bundle) {
+      stmts.push(D.prepare(`INSERT OR IGNORE INTO entitlements(user_id, sku, source, order_id, granted_at)
+        SELECT o.user_id, ?, 'stripe', o.id, ? FROM shop_orders o WHERE o.id = ? AND o.status = 'fulfilled'`)
+        .bind(sku, at, orderId));
+    }
+    if (!bundle.length) {
+      stmts.push(D.prepare("INSERT INTO events(at, actor, user_id, kind, detail) SELECT ?, 'Cash Shop', user_id, 'shop-donation', ? FROM shop_orders WHERE id = ?")
+        .bind(at, orderId + ' ' + money(order.amount, order.currency) + ' - nothing left to unlock', orderId));
+    }
   } else if (item.kind === 'bundle') {
     // Each row is guarded by the order's own status, not by changes(): one already-owned SKU in the
     // list must not stop the rest of the bundle from being delivered. The status flip above has
@@ -169,6 +198,9 @@ export function returnUrls(request, orderId) {
   };
 }
 
+// The line item's unit price. A cosmetic, bundle or supply charges the catalog price; a donation
+// charges the amount the player chose, which checkout already clamped into the tier's floor/step.
+export const unitAmount = (item, order) => item.kind === 'donation' ? Number(order.amount) : item.price;
 export async function createCheckoutSession(env, request, { order, item, user }) {
   const urls = returnUrls(request, order.id);
   const params = {
@@ -181,10 +213,12 @@ export async function createCheckoutSession(env, request, { order, item, user })
       quantity: order.quantity,
       price_data: {
         currency: order.currency,
-        unit_amount: item.price,
+        unit_amount: unitAmount(item, order),
         product_data: {
-          name: 'Horizon Haven: ' + item.name,
-          description: item.kind === 'cosmetic' ? item.slotLabel + ' cosmetic, unlocked forever for ' + user.username
+          name: item.kind === 'donation' ? 'Horizon Haven: Donation' : 'Horizon Haven: ' + item.name,
+          description: item.kind === 'donation'
+            ? (item.all ? 'All ' + CATALOG.items.filter(x => x.kind === 'cosmetic').length + ' cosmetics for ' + user.username + ' on your first payment of ' + money(item.floor, order.currency) + ' or more (does not include future updates). Later payments are donations.' : 'A donation from ' + user.username)
+            : item.kind === 'cosmetic' ? item.slotLabel + ' cosmetic, unlocked forever for ' + user.username
             : item.kind === 'bundle' ? (item.all ? 'All ' + CATALOG.items.filter(x => x.kind === 'cosmetic').length + ' cosmetics for ' + user.username + ' (does not include future updates)' : 'Unlocks picked for ' + user.username + ' from what is still locked')
             : 'Delivered to ' + user.username + ' on the next sync',
           metadata: { sku: item.sku },

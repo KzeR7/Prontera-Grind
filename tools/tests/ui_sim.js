@@ -147,6 +147,8 @@ let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
 let S=null,mapM=0,mapL=1,selB=null,selC=null,collectionGrade=-1,collectionMergeOnly=false,equipmentCardSearch='',equipmentCardFilter='all',equipmentCardPickId=null;   // remaining panel state comes in with the V grab
 const document={addEventListener(){}};
+const dot=()=>false;   // the dock badge reader (v273: the Friends tab asks it before it exists)
+const PGFriends={state:{loaded:false,incoming:[]}};
 const mobs=[],drops=[],logs=[];
 let boardPeriod='daily',boardKind='kills',boardCache={},boardLoading=false,boardError='';
 const CLOUD={api:false,on:false};
@@ -504,7 +506,7 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   assert.ok(h.includes('Card Index available')&&!h.includes('(global max)'),'the loose-card list is renamed and the global-max wording is gone');
   for(const reward of ['hpPct','fleePct','leech','def','mdef','atkPct','matkPct','aspdPct','critPct'])assert.ok(src.includes("id:'"+reward+"'"),reward+' should be an available card mastery reward');
   assert.ok(h.includes('Poring Card')&&h.includes('Mastery 1/5'),'the card album keeps per-card mastery history');
-  assert.ok(src.includes("const SIDE_TABS=['index','market','board','guide','log','wardrobe','shop','set','gm']"),'the Quest Board Index button opens the panel');
+  assert.ok(src.includes("const SIDE_TABS=['index','market','board','guide','log','wardrobe','shop','friends','set','gm']"),'the Quest Board Index button opens the panel');
   assert.ok(src.includes('id="sideMenu"')&&src.includes("index:['📚','Mastery Index','I']"),'both Quest Board and dock link to the index');
   assert.ok(src.includes('flex-wrap:wrap;justify-content:center')&&src.includes('max-width:calc(100vw - 12px)'),'the expanded dock wraps on narrow screens');
   assert.ok(src.includes('recordMonsterKill(mob)')&&src.includes('data-a="titleequip"'),'kills are recorded and titles can be equipped from the view');

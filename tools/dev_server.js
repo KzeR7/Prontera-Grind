@@ -95,6 +95,8 @@ export const ROUTES = {
   'GET /api/shop/webhook': ['onRequestGet', 'api/shop/webhook.js'],
   'GET /api/gm/shop': ['onRequestGet', 'api/gm/shop.js'],
   'POST /api/gm/shop': ['onRequestPost', 'api/gm/shop.js'],
+  'GET /api/friends': ['onRequestGet', 'api/friends.js'],
+  'POST /api/friends': ['onRequestPost', 'api/friends.js'],
 };
 
 const TYPES = {

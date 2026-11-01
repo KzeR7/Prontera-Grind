@@ -3,7 +3,7 @@
 The bottom-left chat replaces the short field feed. World, Whisper and Log
 are available from the field; entering Maps → Social Hub adds Local. On desktop (1120px and wider), its bottom aligns with the centered navigation bar.
 Its width is capped to the space on the left, so resizing never shifts or covers
-the navigation. Narrower screens stack chat above the bar. Market, Log, Wardrobe and Settings are in More (one Market entry).
+the navigation. Narrower screens stack chat above the bar. Market, Log, Wardrobe, Friends and Settings are in More (one Market entry).
 The minimize line and resize grips are drawn inside the chat border, with no detached button or protruding handle. Click the header line to collapse/expand; its Enter/Space keys work too. Drag the top-right corner grip, the full right inner edge, or the top inner edge (or use arrow keys on `#socialResize`); preferred dimensions persist across device resizing and reloads down to a compact `220×120` floor, with the message scrollbar and Send button spaced clear of the right-edge resize strip. Chat grows to the centered navigation on desktop and to the available screen edge on narrower views. Channel tabs are reused in place (selection, unread dots and minimize state update without replacing the button under the pointer), and Display sync only runs when a visibility class changes, so HUD ticks cannot make tabs flicker or swallow clicks. Tab buttons sit above the resize grips in the stacking order.
 Enter focuses/sends, Escape leaves typing. Names offer Whisper/Mute. Log retains
 the existing category filters and history. Muted IDs are stored per account.
@@ -74,6 +74,44 @@ arrive; when it does not, the socket is treated as dead and replaced at the next
 beat, keeping the plaza and the seat. Without this a socket that died silently
 still reported itself as open, and chat stayed quiet until the page was reloaded.
 
+## Friends (haven-v273)
+
+Friendship is a relationship between two **accounts**, stored in its own D1 table
+(`migrations/0012_friends.sql`, one row per pair, `state` is `pending` or `accepted`).
+It is deliberately not part of the save blob: it has to survive a browser save being
+replaced, restored or reset, and the row must exist even while neither player is online.
+
+- `functions/_lib/friends.js` holds the rules (limits, the mutual-pair insert, the
+  `requested / accepted / already-friends / already-asked / not-friends / unfriended /
+  declined / cancelled` codes). `functions/api/friends.js` is `GET /api/friends`
+  (friends, incoming, outgoing, `?who=<name>` for one lookup) and `POST /api/friends`
+  (`request | accept | decline | cancel | remove`). Names are matched
+  case-insensitively; a name is never interpolated into SQL.
+- **Limits:** 100 friends and 50 outgoing requests per account. Asking someone who has
+  already asked you accepts them instead of creating a mirrored request, and accepting
+  is only possible for the addressee.
+- **Missing table:** without migration 0012 the API answers `503 {installed:false}` and
+  chat, saves and every other panel behave exactly as before.
+- **In the game:** More destinations ▸ **Friends** (`assets/friends.js`,
+  `assets/friends.css`) lists friends, requests received and requests sent, with an add
+  box, Accept/Decline/Cancel/Unfriend, and a live "in the plaza now" dot. Any name in
+  World or Whisper can be added from its name menu, which then reads
+  `Friend ✓` (or `Accept friend request` when the request is theirs). Friends carry a
+  `★` in chat lines. The dock shows a dot while a request is waiting, through the same
+  `dot('friends')` the quest and skill badges use.
+- **In the plaza:** `workers/social/room.mjs` keeps a bounded (200 id) set per
+  connection and marks a player `friend:true` **per viewer** in the personal `player`
+  event, so the same character is not described identically to everybody. The list is
+  sent at connect (`friends:[…]`) and refreshed with `{type:'friends',ids:[…]}`;
+  joining only ever adds a mark, and a live list may also drop one. The D1 row is the
+  authority — the room copy is display only.
+- **Tests:** `node tools/tests/friends_sim.js
+node tools/tests/friends_ui_sim.js` (migration, auth, one-way request,
+  addressee-only accept, limits, privacy, audit rows, save blob untouched, per-viewer
+  plaza flags) and `node tools/tests/friends_ui_sim.js` (the panel in the real page:
+  add box, accept, unfriend, the dock badge, adding from a chat name, and the
+  sign-out wipe), plus the `social_*` suites for the chat marks and the name menu.
+
 ## Runtime and production configuration
 
 - `functions/api/social.js`: same-origin authenticated WebSocket ingress.
@@ -138,6 +176,7 @@ SQLite. Sign in explicitly after each reload, as required by the existing game.
 node tools/tests/social_sim.js
 node tools/tests/social_ui_sim.js
 node tools/tests/social_scene_sim.js
+node tools/tests/friends_sim.js
 node tools/tests/social_api_sim.mjs
 node tools/tests/social_config_sim.js
 npx wrangler deploy --dry-run --config workers/social/wrangler.toml --outdir /tmp/social-worker-build

@@ -6,17 +6,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
-const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js','assets/ui/eclipse.css',
- 'functions/_lib/db.js','functions/_lib/echo-board.js',
+const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js','assets/ui/eclipse.css',
+ 'functions/_lib/db.js','functions/_lib/echo-board.js','functions/_lib/http.js','functions/_lib/friends.js',
  'functions/_lib/validate.js','functions/_lib/damage-monitor.js','functions/_lib/competition-baseline.js',
  'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js',
  'functions/_lib/gate-binding.js','functions/_lib/shop.js','functions/api/save.js',
- 'functions/api/board.js','functions/api/_middleware.js','functions/api/gm/damage.js',
+ 'functions/api/board.js','functions/api/_middleware.js','functions/api/social.js','functions/api/friends.js',
+ 'functions/api/shop/checkout.js','functions/api/gm/damage.js',
  // v263: the write-pause control endpoint. It answers 404 without the `GATE` binding, so packaging it
  // does not enable anything; it is listed because it is a runtime file this candidate contains.
  'functions/api/gate.js','migrations/0008_damage_monitoring.sql',
  'migrations/0009_competition_settlement.sql','migrations/0010_competition_baseline.sql',
- 'migrations/0011_unverified_echo_launch.sql'];
+ 'migrations/0011_unverified_echo_launch.sql','migrations/0012_friends.sql'];
 if(process.argv.length!==3)throw Error('Usage: node tools/staging/package_hosted_launch.mjs <output.mjs>');
 // Refuse to generate a mixed-version deployment if the runtime or assets have
 // changed beyond this explicit overlay. The archive comes from the fixed base.
