@@ -119,7 +119,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-01 haven-v274 mobile chat and one login` |
+| Build tag at the bottom of the card | `2026-11-01 haven-v275 cache the entry point safely` |
 | Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
@@ -128,6 +128,44 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 
 That second-browser line is the entire point of the shift: it is progress following the player
 instead of the browser.
+
+## 5b. Updates reach players without clearing their browser (v275)
+
+`bash tools/build_site.sh` writes a `_headers` file into `dist/` that makes the **HTML entry point
+revalidate on every load**:
+
+```
+/index.html
+  Cache-Control: no-cache, must-revalidate
+/gm.html
+  Cache-Control: no-cache, must-revalidate
+/*.html
+  Cache-Control: no-cache, must-revalidate
+/version.txt
+  Cache-Control: no-cache, must-revalidate
+  Content-Type: text/plain; charset=utf-8
+```
+
+**Why this exists.** `index.html` is where `const BUILD` lives *and* where every asset `?v=` number
+lives. That makes a stale copy of it unrescuable: it asks the CDN for the *old* `?v=` names, gets the
+old assets, and the player keeps the old client — even though the fix is sitting on the server. There
+is no way for a later asset to repair the page that requested it.
+
+Cloudflare Pages sends no `Cache-Control` on HTML by default, so browsers fell back to *heuristic*
+freshness and could keep an old page for days. The first symptom was real: the v274 emoji fix
+appeared not to work until the browser cache was cleared by hand. Most players will never clear
+anything, so they would have stayed on the old build until something unrelated forced a reload.
+
+`no-cache` does **not** mean "don't cache"; it means "store it, but revalidate before reusing it". A
+returning player costs one conditional request answered **304**, and the ~1.3 MB of HTML is not
+re-sent. Assets keep their long cache — they are content-addressed by `?v=`, so they do not need
+this and are not affected by it (`/*` sets only the security headers on them).
+
+**Do not change these to `no-store`** unless you accept re-downloading the whole page on every load,
+and do not add `immutable` or a positive `max-age` to an `.html` rule: that recreates the bug.
+
+**Note for local testing.** `tools/dev_server.js` already serves HTML and `.js`/`.css` as `no-store`,
+so local behaviour was always fresh; this file only changes the hosted build.
 
 ## 6. Bring your existing players over
 

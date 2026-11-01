@@ -9305,3 +9305,30 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   offered on World instead of the old "Enter the Social Hub" gate). No deployment, hosted migration or production
   data change was performed from this workspace.
 * **Delivery:** `arena/59a0c268-prontera-grind`.
+
+### 2026-11-01 — `haven-v275 cache the entry point safely`
+* **Changed:** One owner question, and the bug behind it. The v274 emoji fix "did not work" until the
+  owner **cleared the browser cache by hand** - the code was correct on the server the whole time.
+  That is the more dangerous failure, because most players never clear anything: a stale player would
+  have stayed on the old build indefinitely. **`bash tools/build_site.sh` now writes a `_headers` that
+  makes the HTML entry point revalidate on every load.**
+  The mechanism: `index.html` holds `const BUILD` *and* every asset `?v=` number, so a cached copy is
+  unrescuable - it requests the old `?v=` names, receives the old assets, and keeps the old client.
+  No later asset can repair the page that asked for it. Cloudflare Pages sends no `Cache-Control` on
+  HTML by default, so browsers applied heuristic freshness and could pin a page for days. `no-cache,
+  must-revalidate` covers `/index.html`, `/gm.html`, `/*.html` and `/version.txt`; a returning player
+  now costs one conditional request answered **304** rather than re-downloading ~1.3 MB of HTML.
+  Assets under `assets/` are deliberately **not** given this: they are content-addressed by `?v=`,
+  keep their long cache, and only inherit the existing security headers from `/*`.
+  Local development was never affected - `tools/dev_server.js` already serves HTML and `.js`/`.css`
+  as `no-store`.
+* **Checks:** `update_watch_sim.js` now parses `dist/_headers` as path blocks and asserts each entry
+  carries `no-cache, must-revalidate` and carries neither `immutable` nor a positive `max-age`
+  (mutation-checked: deleting the `/index.html` block turns it red). A layered-rules model confirmed
+  `/assets/social.js` receives no `Cache-Control` while `/index.html`, `/gm.html` and `/version.txt`
+  all do. Full gate: 184 suites pass, 0 fail; all 126 progression measurements unchanged (only
+  `sourceHash`/`combatHash` moved, because the hashed slice contains `const BUILD`); `build_site.sh`
+  passes. No deployment or hosted configuration change was performed from this workspace.
+* **Delivery:** `arena/42732cee-prontera-grind`. Applying `dist/_headers` to production is the owner's
+  deploy step; until that build is published, existing players keep whatever their browser cached.
+

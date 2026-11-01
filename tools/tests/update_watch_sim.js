@@ -134,7 +134,7 @@ await T('the endpoint is routed on Cloudflare (_routes.json) and in the local de
   assert.ok(dev.includes('env.ASSETS'), 'with the asset store shimmed, so local dev behaves like Pages');
 });
 
-await T('build_site.sh writes static version.txt and no-store _headers matching BUILD, served by dev_server', async () => {
+await T('build_site.sh writes static version.txt and a revalidating _headers matching BUILD, served by dev_server', async () => {
   const os = await import('node:os');
   const cp = await import('node:child_process');
   const { createApp, freshDb } = await import(pathToFileURL(path.join(__dirname, '..', 'dev_server.js')).href);
@@ -143,7 +143,15 @@ await T('build_site.sh writes static version.txt and no-store _headers matching 
     cp.execFileSync('bash', [path.join(__dirname, '..', 'build_site.sh'), out], { stdio: 'pipe' });
     assert.strictEqual(fs.readFileSync(path.join(out, 'version.txt'), 'utf8'), BUILD, 'dist/version.txt matches BUILD');
     const hdrs = fs.readFileSync(path.join(out, '_headers'), 'utf8');
-    assert.ok(hdrs.includes('/version.txt') && hdrs.includes('Cache-Control: no-store'), 'dist/_headers marks /version.txt no-store');
+    // v275: the HTML entry point is revalidated, never served stale. A block is "<path>" followed by
+    // its indented header lines, so assert on the path+directive pair rather than loose substring hits.
+    const block = (p) => { const m = new RegExp('(?:^|\\n)' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\n((?:  [^\\n]*\\n?)*)').exec(hdrs); return m ? m[1] : ''; };
+    for (const entry of ['/index.html', '/gm.html', '/*.html', '/version.txt']) {
+      assert.match(block(entry), /Cache-Control: no-cache, must-revalidate/,
+        'dist/_headers makes ' + entry + ' revalidate on every load');
+      assert.doesNotMatch(block(entry), /immutable|max-age=[1-9]/, entry + ' must not be cached for a fixed time');
+    }
+    assert.ok(hdrs.includes('Cache-Control: no-cache, must-revalidate'), 'the entry point carries the directive');
     const sqlite = freshDb();
     try {
       const app = createApp({ sqlite, site: out });

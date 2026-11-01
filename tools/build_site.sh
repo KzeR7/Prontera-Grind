@@ -65,6 +65,18 @@ node "$ROOT/tools/maps/build_game_exploration.js" "$OUT"
 cp "$ROOT/tools/maps/vendor/THREE-LICENSE.txt" "$OUT/assets/endgame/THREE-LICENSE.txt"
 
 # Static build tag for updateWatch() so 60-second deploy checks hit the CDN instead of /api/* Functions.
+#
+# v275 (owner): the HTML entry point must always be REVALIDATED, never served from a stale cache.
+# index.html is where `const BUILD` lives AND where every asset `?v=` number lives, so a cached copy
+# of it cannot be rescued: it asks the CDN for the OLD `?v=` names, gets the OLD assets, and the
+# player keeps the old client - including whatever fix shipped in those assets. The owner had to
+# clear the browser by hand to see the v274 emoji fix for exactly this reason. Cloudflare Pages sets
+# no Cache-Control on HTML, so browsers applied heuristic freshness and pinned the old page for days.
+#
+# `no-cache` = "you may store it, but revalidate before reusing it". A returning player then costs one
+# conditional request answered 304 - the ~1.3 MB of HTML is NOT re-sent - instead of staying on an old
+# build. assets/ is content-addressed by `?v=` and keeps its long cache, so this costs one revalidating
+# request per load, not a re-download.
 node -e '
   const fs = require("fs");
   const out = process.argv[1];
@@ -72,7 +84,13 @@ node -e '
   const m = html.match(/const BUILD=\x27([^\x27]+)\x27/);
   if (!m || !m[1]) { console.error("BUILD BROKEN: const BUILD missing in index.html"); process.exit(1); }
   fs.writeFileSync(out + "/version.txt", m[1]);
-  fs.writeFileSync(out + "/_headers", "/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n/version.txt\n  Cache-Control: no-store\n  Content-Type: text/plain; charset=utf-8\n");
+  const NO_CACHE = "  Cache-Control: no-cache, must-revalidate\n";
+  fs.writeFileSync(out + "/_headers",
+    "/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n"
+    + "/index.html\n" + NO_CACHE
+    + "/gm.html\n" + NO_CACHE
+    + "/*.html\n" + NO_CACHE
+    + "/version.txt\n" + NO_CACHE + "  Content-Type: text/plain; charset=utf-8\n");
 ' "$OUT"
 
 # A build that silently ships the wrong thing is worse than one that fails.

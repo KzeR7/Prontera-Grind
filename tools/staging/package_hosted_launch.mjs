@@ -17,11 +17,18 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
  // does not enable anything; it is listed because it is a runtime file this candidate contains.
  'functions/api/gate.js','migrations/0008_damage_monitoring.sql',
  'migrations/0009_competition_settlement.sql','migrations/0010_competition_baseline.sql',
- 'migrations/0011_unverified_echo_launch.sql','migrations/0012_friends.sql'];
+ 'migrations/0011_unverified_echo_launch.sql','migrations/0012_friends.sql',
+ // v275: the build script itself. It generates `_headers`, which decides how long a player's browser
+ // may keep the entry point. A staging package built with the old copy would serve a stale
+ // index.html and reintroduce exactly the bug the v275 change fixes, so it ships with the package.
+ 'tools/build_site.sh'];
 if(process.argv.length!==3)throw Error('Usage: node tools/staging/package_hosted_launch.mjs <output.mjs>');
 // Refuse to generate a mixed-version deployment if the runtime or assets have
 // changed beyond this explicit overlay. The archive comes from the fixed base.
 const base='7511a03c0787ec9b8d94cfc6658570ac402dc297';
+// v275: tools/build_site.sh also decides the published cache headers (_headers). A staging package
+// built with an older copy of it would ship the stale-entry-point bug the v275 change fixes, so the
+// file stays on this list: a local change to it fails closed here instead of shipping quietly.
 const relevant=p=>['index.html','gm.html','_routes.json','tools/build_site.sh'].includes(p)||
  p.startsWith('functions/')||p.startsWith('migrations/')||p.startsWith('assets/');
 const baseEntries=execFileSync('git',['ls-tree','-rz','--full-tree',base],{cwd:root,maxBuffer:20*1024*1024}).toString().split('\0').filter(Boolean);

@@ -24,7 +24,7 @@ const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css'
   // v263: the write-pause control endpoint travels with the candidate; it 404s without the GATE binding.
   'functions/api/gate.js','migrations/0008_damage_monitoring.sql',
   'migrations/0009_competition_settlement.sql','migrations/0010_competition_baseline.sql',
-  'migrations/0011_unverified_echo_launch.sql','migrations/0012_friends.sql'];
+  'migrations/0011_unverified_echo_launch.sql','migrations/0012_friends.sql','tools/build_site.sh'];
 const CONFIG = `name = "${PROJECT}"\ncompatibility_date = "2026-10-01"\npages_build_output_dir = "dist"\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "${DB_NAME}"\ndatabase_id = "${DB_ID}"\n`;
 const schemas = {
   damage_samples:['user_id','slot','bucket','sampled_at','map','stage','reported_total_damage','reported_echo_best'],
