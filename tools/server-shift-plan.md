@@ -233,7 +233,55 @@ Per player, per active hour, and then for 20 players at 4 h/day each:
 
 Writes are the number that matters: D1 *hard-stops* for the rest of the UTC day once the 100,000 is
 crossed, so a player-facing feature that spends writes (a heartbeat, a chat poll, a more eager sync)
-is spending the one allowance that can end a day early. Two things were checked and deliberately left
+is spending the one allowance that can end a day early.
+
+### 3b.2 The v274 session probe — priced, because the first guess was 2.5x too eager
+
+v274 added `cloudSessionTick()` (`index.html`): the tab asks `GET /api/me` on a short clock so a
+session ended by a sign-in elsewhere is noticed in about a minute rather than at the next save
+exchange (a minute visible, five hidden). It exists because the **server was already correct** —
+`db.startVerifiedSession` deletes the account's other tokens in the same batch as the insert, so the
+second login wins — and the only thing missing was how fast the loser noticed.
+
+Measured on the real handlers and schema, counting every statement:
+
+| Per probe | Statements | Rows read | **Rows written** |
+|---|---|---|---|
+| `GET /api/me` (v274 probe) | 2 | 2 | **0** |
+| `GET /api/save` (what it partially replaces) | 3 | 3 | **0** |
+
+**Zero writes, and that is structural, not lucky.** `currentUser()` only SELECTs (the session join,
+then the user row). The one UPDATE it can reach is `touchSession`, the rolling expiry, which fires
+only when the session is more than 23 of its 30 days old — at most once per account per day, and it
+would have happened on the next real sync anyway. So this feature cannot spend the allowance that
+ends a day early.
+
+It does spend the *other* one. `WRITE_GATE = "required"` (wrangler.toml, §The write pause) makes every
+`/api` call a Durable Object admit/release as well, so a probe counts as a **Function request** — the
+100,000/day line. That is why the interval is 45 s visible / 120 s hidden rather than the 20 s / 60 s it
+first shipped with.
+
+A tab cannot be fully visible and fully hidden in the same hour, so the honest figure is a range:
+
+| Session probe, per hour | Requests |
+|---|---|
+| Fully visible (3600 / 45) | **80** |
+| Half visible, half hidden (1800 / 45 + 1800 / 120) | **55** |
+| Fully hidden (3600 / 120) | **30** |
+| The rest of a played session (v82 table above) | ~84 |
+
+Twenty players at 4 h/day is 80 player-hours, so the whole workload lands at **~11,000 requests/day
+(11%)** in the all-visible case and **~9,100 (9%)** at half-and-half — of which the probe is 4,400-6,400.
+The 20 s / 60 s first pass would have spent **8,000-9,600** on the probe alone and reached **~16-18%**
+of the day. Neither number threatens the allowance; the point is that the tighter one cost nothing
+worth having, because "kicked within 45 s" and "kicked within 20 s" are the same experience when the
+replacement message is a full-screen gate.
+
+**Do not shorten `CLOUD_SESSION_CHECK_MS` / `CLOUD_SESSION_CHECK_HIDDEN_MS` without redoing this sum.**
+The constants in `index.html` carry the same note, and the 15-second tick that drives them divides both
+intervals exactly (3 ticks visible, 8 hidden), so the probe cannot drift off its own interval.
+
+Two things were checked and deliberately left
 alone:
 
 * **The leaderboard is already lazy.** `/api/board` is called when the Board tab is opened, not at

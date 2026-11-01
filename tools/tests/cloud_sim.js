@@ -21,6 +21,12 @@ let pass = 0, fail = 0;
 const t = (n, fn) => { try { fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 const T = async (n, fn) => { try { await fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + (e && e.message)); fail++; } };
 console.log('client cloud layer: offline-first sync with a conflict-safe save\n');
+// Read a `const NAME=<number>` straight out of the page, for the two constants whose value is a
+// request budget rather than an implementation detail.
+const cloudSrcValue = name => {
+  const m = new RegExp('const\\s+' + name + '\\s*=\\s*(\\d+)').exec(src);
+  return m ? Number(m[1]) : NaN;
+};
 
 // --------------------------------------------------------------- extraction ----
 const start = src.indexOf('// ---------- cloud accounts and saves (optional) ----------');
@@ -592,10 +598,20 @@ await T('a tab with unsynced progress also adopts: the account is the only save'
   assert.notStrictEqual(h.els.get('cloudGate').style.display, 'flex');
 });
 
-await T('the session probe notices a sign-in elsewhere within seconds, without touching the save', async () => {
+await T('the session probe notices a sign-in elsewhere within a minute, at a priced request rate', async () => {
   // v274 (owner): the second login must kick the first. The server already ends the older token;
-  // this is the client's own /api/me probe, which runs on a much faster clock than the save/poll
-  // traffic so the kicked tab stands down in seconds instead of minutes.
+  // this is the client's own /api/me probe, which runs on a faster clock than the save/poll traffic
+  // so the kicked tab stands down in about a minute instead of up to five.
+  // The interval is a BUDGET, not a taste: the probe costs 0 D1 rows written but one Function
+  // request each (WRITE_GATE=required adds a Durable Object admit/release), and Function requests
+  // are the tight free-plan line. See tools/server-shift-plan.md §3b.2 - changing these constants
+  // means redoing that sum, so the value is pinned here on purpose.
+  assert.strictEqual(cloudSrcValue('CLOUD_SESSION_CHECK_MS'), 45000,
+    'the visible-tab interval stays at the priced 45s (80 requests/hour fully visible)');
+  assert.strictEqual(cloudSrcValue('CLOUD_SESSION_CHECK_HIDDEN_MS'), 120000,
+    'and the hidden-tab interval at 120s (30/hour)');
+  assert.strictEqual(45000 % 15000, 0, 'both intervals divide the 15s tick that drives the probe');
+  assert.strictEqual(120000 % 15000, 0);
   const h = harness({ routes: { '/me': { status: 401, body: { err: 'Not logged in.' } } } });
   h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'FRIEND'; h.sandbox.currentUser = 'FRIEND';
   h.sandbox.CLOUD.paused = false; h.sandbox.CLOUD.signingOut = false;
@@ -613,8 +629,13 @@ await T('the session probe notices a sign-in elsewhere within seconds, without t
   await ok.sandbox.settle();
   assert.strictEqual(ok.sandbox.sessionWasReplaced(), false, 'a live session is not a kick');
   const asked = ok.calls.length;
-  await ok.sandbox.cloudSessionTick();      // seconds later, inside the 20s window
+  await ok.sandbox.cloudSessionTick();      // a moment later, inside the 45s window
   assert.strictEqual(ok.calls.length, asked, 'the probe respects its own interval');
+  // ...and it does ask again once the interval is up: the window is a wait, not a one-shot.
+  ok.sandbox.resetSessionCheck();
+  await ok.sandbox.cloudSessionTick();
+  await ok.sandbox.settle();
+  assert.strictEqual(ok.calls.length, asked + 1, 'the next window sends exactly one more probe');
   // Once this tab has been replaced the probe stops asking entirely.
   h.sandbox.CLOUD.checking = false;
   const afterKick = h.calls.length;

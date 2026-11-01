@@ -9268,15 +9268,25 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   live server: sign in on a second device and the first answers 401 on `/api/me`, `GET /api/save` and
   `PUT /api/save`). What was missing was how quickly the losing tab *knew*: it only asked on its next save exchange -
   a minute while visible, five while hidden - and ground a character nobody would ever see in between. A new
-  `cloudSessionTick()` probes `/api/me` on its own clock (20 s visible, 60 s hidden, one indexed read and no write),
-  wired into the existing 15-second tick, and stops the tab through the same `cloudSessionReplaced()` gate that a 401
-  from a save already used.
+  `cloudSessionTick()` probes `/api/me` on its own clock (45 s visible, 120 s hidden), wired into the existing
+  15-second tick, and stops the tab through the same `cloudSessionReplaced()` gate that a 401 from a save already
+  used. **The interval is priced against the free plan, not chosen by feel.** Measured on the real handlers and schema:
+  one probe is **2 statements, 2 rows read, 0 rows written** - the probe itself cannot spend a write (`currentUser()`
+  only SELECTs; the one UPDATE it can reach, `touchSession`, fires at most once per account per day). But
+  `WRITE_GATE = "required"` makes every `/api` call a Durable Object admit/release as well, so each probe costs one
+  **Function request**, the tight free-plan line (100,000/day). A tab cannot be fully visible and fully hidden in the
+  same hour, so the honest figure is a range: the probe spends 80 requests/hour fully visible (3600/45), 30 fully
+  hidden (3600/120), or 55 across a half-and-half hour - against the ~84/hour the rest of a played session already
+  spends. Twenty players at 4 h/day (80 player-hours) therefore land at **~11,000 requests/day, ~11%**, or ~9,100 at
+  half-and-half; the 20 s/60 s first pass would have spent 8,000-9,600 on the probe alone and reached ~16-18%.
+  Shortening these two constants requires redoing that sum - the constants carry the note, and
+  `tools/server-shift-plan.md` §3b.2 has the measured table.
 * **Try it:** On a phone: press fullscreen (it stays upright), look at the bottom-right (no pet heads, a GM still sees
   Speed), tap ❖ Quests and then tap it again or tap the scrim (the field comes back), open a destination from the sheet
   (the panel gets the screen). Continue as the owner and tap 🛠 GM console: the console stacks, players are tappable,
   and a tapped player scrolls into view with a ✕ Close. In World chat press **Emoji** and send one (it stays in World
   history for everyone); select Whisper, type a name and send one (only they see it). Sign in as the same account in a
-  second browser profile: the first tab says **🔐 Signed in on another device** within about 20 seconds.
+  second browser profile: the first tab says **🔐 Signed in on another device** within about a minute.
 * **Checks:** Full local gate green with **no known-red rows left**: 180 `*_sim.js`/`*_sim.mjs` suites, 4 `*_smoke.js`,
   the three generated-asset `--check`s and `pages_preview_config_sim.py` all pass, as does
   `bash tools/build_site.sh`. Four environment faults were cleared rather than papered over: `git fetch` of the two

@@ -3627,13 +3627,22 @@ const CLOUD_MAX_AGE=900000;          // a tab hidden longer than this re-pulls b
 // deletes every other token in the same transaction as the insert), but the tab
 // that lost the account only found out on its next save exchange - a minute while
 // it is being played, five while hidden - and it kept grinding a character nobody
-// would ever see in the meantime. This is a session probe that reads one indexed
-// row and writes nothing, so it can run far more often than a save: the kicked
-// copy stops within a handful of seconds of the phone signing in. The poll and
-// the save/announcement traffic are untouched, and the bearer is the same
-// HttpOnly cookie - it is not incremental cost on the save budget.
-const CLOUD_SESSION_CHECK_MS=20000;  // one /api/me while the tab is visible
-const CLOUD_SESSION_CHECK_HIDDEN_MS=60000;   // ...and less often while it is hidden
+// would ever see in the meantime. This is a session probe that writes nothing, so
+// it can run far more often than a save: the kicked copy stops within about a
+// minute of the phone signing in instead of up to five.
+//
+// The interval is part of the v82 usage diet, not a taste: `WRITE_GATE=required`
+// makes every /api call a Durable Object admit/release as well, so a probe is a
+// FUNCTION REQUEST (the tight free-plan line, 100k/day) even though it costs zero
+// D1 rows written and two rows read. Measured per probe: 2 statements, 2 reads,
+// 0 writes. At 45s visible / 120s hidden an always-on tab spends 80 requests/hour
+// fully visible (3600/45), 30 fully hidden (3600/120), or 55 across a half-and-half
+// hour - against the ~84/hour the rest of a played session spends. 20 players at
+// 4 h/day is 80 player-hours: ~11,000-13,000 requests/day, 11-13% of the free
+// line. The 20s/60s it first shipped with was 120/h across that same hour, i.e.
+// 16-21% of the day. Do not shorten these without redoing that sum.
+const CLOUD_SESSION_CHECK_MS=45000;  // one /api/me while the tab is visible
+const CLOUD_SESSION_CHECK_HIDDEN_MS=120000;  // ...and a third as often while hidden
 let cloudLastCheck=0;
 const saveKeyFor=u=>'pg_save3_'+u;
 const cloudUrl=p=>'/api'+p;
