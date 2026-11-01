@@ -291,6 +291,34 @@ that currency. The catalog is deliberately single-currency so the list stays hon
 * **Backups**: `entitlements` is now part of what `npx wrangler d1 export pg --remote` must include.
   It is small (one row per owned item).
 
+## 10b. Donations (the donor tier, haven-v273)
+
+There is a fifth shop tab, **💝 Donations**, with one entry: `don:all-cosmetics`, *Donor: every
+cosmetic unlocked*. It is a pay-what-you-want item, not a fixed price:
+
+* **Floor / step / ceiling** — `DONATIONS` in `assets/shop-catalog.js`: `floor:2000` ($20.00),
+  `step:500` ($5.00) and `max:500000` ($5,000.00). `donationAmount()` rounds to the step and clamps
+  into `[floor, max]`; the **server** runs the same function on `body.amount`, so a hand-made request
+  cannot underpay and a fat finger cannot charge a fortune.
+* **What it unlocks** — the first cleared payment answers with `unlocks:{all:true}`, which resolves
+  through the same bundle roller as `bnd:complete`: every cosmetic the account does not own yet, at
+  delivery time. It is not a stored "donor" flag, so an account that already bought the wardrobe
+  still gets the unlock for free inventory it later lacks.
+* **Paying again** — no error and no second delivery. `fulfillOrder()` sees an empty unlock list, keeps
+  the order `fulfilled` (a bundle would be `failed` here), writes `events.kind='shop-donation'` and
+  delivers nothing. `INSERT OR IGNORE` on `entitlements` means even a replayed webhook cannot
+  duplicate a row. The panel says before the click which of the two a payment will be.
+* **The client** — `assets/shop.js` remembers the last amount typed per account
+  (`pg_shop_donation_<user>`), shows five quick picks above the floor, and sends the box's value (not
+  the chip's) when the Donate button is pressed. `pg_shop_donated_<user>` accumulates the thank-you
+  total shown on the card. Both keys are only written while signed in.
+* **Books** — the Stripe line item is `Horizon Haven: Donation` at the player's amount, and the order
+  row keeps it in `shop_orders.amount`. Every delivery also writes `shop-fulfilled`; repeats add
+  `shop-donation`, so `SELECT COUNT(*) FROM events WHERE kind='shop-donation'` is the donation count.
+
+If you change the floor, bump the `?v=` on both `assets/shop-catalog.js` and `assets/shop.js` in
+`index.html`, bump `BUILD`, and run `shop_api_sim.js` + `shop_sim.js` — both pin the amount plumbing.
+
 ## 11. What is deliberately not here
 
 * No premium currency, no gacha, no subscription, no stored card details — one item, one Checkout.

@@ -45,7 +45,9 @@ export async function readJson(request, maxBytes = 600_000) {
 }
 
 export class HttpError extends Error {
-  constructor(status, message) { super(message); this.status = status; }
+  // `extra` is merged into the JSON body (never into the status), so a refusal can carry a stable
+  // machine-readable code next to its sentence without every caller re-declaring the shape.
+  constructor(status, message, extra = null) { super(message); this.status = status; this.extra = extra; }
 }
 
 // Wrap a handler so a thrown HttpError becomes its status and anything else becomes a 500 that does
@@ -55,7 +57,7 @@ export function guard(handler) {
     try {
       return await handler(ctx);
     } catch (e) {
-      if (e instanceof HttpError) return fail(e.message, e.status);
+      if (e instanceof HttpError) return fail(e.message, e.status, e.extra || {});
       console.error('unhandled', e && e.stack || e);
       return fail('Something went wrong on the server.', 500);
     }

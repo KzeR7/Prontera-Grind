@@ -1,0 +1,31 @@
+/* Friends panel (haven-v273). Same vocabulary as the Cash Shop and the Wardrobe — .hd headers,
+   the --e-* surfaces — so the list reads as part of the game and not a bolted-on page.
+   Everything here is scoped to .friends / #socialPeople; nothing touches a shared selector. */
+.friends{display:grid;gap:14px;min-width:0}
+.friends .shop-intro small{display:block;max-width:62ch;line-height:1.6;color:var(--e-muted)}
+.friend-add{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:10px 12px;border:1px solid var(--edge2);border-radius:10px;background:var(--e-bg)}
+.friend-add label{display:grid;gap:4px;flex:1 1 180px;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--e-muted)}
+.friend-add input,.friend-filter input{min-height:34px;padding:5px 9px;border:1px solid var(--edge2);border-radius:7px;background:var(--e-raised);color:var(--ink);font:inherit;font-size:12px}
+.friend-add button{min-height:34px;padding:5px 14px;font-size:11px;font-weight:800}
+.friend-filter{display:grid;gap:4px;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--e-muted)}
+.friend-group{display:grid;gap:8px}
+.friend-group>.hd{display:flex;align-items:center;gap:8px;margin:2px 0 0}
+.friend-group>.hd small{font-size:10px;font-weight:800;color:var(--gold)}
+.friend-list{display:grid;gap:6px}
+.friend-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid var(--edge2);border-radius:9px;background:var(--e-bg)}
+.friend-name{display:grid;gap:2px;min-width:0}
+.friend-name b{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);overflow-wrap:anywhere}
+.friend-name small{font-size:10px;line-height:1.45;color:var(--e-muted)}
+.friend-actions{display:flex;flex-wrap:wrap;gap:6px}
+.friend-actions button{min-height:30px;padding:3px 10px;font-size:11px}
+.friend-yes{border-color:var(--gold);font-weight:800}
+.friend-empty{margin:0;padding:10px 12px;border:1px dashed var(--edge2);border-radius:9px;font-size:11px;line-height:1.5;color:var(--e-muted)}
+/* A friend who is in the plaza right now: a small, quiet dot, not a second colour scheme. */
+.friend-live{width:7px;height:7px;border-radius:50%;background:#7fd08c;box-shadow:0 0 0 2px #7fd08c33;flex:0 0 auto}
+/* The name menu in chat gained a state, so it needs somewhere to put it. */
+#socialPeople .social-friend-mark{color:#9ed7ed;font-size:10px;letter-spacing:.04em}
+@media (max-width:640px){
+  .friend-row{align-items:flex-start}
+  .friend-actions{width:100%}
+  .friend-actions button{flex:1 1 auto}
+}

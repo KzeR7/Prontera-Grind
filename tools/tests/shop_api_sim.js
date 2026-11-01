@@ -222,6 +222,69 @@ await T('the "unlock all" bundle covers today\'s 52 cosmetics and respects the o
   assert.strictEqual(again.status, 409);
 });
 
+// The donor tier (v3): the player names the amount, the floor is enforced on the server, and paying
+// again is a donation rather than an error - the unlock-all set is already owned, so nothing is
+// delivered twice and nothing breaks.
+await T('a donation is unlocked by the first payment of at least the floor, and the amount is clamped', async () => {
+  const { env, sqlite } = freshEnv({ SHOP_FAKE_CHECKOUT: '1' });
+  const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
+  assert.strictEqual((await api.checkout(env, c, { sku: 'don:all-cosmetics' })).status, 400, 'the amount is not optional');
+  assert.strictEqual((await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 'abc' })).status, 400);
+  assert.strictEqual((await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 0 })).status, 400);
+  assert.strictEqual((await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 1999, qty: 2 })).status, 400, 'one payment is one donation');
+  assert.strictEqual((await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 1999 })).status, 200, 'below the floor is raised, not refused');
+  const row = sqlite.prepare("SELECT amount, quantity, status FROM shop_orders WHERE sku = 'don:all-cosmetics'").get();
+  assert.strictEqual(row.amount, 2000); assert.strictEqual(row.quantity, 1); assert.strictEqual(row.status, 'fulfilled');
+  const owned = (await api.catalog(env, c)).data.owned;
+  assert.strictEqual(owned.length, 52, 'the first payment unlocks the whole wardrobe');
+  // The amount above the floor is honoured as asked, rounded to the catalog step.
+  const big = (await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 2500 })).data;
+  assert.strictEqual(big.fulfilled, true);
+  assert.strictEqual(sqlite.prepare('SELECT amount FROM shop_orders WHERE id = ?').get(big.order).amount, 2500);
+  // The catalog's own ceiling holds, so a fat finger cannot charge a fortune.
+  const huge = (await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 99999999 })).data;
+  assert.strictEqual(sqlite.prepare('SELECT amount FROM shop_orders WHERE id = ?').get(huge.order).amount, 500000);
+});
+
+await T('paying again is a donation: fulfilled, nothing delivered, nothing duplicated, one audit line', async () => {
+  const { env, sqlite } = freshEnv({ SHOP_FAKE_CHECKOUT: '1' });
+  const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
+  const first = await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 2000 });
+  assert.strictEqual(first.status, 200);
+  const before = sqlite.prepare('SELECT COUNT(*) n FROM entitlements').get().n;
+  assert.strictEqual(before, 52);
+  for (const amount of [2000, 2000, 3500]) {
+    const again = await api.checkout(env, c, { sku: 'don:all-cosmetics', amount });
+    assert.strictEqual(again.status, 200, JSON.stringify(again.data));
+    assert.strictEqual(again.data.fulfilled, true);
+    assert.strictEqual(again.data.detail.bundleEmpty, undefined, 'an empty donation bundle is not an error');
+    assert.strictEqual(again.data.detail.donation, true);
+  }
+  assert.strictEqual(sqlite.prepare('SELECT COUNT(*) n FROM entitlements').get().n, 52, 'no entitlement is written twice');
+  assert.strictEqual(sqlite.prepare("SELECT COUNT(*) n FROM events WHERE kind = 'shop-donation'").get().n, 3);
+  assert.strictEqual(sqlite.prepare("SELECT COUNT(*) n FROM events WHERE kind = 'shop-bundle-empty'").get().n, 0);
+  assert.strictEqual(sqlite.prepare("SELECT COUNT(*) n FROM shop_orders WHERE status = 'fulfilled'").get().n, 4);
+  assert.deepStrictEqual((await api.catalog(env, c)).data.owned.length, 52);
+  // A non-donor is not blocked by any of this: an ordinary cosmetic still sells normally afterwards.
+  const other = (await api.register(env, { u: 'Bob', p: 'bobby-password-1' })).cookie;
+  assert.strictEqual((await api.checkout(env, other, { sku: 'cos:headwear:halo' })).status, 200);
+});
+
+await T('live mode: a donation session charges the player\'s amount, not a catalog price', async () => {
+  const { env, sqlite } = freshEnv({ STRIPE_SECRET_KEY: KEY });
+  const stripe = stripeMock();
+  stripe.answer = () => ({ body: { id: 'cs_test_d1', url: 'https://checkout.stripe.com/c/pay/cs_test_d1', status: 'open', payment_status: 'unpaid' } });
+  const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
+  const r = await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 3000 }, { 'X-Forwarded-Host': 'play.example.com', 'X-Forwarded-Proto': 'https' });
+  assert.strictEqual(r.status, 200, JSON.stringify(r.data));
+  const q = new URLSearchParams(stripe.calls[0].body);
+  assert.strictEqual(q.get('line_items[0][price_data][unit_amount]'), '3000');
+  assert.strictEqual(q.get('line_items[0][price_data][product_data][name]'), 'Horizon Haven: Donation');
+  assert.strictEqual(q.get('line_items[0][quantity]'), '1');
+  assert.strictEqual(sqlite.prepare('SELECT amount FROM shop_orders WHERE id = ?').get(r.data.order).amount, 3000);
+  assert.strictEqual(sqlite.prepare('SELECT COUNT(*) n FROM entitlements').get().n, 0, 'nothing is delivered before payment');
+});
+
 await T('checkout validates what it is asked for', async () => {
   const { env } = freshEnv({ SHOP_FAKE_CHECKOUT: '1' });
   const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;

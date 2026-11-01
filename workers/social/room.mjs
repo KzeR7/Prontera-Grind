@@ -8,6 +8,8 @@ const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker;
 // measured from when it was accepted, and activity slides the idle window forward, so an active
 // player is no longer dropped every five minutes the way REAUTH_MS alone used to force.
 const IDLE_MS=300000,REAUTH_MS=1800000,MAX_ROOMS=50;
+// Only positive integer account ids belong in a friend list.
+const cleanFriendId=id=>Number.isInteger(id)&&id>0;
 function routeDist(from,route){let d=0,x=from.x,z=from.z;for(const pt of route){d+=Math.hypot(pt.x-x,pt.z-z);x=pt.x;z=pt.z}return d;}
 // A service binding is the only ingress. Identity is supplied by authenticated Pages.
 export class SocialRoom {
@@ -22,6 +24,42 @@ export class SocialRoom {
  // without showing a failure or losing the player's seat.
  refresh(c){this.disconnect(c);this.send(c,{type:'reauth'});c.close(4000,'Refresh session')}
  broadcast(event,filter=()=>true){for(const c of this.clients.values())if(filter(c))this.send(c,event)}
+ // A player event is personal: `friend` is true only for a client whose account is friends with this
+ // one, so the same character cannot be described identically to everybody in the plaza.
+ broadcastPlayer(subject,filter=()=>true,except=null){for(const p of this.clients.values())if(p!==except&&filter(p))this.send(p,{type:'player',player:this.snapshot(subject,p)})}
+ // Friendship is mutual, so a client listing someone as a friend is also listed by them: the room
+ // mirrors the pair for the connected side, and both screens agree immediately. Display only - the
+ // authority is the D1 row behind GET /api/friends.
+ //
+ // Joining only ever adds. A client that has just connected, or that joins a room, knows its own
+ // friendships but nothing about the other side, so it must not be able to clear a mark somebody
+ // else is already showing; `syncFriends` is the explicit statement that may also drop one.
+ adoptFriends(c){
+  let touched=false;
+  for(const other of this.clients.values()){
+   if(other===c)continue;
+   if(other.friends.has(c.id)&&!c.friends.has(other.id))c.friends.add(other.id);
+   if(c.friends.has(other.id)&&!other.friends.has(c.id)){other.friends.add(c.id);touched=true;if(other.room)this.send(other,{type:'player',player:this.snapshot(other,other)})}
+  }
+  return touched;
+ }
+ // A live list is reconciled both ways: whoever spoke last decides for the pair, so accepting a
+ // request marks the other player too and unfriending stops the mark instead of leaving it behind.
+ syncFriends(c,ids,now=this.now()){
+  if(c.friendsAt&&now-c.friendsAt<2000)return false;
+  c.friendsAt=now;
+  const next=new Set((Array.isArray(ids)?ids:[]).filter(cleanFriendId).slice(0,200));
+  for(const other of this.clients.values()){
+   if(other===c)continue;
+   const mine=next.has(other.id),theirs=other.friends.has(c.id);
+   if(mine===theirs)continue;
+   if(mine)other.friends.add(c.id);else other.friends.delete(c.id);
+   if(other.room)this.send(other,{type:'player',player:this.snapshot(other,other)});
+  }
+  c.friends=next;
+  if(c.room)this.broadcastPlayer(c,p=>p.room===c.room);
+  return true;
+ }
  roomList(){
   const counts=new Map();let maxRoom=1;
   for(const p of this.clients.values())if(p.room>0){counts.set(p.room,(counts.get(p.room)||0)+1);if(p.room>maxRoom)maxRoom=p.room;}
@@ -41,7 +79,7 @@ export class SocialRoom {
      const p=this.clients.get(info.id);
      if(p&&p.room===room){
       p.pokerSeat=null;p.sit=false;p.path=[];
-      this.broadcast({type:'player',player:this.snapshot(p)},x=>x.room===room);
+      this.broadcastPlayer(p,x=>x.room===room);
       this.send(p,{type:'poker_kicked',tableId:info.tableId,reason:info.reason,message:info.reason==='empty'?'Stood up from table (out of chips / idle).':'Auto-removed from seat due to AFK inactivity.'});
      }
     }
@@ -109,24 +147,31 @@ export class SocialRoom {
  }
  connect(identity,send,close){
   const prior=this.clients.get(identity.id);if(prior){this.disconnect(prior);prior.close(4001,'Connected in another tab');}
-  const c={id:identity.id,name:identity.username,send,close,room:0,at:this.now(),path:[],x:0,z:12,dir:0,sit:false,nextChat:0,seat:null,pokerSeat:null,moveAt:0,lookAt:0,expires:this.now()+IDLE_MS,reauthAt:this.now()+REAUTH_MS};
-  this.clients.set(c.id,c);this.send(c,{type:'hello',id:c.id,name:c.name,history:this.history});return c;
+  const c={id:identity.id,name:identity.username,send,close,room:0,at:this.now(),path:[],x:0,z:12,dir:0,sit:false,nextChat:0,seat:null,pokerSeat:null,moveAt:0,lookAt:0,expires:this.now()+IDLE_MS,reauthAt:this.now()+REAUTH_MS,friends:new Set(Array.isArray(identity.friends)?identity.friends.filter(cleanFriendId).slice(0,200):[])};
+  this.clients.set(c.id,c);
+  // The list Pages sent at connect time is mirrored at once, so a player who is already in a plaza
+  // and is on your list is drawn as a friend even if you connected second.
+  this.adoptFriends(c);
+  this.send(c,{type:'hello',id:c.id,name:c.name,history:this.history});return c;
  }
  // v225: lv drives the level aura and speed is the character's field run speed. Both are
  // presentation hints: lv is clamped to a display tier input, speed to the shared walk band, so a
  // client cannot make itself faster than the fastest legal character in the plaza.
  cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED))};}
- snapshot(c){R.advance(c,this.now());return {id:c.id,name:c.name,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat,pokerSeat:c.pokerSeat};}
+ // `viewer` is who is asking: whether this person is a friend is a fact about the two accounts, so
+ // the same player is flagged for one client and not for another. Omit it for a neutral snapshot.
+ snapshot(c,viewer=null){R.advance(c,this.now());return {id:c.id,name:c.name,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat,pokerSeat:c.pokerSeat,friend:!!(viewer&&viewer!==c&&viewer.friends.has(c.id))};}
  leave(c){const room=c.room;this.standPoker(c,this.now(),false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;if(room){this.broadcast({type:'left',id:c.id,room},p=>p.room===room);this.broadcastPoker(room,this.now());this.schedulePoker(room);this.syncRooms();}}
  disconnect(c){if(this.clients.get(c.id)!==c)return;this.leave(c);this.clients.delete(c.id)}
  enterPlazaRoom(c,room,now){
   const members=[...this.clients.values()].filter(p=>p.room===room&&p!==c);members.forEach(p=>R.advance(p,now));
   const spawn=Array.from({length:R.CAPACITY},(_,i)=>({x:(i%5-2)*4,z:12+Math.floor(i/5)*4})).find(s=>members.every(p=>Math.hypot(p.x-s.x,p.z-s.z)>2))||{x:0,z:12};
   c.room=room;c.x=spawn.x;c.z=spawn.z;c.dir=0;c.at=now;c.sit=false;c.path=[];c.seat=null;c.pokerSeat=null;
+  this.adoptFriends(c);
   const rooms=this.roomList();
-  this.send(c,{type:'room',room,rooms,players:[...this.clients.values()].filter(p=>p.room===room).map(p=>this.snapshot(p))});
+  this.send(c,{type:'room',room,rooms,players:[...this.clients.values()].filter(p=>p.room===room).map(p=>this.snapshot(p,c))});
   this.send(c,this.pokerPayload(room,c.id,now));
-  this.broadcast({type:'player',player:this.snapshot(c)},p=>p.room===room&&p!==c);
+  this.broadcastPlayer(c,p=>p.room===room,c);
   this.syncRooms(c);
  }
  receive(c,raw){
@@ -138,12 +183,16 @@ export class SocialRoom {
   if(typeof raw!=='string'||raw.length>4096)return this.send(c,{type:'error',message:'Message is too large.'});
   let m;try{m=JSON.parse(raw)}catch{return}if(!m||typeof m!=='object')return;
   if(m.type==='ping')return this.send(c,{type:'pong'});
+  if(m.type==='friends'){this.syncFriends(c,m.ids,now);return}
   if(m.type==='leave'){this.leave(c);return this.send(c,{type:'room',room:0,players:[]})}
   if(m.type==='join'){
    if(c.room)return;
    const look=this.cleanLook(m.look);if(!look)return;
    let room=1;while([...this.clients.values()].filter(p=>p.room===room).length>=R.CAPACITY)room++;
    c.look=look;
+   // The client's list is fresher than the one Pages saw at connect time (a request accepted since
+   // then), so apply it before the snapshot: the join already shows the right names as friends.
+   if(Array.isArray(m.friends))this.syncFriends(c,m.friends,now);
    return this.enterPlazaRoom(c,room,now);
   }
   if(m.type==='switch_room'&&c.room){
@@ -159,10 +208,10 @@ export class SocialRoom {
    this.broadcastPoker(prev,now);this.schedulePoker(prev);
    return this.enterPlazaRoom(c,target,now);
   }
-  if(m.type==='look'&&c.room){const look=this.cleanLook(m.look);if(!look||now-c.lookAt<100)return;c.lookAt=now;c.look=look;return this.broadcast({type:'player',player:this.snapshot(c)},p=>p.room===c.room)}
-  if(m.type==='move'&&c.room){if(now-c.moveAt<100)return;c.moveAt=now;R.advance(c,now);const route=R.path(c,{x:m.x,z:m.z});if(!route.length)return;this.standPoker(c,now,true);c.path=route;c.sit=false;c.seat=null;return this.broadcast({type:'player',player:this.snapshot(c)},p=>p.room===c.room)}
-  if(m.type==='seat'&&c.room){if(now-c.moveAt<100||!Number.isInteger(m.id)||!R.SEATS[m.id])return;c.moveAt=now;R.advance(c,now);const seat=R.SEATS[m.id];if([...this.clients.values()].some(p=>p!==c&&p.room===c.room&&p.seat===seat.id))return this.send(c,{type:'error',message:'That bench is occupied.'});const route=R.path(c,seat);if(!route.length&&Math.hypot(c.x-seat.x,c.z-seat.z)>.5)return;this.standPoker(c,now,true);c.path=route;c.sit=false;c.seat=seat.id;return this.broadcast({type:'player',player:this.snapshot(c)},p=>p.room===c.room)}
-  if(m.type==='sit'&&c.room){if(now-c.moveAt<100)return;c.moveAt=now;R.advance(c,now);this.standPoker(c,now,true);c.path=[];c.seat=null;c.sit=!c.sit;return this.broadcast({type:'player',player:this.snapshot(c)},p=>p.room===c.room)}
+  if(m.type==='look'&&c.room){const look=this.cleanLook(m.look);if(!look||now-c.lookAt<100)return;c.lookAt=now;c.look=look;return this.broadcastPlayer(c,p=>p.room===c.room)}
+  if(m.type==='move'&&c.room){if(now-c.moveAt<100)return;c.moveAt=now;R.advance(c,now);const route=R.path(c,{x:m.x,z:m.z});if(!route.length)return;this.standPoker(c,now,true);c.path=route;c.sit=false;c.seat=null;return this.broadcastPlayer(c,p=>p.room===c.room)}
+  if(m.type==='seat'&&c.room){if(now-c.moveAt<100||!Number.isInteger(m.id)||!R.SEATS[m.id])return;c.moveAt=now;R.advance(c,now);const seat=R.SEATS[m.id];if([...this.clients.values()].some(p=>p!==c&&p.room===c.room&&p.seat===seat.id))return this.send(c,{type:'error',message:'That bench is occupied.'});const route=R.path(c,seat);if(!route.length&&Math.hypot(c.x-seat.x,c.z-seat.z)>.5)return;this.standPoker(c,now,true);c.path=route;c.sit=false;c.seat=seat.id;return this.broadcastPlayer(c,p=>p.room===c.room)}
+  if(m.type==='sit'&&c.room){if(now-c.moveAt<100)return;c.moveAt=now;R.advance(c,now);this.standPoker(c,now,true);c.path=[];c.seat=null;c.sit=!c.sit;return this.broadcastPlayer(c,p=>p.room===c.room)}
   if(m.type==='poker_watch'&&c.room){return this.send(c,this.pokerPayload(c.room,c.id,now))}
   if(m.type==='poker_sit'&&c.room){
    if(now-c.moveAt<100||!Number.isInteger(m.seat)||!R.POKER.seats[m.seat])return;
@@ -183,7 +232,7 @@ export class SocialRoom {
    if(!res.ok)return this.send(c,{type:'poker_error',message:res.error});
    c.seat=null;c.pokerSeat=target.id;c.path=route;c.sit=atSeat;
    if(atSeat){c.x=target.x;c.z=target.z;c.dir=target.dir;}
-   this.broadcast({type:'player',player:this.snapshot(c)},p=>p.room===c.room);
+   this.broadcastPlayer(c,p=>p.room===c.room);
    this.broadcastPoker(c.room,now);
    this.schedulePoker(c.room);
    return;
@@ -191,7 +240,7 @@ export class SocialRoom {
   if(m.type==='poker_stand'&&c.room){
    if(!Number.isInteger(c.pokerSeat))return;
    R.advance(c,now);this.standPoker(c,now,true);c.path=[];c.sit=false;
-   return this.broadcast({type:'player',player:this.snapshot(c)},p=>p.room===c.room);
+   return this.broadcastPlayer(c,p=>p.room===c.room);
   }
   if(m.type==='poker_act'&&c.room){
    if(!Number.isInteger(c.pokerSeat))return;

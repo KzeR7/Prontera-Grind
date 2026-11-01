@@ -286,7 +286,7 @@ try {
   assert.throws(() => bad.verify(), /no verified JSON/);
   ok('Wrangler JSON notices are tolerated, but non-JSON output still stops the remote reset');
 
-  assert.equal(REQUIRED_TABLES.length, 26);
-  assert(PRESERVED_TABLES.includes('users') && PRESERVED_TABLES.includes('entitlements'));
+  assert.equal(REQUIRED_TABLES.length, 27);
+  assert(PRESERVED_TABLES.includes('users') && PRESERVED_TABLES.includes('entitlements') && PRESERVED_TABLES.includes('friends'));
   console.log('PASS: ' + checks + ' launch-reset checks; synthetic data only, no hosted operation');
 } finally { fs.rmSync(temp, { recursive: true, force: true }); }

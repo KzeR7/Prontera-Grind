@@ -1,4 +1,5 @@
-// POST /api/shop/checkout { sku, qty } -> { ok, order, url, fulfilled }
+// POST /api/shop/checkout { sku, qty, amount? } -> { ok, order, url, fulfilled }
+// `amount` (whole cents) is only read for a donation, whose SKU has a floor price instead of a fixed one.
 //
 // Creates a pending shop_orders row and a Stripe Checkout Session for it; the client sends the
 // player to `url`. Stripe tells us about the payment on /api/shop/webhook (and /api/shop/order
@@ -8,7 +9,7 @@
 import { currentUser } from '../../_lib/auth.js';
 import { json, guard, readJson, fail } from '../../_lib/http.js';
 import * as db from '../../_lib/db.js';
-import { findSku, newOrderId, orderShape, fulfillOrder, createCheckoutSession, returnUrls, paymentsLive, fakeCheckout, ownedSkus, shopInstalled, bundleSkus, NOT_INSTALLED, CATALOG } from '../../_lib/shop.js';
+import { findSku, newOrderId, orderShape, fulfillOrder, createCheckoutSession, returnUrls, paymentsLive, fakeCheckout, ownedSkus, shopInstalled, bundleSkus, donationAmount, money, NOT_INSTALLED, CATALOG } from '../../_lib/shop.js';
 import PGShop from '../../../assets/shop-catalog.js';
 
 export const onRequestPost = guard(async ({ request, env }) => {
@@ -20,13 +21,24 @@ export const onRequestPost = guard(async ({ request, env }) => {
   const live = paymentsLive(env), fake = !live && fakeCheckout(env);
   if (!live && !fake) return fail('The Cash Shop is not taking payments yet.', 503, { shopOff: true });
 
-  const body = await readJson(request, 2048);
+  const body = await readJson(request, 4096);
   const sku = String(body.sku || '');
   const item = PGShop.SKU_RE.test(sku) ? findSku(sku) : null;
   if (!item) return fail('That item is not for sale.', 400);
   const qty = Number(body.qty ?? 1);
   if (!Number.isInteger(qty) || qty < 1 || qty > item.maxQty) return fail('Choose between 1 and ' + item.maxQty + ' of those.', 400);
   const owned = await ownedSkus(D, user.id);
+  // v3: a donation is the one item whose price comes from the player. `amount` is in whole cents and
+  // is clamped HERE from the catalog's floor/step, so a hand-made request cannot underpay, and there
+  // is deliberately no owned/empty check: paying again is the point.
+  const donation = item.kind === 'donation';
+  let amount = item.price * qty;
+  if (donation) {
+    if (body.amount === undefined || body.amount === null || body.amount === '') return fail('Choose how much to donate (at least ' + money(item.floor, CATALOG.currency) + ').', 400);
+    const asked = Number(body.amount);
+    if (!Number.isFinite(asked) || asked <= 0) return fail('Choose how much to donate (at least ' + money(item.floor, CATALOG.currency) + ').', 400);
+    amount = donationAmount(item, Math.floor(asked));
+  }
   if (item.kind === 'cosmetic' && owned.has(sku)) return fail('You already own ' + item.name + '.', 409, { owned: true });
   // v2: a bundle whose wardrobe is already complete would charge for nothing, so it is refused here
   // and the panel says why. The server rolls the contents again at delivery - never the client.
@@ -35,7 +47,7 @@ export const onRequestPost = guard(async ({ request, env }) => {
   const rate = await db.hitRate(D, 'shop-checkout:' + user.id, 12, 10 * 60 * 1000);
   if (!rate.ok) return fail('Too many checkout attempts. Try again in a few minutes.', 429);
 
-  const order = { id: newOrderId(), user_id: user.id, sku, quantity: qty, amount: item.price * qty, currency: CATALOG.currency, created_at: Date.now() };
+  const order = { id: newOrderId(), user_id: user.id, sku, quantity: qty, amount, currency: CATALOG.currency, created_at: Date.now() };
   await D.prepare(`INSERT INTO shop_orders(id, user_id, sku, quantity, amount, currency, status, stripe_session, created_at)
                    VALUES(?, ?, ?, ?, ?, ?, 'pending', ?, ?)`)
     .bind(order.id, order.user_id, order.sku, order.quantity, order.amount, order.currency, fake ? 'fake_' + order.id : null, order.created_at).run();

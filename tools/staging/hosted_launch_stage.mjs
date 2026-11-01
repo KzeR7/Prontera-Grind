@@ -14,16 +14,17 @@ const PAYLOAD_SHA256 = '__LAUNCH_PACKAGE_SHA256__';
 const BASE = '7511a03c0787ec9b8d94cfc6658570ac402dc297';
 const DB_NAME = 'pg-staging', DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
 const PROJECT = 'prontera-grind-staging';
-const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js','assets/ui/eclipse.css',
-  'functions/_lib/db.js','functions/_lib/echo-board.js',
-  'functions/_lib/validate.js','functions/_lib/damage-monitor.js','functions/_lib/competition-baseline.js',
-  'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js',
-  'functions/_lib/gate-binding.js','functions/_lib/shop.js','functions/api/save.js',
-  'functions/api/board.js','functions/api/_middleware.js','functions/api/gm/damage.js',
+const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js','assets/ui/eclipse.css',
+ 'functions/_lib/db.js','functions/_lib/echo-board.js','functions/_lib/http.js','functions/_lib/friends.js',
+ 'functions/_lib/validate.js','functions/_lib/damage-monitor.js','functions/_lib/competition-baseline.js',
+ 'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js',
+ 'functions/_lib/gate-binding.js','functions/_lib/shop.js','functions/api/save.js',
+ 'functions/api/board.js','functions/api/_middleware.js','functions/api/social.js','functions/api/friends.js',
+ 'functions/api/shop/checkout.js','functions/api/gm/damage.js',
   // v263: the write-pause control endpoint travels with the candidate; it 404s without the GATE binding.
   'functions/api/gate.js','migrations/0008_damage_monitoring.sql',
   'migrations/0009_competition_settlement.sql','migrations/0010_competition_baseline.sql',
-  'migrations/0011_unverified_echo_launch.sql'];
+  'migrations/0011_unverified_echo_launch.sql','migrations/0012_friends.sql'];
 const CONFIG = `name = "${PROJECT}"\ncompatibility_date = "2026-10-01"\npages_build_output_dir = "dist"\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "${DB_NAME}"\ndatabase_id = "${DB_ID}"\n`;
 const schemas = {
   damage_samples:['user_id','slot','bucket','sampled_at','map','stage','reported_total_damage','reported_echo_best'],
@@ -201,7 +202,7 @@ async function main(){
   for(const table of Object.keys(schemas))verifySchema(table,db.exec(`PRAGMA table_info(${table});`));
   // Execute only reviewed additive files against the verified isolated DB.
   // Remote --file uses D1 import and may temporarily pause *staging* traffic.
-  for(const migration of ['0009_competition_settlement.sql','0010_competition_baseline.sql','0011_unverified_echo_launch.sql'])
+  for(const migration of ['0009_competition_settlement.sql','0010_competition_baseline.sql','0011_unverified_echo_launch.sql','0012_friends.sql'])
     wrangler(temp,['d1','execute','DB','--remote','--file=migrations/'+migration]);
   console.log('Verified pg-staging and applied additive staging schema. Deploying staging project only...');
   const token=randomBytes(32).toString('hex'),marker=`damage-stage:${token}`;

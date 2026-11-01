@@ -19,7 +19,7 @@ const settle=async(n=6)=>{for(let i=0;i<n;i++)await tick()};
  // Shape check, not a pinned number: the shop ships with whatever build index.html carries, and a
  // pinned tag (this used to test for haven-v226) goes stale on every bump without proving anything.
  assert.ok(/^20\d\d-\d\d-\d\d haven-v\d{3} \S/.test(ev('BUILD')),'the build tag is a dated, versioned label');
- assert.equal(ev("PGShop.catalog(PGWardrobe).items.length"),68,'52 cosmetics + 2 bundles + 14 supplies');
+ assert.equal(ev("PGShop.catalog(PGWardrobe).items.length"),69,'52 cosmetics + 2 bundles + 14 supplies + 1 donation tier');
  // ---- the wardrobe preview loader, as in wardrobe_game_sim ------------------------------------------
  ev(`window.matchMedia=()=>({matches:false});window.__saveCount=0;save=()=>{__saveCount++};window.__logs=[];log=(m,c,cat)=>__logs.push(String(m));S.sex='f';S.cls='Lord Knight';`);
  g.window.__catalogs={};g.window.__metadatas={};
@@ -122,6 +122,49 @@ const settle=async(n=6)=>{for(let i=0;i<n;i++)await tick()};
  ev(`shopBuy('cos:facewear:glasses')`);await settle();ev(`__orders.ord_3.status='expired';shopPoll()`);await settle();
  assert.equal(ev('SHOP.pending'),null);assert.match(ev('SHOP.note'),/expired/);assert.equal(ev("shopOwns('cos:facewear:glasses')"),false);
 
+ // ---- 5b. donations: a tab of their own, a player-chosen amount, and a repeat that is just a donation ----
+ ev(`tabs.length=0;tabs.push('shop');SHOP.view='cosmetics';SHOP.note='';renderWin()`);h=ev("$('wins').innerHTML");
+ assert.ok(h.includes('data-v="view:donations"')&&h.includes('Donations'),'the donation has its own tab');
+ ev(`ACT.shop('view:donations')`);h=ev("$('wins').innerHTML");
+ assert.ok(h.includes('data-shop-donate="don:all-cosmetics"'),'the amount box is there');
+ assert.ok(h.includes('Minimum $20.00')&&h.includes('no maximum'),'the floor and the open ceiling are stated');
+ assert.equal(ev("document.querySelector('[data-shop-donate]').value"),'20.00','the box starts at the floor, not at nothing');
+ const chips=Array.from(ev("[...document.querySelectorAll('.shop-donation-quick button')].map(b=>b.getAttribute('data-v'))"));
+ assert.deepEqual(chips,['donate:don:all-cosmetics:2000','donate:don:all-cosmetics:2500','donate:don:all-cosmetics:3000','donate:don:all-cosmetics:4000','donate:don:all-cosmetics:6000'],'five quick picks above the floor, the last a real stretch');
+ assert.match(ev("document.querySelector('.shop-donation-effect').textContent"),/unlocks the 51 cosmetic[s]? you do not own yet/,'the card says what THIS payment would do');
+ // The typed amount is what is charged - not the chip, not the floor.
+ ev(`document.querySelector('[data-shop-donate]').value='35.00';ACT.shop('donate:don:all-cosmetics:0')`);await settle();
+ assert.equal(ev("JSON.stringify(__calls.filter(c=>c[0]==='/shop/checkout').at(-1)[2])"),JSON.stringify({sku:'don:all-cosmetics',qty:1,amount:3500}),'35.00 is sent as 3500 cents');
+ assert.equal(ev('SHOP.pending.name'),'Donor: every cosmetic unlocked · $35.00','the pending line names the money');
+ assert.equal(ev("localStorage.getItem('pg_shop_donation_skill-test')"),JSON.stringify({'don:all-cosmetics':3500}),'the amount is remembered for next time');
+ ev(`ACT.shop('view:donations')`);assert.equal(ev("document.querySelector('[data-shop-donate]').value"),'35.00','and the box offers it again');
+ // A first payment delivers what was missing.
+ const donationOrder=ev('SHOP.pending.id');
+ // The server unlocked the wardrobe; the mock catalog now answers with every cosmetic, as it would.
+ // The order deliberately carries NO `bundle` field: the real order shape has none, so the panel must
+ // learn what arrived from ownership instead of from a field that never comes back.
+ ev(`__owned=PGShop.catalog(PGWardrobe).items.filter(i=>i.kind==='cosmetic').map(i=>i.sku);
+  __orders[${JSON.stringify(donationOrder)}].status='fulfilled';__orders[${JSON.stringify(donationOrder)}].amount=3500;shopPoll()`);await settle();
+ assert.equal(ev('SHOP.pending'),null);
+ assert.match(ev('SHOP.note'),/Thank you for donating \$35\.00[^]*51 cosmetics were unlocked/,'the unlock count comes from what ownership gained');
+ assert.ok(ev("__logs.some(m=>m.includes('Thank you for donating $35.00'))"),'the player is thanked in the log');
+ assert.equal(ev("localStorage.getItem('pg_shop_donated_skill-test')"),'3500','the running total is kept per account');
+ // Paying again is expected, not an error: the same card, nothing new unlocked, still fulfilled.
+ assert.match(ev("document.querySelector('.shop-donation-effect').textContent"),/You already own all \d+ cosmetics[^]*simply a donation/,'the card explains a repeat before it happens');
+ ev(`document.querySelector('[data-shop-donate]').value='25.00';ACT.shop('donate:don:all-cosmetics:0')`);await settle();
+ assert.equal(ev("JSON.stringify(__calls.filter(c=>c[0]==='/shop/checkout').at(-1)[2])"),JSON.stringify({sku:'don:all-cosmetics',qty:1,amount:2500}));
+ assert.equal(ev('SHOP.noteKind'),'');assert.ok(!/already own|error/i.test(ev('SHOP.note')),'no refusal is shown for a repeat');
+ const secondOrder=ev('SHOP.pending.id');
+ ev(`__orders[${JSON.stringify(secondOrder)}].status='fulfilled';__orders[${JSON.stringify(secondOrder)}].amount=2500;__orders[${JSON.stringify(secondOrder)}].bundle=[];shopPoll()`);await settle();
+ assert.match(ev('SHOP.note'),/straight donation/);assert.equal(ev("localStorage.getItem('pg_shop_donated_skill-test')"),'6000','donations add up');
+ // A chip is a shortcut into the box, and typing below the floor is raised to it rather than refused.
+ ev(`ACT.shop('view:donations');ACT.shop('donate:don:all-cosmetics:6000')`);await settle();
+ assert.equal(ev("document.querySelector('[data-shop-donate]').value"),'60.00');
+ ev(`document.querySelector('[data-shop-donate]').value='5';ACT.shop('donate:don:all-cosmetics:0')`);await settle();
+ assert.equal(ev("JSON.stringify(__calls.filter(c=>c[0]==='/shop/checkout').at(-1)[2])"),JSON.stringify({sku:'don:all-cosmetics',qty:1,amount:2000}),'below the floor is clamped, not sent as 500');
+ const thirdOrder=ev('SHOP.pending.id');
+ ev(`__orders[${JSON.stringify(thirdOrder)}].status='expired';shopPoll()`);await settle();
+ assert.equal(ev('SHOP.pending'),null);assert.match(ev('SHOP.note'),/expired/);assert.equal(ev("localStorage.getItem('pg_shop_donated_skill-test')"),'6000','an abandoned payment is not counted');
  // ---- 6. the server said no: the look is stripped and pushed again, the character is untouched ---------
  ev(`S.appearance={...S.appearance,headwear:'halo',facewear:'glasses'};S.zeny=777;CLOUD.dirty=true;CLOUD.ver=1;CLOUD.lastPush=0;CLOUD.paused=false;CLOUD.pushing=false;
   window.__puts=0;window.__putAnswer=b=>{__puts++;const blob=JSON.parse(b.blob);const locked=PGShop.wornSkus(PGWardrobe,blob.appearance).filter(s=>!['cos:backwear:wings'].includes(s));return locked.length?{status:409,body:{err:'This look uses Cash Shop items this account does not own.',cosmeticLocked:true,locked}}:{status:200,body:{version:2}}};`);

@@ -221,6 +221,14 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-01 (`haven-v273` gate result): 183 suites, 183 pass, 0 fail, 0 dependency skips.**
+`skill_balance_sim.js` — the last known-red row — is green: the three progression fixtures
+were regenerated with `--reuse-baseline`, and **all 126 measurements came back byte-identical**.
+Only `sourceHash`/`combatHash` moved, because the hashed slice runs from `const RAR=` to the
+reforge marker and therefore contains `UI_ICONS` (a new `friends` glyph was added) and
+`const BUILD`. No budget was changed and no measurement was re-rolled, so this is a re-hash of
+an unchanged combat surface, not a loosened gate. New suites: `friends_sim.js` (14 checks) and `friends_ui_sim.js` (the panel in the real page).
+
 ### The known-red baseline (measured 2026-10-26, re-measured 2026-10-28)
 
 136 checks: **129 pass, 7 fail.** Those seven fail identically on the untouched base
@@ -381,6 +389,7 @@ the page or the server.
 | Shop | `shop_api_sim` (Pages Functions + in-memory D1), `shop_sim` (the page in jsdom), `ascension_drop_shop_sim`, `dev_server_sim` |
 | GM tools and leaderboard | `gm_console_sim`, `gm_tools_sim`, `gm_auth_sim`, `gm_presets_sim`, `gm_setup_sim`, `leaderboard_sim` |
 | Social hub | `social_sim`, `social_ui_sim`, `social_scene_sim`, `social_config_sim`, `social_api_sim.mjs`, `social_worker_sim.mjs` |
+| Friends (accounts, not saves) | `friends_sim` (migration, auth, one-way request, limits, privacy, audit rows, per-viewer plaza flags), `friends_ui_sim` (the panel in jsdom: add box, accept, unfriend, dock badge, chat name menu, sign-out wipe) |
 | Publishing and build labels | `publish_sim` (builds `dist/`), `update_watch_sim` (the `BUILD` mirrors) |
 | Smoke (boot the real page) | `field_loop_smoke`, `save_owner_boot_smoke`, `panel_layout_smoke` |
 
