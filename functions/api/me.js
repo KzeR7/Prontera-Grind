@@ -12,5 +12,8 @@ export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
   if (!user) return json({ err: 'Not logged in.' }, 401);
   const row = await userById(env.DB, user.id);
-  return json({ u: user.username, gm: user.gm, recoverySet: !!row?.recovery_hash });
+  // v280: `id` lets the client stamp its save with the durable account identity, so a rename (which
+  // changes the name, never the id) cannot strand the save. It is the caller's own id and nothing
+  // else, so exposing it reveals nothing about other accounts.
+  return json({ u: user.username, id: user.id, gm: user.gm, recoverySet: !!row?.recovery_hash });
 });

@@ -61,7 +61,9 @@ export const onRequestPost = guard(async ({ request, env }) => {
   // /api/save), which is the server-observed return the offline reward is timed from.
   await db.logEvent(D, user.username, user.id, 'login', null);
 
-  return json({ u: user.username, gm: user.gm }, 200, { 'Set-Cookie': sessionCookie(token) });
+  // v280: the login answer carries the durable account id, so the very first sync can stamp the save
+  // with it instead of waiting for a later /api/me poll.
+  return json({ u: user.username, id: user.id, gm: user.gm }, 200, { 'Set-Cookie': sessionCookie(token) });
 });
 
 export const onRequestDelete = guard(async ({ request, env }) => {
