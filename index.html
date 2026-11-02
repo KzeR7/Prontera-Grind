@@ -912,12 +912,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=293">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=294">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=293">
-<link rel="stylesheet" href="assets/social-fishing.css?v=293">
+<link rel="stylesheet" href="assets/social.css?v=294">
+<link rel="stylesheet" href="assets/social-fishing.css?v=294">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-02 haven-v293 crucible champion sized above the hero';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-03 haven-v294 fishing locks and painted fish';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3111,7 +3111,7 @@ const PET_SKILLS=[
   {id:'thunderclap',n:'Thunderclap',kind:'aoe',power:1.25,radius:4,cd:12,desc:'AoE: 1.25× pet damage to enemies within 4 units',vfx:'jup',color:'#8fe9ff',icon:'⚡'},
   {id:'piercingfang',n:'Piercing Fang',kind:'single',power:2.0,cd:10,desc:'Single target: 2.0× pet damage',vfx:'spiral',color:'#ff9dff',icon:'🗡️'},
   {id:'spiritbolt',n:'Spirit Bolt',kind:'single',power:2.25,cd:11,desc:'Single target: 2.25× pet damage',vfx:'soulb',color:'#fff3a0',icon:'✧'},
-  {id:'treasuresniff',n:'Treasure Sniff',kind:'utility',effect:'zeny',value:40,cd:35,desc:'Utility: finds 40 Zeny, no combat damage',vfx:'aid',color:'#ffd23f',icon:'🪙'},
+  {id:'treasuresniff',n:'Treasure Sniff',kind:'utility',effect:'zeny',value:40,cd:35,desc:'Utility: finds 40 Zeny, no combat damage',vfx:'aid',color:'#ffd23f',icon:'💰'},
   {id:'warmnuzzle',n:'Warm Nuzzle',kind:'utility',effect:'heal',value:3,cd:32,desc:'Utility: restores 3% of Max HP, no combat damage',vfx:'aid',color:'#ff9db8',icon:'💞'},
   {id:'guardingchirp',n:'Guarding Chirp',kind:'utility',effect:'def',value:5,duration:20,cd:40,desc:'Utility: +5 DEF for 20s, no combat damage',vfx:'coat',color:'#8fe9ff',icon:'🛡️'},
   {id:'tailwag',n:'Tail Wag',kind:'utility',effect:'comfort',cd:28,desc:'Utility: a cosmetic morale emote, no combat damage',vfx:'aid',color:'#fff3a0',icon:'✨'}
@@ -7785,7 +7785,7 @@ const DAILY_WHEEL_SEGMENTS=[
   {id:'elu',resource:'elu',amount:15,badge:'×15',rate:33,label:'15 × Elunium',short:'Elunium',desc:'Armor refinement ore (33%)',weight:33,color:'#1b4f8c',colorInner:'#0d213d',accent:'#9ad4ff',tier:'common',icon:'🛡'},
   {id:'buff_zeny',buff:'zeny',durationMin:30,pct:30,badge:'+30%',rate:11,label:'+30% Zeny Gain for 30 mins',short:'+30% Zeny',desc:'30-minute monster Zeny boost (11%)',weight:11,color:'#8f6510',colorInner:'#382605',accent:'#ffe885',tier:'uncommon',icon:'💰'},
   {id:'buff_exp',buff:'exp',durationMin:30,pct:30,badge:'+30%',rate:11,label:'+30% Base & Job EXP for 30 mins',short:'+30% EXP',desc:'30-minute Base & Job EXP boost (11%)',weight:11,color:'#146c52',colorInner:'#092b21',accent:'#88f7cb',tier:'uncommon',icon:'⚡'},
-  {id:'zeny_pouch',zeny:500000,badge:'500K',rate:7,label:'Instant Zeny Pouch (500,000 Zeny)',short:'Zeny Pouch',desc:'Instant 500,000 Zeny (7%)',weight:7,color:'#552b94',colorInner:'#21103d',accent:'#dec4ff',tier:'rare',icon:'🪙'},
+  {id:'zeny_pouch',zeny:500000,badge:'500K',rate:7,label:'Instant Zeny Pouch (500,000 Zeny)',short:'Zeny Pouch',desc:'Instant 500,000 Zeny (7%)',weight:7,color:'#552b94',colorInner:'#21103d',accent:'#dec4ff',tier:'rare',icon:'💰'},
   {id:'random_card',randomCard:true,amount:1,badge:'×1 Card',rate:4,label:'1 × Random Monster Card',short:'Monster Card',desc:'Random non-boss Monster Card (4%)',weight:4,color:'#8a225a',colorInner:'#360c24',accent:'#ffb8df',tier:'epic',icon:'🃏'},
   {id:'refineScrolls',resource:'refineScrolls',amount:1,badge:'×1 Scroll',rate:1,label:'1 × Refine Protection Scroll',short:'Refine Scroll',desc:'Prevents +5..+10 refine loss (1%)',weight:1,color:'#b86b11',colorInner:'#472404',accent:'#fff3b0',tier:'jackpot',icon:'📜'}
 ];
@@ -12918,10 +12918,10 @@ setInterval(updateWatch,60000);
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=293"></script>
-<script src="assets/social-poker.js?v=293"></script>
-<script src="assets/social-scene.js?v=293"></script>
-<script src="assets/social-fishing.js?v=293"></script>
-<script src="assets/social.js?v=293"></script>
+<script src="assets/social-rules.js?v=294"></script>
+<script src="assets/social-poker.js?v=294"></script>
+<script src="assets/social-scene.js?v=294"></script>
+<script src="assets/social-fishing.js?v=294"></script>
+<script src="assets/social.js?v=294"></script>
 </body>
 </html>

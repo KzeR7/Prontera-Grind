@@ -187,6 +187,48 @@ assert(st.coins===bulk.coins&&bulk.coins>0);
 const all=F.sellBulk(st,'all');
 assert.equal(all.sold,3);assert.equal(st.bag.length,0,'sell-everything empties the bag');
 
+// --- v294: keep-locks protect fish from every sale path -----------------------------------
+st=F.normalize(null);
+const lkA=F.addCatch(st,{sp:'minnow',rarity:'common',w:.2},1);
+const lkB=F.addCatch(st,{sp:'minnow',rarity:'common',w:.6},2);
+assert.equal(lkA.lock,false,'catches start unlocked');
+assert.equal(F.toggleLock(st,'nope'),null,'cannot lock a fish you do not own');
+assert.deepEqual(F.toggleLock(st,lkA.id),{ok:true,lock:true},'locking the light dupe');
+assert.deepEqual(F.sellFish(st,lkA.id),{ok:false,reason:'locked'},'a locked fish cannot be sold');
+assert.equal(st.bag.length,2,'the refused sale removed nothing');
+assert.equal(F.sellBulk(st,'dupes').sold,0,'sell-dupes skips the locked dupe (heavy minnow is the keeper)');
+assert.equal(F.sellBulk(st,'all').sold,1,'sell-everything still spares locked fish');
+assert(st.bag.length===1&&st.bag[0].id===lkA.id,'only the locked fish survives');
+assert.deepEqual(F.toggleLock(st,lkA.id),{ok:true,lock:false},'unlock works');
+assert(F.sellFish(st,lkA.id).ok,'an unlocked fish sells normally');
+assert.equal(F.normalize({bag:[{sp:'koi',w:3,lock:true},{sp:'koi',w:2}]}).bag.filter(e=>e.lock).length,1,'locks survive save/load normalization');
+
+// --- v294: auto-sell applies the sell-dupes rule to each fresh catch ----------------------
+st=F.normalize(null);
+assert.equal(st.settings.autoSell,false,'auto-sell ships opt-in (off)');
+const as1=F.addCatch(st,{sp:'minnow',rarity:'common',w:.6},1);
+const as2=F.addCatch(st,{sp:'minnow',rarity:'common',w:.2},2);
+assert.equal(F.shouldAutoSell(st,as2),false,'auto-sell never fires while the setting is off');
+st.settings.autoSell=true;
+assert.equal(F.shouldAutoSell(st,as2),true,'a lighter dupe auto-sells');
+assert.equal(F.shouldAutoSell(st,as1),false,'the heaviest of a species is kept');
+const as3=F.addCatch(st,{sp:'minnow',rarity:'common',w:.1,mut:'shiny'},3);
+assert.equal(F.shouldAutoSell(st,as3),false,'mutated fish are never auto-sold');
+const as4=F.addCatch(st,{sp:'koi',rarity:'rare',w:1},4);
+assert.equal(F.shouldAutoSell(st,as4),false,'a new species is always kept');
+F.toggleLock(st,as2.id);
+assert.equal(F.shouldAutoSell(st,as2),false,'locked fish are never auto-sold');
+F.toggleLock(st,as2.id);
+assert.equal(F.normalize({settings:{autoSell:true}}).settings.autoSell,true,'the auto-sell setting persists');
+
+// --- v294: painted fish art + movement lock exports ----------------------------------------
+assert.equal(typeof F.fishSprite,'function');
+assert.equal(typeof F.fishSpriteURL,'function');
+assert.equal(F.fishSprite('minnow',null,64),null,'no canvas 2D here - painter degrades to null instead of throwing');
+assert.equal(F.fishSpriteURL('minnow','golden',64),null,'sprite URLs degrade to null without canvas');
+assert.equal(typeof F.busy,'function');
+assert.equal(F.busy(),false,'not fishing yet - the plaza movement lock stays open');
+
 // --- bag + bestiary + show-off ------------------------------------------------------------
 st=F.normalize(null);
 const entry=F.addCatch(st,{sp:'koi',rarity:'rare',w:4.25,mut:'shiny',perfect:true},1700000000000);

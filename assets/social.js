@@ -30,7 +30,7 @@ function saveWorldHistory(){
 const chat=document.createElement('section');chat.id='socialChat';chat.setAttribute('aria-label','Player chat');
 chat.innerHTML='<div id="socialTabs" role="tablist" aria-label="Chat channels"></div><div id="socialLines" role="log" aria-label="Chat messages"></div><div id="socialEmoji" hidden></div><form id="socialCompose"><input id="socialTo" aria-label="Whisper recipient" placeholder="Player name" maxlength="32" hidden><input id="socialInput" aria-label="Message" placeholder="Press Enter to chat" maxlength="300" autocomplete="off"><button id="socialEmojiToggle" type="button" aria-label="Choose an emotion" aria-expanded="false" aria-controls="socialEmoji">Emoji</button><button id="socialSend" type="submit">Send</button></form><div id="socialStatus"><span id="socialConnection">Connecting…</span><button id="socialNew" type="button" hidden>New messages ↓</button></div><span id="socialResizeTop" data-resize="n" aria-hidden="true" title="Drag top edge to resize chat"></span><span id="socialResizeCorner" data-resize="ne" aria-hidden="true" title="Drag corner to resize chat"></span><span id="socialResize" data-resize="ne" role="separator" tabindex="0" aria-label="Resize chat; drag the top or right edge, corner, or use arrow keys" aria-orientation="vertical" title="Drag to resize chat"></span><div id="socialPeople" hidden></div>';
 $id('view').append(chat);$id('feedWrap').hidden=true;$id('feedWrap').style.display='none';
-const hub=document.createElement('section');hub.id='socialHub';hub.hidden=true;hub.setAttribute('aria-label','Prontera Fountain Plaza');hub.innerHTML='<div id="socialScene"></div><div id="socialLabels"></div><div id="socialHubToolbar"><header id="socialHubHeader"><div class="social-hub-title-row"><h2>Fountain Plaza</h2><select id="socialRoomSelect" aria-label="Switch plaza room" title="Switch Plaza server room" hidden></select></div><p id="socialPopulation">Joining plaza…</p></header><div id="socialHubControls"><button id="socialPokerBtn" type="button" title="Open Fountain Plaza Hold\'em"><span id="socialPokerBtnText">🃏 Hold\'em</span><i id="socialPokerDot" hidden></i></button><button id="socialFishBtn" type="button" title="Fish at the South Lawn ponds — cast, reel and fill your Fishing Bag" aria-pressed="false">🎣 Fishing</button><button id="socialSit" title="Sit or stand (Insert)">Sit · Insert</button><button id="socialCamera" aria-expanded="false" aria-controls="socialCameraPanel">Camera</button><button id="socialCameraReset">Reset view</button><details id="socialHubHelp"><summary aria-label="Plaza controls">?</summary><p>Click / tap to walk<br>Click a metal bench (2 seats each) or poker stool to sit<br>Click a Dealer or 🃏 Hold\'em to play Texas Hold\'em<br>Click a South Lawn pond or 🎣 Fishing to cast — catches go to the Fishing Bag<br>▶ Auto fishes for you · sell catches for Fishcoins to buy rods &amp; bait · drag the fishing windows anywhere<br>20 players per Plaza — 21+ auto-opens Plaza 2, 3… (or switch rooms above)<br>Drag to rotate / tilt around your character · Scroll / pinch to zoom<br>Farming continues in your selected field.</p></details><button id="socialLeave">Return to field</button></div></div><div id="socialCameraPanel" hidden><label>Rotate <input id="socialOrbit" type="range" min="-180" max="180" value="0"></label><label>Tilt <input id="socialTilt" type="range" min="26" max="77" value="45"></label><label>Zoom <input id="socialZoom" type="range" min="22" max="72" value="44"></label></div><button id="socialPokerMini" type="button" hidden></button><section id="socialPokerModal" role="dialog" aria-label="Fountain Plaza Hold\'em" hidden><header id="socialPokerHead"><div class="poker-head-title"><strong id="socialPokerHeadTitle">🃏 Plaza Hold\'em · Table 1</strong><small id="socialPokerRoomSub">Dealer Vane · Blinds 10 / 20 · AFK Kick 2×</small></div><div class="poker-head-right"><span id="socialPokerWalletPill" class="poker-wallet-pill">🪙 1,000 Chips</span><button id="socialPokerMinBtn" type="button" title="Minimize table (shows live timer &amp; turn alert)" aria-label="Minimize poker table">—</button><button id="socialPokerCloseBtn" type="button" title="Close poker window" aria-label="Close poker window">✕</button></div></header><nav id="socialPokerNav" role="tablist" aria-label="Poker sections"><button type="button" role="tab" data-ptab="t0" aria-selected="true">♠ Table 1 <small id="pokerTabCount0">0/6</small></button><button type="button" role="tab" data-ptab="t1" aria-selected="false">♠ Table 2 <small id="pokerTabCount1">0/6</small></button><button type="button" role="tab" data-ptab="bank" aria-selected="false">🪙 Chip Bank <i id="pokerBankFreeDot" hidden>!</i></button><button type="button" role="tab" data-ptab="gifts" aria-selected="false" aria-disabled="true" class="is-locked" title="Locked — rewards coming in a later update">🔒 Gift Exchange <small>Later</small></button><span id="socialPokerToast" hidden role="status" aria-live="polite"></span></nav><div id="socialPokerBody"></div><div id="socialPokerResult" hidden aria-live="polite"></div></section>';$id('view').append(hub);
+const hub=document.createElement('section');hub.id='socialHub';hub.hidden=true;hub.setAttribute('aria-label','Prontera Fountain Plaza');hub.innerHTML='<div id="socialScene"></div><div id="socialLabels"></div><div id="socialHubToolbar"><header id="socialHubHeader"><div class="social-hub-title-row"><h2>Fountain Plaza</h2><select id="socialRoomSelect" aria-label="Switch plaza room" title="Switch Plaza server room" hidden></select></div><p id="socialPopulation">Joining plaza…</p></header><div id="socialHubControls"><button id="socialPokerBtn" type="button" title="Open Fountain Plaza Hold\'em"><span id="socialPokerBtnText">🃏 Hold\'em</span><i id="socialPokerDot" hidden></i></button><button id="socialFishBtn" type="button" title="Fish at the South Lawn ponds — cast, reel and fill your Fishing Bag" aria-pressed="false">🎣 Fishing</button><button id="socialSit" title="Sit or stand (Insert)">Sit · Insert</button><button id="socialCamera" aria-expanded="false" aria-controls="socialCameraPanel">Camera</button><button id="socialCameraReset">Reset view</button><details id="socialHubHelp"><summary aria-label="Plaza controls">?</summary><p>Click / tap to walk<br>Click a metal bench (2 seats each) or poker stool to sit<br>Click a Dealer or 🃏 Hold\'em to play Texas Hold\'em<br>Click a South Lawn pond or 🎣 Fishing to cast — catches go to the Fishing Bag<br>▶ Auto fishes for you · sell catches for Fishcoins to buy rods &amp; bait · drag the fishing windows anywhere<br>20 players per Plaza — 21+ auto-opens Plaza 2, 3… (or switch rooms above)<br>Drag to rotate / tilt around your character · Scroll / pinch to zoom<br>Farming continues in your selected field.</p></details><button id="socialLeave">Return to field</button></div></div><div id="socialCameraPanel" hidden><label>Rotate <input id="socialOrbit" type="range" min="-180" max="180" value="0"></label><label>Tilt <input id="socialTilt" type="range" min="26" max="77" value="45"></label><label>Zoom <input id="socialZoom" type="range" min="22" max="72" value="44"></label></div><button id="socialPokerMini" type="button" hidden></button><section id="socialPokerModal" role="dialog" aria-label="Fountain Plaza Hold\'em" hidden><header id="socialPokerHead"><div class="poker-head-title"><strong id="socialPokerHeadTitle">🃏 Plaza Hold\'em · Table 1</strong><small id="socialPokerRoomSub">Dealer Vane · Blinds 10 / 20 · AFK Kick 2×</small></div><div class="poker-head-right"><span id="socialPokerWalletPill" class="poker-wallet-pill"><i class="fishcoin" aria-hidden="true"></i> 1,000 Chips</span><button id="socialPokerMinBtn" type="button" title="Minimize table (shows live timer &amp; turn alert)" aria-label="Minimize poker table">—</button><button id="socialPokerCloseBtn" type="button" title="Close poker window" aria-label="Close poker window">✕</button></div></header><nav id="socialPokerNav" role="tablist" aria-label="Poker sections"><button type="button" role="tab" data-ptab="t0" aria-selected="true">♠ Table 1 <small id="pokerTabCount0">0/6</small></button><button type="button" role="tab" data-ptab="t1" aria-selected="false">♠ Table 2 <small id="pokerTabCount1">0/6</small></button><button type="button" role="tab" data-ptab="bank" aria-selected="false"><i class="fishcoin" aria-hidden="true"></i> Chip Bank <i id="pokerBankFreeDot" hidden>!</i></button><button type="button" role="tab" data-ptab="gifts" aria-selected="false" aria-disabled="true" class="is-locked" title="Locked — rewards coming in a later update">🔒 Gift Exchange <small>Later</small></button><span id="socialPokerToast" hidden role="status" aria-live="polite"></span></nav><div id="socialPokerBody"></div><div id="socialPokerResult" hidden aria-live="polite"></div></section>';$id('view').append(hub);
 const leaveWarning=document.createElement('div');leaveWarning.id='socialPokerLeaveWarning';leaveWarning.hidden=true;
 leaveWarning.innerHTML='<section class="poker-leave-card" role="dialog" aria-modal="true" aria-labelledby="pokerLeaveTitle" aria-describedby="pokerLeaveCopy"><span class="poker-leave-eyebrow">YOU’RE STILL AT THE TABLE</span><h2 id="pokerLeaveTitle">Leave this poker game?</h2><p id="pokerLeaveCopy"></p><p class="poker-leave-note">You can minimize the table instead and keep playing.</p><div class="poker-leave-actions"><button id="pokerLeaveStay" type="button" class="poker-primary-btn">Stay at table</button><button id="pokerLeaveConfirm" type="button" class="poker-danger-btn">Fold &amp; leave</button></div></section>';
 $id('view').append(leaveWarning);
@@ -296,7 +296,7 @@ function syncPokerBadges(){
  const dot=$id('socialPokerDot'),bankDot=$id('pokerBankFreeDot'),pill=$id('socialPokerWalletPill');
  if(dot)dot.hidden=!freeReady;
  if(bankDot)bankDot.hidden=!freeReady;
- if(pill)pill.textContent=`🪙 ${w.chips.toLocaleString()} Chips`;
+ if(pill)pill.innerHTML=`<i class="fishcoin" aria-hidden="true"></i> ${w.chips.toLocaleString()} Chips`;
  const snaps=allPokerSnapshots();
  for(let i=0;i<2;i++){
   const el=$id('pokerTabCount'+i),s=snaps[i];
@@ -412,6 +412,7 @@ function buyPokerChipsWithZeny(packId){
 }
 function pokerSeatAction(globalSeat){
  if(!P||!Number.isInteger(globalSeat)||!R.POKER.seats[globalSeat])return;
+ if(fishingBlocked())return; // v294: stop fishing before taking a poker stool
  const current=seatedPokerSnapshot();
  if(current&&current.me.globalSeat!==globalSeat){confirmPokerLeave(()=>pokerSeatActionConfirmed(globalSeat));return;}
  pokerSeatActionConfirmed(globalSeat);
@@ -603,7 +604,7 @@ function renderPokerMini(){
  btn.hidden=false;
  const mySeat=seated?target.seats[seated.me.seat]:null;
  const cards=mySeat?.cards?.length?mySeat.cards.map(c=>cardHTML(c,true)).join(''):'';
- btn.innerHTML=`<span class="poker-mini-tag">T${(target.tableId||0)+1}</span>${cards?`<span class="poker-mini-cards">${cards}</span>`:''}<span class="poker-mini-pot">Pot 🪙 ${(target.pot||0).toLocaleString()}</span><b id="socialPokerMiniTimer" class="poker-mini-timer">Open</b><i class="poker-mini-bar"><span id="socialPokerMiniBar"></span></i>`;
+ btn.innerHTML=`<span class="poker-mini-tag">T${(target.tableId||0)+1}</span>${cards?`<span class="poker-mini-cards">${cards}</span>`:''}<span class="poker-mini-pot">Pot <i class="fishcoin" aria-hidden="true"></i> ${(target.pot||0).toLocaleString()}</span><b id="socialPokerMiniTimer" class="poker-mini-timer">Open</b><i class="poker-mini-bar"><span id="socialPokerMiniBar"></span></i>`;
  updatePokerTurnClock();
 }
 
@@ -697,7 +698,7 @@ function renderPokerUI(force=false){
    <div class="poker-bank-balances">
     <div>
      <small>PLAZA CHIPS WALLET</small>
-     <strong>🪙 ${w.chips.toLocaleString()}</strong>
+     <strong><i class="fishcoin" aria-hidden="true"></i> ${w.chips.toLocaleString()}</strong>
      <span>${seated?.me?`Table ${seated.tableId+1}: ${onTable.toLocaleString()} · Reserve: ${reserve.toLocaleString()}`:'Ready for Table 1 or Table 2 buy-in'}</span>
     </div>
     <div>
@@ -717,7 +718,7 @@ function renderPokerUI(force=false){
    <div class="poker-pack-grid">
     ${P.ZENY_PACKS.map(pk=>`<div class="poker-pack-card">
      <span class="poker-pack-tag">${escape(pk.label)}</span>
-     <strong>🪙 +${pk.chips.toLocaleString()} Chips</strong>
+     <strong><i class="fishcoin" aria-hidden="true"></i> +${pk.chips.toLocaleString()} Chips</strong>
      <p>${escape(pk.desc)}</p>
      <button type="button" data-zpack="${pk.id}" class="poker-primary-btn" ${curZeny<pk.zeny?'disabled':''}>Buy · ${pk.zeny.toLocaleString()}z</button>
     </div>`).join('')}
@@ -751,7 +752,7 @@ function renderPokerUI(force=false){
    <div class="poker-seat-head"><span class="poker-seat-name">${escape(s.name)}${isMe?' <i>(You)</i>':''}</span>${pucks}${afkWarn}</div>
    <div class="poker-seat-row">
     <div class="poker-seat-cards">${s.cards.length?s.cards.map((c,ci)=>cardHTML(c,true,bestCards.has(c),`t${pokerUI.tableId}h${snap?.handNo||0}s${idx}c${ci}`)).join(''):'<span class="pcard slot sm"></span><span class="pcard slot sm"></span>'}</div>
-    <div class="poker-seat-meta"><span>🪙 ${s.stack.toLocaleString()}</span>${s.streetBet>0?`<b>Bet ${s.streetBet}</b>`:s.lastTag?`<b>${escape(s.lastTag)}</b>`:''}${s.handHint?`<em class="poker-hand-hint">${escape(s.handHint)}</em>`:''}</div>
+    <div class="poker-seat-meta"><span><i class="fishcoin" aria-hidden="true"></i> ${s.stack.toLocaleString()}</span>${s.streetBet>0?`<b>Bet ${s.streetBet}</b>`:s.lastTag?`<b>${escape(s.lastTag)}</b>`:''}${s.handHint?`<em class="poker-hand-hint">${escape(s.handHint)}</em>`:''}</div>
    </div>
   </div>`;
  };
@@ -764,7 +765,7 @@ function renderPokerUI(force=false){
    <div class="poker-seat-head"><span class="poker-seat-name">🃏 ${escape(h.name)} <i>(House)</i></span>${h.isDealer?'<i class="puck d">D</i>':''}${h.isSB?'<i class="puck sb">SB</i>':''}${h.isBB?'<i class="puck bb">BB</i>':''}</div>
    <div class="poker-seat-row">
     <div class="poker-seat-cards">${h.cards.length?h.cards.map((c,ci)=>cardHTML(c,true,bestCards.has(c),`t${pokerUI.tableId}h${snap?.handNo||0}housec${ci}`)).join(''):'<span class="pcard slot sm"></span><span class="pcard slot sm"></span>'}</div>
-    <div class="poker-seat-meta"><span>🪙 ${h.stack.toLocaleString()}</span>${h.streetBet>0?`<b>Bet ${h.streetBet}</b>`:h.lastTag?`<b>${escape(h.lastTag)}</b>`:''}${h.handHint?`<em class="poker-hand-hint">${escape(h.handHint)}</em>`:''}</div>
+    <div class="poker-seat-meta"><span><i class="fishcoin" aria-hidden="true"></i> ${h.stack.toLocaleString()}</span>${h.streetBet>0?`<b>Bet ${h.streetBet}</b>`:h.lastTag?`<b>${escape(h.lastTag)}</b>`:''}${h.handHint?`<em class="poker-hand-hint">${escape(h.handHint)}</em>`:''}</div>
    </div>
   </div>`;
  }else{
@@ -784,7 +785,7 @@ function renderPokerUI(force=false){
    <div class="poker-dock-controls">
     ${w.chips>=P.MIN_BUY_IN?`<label class="poker-buyin-lbl">Buy-in <select id="pokerBuyInSelect">${buyOpts.map(v=>`<option value="${v}"${v===selVal?' selected':''}>${v.toLocaleString()}</option>`).join('')}</select></label>
      ${anyOpen?`<button type="button" id="pokerQuickSitBtn" class="poker-gold-btn">Sit at ${escape(tSpec?.label||'Table')}</button>`:''}`
-     :`<button type="button" data-gotab="bank" class="poker-gold-btn">🪙 Refill Chips (Min ${P.MIN_BUY_IN})</button>`}
+     :`<button type="button" data-gotab="bank" class="poker-gold-btn"><i class="fishcoin" aria-hidden="true"></i> Refill Chips (Min ${P.MIN_BUY_IN})</button>`}
     ${otherSeated?`<button type="button" data-gotab="t${seated.tableId}" class="poker-sub-btn">Go to My Seat (T${seated.tableId+1})</button>`:''}
     <button type="button" data-gotab="bank" class="poker-sub-btn">Chip Bank${w.freeClaimed===0?' (!)':''}</button>
    </div>
@@ -817,11 +818,11 @@ function renderPokerUI(force=false){
   const onTable=(snap.me.stack||0)+(snap.me.pendingAdd||0);
   const reserve=Math.max(0,w.chips-onTable);
   dockHTML=`<div class="poker-dock seated">
-   <span class="poker-dock-lead">Seat <b>${snap.me.seat+1}</b> · Stack <b>🪙 ${snap.me.stack.toLocaleString()}</b>${reserve?` · Reserve <b>${reserve.toLocaleString()}</b>`:''}${snap.me.missedTurns>0?` · <b class="poker-afk-inline">AFK Warning ${snap.me.missedTurns}/${snap.me.afkMax}</b>`:''}</span>
+   <span class="poker-dock-lead">Seat <b>${snap.me.seat+1}</b> · Stack <b><i class="fishcoin" aria-hidden="true"></i> ${snap.me.stack.toLocaleString()}</b>${reserve?` · Reserve <b>${reserve.toLocaleString()}</b>`:''}${snap.me.missedTurns>0?` · <b class="poker-afk-inline">AFK Warning ${snap.me.missedTurns}/${snap.me.afkMax}</b>`:''}</span>
    <div class="poker-dock-controls">
     ${snap.seatedCount===1?`<label class="poker-house-toggle"><input type="checkbox" id="pokerHouseChk" ${snap.vsHouse?'checked':''}> vs. ${escape(dName)}</label>`:''}
     ${snap.me.stack<P.BIG_BLIND&&reserve>=P.BIG_BLIND?`<button type="button" id="pokerQuickTopUp" class="poker-gold-btn">+ Rebuy</button>`:reserve>0?`<button type="button" id="pokerQuickTopUp" class="poker-sub-btn">+ Top Up</button>`:''}
-    <button type="button" data-gotab="bank" class="poker-sub-btn">🪙 Bank${w.freeClaimed===0?' (!)':''}</button>
+    <button type="button" data-gotab="bank" class="poker-sub-btn"><i class="fishcoin" aria-hidden="true"></i> Bank${w.freeClaimed===0?' (!)':''}</button>
     <button type="button" id="pokerStandBtn" class="poker-danger-btn">Stand Up</button>
    </div>
   </div>`;
@@ -835,7 +836,7 @@ function renderPokerUI(force=false){
    <div class="poker-cell s1">${seatHTML(1)}</div>
    <div class="poker-cell felt-slot">
     <div class="poker-felt">
-     <div class="poker-pot-line"><span>POT</span><strong class="${potPulse}">🪙 ${(snap?.pot||0).toLocaleString()}</strong>${snap?.currentBet?`<small>Bet ${snap.currentBet.toLocaleString()}</small>`:''}${snap?.handNo?`<small>#${snap.handNo}</small>`:''}</div>
+     <div class="poker-pot-line"><span>POT</span><strong class="${potPulse}"><i class="fishcoin" aria-hidden="true"></i> ${(snap?.pot||0).toLocaleString()}</strong>${snap?.currentBet?`<small>Bet ${snap.currentBet.toLocaleString()}</small>`:''}${snap?.handNo?`<small>#${snap.handNo}</small>`:''}</div>
      <div class="poker-community" aria-label="Community cards">${comm}</div>
      <p class="poker-banner">${escape(snap?.banner||'Sit at any stool to start Hold\'em.')}</p>
     </div>
@@ -911,11 +912,16 @@ function clearSoloPokerIfSeated(p){
   syncSoloPokerSnapshots();renderPokerMini();renderPokerUI(true);
  }
 }
-function moveAction(x,z){confirmPokerLeave(confirmLeave=>performMoveAction(x,z,confirmLeave))}
+// v294: while a fishing line is in the water you cannot walk, take a seat or toggle sitting -
+// press ✕ Stop fishing (dock or toolbar menu) first. Fishing's own walk-to-pond happens in the
+// 'walking' phase, which busy() does not count.
+function fishingBusy(){const F=FISHING();return !!(F&&typeof F.busy==='function'&&F.busy())}
+function fishingBlocked(){if(!fishingBusy())return false;notice('🎣 You are fishing — press ✕ Stop fishing before moving.');return true}
+function moveAction(x,z){if(fishingBlocked())return;confirmPokerLeave(confirmLeave=>performMoveAction(x,z,confirmLeave))}
 function performMoveAction(x,z,confirmLeave){if(app.room&&send({type:'move',x,z,confirmLeave}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());const route=R.path(p,{x,z});if(!route.length)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=false;p.seat=null;p.pokerSeat=null;putPlayer(p)}
-function seatAction(id){confirmPokerLeave(confirmLeave=>performSeatAction(id,confirmLeave))}
+function seatAction(id){if(fishingBlocked())return;confirmPokerLeave(confirmLeave=>performSeatAction(id,confirmLeave))}
 function performSeatAction(id,confirmLeave){if(app.room&&send({type:'seat',id,confirmLeave}))return;if(app.room||!Number.isInteger(id)||!R.SEATS[id])return;const p=app.players.get(SOLO_ID),seat=R.SEATS[id];if(!p)return;R.advance(p,performance.now());const route=R.path(p,seat);if(!route.length&&Math.hypot(p.x-seat.x,p.z-seat.z)>.5)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=!route.length;p.seat=seat.id;p.pokerSeat=null;if(!route.length){p.x=seat.x;p.z=seat.z}putPlayer(p)}
-function toggleSit(){confirmPokerLeave(confirmLeave=>performToggleSit(confirmLeave))}
+function toggleSit(){if(fishingBlocked())return;confirmPokerLeave(confirmLeave=>performToggleSit(confirmLeave))}
 function performToggleSit(confirmLeave){if(app.room&&send({type:'sit',confirmLeave}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());clearSoloPokerIfSeated(p);p.path=[];p.seat=null;p.pokerSeat=null;p.sit=!p.sit;putPlayer(p)}
 function join(){if(!app.connected)return;send({type:'join',look:currentLook(),friends:[...app.friends]})}
 // v287: plaza fishing. The logic/UI module reads the self position, walks the player to a pond,
