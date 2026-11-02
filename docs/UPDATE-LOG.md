@@ -9647,3 +9647,11 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Files:** `index.html` (constant + v292 comment, BUILD, asset `?v=292`); `docs/GAME-DESIGN.md`, `docs/DECISIONS.md`; build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`); progression fixtures re-measured byte-identical except `sourceHash`/`combatHash`. `tools/tests/job_rite_sim.js` needed no edit — it derives the pinned HP from `JOB_RITE_BOSS_MULT`.
 * **Checks:** `job_rite_sim` 20/20; full gate run this session (see Delivery).
 * **Delivery:** committed to `arena/d86605c0-prontera-grind` and pushed; no deploy performed — owner publishes Pages (client-only change, no Worker or D1 impact).
+
+### 2026-11-02 — `haven-v293 crucible champion sized above the hero`
+
+* **Why:** owner, before the pending PR — the Crucible opponent "is way too small"; he wants it slightly bigger than a player. The six champion sprites (1634–1639) sit in no size table, so `mobVisualScale` fell back to `spriteScale .92 × MOB_REGULAR_VISUAL .7` and the trial boss stood **1.96 world units** next to the **2.16-unit** hero.
+* **Changed:** the rite spawn's `spriteScale` .92 → **1.2**, landing the champion at **2.56 world units ≈ 1.19× the player** — taller than the hero, below the 2.70-unit Ascension field monsters, nowhere near boss bulk. Collision `size`, ATK, HP, timer and rewards untouched.
+* **Files:** `index.html` (spawn line + comment, BUILD v293, asset `?v=293`); `tools/tests/job_rite_sim.js` (two new asserts per class: champion height above `HERO_VISUAL_HEIGHT`, below `ASCENSION_MONSTER_VISUAL`+.1); build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`); progression fixtures re-measured byte-identical except `sourceHash`/`combatHash`.
+* **Checks:** `job_rite_sim` 20/20 with the new size asserts; measured in-harness: 3.05×mobVisualScale = 2.562, ratio 1.186× hero; full gate run this session (see Delivery).
+* **Delivery:** committed to `arena/d86605c0-prontera-grind` and pushed; no deploy — owner publishes Pages after the PR he requested.
