@@ -233,3 +233,13 @@ blinking on hover and sometimes not clickable. The cause was the HUD tick callin
 Display sync and rebuilding the tab buttons several times per second. Display now
 notifies chat only when a visibility class changes, and chat reuses tab nodes; resize
 grips no longer sit above the tab buttons.
+
+### 2026-11-02 — Crucible HP raised to 2× the Abyss MVP (haven-v292)
+
+On launch day the owner's no-card Assassin Cross with only a +4 N+ weapon passed
+the Crucible with about one second left (~3.85M effective DPS against the v211
+bar of 3.72M). The owner asked for a 50–70% HP increase so no-card, minimal-refine
+builds fail: `JOB_RITE_BOSS_MULT` 1.25 → 2 (+60%), i.e. 89,341,585 × 2 =
+178,683,170 HP, requiring ~5.96M DPS inside the unchanged 30-second limit. ATK,
+rewards (none), retry rules and the `nmBossHpOf()` boss-tracking anchor are
+unchanged; `job_rite_sim.js` reads the multiplier so its assertions follow.
