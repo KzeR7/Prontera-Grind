@@ -246,12 +246,16 @@ above the ordinary cap.
 Base progression ends at 150. Do not copy earlier grant curves or pacing estimates
 from historical notes: `totalPts()`, `statCap()`, `needAt()`, `jneed()` and the
 progression/economy tests define current behavior. Base EXP requirements from
-Lv100 onward are 50% higher than the shared reference curve, with existing
-rounding. `needAt()` retains that reference curve for Job requirements and
-contract rewards; `baseNeedAt()` supplies the player Base EXP bar. Existing
-levels and earned EXP are preserved. Offline EXP still uses measured EXP/min,
-50% efficiency and a four-hour cap per claim. The target of roughly five days
-is a balance goal, not a guaranteed duration for every class, build or login schedule.
+Lv100 onward are 4x the shared reference curve, with existing rounding
+(haven-v291: launch players reached Base 150 in under a day because measured
+earned builds clear 4,300-7,500 kills/hour versus the pacing model's 800;
+the owner set the 100-150 band to roughly 2-3 real days of hardcore play
+including capped offline claims). `needAt()` retains that reference curve for
+Job requirements and contract rewards; `baseNeedAt()` supplies the player Base
+EXP bar. Existing levels and earned EXP are preserved. Offline EXP still uses
+measured EXP/min, 50% efficiency and a four-hour cap per claim. The band
+target is a balance goal, not a guaranteed duration for every class, build or
+login schedule.
 
 Nightmare Stage 5 (internal stage 15) redistributes its existing raw EXP budget
 across the MVP and its three/five escorts: the MVP pays at least 25% more than

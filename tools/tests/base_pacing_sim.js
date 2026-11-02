@@ -5,23 +5,23 @@ const g=createGame(),ev=g.ev;let passed=0;
 function test(name,fn){ev('S=fresh();t=0;resetSkillRuntime()');fn();passed++;console.log('  ok '+name)}
 try{
  test('early Base requirements retain their anchors; late requirements match the approved increase',()=>{
-  for(const [level,expected]of [[1,18],[10,360],[50,2870],[70,130000],[99,167000],[100,130000],[120,588000],[140,2114000],[149,3543000]]){
+  for(const [level,expected]of [[1,18],[10,360],[50,2870],[70,130000],[99,167000],[100,346000],[120,1568000],[140,5636000],[149,9448000]]){
    ev(`S.lv=${level}`);assert.equal(ev('need()'),expected,'Base '+level);assert.equal(ev('need()'),ev('baseNeedAt(S.lv)'));
   }
  });
  test('actual level-up keeps EXP carry and awards stat points once at the new threshold',()=>{
-  ev('S.lv=100;S.exp=129999;window.before=S.pts;checkLevel()');assert.equal(ev('S.lv'),100);
+  ev('S.lv=100;S.exp=345999;window.before=S.pts;checkLevel()');assert.equal(ev('S.lv'),100);
   ev('S.exp=need()+123;checkLevel()');assert.equal(ev('S.lv'),101);assert.equal(ev('S.exp'),123);assert.equal(ev('S.pts-before'),24);
   ev('checkLevel()');assert.equal(ev('S.pts-before'),24);
  });
- test('the full late Base EXP budget applies the 50% increase once, with existing rounding',()=>{
+ test('the full late Base EXP budget applies the 4x increase once, with existing rounding',()=>{
   assert.deepEqual(JSON.parse(ev(`JSON.stringify((()=>{
    let early=0,reference=0,late=0;for(let level=1;level<150;level++){
     if(level<100)early+=baseNeedAt(level);else{reference+=needAt(level);late+=baseNeedAt(level);}
-   }return {early,reference,late};})())`)),{early:5197759,reference:38180500,late:57279000});
+   }return {early,reference,late};})())`)),{early:5197759,reference:38180500,late:152722000});
  });
  test('the cap preserves earned levels and uses the increased final requirement',()=>{
-  ev('S.lv=149;S.exp=3543000+500;checkLevel()');assert.equal(ev('S.lv'),150);assert.equal(ev('S.exp'),500);
+  ev('S.lv=149;S.exp=9448000+500;checkLevel()');assert.equal(ev('S.lv'),150);assert.equal(ev('S.exp'),500);
   ev('S.exp=1e9;checkLevel()');assert.equal(ev('S.lv'),150);
  });
  test('old saves preserve level, EXP, stats and Job progression without a refund or reset',()=>{
@@ -46,10 +46,10 @@ try{
  });
  test('an offline claim crosses levels using increased requirements and preserves the remainder',()=>{
   const result=JSON.parse(ev(`JSON.stringify((()=>{
-   const now=Date.UTC(2026,9,14,12);S.lv=99;S.exp=167000-1;S.offlineAt=now-4*3600000;S.offlineIncome={key:'Novice:0:1',at:S.offlineAt,version:1,xp:1100,zeny:0,job:0,kph:0};
+   const now=Date.UTC(2026,9,14,12);S.lv=99;S.exp=167000-1;S.offlineAt=now-4*3600000;S.offlineIncome={key:'Novice:0:1',at:S.offlineAt,version:1,xp:2900,zeny:0,job:0,kph:0};
    const r=applyOfflineProgress(now);return {paid:r.exp,level:S.lv,carry:S.exp};
   })())`));
-  assert.deepEqual(result,{paid:132000,level:101,carry:1999});
+  assert.deepEqual(result,{paid:348000,level:101,carry:1999});
  });
  console.log(`Base pacing: ${passed} passed`);
 }finally{g.close()}

@@ -912,12 +912,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=290">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=291">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=290">
-<link rel="stylesheet" href="assets/social-fishing.css?v=290">
+<link rel="stylesheet" href="assets/social.css?v=291">
+<link rel="stylesheet" href="assets/social-fishing.css?v=291">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-02 haven-v290 fishing menu, giant show-offs, steady poker table and sell-current gear';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-02 haven-v291 base 100-150 retuned to measured kill rates';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2989,7 +2989,16 @@ const NA1=18.705917193,NE1=1.28684215,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=1
 // value at least 1, so a requirement is always a readable number and never zero.
 // Base leveling gains a separate late-game requirement multiplier. The shared
 // needAt curve still supplies Job requirements and contract rewards.
-const BASE_EXP_LATE_LV=100,BASE_EXP_LATE_X=1.5;
+// v291 (owner, launch day: players hit Base 150 in under 24 hours): the pacing model in
+// tools/tune_pacing.js assumes 800 kills/hour, but the measured earned builds in
+// tools/tests/fixtures/progression_encounters.json clear 4,300-7,500 kills/hour, so the
+// 100-150 band collapsed from the modeled ~96 h to ~12-20 h of farm-equivalent time.
+// BASE_EXP_LATE_X 1.5 -> 4 stretches ONLY Base 100+ requirements (Job EXP, quest rewards
+// and Ascension income all read needAt()/expRate() and are untouched): at measured rates
+// the band now costs ~33 h (fastest build) to ~55 h farm-equivalent, i.e. roughly 2-3 real
+// days for a hardcore player even counting the capped offline claims. Levels already
+// reached are never rolled back - the multiplier only prices future EXP.
+const BASE_EXP_LATE_LV=100,BASE_EXP_LATE_X=4;
 const roundReq=n=>{const a=Math.abs(n),m=a<100?1:a<1e4?10:a<1e5?100:1e3;return Math.max(1,Math.round(n/m)*m)};
 // Job levels run alongside base levels. JOFF[t] is the base level a job level of tier t
 // keeps pace with: Novice job j ~ base j, 1st job j ~ base j+9, 2nd job j ~ base j+49,
@@ -12901,10 +12910,10 @@ setInterval(updateWatch,60000);
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=290"></script>
-<script src="assets/social-poker.js?v=290"></script>
-<script src="assets/social-scene.js?v=290"></script>
-<script src="assets/social-fishing.js?v=290"></script>
-<script src="assets/social.js?v=290"></script>
+<script src="assets/social-rules.js?v=291"></script>
+<script src="assets/social-poker.js?v=291"></script>
+<script src="assets/social-scene.js?v=291"></script>
+<script src="assets/social-fishing.js?v=291"></script>
+<script src="assets/social.js?v=291"></script>
 </body>
 </html>
