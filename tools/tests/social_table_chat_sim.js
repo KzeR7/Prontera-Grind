@@ -100,11 +100,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   app.room=1;app.pokerTables=[mock];app.poker=mock;w.PGSocial.pokerOpen(0);
   const result=w.document.getElementById('socialPokerResult');
   assert(!result.hidden);assert(result.classList.contains('is-win'));assert.match(result.textContent,/YOU WIN/);assert.match(result.textContent,/\+200 chips/);
-  assert(chat.classList.contains('poker-chat-fit'),'seated players get the compact chat column');assert.equal(parseFloat(modal.style.left),304,'the table uses the lane freed by compact chat');
+  // v290: sitting must not move anything - the table held 414px and chat keeps its width.
+  assert(!chat.classList.contains('poker-chat-fit'),'sitting no longer narrows the chat column');assert.equal(parseFloat(modal.style.left),414,'the table does not shift left when the player sits');
   const resultCard=result.querySelector('.poker-result-card');w.PGSocial.pokerOpen(0);assert.equal(result.querySelector('.poker-result-card'),resultCard,'the same hand result does not replay on redraw');
   mock.handNo=8;mock.winners=[];mock.banner='Dealer wins';w.PGSocial.pokerOpen(0);assert(result.classList.contains('is-lose'));assert.match(result.textContent,/YOU LOSE/);
   mock.handNo=9;mock.phase='flop';seatView.folded=true;w.PGSocial.pokerOpen(0);assert(result.classList.contains('is-lose'));assert.match(result.textContent,/FOLDED/);
-  mock.me=null;w.PGSocial.pokerOpen(0);assert(!chat.classList.contains('poker-chat-fit'),'leaving the seat restores the normal chat width');assert.equal(parseFloat(modal.style.left),414);
+  mock.me=null;w.PGSocial.pokerOpen(0);assert(!chat.classList.contains('poker-chat-fit'),'standing changes nothing either');assert.equal(parseFloat(modal.style.left),414,'same geometry seated or standing');
   w.Date.now=realNow;w.close();
  }
  // v286: identical table/hand numbers in different plaza rooms are different results.

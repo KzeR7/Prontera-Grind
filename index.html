@@ -912,12 +912,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=282">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=290">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=289">
-<link rel="stylesheet" href="assets/social-fishing.css?v=289">
+<link rel="stylesheet" href="assets/social.css?v=290">
+<link rel="stylesheet" href="assets/social-fishing.css?v=290">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-02 haven-v289 embedded preview sign-in fix (session header bridge)';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-02 haven-v290 fishing menu, giant show-offs, steady poker table and sell-current gear';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6606,7 +6606,7 @@ function gmPetTest(mode){
   }
   ui();save();
 }
-let autoSellDraft=null,autoSellWorkspaceDraft=null,autoSellPreview=null,bulkSellSelection=null;
+let autoSellDraft=null,autoSellWorkspaceDraft=null,autoSellPreview=null,bulkSellSelection=null,autoSellWorkspaceArm=null;
 function bulkSellState(){if(!bulkSellSelection||bulkSellSelection.owner!==S)bulkSellSelection={owner:S,rarities:RARALL.map(()=>true)};return {...S,autoSell:bulkSellSelection.rarities};}
 function autoSellDraftState(){if(!autoSellDraft||autoSellDraft.owner!==S)autoSellDraft={owner:S,rules:cleanAutoSellRules(S.autoSellRules)||defaultAutoSellRules()};return autoSellDraft;}
 function autoSellWorkspaceState(){if(!autoSellWorkspaceDraft||autoSellWorkspaceDraft.owner!==S)autoSellWorkspaceDraft={owner:S,rules:cleanAutoSellRules(S.autoSellRules)||defaultAutoSellRules(),rarities:RARALL.map((_,i)=>!!S.autoSell?.[i])};return autoSellWorkspaceDraft;}
@@ -6677,7 +6677,7 @@ function autoSellWorkspacePanel(){
    <section class="eclipse-autosell-section"><div class="eclipse-autosell-section-head"><span class="eclipse-step">2</span><div><h3>What should be kept?</h3><small>Safety first</small></div></div><div class="eclipse-autosell-protections"><label><span>${uiIcon('refine')}<b>Refined equipment</b><small>Any piece with +1 or higher</small></span><input type="checkbox" data-sell-field="refined" ${rule.refined?'checked':''}></label><label><span>${uiIcon('cards')}<b>Gear with inserted cards</b><small>Socketed cards are separate</small></span><input type="checkbox" data-sell-field="socketed" ${rule.socketed?'checked':''}></label></div></section>
    <section class="eclipse-autosell-section eclipse-autosell-affixes"><div class="eclipse-autosell-rule-head"><div><label for="eclipseAutosellAffixAction">Affix rule</label><select id="eclipseAutosellAffixAction" data-sell-field="affixAction"><option value="keep" ${rule.affixAction==='keep'?'selected':''}>Keep matching affixes</option><option value="sell" ${rule.affixAction==='sell'?'selected':''}>Sell matching affixes</option></select></div><div class="eclipse-autosell-match"><span>Match</span><button type="button" data-a="autosellDraftMode" data-v="any" aria-pressed="${rule.mode==='any'}" class="${rule.mode==='any'?'on':''}">ANY</button><button type="button" data-a="autosellDraftMode" data-v="all" aria-pressed="${rule.mode==='all'}" class="${rule.mode==='all'?'on':''}">ALL</button><small>condition</small></div></div><div class="eclipse-autosell-affix-list">${affixOptions}</div>${addAffixButton}<p class="eclipse-autosell-summary">${rule.affixes.length?`${rule.affixAction==='keep'?'Keep items with matching affixes:':'Only sell items with matching affixes:'} ${esc(autoSellAffixSummary(rule))}`:'No affix condition selected; there is no affix-based restriction.'}</p></section>
    ${autoSellEditor(true)}
-  </main><aside class="eclipse-autosell-aside"><div class="eclipse-autosell-section-head"><span class="eclipse-step">3</span><div><h3>Check your rules</h3></div></div><p class="eclipse-autosell-rule-summary">${esc(autoSellWorkspaceSummary(rule,draft.rarities))}</p><div class="eclipse-autosell-always"><b>${uiIcon('shield')}Always protected</b><small>Locked gear, equipped items, saved class loadouts and paid reforge offers.</small></div><section class="eclipse-autosell-simulation"><div class="eclipse-autosell-sim-head"><span>DRAFT PREVIEW · CURRENT BAG</span><small>${Math.min(3,sim.checked.length)} sample outcome${Math.min(3,sim.checked.length)===1?'':'s'} · ${S.inv.length} items checked</small></div><div class="eclipse-autosell-sim-counts"><div><b>${sim.wouldSell.length}</b><small>would match</small></div><div><b>${sim.wouldKeep.length}</b><small>would stay</small></div></div>${reasonRows||'<p class="eclipse-autosell-empty">No items to simulate yet. New drops will be checked after you apply these rules.</p>'}<div class="eclipse-autosell-sim-value"><span>Potential sale value · simulation only</span><b>${sim.zeny.toLocaleString()} Zeny</b></div></section><p class="eclipse-autosell-fineprint">This check uses your real inventory but does not sell it. Applying rules affects future drops, including offline loot. Bulk-selling existing items stays a separate preview and confirmation.</p></aside></div>
+  </main><aside class="eclipse-autosell-aside"><div class="eclipse-autosell-section-head"><span class="eclipse-step">3</span><div><h3>Check your rules</h3></div></div><p class="eclipse-autosell-rule-summary">${esc(autoSellWorkspaceSummary(rule,draft.rarities))}</p><div class="eclipse-autosell-always"><b>${uiIcon('shield')}Always protected</b><small>Locked gear, equipped items, saved class loadouts and paid reforge offers.</small></div><section class="eclipse-autosell-simulation"><div class="eclipse-autosell-sim-head"><span>DRAFT PREVIEW · CURRENT BAG</span><small>${Math.min(3,sim.checked.length)} sample outcome${Math.min(3,sim.checked.length)===1?'':'s'} · ${S.inv.length} items checked</small></div><div class="eclipse-autosell-sim-counts"><div><b>${sim.wouldSell.length}</b><small>would match</small></div><div><b>${sim.wouldKeep.length}</b><small>would stay</small></div></div>${reasonRows||'<p class="eclipse-autosell-empty">No items to simulate yet. New drops will be checked after you apply these rules.</p>'}<div class="eclipse-autosell-sim-value"><span>Potential sale value · simulation only</span><b>${sim.zeny.toLocaleString()} Zeny</b></div><button class="eclipse-autosell-sellnow${autoSellWorkspaceArm&&autoSellWorkspaceArm.owner===S?' armed':''}" data-a="autosellworkspacesell" ${sim.wouldSell.length?'':'disabled'}>${autoSellWorkspaceArm&&autoSellWorkspaceArm.owner===S?`⚠ Click again to sell ${sim.wouldSell.length} item${sim.wouldSell.length===1?'':'s'} for ${sim.zeny.toLocaleString()}z`:`💰 Sell the ${sim.wouldSell.length} matching item${sim.wouldSell.length===1?'':'s'} in your bag now`}</button></section><p class="eclipse-autosell-fineprint">Applying rules affects future drops, including offline loot — it never touches what you already own. The button above is the opt-in for current items: it sells today's matches using this draft, with the same protections (locked, equipped, loadout and reforge-offer gear always stay).</p></aside></div>
  </div>`;
 }
 
@@ -8329,7 +8329,18 @@ const ACT={
   fullscreen:()=>toggleFullscreen(),
   sellpause:()=>{S.autoSell=RARALL.map(()=>false);autoSellPreview=null;save();ui()},
   lockgear:id=>toggleGearLock(id),
-  sellnow:()=>previewAutoSell(),bulksellnow:()=>previewAutoSell(true),bulkrar:v=>{bulkSellState();const i=Number(v);if(!Number.isInteger(i)||i<0||i>=RARALL.length)return;bulkSellSelection.rarities[i]=!bulkSellSelection.rarities[i];autoSellPreview=null;renderWin()},sellconfirm:()=>confirmAutoSell(),sellcancel:()=>{autoSellPreview=null;ui()},
+  sellnow:()=>previewAutoSell(),bulksellnow:()=>previewAutoSell(true),
+  // v290 (owner request): the Equipment auto-sell workspace can also sell CURRENT bag items that
+  // match the draft rules - two clicks (arm, confirm), every item re-checked at the moment of sale.
+  autosellworkspacesell:()=>{const sim=autoSellWorkspaceSimulation();
+    if(!sim.wouldSell.length){autoSellWorkspaceArm=null;renderWin();return}
+    if(!autoSellWorkspaceArm||autoSellWorkspaceArm.owner!==S){autoSellWorkspaceArm={owner:S};renderWin();return}
+    autoSellWorkspaceArm=null;
+    const state={...S,autoSell:sim.draft.rarities,autoSellRules:sim.draft.rules};
+    let n=0,z=0;
+    for(const x of sim.wouldSell){const i=S.inv.indexOf(x.it);if(i<0)continue;if(autoSellReason(x.it,state))continue;S.inv.splice(i,1);z+=sellVal(x.it);n++;(x.it.cards||[]).forEach(c=>S.cards.push(c));}
+    earnZeny(z);if(selB&&!S.inv.some(it=>String(it.id)===String(selB)))selB=null;
+    log(`Sold ${n} current item${n===1?'':'s'} matching the auto-sell draft (+${z.toLocaleString()}z).`,'r3','gear,zeny');renderWin();save();},bulkrar:v=>{bulkSellState();const i=Number(v);if(!Number.isInteger(i)||i<0||i>=RARALL.length)return;bulkSellSelection.rarities[i]=!bulkSellSelection.rarities[i];autoSellPreview=null;renderWin()},sellconfirm:()=>confirmAutoSell(),sellcancel:()=>{autoSellPreview=null;ui()},
   sellrulesapply:()=>{const rules=cleanAutoSellRules(sellDraft());if(!rules)return log('Check filter values: use valid numbers, up to 100 equipment names and 0–10 empty sockets.','r0','gear');S.autoSellRules=rules;autoSellDraft=null;autoSellPreview=null;save();ui();log('Auto-sell filters saved.','r3','gear')},
   sellrulescancel:()=>{autoSellDraft=null;renderWin()},
   ascopenskill:()=>{sub.skills='skillasc';if(!tabs.includes('skills'))tabs.push('skills');renderWin()},
@@ -12890,10 +12901,10 @@ setInterval(updateWatch,60000);
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=289"></script>
-<script src="assets/social-poker.js?v=289"></script>
-<script src="assets/social-scene.js?v=289"></script>
-<script src="assets/social-fishing.js?v=289"></script>
-<script src="assets/social.js?v=289"></script>
+<script src="assets/social-rules.js?v=290"></script>
+<script src="assets/social-poker.js?v=290"></script>
+<script src="assets/social-scene.js?v=290"></script>
+<script src="assets/social-fishing.js?v=290"></script>
+<script src="assets/social.js?v=290"></script>
 </body>
 </html>

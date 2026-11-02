@@ -305,8 +305,9 @@ function parseShowOff(body){
  if(!Number.isFinite(w)||w<=0||w>999)return null;
  return {sp:spId,w:Math.round(w*100)/100,mut};
 }
-// Overhead sprite scale from weight: a 60 kg whale reads ~3x a hand-sized minnow.
-function showOffScale(w){return Math.round((0.55+1.75*Math.min(1.15,Math.pow(Math.max(.01,w)/MAX_W,.42)))*100)/100}
+// Overhead sprite scale from weight. Big fish are BIG: a 60 kg Cobble Whale shows at
+// 5.0 world units - taller than the angler holding it - while a hand-sized minnow is ~0.8.
+function showOffScale(w){return Math.round((0.7+4.3*Math.min(1,Math.pow(Math.max(.01,w)/MAX_W,.6)))*100)/100}
 // ------------------------------- browser UI ------------------------------------------------
 const doc=root.document;
 let opts=null,els=null,fallbackHost={};
@@ -399,9 +400,12 @@ function ensureDom(){
  const panel=doc.createElement('section');panel.id='fishingPanel';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Fishing Bag');
  panel.innerHTML='<header id="fishingPanelHead" title="Drag to move"><strong>🎣 Fishing</strong><span id="fishingCoins" title="Fishcoins — sell catches to earn, spend on rods &amp; bait">🪙 0</span><button id="fishingPanelClose" type="button" aria-label="Close Fishing window">✕</button></header><nav id="fishingTabs" role="tablist" aria-label="Fishing sections"><button type="button" role="tab" data-ftab="bag" aria-selected="true">🧺 Bag</button><button type="button" role="tab" data-ftab="index" aria-selected="false">📖 Index</button><button type="button" role="tab" data-ftab="shop" aria-selected="false">🛒 Shop</button></nav><div id="fishingBagView"><div id="fishingRecords"></div><div id="fishingTools"><select id="fishingSort" aria-label="Sort fish"><option value="new">Newest</option><option value="heavy">Heaviest</option><option value="rare">Rarest</option><option value="value">Most valuable</option></select><button id="fishingSellDupes" type="button" title="Sells everything except your heaviest of each species and every mutated fish">💰 Sell dupes</button><label title="Show the fish swimming in the ponds"><input type="checkbox" id="fishingShowFish"> Pond fish</label><label title="Fishing sound effects"><input type="checkbox" id="fishingSound"> Sounds</label></div><div id="fishingGrid" role="listbox" aria-label="Caught fish"></div><footer id="fishingDetail" hidden></footer></div><div id="fishingIndexView" hidden></div><div id="fishingShopView" hidden></div>';
  const shakes=doc.createElement('div');shakes.id='fishingShakes';shakes.hidden=true;
+ // v290: the toolbar button opens this menu instead of instantly walking to a pond. Start
+ // fishing is an explicit choice; Bag / Index / Shop open anywhere in the plaza, no walking.
+ const menu=doc.createElement('div');menu.id='fishingMenu';menu.hidden=true;menu.setAttribute('role','menu');menu.setAttribute('aria-label','Fishing menu');
  if(REDUCED()){dock.classList.add('reduced');shakes.classList.add('reduced')}
- hub.append(dock,panel,shakes);
- els={hub,dock,panel,shakes,stage:doc.getElementById('fishingStage'),status:doc.getElementById('fishingStatus'),grid:doc.getElementById('fishingGrid'),records:doc.getElementById('fishingRecords'),detail:doc.getElementById('fishingDetail'),bagCount:doc.getElementById('fishingBagCount'),spot:doc.getElementById('fishingSpot'),gearLine:doc.getElementById('fishingGearLine'),coins:doc.getElementById('fishingCoins'),bagView:doc.getElementById('fishingBagView'),indexView:doc.getElementById('fishingIndexView'),shopView:doc.getElementById('fishingShopView'),autoBtn:doc.getElementById('fishingAutoBtn')};
+ hub.append(dock,panel,shakes,menu);
+ els={hub,dock,panel,shakes,menu,stage:doc.getElementById('fishingStage'),status:doc.getElementById('fishingStatus'),grid:doc.getElementById('fishingGrid'),records:doc.getElementById('fishingRecords'),detail:doc.getElementById('fishingDetail'),bagCount:doc.getElementById('fishingBagCount'),spot:doc.getElementById('fishingSpot'),gearLine:doc.getElementById('fishingGearLine'),coins:doc.getElementById('fishingCoins'),bagView:doc.getElementById('fishingBagView'),indexView:doc.getElementById('fishingIndexView'),shopView:doc.getElementById('fishingShopView'),autoBtn:doc.getElementById('fishingAutoBtn')};
  doc.getElementById('fishingStopBtn').onclick=()=>stopFishing();
  doc.getElementById('fishingBagBtn').onclick=()=>toggleBag();
  doc.getElementById('fishingPanelClose').onclick=()=>toggleBag(false);
@@ -428,6 +432,38 @@ function ensureDom(){
  makeDraggable(dock,doc.getElementById('fishingDockHead'),'dock');
  makeDraggable(panel,doc.getElementById('fishingPanelHead'),'panel');
  applyPos(dock,'dock');applyPos(panel,'panel');
+ doc.addEventListener('pointerdown',e=>{
+  if(els&&!els.menu.hidden&&!e.target.closest('#fishingMenu')&&!(opts&&opts.button&&opts.button.contains(e.target)))toggleMenu(false);
+ });
+}
+function renderMenu(){
+ if(!els)return;
+ const st=state();
+ els.menu.innerHTML=
+  `<button type="button" role="menuitem" data-fm="start">${ui.phase==='off'?'▶ Start fishing<small>walks to the nearest pond</small>':'⏹ Stop fishing'}</button>`+
+  `<button type="button" role="menuitem" data-fm="bag">🧺 Fishing Bag<small>${st.bag.length}/${BAG_MAX} · show off from anywhere</small></button>`+
+  `<button type="button" role="menuitem" data-fm="index">📖 Fish Index<small>${Object.keys(st.dex).filter(k=>st.dex[k].n>0).length}/${SPECIES.length} discovered · catch rates</small></button>`+
+  `<button type="button" role="menuitem" data-fm="shop">🛒 Tackle Shop<small>🪙 ${fmt(st.coins)}</small></button>`;
+ for(const b of els.menu.querySelectorAll('button'))b.onclick=()=>{
+  toggleMenu(false);
+  if(b.dataset.fm==='start'){if(ui.phase==='off')startFishing();else stopFishing()}
+  else{toggleBag(true);switchTab(b.dataset.fm)}
+ };
+}
+function toggleMenu(force){
+ ensureDom();if(!els)return;
+ const show=typeof force==='boolean'?force:els.menu.hidden;
+ if(opts&&opts.button)opts.button.setAttribute('aria-expanded',String(show));
+ if(!show){els.menu.hidden=true;return}
+ renderMenu();
+ els.menu.hidden=false;
+ if(opts&&opts.button&&typeof opts.button.getBoundingClientRect==='function'){
+  const hubR=els.hub.getBoundingClientRect(),bR=opts.button.getBoundingClientRect();
+  const mw=els.menu.offsetWidth||200;
+  const x=Math.max(8,Math.min(Math.max(8,hubR.width-mw-8),bR.left-hubR.left));
+  els.menu.style.left=x+'px';
+  els.menu.style.top=Math.max(8,bR.bottom-hubR.top+6)+'px';
+ }
 }
 function status(text){if(els)els.status.textContent=text||''}
 function setAuto(on){
@@ -436,7 +472,7 @@ function setAuto(on){
  if(ui.auto){ui.autoNext=now()+400;clearShake();if(ui.phase!=='off')status('Auto fishing — click ⏸ Auto or ✕ to stop.')}
  else if(ui.phase!=='off')status('Auto fishing off.');
 }
-function setPhase(phase){ui.phase=phase;renderStage();if(opts&&opts.button){opts.button.textContent=phase==='off'?'🎣 Fishing':'🎣 Stop fishing';opts.button.setAttribute('aria-pressed',String(phase!=='off'))}}
+function setPhase(phase){ui.phase=phase;renderStage();if(opts&&opts.button){opts.button.textContent=phase==='off'?'🎣 Fishing':'🎣 Fishing…';opts.button.setAttribute('aria-pressed',String(phase!=='off'))}}
 function mutFilter(mut){return mut&&MUTATIONS[mut]?' '+MUTATIONS[mut].css:''}
 function glyphHTML(sp,mut,cls='fishing-glyph'){
  return `<span class="${cls}${mut?' mut-'+mut:''}" style="filter:hue-rotate(${sp.hue}deg)${mutFilter(mut)}">${sp.glyph}</span>`;
@@ -779,20 +815,25 @@ function showOff(entryId){
  return false;
 }
 // A show-off line arrived on Local chat (from anyone, including ourselves): render the real
-// fish, scaled by weight, over that player's head in the 3D plaza.
+// fish, scaled by weight, over that player's head in the 3D plaza. Returns true when the fish
+// was displayed - the caller then SKIPS the chat bubble, which used to cover the fish (the
+// text still lands in the chat panel for everyone to read).
 function onLocalMessage(fromId,body){
  const parsed=parseShowOff(body);
- if(!parsed)return;
+ if(!parsed)return false;
  const sp=speciesById(parsed.sp),f=sceneFishing();
- if(!sp||!f||typeof f.showFish!=='function')return;
+ if(!sp||!f||typeof f.showFish!=='function')return false;
  const mut=parsed.mut?MUTATIONS[parsed.mut]:null;
- f.showFish(fromId,{text:sp.glyph,hue:sp.hue,scale:showOffScale(parsed.w),glow:mut?mut.glow:null,ms:5200});
+ f.showFish(fromId,{text:sp.glyph,hue:sp.hue,scale:showOffScale(parsed.w),glow:mut?mut.glow:null,ms:5600});
+ return true;
 }
 // ---------------- wiring from assets/social.js ---------------------------------------------
 function bind(options){
  opts=options||opts;
  ensureDom();
- if(opts&&opts.button&&!opts.button._fishing){opts.button._fishing=true;opts.button.onclick=()=>toggle()}
+ // v290: the toolbar button opens the fishing menu (Start fishing / Bag / Index / Shop).
+ // It never walks on its own - only the explicit "Start fishing" item (or a pond click) does.
+ if(opts&&opts.button&&!opts.button._fishing){opts.button._fishing=true;opts.button.setAttribute('aria-haspopup','menu');opts.button.onclick=()=>toggleMenu()}
  const f=sceneFishing();f&&f.setFishVisible(state().settings.fish);
 }
 function toggle(){if(ui.phase==='off')startFishing();else stopFishing()}
@@ -800,7 +841,7 @@ function pondClick(x,z,idx){
  if(ui.phase==='off')startFishing(idx);
  else if(ui.phase==='walking'||ui.phase==='ready')startFishing(idx);
 }
-function hubClosed(){stopFishing();if(els)els.panel.hidden=true}
+function hubClosed(){stopFishing();if(els){els.panel.hidden=true;els.menu.hidden=true}}
 return {
  // pure core (tests)
  RARITIES,SPECIES,DIFF,MUTATIONS,RODS,BAITS,BAG_MAX,CAST_GREEN,CAST_PERFECT,MAX_W,

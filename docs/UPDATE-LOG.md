@@ -9595,3 +9595,38 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
   production deployment. Nothing to deploy for this one — the bridge is dev-server-only;
   the real host uses first-party cookies on its own domain.
+
+### 2026-11-02 — `haven-v290 fishing menu, giant show-offs, steady poker table and sell-current gear`
+* **Changed:** Four owner requests. (1) **Fishing menu** — the `🎣 Fishing` toolbar
+  button now opens a menu (▶ Start fishing · 🧺 Bag · 📖 Index · 🛒 Shop) instead of
+  instantly walking to a pond. Walking only happens on the explicit *Start fishing* item
+  or a direct pond click; Bag/Index/Shop open the draggable Fishing window on the right
+  tab from anywhere in the plaza, so show-offs and shopping need no travel. (2)
+  **Show-off visuals** — the chat bubble no longer covers the fish: when a show-off line
+  renders the fish overhead, the bubble is skipped (`onLocalMessage` returns whether it
+  displayed; the text still reaches the chat panel). And the fish is now BIG: a 60 kg
+  Cobble Whale renders at 5.0 world units — taller than the 3.2-unit character — vs the
+  old 2.3 cap (scene clamp 5.2, placement raised with size). (3) **Poker table stays
+  put** — sitting used to narrow chat to 280px and slide the table 110px left into the
+  freed lane; `poker-chat-fit` is retired and the modal geometry is identical seated or
+  standing. (4) **Equipment auto-sell: sell current items** — the auto-sell workspace
+  gains an opt-in "💰 Sell the N matching items in your bag now" button (two clicks:
+  arm, then confirm) that sells today's matches using the draft rules with the same
+  protections (locked/equipped/loadout/reforge-offer gear always kept); applying rules
+  still only affects future drops. Also added `tools/preview.sh` — the documented way to
+  start the owner's preview, always passing `--preview-auth` and
+  `--db tools/.devdb/preview.sqlite` so embedded-iframe sign-in and account persistence
+  can never regress by forgetting a flag (docs/TESTING.md notes it).
+* **Try it:** Click 🎣 Fishing → Bag and show off a fish from the promenade — no bubble
+  in the way, and a heavy fish towers over you. Sit at a poker table: nothing moves.
+  Equipment → Auto-sell: tick rarities, then "Sell the N matching items" twice.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips.
+  `social_fishing_sim` covers the new scale bounds (≥4.5 at 60 kg) and the
+  bubble-suppression contract; `social_table_chat_sim` now asserts the table does NOT
+  shift on sit (414px seated and standing); `equipment_workspaces_sim` (11 checks) adds
+  the two-click sell-current flow incl. locked-item protection. Progression fixtures
+  re-measured per procedure: all 126 measurements byte-identical, only
+  `sourceHash`/`combatHash` refreshed. `assets/ui/eclipse.css` cache-busted to ?v=290.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Client-only; `workers/social` needs no redeploy for this one.

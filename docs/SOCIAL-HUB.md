@@ -229,6 +229,27 @@ Cobble Whale). Up to 6 overhead sprites are pooled; they follow the player and f
 (pointer events, clamped to the hub) and remember their positions in
 `localStorage['pg_fishing_ui_v1']`.
 
+## Fishing menu, giant show-offs and a steady poker table (haven-v290)
+
+**Fishing menu.** The `🎣 Fishing` toolbar button no longer starts fishing (and never
+walks the character on its own). It opens a small menu — **▶ Start fishing · 🧺 Fishing
+Bag · 📖 Fish Index · 🛒 Tackle Shop**. Only the explicit *Start fishing* item (or a
+direct pond click) walks to a pond; Bag, Index and Shop open the draggable Fishing window
+on the right tab from anywhere in the plaza, so a catch can be shown off, sold or shopped
+for without moving. The menu closes on selection or any outside click.
+
+**Show-offs are unobstructed and BIG.** The show-off chat line no longer paints a bubble
+over the angler's head — `onLocalMessage` returns `true` when it displayed the fish and
+the client then skips `scene.bubble` (the text still lands in the chat panel; normal chat
+lines are untouched). `showOffScale` was rescaled: a max-weight 60 kg Cobble Whale now
+renders at **5.0 world units** — taller than the 3.2-unit character holding it — down to
+~0.8 for a hand-sized minnow (scene sprite clamp 5.2).
+
+**Steady poker table.** Sitting at a Hold'em table used to narrow chat to 280px and
+slide the whole table 110px left into the freed lane; the owner reported the jump as a
+bug. `poker-chat-fit` is retired: the modal's geometry and the chat column are now
+identical whether the player is seated or standing.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

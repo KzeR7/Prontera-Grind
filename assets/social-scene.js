@@ -92,7 +92,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
    const tex=new T.CanvasTexture(canvas),spr=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
    spr.visible=false;scene.add(spr);
    while(showPool.length>=6){const old=showPool.shift();scene.remove(old.sprite);old.sprite.material.map.dispose();old.sprite.material.dispose()}
-   showPool.push({sprite:spr,pid,t0:clock||performance.now(),dur:Math.max(1200,Math.min(9000,o.ms||5200)),scale:Math.max(.4,Math.min(3.2,Number(o.scale)||1))});
+   showPool.push({sprite:spr,pid,t0:clock||performance.now(),dur:Math.max(1200,Math.min(9000,o.ms||5200)),scale:Math.max(.4,Math.min(5.2,Number(o.scale)||1))});
   }
   let rig={mode:'off'},nextIdleRipple=0,catchAnim=null;
   function ripple(x,z,scale=1){const r=ripples.find(r=>!r.m.visible)||ripples[0];r.m.visible=true;r.t0=clock||performance.now();r.dur=900;r.m.position.set(x,.034,z);r.base=scale}
@@ -131,7 +131,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
     const pop=t<.12?t/.12*1.18:t<.22?1.18-(t-.12)/.1*.18:1;
     const sc=sh.scale*pop;
     sh.sprite.visible=true;sh.sprite.scale.set(sc,sc,1);
-    sh.sprite.position.set(holder.sprite.position.x,holder.sprite.position.y+holder.height+.45+sh.scale*.45+Math.sin(now/480+i)*.08,holder.sprite.position.z);
+    sh.sprite.position.set(holder.sprite.position.x,holder.sprite.position.y+holder.height+.3+sh.scale*.55+Math.sin(now/480+i)*.08,holder.sprite.position.z);
     sh.sprite.material.opacity=t>.82?1-(t-.82)/.18:1;
    }
    if(rig.mode==='off')return;

@@ -117,6 +117,13 @@
 .fishing-detail-btns button{flex:1;background:#24424b;border:1px solid #6fa3b0;border-radius:6px;color:#eef4ec;font:bold 11px "Trebuchet MS",sans-serif;padding:6px 8px;cursor:pointer}
 .fishing-detail-btns button:hover{filter:brightness(1.15)}
 #fishingReleaseBtn[data-confirm]{background:#5d2b28;border-color:#d98b80}
+/* v290: the toolbar's fishing menu - Start fishing is explicit; Bag / Index / Shop open
+   anywhere in the plaza without walking. */
+#fishingMenu{position:absolute;z-index:46;min-width:200px;background:linear-gradient(180deg,#132328f9,#0d181cf9);border:1.5px solid #6fa3b0;border-radius:9px;box-shadow:0 12px 34px #000b;padding:5px;font:11.5px/1.35 "Trebuchet MS",sans-serif}
+#fishingMenu[hidden]{display:none}
+#fishingMenu button{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:6px;color:#eef4ec;font:bold 12px "Trebuchet MS",sans-serif;padding:7px 9px;cursor:pointer}
+#fishingMenu button:hover{background:#24424b}
+#fishingMenu button small{display:block;font-weight:normal;color:#9db9bf;font-size:9.5px;margin-top:1px}
 /* v288: draggable windows, Auto fishing, gear line, tabs (Bag / Index / Shop), fish index,
    shop rows and the extra mutation looks. */
 #fishingDockHead,#fishingPanelHead{cursor:move;touch-action:none}

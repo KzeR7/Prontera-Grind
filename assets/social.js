@@ -170,8 +170,9 @@ function syncPokerBounds(){
  const compactH=H<700?112:132;
  chat.style.setProperty('--poker-chat-height',compactH+'px');
  const chatH=wide||chat.classList.contains('minimized')?0:compactH;
- const seatedFit=chat.classList.contains('poker-chat-fit');
- const left=wide?(seatedFit?304:414):8;
+ // v290: the table's geometry is independent of the seat. It used to slide 110px left (and the
+ // chat snapped to 280px) the moment the player sat down; the owner reported that jump as a bug.
+ const left=wide?414:8;
  const w=Math.max(280,Math.min(1000,W-left-(wide?12:8)));
  const h=Math.max(240,Math.min(620,H-topSafe-dockSafe-(chatH?chatH+12:10)));
  const top=topSafe+Math.max(0,Math.floor((H-topSafe-dockSafe-(chatH?chatH+12:10)-h)/2));
@@ -280,12 +281,12 @@ function viewedPokerSnapshot(){
  return snaps[pokerUI.tableId]||snaps[0]||null;
 }
 function syncPokerChatFit(){
- // Seated players get a narrow chat column so the table can use the freed lane.
- // This is keyed to the seat, not to chat resizing; standing/leaving restores the old size.
- const fit=!hub.hidden&&!!seatedPokerSnapshot();
- if(chat.classList.contains('poker-chat-fit')===fit)return;
- chat.classList.toggle('poker-chat-fit',fit);
- hub.classList.toggle('poker-seated',fit);
+ // v290: sitting no longer moves ANY geometry. The old behaviour (seat => chat narrows to
+ // 280px and the table slides into the freed lane) read as the whole UI jumping left on every
+ // sit. Chat and table now hold their positions; this only clears the legacy classes once.
+ if(!chat.classList.contains('poker-chat-fit')&&!hub.classList.contains('poker-seated'))return;
+ chat.classList.remove('poker-chat-fit');
+ hub.classList.remove('poker-seated');
  syncPokerBounds();
 }
 function syncPokerBadges(){
@@ -923,7 +924,7 @@ const FISHING=()=>globalThis.PGSocialFishing||null;
 function fishingSelf(){const p=app.players.get(app.room?app.id:SOLO_ID);if(!p)return null;const c={...p,path:(p.path||[]).map(v=>({...v}))};R.advance(c,performance.now());return {x:c.x,z:c.z}}
 function fishingShowOff(text){
  if(app.room)return send({type:'chat',channel:'local',body:text});
- const name=soloName();notice(name+' '+text);app.scene?.bubble(SOLO_ID,{body:text});FISHING()?.onLocalMessage?.(SOLO_ID,text);return true;
+ const name=soloName();notice(name+' '+text);if(!FISHING()?.onLocalMessage?.(SOLO_ID,text))app.scene?.bubble(SOLO_ID,{body:text});return true;
 }
 function bindFishing(){const F=FISHING();if(!F)return;F.bind({host:()=>typeof S==='object'&&S?S:null,scene:()=>app.scene,self:fishingSelf,moveTo:(x,z)=>moveAction(x,z),showOff:fishingShowOff,notice,save:()=>{if(typeof save==='function'&&typeof S==='object'&&S)save()},button:$id('socialFishBtn')})}
 async function enter(){if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),sitting,camera:cameraUI});if(app.wanted){app.scene.active=true;bindFishing();cameraUI(app.scene.cameraState);for(const p of app.players.values())app.scene.putPlayer(p);join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
@@ -964,7 +965,7 @@ function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retr
  if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
 
  if(m.type==='left'&&m.room===app.room){app.players.delete(m.id);app.scene?.removePlayer(m.id);population();friendPresenceChanged()}
- if(m.type==='message'){if(m.channel==='local'&&m.room!==app.room)return;app.messages=mergeChatMessages(app.messages,[m]);if(m.channel==='world')saveWorldHistory();if(app.channel!==m.channel||chat.classList.contains('minimized'))app.unread.add(m.channel);if(!app.muted.has(m.from)){if(m.channel==='local'){app.scene?.bubble(m.from,m);pokerTableChatBubble(m);FISHING()?.onLocalMessage?.(m.from,m.body||'')}if(app.channel===m.channel)renderMessages(true)}tabsUI()}}
+ if(m.type==='message'){if(m.channel==='local'&&m.room!==app.room)return;app.messages=mergeChatMessages(app.messages,[m]);if(m.channel==='world')saveWorldHistory();if(app.channel!==m.channel||chat.classList.contains('minimized'))app.unread.add(m.channel);if(!app.muted.has(m.from)){if(m.channel==='local'){const fishShown=FISHING()?.onLocalMessage?.(m.from,m.body||'');if(!fishShown)app.scene?.bubble(m.from,m);pokerTableChatBubble(m)}if(app.channel===m.channel)renderMessages(true)}tabsUI()}}
 const WATCHDOG_MS=20000,PROBE_GRACE_MS=6000;
 function seatState(){const me=app.players.get(app.id);const seated=seatedPokerSnapshot();return me?{seat:Number.isInteger(me.seat)?me.seat:null,pokerSeat:Number.isInteger(me.pokerSeat)?me.pokerSeat:null,pokerBuyIn:seated?.me?.stack||pokerUI.buyIn,sit:!!me.sit}:app.resume}
 function dropSocket(message,keep){const ws=app.socket;app.socket=null;app.connected=false;app.probeAt=0;if(keep)app.resume=seatState();try{ws?.close()}catch{}status(message);app.nextConnect=0}

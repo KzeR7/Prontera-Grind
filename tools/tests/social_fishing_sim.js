@@ -215,9 +215,15 @@ assert.equal(F.parseShowOff('shows off a Fake Fish — 3 kg (Rare)!'),null,'unkn
 assert.equal(F.parseShowOff('shows off a Royal Koi — 5000 kg (Rare)!'),null,'absurd weights rejected');
 assert.equal(F.parseShowOff('hello everyone'),null);
 assert.equal(F.parseShowOff(null),null);
+// v290: onLocalMessage reports whether it displayed a fish - the caller suppresses the chat
+// bubble only when it did (so the bubble never covers the fish, and normal chat is untouched).
+assert.equal(F.onLocalMessage(1,'hello everyone'),false,'normal chat lines never claim the bubble');
+assert.equal(F.onLocalMessage(1,'🎣 shows off a Royal Koi — 4.25 kg (Rare)!'),false,'without a bound scene nothing is shown, so the bubble stays');
 // Heavier fish render bigger over the angler's head, within sane sprite bounds.
 assert(F.showOffScale(58)>F.showOffScale(5)&&F.showOffScale(5)>F.showOffScale(.1),'scale grows with weight');
-assert(F.showOffScale(999)<3.5&&F.showOffScale(.01)>=.5,'scale stays within sprite bounds');
+// v290: the biggest fish show BIG - a max-weight catch is taller than the angler (~3.2 units).
+assert(F.showOffScale(60)>=4.5,'a 60 kg whale reads larger than the character');
+assert(F.showOffScale(999)<=5.1&&F.showOffScale(.01)>=.5,'scale stays within sprite bounds');
 while(st.bag.length<F.BAG_MAX)F.addCatch(st,{sp:'minnow',rarity:'common',w:.2});
 assert.equal(F.addCatch(st,{sp:'minnow',rarity:'common',w:.2}),null,'full bag refuses new fish');
 assert.equal(st.bag.length,F.BAG_MAX);
