@@ -3668,10 +3668,12 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
   grid-template-columns:152px minmax(0,1.45fr) 256px;
 }
 #wins .eclipse-atlas-hero.rm-illustrated-hero{
+  display:flex;
+  flex-direction:column;
   height:auto;
-  aspect-ratio:16 / 9;
-  min-height:230px;
-  max-height:395px;
+  aspect-ratio:auto;
+  min-height:0;
+  max-height:none;
   width:100%;
   margin-bottom:14px;
   background:#1f3038;
@@ -3682,10 +3684,14 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
 }
 #wins .eclipse-atlas-hero.rm-illustrated-hero:after{display:none}
 #wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
-  position:absolute;
-  inset:0;
+  position:relative;
+  inset:auto;
   width:100%;
-  height:100%;
+  height:auto;
+  aspect-ratio:16 / 9;
+  min-height:200px;
+  max-height:360px;
+  flex:none;
   overflow:hidden;
   cursor:default;
   touch-action:auto;
@@ -3693,6 +3699,13 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
   z-index:1;
 }
 body.rm-atlas-fullscreen #wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  min-height:0;
+  max-height:none;
+  aspect-ratio:auto;
   cursor:grab;
   touch-action:none;
 }
@@ -3961,19 +3974,22 @@ body.rm-atlas-fullscreen #wins .rm-viewport.is-dragging{cursor:grabbing}
 }
 
 #wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
-  position:absolute;
-  bottom:8px;
-  left:8px;
+  position:relative;
+  inset:auto;
   top:auto;
   right:auto;
-  max-width:min(68%,340px);
-  padding:5px 9px;
-  border-radius:6px;
-  background:linear-gradient(135deg,rgba(10,16,22,.86),rgba(16,23,31,.72));
-  border:1px solid rgba(219,187,124,.34);
-  backdrop-filter:blur(6px);
-  pointer-events:none;
-  z-index:25;
+  bottom:auto;
+  left:auto;
+  width:100%;
+  max-width:none;
+  box-sizing:border-box;
+  padding:7px 12px 8px;
+  border-radius:0;
+  background:linear-gradient(135deg,rgba(11,17,24,.96),rgba(17,25,34,.92));
+  border:0;
+  border-top:1px solid rgba(219,187,124,.32);
+  pointer-events:auto;
+  z-index:2;
 }
 #wins .rm-hero-caption .ui-eyebrow{
   display:block;
@@ -4115,9 +4131,19 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-a
   right:12px;
 }
 body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
-  bottom:14px;
+  position:absolute;
+  top:12px;
+  bottom:auto;
   left:182px;
-  max-width:min(440px,calc(100vw - 600px));
+  width:auto;
+  max-width:min(360px,calc(100vw - 600px));
+  padding:6px 10px;
+  border-radius:7px;
+  border:1px solid rgba(219,187,124,.38);
+  background:linear-gradient(135deg,rgba(10,16,22,.88),rgba(16,23,31,.76));
+  backdrop-filter:blur(6px);
+  pointer-events:none;
+  z-index:25;
 }
 body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-destinations{
   display:block!important;
@@ -4214,7 +4240,7 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-
 }
 @container(max-width:560px){
   #wins .ui-panel[data-layout=map] .ui-content{grid-template-columns:1fr}
-  #wins .eclipse-atlas-hero.rm-illustrated-hero{min-height:190px}
+  #wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{min-height:175px}
   #wins .rm-hero-caption h2{font-size:14px}
   #wins .rm-subzones-btns{grid-template-columns:repeat(2,minmax(0,1fr))}
 }

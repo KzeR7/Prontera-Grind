@@ -579,6 +579,12 @@ test('v283: Illustrated Rune-Midgard World Atlas shows only Full Map on mini-map
  assert.equal(win.querySelectorAll('[data-a="atlaszoom"]').length,0,'mini-map omits zoom controls');
  assert.equal(win.querySelectorAll('.rm-controls button').length,1,'mini-map toolbar shows only Full Map button');
  assert.ok(win.querySelector('.rm-controls [data-a="atlasfull"]'),'Full Map button is present on mini-map');
+ const eclipseCss=require('fs').readFileSync(require('path').join(__dirname,'../../assets/ui/eclipse.css'),'utf8');
+ assert.match(eclipseCss,/#wins \.eclipse-atlas-hero\.rm-illustrated-hero>\.rm-hero-caption\{[\s\S]*?position:relative;/,'mini-map description box sits below the viewport instead of overlapping Comodo');
+ assert.match(eclipseCss,/body\.rm-atlas-fullscreen #wins>\.wp\[data-win="map"\]\.rm-fullscreen-mode \.eclipse-atlas-hero\.rm-illustrated-hero>\.rm-hero-caption\{[\s\S]*?top:12px;[\s\S]*?bottom:auto;/,'Full Map description box sits in top-left ocean clear of Comodo');
+ win.querySelector('[data-a="atlasplace"][data-v="comodo"]').click();
+ assert.equal(ev('mapM'),5,'clicking Comodo pin selects Comodo');
+ ev("mapM=1;renderWin()");
  const canvasNode=win.querySelector('#rmCanvas');
  const birdNode=win.querySelector('#rmAmb-birds-a');
  assert.ok(canvasNode&&birdNode,'illustrated map canvas and ambient bird flocks render');
