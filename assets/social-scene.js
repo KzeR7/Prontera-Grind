@@ -63,7 +63,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   // Ambient fish silhouettes swim inside each pond; the Fishing Bag's "Show swimming fish" toggles them.
   const fishShape=new T.Shape();fishShape.moveTo(.4,0);fishShape.quadraticCurveTo(.05,.22,-.26,.06);fishShape.lineTo(-.46,.17);fishShape.lineTo(-.37,0);fishShape.lineTo(-.46,-.17);fishShape.lineTo(-.26,-.06);fishShape.quadraticCurveTo(.05,-.22,.4,0);
   const fishGeo=new T.ShapeGeometry(fishShape),fishGroup=new T.Group(),swimmers=[];scene.add(fishGroup);
-  R.PONDS.forEach((p,pi)=>{for(let i=0;i<7;i++){const m=new T.Mesh(fishGeo,new T.MeshBasicMaterial({color:i%3?0x1d4254:0x27616f,transparent:true,opacity:.5,depthWrite:false}));m.rotation.x=-Math.PI/2;const sc=.7+((i*31)%12)/16;m.scale.setScalar(sc);fishGroup.add(m);swimmers.push({m,p,ax:(p.w/2-1.6),az:(p.d/2-1.5),fa:.13+((i*17)%10)/90,fb:.1+((i*23)%10)/80,pa:i*1.7+pi,pb:i*2.9+pi*2})}});
+  R.PONDS.forEach((p,pi)=>{for(let i=0;i<7;i++){const m=new T.Mesh(fishGeo,new T.MeshBasicMaterial({color:[0xe08a3c,0xd8dde2,0x8fc9b8][i%3],transparent:true,opacity:.78,depthWrite:false}));m.rotation.x=-Math.PI/2;const sc=.7+((i*31)%12)/16;m.scale.setScalar(sc);fishGroup.add(m);swimmers.push({m,p,ax:(p.w/2-1.6),az:(p.d/2-1.5),fa:.13+((i*17)%10)/90,fb:.1+((i*23)%10)/80,pa:i*1.7+pi,pb:i*2.9+pi*2})}});
   // The local player's rod, line, bobber, ripples, splash, bite mark and catch flight.
   const poleMat=new T.MeshBasicMaterial({color:0x7a5230}),pole=new T.Mesh(new T.CylinderGeometry(.016,.04,1,6),poleMat);pole.visible=false;scene.add(pole);
   const lineGeo=new T.BufferGeometry(),linePts=new Float32Array(8*3);lineGeo.setAttribute('position',new T.BufferAttribute(linePts,3));const line=new T.Line(lineGeo,new T.LineBasicMaterial({color:0xeef2ee,transparent:true,opacity:.75}));line.visible=false;line.frustumCulled=false;scene.add(line);
@@ -82,12 +82,19 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const showPool=[];
   function showFish(pid,o){
    o=o||{};
-   const canvas=document.createElement('canvas');canvas.width=canvas.height=128;const c2=canvas.getContext('2d');
-   if(c2&&typeof c2.fillText==='function'){
-    try{c2.filter='hue-rotate('+(Number(o.hue)||0)+'deg)'+(o.filter?' '+o.filter:'')}catch{}
-    if(o.glow&&typeof c2.arc==='function'){c2.shadowColor=o.glow;c2.shadowBlur=20}
-    c2.font='88px serif';c2.textAlign='center';c2.textBaseline='middle';c2.fillText(o.text||'🐟',64,70);
-    try{c2.filter='none'}catch{}
+   // v294: prefer the painted species sprite (crisp 256px, bright, baked mutation halo) over
+   // the old 128px emoji draw that showed up blurry and too dim to see.
+   let canvas=null;
+   const F=(typeof globalThis!=='undefined'&&globalThis.PGSocialFishing)||null;
+   if(o.spId&&F&&typeof F.fishSprite==='function'){try{canvas=F.fishSprite(o.spId,o.mut||null,256)}catch{canvas=null}}
+   if(!canvas){
+    canvas=document.createElement('canvas');canvas.width=canvas.height=128;const c2=canvas.getContext('2d');
+    if(c2&&typeof c2.fillText==='function'){
+     try{c2.filter='hue-rotate('+(Number(o.hue)||0)+'deg)'+(o.filter?' '+o.filter:'')}catch{}
+     if(o.glow&&typeof c2.arc==='function'){c2.shadowColor=o.glow;c2.shadowBlur=20}
+     c2.font='88px serif';c2.textAlign='center';c2.textBaseline='middle';c2.fillText(o.text||'🐟',64,70);
+     try{c2.filter='none'}catch{}
+    }
    }
    const tex=new T.CanvasTexture(canvas),spr=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
    spr.visible=false;scene.add(spr);
@@ -103,7 +110,15 @@ window.PGSocialScene={async create(host,labels,callbacks){
    cast(to,dur,onLand){const from=selfPos();rig={mode:'flight',fx:from?from.x:to.x,fz:from?from.z:to.z,tx:to.x,tz:to.z,t0:clock||performance.now(),dur:Math.max(250,dur||700),onLand};bobber.visible=true;pole.visible=true;line.visible=true},
    bite(on){if(rig.mode==='idle'&&on)rig.mode='bite';else if(rig.mode==='bite'&&!on)rig.mode='idle';mark.visible=!!on&&rig.mode==='bite'},
    reel(intensity){if(rig.mode==='bite'||rig.mode==='idle'||rig.mode==='reel'){rig.mode='reel';rig.intensity=Math.max(0,Math.min(1,intensity||0));mark.visible=false}},
-   catchFly(text,hue,done){const from={x:bobber.position.x,z:bobber.position.z};if(glyphCtx&&typeof glyphCtx.fillText==='function'){glyphCtx.clearRect(0,0,96,96);try{glyphCtx.filter='hue-rotate('+(hue||0)+'deg)'}catch{}glyphCtx.font='64px serif';glyphCtx.textAlign='center';glyphCtx.textBaseline='middle';glyphCtx.fillText(text||'🐟',48,52);try{glyphCtx.filter='none'}catch{}glyphTex.needsUpdate=true}
+   catchFly(text,hue,done){const from={x:bobber.position.x,z:bobber.position.z};
+    // v294: `text` may be {spId,mut,glyph,hue} - draw the painted species sprite when available.
+    const info=text&&typeof text==='object'?text:null;if(info&&hue==null)hue=info.hue;
+    let drawn=false;
+    const F=(typeof globalThis!=='undefined'&&globalThis.PGSocialFishing)||null;
+    if(info&&info.spId&&F&&typeof F.fishSprite==='function'&&glyphCtx&&typeof glyphCtx.drawImage==='function'){
+     try{const art=F.fishSprite(info.spId,info.mut||null,96);if(art){glyphCtx.clearRect(0,0,96,96);glyphCtx.drawImage(art,0,0,96,96);glyphTex.needsUpdate=true;drawn=true}}catch{}
+    }
+    if(!drawn&&glyphCtx&&typeof glyphCtx.fillText==='function'){glyphCtx.clearRect(0,0,96,96);try{glyphCtx.filter='hue-rotate('+(hue||0)+'deg)'}catch{}glyphCtx.font='64px serif';glyphCtx.textAlign='center';glyphCtx.textBaseline='middle';glyphCtx.fillText((info?info.glyph:text)||'🐟',48,52);try{glyphCtx.filter='none'}catch{}glyphTex.needsUpdate=true}
     splash(from.x,from.z,24);ripple(from.x,from.z,1.4);catchAnim={fx:from.x,fz:from.z,t0:clock||performance.now(),dur:760,done};glyph.visible=true;api.hide(true)},
    escapeSplash(){if(bobber.visible){splash(bobber.position.x,bobber.position.z,14);ripple(bobber.position.x,bobber.position.z,1.2)}api.hide()},
    ripple,splash,showFish,

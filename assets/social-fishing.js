@@ -187,6 +187,7 @@ function cleanEntry(e){
   mut:Object.hasOwn(MUTATIONS,e.mut)?e.mut:null,
   at:Math.max(0,Math.floor(Number(e.at)||0)),
   perfect:e.perfect===true,
+  lock:e.lock===true,
  };
 }
 // Accepts any stored shape (including corruption) and returns a safe fishing blob.
@@ -210,7 +211,7 @@ function normalize(raw){
  return {
   v:1,bag,dex,
   stats:{casts:cnt(st.casts),catches:cnt(st.catches),escapes:cnt(st.escapes),perfects:cnt(st.perfects)},
-  settings:{fish:se.fish!==false,sound:se.sound!==false},
+  settings:{fish:se.fish!==false,sound:se.sound!==false,autoSell:se.autoSell===true},
   coins:cnt(f.coins),
   rods,
   rod:typeof f.rod==='string'&&rods.includes(f.rod)?f.rod:'twig',
@@ -224,7 +225,7 @@ function addCatch(state,c,now=Date.now()){
  const sp=speciesById(c.sp);if(!sp)return null;
  let id='f'+now.toString(36)+Math.floor(Math.random()*46656).toString(36);
  while(state.bag.some(e=>e.id===id))id+='x';
- const entry={id,sp:sp.id,w:Math.round(Math.max(.01,Math.min(999,Number(c.w)||sp.min))*100)/100,mut:Object.hasOwn(MUTATIONS,c.mut)?c.mut:null,at:now,perfect:c.perfect===true};
+ const entry={id,sp:sp.id,w:Math.round(Math.max(.01,Math.min(999,Number(c.w)||sp.min))*100)/100,mut:Object.hasOwn(MUTATIONS,c.mut)?c.mut:null,at:now,perfect:c.perfect===true,lock:false};
  state.bag.push(entry);
  const d=state.dex[entry.sp]||(state.dex[entry.sp]={n:0,bw:0,at:now,mut:[]});
  d.n++;if(entry.w>d.bw)d.bw=entry.w;if(entry.mut&&!d.mut.includes(entry.mut))d.mut.push(entry.mut);
@@ -260,18 +261,19 @@ function selectBait(state,id){
 function sellFish(state,entryId){
  if(!state)return null;
  const i=state.bag.findIndex(e=>e.id===entryId);if(i<0)return null;
+ if(state.bag[i].lock)return {ok:false,reason:'locked'};
  const coins=value(state.bag[i]);
  state.bag.splice(i,1);
  state.coins=Math.min(COIN_MAX,state.coins+coins);
  return {ok:true,coins};
 }
 // 'dupes' keeps the heaviest of each species plus every mutated fish; 'all' sells everything.
+// v294: 🔒 locked fish are never sold by either mode.
 function sellBulk(state,mode){
  if(!state)return {sold:0,coins:0};
- let keep;
- if(mode==='all')keep=new Set();
- else{
-  keep=new Set(state.bag.filter(e=>e.mut).map(e=>e.id));
+ const keep=new Set(state.bag.filter(e=>e.lock).map(e=>e.id));
+ if(mode!=='all'){
+  for(const e of state.bag)if(e.mut)keep.add(e.id);
   const best={};
   for(const e of state.bag)if(!best[e.sp]||e.w>best[e.sp].w)best[e.sp]=e;
   for(const e of Object.values(best))keep.add(e.id);
@@ -283,6 +285,20 @@ function sellBulk(state,mode){
  });
  state.coins=Math.min(COIN_MAX,state.coins+coins);
  return {sold,coins};
+}
+// v294: per-fish keep-lock. A locked fish cannot be sold (single, bulk or auto) or released.
+function toggleLock(state,entryId){
+ const e=state&&state.bag.find(x=>x.id===entryId);if(!e)return null;
+ e.lock=!e.lock;
+ return {ok:true,lock:e.lock};
+}
+// v294 auto-sell: applies the Sell-dupes rule to each fresh catch. A catch is kept when it is
+// mutated, locked, or your heaviest of its species (new species are always your heaviest);
+// otherwise it is a dupe and goes straight to Fishcoins.
+function shouldAutoSell(state,entry){
+ if(!state||!entry||!state.settings.autoSell)return false;
+ if(entry.lock||entry.mut)return false;
+ return state.bag.some(e=>e.id!==entry.id&&e.sp===entry.sp&&e.w>=entry.w);
 }
 // Show-off text comes only from a fish that is actually in the bag.
 function showOffText(state,entryId){
@@ -398,7 +414,7 @@ function ensureDom(){
  const dock=doc.createElement('section');dock.id='fishingDock';dock.hidden=true;dock.setAttribute('aria-label','Fishing');
  dock.innerHTML='<div id="fishingDockHead" title="Drag to move"><span id="fishingSpot">🎣 South Lawn Pond</span><span id="fishingDockBtns"><button id="fishingAutoBtn" type="button" title="Auto fishing: casts, hooks and reels by itself until you stop it" aria-pressed="false">▶ Auto</button><button id="fishingBagBtn" type="button" aria-haspopup="dialog">🧺 Bag <small id="fishingBagCount"></small></button><button id="fishingStopBtn" type="button" title="Stop fishing" aria-label="Stop fishing">✕</button></span></div><button id="fishingGearLine" type="button" title="Open the rod &amp; bait shop"></button><div id="fishingStage" role="button" tabindex="0" aria-label="Fishing action area"></div><p id="fishingStatus" aria-live="polite"></p>';
  const panel=doc.createElement('section');panel.id='fishingPanel';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Fishing Bag');
- panel.innerHTML='<header id="fishingPanelHead" title="Drag to move"><strong>🎣 Fishing</strong><span id="fishingCoins" title="Fishcoins — sell catches to earn, spend on rods &amp; bait">🪙 0</span><button id="fishingPanelClose" type="button" aria-label="Close Fishing window">✕</button></header><nav id="fishingTabs" role="tablist" aria-label="Fishing sections"><button type="button" role="tab" data-ftab="bag" aria-selected="true">🧺 Bag</button><button type="button" role="tab" data-ftab="index" aria-selected="false">📖 Index</button><button type="button" role="tab" data-ftab="shop" aria-selected="false">🛒 Shop</button></nav><div id="fishingBagView"><div id="fishingRecords"></div><div id="fishingTools"><select id="fishingSort" aria-label="Sort fish"><option value="new">Newest</option><option value="heavy">Heaviest</option><option value="rare">Rarest</option><option value="value">Most valuable</option></select><button id="fishingSellDupes" type="button" title="Sells everything except your heaviest of each species and every mutated fish">💰 Sell dupes</button><label title="Show the fish swimming in the ponds"><input type="checkbox" id="fishingShowFish"> Pond fish</label><label title="Fishing sound effects"><input type="checkbox" id="fishingSound"> Sounds</label></div><div id="fishingGrid" role="listbox" aria-label="Caught fish"></div><footer id="fishingDetail" hidden></footer></div><div id="fishingIndexView" hidden></div><div id="fishingShopView" hidden></div>';
+ panel.innerHTML='<header id="fishingPanelHead" title="Drag to move"><strong>🎣 Fishing</strong><span id="fishingCoins" title="Fishcoins — sell catches to earn, spend on rods &amp; bait"></span><button id="fishingPanelClose" type="button" aria-label="Close Fishing window">✕</button></header><nav id="fishingTabs" role="tablist" aria-label="Fishing sections"><button type="button" role="tab" data-ftab="bag" aria-selected="true">🧺 Bag</button><button type="button" role="tab" data-ftab="index" aria-selected="false">📖 Index</button><button type="button" role="tab" data-ftab="shop" aria-selected="false">🛒 Shop</button></nav><div id="fishingBagView"><div id="fishingRecords"></div><div id="fishingTools"><select id="fishingSort" aria-label="Sort fish"><option value="new">Newest</option><option value="heavy">Heaviest</option><option value="rare">Rarest</option><option value="value">Most valuable</option></select><button id="fishingSellDupes" type="button" title="Sells everything except your heaviest of each species, every mutated fish and every 🔒 locked fish">💰 Sell dupes</button><label title="After every catch, automatically sell it unless it is mutated, locked, or your new heaviest of that species"><input type="checkbox" id="fishingAutoSell"> Auto-sell dupes</label><label title="Show the fish swimming in the ponds"><input type="checkbox" id="fishingShowFish"> Pond fish</label><label title="Fishing sound effects"><input type="checkbox" id="fishingSound"> Sounds</label></div><div id="fishingGrid" role="listbox" aria-label="Caught fish"></div><footer id="fishingDetail" hidden></footer></div><div id="fishingIndexView" hidden></div><div id="fishingShopView" hidden></div>';
  const shakes=doc.createElement('div');shakes.id='fishingShakes';shakes.hidden=true;
  // v290: the toolbar button opens this menu instead of instantly walking to a pond. Start
  // fishing is an explicit choice; Bag / Index / Shop open anywhere in the plaza, no walking.
@@ -410,7 +426,8 @@ function ensureDom(){
  doc.getElementById('fishingBagBtn').onclick=()=>toggleBag();
  doc.getElementById('fishingPanelClose').onclick=()=>toggleBag(false);
  doc.getElementById('fishingSort').onchange=e=>{ui.sort=e.target.value;renderBag()};
- doc.getElementById('fishingSellDupes').onclick=()=>{const r=sellBulk(state(),'dupes');persist();if(r.sold){sound('coin');status(`Sold ${r.sold} fish for 🪙 ${fmt(r.coins)}.`)}ui.selected=null;renderPanel();renderDockGear()};
+ doc.getElementById('fishingSellDupes').onclick=()=>{const r=sellBulk(state(),'dupes');persist();if(r.sold){sound('coin');status(`Sold ${r.sold} fish for ${fmt(r.coins)} Fishcoins.`)}else status('Nothing to sell — every fish is a record, mutated or locked.');ui.selected=null;renderPanel();renderDockGear()};
+ doc.getElementById('fishingAutoSell').onchange=e=>{state().settings.autoSell=e.target.checked;persist();status(e.target.checked?'Auto-sell on — dupes are sold as you catch them (records, mutations and 🔒 locked fish are kept).':'Auto-sell off.')};
  doc.getElementById('fishingShowFish').onchange=e=>{state().settings.fish=e.target.checked;persist();const f=sceneFishing();f&&f.setFishVisible(e.target.checked)};
  doc.getElementById('fishingSound').onchange=e=>{state().settings.sound=e.target.checked;persist()};
  els.autoBtn.onclick=()=>setAuto(!ui.auto);
@@ -443,7 +460,7 @@ function renderMenu(){
   `<button type="button" role="menuitem" data-fm="start">${ui.phase==='off'?'▶ Start fishing<small>walks to the nearest pond</small>':'⏹ Stop fishing'}</button>`+
   `<button type="button" role="menuitem" data-fm="bag">🧺 Fishing Bag<small>${st.bag.length}/${BAG_MAX} · show off from anywhere</small></button>`+
   `<button type="button" role="menuitem" data-fm="index">📖 Fish Index<small>${Object.keys(st.dex).filter(k=>st.dex[k].n>0).length}/${SPECIES.length} discovered · catch rates</small></button>`+
-  `<button type="button" role="menuitem" data-fm="shop">🛒 Tackle Shop<small>🪙 ${fmt(st.coins)}</small></button>`;
+  `<button type="button" role="menuitem" data-fm="shop">🛒 Tackle Shop<small>${COIN_HTML} ${fmt(st.coins)}</small></button>`;
  for(const b of els.menu.querySelectorAll('button'))b.onclick=()=>{
   toggleMenu(false);
   if(b.dataset.fm==='start'){if(ui.phase==='off')startFishing();else stopFishing()}
@@ -474,15 +491,161 @@ function setAuto(on){
 }
 function setPhase(phase){ui.phase=phase;renderStage();if(opts&&opts.button){opts.button.textContent=phase==='off'?'🎣 Fishing':'🎣 Fishing…';opts.button.setAttribute('aria-pressed',String(phase!=='off'))}}
 function mutFilter(mut){return mut&&MUTATIONS[mut]?' '+MUTATIONS[mut].css:''}
+// ---- v294 fish art. The old look was the OS emoji tinted with hue-rotate: blurry, washed
+// out and childish, and the show-off/catch sprites were so dim they vanished over the pond.
+// Every surface now paints a proper side-view sprite on canvas - dark outline, saturated
+// body over a pale belly, real fins, per-species shape + pattern variation seeded from the
+// species id - so all 70 species stay distinct and crisp at any size. Mutations get a baked
+// halo + effect overlay instead of a blur filter. Falls back to the emoji glyph wherever
+// canvas 2D is unavailable (jsdom tests, ancient browsers).
+const SHAPE_BY_GLYPH={'🐟':'fish','🐠':'tropical','🐡':'puffer','🦈':'shark','🐋':'whale','🦐':'shrimp','🦞':'lobster','🦀':'crab','🦑':'squid','🐙':'octopus','🐸':'tadpole'};
+function hashId(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function fishSprite(spId,mut,px=96){
+ const sp=spId&&typeof spId==='object'?spId:speciesById(spId);
+ if(!sp||typeof document==='undefined'||!document.createElement)return null;
+ let c,g;
+ try{c=document.createElement('canvas');c.width=c.height=px;g=c.getContext&&c.getContext('2d')}catch{return null}
+ if(!g||typeof g.quadraticCurveTo!=='function'||typeof g.createLinearGradient!=='function'||typeof g.createRadialGradient!=='function')return null;
+ const H=hashId(sp.id),v=i=>((H>>>((i*5)%27))&31)/31;
+ const M=mut&&Object.hasOwn(MUTATIONS,mut)?MUTATIONS[mut]:null;
+ let hue=((sp.hue%360)+360)%360,sat=66+v(1)*16,lum=46+v(2)*10;
+ if(mut==='golden'){hue=45;sat=92;lum=56}
+ if(mut==='frozen'){hue=202;sat=58;lum=62}
+ if(mut==='ghostly'){sat=Math.min(sat,20);lum=72}
+ const col=(dh,ds,dl,a=1)=>`hsla(${(((hue+dh)%360)+360)%360},${Math.min(100,Math.max(6,sat+ds))}%,${Math.min(94,Math.max(8,lum+dl))}%,${a})`;
+ const LINE=`hsl(${Math.round(hue)},45%,15%)`,FIN=col(-16,6,-8),DARK=col(2,0,-20,.55);
+ const u=px/100,U=n=>n*u;
+ g.lineJoin='round';g.lineCap='round';
+ if(M&&M.glow){try{const r=g.createRadialGradient(U(50),U(52),U(8),U(50),U(52),U(47));r.addColorStop(0,M.glow+'b0');r.addColorStop(.6,M.glow+'46');r.addColorStop(1,M.glow+'00');g.fillStyle=r;g.fillRect(0,0,px,px)}catch{}}
+ const shape=SHAPE_BY_GLYPH[sp.glyph]||'fish';
+ const grad=(y0,y1)=>{const gr=g.createLinearGradient(0,U(y0),0,U(y1));gr.addColorStop(0,col(-6,4,8));gr.addColorStop(.55,col(0,0,0));gr.addColorStop(.82,col(8,-20,24));gr.addColorStop(1,col(10,-24,32));return gr};
+ const path=pts=>{g.beginPath();g.moveTo(U(pts[0][0]),U(pts[0][1]));for(let i=1;i+1<pts.length;i+=2)g.quadraticCurveTo(U(pts[i][0]),U(pts[i][1]),U(pts[i+1][0]),U(pts[i+1][1]));g.closePath()};
+ const paint=f=>{g.fillStyle=f;g.fill();g.strokeStyle=LINE;g.lineWidth=U(2.6);g.stroke()};
+ const eye=(x,y,r)=>{g.fillStyle='#f8f4e8';g.beginPath();g.arc(U(x),U(y),U(r),0,7);g.fill();g.strokeStyle=LINE;g.lineWidth=U(1.5);g.stroke();g.fillStyle='#1c1a18';g.beginPath();g.arc(U(x+r*.2),U(y),U(r*.55),0,7);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(U(x-r*.15),U(y-r*.3),U(r*.26),0,7);g.fill()};
+ const stroke2=(w,fill,draw)=>{draw();g.strokeStyle=LINE;g.lineWidth=U(w+3);g.stroke();draw();g.strokeStyle=fill;g.lineWidth=U(w);g.stroke()};
+ const pattern=(bodyPath,hh)=>{const pv=v(3);if(pv<.3&&shape!=='tropical')return;g.save();bodyPath();g.clip();g.fillStyle=DARK;
+  if(pv<.65||shape==='tropical'){for(let i=0;i<3;i++){const bx=40+i*13;g.beginPath();g.moveTo(U(bx),U(52-hh));g.quadraticCurveTo(U(bx-6),U(52),U(bx),U(52+hh));g.lineTo(U(bx+5),U(52+hh));g.quadraticCurveTo(U(bx-1),U(52),U(bx+5),U(52-hh));g.closePath();g.fill()}}
+  else{for(let i=0;i<5;i++){g.beginPath();g.arc(U(36+i*11+v(i+7)*4),U(46+((i%2)*10)+v(i+9)*4),U(2.6+v(i+8)*1.4),0,7);g.fill()}}
+  g.restore()};
+ if(shape==='fish'||shape==='tropical'||shape==='shark'||shape==='whale'){
+  const hh=shape==='tropical'?19+v(4)*4:shape==='shark'?12+v(4)*3:shape==='whale'?23+v(4)*3:14+v(4)*7;
+  const nose=shape==='shark'?94:shape==='tropical'?82:90;
+  const body=()=>path([[24,52],[34,52-hh*1.3],[58,52-hh],[nose-8,52-hh*.72],[nose,51],[nose+2,55],[nose-10,52+hh*.78],[56,52+hh*.92],[34,52+hh*1.22],[24,52]]);
+  // tail
+  const tl=shape==='shark'?1.5:shape==='whale'?1.3:1.15;
+  path([[32,52],[13,52-hh*tl*.95],[6,52-hh*tl],[16,52],[6,52+hh*tl],[13,52+hh*tl*.95],[32,52]]);paint(FIN);
+  // dorsal + belly fins
+  if(shape==='tropical'){path([[38,52-hh+3],[50,52-hh-17],[68,52-hh+2]]);paint(FIN);path([[42,52+hh-2],[52,52+hh+13],[66,52+hh-3]]);paint(FIN)}
+  else if(shape==='shark'){path([[48,52-hh+2],[55,52-hh-15],[66,52-hh+1]]);paint(FIN);path([[56,52+hh-1],[60,52+hh+8],[68,52+hh-2]]);paint(FIN)}
+  else if(shape==='whale'){path([[52,52-hh+3],[58,52-hh-6],[66,52-hh+2]]);paint(FIN)}
+  else{path([[42,52-hh+2],[52,52-hh-10-v(6)*6],[66,52-hh+1]]);paint(FIN);path([[48,52+hh-1],[54,52+hh+8],[62,52+hh-2]]);paint(FIN)}
+  body();paint(grad(52-hh,52+hh));
+  pattern(body,hh);
+  if(shape==='whale'){g.save();body();g.clip();g.strokeStyle=col(6,-18,26,.9);g.lineWidth=U(1.8);for(let i=0;i<3;i++){g.beginPath();g.moveTo(U(40),U(58+i*5));g.quadraticCurveTo(U(62),U(62+i*5),U(84),U(57+i*5));g.stroke()}g.restore()}
+  // gills + pectoral fin
+  g.strokeStyle=LINE;g.lineWidth=U(1.8);
+  if(shape==='shark'){for(let i=0;i<3;i++){g.beginPath();g.moveTo(U(66+i*4),U(47));g.quadraticCurveTo(U(64+i*4),U(52),U(66+i*4),U(57));g.stroke()}}
+  else{g.beginPath();g.moveTo(U(70),U(52-hh*.55));g.quadraticCurveTo(U(64),U(52),U(70),U(52+hh*.55));g.stroke()}
+  path([[58,54],[50,60+hh*.2],[60,60]]);paint(col(-16,6,-4));
+  eye(shape==='shark'?80:74,shape==='whale'?50:46.5,shape==='whale'?3.2:shape==='shark'?3.2:4.4);
+ }else if(shape==='puffer'){
+  const r=21+v(4)*3;
+  g.strokeStyle=LINE;g.lineWidth=U(2.4);g.fillStyle=FIN;
+  for(let i=0;i<11;i++){const a=i/11*Math.PI*2+.3;if(Math.cos(a)>.86)continue;const x1=52+Math.cos(a)*r*.92,y1=50+Math.sin(a)*r*.92,x2=52+Math.cos(a)*(r+7.5),y2=50+Math.sin(a)*(r+7.5);g.beginPath();g.moveTo(U(x1+Math.sin(a)*4),U(y1-Math.cos(a)*4));g.lineTo(U(x2),U(y2));g.lineTo(U(x1-Math.sin(a)*4),U(y1+Math.cos(a)*4));g.closePath();g.fill();g.stroke()}
+  path([[31,50],[24,42],[22,38],[26,50],[22,62],[24,58],[31,50]]);paint(FIN);
+  const body=()=>{g.beginPath();g.arc(U(52),U(50),U(r),0,7)};
+  body();paint(grad(50-r,50+r));
+  g.save();body();g.clip();g.fillStyle=DARK;for(let i=0;i<6;i++){g.beginPath();g.arc(U(40+(i%3)*12),U(42+Math.floor(i/3)*14),U(2.4),0,7);g.fill()}g.restore();
+  g.fillStyle=col(8,-20,26);g.beginPath();g.ellipse?g.ellipse(U(52),U(58),U(r*.62),U(r*.34),0,0,7):g.arc(U(52),U(58),U(r*.5),0,7);g.fill();
+  eye(62,44,5);g.strokeStyle=LINE;g.lineWidth=U(2);g.beginPath();g.moveTo(U(71),U(52));g.quadraticCurveTo(U(74),U(54),U(71),U(56));g.stroke();
+ }else if(shape==='tadpole'){
+  stroke2(7,col(0,0,-4),()=>{g.beginPath();g.moveTo(U(56),U(52));g.quadraticCurveTo(U(34),U(60),U(24),U(46));g.quadraticCurveTo(U(18),U(36),U(12),U(42))});
+  const body=()=>{g.beginPath();g.arc(U(62),U(50),U(17+v(4)*3),0,7)};
+  body();paint(grad(32,68));
+  eye(68,45,4.4);
+ }else if(shape==='shrimp'||shape==='lobster'){
+  const cx=50,cy=46,r=22;
+  // antennae
+  g.strokeStyle=LINE;g.lineWidth=U(1.7);
+  g.beginPath();g.moveTo(U(cx+r-2),U(cy-4));g.quadraticCurveTo(U(88),U(26),U(92),U(44));g.stroke();
+  g.beginPath();g.moveTo(U(cx+r-2),U(cy-1));g.quadraticCurveTo(U(92),U(38),U(88),U(58));g.stroke();
+  // curved segmented body
+  const bodyArc=()=>{g.beginPath();g.arc(U(cx),U(cy),U(r),-.55,2.5)};
+  stroke2(13,col(0,0,0),bodyArc);
+  g.strokeStyle=col(8,-18,24,.85);g.lineWidth=U(3.4);g.beginPath();g.arc(U(cx),U(cy),U(r-3),.4,2.2);g.stroke();
+  g.strokeStyle=LINE;g.lineWidth=U(1.6);
+  for(let i=0;i<4;i++){const a=.2+i*.55,x1=cx+Math.cos(a)*(r-7),y1=cy+Math.sin(a)*(r-7),x2=cx+Math.cos(a)*(r+7),y2=cy+Math.sin(a)*(r+7);g.beginPath();g.moveTo(U(x1),U(y1));g.lineTo(U(x2),U(y2));g.stroke()}
+  // tail fan (at arc end, lower left)
+  path([[32,62],[18,58],[16,66],[24,70],[20,76],[32,72],[32,62]]);paint(FIN);
+  // legs
+  for(let i=0;i<3;i++){g.beginPath();g.moveTo(U(56+i*7),U(56));g.quadraticCurveTo(U(58+i*7),U(66),U(52+i*7),U(72));g.strokeStyle=LINE;g.lineWidth=U(2);g.stroke()}
+  if(shape==='lobster'){path([[70,40],[86,30],[90,40],[80,38],[90,46],[74,48],[70,40]]);paint(col(0,0,0));path([[68,54],[86,52],[90,62],[80,58],[82,68],[68,60],[68,54]]);paint(col(0,0,0))}
+  eye(68,36,3);
+ }else if(shape==='crab'){
+  g.strokeStyle=LINE;g.lineWidth=U(2);
+  for(const s of[-1,1]){for(let i=0;i<3;i++){g.beginPath();g.moveTo(U(50+s*(14+i*4)),U(60+i*2));g.quadraticCurveTo(U(50+s*(30+i*4)),U(66+i*4),U(50+s*(26+i*5)),U(80))
+   ;g.stroke()}}
+  for(const s of[-1,1]){const bx=50+s*24;
+   g.beginPath();g.moveTo(U(50+s*14),U(50));g.quadraticCurveTo(U(bx),U(44),U(bx-s*1),U(34));g.lineWidth=U(5);g.strokeStyle=col(0,0,0);g.stroke();g.lineWidth=U(2);g.strokeStyle=LINE;
+   path([[bx-6*s,36],[bx-8*s,24],[bx,22],[bx+2*s,28],[bx+7*s,24],[bx+5*s,36],[bx-6*s,36]]);paint(col(0,0,0));}
+  const body=()=>{g.ellipse?(g.beginPath(),g.ellipse(U(50),U(56),U(23),U(15),0,0,7)):(g.beginPath(),g.arc(U(50),U(56),U(19),0,7))};
+  body();paint(grad(41,71));
+  g.save();body();g.clip();g.fillStyle=DARK;for(let i=0;i<4;i++){g.beginPath();g.arc(U(38+i*8),U(52+(i%2)*8),U(1.9),0,7);g.fill()}g.restore();
+  eye(43,48,3.4);eye(57,48,3.4);
+  g.strokeStyle=LINE;g.lineWidth=U(1.8);g.beginPath();g.moveTo(U(46),U(60));g.quadraticCurveTo(U(50),U(63),U(54),U(60));g.stroke();
+ }else if(shape==='squid'){
+  const tip=14+v(4)*4;
+  path([[50,tip],[36,34],[38,58],[44,62],[50,64],[56,62],[62,58],[64,34],[50,tip]]);paint(grad(tip,64));
+  path([[50,tip+2],[32,22],[40,38],[45,30],[50,tip+2]]);paint(FIN);path([[50,tip+2],[68,22],[60,38],[55,30],[50,tip+2]]);paint(FIN);
+  g.strokeStyle=LINE;g.lineWidth=U(2);
+  for(let i=0;i<5;i++){const x0=40+i*5;g.beginPath();g.moveTo(U(x0),U(62));g.quadraticCurveTo(U(x0+(i%2?7:-7)),U(74),U(x0+(i%2?-4:4)),U(86));g.lineWidth=U(4.6);g.strokeStyle=col(0,0,0);g.stroke();g.lineWidth=U(1.6);g.strokeStyle=LINE;g.stroke()}
+  eye(44,56,3.8);eye(56,56,3.8);
+ }else{ // octopus
+  const body=()=>{g.beginPath();g.arc(U(50),U(42),U(20+v(4)*3),0,7)};
+  for(let i=0;i<5;i++){const x0=34+i*8,sw=(i%2?1:-1)*(8+v(i+5)*5);
+   const leg=()=>{g.beginPath();g.moveTo(U(x0),U(52));g.quadraticCurveTo(U(x0+sw*.4),U(70),U(x0+sw),U(84))};
+   stroke2(6,col(0,0,0),leg)}
+  body();paint(grad(20,64));
+  g.save();body();g.clip();g.fillStyle=DARK;for(let i=0;i<3;i++){g.beginPath();g.arc(U(40+i*10),U(30+(i%2)*6),U(2),0,7);g.fill()}g.restore();
+  eye(43,42,4.4);eye(58,42,4.4);
+  g.strokeStyle=LINE;g.lineWidth=U(1.8);g.beginPath();g.moveTo(U(46),U(52));g.quadraticCurveTo(U(50),U(55),U(54),U(52));g.stroke();
+ }
+ // mutation overlays, baked so they stay visible at any scale
+ const star=(x,y,r,fill)=>{g.fillStyle=fill;g.beginPath();g.moveTo(U(x),U(y-r));g.quadraticCurveTo(U(x),U(y),U(x+r),U(y));g.quadraticCurveTo(U(x),U(y),U(x),U(y+r));g.quadraticCurveTo(U(x),U(y),U(x-r),U(y));g.quadraticCurveTo(U(x),U(y),U(x),U(y-r));g.fill()};
+ if(mut==='ghostly'){g.globalCompositeOperation='source-atop';g.fillStyle='rgba(224,224,248,.42)';g.fillRect(0,0,px,px);g.globalCompositeOperation='source-over'}
+ if(mut==='prismatic'){g.globalCompositeOperation='source-atop';const lg=g.createLinearGradient(0,0,px,0);['#ff5d5d','#ffb84d','#ffe95d','#6de87a','#5db9ff','#b06dff'].forEach((h,i)=>lg.addColorStop(i/5,h));g.globalAlpha=.4;g.fillStyle=lg;g.fillRect(0,0,px,px);g.globalAlpha=1;g.globalCompositeOperation='source-over'}
+ if(mut==='frozen'){for(const[x,y,r]of[[30,30,5],[74,66,4],[64,24,3.5]]){g.fillStyle='rgba(225,245,255,.92)';g.beginPath();g.moveTo(U(x),U(y-r));g.lineTo(U(x+r*.62),U(y));g.lineTo(U(x),U(y+r));g.lineTo(U(x-r*.62),U(y));g.closePath();g.fill()}}
+ if(mut==='electric'){g.strokeStyle='#ffe34d';g.lineWidth=U(2.6);for(const[x,y]of[[26,26],[70,70]]){g.beginPath();g.moveTo(U(x),U(y));g.lineTo(U(x+6),U(y+7));g.lineTo(U(x+1),U(y+8));g.lineTo(U(x+8),U(y+17));g.stroke()}}
+ if(mut==='shiny'||mut==='sparkling'||mut==='golden'){star(28,28,5,'#fffbe8');star(72,64,4,'#fff6c8');if(mut!=='shiny')star(66,22,3.2,'#ffffff')}
+ return c;
+}
+const ART_CACHE=new Map();
+function fishSpriteURL(spId,mut,px=96){
+ const sp=spId&&typeof spId==='object'?spId:speciesById(spId);
+ if(!sp)return null;
+ const key=sp.id+'|'+(mut||'')+'|'+px;
+ if(ART_CACHE.has(key))return ART_CACHE.get(key);
+ let url=null;
+ const c=fishSprite(sp,mut,px);
+ if(c&&typeof c.toDataURL==='function'){try{url=c.toDataURL('image/png')}catch{url=null}}
+ if(url&&!/^data:image\/png/.test(url))url=null;
+ ART_CACHE.set(key,url);
+ return url;
+}
 function glyphHTML(sp,mut,cls='fishing-glyph'){
+ const url=fishSpriteURL(sp,mut,cls==='fishing-glyph'?64:128);
+ if(url)return `<img class="${cls} fishing-art${mut?' mut-'+mut:''}" src="${url}" alt="${esc(sp.name)}" draggable="false">`;
  return `<span class="${cls}${mut?' mut-'+mut:''}" style="filter:hue-rotate(${sp.hue}deg)${mutFilter(mut)}">${sp.glyph}</span>`;
 }
+// v294: the 🪙 emoji needs Unicode 13 font support and rendered as a blank square box on
+// Windows 10 / older Android. Fishcoins now draw as a CSS coin that works everywhere.
+const COIN_HTML='<i class="fishcoin" aria-hidden="true"></i>';
 function renderDockGear(){
  if(!els)return;
  const st=state(),rod=equippedRod(),bait=selectedBait();
- els.gearLine.innerHTML=`<span>🪙 ${fmt(st.coins)}</span><span>${rod.icon} ${esc(rod.name)}</span><span>${bait?`${bait.icon} ${esc(bait.name)} ×${st.bait[bait.id]}`:'No bait'}</span>`;
+ els.gearLine.innerHTML=`<span>${COIN_HTML} ${fmt(st.coins)}</span><span>${rod.icon} ${esc(rod.name)}</span><span>${bait?`${bait.icon} ${esc(bait.name)} ×${st.bait[bait.id]}`:'No bait'}</span>`;
  els.bagCount.textContent=st.bag.length+'/'+BAG_MAX;
- if(els.coins)els.coins.textContent='🪙 '+fmt(st.coins);
+ if(els.coins)els.coins.innerHTML=COIN_HTML+' '+fmt(st.coins);
 }
 function renderStage(){
  if(!els)return;
@@ -505,7 +668,7 @@ function renderStage(){
  if(ui.phase==='wait'){stage.innerHTML='<div class="fishing-wait"><span class="fishing-bob">🎈</span> Waiting for a bite<span class="fishing-dots"><i>.</i><i>.</i><i>.</i></span></div>';if(!ui.auto)status('Click the SHAKE! bubbles to attract fish faster.');return}
  if(ui.phase==='bite'){stage.innerHTML='<div class="fishing-bite"><span>❗</span> BITE — CLICK!</div>';status('');return}
  if(ui.phase==='reel'){
-  stage.innerHTML='<div class="fishing-reel"><div class="fishing-track"><div id="fishingBarEl" class="fishing-bar"></div><span id="fishingFishEl" class="fishing-fish">🐟</span></div><div class="fishing-progress"><i id="fishingProgressEl"></i></div><div class="fishing-reel-row"><span id="fishingCrank" class="fishing-crank">🎣</span><span id="fishingReelHint">HOLD to pull ▶ · release to drift ◀</span><span id="fishingPerfectStar" title="Perfect so far">⭐</span></div></div>';
+  stage.innerHTML='<div class="fishing-reel"><div class="fishing-track"><div id="fishingBarEl" class="fishing-bar"></div><span id="fishingFishEl" class="fishing-fish">'+((u=>u?'<img src="'+u+'" alt="" draggable="false">':'🐟')(fishSpriteURL('minnow',null,64)))+'</span></div><div class="fishing-progress"><i id="fishingProgressEl"></i></div><div class="fishing-reel-row"><span id="fishingCrank" class="fishing-crank">🎣</span><span id="fishingReelHint">HOLD to pull ▶ · release to drift ◀</span><span id="fishingPerfectStar" title="Perfect so far">⭐</span></div></div>';
   status(ui.auto?'Auto reeling…':'Keep the fish inside your bar to fill the line!');
   return;
  }
@@ -514,10 +677,10 @@ function renderStage(){
   if(!r){setPhase('ready');return}
   if(r.kind==='catch'){
    const sp=speciesById(r.entry.sp),rar=rarityById(sp.rarity),worth=value(r.entry);
-   stage.innerHTML=`<div class="fishing-card" data-rarity="${sp.rarity}" style="--rar:${rar.color}">${r.isNew?'<span class="fishing-new">NEW SPECIES!</span>':''}${glyphHTML(sp,r.entry.mut,'fishing-card-glyph')}<div class="fishing-card-info"><strong>${esc(sp.name)}</strong><span class="fishing-chip" style="background:${rar.color}">${rar.label}</span>${r.entry.mut?`<span class="fishing-chip fishing-mut">${MUTATIONS[r.entry.mut].badge} ${MUTATIONS[r.entry.mut].label}</span>`:''}<p>${r.entry.w} kg · worth 🪙 ${fmt(worth)}${r.entry.perfect?' · Perfect ⭐':''}</p></div><div class="fishing-card-btns"><button id="fishingAgain" type="button">🎣 Cast again</button><button id="fishingBrag" type="button">📣 Show off</button><button id="fishingSellNow" type="button">💰 Sell ${fmt(worth)}</button></div></div>`;
+   stage.innerHTML=`<div class="fishing-card" data-rarity="${sp.rarity}" style="--rar:${rar.color}">${r.isNew?'<span class="fishing-new">NEW SPECIES!</span>':''}${glyphHTML(sp,r.entry.mut,'fishing-card-glyph')}<div class="fishing-card-info"><strong>${esc(sp.name)}</strong><span class="fishing-chip" style="background:${rar.color}">${rar.label}</span>${r.entry.mut?`<span class="fishing-chip fishing-mut">${MUTATIONS[r.entry.mut].badge} ${MUTATIONS[r.entry.mut].label}</span>`:''}<p>${r.entry.w} kg · worth ${COIN_HTML} ${fmt(worth)}${r.entry.perfect?' · Perfect ⭐':''}${r.autoSold?` · <b>auto-sold +${fmt(r.autoSold)}</b> ${COIN_HTML}`:''}</p></div><div class="fishing-card-btns"><button id="fishingAgain" type="button">🎣 Cast again</button>${r.autoSold?'':`<button id="fishingBrag" type="button">📣 Show off</button><button id="fishingSellNow" type="button">💰 Sell ${fmt(worth)}</button>`}</div></div>`;
    doc.getElementById('fishingAgain').onclick=()=>{ui.result=null;setPhase('ready')};
-   doc.getElementById('fishingBrag').onclick=()=>{showOff(r.entry.id);ui.result=null;setPhase('ready')};
-   doc.getElementById('fishingSellNow').onclick=()=>{const res=sellFish(state(),r.entry.id);if(res){persist();sound('coin');status('Sold for 🪙 '+fmt(res.coins)+'.')}ui.result=null;setPhase('ready')};
+   const brag=doc.getElementById('fishingBrag');if(brag)brag.onclick=()=>{showOff(r.entry.id);ui.result=null;setPhase('ready')};
+   const sellNow=doc.getElementById('fishingSellNow');if(sellNow)sellNow.onclick=()=>{const res=sellFish(state(),r.entry.id);if(res&&res.ok){persist();sound('coin');status('Sold for '+fmt(res.coins)+' Fishcoins.')}ui.result=null;setPhase('ready')};
    if(!ui.auto)status('Space casts again.');
   }else{
    stage.innerHTML=`<div class="fishing-card is-escape"><span class="fishing-card-glyph">💨</span><div class="fishing-card-info"><strong>${r.kind==='slow'?'Too slow — it got away…':'The line went slack — it escaped!'}</strong><p>Keep the fish inside your bar next time.</p></div><div class="fishing-card-btns"><button id="fishingAgain" type="button">🎣 Try again</button></div></div>`;
@@ -600,8 +763,13 @@ function finishReel(kind){
   persist();
   const sp=speciesById(ui.roll.sp);
   sound(entry&&entry.perfect?'perfect':'catch');
-  if(f)f.catchFly(sp.glyph,sp.hue,()=>{});
+  if(f)f.catchFly({spId:sp.id,mut:entry?entry.mut:ui.roll.mut,glyph:sp.glyph,hue:sp.hue},null,()=>{});
   ui.result={kind:'catch',entry:entry||{...ui.roll,id:'',at:Date.now(),perfect:ui.reel.perfect},isNew};
+  // v294 auto-sell: a kept catch that is just a lighter dupe goes straight to Fishcoins.
+  if(entry&&shouldAutoSell(state(),entry)){
+   const res=sellFish(state(),entry.id);
+   if(res&&res.ok){persist();ui.result.autoSold=res.coins;sound('coin')}
+  }
   if(!entry)status('Bag full — the catch could not be kept!');
  }else{
   state().stats.escapes++;persist();
@@ -682,9 +850,11 @@ function startFishing(pondIdx){
  els.spot.textContent='🎣 '+(ui.pond===0?'West':'East')+' Lawn Pond';
  const p=pondCenter();
  if(distToPond()>2.4){
+  // v294: phase goes to 'walking' BEFORE moveTo so the movement lock (busy()) never blocks
+  // fishing's own walk to the pond.
   const stand=standPoint(p,s);
-  if(stand&&opts.moveTo)opts.moveTo(stand.x,stand.z);
   setPhase('walking');
+  if(stand&&opts.moveTo)opts.moveTo(stand.x,stand.z);
  }else setPhase('ready');
  const f=sceneFishing();f&&f.setFishVisible(state().settings.fish);
  startLoop();
@@ -723,9 +893,10 @@ function renderPanel(){
 }
 function syncSettings(){
  const st=state();
- const sf=doc.getElementById('fishingShowFish'),sn=doc.getElementById('fishingSound'),so=doc.getElementById('fishingSort');
+ const sf=doc.getElementById('fishingShowFish'),sn=doc.getElementById('fishingSound'),so=doc.getElementById('fishingSort'),as=doc.getElementById('fishingAutoSell');
  if(sf)sf.checked=st.settings.fish;
  if(sn)sn.checked=st.settings.sound;
+ if(as)as.checked=st.settings.autoSell;
  if(so)so.value=ui.sort;
 }
 function sortedBag(){
@@ -749,8 +920,8 @@ function renderBag(){
   const b=doc.createElement('button');b.type='button';b.className='fishing-slot';b.dataset.rarity=sp.rarity;b.style.setProperty('--rar',r.color);
   b.setAttribute('role','option');b.setAttribute('aria-selected',String(ui.selected===e.id));
   if(ui.selected===e.id)b.classList.add('selected');
-  b.innerHTML=glyphHTML(sp,e.mut)+`<small>${e.w} kg</small>${e.mut?`<i class="fishing-slot-mut">${MUTATIONS[e.mut].badge}</i>`:''}${e.perfect?'<i class="fishing-slot-star">⭐</i>':''}`;
-  b.title=`${sp.name} · ${r.label} · worth 🪙 ${fmt(value(e))}`;
+  b.innerHTML=glyphHTML(sp,e.mut)+`<small>${e.w} kg</small>${e.lock?'<i class="fishing-slot-lock">🔒</i>':''}${e.mut?`<i class="fishing-slot-mut">${MUTATIONS[e.mut].badge}</i>`:''}${e.perfect?'<i class="fishing-slot-star">⭐</i>':''}`;
+  b.title=`${sp.name} · ${r.label} · worth ${fmt(value(e))} Fishcoins${e.lock?' · 🔒 locked':''}`;
   b.onclick=()=>{ui.selected=e.id;renderBag()};
   return b;
  }));
@@ -761,11 +932,13 @@ function renderDetail(){
  if(!e){els.detail.hidden=true;return}
  const sp=speciesById(e.sp),r=rarityById(sp.rarity),worth=value(e);
  els.detail.hidden=false;
- els.detail.innerHTML=`<div class="fishing-detail-main">${glyphHTML(sp,e.mut,'fishing-detail-glyph')}<div><strong>${esc(sp.name)}</strong> <span class="fishing-chip" style="background:${r.color}">${r.label}</span>${e.mut?` <span class="fishing-chip fishing-mut">${MUTATIONS[e.mut].badge} ${MUTATIONS[e.mut].label}</span>`:''}<p>${e.w} kg · worth 🪙 ${fmt(worth)}${e.perfect?' · Perfect catch ⭐':''}${e.at?' · '+new Date(e.at).toLocaleDateString():''}</p></div></div><div class="fishing-detail-btns"><button id="fishingShowOffBtn" type="button">📣 Show off</button><button id="fishingSellBtn" type="button">💰 Sell ${fmt(worth)}</button><button id="fishingReleaseBtn" type="button">🌊 Release</button></div>`;
+ els.detail.innerHTML=`<div class="fishing-detail-main">${glyphHTML(sp,e.mut,'fishing-detail-glyph')}<div><strong>${esc(sp.name)}</strong> <span class="fishing-chip" style="background:${r.color}">${r.label}</span>${e.mut?` <span class="fishing-chip fishing-mut">${MUTATIONS[e.mut].badge} ${MUTATIONS[e.mut].label}</span>`:''}${e.lock?' <span class="fishing-chip fishing-locked">🔒 Locked</span>':''}<p>${e.w} kg · worth ${COIN_HTML} ${fmt(worth)}${e.perfect?' · Perfect catch ⭐':''}${e.at?' · '+new Date(e.at).toLocaleDateString():''}</p></div></div><div class="fishing-detail-btns"><button id="fishingShowOffBtn" type="button">📣 Show off</button><button id="fishingLockBtn" type="button" title="A locked fish can never be sold or released — not by Sell, Sell dupes or Auto-sell">${e.lock?'🔓 Unlock':'🔒 Lock'}</button><button id="fishingSellBtn" type="button"${e.lock?' disabled title="Locked — unlock this fish to sell it"':''}>💰 Sell ${fmt(worth)}</button><button id="fishingReleaseBtn" type="button"${e.lock?' disabled title="Locked — unlock this fish to release it"':''}>🌊 Release</button></div>`;
  doc.getElementById('fishingShowOffBtn').onclick=()=>showOff(e.id);
- doc.getElementById('fishingSellBtn').onclick=()=>{const res=sellFish(st,e.id);if(res){persist();sound('coin');status('Sold for 🪙 '+fmt(res.coins)+'.');ui.selected=null;renderPanel();renderDockGear()}};
+ doc.getElementById('fishingLockBtn').onclick=()=>{const res=toggleLock(st,e.id);if(res){persist();status(res.lock?'🔒 Locked — this fish can no longer be sold or released.':'🔓 Unlocked.');renderBag();renderDockGear()}};
+ doc.getElementById('fishingSellBtn').onclick=()=>{const res=sellFish(st,e.id);if(res&&res.ok){persist();sound('coin');status('Sold for '+fmt(res.coins)+' Fishcoins.');ui.selected=null;renderPanel();renderDockGear()}else if(res&&res.reason==='locked')status('🔒 That fish is locked — unlock it first.')};
  const rel=doc.getElementById('fishingReleaseBtn');
  rel.onclick=()=>{
+  if(e.lock){status('🔒 That fish is locked — unlock it first.');return}
   if(rel.dataset.confirm){const i=st.bag.findIndex(x=>x.id===e.id);if(i>=0)st.bag.splice(i,1);persist();ui.selected=null;renderBag();renderDockGear()}
   else{rel.dataset.confirm='1';rel.textContent='Release?';setTimeout(()=>{if(rel.isConnected){delete rel.dataset.confirm;rel.textContent='🌊 Release'}},2600)}
  };
@@ -778,7 +951,7 @@ function renderIndex(){
   const pct=rate(sp.id)*100;
   const odds='1 in '+fmt(Math.round(1/rate(sp.id)));
   return `<div class="fishing-dex-row${found?'':' undiscovered'}" style="--rar:${r.color}">
-   <span class="fishing-dex-glyph" style="filter:${found?`hue-rotate(${sp.hue}deg)`:'brightness(0) opacity(.45)'}">${sp.glyph}</span>
+   ${(u=>u?`<img class="fishing-dex-glyph fishing-art" style="filter:${found?'none':'brightness(0) opacity(.45)'}" src="${u}" alt="" draggable="false">`:`<span class="fishing-dex-glyph" style="filter:${found?`hue-rotate(${sp.hue}deg)`:'brightness(0) opacity(.45)'}">${sp.glyph}</span>`)(fishSpriteURL(sp,null,64))}
    <span class="fishing-dex-name">${found?esc(sp.name):'???'}<small>${sp.min}–${sp.max} kg${found?` · best ${d.bw} kg · ×${fmt(d.n)}`:''}${found&&d.mut.length?' · '+d.mut.map(m=>MUTATIONS[m].badge).join(''):''}</small></span>
    <span class="fishing-chip" style="background:${r.color}">${r.label}</span>
    <span class="fishing-dex-rate" title="Base catch rate with no rod or bait luck">${pct>=1?pct.toFixed(1)+'%':pct.toFixed(2)+'%'}<small>${odds}</small></span>
@@ -793,15 +966,15 @@ function renderShop(){
  const rodRows=RODS.map(rod=>{
   const owned=st.rods.includes(rod.id),equipped=st.rod===rod.id;
   const stats=`🍀 +${Math.round(rod.luck*100)}% · 🎯 +${Math.round(rod.control*100)}% · 🏋️ +${Math.round(rod.strength*100)}% · ⏱ +${Math.round(rod.lure*100)}%`;
-  const btn=equipped?'<button type="button" disabled>Equipped</button>':owned?`<button type="button" data-equip="${rod.id}">Equip</button>`:`<button type="button" data-rod="${rod.id}" ${st.coins<rod.cost?'disabled':''}>🪙 ${fmt(rod.cost)}</button>`;
+  const btn=equipped?'<button type="button" disabled>Equipped</button>':owned?`<button type="button" data-equip="${rod.id}">Equip</button>`:`<button type="button" data-rod="${rod.id}" ${st.coins<rod.cost?'disabled':''}>${COIN_HTML} ${fmt(rod.cost)}</button>`;
   return `<div class="fishing-shop-row${equipped?' equipped':''}"><span class="fishing-shop-icon">${rod.icon}</span><span class="fishing-shop-name">${esc(rod.name)}<small>${stats}</small></span>${btn}</div>`;
  }).join('');
  const baitRows=BAITS.map(b=>{
   const ownedN=st.bait[b.id]||0,selected=st.baitSel===b.id;
   const stats=`🍀 +${Math.round(b.luck*100)}%${b.weight?` · 🏋️ +${Math.round(b.weight*100)}%`:''}${b.mutation>1?` · 🧬 ×${b.mutation}`:''}`;
-  return `<div class="fishing-shop-row${selected?' equipped':''}"><span class="fishing-shop-icon">${b.icon}</span><span class="fishing-shop-name">${esc(b.name)}<small>${stats} · owned ×${ownedN}</small></span><span class="fishing-shop-btns"><button type="button" data-bait="${b.id}" data-n="1" ${st.coins<b.cost?'disabled':''}>🪙 ${fmt(b.cost)}</button><button type="button" data-bait="${b.id}" data-n="10" ${st.coins<b.cost*10?'disabled':''}>×10</button><button type="button" data-use="${b.id}" ${ownedN?'':'disabled'}>${selected?'Using':'Use'}</button></span></div>`;
+  return `<div class="fishing-shop-row${selected?' equipped':''}"><span class="fishing-shop-icon">${b.icon}</span><span class="fishing-shop-name">${esc(b.name)}<small>${stats} · owned ×${ownedN}</small></span><span class="fishing-shop-btns"><button type="button" data-bait="${b.id}" data-n="1" ${st.coins<b.cost?'disabled':''}>${COIN_HTML} ${fmt(b.cost)}</button><button type="button" data-bait="${b.id}" data-n="10" ${st.coins<b.cost*10?'disabled':''}>×10</button><button type="button" data-use="${b.id}" ${ownedN?'':'disabled'}>${selected?'Using':'Use'}</button></span></div>`;
  }).join('');
- els.shopView.innerHTML=`<p class="fishing-shop-head">🪙 <b>${fmt(st.coins)}</b> Fishcoins — earn them by selling fish from the Bag.</p><h4>Rods <small>permanent · luck / control / strength / lure speed</small></h4>${rodRows}<h4>Bait <small>one is used per cast</small></h4>${baitRows}<div class="fishing-shop-row${st.baitSel===null?' equipped':''}"><span class="fishing-shop-icon">🚫</span><span class="fishing-shop-name">No bait<small>fish with the rod alone</small></span><button type="button" data-use="none" ${st.baitSel===null?'disabled':''}>Use</button></div>`;
+ els.shopView.innerHTML=`<p class="fishing-shop-head">${COIN_HTML} <b>${fmt(st.coins)}</b> Fishcoins — earn them by selling fish from the Bag.</p><h4>Rods <small>permanent · luck / control / strength / lure speed</small></h4>${rodRows}<h4>Bait <small>one is used per cast</small></h4>${baitRows}<div class="fishing-shop-row${st.baitSel===null?' equipped':''}"><span class="fishing-shop-icon">🚫</span><span class="fishing-shop-name">No bait<small>fish with the rod alone</small></span><button type="button" data-use="none" ${st.baitSel===null?'disabled':''}>Use</button></div>`;
  for(const b of els.shopView.querySelectorAll('button[data-rod]'))b.onclick=()=>{const r=buyRod(st,b.dataset.rod);if(r.ok){persist();sound('coin');status('Bought and equipped the '+RODS_BY_ID[b.dataset.rod].name+'!')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-equip]'))b.onclick=()=>{equipRod(st,b.dataset.equip);persist();renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-bait]'))b.onclick=()=>{const r=buyBait(st,b.dataset.bait,Number(b.dataset.n));if(r.ok){persist();sound('coin');if(!st.baitSel)selectBait(st,b.dataset.bait)}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
@@ -824,7 +997,7 @@ function onLocalMessage(fromId,body){
  const sp=speciesById(parsed.sp),f=sceneFishing();
  if(!sp||!f||typeof f.showFish!=='function')return false;
  const mut=parsed.mut?MUTATIONS[parsed.mut]:null;
- f.showFish(fromId,{text:sp.glyph,hue:sp.hue,scale:showOffScale(parsed.w),glow:mut?mut.glow:null,ms:5600});
+ f.showFish(fromId,{spId:sp.id,mut:parsed.mut||null,text:sp.glyph,hue:sp.hue,scale:showOffScale(parsed.w),glow:mut?mut.glow:null,ms:5600});
  return true;
 }
 // ---------------- wiring from assets/social.js ---------------------------------------------
@@ -846,9 +1019,13 @@ return {
  // pure core (tests)
  RARITIES,SPECIES,DIFF,MUTATIONS,RODS,BAITS,BAG_MAX,CAST_GREEN,CAST_PERFECT,MAX_W,
  speciesById,rarityById,rate,value,rollCatch,castRating,makeReel,reelStep,normalize,addCatch,
- buyRod,equipRod,buyBait,selectBait,sellFish,sellBulk,showOffText,parseShowOff,showOffScale,
+ buyRod,equipRod,buyBait,selectBait,sellFish,sellBulk,toggleLock,shouldAutoSell,showOffText,parseShowOff,showOffScale,
+ fishSprite,fishSpriteURL,
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,openBag:()=>toggleBag(true),
+ // v294: true while a line is in the water (or a catch is being resolved). While busy the
+ // plaza blocks walking, bench/chair seats and sit toggles - stop fishing to move.
+ busy:()=>!['off','walking'].includes(ui.phase),
  get phase(){return ui.phase},
  get auto(){return ui.auto},
 };
