@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=288">
-<link rel="stylesheet" href="assets/social-fishing.css?v=288">
+<link rel="stylesheet" href="assets/social.css?v=289">
+<link rel="stylesheet" href="assets/social-fishing.css?v=289">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-02 haven-v288 pond chairs, auto fishing, fish index and Fishcoin shop';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-02 haven-v289 embedded preview sign-in fix (session header bridge)';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3715,11 +3715,14 @@ function cloudBadgeStale(why){
   cloudBadge('☁ …',(why||'Not on the server yet')+(hhmm?' - last save reached it at '+hhmm:''));
 }
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
-async function cloudFetch(path,opt){const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});const res=await fetch(cloudUrl(path),Object.assign({credentials:'same-origin'},o,{headers:hdrs}));
+async function cloudFetch(path,opt){const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});const epoch=CLOUD.epoch||0;const res=await fetch(cloudUrl(path),Object.assign({credentials:'same-origin'},o,{headers:hdrs}));
   // v253: one live session per account (functions/api/sessions.js). A 401 while this tab holds a
   // session means another device signed in as this player, so this tab stops instead of grinding
   // a copy nobody will ever see and losing it to the next save conflict.
-  if(res&&res.status===401&&CLOUD.on&&!CLOUD.signingOut)cloudSessionReplaced();const pt=res&&res.headers&&typeof res.headers.get==='function'?res.headers.get('x-preview-session'):null;if(pt)CLOUD.previewToken=pt;return res}
+  // v289: only a 401 from THIS sign-in counts. A slow request issued before the login (startup
+  // probes racing the sign-in) can resolve 401 after CLOUD.on flips true; ending the fresh session
+  // over it showed a bogus "signed in on another device" right after a successful login.
+  if(res&&res.status===401&&CLOUD.on&&!CLOUD.signingOut&&epoch===(CLOUD.epoch||0))cloudSessionReplaced();const pt=res&&res.headers&&typeof res.headers.get==='function'?res.headers.get('x-preview-session'):null;if(pt)CLOUD.previewToken=pt;return res}
 async function boardRefresh(period=boardPeriod,kind=boardKind){
   if(!['daily','weekly','all'].includes(period)||!['kills','echo'].includes(kind))return;
   const seq=++boardRequest;
@@ -4091,6 +4094,7 @@ function cloudApplyGrants(list){
 function ptsSpent(){let c=0;for(const k of['str','agi','dex','luk','int','vit']){const v=S.st[k]||1;for(let i=1;i<v;i++)c+=(i<ELITELV?1+Math.floor((i-1)/10):10+(i-ELITELV))}return c}
 
 function cloudSession(u,gm,id){
+  CLOUD.epoch=(CLOUD.epoch||0)+1;   // v289: requests already in flight belong to the previous session
   CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;if(id)CLOUD.id=Number(id);
   if(typeof shopSession==='function')shopSession(u);   // haven-v215: what this account owns in the Cash Shop
   if(typeof friendsSession==='function')friendsSession(u);   // haven-v273: the account's friends list
@@ -12886,10 +12890,10 @@ setInterval(updateWatch,60000);
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=288"></script>
-<script src="assets/social-poker.js?v=288"></script>
-<script src="assets/social-scene.js?v=288"></script>
-<script src="assets/social-fishing.js?v=288"></script>
-<script src="assets/social.js?v=288"></script>
+<script src="assets/social-rules.js?v=289"></script>
+<script src="assets/social-poker.js?v=289"></script>
+<script src="assets/social-scene.js?v=289"></script>
+<script src="assets/social-fishing.js?v=289"></script>
+<script src="assets/social.js?v=289"></script>
 </body>
 </html>

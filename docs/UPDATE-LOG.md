@@ -9566,3 +9566,32 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
   production deployment. Deploy `workers/social` (shared `social-rules.js` chairs/seats)
   together with the matching Pages client.
+
+### 2026-11-02 — `haven-v289 embedded preview sign-in fix (session header bridge)`
+* **Changed:** Two sign-in fixes for the embedded (iframed/proxied) preview, where the
+  browser blocks third-party cookies so `pg_session` never sticks and every request after
+  login 401s into a bogus "signed in on another device". (1) `tools/dev_server.js` gains
+  `--preview-auth` (env `DEV_PREVIEW_AUTH=1`): it enables the existing `X-Preview-Session`
+  header bridge — the same session token the cookie would carry, mirrored into a response
+  header and accepted back from a request header, plus the socket's `?preview_session=` —
+  **without** `--gm-all`, so accounts registered on the preview stay ordinary players
+  (`--gm-all` still implies the bridge, unchanged). The client already supported the token
+  (`CLOUD.previewToken`). (2) `index.html` (`cloudFetch`/`cloudSession`): a 401 only ends
+  the session if the request was issued during the **current** sign-in (`CLOUD.epoch`
+  guard) — previously a slow startup probe sent before the login could resolve 401 after
+  it and instantly kill the fresh session. Dev-tool + client only; deployed Functions,
+  registration and the one-session-per-account rule are untouched.
+* **Try it:** `node tools/dev_server.js --preview-auth --db tools/.devdb/preview.sqlite`
+  behind the preview proxy; register/sign in from the embedded frame with third-party
+  cookies blocked — the session now survives, and accounts persist across restarts.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips.
+  `dev_server_sim.js` grew two suites (21 total): `--preview-auth` signs a cookie-blocked
+  browser in over the header while `gm` stays 0 and the GM API stays closed; without the
+  flag no token leaks and a forged header is refused (production rule). `cloud_sim.js`
+  (67) still proves a genuine mid-session 401 ends the tab. Progression fixtures
+  re-measured per procedure: all 126 measurements byte-identical, only
+  `sourceHash`/`combatHash` refreshed.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Nothing to deploy for this one — the bridge is dev-server-only;
+  the real host uses first-party cookies on its own domain.

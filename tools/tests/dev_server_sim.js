@@ -88,6 +88,44 @@ try {
     } finally { await preview.close(); }
   });
 
+  // v289: an embedded preview (iframe/proxy) can have its cookies blocked by the browser. The
+  // X-Preview-Session bridge carries the same session token in a header instead — and it must be
+  // available WITHOUT --gm-all, because it moves no privilege: accounts stay ordinary players.
+  await t('--preview-auth bridges the session over headers without granting GM', async () => {
+    const preview = await start({ port: 0, host: '127.0.0.1', site, previewAuth: true });
+    try {
+      const host = 'http://127.0.0.1:' + preview.port;
+      const reg = await fetch(host + '/api/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ u: 'Cookieless', p: 'a-long-cookieless-password', email:'ck@example.test' }),
+      });
+      const regData = await reg.json();
+      assert.strictEqual(regData.gm, 0, 'preview-auth accounts are players, not owners');
+      const token = reg.headers.get('x-preview-session');
+      assert.ok(token, 'the session token is mirrored into the response header');
+      const me = await fetch(host + '/api/me', { headers: { 'X-Preview-Session': token } });
+      assert.strictEqual(me.status, 200, 'the header alone signs the cookie-blocked browser in');
+      assert.strictEqual((await me.json()).u, 'Cookieless');
+      const gm = await fetch(host + '/api/gm/players', { headers: { 'X-Preview-Session': token } });
+      assert.notStrictEqual(gm.status, 200, 'the bridge must not open the GM API to players');
+    } finally { await preview.close(); }
+  });
+
+  await t('without --gm-all or --preview-auth the header is ignored', async () => {
+    const plain = await start({ port: 0, host: '127.0.0.1', site });
+    try {
+      const host = 'http://127.0.0.1:' + plain.port;
+      const reg = await fetch(host + '/api/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ u: 'NoBridge', p: 'a-long-nobridge-password', email:'nb@example.test' }),
+      });
+      assert.strictEqual(reg.headers.get('x-preview-session'), null, 'no token leaks by default');
+      const cookie = reg.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
+      const forged = await fetch(host + '/api/me', { headers: { 'X-Preview-Session': decodeURIComponent(cookie.replace(/^pg_session=/, '')) } });
+      assert.strictEqual(forged.status, 401, 'the production-rule server only accepts the cookie');
+    } finally { await plain.close(); }
+  });
+
   await t('a second player registers, is not a GM, and has their own empty save', async () => {
     const r = await call('friend', 'POST', '/api/register', { u: 'Friend', p: 'a-long-friend-password' });
     assert.strictEqual(r.status, 201);
