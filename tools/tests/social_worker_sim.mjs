@@ -11,6 +11,8 @@
 // Durable Object durability across evictions, CPU limits and real network conditions.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 // The bundled workerd lags the compatibility date in workers/social/wrangler.toml.
 // Running the Worker under an older date is safe for everything asserted here (a
@@ -40,34 +42,47 @@ if(useDate!==realDate)
  console.log('note: worker compatibility_date is '+realDate+'; running the local runtime at '+useDate+' (newest the bundled workerd accepts)');
 
 const {Miniflare}=await loadMiniflare();
-const mf=new Miniflare({
+const persist=fs.mkdtempSync(path.join(os.tmpdir(),'pg-social-history-'));
+const start=()=>new Miniflare({
  modules:[
   {type:'ESModule',path:'workers/social/index.mjs'},
   {type:'ESModule',path:'workers/social/room.mjs'},
   {type:'ESModule',path:'assets/social-rules.js'},
   {type:'ESModule',path:'assets/social-poker.js'},
  ],
- modulesRoot:'.',
- compatibilityDate:useDate,
- durableObjects:{SOCIAL:{className:'Social',useSQLite:true}},
+ modulesRoot:'.',compatibilityDate:useDate,
+ durableObjects:{SOCIAL:{className:'Social',useSQLite:true}},durableObjectsPersist:persist,
 });
-try{
+async function until(messages,predicate,label){
+ const end=Date.now()+5000;
+ while(!messages.some(predicate)){if(Date.now()>end)throw Error('Worker socket timeout: '+label);await new Promise(r=>setTimeout(r,20))}
+ return messages.find(predicate);
+}
+async function connect(mf,id){
  const ns=await mf.getDurableObjectNamespace('SOCIAL'),stub=ns.get(ns.idFromName('world'));
- const response=await stub.fetch('https://social/connect',{headers:{Upgrade:'websocket','X-Social-Identity':JSON.stringify({id:1,username:'NativeWorkerTest'})}});
+ const response=await stub.fetch('https://social/connect',{headers:{Upgrade:'websocket','X-Social-Identity':JSON.stringify({id,username:'NativeWorkerTest'+id})}});
  assert.equal(response.status,101,'the Durable Object must accept a WebSocket upgrade');
- const ws=response.webSocket;
- assert(ws,'the upgrade must return a socket');
- ws.accept();
- const messages=[];
+ const ws=response.webSocket;assert(ws);ws.accept();const messages=[];
  ws.addEventListener('message',e=>messages.push(JSON.parse(e.data)));
+ return {ws,messages};
+}
+let mf=await start();
+try{
+ const {ws,messages}=await connect(mf,1);
+ await until(messages,m=>m.type==='hello','first hello');
  ws.send(JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));
- const until=Date.now()+5000;
- while(!messages.some(m=>m.type==='room')){
-  if(Date.now()>until)throw Error('Worker socket timeout waiting for the room message');
-  await new Promise(r=>setTimeout(r,20));
- }
- // Anti-vacuity: the join must have produced a room assignment, not merely some message.
- assert.equal(messages.find(m=>m.type==='room').room,1,'joining the plaza must assign room 1');
- ws.close();
- console.log('PASS Cloudflare local runtime: Durable Object binding, WebSocket upgrade and plaza join');
-}finally{await mf.dispose()}
+ const joined=await until(messages,m=>m.type==='room','plaza join');assert.equal(joined.room,1);
+ ws.send(JSON.stringify({type:'chat',channel:'world',body:'survives a Durable Object restart'}));
+ await until(messages,m=>m.type==='message'&&m.body==='survives a Durable Object restart','World echo');
+ await new Promise(r=>setTimeout(r,3100));
+ ws.send(JSON.stringify({type:'chat',channel:'whisper',to:'NativeWorkerTest1',body:'never durable'}));
+ await until(messages,m=>m.type==='message'&&m.body==='never durable','whisper echo');
+ ws.close();await new Promise(r=>setTimeout(r,100));await mf.dispose();mf=null;
+ // A new runtime with the same Durable Object storage is an eviction/restart, not a new world.
+ mf=await start();const second=await connect(mf,2);
+ const hello=await until(second.messages,m=>m.type==='hello','restarted hello');
+ assert(hello.history.some(m=>m.body==='survives a Durable Object restart'),'World backlog survives the restart');
+ assert(!hello.history.some(m=>m.channel!=='world'||m.body==='never durable'),'only public World history is durable');
+ second.ws.close();
+ console.log('PASS Cloudflare local runtime: Durable Object binding, WebSocket upgrade, plaza join and World-only backlog across a storage-backed restart');
+}finally{if(mf)await mf.dispose();fs.rmSync(persist,{recursive:true,force:true})}

@@ -228,12 +228,18 @@ t('every asset versioned in index.html points at a build, never at a stale cache
   const tags = [...src.matchAll(/(?:src|href)="(assets\/[^"?]+\.(?:js|css))\?v=(\d+)"/g)];
   assert.ok(tags.length > 0, 'index.html versions its assets');
   // Only the files this build actually changed. Untouched assets keep their old number on purpose -
-  // bumping those would throw away a warm cache for nothing.
-  for (const f of ['assets/social.js', 'assets/social.css', 'assets/social-scene.js']) {
+  // bumping those would throw away a warm cache for nothing. v283 changes the poker client,
+  // shared table engine and stylesheet; the plaza scene renderer is untouched.
+  const build = (src.match(/haven-v(\d+)/) || [])[1];
+  assert.ok(build, 'the page declares a numbered build');
+  for (const f of ['assets/social.js', 'assets/social.css', 'assets/social-poker.js']) {
     const found = tags.find(([, file]) => file === f);
     assert.ok(found, f + ' is loaded by index.html');
-    assert.strictEqual(found[2], '279', f + ' must be busted to the build that changed it');
+    assert.strictEqual(found[2], build, f + ' must be busted to the build that changed it');
   }
+  const scene = tags.find(([, file]) => file === 'assets/social-scene.js');
+  assert.ok(scene, 'the plaza scene is loaded by index.html');
+  assert.strictEqual(scene[2], '279', 'the untouched scene keeps its warm cache');
 });
 
 // The build tag is copied into a few documents so a reader can tell which build a sheet or a note is about.

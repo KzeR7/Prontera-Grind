@@ -24,8 +24,13 @@ carries `to`). World emotions join the same 100-line backlog as text, whisper
 emotions go to that one player, and Local still broadcasts to the room. A bare
 `{type:'emotion'}` with no `channel` - an older cached client - still means Local,
 so nothing that worked before stops working.
-World has a volatile 100-message backlog, and clients retain at most 400 lines.
-This is not permanent chat storage or offline mail.
+World keeps the latest 100 public messages in the Social Durable Object's SQLite
+storage, so an eviction/restart no longer sends an empty backlog. Each signed-in
+browser also keeps up to 200 World lines under an account-scoped local key and
+merges/deduplicates them with the server backlog on hello/reconnect. An empty hello
+cannot erase that cache. Whispers and Local are never written to this storage; they
+remain delivery-only/private, and the combined in-memory chat cap is still 400.
+This is recent public history, not offline mail or an unlimited archive.
 
 Click/tap to walk at your character's own field run speed (AGI, movement affixes, pets and movement buffs, including the 1.4 running factor); the room clamps the reported value to 2–13 u/s and both client and server advance with it, so the plaza no longer feels slower than farming. Like the main field camera (`PerspectiveCamera(38)`), the camera stays smoothly locked to your character without map-wide free-panning: drag (mouse or 1 finger) to rotate and tilt (`26°–77°`, default `45°`), and scroll or pinch to zoom (`22–72` distance, default `44`). Camera exposes Rotate, Tilt, and Zoom sliders, and Reset view restores defaults. Your character is framed slightly higher than the middle of the screen (`~44–46%` from the top) so overhead bubbles, the top toolbar, and the bottom dock/chat all stay clear. Names appear below the feet, with an equipped Hunt title underneath. Appearance, title and refinement updates preserve your position. Insert or `/sit` toggles sitting; walking stands up. Twelve native slatted metal park benches form four groups along the fountain promenade, and each bench seats **2 adventurers side-by-side** (`24` bench seats total; clicking a half-occupied bench automatically claims the open partner spot beside them). Reservations are per plaza and clear on standing, walking, switching rooms or disconnecting. A larger castle,
 flanking houses, two market stalls, two West Avenue Hold'em tables and four bounded corner gardens surround the expanded avenues; trees stay inside
@@ -44,6 +49,45 @@ farming simulation, loot, EXP, deaths and auto-advance keep running, while hidde
 on return (open window previews still update live). Returning to
 the field reveals its current state, including any automatic stage progression.
 Movement, sitting and social presence are not saved into farming coordinates.
+
+## Plaza Hold'em table safety and layout (haven-v283)
+
+A reserved poker player cannot be stood up by an unconfirmed floor/bench/sit or
+room-switch command. The client asks **Stay at table** (default/focused) or **Fold &
+leave** before walking away, changing seats/tables, using Insert/`/sit`, switching
+plazas or returning to the field. The room enforces the same `confirmLeave` guard,
+so queued clicks and older clients cannot silently fold a hand. Closing/minimizing
+the poker window is safe and never stands the player up. Confirmed leaving uses the
+existing fold/stand accounting: committed chips stay in the pot; the unbet stack
+remains in the chip wallet.
+
+A disconnected socket gets a 15-second, server-owned reconnect reservation. The
+next authenticated socket for that account inherits the exact plaza coordinates,
+facing, remaining path and still-reserved poker seat; it does not spawn at the
+entrance or buy in again. The poker turn clock continues during the grace, and an
+AFK kick/expiry releases the seat. If a pot settled while the socket was down, the
+reserved stack's net change is credited once on authenticated reconnect. Explicitly
+leaving clears the reservation. A same-seat `poker_sit` is idempotent for older
+reconnect clients.
+
+The poker window has a fixed viewport-derived lane: desktop chat stays bottom-left
+and cannot move/resize the table; below 1280px chat docks in a compact lane beneath
+the table while it is open, then restores its preferred size when minimized/closed.
+While the player is actually seated at a table on a wide screen, chat narrows to a
+280px column (`poker-chat-fit`) and the table takes the freed lane (left 304px);
+standing/leaving restores the normal chat width and 414px lane. Hand results show a
+one-shot overlay keyed by table+hand number: win chip burst, lose/fold shake, split
+pot neutral, with a matching mini-pill flash; reduced motion disables the burst.
+Local chat spoken by a player seated at the viewed table (or a dealer callout) also
+pops a small, transient speech bubble on that seat/dealer plaque for six seconds.
+The bubble is visual-only (`aria-hidden`, `pointer-events:none`), renders text rather
+than HTML, replaces the previous bubble for that seat, survives table redraws without
+replaying its pop, and is cleared by mute, expiry, minimize, room change or exit.
+World/Whisper and Local messages from players outside the viewed table never pop the
+table; the existing 3D plaza bubble and chat log are unchanged.
+Cards deal/reveal once per new card, the pot pulses on change, turns/winners glow,
+and reduced-motion preferences disable those animations. The table keeps larger
+cards, readable seats and a dedicated action dock without scrolling the table body.
 Map BGM uses Theme of Prontera while visiting and restores the current farming
 map on exit; manual track choice and volume preferences remain available. Weapon
 refinement glows reuse the native weapon/arm effect hooks in standing, walking and
@@ -142,8 +186,11 @@ npx wrangler deploy --config workers/social/wrangler.toml
 ```
 
 No production deployment is performed by the feature tests. A missing binding
-leaves the game playable and shows chat as unavailable. World backlog is lost
-when the Durable Object restarts; clients reconnect and rejoin. This first service
+leaves the game playable and shows chat as unavailable. The latest 100 World
+messages survive a Durable Object restart in its existing SQLite storage; no new
+D1 migration is required. Deploy the Social Worker before the matching Pages
+client so the leave guard, reconnect reservation and durable backlog are active.
+This first service
 uses one coordinating Durable Object for the world and numbered plazas, intended
 for the current small community rather than an unbounded global population.
 
@@ -187,6 +234,8 @@ SQLite. Sign in explicitly after each reload, as required by the existing game.
 node tools/tests/social_sim.js
 node tools/tests/social_ui_sim.js
 node tools/tests/social_scene_sim.js
+node tools/tests/social_poker_sim.js
+node tools/tests/social_table_chat_sim.js
 node tools/tests/friends_sim.js
 node tools/tests/social_api_sim.mjs
 node tools/tests/social_config_sim.js

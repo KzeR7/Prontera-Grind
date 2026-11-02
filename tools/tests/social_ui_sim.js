@@ -22,8 +22,8 @@ const bar=w.document.getElementById('socialMin');bar.dispatchEvent(new w.Keyboar
  const socialCss=fs.readFileSync('assets/social.css','utf8');assert.match(socialCss,/#socialTabs button\{position:relative;z-index:7\}/);assert.match(socialCss,/#socialMin\{position:relative;z-index:7;/);
 }
 let socket;w.WebSocket=class {constructor(){socket=this;this.readyState=1;this.sent=[]}close(){}send(m){this.sent.push(JSON.parse(m))}};w.CLOUD.on=true;w.CLOUD.user='new';w.sessionTick();socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:[]})});
-app.messages=Array.from({length:400},(_,i)=>({channel:'whisper',body:'old'+i,name:'Name',at:0}));socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:Array.from({length:100},()=>({channel:'world',body:'world',name:'Name',at:0}))})});assert.equal(app.messages.length,400);
-w.PGSocial.select('world');socket.onmessage({data:JSON.stringify({type:'message',channel:'world',body:'<img src=x onerror=alert(1)>',name:'<script>',from:3,at:0})});assert.equal(w.document.querySelectorAll('#socialLines img,#socialLines script').length,0);assert(w.document.getElementById('socialLines').textContent.includes('<img'));
+app.messages=Array.from({length:400},(_,i)=>({channel:'whisper',body:'old'+i,name:'Name',from:1,id:'w'+i,at:i}));socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:Array.from({length:100},(_,i)=>({channel:'world',body:'world',name:'Name',from:1,id:'world'+i,at:i}))})});assert.equal(app.messages.length,400);
+w.PGSocial.select('world');socket.onmessage({data:JSON.stringify({type:'message',channel:'world',body:'<img src=x onerror=alert(1)>',name:'<script>',from:3,at:1000})});assert.equal(w.document.querySelectorAll('#socialLines img,#socialLines script').length,0);assert(w.document.getElementById('socialLines').textContent.includes('<img'));
 w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='first';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'first');const count=socket.sent.length;w.document.getElementById('socialInput').value='second';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count);assert.equal(w.document.getElementById('socialInput').value,'second');assert(w.document.getElementById('socialSend').disabled);w.PGSocial.select('world');w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count,'changing channel cannot evade cooldown');app.nextChat=0;w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'second');
 // Pointer and keyboard resizing uses the actual view bounds and restores a preferred size.
 const view=w.document.getElementById('view'),chat=w.document.getElementById('socialChat'),handle=w.document.getElementById('socialResize'),topHandle=w.document.getElementById('socialResizeTop'),cornerHandle=w.document.getElementById('socialResizeCorner');
@@ -64,7 +64,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  assert.equal(scenePlayers.has(0),false,'multiplayer room join replaces solo placeholder');
  assert.equal(scenePlayers.get(9).name,'new');assert.equal(sceneCallbacks.self(),9);
  // v236: a socket that stops answering is spotted and replaced, and the server's planned
- // re-authentication keeps the plaza on screen and puts the player back in their seat.
+ // re-authentication keeps the plaza on screen and trusts the server-preserved seat.
  let liveDate=1e12;const realNow=Date.now;w.Date.now=()=>liveDate;
  const sockets=[];w.WebSocket=class{constructor(){sockets.push(this);socket=this;this.readyState=1;this.sent=[];this.closed=null}close(){this.readyState=3;this.closed=(this.closed??'client')}send(m){this.sent.push(JSON.parse(m))}};
  socket.onmessage({data:JSON.stringify({type:'room',room:1,players:[{id:9,name:'new',room:1,x:0,z:12,dir:0,sit:true,seat:3,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:0,title:''}}]})});
@@ -81,7 +81,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  w.sessionTick();assert.equal(sockets.length,before+1,'a dead socket is replaced within one beat');
  socket.onmessage({data:JSON.stringify({type:'hello',id:9,history:[]})});
  socket.onmessage({data:JSON.stringify({type:'room',room:1,players:[{id:9,name:'new',room:1,x:0,z:12,dir:0,sit:true,seat:3,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:0,title:''}}]})});
- assert(socket.sent.some(m=>m.type==='seat'&&m.id===3),'the rejoin asks for the same bench');
+ assert(!socket.sent.some(m=>m.type==='seat'&&m.id===3),'a server-preserved bench is not requested again (no duplicate walk/stand); the snapshot is authoritative');
  assert.equal(app.resume,null,'the saved seat is used once');
  // A planned refresh is the server's 4000 close: reconnect at once, no failure message, no reset.
  app.room=1;app.lastSeen=liveDate;socket.onmessage({data:JSON.stringify({type:'reauth'})});
@@ -91,7 +91,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  const player=[{id:9,name:'new',room:1,x:0,z:12,dir:0,sit:true,seat:3,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:0,title:''}}];
  socket.onmessage({data:JSON.stringify({type:'hello',id:9,history:[]})});
  socket.onmessage({data:JSON.stringify({type:'room',room:1,players:player})});
- assert.equal(app.connected,true);assert(socket.sent.some(m=>m.type==='seat'&&m.id===3),'the reconnect reseats');
+ assert.equal(app.connected,true);assert(!socket.sent.some(m=>m.type==='seat'&&m.id===3),'the reconnect keeps the authoritative bench without a second seat command');
  // ...and the same close arriving without the notice (a server on the older build) behaves the same.
  socket.onclose({code:4000});
  assert.equal(app.room,1,'a 4000 close keeps the plaza on screen too');

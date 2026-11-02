@@ -198,15 +198,29 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const modal=uw.document.getElementById('socialPokerModal');
  const checkNoOverlap=label=>{
   uw.PGSocial.syncPokerBounds();
+  // jsdom does not lay out CSS. Model the explicit compact chat lane below 1280px;
+  // desktop chat keeps its measured rectangle. The area assertion is unchanged.
+  const compact=chatEl.classList.contains('poker-compact');
+  const rect=compact?{left:8,right:vw-8,top:vh-80-(vh<700?112:148),bottom:vh-80}:chatRect;
   const ml=parseFloat(modal.style.left),mt=parseFloat(modal.style.top),mw=parseFloat(modal.style.width),mh=parseFloat(modal.style.height);
   const mr=ml+mw,mb=mt+mh;
-  const overlapX=Math.max(0,Math.min(mr,chatRect.right)-Math.max(ml,chatRect.left));
-  const overlapY=Math.max(0,Math.min(mb,chatRect.bottom)-Math.max(mt,chatRect.top));
+  const overlapX=Math.max(0,Math.min(mr,rect.right)-Math.max(ml,rect.left));
+  const overlapY=Math.max(0,Math.min(mb,rect.bottom)-Math.max(mt,rect.top));
   assert.equal(overlapX*overlapY,0,`${label}: #socialPokerModal must never overlap #socialChat`);
  };
  checkNoOverlap('Desktop 1280x720');
- vw=768;vh=640;chatRect={left:8,top:380,right:348,bottom:565,width:340,height:185};
+ assert(parseFloat(modal.style.width)>736,'the dedicated desktop table lane is larger than the old chat-derived window');
+ const fixedBounds=modal.getAttribute('style');
+ chatRect={left:12,top:200,right:650,bottom:704,width:638,height:504};
+ uw.PGSocial.syncPokerBounds();
+ assert.equal(modal.getAttribute('style'),fixedBounds,'resizing chat must not move or resize the poker table');
+ chatRect={left:12,top:490,right:402,bottom:704,width:390,height:214};
+ vw=768;vh=640;
  checkNoOverlap('Compact 768x640');
+ assert(chatEl.classList.contains('poker-compact'),'small screens dock chat below the table instead of shrinking the table beside it');
+ uw.PGSocial.minimizePokerModal();
+ assert(!chatEl.classList.contains('poker-compact'),'minimizing restores the original chat layout');
+ uw.PGSocial.pokerOpen(0);
 
  // Refills: Daily Free (+1,000) & Zeny packs
  uw.PGSocial.pokerSeatAction(0);

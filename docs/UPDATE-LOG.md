@@ -9404,3 +9404,66 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   bumps, other fields and other accounts are untouched, and `GM`/`gm`/`Gm` all resolve.
 * **Delivery:** `arena/42732cee-prontera-grind`.
 
+
+### 2026-11-02 — `haven-v283 safer plaza poker and lasting world chat`
+* **Changed:** Plaza Hold'em now asks before a floor/bench/sit/room-switch action
+  stands a seated player up, with **Stay at table** focused by default and the same
+  guard enforced by the room. Closing/minimizing the window still keeps the seat.
+  A 15-second authenticated reconnect grace preserves exact plaza position and the
+  reserved poker seat, reconciles a pot settled while away, and makes same-seat
+  reconnects idempotent instead of respawning/rebuying. The poker window uses a
+  larger fixed table lane, bigger cards, deal/reveal/pot/turn/win animations and a
+  compact phone chat lane; resizing chat no longer moves the table. World chat keeps
+  the latest 100 public messages in Durable Object SQLite storage plus an
+  account-scoped browser cache, merged/deduplicated on hello so an empty restarted
+  backlog cannot blank it. Whispers/Local are not persisted.
+* **Try it:** Maps → Social Hub → Hold'em. Sit, then click the floor or Return to
+  field and cancel/confirm the warning. Resize chat while the table is open. Send a
+  World line, reload and sign in again. On a phone the table sits above compact chat.
+* **Checks:** Full gate 194 pass / 0 fail / 0 dependency skips. New
+  `social_table_chat_sim.js`; updated poker/UI/Worker suites include a storage-backed
+  Durable Object restart. Software-WebGL browser review passed for real floor-click
+  guard, desktop/phone bounds, chat-resize independence and World history after a
+  full reload. The required BUILD bump changed progression source/combat hashes;
+  all 126 measurements were rerun and were byte-identical to the pinned fixtures.
+* **Delivery:** Local changes on `arena/a44b3133-prontera-grind`; no production
+  deployment. Deploy `workers/social` before the matching Pages client.
+
+
+### 2026-11-02 — `haven-v284 poker results and seated chat fit`
+* **Changed:** Plaza Hold'em now shows a one-shot hand result animation — gold chip
+  burst for a win, red shake for a loss/fold, neutral split-pot card — keyed to the
+  table and hand number so redraws never replay it, plus a matching minimized-pill
+  flash. While the player is seated at a poker table on a wide screen, World chat
+  narrows to a 280px column and the table uses the freed lane; standing up or leaving
+  restores the normal chat width. Phone layout and the v283 leave guard/reconnect/
+  World history behavior are unchanged.
+* **Try it:** Maps → Social Hub → Hold'em, sit down and watch the chat column shrink;
+  finish a hand to see the result burst/shake, then stand to see chat widen again.
+* **Checks:** Full gate 194 pass / 0 fail / 0 dependency skips; updated
+  `social_table_chat_sim.js` covers compact chat, restored width and one-shot results.
+  Software-WebGL browser review passed for compact chat/table lane and the win overlay.
+  BUILD bump refreshed progression hashes only; all 126 measurements were rerun and
+  stayed byte-identical.
+* **Delivery:** Local changes on `arena/a44b3133-prontera-grind`; no production
+  deployment. Deploy `workers/social` before the matching Pages client.
+
+
+### 2026-11-02 — `haven-v285 local chat bubbles on the poker table`
+* **Changed:** When someone seated at the poker table you are viewing speaks in
+  Local chat, a small cream speech bubble pops on their seat for six seconds (Local
+  emotions pop as the emotion image). Dealer callouts pop on the dealer plaque. The
+  bubble is visual-only, never blocks cards/buttons, renders plain text, replaces the
+  previous bubble for that seat, survives redraws without replaying, and disappears
+  on mute/expiry/minimize/room change/exit. World/Whisper and Local messages from
+  players outside the viewed table do not pop the table; the 3D plaza bubble and chat
+  log still work as before.
+* **Try it:** Maps → Social Hub → Hold'em, sit at a table, open Local chat and send a
+  line or emotion; watch it pop on your seat. Have another seated player speak to see
+  theirs. Mute them or minimize the table to clear it.
+* **Checks:** `social_table_chat_sim.js` now covers seat anchoring, Local-only scope,
+  emotion images, text-only rendering, redraw persistence, mute, expiry and minimize.
+  Full gate and software-WebGL review recorded in `docs/TESTING.md`. BUILD bump
+  refreshed progression hashes only; all 126 measurements stayed byte-identical.
+* **Delivery:** Local changes on `arena/a44b3133-prontera-grind`; no production
+  deployment. Deploy `workers/social` before the matching Pages client.

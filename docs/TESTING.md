@@ -221,6 +221,35 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-02 (`haven-v285` gate result): 194 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and
+`*_smoke.js` ran. `social_table_chat_sim.js` additionally asserts Local-only seat
+bubbles on the viewed poker table, emotion images, text-only rendering, redraw
+persistence without replay, mute/expiry/minimize cleanup, and that World/Whisper or
+off-table Local lines never pop the table. The BUILD bump again refreshed only
+progression hashes; all 126 measurements stayed byte-identical (42 gear, 21 moving,
+63 growth). Software-WebGL review passed for the on-table Local bubble alongside the
+v284 compact chat/result overlay and the v283 guard/history checks.
+
+**2026-11-02 (`haven-v284` gate result): 194 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and
+`*_smoke.js` ran. `social_table_chat_sim.js` additionally asserts the seated-only
+compact chat lane, restored chat width after standing, and one-shot win/lose/fold
+result overlays that do not replay on redraw. The BUILD bump again refreshed only
+progression hashes; all 126 measurements stayed byte-identical (42 gear, 21 moving,
+63 growth). Software-WebGL review passed for compact chat, table lane, win overlay,
+floor-click guard, phone bounds and World history after reload.
+
+**2026-11-02 (`haven-v283` gate result): 194 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and
+`*_smoke.js` ran. The new `social_table_chat_sim.js` covers the leave guard,
+reconnect reservation, World-only history and fixed table geometry. The required
+BUILD bump moved the progression fixtures' source/combat hashes; all 126 current
+measurements were rerun with the unchanged tool and pinned baseline and came back
+byte-identical (42 gear, 21 moving, 63 growth). No budget or measurement was changed.
+A software-WebGL browser review also passed for desktop/phone poker bounds,
+chat-resize independence, the floor-click warning and World history after reload.
+
 **2026-11-01 (`haven-v279` gate result): 184 suites pass.** The GM flag now reaches the plaza: added
 to the server-resolved `X-Social-Identity` header, carried in `hello`/`snapshot`/chat messages, and
 rendered as `🛠 Name`. `social_api_sim.mjs` pins that a client-claimed `gm` is discarded and that only
