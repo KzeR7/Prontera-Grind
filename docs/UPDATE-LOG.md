@@ -9485,3 +9485,40 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   stayed byte-identical.
 * **Delivery:** PR #163 on `arena/a44b3133-prontera-grind`; no production deployment.
   Deploy `workers/social` before the matching Pages client.
+
+### 2026-11-02 — `haven-v287 plaza pond fishing with one Fishing Bag`
+* **Changed:** Rebuilt plaza fishing from scratch (the earlier draft lived only on an
+  unpushed session branch and never reached `main`). Two ponds now sit on the open
+  **south lawns** (`PGSocialRules.PONDS`, (±23, 42)) — below the corner gardens, so the
+  water starts at the lower grass and never touches the tree area; `walkable` blocks the
+  water on client and Worker alike. The loop is a full hold-and-release fishing game
+  (researched against Roblox's *Fisch*): hold-to-charge cast meter with a green
+  zone and PERFECT overlay (charge buys distance; PERFECT rolls rarity twice and keeps
+  the better), SHAKE! bubbles that cut the lure wait, a timed bite with `!` mark and
+  chime, then a reel minigame — hold pulls the white control bar right, release drifts
+  left, progress fills on the fish and drains off it, with an opening lock, rarity-based
+  difficulty and a Perfect-catch flag. 3D rod, line, bobber with cast-arc, ripples,
+  splashes, bite dip, reel jitter and a catch-flight to the player; ambient fish swim in
+  the ponds (toggleable). Everything fishing-related lives in **one UI**: the bottom
+  dock (cast/bite/reel/result with Cast again + Show off) and the single Fishing Bag
+  window (inventory grid, bestiary records, sort, pond-fish + sound toggles, per-fish
+  Show off / two-step Release). *Show off* only announces fish actually in the bag, on
+  Local chat through the normal cooldown path. 14 species over six rarities with 2dp
+  weights and Shiny/Sparkling mutations; the bag (cap 120) persists as `S.fishing` in
+  the save blob with a load sanitizer, like the poker wallet. No farming stats, Zeny or
+  combat are touched.
+* **Try it:** Maps → Social Hub, walk south past the gardens, click a pond or the
+  🎣 Fishing toolbar button (it walks you to the rim), hold Space or the button to cast.
+  Open 🧺 Bag for records and show-offs.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips. New
+  `social_fishing_sim.js` covers pond placement/walkability/pathing, catalog integrity,
+  cast rating, reel physics (lock, clamp, catch/escape, Perfect), bag/bestiary bounds,
+  owned-fish-only show-off and the real scene rig (pond clicks never walk into water).
+  Progression fixtures re-measured per procedure: all 126 before/after measurements
+  byte-identical, only `sourceHash`/`combatHash` refreshed. The two new runtime assets
+  were added to the hosted staging package lists, which otherwise fail closed.
+  `tools/check_social_browser.cjs` unavailable here (no playwright); it is not in the gate.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Deploy `workers/social` (shared `social-rules.js` pond
+  collision) together with the matching Pages client.

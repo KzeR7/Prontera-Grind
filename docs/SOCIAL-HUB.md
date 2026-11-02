@@ -139,6 +139,45 @@ arrive; when it does not, the socket is treated as dead and replaced at the next
 beat, keeping the plaza and the seat. Without this a socket that died silently
 still reported itself as open, and chat stayed quiet until the page was reloaded.
 
+## Plaza fishing (haven-v287)
+
+Two fishing ponds sit on the open **south lawns** (`PGSocialRules.PONDS`, centered at
+(±23, 42)) — below the planted corner gardens so the water never touches the tree
+canopies, and clear of the promenade, benches and houses. The water is part of the
+shared layout: `walkable` blocks it on both the client and the Worker, so nobody paths
+through a pond, and the grass ring around the rim stays walkable for casting.
+
+The loop follows the classic hold-and-release fishing games: click a pond (or the
+`🎣 Fishing` toolbar button — if far away the character first walks to the nearest rim),
+then **hold** to charge the cast meter and release in the green zone (`PERFECT` is a small
+overlay inside it; charge only buys distance, but a PERFECT cast rolls rarity twice and
+keeps the better roll). While waiting, **SHAKE!** bubbles pop over the scene; each click
+cuts ~0.7 s off the bite. On the bite (bobber dips, `!` mark, two-tone chime) the player
+has 1.5 s to click, then the reel minigame runs: holding pushes the white control bar
+right, releasing lets it fall left; progress fills while the fish silhouette stays
+inside the bar and drains while it is loose, after an opening lock of ~1.1 s. Rarer fish
+get a narrower bar, faster wander/dashes and slower fill (`DIFF`). A fish that never left
+the bar is a **Perfect catch**. All of this is client-side and cosmetic — no farming
+stats, Zeny or combat are touched.
+
+Everything fishing lives in **one** UI system: the bottom-center fishing dock hosts the
+cast meter, bite prompt, reel bar and the result card (with `Cast again` / `Show off`),
+and the single **Fishing Bag** window (`🧺 Bag`) holds the inventory grid, bestiary
+records (catches, species discovered, perfects, best catch), sort options, the
+*Pond fish* toggle for the ambient swimmers and the *Sounds* toggle. Selecting a bagged
+fish offers **Show off** and **Release** (two-step confirm). *Show off* works only for a
+fish that is actually in the bag (`showOffText` returns `null` otherwise) and announces
+it on **Local chat** through the normal send path — same 3-second cooldown, text-only
+body, nothing new for the Worker to validate; in solo/offline plaza it falls back to a
+local notice and own-bubble. 14 species across six rarities (Common → Secret, weights
+sum to 1) roll a 2-decimal weight inside the species range plus rare Shiny/Sparkling
+mutations. The bag persists in the save blob as `S.fishing` (bag capped at 120 entries,
+sanitized on load in `index.html` and re-normalized on read by the module, like the
+poker wallet). The 3D water, stone rims, lily pads, reeds, swimming silhouettes, rod,
+line, bobber, ripples, splashes and the catch-flight are drawn by the scene renderer
+and driven through `scene.fishing`; they are created once and animated in the existing
+frame loop.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

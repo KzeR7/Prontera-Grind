@@ -1,0 +1,125 @@
+/* Plaza fishing (v287): bottom-center fishing dock (cast/shake/bite/reel/result) and the single
+   Fishing Bag window. Matches the plaza toolbar palette in assets/social.css. */
+#fishingDock{position:absolute;z-index:30;left:50%;bottom:86px;transform:translateX(-50%);width:min(430px,calc(100% - 24px));box-sizing:border-box;background:linear-gradient(180deg,#14282ef2,#0d1b20f2);border:1.5px solid #6fa3b0;border-radius:12px;color:#eef4ec;box-shadow:0 10px 32px #000a;font:12px/1.4 "Trebuchet MS",sans-serif;user-select:none}
+#fishingDock[hidden]{display:none}
+#fishingDockHead{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid #35535c}
+#fishingSpot{font:bold 12px Georgia,serif;letter-spacing:.6px;color:#cfe8ef}
+#fishingDockBtns{display:flex;gap:6px}
+#fishingDockBtns button{background:#24424b;border:1px solid #6fa3b0;border-radius:5px;color:#eef4ec;font:11px "Trebuchet MS",sans-serif;padding:4px 8px;cursor:pointer}
+#fishingDockBtns button:hover{filter:brightness(1.15)}
+#fishingBagBtn small{color:#9fc3cd}
+#fishingStage{min-height:86px;display:flex;align-items:center;justify-content:center;padding:10px 12px;cursor:pointer;touch-action:none}
+#fishingStage:focus-visible{outline:1px solid #ffe0a0;outline-offset:-3px;border-radius:10px}
+#fishingStatus{margin:0;padding:0 12px 8px;font-size:10.5px;color:#9db9bf;text-align:center;min-height:14px}
+/* Hold-to-cast button */
+.fishing-hold{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;background:radial-gradient(circle at 50% 30%,#2e5862,#1b3840);border:2px solid #7cc0d0;border-radius:50%;width:92px;height:92px;color:#f1f8f4;cursor:pointer;font:bold 10px "Trebuchet MS",sans-serif;justify-content:center;transition:transform .08s,box-shadow .12s}
+.fishing-hold:hover{box-shadow:0 0 14px #7cc0d088}
+.fishing-hold:active{transform:scale(.93)}
+.fishing-hold-icon{font-size:26px}
+.fishing-hold-ring{position:absolute;inset:-7px;border:2px dashed #7cc0d066;border-radius:50%;animation:fishing-spin 9s linear infinite}
+#fishingDock.reduced .fishing-hold-ring{animation:none}
+@keyframes fishing-spin{to{transform:rotate(360deg)}}
+/* Cast power meter */
+.fishing-meter{width:100%}
+.fishing-meter-track{position:relative;height:22px;border-radius:11px;background:linear-gradient(90deg,#273c42,#35565e);border:1px solid #5d8893;overflow:hidden}
+.fishing-meter-green{position:absolute;top:0;bottom:0;left:82%;width:14%;background:#2e8f4fd9}
+.fishing-meter-perfect{position:absolute;top:0;bottom:0;left:87%;width:6%;background:#5ef08cd9;box-shadow:0 0 8px #5ef08c}
+.fishing-meter-track b{position:absolute;top:-3px;bottom:-3px;width:4px;margin-left:-2px;background:#fff;border-radius:2px;box-shadow:0 0 6px #fff}
+.fishing-meter-tip{margin:6px 0 0;text-align:center;font-size:10.5px;color:#bfe3d4}
+/* Waiting / bite */
+.fishing-wait{display:flex;align-items:center;gap:8px;font:bold 13px "Trebuchet MS",sans-serif;color:#d8ecf2}
+.fishing-bob{display:inline-block;animation:fishing-bob 1.6s ease-in-out infinite}
+#fishingDock.reduced .fishing-bob,#fishingDock.reduced .fishing-dots i{animation:none}
+@keyframes fishing-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+.fishing-dots i{animation:fishing-dot 1.2s infinite;font-style:normal}
+.fishing-dots i:nth-child(2){animation-delay:.2s}.fishing-dots i:nth-child(3){animation-delay:.4s}
+@keyframes fishing-dot{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.fishing-walk{font-size:18px}
+.fishing-cast-label{font:bold 16px Georgia,serif;color:#cfe8ef;letter-spacing:1px}
+.fishing-cast-label.is-perfect{color:#5ef08c;text-shadow:0 0 10px #5ef08c88;animation:fishing-pop .35s ease-out}
+.fishing-bite{display:flex;align-items:center;gap:10px;font:bold 19px "Trebuchet MS",sans-serif;color:#ffd24d;text-shadow:0 0 10px #e2502e66;animation:fishing-flash .22s steps(2) infinite}
+.fishing-bite span{font-size:30px}
+#fishingDock.reduced .fishing-bite{animation:none}
+@keyframes fishing-flash{50%{opacity:.55}}
+@keyframes fishing-pop{0%{transform:scale(.5)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+/* Reel minigame */
+.fishing-reel{width:100%}
+.fishing-track{position:relative;height:34px;border-radius:9px;background:linear-gradient(180deg,#0f2f42,#154a62);border:1px solid #4e7f93;overflow:hidden}
+.fishing-bar{position:absolute;top:2px;bottom:2px;border-radius:7px;background:#e9f3f566;border:1.5px solid #ffffffb8;box-shadow:inset 0 0 8px #ffffff40;transition:background .1s}
+.fishing-bar.on{background:#7df0a955;border-color:#7df0a9;box-shadow:0 0 10px #7df0a966,inset 0 0 8px #7df0a955}
+.fishing-bar.held{border-width:2.5px}
+.fishing-fish{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:22px;filter:brightness(0) invert(.9) sepia(.3);transition:none;pointer-events:none}
+.fishing-progress{height:9px;margin-top:7px;border-radius:5px;background:#23343a;border:1px solid #4a666d;overflow:hidden}
+.fishing-progress i{display:block;height:100%;width:33%;background:linear-gradient(90deg,#49b06c,#7df0a9);transition:width .08s linear}
+.fishing-progress i.danger{background:linear-gradient(90deg,#b0493f,#f07d64)}
+.fishing-reel-row{display:flex;align-items:center;justify-content:space-between;margin-top:6px;font-size:10.5px;color:#aecbd2}
+.fishing-crank{display:inline-block;font-size:15px}
+.fishing-crank.spin{animation:fishing-crank .5s linear infinite}
+#fishingDock.reduced .fishing-crank.spin{animation:none}
+@keyframes fishing-crank{0%{transform:rotate(0) scale(1.15)}100%{transform:rotate(360deg) scale(1.15)}}
+#fishingPerfectStar[hidden]{visibility:hidden}
+/* SHAKE! bubbles over the scene */
+#fishingShakes{position:absolute;inset:0;z-index:29;pointer-events:none}
+#fishingShakes[hidden]{display:none}
+.fishing-shake{position:absolute;pointer-events:auto;transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 30%,#fff7e0,#ffd24d);border:2px solid #b8862f;border-radius:50%;width:74px;height:74px;font:bold 12px "Trebuchet MS",sans-serif;color:#5c3c0a;cursor:pointer;box-shadow:0 6px 16px #0008;animation:fishing-shakein .18s ease-out,fishing-wobble 0.9s ease-in-out .2s infinite}
+#fishingShakes.reduced .fishing-shake{animation:none}
+.fishing-shake:hover{filter:brightness(1.08)}
+.fishing-shake.popped{animation:fishing-popout .18s ease-in forwards}
+@keyframes fishing-shakein{0%{transform:translate(-50%,-50%) scale(.3)}100%{transform:translate(-50%,-50%) scale(1)}}
+@keyframes fishing-wobble{0%,100%{transform:translate(-50%,-50%) rotate(-6deg)}50%{transform:translate(-50%,-50%) rotate(6deg)}}
+@keyframes fishing-popout{to{transform:translate(-50%,-50%) scale(1.5);opacity:0}}
+/* Result card */
+.fishing-card{display:flex;align-items:center;gap:12px;width:100%;padding:4px 2px;animation:fishing-pop .3s ease-out}
+#fishingDock.reduced .fishing-card{animation:none}
+.fishing-card-glyph{font-size:40px;filter:none;flex-shrink:0;text-shadow:0 4px 10px #000a}
+.fishing-card[data-rarity]{border-left:4px solid var(--rar,#b9c6c4);padding-left:10px}
+.fishing-card-info{flex:1;min-width:0}
+.fishing-card-info strong{font:bold 14px Georgia,serif}
+.fishing-card-info p{margin:3px 0 0;color:#b9d2d8;font-size:11px}
+.fishing-new{position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-2deg);background:#ffd24d;color:#4d3505;font:bold 10px "Trebuchet MS",sans-serif;border-radius:4px;padding:2px 8px;letter-spacing:1px;box-shadow:0 2px 8px #0007}
+.fishing-card{position:relative}
+.fishing-card-btns{display:flex;flex-direction:column;gap:5px}
+.fishing-card-btns button{background:linear-gradient(180deg,#2b6a52,#1d4b3a);border:1px solid #7bc4a4;border-radius:6px;color:#f2fff8;font:bold 11px "Trebuchet MS",sans-serif;padding:6px 9px;cursor:pointer;white-space:nowrap}
+.fishing-card-btns button:hover{filter:brightness(1.12)}
+.fishing-card-btns button:active{transform:translateY(1px)}
+.fishing-card.is-escape .fishing-card-glyph{font-size:30px}
+.fishing-chip{display:inline-block;margin-left:5px;border-radius:4px;padding:1px 6px;font:bold 9.5px "Trebuchet MS",sans-serif;color:#15262b;vertical-align:2px}
+.fishing-chip.fishing-mut{background:#f3e9ff;color:#5b3f85}
+/* The one Fishing Bag window */
+#fishingPanel{position:absolute;z-index:44;right:14px;top:64px;width:min(360px,calc(100% - 28px));max-height:min(500px,calc(100% - 150px));box-sizing:border-box;display:flex;flex-direction:column;background:linear-gradient(180deg,#132328f7,#0d181cf7);border:1.5px solid #6fa3b0;border-radius:10px;color:#f3eedc;box-shadow:0 14px 40px #000b;font:11.5px/1.4 "Trebuchet MS",sans-serif;overflow:hidden}
+#fishingPanel[hidden]{display:none}
+#fishingPanelHead{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid #35535c;background:#16303780}
+#fishingPanelHead strong{font:bold 13px Georgia,serif;letter-spacing:.5px}
+#fishingPanelHead button{background:transparent;border:0;color:#b9d2d8;font-size:13px;cursor:pointer;padding:2px 6px;border-radius:4px}
+#fishingPanelHead button:hover{background:#ffffff1f;color:#fff}
+#fishingRecords{display:flex;flex-wrap:wrap;gap:5px 12px;padding:8px 12px;border-bottom:1px solid #243d44;color:#9db9bf;font-size:10.5px}
+#fishingRecords b{color:#e8f2ee}
+#fishingTools{display:flex;align-items:center;gap:12px;padding:7px 12px;border-bottom:1px solid #243d44}
+#fishingTools select{background:#0e161d;border:1px solid #5d7d87;color:#e8f2ee;border-radius:4px;font:11px "Trebuchet MS",sans-serif;padding:3px 5px}
+#fishingTools label{display:flex;align-items:center;gap:4px;color:#b9d2d8;cursor:pointer}
+#fishingGrid{flex:1;min-height:70px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:7px;padding:10px 12px;scrollbar-width:thin;scrollbar-color:#54767e transparent}
+.fishing-empty{grid-column:1/-1;color:#93adb3;font-style:italic;text-align:center;margin:18px 6px}
+.fishing-slot{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;background:#182d34;border:1.5px solid var(--rar,#3d5a63);border-radius:8px;padding:7px 3px 5px;cursor:pointer;color:#dcebe7;font:10px "Trebuchet MS",sans-serif;transition:transform .08s,box-shadow .12s}
+.fishing-slot:hover{transform:translateY(-2px);box-shadow:0 4px 10px #0007}
+.fishing-slot.selected{background:#1f3e48;box-shadow:0 0 0 2px var(--rar,#6fa3b0),0 4px 10px #0007}
+.fishing-glyph{font-size:24px;line-height:1}
+.fishing-slot-mut{position:absolute;top:2px;right:3px;font-size:10px;font-style:normal}
+.fishing-slot-star{position:absolute;top:2px;left:3px;font-size:8px;font-style:normal}
+.fishing-glyph.mut-sparkling,.fishing-detail-glyph.mut-sparkling{animation:fishing-sparkle 1.6s ease-in-out infinite}
+@keyframes fishing-sparkle{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+#fishingDetail{border-top:1px solid #35535c;padding:9px 12px;background:#10222880}
+#fishingDetail[hidden]{display:none}
+.fishing-detail-main{display:flex;align-items:center;gap:10px}
+.fishing-detail-glyph{font-size:32px}
+.fishing-detail-main strong{font:bold 12.5px Georgia,serif}
+.fishing-detail-main p{margin:3px 0 0;color:#9db9bf;font-size:10.5px}
+.fishing-detail-btns{display:flex;gap:7px;margin-top:8px}
+.fishing-detail-btns button{flex:1;background:#24424b;border:1px solid #6fa3b0;border-radius:6px;color:#eef4ec;font:bold 11px "Trebuchet MS",sans-serif;padding:6px 8px;cursor:pointer}
+.fishing-detail-btns button:hover{filter:brightness(1.15)}
+#fishingReleaseBtn[data-confirm]{background:#5d2b28;border-color:#d98b80}
+@media(max-width:600px){
+ #fishingDock{bottom:112px;width:min(368px,calc(100% - 12px))}
+ #fishingPanel{right:6px;top:118px;max-height:calc(100% - 300px)}
+ .fishing-hold{width:80px;height:80px}
+ .fishing-shake{width:64px;height:64px}
+}

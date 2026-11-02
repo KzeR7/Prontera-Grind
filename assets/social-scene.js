@@ -39,6 +39,92 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const shrubs=makeBatch();for(const offset of [-4,0,4])for(const side of [-1,1])pushModel(shrubs,'shrub',g.x+offset,g.z+side*5,2.4,0,garden,gardenFloats);addBatch(shrubs,gardenMat);
  }
  for(const {x,z,size} of R.TREES)model('tree2',x,z,size,0,garden,gardenFloats,gardenMat);
+ // v287: Fishing ponds on the open south lawns (R.PONDS), well below the planted tree gardens.
+ // All fishing 3D here is visual: water, stone rim, lily pads, ambient fish, and the local
+ // player's rod/bobber rig. assets/social-fishing.js drives the states through `fishing` below.
+ const fishingApi=(()=>{
+  const roundedRect=(w,d,r)=>{const s=new T.Shape(),hw=w/2,hd=d/2;s.moveTo(-hw+r,-hd);s.lineTo(hw-r,-hd);s.quadraticCurveTo(hw,-hd,hw,-hd+r);s.lineTo(hw,hd-r);s.quadraticCurveTo(hw,hd,hw-r,hd);s.lineTo(-hw+r,hd);s.quadraticCurveTo(-hw,hd,-hw,hd-r);s.lineTo(-hw,-hd+r);s.quadraticCurveTo(-hw,-hd,-hw+r,-hd);return s};
+  const waterTile=document.createElement('canvas');waterTile.width=waterTile.height=128;const wctx=waterTile.getContext('2d');
+  if(wctx&&typeof wctx.fillRect==='function'){wctx.fillStyle='#3e97be';wctx.fillRect(0,0,128,128);if(typeof wctx.arc==='function'&&typeof wctx.stroke==='function'){wctx.strokeStyle='rgba(235,250,255,0.3)';wctx.lineWidth=2;for(let i=0;i<24;i++){const x=(i*53)%128,y=(i*37)%128,r=4+(i*7)%9;wctx.beginPath();wctx.arc(x,y,r,Math.PI*.12,Math.PI*.88);wctx.stroke()}}}
+  const makeWaterTex=()=>{const tx=new T.CanvasTexture(waterTile);tx.wrapS=tx.wrapT=T.RepeatWrapping;tx.repeat.set(1/5.5,1/5.5);return tx};
+  const waterTexA=makeWaterTex(),waterTexB=makeWaterTex();
+  const sandMat=new T.MeshBasicMaterial({color:0xcbc09b}),waterMat=new T.MeshBasicMaterial({color:0x2e7ea6}),glintMatA=new T.MeshBasicMaterial({map:waterTexA,transparent:true,opacity:.42,depthWrite:false}),glintMatB=new T.MeshBasicMaterial({map:waterTexB,transparent:true,opacity:.26,depthWrite:false});
+  const lilyMat=new T.MeshBasicMaterial({color:0x3c7a3f,transparent:true,opacity:.94,depthWrite:false}),lilies=[];
+  const reedBatch=makeBatch();
+  for(const p of R.PONDS){
+   const rim=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w+1.7,p.d+1.7,3.1)),sandMat);rim.rotation.x=-Math.PI/2;rim.position.set(p.x,.008,p.z);scene.add(freeze(rim));
+   const water=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w,p.d,2.6)),waterMat);water.rotation.x=-Math.PI/2;water.position.set(p.x,.016,p.z);scene.add(freeze(water));
+   for(const [mat,y] of [[glintMatA,.024],[glintMatB,.028]]){const glint=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w-.6,p.d-.6,2.4)),mat);glint.rotation.x=-Math.PI/2;glint.position.set(p.x,y,p.z);scene.add(freeze(glint))}
+   for(let i=0;i<16;i++){const a=i/16*Math.PI*2,sx=.42+((i*29)%17)/40,stone=new T.Mesh(new T.BoxGeometry(sx,.22+((i*13)%9)/60,.34),curbMaterial);stone.position.set(p.x+Math.cos(a)*(p.w/2+.6),.1,p.z+Math.sin(a)*(p.d/2+.6));stone.rotation.y=a+((i*41)%10)/9;scene.add(freeze(stone))}
+   for(let i=0;i<3;i++){const lily=new T.Mesh(new T.CircleGeometry(.42+(i%2)*.14,12,.5,5.6),lilyMat);lily.rotation.x=-Math.PI/2;lily.position.set(p.x+(i-1)*(p.w/3.4),.032,p.z+(i%2?-1:1)*(p.d/3.6));lilies.push({mesh:lily,x:lily.position.x,z:lily.position.z,ph:i*2.1});scene.add(lily)}
+   pushModel(reedBatch,'shrub',p.x-p.w/2-1.5,p.z-p.d/2-.9,2,0,garden,gardenFloats);pushModel(reedBatch,'shrub',p.x+p.w/2+1.5,p.z+p.d/2+.9,2,0,garden,gardenFloats);
+  }
+  addBatch(reedBatch,gardenMat);
+  // Ambient fish silhouettes swim inside each pond; the Fishing Bag's "Show swimming fish" toggles them.
+  const fishShape=new T.Shape();fishShape.moveTo(.4,0);fishShape.quadraticCurveTo(.05,.22,-.26,.06);fishShape.lineTo(-.46,.17);fishShape.lineTo(-.37,0);fishShape.lineTo(-.46,-.17);fishShape.lineTo(-.26,-.06);fishShape.quadraticCurveTo(.05,-.22,.4,0);
+  const fishGeo=new T.ShapeGeometry(fishShape),fishGroup=new T.Group(),swimmers=[];scene.add(fishGroup);
+  R.PONDS.forEach((p,pi)=>{for(let i=0;i<7;i++){const m=new T.Mesh(fishGeo,new T.MeshBasicMaterial({color:i%3?0x1d4254:0x27616f,transparent:true,opacity:.5,depthWrite:false}));m.rotation.x=-Math.PI/2;const sc=.7+((i*31)%12)/16;m.scale.setScalar(sc);fishGroup.add(m);swimmers.push({m,p,ax:(p.w/2-1.6),az:(p.d/2-1.5),fa:.13+((i*17)%10)/90,fb:.1+((i*23)%10)/80,pa:i*1.7+pi,pb:i*2.9+pi*2})}});
+  // The local player's rod, line, bobber, ripples, splash, bite mark and catch flight.
+  const poleMat=new T.MeshBasicMaterial({color:0x7a5230}),pole=new T.Mesh(new T.CylinderGeometry(.016,.04,1,6),poleMat);pole.visible=false;scene.add(pole);
+  const lineGeo=new T.BufferGeometry(),linePts=new Float32Array(8*3);lineGeo.setAttribute('position',new T.BufferAttribute(linePts,3));const line=new T.Line(lineGeo,new T.LineBasicMaterial({color:0xeef2ee,transparent:true,opacity:.75}));line.visible=false;line.frustumCulled=false;scene.add(line);
+  const bobber=new T.Group();bobber.visible=false;scene.add(bobber);
+  const bTop=new T.Mesh(new T.SphereGeometry(.11,10,8),new T.MeshBasicMaterial({color:0xd8402e}));bTop.position.y=.07;bobber.add(bTop);
+  const bBot=new T.Mesh(new T.SphereGeometry(.09,10,8),new T.MeshBasicMaterial({color:0xf2efe4}));bBot.position.y=-.03;bobber.add(bBot);
+  const bTip=new T.Mesh(new T.CylinderGeometry(.014,.014,.2,6),new T.MeshBasicMaterial({color:0xeadfae}));bTip.position.y=.2;bobber.add(bTip);
+  const ripples=Array.from({length:5},()=>{const m=new T.Mesh(new T.RingGeometry(.82,1,24),new T.MeshBasicMaterial({color:0xdcf2fa,transparent:true,opacity:0,depthWrite:false}));m.rotation.x=-Math.PI/2;m.visible=false;scene.add(m);return {m,t0:0,dur:0}});
+  const splashGeo=new T.BufferGeometry(),splashPos=new Float32Array(26*3);splashGeo.setAttribute('position',new T.BufferAttribute(splashPos,3));const splashPts=new T.Points(splashGeo,new T.PointsMaterial({color:0xdff4ff,size:.1,transparent:true,opacity:.95}));splashPts.visible=false;splashPts.frustumCulled=false;scene.add(splashPts);let splashDrops=null,splashT0=0;
+  const markCanvas=document.createElement('canvas');markCanvas.width=markCanvas.height=64;const markCtx=markCanvas.getContext('2d');
+  if(markCtx&&typeof markCtx.fillText==='function'){markCtx.font='bold 52px Trebuchet MS, sans-serif';markCtx.textAlign='center';markCtx.textBaseline='middle';if(typeof markCtx.strokeText==='function'){markCtx.lineWidth=8;markCtx.strokeStyle='#fff';markCtx.strokeText('!',32,36)}markCtx.fillStyle='#e23b2e';markCtx.fillText('!',32,36)}
+  const markTex=new T.CanvasTexture(markCanvas),mark=new T.Sprite(new T.SpriteMaterial({map:markTex,transparent:true,depthTest:false}));mark.visible=false;mark.scale.set(.9,.9,1);scene.add(mark);
+  const glyphCanvas=document.createElement('canvas');glyphCanvas.width=glyphCanvas.height=96;const glyphCtx=glyphCanvas.getContext('2d');
+  const glyphTex=new T.CanvasTexture(glyphCanvas),glyph=new T.Sprite(new T.SpriteMaterial({map:glyphTex,transparent:true,depthTest:false}));glyph.visible=false;glyph.scale.set(1.5,1.5,1);scene.add(glyph);
+  let rig={mode:'off'},nextIdleRipple=0,catchAnim=null;
+  function ripple(x,z,scale=1){const r=ripples.find(r=>!r.m.visible)||ripples[0];r.m.visible=true;r.t0=clock||performance.now();r.dur=900;r.m.position.set(x,.034,z);r.base=scale}
+  function splash(x,z,n=18){splashDrops=Array.from({length:Math.min(26,n)},(_,i)=>({a:i*2.399,v:.9+((i*37)%17)/14,vy:1.8+((i*29)%13)/6}));splashT0=clock||performance.now();splashPts.visible=true;splashPts.position.set(x,.05,z)}
+  function selfPos(){const p=players.get(callbacks.self());return p?p.sprite.position:null}
+  const api={
+   setFishVisible(v){fishGroup.visible=v!==false},
+   cast(to,dur,onLand){const from=selfPos();rig={mode:'flight',fx:from?from.x:to.x,fz:from?from.z:to.z,tx:to.x,tz:to.z,t0:clock||performance.now(),dur:Math.max(250,dur||700),onLand};bobber.visible=true;pole.visible=true;line.visible=true},
+   bite(on){if(rig.mode==='idle'&&on)rig.mode='bite';else if(rig.mode==='bite'&&!on)rig.mode='idle';mark.visible=!!on&&rig.mode==='bite'},
+   reel(intensity){if(rig.mode==='bite'||rig.mode==='idle'||rig.mode==='reel'){rig.mode='reel';rig.intensity=Math.max(0,Math.min(1,intensity||0));mark.visible=false}},
+   catchFly(text,hue,done){const from={x:bobber.position.x,z:bobber.position.z};if(glyphCtx&&typeof glyphCtx.fillText==='function'){glyphCtx.clearRect(0,0,96,96);try{glyphCtx.filter='hue-rotate('+(hue||0)+'deg)'}catch{}glyphCtx.font='64px serif';glyphCtx.textAlign='center';glyphCtx.textBaseline='middle';glyphCtx.fillText(text||'🐟',48,52);try{glyphCtx.filter='none'}catch{}glyphTex.needsUpdate=true}
+    splash(from.x,from.z,24);ripple(from.x,from.z,1.4);catchAnim={fx:from.x,fz:from.z,t0:clock||performance.now(),dur:760,done};glyph.visible=true;api.hide(true)},
+   escapeSplash(){if(bobber.visible){splash(bobber.position.x,bobber.position.z,14);ripple(bobber.position.x,bobber.position.z,1.2)}api.hide()},
+   ripple,splash,
+   hide(keepPole){rig={mode:'off'};bobber.visible=false;mark.visible=false;if(!keepPole){pole.visible=false;line.visible=false}},
+   off(){api.hide();glyph.visible=false;catchAnim=null},
+  };
+  function placeRod(bx,by,bz,now){const p=selfPos();if(!p){pole.visible=line.visible=false;return}
+   const dx=bx-p.x,dz=bz-p.z,d=Math.hypot(dx,dz)||1,ux=dx/d,uz=dz/d;
+   const hx=p.x+ux*.35,hz=p.z+uz*.35,hy=1.1,tx=p.x+ux*1.7,tz=p.z+uz*1.7,ty=2.15;
+   const mx=(hx+tx)/2,my=(hy+ty)/2,mz=(hz+tz)/2,len=Math.hypot(tx-hx,ty-hy,tz-hz);
+   pole.position.set(mx,my,mz);pole.scale.set(1,len,1);pole.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3((tx-hx)/len,(ty-hy)/len,(tz-hz)/len));
+   for(let i=0;i<8;i++){const t=i/7,sag=Math.sin(t*Math.PI)*Math.max(.2,d*.06),px=tx+(bx-tx)*t,py=ty+(by+.12-ty)*t-sag,pz=tz+(bz-tz)*t;linePts[i*3]=px;linePts[i*3+1]=py;linePts[i*3+2]=pz}
+   lineGeo.attributes.position.needsUpdate=true;lineGeo.computeBoundingSphere?.();
+  }
+  function update(now,dt){
+   waterTexA.offset.x=(now/14000)%1;waterTexA.offset.y=(now/23000)%1;waterTexB.offset.x=1-(now/17000)%1;waterTexB.offset.y=(now/19000)%1;
+   for(const l of lilies){l.mesh.position.x=l.x+Math.sin(now/2600+l.ph)*.22;l.mesh.position.z=l.z+Math.cos(now/3100+l.ph)*.18;l.mesh.rotation.z=Math.sin(now/4000+l.ph)*.4}
+   if(fishGroup.visible)for(const s of swimmers){const t=now/1000,x=s.p.x+Math.sin(t*s.fa+s.pa)*s.ax,z=s.p.z+Math.sin(t*s.fb+s.pb)*s.az,vx=Math.cos(t*s.fa+s.pa)*s.fa*s.ax,vz=Math.cos(t*s.fb+s.pb)*s.fb*s.az;s.m.position.set(x,.03,z);s.m.rotation.z=Math.atan2(-vz,vx)+Math.sin(t*6+s.pa)*.12}
+   for(const r of ripples)if(r.m.visible){const t=(now-r.t0)/r.dur;if(t>=1)r.m.visible=false;else{const s=(r.base||1)*(.4+t*1.6);r.m.scale.set(s,s,1);r.m.material.opacity=.55*(1-t)}}
+   if(splashPts.visible&&splashDrops){const t=(now-splashT0)/650;if(t>=1){splashPts.visible=false;splashDrops=null}else{splashDrops.forEach((drop,i)=>{splashPos[i*3]=Math.cos(drop.a)*drop.v*t;splashPos[i*3+1]=drop.vy*t-4.4*t*t;splashPos[i*3+2]=Math.sin(drop.a)*drop.v*t});splashGeo.attributes.position.needsUpdate=true;splashPts.material.opacity=.95*(1-t)}}
+   if(catchAnim){const t=Math.min(1,(now-catchAnim.t0)/catchAnim.dur),p=selfPos();if(p){glyph.position.set(catchAnim.fx+(p.x-catchAnim.fx)*t,.4+Math.sin(t*Math.PI)*2.6+t*1.6,catchAnim.fz+(p.z-catchAnim.fz)*t)}if(t>=1){glyph.visible=false;pole.visible=false;line.visible=false;const done=catchAnim.done;catchAnim=null;done&&done()}}
+   if(rig.mode==='off')return;
+   if(rig.mode==='flight'){const t=Math.min(1,(now-rig.t0)/rig.dur),x=rig.fx+(rig.tx-rig.fx)*t,z=rig.fz+(rig.tz-rig.fz)*t;bobber.position.set(x,1.4+Math.sin(t*Math.PI)*2.4-1.35*t,z);placeRod(bobber.position.x,bobber.position.y,bobber.position.z,now);
+    if(t>=1){const cb=rig.onLand,lx=rig.tx,lz=rig.tz;rig={mode:'idle',x:lx,z:lz};splash(lx,lz,16);ripple(lx,lz);nextIdleRipple=now+1400;cb&&cb()}
+    return}
+   if(rig.mode==='idle'||rig.mode==='bite'||rig.mode==='reel'){
+    const dip=rig.mode==='bite'?Math.max(0,Math.sin(now/90))*.34:rig.mode==='reel'?Math.max(0,Math.sin(now/70))*.2:0;
+    const jx=rig.mode==='reel'?Math.sin(now/130)*(.25+.45*(rig.intensity||0)):0,jz=rig.mode==='reel'?Math.cos(now/170)*(.2+.4*(rig.intensity||0)):0;
+    bobber.position.set(rig.x+jx,.12+Math.sin(now/520)*.05-dip,rig.z+jz);
+    if(rig.mode!=='idle'&&now>nextIdleRipple){nextIdleRipple=now+(rig.mode==='reel'?240:420);ripple(bobber.position.x,bobber.position.z,rig.mode==='reel'?.9:.7)}
+    else if(rig.mode==='idle'&&now>nextIdleRipple){nextIdleRipple=now+1700;ripple(rig.x,rig.z,.6)}
+    if(rig.mode==='bite'){mark.position.set(bobber.position.x,1.5+Math.sin(now/120)*.14,bobber.position.z);const ms=.8+Math.sin(now/110)*.12;mark.scale.set(ms,ms,1)}
+    placeRod(bobber.position.x,bobber.position.y,bobber.position.z,now);
+   }
+  }
+  return {api,update};
+ })();
  // 12 physical metal park benches, each split into 2 side-by-side seat targets (24 seats total).
  const benches=(R.BENCHES||R.SEATS).map(b=>{
   const mesh=model('bench',b.x,b.z,b.size,b.rotation);
@@ -259,7 +345,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   if(otherTaken(chosen)&&R.SEATS[partner]&&R.SEATS[partner].bench===R.SEATS[chosen]?.bench&&!otherTaken(partner))chosen=partner;
   callbacks.seat(chosen);
  }
- else{const point=new T.Vector3();if(ray.ray.intersectPlane(plane,point)&&R.walkable(point.x,point.z))callbacks.move(point.x,point.z)}}
+ else{const point=new T.Vector3();if(ray.ray.intersectPlane(plane,point)){const pond=(R.PONDS||[]).findIndex(pd=>Math.abs(point.x-pd.x)<=pd.w/2+1.2&&Math.abs(point.z-pd.z)<=pd.d/2+1.2);if(pond>=0&&callbacks.pond)callbacks.pond(point.x,point.z,pond);else if(R.walkable(point.x,point.z))callbacks.move(point.x,point.z)}}}
  if(touches.size){const p=[...touches.values()][0];down=startDrag({...p,clientX:p.x,clientY:p.y},true)}else down=null};
  host.onpointercancel=()=>{down=null;touches.clear()};host.addEventListener('wheel',e=>{e.preventDefault();setCamera({distance:distance*Math.exp(e.deltaY*.001)})},{passive:false});
  // Subtle +5.5% optical offset keeps the player slightly higher than vertical screen center (~44% from top).
@@ -272,6 +358,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
  target.set(focusX,.8,focusZ);if(!focused||focus.distanceTo(target)>12){focus.copy(target);focused=true}else focus.lerp(target,1-Math.exp(-dt*12));
  const tilt=pitch*Math.PI/180;camera.position.set(focus.x+Math.sin(angle)*distance*Math.cos(tilt),focus.y+Math.sin(tilt)*distance,focus.z+Math.cos(angle)*distance*Math.cos(tilt));camera.lookAt(focus);camera.updateMatrixWorld();
  for(let i=0;i<72;i++){const t=(now/1500+i/72)%1,a=i*2.399;spray[i*3]=Math.cos(a)*t*2.6;spray[i*3+1]=1.5+Math.sin(t*Math.PI)*3;spray[i*3+2]=Math.sin(a)*t*2.6}sprayGeo.attributes.position.needsUpdate=true;
+ fishingApi.update(now,dt);
  const w=viewW||host.clientWidth,h=viewH||host.clientHeight;
  // Render table Dealers first so cached frames stay quiet and player stance draws remain authoritative.
  loadDealers(now);
@@ -340,6 +427,6 @@ window.PGSocialScene={async create(host,labels,callbacks){
   }else if(p.bubbleUntil){p.bubbleUntil=0;p.bhid=true;p.bubble.hidden=true;p.bubble.replaceChildren()}
  }
  renderer.render(scene,camera)}requestAnimationFrame(frame);
- return {putPlayer,removePlayer,bubble,dealerBubble,updatePoker,setCamera,resetCamera,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
+ return {putPlayer,removePlayer,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
  }catch(error){renderer.dispose();renderer.domElement.remove();throw error}
 }};

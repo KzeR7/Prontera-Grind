@@ -14,7 +14,10 @@ const PAYLOAD_SHA256 = '__LAUNCH_PACKAGE_SHA256__';
 const BASE = '7511a03c0787ec9b8d94cfc6658570ac402dc297';
 const DB_NAME = 'pg-staging', DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
 const PROJECT = 'prontera-grind-staging';
-const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js','assets/ui/eclipse.css','assets/ui/mobile.css','assets/ui/mobile.js',
+const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js',
+ // v287: plaza pond fishing module + stylesheet (loaded by index.html alongside the social client).
+ 'assets/social-fishing.js','assets/social-fishing.css',
+ 'assets/ui/eclipse.css','assets/ui/mobile.css','assets/ui/mobile.js',
  'functions/_lib/db.js','functions/_lib/echo-board.js','functions/_lib/http.js','functions/_lib/friends.js',
  'functions/_lib/validate.js','functions/_lib/damage-monitor.js','functions/_lib/competition-baseline.js',
  'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js',
