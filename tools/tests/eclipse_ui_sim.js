@@ -568,5 +568,65 @@ test('v265: Display separates Chat box from Activity log and Ascension Forge scr
  assert.match(doc.querySelector('#wins [data-win="equip"] .eclipse-footer-message').textContent,/refinement, socketed cards, and existing affixes/);
  styleEl.remove();
 });
+
+test('v283: Illustrated Rune-Midgard World Atlas shows only Full Map on mini-map, omits lore cards, supports paired sub-zones, and enables zoom + Escape inside Full Map',()=>{
+ ev("closeMailDaily();closeGmStudio();S.mp=1;S.lvl=3;S.prog=MAPS.map(()=>10);tabs.length=0;openTab('map');renderWin()");
+ const win=doc.querySelector('#wins [data-win="map"]');
+ assert.ok(win,'map window opens');
+ assert.equal(win.querySelectorAll('[data-a="selm"]').length,10,'all 10 destination cards remain intact');
+ assert.equal(win.querySelectorAll('.ui-route [data-a="sell_"]').length,15,'all 15 stage buttons remain intact');
+ assert.equal(win.querySelector('.rm-lore-card'),null,'lore/landmark card is completely removed');
+ assert.equal(win.querySelectorAll('[data-a="atlaszoom"]').length,0,'mini-map omits zoom controls');
+ assert.equal(win.querySelectorAll('.rm-controls button').length,1,'mini-map toolbar shows only Full Map button');
+ assert.ok(win.querySelector('.rm-controls [data-a="atlasfull"]'),'Full Map button is present on mini-map');
+ const canvasNode=win.querySelector('#rmCanvas');
+ const birdNode=win.querySelector('#rmAmb-birds-a');
+ assert.ok(canvasNode&&birdNode,'illustrated map canvas and ambient bird flocks render');
+ assert.equal(win.querySelectorAll('.rm-birds').length,8,'all 8 bird flocks render');
+ assert.equal(win.querySelectorAll('.rm-cloud').length,9,'all 9 drifting multi-puff clouds render');
+ const pins=[...win.querySelectorAll('[data-a="atlasplace"]')];
+ assert.equal(pins.length,8,'all 8 illustrated town cutout pins render');
+ // Player is in Izlude (S.mp === 1), which belongs to Prontera & Izlude:
+ const pronteraPin=win.querySelector('[data-a="atlasplace"][data-v="prontera"]');
+ assert.ok(pronteraPin.classList.contains('is-selected')&&pronteraPin.classList.contains('is-here'),'paired Prontera & Izlude pin shows selected + current location');
+ assert.equal(win.querySelectorAll('[data-a="atlassub"]').length,2,'Prontera & Izlude renders 2 sub-zone buttons');
+ win.querySelector('[data-a="atlassub"][data-v="0"]').click();
+ assert.equal(ev('mapM'),0,'sub-zone switches to Prontera while player remains in Izlude');
+ assert.strictEqual(win.querySelector('#rmCanvas'),canvasNode,'eclipsePatch preserves live #rmCanvas node across zone switch');
+ assert.strictEqual(win.querySelector('#rmAmb-birds-a'),birdNode,'eclipsePatch preserves live bird animation node');
+ // Switching to Morroc omits both paired sub-zones and lore card:
+ win.querySelector('[data-a="selm"][data-v="3"]').click();
+ assert.equal(ev('mapM'),3);
+ assert.equal(win.querySelector('.rm-lore-card'),null,'no lore card on Morroc');
+ assert.equal(win.querySelectorAll('[data-a="atlassub"]').length,0,'single-field region omits paired sub-zone bar');
+ assert.ok(win.querySelector('[data-a="atlasplace"][data-v="morroc"]').classList.contains('is-selected'));
+ assert.ok(win.querySelector('[data-a="atlasplace"][data-v="prontera"]').classList.contains('is-here'),'player location dot stays on Prontera & Izlude');
+ // Clicking Niflheim & the Abyss pin exposes Niflheim (8) and Abyss (9) sub-zones:
+ win.querySelector('[data-a="atlasplace"][data-v="niflheim"]').click();
+ assert.equal(ev('mapM'),8);
+ assert.deepEqual([...win.querySelectorAll('[data-a="atlassub"]')].map(b=>b.dataset.v),['8','9']);
+ win.querySelector('[data-a="atlassub"][data-v="9"]').click();
+ assert.equal(ev('mapM'),9);
+ // Full Map mode enables zoom + drawer toggle + two-step Escape (fullscreen -> mini-map at 1x -> close):
+ win.querySelector('[data-a="atlasfull"]').click();
+ assert.equal(doc.body.classList.contains('rm-atlas-fullscreen'),true);
+ assert.equal(win.classList.contains('rm-fullscreen-mode'),true);
+ assert.equal(win.querySelectorAll('[data-a="atlaszoom"]').length,3,'Full Map exposes zoom in/out/reset controls');
+ win.querySelector('[data-a="atlaszoom"][data-v="in"]').click();
+ const zoomed=ev('worldAtlasPan.zoom');
+ assert.ok(zoomed>1,'zoom in increases worldAtlasPan.zoom inside Full Map');
+ win.querySelector('.ui-route [data-a="sell_"][data-v="5"]').click();
+ assert.equal(ev('worldAtlasPan.zoom'),zoomed,'stage click inside Full Map preserves zoom level');
+ win.querySelector('[data-a="atlasdrawer"]').click();
+ assert.equal(win.classList.contains('rm-drawer-hidden'),true);
+ const escKey=()=>doc.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+ escKey();
+ assert.equal(doc.body.classList.contains('rm-atlas-fullscreen'),false,'first Escape exits fullscreen map');
+ assert.equal(ev('worldAtlasPan.zoom'),1,'exiting Full Map resets mini-map zoom to 1');
+ assert.equal(win.querySelectorAll('[data-a="atlaszoom"]').length,0,'mini-map hides zoom controls again');
+ assert.equal(ev('tabs.includes("map")'),true,'map panel remains open in embedded view after exiting fullscreen');
+ escKey();
+ assert.equal(ev('tabs.length'),0,'second Escape closes the map panel');
+});
 console.log(`${passed} passed`);
 }finally{g.close()}

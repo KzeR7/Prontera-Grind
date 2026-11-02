@@ -1336,7 +1336,11 @@ body.clean-screen #eclipseCompanions{display:none}
 #sideMenu.eclipse-more-open{pointer-events:auto;max-height: min(60vh,440px)}
 body.clean-screen #sideMenu{display:none}
 #wins .ui-field-guide{max-height:360px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-gutter:stable}
-@media(min-width:1101px){
+@container(min-width:851px){
+  #wins .ui-panel[data-layout=map] .ui-content{align-items:stretch}
+  #wins .ui-panel[data-layout=map] .ui-field-guide{max-height:none}
+}
+@media(min-width:901px){
   #wins>.wp[data-win=map]:only-child{height:100%}
   #wins .wbody[data-layout=map]{display:flex;flex-direction:column;overflow:hidden;flex:1 1 auto}
   #wins .ui-panel[data-layout=map] .ui-content{min-height:0;flex:1;align-items:stretch;overflow:hidden}
@@ -3658,3 +3662,563 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
   border:1px solid var(--edge);border-radius:6px;padding:14px 8px;margin:14px 0;font-size:16px;letter-spacing:1px;
 }
 #loginOverlay .recovery-success .login-btn{white-space:normal}
+
+/* ---------- Illustrated World Map of Rune-Midgard (v283) ---------- */
+#wins .ui-panel[data-layout=map] .ui-content{
+  grid-template-columns:152px minmax(0,1.45fr) 256px;
+}
+#wins .eclipse-atlas-hero.rm-illustrated-hero{
+  height:auto;
+  aspect-ratio:16 / 9;
+  min-height:230px;
+  max-height:395px;
+  width:100%;
+  margin-bottom:14px;
+  background:#1f3038;
+  border:1px solid color-mix(in srgb,var(--gold) 45%,#5e4a2b);
+  border-radius:8px;
+  box-shadow:0 12px 28px rgba(0,0,0,.42),inset 0 0 0 1px rgba(255,232,178,.14);
+  user-select:none;
+}
+#wins .eclipse-atlas-hero.rm-illustrated-hero:after{display:none}
+#wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  cursor:default;
+  touch-action:auto;
+  background:#223842;
+  z-index:1;
+}
+body.rm-atlas-fullscreen #wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
+  cursor:grab;
+  touch-action:none;
+}
+body.rm-atlas-fullscreen #wins .rm-viewport.is-dragging{cursor:grabbing}
+
+#wins .rm-canvas{
+  position:relative;
+  width:var(--cw,100%);
+  height:var(--ch,100%);
+  transform-origin:0 0;
+  transform:translate3d(var(--x,0px),var(--y,0px),0) scale(var(--zoom,1));
+  will-change:transform;
+}
+#wins .rm-canvas>.rm-map{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  pointer-events:none;
+  user-select:none;
+}
+#wins .rm-clouds-veil{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  pointer-events:none;
+  mix-blend-mode:screen;
+  opacity:.32;
+  z-index:2;
+}
+
+/* Ambient birds & drifting multi-puff clouds */
+#wins .rm-ambient{
+  position:absolute;
+  left:var(--ax);
+  top:var(--ay);
+  width:var(--size);
+  pointer-events:none;
+  z-index:3;
+}
+#wins .rm-ambient img{
+  display:block;
+  width:100%;
+  height:auto;
+  pointer-events:none;
+}
+#wins .rm-birds{opacity:.68}
+#wins .rm-birds.birds-a{animation:rmFlyBirdsA 46s linear infinite}
+#wins .rm-birds.birds-b{animation:rmFlyBirdsB 58s linear -17s infinite}
+#wins .rm-birds.birds-c{animation:rmFlyBirdsC 52s linear -9s infinite}
+#wins .rm-birds.birds-d{animation:rmFlyBirdsD 62s linear -31s infinite}
+#wins .rm-birds.birds-e{animation:rmFlyBirdsE 48s linear -22s infinite}
+#wins .rm-birds.birds-f{animation:rmFlyBirdsF 56s linear -41s infinite}
+#wins .rm-birds.birds-g{animation:rmFlyBirdsG 64s linear -13s infinite}
+#wins .rm-birds.birds-h{animation:rmFlyBirdsH 50s linear -27s infinite}
+
+@keyframes rmFlyBirdsA{
+  0%{transform:translate(160%,-30%);opacity:0}
+  12%,88%{opacity:.68}
+  100%{transform:translate(-190%,35%);opacity:0}
+}
+@keyframes rmFlyBirdsB{
+  0%{transform:translate(-150%,24%);opacity:0}
+  12%,88%{opacity:.62}
+  100%{transform:translate(185%,-28%);opacity:0}
+}
+@keyframes rmFlyBirdsC{
+  0%{transform:translate(145%,22%);opacity:0}
+  12%,88%{opacity:.65}
+  100%{transform:translate(-175%,-32%);opacity:0}
+}
+@keyframes rmFlyBirdsD{
+  0%{transform:translate(-170%,-20%);opacity:0}
+  12%,88%{opacity:.64}
+  100%{transform:translate(175%,28%);opacity:0}
+}
+@keyframes rmFlyBirdsE{
+  0%{transform:translate(155%,-18%);opacity:0}
+  12%,88%{opacity:.6}
+  100%{transform:translate(-165%,30%);opacity:0}
+}
+@keyframes rmFlyBirdsF{
+  0%{transform:translate(-155%,28%);opacity:0}
+  12%,88%{opacity:.65}
+  100%{transform:translate(170%,-26%);opacity:0}
+}
+@keyframes rmFlyBirdsG{
+  0%{transform:translate(175%,16%);opacity:0}
+  12%,88%{opacity:.62}
+  100%{transform:translate(-185%,-24%);opacity:0}
+}
+@keyframes rmFlyBirdsH{
+  0%{transform:translate(150%,26%);opacity:0}
+  12%,88%{opacity:.6}
+  100%{transform:translate(-170%,-28%);opacity:0}
+}
+
+#wins .rm-cloud{
+  aspect-ratio:2 / 1;
+  transform:translate(-50%,-50%);
+  z-index:4;
+}
+#wins .rm-cloud .rm-puff{
+  position:absolute;
+  width:72%;
+  height:auto;
+  filter:drop-shadow(0 8px 10px rgba(24,30,38,.12));
+}
+#wins .rm-cloud .rm-puff-1{left:0;top:14%;opacity:.48}
+#wins .rm-cloud .rm-puff-2{left:28%;top:0;width:76%;opacity:.42}
+#wins .rm-cloud .rm-puff-3{left:16%;top:28%;width:66%;opacity:.36}
+
+#wins .rm-cloud.cloud-a{animation:rmDriftCloudA 90s ease-in-out infinite alternate}
+#wins .rm-cloud.cloud-b{animation:rmDriftCloudB 108s ease-in-out -19s infinite alternate}
+#wins .rm-cloud.cloud-c{animation:rmDriftCloudC 96s ease-in-out -37s infinite alternate}
+#wins .rm-cloud.cloud-d{animation:rmDriftCloudD 84s ease-in-out -11s infinite alternate}
+#wins .rm-cloud.cloud-e{animation:rmDriftCloudE 102s ease-in-out -29s infinite alternate}
+#wins .rm-cloud.cloud-f{animation:rmDriftCloudF 88s ease-in-out -43s infinite alternate}
+#wins .rm-cloud.cloud-g{animation:rmDriftCloudG 94s ease-in-out -23s infinite alternate}
+#wins .rm-cloud.cloud-h{animation:rmDriftCloudH 112s ease-in-out -51s infinite alternate}
+#wins .rm-cloud.cloud-i{animation:rmDriftCloudI 80s ease-in-out -15s infinite alternate}
+
+@keyframes rmDriftCloudA{from{transform:translate(-62%,-50%)}to{transform:translate(-38%,-47%)}}
+@keyframes rmDriftCloudB{from{transform:translate(-40%,-52%)}to{transform:translate(-60%,-48%)}}
+@keyframes rmDriftCloudC{from{transform:translate(-58%,-48%)}to{transform:translate(-42%,-52%)}}
+@keyframes rmDriftCloudD{from{transform:translate(-44%,-50%)}to{transform:translate(-58%,-47%)}}
+@keyframes rmDriftCloudE{from{transform:translate(-60%,-51%)}to{transform:translate(-38%,-49%)}}
+@keyframes rmDriftCloudF{from{transform:translate(-42%,-49%)}to{transform:translate(-57%,-52%)}}
+@keyframes rmDriftCloudG{from{transform:translate(-56%,-52%)}to{transform:translate(-42%,-48%)}}
+@keyframes rmDriftCloudH{from{transform:translate(-62%,-49%)}to{transform:translate(-38%,-51%)}}
+@keyframes rmDriftCloudI{from{transform:translate(-44%,-51%)}to{transform:translate(-58%,-49%)}}
+
+/* 8 Isometric Town Cutout Pins */
+#wins .rm-location-layer{
+  position:absolute;
+  inset:0;
+  z-index:8;
+  pointer-events:none;
+}
+#wins .rm-loc{
+  position:absolute;
+  left:var(--x);
+  top:var(--y);
+  width:calc(var(--size) * 1.38);
+  min-width:40px;
+  min-height:0;
+  height:auto;
+  padding:0!important;
+  margin:0;
+  border:0!important;
+  border-radius:0;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:translate(-50%,-50%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  cursor:pointer;
+  pointer-events:auto;
+  overflow:visible;
+  transition:transform .2s cubic-bezier(.22,1,.36,1),filter .2s ease;
+  z-index:10;
+}
+#wins .rm-loc img{
+  display:block;
+  width:100%;
+  height:auto;
+  object-fit:contain;
+  pointer-events:none;
+  filter:drop-shadow(0 5px 8px rgba(18,12,6,.55)) drop-shadow(0 0 2px rgba(255,238,196,.4));
+  transition:filter .2s ease;
+}
+#wins .rm-loc-label{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  margin-top:-4px;
+  padding:2px 7px;
+  border-radius:999px;
+  background:rgba(236,214,168,.95);
+  border:1px solid rgba(92,58,24,.68);
+  box-shadow:0 3px 8px rgba(14,9,4,.48),inset 0 1px 0 rgba(255,250,235,.72);
+  color:#2d1c0e;
+  font:700 clamp(7.5px,0.72vw,10.5px)/1.2 Georgia,"Times New Roman",serif;
+  letter-spacing:.02em;
+  white-space:nowrap;
+  pointer-events:none;
+  text-shadow:0 1px 0 rgba(255,248,228,.65);
+}
+#wins .rm-loc:hover,
+#wins .rm-loc:focus-visible{
+  transform:translate(-50%,-53%) scale(1.11);
+  z-index:24;
+  outline:none;
+}
+#wins .rm-loc:hover img,
+#wins .rm-loc:focus-visible img{
+  filter:drop-shadow(0 0 6px rgba(255,245,205,.95)) drop-shadow(0 6px 12px rgba(20,12,4,.62));
+}
+#wins .rm-loc.is-selected{
+  transform:translate(-50%,-53%) scale(1.1);
+  z-index:22;
+}
+#wins .rm-loc.is-selected img{
+  filter:drop-shadow(0 0 7px rgba(255,232,150,.98)) drop-shadow(0 0 16px rgba(240,185,75,.68)) drop-shadow(0 6px 12px rgba(16,10,4,.6));
+}
+#wins .rm-loc.is-selected .rm-loc-label{
+  background:linear-gradient(180deg,#fff6d6,#ecc97e);
+  border-color:#7b4b12;
+  color:#231305;
+  box-shadow:0 0 0 1.5px rgba(255,222,135,.82),0 4px 10px rgba(12,8,3,.58);
+}
+#wins .rm-here-dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#1f9d55;
+  box-shadow:0 0 0 2px rgba(31,157,85,.32),0 0 6px #37e27d;
+  flex:none;
+}
+
+/* Top-right Map Toolbar & Bottom-left Region Caption */
+#wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-controls{
+  position:absolute;
+  top:8px;
+  right:8px;
+  left:auto;
+  bottom:auto;
+  z-index:30;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:5px;
+}
+#wins .rm-ctrl-btn{
+  min-width:26px;
+  height:26px;
+  min-height:26px;
+  padding:0 7px;
+  border-radius:6px;
+  border:1px solid rgba(226,194,132,.48);
+  background:rgba(13,18,25,.84);
+  backdrop-filter:blur(6px);
+  color:#f2e5c7;
+  font:600 10.5px/1 var(--e-font);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  cursor:pointer;
+  box-shadow:0 4px 12px rgba(0,0,0,.42);
+  transition:background .15s ease,border-color .15s ease,color .15s ease;
+}
+#wins .rm-ctrl-btn.rm-ctrl-pill{
+  padding:0 9px;
+  font-size:9.5px;
+  letter-spacing:.02em;
+}
+#wins .rm-ctrl-btn:hover,
+#wins .rm-ctrl-btn.on{
+  background:rgba(36,29,18,.94);
+  border-color:var(--gold);
+  color:var(--gold);
+}
+
+#wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+  position:absolute;
+  bottom:8px;
+  left:8px;
+  top:auto;
+  right:auto;
+  max-width:min(68%,340px);
+  padding:5px 9px;
+  border-radius:6px;
+  background:linear-gradient(135deg,rgba(10,16,22,.86),rgba(16,23,31,.72));
+  border:1px solid rgba(219,187,124,.34);
+  backdrop-filter:blur(6px);
+  pointer-events:none;
+  z-index:25;
+}
+#wins .rm-hero-caption .ui-eyebrow{
+  display:block;
+  font-size:7.5px;
+  letter-spacing:.08em;
+  color:#e4c483;
+}
+#wins .rm-hero-caption h2{
+  font:500 15px/1.15 var(--e-display);
+  margin:1px 0;
+  color:#f5f0e4;
+}
+#wins .rm-hero-caption p{
+  font-size:8.5px;
+  margin:0;
+  color:#c8d4cf;
+}
+
+/* Paired Region Sub-Zone Switcher (Prontera/Izlude & Niflheim/Abyss only) */
+#wins .rm-region-bar{
+  display:flex;
+  flex-direction:column;
+  margin-bottom:12px;
+}
+#wins .rm-subzones{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  padding:8px 10px;
+  border-radius:7px;
+  background:color-mix(in srgb,var(--e-soft) 72%,transparent);
+  border:1px solid color-mix(in srgb,var(--gold) 36%,transparent);
+}
+#wins .rm-subzones-kicker{
+  font-size:8px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--gold);
+}
+#wins .rm-subzones-btns{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+}
+#wins .rm-subzone-btn{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+  min-height:38px;
+  padding:6px 10px;
+  border-radius:6px;
+  border:1px solid var(--e-line-bright);
+  background:rgba(12,16,23,.65);
+  text-align:left;
+  cursor:pointer;
+}
+#wins .rm-subzone-btn b{
+  font-size:10.5px;
+  font-weight:600;
+  color:var(--ink);
+}
+#wins .rm-subzone-btn small{
+  font-size:8.5px;
+  color:var(--e-muted);
+}
+#wins .rm-subzone-btn.on{
+  background:color-mix(in srgb,var(--gold) 15%,var(--e-raised));
+  border-color:var(--gold);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 35%,transparent);
+}
+#wins .rm-subzone-btn.on b{color:var(--gold)}
+
+/* Fullscreen Illustrated World Map Mode */
+body.rm-atlas-fullscreen #wins{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100dvh!important;
+  max-width:none!important;
+  max-height:none!important;
+  padding:0!important;
+  margin:0!important;
+  z-index:95!important;
+  transform:none!important;
+  overflow:hidden!important;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode{
+  flex:1 1 100%!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  border-radius:0!important;
+  border:0!important;
+  background:#142028;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode>.title,
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode>.eclipse-window-footer,
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-panel>.ui-hero,
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-panel>.atabs.map-season-tabs{
+  display:none!important;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode>.wbody{
+  overflow:hidden!important;
+  height:100%!important;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-content{
+  position:relative;
+  display:grid!important;
+  grid-template-columns:156px 1fr min(392px,calc(100vw - 24px));
+  grid-template-rows:minmax(0,54%) minmax(0,46%);
+  gap:10px;
+  width:100%;
+  height:100%;
+  padding:52px 12px 12px!important;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-route{
+  display:contents!important;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero{
+  display:block!important;
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  z-index:1;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-controls{
+  top:12px;
+  right:12px;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+  bottom:14px;
+  left:182px;
+  max-width:min(440px,calc(100vw - 600px));
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-destinations{
+  display:block!important;
+  position:static!important;
+  width:auto!important;
+  max-height:none!important;
+  grid-column:1;
+  grid-row:1 / 3;
+  z-index:12;
+  overflow-y:auto;
+  padding:12px 10px!important;
+  border-radius:10px!important;
+  border:1px solid rgba(224,191,126,.35)!important;
+  background:rgba(11,16,23,.84)!important;
+  backdrop-filter:blur(10px);
+  box-shadow:0 12px 32px rgba(0,0,0,.48);
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .rm-route-drawer{
+  display:block!important;
+  max-height:none!important;
+  grid-column:3;
+  grid-row:1;
+  z-index:12;
+  overflow-y:auto;
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid rgba(224,191,126,.38);
+  background:rgba(11,16,23,.86);
+  backdrop-filter:blur(10px);
+  box-shadow:0 12px 32px rgba(0,0,0,.5);
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-field-guide{
+  display:block!important;
+  grid-column:3;
+  grid-row:2;
+  z-index:12;
+  overflow-y:auto;
+  padding:12px 14px!important;
+  border-radius:10px!important;
+  border:1px solid rgba(224,191,126,.34)!important;
+  background:rgba(11,16,23,.86)!important;
+  backdrop-filter:blur(10px);
+  box-shadow:0 12px 32px rgba(0,0,0,.5);
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-hidden .ui-destinations,
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-hidden .rm-route-drawer,
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-hidden .ui-field-guide{
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(8px);
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-hidden .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+  left:14px;
+  max-width:min(460px,calc(100vw - 28px));
+}
+
+@media(max-width:960px){
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-content{
+    grid-template-columns:1fr min(360px,calc(100vw - 20px));
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-destinations{
+    display:none!important;
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .rm-route-drawer,
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-field-guide{
+    grid-column:2;
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+    left:12px;
+    max-width:calc(100vw - 395px);
+  }
+}
+@media(max-width:680px){
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-content{
+    display:flex!important;
+    flex-direction:column;
+    justify-content:flex-end;
+    padding:48px 8px 8px!important;
+    gap:8px;
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .rm-route-drawer{
+    max-height:42dvh!important;
+    flex:0 1 auto;
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-field-guide{
+    display:none!important;
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+    display:none;
+  }
+}
+@container(max-width:850px){
+  #wins .ui-panel[data-layout=map] .ui-content{grid-template-columns:145px minmax(0,1fr)}
+}
+@container(max-width:560px){
+  #wins .ui-panel[data-layout=map] .ui-content{grid-template-columns:1fr}
+  #wins .eclipse-atlas-hero.rm-illustrated-hero{min-height:190px}
+  #wins .rm-hero-caption h2{font-size:14px}
+  #wins .rm-subzones-btns{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){
+  #wins .rm-birds,#wins .rm-cloud{animation:none!important}
+}
+

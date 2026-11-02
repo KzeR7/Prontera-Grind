@@ -28,7 +28,21 @@ const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css'
   // v277: comment-only playbook; included so the packaged tree matches the repo's documented steps.
   'migrations/0013_gm_owner_name.sql',
   // v280: both now return the durable account id used by the save stamp.
-  'functions/api/me.js','functions/api/sessions.js','tools/build_site.sh'];
+  'functions/api/me.js','functions/api/sessions.js','tools/build_site.sh',
+  // v283: Illustrated Rune-Midgard World Atlas assets.
+  'assets/world-map/world-map-cleaned.webp',
+  'assets/world-map/birds-flock-a.webp',
+  'assets/world-map/birds-flock-b.webp',
+  'assets/world-map/cloud-direct.webp',
+  'assets/world-map/cloud-mask-16x9.webp',
+  'assets/world-map/cutout/prontera.png',
+  'assets/world-map/cutout/geffen.png',
+  'assets/world-map/cutout/payon.png',
+  'assets/world-map/cutout/morroc.png',
+  'assets/world-map/cutout/comodo.png',
+  'assets/world-map/cutout/niflheim.png',
+  'assets/world-map/cutout/amatsu.png',
+  'assets/world-map/cutout/louyang.png'];
 const CONFIG = `name = "${PROJECT}"\ncompatibility_date = "2026-10-01"\npages_build_output_dir = "dist"\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "${DB_NAME}"\ndatabase_id = "${DB_ID}"\n`;
 const schemas = {
   damage_samples:['user_id','slot','bucket','sampled_at','map','stage','reported_total_damage','reported_echo_best'],
@@ -186,16 +200,17 @@ async function main(){
   assert.equal(process.platform,'win32','This package is for the owner’s Windows setup.');
   assert.equal(process.argv.length,2,'This staging package takes no arguments.');
   const files=unpackPayload();
-  const repo=path.join(os.homedir(),'Desktop','Prontera-Grind');
-  assert(fs.existsSync(path.join(repo,'.git')),'Cannot find the original Desktop/Prontera-Grind checkout.');
-  const bash='D:\\Git\\bin\\bash.exe';assert(fs.existsSync(bash),'Cannot find D:\\Git\\bin\\bash.exe.');
+  const repo=[process.cwd(),path.join(os.homedir(),'Desktop','Prontera-Grind-staging'),path.join(os.homedir(),'Desktop','Prontera-Grind')].find(d=>fs.existsSync(path.join(d,'.git')));
+  assert(repo,'Cannot find a Prontera-Grind(.git) checkout on Desktop or current directory.');
+  const bash=['D:\\Git\\bin\\bash.exe','C:\\Program Files\\Git\\bin\\bash.exe','C:\\Program Files (x86)\\Git\\bin\\bash.exe'].find(p=>fs.existsSync(p));
+  assert(bash,'Cannot find Git bash.exe.');
   assert.equal(run('git',['-C',repo,'rev-parse','--verify',BASE+'^{commit}']).trim(),BASE,'Expected archived staging base is not present.');
   const temp=fs.mkdtempSync(path.join(os.tmpdir(),'pg-launch-stage-'));
   const archive=path.join(temp,'base.tar');
   console.log('Preparing a new temporary staging copy; your existing checkouts will not be changed.');
   run('git',['-C',repo,'archive','--format=tar','--output='+archive,BASE]);
   run('tar.exe',['-xf',archive,'-C',temp]);fs.unlinkSync(archive);
-  for(const [name,text] of Object.entries(files)){const dest=path.join(temp,...name.split('/'));fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,text);}
+  for(const [name,text] of Object.entries(files)){const dest=path.join(temp,...name.split('/'));fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,/\.(?:png|webp)$/i.test(name)&&text.startsWith('base64:')?Buffer.from(text.slice(7),'base64'):text);}
   fs.writeFileSync(path.join(temp,'wrangler.toml'),CONFIG);
   run(bash,['tools/build_site.sh'],{cwd:temp,allowOutput:true});
   const db=remote(temp);db.verify();

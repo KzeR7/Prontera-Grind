@@ -27,7 +27,21 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
  // v275: the build script itself. It generates `_headers`, which decides how long a player's browser
  // may keep the entry point. A staging package built with the old copy would serve a stale
  // index.html and reintroduce exactly the bug the v275 change fixes, so it ships with the package.
- 'tools/build_site.sh'];
+ 'tools/build_site.sh',
+ // v283: Illustrated Rune-Midgard World Atlas assets referenced by index.html and verified by build_site.sh.
+ 'assets/world-map/world-map-cleaned.webp',
+ 'assets/world-map/birds-flock-a.webp',
+ 'assets/world-map/birds-flock-b.webp',
+ 'assets/world-map/cloud-direct.webp',
+ 'assets/world-map/cloud-mask-16x9.webp',
+ 'assets/world-map/cutout/prontera.png',
+ 'assets/world-map/cutout/geffen.png',
+ 'assets/world-map/cutout/payon.png',
+ 'assets/world-map/cutout/morroc.png',
+ 'assets/world-map/cutout/comodo.png',
+ 'assets/world-map/cutout/niflheim.png',
+ 'assets/world-map/cutout/amatsu.png',
+ 'assets/world-map/cutout/louyang.png'];
 if(process.argv.length!==3)throw Error('Usage: node tools/staging/package_hosted_launch.mjs <output.mjs>');
 // Refuse to generate a mixed-version deployment if the runtime or assets have
 // changed beyond this explicit overlay. The archive comes from the fixed base.
@@ -54,7 +68,8 @@ for(const p of new Set(all)){
 }
 for(const p of baseline.keys())if(relevant(p)&&!fs.existsSync(path.join(root,p)))throw Error('Missing archive runtime file: '+p);
 
-const data=Object.fromEntries(files.map(p=>[p,fs.readFileSync(path.join(root,p),'utf8')]));
+const isBin=p=>/\.(?:png|webp)$/i.test(p);
+const data=Object.fromEntries(files.map(p=>[p,isBin(p)?'base64:'+fs.readFileSync(path.join(root,p)).toString('base64'):fs.readFileSync(path.join(root,p),'utf8')]));
 const packed=gzipSync(Buffer.from(JSON.stringify(data))),hash=createHash('sha256').update(packed).digest('hex');
 let src=fs.readFileSync(path.join(root,'tools/staging/hosted_launch_stage.mjs'),'utf8');
 for(const [marker,value] of [['__LAUNCH_PACKAGE_PAYLOAD__',packed.toString('base64')],['__LAUNCH_PACKAGE_SHA256__',hash]]){

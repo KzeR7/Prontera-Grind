@@ -9404,3 +9404,14 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   bumps, other fields and other accounts are untouched, and `GM`/`gm`/`Gm` all resolve.
 * **Delivery:** `arena/42732cee-prontera-grind`.
 
+### 2026-11-02 — `haven-v283 illustrated rune-midgard world atlas`
+* **Added (`assets/world-map/`):** Integrated the 16:9 hand-illustrated Map of Rune-Midgard (`world-map-cleaned.webp`), all 8 isometric town island cutouts (`prontera.png`, `geffen.png`, `payon.png`, `morroc.png`, `comodo.png`, `niflheim.png`, `amatsu.png`, `louyang.png`), 8 flying bird flocks (`birds-flock-a.webp`, `birds-flock-b.webp`), and 9 drifting multi-puff clouds (`cloud-direct.webp`, `cloud-mask-16x9.webp`) directly into the World Atlas tab (`mapSeason === 'atlas'`).
+* **Changed (`index.html`, `assets/ui/eclipse.css`):**
+  * Replaced the flat `.eclipse-atlas-hero` banner with the clean 3-column World Atlas layout (`01 / Destination` | 16:9 Illustrated Map + `02 / Choose your stage` | `03 / Field intelligence`), omitting lore/landmark text across all maps and keeping only **`⛶ Full Map`** (`ACT.atlasfull`) on the embedded mini-map while exposing zoom/pan (`−`, `+`, `⟲`, drag-to-pan, wheel-zoom) and the collapsible Stages & Drops drawer inside Full Map mode.
+  * Lowered the full-height 3-column stretch breakpoint for `[data-layout=map]` from `1101px` to `901px` (plus `@container(min-width:851px)`) so `03 / Field intelligence` stretches to the full window height without a `360px` cutoff on medium desktop viewports (`851px–1100px`).
+  * Preserved all 8 original town cutout coordinates and added `.rm-subzones` quick switchers solely for the two paired cutouts (`Prontera & Izlude` → `Prontera` / `Izlude`; `Niflheim & the Abyss` → `Niflheim` / `Abyss`), with two-step `Escape` exit (`Fullscreen` → `1x Mini-Map` → `Close`).
+  * Keyed `#rmViewport`, `#rmCanvas`, ambient birds/clouds, and town pins for `eclipsePatch` so continuous bird/cloud animations and Full Map pan/zoom state survive live combat redraws and stage/zone switches without resetting.
+* **Checks:** `publish_sim.js` budgets `assets/world-map/` separately (`< 3.5 MiB`, ~2.8 MiB measured) while preserving the `< 59 MiB` classic and `< 140.5 MiB` combined runtime caps and verifying all 13 files in `dist/`. `eclipse_ui_sim.js` 54 → 55 covers absence of lore cards, Full-Map-only zoom controls, paired sub-zones, live DOM node retention, and fullscreen `Escape` flow.
+* **Delivery:** `arena/b0caa7f9-prontera-grind`.
+
+
