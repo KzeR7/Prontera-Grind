@@ -916,7 +916,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=279">
+<link rel="stylesheet" href="assets/social.css?v=286">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1311,7 +1311,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-02 haven-v282 the cloud badge shows when your save landed';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-02 haven-v286 durable poker payouts and room-scoped results';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3285,7 +3285,7 @@ function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},labels={damage:'
  return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*ascUpgradeScale(k,rank)).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
-const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
+const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0,ledgerApplied:[]},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -3374,6 +3374,8 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   f.poker.day=typeof f.poker.day==='string'?f.poker.day.slice(0,10):trialDay();
   f.poker.chips=Math.max(0,Math.min(1e9,Math.floor(num_(f.poker.chips,1000))));
   f.poker.freeClaimed=Math.max(0,Math.min(1,Math.floor(num_(f.poker.freeClaimed,0))));
+  // Applied server ledger ids survive reloads and daily resets with the chips they credited.
+  f.poker.ledgerApplied=[...new Set((Array.isArray(f.poker.ledgerApplied)?f.poker.ledgerApplied:[]).filter(id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id)))].slice(-512);
   if(f.poker.day!==trialDay()){f.poker.day=trialDay();f.poker.freeClaimed=0;}
   if(!Array.isArray(f.mail))f.mail=[];else f.mail=f.mail.filter(m=>m&&typeof m==='object'&&typeof m.body==='string').slice(0,50);
   f.mailSeeded=f.mailSeeded===true;
@@ -12868,8 +12870,8 @@ setInterval(updateWatch,60000);
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
 <script src="assets/social-rules.js?v=273"></script>
-<script src="assets/social-poker.js?v=273"></script>
+<script src="assets/social-poker.js?v=286"></script>
 <script src="assets/social-scene.js?v=279"></script>
-<script src="assets/social.js?v=279"></script>
+<script src="assets/social.js?v=286"></script>
 </body>
 </html>
