@@ -31,8 +31,9 @@ are 1.5/1.9/2.4/3/3.8. Thor HP multipliers are 7/9/11/14/18 and ATK multipliers
 are 4/4.8/5.6/6.6/8. The stage-5 boss retains three times its original stage
 regular HP. Boss ATK is 3× for Astral and 2.25× for Thor (v198). In v191, only its five escorts receive half the original
 stage regular HP; their ATK is unchanged. Stages 1–4 and boss HP are unchanged.
-The first fourth-job trial uses 1.25× the Nightmare Abyss Stage 15 MVP's own HP
-(111,676,981, deliberately above that boss), the Astral stage-1 ATK, a 30-second
+The first fourth-job trial uses 2× the Nightmare Abyss Stage 15 MVP's own HP
+(178,683,170, deliberately above that boss; haven-v292 — the v211 1.25× bar fell
+to no-card, low-refine launch builds), the Astral stage-1 ATK, a 30-second
 limit and its retained HIT. Before v211 it was 3× the Astral stage-1 regular mob,
 which left it weaker than the boss it is meant to outclass. Thor bosses deal 25% less damage in v198
 (2.25× the original stage regular ATK); Astral bosses retain 3× ATK.
@@ -246,12 +247,16 @@ above the ordinary cap.
 Base progression ends at 150. Do not copy earlier grant curves or pacing estimates
 from historical notes: `totalPts()`, `statCap()`, `needAt()`, `jneed()` and the
 progression/economy tests define current behavior. Base EXP requirements from
-Lv100 onward are 50% higher than the shared reference curve, with existing
-rounding. `needAt()` retains that reference curve for Job requirements and
-contract rewards; `baseNeedAt()` supplies the player Base EXP bar. Existing
-levels and earned EXP are preserved. Offline EXP still uses measured EXP/min,
-50% efficiency and a four-hour cap per claim. The target of roughly five days
-is a balance goal, not a guaranteed duration for every class, build or login schedule.
+Lv100 onward are 4x the shared reference curve, with existing rounding
+(haven-v291: launch players reached Base 150 in under a day because measured
+earned builds clear 4,300-7,500 kills/hour versus the pacing model's 800;
+the owner set the 100-150 band to roughly 2-3 real days of hardcore play
+including capped offline claims). `needAt()` retains that reference curve for
+Job requirements and contract rewards; `baseNeedAt()` supplies the player Base
+EXP bar. Existing levels and earned EXP are preserved. Offline EXP still uses
+measured EXP/min, 50% efficiency and a four-hour cap per claim. The band
+target is a balance goal, not a guaranteed duration for every class, build or
+login schedule.
 
 Nightmare Stage 5 (internal stage 15) redistributes its existing raw EXP budget
 across the MVP and its three/five escorts: the MVP pays at least 25% more than

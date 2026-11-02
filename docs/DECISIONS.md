@@ -7,7 +7,7 @@ the implementation/tests together. Read the linked sources for exact details.
 | Decision | Reason / implementation evidence |
 | --- | --- |
 | Return directly to previously played classes | The owner wanted saved builds available without repeating a Novice reset. `classBlock()` and `changeClass()` restore the class snapshot. Gear is matched by identity, not cloned. |
-| Base EXP requirements increase from 100 | The owner approved the tested 50% increase to Base requirements from Lv100. Job requirements, contract rewards and the measured offline EXP/min rule keep their existing formulas. See `baseNeedAt`, `needAt` and `base_pacing_sim.js`. |
+| Base EXP requirements increase from 100 | The owner approved the tested 50% increase to Base requirements from Lv100 (v255), then raised it to 4x in haven-v291 after launch players hit Base 150 in under 24 hours — the pacing model assumed 800 kills/hour while measured earned builds clear 4,300-7,500. The 100-150 band now targets ~2-3 real days of hardcore play including capped offline claims. Job requirements, contract rewards and the measured offline EXP/min rule keep their existing formulas; existing levels are never rolled back. See `BASE_EXP_LATE_X`, `baseNeedAt`, `needAt` and `base_pacing_sim.js`. |
 | Ordered six-slot combos with recovery | Attacks cast once in player-selected order from the active class line, then recover for 3 seconds. Between-skill swings follow ASPD visually but deal no normal-attack damage or on-hit effects (owner decision, 17 October 2026); recovery basics still deal damage. Rolling Cutter retains its explicit repeats. Buffs and emergency healing are independent. Earlier jobs remain useful through inherited marks and follow-up effects. No Heat/SP meter. |
 | Keep old IDs and save ownership | Renamed skills, appended pets, cosmetics and cloud sync must not reinterpret old progress or mix accounts. See migration, save-owner and cloud tests. |
 | Pets come from drops, not hatching | Collection is part of farming. Training/Bond/skill rolls do not replace acquisition. See `PETS` and pet tests. |
@@ -233,3 +233,13 @@ blinking on hover and sometimes not clickable. The cause was the HUD tick callin
 Display sync and rebuilding the tab buttons several times per second. Display now
 notifies chat only when a visibility class changes, and chat reuses tab nodes; resize
 grips no longer sit above the tab buttons.
+
+### 2026-11-02 — Crucible HP raised to 2× the Abyss MVP (haven-v292)
+
+On launch day the owner's no-card Assassin Cross with only a +4 N+ weapon passed
+the Crucible with about one second left (~3.85M effective DPS against the v211
+bar of 3.72M). The owner asked for a 50–70% HP increase so no-card, minimal-refine
+builds fail: `JOB_RITE_BOSS_MULT` 1.25 → 2 (+60%), i.e. 89,341,585 × 2 =
+178,683,170 HP, requiring ~5.96M DPS inside the unchanged 30-second limit. ATK,
+rewards (none), retry rules and the `nmBossHpOf()` boss-tracking anchor are
+unchanged; `job_rite_sim.js` reads the multiplier so its assertions follow.
