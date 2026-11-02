@@ -65,10 +65,19 @@ A disconnected socket gets a 15-second, server-owned reconnect reservation. The
 next authenticated socket for that account inherits the exact plaza coordinates,
 facing, remaining path and still-reserved poker seat; it does not spawn at the
 entrance or buy in again. The poker turn clock continues during the grace, and an
-AFK kick/expiry releases the seat. If a pot settled while the socket was down, the
-reserved stack's net change is credited once on authenticated reconnect. Explicitly
-leaving clears the reservation. A same-seat `poker_sit` is idempotent for older
-reconnect clients.
+AFK kick/expiry releases the seat. Explicitly leaving clears the reservation. A
+same-seat `poker_sit` is idempotent for older reconnect clients.
+
+Poker chip movements use a separate durable per-account outbox in the Social Durable
+Object's SQLite storage (`poker-ledger-v1:<accountId>`), not the public World backlog
+and not the short-lived seat reservation. Every blind/call/raise/win carries a stable
+unique id and is written before delivery. Unacknowledged events replay on authenticated
+reconnect even if the 15-second reservation expired or the Durable Object restarted.
+The client saves the applied id in the same poker wallet blob as the chip balance
+(`poker.ledgerApplied`), then acknowledges the id; the server removes only that account's acknowledged
+events. Replaying an already-applied id cannot credit chips twice. Replay batches are
+bounded, and a failed ledger load refuses sockets rather than pretending the outbox is
+empty.
 
 The poker window has a fixed viewport-derived lane: desktop chat stays bottom-left
 and cannot move/resize the table; below 1280px chat docks in a compact lane beneath
@@ -76,8 +85,9 @@ the table while it is open, then restores its preferred size when minimized/clos
 While the player is actually seated at a table on a wide screen, chat narrows to a
 280px column (`poker-chat-fit`) and the table takes the freed lane (left 304px);
 standing/leaving restores the normal chat width and 414px lane. Hand results show a
-one-shot overlay keyed by table+hand number: win chip burst, lose/fold shake, split
-pot neutral, with a matching mini-pill flash; reduced motion disables the burst.
+one-shot overlay keyed by plaza room+table+hand number: win chip burst, lose/fold
+shake, split pot neutral, with a matching mini-pill flash. Changing or leaving a room
+clears stale result UI; reduced motion disables the burst.
 Local chat spoken by a player seated at the viewed table (or a dealer callout) also
 pops a small, transient speech bubble on that seat/dealer plaque for six seconds.
 The bubble is visual-only (`aria-hidden`, `pointer-events:none`), renders text rather
@@ -187,8 +197,8 @@ npx wrangler deploy --config workers/social/wrangler.toml
 
 No production deployment is performed by the feature tests. A missing binding
 leaves the game playable and shows chat as unavailable. The latest 100 World
-messages survive a Durable Object restart in its existing SQLite storage; no new
-D1 migration is required. Deploy the Social Worker before the matching Pages
+messages and unacknowledged per-account poker ledger events survive a Durable Object
+restart in its existing SQLite storage; no new D1 migration is required. Deploy the Social Worker before the matching Pages
 client so the leave guard, reconnect reservation and durable backlog are active.
 This first service
 uses one coordinating Durable Object for the world and numbered plazas, intended

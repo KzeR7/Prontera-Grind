@@ -31,15 +31,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const back=join(1,'Alice');assert.notEqual(back.z,saved.z,'an expired grace starts a fresh visit rather than restoring stale coordinates');
  send(back,{type:'leave'});assert(!room.resumes.has(1));
 
- // A pot settled during the socket grace is reconciled once against the reserved stack.
+ // A pot settled during the socket grace replays its actual durable ledger event, not a stack guess.
  const ledgerRoom=new SocialRoom({now:()=>now});const ledgerEvents=[];
  const away=ledgerRoom.connect({id:9,username:'Away'},s=>ledgerEvents.push(JSON.parse(s)),()=>{});
  ledgerRoom.receive(away,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));now+=200;
  ledgerRoom.receive(away,JSON.stringify({type:'poker_sit',seat:0,buyIn:1000}));now+=9000;ledgerRoom.sweep();
  const ledgerTable=ledgerRoom.pokerTables(1)[0],awayStack=ledgerTable.findPlayer(9).stack;
- ledgerRoom.disconnect(away);ledgerTable.findPlayer(9).stack+=30;
+ ledgerRoom.disconnect(away);ledgerTable.findPlayer(9).stack+=30;ledgerTable.onLedger(9,30,'win');await ledgerRoom.ledgerWrites;
  const returned=ledgerRoom.connect({id:9,username:'Away'},s=>ledgerEvents.push(JSON.parse(s)),()=>{});
- assert(ledgerEvents.some(e=>e.type==='poker_ledger'&&e.reason==='reconnect'&&e.delta===30),'a missed settled pot is credited on authenticated reconnect');
+ await new Promise(r=>setImmediate(r));
+ assert(ledgerEvents.some(e=>e.type==='poker_ledger'&&e.reason==='win'&&e.delta===30&&e.id),'a missed settled pot replays its durable event on authenticated reconnect');
  assert.equal(ledgerTable.findPlayer(9).stack,awayStack+30);ledgerRoom.disconnect(returned);
 
  // Only public World messages are restored, and ids keep increasing after a room restart.
@@ -105,6 +106,24 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   mock.handNo=9;mock.phase='flop';seatView.folded=true;w.PGSocial.pokerOpen(0);assert(result.classList.contains('is-lose'));assert.match(result.textContent,/FOLDED/);
   mock.me=null;w.PGSocial.pokerOpen(0);assert(!chat.classList.contains('poker-chat-fit'),'leaving the seat restores the normal chat width');assert.equal(parseFloat(modal.style.left),414);
   w.Date.now=realNow;w.close();
+ }
+ // v286: identical table/hand numbers in different plaza rooms are different results.
+ {
+  const {w}=boot('Alice',true);const app=w.PGSocial.app,ws=app.socket;
+  ws.onmessage({data:JSON.stringify({type:'hello',id:1,history:[]})});
+  app.wanted=true;w.document.getElementById('socialHub').hidden=false;
+  const seat={seat:0,globalSeat:0,id:1,name:'Alice',stack:1200,cards:['As','Ks'],folded:false,totalBet:100,streetBet:0,missedTurns:0,isTurn:false};
+  const snap={tableId:0,tableLabel:'Table 1',dealerName:'Dealer Vane',seq:1,handNo:1,phase:'showdown',banner:'Alice wins',vsHouse:false,pot:200,currentBet:0,minRaise:20,community:[],seats:[seat,null,null,null,null,null],house:null,seatedCount:1,turnSeat:null,turnName:'',turnLeftMs:0,phaseLeftMs:4000,winners:[{seat:0,id:1,name:'Alice',amount:200,handName:'Flush',best5:[]}],me:{seat:0,globalSeat:0,stack:1200,pendingAdd:0,missedTurns:0,afkMax:2,isTurn:false,toCall:0,minRaiseTo:20,maxTo:1200,canCheck:true,canRaise:true}};
+  const enterRoom=room=>{ws.onmessage({data:JSON.stringify({type:'room',room,rooms:[{id:1,count:1},{id:2,count:1}],players:[]})});ws.onmessage({data:JSON.stringify({type:'poker',tables:[snap,null],poker:snap})})};
+  enterRoom(1);w.PGSocial.pokerOpen(0);
+  const result=w.document.getElementById('socialPokerResult'),mini=w.document.getElementById('socialPokerMini');
+  assert(!result.hidden);const first=result.querySelector('.poker-result-card');assert(first);
+  assert.equal(result.dataset.key,'1:0:1','result identity includes the plaza room');
+  enterRoom(2);
+  assert(!result.hidden,'table 1 hand 1 animates again in plaza 2');assert.notEqual(result.querySelector('.poker-result-card'),first,'a different room gets a fresh result animation');assert.equal(result.dataset.key,'2:0:1');
+  mini.hidden=false;mini.classList.add('is-result-win');mini.dataset.resultUntil=String(Date.now()+3000);
+  w.PGSocial.leave();assert(result.hidden);assert.equal(result.innerHTML,'');assert(!mini.classList.contains('is-result-win'));assert(!mini.dataset.resultUntil,'leaving clears both result surfaces');
+  w.close();
  }
  // v285: Local chat pops a small transient bubble on the viewed poker table.
  {

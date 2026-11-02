@@ -6,7 +6,9 @@ const app={socket:null,user:null,id:null,room:0,rooms:[],wanted:false,channel:'w
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const emojiURL=id=>'assets/social/emotions/'+id+'.png';
 // World is public and may be cached per account. Never put whispers or Local messages in storage.
-const CHAT_MAX=400,WORLD_CACHE_MAX=200;
+const CHAT_MAX=400,WORLD_CACHE_MAX=200,POKER_LEDGER_IDS_MAX=512;
+const pokerLedgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id);
+function cleanPokerLedgerIds(value){return [...new Set((Array.isArray(value)?value:[]).filter(pokerLedgerIdValid))].slice(-POKER_LEDGER_IDS_MAX)}
 const worldHistoryKey=user=>'pg_social_world_v1_'+String(user||'').toLowerCase();
 function cleanChatMessage(m){
  if(!m||!['world','whisper','local'].includes(m.channel)||!Number.isFinite(m.at)||!Number.isInteger(m.from)||typeof m.name!=='string'||typeof m.body!=='string'||m.body.length>300||(m.emotion&&!R.EMOTIONS.includes(m.emotion)))return null;
@@ -192,11 +194,12 @@ function pokerWallet(){
  const hostObj=(typeof S==='object'&&S)?S:null;
  let w=hostObj?hostObj.poker:fallbackWallet;
  if(!w||typeof w!=='object'||Array.isArray(w)){
-  w={day:today,chips:P?P.STARTING_CHIPS:1000,freeClaimed:0};
+  w={day:today,chips:P?P.STARTING_CHIPS:1000,freeClaimed:0,ledgerApplied:[]};
   if(hostObj)hostObj.poker=w;
  }
  w.chips=Math.max(0,Math.min(1e9,Math.floor(Number(w.chips)||0)));
  w.freeClaimed=Math.max(0,Math.min(1,Math.floor(Number(w.freeClaimed)||0)));
+ w.ledgerApplied=cleanPokerLedgerIds(w.ledgerApplied);
  if(w.day!==today){w.day=today;w.freeClaimed=0;}
  return w;
 }
@@ -210,12 +213,17 @@ function showPokerToast(msg,kind='info'){
  const el=$id('socialPokerToast');
  if(el){el.textContent=msg;el.dataset.kind=kind;el.hidden=!msg;}
 }
-function applyPokerLedger(delta){
- const d=Math.trunc(Number(delta)||0);if(!d)return;
+function applyPokerLedger(delta,eventId=''){
+ const d=Math.trunc(Number(delta)||0),id=pokerLedgerIdValid(eventId)?eventId:'';
  const w=pokerWallet();
+ if(id&&w.ledgerApplied.includes(id))return false;
+ if(!d)return false;
  w.chips=Math.max(0,Math.min(1e9,w.chips+d));
+ if(id)w.ledgerApplied=cleanPokerLedgerIds([...w.ledgerApplied,id]);
+ // Balance and applied id travel in the same poker wallet/save blob before the server ACK.
  persistPoker();
  renderPokerUI(true);
+ return true;
 }
 function handlePokerCallout(body,tableId=0){
  if(!body)return;
@@ -235,13 +243,15 @@ function handleSoloKick(info){
  syncSoloPokerSnapshots();
  renderPokerMini();renderPokerUI(true);
 }
+let soloLedgerSeq=0;
+function soloLedgerId(){return 'solo:'+(globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+(++soloLedgerSeq))}
 function ensureSoloTables(){
  if(!P)return null;
  if(!soloTables){
   const specs=R.POKER.tables||[{id:0,label:'Table 1',dealer:R.POKER.dealer}];
   soloTables=specs.map(spec=>new P.HoldemTable({
    tableId:spec.id,label:spec.label,dealerName:spec.dealer.name,
-   onLedger:(_id,delta)=>applyPokerLedger(delta),
+   onLedger:(_id,delta)=>applyPokerLedger(delta,soloLedgerId()),
    onCallout:body=>handlePokerCallout(body,spec.id),
    onKick:info=>handleSoloKick(info)
   }));
@@ -494,13 +504,19 @@ function sendPokerAct(action,amount=0){
 }
 
 const pokerHandResults=new Map();
+function clearPokerResult(){
+ const el=$id('socialPokerResult');
+ if(el){el.hidden=true;el.innerHTML='';delete el.dataset.key;el.className=''}
+ const mini=$id('socialPokerMini');
+ if(mini){mini.classList.remove('is-result-win','is-result-lose','is-result-push');delete mini.dataset.resultUntil;delete mini.dataset.resultKey}
+}
 function syncPokerResult(snap,seated){
  const el=$id('socialPokerResult');if(!el)return;
  const now=Date.now();
  const current=el.dataset.key?pokerHandResults.get(el.dataset.key):null;
- if(el.dataset.key&&(!current||now>current.until)){el.hidden=true;el.innerHTML='';delete el.dataset.key;el.className=''}
+ if(el.dataset.key&&(!current||now>current.until||current.room!==app.room)){el.hidden=true;el.innerHTML='';delete el.dataset.key;el.className=''}
  const mini=$id('socialPokerMini');
- if(mini&&mini.dataset.resultUntil&&now>Number(mini.dataset.resultUntil)){mini.classList.remove('is-result-win','is-result-lose','is-result-push');delete mini.dataset.resultUntil}
+ if(mini&&mini.dataset.resultUntil&&now>Number(mini.dataset.resultUntil)){mini.classList.remove('is-result-win','is-result-lose','is-result-push');delete mini.dataset.resultUntil;delete mini.dataset.resultKey}
  if(!snap||!snap.me||snap.tableId!==pokerUI.tableId)return;
  const me=snap.me,seat=snap.seats?.[me.seat],live=['preflop','flop','turn','river'].includes(snap.phase);
  let kind='',title='',detail='';
@@ -511,15 +527,15 @@ function syncPokerResult(snap,seated){
   else{kind='lose';title='YOU LOSE';detail=seat?.totalBet?`-${seat.totalBet.toLocaleString()} chips`:'Next hand is yours'}
  }
  if(!kind)return;
- const key=`${snap.tableId}:${snap.handNo}`;
+ const key=`${app.room}:${snap.tableId}:${snap.handNo}`;
  if(pokerHandResults.has(key))return;
  const until=now+(kind==='win'?3400:2600);
- pokerHandResults.set(key,{kind,until});
+ pokerHandResults.set(key,{kind,until,room:app.room});
  if(pokerHandResults.size>24)pokerHandResults.delete(pokerHandResults.keys().next().value);
  el.dataset.key=key;el.className=`poker-result is-${kind}`;el.hidden=false;
  const burst=kind==='win'?'<i class="poker-result-burst" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b></i>':'';
  el.innerHTML=`<div class="poker-result-card" role="status"><strong>${title}</strong><span>${detail}</span>${burst}</div>`;
- if(mini&&!mini.hidden){mini.classList.remove('is-result-win','is-result-lose','is-result-push');mini.classList.add(`is-result-${kind}`);mini.dataset.resultUntil=String(until)}
+ if(mini&&!mini.hidden){mini.classList.remove('is-result-win','is-result-lose','is-result-push');mini.classList.add(`is-result-${kind}`);mini.dataset.resultUntil=String(until);mini.dataset.resultKey=key}
 }
 // v285: Local chat spoken by someone at the viewed table pops a small, transient
 // bubble on that seat (or the dealer plaque). It never enters storage, never blocks
@@ -902,7 +918,7 @@ function toggleSit(){confirmPokerLeave(confirmLeave=>performToggleSit(confirmLea
 function performToggleSit(confirmLeave){if(app.room&&send({type:'sit',confirmLeave}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());clearSoloPokerIfSeated(p);p.path=[];p.seat=null;p.pokerSeat=null;p.sit=!p.sit;putPlayer(p)}
 function join(){if(!app.connected)return;send({type:'join',look:currentLook(),friends:[...app.friends]})}
 async function enter(){if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),sitting,camera:cameraUI});if(app.wanted){app.scene.active=true;cameraUI(app.scene.cameraState);for(const p of app.players.values())app.scene.putPlayer(p);join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
-function leave(){if(pokerLeaveAction)finishPokerLeave(false);app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');if(app.scene)app.scene.active=false;resetPlayers();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}
+function leave(){if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');if(app.scene)app.scene.active=false;resetPlayers();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}
 $id('socialLeave').onclick=()=>confirmPokerLeave(()=>leave());$id('socialSit').onclick=toggleSit;
 function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retry=0;status('Connected · World & private chat');app.messages=mergeChatMessages(app.messages.filter(x=>x.channel!=='world'),readWorldHistory(),m.history);saveWorldHistory();renderMessages();if(app.wanted&&app.scene)join();else app.resume=null}
  if(m.type==='error'){status(m.message);population();}
@@ -913,7 +929,12 @@ function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retr
   showPokerToast(m.message||'Auto-removed from seat due to AFK inactivity.','warn');
   renderPokerMini();renderPokerUI(true);
  }
- if(m.type==='poker_ledger')applyPokerLedger(m.delta);
+ if(m.type==='poker_ledger'){
+  const id=pokerLedgerIdValid(m.id)?m.id:'';
+  applyPokerLedger(m.delta,id);
+  // ACK even a duplicate: the wallet already saved it, but the server may still hold the outbox.
+  if(id)send({type:'poker_ledger_ack',ids:[id]});
+ }
  if(m.type==='poker_callout'&&m.room===app.room)handlePokerCallout(m.body,m.tableId||0);
  if(m.type==='poker'){
   const now=Date.now();
@@ -930,7 +951,7 @@ function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retr
   renderPokerMini();renderPokerUI();updatePokerTurnClock();
  }
  if(m.type==='reauth')return refreshSocket();
- if(m.type==='room'){friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;resetPlayers();app.messages=app.messages.filter(x=>x.channel!=='local');pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)}
+ if(m.type==='room'){friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());if(app.room!==m.room){clearPokerResult();app.poker=null;app.pokerTables=null;pokerUI.renderKey='';}app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;resetPlayers();app.messages=app.messages.filter(x=>x.channel!=='local');pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)}
  if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
 
  if(m.type==='left'&&m.room===app.room){app.players.delete(m.id);app.scene?.removePlayer(m.id);population();friendPresenceChanged()}
@@ -969,7 +990,7 @@ function connect(){if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextCo
  const ws=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/api/social'+qs);app.socket=ws;status('Connecting to chat…');ws.onmessage=e=>{if(app.socket!==ws)return;app.lastSeen=Date.now();app.probeAt=0;try{receive(JSON.parse(e.data))}catch(err){console.error('Social message',err)}};
  ws.onclose=e=>{if(app.socket!==ws)return;app.socket=null;app.connected=false;app.probeAt=0;
   if(e.code===4000){app.resume=seatState();app.nextConnect=0;status('Refreshing chat…');return}
-  app.room=0;app.rooms=[];app.poker=null;app.pokerTables=null;pokerTableChat.clear();resetPlayers();syncSoloPlayer();population();tabsUI();renderPokerMini();renderPokerUI(true);status(e.code===4001?'Chat moved to another tab. Reload to reconnect.':'Chat unavailable — retrying…');app.blocked=e.code===4001;app.nextConnect=Date.now()+Math.min(30000,1000*2**Math.min(app.retry++,5))};ws.onerror=()=>status('Chat unavailable — checking connection…');}
+  clearPokerResult();app.room=0;app.rooms=[];app.poker=null;app.pokerTables=null;pokerTableChat.clear();resetPlayers();syncSoloPlayer();population();tabsUI();renderPokerMini();renderPokerUI(true);status(e.code===4001?'Chat moved to another tab. Reload to reconnect.':'Chat unavailable — retrying…');app.blocked=e.code===4001;app.nextConnect=Date.now()+Math.min(30000,1000*2**Math.min(app.retry++,5))};ws.onerror=()=>status('Chat unavailable — checking connection…');}
 let lastLog='',lastLook='';setInterval(()=>{if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();heartbeat(Date.now());if(app.channel==='log'){const key=JSON.stringify(logShown().map(l=>l.id));if(key!==lastLog){lastLog=key;renderMessages(true)}}const look=JSON.stringify(currentLook());if(app.room&&lastLook&&look!==lastLook)send({type:'look',look:currentLook()});else if(!app.room&&app.wanted&&app.scene&&lastLook&&look!==lastLook)syncSoloPlayer();lastLook=look},2000);
 // Someone appeared, moved or left: the friends panel's "in the plaza now" label is drawn from this
 // list, so it is redrawn when (and only when) the panel is open.

@@ -53,8 +53,8 @@ const start=()=>new Miniflare({
  modulesRoot:'.',compatibilityDate:useDate,
  durableObjects:{SOCIAL:{className:'Social',useSQLite:true}},durableObjectsPersist:persist,
 });
-async function until(messages,predicate,label){
- const end=Date.now()+5000;
+async function until(messages,predicate,label,timeout=5000){
+ const end=Date.now()+timeout;
  while(!messages.some(predicate)){if(Date.now()>end)throw Error('Worker socket timeout: '+label);await new Promise(r=>setTimeout(r,20))}
  return messages.find(predicate);
 }
@@ -84,5 +84,29 @@ try{
  assert(hello.history.some(m=>m.body==='survives a Durable Object restart'),'World backlog survives the restart');
  assert(!hello.history.some(m=>m.channel!=='world'||m.body==='never durable'),'only public World history is durable');
  second.ws.close();
- console.log('PASS Cloudflare local runtime: Durable Object binding, WebSocket upgrade, plaza join and World-only backlog across a storage-backed restart');
+
+ // A real folded pot pays the disconnected winner. The payout must survive a DO restart,
+ // replay with the same id until the wallet ACKs, and never leak into World history.
+ const p1=await connect(mf,10),p2=await connect(mf,11);
+ for(const peer of [p1,p2]){peer.ws.send(JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'},speed:13}}));await until(peer.messages,m=>m.type==='room','poker plaza join')}
+ p1.ws.send(JSON.stringify({type:'poker_sit',seat:0,buyIn:1000}));p2.ws.send(JSON.stringify({type:'poker_sit',seat:1,buyIn:1000}));
+ await until(p1.messages,m=>m.type==='poker'&&m.tables?.[0]?.phase==='preflop','live poker hand',20000);
+ const hand=[...p1.messages].reverse().find(m=>m.type==='poker').tables[0];
+ const winnerSeat=hand.turnSeat===0?1:0,winnerId=winnerSeat===0?10:11;
+ const winner=winnerSeat===0?p1:p2,loser=winnerSeat===0?p2:p1;
+ winner.ws.close();await new Promise(r=>setTimeout(r,150));
+ loser.ws.send(JSON.stringify({type:'poker_act',action:'fold'}));
+ await until(loser.messages,m=>m.type==='poker'&&m.tables?.[0]?.phase==='showdown'&&m.tables[0].winners?.some(w=>w.id===winnerId),'disconnected winner payout');
+ await new Promise(r=>setTimeout(r,300));loser.ws.close();await mf.dispose();mf=null;
+ mf=await start();let replay=await connect(mf,winnerId);
+ const payout=await until(replay.messages,m=>m.type==='poker_ledger'&&m.reason==='win'&&m.delta>0,'durable payout replay');
+ assert(payout.id,'the payout carries a stable id');assert(!replay.messages.find(m=>m.type==='hello').history.some(m=>m.type==='poker_ledger'),'personal ledger is not public World history');
+ const outsider=await connect(mf,12);await until(outsider.messages,m=>m.type==='hello','outsider hello');await new Promise(r=>setTimeout(r,100));assert(!outsider.messages.some(m=>m.type==='poker_ledger'),'another account cannot read the payout');outsider.ws.close();
+ replay.ws.close();await new Promise(r=>setTimeout(r,100));await mf.dispose();mf=null;
+ mf=await start();replay=await connect(mf,winnerId);
+ const again=await until(replay.messages,m=>m.type==='poker_ledger'&&m.id===payout.id,'same-id replay after second restart');assert.equal(again.delta,payout.delta);
+ const ackIds=replay.messages.filter(m=>m.type==='poker_ledger').map(m=>m.id);
+ replay.ws.send(JSON.stringify({type:'poker_ledger_ack',ids:ackIds}));await new Promise(r=>setTimeout(r,300));replay.ws.close();await mf.dispose();mf=null;
+ mf=await start();replay=await connect(mf,winnerId);await until(replay.messages,m=>m.type==='hello','post-ACK hello');await new Promise(r=>setTimeout(r,150));assert(!replay.messages.some(m=>m.type==='poker_ledger'),'ACKed payout is not replayed after restart');replay.ws.close();
+ console.log('PASS Cloudflare local runtime: Durable Object binding, WebSocket upgrade, plaza join, World-only backlog and durable acknowledged poker payouts across storage-backed restarts');
 }finally{if(mf)await mf.dispose();fs.rmSync(persist,{recursive:true,force:true})}

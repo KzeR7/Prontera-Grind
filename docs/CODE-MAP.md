@@ -290,7 +290,7 @@ remain independent. See [activation/rollback handoff](NATIVE-FIELDS-HANDOFF.md).
 World/Whisper/Local chat and social plaza (v203): `assets/social.js`,
 `assets/social-scene.js`, `assets/social-rules.js`, `assets/social-poker.js`, `functions/api/social.js`,
 `workers/social/`; see [Social hub](SOCIAL-HUB.md) for architecture, deployment and
-checks (`social_poker_sim.js`, `social_table_chat_sim.js`). The independent scene leaves the real farming simulation running. Since
+checks (`social_poker_sim.js`, `social_table_chat_sim.js`, `social_ledger_sim.js`). The independent scene leaves the real farming simulation running. Since
 v225 the validated look also carries `lv` (field level aura) and `speed` (field run
 speed); `PGSocialRules.walkSpeed` clamps and advances every player with it, and the
 plaza reuses `buildLevelAura`/`LEVEL_AURAS` for the Base 50/99/150 sigil.

@@ -7,11 +7,31 @@ const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker;
 // the socket itself is the only thing that proves who the player is. The age of a connection is
 // measured from when it was accepted, and activity slides the idle window forward, so an active
 // player is no longer dropped every five minutes the way REAUTH_MS alone used to force.
-const IDLE_MS=300000,REAUTH_MS=1800000,MAX_ROOMS=50,RESUME_MS=15000;
+const IDLE_MS=300000,REAUTH_MS=1800000,MAX_ROOMS=50,RESUME_MS=15000,LEDGER_BATCH=100;
+const LEDGER_REASONS=new Set(['blind','call','raise','win']);
+const ledgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id);
 // Only public World text/emotions are durable. Whispers and Local never enter this record.
 export function cleanWorldHistory(value){
  if(!Array.isArray(value))return [];
  return value.filter(m=>m&&m.type==='message'&&m.channel==='world'&&Number.isSafeInteger(m.id)&&m.id>0&&Number.isFinite(m.at)&&Number.isInteger(m.from)&&typeof m.name==='string'&&typeof m.body==='string'&&m.body.length<=300&&(!m.emotion||R.EMOTIONS.includes(m.emotion))).slice(-100).map(m=>({type:'message',id:m.id,at:m.at,from:m.from,name:m.name.slice(0,32),gm:m.gm===true,channel:'world',body:m.body,room:0,...(m.emotion?{emotion:m.emotion}:{})}));
+}
+// Poker chip movements are a personal, durable outbox - never part of public World history.
+// An event keeps its id until that account acknowledges it after saving its wallet. Replay is
+// therefore safe after a lost socket, an expired seat reservation, or a Durable Object restart.
+export function cleanPokerLedger(value){
+ if(!value||value.type!=='poker_ledger'||!ledgerIdValid(value.id)||!Number.isSafeInteger(value.delta)||value.delta===0||Math.abs(value.delta)>1e9||!Number.isInteger(value.room)||value.room<1||!Number.isInteger(value.tableId)||value.tableId<0||value.tableId>=R.POKER.tables.length||!Number.isSafeInteger(value.handNo)||value.handNo<0||!Number.isFinite(value.at)||!LEDGER_REASONS.has(value.reason))return null;
+ return {type:'poker_ledger',id:value.id,at:value.at,room:value.room,tableId:value.tableId,handNo:value.handNo,delta:value.delta,reason:value.reason};
+}
+export function cleanPokerLedgerQueues(value){
+ if(!Array.isArray(value))return [];
+ const queues=[];
+ for(const pair of value){
+  if(!Array.isArray(pair)||!Number.isInteger(pair[0])||pair[0]<1||!Array.isArray(pair[1]))continue;
+  const seen=new Set(),events=[];
+  for(const raw of pair[1]){const event=cleanPokerLedger(raw);if(!event||seen.has(event.id))continue;seen.add(event.id);events.push(event)}
+  queues.push([pair[0],events]);
+ }
+ return queues;
 }
 // Only positive integer account ids belong in a friend list.
 const cleanFriendId=id=>Number.isInteger(id)&&id>0;
@@ -23,9 +43,49 @@ export class SocialRoom {
   this.autoTimers=opts.autoTimers??!opts.now;
   this.clients=new Map();this.history=cleanWorldHistory(opts.history);this.serial=Math.max(0,...this.history.map(m=>m.id));
   this.onWorldMessage=opts.onWorldMessage||(()=>{});
+  this.onPokerLedger=opts.onPokerLedger||(()=>{});
+  this.ledgerQueues=new Map(cleanPokerLedgerQueues(opts.ledgers));
+  this.ledgerWrites=Promise.resolve();this.ledgerDirty=new Set();this.ledgerVersions=new Map();
   this.tables=new Map();this.timers=new Map();this.resumes=new Map();
  }
  send(c,event){try{c.send(JSON.stringify(event))}catch{this.disconnect(c)}}
+ persistPokerLedger(accountId){
+  const version=(this.ledgerVersions.get(accountId)||0)+1;this.ledgerVersions.set(accountId,version);this.ledgerDirty.add(accountId);
+  const snapshot=(this.ledgerQueues.get(accountId)||[]).map(event=>({...event}));
+  const write=this.ledgerWrites.then(()=>this.onPokerLedger(accountId,snapshot)).then(()=>{if(this.ledgerVersions.get(accountId)===version)this.ledgerDirty.delete(accountId)});
+  this.ledgerWrites=write.catch(error=>console.error('Poker ledger save failed',error));
+  return write;
+ }
+ retryPokerLedgers(){for(const id of [...this.ledgerDirty])this.persistPokerLedger(id).catch(()=>{})}
+ recordPokerLedger(accountId,detail){
+  if(!Number.isInteger(accountId)||accountId<1)return;
+  const event=cleanPokerLedger({type:'poker_ledger',id:'poker:'+crypto.randomUUID(),at:this.now(),...detail});if(!event)return;
+  const queue=this.ledgerQueues.get(accountId)||[];queue.push(event);this.ledgerQueues.set(accountId,queue);
+  this.persistPokerLedger(accountId).then(()=>{
+   const c=this.clients.get(accountId);if(!c)return;
+   (c.ledgerAckPending||(c.ledgerAckPending=new Set())).add(event.id);this.send(c,event);
+  }).catch(()=>{});
+ }
+ flushPokerLedgers(c){
+  if(this.ledgerDirty.has(c.id)||c.ledgerAckPending?.size)return;
+  const batch=(this.ledgerQueues.get(c.id)||[]).slice(0,LEDGER_BATCH);if(!batch.length)return;
+  c.ledgerAckPending=new Set(batch.map(event=>event.id));
+  for(const event of batch)this.send(c,event);
+ }
+ replayPokerLedgers(c){
+  const ready=this.ledgerDirty.has(c.id)?this.persistPokerLedger(c.id):this.ledgerWrites;
+  ready.then(()=>{if(this.clients.get(c.id)===c&&!this.ledgerDirty.has(c.id))this.flushPokerLedgers(c)}).catch(()=>{});
+ }
+ ackPokerLedgers(c,m){
+  if(!Array.isArray(m.ids)||m.ids.length>LEDGER_BATCH)return;
+  const ids=new Set(m.ids.filter(ledgerIdValid)),queue=this.ledgerQueues.get(c.id)||[];
+  const next=queue.filter(event=>!ids.has(event.id));
+  for(const id of ids)c.ledgerAckPending?.delete(id);
+  const changed=next.length!==queue.length;
+  if(changed){if(next.length)this.ledgerQueues.set(c.id,next);else this.ledgerQueues.delete(c.id)}
+  const ready=changed?this.persistPokerLedger(c.id):this.ledgerWrites;
+  ready.then(()=>{if(this.clients.get(c.id)===c&&!c.ledgerAckPending?.size)this.flushPokerLedgers(c)}).catch(()=>{});
+ }
  // A planned refresh tells the client before the socket closes, so it can reconnect and rejoin
  // without showing a failure or losing the player's seat.
  refresh(c){c.refreshing=true;this.disconnect(c);this.send(c,{type:'reauth'});c.close(4000,'Refresh session')}
@@ -85,7 +145,7 @@ export class SocialRoom {
   if(!list){
    list=R.POKER.tables.map(spec=>new P.HoldemTable({
     tableId:spec.id,label:spec.label,dealerName:spec.dealer.name,
-    onLedger:(playerId,delta,reason)=>{const p=this.clients.get(playerId);if(p&&p.room===room)this.send(p,{type:'poker_ledger',tableId:spec.id,delta,reason});},
+    onLedger:(playerId,delta,reason)=>this.recordPokerLedger(playerId,{room,tableId:spec.id,handNo:list[spec.id]?.handNo||0,delta,reason}),
     onCallout:body=>{this.broadcast({type:'poker_callout',room,tableId:spec.id,body,at:this.now()},p=>p.room===room);},
     onKick:info=>{
      const p=this.clients.get(info.id);
@@ -173,14 +233,9 @@ export class SocialRoom {
   // The list Pages sent at connect time is mirrored at once, so a player who is already in a plaza
   // and is on your list is drawn as a friend even if you connected second.
   this.adoptFriends(c);
-  // A pot can settle while the socket is down. The reserved seat's stack is authoritative;
-  // credit the net change once so a missed win/bet ledger event is not lost from the wallet.
-  if(resume&&Number.isInteger(c.pokerSeat)&&Number.isFinite(resume.pokerStack)){
-   const current=this.tables.get(c.room)?.[Math.floor(c.pokerSeat/6)]?.findPlayer(c.id);
-   const delta=current?current.stack-resume.pokerStack:0;
-   if(delta)this.send(c,{type:'poker_ledger',tableId:Math.floor(c.pokerSeat/6),delta,reason:'reconnect'});
-  }
-  this.send(c,{type:'hello',id:c.id,name:c.name,gm:c.gm,history:this.history});return c;
+  this.send(c,{type:'hello',id:c.id,name:c.name,gm:c.gm,history:this.history});
+  // The durable personal outbox is independent of the short-lived seat reservation.
+  this.replayPokerLedgers(c);return c;
  }
  // v225: lv drives the level aura and speed is the character's field run speed. Both are
  // presentation hints: lv is clamped to a display tier input, speed to the shared walk band, so a
@@ -198,7 +253,7 @@ export class SocialRoom {
   // leave has already cleared the room; a replacement tab may inherit the same reservation.
   if(room&&!c.released){
    R.advance(c,now);
-   this.resumes.set(c.id,{room,x:c.x,z:c.z,dir:c.dir,path:c.path.map(p=>({...p})),sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,pokerStack:Number.isInteger(c.pokerSeat)?this.tables.get(room)?.[Math.floor(c.pokerSeat/6)]?.findPlayer(c.id)?.stack:null,look:c.look,expires:now+RESUME_MS});
+   this.resumes.set(c.id,{room,x:c.x,z:c.z,dir:c.dir,path:c.path.map(p=>({...p})),sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look,expires:now+RESUME_MS});
    if(Number.isInteger(c.pokerSeat))this.tables.get(room)?.[Math.floor(c.pokerSeat/6)]?.markArrived(c.id,false,now);
    this.clients.delete(c.id);
    this.broadcast({type:'left',id:c.id,room},p=>p.room===room);
@@ -250,6 +305,7 @@ export class SocialRoom {
   if(typeof raw!=='string'||raw.length>4096)return this.send(c,{type:'error',message:'Message is too large.'});
   let m;try{m=JSON.parse(raw)}catch{return}if(!m||typeof m!=='object')return;
   if(m.type==='ping')return this.send(c,{type:'pong'});
+  if(m.type==='poker_ledger_ack')return this.ackPokerLedgers(c,m);
   if(m.type==='friends'){this.syncFriends(c,m.ids,now);return}
   if(m.type==='leave'){this.resumes.delete(c.id);c.released=true;this.leave(c);return this.send(c,{type:'room',room:0,players:[]})}
   if(m.type==='join'){

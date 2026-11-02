@@ -221,6 +221,17 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-02 (`haven-v286` gate result): 195 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and
+`*_smoke.js` ran. New `social_ledger_sim.js` covers durable poker payouts before and
+after reservation expiry, Durable Object restart replay, stable ids, account-scoped
+ACKs, bounded replay batches, saved-wallet dedupe, daily reset and the real save-loader
+migration. `social_worker_sim.mjs` rehearses a real folded pot paying a disconnected
+winner across storage-backed Worker restarts, same-id replay and post-ACK silence.
+`social_table_chat_sim.js` covers table 1/hand 1 animating in two plaza rooms and stale
+result cleanup on leave. The BUILD bump refreshed progression hashes only; all 126
+measurements stayed byte-identical (42 gear, 21 moving, 63 growth).
+
 **2026-11-02 (`haven-v285` gate result): 194 suites pass, 0 fail, 0 dependency skips.**
 The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and
 `*_smoke.js` ran. `social_table_chat_sim.js` additionally asserts Local-only seat

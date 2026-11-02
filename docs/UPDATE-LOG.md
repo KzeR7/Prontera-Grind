@@ -9467,3 +9467,21 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   refreshed progression hashes only; all 126 measurements stayed byte-identical.
 * **Delivery:** Local changes on `arena/a44b3133-prontera-grind`; no production
   deployment. Deploy `workers/social` before the matching Pages client.
+
+
+### 2026-11-02 — `haven-v286 durable poker payouts and room-scoped results`
+* **Changed:** Fixed two PR #163 bugs. Poker chip movements now use a durable,
+  per-account Durable Object outbox with stable event ids; missed payouts replay after
+  reconnect even when the 15-second seat reservation expired or the Worker restarted.
+  The client saves applied ids with the poker wallet and acknowledges them, so replay
+  cannot credit chips twice. Poker result animations are keyed by plaza room as well as
+  table/hand, and stale result UI clears when changing or leaving a room.
+* **Try it:** Disconnect during a hand and reconnect after the seat grace; the payout
+  still lands once. Visit the same table/hand number in two plazas; both results animate.
+* **Checks:** Full gate 195 pass / 0 fail / 0 dependency skips. New
+  `social_ledger_sim.js`; expanded `social_worker_sim.mjs` storage-backed restart
+  rehearsal and `social_table_chat_sim.js` room-scoped result test. Focused social
+  suites pass. BUILD bump refreshed progression hashes only; all 126 measurements
+  stayed byte-identical.
+* **Delivery:** PR #163 on `arena/a44b3133-prontera-grind`; no production deployment.
+  Deploy `workers/social` before the matching Pages client.
