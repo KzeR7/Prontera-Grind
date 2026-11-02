@@ -36,6 +36,19 @@ for(const sp of F.SPECIES){
  assert(sp.glyph&&sp.name);
 }
 for(const r of F.RARITIES)assert(F.SPECIES.some(sp=>sp.rarity===r.id),'every rarity has at least one fish');
+// v288: the index holds 70 species and the 14 original ids survive with their rarities.
+assert.equal(F.SPECIES.length,70,'70 fish species');
+const legacy={minnow:'common',carp:'common',smelt:'common',goby:'common',bream:'uncommon',perch:'uncommon',trout:'uncommon',koi:'rare',pike:'rare',tetra:'rare',fountainfish:'legendary',arowana:'legendary',leviathan:'mythical',poring:'secret'};
+for(const [id,rar] of Object.entries(legacy))assert.equal(F.speciesById(id)?.rarity,rar,'v287 species '+id+' is unchanged');
+// Displayed catch rates: each rarity's weight split across its pool; all 70 sum to 1.
+let rateSum=0;
+for(const sp of F.SPECIES){const r=F.rate(sp.id);assert(r>0&&r<1);rateSum+=r}
+assert(Math.abs(rateSum-1)<1e-9,'catch rates sum to 100%');
+assert(F.rate('minnow')>F.rate('poring'),'commons are more likely than secrets');
+// v288: seven mutation kinds, each with a visual + value multiplier.
+assert.equal(Object.keys(F.MUTATIONS).length,7);
+for(const m of Object.values(F.MUTATIONS)){assert(m.chance>0&&m.chance<.2);assert(m.mult>1);assert(m.label&&m.badge&&m.glow)}
+assert(F.MUTATIONS.prismatic.mult>F.MUTATIONS.shiny.mult,'rarer mutations are worth more');
 
 // --- rolling ------------------------------------------------------------------------------
 const seq=values=>{let i=0;return ()=>values[Math.min(i++,values.length-1)]};
@@ -55,8 +68,20 @@ for(let i=0;i<500;i++){
  assert.equal(sp.rarity,roll.rarity);
  assert(roll.w>=sp.min&&roll.w<=sp.max,'weight inside the species range');
  assert.equal(roll.w,Math.round(roll.w*100)/100,'weight is 2dp');
- assert([null,'shiny','sparkling'].includes(roll.mut));
+ assert(roll.mut===null||Object.hasOwn(F.MUTATIONS,roll.mut));
 }
+// v288: luck tilts rarity upward, strength tilts weight heavier, bait multiplies mutations.
+const lcg=seed=>{let x=seed>>>0;return ()=>((x=(x*1664525+1013904223)>>>0)/4294967296)};
+const rareShare=mods=>{let rng=lcg(7),n=0;for(let i=0;i<4000;i++){const r=F.rollCatch(rng,false,mods);if(['rare','legendary','mythical','secret'].includes(r.rarity))n++}return n};
+assert(rareShare({luck:2})>rareShare({luck:0})*1.5,'luck raises the odds of rare+ fish');
+const heftAvg=mods=>{let rng=lcg(11),sum=0;for(let i=0;i<3000;i++){const r=F.rollCatch(rng,false,mods),sp=F.speciesById(r.sp);sum+=(r.w-sp.min)/(sp.max-sp.min)}return sum/3000};
+assert(heftAvg({weight:3})>heftAvg({weight:0})+.15,'weight gear rolls heavier fish');
+const mutShare=mods=>{let rng=lcg(13),n=0;for(let i=0;i<6000;i++)if(F.rollCatch(rng,false,mods).mut)n++;return n};
+assert(mutShare({mutation:6})>mutShare({mutation:1})*2,'bait multiplies mutation odds');
+// Control (better rods) widens the reel bar but stays inside the track.
+assert(F.makeReel(fish0(),()=>.5,.5).barW>F.makeReel(fish0(),()=>.5,0).barW,'control widens the bar');
+assert(F.makeReel({sp:'minnow',rarity:'common',w:.4,mut:null},()=>.5,99).barW<=.5,'bar width caps');
+function fish0(){return {sp:'minnow',rarity:'common',w:.4,mut:null}}
 
 // --- cast rating --------------------------------------------------------------------------
 assert.equal(F.castRating(.9).label,'PERFECT');
@@ -114,6 +139,53 @@ assert.equal(st.settings.fish,false);
 assert.equal(st.settings.sound,true);
 st=F.normalize({bag:Array.from({length:300},(_,i)=>({sp:'minnow',w:.2,id:'x'+i}))});
 assert.equal(st.bag.length,F.BAG_MAX,'bag caps at '+F.BAG_MAX);
+// v288: the economy fields survive normalization and reject garbage.
+st=F.normalize(null);
+assert.equal(st.coins,0);assert.deepEqual(st.rods,['twig']);assert.equal(st.rod,'twig');assert.deepEqual(st.bait,{});assert.equal(st.baitSel,null);
+st=F.normalize({coins:-5,rods:['oak','fake','oak'],rod:'mythril',bait:{worm:'7',fake:3,jelly:-2},baitSel:'jelly'});
+assert.equal(st.coins,0,'coins never go negative');
+assert.deepEqual(st.rods,['twig','oak'],'unknown/duplicate rods dropped, twig always owned');
+assert.equal(st.rod,'twig','cannot equip an unowned rod');
+assert.deepEqual(st.bait,{worm:7},'unknown bait and non-positive counts dropped');
+assert.equal(st.baitSel,'jelly','bait selection keeps a known id');
+st=F.normalize({coins:9e15});
+assert.equal(st.coins,1e9,'coins cap');
+
+// --- v288 Fishcoin economy: sell -> coins -> rods & bait --------------------------------
+st=F.normalize(null);
+const cheap=F.addCatch(st,{sp:'minnow',rarity:'common',w:.1},1);
+const heavy=F.addCatch(st,{sp:'minnow',rarity:'common',w:.7},2);
+const shiny=F.addCatch(st,{sp:'minnow',rarity:'common',w:.4,mut:'shiny'},3);
+assert(F.value(heavy)>F.value(cheap),'heavier fish are worth more');
+assert(F.value(shiny)>F.value({...shiny,mut:null}),'mutations multiply the price');
+assert(F.value({sp:'leviathan',w:40})>F.value({sp:'minnow',w:.7}),'rarer fish are worth more');
+assert.equal(F.buyRod(st,'oak').reason,'coins','no credit at the rod shop');
+const sale=F.sellFish(st,cheap.id);
+assert(sale.ok&&sale.coins>=1&&st.coins===sale.coins&&st.bag.length===2,'selling pays and removes the fish');
+assert.equal(F.sellFish(st,cheap.id),null,'a fish can only be sold once');
+st.coins=200;
+assert(F.buyRod(st,'oak').ok,'buying a rod spends coins');
+assert.equal(st.coins,50);assert.equal(st.rod,'oak','bought rod auto-equips');
+assert.equal(F.buyRod(st,'oak').reason,'owned','rods cannot be bought twice');
+assert(F.equipRod(st,'twig').ok&&st.rod==='twig');
+assert.equal(F.equipRod(st,'mythril').reason,'unknown','cannot equip an unowned rod');
+assert(F.buyBait(st,'worm',10).ok&&st.bait.worm===10&&st.coins===0,'bait buys in stacks');
+assert.equal(F.buyBait(st,'worm',1).reason,'coins');
+assert(F.selectBait(st,'worm').ok&&st.baitSel==='worm');
+assert.equal(F.selectBait(st,'jelly').reason,'unknown','cannot select bait you do not own');
+assert(F.selectBait(st,null).ok&&st.baitSel===null,'fishing without bait is allowed');
+// Bulk sell keeps the heaviest of each species plus every mutated fish.
+st=F.normalize(null);
+F.addCatch(st,{sp:'minnow',rarity:'common',w:.2},1);
+F.addCatch(st,{sp:'minnow',rarity:'common',w:.6},2);
+F.addCatch(st,{sp:'minnow',rarity:'common',w:.3,mut:'golden'},3);
+F.addCatch(st,{sp:'koi',rarity:'rare',w:5},4);
+const bulk=F.sellBulk(st,'dupes');
+assert.equal(bulk.sold,1,'only the light duplicate minnow sells');
+assert(st.bag.some(e=>e.w===.6)&&st.bag.some(e=>e.mut==='golden')&&st.bag.some(e=>e.sp==='koi'));
+assert(st.coins===bulk.coins&&bulk.coins>0);
+const all=F.sellBulk(st,'all');
+assert.equal(all.sold,3);assert.equal(st.bag.length,0,'sell-everything empties the bag');
 
 // --- bag + bestiary + show-off ------------------------------------------------------------
 st=F.normalize(null);
@@ -131,6 +203,21 @@ const text=F.showOffText(st,entry.id);
 assert(text&&text.includes('Royal Koi')&&text.includes('4.25 kg')&&text.includes('Rare')&&text.includes('Shiny'),'show-off describes the owned fish');
 assert(text.length<=300,'fits the chat body limit');
 assert.equal(F.showOffText(st,'not-an-id'),null,'show-off refuses fish the player does not own');
+// v288: every show-off line parses back so other clients can render the actual fish.
+let parsed=F.parseShowOff(text);
+assert(parsed&&parsed.sp==='koi'&&parsed.w===4.25&&parsed.mut==='shiny','show-off round-trips');
+for(const mut of [null,...Object.keys(F.MUTATIONS)]){
+ const st2=F.normalize(null),e2=F.addCatch(st2,{sp:'cobblewhale',rarity:'mythical',w:58.31,mut,perfect:true},5);
+ const p2=F.parseShowOff(F.showOffText(st2,e2.id));
+ assert(p2&&p2.sp==='cobblewhale'&&p2.w===58.31&&p2.mut===mut,'round-trip with mutation '+mut);
+}
+assert.equal(F.parseShowOff('shows off a Fake Fish — 3 kg (Rare)!'),null,'unknown species rejected');
+assert.equal(F.parseShowOff('shows off a Royal Koi — 5000 kg (Rare)!'),null,'absurd weights rejected');
+assert.equal(F.parseShowOff('hello everyone'),null);
+assert.equal(F.parseShowOff(null),null);
+// Heavier fish render bigger over the angler's head, within sane sprite bounds.
+assert(F.showOffScale(58)>F.showOffScale(5)&&F.showOffScale(5)>F.showOffScale(.1),'scale grows with weight');
+assert(F.showOffScale(999)<3.5&&F.showOffScale(.01)>=.5,'scale stays within sprite bounds');
 while(st.bag.length<F.BAG_MAX)F.addCatch(st,{sp:'minnow',rarity:'common',w:.2});
 assert.equal(F.addCatch(st,{sp:'minnow',rarity:'common',w:.2}),null,'full bag refuses new fish');
 assert.equal(st.bag.length,F.BAG_MAX);
@@ -152,10 +239,11 @@ assert.equal(st.bag.length,F.BAG_MAX);
  w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(url)),arrayBuffer:async()=>{const b=fs.readFileSync(url);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)}});
  w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
  w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-scene.js'),'utf8'));
- const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(){},move(x,z){moves.push({x,z})},seat(){},pond(x,z,idx){pondClicks.push({x,z,idx})}});
+ const seatClicks=[];
+ const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(){},move(x,z){moves.push({x,z})},seat(id){seatClicks.push(id)},pond(x,z,idx){pondClicks.push({x,z,idx})}});
  scene.active=true;
  assert(scene.fishing,'the scene exposes a fishing rig');
- for(const fn of ['setFishVisible','cast','bite','reel','catchFly','escapeSplash','ripple','splash','hide','off'])assert.equal(typeof scene.fishing[fn],'function','fishing.'+fn);
+ for(const fn of ['setFishVisible','cast','bite','reel','catchFly','escapeSplash','ripple','splash','hide','off','showFish'])assert.equal(typeof scene.fishing[fn],'function','fishing.'+fn);
  // Stand the local player on the east pond rim.
  const pond=w.PGSocialRules.PONDS[1];
  scene.putPlayer({id:1,name:'Angler',x:pond.x,z:pond.z-pond.d/2-1.7,dir:0,sit:false,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'}}});
@@ -181,6 +269,24 @@ assert.equal(st.bag.length,F.BAG_MAX);
  scene.fishing.off();frame(now+=100);
  scene.fishing.setFishVisible(false);scene.fishing.setFishVisible(true);
  frame(now+=100);
+ // v288: clicking a pond-side chair is a seat action (never a fishing or walk action).
+ const chair=w.PGSocialRules.CHAIRS.find(ch=>ch.id===29); // east pond, north rim
+ assert(chair,'chairs exist in the rules');
+ scene.camera.updateMatrixWorld();
+ const cpt=new T.Vector3(chair.x,.6,chair.z).project(scene.camera);
+ const cev={clientX:(cpt.x+1)*500,clientY:(1-cpt.y)*350,pointerId:2,button:0,preventDefault(){}};
+ const movesBefore=moves.length,pondBefore=pondClicks.length;
+ host.onpointerdown(cev);host.onpointerup(cev);
+ assert.equal(seatClicks.length,1,'a chair click reaches the seat callback');
+ assert(seatClicks[0]>=24&&seatClicks[0]<=31,'chair seats use ids 24-31');
+ assert.equal(moves.length,movesBefore,'a chair click never walks');
+ assert.equal(pondClicks.length,pondBefore,'a chair click never casts');
+ // v288: show-off renders the actual fish over the angler's head for ~5s, scaled by weight.
+ scene.fishing.showFish(1,{text:'🐋',hue:210,scale:2.2,glow:'#ffd24d',ms:4000});
+ frame(now+=100);frame(now+=100);
+ for(let i=0;i<50;i++)frame(now+=100); // expires without error after ~5s
+ scene.fishing.showFish(99,{text:'🐟',hue:0,scale:1}); // unknown player: ignored safely
+ frame(now+=100);
  dom.window.close();
- console.log('PASS social fishing: south-lawn ponds, shared walkability, catalog, reel physics, bag bounds, owned-fish show-off and scene rig');
+ console.log('PASS social fishing: ponds+chairs, 70-fish catalog with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig');
 })().catch(e=>{console.error(e);process.exitCode=1});

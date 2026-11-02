@@ -178,6 +178,57 @@ line, bobber, ripples, splashes and the catch-flight are drawn by the scene rend
 and driven through `scene.fishing`; they are created once and animated in the existing
 frame loop.
 
+## Fishing economy, index, auto fishing and pond chairs (haven-v288)
+
+**Pond chairs.** Eight single-seat wooden angler chairs ring the two ponds
+(`PGSocialRules.CHAIRS`, 4 per pond at `x = pond.x ± 4`, 1.8 m off the north/south rims,
+facing the water). They extend the shared `SEATS` table to 32 entries (ids 24–31, after
+the 24 bench seats) with unique `bench` ids (`100 + id`), so the Worker's bench
+reservation and the client's partner-seat swap both work untouched. The scene builds the
+chairs from primitives and registers them as seat click targets.
+
+**70-fish index.** The catalog grows to **70 species** across the six rarities
+(20/16/13/10/7/4 common→secret); the 14 v287 ids keep their exact id, name and rarity so
+existing bags stay valid. The Fishing window now has three tabs — **🧺 Bag · 📖 Index ·
+🛒 Shop**. The Index lists every species with its weight range and base **catch rate**
+(`rate(sp)` = rarity weight / pool size; the 70 rates sum to 100%), shown as `%` and
+"1 in N". Undiscovered fish render as `???` silhouettes; discovered rows show count, best
+weight and mutation badges from the bestiary.
+
+**Fishcoins, rods and bait.** Coins come **only** from selling fish: per-fish `💰 Sell`
+in the detail footer and result card, `Sell dupes` in the Bag (keeps the heaviest of each
+species plus every mutated fish; `sellBulk`). A fish's value scales with rarity base
+(3/8/20/60/200/600), heft within its species range and mutation multiplier. The Shop
+sells six **rods** (permanent, auto-equip on purchase: Training→Oak→Brass→Silver→Golden→
+Mythril) with four stats — 🍀 luck (bends the rarity roll: `r^(1/(1+luck))`), 🎯 control
+(widens the reel bar, capped at 0.5), 🏋️ strength (bends weight: `rng^(2/(1+w))`) and
+⏱ lure (divides the bite wait) — and four **baits** consumed one per cast (Worm, Shrimp
+Tail, Glow Grub ×2 mutation odds, Royal Jelly +weight). The dock shows a clickable gear
+line (coins · rod · bait) that opens the Shop. **Mutations** grow from 2 to 7 kinds:
+Shiny ×2, Sparkling ×4, Frozen ×5, Electric ×5, Ghostly ×6, Golden ×9, Prismatic ×14 —
+each with its own glyph filter/animation; bait multiplies the roll odds (per-kind cap
+50%). `S.fishing` gains `coins`, `rods[]`, `rod`, `bait{}`, `baitSel`, sanitized in
+`index.html` and re-normalized by the module.
+
+**Auto fishing.** The dock's `▶ Auto` toggle runs the whole loop hands-free: it charges
+to a random 55–95% power, hooks 0.25–0.85 s after the bite, drives the reel with a
+bang-bang controller that re-aims at the predicted fish position every ~130 ms, and
+recasts ~1.3 s after each result. It never spawns SHAKE! bubbles, and it stops on toggle,
+on `✕`, when the player walks away, or when the bag fills.
+
+**Visible show-offs.** The show-off chat line is now machine-readable: `parseShowOff`
+recognizes `shows off a <Mutation?> <Species> — <w> kg (<Rarity>…` from any player's
+Local message (exact species-name match, mutation prefix optional, weight sanity-checked;
+forged lines are ignored). Both the room message path and the solo fallback feed
+`PGSocialFishing.onLocalMessage`, which calls `scene.fishing.showFish(playerId, …)`: the
+actual species glyph (hue + mutation glow) pops over the angler's head for ~5 s, **scaled
+by weight** (`showOffScale`, ~0.55× for a hand-sized minnow up to ~2.3× for a 60 kg
+Cobble Whale). Up to 6 overhead sprites are pooled; they follow the player and fade out.
+
+**Movable UI.** Both the fishing dock and the Fishing window drag by their headers
+(pointer events, clamped to the hub) and remember their positions in
+`localStorage['pg_fishing_ui_v1']`.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

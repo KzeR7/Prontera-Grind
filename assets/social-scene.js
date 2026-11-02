@@ -78,6 +78,22 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const markTex=new T.CanvasTexture(markCanvas),mark=new T.Sprite(new T.SpriteMaterial({map:markTex,transparent:true,depthTest:false}));mark.visible=false;mark.scale.set(.9,.9,1);scene.add(mark);
   const glyphCanvas=document.createElement('canvas');glyphCanvas.width=glyphCanvas.height=96;const glyphCtx=glyphCanvas.getContext('2d');
   const glyphTex=new T.CanvasTexture(glyphCanvas),glyph=new T.Sprite(new T.SpriteMaterial({map:glyphTex,transparent:true,depthTest:false}));glyph.visible=false;glyph.scale.set(1.5,1.5,1);scene.add(glyph);
+  // v288: show-off fish held overhead - the actual species, scaled by its weight, for ~5s.
+  const showPool=[];
+  function showFish(pid,o){
+   o=o||{};
+   const canvas=document.createElement('canvas');canvas.width=canvas.height=128;const c2=canvas.getContext('2d');
+   if(c2&&typeof c2.fillText==='function'){
+    try{c2.filter='hue-rotate('+(Number(o.hue)||0)+'deg)'+(o.filter?' '+o.filter:'')}catch{}
+    if(o.glow&&typeof c2.arc==='function'){c2.shadowColor=o.glow;c2.shadowBlur=20}
+    c2.font='88px serif';c2.textAlign='center';c2.textBaseline='middle';c2.fillText(o.text||'🐟',64,70);
+    try{c2.filter='none'}catch{}
+   }
+   const tex=new T.CanvasTexture(canvas),spr=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+   spr.visible=false;scene.add(spr);
+   while(showPool.length>=6){const old=showPool.shift();scene.remove(old.sprite);old.sprite.material.map.dispose();old.sprite.material.dispose()}
+   showPool.push({sprite:spr,pid,t0:clock||performance.now(),dur:Math.max(1200,Math.min(9000,o.ms||5200)),scale:Math.max(.4,Math.min(3.2,Number(o.scale)||1))});
+  }
   let rig={mode:'off'},nextIdleRipple=0,catchAnim=null;
   function ripple(x,z,scale=1){const r=ripples.find(r=>!r.m.visible)||ripples[0];r.m.visible=true;r.t0=clock||performance.now();r.dur=900;r.m.position.set(x,.034,z);r.base=scale}
   function splash(x,z,n=18){splashDrops=Array.from({length:Math.min(26,n)},(_,i)=>({a:i*2.399,v:.9+((i*37)%17)/14,vy:1.8+((i*29)%13)/6}));splashT0=clock||performance.now();splashPts.visible=true;splashPts.position.set(x,.05,z)}
@@ -90,7 +106,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
    catchFly(text,hue,done){const from={x:bobber.position.x,z:bobber.position.z};if(glyphCtx&&typeof glyphCtx.fillText==='function'){glyphCtx.clearRect(0,0,96,96);try{glyphCtx.filter='hue-rotate('+(hue||0)+'deg)'}catch{}glyphCtx.font='64px serif';glyphCtx.textAlign='center';glyphCtx.textBaseline='middle';glyphCtx.fillText(text||'🐟',48,52);try{glyphCtx.filter='none'}catch{}glyphTex.needsUpdate=true}
     splash(from.x,from.z,24);ripple(from.x,from.z,1.4);catchAnim={fx:from.x,fz:from.z,t0:clock||performance.now(),dur:760,done};glyph.visible=true;api.hide(true)},
    escapeSplash(){if(bobber.visible){splash(bobber.position.x,bobber.position.z,14);ripple(bobber.position.x,bobber.position.z,1.2)}api.hide()},
-   ripple,splash,
+   ripple,splash,showFish,
    hide(keepPole){rig={mode:'off'};bobber.visible=false;mark.visible=false;if(!keepPole){pole.visible=false;line.visible=false}},
    off(){api.hide();glyph.visible=false;catchAnim=null},
   };
@@ -109,6 +125,15 @@ window.PGSocialScene={async create(host,labels,callbacks){
    for(const r of ripples)if(r.m.visible){const t=(now-r.t0)/r.dur;if(t>=1)r.m.visible=false;else{const s=(r.base||1)*(.4+t*1.6);r.m.scale.set(s,s,1);r.m.material.opacity=.55*(1-t)}}
    if(splashPts.visible&&splashDrops){const t=(now-splashT0)/650;if(t>=1){splashPts.visible=false;splashDrops=null}else{splashDrops.forEach((drop,i)=>{splashPos[i*3]=Math.cos(drop.a)*drop.v*t;splashPos[i*3+1]=drop.vy*t-4.4*t*t;splashPos[i*3+2]=Math.sin(drop.a)*drop.v*t});splashGeo.attributes.position.needsUpdate=true;splashPts.material.opacity=.95*(1-t)}}
    if(catchAnim){const t=Math.min(1,(now-catchAnim.t0)/catchAnim.dur),p=selfPos();if(p){glyph.position.set(catchAnim.fx+(p.x-catchAnim.fx)*t,.4+Math.sin(t*Math.PI)*2.6+t*1.6,catchAnim.fz+(p.z-catchAnim.fz)*t)}if(t>=1){glyph.visible=false;pole.visible=false;line.visible=false;const done=catchAnim.done;catchAnim=null;done&&done()}}
+   for(let i=showPool.length-1;i>=0;i--){
+    const sh=showPool[i],holder=players.get(sh.pid),t=(now-sh.t0)/sh.dur;
+    if(t>=1||!holder){scene.remove(sh.sprite);sh.sprite.material.map.dispose();sh.sprite.material.dispose();showPool.splice(i,1);continue}
+    const pop=t<.12?t/.12*1.18:t<.22?1.18-(t-.12)/.1*.18:1;
+    const sc=sh.scale*pop;
+    sh.sprite.visible=true;sh.sprite.scale.set(sc,sc,1);
+    sh.sprite.position.set(holder.sprite.position.x,holder.sprite.position.y+holder.height+.45+sh.scale*.45+Math.sin(now/480+i)*.08,holder.sprite.position.z);
+    sh.sprite.material.opacity=t>.82?1-(t-.82)/.18:1;
+   }
    if(rig.mode==='off')return;
    if(rig.mode==='flight'){const t=Math.min(1,(now-rig.t0)/rig.dur),x=rig.fx+(rig.tx-rig.fx)*t,z=rig.fz+(rig.tz-rig.fz)*t;bobber.position.set(x,1.4+Math.sin(t*Math.PI)*2.4-1.35*t,z);placeRod(bobber.position.x,bobber.position.y,bobber.position.z,now);
     if(t>=1){const cb=rig.onLand,lx=rig.tx,lz=rig.tz;rig={mode:'idle',x:lx,z:lz};splash(lx,lz,16);ripple(lx,lz);nextIdleRipple=now+1400;cb&&cb()}
@@ -140,6 +165,19 @@ window.PGSocialScene={async create(host,labels,callbacks){
    {seat:b.seats[1],bench:b.id,bounds:new T.Box3(new T.Vector3(b.x,bb.min.y,bb.min.z),new T.Vector3(bb.max.x,bb.max.y,bb.max.z))}
   ];
  }):benches.map(mesh=>({seat:mesh.userData.seat,bench:mesh.userData.seat,bounds:mesh.userData.seatBounds}));
+ // v288: single-seat wooden angler chairs on the pond rims (R.CHAIRS, seat ids 24-31).
+ if(R.CHAIRS&&R.CHAIRS.length){
+  const chairWood=new T.MeshLambertMaterial({color:0x6b4a2a}),chairWoodDark=new T.MeshLambertMaterial({color:0x4a2f16});
+  for(const c of R.CHAIRS){
+   const g=new T.Group();g.position.set(c.x,0,c.z);g.rotation.y=c.rotation;
+   for(const lx of [-.3,.3])for(const lz of [-.28,.28]){const leg=new T.Mesh(new T.BoxGeometry(.09,.6,.09),chairWoodDark);leg.position.set(lx,.3,lz);g.add(leg)}
+   const pan=new T.Mesh(new T.BoxGeometry(.82,.08,.76),chairWood);pan.position.y=.62;g.add(pan);
+   for(const px of [-.3,.3]){const post=new T.Mesh(new T.BoxGeometry(.08,.62,.08),chairWoodDark);post.position.set(px,.92,-.32);g.add(post)}
+   for(const sy of [.92,1.1]){const slat=new T.Mesh(new T.BoxGeometry(.72,.1,.06),chairWood);slat.position.set(0,sy,-.32);g.add(slat)}
+   g.userData.seat=c.id;scene.add(freeze(g));
+   seatTargets.push({seat:c.id,bench:100+c.id,bounds:new T.Box3().setFromObject(g).expandByScalar(.3)});
+  }
+ }
 
  const water=new T.Mesh(new T.CircleGeometry(3.7,48),new T.MeshBasicMaterial({color:0x60c9dc,transparent:true,opacity:.65}));water.rotation.x=-Math.PI/2;water.position.y=.7;scene.add(freeze(water));
  const sprayGeo=new T.BufferGeometry(),spray=new Float32Array(72*3);sprayGeo.setAttribute('position',new T.BufferAttribute(spray,3));const drops=new T.Points(sprayGeo,new T.PointsMaterial({color:0xd6f8ff,size:.14,transparent:true,opacity:.8}));scene.add(drops);

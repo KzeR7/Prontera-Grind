@@ -9522,3 +9522,47 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
   production deployment. Deploy `workers/social` (shared `social-rules.js` pond
   collision) together with the matching Pages client.
+
+### 2026-11-02 — `haven-v288 pond chairs, auto fishing, fish index and Fishcoin shop`
+* **Changed:** Six additions to plaza fishing. (1) **Pond chairs** — 8 single-seat
+  wooden angler chairs on the pond rims (`PGSocialRules.CHAIRS`, 4 per pond, facing the
+  water); the shared `SEATS` table grows to 32 (chair ids 24–31, unique `bench` ids
+  `100+id` so bench reservations and partner-swap stay untouched) and the scene builds
+  them as clickable sit targets. (2) **Auto fishing** — a `▶ Auto` toggle on the dock
+  charges to a random power, hooks after the bite, drives the reel with a bang-bang
+  controller (re-aims every ~130 ms) and recasts until toggled off, the player walks
+  away, or the bag fills; no SHAKE! bubbles while automated. (3) **Visible show-offs** —
+  show-off lines are now parsed back (`parseShowOff`, exact species match, forged lines
+  ignored) on both the room Local-chat path and the solo fallback, and the actual fish
+  glyph (hue + mutation glow) pops over the angler's head for ~5 s via
+  `scene.fishing.showFish`, **scaled by its weight** (~0.55× minnow → ~2.3× a 60 kg
+  Cobble Whale). (4) **Fish index** — the catalog grows to **70 species** (the 14 v287
+  ids unchanged) and the Fishing window gains Bag/Index/Shop tabs; the Index lists every
+  fish with weight range, bestiary records and base **catch rate** (% and "1 in N",
+  rates sum to 100%), with `???` silhouettes for undiscovered species. (5) **Fishcoin
+  economy** — coins come only from selling fish (per-fish Sell, result-card Sell, bulk
+  "Sell dupes" that keeps the heaviest per species + all mutated); value scales with
+  rarity, heft and mutation. The Shop sells 6 permanent rods (luck/control/strength/
+  lure) and 4 per-cast baits that raise rarity (`r^(1/(1+luck))`), weight
+  (`rng^(2/(1+w))`) and mutation odds; the dock shows a clickable coins·rod·bait gear
+  line. Mutations grow from 2 to **7** (adds Frozen, Electric, Ghostly, Golden,
+  Prismatic ×14) with their own visuals. `S.fishing` gains `coins/rods/rod/bait/baitSel`
+  (sanitized in `index.html`). (6) **Movable UI** — the dock and the Fishing window drag
+  by their headers; positions persist in `localStorage['pg_fishing_ui_v1']`.
+* **Try it:** Social Hub → south lawns. Sit on a pond chair, click the water to fish,
+  hit `▶ Auto` and watch it grind, then open 🧺 Bag → Shop to sell the haul and buy a
+  better rod; 📣 Show off now floats the real fish over your head for everyone nearby.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips.
+  `social_fishing_sim.js` extended: 70-species/rate integrity, legacy-id preservation,
+  luck/weight/mutation monotonicity under a seeded RNG, control-widened reel bar,
+  economy ops (buy/equip/sell/bulk, never negative), new persistence fields,
+  show-off parse round-trip for all 7 mutations + forged-line rejection, chair clicks
+  reaching the seat callback (never walk/cast) and the `showFish` sprite lifecycle.
+  `social_sim.js`/`social_scene_sim.js` updated for 32 seats + walkable chairs.
+  Progression fixtures re-measured per procedure: all 126 before/after measurements
+  byte-identical, only `sourceHash`/`combatHash` refreshed. No new runtime files, so
+  the hosted staging lists are unchanged.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Deploy `workers/social` (shared `social-rules.js` chairs/seats)
+  together with the matching Pages client.
