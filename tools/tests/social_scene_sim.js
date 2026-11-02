@@ -24,7 +24,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  scene.putPlayer({...state,x:0,z:12,look:{...state.look,lv:99}});frame(now+=100);assert.ok(scene.scene.children.some(o=>o.userData.tier===99),'the sigil follows the character level tier');
 
  // v269: 12 physical metal park benches, each seating 2 players side-by-side (24 seats total).
- assert.equal(w.PGSocialRules.BENCHES.length,12);assert.equal(w.PGSocialRules.SEATS.length,24);
+ // v288 adds 8 single-seat angler chairs on the pond rims (seat ids 24-31) => 32 seats.
+ assert.equal(w.PGSocialRules.BENCHES.length,12);assert.equal(w.PGSocialRules.CHAIRS.length,8);assert.equal(w.PGSocialRules.SEATS.length,32);
+ for(const c of w.PGSocialRules.CHAIRS){
+  assert(w.PGSocialRules.walkable(c.x,c.z),'chair '+c.id+' stands on walkable ground');
+  const seat=w.PGSocialRules.SEATS[c.id];
+  assert.equal(seat.id,c.id);assert.equal(seat.bench,100+c.id,'chairs use unique bench ids so partner-swap never matches');
+ }
  const frontBench=scene.scene.children.find(o=>o.userData.bench===0),benchSize=new T.Box3().setFromObject(frontBench).getSize(new T.Vector3());assert(benchSize.z>1&&benchSize.x>3&&benchSize.y<2.2,'native park bench has a full seat and back at character scale, not a flat noticeboard');
  const chair=scene.scene.children.find(o=>o.userData.bench===5);scene.camera.updateMatrixWorld();
  const bCenter=chair.userData.seatBounds.getCenter(new T.Vector3());

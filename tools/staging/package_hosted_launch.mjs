@@ -6,7 +6,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
-const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js','assets/ui/eclipse.css','assets/ui/mobile.css','assets/ui/mobile.js',
+const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js',
+ // v287: plaza pond fishing module + stylesheet (loaded by index.html alongside the social client).
+ 'assets/social-fishing.js','assets/social-fishing.css',
+ 'assets/ui/eclipse.css','assets/ui/mobile.css','assets/ui/mobile.js',
  'functions/_lib/db.js','functions/_lib/echo-board.js','functions/_lib/http.js','functions/_lib/friends.js',
  'functions/_lib/validate.js','functions/_lib/damage-monitor.js','functions/_lib/competition-baseline.js',
  'functions/_lib/competition-settlement.js','functions/_lib/unverified-echo.js',

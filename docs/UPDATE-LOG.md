@@ -9485,3 +9485,148 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   stayed byte-identical.
 * **Delivery:** PR #163 on `arena/a44b3133-prontera-grind`; no production deployment.
   Deploy `workers/social` before the matching Pages client.
+
+### 2026-11-02 — `haven-v287 plaza pond fishing with one Fishing Bag`
+* **Changed:** Rebuilt plaza fishing from scratch (the earlier draft lived only on an
+  unpushed session branch and never reached `main`). Two ponds now sit on the open
+  **south lawns** (`PGSocialRules.PONDS`, (±23, 42)) — below the corner gardens, so the
+  water starts at the lower grass and never touches the tree area; `walkable` blocks the
+  water on client and Worker alike. The loop is a full hold-and-release fishing game
+  (researched against Roblox's *Fisch*): hold-to-charge cast meter with a green
+  zone and PERFECT overlay (charge buys distance; PERFECT rolls rarity twice and keeps
+  the better), SHAKE! bubbles that cut the lure wait, a timed bite with `!` mark and
+  chime, then a reel minigame — hold pulls the white control bar right, release drifts
+  left, progress fills on the fish and drains off it, with an opening lock, rarity-based
+  difficulty and a Perfect-catch flag. 3D rod, line, bobber with cast-arc, ripples,
+  splashes, bite dip, reel jitter and a catch-flight to the player; ambient fish swim in
+  the ponds (toggleable). Everything fishing-related lives in **one UI**: the bottom
+  dock (cast/bite/reel/result with Cast again + Show off) and the single Fishing Bag
+  window (inventory grid, bestiary records, sort, pond-fish + sound toggles, per-fish
+  Show off / two-step Release). *Show off* only announces fish actually in the bag, on
+  Local chat through the normal cooldown path. 14 species over six rarities with 2dp
+  weights and Shiny/Sparkling mutations; the bag (cap 120) persists as `S.fishing` in
+  the save blob with a load sanitizer, like the poker wallet. No farming stats, Zeny or
+  combat are touched.
+* **Try it:** Maps → Social Hub, walk south past the gardens, click a pond or the
+  🎣 Fishing toolbar button (it walks you to the rim), hold Space or the button to cast.
+  Open 🧺 Bag for records and show-offs.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips. New
+  `social_fishing_sim.js` covers pond placement/walkability/pathing, catalog integrity,
+  cast rating, reel physics (lock, clamp, catch/escape, Perfect), bag/bestiary bounds,
+  owned-fish-only show-off and the real scene rig (pond clicks never walk into water).
+  Progression fixtures re-measured per procedure: all 126 before/after measurements
+  byte-identical, only `sourceHash`/`combatHash` refreshed. The two new runtime assets
+  were added to the hosted staging package lists, which otherwise fail closed.
+  `tools/check_social_browser.cjs` unavailable here (no playwright); it is not in the gate.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Deploy `workers/social` (shared `social-rules.js` pond
+  collision) together with the matching Pages client.
+
+### 2026-11-02 — `haven-v288 pond chairs, auto fishing, fish index and Fishcoin shop`
+* **Changed:** Six additions to plaza fishing. (1) **Pond chairs** — 8 single-seat
+  wooden angler chairs on the pond rims (`PGSocialRules.CHAIRS`, 4 per pond, facing the
+  water); the shared `SEATS` table grows to 32 (chair ids 24–31, unique `bench` ids
+  `100+id` so bench reservations and partner-swap stay untouched) and the scene builds
+  them as clickable sit targets. (2) **Auto fishing** — a `▶ Auto` toggle on the dock
+  charges to a random power, hooks after the bite, drives the reel with a bang-bang
+  controller (re-aims every ~130 ms) and recasts until toggled off, the player walks
+  away, or the bag fills; no SHAKE! bubbles while automated. (3) **Visible show-offs** —
+  show-off lines are now parsed back (`parseShowOff`, exact species match, forged lines
+  ignored) on both the room Local-chat path and the solo fallback, and the actual fish
+  glyph (hue + mutation glow) pops over the angler's head for ~5 s via
+  `scene.fishing.showFish`, **scaled by its weight** (~0.55× minnow → ~2.3× a 60 kg
+  Cobble Whale). (4) **Fish index** — the catalog grows to **70 species** (the 14 v287
+  ids unchanged) and the Fishing window gains Bag/Index/Shop tabs; the Index lists every
+  fish with weight range, bestiary records and base **catch rate** (% and "1 in N",
+  rates sum to 100%), with `???` silhouettes for undiscovered species. (5) **Fishcoin
+  economy** — coins come only from selling fish (per-fish Sell, result-card Sell, bulk
+  "Sell dupes" that keeps the heaviest per species + all mutated); value scales with
+  rarity, heft and mutation. The Shop sells 6 permanent rods (luck/control/strength/
+  lure) and 4 per-cast baits that raise rarity (`r^(1/(1+luck))`), weight
+  (`rng^(2/(1+w))`) and mutation odds; the dock shows a clickable coins·rod·bait gear
+  line. Mutations grow from 2 to **7** (adds Frozen, Electric, Ghostly, Golden,
+  Prismatic ×14) with their own visuals. `S.fishing` gains `coins/rods/rod/bait/baitSel`
+  (sanitized in `index.html`). (6) **Movable UI** — the dock and the Fishing window drag
+  by their headers; positions persist in `localStorage['pg_fishing_ui_v1']`.
+* **Try it:** Social Hub → south lawns. Sit on a pond chair, click the water to fish,
+  hit `▶ Auto` and watch it grind, then open 🧺 Bag → Shop to sell the haul and buy a
+  better rod; 📣 Show off now floats the real fish over your head for everyone nearby.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips.
+  `social_fishing_sim.js` extended: 70-species/rate integrity, legacy-id preservation,
+  luck/weight/mutation monotonicity under a seeded RNG, control-widened reel bar,
+  economy ops (buy/equip/sell/bulk, never negative), new persistence fields,
+  show-off parse round-trip for all 7 mutations + forged-line rejection, chair clicks
+  reaching the seat callback (never walk/cast) and the `showFish` sprite lifecycle.
+  `social_sim.js`/`social_scene_sim.js` updated for 32 seats + walkable chairs.
+  Progression fixtures re-measured per procedure: all 126 before/after measurements
+  byte-identical, only `sourceHash`/`combatHash` refreshed. No new runtime files, so
+  the hosted staging lists are unchanged.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Deploy `workers/social` (shared `social-rules.js` chairs/seats)
+  together with the matching Pages client.
+
+### 2026-11-02 — `haven-v289 embedded preview sign-in fix (session header bridge)`
+* **Changed:** Two sign-in fixes for the embedded (iframed/proxied) preview, where the
+  browser blocks third-party cookies so `pg_session` never sticks and every request after
+  login 401s into a bogus "signed in on another device". (1) `tools/dev_server.js` gains
+  `--preview-auth` (env `DEV_PREVIEW_AUTH=1`): it enables the existing `X-Preview-Session`
+  header bridge — the same session token the cookie would carry, mirrored into a response
+  header and accepted back from a request header, plus the socket's `?preview_session=` —
+  **without** `--gm-all`, so accounts registered on the preview stay ordinary players
+  (`--gm-all` still implies the bridge, unchanged). The client already supported the token
+  (`CLOUD.previewToken`). (2) `index.html` (`cloudFetch`/`cloudSession`): a 401 only ends
+  the session if the request was issued during the **current** sign-in (`CLOUD.epoch`
+  guard) — previously a slow startup probe sent before the login could resolve 401 after
+  it and instantly kill the fresh session. Dev-tool + client only; deployed Functions,
+  registration and the one-session-per-account rule are untouched.
+* **Try it:** `node tools/dev_server.js --preview-auth --db tools/.devdb/preview.sqlite`
+  behind the preview proxy; register/sign in from the embedded frame with third-party
+  cookies blocked — the session now survives, and accounts persist across restarts.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips.
+  `dev_server_sim.js` grew two suites (21 total): `--preview-auth` signs a cookie-blocked
+  browser in over the header while `gm` stays 0 and the GM API stays closed; without the
+  flag no token leaks and a forged header is refused (production rule). `cloud_sim.js`
+  (67) still proves a genuine mid-session 401 ends the tab. Progression fixtures
+  re-measured per procedure: all 126 measurements byte-identical, only
+  `sourceHash`/`combatHash` refreshed.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Nothing to deploy for this one — the bridge is dev-server-only;
+  the real host uses first-party cookies on its own domain.
+
+### 2026-11-02 — `haven-v290 fishing menu, giant show-offs, steady poker table and sell-current gear`
+* **Changed:** Four owner requests. (1) **Fishing menu** — the `🎣 Fishing` toolbar
+  button now opens a menu (▶ Start fishing · 🧺 Bag · 📖 Index · 🛒 Shop) instead of
+  instantly walking to a pond. Walking only happens on the explicit *Start fishing* item
+  or a direct pond click; Bag/Index/Shop open the draggable Fishing window on the right
+  tab from anywhere in the plaza, so show-offs and shopping need no travel. (2)
+  **Show-off visuals** — the chat bubble no longer covers the fish: when a show-off line
+  renders the fish overhead, the bubble is skipped (`onLocalMessage` returns whether it
+  displayed; the text still reaches the chat panel). And the fish is now BIG: a 60 kg
+  Cobble Whale renders at 5.0 world units — taller than the 3.2-unit character — vs the
+  old 2.3 cap (scene clamp 5.2, placement raised with size). (3) **Poker table stays
+  put** — sitting used to narrow chat to 280px and slide the table 110px left into the
+  freed lane; `poker-chat-fit` is retired and the modal geometry is identical seated or
+  standing. (4) **Equipment auto-sell: sell current items** — the auto-sell workspace
+  gains an opt-in "💰 Sell the N matching items in your bag now" button (two clicks:
+  arm, then confirm) that sells today's matches using the draft rules with the same
+  protections (locked/equipped/loadout/reforge-offer gear always kept); applying rules
+  still only affects future drops. Also added `tools/preview.sh` — the documented way to
+  start the owner's preview, always passing `--preview-auth` and
+  `--db tools/.devdb/preview.sqlite` so embedded-iframe sign-in and account persistence
+  can never regress by forgetting a flag (docs/TESTING.md notes it).
+* **Try it:** Click 🎣 Fishing → Bag and show off a fish from the promenade — no bubble
+  in the way, and a heavy fish towers over you. Sit at a poker table: nothing moves.
+  Equipment → Auto-sell: tick rarities, then "Sell the N matching items" twice.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips.
+  `social_fishing_sim` covers the new scale bounds (≥4.5 at 60 kg) and the
+  bubble-suppression contract; `social_table_chat_sim` now asserts the table does NOT
+  shift on sit (414px seated and standing); `equipment_workspaces_sim` (11 checks) adds
+  the two-click sell-current flow incl. locked-item protection. Progression fixtures
+  re-measured per procedure: all 126 measurements byte-identical, only
+  `sourceHash`/`combatHash` refreshed. `assets/ui/eclipse.css` cache-busted to ?v=290.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Client-only; `workers/social` needs no redeploy for this one.

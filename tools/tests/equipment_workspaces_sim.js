@@ -44,6 +44,18 @@ try{
   assert.equal(ev('S.inv.length'),2);assert.equal(ev('JSON.stringify(S.inv)'),ev('window.workInv'));
   assert.ok(doc.querySelector('[data-a=autosellapply]'));doc.querySelector('[data-a=autosellapply]').click();
   assert.equal(ev('S.autoSell[2]'),true);assert.equal(ev('S.inv.length'),2);assert.equal(ev('JSON.stringify(S.inv)'),ev('window.workInv'));
+  // v290: the workspace can ALSO sell current matches - but only through the explicit
+  // two-click button (arm, then confirm); locked/equipped gear is never part of the sale.
+  ev(`S.inv=[{...S.eq.weapon,id:92003,locked:true,cards:[],aff:[],tier:2,sec:0,mythic:false},{...S.eq.weapon,id:92004,locked:false,cards:[],aff:[],tier:2,sec:0,mythic:false}];ACT.openautosell()`);
+  const sellNow=doc.querySelector('[data-a=autosellworkspacesell]');assert.ok(sellNow,'the sell-current button exists');
+  assert.match(sellNow.textContent,/Sell the 1 matching item/);
+  const zenyBefore=ev('S.zeny');
+  sellNow.click();assert.equal(ev('S.inv.length'),2,'the first click only arms the confirm');
+  assert.match(doc.querySelector('[data-a=autosellworkspacesell]').textContent,/Click again to sell 1 item/);
+  doc.querySelector('[data-a=autosellworkspacesell]').click();
+  assert.equal(ev('S.inv.length'),1,'the confirm sells the current match');
+  assert.ok(ev('S.inv[0].locked'),'the locked item is always kept');
+  assert.ok(ev('S.zeny')>zenyBefore,'the sale pays Zeny');
  });
  test('Auto-sell presets and advanced edits remain drafts until explicitly applied',()=>{
   ev(`S.autoSellRules=defaultAutoSellRules();window.savedRules=JSON.stringify(S.autoSellRules);ACT.openautosell()`);

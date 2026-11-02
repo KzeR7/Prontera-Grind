@@ -139,6 +139,117 @@ arrive; when it does not, the socket is treated as dead and replaced at the next
 beat, keeping the plaza and the seat. Without this a socket that died silently
 still reported itself as open, and chat stayed quiet until the page was reloaded.
 
+## Plaza fishing (haven-v287)
+
+Two fishing ponds sit on the open **south lawns** (`PGSocialRules.PONDS`, centered at
+(±23, 42)) — below the planted corner gardens so the water never touches the tree
+canopies, and clear of the promenade, benches and houses. The water is part of the
+shared layout: `walkable` blocks it on both the client and the Worker, so nobody paths
+through a pond, and the grass ring around the rim stays walkable for casting.
+
+The loop follows the classic hold-and-release fishing games: click a pond (or the
+`🎣 Fishing` toolbar button — if far away the character first walks to the nearest rim),
+then **hold** to charge the cast meter and release in the green zone (`PERFECT` is a small
+overlay inside it; charge only buys distance, but a PERFECT cast rolls rarity twice and
+keeps the better roll). While waiting, **SHAKE!** bubbles pop over the scene; each click
+cuts ~0.7 s off the bite. On the bite (bobber dips, `!` mark, two-tone chime) the player
+has 1.5 s to click, then the reel minigame runs: holding pushes the white control bar
+right, releasing lets it fall left; progress fills while the fish silhouette stays
+inside the bar and drains while it is loose, after an opening lock of ~1.1 s. Rarer fish
+get a narrower bar, faster wander/dashes and slower fill (`DIFF`). A fish that never left
+the bar is a **Perfect catch**. All of this is client-side and cosmetic — no farming
+stats, Zeny or combat are touched.
+
+Everything fishing lives in **one** UI system: the bottom-center fishing dock hosts the
+cast meter, bite prompt, reel bar and the result card (with `Cast again` / `Show off`),
+and the single **Fishing Bag** window (`🧺 Bag`) holds the inventory grid, bestiary
+records (catches, species discovered, perfects, best catch), sort options, the
+*Pond fish* toggle for the ambient swimmers and the *Sounds* toggle. Selecting a bagged
+fish offers **Show off** and **Release** (two-step confirm). *Show off* works only for a
+fish that is actually in the bag (`showOffText` returns `null` otherwise) and announces
+it on **Local chat** through the normal send path — same 3-second cooldown, text-only
+body, nothing new for the Worker to validate; in solo/offline plaza it falls back to a
+local notice and own-bubble. 14 species across six rarities (Common → Secret, weights
+sum to 1) roll a 2-decimal weight inside the species range plus rare Shiny/Sparkling
+mutations. The bag persists in the save blob as `S.fishing` (bag capped at 120 entries,
+sanitized on load in `index.html` and re-normalized on read by the module, like the
+poker wallet). The 3D water, stone rims, lily pads, reeds, swimming silhouettes, rod,
+line, bobber, ripples, splashes and the catch-flight are drawn by the scene renderer
+and driven through `scene.fishing`; they are created once and animated in the existing
+frame loop.
+
+## Fishing economy, index, auto fishing and pond chairs (haven-v288)
+
+**Pond chairs.** Eight single-seat wooden angler chairs ring the two ponds
+(`PGSocialRules.CHAIRS`, 4 per pond at `x = pond.x ± 4`, 1.8 m off the north/south rims,
+facing the water). They extend the shared `SEATS` table to 32 entries (ids 24–31, after
+the 24 bench seats) with unique `bench` ids (`100 + id`), so the Worker's bench
+reservation and the client's partner-seat swap both work untouched. The scene builds the
+chairs from primitives and registers them as seat click targets.
+
+**70-fish index.** The catalog grows to **70 species** across the six rarities
+(20/16/13/10/7/4 common→secret); the 14 v287 ids keep their exact id, name and rarity so
+existing bags stay valid. The Fishing window now has three tabs — **🧺 Bag · 📖 Index ·
+🛒 Shop**. The Index lists every species with its weight range and base **catch rate**
+(`rate(sp)` = rarity weight / pool size; the 70 rates sum to 100%), shown as `%` and
+"1 in N". Undiscovered fish render as `???` silhouettes; discovered rows show count, best
+weight and mutation badges from the bestiary.
+
+**Fishcoins, rods and bait.** Coins come **only** from selling fish: per-fish `💰 Sell`
+in the detail footer and result card, `Sell dupes` in the Bag (keeps the heaviest of each
+species plus every mutated fish; `sellBulk`). A fish's value scales with rarity base
+(3/8/20/60/200/600), heft within its species range and mutation multiplier. The Shop
+sells six **rods** (permanent, auto-equip on purchase: Training→Oak→Brass→Silver→Golden→
+Mythril) with four stats — 🍀 luck (bends the rarity roll: `r^(1/(1+luck))`), 🎯 control
+(widens the reel bar, capped at 0.5), 🏋️ strength (bends weight: `rng^(2/(1+w))`) and
+⏱ lure (divides the bite wait) — and four **baits** consumed one per cast (Worm, Shrimp
+Tail, Glow Grub ×2 mutation odds, Royal Jelly +weight). The dock shows a clickable gear
+line (coins · rod · bait) that opens the Shop. **Mutations** grow from 2 to 7 kinds:
+Shiny ×2, Sparkling ×4, Frozen ×5, Electric ×5, Ghostly ×6, Golden ×9, Prismatic ×14 —
+each with its own glyph filter/animation; bait multiplies the roll odds (per-kind cap
+50%). `S.fishing` gains `coins`, `rods[]`, `rod`, `bait{}`, `baitSel`, sanitized in
+`index.html` and re-normalized by the module.
+
+**Auto fishing.** The dock's `▶ Auto` toggle runs the whole loop hands-free: it charges
+to a random 55–95% power, hooks 0.25–0.85 s after the bite, drives the reel with a
+bang-bang controller that re-aims at the predicted fish position every ~130 ms, and
+recasts ~1.3 s after each result. It never spawns SHAKE! bubbles, and it stops on toggle,
+on `✕`, when the player walks away, or when the bag fills.
+
+**Visible show-offs.** The show-off chat line is now machine-readable: `parseShowOff`
+recognizes `shows off a <Mutation?> <Species> — <w> kg (<Rarity>…` from any player's
+Local message (exact species-name match, mutation prefix optional, weight sanity-checked;
+forged lines are ignored). Both the room message path and the solo fallback feed
+`PGSocialFishing.onLocalMessage`, which calls `scene.fishing.showFish(playerId, …)`: the
+actual species glyph (hue + mutation glow) pops over the angler's head for ~5 s, **scaled
+by weight** (`showOffScale`, ~0.55× for a hand-sized minnow up to ~2.3× for a 60 kg
+Cobble Whale). Up to 6 overhead sprites are pooled; they follow the player and fade out.
+
+**Movable UI.** Both the fishing dock and the Fishing window drag by their headers
+(pointer events, clamped to the hub) and remember their positions in
+`localStorage['pg_fishing_ui_v1']`.
+
+## Fishing menu, giant show-offs and a steady poker table (haven-v290)
+
+**Fishing menu.** The `🎣 Fishing` toolbar button no longer starts fishing (and never
+walks the character on its own). It opens a small menu — **▶ Start fishing · 🧺 Fishing
+Bag · 📖 Fish Index · 🛒 Tackle Shop**. Only the explicit *Start fishing* item (or a
+direct pond click) walks to a pond; Bag, Index and Shop open the draggable Fishing window
+on the right tab from anywhere in the plaza, so a catch can be shown off, sold or shopped
+for without moving. The menu closes on selection or any outside click.
+
+**Show-offs are unobstructed and BIG.** The show-off chat line no longer paints a bubble
+over the angler's head — `onLocalMessage` returns `true` when it displayed the fish and
+the client then skips `scene.bubble` (the text still lands in the chat panel; normal chat
+lines are untouched). `showOffScale` was rescaled: a max-weight 60 kg Cobble Whale now
+renders at **5.0 world units** — taller than the 3.2-unit character holding it — down to
+~0.8 for a hand-sized minnow (scene sprite clamp 5.2).
+
+**Steady poker table.** Sitting at a Hold'em table used to narrow chat to 280px and
+slide the whole table 110px left into the freed lane; the owner reported the jump as a
+bug. `poker-chat-fit` is retired: the modal's geometry and the chat column are now
+identical whether the player is seated or standing.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

@@ -336,9 +336,7 @@ body.social-open #bgmPlayer{display:none!important}
 
 /* v284: seated poker players get a narrow chat column; the table takes the freed lane. */
 @media(min-width:1280px){
- #socialChat.poker-chat-fit{width:280px!important;max-width:min(280px,calc(50% - var(--dockhalfwidth,274px) - 32px))!important}
- #socialChat.poker-chat-fit #socialCompose{gap:4px;padding-right:8px}
- #socialChat.poker-chat-fit #socialEmojiToggle{padding:5px 6px;font-size:11px}
+ /* v290: .poker-chat-fit retired - sitting at a table no longer resizes chat or moves the table. */
 }
 /* One-shot hand result: win burst, lose shake, split-pot neutral. Never blocks the action dock. */
 #socialPokerResult{position:absolute;inset:0;z-index:7;display:grid;place-items:center;pointer-events:none}

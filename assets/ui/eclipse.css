@@ -2746,6 +2746,11 @@ body.social-open #minimapTools{display:none!important}
 #wins .eclipse-autosell-sim-row small{font-size:6px}
 #wins .eclipse-autosell-sim-row>strong{flex:none;color:#9fcaaa;font-size:6px;text-align:right}
 #wins .eclipse-autosell-sim-value{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:7px;padding-top:7px;border-top:1px solid var(--e-line)}
+/* v290: opt-in sale of CURRENT bag items matching the draft rules (two-click confirm). */
+#wins .eclipse-autosell-sellnow{display:block;width:100%;margin-top:8px;padding:7px 9px;border-radius:7px;border:1px solid var(--e-line);background:linear-gradient(180deg,#24424b,#1a3038);color:var(--e-text,#eef4ec);font:600 11px/1.3 inherit;cursor:pointer}
+#wins .eclipse-autosell-sellnow:hover:not(:disabled){filter:brightness(1.12)}
+#wins .eclipse-autosell-sellnow:disabled{opacity:.45;cursor:default}
+#wins .eclipse-autosell-sellnow.armed{border-color:#d98b80;background:linear-gradient(180deg,#5d2b28,#431e1c);color:#ffe3dc}
 #wins .eclipse-autosell-sim-value span{color:var(--e-muted);font-size:6px}
 #wins .eclipse-autosell-sim-value b{color:var(--gold);font-size:8px;white-space:nowrap}
 #wins .eclipse-autosell-empty{color:var(--e-muted);font-size:7px}

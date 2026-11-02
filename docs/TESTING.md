@@ -169,6 +169,12 @@ bash tools/build_site.sh
 node tools/dev_server.js
 ```
 
+**Embedded/iframed previews (Arena sandbox, proxied hosts): always start it with
+`tools/preview.sh` instead.** It adds `--preview-auth` (the `X-Preview-Session` header
+bridge — required because browsers block third-party cookies in iframes, which otherwise
+turns every post-login request into a 401 "signed in on another device") and
+`--db tools/.devdb/preview.sqlite` (accounts/saves survive restarts). Neither grants GM.
+
 The default entry point is `http://localhost:8788/`. The server serves `dist/`, routes
 actual API handlers through a local SQLite D1 shim and applies local migrations. Rebuild
 `dist/` after changing client files; restart after changing API handlers (the server
