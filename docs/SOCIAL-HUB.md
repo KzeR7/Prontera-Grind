@@ -659,6 +659,42 @@ sun, great white, thresher, saw, mint and star whales are Mythical; porbeagle, b
 mako and grey whale are Legendary; Greatmaw and Voidfin are Secret. The 155-species split is now
 36 / 34 / 30 / 25 / 20 / 10.
 
+## The pond, painted (haven-v306)
+
+The owner's verdict on the v304 pond was blunt: "water & pond have no texture... basically just slap
+in a bridge and u call it done." He was right - it was a flat `0x2e7ea6` shape with two translucent
+glint planes and a box curb. v306 rebuilds it out of art the game already shipped.
+
+**Where the art came from.** No new download was needed: `assets/kit/ro-tiles-hd.png` (25 named 256px
+terrain tiles) and `assets/kit/ro-spritesheet.png` (34 painted props with anchors) were already in the
+repo for the world map. The social pond now crops them at runtime - `water_frame_0/1` (bright
+caustics), `water_dark_0/1` (deep caustics), `limestone_pale` (coping and banks), `bridge_planks`,
+`bridge_red`, plus the `tree_cherry`, `lantern_stone`, `rock_boulder_mossy`, `rock_cliff_crag`,
+`tree_bush_bright` and `bamboo_grove` sprites. `paintPondArt()` repaints a pond in place once the
+sheets arrive (about 8 MB, already cached by the map); until then the v304 primitives stand, so a
+failed fetch degrades instead of breaking. Existing kit files only - the publish budget (59.0 of
+59.5 MiB) does not move.
+
+**The water is a shader, not a colour.** Following the usual stylised-water breakdown (layer the same
+tile at odd scales scrolling in different directions so the repeat never lines up; pick the colour
+from a depth mask; then draw foam from a shoreline mask), `WATER_FRAG` samples the two painted caustic
+frames at 2.1x and 1.7x in opposite directions, uses their brightness as caustic density on an
+art-directed teal gradient, adds a second faster sample for sun sparkle and a grazing-angle sheen, then
+draws a wet lip and a breathing foam band. Because the pond is a `ShapeGeometry` of a rounded rectangle,
+`position.xy` is already the shape, so the shore band uses an exact rounded-rect signed distance rather
+than a fake rectangle gradient.
+
+**The bank has height.** The flat sand ring is now an extruded stone coping (0.16 high, with a hole for
+the water), so the pond sits *below* its rim and the coping casts a lip shadow over the water. The
+cascade runs into a stone channel that passes under the bridge and spills over the coping into the
+pond - the bridge finally spans water. The fall itself is a tinted double-sided sheet plus an additive
+painted-water spray scrolling at a different rate, with painted crag and boulder sprites standing in
+front of it instead of loose dodecahedrons.
+
+**Details.** Painted blossom trees, stone lanterns, bamboo, shore boulders and a bush around each pond,
+mirrored low-opacity sprites as reflections where a prop actually mirrors into the water, lily-pad
+clusters in two greens with a few flowers, and the ambient fish still swimming over the top.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table
