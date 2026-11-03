@@ -600,6 +600,62 @@ point) never moved. `bindFishing` now also exposes `walkTo`, the same path witho
 fishing module uses it, re-issuing the walk every 2.5s while it is under way and only giving up after
 30s instead of 9s. Sitting is not an obstacle: the move clears the seat on both sides.
 
+## A two-week index, rod gates and a pond that looks like a pond (haven-v304)
+
+Six owner notes, one economy pass.
+
+**The index is a two-week climb, and money cannot shorten it.** The old weights gave a Secret every
+~600 casts on the best rod, so 155/155 took an evening. The rarity table is now
+`.60 / .245 / .1463 / .0083 / .00027 / .00014`, and a rod only lets a tier bite at all:
+
+| rod | unlocks | cost |
+| --- | --- | --- |
+| Training Rod | uncommon | 0 |
+| Oak Rod | rare | 800 |
+| Brass Rod | rare | 2,700 |
+| Silver Rod | legendary | 8,000 |
+| Golden Rod | mythical | 21,500 |
+| Mythril Rod | secret | 54,000 |
+
+`rollCatch` clamps every roll to the rod's ceiling, so an Oak Rod can fish forever and never hook a
+Legendary - the *only* way to a Secret is the Mythril Rod. On top of that the two boss tiers no longer
+repeat themselves: a Mythical or Secret bite is always a species you have not caught yet, until that
+tier is complete. That turns the wall into a catch rate instead of a bad-luck tail.
+
+Measured by simulating `rollCatch` with a live `seen` set (250 casts/h, 40% PERFECT, Mythril + Royal
+Jelly, 31 runs): median **17,000 casts** to 155/155 (**~68 h**), p90 **22,700 (~91 h)**. The same run
+on Glow Grub - the money bait - is a median 24,700 casts (~99 h), so Royal Jelly is a real choice:
+~1.8x the boss bites (and ~30% faster to a full index) for a couple of coins an hour less.
+
+**The shop is priced against that.** Rods 800/2,700/8,000/21,500/54,000 and bags
+1,600/4,000/9,500/20,000 (122,100 for the lot). A 250-casts/h income model (each rod bought as soon as
+it is affordable, bags in between) puts the full rack at **~6.4 hours** of steady fishing. Baits: Worm 4, Shrimp Tail 12, Glow Grub 30 (money/mutations),
+Royal Jelly 55 with luck 1.5 - the rare-hunter bait, net-positive on every rod from Oak up.
+
+**The index prints the odds you actually roll.** Base weights are a bare-rod number, and at the new
+secret rate that read "1 in 70,000" even while holding the rod that unlocks them. `rateWith()` and
+`tierShares()` mirror `rollCatch` (luck exponent, rod clamp, no-repeat rule) and the Index shows
+"Mythril Rod + Royal Jelly" odds; Mythical and Secret rows show the whole tier's rate, because every
+one of those bites is new. The header says which rod and bait the odds are for.
+
+**The pond is the centrepiece.** Both ponds are 18x13 (was 14x10), with a procedural garden in the
+same flat colours as the town - no new art, no new licence: a stone coping walked along the pond's own
+rounded outline, an extruded arch bridge over the outflow, a low cascade of loose boulders with an
+animated water sheet, stone lanterns, flowering trees and shore boulders. `R.POND_PROPS` holds every
+position so the layout can be tested rather than eyeballed: `social_sim` proves no prop sits in the
+water, on a chair or in a house, and that the rim is walkable all the way round.
+
+**Titles are tidy, and the biggest fish fill the pond.** `renderTitles` sorts worn → earned →
+locked-closest-first, every row has a progress bar (a `✓ req` on earned ones), and the name line and
+button are fixed width so the column cannot jump. `showOffScale` is now
+`min(11, 0.45 + 0.235 * sqrt(w))`: a 48 kg catch is 2.1 units, a 1.8 t whale shark is 10.4 - most of
+the 18-unit pond.
+
+**The shark line is the boss line.** The shark family was regraded a tier or two: goblin, tiger,
+sun, great white, thresher, saw, mint and star whales are Mythical; porbeagle, bluefin, silvershark,
+mako and grey whale are Legendary; Greatmaw and Voidfin are Secret. The 155-species split is now
+36 / 34 / 30 / 25 / 20 / 10.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

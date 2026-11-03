@@ -15,7 +15,27 @@ const TREES=GARDENS.map(g=>({x:g.x,z:g.z,size:8}));
 // v287: Two fishing ponds on the open south lawns, below the planted corner gardens
 // (south of the tree canopies at z=23, north of the houses at z=56). Water is not walkable;
 // players fish from the grass around the rim. Shared here so server paths agree with the client.
-const PONDS=[-1,1].map(side=>({x:side*23,z:42,w:14,d:10}));
+// v304 (owner): the ponds are the plaza's centrepiece now, so they are 18x13 instead of 14x10 and
+// each has a waterfall garden behind it (see assets/social-scene.js). Widening them moves the angler
+// chairs automatically - CHAIRS, walkable() and path() all derive from these numbers.
+const PONDS=[-1,1].map(side=>({x:side*23,z:42,w:18,d:13}));
+// The waterfall behind each pond: a stream drops from a rock face into the pond's south side. Shared
+// here so the client builds it in the same place every time.
+const POND_FALLS=PONDS.map(p=>({x:p.x,z:p.z+p.d/2+5.2,w:3.2,h:2.2}));
+// v304: the garden furniture around each pond (bridge, lanterns, blossom trees, boulders) in one
+// place, so the scene builds what the layout test checks. Boulders keep to the corners of the shore
+// because the angler chairs own the rim's mid-points.
+const SHORE_ROCKS=[[-1,-.62],[.62,-.9],[1,.55],[-.9,.75],[.15,-1]];
+const POND_PROPS=PONDS.map((p,i)=>{
+ const hx=p.w/2,hz=p.d/2;
+ return {
+  bridge:{x:p.x,z:p.z+hz+2.6,span:6.2,width:2.2,deck:.22,arch:1.15},
+  lanterns:[{x:p.x-hx-2.1,z:p.z+hz+1.1},{x:p.x+hx+2.1,z:p.z+hz+1.1}],
+  blossoms:[{x:p.x-hx-3.4,z:p.z-1.6,scale:1.05},{x:p.x+hx+3.4,z:p.z+.4,scale:.95}],
+  boulders:SHORE_ROCKS.map(([dx,dz],n)=>({x:p.x+dx*(hx+1.15),z:p.z+dz*(hz+1.15),r:.34+((n*23)%17)/40})),
+  falls:POND_FALLS[i],
+ };
+});
 // The source "lamp" is a stone column; it is not used as street furniture.
 // v269: Each of the 12 metal park benches seats 2 adventurers side-by-side (24 total bench seats).
 const BENCHES=[...[-1,1].flatMap(side=>[-1,1].flatMap(bank=>[11,15,19].map(x=>({x:bank*x,z:side*13,dir:side===1?4:0,rotation:side===1?Math.PI:0,height:.95,size:3.4}))))].map((b,id)=>({...b,id,seats:[id*2,id*2+1]}));
@@ -80,5 +100,5 @@ function path(from,to){
 }
 function walkSpeed(p){const value=Number(p&&p.look&&p.look.speed);return Number.isFinite(value)&&value>0?Math.max(MIN_SPEED,Math.min(MAX_SPEED,value)):SPEED}
 function advance(p,now){let distance=Math.max(0,(now-p.at)/1000)*walkSpeed(p);p.at=now;while(p.path.length&&distance>0){const t=p.path[0],dx=t.x-p.x,dz=t.z-p.z,d=Math.hypot(dx,dz);p.dir=(Math.round(Math.atan2(-dx,dz)/(Math.PI/4))+8)%8;if(d<=distance){p.x=t.x;p.z=t.z;p.path.shift();distance-=d}else{p.x+=dx/d*distance;p.z+=dz/d*distance;break}}if(!p.path.length&&Number.isInteger(p.seat)&&SEATS[p.seat]){p.sit=true;p.dir=SEATS[p.seat].dir}else if(!p.path.length&&Number.isInteger(p.pokerSeat)&&POKER.seats[p.pokerSeat]){p.sit=true;p.dir=POKER.seats[p.pokerSeat].dir}return p;}
-return {LIMIT,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,GARDENS,TREES,PONDS,CHAIRS,BENCHES,SEATS,POKER,walkable,path,advance};
+return {LIMIT,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,SEATS,POKER,walkable,path,advance};
 });

@@ -154,6 +154,9 @@
 .fishing-dex-name small{display:block;font-weight:normal;color:#93adb3;font-size:9.5px}
 .fishing-dex-row .fishing-chip{margin-left:0;flex-shrink:0}
 .fishing-dex-rate{flex-shrink:0;text-align:right;color:#cfe8ef;font:bold 10.5px "Trebuchet MS",sans-serif;min-width:52px}
+.fishing-dex-row.gated{opacity:.72}
+.fishing-dex-row.gated .fishing-dex-rate{min-width:96px;color:#8fa6ad}
+.fishing-dex-row.gated .fishing-chip{opacity:.75}
 .fishing-dex-rate small{display:block;font-weight:normal;color:#7f9aa1;font-size:9px}
 /* Shop */
 .fishing-shop-head{margin:0;padding:8px 12px;border-bottom:1px solid #243d44;color:#b9d2d8;font-size:11px}
@@ -203,7 +206,12 @@ img.fishing-rod-art{filter:drop-shadow(0 0 3px var(--rod-tint,#8b6b45))}
 .fishing-title-mark{flex-shrink:0;font-size:17px;line-height:1;color:var(--tone,#c08a52);text-shadow:0 0 7px var(--tone,#c08a52)}
 .fishing-title-name{flex:1;display:flex;flex-direction:column;gap:2px;font:bold 11.5px "Trebuchet MS",sans-serif;color:#eef4ec}
 .fishing-title-name small{font-weight:400;font-size:10px;color:#a8c2c8}
+/* v304 (owner): the titles list reads top-down - worn, then earned, then the closest locked one -
+   and every row keeps the same height (name line + one progress or requirement line) so nothing
+   jumps around as things unlock. */
 .fishing-title-bar{display:block;height:3px;border-radius:2px;background:#0e1c21;overflow:hidden}
+.fishing-title-row .fishing-title-name{min-height:30px;justify-content:center}
+.fishing-title-row button{flex-shrink:0;min-width:56px;text-align:center}
 .fishing-title-bar b{display:block;height:100%;background:var(--tone,#c08a52)}
 .fishing-title-row button{background:#24424b;border:1px solid #6fa3b0;border-radius:5px;color:#eef4ec;font:bold 10.5px "Trebuchet MS",sans-serif;padding:4px 8px;cursor:pointer;white-space:nowrap}
 .fishing-title-row button:disabled{opacity:.45;cursor:default}

@@ -137,11 +137,12 @@ t('the published tree is small enough to stay honest', () => {
   // whale family: the fish pack is 2.4 MiB of the 11.32 measured here; the other three social packs
   // are unchanged. The combined 140.5 ceiling below still covers every byte.
   assert.ok(socialBytes/1048576 < 12, 'native social assets exceed their separate 12 MiB budget (11.32 measured 2026-11-03)');
-  // 59 MiB, not the original 62.5: the classic game measures 58.59 MiB once the separately-budgeted
-  // explorer is out of the sum, so 62.5 would have handed back 3.9 MiB of silent headroom. 59 keeps
-  // ~0.4 MiB - the same tightness the 62.5 line had when it was set - and the combined 140.5 ceiling
-  // still covers every byte, including the explorer it no longer counts here.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes)/1048576 < 59, 'existing runtime assets exceed their 59 MiB budget (58.59 measured 2026-10-28)');
+  // 59.5 MiB, not the original 62.5: the classic game measures 58.98 MiB once the separately-budgeted
+  // explorer is out of the sum, so 62.5 would have handed back 3.5 MiB of silent headroom. The v303
+  // 128px fish crops spent the 0.4 MiB that the 59 line had left, and v304's pond garden plus the
+  // gate/odds math added ~0.02 MiB on top, so the line moves to 59.5 - still tight, still far under
+  // the combined 140.5 ceiling that covers every byte including the explorer it no longer counts here.
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes)/1048576 < 59.5, 'existing runtime assets exceed their 59.5 MiB budget (59.00 measured 2026-11-03)');
   assert.ok(nativeBytes/1048576 < 68, 'ten native field sets and seventy lossless monster atlases exceed their separate 68 MiB budget');
   assert.ok(mb < 140.5, 'combined runtime delivery exceeds 140.5 MiB');
   const fourth=path.join(out,'assets/wardrobe/fourth/v1');assert.ok(walk(fourth)<6.25*1048576,'six fourth jobs share hair and accessory pixels');
