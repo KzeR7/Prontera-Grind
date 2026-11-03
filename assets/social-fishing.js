@@ -92,7 +92,60 @@ const SPECIES_DATA={
 };
 // v297: a species may name its own body plan (shape) and be flagged mega - the giants that get a
 // Local-chat announcement and show off at pond size. Without a shape the glyph decides.
-const SPECIES=Object.entries(SPECIES_DATA).flatMap(([rarity,list])=>list.map(([id,name,glyph,hue,min,max,shape,mega])=>({id,name,glyph,hue,min,max,shape:shape||null,mega:mega===true,rarity})));
+// v302 (owner): a second art drop - sea turtles, seadragons, crystal snails, shrimp and
+// amphipods, star-mantled octopuses and a much deeper shark roster. Same tuple shape as
+// SPECIES_DATA, with the rarity in the last slot instead of as the group key.
+const EXTRA_SPECIES=[
+ ['greenshell','Green Shell Turtle','🐢',160,8,30,'whale','uncommon'],
+ ['glassback','Glassback Turtle','🐢',190,6,24,'whale','uncommon'],
+ ['emberturtle','Ember Shell Turtle','🐢',20,10,34,'whale','rare'],
+ ['moonturtle','Moonshell Turtle','🐢',250,9,32,'whale','rare'],
+ ['heartback','Heartshell Turtle','🐢',330,7,26,'whale','rare'],
+ ['starhull','Starhull Leviathan','🐢',210,20,70,'whale','legendary'],
+ ['seahorse','Tidepool Seahorse','🐠',30,0.05,0.3,'fish','common'],
+ ['thornhorse','Thornback Seahorse','🐠',340,0.08,0.4,'fish','common'],
+ ['leafdragon','Leafy Seadragon','🐠',120,0.1,0.5,'fish','uncommon'],
+ ['sunhorse','Sunspine Seahorse','🐠',45,0.09,0.45,'fish','uncommon'],
+ ['ribbonhorse','Ribbon Seahorse','🐠',300,0.12,0.6,'fish','uncommon'],
+ ['ghosthorse','Ghost Seahorse','🐠',200,0.06,0.35,'fish','rare'],
+ ['crownhorse','Crowned Seadragon','🐠',260,0.2,0.9,'fish','rare'],
+ ['tidehorse','Tide Dragon','🐠',170,0.3,1.4,'fish','legendary'],
+ ['shellsnail','Tide Snail','🐌',200,0.02,0.2,'fish','common'],
+ ['gemsnail','Gem Shell Snail','🐌',320,0.03,0.25,'fish','common'],
+ ['ambernail','Amber Snail','🐌',35,0.02,0.18,'fish','common'],
+ ['glasssnail','Glass Snail','🐌',180,0.03,0.22,'fish','uncommon'],
+ ['opalsnail','Opal Snail','🐌',280,0.04,0.3,'fish','uncommon'],
+ ['lavasnail','Lava Snail','🐌',10,0.05,0.4,'fish','rare'],
+ ['nebulasnail','Nebula Snail','🐌',265,0.06,0.5,'fish','legendary'],
+ ['prismsnail','Prism Snail','🐌',300,0.05,0.45,'fish','mythical'],
+ ['krill','Glass Krill','🦐',190,0.01,0.08,'shrimp','common'],
+ ['candyshrimp','Candy Shrimp','🦐',340,0.02,0.12,'shrimp','common'],
+ ['lanternshrimp','Lantern Shrimp','🦐',45,0.02,0.15,'shrimp','uncommon'],
+ ['peppershrimp','Pepper Shrimp','🦐',0,0.03,0.18,'shrimp','uncommon'],
+ ['royalshrimp','Royal Mantis Shrimp','🦐',275,0.1,0.5,'shrimp','rare'],
+ ['voidshrimp','Void Shrimp','🦐',250,0.08,0.42,'shrimp','legendary'],
+ ['staropus','Star Octopus','🐙',45,0.4,2.2,'octopus','uncommon'],
+ ['candyopus','Candy Octopus','🐙',330,0.5,2.6,'octopus','rare'],
+ ['moonopus','Moon Octopus','🐙',250,0.6,3,'octopus','rare'],
+ ['galaxyopus','Galaxy Octopus','🐙',275,1.2,6,'octopus','mythical'],
+ ['catshark','Catshark','🦈',30,2,8,'shark','common'],
+ ['hornshark','Horn Shark','🦈',40,3,10,'shark','common'],
+ ['nurseshark','Nurse Shark','🦈',20,10,40,'shark','common'],
+ ['bamboo','Bamboo Shark','🦈',45,4,14,'shark','uncommon'],
+ ['carpetshark','Carpet Shark','🦈',15,6,20,'shark','uncommon'],
+ ['leopardshark','Leopard Shark','🦈',35,8,25,'shark','uncommon'],
+ ['makoshark','Mako Shark','🦈',210,20,80,'shark','rare'],
+ ['porbeagle','Porbeagle','🦈',195,25,90,'shark','rare'],
+ ['silvershark','Silverfin Shark','🦈',200,15,60,'shark','rare'],
+ ['ghostshark','Ghost Shark','🦈',265,10,40,'shark','rare'],
+ ['lanternshark','Lantern Shark','🦈',240,2,9,'shark','rare'],
+ ['tigershark','Tiger Shark','🦈',40,60,220,'shark','legendary'],
+ ['greatmaw','Greatmaw','🦈',0,80,260,'shark','legendary'],
+ ['sunshark','Sunspot Shark','🦈',45,30,120,'shark','legendary'],
+ ['abysssaw','Abyssal Sawshark','🦈',215,40,150,'shark','mythical'],
+ ['voidfin','Voidfin Shark','🦈',270,50,180,'shark','mythical'],
+].map(([id,name,glyph,hue,min,max,shape,rarity])=>({id,name,glyph,hue,min,max,shape:shape||null,mega:false,rarity}));
+const SPECIES=[...Object.entries(SPECIES_DATA).flatMap(([rarity,list])=>list.map(([id,name,glyph,hue,min,max,shape,mega])=>({id,name,glyph,hue,min,max,shape:shape||null,mega:mega===true,rarity}))),...EXTRA_SPECIES];
 const SPECIES_BY_ID=Object.fromEntries(SPECIES.map(s=>[s.id,s]));
 const SPECIES_BY_NAME=Object.fromEntries(SPECIES.map(s=>[s.name,s.id]));
 const MAX_W=Math.max(...SPECIES.map(s=>s.max));
@@ -133,6 +186,10 @@ const BAITS_BY_ID=Object.fromEntries(BAITS.map(b=>[b.id,b]));
 const discoveredSpecies=s=>Object.keys(s&&s.dex?s.dex:{}).filter(k=>s.dex[k]&&s.dex[k].n>0).length;
 const bestWeight=s=>Object.values(s&&s.dex?s.dex:{}).reduce((b,d)=>Math.max(b,Number(d&&d.bw)||0),0);
 const mutationKinds=s=>new Set(Object.values(s&&s.dex?s.dex:{}).flatMap(d=>Array.isArray(d&&d.mut)?d.mut:[])).size;
+// v299: the ten new titles are derived from the same saved blob, so an old save can earn them too.
+const keptMutationFish=s=>Object.values(s&&s.dex?s.dex:{}).reduce((n,d)=>n+(Array.isArray(d&&d.mut)?d.mut.filter(Boolean).length:0),0);
+const bestSpeciesCount=s=>Object.values(s&&s.dex?s.dex:{}).reduce((b,d)=>Math.max(b,Number(d&&d.n)||0),0);
+const caughtIn=(s,pred)=>SPECIES.filter(sp=>pred(sp)&&s.dex&&s.dex[sp.id]&&s.dex[sp.id].n>0).length;
 const FISHING_TITLES=[
  {id:'dockhand',name:'Dockhand',mark:'◉',tone:'bronze',cur:s=>s.stats.catches,goal:10,req:'catch 10 fish'},
  {id:'bait-layer',name:'Bait Layer',mark:'⌖',tone:'copper',cur:s=>s.stats.catches,goal:50,req:'catch 50 fish'},
@@ -144,6 +201,17 @@ const FISHING_TITLES=[
  {id:'mutation-hunter',name:'Mutation Hunter',mark:'🧬',tone:'crimson',cur:mutationKinds,goal:Object.keys(MUTATIONS).length,req:'find all 7 mutation kinds'},
  {id:'pond-legend',name:'Pond Legend',mark:'✹',tone:'gold',cur:discoveredSpecies,goal:60,req:'discover 60 species'},
  {id:'apex-angler',name:'Apex Angler',mark:'✶',tone:'valkyrie',cur:discoveredSpecies,goal:SPECIES.length,req:`discover all ${SPECIES.length} species`},
+ // v299 (owner): ten more, and every one of them is a long haul - the first ten were done in a session.
+ {id:'tide-regular',name:'Tide Regular',mark:'≈',tone:'tide',cur:s=>s.stats.casts,goal:1000,req:'make 1,000 casts'},
+ {id:'line-veteran',name:'Line Veteran',mark:'⚔',tone:'silver',cur:s=>s.stats.catches,goal:250,req:'catch 250 fish'},
+ {id:'perfect-master',name:'Perfect Master',mark:'✸',tone:'sapphire',cur:s=>s.stats.perfects,goal:100,req:'land 100 perfect catches'},
+ {id:'species-archivist',name:'Species Archivist',mark:'❖',tone:'jade',cur:discoveredSpecies,goal:80,req:'discover 80 species'},
+ {id:'mutant-brood',name:'Mutant Brood',mark:'🧬',tone:'crimson',cur:keptMutationFish,goal:25,req:'keep 25 mutated fish'},
+ {id:'leviathan-hook',name:'Leviathan Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:100,req:'record a 100 kg fish'},
+ {id:'colossus-hook',name:'Colossus Hook',mark:'⛰',tone:'abyss',cur:s=>Math.floor(bestWeight(s)),goal:300,req:'record a 300 kg fish'},
+ {id:'pond-devotee',name:'Pond Devotee',mark:'♺',tone:'ember',cur:bestSpeciesCount,goal:150,req:'catch 150 of one species'},
+ {id:'secret-circle',name:'Secret Circle',mark:'✧',tone:'frost',cur:s=>caughtIn(s,sp=>sp.rarity==='secret'),goal:SPECIES.filter(sp=>sp.rarity==='secret').length,req:`catch a fish from every secret species`},
+ {id:'mega-hunter',name:'Mega Hunter',mark:'✹',tone:'dawn',cur:s=>caughtIn(s,sp=>sp.mega),goal:5,req:'catch 5 pond monsters'},
 ];
 const FISHING_TITLE_BY_ID=Object.fromEntries(FISHING_TITLES.map(t=>[t.id,t]));
 const titleUnlocked=(state,t)=>!!(t&&t.cur(state)>=t.goal);
@@ -603,7 +671,8 @@ let rigSent='';
 function rigPayload(){
  if(['off','walking'].includes(ui.phase)||!ui.rigTarget)return {on:false};
  const t=ui.rigTarget;
- return {on:true,pond:ui.pond,x:Math.round(t.x*100)/100,z:Math.round(t.z*100)/100,mode:ui.phase};
+ // v300: the rod id rides along so other anglers see the same tier (and glow) you do.
+ return {on:true,pond:ui.pond,x:Math.round(t.x*100)/100,z:Math.round(t.z*100)/100,mode:ui.phase,rod:equippedRod().id};
 }
 function publishRig(){
  if(!opts||typeof opts.rig!=='function')return;
@@ -612,13 +681,16 @@ function publishRig(){
  rigSent=key;
  opts.rig(p);
 }
-function setPhase(phase){ui.phase=phase;renderStage();publishRig();if(opts&&opts.button){opts.button.textContent=phase==='off'?'🎣 Fishing':'🎣 Fishing…';opts.button.setAttribute('aria-pressed',String(phase!=='off'))}}
+// v300: paint the local pole in the equipped rod's tier colour whenever the session or the rod
+// changes. The scene falls back to wood for an unknown id.
+function syncRodLook(){const f=sceneFishing();if(f&&typeof f.rod==='function')try{f.rod(equippedRod().id)}catch{}}
+function setPhase(phase){ui.phase=phase;syncRodLook();renderStage();publishRig();if(opts&&opts.button){opts.button.textContent=phase==='off'?'🎣 Fishing':'🎣 Fishing…';opts.button.setAttribute('aria-pressed',String(phase!=='off'))}}
 function mutFilter(mut){return mut&&MUTATIONS[mut]?' '+MUTATIONS[mut].css:''}
 // ---- v294 fish art. The old look was the OS emoji tinted with hue-rotate: blurry, washed
 // out and childish, and the show-off/catch sprites were so dim they vanished over the pond.
 // Every surface now paints a proper side-view sprite on canvas - dark outline, saturated
 // body over a pale belly, real fins, per-species shape + pattern variation seeded from the
-// species id - so all 100 species stay distinct and crisp at any size. Distinct body plans
+// species id - so all 148 species stay distinct and crisp at any size. Distinct body plans
 // (hammer/thresher/goblin/saw/ray/eel/sturgeon/gar/sunfish/angler) keep families apart at a glance. Mutations get a baked
 // halo + effect overlay instead of a blur filter. Falls back to the emoji glyph wherever
 // canvas 2D is unavailable (jsdom tests, ancient browsers).
@@ -632,25 +704,65 @@ function fishSprite(spId,mut,px=96){
  if(!g||typeof g.quadraticCurveTo!=='function'||typeof g.createLinearGradient!=='function'||typeof g.createRadialGradient!=='function')return null;
  const H=hashId(sp.id),v=i=>((H>>>((i*5)%27))&31)/31;
  const M=mut&&Object.hasOwn(MUTATIONS,mut)?MUTATIONS[mut]:null;
- let hue=((sp.hue%360)+360)%360,sat=66+v(1)*16,lum=46+v(2)*10;
+ // v301: a real drawing wins when we have one. Mutations still read: the baked halo goes under it
+ // and a tint wash goes over it, so a golden koi stays golden and not brown.
+ const art=FISH_IMG.get(sp.id);
+ if(art){
+  if(M&&M.glow){try{const gr=g.createRadialGradient(px*.5,px*.52,px*.08,px*.5,px*.52,px*.47);gr.addColorStop(0,M.glow+'b0');gr.addColorStop(.6,M.glow+'46');gr.addColorStop(1,M.glow+'00');g.fillStyle=gr;g.fillRect(0,0,px,px)}catch{}}
+  const fit=Math.min(px/art.width,px/art.height)*.97,dw=art.width*fit,dh=art.height*fit;
+  try{g.drawImage(art,(px-dw)/2,(px-dh)/2,dw,dh)}catch{return c}
+  const wash=mut==='golden'?'#ffd24d':mut==='frozen'?'#7fd4ff':mut==='ghostly'?'#eaf6ff':null;
+  if(wash){try{g.globalCompositeOperation='source-atop';g.globalAlpha=mut==='ghostly'?.55:.4;g.fillStyle=wash;g.fillRect(0,0,px,px);g.globalAlpha=1;g.globalCompositeOperation='source-over'}catch{}}
+  return c;
+ }
+ // v301: direction D - the palette from the owner's reference sheets. Saturated body, one
+ // complementary accent, no black ink, a cream belly. Same helpers, so all 25 body plans convert.
+ let hue=((sp.hue%360)+360)%360,sat=76+v(1)*8,lum=52+v(2)*7;
  if(mut==='golden'){hue=45;sat=92;lum=56}
  if(mut==='frozen'){hue=202;sat=58;lum=62}
  if(mut==='ghostly'){sat=Math.min(sat,20);lum=72}
  const col=(dh,ds,dl,a=1)=>`hsla(${(((hue+dh)%360)+360)%360},${Math.min(100,Math.max(6,sat+ds))}%,${Math.min(94,Math.max(8,lum+dl))}%,${a})`;
- const LINE=`hsl(${Math.round(hue)},45%,15%)`,FIN=col(-16,6,-8),DARK=col(2,0,-20,.55);
+ // The accent pairing follows the pins: blue<->gold, magenta<->mint, purple<->pink, coral<->teal.
+ const CANDY_ANCHORS=[232,275,315,350,18,45,165,195];
+ const CANDY_PAIR={232:45,275:315,315:165,350:165,18:195,45:275,165:350,195:315};
+ const accentHue=(()=>{
+  if(mut==='golden')return 30;if(mut==='frozen')return 185;
+  let best=CANDY_ANCHORS[0],bd=999;
+  for(const a of CANDY_ANCHORS){const d=Math.min(Math.abs(hue-a),360-Math.abs(hue-a));if(d<bd){bd=d;best=a}}
+  return CANDY_PAIR[best]!==undefined?CANDY_PAIR[best]:(best+150)%360;
+ })();
+ const ACCENT=`hsl(${accentHue},90%,60%)`;
+ // No ink: the silhouette is a soft self-shadow of the body colour, not a cartoon outline.
+ const LINE=`hsl(${Math.round(hue)},58%,44%)`;
+ // Fins stay in the body's own family (as they do in the reference sheets); the complementary
+ // accent is reserved for the markings, which is what keeps a pond of 148 fish from looking
+ // like a bag of clowns.
+ const FIN=col(3,8,7),DARK=`hsla(${accentHue},88%,62%,.9)`;
  const u=px/100,U=n=>n*u;
  g.lineJoin='round';g.lineCap='round';
  if(M&&M.glow){try{const r=g.createRadialGradient(U(50),U(52),U(8),U(50),U(52),U(47));r.addColorStop(0,M.glow+'b0');r.addColorStop(.6,M.glow+'46');r.addColorStop(1,M.glow+'00');g.fillStyle=r;g.fillRect(0,0,px,px)}catch{}}
  // v297: a species' own body plan wins over the glyph's default, so sharks do not all share one shape.
  const shape=sp.shape||SHAPE_BY_GLYPH[sp.glyph]||'fish';
- const grad=(y0,y1)=>{const gr=g.createLinearGradient(0,U(y0),0,U(y1));gr.addColorStop(0,col(-6,4,8));gr.addColorStop(.55,col(0,0,0));gr.addColorStop(.82,col(8,-20,24));gr.addColorStop(1,col(10,-24,32));return gr};
+ const grad=(y0,y1)=>{const gr=g.createLinearGradient(0,U(y0),0,U(y1));
+  gr.addColorStop(0,col(-4,6,9));gr.addColorStop(.42,col(0,2,1));
+  gr.addColorStop(.78,col(8,-16,26));gr.addColorStop(1,col(12,-26,40));return gr};
  const path=pts=>{g.beginPath();g.moveTo(U(pts[0][0]),U(pts[0][1]));for(let i=1;i+1<pts.length;i+=2)g.quadraticCurveTo(U(pts[i][0]),U(pts[i][1]),U(pts[i+1][0]),U(pts[i+1][1]));g.closePath()};
- const paint=f=>{g.fillStyle=f;g.fill();g.strokeStyle=LINE;g.lineWidth=U(2.6);g.stroke()};
- const eye=(x,y,r)=>{g.fillStyle='#f8f4e8';g.beginPath();g.arc(U(x),U(y),U(r),0,7);g.fill();g.strokeStyle=LINE;g.lineWidth=U(1.5);g.stroke();g.fillStyle='#1c1a18';g.beginPath();g.arc(U(x+r*.2),U(y),U(r*.55),0,7);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(U(x-r*.15),U(y-r*.3),U(r*.26),0,7);g.fill()};
+ const paint=f=>{g.fillStyle=f;g.fill();g.strokeStyle=LINE;g.lineWidth=U(1.3);g.stroke()};
+ const eye=(x,y,r)=>{ // a dot with one glint, never a googly ring
+  g.fillStyle='#17141b';
+  if(g.ellipse){g.beginPath();g.ellipse(U(x),U(y),U(r*.8),U(r),0,0,7);g.fill()}
+  else{g.beginPath();g.arc(U(x),U(y),U(r*.88),0,7);g.fill()}
+  g.fillStyle='#fff';g.beginPath();g.arc(U(x-r*.26),U(y-r*.34),U(r*.3),0,7);g.fill()};
  const stroke2=(w,fill,draw)=>{draw();g.strokeStyle=LINE;g.lineWidth=U(w+3);g.stroke();draw();g.strokeStyle=fill;g.lineWidth=U(w);g.stroke()};
- const pattern=(bodyPath,hh)=>{const pv=v(3);if(pv<.3&&shape!=='tropical')return;g.save();bodyPath();g.clip();g.fillStyle=DARK;
-  if(pv<.65||shape==='tropical'){for(let i=0;i<3;i++){const bx=40+i*13;g.beginPath();g.moveTo(U(bx),U(52-hh));g.quadraticCurveTo(U(bx-6),U(52),U(bx),U(52+hh));g.lineTo(U(bx+5),U(52+hh));g.quadraticCurveTo(U(bx-1),U(52),U(bx+5),U(52-hh));g.closePath();g.fill()}}
-  else{for(let i=0;i<5;i++){g.beginPath();g.arc(U(36+i*11+v(i+7)*4),U(46+((i%2)*10)+v(i+9)*4),U(2.6+v(i+8)*1.4),0,7);g.fill()}}
+ const pattern=(bodyPath,hh)=>{ // one idea per fish: two fat bands, or three spots
+  g.save();bodyPath();g.clip();g.fillStyle=DARK;
+  if(v(3)>.45){
+   for(let i=0;i<2;i++){const bx=40+i*18;
+    g.beginPath();g.moveTo(U(bx),U(52-hh));g.quadraticCurveTo(U(bx-5),U(52),U(bx),U(52+hh));
+    g.lineTo(U(bx+6),U(52+hh));g.quadraticCurveTo(U(bx+1),U(52),U(bx+6),U(52-hh));g.closePath();g.fill()}
+  }else{
+   for(let i=0;i<3;i++){g.beginPath();g.arc(U(40+i*14),U(46+((i%2)*12)),U(3.4+v(i+8)*1.6),0,7);g.fill()}
+  }
   g.restore()};
  if(shape==='fish'||shape==='tropical'||shape==='shark'||shape==='whale'||shape==='deep'){
   // v297: 'deep' is the disc-bodied variant - koi, betta, discus, platies. Same painter, very
@@ -876,6 +988,88 @@ function fishSprite(spId,mut,px=96){
  if(mut==='shiny'||mut==='sparkling'||mut==='golden'){star(28,28,5,'#fffbe8');star(72,64,4,'#fff6c8');if(mut!=='shiny')star(66,22,3.2,'#ffffff')}
  return c;
 }
+// v301 (owner): most of the pond is now a real drawing cropped from the reference sheets. Species
+// without one keep the painted fallback, so the catalog never has a hole. Manifest generated by
+// tools/fish_sprite_crops.js.
+const FISH_ART={
+  pumpkinseed:'assets/social/fish/pumpkinseed.png', angelfin:'assets/social/fish/angelfin.png',
+  crappie:'assets/social/fish/crappie.png', perch:'assets/social/fish/perch.png',
+  sunny:'assets/social/fish/sunny.png', tetra:'assets/social/fish/tetra.png', betta:'assets/social/fish/betta.png',
+  emperium:'assets/social/fish/emperium.png', molly:'assets/social/fish/molly.png',
+  guppy:'assets/social/fish/guppy.png', killi:'assets/social/fish/killi.png', platy:'assets/social/fish/platy.png',
+  koi:'assets/social/fish/koi.png', smelt:'assets/social/fish/smelt.png',
+  seraphkoi:'assets/social/fish/seraphkoi.png', loach:'assets/social/fish/loach.png',
+  mudskip:'assets/social/fish/mudskip.png', tadpole:'assets/social/fish/tadpole.png',
+  stickle:'assets/social/fish/stickle.png', spirlin:'assets/social/fish/spirlin.png',
+  goby:'assets/social/fish/goby.png', ninespine:'assets/social/fish/ninespine.png',
+  topminnow:'assets/social/fish/topminnow.png', angeling:'assets/social/fish/angeling.png',
+  octo:'assets/social/fish/octo.png', squid:'assets/social/fish/squid.png',
+  hydrasquid:'assets/social/fish/hydrasquid.png', kraken:'assets/social/fish/kraken.png',
+  colossus:'assets/social/fish/colossus.png', oarfish:'assets/social/fish/oarfish.png',
+  tench:'assets/social/fish/tench.png', bleak:'assets/social/fish/bleak.png',
+  lobster:'assets/social/fish/lobster.png', fountainfish:'assets/social/fish/fountainfish.png',
+  crucian:'assets/social/fish/crucian.png', poring:'assets/social/fish/poring.png',
+  ghostring:'assets/social/fish/ghostring.png', trout:'assets/social/fish/trout.png',
+  mahi:'assets/social/fish/mahi.png', dragonet:'assets/social/fish/dragonet.png',
+  coelacanth:'assets/social/fish/coelacanth.png', reedeel:'assets/social/fish/reedeel.png',
+  phoenixfish:'assets/social/fish/phoenixfish.png', carp:'assets/social/fish/carp.png',
+  snapper:'assets/social/fish/snapper.png', whaleshark:'assets/social/fish/whaleshark.png',
+  paddlefish:'assets/social/fish/paddlefish.png', ribbonsturgeon:'assets/social/fish/ribbonsturgeon.png',
+  beluga:'assets/social/fish/beluga.png', greenshell:'assets/social/fish/greenshell.png',
+  moonturtle:'assets/social/fish/moonturtle.png', glassback:'assets/social/fish/glassback.png',
+  pupfish:'assets/social/fish/pupfish.png', lantern:'assets/social/fish/lantern.png',
+  emberturtle:'assets/social/fish/emberturtle.png', heartback:'assets/social/fish/heartback.png',
+  starhull:'assets/social/fish/starhull.png', minnow:'assets/social/fish/minnow.png',
+  bitterling:'assets/social/fish/bitterling.png', discus:'assets/social/fish/discus.png',
+  dace:'assets/social/fish/dace.png', chub:'assets/social/fish/chub.png', sunperch:'assets/social/fish/sunperch.png',
+  roach:'assets/social/fish/roach.png', gudgeon:'assets/social/fish/gudgeon.png', dart:'assets/social/fish/dart.png',
+  bream:'assets/social/fish/bream.png', bass:'assets/social/fish/bass.png', catfish:'assets/social/fish/catfish.png',
+  gar:'assets/social/fish/gar.png', barbel:'assets/social/fish/barbel.png', ide:'assets/social/fish/ide.png',
+  piranha:'assets/social/fish/piranha.png', zander:'assets/social/fish/zander.png',
+  mullet:'assets/social/fish/mullet.png', salmon:'assets/social/fish/salmon.png',
+  arowana:'assets/social/fish/arowana.png', marlin:'assets/social/fish/marlin.png',
+  staropus:'assets/social/fish/staropus.png', candyopus:'assets/social/fish/candyopus.png',
+  moonopus:'assets/social/fish/moonopus.png', galaxyopus:'assets/social/fish/galaxyopus.png',
+  gemsnail:'assets/social/fish/gemsnail.png', shellsnail:'assets/social/fish/shellsnail.png',
+  ambernail:'assets/social/fish/ambernail.png', glasssnail:'assets/social/fish/glasssnail.png',
+  opalsnail:'assets/social/fish/opalsnail.png', lavasnail:'assets/social/fish/lavasnail.png',
+  nebulasnail:'assets/social/fish/nebulasnail.png', prismsnail:'assets/social/fish/prismsnail.png',
+  greatwhite:'assets/social/fish/greatwhite.png', nurseshark:'assets/social/fish/nurseshark.png',
+  morayeel:'assets/social/fish/morayeel.png', catshark:'assets/social/fish/catshark.png',
+  cobblewhale:'assets/social/fish/cobblewhale.png', hornshark:'assets/social/fish/hornshark.png',
+  greatmaw:'assets/social/fish/greatmaw.png', bluefin:'assets/social/fish/bluefin.png',
+  baphobass:'assets/social/fish/baphobass.png', thresher:'assets/social/fish/thresher.png',
+  sawfin:'assets/social/fish/sawfin.png', makoshark:'assets/social/fish/makoshark.png',
+  leopardshark:'assets/social/fish/leopardshark.png', lanternshark:'assets/social/fish/lanternshark.png',
+  carpetshark:'assets/social/fish/carpetshark.png', bamboo:'assets/social/fish/bamboo.png',
+  stingray:'assets/social/fish/stingray.png', goblin:'assets/social/fish/goblin.png',
+  abysssaw:'assets/social/fish/abysssaw.png', hammerpup:'assets/social/fish/hammerpup.png',
+  hammer:'assets/social/fish/hammer.png', ghostshark:'assets/social/fish/ghostshark.png',
+  silvershark:'assets/social/fish/silvershark.png', porbeagle:'assets/social/fish/porbeagle.png',
+  manta:'assets/social/fish/manta.png', arapaima:'assets/social/fish/arapaima.png',
+  sturgeon:'assets/social/fish/sturgeon.png', mekong:'assets/social/fish/mekong.png',
+  voidfin:'assets/social/fish/voidfin.png', tigershark:'assets/social/fish/tigershark.png',
+  moonray:'assets/social/fish/moonray.png', leviathan:'assets/social/fish/leviathan.png',
+  sunshark:'assets/social/fish/sunshark.png', candyshrimp:'assets/social/fish/candyshrimp.png',
+  voidshrimp:'assets/social/fish/voidshrimp.png', krill:'assets/social/fish/krill.png',
+  shrimplet:'assets/social/fish/shrimplet.png', lanternshrimp:'assets/social/fish/lanternshrimp.png',
+  peppershrimp:'assets/social/fish/peppershrimp.png', crawdad:'assets/social/fish/crawdad.png',
+  royalshrimp:'assets/social/fish/royalshrimp.png', seahorse:'assets/social/fish/seahorse.png',
+  crownhorse:'assets/social/fish/crownhorse.png', sunhorse:'assets/social/fish/sunhorse.png',
+  ribbonhorse:'assets/social/fish/ribbonhorse.png', leafdragon:'assets/social/fish/leafdragon.png',
+  thornhorse:'assets/social/fish/thornhorse.png', ghosthorse:'assets/social/fish/ghosthorse.png',
+  tidehorse:'assets/social/fish/tidehorse.png',
+};
+const FISH_ART_VERSION='302';
+const FISH_IMG=new Map();
+function preloadFishArt(){
+ if(typeof Image!=='function'||typeof document==='undefined'||!document.createElement)return;
+ for(const id of Object.keys(FISH_ART)){
+  const img=new Image();
+  img.onload=()=>{FISH_IMG.set(id,img);ART_CACHE.clear()};
+  try{img.src=FISH_ART[id]+'?v='+FISH_ART_VERSION}catch{}
+ }
+}
 const ART_CACHE=new Map();
 function fishSpriteURL(spId,mut,px=96){
  const sp=spId&&typeof spId==='object'?spId:speciesById(spId);
@@ -893,6 +1087,8 @@ function fishSpriteURL(spId,mut,px=96){
 // different glyph on every OS and never showed the rod you actually owned. Each rod now has one
 // tier colour that tints both the painted rod and its glow, so the tier reads at a glance.
 const ROD_TIER_COLORS={twig:'#8b6b45',oak:'#b07a3c',brass:'#c8873a',silver:'#cfd8e0',golden:'#ffcb45',mythril:'#7fe3ff'};
+// v299: how strong each tier's aura reads - wood is a hint, mythril is unmistakable.
+const ROD_AURA={twig:.22,oak:.3,brass:.42,silver:.52,golden:.66,mythril:.78};
 function rodSprite(rodId,px=96){
  const rod=RODS_BY_ID[rodId]||RODS[0];
  if(typeof document==='undefined'||!document.createElement)return null;
@@ -901,9 +1097,23 @@ function rodSprite(rodId,px=96){
  if(!g||typeof g.quadraticCurveTo!=='function'||typeof g.createLinearGradient!=='function')return null;
  const tint=ROD_TIER_COLORS[rod.id]||ROD_TIER_COLORS.twig;
  const u=px/100,U=n=>n*u;
- // Tier halo behind the rod - brighter metal, quieter wood.
- const glowA=rod.id==='twig'?.18:rod.id==='oak'?.26:.4;
- try{const rg=g.createRadialGradient(U(52),U(50),U(6),U(52),U(50),U(46));rg.addColorStop(0,tint);rg.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=glowA;g.fillStyle=rg;g.fillRect(0,0,px,px);g.globalAlpha=1}catch{}
+ // v299 (owner, "I don't see any aura on the rods"): the old halo was a single radial fill at
+ // .18-.4 alpha behind a rod that covers most of it, so nothing read on screen. The aura is now
+ // two passes - a wide soft bloom plus a tight ring around the blank - scaled by tier, so a
+ // Golden or Mythril rod visibly glows in the shop, the dock and the catch card.
+ const glowA=ROD_AURA[rod.id]||.34;
+ try{
+  const rg=g.createRadialGradient(U(52),U(48),U(4),U(52),U(50),U(52));
+  rg.addColorStop(0,tint);rg.addColorStop(.45,tint);rg.addColorStop(1,'rgba(0,0,0,0)');
+  g.globalAlpha=glowA;g.fillStyle=rg;g.fillRect(0,0,px,px);g.globalAlpha=1;
+ }catch{}
+ // the ring: the blank drawn wide and blurred-looking in the tier colour, under the rod itself
+ try{
+  g.save();g.globalAlpha=Math.min(1,glowA*1.5);g.strokeStyle=tint;g.lineWidth=U(13);g.lineCap='round';
+  g.shadowColor=tint;g.shadowBlur=U(9);
+  g.beginPath();g.moveTo(U(22),U(82));g.quadraticCurveTo(U(56),U(44),U(88),U(12));g.stroke();
+  g.restore();
+ }catch{}
  g.lineCap='round';g.lineJoin='round';
  // The blank: a tapered curve from the grip (bottom left) to the tip (top right).
  const tip={x:88,y:12},mid={x:56,y:44},grip={x:22,y:82};
@@ -945,8 +1155,8 @@ function rodHTML(rod,cls='fishing-rod-icon',px=64){
  const url=rodSpriteURL(rod.id,px);
  const tint=ROD_TIER_COLORS[rod.id]||ROD_TIER_COLORS.twig;
  const style=`--rod-tint:${tint}`;
- if(url)return `<img class="${cls} fishing-rod-art" style="${style}" src="${url}" alt="" draggable="false">`;
- return `<span class="${cls}" style="${style}">${rod.icon}</span>`;
+ if(url)return `<img class="${cls} fishing-rod-art" data-rod-tier="${esc(rod.id)}" style="${style}" src="${url}" alt="" draggable="false">`;
+ return `<span class="${cls}" data-rod-tier="${esc(rod.id)}" style="${style}">${rod.icon}</span>`;
 }
 function glyphHTML(sp,mut,cls='fishing-glyph'){
  const url=fishSpriteURL(sp,mut,cls==='fishing-glyph'?64:128);
@@ -1305,7 +1515,9 @@ function renderIndex(){
 }
 // 🏅 v295: the ten fishing titles. Worn above the head in the plaza for every player to see;
 // a title is only wearable once its requirement is actually met in the saved fishing blob.
-const TITLE_TONE={bronze:'#c08a52',copper:'#a86f4a',silver:'#cdd6de',jade:'#6ee0a8',sapphire:'#6cb8ff',amethyst:'#c792ea',obsidian:'#8f96b8',crimson:'#ff7a7a',gold:'#ffcc55',valkyrie:'#f0e6ff'};
+const TITLE_TONE={bronze:'#c08a52',copper:'#a86f4a',silver:'#cdd6de',jade:'#6ee0a8',sapphire:'#6cb8ff',amethyst:'#c792ea',obsidian:'#8f96b8',crimson:'#ff7a7a',gold:'#ffcc55',valkyrie:'#f0e6ff',
+ // v299: tones for the ten long-haul titles.
+ tide:'#5fc9d8',abyss:'#7b8fd8',ember:'#ff9a5c',frost:'#bfe9ff',dawn:'#ffd9a0'};
 function renderTitles(){
  const st=state(),worn=equippedTitle(st);
  const rows=FISHING_TITLES.map(t=>{
@@ -1343,7 +1555,7 @@ function renderShop(){
  const bagRow=`<div class="fishing-shop-row equipped"><span class="fishing-shop-icon">🧺</span><span class="fishing-shop-name">${esc(tier.label)}<small>holds ${cap} fish · ${st.bag.length}/${cap} stored${next?` · next: ${esc(next.label)} holds ${next.cap}`:' · fully upgraded'}</small></span>${next?`<button type="button" data-bagup ${st.coins<next.cost?'disabled':''}>${COIN_HTML} ${fmt(next.cost)}</button>`:'<button type="button" disabled>Max</button>'}</div>`;
  els.shopView.innerHTML=`<p class="fishing-shop-head">${COIN_HTML} <b>${fmt(st.coins)}</b> Fishcoins — earn them by selling fish from the Bag.</p><h4>Bag <small>permanent capacity · 120 → 200 → 300 → 400 → 500</small></h4>${bagRow}<h4>Rods <small>permanent · luck / control / strength / lure speed</small></h4>${rodRows}<h4>Bait <small>one is used per cast</small></h4>${baitRows}<div class="fishing-shop-row${st.baitSel===null?' equipped':''}"><span class="fishing-shop-icon">🚫</span><span class="fishing-shop-name">No bait<small>fish with the rod alone</small></span><button type="button" data-use="none" ${st.baitSel===null?'disabled':''}>Use</button></div>`;
  for(const b of els.shopView.querySelectorAll('button[data-rod]'))b.onclick=()=>{const r=buyRod(st,b.dataset.rod);if(r.ok){persist();sound('coin');status('Bought and equipped the '+RODS_BY_ID[b.dataset.rod].name+'!')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
- for(const b of els.shopView.querySelectorAll('button[data-equip]'))b.onclick=()=>{equipRod(st,b.dataset.equip);persist();renderPanel()};
+ for(const b of els.shopView.querySelectorAll('button[data-equip]'))b.onclick=()=>{equipRod(st,b.dataset.equip);syncRodLook();persist();renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-bagup]'))b.onclick=()=>{const r=buyBagUpgrade(st);if(r.ok){persist();sound('coin');status('Bag upgraded — it now holds '+r.cap+' fish.')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel();renderDockGear()};
  for(const b of els.shopView.querySelectorAll('button[data-bait]'))b.onclick=()=>{const r=buyBait(st,b.dataset.bait,Number(b.dataset.n));if(r.ok){persist();sound('coin');if(!st.baitSel)selectBait(st,b.dataset.bait)}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-use]'))b.onclick=()=>{selectBait(st,b.dataset.use==='none'?null:b.dataset.use);persist();renderPanel()};
@@ -1401,6 +1613,7 @@ function pondClick(x,z,idx){
  else if(ui.phase==='walking'||ui.phase==='ready')startFishing(idx);
 }
 function hubClosed(){stopFishing();if(els){els.panel.hidden=true;els.menu.hidden=true}}
+preloadFishArt();
 return {
  // pure core (tests)
  RARITIES,SPECIES,DIFF,MUTATIONS,RODS,BAITS,BAG_MAX,BAG_TIERS,bagMax,bagTierOf,nextBagTier,buyBagUpgrade,CAST_GREEN,CAST_PERFECT,MAX_W,
@@ -1408,6 +1621,8 @@ return {
  speciesById,rarityById,rate,value,rollCatch,castRating,makeReel,reelStep,normalize,addCatch,
  buyRod,equipRod,buyBait,selectBait,sellFish,sellBulk,toggleLock,shouldAutoSell,showOffText,parseShowOff,showOffScale,
  showOffData,cleanShowOff,showOffEvent,rodSprite,rodSpriteURL,ROD_TIER_COLORS,
+ // v301: the crop manifest, so tests can prove every drawing on disk is wired up.
+ FISH_ART,
  fishSprite,fishSpriteURL,
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,

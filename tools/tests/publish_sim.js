@@ -131,7 +131,12 @@ t('the published tree is small enough to stay honest', () => {
   // native field pack and the social portraits above. Everything that ships is still covered by a
   // ceiling: this line for the classic game, 4.25 for the explorer, plus the combined 140.5.
   const endgameBytes=walk(path.join(out,'assets/endgame'));
-  assert.ok(socialBytes/1048576 < 10, 'native social assets exceed their separate 10 MiB budget');
+  // 12 MiB, not the original 10: v302 replaced the placeholder fish painter with 139 cropped
+  // drawings, and each 96px sprite carries a soft sampled halo (about 43% partial-alpha pixels),
+  // so it will not palette-compress without crunchy edges. The fish pack is 1.41 MiB of the
+  // 10.33 measured here; the other three social packs are unchanged. The combined 140.5 ceiling
+  // below still covers every byte, and it is what actually bounds the delivery.
+  assert.ok(socialBytes/1048576 < 12, 'native social assets exceed their separate 12 MiB budget (10.33 measured 2026-11-03)');
   // 59 MiB, not the original 62.5: the classic game measures 58.59 MiB once the separately-budgeted
   // explorer is out of the sum, so 62.5 would have handed back 3.9 MiB of silent headroom. 59 keeps
   // ~0.4 MiB - the same tightness the 62.5 line had when it was set - and the combined 140.5 ceiling

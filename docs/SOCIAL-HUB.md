@@ -271,7 +271,7 @@ cooldown) and broadcasts it to the room. `scene.showFish` gained a `label`, draw
 own small plate above the fish, so the weight is where the fish is. `showOffText` /
 `parseShowOff` / `onLocalMessage` stay for old clients and chat history.
 
-**Ten fishing titles, worn above the head.** `FISHING_TITLES` is a ladder from *Dockhand*
+**Ten fishing titles, worn above the head (twenty since haven-v299).** `FISHING_TITLES` is a ladder from *Dockhand*
 (10 catches) to *Apex Angler* (all 70 species), each earned from counters the saved fishing
 blob already keeps — catches, casts, perfects, discovered species, best weight, mutation
 kinds — so no new counter or migration can lose one. They are equipped from the new
@@ -437,6 +437,120 @@ angle/pitch maths for those gestures. The in-plaza help line now reads
 `tools/tests/social_scene_sim.js` pins all four cases: a left drag leaves angle and pitch untouched,
 a left click on open ground still walks, ctrl-drag orbits without walking, and a touch drag still
 orbits.
+
+## Twenty titles, rod auras, no doubled show-offs (haven-v299)
+
+**Sitting no longer interrupts fishing.** v297 routed `toggleSit` through the new leave-confirm, which
+contradicted v295's rule that sit/stand are allowed with a line in the water - pressing Sit (or Insert)
+asked "Stop fishing and move?". Only actions that actually *walk the player away* ask now:
+`moveAction`, `seatAction` (a bench), `pokerSeatAction` and Return to field. Sit and stand go straight
+through, and the fishing session keeps running.
+
+**Ten more fishing titles (20 total).** The first ten were reachable in an evening, so ten long-haul
+titles now sit on top of them. They are derived from the same saved blob as the originals - no new
+counter, so an older save can earn them the moment its numbers are high enough:
+
+| Title | Ask | Tone |
+| --- | --- | --- |
+| Tide Regular | 1,000 casts | tide |
+| Line Veteran | catch 250 fish | silver |
+| Perfect Master | 100 perfect catches | sapphire |
+| Species Archivist | discover 80 species | jade |
+| Mutant Brood | keep 25 mutated fish | crimson |
+| Leviathan Hook | record a 100 kg fish | amethyst |
+| Colossus Hook | record a 300 kg fish | abyss |
+| Pond Devotee | catch 150 of one species | ember |
+| Secret Circle | a fish from all eight secret species | frost |
+| Mega Hunter | catch 5 pond monsters | dawn |
+
+Five tones were added to `TITLE_TONE` for them, and `fishTitleIds` in the page sanitizer lists all
+twenty (a title worn on a save that predates this build survives the load).
+
+**The rods have a visible aura.** The old sprite baked a single radial fill at .18-.4 alpha *behind* a
+rod that covers most of it, so nothing read on screen. Each tier now has an `ROD_AURA` strength, a
+two-stop bloom plus a shadow-blurred ring around the blank, and the markup carries
+`data-rod-tier` so the CSS can add a tinted `drop-shadow` and a slow pulse on Golden and Mythril
+(reduced-motion respected). The dock's 26px icon reads by tier too, not just the 64px shop art.
+
+**A show-off draws once.** The local draw ran on the cast, and the worker's echo of the same catch ran
+`showOffEvent` again, so the fish and its weight plate appeared twice, stacked. Two fixes: the plaza
+ignores its own `showoff` echo (`m.from !== app.id`), and `showFish()` disposes any active show for
+that angler before adding the new one - one fish and one plate per player, always.
+
+## The rod you hold glows in its own colour (haven-v300)
+
+v299 made the rod *icons* show their tier. The rod the character actually holds in the plaza was still a
+plain brown `MeshBasicMaterial(0x7a5230)` - one geometry, one colour, for everybody.
+
+**The tier travels with the rig.** The fishing module adds `rod` to the rig payload, the relay
+(`workers/social/room.mjs`) validates it against a `FISH_RODS` allow-list (unknown or missing ids become
+`twig`) and stores it on `c.fish`, so it rides both the broadcast and the ordinary snapshot. The page
+therefore knows every angler's tier, not just their own.
+
+**Three meshes per pole.** `makePole()` builds a tier-tinted core, an additive `depthWrite:false` sleeve
+4.2x wider than the shaft, and an 8x haze at a fifth of the opacity so the light falls off instead of
+ending on a hard edge. All three are scaled along the rod, so the glow follows the same pose as the
+blank. The sleeve's opacity comes from the same ladder the icons use (`.22 + aura*.5`, so a twig sits at
+.37 and mythril at .68), the colour is `ROD_TIER_COLORS` lifted 35% toward white, and Golden and Mythril
+breathe at `sin(now/420)` - steady when `prefers-reduced-motion: reduce`. On a 1000x700 plaza view the
+sleeve measures ~44 px across at the test camera, which is the difference between a stick and a glow.
+
+**Three ways in.** `scene.fishing.rod(id)` repaints the local pole (called from `setPhase`, so starting a
+session and equipping a rod both show up immediately), `setRig(pid,{rod})` paints another angler's pole
+and repaints it in place when that angler swaps rods mid-session, and `dropRig` disposes all three meshes.
+`hide()`/`off()` hide the whole group, so the glow never lingers after the line is reeled in.
+
+## Every usable crop, and a bigger sea to put them in (haven-v302)
+
+v301 cut 41 creatures out of five reference sheets. The owner then sent ten more sheets - a chibi-shark
+grid, a turtle set, two reef-fish charts, a seahorse strip, a star-mantled octopus set, a shrimp strip,
+two crystal-snail sheets and a whale sheet - and said the same thing the first time: these are usable,
+add all of them, and if there is extra, grow the index rather than throwing it away.
+
+**The cut, again.** `tools/fish_sprite_crops.js` now reads fourteen sheets and produces **304 creatures**
+(the same border flood-fill, connected components, one-pixel feather and silhouette trim as v301). Two
+things changed inside the tool: crops are hashed and de-duplicated, because two of the new uploads were
+the same reef chart re-encoded and would otherwise have doubled their fish; and the per-sheet index
+sheets are written for everything past the original ninety-seven, so each sheet can be checked against
+the species it was mapped to.
+
+**139 of 148 species now ship a real drawing.** Every species that had a silhouette worth matching was
+re-pointed: the reef charts took the generic pond fish, the shark grid took every shark/ray/thresher/
+goblin/sawfish slot, the turtle and seahorse sets became new species (below), the second snail sheet
+turned out not to be reef fish at all, and the octopus set gave the kraken line a star-mantled cousin.
+
+**Nine still paint themselves**: the crab, the gar/pike/snakehead/bowfin/walleye group (their long jaws
+read better as a painter than as any crop) and the two anglers. The painter itself is unchanged from
+v301, so those nine look like the rest of the pond.
+
+**The index grew from 100 to 148 species.** The surplus creatures became six families in
+`EXTRA_SPECIES` (same tuple shape as `SPECIES_DATA`, rarity in the last slot):
+
+| family | members | rarity spread |
+| --- | --- | --- |
+| sea turtles (Green Shell, Glassback, Ember, Moonshell, Heartshell, Starhull) | 6 | uncommon → legendary |
+| seahorses and seadragons (Tidepool, Thornback, Leafy, Sunspine, Ribbon, Ghost, Crowned, Tide Dragon) | 8 | common → legendary |
+| crystal snails (Tide, Gem, Amber, Glass, Opal, Lava, Nebula, Prism) | 8 | common → mythical |
+| shrimp and amphipods (Glass Krill, Candy, Lantern, Pepper, Royal Mantis, Void) | 6 | common → legendary |
+| star octopuses (Star, Candy, Moon, Galaxy) | 4 | uncommon → mythical |
+| sharks (Catshark … Greatmaw, Abyssal Sawshark, Voidfin) | 16 | common → mythical |
+
+No new `secret` species were added on purpose, so the Secret Circle title still wants its eight. Apex
+Angler already counts `SPECIES.length`, so it silently became a 148-species goal.
+
+**Left on the floor, deliberately.** The whale sheet carries visible `mahoukaP` watermarks across its art,
+and two of its nine crops are not creatures at all (a star blob and the artist's signature line). None of
+it is shipped; the same applies to the Marine-Pokémon chart, which was never in the pipeline.
+
+**Loading and mutations** are unchanged: `preloadFishArt()` still lands one `Image` per drawing and clears
+the sprite cache as each arrives, `fishSprite()` still returns a canvas synchronously, and the baked halo
+plus tint wash go under/over a crop exactly as in v301. `FISH_ART_VERSION` is `'302'`.
+
+**Tests.** `social_fishing_sim.js` now asserts 148 species, eight secrets, 139 drawings against nine
+painted, and it scales its "half the catalog is the plain fish body" bar to `SPECIES.length` instead of a
+fixed 50 so the next art drop does not have to rewrite it. `publish_sim.js` moved the social-asset
+ceiling from 10 to 12 MiB, with the measured numbers and the reason in the comment: the 139 sprites are
+1.41 MiB and every one of them carries a soft sampled halo, which is why they will not palette-compress.
 
 ## Friends (haven-v273)
 

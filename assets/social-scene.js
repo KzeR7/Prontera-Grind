@@ -65,7 +65,48 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const fishGeo=new T.ShapeGeometry(fishShape),fishGroup=new T.Group(),swimmers=[];scene.add(fishGroup);
   R.PONDS.forEach((p,pi)=>{for(let i=0;i<7;i++){const m=new T.Mesh(fishGeo,new T.MeshBasicMaterial({color:[0xe08a3c,0xd8dde2,0x8fc9b8][i%3],transparent:true,opacity:.78,depthWrite:false}));m.rotation.x=-Math.PI/2;const sc=.7+((i*31)%12)/16;m.scale.setScalar(sc);fishGroup.add(m);swimmers.push({m,p,ax:(p.w/2-1.6),az:(p.d/2-1.5),fa:.13+((i*17)%10)/90,fb:.1+((i*23)%10)/80,pa:i*1.7+pi,pb:i*2.9+pi*2})}});
   // The local player's rod, line, bobber, ripples, splash, bite mark and catch flight.
-  const poleMat=new T.MeshBasicMaterial({color:0x7a5230}),pole=new T.Mesh(new T.CylinderGeometry(.016,.04,1,6),poleMat);pole.visible=false;scene.add(pole);
+  // v300 (owner): the rod you hold is painted in your rod's tier colour and wrapped in an additive
+  // glow sleeve, so the rod itself reads at a glance - a Golden rod glows gold in the plaza, not
+  // just as an icon in the shop. Same builder is used for other anglers' rods.
+  const ROD_GLOW={twig:.3,oak:.4,brass:.52,silver:.62,golden:.78,mythril:.92};
+  // v300: the two top tiers breathe; anyone who asked their OS for less motion gets a steady glow.
+  const ROD_PULSE=new Set(['golden','mythril']);
+  let reduceMotion=false;try{reduceMotion=!!(typeof window!=='undefined'&&window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)}catch{}
+  function rodTint(rodId){
+   const F=globalThis.PGSocialFishing;
+   const map=F&&F.ROD_TIER_COLORS?F.ROD_TIER_COLORS:null;
+   return (map&&map[rodId])||'#8b6b45';
+  }
+  function makePole(rTop,rBottom,segments){
+   const group=new T.Group();
+   const core=new T.Mesh(new T.CylinderGeometry(rTop,rBottom,1,segments),new T.MeshBasicMaterial({color:0x7a5230}));
+   // Two shells: a bright sleeve hugging the blank, and a wide faint haze so the light falls off
+   // instead of ending on a hard tube edge.
+   const glow=new T.Mesh(new T.CylinderGeometry(rTop*4.2,rBottom*4.2,1,segments),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.4,blending:T.AdditiveBlending,depthWrite:false}));
+   const haze=new T.Mesh(new T.CylinderGeometry(rTop*8,rBottom*8,1,Math.max(6,segments-2)),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.12,blending:T.AdditiveBlending,depthWrite:false}));
+   core.name='rodCore';glow.name='rodGlow';haze.name='rodHaze';
+   group.add(core,glow,haze);
+   return {group,core,glow,haze,rod:null};
+  }
+  function stylePole(rod,rodId){
+   const id=rodId||'twig';
+   if(rod.rod===id)return;
+   rod.rod=id;
+   const tint=new T.Color(rodTint(id));
+   try{rod.core.material.color.copy(tint)}catch{}
+   // the core is lifted toward white so a lit rod never looks like a brown stick with a haze
+   const lit=tint.clone().lerp(new T.Color(0xffffff),.35);
+   rod.base=.22+((ROD_GLOW[id]||.3)*.5);
+   rod.hazeBase=.06+rod.base*.2;
+   rod.pulse=ROD_PULSE.has(id)&&!reduceMotion;
+   try{rod.glow.material.color.copy(lit);rod.glow.material.opacity=rod.base}catch{}
+   try{rod.haze.material.color.copy(lit);rod.haze.material.opacity=rod.hazeBase}catch{}
+  }
+  function disposePole(rod){
+   rod.group.traverse(o=>{if(o.isMesh){try{o.geometry.dispose()}catch{}try{o.material.dispose()}catch{}}});
+  }
+  const poleRod=makePole(.016,.04,6),pole=poleRod.group;stylePole(poleRod,'twig');pole.visible=false;scene.add(pole);
+  function setRod(rodId){stylePole(poleRod,typeof rodId==='string'?rodId:'twig')}
   const lineGeo=new T.BufferGeometry(),linePts=new Float32Array(8*3);lineGeo.setAttribute('position',new T.BufferAttribute(linePts,3));const line=new T.Line(lineGeo,new T.LineBasicMaterial({color:0xeef2ee,transparent:true,opacity:.75}));line.visible=false;line.frustumCulled=false;scene.add(line);
   const bobber=new T.Group();bobber.visible=false;scene.add(bobber);
   const bTop=new T.Mesh(new T.SphereGeometry(.11,10,8),new T.MeshBasicMaterial({color:0xd8402e}));bTop.position.y=.07;bobber.add(bTop);
@@ -98,6 +139,8 @@ window.PGSocialScene={async create(host,labels,callbacks){
      try{c2.filter='none'}catch{}
     }
    }
+   function dropShow(i){const old=showPool.splice(i,1)[0];if(!old)return;scene.remove(old.sprite);try{old.sprite.material.map.dispose();old.sprite.material.dispose()}catch{}
+    if(old.tag){scene.remove(old.tag);try{old.tag.material.map.dispose();old.tag.material.dispose()}catch{}}}
    const tex=new T.CanvasTexture(canvas),spr=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
    spr.visible=false;scene.add(spr);
    // v295: the weight rides above the fish as its own small plate - the show-off no longer
@@ -115,7 +158,11 @@ window.PGSocialScene={async create(host,labels,callbacks){
      tag.scale.set(1.9,.48,1);tag.visible=false;scene.add(tag);
     }
    }
-   while(showPool.length>=6){const old=showPool.shift();scene.remove(old.sprite);old.sprite.material.map.dispose();old.sprite.material.dispose();if(old.tag){scene.remove(old.tag);old.tag.material.map.dispose();old.tag.material.dispose()}}
+   // v299 (owner): a show-off replaces that angler's previous one instead of stacking on top of it.
+   // The local draw and the relayed echo of the same catch used to put two fish and two weight
+   // plates at the same spot. Disposing the old entry also keeps the pool from filling with them.
+   for(let i=showPool.length-1;i>=0;i--)if(showPool[i].pid===pid)dropShow(i);
+   while(showPool.length>=6)dropShow(0);
    showPool.push({sprite:spr,tag,pid,t0:clock||performance.now(),dur:Math.max(1200,Math.min(9000,o.ms||5200)),scale:Math.max(.4,Math.min(5.2,Number(o.scale)||1))});
   }
   let rig={mode:'off'},nextIdleRipple=0,catchAnim=null;
@@ -129,13 +176,15 @@ window.PGSocialScene={async create(host,labels,callbacks){
   function dropRig(pid){
    const r=remoteRigs.get(pid);if(!r)return;
    scene.remove(r.group);
-   for(const m of [r.pole,r.bobTop,r.bobBot]){try{m.geometry.dispose()}catch{}try{m.material.dispose()}catch{}}
+   if(r.poleRod)disposePole(r.poleRod);
+   for(const m of [r.bobTop,r.bobBot]){try{m.geometry.dispose()}catch{}try{m.material.dispose()}catch{}}
    remoteRigs.delete(pid);
   }
   function setRig(pid,st){
    if(!st||st.on!==true){dropRig(pid);return}
    const tx=Math.max(-60,Math.min(60,Number(st.x)||0)),tz=Math.max(-60,Math.min(60,Number(st.z)||0));
    let r=remoteRigs.get(pid);
+   if(r&&st.rod&&st.rod!==r.rod){r.rod=st.rod;if(r.poleRod)stylePole(r.poleRod,st.rod)}
    if(!r){
     const holder=players.get(pid);
     const group=new T.Group();scene.add(group);
@@ -143,9 +192,10 @@ window.PGSocialScene={async create(host,labels,callbacks){
     const bobBot=new T.Mesh(new T.SphereGeometry(.09,10,8),new T.MeshBasicMaterial({color:0xf2efe4}));
     bobBot.position.y=-.09;
     const bob=new T.Group();bob.add(bobTop,bobBot);group.add(bob);
-    const pole=new T.Mesh(new T.CylinderGeometry(.016,.032,1,5),new T.MeshBasicMaterial({color:0x7a5230}));
+    const poleRod=makePole(.016,.032,5);stylePole(poleRod,st.rod);group.add(poleRod.group);
+    const pole=poleRod.group;
     group.add(pole);
-    r={group,bob,pole,bobTop,bobBot,x:holder?holder.sprite.position.x:tx,z:holder?holder.sprite.position.z:tz,tx,tz,mode:'wait'};
+    r={group,bob,pole,poleRod,bobTop,bobBot,rod:st.rod||'twig',x:holder?holder.sprite.position.x:tx,z:holder?holder.sprite.position.z:tz,tx,tz,mode:'wait'};
     remoteRigs.set(pid,r);
    }
    r.tx=tx;r.tz=tz;
@@ -189,6 +239,8 @@ window.PGSocialScene={async create(host,labels,callbacks){
     splash(from.x,from.z,24);ripple(from.x,from.z,1.4);catchAnim={fx:from.x,fz:from.z,t0:clock||performance.now(),dur:760,done};glyph.visible=true;api.hide(true)},
    escapeSplash(){if(bobber.visible){splash(bobber.position.x,bobber.position.z,14);ripple(bobber.position.x,bobber.position.z,1.2)}api.hide()},
    ripple,splash,showFish,
+   // v300: the equipped rod's tier paints the local pole.
+   rod:setRod,
    hide(keepPole){rig={mode:'off'};bobber.visible=false;mark.visible=false;if(!keepPole){pole.visible=false;line.visible=false}},
    off(){api.hide();glyph.visible=false;catchAnim=null},
   };
@@ -201,6 +253,12 @@ window.PGSocialScene={async create(host,labels,callbacks){
    const dx=bx-p.x,dz=bz-p.z,d=Math.hypot(dx,dz)||1,ux=dx/d,uz=dz/d;
    const hx=p.x+ux*.35,hz=p.z+uz*.35,hy=base+h*.5,tx=p.x+ux*1.7,tz=p.z+uz*1.7,ty=base+h*.78;
    const mx=(hx+tx)/2,my=(hy+ty)/2,mz=(hz+tz)/2,len=Math.hypot(tx-hx,ty-hy,tz-hz);
+   // v300: golden and mythril poles breathe, so the glow reads as light rather than paint.
+   if(poleRod&&Number.isFinite(poleRod.base))try{
+    const k=poleRod.pulse?1+.3*Math.sin(now/420):1;
+    poleRod.glow.material.opacity=Math.min(.85,poleRod.base*k);
+    poleRod.haze.material.opacity=Math.min(.3,poleRod.hazeBase*k);
+   }catch{}
    pole.position.set(mx,my,mz);pole.scale.set(1,len,1);pole.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3((tx-hx)/len,(ty-hy)/len,(tz-hz)/len));
    for(let i=0;i<8;i++){const t=i/7,sag=Math.sin(t*Math.PI)*Math.max(.2,d*.06),px=tx+(bx-tx)*t,py=ty+(by+.12-ty)*t-sag,pz=tz+(bz-tz)*t;linePts[i*3]=px;linePts[i*3+1]=py;linePts[i*3+2]=pz}
    lineGeo.attributes.position.needsUpdate=true;lineGeo.computeBoundingSphere?.();

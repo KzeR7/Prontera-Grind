@@ -964,7 +964,9 @@ function moveAction(x,z){if(fishingBlocked(()=>moveAction(x,z)))return;confirmPo
 function performMoveAction(x,z,confirmLeave){if(app.room&&send({type:'move',x,z,confirmLeave}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());const route=R.path(p,{x,z});if(!route.length)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=false;p.seat=null;p.pokerSeat=null;putPlayer(p)}
 function seatAction(id){if(fishingBlocked(()=>seatAction(id)))return;confirmPokerLeave(confirmLeave=>performSeatAction(id,confirmLeave))}
 function performSeatAction(id,confirmLeave){if(app.room&&send({type:'seat',id,confirmLeave}))return;if(app.room||!Number.isInteger(id)||!R.SEATS[id])return;const p=app.players.get(SOLO_ID),seat=R.SEATS[id];if(!p)return;R.advance(p,performance.now());const route=R.path(p,seat);if(!route.length&&Math.hypot(p.x-seat.x,p.z-seat.z)>.5)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=!route.length;p.seat=seat.id;p.pokerSeat=null;if(!route.length){p.x=seat.x;p.z=seat.z}putPlayer(p)}
-function toggleSit(){if(fishingBlocked(()=>toggleSit()))return;confirmPokerLeave(confirmLeave=>performToggleSit(confirmLeave))}
+// v299 (owner): sit and stand are allowed with a line in the water - only actions that WALK the
+// player away (a bench, a pond seat, a poker stool, the exit) ask before reeling in.
+function toggleSit(){confirmPokerLeave(confirmLeave=>performToggleSit(confirmLeave))}
 function performToggleSit(confirmLeave){if(app.room&&send({type:'sit',confirmLeave}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());clearSoloPokerIfSeated(p);p.path=[];p.seat=null;p.pokerSeat=null;p.sit=!p.sit;putPlayer(p)}
 function join(){if(!app.connected)return;send({type:'join',look:currentLook(),friends:[...app.friends]})}
 // v287: plaza fishing. The logic/UI module reads the self position, walks the player to a pond,
@@ -980,7 +982,8 @@ function fishingShowOff(fish){
 // v295: the player's line in the water, shared with the room so everyone sees the bobber.
 function fishingRig(state){
  if(!app.room)return true;
- return send({type:'rig',on:!!(state&&state.on),pond:state&&state.pond,x:state&&state.x,z:state&&state.z,mode:state&&state.mode});
+ // v300: the rod tier travels with the rig, so everyone draws your pole in your colour.
+ return send({type:'rig',on:!!(state&&state.on),pond:state&&state.pond,x:state&&state.x,z:state&&state.z,mode:state&&state.mode,rod:state&&state.rod});
 }
 // v295: a fishing title is worn above the head in the plaza; changing it repaints the room.
 function fishingTitleChanged(){const p=app.players.get(app.room?app.id:SOLO_ID);if(!p)return;const look=currentLook();if(app.room)return send({type:'look',look});p.look=look;putPlayer(p)}
@@ -1043,7 +1046,10 @@ function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retr
   renderPokerMini();renderPokerUI();updatePokerTurnClock();
  }
  if(m.type==='fishnote'){pushFishNote(m);return}
- if(m.type==='showoff'){try{FISHING()?.showOffEvent?.(m.from,{sp:m.sp,w:m.w,mut:m.mut,perfect:m.perfect})}catch{}return}
+ if(m.type==='showoff'){
+  // v299: our own show-off is already on screen - the echo would draw it a second time.
+  if(m.from!==app.id)try{FISHING()?.showOffEvent?.(m.from,{sp:m.sp,w:m.w,mut:m.mut,perfect:m.perfect})}catch{}
+  return}
  if(m.type==='reauth')return refreshSocket();
  if(m.type==='room'){friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());if(app.room!==m.room){clearPokerResult();app.poker=null;app.pokerTables=null;pokerUI.renderKey='';}app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;resetPlayers();app.messages=app.messages.filter(x=>x.channel!=='local');pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)}
  if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
