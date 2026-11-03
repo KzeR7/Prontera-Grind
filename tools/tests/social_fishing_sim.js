@@ -112,47 +112,52 @@ const heftAvg=mods=>{let rng=lcg(11),sum=0;for(let i=0;i<3000;i++){const r=F.rol
 assert(heftAvg({weight:3})>heftAvg({weight:0})+.15,'weight gear rolls heavier fish');
 const mutShare=mods=>{let rng=lcg(13),n=0;for(let i=0;i<6000;i++)if(F.rollCatch(rng,false,mods).mut)n++;return n};
 assert(mutShare({mutation:6})>mutShare({mutation:1})*2,'bait multiplies mutation odds');
-// --- v304: rod gates, the boss-tier wall and gear-aware Index odds ---------------------------------
-// Every rod unlocks one rarity tier; nothing above the ceiling can bite, at any luck.
+// --- v304/v305: soft rod gates, a fully random catch and gear-aware Index odds -------------------
+// Every rod raises the ceiling, but the ceiling is a filter, not a wall: over-ceiling rolls slip
+// through GATE_ESCAPE of the time.
 assert.equal(F.rodCeiling('twig'),'uncommon','the training rod tops out at uncommon');
 assert.equal(F.rodCeiling('oak'),'rare');
 assert.equal(F.rodCeiling('brass'),'rare','brass shares the rare ceiling with oak');
 assert.equal(F.rodCeiling('silver'),'legendary');
 assert.equal(F.rodCeiling('golden'),'mythical');
-assert.equal(F.rodCeiling('mythril'),'secret','only the mythril rod reaches secrets');
+assert.equal(F.rodCeiling('mythril'),'secret','only the mythril rod reaches secrets outright');
 assert.equal(F.gateRodFor('secret'),'mythril');
-const topRarity=(rod,n)=>{let rng=lcg(19),best=0;for(let i=0;i<n;i++){const r=F.rollCatch(rng,true,{rod,luck:3,weight:3,mutation:6});best=Math.max(best,F.RARITIES.findIndex(x=>x.id===r.rarity))}return F.RARITIES[best].id};
-assert.equal(topRarity('golden',20000),'mythical','max luck on a golden rod never sneaks a secret through');
-assert.equal(topRarity('oak',8000),'rare','an oak rod cannot roll a legendary');
-assert.equal(topRarity('mythril',20000),'secret','the mythril rod can, and does');
-// The two boss tiers hand out a fresh species until the tier is complete: that is what makes the
-// wall the catch rate instead of a bad-luck tail.
+assert(F.GATE_ESCAPE>0&&F.GATE_ESCAPE<.2,'the ceiling leaks a little, not a lot');
+// A cheap rod can hook the top tiers - rarely. On the training rod a rare is a few casts in a
+// hundred, a legendary is a once-a-thousand event and a secret is barely possible at all.
+const shareOf=(rod,tier,n)=>{let rng=lcg(19),hit=0;for(let i=0;i<n;i++)if(F.rollCatch(rng,false,{rod,luck:0}).rarity===tier)hit++;return hit/n};
+const twigRare=shareOf('twig','rare',60000),twigSecret=shareOf('twig','secret',60000);
+assert(twigRare>0,'a training rod still lands the odd rare');
+assert(twigRare<.02,'but rarely');
+assert(twigSecret>=0&&twigSecret<.0004,'a secret on a training rod is a lottery ticket');
+// The gate really is the rod: the same cast on the rod that unlocks the tier is far more likely.
+assert(F.tierShares(0,'mythril').secret>F.tierShares(0,'twig').secret*20,'the mythril rod is a different league');
+// And the leak thins with distance: one tier above the ceiling leaks 8%, four tiers leaks a sliver.
+assert(Math.abs(F.tierShares(0,'twig').rare/F.tierShares(0,null).rare-F.GATE_ESCAPE)<1e-9,'one tier up leaks exactly GATE_ESCAPE');
+assert(F.tierShares(0,'twig').secret<F.tierShares(0,'golden').secret,'a secret is easier on a golden rod than a training rod');
+// Every species is a plain uniform draw - there is no repeat protection anywhere.
 const secretPool=F.SPECIES.filter(sp=>sp.rarity==='secret');
-const oneShort=new Set(secretPool.slice(0,secretPool.length-1).map(sp=>sp.id));
 assert.equal(secretPool.length,10,'ten secrets in the pool');
-let hits=0;let rngS=lcg(23);
-for(let i=0;i<4000&&hits<25;i++){
- // drive the roll to the top band every time, then let the species index be random
- const c=F.rollCatch(()=>.999999,false,{rod:'mythril',seen:oneShort});
- if(c.rarity==='secret'){hits++;assert.equal(c.sp,secretPool[secretPool.length-1].id,'the last missing secret is the only one hooked')}
- else break;
-}
-assert(hits>=20,'the mercy draw keeps giving the missing secret');
-// Without a `seen` list nothing changes (older saves and the plain call keep the uniform draw).
-const plain=F.rollCatch(()=>.999999,false,{rod:'mythril'});
-assert.equal(plain.rarity,'secret');
-// Tier shares mirror rollCatch: they sum to 1, they climb with luck and they collapse into the
-// ceiling when the rod cannot reach the top.
+const rolled=new Set();
+let calls=0;
+const topThenRandom=()=>{calls++;return calls===1?.999999:Math.random()};
+for(let i=0;i<400;i++){calls=0;const c=F.rollCatch(topThenRandom,false,{rod:'mythril'});if(c.rarity==='secret')rolled.add(c.sp)}
+assert(rolled.size>1,'a forced secret tier still draws any secret, not the next missing one');
+const seenField=F.rollCatch(()=>.999999,false,{rod:'mythril',seen:new Set(secretPool.slice(1).map(sp=>sp.id))});
+assert.equal(seenField.rarity,'secret','an old caller that still passes seen is ignored, not broken');
+// Tier shares mirror rollCatch: they sum to 1, they climb with luck, and above the ceiling they
+// shrink to the escape chance instead of disappearing.
 const sumShares=luck=>Object.values(F.tierShares(luck,'secret')).reduce((a,b)=>a+b,0);
 assert(Math.abs(sumShares(0)-1)<1e-9&&Math.abs(sumShares(2.6)-1)<1e-9,'tier shares always total 1');
 assert(F.tierShares(2.6,'secret').secret>F.tierShares(0,'secret').secret,'luck lifts the secret share');
-const capped=F.tierShares(2.6,'oak');
-assert.equal(capped.legendary,0,'a clamped roll cannot leave the ceiling tier');
-assert(capped.rare>F.tierShares(2.6,'secret').rare,'and it piles into rare instead');
-// The Index prints the gear-aware rate: a bare secret is 1 in tens of thousands, a hooked one is not.
+const capped=F.tierShares(2.6,'oak'),natural=F.tierShares(2.6,null);
+assert(capped.legendary>0&&capped.legendary<natural.legendary,'above the ceiling a tier becomes a trickle');
+assert(Math.abs(capped.legendary/natural.legendary-F.GATE_ESCAPE)<1e-9,'and that trickle is the escape chance');
+assert(capped.rare>natural.rare,'the rest piles into the ceiling tier');
+// The Index prints the gear-aware rate: a bare secret is 1 in ~19,000 casts, a hooked one is not.
 const bareSecret=F.rateWith('voidfin',0,'secret'),gearedSecret=F.rateWith('voidfin',2.6,'secret');
 assert(gearedSecret>bareSecret*3,'the rod and bait rate is far better than the bare-rod rate');
-assert.equal(F.rateWith('voidfin',2.6,'secret'),F.tierShares(2.6,'secret').secret,'secret rows show the tier rate');
+assert(Math.abs(F.rateWith('voidfin',2.6,'secret')-F.tierShares(2.6,'secret').secret/secretPool.length)<1e-12,'secret rows show a per-species rate');
 assert(F.rateWith('minnow',2.6,'secret')<F.rateWith('minnow',0,'secret'),'a common is rarer once luck tilts away from it');
 // Control (better rods) widens the reel bar but stays inside the track.
 assert(F.makeReel(fish0(),()=>.5,.5).barW>F.makeReel(fish0(),()=>.5,0).barW,'control widens the bar');
@@ -358,8 +363,8 @@ assert.equal(st.bag.length,F.BAG_MAX);
 
 // --- v295: bag tiers, fishing titles, painted rods and data show-offs ---------------------
 assert.deepEqual(F.BAG_TIERS.map(t=>t.cap),[120,200,300,400,500],'the bag ladder is 120→200→300→400→500');
-// v304: bag prices were retuned alongside the 6x catch values, so the ladder now starts at 1600.
-assert.deepEqual(F.BAG_TIERS.map(t=>t.cost),[0,1600,4000,9500,20000],'each tier has its own price');
+// v305 (owner): the bags are a small buff, not a farm - the ladder starts at 600.
+assert.deepEqual(F.BAG_TIERS.map(t=>t.cost),[0,600,1400,3000,6500],'each tier has its own price');
 for(let i=2;i<F.BAG_TIERS.length;i++)assert(F.BAG_TIERS[i].cost>F.BAG_TIERS[i-1].cost,'prices rise with the ladder');
 assert.equal(F.BAG_MAX,120,'BAG_MAX stays the base tier for older callers and saves');
 st=F.normalize(null);
@@ -707,8 +712,8 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=304'),asset+' is versioned at v304');
- assert(/haven-v304/.test(page),'the login card names the v304 build');
+  assert(page.includes(asset+'?v=305'),asset+' is versioned at v305');
+ assert(/haven-v305/.test(page),'the login card names the v305 build');
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
  const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');
@@ -795,5 +800,5 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  assert(/announce:fishingAnnounce/.test(social),'the fishing bind receives it');
  assert(/\.social-line-sys/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'system lines have their own style');
  assert(/socialFishLeaveWarning/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'the fishing dialog shares the poker overlay style');
- console.log('PASS social fishing: ponds+chairs, 155-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler; v302 139 cropped drawings behind the same fishSprite, with the painted fallback for the other nine; v303 whales and 146 crops at 128px, prices that read rarity+weight, twenty harder titles and an AFK walk-back that never asks; v304 rod gates (only the Mythril Rod can hook a Secret), boss tiers that hand out a fresh species until the pool is done, a ~65 h two-week index wall, retuned rods/bags/bait and Index odds that use the gear you are holding');
+ console.log('PASS social fishing: ponds+chairs, 155-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler; v302 139 cropped drawings behind the same fishSprite, with the painted fallback for the other nine; v303 whales and 146 crops at 128px, prices that read rarity+weight, twenty harder titles and an AFK walk-back that never asks; v304/v305 soft rod gates (a cheap rod can still be surprised by a Legendary or a Secret), a fully random index draw with a ~85 h median wall, cheap rods and bags, and Index odds that use the gear you are holding');
 })().catch(e=>{console.error(e);process.exitCode=1});

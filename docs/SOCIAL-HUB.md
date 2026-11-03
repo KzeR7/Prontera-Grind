@@ -600,43 +600,46 @@ point) never moved. `bindFishing` now also exposes `walkTo`, the same path witho
 fishing module uses it, re-issuing the walk every 2.5s while it is under way and only giving up after
 30s instead of 9s. Sitting is not an obstacle: the move clears the seat on both sides.
 
-## A two-week index, rod gates and a pond that looks like a pond (haven-v304)
+## A two-week index, soft rod gates and a pond that looks like a pond (haven-v304/v305)
 
-Six owner notes, one economy pass.
+Six owner notes, one economy pass, then a correction pass on the luck.
 
 **The index is a two-week climb, and money cannot shorten it.** The old weights gave a Secret every
 ~600 casts on the best rod, so 155/155 took an evening. The rarity table is now
-`.60 / .245 / .1463 / .0083 / .00027 / .00014`, and a rod only lets a tier bite at all:
+`.60 / .245 / .1454 / .0083 / .00087 / .00035` - a Secret tier bite is about 1 in 2,900 casts on a
+bare rod and ~1 in 800 on the best gear. Every species is a **plain uniform draw**: no pity, no
+repeat protection, no "you have not caught this yet" nudge. The wall is the catch rate and luck.
 
-| rod | unlocks | cost |
-| --- | --- | --- |
-| Training Rod | uncommon | 0 |
-| Oak Rod | rare | 800 |
-| Brass Rod | rare | 2,700 |
-| Silver Rod | legendary | 8,000 |
-| Golden Rod | mythical | 21,500 |
-| Mythril Rod | secret | 54,000 |
+**A rod is a ceiling, not a wall.** `rodCeiling()` says how far up the table a rod reaches - Training
+Rod uncommon, Oak/Brass rare, Silver legendary, Golden mythical, Mythril secret - and a roll above it
+is held back most of the time. But not always: `GATE_ESCAPE` is 8% for one tier above the ceiling and
+0.35x of that for each tier beyond (2.8% / 1% / 0.34%), so a cheap rod *can* be surprised:
 
-`rollCatch` clamps every roll to the rod's ceiling, so an Oak Rod can fish forever and never hook a
-Legendary - the *only* way to a Secret is the Mythril Rod. On top of that the two boss tiers no longer
-repeat themselves: a Mythical or Secret bite is always a species you have not caught yet, until that
-tier is complete. That turns the wall into a catch rate instead of a bad-luck tail.
+| rod | rare | legendary | mythical | secret |
+| --- | --- | --- | --- | --- |
+| Training | 1.2% | 1 in 4,300 | 1 in 100,000 | 1 in 830,000 |
+| Oak | 15.4% | 1 in 1,500 | 1 in 50,000 | 1 in 290,000 |
+| Golden | 14.5% | 0.83% | 0.12% | 1 in 36,000 |
+| Mythril | 14.5% | 0.83% | 0.087% | 0.035% |
 
-Measured by simulating `rollCatch` with a live `seen` set (250 casts/h, 40% PERFECT, Mythril + Royal
-Jelly, 31 runs): median **17,000 casts** to 155/155 (**~68 h**), p90 **22,700 (~91 h)**. The same run
-on Glow Grub - the money bait - is a median 24,700 casts (~99 h), so Royal Jelly is a real choice:
-~1.8x the boss bites (and ~30% faster to a full index) for a couple of coins an hour less.
+(At luck 0, per cast. The Index prints these numbers for whatever rod and bait you are holding.)
 
-**The shop is priced against that.** Rods 800/2,700/8,000/21,500/54,000 and bags
-1,600/4,000/9,500/20,000 (122,100 for the lot). A 250-casts/h income model (each rod bought as soon as
-it is affordable, bags in between) puts the full rack at **~6.4 hours** of steady fishing. Baits: Worm 4, Shrimp Tail 12, Glow Grub 30 (money/mutations),
-Royal Jelly 55 with luck 1.5 - the rare-hunter bait, net-positive on every rod from Oak up.
+**Measured to 155/155** by simulating `rollCatch` (250 casts/h, 40% PERFECT, 31 runs, Mythril + Royal
+Jelly): median **21,300 casts (~85 h)**, p90 **38,000 (~152 h)**, mean ~93 h - a real tail, because it
+is a real coupon collector. Glow Grub - the money bait - is a median 27,300 (~109 h). Royal Jelly is
+the rare-hunter bait: ~1.8x the boss bites for a couple of coins an hour less.
 
-**The index prints the odds you actually roll.** Base weights are a bare-rod number, and at the new
-secret rate that read "1 in 70,000" even while holding the rod that unlocks them. `rateWith()` and
-`tierShares()` mirror `rollCatch` (luck exponent, rod clamp, no-repeat rule) and the Index shows
-"Mythril Rod + Royal Jelly" odds; Mythical and Secret rows show the whole tier's rate, because every
-one of those bites is new. The header says which rod and bait the odds are for.
+**The gear is cheap on purpose.** "I just want fishes hard to catch, not too much to farm on rods."
+Rods are 300 / 1,000 / 3,000 / 8,000 / 20,000 and bags 600 / 1,400 / 3,000 / 6,500 - 43,800 for the
+whole rack, about **2.3 hours** of steady fishing in the 250-casts/h model (it was 122,100 and 6.4 h in
+the first v304 pass). Baits: Worm 4, Shrimp Tail 12, Glow Grub 30, Royal Jelly 55 (luck 1.5), all
+net-positive from Oak up.
+
+**The index prints the odds you actually roll.** Base weights are a bare-rod number, and at this
+secret rate that reads "1 in 34,000" even while holding the rod that unlocks them. `rateWith()` and
+`tierShares()` mirror `rollCatch` (luck exponent, the ceiling and its escape chance), and the Index
+shows the odds for the rod and bait you are holding. Rows above your rod's ceiling still say which rod
+lifts them, with the escape chance in the tooltip.
 
 **The pond is the centrepiece.** Both ponds are 18x13 (was 14x10), with a procedural garden in the
 same flat colours as the town - no new art, no new licence: a stone coping walked along the pond's own

@@ -9,19 +9,20 @@
 (function(root,factory){const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;root.PGSocialFishing=api})(globalThis,root=>{
 'use strict';
 // ------------------------------- pure core (covered by tools/tests/social_fishing_sim.js) --
-// v304 (owner): "the last two rarities should be hard - about two weeks to complete the index, and
-// having money is one thing but the catch rates should be the wall". The old table was
-// .58/.24/.12/.045/.012/.003, which fed a Secret every ~600 casts on the best rod and finished the
-// index in an evening. These numbers are solved backwards from a target instead: Mythril + Royal
-// Jelly lands one boss bite every ~900 casts, and with the no-repeat rule in rollCatch that is a
-// median ~17,000 casts (~68 h) to 155/155, p90 ~22,700 (~91 h). Rods gate the tiers on top (ROD_GATE).
+// v304/v305 (owner): "the last two rarities should be hard - about two weeks to complete the index -
+// and it should be random and luck". The old table was .58/.24/.12/.045/.012/.003, which fed a Secret
+// every ~600 casts on the best rod and finished the index in an evening. These numbers are solved
+// against a target instead: on the Mythril Rod + Royal Jelly a Secret tier bite lands about every 800
+// casts (0.126%), and because every species is a plain uniform draw the index is a coupon collector -
+// median ~21,300 casts (~85 h) to 155/155 with a long, honest tail. Rods reach up the table
+// (ROD_GATE) but the ceiling leaks a little (GATE_ESCAPE), so luck can always surprise you.
 const RARITIES=[
  {id:'common',label:'Common',color:'#b9c6c4',weight:.60},
  {id:'uncommon',label:'Uncommon',color:'#7fd98a',weight:.245},
- {id:'rare',label:'Rare',color:'#58a6ff',weight:.1462442},
+ {id:'rare',label:'Rare',color:'#58a6ff',weight:.145433},
  {id:'legendary',label:'Legendary',color:'#ffb84d',weight:.008343},
- {id:'mythical',label:'Mythical',color:'#c792ea',weight:.0002694},
- {id:'secret',label:'Secret',color:'#ff7ab8',weight:.0001434},
+ {id:'mythical',label:'Mythical',color:'#c792ea',weight:.000874},
+ {id:'secret',label:'Secret',color:'#ff7ab8',weight:.00035},
 ];
 const RARITY_INDEX=Object.fromEntries(RARITIES.map((r,i)=>[r.id,i]));
 // 70 species. The 14 v287 ids keep their exact id/rarity so bagged fish stay valid.
@@ -186,18 +187,20 @@ const tierShares=(luck,ceiling)=>{
  const cum=[];let acc=0;
  for(const r of RARITIES){acc=Math.min(1,acc+r.weight);cum.push(Math.pow(acc,e))}
  const out={};
+ let heldBack=0;
  for(const r of RARITIES){
-  const i=RARITY_INDEX[r.id],lo=i?cum[i-1]:0;
-  out[r.id]=i<cIdx?cum[i]-lo:(i===cIdx?1-lo:0); // rolls above the ceiling collapse into it
+  const i=RARITY_INDEX[r.id],lo=i?cum[i-1]:0,natural=cum[i]-lo;
+  // Rolls above the ceiling mostly fall back into it; gateChance() of them still bite.
+  if(i>cIdx){const p=gateChance(r.id,ceilId);out[r.id]=natural*p;heldBack+=natural*(1-p)}
+  else out[r.id]=natural;
  }
+ if(ceilId)out[ceilId]+=heldBack;
  return out;
 };
-// One species' chance per cast: its tier's share split across the pool. The two boss tiers report
-// the whole tier, because (see rollCatch) a Mythical or Secret bite is always a fresh species.
+// One species' chance per cast with the gear you are holding: its tier's share split across the pool.
 function rateWith(spId,luck,ceiling){
  const sp=SPECIES_BY_ID[spId];if(!sp)return 0;
  const share=tierShares(luck,ceiling)[sp.rarity]||0;
- if(sp.rarity==='mythical'||sp.rarity==='secret')return share;
  const pool=SPECIES.filter(x=>x.rarity===sp.rarity).length;
  return pool?share/pool:0;
 }
@@ -214,22 +217,31 @@ const MUTATIONS={
 // Rods are permanent; luck biases rarity, control widens the reel bar, strength biases weight,
 // lure shortens the wait. Bait is consumed one per cast on top of the rod.
 const RODS=[
- // v304 (owner): the shelf is priced against the rebalanced catch values - the old ladder (21,650 for
- // everything) was about two hours of income. Rods + bags come to 122,100, which a 250-casts/h income
- // model puts at about 6.4 hours of steady fishing (see docs/SOCIAL-HUB.md). Rods are no longer only
- // luck: each one unlocks a rarity tier (ROD_GATE), so the ladder IS the progression and the Mythril
- // Rod is the only way to a Secret.
+ // v305 (owner): "i just want fishes hard to catch, not too much to farm on rods" - the v304 ladder
+ // (122,100) was six hours of farming. Rods + bags now come to 43,800, about two hours of steady
+ // fishing in the 250-casts/h model, so the grind is the fish, not the gear. The ladder still decides
+ // how much of the rare table you can reach (ROD_GATE).
  {id:'twig',name:'Training Rod',icon:'🎣',cost:0,luck:0,control:0,strength:0,lure:0},
- {id:'oak',name:'Oak Rod',icon:'🪵',cost:800,luck:.15,control:.1,strength:.1,lure:.1},
- {id:'brass',name:'Brass Rod',icon:'🥉',cost:2700,luck:.3,control:.18,strength:.22,lure:.2},
- {id:'silver',name:'Silver Rod',icon:'🥈',cost:8000,luck:.5,control:.28,strength:.35,lure:.3},
- {id:'golden',name:'Golden Rod',icon:'🥇',cost:21500,luck:.75,control:.38,strength:.5,lure:.45},
- {id:'mythril',name:'Mythril Rod',icon:'💠',cost:54000,luck:1.1,control:.5,strength:.7,lure:.6},
+ {id:'oak',name:'Oak Rod',icon:'🪵',cost:300,luck:.15,control:.1,strength:.1,lure:.1},
+ {id:'brass',name:'Brass Rod',icon:'🥉',cost:1000,luck:.3,control:.18,strength:.22,lure:.2},
+ {id:'silver',name:'Silver Rod',icon:'🥈',cost:3000,luck:.5,control:.28,strength:.35,lure:.3},
+ {id:'golden',name:'Golden Rod',icon:'🥇',cost:8000,luck:.75,control:.38,strength:.5,lure:.45},
+ {id:'mythril',name:'Mythril Rod',icon:'💠',cost:20000,luck:1.1,control:.5,strength:.7,lure:.6},
 ];
 const RODS_BY_ID=Object.fromEntries(RODS.map(r=>[r.id,r]));
-// v304 (owner): a rod does not only raise luck, it is what lets the boss tiers bite at all. The cart
-// lists the unlock on each rod, and rollCatch clamps a roll down to the best tier the rod allows.
+// v304/v305 (owner): a rod does not only raise luck, it is what lets the boss tiers bite. The cart
+// lists the unlock on each rod, and rollCatch holds a roll above the ceiling back most of the time.
 const ROD_GATE={rare:'oak',legendary:'silver',mythical:'golden',secret:'mythril'};
+// v305 (owner): "give a small little chance for lower rod to catch high rarity fishes". A roll one tier
+// above the rod's ceiling gets through 8% of the time, and every tier further up is worth 0.35 of the
+// one below it (2.8% for two tiers, 1% for three, 0.34% for four). So a training rod lands a rare now
+// and then, an Oak Rod can be surprised by a legendary, and a Secret on anything but the Mythril Rod
+// is a genuine one-in-a-million story.
+const GATE_ESCAPE=.08,GATE_DECAY=.35;
+const gateChance=(tier,ceiling)=>{
+ if(!ceiling||RARITY_INDEX[tier]<=RARITY_INDEX[ceiling])return 1;
+ return GATE_ESCAPE*Math.pow(GATE_DECAY,RARITY_INDEX[tier]-RARITY_INDEX[ceiling]-1);
+};
 const ROD_RANK=Object.fromEntries(RODS.map((r,i)=>[r.id,i]));
 // The highest rarity a rod can roll, and the rod that lifts a tier.
 const rodCeiling=rod=>{
@@ -329,10 +341,10 @@ const BAG_TIERS=[
  {tier:0,cap:120,cost:0,label:'Canvas Satchel'},
  // v296 (owner): the first upgrade has to be reachable in a session, so the ladder starts low and
  // grows gently (~2.2x, then ~2x) instead of jumping straight to five figures.
- {tier:1,cap:200,cost:1600,label:'Reinforced Creel'},
- {tier:2,cap:300,cost:4000,label:'Angler\'s Basket'},
- {tier:3,cap:400,cost:9500,label:'Deep Keep-Net'},
- {tier:4,cap:500,cost:20000,label:'Bottomless Creel'},
+ {tier:1,cap:200,cost:600,label:'Reinforced Creel'},
+ {tier:2,cap:300,cost:1400,label:'Angler\'s Basket'},
+ {tier:3,cap:400,cost:3000,label:'Deep Keep-Net'},
+ {tier:4,cap:500,cost:6500,label:'Bottomless Creel'},
 ];
 const BAG_MAX=BAG_TIERS[0].cap,COIN_MAX=1e9,CAST_GREEN=[.82,.96],CAST_PERFECT=[.87,.93];
 const bagTierOf=state=>{const t=state&&Number.isInteger(state.bagTier)?state.bagTier:0;return BAG_TIERS[Math.max(0,Math.min(BAG_TIERS.length-1,t))]};
@@ -360,26 +372,17 @@ function rollCatch(rng=Math.random,boost=false,mods){
  const wb=Math.max(0,Math.min(3,(mods&&mods.weight)||0));
  const mm=Math.max(0,Math.min(6,(mods&&mods.mutation)||1));
  const pick=()=>{const r=Math.pow(rng(),1/(1+luck));let acc=0;for(const t of RARITIES){acc+=t.weight;if(r<acc)return t.id}return 'common'};
- // v304: the rod decides which tiers can bite at all. Without a rod (older callers, the sim) nothing
- // is clamped, so base rates stay exactly what the Index prints.
+ // The rod decides which tiers can bite, but the ceiling is a filter, not a wall: a roll above it
+ // slips through GATE_ESCAPE of the time. That is the owner's "small chance for a lower rod to catch a
+ // high rarity fish" - an Oak Rod hooks a Legendary now and then, it just takes far more casts.
  const rod=mods&&typeof mods.rod==='string'?mods.rod:null;
  const ceiling=rod?rodCeiling(rod):null;
- const clamp=rid=>ceiling&&RARITY_INDEX[rid]>RARITY_INDEX[ceiling]?ceiling:rid;
+ const clamp=rid=>ceiling&&RARITY_INDEX[rid]>RARITY_INDEX[ceiling]&&rng()>=gateChance(rid,ceiling)?ceiling:rid;
  let rid=clamp(pick());
  if(boost){const other=clamp(pick());if(RARITY_INDEX[other]>RARITY_INDEX[rid])rid=other}
+ // The species inside the tier is a plain uniform draw, every time: no repeat protection anywhere.
  const pool=SPECIES.filter(s=>s.rarity===rid);
- // v304 (owner): "about two weeks" cannot hinge on one unlucky fish, so the two boss tiers hand out a
- // species you have not caught yet until that tier is finished. Their wall is then the catch rate
- // itself rather than a coupon-collector tail that could double or triple it. Callers without a
- // `seen` list (older saves, the sim) keep the plain uniform draw.
- let draw=pool;
- const seen=mods&&mods.seen?mods.seen:null;
- if(seen&&(rid==='mythical'||rid==='secret')){
-  const has=typeof seen.has==='function'?id=>seen.has(id):Array.isArray(seen)?id=>seen.includes(id):null;
-  const fresh=has?pool.filter(sp2=>!has(sp2.id)):[];
-  if(fresh.length)draw=fresh;
- }
- const sp=draw[Math.min(draw.length-1,Math.floor(rng()*draw.length))];
+ const sp=pool[Math.min(pool.length-1,Math.floor(rng()*pool.length))];
  const heft=Math.pow(rng(),2/(1+wb));
  const w=Math.round((sp.min+(sp.max-sp.min)*heft)*100)/100;
  const roll=rng();let acc=0,mut=null;
@@ -1389,9 +1392,7 @@ function landed(){
 function hook(){
  clearShake();
  const f=sceneFishing();f&&f.bite(false);
- // v304: pass what has already been caught so the boss tiers can avoid repeats.
- const st0=state(),seen0=Object.keys(st0.dex||{}).filter(k=>st0.dex[k]&&st0.dex[k].n>0);
- ui.roll=rollCatch(Math.random,!!(ui.castR&&ui.castR.perfect),{...ui.mods,seen:seen0});
+ ui.roll=rollCatch(Math.random,!!(ui.castR&&ui.castR.perfect),ui.mods);
  ui.reel=makeReel(ui.roll,Math.random,(ui.mods&&ui.mods.control)||0);
  ui.last=now();
  ui.autoSampleAt=0;
@@ -1655,7 +1656,6 @@ function renderIndex(){
  const eluck=(erod?erod.luck:0)+(ebait?ebait.luck:0);
  const rows=ORDER.map(sp=>{
   const r=rarityById(sp.rarity),d=st.dex[sp.id],found=d&&d.n>0;
-  const boss=sp.rarity==='mythical'||sp.rarity==='secret';
   const pct=rateWith(sp.id,eluck,ceil)*100;
   const odds='1 in '+fmt(Math.round(1/Math.max(1e-9,rateWith(sp.id,eluck,ceil))));
   const gated=RARITY_INDEX[sp.rarity]>ceilIdx,grod=gateRodFor(sp.rarity),gname=grod&&RODS_BY_ID[grod]?RODS_BY_ID[grod].name:'a better rod';
@@ -1663,11 +1663,11 @@ function renderIndex(){
    ${(u=>u?`<img class="fishing-dex-glyph fishing-art" style="filter:${found?'none':'brightness(0) opacity(.45)'}" src="${u}" alt="" draggable="false">`:`<span class="fishing-dex-glyph" style="filter:${found?`hue-rotate(${sp.hue}deg)`:'brightness(0) opacity(.45)'}">${sp.glyph}</span>`)(fishSpriteURL(sp,null,64))}
    <span class="fishing-dex-name">${found?esc(sp.name):'???'}<small>${sp.min}–${sp.max} kg${found?` · best ${d.bw} kg · ×${fmt(d.n)}`:''}${found&&d.mut.length?' · '+d.mut.map(m=>MUTATIONS[m].badge).join(''):''}</small></span>
    <span class="fishing-chip" style="background:${r.color}">${r.label}</span>
-   <span class="fishing-dex-rate" title="${gated?'Locked until you own the '+esc(gname):boss?'Your rod and bait rate for the whole '+r.label+' tier - each one you hook is one you have not caught yet':'Your rod and bait rate, before PERFECT timing'}">${gated?`🔒 <small>needs ${esc(gname)}</small>`:`${pct>=1?pct.toFixed(1)+'%':pct.toFixed(2)+'%'}<small>${odds}</small>`}</span>
+   <span class="fishing-dex-rate" title="${gated?'Mostly locked until you own the '+esc(gname)+' — about '+Math.round(GATE_ESCAPE*100)+'% of these bites still get through':'Your rod and bait rate, before PERFECT timing'}">${gated?`🔒 <small>needs ${esc(gname)}</small>`:`${pct>=1?pct.toFixed(1)+'%':pct.toFixed(2)+'%'}<small>${odds}</small>`}</span>
   </div>`;
  }).join('');
  const found=Object.keys(st.dex).filter(k=>st.dex[k].n>0).length;
- els.indexView.innerHTML=`<p class="fishing-dex-head">Discovered <b>${found}/${SPECIES.length}</b> · odds use your ${esc(erod?erod.name:'rod')}${ebait?' + '+esc(ebait.name):''} (before PERFECT timing). Mythical &amp; Secret show their whole tier — every one you hook is new.</p><div class="fishing-dex-list">${rows}</div>`;
+ els.indexView.innerHTML=`<p class="fishing-dex-head">Discovered <b>${found}/${SPECIES.length}</b> · odds use your ${esc(erod?erod.name:'rod')}${ebait?' + '+esc(ebait.name):''} (before PERFECT timing). Every fish is a straight roll — a better rod just reaches further up the table.</p><div class="fishing-dex-list">${rows}</div>`;
 }
 // 🏅 v295: the ten fishing titles. Worn above the head in the plaza for every player to see;
 // a title is only wearable once its requirement is actually met in the saved fishing blob.
@@ -1789,7 +1789,7 @@ return {
  RARITIES,SPECIES,DIFF,MUTATIONS,RODS,BAITS,BAG_MAX,BAG_TIERS,bagMax,bagTierOf,nextBagTier,buyBagUpgrade,CAST_GREEN,CAST_PERFECT,MAX_W,
  FISHING_TITLES,FISHING_TITLE_BY_ID,titleUnlocked,equipTitle,equippedTitle,discoveredSpecies,bestWeight,mutationKinds,
  speciesById,rarityById,rate,rateWith,tierShares,value,rollCatch,castRating,makeReel,reelStep,normalize,addCatch,
- ROD_GATE,ROD_RANK,rodCeiling,gateRodFor,
+ ROD_GATE,ROD_RANK,rodCeiling,gateRodFor,GATE_ESCAPE,
  buyRod,equipRod,buyBait,selectBait,sellFish,sellBulk,toggleLock,shouldAutoSell,showOffText,parseShowOff,showOffScale,
  showOffData,cleanShowOff,showOffEvent,rodSprite,rodSpriteURL,ROD_TIER_COLORS,
  // v301: the crop manifest, so tests can prove every drawing on disk is wired up.
