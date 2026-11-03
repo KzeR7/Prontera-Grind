@@ -161,8 +161,10 @@ window.PGSocialScene={async create(host,labels,callbacks){
     const dip=r.mode==='bite'?Math.max(0,Math.sin(now/90))*.3:r.mode==='reel'?Math.max(0,Math.sin(now/70))*.16:0;
     r.bob.position.set(r.x,.12+Math.sin(now/520)*.05-dip,r.z);
     const px=holder.sprite.position.x,pz=holder.sprite.position.z;
+    const base=Number.isFinite(holder.sprite.position.y)?holder.sprite.position.y:0;
+    const h=Number.isFinite(holder.height)&&holder.height>0?holder.height:3.2;
     const dx=r.x-px,dz=r.z-pz,d=Math.hypot(dx,dz)||1,ux=dx/d,uz=dz/d;
-    const hx=px+ux*.35,hz=pz+uz*.35,hy=1.1,tx2=px+ux*1.5,tz2=pz+uz*1.5,ty=2.05;
+    const hx=px+ux*.35,hz=pz+uz*.35,hy=base+h*.5,tx2=px+ux*1.5,tz2=pz+uz*1.5,ty=base+h*.76;
     const mx=(hx+tx2)/2,my=(hy+ty)/2,mz=(hz+tz2)/2,len=Math.hypot(tx2-hx,ty-hy,tz2-hz)||1;
     r.pole.position.set(mx,my,mz);r.pole.scale.set(1,len,1);
     r.pole.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3((tx2-hx)/len,(ty-hy)/len,(tz2-hz)/len));
@@ -190,9 +192,14 @@ window.PGSocialScene={async create(host,labels,callbacks){
    hide(keepPole){rig={mode:'off'};bobber.visible=false;mark.visible=false;if(!keepPole){pole.visible=false;line.visible=false}},
    off(){api.hide();glyph.visible=false;catchAnim=null},
   };
+  // v296: the rod is measured from the character's own feet and height. It used to use fixed
+  // world heights (1.1 / 2.15), so it sat at hip level on the ground and drifted up the body the
+  // moment the player sat on an angler chair - the same rod, two different heights.
   function placeRod(bx,by,bz,now){const p=selfPos();if(!p){pole.visible=line.visible=false;return}
+   const holder=players.get(callbacks.self());
+   const base=Number.isFinite(p.y)?p.y:0,h=Number.isFinite(holder&&holder.height)&&holder.height>0?holder.height:3.2;
    const dx=bx-p.x,dz=bz-p.z,d=Math.hypot(dx,dz)||1,ux=dx/d,uz=dz/d;
-   const hx=p.x+ux*.35,hz=p.z+uz*.35,hy=1.1,tx=p.x+ux*1.7,tz=p.z+uz*1.7,ty=2.15;
+   const hx=p.x+ux*.35,hz=p.z+uz*.35,hy=base+h*.5,tx=p.x+ux*1.7,tz=p.z+uz*1.7,ty=base+h*.78;
    const mx=(hx+tx)/2,my=(hy+ty)/2,mz=(hz+tz)/2,len=Math.hypot(tx-hx,ty-hy,tz-hz);
    pole.position.set(mx,my,mz);pole.scale.set(1,len,1);pole.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3((tx-hx)/len,(ty-hy)/len,(tz-hz)/len));
    for(let i=0;i<8;i++){const t=i/7,sag=Math.sin(t*Math.PI)*Math.max(.2,d*.06),px=tx+(bx-tx)*t,py=ty+(by+.12-ty)*t-sag,pz=tz+(bz-tz)*t;linePts[i*3]=px;linePts[i*3+1]=py;linePts[i*3+2]=pz}
@@ -427,17 +434,20 @@ window.PGSocialScene={async create(host,labels,callbacks){
  function putPlayer(state){let p=players.get(state.id);if(!p){
   const canvas=document.createElement('canvas');canvas.width=320;canvas.height=280;const ctx=canvas.getContext('2d'),texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.userData.socialId=state.id;sprite.center.set(.5,80/280);scene.add(sprite);
-  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');if(state.gm){name.textContent='🛠 '+state.name;name.title='Game Master';name.classList.add('social-gm')}else name.textContent=state.name;name.onclick=()=>callbacks.menu(state.name,state.id);const title=document.createElement('small');title.className='social-player-title';label.append(name,title);labels.append(label,bubble);
-  p={canvas,ctx,texture,sprite,label,bubble,title,state,loaded:'',paint:'',height:3.2,aura:null,auraTier:-1,lx:'',ly:'',lhid:null,bx:'',by:'',bhid:null,bubbleUntil:0,looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
+  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');if(state.gm){name.textContent='🛠 '+state.name;name.title='Game Master';name.classList.add('social-gm')}else name.textContent=state.name;name.onclick=()=>callbacks.menu(state.name,state.id);const title=document.createElement('small');title.className='social-player-title';const fishTitle=document.createElement('small');fishTitle.className='social-player-fish-title';label.append(name,title,fishTitle);labels.append(label,bubble);
+  p={canvas,ctx,texture,sprite,label,bubble,title,fishTitle,state,loaded:'',paint:'',height:3.2,aura:null,auraTier:-1,lx:'',ly:'',lhid:null,bx:'',by:'',bhid:null,bubbleUntil:0,looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
  }
  const nextTitle=state.look?.title||'';if(p.title.textContent!==nextTitle){p.title.textContent=nextTitle;p.title.hidden=!nextTitle}else if(p.title.hidden!==!nextTitle)p.title.hidden=!nextTitle;
+ // v296: the fishing title is a second line, so it never displaces the Hunt title.
+ const nextFish=state.look?.fishTitle||'';if(p.fishTitle.textContent!==nextFish){p.fishTitle.textContent=nextFish;p.fishTitle.hidden=!nextFish}else if(p.fishTitle.hidden!==!nextFish)p.fishTitle.hidden=!nextFish;
  p.state={...state,path:(state.path||[]).map(v=>({...v})),at:performance.now()};
  syncAura(p);
  const key=JSON.stringify([Object.hasOwn(allClasses,state.look?.cls)?state.look.cls:'Novice',PGWardrobe.normalize(state.look?.appearance)||PGWardrobe.defaults('m')]);
  if(p.requested!==key){p.requested=key;p.paint='';p.seq++;p.loading=false;p.retryAt=0;loadLooks(p,performance.now())}
  }
  function bubble(id,m){const p=players.get(id);if(!p)return;p.bubble.replaceChildren();p.bubble.classList.toggle('social-emotion',!!m.emotion);if(m.emotion){const img=document.createElement('img');img.src='assets/social/emotions/'+m.emotion+'.png';img.alt='/'+m.emotion;p.bubble.append(img)}else p.bubble.textContent=m.body;p.bubbleUntil=Math.max(performance.now(),clock)+6000;p.bhid=null}
- // Player-locked camera matching the main field game: drag orbits/tilts, pinch/wheel zooms, no map-roaming pan.
+ // Player-locked camera: the right mouse button orbits/tilts, pinch/wheel zooms, no map-roaming pan.
+ // v298 (owner): the LEFT button no longer rotates - a left click always means "walk here".
  const cameraState=()=>({angle,pitch,distance,panX:0,panZ:0,follow:true});
  function setCamera(values={}){const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
  if(Number.isFinite(values.angle))angle=((values.angle+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
@@ -446,12 +456,19 @@ window.PGSocialScene={async create(host,labels,callbacks){
  callbacks.camera?.(cameraState());}
  function resetCamera(){setCamera({angle:0,pitch:DEFAULT_PITCH,distance:DEFAULT_DISTANCE})}
  const ray=new T.Raycaster(),plane=new T.Plane(new T.Vector3(0,1,0),0);let down=null;const touches=new Map();
- function startDrag(e,moved=false){return {x:e.clientX,y:e.clientY,angle,pitch,moved}}
+ function startDrag(e,moved=false){
+  // v298: with a mouse only the right button (or ctrl+left, which macOS sends instead of a right
+  // click) orbits. Touch and pen keep dragging, because neither has a right button to use.
+  const touch=e.pointerType==='touch'||e.pointerType==='pen';
+  return {x:e.clientX,y:e.clientY,angle,pitch,moved,orbit:touch||e.button===2||(e.button===0&&e.ctrlKey===true)};
+ }
  host.oncontextmenu=e=>e.preventDefault();
  host.onpointerdown=e=>{e.preventDefault();host.setPointerCapture(e.pointerId);touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===1)down=startDrag(e);else if(down){down.moved=true;down.pinch=null}};
  host.onpointermove=e=>{if(!down||!touches.has(e.pointerId))return;touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
  if(touches.size===2){const a=[...touches.values()],span=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);if(down.pinch&&span>0)setCamera({distance:distance*down.pinch/span});down.pinch=span;down.moved=true}
- else if(down.moved||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7){setCamera({angle:down.angle-(e.clientX-down.x)*.006,pitch:down.pitch+(e.clientY-down.y)*.28});down.moved=true}};
+ else if(down.orbit&&(down.moved||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)){setCamera({angle:down.angle-(e.clientX-down.x)*.006,pitch:down.pitch+(e.clientY-down.y)*.28});down.moved=true}
+ // A left drag is a dead zone: it cancels the click-to-walk, but never moves the camera.
+ else if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)down.moved=true};
  host.onpointerup=e=>{if(!touches.has(e.pointerId))return;touches.delete(e.pointerId);if(down&&!down.moved&&!(e.button>0)){const rect=host.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
  const pokerSeatHit=pokerStools.map(mesh=>{const point=ray.ray.intersectBox(mesh.userData.pokerSeatBounds,new T.Vector3());return point?{mesh,distance:point.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];
  const tableHit=pokerUnits.map(u=>{const dp=ray.ray.intersectBox(u.dealerBounds,new T.Vector3()),tp=ray.ray.intersectBox(u.tableBounds,new T.Vector3());const pt=dp||tp;return pt?{u,dealerDist:dp?dp.distanceTo(ray.ray.origin):Infinity,distance:pt.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];

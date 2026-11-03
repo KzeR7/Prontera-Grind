@@ -69,6 +69,9 @@ body.social-open #bgmPlayer{display:none!important}
 /* Names and equipped titles stay below the feet; only speech uses a box. */
 .social-player-title{display:block;margin-top:2px;color:#ffe6a2;font-size:11px;text-shadow:0 1px 3px #000,0 0 5px #000}
 .social-player-title[hidden],.social-bubble[hidden],.social-player-label[hidden]{display:none}
+/* v296: the fishing title is its own line under the name, so wearing one never hides the Hunt title. */
+.social-player-fish-title{display:block;margin-top:1px;color:#9fe3ff;font-size:10.5px;letter-spacing:.2px;text-shadow:0 1px 3px #000,0 0 5px #000}
+.social-player-fish-title[hidden]{display:none}
 .social-bubble.social-emotion{background:transparent;border:0;box-shadow:none;border-radius:0;padding:0;margin:0;min-width:48px}
 
 #socialCameraPanel{position:absolute;z-index:4;right:16px;top:82px;width:220px;max-width:calc(100% - 32px);padding:12px;background:#213a3bf5;color:#f2ecdb;border:1px solid #c7ccba;border-radius:5px;font:12px/1.5 "Trebuchet MS",sans-serif}
@@ -308,9 +311,10 @@ body.social-open #bgmPlayer{display:none!important}
 .poker-dock button:focus-visible,.poker-seat.open:focus-visible,#socialPokerNav button:focus-visible,.poker-leave-actions button:focus-visible{outline:3px solid #ffe39a;outline-offset:2px}
 .poker-turn-pill span,.poker-turn-pill strong{font-size:12px}.poker-turn-pill.is-urgent .poker-turn-track span{background:#ef7664}
 .poker-raise-box{padding:4px 7px;gap:7px}.poker-raise-box input[type=range]{width:100px}.poker-presets button{font-size:10.5px;padding:4px 6px}
-#socialPokerLeaveWarning[hidden]{display:none!important}
-#socialPokerLeaveWarning{position:absolute;inset:0;z-index:100;display:grid;place-items:center;padding:18px;background:#06100dcc;backdrop-filter:blur(3px);font:13px/1.5 "Trebuchet MS",sans-serif}
+#socialPokerLeaveWarning[hidden],#socialFishLeaveWarning[hidden]{display:none!important}
+#socialPokerLeaveWarning,#socialFishLeaveWarning{position:absolute;inset:0;z-index:100;display:grid;place-items:center;padding:18px;background:#06100dcc;backdrop-filter:blur(3px);font:13px/1.5 "Trebuchet MS",sans-serif}
 .poker-leave-card{box-sizing:border-box;width:min(440px,100%);padding:25px;border:1px solid #d4b56d;border-radius:15px;background:linear-gradient(150deg,#203a35,#101f27);color:#eef4ec;box-shadow:0 24px 70px #000b}
+.fish-leave-card{border-color:#7fd3e8}.fish-leave-card .poker-leave-eyebrow{color:#9fe3ff}
 .poker-leave-eyebrow{font-size:10px;font-weight:bold;letter-spacing:1.5px;color:#e8c77d}.poker-leave-card h2{font:25px Georgia,serif;color:#fff0c6;margin:8px 0 12px}.poker-leave-card p{margin:8px 0}.poker-leave-note{font-size:12px;color:#b9d0c8}.poker-leave-actions{display:flex;gap:10px;margin-top:22px}.poker-leave-actions button{flex:1;min-height:42px}
 @keyframes pokerDeal{from{opacity:0;transform:translate(16px,-22px) rotate(-9deg) scale(.86)}to{opacity:1;transform:translate(0,0) rotate(0) scale(1)}}
 @keyframes pokerReveal{from{opacity:.25;transform:rotateY(88deg) scale(.94)}to{opacity:1;transform:rotateY(0) scale(1)}}
@@ -394,3 +398,7 @@ body.social-open #bgmPlayer{display:none!important}
    as an empty square box on Windows 10 and older Android. */
 .fishcoin{display:inline-block;width:.92em;height:.92em;border-radius:50%;vertical-align:-.08em;background:radial-gradient(circle at 35% 30%,#ffe9a0 0%,#f6c23d 55%,#b97f16 100%);border:1px solid #8a5c10;box-shadow:inset 0 0 0 1.5px #d9a62e;position:relative}
 .fishcoin::after{content:"";position:absolute;inset:24%;border-radius:50%;border:1px solid rgba(122,79,13,.8)}
+
+/* v297: pond announcements in Local chat - a centred system line, not a player message. */
+.social-line.social-line-sys{display:block;padding:5px 8px;margin:3px 0;border-left:2px solid #7fd3e8;border-radius:4px;background:#7fd3e815;color:#cdeaf5;font-style:italic}
+.social-line.social-line-sys time{opacity:.55;margin-right:6px;font-style:normal}

@@ -26,6 +26,9 @@ const LEDGER_REASONS=new Set(['blind','call','raise','win']);
 // drawn, so an unknown id simply renders nothing.
 const FISH_MODES=new Set(['flight','wait','bite','reel','ready']);
 const FISH_MUTATIONS=new Set(['shiny','sparkling','frozen','electric','ghostly','golden','prismatic']);
+// v297: the biggest catch in the catalog is a 1.8 t whale shark, so the show-off weight clamp
+// follows the game's weight ceiling instead of the old 60 kg-era 999.
+const MAX_FISH_W=5000;
 const ledgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id);
 // Only public World text/emotions are durable. Whispers and Local never enter this record.
 export function cleanWorldHistory(value){
@@ -61,6 +64,8 @@ export class SocialRoom {
   this.clients=new Map();this.history=cleanWorldHistory(opts.history);this.serial=Math.max(0,...this.history.map(m=>m.id));
   this.onWorldMessage=opts.onWorldMessage||(()=>{});
   this.onPokerLedger=opts.onPokerLedger||(()=>{});
+  // v296: optional persistence for plaza reservations, so they survive a Durable Object eviction.
+  this.onResume=opts.onResume||null;
   this.ledgerQueues=new Map(cleanPokerLedgerQueues(opts.ledgers));
   this.ledgerWrites=Promise.resolve();this.ledgerDirty=new Set();this.ledgerVersions=new Map();
   this.tables=new Map();this.timers=new Map();this.resumes=new Map();
@@ -257,7 +262,7 @@ export class SocialRoom {
  // v225: lv drives the level aura and speed is the character's field run speed. Both are
  // presentation hints: lv is clamped to a display tier input, speed to the shared walk band, so a
  // client cannot make itself faster than the fastest legal character in the plaza.
- cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED))};}
+ cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',fishTitle:typeof look.fishTitle==='string'?look.fishTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED))};}
  // `viewer` is who is asking: whether this person is a friend is a fact about the two accounts, so
  // the same player is flagged for one client and not for another. Omit it for a neutral snapshot.
  snapshot(c,viewer=null){R.advance(c,this.now());return {id:c.id,name:c.name,gm:c.gm,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat,pokerSeat:c.pokerSeat,fish:c.fish||null,friend:!!(viewer&&viewer!==c&&viewer.friends.has(c.id))};}
@@ -270,7 +275,11 @@ export class SocialRoom {
   // leave has already cleared the room; a replacement tab may inherit the same reservation.
   if(room&&!c.released){
    R.advance(c,now);
-   this.resumes.set(c.id,{room,x:c.x,z:c.z,dir:c.dir,path:c.path.map(p=>({...p})),sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look,expires:now+RESUME_MS,seatExpires:now+POKER_RESUME_MS});
+   const saved={room,x:c.x,z:c.z,dir:c.dir,path:c.path.map(p=>({...p})),sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look,expires:now+RESUME_MS,seatExpires:now+POKER_RESUME_MS};
+   this.resumes.set(c.id,saved);
+   // v296: also hand it to storage. A Durable Object can be evicted while nobody is connected,
+   // which used to empty this Map and turn the next reconnect into a fresh join at the entrance.
+   this.onResume?.(c.id,saved);
    if(Number.isInteger(c.pokerSeat))this.tables.get(room)?.[Math.floor(c.pokerSeat/6)]?.markArrived(c.id,false,now);
    this.clients.delete(c.id);
    this.broadcast({type:'left',id:c.id,room},p=>p.room===room);
@@ -291,6 +300,7 @@ export class SocialRoom {
  takeResume(id,now){
   const saved=this.resumes.get(id);if(!saved)return null;
   this.resumes.delete(id);
+  this.onResume?.(id,null);
   if(now>saved.expires){
    if(Number.isInteger(saved.pokerSeat))this.tables.get(saved.room)?.[Math.floor(saved.pokerSeat/6)]?.stand(id,now);
    this.broadcastPoker(saved.room,now);this.schedulePoker(saved.room);
@@ -334,7 +344,7 @@ export class SocialRoom {
   if(m.type==='ping')return this.send(c,{type:'pong'});
   if(m.type==='poker_ledger_ack')return this.ackPokerLedgers(c,m);
   if(m.type==='friends'){this.syncFriends(c,m.ids,now);return}
-  if(m.type==='leave'){this.resumes.delete(c.id);c.released=true;this.leave(c);return this.send(c,{type:'room',room:0,players:[]})}
+  if(m.type==='leave'){this.resumes.delete(c.id);this.onResume?.(c.id,null);c.released=true;this.leave(c);return this.send(c,{type:'room',room:0,players:[]})}
   if(m.type==='join'){
    const look=this.cleanLook(m.look);if(!look)return;
    if(c.room){if(c.resumed)this.sendRoom(c,now);return;}
@@ -377,10 +387,20 @@ export class SocialRoom {
    if(now-(c.showOffAt||0)<1500)return;
    c.showOffAt=now;
    if(typeof m.sp!=='string'||!/^[a-z][a-z0-9]{1,23}$/.test(m.sp))return;
-   const w=Math.round(Math.max(.01,Math.min(999,Number(m.w)||0))*100)/100;
+   const w=Math.round(Math.max(.01,Math.min(MAX_FISH_W,Number(m.w)||0))*100)/100;
    if(!(w>0))return;
    const mut=typeof m.mut==='string'&&FISH_MUTATIONS.has(m.mut)?m.mut:null;
    return this.broadcast({type:'showoff',from:c.id,name:c.name,sp:m.sp,w,mut,perfect:m.perfect===true,at:now},p=>p.room===c.room);
+  }
+  // v297: monster and secret catches are announced in the room's Local chat. The weight and the
+  // species slug are validated exactly like the show-off; the display name is resolved client side.
+  if(m.type==='fishbrag'&&c.room){
+   if(now-(c.bragAt||0)<3000)return;
+   if(typeof m.sp!=='string'||!/^[a-z][a-z0-9]{1,23}$/.test(m.sp))return;
+   const w=Math.round(Math.max(.01,Math.min(MAX_FISH_W,Number(m.w)||0))*100)/100;
+   if(!(w>0))return;
+   c.bragAt=now;
+   return this.broadcast({type:'fishnote',from:c.id,name:c.name,sp:m.sp,w,kind:m.kind==='secret'?'secret':'mega',at:now},p=>p.room===c.room);
   }
   if(m.type==='sit'&&c.room){if(!this.requirePokerLeave(c,m))return;if(now-c.moveAt<100)return;c.moveAt=now;R.advance(c,now);this.standPoker(c,now,true);c.path=[];c.seat=null;c.sit=!c.sit;return this.broadcastPlayer(c,p=>p.room===c.room)}
   if(m.type==='poker_watch'&&c.room){return this.send(c,this.pokerPayload(c.room,c.id,now))}

@@ -36,11 +36,38 @@ for(const sp of F.SPECIES){
  assert(sp.glyph&&sp.name);
 }
 for(const r of F.RARITIES)assert(F.SPECIES.some(sp=>sp.rarity===r.id),'every rarity has at least one fish');
-// v288: the index holds 70 species and the 14 original ids survive with their rarities.
-assert.equal(F.SPECIES.length,70,'70 fish species');
+// v297: the index holds 100 species and the 14 original ids survive with their rarities.
+assert.equal(F.SPECIES.length,100,'100 fish species');
+assert.equal(new Set(F.SPECIES.map(sp=>sp.id)).size,100,'no duplicate species ids in a 100-entry index');
+// v297: every species is either a glyph body or one of the named body plans the renderer paints.
+const SHAPES=new Set(['fish','tropical','puffer','shark','whale','shrimp','lobster','crab','squid','octopus','tadpole','gar','eel','hammer','saw','ray','sunfish','thresher','goblin','sturgeon','angler','deep']);
+for(const sp of F.SPECIES)if(sp.shape)assert(SHAPES.has(sp.shape),'species '+sp.id+' has a body plan the renderer knows');
+// v297: shapes are what stop the index from being 100 recolours - at least ten families, each
+// with more than one member or a glyph fallback, and no single body plan dominating the catalog.
+const shapeCounts={};
+for(const sp of F.SPECIES){const k=sp.shape||('glyph:'+sp.glyph);shapeCounts[k]=(shapeCounts[k]||0)+1}
+assert(Object.keys(shapeCounts).length>=12,'the catalog uses at least twelve distinct body plans');
+for(const k of ['hammer','thresher','goblin','saw','ray','sunfish','eel','sturgeon','angler','gar','deep'])assert(shapeCounts[k]>=2,'the '+k+' body plan is used by more than one species');
+const plainSpecies=F.SPECIES.filter(sp=>sp.shape?sp.shape==='fish'||sp.shape==='tropical':sp.glyph==='🐟'||sp.glyph==='🐠').length;
+assert(plainSpecies<=50,'fewer than half the catalog is the plain fish body (got '+plainSpecies+')');
+assert(plainSpecies<F.SPECIES.length-40,'at least forty species use a named body plan');
+// v297: weight scales up to a pond-sized giant and the mega flag marks the announced fish.
+assert.equal(F.MAX_W,1800,'the heaviest species is a 1.8 t whale shark');
+const mega=F.SPECIES.filter(sp=>sp.mega);
+assert.equal(mega.length,10,'ten species are pond-monster scale');
+for(const sp of mega)assert(sp.max>=100,'a mega species is heavy: '+sp.id);
+assert(mega.some(sp=>sp.id==='whaleshark'),'the whale shark is one of the giants');
+// v297: the three heaviest fish in the game are secret-rarity giants, which is why a secret catch
+// is announced in Local chat whatever its weight.
+const heaviest=F.SPECIES.slice().sort((a,b)=>b.max-a.max).slice(0,3);
+assert(heaviest.every(sp=>sp.rarity==='secret'),'the three heaviest species are secret rarities');
+assert(['legendary','mythical','secret'].includes(F.SPECIES.slice().sort((a,b)=>b.max-a.max)[3].rarity),'the next heaviest is still a boss-tier fish');
+assert(F.SPECIES.filter(sp=>sp.rarity==='secret').length>=4,'the secret pool still has its own fish');
+assert(F.showOffScale(1800)>=4.9,'the biggest catch shows off at pond scale');
+assert(F.showOffScale(1800)>F.showOffScale(300)&&F.showOffScale(300)>F.showOffScale(60),'show-off size keeps climbing into the giants');
 const legacy={minnow:'common',carp:'common',smelt:'common',goby:'common',bream:'uncommon',perch:'uncommon',trout:'uncommon',koi:'rare',pike:'rare',tetra:'rare',fountainfish:'legendary',arowana:'legendary',leviathan:'mythical',poring:'secret'};
 for(const [id,rar] of Object.entries(legacy))assert.equal(F.speciesById(id)?.rarity,rar,'v287 species '+id+' is unchanged');
-// Displayed catch rates: each rarity's weight split across its pool; all 70 sum to 1.
+// Displayed catch rates: each rarity's weight split across its pool; all 100 sum to 1.
 let rateSum=0;
 for(const sp of F.SPECIES){const r=F.rate(sp.id);assert(r>0&&r<1);rateSum+=r}
 assert(Math.abs(rateSum-1)<1e-9,'catch rates sum to 100%');
@@ -273,12 +300,14 @@ assert.equal(st.bag.length,F.BAG_MAX);
 
 // --- v295: bag tiers, fishing titles, painted rods and data show-offs ---------------------
 assert.deepEqual(F.BAG_TIERS.map(t=>t.cap),[120,200,300,400,500],'the bag ladder is 120→200→300→400→500');
-assert.deepEqual(F.BAG_TIERS.map(t=>t.cost),[0,2500,8000,25000,75000],'each tier has its own price');
+// v296 (owner): cheap to start, rising gently - the first upgrade is affordable in a session.
+assert.deepEqual(F.BAG_TIERS.map(t=>t.cost),[0,300,700,1500,3000],'each tier has its own price');
+for(let i=2;i<F.BAG_TIERS.length;i++)assert(F.BAG_TIERS[i].cost>F.BAG_TIERS[i-1].cost,'prices rise with the ladder');
 assert.equal(F.BAG_MAX,120,'BAG_MAX stays the base tier for older callers and saves');
 st=F.normalize(null);
 assert.equal(F.bagMax(st),120);assert.equal(F.bagTierOf(st).tier,0);assert.equal(F.nextBagTier(st).cap,200);
 st.coins=100;assert.deepEqual(F.buyBagUpgrade(st),{ok:false,reason:'coins'},'an upgrade needs its Fishcoins');
-st.coins=2500;const up1=F.buyBagUpgrade(st);
+st.coins=300;const up1=F.buyBagUpgrade(st);
 assert(up1.ok&&up1.cap===200);assert.equal(st.coins,0,'an upgrade costs exactly its price');
 assert.equal(F.bagMax(st),200,'the bought capacity is live');
 st.coins=1e9;
@@ -296,6 +325,9 @@ assert.equal(F.normalize({bagTier:'x'}).bagTier,0);
 assert.equal(F.normalize({bagTier:1,bag:Array.from({length:300},(_,i)=>({sp:'minnow',w:.2,id:'b'+i}))}).bag.length,200,'normalization keeps the fish the owned tier allows');
 // Ten fishing titles, earned from the saved fishing blob and worn above the head.
 assert.equal(F.FISHING_TITLES.length,10,'ten fishing titles');
+// v297: the apex title tracks the catalog size instead of a hardcoded 70.
+assert.equal(F.FISHING_TITLE_BY_ID['apex-angler'].goal,100,'Apex Angler wants all 100 species');
+assert(F.FISHING_TITLE_BY_ID['pond-legend'].goal<100,'Pond Legend is a milestone before the apex');
 assert.equal(new Set(F.FISHING_TITLES.map(t=>t.id)).size,10,'title ids are unique');
 assert.equal(new Set(F.FISHING_TITLES.map(t=>t.name)).size,10,'title names are unique');
 st=F.normalize(null);
@@ -404,6 +436,12 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  // A show-off with a weight label draws and expires without error.
  scene.fishing.showFish(1,{spId:'koi',mut:'shiny',scale:2,label:'4.25 kg',glow:'#ffd24d',ms:1200});
  for(let i=0;i<20;i++)frame(now+=100);
+ // v296: the fishing title is its own line, so wearing one never hides the Hunt title.
+ scene.putPlayer({id:3,name:'Titled',x:pond.x+2,z:pond.z-pond.d/2-1.7,dir:0,sit:false,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},title:'Dungeon Reaper',fishTitle:'🎣 Heavy Hook'}});
+ frame(now+=100);
+ const titleEl=w.document.querySelector('.social-player-title:not([hidden])'),fishEl=w.document.querySelector('.social-player-fish-title:not([hidden])');
+ assert(titleEl&&titleEl.textContent==='Dungeon Reaper','the Hunt title keeps its own line');
+ assert(fishEl&&fishEl.textContent==='🎣 Heavy Hook','the fishing title gets a second line');
  // A player who leaves takes their bobber with them.
  scene.fishing.setRig(2,{on:true,pond:1,x:pond.x,z:pond.z,mode:'wait'});
  frame(now+=100);
@@ -446,7 +484,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  const buyBtn=d2.querySelector('#fishingShopView button[data-bagup]');
  assert(buyBtn,'the shop offers the next bag tier');
  assert.equal(buyBtn.disabled,true,'it cannot be bought without the Fishcoins');
- hostS.fishing.coins=2500;FISH.openBag();d2.getElementById('fishingGearLine').onclick();
+ hostS.fishing.coins=300;FISH.openBag();d2.getElementById('fishingGearLine').onclick();
  const buy2=d2.querySelector('#fishingShopView button[data-bagup]');
  assert.equal(buy2.disabled,false,'it becomes affordable');
  buy2.onclick();
@@ -454,6 +492,49 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert.equal(FISH.bagMax(hostS.fishing),200);
  assert.equal(hostS.fishing.coins,0,'the tier is paid for once');
  assert(/Reinforced Creel/.test(d2.getElementById('fishingShopView').textContent),'the shop reflects the new tier');
+ // --- Part C2: Auto fishing survives being moved (the AFK spawn teleport) -----------------
+ let frame2=null,clock2=1000,moved=null;
+ w2.requestAnimationFrame=cb=>{frame2=cb};
+ w2.cancelAnimationFrame=()=>{frame2=null};
+ w2.performance.now=()=>clock2;
+ const pondA=w2.PGSocialRules.PONDS[0],rimA={x:pondA.x,z:pondA.z-pondA.d/2-1.7},me={...rimA};
+ FISH.bind({host:()=>hostS,scene:()=>null,self:()=>({x:me.x,z:me.z}),moveTo:(x,z)=>{moved={x,z}},notice:()=>{},save:()=>{}});
+ FISH.toggle();
+ assert.equal(FISH.phase,'ready','standing on the rim starts a session ready to cast');
+ d2.getElementById('fishingAutoBtn').onclick();
+ assert.equal(FISH.auto,true,'Auto is on');
+ // The server respawns the angler at the plaza entrance: ~30 units from the pond.
+ me.x=0;me.z=12;
+ frame2(clock2+=100);
+ assert(moved,'Auto walks back to the pond instead of cancelling the session');
+ assert.equal(FISH.phase,'walking','the session is in its walk-back phase');
+ assert(Math.hypot(moved.x-pondA.x,moved.z-pondA.z)<12,'the walk targets the pond, not the spawn');
+ // Reaching the rim resumes fishing.
+ me.x=rimA.x;me.z=rimA.z;
+ frame2(clock2+=100);
+ assert.equal(FISH.phase,'ready','Auto fishing carries on after the walk back');
+ // A manual session still stops with the v294 message, exactly as before.
+ d2.getElementById('fishingAutoBtn').onclick();
+ assert.equal(FISH.auto,false,'Auto is off');
+ me.x=0;me.z=12;
+ frame2(clock2+=100);
+ assert.equal(FISH.phase,'off','without Auto, walking away still ends the session');
+ me.x=rimA.x;me.z=rimA.z;
+ // --- Part C3: the leave-warning's stop hook (v297) ---------------------------------------
+ // Clicking away no longer blocks the click with a chat nag; the plaza asks and then calls this.
+ let said=[];
+ FISH.bind({host:()=>hostS,scene:()=>null,self:()=>({x:rimA.x,z:rimA.z}),moveTo:()=>{},notice:m=>said.push(m),save:()=>{}});
+ FISH.toggle();
+ assert.equal(FISH.phase,'ready','a bound session is live for the stop hook');
+ FISH.stop('🎣 Line reeled in — you stepped away from the pond.');
+ assert.equal(FISH.phase,'off','stop() reels the line in, which is what the confirm button calls');
+ assert(said.some(m=>/Line reeled in/.test(m)),'stop() passes its message to the chat notice');
+ FISH.stop('again');
+ assert.equal(said.filter(m=>/again/.test(m)).length,0,'stopping an idle session says nothing');
+ // The announcement rule: mega species and the secret pool, and nothing else.
+ const announced=F.SPECIES.filter(sp=>sp.mega||sp.rarity==='secret').map(sp=>sp.id);
+ assert(announced.includes('whaleshark')&&announced.includes('poring'),'giants and secrets are announced');
+ assert(!announced.includes('minnow')&&!announced.includes('koi'),'ordinary catches stay quiet in chat');
  dom2.window.close();
  // --- Part D: the page wires v295 up (save shape, cache versions, build tag) ---------------
  const page=fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
@@ -464,8 +545,41 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/const fishTitleIds=\['dockhand'/.test(page),'the page sanitizer whitelists the fishing titles');
  for(const t of F.FISHING_TITLES)assert(page.includes("'"+t.id+"'"),'index.html knows the title '+t.id);
  assert(/f\.fishing\.settings=\{fish:true,/.test(page),'pond fish are forced on in the page sanitizer');
+ // v297 (owner bug): the sanitiser used to drop autoSell, so it never survived a reload.
+ assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
+ assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=295'),asset+' is versioned at v295');
- assert(/haven-v295/.test(page),'the login card names the v295 build');
- console.log('PASS social fishing: ponds+chairs, 70-fish catalog with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs');
+  assert(page.includes(asset+'?v=298'),asset+' is versioned at v298');
+ assert(/haven-v298/.test(page),'the login card names the v298 build');
+ // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
+ const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
+ // Clicking away from the pond asks first, exactly like the poker table, instead of nagging chat.
+ assert(!social.includes('press ✕ Stop fishing before moving'),'chat no longer nags about the X button');
+ assert(social.includes('function confirmFishingStop('),'the plaza has a fishing leave-confirm');
+ assert(social.includes('function finishFishingStop('),'the confirm resolves to stay or reel in');
+ for(const id of ['socialFishLeaveWarning','fishLeaveStay','fishLeaveConfirm'])
+  assert(social.includes(id),'the leave-confirm has #'+id);
+ assert(/fishLeaveWarning\.innerHTML='<section class="poker-leave-card fish-leave-card"/.test(social),'it reuses the poker dialog layout');
+ assert(/\.key==='Escape'\).*finishFishingStop\(false\)/.test(social),'Escape keeps the line in the water');
+ assert(social.includes('fishingBlocked(()=>moveAction(x,z))'),'a blocked walk is retried after confirming');
+ assert(social.includes('fishingBlocked(()=>seatAction(id))'),'a blocked seat is retried after confirming');
+ assert(social.includes('fishingBlocked(()=>toggleSit())'),'a blocked sit is retried after confirming');
+ // The module can be told to reel in by that dialog.
+ const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');
+ assert(/stop:message=>stopFishing\(message\)/.test(mod),'the fishing module exposes stop()');
+ assert(mod.includes("typeof opts.announce==='function'"),'a mega/secret catch fires the announce hook');
+ assert(/\(sp\.mega\|\|sp\.rarity==='secret'\)/.test(mod),'only mega and secret species are announced');
+ // Local-chat announcements: the worker relays, the plaza renders a system line.
+ const room=fs.readFileSync(path.join(__dirname,'..','..','workers','social','room.mjs'),'utf8');
+ assert(room.includes("m.type==='fishbrag'"),'the room accepts a fish announcement');
+ assert(room.includes("type:'fishnote'"),'the room relays it as a fishnote');
+ assert(/MAX_FISH_W=5000/.test(room),'the relay clamp follows the new weight ceiling');
+ assert(/Math\.min\(MAX_FISH_W,Number\(m\.w\)/.test(room),'a 1.8 t show-off is no longer clamped to 999 kg');
+ assert(social.includes("m.type==='fishnote'"),'the plaza listens for fishnote');
+ assert(social.includes('function pushFishNote('),'the plaza turns it into a Local line');
+ assert(social.includes('function fishingAnnounce('),'binding hands the module an announce callback');
+ assert(/announce:fishingAnnounce/.test(social),'the fishing bind receives it');
+ assert(/\.social-line-sys/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'system lines have their own style');
+ assert(/socialFishLeaveWarning/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'the fishing dialog shares the poker overlay style');
+ console.log('PASS social fishing: ponds+chairs, 100-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches');
 })().catch(e=>{console.error(e);process.exitCode=1});

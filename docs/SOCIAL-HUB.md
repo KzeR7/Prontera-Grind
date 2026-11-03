@@ -313,6 +313,131 @@ not look dead to proxies.
 together; walk-away is still blocked (press ✕ Stop fishing), but `seatAction` and
 `toggleSit` no longer are — the pond-side angler chairs are now usable mid-cast.
 
+## Owner fixes after v295 (haven-v296)
+
+**The rod sits at the same height in both stances.** `placeRod` (and the remote rig) used fixed
+world heights (1.1 / 2.15), so the rod read as hip-level on the ground and drifted up the body
+the moment the angler sat on a pond chair. Both now measure from the character's own feet and
+height (`base + height*0.5` for the grip, `*0.78` for the tip), so one rod has one height.
+
+**Two title lines, not one slot.** v295 wore an equipped fishing title *instead of* the Hunt
+title. `look` now carries `title` and `fishTitle` separately (the worker sanitises both), and
+the nameplate paints the Hunt title on its own line with the fishing title under it — so
+wearing one never hides the other.
+
+**The Titles tab scrolls.** `#fishingTitlesView` had been left out of the panel's flex and
+`overflow:auto` selectors, so the list was clipped to the window. It shares the Index/Shop
+rules now.
+
+**Cheaper bag ladder.** The owner found 2,500 / 8,000 / 25,000 / 75,000 unreachable. v296 is
+**300 / 700 / 1,500 / 3,000** — rising gently, with the first upgrade affordable in a session.
+
+**AFK fishing recovers instead of surrendering.** v295 widened the resume window, which was not
+enough on its own:
+
+- The reservation is now **durable** (`onResume` → Durable Object storage under `resume-v1:`,
+  reloaded in the constructor and dropped once used or expired), so an eviction between the drop
+  and the reconnect no longer respawns the angler.
+- With **Auto** on, being moved no longer ends the session: `walkBackToPond` sends the character
+  back to the rim and fishing continues (a 9 s guard stops the loop if no route exists). A manual
+  session still stops with *"You stepped away from the pond."*, exactly as v294 promised.
+
+## A hundred species, pond giants and quiet exits (haven-v297)
+
+Six owner requests landed together: leaving the pond asks before it reels in, the index grew to 100
+species that no longer look like recolours, weights run up to a pond-sized 1.8 t, mega and secret
+catches are announced in Local chat, auto-sell actually persists, and the window got quieter.
+
+**Click away = a question, not a nag.** `stopFishing` was never the problem - the problem was
+`fishingBlocked()` in `assets/social.js`, which aborted the click and wrote *"🎣 You are fishing —
+press ✕ Stop fishing before moving."* into chat every time. It now opens `#socialFishLeaveWarning`
+(the poker `poker-leave-card` layout, `.fish-leave-card` accent): **Keep fishing** or
+**Reel in & stop**. Escape, backdrop click and **Keep fishing** all leave the line in the water;
+confirming calls the new `PGSocialFishing.stop(message)`, reels in, then replays the action that was
+blocked - `moveAction`, `seatAction`, `toggleSit`, `pokerSeatAction` and **Return to field** all pass
+themselves as the retry, so the click the player made still happens. Focus moves into the dialog and
+Tab cycles the two buttons, same as poker.
+
+**100 species, 25 body plans.** The catalog used to be one painted fish recoloured 70 times. Every
+species tuple may now carry a seventh field, its `shape`:
+
+| Shape | What it is | Species |
+| --- | --- | --- |
+| `fish` / `tropical` | the original torpedo and reef bodies | 46 |
+| `deep` | v297 disc body - short and tall with veil fins | koi, betta, tetra, platies, mollies, guppies, angel, crappie, pumpkinseed, killi, seraph koi |
+| `gar` | needle jaw, fins set back at the tail | gar, pike, snakehead, bowfin, walleye |
+| `eel` | one long tapering ribbon with a dorsal fringe | reed eel, canal moray |
+| `hammer` | wide cephalofoil across the skull | hammerhead pup, great hammerhead |
+| `thresher` | whip tail as long as the body | whiptail thresher, pond leviathan |
+| `goblin` | long flat snout over protruding jaws | goblin shark, baphomet bass |
+| `saw` | flat disc with a toothed rostrum | sawfin ray, ghost paddlefish |
+| `ray` | broad wings, whip tail, cephalic horns | plaza manta, giant stingray, moonlight ray |
+| `sunfish` | disc with tall fused dorsal/anal fins | ocean sunperch, sunfish, discus |
+| `sturgeon` | heterocercal tail, scutes, barbels, long snout | ribbon sturgeon, beluga sturgeon |
+| `angler` | huge jaw, teeth, glowing illicium | abyss angler, abyssal angler |
+| `whale` | massive body, throat ridges, whale-shark spots | cobble whale, whale shark |
+| glyph shapes | `puffer`, `shark`, `crab`, `lobster`, `squid`, `octopus`, `tadpole`, ... | the rest |
+
+Body plans are drawn by `fishSprite` in `assets/social-fishing.js`; `sp.shape` wins over the glyph
+(`SHAPE_BY_GLYPH` is only the fallback). Weights follow the real fish the names come from: beluga
+sturgeon ~1.4 t, white-sturgeon-scale ribbon sturgeon, Mekong giant catfish 200 kg, giant freshwater
+stingray 400 kg, arapaima 120 kg, and the whale shark at the top of the catalog.
+
+**Weight bands up to the pond.** `MAX_W` is now 1,800 kg, and `showOffScale` is a saturating curve
+(`0.7 + 4.3·w/(w+6)`): a 60 kg fish still reads larger than the character (4.6), and the giants sit
+at 5.0 - the largest sprite the pond ever shows. `mega: true` marks the ten pond-monsters; ten
+species between 80 kg and 1,800 kg carry it.
+
+**Local-chat announcements.** A landed catch of a `mega` species, or of anything in the `secret`
+pool, fires `opts.announce` from `finishReel` (not from the 📣 Show off button, so Auto fishing
+announces too). The plaza sends `{type:'fishbrag'}`; `workers/social/room.mjs` validates the species
+slug and weight (3 s cooldown, clamp raised from 999 to `MAX_FISH_W` = 5,000 so a 1.8 t show-off is
+not truncated) and relays `{type:'fishnote'}` to everyone in the room. The plaza resolves the display
+name from its own catalog and merges a `sys` Local line - rendered by `messageNode` as
+`.social-line-sys`, a centred italic band rather than "Name: text". Solo play writes the same line
+directly. `cleanChatMessage` only honours `sys` on the local channel.
+
+**Auto-sell dupes actually persists.** The bug was never the rule engine. `index.html` rebuilt
+`f.fishing.settings` as `{fish:true,sound:…}` on every save, silently dropping `autoSell` - the
+toggle looked on for the session, then Sell dupes ran on a save that had it off. It is now
+`autoSell:f.fishing.settings?.autoSell===true`.
+
+**Interface pass.** The dock and window share one accent instead of two competing ones, the tools row
+wraps into pills (`label:has(input:checked)` for the toggles), the tab bar and the index header are
+sticky, the dock's status line ellipsises instead of growing, and the panel/dock pick up a blurred
+backdrop so the plaza reads behind them.
+
+**Checks.** `tools/tests/social_fishing_sim.js` covers the 100-entry catalog, the 25 body plans
+(every `shape` must be one the renderer paints, at least twelve plans, at least two members per new
+plan, fewer than half the catalog on the plain fish body), `MAX_W` = 1800, the mega count, the
+show-off curve into the giants, the apex title tracking the catalog size, and Part D2: the leave-confirm
+ids, Escape behaviour, the retried actions, the `stop` export, the announce hook, the `fishbrag`/
+`fishnote` relay, the raised clamp and the system-line styling. `social_sim.js`, `update_watch_sim.js`
+and the build/publish/page checks stay green.
+
+## Right-drag camera, left click walks (haven-v298)
+
+The plaza camera took any pointer drag as an orbit, so a click that slipped a few pixels rotated the
+view instead of walking - and a left drag did both nothing and everything at once. With a mouse the
+left button is now walk-only:
+
+* **left click** - walks (or sits / opens the pond / shows off, exactly as before). A left *drag* is a
+  dead zone: it cancels the click so you do not walk by accident, but it never moves the camera.
+* **right drag** - orbits and tilts, as before. The context menu stays suppressed.
+* **ctrl + left drag** - orbits too, for trackpads and one-button mice (macOS sends ctrl+click there).
+* **touch / pen** - single-finger drag still orbits, because there is no right button on a phone;
+  pinch still zooms.
+* The wheel still zooms and the Camera panel sliders are unchanged.
+
+`startDrag()` in `assets/social-scene.js` records whether a gesture may orbit
+(`orbit = touch || button===2 || (button===0 && ctrlKey)`), and `pointermove` only applies the
+angle/pitch maths for those gestures. The in-plaza help line now reads
+*"Right-drag (or ctrl-drag) to rotate / tilt · left-click to walk · Scroll / pinch to zoom"*.
+
+`tools/tests/social_scene_sim.js` pins all four cases: a left drag leaves angle and pitch untouched,
+a left click on open ground still walks, ctrl-drag orbits without walking, and a touch drag still
+orbits.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

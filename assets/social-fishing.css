@@ -138,9 +138,9 @@
 #fishingTabs button{flex:1;background:transparent;border:0;border-bottom:2px solid transparent;color:#9db9bf;font:bold 11px "Trebuchet MS",sans-serif;padding:7px 4px;cursor:pointer}
 #fishingTabs button:hover{color:#e8f2ee}
 #fishingTabs button[aria-selected="true"]{color:#ffe0a0;border-bottom-color:#ffe0a0;background:#1a333b60}
-#fishingBagView,#fishingIndexView,#fishingShopView{display:flex;flex-direction:column;flex:1;min-height:0}
-#fishingBagView[hidden],#fishingIndexView[hidden],#fishingShopView[hidden]{display:none}
-#fishingIndexView,#fishingShopView{overflow:auto;scrollbar-width:thin;scrollbar-color:#54767e transparent}
+#fishingBagView,#fishingIndexView,#fishingShopView,#fishingTitlesView{display:flex;flex-direction:column;flex:1;min-height:0}
+#fishingBagView[hidden],#fishingIndexView[hidden],#fishingShopView[hidden],#fishingTitlesView[hidden]{display:none}
+#fishingIndexView,#fishingShopView,#fishingTitlesView{overflow:auto;scrollbar-width:thin;scrollbar-color:#54767e transparent}
 #fishingTools button{background:#24424b;border:1px solid #6fa3b0;border-radius:5px;color:#eef4ec;font:bold 10.5px "Trebuchet MS",sans-serif;padding:4px 8px;cursor:pointer}
 #fishingTools button:hover{filter:brightness(1.15)}
 /* Fish index */
@@ -210,3 +210,39 @@ img.fishing-rod-art{filter:drop-shadow(0 0 3px var(--rod-tint,#8b6b45))}
 .fishing-title-row button:hover:not(:disabled){filter:brightness(1.15)}
 .fishing-title-none{margin:0 10px 12px;text-align:center}
 .fishing-title-none button{background:#24424b;border:1px solid #6fa3b0;border-radius:5px;color:#eef4ec;font:bold 10.5px "Trebuchet MS",sans-serif;padding:4px 10px;cursor:pointer}
+
+/* ---------------------------------------------------------------------------------------------
+   v297 interface pass. The window and dock were doing too much at once: four stacked bars in the
+   dock, a tools row that wrapped into the grid, and two competing accents. This keeps one accent
+   for "active", turns the settings into pills, and stops the panel from crowding the plaza.
+   ------------------------------------------------------------------------------------------- */
+#fishingDock{border-color:#3d6672d9;background:linear-gradient(180deg,#122227f5,#0a1518f7);backdrop-filter:blur(6px)}
+#fishingPanel{border-color:#3d6672d9;background:linear-gradient(180deg,#122227fa,#0a1518fa);box-shadow:0 18px 48px #000c;backdrop-filter:blur(6px)}
+#fishingDockHead{padding:6px 10px}
+#fishingSpot{font-weight:bold;letter-spacing:.3px;color:#cfe7ee}
+#fishingDockBtns button{min-height:26px;border-color:#3d6672;border-radius:6px}
+#fishingGearLine{padding:5px 10px;gap:10px;color:#b7d3da}
+#fishingStatus{margin:0;padding:5px 10px 7px;color:#9fc0c8;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#fishingPanelHead{padding:8px 12px;gap:8px}
+#fishingPanelHead strong{font:bold 12.5px Georgia,serif;letter-spacing:.6px;color:#dff2f6}
+#fishingPanelHead button{border-radius:6px}
+#fishingRecords{padding:7px 12px;font-size:10px;color:#93b0b7}
+#fishingTools{flex-wrap:wrap;gap:6px 8px;padding:8px 12px;background:#0e1b2066}
+#fishingTools select{flex:1 1 92px;min-height:26px;border-color:#3d6672;border-radius:6px}
+#fishingTools button{flex:1 1 auto;min-height:26px;border-color:#3d6672;border-radius:6px;white-space:nowrap}
+#fishingTools label{flex:0 0 auto;gap:5px;padding:3px 9px 3px 7px;border:1px solid #35535c;border-radius:999px;background:#111f25;color:#a9c6cd;font-size:10.5px}
+#fishingTools label:has(input:checked){border-color:#7fd3e8;background:#153440;color:#eaf6f9}
+#fishingTools label:hover{border-color:#4d7a86;color:#dff2f6}
+#fishingTools input[type=checkbox]{margin:0;accent-color:#5fb6cd}
+#fishingGrid{gap:8px;padding:10px 12px 14px;grid-template-columns:repeat(auto-fill,minmax(66px,1fr))}
+#fishingTabs{gap:4px;padding:6px 8px;background:#0d1a1ff2;border-bottom:1px solid #243d44}
+#fishingTabs button{flex:1;min-height:28px;border-radius:6px;border:1px solid transparent;background:transparent;color:#9db9bf;font:11px/1 "Trebuchet MS",sans-serif;padding:0 4px}
+#fishingTabs button[aria-selected="true"]{background:#1b3a44;border-color:#6fa3b0;color:#eaf6f9}
+#fishingTabs button:hover{color:#eaf6f9}
+#fishingIndexView,#fishingShopView,#fishingTitlesView{padding:0 2px}
+/* the Index holds 100 entries now: keep its header pinned so the columns stay readable */
+.fishing-dex-head{position:sticky;top:0;z-index:1;background:#0f1d23f2;backdrop-filter:blur(4px)}
+@media(max-width:680px){
+ #fishingTools{gap:5px 6px;padding:7px 9px}
+ #fishingTools label{padding:3px 7px 3px 6px}
+}
