@@ -80,8 +80,10 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const glyphTex=new T.CanvasTexture(glyphCanvas),glyph=new T.Sprite(new T.SpriteMaterial({map:glyphTex,transparent:true,depthTest:false}));glyph.visible=false;glyph.scale.set(1.5,1.5,1);scene.add(glyph);
   // v288: show-off fish held overhead - the actual species, scaled by its weight, for ~5s.
   const showPool=[];
+  // v295: a null id means the local player, so "show off my own catch" uses the same path.
   function showFish(pid,o){
    o=o||{};
+   if(pid===null||pid===undefined||pid==='self')pid=callbacks.self&&callbacks.self();
    // v294: prefer the painted species sprite (crisp 256px, bright, baked mutation halo) over
    // the old 128px emoji draw that showed up blurry and too dim to see.
    let canvas=null;
@@ -98,15 +100,78 @@ window.PGSocialScene={async create(host,labels,callbacks){
    }
    const tex=new T.CanvasTexture(canvas),spr=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
    spr.visible=false;scene.add(spr);
-   while(showPool.length>=6){const old=showPool.shift();scene.remove(old.sprite);old.sprite.material.map.dispose();old.sprite.material.dispose()}
-   showPool.push({sprite:spr,pid,t0:clock||performance.now(),dur:Math.max(1200,Math.min(9000,o.ms||5200)),scale:Math.max(.4,Math.min(5.2,Number(o.scale)||1))});
+   // v295: the weight rides above the fish as its own small plate - the show-off no longer
+   // posts a Local-chat line, so this is the only place the number is written.
+   let tag=null;
+   if(o.label){
+    const tc=document.createElement('canvas');tc.width=256;tc.height=64;const tctx=tc.getContext&&tc.getContext('2d');
+    if(tctx&&typeof tctx.fillText==='function'){
+     const text=String(o.label).slice(0,24);
+     tctx.font='bold 40px Trebuchet MS, sans-serif';tctx.textAlign='center';tctx.textBaseline='middle';
+     if(typeof tctx.strokeText==='function'){tctx.lineWidth=9;tctx.strokeStyle='rgba(8,14,20,.9)';tctx.strokeText(text,128,34)}
+     tctx.fillStyle=o.glow||'#ffe9a8';tctx.fillText(text,128,34);
+     const ttex=new T.CanvasTexture(tc);
+     tag=new T.Sprite(new T.SpriteMaterial({map:ttex,transparent:true,depthTest:false}));
+     tag.scale.set(1.9,.48,1);tag.visible=false;scene.add(tag);
+    }
+   }
+   while(showPool.length>=6){const old=showPool.shift();scene.remove(old.sprite);old.sprite.material.map.dispose();old.sprite.material.dispose();if(old.tag){scene.remove(old.tag);old.tag.material.map.dispose();old.tag.material.dispose()}}
+   showPool.push({sprite:spr,tag,pid,t0:clock||performance.now(),dur:Math.max(1200,Math.min(9000,o.ms||5200)),scale:Math.max(.4,Math.min(5.2,Number(o.scale)||1))});
   }
   let rig={mode:'off'},nextIdleRipple=0,catchAnim=null;
   function ripple(x,z,scale=1){const r=ripples.find(r=>!r.m.visible)||ripples[0];r.m.visible=true;r.t0=clock||performance.now();r.dur=900;r.m.position.set(x,.034,z);r.base=scale}
   function splash(x,z,n=18){splashDrops=Array.from({length:Math.min(26,n)},(_,i)=>({a:i*2.399,v:.9+((i*37)%17)/14,vy:1.8+((i*29)%13)/6}));splashT0=clock||performance.now();splashPts.visible=true;splashPts.position.set(x,.05,z)}
   function selfPos(){const p=players.get(callbacks.self());return p?p.sprite.position:null}
+  // v295: other players' rigs. The worker broadcasts each angler's line position, so every
+  // player sees the bobber in the water - not just the caster. One small group per remote
+  // angler, built on demand and disposed the moment their line comes out.
+  const remoteRigs=new Map();
+  function dropRig(pid){
+   const r=remoteRigs.get(pid);if(!r)return;
+   scene.remove(r.group);
+   for(const m of [r.pole,r.bobTop,r.bobBot]){try{m.geometry.dispose()}catch{}try{m.material.dispose()}catch{}}
+   remoteRigs.delete(pid);
+  }
+  function setRig(pid,st){
+   if(!st||st.on!==true){dropRig(pid);return}
+   const tx=Math.max(-60,Math.min(60,Number(st.x)||0)),tz=Math.max(-60,Math.min(60,Number(st.z)||0));
+   let r=remoteRigs.get(pid);
+   if(!r){
+    const holder=players.get(pid);
+    const group=new T.Group();scene.add(group);
+    const bobTop=new T.Mesh(new T.SphereGeometry(.11,10,8),new T.MeshBasicMaterial({color:0xd8402e}));
+    const bobBot=new T.Mesh(new T.SphereGeometry(.09,10,8),new T.MeshBasicMaterial({color:0xf2efe4}));
+    bobBot.position.y=-.09;
+    const bob=new T.Group();bob.add(bobTop,bobBot);group.add(bob);
+    const pole=new T.Mesh(new T.CylinderGeometry(.016,.032,1,5),new T.MeshBasicMaterial({color:0x7a5230}));
+    group.add(pole);
+    r={group,bob,pole,bobTop,bobBot,x:holder?holder.sprite.position.x:tx,z:holder?holder.sprite.position.z:tz,tx,tz,mode:'wait'};
+    remoteRigs.set(pid,r);
+   }
+   r.tx=tx;r.tz=tz;
+   r.mode=typeof st.mode==='string'?st.mode:'wait';
+  }
+  function updateRemoteRigs(now,dt){
+   for(const [pid,r] of remoteRigs){
+    const holder=players.get(pid);
+    if(!holder){dropRig(pid);continue}
+    // The bobber eases to the reported spot, so a cast reads as a throw instead of a teleport.
+    const k=Math.min(1,dt*5);
+    r.x+=(r.tx-r.x)*k;r.z+=(r.tz-r.z)*k;
+    const dip=r.mode==='bite'?Math.max(0,Math.sin(now/90))*.3:r.mode==='reel'?Math.max(0,Math.sin(now/70))*.16:0;
+    r.bob.position.set(r.x,.12+Math.sin(now/520)*.05-dip,r.z);
+    const px=holder.sprite.position.x,pz=holder.sprite.position.z;
+    const dx=r.x-px,dz=r.z-pz,d=Math.hypot(dx,dz)||1,ux=dx/d,uz=dz/d;
+    const hx=px+ux*.35,hz=pz+uz*.35,hy=1.1,tx2=px+ux*1.5,tz2=pz+uz*1.5,ty=2.05;
+    const mx=(hx+tx2)/2,my=(hy+ty)/2,mz=(hz+tz2)/2,len=Math.hypot(tx2-hx,ty-hy,tz2-hz)||1;
+    r.pole.position.set(mx,my,mz);r.pole.scale.set(1,len,1);
+    r.pole.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3((tx2-hx)/len,(ty-hy)/len,(tz2-hz)/len));
+   }
+  }
   const api={
    setFishVisible(v){fishGroup.visible=v!==false},
+   setRig,
+   clearRigs(){for(const pid of [...remoteRigs.keys()])dropRig(pid)},
    cast(to,dur,onLand){const from=selfPos();rig={mode:'flight',fx:from?from.x:to.x,fz:from?from.z:to.z,tx:to.x,tz:to.z,t0:clock||performance.now(),dur:Math.max(250,dur||700),onLand};bobber.visible=true;pole.visible=true;line.visible=true},
    bite(on){if(rig.mode==='idle'&&on)rig.mode='bite';else if(rig.mode==='bite'&&!on)rig.mode='idle';mark.visible=!!on&&rig.mode==='bite'},
    reel(intensity){if(rig.mode==='bite'||rig.mode==='idle'||rig.mode==='reel'){rig.mode='reel';rig.intensity=Math.max(0,Math.min(1,intensity||0));mark.visible=false}},
@@ -134,6 +199,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
    lineGeo.attributes.position.needsUpdate=true;lineGeo.computeBoundingSphere?.();
   }
   function update(now,dt){
+   updateRemoteRigs(now,dt);
    waterTexA.offset.x=(now/14000)%1;waterTexA.offset.y=(now/23000)%1;waterTexB.offset.x=1-(now/17000)%1;waterTexB.offset.y=(now/19000)%1;
    for(const l of lilies){l.mesh.position.x=l.x+Math.sin(now/2600+l.ph)*.22;l.mesh.position.z=l.z+Math.cos(now/3100+l.ph)*.18;l.mesh.rotation.z=Math.sin(now/4000+l.ph)*.4}
    if(fishGroup.visible)for(const s of swimmers){const t=now/1000,x=s.p.x+Math.sin(t*s.fa+s.pa)*s.ax,z=s.p.z+Math.sin(t*s.fb+s.pb)*s.az,vx=Math.cos(t*s.fa+s.pa)*s.fa*s.ax,vz=Math.cos(t*s.fb+s.pb)*s.fb*s.az;s.m.position.set(x,.03,z);s.m.rotation.z=Math.atan2(-vz,vx)+Math.sin(t*6+s.pa)*.12}
@@ -142,12 +208,13 @@ window.PGSocialScene={async create(host,labels,callbacks){
    if(catchAnim){const t=Math.min(1,(now-catchAnim.t0)/catchAnim.dur),p=selfPos();if(p){glyph.position.set(catchAnim.fx+(p.x-catchAnim.fx)*t,.4+Math.sin(t*Math.PI)*2.6+t*1.6,catchAnim.fz+(p.z-catchAnim.fz)*t)}if(t>=1){glyph.visible=false;pole.visible=false;line.visible=false;const done=catchAnim.done;catchAnim=null;done&&done()}}
    for(let i=showPool.length-1;i>=0;i--){
     const sh=showPool[i],holder=players.get(sh.pid),t=(now-sh.t0)/sh.dur;
-    if(t>=1||!holder){scene.remove(sh.sprite);sh.sprite.material.map.dispose();sh.sprite.material.dispose();showPool.splice(i,1);continue}
+    if(t>=1||!holder){scene.remove(sh.sprite);sh.sprite.material.map.dispose();sh.sprite.material.dispose();if(sh.tag){scene.remove(sh.tag);sh.tag.material.map.dispose();sh.tag.material.dispose()}showPool.splice(i,1);continue}
     const pop=t<.12?t/.12*1.18:t<.22?1.18-(t-.12)/.1*.18:1;
     const sc=sh.scale*pop;
     sh.sprite.visible=true;sh.sprite.scale.set(sc,sc,1);
     sh.sprite.position.set(holder.sprite.position.x,holder.sprite.position.y+holder.height+.3+sh.scale*.55+Math.sin(now/480+i)*.08,holder.sprite.position.z);
     sh.sprite.material.opacity=t>.82?1-(t-.82)/.18:1;
+    if(sh.tag){sh.tag.visible=true;sh.tag.position.set(sh.sprite.position.x,sh.sprite.position.y+sh.scale*.5+.42+Math.sin(now/480+i)*.08,sh.sprite.position.z);sh.tag.material.opacity=sh.sprite.material.opacity}
    }
    if(rig.mode==='off')return;
    if(rig.mode==='flight'){const t=Math.min(1,(now-rig.t0)/rig.dur),x=rig.fx+(rig.tx-rig.fx)*t,z=rig.fz+(rig.tz-rig.fz)*t;bobber.position.set(x,1.4+Math.sin(t*Math.PI)*2.4-1.35*t,z);placeRod(bobber.position.x,bobber.position.y,bobber.position.z,now);
@@ -345,7 +412,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
  function auraTier(lv){return typeof LEVEL_AURAS==='undefined'?null:LEVEL_AURAS.filter(a=>lv>=a.at).at(-1)||null}
  function syncAura(p){const tier=auraTier(Math.max(0,Math.floor(Number(p.state.look?.lv)||0))),tierAt=tier?tier.at:0;if(p.auraTier===tierAt)return;p.auraTier=tierAt;if(p.aura){scene.remove(p.aura);disposeAura(p.aura);p.aura=null}if(!tier||typeof buildLevelAura!=='function')return;p.aura=buildLevelAura(tier);scene.add(p.aura)}
  function animateAura(p,now,x,z){const aura=p.aura;if(!aura)return;const seconds=now/1000;aura.position.set(x,.07,z);aura.scale.setScalar(1.18*(1+Math.sin(seconds*2)*.025));aura.children.forEach((layer,i)=>{if(!layer.material)return;layer.rotation.y=(seconds*(i?-.3:.22))%(Math.PI*2);layer.material.opacity=.8+Math.sin(seconds*2+i)*.12;if(layer.children[0]?.material)layer.children[0].material.opacity=.85+Math.sin(seconds*2+i)*.1});const data=aura.userData;if(data.floor)data.floor.material.opacity=.4+Math.sin(seconds*1.7)*.07;if(data.veil)data.veil.material.opacity=.2+Math.sin(seconds*1.7)*.035;const motes=data.motes;if(motes){const positions=motes.geometry.attributes.position,colors=motes.geometry.attributes.color;for(let i=0;i<positions.count;i++){const phase=(seconds*.23+i/positions.count)%1,angle=i*2.399+seconds*.24,radius=.55+Math.sin(i*1.7)*.25,fade=Math.sin(phase*Math.PI);positions.setXYZ(i,Math.cos(angle)*radius,phase*1.6,Math.sin(angle)*radius);colors.setXYZ(i,fade,fade,fade)}positions.needsUpdate=colors.needsUpdate=true}}
- function removePlayer(id){const p=players.get(id);if(!p)return;for(const s of stores)s.release('social-'+id);if(p.aura){scene.remove(p.aura);disposeAura(p.aura)}scene.remove(p.sprite);p.sprite.material.dispose();p.texture.dispose();p.label.remove();p.bubble.remove();players.delete(id)}
+ function removePlayer(id){const p=players.get(id);if(!p)return;try{fishingApi.api.setRig(id,{on:false})}catch{}for(const s of stores)s.release('social-'+id);if(p.aura){scene.remove(p.aura);disposeAura(p.aura)}scene.remove(p.sprite);p.sprite.material.dispose();p.texture.dispose();p.label.remove();p.bubble.remove();players.delete(id)}
  function loadLooks(p,now){
   if(p.loading||now<p.retryAt)return;
   const appearance=PGWardrobe.normalize(p.state.look?.appearance)||PGWardrobe.defaults('m'),cls=Object.hasOwn(allClasses,p.state.look?.cls)?p.state.look.cls:'Novice';

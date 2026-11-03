@@ -7,8 +7,25 @@ const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker;
 // the socket itself is the only thing that proves who the player is. The age of a connection is
 // measured from when it was accepted, and activity slides the idle window forward, so an active
 // player is no longer dropped every five minutes the way REAUTH_MS alone used to force.
-const IDLE_MS=300000,REAUTH_MS=1800000,MAX_ROOMS=50,RESUME_MS=15000,LEDGER_BATCH=100;
+const IDLE_MS=300000,REAUTH_MS=1800000,MAX_ROOMS=50,LEDGER_BATCH=100;
+// v295: RESUME_MS is the window in which a replacement socket may inherit the position, room and
+// seat of the one it replaced. It used to be 15 s, which was shorter than the client's own
+// dead-socket detection (20 s of silence + a 6 s probe grace) - so any silent drop, and every
+// throttled background tab, resumed AFTER the reservation had expired. The client then fell
+// through to a fresh join, which spawns at the plaza entrance, and fishing cancelled itself with
+// "You stepped away from the pond." Matching the idle window fixes the AFK spawn teleport: the
+// reservation is still single-use (takeResume deletes it), still authenticated by Pages before
+// the socket exists, and still bounded - it just covers realistic reconnect latency.
+const RESUME_MS=IDLE_MS;
+// A poker seat is a different promise from a plaza spot: an abandoned seat must free up quickly
+// or it stalls the hand for everyone else, so it keeps the short v290 grace.
+const POKER_RESUME_MS=15000;
 const LEDGER_REASONS=new Set(['blind','call','raise','win']);
+// v295: bounded vocabulary for the two fishing broadcasts. Species ids are validated by shape
+// here (the catalog belongs to the browser module) and again by the client before anything is
+// drawn, so an unknown id simply renders nothing.
+const FISH_MODES=new Set(['flight','wait','bite','reel','ready']);
+const FISH_MUTATIONS=new Set(['shiny','sparkling','frozen','electric','ghostly','golden','prismatic']);
 const ledgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id);
 // Only public World text/emotions are durable. Whispers and Local never enter this record.
 export function cleanWorldHistory(value){
@@ -243,8 +260,8 @@ export class SocialRoom {
  cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED))};}
  // `viewer` is who is asking: whether this person is a friend is a fact about the two accounts, so
  // the same player is flagged for one client and not for another. Omit it for a neutral snapshot.
- snapshot(c,viewer=null){R.advance(c,this.now());return {id:c.id,name:c.name,gm:c.gm,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat,pokerSeat:c.pokerSeat,friend:!!(viewer&&viewer!==c&&viewer.friends.has(c.id))};}
- leave(c){const room=c.room;this.standPoker(c,this.now(),false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;if(room){this.broadcast({type:'left',id:c.id,room},p=>p.room===room);this.broadcastPoker(room,this.now());this.schedulePoker(room);this.syncRooms();}}
+ snapshot(c,viewer=null){R.advance(c,this.now());return {id:c.id,name:c.name,gm:c.gm,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat,pokerSeat:c.pokerSeat,fish:c.fish||null,friend:!!(viewer&&viewer!==c&&viewer.friends.has(c.id))};}
+ leave(c){const room=c.room;this.standPoker(c,this.now(),false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;if(room){this.broadcast({type:'left',id:c.id,room},p=>p.room===room);this.broadcastPoker(room,this.now());this.schedulePoker(room);this.syncRooms();}}
  disconnect(c){
   if(this.clients.get(c.id)!==c)return;
   const now=this.now(),room=c.room;
@@ -253,7 +270,7 @@ export class SocialRoom {
   // leave has already cleared the room; a replacement tab may inherit the same reservation.
   if(room&&!c.released){
    R.advance(c,now);
-   this.resumes.set(c.id,{room,x:c.x,z:c.z,dir:c.dir,path:c.path.map(p=>({...p})),sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look,expires:now+RESUME_MS});
+   this.resumes.set(c.id,{room,x:c.x,z:c.z,dir:c.dir,path:c.path.map(p=>({...p})),sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look,expires:now+RESUME_MS,seatExpires:now+POKER_RESUME_MS});
    if(Number.isInteger(c.pokerSeat))this.tables.get(room)?.[Math.floor(c.pokerSeat/6)]?.markArrived(c.id,false,now);
    this.clients.delete(c.id);
    this.broadcast({type:'left',id:c.id,room},p=>p.room===room);
@@ -261,6 +278,15 @@ export class SocialRoom {
    return;
   }
   this.leave(c);this.clients.delete(c.id);
+ }
+ // The plaza spot and the poker seat expire on their own clocks: the spot keeps the whole idle
+ // window so a dropped or throttled client resumes where it stood, while the seat falls back to
+ // the short grace. Releasing the seat never costs the player their position.
+ releaseSeat(id,saved,now){
+  if(!Number.isInteger(saved.pokerSeat))return;
+  const table=this.tables.get(saved.room)?.[Math.floor(saved.pokerSeat/6)];
+  if(table&&table.findPlayer(id)){table.stand(id,now);this.broadcastPoker(saved.room,now);this.schedulePoker(saved.room)}
+  saved.pokerSeat=null;
  }
  takeResume(id,now){
   const saved=this.resumes.get(id);if(!saved)return null;
@@ -270,6 +296,7 @@ export class SocialRoom {
    this.broadcastPoker(saved.room,now);this.schedulePoker(saved.room);
    return null;
   }
+  if(Number.isInteger(saved.pokerSeat)&&now>(saved.seatExpires||0))this.releaseSeat(id,saved,now);
   if(Number.isInteger(saved.pokerSeat)&&!this.tables.get(saved.room)?.[Math.floor(saved.pokerSeat/6)]?.findPlayer(id))saved.pokerSeat=null;
   return saved;
  }
@@ -286,7 +313,7 @@ export class SocialRoom {
  enterPlazaRoom(c,room,now){
   const members=[...this.clients.values()].filter(p=>p.room===room&&p!==c);members.forEach(p=>R.advance(p,now));
   const spawn=Array.from({length:R.CAPACITY},(_,i)=>({x:(i%5-2)*4,z:12+Math.floor(i/5)*4})).find(s=>members.every(p=>Math.hypot(p.x-s.x,p.z-s.z)>2))||{x:0,z:12};
-  c.room=room;c.x=spawn.x;c.z=spawn.z;c.dir=0;c.at=now;c.sit=false;c.path=[];c.seat=null;c.pokerSeat=null;
+  c.room=room;c.x=spawn.x;c.z=spawn.z;c.dir=0;c.at=now;c.sit=false;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;
   this.sendRoom(c,now);
  }
  // The warning is a client affordance; this is the authority. An old client, a queued floor
@@ -335,6 +362,26 @@ export class SocialRoom {
   if(m.type==='look'&&c.room){const look=this.cleanLook(m.look);if(!look||now-c.lookAt<100)return;c.lookAt=now;c.look=look;return this.broadcastPlayer(c,p=>p.room===c.room)}
   if(m.type==='move'&&c.room){if(!this.requirePokerLeave(c,m))return;if(now-c.moveAt<100)return;c.moveAt=now;R.advance(c,now);const route=R.path(c,{x:m.x,z:m.z});if(!route.length)return;this.standPoker(c,now,true);c.path=route;c.sit=false;c.seat=null;return this.broadcastPlayer(c,p=>p.room===c.room)}
   if(m.type==='seat'&&c.room){if(!this.requirePokerLeave(c,m))return;if(now-c.moveAt<100||!Number.isInteger(m.id)||!R.SEATS[m.id])return;c.moveAt=now;R.advance(c,now);const seat=R.SEATS[m.id];if([...this.clients.values()].some(p=>p!==c&&p.room===c.room&&p.seat===seat.id))return this.send(c,{type:'error',message:'That bench is occupied.'});const route=R.path(c,seat);if(!route.length&&Math.hypot(c.x-seat.x,c.z-seat.z)>.5)return;this.standPoker(c,now,true);c.path=route;c.sit=false;c.seat=seat.id;return this.broadcastPlayer(c,p=>p.room===c.room)}
+  // v295: the line in the water is public. This is presentation only - it carries no score, no
+  // item and no money - so the worst a forged value can do is draw a bobber in the wrong spot.
+  if(m.type==='rig'&&c.room){
+   if(m.on!==true){if(c.fish){c.fish=null;this.broadcastPlayer(c,p=>p.room===c.room)}return}
+   const x=Number(m.x),z=Number(m.z);
+   if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>70||Math.abs(z)>70)return;
+   c.fish={on:true,pond:Number.isInteger(m.pond)?Math.max(0,Math.min(7,m.pond)):0,x:Math.round(x*100)/100,z:Math.round(z*100)/100,mode:FISH_MODES.has(m.mode)?m.mode:'wait'};
+   return this.broadcastPlayer(c,p=>p.room===c.room);
+  }
+  // v295: Show off is relayed as data to the whole room instead of being written as a Local-chat
+  // line, so the fish and its weight appear above the angler's head and chat stays clean.
+  if(m.type==='showoff'&&c.room){
+   if(now-(c.showOffAt||0)<1500)return;
+   c.showOffAt=now;
+   if(typeof m.sp!=='string'||!/^[a-z][a-z0-9]{1,23}$/.test(m.sp))return;
+   const w=Math.round(Math.max(.01,Math.min(999,Number(m.w)||0))*100)/100;
+   if(!(w>0))return;
+   const mut=typeof m.mut==='string'&&FISH_MUTATIONS.has(m.mut)?m.mut:null;
+   return this.broadcast({type:'showoff',from:c.id,name:c.name,sp:m.sp,w,mut,perfect:m.perfect===true,at:now},p=>p.room===c.room);
+  }
   if(m.type==='sit'&&c.room){if(!this.requirePokerLeave(c,m))return;if(now-c.moveAt<100)return;c.moveAt=now;R.advance(c,now);this.standPoker(c,now,true);c.path=[];c.seat=null;c.sit=!c.sit;return this.broadcastPlayer(c,p=>p.room===c.room)}
   if(m.type==='poker_watch'&&c.room){return this.send(c,this.pokerPayload(c.room,c.id,now))}
   if(m.type==='poker_sit'&&c.room){
@@ -412,5 +459,11 @@ export class SocialRoom {
   else if(channel==='local')this.broadcast(event,p=>p.room===c.room);
   else {this.send(c,event);if(recipient!==c)this.send(recipient,event)}
  }
- sweep(){const now=this.now();for(const id of [...this.resumes.keys()])if(now>this.resumes.get(id).expires)this.takeResume(id,now);this.tickAll(now);for(const c of [...this.clients.values()])if(now>c.reauthAt||now>c.expires)this.refresh(c)}
+ sweep(){const now=this.now();
+  for(const [id,r] of [...this.resumes]){
+   if(now>r.expires){this.takeResume(id,now);continue}
+   // An abandoned poker seat is released on the sweep, not only when the player reconnects.
+   if(Number.isInteger(r.pokerSeat)&&now>(r.seatExpires||0))this.releaseSeat(id,r,now);
+  }
+  this.tickAll(now);for(const c of [...this.clients.values()])if(now>c.reauthAt||now>c.expires)this.refresh(c)}
 }

@@ -27,7 +27,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const same=room.pokerTables(1)[0].sit(0,{id:1,name:'Alice'},1000,now,true);assert(same.resumed);assert.equal(room.pokerTables(1)[0].findPlayer(1).stack,saved.stack,'same-seat sit is idempotent');
  send(again,{type:'move',x:0,z:12,confirmLeave:true});assert.equal(again.pokerSeat,null,'confirmed floor click folds and walks');assert(again.path.length>0);
  // An explicit exit is not a reconnect. A lost socket that never returns expires its reservation.
- send(again,{type:'poker_sit',seat:0,buyIn:1000,confirmLeave:true});now+=200;room.disconnect(again);now+=16000;room.sweep();assert(!room.resumes.has(1));assert.equal(room.pokerTables(1)[0].findPlayer(1),null);
+ send(again,{type:'poker_sit',seat:0,buyIn:1000,confirmLeave:true});now+=200;room.disconnect(again);now+=16000;room.sweep();
+ // v295: the poker seat frees up on the short grace; the plaza spot lasts the idle window.
+ assert.equal(room.pokerTables(1)[0].findPlayer(1),null,'an abandoned poker seat is released after the short grace');
+ assert(room.resumes.has(1),'the plaza spot outlives the seat reservation');
+ now+=300000;room.sweep();assert(!room.resumes.has(1),'the plaza spot expires on the idle window');
  const back=join(1,'Alice');assert.notEqual(back.z,saved.z,'an expired grace starts a fresh visit rather than restoring stale coordinates');
  send(back,{type:'leave'});assert(!room.resumes.has(1));
 

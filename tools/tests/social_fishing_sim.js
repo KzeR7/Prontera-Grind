@@ -135,7 +135,8 @@ assert.equal(st.dex.koi.n,7);
 assert.deepEqual(st.dex.koi.mut,['shiny']);
 assert(!st.dex.ghost,'bestiary only keeps real species');
 assert.equal(st.stats.casts,0);
-assert.equal(st.settings.fish,false);
+// v295: pond fish are permanently on - a save that had the old toggle off comes back visible.
+assert.equal(st.settings.fish,true,'v295 forces swimming pond fish on for every save');
 assert.equal(st.settings.sound,true);
 st=F.normalize({bag:Array.from({length:300},(_,i)=>({sp:'minnow',w:.2,id:'x'+i}))});
 assert.equal(st.bag.length,F.BAG_MAX,'bag caps at '+F.BAG_MAX);
@@ -270,6 +271,61 @@ while(st.bag.length<F.BAG_MAX)F.addCatch(st,{sp:'minnow',rarity:'common',w:.2});
 assert.equal(F.addCatch(st,{sp:'minnow',rarity:'common',w:.2}),null,'full bag refuses new fish');
 assert.equal(st.bag.length,F.BAG_MAX);
 
+// --- v295: bag tiers, fishing titles, painted rods and data show-offs ---------------------
+assert.deepEqual(F.BAG_TIERS.map(t=>t.cap),[120,200,300,400,500],'the bag ladder is 120→200→300→400→500');
+assert.deepEqual(F.BAG_TIERS.map(t=>t.cost),[0,2500,8000,25000,75000],'each tier has its own price');
+assert.equal(F.BAG_MAX,120,'BAG_MAX stays the base tier for older callers and saves');
+st=F.normalize(null);
+assert.equal(F.bagMax(st),120);assert.equal(F.bagTierOf(st).tier,0);assert.equal(F.nextBagTier(st).cap,200);
+st.coins=100;assert.deepEqual(F.buyBagUpgrade(st),{ok:false,reason:'coins'},'an upgrade needs its Fishcoins');
+st.coins=2500;const up1=F.buyBagUpgrade(st);
+assert(up1.ok&&up1.cap===200);assert.equal(st.coins,0,'an upgrade costs exactly its price');
+assert.equal(F.bagMax(st),200,'the bought capacity is live');
+st.coins=1e9;
+assert.equal(F.buyBagUpgrade(st).cap,300);assert.equal(F.buyBagUpgrade(st).cap,400);assert.equal(F.buyBagUpgrade(st).cap,500);
+assert.deepEqual(F.buyBagUpgrade(st),{ok:false,reason:'max'},'the ladder ends at 500 and never overflows');
+// A bought bag really holds more fish, and a full one still refuses.
+st=F.normalize({bagTier:4});assert.equal(F.bagMax(st),500);
+for(let i=0;i<500;i++)F.addCatch(st,{sp:'minnow',rarity:'common',w:.2});
+assert.equal(st.bag.length,500);assert.equal(F.addCatch(st,{sp:'minnow',rarity:'common',w:.2}),null,'a full 500 bag refuses new fish');
+// The tier survives save/load, clamps to the ladder and rejects garbage.
+assert.equal(F.normalize({bagTier:2}).bagTier,2);
+assert.equal(F.normalize({bagTier:99}).bagTier,4,'an impossible tier clamps to the top of the ladder');
+assert.equal(F.normalize({bagTier:-5}).bagTier,0);
+assert.equal(F.normalize({bagTier:'x'}).bagTier,0);
+assert.equal(F.normalize({bagTier:1,bag:Array.from({length:300},(_,i)=>({sp:'minnow',w:.2,id:'b'+i}))}).bag.length,200,'normalization keeps the fish the owned tier allows');
+// Ten fishing titles, earned from the saved fishing blob and worn above the head.
+assert.equal(F.FISHING_TITLES.length,10,'ten fishing titles');
+assert.equal(new Set(F.FISHING_TITLES.map(t=>t.id)).size,10,'title ids are unique');
+assert.equal(new Set(F.FISHING_TITLES.map(t=>t.name)).size,10,'title names are unique');
+st=F.normalize(null);
+for(const t of F.FISHING_TITLES){assert(t.name&&t.mark&&t.tone&&t.req,'each title has a name, mark, tone and requirement');assert(t.goal>0);assert(!F.titleUnlocked(st,t),'nothing is earned on a fresh save')}
+assert.equal(F.equippedTitle(st),null);
+assert.deepEqual(F.equipTitle(st,'dockhand'),{ok:false,reason:'locked'},'an unearned title cannot be worn');
+assert.deepEqual(F.equipTitle(st,'nope'),{ok:false,reason:'unknown'});
+st.stats.catches=10;assert(F.titleUnlocked(st,F.FISHING_TITLE_BY_ID.dockhand));
+assert.deepEqual(F.equipTitle(st,'dockhand'),{ok:true,title:'dockhand'});
+assert.equal(F.equippedTitle(st).name,'Dockhand','the earned title is the one worn');
+assert(F.equipTitle(st,null).ok);assert.equal(F.equippedTitle(st),null,'a title can be taken off');
+assert.equal(F.normalize({title:'dockhand'}).title,'dockhand','the worn title saves');
+assert.equal(F.normalize({title:'not-a-title'}).title,null,'an unknown title is dropped');
+st.stats.catches=0;st.title='dockhand';assert.equal(F.equippedTitle(st),null,'a title that is no longer earned never shows');
+// Ladders that read the bestiary still work when it is empty.
+assert.equal(F.bestWeight(F.normalize(null)),0);assert.equal(F.discoveredSpecies(F.normalize(null)),0);assert.equal(F.mutationKinds(F.normalize(null)),0);
+// Show off travels as data now; the text form stays for old clients and chat history.
+st=F.normalize(null);const so=F.addCatch(st,{sp:'koi',rarity:'rare',w:4.25,mut:'shiny',perfect:true});
+assert.deepEqual(F.showOffData(st,so.id),{sp:'koi',w:4.25,mut:'shiny',perfect:true},'a show-off carries the fish as data');
+assert.equal(F.showOffData(st,'nope'),null,'you cannot show off a fish you do not own');
+assert.deepEqual(F.cleanShowOff({sp:'koi',w:'9999',mut:'evil'}),{sp:'koi',w:999,mut:null,perfect:false},'a relayed show-off is re-validated');
+assert.equal(F.cleanShowOff({sp:'not-a-fish',w:3}),null);
+assert.equal(F.cleanShowOff({sp:'koi',w:0}),null);
+assert.equal(F.cleanShowOff(null),null);
+// Rods are painted per tier, one colour each.
+assert.deepEqual(Object.keys(F.ROD_TIER_COLORS).sort(),F.RODS.map(r=>r.id).sort(),'every rod has a tier colour');
+assert.equal(new Set(Object.values(F.ROD_TIER_COLORS)).size,F.RODS.length,'no two tiers share a colour');
+assert.equal(F.rodSprite('twig',64),null,'no canvas here - the rod painter degrades instead of throwing');
+assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null without canvas');
+
 // --- Part B: the real scene renderer builds ponds and routes pond clicks to fishing --------
 (async()=>{
  const {JSDOM}=require('jsdom');
@@ -335,6 +391,81 @@ assert.equal(st.bag.length,F.BAG_MAX);
  for(let i=0;i<50;i++)frame(now+=100); // expires without error after ~5s
  scene.fishing.showFish(99,{text:'🐟',hue:0,scale:1}); // unknown player: ignored safely
  frame(now+=100);
+ // v295: every other angler's line in the water is drawn, and a show-off carries its weight.
+ for(const fn of ['setRig','clearRigs'])assert.equal(typeof scene.fishing[fn],'function','fishing.'+fn);
+ scene.putPlayer({id:2,name:'Mate',x:pond.x-4,z:pond.z-pond.d/2-1.7,dir:0,sit:false,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'}}});
+ frame(now+=100);
+ scene.fishing.setRig(2,{on:true,pond:1,x:pond.x-3,z:pond.z,mode:'wait'});
+ frame(now+=100);frame(now+=100);
+ scene.fishing.setRig(2,{on:true,pond:1,x:pond.x-3,z:pond.z,mode:'bite'});
+ frame(now+=100);
+ scene.fishing.setRig(2,{on:false});
+ frame(now+=100);
+ // A show-off with a weight label draws and expires without error.
+ scene.fishing.showFish(1,{spId:'koi',mut:'shiny',scale:2,label:'4.25 kg',glow:'#ffd24d',ms:1200});
+ for(let i=0;i<20;i++)frame(now+=100);
+ // A player who leaves takes their bobber with them.
+ scene.fishing.setRig(2,{on:true,pond:1,x:pond.x,z:pond.z,mode:'wait'});
+ frame(now+=100);
+ scene.removePlayer(2);
+ frame(now+=100);
+ scene.fishing.setRig(2,{on:false});
+ frame(now+=100);
  dom.window.close();
- console.log('PASS social fishing: ponds+chairs, 70-fish catalog with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig');
+ // --- Part C: the real Fishing window in a DOM - tabs, titles and the bag upgrade ----------
+ const dom2=new JSDOM('<div id="socialHub"></div>',{runScripts:'outside-only'}),w2=dom2.window;
+ w2.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
+ w2.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8'));
+ w2.HTMLCanvasElement.prototype.getContext=()=>null; // no canvas package here: prove the emoji fallback
+ const FISH=w2.PGSocialFishing,hostS={fishing:null},d2=w2.document;
+ let saves=0;
+ FISH.bind({host:()=>hostS,scene:()=>null,self:()=>null,moveTo:()=>{},notice:()=>{},save:()=>{saves++}});
+ assert.equal(d2.getElementById('socialHub').querySelector('#fishingDock')!==null,true,'the module builds its dock into the hub');
+ FISH.openBag();
+ assert.equal(d2.getElementById('fishingPanel').hidden,false,'the bag window opens');
+ // v295: the Pond fish toggle is gone - the ponds always hold fish.
+ assert.equal(d2.getElementById('fishingShowFish'),null,'there is no Pond fish toggle any more');
+ // The Titles tab lists exactly the ten fishing titles, with progress for the locked ones.
+ FISH.openTitles();
+ const titleRows=d2.querySelectorAll('.fishing-title-row');
+ assert.equal(titleRows.length,10,'the Titles tab lists all ten fishing titles');
+ assert(/Dockhand/.test(d2.getElementById('fishingTitlesView').textContent),'titles are named');
+ assert.equal(d2.querySelectorAll('.fishing-title-row.locked').length,10,'nothing is earned on a fresh save');
+ // Earning one and wearing it from the tab goes through the same save hook as the rest.
+ hostS.fishing.stats.catches=10;FISH.openTitles();
+ const wearBtn=d2.querySelector('button[data-title="dockhand"]');
+ assert(wearBtn&&!wearBtn.disabled,'an earned title offers a Wear button');
+ wearBtn.onclick();
+ assert.equal(hostS.fishing.title,'dockhand','wearing a title from the tab equips it');
+ assert(saves>0,'wearing a title saves');
+ assert(d2.querySelector('.fishing-title-row.worn'),'the worn title is marked');
+ // The Shop tab sells the next bag tier, and buying it raises the cap.
+ d2.getElementById('fishingGearLine').onclick();
+ assert.equal(d2.getElementById('fishingShopView').hidden,false,'the gear line opens the Shop');
+ assert(/Canvas Satchel/.test(d2.getElementById('fishingShopView').textContent),'the shop shows the owned bag tier');
+ const buyBtn=d2.querySelector('#fishingShopView button[data-bagup]');
+ assert(buyBtn,'the shop offers the next bag tier');
+ assert.equal(buyBtn.disabled,true,'it cannot be bought without the Fishcoins');
+ hostS.fishing.coins=2500;FISH.openBag();d2.getElementById('fishingGearLine').onclick();
+ const buy2=d2.querySelector('#fishingShopView button[data-bagup]');
+ assert.equal(buy2.disabled,false,'it becomes affordable');
+ buy2.onclick();
+ assert.equal(hostS.fishing.bagTier,1,'buying the tier raises the bag');
+ assert.equal(FISH.bagMax(hostS.fishing),200);
+ assert.equal(hostS.fishing.coins,0,'the tier is paid for once');
+ assert(/Reinforced Creel/.test(d2.getElementById('fishingShopView').textContent),'the shop reflects the new tier');
+ dom2.window.close();
+ // --- Part D: the page wires v295 up (save shape, cache versions, build tag) ---------------
+ const page=fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
+ assert(page.includes('baitSel:null,bagTier:0,title:null'),'a fresh save carries the bag tier and the fishing title');
+ assert(/const fishBagTiers=\[120,200,300,400,500\]/.test(page),'the page sanitizer knows the bag ladder');
+ assert(/f\.fishing\.bagTier=Math\.max\(0,Math\.min\(fishBagTiers\.length-1/.test(page),'the saved bag tier is clamped');
+ assert(/\.slice\(-fishBagCap\)/.test(page),'the bag is sliced to the tier the player owns');
+ assert(/const fishTitleIds=\['dockhand'/.test(page),'the page sanitizer whitelists the fishing titles');
+ for(const t of F.FISHING_TITLES)assert(page.includes("'"+t.id+"'"),'index.html knows the title '+t.id);
+ assert(/f\.fishing\.settings=\{fish:true,/.test(page),'pond fish are forced on in the page sanitizer');
+ for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
+  assert(page.includes(asset+'?v=295'),asset+' is versioned at v295');
+ assert(/haven-v295/.test(page),'the login card names the v295 build');
+ console.log('PASS social fishing: ponds+chairs, 70-fish catalog with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs');
 })().catch(e=>{console.error(e);process.exitCode=1});

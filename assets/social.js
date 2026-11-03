@@ -902,7 +902,14 @@ setInterval(()=>{
 },200);
 
 function resetPlayers(){app.players.clear();app.scene?.clearPlayers();$id('socialLabels').querySelectorAll('.social-player-label,.social-bubble').forEach(n=>n.remove())}
-function currentLook(){const st=typeof S==='object'&&S?S:null;return {cls:st?.cls||'Novice',appearance:st&&typeof wardrobeAppearance==='function'?wardrobeAppearance():{version:1,sex:'m'},refine:Math.max(0,Math.min(15,st?.eq?.weapon?.r||0)),title:st&&typeof HUNT_TITLES!=='undefined'?HUNT_TITLES.find(t=>t.id===st.equippedTitle&&titleUnlocked(t))?.name||'':'',lv:st&&st.auraShow!==false&&!st.hideUI?Math.max(0,Math.min(999,Math.floor(Number(st.lv)||0))):0,speed:st&&typeof moveSpd==='function'?Math.round(moveSpd(true)*100)/100:0}}
+// v295: one title slot. A fishing title earned at the ponds is worn in the plaza ahead of the
+// Hunt title (that is where fishing lives); with none equipped the Hunt title shows as before.
+function plazaTitle(st){
+ const F=FISHING();
+ if(F&&typeof F.equippedTitle==='function'){try{const t=F.equippedTitle(st&&st.fishing);if(t)return t.name}catch{}}
+ return st&&typeof HUNT_TITLES!=='undefined'?HUNT_TITLES.find(t=>t.id===st.equippedTitle&&titleUnlocked(t))?.name||'':'';
+}
+function currentLook(){const st=typeof S==='object'&&S?S:null;return {cls:st?.cls||'Novice',appearance:st&&typeof wardrobeAppearance==='function'?wardrobeAppearance():{version:1,sex:'m'},refine:Math.max(0,Math.min(15,st?.eq?.weapon?.r||0)),title:plazaTitle(st),lv:st&&st.auraShow!==false&&!st.hideUI?Math.max(0,Math.min(999,Math.floor(Number(st.lv)||0))):0,speed:st&&typeof moveSpd==='function'?Math.round(moveSpd(true)*100)/100:0}}
 function soloName(){const u=typeof CLOUD!=='undefined'&&CLOUD.user?(typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username):typeof currentUser==='string'&&currentUser?currentUser:'';return u||app.user||'Adventurer'}
 function syncSoloPlayer(){if(!app.wanted||!app.scene||app.room)return;let p=app.players.get(SOLO_ID);const look=currentLook(),name=soloName();if(!p)p={id:SOLO_ID,name,room:0,x:0,z:12,dir:0,sit:false,seat:null,pokerSeat:null,path:[],at:performance.now(),look};else{R.advance(p,performance.now());p.name=name;p.look=look}putPlayer(p)}
 function clearSoloPokerIfSeated(p){
@@ -912,27 +919,37 @@ function clearSoloPokerIfSeated(p){
   syncSoloPokerSnapshots();renderPokerMini();renderPokerUI(true);
  }
 }
-// v294: while a fishing line is in the water you cannot walk, take a seat or toggle sitting -
-// press ✕ Stop fishing (dock or toolbar menu) first. Fishing's own walk-to-pond happens in the
-// 'walking' phase, which busy() does not count.
+// v294: while a fishing line is in the water you cannot walk away - press ✕ Stop fishing first.
+// Fishing's own walk-to-pond happens in the 'walking' phase, which busy() does not count.
+// v295: sitting is no longer blocked. Sitting on a pond-side angler chair (or pressing Insert to
+// sit/stand) keeps the line in the water, which is how the chairs were meant to be used.
 function fishingBusy(){const F=FISHING();return !!(F&&typeof F.busy==='function'&&F.busy())}
 function fishingBlocked(){if(!fishingBusy())return false;notice('🎣 You are fishing — press ✕ Stop fishing before moving.');return true}
 function moveAction(x,z){if(fishingBlocked())return;confirmPokerLeave(confirmLeave=>performMoveAction(x,z,confirmLeave))}
 function performMoveAction(x,z,confirmLeave){if(app.room&&send({type:'move',x,z,confirmLeave}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());const route=R.path(p,{x,z});if(!route.length)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=false;p.seat=null;p.pokerSeat=null;putPlayer(p)}
-function seatAction(id){if(fishingBlocked())return;confirmPokerLeave(confirmLeave=>performSeatAction(id,confirmLeave))}
+function seatAction(id){confirmPokerLeave(confirmLeave=>performSeatAction(id,confirmLeave))}
 function performSeatAction(id,confirmLeave){if(app.room&&send({type:'seat',id,confirmLeave}))return;if(app.room||!Number.isInteger(id)||!R.SEATS[id])return;const p=app.players.get(SOLO_ID),seat=R.SEATS[id];if(!p)return;R.advance(p,performance.now());const route=R.path(p,seat);if(!route.length&&Math.hypot(p.x-seat.x,p.z-seat.z)>.5)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=!route.length;p.seat=seat.id;p.pokerSeat=null;if(!route.length){p.x=seat.x;p.z=seat.z}putPlayer(p)}
-function toggleSit(){if(fishingBlocked())return;confirmPokerLeave(confirmLeave=>performToggleSit(confirmLeave))}
+function toggleSit(){confirmPokerLeave(confirmLeave=>performToggleSit(confirmLeave))}
 function performToggleSit(confirmLeave){if(app.room&&send({type:'sit',confirmLeave}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());clearSoloPokerIfSeated(p);p.path=[];p.seat=null;p.pokerSeat=null;p.sit=!p.sit;putPlayer(p)}
 function join(){if(!app.connected)return;send({type:'join',look:currentLook(),friends:[...app.friends]})}
 // v287: plaza fishing. The logic/UI module reads the self position, walks the player to a pond,
 // and announces show-offs on Local chat; everything else stays in assets/social-fishing.js.
 const FISHING=()=>globalThis.PGSocialFishing||null;
 function fishingSelf(){const p=app.players.get(app.room?app.id:SOLO_ID);if(!p)return null;const c={...p,path:(p.path||[]).map(v=>({...v}))};R.advance(c,performance.now());return {x:c.x,z:c.z}}
-function fishingShowOff(text){
- if(app.room)return send({type:'chat',channel:'local',body:text});
- const name=soloName();notice(name+' '+text);if(!FISHING()?.onLocalMessage?.(SOLO_ID,text))app.scene?.bubble(SOLO_ID,{body:text});return true;
+// v295: Show off is no longer a Local-chat line. The fishing module paints the fish locally and
+// hands the same payload here, which relays it to the room as data.
+function fishingShowOff(fish){
+ if(!app.room)return true; // solo: the local overhead fish is the whole show
+ return send({type:'showoff',sp:fish&&fish.sp,w:fish&&fish.w,mut:(fish&&fish.mut)||null,perfect:!!(fish&&fish.perfect)});
 }
-function bindFishing(){const F=FISHING();if(!F)return;F.bind({host:()=>typeof S==='object'&&S?S:null,scene:()=>app.scene,self:fishingSelf,moveTo:(x,z)=>moveAction(x,z),showOff:fishingShowOff,notice,save:()=>{if(typeof save==='function'&&typeof S==='object'&&S)save()},button:$id('socialFishBtn')})}
+// v295: the player's line in the water, shared with the room so everyone sees the bobber.
+function fishingRig(state){
+ if(!app.room)return true;
+ return send({type:'rig',on:!!(state&&state.on),pond:state&&state.pond,x:state&&state.x,z:state&&state.z,mode:state&&state.mode});
+}
+// v295: a fishing title is worn above the head in the plaza; changing it repaints the room.
+function fishingTitleChanged(){const p=app.players.get(app.room?app.id:SOLO_ID);if(!p)return;const look=currentLook();if(app.room)return send({type:'look',look});p.look=look;putPlayer(p)}
+function bindFishing(){const F=FISHING();if(!F)return;F.bind({host:()=>typeof S==='object'&&S?S:null,scene:()=>app.scene,self:fishingSelf,moveTo:(x,z)=>moveAction(x,z),showOff:fishingShowOff,rig:fishingRig,titleChanged:fishingTitleChanged,notice,save:()=>{if(typeof save==='function'&&typeof S==='object'&&S)save()},button:$id('socialFishBtn')})}
 async function enter(){if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),sitting,camera:cameraUI});if(app.wanted){app.scene.active=true;bindFishing();cameraUI(app.scene.cameraState);for(const p of app.players.values())app.scene.putPlayer(p);join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
 function leave(){FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');if(app.scene)app.scene.active=false;resetPlayers();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}
 $id('socialLeave').onclick=()=>confirmPokerLeave(()=>leave());$id('socialSit').onclick=toggleSit;
@@ -966,13 +983,18 @@ function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retr
   app.scene?.updatePoker?.(list);
   renderPokerMini();renderPokerUI();updatePokerTurnClock();
  }
+ if(m.type==='showoff'){try{FISHING()?.showOffEvent?.(m.from,{sp:m.sp,w:m.w,mut:m.mut,perfect:m.perfect})}catch{}return}
  if(m.type==='reauth')return refreshSocket();
  if(m.type==='room'){friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());if(app.room!==m.room){clearPokerResult();app.poker=null;app.pokerTables=null;pokerUI.renderKey='';}app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;resetPlayers();app.messages=app.messages.filter(x=>x.channel!=='local');pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)}
  if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
 
  if(m.type==='left'&&m.room===app.room){app.players.delete(m.id);app.scene?.removePlayer(m.id);population();friendPresenceChanged()}
  if(m.type==='message'){if(m.channel==='local'&&m.room!==app.room)return;app.messages=mergeChatMessages(app.messages,[m]);if(m.channel==='world')saveWorldHistory();if(app.channel!==m.channel||chat.classList.contains('minimized'))app.unread.add(m.channel);if(!app.muted.has(m.from)){if(m.channel==='local'){const fishShown=FISHING()?.onLocalMessage?.(m.from,m.body||'');if(!fishShown)app.scene?.bubble(m.from,m);pokerTableChatBubble(m)}if(app.channel===m.channel)renderMessages(true)}tabsUI()}}
-const WATCHDOG_MS=20000,PROBE_GRACE_MS=6000;
+// v295: the watchdog used to allow 20 s of silence plus a 6 s probe grace - longer than the
+// server's old 15 s resume window, so a silent drop always came back as a fresh join at the
+// plaza spawn. Detection is now 10 s + 5 s, comfortably inside the resume window, and
+// visibilitychange probes the moment a throttled background tab wakes up.
+const WATCHDOG_MS=10000,PROBE_GRACE_MS=5000;
 function seatState(){const me=app.players.get(app.id);const seated=seatedPokerSnapshot();return me?{seat:Number.isInteger(me.seat)?me.seat:null,pokerSeat:Number.isInteger(me.pokerSeat)?me.pokerSeat:null,pokerBuyIn:seated?.me?.stack||pokerUI.buyIn,sit:!!me.sit}:app.resume}
 function dropSocket(message,keep){const ws=app.socket;app.socket=null;app.connected=false;app.probeAt=0;if(keep)app.resume=seatState();try{ws?.close()}catch{}status(message);app.nextConnect=0}
 function refreshSocket(){dropSocket('Refreshing chat…',true)}
@@ -981,7 +1003,12 @@ function heartbeat(now){if(!app.connected||!app.socket||app.socket.readyState!==
  if(!app.probeAt){app.probeAt=now;send({type:'ping'});return}
  if(now-app.probeAt>PROBE_GRACE_MS)dropSocket('Chat connection lost — reconnecting…',true)}
 function sitting(sit){$id('socialSit').textContent=sit?'Stand · Insert':'Sit · Insert';$id('socialSit').setAttribute('aria-pressed',String(sit))}
-function putPlayer(p){p.at=performance.now();app.players.set(p.id,p);app.scene?.putPlayer(p);if(p.id===(app.room?app.id:SOLO_ID))sitting(p.sit);population()}
+function putPlayer(p){p.at=performance.now();app.players.set(p.id,p);app.scene?.putPlayer(p);
+ // v295: every OTHER player's line in the water is drawn. Your own rig is driven frame by frame
+ // from assets/social-fishing.js, so it is deliberately skipped here or it would draw twice.
+ const selfId=app.room?app.id:SOLO_ID;
+ if(p.id!==selfId&&app.scene?.fishing&&typeof app.scene.fishing.setRig==='function')try{app.scene.fishing.setRig(p.id,p.fish||{on:false})}catch{}
+ if(p.id===selfId)sitting(p.sit);population()}
 function population(){
  $id('socialPopulation').textContent=app.room?'Plaza '+app.room+' · '+app.players.size+' / 20 adventurers':CLOUD.on?'Connecting to plaza · Solo view':'Solo plaza · Local character';
  const sel=$id('socialRoomSelect');
@@ -1006,8 +1033,22 @@ function connect(){if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextCo
  const ws=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/api/social'+qs);app.socket=ws;status('Connecting to chat…');ws.onmessage=e=>{if(app.socket!==ws)return;app.lastSeen=Date.now();app.probeAt=0;try{receive(JSON.parse(e.data))}catch(err){console.error('Social message',err)}};
  ws.onclose=e=>{if(app.socket!==ws)return;app.socket=null;app.connected=false;app.probeAt=0;
   if(e.code===4000){app.resume=seatState();app.nextConnect=0;status('Refreshing chat…');return}
+  // v295: a silent drop or a network blip reserves the same thing a planned refresh does, so the
+  // reconnect resumes the seat/room instead of spawning at the plaza entrance. Read it BEFORE
+  // resetPlayers() wipes the map it comes from.
+  if(e.code!==4001)app.resume=seatState();
   clearPokerResult();app.room=0;app.rooms=[];app.poker=null;app.pokerTables=null;pokerTableChat.clear();resetPlayers();syncSoloPlayer();population();tabsUI();renderPokerMini();renderPokerUI(true);status(e.code===4001?'Chat moved to another tab. Reload to reconnect.':'Chat unavailable — retrying…');app.blocked=e.code===4001;app.nextConnect=Date.now()+Math.min(30000,1000*2**Math.min(app.retry++,5))};ws.onerror=()=>status('Chat unavailable — checking connection…');}
-let lastLog='',lastLook='';setInterval(()=>{if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();heartbeat(Date.now());if(app.channel==='log'){const key=JSON.stringify(logShown().map(l=>l.id));if(key!==lastLog){lastLog=key;renderMessages(true)}}const look=JSON.stringify(currentLook());if(app.room&&lastLook&&look!==lastLook)send({type:'look',look:currentLook()});else if(!app.room&&app.wanted&&app.scene&&lastLook&&look!==lastLook)syncSoloPlayer();lastLook=look},2000);
+let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();heartbeat(Date.now());
+ // v295: fishing holds two minutes or more without a single movement packet. A light ping keeps
+ // the socket warm through proxies and NAT so an AFK session never looks dead.
+ if(app.connected&&app.socket&&app.socket.readyState===1&&fishingBusy()&&Date.now()>=keepAliveAt){keepAliveAt=Date.now()+45000;send({type:'ping'})}if(app.channel==='log'){const key=JSON.stringify(logShown().map(l=>l.id));if(key!==lastLog){lastLog=key;renderMessages(true)}}const look=JSON.stringify(currentLook());if(app.room&&lastLook&&look!==lastLook)send({type:'look',look:currentLook()});else if(!app.room&&app.wanted&&app.scene&&lastLook&&look!==lastLook)syncSoloPlayer();lastLook=look},2000);
+// v295: browsers throttle timers in a hidden tab, so an AFK player can sit behind a dead socket
+// well past the watchdog. Coming back to the tab checks it at once instead of waiting a cycle.
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden)return;
+ if(!app.socket){if(app.wanted&&CLOUD.on){app.nextConnect=0;connect()}return}
+ if(app.connected&&app.socket.readyState===1&&Date.now()-(app.lastSeen||0)>=WATCHDOG_MS)dropSocket('Chat connection lost — reconnecting…',true);
+});
 // Someone appeared, moved or left: the friends panel's "in the plaza now" label is drawn from this
 // list, so it is redrawn when (and only when) the panel is open.
 let friendPaintAt=0;

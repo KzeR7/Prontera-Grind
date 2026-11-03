@@ -103,6 +103,42 @@ const BAITS=[
  {id:'jelly',name:'Royal Jelly',icon:'🍯',cost:100,luck:.6,weight:.5,mutation:1.5},
 ];
 const BAITS_BY_ID=Object.fromEntries(BAITS.map(b=>[b.id,b]));
+// v295: ten fishing titles, worn above the head in the plaza. Every requirement is computed
+// from the saved fishing blob alone (catches, casts, perfects, species found, best weight,
+// mutation kinds), so a title can never be lost by a save migration and never needs a new
+// counter that older saves lack. `cur`/`goal` drive the progress text in the Titles tab.
+const discoveredSpecies=s=>Object.keys(s&&s.dex?s.dex:{}).filter(k=>s.dex[k]&&s.dex[k].n>0).length;
+const bestWeight=s=>Object.values(s&&s.dex?s.dex:{}).reduce((b,d)=>Math.max(b,Number(d&&d.bw)||0),0);
+const mutationKinds=s=>new Set(Object.values(s&&s.dex?s.dex:{}).flatMap(d=>Array.isArray(d&&d.mut)?d.mut:[])).size;
+const FISHING_TITLES=[
+ {id:'dockhand',name:'Dockhand',mark:'◉',tone:'bronze',cur:s=>s.stats.catches,goal:10,req:'catch 10 fish'},
+ {id:'bait-layer',name:'Bait Layer',mark:'⌖',tone:'copper',cur:s=>s.stats.catches,goal:50,req:'catch 50 fish'},
+ {id:'reed-watcher',name:'Reed Watcher',mark:'⚔',tone:'silver',cur:s=>s.stats.casts,goal:200,req:'make 200 casts'},
+ {id:'species-collector',name:'Species Collector',mark:'✧',tone:'jade',cur:discoveredSpecies,goal:10,req:'discover 10 species'},
+ {id:'perfect-hand',name:'Perfect Hand',mark:'★',tone:'sapphire',cur:s=>s.stats.perfects,goal:25,req:'land 25 perfect catches'},
+ {id:'heavy-hook',name:'Heavy Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:20,req:'record a 20 kg fish'},
+ {id:'deep-line',name:'Deep Line',mark:'☾',tone:'obsidian',cur:s=>s.stats.catches,goal:500,req:'catch 500 fish'},
+ {id:'mutation-hunter',name:'Mutation Hunter',mark:'🧬',tone:'crimson',cur:mutationKinds,goal:Object.keys(MUTATIONS).length,req:'find all 7 mutation kinds'},
+ {id:'pond-legend',name:'Pond Legend',mark:'✹',tone:'gold',cur:discoveredSpecies,goal:40,req:'discover 40 species'},
+ {id:'apex-angler',name:'Apex Angler',mark:'✶',tone:'valkyrie',cur:discoveredSpecies,goal:SPECIES.length,req:'discover all 70 species'},
+];
+const FISHING_TITLE_BY_ID=Object.fromEntries(FISHING_TITLES.map(t=>[t.id,t]));
+const titleUnlocked=(state,t)=>!!(t&&t.cur(state)>=t.goal);
+// Equipping is only ever possible for an earned title; null means "wear no fishing title".
+function equipTitle(state,id){
+ if(!state)return {ok:false,reason:'unknown'};
+ if(id===null||id==='none'){state.title=null;return {ok:true,title:null}}
+ const t=FISHING_TITLE_BY_ID[id];
+ if(!t)return {ok:false,reason:'unknown'};
+ if(!titleUnlocked(state,t))return {ok:false,reason:'locked'};
+ state.title=t.id;
+ return {ok:true,title:t.id};
+}
+// The name worn above the head. Falls back to null when nothing is equipped or it is not earned.
+function equippedTitle(state){
+ const t=state&&state.title?FISHING_TITLE_BY_ID[state.title]:null;
+ return titleUnlocked(state,t)?t:null;
+}
 // Reel feel per rarity: control-bar width, fish wander speed, dash chance, fill/drain per second.
 const DIFF={
  common:{bar:.34,speed:.42,dash:.16,fill:.165,drain:.1},
@@ -113,7 +149,20 @@ const DIFF={
  secret:{bar:.24,speed:.8,dash:.5,fill:.112,drain:.118},
 };
 const RARITY_VALUE={common:3,uncommon:8,rare:20,legendary:60,mythical:200,secret:600};
-const BAG_MAX=120,COIN_MAX=1e9,CAST_GREEN=[.82,.96],CAST_PERFECT=[.87,.93];
+// v295: the bag is upgradeable. Tier 0 is the v288 bag (120) and is always owned; each later
+// tier is bought once with Fishcoins and is permanent, exactly like a rod. BAG_MAX stays the
+// base capacity so older callers and saves keep working, and bagMax(state) is the live cap.
+const BAG_TIERS=[
+ {tier:0,cap:120,cost:0,label:'Canvas Satchel'},
+ {tier:1,cap:200,cost:2500,label:'Reinforced Creel'},
+ {tier:2,cap:300,cost:8000,label:'Angler\'s Basket'},
+ {tier:3,cap:400,cost:25000,label:'Deep Keep-Net'},
+ {tier:4,cap:500,cost:75000,label:'Bottomless Creel'},
+];
+const BAG_MAX=BAG_TIERS[0].cap,COIN_MAX=1e9,CAST_GREEN=[.82,.96],CAST_PERFECT=[.87,.93];
+const bagTierOf=state=>{const t=state&&Number.isInteger(state.bagTier)?state.bagTier:0;return BAG_TIERS[Math.max(0,Math.min(BAG_TIERS.length-1,t))]};
+const bagMax=state=>bagTierOf(state).cap;
+const nextBagTier=state=>BAG_TIERS[bagTierOf(state).tier+1]||null;
 const speciesById=id=>SPECIES_BY_ID[id]||null;
 const rarityById=id=>RARITIES[RARITY_INDEX[id]]||RARITIES[0];
 // A catch is worth more the heavier it rolled; mutations multiply the price.
@@ -194,7 +243,7 @@ function cleanEntry(e){
 function normalize(raw){
  const f=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
  const bag=[],ids=new Set();
- for(const e of (Array.isArray(f.bag)?f.bag:[]).map(cleanEntry).filter(Boolean).slice(-BAG_MAX)){
+ for(const e of (Array.isArray(f.bag)?f.bag:[]).map(cleanEntry).filter(Boolean).slice(-BAG_TIERS[Math.max(0,Math.min(BAG_TIERS.length-1,Math.floor(Number(f.bagTier)||0)))].cap)){
   while(ids.has(e.id))e.id='f'+Math.random().toString(36).slice(2,10);
   ids.add(e.id);bag.push(e);
  }
@@ -211,17 +260,32 @@ function normalize(raw){
  return {
   v:1,bag,dex,
   stats:{casts:cnt(st.casts),catches:cnt(st.catches),escapes:cnt(st.escapes),perfects:cnt(st.perfects)},
-  settings:{fish:se.fish!==false,sound:se.sound!==false,autoSell:se.autoSell===true},
+  settings:{fish:true,sound:se.sound!==false,autoSell:se.autoSell===true},
   coins:cnt(f.coins),
   rods,
   rod:typeof f.rod==='string'&&rods.includes(f.rod)?f.rod:'twig',
   bait,
   baitSel:typeof f.baitSel==='string'&&Object.hasOwn(BAITS_BY_ID,f.baitSel)?f.baitSel:null,
+  // v295: permanent bag upgrade tier and the equipped fishing title.
+  bagTier:Math.max(0,Math.min(BAG_TIERS.length-1,Math.floor(Number(f.bagTier)||0))),
+  title:typeof f.title==='string'&&FISHING_TITLE_BY_ID[f.title]?f.title:null,
  };
 }
+// v295: buying a bag tier spends Fishcoins once and raises the cap permanently. Buying is
+// strictly sequential, so a tampered tier can never skip a rung or hand out free capacity.
+function buyBagUpgrade(state){
+ if(!state)return {ok:false,reason:'unknown'};
+ const next=nextBagTier(state);
+ if(!next)return {ok:false,reason:'max'};
+ if(state.coins<next.cost)return {ok:false,reason:'coins'};
+ state.coins-=next.cost;
+ state.bagTier=next.tier;
+ return {ok:true,tier:next.tier,cap:next.cap};
+}
+
 // Adds a rolled catch to the bag and bestiary. Returns the entry, or null when the bag is full.
 function addCatch(state,c,now=Date.now()){
- if(!state||state.bag.length>=BAG_MAX)return null;
+ if(!state||state.bag.length>=bagMax(state))return null;
  const sp=speciesById(c.sp);if(!sp)return null;
  let id='f'+now.toString(36)+Math.floor(Math.random()*46656).toString(36);
  while(state.bag.some(e=>e.id===id))id+='x';
@@ -307,6 +371,23 @@ function showOffText(state,entryId){
  const mut=e.mut?MUTATIONS[e.mut].badge+' '+MUTATIONS[e.mut].label+' ':'';
  return `🎣 shows off a ${mut}${sp.name} — ${e.w} kg (${r.label}${e.perfect?' · Perfect catch ⭐':''})!`;
 }
+// v295: the show-off travels as data, not as a Local-chat line. Returns the exact fish (never a
+// fish that is not in the bag) in the compact shape the worker relays to the room.
+function showOffData(state,entryId){
+ const e=state&&state.bag.find(x=>x.id===entryId);if(!e)return null;
+ const sp=speciesById(e.sp);if(!sp)return null;
+ return {sp:sp.id,w:e.w,mut:e.mut||null,perfect:e.perfect===true};
+}
+// A relayed show-off is only ever drawn from validated fields; anything unknown renders nothing.
+function cleanShowOff(raw){
+ if(!raw||typeof raw!=='object')return null;
+ const sp=speciesById(raw.sp);if(!sp)return null;
+ // Same contract as the worker: a weight that is not a positive number is not a fish.
+ const w0=Number(raw.w);
+ if(!Number.isFinite(w0)||w0<=0)return null;
+ const w=Math.round(Math.max(.01,Math.min(999,w0))*100)/100;
+ return {sp:sp.id,w,mut:Object.hasOwn(MUTATIONS,raw.mut)?raw.mut:null,perfect:raw.perfect===true};
+}
 // The reverse: recognize a show-off line from any player so everyone sees the actual fish,
 // scaled by its weight, over the angler's head. Returns {sp,w,mut} or null.
 function parseShowOff(body){
@@ -364,7 +445,7 @@ function sound(kind){
  }catch{}
 }
 const ui={phase:'off',pond:-1,holding:false,chargeT0:0,castR:null,mods:null,biteAt:0,biteEnd:0,shakeAt:0,shakeEl:null,roll:null,reel:null,raf:0,last:0,selected:null,sort:'new',result:null,
- tab:'bag',auto:false,autoNext:0,autoPower:.8,autoHookAt:0,autoSampleAt:0,autoTarget:.5};
+ tab:'bag',auto:false,autoNext:0,autoPower:.8,autoHookAt:0,autoSampleAt:0,autoTarget:.5,rigTarget:null};
 let uiPos={};
 try{uiPos=JSON.parse(root.localStorage.getItem('pg_fishing_ui_v1'))||{}}catch{}
 function saveUiPos(){try{root.localStorage.setItem('pg_fishing_ui_v1',JSON.stringify(uiPos))}catch{}}
@@ -414,21 +495,20 @@ function ensureDom(){
  const dock=doc.createElement('section');dock.id='fishingDock';dock.hidden=true;dock.setAttribute('aria-label','Fishing');
  dock.innerHTML='<div id="fishingDockHead" title="Drag to move"><span id="fishingSpot">🎣 South Lawn Pond</span><span id="fishingDockBtns"><button id="fishingAutoBtn" type="button" title="Auto fishing: casts, hooks and reels by itself until you stop it" aria-pressed="false">▶ Auto</button><button id="fishingBagBtn" type="button" aria-haspopup="dialog">🧺 Bag <small id="fishingBagCount"></small></button><button id="fishingStopBtn" type="button" title="Stop fishing" aria-label="Stop fishing">✕</button></span></div><button id="fishingGearLine" type="button" title="Open the rod &amp; bait shop"></button><div id="fishingStage" role="button" tabindex="0" aria-label="Fishing action area"></div><p id="fishingStatus" aria-live="polite"></p>';
  const panel=doc.createElement('section');panel.id='fishingPanel';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Fishing Bag');
- panel.innerHTML='<header id="fishingPanelHead" title="Drag to move"><strong>🎣 Fishing</strong><span id="fishingCoins" title="Fishcoins — sell catches to earn, spend on rods &amp; bait"></span><button id="fishingPanelClose" type="button" aria-label="Close Fishing window">✕</button></header><nav id="fishingTabs" role="tablist" aria-label="Fishing sections"><button type="button" role="tab" data-ftab="bag" aria-selected="true">🧺 Bag</button><button type="button" role="tab" data-ftab="index" aria-selected="false">📖 Index</button><button type="button" role="tab" data-ftab="shop" aria-selected="false">🛒 Shop</button></nav><div id="fishingBagView"><div id="fishingRecords"></div><div id="fishingTools"><select id="fishingSort" aria-label="Sort fish"><option value="new">Newest</option><option value="heavy">Heaviest</option><option value="rare">Rarest</option><option value="value">Most valuable</option></select><button id="fishingSellDupes" type="button" title="Sells everything except your heaviest of each species, every mutated fish and every 🔒 locked fish">💰 Sell dupes</button><label title="After every catch, automatically sell it unless it is mutated, locked, or your new heaviest of that species"><input type="checkbox" id="fishingAutoSell"> Auto-sell dupes</label><label title="Show the fish swimming in the ponds"><input type="checkbox" id="fishingShowFish"> Pond fish</label><label title="Fishing sound effects"><input type="checkbox" id="fishingSound"> Sounds</label></div><div id="fishingGrid" role="listbox" aria-label="Caught fish"></div><footer id="fishingDetail" hidden></footer></div><div id="fishingIndexView" hidden></div><div id="fishingShopView" hidden></div>';
+ panel.innerHTML='<header id="fishingPanelHead" title="Drag to move"><strong>🎣 Fishing</strong><span id="fishingCoins" title="Fishcoins — sell catches to earn, spend on rods &amp; bait"></span><button id="fishingPanelClose" type="button" aria-label="Close Fishing window">✕</button></header><nav id="fishingTabs" role="tablist" aria-label="Fishing sections"><button type="button" role="tab" data-ftab="bag" aria-selected="true">🧺 Bag</button><button type="button" role="tab" data-ftab="index" aria-selected="false">📖 Index</button><button type="button" role="tab" data-ftab="shop" aria-selected="false">🛒 Shop</button><button type="button" role="tab" data-ftab="titles" aria-selected="false">🏅 Titles</button></nav><div id="fishingBagView"><div id="fishingRecords"></div><div id="fishingTools"><select id="fishingSort" aria-label="Sort fish"><option value="new">Newest</option><option value="heavy">Heaviest</option><option value="rare">Rarest</option><option value="value">Most valuable</option></select><button id="fishingSellDupes" type="button" title="Sells everything except your heaviest of each species, every mutated fish and every 🔒 locked fish">💰 Sell dupes</button><label title="After every catch, automatically sell it unless it is mutated, locked, or your new heaviest of that species"><input type="checkbox" id="fishingAutoSell"> Auto-sell dupes</label><label title="Fishing sound effects"><input type="checkbox" id="fishingSound"> Sounds</label></div><div id="fishingGrid" role="listbox" aria-label="Caught fish"></div><footer id="fishingDetail" hidden></footer></div><div id="fishingIndexView" hidden></div><div id="fishingShopView" hidden></div><div id="fishingTitlesView" hidden></div>';
  const shakes=doc.createElement('div');shakes.id='fishingShakes';shakes.hidden=true;
  // v290: the toolbar button opens this menu instead of instantly walking to a pond. Start
  // fishing is an explicit choice; Bag / Index / Shop open anywhere in the plaza, no walking.
  const menu=doc.createElement('div');menu.id='fishingMenu';menu.hidden=true;menu.setAttribute('role','menu');menu.setAttribute('aria-label','Fishing menu');
  if(REDUCED()){dock.classList.add('reduced');shakes.classList.add('reduced')}
  hub.append(dock,panel,shakes,menu);
- els={hub,dock,panel,shakes,menu,stage:doc.getElementById('fishingStage'),status:doc.getElementById('fishingStatus'),grid:doc.getElementById('fishingGrid'),records:doc.getElementById('fishingRecords'),detail:doc.getElementById('fishingDetail'),bagCount:doc.getElementById('fishingBagCount'),spot:doc.getElementById('fishingSpot'),gearLine:doc.getElementById('fishingGearLine'),coins:doc.getElementById('fishingCoins'),bagView:doc.getElementById('fishingBagView'),indexView:doc.getElementById('fishingIndexView'),shopView:doc.getElementById('fishingShopView'),autoBtn:doc.getElementById('fishingAutoBtn')};
+ els={hub,dock,panel,shakes,menu,stage:doc.getElementById('fishingStage'),status:doc.getElementById('fishingStatus'),grid:doc.getElementById('fishingGrid'),records:doc.getElementById('fishingRecords'),detail:doc.getElementById('fishingDetail'),bagCount:doc.getElementById('fishingBagCount'),spot:doc.getElementById('fishingSpot'),gearLine:doc.getElementById('fishingGearLine'),coins:doc.getElementById('fishingCoins'),bagView:doc.getElementById('fishingBagView'),indexView:doc.getElementById('fishingIndexView'),shopView:doc.getElementById('fishingShopView'),titlesView:doc.getElementById('fishingTitlesView'),autoBtn:doc.getElementById('fishingAutoBtn')};
  doc.getElementById('fishingStopBtn').onclick=()=>stopFishing();
  doc.getElementById('fishingBagBtn').onclick=()=>toggleBag();
  doc.getElementById('fishingPanelClose').onclick=()=>toggleBag(false);
  doc.getElementById('fishingSort').onchange=e=>{ui.sort=e.target.value;renderBag()};
  doc.getElementById('fishingSellDupes').onclick=()=>{const r=sellBulk(state(),'dupes');persist();if(r.sold){sound('coin');status(`Sold ${r.sold} fish for ${fmt(r.coins)} Fishcoins.`)}else status('Nothing to sell — every fish is a record, mutated or locked.');ui.selected=null;renderPanel();renderDockGear()};
  doc.getElementById('fishingAutoSell').onchange=e=>{state().settings.autoSell=e.target.checked;persist();status(e.target.checked?'Auto-sell on — dupes are sold as you catch them (records, mutations and 🔒 locked fish are kept).':'Auto-sell off.')};
- doc.getElementById('fishingShowFish').onchange=e=>{state().settings.fish=e.target.checked;persist();const f=sceneFishing();f&&f.setFishVisible(e.target.checked)};
  doc.getElementById('fishingSound').onchange=e=>{state().settings.sound=e.target.checked;persist()};
  els.autoBtn.onclick=()=>setAuto(!ui.auto);
  els.gearLine.onclick=()=>{toggleBag(true);switchTab('shop')};
@@ -458,7 +538,7 @@ function renderMenu(){
  const st=state();
  els.menu.innerHTML=
   `<button type="button" role="menuitem" data-fm="start">${ui.phase==='off'?'▶ Start fishing<small>walks to the nearest pond</small>':'⏹ Stop fishing'}</button>`+
-  `<button type="button" role="menuitem" data-fm="bag">🧺 Fishing Bag<small>${st.bag.length}/${BAG_MAX} · show off from anywhere</small></button>`+
+  `<button type="button" role="menuitem" data-fm="bag">🧺 Fishing Bag<small>${st.bag.length}/${bagMax(st)} · show off from anywhere</small></button>`+
   `<button type="button" role="menuitem" data-fm="index">📖 Fish Index<small>${Object.keys(st.dex).filter(k=>st.dex[k].n>0).length}/${SPECIES.length} discovered · catch rates</small></button>`+
   `<button type="button" role="menuitem" data-fm="shop">🛒 Tackle Shop<small>${COIN_HTML} ${fmt(st.coins)}</small></button>`;
  for(const b of els.menu.querySelectorAll('button'))b.onclick=()=>{
@@ -489,7 +569,22 @@ function setAuto(on){
  if(ui.auto){ui.autoNext=now()+400;clearShake();if(ui.phase!=='off')status('Auto fishing — click ⏸ Auto or ✕ to stop.')}
  else if(ui.phase!=='off')status('Auto fishing off.');
 }
-function setPhase(phase){ui.phase=phase;renderStage();if(opts&&opts.button){opts.button.textContent=phase==='off'?'🎣 Fishing':'🎣 Fishing…';opts.button.setAttribute('aria-pressed',String(phase!=='off'))}}
+// v295: the line in the water is public. Every player in the plaza sees the bobber, so the rig
+// state rides the same room broadcast as position instead of living only on the caster's screen.
+let rigSent='';
+function rigPayload(){
+ if(['off','walking'].includes(ui.phase)||!ui.rigTarget)return {on:false};
+ const t=ui.rigTarget;
+ return {on:true,pond:ui.pond,x:Math.round(t.x*100)/100,z:Math.round(t.z*100)/100,mode:ui.phase};
+}
+function publishRig(){
+ if(!opts||typeof opts.rig!=='function')return;
+ const p=rigPayload(),key=JSON.stringify(p);
+ if(key===rigSent)return;
+ rigSent=key;
+ opts.rig(p);
+}
+function setPhase(phase){ui.phase=phase;renderStage();publishRig();if(opts&&opts.button){opts.button.textContent=phase==='off'?'🎣 Fishing':'🎣 Fishing…';opts.button.setAttribute('aria-pressed',String(phase!=='off'))}}
 function mutFilter(mut){return mut&&MUTATIONS[mut]?' '+MUTATIONS[mut].css:''}
 // ---- v294 fish art. The old look was the OS emoji tinted with hue-rotate: blurry, washed
 // out and childish, and the show-off/catch sprites were so dim they vanished over the pond.
@@ -632,6 +727,65 @@ function fishSpriteURL(spId,mut,px=96){
  ART_CACHE.set(key,url);
  return url;
 }
+// v295: rods are painted, not emoji. The old shop/gear line used 🎣/🪵/🥇, which rendered as a
+// different glyph on every OS and never showed the rod you actually owned. Each rod now has one
+// tier colour that tints both the painted rod and its glow, so the tier reads at a glance.
+const ROD_TIER_COLORS={twig:'#8b6b45',oak:'#b07a3c',brass:'#c8873a',silver:'#cfd8e0',golden:'#ffcb45',mythril:'#7fe3ff'};
+function rodSprite(rodId,px=96){
+ const rod=RODS_BY_ID[rodId]||RODS[0];
+ if(typeof document==='undefined'||!document.createElement)return null;
+ let c,g;
+ try{c=document.createElement('canvas');c.width=c.height=px;g=c.getContext&&c.getContext('2d')}catch{return null}
+ if(!g||typeof g.quadraticCurveTo!=='function'||typeof g.createLinearGradient!=='function')return null;
+ const tint=ROD_TIER_COLORS[rod.id]||ROD_TIER_COLORS.twig;
+ const u=px/100,U=n=>n*u;
+ // Tier halo behind the rod - brighter metal, quieter wood.
+ const glowA=rod.id==='twig'?.18:rod.id==='oak'?.26:.4;
+ try{const rg=g.createRadialGradient(U(52),U(50),U(6),U(52),U(50),U(46));rg.addColorStop(0,tint);rg.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=glowA;g.fillStyle=rg;g.fillRect(0,0,px,px);g.globalAlpha=1}catch{}
+ g.lineCap='round';g.lineJoin='round';
+ // The blank: a tapered curve from the grip (bottom left) to the tip (top right).
+ const tip={x:88,y:12},mid={x:56,y:44},grip={x:22,y:82};
+ g.strokeStyle='#241a12';g.lineWidth=U(7);g.beginPath();g.moveTo(U(grip.x),U(grip.y));g.quadraticCurveTo(U(mid.x),U(mid.y),U(tip.x),U(tip.y));g.stroke();
+ const bg=g.createLinearGradient(U(grip.x),U(grip.y),U(tip.x),U(tip.y));bg.addColorStop(0,tint);bg.addColorStop(.55,'#3b2c1e');bg.addColorStop(1,tint);
+ g.strokeStyle=bg;g.lineWidth=U(4);g.beginPath();g.moveTo(U(grip.x),U(grip.y));g.quadraticCurveTo(U(mid.x),U(mid.y),U(tip.x),U(tip.y));g.stroke();
+ // Cork grip with darker rings.
+ g.strokeStyle='#2a1d13';g.lineWidth=U(11);g.beginPath();g.moveTo(U(grip.x),U(grip.y));g.lineTo(U(grip.x+9),U(grip.y-9));g.stroke();
+ g.strokeStyle='#c9a06a';g.lineWidth=U(8);g.beginPath();g.moveTo(U(grip.x),U(grip.y));g.lineTo(U(grip.x+9),U(grip.y-9));g.stroke();
+ g.strokeStyle='rgba(70,44,24,.85)';g.lineWidth=U(1.4);
+ for(let i=1;i<4;i++){const t=i/4,x=grip.x+9*t,y=grip.y-9*t;g.beginPath();g.moveTo(U(x-3),U(y-4));g.lineTo(U(x+4),U(y+3));g.stroke()}
+ // Reel body + crank, tinted to the tier.
+ g.fillStyle='#1d1712';g.beginPath();g.arc(U(42),U(56),U(9),0,7);g.fill();
+ g.fillStyle=tint;g.beginPath();g.arc(U(42),U(56),U(6.4),0,7);g.fill();
+ g.strokeStyle='#1d1712';g.lineWidth=U(2);g.beginPath();g.moveTo(U(42),U(56));g.lineTo(U(48),U(62));g.stroke();
+ g.fillStyle='#f3ead8';g.beginPath();g.arc(U(49),U(63),U(2.4),0,7);g.fill();
+ // Line guides along the blank, then the line leaving the tip.
+ g.strokeStyle='#e9eef2';g.lineWidth=U(1.6);
+ for(const t of [.35,.6,.82]){const x=grip.x+(tip.x-grip.x)*t,y=grip.y+(tip.y-grip.y)*t-6*t;g.beginPath();g.arc(U(x),U(y),U(2.2),0,7);g.stroke()}
+ g.beginPath();g.moveTo(U(tip.x),U(tip.y));g.quadraticCurveTo(U(94),U(34),U(84),U(66));g.strokeStyle='rgba(233,238,242,.8)';g.lineWidth=U(1.2);g.stroke();
+ // Hook at the end of the line.
+ g.strokeStyle='#d8dde2';g.lineWidth=U(1.8);g.beginPath();g.arc(U(82),U(70),U(4),-.4,3.2);g.stroke();
+ return c;
+}
+const ROD_ART_CACHE=new Map();
+function rodSpriteURL(rodId,px=96){
+ const rod=RODS_BY_ID[rodId]||RODS[0];
+ const key=rod.id+'|'+px;
+ if(ROD_ART_CACHE.has(key))return ROD_ART_CACHE.get(key);
+ let url=null;
+ const c=rodSprite(rod.id,px);
+ if(c&&typeof c.toDataURL==='function'){try{url=c.toDataURL('image/png')}catch{url=null}}
+ if(url&&!/^data:image\/png/.test(url))url=null;
+ ROD_ART_CACHE.set(key,url);
+ return url;
+}
+// One markup helper so the shop, the dock and the catch card can never drift apart.
+function rodHTML(rod,cls='fishing-rod-icon',px=64){
+ const url=rodSpriteURL(rod.id,px);
+ const tint=ROD_TIER_COLORS[rod.id]||ROD_TIER_COLORS.twig;
+ const style=`--rod-tint:${tint}`;
+ if(url)return `<img class="${cls} fishing-rod-art" style="${style}" src="${url}" alt="" draggable="false">`;
+ return `<span class="${cls}" style="${style}">${rod.icon}</span>`;
+}
 function glyphHTML(sp,mut,cls='fishing-glyph'){
  const url=fishSpriteURL(sp,mut,cls==='fishing-glyph'?64:128);
  if(url)return `<img class="${cls} fishing-art${mut?' mut-'+mut:''}" src="${url}" alt="${esc(sp.name)}" draggable="false">`;
@@ -643,8 +797,8 @@ const COIN_HTML='<i class="fishcoin" aria-hidden="true"></i>';
 function renderDockGear(){
  if(!els)return;
  const st=state(),rod=equippedRod(),bait=selectedBait();
- els.gearLine.innerHTML=`<span>${COIN_HTML} ${fmt(st.coins)}</span><span>${rod.icon} ${esc(rod.name)}</span><span>${bait?`${bait.icon} ${esc(bait.name)} ×${st.bait[bait.id]}`:'No bait'}</span>`;
- els.bagCount.textContent=st.bag.length+'/'+BAG_MAX;
+ els.gearLine.innerHTML=`<span>${COIN_HTML} ${fmt(st.coins)}</span><span>${rodHTML(rod,'fishing-gear-rod',40)} ${esc(rod.name)}</span><span>${bait?`${bait.icon} ${esc(bait.name)} ×${st.bait[bait.id]}`:'No bait'}</span>`;
+ els.bagCount.textContent=st.bag.length+'/'+bagMax(st);
  if(els.coins)els.coins.innerHTML=COIN_HTML+' '+fmt(st.coins);
 }
 function renderStage(){
@@ -703,7 +857,7 @@ function spawnShake(){
 }
 function holdDown(){
  if(ui.phase==='ready'){
-  if(state().bag.length>=BAG_MAX){status('Bag full ('+BAG_MAX+') — sell or release some fish first.');toggleBag(true);if(ui.auto)setAuto(false);return}
+  if(state().bag.length>=bagMax(state())){status('Bag full ('+bagMax(state())+') — sell, release or upgrade the bag first.');toggleBag(true);if(ui.auto)setAuto(false);return}
   ui.holding=true;ui.chargeT0=now();setPhase('charge');return;
  }
  if(ui.phase==='bite'){hook();return}
@@ -731,6 +885,7 @@ function releaseCast(){
  const farX=Math.max(inX[0],Math.min(inX[1],2*p.x-nearX)),farZ=Math.max(inZ[0],Math.min(inZ[1],2*p.z-nearZ));
  const t=ui.castR.dist,tx=nearX+(farX-nearX)*t+(Math.random()-.5)*.8,tz=nearZ+(farZ-nearZ)*t+(Math.random()-.5)*.8;
  const target={x:Math.max(inX[0],Math.min(inX[1],tx)),z:Math.max(inZ[0],Math.min(inZ[1],tz))};
+ ui.rigTarget=target;
  sound('cast');
  setPhase('flight');
  const f=sceneFishing();
@@ -856,7 +1011,6 @@ function startFishing(pondIdx){
   setPhase('walking');
   if(stand&&opts.moveTo)opts.moveTo(stand.x,stand.z);
  }else setPhase('ready');
- const f=sceneFishing();f&&f.setFishVisible(state().settings.fish);
  startLoop();
 }
 function stopFishing(message){
@@ -876,12 +1030,13 @@ function toggleBag(force){
  if(show){applyPos(els.panel,'panel');syncSettings();renderPanel()}
 }
 function switchTab(tab){
- if(!['bag','index','shop'].includes(tab))tab='bag';
+ if(!['bag','index','shop','titles'].includes(tab))tab='bag';
  ui.tab=tab;
  for(const b of els.panel.querySelectorAll('#fishingTabs button'))b.setAttribute('aria-selected',String(b.dataset.ftab===tab));
  els.bagView.hidden=tab!=='bag';
  els.indexView.hidden=tab!=='index';
  els.shopView.hidden=tab!=='shop';
+ els.titlesView.hidden=tab!=='titles';
  renderPanel();
 }
 function renderPanel(){
@@ -889,12 +1044,12 @@ function renderPanel(){
  renderDockGear();
  if(ui.tab==='bag')renderBag();
  else if(ui.tab==='index')renderIndex();
+ else if(ui.tab==='titles')renderTitles();
  else renderShop();
 }
 function syncSettings(){
  const st=state();
- const sf=doc.getElementById('fishingShowFish'),sn=doc.getElementById('fishingSound'),so=doc.getElementById('fishingSort'),as=doc.getElementById('fishingAutoSell');
- if(sf)sf.checked=st.settings.fish;
+ const sn=doc.getElementById('fishingSound'),so=doc.getElementById('fishingSort'),as=doc.getElementById('fishingAutoSell');
  if(sn)sn.checked=st.settings.sound;
  if(as)as.checked=st.settings.autoSell;
  if(so)so.value=ui.sort;
@@ -912,7 +1067,7 @@ function renderBag(){
  const st=state();
  const best=st.bag.reduce((b,e)=>!b||e.w>b.w?e:b,null);
  const species=Object.keys(st.dex).filter(k=>st.dex[k].n>0).length;
- els.records.innerHTML=`<span>Catches <b>${fmt(st.stats.catches)}</b></span><span>Species <b>${species}/${SPECIES.length}</b></span><span>Perfect <b>${fmt(st.stats.perfects)}</b></span><span>${best?`Best <b>${esc(speciesById(best.sp).name)} ${best.w} kg</b>`:'Best <b>—</b>'}</span><span>Bag <b>${st.bag.length}/${BAG_MAX}</b></span>`;
+ els.records.innerHTML=`<span>Catches <b>${fmt(st.stats.catches)}</b></span><span>Species <b>${species}/${SPECIES.length}</b></span><span>Perfect <b>${fmt(st.stats.perfects)}</b></span><span>${best?`Best <b>${esc(speciesById(best.sp).name)} ${best.w} kg</b>`:'Best <b>—</b>'}</span><span>Bag <b>${st.bag.length}/${bagMax(st)}</b></span>`;
  const bag=sortedBag();
  if(!bag.length){els.grid.innerHTML='<p class="fishing-empty">No fish yet — stand by a South Lawn pond and press 🎣 Fishing to cast.</p>';els.detail.hidden=true;ui.selected=null;return}
  els.grid.replaceChildren(...bag.map(e=>{
@@ -960,6 +1115,27 @@ function renderIndex(){
  const found=Object.keys(st.dex).filter(k=>st.dex[k].n>0).length;
  els.indexView.innerHTML=`<p class="fishing-dex-head">Discovered <b>${found}/${SPECIES.length}</b> · rates shown are base odds — rods &amp; bait tilt them toward the rare end.</p><div class="fishing-dex-list">${rows}</div>`;
 }
+// 🏅 v295: the ten fishing titles. Worn above the head in the plaza for every player to see;
+// a title is only wearable once its requirement is actually met in the saved fishing blob.
+const TITLE_TONE={bronze:'#c08a52',copper:'#a86f4a',silver:'#cdd6de',jade:'#6ee0a8',sapphire:'#6cb8ff',amethyst:'#c792ea',obsidian:'#8f96b8',crimson:'#ff7a7a',gold:'#ffcc55',valkyrie:'#f0e6ff'};
+function renderTitles(){
+ const st=state(),worn=equippedTitle(st);
+ const rows=FISHING_TITLES.map(t=>{
+  const cur=Math.min(t.goal,t.cur(st)),done=titleUnlocked(st,t),isWorn=worn&&worn.id===t.id;
+  const pct=Math.round(cur/t.goal*100);
+  const tone=TITLE_TONE[t.tone]||TITLE_TONE.bronze;
+  return `<div class="fishing-title-row${done?'':' locked'}${isWorn?' worn':''}" style="--tone:${tone}">
+   <span class="fishing-title-mark">${t.mark}</span>
+   <span class="fishing-title-name">${esc(t.name)}<small>${done?'Unlocked':`${fmt(cur)}/${fmt(t.goal)} — ${esc(t.req)}`}</small>${done?'':`<i class="fishing-title-bar"><b style="width:${pct}%"></b></i>`}</span>
+   ${isWorn?'<button type="button" disabled>Worn</button>':done?`<button type="button" data-title="${t.id}">Wear</button>`:'<button type="button" disabled>🔒</button>'}
+  </div>`;
+ }).join('');
+ els.titlesView.innerHTML=`<p class="fishing-dex-head">Worn above your head in the plaza. <b>${FISHING_TITLES.filter(t=>titleUnlocked(st,t)).length}/${FISHING_TITLES.length}</b> earned.</p><div class="fishing-title-list">${rows}</div>${worn?'<div class="fishing-title-none"><button type="button" data-title="none">Wear no fishing title</button></div>':''}`;
+ for(const b of els.titlesView.querySelectorAll('button[data-title]'))b.onclick=()=>{
+  const r=equipTitle(st,b.dataset.title==='none'?null:b.dataset.title);
+  if(r.ok){persist();status(r.title?('Wearing '+FISHING_TITLE_BY_ID[r.title].name+'.'):'Fishing title removed.');renderPanel();if(opts&&typeof opts.titleChanged==='function')opts.titleChanged()}
+ };
+}
 // 🛒 Rods & bait, paid with Fishcoins earned by selling fish.
 function renderShop(){
  const st=state();
@@ -967,26 +1143,47 @@ function renderShop(){
   const owned=st.rods.includes(rod.id),equipped=st.rod===rod.id;
   const stats=`🍀 +${Math.round(rod.luck*100)}% · 🎯 +${Math.round(rod.control*100)}% · 🏋️ +${Math.round(rod.strength*100)}% · ⏱ +${Math.round(rod.lure*100)}%`;
   const btn=equipped?'<button type="button" disabled>Equipped</button>':owned?`<button type="button" data-equip="${rod.id}">Equip</button>`:`<button type="button" data-rod="${rod.id}" ${st.coins<rod.cost?'disabled':''}>${COIN_HTML} ${fmt(rod.cost)}</button>`;
-  return `<div class="fishing-shop-row${equipped?' equipped':''}"><span class="fishing-shop-icon">${rod.icon}</span><span class="fishing-shop-name">${esc(rod.name)}<small>${stats}</small></span>${btn}</div>`;
+  return `<div class="fishing-shop-row${equipped?' equipped':''}"><span class="fishing-shop-icon">${rodHTML(rod,'fishing-shop-rod',56)}</span><span class="fishing-shop-name">${esc(rod.name)}<small>${stats}</small></span>${btn}</div>`;
  }).join('');
  const baitRows=BAITS.map(b=>{
   const ownedN=st.bait[b.id]||0,selected=st.baitSel===b.id;
   const stats=`🍀 +${Math.round(b.luck*100)}%${b.weight?` · 🏋️ +${Math.round(b.weight*100)}%`:''}${b.mutation>1?` · 🧬 ×${b.mutation}`:''}`;
   return `<div class="fishing-shop-row${selected?' equipped':''}"><span class="fishing-shop-icon">${b.icon}</span><span class="fishing-shop-name">${esc(b.name)}<small>${stats} · owned ×${ownedN}</small></span><span class="fishing-shop-btns"><button type="button" data-bait="${b.id}" data-n="1" ${st.coins<b.cost?'disabled':''}>${COIN_HTML} ${fmt(b.cost)}</button><button type="button" data-bait="${b.id}" data-n="10" ${st.coins<b.cost*10?'disabled':''}>×10</button><button type="button" data-use="${b.id}" ${ownedN?'':'disabled'}>${selected?'Using':'Use'}</button></span></div>`;
  }).join('');
- els.shopView.innerHTML=`<p class="fishing-shop-head">${COIN_HTML} <b>${fmt(st.coins)}</b> Fishcoins — earn them by selling fish from the Bag.</p><h4>Rods <small>permanent · luck / control / strength / lure speed</small></h4>${rodRows}<h4>Bait <small>one is used per cast</small></h4>${baitRows}<div class="fishing-shop-row${st.baitSel===null?' equipped':''}"><span class="fishing-shop-icon">🚫</span><span class="fishing-shop-name">No bait<small>fish with the rod alone</small></span><button type="button" data-use="none" ${st.baitSel===null?'disabled':''}>Use</button></div>`;
+ const tier=bagTierOf(st),next=nextBagTier(st),cap=bagMax(st);
+ // v295: one permanent bag upgrade per tier, bought in order - never a skip.
+ const bagRow=`<div class="fishing-shop-row equipped"><span class="fishing-shop-icon">🧺</span><span class="fishing-shop-name">${esc(tier.label)}<small>holds ${cap} fish · ${st.bag.length}/${cap} stored${next?` · next: ${esc(next.label)} holds ${next.cap}`:' · fully upgraded'}</small></span>${next?`<button type="button" data-bagup ${st.coins<next.cost?'disabled':''}>${COIN_HTML} ${fmt(next.cost)}</button>`:'<button type="button" disabled>Max</button>'}</div>`;
+ els.shopView.innerHTML=`<p class="fishing-shop-head">${COIN_HTML} <b>${fmt(st.coins)}</b> Fishcoins — earn them by selling fish from the Bag.</p><h4>Bag <small>permanent capacity · 120 → 200 → 300 → 400 → 500</small></h4>${bagRow}<h4>Rods <small>permanent · luck / control / strength / lure speed</small></h4>${rodRows}<h4>Bait <small>one is used per cast</small></h4>${baitRows}<div class="fishing-shop-row${st.baitSel===null?' equipped':''}"><span class="fishing-shop-icon">🚫</span><span class="fishing-shop-name">No bait<small>fish with the rod alone</small></span><button type="button" data-use="none" ${st.baitSel===null?'disabled':''}>Use</button></div>`;
  for(const b of els.shopView.querySelectorAll('button[data-rod]'))b.onclick=()=>{const r=buyRod(st,b.dataset.rod);if(r.ok){persist();sound('coin');status('Bought and equipped the '+RODS_BY_ID[b.dataset.rod].name+'!')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-equip]'))b.onclick=()=>{equipRod(st,b.dataset.equip);persist();renderPanel()};
+ for(const b of els.shopView.querySelectorAll('button[data-bagup]'))b.onclick=()=>{const r=buyBagUpgrade(st);if(r.ok){persist();sound('coin');status('Bag upgraded — it now holds '+r.cap+' fish.')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel();renderDockGear()};
  for(const b of els.shopView.querySelectorAll('button[data-bait]'))b.onclick=()=>{const r=buyBait(st,b.dataset.bait,Number(b.dataset.n));if(r.ok){persist();sound('coin');if(!st.baitSel)selectBait(st,b.dataset.bait)}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-use]'))b.onclick=()=>{selectBait(st,b.dataset.use==='none'?null:b.dataset.use);persist();renderPanel()};
 }
+// v295: Show off no longer writes a Local-chat line. The fish (and its weight) is relayed to
+// the room as data and drawn above the angler's head for everyone, so chat stays clean.
 function showOff(entryId){
  const st=state();
- const text=showOffText(st,entryId);
- if(!text)return false;
- if(opts&&typeof opts.showOff==='function')return opts.showOff(text)!==false;
- return false;
+ const fish=showOffData(st,entryId);
+ if(!fish)return false;
+ // Always show it locally first - solo players get the same overhead fish and weight.
+ drawShowOff(opts&&opts.self?selfId():null,fish);
+ if(opts&&typeof opts.showOff==='function')opts.showOff(fish);
+ return true;
 }
+function selfId(){return opts&&typeof opts.id==='function'?opts.id():null}
+// One place that turns a show-off payload into the overhead fish + weight label.
+function drawShowOff(fromId,fish){
+ const clean=cleanShowOff(fish);
+ const f=sceneFishing();
+ if(!clean||!f||typeof f.showFish!=='function')return false;
+ const sp=speciesById(clean.sp),mut=clean.mut?MUTATIONS[clean.mut]:null;
+ // A null id means "the local player"; the scene resolves it through its own self() callback.
+ f.showFish(fromId==null?null:fromId,{spId:sp.id,mut:clean.mut,text:sp.glyph,hue:sp.hue,scale:showOffScale(clean.w),glow:mut?mut.glow:null,label:clean.w+' kg',ms:5600});
+ return true;
+}
+// A show-off relayed by the worker from any player in the room.
+function showOffEvent(fromId,raw){return drawShowOff(fromId,raw)}
 // A show-off line arrived on Local chat (from anyone, including ourselves): render the real
 // fish, scaled by weight, over that player's head in the 3D plaza. Returns true when the fish
 // was displayed - the caller then SKIPS the chat bubble, which used to cover the fish (the
@@ -1007,7 +1204,8 @@ function bind(options){
  // v290: the toolbar button opens the fishing menu (Start fishing / Bag / Index / Shop).
  // It never walks on its own - only the explicit "Start fishing" item (or a pond click) does.
  if(opts&&opts.button&&!opts.button._fishing){opts.button._fishing=true;opts.button.setAttribute('aria-haspopup','menu');opts.button.onclick=()=>toggleMenu()}
- const f=sceneFishing();f&&f.setFishVisible(state().settings.fish);
+ // v295: the ponds always hold fish - there is no Pond-fish toggle any more.
+ const f=sceneFishing();f&&f.setFishVisible(true);
 }
 function toggle(){if(ui.phase==='off')startFishing();else stopFishing()}
 function pondClick(x,z,idx){
@@ -1017,14 +1215,19 @@ function pondClick(x,z,idx){
 function hubClosed(){stopFishing();if(els){els.panel.hidden=true;els.menu.hidden=true}}
 return {
  // pure core (tests)
- RARITIES,SPECIES,DIFF,MUTATIONS,RODS,BAITS,BAG_MAX,CAST_GREEN,CAST_PERFECT,MAX_W,
+ RARITIES,SPECIES,DIFF,MUTATIONS,RODS,BAITS,BAG_MAX,BAG_TIERS,bagMax,bagTierOf,nextBagTier,buyBagUpgrade,CAST_GREEN,CAST_PERFECT,MAX_W,
+ FISHING_TITLES,FISHING_TITLE_BY_ID,titleUnlocked,equipTitle,equippedTitle,discoveredSpecies,bestWeight,mutationKinds,
  speciesById,rarityById,rate,value,rollCatch,castRating,makeReel,reelStep,normalize,addCatch,
  buyRod,equipRod,buyBait,selectBait,sellFish,sellBulk,toggleLock,shouldAutoSell,showOffText,parseShowOff,showOffScale,
+ showOffData,cleanShowOff,showOffEvent,rodSprite,rodSpriteURL,ROD_TIER_COLORS,
  fishSprite,fishSpriteURL,
  // UI
- bind,toggle,pondClick,hubClosed,onLocalMessage,openBag:()=>toggleBag(true),
+ bind,toggle,pondClick,hubClosed,onLocalMessage,openBag:()=>toggleBag(true),openTitles:()=>{toggleBag(true);switchTab('titles')},
+ // v295: sit/stand are allowed with a line in the water, so the plaza asks these two separately
+ // instead of using one movement lock for everything.
+ seatedBusy:()=>!['off','walking'].includes(ui.phase),
  // v294: true while a line is in the water (or a catch is being resolved). While busy the
- // plaza blocks walking, bench/chair seats and sit toggles - stop fishing to move.
+ // plaza blocks walking - stop fishing to move. v295: seats and sit are no longer blocked.
  busy:()=>!['off','walking'].includes(ui.phase),
  get phase(){return ui.phase},
  get auto(){return ui.auto},
