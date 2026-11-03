@@ -9,13 +9,20 @@
 (function(root,factory){const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;root.PGSocialFishing=api})(globalThis,root=>{
 'use strict';
 // ------------------------------- pure core (covered by tools/tests/social_fishing_sim.js) --
+// v304/v305 (owner): "the last two rarities should be hard - about two weeks to complete the index -
+// and it should be random and luck". The old table was .58/.24/.12/.045/.012/.003, which fed a Secret
+// every ~600 casts on the best rod and finished the index in an evening. These numbers are solved
+// against a target instead: on the Mythril Rod + Royal Jelly a Secret tier bite lands about every 800
+// casts (0.126%), and because every species is a plain uniform draw the index is a coupon collector -
+// median ~21,300 casts (~85 h) to 155/155 with a long, honest tail. Rods reach up the table
+// (ROD_GATE) but the ceiling leaks a little (GATE_ESCAPE), so luck can always surprise you.
 const RARITIES=[
- {id:'common',label:'Common',color:'#b9c6c4',weight:.58},
- {id:'uncommon',label:'Uncommon',color:'#7fd98a',weight:.24},
- {id:'rare',label:'Rare',color:'#58a6ff',weight:.12},
- {id:'legendary',label:'Legendary',color:'#ffb84d',weight:.045},
- {id:'mythical',label:'Mythical',color:'#c792ea',weight:.012},
- {id:'secret',label:'Secret',color:'#ff7ab8',weight:.003},
+ {id:'common',label:'Common',color:'#b9c6c4',weight:.60},
+ {id:'uncommon',label:'Uncommon',color:'#7fd98a',weight:.245},
+ {id:'rare',label:'Rare',color:'#58a6ff',weight:.145433},
+ {id:'legendary',label:'Legendary',color:'#ffb84d',weight:.008343},
+ {id:'mythical',label:'Mythical',color:'#c792ea',weight:.000874},
+ {id:'secret',label:'Secret',color:'#ff7ab8',weight:.00035},
 ];
 const RARITY_INDEX=Object.fromEntries(RARITIES.map((r,i)=>[r.id,i]));
 // 70 species. The 14 v287 ids keep their exact id/rarity so bagged fish stay valid.
@@ -153,12 +160,50 @@ const EXTRA_SPECIES=[
  ['abysssaw','Abyssal Sawshark','🦈',215,40,150,'shark','mythical'],
  ['voidfin','Voidfin Shark','🦈',270,50,180,'shark','mythical'],
 ].map(([id,name,glyph,hue,min,max,shape,rarity])=>({id,name,glyph,hue,min,max,shape:shape||null,mega:false,rarity}));
-const SPECIES=[...Object.entries(SPECIES_DATA).flatMap(([rarity,list])=>list.map(([id,name,glyph,hue,min,max,shape,mega])=>({id,name,glyph,hue,min,max,shape:shape||null,mega:mega===true,rarity}))),...EXTRA_SPECIES];
+// v304 (owner): the shark line is the boss line now - the big ones moved up a tier (or two), so a
+// Great White or a Tiger Shark is an event and the Abyssal Saw is a secret.
+const RARITY_OVERRIDE={
+ goblin:'mythical', tigershark:'mythical', sunshark:'mythical', greatmaw:'secret',
+ porbeagle:'legendary', bluefin:'legendary', silvershark:'legendary', makoshark:'legendary',
+ greatwhite:'mythical', thresher:'mythical', voidfin:'secret', abysssaw:'mythical',
+ mintwhale:'mythical', starwhale:'mythical', greywhale:'legendary',
+};
+const SPECIES=[...Object.entries(SPECIES_DATA).flatMap(([rarity,list])=>list.map(([id,name,glyph,hue,min,max,shape,mega])=>({id,name,glyph,hue,min,max,shape:shape||null,mega:mega===true,rarity}))),...EXTRA_SPECIES]
+ .map(sp=>RARITY_OVERRIDE[sp.id]?{...sp,rarity:RARITY_OVERRIDE[sp.id]}:sp);
 const SPECIES_BY_ID=Object.fromEntries(SPECIES.map(s=>[s.id,s]));
 const SPECIES_BY_NAME=Object.fromEntries(SPECIES.map(s=>[s.name,s.id]));
 const MAX_W=Math.max(...SPECIES.map(s=>s.max));
 // Catch rate with no luck: the rarity's share split evenly across its pool.
 function rate(spId){const sp=SPECIES_BY_ID[spId];if(!sp)return 0;const r=RARITIES[RARITY_INDEX[sp.rarity]];return r.weight/SPECIES.filter(x=>x.rarity===sp.rarity).length}
+// v304: the Index now prints the odds the angler actually rolls, because the bare-rod numbers are a
+// poor description of the game once luck and rod ceilings are in it (a bare Secret reads 1 in 70,000
+// while the Mythril Rod hooks one about every 1,700 casts). These two helpers mirror rollCatch
+// exactly: the luck exponent, the rod's ceiling clamp, and the tier share each one produces.
+const tierShares=(luck,ceiling)=>{
+ const e=1+Math.max(0,Math.min(3,Number(luck)||0));
+ // Accepts a rarity id or a rod id, so callers can pass whichever they are holding.
+ const ceilId=ceiling&&RARITY_INDEX[ceiling]!==undefined?ceiling:(ceiling&&ROD_RANK[ceiling]!==undefined?rodCeiling(ceiling):null);
+ const cIdx=ceilId?RARITY_INDEX[ceilId]:RARITIES.length-1;
+ const cum=[];let acc=0;
+ for(const r of RARITIES){acc=Math.min(1,acc+r.weight);cum.push(Math.pow(acc,e))}
+ const out={};
+ let heldBack=0;
+ for(const r of RARITIES){
+  const i=RARITY_INDEX[r.id],lo=i?cum[i-1]:0,natural=cum[i]-lo;
+  // Rolls above the ceiling mostly fall back into it; gateChance() of them still bite.
+  if(i>cIdx){const p=gateChance(r.id,ceilId);out[r.id]=natural*p;heldBack+=natural*(1-p)}
+  else out[r.id]=natural;
+ }
+ if(ceilId)out[ceilId]+=heldBack;
+ return out;
+};
+// One species' chance per cast with the gear you are holding: its tier's share split across the pool.
+function rateWith(spId,luck,ceiling){
+ const sp=SPECIES_BY_ID[spId];if(!sp)return 0;
+ const share=tierShares(luck,ceiling)[sp.rarity]||0;
+ const pool=SPECIES.filter(x=>x.rarity===sp.rarity).length;
+ return pool?share/pool:0;
+}
 // Mutations roll once per catch, rarest reachable via bait mutation odds. `mult` scales sell value.
 const MUTATIONS={
  shiny:{label:'Shiny',badge:'✨',chance:.05,mult:2,glow:'#ffe9a0',css:'drop-shadow(0 0 6px #ffe9a0)'},
@@ -172,19 +217,49 @@ const MUTATIONS={
 // Rods are permanent; luck biases rarity, control widens the reel bar, strength biases weight,
 // lure shortens the wait. Bait is consumed one per cast on top of the rod.
 const RODS=[
+ // v305 (owner): "i just want fishes hard to catch, not too much to farm on rods" - the v304 ladder
+ // (122,100) was six hours of farming. Rods + bags now come to 43,800, about two hours of steady
+ // fishing in the 250-casts/h model, so the grind is the fish, not the gear. The ladder still decides
+ // how much of the rare table you can reach (ROD_GATE).
  {id:'twig',name:'Training Rod',icon:'🎣',cost:0,luck:0,control:0,strength:0,lure:0},
- {id:'oak',name:'Oak Rod',icon:'🪵',cost:150,luck:.15,control:.1,strength:.1,lure:.1},
- {id:'brass',name:'Brass Rod',icon:'🥉',cost:500,luck:.3,control:.18,strength:.22,lure:.2},
- {id:'silver',name:'Silver Rod',icon:'🥈',cost:1500,luck:.5,control:.28,strength:.35,lure:.3},
- {id:'golden',name:'Golden Rod',icon:'🥇',cost:4000,luck:.75,control:.38,strength:.5,lure:.45},
- {id:'mythril',name:'Mythril Rod',icon:'💠',cost:10000,luck:1.1,control:.5,strength:.7,lure:.6},
+ {id:'oak',name:'Oak Rod',icon:'🪵',cost:300,luck:.15,control:.1,strength:.1,lure:.1},
+ {id:'brass',name:'Brass Rod',icon:'🥉',cost:1000,luck:.3,control:.18,strength:.22,lure:.2},
+ {id:'silver',name:'Silver Rod',icon:'🥈',cost:3000,luck:.5,control:.28,strength:.35,lure:.3},
+ {id:'golden',name:'Golden Rod',icon:'🥇',cost:8000,luck:.75,control:.38,strength:.5,lure:.45},
+ {id:'mythril',name:'Mythril Rod',icon:'💠',cost:20000,luck:1.1,control:.5,strength:.7,lure:.6},
 ];
 const RODS_BY_ID=Object.fromEntries(RODS.map(r=>[r.id,r]));
+// v304/v305 (owner): a rod does not only raise luck, it is what lets the boss tiers bite. The cart
+// lists the unlock on each rod, and rollCatch holds a roll above the ceiling back most of the time.
+const ROD_GATE={rare:'oak',legendary:'silver',mythical:'golden',secret:'mythril'};
+// v305 (owner): "give a small little chance for lower rod to catch high rarity fishes". A roll one tier
+// above the rod's ceiling gets through 8% of the time, and every tier further up is worth 0.35 of the
+// one below it (2.8% for two tiers, 1% for three, 0.34% for four). So a training rod lands a rare now
+// and then, an Oak Rod can be surprised by a legendary, and a Secret on anything but the Mythril Rod
+// is a genuine one-in-a-million story.
+const GATE_ESCAPE=.08,GATE_DECAY=.35;
+const gateChance=(tier,ceiling)=>{
+ if(!ceiling||RARITY_INDEX[tier]<=RARITY_INDEX[ceiling])return 1;
+ return GATE_ESCAPE*Math.pow(GATE_DECAY,RARITY_INDEX[tier]-RARITY_INDEX[ceiling]-1);
+};
+const ROD_RANK=Object.fromEntries(RODS.map((r,i)=>[r.id,i]));
+// The highest rarity a rod can roll, and the rod that lifts a tier.
+const rodCeiling=rod=>{
+ const rank=ROD_RANK[rod]===undefined?ROD_RANK.twig:ROD_RANK[rod];
+ let best='common';
+ for(const r of RARITIES)if(ROD_RANK[ROD_GATE[r.id]]===undefined||ROD_RANK[ROD_GATE[r.id]]<=rank)best=r.id;
+ return best;
+};
+const gateRodFor=rid=>ROD_GATE[rid]||null;
 const BAITS=[
- {id:'worm',name:'Worm',icon:'🪱',cost:5,luck:.1,weight:0,mutation:1},
- {id:'shrimp',name:'Shrimp Tail',icon:'🦐',cost:15,luck:.25,weight:0,mutation:1},
- {id:'grub',name:'Glow Grub',icon:'🪰',cost:40,luck:.35,weight:0,mutation:2},
- {id:'jelly',name:'Royal Jelly',icon:'🍯',cost:100,luck:.6,weight:.5,mutation:1.5},
+ // v304 (owner): bait has to be a boost, not a tax - at v303 prices the best bait cost more per cast
+ // than it added. Royal Jelly is now the rare-hunter bait (luck 1.5, so ~1.7x the mythical/secret
+ // bites of Glow Grub) at 55 a cast, while Glow Grub stays the money/mutation bait. Both are
+ // net-positive on the good rods; Jelly trades a few coins an hour for a much faster index.
+ {id:'worm',name:'Worm',icon:'🪱',cost:4,luck:.1,weight:0,mutation:1},
+ {id:'shrimp',name:'Shrimp Tail',icon:'🦐',cost:12,luck:.25,weight:0,mutation:1},
+ {id:'grub',name:'Glow Grub',icon:'🪰',cost:30,luck:.35,weight:0,mutation:2},
+ {id:'jelly',name:'Royal Jelly',icon:'🍯',cost:55,luck:1.5,weight:.6,mutation:1.5},
 ];
 const BAITS_BY_ID=Object.fromEntries(BAITS.map(b=>[b.id,b]));
 // v295: ten fishing titles, worn above the head in the plaza. Every requirement is computed
@@ -205,29 +280,82 @@ const caughtIn=(s,pred)=>SPECIES.filter(sp=>pred(sp)&&s.dex&&s.dex[sp.id]&&s.dex
 const rodsOwned=s=>new Set([...(Array.isArray(s&&s.rods)?s.rods:Object.keys((s&&s.rods)||{}).filter(k=>s.rods[k])),'twig']).size;
 const mutatedMythic=s=>SPECIES.filter(sp=>(sp.rarity==='mythical'||sp.rarity==='secret')&&s.dex&&s.dex[sp.id]&&s.dex[sp.id].n>0
  &&Array.isArray(s.dex[sp.id].mut)&&s.dex[sp.id].mut.some(m=>m==='golden'||m==='prismatic')).length;
+// v310 (owner: "titles are also mission icons & not arranged rarity"): each title now carries the
+// rarity tier it belongs to and its place on that ladder (rank 1-20, easiest first). The list is
+// rendered in rank order - Common, Uncommon, Rare, Legendary, Mythical, Secret - with the same
+// rarity chip the fish index uses, so the ladder reads at a glance instead of as a mission log.
 const FISHING_TITLES=[
- {id:'dockhand',name:'Dockhand',mark:'◉',tone:'bronze',cur:s=>s.stats.catches,goal:25,req:'catch 25 fish'},
- {id:'bait-layer',name:'Bait Layer',mark:'⌖',tone:'copper',cur:s=>s.stats.catches,goal:150,req:'catch 150 fish'},
- {id:'reed-watcher',name:'Reed Watcher',mark:'⚔',tone:'silver',cur:s=>s.stats.casts,goal:500,req:'make 500 casts'},
- {id:'species-collector',name:'Species Collector',mark:'✧',tone:'jade',cur:discoveredSpecies,goal:25,req:'discover 25 species'},
- {id:'perfect-hand',name:'Perfect Hand',mark:'★',tone:'sapphire',cur:s=>s.stats.perfects,goal:60,req:'land 60 perfect catches'},
- {id:'heavy-hook',name:'Heavy Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:50,req:'record a 50 kg fish'},
- {id:'deep-line',name:'Deep Line',mark:'☾',tone:'obsidian',cur:s=>s.stats.catches,goal:1500,req:'catch 1,500 fish'},
- {id:'mutation-hunter',name:'Mutation Hunter',mark:'🧬',tone:'crimson',cur:mutationKinds,goal:Object.keys(MUTATIONS).length,req:'find all 7 mutation kinds'},
- {id:'pond-legend',name:'Pond Legend',mark:'✹',tone:'gold',cur:discoveredSpecies,goal:100,req:'discover 100 species'},
- {id:'apex-angler',name:'Apex Angler',mark:'✶',tone:'valkyrie',cur:discoveredSpecies,goal:SPECIES.length,req:`discover all ${SPECIES.length} species`},
- {id:'tide-regular',name:'Tide Regular',mark:'≈',tone:'tide',cur:s=>s.stats.casts,goal:5000,req:'make 5,000 casts'},
- {id:'line-veteran',name:'Line Veteran',mark:'⚔',tone:'silver',cur:s=>s.stats.catches,goal:1000,req:'catch 1,000 fish'},
- {id:'leviathan-hook',name:'Leviathan Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:250,req:'record a 250 kg fish'},
- {id:'colossus-hook',name:'Colossus Hook',mark:'⛰',tone:'abyss',cur:s=>Math.floor(bestWeight(s)),goal:800,req:'record an 800 kg fish'},
- {id:'secret-circle',name:'Secret Circle',mark:'✧',tone:'frost',cur:s=>caughtIn(s,sp=>sp.rarity==='secret'),goal:SPECIES.filter(sp=>sp.rarity==='secret').length,req:`catch a fish from every secret species`},
- {id:'mega-hunter',name:'Mega Hunter',mark:'✹',tone:'dawn',cur:s=>caughtIn(s,sp=>sp.mega),goal:SPECIES.filter(sp=>sp.mega).length,req:'catch one of every pond monster'},
+ {id:'dockhand',tier:'common',rank:1,name:'Dockhand',mark:'◉',tone:'bronze',cur:s=>s.stats.catches,goal:25,req:'catch 25 fish'},
+ {id:'bait-layer',tier:'uncommon',rank:5,name:'Bait Layer',mark:'⌖',tone:'copper',cur:s=>s.stats.catches,goal:150,req:'catch 150 fish'},
+ {id:'reed-watcher',tier:'rare',rank:7,name:'Reed Watcher',mark:'⚔',tone:'silver',cur:s=>s.stats.casts,goal:500,req:'make 500 casts'},
+ {id:'species-collector',tier:'common',rank:2,name:'Species Collector',mark:'✧',tone:'jade',cur:discoveredSpecies,goal:25,req:'discover 25 species'},
+ {id:'perfect-hand',tier:'uncommon',rank:4,name:'Perfect Hand',mark:'★',tone:'sapphire',cur:s=>s.stats.perfects,goal:60,req:'land 60 perfect catches'},
+ {id:'heavy-hook',tier:'uncommon',rank:6,name:'Heavy Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:50,req:'record a 50 kg fish'},
+ {id:'deep-line',tier:'rare',rank:10,name:'Deep Line',mark:'☾',tone:'obsidian',cur:s=>s.stats.catches,goal:1500,req:'catch 1,500 fish'},
+ {id:'mutation-hunter',tier:'legendary',rank:12,name:'Mutation Hunter',mark:'🧬',tone:'crimson',cur:mutationKinds,goal:Object.keys(MUTATIONS).length,req:'find all 7 mutation kinds'},
+ {id:'pond-legend',tier:'rare',rank:11,name:'Pond Legend',mark:'✹',tone:'gold',cur:discoveredSpecies,goal:100,req:'discover 100 species'},
+ {id:'apex-angler',tier:'secret',rank:19,name:'Apex Angler',mark:'✶',tone:'valkyrie',cur:discoveredSpecies,goal:SPECIES.length,req:`discover all ${SPECIES.length} species`},
+ {id:'tide-regular',tier:'legendary',rank:13,name:'Tide Regular',mark:'≈',tone:'tide',cur:s=>s.stats.casts,goal:5000,req:'make 5,000 casts'},
+ {id:'line-veteran',tier:'rare',rank:8,name:'Line Veteran',mark:'⚔',tone:'silver',cur:s=>s.stats.catches,goal:1000,req:'catch 1,000 fish'},
+ {id:'leviathan-hook',tier:'rare',rank:9,name:'Leviathan Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:250,req:'record a 250 kg fish'},
+ {id:'colossus-hook',tier:'mythical',rank:17,name:'Colossus Hook',mark:'⛰',tone:'abyss',cur:s=>Math.floor(bestWeight(s)),goal:800,req:'record an 800 kg fish'},
+ {id:'secret-circle',tier:'mythical',rank:16,name:'Secret Circle',mark:'✧',tone:'frost',cur:s=>caughtIn(s,sp=>sp.rarity==='secret'),goal:SPECIES.filter(sp=>sp.rarity==='secret').length,req:`catch a fish from every secret species`},
+ {id:'mega-hunter',tier:'legendary',rank:14,name:'Mega Hunter',mark:'✹',tone:'dawn',cur:s=>caughtIn(s,sp=>sp.mega),goal:SPECIES.filter(sp=>sp.mega).length,req:'catch one of every pond monster'},
  // the four that are not counters
- {id:'full-creel',name:'Full Creel',mark:'🧺',tone:'ember',cur:s=>Number(s.bag&&s.bag.length)||0,goal:500,req:'fill the biggest bag - 500 fish at once'},
- {id:'armoury',name:'Armoury',mark:'🪝',tone:'bronze',cur:rodsOwned,goal:6,req:'own all six rods'},
- {id:'coin-hoard',name:'Coin Hoard',mark:'🪙',tone:'gold',cur:s=>Number(s.coins)||0,goal:50000,req:'hold 50,000 Fishcoins at once'},
- {id:'dark-star',name:'Dark Star',mark:'🌑',tone:'void',cur:mutatedMythic,goal:1,req:'catch a mythical or secret fish with a Golden or Prismatic mutation'},
+ {id:'full-creel',tier:'legendary',rank:15,name:'Full Creel',mark:'🧺',tone:'ember',cur:s=>Number(s.bag&&s.bag.length)||0,goal:500,req:'fill the biggest bag - 500 fish at once'},
+ {id:'armoury',tier:'common',rank:3,name:'Armoury',mark:'🪝',tone:'bronze',cur:rodsOwned,goal:6,req:'own all six rods'},
+ {id:'coin-hoard',tier:'mythical',rank:18,name:'Coin Hoard',mark:'🪙',tone:'gold',cur:s=>Number(s.coins)||0,goal:50000,req:'hold 50,000 Fishcoins at once'},
+ {id:'dark-star',tier:'secret',rank:20,name:'Dark Star',mark:'🌑',tone:'void',cur:mutatedMythic,goal:1,req:'catch a mythical or secret fish with a Golden or Prismatic mutation'},
 ];
+// v310: a painted medal for each title tier - a ribbon, a disc in the rarity colour and a star. It
+// replaces the loose glyphs (◉ ⌖ ⚔ ✧ ★ …) that read as quest markers and rendered at a different
+// size in every font. Cached per colour, drawn at 64 and laid out at 26 by .fishing-title-badge.
+const TITLE_BADGE_CACHE=new Map();
+function shade(hex,amt){
+ const n=parseInt(String(hex).replace('#',''),16);
+ if(!Number.isFinite(n))return hex;
+ const clamp=v=>Math.max(0,Math.min(255,Math.round(v)));
+ const r=clamp(((n>>16)&255)*(1+amt)),g=clamp(((n>>8)&255)*(1+amt)),b=clamp((n&255)*(1+amt));
+ return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+function titleBadge(color,px=64){
+ if(typeof document==='undefined'||!document.createElement)return null;
+ let c,g;
+ try{c=document.createElement('canvas');c.width=c.height=px;g=c.getContext&&c.getContext('2d')}catch{return null}
+ if(!g||typeof g.beginPath!=='function')return null;
+ const u=px/100,U=n=>n*u;
+ try{
+  const ink=shade(color,-.45),light=shade(color,.35);
+  // ribbon: two tails behind the disc
+  g.fillStyle=ink;
+  g.beginPath();g.moveTo(U(30),U(10));g.lineTo(U(48),U(10));g.lineTo(U(44),U(56));g.lineTo(U(33),U(48));g.closePath();g.fill();
+  g.beginPath();g.moveTo(U(52),U(10));g.lineTo(U(70),U(10));g.lineTo(U(67),U(48));g.lineTo(U(56),U(56));g.closePath();g.fill();
+  // disc
+  g.fillStyle=color;g.beginPath();g.arc(U(50),U(60),U(32),0,Math.PI*2);g.fill();
+  g.strokeStyle=ink;g.lineWidth=U(5);g.beginPath();g.arc(U(50),U(60),U(32),0,Math.PI*2);g.stroke();
+  g.strokeStyle=light;g.lineWidth=U(2.5);g.beginPath();g.arc(U(50),U(60),U(25),0,Math.PI*2);g.stroke();
+  // the star
+  g.beginPath();
+  for(let i=0;i<10;i++){
+   const ang=-Math.PI/2+i*Math.PI/5,r=i%2?U(7):U(15);
+   const x=U(50)+Math.cos(ang)*r,y=U(60)+Math.sin(ang)*r;
+   i?g.lineTo(x,y):g.moveTo(x,y);
+  }
+  g.closePath();g.fillStyle='rgba(255,255,255,.92)';g.fill();
+ }catch{return null}
+ return c;
+}
+function titleBadgeURL(tier,px=64){
+ const r=rarityById(tier)||rarityById('common');
+ const key=r.color+'|'+px;
+ if(TITLE_BADGE_CACHE.has(key))return TITLE_BADGE_CACHE.get(key);
+ let url=null;
+ const c=titleBadge(r.color,px);
+ if(c&&typeof c.toDataURL==='function'){try{url=c.toDataURL('image/png')}catch{url=null}}
+ if(url&&!/^data:image\/png/.test(url))url=null;
+ TITLE_BADGE_CACHE.set(key,url);
+ return url;
+}
 const FISHING_TITLE_BY_ID=Object.fromEntries(FISHING_TITLES.map(t=>[t.id,t]));
 const titleUnlocked=(state,t)=>!!(t&&t.cur(state)>=t.goal);
 // Equipping is only ever possible for an earned title; null means "wear no fishing title".
@@ -254,7 +382,11 @@ const DIFF={
  mythical:{bar:.22,speed:.86,dash:.56,fill:.108,drain:.12},
  secret:{bar:.24,speed:.8,dash:.5,fill:.112,drain:.118},
 };
-const RARITY_VALUE={common:3,uncommon:8,rare:20,legendary:60,mythical:200,secret:600};
+// v304 (owner): v303's prices were tuned against the old (looser) rarity weights. Cutting the top
+// tiers made an average catch worth a quarter of what it was, so the base values scale ~6x to put
+// income back where the shop ladder assumes it is (about 40 coins a catch on a training rod,
+// 160 on mythril + Royal Jelly).
+const RARITY_VALUE={common:18,uncommon:48,rare:120,legendary:360,mythical:1200,secret:3600};
 // v295: the bag is upgradeable. Tier 0 is the v288 bag (120) and is always owned; each later
 // tier is bought once with Fishcoins and is permanent, exactly like a rod. BAG_MAX stays the
 // base capacity so older callers and saves keep working, and bagMax(state) is the live cap.
@@ -262,10 +394,10 @@ const BAG_TIERS=[
  {tier:0,cap:120,cost:0,label:'Canvas Satchel'},
  // v296 (owner): the first upgrade has to be reachable in a session, so the ladder starts low and
  // grows gently (~2.2x, then ~2x) instead of jumping straight to five figures.
- {tier:1,cap:200,cost:300,label:'Reinforced Creel'},
- {tier:2,cap:300,cost:700,label:'Angler\'s Basket'},
- {tier:3,cap:400,cost:1500,label:'Deep Keep-Net'},
- {tier:4,cap:500,cost:3000,label:'Bottomless Creel'},
+ {tier:1,cap:200,cost:600,label:'Reinforced Creel'},
+ {tier:2,cap:300,cost:1400,label:'Angler\'s Basket'},
+ {tier:3,cap:400,cost:3000,label:'Deep Keep-Net'},
+ {tier:4,cap:500,cost:6500,label:'Bottomless Creel'},
 ];
 const BAG_MAX=BAG_TIERS[0].cap,COIN_MAX=1e9,CAST_GREEN=[.82,.96],CAST_PERFECT=[.87,.93];
 const bagTierOf=state=>{const t=state&&Number.isInteger(state.bagTier)?state.bagTier:0;return BAG_TIERS[Math.max(0,Math.min(BAG_TIERS.length-1,t))]};
@@ -293,8 +425,15 @@ function rollCatch(rng=Math.random,boost=false,mods){
  const wb=Math.max(0,Math.min(3,(mods&&mods.weight)||0));
  const mm=Math.max(0,Math.min(6,(mods&&mods.mutation)||1));
  const pick=()=>{const r=Math.pow(rng(),1/(1+luck));let acc=0;for(const t of RARITIES){acc+=t.weight;if(r<acc)return t.id}return 'common'};
- let rid=pick();
- if(boost){const other=pick();if(RARITY_INDEX[other]>RARITY_INDEX[rid])rid=other}
+ // The rod decides which tiers can bite, but the ceiling is a filter, not a wall: a roll above it
+ // slips through GATE_ESCAPE of the time. That is the owner's "small chance for a lower rod to catch a
+ // high rarity fish" - an Oak Rod hooks a Legendary now and then, it just takes far more casts.
+ const rod=mods&&typeof mods.rod==='string'?mods.rod:null;
+ const ceiling=rod?rodCeiling(rod):null;
+ const clamp=rid=>ceiling&&RARITY_INDEX[rid]>RARITY_INDEX[ceiling]&&rng()>=gateChance(rid,ceiling)?ceiling:rid;
+ let rid=clamp(pick());
+ if(boost){const other=clamp(pick());if(RARITY_INDEX[other]>RARITY_INDEX[rid])rid=other}
+ // The species inside the tier is a plain uniform draw, every time: no repeat protection anywhere.
  const pool=SPECIES.filter(s=>s.rarity===rid);
  const sp=pool[Math.min(pool.length-1,Math.floor(rng()*pool.length))];
  const heft=Math.pow(rng(),2/(1+wb));
@@ -516,12 +655,16 @@ function parseShowOff(body){
  if(!Number.isFinite(w)||w<=0||w>999)return null;
  return {sp:spId,w:Math.round(w*100)/100,mut};
 }
-// Overhead sprite scale from weight. Big fish are BIG: a 60 kg Cobble Whale shows at
-// 5.0 world units - taller than the angler holding it - while a hand-sized minnow is ~0.8.
-// v297: the catalog now runs to 1.8 t, so the old MAX_W-referenced curve would have shrunk every
-// existing catch. This one saturates at pond size (5.0) for the giants while a 60 kg fish still
-// reads larger than the character.
-function showOffScale(w){const x=Math.max(.01,w);return Math.round((0.7+4.3*(x/(x+6)))*100)/100}
+// Overhead sprite scale from weight.
+// v304 (owner): "400 kg with 100 kg is almost the same size - max should be as big as the pond". The
+// old curve was x/(x+6), which saturates: 48 kg and 131 kg both came out around 4.5, and everything
+// past 200 kg was the same fish. This one is square-root, so size keeps separating: a 1 kg fish is
+// 0.68 units, 48 kg is 2.08, 131 kg is 3.14, 400 kg is 5.15 and the 1.8 t whale shark is 10.4 -
+// about the width of a pond. Four times the weight is twice the fish, all the way up the catalog.
+function showOffScale(w){
+ const x=Math.max(.01,Number(w)||.01);
+ return Math.round(Math.min(11,0.45+0.235*Math.sqrt(x))*100)/100;
+}
 // ------------------------------- browser UI ------------------------------------------------
 const doc=root.document;
 let opts=null,els=null,fallbackHost={};
@@ -577,6 +720,14 @@ function distToPond(){
  return Math.hypot(dx,dz);
 }
 function standPoint(p,s){
+ // v309 (owner: "can u fix to fish on the bridge & on the rocks?"): the pond's own fishing places
+ // come first - the bridge crown is a stand you can really fish from - and the crag behind them is
+ // solid, so the walk no longer ends inside the rock face.
+ const props=(R().POND_PROPS||[])[ui.pond];
+ const stands=props&&Array.isArray(props.stands)?props.stands:[];
+ const nearest=stands.filter(c=>R().walkable(c.x,c.z))
+  .sort((a,b)=>Math.hypot(a.x-s.x,a.z-s.z)-Math.hypot(b.x-s.x,b.z-s.z))[0];
+ if(nearest)return {x:nearest.x,z:nearest.z};
  const cx=Math.max(p.x-p.w/2-1.6,Math.min(p.x+p.w/2+1.6,s.x)),cz=Math.max(p.z-p.d/2-1.6,Math.min(p.z+p.d/2+1.6,s.z));
  const candidates=[{x:cx,z:cz}];
  for(const a of [0,.5,1,1.5,2,2.5,3,3.5]){const ang=a*Math.PI/4;candidates.push({x:p.x+Math.cos(ang)*(p.w/2+1.7),z:p.z+Math.sin(ang)*(p.d/2+1.7)})}
@@ -1186,6 +1337,75 @@ function rodHTML(rod,cls='fishing-rod-icon',px=64){
  if(url)return `<img class="${cls} fishing-rod-art" data-rod-tier="${esc(rod.id)}" style="${style}" src="${url}" alt="" draggable="false">`;
  return `<span class="${cls}" data-rod-tier="${esc(rod.id)}" style="${style}">${rod.icon}</span>`;
 }
+// v309 (owner: "bugged bait icons"): the bait list drew emoji, and the worm and the fly glyphs only
+// exist in Unicode 13 - on Windows 10 and older Android they render as empty boxes, so two of the
+// four baits were blank next to a prawn and a honey pot. They are painted now, in the same flat
+// style as the fish and the rods, and the emoji stays only as a fallback when canvas is missing.
+const BAIT_ART_CACHE=new Map();
+function baitSprite(baitId,px=64){
+ const bait=BAITS_BY_ID[baitId];
+ if(!bait||typeof document==='undefined'||!document.createElement)return null;
+ let c,g;
+ try{c=document.createElement('canvas');c.width=c.height=px;g=c.getContext&&c.getContext('2d')}catch{return null}
+ if(!g||typeof g.quadraticCurveTo!=='function')return null;
+ const u=px/100,U=n=>n*u;
+ g.lineCap='round';g.lineJoin='round';
+ const dot=(x,y,r,fill)=>{g.fillStyle=fill;g.beginPath();g.arc(U(x),U(y),U(r),0,Math.PI*2);g.fill()};
+ if(baitId==='worm'){
+  // a wriggling worm: three pink segments with a darker head and a highlight
+  g.strokeStyle='#7d2740';g.lineWidth=U(15);g.beginPath();
+  g.moveTo(U(24),U(76));g.quadraticCurveTo(U(30),U(34),U(52),U(40));g.quadraticCurveTo(U(74),U(46),U(70),U(22));g.stroke();
+  g.strokeStyle='#e2617f';g.lineWidth=U(10);g.beginPath();
+  g.moveTo(U(24),U(76));g.quadraticCurveTo(U(30),U(34),U(52),U(40));g.quadraticCurveTo(U(74),U(46),U(70),U(22));g.stroke();
+  dot(24,76,8,'#f4919f');           // the thick end
+  dot(70,22,7,'#b93a58');           // head
+  g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=U(3);g.beginPath();
+  g.moveTo(U(31),U(64));g.quadraticCurveTo(U(36),U(42),U(50),U(37));g.stroke();
+ }else if(baitId==='shrimp'){
+  // a curled shrimp tail: orange body, amber fan, two antennae
+  g.strokeStyle='#8a3d10';g.lineWidth=U(13);g.beginPath();g.moveTo(U(34),U(66));g.quadraticCurveTo(U(24),U(38),U(52),U(28));g.stroke();
+  g.strokeStyle='#f08a3c';g.lineWidth=U(8);g.beginPath();g.moveTo(U(34),U(66));g.quadraticCurveTo(U(24),U(38),U(52),U(28));g.stroke();
+  g.fillStyle='#ffc46b';g.beginPath();g.moveTo(U(52),U(28));g.lineTo(U(74),U(18));g.lineTo(U(72),U(40));g.closePath();g.fill();
+  g.strokeStyle='#8a3d10';g.lineWidth=U(3);g.beginPath();g.moveTo(U(34),U(70));g.quadraticCurveTo(U(20),U(80),U(30),U(88));g.stroke();
+  dot(36,64,7,'#e2622a');
+ }else if(baitId==='grub'){
+  // a fat glowing grub: green body, pale belly, a lit tail
+  dot(50,58,26,'rgba(150,255,120,.28)');
+  g.fillStyle='#3f6b2a';g.beginPath();g.ellipse(U(50),U(58),U(22),U(15),-.35,0,Math.PI*2);g.fill();
+  g.fillStyle='#8fd05a';g.beginPath();g.ellipse(U(50),U(55),U(19),U(12),-.35,0,Math.PI*2);g.fill();
+  for(let i=0;i<4;i++)dot(38+i*10,55+Math.sin(i)*2,4.5,'rgba(255,255,255,.35)');
+  dot(28,64,11,'rgba(226,255,150,.85)');  // the glow sac
+  dot(28,64,6,'#f6ffc9');
+  dot(72,46,4,'#22301a');
+ }else{
+  // Royal Jelly: an amber jar with a wax lid and a crown band
+  g.fillStyle='#7a4a06';g.beginPath();g.roundRect?g.roundRect(U(28),U(30),U(44),U(52),U(12)):g.rect(U(28),U(30),U(44),U(52));g.fill();
+  g.fillStyle='#f2b53c';g.beginPath();g.roundRect?g.roundRect(U(31),U(33),U(38),U(46),U(10)):g.rect(U(31),U(33),U(38),U(46));g.fill();
+  g.fillStyle='rgba(255,255,255,.42)';g.beginPath();g.ellipse(U(42),U(48),U(7),U(12),0,0,Math.PI*2);g.fill();
+  g.fillStyle='#c98a1c';g.fillRect(U(26),U(24),U(48),U(11));       // wax lid
+  g.fillStyle='#ffd979';g.fillRect(U(26),U(24),U(48),U(4));
+  g.fillStyle='#8a5a10';g.beginPath();g.moveTo(U(40),U(80));g.lineTo(U(44),U(74));g.lineTo(U(48),U(80));g.lineTo(U(52),U(74));g.lineTo(U(56),U(80));g.closePath();g.fill();
+ }
+ return c;
+}
+function baitSpriteURL(baitId,px=64){
+ const key=baitId+'|'+px;
+ if(BAIT_ART_CACHE.has(key))return BAIT_ART_CACHE.get(key);
+ let url=null;
+ const c=baitSprite(baitId,px);
+ if(c&&typeof c.toDataURL==='function'){try{url=c.toDataURL('image/png')}catch{url=null}}
+ if(url&&!/^data:image\/png/.test(url))url=null;
+ BAIT_ART_CACHE.set(key,url);
+ return url;
+}
+function baitHTML(bait,px=64){
+ const b=typeof bait==='string'?BAITS_BY_ID[bait]:bait;
+ if(!b)return '';
+ // v310 (owner: "bait images is too big"): the bitmap was always 96px and had no CSS size, so it
+ // filled the row. It is painted at a crisp 64 and laid out by .fishing-bait-art / .fishing-shop-bait.
+ const url=baitSpriteURL(b.id,64);
+ return url?`<img class="fishing-bait-art" src="${url}" alt="" draggable="false">`:`<span>${b.icon}</span>`;
+}
 function glyphHTML(sp,mut,cls='fishing-glyph'){
  const url=fishSpriteURL(sp,mut,cls==='fishing-glyph'?64:128);
  if(url)return `<img class="${cls} fishing-art${mut?' mut-'+mut:''}" src="${url}" alt="${esc(sp.name)}" draggable="false">`;
@@ -1197,7 +1417,7 @@ const COIN_HTML='<i class="fishcoin" aria-hidden="true"></i>';
 function renderDockGear(){
  if(!els)return;
  const st=state(),rod=equippedRod(),bait=selectedBait();
- els.gearLine.innerHTML=`<span>${COIN_HTML} ${fmt(st.coins)}</span><span>${rodHTML(rod,'fishing-gear-rod',40)} ${esc(rod.name)}</span><span>${bait?`${bait.icon} ${esc(bait.name)} ×${st.bait[bait.id]}`:'No bait'}</span>`;
+ els.gearLine.innerHTML=`<span>${COIN_HTML} ${fmt(st.coins)}</span><span>${rodHTML(rod,'fishing-gear-rod',40)} ${esc(rod.name)}</span><span>${bait?`${baitHTML(bait)} ${esc(bait.name)} ×${st.bait[bait.id]}`:'No bait'}</span>`;
  els.bagCount.textContent=st.bag.length+'/'+bagMax(st);
  if(els.coins)els.coins.innerHTML=COIN_HTML+' '+fmt(st.coins);
 }
@@ -1278,7 +1498,7 @@ function releaseCast(){
  const st=state(),rod=equippedRod(),bait=selectedBait();
  // Bait is consumed by the cast; the rod is permanent.
  if(bait){st.bait[bait.id]--;if(st.bait[bait.id]<=0){delete st.bait[bait.id];st.baitSel=null}}
- ui.mods={luck:rod.luck+(bait?bait.luck:0),weight:rod.strength+(bait?bait.weight:0),mutation:bait?bait.mutation:1,control:rod.control,lure:rod.lure};
+ ui.mods={rod:rod.id,luck:rod.luck+(bait?bait.luck:0),weight:rod.strength+(bait?bait.weight:0),mutation:bait?bait.mutation:1,control:rod.control,lure:rod.lure};
  st.stats.casts++;persist();renderDockGear();
  const inX=[p.x-p.w/2+1.2,p.x+p.w/2-1.2],inZ=[p.z-p.d/2+1.1,p.z+p.d/2-1.1];
  const nearX=Math.max(inX[0],Math.min(inX[1],s.x)),nearZ=Math.max(inZ[0],Math.min(inZ[1],s.z));
@@ -1554,23 +1774,30 @@ function renderDetail(){
 // 📖 The full index (all SPECIES.length entries) with no-luck catch rates; undiscovered entries show as silhouettes.
 function renderIndex(){
  const st=state();
+ // v304: the rod gates the boss tiers, so an index row above the rod's ceiling says which rod lifts
+ // it instead of showing odds the player cannot hit yet.
+ const ceil=rodCeiling(st.rod),ceilIdx=RARITY_INDEX[ceil]||0;
  // v303 (owner): the index used to list the catalog in construction order, so everything added
  // after the first drop sat in one mixed-rarity block at the bottom. Sort by rarity instead - the
  // order inside a rarity stays the catalog's own.
  const ORDER=[...SPECIES].sort((x,y)=>RARITY_INDEX[x.rarity]-RARITY_INDEX[y.rarity]);
+ // v304: odds are computed with the equipped rod and bait, not as a bare-rod number.
+ const erod=equippedRod(),ebait=selectedBait();
+ const eluck=(erod?erod.luck:0)+(ebait?ebait.luck:0);
  const rows=ORDER.map(sp=>{
   const r=rarityById(sp.rarity),d=st.dex[sp.id],found=d&&d.n>0;
-  const pct=rate(sp.id)*100;
-  const odds='1 in '+fmt(Math.round(1/rate(sp.id)));
-  return `<div class="fishing-dex-row${found?'':' undiscovered'}" style="--rar:${r.color}">
+  const pct=rateWith(sp.id,eluck,ceil)*100;
+  const odds='1 in '+fmt(Math.round(1/Math.max(1e-9,rateWith(sp.id,eluck,ceil))));
+  const gated=RARITY_INDEX[sp.rarity]>ceilIdx,grod=gateRodFor(sp.rarity),gname=grod&&RODS_BY_ID[grod]?RODS_BY_ID[grod].name:'a better rod';
+  return `<div class="fishing-dex-row${found?'':' undiscovered'}${gated?' gated':''}" style="--rar:${r.color}">
    ${(u=>u?`<img class="fishing-dex-glyph fishing-art" style="filter:${found?'none':'brightness(0) opacity(.45)'}" src="${u}" alt="" draggable="false">`:`<span class="fishing-dex-glyph" style="filter:${found?`hue-rotate(${sp.hue}deg)`:'brightness(0) opacity(.45)'}">${sp.glyph}</span>`)(fishSpriteURL(sp,null,64))}
    <span class="fishing-dex-name">${found?esc(sp.name):'???'}<small>${sp.min}–${sp.max} kg${found?` · best ${d.bw} kg · ×${fmt(d.n)}`:''}${found&&d.mut.length?' · '+d.mut.map(m=>MUTATIONS[m].badge).join(''):''}</small></span>
    <span class="fishing-chip" style="background:${r.color}">${r.label}</span>
-   <span class="fishing-dex-rate" title="Base catch rate with no rod or bait luck">${pct>=1?pct.toFixed(1)+'%':pct.toFixed(2)+'%'}<small>${odds}</small></span>
+   <span class="fishing-dex-rate" title="${gated?'Mostly locked until you own the '+esc(gname)+' — about '+Math.round(GATE_ESCAPE*100)+'% of these bites still get through':'Your rod and bait rate, before PERFECT timing'}">${gated?`🔒 <small>needs ${esc(gname)}</small>`:`${pct>=1?pct.toFixed(1)+'%':pct.toFixed(2)+'%'}<small>${odds}</small>`}</span>
   </div>`;
  }).join('');
  const found=Object.keys(st.dex).filter(k=>st.dex[k].n>0).length;
- els.indexView.innerHTML=`<p class="fishing-dex-head">Discovered <b>${found}/${SPECIES.length}</b> · rates shown are base odds — rods &amp; bait tilt them toward the rare end.</p><div class="fishing-dex-list">${rows}</div>`;
+ els.indexView.innerHTML=`<p class="fishing-dex-head">Discovered <b>${found}/${SPECIES.length}</b> · odds use your ${esc(erod?erod.name:'rod')}${ebait?' + '+esc(ebait.name):''} (before PERFECT timing). Every fish is a straight roll — a better rod just reaches further up the table.</p><div class="fishing-dex-list">${rows}</div>`;
 }
 // 🏅 v295: the ten fishing titles. Worn above the head in the plaza for every player to see;
 // a title is only wearable once its requirement is actually met in the saved fishing blob.
@@ -1579,17 +1806,27 @@ const TITLE_TONE={bronze:'#c08a52',copper:'#a86f4a',silver:'#cdd6de',jade:'#6ee0
  tide:'#5fc9d8',abyss:'#7b8fd8',ember:'#ff9a5c',frost:'#bfe9ff',dawn:'#ffd9a0'};
 function renderTitles(){
  const st=state(),worn=equippedTitle(st);
- const rows=FISHING_TITLES.map(t=>{
-  const cur=Math.min(t.goal,t.cur(st)),done=titleUnlocked(st,t),isWorn=worn&&worn.id===t.id;
-  const pct=Math.round(cur/t.goal*100);
-  const tone=TITLE_TONE[t.tone]||TITLE_TONE.bronze;
-  return `<div class="fishing-title-row${done?'':' locked'}${isWorn?' worn':''}" style="--tone:${tone}">
-   <span class="fishing-title-mark">${t.mark}</span>
-   <span class="fishing-title-name">${esc(t.name)}<small>${done?'Unlocked':`${fmt(cur)}/${fmt(t.goal)} — ${esc(t.req)}`}</small>${done?'':`<i class="fishing-title-bar"><b style="width:${pct}%"></b></i>`}</span>
+ // v310 (owner): "titles are ... not arranged rarity". The old list sorted worn → earned → locked,
+ // so the ladder was scattered. It now reads the way the fish index reads - Common, Uncommon, Rare,
+ // Legendary, Mythical, Secret - and within a tier from the shortest haul to the longest. The worn
+ // title is still easy to spot: its row is outlined and its button says Worn.
+ const scored=FISHING_TITLES.map(t=>{
+  const done=titleUnlocked(st,t),cur=Math.min(t.goal,t.cur(st));
+  return {t,done,cur,isWorn:!!(worn&&worn.id===t.id),frac:cur/Math.max(1,t.goal)};
+ }).sort((a,b)=>(RARITY_INDEX[a.t.tier]??0)-(RARITY_INDEX[b.t.tier]??0)||(a.t.rank||0)-(b.t.rank||0));
+ const rows=scored.map(({t,cur,done,isWorn})=>{
+  const pct=Math.round(Math.min(1,cur/Math.max(1,t.goal))*100);
+  const r=rarityById(t.tier)||rarityById('common');
+  const tone=TITLE_TONE[t.tone]||r.color;
+  const badge=titleBadgeURL(t.tier,64);
+  return `<div class="fishing-title-row${done?'':' locked'}${isWorn?' worn':''}" style="--tone:${r.color}" data-tier="${esc(t.tier)}" data-rank="${t.rank}">
+   ${badge?`<img class="fishing-title-badge" src="${badge}" alt="" draggable="false" style="--tone:${tone}">`:`<span class="fishing-title-mark">${t.mark}</span>`}
+   <span class="fishing-title-name">${esc(t.name)}<small>${done?`✓ ${esc(t.req)}`:`${fmt(cur)}/${fmt(t.goal)} — ${esc(t.req)}`}</small><i class="fishing-title-bar"><b style="width:${done?100:pct}%"></b></i></span>
+   <span class="fishing-chip" style="background:${r.color}">${r.label}</span>
    ${isWorn?'<button type="button" disabled>Worn</button>':done?`<button type="button" data-title="${t.id}">Wear</button>`:'<button type="button" disabled>🔒</button>'}
   </div>`;
  }).join('');
- els.titlesView.innerHTML=`<p class="fishing-dex-head">Worn above your head in the plaza. <b>${FISHING_TITLES.filter(t=>titleUnlocked(st,t)).length}/${FISHING_TITLES.length}</b> earned.</p><div class="fishing-title-list">${rows}</div>${worn?'<div class="fishing-title-none"><button type="button" data-title="none">Wear no fishing title</button></div>':''}`;
+ els.titlesView.innerHTML=`<p class="fishing-dex-head">Worn above your head in the plaza. <b>${FISHING_TITLES.filter(t=>titleUnlocked(st,t)).length}/${FISHING_TITLES.length}</b> earned · listed by rarity.</p><div class="fishing-title-list">${rows}</div>${worn?'<div class="fishing-title-none"><button type="button" data-title="none">Wear no fishing title</button></div>':''}`;
  for(const b of els.titlesView.querySelectorAll('button[data-title]'))b.onclick=()=>{
   const r=equipTitle(st,b.dataset.title==='none'?null:b.dataset.title);
   if(r.ok){persist();status(r.title?('Wearing '+FISHING_TITLE_BY_ID[r.title].name+'.'):'Fishing title removed.');renderPanel();if(opts&&typeof opts.titleChanged==='function')opts.titleChanged()}
@@ -1600,14 +1837,16 @@ function renderShop(){
  const st=state();
  const rodRows=RODS.map(rod=>{
   const owned=st.rods.includes(rod.id),equipped=st.rod===rod.id;
-  const stats=`🍀 +${Math.round(rod.luck*100)}% · 🎯 +${Math.round(rod.control*100)}% · 🏋️ +${Math.round(rod.strength*100)}% · ⏱ +${Math.round(rod.lure*100)}%`;
+  const ceil=rodCeiling(rod.id),before=rodCeiling(RODS[Math.max(0,ROD_RANK[rod.id]-1)].id);
+  const unlock=ceil!==before?` · 🔓 unlocks ${rarityById(ceil).label}+`:'';
+  const stats=`🍀 +${Math.round(rod.luck*100)}% · 🎯 +${Math.round(rod.control*100)}% · 🏋️ +${Math.round(rod.strength*100)}% · ⏱ +${Math.round(rod.lure*100)}%${unlock}`;
   const btn=equipped?'<button type="button" disabled>Equipped</button>':owned?`<button type="button" data-equip="${rod.id}">Equip</button>`:`<button type="button" data-rod="${rod.id}" ${st.coins<rod.cost?'disabled':''}>${COIN_HTML} ${fmt(rod.cost)}</button>`;
   return `<div class="fishing-shop-row${equipped?' equipped':''}"><span class="fishing-shop-icon">${rodHTML(rod,'fishing-shop-rod',56)}</span><span class="fishing-shop-name">${esc(rod.name)}<small>${stats}</small></span>${btn}</div>`;
  }).join('');
  const baitRows=BAITS.map(b=>{
   const ownedN=st.bait[b.id]||0,selected=st.baitSel===b.id;
   const stats=`🍀 +${Math.round(b.luck*100)}%${b.weight?` · 🏋️ +${Math.round(b.weight*100)}%`:''}${b.mutation>1?` · 🧬 ×${b.mutation}`:''}`;
-  return `<div class="fishing-shop-row${selected?' equipped':''}"><span class="fishing-shop-icon">${b.icon}</span><span class="fishing-shop-name">${esc(b.name)}<small>${stats} · owned ×${ownedN}</small></span><span class="fishing-shop-btns"><button type="button" data-bait="${b.id}" data-n="1" ${st.coins<b.cost?'disabled':''}>${COIN_HTML} ${fmt(b.cost)}</button><button type="button" data-bait="${b.id}" data-n="10" ${st.coins<b.cost*10?'disabled':''}>×10</button><button type="button" data-use="${b.id}" ${ownedN?'':'disabled'}>${selected?'Using':'Use'}</button></span></div>`;
+  return `<div class="fishing-shop-row${selected?' equipped':''}"><span class="fishing-shop-icon">${baitHTML(b)}</span><span class="fishing-shop-name">${esc(b.name)}<small>${stats} · owned ×${ownedN}</small></span><span class="fishing-shop-btns"><button type="button" data-bait="${b.id}" data-n="1" ${st.coins<b.cost?'disabled':''}>${COIN_HTML} ${fmt(b.cost)}</button><button type="button" data-bait="${b.id}" data-n="10" ${st.coins<b.cost*10?'disabled':''}>×10</button><button type="button" data-use="${b.id}" ${ownedN?'':'disabled'}>${selected?'Using':'Use'}</button></span></div>`;
  }).join('');
  const tier=bagTierOf(st),next=nextBagTier(st),cap=bagMax(st);
  // v295: one permanent bag upgrade per tier, bought in order - never a skip.
@@ -1677,12 +1916,15 @@ return {
  // pure core (tests)
  RARITIES,SPECIES,DIFF,MUTATIONS,RODS,BAITS,BAG_MAX,BAG_TIERS,bagMax,bagTierOf,nextBagTier,buyBagUpgrade,CAST_GREEN,CAST_PERFECT,MAX_W,
  FISHING_TITLES,FISHING_TITLE_BY_ID,titleUnlocked,equipTitle,equippedTitle,discoveredSpecies,bestWeight,mutationKinds,
- speciesById,rarityById,rate,value,rollCatch,castRating,makeReel,reelStep,normalize,addCatch,
+ speciesById,rarityById,rate,rateWith,tierShares,value,rollCatch,castRating,makeReel,reelStep,normalize,addCatch,
+ ROD_GATE,ROD_RANK,rodCeiling,gateRodFor,GATE_ESCAPE,
  buyRod,equipRod,buyBait,selectBait,sellFish,sellBulk,toggleLock,shouldAutoSell,showOffText,parseShowOff,showOffScale,
  showOffData,cleanShowOff,showOffEvent,rodSprite,rodSpriteURL,ROD_TIER_COLORS,
  // v301: the crop manifest, so tests can prove every drawing on disk is wired up.
  FISH_ART,
  fishSprite,fishSpriteURL,
+ // v309: painted bait icons, so the shop no longer depends on Unicode-13 emoji fonts.
+ baitSprite,baitSpriteURL,baitHTML,titleBadge,titleBadgeURL,
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,
  // v297: the plaza's leave-warning reels the line in through this, so chat no longer has to nag.

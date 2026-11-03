@@ -600,6 +600,101 @@ point) never moved. `bindFishing` now also exposes `walkTo`, the same path witho
 fishing module uses it, re-issuing the walk every 2.5s while it is under way and only giving up after
 30s instead of 9s. Sitting is not an obstacle: the move clears the seat on both sides.
 
+## A two-week index, soft rod gates and a pond that looks like a pond (haven-v304/v305)
+
+Six owner notes, one economy pass, then a correction pass on the luck.
+
+**The index is a two-week climb, and money cannot shorten it.** The old weights gave a Secret every
+~600 casts on the best rod, so 155/155 took an evening. The rarity table is now
+`.60 / .245 / .1454 / .0083 / .00087 / .00035` - a Secret tier bite is about 1 in 2,900 casts on a
+bare rod and ~1 in 800 on the best gear. Every species is a **plain uniform draw**: no pity, no
+repeat protection, no "you have not caught this yet" nudge. The wall is the catch rate and luck.
+
+**A rod is a ceiling, not a wall.** `rodCeiling()` says how far up the table a rod reaches - Training
+Rod uncommon, Oak/Brass rare, Silver legendary, Golden mythical, Mythril secret - and a roll above it
+is held back most of the time. But not always: `GATE_ESCAPE` is 8% for one tier above the ceiling and
+0.35x of that for each tier beyond (2.8% / 1% / 0.34%), so a cheap rod *can* be surprised:
+
+| rod | rare | legendary | mythical | secret |
+| --- | --- | --- | --- | --- |
+| Training | 1.2% | 1 in 4,300 | 1 in 100,000 | 1 in 830,000 |
+| Oak | 15.4% | 1 in 1,500 | 1 in 50,000 | 1 in 290,000 |
+| Golden | 14.5% | 0.83% | 0.12% | 1 in 36,000 |
+| Mythril | 14.5% | 0.83% | 0.087% | 0.035% |
+
+(At luck 0, per cast. The Index prints these numbers for whatever rod and bait you are holding.)
+
+**Measured to 155/155** by simulating `rollCatch` (250 casts/h, 40% PERFECT, 31 runs, Mythril + Royal
+Jelly): median **21,300 casts (~85 h)**, p90 **38,000 (~152 h)**, mean ~93 h - a real tail, because it
+is a real coupon collector. Glow Grub - the money bait - is a median 27,300 (~109 h). Royal Jelly is
+the rare-hunter bait: ~1.8x the boss bites for a couple of coins an hour less.
+
+**The gear is cheap on purpose.** "I just want fishes hard to catch, not too much to farm on rods."
+Rods are 300 / 1,000 / 3,000 / 8,000 / 20,000 and bags 600 / 1,400 / 3,000 / 6,500 - 43,800 for the
+whole rack, about **2.3 hours** of steady fishing in the 250-casts/h model (it was 122,100 and 6.4 h in
+the first v304 pass). Baits: Worm 4, Shrimp Tail 12, Glow Grub 30, Royal Jelly 55 (luck 1.5), all
+net-positive from Oak up.
+
+**The index prints the odds you actually roll.** Base weights are a bare-rod number, and at this
+secret rate that reads "1 in 34,000" even while holding the rod that unlocks them. `rateWith()` and
+`tierShares()` mirror `rollCatch` (luck exponent, the ceiling and its escape chance), and the Index
+shows the odds for the rod and bait you are holding. Rows above your rod's ceiling still say which rod
+lifts them, with the escape chance in the tooltip.
+
+**The pond is the centrepiece.** Both ponds are 18x13 (was 14x10), with a procedural garden in the
+same flat colours as the town - no new art, no new licence: a stone coping walked along the pond's own
+rounded outline, an extruded arch bridge over the outflow, a low cascade of loose boulders with an
+animated water sheet, stone lanterns, flowering trees and shore boulders. `R.POND_PROPS` holds every
+position so the layout can be tested rather than eyeballed: `social_sim` proves no prop sits in the
+water, on a chair or in a house, and that the rim is walkable all the way round.
+
+**Titles are tidy, and the biggest fish fill the pond.** `renderTitles` sorts worn → earned →
+locked-closest-first, every row has a progress bar (a `✓ req` on earned ones), and the name line and
+button are fixed width so the column cannot jump. `showOffScale` is now
+`min(11, 0.45 + 0.235 * sqrt(w))`: a 48 kg catch is 2.1 units, a 1.8 t whale shark is 10.4 - most of
+the 18-unit pond.
+
+**The shark line is the boss line.** The shark family was regraded a tier or two: goblin, tiger,
+sun, great white, thresher, saw, mint and star whales are Mythical; porbeagle, bluefin, silvershark,
+mako and grey whale are Legendary; Greatmaw and Voidfin are Secret. The 155-species split is now
+36 / 34 / 30 / 25 / 20 / 10.
+
+## The pond, painted (haven-v306)
+
+The owner's verdict on the v304 pond was blunt: "water & pond have no texture... basically just slap
+in a bridge and u call it done." He was right - it was a flat `0x2e7ea6` shape with two translucent
+glint planes and a box curb. v306 rebuilds it out of art the game already shipped.
+
+**Where the art came from.** No new download was needed: `assets/kit/ro-tiles-hd.png` (25 named 256px
+terrain tiles) and `assets/kit/ro-spritesheet.png` (34 painted props with anchors) were already in the
+repo for the world map. The social pond now crops them at runtime - `water_frame_0/1` (bright
+caustics), `water_dark_0/1` (deep caustics), `limestone_pale` (coping and banks), `bridge_planks`,
+`bridge_red`, plus the `tree_cherry`, `lantern_stone`, `rock_boulder_mossy`, `rock_cliff_crag`,
+`tree_bush_bright` and `bamboo_grove` sprites. `paintPondArt()` repaints a pond in place once the
+sheets arrive (about 8 MB, already cached by the map); until then the v304 primitives stand, so a
+failed fetch degrades instead of breaking. Existing kit files only - the publish budget (59.0 of
+59.5 MiB) does not move.
+
+**The water is a shader, not a colour.** Following the usual stylised-water breakdown (layer the same
+tile at odd scales scrolling in different directions so the repeat never lines up; pick the colour
+from a depth mask; then draw foam from a shoreline mask), `WATER_FRAG` samples the two painted caustic
+frames at 2.1x and 1.7x in opposite directions, uses their brightness as caustic density on an
+art-directed teal gradient, adds a second faster sample for sun sparkle and a grazing-angle sheen, then
+draws a wet lip and a breathing foam band. Because the pond is a `ShapeGeometry` of a rounded rectangle,
+`position.xy` is already the shape, so the shore band uses an exact rounded-rect signed distance rather
+than a fake rectangle gradient.
+
+**The bank has height.** The flat sand ring is now an extruded stone coping (0.16 high, with a hole for
+the water), so the pond sits *below* its rim and the coping casts a lip shadow over the water. The
+cascade runs into a stone channel that passes under the bridge and spills over the coping into the
+pond - the bridge finally spans water. The fall itself is a tinted double-sided sheet plus an additive
+painted-water spray scrolling at a different rate, with painted crag and boulder sprites standing in
+front of it instead of loose dodecahedrons.
+
+**Details.** Painted blossom trees, stone lanterns, bamboo, shore boulders and a bush around each pond,
+mirrored low-opacity sprites as reflections where a prop actually mirrors into the water, lily-pad
+clusters in two greens with a few flowers, and the ambient fish still swimming over the top.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

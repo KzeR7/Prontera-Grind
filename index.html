@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=303">
-<link rel="stylesheet" href="assets/social-fishing.css?v=303">
+<link rel="stylesheet" href="assets/social.css?v=310">
+<link rel="stylesheet" href="assets/social-fishing.css?v=310">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1022,7 +1022,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div class="login-card" style="max-width:520px">
 <h2 id="sessionGateTitle" style="font-size:16px">🔐 Signed in on another device</h2>
 <p style="font-size:13px;opacity:1;margin:0 0 10px">This account was signed in somewhere else, so this tab has stopped playing. Only one device can play a character at a time.</p>
-<p id="sessionGateText" style="font-size:12px;line-height:1.6;margin:0 0 10px">Everything up to this moment is safe. The other device is playing the account now - sign in again here only when you want to take it back (that will end the other device's session in turn).</p>
+<p id="sessionGateText" style="font-size:12px;line-height:1.6;margin:0 0 10px">This tab's session is no longer valid - either the character signed in somewhere else, or the session expired. Everything up to this moment is safe. Sign in again only when you want to take the character back (that ends the other session in turn).</p>
 <div class="row" style="justify-content:center;margin-top:12px"><button id="sessionGateBack" class="login-btn" onclick="location.reload()">Sign in again</button></div>
 </div></div>
 <div id="offlineModal" role="dialog" aria-modal="true" aria-labelledby="offlineTitle" aria-describedby="offlineExplanation">
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-03 haven-v303 whales, honest prices, harder titles, afk walk-back';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-03 haven-v310 titles listed by rarity, smaller bait art, no rock shelf';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3741,7 +3741,10 @@ async function cloudFetch(path,opt){const o=opt||{},hdrs=Object.assign({'Content
   // v289: only a 401 from THIS sign-in counts. A slow request issued before the login (startup
   // probes racing the sign-in) can resolve 401 after CLOUD.on flips true; ending the fresh session
   // over it showed a bogus "signed in on another device" right after a successful login.
-  if(res&&res.status===401&&CLOUD.on&&!CLOUD.signingOut&&epoch===(CLOUD.epoch||0))cloudSessionReplaced();const pt=res&&res.headers&&typeof res.headers.get==='function'?res.headers.get('x-preview-session'):null;if(pt)CLOUD.previewToken=pt;return res}
+  // v307: /api/me marks a credential-less 401 as X-Session:none - in an embedded preview that is a
+  // browser dropping the third-party cookie, not a sign-in on another device.
+  if(res&&res.status===401&&CLOUD.on&&!CLOUD.signingOut&&epoch===(CLOUD.epoch||0))
+    cloudSessionReplaced((res.headers&&typeof res.headers.get==='function'&&res.headers.get('x-session'))||'');const pt=res&&res.headers&&typeof res.headers.get==='function'?res.headers.get('x-preview-session'):null;if(pt)CLOUD.previewToken=pt;return res}
 async function boardRefresh(period=boardPeriod,kind=boardKind){
   if(!['daily','weekly','all'].includes(period)||!['kills','echo'].includes(kind))return;
   const seq=++boardRequest;
@@ -3899,9 +3902,22 @@ function cloudMaintenance(reason){
 // playing - another device owns the character now - so it stops the simulation, keeps the local
 // copy, and says so plainly. It never uploads (that would race the device that just signed in).
 let cloudReplaced=false;
-function cloudSessionReplaced(){
+// why: 'ended' = another sign-in owns the account now; 'none' = this tab has no session token at
+// all (a blocked/dropped cookie, or a server that lost the account); '' = unknown.
+let cloudReplacedWhy='';
+function cloudSessionReplaced(why){
   if(cloudReplaced)return;
-  cloudReplaced=true;
+  cloudReplaced=true;cloudReplacedWhy=why||'';
+  const framed=(()=>{try{return window.top!==window.self}catch(e){return true}})();
+  const title=$('sessionGateTitle'),text=$('sessionGateText'),button=$('sessionGateBack');
+  if(why==='none'){
+    if(title)title.textContent='🔐 This tab lost its sign-in';
+    if(text)text.textContent='The browser did not send the sign-in back to the server'+(framed?' - an embedded preview is an iframe on another site, and browsers block its cookies':'')+'. Nothing was lost: your character is safe on the account. '+(framed?'Open the preview in its own tab, or ':'')+'sign in again here.';
+    if(button)button.textContent='Sign in again';
+  }else{
+    if(title)title.textContent='🔐 Signed in on another device';
+    if(text)text.textContent='This tab\'s session is no longer valid - either the character signed in somewhere else, or the session expired'+(framed?' (an embedded preview can also drop it)':'')+'. Everything up to this moment is safe. Sign in again only when you want to take the character back (that ends the other session in turn).';
+  }
   CLOUD.paused=true;CLOUD.lost=true;CLOUD.gate=true;
   try{save()}catch(e){}
   cloudBadge('☁ ⛔','Signed out: your account signed in on another device');
@@ -12970,10 +12986,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=303"></script>
-<script src="assets/social-poker.js?v=303"></script>
-<script src="assets/social-scene.js?v=303"></script>
-<script src="assets/social-fishing.js?v=303"></script>
-<script src="assets/social.js?v=303"></script>
+<script src="assets/social-rules.js?v=310"></script>
+<script src="assets/social-poker.js?v=310"></script>
+<script src="assets/social-scene.js?v=310"></script>
+<script src="assets/social-fishing.js?v=310"></script>
+<script src="assets/social.js?v=310"></script>
 </body>
 </html>

@@ -166,5 +166,44 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  fishRoom.disconnect(resumed);
  fClock.t+=310000;const fresh=mk(401);
  assert(Math.hypot(fresh.x,12-fresh.z)<1||Math.abs(fresh.z-12)<8,'an expired reservation spawns at the entrance again');
- console.log('PASS social room: channel privacy, 20-player overflow, native emotion events, collision, movement/sit, rate limit, sliding idle window with a 30-minute re-authentication, per-character walk speed and tab replacement');
+ // --- v304: the pond garden ----------------------------------------------------------------
+ // The ponds are the plaza centrepiece now (18x13, a bridge, a waterfall garden). These are the
+ // checks the owner asked for by eye: nothing in the water, nothing on a chair, no prop in a house.
+ for(const p of R.PONDS){
+  assert.equal(p.w,18,'the pond is 18 wide');assert.equal(p.d,13,'and 13 deep');
+  const inWater=(x,z,m=0)=>Math.abs(x-p.x)<p.w/2-m&&Math.abs(z-p.z)<p.d/2-m;
+  const onTop=(x,z,r,o)=>Math.hypot(x-o.x,z-o.z)<r;
+  const props=R.POND_PROPS[R.PONDS.indexOf(p)];
+  assert(props,'every pond has its garden props');
+  for(const b of props.boulders){
+   assert(!inWater(b.x,b.z,b.r),'a boulder never sits in the water');
+   for(const c of R.CHAIRS)assert(!onTop(b.x,b.z,b.r+1,c),'a boulder never crowds an angler chair');
+   for(const b2 of R.BENCHES)assert(Math.hypot(b.x-b2.x,b.z-b2.z)>4,'a boulder stays off the bench rows');
+  }
+  for(const l of props.lanterns){
+   assert(!inWater(l.x,l.z,.5),'a stone lantern stands on the shore, not in the water');
+   for(const c of R.CHAIRS)assert(!onTop(l.x,l.z,1.2,c),'a lantern never crowds a chair');
+  }
+  for(const t of props.blossoms){
+   assert(!inWater(t.x,t.z,1.2),'a blossom tree is planted on the grass');
+   for(const c of R.CHAIRS)assert(!onTop(t.x,t.z,1.6,c),'a bloom never hides a chair');
+  }
+  // The bridge tunnels the outflow: it sits south of the water and clears both south chairs.
+  assert(props.bridge.z>p.z+p.d/2,'the bridge is past the south rim');
+  for(const c of R.CHAIRS)assert(Math.abs(c.x-props.bridge.x)>props.bridge.span/2||Math.abs(c.z-props.bridge.z)>props.bridge.width/2+1,'the bridge never sits on a chair');
+  // It is a garden behind the pond, so it must stay clear of the houses at z=56 and the planting.
+  for(const b of R.BUILDINGS)assert(Math.hypot(p.x-b.x,p.z-b.z)>Math.max(p.w,b.w)/2+Math.max(p.d,b.d)/2-12,'the pond does not run into a building');
+  for(const g of R.GARDENS)assert(Math.abs(p.x-g.x)>g.w/2+p.w/2||Math.abs(p.z-g.z)>g.d/2+p.d/2,'the pond does not run into a garden');
+  // Fishing spots: the rim is walkable all the way round except where the cascade's boulder heap
+  // stands (v309: it is solid, so you can no longer end up standing inside the rock face).
+  assert(!R.walkable(p.x,p.z),'pond water is not walkable');
+  // The pond blocks as a box, so the walkable rim is the box offset by the fishing stand-off.
+  for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){
+   const x=p.x+dx*(p.w/2+1.7),z=p.z+dz*(p.d/2+1.7);
+   if(R.cragBlocked(x,z)){assert(!R.walkable(x,z),'the boulder heap behind the cascade is solid');continue}
+   assert(R.walkable(x,z),'the rim at '+dx+'/'+dz+' is walkable');
+  }
+  assert(R.walkable(p.x,p.z+p.d/2+1.4),'the south bank (and the bridge approach) is walkable');
+ }
+ console.log('PASS social room: channel privacy, 20-player overflow, native emotion events, collision, movement/sit, rate limit, sliding idle window with a 30-minute re-authentication, per-character walk speed and tab replacement; v304 18x13 ponds whose bridge, falls, lanterns, blossoms and boulders stay out of the water and off every chair');
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -7,6 +7,16 @@ window.PGSocialScene={async create(host,labels,callbacks){
  const camera=new T.PerspectiveCamera(38,1,.1,350),players=new Map();let angle=0,pitch=DEFAULT_PITCH,distance=DEFAULT_DISTANCE,active=false,last=0,clock=0,focused=false,viewW=0,viewH=0;
  const focus=new T.Vector3(0,.8,12),target=new T.Vector3(),feet=new T.Vector3(),head=new T.Vector3();
  const freeze=mesh=>{mesh.updateMatrix();mesh.matrixAutoUpdate=false;return mesh};
+ // Bridges register their arch here (v308) so the player pass can stand feet on the deck.
+ const bridges=[];
+ const bridgeLift=(x,z)=>{
+  for(const b of bridges){
+   if(Math.abs(x-b.x)>b.span/2||Math.abs(z-b.z)>b.width/2)continue;
+   const t=(x-b.x+b.span/2)/b.span;
+   return 4*b.arch*t*(1-t);
+  }
+  return 0;
+ };
  scene.add(new T.HemisphereLight(0xffffff,0x66775a,1));
  const [catalog,data,atlas,paving]=await Promise.all([fetch('assets/social/town/catalog.json').then(r=>{if(!r.ok)throw Error('Town metadata unavailable');return r.json()}),fetch('assets/social/town/models.bin').then(r=>{if(!r.ok)throw Error('Town models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/social/town/models.webp'),new T.TextureLoader().loadAsync('assets/social/town/paving.webp')]);
  atlas.flipY=false;atlas.magFilter=T.LinearFilter;const modelMat=new T.MeshBasicMaterial({map:atlas,vertexColors:true,side:T.DoubleSide,alphaTest:.35});
@@ -49,17 +59,419 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const makeWaterTex=()=>{const tx=new T.CanvasTexture(waterTile);tx.wrapS=tx.wrapT=T.RepeatWrapping;tx.repeat.set(1/5.5,1/5.5);return tx};
   const waterTexA=makeWaterTex(),waterTexB=makeWaterTex();
   const sandMat=new T.MeshBasicMaterial({color:0xcbc09b}),waterMat=new T.MeshBasicMaterial({color:0x2e7ea6}),glintMatA=new T.MeshBasicMaterial({map:waterTexA,transparent:true,opacity:.42,depthWrite:false}),glintMatB=new T.MeshBasicMaterial({map:waterTexB,transparent:true,opacity:.26,depthWrite:false});
+  // v306: a second, animated water sheet sits just above the first one; the painted map-kit frames
+  // cross-fade into it so the pond moves instead of being a flat blue shape.
+  const waterMatB=new T.MeshBasicMaterial({color:0x2e7ea6,transparent:true,opacity:0,depthWrite:false});
+  const stoneMat=new T.MeshBasicMaterial({color:0xb3ac97});
   const lilyMat=new T.MeshBasicMaterial({color:0x3c7a3f,transparent:true,opacity:.94,depthWrite:false}),lilies=[];
+  // v304 (owner): "a better redesign of the pond - trees, a bridge, maybe a waterfall". Everything
+  // here is built from primitives in the same flat colours as the rest of the town, so it needs no
+  // new art and cannot clash with the sprite atlas: a stone arch bridge over the outflow, a rock face
+  // with a falling water sheet and a splash pool behind each pond, stone lanterns, boulders and
+  // flowering trees around the rim.
+  // The town is unlit flat colour, so "shading" is done by alternating tones per stone.
+  const rockMat=new T.MeshBasicMaterial({color:0x9d9a90}),rockMidMat=new T.MeshBasicMaterial({color:0x87847b}),rockDarkMat=new T.MeshBasicMaterial({color:0x6e6b65});
+  const bridgeMat=new T.MeshBasicMaterial({color:0xc0b9a7}),bridgeRailMat=new T.MeshBasicMaterial({color:0xa79f8d});
+  const lanternMat=new T.MeshBasicMaterial({color:0xb5ae9d}),lanternGlowMat=new T.MeshBasicMaterial({color:0xffe4a6});
+  const trunkMat=new T.MeshBasicMaterial({color:0x6d4c33}),blossomMat=new T.MeshBasicMaterial({color:0xf6c3d6}),blossomDarkMat=new T.MeshBasicMaterial({color:0xe6a3bf});
+  // soft splash pool: three stacked discs fading outwards (no canvas gradient, so the headless
+  // scene tests can build the pond without a 2D context)
+  const poolMat=new T.MeshBasicMaterial({color:0xbfe9f2,transparent:true,opacity:.3,depthWrite:false});
+  // v308 (owner: "what's the random waterfall from the sky?"): the old sheet was a fully opaque
+  // canvas rectangle, so it read as a slab of water hanging in the air. This one is built in bands:
+  // each band only paints thin streaks inside a width that starts narrow at the lip and widens as it
+  // falls, with the alpha ramping in at the top - so the sheet has soft edges and no hard top line,
+  // and the rock face behind it shows through.
+  const fallTile=document.createElement('canvas');fallTile.width=96;fallTile.height=192;
+  const fctx=fallTile.getContext('2d');
+  if(fctx&&typeof fctx.fillRect==='function'){
+   if(typeof fctx.clearRect==='function')fctx.clearRect(0,0,96,192);
+   const bands=34;
+   for(let b=0;b<bands;b++){
+    const y=Math.floor(b*192/bands),bh=Math.ceil(192/bands)+1,t=b/(bands-1);
+    const half=(0.26+0.34*t)*48;                       // 12.5px at the lip, 29px at the base
+    const fadeTop=Math.min(1,t/0.14);
+    for(let k=0;k<8;k++){
+     const off=((k*37+b*11)%100)/100;
+     const x=48-half+off*half*2;
+     const a=(0.22+0.5*fadeTop)*(0.5+0.5*((k*13+b*7)%100)/100);
+     fctx.globalAlpha=Math.min(1,a);
+     fctx.fillStyle=k%3?'#cfeeff':'#ffffff';
+     fctx.fillRect(x,y,1+(k%3),bh);
+    }
+   }
+   fctx.globalAlpha=1;
+  }
+  const makeFallTex=()=>{const tx=new T.CanvasTexture(fallTile);tx.wrapS=tx.wrapT=T.RepeatWrapping;tx.repeat.set(1,1.6);return tx};
+  const falls=[],fallScroll=[];
+  function stoneLantern(x,z){
+   const g=new T.Group();
+   const base=new T.Mesh(new T.BoxGeometry(.52,.18,.52),lanternMat);base.position.y=.09;g.add(base);
+   const post=new T.Mesh(new T.CylinderGeometry(.11,.14,.62,8),lanternMat);post.position.y=.49;g.add(post);
+   const box=new T.Mesh(new T.BoxGeometry(.42,.34,.42),lanternGlowMat);box.position.y=.98;g.add(box);
+   const roof=new T.Mesh(new T.ConeGeometry(.44,.26,4),lanternMat);roof.position.y=1.28;roof.rotation.y=Math.PI/4;g.add(roof);
+   g.position.set(x,0,z);scene.add(freeze(g));return g;
+  }
+  // v304: a taller trunk under a cluster of small blooms, two pinks deep - four big spheres read as a
+  // pink cloud from the plaza camera rather than as a tree.
+  function blossomTree(x,z,scale=1){
+   const g=new T.Group();
+   const trunk=new T.Mesh(new T.CylinderGeometry(.13*scale,.22*scale,1.7*scale,7),trunkMat);trunk.position.y=.85*scale;g.add(trunk);
+   const blooms=[[0,2.05,.05,.68],[-.5,1.8,-.16,.5],[.46,1.84,.2,.48],[.06,2.34,-.26,.44],[-.26,2.2,.32,.38],[.36,2.18,-.34,.36],[-.12,1.7,.42,.34]];
+   blooms.forEach(([dx,dy,dz,r],i)=>{
+    const c=new T.Mesh(new T.SphereGeometry(r*scale,8,6),i%2?blossomDarkMat:blossomMat);
+    c.position.set(dx*scale,dy*scale,dz*scale);c.scale.y=.82;g.add(c);
+   });
+   g.position.set(x,0,z);scene.add(freeze(g));return g;
+  }
+  // v304: one extruded arch instead of nine loose slabs, with a rail that follows the curve. The water
+  // runs under the opening, so the bridge reads as a bridge from the plaza instead of scattered blocks.
+  // v308 (owner: "the bridge too, a bit small and can pass through"): the deck is wider and thicker,
+  // the parapets are real balustrades (newel posts at the ends, a hand rail and a mid rail on
+  // turned posts), stone abutments tie it into the banks, and every bridge is registered in
+  // `bridges` so the player walk is lifted onto the deck instead of clipping through the arch.
+  function archBridge(cx,z,span,width,arch=1.05){
+   const half=span/2;
+   // deck: the top of the arch, .34 thick, ends sinking into the banks
+   const top=t=>4*arch*t*(1-t);
+   const shape=new T.Shape();
+   shape.moveTo(-half,-.34);
+   shape.quadraticCurveTo(0,2*arch,half,-.34);
+   shape.lineTo(half,-.36);
+   shape.quadraticCurveTo(0,2*arch-.7,-half,-.36);
+   shape.closePath();
+   const deck=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:width,bevelEnabled:false}),bridgeMat.clone());
+   deck.position.set(cx,0,z-width/2);scene.add(freeze(deck));
+   bridges.push({x:cx,z,span,width,arch});
+   const point=t=>({x:-half+span*t,y:top(t)});
+   for(const side of [-1,1]){
+    const zz=z+side*(width/2-.1);
+    // newel posts, taller than the rail, at both ends
+    for(const t of [0,1]){
+     const pt=point(t);
+     const newel=new T.Mesh(new T.BoxGeometry(.17,1.02,.17),bridgeRailMat);
+     newel.position.set(cx+pt.x,pt.y+.5,zz);scene.add(freeze(newel));
+    }
+    // hand rail + mid rail sampled along the curve
+    for(const lift of [1.0,.55]){
+     for(let i=0;i<8;i++){
+      const a=point(i/8),b=point((i+1)/8);
+      const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
+      const rail=new T.Mesh(new T.BoxGeometry(len+.03,lift===1?.09:.06,.09),bridgeRailMat);
+      rail.position.set(cx+(a.x+b.x)/2,(a.y+b.y)/2+lift,zz);
+      rail.rotation.z=Math.atan2(dy,dx);scene.add(freeze(rail));
+     }
+    }
+    // balusters
+    for(let i=0;i<=10;i++){
+     const t=i/10,pt=point(t);
+     const post=new T.Mesh(new T.BoxGeometry(.07,.92,.07),bridgeRailMat);
+     post.position.set(cx+pt.x,pt.y+.46,zz);scene.add(freeze(post));
+    }
+   }
+   // a low stone landing at each end, so the ramp meets masonry instead of hanging over the grass
+   for(const side of [-1,1]){
+    const pad=new T.Mesh(new T.BoxGeometry(.55,.1,width),stoneMat);
+    pad.position.set(cx+side*(half-.1),.04,z);scene.add(freeze(pad));
+   }
+   return {deck};
+  }
+
+  // v304 (owner): "a waterfall behind the pond". The first pass built a 6-unit rock wall, which from the
+  // plaza camera was a grey slab that hid the water. This is a low cascade of loose boulders at the
+  // pond's south end with a narrow sheet falling between them - it reads as a rock garden, keeps the
+  // pond visible from the north, and is small enough not to fight the houses behind it.
+  // v308 (owner: "what's the random waterfall from the sky? looks funny"): the sheet was an opaque
+  // rectangle AND it stood on the far side of the pond from the camera, so what you saw was the back
+  // of a slab. It now pours into the pond from the far rim, its top disappears under a rock lip, its
+  // foot lands in the water, and the rock face is heaped behind it so no edge is ever in open air.
+  function cascade(p,fall,view){
+   const zc=fall.z,w=fall.w,h=fall.h,d=fall.dir||1,tone=[rockMat,rockMidMat,rockDarkMat];
+   // rock face: taller than the drop, heaped behind the water (away from the pond)
+   const rocks=[[-w/2-1.2,.5,.8,h*.4],[-w/2-.35,.55,1.05,h+.35],[-w/2+.55,.35,.95,h+.5],[.05,.5,1.18,h+.65],
+                [w/2-.55,.35,.92,h+.45],[w/2+.4,.55,.84,h*.65],[w/2+1.15,.45,.68,h*.4],[-.62,1.05,.74,h*.34],[.66,1.0,.7,h*.3]];
+   const rockGroup=new T.Group();scene.add(rockGroup);
+   if(view)view.fallback.push(rockGroup);
+   // v309: the heap sits left of the pond centre and a little further back, so it never covers the
+   // water where the cascade lands (the shelf that used to sit here was removed at the owner's ask).
+   rocks.forEach(([dx,dz,r,ry],i)=>{
+    const rock=new T.Mesh(new T.DodecahedronGeometry(r,0),tone[i%3]);
+    rock.position.set(fall.x-1.0+dx*.86,ry*.6,zc-d*(dz+.35));
+    rock.scale.set(1.12,.9,1.02);
+    rock.rotation.set(i*.7,i*1.3,i*.45);
+    rockGroup.add(rock);
+   });
+   // the sheet: soft-edged streaks, top tucked under the lip slab, foot in the water
+   const tex=makeFallTex(),H=h+.45,baseZ=zc+d*.55;
+   const sheet=new T.Mesh(new T.PlaneGeometry(w-1.5,H),new T.MeshBasicMaterial({map:tex,color:0xd2f0fa,transparent:true,opacity:.9,side:T.DoubleSide,depthWrite:false}));
+   sheet.position.set(fall.x,.10+H/2,baseZ);scene.add(freeze(sheet));
+   falls.push({tex});if(view)view.falls.push({tex});
+   // v306: a second, additive sheet of painted water keeps scrolling down over the streaks, so the
+   // cascade has the same depth and highlights as the pond. It stays invisible until the art loads.
+   const sprayMat=new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending});
+   const spray=new T.Mesh(new T.PlaneGeometry(w-1.7,H-.12),sprayMat);
+   spray.position.set(fall.x,.10+H/2,baseZ+d*.03);scene.add(freeze(spray));
+   if(view)view.fallSpray.push(spray);
+   // The source: a slab of rock sitting ON the sheet's top edge, deeper than the sheet, so the water
+   // comes out from under stone instead of starting in mid-air.
+   const lipRock=new T.Mesh(new T.DodecahedronGeometry(w*.34,0),rockMat);
+   lipRock.position.set(fall.x,.10+H-.02,baseZ-d*.05);
+   lipRock.scale.set(1.3,.5,1.05);lipRock.rotation.set(.25,.5,.12);
+   scene.add(freeze(lipRock));
+   if(view)view.fallback.push(lipRock);
+   // splash: broken foam where the water lands, and a shallow pool when it lands on grass
+   const foam=new T.Mesh(new T.RingGeometry(.75,1.2,22),new T.MeshBasicMaterial({color:0xe8f8ff,transparent:true,opacity:.4,depthWrite:false}));
+   foam.rotation.x=-Math.PI/2;foam.position.set(fall.x,fall.intoPond?.045:.032,baseZ+d*.45);scene.add(freeze(foam));
+   if(!fall.intoPond){
+    const pool=new T.Mesh(new T.CircleGeometry(1.85,20),poolMat);
+    pool.rotation.x=-Math.PI/2;pool.position.set(fall.x,.026,baseZ+d*.8);scene.add(freeze(pool));
+   }
+  }
+  // ------------------------------- v306 painted pond art ------------------------------------
+  // The owner's verdict on the first pass: "water & pond have no texture... nothing like the images".
+  // The game already ships two painted sheets for its world map - assets/kit/ro-spritesheet (props:
+  // cherry, red arch bridge, rocks, stone lantern, bamboo) and assets/kit/ro-tiles-hd (256px terrain:
+  // water frames, limestone, planks). They are loaded after the plaza is on screen and dress the ponds
+  // in the same hand-painted style as the town. If they never arrive the primitives above stay.
+  const pondViews=[];
+  const cropTex=(img,rect)=>{
+   if(!img||!rect||typeof document==='undefined')return null;
+   const c=document.createElement('canvas');c.width=Math.max(1,rect.w);c.height=Math.max(1,rect.h);
+   const cx=c.getContext('2d');if(!cx)return null;
+   cx.drawImage(img,rect.x,rect.y,rect.w,rect.h,0,0,rect.w,rect.h);
+   const tx=new T.CanvasTexture(c);tx.wrapS=tx.wrapT=T.RepeatWrapping;tx.anisotropy=4;return tx;
+  };
+  // A painted prop standing on the ground: a camera-facing sprite anchored at its feet.
+  const addSprite=(tex,x,z,height,width)=>{
+   const mat=new T.SpriteMaterial({map:tex,transparent:true,alphaTest:.22,depthWrite:true});
+   const sp=new T.Sprite(mat);
+   sp.center.set(.5,0);
+   sp.position.set(x,.02,z);
+   sp.scale.set(width||height*(tex.image.width/tex.image.height),height,1);
+   scene.add(sp);return sp;
+  };
+  // ------------------------------ v306 water shader -----------------------------------------
+  // Recipe follows the standard stylised-water breakdown: layer the same hand-painted tile at odd
+  // scales scrolling in different directions (so the repeat never lines up), pick the colour from a
+  // depth mask, then draw a foam band along the shoreline mask and a moving caustic highlight. The
+  // pond is a ShapeGeometry, so position.xy is already the rounded-rectangle it was drawn from - that
+  // gives an exact signed distance for the shore band instead of a fake rectangle gradient.
+  const WATER_VERT=`
+varying vec2 vPos;varying vec3 vWorld;
+void main(){vPos=position.xy;vec4 wp=modelMatrix*vec4(position,1.0);vWorld=wp.xyz;gl_Position=projectionMatrix*viewMatrix*wp;}`;
+  const WATER_FRAG=`
+precision highp float;
+uniform sampler2D uA,uB,uN;uniform float uTime,uRadius,uFoamW;
+uniform vec2 uHalf;uniform vec3 uShallow,uDeep,uFoam,uSun,uCam;
+varying vec2 vPos;varying vec3 vWorld;
+float sdRound(vec2 p,vec2 half_,float r){vec2 q=abs(p)-(half_-vec2(r));return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r;}
+void main(){
+ vec2 uv=vPos/(uRadius*1.9);
+ // two hand-painted caustic frames, drifting against each other at odd scales
+ vec3 sh=texture2D(uA,uv*2.1+vec2(uTime*.014,uTime*.008)).rgb;
+ vec3 dp=texture2D(uB,uv*1.7-vec2(uTime*.010,-uTime*.013)).rgb;
+ vec3 n=texture2D(uN,uv*3.9+vec2(uTime*.026,-uTime*.017)).rgb;
+ float sd=sdRound(vPos,uHalf,uRadius);
+ // 0 at the waterline, 1 in the deep middle
+ float depth=clamp(smoothstep(0.0,-2.4,sd),0.0,1.0);
+ // the painted frames drive brightness (caustic density); the tint itself stays art-directed
+ float calm=sh.g*.55+dp.g*.45;
+ vec3 col=mix(uShallow,uDeep,depth)*(.80+.66*calm);
+ vec3 spark=texture2D(uA,uv*3.3+vec2(-uTime*.028,uTime*.021)).rgb;
+ col+=uSun*smoothstep(.70,.97,spark.g)*.26*(1.0-.35*depth);
+ col+=uSun*smoothstep(.80,.99,n.g)*.09*(1.0-depth);
+ // grazing-angle sheen, so the far half of the pond reads lighter
+ vec3 V=normalize(uCam-vWorld);
+ col=mix(col,col*1.12+vec3(.07,.11,.12),pow(1.0-abs(V.y),2.0)*.5);
+ // shoreline: a wet dark lip, then a broken foam band that breathes
+ float lip=smoothstep(-uFoamW*1.6,-uFoamW*.1,sd)*smoothstep(-.02,.05,sd);
+ col=mix(col,vec3(.14,.26,.27),lip*.55);
+ float band=smoothstep(-uFoamW,.0,sd);
+ float foamNoise=texture2D(uN,uv*5.1+vec2(uTime*.021,uTime*.009)).g;
+ float foam=band*smoothstep(.42,.86,foamNoise*.8+band*.35);
+ col=mix(col,uFoam,clamp(foam,0.0,1.0)*.62);
+ gl_FragColor=vec4(col,1.0);}`;
+  const pondShaders=[];
+  function waterShader(texA,texB,texN,p,foamW){
+   const mat=new T.ShaderMaterial({
+    uniforms:{uA:{value:texA},uB:{value:texB},uN:{value:texN},uTime:{value:0},
+     uRadius:{value:2.6},uFoamW:{value:foamW||.3},uHalf:{value:new T.Vector2(p.w/2,p.d/2)},
+     uShallow:{value:new T.Color(0x86d3c9)},uDeep:{value:new T.Color(0x1d6478)},
+     uFoam:{value:new T.Color(0xf3fcff)},uSun:{value:new T.Color(0xfff1c6)},
+     uCam:{value:new T.Vector3()}},
+    vertexShader:WATER_VERT,fragmentShader:WATER_FRAG});
+   pondShaders.push(mat);return mat;
+  }
+  let pondPainted=false;
+  function paintPondArt(sheetMeta,sheetImg,tilesMeta,tilesImg){
+   if(pondPainted||!sheetMeta||!sheetImg||!tilesMeta||!tilesImg)return false;
+   const S=sheetMeta.sprites||{},TL=tilesMeta.tiles||{};
+   const prop=n=>S[n]?cropTex(sheetImg,S[n]):null;
+   const tile=n=>TL[n]?cropTex(tilesImg,TL[n]):null;
+   const water0=tile('water_frame_0'),water1=tile('water_frame_1'),stone=tile('limestone_pale'),planks=tile('bridge_planks'),red=tile('bridge_red');
+   const cherry=prop('tree_cherry'),lantern=prop('lantern_stone'),boulder=prop('rock_boulder_mossy'),
+         crag=prop('rock_cliff_crag'),bamboo=prop('bamboo_grove'),bush=prop('tree_bush_bright');
+   if(!water0)return false;
+   // cloned per pond so each surface drifts at its own offset
+   const clone=(t,rx,ry)=>{const c=t.clone();c.needsUpdate=true;c.wrapS=c.wrapT=T.RepeatWrapping;c.repeat.set(rx,ry);return c};
+   for(const v of pondViews){
+    // water: one shader per pond, layering the painted frames and the shoreline mask
+    const w0=clone(water0,1,1),w1=clone(tile('water_dark_0')||water1||water0,1,1),wN=clone(water1||water0,1,1);
+    v.water.material=waterShader(w0,w1,wN,v.p);
+    v.waterB.visible=false;
+    for(const sp of v.fallSpray){
+     sp.material.map=clone(water1||water0,1,2.2);sp.material.opacity=.4;sp.material.needsUpdate=true;
+     fallScroll.push({tex:sp.material.map});
+    }
+    // v308: the fall now pours straight into the pond, so the stone channel that used to run from
+    // the far side of the bridge has gone. What the bridge spans is the pond's outlet: a narrow
+    // canal leaving the south coping and running down to the houses.
+    if(v.props){
+     const mouth=v.p.z+v.p.d/2+.1,len=3.7,zc=mouth+len/2;
+     const chMat=waterShader(clone(water0,1,1),clone(tile('water_dark_0')||water0,1,1),clone(water1||water0,1,1),{w:2.8,d:len},.15);
+     chMat.uniforms.uRadius.value=.5;
+     const ch=new T.Mesh(new T.ShapeGeometry(roundedRect(2.8,len,.5)),chMat);
+     ch.rotation.x=-Math.PI/2;ch.position.set(v.p.x,.13,zc);scene.add(ch);
+     for(const side of [-1,1]){
+      const bank=new T.Mesh(new T.BoxGeometry(.55,.26,len+.9),new T.MeshBasicMaterial({color:0xb9b2a0}));
+      bank.position.set(v.p.x+side*1.68,.07,zc);scene.add(bank);
+      if(stone){bank.material.map=clone(stone,1/2.2,len/4);bank.material.color.set(0xdfd9c8);bank.material.needsUpdate=true}
+     }
+     // a culvert where the canal leaves the coping, so the water never floats over the rim
+     const culvert=new T.Mesh(new T.BoxGeometry(3.1,.3,.62),new T.MeshBasicMaterial({color:0xb7af9c}));
+     culvert.position.set(v.p.x,.15,mouth);scene.add(culvert);
+    }
+    // stone coping: the same limestone the town's river walls are cut from, now with real height
+    // so it casts a lip shadow over the water instead of being a painted flat ring.
+    {
+     const outer=roundedRect(v.p.w+1.7,v.p.d+1.7,3.1),inner=roundedRect(v.p.w-.35,v.p.d-.35,2.5);
+     const shape=new T.Shape(outer.getPoints(64)),hole=new T.Path(inner.getPoints(64));
+     shape.holes.push(hole);
+     const coping=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:.16,bevelEnabled:false}),
+      new T.MeshBasicMaterial({color:0xd8d1bd}));
+     coping.rotation.x=-Math.PI/2;coping.position.set(v.p.x,.006,v.p.z);scene.add(coping);
+     v.rim.visible=false;v.coping=coping;
+    }
+    if(stone){
+     if(v.coping){v.coping.material.map=clone(stone,1/3.2,1/3.2);v.coping.material.color.set(0xe9e3d3);v.coping.material.needsUpdate=true;}
+     stoneMat.map=clone(stone,1,1);stoneMat.color.set(0xded7c6);stoneMat.needsUpdate=true;
+    }
+    // planks across the deck, red lacquer on the parapets
+    if(planks&&v.bridge){v.bridge.deck.material.map=clone(planks,1/2.3,1/2.3);v.bridge.deck.material.color.set(0xf2e6d2);v.bridge.deck.material.needsUpdate=true;}
+    if(red){
+     bridgeRailMat.map=clone(red,1,1);bridgeRailMat.color.set(0xffffff);bridgeRailMat.needsUpdate=true;
+    }
+    // painted props replace the primitives that were standing in for them
+    for(const o of v.fallback)scene.remove(o);
+    v.fallback.length=0;
+    const props=v.props;if(!props)continue;
+    if(cherry)for(const t of props.blossoms)addSprite(cherry,t.x,t.z,6.8*t.scale);
+    if(lantern)for(const l of props.lanterns)addSprite(lantern,l.x,l.z,1.9);
+    if(boulder)for(const b of props.boulders)addSprite(boulder,b.x,b.z,.78+b.r*.6);
+    if(props.falls){
+     // the rock face the water comes out of: behind the sheet, wide enough to hide it from the far side
+     if(crag){addSprite(crag,props.falls.x-.9,props.falls.z-1.5,3.4);addSprite(crag,props.falls.x+1.1,props.falls.z-2.1,2.9)}
+     // v309 (owner: "there is a bush on one of the chairs"): the bush sat .6 from the north-rim
+     // angler chair. It lives on the pond's east bank now, clear of every chair and the bridge.
+     if(bush)addSprite(bush,v.p.x+v.p.w/2+2.6,v.p.z-3.0,1.3);
+    }
+    if(bamboo)addSprite(bamboo,v.p.x+(v.p.x<0?-1:1)*(v.p.w/2+4.2),v.p.z+v.p.d/2+2.4,2.3);
+    // rocks flanking the cascade where it meets the water
+    if(boulder&&props.falls){
+     addSprite(boulder,props.falls.x-2.55,props.falls.z+1.1,1.05);
+     addSprite(boulder,props.falls.x+2.6,props.falls.z+1.3,.95);
+    }
+    // reflections: the blossom trees mirrored across the pond surface, so the water is not a flat
+    // sheet of colour. Only the trees that actually mirror into the water get one.
+    const mirror=(tex,x,z,h,objScale=1)=>{
+     const dx=x-v.p.x,dz=z-v.p.z,hx=v.p.w/2,hz=v.p.d/2;
+     // mirror across whichever shore the prop stands beyond
+     const mx=Math.abs(dx)>hx, mz=Math.abs(dz)>hz;
+     let rz=z,rx=x;
+     if(mx&&!mz)rx=2*(v.p.x+Math.sign(dx)*hx)-x; else rz=2*(v.p.z+Math.sign(dz)*hz)-z;
+     if(Math.abs(rx-v.p.x)>hx-.6||Math.abs(rz-v.p.z)>hz-.6)return;
+     const m=new T.SpriteMaterial({map:tex,transparent:true,opacity:.2,depthWrite:false});
+     const sp=new T.Sprite(m);sp.center.set(.5,1);sp.scale.set(h*(tex.image.width/tex.image.height)*objScale,-h*objScale,1);
+     sp.position.set(rx,.035,rz);scene.add(sp);
+    };
+    if(cherry)for(const t of props.blossoms)mirror(cherry,t.x,t.z,6.8*t.scale);
+    if(lantern)for(const l of props.lanterns)mirror(lantern,l.x,l.z,1.9);
+    if(boulder)for(const b of props.boulders)mirror(boulder,b.x,b.z,.78+b.r*.6);
+   }
+   pondPainted=true;return true;
+  }
+  function loadPondArt(){
+   const j=n=>fetch('assets/kit/'+n).then(r=>r.ok?r.json():null).catch(()=>null);
+   const img=n=>new T.TextureLoader().loadAsync('assets/kit/'+n).then(t=>t.image).catch(()=>null);
+   return Promise.all([j('ro-spritesheet.json'),img('ro-spritesheet.png'),j('ro-tiles-hd.json'),img('ro-tiles-hd.png')])
+    .then(([sm,si,tm,ti])=>paintPondArt(sm,si,tm,ti))
+    .catch(err=>{if(typeof console!=='undefined')console.error('pond art failed',err&&err.message,err&&err.stack&&err.stack.slice(0,300));return false});
+  }
   const reedBatch=makeBatch();
   for(const p of R.PONDS){
-   const rim=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w+1.7,p.d+1.7,3.1)),sandMat);rim.rotation.x=-Math.PI/2;rim.position.set(p.x,.008,p.z);scene.add(freeze(rim));
-   const water=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w,p.d,2.6)),waterMat);water.rotation.x=-Math.PI/2;water.position.set(p.x,.016,p.z);scene.add(freeze(water));
-   for(const [mat,y] of [[glintMatA,.024],[glintMatB,.028]]){const glint=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w-.6,p.d-.6,2.4)),mat);glint.rotation.x=-Math.PI/2;glint.position.set(p.x,y,p.z);scene.add(freeze(glint))}
-   for(let i=0;i<16;i++){const a=i/16*Math.PI*2,sx=.42+((i*29)%17)/40,stone=new T.Mesh(new T.BoxGeometry(sx,.22+((i*13)%9)/60,.34),curbMaterial);stone.position.set(p.x+Math.cos(a)*(p.w/2+.6),.1,p.z+Math.sin(a)*(p.d/2+.6));stone.rotation.y=a+((i*41)%10)/9;scene.add(freeze(stone))}
-   for(let i=0;i<3;i++){const lily=new T.Mesh(new T.CircleGeometry(.42+(i%2)*.14,12,.5,5.6),lilyMat);lily.rotation.x=-Math.PI/2;lily.position.set(p.x+(i-1)*(p.w/3.4),.032,p.z+(i%2?-1:1)*(p.d/3.6));lilies.push({mesh:lily,x:lily.position.x,z:lily.position.z,ph:i*2.1});scene.add(lily)}
+   const view={p,props:null,fallback:[],falls:[],fallSpray:[],bridge:null,stones:[],rim:null,water:null,waterB:null};
+   pondViews.push(view);
+   const rim=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w+1.7,p.d+1.7,3.1)),sandMat);rim.rotation.x=-Math.PI/2;rim.position.set(p.x,.008,p.z);scene.add(freeze(rim));view.rim=rim;
+   const water=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w,p.d,2.6)),waterMat);water.rotation.x=-Math.PI/2;water.position.set(p.x,.016,p.z);scene.add(freeze(water));view.water=water;
+   const waterB=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w-.05,p.d-.05,2.6)),waterMatB);waterB.rotation.x=-Math.PI/2;waterB.position.set(p.x,.019,p.z);scene.add(freeze(waterB));view.waterB=waterB;
+   for(const [mat,y] of [[glintMatA,.024],[glintMatB,.028]]){const glint=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w-.6,p.d-.6,2.4)),mat);glint.rotation.x=-Math.PI/2;glint.position.set(p.x,y,p.z);scene.add(freeze(glint));view.fallback.push(glint)}
+   // v304: 28 low stones walked along the pond's own rounded outline. The old ring used an ellipse, so
+   // at the corners it dropped stones into the water - now the edging follows the rim exactly.
+   {
+    const ring=roundedRect(p.w+1.26,p.d+1.26,3.25).getSpacedPoints(28);
+    ring.forEach((pt,i)=>{
+     // leave a mouth in the edging where the cascade enters the water (v308: north shore)
+     if(pt.y>p.d/2&&Math.abs(pt.x)<1.7)return;
+     const nx=ring[(i+1)%ring.length],ang=Math.atan2(nx.y-pt.y,nx.x-pt.x);
+     const sx=.58+((i*29)%13)/70;
+     const stone=new T.Mesh(new T.BoxGeometry(sx,.18+((i*13)%7)/80,.42),stoneMat);
+     stone.position.set(p.x+pt.x,.08,p.z-pt.y);stone.rotation.y=-ang;
+     scene.add(freeze(stone));view.stones.push(stone);
+    });
+   }
+   // v306: lily clusters instead of three lone discs - pads of two greens in uneven clumps, a few
+   // of them flowering, drifting slowly (the drift is animated further down).
+   for(let i=0;i<4;i++){
+    const g=new T.Group();
+    const bx=p.x+(i-1.5)*(p.w/4.6),bz=p.z+(i%2?-1:1)*(p.d/3.9)+(i===2?1.4:0);
+    const pads=[[0,0,.5,0],[-.55,.28,.38,1],[.42,.34,.34,0],[.16,-.46,.3,2]];
+    pads.forEach(([dx,dz,r,rot],k)=>{
+     const pad=new T.Mesh(new T.CircleGeometry((r+(i%2)*.05)*.82,14,.42,5.7),lilyMat);
+     pad.rotation.x=-Math.PI/2;pad.rotation.z=rot;
+     pad.position.set(dx,0,dz);g.add(pad);
+     if(k===0&&i%2===0){
+      const bloom=new T.Mesh(new T.ConeGeometry(.14,.16,6),blossomMat);
+      bloom.position.set(dx+.06,.1,dz);g.add(bloom);
+      const tip=new T.Mesh(new T.SphereGeometry(.07,6,5),blossomDarkMat);
+      tip.position.set(dx+.06,.19,dz);g.add(tip);
+     }
+    });
+    g.position.set(bx,.032,bz);
+    lilies.push({mesh:g,x:bx,z:bz,ph:i*2.1});scene.add(g);
+   }
    pushModel(reedBatch,'shrub',p.x-p.w/2-1.5,p.z-p.d/2-.9,2,0,garden,gardenFloats);pushModel(reedBatch,'shrub',p.x+p.w/2+1.5,p.z+p.d/2+.9,2,0,garden,gardenFloats);
+   // v304: the garden behind and around the pond. Positions come from R.POND_PROPS so the layout
+   // test in tools/tests/social_sim.js can prove no prop sits in the water or on a chair.
+   const props=(R.POND_PROPS||[])[R.PONDS.indexOf(p)]||null;
+   view.props=props;
+   if(props&&props.falls)cascade(p,props.falls,view);
+   if(props){
+    view.bridge=archBridge(props.bridge.x,props.bridge.z,props.bridge.span,props.bridge.width,props.bridge.arch);
+    for(const l of props.lanterns)view.fallback.push(stoneLantern(l.x,l.z));
+    for(const t of props.blossoms)view.fallback.push(blossomTree(t.x,t.z,t.scale));
+    const boulders=new T.Group();
+    props.boulders.forEach((b,i)=>{
+     const rock=new T.Mesh(new T.DodecahedronGeometry(b.r,0),i%2?rockMat:rockDarkMat);
+     rock.position.set(b.x,b.r*.55,b.z);rock.rotation.set(i*1.1,i*.7,i*.3);
+     boulders.add(rock);
+    });
+    scene.add(boulders);view.fallback.push(boulders);
+   }
   }
   addBatch(reedBatch,gardenMat);
+  // v306: fetch the painted sheets once the pond exists (deferred so the plaza is interactive first);
+  // every pond view is repainted in place when they arrive.
+  setTimeout(loadPondArt,900);
   // Ambient fish silhouettes swim inside each pond; the Fishing Bag's "Show swimming fish" toggles them.
   const fishShape=new T.Shape();fishShape.moveTo(.4,0);fishShape.quadraticCurveTo(.05,.22,-.26,.06);fishShape.lineTo(-.46,.17);fishShape.lineTo(-.37,0);fishShape.lineTo(-.46,-.17);fishShape.lineTo(-.26,-.06);fishShape.quadraticCurveTo(.05,-.22,.4,0);
   const fishGeo=new T.ShapeGeometry(fishShape),fishGroup=new T.Group(),swimmers=[];scene.add(fishGroup);
@@ -163,7 +575,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
    // plates at the same spot. Disposing the old entry also keeps the pool from filling with them.
    for(let i=showPool.length-1;i>=0;i--)if(showPool[i].pid===pid)dropShow(i);
    while(showPool.length>=6)dropShow(0);
-   showPool.push({sprite:spr,tag,pid,t0:clock||performance.now(),dur:Math.max(1200,Math.min(9000,o.ms||5200)),scale:Math.max(.4,Math.min(5.2,Number(o.scale)||1))});
+   showPool.push({sprite:spr,tag,pid,t0:clock||performance.now(),dur:Math.max(1200,Math.min(9000,o.ms||5200)),scale:Math.max(.4,Math.min(11,Number(o.scale)||1))});
   }
   let rig={mode:'off'},nextIdleRipple=0,catchAnim=null;
   function ripple(x,z,scale=1){const r=ripples.find(r=>!r.m.visible)||ripples[0];r.m.visible=true;r.t0=clock||performance.now();r.dur=900;r.m.position.set(x,.034,z);r.base=scale}
@@ -266,6 +678,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   function update(now,dt){
    updateRemoteRigs(now,dt);
    waterTexA.offset.x=(now/14000)%1;waterTexA.offset.y=(now/23000)%1;waterTexB.offset.x=1-(now/17000)%1;waterTexB.offset.y=(now/19000)%1;
+   for(const f of falls)f.tex.offset.y=(now/700)%1;
    for(const l of lilies){l.mesh.position.x=l.x+Math.sin(now/2600+l.ph)*.22;l.mesh.position.z=l.z+Math.cos(now/3100+l.ph)*.18;l.mesh.rotation.z=Math.sin(now/4000+l.ph)*.4}
    if(fishGroup.visible)for(const s of swimmers){const t=now/1000,x=s.p.x+Math.sin(t*s.fa+s.pa)*s.ax,z=s.p.z+Math.sin(t*s.fb+s.pb)*s.az,vx=Math.cos(t*s.fa+s.pa)*s.fa*s.ax,vz=Math.cos(t*s.fb+s.pb)*s.fb*s.az;s.m.position.set(x,.03,z);s.m.rotation.z=Math.atan2(-vz,vx)+Math.sin(t*6+s.pa)*.12}
    for(const r of ripples)if(r.m.visible){const t=(now-r.t0)/r.dur;if(t>=1)r.m.visible=false;else{const s=(r.base||1)*(.4+t*1.6);r.m.scale.set(s,s,1);r.m.material.opacity=.55*(1-t)}}
@@ -587,7 +1000,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const state=p.state;if(state.id===callbacks.self()&&p.wasSitting!==state.sit){p.wasSitting=state.sit;callbacks.sitting?.(state.sit)}if(p.loaded!==p.requested||!p.looks.normal||!p.looks.sit)loadLooks(p,now);
   const look=(state.sit?p.looks.sit:null)||p.looks.normal;let height=p.height;
   const pokerChair=state.sit&&Number.isInteger(state.pokerSeat)&&R.POKER?.seats[state.pokerSeat];
-  const chair=pokerChair||(state.sit&&R.SEATS[state.seat]),floor=chair?chair.height:.06;
+  const chair=pokerChair||(state.sit&&R.SEATS[state.seat]),floor=chair?chair.height:.06+bridgeLift(state.x,state.z);
   if(look){
    const facing=(state.dir+Math.round(angle/(Math.PI/4))+8)%8,stance=state.sit&&p.looks.sit?'sit':state.path.length?'walk':'idle';
    const glow=milestone(REFINE_GLOWS,Math.max(0,Math.min(15,Number(state.look?.refine)||0)));

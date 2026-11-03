@@ -16,13 +16,63 @@ for(const p of R.PONDS){
  for(const t of R.TREES)assert(Math.hypot(p.x-t.x,p.z-t.z)>t.size+2,'pond is not under a tree canopy');
  assert(!R.walkable(p.x,p.z),'water is not walkable');
  assert(!R.walkable(p.x-p.w/2+.3,p.z),'water edge is not walkable');
- const rim=[{x:p.x,z:p.z-p.d/2-1.7},{x:p.x,z:p.z+p.d/2+1.7},{x:p.x-p.w/2-1.7,z:p.z},{x:p.x+p.w/2+1.7,z:p.z}];
+ const props=R.POND_PROPS[R.PONDS.indexOf(p)];
+ // v309: the north-rim point behind the cascade is the boulder heap, and it is solid on purpose, so
+ // the ring test skips it and checks the heap really is unwalkable instead.
+ const rim=[{x:p.x,z:p.z-p.d/2-1.7},{x:p.x,z:p.z+p.d/2+1.7},{x:p.x-p.w/2-1.7,z:p.z},{x:p.x+p.w/2+1.7,z:p.z}]
+  .filter(q=>!R.cragBlocked(q.x,q.z));
+ assert.equal(rim.length,3,'only the cascade footprint leaves the ring');
  for(const s of rim)assert(R.walkable(s.x,s.z),'grass ring around the pond stays walkable');
- const route=R.path({x:0,z:12},rim[0]);
+ assert(R.cragBlocked(props.crag.x,props.crag.z)&&!R.walkable(props.crag.x,props.crag.z),'the cascade boulder heap is solid');
+ for(const stand of props.stands)assert(R.walkable(stand.x,stand.z),'fishing stand "'+stand.name+'" is walkable');
+ assert(props.stands.some(s=>s.name==='bridge'),'the bridge crown is a real fishing stand');
+ assert.equal(props.ledge,undefined,'the stone shelf was removed at the owner\'s request');
+ const route=R.path({x:0,z:12},rim[1]);
  assert(route.length,'players can walk from spawn to the pond rim');
  assert(route.every(q=>R.walkable(q.x,q.z)));
+ for(const stand of props.stands){
+  const r2=R.path({x:0,z:12},stand);
+  assert(r2.length>1,'spawn can reach the '+stand.name+' stand');
+  assert(r2.every(q=>R.walkable(q.x,q.z)));
+ }
 }
 for(let n=-30;n<=30;n++)if(Math.abs(n)>6){assert(R.walkable(0,n),'promenade clear');assert(R.walkable(n,0),'avenue clear')}
+
+// --- v309: bait icons are painted, not emoji -------------------------------------------------
+// The owner's shop screenshot showed a blank box where the worm and the grub were: those glyphs are
+// Unicode 13 and fall back to tofu on Windows 10 / older Android. The painter is checked with a
+// recording 2D context (no canvas package here) so every bait must produce real PNG art.
+{
+ const {JSDOM}=require('jsdom');
+ const dom=new JSDOM('',{runScripts:'outside-only'}),w=dom.window;
+ const calls=[];
+ const g=new Proxy({},{get(_,k){
+  if(k==='createLinearGradient'||k==='createRadialGradient')return()=>({addColorStop(){}});
+  if(k==='canvas')return null;
+  return (...a)=>{calls.push([k,...a])};
+ },set(){return true}});
+ w.HTMLCanvasElement.prototype.getContext=()=>g;
+ w.HTMLCanvasElement.prototype.toDataURL=()=>'data:image/png;base64,AAAA';
+ w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
+ w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8'));
+ const FB=w.PGSocialFishing;
+ assert.equal(FB.BAITS.length,4,'four baits in the shop');
+ for(const b of FB.BAITS){
+  const url=FB.baitSpriteURL(b.id,64);
+  assert(typeof url==='string'&&url.startsWith('data:image/png'),b.name+' paints a real icon instead of an emoji glyph');
+  assert(FB.baitHTML(b,40).includes('<img class="fishing-bait-art"'),b.name+' renders that icon as an image');
+  assert(!FB.baitHTML(b,40).includes(b.icon),b.name+' no longer renders its emoji');
+ }
+ assert(calls.some(c=>c[0]==='quadraticCurveTo')&&calls.some(c=>c[0]==='arc'),'the icons are drawn with curves, not text');
+ // v310: title medals are painted too - one per rarity tier, all the same size, no glyph fallbacks
+ for(const id of ['common','uncommon','rare','legendary','mythical','secret']){
+  const url=FB.titleBadgeURL(id,64);
+  assert(typeof url==='string'&&url.startsWith('data:image/png'),'the '+id+' title medal is painted');
+ }
+ assert.equal(FB.titleBadgeURL('common',64),FB.titleBadgeURL('common',64),'medals are cached per tier');
+ assert.equal(typeof FB.titleBadgeURL('not-a-tier',64),'string','an unknown tier falls back to a common medal');
+ dom.window.close();
+}
 
 // --- catalog ------------------------------------------------------------------------------
 const weightSum=F.RARITIES.reduce((a,r)=>a+r.weight,0);
@@ -38,7 +88,10 @@ for(const sp of F.SPECIES){
 for(const r of F.RARITIES)assert(F.SPECIES.some(sp=>sp.rarity===r.id),'every rarity has at least one fish');
 // v302 (owner): the index holds every creature from the art drop, and the original ids survive.
 assert.equal(F.SPECIES.length,155,'155 fish species');
-assert.equal(F.SPECIES.filter(sp=>sp.rarity==='secret').length,8,'no new secrets, so Secret Circle still wants eight');
+// v304: the shark line moved up a tier (Greatmaw and the Voidfin are secrets now), so the secret
+// pool is ten and Secret Circle follows it - it is derived, never hardcoded.
+ assert.equal(F.SPECIES.filter(sp=>sp.rarity==='secret').length,10,'the secret pool is ten species');
+ assert.equal(F.FISHING_TITLE_BY_ID['secret-circle'].goal,F.SPECIES.filter(sp=>sp.rarity==='secret').length,'Secret Circle wants the whole secret pool');
 assert.equal(new Set(F.SPECIES.map(sp=>sp.id)).size,F.SPECIES.length,'no duplicate species ids in the index');
 // v297: every species is either a glyph body or one of the named body plans the renderer paints.
 const SHAPES=new Set(['fish','tropical','puffer','shark','whale','shrimp','lobster','crab','squid','octopus','tadpole','gar','eel','hammer','saw','ray','sunfish','thresher','goblin','sturgeon','angler','deep']);
@@ -82,14 +135,15 @@ assert(F.MUTATIONS.prismatic.mult>F.MUTATIONS.shiny.mult,'rarer mutations are wo
 
 // --- rolling ------------------------------------------------------------------------------
 const seq=values=>{let i=0;return ()=>values[Math.min(i++,values.length-1)]};
-let c=F.rollCatch(seq([.999,.0,.5,.99]));
+// v304: the secret band is the last 0.014% now, so a top-of-the-table roll has to be near 1.
+let c=F.rollCatch(seq([.99999,.0,.5,.99]));
 assert.equal(c.rarity,'secret','top of the table is the secret rarity');
 c=F.rollCatch(seq([.0,.0,.5,.99]));
 assert.equal(c.rarity,'common');
 // A PERFECT cast rolls twice and keeps the better one - never worse.
-c=F.rollCatch(seq([.0,.999,.0,.5,.99]),true);
+c=F.rollCatch(seq([.0,.99999,.0,.5,.99]),true);
 assert.equal(c.rarity,'secret','boost upgrades a bad roll');
-c=F.rollCatch(seq([.999,.0,.0,.5,.99]),true);
+c=F.rollCatch(seq([.99999,.0,.0,.5,.99]),true);
 assert.equal(c.rarity,'secret','boost never downgrades');
 for(let i=0;i<500;i++){
  const roll=F.rollCatch();
@@ -108,6 +162,53 @@ const heftAvg=mods=>{let rng=lcg(11),sum=0;for(let i=0;i<3000;i++){const r=F.rol
 assert(heftAvg({weight:3})>heftAvg({weight:0})+.15,'weight gear rolls heavier fish');
 const mutShare=mods=>{let rng=lcg(13),n=0;for(let i=0;i<6000;i++)if(F.rollCatch(rng,false,mods).mut)n++;return n};
 assert(mutShare({mutation:6})>mutShare({mutation:1})*2,'bait multiplies mutation odds');
+// --- v304/v305: soft rod gates, a fully random catch and gear-aware Index odds -------------------
+// Every rod raises the ceiling, but the ceiling is a filter, not a wall: over-ceiling rolls slip
+// through GATE_ESCAPE of the time.
+assert.equal(F.rodCeiling('twig'),'uncommon','the training rod tops out at uncommon');
+assert.equal(F.rodCeiling('oak'),'rare');
+assert.equal(F.rodCeiling('brass'),'rare','brass shares the rare ceiling with oak');
+assert.equal(F.rodCeiling('silver'),'legendary');
+assert.equal(F.rodCeiling('golden'),'mythical');
+assert.equal(F.rodCeiling('mythril'),'secret','only the mythril rod reaches secrets outright');
+assert.equal(F.gateRodFor('secret'),'mythril');
+assert(F.GATE_ESCAPE>0&&F.GATE_ESCAPE<.2,'the ceiling leaks a little, not a lot');
+// A cheap rod can hook the top tiers - rarely. On the training rod a rare is a few casts in a
+// hundred, a legendary is a once-a-thousand event and a secret is barely possible at all.
+const shareOf=(rod,tier,n)=>{let rng=lcg(19),hit=0;for(let i=0;i<n;i++)if(F.rollCatch(rng,false,{rod,luck:0}).rarity===tier)hit++;return hit/n};
+const twigRare=shareOf('twig','rare',60000),twigSecret=shareOf('twig','secret',60000);
+assert(twigRare>0,'a training rod still lands the odd rare');
+assert(twigRare<.02,'but rarely');
+assert(twigSecret>=0&&twigSecret<.0004,'a secret on a training rod is a lottery ticket');
+// The gate really is the rod: the same cast on the rod that unlocks the tier is far more likely.
+assert(F.tierShares(0,'mythril').secret>F.tierShares(0,'twig').secret*20,'the mythril rod is a different league');
+// And the leak thins with distance: one tier above the ceiling leaks 8%, four tiers leaks a sliver.
+assert(Math.abs(F.tierShares(0,'twig').rare/F.tierShares(0,null).rare-F.GATE_ESCAPE)<1e-9,'one tier up leaks exactly GATE_ESCAPE');
+assert(F.tierShares(0,'twig').secret<F.tierShares(0,'golden').secret,'a secret is easier on a golden rod than a training rod');
+// Every species is a plain uniform draw - there is no repeat protection anywhere.
+const secretPool=F.SPECIES.filter(sp=>sp.rarity==='secret');
+assert.equal(secretPool.length,10,'ten secrets in the pool');
+const rolled=new Set();
+let calls=0;
+const topThenRandom=()=>{calls++;return calls===1?.999999:Math.random()};
+for(let i=0;i<400;i++){calls=0;const c=F.rollCatch(topThenRandom,false,{rod:'mythril'});if(c.rarity==='secret')rolled.add(c.sp)}
+assert(rolled.size>1,'a forced secret tier still draws any secret, not the next missing one');
+const seenField=F.rollCatch(()=>.999999,false,{rod:'mythril',seen:new Set(secretPool.slice(1).map(sp=>sp.id))});
+assert.equal(seenField.rarity,'secret','an old caller that still passes seen is ignored, not broken');
+// Tier shares mirror rollCatch: they sum to 1, they climb with luck, and above the ceiling they
+// shrink to the escape chance instead of disappearing.
+const sumShares=luck=>Object.values(F.tierShares(luck,'secret')).reduce((a,b)=>a+b,0);
+assert(Math.abs(sumShares(0)-1)<1e-9&&Math.abs(sumShares(2.6)-1)<1e-9,'tier shares always total 1');
+assert(F.tierShares(2.6,'secret').secret>F.tierShares(0,'secret').secret,'luck lifts the secret share');
+const capped=F.tierShares(2.6,'oak'),natural=F.tierShares(2.6,null);
+assert(capped.legendary>0&&capped.legendary<natural.legendary,'above the ceiling a tier becomes a trickle');
+assert(Math.abs(capped.legendary/natural.legendary-F.GATE_ESCAPE)<1e-9,'and that trickle is the escape chance');
+assert(capped.rare>natural.rare,'the rest piles into the ceiling tier');
+// The Index prints the gear-aware rate: a bare secret is 1 in ~19,000 casts, a hooked one is not.
+const bareSecret=F.rateWith('voidfin',0,'secret'),gearedSecret=F.rateWith('voidfin',2.6,'secret');
+assert(gearedSecret>bareSecret*3,'the rod and bait rate is far better than the bare-rod rate');
+assert(Math.abs(F.rateWith('voidfin',2.6,'secret')-F.tierShares(2.6,'secret').secret/secretPool.length)<1e-12,'secret rows show a per-species rate');
+assert(F.rateWith('minnow',2.6,'secret')<F.rateWith('minnow',0,'secret'),'a common is rarer once luck tilts away from it');
 // Control (better rods) widens the reel bar but stays inside the track.
 assert(F.makeReel(fish0(),()=>.5,.5).barW>F.makeReel(fish0(),()=>.5,0).barW,'control widens the bar');
 assert(F.makeReel({sp:'minnow',rarity:'common',w:.4,mut:null},()=>.5,99).barW<=.5,'bar width caps');
@@ -192,21 +293,23 @@ assert(F.value(shiny)>F.value({...shiny,mut:null}),'mutations multiply the price
 assert(F.value({sp:'leviathan',w:40})>F.value({sp:'minnow',w:.7}),'rarer fish are worth more');
 // v303 (owner): a heavy fish must not be cheap just because its rarity is low.
 assert(F.value({sp:'nurseshark',w:40})>=40,'40 kg of common shark is worth real coins, not pocket change');
-assert(F.value({sp:'nurseshark',w:40})>F.value({sp:'koi',w:.5}),'weight can outweigh a rarity step');
+assert(F.value({sp:'nurseshark',w:40})>F.value({sp:'bamboo',w:4}),'at the top of its weight a low-tier shark beats a light fish of the next tier');
 assert(F.value({sp:'starwhale',w:900})>F.value({sp:'starwhale',w:420}),'the same species pays more at its top weight');
 assert(F.value({sp:'tigershark',w:200,'mut':undefined})>F.value({sp:'minnow',w:.7}),'a legendary giant is a prize');
 assert.equal(F.buyRod(st,'oak').reason,'coins','no credit at the rod shop');
 const sale=F.sellFish(st,cheap.id);
 assert(sale.ok&&sale.coins>=1&&st.coins===sale.coins&&st.bag.length===2,'selling pays and removes the fish');
 assert.equal(F.sellFish(st,cheap.id),null,'a fish can only be sold once');
-st.coins=200;
+// v304: the ladder is priced against the rebalanced catch values, so the test funds the purchase
+// from the shipped price instead of assuming the old number.
+st.coins=F.RODS.find(r=>r.id==='oak').cost+100;
 assert(F.buyRod(st,'oak').ok,'buying a rod spends coins');
-assert.equal(st.coins,50);assert.equal(st.rod,'oak','bought rod auto-equips');
+assert.equal(st.coins,100);assert.equal(st.rod,'oak','bought rod auto-equips');
 assert.equal(F.buyRod(st,'oak').reason,'owned','rods cannot be bought twice');
 assert(F.equipRod(st,'twig').ok&&st.rod==='twig');
 assert.equal(F.equipRod(st,'mythril').reason,'unknown','cannot equip an unowned rod');
-assert(F.buyBait(st,'worm',10).ok&&st.bait.worm===10&&st.coins===0,'bait buys in stacks');
-assert.equal(F.buyBait(st,'worm',1).reason,'coins');
+assert(F.buyBait(st,'worm',10).ok&&st.bait.worm===10&&st.coins===100-10*F.BAITS.find(b=>b.id==='worm').cost,'bait buys in stacks');
+st.coins=2;assert.equal(F.buyBait(st,'worm',1).reason,'coins');st.coins=60;
 assert(F.selectBait(st,'worm').ok&&st.baitSel==='worm');
 assert.equal(F.selectBait(st,'jelly').reason,'unknown','cannot select bait you do not own');
 assert(F.selectBait(st,null).ok&&st.baitSel===null,'fishing without bait is allowed');
@@ -299,23 +402,25 @@ assert.equal(F.onLocalMessage(1,'hello everyone'),false,'normal chat lines never
 assert.equal(F.onLocalMessage(1,'🎣 shows off a Royal Koi — 4.25 kg (Rare)!'),false,'without a bound scene nothing is shown, so the bubble stays');
 // Heavier fish render bigger over the angler's head, within sane sprite bounds.
 assert(F.showOffScale(58)>F.showOffScale(5)&&F.showOffScale(5)>F.showOffScale(.1),'scale grows with weight');
-// v290: the biggest fish show BIG - a max-weight catch is taller than the angler (~3.2 units).
-assert(F.showOffScale(60)>=4.5,'a 60 kg whale reads larger than the character');
-assert(F.showOffScale(999)<=5.1&&F.showOffScale(.01)>=.5,'scale stays within sprite bounds');
+// v304: the curve is now sqrt-based so the very biggest fish can fill the pond. A 60 kg catch is
+// still a big silhouette next to the angler, and the 1.8 t whale shark spans most of the 18-unit pond.
+assert(F.showOffScale(60)>=2*F.showOffScale(5),'a 60 kg whale reads much larger than a 5 kg fish');
+assert(F.showOffScale(1800)>=9.5,'the biggest fish spans most of the pond');
+assert(F.showOffScale(999)<=11&&F.showOffScale(.01)>=.45,'scale stays within sprite bounds');
 while(st.bag.length<F.BAG_MAX)F.addCatch(st,{sp:'minnow',rarity:'common',w:.2});
 assert.equal(F.addCatch(st,{sp:'minnow',rarity:'common',w:.2}),null,'full bag refuses new fish');
 assert.equal(st.bag.length,F.BAG_MAX);
 
 // --- v295: bag tiers, fishing titles, painted rods and data show-offs ---------------------
 assert.deepEqual(F.BAG_TIERS.map(t=>t.cap),[120,200,300,400,500],'the bag ladder is 120→200→300→400→500');
-// v296 (owner): cheap to start, rising gently - the first upgrade is affordable in a session.
-assert.deepEqual(F.BAG_TIERS.map(t=>t.cost),[0,300,700,1500,3000],'each tier has its own price');
+// v305 (owner): the bags are a small buff, not a farm - the ladder starts at 600.
+assert.deepEqual(F.BAG_TIERS.map(t=>t.cost),[0,600,1400,3000,6500],'each tier has its own price');
 for(let i=2;i<F.BAG_TIERS.length;i++)assert(F.BAG_TIERS[i].cost>F.BAG_TIERS[i-1].cost,'prices rise with the ladder');
 assert.equal(F.BAG_MAX,120,'BAG_MAX stays the base tier for older callers and saves');
 st=F.normalize(null);
 assert.equal(F.bagMax(st),120);assert.equal(F.bagTierOf(st).tier,0);assert.equal(F.nextBagTier(st).cap,200);
 st.coins=100;assert.deepEqual(F.buyBagUpgrade(st),{ok:false,reason:'coins'},'an upgrade needs its Fishcoins');
-st.coins=300;const up1=F.buyBagUpgrade(st);
+st.coins=F.BAG_TIERS[1].cost;const up1=F.buyBagUpgrade(st);
 assert(up1.ok&&up1.cap===200);assert.equal(st.coins,0,'an upgrade costs exactly its price');
 assert.equal(F.bagMax(st),200,'the bought capacity is live');
 st.coins=1e9;
@@ -368,6 +473,24 @@ assert.equal(F.FISHING_TITLES.filter(t=>F.titleUnlocked(mid,t)).length<=4,true,'
 // v297: the apex title tracks the catalog size instead of a hardcoded 70.
 assert.equal(F.FISHING_TITLE_BY_ID['apex-angler'].goal,F.SPECIES.length,'Apex Angler wants every species');
 assert(F.FISHING_TITLE_BY_ID['pond-legend'].goal<F.SPECIES.length,'Pond Legend is a milestone before the apex');
+// v310 (owner: "titles are not arranged rarity"): every title belongs to a rarity tier and holds a
+// unique place on the ladder, so the UI can list them Common -> Secret instead of in catalog order.
+{
+ const rankIdx=F.RARITIES.map(r=>r.id);
+ for(const t of F.FISHING_TITLES){
+  assert(rankIdx.includes(t.tier),t.id+' belongs to a real rarity tier');
+  assert(Number.isInteger(t.rank)&&t.rank>=1&&t.rank<=20,t.id+' has a ladder rank');
+ }
+ const ranks=F.FISHING_TITLES.map(t=>t.rank).sort((a,b)=>a-b);
+ assert.deepEqual(ranks,Array.from({length:20},(_,i)=>i+1),'the ladder ranks are 1..20 with no gaps');
+ for(const tier of rankIdx)assert(F.FISHING_TITLES.some(t=>t.tier===tier),'the '+tier+' tier has at least one title');
+ const listed=[...F.FISHING_TITLES].sort((a,b)=>rankIdx.indexOf(a.tier)-rankIdx.indexOf(b.tier)||a.rank-b.rank);
+ let lastTier=-1,ordered=true;
+ for(const t of listed){const i=rankIdx.indexOf(t.tier);if(i<lastTier)ordered=false;lastTier=i}
+ assert(ordered,'sorting by tier then rank walks the rarity ladder once, never back');
+ assert.equal(listed[0].tier,'common','the list opens with the common tier');
+ assert.equal(listed.at(-1).tier,'secret','and closes with secret');
+}
 assert.equal(new Set(F.FISHING_TITLES.map(t=>t.id)).size,20,'title ids are unique');
 assert.equal(new Set(F.FISHING_TITLES.map(t=>t.name)).size,20,'title names are unique');
 st=F.normalize(null);
@@ -539,10 +662,15 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  d2.getElementById('fishingGearLine').onclick();
  assert.equal(d2.getElementById('fishingShopView').hidden,false,'the gear line opens the Shop');
  assert(/Canvas Satchel/.test(d2.getElementById('fishingShopView').textContent),'the shop shows the owned bag tier');
+ // v304: the cart says which rarity each rod unlocks, and the dearest rod is the only route to Secrets.
+ const cart=d2.getElementById('fishingShopView').textContent;
+ assert(/unlocks Rare\+/.test(cart),'the Oak Rod advertises the rare tier');
+ assert(/unlocks Legendary\+/.test(cart),'the Silver Rod advertises legendaries');
+ assert(/unlocks Secret\+/.test(cart),'the Mythril Rod advertises secrets');
  const buyBtn=d2.querySelector('#fishingShopView button[data-bagup]');
  assert(buyBtn,'the shop offers the next bag tier');
  assert.equal(buyBtn.disabled,true,'it cannot be bought without the Fishcoins');
- hostS.fishing.coins=300;FISH.openBag();d2.getElementById('fishingGearLine').onclick();
+ hostS.fishing.coins=F.BAG_TIERS[1].cost;FISH.openBag(); // v304 tier priced2.getElementById('fishingGearLine').onclick();
  const buy2=d2.querySelector('#fishingShopView button[data-bagup]');
  assert.equal(buy2.disabled,false,'it becomes affordable');
  buy2.onclick();
@@ -566,7 +694,10 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  frame2(clock2+=100);
  assert(moved,'Auto walks back to the pond instead of cancelling the session');
  assert.equal(FISH.phase,'walking','the session is in its walk-back phase');
- assert(Math.hypot(moved.x-pondA.x,moved.z-pondA.z)<12,'the walk targets the pond, not the spawn');
+ // v304: the pond is 18x13 now, so the rim offset is bigger than the old fixed 12-unit radius.
+// What matters is that the target sits on the pond's rim, not the distance from its centre.
+const rimDist=Math.hypot(Math.max(0,Math.abs(moved.x-pondA.x)-pondA.w/2),Math.max(0,Math.abs(moved.z-pondA.z)-pondA.d/2));
+assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  // Reaching the rim resumes fishing.
  me.x=rimA.x;me.z=rimA.z;
  frame2(clock2+=100);
@@ -649,8 +780,8 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=303'),asset+' is versioned at v303');
- assert(/haven-v303/.test(page),'the login card names the v303 build');
+  assert(page.includes(asset+'?v=310'),asset+' is versioned at v310');
+ assert(/haven-v310/.test(page),'the login card names the v310 build');
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
  const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');
@@ -737,5 +868,5 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/announce:fishingAnnounce/.test(social),'the fishing bind receives it');
  assert(/\.social-line-sys/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'system lines have their own style');
  assert(/socialFishLeaveWarning/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'the fishing dialog shares the poker overlay style');
- console.log('PASS social fishing: ponds+chairs, 155-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler; v302 139 cropped drawings behind the same fishSprite, with the painted fallback for the other nine; v303 whales and 146 crops at 128px, prices that read rarity+weight, twenty harder titles and an AFK walk-back that never asks');
+ console.log('PASS social fishing: ponds+chairs, 155-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler; v302 139 cropped drawings behind the same fishSprite, with the painted fallback for the other nine; v303 whales and 146 crops at 128px, prices that read rarity+weight, twenty harder titles and an AFK walk-back that never asks; v304/v305 soft rod gates (a cheap rod can still be surprised by a Legendary or a Secret), a fully random index draw with a ~85 h median wall, cheap rods and bags, and Index odds that use the gear you are holding');
 })().catch(e=>{console.error(e);process.exitCode=1});
