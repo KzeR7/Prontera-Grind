@@ -194,11 +194,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
   // It is a garden behind the pond, so it must stay clear of the houses at z=56 and the planting.
   for(const b of R.BUILDINGS)assert(Math.hypot(p.x-b.x,p.z-b.z)>Math.max(p.w,b.w)/2+Math.max(p.d,b.d)/2-12,'the pond does not run into a building');
   for(const g of R.GARDENS)assert(Math.abs(p.x-g.x)>g.w/2+p.w/2||Math.abs(p.z-g.z)>g.d/2+p.d/2,'the pond does not run into a garden');
-  // Fishing spots: the rim is walkable all the way round and the water itself never is.
+  // Fishing spots: the rim is walkable all the way round except where the cascade's boulder heap
+  // stands (v309: it is solid, so you can no longer end up standing inside the rock face).
   assert(!R.walkable(p.x,p.z),'pond water is not walkable');
   // The pond blocks as a box, so the walkable rim is the box offset by the fishing stand-off.
   for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){
    const x=p.x+dx*(p.w/2+1.7),z=p.z+dz*(p.d/2+1.7);
+   if(R.cragBlocked(x,z)){assert(!R.walkable(x,z),'the boulder heap behind the cascade is solid');continue}
    assert(R.walkable(x,z),'the rim at '+dx+'/'+dz+' is walkable');
   }
   assert(R.walkable(p.x,p.z+p.d/2+1.4),'the south bank (and the bridge approach) is walkable');

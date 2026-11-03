@@ -667,6 +667,14 @@ function distToPond(){
  return Math.hypot(dx,dz);
 }
 function standPoint(p,s){
+ // v309 (owner: "can u fix to fish on the bridge & on the rocks?"): the pond's own fishing places
+ // come first - the bridge crown and the stone shelf by the cascade are stands you can really fish
+ // from, and the crag behind them is solid, so the walk no longer ends inside the rock face.
+ const props=(R().POND_PROPS||[])[ui.pond];
+ const stands=props&&Array.isArray(props.stands)?props.stands:[];
+ const nearest=stands.filter(c=>R().walkable(c.x,c.z))
+  .sort((a,b)=>Math.hypot(a.x-s.x,a.z-s.z)-Math.hypot(b.x-s.x,b.z-s.z))[0];
+ if(nearest)return {x:nearest.x,z:nearest.z};
  const cx=Math.max(p.x-p.w/2-1.6,Math.min(p.x+p.w/2+1.6,s.x)),cz=Math.max(p.z-p.d/2-1.6,Math.min(p.z+p.d/2+1.6,s.z));
  const candidates=[{x:cx,z:cz}];
  for(const a of [0,.5,1,1.5,2,2.5,3,3.5]){const ang=a*Math.PI/4;candidates.push({x:p.x+Math.cos(ang)*(p.w/2+1.7),z:p.z+Math.sin(ang)*(p.d/2+1.7)})}
@@ -1276,6 +1284,73 @@ function rodHTML(rod,cls='fishing-rod-icon',px=64){
  if(url)return `<img class="${cls} fishing-rod-art" data-rod-tier="${esc(rod.id)}" style="${style}" src="${url}" alt="" draggable="false">`;
  return `<span class="${cls}" data-rod-tier="${esc(rod.id)}" style="${style}">${rod.icon}</span>`;
 }
+// v309 (owner: "bugged bait icons"): the bait list drew emoji, and the worm and the fly glyphs only
+// exist in Unicode 13 - on Windows 10 and older Android they render as empty boxes, so two of the
+// four baits were blank next to a prawn and a honey pot. They are painted now, in the same flat
+// style as the fish and the rods, and the emoji stays only as a fallback when canvas is missing.
+const BAIT_ART_CACHE=new Map();
+function baitSprite(baitId,px=64){
+ const bait=BAITS_BY_ID[baitId];
+ if(!bait||typeof document==='undefined'||!document.createElement)return null;
+ let c,g;
+ try{c=document.createElement('canvas');c.width=c.height=px;g=c.getContext&&c.getContext('2d')}catch{return null}
+ if(!g||typeof g.quadraticCurveTo!=='function')return null;
+ const u=px/100,U=n=>n*u;
+ g.lineCap='round';g.lineJoin='round';
+ const dot=(x,y,r,fill)=>{g.fillStyle=fill;g.beginPath();g.arc(U(x),U(y),U(r),0,Math.PI*2);g.fill()};
+ if(baitId==='worm'){
+  // a wriggling worm: three pink segments with a darker head and a highlight
+  g.strokeStyle='#7d2740';g.lineWidth=U(15);g.beginPath();
+  g.moveTo(U(24),U(76));g.quadraticCurveTo(U(30),U(34),U(52),U(40));g.quadraticCurveTo(U(74),U(46),U(70),U(22));g.stroke();
+  g.strokeStyle='#e2617f';g.lineWidth=U(10);g.beginPath();
+  g.moveTo(U(24),U(76));g.quadraticCurveTo(U(30),U(34),U(52),U(40));g.quadraticCurveTo(U(74),U(46),U(70),U(22));g.stroke();
+  dot(24,76,8,'#f4919f');           // the thick end
+  dot(70,22,7,'#b93a58');           // head
+  g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=U(3);g.beginPath();
+  g.moveTo(U(31),U(64));g.quadraticCurveTo(U(36),U(42),U(50),U(37));g.stroke();
+ }else if(baitId==='shrimp'){
+  // a curled shrimp tail: orange body, amber fan, two antennae
+  g.strokeStyle='#8a3d10';g.lineWidth=U(13);g.beginPath();g.moveTo(U(34),U(66));g.quadraticCurveTo(U(24),U(38),U(52),U(28));g.stroke();
+  g.strokeStyle='#f08a3c';g.lineWidth=U(8);g.beginPath();g.moveTo(U(34),U(66));g.quadraticCurveTo(U(24),U(38),U(52),U(28));g.stroke();
+  g.fillStyle='#ffc46b';g.beginPath();g.moveTo(U(52),U(28));g.lineTo(U(74),U(18));g.lineTo(U(72),U(40));g.closePath();g.fill();
+  g.strokeStyle='#8a3d10';g.lineWidth=U(3);g.beginPath();g.moveTo(U(34),U(70));g.quadraticCurveTo(U(20),U(80),U(30),U(88));g.stroke();
+  dot(36,64,7,'#e2622a');
+ }else if(baitId==='grub'){
+  // a fat glowing grub: green body, pale belly, a lit tail
+  dot(50,58,26,'rgba(150,255,120,.28)');
+  g.fillStyle='#3f6b2a';g.beginPath();g.ellipse(U(50),U(58),U(22),U(15),-.35,0,Math.PI*2);g.fill();
+  g.fillStyle='#8fd05a';g.beginPath();g.ellipse(U(50),U(55),U(19),U(12),-.35,0,Math.PI*2);g.fill();
+  for(let i=0;i<4;i++)dot(38+i*10,55+Math.sin(i)*2,4.5,'rgba(255,255,255,.35)');
+  dot(28,64,11,'rgba(226,255,150,.85)');  // the glow sac
+  dot(28,64,6,'#f6ffc9');
+  dot(72,46,4,'#22301a');
+ }else{
+  // Royal Jelly: an amber jar with a wax lid and a crown band
+  g.fillStyle='#7a4a06';g.beginPath();g.roundRect?g.roundRect(U(28),U(30),U(44),U(52),U(12)):g.rect(U(28),U(30),U(44),U(52));g.fill();
+  g.fillStyle='#f2b53c';g.beginPath();g.roundRect?g.roundRect(U(31),U(33),U(38),U(46),U(10)):g.rect(U(31),U(33),U(38),U(46));g.fill();
+  g.fillStyle='rgba(255,255,255,.42)';g.beginPath();g.ellipse(U(42),U(48),U(7),U(12),0,0,Math.PI*2);g.fill();
+  g.fillStyle='#c98a1c';g.fillRect(U(26),U(24),U(48),U(11));       // wax lid
+  g.fillStyle='#ffd979';g.fillRect(U(26),U(24),U(48),U(4));
+  g.fillStyle='#8a5a10';g.beginPath();g.moveTo(U(40),U(80));g.lineTo(U(44),U(74));g.lineTo(U(48),U(80));g.lineTo(U(52),U(74));g.lineTo(U(56),U(80));g.closePath();g.fill();
+ }
+ return c;
+}
+function baitSpriteURL(baitId,px=64){
+ const key=baitId+'|'+px;
+ if(BAIT_ART_CACHE.has(key))return BAIT_ART_CACHE.get(key);
+ let url=null;
+ const c=baitSprite(baitId,px);
+ if(c&&typeof c.toDataURL==='function'){try{url=c.toDataURL('image/png')}catch{url=null}}
+ if(url&&!/^data:image\/png/.test(url))url=null;
+ BAIT_ART_CACHE.set(key,url);
+ return url;
+}
+function baitHTML(bait,px=40){
+ const b=typeof bait==='string'?BAITS_BY_ID[bait]:bait;
+ if(!b)return '';
+ const url=baitSpriteURL(b.id,px>=64?64:96);
+ return url?`<img class="fishing-bait-art" src="${url}" alt="" draggable="false">`:`<span>${b.icon}</span>`;
+}
 function glyphHTML(sp,mut,cls='fishing-glyph'){
  const url=fishSpriteURL(sp,mut,cls==='fishing-glyph'?64:128);
  if(url)return `<img class="${cls} fishing-art${mut?' mut-'+mut:''}" src="${url}" alt="${esc(sp.name)}" draggable="false">`;
@@ -1287,7 +1362,7 @@ const COIN_HTML='<i class="fishcoin" aria-hidden="true"></i>';
 function renderDockGear(){
  if(!els)return;
  const st=state(),rod=equippedRod(),bait=selectedBait();
- els.gearLine.innerHTML=`<span>${COIN_HTML} ${fmt(st.coins)}</span><span>${rodHTML(rod,'fishing-gear-rod',40)} ${esc(rod.name)}</span><span>${bait?`${bait.icon} ${esc(bait.name)} ×${st.bait[bait.id]}`:'No bait'}</span>`;
+ els.gearLine.innerHTML=`<span>${COIN_HTML} ${fmt(st.coins)}</span><span>${rodHTML(rod,'fishing-gear-rod',40)} ${esc(rod.name)}</span><span>${bait?`${baitHTML(bait,32)} ${esc(bait.name)} ×${st.bait[bait.id]}`:'No bait'}</span>`;
  els.bagCount.textContent=st.bag.length+'/'+bagMax(st);
  if(els.coins)els.coins.innerHTML=COIN_HTML+' '+fmt(st.coins);
 }
@@ -1718,7 +1793,7 @@ function renderShop(){
  const baitRows=BAITS.map(b=>{
   const ownedN=st.bait[b.id]||0,selected=st.baitSel===b.id;
   const stats=`🍀 +${Math.round(b.luck*100)}%${b.weight?` · 🏋️ +${Math.round(b.weight*100)}%`:''}${b.mutation>1?` · 🧬 ×${b.mutation}`:''}`;
-  return `<div class="fishing-shop-row${selected?' equipped':''}"><span class="fishing-shop-icon">${b.icon}</span><span class="fishing-shop-name">${esc(b.name)}<small>${stats} · owned ×${ownedN}</small></span><span class="fishing-shop-btns"><button type="button" data-bait="${b.id}" data-n="1" ${st.coins<b.cost?'disabled':''}>${COIN_HTML} ${fmt(b.cost)}</button><button type="button" data-bait="${b.id}" data-n="10" ${st.coins<b.cost*10?'disabled':''}>×10</button><button type="button" data-use="${b.id}" ${ownedN?'':'disabled'}>${selected?'Using':'Use'}</button></span></div>`;
+  return `<div class="fishing-shop-row${selected?' equipped':''}"><span class="fishing-shop-icon">${baitHTML(b,40)}</span><span class="fishing-shop-name">${esc(b.name)}<small>${stats} · owned ×${ownedN}</small></span><span class="fishing-shop-btns"><button type="button" data-bait="${b.id}" data-n="1" ${st.coins<b.cost?'disabled':''}>${COIN_HTML} ${fmt(b.cost)}</button><button type="button" data-bait="${b.id}" data-n="10" ${st.coins<b.cost*10?'disabled':''}>×10</button><button type="button" data-use="${b.id}" ${ownedN?'':'disabled'}>${selected?'Using':'Use'}</button></span></div>`;
  }).join('');
  const tier=bagTierOf(st),next=nextBagTier(st),cap=bagMax(st);
  // v295: one permanent bag upgrade per tier, bought in order - never a skip.
@@ -1795,6 +1870,8 @@ return {
  // v301: the crop manifest, so tests can prove every drawing on disk is wired up.
  FISH_ART,
  fishSprite,fishSpriteURL,
+ // v309: painted bait icons, so the shop no longer depends on Unicode-13 emoji fonts.
+ baitSprite,baitSpriteURL,baitHTML,
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,
  // v297: the plaza's leave-warning reels the line in through this, so chat no longer has to nag.

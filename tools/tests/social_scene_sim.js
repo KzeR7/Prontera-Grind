@@ -33,6 +33,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert(onBridge.position.y>1.1&&onBridge.position.y<2,'the hero stands on the bridge deck, not inside it');
  scene.putPlayer({...state,sit:false,x:bridge.x-.6,z:bridge.z+7});frame(now+=100);
  assert(scene.scene.children.find(o=>o.userData.socialId===1).position.y<.3,'off the deck the hero is back on the ground');
+ // v309: the stone shelf beside the cascade is a platform - standing on it lifts the hero, so you
+ // fish from the rocks instead of inside them.
+ const shelf=w.PGSocialRules.POND_PROPS[0].ledge;
+ scene.putPlayer({...state,sit:false,x:shelf.x,z:shelf.z});frame(now+=100);
+ const onShelf=scene.scene.children.find(o=>o.userData.socialId===1);
+ assert(Math.abs(onShelf.position.y-(shelf.h+.09+.06))<.02,'the hero stands on top of the stone shelf');
+ scene.putPlayer({...state,sit:false,x:shelf.x+4.5,z:shelf.z+3});frame(now+=100);
+ assert(scene.scene.children.find(o=>o.userData.socialId===1).position.y<.3,'off the shelf the hero is back on the grass');
  // v308: the cascade pours into the pond from its far rim, not from behind the bridge
  for(const [i,fall] of w.PGSocialRules.POND_FALLS.entries()){
   const pond=w.PGSocialRules.PONDS[i];

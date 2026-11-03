@@ -33,6 +33,15 @@ const POND_PROPS=PONDS.map((p,i)=>{
  const hx=p.w/2,hz=p.d/2;
  return {
   bridge:{x:p.x,z:p.z+hz+3.1,span:7.2,width:3.1,deck:.3,arch:1.45},
+  // v309 (owner: "both bridge & stone can pass through... can u fix to fish on the bridge & on the
+  // rocks?"). The boulder heap behind the cascade is solid, and there is a flat stone shelf beside it
+  // that you stand on to fish. `stands` are the real fishing places around the pond, so walking to
+  // the pond lands you on the bridge crown or the shelf instead of inside a rock.
+  crag:{x:p.x-.9,z:POND_FALLS[i].z-1.9,hx:2.5,hz:1.0},
+  ledge:{x:p.x+3.0,z:p.z-hz-1.2,w:3.0,d:1.6,h:.5},
+  stands:[{x:p.x,z:p.z+hz+3.1,name:'bridge'},{x:p.x+3.0,z:p.z-hz-1.2,name:'ledge'},
+          {x:p.x+hx+2.0,z:p.z,name:'east'},{x:p.x-hx-2.0,z:p.z,name:'west'},
+          {x:p.x,z:p.z+hz+1.6,name:'south'},{x:p.x+hx+1.6,z:p.z+hz+1.6,name:'south-east'}],
   lanterns:[{x:p.x-hx-2.1,z:p.z+hz+1.1},{x:p.x+hx+2.1,z:p.z+hz+1.1}],
   blossoms:[{x:p.x-hx-3.4,z:p.z-1.6,scale:1.05},{x:p.x+hx+3.4,z:p.z+.4,scale:.95}],
   boulders:SHORE_ROCKS.map(([dx,dz],n)=>({x:p.x+dx*(hx+1.15),z:p.z+dz*(hz+1.15),r:.34+((n*23)%17)/40})),
@@ -93,7 +102,9 @@ const POKER={
 };
 
 function pokerBlocked(x,z){return POKER_TABLES.some(({table:t})=>x>=t.minX&&x<=t.maxX&&z>=t.minZ&&z<=t.maxZ);}
-function walkable(x,z){return Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<=LIMIT&&Math.abs(z)<=LIMIT&&Math.hypot(x,z)>5.6&&!pokerBlocked(x,z)&&BUILDINGS.every(b=>Math.abs(x-b.x)>b.w/2+.7||Math.abs(z-b.z)>b.d/2+.7)&&GARDENS.every(g=>Math.abs(x-g.x)>g.w/2+.5||Math.abs(z-g.z)>g.d/2+.5)&&PONDS.every(p=>Math.abs(x-p.x)>p.w/2+.5||Math.abs(z-p.z)>p.d/2+.5);}
+// v309: the cascade's boulder heap is solid - you walk around it instead of standing inside it.
+function cragBlocked(x,z){return POND_PROPS.some(pr=>pr.crag&&Math.abs(x-pr.crag.x)<=pr.crag.hx&&Math.abs(z-pr.crag.z)<=pr.crag.hz)}
+function walkable(x,z){return Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<=LIMIT&&Math.abs(z)<=LIMIT&&Math.hypot(x,z)>5.6&&!pokerBlocked(x,z)&&!cragBlocked(x,z)&&BUILDINGS.every(b=>Math.abs(x-b.x)>b.w/2+.7||Math.abs(z-b.z)>b.d/2+.7)&&GARDENS.every(g=>Math.abs(x-g.x)>g.w/2+.5||Math.abs(z-g.z)>g.d/2+.5)&&PONDS.every(p=>Math.abs(x-p.x)>p.w/2+.5||Math.abs(z-p.z)>p.d/2+.5);}
 function path(from,to){
  if(!walkable(to.x,to.z))return [];
  const start=[Math.round(from.x),Math.round(from.z)],end=[Math.round(to.x),Math.round(to.z)],key=(x,z)=>x+','+z;
@@ -104,5 +115,5 @@ function path(from,to){
 }
 function walkSpeed(p){const value=Number(p&&p.look&&p.look.speed);return Number.isFinite(value)&&value>0?Math.max(MIN_SPEED,Math.min(MAX_SPEED,value)):SPEED}
 function advance(p,now){let distance=Math.max(0,(now-p.at)/1000)*walkSpeed(p);p.at=now;while(p.path.length&&distance>0){const t=p.path[0],dx=t.x-p.x,dz=t.z-p.z,d=Math.hypot(dx,dz);p.dir=(Math.round(Math.atan2(-dx,dz)/(Math.PI/4))+8)%8;if(d<=distance){p.x=t.x;p.z=t.z;p.path.shift();distance-=d}else{p.x+=dx/d*distance;p.z+=dz/d*distance;break}}if(!p.path.length&&Number.isInteger(p.seat)&&SEATS[p.seat]){p.sit=true;p.dir=SEATS[p.seat].dir}else if(!p.path.length&&Number.isInteger(p.pokerSeat)&&POKER.seats[p.pokerSeat]){p.sit=true;p.dir=POKER.seats[p.pokerSeat].dir}return p;}
-return {LIMIT,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,SEATS,POKER,walkable,path,advance};
+return {LIMIT,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,SEATS,POKER,cragBlocked,walkable,path,advance};
 });

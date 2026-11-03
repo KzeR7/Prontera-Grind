@@ -16,13 +16,56 @@ for(const p of R.PONDS){
  for(const t of R.TREES)assert(Math.hypot(p.x-t.x,p.z-t.z)>t.size+2,'pond is not under a tree canopy');
  assert(!R.walkable(p.x,p.z),'water is not walkable');
  assert(!R.walkable(p.x-p.w/2+.3,p.z),'water edge is not walkable');
- const rim=[{x:p.x,z:p.z-p.d/2-1.7},{x:p.x,z:p.z+p.d/2+1.7},{x:p.x-p.w/2-1.7,z:p.z},{x:p.x+p.w/2+1.7,z:p.z}];
+ const props=R.POND_PROPS[R.PONDS.indexOf(p)];
+ // v309: the north-rim point behind the cascade is the boulder heap, and it is solid on purpose, so
+ // the ring test skips it and checks the heap really is unwalkable instead.
+ const rim=[{x:p.x,z:p.z-p.d/2-1.7},{x:p.x,z:p.z+p.d/2+1.7},{x:p.x-p.w/2-1.7,z:p.z},{x:p.x+p.w/2+1.7,z:p.z}]
+  .filter(q=>!R.cragBlocked(q.x,q.z));
+ assert.equal(rim.length,3,'only the cascade footprint leaves the ring');
  for(const s of rim)assert(R.walkable(s.x,s.z),'grass ring around the pond stays walkable');
- const route=R.path({x:0,z:12},rim[0]);
+ assert(R.cragBlocked(props.crag.x,props.crag.z)&&!R.walkable(props.crag.x,props.crag.z),'the cascade boulder heap is solid');
+ for(const stand of props.stands)assert(R.walkable(stand.x,stand.z),'fishing stand "'+stand.name+'" is walkable');
+ assert(props.stands.some(s=>s.name==='bridge')&&props.stands.some(s=>s.name==='ledge'),'the bridge crown and the stone shelf are real fishing stands');
+ assert(props.ledge&&props.ledge.h>.3,'the stone shelf has height, so standing on it lifts the hero');
+ const route=R.path({x:0,z:12},rim[1]);
  assert(route.length,'players can walk from spawn to the pond rim');
  assert(route.every(q=>R.walkable(q.x,q.z)));
+ for(const stand of props.stands){
+  const r2=R.path({x:0,z:12},stand);
+  assert(r2.length>1,'spawn can reach the '+stand.name+' stand');
+  assert(r2.every(q=>R.walkable(q.x,q.z)));
+ }
 }
 for(let n=-30;n<=30;n++)if(Math.abs(n)>6){assert(R.walkable(0,n),'promenade clear');assert(R.walkable(n,0),'avenue clear')}
+
+// --- v309: bait icons are painted, not emoji -------------------------------------------------
+// The owner's shop screenshot showed a blank box where the worm and the grub were: those glyphs are
+// Unicode 13 and fall back to tofu on Windows 10 / older Android. The painter is checked with a
+// recording 2D context (no canvas package here) so every bait must produce real PNG art.
+{
+ const {JSDOM}=require('jsdom');
+ const dom=new JSDOM('',{runScripts:'outside-only'}),w=dom.window;
+ const calls=[];
+ const g=new Proxy({},{get(_,k){
+  if(k==='createLinearGradient'||k==='createRadialGradient')return()=>({addColorStop(){}});
+  if(k==='canvas')return null;
+  return (...a)=>{calls.push([k,...a])};
+ },set(){return true}});
+ w.HTMLCanvasElement.prototype.getContext=()=>g;
+ w.HTMLCanvasElement.prototype.toDataURL=()=>'data:image/png;base64,AAAA';
+ w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
+ w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8'));
+ const FB=w.PGSocialFishing;
+ assert.equal(FB.BAITS.length,4,'four baits in the shop');
+ for(const b of FB.BAITS){
+  const url=FB.baitSpriteURL(b.id,64);
+  assert(typeof url==='string'&&url.startsWith('data:image/png'),b.name+' paints a real icon instead of an emoji glyph');
+  assert(FB.baitHTML(b,40).includes('<img class="fishing-bait-art"'),b.name+' renders that icon as an image');
+  assert(!FB.baitHTML(b,40).includes(b.icon),b.name+' no longer renders its emoji');
+ }
+ assert(calls.some(c=>c[0]==='quadraticCurveTo')&&calls.some(c=>c[0]==='arc'),'the icons are drawn with curves, not text');
+ dom.window.close();
+}
 
 // --- catalog ------------------------------------------------------------------------------
 const weightSum=F.RARITIES.reduce((a,r)=>a+r.weight,0);
@@ -712,8 +755,8 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=308'),asset+' is versioned at v308');
- assert(/haven-v308/.test(page),'the login card names the v308 build');
+  assert(page.includes(asset+'?v=309'),asset+' is versioned at v309');
+ assert(/haven-v309/.test(page),'the login card names the v309 build');
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
  const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');
