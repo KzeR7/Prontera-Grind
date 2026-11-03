@@ -10,7 +10,7 @@
 // the game hides the panel rather than failing at something a player cannot see.
 
 import { currentUser } from '../_lib/auth.js';
-import { json, guard, readJson, fail } from '../_lib/http.js';
+import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
 import * as db from '../_lib/db.js';
 import {
   FRIEND_LIMIT, PENDING_LIMIT, NOT_INSTALLED, friendsInstalled, listFor,
@@ -23,7 +23,7 @@ const cleanName = v => String(v || '').trim().slice(0, NAME_MAX);
 export const onRequestGet = guard(async ({ request, env }) => {
   const D = env.DB;
   const user = await currentUser(request, D);
-  if (!user) return fail('Not logged in.', 401);
+  if (!user) return await unauth(request);
   if (!(await friendsInstalled(D))) return fail(NOT_INSTALLED, 503, { installed: false });
   const url = new URL(request.url);
   const who = cleanName(url.searchParams.get('who'));
@@ -53,7 +53,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
 export const onRequestPost = guard(async ({ request, env }) => {
   const D = env.DB;
   const user = await currentUser(request, D);
-  if (!user) return fail('Not logged in.', 401);
+  if (!user) return await unauth(request);
   if (user.banned) return fail('This account is suspended.', 403);
   if (!(await friendsInstalled(D))) return fail(NOT_INSTALLED, 503, { installed: false });
 

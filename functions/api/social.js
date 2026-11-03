@@ -1,5 +1,5 @@
 import {currentUser} from '../_lib/auth.js';
-import {json,guard} from '../_lib/http.js';
+import { json, guard, unauth } from '../_lib/http.js';
 import {friendsInstalled,listFor} from '../_lib/friends.js';
 // The plaza socket. Identity is resolved HERE, from the session cookie, and passed to the private
 // Worker; the accepted-friends list travels with it so the plaza can draw a friend's name
@@ -9,7 +9,7 @@ export const onRequestGet=guard(async({request,env})=>{
  if(request.headers.get('Origin')!==new URL(request.url).origin)return json({error:'Origin rejected'},403);
  if(request.headers.get('Upgrade')?.toLowerCase()!=='websocket')return json({error:'WebSocket required'},426);
  if(!env.SOCIAL)return json({error:'Social service is not configured'},503);
- const user=await currentUser(request,env.DB);if(!user)return json({error:'Sign in to chat'},401);
+ const user=await currentUser(request,env.DB);if(!user)return await unauth(request,'Sign in to chat');
  let friends=[];
  try{if(await friendsInstalled(env.DB))friends=(await listFor(env.DB,user.id)).friends.map(f=>f.id)}catch(e){friends=[]}
  // v279 (owner): the GM tag. `gm` is resolved from the session's own row, exactly like `friends`, so a

@@ -8,6 +8,20 @@ export const json = (data, status = 200, headers = {}) =>
 
 export const fail = (message, status = 400, extra = {}) => json({ err: message, ...extra }, status);
 
+// v307: a 401 that says WHY, so the client can stop calling a dropped cookie a sign-in elsewhere.
+// The session token is read the same way the endpoints read it (cookie, or the preview header the
+// dev server mirrors into the cookie), so this never guesses.
+//   X-Session: none    no token on the request at all
+//   X-Session: ended   a token was sent but it is not a live session
+export const unauth = async (request, message = 'Not logged in.') => {
+  let presented = false;
+  try {
+    const { readCookie } = await import('./auth.js');
+    presented = !!readCookie(request);
+  } catch { presented = false; }
+  return json({ err: message }, 401, { 'X-Session': presented ? 'ended' : 'none' });
+};
+
 // Read a JSON body with a hard size cap before parsing: a 100 MB body must never reach JSON.parse.
 export async function readJson(request, maxBytes = 600_000) {
   const origin = request.headers.get('Origin');

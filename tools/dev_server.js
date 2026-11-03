@@ -263,9 +263,15 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   // losing them with the process. Both are for the preview; the default stays the production rule.
   const gmAll = process.argv.includes('--gm-all') || process.env.DEV_GM_ALL === 'all';
   const dbFile = arg('--db') || process.env.DEV_DB || undefined;
-  // --preview-auth: enable the X-Preview-Session bridge WITHOUT --gm-all, for an embedded
-  // (iframed/proxied) preview whose browser blocks third-party cookies. Accounts stay players.
-  const previewAuth = gmAll || process.argv.includes('--preview-auth') || process.env.DEV_PREVIEW_AUTH === '1';
+  // The X-Preview-Session bridge is ON by default (owner bug, v307). An embedded preview runs the
+  // game in an iframe on another site, and browsers drop third-party cookies there - the session
+  // cookie was silently lost, every authenticated call answered 401, and the client read that as
+  // "signed in on another device", so a fresh sign-in (or a brand-new account) landed on that card
+  // and could never get past it. The bridge carries the SAME session token in a header instead of
+  // only in the cookie; it grants no extra privilege (--gm-all is what makes accounts owners), and
+  // this is a local development server either way. --no-preview-auth (or DEV_PREVIEW_AUTH=0) turns
+  // it off to rehearse the production cookie-only path.
+  const previewAuth = !process.argv.includes('--no-preview-auth') && process.env.DEV_PREVIEW_AUTH !== '0';
   // --fake-payments: Cash Shop purchases complete instantly without Stripe (preview/rehearsal only).
   const fakePayments = process.argv.includes('--fake-payments') || process.env.SHOP_FAKE_CHECKOUT === '1';
   if (gmAll && !['127.0.0.1', 'localhost', '::1'].includes(host))
@@ -280,7 +286,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   console.log(gmAll
     ? '  gm      EVERY account registered here is an owner (gm=2) - this is a preview server'
     : '  gm      public registrations are players; --gm-all is for disposable local testing only');
-  if (previewAuth && !gmAll) console.log('  auth    X-Preview-Session bridge on (embedded-preview sign-in; accounts stay players)');
+  console.log(previewAuth
+    ? '  auth    X-Preview-Session bridge on (embedded-preview sign-in without third-party cookies)'
+    : '  auth    cookie-only sign-in (--no-preview-auth): an iframed preview may lose its session');
   console.log(fakePayments
     ? '  shop    FAKE payments: every Cash Shop order is delivered instantly, no card, no Stripe'
     : '  shop    Cash Shop in preview mode (no payments); add --fake-payments to rehearse purchases');

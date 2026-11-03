@@ -19,7 +19,7 @@
 
 import { currentUser } from '../_lib/auth.js';
 import { lockedCosmetics } from '../_lib/shop.js';
-import { json, guard, readJson, fail } from '../_lib/http.js';
+import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
 import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH } from '../_lib/validate.js';
 import * as db from '../_lib/db.js';
 import { recordDamageObservation } from '../_lib/damage-monitor.js';
@@ -97,7 +97,7 @@ function updatedRate(row, pub, now, appliedClaim) {
 
 export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
-  if (!user) return fail('Not logged in.', 401);
+  if (!user) return await unauth(request);
   const D = env.DB, now = Date.now();
   let row = await db.saveByUser(D, user.id), offlineClaim = null;
 
@@ -126,7 +126,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
 
 export const onRequestPut = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
-  if (!user) return fail('Not logged in.', 401);
+  if (!user) return await unauth(request);
   const D = env.DB;
   const body = await readJson(request, 600_000);
   // Whose save is this? The session cookie is shared by every tab of the site: a tab still playing
