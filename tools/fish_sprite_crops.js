@@ -83,6 +83,20 @@ function cut(data,label,comp,w,h){
  return c;
 }
 
+
+// Which crop becomes which species. Chosen by silhouette + palette, not by grid position:
+// the angelfish chart covers the disc-bodied fish, the slugs the small odd bottom-dwellers,
+// the cephalopod poster the squid/octopus line, and the odd fish from the creature grid the
+// torpedo-shaped pond fish. Everything not listed here stays on the procedural painter.
+const MAPPING={
+ 0:'pumpkinseed',1:'angelfin',2:'crappie',3:'perch',4:'sunny',5:'tetra',6:'betta',7:'emperium',
+ 8:'molly',9:'guppy',10:'killi',11:'platy',12:'koi',13:'smelt',14:'seraphkoi',
+ 15:'loach',16:'mudskip',17:'tadpole',19:'stickle',25:'ninespine',24:'goby',22:'spirlin',26:'topminnow',
+ 37:'octo',38:'squid',39:'hydrasquid',47:'kraken',48:'colossus',36:'angeling',
+ 67:'lobster',66:'bleak',65:'tench',68:'fountainfish',69:'crucian',70:'poring',
+ 72:'trout',75:'dragonet',78:'morayeel',79:'phoenixfish',80:'carp',81:'snapper',
+};
+
 (async()=>{
  const found=[];
  for(const sheet of SHEETS){
@@ -131,4 +145,65 @@ function cut(data,label,comp,w,h){
  });
  fs.writeFileSync(path.join(__dirname,'..','docs','fish-crop-test-haven-v301.png'),out.toBuffer('image/png'));
  console.log('wrote docs/fish-crop-test-haven-v301.png');
+
+ // Numbered index sheet, for deciding which crop becomes which species.
+ if(process.env.INDEX){
+  const IC=150,IPAD=22,ICOLS=8,irows=Math.ceil(found.length/ICOLS);
+  const iw=IPAD*2+ICOLS*IC,ih=IPAD*2+irows*IC;
+  const ic=createCanvas(iw,ih),ig=ic.getContext('2d');
+  ig.fillStyle='#0d1117';ig.fillRect(0,0,iw,ih);
+  found.forEach((f,i)=>{
+   const cx=IPAD+(i%ICOLS)*IC,cy=IPAD+Math.floor(i/ICOLS)*IC;
+   ig.fillStyle='#1b2230';ig.beginPath();ig.roundRect?ig.roundRect(cx,cy,IC-6,IC-6,12):ig.rect(cx,cy,IC-6,IC-6);ig.fill();
+   const sc=Math.min((IC-26)/f.w,(IC-26)/f.h),dw=f.w*sc,dh=f.h*sc;
+   ig.drawImage(f.art,cx+(IC-6-dw)/2,cy+(IC-6-dh)/2,dw,dh);
+   ig.fillStyle='#ffd24d';ig.font='bold 13px sans-serif';ig.fillText(String(i),cx+6,cy+IC-12);
+  });
+  fs.writeFileSync('/tmp/fish-crops-index.png',ic.toBuffer('image/png'));
+  fs.writeFileSync('/tmp/fish-crops.json',JSON.stringify(found.map((f,i)=>({i,sheet:f.sheet,w:f.w,h:f.h,ar:+(f.w/f.h).toFixed(2)})),null,0));
+  console.log('wrote /tmp/fish-crops-index.png + json');
+ }
+
+ // ---- ship-ready assets: 96x96 transparent PNGs, one per mapped species ----------------------
+ const OUT=path.join(__dirname,'..','assets','social','fish');
+ fs.mkdirSync(OUT,{recursive:true});
+ const manifest={},mapped=[];
+ const px=96;
+ for(const [i,id] of Object.entries(MAPPING)){
+  const f=found[+i];
+  if(!f){console.log('missing crop index',i);continue}
+  const c=createCanvas(px,px),g=c.getContext('2d');
+  const fit=(px-4)/Math.max(f.w,f.h);
+  const dw=f.w*fit,dh=f.h*fit;
+  g.imageSmoothingEnabled=true;
+  g.drawImage(f.art,(px-dw)/2,(px-dh)/2,dw,dh);
+  fs.writeFileSync(path.join(OUT,id+'.png'),c.toBuffer('image/png'));
+  manifest[id]='assets/social/fish/'+id+'.png';
+  mapped.push({id,crop:+i,w:f.w,h:f.h});
+ }
+ fs.writeFileSync(path.join(OUT,'MANIFEST.json'),JSON.stringify(manifest,null,1));
+ fs.writeFileSync('/tmp/fish-art-snippet.txt','const FISH_ART='+JSON.stringify(manifest)+';');
+ console.log('wrote',mapped.length,'species assets to assets/social/fish');
+
+ // mapping contact sheet for review: the crop and the species it now becomes
+ if(process.env.INDEX){
+  const MC=132,MP=22,MCOLS=8,mrows=Math.ceil(mapped.length/MCOLS);
+  const mw=MP*2+MCOLS*MC,mh=120+mrows*(MC+14)+MP;
+  const mc=createCanvas(mw,mh),mg=mc.getContext('2d');
+  mg.fillStyle='#12161d';mg.fillRect(0,0,mw,mh);
+  mg.fillStyle='#eef3fb';mg.font='bold 24px sans-serif';
+  mg.fillText('Crop → species mapping',MP,MP-6);
+  mg.fillStyle='#8fa0b8';mg.font='14px sans-serif';
+  mg.fillText(mapped.length+' of 100 species get a real drawing; the rest are painted in the same candy style.',MP,MP+26);
+  mapped.forEach((m,i)=>{
+   const cx=MP+(i%MCOLS)*MC,cy=120+Math.floor(i/MCOLS)*(MC+14);
+   mg.fillStyle='#1b2230';mg.beginPath();mg.roundRect?mg.roundRect(cx,cy,MC-6,MC-6,12):mg.rect(cx,cy,MC-6,MC-6);mg.fill();
+   const sc=Math.min((MC-26)/m.w,(MC-26)/m.h),dw=m.w*sc,dh=m.h*sc;
+   mg.drawImage(found[m.crop].art,cx+(MC-6-dw)/2,cy+(MC-6-dh)/2,dw,dh);
+   mg.fillStyle='#93a2b8';mg.font='11px sans-serif';mg.textAlign='center';
+   mg.fillText(m.id,cx+(MC-6)/2,cy+MC-12);mg.textAlign='left';
+  });
+  fs.writeFileSync('/tmp/fish-mapping.png',mc.toBuffer('image/png'));
+  console.log('wrote /tmp/fish-mapping.png');
+ }
 })().catch(e=>{console.error(e);process.exitCode=1});

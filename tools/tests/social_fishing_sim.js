@@ -587,8 +587,8 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=300'),asset+' is versioned at v300');
- assert(/haven-v300/.test(page),'the login card names the v300 build');
+  assert(page.includes(asset+'?v=301'),asset+' is versioned at v301');
+ assert(/haven-v301/.test(page),'the login card names the v301 build');
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
  const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');
@@ -622,6 +622,34 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/rodTint\(rodId\)/.test(sceneSrc)&&sceneSrc.includes('ROD_TIER_COLORS'),'the pole reuses the rod tier palette');
  assert(sceneSrc.includes('rod:setRod'),'the scene hands the fishing module a setRod hook');
  assert(/c\.fish=\{on:true,pond:.*rod:FISH_RODS\.has\(m\.rod\)\?m\.rod:'twig'\}/.test(room),'the relay validates and forwards the rod id');
+
+ // --- Part D3: v301 fish art - crops first, painted fallback for the rest ---------------------
+ const artDir=path.join(__dirname,'..','..','assets','social','fish');
+ const manifest=JSON.parse(fs.readFileSync(path.join(artDir,'MANIFEST.json'),'utf8'));
+ const artIds=Object.keys(manifest);
+ assert.equal(artIds.length,41,'forty-one species ship a real drawing');
+ assert.deepEqual(artIds.slice().sort(),Object.keys(F.FISH_ART).sort(),'the module and the manifest agree');
+ assert.equal(new Set(Object.values(manifest)).size,artIds.length,'no two species share one file');
+ const PNG=Buffer.from([137,80,78,71,13,10,26,10]);
+ for(const id of artIds){
+  assert(F.speciesById(id),'art maps to a real species: '+id);
+  assert.equal(manifest[id],'assets/social/fish/'+id+'.png',id+' is one file per species');
+  const buf=fs.readFileSync(path.join(__dirname,'..','..',manifest[id]));
+  assert(buf.subarray(0,8).equals(PNG),id+'.png is a png');
+  assert.equal(buf.readUInt32BE(16),96,id+' is 96 wide');
+  assert.equal(buf.readUInt32BE(20),96,id+' is 96 tall');
+  assert.equal(buf[25],6,id+' keeps its transparency (rgba)');
+ }
+ const paintedIds=F.SPECIES.filter(sp=>!manifest[sp.id]).map(sp=>sp.id);
+ assert.equal(paintedIds.length,59,'the other fifty-nine species still paint themselves');
+ assert(paintedIds.every(id=>!F.FISH_ART[id]),'no stale art entry for a painted species');
+ assert(mod.includes('const art=FISH_IMG.get(sp.id);'),'a drawing is tried before the painter');
+ assert(mod.includes('function preloadFishArt()'),'drawings are preloaded once, not per frame');
+ assert(/const wash=mut==='golden'\?'#ffd24d'/.test(mod),'mutations tint a drawing instead of ignoring it');
+ assert(mod.includes('sat=76+v(1)*8,lum=52+v(2)*7'),'the painter uses the saturated candy ramp');
+ assert(mod.includes('const FIN=col(3,8,7)'),'fins stay in the body family, as in the references');
+ assert(mod.includes('const eye=(x,y,r)=>{ // a dot with one glint'),'dot eyes, never a googly ring');
+ assert(!mod.includes('45%,15%'),'the old black ink is gone');
  const rodCss=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.css'),'utf8');
  assert(/\.fishing-rod-art\{filter:drop-shadow/.test(rodCss),'CSS gives the rod icon a tinted aura');
  assert(/@keyframes rod-aura/.test(rodCss),'the top tiers pulse');
@@ -643,5 +671,5 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/announce:fishingAnnounce/.test(social),'the fishing bind receives it');
  assert(/\.social-line-sys/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'system lines have their own style');
  assert(/socialFishLeaveWarning/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'the fishing dialog shares the poker overlay style');
- console.log('PASS social fishing: ponds+chairs, 100-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler');
+ console.log('PASS social fishing: ponds+chairs, 100-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler; v301 forty-one cropped drawings behind the same fishSprite, with the painted fallback for the other fifty-nine');
 })().catch(e=>{console.error(e);process.exitCode=1});

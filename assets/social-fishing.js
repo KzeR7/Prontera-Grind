@@ -651,25 +651,65 @@ function fishSprite(spId,mut,px=96){
  if(!g||typeof g.quadraticCurveTo!=='function'||typeof g.createLinearGradient!=='function'||typeof g.createRadialGradient!=='function')return null;
  const H=hashId(sp.id),v=i=>((H>>>((i*5)%27))&31)/31;
  const M=mut&&Object.hasOwn(MUTATIONS,mut)?MUTATIONS[mut]:null;
- let hue=((sp.hue%360)+360)%360,sat=66+v(1)*16,lum=46+v(2)*10;
+ // v301: a real drawing wins when we have one. Mutations still read: the baked halo goes under it
+ // and a tint wash goes over it, so a golden koi stays golden and not brown.
+ const art=FISH_IMG.get(sp.id);
+ if(art){
+  if(M&&M.glow){try{const gr=g.createRadialGradient(px*.5,px*.52,px*.08,px*.5,px*.52,px*.47);gr.addColorStop(0,M.glow+'b0');gr.addColorStop(.6,M.glow+'46');gr.addColorStop(1,M.glow+'00');g.fillStyle=gr;g.fillRect(0,0,px,px)}catch{}}
+  const fit=Math.min(px/art.width,px/art.height)*.97,dw=art.width*fit,dh=art.height*fit;
+  try{g.drawImage(art,(px-dw)/2,(px-dh)/2,dw,dh)}catch{return c}
+  const wash=mut==='golden'?'#ffd24d':mut==='frozen'?'#7fd4ff':mut==='ghostly'?'#eaf6ff':null;
+  if(wash){try{g.globalCompositeOperation='source-atop';g.globalAlpha=mut==='ghostly'?.55:.4;g.fillStyle=wash;g.fillRect(0,0,px,px);g.globalAlpha=1;g.globalCompositeOperation='source-over'}catch{}}
+  return c;
+ }
+ // v301: direction D - the palette from the owner's reference sheets. Saturated body, one
+ // complementary accent, no black ink, a cream belly. Same helpers, so all 25 body plans convert.
+ let hue=((sp.hue%360)+360)%360,sat=76+v(1)*8,lum=52+v(2)*7;
  if(mut==='golden'){hue=45;sat=92;lum=56}
  if(mut==='frozen'){hue=202;sat=58;lum=62}
  if(mut==='ghostly'){sat=Math.min(sat,20);lum=72}
  const col=(dh,ds,dl,a=1)=>`hsla(${(((hue+dh)%360)+360)%360},${Math.min(100,Math.max(6,sat+ds))}%,${Math.min(94,Math.max(8,lum+dl))}%,${a})`;
- const LINE=`hsl(${Math.round(hue)},45%,15%)`,FIN=col(-16,6,-8),DARK=col(2,0,-20,.55);
+ // The accent pairing follows the pins: blue<->gold, magenta<->mint, purple<->pink, coral<->teal.
+ const CANDY_ANCHORS=[232,275,315,350,18,45,165,195];
+ const CANDY_PAIR={232:45,275:315,315:165,350:165,18:195,45:275,165:350,195:315};
+ const accentHue=(()=>{
+  if(mut==='golden')return 30;if(mut==='frozen')return 185;
+  let best=CANDY_ANCHORS[0],bd=999;
+  for(const a of CANDY_ANCHORS){const d=Math.min(Math.abs(hue-a),360-Math.abs(hue-a));if(d<bd){bd=d;best=a}}
+  return CANDY_PAIR[best]!==undefined?CANDY_PAIR[best]:(best+150)%360;
+ })();
+ const ACCENT=`hsl(${accentHue},90%,60%)`;
+ // No ink: the silhouette is a soft self-shadow of the body colour, not a cartoon outline.
+ const LINE=`hsl(${Math.round(hue)},58%,44%)`;
+ // Fins stay in the body's own family (as they do in the reference sheets); the complementary
+ // accent is reserved for the markings, which is what keeps a pond of 100 fish from looking
+ // like a bag of clowns.
+ const FIN=col(3,8,7),DARK=`hsla(${accentHue},88%,62%,.9)`;
  const u=px/100,U=n=>n*u;
  g.lineJoin='round';g.lineCap='round';
  if(M&&M.glow){try{const r=g.createRadialGradient(U(50),U(52),U(8),U(50),U(52),U(47));r.addColorStop(0,M.glow+'b0');r.addColorStop(.6,M.glow+'46');r.addColorStop(1,M.glow+'00');g.fillStyle=r;g.fillRect(0,0,px,px)}catch{}}
  // v297: a species' own body plan wins over the glyph's default, so sharks do not all share one shape.
  const shape=sp.shape||SHAPE_BY_GLYPH[sp.glyph]||'fish';
- const grad=(y0,y1)=>{const gr=g.createLinearGradient(0,U(y0),0,U(y1));gr.addColorStop(0,col(-6,4,8));gr.addColorStop(.55,col(0,0,0));gr.addColorStop(.82,col(8,-20,24));gr.addColorStop(1,col(10,-24,32));return gr};
+ const grad=(y0,y1)=>{const gr=g.createLinearGradient(0,U(y0),0,U(y1));
+  gr.addColorStop(0,col(-4,6,9));gr.addColorStop(.42,col(0,2,1));
+  gr.addColorStop(.78,col(8,-16,26));gr.addColorStop(1,col(12,-26,40));return gr};
  const path=pts=>{g.beginPath();g.moveTo(U(pts[0][0]),U(pts[0][1]));for(let i=1;i+1<pts.length;i+=2)g.quadraticCurveTo(U(pts[i][0]),U(pts[i][1]),U(pts[i+1][0]),U(pts[i+1][1]));g.closePath()};
- const paint=f=>{g.fillStyle=f;g.fill();g.strokeStyle=LINE;g.lineWidth=U(2.6);g.stroke()};
- const eye=(x,y,r)=>{g.fillStyle='#f8f4e8';g.beginPath();g.arc(U(x),U(y),U(r),0,7);g.fill();g.strokeStyle=LINE;g.lineWidth=U(1.5);g.stroke();g.fillStyle='#1c1a18';g.beginPath();g.arc(U(x+r*.2),U(y),U(r*.55),0,7);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(U(x-r*.15),U(y-r*.3),U(r*.26),0,7);g.fill()};
+ const paint=f=>{g.fillStyle=f;g.fill();g.strokeStyle=LINE;g.lineWidth=U(1.3);g.stroke()};
+ const eye=(x,y,r)=>{ // a dot with one glint, never a googly ring
+  g.fillStyle='#17141b';
+  if(g.ellipse){g.beginPath();g.ellipse(U(x),U(y),U(r*.8),U(r),0,0,7);g.fill()}
+  else{g.beginPath();g.arc(U(x),U(y),U(r*.88),0,7);g.fill()}
+  g.fillStyle='#fff';g.beginPath();g.arc(U(x-r*.26),U(y-r*.34),U(r*.3),0,7);g.fill()};
  const stroke2=(w,fill,draw)=>{draw();g.strokeStyle=LINE;g.lineWidth=U(w+3);g.stroke();draw();g.strokeStyle=fill;g.lineWidth=U(w);g.stroke()};
- const pattern=(bodyPath,hh)=>{const pv=v(3);if(pv<.3&&shape!=='tropical')return;g.save();bodyPath();g.clip();g.fillStyle=DARK;
-  if(pv<.65||shape==='tropical'){for(let i=0;i<3;i++){const bx=40+i*13;g.beginPath();g.moveTo(U(bx),U(52-hh));g.quadraticCurveTo(U(bx-6),U(52),U(bx),U(52+hh));g.lineTo(U(bx+5),U(52+hh));g.quadraticCurveTo(U(bx-1),U(52),U(bx+5),U(52-hh));g.closePath();g.fill()}}
-  else{for(let i=0;i<5;i++){g.beginPath();g.arc(U(36+i*11+v(i+7)*4),U(46+((i%2)*10)+v(i+9)*4),U(2.6+v(i+8)*1.4),0,7);g.fill()}}
+ const pattern=(bodyPath,hh)=>{ // one idea per fish: two fat bands, or three spots
+  g.save();bodyPath();g.clip();g.fillStyle=DARK;
+  if(v(3)>.45){
+   for(let i=0;i<2;i++){const bx=40+i*18;
+    g.beginPath();g.moveTo(U(bx),U(52-hh));g.quadraticCurveTo(U(bx-5),U(52),U(bx),U(52+hh));
+    g.lineTo(U(bx+6),U(52+hh));g.quadraticCurveTo(U(bx+1),U(52),U(bx+6),U(52-hh));g.closePath();g.fill()}
+  }else{
+   for(let i=0;i<3;i++){g.beginPath();g.arc(U(40+i*14),U(46+((i%2)*12)),U(3.4+v(i+8)*1.6),0,7);g.fill()}
+  }
   g.restore()};
  if(shape==='fish'||shape==='tropical'||shape==='shark'||shape==='whale'||shape==='deep'){
   // v297: 'deep' is the disc-bodied variant - koi, betta, discus, platies. Same painter, very
@@ -894,6 +934,62 @@ function fishSprite(spId,mut,px=96){
  if(mut==='electric'){g.strokeStyle='#ffe34d';g.lineWidth=U(2.6);for(const[x,y]of[[26,26],[70,70]]){g.beginPath();g.moveTo(U(x),U(y));g.lineTo(U(x+6),U(y+7));g.lineTo(U(x+1),U(y+8));g.lineTo(U(x+8),U(y+17));g.stroke()}}
  if(mut==='shiny'||mut==='sparkling'||mut==='golden'){star(28,28,5,'#fffbe8');star(72,64,4,'#fff6c8');if(mut!=='shiny')star(66,22,3.2,'#ffffff')}
  return c;
+}
+// v301 (owner): most of the pond is now a real drawing cropped from the reference sheets. Species
+// without one keep the painted fallback, so the catalog never has a hole. Manifest generated by
+// tools/fish_sprite_crops.js.
+const FISH_ART={
+ pumpkinseed:'assets/social/fish/pumpkinseed.png',
+ angelfin:'assets/social/fish/angelfin.png',
+ crappie:'assets/social/fish/crappie.png',
+ perch:'assets/social/fish/perch.png',
+ sunny:'assets/social/fish/sunny.png',
+ tetra:'assets/social/fish/tetra.png',
+ betta:'assets/social/fish/betta.png',
+ emperium:'assets/social/fish/emperium.png',
+ molly:'assets/social/fish/molly.png',
+ guppy:'assets/social/fish/guppy.png',
+ killi:'assets/social/fish/killi.png',
+ platy:'assets/social/fish/platy.png',
+ koi:'assets/social/fish/koi.png',
+ smelt:'assets/social/fish/smelt.png',
+ seraphkoi:'assets/social/fish/seraphkoi.png',
+ loach:'assets/social/fish/loach.png',
+ mudskip:'assets/social/fish/mudskip.png',
+ tadpole:'assets/social/fish/tadpole.png',
+ stickle:'assets/social/fish/stickle.png',
+ spirlin:'assets/social/fish/spirlin.png',
+ goby:'assets/social/fish/goby.png',
+ ninespine:'assets/social/fish/ninespine.png',
+ topminnow:'assets/social/fish/topminnow.png',
+ angeling:'assets/social/fish/angeling.png',
+ octo:'assets/social/fish/octo.png',
+ squid:'assets/social/fish/squid.png',
+ hydrasquid:'assets/social/fish/hydrasquid.png',
+ kraken:'assets/social/fish/kraken.png',
+ colossus:'assets/social/fish/colossus.png',
+ tench:'assets/social/fish/tench.png',
+ bleak:'assets/social/fish/bleak.png',
+ lobster:'assets/social/fish/lobster.png',
+ fountainfish:'assets/social/fish/fountainfish.png',
+ crucian:'assets/social/fish/crucian.png',
+ poring:'assets/social/fish/poring.png',
+ trout:'assets/social/fish/trout.png',
+ dragonet:'assets/social/fish/dragonet.png',
+ morayeel:'assets/social/fish/morayeel.png',
+ phoenixfish:'assets/social/fish/phoenixfish.png',
+ carp:'assets/social/fish/carp.png',
+ snapper:'assets/social/fish/snapper.png'
+};
+const FISH_ART_VERSION='301';
+const FISH_IMG=new Map();
+function preloadFishArt(){
+ if(typeof Image!=='function'||typeof document==='undefined'||!document.createElement)return;
+ for(const id of Object.keys(FISH_ART)){
+  const img=new Image();
+  img.onload=()=>{FISH_IMG.set(id,img);ART_CACHE.clear()};
+  try{img.src=FISH_ART[id]+'?v='+FISH_ART_VERSION}catch{}
+ }
 }
 const ART_CACHE=new Map();
 function fishSpriteURL(spId,mut,px=96){
@@ -1438,6 +1534,7 @@ function pondClick(x,z,idx){
  else if(ui.phase==='walking'||ui.phase==='ready')startFishing(idx);
 }
 function hubClosed(){stopFishing();if(els){els.panel.hidden=true;els.menu.hidden=true}}
+preloadFishArt();
 return {
  // pure core (tests)
  RARITIES,SPECIES,DIFF,MUTATIONS,RODS,BAITS,BAG_MAX,BAG_TIERS,bagMax,bagTierOf,nextBagTier,buyBagUpgrade,CAST_GREEN,CAST_PERFECT,MAX_W,
@@ -1445,6 +1542,8 @@ return {
  speciesById,rarityById,rate,value,rollCatch,castRating,makeReel,reelStep,normalize,addCatch,
  buyRod,equipRod,buyBait,selectBait,sellFish,sellBulk,toggleLock,shouldAutoSell,showOffText,parseShowOff,showOffScale,
  showOffData,cleanShowOff,showOffEvent,rodSprite,rodSpriteURL,ROD_TIER_COLORS,
+ // v301: the crop manifest, so tests can prove every drawing on disk is wired up.
+ FISH_ART,
  fishSprite,fishSpriteURL,
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,

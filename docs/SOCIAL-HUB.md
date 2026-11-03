@@ -500,6 +500,39 @@ session and equipping a rod both show up immediately), `setRig(pid,{rod})` paint
 and repaints it in place when that angler swaps rods mid-session, and `dropRig` disposes all three meshes.
 `hide()`/`off()` hide the whole group, so the glow never lingers after the line is reeled in.
 
+## New fish art: crops where they exist, one painter for the rest (haven-v301)
+
+The owner sent five reference sheets and asked whether the creatures could be cut out of them. They
+can, and 41 of the 100 species now ship as real drawings.
+
+**The cut.** `tools/fish_sprite_crops.js` flood-fills the flat backdrop from the image borders rather
+than keying by colour, so dark eyes and dark bodies *inside* a creature survive; it then labels the
+connected components and drops anything small (the chart labels, specks and page rules), feathers the
+cut by one pixel so the edge is not a staircase, and trims to the silhouette. 97 creatures came out of
+four sheets; 41 of them were mapped onto species by silhouette and palette, not by grid position - the
+angelfish chart became the disc-bodied fish, the slugs became the small odd bottom-dwellers, the
+cephalopod poster became the squid/octopus line, and the odd fish from the creature grid became the
+torpedo-shaped pond fish. Everything is written to `assets/social/fish/<species>.png` at the exact 96px
+the game draws, plus `MANIFEST.json` and a `FISH_ART` const in the module.
+
+**The other 59.** The reference sheets have no sharks, rays, whales, eels, gar, sawfish, sturgeon,
+threshers, hammerheads, mantas or anglers, so those keep a painter - retuned to the same direction:
+saturated body, a complementary accent reserved for the *markings* (fins stay in the body's own family,
+which is what the reference sheets do), a cream belly, a hairline self-shadow instead of black ink, one
+motif per fish and a dot eye with a single glint. That was done by rewriting the six helpers the painter
+already funnelled every body plan through - `paint`, `grad`, `eye`, `pattern`, `FIN`/`LINE` - rather than
+redrawing 25 silhouettes, so all of them changed at once.
+
+**Loading.** `preloadFishArt()` creates one `Image` per drawing at module load and clears the sprite
+cache as each lands, so the first frame is never a hole: until a drawing arrives the painted fallback
+draws, and `fishSprite()` keeps returning a canvas synchronously for the bag, the index, the pond and the
+show-off sprites. Mutations still read on a drawing - the baked halo goes underneath and a tint wash goes
+over (`#ffd24d` golden, `#7fd4ff` frozen, `#eaf6ff` ghostly).
+
+**Credit.** These drawings are pikaole's illustrations (as is the Marine-Pokémon sheet, which was *not*
+used). Shipping them needs the artist's permission - the owner confirmed the direction; the attribution
+belongs wherever the game credits its art.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table
