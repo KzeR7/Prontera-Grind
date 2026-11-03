@@ -92,7 +92,60 @@ const SPECIES_DATA={
 };
 // v297: a species may name its own body plan (shape) and be flagged mega - the giants that get a
 // Local-chat announcement and show off at pond size. Without a shape the glyph decides.
-const SPECIES=Object.entries(SPECIES_DATA).flatMap(([rarity,list])=>list.map(([id,name,glyph,hue,min,max,shape,mega])=>({id,name,glyph,hue,min,max,shape:shape||null,mega:mega===true,rarity})));
+// v302 (owner): a second art drop - sea turtles, seadragons, crystal snails, shrimp and
+// amphipods, star-mantled octopuses and a much deeper shark roster. Same tuple shape as
+// SPECIES_DATA, with the rarity in the last slot instead of as the group key.
+const EXTRA_SPECIES=[
+ ['greenshell','Green Shell Turtle','🐢',160,8,30,'whale','uncommon'],
+ ['glassback','Glassback Turtle','🐢',190,6,24,'whale','uncommon'],
+ ['emberturtle','Ember Shell Turtle','🐢',20,10,34,'whale','rare'],
+ ['moonturtle','Moonshell Turtle','🐢',250,9,32,'whale','rare'],
+ ['heartback','Heartshell Turtle','🐢',330,7,26,'whale','rare'],
+ ['starhull','Starhull Leviathan','🐢',210,20,70,'whale','legendary'],
+ ['seahorse','Tidepool Seahorse','🐠',30,0.05,0.3,'fish','common'],
+ ['thornhorse','Thornback Seahorse','🐠',340,0.08,0.4,'fish','common'],
+ ['leafdragon','Leafy Seadragon','🐠',120,0.1,0.5,'fish','uncommon'],
+ ['sunhorse','Sunspine Seahorse','🐠',45,0.09,0.45,'fish','uncommon'],
+ ['ribbonhorse','Ribbon Seahorse','🐠',300,0.12,0.6,'fish','uncommon'],
+ ['ghosthorse','Ghost Seahorse','🐠',200,0.06,0.35,'fish','rare'],
+ ['crownhorse','Crowned Seadragon','🐠',260,0.2,0.9,'fish','rare'],
+ ['tidehorse','Tide Dragon','🐠',170,0.3,1.4,'fish','legendary'],
+ ['shellsnail','Tide Snail','🐌',200,0.02,0.2,'fish','common'],
+ ['gemsnail','Gem Shell Snail','🐌',320,0.03,0.25,'fish','common'],
+ ['ambernail','Amber Snail','🐌',35,0.02,0.18,'fish','common'],
+ ['glasssnail','Glass Snail','🐌',180,0.03,0.22,'fish','uncommon'],
+ ['opalsnail','Opal Snail','🐌',280,0.04,0.3,'fish','uncommon'],
+ ['lavasnail','Lava Snail','🐌',10,0.05,0.4,'fish','rare'],
+ ['nebulasnail','Nebula Snail','🐌',265,0.06,0.5,'fish','legendary'],
+ ['prismsnail','Prism Snail','🐌',300,0.05,0.45,'fish','mythical'],
+ ['krill','Glass Krill','🦐',190,0.01,0.08,'shrimp','common'],
+ ['candyshrimp','Candy Shrimp','🦐',340,0.02,0.12,'shrimp','common'],
+ ['lanternshrimp','Lantern Shrimp','🦐',45,0.02,0.15,'shrimp','uncommon'],
+ ['peppershrimp','Pepper Shrimp','🦐',0,0.03,0.18,'shrimp','uncommon'],
+ ['royalshrimp','Royal Mantis Shrimp','🦐',275,0.1,0.5,'shrimp','rare'],
+ ['voidshrimp','Void Shrimp','🦐',250,0.08,0.42,'shrimp','legendary'],
+ ['staropus','Star Octopus','🐙',45,0.4,2.2,'octopus','uncommon'],
+ ['candyopus','Candy Octopus','🐙',330,0.5,2.6,'octopus','rare'],
+ ['moonopus','Moon Octopus','🐙',250,0.6,3,'octopus','rare'],
+ ['galaxyopus','Galaxy Octopus','🐙',275,1.2,6,'octopus','mythical'],
+ ['catshark','Catshark','🦈',30,2,8,'shark','common'],
+ ['hornshark','Horn Shark','🦈',40,3,10,'shark','common'],
+ ['nurseshark','Nurse Shark','🦈',20,10,40,'shark','common'],
+ ['bamboo','Bamboo Shark','🦈',45,4,14,'shark','uncommon'],
+ ['carpetshark','Carpet Shark','🦈',15,6,20,'shark','uncommon'],
+ ['leopardshark','Leopard Shark','🦈',35,8,25,'shark','uncommon'],
+ ['makoshark','Mako Shark','🦈',210,20,80,'shark','rare'],
+ ['porbeagle','Porbeagle','🦈',195,25,90,'shark','rare'],
+ ['silvershark','Silverfin Shark','🦈',200,15,60,'shark','rare'],
+ ['ghostshark','Ghost Shark','🦈',265,10,40,'shark','rare'],
+ ['lanternshark','Lantern Shark','🦈',240,2,9,'shark','rare'],
+ ['tigershark','Tiger Shark','🦈',40,60,220,'shark','legendary'],
+ ['greatmaw','Greatmaw','🦈',0,80,260,'shark','legendary'],
+ ['sunshark','Sunspot Shark','🦈',45,30,120,'shark','legendary'],
+ ['abysssaw','Abyssal Sawshark','🦈',215,40,150,'shark','mythical'],
+ ['voidfin','Voidfin Shark','🦈',270,50,180,'shark','mythical'],
+].map(([id,name,glyph,hue,min,max,shape,rarity])=>({id,name,glyph,hue,min,max,shape:shape||null,mega:false,rarity}));
+const SPECIES=[...Object.entries(SPECIES_DATA).flatMap(([rarity,list])=>list.map(([id,name,glyph,hue,min,max,shape,mega])=>({id,name,glyph,hue,min,max,shape:shape||null,mega:mega===true,rarity}))),...EXTRA_SPECIES];
 const SPECIES_BY_ID=Object.fromEntries(SPECIES.map(s=>[s.id,s]));
 const SPECIES_BY_NAME=Object.fromEntries(SPECIES.map(s=>[s.name,s.id]));
 const MAX_W=Math.max(...SPECIES.map(s=>s.max));
@@ -637,7 +690,7 @@ function mutFilter(mut){return mut&&MUTATIONS[mut]?' '+MUTATIONS[mut].css:''}
 // out and childish, and the show-off/catch sprites were so dim they vanished over the pond.
 // Every surface now paints a proper side-view sprite on canvas - dark outline, saturated
 // body over a pale belly, real fins, per-species shape + pattern variation seeded from the
-// species id - so all 100 species stay distinct and crisp at any size. Distinct body plans
+// species id - so all 148 species stay distinct and crisp at any size. Distinct body plans
 // (hammer/thresher/goblin/saw/ray/eel/sturgeon/gar/sunfish/angler) keep families apart at a glance. Mutations get a baked
 // halo + effect overlay instead of a blur filter. Falls back to the emoji glyph wherever
 // canvas 2D is unavailable (jsdom tests, ancient browsers).
@@ -682,7 +735,7 @@ function fishSprite(spId,mut,px=96){
  // No ink: the silhouette is a soft self-shadow of the body colour, not a cartoon outline.
  const LINE=`hsl(${Math.round(hue)},58%,44%)`;
  // Fins stay in the body's own family (as they do in the reference sheets); the complementary
- // accent is reserved for the markings, which is what keeps a pond of 100 fish from looking
+ // accent is reserved for the markings, which is what keeps a pond of 148 fish from looking
  // like a bag of clowns.
  const FIN=col(3,8,7),DARK=`hsla(${accentHue},88%,62%,.9)`;
  const u=px/100,U=n=>n*u;
@@ -939,49 +992,75 @@ function fishSprite(spId,mut,px=96){
 // without one keep the painted fallback, so the catalog never has a hole. Manifest generated by
 // tools/fish_sprite_crops.js.
 const FISH_ART={
- pumpkinseed:'assets/social/fish/pumpkinseed.png',
- angelfin:'assets/social/fish/angelfin.png',
- crappie:'assets/social/fish/crappie.png',
- perch:'assets/social/fish/perch.png',
- sunny:'assets/social/fish/sunny.png',
- tetra:'assets/social/fish/tetra.png',
- betta:'assets/social/fish/betta.png',
- emperium:'assets/social/fish/emperium.png',
- molly:'assets/social/fish/molly.png',
- guppy:'assets/social/fish/guppy.png',
- killi:'assets/social/fish/killi.png',
- platy:'assets/social/fish/platy.png',
- koi:'assets/social/fish/koi.png',
- smelt:'assets/social/fish/smelt.png',
- seraphkoi:'assets/social/fish/seraphkoi.png',
- loach:'assets/social/fish/loach.png',
- mudskip:'assets/social/fish/mudskip.png',
- tadpole:'assets/social/fish/tadpole.png',
- stickle:'assets/social/fish/stickle.png',
- spirlin:'assets/social/fish/spirlin.png',
- goby:'assets/social/fish/goby.png',
- ninespine:'assets/social/fish/ninespine.png',
- topminnow:'assets/social/fish/topminnow.png',
- angeling:'assets/social/fish/angeling.png',
- octo:'assets/social/fish/octo.png',
- squid:'assets/social/fish/squid.png',
- hydrasquid:'assets/social/fish/hydrasquid.png',
- kraken:'assets/social/fish/kraken.png',
- colossus:'assets/social/fish/colossus.png',
- tench:'assets/social/fish/tench.png',
- bleak:'assets/social/fish/bleak.png',
- lobster:'assets/social/fish/lobster.png',
- fountainfish:'assets/social/fish/fountainfish.png',
- crucian:'assets/social/fish/crucian.png',
- poring:'assets/social/fish/poring.png',
- trout:'assets/social/fish/trout.png',
- dragonet:'assets/social/fish/dragonet.png',
- morayeel:'assets/social/fish/morayeel.png',
- phoenixfish:'assets/social/fish/phoenixfish.png',
- carp:'assets/social/fish/carp.png',
- snapper:'assets/social/fish/snapper.png'
+  pumpkinseed:'assets/social/fish/pumpkinseed.png', angelfin:'assets/social/fish/angelfin.png',
+  crappie:'assets/social/fish/crappie.png', perch:'assets/social/fish/perch.png',
+  sunny:'assets/social/fish/sunny.png', tetra:'assets/social/fish/tetra.png', betta:'assets/social/fish/betta.png',
+  emperium:'assets/social/fish/emperium.png', molly:'assets/social/fish/molly.png',
+  guppy:'assets/social/fish/guppy.png', killi:'assets/social/fish/killi.png', platy:'assets/social/fish/platy.png',
+  koi:'assets/social/fish/koi.png', smelt:'assets/social/fish/smelt.png',
+  seraphkoi:'assets/social/fish/seraphkoi.png', loach:'assets/social/fish/loach.png',
+  mudskip:'assets/social/fish/mudskip.png', tadpole:'assets/social/fish/tadpole.png',
+  stickle:'assets/social/fish/stickle.png', spirlin:'assets/social/fish/spirlin.png',
+  goby:'assets/social/fish/goby.png', ninespine:'assets/social/fish/ninespine.png',
+  topminnow:'assets/social/fish/topminnow.png', angeling:'assets/social/fish/angeling.png',
+  octo:'assets/social/fish/octo.png', squid:'assets/social/fish/squid.png',
+  hydrasquid:'assets/social/fish/hydrasquid.png', kraken:'assets/social/fish/kraken.png',
+  colossus:'assets/social/fish/colossus.png', oarfish:'assets/social/fish/oarfish.png',
+  tench:'assets/social/fish/tench.png', bleak:'assets/social/fish/bleak.png',
+  lobster:'assets/social/fish/lobster.png', fountainfish:'assets/social/fish/fountainfish.png',
+  crucian:'assets/social/fish/crucian.png', poring:'assets/social/fish/poring.png',
+  ghostring:'assets/social/fish/ghostring.png', trout:'assets/social/fish/trout.png',
+  mahi:'assets/social/fish/mahi.png', dragonet:'assets/social/fish/dragonet.png',
+  coelacanth:'assets/social/fish/coelacanth.png', reedeel:'assets/social/fish/reedeel.png',
+  phoenixfish:'assets/social/fish/phoenixfish.png', carp:'assets/social/fish/carp.png',
+  snapper:'assets/social/fish/snapper.png', whaleshark:'assets/social/fish/whaleshark.png',
+  paddlefish:'assets/social/fish/paddlefish.png', ribbonsturgeon:'assets/social/fish/ribbonsturgeon.png',
+  beluga:'assets/social/fish/beluga.png', greenshell:'assets/social/fish/greenshell.png',
+  moonturtle:'assets/social/fish/moonturtle.png', glassback:'assets/social/fish/glassback.png',
+  pupfish:'assets/social/fish/pupfish.png', lantern:'assets/social/fish/lantern.png',
+  emberturtle:'assets/social/fish/emberturtle.png', heartback:'assets/social/fish/heartback.png',
+  starhull:'assets/social/fish/starhull.png', minnow:'assets/social/fish/minnow.png',
+  bitterling:'assets/social/fish/bitterling.png', discus:'assets/social/fish/discus.png',
+  dace:'assets/social/fish/dace.png', chub:'assets/social/fish/chub.png', sunperch:'assets/social/fish/sunperch.png',
+  roach:'assets/social/fish/roach.png', gudgeon:'assets/social/fish/gudgeon.png', dart:'assets/social/fish/dart.png',
+  bream:'assets/social/fish/bream.png', bass:'assets/social/fish/bass.png', catfish:'assets/social/fish/catfish.png',
+  gar:'assets/social/fish/gar.png', barbel:'assets/social/fish/barbel.png', ide:'assets/social/fish/ide.png',
+  piranha:'assets/social/fish/piranha.png', zander:'assets/social/fish/zander.png',
+  mullet:'assets/social/fish/mullet.png', salmon:'assets/social/fish/salmon.png',
+  arowana:'assets/social/fish/arowana.png', marlin:'assets/social/fish/marlin.png',
+  staropus:'assets/social/fish/staropus.png', candyopus:'assets/social/fish/candyopus.png',
+  moonopus:'assets/social/fish/moonopus.png', galaxyopus:'assets/social/fish/galaxyopus.png',
+  gemsnail:'assets/social/fish/gemsnail.png', shellsnail:'assets/social/fish/shellsnail.png',
+  ambernail:'assets/social/fish/ambernail.png', glasssnail:'assets/social/fish/glasssnail.png',
+  opalsnail:'assets/social/fish/opalsnail.png', lavasnail:'assets/social/fish/lavasnail.png',
+  nebulasnail:'assets/social/fish/nebulasnail.png', prismsnail:'assets/social/fish/prismsnail.png',
+  greatwhite:'assets/social/fish/greatwhite.png', nurseshark:'assets/social/fish/nurseshark.png',
+  morayeel:'assets/social/fish/morayeel.png', catshark:'assets/social/fish/catshark.png',
+  cobblewhale:'assets/social/fish/cobblewhale.png', hornshark:'assets/social/fish/hornshark.png',
+  greatmaw:'assets/social/fish/greatmaw.png', bluefin:'assets/social/fish/bluefin.png',
+  baphobass:'assets/social/fish/baphobass.png', thresher:'assets/social/fish/thresher.png',
+  sawfin:'assets/social/fish/sawfin.png', makoshark:'assets/social/fish/makoshark.png',
+  leopardshark:'assets/social/fish/leopardshark.png', lanternshark:'assets/social/fish/lanternshark.png',
+  carpetshark:'assets/social/fish/carpetshark.png', bamboo:'assets/social/fish/bamboo.png',
+  stingray:'assets/social/fish/stingray.png', goblin:'assets/social/fish/goblin.png',
+  abysssaw:'assets/social/fish/abysssaw.png', hammerpup:'assets/social/fish/hammerpup.png',
+  hammer:'assets/social/fish/hammer.png', ghostshark:'assets/social/fish/ghostshark.png',
+  silvershark:'assets/social/fish/silvershark.png', porbeagle:'assets/social/fish/porbeagle.png',
+  manta:'assets/social/fish/manta.png', arapaima:'assets/social/fish/arapaima.png',
+  sturgeon:'assets/social/fish/sturgeon.png', mekong:'assets/social/fish/mekong.png',
+  voidfin:'assets/social/fish/voidfin.png', tigershark:'assets/social/fish/tigershark.png',
+  moonray:'assets/social/fish/moonray.png', leviathan:'assets/social/fish/leviathan.png',
+  sunshark:'assets/social/fish/sunshark.png', candyshrimp:'assets/social/fish/candyshrimp.png',
+  voidshrimp:'assets/social/fish/voidshrimp.png', krill:'assets/social/fish/krill.png',
+  shrimplet:'assets/social/fish/shrimplet.png', lanternshrimp:'assets/social/fish/lanternshrimp.png',
+  peppershrimp:'assets/social/fish/peppershrimp.png', crawdad:'assets/social/fish/crawdad.png',
+  royalshrimp:'assets/social/fish/royalshrimp.png', seahorse:'assets/social/fish/seahorse.png',
+  crownhorse:'assets/social/fish/crownhorse.png', sunhorse:'assets/social/fish/sunhorse.png',
+  ribbonhorse:'assets/social/fish/ribbonhorse.png', leafdragon:'assets/social/fish/leafdragon.png',
+  thornhorse:'assets/social/fish/thornhorse.png', ghosthorse:'assets/social/fish/ghosthorse.png',
+  tidehorse:'assets/social/fish/tidehorse.png',
 };
-const FISH_ART_VERSION='301';
+const FISH_ART_VERSION='302';
 const FISH_IMG=new Map();
 function preloadFishArt(){
  if(typeof Image!=='function'||typeof document==='undefined'||!document.createElement)return;

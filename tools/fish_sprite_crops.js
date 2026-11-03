@@ -1,17 +1,29 @@
 // Proof of concept: cut individual creatures out of the reference sheets the owner sent, key the
 // flat background away, trim, and drop them to the size the game draws (96px).
 //   node tools/fish_sprite_crops.js [dir]
-// Writes docs/fish-crop-test-haven-v301.png. Nothing is wired into the game.
+// Writes docs/fish-crop-test-haven-v302.png. Nothing is wired into the game.
 const fs=require('node:fs'),path=require('node:path');
 const {createCanvas,loadImage}=require('@napi-rs/canvas');
 const DIR=process.argv[2]||'/tmp/arena-coding-uploads';
 const F=require(path.join(__dirname,'..','assets','social-fishing.js'));
 
+// Order matters: the first four sheets own indices 0-96, which the shipped mapping references.
+// New sheets are appended so a re-map never silently moves an existing fish.
 const SHEETS=[
  {file:'image-10.png',label:'angelfish chart',minPx:900},
  {file:'image-9.png',label:'sea-slug chart',minPx:900},
  {file:'image-11.png',label:'cephalopod poster',minPx:1200},
  {file:'image-12.png',label:'creature grid',minPx:700},
+ {file:'image-14.png',label:'chibi sharks',minPx:900},
+ {file:'image-15.png',label:'sea turtles',minPx:1400},
+ {file:'image-16.png',label:'reef fish',minPx:900},
+ {file:'image-17.png',label:'star octopus',minPx:1400},
+ {file:'image-18.png',label:'crystal snails',minPx:1200},
+ {file:'image-19.png',label:'reef fish II',minPx:900},
+ {file:'image-21.png',label:'shark grid',minPx:700},
+ {file:'image-22.png',label:'shrimp and amphipods',minPx:900},
+ {file:'image-23.png',label:'seahorses',minPx:900},
+ {file:'image-20.png',label:'whales (watermarked)',minPx:1400},
 ];
 
 function keyBackground(data,w,h){
@@ -89,12 +101,27 @@ function cut(data,label,comp,w,h){
 // the cephalopod poster the squid/octopus line, and the odd fish from the creature grid the
 // torpedo-shaped pond fish. Everything not listed here stays on the procedural painter.
 const MAPPING={
- 0:'pumpkinseed',1:'angelfin',2:'crappie',3:'perch',4:'sunny',5:'tetra',6:'betta',7:'emperium',
- 8:'molly',9:'guppy',10:'killi',11:'platy',12:'koi',13:'smelt',14:'seraphkoi',
- 15:'loach',16:'mudskip',17:'tadpole',19:'stickle',25:'ninespine',24:'goby',22:'spirlin',26:'topminnow',
- 37:'octo',38:'squid',39:'hydrasquid',47:'kraken',48:'colossus',36:'angeling',
- 67:'lobster',66:'bleak',65:'tench',68:'fountainfish',69:'crucian',70:'poring',
- 72:'trout',75:'dragonet',78:'morayeel',79:'phoenixfish',80:'carp',81:'snapper',
+  0:'pumpkinseed', 1:'angelfin', 2:'crappie', 3:'perch', 4:'sunny', 5:'tetra', 6:'betta', 7:'emperium',
+  8:'molly', 9:'guppy', 10:'killi', 11:'platy', 12:'koi', 13:'smelt', 14:'seraphkoi', 15:'loach', 16:'mudskip',
+  17:'tadpole', 19:'stickle', 22:'spirlin', 24:'goby', 25:'ninespine', 26:'topminnow', 36:'angeling', 37:'octo',
+  38:'squid', 39:'hydrasquid', 47:'kraken', 48:'colossus', 64:'oarfish', 65:'tench', 66:'bleak', 67:'lobster',
+  68:'fountainfish', 69:'crucian', 70:'poring', 71:'ghostring', 72:'trout', 73:'mahi', 75:'dragonet',
+  76:'coelacanth', 78:'reedeel', 79:'phoenixfish', 80:'carp', 81:'snapper', 99:'whaleshark', 105:'paddlefish',
+  109:'ribbonsturgeon', 111:'beluga', 118:'greenshell', 119:'moonturtle', 120:'glassback', 121:'pupfish',
+  124:'lantern', 125:'emberturtle', 127:'heartback', 128:'starhull', 129:'minnow', 130:'bitterling',
+  131:'discus', 132:'dace', 133:'chub', 134:'sunperch', 135:'roach', 136:'gudgeon', 137:'dart', 138:'bream',
+  139:'bass', 140:'catfish', 141:'gar', 142:'barbel', 143:'ide', 144:'piranha', 145:'zander', 146:'mullet',
+  147:'salmon', 148:'arowana', 149:'marlin', 150:'staropus', 152:'candyopus', 154:'moonopus', 158:'galaxyopus',
+  159:'gemsnail', 161:'shellsnail', 163:'ambernail', 167:'glasssnail', 171:'opalsnail', 175:'lavasnail',
+  181:'nebulasnail', 185:'prismsnail', 211:'greatwhite', 212:'nurseshark', 213:'morayeel', 214:'catshark',
+  215:'cobblewhale', 216:'hornshark', 217:'greatmaw', 218:'bluefin', 219:'baphobass', 220:'thresher',
+  221:'sawfin', 222:'makoshark', 224:'leopardshark', 227:'lanternshark', 228:'carpetshark', 229:'bamboo',
+  230:'stingray', 231:'goblin', 232:'abysssaw', 235:'hammerpup', 236:'hammer', 237:'ghostshark',
+  239:'silvershark', 240:'porbeagle', 241:'manta', 242:'arapaima', 243:'sturgeon', 244:'mekong', 245:'voidfin',
+  249:'tigershark', 250:'moonray', 251:'leviathan', 254:'sunshark', 256:'candyshrimp', 258:'voidshrimp',
+  259:'krill', 260:'shrimplet', 266:'lanternshrimp', 269:'peppershrimp', 271:'crawdad', 274:'royalshrimp',
+  280:'seahorse', 281:'crownhorse', 284:'sunhorse', 287:'ribbonhorse', 289:'leafdragon', 291:'thornhorse',
+  292:'ghosthorse', 294:'tidehorse',
 };
 
 (async()=>{
@@ -114,15 +141,20 @@ const MAPPING={
    return ra===rb?a.minX-b.minX:ra-rb;
   });
   let kept=0;
+  const seenHashes=new Set();
   for(const comp of out){
    const wpx=comp.maxX-comp.minX+1,hpx=comp.maxY-comp.minY+1;
    if(wpx<40||hpx<30)continue;             // letters, dots, stray specks
    if(wpx>img.width*0.92)continue;         // page-wide rules and headings
    const art=cut(data,label,comp,img.width,img.height);
-   found.push({art,sheet:sheet.label,w:wpx,h:hpx});
+   // the same sheet was uploaded twice; drop byte-identical crops
+   const hsh=require('node:crypto').createHash('md5').update(art.toBuffer('image/png')).digest('hex');
+   if(seenHashes.has(hsh))continue;
+   seenHashes.add(hsh);
+   found.push({art,sheet:sheet.label,w:wpx,h:hpx,file:sheet.file,index:found.length});
    kept++;
   }
-  console.log(sheet.file,sheet.label,'->',kept,'creatures');
+  console.log(sheet.file,sheet.label,'->',kept,'creatures, indices',found.length-kept+'..'+(found.length-1));
  }
 
  // ---- contact sheet: the crops at the size the game draws them -------------------------------
@@ -143,8 +175,8 @@ const MAPPING={
   og.imageSmoothingEnabled=true;
   og.drawImage(f.art,cx+(CELL-6-dw)/2,cy+(CELL-6-dh)/2,dw,dh);
  });
- fs.writeFileSync(path.join(__dirname,'..','docs','fish-crop-test-haven-v301.png'),out.toBuffer('image/png'));
- console.log('wrote docs/fish-crop-test-haven-v301.png');
+ fs.writeFileSync(path.join(__dirname,'..','docs','fish-crop-test-haven-v302.png'),out.toBuffer('image/png'));
+ console.log('wrote docs/fish-crop-test-haven-v302.png');
 
  // Numbered index sheet, for deciding which crop becomes which species.
  if(process.env.INDEX){
@@ -160,6 +192,25 @@ const MAPPING={
    ig.fillStyle='#ffd24d';ig.font='bold 13px sans-serif';ig.fillText(String(i),cx+6,cy+IC-12);
   });
   fs.writeFileSync('/tmp/fish-crops-index.png',ic.toBuffer('image/png'));
+  // per-sheet indices for the new uploads, so a mapping can be read off one picture at a time
+  const bySheet=new Map();
+  found.forEach(f=>{if(f.index>=97){if(!bySheet.has(f.file))bySheet.set(f.file,[]);bySheet.get(f.file).push(f)}});
+  for(const [file,list] of bySheet){
+   const PC=150,PP=20,PCOLS=6,prow=Math.ceil(list.length/PCOLS);
+   const pw=PP*2+PCOLS*PC,ph=60+prow*PC;
+   const pc=createCanvas(pw,ph),pg=pc.getContext('2d');
+   pg.fillStyle='#0d1117';pg.fillRect(0,0,pw,ph);
+   pg.fillStyle='#eef3fb';pg.font='bold 18px sans-serif';
+   pg.fillText(file+' — indices '+list[0].index+'..'+list[list.length-1].index,PP,PP+6);
+   list.forEach((f,i)=>{
+    const cx=PP+(i%PCOLS)*PC,cy=50+Math.floor(i/PCOLS)*PC;
+    pg.fillStyle='#1b2230';pg.beginPath();pg.roundRect?pg.roundRect(cx,cy,PC-6,PC-6,10):pg.rect(cx,cy,PC-6,PC-6);pg.fill();
+    const sc=Math.min((PC-26)/f.w,(PC-26)/f.h),dw=f.w*sc,dh=f.h*sc;
+    pg.drawImage(f.art,cx+(PC-6-dw)/2,cy+(PC-6-dh)/2,dw,dh);
+    pg.fillStyle='#ffd24d';pg.font='bold 13px sans-serif';pg.fillText(String(f.index),cx+6,cy+PC-12);
+   });
+   fs.writeFileSync('/tmp/fish-index-'+file.replace(/\D/g,'')+'.png',pc.toBuffer('image/png'));
+  }
   fs.writeFileSync('/tmp/fish-crops.json',JSON.stringify(found.map((f,i)=>({i,sheet:f.sheet,w:f.w,h:f.h,ar:+(f.w/f.h).toFixed(2)})),null,0));
   console.log('wrote /tmp/fish-crops-index.png + json');
  }

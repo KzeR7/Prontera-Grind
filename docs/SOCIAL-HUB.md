@@ -500,38 +500,57 @@ session and equipping a rod both show up immediately), `setRig(pid,{rod})` paint
 and repaints it in place when that angler swaps rods mid-session, and `dropRig` disposes all three meshes.
 `hide()`/`off()` hide the whole group, so the glow never lingers after the line is reeled in.
 
-## New fish art: crops where they exist, one painter for the rest (haven-v301)
+## Every usable crop, and a bigger sea to put them in (haven-v302)
 
-The owner sent five reference sheets and asked whether the creatures could be cut out of them. They
-can, and 41 of the 100 species now ship as real drawings.
+v301 cut 41 creatures out of five reference sheets. The owner then sent ten more sheets - a chibi-shark
+grid, a turtle set, two reef-fish charts, a seahorse strip, a star-mantled octopus set, a shrimp strip,
+two crystal-snail sheets and a whale sheet - and said the same thing the first time: these are usable,
+add all of them, and if there is extra, grow the index rather than throwing it away.
 
-**The cut.** `tools/fish_sprite_crops.js` flood-fills the flat backdrop from the image borders rather
-than keying by colour, so dark eyes and dark bodies *inside* a creature survive; it then labels the
-connected components and drops anything small (the chart labels, specks and page rules), feathers the
-cut by one pixel so the edge is not a staircase, and trims to the silhouette. 97 creatures came out of
-four sheets; 41 of them were mapped onto species by silhouette and palette, not by grid position - the
-angelfish chart became the disc-bodied fish, the slugs became the small odd bottom-dwellers, the
-cephalopod poster became the squid/octopus line, and the odd fish from the creature grid became the
-torpedo-shaped pond fish. Everything is written to `assets/social/fish/<species>.png` at the exact 96px
-the game draws, plus `MANIFEST.json` and a `FISH_ART` const in the module.
+**The cut, again.** `tools/fish_sprite_crops.js` now reads fourteen sheets and produces **304 creatures**
+(the same border flood-fill, connected components, one-pixel feather and silhouette trim as v301). Two
+things changed inside the tool: crops are hashed and de-duplicated, because two of the new uploads were
+the same reef chart re-encoded and would otherwise have doubled their fish; and the per-sheet index
+sheets are written for everything past the original ninety-seven, so each sheet can be checked against
+the species it was mapped to.
 
-**The other 59.** The reference sheets have no sharks, rays, whales, eels, gar, sawfish, sturgeon,
-threshers, hammerheads, mantas or anglers, so those keep a painter - retuned to the same direction:
-saturated body, a complementary accent reserved for the *markings* (fins stay in the body's own family,
-which is what the reference sheets do), a cream belly, a hairline self-shadow instead of black ink, one
-motif per fish and a dot eye with a single glint. That was done by rewriting the six helpers the painter
-already funnelled every body plan through - `paint`, `grad`, `eye`, `pattern`, `FIN`/`LINE` - rather than
-redrawing 25 silhouettes, so all of them changed at once.
+**139 of 148 species now ship a real drawing.** Every species that had a silhouette worth matching was
+re-pointed: the reef charts took the generic pond fish, the shark grid took every shark/ray/thresher/
+goblin/sawfish slot, the turtle and seahorse sets became new species (below), the second snail sheet
+turned out not to be reef fish at all, and the octopus set gave the kraken line a star-mantled cousin.
 
-**Loading.** `preloadFishArt()` creates one `Image` per drawing at module load and clears the sprite
-cache as each lands, so the first frame is never a hole: until a drawing arrives the painted fallback
-draws, and `fishSprite()` keeps returning a canvas synchronously for the bag, the index, the pond and the
-show-off sprites. Mutations still read on a drawing - the baked halo goes underneath and a tint wash goes
-over (`#ffd24d` golden, `#7fd4ff` frozen, `#eaf6ff` ghostly).
+**Nine still paint themselves**: the crab, the gar/pike/snakehead/bowfin/walleye group (their long jaws
+read better as a painter than as any crop) and the two anglers. The painter itself is unchanged from
+v301, so those nine look like the rest of the pond.
 
-**Credit.** These drawings are pikaole's illustrations (as is the Marine-Pokémon sheet, which was *not*
-used). Shipping them needs the artist's permission - the owner confirmed the direction; the attribution
-belongs wherever the game credits its art.
+**The index grew from 100 to 148 species.** The surplus creatures became six families in
+`EXTRA_SPECIES` (same tuple shape as `SPECIES_DATA`, rarity in the last slot):
+
+| family | members | rarity spread |
+| --- | --- | --- |
+| sea turtles (Green Shell, Glassback, Ember, Moonshell, Heartshell, Starhull) | 6 | uncommon → legendary |
+| seahorses and seadragons (Tidepool, Thornback, Leafy, Sunspine, Ribbon, Ghost, Crowned, Tide Dragon) | 8 | common → legendary |
+| crystal snails (Tide, Gem, Amber, Glass, Opal, Lava, Nebula, Prism) | 8 | common → mythical |
+| shrimp and amphipods (Glass Krill, Candy, Lantern, Pepper, Royal Mantis, Void) | 6 | common → legendary |
+| star octopuses (Star, Candy, Moon, Galaxy) | 4 | uncommon → mythical |
+| sharks (Catshark … Greatmaw, Abyssal Sawshark, Voidfin) | 16 | common → mythical |
+
+No new `secret` species were added on purpose, so the Secret Circle title still wants its eight. Apex
+Angler already counts `SPECIES.length`, so it silently became a 148-species goal.
+
+**Left on the floor, deliberately.** The whale sheet carries visible `mahoukaP` watermarks across its art,
+and two of its nine crops are not creatures at all (a star blob and the artist's signature line). None of
+it is shipped; the same applies to the Marine-Pokémon chart, which was never in the pipeline.
+
+**Loading and mutations** are unchanged: `preloadFishArt()` still lands one `Image` per drawing and clears
+the sprite cache as each arrives, `fishSprite()` still returns a canvas synchronously, and the baked halo
+plus tint wash go under/over a crop exactly as in v301. `FISH_ART_VERSION` is `'302'`.
+
+**Tests.** `social_fishing_sim.js` now asserts 148 species, eight secrets, 139 drawings against nine
+painted, and it scales its "half the catalog is the plain fish body" bar to `SPECIES.length` instead of a
+fixed 50 so the next art drop does not have to rewrite it. `publish_sim.js` moved the social-asset
+ceiling from 10 to 12 MiB, with the measured numbers and the reason in the comment: the 139 sprites are
+1.41 MiB and every one of them carries a soft sampled halo, which is why they will not palette-compress.
 
 ## Friends (haven-v273)
 

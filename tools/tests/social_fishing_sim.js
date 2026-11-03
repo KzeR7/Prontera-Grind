@@ -36,9 +36,10 @@ for(const sp of F.SPECIES){
  assert(sp.glyph&&sp.name);
 }
 for(const r of F.RARITIES)assert(F.SPECIES.some(sp=>sp.rarity===r.id),'every rarity has at least one fish');
-// v297: the index holds 100 species and the 14 original ids survive with their rarities.
-assert.equal(F.SPECIES.length,100,'100 fish species');
-assert.equal(new Set(F.SPECIES.map(sp=>sp.id)).size,100,'no duplicate species ids in a 100-entry index');
+// v302 (owner): the index holds every creature from the art drop, and the original ids survive.
+assert.equal(F.SPECIES.length,148,'148 fish species');
+assert.equal(F.SPECIES.filter(sp=>sp.rarity==='secret').length,8,'no new secrets, so Secret Circle still wants eight');
+assert.equal(new Set(F.SPECIES.map(sp=>sp.id)).size,F.SPECIES.length,'no duplicate species ids in the index');
 // v297: every species is either a glyph body or one of the named body plans the renderer paints.
 const SHAPES=new Set(['fish','tropical','puffer','shark','whale','shrimp','lobster','crab','squid','octopus','tadpole','gar','eel','hammer','saw','ray','sunfish','thresher','goblin','sturgeon','angler','deep']);
 for(const sp of F.SPECIES)if(sp.shape)assert(SHAPES.has(sp.shape),'species '+sp.id+' has a body plan the renderer knows');
@@ -49,7 +50,9 @@ for(const sp of F.SPECIES){const k=sp.shape||('glyph:'+sp.glyph);shapeCounts[k]=
 assert(Object.keys(shapeCounts).length>=12,'the catalog uses at least twelve distinct body plans');
 for(const k of ['hammer','thresher','goblin','saw','ray','sunfish','eel','sturgeon','angler','gar','deep'])assert(shapeCounts[k]>=2,'the '+k+' body plan is used by more than one species');
 const plainSpecies=F.SPECIES.filter(sp=>sp.shape?sp.shape==='fish'||sp.shape==='tropical':sp.glyph==='🐟'||sp.glyph==='🐠').length;
-assert(plainSpecies<=50,'fewer than half the catalog is the plain fish body (got '+plainSpecies+')');
+// v302: scale the bar with the catalog instead of a fixed 50 - the assertion is that the plain
+// fish body stays under half of it, not that the index can never grow past 100 entries.
+assert(plainSpecies<F.SPECIES.length/2,'fewer than half the catalog is the plain fish body (got '+plainSpecies+' of '+F.SPECIES.length+')');
 assert(plainSpecies<F.SPECIES.length-40,'at least forty species use a named body plan');
 // v297: weight scales up to a pond-sized giant and the mega flag marks the announced fish.
 assert.equal(F.MAX_W,1800,'the heaviest species is a 1.8 t whale shark');
@@ -348,7 +351,7 @@ const mid=F.normalize(null);
 mid.stats.casts=300;mid.stats.catches=60;mid.stats.perfects=30;
 assert.equal(F.FISHING_TITLES.filter(t=>F.titleUnlocked(mid,t)).length<=4,true,'the new ten stay locked for an ordinary save');
 // v297: the apex title tracks the catalog size instead of a hardcoded 70.
-assert.equal(F.FISHING_TITLE_BY_ID['apex-angler'].goal,100,'Apex Angler wants all 100 species');
+assert.equal(F.FISHING_TITLE_BY_ID['apex-angler'].goal,F.SPECIES.length,'Apex Angler wants every species');
 assert(F.FISHING_TITLE_BY_ID['pond-legend'].goal<100,'Pond Legend is a milestone before the apex');
 assert.equal(new Set(F.FISHING_TITLES.map(t=>t.id)).size,20,'title ids are unique');
 assert.equal(new Set(F.FISHING_TITLES.map(t=>t.name)).size,20,'title names are unique');
@@ -587,8 +590,8 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=301'),asset+' is versioned at v301');
- assert(/haven-v301/.test(page),'the login card names the v301 build');
+  assert(page.includes(asset+'?v=302'),asset+' is versioned at v302');
+ assert(/haven-v302/.test(page),'the login card names the v302 build');
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
  const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');
@@ -627,7 +630,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  const artDir=path.join(__dirname,'..','..','assets','social','fish');
  const manifest=JSON.parse(fs.readFileSync(path.join(artDir,'MANIFEST.json'),'utf8'));
  const artIds=Object.keys(manifest);
- assert.equal(artIds.length,41,'forty-one species ship a real drawing');
+ assert.equal(artIds.length,139,'139 species ship a real drawing');
  assert.deepEqual(artIds.slice().sort(),Object.keys(F.FISH_ART).sort(),'the module and the manifest agree');
  assert.equal(new Set(Object.values(manifest)).size,artIds.length,'no two species share one file');
  const PNG=Buffer.from([137,80,78,71,13,10,26,10]);
@@ -641,7 +644,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
   assert.equal(buf[25],6,id+' keeps its transparency (rgba)');
  }
  const paintedIds=F.SPECIES.filter(sp=>!manifest[sp.id]).map(sp=>sp.id);
- assert.equal(paintedIds.length,59,'the other fifty-nine species still paint themselves');
+ assert.equal(paintedIds.length,9,'the last nine species (crab, gar/pike, angler) paint themselves');
  assert(paintedIds.every(id=>!F.FISH_ART[id]),'no stale art entry for a painted species');
  assert(mod.includes('const art=FISH_IMG.get(sp.id);'),'a drawing is tried before the painter');
  assert(mod.includes('function preloadFishArt()'),'drawings are preloaded once, not per frame');
@@ -671,5 +674,5 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/announce:fishingAnnounce/.test(social),'the fishing bind receives it');
  assert(/\.social-line-sys/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'system lines have their own style');
  assert(/socialFishLeaveWarning/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'the fishing dialog shares the poker overlay style');
- console.log('PASS social fishing: ponds+chairs, 100-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler; v301 forty-one cropped drawings behind the same fishSprite, with the painted fallback for the other fifty-nine');
+ console.log('PASS social fishing: ponds+chairs, 148-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler; v302 139 cropped drawings behind the same fishSprite, with the painted fallback for the other nine');
 })().catch(e=>{console.error(e);process.exitCode=1});
