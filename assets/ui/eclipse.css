@@ -1322,6 +1322,8 @@ body.clean-screen #eclipseCompanions{display:none}
 .refine-item-summary{display:block;font-variant-numeric:tabular-nums}.refine-item-summary>span{display:block}.refine-item-summary .refine-owned{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* v311: the workshop says what it will buy for you before you press Refine. */
 .refine-auto-buy{display:block;margin-top:2px;color:#ffd88a;font-variant-numeric:tabular-nums}
+.refine-auto-buy.is-short{color:#ff9f8a}
+.eclipse-refine-preview>div.is-short b{color:#ff9f8a}
 .eclipse-owned-count{white-space:nowrap;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}
 
 /* v113: centered workspaces and controls beside the information they affect. */
@@ -1491,6 +1493,7 @@ body.clean-screen #sideMenu{display:none}
 #wins .wbody[data-view=refine] .eclipse-refine-preview>div:not(.eclipse-rank-preview){padding:3px 0}
 .eclipse-workshop-action{flex:none;padding-top:6px}
 #wins .eclipse-workshop-action [data-a=refine]{margin:0;padding:10px;width:100%}
+#wins .eclipse-workshop-action [data-a=refine]:disabled{background:var(--e-raised);color:var(--ink);border-color:var(--edge2);opacity:.78;cursor:not-allowed}
 .eclipse-workshop:has(.reforge-offer){grid-template-columns:190px minmax(0,1fr)}
 .reforge-comparison{margin:16px 0;display:grid;gap:10px}
 .reforge-comparison-row{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);align-items:center;gap:8px;padding:10px;background:var(--e-soft);border-radius:5px;overflow-wrap:anywhere}
