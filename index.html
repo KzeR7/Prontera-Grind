@@ -912,12 +912,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=314">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=315">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=314">
-<link rel="stylesheet" href="assets/social-fishing.css?v=314">
+<link rel="stylesheet" href="assets/social.css?v=315">
+<link rel="stylesheet" href="assets/social-fishing.css?v=315">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-03 haven-v314 illustrated rune-midgard world atlas';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-04 haven-v315 illustrated rune-midgard world atlas';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6811,34 +6811,57 @@ const WORLD_ATLAS_CLOUDS=[
   {id:'cloud-i',x:74,y:28,size:10,puffs:2}
 ];
 let worldAtlasFullscreen=false,worldAtlasDrawerHidden=false;
-const worldAtlasPan={x:0,y:0,zoom:1,cw:1600,ch:900};
+const WORLD_ATLAS_MINI_ZOOM=1.20;
+const worldAtlasPan={x:0,y:0,zoom:WORLD_ATLAS_MINI_ZOOM,cw:1600,ch:900};
 function worldAtlasPlaceOf(mi){return WORLD_ATLAS_PLACES.find(p=>p.maps.includes(+mi))||WORLD_ATLAS_PLACES[0]}
+function computeMiniAtlasPan(place,vw,vh){
+  const scale=vw/vh>(16/9)*1.12?vh/900:Math.max(vw/1600,vh/900),cw=Math.round(1600*scale*100)/100,ch=Math.round(900*scale*100)/100;
+  const z=WORLD_ATLAS_MINI_ZOOM,W=cw*z,H=ch*z;
+  const tx=vw/2-(place.x/100)*W,ty=vh/2-(place.y/100)*H;
+  const x=W>=vw?Math.min(0,Math.max(vw-W,tx)):(vw-W)/2;
+  const y=H>=vh?Math.min(0,Math.max(vh-H,ty)):(vh-H)/2;
+  return{cw,ch,x:Math.round(x*100)/100,y:Math.round(y*100)/100,zoom:z};
+}
 function buildIllustratedAtlasHero(mi){
   const place=worldAtlasPlaceOf(mi);
+  const liveVp=!worldAtlasFullscreen&&typeof document!=='undefined'&&document.getElementById?document.getElementById('rmViewport'):null;
+  if(liveVp&&liveVp.clientWidth>0&&liveVp.clientHeight>0){
+    const cam=computeMiniAtlasPan(place,liveVp.clientWidth,liveVp.clientHeight);
+    worldAtlasPan.cw=cam.cw;worldAtlasPan.ch=cam.ch;worldAtlasPan.x=cam.x;worldAtlasPan.y=cam.y;worldAtlasPan.zoom=cam.zoom;
+  }
+  const subOverlay=place.maps.length>1?`<div class="rm-subzones rm-subzones-overlay" role="group" aria-label="${esc(place.title)} field zones">${place.maps.map(idx=>{const zm=MAPS[idx],on=idx===mi,here=!!S&&idx===S.mp;return`<button type="button" class="rm-subzone-btn${on?' on':''}${here?' here':''}" data-a="atlassub" data-v="${idx}" aria-pressed="${on}"><b>${here?'● ':''}${esc(zm.n)}</b></button>`;}).join('')}</div>`:'';
   const toolbar=`<div class="rm-controls" role="toolbar" aria-label="World map controls">${worldAtlasFullscreen?`<button type="button" class="rm-ctrl-btn" data-a="atlaszoom" data-v="out" aria-label="Zoom out" title="Zoom out">−</button><button type="button" class="rm-ctrl-btn" data-a="atlaszoom" data-v="in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" class="rm-ctrl-btn" data-a="atlaszoom" data-v="reset" aria-label="Reset map view" title="Reset zoom and center">⟲</button><button type="button" class="rm-ctrl-btn rm-ctrl-pill${worldAtlasDrawerHidden?'':' on'}" data-a="atlasdrawer" aria-pressed="${!worldAtlasDrawerHidden}" title="Show or hide stages and drops panel">${worldAtlasDrawerHidden?'☷ Stages & Drops':'☷ Hide Panel'}</button>`:''}<button type="button" class="rm-ctrl-btn rm-ctrl-pill${worldAtlasFullscreen?' on':''}" data-a="atlasfull" aria-pressed="${worldAtlasFullscreen}" title="${worldAtlasFullscreen?'Return to panel view (Esc)':'Expand illustrated map to full screen'}">${worldAtlasFullscreen?'✕ Exit Full Map':'⛶ Full Map'}</button></div>`;
-  const viewportBody=`<div id="rmCanvas" class="rm-canvas" style="--cw:${worldAtlasPan.cw}px;--ch:${worldAtlasPan.ch}px;--x:${worldAtlasPan.x}px;--y:${worldAtlasPan.y}px;--zoom:${worldAtlasPan.zoom}"><img class="rm-map" src="assets/world-map/world-map-cleaned.webp?v=283" alt="Illustrated map of Rune-Midgard" draggable="false"><img class="rm-clouds-veil" src="assets/world-map/cloud-mask-16x9.webp?v=283" alt="" draggable="false">${WORLD_ATLAS_BIRDS.map(b=>`<div id="rmAmb-${b.id}" class="rm-ambient rm-birds ${b.id}" style="--ax:${b.x}%;--ay:${b.y}%;--size:${b.size}%" aria-hidden="true"><img src="${b.img}?v=283" alt="" draggable="false"></div>`).join('')}${WORLD_ATLAS_CLOUDS.map(c=>`<div id="rmAmb-${c.id}" class="rm-ambient rm-cloud ${c.id}" style="--ax:${c.x}%;--ay:${c.y}%;--size:${c.size}%" aria-hidden="true">${Array.from({length:c.puffs},(_,pi)=>`<img class="rm-puff rm-puff-${pi+1}" src="assets/world-map/cloud-direct.webp?v=283" alt="" draggable="false">`).join('')}</div>`).join('')}<div id="rmLocationLayer" class="rm-location-layer">${WORLD_ATLAS_PLACES.map(p=>{const selected=p.id===place.id,here=!!S&&p.maps.includes(S.mp);return`<button type="button" class="rm-loc${selected?' is-selected':''}${here?' is-here':''}" data-a="atlasplace" data-v="${p.id}" aria-pressed="${selected}" aria-label="${esc(p.title)}${here?' (Current location)':''}" style="--x:${p.x}%;--y:${p.y}%;--size:${p.size}%"><img src="${p.cutout}?v=283" alt="" draggable="false"><span class="rm-loc-label">${here?'<i class="rm-here-dot" aria-hidden="true"></i>':''}${esc(p.title)}</span></button>`;}).join('')}</div></div>`;
+  const viewportBody=`<div id="rmCanvas" class="rm-canvas" style="--cw: ${worldAtlasPan.cw}px; --ch: ${worldAtlasPan.ch}px; --x: ${worldAtlasPan.x}px; --y: ${worldAtlasPan.y}px; --zoom: ${worldAtlasPan.zoom};"><img class="rm-map" src="assets/world-map/world-map-cleaned.webp?v=283" alt="Illustrated map of Rune-Midgard" draggable="false"><img class="rm-clouds-veil" src="assets/world-map/cloud-mask-16x9.webp?v=283" alt="" draggable="false">${WORLD_ATLAS_BIRDS.map(b=>`<div id="rmAmb-${b.id}" class="rm-ambient rm-birds ${b.id}" style="--ax:${b.x}%;--ay:${b.y}%;--size:${b.size}%" aria-hidden="true"><img src="${b.img}?v=283" alt="" draggable="false"></div>`).join('')}${WORLD_ATLAS_CLOUDS.map(c=>`<div id="rmAmb-${c.id}" class="rm-ambient rm-cloud ${c.id}" style="--ax:${c.x}%;--ay:${c.y}%;--size:${c.size}%" aria-hidden="true">${Array.from({length:c.puffs},(_,pi)=>`<img class="rm-puff rm-puff-${pi+1}" src="assets/world-map/cloud-direct.webp?v=283" alt="" draggable="false">`).join('')}</div>`).join('')}<div id="rmLocationLayer" class="rm-location-layer">${WORLD_ATLAS_PLACES.map(p=>{const selected=p.id===place.id,here=!!S&&p.maps.includes(S.mp);return`<button type="button" class="rm-loc${selected?' is-selected':''}${here?' is-here':''}" data-a="atlasplace" data-v="${p.id}" aria-pressed="${selected}" aria-label="${esc(p.title)}${here?' (Current location)':''}" style="--x:${p.x}%;--y:${p.y}%;--size:${p.size}%"><img src="${p.cutout}?v=283" alt="" draggable="false"><span class="rm-loc-label">${here?'<i class="rm-here-dot" aria-hidden="true"></i>':''}${esc(p.title)}</span></button>`;}).join('')}</div></div>`;
   const caption=`<div class="rm-hero-caption"><span class="ui-eyebrow">RUNE-MIDGARD / ${String(mi+1).padStart(2,'0')} · ${esc(place.title.toUpperCase())}</span><h2>${esc(MAPS[mi].n)}</h2><p>${esc(MAPS[mi].t)} · Recommended ${esc(MAPS[mi].rec)}</p></div>`;
-  return `<div id="rmViewport" class="rm-viewport">${viewportBody}</div>${toolbar}${caption}`;
+  return `<div id="rmViewport" class="rm-viewport">${viewportBody}</div>${subOverlay}${toolbar}${caption}`;
 }
 function buildIllustratedStageHead(mi,make){
-  const place=worldAtlasPlaceOf(mi),m=MAPS[mi],subDesc=(m.t||'').split('·')[0].trim();
-  const subBtns=place.maps.length>1?`<span class="rm-subzones rm-subzones-inline" role="group" aria-label="${esc(place.title)} field zones">${place.maps.map(idx=>{const zm=MAPS[idx],on=idx===mi,here=!!S&&idx===S.mp;return`<button type="button" class="rm-subzone-btn${on?' on':''}${here?' here':''}" data-a="atlassub" data-v="${idx}" aria-pressed="${on}"><b>${here?'● ':''}${esc(zm.n)}</b></button>`;}).join('')}</span>`:'';
+  const m=MAPS[mi],pr=S?Math.min(S.prog[mi]||0,normalStages(mi)):0,nmo=typeof nmMapOpen==='function'&&S?nmMapOpen(mi):false;
+  const status=`${pr}/${normalStages(mi)} open · ${nmo?'NM open':'NM Lv '+NMLV[nmTierOf(mi)]}`;
   const wrap=make('div','rm-optb-head');
-  wrap.innerHTML=`<div class="rm-optb-meta"><span class="rm-optb-kicker">02 / ${esc(m.n.toUpperCase())} · ${esc(m.rec)}</span>${subDesc?`<span class="rm-optb-sub">(${esc(subDesc)})</span>`:''}${subBtns}</div>`;
+  wrap.innerHTML=`<div class="rm-optb-meta"><span class="rm-optb-kicker">02 / ${esc(m.n.toUpperCase())}</span><span class="rm-optb-lv">${esc(m.rec)}</span><span class="rm-optb-sub">${esc(status)}</span></div>`;
   return wrap;
+}
+function buildFieldEncounterRoster(mi,li,field,make){
+  const mobImg=m=>esc(ASCENSION_MOB_IDS.has(m.spriteId)?'assets/mobs/v1/thumb-'+m.spriteId+'.png':mobSpriteUrl(m.spriteId));
+  const escorts=mi<5?3:5;
+  const encounter=make('div','eclipse-field-encounter');
+  const bossHtml=field.boss?`<div class="rm-mob-tile is-boss"><img src="${mobImg(field.boss)}" alt=""><div><b>${esc(field.boss.n)} <span class="rm-mob-tag boss">MVP</span></b><small>${escorts} escorts · 🃏 ${esc(field.boss.card.n)} (${field.boss.cardCh}%)</small></div></div>`:'';
+  const mobsHtml=`<div class="rm-mob-grid">${field.mobs.map(m=>`<div class="rm-mob-tile"><img src="${mobImg(m)}" alt=""><div><b>${esc(m.n)}${field.boss?' <span class="rm-mob-tag escort">Escort</span>':''}</b><small>🃏 ${esc(m.card.n)} (${m.cardCh}%)</small></div></div>`).join('')}</div>`;
+  encounter.innerHTML=`<div class="rm-encounter-head"><span>MONSTERS ON THIS STAGE</span><small>${field.boss?`MVP + ${escorts} escorts`:`${field.mobs.length} field monsters · independent loot rolls`}</small></div>${bossHtml}${mobsHtml}`;
+  return encounter;
 }
 function syncIllustratedAtlas(centerPlace){
   if(typeof document==='undefined'||!document.getElementById)return;
   const vp=document.getElementById('rmViewport');
   if(!vp)return;
   const vw=vp.clientWidth||640,vh=vp.clientHeight||360;
-  const scale=worldAtlasFullscreen?Math.max(vw/1600,vh/900):(vw/vh>(16/9)*1.12?vh/900:Math.max(vw/1600,vh/900)),cw=Math.round(1600*scale*100)/100,ch=Math.round(900*scale*100)/100;
-  worldAtlasPan.cw=cw;worldAtlasPan.ch=ch;
   if(!worldAtlasFullscreen){
-    worldAtlasPan.zoom=1;
-    worldAtlasPan.x=Math.round((vw-cw)/2*100)/100;
-    worldAtlasPan.y=Math.round((vh-ch)/2*100)/100;
+    const cam=computeMiniAtlasPan(worldAtlasPlaceOf(mapM),vw,vh);
+    worldAtlasPan.cw=cam.cw;worldAtlasPan.ch=cam.ch;worldAtlasPan.x=cam.x;worldAtlasPan.y=cam.y;worldAtlasPan.zoom=cam.zoom;
   }else{
+    const scale=Math.max(vw/1600,vh/900),cw=Math.round(1600*scale*100)/100,ch=Math.round(900*scale*100)/100;
+    worldAtlasPan.cw=cw;worldAtlasPan.ch=ch;
     const z=Math.max(1,Math.min(2.8,worldAtlasPan.zoom||1)),W=cw*z,H=ch*z;
     worldAtlasPan.zoom=z;
     if(centerPlace){
@@ -6849,7 +6872,7 @@ function syncIllustratedAtlas(centerPlace){
     worldAtlasPan.y=Math.min(0,Math.max(vh-H,worldAtlasPan.y));
   }
   const cv=document.getElementById('rmCanvas');
-  if(cv){cv.style.setProperty('--cw',cw+'px');cv.style.setProperty('--ch',ch+'px');cv.style.setProperty('--x',worldAtlasPan.x+'px');cv.style.setProperty('--y',worldAtlasPan.y+'px');cv.style.setProperty('--zoom',String(worldAtlasPan.zoom));}
+  if(cv){cv.style.setProperty('--cw',worldAtlasPan.cw+'px');cv.style.setProperty('--ch',worldAtlasPan.ch+'px');cv.style.setProperty('--x',worldAtlasPan.x+'px');cv.style.setProperty('--y',worldAtlasPan.y+'px');cv.style.setProperty('--zoom',String(worldAtlasPan.zoom));}
 }
 function zoomIllustratedAtlas(factor,ax,ay){
   if(!worldAtlasFullscreen||typeof document==='undefined'||!document.getElementById)return;
@@ -6870,7 +6893,8 @@ function zoomIllustratedAtlas(factor,ax,ay){
 }
 function setWorldAtlasFullscreen(on){
   worldAtlasFullscreen=!!(on&&tabs.includes('map')&&mapSeason==='atlas');
-  if(!worldAtlasFullscreen){worldAtlasDrawerHidden=false;worldAtlasPan.zoom=1;worldAtlasPan.x=0;worldAtlasPan.y=0;}
+  if(worldAtlasFullscreen){worldAtlasPan.zoom=1;worldAtlasPan.x=0;worldAtlasPan.y=0;}
+  else{worldAtlasDrawerHidden=false;worldAtlasPan.zoom=WORLD_ATLAS_MINI_ZOOM;}
   renderWin();
   if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>syncIllustratedAtlas(worldAtlasFullscreen?worldAtlasPlaceOf(mapM):null));
   else syncIllustratedAtlas(worldAtlasFullscreen?worldAtlasPlaceOf(mapM):null);
@@ -7526,14 +7550,32 @@ function arrangePanel(k,root){
     if(mapM<10)put(route,routeTarget);
     put(routeTarget,fields);
     if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')],nodes=[...fields.querySelectorAll('.map-node')],grid=fields.querySelector('.lvgrid'),advRow=fields.querySelector('.row');
-      if(mapM<10){const head=buildIllustratedStageHead(mapM,make);if(advRow)put(head,advRow);fields.prepend(head)}
+      if(mapM<10){const head=buildIllustratedStageHead(mapM,make);if(advRow){const lbl=advRow.querySelector('label');if(lbl){lbl.title='Auto-advance through stages and maps — turn off to farm where you stand';if(lbl.lastChild&&lbl.lastChild.nodeType===3)lbl.lastChild.textContent=' Auto-advance'}put(head,advRow)}fields.prepend(head)}
       if(grid){const normal=make('div','eclipse-stages'),nightmare=make('div','eclipse-stages eclipse-nightmare');nodes.forEach((node,i)=>{node.querySelector('b').textContent=i<10?(i===normalStages(mapM)-1?(mapM<10?'MVP':'♛'):String(i+1).padStart(2,'0')):'NM '+(i-9);node.setAttribute('aria-label',node.title);node.setAttribute('aria-pressed',String(mapL===i+1));put(i<10?normal:nightmare,node)});grid.replaceChildren(normal,nightmare)}
       const go=fields.querySelector('.go');if(go){go.textContent=S.mp===mapM&&S.lvl===mapL?'You are here · '+MAPS[mapM].n:'Travel to '+MAPS[mapM].n+' · '+(mapL>10?'NM '+(mapL-10):'Stage '+String(mapL).padStart(2,'0'))+' →';put(fields,put(make('div','ui-primary-action'),go))}
       put(fields,fold('Stage rules & requirements',notes,'stage-rules'));
     }
     if(special)put(routeTarget,put(section('CHALLENGE / Endless Echo','ui-challenge'),special));
     const intel=section('03 / Field intelligence','ui-field-guide');
-    if(drops){const field=fieldOf(mapM,mapL),mob=field.boss||field.mobs[0],encounter=make('div','eclipse-field-encounter');encounter.innerHTML='<img src="'+esc(ASCENSION_MOB_IDS.has(mob.spriteId)?'assets/mobs/v1/thumb-'+mob.spriteId+'.png':mobSpriteUrl(mob.spriteId))+'" alt=""><div><b>'+esc(mob.n)+'</b><small>'+(field.boss?'MVP + escorts':'Normal field · independent loot rolls')+'</small></div>';drops.querySelector('.hd')?.after(encounter)}
+    if(drops){
+      const field=fieldOf(mapM,mapL),encounter=buildFieldEncounterRoster(mapM,mapL,field,make),cards=[...drops.querySelectorAll(':scope > .mob-card')];
+      const topHd=cards[0]?.querySelector('.hd');
+      if(topHd){
+        const rarBadge=mapM>=10?`<span class="rm-intel-badge r3">Ascension</span>`:`<span class="rm-intel-badge ${rarCls({sec:field.sec,tier:field.tier})}">${esc(rarOf({sec:field.sec,tier:field.tier}).n)} · ${esc(SECN[field.sec])}</span>`;
+        topHd.classList.add('rm-intel-hd');
+        topHd.insertAdjacentHTML('beforeend',rarBadge);
+        topHd.after(encounter);
+      }
+      if(field.boss&&cards[0]&&cards[1]){
+        const bossEntry=cards[1].querySelector('.mobentry');
+        if(bossEntry){
+          const bossWrap=make('div','rm-boss-loot-priority');
+          bossWrap.innerHTML='<div class="dropgrp"><small>👑 MVP Boss Drops ('+esc(field.boss.n)+')</small></div>';
+          bossWrap.append(bossEntry);
+          encounter.after(bossWrap);
+        }
+      }
+    }
     intel.dataset.panelScroll='field-intelligence';put(intel,drops);body.replaceChildren(destinations,route,intel);
   }else if(mode==='stats'){
     const slots=direct().filter(e=>e.classList.contains('slot')),attrs=slots.filter(e=>e.querySelector('[data-a="stat"]')),combat=slots.find(e=>!e.querySelector('[data-a="stat"]')),reset=q('[data-a="rstat"]');
@@ -13180,10 +13222,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=314"></script>
-<script src="assets/social-poker.js?v=314"></script>
-<script src="assets/social-scene.js?v=314"></script>
-<script src="assets/social-fishing.js?v=314"></script>
-<script src="assets/social.js?v=314"></script>
+<script src="assets/social-rules.js?v=315"></script>
+<script src="assets/social-poker.js?v=315"></script>
+<script src="assets/social-scene.js?v=315"></script>
+<script src="assets/social-fishing.js?v=315"></script>
+<script src="assets/social.js?v=315"></script>
 </body>
 </html>

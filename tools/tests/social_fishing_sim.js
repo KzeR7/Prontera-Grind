@@ -810,7 +810,7 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  const curV=(page.match(/haven-v(\d+)/)||[])[1];
- assert(Number(curV)>=314,'the login card names the v314+ build');
+ assert(Number(curV)>=315,'the login card names the v315+ build');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
   assert(page.includes(asset+'?v='+curV),asset+' is versioned at v'+curV);
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------

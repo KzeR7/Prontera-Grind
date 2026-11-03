@@ -651,11 +651,30 @@ test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar
  // Player is in Izlude (S.mp === 1), which belongs to Prontera & Izlude:
  const pronteraPin=win.querySelector('[data-a="atlasplace"][data-v="prontera"]');
  assert.ok(pronteraPin.classList.contains('is-selected')&&pronteraPin.classList.contains('is-here'),'paired Prontera & Izlude pin shows selected + current location');
+ assert.ok(win.querySelector('.rm-illustrated-hero > .rm-subzones-overlay'),'paired sub-zone toggle floats over top-left ocean so stage card height never shifts');
  assert.equal(win.querySelectorAll('[data-a="atlassub"]').length,2,'Prontera & Izlude renders 2 sub-zone buttons');
+ const izludeStyle=canvasNode.getAttribute('style');
+ assert.equal(canvasNode.style.getPropertyValue('--zoom'),'1.2','mini-map focuses at 1.2x regional zoom');
  win.querySelector('[data-a="atlassub"][data-v="0"]').click();
  assert.equal(ev('mapM'),0,'sub-zone switches to Prontera while player remains in Izlude');
  assert.strictEqual(win.querySelector('#rmCanvas'),canvasNode,'eclipsePatch preserves live #rmCanvas node across zone switch');
  assert.strictEqual(win.querySelector('#rmAmb-birds-a'),birdNode,'eclipsePatch preserves live bird animation node');
+ assert.equal(canvasNode.getAttribute('style'),izludeStyle,'switching between Prontera and Izlude produces zero camera jump');
+ // Complete stage monster roster & drop accuracy checks:
+ ev("mapM=0;mapL=1;renderWin()");
+ const s1Mobs=[...win.querySelectorAll('.ui-field-guide .eclipse-field-encounter .rm-mob-tile b')].map(el=>el.textContent.trim());
+ assert.deepEqual(s1Mobs,['Poring','Fabre'],'Prontera Stage 1 shows both Poring and Fabre in Field Intelligence');
+ ev("mapM=0;mapL=10;renderWin()");
+ const s10Mobs=[...win.querySelectorAll('.ui-field-guide .eclipse-field-encounter .rm-mob-tile b')].map(el=>el.childNodes[0].textContent.trim());
+ assert.deepEqual(s10Mobs,['Mastering','Peco Peco','Poring'],'Prontera Stage 10 MVP shows Mastering plus both escort species');
+ assert.ok(win.querySelector('.ui-field-guide .rm-boss-loot-priority'),'Boss stage hoists MVP drops into priority loot card directly beneath monster roster');
+ // Regional camera pans smoothly between distant regions (Geffen vs Amatsu):
+ win.querySelector('[data-a="selm"][data-v="2"]').click();
+ const geffenX=canvasNode.style.getPropertyValue('--x'),geffenY=canvasNode.style.getPropertyValue('--y');
+ win.querySelector('[data-a="selm"][data-v="7"]').click();
+ const amatsuX=canvasNode.style.getPropertyValue('--x'),amatsuY=canvasNode.style.getPropertyValue('--y');
+ assert.notEqual(`${geffenX},${geffenY}`,`${amatsuX},${amatsuY}`,'selecting distant maps pans the 1.2x camera smoothly toward each region');
+ assert.match(eclipseCss,/#wins \.rm-canvas\{[\s\S]*?transition:transform \.52s cubic-bezier\(/,'#rmCanvas animates regional focus smoothly');
  // Switching to Morroc omits both paired sub-zones and lore card:
  win.querySelector('[data-a="selm"][data-v="3"]').click();
  assert.equal(ev('mapM'),3);
@@ -669,7 +688,7 @@ test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar
  assert.deepEqual([...win.querySelectorAll('[data-a="atlassub"]')].map(b=>b.dataset.v),['8','9']);
  win.querySelector('[data-a="atlassub"][data-v="9"]').click();
  assert.equal(ev('mapM'),9);
- // Full Map mode enables zoom + drawer toggle + two-step Escape (fullscreen -> mini-map at 1x -> close):
+ // Full Map mode enables zoom + drawer toggle + two-step Escape (fullscreen -> mini-map at 1.2x -> close):
  win.querySelector('[data-a="atlasfull"]').click();
  assert.equal(doc.body.classList.contains('rm-atlas-fullscreen'),true);
  assert.equal(win.classList.contains('rm-fullscreen-mode'),true);
@@ -684,7 +703,7 @@ test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar
  const escKey=()=>doc.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
  escKey();
  assert.equal(doc.body.classList.contains('rm-atlas-fullscreen'),false,'first Escape exits fullscreen map');
- assert.equal(ev('worldAtlasPan.zoom'),1,'exiting Full Map resets mini-map zoom to 1');
+ assert.equal(ev('worldAtlasPan.zoom'),1.2,'exiting Full Map restores 1.2x mini-map focus zoom');
  assert.equal(win.querySelectorAll('[data-a="atlaszoom"]').length,0,'mini-map hides zoom controls again');
  assert.equal(ev('tabs.includes("map")'),true,'map panel remains open in embedded view after exiting fullscreen');
  escKey();
