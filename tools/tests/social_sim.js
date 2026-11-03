@@ -162,6 +162,23 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  assert.equal(resumed.room,1,'a reconnect a minute later rejoins the same plaza');
  assert(Math.hypot(resumed.x-pondSpot.x,resumed.z-pondSpot.z)<2,'the angler resumes at the pond, not the entrance');
  assert(resumed.events.some(e=>e.type==='room'),'the reconnecting client is sent the room snapshot');
+ // v311 (owner: "he auto jumps around on reconnect"): the room keeps the spot, never the errand.
+ // A half-finished walk used to be restored, so a reconnected client watched its character stroll
+ // off toward a destination it had already forgotten.
+ {
+  const stand=R.POND_PROPS[0].stands.find(s=>s.name==='south')||R.POND_PROPS[0].stands[0];
+  const walker=mk(403);
+  fClock.t+=200;sendF(walker,{type:'move',x:stand.x,z:stand.z});
+  assert(walker.path.length>0,'the walker really has a route');
+  fClock.t+=300;R.advance(walker,fClock.t);
+  const walkedTo={x:walker.x,z:walker.z};
+  fishRoom.disconnect(walker);
+  const walkBack=mk(403);
+  assert.equal(walkBack.path.length,0,'a reconnect never resumes the old walk');
+  assert(Math.hypot(walkBack.x-walkedTo.x,walkBack.z-walkedTo.z)<1,'the spot is where the walk had reached');
+  assert.equal((walkBack.events.find(e=>e.type==='room')||{players:[]}).players.every(p=>p.id!==403||p.path.length===0),true,'the room snapshot publishes no stale route');
+  fishRoom.disconnect(walkBack);
+ }
  // The reservation is still bounded: past the idle window it is a fresh join at the entrance.
  fishRoom.disconnect(resumed);
  fClock.t+=310000;const fresh=mk(401);

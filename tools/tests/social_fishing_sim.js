@@ -402,11 +402,16 @@ assert.equal(F.onLocalMessage(1,'hello everyone'),false,'normal chat lines never
 assert.equal(F.onLocalMessage(1,'🎣 shows off a Royal Koi — 4.25 kg (Rare)!'),false,'without a bound scene nothing is shown, so the bubble stays');
 // Heavier fish render bigger over the angler's head, within sane sprite bounds.
 assert(F.showOffScale(58)>F.showOffScale(5)&&F.showOffScale(5)>F.showOffScale(.1),'scale grows with weight');
-// v304: the curve is now sqrt-based so the very biggest fish can fill the pond. A 60 kg catch is
-// still a big silhouette next to the angler, and the 1.8 t whale shark spans most of the 18-unit pond.
+// v311 (owner: "a 922 kg fish looks small next to the pond - the max is 1000 kg, it should be as
+// big as the pond"). The ladder is pinned to the pond: 1,000 kg is 13 units across a 13 x 18 pond,
+// 922 kg reads 12.46, and nothing ever exceeds the scene's 13.2 clamp.
 assert(F.showOffScale(60)>=2*F.showOffScale(5),'a 60 kg whale reads much larger than a 5 kg fish');
-assert(F.showOffScale(1800)>=9.5,'the biggest fish spans most of the pond');
-assert(F.showOffScale(999)<=11&&F.showOffScale(.01)>=.45,'scale stays within sprite bounds');
+assert.equal(F.showOffScale(1000),13,'the 1 t ceiling is the width of the pond');
+assert(F.showOffScale(922)>=12,'a 922 kg fish reads as pond-sized');
+assert.equal(F.showOffScale(1800),13,'anything heavier than the cap stays at the cap');
+assert(F.showOffScale(400)>F.showOffScale(200)&&F.showOffScale(200)>F.showOffScale(100),'the ladder never flattens at the top');
+assert(F.showOffScale(1)>=.8&&F.showOffScale(.01)>=.4,'small fish stay small');
+assert(F.showOffScale(999)<=13.2,'scale stays inside the scene clamp');
 while(st.bag.length<F.BAG_MAX)F.addCatch(st,{sp:'minnow',rarity:'common',w:.2});
 assert.equal(F.addCatch(st,{sp:'minnow',rarity:'common',w:.2}),null,'full bag refuses new fish');
 assert.equal(st.bag.length,F.BAG_MAX);
@@ -467,6 +472,20 @@ countRich.stats.casts=6000;countRich.stats.catches=2000;countRich.stats.perfects
 for(const sp of F.SPECIES)countRich.dex[sp.id]={n:200,bw:Math.max(sp.max,900),mut:[]};
 for(const id of ['full-creel','armoury','coin-hoard','dark-star'])
  assert(!F.titleUnlocked(countRich,F.FISHING_TITLE_BY_ID[id]),id+' is not just another counter');
+// v311 (owner: "players with the qualifying fish still don't get Dark Star"): any mutation on a
+// mythical or secret fish earns it, and a mutation that only survives in the bag still counts, so a
+// catch sold or carried over from an older save is not quietly forgotten.
+{
+ const dark=F.FISHING_TITLE_BY_ID['dark-star'];
+ const myth=F.SPECIES.find(s=>s.rarity==='mythical').id,secret=F.SPECIES.find(s=>s.rarity==='secret').id;
+ const shiny=F.normalize(null);F.addCatch(shiny,{sp:myth,w:400,mut:'shiny'});
+ assert(F.titleUnlocked(shiny,dark),'a shiny mythical earns Dark Star');
+ const plain=F.normalize(null);F.addCatch(plain,{sp:myth,w:400,mut:null});
+ assert(!F.titleUnlocked(plain,dark),'an unmutated mythical does not');
+ const legacy=F.normalize({bag:[{id:'x',sp:secret,w:300,mut:'golden',at:1,perfect:false,lock:false}],dex:{[secret]:{n:1,bw:300,at:1}}});
+ assert(F.titleUnlocked(legacy,dark),'a mutation only the bag remembers still counts');
+ assert.equal(F.mutationKinds(legacy),1,'the mutation counter reads the bag too');
+}
 const mid=F.normalize(null);
 mid.stats.casts=300;mid.stats.catches=60;mid.stats.perfects=30;
 assert.equal(F.FISHING_TITLES.filter(t=>F.titleUnlocked(mid,t)).length<=4,true,'the new ten stay locked for an ordinary save');
@@ -698,6 +717,17 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
 // What matters is that the target sits on the pond's rim, not the distance from its centre.
 const rimDist=Math.hypot(Math.max(0,Math.abs(moved.x-pondA.x)-pondA.w/2),Math.max(0,Math.abs(moved.z-pondA.z)-pondA.d/2));
 assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
+// v311 (owner: "pond clicking is off - it keeps going to the same place"): the water you click now
+// decides the stand, so two clicks on opposite banks walk to opposite banks.
+{
+ const pondB=w2.PGSocialRules.PONDS[0],targets=[];
+ FISH.bind({host:()=>hostS,scene:()=>null,self:()=>({x:0,z:12}),moveTo:(x,z)=>targets.push({x,z}),notice:()=>{},save:()=>{}});
+ FISH.pondClick(pondB.x-5,pondB.z,0);const west=targets.at(-1);
+ FISH.pondClick(pondB.x+5,pondB.z,0);const east=targets.at(-1);
+ assert(west&&east&&Math.hypot(west.x-east.x,west.z-east.z)>5,'clicking the far bank walks somewhere else');
+ assert(east.x>west.x,'the east click lands east of the west click');
+ FISH.bind({host:()=>hostS,scene:()=>null,self:()=>({x:me.x,z:me.z}),moveTo:(x,z)=>{moved={x,z}},notice:()=>{},save:()=>{}});
+}
  // Reaching the rim resumes fishing.
  me.x=rimA.x;me.z=rimA.z;
  frame2(clock2+=100);
@@ -780,8 +810,8 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=310'),asset+' is versioned at v310');
- assert(/haven-v310/.test(page),'the login card names the v310 build');
+  assert(page.includes(asset+'?v=311'),asset+' is versioned at v311');
+ assert(/haven-v311/.test(page),'the login card names the v311 build');
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
  const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');

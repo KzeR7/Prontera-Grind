@@ -268,7 +268,13 @@ const BAITS_BY_ID=Object.fromEntries(BAITS.map(b=>[b.id,b]));
 // counter that older saves lack. `cur`/`goal` drive the progress text in the Titles tab.
 const discoveredSpecies=s=>Object.keys(s&&s.dex?s.dex:{}).filter(k=>s.dex[k]&&s.dex[k].n>0).length;
 const bestWeight=s=>Object.values(s&&s.dex?s.dex:{}).reduce((b,d)=>Math.max(b,Number(d&&d.bw)||0),0);
-const mutationKinds=s=>new Set(Object.values(s&&s.dex?s.dex:{}).flatMap(d=>Array.isArray(d&&d.mut)?d.mut:[])).size;
+// v311: the bag is read too. A catch that was sold, auto-sold or carried over from a save written
+// before mutations were stored on the dex entry still counts - the fish was really caught.
+const mutationIds=s=>{const out=new Set(),dex=s&&s.dex?s.dex:{},bag=Array.isArray(s&&s.bag)?s.bag:[];
+ for(const d of Object.values(dex))for(const m of (Array.isArray(d&&d.mut)?d.mut:[]))if(m)out.add(m);
+ for(const e of bag)if(e&&typeof e.mut==='string'&&e.mut)out.add(e.mut);
+ return out;};
+const mutationKinds=s=>mutationIds(s).size;
 // v299: the ten new titles are derived from the same saved blob, so an old save can earn them too.
 const keptMutationFish=s=>Object.values(s&&s.dex?s.dex:{}).reduce((n,d)=>n+(Array.isArray(d&&d.mut)?d.mut.filter(Boolean).length:0),0);
 const bestSpeciesCount=s=>Object.values(s&&s.dex?s.dex:{}).reduce((b,d)=>Math.max(b,Number(d&&d.n)||0),0);
@@ -278,8 +284,14 @@ const caughtIn=(s,pred)=>SPECIES.filter(sp=>pred(sp)&&s.dex&&s.dex[sp.id]&&s.dex
 // for a SHAPE of save rather than a number: a full creel, the whole rod rack, a coin hoard, and a
 // mutated mythic. All of it reads the same saved blob, so an old save still earns what it earned.
 const rodsOwned=s=>new Set([...(Array.isArray(s&&s.rods)?s.rods:Object.keys((s&&s.rods)||{}).filter(k=>s.rods[k])),'twig']).size;
-const mutatedMythic=s=>SPECIES.filter(sp=>(sp.rarity==='mythical'||sp.rarity==='secret')&&s.dex&&s.dex[sp.id]&&s.dex[sp.id].n>0
- &&Array.isArray(s.dex[sp.id].mut)&&s.dex[sp.id].mut.some(m=>m==='golden'||m==='prismatic')).length;
+// v311 (owner: "players with the qualifying fish still don't get Dark Star"). The old test demanded
+// a Golden or Prismatic roll on top of a mythical-or-secret roll - about one catch in 100,000 - so
+// anglers who had visibly caught a mutated mythic were told they had not. Any mutation on a
+// mythical or secret fish now earns the title, and the dex and the bag are both read.
+const mutatedMythic=s=>{const dex=s&&s.dex?s.dex:{},bag=Array.isArray(s&&s.bag)?s.bag:[];
+ return SPECIES.filter(sp=>(sp.rarity==='mythical'||sp.rarity==='secret')&&(
+  (dex[sp.id]&&dex[sp.id].n>0&&Array.isArray(dex[sp.id].mut)&&dex[sp.id].mut.length>0)||
+  bag.some(e=>e&&e.sp===sp.id&&typeof e.mut==='string'&&e.mut))).length;};
 // v310 (owner: "titles are also mission icons & not arranged rarity"): each title now carries the
 // rarity tier it belongs to and its place on that ladder (rank 1-20, easiest first). The list is
 // rendered in rank order - Common, Uncommon, Rare, Legendary, Mythical, Secret - with the same
@@ -305,7 +317,7 @@ const FISHING_TITLES=[
  {id:'full-creel',tier:'legendary',rank:15,name:'Full Creel',mark:'🧺',tone:'ember',cur:s=>Number(s.bag&&s.bag.length)||0,goal:500,req:'fill the biggest bag - 500 fish at once'},
  {id:'armoury',tier:'common',rank:3,name:'Armoury',mark:'🪝',tone:'bronze',cur:rodsOwned,goal:6,req:'own all six rods'},
  {id:'coin-hoard',tier:'mythical',rank:18,name:'Coin Hoard',mark:'🪙',tone:'gold',cur:s=>Number(s.coins)||0,goal:50000,req:'hold 50,000 Fishcoins at once'},
- {id:'dark-star',tier:'secret',rank:20,name:'Dark Star',mark:'🌑',tone:'void',cur:mutatedMythic,goal:1,req:'catch a mythical or secret fish with a Golden or Prismatic mutation'},
+ {id:'dark-star',tier:'secret',rank:20,name:'Dark Star',mark:'🌑',tone:'void',cur:mutatedMythic,goal:1,req:'catch a mythical or secret fish with any mutation'},
 ];
 // v310: a painted medal for each title tier - a ribbon, a disc in the rarity colour and a star. It
 // replaces the loose glyphs (◉ ⌖ ⚔ ✧ ★ …) that read as quest markers and rendered at a different
@@ -655,15 +667,17 @@ function parseShowOff(body){
  if(!Number.isFinite(w)||w<=0||w>999)return null;
  return {sp:spId,w:Math.round(w*100)/100,mut};
 }
-// Overhead sprite scale from weight.
-// v304 (owner): "400 kg with 100 kg is almost the same size - max should be as big as the pond". The
-// old curve was x/(x+6), which saturates: 48 kg and 131 kg both came out around 4.5, and everything
-// past 200 kg was the same fish. This one is square-root, so size keeps separating: a 1 kg fish is
-// 0.68 units, 48 kg is 2.08, 131 kg is 3.14, 400 kg is 5.15 and the 1.8 t whale shark is 10.4 -
-// about the width of a pond. Four times the weight is twice the fish, all the way up the catalog.
+// Overhead sprite scale from weight. v304 flattened nothing but still topped out at 11 units after a
+// square root; v311 pins the ladder to the pond instead of to a magic number.
 function showOffScale(w){
- const x=Math.max(.01,Number(w)||.01);
- return Math.round(Math.min(11,0.45+0.235*Math.sqrt(x))*100)/100;
+ // v311 (owner: "a 922 kg fish looks small next to the pond - the max is 1000 kg, it should be as
+ // big as the pond"). One curve from a minnow to the pond itself: at the 1,000 kg ceiling the fish
+ // is 13 units across in a 13 x 18 pond, 922 kg reads 12.46, 400 kg 8.13 and a 50 kg fish 3.06, so
+ // the ladder never flattens out the way the old x/(x+6) and sqrt curves did at the top end.
+ // The pond is 13 units deep and 18 wide; 1,000 kg (the weight every catch is clamped to) is the
+ // fish that fills it, and anything heavier - the whale-shark class in the catalog - sits at the cap.
+ const x=Math.max(.01,Math.min(1000,Number(w)||.01));
+ return Math.round(Math.min(13,0.7+12.3*Math.pow(x/1000,.55))*100)/100;
 }
 // ------------------------------- browser UI ------------------------------------------------
 const doc=root.document;
@@ -725,8 +739,11 @@ function standPoint(p,s){
  // solid, so the walk no longer ends inside the rock face.
  const props=(R().POND_PROPS||[])[ui.pond];
  const stands=props&&Array.isArray(props.stands)?props.stands:[];
- const nearest=stands.filter(c=>R().walkable(c.x,c.z))
-  .sort((a,b)=>Math.hypot(a.x-s.x,a.z-s.z)-Math.hypot(b.x-s.x,b.z-s.z))[0];
+ // The stand nearest the water you clicked wins, with a half-weight nudge toward the angler so a
+ // click straight across the pond does not send you the long way round.
+ const me=(()=>{try{return selfPos()||s}catch{return s}})();
+ const score=c=>Math.hypot(c.x-s.x,c.z-s.z)+.15*Math.hypot(c.x-me.x,c.z-me.z);
+ const nearest=stands.filter(c=>R().walkable(c.x,c.z)).sort((a,b)=>score(a)-score(b))[0];
  if(nearest)return {x:nearest.x,z:nearest.z};
  const cx=Math.max(p.x-p.w/2-1.6,Math.min(p.x+p.w/2+1.6,s.x)),cz=Math.max(p.z-p.d/2-1.6,Math.min(p.z+p.d/2+1.6,s.z));
  const candidates=[{x:cx,z:cz}];
@@ -1534,8 +1551,15 @@ function finishReel(kind){
  ui.holding=false;
  if(kind==='catch'){
   const isNew=!state().dex[ui.roll.sp];
+  // v311 (owner: "players with the qualifying fish don't get their titles"): the ladder is checked
+  // on the catch itself, so a title that unlocks is announced the moment it does instead of waiting
+  // for the angler to reopen the Titles tab and wonder what went wrong.
+  const heldBefore=new Set(FISHING_TITLES.filter(t=>titleUnlocked(state(),t)).map(t=>t.id));
   const entry=addCatch(state(),{...ui.roll,perfect:ui.reel.perfect});
   persist();
+  const fresh=FISHING_TITLES.filter(t=>!heldBefore.has(t.id)&&titleUnlocked(state(),t));
+  if(fresh.length)status('New title unlocked · '+fresh.map(t=>t.name).join(' · '));
+  if(els&&!els.titlesView.hidden)renderTitles();
   const sp=speciesById(ui.roll.sp);
   sound(entry&&entry.perfect?'perfect':'catch');
   if(f)f.catchFly({spId:sp.id,mut:entry?entry.mut:ui.roll.mut,glyph:sp.glyph,hue:sp.hue},null,()=>{});
@@ -1626,7 +1650,7 @@ function tick(t){
  }
 }
 function startLoop(){cancelAnimationFrame(ui.raf);ui.last=0;ui.raf=requestAnimationFrame(tick)}
-function startFishing(pondIdx){
+function startFishing(pondIdx,at){
  ensureDom();
  if(!els||!R()||!R().PONDS||!R().PONDS.length)return;
  const s=selfPos();
@@ -1639,7 +1663,7 @@ function startFishing(pondIdx){
  if(distToPond()>2.4){
   // v294: phase goes to 'walking' BEFORE moveTo so the movement lock (busy()) never blocks
   // fishing's own walk to the pond.
-  const stand=standPoint(p,s);
+  const stand=standPoint(p,at&&Number.isFinite(at.x)?at:s,s);
   setPhase('walking');
   ui.walkT0=now();
   if(stand&&opts.moveTo)opts.moveTo(stand.x,stand.z);
@@ -1906,9 +1930,12 @@ function bind(options){
  const f=sceneFishing();f&&f.setFishVisible(true);
 }
 function toggle(){if(ui.phase==='off')startFishing();else stopFishing()}
+// v311 (owner: "pond clicking is off, sometimes it keeps going to the same place"). The click point
+// used to be thrown away and every cast walked to the stand nearest the PLAYER, so two clicks ten
+// units apart in the same pond produced the same walk. The spot now travels with the request.
 function pondClick(x,z,idx){
- if(ui.phase==='off')startFishing(idx);
- else if(ui.phase==='walking'||ui.phase==='ready')startFishing(idx);
+ const at=Number.isFinite(x)&&Number.isFinite(z)?{x,z}:null;
+ if(ui.phase==='off'||ui.phase==='walking'||ui.phase==='ready')startFishing(idx,at);
 }
 function hubClosed(){stopFishing();if(els){els.panel.hidden=true;els.menu.hidden=true}}
 preloadFishArt();

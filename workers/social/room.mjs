@@ -249,7 +249,7 @@ export class SocialRoom {
   // Never accept coordinates, a room id or a seat from the browser's join payload.
   const resume=this.takeResume(c.id,this.now());
   if(resume){
-   Object.assign(c,{room:resume.room,x:resume.x,z:resume.z,dir:resume.dir,path:resume.path,at:this.now(),sit:resume.sit,seat:resume.seat,pokerSeat:resume.pokerSeat,look:resume.look,resumed:true});
+   Object.assign(c,{room:resume.room,x:resume.x,z:resume.z,dir:resume.dir,path:[],at:this.now(),sit:resume.sit,seat:resume.seat,pokerSeat:resume.pokerSeat,look:resume.look,resumed:true});
    if(Number.isInteger(c.seat)&&[...this.clients.values()].some(p=>p!==c&&p.room===c.room&&p.seat===c.seat)){c.seat=null;c.sit=false}
   }
   this.clients.set(c.id,c);
@@ -276,7 +276,11 @@ export class SocialRoom {
   // leave has already cleared the room; a replacement tab may inherit the same reservation.
   if(room&&!c.released){
    R.advance(c,now);
-   const saved={room,x:c.x,z:c.z,dir:c.dir,path:c.path.map(p=>({...p})),sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look,expires:now+RESUME_MS,seatExpires:now+POKER_RESUME_MS};
+   // v311 (owner: "he auto jumps around on reconnect"): the remaining route is deliberately NOT
+   // restored. The spot is where the character actually stood; replaying a half-finished walk meant
+   // a reconnected player watched their character stroll off on its own, and the client's own copy
+   // of that walk had already been stopped.
+   const saved={room,x:c.x,z:c.z,dir:c.dir,path:[],sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look,expires:now+RESUME_MS,seatExpires:now+POKER_RESUME_MS};
    this.resumes.set(c.id,saved);
    // v296: also hand it to storage. A Durable Object can be evicted while nobody is connected,
    // which used to empty this Map and turn the next reconnect into a fresh join at the entrance.
