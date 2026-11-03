@@ -12,7 +12,7 @@ function cleanPokerLedgerIds(value){return [...new Set((Array.isArray(value)?val
 const worldHistoryKey=user=>'pg_social_world_v1_'+String(user||'').toLowerCase();
 function cleanChatMessage(m){
  if(!m||!['world','whisper','local'].includes(m.channel)||!Number.isFinite(m.at)||!Number.isInteger(m.from)||typeof m.name!=='string'||typeof m.body!=='string'||m.body.length>300||(m.emotion&&!R.EMOTIONS.includes(m.emotion)))return null;
- return {type:'message',id:typeof m.id==='number'||typeof m.id==='string'?m.id:'',at:m.at,from:m.from,name:m.name.slice(0,32),gm:m.gm===true,channel:m.channel,body:m.body,room:Number.isInteger(m.room)?m.room:0,...(m.emotion?{emotion:m.emotion}:{}),...(Number.isInteger(m.to)?{to:m.to}:{}),...(typeof m.toName==='string'?{toName:m.toName.slice(0,32)}:{})};
+ return {type:'message',id:typeof m.id==='number'||typeof m.id==='string'?m.id:'',at:m.at,from:m.from,name:m.name.slice(0,32),gm:m.gm===true,channel:m.channel,body:m.body,...(m.channel==='local'&&m.sys===true?{sys:true}:{}),room:Number.isInteger(m.room)?m.room:0,...(m.emotion?{emotion:m.emotion}:{}),...(Number.isInteger(m.to)?{to:m.to}:{}),...(typeof m.toName==='string'?{toName:m.toName.slice(0,32)}:{})};
 }
 function mergeChatMessages(...lists){
  const unique=new Map();
@@ -34,6 +34,11 @@ const hub=document.createElement('section');hub.id='socialHub';hub.hidden=true;h
 const leaveWarning=document.createElement('div');leaveWarning.id='socialPokerLeaveWarning';leaveWarning.hidden=true;
 leaveWarning.innerHTML='<section class="poker-leave-card" role="dialog" aria-modal="true" aria-labelledby="pokerLeaveTitle" aria-describedby="pokerLeaveCopy"><span class="poker-leave-eyebrow">YOU’RE STILL AT THE TABLE</span><h2 id="pokerLeaveTitle">Leave this poker game?</h2><p id="pokerLeaveCopy"></p><p class="poker-leave-note">You can minimize the table instead and keep playing.</p><div class="poker-leave-actions"><button id="pokerLeaveStay" type="button" class="poker-primary-btn">Stay at table</button><button id="pokerLeaveConfirm" type="button" class="poker-danger-btn">Fold &amp; leave</button></div></section>';
 $id('view').append(leaveWarning);
+// v297: the fishing copy of the leave-warning. Clicking away from the pond used to block the click
+// and spam chat with "press ✕". It now asks first, exactly like the poker table.
+const fishLeaveWarning=document.createElement('div');fishLeaveWarning.id='socialFishLeaveWarning';fishLeaveWarning.hidden=true;
+fishLeaveWarning.innerHTML='<section class="poker-leave-card fish-leave-card" role="dialog" aria-modal="true" aria-labelledby="fishLeaveTitle" aria-describedby="fishLeaveCopy"><span class="poker-leave-eyebrow">YOUR LINE IS IN THE WATER</span><h2 id="fishLeaveTitle">Stop fishing and move?</h2><p id="fishLeaveCopy">Your line is reeled in and the cast in progress is lost.</p><p class="poker-leave-note">Keep fishing to stay at the pond — nothing is lost if you stay.</p><div class="poker-leave-actions"><button id="fishLeaveStay" type="button" class="poker-primary-btn">Keep fishing</button><button id="fishLeaveConfirm" type="button" class="poker-danger-btn">Reel in &amp; stop</button></div></section>';
+$id('view').append(fishLeaveWarning);
 const feedHidden=()=>document.body.classList.contains('hide-feed')||(typeof S==='object'&&S&&S.feedShow===false);
 function notice(text){const p=document.createElement('p');p.className='social-notice';p.textContent=text;$id('socialLines').append(p)}
 function status(text){$id('socialConnection').textContent=text}
@@ -68,7 +73,9 @@ function playerMenu(name,id){const menu=$id('socialPeople');menu.replaceChildren
  for(const [title,fn] of items){const b=document.createElement('button');b.type='button';b.textContent=title;b.onclick=()=>{fn();menu.hidden=true};menu.append(b)}
  if(isFriend){const mark=document.createElement('small');mark.className='social-friend-mark';mark.textContent='Friend ✓';menu.append(mark)}
 }
-function messageNode(m){const p=document.createElement('div');p.className='social-line';p.dataset.channel=m.channel;const t=document.createElement('time');t.textContent=new Date(m.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});p.append(t);const b=document.createElement('button');b.type='button';b.textContent=(m.gm?'🛠 ':'')+(app.friends.has(m.from)?'★ ':'')+m.name+(m.channel==='whisper'?' → '+m.toName:'');b.title=(m.gm?'Game Master':'')+(m.gm&&app.friends.has(m.from)?' · ':'')+(app.friends.has(m.from)?'Friend':'');b.classList.toggle('social-gm',!!m.gm);b.onclick=()=>playerMenu(m.name,m.from);p.append(b,document.createTextNode(': '));if(m.emotion){const im=document.createElement('img');im.src=emojiURL(m.emotion);im.alt='/'+m.emotion;im.title='/'+m.emotion;p.append(im)}else p.append(document.createTextNode(m.body));return p}
+function messageNode(m){const p=document.createElement('div');p.className='social-line';p.dataset.channel=m.channel;const t=document.createElement('time');t.textContent=new Date(m.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});p.append(t);
+ // v297: pond announcements are system lines, not something a player typed.
+ if(m.sys){p.classList.add('social-line-sys');const span=document.createElement('span');span.className='social-sys-text';span.textContent=m.body;p.append(span);return p}const b=document.createElement('button');b.type='button';b.textContent=(m.gm?'🛠 ':'')+(app.friends.has(m.from)?'★ ':'')+m.name+(m.channel==='whisper'?' → '+m.toName:'');b.title=(m.gm?'Game Master':'')+(m.gm&&app.friends.has(m.from)?' · ':'')+(app.friends.has(m.from)?'Friend':'');b.classList.toggle('social-gm',!!m.gm);b.onclick=()=>playerMenu(m.name,m.from);p.append(b,document.createTextNode(': '));if(m.emotion){const im=document.createElement('img');im.src=emojiURL(m.emotion);im.alt='/'+m.emotion;im.title='/'+m.emotion;p.append(im)}else p.append(document.createTextNode(m.body));return p}
 function renderMessages(preserve=false){const box=$id('socialLines'),bottom=box.scrollHeight-box.scrollTop-box.clientHeight<35,top=box.scrollTop;box.replaceChildren();if(app.channel==='log'){for(const l of logShown()){const p=document.createElement('div');p.className='social-line '+(l.cls||'');p.textContent=l.m;box.append(p)}const b=document.createElement('button');b.textContent='Log filters';b.onclick=()=>openTab('log');box.append(b)}else for(const m of app.messages.filter(m=>m.channel===app.channel&&!app.muted.has(m.from)))box.append(messageNode(m));if(!box.childNodes.length)notice(app.channel==='local'?'Messages here are visible only to this plaza.':'No messages yet.');if(!preserve||bottom){box.scrollTop=box.scrollHeight;$id('socialNew').hidden=true}else {box.scrollTop=top;$id('socialNew').hidden=false}}
 $id('socialNew').onclick=()=>{$id('socialLines').scrollTop=$id('socialLines').scrollHeight;$id('socialNew').hidden=true};
 let lastCooldownKey='';
@@ -84,7 +91,7 @@ setInterval(cooldownUI,200);
 function send(m){if(!app.connected||app.socket?.readyState!==1){status('Chat disconnected — reconnecting…');return false}const speaking=['chat','emotion'].includes(m.type);if(speaking&&Date.now()<app.nextChat){status('Please wait 3 seconds between messages and emotions.');return false}app.socket.send(JSON.stringify(m));if(speaking){app.nextChat=Date.now()+R.CHAT_DELAY;cooldownUI()}return true}
 $id('socialCompose').onsubmit=e=>{e.preventDefault();const input=$id('socialInput'),body=input.value.trim();if(!body||app.channel==='log')return;let sent=false;if(body==='/sit'){toggleSit();input.value='';return}else if(body==='/poker'){pokerOpen();input.value='';return}else if(R.EMOTIONS.includes(body.slice(1))&&body[0]==='/'){const ch=emoteChannel(),em={type:'emotion',emotion:body.slice(1),channel:ch||'local'};if(ch==='whisper')em.to=$id('socialTo').value.trim();if(ch==='whisper'&&!em.to){status('Whisper an emotion to whom? Type a name in the To field first.');return}sent=send(em)}else if(body.startsWith('/w ')){const match=body.match(/^\/w\s+(\S+)\s+(.+)$/);if(match)sent=send({type:'chat',channel:'whisper',to:match[1],body:match[2]});else status('Use /w PlayerName message')}else sent=send({type:'chat',channel:app.channel,to:$id('socialTo').value.trim(),body});if(sent)input.value=''};
 chat.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'){e.target.blur();toggleEmoji(false);$id('socialPeople').hidden=true}});
-addEventListener('keydown',e=>{if(!leaveWarning.hidden)return;if(e.target.matches('input,textarea,select')||e.target.closest('button,[role=button],[role=separator],summary')||e.ctrlKey||e.altKey||e.metaKey)return;if(e.key==='Escape'&&!hub.hidden&&!$id('socialPokerModal').hidden){e.preventDefault();closePokerModal();return}if(e.key==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(app.channel==='log')select(app.room?'local':'world');$id('socialInput').focus()}if(e.key==='Insert'&&(app.room||app.wanted)){e.preventDefault();toggleSit()}},true);
+addEventListener('keydown',e=>{if(!leaveWarning.hidden||!fishLeaveWarning.hidden)return;if(e.target.matches('input,textarea,select')||e.target.closest('button,[role=button],[role=separator],summary')||e.ctrlKey||e.altKey||e.metaKey)return;if(e.key==='Escape'&&!hub.hidden&&!$id('socialPokerModal').hidden){e.preventDefault();closePokerModal();return}if(e.key==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(app.channel==='log')select(app.room?'local':'world');$id('socialInput').focus()}if(e.key==='Insert'&&(app.room||app.wanted)){e.preventDefault();toggleSit()}},true);
 // Measure in the view's coordinates. Chat can grow to the central UI on desktop,
 // and to the viewport edge on phones. Reserve the dock and top controls vertically.
 let preferredSize=[390,214];
@@ -141,6 +148,14 @@ function confirmPokerLeave(action){
  leaveWarning.hidden=false;hub.inert=true;chat.inert=true;$id('pokerLeaveStay').focus();
  return false;
 }
+$id('fishLeaveStay').onclick=()=>finishFishingStop(false);
+$id('fishLeaveConfirm').onclick=()=>finishFishingStop(true);
+fishLeaveWarning.onclick=e=>{if(e.target===fishLeaveWarning)finishFishingStop(false)};
+fishLeaveWarning.addEventListener('keydown',e=>{
+ e.stopPropagation();
+ if(e.key==='Escape'){e.preventDefault();finishFishingStop(false)}
+ if(e.key==='Tab'){e.preventDefault();(document.activeElement===$id('fishLeaveStay')?$id('fishLeaveConfirm'):$id('fishLeaveStay')).focus()}
+});
 $id('pokerLeaveStay').onclick=()=>finishPokerLeave(false);
 $id('pokerLeaveConfirm').onclick=()=>finishPokerLeave(true);
 leaveWarning.onclick=e=>{if(e.target===leaveWarning)finishPokerLeave(false)};
@@ -412,7 +427,7 @@ function buyPokerChipsWithZeny(packId){
 }
 function pokerSeatAction(globalSeat){
  if(!P||!Number.isInteger(globalSeat)||!R.POKER.seats[globalSeat])return;
- if(fishingBlocked())return; // v294: stop fishing before taking a poker stool
+ if(fishingBlocked(()=>pokerSeatAction(globalSeat)))return; // v294: stop fishing before taking a poker stool
  const current=seatedPokerSnapshot();
  if(current&&current.me.globalSeat!==globalSeat){confirmPokerLeave(()=>pokerSeatActionConfirmed(globalSeat));return;}
  pokerSeatActionConfirmed(globalSeat);
@@ -925,12 +940,31 @@ function clearSoloPokerIfSeated(p){
 // v295: sitting is no longer blocked. Sitting on a pond-side angler chair (or pressing Insert to
 // sit/stand) keeps the line in the water, which is how the chairs were meant to be used.
 function fishingBusy(){const F=FISHING();return !!(F&&typeof F.busy==='function'&&F.busy())}
-function fishingBlocked(){if(!fishingBusy())return false;notice('🎣 You are fishing — press ✕ Stop fishing before moving.');return true}
-function moveAction(x,z){if(fishingBlocked())return;confirmPokerLeave(confirmLeave=>performMoveAction(x,z,confirmLeave))}
+// v297: ask before reeling in, like the poker leave-warning, instead of spamming chat with "press ✕".
+// `action` is retried once the player confirms, so the click that was blocked still happens.
+let fishLeaveAction=null,fishLeaveFocus=null;
+function confirmFishingStop(action){
+ if(!fishingBusy()){if(action)action();return true}
+ if(fishLeaveAction||!fishLeaveWarning.hidden)return false;
+ fishLeaveAction=action||null;fishLeaveFocus=document.activeElement;
+ fishLeaveWarning.hidden=false;hub.inert=true;chat.inert=true;$id('fishLeaveStay').focus();
+ return false;
+}
+function finishFishingStop(go){
+ if(fishLeaveWarning.hidden)return;
+ const act=fishLeaveAction;fishLeaveAction=null;
+ fishLeaveWarning.hidden=true;hub.inert=false;chat.inert=false;
+ if(go){const F=FISHING();try{if(F&&typeof F.stop==='function')F.stop('🎣 Line reeled in — you stepped away from the pond.')}catch{}}
+ if(go&&act)act();
+ else if(fishLeaveFocus&&typeof fishLeaveFocus.focus==='function')try{fishLeaveFocus.focus()}catch{}
+ fishLeaveFocus=null;
+}
+function fishingBlocked(action){if(!fishingBusy())return false;confirmFishingStop(action);return true}
+function moveAction(x,z){if(fishingBlocked(()=>moveAction(x,z)))return;confirmPokerLeave(confirmLeave=>performMoveAction(x,z,confirmLeave))}
 function performMoveAction(x,z,confirmLeave){if(app.room&&send({type:'move',x,z,confirmLeave}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());const route=R.path(p,{x,z});if(!route.length)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=false;p.seat=null;p.pokerSeat=null;putPlayer(p)}
-function seatAction(id){confirmPokerLeave(confirmLeave=>performSeatAction(id,confirmLeave))}
+function seatAction(id){if(fishingBlocked(()=>seatAction(id)))return;confirmPokerLeave(confirmLeave=>performSeatAction(id,confirmLeave))}
 function performSeatAction(id,confirmLeave){if(app.room&&send({type:'seat',id,confirmLeave}))return;if(app.room||!Number.isInteger(id)||!R.SEATS[id])return;const p=app.players.get(SOLO_ID),seat=R.SEATS[id];if(!p)return;R.advance(p,performance.now());const route=R.path(p,seat);if(!route.length&&Math.hypot(p.x-seat.x,p.z-seat.z)>.5)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=!route.length;p.seat=seat.id;p.pokerSeat=null;if(!route.length){p.x=seat.x;p.z=seat.z}putPlayer(p)}
-function toggleSit(){confirmPokerLeave(confirmLeave=>performToggleSit(confirmLeave))}
+function toggleSit(){if(fishingBlocked(()=>toggleSit()))return;confirmPokerLeave(confirmLeave=>performToggleSit(confirmLeave))}
 function performToggleSit(confirmLeave){if(app.room&&send({type:'sit',confirmLeave}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());clearSoloPokerIfSeated(p);p.path=[];p.seat=null;p.pokerSeat=null;p.sit=!p.sit;putPlayer(p)}
 function join(){if(!app.connected)return;send({type:'join',look:currentLook(),friends:[...app.friends]})}
 // v287: plaza fishing. The logic/UI module reads the self position, walks the player to a pond,
@@ -950,10 +984,34 @@ function fishingRig(state){
 }
 // v295: a fishing title is worn above the head in the plaza; changing it repaints the room.
 function fishingTitleChanged(){const p=app.players.get(app.room?app.id:SOLO_ID);if(!p)return;const look=currentLook();if(app.room)return send({type:'look',look});p.look=look;putPlayer(p)}
-function bindFishing(){const F=FISHING();if(!F)return;F.bind({host:()=>typeof S==='object'&&S?S:null,scene:()=>app.scene,self:fishingSelf,moveTo:(x,z)=>moveAction(x,z),showOff:fishingShowOff,rig:fishingRig,titleChanged:fishingTitleChanged,notice,save:()=>{if(typeof save==='function'&&typeof S==='object'&&S)save()},button:$id('socialFishBtn')})}
+// v297: pond monsters (sp.mega) and secret-rarity catches are announced in the room's Local chat.
+// The worker relays {type:'fishnote'} to everyone in the room; solo play writes the line directly.
+function fishNoteBody(name,spName,w,kind){
+ return kind==='secret'
+  ? `✨ ${name} pulled a secret catch out of the pond — ${spName}, ${w} kg!`
+  : `🎣 ${name} landed a pond monster — ${spName}, ${w} kg!`;
+}
+function pushFishNote(m){
+ const F=FISHING();
+ const sp=F&&typeof F.speciesById==='function'?F.speciesById(m.sp):null;
+ if(!sp)return false;
+ const note=cleanChatMessage({type:'message',id:'fish:'+(m.at||Date.now())+':'+(m.from||0),at:m.at||Date.now(),from:Number.isInteger(m.from)?m.from:0,name:typeof m.name==='string'?m.name:'',gm:false,channel:'local',body:fishNoteBody(m.name||'An angler',sp.name,m.w,m.kind),sys:true,room:app.room||0});
+ if(!note)return false;
+ app.messages=mergeChatMessages(app.messages,[note]);
+ if(app.channel!=='local'||chat.classList.contains('minimized'))app.unread.add('local');
+ if(app.channel==='local')renderMessages(true);
+ tabsUI();
+ return true;
+}
+function fishingAnnounce(fish){
+ if(!fish||typeof fish.sp!=='string')return false;
+ if(app.room&&send({type:'fishbrag',sp:fish.sp,w:fish.w,kind:fish.kind==='secret'?'secret':'mega'}))return true;
+ return pushFishNote({sp:fish.sp,w:fish.w,kind:fish.kind,name:'You',from:app.id||SOLO_ID,at:Date.now()});
+}
+function bindFishing(){const F=FISHING();if(!F)return;F.bind({host:()=>typeof S==='object'&&S?S:null,scene:()=>app.scene,self:fishingSelf,moveTo:(x,z)=>moveAction(x,z),showOff:fishingShowOff,announce:fishingAnnounce,rig:fishingRig,titleChanged:fishingTitleChanged,notice,save:()=>{if(typeof save==='function'&&typeof S==='object'&&S)save()},button:$id('socialFishBtn')})}
 async function enter(){if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),sitting,camera:cameraUI});if(app.wanted){app.scene.active=true;bindFishing();cameraUI(app.scene.cameraState);for(const p of app.players.values())app.scene.putPlayer(p);join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
 function leave(){FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');if(app.scene)app.scene.active=false;resetPlayers();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}
-$id('socialLeave').onclick=()=>confirmPokerLeave(()=>leave());$id('socialSit').onclick=toggleSit;
+$id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick()))return;confirmPokerLeave(()=>leave())};$id('socialSit').onclick=toggleSit;
 function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retry=0;status('Connected · World & private chat');app.messages=mergeChatMessages(app.messages.filter(x=>x.channel!=='world'),readWorldHistory(),m.history);saveWorldHistory();renderMessages();if(app.wanted&&app.scene)join();else app.resume=null}
  if(m.type==='error'){status(m.message);population();}
  if(m.type==='rooms'&&Array.isArray(m.rooms)){app.rooms=m.rooms;population();}
@@ -984,6 +1042,7 @@ function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retr
   app.scene?.updatePoker?.(list);
   renderPokerMini();renderPokerUI();updatePokerTurnClock();
  }
+ if(m.type==='fishnote'){pushFishNote(m);return}
  if(m.type==='showoff'){try{FISHING()?.showOffEvent?.(m.from,{sp:m.sp,w:m.w,mut:m.mut,perfect:m.perfect})}catch{}return}
  if(m.type==='reauth')return refreshSocket();
  if(m.type==='room'){friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());if(app.room!==m.room){clearPokerResult();app.poker=null;app.pokerTables=null;pokerUI.renderKey='';}app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;resetPlayers();app.messages=app.messages.filter(x=>x.channel!=='local');pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)}

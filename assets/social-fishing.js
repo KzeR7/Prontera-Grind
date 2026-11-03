@@ -29,47 +29,70 @@ const SPECIES_DATA={
   ['loach','Stone Loach','🐟',45,.2,1.1],['shrimplet','Pond Shrimp','🦐',0,.05,.3],
   ['crucian','Crucian Carp','🐟',80,.6,2.4],['sunny','Sunray Sunfish','🐠',40,.3,1.3],
   ['tadpole','Giant Tadpole','🐸',110,.2,1],['stickle','Stickleback','🐟',180,.05,.4],
-  ['killi','Meadow Killifish','🐠',90,.1,.6],['molly','Moss Molly','🐠',130,.1,.7],
-  ['platy','Brick Platy','🐠',20,.1,.5],['guppy','Gutter Guppy','🐠',300,.05,.35],
+  ['killi','Meadow Killifish','🐠',90,.1,.6,'deep'],['molly','Moss Molly','🐠',130,.1,.7,'deep'],
+  ['platy','Brick Platy','🐠',20,.1,.5,'deep'],['guppy','Gutter Guppy','🐠',300,.05,.35,'deep'],
+  // v297 additions - small pond life that mostly adds variety to the index.
+  ['mudskip','Mudskipper','🐟',215,.05,.3],['pupfish','Pond Pupfish','🐠',195,.05,.25],
+  ['topminnow','Topwater Minnow','🐟',110,.1,.5],['spirlin','Silver Spirlin','🐟',350,.05,.3],
+  ['ninespine','Nine-spine Stickle','🐟',75,.05,.45],['dart','Ribbon Dart','🐟',30,.04,.22],
  ],
  uncommon:[
   ['bream','Brass Bream','🐟',40,1,4],['perch','Garden Perch','🐠',70,.8,2.8],
   ['trout','Canal Trout','🐟',190,1.5,5],['crawdad','Rusty Crayfish','🦞',15,.3,1.6],
   ['bass','Bell Bass','🐟',210,1.2,4.5],['catfish','Whisker Catfish','🐟',260,2,7],
-  ['reedeel','Reed Eel','🐟',150,.8,3.2],['tench','Bronze Tench','🐟',35,1,4.2],
+  ['reedeel','Reed Eel','🐟',150,.8,3.2,'eel'],['tench','Bronze Tench','🐟',35,1,4.2],
   ['barbel','River Barbel','🐟',220,1.5,6],['ide','Golden Ide','🐟',50,1,3.8],
   ['zander','Dusk Zander','🐟',240,2,6.5],['crab','Paving Crab','🦀',0,.4,2],
-  ['mullet','Cloud Mullet','🐟',280,1,3.5],['betta','Dusk Betta','🐠',290,.2,1],
-  ['angelfin','Plaza Angelfish','🐠',230,.3,1.5],['pumpkinseed','Pumpkinseed','🐠',30,.4,1.8],
+  ['mullet','Cloud Mullet','🐟',280,1,3.5],['betta','Dusk Betta','🐠',290,.2,1,'deep'],
+  ['angelfin','Plaza Angelfish','🐠',230,.3,1.5,'deep'],['pumpkinseed','Pumpkinseed','🐠',30,.4,1.8,'deep'],
+  // v297: gar and snakeheads get their own long-jawed silhouette.
+  ['garpike','Spotted Gar','🐟',120,2,7,'gar'],['snakehead','Plaza Snakehead','🐟',150,1.5,6.5,'gar'],
+  ['bowfin','Copper Bowfin','🐟',90,1,5,'gar'],['walleye','Glass Walleye','🐟',205,1.5,6,'gar'],['crappie','Calico Crappie','🐠',265,.4,1.8,'deep'],
  ],
  rare:[
-  ['koi','Royal Koi','🐠',320,2,8],['pike','Knight Pike','🐟',225,3,10],
-  ['tetra','Crystal Tetra','🐠',260,.4,1.5],['sturgeon','Young Sturgeon','🐟',200,3,12],
+  ['koi','Royal Koi','🐠',320,2,8,'deep'],['pike','Knight Pike','🐟',225,3,10,'gar'],
+  ['tetra','Crystal Tetra','🐠',260,.4,1.5,'deep'],['sturgeon','Young Sturgeon','🐟',200,3,12],
   ['squid','Pond Squid','🦑',260,1,5],['octo','Puddle Octopus','🐙',310,1.5,6],
-  ['lobster','Azure Lobster','🦞',220,1,4.5],['discus','Stained-glass Discus','🐠',10,.6,2.2],
+  ['lobster','Azure Lobster','🦞',220,1,4.5],['discus','Stained-glass Discus','🐠',10,.6,2.2,'sunfish'],
   ['gar','Longnose Gar','🐟',130,2.5,9],['piranha','Gilded Piranha','🐟',45,1,3.6],
   ['salmon','Sakura Salmon','🐟',340,2.5,9.5],['snapper','Emerald Snapper','🐟',140,1.5,6],
   ['lantern','Lantern Guppy','🐠',55,.3,1.2],
+  // v297: the first proper predators - moray, hammerhead, sawfish, blue shark, sturgeon.
+  ['morayeel','Canal Moray','🐟',95,2,9,'eel'],['hammerpup','Hammerhead Pup','🦈',210,3,14,'hammer'],
+  ['sawfin','Sawfin Ray','🐟',195,4,16,'saw'],['bluefin','Azure Blue Shark','🦈',215,5,18],
+  ['sunperch','Ocean Sunperch','🐠',50,6,20,'sunfish'],['ribbonsturgeon','Ribbon Sturgeon','🐟',205,4,17,'sturgeon'],
  ],
  legendary:[
   ['fountainfish','Gilded Fountainfish','🐠',25,1,6],['arowana','Prontera Arowana','🐟',285,4,14],
-  ['marlin','Lawn Marlin','🐟',210,8,24],['moonray','Moonlight Ray','🐠',250,5,18],
-  ['paddlefish','Ghost Paddlefish','🐟',190,6,20],['mahi','Prism Mahi','🐠',160,4,15],
+  ['marlin','Lawn Marlin','🐟',210,8,24],['moonray','Moonlight Ray','🐠',250,5,18,'ray'],
+  ['paddlefish','Ghost Paddlefish','🐟',190,6,20,'saw'],['mahi','Prism Mahi','🐠',160,4,15],
   ['coelacanth','Ancient Coelacanth','🐟',230,10,30],['dragonet','Emerald Dragonet','🐠',0,.8,3],
   ['phoenixfish','Ember Phoenixfish','🐠',20,2,9],['oarfish','Banner Oarfish','🐟',265,7,26],
+  // v297: thresher and goblin sharks, and the first true freshwater giants.
+  ['thresher','Whiptail Thresher','🦈',205,15,45,'thresher'],['goblin','Goblin Shark','🦈',340,12,38,'goblin'],
+  ['arapaima','Arapaima','🐟',20,30,120,'fish',true],['mekong','Mekong Giant Catfish','🐟',45,50,200,'fish',true],
+  ['manta','Plaza Manta','🐟',210,25,110,'ray',true],
  ],
  mythical:[
-  ['leviathan','Pond Leviathan','🦈',175,12,40],['kraken','Garden Kraken','🐙',270,10,36],
-  ['hydrasquid','Hydra Squid','🦑',285,8,30],['cobblewhale','Cobble Whale','🐋',210,20,60],
-  ['angler','Abyss Angler','🐡',260,6,22],['seraphkoi','Seraph Koi','🐠',45,5,18],
-  ['baphobass','Baphomet Bass','🐟',0,9,28],
+  ['leviathan','Pond Leviathan','🦈',175,12,40,'thresher'],['kraken','Garden Kraken','🐙',270,10,36],
+  ['hydrasquid','Hydra Squid','🦑',285,8,30],['cobblewhale','Cobble Whale','🐋',210,20,60,'whale'],
+  ['angler','Abyss Angler','🐡',260,6,22,'angler'],['seraphkoi','Seraph Koi','🐠',45,5,18,'deep'],
+  ['baphobass','Baphomet Bass','🐟',0,9,28,'goblin'],
+  // v297: the monsters. Weights follow the real record fish the names come from.
+  ['greatwhite','Great White','🦈',205,100,350],['stingray','Giant Stingray','🐟',40,120,400,'ray',true],
+  ['sunfish','Ocean Sunfish','🐠',48,200,600,'sunfish',true],['hammer','Great Hammerhead','🦈',205,150,450,'hammer',true],
  ],
  secret:[
   ['poring','Poring Puffer','🐡',300,.5,2],['emperium','Emperium Carp','🐠',45,3,12],
   ['ghostring','Ghostring Fish','🐟',200,.4,1.8],['angeling','Angeling Jelly','🐙',310,.6,2.5],
+  // v297: the largest fish alive, and the deep oddities that go with them.
+  ['whaleshark','Whale Shark','🦈',205,600,1800,'whale',true],['beluga','Beluga Sturgeon','🐟',205,400,1400,'sturgeon',true],
+  ['anglerdeep','Abyssal Angler','🐡',280,80,260,'angler',true],['colossus','Plaza Colossus','🐙',270,300,1000,'octopus',true],
  ],
 };
-const SPECIES=Object.entries(SPECIES_DATA).flatMap(([rarity,list])=>list.map(([id,name,glyph,hue,min,max])=>({id,name,glyph,hue,min,max,rarity})));
+// v297: a species may name its own body plan (shape) and be flagged mega - the giants that get a
+// Local-chat announcement and show off at pond size. Without a shape the glyph decides.
+const SPECIES=Object.entries(SPECIES_DATA).flatMap(([rarity,list])=>list.map(([id,name,glyph,hue,min,max,shape,mega])=>({id,name,glyph,hue,min,max,shape:shape||null,mega:mega===true,rarity})));
 const SPECIES_BY_ID=Object.fromEntries(SPECIES.map(s=>[s.id,s]));
 const SPECIES_BY_NAME=Object.fromEntries(SPECIES.map(s=>[s.name,s.id]));
 const MAX_W=Math.max(...SPECIES.map(s=>s.max));
@@ -119,8 +142,8 @@ const FISHING_TITLES=[
  {id:'heavy-hook',name:'Heavy Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:20,req:'record a 20 kg fish'},
  {id:'deep-line',name:'Deep Line',mark:'☾',tone:'obsidian',cur:s=>s.stats.catches,goal:500,req:'catch 500 fish'},
  {id:'mutation-hunter',name:'Mutation Hunter',mark:'🧬',tone:'crimson',cur:mutationKinds,goal:Object.keys(MUTATIONS).length,req:'find all 7 mutation kinds'},
- {id:'pond-legend',name:'Pond Legend',mark:'✹',tone:'gold',cur:discoveredSpecies,goal:40,req:'discover 40 species'},
- {id:'apex-angler',name:'Apex Angler',mark:'✶',tone:'valkyrie',cur:discoveredSpecies,goal:SPECIES.length,req:'discover all 70 species'},
+ {id:'pond-legend',name:'Pond Legend',mark:'✹',tone:'gold',cur:discoveredSpecies,goal:60,req:'discover 60 species'},
+ {id:'apex-angler',name:'Apex Angler',mark:'✶',tone:'valkyrie',cur:discoveredSpecies,goal:SPECIES.length,req:`discover all ${SPECIES.length} species`},
 ];
 const FISHING_TITLE_BY_ID=Object.fromEntries(FISHING_TITLES.map(t=>[t.id,t]));
 const titleUnlocked=(state,t)=>!!(t&&t.cur(state)>=t.goal);
@@ -406,7 +429,10 @@ function parseShowOff(body){
 }
 // Overhead sprite scale from weight. Big fish are BIG: a 60 kg Cobble Whale shows at
 // 5.0 world units - taller than the angler holding it - while a hand-sized minnow is ~0.8.
-function showOffScale(w){return Math.round((0.7+4.3*Math.min(1,Math.pow(Math.max(.01,w)/MAX_W,.6)))*100)/100}
+// v297: the catalog now runs to 1.8 t, so the old MAX_W-referenced curve would have shrunk every
+// existing catch. This one saturates at pond size (5.0) for the giants while a 60 kg fish still
+// reads larger than the character.
+function showOffScale(w){const x=Math.max(.01,w);return Math.round((0.7+4.3*(x/(x+6)))*100)/100}
 // ------------------------------- browser UI ------------------------------------------------
 const doc=root.document;
 let opts=null,els=null,fallbackHost={};
@@ -509,7 +535,7 @@ function ensureDom(){
  doc.getElementById('fishingBagBtn').onclick=()=>toggleBag();
  doc.getElementById('fishingPanelClose').onclick=()=>toggleBag(false);
  doc.getElementById('fishingSort').onchange=e=>{ui.sort=e.target.value;renderBag()};
- doc.getElementById('fishingSellDupes').onclick=()=>{const r=sellBulk(state(),'dupes');persist();if(r.sold){sound('coin');status(`Sold ${r.sold} fish for ${fmt(r.coins)} Fishcoins.`)}else status('Nothing to sell — every fish is a record, mutated or locked.');ui.selected=null;renderPanel();renderDockGear()};
+ doc.getElementById('fishingSellDupes').onclick=()=>{const r=sellBulk(state(),'dupes');persist();if(r.sold){sound('coin');status(`Sold ${r.sold} fish for ${fmt(r.coins)} Fishcoins.`)}else status(st.settings.autoSell?'Nothing to sell — auto-sell is on, so dupes never pile up.':'Nothing to sell — every fish is a record, mutated or locked.');ui.selected=null;renderPanel();renderDockGear()};
  doc.getElementById('fishingAutoSell').onchange=e=>{state().settings.autoSell=e.target.checked;persist();status(e.target.checked?'Auto-sell on — dupes are sold as you catch them (records, mutations and 🔒 locked fish are kept).':'Auto-sell off.')};
  doc.getElementById('fishingSound').onchange=e=>{state().settings.sound=e.target.checked;persist()};
  els.autoBtn.onclick=()=>setAuto(!ui.auto);
@@ -592,7 +618,8 @@ function mutFilter(mut){return mut&&MUTATIONS[mut]?' '+MUTATIONS[mut].css:''}
 // out and childish, and the show-off/catch sprites were so dim they vanished over the pond.
 // Every surface now paints a proper side-view sprite on canvas - dark outline, saturated
 // body over a pale belly, real fins, per-species shape + pattern variation seeded from the
-// species id - so all 70 species stay distinct and crisp at any size. Mutations get a baked
+// species id - so all 100 species stay distinct and crisp at any size. Distinct body plans
+// (hammer/thresher/goblin/saw/ray/eel/sturgeon/gar/sunfish/angler) keep families apart at a glance. Mutations get a baked
 // halo + effect overlay instead of a blur filter. Falls back to the emoji glyph wherever
 // canvas 2D is unavailable (jsdom tests, ancient browsers).
 const SHAPE_BY_GLYPH={'🐟':'fish','🐠':'tropical','🐡':'puffer','🦈':'shark','🐋':'whale','🦐':'shrimp','🦞':'lobster','🦀':'crab','🦑':'squid','🐙':'octopus','🐸':'tadpole'};
@@ -614,7 +641,8 @@ function fishSprite(spId,mut,px=96){
  const u=px/100,U=n=>n*u;
  g.lineJoin='round';g.lineCap='round';
  if(M&&M.glow){try{const r=g.createRadialGradient(U(50),U(52),U(8),U(50),U(52),U(47));r.addColorStop(0,M.glow+'b0');r.addColorStop(.6,M.glow+'46');r.addColorStop(1,M.glow+'00');g.fillStyle=r;g.fillRect(0,0,px,px)}catch{}}
- const shape=SHAPE_BY_GLYPH[sp.glyph]||'fish';
+ // v297: a species' own body plan wins over the glyph's default, so sharks do not all share one shape.
+ const shape=sp.shape||SHAPE_BY_GLYPH[sp.glyph]||'fish';
  const grad=(y0,y1)=>{const gr=g.createLinearGradient(0,U(y0),0,U(y1));gr.addColorStop(0,col(-6,4,8));gr.addColorStop(.55,col(0,0,0));gr.addColorStop(.82,col(8,-20,24));gr.addColorStop(1,col(10,-24,32));return gr};
  const path=pts=>{g.beginPath();g.moveTo(U(pts[0][0]),U(pts[0][1]));for(let i=1;i+1<pts.length;i+=2)g.quadraticCurveTo(U(pts[i][0]),U(pts[i][1]),U(pts[i+1][0]),U(pts[i+1][1]));g.closePath()};
  const paint=f=>{g.fillStyle=f;g.fill();g.strokeStyle=LINE;g.lineWidth=U(2.6);g.stroke()};
@@ -624,27 +652,34 @@ function fishSprite(spId,mut,px=96){
   if(pv<.65||shape==='tropical'){for(let i=0;i<3;i++){const bx=40+i*13;g.beginPath();g.moveTo(U(bx),U(52-hh));g.quadraticCurveTo(U(bx-6),U(52),U(bx),U(52+hh));g.lineTo(U(bx+5),U(52+hh));g.quadraticCurveTo(U(bx-1),U(52),U(bx+5),U(52-hh));g.closePath();g.fill()}}
   else{for(let i=0;i<5;i++){g.beginPath();g.arc(U(36+i*11+v(i+7)*4),U(46+((i%2)*10)+v(i+9)*4),U(2.6+v(i+8)*1.4),0,7);g.fill()}}
   g.restore()};
- if(shape==='fish'||shape==='tropical'||shape==='shark'||shape==='whale'){
-  const hh=shape==='tropical'?19+v(4)*4:shape==='shark'?12+v(4)*3:shape==='whale'?23+v(4)*3:14+v(4)*7;
-  const nose=shape==='shark'?94:shape==='tropical'?82:90;
+ if(shape==='fish'||shape==='tropical'||shape==='shark'||shape==='whale'||shape==='deep'){
+  // v297: 'deep' is the disc-bodied variant - koi, betta, discus, platies. Same painter, very
+  // different silhouette: short, tall, with long veil fins instead of a torpedo outline.
+  const deep=shape==='deep';
+  const hh=deep?22+v(4)*5:shape==='tropical'?19+v(4)*4:shape==='shark'?12+v(4)*3:shape==='whale'?23+v(4)*3:14+v(4)*7;
+  const nose=deep?84:shape==='shark'?94:shape==='tropical'?82:90;
   const body=()=>path([[24,52],[34,52-hh*1.3],[58,52-hh],[nose-8,52-hh*.72],[nose,51],[nose+2,55],[nose-10,52+hh*.78],[56,52+hh*.92],[34,52+hh*1.22],[24,52]]);
   // tail
-  const tl=shape==='shark'?1.5:shape==='whale'?1.3:1.15;
+  const tl=deep?.78:shape==='shark'?1.5:shape==='whale'?1.3:1.15;
   path([[32,52],[13,52-hh*tl*.95],[6,52-hh*tl],[16,52],[6,52+hh*tl],[13,52+hh*tl*.95],[32,52]]);paint(FIN);
   // dorsal + belly fins
-  if(shape==='tropical'){path([[38,52-hh+3],[50,52-hh-17],[68,52-hh+2]]);paint(FIN);path([[42,52+hh-2],[52,52+hh+13],[66,52+hh-3]]);paint(FIN)}
+  if(deep){path([[40,52-hh+3],[48,52-hh-13],[58,52-hh-16],[70,52-hh+1],[70,52-hh+9],[48,52-hh+6],[40,52-hh+3]]);paint(FIN);path([[42,52+hh-3],[50,52+hh+13],[60,52+hh+15],[70,52+hh-1],[70,52+hh-9],[50,52+hh-6],[42,52+hh-3]]);paint(FIN)}
+  else if(shape==='tropical'){path([[38,52-hh+3],[50,52-hh-17],[68,52-hh+2]]);paint(FIN);path([[42,52+hh-2],[52,52+hh+13],[66,52+hh-3]]);paint(FIN)}
   else if(shape==='shark'){path([[48,52-hh+2],[55,52-hh-15],[66,52-hh+1]]);paint(FIN);path([[56,52+hh-1],[60,52+hh+8],[68,52+hh-2]]);paint(FIN)}
   else if(shape==='whale'){path([[52,52-hh+3],[58,52-hh-6],[66,52-hh+2]]);paint(FIN)}
   else{path([[42,52-hh+2],[52,52-hh-10-v(6)*6],[66,52-hh+1]]);paint(FIN);path([[48,52+hh-1],[54,52+hh+8],[62,52+hh-2]]);paint(FIN)}
   body();paint(grad(52-hh,52+hh));
   pattern(body,hh);
+  // v297: the whale shark is the one spotted giant - pale spots over a dark back.
+  if(sp.id==='whaleshark'){g.save();body();g.clip();g.fillStyle='rgba(238,247,255,.8)';
+   for(let i=0;i<18;i++){g.beginPath();g.arc(U(30+(i%6)*11+v(i)*4),U(36+Math.floor(i/6)*10+v(i+3)*3),U(.9+v(i+1)*.7),0,7);g.fill()}g.restore()}
   if(shape==='whale'){g.save();body();g.clip();g.strokeStyle=col(6,-18,26,.9);g.lineWidth=U(1.8);for(let i=0;i<3;i++){g.beginPath();g.moveTo(U(40),U(58+i*5));g.quadraticCurveTo(U(62),U(62+i*5),U(84),U(57+i*5));g.stroke()}g.restore()}
   // gills + pectoral fin
   g.strokeStyle=LINE;g.lineWidth=U(1.8);
   if(shape==='shark'){for(let i=0;i<3;i++){g.beginPath();g.moveTo(U(66+i*4),U(47));g.quadraticCurveTo(U(64+i*4),U(52),U(66+i*4),U(57));g.stroke()}}
   else{g.beginPath();g.moveTo(U(70),U(52-hh*.55));g.quadraticCurveTo(U(64),U(52),U(70),U(52+hh*.55));g.stroke()}
   path([[58,54],[50,60+hh*.2],[60,60]]);paint(col(-16,6,-4));
-  eye(shape==='shark'?80:74,shape==='whale'?50:46.5,shape==='whale'?3.2:shape==='shark'?3.2:4.4);
+  eye(deep?74:shape==='shark'?80:74,shape==='whale'?50:deep?44:46.5,shape==='whale'?3.2:shape==='shark'?3.2:deep?5:4.4);
  }else if(shape==='puffer'){
   const r=21+v(4)*3;
   g.strokeStyle=LINE;g.lineWidth=U(2.4);g.fillStyle=FIN;
@@ -697,6 +732,131 @@ function fishSprite(spId,mut,px=96){
   g.strokeStyle=LINE;g.lineWidth=U(2);
   for(let i=0;i<5;i++){const x0=40+i*5;g.beginPath();g.moveTo(U(x0),U(62));g.quadraticCurveTo(U(x0+(i%2?7:-7)),U(74),U(x0+(i%2?-4:4)),U(86));g.lineWidth=U(4.6);g.strokeStyle=col(0,0,0);g.stroke();g.lineWidth=U(1.6);g.strokeStyle=LINE;g.stroke()}
   eye(44,56,3.8);eye(56,56,3.8);
+ }else if(shape==='gar'){
+  const hh=9+v(4)*3;
+  path([[18,52],[4,52-hh*1.5],[2,52-hh*1.6],[10,52],[2,52+hh*1.6],[4,52+hh*1.5],[18,52]]);paint(FIN);
+  path([[22,52-hh],[28,52-hh-9],[34,52-hh]]);paint(FIN);
+  path([[22,52+hh],[28,52+hh+9],[34,52+hh]]);paint(FIN);
+  const body=()=>path([[20,52],[26,52-hh*1.1],[58,52-hh],[86,51-hh*.5],[86,53+hh*.5],[58,52+hh*.9],[26,52+hh],[20,52]]);
+  body();paint(grad(52-hh,52+hh));
+  path([[86,48],[99,50],[99,54],[86,56],[86,48]]);paint(col(0,-4,10));
+  g.save();body();g.clip();g.fillStyle=DARK;for(let i=0;i<7;i++){g.beginPath();g.arc(U(34+i*8),U(48+(i%2)*9),U(2.2),0,7);g.fill()}g.restore();
+  g.strokeStyle=LINE;g.lineWidth=U(1.2);for(let i=0;i<4;i++){const x=90+i*2.4;g.beginPath();g.moveTo(U(x),U(50));g.lineTo(U(x),U(51.6));g.stroke()}
+  eye(82,49,3.2);
+ }else if(shape==='eel'){
+  const hh=11+v(4)*2;
+  // continuous dorsal fringe first, so the body covers its root
+  stroke2(4,col(-20,8,-2),()=>{g.beginPath();g.moveTo(U(16),U(58));g.quadraticCurveTo(U(44),U(20),U(62),U(40));g.quadraticCurveTo(U(76),U(50),U(88),U(44))});
+  // one long tapering S-body, drawn as a thick stroke so the silhouette stays ribbon-like
+  stroke2(hh*2,col(-14,4,-6),()=>{g.beginPath();g.moveTo(U(12),U(68));g.quadraticCurveTo(U(40),U(34),U(62),U(54));g.quadraticCurveTo(U(74),U(64),U(88),U(54))});
+  // head + gaping jaw
+  path([[82,46],[99,45],[99,52],[90,55],[82,55],[82,46]]);paint(col(0,-2,-4));
+  g.strokeStyle=LINE;g.lineWidth=U(1.5);g.beginPath();g.moveTo(U(84),U(53));g.lineTo(U(96),U(52));g.stroke();
+  eye(84,49,2.6);
+ }else if(shape==='hammer'){
+  const hh=11+v(4)*3;
+  path([[28,52],[10,52-hh*1.3],[3,52-hh*1.4],[13,52],[3,52+hh*1.4],[10,52+hh*1.3],[28,52]]);paint(FIN);
+  path([[42,52-hh+2],[50,52-hh-15],[62,52-hh+1]]);paint(FIN);
+  path([[50,52+hh-1],[55,52+hh+9],[63,52+hh-2]]);paint(FIN);
+  // cephalofoil: a vertical lens at the head, in the body's own gradient so it reads as one animal
+  path([[76,52],[82,34],[90,33],[94,44],[94,60],[90,71],[82,70],[76,52]]);g.fillStyle=grad(34,70);g.fill();
+  const body=()=>path([[28,52],[36,52-hh*1.2],[54,52-hh*.95],[74,52-hh*.55],[86,48],[86,56],[74,52+hh*.6],[54,52+hh*.95],[36,52+hh*1.15],[28,52]]);
+  body();paint(grad(52-hh,52+hh));
+  g.save();body();g.clip();g.fillStyle=DARK;for(let i=0;i<3;i++){g.beginPath();g.arc(U(42+i*10),U(50),U(2.4),0,7);g.fill()}g.restore();
+  g.strokeStyle=LINE;g.lineWidth=U(1.6);for(let i=0;i<3;i++){g.beginPath();g.moveTo(U(64+i*3),U(48));g.quadraticCurveTo(U(62+i*3),U(52),U(64+i*3),U(56));g.stroke()}
+  eye(89,41,3.1);eye(89,63,3.1);
+ }else if(shape==='saw'){
+  const hh=16+v(4)*3;
+  path([[46,52],[24,52-hh-3],[4,40],[20,54],[4,66],[24,52+hh+3],[46,52]]);paint(col(-10,4,-12));
+  const body=()=>path([[34,52],[44,52-hh*.9],[60,52-hh*.62],[68,52],[60,52+hh*.62],[44,52+hh*.9],[34,52]]);
+  body();paint(grad(52-hh*.9,52+hh*.9));
+  // the saw: a long flat rostrum with a tooth down each side
+  path([[64,46],[99,47],[99,57],[64,56],[64,46]]);paint(col(0,-4,16));
+  g.strokeStyle=LINE;g.lineWidth=U(1.7);
+  for(let i=0;i<4;i++){const x=76+i*5.4;
+   g.beginPath();g.moveTo(U(x),U(47));g.lineTo(U(x+2),U(40));g.lineTo(U(x+4),U(47));g.stroke();
+   g.beginPath();g.moveTo(U(x),U(56));g.lineTo(U(x+2),U(63));g.lineTo(U(x+4),U(56));g.stroke()}
+  eye(60,48,2.8);eye(60,56,2.8);
+ }else if(shape==='ray'){
+  const span=30+v(4)*5;
+  // whip tail first, so the disc covers its root
+  stroke2(3.4,col(-12,4,-8),()=>{g.beginPath();g.moveTo(U(30),U(58));g.quadraticCurveTo(U(12),U(74),U(4),U(90))});
+  // the disc: wide wings with pointed tips, rounded head at the front
+  const disc=()=>path([[88,52],[72,42],[40,52-span],[14,52-span*.55],[30,52],[14,52+span*.55],[40,52+span],[72,62],[88,52]]);
+  disc();paint(grad(52-span*.6,52+span*.6));
+  g.save();disc();g.clip();g.fillStyle=DARK;for(let i=0;i<6;i++){g.beginPath();g.arc(U(42+(i%3)*12),U(44+Math.floor(i/3)*14),U(2.2),0,7);g.fill()}g.restore();
+  // cephalic horns and the mouth on the leading edge
+  g.strokeStyle=LINE;g.lineWidth=U(2.6);
+  g.beginPath();g.moveTo(U(84),U(45));g.quadraticCurveTo(U(92),U(40),U(96),U(42));g.stroke();
+  g.beginPath();g.moveTo(U(84),U(59));g.quadraticCurveTo(U(92),U(64),U(96),U(62));g.stroke();
+  g.lineWidth=U(1.8);g.beginPath();g.moveTo(U(86),U(52));g.lineTo(U(92),U(52));g.stroke();
+  eye(76,47,2.8);eye(76,57,2.8);
+ }else if(shape==='sunfish'){
+  const r=29+v(4)*3;
+  // tall fused dorsal and anal fins, drawn first so the disc covers their roots
+  path([[26,52-10],[40,52-r-22],[58,52-r-24],[72,52-r+2],[72,52-6],[26,52-10]]);paint(FIN);
+  path([[26,52+10],[40,52+r+22],[58,52+r+24],[72,52+r-2],[72,52+6],[26,52+10]]);paint(FIN);
+  const body=()=>path([[30,52],[36,52-r*.78],[52,52-r],[68,52-r*.8],[74,52-r*.2],[76,52],[74,52+r*.2],[68,52+r*.8],[52,52+r],[36,52+r*.78],[30,52]]);
+  body();paint(grad(52-r,52+r));
+  g.save();body();g.clip();g.fillStyle=DARK;for(let i=0;i<6;i++){g.beginPath();g.arc(U(44+(i%3)*11),U(42+Math.floor(i/3)*18),U(2.4),0,7);g.fill()}g.restore();
+  // blunt beak at the front, scalloped clavus at the back
+  g.strokeStyle=LINE;g.lineWidth=U(2);g.beginPath();g.moveTo(U(76),U(46));g.quadraticCurveTo(U(82),U(52),U(76),U(58));g.stroke();
+  g.lineWidth=U(1.7);g.beginPath();g.moveTo(U(30),U(40));g.quadraticCurveTo(U(25),U(52),U(30),U(64));g.stroke();
+  eye(66,45,4);
+ }else if(shape==='thresher'){
+  const hh=11+v(4)*3;
+  // upper caudal lobe: a tapering whip about as long as the body itself
+  path([[32,46],[20,36],[2,10],[9,7],[26,30],[38,44],[32,46]]);paint(FIN);
+  path([[30,58],[16,64],[8,74],[16,70],[32,66],[30,58]]);paint(FIN);
+  path([[46,52-hh+2],[54,52-hh-13],[64,52-hh+1]]);paint(FIN);
+  path([[54,52+hh-1],[58,52+hh+8],[66,52+hh-2]]);paint(FIN);
+  const body=()=>path([[30,52],[38,52-hh*1.15],[56,52-hh*.95],[74,52-hh*.5],[80,51],[80,54],[74,52+hh*.6],[56,52+hh*.9],[38,52+hh*1.1],[30,52]]);
+  body();paint(grad(52-hh,52+hh));
+  g.save();body();g.clip();g.globalAlpha=.45;g.fillStyle=DARK;g.fillRect(0,U(52-hh),px,U(hh*.85));g.globalAlpha=1;g.restore();
+  g.strokeStyle=LINE;g.lineWidth=U(1.8);for(let i=0;i<3;i++){g.beginPath();g.moveTo(U(60+i*4),U(47));g.quadraticCurveTo(U(58+i*4),U(52),U(60+i*4),U(57));g.stroke()}
+  path([[58,54],[50,61],[60,60]]);paint(col(-16,6,-4));
+  eye(74,47,3);
+ }else if(shape==='goblin'){
+  const hh=10+v(4)*3;
+  path([[28,52],[10,52-hh*1.2],[4,52-hh*1.3],[14,52],[4,52+hh*1.3],[10,52+hh*1.2],[28,52]]);paint(FIN);
+  path([[42,52-hh+2],[50,52-hh-13],[60,52-hh+1]]);paint(FIN);
+  path([[52,52+hh-1],[56,52+hh+8],[64,52+hh-2]]);paint(FIN);
+  const body=()=>path([[26,52],[34,52-hh*1.15],[54,52-hh*.9],[72,52-hh*.55],[76,51],[76,54],[72,52+hh*.7],[54,52+hh*.85],[34,52+hh*1.1],[26,52]]);
+  body();paint(grad(52-hh,52+hh));
+  path([[72,49],[99,51],[99,54],[72,55],[72,49]]);paint(col(4,-4,8));
+  path([[64,55],[74,62],[92,58],[86,54],[64,55]]);paint(col(6,-6,14));
+  g.strokeStyle=LINE;g.lineWidth=U(1.4);for(let i=0;i<5;i++){const x=72+i*4;g.beginPath();g.moveTo(U(x),U(55.5));g.lineTo(U(x+1),U(53.2));g.stroke()}
+  eye(70,47.5,2.8);
+ }else if(shape==='sturgeon'){
+  const hh=12+v(4)*3;
+  path([[30,52],[12,52-hh*1.5],[4,52-hh*1.6],[16,52],[8,52+hh*.6],[24,52+hh*.4],[30,52]]);paint(FIN);
+  path([[36,52-hh+3],[46,52-hh-9],[58,52-hh+3]]);paint(FIN);
+  const body=()=>path([[26,52],[36,52-hh*1.1],[58,52-hh*.85],[78,52-hh*.5],[82,51],[82,54],[78,52+hh*.6],[58,52+hh*.75],[36,52+hh*1.05],[26,52]]);
+  body();paint(grad(52-hh,52+hh));
+  g.save();body();g.clip();g.fillStyle=col(-4,10,-6);for(let i=0;i<6;i++){g.beginPath();g.arc(U(30+i*9),U(52-hh*.85),U(2.2),0,7);g.fill()}
+  g.fillStyle=DARK;for(let i=0;i<5;i++){g.beginPath();g.arc(U(36+i*9),U(52+hh*.5),U(1.8),0,7);g.fill()}g.restore();
+  path([[78,50],[99,51],[99,55],[78,55],[78,50]]);paint(col(2,-4,10));
+  g.strokeStyle=LINE;g.lineWidth=U(1.6);
+  for(const dy of[1,-1]){g.beginPath();g.moveTo(U(88),U(55));g.quadraticCurveTo(U(92),U(55+dy*4),U(95),U(52+dy*3));g.stroke()}
+  eye(76,47,3.2);
+ }else if(shape==='angler'){
+  const r=29+v(4)*3;
+  const body=()=>path([[28,52],[34,52-r*.85],[52,52-r],[70,52-r*.6],[78,50],[80,54],[70,52+r*.62],[52,52+r*.95],[34,52+r*.85],[28,52]]);
+  body();paint(grad(52-r,52+r));
+  g.save();body();g.clip();
+  g.fillStyle=DARK;for(let i=0;i<5;i++){g.beginPath();g.arc(U(40+(i%2)*11),U(38+i*6),U(2.2),0,7);g.fill()}
+  // the jaw is a dark wedge cut into the front third of the head
+  g.fillStyle='rgba(20,8,22,.85)';g.beginPath();g.moveTo(U(62),U(40));g.quadraticCurveTo(U(80),U(46),U(86),U(52));g.quadraticCurveTo(U(80),U(60),U(62),U(66));g.closePath();g.fill();
+  g.restore();
+  g.strokeStyle='#f6f1e2';g.lineWidth=U(2);
+  for(let i=0;i<4;i++){const x=66+i*5;
+   g.beginPath();g.moveTo(U(x),U(42+i*1.2));g.lineTo(U(x+2),U(48+i*1.2));g.stroke();
+   g.beginPath();g.moveTo(U(x),U(62-i*1.2));g.lineTo(U(x+2),U(56-i*1.2));g.stroke()}
+  // illicium: a stalk over the head ending in a glowing esca
+  stroke2(2.6,col(-10,8,-2),()=>{g.beginPath();g.moveTo(U(48),U(52-r+5));g.quadraticCurveTo(U(36),U(16),U(24),U(26))});
+  g.fillStyle='rgba(255,240,150,.55)';g.beginPath();g.arc(U(24),U(26),U(9),0,7);g.fill();
+  g.fillStyle='#fff6bf';g.beginPath();g.arc(U(24),U(26),U(5),0,7);g.fill();g.strokeStyle=LINE;g.lineWidth=U(1.5);g.stroke();
+  eye(58,40,3.4);
  }else{ // octopus
   const body=()=>{g.beginPath();g.arc(U(50),U(42),U(20+v(4)*3),0,7)};
   for(let i=0;i<5;i++){const x0=34+i*8,sw=(i%2?1:-1)*(8+v(i+5)*5);
@@ -928,6 +1088,11 @@ function finishReel(kind){
    if(res&&res.ok){persist();ui.result.autoSold=res.coins;sound('coin')}
   }
   if(!entry)status('Bag full — the catch could not be kept!');
+  // v297: a pond monster or a secret find goes to the room's Local chat. Fired from the catch
+  // itself (not the Show off button) so auto-fishing announces too.
+  if(sp&&typeof opts.announce==='function'&&(sp.mega||sp.rarity==='secret')){
+   try{opts.announce({sp:sp.id,name:sp.name,w:ui.result.entry.w,kind:sp.rarity==='secret'?'secret':'mega'})}catch{}
+  }
  }else{
   state().stats.escapes++;persist();
   sound('fail');
@@ -1073,6 +1238,9 @@ function syncSettings(){
  if(sn)sn.checked=st.settings.sound;
  if(as)as.checked=st.settings.autoSell;
  if(so)so.value=ui.sort;
+ // v297: with auto-sell on there is usually nothing for the bulk button to do - say why.
+ const sd=doc.getElementById('fishingSellDupes');
+ if(sd)sd.title=st.settings.autoSell?'Auto-sell is on: dupes are sold after each catch, so this only clears fish caught before you turned it on.':'Sells everything except your heaviest of each species, every mutated fish and every 🔒 locked fish';
 }
 function sortedBag(){
  const bag=[...state().bag];
@@ -1118,7 +1286,7 @@ function renderDetail(){
   else{rel.dataset.confirm='1';rel.textContent='Release?';setTimeout(()=>{if(rel.isConnected){delete rel.dataset.confirm;rel.textContent='🌊 Release'}},2600)}
  };
 }
-// 📖 The full 70-fish index with no-luck catch rates; undiscovered entries show as silhouettes.
+// 📖 The full index (all SPECIES.length entries) with no-luck catch rates; undiscovered entries show as silhouettes.
 function renderIndex(){
  const st=state();
  const rows=SPECIES.map(sp=>{
@@ -1242,7 +1410,9 @@ return {
  showOffData,cleanShowOff,showOffEvent,rodSprite,rodSpriteURL,ROD_TIER_COLORS,
  fishSprite,fishSpriteURL,
  // UI
- bind,toggle,pondClick,hubClosed,onLocalMessage,openBag:()=>toggleBag(true),openTitles:()=>{toggleBag(true);switchTab('titles')},
+ bind,toggle,pondClick,hubClosed,onLocalMessage,
+ // v297: the plaza's leave-warning reels the line in through this, so chat no longer has to nag.
+ stop:message=>stopFishing(message),openBag:()=>toggleBag(true),openTitles:()=>{toggleBag(true);switchTab('titles')},
  // v295: sit/stand are allowed with a line in the water, so the plaza asks these two separately
  // instead of using one movement lock for everything.
  seatedBusy:()=>!['off','walking'].includes(ui.phase),

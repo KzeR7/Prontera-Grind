@@ -26,6 +26,9 @@ const LEDGER_REASONS=new Set(['blind','call','raise','win']);
 // drawn, so an unknown id simply renders nothing.
 const FISH_MODES=new Set(['flight','wait','bite','reel','ready']);
 const FISH_MUTATIONS=new Set(['shiny','sparkling','frozen','electric','ghostly','golden','prismatic']);
+// v297: the biggest catch in the catalog is a 1.8 t whale shark, so the show-off weight clamp
+// follows the game's weight ceiling instead of the old 60 kg-era 999.
+const MAX_FISH_W=5000;
 const ledgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id);
 // Only public World text/emotions are durable. Whispers and Local never enter this record.
 export function cleanWorldHistory(value){
@@ -384,10 +387,20 @@ export class SocialRoom {
    if(now-(c.showOffAt||0)<1500)return;
    c.showOffAt=now;
    if(typeof m.sp!=='string'||!/^[a-z][a-z0-9]{1,23}$/.test(m.sp))return;
-   const w=Math.round(Math.max(.01,Math.min(999,Number(m.w)||0))*100)/100;
+   const w=Math.round(Math.max(.01,Math.min(MAX_FISH_W,Number(m.w)||0))*100)/100;
    if(!(w>0))return;
    const mut=typeof m.mut==='string'&&FISH_MUTATIONS.has(m.mut)?m.mut:null;
    return this.broadcast({type:'showoff',from:c.id,name:c.name,sp:m.sp,w,mut,perfect:m.perfect===true,at:now},p=>p.room===c.room);
+  }
+  // v297: monster and secret catches are announced in the room's Local chat. The weight and the
+  // species slug are validated exactly like the show-off; the display name is resolved client side.
+  if(m.type==='fishbrag'&&c.room){
+   if(now-(c.bragAt||0)<3000)return;
+   if(typeof m.sp!=='string'||!/^[a-z][a-z0-9]{1,23}$/.test(m.sp))return;
+   const w=Math.round(Math.max(.01,Math.min(MAX_FISH_W,Number(m.w)||0))*100)/100;
+   if(!(w>0))return;
+   c.bragAt=now;
+   return this.broadcast({type:'fishnote',from:c.id,name:c.name,sp:m.sp,w,kind:m.kind==='secret'?'secret':'mega',at:now},p=>p.room===c.room);
   }
   if(m.type==='sit'&&c.room){if(!this.requirePokerLeave(c,m))return;if(now-c.moveAt<100)return;c.moveAt=now;R.advance(c,now);this.standPoker(c,now,true);c.path=[];c.seat=null;c.sit=!c.sit;return this.broadcastPlayer(c,p=>p.room===c.room)}
   if(m.type==='poker_watch'&&c.room){return this.send(c,this.pokerPayload(c.room,c.id,now))}
