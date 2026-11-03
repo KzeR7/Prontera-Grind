@@ -25,8 +25,8 @@ for(const p of R.PONDS){
  for(const s of rim)assert(R.walkable(s.x,s.z),'grass ring around the pond stays walkable');
  assert(R.cragBlocked(props.crag.x,props.crag.z)&&!R.walkable(props.crag.x,props.crag.z),'the cascade boulder heap is solid');
  for(const stand of props.stands)assert(R.walkable(stand.x,stand.z),'fishing stand "'+stand.name+'" is walkable');
- assert(props.stands.some(s=>s.name==='bridge')&&props.stands.some(s=>s.name==='ledge'),'the bridge crown and the stone shelf are real fishing stands');
- assert(props.ledge&&props.ledge.h>.3,'the stone shelf has height, so standing on it lifts the hero');
+ assert(props.stands.some(s=>s.name==='bridge'),'the bridge crown is a real fishing stand');
+ assert.equal(props.ledge,undefined,'the stone shelf was removed at the owner\'s request');
  const route=R.path({x:0,z:12},rim[1]);
  assert(route.length,'players can walk from spawn to the pond rim');
  assert(route.every(q=>R.walkable(q.x,q.z)));
@@ -64,6 +64,13 @@ for(let n=-30;n<=30;n++)if(Math.abs(n)>6){assert(R.walkable(0,n),'promenade clea
   assert(!FB.baitHTML(b,40).includes(b.icon),b.name+' no longer renders its emoji');
  }
  assert(calls.some(c=>c[0]==='quadraticCurveTo')&&calls.some(c=>c[0]==='arc'),'the icons are drawn with curves, not text');
+ // v310: title medals are painted too - one per rarity tier, all the same size, no glyph fallbacks
+ for(const id of ['common','uncommon','rare','legendary','mythical','secret']){
+  const url=FB.titleBadgeURL(id,64);
+  assert(typeof url==='string'&&url.startsWith('data:image/png'),'the '+id+' title medal is painted');
+ }
+ assert.equal(FB.titleBadgeURL('common',64),FB.titleBadgeURL('common',64),'medals are cached per tier');
+ assert.equal(typeof FB.titleBadgeURL('not-a-tier',64),'string','an unknown tier falls back to a common medal');
  dom.window.close();
 }
 
@@ -466,6 +473,24 @@ assert.equal(F.FISHING_TITLES.filter(t=>F.titleUnlocked(mid,t)).length<=4,true,'
 // v297: the apex title tracks the catalog size instead of a hardcoded 70.
 assert.equal(F.FISHING_TITLE_BY_ID['apex-angler'].goal,F.SPECIES.length,'Apex Angler wants every species');
 assert(F.FISHING_TITLE_BY_ID['pond-legend'].goal<F.SPECIES.length,'Pond Legend is a milestone before the apex');
+// v310 (owner: "titles are not arranged rarity"): every title belongs to a rarity tier and holds a
+// unique place on the ladder, so the UI can list them Common -> Secret instead of in catalog order.
+{
+ const rankIdx=F.RARITIES.map(r=>r.id);
+ for(const t of F.FISHING_TITLES){
+  assert(rankIdx.includes(t.tier),t.id+' belongs to a real rarity tier');
+  assert(Number.isInteger(t.rank)&&t.rank>=1&&t.rank<=20,t.id+' has a ladder rank');
+ }
+ const ranks=F.FISHING_TITLES.map(t=>t.rank).sort((a,b)=>a-b);
+ assert.deepEqual(ranks,Array.from({length:20},(_,i)=>i+1),'the ladder ranks are 1..20 with no gaps');
+ for(const tier of rankIdx)assert(F.FISHING_TITLES.some(t=>t.tier===tier),'the '+tier+' tier has at least one title');
+ const listed=[...F.FISHING_TITLES].sort((a,b)=>rankIdx.indexOf(a.tier)-rankIdx.indexOf(b.tier)||a.rank-b.rank);
+ let lastTier=-1,ordered=true;
+ for(const t of listed){const i=rankIdx.indexOf(t.tier);if(i<lastTier)ordered=false;lastTier=i}
+ assert(ordered,'sorting by tier then rank walks the rarity ladder once, never back');
+ assert.equal(listed[0].tier,'common','the list opens with the common tier');
+ assert.equal(listed.at(-1).tier,'secret','and closes with secret');
+}
 assert.equal(new Set(F.FISHING_TITLES.map(t=>t.id)).size,20,'title ids are unique');
 assert.equal(new Set(F.FISHING_TITLES.map(t=>t.name)).size,20,'title names are unique');
 st=F.normalize(null);
@@ -755,8 +780,8 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=309'),asset+' is versioned at v309');
- assert(/haven-v309/.test(page),'the login card names the v309 build');
+  assert(page.includes(asset+'?v=310'),asset+' is versioned at v310');
+ assert(/haven-v310/.test(page),'the login card names the v310 build');
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
  const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');

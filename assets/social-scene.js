@@ -9,18 +9,6 @@ window.PGSocialScene={async create(host,labels,callbacks){
  const freeze=mesh=>{mesh.updateMatrix();mesh.matrixAutoUpdate=false;return mesh};
  // Bridges register their arch here (v308) so the player pass can stand feet on the deck.
  const bridges=[];
- const platforms=[];
- const platformLift=(x,z)=>{
-  let y=0;
-  for(const b of platforms){
-   const dx=Math.abs(x-b.x),dz=Math.abs(z-b.z);
-   if(dx>b.hx||dz>b.hz)continue;
-   // ramp over the last .3 so stepping onto a stone shelf is a step, not a jump
-   const k=Math.max(0,Math.min(1,Math.min(b.hx-dx,b.hz-dz)/.3+.25));
-   y=Math.max(y,b.h*k);
-  }
-  return y;
- };
  const bridgeLift=(x,z)=>{
   for(const b of bridges){
    if(Math.abs(x-b.x)>b.span/2||Math.abs(z-b.z)>b.width/2)continue;
@@ -204,8 +192,8 @@ window.PGSocialScene={async create(host,labels,callbacks){
                 [w/2-.55,.35,.92,h+.45],[w/2+.4,.55,.84,h*.65],[w/2+1.15,.45,.68,h*.4],[-.62,1.05,.74,h*.34],[.66,1.0,.7,h*.3]];
    const rockGroup=new T.Group();scene.add(rockGroup);
    if(view)view.fallback.push(rockGroup);
-   // v309: the heap sits left of the pond centre and a little further back, so the stone shelf the
-   // angler stands on (R.POND_PROPS[].ledge) is clear of it.
+   // v309: the heap sits left of the pond centre and a little further back, so it never covers the
+   // water where the cascade lands (the shelf that used to sit here was removed at the owner's ask).
    rocks.forEach(([dx,dz,r,ry],i)=>{
     const rock=new T.Mesh(new T.DodecahedronGeometry(r,0),tone[i%3]);
     rock.position.set(fall.x-1.0+dx*.86,ry*.6,zc-d*(dz+.35));
@@ -369,7 +357,6 @@ void main(){
      stoneMat.map=clone(stone,1,1);stoneMat.color.set(0xded7c6);stoneMat.needsUpdate=true;
     }
     // planks across the deck, red lacquer on the parapets
-    if(stone&&v.ledge){v.ledge.material.map=clone(stone,1.4,.7);v.ledge.material.color.set(0xe2dbca);v.ledge.material.needsUpdate=true}
     if(planks&&v.bridge){v.bridge.deck.material.map=clone(planks,1/2.3,1/2.3);v.bridge.deck.material.color.set(0xf2e6d2);v.bridge.deck.material.needsUpdate=true;}
     if(red){
      bridgeRailMat.map=clone(red,1,1);bridgeRailMat.color.set(0xffffff);bridgeRailMat.needsUpdate=true;
@@ -422,7 +409,7 @@ void main(){
   }
   const reedBatch=makeBatch();
   for(const p of R.PONDS){
-   const view={p,props:null,fallback:[],falls:[],fallSpray:[],bridge:null,ledge:null,stones:[],rim:null,water:null,waterB:null};
+   const view={p,props:null,fallback:[],falls:[],fallSpray:[],bridge:null,stones:[],rim:null,water:null,waterB:null};
    pondViews.push(view);
    const rim=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w+1.7,p.d+1.7,3.1)),sandMat);rim.rotation.x=-Math.PI/2;rim.position.set(p.x,.008,p.z);scene.add(freeze(rim));view.rim=rim;
    const water=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w,p.d,2.6)),waterMat);water.rotation.x=-Math.PI/2;water.position.set(p.x,.016,p.z);scene.add(freeze(water));view.water=water;
@@ -470,26 +457,6 @@ void main(){
    if(props&&props.falls)cascade(p,props.falls,view);
    if(props){
     view.bridge=archBridge(props.bridge.x,props.bridge.z,props.bridge.span,props.bridge.width,props.bridge.arch);
-    // v309: a flat stone shelf beside the cascade. It is a real platform: walk onto it and the hero
-    // stands on top (platformLift), which is how you fish "on the rocks" instead of inside them.
-    if(props.ledge){
-     // v309: a stone shelf cut like the pond coping (rounded, extruded, limestone) so it reads as a
-     // natural ledge at the water's edge rather than a concrete pad. You can walk onto it: the
-     // invisible platform below uses the same footprint, and the hero's feet land on its top.
-     const L=props.ledge;
-     const slab=new T.Mesh(new T.ExtrudeGeometry(roundedRect(L.w,L.d,.55),{depth:L.h,bevelEnabled:false}),stoneMat.clone());
-     slab.rotation.x=-Math.PI/2;slab.position.set(L.x,L.h,L.z);scene.add(freeze(slab));view.ledge=slab;
-     const cap=new T.Mesh(new T.ExtrudeGeometry(roundedRect(L.w+.34,L.d+.34,.7),{depth:.12,bevelEnabled:false}),new T.MeshBasicMaterial({color:0xc9c2ae}));
-     cap.rotation.x=-Math.PI/2;cap.position.set(L.x,L.h+.01,L.z);scene.add(freeze(cap));
-     platforms.push({x:L.x,z:L.z,hx:L.w/2,hz:L.d/2,h:L.h+.09});
-     // the boulder that ties the shelf to the rock face stays in painted mode too
-     const back=new T.Mesh(new T.DodecahedronGeometry(.6,0),rockMidMat);
-     back.position.set(L.x+L.w/2-.15,L.h+.08,L.z-.6);back.scale.set(1,.78,1);back.rotation.set(.4,.8,.2);
-     scene.add(freeze(back));
-     const back2=new T.Mesh(new T.DodecahedronGeometry(.42,0),rockDarkMat);
-     back2.position.set(L.x+L.w/2-.75,L.h+.02,L.z-.5);back2.scale.set(1,.7,1);back2.rotation.set(-.3,.4,.5);
-     scene.add(freeze(back2));
-    }
     for(const l of props.lanterns)view.fallback.push(stoneLantern(l.x,l.z));
     for(const t of props.blossoms)view.fallback.push(blossomTree(t.x,t.z,t.scale));
     const boulders=new T.Group();
@@ -1033,7 +1000,7 @@ void main(){
   const state=p.state;if(state.id===callbacks.self()&&p.wasSitting!==state.sit){p.wasSitting=state.sit;callbacks.sitting?.(state.sit)}if(p.loaded!==p.requested||!p.looks.normal||!p.looks.sit)loadLooks(p,now);
   const look=(state.sit?p.looks.sit:null)||p.looks.normal;let height=p.height;
   const pokerChair=state.sit&&Number.isInteger(state.pokerSeat)&&R.POKER?.seats[state.pokerSeat];
-  const chair=pokerChair||(state.sit&&R.SEATS[state.seat]),floor=chair?chair.height:.06+Math.max(bridgeLift(state.x,state.z),platformLift(state.x,state.z));
+  const chair=pokerChair||(state.sit&&R.SEATS[state.seat]),floor=chair?chair.height:.06+bridgeLift(state.x,state.z);
   if(look){
    const facing=(state.dir+Math.round(angle/(Math.PI/4))+8)%8,stance=state.sit&&p.looks.sit?'sit':state.path.length?'walk':'idle';
    const glow=milestone(REFINE_GLOWS,Math.max(0,Math.min(15,Number(state.look?.refine)||0)));

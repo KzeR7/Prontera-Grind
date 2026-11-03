@@ -280,29 +280,82 @@ const caughtIn=(s,pred)=>SPECIES.filter(sp=>pred(sp)&&s.dex&&s.dex[sp.id]&&s.dex
 const rodsOwned=s=>new Set([...(Array.isArray(s&&s.rods)?s.rods:Object.keys((s&&s.rods)||{}).filter(k=>s.rods[k])),'twig']).size;
 const mutatedMythic=s=>SPECIES.filter(sp=>(sp.rarity==='mythical'||sp.rarity==='secret')&&s.dex&&s.dex[sp.id]&&s.dex[sp.id].n>0
  &&Array.isArray(s.dex[sp.id].mut)&&s.dex[sp.id].mut.some(m=>m==='golden'||m==='prismatic')).length;
+// v310 (owner: "titles are also mission icons & not arranged rarity"): each title now carries the
+// rarity tier it belongs to and its place on that ladder (rank 1-20, easiest first). The list is
+// rendered in rank order - Common, Uncommon, Rare, Legendary, Mythical, Secret - with the same
+// rarity chip the fish index uses, so the ladder reads at a glance instead of as a mission log.
 const FISHING_TITLES=[
- {id:'dockhand',name:'Dockhand',mark:'◉',tone:'bronze',cur:s=>s.stats.catches,goal:25,req:'catch 25 fish'},
- {id:'bait-layer',name:'Bait Layer',mark:'⌖',tone:'copper',cur:s=>s.stats.catches,goal:150,req:'catch 150 fish'},
- {id:'reed-watcher',name:'Reed Watcher',mark:'⚔',tone:'silver',cur:s=>s.stats.casts,goal:500,req:'make 500 casts'},
- {id:'species-collector',name:'Species Collector',mark:'✧',tone:'jade',cur:discoveredSpecies,goal:25,req:'discover 25 species'},
- {id:'perfect-hand',name:'Perfect Hand',mark:'★',tone:'sapphire',cur:s=>s.stats.perfects,goal:60,req:'land 60 perfect catches'},
- {id:'heavy-hook',name:'Heavy Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:50,req:'record a 50 kg fish'},
- {id:'deep-line',name:'Deep Line',mark:'☾',tone:'obsidian',cur:s=>s.stats.catches,goal:1500,req:'catch 1,500 fish'},
- {id:'mutation-hunter',name:'Mutation Hunter',mark:'🧬',tone:'crimson',cur:mutationKinds,goal:Object.keys(MUTATIONS).length,req:'find all 7 mutation kinds'},
- {id:'pond-legend',name:'Pond Legend',mark:'✹',tone:'gold',cur:discoveredSpecies,goal:100,req:'discover 100 species'},
- {id:'apex-angler',name:'Apex Angler',mark:'✶',tone:'valkyrie',cur:discoveredSpecies,goal:SPECIES.length,req:`discover all ${SPECIES.length} species`},
- {id:'tide-regular',name:'Tide Regular',mark:'≈',tone:'tide',cur:s=>s.stats.casts,goal:5000,req:'make 5,000 casts'},
- {id:'line-veteran',name:'Line Veteran',mark:'⚔',tone:'silver',cur:s=>s.stats.catches,goal:1000,req:'catch 1,000 fish'},
- {id:'leviathan-hook',name:'Leviathan Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:250,req:'record a 250 kg fish'},
- {id:'colossus-hook',name:'Colossus Hook',mark:'⛰',tone:'abyss',cur:s=>Math.floor(bestWeight(s)),goal:800,req:'record an 800 kg fish'},
- {id:'secret-circle',name:'Secret Circle',mark:'✧',tone:'frost',cur:s=>caughtIn(s,sp=>sp.rarity==='secret'),goal:SPECIES.filter(sp=>sp.rarity==='secret').length,req:`catch a fish from every secret species`},
- {id:'mega-hunter',name:'Mega Hunter',mark:'✹',tone:'dawn',cur:s=>caughtIn(s,sp=>sp.mega),goal:SPECIES.filter(sp=>sp.mega).length,req:'catch one of every pond monster'},
+ {id:'dockhand',tier:'common',rank:1,name:'Dockhand',mark:'◉',tone:'bronze',cur:s=>s.stats.catches,goal:25,req:'catch 25 fish'},
+ {id:'bait-layer',tier:'uncommon',rank:5,name:'Bait Layer',mark:'⌖',tone:'copper',cur:s=>s.stats.catches,goal:150,req:'catch 150 fish'},
+ {id:'reed-watcher',tier:'rare',rank:7,name:'Reed Watcher',mark:'⚔',tone:'silver',cur:s=>s.stats.casts,goal:500,req:'make 500 casts'},
+ {id:'species-collector',tier:'common',rank:2,name:'Species Collector',mark:'✧',tone:'jade',cur:discoveredSpecies,goal:25,req:'discover 25 species'},
+ {id:'perfect-hand',tier:'uncommon',rank:4,name:'Perfect Hand',mark:'★',tone:'sapphire',cur:s=>s.stats.perfects,goal:60,req:'land 60 perfect catches'},
+ {id:'heavy-hook',tier:'uncommon',rank:6,name:'Heavy Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:50,req:'record a 50 kg fish'},
+ {id:'deep-line',tier:'rare',rank:10,name:'Deep Line',mark:'☾',tone:'obsidian',cur:s=>s.stats.catches,goal:1500,req:'catch 1,500 fish'},
+ {id:'mutation-hunter',tier:'legendary',rank:12,name:'Mutation Hunter',mark:'🧬',tone:'crimson',cur:mutationKinds,goal:Object.keys(MUTATIONS).length,req:'find all 7 mutation kinds'},
+ {id:'pond-legend',tier:'rare',rank:11,name:'Pond Legend',mark:'✹',tone:'gold',cur:discoveredSpecies,goal:100,req:'discover 100 species'},
+ {id:'apex-angler',tier:'secret',rank:19,name:'Apex Angler',mark:'✶',tone:'valkyrie',cur:discoveredSpecies,goal:SPECIES.length,req:`discover all ${SPECIES.length} species`},
+ {id:'tide-regular',tier:'legendary',rank:13,name:'Tide Regular',mark:'≈',tone:'tide',cur:s=>s.stats.casts,goal:5000,req:'make 5,000 casts'},
+ {id:'line-veteran',tier:'rare',rank:8,name:'Line Veteran',mark:'⚔',tone:'silver',cur:s=>s.stats.catches,goal:1000,req:'catch 1,000 fish'},
+ {id:'leviathan-hook',tier:'rare',rank:9,name:'Leviathan Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:250,req:'record a 250 kg fish'},
+ {id:'colossus-hook',tier:'mythical',rank:17,name:'Colossus Hook',mark:'⛰',tone:'abyss',cur:s=>Math.floor(bestWeight(s)),goal:800,req:'record an 800 kg fish'},
+ {id:'secret-circle',tier:'mythical',rank:16,name:'Secret Circle',mark:'✧',tone:'frost',cur:s=>caughtIn(s,sp=>sp.rarity==='secret'),goal:SPECIES.filter(sp=>sp.rarity==='secret').length,req:`catch a fish from every secret species`},
+ {id:'mega-hunter',tier:'legendary',rank:14,name:'Mega Hunter',mark:'✹',tone:'dawn',cur:s=>caughtIn(s,sp=>sp.mega),goal:SPECIES.filter(sp=>sp.mega).length,req:'catch one of every pond monster'},
  // the four that are not counters
- {id:'full-creel',name:'Full Creel',mark:'🧺',tone:'ember',cur:s=>Number(s.bag&&s.bag.length)||0,goal:500,req:'fill the biggest bag - 500 fish at once'},
- {id:'armoury',name:'Armoury',mark:'🪝',tone:'bronze',cur:rodsOwned,goal:6,req:'own all six rods'},
- {id:'coin-hoard',name:'Coin Hoard',mark:'🪙',tone:'gold',cur:s=>Number(s.coins)||0,goal:50000,req:'hold 50,000 Fishcoins at once'},
- {id:'dark-star',name:'Dark Star',mark:'🌑',tone:'void',cur:mutatedMythic,goal:1,req:'catch a mythical or secret fish with a Golden or Prismatic mutation'},
+ {id:'full-creel',tier:'legendary',rank:15,name:'Full Creel',mark:'🧺',tone:'ember',cur:s=>Number(s.bag&&s.bag.length)||0,goal:500,req:'fill the biggest bag - 500 fish at once'},
+ {id:'armoury',tier:'common',rank:3,name:'Armoury',mark:'🪝',tone:'bronze',cur:rodsOwned,goal:6,req:'own all six rods'},
+ {id:'coin-hoard',tier:'mythical',rank:18,name:'Coin Hoard',mark:'🪙',tone:'gold',cur:s=>Number(s.coins)||0,goal:50000,req:'hold 50,000 Fishcoins at once'},
+ {id:'dark-star',tier:'secret',rank:20,name:'Dark Star',mark:'🌑',tone:'void',cur:mutatedMythic,goal:1,req:'catch a mythical or secret fish with a Golden or Prismatic mutation'},
 ];
+// v310: a painted medal for each title tier - a ribbon, a disc in the rarity colour and a star. It
+// replaces the loose glyphs (◉ ⌖ ⚔ ✧ ★ …) that read as quest markers and rendered at a different
+// size in every font. Cached per colour, drawn at 64 and laid out at 26 by .fishing-title-badge.
+const TITLE_BADGE_CACHE=new Map();
+function shade(hex,amt){
+ const n=parseInt(String(hex).replace('#',''),16);
+ if(!Number.isFinite(n))return hex;
+ const clamp=v=>Math.max(0,Math.min(255,Math.round(v)));
+ const r=clamp(((n>>16)&255)*(1+amt)),g=clamp(((n>>8)&255)*(1+amt)),b=clamp((n&255)*(1+amt));
+ return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+function titleBadge(color,px=64){
+ if(typeof document==='undefined'||!document.createElement)return null;
+ let c,g;
+ try{c=document.createElement('canvas');c.width=c.height=px;g=c.getContext&&c.getContext('2d')}catch{return null}
+ if(!g||typeof g.beginPath!=='function')return null;
+ const u=px/100,U=n=>n*u;
+ try{
+  const ink=shade(color,-.45),light=shade(color,.35);
+  // ribbon: two tails behind the disc
+  g.fillStyle=ink;
+  g.beginPath();g.moveTo(U(30),U(10));g.lineTo(U(48),U(10));g.lineTo(U(44),U(56));g.lineTo(U(33),U(48));g.closePath();g.fill();
+  g.beginPath();g.moveTo(U(52),U(10));g.lineTo(U(70),U(10));g.lineTo(U(67),U(48));g.lineTo(U(56),U(56));g.closePath();g.fill();
+  // disc
+  g.fillStyle=color;g.beginPath();g.arc(U(50),U(60),U(32),0,Math.PI*2);g.fill();
+  g.strokeStyle=ink;g.lineWidth=U(5);g.beginPath();g.arc(U(50),U(60),U(32),0,Math.PI*2);g.stroke();
+  g.strokeStyle=light;g.lineWidth=U(2.5);g.beginPath();g.arc(U(50),U(60),U(25),0,Math.PI*2);g.stroke();
+  // the star
+  g.beginPath();
+  for(let i=0;i<10;i++){
+   const ang=-Math.PI/2+i*Math.PI/5,r=i%2?U(7):U(15);
+   const x=U(50)+Math.cos(ang)*r,y=U(60)+Math.sin(ang)*r;
+   i?g.lineTo(x,y):g.moveTo(x,y);
+  }
+  g.closePath();g.fillStyle='rgba(255,255,255,.92)';g.fill();
+ }catch{return null}
+ return c;
+}
+function titleBadgeURL(tier,px=64){
+ const r=rarityById(tier)||rarityById('common');
+ const key=r.color+'|'+px;
+ if(TITLE_BADGE_CACHE.has(key))return TITLE_BADGE_CACHE.get(key);
+ let url=null;
+ const c=titleBadge(r.color,px);
+ if(c&&typeof c.toDataURL==='function'){try{url=c.toDataURL('image/png')}catch{url=null}}
+ if(url&&!/^data:image\/png/.test(url))url=null;
+ TITLE_BADGE_CACHE.set(key,url);
+ return url;
+}
 const FISHING_TITLE_BY_ID=Object.fromEntries(FISHING_TITLES.map(t=>[t.id,t]));
 const titleUnlocked=(state,t)=>!!(t&&t.cur(state)>=t.goal);
 // Equipping is only ever possible for an earned title; null means "wear no fishing title".
@@ -668,8 +721,8 @@ function distToPond(){
 }
 function standPoint(p,s){
  // v309 (owner: "can u fix to fish on the bridge & on the rocks?"): the pond's own fishing places
- // come first - the bridge crown and the stone shelf by the cascade are stands you can really fish
- // from, and the crag behind them is solid, so the walk no longer ends inside the rock face.
+ // come first - the bridge crown is a stand you can really fish from - and the crag behind them is
+ // solid, so the walk no longer ends inside the rock face.
  const props=(R().POND_PROPS||[])[ui.pond];
  const stands=props&&Array.isArray(props.stands)?props.stands:[];
  const nearest=stands.filter(c=>R().walkable(c.x,c.z))
@@ -1345,10 +1398,12 @@ function baitSpriteURL(baitId,px=64){
  BAIT_ART_CACHE.set(key,url);
  return url;
 }
-function baitHTML(bait,px=40){
+function baitHTML(bait,px=64){
  const b=typeof bait==='string'?BAITS_BY_ID[bait]:bait;
  if(!b)return '';
- const url=baitSpriteURL(b.id,px>=64?64:96);
+ // v310 (owner: "bait images is too big"): the bitmap was always 96px and had no CSS size, so it
+ // filled the row. It is painted at a crisp 64 and laid out by .fishing-bait-art / .fishing-shop-bait.
+ const url=baitSpriteURL(b.id,64);
  return url?`<img class="fishing-bait-art" src="${url}" alt="" draggable="false">`:`<span>${b.icon}</span>`;
 }
 function glyphHTML(sp,mut,cls='fishing-glyph'){
@@ -1362,7 +1417,7 @@ const COIN_HTML='<i class="fishcoin" aria-hidden="true"></i>';
 function renderDockGear(){
  if(!els)return;
  const st=state(),rod=equippedRod(),bait=selectedBait();
- els.gearLine.innerHTML=`<span>${COIN_HTML} ${fmt(st.coins)}</span><span>${rodHTML(rod,'fishing-gear-rod',40)} ${esc(rod.name)}</span><span>${bait?`${baitHTML(bait,32)} ${esc(bait.name)} ×${st.bait[bait.id]}`:'No bait'}</span>`;
+ els.gearLine.innerHTML=`<span>${COIN_HTML} ${fmt(st.coins)}</span><span>${rodHTML(rod,'fishing-gear-rod',40)} ${esc(rod.name)}</span><span>${bait?`${baitHTML(bait)} ${esc(bait.name)} ×${st.bait[bait.id]}`:'No bait'}</span>`;
  els.bagCount.textContent=st.bag.length+'/'+bagMax(st);
  if(els.coins)els.coins.innerHTML=COIN_HTML+' '+fmt(st.coins);
 }
@@ -1751,29 +1806,27 @@ const TITLE_TONE={bronze:'#c08a52',copper:'#a86f4a',silver:'#cdd6de',jade:'#6ee0
  tide:'#5fc9d8',abyss:'#7b8fd8',ember:'#ff9a5c',frost:'#bfe9ff',dawn:'#ffd9a0'};
 function renderTitles(){
  const st=state(),worn=equippedTitle(st);
- // v304 (owner): "titles are bugged on the arrangement". They were listed in catalog order, so a worn
- // title could sit at the bottom under five locked ones and the earned ones were scattered. The list
- // now reads worn → earned (closest first) → locked (closest first), which is the order a player
- // actually scans it in.
+ // v310 (owner): "titles are ... not arranged rarity". The old list sorted worn → earned → locked,
+ // so the ladder was scattered. It now reads the way the fish index reads - Common, Uncommon, Rare,
+ // Legendary, Mythical, Secret - and within a tier from the shortest haul to the longest. The worn
+ // title is still easy to spot: its row is outlined and its button says Worn.
  const scored=FISHING_TITLES.map(t=>{
   const done=titleUnlocked(st,t),cur=Math.min(t.goal,t.cur(st));
   return {t,done,cur,isWorn:!!(worn&&worn.id===t.id),frac:cur/Math.max(1,t.goal)};
- }).sort((a,b)=>{
-  if(a.isWorn!==b.isWorn)return a.isWorn?-1:1;
-  if(a.done!==b.done)return a.done?-1:1;
-  if(!a.done&&!b.done&&a.frac!==b.frac)return b.frac-a.frac;
-  return FISHING_TITLES.indexOf(a.t)-FISHING_TITLES.indexOf(b.t);
- });
+ }).sort((a,b)=>(RARITY_INDEX[a.t.tier]??0)-(RARITY_INDEX[b.t.tier]??0)||(a.t.rank||0)-(b.t.rank||0));
  const rows=scored.map(({t,cur,done,isWorn})=>{
   const pct=Math.round(Math.min(1,cur/Math.max(1,t.goal))*100);
-  const tone=TITLE_TONE[t.tone]||TITLE_TONE.bronze;
-  return `<div class="fishing-title-row${done?'':' locked'}${isWorn?' worn':''}" style="--tone:${tone}">
-   <span class="fishing-title-mark">${t.mark}</span>
+  const r=rarityById(t.tier)||rarityById('common');
+  const tone=TITLE_TONE[t.tone]||r.color;
+  const badge=titleBadgeURL(t.tier,64);
+  return `<div class="fishing-title-row${done?'':' locked'}${isWorn?' worn':''}" style="--tone:${r.color}" data-tier="${esc(t.tier)}" data-rank="${t.rank}">
+   ${badge?`<img class="fishing-title-badge" src="${badge}" alt="" draggable="false" style="--tone:${tone}">`:`<span class="fishing-title-mark">${t.mark}</span>`}
    <span class="fishing-title-name">${esc(t.name)}<small>${done?`✓ ${esc(t.req)}`:`${fmt(cur)}/${fmt(t.goal)} — ${esc(t.req)}`}</small><i class="fishing-title-bar"><b style="width:${done?100:pct}%"></b></i></span>
+   <span class="fishing-chip" style="background:${r.color}">${r.label}</span>
    ${isWorn?'<button type="button" disabled>Worn</button>':done?`<button type="button" data-title="${t.id}">Wear</button>`:'<button type="button" disabled>🔒</button>'}
   </div>`;
  }).join('');
- els.titlesView.innerHTML=`<p class="fishing-dex-head">Worn above your head in the plaza. <b>${FISHING_TITLES.filter(t=>titleUnlocked(st,t)).length}/${FISHING_TITLES.length}</b> earned.</p><div class="fishing-title-list">${rows}</div>${worn?'<div class="fishing-title-none"><button type="button" data-title="none">Wear no fishing title</button></div>':''}`;
+ els.titlesView.innerHTML=`<p class="fishing-dex-head">Worn above your head in the plaza. <b>${FISHING_TITLES.filter(t=>titleUnlocked(st,t)).length}/${FISHING_TITLES.length}</b> earned · listed by rarity.</p><div class="fishing-title-list">${rows}</div>${worn?'<div class="fishing-title-none"><button type="button" data-title="none">Wear no fishing title</button></div>':''}`;
  for(const b of els.titlesView.querySelectorAll('button[data-title]'))b.onclick=()=>{
   const r=equipTitle(st,b.dataset.title==='none'?null:b.dataset.title);
   if(r.ok){persist();status(r.title?('Wearing '+FISHING_TITLE_BY_ID[r.title].name+'.'):'Fishing title removed.');renderPanel();if(opts&&typeof opts.titleChanged==='function')opts.titleChanged()}
@@ -1793,7 +1846,7 @@ function renderShop(){
  const baitRows=BAITS.map(b=>{
   const ownedN=st.bait[b.id]||0,selected=st.baitSel===b.id;
   const stats=`🍀 +${Math.round(b.luck*100)}%${b.weight?` · 🏋️ +${Math.round(b.weight*100)}%`:''}${b.mutation>1?` · 🧬 ×${b.mutation}`:''}`;
-  return `<div class="fishing-shop-row${selected?' equipped':''}"><span class="fishing-shop-icon">${baitHTML(b,40)}</span><span class="fishing-shop-name">${esc(b.name)}<small>${stats} · owned ×${ownedN}</small></span><span class="fishing-shop-btns"><button type="button" data-bait="${b.id}" data-n="1" ${st.coins<b.cost?'disabled':''}>${COIN_HTML} ${fmt(b.cost)}</button><button type="button" data-bait="${b.id}" data-n="10" ${st.coins<b.cost*10?'disabled':''}>×10</button><button type="button" data-use="${b.id}" ${ownedN?'':'disabled'}>${selected?'Using':'Use'}</button></span></div>`;
+  return `<div class="fishing-shop-row${selected?' equipped':''}"><span class="fishing-shop-icon">${baitHTML(b)}</span><span class="fishing-shop-name">${esc(b.name)}<small>${stats} · owned ×${ownedN}</small></span><span class="fishing-shop-btns"><button type="button" data-bait="${b.id}" data-n="1" ${st.coins<b.cost?'disabled':''}>${COIN_HTML} ${fmt(b.cost)}</button><button type="button" data-bait="${b.id}" data-n="10" ${st.coins<b.cost*10?'disabled':''}>×10</button><button type="button" data-use="${b.id}" ${ownedN?'':'disabled'}>${selected?'Using':'Use'}</button></span></div>`;
  }).join('');
  const tier=bagTierOf(st),next=nextBagTier(st),cap=bagMax(st);
  // v295: one permanent bag upgrade per tier, bought in order - never a skip.
@@ -1871,7 +1924,7 @@ return {
  FISH_ART,
  fishSprite,fishSpriteURL,
  // v309: painted bait icons, so the shop no longer depends on Unicode-13 emoji fonts.
- baitSprite,baitSpriteURL,baitHTML,
+ baitSprite,baitSpriteURL,baitHTML,titleBadge,titleBadgeURL,
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,
  // v297: the plaza's leave-warning reels the line in through this, so chat no longer has to nag.

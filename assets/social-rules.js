@@ -38,10 +38,10 @@ const POND_PROPS=PONDS.map((p,i)=>{
   // that you stand on to fish. `stands` are the real fishing places around the pond, so walking to
   // the pond lands you on the bridge crown or the shelf instead of inside a rock.
   crag:{x:p.x-.9,z:POND_FALLS[i].z-1.9,hx:2.5,hz:1.0},
-  ledge:{x:p.x+3.0,z:p.z-hz-1.2,w:3.0,d:1.6,h:.5},
-  stands:[{x:p.x,z:p.z+hz+3.1,name:'bridge'},{x:p.x+3.0,z:p.z-hz-1.2,name:'ledge'},
+  stands:[{x:p.x,z:p.z+hz+3.1,name:'bridge'},
           {x:p.x+hx+2.0,z:p.z,name:'east'},{x:p.x-hx-2.0,z:p.z,name:'west'},
-          {x:p.x,z:p.z+hz+1.6,name:'south'},{x:p.x+hx+1.6,z:p.z+hz+1.6,name:'south-east'}],
+          {x:p.x,z:p.z+hz+1.6,name:'south'},{x:p.x+hx+1.6,z:p.z+hz+1.6,name:'south-east'},
+          {x:p.x-hx+1.6,z:p.z-hz-2.4,name:'north-west'}],
   lanterns:[{x:p.x-hx-2.1,z:p.z+hz+1.1},{x:p.x+hx+2.1,z:p.z+hz+1.1}],
   blossoms:[{x:p.x-hx-3.4,z:p.z-1.6,scale:1.05},{x:p.x+hx+3.4,z:p.z+.4,scale:.95}],
   boulders:SHORE_ROCKS.map(([dx,dz],n)=>({x:p.x+dx*(hx+1.15),z:p.z+dz*(hz+1.15),r:.34+((n*23)%17)/40})),
