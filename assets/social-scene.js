@@ -446,7 +446,8 @@ window.PGSocialScene={async create(host,labels,callbacks){
  if(p.requested!==key){p.requested=key;p.paint='';p.seq++;p.loading=false;p.retryAt=0;loadLooks(p,performance.now())}
  }
  function bubble(id,m){const p=players.get(id);if(!p)return;p.bubble.replaceChildren();p.bubble.classList.toggle('social-emotion',!!m.emotion);if(m.emotion){const img=document.createElement('img');img.src='assets/social/emotions/'+m.emotion+'.png';img.alt='/'+m.emotion;p.bubble.append(img)}else p.bubble.textContent=m.body;p.bubbleUntil=Math.max(performance.now(),clock)+6000;p.bhid=null}
- // Player-locked camera matching the main field game: drag orbits/tilts, pinch/wheel zooms, no map-roaming pan.
+ // Player-locked camera: the right mouse button orbits/tilts, pinch/wheel zooms, no map-roaming pan.
+ // v298 (owner): the LEFT button no longer rotates - a left click always means "walk here".
  const cameraState=()=>({angle,pitch,distance,panX:0,panZ:0,follow:true});
  function setCamera(values={}){const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
  if(Number.isFinite(values.angle))angle=((values.angle+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
@@ -455,12 +456,19 @@ window.PGSocialScene={async create(host,labels,callbacks){
  callbacks.camera?.(cameraState());}
  function resetCamera(){setCamera({angle:0,pitch:DEFAULT_PITCH,distance:DEFAULT_DISTANCE})}
  const ray=new T.Raycaster(),plane=new T.Plane(new T.Vector3(0,1,0),0);let down=null;const touches=new Map();
- function startDrag(e,moved=false){return {x:e.clientX,y:e.clientY,angle,pitch,moved}}
+ function startDrag(e,moved=false){
+  // v298: with a mouse only the right button (or ctrl+left, which macOS sends instead of a right
+  // click) orbits. Touch and pen keep dragging, because neither has a right button to use.
+  const touch=e.pointerType==='touch'||e.pointerType==='pen';
+  return {x:e.clientX,y:e.clientY,angle,pitch,moved,orbit:touch||e.button===2||(e.button===0&&e.ctrlKey===true)};
+ }
  host.oncontextmenu=e=>e.preventDefault();
  host.onpointerdown=e=>{e.preventDefault();host.setPointerCapture(e.pointerId);touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===1)down=startDrag(e);else if(down){down.moved=true;down.pinch=null}};
  host.onpointermove=e=>{if(!down||!touches.has(e.pointerId))return;touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
  if(touches.size===2){const a=[...touches.values()],span=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);if(down.pinch&&span>0)setCamera({distance:distance*down.pinch/span});down.pinch=span;down.moved=true}
- else if(down.moved||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7){setCamera({angle:down.angle-(e.clientX-down.x)*.006,pitch:down.pitch+(e.clientY-down.y)*.28});down.moved=true}};
+ else if(down.orbit&&(down.moved||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)){setCamera({angle:down.angle-(e.clientX-down.x)*.006,pitch:down.pitch+(e.clientY-down.y)*.28});down.moved=true}
+ // A left drag is a dead zone: it cancels the click-to-walk, but never moves the camera.
+ else if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)down.moved=true};
  host.onpointerup=e=>{if(!touches.has(e.pointerId))return;touches.delete(e.pointerId);if(down&&!down.moved&&!(e.button>0)){const rect=host.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
  const pokerSeatHit=pokerStools.map(mesh=>{const point=ray.ray.intersectBox(mesh.userData.pokerSeatBounds,new T.Vector3());return point?{mesh,distance:point.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];
  const tableHit=pokerUnits.map(u=>{const dp=ray.ray.intersectBox(u.dealerBounds,new T.Vector3()),tp=ray.ray.intersectBox(u.tableBounds,new T.Vector3());const pt=dp||tp;return pt?{u,dealerDist:dp?dp.distanceTo(ray.ray.origin):Infinity,distance:pt.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];

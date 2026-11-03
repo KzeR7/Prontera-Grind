@@ -54,8 +54,27 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  scene.setCamera({distance:0,pitch:100,panX:100,follow:false,angle:-20*Math.PI});
  assert.equal(scene.cameraState.distance,22);assert.equal(scene.cameraState.pitch,77);assert.equal(scene.cameraState.panX,0);assert.equal(scene.cameraState.follow,true);assert(Math.abs(scene.cameraState.angle)<1e-10);
  scene.resetCamera();frame(now+=100);const pointer=(x,y,id=1,extra={})=>({clientX:x,clientY:y,pointerId:id,button:0,preventDefault(){},...extra});
- host.onpointerdown(pointer(200,200));host.onpointermove(pointer(250,240));host.onpointerup(pointer(250,240));assert.notEqual(scene.cameraState.angle,0);assert.notEqual(scene.cameraState.pitch,45);assert.equal(scene.cameraState.panX,0);
- scene.resetCamera();host.onpointerdown(pointer(200,200,1,{button:2}));host.onpointermove(pointer(250,240,1,{button:2}));host.onpointerup(pointer(250,240,1,{button:2}));assert.notEqual(scene.cameraState.angle,0,'right-drag orbits like the main game instead of map panning');assert.equal(scene.cameraState.panX,0);
+ // v298 (owner): the left button is walk-only. A left drag must not move the camera at all.
+ host.onpointerdown(pointer(200,200));host.onpointermove(pointer(250,240));host.onpointerup(pointer(250,240));
+ assert.equal(scene.cameraState.angle,0,'left drag never orbits the plaza camera');assert.equal(scene.cameraState.pitch,45,'left drag never tilts it');assert.equal(scene.cameraState.panX,0);
+ // A left click that does not drag still walks (and a left drag is not a click).
+ assert.equal(moves.length,0,'a left drag is not a walk');
+ // Find open ground the camera can see, then click exactly there.
+ const openGround=()=>{for(let r=2;r<=16;r++)for(const s of [[r,0],[0,r],[-r,0],[0,-r],[r*.7,r*.7],[-r*.7,r*.7]]){
+  const ok=w.PGSocialRules.walkable(s[0],s[1])&&!Object.values(w.PGSocialRules.SEATS).some(q=>Math.hypot(q.x-s[0],q.z-s[1])<2.5);
+  if(ok)return new T.Vector3(s[0],0,s[1]).project(scene.camera)}return null};
+ const ground=openGround();assert(ground,'the plaza has open, walkable ground to click');
+ clickAt(ground);assert.equal(moves.length,1,'a left click still walks to the point under the pointer');
+ // macOS sends ctrl+left instead of a right click - that orbits too.
+ scene.resetCamera();moves.length=0;
+ host.onpointerdown(pointer(200,200,1,{ctrlKey:true}));host.onpointermove(pointer(260,250,1,{ctrlKey:true}));host.onpointerup(pointer(260,250,1,{ctrlKey:true}));
+ assert.notEqual(scene.cameraState.angle,0,'ctrl-drag orbits for trackpads and one-button mice');
+ assert.equal(moves.length,0,'ctrl-drag is a camera gesture, not a walk');
+ // Touch still drags (there is no right button on a phone).
+ scene.resetCamera();host.onpointerdown(pointer(200,200,1,{pointerType:'touch'}));host.onpointermove(pointer(250,240,1,{pointerType:'touch'}));host.onpointerup(pointer(250,240,1,{pointerType:'touch'}));
+ assert.notEqual(scene.cameraState.angle,0,'touch drag still orbits');
+ scene.resetCamera();moves.length=0;
+ scene.resetCamera();host.onpointerdown(pointer(200,200,1,{button:2}));host.onpointermove(pointer(250,240,1,{button:2}));host.onpointerup(pointer(250,240,1,{button:2}));assert.notEqual(scene.cameraState.angle,0,'right-drag orbits instead of map panning');assert.equal(moves.length,0,'right-drag never walks');assert.equal(scene.cameraState.panX,0);
  scene.resetCamera();host.onpointerdown(pointer(200,200));host.onpointerdown(pointer(300,200,2));host.onpointermove(pointer(320,200,2));host.onpointermove(pointer(360,220,2));host.onpointerup(pointer(360,220,2));host.onpointerup(pointer(200,200));assert(scene.cameraState.distance<44);assert.equal(scene.cameraState.panX,0);assert.equal(moves.length,0,'camera gestures do not walk');
  scene.bubble(1,{emotion:'cry'});const bubble=w.document.querySelector('.social-bubble');assert(bubble.classList.contains('social-emotion'));assert.equal(bubble.parentElement.id,'labels');scene.bubble(1,{body:'Hello'});assert(!bubble.classList.contains('social-emotion'));
  // High-refresh frames within 16ms render without dropping, and unchanged sprite frames skip redundant 2D redraws.

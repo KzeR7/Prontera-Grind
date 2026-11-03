@@ -415,6 +415,29 @@ ids, Escape behaviour, the retried actions, the `stop` export, the announce hook
 `fishnote` relay, the raised clamp and the system-line styling. `social_sim.js`, `update_watch_sim.js`
 and the build/publish/page checks stay green.
 
+## Right-drag camera, left click walks (haven-v298)
+
+The plaza camera took any pointer drag as an orbit, so a click that slipped a few pixels rotated the
+view instead of walking - and a left drag did both nothing and everything at once. With a mouse the
+left button is now walk-only:
+
+* **left click** - walks (or sits / opens the pond / shows off, exactly as before). A left *drag* is a
+  dead zone: it cancels the click so you do not walk by accident, but it never moves the camera.
+* **right drag** - orbits and tilts, as before. The context menu stays suppressed.
+* **ctrl + left drag** - orbits too, for trackpads and one-button mice (macOS sends ctrl+click there).
+* **touch / pen** - single-finger drag still orbits, because there is no right button on a phone;
+  pinch still zooms.
+* The wheel still zooms and the Camera panel sliders are unchanged.
+
+`startDrag()` in `assets/social-scene.js` records whether a gesture may orbit
+(`orbit = touch || button===2 || (button===0 && ctrlKey)`), and `pointermove` only applies the
+angle/pitch maths for those gestures. The in-plaza help line now reads
+*"Right-drag (or ctrl-drag) to rotate / tilt · left-click to walk · Scroll / pinch to zoom"*.
+
+`tools/tests/social_scene_sim.js` pins all four cases: a left drag leaves angle and pitch untouched,
+a left click on open ground still walks, ctrl-drag orbits without walking, and a touch drag still
+orbits.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

@@ -549,8 +549,8 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=297'),asset+' is versioned at v297');
- assert(/haven-v297/.test(page),'the login card names the v297 build');
+  assert(page.includes(asset+'?v=298'),asset+' is versioned at v298');
+ assert(/haven-v298/.test(page),'the login card names the v298 build');
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
  // Clicking away from the pond asks first, exactly like the poker table, instead of nagging chat.
