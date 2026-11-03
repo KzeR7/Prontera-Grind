@@ -982,7 +982,8 @@ function fishingShowOff(fish){
 // v295: the player's line in the water, shared with the room so everyone sees the bobber.
 function fishingRig(state){
  if(!app.room)return true;
- return send({type:'rig',on:!!(state&&state.on),pond:state&&state.pond,x:state&&state.x,z:state&&state.z,mode:state&&state.mode});
+ // v300: the rod tier travels with the rig, so everyone draws your pole in your colour.
+ return send({type:'rig',on:!!(state&&state.on),pond:state&&state.pond,x:state&&state.x,z:state&&state.z,mode:state&&state.mode,rod:state&&state.rod});
 }
 // v295: a fishing title is worn above the head in the plaza; changing it repaints the room.
 function fishingTitleChanged(){const p=app.players.get(app.room?app.id:SOLO_ID);if(!p)return;const look=currentLook();if(app.room)return send({type:'look',look});p.look=look;putPlayer(p)}

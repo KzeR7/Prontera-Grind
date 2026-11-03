@@ -601,6 +601,8 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
   assert(social.includes(id),'the leave-confirm has #'+id);
  assert(/fishLeaveWarning\.innerHTML='<section class="poker-leave-card fish-leave-card"/.test(social),'it reuses the poker dialog layout');
  assert(/\.key==='Escape'\).*finishFishingStop\(false\)/.test(social),'Escape keeps the line in the water');
+ // v300: the plaza used to rebuild the rig packet field by field - which silently dropped the rod.
+ assert(/type:'rig',on:!!\(state&&state\.on\).*?rod:state&&state\.rod\}/.test(social),'the plaza forwards the rod id with the rig, not just the mode');
  assert(social.includes('fishingBlocked(()=>moveAction(x,z))'),'a blocked walk is retried after confirming');
  assert(social.includes('fishingBlocked(()=>seatAction(id))'),'a blocked seat is retried after confirming');
  // v299 (owner): sit and stand never interrupt fishing - only actions that walk away ask.
