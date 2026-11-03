@@ -37,7 +37,7 @@ for(const sp of F.SPECIES){
 }
 for(const r of F.RARITIES)assert(F.SPECIES.some(sp=>sp.rarity===r.id),'every rarity has at least one fish');
 // v302 (owner): the index holds every creature from the art drop, and the original ids survive.
-assert.equal(F.SPECIES.length,148,'148 fish species');
+assert.equal(F.SPECIES.length,155,'155 fish species');
 assert.equal(F.SPECIES.filter(sp=>sp.rarity==='secret').length,8,'no new secrets, so Secret Circle still wants eight');
 assert.equal(new Set(F.SPECIES.map(sp=>sp.id)).size,F.SPECIES.length,'no duplicate species ids in the index');
 // v297: every species is either a glyph body or one of the named body plans the renderer paints.
@@ -190,6 +190,11 @@ const shiny=F.addCatch(st,{sp:'minnow',rarity:'common',w:.4,mut:'shiny'},3);
 assert(F.value(heavy)>F.value(cheap),'heavier fish are worth more');
 assert(F.value(shiny)>F.value({...shiny,mut:null}),'mutations multiply the price');
 assert(F.value({sp:'leviathan',w:40})>F.value({sp:'minnow',w:.7}),'rarer fish are worth more');
+// v303 (owner): a heavy fish must not be cheap just because its rarity is low.
+assert(F.value({sp:'nurseshark',w:40})>=40,'40 kg of common shark is worth real coins, not pocket change');
+assert(F.value({sp:'nurseshark',w:40})>F.value({sp:'koi',w:.5}),'weight can outweigh a rarity step');
+assert(F.value({sp:'starwhale',w:900})>F.value({sp:'starwhale',w:420}),'the same species pays more at its top weight');
+assert(F.value({sp:'tigershark',w:200,'mut':undefined})>F.value({sp:'minnow',w:.7}),'a legendary giant is a prize');
 assert.equal(F.buyRod(st,'oak').reason,'coins','no credit at the rod shop');
 const sale=F.sellFish(st,cheap.id);
 assert(sale.ok&&sale.coins>=1&&st.coins===sale.coins&&st.bag.length===2,'selling pays and removes the fish');
@@ -335,24 +340,34 @@ assert.deepStrictEqual(F.FISHING_TITLES.slice(0,10).map(t=>t.id),earlyIds,'the o
 assert.equal(lateTitles.length,10,'ten new titles');
 for(const t of lateTitles)assert(!earlyIds.includes(t.id),'the new title '+t.id+' is genuinely new');
 // Each new title in a family asks for strictly more than the early one on the same counter.
-const sameCounter=[['tide-regular','reed-watcher'],['line-veteran','bait-layer'],['perfect-master','perfect-hand'],
- ['species-archivist','pond-legend'],['leviathan-hook','heavy-hook'],['colossus-hook','leviathan-hook']];
+const sameCounter=[['tide-regular','reed-watcher'],['line-veteran','bait-layer'],
+ ['leviathan-hook','heavy-hook'],['colossus-hook','leviathan-hook'],['pond-legend','species-collector']];
 for(const [lateId,earlyId] of sameCounter){
  const L=F.FISHING_TITLE_BY_ID[lateId],E=F.FISHING_TITLE_BY_ID[earlyId];
  assert(L&&E,'both '+lateId+' and '+earlyId+' exist');
  assert(L.goal>E.goal,'the new title '+lateId+' ('+L.goal+') is a longer haul than '+earlyId+' ('+E.goal+')');
 }
 // Every one of them is reachable from a saved blob that only has the fields older saves already keep.
+// v303: four of the titles are no longer counters (full creel, armoury, coin hoard, dark star), so a
+// "rich" save now has to look rich: a full top-tier bag, every rod, a coin pile and a mutated mythic.
 const rich=F.normalize(null);
-rich.stats.casts=2000;rich.stats.catches=1000;rich.stats.perfects=200;
-for(const sp of F.SPECIES)rich.dex[sp.id]={n:200,bw:Math.max(sp.max,500),mut:Object.keys(F.MUTATIONS)};
+rich.stats.casts=6000;rich.stats.catches=2000;rich.stats.perfects=400;
+for(const sp of F.SPECIES)rich.dex[sp.id]={n:200,bw:Math.max(sp.max,900),mut:Object.keys(F.MUTATIONS)};
+rich.coins=60000;rich.rods=['twig','oak','brass','silver','golden','mythril'];
+rich.bagTier=4;rich.bag=Array.from({length:500},(_,i)=>({sp:'minnow',w:.2,id:'r'+i,at:1,mut:null,lock:false,perfect:false}));
 assert.equal(F.FISHING_TITLES.filter(t=>F.titleUnlocked(rich,t)).length,20,'a very rich save can earn all twenty');
+// And the four new shapes refuse a save that is rich in counters alone.
+const countRich=F.normalize(null);
+countRich.stats.casts=6000;countRich.stats.catches=2000;countRich.stats.perfects=400;
+for(const sp of F.SPECIES)countRich.dex[sp.id]={n:200,bw:Math.max(sp.max,900),mut:[]};
+for(const id of ['full-creel','armoury','coin-hoard','dark-star'])
+ assert(!F.titleUnlocked(countRich,F.FISHING_TITLE_BY_ID[id]),id+' is not just another counter');
 const mid=F.normalize(null);
 mid.stats.casts=300;mid.stats.catches=60;mid.stats.perfects=30;
 assert.equal(F.FISHING_TITLES.filter(t=>F.titleUnlocked(mid,t)).length<=4,true,'the new ten stay locked for an ordinary save');
 // v297: the apex title tracks the catalog size instead of a hardcoded 70.
 assert.equal(F.FISHING_TITLE_BY_ID['apex-angler'].goal,F.SPECIES.length,'Apex Angler wants every species');
-assert(F.FISHING_TITLE_BY_ID['pond-legend'].goal<100,'Pond Legend is a milestone before the apex');
+assert(F.FISHING_TITLE_BY_ID['pond-legend'].goal<F.SPECIES.length,'Pond Legend is a milestone before the apex');
 assert.equal(new Set(F.FISHING_TITLES.map(t=>t.id)).size,20,'title ids are unique');
 assert.equal(new Set(F.FISHING_TITLES.map(t=>t.name)).size,20,'title names are unique');
 st=F.normalize(null);
@@ -360,7 +375,8 @@ for(const t of F.FISHING_TITLES){assert(t.name&&t.mark&&t.tone&&t.req,'each titl
 assert.equal(F.equippedTitle(st),null);
 assert.deepEqual(F.equipTitle(st,'dockhand'),{ok:false,reason:'locked'},'an unearned title cannot be worn');
 assert.deepEqual(F.equipTitle(st,'nope'),{ok:false,reason:'unknown'});
-st.stats.catches=10;assert(F.titleUnlocked(st,F.FISHING_TITLE_BY_ID.dockhand));
+// v303: Dockhand now wants 25 catches, so the earned-title check catches 25.
+st.stats.catches=25;assert(F.titleUnlocked(st,F.FISHING_TITLE_BY_ID.dockhand));
 assert.deepEqual(F.equipTitle(st,'dockhand'),{ok:true,title:'dockhand'});
 assert.equal(F.equippedTitle(st).name,'Dockhand','the earned title is the one worn');
 assert(F.equipTitle(st,null).ok);assert.equal(F.equippedTitle(st),null,'a title can be taken off');
@@ -488,6 +504,22 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert.equal(d2.getElementById('fishingPanel').hidden,false,'the bag window opens');
  // v295: the Pond fish toggle is gone - the ponds always hold fish.
  assert.equal(d2.getElementById('fishingShowFish'),null,'there is no Pond fish toggle any more');
+ // v303 (owner): the Index is grouped by rarity. Everything added after the first art drop used to
+ // sit in one mixed block at the bottom, which read as a bug.
+ FISH.openIndex();
+ const dexRarities=[...d2.querySelectorAll('.fishing-dex-row')].map(r=>{
+  const chip=r.querySelector('.fishing-chip');return chip?chip.textContent:'';
+ });
+ const rank=['Common','Uncommon','Rare','Legendary','Mythical','Secret'];
+ let last=0,grouped=true;
+ for(const label of dexRarities){
+  const i=rank.indexOf(label);
+  if(i<0)continue;
+  if(i<last)grouped=false;
+  last=i;
+ }
+ assert.equal(dexRarities.length,F.SPECIES.length,'the index lists every species');
+ assert(grouped,'the index is grouped by rarity from common up to secret');
  // The Titles tab lists exactly the fishing titles, with progress for the locked ones.
  FISH.openTitles();
  const titleRows=d2.querySelectorAll('.fishing-title-row');
@@ -496,7 +528,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/Dockhand/.test(d2.getElementById('fishingTitlesView').textContent),'titles are named');
  assert.equal(d2.querySelectorAll('.fishing-title-row.locked').length,20,'nothing is earned on a fresh save');
  // Earning one and wearing it from the tab goes through the same save hook as the rest.
- hostS.fishing.stats.catches=10;FISH.openTitles();
+ hostS.fishing.stats.catches=25;FISH.openTitles();
  const wearBtn=d2.querySelector('button[data-title="dockhand"]');
  assert(wearBtn&&!wearBtn.disabled,'an earned title offers a Wear button');
  wearBtn.onclick();
@@ -539,6 +571,33 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  me.x=rimA.x;me.z=rimA.z;
  frame2(clock2+=100);
  assert.equal(FISH.phase,'ready','Auto fishing carries on after the walk back');
+ // v303 (owner): the walk-back used to go through the plaza's normal move, which raises the
+ // "Stop fishing and move?" dialog - so an AFK angler was asked a question and never walked. It has
+ // to use walkTo (the no-prompt move) when it is bound, and it must re-issue it while walking.
+ let walked=0,moved2=0;
+ FISH.stop('');
+ me.x=rimA.x;me.z=rimA.z;
+ FISH.bind({host:()=>hostS,scene:()=>null,self:()=>({x:me.x,z:me.z}),moveTo:()=>{moved2++},walkTo:()=>{walked++},notice:()=>{},save:()=>{}});
+ FISH.toggle();
+ assert.equal(FISH.phase,'ready','a fresh session on the rim is live again');
+ d2.getElementById('fishingAutoBtn').onclick();
+ me.x=0;me.z=12;
+ frame2(clock2+=100);
+ assert.equal(FISH.phase,'walking','a respawned Auto angler starts walking');
+ assert(walked>=1,'the walk uses the no-prompt move');
+ assert.equal(moved2,0,'the confirm-raising move is never used for an automatic walk-back');
+ const before=walked;
+ frame2(clock2+=3000);
+ assert(walked>before,'the walk is re-issued while it is still far from the pond');
+ frame2(clock2+=40000);
+ assert.equal(FISH.phase,'off','after half a minute of trying it stops instead of spinning forever');
+ // back to a plain manual session for the two checks below
+ FISH.bind({host:()=>hostS,scene:()=>null,self:()=>({x:me.x,z:me.z}),moveTo:()=>{},notice:()=>{},save:()=>{}});
+ me.x=rimA.x;me.z=rimA.z;
+ FISH.toggle();
+ assert.equal(FISH.phase,'ready','the manual session is live again');
+ if(!FISH.auto)d2.getElementById('fishingAutoBtn').onclick();
+ assert.equal(FISH.auto,true,'Auto is back on for the manual-session check');
  // A manual session still stops with the v294 message, exactly as before.
  d2.getElementById('fishingAutoBtn').onclick();
  assert.equal(FISH.auto,false,'Auto is off');
@@ -590,8 +649,8 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=302'),asset+' is versioned at v302');
- assert(/haven-v302/.test(page),'the login card names the v302 build');
+  assert(page.includes(asset+'?v=303'),asset+' is versioned at v303');
+ assert(/haven-v303/.test(page),'the login card names the v303 build');
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
  const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');
@@ -612,6 +671,8 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(!social.includes('fishingBlocked(()=>toggleSit())'),'sit/stand never asks to stop fishing');
  assert(/function toggleSit\(\)\{confirmPokerLeave/.test(social),'sit/stand goes straight through');
  assert(social.includes('fishingBlocked(()=>moveAction(x,z))'),'walking away still asks');
+ // v303: the auto walk-back needs a move that never asks, or an AFK angler gets a dialog instead.
+ assert(social.includes('walkTo:(x,z)=>performMoveAction(x,z,true)'),'the fishing bind exposes a no-prompt walk');
  assert(social.includes('fishingBlocked(()=>pokerSeatAction(globalSeat))'),'a poker stool still asks');
  // v299 (owner): the rods carry a visible tier aura in the sprite and in CSS.
  assert(/const ROD_AURA=\{twig:\.22/.test(mod),'every rod tier has an aura strength');
@@ -630,7 +691,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  const artDir=path.join(__dirname,'..','..','assets','social','fish');
  const manifest=JSON.parse(fs.readFileSync(path.join(artDir,'MANIFEST.json'),'utf8'));
  const artIds=Object.keys(manifest);
- assert.equal(artIds.length,139,'139 species ship a real drawing');
+ assert.equal(artIds.length,146,'146 species ship a real drawing');
  assert.deepEqual(artIds.slice().sort(),Object.keys(F.FISH_ART).sort(),'the module and the manifest agree');
  assert.equal(new Set(Object.values(manifest)).size,artIds.length,'no two species share one file');
  const PNG=Buffer.from([137,80,78,71,13,10,26,10]);
@@ -639,8 +700,10 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
   assert.equal(manifest[id],'assets/social/fish/'+id+'.png',id+' is one file per species');
   const buf=fs.readFileSync(path.join(__dirname,'..','..',manifest[id]));
   assert(buf.subarray(0,8).equals(PNG),id+'.png is a png');
-  assert.equal(buf.readUInt32BE(16),96,id+' is 96 wide');
-  assert.equal(buf.readUInt32BE(20),96,id+' is 96 tall');
+  // v303 (owner): 128, not 96 - the detail panel draws 128 and the index 64, so the art is either
+  // 1:1 or an exact halving instead of being upscaled (which is what looked blurry).
+  assert.equal(buf.readUInt32BE(16),128,id+' is 128 wide');
+  assert.equal(buf.readUInt32BE(20),128,id+' is 128 tall');
   assert.equal(buf[25],6,id+' keeps its transparency (rgba)');
  }
  const paintedIds=F.SPECIES.filter(sp=>!manifest[sp.id]).map(sp=>sp.id);
@@ -674,5 +737,5 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/announce:fishingAnnounce/.test(social),'the fishing bind receives it');
  assert(/\.social-line-sys/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'system lines have their own style');
  assert(/socialFishLeaveWarning/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'the fishing dialog shares the poker overlay style');
- console.log('PASS social fishing: ponds+chairs, 148-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler; v302 139 cropped drawings behind the same fishSprite, with the painted fallback for the other nine');
+ console.log('PASS social fishing: ponds+chairs, 155-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler; v302 139 cropped drawings behind the same fishSprite, with the painted fallback for the other nine; v303 whales and 146 crops at 128px, prices that read rarity+weight, twenty harder titles and an AFK walk-back that never asks');
 })().catch(e=>{console.error(e);process.exitCode=1});

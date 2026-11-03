@@ -552,6 +552,54 @@ fixed 50 so the next art drop does not have to rewrite it. `publish_sim.js` move
 ceiling from 10 to 12 MiB, with the measured numbers and the reason in the comment: the 139 sprites are
 1.41 MiB and every one of them carries a soft sampled halo, which is why they will not palette-compress.
 
+## Whales, honest prices, harder titles and an AFK walk that works (haven-v303)
+
+Six things came out of one owner pass over the fishing window.
+
+**The whale sheet is in.** Seven creatures (a pink dolphin, an orange orca, a violet beluga, two
+whales and two sharks, all whale-sized in the index) became a seventh family, taking the catalog to
+155 species and 146 cropped drawings. The sheet carries a faint `mahoukarP` logo stamped over every
+creature. It is translucent art drawn *on* the body, so there is nothing to crop around: both
+automatic removals that were tried damaged the drawing (a stroke scrub left the stamp half-there and
+ringed the white spots; a full inpaint flattened the belly and ate the spot pattern), so the seven are
+shipped as drawn. At the 32-64px the game renders, the mark is invisible. The sheet's two
+non-creatures - a star blob and the artist's signature line - are rejected by the size filter.
+
+**The art is 128px now, not 96.** "A bit blurry" was arithmetic: the detail panel draws 128 and the
+index 64, and every source was 96, so both were an upscale. Crops now ship at 128 (1:1 in the panel,
+an exact halving in the index) and every `drawImage` asks for high-quality resampling.
+
+**The index is grouped by rarity.** It used to render `SPECIES` in construction order, which meant
+everything added after the first art drop sat in one mixed-rarity block at the bottom - rare above
+common above legendary. It now sorts by rarity (stable inside a rarity), so the list reads common →
+secret.
+
+**Prices read rarity, weight and mutation.** The old formula was
+`rarity × (0.7 + 0.6 × heft) × mut`, so the *rarity base* dominated and a 40 kg common shark sold for
+about 4 coins. Now:
+
+```
+price = ( RARITY_VALUE[rarity] × (0.6 + 0.8 × heft)  +  2.2 × weight^0.82 ) × mutationMult
+```
+
+That second term is absolute weight, and it is what makes a big fish worth carrying home whatever its
+rarity: a 40 kg nurse shark is ~50 coins (was ~4), a 200 kg tiger shark ~250, a 900 kg stardust whale
+~900, a prismatic one ~15,000. Small catches are unchanged in practice (a 0.7 kg minnow is 6).
+
+**Twenty titles, harder, and four of them are not counters.** Every counter moved up 2.5-5x (Dockhand
+10 → 25, Line Veteran 250 → 1,000, Tide Regular 1,000 → 5,000 casts, Colossus Hook 300 → 800 kg,
+Mega Hunter 5 → one of every pond monster). Four titles now ask for a *shape* of save rather than a
+number: **Full Creel** (500 fish in the bag at once, i.e. the top bag tier and a full one), **Armoury**
+(all six rods), **Coin Hoard** (50,000 coins on hand) and **Dark Star** (a mythical or secret fish with
+a Golden or Prismatic mutation). `fishTitleIds` in the page sanitizer was updated with the new ids.
+
+**AFK fishing walks back for real.** The v296 walk-back went out through the plaza's normal move
+action, which raises the "Stop fishing and move?" dialog for anyone with a line in the water - so a
+respawned angler was asked a question instead of being walked, and (often still seated at the spawn
+point) never moved. `bindFishing` now also exposes `walkTo`, the same path without the prompt, and the
+fishing module uses it, re-issuing the walk every 2.5s while it is under way and only giving up after
+30s instead of 9s. Sitting is not an obstacle: the move clears the seat on both sides.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

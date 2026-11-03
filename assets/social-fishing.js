@@ -128,6 +128,14 @@ const EXTRA_SPECIES=[
  ['candyopus','Candy Octopus','🐙',330,0.5,2.6,'octopus','rare'],
  ['moonopus','Moon Octopus','🐙',250,0.6,3,'octopus','rare'],
  ['galaxyopus','Galaxy Octopus','🐙',275,1.2,6,'octopus','mythical'],
+ // whales - the seventh sheet, the big ones
+ ['rosedolphin','Rosy Dolphin','🐬',335,90,320,'whale','rare'],
+ ['sunorca','Sunlit Orca','🐋',25,180,700,'whale','legendary'],
+ ['violetbeluga','Violet Beluga','🐋',265,150,560,'whale','legendary'],
+ ['azurwhale','Azure Whale','🐋',205,260,900,'whale','legendary'],
+ ['greywhale','Greyback Whale','🐋',215,300,950,'whale','legendary'],
+ ['mintwhale','Mintback Whale','🐋',150,220,780,'whale','mythical'],
+ ['starwhale','Stardust Whale','🐋',195,420,980,'whale','mythical'],
  ['catshark','Catshark','🦈',30,2,8,'shark','common'],
  ['hornshark','Horn Shark','🦈',40,3,10,'shark','common'],
  ['nurseshark','Nurse Shark','🦈',20,10,40,'shark','common'],
@@ -190,28 +198,35 @@ const mutationKinds=s=>new Set(Object.values(s&&s.dex?s.dex:{}).flatMap(d=>Array
 const keptMutationFish=s=>Object.values(s&&s.dex?s.dex:{}).reduce((n,d)=>n+(Array.isArray(d&&d.mut)?d.mut.filter(Boolean).length:0),0);
 const bestSpeciesCount=s=>Object.values(s&&s.dex?s.dex:{}).reduce((b,d)=>Math.max(b,Number(d&&d.n)||0),0);
 const caughtIn=(s,pred)=>SPECIES.filter(sp=>pred(sp)&&s.dex&&s.dex[sp.id]&&s.dex[sp.id].n>0).length;
+// v303 (owner): "the requirements are a bit too easy, make them harder and more unique". Every
+// counter below moved up by roughly 2.5-5x, and four titles are no longer counters at all - they ask
+// for a SHAPE of save rather than a number: a full creel, the whole rod rack, a coin hoard, and a
+// mutated mythic. All of it reads the same saved blob, so an old save still earns what it earned.
+const rodsOwned=s=>new Set([...(Array.isArray(s&&s.rods)?s.rods:Object.keys((s&&s.rods)||{}).filter(k=>s.rods[k])),'twig']).size;
+const mutatedMythic=s=>SPECIES.filter(sp=>(sp.rarity==='mythical'||sp.rarity==='secret')&&s.dex&&s.dex[sp.id]&&s.dex[sp.id].n>0
+ &&Array.isArray(s.dex[sp.id].mut)&&s.dex[sp.id].mut.some(m=>m==='golden'||m==='prismatic')).length;
 const FISHING_TITLES=[
- {id:'dockhand',name:'Dockhand',mark:'◉',tone:'bronze',cur:s=>s.stats.catches,goal:10,req:'catch 10 fish'},
- {id:'bait-layer',name:'Bait Layer',mark:'⌖',tone:'copper',cur:s=>s.stats.catches,goal:50,req:'catch 50 fish'},
- {id:'reed-watcher',name:'Reed Watcher',mark:'⚔',tone:'silver',cur:s=>s.stats.casts,goal:200,req:'make 200 casts'},
- {id:'species-collector',name:'Species Collector',mark:'✧',tone:'jade',cur:discoveredSpecies,goal:10,req:'discover 10 species'},
- {id:'perfect-hand',name:'Perfect Hand',mark:'★',tone:'sapphire',cur:s=>s.stats.perfects,goal:25,req:'land 25 perfect catches'},
- {id:'heavy-hook',name:'Heavy Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:20,req:'record a 20 kg fish'},
- {id:'deep-line',name:'Deep Line',mark:'☾',tone:'obsidian',cur:s=>s.stats.catches,goal:500,req:'catch 500 fish'},
+ {id:'dockhand',name:'Dockhand',mark:'◉',tone:'bronze',cur:s=>s.stats.catches,goal:25,req:'catch 25 fish'},
+ {id:'bait-layer',name:'Bait Layer',mark:'⌖',tone:'copper',cur:s=>s.stats.catches,goal:150,req:'catch 150 fish'},
+ {id:'reed-watcher',name:'Reed Watcher',mark:'⚔',tone:'silver',cur:s=>s.stats.casts,goal:500,req:'make 500 casts'},
+ {id:'species-collector',name:'Species Collector',mark:'✧',tone:'jade',cur:discoveredSpecies,goal:25,req:'discover 25 species'},
+ {id:'perfect-hand',name:'Perfect Hand',mark:'★',tone:'sapphire',cur:s=>s.stats.perfects,goal:60,req:'land 60 perfect catches'},
+ {id:'heavy-hook',name:'Heavy Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:50,req:'record a 50 kg fish'},
+ {id:'deep-line',name:'Deep Line',mark:'☾',tone:'obsidian',cur:s=>s.stats.catches,goal:1500,req:'catch 1,500 fish'},
  {id:'mutation-hunter',name:'Mutation Hunter',mark:'🧬',tone:'crimson',cur:mutationKinds,goal:Object.keys(MUTATIONS).length,req:'find all 7 mutation kinds'},
- {id:'pond-legend',name:'Pond Legend',mark:'✹',tone:'gold',cur:discoveredSpecies,goal:60,req:'discover 60 species'},
+ {id:'pond-legend',name:'Pond Legend',mark:'✹',tone:'gold',cur:discoveredSpecies,goal:100,req:'discover 100 species'},
  {id:'apex-angler',name:'Apex Angler',mark:'✶',tone:'valkyrie',cur:discoveredSpecies,goal:SPECIES.length,req:`discover all ${SPECIES.length} species`},
- // v299 (owner): ten more, and every one of them is a long haul - the first ten were done in a session.
- {id:'tide-regular',name:'Tide Regular',mark:'≈',tone:'tide',cur:s=>s.stats.casts,goal:1000,req:'make 1,000 casts'},
- {id:'line-veteran',name:'Line Veteran',mark:'⚔',tone:'silver',cur:s=>s.stats.catches,goal:250,req:'catch 250 fish'},
- {id:'perfect-master',name:'Perfect Master',mark:'✸',tone:'sapphire',cur:s=>s.stats.perfects,goal:100,req:'land 100 perfect catches'},
- {id:'species-archivist',name:'Species Archivist',mark:'❖',tone:'jade',cur:discoveredSpecies,goal:80,req:'discover 80 species'},
- {id:'mutant-brood',name:'Mutant Brood',mark:'🧬',tone:'crimson',cur:keptMutationFish,goal:25,req:'keep 25 mutated fish'},
- {id:'leviathan-hook',name:'Leviathan Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:100,req:'record a 100 kg fish'},
- {id:'colossus-hook',name:'Colossus Hook',mark:'⛰',tone:'abyss',cur:s=>Math.floor(bestWeight(s)),goal:300,req:'record a 300 kg fish'},
- {id:'pond-devotee',name:'Pond Devotee',mark:'♺',tone:'ember',cur:bestSpeciesCount,goal:150,req:'catch 150 of one species'},
+ {id:'tide-regular',name:'Tide Regular',mark:'≈',tone:'tide',cur:s=>s.stats.casts,goal:5000,req:'make 5,000 casts'},
+ {id:'line-veteran',name:'Line Veteran',mark:'⚔',tone:'silver',cur:s=>s.stats.catches,goal:1000,req:'catch 1,000 fish'},
+ {id:'leviathan-hook',name:'Leviathan Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:250,req:'record a 250 kg fish'},
+ {id:'colossus-hook',name:'Colossus Hook',mark:'⛰',tone:'abyss',cur:s=>Math.floor(bestWeight(s)),goal:800,req:'record an 800 kg fish'},
  {id:'secret-circle',name:'Secret Circle',mark:'✧',tone:'frost',cur:s=>caughtIn(s,sp=>sp.rarity==='secret'),goal:SPECIES.filter(sp=>sp.rarity==='secret').length,req:`catch a fish from every secret species`},
- {id:'mega-hunter',name:'Mega Hunter',mark:'✹',tone:'dawn',cur:s=>caughtIn(s,sp=>sp.mega),goal:5,req:'catch 5 pond monsters'},
+ {id:'mega-hunter',name:'Mega Hunter',mark:'✹',tone:'dawn',cur:s=>caughtIn(s,sp=>sp.mega),goal:SPECIES.filter(sp=>sp.mega).length,req:'catch one of every pond monster'},
+ // the four that are not counters
+ {id:'full-creel',name:'Full Creel',mark:'🧺',tone:'ember',cur:s=>Number(s.bag&&s.bag.length)||0,goal:500,req:'fill the biggest bag - 500 fish at once'},
+ {id:'armoury',name:'Armoury',mark:'🪝',tone:'bronze',cur:rodsOwned,goal:6,req:'own all six rods'},
+ {id:'coin-hoard',name:'Coin Hoard',mark:'🪙',tone:'gold',cur:s=>Number(s.coins)||0,goal:50000,req:'hold 50,000 Fishcoins at once'},
+ {id:'dark-star',name:'Dark Star',mark:'🌑',tone:'void',cur:mutatedMythic,goal:1,req:'catch a mythical or secret fish with a Golden or Prismatic mutation'},
 ];
 const FISHING_TITLE_BY_ID=Object.fromEntries(FISHING_TITLES.map(t=>[t.id,t]));
 const titleUnlocked=(state,t)=>!!(t&&t.cur(state)>=t.goal);
@@ -258,12 +273,18 @@ const bagMax=state=>bagTierOf(state).cap;
 const nextBagTier=state=>BAG_TIERS[bagTierOf(state).tier+1]||null;
 const speciesById=id=>SPECIES_BY_ID[id]||null;
 const rarityById=id=>RARITIES[RARITY_INDEX[id]]||RARITIES[0];
-// A catch is worth more the heavier it rolled; mutations multiply the price.
+// v303 (owner): a price that reads all three of the things it should. Rarity sets the base, how
+// close this specimen is to its species' record scales that base, and the catch's own absolute
+// weight adds worth of its own - which is the part that was missing: a 40 kg nurse shark used to sell
+// for single digits just because its rarity is common. Mutations still multiply the whole thing.
+const weightWorth=w=>2.2*Math.pow(Math.max(0,Number(w)||0),.82);
 function value(e){
  const sp=speciesById(e&&e.sp);if(!sp)return 0;
- const heft=Math.max(0,Math.min(1,(Number(e.w)-sp.min)/Math.max(.01,sp.max-sp.min)));
+ const w=Math.max(0,Number(e.w)||0);
+ const heft=Math.max(0,Math.min(1,(w-sp.min)/Math.max(.01,sp.max-sp.min)));
  const mult=e.mut&&MUTATIONS[e.mut]?MUTATIONS[e.mut].mult:1;
- return Math.max(1,Math.round((RARITY_VALUE[sp.rarity]||3)*(0.7+0.6*heft)*mult));
+ const rarityPart=(RARITY_VALUE[sp.rarity]||3)*(0.6+0.8*heft);
+ return Math.max(1,Math.round((rarityPart+weightWorth(w))*mult));
 }
 // Luck bends the rarity roll toward the rare end; strength bends weight heavier; mutation odds scale.
 // A PERFECT cast rolls rarity twice and keeps the better roll; it never makes a roll worse.
@@ -690,7 +711,7 @@ function mutFilter(mut){return mut&&MUTATIONS[mut]?' '+MUTATIONS[mut].css:''}
 // out and childish, and the show-off/catch sprites were so dim they vanished over the pond.
 // Every surface now paints a proper side-view sprite on canvas - dark outline, saturated
 // body over a pale belly, real fins, per-species shape + pattern variation seeded from the
-// species id - so all 148 species stay distinct and crisp at any size. Distinct body plans
+// species id - so all 155 species stay distinct and crisp at any size. Distinct body plans
 // (hammer/thresher/goblin/saw/ray/eel/sturgeon/gar/sunfish/angler) keep families apart at a glance. Mutations get a baked
 // halo + effect overlay instead of a blur filter. Falls back to the emoji glyph wherever
 // canvas 2D is unavailable (jsdom tests, ancient browsers).
@@ -710,6 +731,10 @@ function fishSprite(spId,mut,px=96){
  if(art){
   if(M&&M.glow){try{const gr=g.createRadialGradient(px*.5,px*.52,px*.08,px*.5,px*.52,px*.47);gr.addColorStop(0,M.glow+'b0');gr.addColorStop(.6,M.glow+'46');gr.addColorStop(1,M.glow+'00');g.fillStyle=gr;g.fillRect(0,0,px,px)}catch{}}
   const fit=Math.min(px/art.width,px/art.height)*.97,dw=art.width*fit,dh=art.height*fit;
+  // v303 (owner): "the new fish images are a bit blurry". Two halves to that: the crops ship at 128
+  // instead of 96 (so the 128px detail panel is 1:1 and the 64px index is an exact halving), and
+  // every draw now asks for high-quality resampling instead of the browser default.
+  try{g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high'}catch{}
   try{g.drawImage(art,(px-dw)/2,(px-dh)/2,dw,dh)}catch{return c}
   const wash=mut==='golden'?'#ffd24d':mut==='frozen'?'#7fd4ff':mut==='ghostly'?'#eaf6ff':null;
   if(wash){try{g.globalCompositeOperation='source-atop';g.globalAlpha=mut==='ghostly'?.55:.4;g.fillStyle=wash;g.fillRect(0,0,px,px);g.globalAlpha=1;g.globalCompositeOperation='source-over'}catch{}}
@@ -735,7 +760,7 @@ function fishSprite(spId,mut,px=96){
  // No ink: the silhouette is a soft self-shadow of the body colour, not a cartoon outline.
  const LINE=`hsl(${Math.round(hue)},58%,44%)`;
  // Fins stay in the body's own family (as they do in the reference sheets); the complementary
- // accent is reserved for the markings, which is what keeps a pond of 148 fish from looking
+ // accent is reserved for the markings, which is what keeps a pond of 155 fish from looking
  // like a bag of clowns.
  const FIN=col(3,8,7),DARK=`hsla(${accentHue},88%,62%,.9)`;
  const u=px/100,U=n=>n*u;
@@ -1058,9 +1083,12 @@ const FISH_ART={
   crownhorse:'assets/social/fish/crownhorse.png', sunhorse:'assets/social/fish/sunhorse.png',
   ribbonhorse:'assets/social/fish/ribbonhorse.png', leafdragon:'assets/social/fish/leafdragon.png',
   thornhorse:'assets/social/fish/thornhorse.png', ghosthorse:'assets/social/fish/ghosthorse.png',
-  tidehorse:'assets/social/fish/tidehorse.png',
+  tidehorse:'assets/social/fish/tidehorse.png', sunorca:'assets/social/fish/sunorca.png',
+  rosedolphin:'assets/social/fish/rosedolphin.png', violetbeluga:'assets/social/fish/violetbeluga.png',
+  greywhale:'assets/social/fish/greywhale.png', mintwhale:'assets/social/fish/mintwhale.png',
+  azurwhale:'assets/social/fish/azurwhale.png', starwhale:'assets/social/fish/starwhale.png',
 };
-const FISH_ART_VERSION='302';
+const FISH_ART_VERSION='303';
 const FISH_IMG=new Map();
 function preloadFishArt(){
  if(typeof Image!=='function'||typeof document==='undefined'||!document.createElement)return;
@@ -1323,9 +1351,13 @@ function tick(t){
   return;
  }
  if(ui.phase==='walking'){
-  if(distToPond()<=2.4){setPhase('ready');ui.autoNext=t+500;return}
-  // If the walk never gets there (no route, or the plaza keeps resetting us) do not spin forever.
-  if(ui.walkT0&&t-ui.walkT0>9000){ui.walkT0=0;stopFishing('Could not reach the pond — Auto fishing stopped.');return}
+  if(distToPond()<=2.4){ui.walkT0=0;ui.walkTries=0;setPhase('ready');ui.autoNext=t+500;return}
+  // Keep asking: the plaza can teleport us again mid-walk, and a single dropped move must not strand
+  // an AFK session at the spawn point.
+  if(!ui.walkNext||t>=ui.walkNext){ui.walkNext=t+2500;ui.walkTries=(ui.walkTries||0)+1;issueWalk()}
+  // Half a minute of trying, not nine seconds: a respawn on the far side of the plaza is a long walk
+  // and the position has to arrive over the wire before it can start.
+  if(ui.walkT0&&t-ui.walkT0>30000){ui.walkT0=0;stopFishing('Could not reach the pond — Auto fishing stopped.');return}
   return;
  }
  if(ui.phase==='ready'&&ui.auto&&t>=ui.autoNext){
@@ -1397,14 +1429,37 @@ function startFishing(pondIdx){
 // v296 (owner): AFK fishing must survive being moved by the server. A respawn, a room change or a
 // lost plaza spot used to end the session with "You stepped away from the pond."; with Auto on we
 // walk back to the pond and carry on instead. A manual session still stops, as v294 promised.
+// v303: the walk itself. `walkTo` is the plaza's no-questions move (bound in social.js to the same
+// path the click handler uses, minus the leave-confirm); `moveTo` stays as the fallback for callers
+// that only bind that.
+function walkTarget(){
+ const p=pondCenter(),s=selfPos();
+ return p&&s?standPoint(p,s):null;
+}
+function issueWalk(){
+ const stand=walkTarget();
+ const walk=opts&&(typeof opts.walkTo==='function'?opts.walkTo:(typeof opts.moveTo==='function'?opts.moveTo:null));
+ if(!stand||typeof walk!=='function')return false;
+ walk(stand.x,stand.z);
+ return true;
+}
+// v303 (owner): "afk fishing still doesnt work - sometimes it doesnt walk back and gets stuck at the
+// respawn while sitting". Two things were wrong. The walk went out through the plaza's normal move
+// action, which raises the "Stop fishing and move?" dialog for anyone with a line in the water, so an
+// AFK angler was asked a question instead of being walked - and the player was often still SEATED,
+// which is how they were left after a respawn. It now uses the no-prompt walk, and it no longer
+// gives up when the position has not arrived yet: it walks, re-issues the walk every couple of
+// seconds (a respawn can move you again mid-walk) and only stops after half a minute.
 function walkBackToPond(reason){
- const p=pondCenter(),s=selfPos(),stand=p&&s?standPoint(p,s):null;
- if(!stand||!opts||typeof opts.moveTo!=='function')return false;
+ const walk=opts&&(typeof opts.walkTo==='function'?opts.walkTo:(typeof opts.moveTo==='function'?opts.moveTo:null));
+ if(typeof walk!=='function')return false;
  ui.result=null;ui.roll=null;ui.reel=null;ui.holding=false;
  clearShake();
  setPhase('walking');
- ui.walkT0=now();
- opts.moveTo(stand.x,stand.z);
+ ui.walkT0=ui.walkT0||now();
+ ui.walkTries=(ui.walkTries||0)+1;
+ issueWalk();
+ ui.walkNext=now()+2500;
  status(reason||'Walking back to the pond…');
  return true;
 }
@@ -1499,7 +1554,11 @@ function renderDetail(){
 // 📖 The full index (all SPECIES.length entries) with no-luck catch rates; undiscovered entries show as silhouettes.
 function renderIndex(){
  const st=state();
- const rows=SPECIES.map(sp=>{
+ // v303 (owner): the index used to list the catalog in construction order, so everything added
+ // after the first drop sat in one mixed-rarity block at the bottom. Sort by rarity instead - the
+ // order inside a rarity stays the catalog's own.
+ const ORDER=[...SPECIES].sort((x,y)=>RARITY_INDEX[x.rarity]-RARITY_INDEX[y.rarity]);
+ const rows=ORDER.map(sp=>{
   const r=rarityById(sp.rarity),d=st.dex[sp.id],found=d&&d.n>0;
   const pct=rate(sp.id)*100;
   const odds='1 in '+fmt(Math.round(1/rate(sp.id)));
@@ -1627,7 +1686,7 @@ return {
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,
  // v297: the plaza's leave-warning reels the line in through this, so chat no longer has to nag.
- stop:message=>stopFishing(message),openBag:()=>toggleBag(true),openTitles:()=>{toggleBag(true);switchTab('titles')},
+ stop:message=>stopFishing(message),openBag:()=>toggleBag(true),openIndex:()=>{toggleBag(true);switchTab('index')},openTitles:()=>{toggleBag(true);switchTab('titles')},
  // v295: sit/stand are allowed with a line in the water, so the plaza asks these two separately
  // instead of using one movement lock for everything.
  seatedBusy:()=>!['off','walking'].includes(ui.phase),

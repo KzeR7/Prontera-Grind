@@ -137,5 +137,12 @@
  "leafdragon": "assets/social/fish/leafdragon.png",
  "thornhorse": "assets/social/fish/thornhorse.png",
  "ghosthorse": "assets/social/fish/ghosthorse.png",
- "tidehorse": "assets/social/fish/tidehorse.png"
+ "tidehorse": "assets/social/fish/tidehorse.png",
+ "sunorca": "assets/social/fish/sunorca.png",
+ "rosedolphin": "assets/social/fish/rosedolphin.png",
+ "violetbeluga": "assets/social/fish/violetbeluga.png",
+ "greywhale": "assets/social/fish/greywhale.png",
+ "mintwhale": "assets/social/fish/mintwhale.png",
+ "azurwhale": "assets/social/fish/azurwhale.png",
+ "starwhale": "assets/social/fish/starwhale.png"
 }

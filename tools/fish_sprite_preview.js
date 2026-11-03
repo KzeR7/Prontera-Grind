@@ -1,7 +1,7 @@
 // Review sheet: renders all 100 species through the game's own fishSprite(), so the crop loader and
 // the painted fallback are exercised exactly as the pond draws them.
 //   node tools/fish_sprite_preview.js
-// Writes docs/fish-sprites-haven-v302.png and docs/fish-mutations-haven-v302.png
+// Writes docs/fish-sprites-haven-v303.png and docs/fish-mutations-haven-v303.png
 const path=require('node:path'),fs=require('node:fs');
 const napi=require('@napi-rs/canvas');
 const proto=Object.getPrototypeOf(napi.createCanvas(1,1).getContext('2d'));
@@ -42,7 +42,7 @@ const F=require(path.join(__dirname,'..','assets','social-fishing.js'));
   g.fillStyle='#93a2b8';g.font='10px sans-serif';g.textAlign='center';
   g.fillText(id,cx+(CELL-8)/2,cy+CELL-14);g.textAlign='left';
  });
- fs.writeFileSync(path.join(__dirname,'..','docs','fish-sprites-haven-v302.png'),out.toBuffer('image/png'));
+ fs.writeFileSync(path.join(__dirname,'..','docs','fish-sprites-haven-v303.png'),out.toBuffer('image/png'));
  // mutation sanity: golden / frozen / ghostly on a cropped and a painted species
  const MC=120;
  const m=napi.createCanvas(MC*6+40,MC+40),mg=m.getContext('2d');
@@ -52,6 +52,6 @@ const F=require(path.join(__dirname,'..','assets','social-fishing.js'));
   const c=F.fishSprite(id,mut,96);if(c)mg.drawImage(c,20+i*MC,20,96,96);
   mg.fillStyle='#93a2b8';mg.font='12px sans-serif';mg.fillText(id+(mut?' · '+mut:''),20+i*MC,132);
  });
- fs.writeFileSync(path.join(__dirname,'..','docs','fish-mutations-haven-v302.png'),m.toBuffer('image/png'));
+ fs.writeFileSync(path.join(__dirname,'..','docs','fish-mutations-haven-v303.png'),m.toBuffer('image/png'));
  console.log('ok, images settled:',pending===0);
 })();
