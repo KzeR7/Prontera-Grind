@@ -125,6 +125,7 @@ function geometry(family){
 
 // ---------- style renderers ------------------------------------------------------------------
 function drawSprite(g,hue,family,style,px){
+ if(style==='candy')return drawCandy(g,hue,family,px);
  const R=rampFor(hue,style);
  const {B,fins,extras}=geometry(family);
  // Draw in a 100x100 unit space and let the transform do the scaling - otherwise the 48px pixel
@@ -254,13 +255,103 @@ function drawSprite(g,hue,family,style,px){
  return px;
 }
 
+// ---------- D · candy flat (the pikaole look from the owner's pins) -------------------------
+// Sampled out of the reference sheets: periwinkle #596ad3, cream #f5c957, coral #ea8839,
+// magenta #a833a8, royal #4936c6, gold #fab705, crimson #e72a58, hot pink #f958b7, plum #684a88.
+// The rule those drawings follow: one saturated body, a complementary fin/band accent, a cream
+// belly, no black ink, and a dot eye. Nothing here uses a hue ramp of a single colour.
+const CANDY_ANCHORS=[232,275,315,350,18,45,165,195];
+const CANDY_PAIR={232:45,45:275,275:315,315:165,350:165,18:195,165:350,195:315,350:45};
+function candyHues(hue){
+ const h0=h(hue);
+ let best=CANDY_ANCHORS[0],bd=999;
+ for(const a of CANDY_ANCHORS){const d=Math.min(Math.abs(h0-a),360-Math.abs(h0-a));if(d<bd){bd=d;best=a}}
+ return {body:best,comp:CANDY_PAIR[best]||((best+150)%360)};
+}
+function drawCandy(g,hue,family,px){
+ const k=px/100;
+ g.save();g.scale(k,k);
+ // the body keeps the species' own hue (a gar stays green, a koi stays pink); only the accent
+ // is snapped to the complementary pairing the reference sheets use.
+ const {body,comp}=candyHues(hue);
+ const bodyHue=h(hue);
+ const hash=(()=>{let x=Math.round(hue*37)%997;return n=>{x=(x*1103515245+12345)&0x7fffffff;return (x>>8)/0x7fffff}})().bind(null);
+ const rnd=[0,1,2,3,4,5].map(i=>hash(i));
+ const bodyC=`hsl(${bodyHue},83%,56%)`,bodyD=`hsl(${bodyHue},72%,44%)`,bodyL=`hsl(${bodyHue},92%,70%)`;
+ // pikaole draws no ink at all; a 1.4u edge keeps the silhouette readable on the dark pond
+ // without turning into a cartoon outline.
+ const edge=`hsl(${bodyHue},52%,46%)`;
+ const accA=`hsl(${comp},92%,60%)`,accB=`hsl(${(comp+18)%360},95%,66%)`,accD=`hsl(${comp},70%,40%)`;
+ const belly=`hsl(${(bodyHue+12)%360},48%,91%)`;
+ const ink='#17141b';
+ const geo=geometry(family);
+ const P2=pts=>P(g,pts);
+ const fillEdge=(pts,fill,ew=1.8)=>{P2(pts);g.fillStyle=fill;g.fill();g.strokeStyle=edge;g.lineWidth=ew;g.stroke()};
+ const bands=rnd[0]>.45,spots=!bands&&rnd[1]>.4;
+ // fins first, in the complementary accent
+ g.lineJoin='round';g.lineCap='round';
+ for(const f of geo.fins){P2(f);g.fillStyle=accA;g.fill()}
+ // body
+ P2(geo.B.body);g.fillStyle=bodyC;g.fill();
+ g.save();P2(geo.B.body);g.clip();
+ // cream belly + a soft top light, both flat-ish
+ g.fillStyle=belly;g.globalAlpha=.85;g.beginPath();g.ellipse(50,98,50,20,0,0,7);g.fill();g.globalAlpha=1;
+ g.fillStyle=bodyL;g.globalAlpha=.45;g.beginPath();g.ellipse(46,30,30,12,-.25,0,7);g.fill();g.globalAlpha=1;
+ // markings: chunky bands or big spots, in the accent
+ // The pins never stack motifs: one idea per creature, 2-3 shapes, nothing else.
+ if(spots){
+  g.fillStyle=accA;
+  for(let i=0;i<3;i++){g.beginPath();g.arc(38+i*16,46+(i%2)*14,4.6+rnd[i]*1.6,0,7);g.fill()}
+ }else if(bands){
+  g.fillStyle=accA;
+  for(let i=0;i<2;i++){g.beginPath();g.moveTo(38+i*20,20);g.quadraticCurveTo(32+i*20,52,38+i*20,84);g.lineTo(44+i*20,84);g.quadraticCurveTo(38+i*20,52,44+i*20,20);g.closePath();g.fill()}
+ }else{
+  // a soft two-tone saddle, the quietest option
+  g.fillStyle=accB;g.globalAlpha=.8;g.beginPath();g.ellipse(58,44,20,14,-.2,0,7);g.fill();g.globalAlpha=1;
+ }
+ g.fillStyle='rgba(255,255,255,.35)';
+ for(let i=0;i<5;i++){g.beginPath();g.arc(34+rnd[i%6]*52,34+((i*17)%34),1+rnd[i%6]*.8,0,7);g.fill()}
+ g.restore();
+ P2(geo.B.body);g.strokeStyle=edge;g.lineWidth=1.2;g.stroke();
+ // family extras (gills, teeth, lure, crab stalks) in the edge colour
+ if(geo.extras){g.save();g.strokeStyle=edge;g.lineJoin='round';g.lineCap='round';
+  const local={beginPath:()=>g.beginPath(),moveTo:(a,b)=>g.moveTo(a,b),lineTo:(a,b)=>g.lineTo(a,b),
+   quadraticCurveTo:(a,b,c,d)=>g.quadraticCurveTo(a,b,c,d),arc:(a,b,r,s,e2)=>g.arc(a,b,r,s,e2),
+   ellipse:(a,b,rx,ry,rot,s2,e2)=>g.ellipse(a,b,rx,ry,rot,s2,e2),
+   stroke:()=>{g.lineWidth=1.6;g.stroke()},fill:()=>g.fill(),closePath:()=>g.closePath(),
+   get strokeStyle(){return g.strokeStyle},set strokeStyle(v){g.strokeStyle=v},
+   get fillStyle(){return g.fillStyle},set fillStyle(v){g.fillStyle=v},
+   get lineWidth(){return 1},set lineWidth(v){}};
+  try{geo.extras(local)}catch(e){}
+  g.restore()}
+ // dot eyes - the signature of every pin they sent
+ const big=family==='whale'||family==='shark'||family==='angler';
+ const eyes=family==='crab'?[[39,26],[61,26]]:family==='squid'?[[41,42],[59,42]]:family==='ray'?[[42,38],[58,38]]:[[72,46]];
+ for(const [ex,ey] of eyes){
+  if(big){
+   g.beginPath();g.arc(ex,ey,4.6,0,7);g.fillStyle='#fffdf6';g.fill();g.strokeStyle=edge;g.lineWidth=1.2;g.stroke();
+   g.beginPath();g.arc(ex+.2,ey,2.9,0,7);g.fillStyle=ink;g.fill();
+   g.fillStyle='#fff';g.beginPath();g.arc(ex-1,ey-1.3,1.05,0,7);g.fill();
+  }else{
+   g.beginPath();g.ellipse(ex,ey,2.5,3,0,0,7);g.fillStyle=ink;g.fill();
+   g.fillStyle='#fff';g.beginPath();g.arc(ex-.9,ey-1.1,.85,0,7);g.fill();
+  }
+ }
+ // a small smile, never a frown
+ g.strokeStyle=edge;g.lineWidth=1.5;g.beginPath();
+ const mx=family==='crab'?50:66,my=family==='crab'?62:58;
+ g.moveTo(mx-4,my-1);g.quadraticCurveTo(mx,my+3,mx+4,my-1);g.stroke();
+ g.restore();
+ return px;
+}
+
 // ---------- sheet ---------------------------------------------------------------------------
 const CELL=132,PAD=26,LABEL=22;
 const ROWS=[
  ['v297 — current (for comparison)',null],
- ['A · Pixel 16-bit — hard 1px outline, 4-tone ramp, chunky read at 32px',"pixel"],
- ['B · Sticker cartoon — flat fills, thick ink outline, white rim, big eye',"sticker"],
- ['C · Kawaii chub — round body, oversized eye, blush, pastel ramp',"kawaii"],
+ ['D · Candy flat, from your pins — saturated body + complementary fins, cream belly, dot eyes, no ink',"candy"],
+ ['B · Sticker cartoon — thick ink outline, white rim (my earlier guess)',"sticker"],
+ ['C · Kawaii chub — oversized glossy eye, blush (my earlier guess)',"kawaii"],
 ];
 const W=PAD*2+COLS.length*CELL, headerH=112;
 const rowH=CELL+LABEL+18;
@@ -316,7 +407,7 @@ zg.fillText('Close-up — same species, three directions',PAD,PAD-6);
 zg.fillStyle='#8fa0b8';zg.font='15px sans-serif';
 zg.fillText('96px is what the bag, the index and the pond actually draw. Judge the shapes at this size, not the big one.',PAD,PAD+30);
 let zy=headerH;
-for(const [label,style] of [['B · Sticker cartoon','sticker'],['C · Kawaii chub','kawaii'],['A · Pixel 16-bit','pixel']]){
+for(const [label,style] of [['D · Candy flat (your pins)','candy'],['B · Sticker cartoon','sticker'],['C · Kawaii chub','kawaii']]){
  zg.fillStyle='#eef3fb';zg.font='bold 15px sans-serif';zg.fillText(label,PAD,zy);
  ZOOM.forEach(([id,family],i)=>{
   const sp=F.speciesById(id),cx=PAD+i*ZC,cy=zy+22;
