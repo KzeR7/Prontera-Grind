@@ -133,6 +133,8 @@ class HoldemTable{
   if(!Number.isInteger(idx)||idx<0||idx>=6)return {ok:false,error:'Choose a valid seat (1–6).'};
   if(this.seats[idx]&&this.seats[idx].id!==player.id)return {ok:false,error:'That seat is already taken.'};
   const existing=this.findPlayer(player.id);
+  // Reconnecting to the same reserved seat must not reset its stack, hole cards or bets.
+  if(existing&&existing.seat===idx){this.markArrived(player.id,arrived,now);return {ok:true,seat:idx,stack:existing.stack,resumed:true}}
   if(existing&&existing.seat!==idx){
    if(['preflop','flop','turn','river'].includes(this.phase)&&this.handOrder.includes(existing.seat))
     return {ok:false,error:'Finish or fold the current hand before changing seats.'};

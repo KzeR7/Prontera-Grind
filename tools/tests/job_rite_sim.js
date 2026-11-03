@@ -28,6 +28,9 @@ try{
    assert.equal(ev('S.hp'),ev('maxHp()'));
    assert.equal(ev('mhOf(mob)'),30,'field-only +15 HIT does not change the advancement opponent');
    assert.equal(ev('mob.size'),.6);assert.equal(ev("mob.mag===['demon','tree','blob'].includes(fieldOf(10,1).mobs[0].shape)"),true);
+   // v293: the champion must read slightly bigger than the player figure, never boss-huge.
+   assert.ok(ev('3.05*mobVisualScale(mob)')>ev('HERO_VISUAL_HEIGHT'),'trial opponent stands taller than the hero');
+   assert.ok(ev('3.05*mobVisualScale(mob)')<ev('ASCENSION_MONSTER_VISUAL')+.1,'trial opponent stays below field-monster bulk');
    ev('JOB_RITE.enemy.hp=0;kill(JOB_RITE.enemy);tickJobRite()');
    assert.equal(ev('JOB_RITE.outcome'),'passed');assert.equal(ev('S.cls'),parent);
    assert.equal(ev('JOB_RITE.exitAt-Date.now()'),3000);

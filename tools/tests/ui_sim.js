@@ -91,6 +91,8 @@ const code = [
   pick(/const cardSlots=[^\n]*/, 'cardSlots'),
   grab('function insertUI(sel){', 'const DOCK_TABS='),
   grab('const refineScrollFrom=', 'function refine(sl){'),
+  // v311: the workshop auto-buys missing ore, so its shortfall helper has to come along.
+  pick(/function refineOreShortfall\(it\)\{[^\n]*/, 'refineOreShortfall'),
   pick(/function refineUI\(it,k\)\{const[^\n]*/, 'refineUI'),
   pick(/function nmMatCounts\(\)\{[^\n]*/, 'nmMatCounts'),
   pick(/function dpsPanel\(\)\{[^\n]*/, 'dpsPanel'),

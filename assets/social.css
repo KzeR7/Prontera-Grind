@@ -69,6 +69,9 @@ body.social-open #bgmPlayer{display:none!important}
 /* Names and equipped titles stay below the feet; only speech uses a box. */
 .social-player-title{display:block;margin-top:2px;color:#ffe6a2;font-size:11px;text-shadow:0 1px 3px #000,0 0 5px #000}
 .social-player-title[hidden],.social-bubble[hidden],.social-player-label[hidden]{display:none}
+/* v296: the fishing title is its own line under the name, so wearing one never hides the Hunt title. */
+.social-player-fish-title{display:block;margin-top:1px;color:#9fe3ff;font-size:10.5px;letter-spacing:.2px;text-shadow:0 1px 3px #000,0 0 5px #000}
+.social-player-fish-title[hidden]{display:none}
 .social-bubble.social-emotion{background:transparent;border:0;box-shadow:none;border-radius:0;padding:0;margin:0;min-width:48px}
 
 #socialCameraPanel{position:absolute;z-index:4;right:16px;top:82px;width:220px;max-width:calc(100% - 32px);padding:12px;background:#213a3bf5;color:#f2ecdb;border:1px solid #c7ccba;border-radius:5px;font:12px/1.5 "Trebuchet MS",sans-serif}
@@ -275,3 +278,127 @@ body.social-open #bgmPlayer{display:none!important}
  .poker-dock{flex-direction:column;align-items:stretch;gap:4px}
 }
 
+
+/* v283: a dedicated table lane. Chat resize never participates in these bounds. */
+#socialChat.poker-chat-capped{max-width:min(390px,calc(50% - var(--dockhalfwidth,274px) - 32px))!important}
+#socialChat.poker-compact{left:8px!important;right:auto!important;width:calc(100% - 16px)!important;max-width:none!important;height:var(--poker-chat-height,148px)!important;bottom:var(--docktop,80px)!important;box-shadow:0 6px 24px #0008;background:rgba(13,24,29,.97)}
+#socialChat.poker-compact.minimized{height:auto!important}
+#socialPokerModal{border-color:#d7b96f;background:linear-gradient(160deg,#172d31,#0b171c 70%);box-shadow:0 18px 55px #000c,0 0 0 1px #0008;border-radius:14px}
+#socialPokerHead{padding:9px 13px;background:linear-gradient(90deg,#203d35,#172b32)}
+.poker-head-title strong{font-size:16px;letter-spacing:.2px}.poker-head-title small{font-size:11px}
+#socialPokerHead button{width:30px;height:28px;line-height:26px;border-radius:6px}
+#socialPokerNav{padding:6px 10px;gap:6px}#socialPokerNav button{padding:6px 10px;font-size:12px}
+#socialPokerBody{padding:10px 12px}.poker-table-grid{gap:9px}.poker-arena{gap:8px}
+.poker-seat{padding:7px 9px;border-radius:10px;background:linear-gradient(155deg,#1d343b,#12252b);gap:5px;transition:border-color .18s,box-shadow .18s,opacity .18s}
+.poker-seat-name{font-size:12px}.poker-seat-meta{font-size:11.5px;gap:2px}.poker-seat-meta b{font-size:10.5px}.poker-hand-hint{font-size:10px}
+.poker-seat.is-me{border-color:#d7b96f;background:linear-gradient(155deg,#294238,#172e2a)}
+.poker-seat.is-turn{animation:pokerTurnGlow 1.4s ease-in-out infinite alternate}
+.poker-seat.is-win{animation:pokerWinnerGlow .9s ease-out both}
+.poker-seat.open:hover{transform:translateY(-1px);box-shadow:0 5px 14px #0005}
+.poker-felt{position:relative;border:5px solid #654329;border-radius:48px;background:radial-gradient(ellipse at 48% 38%,#27865c,#175b3d 62%,#0d3b29);box-shadow:inset 0 0 0 2px #d9bb76,inset 0 0 28px #001b0e88,0 7px 18px #0008;gap:7px;padding:10px 14px}
+.poker-felt::after{content:'';position:absolute;right:13px;bottom:12px;width:13px;height:13px;border-radius:50%;background:#e8c56e;border:2px dashed #fff2c4;box-shadow:-9px -4px 0 -1px #ba5360,-4px -9px 0 -1px #6ca7c2;opacity:.8;pointer-events:none}
+.poker-pot-line{position:relative;z-index:1;flex-wrap:wrap}.poker-pot-line strong{font-size:20px;letter-spacing:.3px}.poker-pot-line strong.is-changing{animation:pokerPotPop .32s ease-out}
+.poker-community{position:relative;z-index:1;gap:7px}.poker-banner{font-size:11.5px;max-width:95%}
+.pcard{width:42px;height:58px;border-radius:6px;box-shadow:0 4px 8px #0007;transform-origin:center bottom}.pcard b{font-size:16px}.pcard em{font-size:18px;margin-top:3px}
+.pcard.sm{width:28px;height:40px;border-radius:4px}.pcard.sm b{font-size:11px}.pcard.sm em{font-size:13px;margin-top:1px}
+.pcard.back{background:repeating-linear-gradient(45deg,#812b39 0 4px,#571a27 4px 8px);border-color:#e4c77f}.pcard.back i{width:28px;height:43px;border-color:#f4d99caa}.pcard.sm.back i{width:18px;height:28px}
+.pcard.is-dealing{animation:pokerDeal .36s cubic-bezier(.2,.75,.3,1) both;animation-delay:var(--deal-delay,0ms)}
+.pcard.is-revealing{animation:pokerReveal .4s ease-out both;animation-delay:var(--deal-delay,0ms)}
+.poker-dock{min-height:62px;padding:8px 10px;border-radius:10px;background:#0e2026;border-color:#4e6c70}
+.poker-gold-btn,.poker-primary-btn,.poker-danger-btn,.poker-sub-btn{min-height:34px;padding:7px 11px;font-size:12px;border-radius:7px;transition:filter .15s,transform .1s,box-shadow .15s}
+.poker-gold-btn:hover:not(:disabled),.poker-primary-btn:hover:not(:disabled),.poker-danger-btn:hover:not(:disabled),.poker-sub-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 10px #0005}
+.poker-gold-btn:active:not(:disabled),.poker-primary-btn:active:not(:disabled),.poker-danger-btn:active:not(:disabled),.poker-sub-btn:active:not(:disabled){transform:translateY(1px)}
+.poker-dock button:focus-visible,.poker-seat.open:focus-visible,#socialPokerNav button:focus-visible,.poker-leave-actions button:focus-visible{outline:3px solid #ffe39a;outline-offset:2px}
+.poker-turn-pill span,.poker-turn-pill strong{font-size:12px}.poker-turn-pill.is-urgent .poker-turn-track span{background:#ef7664}
+.poker-raise-box{padding:4px 7px;gap:7px}.poker-raise-box input[type=range]{width:100px}.poker-presets button{font-size:10.5px;padding:4px 6px}
+#socialPokerLeaveWarning[hidden],#socialFishLeaveWarning[hidden]{display:none!important}
+#socialPokerLeaveWarning,#socialFishLeaveWarning{position:absolute;inset:0;z-index:100;display:grid;place-items:center;padding:18px;background:#06100dcc;backdrop-filter:blur(3px);font:13px/1.5 "Trebuchet MS",sans-serif}
+.poker-leave-card{box-sizing:border-box;width:min(440px,100%);padding:25px;border:1px solid #d4b56d;border-radius:15px;background:linear-gradient(150deg,#203a35,#101f27);color:#eef4ec;box-shadow:0 24px 70px #000b}
+.fish-leave-card{border-color:#7fd3e8}.fish-leave-card .poker-leave-eyebrow{color:#9fe3ff}
+.poker-leave-eyebrow{font-size:10px;font-weight:bold;letter-spacing:1.5px;color:#e8c77d}.poker-leave-card h2{font:25px Georgia,serif;color:#fff0c6;margin:8px 0 12px}.poker-leave-card p{margin:8px 0}.poker-leave-note{font-size:12px;color:#b9d0c8}.poker-leave-actions{display:flex;gap:10px;margin-top:22px}.poker-leave-actions button{flex:1;min-height:42px}
+@keyframes pokerDeal{from{opacity:0;transform:translate(16px,-22px) rotate(-9deg) scale(.86)}to{opacity:1;transform:translate(0,0) rotate(0) scale(1)}}
+@keyframes pokerReveal{from{opacity:.25;transform:rotateY(88deg) scale(.94)}to{opacity:1;transform:rotateY(0) scale(1)}}
+@keyframes pokerPotPop{0%{transform:scale(1)}45%{transform:scale(1.13);color:#fff6c9}100%{transform:scale(1)}}
+@keyframes pokerTurnGlow{from{box-shadow:0 0 0 1px #e6bd59,0 0 7px #e6bd5933}to{box-shadow:0 0 0 2px #ffdc79,0 0 16px #e6bd5966}}
+@keyframes pokerWinnerGlow{0%{box-shadow:0 0 0 1px #83eab2}40%{box-shadow:0 0 0 3px #a6f4c7,0 0 24px #69e0a388}100%{box-shadow:0 0 0 1.5px #69e0a3}}
+@media(max-width:680px){
+ #socialPokerHead{padding:7px 9px}.poker-head-title{flex-direction:column;gap:1px}.poker-head-title strong{font-size:13px}.poker-head-title small{font-size:9px;max-width:190px}.poker-wallet-pill{font-size:10px;padding:3px 6px}
+ #socialPokerNav{padding:5px 7px;gap:4px;overflow-x:auto;scrollbar-width:thin}#socialPokerNav button{flex-shrink:0}#socialPokerNav button{font-size:10.5px;padding:5px 7px}#socialPokerNav button small{font-size:8px}#socialPokerToast{position:absolute;left:10px;right:10px;top:100%;max-width:none;z-index:4;white-space:normal;text-align:center}
+ #socialPokerBody{padding:7px}.poker-arena{gap:5px;grid-template-rows:minmax(56px,.75fr) minmax(60px,1fr) minmax(60px,1fr)}
+ .poker-cell.dealer-slot{grid-column:2;grid-row:1}.poker-cell.felt-slot{grid-column:2;grid-row:2 / 4}.poker-cell.s0{grid-column:1;grid-row:1}.poker-cell.s5{grid-column:3;grid-row:1}.poker-cell.s1{grid-column:1;grid-row:2}.poker-cell.s4{grid-column:3;grid-row:2}.poker-cell.s2{grid-column:1;grid-row:3}.poker-cell.s3{grid-column:3;grid-row:3}
+ .poker-seat{padding:4px 5px;gap:3px;border-radius:7px}.poker-seat-name{font-size:10px}.poker-seat-row{flex-direction:row;align-items:center;gap:4px}.poker-seat-meta{font-size:9.5px;gap:1px}.poker-seat-meta b{font-size:9px}.poker-hand-hint{display:none}.puck{font-size:7px;padding:1px 3px}.puck.afk{display:none}
+ .pcard{width:27px;height:39px;border-radius:4px}.pcard b{font-size:11px}.pcard em{font-size:12px;margin-top:1px}.pcard.sm{width:21px;height:30px}.pcard.sm b{font-size:9px}.pcard.sm em{font-size:10px}.pcard.back i{width:17px;height:27px}.pcard.sm.back i{width:13px;height:20px}
+ .poker-felt{padding:6px 4px;border-width:3px;border-radius:20px;gap:5px}.poker-felt::after{display:none}.poker-community{flex-wrap:wrap;gap:3px}.poker-pot-line{gap:3px}.poker-pot-line span{font-size:8px}.poker-pot-line strong{font-size:14px}.poker-pot-line small{font-size:8px;padding:1px 4px}.poker-banner{font-size:9px;white-space:normal;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}.poker-dealer-plaque{padding:3px}.poker-dealer-plaque strong{font-size:10px}.poker-dealer-plaque small{font-size:8px}
+ .poker-table-grid{gap:6px}.poker-dock{min-height:0;padding:6px;gap:5px}.poker-dock-controls{gap:5px;justify-content:space-between}.poker-dock-lead{font-size:10px;white-space:normal}.poker-turn-pill{min-height:20px;padding-bottom:5px}.poker-turn-pill span,.poker-turn-pill strong{font-size:11px}
+ .poker-gold-btn,.poker-primary-btn,.poker-danger-btn,.poker-sub-btn{min-height:32px;padding:6px 8px;font-size:11px}.poker-raise-box{order:3;flex:1 1 100%;display:grid;grid-template-columns:auto minmax(40px,1fr);gap:4px;padding:4px}.poker-raise-box input[type=range]{width:100%;min-width:0}.poker-presets{grid-column:1 / -1;justify-content:space-between}.poker-presets button{flex:1;font-size:10px;min-height:25px}.poker-buyin-lbl{font-size:10px}.poker-house-toggle{font-size:10px}
+ .poker-bank-balances{gap:5px}.poker-bank-balances>div{padding:6px}.poker-bank-balances strong{font-size:13px}.poker-bank-balances span{font-size:9px;white-space:normal}.poker-free-card{padding:7px;gap:6px}.poker-free-info h3{font-size:11px}.poker-free-info p{font-size:9px;white-space:normal}.poker-pack-grid{gap:5px}.poker-pack-card{padding:6px}.poker-pack-card strong{font-size:11px}.poker-pack-card p{font-size:9px}.poker-pack-tag{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+ .pcard.is-dealing,.pcard.is-revealing,.poker-pot-line strong.is-changing,.poker-seat.is-turn,.poker-seat.is-win,#socialPokerMini.is-turn-blink,#socialPokerMini.is-urgent-blink,#socialPokerMini.is-watch-pulse,#socialPokerBtn.is-turn-blink{animation:none!important}
+ .poker-seat,.poker-dock button{transition:none}
+}
+
+/* v284: seated poker players get a narrow chat column; the table takes the freed lane. */
+@media(min-width:1280px){
+ /* v290: .poker-chat-fit retired - sitting at a table no longer resizes chat or moves the table. */
+}
+/* One-shot hand result: win burst, lose shake, split-pot neutral. Never blocks the action dock. */
+#socialPokerResult{position:absolute;inset:0;z-index:7;display:grid;place-items:center;pointer-events:none}
+#socialPokerResult[hidden]{display:none!important}
+.poker-result-card{position:relative;box-sizing:border-box;width:min(340px,82%);padding:18px 22px;text-align:center;border-radius:14px;border:2px solid #d7b96f;background:linear-gradient(160deg,#1e3a32f2,#0d1b20f2);box-shadow:0 18px 50px #000b,0 0 0 1px #0007;color:#f4f7ee}
+.poker-result-card strong{display:block;font:800 30px/1.1 Georgia,serif;letter-spacing:2px;text-shadow:0 2px 10px #0009}
+.poker-result-card span{display:block;margin-top:6px;font:bold 13px "Trebuchet MS",sans-serif;color:#dcebe2}
+.poker-result.is-win .poker-result-card{border-color:#ffe08a;background:linear-gradient(160deg,#2b5b3df2,#123024f2);animation:pokerResultWin .55s cubic-bezier(.2,.9,.3,1.2) both}
+.poker-result.is-win .poker-result-card strong{color:#ffe89a}
+.poker-result.is-lose .poker-result-card{border-color:#c96a60;background:linear-gradient(160deg,#4a2622f2,#201214f2);animation:pokerResultLose .55s ease-out both}
+.poker-result.is-lose .poker-result-card strong{color:#ffb4a8}
+.poker-result.is-push .poker-result-card{border-color:#8fb6c9;background:linear-gradient(160deg,#27414df2,#13222af2);animation:pokerResultWin .45s ease-out both}
+.poker-result.is-push .poker-result-card strong{color:#cfe8f5}
+.poker-result-burst{position:absolute;inset:-14px;pointer-events:none}
+.poker-result-burst b{position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3c0,#e8c56e 60%,#b8873a);border:1px dashed #fff2c4;opacity:0;animation:pokerChipBurst 1.15s ease-out both}
+.poker-result-burst b:nth-child(1){--dx:-120px;--dy:-70px;animation-delay:.02s}
+.poker-result-burst b:nth-child(2){--dx:120px;--dy:-78px;animation-delay:.06s}
+.poker-result-burst b:nth-child(3){--dx:-150px;--dy:12px;animation-delay:.1s}
+.poker-result-burst b:nth-child(4){--dx:150px;--dy:16px;animation-delay:.14s}
+.poker-result-burst b:nth-child(5){--dx:-84px;--dy:84px;animation-delay:.18s}
+.poker-result-burst b:nth-child(6){--dx:90px;--dy:88px;animation-delay:.22s}
+#socialPokerMini.is-result-win{animation:pokerMiniWin .7s ease-out 2}
+#socialPokerMini.is-result-lose{animation:pokerMiniLose .55s ease-out 2}
+#socialPokerMini.is-result-push{animation:pokerWatchPulse .8s infinite alternate}
+@keyframes pokerResultWin{0%{opacity:0;transform:scale(.72) rotate(-2deg)}60%{opacity:1;transform:scale(1.06) rotate(1deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes pokerResultLose{0%{opacity:0;transform:translateY(10px) scale(.9)}25%{opacity:1;transform:translateX(-7px) scale(1)}45%{transform:translateX(6px)}65%{transform:translateX(-4px)}85%{transform:translateX(2px)}100%{opacity:1;transform:translateX(0)}}
+@keyframes pokerChipBurst{0%{opacity:0;transform:translate(0,0) scale(.5)}18%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.05) rotate(220deg)}}
+@keyframes pokerMiniWin{0%{box-shadow:0 0 0 0 #ffe08a00}40%{box-shadow:0 0 0 5px #ffe08a66,0 0 24px #ffe08a99;border-color:#ffe89a}100%{box-shadow:0 0 0 0 #ffe08a00}}
+@keyframes pokerMiniLose{0%,100%{transform:translateX(0)}30%{transform:translateX(-4px);border-color:#c96a60}60%{transform:translateX(4px)}}
+@media(prefers-reduced-motion:reduce){
+ .poker-result-card,.poker-result-burst b,#socialPokerMini.is-result-win,#socialPokerMini.is-result-lose,#socialPokerMini.is-result-push{animation:none!important}
+ .poker-result-burst{display:none}
+}
+
+/* v285: Local chat from a seated player (or the dealer) pops a small transient bubble
+   on the table itself. It is visual-only: the chat log remains the accessible record. */
+.poker-cell{position:relative}
+.poker-table-bubble{position:absolute;left:5px;right:5px;top:5px;z-index:6;pointer-events:none;box-sizing:border-box;max-height:3.7em;overflow:hidden;padding:4px 7px;border-radius:8px;border:1px solid #b58d3d;background:linear-gradient(180deg,#fffbeb,#f3e5c0);color:#2a2112;font:bold 10.5px/1.25 "Trebuchet MS",sans-serif;text-align:center;overflow-wrap:anywhere;box-shadow:0 4px 12px #0006;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.poker-table-bubble::after{content:'';position:absolute;left:50%;bottom:-5px;width:8px;height:8px;background:#f3e5c0;border-right:1px solid #b58d3d;border-bottom:1px solid #b58d3d;transform:translateX(-50%) rotate(45deg)}
+.poker-table-bubble.is-emotion{display:flex;align-items:center;justify-content:center;max-height:none;padding:0;background:transparent;border:0;box-shadow:none}
+.poker-table-bubble.is-emotion::after{display:none}
+.poker-table-bubble img{width:34px;height:34px;object-fit:contain;image-rendering:pixelated}
+.poker-table-bubble.is-fresh{animation:pokerTableChatPop .22s ease-out both}
+.poker-table-bubble.is-leaving{opacity:0;transform:translateY(-4px);transition:opacity .25s ease-in,transform .25s ease-in}
+@keyframes pokerTableChatPop{from{opacity:0;transform:translateY(6px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:680px){
+ .poker-table-bubble{left:3px;right:3px;top:3px;padding:3px 5px;font-size:9px;max-height:3.5em}
+ .poker-table-bubble img{width:26px;height:26px}
+}
+@media(prefers-reduced-motion:reduce){
+ .poker-table-bubble.is-fresh{animation:none!important}
+ .poker-table-bubble.is-leaving{transition:none}
+}
+/* v294: Fishcoins/chips draw as a CSS coin - the 🪙 emoji needs Unicode 13 fonts and showed
+   as an empty square box on Windows 10 and older Android. */
+.fishcoin{display:inline-block;width:.92em;height:.92em;border-radius:50%;vertical-align:-.08em;background:radial-gradient(circle at 35% 30%,#ffe9a0 0%,#f6c23d 55%,#b97f16 100%);border:1px solid #8a5c10;box-shadow:inset 0 0 0 1.5px #d9a62e;position:relative}
+.fishcoin::after{content:"";position:absolute;inset:24%;border-radius:50%;border:1px solid rgba(122,79,13,.8)}
+
+/* v297: pond announcements in Local chat - a centred system line, not a player message. */
+.social-line.social-line-sys{display:block;padding:5px 8px;margin:3px 0;border-left:2px solid #7fd3e8;border-radius:4px;background:#7fd3e815;color:#cdeaf5;font-style:italic}
+.social-line.social-line-sys time{opacity:.55;margin-right:6px;font-style:normal}

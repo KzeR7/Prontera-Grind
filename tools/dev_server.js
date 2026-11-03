@@ -3,6 +3,7 @@
 //   node tools/dev_server.js            # http://localhost:8788 (or PORT=xxxx)
 //   node tools/dev_server.js --port 0   # any free port; the chosen one is printed
 //   node tools/dev_server.js --gm-all   # every account registered here is an owner (preview use)
+//   node tools/dev_server.js --preview-auth   # header session bridge for embedded previews (players stay players)
 //   node tools/dev_server.js --db tools/.devdb/preview.sqlite   # keep accounts across restarts
 //
 // Why this exists: the real server is Pages Functions + D1, and `wrangler pages dev` is the official
@@ -194,7 +195,12 @@ function serveStatic(url, dir) {
 }
 
 // ------------------------------------------------------------------- boot -----
-export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = false, fakePayments = false } = {}) {
+// previewAuth: mirror the pg_session cookie through the X-Preview-Session header (and the
+// socket's ?preview_session=) so an embedded preview still signs in when the browser blocks
+// third-party cookies in iframes. It moves the SAME session token over the SAME channel the
+// cookie would use - no extra privilege; --gm-all is what grants GM, and it implies this.
+export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = false, previewAuth = gmAll, fakePayments = false } = {}) {
+  const bridge = !!(previewAuth || gmAll);
   const sqlite = freshDb(dbFile);
   const app = createApp({ sqlite, site, gmAll, fakePayments });
   const server = createServer(async (req, res) => {
@@ -206,7 +212,7 @@ export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = f
       const body = Buffer.concat(chunks);
       const isHttps = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https' || /^https:\/\//i.test(String(req.headers.origin || req.headers.referer || ''));
       const proto = isHttps ? 'https' : 'http';
-      const psIn = gmAll && req.headers['x-preview-session'] && !/\bpg_session=/.test(req.headers.cookie || '')
+      const psIn = bridge && req.headers['x-preview-session'] && !/\bpg_session=/.test(req.headers.cookie || '')
         ? (req.headers.cookie ? req.headers.cookie + '; ' : '') + 'pg_session=' + encodeURIComponent(String(req.headers['x-preview-session']))
         : req.headers.cookie;
       const request = {
@@ -222,7 +228,7 @@ export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = f
         if (k.toLowerCase() === 'set-cookie') {
           const cookieOut = isHttps ? v.replace(/;\s*SameSite=Lax/i, '; SameSite=None; Partitioned') : v.replace(/;\s*Secure/i, '');
           (headers['set-cookie'] = headers['set-cookie'] || []).push(cookieOut);
-          const m = gmAll && /\bpg_session=([^;]*)/.exec(v);
+          const m = bridge && /\bpg_session=([^;]*)/.exec(v);
           if (m) headers['x-preview-session'] = decodeURIComponent(m[1]);
         } else headers[k] = v;
       }
@@ -234,7 +240,7 @@ export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = f
       res.end(JSON.stringify({ err: String(e && e.message || e) }));
     }
   });
-  attachSocial(server, makeD1(sqlite), { previewAuth: !!gmAll });
+  attachSocial(server, makeD1(sqlite), { previewAuth: bridge });
   return new Promise(resolve => server.listen(port, host, () => resolve({
     server, sqlite, port: server.address().port, close: () => new Promise(r => server.close(r)),
   })));
@@ -257,11 +263,20 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   // losing them with the process. Both are for the preview; the default stays the production rule.
   const gmAll = process.argv.includes('--gm-all') || process.env.DEV_GM_ALL === 'all';
   const dbFile = arg('--db') || process.env.DEV_DB || undefined;
+  // The X-Preview-Session bridge is ON by default (owner bug, v307). An embedded preview runs the
+  // game in an iframe on another site, and browsers drop third-party cookies there - the session
+  // cookie was silently lost, every authenticated call answered 401, and the client read that as
+  // "signed in on another device", so a fresh sign-in (or a brand-new account) landed on that card
+  // and could never get past it. The bridge carries the SAME session token in a header instead of
+  // only in the cookie; it grants no extra privilege (--gm-all is what makes accounts owners), and
+  // this is a local development server either way. --no-preview-auth (or DEV_PREVIEW_AUTH=0) turns
+  // it off to rehearse the production cookie-only path.
+  const previewAuth = !process.argv.includes('--no-preview-auth') && process.env.DEV_PREVIEW_AUTH !== '0';
   // --fake-payments: Cash Shop purchases complete instantly without Stripe (preview/rehearsal only).
   const fakePayments = process.argv.includes('--fake-payments') || process.env.SHOP_FAKE_CHECKOUT === '1';
   if (gmAll && !['127.0.0.1', 'localhost', '::1'].includes(host))
     console.warn('WARNING: GM preview is reachable beyond localhost; use only disposable data and a trusted network.');
-  const { port: got, close } = await start({ port, host, gmAll, dbFile, fakePayments });
+  const { port: got, close } = await start({ port, host, gmAll, previewAuth, dbFile, fakePayments });
   console.log('Prontera Grind — local server (Pages Functions + D1 shim, in memory)');
   console.log('  game    http://localhost:' + got + '/');
   console.log('  console http://localhost:' + got + '/gm.html');
@@ -271,6 +286,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   console.log(gmAll
     ? '  gm      EVERY account registered here is an owner (gm=2) - this is a preview server'
     : '  gm      public registrations are players; --gm-all is for disposable local testing only');
+  console.log(previewAuth
+    ? '  auth    X-Preview-Session bridge on (embedded-preview sign-in without third-party cookies)'
+    : '  auth    cookie-only sign-in (--no-preview-auth): an iframed preview may lose its session');
   console.log(fakePayments
     ? '  shop    FAKE payments: every Cash Shop order is delivered instantly, no card, no Stripe'
     : '  shop    Cash Shop in preview mode (no payments); add --fake-payments to rehearse purchases');

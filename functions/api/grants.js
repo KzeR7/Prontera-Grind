@@ -6,7 +6,7 @@
 // and then claims, and a claim only ever matches grants belonging to the caller.
 
 import { currentUser } from '../_lib/auth.js';
-import { json, guard, readJson, fail } from '../_lib/http.js';
+import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
 import * as db from '../_lib/db.js';
 
 const shape = g => ({
@@ -16,14 +16,14 @@ const shape = g => ({
 
 export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
-  if (!user) return fail('Not logged in.', 401);
+  if (!user) return await unauth(request);
   const rows = await db.pendingGrants(env.DB, user.id);
   return json({ grants: rows.results.map(shape), owner: user.username });
 });
 
 export const onRequestPost = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
-  if (!user) return fail('Not logged in.', 401);
+  if (!user) return await unauth(request);
   const { ids } = await readJson(request, 4096);
   const list = Array.isArray(ids) ? ids.map(Number).filter(Number.isInteger).slice(0, 100) : [];
   const pending=await db.pendingGrants(env.DB,user.id);

@@ -11,7 +11,7 @@ const PROJECT = 'prontera-grind-staging';
 const DB_NAME = 'pg-staging';
 const DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
 const BRANCH = 'arena/b0caa7f9-prontera-grind';
-const EXPECTED_BUILD = '2026-11-02 haven-v283 illustrated rune-midgard world atlas';
+const EXPECTED_BUILD = '2026-11-03 haven-v314 illustrated rune-midgard world atlas';
 
 const CONFIG = [
   `name = "${PROJECT}"`,

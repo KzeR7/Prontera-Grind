@@ -1,0 +1,274 @@
+/* Plaza fishing (v287): bottom-center fishing dock (cast/shake/bite/reel/result) and the single
+   Fishing Bag window. Matches the plaza toolbar palette in assets/social.css. */
+#fishingDock{position:absolute;z-index:30;left:50%;bottom:86px;transform:translateX(-50%);width:min(430px,calc(100% - 24px));box-sizing:border-box;background:linear-gradient(180deg,#14282ef2,#0d1b20f2);border:1.5px solid #6fa3b0;border-radius:12px;color:#eef4ec;box-shadow:0 10px 32px #000a;font:12px/1.4 "Trebuchet MS",sans-serif;user-select:none}
+#fishingDock[hidden]{display:none}
+#fishingDockHead{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid #35535c}
+#fishingSpot{font:bold 12px Georgia,serif;letter-spacing:.6px;color:#cfe8ef}
+#fishingDockBtns{display:flex;gap:6px}
+#fishingDockBtns button{background:#24424b;border:1px solid #6fa3b0;border-radius:5px;color:#eef4ec;font:11px "Trebuchet MS",sans-serif;padding:4px 8px;cursor:pointer}
+#fishingDockBtns button:hover{filter:brightness(1.15)}
+#fishingBagBtn small{color:#9fc3cd}
+#fishingStage{min-height:86px;display:flex;align-items:center;justify-content:center;padding:10px 12px;cursor:pointer;touch-action:none}
+#fishingStage:focus-visible{outline:1px solid #ffe0a0;outline-offset:-3px;border-radius:10px}
+#fishingStatus{margin:0;padding:0 12px 8px;font-size:10.5px;color:#9db9bf;text-align:center;min-height:14px}
+/* Hold-to-cast button */
+.fishing-hold{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;background:radial-gradient(circle at 50% 30%,#2e5862,#1b3840);border:2px solid #7cc0d0;border-radius:50%;width:92px;height:92px;color:#f1f8f4;cursor:pointer;font:bold 10px "Trebuchet MS",sans-serif;justify-content:center;transition:transform .08s,box-shadow .12s}
+.fishing-hold:hover{box-shadow:0 0 14px #7cc0d088}
+.fishing-hold:active{transform:scale(.93)}
+.fishing-hold-icon{font-size:26px}
+.fishing-hold-ring{position:absolute;inset:-7px;border:2px dashed #7cc0d066;border-radius:50%;animation:fishing-spin 9s linear infinite}
+#fishingDock.reduced .fishing-hold-ring{animation:none}
+@keyframes fishing-spin{to{transform:rotate(360deg)}}
+/* Cast power meter */
+.fishing-meter{width:100%}
+.fishing-meter-track{position:relative;height:22px;border-radius:11px;background:linear-gradient(90deg,#273c42,#35565e);border:1px solid #5d8893;overflow:hidden}
+.fishing-meter-green{position:absolute;top:0;bottom:0;left:82%;width:14%;background:#2e8f4fd9}
+.fishing-meter-perfect{position:absolute;top:0;bottom:0;left:87%;width:6%;background:#5ef08cd9;box-shadow:0 0 8px #5ef08c}
+.fishing-meter-track b{position:absolute;top:-3px;bottom:-3px;width:4px;margin-left:-2px;background:#fff;border-radius:2px;box-shadow:0 0 6px #fff}
+.fishing-meter-tip{margin:6px 0 0;text-align:center;font-size:10.5px;color:#bfe3d4}
+/* Waiting / bite */
+.fishing-wait{display:flex;align-items:center;gap:8px;font:bold 13px "Trebuchet MS",sans-serif;color:#d8ecf2}
+.fishing-bob{display:inline-block;animation:fishing-bob 1.6s ease-in-out infinite}
+#fishingDock.reduced .fishing-bob,#fishingDock.reduced .fishing-dots i{animation:none}
+@keyframes fishing-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+.fishing-dots i{animation:fishing-dot 1.2s infinite;font-style:normal}
+.fishing-dots i:nth-child(2){animation-delay:.2s}.fishing-dots i:nth-child(3){animation-delay:.4s}
+@keyframes fishing-dot{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.fishing-walk{font-size:18px}
+.fishing-cast-label{font:bold 16px Georgia,serif;color:#cfe8ef;letter-spacing:1px}
+.fishing-cast-label.is-perfect{color:#5ef08c;text-shadow:0 0 10px #5ef08c88;animation:fishing-pop .35s ease-out}
+.fishing-bite{display:flex;align-items:center;gap:10px;font:bold 19px "Trebuchet MS",sans-serif;color:#ffd24d;text-shadow:0 0 10px #e2502e66;animation:fishing-flash .22s steps(2) infinite}
+.fishing-bite span{font-size:30px}
+#fishingDock.reduced .fishing-bite{animation:none}
+@keyframes fishing-flash{50%{opacity:.55}}
+@keyframes fishing-pop{0%{transform:scale(.5)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+/* Reel minigame */
+.fishing-reel{width:100%}
+.fishing-track{position:relative;height:34px;border-radius:9px;background:linear-gradient(180deg,#0f2f42,#154a62);border:1px solid #4e7f93;overflow:hidden}
+.fishing-bar{position:absolute;top:2px;bottom:2px;border-radius:7px;background:#e9f3f566;border:1.5px solid #ffffffb8;box-shadow:inset 0 0 8px #ffffff40;transition:background .1s}
+.fishing-bar.on{background:#7df0a955;border-color:#7df0a9;box-shadow:0 0 10px #7df0a966,inset 0 0 8px #7df0a955}
+.fishing-bar.held{border-width:2.5px}
+/* v294: the reel fish used to be dimmed to a pale silhouette (brightness(0) invert) - now it
+   shows the painted sprite at full brightness with a dark halo for contrast. */
+.fishing-fish{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:22px;filter:drop-shadow(0 0 3px #000d);transition:none;pointer-events:none}
+.fishing-fish img{width:26px;height:26px;vertical-align:middle}
+.fishing-progress{height:9px;margin-top:7px;border-radius:5px;background:#23343a;border:1px solid #4a666d;overflow:hidden}
+.fishing-progress i{display:block;height:100%;width:33%;background:linear-gradient(90deg,#49b06c,#7df0a9);transition:width .08s linear}
+.fishing-progress i.danger{background:linear-gradient(90deg,#b0493f,#f07d64)}
+.fishing-reel-row{display:flex;align-items:center;justify-content:space-between;margin-top:6px;font-size:10.5px;color:#aecbd2}
+.fishing-crank{display:inline-block;font-size:15px}
+.fishing-crank.spin{animation:fishing-crank .5s linear infinite}
+#fishingDock.reduced .fishing-crank.spin{animation:none}
+@keyframes fishing-crank{0%{transform:rotate(0) scale(1.15)}100%{transform:rotate(360deg) scale(1.15)}}
+#fishingPerfectStar[hidden]{visibility:hidden}
+/* SHAKE! bubbles over the scene */
+#fishingShakes{position:absolute;inset:0;z-index:29;pointer-events:none}
+#fishingShakes[hidden]{display:none}
+.fishing-shake{position:absolute;pointer-events:auto;transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 30%,#fff7e0,#ffd24d);border:2px solid #b8862f;border-radius:50%;width:74px;height:74px;font:bold 12px "Trebuchet MS",sans-serif;color:#5c3c0a;cursor:pointer;box-shadow:0 6px 16px #0008;animation:fishing-shakein .18s ease-out,fishing-wobble 0.9s ease-in-out .2s infinite}
+#fishingShakes.reduced .fishing-shake{animation:none}
+.fishing-shake:hover{filter:brightness(1.08)}
+.fishing-shake.popped{animation:fishing-popout .18s ease-in forwards}
+@keyframes fishing-shakein{0%{transform:translate(-50%,-50%) scale(.3)}100%{transform:translate(-50%,-50%) scale(1)}}
+@keyframes fishing-wobble{0%,100%{transform:translate(-50%,-50%) rotate(-6deg)}50%{transform:translate(-50%,-50%) rotate(6deg)}}
+@keyframes fishing-popout{to{transform:translate(-50%,-50%) scale(1.5);opacity:0}}
+/* Result card */
+.fishing-card{display:flex;align-items:center;gap:12px;width:100%;padding:4px 2px;animation:fishing-pop .3s ease-out}
+#fishingDock.reduced .fishing-card{animation:none}
+.fishing-card-glyph{font-size:40px;filter:none;flex-shrink:0;text-shadow:0 4px 10px #000a}
+.fishing-card[data-rarity]{border-left:4px solid var(--rar,#b9c6c4);padding-left:10px}
+.fishing-card-info{flex:1;min-width:0}
+.fishing-card-info strong{font:bold 14px Georgia,serif}
+.fishing-card-info p{margin:3px 0 0;color:#b9d2d8;font-size:11px}
+.fishing-new{position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-2deg);background:#ffd24d;color:#4d3505;font:bold 10px "Trebuchet MS",sans-serif;border-radius:4px;padding:2px 8px;letter-spacing:1px;box-shadow:0 2px 8px #0007}
+.fishing-card{position:relative}
+.fishing-card-btns{display:flex;flex-direction:column;gap:5px}
+.fishing-card-btns button{background:linear-gradient(180deg,#2b6a52,#1d4b3a);border:1px solid #7bc4a4;border-radius:6px;color:#f2fff8;font:bold 11px "Trebuchet MS",sans-serif;padding:6px 9px;cursor:pointer;white-space:nowrap}
+.fishing-card-btns button:hover{filter:brightness(1.12)}
+.fishing-card-btns button:active{transform:translateY(1px)}
+.fishing-card.is-escape .fishing-card-glyph{font-size:30px}
+.fishing-chip{display:inline-block;margin-left:5px;border-radius:4px;padding:1px 6px;font:bold 9.5px "Trebuchet MS",sans-serif;color:#15262b;vertical-align:2px}
+.fishing-chip.fishing-mut{background:#f3e9ff;color:#5b3f85}
+/* The one Fishing Bag window */
+#fishingPanel{position:absolute;z-index:44;right:14px;top:64px;width:min(360px,calc(100% - 28px));max-height:min(500px,calc(100% - 150px));box-sizing:border-box;display:flex;flex-direction:column;background:linear-gradient(180deg,#132328f7,#0d181cf7);border:1.5px solid #6fa3b0;border-radius:10px;color:#f3eedc;box-shadow:0 14px 40px #000b;font:11.5px/1.4 "Trebuchet MS",sans-serif;overflow:hidden}
+#fishingPanel[hidden]{display:none}
+#fishingPanelHead{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid #35535c;background:#16303780}
+#fishingPanelHead strong{font:bold 13px Georgia,serif;letter-spacing:.5px}
+#fishingPanelHead button{background:transparent;border:0;color:#b9d2d8;font-size:13px;cursor:pointer;padding:2px 6px;border-radius:4px}
+#fishingPanelHead button:hover{background:#ffffff1f;color:#fff}
+#fishingRecords{display:flex;flex-wrap:wrap;gap:5px 12px;padding:8px 12px;border-bottom:1px solid #243d44;color:#9db9bf;font-size:10.5px}
+#fishingRecords b{color:#e8f2ee}
+#fishingTools{display:flex;align-items:center;gap:12px;padding:7px 12px;border-bottom:1px solid #243d44}
+#fishingTools select{background:#0e161d;border:1px solid #5d7d87;color:#e8f2ee;border-radius:4px;font:11px "Trebuchet MS",sans-serif;padding:3px 5px}
+#fishingTools label{display:flex;align-items:center;gap:4px;color:#b9d2d8;cursor:pointer}
+#fishingGrid{flex:1;min-height:70px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:7px;padding:10px 12px;scrollbar-width:thin;scrollbar-color:#54767e transparent}
+.fishing-empty{grid-column:1/-1;color:#93adb3;font-style:italic;text-align:center;margin:18px 6px}
+.fishing-slot{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;background:#182d34;border:1.5px solid var(--rar,#3d5a63);border-radius:8px;padding:7px 3px 5px;cursor:pointer;color:#dcebe7;font:10px "Trebuchet MS",sans-serif;transition:transform .08s,box-shadow .12s}
+.fishing-slot:hover{transform:translateY(-2px);box-shadow:0 4px 10px #0007}
+.fishing-slot.selected{background:#1f3e48;box-shadow:0 0 0 2px var(--rar,#6fa3b0),0 4px 10px #0007}
+.fishing-glyph{font-size:24px;line-height:1}
+.fishing-slot-mut{position:absolute;top:2px;right:3px;font-size:10px;font-style:normal}
+.fishing-slot-star{position:absolute;top:2px;left:3px;font-size:8px;font-style:normal}
+.fishing-glyph.mut-sparkling,.fishing-detail-glyph.mut-sparkling{animation:fishing-sparkle 1.6s ease-in-out infinite}
+@keyframes fishing-sparkle{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+#fishingDetail{border-top:1px solid #35535c;padding:9px 12px;background:#10222880}
+#fishingDetail[hidden]{display:none}
+.fishing-detail-main{display:flex;align-items:center;gap:10px}
+.fishing-detail-glyph{font-size:32px}
+.fishing-detail-main strong{font:bold 12.5px Georgia,serif}
+.fishing-detail-main p{margin:3px 0 0;color:#9db9bf;font-size:10.5px}
+.fishing-detail-btns{display:flex;gap:7px;margin-top:8px}
+.fishing-detail-btns button{flex:1;background:#24424b;border:1px solid #6fa3b0;border-radius:6px;color:#eef4ec;font:bold 11px "Trebuchet MS",sans-serif;padding:6px 8px;cursor:pointer}
+.fishing-detail-btns button:hover{filter:brightness(1.15)}
+#fishingReleaseBtn[data-confirm]{background:#5d2b28;border-color:#d98b80}
+/* v290: the toolbar's fishing menu - Start fishing is explicit; Bag / Index / Shop open
+   anywhere in the plaza without walking. */
+#fishingMenu{position:absolute;z-index:46;min-width:200px;background:linear-gradient(180deg,#132328f9,#0d181cf9);border:1.5px solid #6fa3b0;border-radius:9px;box-shadow:0 12px 34px #000b;padding:5px;font:11.5px/1.35 "Trebuchet MS",sans-serif}
+#fishingMenu[hidden]{display:none}
+#fishingMenu button{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:6px;color:#eef4ec;font:bold 12px "Trebuchet MS",sans-serif;padding:7px 9px;cursor:pointer}
+#fishingMenu button:hover{background:#24424b}
+#fishingMenu button small{display:block;font-weight:normal;color:#9db9bf;font-size:9.5px;margin-top:1px}
+/* v288: draggable windows, Auto fishing, gear line, tabs (Bag / Index / Shop), fish index,
+   shop rows and the extra mutation looks. */
+#fishingDockHead,#fishingPanelHead{cursor:move;touch-action:none}
+#fishingAutoBtn.on{background:linear-gradient(180deg,#2b6a52,#1d4b3a);border-color:#7bc4a4;box-shadow:0 0 8px #7bc4a466}
+#fishingGearLine{display:flex;width:100%;box-sizing:border-box;gap:12px;align-items:center;justify-content:center;padding:4px 10px;background:#10222870;border:0;border-bottom:1px solid #243d44;color:#b9d2d8;font:10.5px "Trebuchet MS",sans-serif;cursor:pointer}
+#fishingGearLine:hover{color:#eef4ec;background:#17313970}
+#fishingCoins{margin-left:auto;margin-right:8px;color:#ffd24d;font:bold 11.5px "Trebuchet MS",sans-serif}
+#fishingTabs{display:flex;border-bottom:1px solid #35535c;background:#10222860}
+#fishingTabs button{flex:1;background:transparent;border:0;border-bottom:2px solid transparent;color:#9db9bf;font:bold 11px "Trebuchet MS",sans-serif;padding:7px 4px;cursor:pointer}
+#fishingTabs button:hover{color:#e8f2ee}
+#fishingTabs button[aria-selected="true"]{color:#ffe0a0;border-bottom-color:#ffe0a0;background:#1a333b60}
+#fishingBagView,#fishingIndexView,#fishingShopView,#fishingTitlesView{display:flex;flex-direction:column;flex:1;min-height:0}
+#fishingBagView[hidden],#fishingIndexView[hidden],#fishingShopView[hidden],#fishingTitlesView[hidden]{display:none}
+#fishingIndexView,#fishingShopView,#fishingTitlesView{overflow:auto;scrollbar-width:thin;scrollbar-color:#54767e transparent}
+#fishingTools button{background:#24424b;border:1px solid #6fa3b0;border-radius:5px;color:#eef4ec;font:bold 10.5px "Trebuchet MS",sans-serif;padding:4px 8px;cursor:pointer}
+#fishingTools button:hover{filter:brightness(1.15)}
+/* Fish index */
+.fishing-dex-head{margin:0;padding:8px 12px;border-bottom:1px solid #243d44;color:#9db9bf;font-size:10.5px}
+.fishing-dex-head b{color:#e8f2ee}
+.fishing-dex-list{padding:6px 10px 10px}
+.fishing-dex-row{display:flex;align-items:center;gap:9px;padding:5px 6px;border-left:3px solid var(--rar,#3d5a63);border-radius:4px;margin-top:4px;background:#16292f}
+.fishing-dex-row.undiscovered{opacity:.62}
+.fishing-dex-glyph{font-size:20px;flex-shrink:0}
+.fishing-dex-name{flex:1;min-width:0;font:bold 11px "Trebuchet MS",sans-serif}
+.fishing-dex-name small{display:block;font-weight:normal;color:#93adb3;font-size:9.5px}
+.fishing-dex-row .fishing-chip{margin-left:0;flex-shrink:0}
+.fishing-dex-rate{flex-shrink:0;text-align:right;color:#cfe8ef;font:bold 10.5px "Trebuchet MS",sans-serif;min-width:52px}
+.fishing-dex-row.gated{opacity:.72}
+.fishing-dex-row.gated .fishing-dex-rate{min-width:96px;color:#8fa6ad}
+.fishing-dex-row.gated .fishing-chip{opacity:.75}
+.fishing-dex-rate small{display:block;font-weight:normal;color:#7f9aa1;font-size:9px}
+/* Shop */
+.fishing-shop-head{margin:0;padding:8px 12px;border-bottom:1px solid #243d44;color:#b9d2d8;font-size:11px}
+.fishing-shop-head b{color:#ffd24d}
+#fishingShopView h4{margin:10px 12px 2px;font:bold 11.5px Georgia,serif;color:#cfe8ef;letter-spacing:.4px}
+#fishingShopView h4 small{color:#7f9aa1;font:normal 9.5px "Trebuchet MS",sans-serif;margin-left:6px}
+.fishing-shop-row{display:flex;align-items:center;gap:9px;margin:4px 10px 0;padding:6px 8px;border-radius:6px;background:#16292f;border:1px solid #27424a}
+.fishing-shop-row.equipped{border-color:#7bc4a4;box-shadow:inset 0 0 8px #7bc4a422}
+.fishing-shop-row:last-child{margin-bottom:10px}
+.fishing-shop-icon{font-size:19px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px}
+/* v310: the bait art is a 64px bitmap for crispness and is laid out at the size of the emoji it replaced */
+.fishing-shop-icon img.fishing-bait-art,.fishing-bait-art{width:24px;height:24px;object-fit:contain;flex-shrink:0}
+#fishingGearLine .fishing-bait-art{width:16px;height:16px;vertical-align:-3px}
+.fishing-shop-name{flex:1;min-width:0;font:bold 11px "Trebuchet MS",sans-serif}
+.fishing-shop-name small{display:block;font-weight:normal;color:#93adb3;font-size:9.5px}
+.fishing-shop-btns{display:flex;gap:5px;flex-shrink:0}
+.fishing-shop-row button{background:#24424b;border:1px solid #6fa3b0;border-radius:5px;color:#eef4ec;font:bold 10.5px "Trebuchet MS",sans-serif;padding:4px 8px;cursor:pointer;white-space:nowrap}
+.fishing-shop-row button:hover:not(:disabled){filter:brightness(1.15)}
+.fishing-shop-row button:disabled{opacity:.45;cursor:default}
+/* Extra mutation looks (shiny/sparkling glows come from inline filters) */
+.fishing-glyph.mut-prismatic,.fishing-detail-glyph.mut-prismatic,.fishing-card-glyph.mut-prismatic{animation:fishing-prism 3.2s linear infinite}
+@keyframes fishing-prism{0%{filter:hue-rotate(0deg) saturate(1.6) drop-shadow(0 0 10px #ff9ef5)}100%{filter:hue-rotate(360deg) saturate(1.6) drop-shadow(0 0 10px #ff9ef5)}}
+.fishing-glyph.mut-electric,.fishing-detail-glyph.mut-electric,.fishing-card-glyph.mut-electric{animation:fishing-zap 1.1s steps(2) infinite}
+@keyframes fishing-zap{50%{transform:translateX(1px)}}
+#fishingPanel.reduced .mut-prismatic,#fishingPanel.reduced .mut-electric{animation:none}
+@media(max-width:600px){
+ #fishingDock{bottom:112px;width:min(368px,calc(100% - 12px))}
+ #fishingPanel{right:6px;top:118px;max-height:calc(100% - 300px)}
+ .fishing-hold{width:80px;height:80px}
+ .fishing-shake{width:64px;height:64px}
+}
+/* v294: painted fish sprites replace the emoji glyphs on every surface. */
+img.fishing-glyph{width:30px;height:30px;object-fit:contain;filter:none}
+img.fishing-card-glyph{width:58px;height:58px;object-fit:contain;filter:none}
+img.fishing-detail-glyph{width:46px;height:46px;object-fit:contain;filter:none}
+img.fishing-dex-glyph{width:26px;height:26px;object-fit:contain;flex-shrink:0}
+.fishing-slot-lock{position:absolute;bottom:2px;right:3px;font-size:9px;font-style:normal}
+.fishing-chip.fishing-locked{background:#5b4a1f}
+/* v295: painted rod icons with a tier-tinted glow, shared by the dock, the shop and the gear line. */
+img.fishing-rod-art{filter:drop-shadow(0 0 3px var(--rod-tint,#8b6b45))}
+.fishing-shop-rod{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 5px var(--rod-tint,#8b6b45))}
+.fishing-gear-rod{width:18px;height:18px;object-fit:contain;vertical-align:-4px;filter:drop-shadow(0 0 4px var(--rod-tint,#8b6b45))}
+#fishingGearLine:hover .fishing-gear-rod{filter:drop-shadow(0 0 7px var(--rod-tint,#8b6b45)) brightness(1.1)}
+.fishing-shop-row.equipped .fishing-shop-rod{filter:drop-shadow(0 0 7px var(--rod-tint,#8b6b45)) brightness(1.12)}
+/* v295: the ten fishing titles. --tone is set per row from the title's rank. */
+.fishing-title-list{margin:6px 10px 10px}
+.fishing-title-row{display:flex;align-items:center;gap:9px;margin-top:4px;padding:6px 8px;border-radius:6px;background:#16292f;border:1px solid #27424a;border-left:3px solid var(--tone,#c08a52)}
+.fishing-title-row.locked{opacity:.66}
+.fishing-title-row.worn{border-color:var(--tone,#c08a52);box-shadow:inset 0 0 10px #ffffff1c}
+.fishing-title-mark{flex-shrink:0;font-size:17px;line-height:1;color:var(--tone,#c08a52);text-shadow:0 0 7px var(--tone,#c08a52)}
+/* v310: every row carries the same 26px painted medal, so the list lines up regardless of font */
+.fishing-title-badge{width:26px;height:26px;flex-shrink:0;object-fit:contain;filter:drop-shadow(0 0 4px rgba(0,0,0,.45))}
+.fishing-title-row.worn .fishing-title-badge{filter:drop-shadow(0 0 6px var(--tone,#c08a52))}
+.fishing-title-row .fishing-chip{margin-left:0;flex-shrink:0}
+.fishing-title-name{flex:1;display:flex;flex-direction:column;gap:2px;font:bold 11.5px "Trebuchet MS",sans-serif;color:#eef4ec}
+.fishing-title-name small{font-weight:400;font-size:10px;color:#a8c2c8}
+/* v304 (owner): the titles list reads top-down - worn, then earned, then the closest locked one -
+   and every row keeps the same height (name line + one progress or requirement line) so nothing
+   jumps around as things unlock. */
+.fishing-title-bar{display:block;height:3px;border-radius:2px;background:#0e1c21;overflow:hidden}
+.fishing-title-row .fishing-title-name{min-height:30px;justify-content:center}
+.fishing-title-row button{flex-shrink:0;min-width:56px;text-align:center}
+.fishing-title-bar b{display:block;height:100%;background:var(--tone,#c08a52)}
+.fishing-title-row button{background:#24424b;border:1px solid #6fa3b0;border-radius:5px;color:#eef4ec;font:bold 10.5px "Trebuchet MS",sans-serif;padding:4px 8px;cursor:pointer;white-space:nowrap}
+.fishing-title-row button:disabled{opacity:.45;cursor:default}
+.fishing-title-row button:hover:not(:disabled){filter:brightness(1.15)}
+.fishing-title-none{margin:0 10px 12px;text-align:center}
+.fishing-title-none button{background:#24424b;border:1px solid #6fa3b0;border-radius:5px;color:#eef4ec;font:bold 10.5px "Trebuchet MS",sans-serif;padding:4px 10px;cursor:pointer}
+
+/* ---------------------------------------------------------------------------------------------
+   v297 interface pass. The window and dock were doing too much at once: four stacked bars in the
+   dock, a tools row that wrapped into the grid, and two competing accents. This keeps one accent
+   for "active", turns the settings into pills, and stops the panel from crowding the plaza.
+   ------------------------------------------------------------------------------------------- */
+#fishingDock{border-color:#3d6672d9;background:linear-gradient(180deg,#122227f5,#0a1518f7);backdrop-filter:blur(6px)}
+#fishingPanel{border-color:#3d6672d9;background:linear-gradient(180deg,#122227fa,#0a1518fa);box-shadow:0 18px 48px #000c;backdrop-filter:blur(6px)}
+#fishingDockHead{padding:6px 10px}
+#fishingSpot{font-weight:bold;letter-spacing:.3px;color:#cfe7ee}
+#fishingDockBtns button{min-height:26px;border-color:#3d6672;border-radius:6px}
+#fishingGearLine{padding:5px 10px;gap:10px;color:#b7d3da}
+#fishingStatus{margin:0;padding:5px 10px 7px;color:#9fc0c8;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#fishingPanelHead{padding:8px 12px;gap:8px}
+#fishingPanelHead strong{font:bold 12.5px Georgia,serif;letter-spacing:.6px;color:#dff2f6}
+#fishingPanelHead button{border-radius:6px}
+#fishingRecords{padding:7px 12px;font-size:10px;color:#93b0b7}
+#fishingTools{flex-wrap:wrap;gap:6px 8px;padding:8px 12px;background:#0e1b2066}
+#fishingTools select{flex:1 1 92px;min-height:26px;border-color:#3d6672;border-radius:6px}
+#fishingTools button{flex:1 1 auto;min-height:26px;border-color:#3d6672;border-radius:6px;white-space:nowrap}
+#fishingTools label{flex:0 0 auto;gap:5px;padding:3px 9px 3px 7px;border:1px solid #35535c;border-radius:999px;background:#111f25;color:#a9c6cd;font-size:10.5px}
+#fishingTools label:has(input:checked){border-color:#7fd3e8;background:#153440;color:#eaf6f9}
+#fishingTools label:hover{border-color:#4d7a86;color:#dff2f6}
+#fishingTools input[type=checkbox]{margin:0;accent-color:#5fb6cd}
+#fishingGrid{gap:8px;padding:10px 12px 14px;grid-template-columns:repeat(auto-fill,minmax(66px,1fr))}
+#fishingTabs{gap:4px;padding:6px 8px;background:#0d1a1ff2;border-bottom:1px solid #243d44}
+#fishingTabs button{flex:1;min-height:28px;border-radius:6px;border:1px solid transparent;background:transparent;color:#9db9bf;font:11px/1 "Trebuchet MS",sans-serif;padding:0 4px}
+#fishingTabs button[aria-selected="true"]{background:#1b3a44;border-color:#6fa3b0;color:#eaf6f9}
+#fishingTabs button:hover{color:#eaf6f9}
+#fishingIndexView,#fishingShopView,#fishingTitlesView{padding:0 2px}
+/* the Index holds 100 entries now: keep its header pinned so the columns stay readable */
+.fishing-dex-head{position:sticky;top:0;z-index:1;background:#0f1d23f2;backdrop-filter:blur(4px)}
+@media(max-width:680px){
+ #fishingTools{gap:5px 6px;padding:7px 9px}
+ #fishingTools label{padding:3px 7px 3px 6px}
+}
+
+/* v299 (owner): the rods now carry a visible aura. The painted sprite has a baked bloom; this adds
+   a tinted drop-shadow that follows the rod silhouette and a slow pulse on the two top tiers, so a
+   Golden or Mythril rod reads as special at 26px in the dock as well as at 64px in the shop. */
+.fishing-rod-art{filter:drop-shadow(0 0 4px var(--rod-tint,#8b6b45)) drop-shadow(0 0 2px var(--rod-tint,#8b6b45))}
+.fishing-rod-art[data-rod-tier="silver"]{filter:drop-shadow(0 0 5px var(--rod-tint)) drop-shadow(0 0 2px #e8f2ff)}
+.fishing-rod-art[data-rod-tier="golden"],
+.fishing-rod-art[data-rod-tier="mythril"]{filter:drop-shadow(0 0 7px var(--rod-tint)) drop-shadow(0 0 14px var(--rod-tint));animation:rod-aura 2.6s ease-in-out infinite}
+.fishing-rod-art[data-rod-tier="mythril"]{animation-duration:2s}
+@keyframes rod-aura{0%,100%{filter:drop-shadow(0 0 6px var(--rod-tint)) drop-shadow(0 0 10px var(--rod-tint))}50%{filter:drop-shadow(0 0 9px var(--rod-tint)) drop-shadow(0 0 18px var(--rod-tint))}}
+@media(prefers-reduced-motion:reduce){.fishing-rod-art[data-rod-tier]{animation:none}}

@@ -1320,6 +1320,10 @@ body.clean-screen #eclipseCompanions{display:none}
 /* v112: keep live counters from moving inventory rows and actions. */
 #wins .eclipse-new-drops,#wins .eclipse-new-drops:has(button:disabled),#wins .eclipse-bag .eclipse-new-drops:has(button:disabled){display:flex!important;flex:none;min-height:25px}
 .refine-item-summary{display:block;font-variant-numeric:tabular-nums}.refine-item-summary>span{display:block}.refine-item-summary .refine-owned{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* v311: the workshop says what it will buy for you before you press Refine. */
+.refine-auto-buy{display:block;margin-top:2px;color:#ffd88a;font-variant-numeric:tabular-nums}
+.refine-auto-buy.is-short{color:#ff9f8a}
+.eclipse-refine-preview>div.is-short b{color:#ff9f8a}
 .eclipse-owned-count{white-space:nowrap;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}
 
 /* v113: centered workspaces and controls beside the information they affect. */
@@ -1340,11 +1344,11 @@ body.clean-screen #sideMenu{display:none}
   #wins .ui-panel[data-layout=map] .ui-content{align-items:stretch}
   #wins .ui-panel[data-layout=map] .ui-field-guide{max-height:none}
 }
-@media(min-width:901px){
-  #wins>.wp[data-win=map]:only-child{height:100%}
-  #wins .wbody[data-layout=map]{display:flex;flex-direction:column;overflow:hidden;flex:1 1 auto}
-  #wins .ui-panel[data-layout=map] .ui-content{min-height:0;flex:1;align-items:stretch;overflow:hidden}
-  #wins .ui-panel[data-layout=map] .ui-content>.ui-section{min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+@media(min-width:820px){
+  html:not(.pg-mobile) #wins>.wp[data-win=map]:only-child{height:100%}
+  html:not(.pg-mobile) #wins .wbody[data-layout=map]{display:flex;flex-direction:column;overflow:hidden;flex:1 1 auto}
+  html:not(.pg-mobile) #wins .ui-panel[data-layout=map] .ui-content{min-height:0;flex:1;align-items:stretch;overflow:hidden}
+  html:not(.pg-mobile) #wins .ui-panel[data-layout=map] .ui-content>.ui-section{min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
 }
 #wins .ui-skill-catalog .skg{grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:8px}
 #wins .ui-skill-catalog .sk{grid-template-columns:38px minmax(0,1fr) 36px;align-content:start;gap:4px 8px;cursor:default}
@@ -1493,6 +1497,7 @@ body.clean-screen #sideMenu{display:none}
 #wins .wbody[data-view=refine] .eclipse-refine-preview>div:not(.eclipse-rank-preview){padding:3px 0}
 .eclipse-workshop-action{flex:none;padding-top:6px}
 #wins .eclipse-workshop-action [data-a=refine]{margin:0;padding:10px;width:100%}
+#wins .eclipse-workshop-action [data-a=refine]:disabled{background:var(--e-raised);color:var(--ink);border-color:var(--edge2);opacity:.78;cursor:not-allowed}
 .eclipse-workshop:has(.reforge-offer){grid-template-columns:190px minmax(0,1fr)}
 .reforge-comparison{margin:16px 0;display:grid;gap:10px}
 .reforge-comparison-row{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);align-items:center;gap:8px;padding:10px;background:var(--e-soft);border-radius:5px;overflow-wrap:anywhere}
@@ -1837,6 +1842,9 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #updatePrompt p{margin:0 0 16px}
 #updatePrompt button{width:100%;min-height:44px;white-space:normal}
 #updatePrompt [data-update-later]{margin-top:8px;background:transparent;color:#d9d1c3}
+/* v299: the automatic hard reset shows one short line instead of a dialog. */
+#updateToast{position:fixed;right:16px;bottom:16px;z-index:2501;margin:0;padding:10px 16px;border:1px solid #7fd3e8;border-radius:10px;background:#12232b;color:#dff4fb;box-shadow:0 10px 30px #0008;font:13px/1.4 sans-serif}
+
 #wins .ascension-evolution .ascension-missing{color:#ff9292}
 #wins .ascension-evolution .ascension-enough{color:#8fe0a4}
 #wins .ascension-costs dd small{display:block;color:inherit}
@@ -2750,6 +2758,11 @@ body.social-open #minimapTools{display:none!important}
 #wins .eclipse-autosell-sim-row small{font-size:6px}
 #wins .eclipse-autosell-sim-row>strong{flex:none;color:#9fcaaa;font-size:6px;text-align:right}
 #wins .eclipse-autosell-sim-value{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:7px;padding-top:7px;border-top:1px solid var(--e-line)}
+/* v290: opt-in sale of CURRENT bag items matching the draft rules (two-click confirm). */
+#wins .eclipse-autosell-sellnow{display:block;width:100%;margin-top:8px;padding:7px 9px;border-radius:7px;border:1px solid var(--e-line);background:linear-gradient(180deg,#24424b,#1a3038);color:var(--e-text,#eef4ec);font:600 11px/1.3 inherit;cursor:pointer}
+#wins .eclipse-autosell-sellnow:hover:not(:disabled){filter:brightness(1.12)}
+#wins .eclipse-autosell-sellnow:disabled{opacity:.45;cursor:default}
+#wins .eclipse-autosell-sellnow.armed{border-color:#d98b80;background:linear-gradient(180deg,#5d2b28,#431e1c);color:#ffe3dc}
 #wins .eclipse-autosell-sim-value span{color:var(--e-muted);font-size:6px}
 #wins .eclipse-autosell-sim-value b{color:var(--gold);font-size:8px;white-space:nowrap}
 #wins .eclipse-autosell-empty{color:var(--e-muted);font-size:7px}
@@ -3663,23 +3676,327 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
 }
 #loginOverlay .recovery-success .login-btn{white-space:normal}
 
-/* ---------- Illustrated World Map of Rune-Midgard (v283) ---------- */
-#wins .ui-panel[data-layout=map] .ui-content{
+/* ---------- Illustrated World Map of Rune-Midgard — Option B Layout (v314) ---------- */
+#wins .ui-panel[data-layout=map] #map-panel-ascension.ui-content{
   grid-template-columns:152px minmax(0,1.45fr) 256px;
 }
-#wins .eclipse-atlas-hero.rm-illustrated-hero{
+
+/* Mobile guard: hide Option B inline kicker so landscape phone keeps its compact 205px budget */
+html.pg-mobile #wins .rm-optb-meta{display:none}
+
+/* Option B Desktop & Tablet World Atlas: Top 10-Map Bar + 2-Column Split (Zero-Scroll Left) */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins .ui-panel[data-layout=map]:has(>#map-panel-atlas)>.ui-hero{
+  display:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins .ui-panel[data-layout=map]:has(>#map-panel-atlas)>.atabs.map-season-tabs{
+  padding:6px 14px;
+  gap:6px;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content{
+  display:grid;
+  grid-template-columns:minmax(0,1.24fr) minmax(300px,1fr);
+  grid-template-rows:auto minmax(0,1fr);
+  gap:10px 14px;
+  padding:10px 14px 12px;
+  align-items:stretch;
+  min-height:0;
+  flex:1 1 auto;
+  overflow:hidden;
+}
+
+/* Row 1: Full-width 10-Map Horizontal Bar */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations{
+  grid-column:1 / -1;
+  grid-row:1;
+  padding:5px 6px;
+  margin:0;
+  background:#0d131b;
+  border:1px solid #263344;
+  border-radius:7px;
+  overflow:visible;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations>.ui-section-label{
+  display:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapgrid{
+  display:grid;
+  grid-template-columns:repeat(10,minmax(0,1fr));
+  gap:5px;
+  margin:0;
+  padding:0;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard{
+  display:grid;
+  grid-template-columns:auto minmax(0,auto);
+  justify-content:center;
+  align-content:center;
+  align-items:baseline;
+  gap:1px 4px;
+  min-height:36px;
+  height:36px;
+  padding:3px 4px;
+  margin:0;
+  border-radius:5px;
+  background:#141d28;
+  border:1px solid #283648;
+  text-align:center;
+  box-shadow:none;
+  transition:background .15s ease,border-color .15s ease;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard .eclipse-map-number{
+  position:static;
+  margin:0;
+  font:700 10px/1.1 var(--e-font);
+  color:#8da0b2;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard b{
+  margin:0;
+  font:700 10.5px/1.1 var(--e-font);
+  color:#e2e8ef;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard small{
+  grid-column:1 / -1;
+  margin:0;
+  font:500 8.5px/1.1 var(--e-font);
+  color:#8497a8;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard:hover{
+  background:#1a2533;
+  border-color:#465d78;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.here:not(.on){
+  border-color:rgba(70,196,126,.52);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.on{
+  background:#2b2316;
+  border:1.5px solid #dfb96e;
+  box-shadow:inset 0 0 0 1px rgba(245,214,142,.2);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.on .eclipse-map-number,
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.on b{
+  color:#f5d68e;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.on small{
+  color:#cbb07a;
+}
+
+/* Row 2, Col 1: Bigger Illustrated Map + Compact Header + Stages + Gold Travel (Zero Scroll) */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route{
+  grid-column:1;
+  grid-row:2;
   display:flex;
   flex-direction:column;
+  gap:8px;
+  min-height:0;
+  height:100%;
+  padding:0;
+  margin:0;
+  border:0!important;
+  background:none;
+  overflow:hidden;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.ui-section-label{
+  display:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.rm-route-drawer{
+  flex:0 0 auto;
+  margin:0;
+  padding:0;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .fields{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin:0;
+  padding:0;
+  border:0;
+  background:none;
+  position:static;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .mapband-t{
+  display:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-fold{
+  display:none;
+}
+
+/* Option B Header Line Below Map: "02 / COMODO · Lv 60-67 (Dancer & Rogue)" + Auto-advance */
+#wins .rm-optb-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px 10px;
+  flex-wrap:wrap;
+  min-height:22px;
+  padding:1px 2px;
+}
+#wins .rm-optb-meta{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+  min-width:0;
+}
+#wins .rm-optb-kicker{
+  font:700 11.5px/1.2 var(--e-font);
+  letter-spacing:.04em;
+  color:#e8c987;
+}
+#wins .rm-optb-sub{
+  font:500 10.5px/1.2 var(--e-font);
+  color:#8fa2b3;
+}
+#wins .rm-optb-head>.row{
+  margin:0!important;
+  padding:0!important;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:10.5px;
+  color:#b7c5d3;
+}
+#wins .rm-optb-head>.row label{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin:0;
+  cursor:pointer;
+  font-size:10.5px;
+  color:#b7c5d3;
+  white-space:nowrap;
+}
+html:not(.pg-mobile) #wins .rm-optb-head>.row>small{
+  display:none;
+}
+
+/* Option B Stage Grid (01..09, MVP + NM 1..5) & Gold Travel Button */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .lvgrid{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  margin:0;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare){
+  display:grid;
+  grid-template-columns:repeat(10,minmax(0,1fr));
+  gap:4px;
+  margin:0;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:5px;
+  margin:0;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node{
+  min-height:30px;
+  height:30px;
+  padding:0 2px;
+  border-radius:5px;
+  background:#161f2a;
+  border:1px solid #2b3a4d;
+  color:#c8d4e0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node>small{
+  display:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node b{
+  font:700 10.5px/1 var(--e-font);
+  color:inherit;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare .map-node{
+  min-height:26px;
+  height:26px;
+  background:#171626;
+  border-color:#453862;
+  color:#a89bc9;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare) .map-node.picked,
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare) .map-node[aria-pressed="true"]{
+  background:#cca965!important;
+  border-color:#f3d999!important;
+  color:#14181f!important;
+  box-shadow:0 2px 8px rgba(204,169,101,.28);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare) .map-node.picked b,
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare) .map-node[aria-pressed="true"] b{
+  color:#14181f!important;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare .map-node.picked,
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare .map-node[aria-pressed="true"]{
+  background:#533e7d!important;
+  border-color:#c2abf4!important;
+  color:#f7f2ff!important;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action{
+  margin:2px 0 0;
+  padding:0;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action>.go{
+  width:100%;
+  min-height:38px;
+  height:38px;
+  padding:0 14px;
+  border-radius:6px;
+  background:linear-gradient(180deg,#dfc080,#c49e58);
+  border:1px solid #f4dca0;
+  color:#14181f;
+  font:700 12px/1 var(--e-font);
+  letter-spacing:.01em;
+  box-shadow:0 4px 14px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,250,232,.55);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action>.go:hover:not(:disabled){
+  filter:brightness(1.06);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action>.go:disabled{
+  background:#19222e;
+  border-color:#344457;
+  color:#9bb0c4;
+  box-shadow:none;
+  opacity:1;
+}
+
+/* Row 2, Col 2: Wider Full-Height 03 / Field Intelligence */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-field-guide{
+  grid-column:2;
+  grid-row:2;
+  min-height:0;
+  height:100%;
+  max-height:none;
+  overflow-y:auto;
+  padding:12px 16px;
+  margin:0;
+  background:#0d131b;
+  border:1px solid #243040;
+  border-radius:8px;
+}
+
+#wins .eclipse-atlas-hero.rm-illustrated-hero{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  min-height:175px;
   height:auto;
   aspect-ratio:auto;
-  min-height:0;
   max-height:none;
   width:100%;
-  margin-bottom:14px;
-  background:#1f3038;
+  margin:0;
+  background:#223842;
   border:1px solid color-mix(in srgb,var(--gold) 45%,#5e4a2b);
   border-radius:8px;
-  box-shadow:0 12px 28px rgba(0,0,0,.42),inset 0 0 0 1px rgba(255,232,178,.14);
+  box-shadow:0 10px 24px rgba(0,0,0,.4),inset 0 0 0 1px rgba(255,232,178,.14);
+  overflow:hidden;
   user-select:none;
 }
 #wins .eclipse-atlas-hero.rm-illustrated-hero:after{display:none}
@@ -3689,14 +4006,28 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
   width:100%;
   height:auto;
   aspect-ratio:16 / 9;
-  min-height:200px;
-  max-height:360px;
+  min-height:185px;
+  max-height:380px;
   flex:none;
   overflow:hidden;
   cursor:default;
   touch-action:auto;
   background:#223842;
   z-index:1;
+}
+@media(min-width:820px){
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero{
+    flex:1 1 0;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    min-height:0;
+    max-height:none;
+    aspect-ratio:auto;
+  }
 }
 body.rm-atlas-fullscreen #wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
   position:absolute;
@@ -3974,22 +4305,8 @@ body.rm-atlas-fullscreen #wins .rm-viewport.is-dragging{cursor:grabbing}
 }
 
 #wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+  display:none;
   position:relative;
-  inset:auto;
-  top:auto;
-  right:auto;
-  bottom:auto;
-  left:auto;
-  width:100%;
-  max-width:none;
-  box-sizing:border-box;
-  padding:7px 12px 8px;
-  border-radius:0;
-  background:linear-gradient(135deg,rgba(11,17,24,.96),rgba(17,25,34,.92));
-  border:0;
-  border-top:1px solid rgba(219,187,124,.32);
-  pointer-events:auto;
-  z-index:2;
 }
 #wins .rm-hero-caption .ui-eyebrow{
   display:block;
@@ -4008,60 +4325,35 @@ body.rm-atlas-fullscreen #wins .rm-viewport.is-dragging{cursor:grabbing}
   color:#c8d4cf;
 }
 
-/* Paired Region Sub-Zone Switcher (Prontera/Izlude & Niflheim/Abyss only) */
-#wins .rm-region-bar{
-  display:flex;
-  flex-direction:column;
-  margin-bottom:12px;
-}
-#wins .rm-subzones{
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-  padding:8px 10px;
-  border-radius:7px;
-  background:color-mix(in srgb,var(--e-soft) 72%,transparent);
-  border:1px solid color-mix(in srgb,var(--gold) 36%,transparent);
-}
-#wins .rm-subzones-kicker{
-  font-size:8px;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:var(--gold);
-}
-#wins .rm-subzones-btns{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:6px;
+/* Inline Paired Region Sub-Zone Pills (Prontera/Izlude & Niflheim/Abyss) */
+#wins .rm-subzones.rm-subzones-inline{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  margin-left:2px;
 }
 #wins .rm-subzone-btn{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:2px;
-  min-height:38px;
-  padding:6px 10px;
-  border-radius:6px;
-  border:1px solid var(--e-line-bright);
-  background:rgba(12,16,23,.65);
-  text-align:left;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:20px;
+  height:20px;
+  padding:0 8px;
+  border-radius:999px;
+  border:1px solid #35475c;
+  background:#141d28;
   cursor:pointer;
 }
 #wins .rm-subzone-btn b{
-  font-size:10.5px;
-  font-weight:600;
-  color:var(--ink);
-}
-#wins .rm-subzone-btn small{
-  font-size:8.5px;
-  color:var(--e-muted);
+  font:600 9.5px/1 var(--e-font);
+  color:#c5d2de;
 }
 #wins .rm-subzone-btn.on{
-  background:color-mix(in srgb,var(--gold) 15%,var(--e-raised));
-  border-color:var(--gold);
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 35%,transparent);
+  background:#2b2316;
+  border-color:#dfb96e;
+  box-shadow:inset 0 0 0 1px rgba(245,214,142,.22);
 }
-#wins .rm-subzone-btn.on b{color:var(--gold)}
+#wins .rm-subzone-btn.on b{color:#f5d68e}
 
 /* Fullscreen Illustrated World Map Mode */
 body.rm-atlas-fullscreen #wins{
@@ -4131,6 +4423,7 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-a
   right:12px;
 }
 body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+  display:block;
   position:absolute;
   top:12px;
   bottom:auto;
@@ -4235,14 +4528,37 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-
     display:none;
   }
 }
+@media(max-width:819px){
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content{
+    grid-template-columns:1fr;
+    grid-template-rows:auto;
+    overflow-y:auto;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapgrid{
+    grid-template-columns:repeat(5,minmax(0,1fr));
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route,
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-field-guide{
+    grid-column:1;
+    grid-row:auto;
+    height:auto;
+    overflow:visible;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero{
+    flex:none;
+    aspect-ratio:16 / 9;
+    min-height:190px;
+  }
+}
 @container(max-width:850px){
-  #wins .ui-panel[data-layout=map] .ui-content{grid-template-columns:145px minmax(0,1fr)}
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapgrid{
+    grid-template-columns:repeat(5,minmax(0,1fr));
+  }
+  #wins .ui-panel[data-layout=map] #map-panel-ascension.ui-content{grid-template-columns:145px minmax(0,1fr)}
 }
 @container(max-width:560px){
-  #wins .ui-panel[data-layout=map] .ui-content{grid-template-columns:1fr}
-  #wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{min-height:175px}
+  #wins .ui-panel[data-layout=map] #map-panel-ascension.ui-content{grid-template-columns:1fr}
   #wins .rm-hero-caption h2{font-size:14px}
-  #wins .rm-subzones-btns{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(prefers-reduced-motion:reduce){
   #wins .rm-birds,#wins .rm-cloud{animation:none!important}

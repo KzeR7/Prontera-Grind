@@ -5,12 +5,19 @@
 // login card). A 401 here is normal and means "not logged in", not "broken".
 
 import { currentUser } from '../_lib/auth.js';
-import { json, guard } from '../_lib/http.js';
+import { json, guard, unauth } from '../_lib/http.js';
 import { userById } from '../_lib/db.js';
 
 export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
-  if (!user) return json({ err: 'Not logged in.' }, 401);
+  // v307: say WHY there is no session, in a header so callers can still read the JSON body.
+  //   none  - the request carried no session token at all (no cookie). In an embedded preview this
+  //           is the normal shape of a browser that drops third-party cookies.
+  //   ended - a token was presented but it is not a live session: another sign-in replaced it, it
+  //           expired, or the account is gone. That is the real "signed in somewhere else".
+  // The client used to show the takeover card for both, which made a lost cookie look like a hijack
+  // and left the player with no way back in.
+  if (!user) return await unauth(request);
   const row = await userById(env.DB, user.id);
   // v280: `id` lets the client stamp its save with the durable account identity, so a rename (which
   // changes the name, never the id) cannot strand the save. It is the caller's own id and nothing

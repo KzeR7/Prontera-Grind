@@ -10,7 +10,7 @@
 // daily/weekly data is retained but never automatically back-paid.
 
 import { currentUser } from '../_lib/auth.js';
-import { json, guard, fail } from '../_lib/http.js';
+import { json, guard, fail, unauth } from '../_lib/http.js';
 import { BOARD_PERIODS, boardWindow, boardWeekStart } from '../_lib/board.js';
 import { ECHO_LIMIT, ECHO_REWARDS, echoPrizeText } from '../_lib/echo-board.js';
 import { unverifiedConfig, unverifiedWindows, settleUnverifiedEcho } from '../_lib/unverified-echo.js';
@@ -28,7 +28,7 @@ const rewardTiers = kind => {
 
 export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
-  if (!user) return fail('Not logged in.', 401);
+  if (!user) return await unauth(request);
 
   const url = new URL(request.url);
   const period = url.searchParams.get('period') || 'daily';

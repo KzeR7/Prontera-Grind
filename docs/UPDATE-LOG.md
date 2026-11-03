@@ -9404,14 +9404,348 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   bumps, other fields and other accounts are untouched, and `GM`/`gm`/`Gm` all resolve.
 * **Delivery:** `arena/42732cee-prontera-grind`.
 
-### 2026-11-02 — `haven-v283 illustrated rune-midgard world atlas`
-* **Added (`assets/world-map/`):** Integrated the 16:9 hand-illustrated Map of Rune-Midgard (`world-map-cleaned.webp`), all 8 isometric town island cutouts (`prontera.png`, `geffen.png`, `payon.png`, `morroc.png`, `comodo.png`, `niflheim.png`, `amatsu.png`, `louyang.png`), 8 flying bird flocks (`birds-flock-a.webp`, `birds-flock-b.webp`), and 9 drifting multi-puff clouds (`cloud-direct.webp`, `cloud-mask-16x9.webp`) directly into the World Atlas tab (`mapSeason === 'atlas'`).
-* **Changed (`index.html`, `assets/ui/eclipse.css`):**
-  * Replaced the flat `.eclipse-atlas-hero` banner with the clean 3-column World Atlas layout (`01 / Destination` | 16:9 Illustrated Map + `02 / Choose your stage` | `03 / Field intelligence`), omitting lore/landmark text across all maps and keeping only **`⛶ Full Map`** (`ACT.atlasfull`) on the embedded mini-map while exposing zoom/pan (`−`, `+`, `⟲`, drag-to-pan, wheel-zoom) and the collapsible Stages & Drops drawer inside Full Map mode.
-  * Lowered the full-height 3-column stretch breakpoint for `[data-layout=map]` from `1101px` to `901px` (plus `@container(min-width:851px)`) so `03 / Field intelligence` stretches to the full window height without a `360px` cutoff on medium desktop viewports (`851px–1100px`).
-  * Preserved all 8 original town cutout coordinates and added `.rm-subzones` quick switchers solely for the two paired cutouts (`Prontera & Izlude` → `Prontera` / `Izlude`; `Niflheim & the Abyss` → `Niflheim` / `Abyss`), with two-step `Escape` exit (`Fullscreen` → `1x Mini-Map` → `Close`).
-  * Keyed `#rmViewport`, `#rmCanvas`, ambient birds/clouds, and town pins for `eclipsePatch` so continuous bird/cloud animations and Full Map pan/zoom state survive live combat redraws and stage/zone switches without resetting.
-* **Checks:** `publish_sim.js` budgets `assets/world-map/` separately (`< 3.5 MiB`, ~2.8 MiB measured) while preserving the `< 59 MiB` classic and `< 140.5 MiB` combined runtime caps and verifying all 13 files in `dist/`. `eclipse_ui_sim.js` 54 → 55 covers absence of lore cards, Full-Map-only zoom controls, paired sub-zones, live DOM node retention, and fullscreen `Escape` flow.
-* **Delivery:** `arena/b0caa7f9-prontera-grind`.
 
+### 2026-11-02 — `haven-v283 safer plaza poker and lasting world chat`
+* **Changed:** Plaza Hold'em now asks before a floor/bench/sit/room-switch action
+  stands a seated player up, with **Stay at table** focused by default and the same
+  guard enforced by the room. Closing/minimizing the window still keeps the seat.
+  A 15-second authenticated reconnect grace preserves exact plaza position and the
+  reserved poker seat, reconciles a pot settled while away, and makes same-seat
+  reconnects idempotent instead of respawning/rebuying. The poker window uses a
+  larger fixed table lane, bigger cards, deal/reveal/pot/turn/win animations and a
+  compact phone chat lane; resizing chat no longer moves the table. World chat keeps
+  the latest 100 public messages in Durable Object SQLite storage plus an
+  account-scoped browser cache, merged/deduplicated on hello so an empty restarted
+  backlog cannot blank it. Whispers/Local are not persisted.
+* **Try it:** Maps → Social Hub → Hold'em. Sit, then click the floor or Return to
+  field and cancel/confirm the warning. Resize chat while the table is open. Send a
+  World line, reload and sign in again. On a phone the table sits above compact chat.
+* **Checks:** Full gate 194 pass / 0 fail / 0 dependency skips. New
+  `social_table_chat_sim.js`; updated poker/UI/Worker suites include a storage-backed
+  Durable Object restart. Software-WebGL browser review passed for real floor-click
+  guard, desktop/phone bounds, chat-resize independence and World history after a
+  full reload. The required BUILD bump changed progression source/combat hashes;
+  all 126 measurements were rerun and were byte-identical to the pinned fixtures.
+* **Delivery:** Local changes on `arena/a44b3133-prontera-grind`; no production
+  deployment. Deploy `workers/social` before the matching Pages client.
+
+
+### 2026-11-02 — `haven-v284 poker results and seated chat fit`
+* **Changed:** Plaza Hold'em now shows a one-shot hand result animation — gold chip
+  burst for a win, red shake for a loss/fold, neutral split-pot card — keyed to the
+  table and hand number so redraws never replay it, plus a matching minimized-pill
+  flash. While the player is seated at a poker table on a wide screen, World chat
+  narrows to a 280px column and the table uses the freed lane; standing up or leaving
+  restores the normal chat width. Phone layout and the v283 leave guard/reconnect/
+  World history behavior are unchanged.
+* **Try it:** Maps → Social Hub → Hold'em, sit down and watch the chat column shrink;
+  finish a hand to see the result burst/shake, then stand to see chat widen again.
+* **Checks:** Full gate 194 pass / 0 fail / 0 dependency skips; updated
+  `social_table_chat_sim.js` covers compact chat, restored width and one-shot results.
+  Software-WebGL browser review passed for compact chat/table lane and the win overlay.
+  BUILD bump refreshed progression hashes only; all 126 measurements were rerun and
+  stayed byte-identical.
+* **Delivery:** Local changes on `arena/a44b3133-prontera-grind`; no production
+  deployment. Deploy `workers/social` before the matching Pages client.
+
+
+### 2026-11-02 — `haven-v285 local chat bubbles on the poker table`
+* **Changed:** When someone seated at the poker table you are viewing speaks in
+  Local chat, a small cream speech bubble pops on their seat for six seconds (Local
+  emotions pop as the emotion image). Dealer callouts pop on the dealer plaque. The
+  bubble is visual-only, never blocks cards/buttons, renders plain text, replaces the
+  previous bubble for that seat, survives redraws without replaying, and disappears
+  on mute/expiry/minimize/room change/exit. World/Whisper and Local messages from
+  players outside the viewed table do not pop the table; the 3D plaza bubble and chat
+  log still work as before.
+* **Try it:** Maps → Social Hub → Hold'em, sit at a table, open Local chat and send a
+  line or emotion; watch it pop on your seat. Have another seated player speak to see
+  theirs. Mute them or minimize the table to clear it.
+* **Checks:** `social_table_chat_sim.js` now covers seat anchoring, Local-only scope,
+  emotion images, text-only rendering, redraw persistence, mute, expiry and minimize.
+  Full gate and software-WebGL review recorded in `docs/TESTING.md`. BUILD bump
+  refreshed progression hashes only; all 126 measurements stayed byte-identical.
+* **Delivery:** Local changes on `arena/a44b3133-prontera-grind`; no production
+  deployment. Deploy `workers/social` before the matching Pages client.
+
+
+### 2026-11-02 — `haven-v286 durable poker payouts and room-scoped results`
+* **Changed:** Fixed two PR #163 bugs. Poker chip movements now use a durable,
+  per-account Durable Object outbox with stable event ids; missed payouts replay after
+  reconnect even when the 15-second seat reservation expired or the Worker restarted.
+  The client saves applied ids with the poker wallet and acknowledges them, so replay
+  cannot credit chips twice. Poker result animations are keyed by plaza room as well as
+  table/hand, and stale result UI clears when changing or leaving a room.
+* **Try it:** Disconnect during a hand and reconnect after the seat grace; the payout
+  still lands once. Visit the same table/hand number in two plazas; both results animate.
+* **Checks:** Full gate 195 pass / 0 fail / 0 dependency skips. New
+  `social_ledger_sim.js`; expanded `social_worker_sim.mjs` storage-backed restart
+  rehearsal and `social_table_chat_sim.js` room-scoped result test. Focused social
+  suites pass. BUILD bump refreshed progression hashes only; all 126 measurements
+  stayed byte-identical.
+* **Delivery:** PR #163 on `arena/a44b3133-prontera-grind`; no production deployment.
+  Deploy `workers/social` before the matching Pages client.
+
+### 2026-11-02 — `haven-v287 plaza pond fishing with one Fishing Bag`
+* **Changed:** Rebuilt plaza fishing from scratch (the earlier draft lived only on an
+  unpushed session branch and never reached `main`). Two ponds now sit on the open
+  **south lawns** (`PGSocialRules.PONDS`, (±23, 42)) — below the corner gardens, so the
+  water starts at the lower grass and never touches the tree area; `walkable` blocks the
+  water on client and Worker alike. The loop is a full hold-and-release fishing game
+  (researched against Roblox's *Fisch*): hold-to-charge cast meter with a green
+  zone and PERFECT overlay (charge buys distance; PERFECT rolls rarity twice and keeps
+  the better), SHAKE! bubbles that cut the lure wait, a timed bite with `!` mark and
+  chime, then a reel minigame — hold pulls the white control bar right, release drifts
+  left, progress fills on the fish and drains off it, with an opening lock, rarity-based
+  difficulty and a Perfect-catch flag. 3D rod, line, bobber with cast-arc, ripples,
+  splashes, bite dip, reel jitter and a catch-flight to the player; ambient fish swim in
+  the ponds (toggleable). Everything fishing-related lives in **one UI**: the bottom
+  dock (cast/bite/reel/result with Cast again + Show off) and the single Fishing Bag
+  window (inventory grid, bestiary records, sort, pond-fish + sound toggles, per-fish
+  Show off / two-step Release). *Show off* only announces fish actually in the bag, on
+  Local chat through the normal cooldown path. 14 species over six rarities with 2dp
+  weights and Shiny/Sparkling mutations; the bag (cap 120) persists as `S.fishing` in
+  the save blob with a load sanitizer, like the poker wallet. No farming stats, Zeny or
+  combat are touched.
+* **Try it:** Maps → Social Hub, walk south past the gardens, click a pond or the
+  🎣 Fishing toolbar button (it walks you to the rim), hold Space or the button to cast.
+  Open 🧺 Bag for records and show-offs.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips. New
+  `social_fishing_sim.js` covers pond placement/walkability/pathing, catalog integrity,
+  cast rating, reel physics (lock, clamp, catch/escape, Perfect), bag/bestiary bounds,
+  owned-fish-only show-off and the real scene rig (pond clicks never walk into water).
+  Progression fixtures re-measured per procedure: all 126 before/after measurements
+  byte-identical, only `sourceHash`/`combatHash` refreshed. The two new runtime assets
+  were added to the hosted staging package lists, which otherwise fail closed.
+  `tools/check_social_browser.cjs` unavailable here (no playwright); it is not in the gate.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Deploy `workers/social` (shared `social-rules.js` pond
+  collision) together with the matching Pages client.
+
+### 2026-11-02 — `haven-v288 pond chairs, auto fishing, fish index and Fishcoin shop`
+* **Changed:** Six additions to plaza fishing. (1) **Pond chairs** — 8 single-seat
+  wooden angler chairs on the pond rims (`PGSocialRules.CHAIRS`, 4 per pond, facing the
+  water); the shared `SEATS` table grows to 32 (chair ids 24–31, unique `bench` ids
+  `100+id` so bench reservations and partner-swap stay untouched) and the scene builds
+  them as clickable sit targets. (2) **Auto fishing** — a `▶ Auto` toggle on the dock
+  charges to a random power, hooks after the bite, drives the reel with a bang-bang
+  controller (re-aims every ~130 ms) and recasts until toggled off, the player walks
+  away, or the bag fills; no SHAKE! bubbles while automated. (3) **Visible show-offs** —
+  show-off lines are now parsed back (`parseShowOff`, exact species match, forged lines
+  ignored) on both the room Local-chat path and the solo fallback, and the actual fish
+  glyph (hue + mutation glow) pops over the angler's head for ~5 s via
+  `scene.fishing.showFish`, **scaled by its weight** (~0.55× minnow → ~2.3× a 60 kg
+  Cobble Whale). (4) **Fish index** — the catalog grows to **70 species** (the 14 v287
+  ids unchanged) and the Fishing window gains Bag/Index/Shop tabs; the Index lists every
+  fish with weight range, bestiary records and base **catch rate** (% and "1 in N",
+  rates sum to 100%), with `???` silhouettes for undiscovered species. (5) **Fishcoin
+  economy** — coins come only from selling fish (per-fish Sell, result-card Sell, bulk
+  "Sell dupes" that keeps the heaviest per species + all mutated); value scales with
+  rarity, heft and mutation. The Shop sells 6 permanent rods (luck/control/strength/
+  lure) and 4 per-cast baits that raise rarity (`r^(1/(1+luck))`), weight
+  (`rng^(2/(1+w))`) and mutation odds; the dock shows a clickable coins·rod·bait gear
+  line. Mutations grow from 2 to **7** (adds Frozen, Electric, Ghostly, Golden,
+  Prismatic ×14) with their own visuals. `S.fishing` gains `coins/rods/rod/bait/baitSel`
+  (sanitized in `index.html`). (6) **Movable UI** — the dock and the Fishing window drag
+  by their headers; positions persist in `localStorage['pg_fishing_ui_v1']`.
+* **Try it:** Social Hub → south lawns. Sit on a pond chair, click the water to fish,
+  hit `▶ Auto` and watch it grind, then open 🧺 Bag → Shop to sell the haul and buy a
+  better rod; 📣 Show off now floats the real fish over your head for everyone nearby.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips.
+  `social_fishing_sim.js` extended: 70-species/rate integrity, legacy-id preservation,
+  luck/weight/mutation monotonicity under a seeded RNG, control-widened reel bar,
+  economy ops (buy/equip/sell/bulk, never negative), new persistence fields,
+  show-off parse round-trip for all 7 mutations + forged-line rejection, chair clicks
+  reaching the seat callback (never walk/cast) and the `showFish` sprite lifecycle.
+  `social_sim.js`/`social_scene_sim.js` updated for 32 seats + walkable chairs.
+  Progression fixtures re-measured per procedure: all 126 before/after measurements
+  byte-identical, only `sourceHash`/`combatHash` refreshed. No new runtime files, so
+  the hosted staging lists are unchanged.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Deploy `workers/social` (shared `social-rules.js` chairs/seats)
+  together with the matching Pages client.
+
+### 2026-11-02 — `haven-v289 embedded preview sign-in fix (session header bridge)`
+* **Changed:** Two sign-in fixes for the embedded (iframed/proxied) preview, where the
+  browser blocks third-party cookies so `pg_session` never sticks and every request after
+  login 401s into a bogus "signed in on another device". (1) `tools/dev_server.js` gains
+  `--preview-auth` (env `DEV_PREVIEW_AUTH=1`): it enables the existing `X-Preview-Session`
+  header bridge — the same session token the cookie would carry, mirrored into a response
+  header and accepted back from a request header, plus the socket's `?preview_session=` —
+  **without** `--gm-all`, so accounts registered on the preview stay ordinary players
+  (`--gm-all` still implies the bridge, unchanged). The client already supported the token
+  (`CLOUD.previewToken`). (2) `index.html` (`cloudFetch`/`cloudSession`): a 401 only ends
+  the session if the request was issued during the **current** sign-in (`CLOUD.epoch`
+  guard) — previously a slow startup probe sent before the login could resolve 401 after
+  it and instantly kill the fresh session. Dev-tool + client only; deployed Functions,
+  registration and the one-session-per-account rule are untouched.
+* **Try it:** `node tools/dev_server.js --preview-auth --db tools/.devdb/preview.sqlite`
+  behind the preview proxy; register/sign in from the embedded frame with third-party
+  cookies blocked — the session now survives, and accounts persist across restarts.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips.
+  `dev_server_sim.js` grew two suites (21 total): `--preview-auth` signs a cookie-blocked
+  browser in over the header while `gm` stays 0 and the GM API stays closed; without the
+  flag no token leaks and a forged header is refused (production rule). `cloud_sim.js`
+  (67) still proves a genuine mid-session 401 ends the tab. Progression fixtures
+  re-measured per procedure: all 126 measurements byte-identical, only
+  `sourceHash`/`combatHash` refreshed.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Nothing to deploy for this one — the bridge is dev-server-only;
+  the real host uses first-party cookies on its own domain.
+
+### 2026-11-02 — `haven-v290 fishing menu, giant show-offs, steady poker table and sell-current gear`
+* **Changed:** Four owner requests. (1) **Fishing menu** — the `🎣 Fishing` toolbar
+  button now opens a menu (▶ Start fishing · 🧺 Bag · 📖 Index · 🛒 Shop) instead of
+  instantly walking to a pond. Walking only happens on the explicit *Start fishing* item
+  or a direct pond click; Bag/Index/Shop open the draggable Fishing window on the right
+  tab from anywhere in the plaza, so show-offs and shopping need no travel. (2)
+  **Show-off visuals** — the chat bubble no longer covers the fish: when a show-off line
+  renders the fish overhead, the bubble is skipped (`onLocalMessage` returns whether it
+  displayed; the text still reaches the chat panel). And the fish is now BIG: a 60 kg
+  Cobble Whale renders at 5.0 world units — taller than the 3.2-unit character — vs the
+  old 2.3 cap (scene clamp 5.2, placement raised with size). (3) **Poker table stays
+  put** — sitting used to narrow chat to 280px and slide the table 110px left into the
+  freed lane; `poker-chat-fit` is retired and the modal geometry is identical seated or
+  standing. (4) **Equipment auto-sell: sell current items** — the auto-sell workspace
+  gains an opt-in "💰 Sell the N matching items in your bag now" button (two clicks:
+  arm, then confirm) that sells today's matches using the draft rules with the same
+  protections (locked/equipped/loadout/reforge-offer gear always kept); applying rules
+  still only affects future drops. Also added `tools/preview.sh` — the documented way to
+  start the owner's preview, always passing `--preview-auth` and
+  `--db tools/.devdb/preview.sqlite` so embedded-iframe sign-in and account persistence
+  can never regress by forgetting a flag (docs/TESTING.md notes it).
+* **Try it:** Click 🎣 Fishing → Bag and show off a fish from the promenade — no bubble
+  in the way, and a heavy fish towers over you. Sit at a poker table: nothing moves.
+  Equipment → Auto-sell: tick rarities, then "Sell the N matching items" twice.
+* **Checks:** Full gate green: 4 generated-asset/config checks plus every `*_sim.js`,
+  `*_sim.mjs` and `*_smoke.js` — 196 suites pass, 0 fail, 0 dependency skips.
+  `social_fishing_sim` covers the new scale bounds (≥4.5 at 60 kg) and the
+  bubble-suppression contract; `social_table_chat_sim` now asserts the table does NOT
+  shift on sit (414px seated and standing); `equipment_workspaces_sim` (11 checks) adds
+  the two-click sell-current flow incl. locked-item protection. Progression fixtures
+  re-measured per procedure: all 126 measurements byte-identical, only
+  `sourceHash`/`combatHash` refreshed. `assets/ui/eclipse.css` cache-busted to ?v=290.
+* **Delivery:** Local changes committed on `arena/348a785f-prontera-grind`; no
+  production deployment. Client-only; `workers/social` needs no redeploy for this one.
+
+### 2026-11-02 — `haven-v291 base 100-150 retuned to measured kill rates`
+
+* **Why:** the game launched and players reached Base 150 in under 24 hours. Scan result: the curve constants were intact (`tools/tune_pacing.js --verify` passes), but the pacing model assumes 800 kills/hour while the measured earned builds in `tools/tests/fixtures/progression_encounters.json` clear 4,300–7,500 kills/hour — so the "~96 h" 100–150 band really cost ~12–20 h of farm-equivalent time, and with the +30% daily buff, pet EXP, contracts and capped offline claims a launch player maxed within a day.
+* **Changed:** `BASE_EXP_LATE_X` 1.5 → **4** (owner-approved). Only Base requirements from Lv 100 up are multiplied: at measured rates the band now costs ~33 h farm-equivalent for the fastest build and ~45–55 h for typical ones — roughly **2–3 real days** of hardcore play including offline claims. Job EXP (`jneed`/`needAt`), contract rewards (`needAt/2` above 99), Ascension income and the measured offline EXP/min rule are all untouched; levels already earned are never rolled back (`checkLevel` only prices future EXP). Anchors: need(100) 130,000 → 346,000; need(149) 3,543,000 → 9,448,000; late budget 57,279,000 → 152,722,000.
+* **Files:** `index.html` (constant + curve comment, BUILD v291, asset `?v=291`); `tools/tests/base_pacing_sim.js` (new 4x anchors, offline-crossing income 1,100 → 2,900/min so the claim still crosses Base 100); `docs/GAME-DESIGN.md`, `docs/DECISIONS.md`; build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`); progression fixtures re-measured byte-identical except `sourceHash`/`combatHash`.
+* **Checks:** `tune_pacing --verify` all green (model untouched by design — it prices `needAt`, not the late multiplier); `base_pacing_sim` 8/8; full gate run this session (see Delivery).
+* **Delivery:** committed to `arena/d86605c0-prontera-grind` and pushed; no deploy performed — owner publishes Pages (client-only change, no Worker or D1 impact).
+
+### 2026-11-02 — `haven-v292 crucible trial doubled to gate no-card builds`
+
+* **Why:** owner launch observation — his Assassin Cross with **no cards and only a +4 N+ weapon** passed the Crucible of the Valkyrie with ~1 second left. The v211 bar (1.25× the Abyss Stage 15 MVP = 111,676,981 HP, ~3.72M DPS over 30 s) no longer gates under-built characters; the owner asked for a 50–70% HP increase.
+* **Changed:** `JOB_RITE_BOSS_MULT` 1.25 → **2** (+60%, the upper middle of the requested band). The opponent now spawns with **178,683,170 HP** (89,341,585 × 2) and requires ~**5.96M DPS** inside the unchanged 30-second limit — the owner's no-card build (~3.85M effective DPS) now deals ~64% and fails, while carded/high-refine builds at 2–3× the no-card output still clear. ATK (15,235), rewards (none), the retry rule and the `nmBossHpOf()` boss-tracking anchor are untouched; if the Abyss MVP's HP is retuned the trial still follows it.
+* **Measured (rite run end-to-end in the real update loop, pet-less benchmark builds):** no-card +3 builds deal 12–36% (fail everywhere); full N+ +10 card/mastery benchmarks: Assassin Cross 18.9 s and High Wizard 26.8 s pass, LK/Sniper/HP/WS reach 43–55% — live builds with pets and reforged affixes run well above these benchmarks (the owner's live no-card AC did ~2.4× the harness equivalent).
+* **Files:** `index.html` (constant + v292 comment, BUILD, asset `?v=292`); `docs/GAME-DESIGN.md`, `docs/DECISIONS.md`; build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`); progression fixtures re-measured byte-identical except `sourceHash`/`combatHash`. `tools/tests/job_rite_sim.js` needed no edit — it derives the pinned HP from `JOB_RITE_BOSS_MULT`.
+* **Checks:** `job_rite_sim` 20/20; full gate run this session (see Delivery).
+* **Delivery:** committed to `arena/d86605c0-prontera-grind` and pushed; no deploy performed — owner publishes Pages (client-only change, no Worker or D1 impact).
+
+### 2026-11-02 — `haven-v293 crucible champion sized above the hero`
+
+* **Why:** owner, before the pending PR — the Crucible opponent "is way too small"; he wants it slightly bigger than a player. The six champion sprites (1634–1639) sit in no size table, so `mobVisualScale` fell back to `spriteScale .92 × MOB_REGULAR_VISUAL .7` and the trial boss stood **1.96 world units** next to the **2.16-unit** hero.
+* **Changed:** the rite spawn's `spriteScale` .92 → **1.2**, landing the champion at **2.56 world units ≈ 1.19× the player** — taller than the hero, below the 2.70-unit Ascension field monsters, nowhere near boss bulk. Collision `size`, ATK, HP, timer and rewards untouched.
+* **Files:** `index.html` (spawn line + comment, BUILD v293, asset `?v=293`); `tools/tests/job_rite_sim.js` (two new asserts per class: champion height above `HERO_VISUAL_HEIGHT`, below `ASCENSION_MONSTER_VISUAL`+.1); build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`); progression fixtures re-measured byte-identical except `sourceHash`/`combatHash`.
+* **Checks:** `job_rite_sim` 20/20 with the new size asserts; measured in-harness: 3.05×mobVisualScale = 2.562, ratio 1.186× hero; full gate run this session (see Delivery).
+* **Delivery:** committed to `arena/d86605c0-prontera-grind` and pushed; no deploy — owner publishes Pages after the PR he requested.
+
+### 2026-11-03 — `haven-v294 fishing locks and painted fish`
+
+* **Why:** owner batch, fishing follow-ups. (1) While a line was in the water the player could walk off (fishing silently cancelled at 6.5 units) or hop onto a bench mid-reel — he wants movement locked until Stop fishing. (2) He asked how Sell dupes works and wanted an auto-sell plus a per-fish keep-lock. (3) The fish art "looks too kiddo" — every fish was the OS emoji with a hue-rotate filter, and the show-off/catch/reel sprites were small-canvas emoji draws, blurry and too dim to see. (4) The Fishcoin/chip 🪙 glyph needs Unicode-13 fonts and rendered as an empty square box on Windows 10 / older Android.
+* **Changed:** `assets/social-fishing.js` — new procedural sprite painter (`fishSprite`/`fishSpriteURL`): side-view canvas fish with dark outline, saturated body over pale belly, 11 shape families keyed by the species glyph (fish/tropical/puffer/shark/whale/shrimp/lobster/crab/squid/octopus/tadpole), per-species variation seeded from the species id, mutations as baked halo + overlay (ice, bolts, sparkles, rainbow, ghost fade); used in bag/card/detail/index/reel, with emoji fallback where canvas 2D is missing. Per-fish 🔒 lock (`toggleLock`): locked fish refuse Sell, Sell dupes, Sell everything, Release and auto-sell; survives normalization. Opt-in **Auto-sell dupes** (`settings.autoSell`, default off, `shouldAutoSell`): each fresh catch is sold immediately unless mutated, locked or your heaviest of that species — same keep-rule as Sell dupes; the result card shows "auto-sold +N". `busy()` export + `assets/social.js` gates on `moveAction`/`seatAction`/`toggleSit`/`pokerSeatAction`: while phase is past 'walking' the plaza blocks walking and seats with a notice; `startFishing` sets 'walking' before its own moveTo so the lock never blocks fishing's walk-in. Fishcoins and poker chips now draw as a CSS `.fishcoin` coin everywhere (plain-text statuses say "Fishcoins"); the two 🪙 in `index.html` (Treasure Sniff icon, gacha Zeny pouch) became 💰. `assets/social-scene.js`: show-off uses the 256px painted sprite (was 88px emoji on 128px canvas), catch-fly accepts `{spId,mut}`, pond swimmers brightened (koi-orange/silver/jade at .78 opacity, were near-black at .5); reel fish no longer dimmed to a silhouette.
+* **Files:** `assets/social-fishing.js`, `assets/social.js`, `assets/social-scene.js`, `assets/social-fishing.css`, `assets/social.css`, `index.html` (BUILD v294, asset `?v=294`, 2 emoji), `tools/tests/social_fishing_sim.js` (+24 v294 asserts: lock paths, auto-sell rule, settings persistence, painter degradation, busy export); build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`); progression fixtures re-measured.
+* **Checks:** `social_fishing_sim` PASS with the new asserts; sprite sheet rendered via @napi-rs/canvas and visually reviewed (70 species distinct, mutations visible); all social sims + `update_watch_sim` PASS; full gate run this session (see Delivery).
+* **Delivery:** committed to the session branch and pushed; no deploy — owner publishes Pages. Client-only: `workers/social` and `assets/social-rules.js` untouched, no Worker redeploy needed.
+
+### 2026-11-03 — `haven-v307 a sign-in that survives a cookie-less preview`
+
+* **Why:** owner, blocked: a fresh sign-in — and a brand-new account — landed on "🔐 Signed in on another device" and could not get past it. Reproduced: the embedded preview runs the game in an iframe on another site, so the browser drops the third-party `pg_session` cookie. Every authenticated call then answered 401, and `cloudFetch` read *any* 401 while signed in as a takeover. The tab was told another device was playing it, signed in again (still no cookie), and looped.
+* **Changed (server):** `tools/dev_server.js` now turns the `X-Preview-Session` bridge **on by default** (opt out with `--no-preview-auth` / `DEV_PREVIEW_AUTH=0`). The bridge moves the same session token the cookie would carry into a request header, so a preview without third-party cookies stays signed in; it grants no extra privilege (`--gm-all` is what makes accounts owners) and only exists on the local dev server.
+* **Changed (API):** a 401 now says why, in an `X-Session` response header (body untouched): `none` — no token on the request at all; `ended` — a token was sent and it is not a live session (replaced, expired, account gone). `_lib/http.js` gained `unauth(request)` and every endpoint that used to `fail('Not logged in.', 401)` (`me`, `save`, `grants`, `messages`, `friends`, `board`, `social`) uses it.
+* **Changed (client):** `cloudFetch` forwards the reason to `cloudSessionReplaced(why)`; `none` shows "🔐 This tab lost its sign-in" (nothing lost, open the preview in its own tab or sign in again) instead of the takeover card. `ended` keeps the takeover card but now says the session may also have expired, and keeps `cloudReplaced` as the single latch.
+* **Files:** `tools/dev_server.js`, `functions/_lib/http.js`, `functions/api/{me,save,grants,messages,friends,board,social}.js`, `index.html` (BUILD v307, asset `?v=307`, gate copy + `x-session` handling); new `tools/tests/session_lost_sim.js` (10 checks: the client branches and copy, the bridge defaults on, and live API behaviour — no credentials → `none`, replaced token → `ended`, cookie-less header token → 200, junk token → 401); build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
+* **Checks:** `session_lost_sim` 10/10; `cloud_sim` 67/67; `session_race_sim`, `cloud_login_error_sim` 9/9, `cloud_badge_sim` 6/6, `gm_auth_sim` 13/13; `update_watch_sim` 16/16; `social_fishing_sim` PASS. Reproduced the failure on a bridge-less server (gate shown after the cookie was dropped) and confirmed the same flow stays signed in with the bridge on.
+* **Delivery:** committed to `arena/94b2997a-prontera-grind` and pushed; no deploy. The dev-server default only affects local previews — production Pages keeps cookie-only ingress.
+
+### 2026-11-03 — `haven-v308 a garden that reads at hero scale`
+
+* **Why:** owner, with three v306 pond screenshots. (1) The sakura stood at *his* height — "now its same size as a player, not realistic". (2) The bridge was "abit small and can pass through" — the character walked straight through the arch. (3) "What's the random waterfall from the sky? looks funny" — the cascade was an opaque rectangle of water with a hard top edge, standing on the far side of the pond from the camera, so what he saw was the back of a slab in mid-air.
+* **Changed (sakura):** painted blossom sprites grew from 3.5× to 6.8× the species scale (≈7–8 world units against the 2.6-unit hero), so the trees overhang the pond instead of standing beside it like shrubs. Reflections scale with them.
+* **Changed (bridge):** `POND_PROPS.bridge` span 6.2 → 7.2, width 2.2 → 3.1, arch 1.15 → 1.45, moved south to clear the coping; the deck is thicker, and the parapets are rebuilt as real balustrades (newel posts both ends, hand rail + mid rail on turned balusters) over low stone landings. The angler chairs moved out to ±4.8 so nothing sits on the deck. **The bridge is no longer cosmetic:** `archBridge()` registers itself in a scene-level `bridges` list and `bridgeLift(x,z)` returns the deck height under the feet, which the per-frame sprite pass adds to the floor — the hero now walks *over* the arch (measured: feet at y 1.51 at the crown instead of 0.06).
+* **Changed (waterfall):** the fall moved from the pond's south side to its **north rim** (`POND_FALLS` `z: p.z + d/2 + 5.2` → `p.z - d/2 + .1`, with `dir`/`intoPond`), so it pours into the pond, toward the anglers standing on the south shore, and the rock face is behind the water where it belongs. The stone edging's mouth moved with it. `cascade()` is now direction-aware: the sheet sits `dir`-side of the rocks, its top tucks under a rock lip (and is hidden outright once the painted crag is in), its foot lands in the water under a broken foam ring, and the fallback `lipRock` is smaller and joins `view.fallback`, so the grey slab that used to float over the cascade is gone in painted mode. The sheet tile itself is the v308 rewrite: 96×192, cleared canvas, translucent streaks that start narrow at the lip and widen downward with an alpha ramp — no filled rectangle, no top edge.
+* **Changed (outlet):** the fall no longer feeds a stone channel under the bridge, so that channel went with it. The bridge now spans the pond's own outlet — a short painted canal leaving the south coping, walled by limestone banks and passing under a culvert — which rescues the composition and keeps water under the bridge.
+* **Files:** `assets/social-rules.js` (`POND_FALLS`, `POND_PROPS.bridge`, `CHAIRS`), `assets/social-scene.js` (`fallTile`, `cascade`, `archBridge` + `bridges`/`bridgeLift`, per-frame foot height, `paintPondArt` canal/crag/flanking rocks, sprites 6.8×), `index.html` (BUILD v308, asset `?v=308`), `tools/tests/social_fishing_sim.js` build tag, build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
+* **Checks:** `social_sim` (pond props clear the water and every chair at the new sizes), `social_scene_sim`, `social_ui_sim`, `social_fishing_sim`, `update_watch_sim` 16/16, `cloud_sim` 67/67, `session_lost_sim` 10/10. Verified in the live preview at the default camera and close up: feet at 1.51 on the bridge crown, the cascade visible over the water with no floating edges.
+* **Delivery:** committed to `arena/94b2997a-prontera-grind` and pushed; no deploy — owner publishes Pages. Client-only, no Worker changes.
+
+### 2026-11-03 — `haven-v309 fish from the bridge and the shelf; painted bait`
+
+* **Why:** owner, from the garden build. (1) "there is a bush on one of the chairs" — a painted shrub stood 0.6 units from a north-rim angler chair. (2) "both bridge & stone can pass through when click to fish. can u fix to fish on the bridge & on the rocks?" — clicking a pond walked the hero straight through the cascade's boulders and left him standing *inside* the rock face. (3) "bugged bait icons" — the bait list drew emoji and two of the four (`worm`, `grub`) are Unicode 13 glyphs that render as empty boxes on Windows 10 and older Android, so the shop showed blank squares next to a prawn and a honey pot.
+* **Changed (fishing places):** `POND_PROPS[]` gained `stands` — the real places to fish a pond: the bridge crown, a new stone shelf beside the cascade, the east and west banks, the south bank and the south-east corner. `standPoint()` in `assets/social-fishing.js` now walks to the nearest one, so "Start fishing", a pond click and AFK walk-back all end on a proper stand instead of on the nearest arbitrary patch of grass.
+* **Changed (solid rock):** the cascade's boulder heap is no longer walkable. `POND_PROPS[].crag` is a solid box and `walkable()` rejects it (`cragBlocked()`), so the server paths around the rock face instead of through it. The rest of the rim is unchanged.
+* **Changed (the shelf):** `POND_PROPS[].ledge` — a rounded, limestone-cut shelf (same `roundedRect` + extrude as the pond coping) at the water's edge beside the cascade, half a unit tall, with two boulders tying it to the rock face. It is a real platform: `platformLift(x,z)` in `assets/social-scene.js` returns the shelf height under the feet and the per-frame pass takes the max of it and `bridgeLift`, so the hero stands on the stone (measured feet at 0.65) instead of inside it.
+* **Changed (bait art):** `baitSprite()` / `baitSpriteURL()` / `baitHTML()` paint the four baits — a segmented worm, a curled shrimp tail, a glowing grub, a wax-sealed Royal Jelly jar — in the same flat style as the fish and the rods. The shop rows and the dock's gear line use them; the emoji stays only as the fallback when canvas is missing.
+* **Changed (bush):** the shrub moved from the cascade's chair line to the pond's east bank, clear of every chair and of the bridge.
+* **Files:** `assets/social-rules.js` (`crag`, `ledge`, `stands`, `cragBlocked`, `walkable`), `assets/social-scene.js` (`platforms`/`platformLift`, shelf mesh, rock heap shifted left, bush position), `assets/social-fishing.js` (`standPoint`, bait painter + exports, shop/dock markup), `index.html` (BUILD v309, asset `?v=309`), `tools/tests/social_scene_sim.js` (shelf lift on/off), `tools/tests/social_fishing_sim.js` (stands reachable from spawn, crag solid, painted bait icons with a recording 2D context, build tag), `tools/tests/social_sim.js` (the rim test now allows the cascade footprint and asserts it is unwalkable), build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
+* **Checks:** `social_sim`, `social_scene_sim`, `social_ui_sim`, `social_fishing_sim`, `update_watch_sim` 16/16, `cloud_sim` 67/67, `session_lost_sim` 10/10. Verified in the live preview: feet at 1.51 on the bridge crown and 0.65 on the shelf, all four bait icons render as painted images, the chair by the cascade is clear.
+* **Delivery:** committed to `arena/94b2997a-prontera-grind` and pushed; no deploy — owner publishes Pages. Client-only, no Worker changes.
+
+### 2026-11-03 — `haven-v310 titles by rarity, smaller bait art, no rock shelf`
+
+* **Why:** owner, on the v309 build. (1) "what is this rock platform? i dont like it. remove it" — the stone shelf added a turn earlier read as a floating pad at the water's edge. (2) "bait images is too big, adjust it back" — the painted bait bitmaps were 96px with no CSS size, so they filled the shop rows. (3) "titles are also mission icons & not arranged rarity, fix it & make sure the size are correct" — the title list showed loose Unicode glyphs (◉ ⌖ ⚔ ✧ ★ …) that read as quest markers, rendered at a different size in every font, and was sorted worn → earned → locked.
+* **Changed (shelf removed):** `POND_PROPS[].ledge` and the `platforms`/`platformLift` registry are gone; the per-frame foot height is back to the bridge arch alone. The `ledge` fishing stand was replaced by a `north-west` stand on the grass, and the cascade's boulder heap stays solid, so the walk to the pond still routes around the rock face.
+* **Changed (bait art):** `baitHTML()` always paints at 64px and `.fishing-bait-art` lays it out at 24px in the shop (16px on the dock's gear line), the size of the emoji it replaced.
+* **Changed (titles):** every title now carries the rarity `tier` it belongs to and a `rank` (1–20, easiest first). The list sorts by tier then rank — Common → Uncommon → Rare → Legendary → Mythical → Secret — and each row shows the same painted 26px medal (`titleBadge()`, a ribbon + disc + star in the tier colour) plus the rarity chip the fish index uses. The glyph is only the no-canvas fallback.
+* **Files:** `assets/social-rules.js` (ledge + ledge stand removed, north-west stand added), `assets/social-scene.js` (shelf mesh and platform registry removed), `assets/social-fishing.js` (bait sizing, `tier`/`rank` on all twenty titles, `titleBadge`/`titleBadgeURL`, `renderTitles` sorted by rarity), `assets/social-fishing.css` (`.fishing-bait-art`, `.fishing-title-badge`), `index.html` (BUILD v310, asset `?v=310`), `tools/tests/social_fishing_sim.js` (ladder ranks 1–20, every tier populated, tier-then-rank walks the ladder once, medals paint and cache, ledge is gone), `tools/tests/social_scene_sim.js` (shelf lift test removed), build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
+* **Checks:** `social_sim`, `social_scene_sim`, `social_ui_sim`, `social_fishing_sim`, `update_watch_sim` 16/16, `cloud_sim` 67/67, `session_lost_sim` 10/10. Verified in the live preview: no shelf at the cascade, bait icons at emoji scale, the title list opening on Common and closing on Secret with aligned medals.
+* **Delivery:** committed to `arena/94b2997a-prontera-grind` and pushed; no deploy — owner publishes Pages. Client-only, no Worker changes.
+
+### 2026-11-03 — `haven-v311 pond clicking, japanese chairs, pond-sized fish, auto-buy refine`
+
+* **Why:** owner, on the v310 build, with three screenshots. (1) "fishing pond area clicking is off, sometimes it will keep going to the same place when clicking"; the reconnect jump was still there. (2) "all the chairs around the pond doesn't work now. can u make them japanese style to match the theme? and when fishing, he should face the pond." (3) "some players don't get the titles even after having the fish (dark star)". (4) "a 922 kg fish looks small next to the pond — the max is 1000 kg, it should be as big as the pond". (5) "when materials are short it must auto purchase them, I shouldn't have to go to the shop" (Refinement workshop, Oridecon 10/16).
+* **Changed (pond clicking):** the fishing hit area is the water plus a 0.45 lip instead of the old 1.2-unit skirt, which used to swallow clicks on the coping, the rocks and the chairs' footing and cast a line instead of walking. `pondClick` now keeps the spot you clicked: `startFishing(idx, at)` passes it to `standPoint`, which ranks the pond's stands by distance to *that* water (plus a 0.15 nudge toward the angler), so two clicks on opposite banks walk to opposite banks instead of both walking to the stand nearest the player.
+* **Changed (reconnect):** a dropped socket no longer replays a half-finished walk. The worker stores the spot with `path: []` and the client stops its own route at the drop, so a reconnected angler stands still where the walk had reached instead of strolling off on its own.
+* **Changed (chairs):** the eight pond chairs are rebuilt as Japanese zen seats — dark sled runners and a front rail, a low lacquered vermilion frame with gold piping, a thick indigo zabuton that tops out at exactly the 0.66 sit height, and a raked three-slat back. They are bigger (1.06 wide, 1.31 tall) and their click pad is padded to 1.55 units, so a tap on the seat or within a hand's width of it sits you down. Clicking a chair selected a bench across the plaza before, because the pad was only 0.3 units and the ray ran on to whatever bench stood behind it.
+* **Changed (facing):** while a line is out the angler turns to the bobber. The local client turns its own hero on every rig update; every other viewer gets the same turn from the rig already carried in the player snapshot, so no new message is needed and it cannot arrive stale.
+* **Changed (titles):** Dark Star no longer demands a Golden or Prismatic roll *on top of* a mythical-or-secret roll (about one catch in 100,000, so anglers with a visibly mutated mythic were told they had nothing). Any mutation on a mythical or secret fish earns it, and both the dex and the bag are read, so a catch that was sold or carried over from a save written before mutations reached the dex still counts. A title that unlocks is announced in the dock the moment it does, and an open Titles tab re-renders on the catch.
+* **Changed (show-off size):** the weight-to-size curve is pinned to the pond. A 1,000 kg fish draws 13 units across a 13 × 18 pond, 922 kg draws 12.46 (was 7.58), 400 kg 8.13 and a 50 kg fish 3.07, and the scene's clamp rose from 11 to 13.2. The weight plate scales with the fish so the number stays readable on a pond-sized body.
+* **Changed (refine):** the workshop buys the ore you are short of at the Black Market price straight from the attempt and says so in the feed ("Bought 6 Oridecon for 600,000z to finish this refine"), so a 10/16 stack no longer blocks the button. The button is disabled only when the Zeny for fee plus shortfall is missing, and both `refineUI` and the workshop preview show the shortfall and the total before you press it. **(Corrected in v312: the workshop builds its rows from `V.refine()`, which kept the old "own every ore" gate, so the button stayed greyed out. Client-only follow-up, no deploy beyond Pages.)**
+* **Files:** `assets/social-rules.js` (no change), `assets/social-scene.js` (Japanese chair build + padded pads, pond hit area, angler facing, show-off clamp/tag scale), `assets/social-fishing.js` (`showOffScale`, `mutationIds`/`mutatedMythic`, Dark Star text, `pondClick`/`startFishing`/`standPoint`, title-unlock notice), `assets/social.js` (rig facing, drop stops the local walk, help line), `workers/social/room.mjs` (resume keeps the spot, not the route), `index.html` (`refineOreShortfall`, auto-buy in `refine`, `refineUI` shortfall line and button gate, workshop preview rows, BUILD v311), `assets/ui/eclipse.css` (`.refine-auto-buy`), `tools/tests/social_scene_sim.js` (chair size + click + near-miss + facing), `tools/tests/social_fishing_sim.js` (scale ladder, Dark Star freedom + bag fallback, click-to-stand, build tag), `tools/tests/social_sim.js` (resume drops the route), `tools/tests/material_sim.js` (auto-buy, refusal without Zeny, no buy when stocked), `tools/tests/eclipse_ui_sim.js` (stale confirmation with no Zeny), `tools/tests/ui_sim.js` (extracts `refineOreShortfall`), build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
+* **Checks:** every `tools/tests/*_sim.js` suite passes except the five that need things this sandbox cannot provide (`card_star_balance_sim`/`skill_balance_sim` want a commit outside the shallow clone, `hosted_launch_stage_sim` wants a CRLF checkout, `hosted_scrypt_prepare_sim` wants staging git, `write_gate_binding_sim` wants miniflare). Chair geometry and the 13-unit fish were rendered straight from the scene for review: `pond-v311-chairs.png`.
+* **Delivery:** committed to `arena/081dc41f-prontera-grind` and pushed; no deploy — owner publishes Pages. The Worker change only affects the resume path (`workers/social/room.mjs`), so Pages + the Durable Object both need the usual publish.
+
+### 2026-11-03 — `haven-v312 refine button prices the ore it auto-buys`
+
+* **Why:** owner, on the v311 build, with a screenshot of the Refinement workshop: a +4 N+ Kami Tengu Claw, 10 Oridecon needed, 9 in the bag, `Oridecon short · 1 · auto-bought 100,000z`, `Total 121,000z` — and a greyed-out Refine. "did u even add in the refine? still showing unclickable". The auto-buy was in `refine()`, but nothing could reach it.
+* **Cause:** there are two refine surfaces, and v311 fixed only one. `refineUI()` (the loadout detail card) got the new gate; the workshop under **Refine** builds its rows from `V.refine()`, whose button still tested `S.ore[o]<refOre(it) || S.zeny<c` — "you must already own every ore", the exact rule v311 replaced. With 9 of 10 ore the button was disabled before the attempt could buy the tenth.
+* **Changed (the gate):** `V.refine()` prices the attempt as fee plus the auto-bought shortfall and disables on money alone. Short of ore is no longer a reason to block; short of Zeny still is, and now says so: a `Need 5,000z more` line under the row, a `Zeny short` row in the workshop preview, and the button itself reads `Refine · 121,000z` (or `Need 5,000z more` when it cannot be afforded). `refineUI()` got the same `Need …z more` line and the price on its button, so neither surface can grey out without a number beside it.
+* **Changed (styling):** `.refine-auto-buy.is-short` and the preview's short row in the warning colour, and a disabled style for the workshop button matching the Ascension Forge's (raised background, `cursor:not-allowed`) instead of the global `opacity:.4` wash that read as "broken".
+* **Files:** `index.html` (`V.refine()` row gate, price and shortfall line; workshop preview `Zeny short` row and button label/disabled sync; `refineUI` short-Zeny line and priced button; BUILD v312, asset `?v=312`), `assets/ui/eclipse.css` (shortfall colours, disabled workshop button), `tools/tests/eclipse_ui_sim.js` (new test), build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
+* **Checks:** the new `eclipse_ui_sim` test reproduces the screenshot exactly — a +4 N+ weapon (10 Oridecon, 21,000z, 49%), 9 owned, 121,000z total — and asserts the button is enabled, names the total, and that clicking it buys the missing ore, spends fee + 100,000z, lands +5 and logs `Bought 1 Oridecon`. It also asserts the money gate still disables and says `Need 2,500z more` when the purse is short, and that a fully stocked bag stays clickable. Suites: `eclipse_ui_sim` 55, `ui_sim` 64/0, `material_sim` 16/0, `social_sim`/`social_scene_sim`/`social_ui_sim`/`social_fishing_sim` PASS, `cloud_sim` 67/0, `session_lost_sim` 10/0, `update_watch_sim` 16/0.
+* **Delivery:** committed to `arena/08bbb299-prontera-grind`. Client-only — no Worker and no Durable Object change, so the usual Pages publish is the whole deploy.
+
+### 2026-11-03 — `haven-v313 refine purchase confirmation, plaza chat history`
+
+* **Why:** owner, on the v312 build. (1) "make a pop up to confirm buying materials & amount — this is confusing for players who just press & finish all the zeny". (2) "check out the social hub, still getting random reconnect & missing local chat history — been trying to fix this for a while".
+* **Changed (refine purchase):** the ore purchase is now a question, exactly like the Reforge quote already was. Pressing Refine with ore short opens a modal that names the count, the Black Market unit price, the fee, the total for the attempt and what the purse would be left with — "This refine needs 10 Oridecon and you have 6. Buy the missing 4 Oridecon at the Black Market price of 100,000z each — 400,000z — and refine for 21,000z? Total 421,000z, leaving 579,000z." — with `Buy 4 · 400,000z` / `Cancel`. Nothing is bought before the answer; cancelling leaves the wallet, the bench and the rank untouched and asks again next time. When a protection-scroll question also applies, the money question comes first and each answer is remembered, so no question is asked twice. The workshop UI's wording follows: `short 1 Oridecon (buy for 100,000z on confirm)` in the row, `buy for 100,000z on confirm` in the preview, and `bought on confirm` on the loadout card.
+* **Changed (Local chat history):** Local chat is per plaza and is deliberately never written to storage, but it lived only in `app.messages` and **every `room` snapshot ran a blanket `filter(channel!=='local')`** — so each reconnect (and each socket drop) emptied the Local tab. The last 60 lines of every plaza you have been in are now kept in memory (`localHistory`), stashed when the room changes, when the socket closes and when you leave, and restored when you re-enter that plaza. Another plaza never inherits the previous one's lines, and the cache is cleared on sign-out and on account switch, so one account can never see another's Local chat.
+* **Changed (random reconnects):** two real causes found and fixed. (a) Coming back to the tab dropped the socket on the spot whenever it had been quiet for ten seconds, so every tab switch longer than that forced a reconnect; the socket is now *probed* first and only dropped if the probe goes unanswered. (b) A socket that opened against a cold Durable Object but never received `hello` was never noticed — the plaza sat on "Connecting to chat…" with a healthy-looking socket; a handshake that takes longer than 12 s is now treated as a failed attempt, with the same exponential backoff a close gets (`retryDelay()`, shared, so the two paths cannot drift). The status line also stops claiming "Chat disconnected — reconnecting…" for a socket that is merely still opening, and an unexpected close now logs `[plaza] chat socket closed <code> <reason>` to the console — 1006 means the network or the edge, 4000 is the server's planned 30-minute session refresh, 4001 is the same account in another tab — which is the one question the plaza kept being asked without an answer.
+* **Files:** `index.html` (`refine` purchase confirmation with per-question `answered` state, wording in `V.refine`/workshop preview/`refineUI`, BUILD v313, asset `?v=313`), `assets/social.js` (`localHistory`/`stashLocal`/`recallLocal`, room snapshot only clears Local on a real room change, `retryDelay`, handshake watchdog, probed visibility resume, honest connecting status, close-code log), `tools/tests/material_sim.js` (purchase asked first, cancel spends nothing, purchase-then-scroll order), `tools/tests/eclipse_ui_sim.js` (the v312 test now walks the modal: text, cancel, confirm), `tools/tests/social_ui_sim.js` (Local history across reconnect and plaza switch, probed quiet socket, handshake timeout), `tools/tests/social_fishing_sim.js` (build tag), build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
+* **Checks:** `material_sim` 17/17, `eclipse_ui_sim` 55, `ui_sim` 64/0, `social_ui_sim` PASS (new block), `social_sim`/`social_scene_sim`/`social_fishing_sim` PASS, `cloud_sim` 67/0, `session_lost_sim` 10/0, `update_watch_sim` 16/0. The Local-history test was verified against the old code — restoring the blanket filter makes it fail with "a reconnect keeps the Local history it was showing".
+* **Delivery:** committed to `arena/0c692046-prontera-grind`. Client-only — `assets/social.js` ships with Pages; no Worker or Durable Object change, so the usual Pages publish is the whole deploy.
+
+### 2026-11-03 — `haven-v314 illustrated rune-midgard world atlas`
+
+* **Added (`assets/world-map/`):** Integrated the 16:9 hand-illustrated Map of Rune-Midgard (`world-map-cleaned.webp`), all 8 isometric town island cutouts (`prontera.png`, `geffen.png`, `payon.png`, `morroc.png`, `comodo.png`, `niflheim.png`, `amatsu.png`, `louyang.png`), 8 flying bird flocks (`birds-flock-a.webp`, `birds-flock-b.webp`), and 9 drifting multi-puff clouds (`cloud-direct.webp`, `cloud-mask-16x9.webp`) into the World Atlas tab (`mapSeason === 'atlas'`).
+* **Changed (`index.html`, `assets/ui/eclipse.css` — Option B Zero-Scroll World Atlas):**
+  * Rearranged desktop `#map-panel-atlas` into the approved Option B layout: a full-width 1-row 10-destination bar across the top (`01 Prontera` … `10 Abyss` with level ranges) over a ~55% / ~45% 2-column split where the left column stacks the larger 16:9 Illustrated Map (`⛶ Full Map` top-right, Comodo unobstructed, no caption box over the mini-map), an inline `02 / <MAP> · Lv <range>` + Auto-advance header row (with inline sub-zone pills on `Prontera & Izlude` and `Niflheim & the Abyss`), the 10-stage (`01`–`09`, `MVP`) + 5-Nightmare (`NM 1`–`NM 5`) grid, and a full-width gold `Travel to <Map> · Stage <NN> →` button visible immediately with zero scrolling, paired against a wider full-height `03 / Field intelligence` panel on the right.
+  * Preserved Full Map (`⛶ Full Map`) zoom/pan (`−`, `+`, `⟲`, drag-to-pan, wheel-zoom), collapsible Stages & Drops drawer, and two-step `Escape` exit (`Full Map` → `World Atlas` → `Close`), while keeping `html.pg-mobile` portrait/landscape rules and `Ascension Map` untouched.
+* **Files:** `index.html`, `assets/ui/eclipse.css`, `assets/world-map/*`, `tools/staging/{hosted_launch_stage,package_hosted_launch,stage_v283}.mjs`, `tools/tests/{publish_sim,eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, and build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html`, `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
 

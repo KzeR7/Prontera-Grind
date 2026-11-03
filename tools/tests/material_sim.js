@@ -23,14 +23,18 @@ const rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(4,(i
 ${grab('const REF_ZENY_MUL=3,refCost=', 'const affTxt=')}
 const ORE={ori:'Oridecon',elu:'Elunium'};
 const iname=it=>(it.r?'+'+it.r+' ':'')+it.name;
-${grab('function refine(sl){', '// ---------- v90: Black Market')}
+${grab('function refine(sl){', 'const bmOpen=()=>')}
+// v311: the workshop now buys missing ore itself, so the Black Market's ore price travels with it.
 // Presentation is exercised with a real DOM in eclipse_ui_sim.js.
 eclipseRefineFeedback=()=>{};
 let S=null,LOGS=[],RND=0;
 const questEvent=()=>{};
 const log=(m)=>LOGS.push(m), ui=()=>{}, save=()=>{}, addFloat=()=>{}, pl={x:0,z:0};
+// The page's modal question. The sim never answers it unless a test asks for the callback.
+let ASKED=[];
+const ask=(message,yes)=>{ASKED.push({message,yes})};
 Math.random=()=>RND;
-this.__m={refine,craftDps,dpsPanel,refCh,refCost,refOre,NM_MAT,DPS_MATS,get S(){return S},set S(v){S=v},LOGS,set RND(v){RND=v}};
+this.__m={refine,craftDps,dpsPanel,refCh,refCost,refOre,NM_MAT,DPS_MATS,get S(){return S},set S(v){S=v},LOGS,ASKED,set RND(v){RND=v}};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -81,7 +85,90 @@ t('the refine panel shows the count, and the craft button is off under 20', () =
   assert.ok(!/disabled/.test(M.dpsPanel()), 'and it is on at 20');
 });
 
-// ---- 3. refine: a scroll keeps the rank ----------------------------------------
+// ---- 3. refine buys what you are short of (v311) --------------------------------
+t('a short ore stack is bought only after the purchase is confirmed, at the Black Market price', () => {
+  M.S = fresh({ refineScrolls: 0, useRefineScroll: false, ore: { ori: 6, elu: 0 }, zeny: 1e6 });
+  const need = M.refOre(M.S.eq.weapon), fee = M.refCost(M.S.eq.weapon), miss = need - 6;
+  M.RND = WIN; M.LOGS.length = 0; M.ASKED.length = 0;
+  const zeny = M.S.zeny, before = JSON.stringify(M.S.eq.weapon);
+  M.refine('weapon');
+  // v313: the purchase is a question that names the count, the unit price and the total.
+  assert.strictEqual(M.ASKED.length, 1, 'the purchase is asked, not assumed');
+  assert.strictEqual(M.S.eq.weapon.r, 5, 'and nothing has been refined yet');
+  assert.strictEqual(M.S.zeny, zeny, 'and not a coin spent');
+  assert.strictEqual(JSON.stringify(M.S.eq.weapon), before);
+  assert.match(M.ASKED[0].message, new RegExp('Buy the missing ' + miss + ' Oridecon'), 'it names how many');
+  assert.match(M.ASKED[0].message, new RegExp((miss * 100000).toLocaleString() + 'z'), 'and what they cost');
+  assert.match(M.ASKED[0].message, new RegExp((fee + miss * 100000).toLocaleString() + 'z'), 'and the total for the attempt');
+  M.ASKED[0].yes();
+  assert.strictEqual(M.S.eq.weapon.r, 6, 'the refine still lands');
+  assert.strictEqual(M.S.ore.ori, 6 + (need - 6) - need, 'the shortfall is bought, then spent');
+  assert.strictEqual(zeny - M.S.zeny, fee + (need - 6) * 100000, 'the attempt costs its fee plus the ore it had to buy');
+  assert.ok(M.LOGS.some(x => /Bought \d+ Oridecon for [\d,]+z to finish this refine/.test(x)), 'the purchase is announced, not silent');
+});
+
+t('cancelling the purchase confirmation spends nothing at all', () => {
+  // The owner's worry: "players just press and finish all the zeny". Declining leaves the wallet,
+  // the bench and the rank exactly as they were - and asks again next time, because nothing is remembered.
+  M.S = fresh({ refineScrolls: 0, useRefineScroll: false, ore: { ori: 1, elu: 0 }, zeny: 1e6 });
+  M.RND = WIN; M.LOGS.length = 0; M.ASKED.length = 0;
+  const before = JSON.stringify(M.S);
+  M.refine('weapon');
+  assert.strictEqual(M.ASKED.length, 1);
+  assert.strictEqual(JSON.stringify(M.S), before, 'a refused purchase has spent nothing');
+  assert.ok(!M.LOGS.some(x => /Bought/.test(x)), 'and bought no ore');
+  M.ASKED[0].yes();
+  assert.ok(M.S.zeny < 1e6, 'agreeing to it does buy');
+});
+
+t('a short stack with no Zeny for the ore buys nothing and says why', () => {
+  M.S = fresh({ refineScrolls: 0, useRefineScroll: false, ore: { ori: 1, elu: 0 }, zeny: 50000 });
+  M.RND = WIN; M.LOGS.length = 0;
+  const before = JSON.stringify(M.S.eq.weapon);
+  M.refine('weapon');
+  assert.strictEqual(JSON.stringify(M.S.eq.weapon), before, 'nothing was refined');
+  assert.strictEqual(M.S.ore.ori, 1, 'and nothing was bought');
+  assert.strictEqual(M.S.zeny, 50000);
+  assert.ok(M.LOGS.some(x => /Not enough Zeny/.test(x)));
+});
+
+t('cancelling the scroll confirmation buys nothing', () => {
+  // The protection-scroll question is asked before the ore is bought, so "Cancel" leaves the
+  // wallet and the bench exactly as they were.
+  M.S = fresh({ refineScrolls: 1, useRefineScroll: true, ore: { ori: 2, elu: 0 }, zeny: 1e6, eq: { weapon: piece(3) } });
+  M.RND = WIN; M.LOGS.length = 0; M.ASKED.length = 0;
+  const before = JSON.stringify(M.S);
+  M.refine('weapon');
+  assert.strictEqual(M.ASKED.length, 1, 'the scroll question is asked first');
+  assert.strictEqual(JSON.stringify(M.S), before, 'an unanswered confirmation has spent nothing');
+  assert.ok(!M.LOGS.some(x => /Bought/.test(x)), 'and has bought no ore');
+});
+
+t('the purchase is asked before the scroll question, and both must be answered', () => {
+  M.S = fresh({ refineScrolls: 1, useRefineScroll: true, ore: { ori: 2, elu: 0 }, zeny: 1e6, eq: { weapon: piece(3) } });
+  M.RND = WIN; M.LOGS.length = 0; M.ASKED.length = 0;
+  const need = M.refOre(M.S.eq.weapon), fee = M.refCost(M.S.eq.weapon), zeny = M.S.zeny;
+  M.refine('weapon');
+  assert.strictEqual(M.ASKED.length, 1, 'one question at a time');
+  assert.match(M.ASKED[0].message, /Buy the missing/, 'the money question comes first');
+  M.ASKED[0].yes();
+  assert.strictEqual(M.ASKED.length, 2, 'then the scroll question');
+  assert.match(M.ASKED[1].message, /Protection Scroll/);
+  assert.strictEqual(M.S.eq.weapon.r, 3, 'still nothing refined until every question is answered');
+  M.ASKED[1].yes();
+  assert.strictEqual(M.S.eq.weapon.r, 4, 'the refine lands after both answers');
+  assert.strictEqual(M.S.ore.ori, 0, 'the bought ore is spent on the attempt');
+  assert.strictEqual(zeny - M.S.zeny, fee + (need - 2) * 100000, 'fee plus the ore it had to buy');
+});
+
+t('a full stack never touches the auto-purchase', () => {
+  M.S = fresh({ refineScrolls: 0, useRefineScroll: false, ore: { ori: 999, elu: 0 } });
+  M.RND = WIN; M.LOGS.length = 0;
+  M.refine('weapon');
+  assert.ok(!M.LOGS.some(x => /Bought/.test(x)), 'no purchase line when the bench has the ore');
+});
+
+// ---- 3b. refine: a scroll keeps the rank ----------------------------------------
 t('a failed refine at +5 drops the rank with no scroll (unchanged)', () => {
   M.S = fresh({ refineScrolls: 0, useRefineScroll: false });
   M.RND = FAIL; M.LOGS.length = 0;

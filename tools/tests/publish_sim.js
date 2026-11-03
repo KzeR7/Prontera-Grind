@@ -131,10 +131,10 @@ t('the published tree is small enough to stay honest', () => {
   // native field pack and the social portraits above. Everything that ships is still covered by a
   // ceiling: this line for the classic game, 4.25 for the explorer, plus the combined 140.5.
   const endgameBytes=walk(path.join(out,'assets/endgame'));
-  // Illustrated Rune-Midgard World Atlas pack (v283): only requested when the player opens the
-  // World Map window, budgeted separately at < 3.5 MiB while still covered by the 140.5 MiB ceiling.
+  // Illustrated Rune-Midgard World Atlas pack (v314): only requested when the player opens the
+  // World Map window, budgeted separately at < 3.5 MiB (2.69 MiB measured) while still covered by
+  // the combined runtime ceiling below.
   const worldMapBytes=walk(path.join(out,'assets/world-map'));
-  assert.ok(socialBytes/1048576 < 10, 'native social assets exceed their separate 10 MiB budget');
   assert.ok(worldMapBytes > 0 && worldMapBytes/1048576 < 3.5, 'illustrated world-map assets exceed their separate 3.5 MiB budget');
   for (const rel of [
     'world-map-cleaned.webp',
@@ -153,13 +153,17 @@ t('the published tree is small enough to stay honest', () => {
   ]) {
     assert.ok(fs.existsSync(path.join(out, 'assets/world-map', rel)), 'missing world-map asset in dist: ' + rel);
   }
-  // 59 MiB, not the original 62.5: the classic game measures 58.59 MiB once the separately-budgeted
-  // explorer is out of the sum, so 62.5 would have handed back 3.9 MiB of silent headroom. 59 keeps
-  // ~0.4 MiB - the same tightness the 62.5 line had when it was set - and the combined 140.5 ceiling
-  // still covers every byte, including the explorer it no longer counts here.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes)/1048576 < 59, 'existing runtime assets exceed their 59 MiB budget (58.59 measured 2026-10-28)');
+  // 12 MiB, not the original 10: v302 replaced the placeholder fish painter with cropped drawings,
+  // and each sprite carries a soft sampled halo (about 43% partial-alpha pixels), so it will not
+  // palette-compress without crunchy edges. v303 moved them to 128px for sharpness and added the
+  // whale family: the fish pack is 2.4 MiB of the 11.32 measured here; the other three social packs
+  // are unchanged. The combined ceiling below still covers every byte.
+  assert.ok(socialBytes/1048576 < 12, 'native social assets exceed their separate 12 MiB budget (11.32 measured 2026-11-03)');
+  // 59.5 MiB, not the original 62.5: the classic game measures 58.98 MiB once the separately-budgeted
+  // explorer is out of the sum, so 62.5 would have handed back 3.5 MiB of silent headroom.
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes)/1048576 < 59.5, 'existing runtime assets exceed their 59.5 MiB budget (59.00 measured 2026-11-03)');
   assert.ok(nativeBytes/1048576 < 68, 'ten native field sets and seventy lossless monster atlases exceed their separate 68 MiB budget');
-  assert.ok(mb < 140.5, 'combined runtime delivery exceeds 140.5 MiB');
+  assert.ok(mb < 143.5, 'combined runtime delivery exceeds 143.5 MiB');
   const fourth=path.join(out,'assets/wardrobe/fourth/v1');assert.ok(walk(fourth)<6.25*1048576,'six fourth jobs share hair and accessory pixels');
   const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<13.5*1048576,'nineteen classes and fifty-two accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));

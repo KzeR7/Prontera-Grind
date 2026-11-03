@@ -169,6 +169,12 @@ bash tools/build_site.sh
 node tools/dev_server.js
 ```
 
+**Embedded/iframed previews (Arena sandbox, proxied hosts): always start it with
+`tools/preview.sh` instead.** It adds `--preview-auth` (the `X-Preview-Session` header
+bridge — required because browsers block third-party cookies in iframes, which otherwise
+turns every post-login request into a 401 "signed in on another device") and
+`--db tools/.devdb/preview.sqlite` (accounts/saves survive restarts). Neither grants GM.
+
 The default entry point is `http://localhost:8788/`. The server serves `dist/`, routes
 actual API handlers through a local SQLite D1 shim and applies local migrations. Rebuild
 `dist/` after changing client files; restart after changing API handlers (the server
@@ -220,6 +226,46 @@ python3 tools/make_weapon_pack.py --check
 for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
+
+**2026-11-02 (`haven-v286` gate result): 195 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and
+`*_smoke.js` ran. New `social_ledger_sim.js` covers durable poker payouts before and
+after reservation expiry, Durable Object restart replay, stable ids, account-scoped
+ACKs, bounded replay batches, saved-wallet dedupe, daily reset and the real save-loader
+migration. `social_worker_sim.mjs` rehearses a real folded pot paying a disconnected
+winner across storage-backed Worker restarts, same-id replay and post-ACK silence.
+`social_table_chat_sim.js` covers table 1/hand 1 animating in two plaza rooms and stale
+result cleanup on leave. The BUILD bump refreshed progression hashes only; all 126
+measurements stayed byte-identical (42 gear, 21 moving, 63 growth).
+
+**2026-11-02 (`haven-v285` gate result): 194 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and
+`*_smoke.js` ran. `social_table_chat_sim.js` additionally asserts Local-only seat
+bubbles on the viewed poker table, emotion images, text-only rendering, redraw
+persistence without replay, mute/expiry/minimize cleanup, and that World/Whisper or
+off-table Local lines never pop the table. The BUILD bump again refreshed only
+progression hashes; all 126 measurements stayed byte-identical (42 gear, 21 moving,
+63 growth). Software-WebGL review passed for the on-table Local bubble alongside the
+v284 compact chat/result overlay and the v283 guard/history checks.
+
+**2026-11-02 (`haven-v284` gate result): 194 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and
+`*_smoke.js` ran. `social_table_chat_sim.js` additionally asserts the seated-only
+compact chat lane, restored chat width after standing, and one-shot win/lose/fold
+result overlays that do not replay on redraw. The BUILD bump again refreshed only
+progression hashes; all 126 measurements stayed byte-identical (42 gear, 21 moving,
+63 growth). Software-WebGL review passed for compact chat, table lane, win overlay,
+floor-click guard, phone bounds and World history after reload.
+
+**2026-11-02 (`haven-v283` gate result): 194 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and
+`*_smoke.js` ran. The new `social_table_chat_sim.js` covers the leave guard,
+reconnect reservation, World-only history and fixed table geometry. The required
+BUILD bump moved the progression fixtures' source/combat hashes; all 126 current
+measurements were rerun with the unchanged tool and pinned baseline and came back
+byte-identical (42 gear, 21 moving, 63 growth). No budget or measurement was changed.
+A software-WebGL browser review also passed for desktop/phone poker bounds,
+chat-resize independence, the floor-click warning and World history after reload.
 
 **2026-11-01 (`haven-v279` gate result): 184 suites pass.** The GM flag now reaches the plaza: added
 to the server-resolved `X-Social-Identity` header, carried in `hello`/`snapshot`/chat messages, and

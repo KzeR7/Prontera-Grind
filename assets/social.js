@@ -5,10 +5,53 @@ const R=PGSocialRules,P=globalThis.PGSocialPoker||null,$id=id=>document.getEleme
 const app={socket:null,user:null,id:null,room:0,rooms:[],wanted:false,channel:'world',messages:[],unread:new Set(),muted:new Set(),friends:new Set(),players:new Map(),retry:0,connected:false,nextConnect:0,blocked:false,scene:null,owner:null,nextChat:0,lastSeen:0,probeAt:0,resume:null,poker:null,pokerTables:null};
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const emojiURL=id=>'assets/social/emotions/'+id+'.png';
+// World is public and may be cached per account. Never put whispers or Local messages in storage.
+const CHAT_MAX=400,WORLD_CACHE_MAX=200,POKER_LEDGER_IDS_MAX=512;
+const pokerLedgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id);
+function cleanPokerLedgerIds(value){return [...new Set((Array.isArray(value)?value:[]).filter(pokerLedgerIdValid))].slice(-POKER_LEDGER_IDS_MAX)}
+const worldHistoryKey=user=>'pg_social_world_v1_'+String(user||'').toLowerCase();
+// v313 (owner: "missing local chat history"). Local chat is per plaza and is deliberately never
+// written to storage - it can carry whatever people say to the room - but it lived only in
+// `app.messages`, and every `room` snapshot that arrived after a reconnect ran a blanket
+// `filter(channel!=='local')`. The last lines of each plaza you have been in are now kept in memory,
+// so a dropped socket, a planned re-authentication, or a walk back to the plaza you just left shows
+// the conversation you were reading instead of an empty tab.
+const LOCAL_CACHE_MAX=60,localHistory=new Map();
+function stashLocal(){
+ const room=app.room;if(!room)return;
+ const lines=app.messages.filter(m=>m.channel==='local'&&m.room===room);
+ if(lines.length)localHistory.set(room,lines.slice(-LOCAL_CACHE_MAX));
+}
+function recallLocal(room){return room&&localHistory.get(room)||[]}
+function cleanChatMessage(m){
+ if(!m||!['world','whisper','local'].includes(m.channel)||!Number.isFinite(m.at)||!Number.isInteger(m.from)||typeof m.name!=='string'||typeof m.body!=='string'||m.body.length>300||(m.emotion&&!R.EMOTIONS.includes(m.emotion)))return null;
+ return {type:'message',id:typeof m.id==='number'||typeof m.id==='string'?m.id:'',at:m.at,from:m.from,name:m.name.slice(0,32),gm:m.gm===true,channel:m.channel,body:m.body,...(m.channel==='local'&&m.sys===true?{sys:true}:{}),room:Number.isInteger(m.room)?m.room:0,...(m.emotion?{emotion:m.emotion}:{}),...(Number.isInteger(m.to)?{to:m.to}:{}),...(typeof m.toName==='string'?{toName:m.toName.slice(0,32)}:{})};
+}
+function mergeChatMessages(...lists){
+ const unique=new Map();
+ for(const list of lists)if(Array.isArray(list))for(const raw of list){const m=cleanChatMessage(raw);if(!m)continue;const key=[m.channel,m.room,m.from,m.at,m.id,m.emotion||m.body].join(':');unique.set(key,m)}
+ return [...unique.values()].sort((a,b)=>a.at-b.at).slice(-CHAT_MAX);
+}
+function readWorldHistory(){
+ if(!app.user)return [];
+ try{return mergeChatMessages(JSON.parse(localStorage.getItem(worldHistoryKey(app.user)))).filter(m=>m.channel==='world').slice(-WORLD_CACHE_MAX)}catch{return []}
+}
+function saveWorldHistory(){
+ if(!app.user)return;
+ try{localStorage.setItem(worldHistoryKey(app.user),JSON.stringify(app.messages.filter(m=>m.channel==='world').slice(-WORLD_CACHE_MAX)))}catch{}
+}
 const chat=document.createElement('section');chat.id='socialChat';chat.setAttribute('aria-label','Player chat');
 chat.innerHTML='<div id="socialTabs" role="tablist" aria-label="Chat channels"></div><div id="socialLines" role="log" aria-label="Chat messages"></div><div id="socialEmoji" hidden></div><form id="socialCompose"><input id="socialTo" aria-label="Whisper recipient" placeholder="Player name" maxlength="32" hidden><input id="socialInput" aria-label="Message" placeholder="Press Enter to chat" maxlength="300" autocomplete="off"><button id="socialEmojiToggle" type="button" aria-label="Choose an emotion" aria-expanded="false" aria-controls="socialEmoji">Emoji</button><button id="socialSend" type="submit">Send</button></form><div id="socialStatus"><span id="socialConnection">Connecting…</span><button id="socialNew" type="button" hidden>New messages ↓</button></div><span id="socialResizeTop" data-resize="n" aria-hidden="true" title="Drag top edge to resize chat"></span><span id="socialResizeCorner" data-resize="ne" aria-hidden="true" title="Drag corner to resize chat"></span><span id="socialResize" data-resize="ne" role="separator" tabindex="0" aria-label="Resize chat; drag the top or right edge, corner, or use arrow keys" aria-orientation="vertical" title="Drag to resize chat"></span><div id="socialPeople" hidden></div>';
 $id('view').append(chat);$id('feedWrap').hidden=true;$id('feedWrap').style.display='none';
-const hub=document.createElement('section');hub.id='socialHub';hub.hidden=true;hub.setAttribute('aria-label','Prontera Fountain Plaza');hub.innerHTML='<div id="socialScene"></div><div id="socialLabels"></div><div id="socialHubToolbar"><header id="socialHubHeader"><div class="social-hub-title-row"><h2>Fountain Plaza</h2><select id="socialRoomSelect" aria-label="Switch plaza room" title="Switch Plaza server room" hidden></select></div><p id="socialPopulation">Joining plaza…</p></header><div id="socialHubControls"><button id="socialPokerBtn" type="button" title="Open Fountain Plaza Hold\'em"><span id="socialPokerBtnText">🃏 Hold\'em</span><i id="socialPokerDot" hidden></i></button><button id="socialSit" title="Sit or stand (Insert)">Sit · Insert</button><button id="socialCamera" aria-expanded="false" aria-controls="socialCameraPanel">Camera</button><button id="socialCameraReset">Reset view</button><details id="socialHubHelp"><summary aria-label="Plaza controls">?</summary><p>Click / tap to walk<br>Click a metal bench (2 seats each) or poker stool to sit<br>Click a Dealer or 🃏 Hold\'em to play Texas Hold\'em<br>20 players per Plaza — 21+ auto-opens Plaza 2, 3… (or switch rooms above)<br>Drag to rotate / tilt around your character · Scroll / pinch to zoom<br>Farming continues in your selected field.</p></details><button id="socialLeave">Return to field</button></div></div><div id="socialCameraPanel" hidden><label>Rotate <input id="socialOrbit" type="range" min="-180" max="180" value="0"></label><label>Tilt <input id="socialTilt" type="range" min="26" max="77" value="45"></label><label>Zoom <input id="socialZoom" type="range" min="22" max="72" value="44"></label></div><button id="socialPokerMini" type="button" hidden></button><section id="socialPokerModal" role="dialog" aria-label="Fountain Plaza Hold\'em" hidden><header id="socialPokerHead"><div class="poker-head-title"><strong id="socialPokerHeadTitle">🃏 Plaza Hold\'em · Table 1</strong><small id="socialPokerRoomSub">Dealer Vane · Blinds 10 / 20 · AFK Kick 2×</small></div><div class="poker-head-right"><span id="socialPokerWalletPill" class="poker-wallet-pill">🪙 1,000 Chips</span><button id="socialPokerMinBtn" type="button" title="Minimize table (shows live timer &amp; turn alert)" aria-label="Minimize poker table">—</button><button id="socialPokerCloseBtn" type="button" title="Close poker window" aria-label="Close poker window">✕</button></div></header><nav id="socialPokerNav" role="tablist" aria-label="Poker sections"><button type="button" role="tab" data-ptab="t0" aria-selected="true">♠ Table 1 <small id="pokerTabCount0">0/6</small></button><button type="button" role="tab" data-ptab="t1" aria-selected="false">♠ Table 2 <small id="pokerTabCount1">0/6</small></button><button type="button" role="tab" data-ptab="bank" aria-selected="false">🪙 Chip Bank <i id="pokerBankFreeDot" hidden>!</i></button><button type="button" role="tab" data-ptab="gifts" aria-selected="false" aria-disabled="true" class="is-locked" title="Locked — rewards coming in a later update">🔒 Gift Exchange <small>Later</small></button><span id="socialPokerToast" hidden role="status" aria-live="polite"></span></nav><div id="socialPokerBody"></div></section>';$id('view').append(hub);
+const hub=document.createElement('section');hub.id='socialHub';hub.hidden=true;hub.setAttribute('aria-label','Prontera Fountain Plaza');hub.innerHTML='<div id="socialScene"></div><div id="socialLabels"></div><div id="socialHubToolbar"><header id="socialHubHeader"><div class="social-hub-title-row"><h2>Fountain Plaza</h2><select id="socialRoomSelect" aria-label="Switch plaza room" title="Switch Plaza server room" hidden></select></div><p id="socialPopulation">Joining plaza…</p></header><div id="socialHubControls"><button id="socialPokerBtn" type="button" title="Open Fountain Plaza Hold\'em"><span id="socialPokerBtnText">🃏 Hold\'em</span><i id="socialPokerDot" hidden></i></button><button id="socialFishBtn" type="button" title="Fish at the South Lawn ponds — cast, reel and fill your Fishing Bag" aria-pressed="false">🎣 Fishing</button><button id="socialSit" title="Sit or stand (Insert)">Sit · Insert</button><button id="socialCamera" aria-expanded="false" aria-controls="socialCameraPanel">Camera</button><button id="socialCameraReset">Reset view</button><details id="socialHubHelp"><summary aria-label="Plaza controls">?</summary><p>Click / tap to walk<br>Click a metal bench (2 seats each), a Japanese pond chair or a poker stool to sit<br>Click a Dealer or 🃏 Hold\'em to play Texas Hold\'em<br>Click a South Lawn pond or 🎣 Fishing to cast — catches go to the Fishing Bag<br>▶ Auto fishes for you · sell catches for Fishcoins to buy rods &amp; bait · drag the fishing windows anywhere<br>20 players per Plaza — 21+ auto-opens Plaza 2, 3… (or switch rooms above)<br>Right-drag (or ctrl-drag) to rotate / tilt · left-click to walk · Scroll / pinch to zoom<br>Farming continues in your selected field.</p></details><button id="socialLeave">Return to field</button></div></div><div id="socialCameraPanel" hidden><label>Rotate <input id="socialOrbit" type="range" min="-180" max="180" value="0"></label><label>Tilt <input id="socialTilt" type="range" min="26" max="77" value="45"></label><label>Zoom <input id="socialZoom" type="range" min="22" max="72" value="44"></label></div><button id="socialPokerMini" type="button" hidden></button><section id="socialPokerModal" role="dialog" aria-label="Fountain Plaza Hold\'em" hidden><header id="socialPokerHead"><div class="poker-head-title"><strong id="socialPokerHeadTitle">🃏 Plaza Hold\'em · Table 1</strong><small id="socialPokerRoomSub">Dealer Vane · Blinds 10 / 20 · AFK Kick 2×</small></div><div class="poker-head-right"><span id="socialPokerWalletPill" class="poker-wallet-pill"><i class="fishcoin" aria-hidden="true"></i> 1,000 Chips</span><button id="socialPokerMinBtn" type="button" title="Minimize table (shows live timer &amp; turn alert)" aria-label="Minimize poker table">—</button><button id="socialPokerCloseBtn" type="button" title="Close poker window" aria-label="Close poker window">✕</button></div></header><nav id="socialPokerNav" role="tablist" aria-label="Poker sections"><button type="button" role="tab" data-ptab="t0" aria-selected="true">♠ Table 1 <small id="pokerTabCount0">0/6</small></button><button type="button" role="tab" data-ptab="t1" aria-selected="false">♠ Table 2 <small id="pokerTabCount1">0/6</small></button><button type="button" role="tab" data-ptab="bank" aria-selected="false"><i class="fishcoin" aria-hidden="true"></i> Chip Bank <i id="pokerBankFreeDot" hidden>!</i></button><button type="button" role="tab" data-ptab="gifts" aria-selected="false" aria-disabled="true" class="is-locked" title="Locked — rewards coming in a later update">🔒 Gift Exchange <small>Later</small></button><span id="socialPokerToast" hidden role="status" aria-live="polite"></span></nav><div id="socialPokerBody"></div><div id="socialPokerResult" hidden aria-live="polite"></div></section>';$id('view').append(hub);
+const leaveWarning=document.createElement('div');leaveWarning.id='socialPokerLeaveWarning';leaveWarning.hidden=true;
+leaveWarning.innerHTML='<section class="poker-leave-card" role="dialog" aria-modal="true" aria-labelledby="pokerLeaveTitle" aria-describedby="pokerLeaveCopy"><span class="poker-leave-eyebrow">YOU’RE STILL AT THE TABLE</span><h2 id="pokerLeaveTitle">Leave this poker game?</h2><p id="pokerLeaveCopy"></p><p class="poker-leave-note">You can minimize the table instead and keep playing.</p><div class="poker-leave-actions"><button id="pokerLeaveStay" type="button" class="poker-primary-btn">Stay at table</button><button id="pokerLeaveConfirm" type="button" class="poker-danger-btn">Fold &amp; leave</button></div></section>';
+$id('view').append(leaveWarning);
+// v297: the fishing copy of the leave-warning. Clicking away from the pond used to block the click
+// and spam chat with "press ✕". It now asks first, exactly like the poker table.
+const fishLeaveWarning=document.createElement('div');fishLeaveWarning.id='socialFishLeaveWarning';fishLeaveWarning.hidden=true;
+fishLeaveWarning.innerHTML='<section class="poker-leave-card fish-leave-card" role="dialog" aria-modal="true" aria-labelledby="fishLeaveTitle" aria-describedby="fishLeaveCopy"><span class="poker-leave-eyebrow">YOUR LINE IS IN THE WATER</span><h2 id="fishLeaveTitle">Stop fishing and move?</h2><p id="fishLeaveCopy">Your line is reeled in and the cast in progress is lost.</p><p class="poker-leave-note">Keep fishing to stay at the pond — nothing is lost if you stay.</p><div class="poker-leave-actions"><button id="fishLeaveStay" type="button" class="poker-primary-btn">Keep fishing</button><button id="fishLeaveConfirm" type="button" class="poker-danger-btn">Reel in &amp; stop</button></div></section>';
+$id('view').append(fishLeaveWarning);
 const feedHidden=()=>document.body.classList.contains('hide-feed')||(typeof S==='object'&&S&&S.feedShow===false);
 function notice(text){const p=document.createElement('p');p.className='social-notice';p.textContent=text;$id('socialLines').append(p)}
 function status(text){$id('socialConnection').textContent=text}
@@ -43,7 +86,9 @@ function playerMenu(name,id){const menu=$id('socialPeople');menu.replaceChildren
  for(const [title,fn] of items){const b=document.createElement('button');b.type='button';b.textContent=title;b.onclick=()=>{fn();menu.hidden=true};menu.append(b)}
  if(isFriend){const mark=document.createElement('small');mark.className='social-friend-mark';mark.textContent='Friend ✓';menu.append(mark)}
 }
-function messageNode(m){const p=document.createElement('div');p.className='social-line';p.dataset.channel=m.channel;const t=document.createElement('time');t.textContent=new Date(m.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});p.append(t);const b=document.createElement('button');b.type='button';b.textContent=(m.gm?'🛠 ':'')+(app.friends.has(m.from)?'★ ':'')+m.name+(m.channel==='whisper'?' → '+m.toName:'');b.title=(m.gm?'Game Master':'')+(m.gm&&app.friends.has(m.from)?' · ':'')+(app.friends.has(m.from)?'Friend':'');b.classList.toggle('social-gm',!!m.gm);b.onclick=()=>playerMenu(m.name,m.from);p.append(b,document.createTextNode(': '));if(m.emotion){const im=document.createElement('img');im.src=emojiURL(m.emotion);im.alt='/'+m.emotion;im.title='/'+m.emotion;p.append(im)}else p.append(document.createTextNode(m.body));return p}
+function messageNode(m){const p=document.createElement('div');p.className='social-line';p.dataset.channel=m.channel;const t=document.createElement('time');t.textContent=new Date(m.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});p.append(t);
+ // v297: pond announcements are system lines, not something a player typed.
+ if(m.sys){p.classList.add('social-line-sys');const span=document.createElement('span');span.className='social-sys-text';span.textContent=m.body;p.append(span);return p}const b=document.createElement('button');b.type='button';b.textContent=(m.gm?'🛠 ':'')+(app.friends.has(m.from)?'★ ':'')+m.name+(m.channel==='whisper'?' → '+m.toName:'');b.title=(m.gm?'Game Master':'')+(m.gm&&app.friends.has(m.from)?' · ':'')+(app.friends.has(m.from)?'Friend':'');b.classList.toggle('social-gm',!!m.gm);b.onclick=()=>playerMenu(m.name,m.from);p.append(b,document.createTextNode(': '));if(m.emotion){const im=document.createElement('img');im.src=emojiURL(m.emotion);im.alt='/'+m.emotion;im.title='/'+m.emotion;p.append(im)}else p.append(document.createTextNode(m.body));return p}
 function renderMessages(preserve=false){const box=$id('socialLines'),bottom=box.scrollHeight-box.scrollTop-box.clientHeight<35,top=box.scrollTop;box.replaceChildren();if(app.channel==='log'){for(const l of logShown()){const p=document.createElement('div');p.className='social-line '+(l.cls||'');p.textContent=l.m;box.append(p)}const b=document.createElement('button');b.textContent='Log filters';b.onclick=()=>openTab('log');box.append(b)}else for(const m of app.messages.filter(m=>m.channel===app.channel&&!app.muted.has(m.from)))box.append(messageNode(m));if(!box.childNodes.length)notice(app.channel==='local'?'Messages here are visible only to this plaza.':'No messages yet.');if(!preserve||bottom){box.scrollTop=box.scrollHeight;$id('socialNew').hidden=true}else {box.scrollTop=top;$id('socialNew').hidden=false}}
 $id('socialNew').onclick=()=>{$id('socialLines').scrollTop=$id('socialLines').scrollHeight;$id('socialNew').hidden=true};
 let lastCooldownKey='';
@@ -56,10 +101,14 @@ function renderEmoji(){const box=$id('socialEmoji');box.replaceChildren();const 
  for(const id of R.EMOTIONS){const b=document.createElement('button');b.type='button';b.title='/'+id;const im=document.createElement('img');im.src=emojiURL(id);im.alt=id;b.append(im,document.createTextNode('/'+id));b.onclick=()=>{const m={type:'emotion',emotion:id,channel};if(channel==='whisper'){const to=$id('socialTo').value.trim();if(!to){status('Whisper an emotion to whom? Type a name in the To field first.');$id('socialTo').focus();return}m.to=to}if(send(m))toggleEmoji(false)};box.append(b)}lastCooldownKey='';cooldownUI()}
 function cooldownUI(){const seconds=Math.max(0,Math.ceil((app.nextChat-Date.now())/1000)),key=seconds+':'+app.channel+':'+$id('socialEmoji').hidden;if(key===lastCooldownKey)return;lastCooldownKey=key;$id('socialSend').disabled=seconds>0||app.channel==='log';$id('socialSend').textContent=seconds?'Wait '+seconds+'s':'Send';chat.querySelectorAll('#socialEmoji button').forEach(b=>b.disabled=seconds>0)}
 setInterval(cooldownUI,200);
-function send(m){if(!app.connected||app.socket?.readyState!==1){status('Chat disconnected — reconnecting…');return false}const speaking=['chat','emotion'].includes(m.type);if(speaking&&Date.now()<app.nextChat){status('Please wait 3 seconds between messages and emotions.');return false}app.socket.send(JSON.stringify(m));if(speaking){app.nextChat=Date.now()+R.CHAT_DELAY;cooldownUI()}return true}
-$id('socialCompose').onsubmit=e=>{e.preventDefault();const input=$id('socialInput'),body=input.value.trim();if(!body||app.channel==='log')return;let sent=false;if(body==='/sit')sent=send({type:'sit'});else if(body==='/poker'){pokerOpen();input.value='';return}else if(R.EMOTIONS.includes(body.slice(1))&&body[0]==='/'){const ch=emoteChannel(),em={type:'emotion',emotion:body.slice(1),channel:ch||'local'};if(ch==='whisper')em.to=$id('socialTo').value.trim();if(ch==='whisper'&&!em.to){status('Whisper an emotion to whom? Type a name in the To field first.');return}sent=send(em)}else if(body.startsWith('/w ')){const match=body.match(/^\/w\s+(\S+)\s+(.+)$/);if(match)sent=send({type:'chat',channel:'whisper',to:match[1],body:match[2]});else status('Use /w PlayerName message')}else sent=send({type:'chat',channel:app.channel,to:$id('socialTo').value.trim(),body});if(sent)input.value=''};
+function send(m){if(!app.connected||app.socket?.readyState!==1){
+ // v313: during the half-second between a new socket opening and its `hello`, a walk or a look used
+ // to print "Chat disconnected - reconnecting..." over a socket that was perfectly healthy. The
+ // status now only says so when the connection really is gone.
+ status(!app.socket?'Chat disconnected — reconnecting…':app.socket.readyState===0?'Connecting to chat…':'Chat disconnected — reconnecting…');return false}const speaking=['chat','emotion'].includes(m.type);if(speaking&&Date.now()<app.nextChat){status('Please wait 3 seconds between messages and emotions.');return false}app.socket.send(JSON.stringify(m));if(speaking){app.nextChat=Date.now()+R.CHAT_DELAY;cooldownUI()}return true}
+$id('socialCompose').onsubmit=e=>{e.preventDefault();const input=$id('socialInput'),body=input.value.trim();if(!body||app.channel==='log')return;let sent=false;if(body==='/sit'){toggleSit();input.value='';return}else if(body==='/poker'){pokerOpen();input.value='';return}else if(R.EMOTIONS.includes(body.slice(1))&&body[0]==='/'){const ch=emoteChannel(),em={type:'emotion',emotion:body.slice(1),channel:ch||'local'};if(ch==='whisper')em.to=$id('socialTo').value.trim();if(ch==='whisper'&&!em.to){status('Whisper an emotion to whom? Type a name in the To field first.');return}sent=send(em)}else if(body.startsWith('/w ')){const match=body.match(/^\/w\s+(\S+)\s+(.+)$/);if(match)sent=send({type:'chat',channel:'whisper',to:match[1],body:match[2]});else status('Use /w PlayerName message')}else sent=send({type:'chat',channel:app.channel,to:$id('socialTo').value.trim(),body});if(sent)input.value=''};
 chat.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'){e.target.blur();toggleEmoji(false);$id('socialPeople').hidden=true}});
-addEventListener('keydown',e=>{if(e.target.matches('input,textarea,select')||e.target.closest('button,[role=button],[role=separator],summary')||e.ctrlKey||e.altKey||e.metaKey)return;if(e.key==='Escape'&&!hub.hidden&&!$id('socialPokerModal').hidden){e.preventDefault();closePokerModal();return}if(e.key==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(app.channel==='log')select(app.room?'local':'world');$id('socialInput').focus()}if(e.key==='Insert'&&(app.room||app.wanted)){e.preventDefault();toggleSit()}},true);
+addEventListener('keydown',e=>{if(!leaveWarning.hidden||!fishLeaveWarning.hidden)return;if(e.target.matches('input,textarea,select')||e.target.closest('button,[role=button],[role=separator],summary')||e.ctrlKey||e.altKey||e.metaKey)return;if(e.key==='Escape'&&!hub.hidden&&!$id('socialPokerModal').hidden){e.preventDefault();closePokerModal();return}if(e.key==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(app.channel==='log')select(app.room?'local':'world');$id('socialInput').focus()}if(e.key==='Insert'&&(app.room||app.wanted)){e.preventDefault();toggleSit()}},true);
 // Measure in the view's coordinates. Chat can grow to the central UI on desktop,
 // and to the viewport edge on phones. Reserve the dock and top controls vertically.
 let preferredSize=[390,214];
@@ -94,52 +143,74 @@ function cameraUI(state){$id('socialOrbit').value=((state.angle*180/Math.PI+180)
 $id('socialCamera').onclick=()=>{const panel=$id('socialCameraPanel');panel.hidden=!panel.hidden;$id('socialCamera').setAttribute('aria-expanded',String(!panel.hidden))};
 $id('socialCameraReset').onclick=()=>app.scene?.resetCamera();
 for(const [id,key,factor] of [['socialOrbit','angle',Math.PI/180],['socialTilt','pitch',1],['socialZoom','distance',1]])$id(id).oninput=e=>app.scene?.setCamera({[key]:Number(e.target.value)*factor});
-$id('socialRoomSelect').onchange=e=>{const target=Number(e.target.value);if(!app.room||!Number.isInteger(target)||target===app.room){e.target.value=String(app.room||1);return}if(!send({type:'switch_room',room:target}))e.target.value=String(app.room)};
+$id('socialRoomSelect').onchange=e=>{const target=Number(e.target.value);if(!app.room||!Number.isInteger(target)||target===app.room){e.target.value=String(app.room||1);return}confirmPokerLeave(confirmLeave=>{if(!send({type:'switch_room',room:target,confirmLeave}))e.target.value=String(app.room)});e.target.value=String(app.room)};
 const SOLO_ID=0;
 
 // ---------- Fountain Plaza Hold'em (2 Tables), AFK Auto-Kick, Chip Bank & Gift Exchange ----------
 const fallbackWallet={day:'',chips:1000,freeClaimed:0};
 const pokerUI={open:false,minimized:false,tab:'t0',tableId:0,buyIn:1000,raiseTo:40,toast:'',toastKind:'',toastUntil:0,renderKey:''};
-let soloTables=null;
+let soloTables=null,pokerLeaveAction=null,pokerLeaveFocus=null;
+function finishPokerLeave(accepted){
+ const action=pokerLeaveAction;if(!action)return;
+ pokerLeaveAction=null;leaveWarning.hidden=true;hub.inert=false;chat.inert=false;
+ if(pokerLeaveFocus?.isConnected)pokerLeaveFocus.focus();pokerLeaveFocus=null;
+ if(accepted)action(true);
+}
+function confirmPokerLeave(action){
+ if(!seatedPokerSnapshot()){action(true);return true}
+ if(pokerLeaveAction)return false;
+ const snap=seatedPokerSnapshot(),me=snap.seats[snap.me.seat];
+ $id('pokerLeaveCopy').textContent=me?.inHand&&!me.folded?'Leaving now folds your current hand. Chips already bet stay in the pot; your unbet stack stays in your wallet.':'You will give up your seat. Your remaining table stack stays in your chip wallet.';
+ pokerLeaveAction=action;pokerLeaveFocus=document.activeElement;
+ leaveWarning.hidden=false;hub.inert=true;chat.inert=true;$id('pokerLeaveStay').focus();
+ return false;
+}
+$id('fishLeaveStay').onclick=()=>finishFishingStop(false);
+$id('fishLeaveConfirm').onclick=()=>finishFishingStop(true);
+fishLeaveWarning.onclick=e=>{if(e.target===fishLeaveWarning)finishFishingStop(false)};
+fishLeaveWarning.addEventListener('keydown',e=>{
+ e.stopPropagation();
+ if(e.key==='Escape'){e.preventDefault();finishFishingStop(false)}
+ if(e.key==='Tab'){e.preventDefault();(document.activeElement===$id('fishLeaveStay')?$id('fishLeaveConfirm'):$id('fishLeaveStay')).focus()}
+});
+$id('pokerLeaveStay').onclick=()=>finishPokerLeave(false);
+$id('pokerLeaveConfirm').onclick=()=>finishPokerLeave(true);
+leaveWarning.onclick=e=>{if(e.target===leaveWarning)finishPokerLeave(false)};
+leaveWarning.addEventListener('keydown',e=>{
+ e.stopPropagation();
+ if(e.key==='Escape'){e.preventDefault();finishPokerLeave(false)}
+ if(e.key==='Tab'){e.preventDefault();(document.activeElement===$id('pokerLeaveStay')?$id('pokerLeaveConfirm'):$id('pokerLeaveStay')).focus()}
+});
 
 function syncPokerBounds(){
- const modal=$id('socialPokerModal');if(!modal||hub.hidden)return;
+ const modal=$id('socialPokerModal');if(!modal)return;
+ const active=!modal.hidden&&!hub.hidden;
  const view=$id('view'),vBox=view.getBoundingClientRect();
  const W=vBox.width||innerWidth,H=vBox.height||innerHeight;
- if(!W||!H)return;
+ const wide=W>=1280;
+ // Chat has a fixed lane, not a vote in the table's geometry. Resizing chat or changing
+ // channel/emoji cannot move the cards. On small screens only, opening the table docks chat
+ // below it; closing/minimizing restores the player's original chat dimensions.
+ chat.classList.toggle('poker-chat-capped',active&&wide);
+ chat.classList.toggle('poker-compact',active&&!wide);
+ hub.classList.toggle('poker-table-open',active);
+ if(!active||!W||!H)return;
  const tb=$id('socialHubToolbar')?.getBoundingClientRect();
- const topSafe=Math.max(52,tb&&tb.height?Math.ceil(tb.bottom-vBox.top+8):56);
+ const topSafe=Math.max(52,tb&&tb.height?Math.ceil(tb.bottom-vBox.top+10):64);
  const dock=$id('eclipseDock')?.getBoundingClientRect()||$id('dock')?.getBoundingClientRect();
  const dockSafe=dock&&dock.height&&dock.top>vBox.top?Math.max(10,Math.ceil(vBox.bottom-dock.top+8)):76;
- const cStyle=getComputedStyle(chat);
- const cBox=chat.getBoundingClientRect();
- const chatW=cBox.width||chat.offsetWidth||0,chatH=cBox.height||chat.offsetHeight||0;
- const chatVis=cStyle.display!=='none'&&cStyle.visibility!=='hidden'&&chatW>0&&chatH>0;
- const chatRight=chatVis?Math.ceil((cBox.right?cBox.right-vBox.left:(chat.offsetLeft||12)+chatW)):0;
- const chatTop=chatVis?Math.floor(cBox.height?cBox.top-vBox.top:H-dockSafe-chatH):H;
- const rightRoom=W-chatRight-20;
- if(chatVis&&rightRoom>=490){
-  const availW=W-(chatRight+12)-12;
-  const w=Math.min(736,availW);
-  const left=chatRight+12+Math.max(0,Math.floor((availW-w)/2));
-  const availH=Math.max(290,H-topSafe-dockSafe);
-  const h=Math.min(444,availH);
-  const top=topSafe+Math.max(0,Math.floor((availH-h)/2));
-  modal.style.left=left+'px';modal.style.right='auto';modal.style.transform='none';
-  modal.style.top=top+'px';modal.style.bottom='auto';
-  modal.style.width=w+'px';modal.style.height=h+'px';
- }else{
-  const safeBottom=chatVis?Math.max(dockSafe,Math.ceil(H-chatTop+8)):dockSafe;
-  const availH=Math.max(255,H-topSafe-safeBottom);
-  const availW=Math.max(280,W-16);
-  const w=Math.min(720,availW);
-  const h=Math.min(432,availH);
-  const left=Math.max(8,Math.floor((W-w)/2));
-  const top=topSafe+Math.max(0,Math.floor((availH-h)/2));
-  modal.style.left=left+'px';modal.style.right='auto';modal.style.transform='none';
-  modal.style.top=top+'px';modal.style.bottom='auto';
-  modal.style.width=w+'px';modal.style.height=h+'px';
- }
+ const compactH=H<700?112:132;
+ chat.style.setProperty('--poker-chat-height',compactH+'px');
+ const chatH=wide||chat.classList.contains('minimized')?0:compactH;
+ // v290: the table's geometry is independent of the seat. It used to slide 110px left (and the
+ // chat snapped to 280px) the moment the player sat down; the owner reported that jump as a bug.
+ const left=wide?414:8;
+ const w=Math.max(280,Math.min(1000,W-left-(wide?12:8)));
+ const h=Math.max(240,Math.min(620,H-topSafe-dockSafe-(chatH?chatH+12:10)));
+ const top=topSafe+Math.max(0,Math.floor((H-topSafe-dockSafe-(chatH?chatH+12:10)-h)/2));
+ modal.style.left=left+'px';modal.style.right='auto';modal.style.transform='none';
+ modal.style.top=top+'px';modal.style.bottom='auto';
+ modal.style.width=w+'px';modal.style.height=h+'px';
 }
 
 function pokerDay(){
@@ -156,11 +227,12 @@ function pokerWallet(){
  const hostObj=(typeof S==='object'&&S)?S:null;
  let w=hostObj?hostObj.poker:fallbackWallet;
  if(!w||typeof w!=='object'||Array.isArray(w)){
-  w={day:today,chips:P?P.STARTING_CHIPS:1000,freeClaimed:0};
+  w={day:today,chips:P?P.STARTING_CHIPS:1000,freeClaimed:0,ledgerApplied:[]};
   if(hostObj)hostObj.poker=w;
  }
  w.chips=Math.max(0,Math.min(1e9,Math.floor(Number(w.chips)||0)));
  w.freeClaimed=Math.max(0,Math.min(1,Math.floor(Number(w.freeClaimed)||0)));
+ w.ledgerApplied=cleanPokerLedgerIds(w.ledgerApplied);
  if(w.day!==today){w.day=today;w.freeClaimed=0;}
  return w;
 }
@@ -174,12 +246,17 @@ function showPokerToast(msg,kind='info'){
  const el=$id('socialPokerToast');
  if(el){el.textContent=msg;el.dataset.kind=kind;el.hidden=!msg;}
 }
-function applyPokerLedger(delta){
- const d=Math.trunc(Number(delta)||0);if(!d)return;
+function applyPokerLedger(delta,eventId=''){
+ const d=Math.trunc(Number(delta)||0),id=pokerLedgerIdValid(eventId)?eventId:'';
  const w=pokerWallet();
+ if(id&&w.ledgerApplied.includes(id))return false;
+ if(!d)return false;
  w.chips=Math.max(0,Math.min(1e9,w.chips+d));
+ if(id)w.ledgerApplied=cleanPokerLedgerIds([...w.ledgerApplied,id]);
+ // Balance and applied id travel in the same poker wallet/save blob before the server ACK.
  persistPoker();
  renderPokerUI(true);
+ return true;
 }
 function handlePokerCallout(body,tableId=0){
  if(!body)return;
@@ -189,6 +266,7 @@ function handlePokerCallout(body,tableId=0){
   app.messages.push({id:'poker-'+Date.now()+'-'+Math.random(),at:Date.now(),from:0,name:dName,channel:'local',room:app.room,body});
   if(app.messages.length>400)app.messages.splice(0,app.messages.length-400);
   if(app.channel==='local')renderMessages(true);
+  pokerTableChatBubble({from:0,name:dName,channel:'local',room:app.room,body},tableId);
  }
 }
 function handleSoloKick(info){
@@ -198,13 +276,15 @@ function handleSoloKick(info){
  syncSoloPokerSnapshots();
  renderPokerMini();renderPokerUI(true);
 }
+let soloLedgerSeq=0;
+function soloLedgerId(){return 'solo:'+(globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+(++soloLedgerSeq))}
 function ensureSoloTables(){
  if(!P)return null;
  if(!soloTables){
   const specs=R.POKER.tables||[{id:0,label:'Table 1',dealer:R.POKER.dealer}];
   soloTables=specs.map(spec=>new P.HoldemTable({
    tableId:spec.id,label:spec.label,dealerName:spec.dealer.name,
-   onLedger:(_id,delta)=>applyPokerLedger(delta),
+   onLedger:(_id,delta)=>applyPokerLedger(delta,soloLedgerId()),
    onCallout:body=>handlePokerCallout(body,spec.id),
    onKick:info=>handleSoloKick(info)
   }));
@@ -232,27 +312,48 @@ function viewedPokerSnapshot(){
  const snaps=allPokerSnapshots();
  return snaps[pokerUI.tableId]||snaps[0]||null;
 }
+function syncPokerChatFit(){
+ // v290: sitting no longer moves ANY geometry. The old behaviour (seat => chat narrows to
+ // 280px and the table slides into the freed lane) read as the whole UI jumping left on every
+ // sit. Chat and table now hold their positions; this only clears the legacy classes once.
+ if(!chat.classList.contains('poker-chat-fit')&&!hub.classList.contains('poker-seated'))return;
+ chat.classList.remove('poker-chat-fit');
+ hub.classList.remove('poker-seated');
+ syncPokerBounds();
+}
 function syncPokerBadges(){
+ syncPokerChatFit();
  const w=pokerWallet();
  const freeReady=w.freeClaimed===0;
  const dot=$id('socialPokerDot'),bankDot=$id('pokerBankFreeDot'),pill=$id('socialPokerWalletPill');
  if(dot)dot.hidden=!freeReady;
  if(bankDot)bankDot.hidden=!freeReady;
- if(pill)pill.textContent=`🪙 ${w.chips.toLocaleString()} Chips`;
+ if(pill)pill.innerHTML=`<i class="fishcoin" aria-hidden="true"></i> ${w.chips.toLocaleString()} Chips`;
  const snaps=allPokerSnapshots();
  for(let i=0;i<2;i++){
   const el=$id('pokerTabCount'+i),s=snaps[i];
   if(el)el.textContent=s?.me?'YOU':`${s?.seatedCount||0}/6`;
  }
 }
-function cardHTML(code,small=false,highlight=false){
- if(!code)return `<span class="pcard slot${small?' sm':''}"></span>`;
- if(code==='??')return `<span class="pcard back${small?' sm':''}" aria-label="Face-down card"><i></i></span>`;
- const suitMap={s:['♠','black'],h:['♥','red'],d:['♦','red'],c:['♣','black']};
- const [glyph,tone]=suitMap[code[1]]||['♠','black'];
+const pokerCardMotion=new Map();
+function cardHTML(code,small=false,highlight=false,motionKey=''){
+ if(!code)return `<span class="pcard slot${small?' sm':''}" aria-hidden="true"></span>`;
+ let motion='',delay=0;
+ if(motionKey&&pokerCardMotion.get(motionKey)!==code){
+  motion=pokerCardMotion.get(motionKey)==='??'?' is-revealing':' is-dealing';
+  delay=(Number(motionKey.match(/c(\d)$/)?.[1])||0)*70;
+  pokerCardMotion.set(motionKey,code);
+  if(pokerCardMotion.size>160)for(const key of pokerCardMotion.keys()){pokerCardMotion.delete(key);if(pokerCardMotion.size<=120)break}
+ }
+ const cls=`pcard${small?' sm':''}${highlight?' win':''}${motion}`;
+ const style=motion?` style="--deal-delay:${delay}ms"`:'';
+ if(code==='??')return `<span class="${cls} back"${style} role="img" aria-label="Face-down card"><i></i></span>`;
+ const suitMap={s:['♠','black','spades'],h:['♥','red','hearts'],d:['♦','red','diamonds'],c:['♣','black','clubs']};
+ const [glyph,tone,suit]=suitMap[code[1]]||['♠','black','spades'];
  const rank=code[0]==='T'?'10':code[0];
- return `<span class="pcard ${tone}${small?' sm':''}${highlight?' win':''}"><b>${rank}</b><em>${glyph}</em></span>`;
+ return `<span class="${cls} ${tone}"${style} role="img" aria-label="${rank} of ${suit}"><b>${rank}</b><em>${glyph}</em></span>`;
 }
+
 function pokerOpen(tabOrTable){
  if(!P)return;
  if(!app.wanted){enter().then(()=>pokerOpen(tabOrTable));return;}
@@ -281,6 +382,7 @@ function pokerOpen(tabOrTable){
 function minimizePokerModal(){
  pokerUI.open=false;pokerUI.minimized=true;
  $id('socialPokerModal').hidden=true;
+ syncPokerBounds();
  renderPokerMini();
  updatePokerTurnClock();
 }
@@ -289,6 +391,7 @@ function closePokerModal(){
  const my=seatedPokerSnapshot();
  pokerUI.minimized=!!my;
  $id('socialPokerModal').hidden=true;
+ syncPokerBounds();
  renderPokerMini();
  updatePokerTurnClock();
 }
@@ -341,6 +444,12 @@ function buyPokerChipsWithZeny(packId){
 }
 function pokerSeatAction(globalSeat){
  if(!P||!Number.isInteger(globalSeat)||!R.POKER.seats[globalSeat])return;
+ if(fishingBlocked(()=>pokerSeatAction(globalSeat)))return; // v294: stop fishing before taking a poker stool
+ const current=seatedPokerSnapshot();
+ if(current&&current.me.globalSeat!==globalSeat){confirmPokerLeave(()=>pokerSeatActionConfirmed(globalSeat));return;}
+ pokerSeatActionConfirmed(globalSeat);
+}
+function pokerSeatActionConfirmed(globalSeat){
  const target=R.POKER.seats[globalSeat];
  pokerUI.tableId=target.tableId||0;
  const w=pokerWallet();
@@ -352,7 +461,7 @@ function pokerSeatAction(globalSeat){
  }
  const buyIn=Math.max(P.MIN_BUY_IN,Math.min(w.chips,pokerUI.buyIn||P.DEFAULT_BUY_IN));
  if(app.room){
-  if(!send({type:'poker_sit',seat:globalSeat,buyIn}))return;
+  if(!send({type:'poker_sit',seat:globalSeat,buyIn,confirmLeave:true}))return;
   pokerOpen('t'+target.tableId);
   return;
  }
@@ -375,6 +484,9 @@ function pokerSeatAction(globalSeat){
  pokerOpen('t'+target.tableId);
 }
 function standFromPoker(){
+ confirmPokerLeave(performStandFromPoker);
+}
+function performStandFromPoker(){
  if(app.room){send({type:'poker_stand'});return;}
  const p=app.players.get(SOLO_ID);
  const list=ensureSoloTables();
@@ -425,6 +537,97 @@ function sendPokerAct(action,amount=0){
  renderPokerMini();renderPokerUI(true);
 }
 
+const pokerHandResults=new Map();
+function clearPokerResult(){
+ const el=$id('socialPokerResult');
+ if(el){el.hidden=true;el.innerHTML='';delete el.dataset.key;el.className=''}
+ const mini=$id('socialPokerMini');
+ if(mini){mini.classList.remove('is-result-win','is-result-lose','is-result-push');delete mini.dataset.resultUntil;delete mini.dataset.resultKey}
+}
+function syncPokerResult(snap,seated){
+ const el=$id('socialPokerResult');if(!el)return;
+ const now=Date.now();
+ const current=el.dataset.key?pokerHandResults.get(el.dataset.key):null;
+ if(el.dataset.key&&(!current||now>current.until||current.room!==app.room)){el.hidden=true;el.innerHTML='';delete el.dataset.key;el.className=''}
+ const mini=$id('socialPokerMini');
+ if(mini&&mini.dataset.resultUntil&&now>Number(mini.dataset.resultUntil)){mini.classList.remove('is-result-win','is-result-lose','is-result-push');delete mini.dataset.resultUntil;delete mini.dataset.resultKey}
+ if(!snap||!snap.me||snap.tableId!==pokerUI.tableId)return;
+ const me=snap.me,seat=snap.seats?.[me.seat],live=['preflop','flop','turn','river'].includes(snap.phase);
+ let kind='',title='',detail='';
+ if(live&&seat?.folded){kind='lose';title='FOLDED';detail=seat.totalBet?`-${seat.totalBet.toLocaleString()} chips`:'Hand released'}
+ else if(snap.phase==='showdown'){
+  const winners=(snap.winners||[]).filter(x=>x.amount>0),won=winners.find(x=>x.seat===me.seat);
+  if(won){kind=winners.length>1?'push':'win';title=kind==='push'?'SPLIT POT':'YOU WIN';detail=`+${won.amount.toLocaleString()} chips`}
+  else{kind='lose';title='YOU LOSE';detail=seat?.totalBet?`-${seat.totalBet.toLocaleString()} chips`:'Next hand is yours'}
+ }
+ if(!kind)return;
+ const key=`${app.room}:${snap.tableId}:${snap.handNo}`;
+ if(pokerHandResults.has(key))return;
+ const until=now+(kind==='win'?3400:2600);
+ pokerHandResults.set(key,{kind,until,room:app.room});
+ if(pokerHandResults.size>24)pokerHandResults.delete(pokerHandResults.keys().next().value);
+ el.dataset.key=key;el.className=`poker-result is-${kind}`;el.hidden=false;
+ const burst=kind==='win'?'<i class="poker-result-burst" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b></i>':'';
+ el.innerHTML=`<div class="poker-result-card" role="status"><strong>${title}</strong><span>${detail}</span>${burst}</div>`;
+ if(mini&&!mini.hidden){mini.classList.remove('is-result-win','is-result-lose','is-result-push');mini.classList.add(`is-result-${kind}`);mini.dataset.resultUntil=String(until);mini.dataset.resultKey=key}
+}
+// v285: Local chat spoken by someone at the viewed table pops a small, transient
+// bubble on that seat (or the dealer plaque). It never enters storage, never blocks
+// a card/button, and expires on the same 200ms clock as the turn timer.
+const pokerTableChat=new Map();let pokerTableChatSeq=0;const POKER_TABLE_CHAT_MS=6000;
+function pokerTableChatBubble(m,tableId){
+ if(!m||m.channel!=='local'||!app.room||m.room!==app.room||app.muted.has(m.from))return false;
+ const body=typeof m.body==='string'?m.body.slice(0,300):'';
+ const emotion=R.EMOTIONS.includes(m.emotion)?m.emotion:'';
+ if(!body&&!emotion)return false;
+ const tid=Number.isInteger(tableId)?tableId:(viewedPokerSnapshot()?.tableId??pokerUI.tableId);
+ const snap=allPokerSnapshots()[tid];if(!snap)return false;
+ let key;
+ if(m.from===0)key=`${tid}:dealer`;
+ else{
+  const idx=snap.seats?.findIndex(s=>s&&s.id===m.from);
+  if(!Number.isInteger(idx)||idx<0)return false;
+  key=`${tid}:${idx}`;
+ }
+ const now=Date.now();
+ pokerTableChat.set(key,{key,tableId:tid,from:m.from,name:String(m.name||'').slice(0,32),body,emotion,serial:++pokerTableChatSeq,startedAt:now,until:now+POKER_TABLE_CHAT_MS});
+ if(pokerTableChat.size>12)for(const k of pokerTableChat.keys()){if(k!==key)pokerTableChat.delete(k);if(pokerTableChat.size<=8)break}
+ syncPokerTableChat();return true;
+}
+function syncPokerTableChat(){
+ const box=$id('socialPokerBody');if(!box)return;
+ const now=Date.now();
+ for(const [key,e] of pokerTableChat)if(now>e.until||app.muted.has(e.from))pokerTableChat.delete(key);
+ const active=new Map();
+ const visible=pokerUI.open&&!$id('socialPokerModal').hidden&&pokerUI.tab==='t'+pokerUI.tableId;
+ if(visible){
+  const snap=viewedPokerSnapshot();
+  if(snap&&snap.tableId===pokerUI.tableId)for(const [key,e] of pokerTableChat){
+   if(e.tableId!==pokerUI.tableId)continue;
+   let cell=null,ok=true;
+   if(key.endsWith(':dealer'))cell=box.querySelector('.poker-cell.dealer-slot');
+   else{
+    const idx=Number(key.split(':')[1]),seat=snap.seats?.[idx];
+    if(!seat||seat.id!==e.from)ok=false;else cell=box.querySelector('.poker-cell.s'+idx);
+   }
+   if(!ok||!cell){pokerTableChat.delete(key);continue}
+   active.set(key,{e,cell});
+  }
+ }
+ for(const node of box.querySelectorAll('.poker-table-bubble'))if(!active.has(node.dataset.key))node.remove();
+ for(const [key,{e,cell}] of active){
+  let node=cell.querySelector('.poker-table-bubble[data-key="'+key+'"]');
+  if(node&&Number(node.dataset.serial)!==e.serial){node.remove();node=null}
+  if(!node){
+   node=document.createElement('div');node.className='poker-table-bubble';node.dataset.key=key;node.dataset.serial=String(e.serial);node.setAttribute('aria-hidden','true');
+   if(e.emotion){node.classList.add('is-emotion');const img=document.createElement('img');img.src=emojiURL(e.emotion);img.alt='/'+e.emotion;img.title='/'+e.emotion;node.append(img)}
+   else node.textContent=e.body;
+   if(now-e.startedAt<300)node.classList.add('is-fresh');
+   cell.append(node);
+  }
+  node.classList.toggle('is-leaving',now>e.until-300);
+ }
+}
 function renderPokerMini(){
  const btn=$id('socialPokerMini');if(!btn)return;
  const seated=seatedPokerSnapshot();
@@ -433,7 +636,7 @@ function renderPokerMini(){
  btn.hidden=false;
  const mySeat=seated?target.seats[seated.me.seat]:null;
  const cards=mySeat?.cards?.length?mySeat.cards.map(c=>cardHTML(c,true)).join(''):'';
- btn.innerHTML=`<span class="poker-mini-tag">T${(target.tableId||0)+1}</span>${cards?`<span class="poker-mini-cards">${cards}</span>`:''}<span class="poker-mini-pot">Pot 🪙 ${(target.pot||0).toLocaleString()}</span><b id="socialPokerMiniTimer" class="poker-mini-timer">Open</b><i class="poker-mini-bar"><span id="socialPokerMiniBar"></span></i>`;
+ btn.innerHTML=`<span class="poker-mini-tag">T${(target.tableId||0)+1}</span>${cards?`<span class="poker-mini-cards">${cards}</span>`:''}<span class="poker-mini-pot">Pot <i class="fishcoin" aria-hidden="true"></i> ${(target.pot||0).toLocaleString()}</span><b id="socialPokerMiniTimer" class="poker-mini-timer">Open</b><i class="poker-mini-bar"><span id="socialPokerMiniBar"></span></i>`;
  updatePokerTurnClock();
 }
 
@@ -441,6 +644,8 @@ function updatePokerTurnClock(){
  if(!P)return;
  const seated=seatedPokerSnapshot();
  const viewed=viewedPokerSnapshot();
+ syncPokerResult(viewed,seated);
+ syncPokerTableChat();
  const target=pokerUI.open?viewed:(seated||viewed);
  // Sync modal turn bar if visible
  const fill=$id('pokerTurnFill'),lbl=$id('pokerTurnSec');
@@ -450,6 +655,7 @@ function updatePokerTurnClock(){
   const pct=Math.max(0,Math.min(100,(left/P.TURN_MS)*100));
   if(fill)fill.style.width=pct.toFixed(1)+'%';
   if(lbl)lbl.textContent=sec+'s';
+  fill?.closest('.poker-turn-pill')?.classList.toggle('is-urgent',viewed.me?.isTurn&&sec<=6);
  }
  // Sync minimized pill & toolbar button blinking + live countdown timer
  const mini=$id('socialPokerMini'),miniTimer=$id('socialPokerMiniTimer'),miniBar=$id('socialPokerMiniBar');
@@ -524,7 +730,7 @@ function renderPokerUI(force=false){
    <div class="poker-bank-balances">
     <div>
      <small>PLAZA CHIPS WALLET</small>
-     <strong>🪙 ${w.chips.toLocaleString()}</strong>
+     <strong><i class="fishcoin" aria-hidden="true"></i> ${w.chips.toLocaleString()}</strong>
      <span>${seated?.me?`Table ${seated.tableId+1}: ${onTable.toLocaleString()} · Reserve: ${reserve.toLocaleString()}`:'Ready for Table 1 or Table 2 buy-in'}</span>
     </div>
     <div>
@@ -544,7 +750,7 @@ function renderPokerUI(force=false){
    <div class="poker-pack-grid">
     ${P.ZENY_PACKS.map(pk=>`<div class="poker-pack-card">
      <span class="poker-pack-tag">${escape(pk.label)}</span>
-     <strong>🪙 +${pk.chips.toLocaleString()} Chips</strong>
+     <strong><i class="fishcoin" aria-hidden="true"></i> +${pk.chips.toLocaleString()} Chips</strong>
      <p>${escape(pk.desc)}</p>
      <button type="button" data-zpack="${pk.id}" class="poker-primary-btn" ${curZeny<pk.zeny?'disabled':''}>Buy · ${pk.zeny.toLocaleString()}z</button>
     </div>`).join('')}
@@ -559,7 +765,8 @@ function renderPokerUI(force=false){
  // Hold'em Table tab (4x3 fixed perimeter grid + compact single-row dock, zero scrolling)
  const winSeats=new Set((snap?.winners||[]).map(x=>x.seat));
  const bestCards=new Set((snap?.winners||[]).flatMap(x=>x.best5||[]));
- const comm=[0,1,2,3,4].map(i=>{const c=snap?.community?.[i]||null;return cardHTML(c,false,c&&bestCards.has(c));}).join('');
+ const potPulse=pokerUI.lastPot!==undefined&&pokerUI.lastPot!==(snap?.pot||0)?' is-changing':'';pokerUI.lastPot=snap?.pot||0;
+ const comm=[0,1,2,3,4].map(i=>{const c=snap?.community?.[i]||null;return cardHTML(c,false,c&&bestCards.has(c),`t${pokerUI.tableId}h${snap?.handNo||0}boardc${i}`);}).join('');
 
  const seatHTML=idx=>{
   const globalId=(pokerUI.tableId||0)*6+idx;
@@ -576,8 +783,8 @@ function renderPokerUI(force=false){
   return `<div class="poker-seat occupied${isMe?' is-me':''}${s.isTurn?' is-turn':''}${s.folded?' is-folded':''}${winSeats.has(idx)?' is-win':''}">
    <div class="poker-seat-head"><span class="poker-seat-name">${escape(s.name)}${isMe?' <i>(You)</i>':''}</span>${pucks}${afkWarn}</div>
    <div class="poker-seat-row">
-    <div class="poker-seat-cards">${s.cards.length?s.cards.map(c=>cardHTML(c,true,bestCards.has(c))).join(''):'<span class="pcard slot sm"></span><span class="pcard slot sm"></span>'}</div>
-    <div class="poker-seat-meta"><span>🪙 ${s.stack.toLocaleString()}</span>${s.streetBet>0?`<b>Bet ${s.streetBet}</b>`:s.lastTag?`<b>${escape(s.lastTag)}</b>`:''}${s.handHint?`<em class="poker-hand-hint">${escape(s.handHint)}</em>`:''}</div>
+    <div class="poker-seat-cards">${s.cards.length?s.cards.map((c,ci)=>cardHTML(c,true,bestCards.has(c),`t${pokerUI.tableId}h${snap?.handNo||0}s${idx}c${ci}`)).join(''):'<span class="pcard slot sm"></span><span class="pcard slot sm"></span>'}</div>
+    <div class="poker-seat-meta"><span><i class="fishcoin" aria-hidden="true"></i> ${s.stack.toLocaleString()}</span>${s.streetBet>0?`<b>Bet ${s.streetBet}</b>`:s.lastTag?`<b>${escape(s.lastTag)}</b>`:''}${s.handHint?`<em class="poker-hand-hint">${escape(s.handHint)}</em>`:''}</div>
    </div>
   </div>`;
  };
@@ -589,8 +796,8 @@ function renderPokerUI(force=false){
   houseHTML=`<div class="poker-seat occupied house${h.isTurn?' is-turn':''}${h.folded?' is-folded':''}${winSeats.has('vane')?' is-win':''}">
    <div class="poker-seat-head"><span class="poker-seat-name">🃏 ${escape(h.name)} <i>(House)</i></span>${h.isDealer?'<i class="puck d">D</i>':''}${h.isSB?'<i class="puck sb">SB</i>':''}${h.isBB?'<i class="puck bb">BB</i>':''}</div>
    <div class="poker-seat-row">
-    <div class="poker-seat-cards">${h.cards.length?h.cards.map(c=>cardHTML(c,true,bestCards.has(c))).join(''):'<span class="pcard slot sm"></span><span class="pcard slot sm"></span>'}</div>
-    <div class="poker-seat-meta"><span>🪙 ${h.stack.toLocaleString()}</span>${h.streetBet>0?`<b>Bet ${h.streetBet}</b>`:h.lastTag?`<b>${escape(h.lastTag)}</b>`:''}${h.handHint?`<em class="poker-hand-hint">${escape(h.handHint)}</em>`:''}</div>
+    <div class="poker-seat-cards">${h.cards.length?h.cards.map((c,ci)=>cardHTML(c,true,bestCards.has(c),`t${pokerUI.tableId}h${snap?.handNo||0}housec${ci}`)).join(''):'<span class="pcard slot sm"></span><span class="pcard slot sm"></span>'}</div>
+    <div class="poker-seat-meta"><span><i class="fishcoin" aria-hidden="true"></i> ${h.stack.toLocaleString()}</span>${h.streetBet>0?`<b>Bet ${h.streetBet}</b>`:h.lastTag?`<b>${escape(h.lastTag)}</b>`:''}${h.handHint?`<em class="poker-hand-hint">${escape(h.handHint)}</em>`:''}</div>
    </div>
   </div>`;
  }else{
@@ -610,7 +817,7 @@ function renderPokerUI(force=false){
    <div class="poker-dock-controls">
     ${w.chips>=P.MIN_BUY_IN?`<label class="poker-buyin-lbl">Buy-in <select id="pokerBuyInSelect">${buyOpts.map(v=>`<option value="${v}"${v===selVal?' selected':''}>${v.toLocaleString()}</option>`).join('')}</select></label>
      ${anyOpen?`<button type="button" id="pokerQuickSitBtn" class="poker-gold-btn">Sit at ${escape(tSpec?.label||'Table')}</button>`:''}`
-     :`<button type="button" data-gotab="bank" class="poker-gold-btn">🪙 Refill Chips (Min ${P.MIN_BUY_IN})</button>`}
+     :`<button type="button" data-gotab="bank" class="poker-gold-btn"><i class="fishcoin" aria-hidden="true"></i> Refill Chips (Min ${P.MIN_BUY_IN})</button>`}
     ${otherSeated?`<button type="button" data-gotab="t${seated.tableId}" class="poker-sub-btn">Go to My Seat (T${seated.tableId+1})</button>`:''}
     <button type="button" data-gotab="bank" class="poker-sub-btn">Chip Bank${w.freeClaimed===0?' (!)':''}</button>
    </div>
@@ -643,11 +850,11 @@ function renderPokerUI(force=false){
   const onTable=(snap.me.stack||0)+(snap.me.pendingAdd||0);
   const reserve=Math.max(0,w.chips-onTable);
   dockHTML=`<div class="poker-dock seated">
-   <span class="poker-dock-lead">Seat <b>${snap.me.seat+1}</b> · Stack <b>🪙 ${snap.me.stack.toLocaleString()}</b>${reserve?` · Reserve <b>${reserve.toLocaleString()}</b>`:''}${snap.me.missedTurns>0?` · <b class="poker-afk-inline">AFK Warning ${snap.me.missedTurns}/${snap.me.afkMax}</b>`:''}</span>
+   <span class="poker-dock-lead">Seat <b>${snap.me.seat+1}</b> · Stack <b><i class="fishcoin" aria-hidden="true"></i> ${snap.me.stack.toLocaleString()}</b>${reserve?` · Reserve <b>${reserve.toLocaleString()}</b>`:''}${snap.me.missedTurns>0?` · <b class="poker-afk-inline">AFK Warning ${snap.me.missedTurns}/${snap.me.afkMax}</b>`:''}</span>
    <div class="poker-dock-controls">
     ${snap.seatedCount===1?`<label class="poker-house-toggle"><input type="checkbox" id="pokerHouseChk" ${snap.vsHouse?'checked':''}> vs. ${escape(dName)}</label>`:''}
     ${snap.me.stack<P.BIG_BLIND&&reserve>=P.BIG_BLIND?`<button type="button" id="pokerQuickTopUp" class="poker-gold-btn">+ Rebuy</button>`:reserve>0?`<button type="button" id="pokerQuickTopUp" class="poker-sub-btn">+ Top Up</button>`:''}
-    <button type="button" data-gotab="bank" class="poker-sub-btn">🪙 Bank${w.freeClaimed===0?' (!)':''}</button>
+    <button type="button" data-gotab="bank" class="poker-sub-btn"><i class="fishcoin" aria-hidden="true"></i> Bank${w.freeClaimed===0?' (!)':''}</button>
     <button type="button" id="pokerStandBtn" class="poker-danger-btn">Stand Up</button>
    </div>
   </div>`;
@@ -661,7 +868,7 @@ function renderPokerUI(force=false){
    <div class="poker-cell s1">${seatHTML(1)}</div>
    <div class="poker-cell felt-slot">
     <div class="poker-felt">
-     <div class="poker-pot-line"><span>POT</span><strong>🪙 ${(snap?.pot||0).toLocaleString()}</strong>${snap?.currentBet?`<small>Bet ${snap.currentBet.toLocaleString()}</small>`:''}${snap?.handNo?`<small>#${snap.handNo}</small>`:''}</div>
+     <div class="poker-pot-line"><span>POT</span><strong class="${potPulse}"><i class="fishcoin" aria-hidden="true"></i> ${(snap?.pot||0).toLocaleString()}</strong>${snap?.currentBet?`<small>Bet ${snap.currentBet.toLocaleString()}</small>`:''}${snap?.handNo?`<small>#${snap.handNo}</small>`:''}</div>
      <div class="poker-community" aria-label="Community cards">${comm}</div>
      <p class="poker-banner">${escape(snap?.banner||'Sit at any stool to start Hold\'em.')}</p>
     </div>
@@ -675,6 +882,7 @@ function renderPokerUI(force=false){
   ${dockHTML}
  </div>`;
 
+ syncPokerTableChat();
  updatePokerTurnClock();
  for(const b of box.querySelectorAll('[data-sitseat]'))b.onclick=()=>pokerSeatAction(Number(b.dataset.sitseat));
  for(const b of box.querySelectorAll('[data-gotab]'))b.onclick=()=>switchPokerTab(b.dataset.gotab);
@@ -726,7 +934,15 @@ setInterval(()=>{
 },200);
 
 function resetPlayers(){app.players.clear();app.scene?.clearPlayers();$id('socialLabels').querySelectorAll('.social-player-label,.social-bubble').forEach(n=>n.remove())}
-function currentLook(){const st=typeof S==='object'&&S?S:null;return {cls:st?.cls||'Novice',appearance:st&&typeof wardrobeAppearance==='function'?wardrobeAppearance():{version:1,sex:'m'},refine:Math.max(0,Math.min(15,st?.eq?.weapon?.r||0)),title:st&&typeof HUNT_TITLES!=='undefined'?HUNT_TITLES.find(t=>t.id===st.equippedTitle&&titleUnlocked(t))?.name||'':'',lv:st&&st.auraShow!==false&&!st.hideUI?Math.max(0,Math.min(999,Math.floor(Number(st.lv)||0))):0,speed:st&&typeof moveSpd==='function'?Math.round(moveSpd(true)*100)/100:0}}
+// v296 (owner): wearing a fishing title must not replace the Hunt title. The two now travel as
+// separate fields and draw as separate lines above the head - Hunt title first, fishing under it.
+function huntTitleName(st){return st&&typeof HUNT_TITLES!=='undefined'?HUNT_TITLES.find(t=>t.id===st.equippedTitle&&titleUnlocked(t))?.name||'':''}
+function fishingTitleName(st){
+ const F=FISHING();
+ if(!F||typeof F.equippedTitle!=='function')return '';
+ try{const t=F.equippedTitle(st&&st.fishing);return t?'🎣 '+t.name:''}catch{return ''}
+}
+function currentLook(){const st=typeof S==='object'&&S?S:null;return {cls:st?.cls||'Novice',appearance:st&&typeof wardrobeAppearance==='function'?wardrobeAppearance():{version:1,sex:'m'},refine:Math.max(0,Math.min(15,st?.eq?.weapon?.r||0)),title:huntTitleName(st),fishTitle:fishingTitleName(st),lv:st&&st.auraShow!==false&&!st.hideUI?Math.max(0,Math.min(999,Math.floor(Number(st.lv)||0))):0,speed:st&&typeof moveSpd==='function'?Math.round(moveSpd(true)*100)/100:0}}
 function soloName(){const u=typeof CLOUD!=='undefined'&&CLOUD.user?(typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username):typeof currentUser==='string'&&currentUser?currentUser:'';return u||app.user||'Adventurer'}
 function syncSoloPlayer(){if(!app.wanted||!app.scene||app.room)return;let p=app.players.get(SOLO_ID);const look=currentLook(),name=soloName();if(!p)p={id:SOLO_ID,name,room:0,x:0,z:12,dir:0,sit:false,seat:null,pokerSeat:null,path:[],at:performance.now(),look};else{R.advance(p,performance.now());p.name=name;p.look=look}putPlayer(p)}
 function clearSoloPokerIfSeated(p){
@@ -736,23 +952,109 @@ function clearSoloPokerIfSeated(p){
   syncSoloPokerSnapshots();renderPokerMini();renderPokerUI(true);
  }
 }
-function moveAction(x,z){if(app.room&&send({type:'move',x,z}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());const route=R.path(p,{x,z});if(!route.length)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=false;p.seat=null;p.pokerSeat=null;putPlayer(p)}
-function seatAction(id){if(app.room&&send({type:'seat',id}))return;if(app.room||!Number.isInteger(id)||!R.SEATS[id])return;const p=app.players.get(SOLO_ID),seat=R.SEATS[id];if(!p)return;R.advance(p,performance.now());const route=R.path(p,seat);if(!route.length&&Math.hypot(p.x-seat.x,p.z-seat.z)>.5)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=!route.length;p.seat=seat.id;p.pokerSeat=null;if(!route.length){p.x=seat.x;p.z=seat.z}putPlayer(p)}
-function toggleSit(){if(app.room&&send({type:'sit'}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());clearSoloPokerIfSeated(p);p.path=[];p.seat=null;p.pokerSeat=null;p.sit=!p.sit;putPlayer(p)}
+// v294: while a fishing line is in the water you cannot walk away - press ✕ Stop fishing first.
+// Fishing's own walk-to-pond happens in the 'walking' phase, which busy() does not count.
+// v295: sitting is no longer blocked. Sitting on a pond-side angler chair (or pressing Insert to
+// sit/stand) keeps the line in the water, which is how the chairs were meant to be used.
+function fishingBusy(){const F=FISHING();return !!(F&&typeof F.busy==='function'&&F.busy())}
+// v297: ask before reeling in, like the poker leave-warning, instead of spamming chat with "press ✕".
+// `action` is retried once the player confirms, so the click that was blocked still happens.
+let fishLeaveAction=null,fishLeaveFocus=null;
+function confirmFishingStop(action){
+ if(!fishingBusy()){if(action)action();return true}
+ if(fishLeaveAction||!fishLeaveWarning.hidden)return false;
+ fishLeaveAction=action||null;fishLeaveFocus=document.activeElement;
+ fishLeaveWarning.hidden=false;hub.inert=true;chat.inert=true;$id('fishLeaveStay').focus();
+ return false;
+}
+function finishFishingStop(go){
+ if(fishLeaveWarning.hidden)return;
+ const act=fishLeaveAction;fishLeaveAction=null;
+ fishLeaveWarning.hidden=true;hub.inert=false;chat.inert=false;
+ if(go){const F=FISHING();try{if(F&&typeof F.stop==='function')F.stop('🎣 Line reeled in — you stepped away from the pond.')}catch{}}
+ if(go&&act)act();
+ else if(fishLeaveFocus&&typeof fishLeaveFocus.focus==='function')try{fishLeaveFocus.focus()}catch{}
+ fishLeaveFocus=null;
+}
+function fishingBlocked(action){if(!fishingBusy())return false;confirmFishingStop(action);return true}
+function moveAction(x,z){if(fishingBlocked(()=>moveAction(x,z)))return;confirmPokerLeave(confirmLeave=>performMoveAction(x,z,confirmLeave))}
+function performMoveAction(x,z,confirmLeave){if(app.room&&send({type:'move',x,z,confirmLeave}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());const route=R.path(p,{x,z});if(!route.length)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=false;p.seat=null;p.pokerSeat=null;putPlayer(p)}
+function seatAction(id){if(fishingBlocked(()=>seatAction(id)))return;confirmPokerLeave(confirmLeave=>performSeatAction(id,confirmLeave))}
+function performSeatAction(id,confirmLeave){if(app.room&&send({type:'seat',id,confirmLeave}))return;if(app.room||!Number.isInteger(id)||!R.SEATS[id])return;const p=app.players.get(SOLO_ID),seat=R.SEATS[id];if(!p)return;R.advance(p,performance.now());const route=R.path(p,seat);if(!route.length&&Math.hypot(p.x-seat.x,p.z-seat.z)>.5)return;clearSoloPokerIfSeated(p);p.path=route;p.sit=!route.length;p.seat=seat.id;p.pokerSeat=null;if(!route.length){p.x=seat.x;p.z=seat.z}putPlayer(p)}
+// v299 (owner): sit and stand are allowed with a line in the water - only actions that WALK the
+// player away (a bench, a pond seat, a poker stool, the exit) ask before reeling in.
+function toggleSit(){confirmPokerLeave(confirmLeave=>performToggleSit(confirmLeave))}
+function performToggleSit(confirmLeave){if(app.room&&send({type:'sit',confirmLeave}))return;if(app.room)return;const p=app.players.get(SOLO_ID);if(!p)return;R.advance(p,performance.now());clearSoloPokerIfSeated(p);p.path=[];p.seat=null;p.pokerSeat=null;p.sit=!p.sit;putPlayer(p)}
 function join(){if(!app.connected)return;send({type:'join',look:currentLook(),friends:[...app.friends]})}
-async function enter(){if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),sitting,camera:cameraUI});if(app.wanted){app.scene.active=true;cameraUI(app.scene.cameraState);for(const p of app.players.values())app.scene.putPlayer(p);join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
-function leave(){app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});app.room=0;app.rooms=[];hub.hidden=true;document.body.classList.remove('social-open');if(app.scene)app.scene.active=false;resetPlayers();app.messages=app.messages.filter(m=>m.channel!=='local');select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}
-$id('socialLeave').onclick=leave;$id('socialSit').onclick=toggleSit;
-function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retry=0;status('Connected · World & private chat');app.messages=app.messages.filter(x=>x.channel!=='world').concat(m.history).slice(-400);renderMessages();if(app.wanted&&app.scene)join();else app.resume=null}
+// v287: plaza fishing. The logic/UI module reads the self position, walks the player to a pond,
+// and announces show-offs on Local chat; everything else stays in assets/social-fishing.js.
+const FISHING=()=>globalThis.PGSocialFishing||null;
+function fishingSelf(){const p=app.players.get(app.room?app.id:SOLO_ID);if(!p)return null;const c={...p,path:(p.path||[]).map(v=>({...v}))};R.advance(c,performance.now());return {x:c.x,z:c.z}}
+// v295: Show off is no longer a Local-chat line. The fishing module paints the fish locally and
+// hands the same payload here, which relays it to the room as data.
+function fishingShowOff(fish){
+ if(!app.room)return true; // solo: the local overhead fish is the whole show
+ return send({type:'showoff',sp:fish&&fish.sp,w:fish&&fish.w,mut:(fish&&fish.mut)||null,perfect:!!(fish&&fish.perfect)});
+}
+// v295: the player's line in the water, shared with the room so everyone sees the bobber.
+function fishingRig(state){
+ // v311 (owner: "he should face the pond while fishing"): the local angler turns to the bobber the
+ // moment the line goes out, and keeps that facing while the rig is idle, biting or being reeled.
+ // Remote viewers get the same turn from the rig that already travels in their player snapshot.
+ if(state&&state.on&&Number.isFinite(state.x)&&Number.isFinite(state.z)){
+  const me=app.players.get(app.room?app.id:SOLO_ID);
+  if(me){const dx=state.x-me.x,dz=state.z-me.z;
+   if(Math.hypot(dx,dz)>.15){const dir=(Math.round(Math.atan2(-dx,dz)/(Math.PI/4))+8)%8;if(me.dir!==dir){me.dir=dir;putPlayer(me)}}}
+ }
+ if(!app.room)return true;
+ // v300: the rod tier travels with the rig, so everyone draws your pole in your colour.
+ return send({type:'rig',on:!!(state&&state.on),pond:state&&state.pond,x:state&&state.x,z:state&&state.z,mode:state&&state.mode,rod:state&&state.rod});
+}
+// v295: a fishing title is worn above the head in the plaza; changing it repaints the room.
+function fishingTitleChanged(){const p=app.players.get(app.room?app.id:SOLO_ID);if(!p)return;const look=currentLook();if(app.room)return send({type:'look',look});p.look=look;putPlayer(p)}
+// v297: pond monsters (sp.mega) and secret-rarity catches are announced in the room's Local chat.
+// The worker relays {type:'fishnote'} to everyone in the room; solo play writes the line directly.
+function fishNoteBody(name,spName,w,kind){
+ return kind==='secret'
+  ? `✨ ${name} pulled a secret catch out of the pond — ${spName}, ${w} kg!`
+  : `🎣 ${name} landed a pond monster — ${spName}, ${w} kg!`;
+}
+function pushFishNote(m){
+ const F=FISHING();
+ const sp=F&&typeof F.speciesById==='function'?F.speciesById(m.sp):null;
+ if(!sp)return false;
+ const note=cleanChatMessage({type:'message',id:'fish:'+(m.at||Date.now())+':'+(m.from||0),at:m.at||Date.now(),from:Number.isInteger(m.from)?m.from:0,name:typeof m.name==='string'?m.name:'',gm:false,channel:'local',body:fishNoteBody(m.name||'An angler',sp.name,m.w,m.kind),sys:true,room:app.room||0});
+ if(!note)return false;
+ app.messages=mergeChatMessages(app.messages,[note]);
+ if(app.channel!=='local'||chat.classList.contains('minimized'))app.unread.add('local');
+ if(app.channel==='local')renderMessages(true);
+ tabsUI();
+ return true;
+}
+function fishingAnnounce(fish){
+ if(!fish||typeof fish.sp!=='string')return false;
+ if(app.room&&send({type:'fishbrag',sp:fish.sp,w:fish.w,kind:fish.kind==='secret'?'secret':'mega'}))return true;
+ return pushFishNote({sp:fish.sp,w:fish.w,kind:fish.kind,name:'You',from:app.id||SOLO_ID,at:Date.now()});
+}
+function bindFishing(){const F=FISHING();if(!F)return;F.bind({host:()=>typeof S==='object'&&S?S:null,scene:()=>app.scene,self:fishingSelf,moveTo:(x,z)=>moveAction(x,z),walkTo:(x,z)=>performMoveAction(x,z,true),showOff:fishingShowOff,announce:fishingAnnounce,rig:fishingRig,titleChanged:fishingTitleChanged,notice,save:()=>{if(typeof save==='function'&&typeof S==='object'&&S)save()},button:$id('socialFishBtn')})}
+async function enter(){if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),sitting,camera:cameraUI});if(app.wanted){app.scene.active=true;bindFishing();cameraUI(app.scene.cameraState);for(const p of app.players.values())app.scene.putPlayer(p);join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
+function leave(){FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');if(app.scene)app.scene.active=false;resetPlayers();stashLocal();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}
+$id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick()))return;confirmPokerLeave(()=>leave())};$id('socialSit').onclick=toggleSit;
+function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retry=0;status('Connected · World & private chat');app.messages=mergeChatMessages(app.messages.filter(x=>x.channel!=='world'),readWorldHistory(),m.history);saveWorldHistory();renderMessages();if(app.wanted&&app.scene)join();else app.resume=null}
  if(m.type==='error'){status(m.message);population();}
  if(m.type==='rooms'&&Array.isArray(m.rooms)){app.rooms=m.rooms;population();}
- if(m.type==='poker_error'){showPokerToast(m.message,'warn');renderPokerUI(true);}
+ if(m.type==='poker_error'||m.type==='poker_leave_required'){showPokerToast(m.message,'warn');pokerOpen('table');renderPokerUI(true);}
  if(m.type==='poker_kicked'){
   const me=app.players.get(app.id);if(me){me.pokerSeat=null;me.sit=false;me.path=[];putPlayer(me);}
   showPokerToast(m.message||'Auto-removed from seat due to AFK inactivity.','warn');
   renderPokerMini();renderPokerUI(true);
  }
- if(m.type==='poker_ledger')applyPokerLedger(m.delta);
+ if(m.type==='poker_ledger'){
+  const id=pokerLedgerIdValid(m.id)?m.id:'';
+  applyPokerLedger(m.delta,id);
+  // ACK even a duplicate: the wallet already saved it, but the server may still hold the outbox.
+  if(id)send({type:'poker_ledger_ack',ids:[id]});
+ }
  if(m.type==='poker_callout'&&m.room===app.room)handlePokerCallout(m.body,m.tableId||0);
  if(m.type==='poker'){
   const now=Date.now();
@@ -768,22 +1070,43 @@ function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retr
   app.scene?.updatePoker?.(list);
   renderPokerMini();renderPokerUI();updatePokerTurnClock();
  }
+ if(m.type==='fishnote'){pushFishNote(m);return}
+ if(m.type==='showoff'){
+  // v299: our own show-off is already on screen - the echo would draw it a second time.
+  if(m.from!==app.id)try{FISHING()?.showOffEvent?.(m.from,{sp:m.sp,w:m.w,mut:m.mut,perfect:m.perfect})}catch{}
+  return}
  if(m.type==='reauth')return refreshSocket();
- if(m.type==='room'){friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;resetPlayers();app.messages=app.messages.filter(x=>x.channel!=='local');for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat))send({type:'seat',id:r.seat});else if(r.sit)send({type:'sit'})}renderPokerUI(true)}
+ if(m.type==='room'){friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());const moved=app.room!==m.room;if(moved){clearPokerResult();app.poker=null;app.pokerTables=null;pokerUI.renderKey='';}app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;resetPlayers();if(moved){stashLocal();app.messages=app.messages.filter(x=>x.channel!=='local');const back=recallLocal(m.room);if(back.length)app.messages=mergeChatMessages(app.messages,back)}pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)}
  if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
 
  if(m.type==='left'&&m.room===app.room){app.players.delete(m.id);app.scene?.removePlayer(m.id);population();friendPresenceChanged()}
- if(m.type==='message'){if(m.channel==='local'&&m.room!==app.room)return;app.messages.push(m);if(app.messages.length>400)app.messages.splice(0,app.messages.length-400);if(app.channel!==m.channel||chat.classList.contains('minimized'))app.unread.add(m.channel);if(!app.muted.has(m.from)){if(m.channel==='local')app.scene?.bubble(m.from,m);if(app.channel===m.channel)renderMessages(true)}tabsUI()}}
-const WATCHDOG_MS=20000,PROBE_GRACE_MS=6000;
+ if(m.type==='message'){if(m.channel==='local'&&m.room!==app.room)return;app.messages=mergeChatMessages(app.messages,[m]);if(m.channel==='world')saveWorldHistory();else if(m.channel==='local')stashLocal();if(app.channel!==m.channel||chat.classList.contains('minimized'))app.unread.add(m.channel);if(!app.muted.has(m.from)){if(m.channel==='local'){const fishShown=FISHING()?.onLocalMessage?.(m.from,m.body||'');if(!fishShown)app.scene?.bubble(m.from,m);pokerTableChatBubble(m)}if(app.channel===m.channel)renderMessages(true)}tabsUI()}}
+// v295: the watchdog used to allow 20 s of silence plus a 6 s probe grace - longer than the
+// server's old 15 s resume window, so a silent drop always came back as a fresh join at the
+// plaza spawn. Detection is now 10 s + 5 s, comfortably inside the resume window, and
+// visibilitychange probes the moment a throttled background tab wakes up.
+const WATCHDOG_MS=10000,PROBE_GRACE_MS=5000,HANDSHAKE_MS=12000;
 function seatState(){const me=app.players.get(app.id);const seated=seatedPokerSnapshot();return me?{seat:Number.isInteger(me.seat)?me.seat:null,pokerSeat:Number.isInteger(me.pokerSeat)?me.pokerSeat:null,pokerBuyIn:seated?.me?.stack||pokerUI.buyIn,sit:!!me.sit}:app.resume}
-function dropSocket(message,keep){const ws=app.socket;app.socket=null;app.connected=false;app.probeAt=0;if(keep)app.resume=seatState();try{ws?.close()}catch{}status(message);app.nextConnect=0}
+function dropSocket(message,keep){const ws=app.socket;app.socket=null;app.connected=false;app.probeAt=0;if(keep)app.resume=seatState();
+ // v311 (owner: "the hero jumps around on reconnect"): a dropped socket used to leave the local
+ // character walking a route the room no longer knew about, and the room then restored its own
+ // copy - two different heroes, one of them moving on its own. Stop the walk where it stands and
+ // let the resumed spot take over.
+ const me=app.players.get(app.room?app.id:SOLO_ID);
+ if(me&&me.path&&me.path.length){try{R.advance(me,performance.now())}catch{}me.path=[];me.sit=false;putPlayer(me)}
+ try{ws?.close()}catch{}status(message);app.nextConnect=0}
 function refreshSocket(){dropSocket('Refreshing chat…',true)}
 function heartbeat(now){if(!app.connected||!app.socket||app.socket.readyState!==1){app.probeAt=0;return}
  if(now-(app.lastSeen||now)<WATCHDOG_MS){app.probeAt=0;return}
  if(!app.probeAt){app.probeAt=now;send({type:'ping'});return}
  if(now-app.probeAt>PROBE_GRACE_MS)dropSocket('Chat connection lost — reconnecting…',true)}
 function sitting(sit){$id('socialSit').textContent=sit?'Stand · Insert':'Sit · Insert';$id('socialSit').setAttribute('aria-pressed',String(sit))}
-function putPlayer(p){p.at=performance.now();app.players.set(p.id,p);app.scene?.putPlayer(p);if(p.id===(app.room?app.id:SOLO_ID))sitting(p.sit);population()}
+function putPlayer(p){p.at=performance.now();app.players.set(p.id,p);app.scene?.putPlayer(p);
+ // v295: every OTHER player's line in the water is drawn. Your own rig is driven frame by frame
+ // from assets/social-fishing.js, so it is deliberately skipped here or it would draw twice.
+ const selfId=app.room?app.id:SOLO_ID;
+ if(p.id!==selfId&&app.scene?.fishing&&typeof app.scene.fishing.setRig==='function')try{app.scene.fishing.setRig(p.id,p.fish||{on:false})}catch{}
+ if(p.id===selfId)sitting(p.sit);population()}
 function population(){
  $id('socialPopulation').textContent=app.room?'Plaza '+app.room+' · '+app.players.size+' / 20 adventurers':CLOUD.on?'Connecting to plaza · Solo view':'Solo plaza · Local character';
  const sel=$id('socialRoomSelect');
@@ -803,13 +1126,44 @@ function population(){
  sel.value=String(app.room);
  sel.hidden=false;
 }
-function connect(){if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextConnect)return;const user=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username;if(app.user!==user){app.user=user;app.messages=[];app.unread.clear();try{app.muted=new Set(JSON.parse(localStorage.getItem('pg_social_mute_'+user))||[])}catch{app.muted=new Set()}}
+// v313: one place decides how long to wait before the next attempt, so a socket that opens but never
+// completes the handshake backs off exactly like a socket that closed.
+function retryDelay(){return Math.min(30000,1000*2**Math.min(app.retry++,5))}
+function connect(){if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextConnect)return;const user=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username;if(app.user!==user){app.user=user;localHistory.clear();app.messages=readWorldHistory();renderMessages();app.unread.clear();try{app.muted=new Set(JSON.parse(localStorage.getItem('pg_social_mute_'+user))||[])}catch{app.muted=new Set()}}
  const qs=CLOUD.previewToken?'?preview_session='+encodeURIComponent(CLOUD.previewToken):'';
- const ws=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/api/social'+qs);app.socket=ws;status('Connecting to chat…');ws.onmessage=e=>{if(app.socket!==ws)return;app.lastSeen=Date.now();app.probeAt=0;try{receive(JSON.parse(e.data))}catch(err){console.error('Social message',err)}};
+ const ws=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/api/social'+qs);app.socket=ws;app.socketAt=Date.now();status('Connecting to chat…');ws.onmessage=e=>{if(app.socket!==ws)return;app.lastSeen=Date.now();app.probeAt=0;try{receive(JSON.parse(e.data))}catch(err){console.error('Social message',err)}};
  ws.onclose=e=>{if(app.socket!==ws)return;app.socket=null;app.connected=false;app.probeAt=0;
+  // Logged on purpose: "why did it reconnect" is the question the plaza keeps being asked, and the
+  // browser console is the only place that can answer it (1000/1006 = network or edge, 4000 = the
+  // server's planned session refresh, 4001 = the same account signed in somewhere else).
+  if(e.code!==4000)console.info('[plaza] chat socket closed',e.code,e.reason||'');
   if(e.code===4000){app.resume=seatState();app.nextConnect=0;status('Refreshing chat…');return}
-  app.room=0;app.rooms=[];app.poker=null;app.pokerTables=null;resetPlayers();syncSoloPlayer();population();tabsUI();renderPokerMini();renderPokerUI(true);status(e.code===4001?'Chat moved to another tab. Reload to reconnect.':'Chat unavailable — retrying…');app.blocked=e.code===4001;app.nextConnect=Date.now()+Math.min(30000,1000*2**Math.min(app.retry++,5))};ws.onerror=()=>status('Chat unavailable — checking connection…');}
-let lastLog='',lastLook='';setInterval(()=>{if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();heartbeat(Date.now());if(app.channel==='log'){const key=JSON.stringify(logShown().map(l=>l.id));if(key!==lastLog){lastLog=key;renderMessages(true)}}const look=JSON.stringify(currentLook());if(app.room&&lastLook&&look!==lastLook)send({type:'look',look:currentLook()});else if(!app.room&&app.wanted&&app.scene&&lastLook&&look!==lastLook)syncSoloPlayer();lastLook=look},2000);
+  // v295: a silent drop or a network blip reserves the same thing a planned refresh does, so the
+  // reconnect resumes the seat/room instead of spawning at the plaza entrance. Read it BEFORE
+  // resetPlayers() wipes the map it comes from.
+  if(e.code!==4001)app.resume=seatState();
+  stashLocal();clearPokerResult();app.room=0;app.rooms=[];app.poker=null;app.pokerTables=null;pokerTableChat.clear();resetPlayers();syncSoloPlayer();population();tabsUI();renderPokerMini();renderPokerUI(true);status(e.code===4001?'Chat moved to another tab. Reload to reconnect.':'Chat unavailable — retrying…');app.blocked=e.code===4001;app.nextConnect=Date.now()+retryDelay()};ws.onerror=()=>status('Chat unavailable — checking connection…');}
+let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();
+ // v313: a socket can open against a cold Durable Object and then sit there - Pages accepted the
+ // upgrade, the room has not said hello. Nothing used to notice: the plaza showed "Connecting to
+ // chat…" forever with a healthy-looking socket and no reconnect. A handshake that takes longer than
+ // this is treated as a failed attempt, with the same backoff a close gets.
+ else if(!app.connected&&Date.now()-(app.socketAt||0)>HANDSHAKE_MS){dropSocket('Chat took too long to answer — retrying…',true);app.nextConnect=Date.now()+retryDelay()}
+ heartbeat(Date.now());
+ // v295: fishing holds two minutes or more without a single movement packet. A light ping keeps
+ // the socket warm through proxies and NAT so an AFK session never looks dead.
+ if(app.connected&&app.socket&&app.socket.readyState===1&&fishingBusy()&&Date.now()>=keepAliveAt){keepAliveAt=Date.now()+45000;send({type:'ping'})}if(app.channel==='log'){const key=JSON.stringify(logShown().map(l=>l.id));if(key!==lastLog){lastLog=key;renderMessages(true)}}const look=JSON.stringify(currentLook());if(app.room&&lastLook&&look!==lastLook)send({type:'look',look:currentLook()});else if(!app.room&&app.wanted&&app.scene&&lastLook&&look!==lastLook)syncSoloPlayer();lastLook=look},2000);
+// v295: browsers throttle timers in a hidden tab, so an AFK player can sit behind a dead socket
+// well past the watchdog. Coming back to the tab checks it at once instead of waiting a cycle.
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden)return;
+ if(!app.socket){if(app.wanted&&CLOUD.on){app.nextConnect=0;connect()}return}
+ // v313 (owner: "random reconnects"). Returning to the tab used to drop the socket on the spot
+ // whenever it had been quiet for ten seconds - so every tab switch longer than that forced a
+ // reconnect, and a reconnect that was not needed is exactly what the plaza was reporting. The
+ // socket is now asked first: one probe, five seconds to answer, and only silence past that drops it.
+ if(app.connected&&app.socket.readyState===1&&Date.now()-(app.lastSeen||0)>=WATCHDOG_MS)heartbeat(Date.now());
+});
 // Someone appeared, moved or left: the friends panel's "in the plaza now" label is drawn from this
 // list, so it is redrawn when (and only when) the panel is open.
 let friendPaintAt=0;

@@ -266,6 +266,56 @@ test('refine feedback follows success, safe failure, protection and rank loss',(
  ev(`clearTimeout(eclipseRefineTimer);$('eclipseRefineResult').hidden=true;S.zeny=0;refine('weapon');Math.random=window.refineRandom`);assert.equal(doc.getElementById('eclipseRefineResult').hidden,true);
 });
 
+test('v312 the refine button prices the auto-bought ore instead of demanding it in the bag',()=>{
+ // The owner's screenshot: +4 gear that needs 10 Oridecon with 9 in the bag. v311 taught refine() to buy
+ // the missing ore, but the row the workshop builds its button from still tested "own every ore first",
+ // so the attempt was greyed out over the shortfall it was about to cover. Enabled now - and the one
+ // thing that may still block it, the money, has to say how much it wants.
+ // The sim stubs log() out; capture the real feed text for this test only.
+ // The exact screenshot: a +4 N+ weapon (10 Oridecon a try, 21,000z, 49%), 9 in the bag.
+ ev(`tabs.push('equip');sub.equip='refine';selE='weapon';S.useRefineScroll=false;S.eq.weapon={...S.eq.weapon,sec:5,val:7200,r:4};S.ore.ori=9;window.v312Keep=Math.random;window.v312Feed=[];window.v312KeepLog=log;log=m=>window.v312Feed.push(m);Math.random=()=>0`);
+ const fee=ev('refCost(S.eq.weapon)'),total=ev('refCost(S.eq.weapon)+Math.max(0,refOre(S.eq.weapon)-S.ore.ori)*BM_ORE');
+ assert.equal(ev('refOre(S.eq.weapon)'),10);assert.equal(fee,21000);assert.equal(total,121000);
+ ev(`S.zeny=${total}+5000;renderWin()`);
+ let b=doc.querySelector('.eclipse-workshop-action [data-a=refine]');
+ assert.equal(b.disabled,false,'one ore short must not block an attempt the purse can cover');
+ assert.match(doc.querySelector('.eclipse-refine-preview').textContent,/Oridecon short/);
+ assert.ok(b.textContent.includes(total.toLocaleString()),'the button names the total it is about to spend');
+ b.click();
+ // v313: pressing Refine asks before it buys anything.
+ assert.equal(doc.getElementById('modal').style.display,'flex','the purchase is put to the player first');
+ assert.match(doc.getElementById('mt').textContent,/Buy the missing 1 Oridecon at the Black Market price of 100,000z/);
+ assert.match(doc.getElementById('mt').textContent,/Total 121,000z, leaving 5,000z/);
+ assert.match(doc.getElementById('my').textContent,/Buy 1/);
+ assert.equal(ev('S.eq.weapon.r'),4,'nothing is refined before the answer');
+ assert.equal(ev('S.zeny'),total+5000,'and not a coin spent');
+ doc.getElementById('mn').click();
+ assert.equal(ev('S.zeny'),total+5000,'cancelling spends nothing');
+ b=doc.querySelector('.eclipse-workshop-action [data-a=refine]');
+ b.click();
+ doc.getElementById('my').click();
+ assert.equal(ev('S.eq.weapon.r'),5,'the attempt runs once the purchase is agreed');
+ assert.equal(ev('S.ore.ori'),0,'the bought ore is spent in the same attempt, nothing left over');
+ assert.equal(ev('S.zeny'),5000,'fee plus one auto-bought ore leaves exactly the change');
+ assert.match(ev("window.v312Feed.join(' | ')"),/Bought 1 Oridecon/);
+ assert.ok(fee>0&&total>fee);
+ // Money is the one remaining gate, and it explains itself instead of just greying out.
+ ev(`S.eq.weapon.r=4;S.ore.ori=refOre(S.eq.weapon)-1;S.zeny=${total}-2500;renderWin()`);
+ b=doc.querySelector('.eclipse-workshop-action [data-a=refine]');
+ assert.equal(b.disabled,true,'the purse cannot cover the total');
+ assert.match(b.textContent,/Need 2,500z more/);
+ assert.match(doc.querySelector('.eclipse-refine-preview').textContent,/Zeny short/);
+ // Full ore: the row still names the price, and there is nothing to ask about.
+ ev(`S.ore.ori=refOre(S.eq.weapon);S.zeny=${total};renderWin()`);
+ b=doc.querySelector('.eclipse-workshop-action [data-a=refine]');
+ assert.equal(b.disabled,false);
+ assert.match(doc.querySelector('.eclipse-refine-preview').textContent,/Total/);
+ doc.getElementById('modal').style.display='none';
+ b.click();
+ assert.notEqual(doc.getElementById('modal').style.display,'flex','a stocked bench needs no purchase confirmation');
+ ev('Math.random=window.v312Keep;log=window.v312KeepLog');
+});
+
 test('screen companion shortcuts open pets and party cards deploy, swap and remove',()=>{
  ev(`S.pets=[0,1,2,3].map((sp,i)=>({id:92000+i,sp,mut:0,eq:[0,0,0],skills:[],on:i<3}));window.eclipseRealBars()`);
  doc.querySelector('#eclipseCompanions > [data-t=pet]').click();assert.ok(doc.querySelector('[data-win=pet]'));
@@ -317,7 +367,9 @@ test('protection On/Off confirms below +5 and never spends on cancel or stale co
  let before=ev('JSON.stringify(S)');doc.querySelector('[data-a=refine]').click();assert.equal(doc.getElementById('modal').style.display,'flex');assert.match(doc.getElementById('mt').textContent,/below \+5/);assert.equal(ev('JSON.stringify(S)'),before);doc.getElementById('mn').click();assert.equal(ev('JSON.stringify(S)'),before);
  ev('refine("weapon")');const cost=ev('refCost(S.eq.weapon)'),zeny=ev('S.zeny');ev('window.oldRefRandom=Math.random;Math.random=()=>0');doc.getElementById('my').click();doc.getElementById('my').click();ev('Math.random=window.oldRefRandom');assert.equal(ev('S.refineScrolls'),3);assert.equal(ev('S.eq.weapon.r'),4);assert.equal(ev('S.zeny'),zeny-cost);
  ev('refine("weapon");S.eq.weapon={...S.eq.weapon,id:990001}');before=ev('JSON.stringify(S)');doc.getElementById('my').click();assert.equal(ev('JSON.stringify(S)'),before);
- ev('refine("weapon");S.ore.ori=0');before=ev('JSON.stringify(S)');doc.getElementById('my').click();assert.equal(ev('JSON.stringify(S)'),before);
+ // v311: an empty ore stack is auto-bought now, so "spends nothing" is the case with no Zeny for it.
+ ev('refine("weapon");S.ore.ori=0;window.keepZeny=S.zeny;S.zeny=0');before=ev('JSON.stringify(S)');doc.getElementById('my').click();assert.equal(ev('JSON.stringify(S)'),before);
+ ev('S.zeny=window.keepZeny');
  ev(`S.ore.ori=1000;ACT.refprotect('0');window.oldRefRandom=Math.random;Math.random=()=>0;refine('weapon');Math.random=window.oldRefRandom`);assert.equal(ev('S.eq.weapon.r'),5);assert.equal(ev('S.refineScrolls'),3);
 });
 test('large HUD numbers are compact while the exact rates remain accessible',()=>{
@@ -569,19 +621,23 @@ test('v265: Display separates Chat box from Activity log and Ascension Forge scr
  styleEl.remove();
 });
 
-test('v283: Illustrated Rune-Midgard World Atlas shows only Full Map on mini-map, omits lore cards, supports paired sub-zones, and enables zoom + Escape inside Full Map',()=>{
+test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar, 2-column zero-scroll split, inline stage header + paired sub-zones, and Full Map zoom + Escape',()=>{
  ev("closeMailDaily();closeGmStudio();S.mp=1;S.lvl=3;S.prog=MAPS.map(()=>10);tabs.length=0;openTab('map');renderWin()");
  const win=doc.querySelector('#wins [data-win="map"]');
  assert.ok(win,'map window opens');
  assert.equal(win.querySelectorAll('[data-a="selm"]').length,10,'all 10 destination cards remain intact');
  assert.equal(win.querySelectorAll('.ui-route [data-a="sell_"]').length,15,'all 15 stage buttons remain intact');
+ assert.equal(win.querySelector('.ui-route [data-a="sell_"][data-v="10"] b').textContent,'MVP','Stage 10 displays MVP label on World Atlas');
+ assert.ok(win.querySelector('.rm-optb-head .rm-optb-kicker').textContent.includes('02 / IZLUDE'),'Option B inline stage header displays 02 / MAP kicker');
+ assert.ok(win.querySelector('.rm-optb-head [data-a="adv"]'),'Auto-advance toggle sits inline inside Option B stage header');
  assert.equal(win.querySelector('.rm-lore-card'),null,'lore/landmark card is completely removed');
  assert.equal(win.querySelectorAll('[data-a="atlaszoom"]').length,0,'mini-map omits zoom controls');
  assert.equal(win.querySelectorAll('.rm-controls button').length,1,'mini-map toolbar shows only Full Map button');
  assert.ok(win.querySelector('.rm-controls [data-a="atlasfull"]'),'Full Map button is present on mini-map');
  const eclipseCss=require('fs').readFileSync(require('path').join(__dirname,'../../assets/ui/eclipse.css'),'utf8');
- assert.match(eclipseCss,/#wins \.eclipse-atlas-hero\.rm-illustrated-hero>\.rm-hero-caption\{[\s\S]*?position:relative;/,'mini-map description box sits below the viewport instead of overlapping Comodo');
- assert.match(eclipseCss,/body\.rm-atlas-fullscreen #wins>\.wp\[data-win="map"\]\.rm-fullscreen-mode \.eclipse-atlas-hero\.rm-illustrated-hero>\.rm-hero-caption\{[\s\S]*?top:12px;[\s\S]*?bottom:auto;/,'Full Map description box sits in top-left ocean clear of Comodo');
+ assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-destinations \.mapgrid\{[\s\S]*?repeat\(10,minmax\(0,1fr\)\)/,'Option B top bar renders all 10 maps in one horizontal row');
+ assert.match(eclipseCss,/#wins \.eclipse-atlas-hero\.rm-illustrated-hero>\.rm-hero-caption\{[\s\S]*?display:none;/,'mini-map hides caption box so Comodo and the coastline remain unobstructed');
+ assert.match(eclipseCss,/body\.rm-atlas-fullscreen #wins>\.wp\[data-win="map"\]\.rm-fullscreen-mode \.eclipse-atlas-hero\.rm-illustrated-hero>\.rm-hero-caption\{[\s\S]*?display:block;[\s\S]*?top:12px;[\s\S]*?bottom:auto;/,'Full Map description box sits in top-left ocean clear of Comodo');
  win.querySelector('[data-a="atlasplace"][data-v="comodo"]').click();
  assert.equal(ev('mapM'),5,'clicking Comodo pin selects Comodo');
  ev("mapM=1;renderWin()");

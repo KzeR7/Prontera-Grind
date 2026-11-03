@@ -912,11 +912,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=286">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=314">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=279">
+<link rel="stylesheet" href="assets/social.css?v=314">
+<link rel="stylesheet" href="assets/social-fishing.css?v=314">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1021,7 +1022,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div class="login-card" style="max-width:520px">
 <h2 id="sessionGateTitle" style="font-size:16px">🔐 Signed in on another device</h2>
 <p style="font-size:13px;opacity:1;margin:0 0 10px">This account was signed in somewhere else, so this tab has stopped playing. Only one device can play a character at a time.</p>
-<p id="sessionGateText" style="font-size:12px;line-height:1.6;margin:0 0 10px">Everything up to this moment is safe. The other device is playing the account now - sign in again here only when you want to take it back (that will end the other device's session in turn).</p>
+<p id="sessionGateText" style="font-size:12px;line-height:1.6;margin:0 0 10px">This tab's session is no longer valid - either the character signed in somewhere else, or the session expired. Everything up to this moment is safe. Sign in again only when you want to take the character back (that ends the other session in turn).</p>
 <div class="row" style="justify-content:center;margin-top:12px"><button id="sessionGateBack" class="login-btn" onclick="location.reload()">Sign in again</button></div>
 </div></div>
 <div id="offlineModal" role="dialog" aria-modal="true" aria-labelledby="offlineTitle" aria-describedby="offlineExplanation">
@@ -1311,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-02 haven-v283 illustrated rune-midgard world atlas';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-03 haven-v314 illustrated rune-midgard world atlas';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2988,7 +2989,16 @@ const NA1=18.705917193,NE1=1.28684215,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=1
 // value at least 1, so a requirement is always a readable number and never zero.
 // Base leveling gains a separate late-game requirement multiplier. The shared
 // needAt curve still supplies Job requirements and contract rewards.
-const BASE_EXP_LATE_LV=100,BASE_EXP_LATE_X=1.5;
+// v291 (owner, launch day: players hit Base 150 in under 24 hours): the pacing model in
+// tools/tune_pacing.js assumes 800 kills/hour, but the measured earned builds in
+// tools/tests/fixtures/progression_encounters.json clear 4,300-7,500 kills/hour, so the
+// 100-150 band collapsed from the modeled ~96 h to ~12-20 h of farm-equivalent time.
+// BASE_EXP_LATE_X 1.5 -> 4 stretches ONLY Base 100+ requirements (Job EXP, quest rewards
+// and Ascension income all read needAt()/expRate() and are untouched): at measured rates
+// the band now costs ~33 h (fastest build) to ~55 h farm-equivalent, i.e. roughly 2-3 real
+// days for a hardcore player even counting the capped offline claims. Levels already
+// reached are never rolled back - the multiplier only prices future EXP.
+const BASE_EXP_LATE_LV=100,BASE_EXP_LATE_X=4;
 const roundReq=n=>{const a=Math.abs(n),m=a<100?1:a<1e4?10:a<1e5?100:1e3;return Math.max(1,Math.round(n/m)*m)};
 // Job levels run alongside base levels. JOFF[t] is the base level a job level of tier t
 // keeps pace with: Novice job j ~ base j, 1st job j ~ base j+9, 2nd job j ~ base j+49,
@@ -3101,7 +3111,7 @@ const PET_SKILLS=[
   {id:'thunderclap',n:'Thunderclap',kind:'aoe',power:1.25,radius:4,cd:12,desc:'AoE: 1.25× pet damage to enemies within 4 units',vfx:'jup',color:'#8fe9ff',icon:'⚡'},
   {id:'piercingfang',n:'Piercing Fang',kind:'single',power:2.0,cd:10,desc:'Single target: 2.0× pet damage',vfx:'spiral',color:'#ff9dff',icon:'🗡️'},
   {id:'spiritbolt',n:'Spirit Bolt',kind:'single',power:2.25,cd:11,desc:'Single target: 2.25× pet damage',vfx:'soulb',color:'#fff3a0',icon:'✧'},
-  {id:'treasuresniff',n:'Treasure Sniff',kind:'utility',effect:'zeny',value:40,cd:35,desc:'Utility: finds 40 Zeny, no combat damage',vfx:'aid',color:'#ffd23f',icon:'🪙'},
+  {id:'treasuresniff',n:'Treasure Sniff',kind:'utility',effect:'zeny',value:40,cd:35,desc:'Utility: finds 40 Zeny, no combat damage',vfx:'aid',color:'#ffd23f',icon:'💰'},
   {id:'warmnuzzle',n:'Warm Nuzzle',kind:'utility',effect:'heal',value:3,cd:32,desc:'Utility: restores 3% of Max HP, no combat damage',vfx:'aid',color:'#ff9db8',icon:'💞'},
   {id:'guardingchirp',n:'Guarding Chirp',kind:'utility',effect:'def',value:5,duration:20,cd:40,desc:'Utility: +5 DEF for 20s, no combat damage',vfx:'coat',color:'#8fe9ff',icon:'🛡️'},
   {id:'tailwag',n:'Tail Wag',kind:'utility',effect:'comfort',cd:28,desc:'Utility: a cosmetic morale emote, no combat damage',vfx:'aid',color:'#fff3a0',icon:'✨'}
@@ -3285,7 +3295,7 @@ function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},labels={damage:'
  return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*ascUpgradeScale(k,rank)).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
-const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
+const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0,ledgerApplied:[]},fishing:{v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true},coins:0,rods:['twig'],rod:'twig',bait:{},baitSel:null,bagTier:0,title:null},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -3374,7 +3384,35 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   f.poker.day=typeof f.poker.day==='string'?f.poker.day.slice(0,10):trialDay();
   f.poker.chips=Math.max(0,Math.min(1e9,Math.floor(num_(f.poker.chips,1000))));
   f.poker.freeClaimed=Math.max(0,Math.min(1,Math.floor(num_(f.poker.freeClaimed,0))));
+  // Applied server ledger ids survive reloads and daily resets with the chips they credited.
+  f.poker.ledgerApplied=[...new Set((Array.isArray(f.poker.ledgerApplied)?f.poker.ledgerApplied:[]).filter(id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id)))].slice(-512);
   if(f.poker.day!==trialDay()){f.poker.day=trialDay();f.poker.freeClaimed=0;}
+  // v287: plaza Fishing Bag. The module normalizes again on read; this keeps a corrupt or
+  // oversized blob from ever being saved back. Entries beyond the 120-fish bag are dropped oldest-first.
+  // v288 adds the Fishcoin economy (coins, owned rods, bait pouch) and five more mutation kinds.
+  if(!f.fishing||typeof f.fishing!=='object'||Array.isArray(f.fishing))f.fishing={v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true}};
+  f.fishing.v=1;
+  const fishMuts=['shiny','sparkling','frozen','electric','ghostly','golden','prismatic'];
+  // v295: permanent bag tiers (120 → 200 → 300 → 400 → 500) and the equipped fishing title.
+  // The tier is clamped to the ladder and the slice uses THAT cap, so upgrading never appears to
+  // lose fish and a tampered tier can never grant capacity the ladder does not sell.
+  const fishBagTiers=[120,200,300,400,500];
+  f.fishing.bagTier=Math.max(0,Math.min(fishBagTiers.length-1,Math.floor(num_(f.fishing.bagTier,0))||0));
+  const fishBagCap=fishBagTiers[f.fishing.bagTier];
+  f.fishing.bag=(Array.isArray(f.fishing.bag)?f.fishing.bag:[]).filter(e=>e&&typeof e==='object'&&typeof e.sp==='string').slice(-fishBagCap).map(e=>({id:typeof e.id==='string'?e.id.slice(0,40):'',sp:e.sp.slice(0,24),w:Math.round(cl(num_(e.w,0),0,999)*100)/100,mut:fishMuts.includes(e.mut)?e.mut:null,at:Math.max(0,Math.floor(num_(e.at,0))),perfect:e.perfect===true}));
+  f.fishing.dex=f.fishing.dex&&typeof f.fishing.dex==='object'&&!Array.isArray(f.fishing.dex)?Object.fromEntries(Object.entries(f.fishing.dex).slice(0,96).filter(([k,d])=>typeof k==='string'&&d&&typeof d==='object').map(([k,d])=>[k.slice(0,24),{n:safeCount(d.n),bw:Math.round(cl(num_(d.bw,0),0,999)*100)/100,at:Math.max(0,Math.floor(num_(d.at,0))),mut:[...new Set((Array.isArray(d.mut)?d.mut:[]).filter(m=>fishMuts.includes(m)))]}])):{};
+  f.fishing.stats={casts:safeCount(f.fishing.stats?.casts),catches:safeCount(f.fishing.stats?.catches),escapes:safeCount(f.fishing.stats?.escapes),perfects:safeCount(f.fishing.stats?.perfects)};
+  // v297 (owner bug): autoSell was dropped here, so the toggle looked on in a live session but
+  // every save wrote a settings object without it and the next load turned auto-sell back off.
+  f.fishing.settings={fish:true,sound:f.fishing.settings?.sound!==false,autoSell:f.fishing.settings?.autoSell===true};
+  const fishRodIds=['twig','oak','brass','silver','golden','mythril'],fishBaitIds=['worm','shrimp','grub','jelly'];
+  f.fishing.coins=Math.max(0,Math.min(1e9,Math.floor(num_(f.fishing.coins,0))));
+  f.fishing.rods=[...new Set(['twig',...(Array.isArray(f.fishing.rods)?f.fishing.rods:[]).filter(r=>fishRodIds.includes(r))])];
+  f.fishing.rod=typeof f.fishing.rod==='string'&&f.fishing.rods.includes(f.fishing.rod)?f.fishing.rod:'twig';
+  f.fishing.bait=f.fishing.bait&&typeof f.fishing.bait==='object'&&!Array.isArray(f.fishing.bait)?Object.fromEntries(fishBaitIds.map(b=>[b,Math.max(0,Math.min(999,Math.floor(num_(f.fishing.bait[b],0))))]).filter(([,n])=>n>0)):{};
+  f.fishing.baitSel=typeof f.fishing.baitSel==='string'&&fishBaitIds.includes(f.fishing.baitSel)?f.fishing.baitSel:null;
+  const fishTitleIds=['dockhand','bait-layer','reed-watcher','species-collector','perfect-hand','heavy-hook','deep-line','mutation-hunter','pond-legend','apex-angler','tide-regular','line-veteran','leviathan-hook','colossus-hook','secret-circle','mega-hunter','full-creel','armoury','coin-hoard','dark-star'];
+  f.fishing.title=typeof f.fishing.title==='string'&&fishTitleIds.includes(f.fishing.title)?f.fishing.title:null;
   if(!Array.isArray(f.mail))f.mail=[];else f.mail=f.mail.filter(m=>m&&typeof m==='object'&&typeof m.body==='string').slice(0,50);
   f.mailSeeded=f.mailSeeded===true;
   f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
@@ -3696,11 +3734,17 @@ function cloudBadgeStale(why){
   cloudBadge('☁ …',(why||'Not on the server yet')+(hhmm?' - last save reached it at '+hhmm:''));
 }
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
-async function cloudFetch(path,opt){const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});const res=await fetch(cloudUrl(path),Object.assign({credentials:'same-origin'},o,{headers:hdrs}));
+async function cloudFetch(path,opt){const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});const epoch=CLOUD.epoch||0;const res=await fetch(cloudUrl(path),Object.assign({credentials:'same-origin'},o,{headers:hdrs}));
   // v253: one live session per account (functions/api/sessions.js). A 401 while this tab holds a
   // session means another device signed in as this player, so this tab stops instead of grinding
   // a copy nobody will ever see and losing it to the next save conflict.
-  if(res&&res.status===401&&CLOUD.on&&!CLOUD.signingOut)cloudSessionReplaced();const pt=res&&res.headers&&typeof res.headers.get==='function'?res.headers.get('x-preview-session'):null;if(pt)CLOUD.previewToken=pt;return res}
+  // v289: only a 401 from THIS sign-in counts. A slow request issued before the login (startup
+  // probes racing the sign-in) can resolve 401 after CLOUD.on flips true; ending the fresh session
+  // over it showed a bogus "signed in on another device" right after a successful login.
+  // v307: /api/me marks a credential-less 401 as X-Session:none - in an embedded preview that is a
+  // browser dropping the third-party cookie, not a sign-in on another device.
+  if(res&&res.status===401&&CLOUD.on&&!CLOUD.signingOut&&epoch===(CLOUD.epoch||0))
+    cloudSessionReplaced((res.headers&&typeof res.headers.get==='function'&&res.headers.get('x-session'))||'');const pt=res&&res.headers&&typeof res.headers.get==='function'?res.headers.get('x-preview-session'):null;if(pt)CLOUD.previewToken=pt;return res}
 async function boardRefresh(period=boardPeriod,kind=boardKind){
   if(!['daily','weekly','all'].includes(period)||!['kills','echo'].includes(kind))return;
   const seq=++boardRequest;
@@ -3858,9 +3902,22 @@ function cloudMaintenance(reason){
 // playing - another device owns the character now - so it stops the simulation, keeps the local
 // copy, and says so plainly. It never uploads (that would race the device that just signed in).
 let cloudReplaced=false;
-function cloudSessionReplaced(){
+// why: 'ended' = another sign-in owns the account now; 'none' = this tab has no session token at
+// all (a blocked/dropped cookie, or a server that lost the account); '' = unknown.
+let cloudReplacedWhy='';
+function cloudSessionReplaced(why){
   if(cloudReplaced)return;
-  cloudReplaced=true;
+  cloudReplaced=true;cloudReplacedWhy=why||'';
+  const framed=(()=>{try{return window.top!==window.self}catch(e){return true}})();
+  const title=$('sessionGateTitle'),text=$('sessionGateText'),button=$('sessionGateBack');
+  if(why==='none'){
+    if(title)title.textContent='🔐 This tab lost its sign-in';
+    if(text)text.textContent='The browser did not send the sign-in back to the server'+(framed?' - an embedded preview is an iframe on another site, and browsers block its cookies':'')+'. Nothing was lost: your character is safe on the account. '+(framed?'Open the preview in its own tab, or ':'')+'sign in again here.';
+    if(button)button.textContent='Sign in again';
+  }else{
+    if(title)title.textContent='🔐 Signed in on another device';
+    if(text)text.textContent='This tab\'s session is no longer valid - either the character signed in somewhere else, or the session expired'+(framed?' (an embedded preview can also drop it)':'')+'. Everything up to this moment is safe. Sign in again only when you want to take the character back (that ends the other session in turn).';
+  }
   CLOUD.paused=true;CLOUD.lost=true;CLOUD.gate=true;
   try{save()}catch(e){}
   cloudBadge('☁ ⛔','Signed out: your account signed in on another device');
@@ -4072,6 +4129,7 @@ function cloudApplyGrants(list){
 function ptsSpent(){let c=0;for(const k of['str','agi','dex','luk','int','vit']){const v=S.st[k]||1;for(let i=1;i<v;i++)c+=(i<ELITELV?1+Math.floor((i-1)/10):10+(i-ELITELV))}return c}
 
 function cloudSession(u,gm,id){
+  CLOUD.epoch=(CLOUD.epoch||0)+1;   // v289: requests already in flight belong to the previous session
   CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;if(id)CLOUD.id=Number(id);
   if(typeof shopSession==='function')shopSession(u);   // haven-v215: what this account owns in the Cash Shop
   if(typeof friendsSession==='function')friendsSession(u);   // haven-v273: the account's friends list
@@ -5836,13 +5894,33 @@ const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Colle
 const refineScrollFrom=()=>0;
 function refineProtectionUI(){return `<div class="sec">Refine Protection Scrolls</div><small>Regular: ${safeCount(S.refineScrolls)} (for +0 to +10 on all gear)</small><br><small>Mythic: ${safeCount(S.mythicScrolls)} (for +11 to +15 on Mythic gear; boss drops, Black Market or Echo)</small><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>When On, one scroll is used per attempt, including success, and prevents rank loss. +10 is safe on Mythic gear (no scroll needed). Below +5, we ask before spending a scroll. Unprotected failures from +5 to +9 lose one rank on every grade. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
 function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it.r||0)>=maxRef)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
-  if(S.ore[o]<need){log(`You need ${need} ${ORE[o]} for this piece. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
+  // The shortfall is priced up front so the attempt can refuse before it asks anything, but the
+  // ore is only bought once the attempt is certain to happen - a cancelled protection-scroll
+  // confirmation must not have spent Zeny on supplies first.
+  const short=refineOreShortfall(it);
+  if(!Number.isSafeInteger(short.cost)||S.zeny<c+short.cost){
+   log(short.miss>0?`Not enough Zeny: this refine needs ${c.toLocaleString()}z plus ${short.miss} ${ORE[o]} at ${BM_ORE.toLocaleString()}z (${short.cost.toLocaleString()}z).`:'Not enough Zeny.','','zeny');
+   return;
+  }
   const previousRank=it.r||0;let succeeded=false;const protectedAttempt=!!S.useRefineScroll;
+  // v313 (owner: "make a pop up to confirm buying materials & amount - players just press and
+  // finish all the zeny"). The purchase is now a question, not a side effect: it names the count,
+  // the unit price, the total for the attempt and what the purse would be left with. `answered`
+  // carries what has already been agreed to, so a second question never re-asks the first.
+  const answered=arguments[1],buyAnswered=answered===it||!!(answered&&answered.buy),scrollAnswered=answered===it;
   const needsMythicScroll=it.sec===6&&previousRank>=10;
   if(protectedAttempt&&needsMythicScroll&&!safeCount(S.mythicScrolls)){log('Mythic Protection Scroll required for +11 to +15 refines. Find them on Ascension bosses, or exchange 100 Sigils in the Black Market or 600 Echo Shards in Echo.');return;}
   if(protectedAttempt&&!needsMythicScroll&&!safeCount(S.refineScrolls)){log('Refine Protection Scroll is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
+  if(short.miss>0&&!buyAnswered){
+   const owner=S;let pending=true,left=S.zeny-c-short.cost;
+   ask(`This refine needs ${need} ${ORE[o]} and you have ${short.have}. Buy the missing ${short.miss} ${ORE[o]} at the Black Market price of ${BM_ORE.toLocaleString()}z each - ${short.cost.toLocaleString()}z - and refine for ${c.toLocaleString()}z? Total ${(c+short.cost).toLocaleString()}z, leaving ${left.toLocaleString()}z.`,()=>{
+    if(!pending)return;pending=false;
+    if(S!==owner||S.eq[sl]!==it||(it.r||0)!==previousRank)return;
+    refine(sl,{buy:true});
+   },{yes:`Buy ${short.miss} · ${short.cost.toLocaleString()}z`,no:'Cancel'});return;
+  }
   // Warn before spending a scroll where a failed attempt cannot drop the rank.
-  if(protectedAttempt&&(previousRank<5||(it.sec===6&&previousRank===10))&&arguments[1]!==it){
+  if(protectedAttempt&&(previousRank<5||(it.sec===6&&previousRank===10))&&!scrollAnswered){
     const owner=S;let pending=true;
     ask((it.sec===6?'This Mythic equipment is +'+previousRank+', so failure cannot drop its rank. Use one '+(needsMythicScroll?'Mythic ':'')+'Refine Protection Scroll anyway?':'This equipment is below +5, so failure cannot drop its rank. Use one Refine Protection Scroll anyway?')+' This attempt also costs '+c.toLocaleString()+'z and '+need+' '+ORE[o]+'.',()=>{
       if(!pending)return;pending=false;
@@ -5851,12 +5929,18 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
     },{yes:'Use scroll & refine',no:'Cancel'});return;
   }
   if(protectedAttempt){if(needsMythicScroll)S.mythicScrolls--;else S.refineScrolls--;}
+  const buy=refineOreShortfall(it);
+  if(buy.miss>0){S.zeny-=buy.cost;S.ore[o]=safeCount(S.ore[o])+buy.miss;log(`Bought ${buy.miss} ${ORE[o]} for ${buy.cost.toLocaleString()}z to finish this refine.`,'r3','zeny')}
   S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){succeeded=true;it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(protectedAttempt){log(`Refine failed, but your ${needsMythicScroll?'Mythic ':''}Protection Scroll kept +${it.r}.`,'r3','gear')}
     else if(it.r>=5&&(it.sec!==6||it.r<10)){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
     else if(it.sec===6&&it.r>=11){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
     else if(it.r>=10&&it.sec===6){log(`Refine failed, but +10 is safe on Mythic gear. Kept +${it.r}.`,'r3','gear')}
     else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save();if(typeof eclipseRefineFeedback==='function')eclipseRefineFeedback(it,previousRank,succeeded)}
+// v311 (owner: "when materials are short it must auto purchase them, I shouldn't have to go shop").
+// Refine buys the shortfall itself at the Black Market ore price, straight from the attempt, and
+// says so in the feed. The splurge never happens silently: the line names the count and the Zeny.
+function refineOreShortfall(it){const o=it.slot==='weapon'?'ori':'elu',need=refOre(it),miss=Math.max(0,need-safeCount(S.ore[o]));return {ore:o,need,have:safeCount(S.ore[o]),miss,cost:miss*BM_ORE};}
 // Outcome presentation follows the committed transaction; it never rolls or spends resources.
 let eclipseRefineTimer,eclipseRefineOutcome=null;
 function eclipseRefineFeedback(it,previousRank,succeeded){
@@ -6337,14 +6421,18 @@ const JOB_RITE_OPPONENTS={
   Sniper:{n:'Sniper Shecil',spriteId:1638},
   'High Wizard':{n:'High Wizard Katrinn',spriteId:1639}
 };
-const JOB_RITE_SECS=30,JOB_RITE_BOSS_MULT=1.25;
+const JOB_RITE_SECS=30,JOB_RITE_BOSS_MULT=2;
 // v211 (owner: "job change should be hard and stronger than abyss nightmare boss"): the Crucible
-// opponent's HP is anchored to the Nightmare Abyss Stage 15 MVP - the deepest boss in the game - and
-// set 25% above it, so the trial is always the hardest single fight a third job can meet. nmBossHpOf
-// repeats spawn()'s own boss formula (that map's map bonus, NMBOSSHP and the Stage 15 +30%) so the
-// trial follows the boss instead of pinning a number: 89,341,585 -> 111,676,981 HP. Its ATK stays the
-// Astral Stage 1 value (15,235), already above the Dark Lord's 14,364. Before v211 it was 3x the
-// Astral Stage 1 regular mob (45,028,158 HP) - weaker than the boss it is meant to outclass.
+// opponent's HP is anchored to the Nightmare Abyss Stage 15 MVP - the deepest boss in the game - so
+// the trial is always the hardest single fight a third job can meet. nmBossHpOf repeats spawn()'s
+// own boss formula (that map's map bonus, NMBOSSHP and the Stage 15 +30%) so the trial follows the
+// boss instead of pinning a number. Its ATK stays the Astral Stage 1 value (15,235), already above
+// the Dark Lord's 14,364. Before v211 it was 3x the Astral Stage 1 regular mob (45,028,158 HP).
+// v292 (owner, launch observation: his no-card Assassin Cross with only a +4 N+ weapon passed with
+// ~1 s left, i.e. ~3.85M effective DPS beat the 1.25x bar of 3.72M): JOB_RITE_BOSS_MULT 1.25 -> 2,
+// a +60% jump inside the owner's requested 50-70% band. 89,341,585 x2 = 178,683,170 HP, ~5.96M DPS
+// in 30 s - that same no-card build now deals ~64% and fails, while carded/high-refine builds at
+// 2-3x the no-card output still clear. Timer, ATK, rewards (none) and retry rules are unchanged.
 const nmBossHpOf=(m,l)=>Math.floor(500*(1+m*.15+Math.max(0,m-4)*.2)*Math.pow(fieldPower(m,l),HPE)*(l>10?NMBOSSHP*nm15Of(l):1));
 const JOB_RITE_RESULT_MS=3000;
 const JOB_RITE={on:false,passed:null,result:null};
@@ -6375,7 +6463,11 @@ function startJobRite(target){
   Object.assign(JOB_RITE,{on:true,owner:S,user:currentUser,parent:S.cls,target,started:t,deadline:Date.now()+JOB_RITE_SECS*1000,outcome:null,exitAt:0,result:null,
     home:{mobs,mob,camps,activePack,respawn,engageTgt,drops,position:{...pl},hp:S.hp,tb,petBuff:{...petBuff},petBuffSrc:{...petBuffSrc}},
     enemy:{...template,...opponent,...stats,x:0,z:-4,hx:0,hz:-4,a:0,size:.6,pack:0,boss:false,spawn:1,mapIndex:10,sec:fieldOf(10,1).sec,
-      spriteSize:'Medium',spriteScale:.92,lvl:fieldPower(10,1),at:1.5,stun:0,mag:['demon','tree','blob'].includes(template.shape),drops:[],cardCh:0,exp:0,zeny:0}});
+      // v293 (owner: the trial opponent "is way too small", wants it slightly bigger than a player):
+      // 1634-1639 sit in no size table, so mobVisualScale falls back to spriteScale*MOB_REGULAR_VISUAL(.7)
+      // and .92 drew a 1.96-unit champion next to the 2.16-unit hero. 1.2 lands 3.05*1.2*.7 = 2.56
+      // world units, ~1.19x the player. Collision size, ATK cadence and everything else unchanged.
+      spriteSize:'Medium',spriteScale:1.2,lvl:fieldPower(10,1),at:1.5,stun:0,mag:['demon','tree','blob'].includes(template.shape),drops:[],cardCh:0,exp:0,zeny:0}});
   mobs=[JOB_RITE.enemy];mob=JOB_RITE.enemy;camps=[];activePack=0;engageTgt=null;drops=[];respawn=1e9;
   swing=null;resetSkillRuntime();for(const id in skCd)delete skCd[id];tb={};farmSession=null;
   S.hp=maxHp();pl.x=0;pl.z=-1;pl.wx=null;pl.wz=-1;pl.wt=0;pAtkT=.2;
@@ -6583,7 +6675,7 @@ function gmPetTest(mode){
   }
   ui();save();
 }
-let autoSellDraft=null,autoSellWorkspaceDraft=null,autoSellPreview=null,bulkSellSelection=null;
+let autoSellDraft=null,autoSellWorkspaceDraft=null,autoSellPreview=null,bulkSellSelection=null,autoSellWorkspaceArm=null;
 function bulkSellState(){if(!bulkSellSelection||bulkSellSelection.owner!==S)bulkSellSelection={owner:S,rarities:RARALL.map(()=>true)};return {...S,autoSell:bulkSellSelection.rarities};}
 function autoSellDraftState(){if(!autoSellDraft||autoSellDraft.owner!==S)autoSellDraft={owner:S,rules:cleanAutoSellRules(S.autoSellRules)||defaultAutoSellRules()};return autoSellDraft;}
 function autoSellWorkspaceState(){if(!autoSellWorkspaceDraft||autoSellWorkspaceDraft.owner!==S)autoSellWorkspaceDraft={owner:S,rules:cleanAutoSellRules(S.autoSellRules)||defaultAutoSellRules(),rarities:RARALL.map((_,i)=>!!S.autoSell?.[i])};return autoSellWorkspaceDraft;}
@@ -6654,7 +6746,7 @@ function autoSellWorkspacePanel(){
    <section class="eclipse-autosell-section"><div class="eclipse-autosell-section-head"><span class="eclipse-step">2</span><div><h3>What should be kept?</h3><small>Safety first</small></div></div><div class="eclipse-autosell-protections"><label><span>${uiIcon('refine')}<b>Refined equipment</b><small>Any piece with +1 or higher</small></span><input type="checkbox" data-sell-field="refined" ${rule.refined?'checked':''}></label><label><span>${uiIcon('cards')}<b>Gear with inserted cards</b><small>Socketed cards are separate</small></span><input type="checkbox" data-sell-field="socketed" ${rule.socketed?'checked':''}></label></div></section>
    <section class="eclipse-autosell-section eclipse-autosell-affixes"><div class="eclipse-autosell-rule-head"><div><label for="eclipseAutosellAffixAction">Affix rule</label><select id="eclipseAutosellAffixAction" data-sell-field="affixAction"><option value="keep" ${rule.affixAction==='keep'?'selected':''}>Keep matching affixes</option><option value="sell" ${rule.affixAction==='sell'?'selected':''}>Sell matching affixes</option></select></div><div class="eclipse-autosell-match"><span>Match</span><button type="button" data-a="autosellDraftMode" data-v="any" aria-pressed="${rule.mode==='any'}" class="${rule.mode==='any'?'on':''}">ANY</button><button type="button" data-a="autosellDraftMode" data-v="all" aria-pressed="${rule.mode==='all'}" class="${rule.mode==='all'?'on':''}">ALL</button><small>condition</small></div></div><div class="eclipse-autosell-affix-list">${affixOptions}</div>${addAffixButton}<p class="eclipse-autosell-summary">${rule.affixes.length?`${rule.affixAction==='keep'?'Keep items with matching affixes:':'Only sell items with matching affixes:'} ${esc(autoSellAffixSummary(rule))}`:'No affix condition selected; there is no affix-based restriction.'}</p></section>
    ${autoSellEditor(true)}
-  </main><aside class="eclipse-autosell-aside"><div class="eclipse-autosell-section-head"><span class="eclipse-step">3</span><div><h3>Check your rules</h3></div></div><p class="eclipse-autosell-rule-summary">${esc(autoSellWorkspaceSummary(rule,draft.rarities))}</p><div class="eclipse-autosell-always"><b>${uiIcon('shield')}Always protected</b><small>Locked gear, equipped items, saved class loadouts and paid reforge offers.</small></div><section class="eclipse-autosell-simulation"><div class="eclipse-autosell-sim-head"><span>DRAFT PREVIEW · CURRENT BAG</span><small>${Math.min(3,sim.checked.length)} sample outcome${Math.min(3,sim.checked.length)===1?'':'s'} · ${S.inv.length} items checked</small></div><div class="eclipse-autosell-sim-counts"><div><b>${sim.wouldSell.length}</b><small>would match</small></div><div><b>${sim.wouldKeep.length}</b><small>would stay</small></div></div>${reasonRows||'<p class="eclipse-autosell-empty">No items to simulate yet. New drops will be checked after you apply these rules.</p>'}<div class="eclipse-autosell-sim-value"><span>Potential sale value · simulation only</span><b>${sim.zeny.toLocaleString()} Zeny</b></div></section><p class="eclipse-autosell-fineprint">This check uses your real inventory but does not sell it. Applying rules affects future drops, including offline loot. Bulk-selling existing items stays a separate preview and confirmation.</p></aside></div>
+  </main><aside class="eclipse-autosell-aside"><div class="eclipse-autosell-section-head"><span class="eclipse-step">3</span><div><h3>Check your rules</h3></div></div><p class="eclipse-autosell-rule-summary">${esc(autoSellWorkspaceSummary(rule,draft.rarities))}</p><div class="eclipse-autosell-always"><b>${uiIcon('shield')}Always protected</b><small>Locked gear, equipped items, saved class loadouts and paid reforge offers.</small></div><section class="eclipse-autosell-simulation"><div class="eclipse-autosell-sim-head"><span>DRAFT PREVIEW · CURRENT BAG</span><small>${Math.min(3,sim.checked.length)} sample outcome${Math.min(3,sim.checked.length)===1?'':'s'} · ${S.inv.length} items checked</small></div><div class="eclipse-autosell-sim-counts"><div><b>${sim.wouldSell.length}</b><small>would match</small></div><div><b>${sim.wouldKeep.length}</b><small>would stay</small></div></div>${reasonRows||'<p class="eclipse-autosell-empty">No items to simulate yet. New drops will be checked after you apply these rules.</p>'}<div class="eclipse-autosell-sim-value"><span>Potential sale value · simulation only</span><b>${sim.zeny.toLocaleString()} Zeny</b></div><button class="eclipse-autosell-sellnow${autoSellWorkspaceArm&&autoSellWorkspaceArm.owner===S?' armed':''}" data-a="autosellworkspacesell" ${sim.wouldSell.length?'':'disabled'}>${autoSellWorkspaceArm&&autoSellWorkspaceArm.owner===S?`⚠ Click again to sell ${sim.wouldSell.length} item${sim.wouldSell.length===1?'':'s'} for ${sim.zeny.toLocaleString()}z`:`💰 Sell the ${sim.wouldSell.length} matching item${sim.wouldSell.length===1?'':'s'} in your bag now`}</button></section><p class="eclipse-autosell-fineprint">Applying rules affects future drops, including offline loot — it never touches what you already own. The button above is the opt-in for current items: it sells today's matches using this draft, with the same protections (locked, equipped, loadout and reforge-offer gear always stay).</p></aside></div>
  </div>`;
 }
 
@@ -6728,11 +6820,11 @@ function buildIllustratedAtlasHero(mi){
   const caption=`<div class="rm-hero-caption"><span class="ui-eyebrow">RUNE-MIDGARD / ${String(mi+1).padStart(2,'0')} · ${esc(place.title.toUpperCase())}</span><h2>${esc(MAPS[mi].n)}</h2><p>${esc(MAPS[mi].t)} · Recommended ${esc(MAPS[mi].rec)}</p></div>`;
   return `<div id="rmViewport" class="rm-viewport">${viewportBody}</div>${toolbar}${caption}`;
 }
-function buildIllustratedRegionBar(mi,make){
-  const place=worldAtlasPlaceOf(mi);
-  if(place.maps.length<=1)return null;
-  const wrap=make('div','rm-region-bar');
-  wrap.innerHTML=`<div class="rm-subzones" role="group" aria-label="${esc(place.title)} field zones"><span class="rm-subzones-kicker">Region zones</span><div class="rm-subzones-btns">${place.maps.map(idx=>{const m=MAPS[idx],on=idx===mi,here=!!S&&idx===S.mp,cleared=S?Math.min(S.prog[idx]||0,normalStages(idx)):0;return`<button type="button" class="rm-subzone-btn${on?' on':''}${here?' here':''}" data-a="atlassub" data-v="${idx}" aria-pressed="${on}"><b>${here?'● ':''}${esc(m.n)}</b><small>${esc(m.rec)} · ${cleared}/${normalStages(idx)}</small></button>`;}).join('')}</div></div>`;
+function buildIllustratedStageHead(mi,make){
+  const place=worldAtlasPlaceOf(mi),m=MAPS[mi],subDesc=(m.t||'').split('·')[0].trim();
+  const subBtns=place.maps.length>1?`<span class="rm-subzones rm-subzones-inline" role="group" aria-label="${esc(place.title)} field zones">${place.maps.map(idx=>{const zm=MAPS[idx],on=idx===mi,here=!!S&&idx===S.mp;return`<button type="button" class="rm-subzone-btn${on?' on':''}${here?' here':''}" data-a="atlassub" data-v="${idx}" aria-pressed="${on}"><b>${here?'● ':''}${esc(zm.n)}</b></button>`;}).join('')}</span>`:'';
+  const wrap=make('div','rm-optb-head');
+  wrap.innerHTML=`<div class="rm-optb-meta"><span class="rm-optb-kicker">02 / ${esc(m.n.toUpperCase())} · ${esc(m.rec)}</span>${subDesc?`<span class="rm-optb-sub">(${esc(subDesc)})</span>`:''}${subBtns}</div>`;
   return wrap;
 }
 function syncIllustratedAtlas(centerPlace){
@@ -6740,7 +6832,7 @@ function syncIllustratedAtlas(centerPlace){
   const vp=document.getElementById('rmViewport');
   if(!vp)return;
   const vw=vp.clientWidth||640,vh=vp.clientHeight||360;
-  const scale=Math.max(vw/1600,vh/900),cw=Math.round(1600*scale*100)/100,ch=Math.round(900*scale*100)/100;
+  const scale=worldAtlasFullscreen?Math.max(vw/1600,vh/900):(vw/vh>(16/9)*1.12?vh/900:Math.max(vw/1600,vh/900)),cw=Math.round(1600*scale*100)/100,ch=Math.round(900*scale*100)/100;
   worldAtlasPan.cw=cw;worldAtlasPan.ch=ch;
   if(!worldAtlasFullscreen){
     worldAtlasPan.zoom=1;
@@ -7041,8 +7133,14 @@ const V={
     return`<p>Equipped cards stay here and can be merged using loose copies. Compatible cards transfer when replacing gear; cards that cannot fit stay on the old item. Merge identical cards: ★ +9%, ★★ +12%, ★★★ +15% effects. Each step consumes 1 / 3 / 5 extra unstarred copies (10 cards total for ★★★). Normal and Nightmare merge separately. Starred cards are protected from Mastery donations and resets.</p><div class="eclipse-card-filters" role="group" aria-label="Card filters">${[[-1,"All grades"],...GRADE.map((n,i)=>[i,n])].map(([v,n])=>`<button data-a="cardgrade" data-v="${v}" aria-pressed="${collectionGrade===v}">${n}</button>`).join('')}<button data-a="cardmerge" data-v="${collectionMergeOnly?0:1}" aria-pressed="${collectionMergeOnly}">Mergeable now${mergeGroups?' ('+mergeGroups+')':''}</button></div><div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${esc(n)}" data-tip="${g[n][0].id}">🃏<small>${"★".repeat(cardStars(g[n][0]))}</small><i class="rf">x${g[n].length}</i></div>`).join('')||(!entries.length?'<small>No cards yet. Every monster drops its own card at a low chance.</small>':collectionMergeOnly?'<small>Nothing can merge right now. A merge needs extra unstarred copies of the same card; Normal and Nightmare copies merge separately.</small>':'<small>No cards in this grade.</small>')}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<p class="card-location">${esc(entries.find(x=>x.card===sel).location)}</p><div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return loose&&e&&(e.cards||[]).length<(e.slots||0)&&!socketWhy(sel,e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}${!sel.legacy&&sel.cardKey&&cardStars(sel)<3?`<button data-a="mergecard" data-v="${sel.id}">Merge to ${cardStars(sel)+1}★ · ${cardMergeable(sel)?CARD_MERGE_COST[cardStars(sel)]+' extra copies':'need '+cardMergeNeed(sel)+' more'}</button>`:""}${loose?`<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button>`:''}</div></div>`:''}`},
   refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Protection Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, 10 on N and N+, and 15 on Mythic. Mythic gear can reach +15. Enable Refine Protection Scroll below: one scroll is consumed on every attempt while On, including success, and keeps your rank on failure. Only current +5 or above can lose a rank. Below +5 asks for confirmation before spending a scroll. Success chance is unchanged. Crafted and purchased scrolls share this reserve.</small>`
-    +`${refineProtectionUI()}`+dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
-      return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=(it.sec===6?15:10)?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=(it.sec===6?15:10)||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
+    +`${refineProtectionUI()}`+dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),maxed=r>=(it.sec===6?15:10),short=refineOreShortfall(it),total=c+short.cost,afford=S.zeny>=total;
+      // v312 (owner: "did u even add in the refine? still showing unclickable"). v311 taught refine() to
+      // buy the ore it was missing, but this list - the one the workshop builds its rows from - kept the
+      // old rule, "you must already own every ore", so the button greyed out over the very shortfall the
+      // attempt was about to cover. The gate is the money now: fee plus auto-bought ore, and the line
+      // says both numbers so a disabled button is never a mystery.
+      const price=maxed?'':short.miss>0?' &middot; short '+short.miss+' '+ORE[o]+' (buy for '+short.cost.toLocaleString()+'z on confirm) &middot; total '+total.toLocaleString()+'z':' &middot; total '+total.toLocaleString()+'z';
+      return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${maxed?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}${price}</small>${!maxed&&!afford?'<br><small class="refine-auto-buy is-short">Need '+(total-S.zeny).toLocaleString()+'z more</small>':''}<br><button data-a="refine" data-v="${k}" ${maxed||!afford?'disabled':''}>Refine${maxed?'':' &middot; '+total.toLocaleString()+'z'}</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
     return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters, and every species has a signature passive - a duplicate folds into the copy you own and raises that species' Bond. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}<span class="pet-bond-badge">${bondStars(q.sp)}</span></div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
   board(){const labels={daily:'Daily',weekly:'Weekly',all:'All-time'},echo=boardKind==='echo',data=boardCache[boardKind+':'+boardPeriod],esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -7326,7 +7424,7 @@ function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display=
   const questHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?contractPanel(eclipseQuestAll?Infinity:3)+(S.q||[]).map((q,i)=>q.prog<q.goal?'':`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
   eclipseSetMarkup(e,questHTML+(qOpen?'<button class="eclipse-quest-all" data-q="viewall">'+(eclipseQuestAll?'Show compact journal':'View all objectives')+' →</button>':''));e.classList.toggle('expanded-journal',eclipseQuestAll);$('sideMenu').classList.toggle('eclipse-more-open',sideOpen);eclipseSetMarkup($('sideMenu'),qpSide());eclipsePositionMore();polishIcons(e);if(typeof guideFinderSync==='function')guideFinderSync()}
 $('sideRail').onclick=e=>{const d=e.target.closest('[data-t]');if(d){sideOpen=false;openTab(d.dataset.t);return}const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='viewall'){eclipseQuestAll=!eclipseQuestAll;renderQ();return}if(v==='daily'||v==='all'){questView=v;renderQ();return}if(v.startsWith('contract:')){claimContract(v.slice(9));return}if(v==='side'){sideOpen=!sideOpen;renderQ();return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
-function refineUI(it,k){const r=it.r||0,maxRef=it.sec===6?15:10,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);return`<div class="sec">Refine</div>${refineProtectionUI()}<small class="refine-item-summary"><span>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${r>=maxRef?ev(it):Math.round(it.val*(1+(r+1)*.15))}</span><span>${r>=maxRef?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]}</span><span class="refine-owned" title="${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned">${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned</span></small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=maxRef||S.ore[o]<need||S.zeny<c?'disabled':''}>Refine</button></div>`}
+function refineUI(it,k){const r=it.r||0,maxRef=it.sec===6?15:10,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it),short=refineOreShortfall(it),total=c+short.cost;return`<div class="sec">Refine</div>${refineProtectionUI()}<small class="refine-item-summary"><span>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${r>=maxRef?ev(it):Math.round(it.val*(1+(r+1)*.15))}</span><span>${r>=maxRef?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]}</span><span class="refine-owned" title="${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned">${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned</span></small>${short.miss>0?`<small class="refine-auto-buy">Short ${short.miss} ${ORE[o]} &middot; bought on confirm for ${short.cost.toLocaleString()}z (total ${total.toLocaleString()}z)</small>`:''}${r<maxRef&&S.zeny<total?`<small class="refine-auto-buy is-short">Need ${(total-S.zeny).toLocaleString()}z more</small>`:''}<div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=maxRef||S.zeny<total?'disabled':''}>Refine${r>=maxRef?'':' &middot; '+total.toLocaleString()+'z'}</button></div>`}
 // v75: one pet per species. petFold() takes a duplicate and folds it into the pet you already
 // own - the better mutation survives, each gear slot keeps its better level, a skill the older
 // pet was missing moves into its free slot, and the species gains +1 Bond. It returns what
@@ -7425,10 +7523,11 @@ function arrangePanel(k,root){
     hero.innerHTML=mapM>=10?'<img class="ascension-preview" src="'+(mapM===10?'assets/atlas/astral-citadel.png?v=156':'assets/atlas/thor-volcano.png?v=162')+'" width="750" height="350" alt="'+(mapM===10?'Connected stone bridge through an indigo starfield, ruined arches and a luminous boss seal':'Basalt cavern, molten lava channels and glowing volcanic vents')+'"><div><span class="ui-eyebrow">ASCENSION / '+String(mapM+1).padStart(2,'0')+'</span><h2>'+esc(MAPS[mapM].n)+'</h2><p>'+esc(MAPS[mapM].t)+' · Requires a fourth-job class</p></div>':buildIllustratedAtlasHero(mapM);
     route.prepend(hero);
     const routeTarget=mapM>=10?route:make('div','rm-route-drawer');
-    if(mapM<10){const regBar=buildIllustratedRegionBar(mapM,make);if(regBar)put(routeTarget,regBar);put(route,routeTarget)}
+    if(mapM<10)put(route,routeTarget);
     put(routeTarget,fields);
-    if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')],nodes=[...fields.querySelectorAll('.map-node')],grid=fields.querySelector('.lvgrid');
-      if(grid){const normal=make('div','eclipse-stages'),nightmare=make('div','eclipse-stages eclipse-nightmare');nodes.forEach((node,i)=>{node.querySelector('b').textContent=i<10?(i===normalStages(mapM)-1?'♛':String(i+1).padStart(2,'0')):'NM '+(i-9);node.setAttribute('aria-label',node.title);node.setAttribute('aria-pressed',String(mapL===i+1));put(i<10?normal:nightmare,node)});grid.replaceChildren(normal,nightmare)}
+    if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')],nodes=[...fields.querySelectorAll('.map-node')],grid=fields.querySelector('.lvgrid'),advRow=fields.querySelector('.row');
+      if(mapM<10){const head=buildIllustratedStageHead(mapM,make);if(advRow)put(head,advRow);fields.prepend(head)}
+      if(grid){const normal=make('div','eclipse-stages'),nightmare=make('div','eclipse-stages eclipse-nightmare');nodes.forEach((node,i)=>{node.querySelector('b').textContent=i<10?(i===normalStages(mapM)-1?(mapM<10?'MVP':'♛'):String(i+1).padStart(2,'0')):'NM '+(i-9);node.setAttribute('aria-label',node.title);node.setAttribute('aria-pressed',String(mapL===i+1));put(i<10?normal:nightmare,node)});grid.replaceChildren(normal,nightmare)}
       const go=fields.querySelector('.go');if(go){go.textContent=S.mp===mapM&&S.lvl===mapL?'You are here · '+MAPS[mapM].n:'Travel to '+MAPS[mapM].n+' · '+(mapL>10?'NM '+(mapL-10):'Stage '+String(mapL).padStart(2,'0'))+' →';put(fields,put(make('div','ui-primary-action'),go))}
       put(fields,fold('Stage rules & requirements',notes,'stage-rules'));
     }
@@ -7538,7 +7637,10 @@ function arrangePanel(k,root){
         const buttons=[...chosen.querySelectorAll('[data-a="bmref"]')];const quote=make('div','eclipse-quote-summary');const picked=reforgeSelection[it.id]||[],cost=reforgeQuote(it,picked.length||it.aff.length);const oreMissing=Math.max(0,cost.ore-safeCount(S.ore[cost.oreKey])),matMissing=Math.max(0,cost.mat-safeCount(nmMatCounts()[cost.map])),extra=oreMissing*BM_ORE+matMissing*BM_MAT_PRICE;quote.innerHTML='<h2>'+(picked.length?'Selected affixes':'Full reroll')+'</h2><div><span>Reforge fee</span><b>'+cost.zeny.toLocaleString()+'z</b></div><div><span>'+ORE[cost.oreKey]+'</span><b>'+cost.ore+' / '+safeCount(S.ore[cost.oreKey])+' owned</b></div>'+(cost.mat?'<div><span>'+esc(NM_MAT[cost.map])+'</span><b>'+cost.mat+' / '+safeCount(nmMatCounts()[cost.map])+' owned</b></div>':'')+(cost.ascMat&&cost.ascMatType>=0?'<div><span>'+esc(ASCENSION_MATERIALS[cost.ascMatType])+'</span><b>'+cost.ascMat+' / '+safeCount(S.ascensionMat[cost.ascMatType])+' owned</b></div>':'')+'<div><span>Missing materials</span><b>'+extra.toLocaleString()+'z</b></div><div><span>Total</span><b>'+(cost.zeny+extra).toLocaleString()+'z</b></div>';put(aside,quote);put(aside,make('p','','Select individual affixes or reroll all. Review the result before accepting.'));buttons.forEach(b=>put(aside,b));
         if(offer){put(stage,offer);aside.hidden=true}else put(stage,chosen);put(aside,fold('Rules & materials',notes,'workshop-notes'));
       }else{
-        const button=chosen.querySelector('[data-a=refine]'),preview=make('div','eclipse-refine-preview'),rank=it.r||0,ore=it.slot==='weapon'?'ori':'elu';preview.innerHTML='<div class="eclipse-rank-preview"><b>+'+rank+'</b><span>→</span><b>+'+Math.min(it.sec===6?15:10,rank+1)+'</b></div><div><span>'+SLOTS[it.slot].stat+'</span><b>'+ev(it)+' → '+(rank>=(it.sec===6?15:10)?ev(it):Math.round(it.val*(1+(rank+1)*.15)))+'</b></div><div><span>Success chance</span><b>'+(rank>=(it.sec===6?15:10)?'Maximum refinement':refCh(it)+'%')+'</b></div><div><span>Required Zeny</span><b>'+refCost(it).toLocaleString()+'z</b></div><div><span>'+ORE[ore]+'</span><b>'+refOre(it)+' / '+safeCount(S.ore[ore])+' owned</b></div>';chosen.replaceChildren(preview);put(stage,chosen,put(make('div','eclipse-workshop-action'),button));const reserve=make('div','refine-reserve');reserve.textContent='Oridecon: '+safeCount(S.ore.ori)+' · Elunium: '+safeCount(S.ore.elu);stage.prepend(reserve);put(aside,protection,fold('Resources, rates & damage',notes,'workshop-notes'));
+        const button=chosen.querySelector('[data-a=refine]'),preview=make('div','eclipse-refine-preview'),rank=it.r||0,ore=it.slot==='weapon'?'ori':'elu',oreShort=refineOreShortfall(it),total=refCost(it)+oreShort.cost,maxed=rank>=(it.sec===6?15:10),afford=S.zeny>=total;preview.innerHTML='<div class="eclipse-rank-preview"><b>+'+rank+'</b><span>→</span><b>+'+Math.min(it.sec===6?15:10,rank+1)+'</b></div><div><span>'+SLOTS[it.slot].stat+'</span><b>'+ev(it)+' → '+(rank>=(it.sec===6?15:10)?ev(it):Math.round(it.val*(1+(rank+1)*.15)))+'</b></div><div><span>Success chance</span><b>'+(rank>=(it.sec===6?15:10)?'Maximum refinement':refCh(it)+'%')+'</b></div><div><span>Required Zeny</span><b>'+refCost(it).toLocaleString()+'z</b></div><div><span>'+ORE[ore]+'</span><b>'+refOre(it)+' / '+safeCount(S.ore[ore])+' owned</b></div>'+(oreShort.miss>0?'<div><span>'+ORE[ore]+' short</span><b>'+oreShort.miss+' · buy for '+oreShort.cost.toLocaleString()+'z on confirm</b></div>':'')+'<div><span>Total</span><b>'+total.toLocaleString()+'z</b></div>'+(afford?'':'<div class="is-short"><span>Zeny short</span><b>'+(total-S.zeny).toLocaleString()+'z</b></div>');chosen.replaceChildren(preview);
+        // v312: the button carries the same price gate the row used, and names the number it wants, so
+        // "unclickable" always has a reason written next to it.
+        button.disabled=maxed||!afford||!Number.isSafeInteger(oreShort.cost);button.textContent=maxed?'Maximum refinement':afford?'Refine \u00b7 '+total.toLocaleString()+'z':'Need '+(total-S.zeny).toLocaleString()+'z more';put(stage,chosen,put(make('div','eclipse-workshop-action'),button));const reserve=make('div','refine-reserve');reserve.textContent='Oridecon: '+safeCount(S.ore.ori)+' · Elunium: '+safeCount(S.ore.elu);stage.prepend(reserve);put(aside,protection,fold('Resources, rates & damage',notes,'workshop-notes'));
       }
       body.replaceChildren(put(make('div','eclipse-workshop'),menu,stage,aside));
     }
@@ -7897,7 +7999,7 @@ const DAILY_WHEEL_SEGMENTS=[
   {id:'elu',resource:'elu',amount:15,badge:'×15',rate:33,label:'15 × Elunium',short:'Elunium',desc:'Armor refinement ore (33%)',weight:33,color:'#1b4f8c',colorInner:'#0d213d',accent:'#9ad4ff',tier:'common',icon:'🛡'},
   {id:'buff_zeny',buff:'zeny',durationMin:30,pct:30,badge:'+30%',rate:11,label:'+30% Zeny Gain for 30 mins',short:'+30% Zeny',desc:'30-minute monster Zeny boost (11%)',weight:11,color:'#8f6510',colorInner:'#382605',accent:'#ffe885',tier:'uncommon',icon:'💰'},
   {id:'buff_exp',buff:'exp',durationMin:30,pct:30,badge:'+30%',rate:11,label:'+30% Base & Job EXP for 30 mins',short:'+30% EXP',desc:'30-minute Base & Job EXP boost (11%)',weight:11,color:'#146c52',colorInner:'#092b21',accent:'#88f7cb',tier:'uncommon',icon:'⚡'},
-  {id:'zeny_pouch',zeny:500000,badge:'500K',rate:7,label:'Instant Zeny Pouch (500,000 Zeny)',short:'Zeny Pouch',desc:'Instant 500,000 Zeny (7%)',weight:7,color:'#552b94',colorInner:'#21103d',accent:'#dec4ff',tier:'rare',icon:'🪙'},
+  {id:'zeny_pouch',zeny:500000,badge:'500K',rate:7,label:'Instant Zeny Pouch (500,000 Zeny)',short:'Zeny Pouch',desc:'Instant 500,000 Zeny (7%)',weight:7,color:'#552b94',colorInner:'#21103d',accent:'#dec4ff',tier:'rare',icon:'💰'},
   {id:'random_card',randomCard:true,amount:1,badge:'×1 Card',rate:4,label:'1 × Random Monster Card',short:'Monster Card',desc:'Random non-boss Monster Card (4%)',weight:4,color:'#8a225a',colorInner:'#360c24',accent:'#ffb8df',tier:'epic',icon:'🃏'},
   {id:'refineScrolls',resource:'refineScrolls',amount:1,badge:'×1 Scroll',rate:1,label:'1 × Refine Protection Scroll',short:'Refine Scroll',desc:'Prevents +5..+10 refine loss (1%)',weight:1,color:'#b86b11',colorInner:'#472404',accent:'#fff3b0',tier:'jackpot',icon:'📜'}
 ];
@@ -8463,7 +8565,18 @@ const ACT={
   fullscreen:()=>toggleFullscreen(),
   sellpause:()=>{S.autoSell=RARALL.map(()=>false);autoSellPreview=null;save();ui()},
   lockgear:id=>toggleGearLock(id),
-  sellnow:()=>previewAutoSell(),bulksellnow:()=>previewAutoSell(true),bulkrar:v=>{bulkSellState();const i=Number(v);if(!Number.isInteger(i)||i<0||i>=RARALL.length)return;bulkSellSelection.rarities[i]=!bulkSellSelection.rarities[i];autoSellPreview=null;renderWin()},sellconfirm:()=>confirmAutoSell(),sellcancel:()=>{autoSellPreview=null;ui()},
+  sellnow:()=>previewAutoSell(),bulksellnow:()=>previewAutoSell(true),
+  // v290 (owner request): the Equipment auto-sell workspace can also sell CURRENT bag items that
+  // match the draft rules - two clicks (arm, confirm), every item re-checked at the moment of sale.
+  autosellworkspacesell:()=>{const sim=autoSellWorkspaceSimulation();
+    if(!sim.wouldSell.length){autoSellWorkspaceArm=null;renderWin();return}
+    if(!autoSellWorkspaceArm||autoSellWorkspaceArm.owner!==S){autoSellWorkspaceArm={owner:S};renderWin();return}
+    autoSellWorkspaceArm=null;
+    const state={...S,autoSell:sim.draft.rarities,autoSellRules:sim.draft.rules};
+    let n=0,z=0;
+    for(const x of sim.wouldSell){const i=S.inv.indexOf(x.it);if(i<0)continue;if(autoSellReason(x.it,state))continue;S.inv.splice(i,1);z+=sellVal(x.it);n++;(x.it.cards||[]).forEach(c=>S.cards.push(c));}
+    earnZeny(z);if(selB&&!S.inv.some(it=>String(it.id)===String(selB)))selB=null;
+    log(`Sold ${n} current item${n===1?'':'s'} matching the auto-sell draft (+${z.toLocaleString()}z).`,'r3','gear,zeny');renderWin();save();},bulkrar:v=>{bulkSellState();const i=Number(v);if(!Number.isInteger(i)||i<0||i>=RARALL.length)return;bulkSellSelection.rarities[i]=!bulkSellSelection.rarities[i];autoSellPreview=null;renderWin()},sellconfirm:()=>confirmAutoSell(),sellcancel:()=>{autoSellPreview=null;ui()},
   sellrulesapply:()=>{const rules=cleanAutoSellRules(sellDraft());if(!rules)return log('Check filter values: use valid numbers, up to 100 equipment names and 0–10 empty sockets.','r0','gear');S.autoSellRules=rules;autoSellDraft=null;autoSellPreview=null;save();ui();log('Auto-sell filters saved.','r3','gear')},
   sellrulescancel:()=>{autoSellDraft=null;renderWin()},
   ascopenskill:()=>{sub.skills='skillasc';if(!tabs.includes('skills'))tabs.push('skills');renderWin()},
@@ -12985,6 +13098,39 @@ $('recoveryForm').onsubmit=async e=>{
 const UPDATE_SNOOZE_MS=30*60*1000;      // "Keep playing" buys half an hour, not the rest of the session
 const UPDATE_INSIST_MS=24*60*60*1000;   // a full day behind: the update is no longer optional
 const PAGE_STARTED_AT=Date.now();
+// v299 (owner): "can the game hard reset the browser on updates?" - yes, and it now does it on its
+// own in the two cases where that costs the player nothing: a page that has only just loaded, and a
+// tab sitting in the background. Mid-run it still asks, because only the player knows what is safe.
+//
+// The reset is a CACHE-BUSTED navigation, not location.reload(). That is the part the old code was
+// missing: with no query in the URL the browser (and the edge) can answer the reload with the stale
+// shell from its own cache - which is exactly why players were being told to press Ctrl+F5.
+const UPDATE_AUTO_MS=12000;            // this long after load a reset costs nothing
+const UPDATE_RESET_KEY='pg_update_reset';
+const UPDATE_RESET_GUARD_MS=180000;    // one automatic reset per build per tab, so a stale edge
+                                       // that keeps answering with an old index.html cannot loop us
+function updateResetSeen(build){
+ try{const seen=JSON.parse(sessionStorage.getItem(UPDATE_RESET_KEY)||'null');
+  return !!(seen&&seen.build===build&&Date.now()-(seen.at||0)<UPDATE_RESET_GUARD_MS)}catch{return false}
+}
+function updateResetMark(build){try{sessionStorage.setItem(UPDATE_RESET_KEY,JSON.stringify({build,at:Date.now()}))}catch{}}
+function hardReload(build,manual){
+ if(!manual&&updateResetSeen(build))return false;
+ updateResetMark(build);
+ try{
+  const url=new URL(location.href);
+  url.searchParams.set('build',String(build||'update').replace(/[^a-z0-9]+/gi,'-').slice(0,40)||'update');
+  location.replace(url.toString());
+  return true;
+ }catch{}
+ try{location.reload();return true}catch{return false}
+}
+function updateToast(){
+ if(document.getElementById('updateToast'))return;
+ const t=document.createElement('p');t.id='updateToast';t.setAttribute('role','status');
+ t.textContent='Updating to the newest build…';
+ document.body.appendChild(t);
+}
 function showUpdatePrompt(build=BUILD){
   if(document.getElementById('updatePrompt'))return;
   // Same build already dismissed: stay quiet until the snooze expires. A DIFFERENT build is news
@@ -13002,7 +13148,7 @@ function showUpdatePrompt(build=BUILD){
     const button=prompt.querySelector('button');if(button.disabled)return;
     button.disabled=true;button.textContent=insistent?'Saving and reloading…':'Saving and refreshing…';
     save();
-    try{await cloudFlushNow()}finally{location.reload()}
+    try{await cloudFlushNow()}finally{hardReload(build,true)}
   };
   const later=prompt.querySelector('[data-update-later]');
   if(later)later.onclick=()=>{showUpdatePrompt.until=Date.now()+UPDATE_SNOOZE_MS;prompt.remove()};
@@ -13012,7 +13158,13 @@ function updateWatch(){
   if(typeof fetch!=='function'||typeof location==='undefined'||!location.reload)return;
   return fetch('version.txt?_='+Date.now(),{cache:'no-store'}).then(r=>r&&r.ok?r.text():null).then(txt=>{
     txt=String(txt||'').trim();
-    if(txt&&txt!==BUILD)showUpdatePrompt(txt);
+    if(!txt||txt===BUILD)return;
+    // Quiet moment (fresh page or backgrounded tab): reset now, no question asked.
+    if(Date.now()-PAGE_STARTED_AT<UPDATE_AUTO_MS||document.hidden===true){
+     updateToast();
+     if(hardReload(txt))return;
+    }
+    showUpdatePrompt(txt);
   }).catch(()=>{});
 }
 // v275 (owner): check at boot as well. The interval alone meant the FIRST check landed a full
@@ -13021,13 +13173,17 @@ function updateWatch(){
 // it never competes with the login card or the first frames of the game.
 setTimeout(updateWatch,3000);
 setInterval(updateWatch,60000);
+// v299: coming back to a tab that has been away is the best moment to look again - the page may
+// be hours old while the player was on another tab, and the check is a 60-byte text file.
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-PAGE_STARTED_AT>30000)updateWatch()});
 </script>
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=273"></script>
-<script src="assets/social-poker.js?v=273"></script>
-<script src="assets/social-scene.js?v=279"></script>
-<script src="assets/social.js?v=279"></script>
+<script src="assets/social-rules.js?v=314"></script>
+<script src="assets/social-poker.js?v=314"></script>
+<script src="assets/social-scene.js?v=314"></script>
+<script src="assets/social-fishing.js?v=314"></script>
+<script src="assets/social.js?v=314"></script>
 </body>
 </html>
