@@ -575,7 +575,8 @@ void main(){
    // plates at the same spot. Disposing the old entry also keeps the pool from filling with them.
    for(let i=showPool.length-1;i>=0;i--)if(showPool[i].pid===pid)dropShow(i);
    while(showPool.length>=6)dropShow(0);
-   showPool.push({sprite:spr,tag,pid,t0:clock||performance.now(),dur:Math.max(1200,Math.min(9000,o.ms||5200)),scale:Math.max(.4,Math.min(11,Number(o.scale)||1))});
+   // v311: the ceiling follows the pond - a 1 t fish is 13 units across in a 13 x 18 pond.
+   showPool.push({sprite:spr,tag,pid,t0:clock||performance.now(),dur:Math.max(1200,Math.min(9000,o.ms||5200)),scale:Math.max(.4,Math.min(13.2,Number(o.scale)||1))});
   }
   let rig={mode:'off'},nextIdleRipple=0,catchAnim=null;
   function ripple(x,z,scale=1){const r=ripples.find(r=>!r.m.visible)||ripples[0];r.m.visible=true;r.t0=clock||performance.now();r.dur=900;r.m.position.set(x,.034,z);r.base=scale}
@@ -692,7 +693,9 @@ void main(){
     sh.sprite.visible=true;sh.sprite.scale.set(sc,sc,1);
     sh.sprite.position.set(holder.sprite.position.x,holder.sprite.position.y+holder.height+.3+sh.scale*.55+Math.sin(now/480+i)*.08,holder.sprite.position.z);
     sh.sprite.material.opacity=t>.82?1-(t-.82)/.18:1;
-    if(sh.tag){sh.tag.visible=true;sh.tag.position.set(sh.sprite.position.x,sh.sprite.position.y+sh.scale*.5+.42+Math.sin(now/480+i)*.08,sh.sprite.position.z);sh.tag.material.opacity=sh.sprite.material.opacity}
+    // v311: the weight plate grows with the fish, so a pond-sized show-off still carries a
+    // readable number instead of a stamp-sized tag pinned to a 13-unit body.
+    if(sh.tag){const ts=Math.min(2.4,Math.max(1,sh.scale/3.2));sh.tag.visible=true;sh.tag.scale.set(1.9*ts,.48*ts,1);sh.tag.position.set(sh.sprite.position.x,sh.sprite.position.y+sh.scale*.5+.42+Math.sin(now/480+i)*.08,sh.sprite.position.z);sh.tag.material.opacity=sh.sprite.material.opacity}
    }
    if(rig.mode==='off')return;
    if(rig.mode==='flight'){const t=Math.min(1,(now-rig.t0)/rig.dur),x=rig.fx+(rig.tx-rig.fx)*t,z=rig.fz+(rig.tz-rig.fz)*t;bobber.position.set(x,1.4+Math.sin(t*Math.PI)*2.4-1.35*t,z);placeRod(bobber.position.x,bobber.position.y,bobber.position.z,now);
@@ -725,17 +728,36 @@ void main(){
    {seat:b.seats[1],bench:b.id,bounds:new T.Box3(new T.Vector3(b.x,bb.min.y,bb.min.z),new T.Vector3(bb.max.x,bb.max.y,bb.max.z))}
   ];
  }):benches.map(mesh=>({seat:mesh.userData.seat,bench:mesh.userData.seat,bounds:mesh.userData.seatBounds}));
- // v288: single-seat wooden angler chairs on the pond rims (R.CHAIRS, seat ids 24-31).
+ // v311 (owner: "the chairs around the pond don't work, can u make them japanese style"):
+ // A zen-style pond seat - two dark sled runners, a low lacquered frame, a thick indigo zabuton
+ // with a gold piping and a gently raked three-slat back. Bigger than the old stool (1.06 wide,
+ // 1.31 tall) so it reads at the plaza camera, and its click pad is padded to ~2.1 units across so
+ // a tap anywhere on the seat - or within a hand's width of it - sits you down instead of missing.
  if(R.CHAIRS&&R.CHAIRS.length){
-  const chairWood=new T.MeshLambertMaterial({color:0x6b4a2a}),chairWoodDark=new T.MeshLambertMaterial({color:0x4a2f16});
+  const jpWoodDark=new T.MeshLambertMaterial({color:0x3f2a17}),jpWood=new T.MeshLambertMaterial({color:0x6d4a29}),
+   jpLacquer=new T.MeshLambertMaterial({color:0x9e3327}),jpCushion=new T.MeshLambertMaterial({color:0x2d4a70}),
+   jpTrim=new T.MeshLambertMaterial({color:0xd8bb74});
+  const box=(w,h,d,mat,x,y,z,parent)=>{const m=new T.Mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);parent.add(m);return m};
   for(const c of R.CHAIRS){
    const g=new T.Group();g.position.set(c.x,0,c.z);g.rotation.y=c.rotation;
-   for(const lx of [-.3,.3])for(const lz of [-.28,.28]){const leg=new T.Mesh(new T.BoxGeometry(.09,.6,.09),chairWoodDark);leg.position.set(lx,.3,lz);g.add(leg)}
-   const pan=new T.Mesh(new T.BoxGeometry(.82,.08,.76),chairWood);pan.position.y=.62;g.add(pan);
-   for(const px of [-.3,.3]){const post=new T.Mesh(new T.BoxGeometry(.08,.62,.08),chairWoodDark);post.position.set(px,.92,-.32);g.add(post)}
-   for(const sy of [.92,1.1]){const slat=new T.Mesh(new T.BoxGeometry(.72,.1,.06),chairWood);slat.position.set(0,sy,-.32);g.add(slat)}
+   // Sled runners keep the seat off the wet rim, with a dark front rail tying them together.
+   for(const rz of [-.26,.26])box(.98,.09,.11,jpWoodDark,0,.045,rz,g);
+   box(.86,.06,.09,jpWood,0,.1,.3,g);
+   for(const lx of [-.4,.4])for(const lz of [-.24,.24])box(.1,.33,.1,jpWoodDark,lx,.235,lz,g);
+   // Lacquered seat frame, a gold piping edge and the zabuton that actually carries the sitter.
+   // The cushion tops out at 0.66, so the native sitting pose (R.SEATS[].height 0.66) rests on it
+   // instead of sinking into it.
+   box(1.06,.09,.66,jpLacquer,0,.4,0,g);
+   box(1,.03,.62,jpTrim,0,.455,0,g);
+   box(.94,.18,.56,jpCushion,0,.57,0,g);
+   // Raked back: two uprights and three slats, leaning away from the pond.
+   const hub=new T.Group();hub.position.set(0,.52,-.33);hub.rotation.x=-.2;g.add(hub);
+   for(const px of [-.42,.42])box(.09,.78,.09,jpWoodDark,px,.39,0,hub);
+   for(const sy of [.16,.4,.64])box(.86,.11,.07,jpWood,0,sy,0,hub);
+   box(.94,.07,.12,jpLacquer,0,.82,0,hub);
    g.userData.seat=c.id;scene.add(freeze(g));
-   seatTargets.push({seat:c.id,bench:100+c.id,bounds:new T.Box3().setFromObject(g).expandByScalar(.3)});
+   // A generous pad: the whole seat, its back and a hand's width of rim.
+   seatTargets.push({seat:c.id,bench:100+c.id,bounds:new T.Box3().setFromObject(g).expandByScalar(.55)});
   }
  }
 
@@ -902,6 +924,9 @@ void main(){
    const sit=await stores[2].select('social-'+p.state.id,appearance,cls);if(current()&&sit){p.looks.sit=sit;p.paint=''}
   }).catch(e=>{if(current()){p.retryAt=performance.now()+3000;p.label.title='Retrying character download…';console.warn('Social appearance:',e.message)}}).finally(()=>{if(current())p.loading=false});
  }
+ // Dir index 0..7 in the plaza's own convention (0 = +z, 2 = -x, 4 = -z, 6 = +x), so anything
+ // that knows a target can turn a character toward it.
+ function faceTo(x,z,tx,tz){const dx=Number(tx)-x,dz=Number(tz)-z;if(!Number.isFinite(dx)||!Number.isFinite(dz)||Math.hypot(dx,dz)<.15)return null;return (Math.round(Math.atan2(-dx,dz)/(Math.PI/4))+8)%8}
  function putPlayer(state){let p=players.get(state.id);if(!p){
   const canvas=document.createElement('canvas');canvas.width=320;canvas.height=280;const ctx=canvas.getContext('2d'),texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.userData.socialId=state.id;sprite.center.set(.5,80/280);scene.add(sprite);
@@ -953,7 +978,12 @@ void main(){
   if(otherTaken(chosen)&&R.SEATS[partner]&&R.SEATS[partner].bench===R.SEATS[chosen]?.bench&&!otherTaken(partner))chosen=partner;
   callbacks.seat(chosen);
  }
- else{const point=new T.Vector3();if(ray.ray.intersectPlane(plane,point)){const pond=(R.PONDS||[]).findIndex(pd=>Math.abs(point.x-pd.x)<=pd.w/2+1.2&&Math.abs(point.z-pd.z)<=pd.d/2+1.2);if(pond>=0&&callbacks.pond)callbacks.pond(point.x,point.z,pond);else if(R.walkable(point.x,point.z))callbacks.move(point.x,point.z)}}}
+ else{const point=new T.Vector3();if(ray.ray.intersectPlane(plane,point)){
+  // v311 (owner: "pond clicking is off, it keeps going to the same place"): the fishing target is
+  // the water itself plus a narrow lip. The old 1.2-unit skirt around the pond swallowed clicks on
+  // the rim, the rocks and the chairs' footing, so a click meant for the bank cast a line instead.
+  const pond=(R.PONDS||[]).findIndex(pd=>Math.abs(point.x-pd.x)<=pd.w/2+.45&&Math.abs(point.z-pd.z)<=pd.d/2+.45);
+  if(pond>=0&&callbacks.pond)callbacks.pond(point.x,point.z,pond);else if(R.walkable(point.x,point.z))callbacks.move(point.x,point.z)}}}
  if(touches.size){const p=[...touches.values()][0];down=startDrag({...p,clientX:p.x,clientY:p.y},true)}else down=null};
  host.onpointercancel=()=>{down=null;touches.clear()};host.addEventListener('wheel',e=>{e.preventDefault();setCamera({distance:distance*Math.exp(e.deltaY*.001)})},{passive:false});
  // Subtle +5.5% optical offset keeps the player slightly higher than vertical screen center (~44% from top).
@@ -1002,7 +1032,11 @@ void main(){
   const pokerChair=state.sit&&Number.isInteger(state.pokerSeat)&&R.POKER?.seats[state.pokerSeat];
   const chair=pokerChair||(state.sit&&R.SEATS[state.seat]),floor=chair?chair.height:.06+bridgeLift(state.x,state.z);
   if(look){
-   const facing=(state.dir+Math.round(angle/(Math.PI/4))+8)%8,stance=state.sit&&p.looks.sit?'sit':state.path.length?'walk':'idle';
+   // v311 (owner: "when fishing, the hero must face the pond"): while a line is out the angler
+   // turns to the bobber, for every viewer - the rig already travels with the player snapshot, so
+   // this needs no extra message and it cannot be stale.
+   const fishDir=state.fish&&state.fish.on&&!state.path.length&&!state.sit?faceTo(state.x,state.z,state.fish.x,state.fish.z):null;
+   const facing=((fishDir==null?state.dir:fishDir)+Math.round(angle/(Math.PI/4))+8)%8,stance=state.sit&&p.looks.sit?'sit':state.path.length?'walk':'idle';
    const glow=milestone(REFINE_GLOWS,Math.max(0,Math.min(15,Number(state.look?.refine)||0)));
    const animKey=PGWardrobe.animationKey&&Array.isArray(look.pieces)?PGWardrobe.animationKey(look,stance,facing,now,null,now):PGWardrobe.frameIndex(look.base.metadata.actions[stance+facing],now);
    const paint=(look.key||p.loaded)+':'+stance+facing+':'+animKey+(glow?':r'+glow.at+':'+Math.floor(now/50):'');

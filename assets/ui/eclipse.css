@@ -1320,6 +1320,8 @@ body.clean-screen #eclipseCompanions{display:none}
 /* v112: keep live counters from moving inventory rows and actions. */
 #wins .eclipse-new-drops,#wins .eclipse-new-drops:has(button:disabled),#wins .eclipse-bag .eclipse-new-drops:has(button:disabled){display:flex!important;flex:none;min-height:25px}
 .refine-item-summary{display:block;font-variant-numeric:tabular-nums}.refine-item-summary>span{display:block}.refine-item-summary .refine-owned{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* v311: the workshop says what it will buy for you before you press Refine. */
+.refine-auto-buy{display:block;margin-top:2px;color:#ffd88a;font-variant-numeric:tabular-nums}
 .eclipse-owned-count{white-space:nowrap;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}
 
 /* v113: centered workspaces and controls beside the information they affect. */

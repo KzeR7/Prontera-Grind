@@ -317,7 +317,9 @@ test('protection On/Off confirms below +5 and never spends on cancel or stale co
  let before=ev('JSON.stringify(S)');doc.querySelector('[data-a=refine]').click();assert.equal(doc.getElementById('modal').style.display,'flex');assert.match(doc.getElementById('mt').textContent,/below \+5/);assert.equal(ev('JSON.stringify(S)'),before);doc.getElementById('mn').click();assert.equal(ev('JSON.stringify(S)'),before);
  ev('refine("weapon")');const cost=ev('refCost(S.eq.weapon)'),zeny=ev('S.zeny');ev('window.oldRefRandom=Math.random;Math.random=()=>0');doc.getElementById('my').click();doc.getElementById('my').click();ev('Math.random=window.oldRefRandom');assert.equal(ev('S.refineScrolls'),3);assert.equal(ev('S.eq.weapon.r'),4);assert.equal(ev('S.zeny'),zeny-cost);
  ev('refine("weapon");S.eq.weapon={...S.eq.weapon,id:990001}');before=ev('JSON.stringify(S)');doc.getElementById('my').click();assert.equal(ev('JSON.stringify(S)'),before);
- ev('refine("weapon");S.ore.ori=0');before=ev('JSON.stringify(S)');doc.getElementById('my').click();assert.equal(ev('JSON.stringify(S)'),before);
+ // v311: an empty ore stack is auto-bought now, so "spends nothing" is the case with no Zeny for it.
+ ev('refine("weapon");S.ore.ori=0;window.keepZeny=S.zeny;S.zeny=0');before=ev('JSON.stringify(S)');doc.getElementById('my').click();assert.equal(ev('JSON.stringify(S)'),before);
+ ev('S.zeny=window.keepZeny');
  ev(`S.ore.ori=1000;ACT.refprotect('0');window.oldRefRandom=Math.random;Math.random=()=>0;refine('weapon');Math.random=window.oldRefRandom`);assert.equal(ev('S.eq.weapon.r'),5);assert.equal(ev('S.refineScrolls'),3);
 });
 test('large HUD numbers are compact while the exact rates remain accessible',()=>{

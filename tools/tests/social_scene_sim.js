@@ -172,6 +172,34 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const widest=Math.max(Math.max(...screenPts.map(p=>p.x))-Math.min(...screenPts.map(p=>p.x)),Math.max(...screenPts.map(p=>p.y))-Math.min(...screenPts.map(p=>p.y)));
  assert(widest>=26,'the glow covers at least '+Math.round(widest)+' px on a 1000x700 plaza view, so it is visible without leaning in');
  console.log('   rod glow on screen: '+Math.round(widest)+' px across at the plaza camera');
+
+ // v311 (owner): the pond chairs are Japanese-styled and actually clickable from the rim.
+ {
+  const pond=w.PGSocialRules.PONDS[0];
+  scene.putPlayer({...state,sit:false,seat:null,path:[],x:pond.x,z:pond.z+pond.d/2+7,dir:4});
+  for(let i=0;i<6;i++)frame(now+=100);
+  scene.camera.updateMatrixWorld();scene.scene.updateMatrixWorld(true);
+  for(const c of w.PGSocialRules.CHAIRS){
+   const g=scene.scene.children.find(o=>o.userData.seat===c.id),box=new T.Box3().setFromObject(g),size=box.getSize(new T.Vector3());
+   assert(size.x>1&&size.y>1.05,'chair '+c.id+' is a full Japanese seat, not a stool ('+size.x.toFixed(2)+' x '+size.y.toFixed(2)+')');
+   const ndc=box.getCenter(new T.Vector3()).project(scene.camera);
+   if(Math.abs(ndc.x)>1||Math.abs(ndc.y)>1)continue;
+   selectedSeat=null;clickAt(ndc);
+   assert.equal(selectedSeat,c.id,'clicking chair '+c.id+' sits on it');
+  }
+  // A hand's width off the seat still counts: the pad is padded, not pixel-hunting.
+  const chair=w.PGSocialRules.CHAIRS.find(c=>c.z>pond.z)||w.PGSocialRules.CHAIRS[0];
+  const cg=scene.scene.children.find(o=>o.userData.seat===chair.id),cb=new T.Box3().setFromObject(cg).getCenter(new T.Vector3());
+  const off=new T.Vector3(cb.x+.55,cb.y,cb.z+.35).project(scene.camera);
+  if(Math.abs(off.x)<=1&&Math.abs(off.y)<=1){selectedSeat=null;clickAt(off);assert.equal(selectedSeat,chair.id,'a near miss on the rim still sits you down')}
+  // v311: a line in the water turns the angler to the bobber for every viewer.
+  scene.putPlayer({...state,sit:false,seat:null,path:[],x:pond.x,z:pond.z+pond.d/2+1.7,dir:0,fish:{on:true,pond:0,x:pond.x,z:pond.z,mode:'wait',rod:'twig'}});
+  frame(now+=100);
+  const facing=draws.at(-1)[3],offset=Math.round(scene.cameraState.angle/(Math.PI/4));
+  assert.equal(facing,(4+offset+8)%8,'the angler faces north, into the pond, whatever dir the walk left behind');
+  scene.putPlayer({...state,fish:{on:false}});
+  scene.fishing.off();
+ }
  dom.window.close();
  console.log('PASS social scene: v300 per-tier rod glow, download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor and reentry');
 })().catch(e=>{console.error(e);process.exitCode=1});
