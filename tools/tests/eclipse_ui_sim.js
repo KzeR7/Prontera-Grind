@@ -266,6 +266,41 @@ test('refine feedback follows success, safe failure, protection and rank loss',(
  ev(`clearTimeout(eclipseRefineTimer);$('eclipseRefineResult').hidden=true;S.zeny=0;refine('weapon');Math.random=window.refineRandom`);assert.equal(doc.getElementById('eclipseRefineResult').hidden,true);
 });
 
+test('v312 the refine button prices the auto-bought ore instead of demanding it in the bag',()=>{
+ // The owner's screenshot: +4 gear that needs 10 Oridecon with 9 in the bag. v311 taught refine() to buy
+ // the missing ore, but the row the workshop builds its button from still tested "own every ore first",
+ // so the attempt was greyed out over the shortfall it was about to cover. Enabled now - and the one
+ // thing that may still block it, the money, has to say how much it wants.
+ // The sim stubs log() out; capture the real feed text for this test only.
+ // The exact screenshot: a +4 N+ weapon (10 Oridecon a try, 21,000z, 49%), 9 in the bag.
+ ev(`tabs.push('equip');sub.equip='refine';selE='weapon';S.useRefineScroll=false;S.eq.weapon={...S.eq.weapon,sec:5,val:7200,r:4};S.ore.ori=9;window.v312Keep=Math.random;window.v312Feed=[];window.v312KeepLog=log;log=m=>window.v312Feed.push(m);Math.random=()=>0`);
+ const fee=ev('refCost(S.eq.weapon)'),total=ev('refCost(S.eq.weapon)+Math.max(0,refOre(S.eq.weapon)-S.ore.ori)*BM_ORE');
+ assert.equal(ev('refOre(S.eq.weapon)'),10);assert.equal(fee,21000);assert.equal(total,121000);
+ ev(`S.zeny=${total}+5000;renderWin()`);
+ let b=doc.querySelector('.eclipse-workshop-action [data-a=refine]');
+ assert.equal(b.disabled,false,'one ore short must not block an attempt the purse can cover');
+ assert.match(doc.querySelector('.eclipse-refine-preview').textContent,/Oridecon short/);
+ assert.ok(b.textContent.includes(total.toLocaleString()),'the button names the total it is about to spend');
+ b.click();
+ assert.equal(ev('S.eq.weapon.r'),5,'the attempt runs');
+ assert.equal(ev('S.ore.ori'),0,'the bought ore is spent in the same attempt, nothing left over');
+ assert.equal(ev('S.zeny'),5000,'fee plus one auto-bought ore leaves exactly the change');
+ assert.match(ev("window.v312Feed.join(' | ')"),/Bought 1 Oridecon/);
+ assert.ok(fee>0&&total>fee);
+ // Money is the one remaining gate, and it explains itself instead of just greying out.
+ ev(`S.eq.weapon.r=4;S.ore.ori=refOre(S.eq.weapon)-1;S.zeny=${total}-2500;renderWin()`);
+ b=doc.querySelector('.eclipse-workshop-action [data-a=refine]');
+ assert.equal(b.disabled,true,'the purse cannot cover the total');
+ assert.match(b.textContent,/Need 2,500z more/);
+ assert.match(doc.querySelector('.eclipse-refine-preview').textContent,/Zeny short/);
+ // Full ore, short nothing: the row still names the price and stays clickable.
+ ev(`S.ore.ori=refOre(S.eq.weapon);S.zeny=${total};renderWin()`);
+ b=doc.querySelector('.eclipse-workshop-action [data-a=refine]');
+ assert.equal(b.disabled,false);
+ assert.match(doc.querySelector('.eclipse-refine-preview').textContent,/Total/);
+ ev('Math.random=window.v312Keep;log=window.v312KeepLog');
+});
+
 test('screen companion shortcuts open pets and party cards deploy, swap and remove',()=>{
  ev(`S.pets=[0,1,2,3].map((sp,i)=>({id:92000+i,sp,mut:0,eq:[0,0,0],skills:[],on:i<3}));window.eclipseRealBars()`);
  doc.querySelector('#eclipseCompanions > [data-t=pet]').click();assert.ok(doc.querySelector('[data-win=pet]'));
