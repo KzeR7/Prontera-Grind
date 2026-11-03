@@ -7,6 +7,16 @@ window.PGSocialScene={async create(host,labels,callbacks){
  const camera=new T.PerspectiveCamera(38,1,.1,350),players=new Map();let angle=0,pitch=DEFAULT_PITCH,distance=DEFAULT_DISTANCE,active=false,last=0,clock=0,focused=false,viewW=0,viewH=0;
  const focus=new T.Vector3(0,.8,12),target=new T.Vector3(),feet=new T.Vector3(),head=new T.Vector3();
  const freeze=mesh=>{mesh.updateMatrix();mesh.matrixAutoUpdate=false;return mesh};
+ // Bridges register their arch here (v308) so the player pass can stand feet on the deck.
+ const bridges=[];
+ const bridgeLift=(x,z)=>{
+  for(const b of bridges){
+   if(Math.abs(x-b.x)>b.span/2||Math.abs(z-b.z)>b.width/2)continue;
+   const t=(x-b.x+b.span/2)/b.span;
+   return 4*b.arch*t*(1-t);
+  }
+  return 0;
+ };
  scene.add(new T.HemisphereLight(0xffffff,0x66775a,1));
  const [catalog,data,atlas,paving]=await Promise.all([fetch('assets/social/town/catalog.json').then(r=>{if(!r.ok)throw Error('Town metadata unavailable');return r.json()}),fetch('assets/social/town/models.bin').then(r=>{if(!r.ok)throw Error('Town models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/social/town/models.webp'),new T.TextureLoader().loadAsync('assets/social/town/paving.webp')]);
  atlas.flipY=false;atlas.magFilter=T.LinearFilter;const modelMat=new T.MeshBasicMaterial({map:atlas,vertexColors:true,side:T.DoubleSide,alphaTest:.35});
@@ -67,14 +77,30 @@ window.PGSocialScene={async create(host,labels,callbacks){
   // soft splash pool: three stacked discs fading outwards (no canvas gradient, so the headless
   // scene tests can build the pond without a 2D context)
   const poolMat=new T.MeshBasicMaterial({color:0xbfe9f2,transparent:true,opacity:.3,depthWrite:false});
-  const fallTile=document.createElement('canvas');fallTile.width=64;fallTile.height=128;
+  // v308 (owner: "what's the random waterfall from the sky?"): the old sheet was a fully opaque
+  // canvas rectangle, so it read as a slab of water hanging in the air. This one is built in bands:
+  // each band only paints thin streaks inside a width that starts narrow at the lip and widens as it
+  // falls, with the alpha ramping in at the top - so the sheet has soft edges and no hard top line,
+  // and the rock face behind it shows through.
+  const fallTile=document.createElement('canvas');fallTile.width=96;fallTile.height=192;
   const fctx=fallTile.getContext('2d');
   if(fctx&&typeof fctx.fillRect==='function'){
-   fctx.fillStyle='#bfe8f7';fctx.fillRect(0,0,64,128);
-   fctx.fillStyle='rgba(255,255,255,.55)';
-   for(let i=0;i<14;i++){const x=(i*17)%58,w=2+(i%3);fctx.fillRect(x,0,w,128)}
-   fctx.fillStyle='rgba(120,190,220,.35)';
-   for(let i=0;i<9;i++){const x=(i*23)%60;fctx.fillRect(x,0,1+(i%2),128)}
+   if(typeof fctx.clearRect==='function')fctx.clearRect(0,0,96,192);
+   const bands=34;
+   for(let b=0;b<bands;b++){
+    const y=Math.floor(b*192/bands),bh=Math.ceil(192/bands)+1,t=b/(bands-1);
+    const half=(0.26+0.34*t)*48;                       // 12.5px at the lip, 29px at the base
+    const fadeTop=Math.min(1,t/0.14);
+    for(let k=0;k<8;k++){
+     const off=((k*37+b*11)%100)/100;
+     const x=48-half+off*half*2;
+     const a=(0.22+0.5*fadeTop)*(0.5+0.5*((k*13+b*7)%100)/100);
+     fctx.globalAlpha=Math.min(1,a);
+     fctx.fillStyle=k%3?'#cfeeff':'#ffffff';
+     fctx.fillRect(x,y,1+(k%3),bh);
+    }
+   }
+   fctx.globalAlpha=1;
   }
   const makeFallTex=()=>{const tx=new T.CanvasTexture(fallTile);tx.wrapS=tx.wrapT=T.RepeatWrapping;tx.repeat.set(1,1.6);return tx};
   const falls=[],fallScroll=[];
@@ -100,75 +126,104 @@ window.PGSocialScene={async create(host,labels,callbacks){
   }
   // v304: one extruded arch instead of nine loose slabs, with a rail that follows the curve. The water
   // runs under the opening, so the bridge reads as a bridge from the plaza instead of scattered blocks.
+  // v308 (owner: "the bridge too, a bit small and can pass through"): the deck is wider and thicker,
+  // the parapets are real balustrades (newel posts at the ends, a hand rail and a mid rail on
+  // turned posts), stone abutments tie it into the banks, and every bridge is registered in
+  // `bridges` so the player walk is lifted onto the deck instead of clipping through the arch.
   function archBridge(cx,z,span,width,arch=1.05){
    const half=span/2;
-   // deck: the top of the arch, 0.3 thick, ends sinking into the banks
+   // deck: the top of the arch, .34 thick, ends sinking into the banks
    const top=t=>4*arch*t*(1-t);
    const shape=new T.Shape();
-   shape.moveTo(-half,-.3);
-   shape.quadraticCurveTo(0,2*arch,half,-.3);
-   shape.lineTo(half,-.32);
-   shape.quadraticCurveTo(0,2*arch-.62,-half,-.32);
+   shape.moveTo(-half,-.34);
+   shape.quadraticCurveTo(0,2*arch,half,-.34);
+   shape.lineTo(half,-.36);
+   shape.quadraticCurveTo(0,2*arch-.7,-half,-.36);
    shape.closePath();
    const deck=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:width,bevelEnabled:false}),bridgeMat.clone());
    deck.position.set(cx,0,z-width/2);scene.add(freeze(deck));
-   // parapets: posts and a rail sampled along the same curve, on both edges
+   bridges.push({x:cx,z,span,width,arch});
    const point=t=>({x:-half+span*t,y:top(t)});
    for(const side of [-1,1]){
-    const zz=z+side*(width/2-.08);
-    for(let i=0;i<=6;i++){
-     const t=i/6,pt=point(t);
-     const post=new T.Mesh(new T.BoxGeometry(.09,.5,.09),bridgeRailMat);
-     post.position.set(cx+pt.x,pt.y+.35,zz);scene.add(freeze(post));
+    const zz=z+side*(width/2-.1);
+    // newel posts, taller than the rail, at both ends
+    for(const t of [0,1]){
+     const pt=point(t);
+     const newel=new T.Mesh(new T.BoxGeometry(.17,1.02,.17),bridgeRailMat);
+     newel.position.set(cx+pt.x,pt.y+.5,zz);scene.add(freeze(newel));
     }
-    for(let i=0;i<6;i++){
-     const a=point(i/6),b=point((i+1)/6);
-     const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
-     const rail=new T.Mesh(new T.BoxGeometry(len+.02,.07,.07),bridgeRailMat);
-     rail.position.set(cx+(a.x+b.x)/2,(a.y+b.y)/2+.62,zz);
-     rail.rotation.z=Math.atan2(dy,dx);scene.add(freeze(rail));
+    // hand rail + mid rail sampled along the curve
+    for(const lift of [1.0,.55]){
+     for(let i=0;i<8;i++){
+      const a=point(i/8),b=point((i+1)/8);
+      const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
+      const rail=new T.Mesh(new T.BoxGeometry(len+.03,lift===1?.09:.06,.09),bridgeRailMat);
+      rail.position.set(cx+(a.x+b.x)/2,(a.y+b.y)/2+lift,zz);
+      rail.rotation.z=Math.atan2(dy,dx);scene.add(freeze(rail));
+     }
     }
+    // balusters
+    for(let i=0;i<=10;i++){
+     const t=i/10,pt=point(t);
+     const post=new T.Mesh(new T.BoxGeometry(.07,.92,.07),bridgeRailMat);
+     post.position.set(cx+pt.x,pt.y+.46,zz);scene.add(freeze(post));
+    }
+   }
+   // a low stone landing at each end, so the ramp meets masonry instead of hanging over the grass
+   for(const side of [-1,1]){
+    const pad=new T.Mesh(new T.BoxGeometry(.55,.1,width),stoneMat);
+    pad.position.set(cx+side*(half-.1),.04,z);scene.add(freeze(pad));
    }
    return {deck};
   }
+
   // v304 (owner): "a waterfall behind the pond". The first pass built a 6-unit rock wall, which from the
   // plaza camera was a grey slab that hid the water. This is a low cascade of loose boulders at the
   // pond's south end with a narrow sheet falling between them - it reads as a rock garden, keeps the
   // pond visible from the north, and is small enough not to fight the houses behind it.
+  // v308 (owner: "what's the random waterfall from the sky? looks funny"): the sheet was an opaque
+  // rectangle AND it stood on the far side of the pond from the camera, so what you saw was the back
+  // of a slab. It now pours into the pond from the far rim, its top disappears under a rock lip, its
+  // foot lands in the water, and the rock face is heaped behind it so no edge is ever in open air.
   function cascade(p,fall,view){
-   const zc=fall.z,w=fall.w,h=fall.h,tone=[rockMat,rockMidMat,rockDarkMat];
-   // boulders: a shallow arc opening toward the pond, sizes varied so no two read the same
-   const rocks=[[-w/2-1.15,.45,.78,.5],[-w/2-.4,.6,1.02,.78],[-w/2+.5,.25,.92,h],[.05,.55,1.12,h+.15],
-                [w/2-.5,.3,.88,h-.05],[w/2+.4,.6,.8,.75],[w/2+1.12,.42,.66,.5],[-.55,1.05,.7,.45],[.62,1.0,.66,.4]];
+   const zc=fall.z,w=fall.w,h=fall.h,d=fall.dir||1,tone=[rockMat,rockMidMat,rockDarkMat];
+   // rock face: taller than the drop, heaped behind the water (away from the pond)
+   const rocks=[[-w/2-1.2,.5,.8,h*.4],[-w/2-.35,.55,1.05,h+.35],[-w/2+.55,.35,.95,h+.5],[.05,.5,1.18,h+.65],
+                [w/2-.55,.35,.92,h+.45],[w/2+.4,.55,.84,h*.65],[w/2+1.15,.45,.68,h*.4],[-.62,1.05,.74,h*.34],[.66,1.0,.7,h*.3]];
    const rockGroup=new T.Group();scene.add(rockGroup);
    if(view)view.fallback.push(rockGroup);
    rocks.forEach(([dx,dz,r,ry],i)=>{
     const rock=new T.Mesh(new T.DodecahedronGeometry(r,0),tone[i%3]);
-    rock.position.set(fall.x+dx,ry*.52,zc+dz);
-    rock.scale.set(1.12,.86,1.02);
+    rock.position.set(fall.x+dx,ry*.6,zc-d*dz);
+    rock.scale.set(1.12,.9,1.02);
     rock.rotation.set(i*.7,i*1.3,i*.45);
     rockGroup.add(rock);
    });
-   // the sheet, in front of the rocks and facing the pond (double sided so it reads from any angle)
-   const tex=makeFallTex();
-   const sheet=new T.Mesh(new T.PlaneGeometry(w-1.7,h+.1),new T.MeshBasicMaterial({map:tex,color:0xcdeaf4,transparent:true,opacity:.78,side:T.DoubleSide,depthWrite:false}));
-   sheet.position.set(fall.x,h/2+.05,zc-.55);scene.add(freeze(sheet));
+   // the sheet: soft-edged streaks, top tucked under the lip slab, foot in the water
+   const tex=makeFallTex(),H=h+.45,baseZ=zc+d*.55;
+   const sheet=new T.Mesh(new T.PlaneGeometry(w-1.5,H),new T.MeshBasicMaterial({map:tex,color:0xd2f0fa,transparent:true,opacity:.9,side:T.DoubleSide,depthWrite:false}));
+   sheet.position.set(fall.x,.10+H/2,baseZ);scene.add(freeze(sheet));
    falls.push({tex});if(view)view.falls.push({tex});
    // v306: a second, additive sheet of painted water keeps scrolling down over the streaks, so the
    // cascade has the same depth and highlights as the pond. It stays invisible until the art loads.
    const sprayMat=new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending});
-   const spray=new T.Mesh(new T.PlaneGeometry(w-1.9,h+.05),sprayMat);
-   spray.position.set(fall.x,h/2+.05,zc-.58);scene.add(freeze(spray));
+   const spray=new T.Mesh(new T.PlaneGeometry(w-1.7,H-.12),sprayMat);
+   spray.position.set(fall.x,.10+H/2,baseZ+d*.03);scene.add(freeze(spray));
    if(view)view.fallSpray.push(spray);
-   // splash: a bright lip, a ring of foam and a shallow pool on the pond side of the rocks
-   const lip=new T.Mesh(new T.BoxGeometry(w-1.5,.07,.26),new T.MeshBasicMaterial({color:0xeaf9ff,transparent:true,opacity:.55}));
-   lip.position.set(fall.x,h+.08,zc-.62);scene.add(freeze(lip));
-   const pool=new T.Mesh(new T.CircleGeometry(1.85,20),poolMat);pool.rotation.x=-Math.PI/2;pool.position.set(fall.x,.026,zc-1.25);scene.add(freeze(pool));
-   const foam=new T.Mesh(new T.RingGeometry(.95,1.45,22),new T.MeshBasicMaterial({color:0xe8f8ff,transparent:true,opacity:.5,depthWrite:false}));
-   foam.rotation.x=-Math.PI/2;foam.position.set(fall.x,.032,zc-1.1);scene.add(freeze(foam));
-   // the stream carries that water into the pond, and the bridge crosses it
-   const stream=new T.Mesh(new T.PlaneGeometry(1.9,p.d/2+1.1),poolMat);
-   stream.rotation.x=-Math.PI/2;stream.position.set(p.x,.019,p.z+p.d/2+1.95);scene.add(freeze(stream));
+   // The source: a slab of rock sitting ON the sheet's top edge, deeper than the sheet, so the water
+   // comes out from under stone instead of starting in mid-air.
+   const lipRock=new T.Mesh(new T.DodecahedronGeometry(w*.34,0),rockMat);
+   lipRock.position.set(fall.x,.10+H-.02,baseZ-d*.05);
+   lipRock.scale.set(1.3,.5,1.05);lipRock.rotation.set(.25,.5,.12);
+   scene.add(freeze(lipRock));
+   if(view)view.fallback.push(lipRock);
+   // splash: broken foam where the water lands, and a shallow pool when it lands on grass
+   const foam=new T.Mesh(new T.RingGeometry(.75,1.2,22),new T.MeshBasicMaterial({color:0xe8f8ff,transparent:true,opacity:.4,depthWrite:false}));
+   foam.rotation.x=-Math.PI/2;foam.position.set(fall.x,fall.intoPond?.045:.032,baseZ+d*.45);scene.add(freeze(foam));
+   if(!fall.intoPond){
+    const pool=new T.Mesh(new T.CircleGeometry(1.85,20),poolMat);
+    pool.rotation.x=-Math.PI/2;pool.position.set(fall.x,.026,baseZ+d*.8);scene.add(freeze(pool));
+   }
   }
   // ------------------------------- v306 painted pond art ------------------------------------
   // The owner's verdict on the first pass: "water & pond have no texture... nothing like the images".
@@ -266,25 +321,23 @@ void main(){
      sp.material.map=clone(water1||water0,1,2.2);sp.material.opacity=.4;sp.material.needsUpdate=true;
      fallScroll.push({tex:sp.material.map});
     }
-    // The bridge used to stand on grass with a puddle at its feet. Now the fall feeds a stone
-    // channel that runs under the bridge and spills over the coping into the pond, so the bridge
-    // spans water and the outlet has a reason to exist.
-    if(v.props&&v.props.falls){
-     const zNear=v.p.z+v.p.d/2-.55,zFar=v.props.falls.z-1.3,len=Math.max(2.4,zFar-zNear),zc=(zNear+zFar)/2;
-     const chShape=new T.ShapeGeometry(roundedRect(3.0,len,.45));
-     const chMat=waterShader(clone(water0,1,1),clone(tile('water_dark_0')||water0,1,1),clone(water1||water0,1,1),{w:3.0,d:len},.16);
-     chMat.uniforms.uRadius.value=.45;
-     const ch=new T.Mesh(chShape,chMat);ch.rotation.x=-Math.PI/2;ch.position.set(v.p.x,.13,zc);scene.add(ch);
+    // v308: the fall now pours straight into the pond, so the stone channel that used to run from
+    // the far side of the bridge has gone. What the bridge spans is the pond's outlet: a narrow
+    // canal leaving the south coping and running down to the houses.
+    if(v.props){
+     const mouth=v.p.z+v.p.d/2+.1,len=3.7,zc=mouth+len/2;
+     const chMat=waterShader(clone(water0,1,1),clone(tile('water_dark_0')||water0,1,1),clone(water1||water0,1,1),{w:2.8,d:len},.15);
+     chMat.uniforms.uRadius.value=.5;
+     const ch=new T.Mesh(new T.ShapeGeometry(roundedRect(2.8,len,.5)),chMat);
+     ch.rotation.x=-Math.PI/2;ch.position.set(v.p.x,.13,zc);scene.add(ch);
      for(const side of [-1,1]){
-      const bank=new T.Mesh(new T.BoxGeometry(.5,.24,len+1.1),new T.MeshBasicMaterial({color:0xb9b2a0}));
-      bank.position.set(v.p.x+side*1.9,.06,zc);scene.add(bank);
-      if(stone){bank.material.map=clone(stone,1/2.2,len/4);bank.material.color.set(0xdfd9c8);bank.material.needsUpdate=true;}
+      const bank=new T.Mesh(new T.BoxGeometry(.55,.26,len+.9),new T.MeshBasicMaterial({color:0xb9b2a0}));
+      bank.position.set(v.p.x+side*1.68,.07,zc);scene.add(bank);
+      if(stone){bank.material.map=clone(stone,1/2.2,len/4);bank.material.color.set(0xdfd9c8);bank.material.needsUpdate=true}
      }
-     // the stone lip the channel spills over, and foam where it lands in the pond
-     const weir=new T.Mesh(new T.BoxGeometry(3.4,.17,.55),new T.MeshBasicMaterial({color:0xb7af9c}));
-     weir.position.set(v.p.x,.09,zNear-.15);scene.add(weir);
-     const spill=new T.Mesh(new T.PlaneGeometry(2.2,.55),new T.MeshBasicMaterial({color:0xdff6fc,transparent:true,opacity:.32,depthWrite:false}));
-     spill.rotation.x=-Math.PI/2;spill.position.set(v.p.x,.03,zNear-.75);scene.add(spill);
+     // a culvert where the canal leaves the coping, so the water never floats over the rim
+     const culvert=new T.Mesh(new T.BoxGeometry(3.1,.3,.62),new T.MeshBasicMaterial({color:0xb7af9c}));
+     culvert.position.set(v.p.x,.15,mouth);scene.add(culvert);
     }
     // stone coping: the same limestone the town's river walls are cut from, now with real height
     // so it casts a lip shadow over the water instead of being a painted flat ring.
@@ -310,18 +363,19 @@ void main(){
     for(const o of v.fallback)scene.remove(o);
     v.fallback.length=0;
     const props=v.props;if(!props)continue;
-    if(cherry)for(const t of props.blossoms)addSprite(cherry,t.x,t.z,3.5*t.scale);
+    if(cherry)for(const t of props.blossoms)addSprite(cherry,t.x,t.z,6.8*t.scale);
     if(lantern)for(const l of props.lanterns)addSprite(lantern,l.x,l.z,1.9);
     if(boulder)for(const b of props.boulders)addSprite(boulder,b.x,b.z,.78+b.r*.6);
     if(props.falls){
-     if(crag)addSprite(crag,props.falls.x+.15,props.falls.z+3.6,2.6);
-     if(bush)addSprite(bush,props.falls.x-4.6,props.falls.z+1.1,1.3);
+     // the rock face the water comes out of: behind the sheet, wide enough to hide it from the far side
+     if(crag){addSprite(crag,props.falls.x-.9,props.falls.z-1.5,3.4);addSprite(crag,props.falls.x+1.1,props.falls.z-2.1,2.9)}
+     if(bush)addSprite(bush,props.falls.x-4.7,props.falls.z-1.3,1.3);
     }
     if(bamboo)addSprite(bamboo,v.p.x+(v.p.x<0?-1:1)*(v.p.w/2+4.2),v.p.z+v.p.d/2+2.4,2.3);
-    // rocks flanking the cascade, where the stream enters the pond
+    // rocks flanking the cascade where it meets the water
     if(boulder&&props.falls){
-     addSprite(boulder,props.falls.x-2.5,props.falls.z-.4,1.05);
-     addSprite(boulder,props.falls.x+2.6,props.falls.z-.2,.95);
+     addSprite(boulder,props.falls.x-2.55,props.falls.z+1.1,1.05);
+     addSprite(boulder,props.falls.x+2.6,props.falls.z+1.3,.95);
     }
     // reflections: the blossom trees mirrored across the pond surface, so the water is not a flat
     // sheet of colour. Only the trees that actually mirror into the water get one.
@@ -336,7 +390,7 @@ void main(){
      const sp=new T.Sprite(m);sp.center.set(.5,1);sp.scale.set(h*(tex.image.width/tex.image.height)*objScale,-h*objScale,1);
      sp.position.set(rx,.035,rz);scene.add(sp);
     };
-    if(cherry)for(const t of props.blossoms)mirror(cherry,t.x,t.z,3.5*t.scale);
+    if(cherry)for(const t of props.blossoms)mirror(cherry,t.x,t.z,6.8*t.scale);
     if(lantern)for(const l of props.lanterns)mirror(lantern,l.x,l.z,1.9);
     if(boulder)for(const b of props.boulders)mirror(boulder,b.x,b.z,.78+b.r*.6);
    }
@@ -362,8 +416,8 @@ void main(){
    {
     const ring=roundedRect(p.w+1.26,p.d+1.26,3.25).getSpacedPoints(28);
     ring.forEach((pt,i)=>{
-     // leave a mouth in the edging where the stream runs in from the cascade
-     if(pt.y<-(p.d/2)&&Math.abs(pt.x)<1.5)return;
+     // leave a mouth in the edging where the cascade enters the water (v308: north shore)
+     if(pt.y>p.d/2&&Math.abs(pt.x)<1.7)return;
      const nx=ring[(i+1)%ring.length],ang=Math.atan2(nx.y-pt.y,nx.x-pt.x);
      const sx=.58+((i*29)%13)/70;
      const stone=new T.Mesh(new T.BoxGeometry(sx,.18+((i*13)%7)/80,.42),stoneMat);
@@ -942,7 +996,7 @@ void main(){
   const state=p.state;if(state.id===callbacks.self()&&p.wasSitting!==state.sit){p.wasSitting=state.sit;callbacks.sitting?.(state.sit)}if(p.loaded!==p.requested||!p.looks.normal||!p.looks.sit)loadLooks(p,now);
   const look=(state.sit?p.looks.sit:null)||p.looks.normal;let height=p.height;
   const pokerChair=state.sit&&Number.isInteger(state.pokerSeat)&&R.POKER?.seats[state.pokerSeat];
-  const chair=pokerChair||(state.sit&&R.SEATS[state.seat]),floor=chair?chair.height:.06;
+  const chair=pokerChair||(state.sit&&R.SEATS[state.seat]),floor=chair?chair.height:.06+bridgeLift(state.x,state.z);
   if(look){
    const facing=(state.dir+Math.round(angle/(Math.PI/4))+8)%8,stance=state.sit&&p.looks.sit?'sit':state.path.length?'walk':'idle';
    const glow=milestone(REFINE_GLOWS,Math.max(0,Math.min(15,Number(state.look?.refine)||0)));

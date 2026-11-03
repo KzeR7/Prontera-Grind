@@ -19,9 +19,12 @@ const TREES=GARDENS.map(g=>({x:g.x,z:g.z,size:8}));
 // each has a waterfall garden behind it (see assets/social-scene.js). Widening them moves the angler
 // chairs automatically - CHAIRS, walkable() and path() all derive from these numbers.
 const PONDS=[-1,1].map(side=>({x:side*23,z:42,w:18,d:13}));
-// The waterfall behind each pond: a stream drops from a rock face into the pond's south side. Shared
-// here so the client builds it in the same place every time.
-const POND_FALLS=PONDS.map(p=>({x:p.x,z:p.z+p.d/2+5.2,w:3.2,h:2.2}));
+// v308: the waterfall moved from behind the bridge to the pond's far (north) rim, so it pours INTO
+// the pond and the default camera - anglers stand on the south shore looking north - sees the water
+// coming toward it out of a rock face instead of the back of a slab hanging in the air. `dir` is the
+// way the water runs (+1 = toward +z, into the pond); `intoPond` drops the splash straight into the
+// water instead of onto a stone channel.
+const POND_FALLS=PONDS.map(p=>({x:p.x,z:p.z-p.d/2+.1,w:4.4,h:2.8,dir:1,intoPond:true}));
 // v304: the garden furniture around each pond (bridge, lanterns, blossom trees, boulders) in one
 // place, so the scene builds what the layout test checks. Boulders keep to the corners of the shore
 // because the angler chairs own the rim's mid-points.
@@ -29,7 +32,7 @@ const SHORE_ROCKS=[[-1,-.62],[.62,-.9],[1,.55],[-.9,.75],[.15,-1]];
 const POND_PROPS=PONDS.map((p,i)=>{
  const hx=p.w/2,hz=p.d/2;
  return {
-  bridge:{x:p.x,z:p.z+hz+2.6,span:6.2,width:2.2,deck:.22,arch:1.15},
+  bridge:{x:p.x,z:p.z+hz+3.1,span:7.2,width:3.1,deck:.3,arch:1.45},
   lanterns:[{x:p.x-hx-2.1,z:p.z+hz+1.1},{x:p.x+hx+2.1,z:p.z+hz+1.1}],
   blossoms:[{x:p.x-hx-3.4,z:p.z-1.6,scale:1.05},{x:p.x+hx+3.4,z:p.z+.4,scale:.95}],
   boulders:SHORE_ROCKS.map(([dx,dz],n)=>({x:p.x+dx*(hx+1.15),z:p.z+dz*(hz+1.15),r:.34+((n*23)%17)/40})),
@@ -41,11 +44,12 @@ const POND_PROPS=PONDS.map((p,i)=>{
 const BENCHES=[...[-1,1].flatMap(side=>[-1,1].flatMap(bank=>[11,15,19].map(x=>({x:bank*x,z:side*13,dir:side===1?4:0,rotation:side===1?Math.PI:0,height:.95,size:3.4}))))].map((b,id)=>({...b,id,seats:[id*2,id*2+1]}));
 // v288: 8 single-seat wooden angler chairs on the pond rims (4 per pond), facing the water.
 // They take seat ids 24-31, after the 24 bench seats, so bench reservations are untouched.
+// v308: the pairs moved out to +-4.8 so the wider bridge and the rock face of the cascade have room.
 const CHAIRS=PONDS.flatMap(p=>[
- {x:p.x-4,z:p.z-p.d/2-1.8,dir:0,rotation:0},
- {x:p.x+4,z:p.z-p.d/2-1.8,dir:0,rotation:0},
- {x:p.x-4,z:p.z+p.d/2+1.8,dir:4,rotation:Math.PI},
- {x:p.x+4,z:p.z+p.d/2+1.8,dir:4,rotation:Math.PI},
+ {x:p.x-4.8,z:p.z-p.d/2-1.8,dir:0,rotation:0},
+ {x:p.x+4.8,z:p.z-p.d/2-1.8,dir:0,rotation:0},
+ {x:p.x-4.8,z:p.z+p.d/2+1.8,dir:4,rotation:Math.PI},
+ {x:p.x+4.8,z:p.z+p.d/2+1.8,dir:4,rotation:Math.PI},
 ]).map((c,i)=>({...c,id:24+i,height:.66,size:1.1}));
 const SEATS=[
  ...BENCHES.flatMap(b=>[-1,1].map((slotSign,slot)=>({id:b.id*2+slot,bench:b.id,slot,x:b.x+slotSign,sitX:b.x+slotSign*.74,z:b.z,dir:b.dir,rotation:b.rotation,height:b.height,size:b.size}))),

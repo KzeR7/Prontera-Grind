@@ -119,7 +119,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-03 haven-v307 sign-in survives a cookie-less preview` |
+| Build tag at the bottom of the card | `2026-11-03 haven-v308 garden: bigger sakura, a bridge you walk over, a fall that comes out of rock` |
 | Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

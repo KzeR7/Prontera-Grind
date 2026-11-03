@@ -25,6 +25,23 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  scene.putPlayer({...state,x:0,z:12,look:{...state.look,lv:49}});frame(now+=100);assert.equal(scene.scene.children.some(o=>o.userData.tier),false,'no aura below Base 50');assert.ok(w.auraDisposals>0,'removing a tier disposes its geometry and material');
  scene.putPlayer({...state,x:0,z:12,look:{...state.look,lv:99}});frame(now+=100);assert.ok(scene.scene.children.some(o=>o.userData.tier===99),'the sigil follows the character level tier');
 
+ // v308: the bridge is walkable - the crown of the arch lifts the hero onto the deck (before this
+ // the sprite stayed at ground level and the character walked straight through the bridge).
+ const bridge=w.PGSocialRules.POND_PROPS[0].bridge;
+ scene.putPlayer({...state,sit:false,x:bridge.x-.6,z:bridge.z});frame(now+=100);
+ const onBridge=scene.scene.children.find(o=>o.userData.socialId===1);
+ assert(onBridge.position.y>1.1&&onBridge.position.y<2,'the hero stands on the bridge deck, not inside it');
+ scene.putPlayer({...state,sit:false,x:bridge.x-.6,z:bridge.z+7});frame(now+=100);
+ assert(scene.scene.children.find(o=>o.userData.socialId===1).position.y<.3,'off the deck the hero is back on the ground');
+ // v308: the cascade pours into the pond from its far rim, not from behind the bridge
+ for(const [i,fall] of w.PGSocialRules.POND_FALLS.entries()){
+  const pond=w.PGSocialRules.PONDS[i];
+  assert(fall.z<pond.z,'fall '+i+' sits on the pond\'s far side so it pours toward the south shore');
+  assert(fall.dir===1&&fall.intoPond,'fall '+i+' runs into the pond');
+ }
+ // v308: garden furniture grew to hero scale
+ assert(w.PGSocialRules.POND_PROPS[0].bridge.span>=7&&w.PGSocialRules.POND_PROPS[0].bridge.width>=3,'the bridge is wider than the v304 span');
+
  // v269: 12 physical metal park benches, each seating 2 players side-by-side (24 seats total).
  // v288 adds 8 single-seat angler chairs on the pond rims (seat ids 24-31) => 32 seats.
  assert.equal(w.PGSocialRules.BENCHES.length,12);assert.equal(w.PGSocialRules.CHAIRS.length,8);assert.equal(w.PGSocialRules.SEATS.length,32);
