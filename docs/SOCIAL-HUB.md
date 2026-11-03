@@ -477,6 +477,29 @@ two-stop bloom plus a shadow-blurred ring around the blank, and the markup carri
 ignores its own `showoff` echo (`m.from !== app.id`), and `showFish()` disposes any active show for
 that angler before adding the new one - one fish and one plate per player, always.
 
+## The rod you hold glows in its own colour (haven-v300)
+
+v299 made the rod *icons* show their tier. The rod the character actually holds in the plaza was still a
+plain brown `MeshBasicMaterial(0x7a5230)` - one geometry, one colour, for everybody.
+
+**The tier travels with the rig.** The fishing module adds `rod` to the rig payload, the relay
+(`workers/social/room.mjs`) validates it against a `FISH_RODS` allow-list (unknown or missing ids become
+`twig`) and stores it on `c.fish`, so it rides both the broadcast and the ordinary snapshot. The page
+therefore knows every angler's tier, not just their own.
+
+**Three meshes per pole.** `makePole()` builds a tier-tinted core, an additive `depthWrite:false` sleeve
+4.2x wider than the shaft, and an 8x haze at a fifth of the opacity so the light falls off instead of
+ending on a hard edge. All three are scaled along the rod, so the glow follows the same pose as the
+blank. The sleeve's opacity comes from the same ladder the icons use (`.22 + aura*.5`, so a twig sits at
+.37 and mythril at .68), the colour is `ROD_TIER_COLORS` lifted 35% toward white, and Golden and Mythril
+breathe at `sin(now/420)` - steady when `prefers-reduced-motion: reduce`. On a 1000x700 plaza view the
+sleeve measures ~44 px across at the test camera, which is the difference between a stick and a glow.
+
+**Three ways in.** `scene.fishing.rod(id)` repaints the local pole (called from `setPhase`, so starting a
+session and equipping a rod both show up immediately), `setRig(pid,{rod})` paints another angler's pole
+and repaints it in place when that angler swaps rods mid-session, and `dropRig` disposes all three meshes.
+`hide()`/`off()` hide the whole group, so the glow never lingers after the line is reeled in.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

@@ -25,6 +25,7 @@ const LEDGER_REASONS=new Set(['blind','call','raise','win']);
 // here (the catalog belongs to the browser module) and again by the client before anything is
 // drawn, so an unknown id simply renders nothing.
 const FISH_MODES=new Set(['flight','wait','bite','reel','ready']);
+const FISH_RODS=new Set(['twig','oak','brass','silver','golden','mythril']);
 const FISH_MUTATIONS=new Set(['shiny','sparkling','frozen','electric','ghostly','golden','prismatic']);
 // v297: the biggest catch in the catalog is a 1.8 t whale shark, so the show-off weight clamp
 // follows the game's weight ceiling instead of the old 60 kg-era 999.
@@ -378,7 +379,7 @@ export class SocialRoom {
    if(m.on!==true){if(c.fish){c.fish=null;this.broadcastPlayer(c,p=>p.room===c.room)}return}
    const x=Number(m.x),z=Number(m.z);
    if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>70||Math.abs(z)>70)return;
-   c.fish={on:true,pond:Number.isInteger(m.pond)?Math.max(0,Math.min(7,m.pond)):0,x:Math.round(x*100)/100,z:Math.round(z*100)/100,mode:FISH_MODES.has(m.mode)?m.mode:'wait'};
+   c.fish={on:true,pond:Number.isInteger(m.pond)?Math.max(0,Math.min(7,m.pond)):0,x:Math.round(x*100)/100,z:Math.round(z*100)/100,mode:FISH_MODES.has(m.mode)?m.mode:'wait',rod:FISH_RODS.has(m.rod)?m.rod:'twig'};
    return this.broadcastPlayer(c,p=>p.room===c.room);
   }
   // v295: Show off is relayed as data to the whole room instead of being written as a Local-chat

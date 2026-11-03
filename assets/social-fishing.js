@@ -618,7 +618,8 @@ let rigSent='';
 function rigPayload(){
  if(['off','walking'].includes(ui.phase)||!ui.rigTarget)return {on:false};
  const t=ui.rigTarget;
- return {on:true,pond:ui.pond,x:Math.round(t.x*100)/100,z:Math.round(t.z*100)/100,mode:ui.phase};
+ // v300: the rod id rides along so other anglers see the same tier (and glow) you do.
+ return {on:true,pond:ui.pond,x:Math.round(t.x*100)/100,z:Math.round(t.z*100)/100,mode:ui.phase,rod:equippedRod().id};
 }
 function publishRig(){
  if(!opts||typeof opts.rig!=='function')return;
@@ -627,7 +628,10 @@ function publishRig(){
  rigSent=key;
  opts.rig(p);
 }
-function setPhase(phase){ui.phase=phase;renderStage();publishRig();if(opts&&opts.button){opts.button.textContent=phase==='off'?'🎣 Fishing':'🎣 Fishing…';opts.button.setAttribute('aria-pressed',String(phase!=='off'))}}
+// v300: paint the local pole in the equipped rod's tier colour whenever the session or the rod
+// changes. The scene falls back to wood for an unknown id.
+function syncRodLook(){const f=sceneFishing();if(f&&typeof f.rod==='function')try{f.rod(equippedRod().id)}catch{}}
+function setPhase(phase){ui.phase=phase;syncRodLook();renderStage();publishRig();if(opts&&opts.button){opts.button.textContent=phase==='off'?'🎣 Fishing':'🎣 Fishing…';opts.button.setAttribute('aria-pressed',String(phase!=='off'))}}
 function mutFilter(mut){return mut&&MUTATIONS[mut]?' '+MUTATIONS[mut].css:''}
 // ---- v294 fish art. The old look was the OS emoji tinted with hue-rotate: blurry, washed
 // out and childish, and the show-off/catch sprites were so dim they vanished over the pond.
@@ -1376,7 +1380,7 @@ function renderShop(){
  const bagRow=`<div class="fishing-shop-row equipped"><span class="fishing-shop-icon">🧺</span><span class="fishing-shop-name">${esc(tier.label)}<small>holds ${cap} fish · ${st.bag.length}/${cap} stored${next?` · next: ${esc(next.label)} holds ${next.cap}`:' · fully upgraded'}</small></span>${next?`<button type="button" data-bagup ${st.coins<next.cost?'disabled':''}>${COIN_HTML} ${fmt(next.cost)}</button>`:'<button type="button" disabled>Max</button>'}</div>`;
  els.shopView.innerHTML=`<p class="fishing-shop-head">${COIN_HTML} <b>${fmt(st.coins)}</b> Fishcoins — earn them by selling fish from the Bag.</p><h4>Bag <small>permanent capacity · 120 → 200 → 300 → 400 → 500</small></h4>${bagRow}<h4>Rods <small>permanent · luck / control / strength / lure speed</small></h4>${rodRows}<h4>Bait <small>one is used per cast</small></h4>${baitRows}<div class="fishing-shop-row${st.baitSel===null?' equipped':''}"><span class="fishing-shop-icon">🚫</span><span class="fishing-shop-name">No bait<small>fish with the rod alone</small></span><button type="button" data-use="none" ${st.baitSel===null?'disabled':''}>Use</button></div>`;
  for(const b of els.shopView.querySelectorAll('button[data-rod]'))b.onclick=()=>{const r=buyRod(st,b.dataset.rod);if(r.ok){persist();sound('coin');status('Bought and equipped the '+RODS_BY_ID[b.dataset.rod].name+'!')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
- for(const b of els.shopView.querySelectorAll('button[data-equip]'))b.onclick=()=>{equipRod(st,b.dataset.equip);persist();renderPanel()};
+ for(const b of els.shopView.querySelectorAll('button[data-equip]'))b.onclick=()=>{equipRod(st,b.dataset.equip);syncRodLook();persist();renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-bagup]'))b.onclick=()=>{const r=buyBagUpgrade(st);if(r.ok){persist();sound('coin');status('Bag upgraded — it now holds '+r.cap+' fish.')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel();renderDockGear()};
  for(const b of els.shopView.querySelectorAll('button[data-bait]'))b.onclick=()=>{const r=buyBait(st,b.dataset.bait,Number(b.dataset.n));if(r.ok){persist();sound('coin');if(!st.baitSel)selectBait(st,b.dataset.bait)}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-use]'))b.onclick=()=>{selectBait(st,b.dataset.use==='none'?null:b.dataset.use);persist();renderPanel()};

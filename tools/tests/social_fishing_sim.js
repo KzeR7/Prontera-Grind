@@ -558,6 +558,21 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  const announced=F.SPECIES.filter(sp=>sp.mega||sp.rarity==='secret').map(sp=>sp.id);
  assert(announced.includes('whaleshark')&&announced.includes('poring'),'giants and secrets are announced');
  assert(!announced.includes('minnow')&&!announced.includes('koi'),'ordinary catches stay quiet in chat');
+ // --- Part C4: the rod you hold is the rod the plaza draws (v300) ---------------------------
+ let rodCalls=[],rigs=[];
+ const fishStub=new Proxy({},{get:(t,k)=>{if(k==='rod')return id=>rodCalls.push(id);return typeof k==='string'?()=>{}:undefined}});
+ hostS.fishing.rods=['twig','oak','brass','golden'];hostS.fishing.rod='twig';
+ FISH.bind({host:()=>hostS,scene:()=>({fishing:fishStub}),rig:p=>rigs.push(p),self:()=>({x:rimA.x,z:rimA.z}),moveTo:()=>{},notice:()=>{},save:()=>{}});
+ FISH.toggle();
+ assert.equal(FISH.phase,'ready','the rod-plumbing session is live');
+ assert.equal(rodCalls.at(-1),'twig','starting a session paints the held pole in the equipped rod');
+ // Nothing is on the wire until the line is cast, and then the tier rides with it.
+ assert.equal(rigs.every(p=>p.on!==true||!!p.rod),true,'anything that leaves the client names its rod');
+ FISH.stop('done');
+ hostS.fishing.rod='golden';
+ FISH.toggle();
+ assert.equal(rodCalls.at(-1),'golden','a better rod repaints the pole you are holding');
+ FISH.stop('done');
  dom2.window.close();
  // --- Part D: the page wires v295 up (save shape, cache versions, build tag) ---------------
  const page=fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
@@ -572,8 +587,8 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=299'),asset+' is versioned at v299');
- assert(/haven-v299/.test(page),'the login card names the v299 build');
+  assert(page.includes(asset+'?v=300'),asset+' is versioned at v300');
+ assert(/haven-v300/.test(page),'the login card names the v300 build');
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
  const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');
@@ -597,6 +612,14 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/const ROD_AURA=\{twig:\.22/.test(mod),'every rod tier has an aura strength');
  assert(mod.includes('shadowBlur=U(9)'),'the painted rod gets a bloom + ring the eye can actually see');
  assert(/data-rod-tier=\"\$\{esc\(rod\.id\)\}\"/.test(mod),'the markup exposes the tier for CSS');
+ // v300 (owner): the 3D pole in the player's hands glows in the rod's own colour.
+ assert(/const ROD_GLOW=\{twig:\.3/.test(mod.replace(/\s+/g,' '))===false,'the glow table lives in the scene, not the fishing module');
+ const sceneSrc=fs.readFileSync(path.join(__dirname,'..','..','assets','social-scene.js'),'utf8');
+ assert(/ROD_GLOW=\{twig:\.3,oak:\.4,brass:\.52,silver:\.62,golden:\.78,mythril:\.92\}/.test(sceneSrc),'every tier has a world-space glow strength');
+ assert(sceneSrc.includes('T.AdditiveBlending'),'the glow is added light, not a dull brown stick');
+ assert(/rodTint\(rodId\)/.test(sceneSrc)&&sceneSrc.includes('ROD_TIER_COLORS'),'the pole reuses the rod tier palette');
+ assert(sceneSrc.includes('rod:setRod'),'the scene hands the fishing module a setRod hook');
+ assert(/c\.fish=\{on:true,pond:.*rod:FISH_RODS\.has\(m\.rod\)\?m\.rod:'twig'\}/.test(room),'the relay validates and forwards the rod id');
  const rodCss=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.css'),'utf8');
  assert(/\.fishing-rod-art\{filter:drop-shadow/.test(rodCss),'CSS gives the rod icon a tinted aura');
  assert(/@keyframes rod-aura/.test(rodCss),'the top tiers pulse');

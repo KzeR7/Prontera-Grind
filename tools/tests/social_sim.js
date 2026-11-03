@@ -96,16 +96,22 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  const mk=(id)=>{const ev=[];const c=fishRoom.connect({id,username:'Angler'+id},raw=>ev.push(JSON.parse(raw)),()=>{});c.events=ev;fishRoom.receive(c,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));return c};
  const sendF=(c,m)=>fishRoom.receive(c,JSON.stringify(m));
  const angler=mk(401),watcher=mk(402);
- sendF(angler,{type:'rig',on:true,pond:1,x:23,z:42,mode:'wait'});
+ // v300: the angler's rod tier rides with the rig so everyone sees the same colour pole.
+ sendF(angler,{type:'rig',on:true,pond:1,x:23,z:42,mode:'wait',rod:'mythril'});
  const rigged=watcher.events.find(e=>e.type==='player'&&e.player.id===401&&e.player.fish);
  assert(rigged&&rigged.player.fish.on===true,'everyone in the plaza is told where the line is');
  assert.equal(rigged.player.fish.x,23);assert.equal(rigged.player.fish.pond,1);
+ assert.equal(rigged.player.fish.rod,'mythril','the rod tier is relayed verbatim');
  assert.equal(fishRoom.snapshot(angler,watcher).fish.on,true,'the rig rides the ordinary snapshot too');
  // A forged position or an unknown phase is dropped rather than broadcast.
  sendF(angler,{type:'rig',on:true,x:999,z:-999,mode:'nonsense'});
  assert.equal(angler.fish.x,23,'out-of-bounds rig packets change nothing');
  sendF(angler,{type:'rig',on:true,x:22,z:41,mode:'nonsense'});
  assert.equal(angler.fish.mode,'wait','an unknown phase falls back to waiting');
+ sendF(angler,{type:'rig',on:true,x:22,z:41,mode:'wait',rod:'<script>'});
+ assert.equal(angler.fish.rod,'twig','an unknown rod id falls back to the starting rod');
+ sendF(angler,{type:'rig',on:true,x:22,z:41,mode:'wait'});
+ assert.equal(angler.fish.rod,'twig','a rig with no rod id at all is still safe');
  sendF(angler,{type:'rig',on:false});
  assert.equal(angler.fish,null,'reeling in clears the shared rig');
  assert(watcher.events.some(e=>e.type==='player'&&e.player.id===401&&e.player.fish===null),'the plaza is told the line is out');
