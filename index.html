@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=294">
-<link rel="stylesheet" href="assets/social-fishing.css?v=294">
+<link rel="stylesheet" href="assets/social.css?v=295">
+<link rel="stylesheet" href="assets/social-fishing.css?v=295">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-03 haven-v294 fishing locks and painted fish';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-03 haven-v295 pond fish, public rigs, fishing titles';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3295,7 +3295,7 @@ function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},labels={damage:'
  return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*ascUpgradeScale(k,rank)).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
-const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0,ledgerApplied:[]},fishing:{v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true},coins:0,rods:['twig'],rod:'twig',bait:{},baitSel:null},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
+const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0,ledgerApplied:[]},fishing:{v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true},coins:0,rods:['twig'],rod:'twig',bait:{},baitSel:null,bagTier:0,title:null},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -3393,16 +3393,24 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   if(!f.fishing||typeof f.fishing!=='object'||Array.isArray(f.fishing))f.fishing={v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true}};
   f.fishing.v=1;
   const fishMuts=['shiny','sparkling','frozen','electric','ghostly','golden','prismatic'];
-  f.fishing.bag=(Array.isArray(f.fishing.bag)?f.fishing.bag:[]).filter(e=>e&&typeof e==='object'&&typeof e.sp==='string').slice(-120).map(e=>({id:typeof e.id==='string'?e.id.slice(0,40):'',sp:e.sp.slice(0,24),w:Math.round(cl(num_(e.w,0),0,999)*100)/100,mut:fishMuts.includes(e.mut)?e.mut:null,at:Math.max(0,Math.floor(num_(e.at,0))),perfect:e.perfect===true}));
+  // v295: permanent bag tiers (120 → 200 → 300 → 400 → 500) and the equipped fishing title.
+  // The tier is clamped to the ladder and the slice uses THAT cap, so upgrading never appears to
+  // lose fish and a tampered tier can never grant capacity the ladder does not sell.
+  const fishBagTiers=[120,200,300,400,500];
+  f.fishing.bagTier=Math.max(0,Math.min(fishBagTiers.length-1,Math.floor(num_(f.fishing.bagTier,0))||0));
+  const fishBagCap=fishBagTiers[f.fishing.bagTier];
+  f.fishing.bag=(Array.isArray(f.fishing.bag)?f.fishing.bag:[]).filter(e=>e&&typeof e==='object'&&typeof e.sp==='string').slice(-fishBagCap).map(e=>({id:typeof e.id==='string'?e.id.slice(0,40):'',sp:e.sp.slice(0,24),w:Math.round(cl(num_(e.w,0),0,999)*100)/100,mut:fishMuts.includes(e.mut)?e.mut:null,at:Math.max(0,Math.floor(num_(e.at,0))),perfect:e.perfect===true}));
   f.fishing.dex=f.fishing.dex&&typeof f.fishing.dex==='object'&&!Array.isArray(f.fishing.dex)?Object.fromEntries(Object.entries(f.fishing.dex).slice(0,96).filter(([k,d])=>typeof k==='string'&&d&&typeof d==='object').map(([k,d])=>[k.slice(0,24),{n:safeCount(d.n),bw:Math.round(cl(num_(d.bw,0),0,999)*100)/100,at:Math.max(0,Math.floor(num_(d.at,0))),mut:[...new Set((Array.isArray(d.mut)?d.mut:[]).filter(m=>fishMuts.includes(m)))]}])):{};
   f.fishing.stats={casts:safeCount(f.fishing.stats?.casts),catches:safeCount(f.fishing.stats?.catches),escapes:safeCount(f.fishing.stats?.escapes),perfects:safeCount(f.fishing.stats?.perfects)};
-  f.fishing.settings={fish:f.fishing.settings?.fish!==false,sound:f.fishing.settings?.sound!==false};
+  f.fishing.settings={fish:true,sound:f.fishing.settings?.sound!==false};
   const fishRodIds=['twig','oak','brass','silver','golden','mythril'],fishBaitIds=['worm','shrimp','grub','jelly'];
   f.fishing.coins=Math.max(0,Math.min(1e9,Math.floor(num_(f.fishing.coins,0))));
   f.fishing.rods=[...new Set(['twig',...(Array.isArray(f.fishing.rods)?f.fishing.rods:[]).filter(r=>fishRodIds.includes(r))])];
   f.fishing.rod=typeof f.fishing.rod==='string'&&f.fishing.rods.includes(f.fishing.rod)?f.fishing.rod:'twig';
   f.fishing.bait=f.fishing.bait&&typeof f.fishing.bait==='object'&&!Array.isArray(f.fishing.bait)?Object.fromEntries(fishBaitIds.map(b=>[b,Math.max(0,Math.min(999,Math.floor(num_(f.fishing.bait[b],0))))]).filter(([,n])=>n>0)):{};
   f.fishing.baitSel=typeof f.fishing.baitSel==='string'&&fishBaitIds.includes(f.fishing.baitSel)?f.fishing.baitSel:null;
+  const fishTitleIds=['dockhand','bait-layer','reed-watcher','species-collector','perfect-hand','heavy-hook','deep-line','mutation-hunter','pond-legend','apex-angler'];
+  f.fishing.title=typeof f.fishing.title==='string'&&fishTitleIds.includes(f.fishing.title)?f.fishing.title:null;
   if(!Array.isArray(f.mail))f.mail=[];else f.mail=f.mail.filter(m=>m&&typeof m==='object'&&typeof m.body==='string').slice(0,50);
   f.mailSeeded=f.mailSeeded===true;
   f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
@@ -12918,10 +12926,10 @@ setInterval(updateWatch,60000);
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=294"></script>
-<script src="assets/social-poker.js?v=294"></script>
-<script src="assets/social-scene.js?v=294"></script>
-<script src="assets/social-fishing.js?v=294"></script>
-<script src="assets/social.js?v=294"></script>
+<script src="assets/social-rules.js?v=295"></script>
+<script src="assets/social-poker.js?v=295"></script>
+<script src="assets/social-scene.js?v=295"></script>
+<script src="assets/social-fishing.js?v=295"></script>
+<script src="assets/social.js?v=295"></script>
 </body>
 </html>

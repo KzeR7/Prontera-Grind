@@ -25,7 +25,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert(c.events.some(e=>e.type==='poker_ledger'&&e.id===missed.id),'unacknowledged payout replays again');
 
  // Payout during disconnect, reconnect AFTER expiry. The seat is gone; the outbox is not.
- now+=200;room.disconnect(c);now+=16000;room.sweep();assert(!room.resumes.has(9));assert(!table.findPlayer(9));
+ now+=200;room.disconnect(c);now+=16000;room.sweep();
+ // v295: two clocks. The poker seat keeps its short grace so an abandoned table frees up, while
+ // the plaza spot keeps the whole idle window so a dropped client still resumes where it stood.
+ assert(!table.findPlayer(9),'an abandoned poker seat is released after the short grace');
+ assert(room.resumes.has(9),'the plaza spot outlives the seat reservation');
  c=connect(room,9);c._room=room;await settle();assert.equal(c.pokerSeat,null);
  assert(c.events.some(e=>e.type==='poker_ledger'&&e.id===missed.id),'expiry cannot discard the missed payout');
 

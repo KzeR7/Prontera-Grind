@@ -250,6 +250,69 @@ slide the whole table 110px left into the freed lane; the owner reported the jum
 bug. `poker-chat-fit` is retired: the modal's geometry and the chat column are now
 identical whether the player is seated or standing.
 
+## Ponds, public rigs, titles and the AFK spawn fix (haven-v295)
+
+**Pond fish are permanent.** The *Pond fish* checkbox is gone and `settings.fish` is
+always `true`; `normalize` (and the `index.html` save sanitiser) force it, so a save that
+had it off comes back with swimming fish. The ambient swimmers are part of the pond now.
+
+**The line in the water is public.** A caster sends `{type:'rig',on,pond,x,z,mode}`; the
+worker keeps it on the client (`c.fish`), puts it on the ordinary snapshot, and re-emits
+`type:'player'` so every client redraws. `fishing.setRig(id,state)` draws one lightweight
+bobber + rod per remote angler and `removePlayer` drops it, so nobody leaves a floating
+bobber behind. Your own rig is still drawn frame by frame from the fishing module and is
+deliberately skipped by `putPlayer`. Presentation only — the message carries no score,
+item or money, and out-of-bounds coordinates or an unknown `mode` are ignored.
+
+**Show-offs are data, not chat.** Show off no longer writes a Local-chat line. The
+angler paints the fish locally and sends `{type:'showoff',sp,w,mut,perfect}`; the worker
+validates the fields (species by shape, weight 0.01–999, known mutation, 1.5 s per-client
+cooldown) and broadcasts it to the room. `scene.showFish` gained a `label`, drawn as its
+own small plate above the fish, so the weight is where the fish is. `showOffText` /
+`parseShowOff` / `onLocalMessage` stay for old clients and chat history.
+
+**Ten fishing titles, worn above the head.** `FISHING_TITLES` is a ladder from *Dockhand*
+(10 catches) to *Apex Angler* (all 70 species), each earned from counters the saved fishing
+blob already keeps — catches, casts, perfects, discovered species, best weight, mutation
+kinds — so no new counter or migration can lose one. They are equipped from the new
+**🏅 Titles** tab and saved as `S.fishing.title`. `plazaTitle()` wears an equipped fishing
+title in the plaza ahead of the Hunt title (that is where fishing happens) and falls back
+to the Hunt title when none is equipped, through the existing `look.title` nameplate line.
+
+**Bag upgrades 120 → 200 → 300 → 400 → 500.** `BAG_TIERS` is permanent and strictly
+sequential (2,500 / 8,000 / 25,000 / 75,000 Fishcoins); `bagMax(state)` is the live cap,
+`BAG_MAX` stays the base 120 for older callers, and the `index.html` sanitiser clamps
+`bagTier` and slices the bag to the tier the player actually owns. A full bag still
+refuses a catch, and the shop row shows what is owned, stored and next.
+
+**Painted rods with a tier glow.** `rodSprite`/`rodSpriteURL` paint a side-view rod per
+tier and `ROD_TIER_COLORS` is the single colour table shared by the dock, the shop and
+the glow, so a tier reads at a glance instead of as an OS emoji. Like `fishSprite` it
+returns `null` without canvas 2D and the emoji glyph is the fallback.
+
+**AFK fishing no longer teleports to spawn.** The bug was the resume window, not the
+idle window: `disconnect` reserved the spot for 15 s while the client allowed 20 s of
+silence + 6 s before probing, so a silent drop — and every throttled background tab —
+reconnected *after* expiry, fell through to a fresh `join`, and spawned at the entrance
+(~30 units from the pond, far outside the 6.5-unit fishing range), which cancelled the
+cast with "You stepped away from the pond." Two clocks now:
+
+- `RESUME_MS = IDLE_MS` (5 minutes) for the **plaza spot**, so a dropped or throttled
+  client resumes where it stood. The reservation is still single-use, still authenticated
+  by Pages before the socket exists, and still bounded.
+- `POKER_RESUME_MS = 15000` for the **poker seat**, unchanged: an abandoned table must
+  free up or it stalls the hand. `releaseSeat` drops the seat without costing the player
+  their position.
+
+The client side matches: the watchdog is 10 s + 5 s, `visibilitychange` probes the moment
+a background tab wakes, every close path (not just the planned `4000` refresh) keeps
+`seatState()`, and a 45 s ping runs while a line is in the water so an AFK session does
+not look dead to proxies.
+
+**Sitting is allowed while fishing.** v294's movement lock blocked seats and Insert
+together; walk-away is still blocked (press ✕ Stop fishing), but `seatAction` and
+`toggleSit` no longer are — the pond-side angler chairs are now usable mid-cast.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

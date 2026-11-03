@@ -90,5 +90,49 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  const chatty=beatRoom.connect({id:303,username:'Chatty'},()=>{},()=>{});
  for(let i=0;i<6;i++){beatNow+=240000;beatRoom.receive(chatty,JSON.stringify({type:'ping'}));assert(beatRoom.clients.has(303),'each message slides the idle window forward')}
  beatNow+=400000;beatRoom.receive(chatty,JSON.stringify({type:'ping'}));assert(!beatRoom.clients.has(303),'activity cannot outrun the re-authentication bound');
+ // v295: the line in the water is public, show-offs travel as data, and a silent drop resumes the
+ // angler where they stood instead of respawning them at the plaza entrance.
+ const fClock={t:5000},fishRoom=new SocialRoom({now:()=>fClock.t});
+ const mk=(id)=>{const ev=[];const c=fishRoom.connect({id,username:'Angler'+id},raw=>ev.push(JSON.parse(raw)),()=>{});c.events=ev;fishRoom.receive(c,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));return c};
+ const sendF=(c,m)=>fishRoom.receive(c,JSON.stringify(m));
+ const angler=mk(401),watcher=mk(402);
+ sendF(angler,{type:'rig',on:true,pond:1,x:23,z:42,mode:'wait'});
+ const rigged=watcher.events.find(e=>e.type==='player'&&e.player.id===401&&e.player.fish);
+ assert(rigged&&rigged.player.fish.on===true,'everyone in the plaza is told where the line is');
+ assert.equal(rigged.player.fish.x,23);assert.equal(rigged.player.fish.pond,1);
+ assert.equal(fishRoom.snapshot(angler,watcher).fish.on,true,'the rig rides the ordinary snapshot too');
+ // A forged position or an unknown phase is dropped rather than broadcast.
+ sendF(angler,{type:'rig',on:true,x:999,z:-999,mode:'nonsense'});
+ assert.equal(angler.fish.x,23,'out-of-bounds rig packets change nothing');
+ sendF(angler,{type:'rig',on:true,x:22,z:41,mode:'nonsense'});
+ assert.equal(angler.fish.mode,'wait','an unknown phase falls back to waiting');
+ sendF(angler,{type:'rig',on:false});
+ assert.equal(angler.fish,null,'reeling in clears the shared rig');
+ assert(watcher.events.some(e=>e.type==='player'&&e.player.id===401&&e.player.fish===null),'the plaza is told the line is out');
+ // Show off is relayed as data: no chat line, bounded fields, and a cooldown.
+ sendF(angler,{type:'showoff',sp:'<img src=x>',w:3});
+ assert(!watcher.events.some(e=>e.type==='showoff'),'a non-species payload is never relayed');
+ fClock.t+=2000;sendF(angler,{type:'showoff',sp:'koi',w:999,mut:'evil',perfect:true});
+ const shown=watcher.events.filter(e=>e.type==='showoff').at(-1);
+ assert(shown&&shown.sp==='koi'&&shown.w===999&&shown.from===401,'the show-off reaches the room as data');
+ assert.equal(shown.mut,null,'an unknown mutation is dropped');
+ assert.equal(shown.perfect,true);
+ const beforeFlood=watcher.events.filter(e=>e.type==='showoff').length;
+ sendF(angler,{type:'showoff',sp:'koi',w:5});
+ assert.equal(watcher.events.filter(e=>e.type==='showoff').length,beforeFlood,'show-offs are rate limited');
+ const pond0=R.PONDS[0];
+ assert(Math.hypot(0-pond0.x,12-pond0.z)>6.5,'the entrance is far outside fishing range - a respawn there cancels the cast');
+ // A silent drop keeps the spot for the whole idle window, not the old 15 seconds.
+ fClock.t+=1000;angler.x=pond0.x+9;angler.z=pond0.z;angler.at=fClock.t;
+ const pondSpot={x:angler.x,z:angler.z};
+ fishRoom.disconnect(angler);
+ fClock.t+=60000;const resumed=mk(401);
+ assert.equal(resumed.room,1,'a reconnect a minute later rejoins the same plaza');
+ assert(Math.hypot(resumed.x-pondSpot.x,resumed.z-pondSpot.z)<2,'the angler resumes at the pond, not the entrance');
+ assert(resumed.events.some(e=>e.type==='room'),'the reconnecting client is sent the room snapshot');
+ // The reservation is still bounded: past the idle window it is a fresh join at the entrance.
+ fishRoom.disconnect(resumed);
+ fClock.t+=310000;const fresh=mk(401);
+ assert(Math.hypot(fresh.x,12-fresh.z)<1||Math.abs(fresh.z-12)<8,'an expired reservation spawns at the entrance again');
  console.log('PASS social room: channel privacy, 20-player overflow, native emotion events, collision, movement/sit, rate limit, sliding idle window with a 30-minute re-authentication, per-character walk speed and tab replacement');
 })().catch(e=>{console.error(e);process.exitCode=1});
