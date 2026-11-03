@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=312">
-<link rel="stylesheet" href="assets/social-fishing.css?v=312">
+<link rel="stylesheet" href="assets/social.css?v=313">
+<link rel="stylesheet" href="assets/social-fishing.css?v=313">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-03 haven-v312 refine button prices the ore it auto-buys';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-03 haven-v313 refine purchase confirmation, plaza chat history';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -5903,11 +5903,24 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
    return;
   }
   const previousRank=it.r||0;let succeeded=false;const protectedAttempt=!!S.useRefineScroll;
+  // v313 (owner: "make a pop up to confirm buying materials & amount - players just press and
+  // finish all the zeny"). The purchase is now a question, not a side effect: it names the count,
+  // the unit price, the total for the attempt and what the purse would be left with. `answered`
+  // carries what has already been agreed to, so a second question never re-asks the first.
+  const answered=arguments[1],buyAnswered=answered===it||!!(answered&&answered.buy),scrollAnswered=answered===it;
   const needsMythicScroll=it.sec===6&&previousRank>=10;
   if(protectedAttempt&&needsMythicScroll&&!safeCount(S.mythicScrolls)){log('Mythic Protection Scroll required for +11 to +15 refines. Find them on Ascension bosses, or exchange 100 Sigils in the Black Market or 600 Echo Shards in Echo.');return;}
   if(protectedAttempt&&!needsMythicScroll&&!safeCount(S.refineScrolls)){log('Refine Protection Scroll is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
+  if(short.miss>0&&!buyAnswered){
+   const owner=S;let pending=true,left=S.zeny-c-short.cost;
+   ask(`This refine needs ${need} ${ORE[o]} and you have ${short.have}. Buy the missing ${short.miss} ${ORE[o]} at the Black Market price of ${BM_ORE.toLocaleString()}z each - ${short.cost.toLocaleString()}z - and refine for ${c.toLocaleString()}z? Total ${(c+short.cost).toLocaleString()}z, leaving ${left.toLocaleString()}z.`,()=>{
+    if(!pending)return;pending=false;
+    if(S!==owner||S.eq[sl]!==it||(it.r||0)!==previousRank)return;
+    refine(sl,{buy:true});
+   },{yes:`Buy ${short.miss} · ${short.cost.toLocaleString()}z`,no:'Cancel'});return;
+  }
   // Warn before spending a scroll where a failed attempt cannot drop the rank.
-  if(protectedAttempt&&(previousRank<5||(it.sec===6&&previousRank===10))&&arguments[1]!==it){
+  if(protectedAttempt&&(previousRank<5||(it.sec===6&&previousRank===10))&&!scrollAnswered){
     const owner=S;let pending=true;
     ask((it.sec===6?'This Mythic equipment is +'+previousRank+', so failure cannot drop its rank. Use one '+(needsMythicScroll?'Mythic ':'')+'Refine Protection Scroll anyway?':'This equipment is below +5, so failure cannot drop its rank. Use one Refine Protection Scroll anyway?')+' This attempt also costs '+c.toLocaleString()+'z and '+need+' '+ORE[o]+'.',()=>{
       if(!pending)return;pending=false;
@@ -6980,7 +6993,7 @@ const V={
       // old rule, "you must already own every ore", so the button greyed out over the very shortfall the
       // attempt was about to cover. The gate is the money now: fee plus auto-bought ore, and the line
       // says both numbers so a disabled button is never a mystery.
-      const price=maxed?'':short.miss>0?' &middot; short '+short.miss+' '+ORE[o]+' (auto-bought '+short.cost.toLocaleString()+'z) &middot; total '+total.toLocaleString()+'z':' &middot; total '+total.toLocaleString()+'z';
+      const price=maxed?'':short.miss>0?' &middot; short '+short.miss+' '+ORE[o]+' (buy for '+short.cost.toLocaleString()+'z on confirm) &middot; total '+total.toLocaleString()+'z':' &middot; total '+total.toLocaleString()+'z';
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${maxed?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}${price}</small>${!maxed&&!afford?'<br><small class="refine-auto-buy is-short">Need '+(total-S.zeny).toLocaleString()+'z more</small>':''}<br><button data-a="refine" data-v="${k}" ${maxed||!afford?'disabled':''}>Refine${maxed?'':' &middot; '+total.toLocaleString()+'z'}</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
     return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters, and every species has a signature passive - a duplicate folds into the copy you own and raises that species' Bond. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}<span class="pet-bond-badge">${bondStars(q.sp)}</span></div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
@@ -7265,7 +7278,7 @@ function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display=
   const questHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?contractPanel(eclipseQuestAll?Infinity:3)+(S.q||[]).map((q,i)=>q.prog<q.goal?'':`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
   eclipseSetMarkup(e,questHTML+(qOpen?'<button class="eclipse-quest-all" data-q="viewall">'+(eclipseQuestAll?'Show compact journal':'View all objectives')+' →</button>':''));e.classList.toggle('expanded-journal',eclipseQuestAll);$('sideMenu').classList.toggle('eclipse-more-open',sideOpen);eclipseSetMarkup($('sideMenu'),qpSide());eclipsePositionMore();polishIcons(e);if(typeof guideFinderSync==='function')guideFinderSync()}
 $('sideRail').onclick=e=>{const d=e.target.closest('[data-t]');if(d){sideOpen=false;openTab(d.dataset.t);return}const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='viewall'){eclipseQuestAll=!eclipseQuestAll;renderQ();return}if(v==='daily'||v==='all'){questView=v;renderQ();return}if(v.startsWith('contract:')){claimContract(v.slice(9));return}if(v==='side'){sideOpen=!sideOpen;renderQ();return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
-function refineUI(it,k){const r=it.r||0,maxRef=it.sec===6?15:10,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it),short=refineOreShortfall(it),total=c+short.cost;return`<div class="sec">Refine</div>${refineProtectionUI()}<small class="refine-item-summary"><span>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${r>=maxRef?ev(it):Math.round(it.val*(1+(r+1)*.15))}</span><span>${r>=maxRef?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]}</span><span class="refine-owned" title="${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned">${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned</span></small>${short.miss>0?`<small class="refine-auto-buy">Short ${short.miss} ${ORE[o]} &middot; bought automatically for ${short.cost.toLocaleString()}z (total ${total.toLocaleString()}z)</small>`:''}${r<maxRef&&S.zeny<total?`<small class="refine-auto-buy is-short">Need ${(total-S.zeny).toLocaleString()}z more</small>`:''}<div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=maxRef||S.zeny<total?'disabled':''}>Refine${r>=maxRef?'':' &middot; '+total.toLocaleString()+'z'}</button></div>`}
+function refineUI(it,k){const r=it.r||0,maxRef=it.sec===6?15:10,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it),short=refineOreShortfall(it),total=c+short.cost;return`<div class="sec">Refine</div>${refineProtectionUI()}<small class="refine-item-summary"><span>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${r>=maxRef?ev(it):Math.round(it.val*(1+(r+1)*.15))}</span><span>${r>=maxRef?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]}</span><span class="refine-owned" title="${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned">${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned</span></small>${short.miss>0?`<small class="refine-auto-buy">Short ${short.miss} ${ORE[o]} &middot; bought on confirm for ${short.cost.toLocaleString()}z (total ${total.toLocaleString()}z)</small>`:''}${r<maxRef&&S.zeny<total?`<small class="refine-auto-buy is-short">Need ${(total-S.zeny).toLocaleString()}z more</small>`:''}<div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=maxRef||S.zeny<total?'disabled':''}>Refine${r>=maxRef?'':' &middot; '+total.toLocaleString()+'z'}</button></div>`}
 // v75: one pet per species. petFold() takes a duplicate and folds it into the pet you already
 // own - the better mutation survives, each gear slot keeps its better level, a skill the older
 // pet was missing moves into its free slot, and the species gains +1 Bond. It returns what
@@ -7474,7 +7487,7 @@ function arrangePanel(k,root){
         const buttons=[...chosen.querySelectorAll('[data-a="bmref"]')];const quote=make('div','eclipse-quote-summary');const picked=reforgeSelection[it.id]||[],cost=reforgeQuote(it,picked.length||it.aff.length);const oreMissing=Math.max(0,cost.ore-safeCount(S.ore[cost.oreKey])),matMissing=Math.max(0,cost.mat-safeCount(nmMatCounts()[cost.map])),extra=oreMissing*BM_ORE+matMissing*BM_MAT_PRICE;quote.innerHTML='<h2>'+(picked.length?'Selected affixes':'Full reroll')+'</h2><div><span>Reforge fee</span><b>'+cost.zeny.toLocaleString()+'z</b></div><div><span>'+ORE[cost.oreKey]+'</span><b>'+cost.ore+' / '+safeCount(S.ore[cost.oreKey])+' owned</b></div>'+(cost.mat?'<div><span>'+esc(NM_MAT[cost.map])+'</span><b>'+cost.mat+' / '+safeCount(nmMatCounts()[cost.map])+' owned</b></div>':'')+(cost.ascMat&&cost.ascMatType>=0?'<div><span>'+esc(ASCENSION_MATERIALS[cost.ascMatType])+'</span><b>'+cost.ascMat+' / '+safeCount(S.ascensionMat[cost.ascMatType])+' owned</b></div>':'')+'<div><span>Missing materials</span><b>'+extra.toLocaleString()+'z</b></div><div><span>Total</span><b>'+(cost.zeny+extra).toLocaleString()+'z</b></div>';put(aside,quote);put(aside,make('p','','Select individual affixes or reroll all. Review the result before accepting.'));buttons.forEach(b=>put(aside,b));
         if(offer){put(stage,offer);aside.hidden=true}else put(stage,chosen);put(aside,fold('Rules & materials',notes,'workshop-notes'));
       }else{
-        const button=chosen.querySelector('[data-a=refine]'),preview=make('div','eclipse-refine-preview'),rank=it.r||0,ore=it.slot==='weapon'?'ori':'elu',oreShort=refineOreShortfall(it),total=refCost(it)+oreShort.cost,maxed=rank>=(it.sec===6?15:10),afford=S.zeny>=total;preview.innerHTML='<div class="eclipse-rank-preview"><b>+'+rank+'</b><span>→</span><b>+'+Math.min(it.sec===6?15:10,rank+1)+'</b></div><div><span>'+SLOTS[it.slot].stat+'</span><b>'+ev(it)+' → '+(rank>=(it.sec===6?15:10)?ev(it):Math.round(it.val*(1+(rank+1)*.15)))+'</b></div><div><span>Success chance</span><b>'+(rank>=(it.sec===6?15:10)?'Maximum refinement':refCh(it)+'%')+'</b></div><div><span>Required Zeny</span><b>'+refCost(it).toLocaleString()+'z</b></div><div><span>'+ORE[ore]+'</span><b>'+refOre(it)+' / '+safeCount(S.ore[ore])+' owned</b></div>'+(oreShort.miss>0?'<div><span>'+ORE[ore]+' short</span><b>'+oreShort.miss+' · auto-bought '+oreShort.cost.toLocaleString()+'z</b></div>':'')+'<div><span>Total</span><b>'+total.toLocaleString()+'z</b></div>'+(afford?'':'<div class="is-short"><span>Zeny short</span><b>'+(total-S.zeny).toLocaleString()+'z</b></div>');chosen.replaceChildren(preview);
+        const button=chosen.querySelector('[data-a=refine]'),preview=make('div','eclipse-refine-preview'),rank=it.r||0,ore=it.slot==='weapon'?'ori':'elu',oreShort=refineOreShortfall(it),total=refCost(it)+oreShort.cost,maxed=rank>=(it.sec===6?15:10),afford=S.zeny>=total;preview.innerHTML='<div class="eclipse-rank-preview"><b>+'+rank+'</b><span>→</span><b>+'+Math.min(it.sec===6?15:10,rank+1)+'</b></div><div><span>'+SLOTS[it.slot].stat+'</span><b>'+ev(it)+' → '+(rank>=(it.sec===6?15:10)?ev(it):Math.round(it.val*(1+(rank+1)*.15)))+'</b></div><div><span>Success chance</span><b>'+(rank>=(it.sec===6?15:10)?'Maximum refinement':refCh(it)+'%')+'</b></div><div><span>Required Zeny</span><b>'+refCost(it).toLocaleString()+'z</b></div><div><span>'+ORE[ore]+'</span><b>'+refOre(it)+' / '+safeCount(S.ore[ore])+' owned</b></div>'+(oreShort.miss>0?'<div><span>'+ORE[ore]+' short</span><b>'+oreShort.miss+' · buy for '+oreShort.cost.toLocaleString()+'z on confirm</b></div>':'')+'<div><span>Total</span><b>'+total.toLocaleString()+'z</b></div>'+(afford?'':'<div class="is-short"><span>Zeny short</span><b>'+(total-S.zeny).toLocaleString()+'z</b></div>');chosen.replaceChildren(preview);
         // v312: the button carries the same price gate the row used, and names the number it wants, so
         // "unclickable" always has a reason written next to it.
         button.disabled=maxed||!afford||!Number.isSafeInteger(oreShort.cost);button.textContent=maxed?'Maximum refinement':afford?'Refine \u00b7 '+total.toLocaleString()+'z':'Need '+(total-S.zeny).toLocaleString()+'z more';put(stage,chosen,put(make('div','eclipse-workshop-action'),button));const reserve=make('div','refine-reserve');reserve.textContent='Oridecon: '+safeCount(S.ore.ori)+' · Elunium: '+safeCount(S.ore.elu);stage.prepend(reserve);put(aside,protection,fold('Resources, rates & damage',notes,'workshop-notes'));
@@ -13008,10 +13021,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=312"></script>
-<script src="assets/social-poker.js?v=312"></script>
-<script src="assets/social-scene.js?v=312"></script>
-<script src="assets/social-fishing.js?v=312"></script>
-<script src="assets/social.js?v=312"></script>
+<script src="assets/social-rules.js?v=313"></script>
+<script src="assets/social-poker.js?v=313"></script>
+<script src="assets/social-scene.js?v=313"></script>
+<script src="assets/social-fishing.js?v=313"></script>
+<script src="assets/social.js?v=313"></script>
 </body>
 </html>

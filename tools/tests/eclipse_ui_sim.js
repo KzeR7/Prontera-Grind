@@ -282,7 +282,19 @@ test('v312 the refine button prices the auto-bought ore instead of demanding it 
  assert.match(doc.querySelector('.eclipse-refine-preview').textContent,/Oridecon short/);
  assert.ok(b.textContent.includes(total.toLocaleString()),'the button names the total it is about to spend');
  b.click();
- assert.equal(ev('S.eq.weapon.r'),5,'the attempt runs');
+ // v313: pressing Refine asks before it buys anything.
+ assert.equal(doc.getElementById('modal').style.display,'flex','the purchase is put to the player first');
+ assert.match(doc.getElementById('mt').textContent,/Buy the missing 1 Oridecon at the Black Market price of 100,000z/);
+ assert.match(doc.getElementById('mt').textContent,/Total 121,000z, leaving 5,000z/);
+ assert.match(doc.getElementById('my').textContent,/Buy 1/);
+ assert.equal(ev('S.eq.weapon.r'),4,'nothing is refined before the answer');
+ assert.equal(ev('S.zeny'),total+5000,'and not a coin spent');
+ doc.getElementById('mn').click();
+ assert.equal(ev('S.zeny'),total+5000,'cancelling spends nothing');
+ b=doc.querySelector('.eclipse-workshop-action [data-a=refine]');
+ b.click();
+ doc.getElementById('my').click();
+ assert.equal(ev('S.eq.weapon.r'),5,'the attempt runs once the purchase is agreed');
  assert.equal(ev('S.ore.ori'),0,'the bought ore is spent in the same attempt, nothing left over');
  assert.equal(ev('S.zeny'),5000,'fee plus one auto-bought ore leaves exactly the change');
  assert.match(ev("window.v312Feed.join(' | ')"),/Bought 1 Oridecon/);
@@ -293,11 +305,14 @@ test('v312 the refine button prices the auto-bought ore instead of demanding it 
  assert.equal(b.disabled,true,'the purse cannot cover the total');
  assert.match(b.textContent,/Need 2,500z more/);
  assert.match(doc.querySelector('.eclipse-refine-preview').textContent,/Zeny short/);
- // Full ore, short nothing: the row still names the price and stays clickable.
+ // Full ore: the row still names the price, and there is nothing to ask about.
  ev(`S.ore.ori=refOre(S.eq.weapon);S.zeny=${total};renderWin()`);
  b=doc.querySelector('.eclipse-workshop-action [data-a=refine]');
  assert.equal(b.disabled,false);
  assert.match(doc.querySelector('.eclipse-refine-preview').textContent,/Total/);
+ doc.getElementById('modal').style.display='none';
+ b.click();
+ assert.notEqual(doc.getElementById('modal').style.display,'flex','a stocked bench needs no purchase confirmation');
  ev('Math.random=window.v312Keep;log=window.v312KeepLog');
 });
 
