@@ -161,8 +161,10 @@ window.PGSocialScene={async create(host,labels,callbacks){
     const dip=r.mode==='bite'?Math.max(0,Math.sin(now/90))*.3:r.mode==='reel'?Math.max(0,Math.sin(now/70))*.16:0;
     r.bob.position.set(r.x,.12+Math.sin(now/520)*.05-dip,r.z);
     const px=holder.sprite.position.x,pz=holder.sprite.position.z;
+    const base=Number.isFinite(holder.sprite.position.y)?holder.sprite.position.y:0;
+    const h=Number.isFinite(holder.height)&&holder.height>0?holder.height:3.2;
     const dx=r.x-px,dz=r.z-pz,d=Math.hypot(dx,dz)||1,ux=dx/d,uz=dz/d;
-    const hx=px+ux*.35,hz=pz+uz*.35,hy=1.1,tx2=px+ux*1.5,tz2=pz+uz*1.5,ty=2.05;
+    const hx=px+ux*.35,hz=pz+uz*.35,hy=base+h*.5,tx2=px+ux*1.5,tz2=pz+uz*1.5,ty=base+h*.76;
     const mx=(hx+tx2)/2,my=(hy+ty)/2,mz=(hz+tz2)/2,len=Math.hypot(tx2-hx,ty-hy,tz2-hz)||1;
     r.pole.position.set(mx,my,mz);r.pole.scale.set(1,len,1);
     r.pole.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3((tx2-hx)/len,(ty-hy)/len,(tz2-hz)/len));
@@ -190,9 +192,14 @@ window.PGSocialScene={async create(host,labels,callbacks){
    hide(keepPole){rig={mode:'off'};bobber.visible=false;mark.visible=false;if(!keepPole){pole.visible=false;line.visible=false}},
    off(){api.hide();glyph.visible=false;catchAnim=null},
   };
+  // v296: the rod is measured from the character's own feet and height. It used to use fixed
+  // world heights (1.1 / 2.15), so it sat at hip level on the ground and drifted up the body the
+  // moment the player sat on an angler chair - the same rod, two different heights.
   function placeRod(bx,by,bz,now){const p=selfPos();if(!p){pole.visible=line.visible=false;return}
+   const holder=players.get(callbacks.self());
+   const base=Number.isFinite(p.y)?p.y:0,h=Number.isFinite(holder&&holder.height)&&holder.height>0?holder.height:3.2;
    const dx=bx-p.x,dz=bz-p.z,d=Math.hypot(dx,dz)||1,ux=dx/d,uz=dz/d;
-   const hx=p.x+ux*.35,hz=p.z+uz*.35,hy=1.1,tx=p.x+ux*1.7,tz=p.z+uz*1.7,ty=2.15;
+   const hx=p.x+ux*.35,hz=p.z+uz*.35,hy=base+h*.5,tx=p.x+ux*1.7,tz=p.z+uz*1.7,ty=base+h*.78;
    const mx=(hx+tx)/2,my=(hy+ty)/2,mz=(hz+tz)/2,len=Math.hypot(tx-hx,ty-hy,tz-hz);
    pole.position.set(mx,my,mz);pole.scale.set(1,len,1);pole.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3((tx-hx)/len,(ty-hy)/len,(tz-hz)/len));
    for(let i=0;i<8;i++){const t=i/7,sag=Math.sin(t*Math.PI)*Math.max(.2,d*.06),px=tx+(bx-tx)*t,py=ty+(by+.12-ty)*t-sag,pz=tz+(bz-tz)*t;linePts[i*3]=px;linePts[i*3+1]=py;linePts[i*3+2]=pz}
@@ -427,10 +434,12 @@ window.PGSocialScene={async create(host,labels,callbacks){
  function putPlayer(state){let p=players.get(state.id);if(!p){
   const canvas=document.createElement('canvas');canvas.width=320;canvas.height=280;const ctx=canvas.getContext('2d'),texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.userData.socialId=state.id;sprite.center.set(.5,80/280);scene.add(sprite);
-  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');if(state.gm){name.textContent='🛠 '+state.name;name.title='Game Master';name.classList.add('social-gm')}else name.textContent=state.name;name.onclick=()=>callbacks.menu(state.name,state.id);const title=document.createElement('small');title.className='social-player-title';label.append(name,title);labels.append(label,bubble);
-  p={canvas,ctx,texture,sprite,label,bubble,title,state,loaded:'',paint:'',height:3.2,aura:null,auraTier:-1,lx:'',ly:'',lhid:null,bx:'',by:'',bhid:null,bubbleUntil:0,looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
+  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');if(state.gm){name.textContent='🛠 '+state.name;name.title='Game Master';name.classList.add('social-gm')}else name.textContent=state.name;name.onclick=()=>callbacks.menu(state.name,state.id);const title=document.createElement('small');title.className='social-player-title';const fishTitle=document.createElement('small');fishTitle.className='social-player-fish-title';label.append(name,title,fishTitle);labels.append(label,bubble);
+  p={canvas,ctx,texture,sprite,label,bubble,title,fishTitle,state,loaded:'',paint:'',height:3.2,aura:null,auraTier:-1,lx:'',ly:'',lhid:null,bx:'',by:'',bhid:null,bubbleUntil:0,looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
  }
  const nextTitle=state.look?.title||'';if(p.title.textContent!==nextTitle){p.title.textContent=nextTitle;p.title.hidden=!nextTitle}else if(p.title.hidden!==!nextTitle)p.title.hidden=!nextTitle;
+ // v296: the fishing title is a second line, so it never displaces the Hunt title.
+ const nextFish=state.look?.fishTitle||'';if(p.fishTitle.textContent!==nextFish){p.fishTitle.textContent=nextFish;p.fishTitle.hidden=!nextFish}else if(p.fishTitle.hidden!==!nextFish)p.fishTitle.hidden=!nextFish;
  p.state={...state,path:(state.path||[]).map(v=>({...v})),at:performance.now()};
  syncAura(p);
  const key=JSON.stringify([Object.hasOwn(allClasses,state.look?.cls)?state.look.cls:'Novice',PGWardrobe.normalize(state.look?.appearance)||PGWardrobe.defaults('m')]);

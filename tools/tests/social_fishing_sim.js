@@ -273,12 +273,14 @@ assert.equal(st.bag.length,F.BAG_MAX);
 
 // --- v295: bag tiers, fishing titles, painted rods and data show-offs ---------------------
 assert.deepEqual(F.BAG_TIERS.map(t=>t.cap),[120,200,300,400,500],'the bag ladder is 120→200→300→400→500');
-assert.deepEqual(F.BAG_TIERS.map(t=>t.cost),[0,2500,8000,25000,75000],'each tier has its own price');
+// v296 (owner): cheap to start, rising gently - the first upgrade is affordable in a session.
+assert.deepEqual(F.BAG_TIERS.map(t=>t.cost),[0,300,700,1500,3000],'each tier has its own price');
+for(let i=2;i<F.BAG_TIERS.length;i++)assert(F.BAG_TIERS[i].cost>F.BAG_TIERS[i-1].cost,'prices rise with the ladder');
 assert.equal(F.BAG_MAX,120,'BAG_MAX stays the base tier for older callers and saves');
 st=F.normalize(null);
 assert.equal(F.bagMax(st),120);assert.equal(F.bagTierOf(st).tier,0);assert.equal(F.nextBagTier(st).cap,200);
 st.coins=100;assert.deepEqual(F.buyBagUpgrade(st),{ok:false,reason:'coins'},'an upgrade needs its Fishcoins');
-st.coins=2500;const up1=F.buyBagUpgrade(st);
+st.coins=300;const up1=F.buyBagUpgrade(st);
 assert(up1.ok&&up1.cap===200);assert.equal(st.coins,0,'an upgrade costs exactly its price');
 assert.equal(F.bagMax(st),200,'the bought capacity is live');
 st.coins=1e9;
@@ -404,6 +406,12 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  // A show-off with a weight label draws and expires without error.
  scene.fishing.showFish(1,{spId:'koi',mut:'shiny',scale:2,label:'4.25 kg',glow:'#ffd24d',ms:1200});
  for(let i=0;i<20;i++)frame(now+=100);
+ // v296: the fishing title is its own line, so wearing one never hides the Hunt title.
+ scene.putPlayer({id:3,name:'Titled',x:pond.x+2,z:pond.z-pond.d/2-1.7,dir:0,sit:false,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},title:'Dungeon Reaper',fishTitle:'🎣 Heavy Hook'}});
+ frame(now+=100);
+ const titleEl=w.document.querySelector('.social-player-title:not([hidden])'),fishEl=w.document.querySelector('.social-player-fish-title:not([hidden])');
+ assert(titleEl&&titleEl.textContent==='Dungeon Reaper','the Hunt title keeps its own line');
+ assert(fishEl&&fishEl.textContent==='🎣 Heavy Hook','the fishing title gets a second line');
  // A player who leaves takes their bobber with them.
  scene.fishing.setRig(2,{on:true,pond:1,x:pond.x,z:pond.z,mode:'wait'});
  frame(now+=100);
@@ -446,7 +454,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  const buyBtn=d2.querySelector('#fishingShopView button[data-bagup]');
  assert(buyBtn,'the shop offers the next bag tier');
  assert.equal(buyBtn.disabled,true,'it cannot be bought without the Fishcoins');
- hostS.fishing.coins=2500;FISH.openBag();d2.getElementById('fishingGearLine').onclick();
+ hostS.fishing.coins=300;FISH.openBag();d2.getElementById('fishingGearLine').onclick();
  const buy2=d2.querySelector('#fishingShopView button[data-bagup]');
  assert.equal(buy2.disabled,false,'it becomes affordable');
  buy2.onclick();
@@ -454,6 +462,34 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert.equal(FISH.bagMax(hostS.fishing),200);
  assert.equal(hostS.fishing.coins,0,'the tier is paid for once');
  assert(/Reinforced Creel/.test(d2.getElementById('fishingShopView').textContent),'the shop reflects the new tier');
+ // --- Part C2: Auto fishing survives being moved (the AFK spawn teleport) -----------------
+ let frame2=null,clock2=1000,moved=null;
+ w2.requestAnimationFrame=cb=>{frame2=cb};
+ w2.cancelAnimationFrame=()=>{frame2=null};
+ w2.performance.now=()=>clock2;
+ const pondA=w2.PGSocialRules.PONDS[0],rimA={x:pondA.x,z:pondA.z-pondA.d/2-1.7},me={...rimA};
+ FISH.bind({host:()=>hostS,scene:()=>null,self:()=>({x:me.x,z:me.z}),moveTo:(x,z)=>{moved={x,z}},notice:()=>{},save:()=>{}});
+ FISH.toggle();
+ assert.equal(FISH.phase,'ready','standing on the rim starts a session ready to cast');
+ d2.getElementById('fishingAutoBtn').onclick();
+ assert.equal(FISH.auto,true,'Auto is on');
+ // The server respawns the angler at the plaza entrance: ~30 units from the pond.
+ me.x=0;me.z=12;
+ frame2(clock2+=100);
+ assert(moved,'Auto walks back to the pond instead of cancelling the session');
+ assert.equal(FISH.phase,'walking','the session is in its walk-back phase');
+ assert(Math.hypot(moved.x-pondA.x,moved.z-pondA.z)<12,'the walk targets the pond, not the spawn');
+ // Reaching the rim resumes fishing.
+ me.x=rimA.x;me.z=rimA.z;
+ frame2(clock2+=100);
+ assert.equal(FISH.phase,'ready','Auto fishing carries on after the walk back');
+ // A manual session still stops with the v294 message, exactly as before.
+ d2.getElementById('fishingAutoBtn').onclick();
+ assert.equal(FISH.auto,false,'Auto is off');
+ me.x=0;me.z=12;
+ frame2(clock2+=100);
+ assert.equal(FISH.phase,'off','without Auto, walking away still ends the session');
+ me.x=rimA.x;me.z=rimA.z;
  dom2.window.close();
  // --- Part D: the page wires v295 up (save shape, cache versions, build tag) ---------------
  const page=fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
@@ -465,7 +501,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  for(const t of F.FISHING_TITLES)assert(page.includes("'"+t.id+"'"),'index.html knows the title '+t.id);
  assert(/f\.fishing\.settings=\{fish:true,/.test(page),'pond fish are forced on in the page sanitizer');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=295'),asset+' is versioned at v295');
- assert(/haven-v295/.test(page),'the login card names the v295 build');
- console.log('PASS social fishing: ponds+chairs, 70-fish catalog with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs');
+  assert(page.includes(asset+'?v=296'),asset+' is versioned at v296');
+ assert(/haven-v296/.test(page),'the login card names the v296 build');
+ console.log('PASS social fishing: ponds+chairs, 70-fish catalog with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back');
 })().catch(e=>{console.error(e);process.exitCode=1});

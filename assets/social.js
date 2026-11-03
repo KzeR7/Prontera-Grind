@@ -902,14 +902,15 @@ setInterval(()=>{
 },200);
 
 function resetPlayers(){app.players.clear();app.scene?.clearPlayers();$id('socialLabels').querySelectorAll('.social-player-label,.social-bubble').forEach(n=>n.remove())}
-// v295: one title slot. A fishing title earned at the ponds is worn in the plaza ahead of the
-// Hunt title (that is where fishing lives); with none equipped the Hunt title shows as before.
-function plazaTitle(st){
+// v296 (owner): wearing a fishing title must not replace the Hunt title. The two now travel as
+// separate fields and draw as separate lines above the head - Hunt title first, fishing under it.
+function huntTitleName(st){return st&&typeof HUNT_TITLES!=='undefined'?HUNT_TITLES.find(t=>t.id===st.equippedTitle&&titleUnlocked(t))?.name||'':''}
+function fishingTitleName(st){
  const F=FISHING();
- if(F&&typeof F.equippedTitle==='function'){try{const t=F.equippedTitle(st&&st.fishing);if(t)return t.name}catch{}}
- return st&&typeof HUNT_TITLES!=='undefined'?HUNT_TITLES.find(t=>t.id===st.equippedTitle&&titleUnlocked(t))?.name||'':'';
+ if(!F||typeof F.equippedTitle!=='function')return '';
+ try{const t=F.equippedTitle(st&&st.fishing);return t?'🎣 '+t.name:''}catch{return ''}
 }
-function currentLook(){const st=typeof S==='object'&&S?S:null;return {cls:st?.cls||'Novice',appearance:st&&typeof wardrobeAppearance==='function'?wardrobeAppearance():{version:1,sex:'m'},refine:Math.max(0,Math.min(15,st?.eq?.weapon?.r||0)),title:plazaTitle(st),lv:st&&st.auraShow!==false&&!st.hideUI?Math.max(0,Math.min(999,Math.floor(Number(st.lv)||0))):0,speed:st&&typeof moveSpd==='function'?Math.round(moveSpd(true)*100)/100:0}}
+function currentLook(){const st=typeof S==='object'&&S?S:null;return {cls:st?.cls||'Novice',appearance:st&&typeof wardrobeAppearance==='function'?wardrobeAppearance():{version:1,sex:'m'},refine:Math.max(0,Math.min(15,st?.eq?.weapon?.r||0)),title:huntTitleName(st),fishTitle:fishingTitleName(st),lv:st&&st.auraShow!==false&&!st.hideUI?Math.max(0,Math.min(999,Math.floor(Number(st.lv)||0))):0,speed:st&&typeof moveSpd==='function'?Math.round(moveSpd(true)*100)/100:0}}
 function soloName(){const u=typeof CLOUD!=='undefined'&&CLOUD.user?(typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username):typeof currentUser==='string'&&currentUser?currentUser:'';return u||app.user||'Adventurer'}
 function syncSoloPlayer(){if(!app.wanted||!app.scene||app.room)return;let p=app.players.get(SOLO_ID);const look=currentLook(),name=soloName();if(!p)p={id:SOLO_ID,name,room:0,x:0,z:12,dir:0,sit:false,seat:null,pokerSeat:null,path:[],at:performance.now(),look};else{R.advance(p,performance.now());p.name=name;p.look=look}putPlayer(p)}
 function clearSoloPokerIfSeated(p){

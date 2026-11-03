@@ -154,10 +154,12 @@ const RARITY_VALUE={common:3,uncommon:8,rare:20,legendary:60,mythical:200,secret
 // base capacity so older callers and saves keep working, and bagMax(state) is the live cap.
 const BAG_TIERS=[
  {tier:0,cap:120,cost:0,label:'Canvas Satchel'},
- {tier:1,cap:200,cost:2500,label:'Reinforced Creel'},
- {tier:2,cap:300,cost:8000,label:'Angler\'s Basket'},
- {tier:3,cap:400,cost:25000,label:'Deep Keep-Net'},
- {tier:4,cap:500,cost:75000,label:'Bottomless Creel'},
+ // v296 (owner): the first upgrade has to be reachable in a session, so the ladder starts low and
+ // grows gently (~2.2x, then ~2x) instead of jumping straight to five figures.
+ {tier:1,cap:200,cost:300,label:'Reinforced Creel'},
+ {tier:2,cap:300,cost:700,label:'Angler\'s Basket'},
+ {tier:3,cap:400,cost:1500,label:'Deep Keep-Net'},
+ {tier:4,cap:500,cost:3000,label:'Bottomless Creel'},
 ];
 const BAG_MAX=BAG_TIERS[0].cap,COIN_MAX=1e9,CAST_GREEN=[.82,.96],CAST_PERFECT=[.87,.93];
 const bagTierOf=state=>{const t=state&&Number.isInteger(state.bagTier)?state.bagTier:0;return BAG_TIERS[Math.max(0,Math.min(BAG_TIERS.length-1,t))]};
@@ -445,7 +447,7 @@ function sound(kind){
  }catch{}
 }
 const ui={phase:'off',pond:-1,holding:false,chargeT0:0,castR:null,mods:null,biteAt:0,biteEnd:0,shakeAt:0,shakeEl:null,roll:null,reel:null,raf:0,last:0,selected:null,sort:'new',result:null,
- tab:'bag',auto:false,autoNext:0,autoPower:.8,autoHookAt:0,autoSampleAt:0,autoTarget:.5,rigTarget:null};
+ tab:'bag',auto:false,autoNext:0,autoPower:.8,autoHookAt:0,autoSampleAt:0,autoTarget:.5,rigTarget:null,walkT0:0};
 let uiPos={};
 try{uiPos=JSON.parse(root.localStorage.getItem('pg_fishing_ui_v1'))||{}}catch{}
 function saveUiPos(){try{root.localStorage.setItem('pg_fishing_ui_v1',JSON.stringify(uiPos))}catch{}}
@@ -941,11 +943,14 @@ function tick(t){
  ui.raf=requestAnimationFrame(tick);
  const dt=ui.last?Math.min(.1,Math.max(0,(t-ui.last)/1000)):0;ui.last=t;
  if(['ready','charge','wait','bite','reel'].includes(ui.phase)&&distToPond()>6.5){
+  if(ui.auto&&walkBackToPond('Moved away from the pond — Auto is walking back.'))return;
   stopFishing('You stepped away from the pond.');
   return;
  }
  if(ui.phase==='walking'){
-  if(distToPond()<=2.4){setPhase('ready');ui.autoNext=t+500}
+  if(distToPond()<=2.4){setPhase('ready');ui.autoNext=t+500;return}
+  // If the walk never gets there (no route, or the plaza keeps resetting us) do not spin forever.
+  if(ui.walkT0&&t-ui.walkT0>9000){ui.walkT0=0;stopFishing('Could not reach the pond — Auto fishing stopped.');return}
   return;
  }
  if(ui.phase==='ready'&&ui.auto&&t>=ui.autoNext){
@@ -1009,9 +1014,24 @@ function startFishing(pondIdx){
   // fishing's own walk to the pond.
   const stand=standPoint(p,s);
   setPhase('walking');
+  ui.walkT0=now();
   if(stand&&opts.moveTo)opts.moveTo(stand.x,stand.z);
  }else setPhase('ready');
  startLoop();
+}
+// v296 (owner): AFK fishing must survive being moved by the server. A respawn, a room change or a
+// lost plaza spot used to end the session with "You stepped away from the pond."; with Auto on we
+// walk back to the pond and carry on instead. A manual session still stops, as v294 promised.
+function walkBackToPond(reason){
+ const p=pondCenter(),s=selfPos(),stand=p&&s?standPoint(p,s):null;
+ if(!stand||!opts||typeof opts.moveTo!=='function')return false;
+ ui.result=null;ui.roll=null;ui.reel=null;ui.holding=false;
+ clearShake();
+ setPhase('walking');
+ ui.walkT0=now();
+ opts.moveTo(stand.x,stand.z);
+ status(reason||'Walking back to the pond…');
+ return true;
 }
 function stopFishing(message){
  if(ui.phase==='off')return;

@@ -121,6 +121,32 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  sendF(angler,{type:'showoff',sp:'koi',w:5});
  assert.equal(watcher.events.filter(e=>e.type==='showoff').length,beforeFlood,'show-offs are rate limited');
  const pond0=R.PONDS[0];
+ // v296: every reservation is also handed to storage, so a Durable Object eviction between the
+ // drop and the reconnect cannot turn the resume into a fresh join at the entrance.
+ const stored=new Map();
+ const durableRoom=new SocialRoom({now:()=>fClock.t,onResume:(id,rec)=>{rec?stored.set(id,rec):stored.delete(id)}});
+ const dJoin=(id)=>{const ev=[];const c=durableRoom.connect({id,username:'Durable'+id},raw=>ev.push(JSON.parse(raw)),()=>{});c.events=ev;durableRoom.receive(c,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));return c};
+ const keeper=dJoin(501);
+ keeper.x=pond0.x+8;keeper.z=pond0.z+1;keeper.at=fClock.t;
+ durableRoom.disconnect(keeper);
+ assert(stored.has(501),'a drop writes the spot to storage');
+ assert.equal(stored.get(501).x,pond0.x+8);
+ // A brand-new room (what a restarted Durable Object is) loading that storage resumes the spot.
+ const evicted=new SocialRoom({now:()=>fClock.t});
+ for(const [id,rec] of stored)evicted.resumes.set(id,rec);
+ const revivedEv=[];const revived=evicted.connect({id:501,username:'Durable501'},raw=>revivedEv.push(JSON.parse(raw)),()=>{});
+ evicted.receive(revived,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));
+ assert(Math.hypot(revived.x-(pond0.x+8),revived.z-(pond0.z+1))<2,'a restarted room resumes the stored spot instead of spawning');
+ assert.equal(revived.room,1);
+ evicted.disconnect(revived);
+ // Taking the reservation clears the stored copy, so nothing stale is reloaded later.
+ const cleared=new Map();
+ const tidyRoom=new SocialRoom({now:()=>fClock.t,onResume:(id,rec)=>{rec?cleared.set(id,rec):cleared.delete(id)}});
+ const tidyJoin=(id)=>{const c=tidyRoom.connect({id,username:'Tidy'+id},()=>{},()=>{});tidyRoom.receive(c,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));return c};
+ const tidy=tidyJoin(502);tidyRoom.disconnect(tidy);assert(cleared.has(502));
+ const back2=tidyJoin(502);assert(!cleared.has(502),'resuming clears the stored reservation');
+ tidyRoom.receive(back2,JSON.stringify({type:'leave'}));assert(!cleared.has(502),'leaving also clears it');
+
  assert(Math.hypot(0-pond0.x,12-pond0.z)>6.5,'the entrance is far outside fishing range - a respawn there cancels the cast');
  // A silent drop keeps the spot for the whole idle window, not the old 15 seconds.
  fClock.t+=1000;angler.x=pond0.x+9;angler.z=pond0.z;angler.at=fClock.t;

@@ -313,6 +313,35 @@ not look dead to proxies.
 together; walk-away is still blocked (press ✕ Stop fishing), but `seatAction` and
 `toggleSit` no longer are — the pond-side angler chairs are now usable mid-cast.
 
+## Owner fixes after v295 (haven-v296)
+
+**The rod sits at the same height in both stances.** `placeRod` (and the remote rig) used fixed
+world heights (1.1 / 2.15), so the rod read as hip-level on the ground and drifted up the body
+the moment the angler sat on a pond chair. Both now measure from the character's own feet and
+height (`base + height*0.5` for the grip, `*0.78` for the tip), so one rod has one height.
+
+**Two title lines, not one slot.** v295 wore an equipped fishing title *instead of* the Hunt
+title. `look` now carries `title` and `fishTitle` separately (the worker sanitises both), and
+the nameplate paints the Hunt title on its own line with the fishing title under it — so
+wearing one never hides the other.
+
+**The Titles tab scrolls.** `#fishingTitlesView` had been left out of the panel's flex and
+`overflow:auto` selectors, so the list was clipped to the window. It shares the Index/Shop
+rules now.
+
+**Cheaper bag ladder.** The owner found 2,500 / 8,000 / 25,000 / 75,000 unreachable. v296 is
+**300 / 700 / 1,500 / 3,000** — rising gently, with the first upgrade affordable in a session.
+
+**AFK fishing recovers instead of surrendering.** v295 widened the resume window, which was not
+enough on its own:
+
+- The reservation is now **durable** (`onResume` → Durable Object storage under `resume-v1:`,
+  reloaded in the constructor and dropped once used or expired), so an eviction between the drop
+  and the reconnect no longer respawns the angler.
+- With **Auto** on, being moved no longer ends the session: `walkBackToPond` sends the character
+  back to the rim and fishing continues (a 9 s guard stops the loop if no route exists). A manual
+  session still stops with *"You stepped away from the pond."*, exactly as v294 promised.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

@@ -61,6 +61,8 @@ export class SocialRoom {
   this.clients=new Map();this.history=cleanWorldHistory(opts.history);this.serial=Math.max(0,...this.history.map(m=>m.id));
   this.onWorldMessage=opts.onWorldMessage||(()=>{});
   this.onPokerLedger=opts.onPokerLedger||(()=>{});
+  // v296: optional persistence for plaza reservations, so they survive a Durable Object eviction.
+  this.onResume=opts.onResume||null;
   this.ledgerQueues=new Map(cleanPokerLedgerQueues(opts.ledgers));
   this.ledgerWrites=Promise.resolve();this.ledgerDirty=new Set();this.ledgerVersions=new Map();
   this.tables=new Map();this.timers=new Map();this.resumes=new Map();
@@ -257,7 +259,7 @@ export class SocialRoom {
  // v225: lv drives the level aura and speed is the character's field run speed. Both are
  // presentation hints: lv is clamped to a display tier input, speed to the shared walk band, so a
  // client cannot make itself faster than the fastest legal character in the plaza.
- cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED))};}
+ cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',fishTitle:typeof look.fishTitle==='string'?look.fishTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED))};}
  // `viewer` is who is asking: whether this person is a friend is a fact about the two accounts, so
  // the same player is flagged for one client and not for another. Omit it for a neutral snapshot.
  snapshot(c,viewer=null){R.advance(c,this.now());return {id:c.id,name:c.name,gm:c.gm,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat,pokerSeat:c.pokerSeat,fish:c.fish||null,friend:!!(viewer&&viewer!==c&&viewer.friends.has(c.id))};}
@@ -270,7 +272,11 @@ export class SocialRoom {
   // leave has already cleared the room; a replacement tab may inherit the same reservation.
   if(room&&!c.released){
    R.advance(c,now);
-   this.resumes.set(c.id,{room,x:c.x,z:c.z,dir:c.dir,path:c.path.map(p=>({...p})),sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look,expires:now+RESUME_MS,seatExpires:now+POKER_RESUME_MS});
+   const saved={room,x:c.x,z:c.z,dir:c.dir,path:c.path.map(p=>({...p})),sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look,expires:now+RESUME_MS,seatExpires:now+POKER_RESUME_MS};
+   this.resumes.set(c.id,saved);
+   // v296: also hand it to storage. A Durable Object can be evicted while nobody is connected,
+   // which used to empty this Map and turn the next reconnect into a fresh join at the entrance.
+   this.onResume?.(c.id,saved);
    if(Number.isInteger(c.pokerSeat))this.tables.get(room)?.[Math.floor(c.pokerSeat/6)]?.markArrived(c.id,false,now);
    this.clients.delete(c.id);
    this.broadcast({type:'left',id:c.id,room},p=>p.room===room);
@@ -291,6 +297,7 @@ export class SocialRoom {
  takeResume(id,now){
   const saved=this.resumes.get(id);if(!saved)return null;
   this.resumes.delete(id);
+  this.onResume?.(id,null);
   if(now>saved.expires){
    if(Number.isInteger(saved.pokerSeat))this.tables.get(saved.room)?.[Math.floor(saved.pokerSeat/6)]?.stand(id,now);
    this.broadcastPoker(saved.room,now);this.schedulePoker(saved.room);
@@ -334,7 +341,7 @@ export class SocialRoom {
   if(m.type==='ping')return this.send(c,{type:'pong'});
   if(m.type==='poker_ledger_ack')return this.ackPokerLedgers(c,m);
   if(m.type==='friends'){this.syncFriends(c,m.ids,now);return}
-  if(m.type==='leave'){this.resumes.delete(c.id);c.released=true;this.leave(c);return this.send(c,{type:'room',room:0,players:[]})}
+  if(m.type==='leave'){this.resumes.delete(c.id);this.onResume?.(c.id,null);c.released=true;this.leave(c);return this.send(c,{type:'room',room:0,players:[]})}
   if(m.type==='join'){
    const look=this.cleanLook(m.look);if(!look)return;
    if(c.room){if(c.resumed)this.sendRoom(c,now);return;}

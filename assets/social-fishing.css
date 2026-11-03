@@ -138,9 +138,9 @@
 #fishingTabs button{flex:1;background:transparent;border:0;border-bottom:2px solid transparent;color:#9db9bf;font:bold 11px "Trebuchet MS",sans-serif;padding:7px 4px;cursor:pointer}
 #fishingTabs button:hover{color:#e8f2ee}
 #fishingTabs button[aria-selected="true"]{color:#ffe0a0;border-bottom-color:#ffe0a0;background:#1a333b60}
-#fishingBagView,#fishingIndexView,#fishingShopView{display:flex;flex-direction:column;flex:1;min-height:0}
-#fishingBagView[hidden],#fishingIndexView[hidden],#fishingShopView[hidden]{display:none}
-#fishingIndexView,#fishingShopView{overflow:auto;scrollbar-width:thin;scrollbar-color:#54767e transparent}
+#fishingBagView,#fishingIndexView,#fishingShopView,#fishingTitlesView{display:flex;flex-direction:column;flex:1;min-height:0}
+#fishingBagView[hidden],#fishingIndexView[hidden],#fishingShopView[hidden],#fishingTitlesView[hidden]{display:none}
+#fishingIndexView,#fishingShopView,#fishingTitlesView{overflow:auto;scrollbar-width:thin;scrollbar-color:#54767e transparent}
 #fishingTools button{background:#24424b;border:1px solid #6fa3b0;border-radius:5px;color:#eef4ec;font:bold 10.5px "Trebuchet MS",sans-serif;padding:4px 8px;cursor:pointer}
 #fishingTools button:hover{filter:brightness(1.15)}
 /* Fish index */

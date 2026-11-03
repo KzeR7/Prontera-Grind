@@ -69,6 +69,9 @@ body.social-open #bgmPlayer{display:none!important}
 /* Names and equipped titles stay below the feet; only speech uses a box. */
 .social-player-title{display:block;margin-top:2px;color:#ffe6a2;font-size:11px;text-shadow:0 1px 3px #000,0 0 5px #000}
 .social-player-title[hidden],.social-bubble[hidden],.social-player-label[hidden]{display:none}
+/* v296: the fishing title is its own line under the name, so wearing one never hides the Hunt title. */
+.social-player-fish-title{display:block;margin-top:1px;color:#9fe3ff;font-size:10.5px;letter-spacing:.2px;text-shadow:0 1px 3px #000,0 0 5px #000}
+.social-player-fish-title[hidden]{display:none}
 .social-bubble.social-emotion{background:transparent;border:0;box-shadow:none;border-radius:0;padding:0;margin:0;min-width:48px}
 
 #socialCameraPanel{position:absolute;z-index:4;right:16px;top:82px;width:220px;max-width:calc(100% - 32px);padding:12px;background:#213a3bf5;color:#f2ecdb;border:1px solid #c7ccba;border-radius:5px;font:12px/1.5 "Trebuchet MS",sans-serif}
