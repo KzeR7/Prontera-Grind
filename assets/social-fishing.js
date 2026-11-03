@@ -133,6 +133,10 @@ const BAITS_BY_ID=Object.fromEntries(BAITS.map(b=>[b.id,b]));
 const discoveredSpecies=s=>Object.keys(s&&s.dex?s.dex:{}).filter(k=>s.dex[k]&&s.dex[k].n>0).length;
 const bestWeight=s=>Object.values(s&&s.dex?s.dex:{}).reduce((b,d)=>Math.max(b,Number(d&&d.bw)||0),0);
 const mutationKinds=s=>new Set(Object.values(s&&s.dex?s.dex:{}).flatMap(d=>Array.isArray(d&&d.mut)?d.mut:[])).size;
+// v299: the ten new titles are derived from the same saved blob, so an old save can earn them too.
+const keptMutationFish=s=>Object.values(s&&s.dex?s.dex:{}).reduce((n,d)=>n+(Array.isArray(d&&d.mut)?d.mut.filter(Boolean).length:0),0);
+const bestSpeciesCount=s=>Object.values(s&&s.dex?s.dex:{}).reduce((b,d)=>Math.max(b,Number(d&&d.n)||0),0);
+const caughtIn=(s,pred)=>SPECIES.filter(sp=>pred(sp)&&s.dex&&s.dex[sp.id]&&s.dex[sp.id].n>0).length;
 const FISHING_TITLES=[
  {id:'dockhand',name:'Dockhand',mark:'◉',tone:'bronze',cur:s=>s.stats.catches,goal:10,req:'catch 10 fish'},
  {id:'bait-layer',name:'Bait Layer',mark:'⌖',tone:'copper',cur:s=>s.stats.catches,goal:50,req:'catch 50 fish'},
@@ -144,6 +148,17 @@ const FISHING_TITLES=[
  {id:'mutation-hunter',name:'Mutation Hunter',mark:'🧬',tone:'crimson',cur:mutationKinds,goal:Object.keys(MUTATIONS).length,req:'find all 7 mutation kinds'},
  {id:'pond-legend',name:'Pond Legend',mark:'✹',tone:'gold',cur:discoveredSpecies,goal:60,req:'discover 60 species'},
  {id:'apex-angler',name:'Apex Angler',mark:'✶',tone:'valkyrie',cur:discoveredSpecies,goal:SPECIES.length,req:`discover all ${SPECIES.length} species`},
+ // v299 (owner): ten more, and every one of them is a long haul - the first ten were done in a session.
+ {id:'tide-regular',name:'Tide Regular',mark:'≈',tone:'tide',cur:s=>s.stats.casts,goal:1000,req:'make 1,000 casts'},
+ {id:'line-veteran',name:'Line Veteran',mark:'⚔',tone:'silver',cur:s=>s.stats.catches,goal:250,req:'catch 250 fish'},
+ {id:'perfect-master',name:'Perfect Master',mark:'✸',tone:'sapphire',cur:s=>s.stats.perfects,goal:100,req:'land 100 perfect catches'},
+ {id:'species-archivist',name:'Species Archivist',mark:'❖',tone:'jade',cur:discoveredSpecies,goal:80,req:'discover 80 species'},
+ {id:'mutant-brood',name:'Mutant Brood',mark:'🧬',tone:'crimson',cur:keptMutationFish,goal:25,req:'keep 25 mutated fish'},
+ {id:'leviathan-hook',name:'Leviathan Hook',mark:'⚓',tone:'amethyst',cur:s=>Math.floor(bestWeight(s)),goal:100,req:'record a 100 kg fish'},
+ {id:'colossus-hook',name:'Colossus Hook',mark:'⛰',tone:'abyss',cur:s=>Math.floor(bestWeight(s)),goal:300,req:'record a 300 kg fish'},
+ {id:'pond-devotee',name:'Pond Devotee',mark:'♺',tone:'ember',cur:bestSpeciesCount,goal:150,req:'catch 150 of one species'},
+ {id:'secret-circle',name:'Secret Circle',mark:'✧',tone:'frost',cur:s=>caughtIn(s,sp=>sp.rarity==='secret'),goal:SPECIES.filter(sp=>sp.rarity==='secret').length,req:`catch a fish from every secret species`},
+ {id:'mega-hunter',name:'Mega Hunter',mark:'✹',tone:'dawn',cur:s=>caughtIn(s,sp=>sp.mega),goal:5,req:'catch 5 pond monsters'},
 ];
 const FISHING_TITLE_BY_ID=Object.fromEntries(FISHING_TITLES.map(t=>[t.id,t]));
 const titleUnlocked=(state,t)=>!!(t&&t.cur(state)>=t.goal);
@@ -893,6 +908,8 @@ function fishSpriteURL(spId,mut,px=96){
 // different glyph on every OS and never showed the rod you actually owned. Each rod now has one
 // tier colour that tints both the painted rod and its glow, so the tier reads at a glance.
 const ROD_TIER_COLORS={twig:'#8b6b45',oak:'#b07a3c',brass:'#c8873a',silver:'#cfd8e0',golden:'#ffcb45',mythril:'#7fe3ff'};
+// v299: how strong each tier's aura reads - wood is a hint, mythril is unmistakable.
+const ROD_AURA={twig:.22,oak:.3,brass:.42,silver:.52,golden:.66,mythril:.78};
 function rodSprite(rodId,px=96){
  const rod=RODS_BY_ID[rodId]||RODS[0];
  if(typeof document==='undefined'||!document.createElement)return null;
@@ -901,9 +918,23 @@ function rodSprite(rodId,px=96){
  if(!g||typeof g.quadraticCurveTo!=='function'||typeof g.createLinearGradient!=='function')return null;
  const tint=ROD_TIER_COLORS[rod.id]||ROD_TIER_COLORS.twig;
  const u=px/100,U=n=>n*u;
- // Tier halo behind the rod - brighter metal, quieter wood.
- const glowA=rod.id==='twig'?.18:rod.id==='oak'?.26:.4;
- try{const rg=g.createRadialGradient(U(52),U(50),U(6),U(52),U(50),U(46));rg.addColorStop(0,tint);rg.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=glowA;g.fillStyle=rg;g.fillRect(0,0,px,px);g.globalAlpha=1}catch{}
+ // v299 (owner, "I don't see any aura on the rods"): the old halo was a single radial fill at
+ // .18-.4 alpha behind a rod that covers most of it, so nothing read on screen. The aura is now
+ // two passes - a wide soft bloom plus a tight ring around the blank - scaled by tier, so a
+ // Golden or Mythril rod visibly glows in the shop, the dock and the catch card.
+ const glowA=ROD_AURA[rod.id]||.34;
+ try{
+  const rg=g.createRadialGradient(U(52),U(48),U(4),U(52),U(50),U(52));
+  rg.addColorStop(0,tint);rg.addColorStop(.45,tint);rg.addColorStop(1,'rgba(0,0,0,0)');
+  g.globalAlpha=glowA;g.fillStyle=rg;g.fillRect(0,0,px,px);g.globalAlpha=1;
+ }catch{}
+ // the ring: the blank drawn wide and blurred-looking in the tier colour, under the rod itself
+ try{
+  g.save();g.globalAlpha=Math.min(1,glowA*1.5);g.strokeStyle=tint;g.lineWidth=U(13);g.lineCap='round';
+  g.shadowColor=tint;g.shadowBlur=U(9);
+  g.beginPath();g.moveTo(U(22),U(82));g.quadraticCurveTo(U(56),U(44),U(88),U(12));g.stroke();
+  g.restore();
+ }catch{}
  g.lineCap='round';g.lineJoin='round';
  // The blank: a tapered curve from the grip (bottom left) to the tip (top right).
  const tip={x:88,y:12},mid={x:56,y:44},grip={x:22,y:82};
@@ -945,8 +976,8 @@ function rodHTML(rod,cls='fishing-rod-icon',px=64){
  const url=rodSpriteURL(rod.id,px);
  const tint=ROD_TIER_COLORS[rod.id]||ROD_TIER_COLORS.twig;
  const style=`--rod-tint:${tint}`;
- if(url)return `<img class="${cls} fishing-rod-art" style="${style}" src="${url}" alt="" draggable="false">`;
- return `<span class="${cls}" style="${style}">${rod.icon}</span>`;
+ if(url)return `<img class="${cls} fishing-rod-art" data-rod-tier="${esc(rod.id)}" style="${style}" src="${url}" alt="" draggable="false">`;
+ return `<span class="${cls}" data-rod-tier="${esc(rod.id)}" style="${style}">${rod.icon}</span>`;
 }
 function glyphHTML(sp,mut,cls='fishing-glyph'){
  const url=fishSpriteURL(sp,mut,cls==='fishing-glyph'?64:128);
@@ -1305,7 +1336,9 @@ function renderIndex(){
 }
 // 🏅 v295: the ten fishing titles. Worn above the head in the plaza for every player to see;
 // a title is only wearable once its requirement is actually met in the saved fishing blob.
-const TITLE_TONE={bronze:'#c08a52',copper:'#a86f4a',silver:'#cdd6de',jade:'#6ee0a8',sapphire:'#6cb8ff',amethyst:'#c792ea',obsidian:'#8f96b8',crimson:'#ff7a7a',gold:'#ffcc55',valkyrie:'#f0e6ff'};
+const TITLE_TONE={bronze:'#c08a52',copper:'#a86f4a',silver:'#cdd6de',jade:'#6ee0a8',sapphire:'#6cb8ff',amethyst:'#c792ea',obsidian:'#8f96b8',crimson:'#ff7a7a',gold:'#ffcc55',valkyrie:'#f0e6ff',
+ // v299: tones for the ten long-haul titles.
+ tide:'#5fc9d8',abyss:'#7b8fd8',ember:'#ff9a5c',frost:'#bfe9ff',dawn:'#ffd9a0'};
 function renderTitles(){
  const st=state(),worn=equippedTitle(st);
  const rows=FISHING_TITLES.map(t=>{

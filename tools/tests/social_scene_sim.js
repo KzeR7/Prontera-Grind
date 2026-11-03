@@ -81,6 +81,22 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  scene.putPlayer({...state,look:{...state.look,refine:0},sit:false});await flush();frame(now+=16);const steadyDraws=draws.length;frame(now+=16);assert.equal(draws.length,steadyDraws,'unchanged sprite frame reuses cached GPU texture');
  frame(now+=7000);assert.equal(bubble.childNodes.length,0,'expired bubble clears once');assert.equal(bubble.hidden,true);
  const startCam=scene.camera.position.clone();scene.putPlayer({...state,sit:false,x:40,z:30});for(let n=0;n<30;n++)frame(now+=100);assert(scene.camera.position.distanceTo(startCam)>5,'locked camera always tracks the player across the plaza');scene.resetCamera();
- scene.clearPlayers();assert.equal(w.document.querySelectorAll('.social-player-label,.social-bubble').length,0);assert.equal(scene.scene.children.some(o=>o.userData.tier),false,'leaving removes the aura');scene.putPlayer(state);await flush();frame(now+=100);assert.equal(w.document.querySelectorAll('.social-player-label').length,1,'reenter restores character');assert.ok(scene.scene.children.some(o=>o.userData.tier===150),'reenter restores the aura');dom.window.close();
+ scene.clearPlayers();assert.equal(w.document.querySelectorAll('.social-player-label,.social-bubble').length,0);assert.equal(scene.scene.children.some(o=>o.userData.tier),false,'leaving removes the aura');scene.putPlayer(state);await flush();frame(now+=100);assert.equal(w.document.querySelectorAll('.social-player-label').length,1,'reenter restores character');assert.ok(scene.scene.children.some(o=>o.userData.tier===150),'reenter restores the aura')
+ // v299 (owner): a show-off now draws once per angler. Two draws of the same catch used to leave
+ // two fish and two weight plates stacked on the same spot.
+ const spriteCount=()=>scene.scene.children.filter(o=>o.isSprite).length;
+ scene.putPlayer(state);await flush();
+ const beforeShow=spriteCount();
+ scene.fishing.showFish(1,{spId:'whaleshark',w:1800,scale:4.9,label:'1800 kg',ms:5600});
+ const afterOne=spriteCount();
+ assert(afterOne>beforeShow,'a show-off adds its fish (and weight plate)');
+ scene.fishing.showFish(1,{spId:'whaleshark',w:1800,scale:4.9,label:'1800 kg',ms:5600});
+ assert.equal(spriteCount(),afterOne,'the second draw for that angler replaces the first instead of stacking');
+ const otherBefore=spriteCount();
+ scene.fishing.showFish(2,{spId:'manta',w:110,scale:3,label:'110 kg',ms:5600});
+ // The pool caps at six shows, so a busy plaza can evict the oldest - one angler's fish must
+ // never be swallowed by another's, which is what this checks.
+ assert(spriteCount()>=otherBefore+1,'another angler still gets their own fish (and plate, pool permitting)');
+ dom.window.close();
  console.log('PASS social scene: download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor and reentry');
 })().catch(e=>{console.error(e);process.exitCode=1});

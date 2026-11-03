@@ -42,21 +42,41 @@ const harness = (opts) => {
       const r = { ok: opts.status ? opts.status < 400 : true, text: async () => opts.answer };
       return opts.answer === undefined ? (opts.status ? r : Promise.reject(new Error('no endpoint'))) : r;
     },
-    location: { reload: () => { calls.reloads++; calls.order.push("reload"); } },
+    // v299: a reset is a cache-busted navigation (location.replace with ?build=), with
+    // location.reload() kept as the fallback for hosts that cannot parse one.
+    location: {
+      href: 'https://haven.example/',
+      replace: (url) => { calls.reloads++; calls.replaceUrl = url; calls.order.push("replace"); },
+      reload: () => { calls.reloads++; calls.order.push("reload"); },
+    },
+    // The page only ever touches this inside try/catch, but the guard is what stops a loop.
+    sessionStorage: opts.storage || {
+      _v: {},
+      getItem(k){ return Object.prototype.hasOwnProperty.call(this._v,k)?this._v[k]:null },
+      setItem(k,v){ this._v[k]=String(v) },
+    },
     setInterval: (fn, ms) => { calls.timers.push(ms); return 0; },
     // v275: the page also schedules a boot-time check. Stubbed so it never fires mid-test; the
     // boot wiring itself is asserted separately.
     setTimeout: (fn, ms) => { calls.bootTimers.push(ms); return 0; },
     bootTimers: calls.bootTimers,
   };
+  // v299: jsdom reports document.hidden === true by default (no real renderer), which would look
+  // like a backgrounded tab to the new auto-reset. Pin it explicitly - false is "someone is looking".
+  Object.defineProperty(document,'hidden',{value:!!opts.hidden,configurable:true});
+  // A long-running visible page must still get the ASK, so the prompt tests start the page older
+  // than UPDATE_AUTO_MS. `opts.freshPage` and `opts.hidden` cover the automatic reset.
+  box.URL = URL;                                   // the page builds the cache-busted URL with it
   vm.createContext(box);
   vm.runInContext(watcherSrc + '\nsetInterval(updateWatch,60000);', box);
+  if(!opts.freshPage)clock.t+=5*60*1000;
   return { box, calls, clock };
 };
 
 t('the watcher polls static version.txt with no-store and compares it with the running BUILD', () => {
   assert.ok(/fetch\('version\.txt\?_='\+Date\.now\(\),\{cache:'no-store'\}\)/.test(watcherSrc), 'the poll hits static version.txt, cache-busted and never served stale');
-  assert.ok(/txt&&txt!==BUILD\)showUpdatePrompt\(txt\)/.test(watcherSrc), 'only a different build prompts');
+  assert.ok(/if\(!txt\|\|txt===BUILD\)return;/.test(watcherSrc), 'only a different build does anything');
+  assert.ok(/showUpdatePrompt\(txt\)/.test(watcherSrc), 'and a mid-session page is asked');
   assert.ok(src.includes('setInterval(updateWatch,60000)'), 'and it runs once a minute');
 });
 
@@ -68,14 +88,66 @@ await T('a matching build changes nothing; a different build prompts once withou
   assert.ok(same.calls.fetch[0].url.startsWith('version.txt?_='), 'polled at static version.txt with a cache-buster');
   assert.strictEqual(same.calls.fetch[0].init.cache, 'no-store', 'the browser cache is bypassed');
 
+  // v299 (owner): mid-session the player is still asked - no automatic reset while they are playing.
   const next = harness({ answer: '2026-10-09 grind-v99 some future deploy' });
   await next.box.updateWatch();
-  assert.strictEqual(next.calls.reloads, 0, 'a deploy never reloads automatically');
+  assert.strictEqual(next.calls.reloads, 0, 'a deploy never interrupts a player who is mid-session');
   assert.strictEqual(next.box.document.querySelectorAll('#updatePrompt').length,1);
   assert.strictEqual(next.box.document.querySelector('#updatePrompt').getAttribute('role'),'dialog');
   await next.box.updateWatch();
   assert.strictEqual(next.box.document.querySelectorAll('#updatePrompt').length,1,'polls do not duplicate notices');
   assert.deepStrictEqual(next.calls.order,[],'no save, sync or session change before the player clicks');
+});
+
+await T('a fresh page or a background tab hard-resets itself onto the new build (v299)', async () => {
+  // Nobody has done anything yet: reset without asking, and cache-bust the URL so the browser
+  // cannot answer the navigation from its own copy of the old shell.
+  const fresh = harness({ answer: 'new build', freshPage: true });
+  await fresh.box.updateWatch();
+  assert.strictEqual(fresh.calls.reloads, 1, 'a brand-new page resets itself instead of prompting');
+  assert.strictEqual(fresh.box.document.querySelector('#updatePrompt'), null, 'and asks nothing');
+  assert.ok(/[?&]build=new-build/.test(fresh.calls.replaceUrl || ''), 'the reset URL carries the new build, so it cannot be served from cache');
+  assert.strictEqual(fresh.box.document.querySelector('#updateToast')?.textContent.indexOf('Updating'), 0, 'the player sees one short line, not a dialog');
+
+  // Same rule for a tab that is in the background, however long it has been open.
+  const away = harness({ answer: 'new build', hidden: true });
+  await away.box.updateWatch();
+  assert.strictEqual(away.calls.reloads, 1, 'a backgrounded tab resets itself');
+  assert.strictEqual(away.box.document.querySelector('#updatePrompt'), null, 'no prompt for a tab nobody is looking at');
+
+  // A visible, mid-session page is never reset behind the player's back.
+  const busy = harness({ answer: 'new build' });
+  await busy.box.updateWatch();
+  assert.strictEqual(busy.calls.reloads, 0, 'an active session is asked, never reset');
+  assert.ok(busy.box.document.querySelector('#updatePrompt'), 'it gets the dialog instead');
+});
+
+await T('the automatic reset happens once per build, so a stale edge cannot loop it (v299)', async () => {
+  // The tab session survives a reload, so the guard is shared across pages - exactly what a loop
+  // prevention needs when the edge keeps handing back the old shell.
+  const store = { _v: {}, getItem(k){ return this._v[k] ?? null }, setItem(k,v){ this._v[k]=String(v) } };
+  const first = harness({ answer: 'new build', freshPage: true, storage: store });
+  await first.box.updateWatch();
+  assert.strictEqual(first.calls.reloads, 1, 'the first quiet moment resets');
+  // The page comes back still running the old shell. A second automatic reset here is a reload
+  // loop, which is worse than the stale build - so it asks instead.
+  const back = harness({ answer: 'new build', freshPage: true, storage: store });
+  await back.box.updateWatch();
+  assert.strictEqual(back.calls.reloads, 0, 'the same build is not reset twice inside the guard window');
+  assert.ok(back.box.document.querySelector('#updatePrompt'), 'the player is asked instead of looped');
+});
+
+await T('the refresh button hard-resets even when the automatic attempt already ran (v299)', async () => {
+  const h = harness({ answer: 'new build', freshPage: true });
+  await h.box.updateWatch();                        // automatic attempt, blocked by nothing yet
+  assert.strictEqual(h.calls.reloads, 1);
+  await h.box.updateWatch();                        // guard is set now, so this one asks
+  const prompt = h.box.document.querySelector('#updatePrompt');
+  assert.ok(prompt, 'the second poll falls back to the dialog');
+  prompt.querySelector('button').click();
+  await new Promise(r => setTimeout(r, 0));
+  assert.strictEqual(h.calls.reloads, 2, 'the button always wins, guard or not');
+  assert.ok(/[?&]build=new-build/.test(h.calls.replaceUrl || ''), 'and it is cache-busted too');
 });
 
 await T('a missing endpoint, a dead network or an empty answer never interrupts play', async () => {
@@ -152,13 +224,13 @@ await T('refresh saves locally and waits for cloud sync; double clicks only refr
   assert.strictEqual(button.disabled,true);assert.strictEqual(h.calls.reloads,0);
   assert.deepStrictEqual(h.calls.order,['save','flush']);
   finish();await clicked;
-  assert.deepStrictEqual(h.calls.order,['save','flush','flushed','reload']);
+  assert.deepStrictEqual(h.calls.order,['save','flush','flushed','replace']);
   assert.strictEqual(h.calls.reloads,1);
 });
 await T('offline cloud sync still permits a chosen refresh after saving locally',async()=>{
   const h=harness({answer:'new build',flush:async()=> 'offline'});await h.box.updateWatch();
   await h.box.document.querySelector('button').onclick();
-  assert.deepStrictEqual(h.calls.order,['save','flush','flushed','reload']);
+  assert.deepStrictEqual(h.calls.order,['save','flush','flushed','replace']);
 });
 
 // ---- the endpoint itself ----------------------------------------------------

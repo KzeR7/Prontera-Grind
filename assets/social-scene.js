@@ -98,6 +98,8 @@ window.PGSocialScene={async create(host,labels,callbacks){
      try{c2.filter='none'}catch{}
     }
    }
+   function dropShow(i){const old=showPool.splice(i,1)[0];if(!old)return;scene.remove(old.sprite);try{old.sprite.material.map.dispose();old.sprite.material.dispose()}catch{}
+    if(old.tag){scene.remove(old.tag);try{old.tag.material.map.dispose();old.tag.material.dispose()}catch{}}}
    const tex=new T.CanvasTexture(canvas),spr=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
    spr.visible=false;scene.add(spr);
    // v295: the weight rides above the fish as its own small plate - the show-off no longer
@@ -115,7 +117,11 @@ window.PGSocialScene={async create(host,labels,callbacks){
      tag.scale.set(1.9,.48,1);tag.visible=false;scene.add(tag);
     }
    }
-   while(showPool.length>=6){const old=showPool.shift();scene.remove(old.sprite);old.sprite.material.map.dispose();old.sprite.material.dispose();if(old.tag){scene.remove(old.tag);old.tag.material.map.dispose();old.tag.material.dispose()}}
+   // v299 (owner): a show-off replaces that angler's previous one instead of stacking on top of it.
+   // The local draw and the relayed echo of the same catch used to put two fish and two weight
+   // plates at the same spot. Disposing the old entry also keeps the pool from filling with them.
+   for(let i=showPool.length-1;i>=0;i--)if(showPool[i].pid===pid)dropShow(i);
+   while(showPool.length>=6)dropShow(0);
    showPool.push({sprite:spr,tag,pid,t0:clock||performance.now(),dur:Math.max(1200,Math.min(9000,o.ms||5200)),scale:Math.max(.4,Math.min(5.2,Number(o.scale)||1))});
   }
   let rig={mode:'off'},nextIdleRipple=0,catchAnim=null;

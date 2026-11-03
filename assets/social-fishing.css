@@ -246,3 +246,14 @@ img.fishing-rod-art{filter:drop-shadow(0 0 3px var(--rod-tint,#8b6b45))}
  #fishingTools{gap:5px 6px;padding:7px 9px}
  #fishingTools label{padding:3px 7px 3px 6px}
 }
+
+/* v299 (owner): the rods now carry a visible aura. The painted sprite has a baked bloom; this adds
+   a tinted drop-shadow that follows the rod silhouette and a slow pulse on the two top tiers, so a
+   Golden or Mythril rod reads as special at 26px in the dock as well as at 64px in the shop. */
+.fishing-rod-art{filter:drop-shadow(0 0 4px var(--rod-tint,#8b6b45)) drop-shadow(0 0 2px var(--rod-tint,#8b6b45))}
+.fishing-rod-art[data-rod-tier="silver"]{filter:drop-shadow(0 0 5px var(--rod-tint)) drop-shadow(0 0 2px #e8f2ff)}
+.fishing-rod-art[data-rod-tier="golden"],
+.fishing-rod-art[data-rod-tier="mythril"]{filter:drop-shadow(0 0 7px var(--rod-tint)) drop-shadow(0 0 14px var(--rod-tint));animation:rod-aura 2.6s ease-in-out infinite}
+.fishing-rod-art[data-rod-tier="mythril"]{animation-duration:2s}
+@keyframes rod-aura{0%,100%{filter:drop-shadow(0 0 6px var(--rod-tint)) drop-shadow(0 0 10px var(--rod-tint))}50%{filter:drop-shadow(0 0 9px var(--rod-tint)) drop-shadow(0 0 18px var(--rod-tint))}}
+@media(prefers-reduced-motion:reduce){.fishing-rod-art[data-rod-tier]{animation:none}}

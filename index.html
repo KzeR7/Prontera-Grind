@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=298">
-<link rel="stylesheet" href="assets/social-fishing.css?v=298">
+<link rel="stylesheet" href="assets/social.css?v=299">
+<link rel="stylesheet" href="assets/social-fishing.css?v=299">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-03 haven-v298 right-drag camera, left-click walks';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-03 haven-v299 20 titles, rod auras, sit while fishing, auto-update';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3411,7 +3411,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   f.fishing.rod=typeof f.fishing.rod==='string'&&f.fishing.rods.includes(f.fishing.rod)?f.fishing.rod:'twig';
   f.fishing.bait=f.fishing.bait&&typeof f.fishing.bait==='object'&&!Array.isArray(f.fishing.bait)?Object.fromEntries(fishBaitIds.map(b=>[b,Math.max(0,Math.min(999,Math.floor(num_(f.fishing.bait[b],0))))]).filter(([,n])=>n>0)):{};
   f.fishing.baitSel=typeof f.fishing.baitSel==='string'&&fishBaitIds.includes(f.fishing.baitSel)?f.fishing.baitSel:null;
-  const fishTitleIds=['dockhand','bait-layer','reed-watcher','species-collector','perfect-hand','heavy-hook','deep-line','mutation-hunter','pond-legend','apex-angler'];
+  const fishTitleIds=['dockhand','bait-layer','reed-watcher','species-collector','perfect-hand','heavy-hook','deep-line','mutation-hunter','pond-legend','apex-angler','tide-regular','line-veteran','perfect-master','species-archivist','mutant-brood','leviathan-hook','colossus-hook','pond-devotee','secret-circle','mega-hunter'];
   f.fishing.title=typeof f.fishing.title==='string'&&fishTitleIds.includes(f.fishing.title)?f.fishing.title:null;
   if(!Array.isArray(f.mail))f.mail=[];else f.mail=f.mail.filter(m=>m&&typeof m==='object'&&typeof m.body==='string').slice(0,50);
   f.mailSeeded=f.mailSeeded===true;
@@ -12888,6 +12888,39 @@ $('recoveryForm').onsubmit=async e=>{
 const UPDATE_SNOOZE_MS=30*60*1000;      // "Keep playing" buys half an hour, not the rest of the session
 const UPDATE_INSIST_MS=24*60*60*1000;   // a full day behind: the update is no longer optional
 const PAGE_STARTED_AT=Date.now();
+// v299 (owner): "can the game hard reset the browser on updates?" - yes, and it now does it on its
+// own in the two cases where that costs the player nothing: a page that has only just loaded, and a
+// tab sitting in the background. Mid-run it still asks, because only the player knows what is safe.
+//
+// The reset is a CACHE-BUSTED navigation, not location.reload(). That is the part the old code was
+// missing: with no query in the URL the browser (and the edge) can answer the reload with the stale
+// shell from its own cache - which is exactly why players were being told to press Ctrl+F5.
+const UPDATE_AUTO_MS=12000;            // this long after load a reset costs nothing
+const UPDATE_RESET_KEY='pg_update_reset';
+const UPDATE_RESET_GUARD_MS=180000;    // one automatic reset per build per tab, so a stale edge
+                                       // that keeps answering with an old index.html cannot loop us
+function updateResetSeen(build){
+ try{const seen=JSON.parse(sessionStorage.getItem(UPDATE_RESET_KEY)||'null');
+  return !!(seen&&seen.build===build&&Date.now()-(seen.at||0)<UPDATE_RESET_GUARD_MS)}catch{return false}
+}
+function updateResetMark(build){try{sessionStorage.setItem(UPDATE_RESET_KEY,JSON.stringify({build,at:Date.now()}))}catch{}}
+function hardReload(build,manual){
+ if(!manual&&updateResetSeen(build))return false;
+ updateResetMark(build);
+ try{
+  const url=new URL(location.href);
+  url.searchParams.set('build',String(build||'update').replace(/[^a-z0-9]+/gi,'-').slice(0,40)||'update');
+  location.replace(url.toString());
+  return true;
+ }catch{}
+ try{location.reload();return true}catch{return false}
+}
+function updateToast(){
+ if(document.getElementById('updateToast'))return;
+ const t=document.createElement('p');t.id='updateToast';t.setAttribute('role','status');
+ t.textContent='Updating to the newest build…';
+ document.body.appendChild(t);
+}
 function showUpdatePrompt(build=BUILD){
   if(document.getElementById('updatePrompt'))return;
   // Same build already dismissed: stay quiet until the snooze expires. A DIFFERENT build is news
@@ -12905,7 +12938,7 @@ function showUpdatePrompt(build=BUILD){
     const button=prompt.querySelector('button');if(button.disabled)return;
     button.disabled=true;button.textContent=insistent?'Saving and reloading…':'Saving and refreshing…';
     save();
-    try{await cloudFlushNow()}finally{location.reload()}
+    try{await cloudFlushNow()}finally{hardReload(build,true)}
   };
   const later=prompt.querySelector('[data-update-later]');
   if(later)later.onclick=()=>{showUpdatePrompt.until=Date.now()+UPDATE_SNOOZE_MS;prompt.remove()};
@@ -12915,7 +12948,13 @@ function updateWatch(){
   if(typeof fetch!=='function'||typeof location==='undefined'||!location.reload)return;
   return fetch('version.txt?_='+Date.now(),{cache:'no-store'}).then(r=>r&&r.ok?r.text():null).then(txt=>{
     txt=String(txt||'').trim();
-    if(txt&&txt!==BUILD)showUpdatePrompt(txt);
+    if(!txt||txt===BUILD)return;
+    // Quiet moment (fresh page or backgrounded tab): reset now, no question asked.
+    if(Date.now()-PAGE_STARTED_AT<UPDATE_AUTO_MS||document.hidden===true){
+     updateToast();
+     if(hardReload(txt))return;
+    }
+    showUpdatePrompt(txt);
   }).catch(()=>{});
 }
 // v275 (owner): check at boot as well. The interval alone meant the FIRST check landed a full
@@ -12924,14 +12963,17 @@ function updateWatch(){
 // it never competes with the login card or the first frames of the game.
 setTimeout(updateWatch,3000);
 setInterval(updateWatch,60000);
+// v299: coming back to a tab that has been away is the best moment to look again - the page may
+// be hours old while the player was on another tab, and the check is a 60-byte text file.
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-PAGE_STARTED_AT>30000)updateWatch()});
 </script>
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=298"></script>
-<script src="assets/social-poker.js?v=298"></script>
-<script src="assets/social-scene.js?v=298"></script>
-<script src="assets/social-fishing.js?v=298"></script>
-<script src="assets/social.js?v=298"></script>
+<script src="assets/social-rules.js?v=299"></script>
+<script src="assets/social-poker.js?v=299"></script>
+<script src="assets/social-scene.js?v=299"></script>
+<script src="assets/social-fishing.js?v=299"></script>
+<script src="assets/social.js?v=299"></script>
 </body>
 </html>

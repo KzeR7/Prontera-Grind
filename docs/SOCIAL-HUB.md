@@ -271,7 +271,7 @@ cooldown) and broadcasts it to the room. `scene.showFish` gained a `label`, draw
 own small plate above the fish, so the weight is where the fish is. `showOffText` /
 `parseShowOff` / `onLocalMessage` stay for old clients and chat history.
 
-**Ten fishing titles, worn above the head.** `FISHING_TITLES` is a ladder from *Dockhand*
+**Ten fishing titles, worn above the head (twenty since haven-v299).** `FISHING_TITLES` is a ladder from *Dockhand*
 (10 catches) to *Apex Angler* (all 70 species), each earned from counters the saved fishing
 blob already keeps — catches, casts, perfects, discovered species, best weight, mutation
 kinds — so no new counter or migration can lose one. They are equipped from the new
@@ -437,6 +437,45 @@ angle/pitch maths for those gestures. The in-plaza help line now reads
 `tools/tests/social_scene_sim.js` pins all four cases: a left drag leaves angle and pitch untouched,
 a left click on open ground still walks, ctrl-drag orbits without walking, and a touch drag still
 orbits.
+
+## Twenty titles, rod auras, no doubled show-offs (haven-v299)
+
+**Sitting no longer interrupts fishing.** v297 routed `toggleSit` through the new leave-confirm, which
+contradicted v295's rule that sit/stand are allowed with a line in the water - pressing Sit (or Insert)
+asked "Stop fishing and move?". Only actions that actually *walk the player away* ask now:
+`moveAction`, `seatAction` (a bench), `pokerSeatAction` and Return to field. Sit and stand go straight
+through, and the fishing session keeps running.
+
+**Ten more fishing titles (20 total).** The first ten were reachable in an evening, so ten long-haul
+titles now sit on top of them. They are derived from the same saved blob as the originals - no new
+counter, so an older save can earn them the moment its numbers are high enough:
+
+| Title | Ask | Tone |
+| --- | --- | --- |
+| Tide Regular | 1,000 casts | tide |
+| Line Veteran | catch 250 fish | silver |
+| Perfect Master | 100 perfect catches | sapphire |
+| Species Archivist | discover 80 species | jade |
+| Mutant Brood | keep 25 mutated fish | crimson |
+| Leviathan Hook | record a 100 kg fish | amethyst |
+| Colossus Hook | record a 300 kg fish | abyss |
+| Pond Devotee | catch 150 of one species | ember |
+| Secret Circle | a fish from all eight secret species | frost |
+| Mega Hunter | catch 5 pond monsters | dawn |
+
+Five tones were added to `TITLE_TONE` for them, and `fishTitleIds` in the page sanitizer lists all
+twenty (a title worn on a save that predates this build survives the load).
+
+**The rods have a visible aura.** The old sprite baked a single radial fill at .18-.4 alpha *behind* a
+rod that covers most of it, so nothing read on screen. Each tier now has an `ROD_AURA` strength, a
+two-stop bloom plus a shadow-blurred ring around the blank, and the markup carries
+`data-rod-tier` so the CSS can add a tinted `drop-shadow` and a slow pulse on Golden and Mythril
+(reduced-motion respected). The dock's 26px icon reads by tier too, not just the 64px shop art.
+
+**A show-off draws once.** The local draw ran on the cast, and the worker's echo of the same catch ran
+`showOffEvent` again, so the fish and its weight plate appeared twice, stacked. Two fixes: the plaza
+ignores its own `showoff` echo (`m.from !== app.id`), and `showFish()` disposes any active show for
+that angler before adding the new one - one fish and one plate per player, always.
 
 ## Friends (haven-v273)
 

@@ -324,12 +324,34 @@ assert.equal(F.normalize({bagTier:-5}).bagTier,0);
 assert.equal(F.normalize({bagTier:'x'}).bagTier,0);
 assert.equal(F.normalize({bagTier:1,bag:Array.from({length:300},(_,i)=>({sp:'minnow',w:.2,id:'b'+i}))}).bag.length,200,'normalization keeps the fish the owned tier allows');
 // Ten fishing titles, earned from the saved fishing blob and worn above the head.
-assert.equal(F.FISHING_TITLES.length,10,'ten fishing titles');
+assert.equal(F.FISHING_TITLES.length,20,'twenty fishing titles');
+// v299 (owner): the first ten came too easily, so ten harder ones sit on top of them.
+const earlyIds=['dockhand','bait-layer','reed-watcher','species-collector','perfect-hand','heavy-hook','deep-line','mutation-hunter','pond-legend','apex-angler'];
+const lateTitles=F.FISHING_TITLES.slice(10);
+assert.deepStrictEqual(F.FISHING_TITLES.slice(0,10).map(t=>t.id),earlyIds,'the original ten keep their order and ids');
+assert.equal(lateTitles.length,10,'ten new titles');
+for(const t of lateTitles)assert(!earlyIds.includes(t.id),'the new title '+t.id+' is genuinely new');
+// Each new title in a family asks for strictly more than the early one on the same counter.
+const sameCounter=[['tide-regular','reed-watcher'],['line-veteran','bait-layer'],['perfect-master','perfect-hand'],
+ ['species-archivist','pond-legend'],['leviathan-hook','heavy-hook'],['colossus-hook','leviathan-hook']];
+for(const [lateId,earlyId] of sameCounter){
+ const L=F.FISHING_TITLE_BY_ID[lateId],E=F.FISHING_TITLE_BY_ID[earlyId];
+ assert(L&&E,'both '+lateId+' and '+earlyId+' exist');
+ assert(L.goal>E.goal,'the new title '+lateId+' ('+L.goal+') is a longer haul than '+earlyId+' ('+E.goal+')');
+}
+// Every one of them is reachable from a saved blob that only has the fields older saves already keep.
+const rich=F.normalize(null);
+rich.stats.casts=2000;rich.stats.catches=1000;rich.stats.perfects=200;
+for(const sp of F.SPECIES)rich.dex[sp.id]={n:200,bw:Math.max(sp.max,500),mut:Object.keys(F.MUTATIONS)};
+assert.equal(F.FISHING_TITLES.filter(t=>F.titleUnlocked(rich,t)).length,20,'a very rich save can earn all twenty');
+const mid=F.normalize(null);
+mid.stats.casts=300;mid.stats.catches=60;mid.stats.perfects=30;
+assert.equal(F.FISHING_TITLES.filter(t=>F.titleUnlocked(mid,t)).length<=4,true,'the new ten stay locked for an ordinary save');
 // v297: the apex title tracks the catalog size instead of a hardcoded 70.
 assert.equal(F.FISHING_TITLE_BY_ID['apex-angler'].goal,100,'Apex Angler wants all 100 species');
 assert(F.FISHING_TITLE_BY_ID['pond-legend'].goal<100,'Pond Legend is a milestone before the apex');
-assert.equal(new Set(F.FISHING_TITLES.map(t=>t.id)).size,10,'title ids are unique');
-assert.equal(new Set(F.FISHING_TITLES.map(t=>t.name)).size,10,'title names are unique');
+assert.equal(new Set(F.FISHING_TITLES.map(t=>t.id)).size,20,'title ids are unique');
+assert.equal(new Set(F.FISHING_TITLES.map(t=>t.name)).size,20,'title names are unique');
 st=F.normalize(null);
 for(const t of F.FISHING_TITLES){assert(t.name&&t.mark&&t.tone&&t.req,'each title has a name, mark, tone and requirement');assert(t.goal>0);assert(!F.titleUnlocked(st,t),'nothing is earned on a fresh save')}
 assert.equal(F.equippedTitle(st),null);
@@ -463,12 +485,13 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert.equal(d2.getElementById('fishingPanel').hidden,false,'the bag window opens');
  // v295: the Pond fish toggle is gone - the ponds always hold fish.
  assert.equal(d2.getElementById('fishingShowFish'),null,'there is no Pond fish toggle any more');
- // The Titles tab lists exactly the ten fishing titles, with progress for the locked ones.
+ // The Titles tab lists exactly the fishing titles, with progress for the locked ones.
  FISH.openTitles();
  const titleRows=d2.querySelectorAll('.fishing-title-row');
- assert.equal(titleRows.length,10,'the Titles tab lists all ten fishing titles');
+ assert.equal(titleRows.length,F.FISHING_TITLES.length,'the Titles tab lists every fishing title');
+ assert.equal(titleRows.length,20,'which is twenty in v299');
  assert(/Dockhand/.test(d2.getElementById('fishingTitlesView').textContent),'titles are named');
- assert.equal(d2.querySelectorAll('.fishing-title-row.locked').length,10,'nothing is earned on a fresh save');
+ assert.equal(d2.querySelectorAll('.fishing-title-row.locked').length,20,'nothing is earned on a fresh save');
  // Earning one and wearing it from the tab goes through the same save hook as the rest.
  hostS.fishing.stats.catches=10;FISH.openTitles();
  const wearBtn=d2.querySelector('button[data-title="dockhand"]');
@@ -549,10 +572,12 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/autoSell:f\.fishing\.settings\?\.autoSell===true/.test(page),'the page sanitizer keeps the auto-sell toggle');
  assert(/const fresh=\(\).*?settings:\{fish:true,sound:true\}/s.test(page)||/fishing:\{v:1,bag:\[\],dex:\{\}/.test(page),'the fresh save shape is present');
  for(const asset of ['assets/social-fishing.js','assets/social-scene.js','assets/social.js','assets/social-fishing.css'])
-  assert(page.includes(asset+'?v=298'),asset+' is versioned at v298');
- assert(/haven-v298/.test(page),'the login card names the v298 build');
+  assert(page.includes(asset+'?v=299'),asset+' is versioned at v299');
+ assert(/haven-v299/.test(page),'the login card names the v299 build');
  // --- Part D2: v297 leave-confirm, announcements and the fishing stop hook ------------------
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
+ const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');
+ const room=fs.readFileSync(path.join(__dirname,'..','..','workers','social','room.mjs'),'utf8');
  // Clicking away from the pond asks first, exactly like the poker table, instead of nagging chat.
  assert(!social.includes('press ✕ Stop fishing before moving'),'chat no longer nags about the X button');
  assert(social.includes('function confirmFishingStop('),'the plaza has a fishing leave-confirm');
@@ -563,14 +588,26 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/\.key==='Escape'\).*finishFishingStop\(false\)/.test(social),'Escape keeps the line in the water');
  assert(social.includes('fishingBlocked(()=>moveAction(x,z))'),'a blocked walk is retried after confirming');
  assert(social.includes('fishingBlocked(()=>seatAction(id))'),'a blocked seat is retried after confirming');
- assert(social.includes('fishingBlocked(()=>toggleSit())'),'a blocked sit is retried after confirming');
+ // v299 (owner): sit and stand never interrupt fishing - only actions that walk away ask.
+ assert(!social.includes('fishingBlocked(()=>toggleSit())'),'sit/stand never asks to stop fishing');
+ assert(/function toggleSit\(\)\{confirmPokerLeave/.test(social),'sit/stand goes straight through');
+ assert(social.includes('fishingBlocked(()=>moveAction(x,z))'),'walking away still asks');
+ assert(social.includes('fishingBlocked(()=>pokerSeatAction(globalSeat))'),'a poker stool still asks');
+ // v299 (owner): the rods carry a visible tier aura in the sprite and in CSS.
+ assert(/const ROD_AURA=\{twig:\.22/.test(mod),'every rod tier has an aura strength');
+ assert(mod.includes('shadowBlur=U(9)'),'the painted rod gets a bloom + ring the eye can actually see');
+ assert(/data-rod-tier=\"\$\{esc\(rod\.id\)\}\"/.test(mod),'the markup exposes the tier for CSS');
+ const rodCss=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.css'),'utf8');
+ assert(/\.fishing-rod-art\{filter:drop-shadow/.test(rodCss),'CSS gives the rod icon a tinted aura');
+ assert(/@keyframes rod-aura/.test(rodCss),'the top tiers pulse');
+ // v299 (owner): a show-off draws once. The local draw and its relayed echo used to stack.
+ assert(social.includes('if(m.from!==app.id)'),'our own show-off echo is ignored');
+ assert(fs.readFileSync(path.join(__dirname,'..','..','assets','social-scene.js'),'utf8').includes('if(showPool[i].pid===pid)dropShow(i)'),'one show-off sprite per angler');
  // The module can be told to reel in by that dialog.
- const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');
  assert(/stop:message=>stopFishing\(message\)/.test(mod),'the fishing module exposes stop()');
  assert(mod.includes("typeof opts.announce==='function'"),'a mega/secret catch fires the announce hook');
  assert(/\(sp\.mega\|\|sp\.rarity==='secret'\)/.test(mod),'only mega and secret species are announced');
  // Local-chat announcements: the worker relays, the plaza renders a system line.
- const room=fs.readFileSync(path.join(__dirname,'..','..','workers','social','room.mjs'),'utf8');
  assert(room.includes("m.type==='fishbrag'"),'the room accepts a fish announcement');
  assert(room.includes("type:'fishnote'"),'the room relays it as a fishnote');
  assert(/MAX_FISH_W=5000/.test(room),'the relay clamp follows the new weight ceiling');
@@ -581,5 +618,5 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(/announce:fishingAnnounce/.test(social),'the fishing bind receives it');
  assert(/\.social-line-sys/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'system lines have their own style');
  assert(/socialFishLeaveWarning/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'the fishing dialog shares the poker overlay style');
- console.log('PASS social fishing: ponds+chairs, 100-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches');
+ console.log('PASS social fishing: ponds+chairs, 100-species catalog across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 1.8 t, a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler');
 })().catch(e=>{console.error(e);process.exitCode=1});
