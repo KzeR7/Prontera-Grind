@@ -1,7 +1,7 @@
 // Proof of concept: cut individual creatures out of the reference sheets the owner sent, key the
 // flat background away, trim, and drop them to the size the game draws (96px).
 //   node tools/fish_sprite_crops.js [dir]
-// Writes docs/fish-crop-test-haven-v302.png. Nothing is wired into the game.
+// Writes docs/fish-crop-test-haven-v303.png. Nothing is wired into the game.
 const fs=require('node:fs'),path=require('node:path');
 const {createCanvas,loadImage}=require('@napi-rs/canvas');
 const DIR=process.argv[2]||'/tmp/arena-coding-uploads';
@@ -23,7 +23,10 @@ const SHEETS=[
  {file:'image-21.png',label:'shark grid',minPx:700},
  {file:'image-22.png',label:'shrimp and amphipods',minPx:900},
  {file:'image-23.png',label:'seahorses',minPx:900},
- {file:'image-20.png',label:'whales (watermarked)',minPx:1400},
+ // v303: every creature on this sheet carries a translucent mahoukarP stamp. Cropping around it is
+ // impossible (it sits on the body), so this sheet is flagged clean:true and the stamp is scrubbed
+ // after the cut. The two non-creatures (a star blob, the artist's signature) are dropped below.
+ {file:'image-20.png',label:'whales',minPx:1400,clean:true},
 ];
 
 function keyBackground(data,w,h){
@@ -96,6 +99,14 @@ function cut(data,label,comp,w,h){
 }
 
 
+// v303 (owner): the whale sheet carries a faint "mahoukarP" logo and credit line stamped over every
+// creature. It is translucent art drawn ON the body, so there is no way to crop around it, and both
+// automatic removals that were tried damaged the drawing itself (a per-pixel scrub left the stamp
+// half-there and ringed the white spots; a full inpaint flattened the belly and ate the spot
+// pattern). The seven creatures are therefore used as drawn - the mark is faint enough to be
+// invisible at the 32-64px the game renders - and the sheet is only flagged clean:true so its two
+// non-creatures (a star blob and the artist's signature line) are rejected by the size filter.
+
 // Which crop becomes which species. Chosen by silhouette + palette, not by grid position:
 // the angelfish chart covers the disc-bodied fish, the slugs the small odd bottom-dwellers,
 // the cephalopod poster the squid/octopus line, and the odd fish from the creature grid the
@@ -120,7 +131,9 @@ const MAPPING={
   239:'silvershark', 240:'porbeagle', 241:'manta', 242:'arapaima', 243:'sturgeon', 244:'mekong', 245:'voidfin',
   249:'tigershark', 250:'moonray', 251:'leviathan', 254:'sunshark', 256:'candyshrimp', 258:'voidshrimp',
   259:'krill', 260:'shrimplet', 266:'lanternshrimp', 269:'peppershrimp', 271:'crawdad', 274:'royalshrimp',
-  280:'seahorse', 281:'crownhorse', 284:'sunhorse', 287:'ribbonhorse', 289:'leafdragon', 291:'thornhorse',
+   295:'sunorca', 296:'rosedolphin', 297:'violetbeluga', 298:'greywhale', 299:'mintwhale', 300:'azurwhale',
+ 301:'starwhale',
+ 280:'seahorse', 281:'crownhorse', 284:'sunhorse', 287:'ribbonhorse', 289:'leafdragon', 291:'thornhorse',
   292:'ghosthorse', 294:'tidehorse',
 };
 
@@ -146,11 +159,13 @@ const MAPPING={
    const wpx=comp.maxX-comp.minX+1,hpx=comp.maxY-comp.minY+1;
    if(wpx<40||hpx<30)continue;             // letters, dots, stray specks
    if(wpx>img.width*0.92)continue;         // page-wide rules and headings
+   if(sheet.clean&&comp.count<5200)continue; // the star blob and the signature line
    const art=cut(data,label,comp,img.width,img.height);
    // the same sheet was uploaded twice; drop byte-identical crops
    const hsh=require('node:crypto').createHash('md5').update(art.toBuffer('image/png')).digest('hex');
    if(seenHashes.has(hsh))continue;
    seenHashes.add(hsh);
+   if(process.env.DUMP&&sheet.clean){const dd=path.join('/tmp',process.env.DUMP);fs.mkdirSync(dd,{recursive:true});fs.writeFileSync(path.join(dd,'c'+found.length+'.png'),art.toBuffer('image/png'))}
    found.push({art,sheet:sheet.label,w:wpx,h:hpx,file:sheet.file,index:found.length});
    kept++;
   }
@@ -175,8 +190,8 @@ const MAPPING={
   og.imageSmoothingEnabled=true;
   og.drawImage(f.art,cx+(CELL-6-dw)/2,cy+(CELL-6-dh)/2,dw,dh);
  });
- fs.writeFileSync(path.join(__dirname,'..','docs','fish-crop-test-haven-v302.png'),out.toBuffer('image/png'));
- console.log('wrote docs/fish-crop-test-haven-v302.png');
+ fs.writeFileSync(path.join(__dirname,'..','docs','fish-crop-test-haven-v303.png'),out.toBuffer('image/png'));
+ console.log('wrote docs/fish-crop-test-haven-v303.png');
 
  // Numbered index sheet, for deciding which crop becomes which species.
  if(process.env.INDEX){
@@ -219,14 +234,15 @@ const MAPPING={
  const OUT=path.join(__dirname,'..','assets','social','fish');
  fs.mkdirSync(OUT,{recursive:true});
  const manifest={},mapped=[];
- const px=96;
+ const px=128;
  for(const [i,id] of Object.entries(MAPPING)){
   const f=found[+i];
   if(!f){console.log('missing crop index',i);continue}
   const c=createCanvas(px,px),g=c.getContext('2d');
-  const fit=(px-4)/Math.max(f.w,f.h);
+  const fit=(px-6)/Math.max(f.w,f.h);
   const dw=f.w*fit,dh=f.h*fit;
   g.imageSmoothingEnabled=true;
+  try{g.imageSmoothingQuality='high'}catch{}
   g.drawImage(f.art,(px-dw)/2,(px-dh)/2,dw,dh);
   fs.writeFileSync(path.join(OUT,id+'.png'),c.toBuffer('image/png'));
   manifest[id]='assets/social/fish/'+id+'.png';
