@@ -86,16 +86,39 @@ t('the refine panel shows the count, and the craft button is off under 20', () =
 });
 
 // ---- 3. refine buys what you are short of (v311) --------------------------------
-t('a short ore stack is bought automatically, at the Black Market price', () => {
+t('a short ore stack is bought only after the purchase is confirmed, at the Black Market price', () => {
   M.S = fresh({ refineScrolls: 0, useRefineScroll: false, ore: { ori: 6, elu: 0 }, zeny: 1e6 });
-  const need = M.refOre(M.S.eq.weapon), fee = M.refCost(M.S.eq.weapon);
-  M.RND = WIN; M.LOGS.length = 0;
-  const zeny = M.S.zeny;
+  const need = M.refOre(M.S.eq.weapon), fee = M.refCost(M.S.eq.weapon), miss = need - 6;
+  M.RND = WIN; M.LOGS.length = 0; M.ASKED.length = 0;
+  const zeny = M.S.zeny, before = JSON.stringify(M.S.eq.weapon);
   M.refine('weapon');
+  // v313: the purchase is a question that names the count, the unit price and the total.
+  assert.strictEqual(M.ASKED.length, 1, 'the purchase is asked, not assumed');
+  assert.strictEqual(M.S.eq.weapon.r, 5, 'and nothing has been refined yet');
+  assert.strictEqual(M.S.zeny, zeny, 'and not a coin spent');
+  assert.strictEqual(JSON.stringify(M.S.eq.weapon), before);
+  assert.match(M.ASKED[0].message, new RegExp('Buy the missing ' + miss + ' Oridecon'), 'it names how many');
+  assert.match(M.ASKED[0].message, new RegExp((miss * 100000).toLocaleString() + 'z'), 'and what they cost');
+  assert.match(M.ASKED[0].message, new RegExp((fee + miss * 100000).toLocaleString() + 'z'), 'and the total for the attempt');
+  M.ASKED[0].yes();
   assert.strictEqual(M.S.eq.weapon.r, 6, 'the refine still lands');
   assert.strictEqual(M.S.ore.ori, 6 + (need - 6) - need, 'the shortfall is bought, then spent');
   assert.strictEqual(zeny - M.S.zeny, fee + (need - 6) * 100000, 'the attempt costs its fee plus the ore it had to buy');
   assert.ok(M.LOGS.some(x => /Bought \d+ Oridecon for [\d,]+z to finish this refine/.test(x)), 'the purchase is announced, not silent');
+});
+
+t('cancelling the purchase confirmation spends nothing at all', () => {
+  // The owner's worry: "players just press and finish all the zeny". Declining leaves the wallet,
+  // the bench and the rank exactly as they were - and asks again next time, because nothing is remembered.
+  M.S = fresh({ refineScrolls: 0, useRefineScroll: false, ore: { ori: 1, elu: 0 }, zeny: 1e6 });
+  M.RND = WIN; M.LOGS.length = 0; M.ASKED.length = 0;
+  const before = JSON.stringify(M.S);
+  M.refine('weapon');
+  assert.strictEqual(M.ASKED.length, 1);
+  assert.strictEqual(JSON.stringify(M.S), before, 'a refused purchase has spent nothing');
+  assert.ok(!M.LOGS.some(x => /Bought/.test(x)), 'and bought no ore');
+  M.ASKED[0].yes();
+  assert.ok(M.S.zeny < 1e6, 'agreeing to it does buy');
 });
 
 t('a short stack with no Zeny for the ore buys nothing and says why', () => {
@@ -121,13 +144,19 @@ t('cancelling the scroll confirmation buys nothing', () => {
   assert.ok(!M.LOGS.some(x => /Bought/.test(x)), 'and has bought no ore');
 });
 
-t('answering the scroll confirmation buys the ore, then refines', () => {
+t('the purchase is asked before the scroll question, and both must be answered', () => {
   M.S = fresh({ refineScrolls: 1, useRefineScroll: true, ore: { ori: 2, elu: 0 }, zeny: 1e6, eq: { weapon: piece(3) } });
   M.RND = WIN; M.LOGS.length = 0; M.ASKED.length = 0;
   const need = M.refOre(M.S.eq.weapon), fee = M.refCost(M.S.eq.weapon), zeny = M.S.zeny;
   M.refine('weapon');
+  assert.strictEqual(M.ASKED.length, 1, 'one question at a time');
+  assert.match(M.ASKED[0].message, /Buy the missing/, 'the money question comes first');
   M.ASKED[0].yes();
-  assert.strictEqual(M.S.eq.weapon.r, 4, 'the refine lands after the answer');
+  assert.strictEqual(M.ASKED.length, 2, 'then the scroll question');
+  assert.match(M.ASKED[1].message, /Protection Scroll/);
+  assert.strictEqual(M.S.eq.weapon.r, 3, 'still nothing refined until every question is answered');
+  M.ASKED[1].yes();
+  assert.strictEqual(M.S.eq.weapon.r, 4, 'the refine lands after both answers');
   assert.strictEqual(M.S.ore.ori, 0, 'the bought ore is spent on the attempt');
   assert.strictEqual(zeny - M.S.zeny, fee + (need - 2) * 100000, 'fee plus the ore it had to buy');
 });
