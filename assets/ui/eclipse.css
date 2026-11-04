@@ -3743,11 +3743,31 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
     gap:4px;
   }
   html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard{
-    min-height:38px;
+    min-height:36px;
     padding:4px 2px;
     border-radius:6px;
     background:#111923;
     border:1px solid #263446;
+    min-width:0;
+  }
+  /* v324: one line per destination on a phone - wrapping names made the 5-across
+     cards uneven heights and pushed the stage card down. */
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard b{
+    font-size:8.5px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:100%;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard small{
+    font-size:7px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:100%;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard .eclipse-map-number{
+    display:none;
   }
   html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.on{
     background:#2a2215;
@@ -3784,6 +3804,18 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
     padding:0;
     border:0;
     background:none;
+  }
+  /* v324: the auto-advance hint sentence has no room on a phone - the checkbox and
+     its label stay, the trailing explanation goes (it clipped mid-word). */
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas .rm-optb-head>.row>small{
+    display:none;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages{
+    width:100%;
+    min-width:0;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node{
+    min-width:0;
   }
   html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare){
     display:grid;
@@ -4251,7 +4283,9 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-f
   overflow:hidden;
   cursor:default;
   touch-action:auto;
-  background:#223842;
+  /* v324: the whole-world fit letterboxes inside taller heroes - paint the surround as
+     deep ocean so the framed map reads intentional, not cropped. */
+  background:radial-gradient(130% 130% at 50% 32%,#2e4d5c,#182b36 78%);
   z-index:1;
 }
 @media(min-width:640px){

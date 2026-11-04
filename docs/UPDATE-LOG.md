@@ -9832,3 +9832,13 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 
 
 
+### 2026-11-04 — `haven-v324 whole world atlas fit and mobile polish`
+
+* **Changed (`index.html`, `assets/ui/eclipse.css` — PC Atlas: The Whole World Fits):** the panel map no longer 1.2x-crops toward the selected region (from a northern map, Comodo at the world's bottom edge was cut off). `computeMiniAtlasPan` now contain-fits the full 16:9 world inside the hero, centred, and the surround is painted as deep ocean so the letterbox reads as framed sea. Pin selection, stage routing and all eight destinations keep working; Full Map remains the zoom/pan/drag lens.
+* **Fixed (`assets/ui/mobile.css`, `assets/ui/eclipse.css` — Mobile Atlas):**
+  * The floating ✦ Quests chip no longer overlaps the panel's tab strip while a panel is open (it covered "Social Hub"); it steps aside with the chat card and returns on close.
+  * The auto-advance hint sentence no longer clips mid-word on phones (hidden; checkbox and label stay).
+  * Destination names/descriptions stay on one line at legible sizes, and the stage strip keeps full panel width so the MVP marker cannot ride the panel edge.
+* **Files:** `index.html`, `assets/ui/eclipse.css`, `assets/ui/mobile.css`, `tools/tests/eclipse_ui_sim.js`, `tools/tests/mobile_layout_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+Players need one refresh at least once.

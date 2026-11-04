@@ -424,6 +424,8 @@ if (game) {
   testAsync('an open panel stands the chat down instead of stacking on it', async () => {
     assert.match(mobileJs, /root\.classList\.toggle\('pg-panel', open\)/);
     assert.equal(declOf('html.pg-mobile.pg-panel #socialChat', 'display'), 'none');
+    assert.equal(declOf('html.pg-mobile.pg-panel #pgQuests', 'display'), 'none!important',
+      'v324: the Quests chip also steps aside, so it cannot cover the panel tab strip');
     ev("S=fresh();S.auto=false;tabs.length=0;tabs.push('map');renderWin()");
     await Promise.resolve(); await Promise.resolve();
     assert.ok(d.documentElement.classList.contains('pg-panel'), 'the panel is open, so the chat steps aside');

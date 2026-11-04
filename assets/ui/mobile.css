@@ -258,6 +258,9 @@ html.pg-mobile #socialChat.minimized{height:auto!important}
 /* An open panel owns the field; the chat card (and its tab strip) would float
    on top of it. It comes back the moment the panel closes. */
 html.pg-mobile.pg-panel #socialChat{display:none}
+/* v324: same rule for the Quests chip - over an open panel it landed on the
+   panel's own tab strip and covered the Social Hub tab. */
+html.pg-mobile.pg-panel #pgQuests{display:none!important}
 
 /* Pet buffs: small tiles tucked above the dock on the right. */
 html.pg-mobile #hudBuffs{
@@ -441,7 +444,7 @@ html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs{
   position:sticky;top:0;z-index:3;background:var(--e-raised,#1a231d);
 }
 html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs button{
-  min-height:30px;height:30px;padding:0 2px;font-size:9px;line-height:1.15;
+  min-height:30px;height:30px;padding:0 1px;font-size:8.5px;line-height:1.15;letter-spacing:-.01em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
 }
 html.pg-mobile #screenOptions label{padding:9px 6px;font-size:11px;border-radius:8px}

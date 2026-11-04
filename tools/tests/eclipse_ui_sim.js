@@ -654,7 +654,7 @@ test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar
  assert.ok(win.querySelector('.rm-illustrated-hero > .rm-subzones-overlay'),'paired sub-zone toggle floats over top-left ocean so stage card height never shifts');
  assert.equal(win.querySelectorAll('[data-a="atlassub"]').length,2,'Prontera & Izlude renders 2 sub-zone buttons');
  const izludeStyle=canvasNode.getAttribute('style');
- assert.equal(canvasNode.style.getPropertyValue('--zoom'),'1.2','mini-map focuses at 1.2x regional zoom');
+ assert.equal(canvasNode.style.getPropertyValue('--zoom'),'1','mini-map fits the whole world at 1x, no regional crop');
  win.querySelector('[data-a="atlassub"][data-v="0"]').click();
  assert.equal(ev('mapM'),0,'sub-zone switches to Prontera while player remains in Izlude');
  assert.strictEqual(win.querySelector('#rmCanvas'),canvasNode,'eclipsePatch preserves live #rmCanvas node across zone switch');
@@ -680,13 +680,18 @@ test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar
  assert.match(eclipseCss,/\.rm-subzones\.rm-subzones-overlay\{[\s\S]*?bottom:auto;/,'sub-zone overlay resets bottom:auto so .eclipse-atlas-hero>div never stretches it');
  assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-route\{[\s\S]*?grid-column:1 \/ 7;/,'left map/stage column aligns cleanly across columns 1..6 of the 10-column grid');
  assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-field-guide\{[\s\S]*?grid-column:7 \/ -1;/,'right Field Intelligence column aligns cleanly across columns 7..10 of the 10-column grid');
- // Regional camera pans smoothly between distant regions (Geffen vs Amatsu):
+ // v324: the whole world stays framed - selecting a distant region moves the
+ // highlight, never the camera (Comodo at 23%/79% must stay on the map):
  win.querySelector('[data-a="selm"][data-v="2"]').click();
  const geffenX=canvasNode.style.getPropertyValue('--x'),geffenY=canvasNode.style.getPropertyValue('--y');
  win.querySelector('[data-a="selm"][data-v="7"]').click();
  const amatsuX=canvasNode.style.getPropertyValue('--x'),amatsuY=canvasNode.style.getPropertyValue('--y');
- assert.notEqual(`${geffenX},${geffenY}`,`${amatsuX},${amatsuY}`,'selecting distant maps pans the 1.2x camera smoothly toward each region');
- assert.match(eclipseCss,/#wins \.rm-canvas\{[\s\S]*?transition:transform \.52s cubic-bezier\(/,'#rmCanvas animates regional focus smoothly');
+ assert.equal(`${geffenX},${geffenY}`,`${amatsuX},${amatsuY}`,'selecting distant maps keeps the whole-world frame still');
+ const fit=ev('computeMiniAtlasPan(worldAtlasPlaceOf(9),800,450)');
+ assert.equal(fit.zoom,1);assert.ok(fit.cw<=800&&fit.ch<=450,'the fitted canvas never exceeds the viewport on any side');
+ const comodo=ev('computeMiniAtlasPan(worldAtlasPlaceOf(5),800,300)');
+ assert.ok(comodo.y>=0&&comodo.y+comodo.ch<=300,'Comodo\'s row of the world fits inside a short hero');
+ assert.match(eclipseCss,/#wins \.rm-canvas\{[\s\S]*?transition:transform \.52s cubic-bezier\(/,'#rmCanvas still animates smoothly when Full Map pans it');
  // Switching to Morroc omits both paired sub-zones and lore card:
  win.querySelector('[data-a="selm"][data-v="3"]').click();
  assert.equal(ev('mapM'),3);
@@ -715,7 +720,7 @@ test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar
  const escKey=()=>doc.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
  escKey();
  assert.equal(doc.body.classList.contains('rm-atlas-fullscreen'),false,'first Escape exits fullscreen map');
- assert.equal(ev('worldAtlasPan.zoom'),1.2,'exiting Full Map restores 1.2x mini-map focus zoom');
+ assert.equal(ev('worldAtlasPan.zoom'),1,'exiting Full Map restores the whole-world 1x frame');
  assert.equal(win.querySelectorAll('[data-a="atlaszoom"]').length,0,'mini-map hides zoom controls again');
  assert.equal(ev('tabs.includes("map")'),true,'map panel remains open in embedded view after exiting fullscreen');
  escKey();
@@ -752,6 +757,14 @@ test('v323: every external script loads exactly once (a duplicated tail killed w
  const dup=[...new Set(srcs.filter((s,i)=>srcs.indexOf(s)!==i))];
  assert.deepEqual(dup,[],'duplicate script loads create a second chat socket: '+dup.join(', '));
  assert.equal(srcs.filter(s=>/assets\/social\.js\?/.test(s)).length,1,'one social.js boot, one chat socket');
+});
+test('v324: whole-world hero letterbox and mobile atlas polish are in the stylesheet',()=>{
+ const eclipseCss=fs.readFileSync(path.join(root,'assets/ui/eclipse.css'),'utf8');
+ const mobileCss=fs.readFileSync(path.join(root,'assets/ui/mobile.css'),'utf8');
+ assert.match(eclipseCss,/\.rm-illustrated-hero>\.rm-viewport\{[\s\S]*?background:radial-gradient\(130% 130% at 50% 32%,#2e4d5c/,'the fitted world letterboxes onto deep ocean, not bare bars');
+ assert.match(eclipseCss,/html\.pg-mobile[^\n]*#map-panel-atlas[^\n]*\.mapcard b\{\s*font-size:8\.5px;\s*white-space:nowrap;/,'phone destinations stay on one line');
+ assert.match(eclipseCss,/html\.pg-mobile[^\n]*\.rm-optb-head>\.row>small\{\s*display:none;/,'the auto-advance hint sentence is hidden on phones instead of clipping mid-word');
+ assert.match(mobileCss,/html\.pg-mobile\.pg-panel #pgQuests\{display:none!important\}/,'the Quests chip steps aside while a panel is open');
 });
 test('v318: Social Hub destination showcases scenic Fountain Plaza background and Fishing + Hold\'em mini-games',()=>{
  ev('tabs.splice(0,tabs.length,"map");mapSeason="social";renderWin()');
