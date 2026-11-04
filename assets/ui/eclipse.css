@@ -1851,7 +1851,7 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .ascension-forge-status{font-size:12px;line-height:1.5}
 
 /* Minimap-left quick icons: Mail (Announcements & Gifts) + Daily Material Roulette */
-#minimapTools{position:absolute;right:254px;top:19px;z-index:6;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+#minimapTools{position:absolute;right:254px;top:19px;z-index:6;display:flex;flex-direction:column;gap:6px;pointer-events:auto;align-items:flex-end}
 body.social-open #minimapTools{display:none!important}
 .minimap-tool-btn{position:relative;width:44px;height:42px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--panel);border:1px solid var(--edge2);border-radius:8px;color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,.42);cursor:pointer;transition:border-color .15s,background .15s,transform .12s}
 .minimap-tool-btn:hover{border-color:var(--gold);background:var(--e-raised);color:var(--gold);transform:translateY(-1px)}
@@ -1862,20 +1862,29 @@ body.social-open #minimapTools{display:none!important}
 .minimap-tool-badge[hidden]{display:none!important}
 .minimap-tool-badge.is-dot{background:var(--gold);color:#17151c}
 
-/* v319: Social Hub quick button - the third seat in the minimap tool column.
-   The blink lives on the count badge and a soft ring, never on the button
-   body, so it reads as "someone is at the plaza" instead of an alarm. Green
-   means adventurers are inside; gold is reserved for a friend inside. */
-.social-hub-badge{background:#2fbf71;border-color:#161822;color:#07130c}
+/* v320: Social Hub quick button - the third seat in the minimap tool column, deliberately
+   oversized next to Mail/Daily (owner: the 44px seat was too small to notice). It keeps the
+   column's right edge and grows leftwards into the field margin. The attract pulse never
+   fully sleeps: a slow gold ring breathes even on an empty plaza (all a test server ever
+   shows), a busy plaza turns it green and adds a glow, and a friend inside turns the badge
+   gold and quickens everything. Green = adventurers inside; gold badge = a friend inside. */
+.social-hub-btn{width:82px;height:56px;align-self:flex-end;gap:3px;background:linear-gradient(165deg,#2e5240,#14231c);border:1.5px solid #c9a35b;color:#ffe9a8;box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 14px #c9a35b33}
+.social-hub-btn svg{width:25px;height:25px;color:#ffd977}
+.social-hub-btn .minimap-tool-label{font-size:9.5px;letter-spacing:.1em;color:#ffe9a8}
+.social-hub-btn:hover{transform:translateY(-1px) scale(1.03)}
+.social-hub-badge{background:#2fbf71;border-color:#161822;color:#07130c;min-width:21px;height:21px;padding:0 5px;font-size:11px;line-height:18px;top:-7px;right:-7px}
 .social-hub-btn.is-empty .social-hub-badge{background:#5b6a60;color:#d8e2da}
 .social-hub-btn.has-friends .social-hub-badge{background:var(--gold);color:#17151c}
-.social-hub-btn.is-live::after{content:'';position:absolute;inset:-1px;border-radius:9px;border:1.5px solid #57e389;opacity:0;pointer-events:none;animation:socialHubRing 2.4s ease-out infinite}
-.social-hub-btn.has-friends::after{border-color:var(--gold);animation-duration:1.8s}
-.social-hub-btn.is-live .social-hub-badge{animation:socialHubBadge 2.4s ease-in-out infinite}
-.social-hub-btn.has-friends .social-hub-badge{animation-duration:1.8s}
-@keyframes socialHubRing{0%{opacity:.8;transform:scale(1)}70%{opacity:0;transform:scale(1.14)}100%{opacity:0;transform:scale(1.14)}}
-@keyframes socialHubBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
-@media (prefers-reduced-motion:reduce){.social-hub-btn.is-live::after,.social-hub-btn.is-live .social-hub-badge{animation:none}}
+.social-hub-btn::after{content:'';position:absolute;inset:-1px;border-radius:9px;border:1.5px solid #c9a35b;opacity:0;pointer-events:none;animation:socialHubRing 3s ease-out infinite}
+.social-hub-btn.is-live{animation:socialHubGlow 2s ease-in-out infinite}
+.social-hub-btn.is-live::after{border-color:#57e389;animation-duration:2s}
+.social-hub-btn.has-friends::after{border-color:var(--gold);animation-duration:1.6s}
+.social-hub-btn.is-live .social-hub-badge{animation:socialHubBadge 2s ease-in-out infinite}
+.social-hub-btn.has-friends .social-hub-badge{animation-duration:1.6s}
+@keyframes socialHubRing{0%{opacity:.85;transform:scale(1)}70%{opacity:0;transform:scale(1.16)}100%{opacity:0;transform:scale(1.16)}}
+@keyframes socialHubBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@keyframes socialHubGlow{0%,100%{box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 10px #57e38940}50%{box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 24px #57e38990}}
+@media (prefers-reduced-motion:reduce){.social-hub-btn::after,.social-hub-btn.is-live,.social-hub-btn.is-live .social-hub-badge{animation:none}}
 
 /* The studio is a real top-level modal. Its root was missing its fixed overlay rules,
    which made the Compose action add a class without ever bringing a visible dialog up. */
@@ -2205,10 +2214,10 @@ body.social-open #minimapTools{display:none!important}
 @media(max-width:980px){
   #minimapTools{right:188px;top:19px}
 }
-/* v319: with a third tool button the column reaches y=157px at this band, where the
-   rail otherwise starts at y=142px - drop the rail clear of the Social badge. */
+/* v319/v320: with a third, oversized tool button the column reaches y=171px at this band,
+   where the rail otherwise starts at y=142px - drop the rail clear of the Social badge. */
 @media(min-width:701px) and (max-width:980px){
-  #sideRail{top:166px;max-height:calc(100% - 134px)}
+  #sideRail{top:182px;max-height:calc(100% - 150px)}
 }
 
 /* Loadout workbench — live equipment and inventory controls, styled without changing game rules. */

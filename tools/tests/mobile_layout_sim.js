@@ -459,6 +459,9 @@ if (game) {
   test('mail and the daily roulette sit in one corner row on a phone', () => {
     assert.equal(declOf('html.pg-mobile #minimapTools', 'flex-direction'), 'row');
     assert.equal(declOf('html.pg-mobile .minimap-tool-btn', 'width'), '36px');
+    // v320: the Social Hub seat joins the same row but stays thumb-sized.
+    assert.equal(declOf('html.pg-mobile .social-hub-btn', 'width'), '48px');
+    assert.equal(declOf('html.pg-mobile .social-hub-btn', 'height'), '42px');
   });
 
   test('a landscape phone shows the whole map page without scrolling', () => {

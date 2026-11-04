@@ -9796,6 +9796,14 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   * `syncRooms` now sends room counts to every connected chat client (not only players already in a plaza), personalised with a per-client friend count (`plaza.friends`, including reserved reconnect spots); fresh connections receive the population immediately after `hello`, friend syncs and reservation expiries refresh it too.
 * **Files:** `index.html`, `assets/social.js`, `assets/ui/eclipse.css`, `workers/social/room.mjs`, `tools/tests/{eclipse_ui_sim,social_sim}.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
 
+### 2026-11-04 — `haven-v320 social hub big button`
+
+* **Changed (`assets/ui/eclipse.css`, `assets/ui/mobile.css` — Oversized Social Hub Button & Always-On Attract Pulse):**
+  * Enlarged the field Social Hub button from the shared 44×42px Mail/Daily seat to an 82×56px gold-bordered green-gradient seat (48×42px on phones, 44×38px in short landscape) with a 25px icon, growing leftwards from the column's right edge (`align-items:flex-end`) so Mail/Daily keep their exact spot; the count badge grows to 21px with it.
+  * The pulse no longer sleeps on an empty plaza: a slow 3s gold attract ring always breathes (the only state an empty test server ever shows), a busy plaza turns the ring green at 2s and adds a `socialHubGlow` box-shadow pulse, and a friend inside turns the badge gold and quickens the cycle to 1.6s — all still stilled by `prefers-reduced-motion`.
+  * Raised the 701–980px side-rail clearance (`top:182px`) for the taller column.
+* **Files:** `index.html`, `assets/ui/{eclipse,mobile}.css`, `tools/tests/{eclipse_ui_sim,mobile_layout_sim}.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
 
 
 

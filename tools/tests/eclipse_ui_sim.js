@@ -731,11 +731,16 @@ test('v319: Social Hub button sits third in minimapTools with a population badge
  assert.match(btn.textContent,/Social/);
  assert.equal(badge.hidden,true,'the badge starts hidden: an unknown population never invents a count');
  const eclipseCss=fs.readFileSync(path.join(root,'assets/ui/eclipse.css'),'utf8');
- assert.match(eclipseCss,/\.social-hub-btn\.is-live::after\{[^}]*animation:socialHubRing 2\.4s/,'the live state pulses a soft ring, not the button body');
  assert.match(eclipseCss,/@keyframes socialHubRing/);
- assert.match(eclipseCss,/prefers-reduced-motion:reduce\)\{\.social-hub-btn\.is-live/,'reduced motion stills the pulse');
+ assert.match(eclipseCss,/prefers-reduced-motion:reduce\)\{\.social-hub-btn::after/,'reduced motion stills the pulse');
  assert.match(eclipseCss,/\.social-hub-btn\.has-friends \.social-hub-badge\{background:var\(--gold\)/,'a friend inside turns the badge gold');
- assert.match(eclipseCss,/@media\(min-width:701px\) and \(max-width:980px\)\{\s*#sideRail\{top:166px/,'the 701-980px rail drops clear of the taller tool column');
+ assert.match(eclipseCss,/@media\(min-width:701px\) and \(max-width:980px\)\{\s*#sideRail\{top:182px/,'the 701-980px rail drops clear of the taller tool column');
+ // v320 (owner: too small to notice): the seat is oversized and its attract pulse never sleeps.
+ assert.match(eclipseCss,/\.social-hub-btn\{width:82px;height:56px/,'the Social seat is roughly double the Mail/Daily footprint');
+ assert.match(eclipseCss,/\.social-hub-btn::after\{[^}]*animation:socialHubRing 3s[^}]*infinite/,'a slow gold attract ring breathes even on an empty plaza');
+ assert.match(eclipseCss,/\.social-hub-btn\.is-live\{animation:socialHubGlow 2s/,'a busy plaza adds a green glow pulse on top');
+ assert.match(eclipseCss,/\.social-hub-btn\.is-live::after\{border-color:#57e389;animation-duration:2s/);
+ assert.match(eclipseCss,/#minimapTools\{[^}]*align-items:flex-end/,'the wider seat grows leftwards, Mail/Daily keep their spot');
 });
 test('v318: Social Hub destination showcases scenic Fountain Plaza background and Fishing + Hold\'em mini-games',()=>{
  ev('tabs.splice(0,tabs.length,"map");mapSeason="social";renderWin()');

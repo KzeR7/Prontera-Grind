@@ -11,7 +11,7 @@ const PROJECT = 'prontera-grind-staging';
 const DB_NAME = 'pg-staging';
 const DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
 const BRANCH = 'arena/b0caa7f9-prontera-grind';
-const EXPECTED_BUILD = '2026-11-04 haven-v319 social hub live button';
+const EXPECTED_BUILD = '2026-11-04 haven-v320 social hub big button';
 
 const CONFIG = [
   `name = "${PROJECT}"`,
