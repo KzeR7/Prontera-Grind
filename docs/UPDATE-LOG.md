@@ -9804,6 +9804,16 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   * Raised the 701–980px side-rail clearance (`top:182px`) for the taller column.
 * **Files:** `index.html`, `assets/ui/{eclipse,mobile}.css`, `tools/tests/{eclipse_ui_sim,mobile_layout_sim}.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
 
+### 2026-11-04 — `haven-v321 rainbow social button and donation floor`
+
+* **Changed (`assets/ui/eclipse.css`, `assets/ui/mobile.css` — Uniform Seats & Spinning Rainbow Frame):**
+  * The Social seat is a little shorter (82×44px) and Mail / Daily now match that footprint exactly on PC (48×42px on phones, 44×38px in short landscape, Quests chip offsets adjusted); at ≤980px the column parks at `right:228px` so the wider seats clear the minimized AUTO COMBAT bar instead of tucking the Mail badge under it.
+  * Social's frame is now a rainbow conic gradient (`@property --social-spin`, hue-rotate fallback) that spins continuously around the border while the attract/live pulse keeps breathing; `prefers-reduced-motion` stills both.
+* **Fixed (`assets/shop-catalog.js`, `assets/shop.js` — Donation Floor $20 → $25):**
+  * The Donor tier's floor was $20.00 while the all-cosmetics Wardrobe bundle runs $25.00; the catalog `floor`/`price` are now 2500 so the amount box, quick-pick chips ($25/$30/$35/$45/$65), the server clamp, and the Stripe description all agree at $25+.
+  * The donation card and tab intro now say the quiet part out loud: Horizon Haven is built by a solo developer, and donations go toward the hosting and application fees that keep the server running.
+* **Files:** `index.html`, `assets/shop-catalog.js`, `assets/shop.js`, `assets/ui/{eclipse,mobile}.css`, `tools/tests/{eclipse_ui_sim,mobile_layout_sim,shop_sim,shop_api_sim}.js`, `docs/MONETIZATION-SETUP.md`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
 
 
 

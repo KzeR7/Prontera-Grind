@@ -1853,7 +1853,7 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 /* Minimap-left quick icons: Mail (Announcements & Gifts) + Daily Material Roulette */
 #minimapTools{position:absolute;right:254px;top:19px;z-index:6;display:flex;flex-direction:column;gap:6px;pointer-events:auto;align-items:flex-end}
 body.social-open #minimapTools{display:none!important}
-.minimap-tool-btn{position:relative;width:44px;height:42px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--panel);border:1px solid var(--edge2);border-radius:8px;color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,.42);cursor:pointer;transition:border-color .15s,background .15s,transform .12s}
+.minimap-tool-btn{position:relative;width:82px;height:44px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--panel);border:1px solid var(--edge2);border-radius:8px;color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,.42);cursor:pointer;transition:border-color .15s,background .15s,transform .12s}
 .minimap-tool-btn:hover{border-color:var(--gold);background:var(--e-raised);color:var(--gold);transform:translateY(-1px)}
 .minimap-tool-btn svg{width:18px;height:18px;flex:none;color:var(--gold)}
 .minimap-tool-label{font-size:8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1;color:var(--e-muted)}
@@ -1868,9 +1868,15 @@ body.social-open #minimapTools{display:none!important}
    fully sleeps: a slow gold ring breathes even on an empty plaza (all a test server ever
    shows), a busy plaza turns it green and adds a glow, and a friend inside turns the badge
    gold and quickens everything. Green = adventurers inside; gold badge = a friend inside. */
-.social-hub-btn{width:82px;height:56px;align-self:flex-end;gap:3px;background:linear-gradient(165deg,#2e5240,#14231c);border:1.5px solid #c9a35b;color:#ffe9a8;box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 14px #c9a35b33}
-.social-hub-btn svg{width:25px;height:25px;color:#ffd977}
-.social-hub-btn .minimap-tool-label{font-size:9.5px;letter-spacing:.1em;color:#ffe9a8}
+.social-hub-btn{align-self:flex-end;gap:2px;background:linear-gradient(165deg,#2e5240,#14231c);border:1.5px solid #c9a35b;color:#ffe9a8;box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 14px #c9a35b33;isolation:isolate}
+.social-hub-btn svg{width:21px;height:21px;color:#ffd977}
+.social-hub-btn .minimap-tool-label{font-size:9px;letter-spacing:.1em;color:#ffe9a8}
+/* v321 (owner): a rainbow frame that spins around the Social seat while the pulse keeps
+   breathing. The conic border rides a registered angle; where @property is unknown the
+   hue rotation still cycles the colours, so the frame never sits still. */
+@property --social-spin{syntax:'<angle>';initial-value:0deg;inherits:false}
+.social-hub-btn::before{content:'';position:absolute;inset:-2px;border-radius:10px;background:conic-gradient(from var(--social-spin),#ff004c,#ff8a00,#ffee00,#37ff7a,#00cfff,#7a5cff,#ff004c);z-index:-1;animation:socialSpin 4s linear infinite}
+@keyframes socialSpin{to{--social-spin:360deg;filter:hue-rotate(360deg)}}
 .social-hub-btn:hover{transform:translateY(-1px) scale(1.03)}
 .social-hub-badge{background:#2fbf71;border-color:#161822;color:#07130c;min-width:21px;height:21px;padding:0 5px;font-size:11px;line-height:18px;top:-7px;right:-7px}
 .social-hub-btn.is-empty .social-hub-badge{background:#5b6a60;color:#d8e2da}
@@ -1884,7 +1890,7 @@ body.social-open #minimapTools{display:none!important}
 @keyframes socialHubRing{0%{opacity:.85;transform:scale(1)}70%{opacity:0;transform:scale(1.16)}100%{opacity:0;transform:scale(1.16)}}
 @keyframes socialHubBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
 @keyframes socialHubGlow{0%,100%{box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 10px #57e38940}50%{box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 24px #57e38990}}
-@media (prefers-reduced-motion:reduce){.social-hub-btn::after,.social-hub-btn.is-live,.social-hub-btn.is-live .social-hub-badge{animation:none}}
+@media (prefers-reduced-motion:reduce){.social-hub-btn::before,.social-hub-btn::after,.social-hub-btn.is-live,.social-hub-btn.is-live .social-hub-badge{animation:none}}
 
 /* The studio is a real top-level modal. Its root was missing its fixed overlay rules,
    which made the Compose action add a class without ever bringing a visible dialog up. */
@@ -2212,7 +2218,10 @@ body.social-open #minimapTools{display:none!important}
 }
 
 @media(max-width:980px){
-  #minimapTools{right:188px;top:19px}
+  /* v321: the seats are 82px wide now, and at this band the minimized AUTO COMBAT bar
+     holds the top-right (right:8, 210px). 228px parks the whole column left of it
+     instead of tucking the Mail badge under the bar. */
+  #minimapTools{right:228px;top:19px}
 }
 /* v319/v320: with a third, oversized tool button the column reaches y=171px at this band,
    where the rail otherwise starts at y=142px - drop the rail clear of the Social badge. */

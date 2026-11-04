@@ -296,7 +296,7 @@ that currency. The catalog is deliberately single-currency so the list stays hon
 There is a fifth shop tab, **💝 Donations**, with one entry: `don:all-cosmetics`, *Donor: every
 cosmetic unlocked*. It is a pay-what-you-want item, not a fixed price:
 
-* **Floor / step / ceiling** — `DONATIONS` in `assets/shop-catalog.js`: `floor:2000` ($20.00),
+* **Floor / step / ceiling** — `DONATIONS` in `assets/shop-catalog.js`: `floor:2500` ($25.00, matching the `bnd:complete` Wardrobe bundle),
   `step:500` ($5.00) and `max:500000` ($5,000.00). `donationAmount()` rounds to the step and clamps
   into `[floor, max]`; the **server** runs the same function on `body.amount`, so a hand-made request
   cannot underpay and a fat finger cannot charge a fortune.
