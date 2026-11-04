@@ -787,6 +787,14 @@ test('v325: Grand Atlas opens big, stages ride the map as glass, intel is a coll
  closed.querySelector('.rm-intel-reopen').click();
  assert.ok(!doc.querySelector('#map-panel-atlas').classList.contains('intel-closed'),'edge tab restores the intel drawer');
 });
+test('v326: hero is a true 16:9 stage - the world fills it edge to edge, no side oceans',()=>{
+ const eclipseCss=fs.readFileSync(path.join(root,'assets/ui/eclipse.css'),'utf8');
+ assert.match(eclipseCss,/\.eclipse-atlas-hero\.rm-illustrated-hero\{\s*height:auto;\s*aspect-ratio:16 \/ 9;/,'hero is aspect-locked 16:9, not leftover height');
+ assert.match(eclipseCss,/width:min\(100%,calc\(\(100dvh - 330px\) \* 16 \/ 9\)\);/,'hero width is capped by screen height so short screens narrow instead of squash');
+ assert.match(eclipseCss,/#map-panel-atlas>\.ui-route\{[\s\S]*?grid-template-rows:auto auto;[\s\S]*?overflow-y:auto;/,'route column scrolls rather than squishing the hero');
+ const fill=ev('computeMiniAtlasPan(worldAtlasPlaceOf(0),960,540)');
+ assert.deepEqual([fill.cw,fill.ch,fill.x,fill.y],[960,540,0,0],'at 16:9 the fitted world touches every edge of the hero');
+});
 test('v318: Social Hub destination showcases scenic Fountain Plaza background and Fishing + Hold\'em mini-games',()=>{
  ev('tabs.splice(0,tabs.length,"map");mapSeason="social";renderWin()');
  const dest=doc.querySelector('#wins .social-destination');

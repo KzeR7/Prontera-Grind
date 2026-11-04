@@ -4047,7 +4047,9 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-r
   grid-row:2;
   position:relative;
   display:grid;
-  grid-template-rows:minmax(0,1fr) auto;
+  /* v326: rows size to content - the 16:9 hero is never squished to leftover height;
+     on a short screen this column scrolls instead (that squish was the side bars). */
+  grid-template-rows:auto auto;
   gap:8px;
   min-height:0;
   height:100%;
@@ -4055,7 +4057,8 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-r
   margin:0;
   border:0!important;
   background:none;
-  overflow:hidden;
+  overflow-y:auto;
+  overflow-x:hidden;
 }
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.ui-section-label{
   display:none;
@@ -4376,9 +4379,17 @@ body.rm-atlas-fullscreen #wins .rm-stage-glass{display:none}
   z-index:1;
 }
 @media(min-width:640px){
+  /* v326 (owner screenshot): the hero took leftover height (~940x255) while the map is
+     16:9, so the whole-world fit shrank it into the middle with empty side oceans.
+     Now the hero IS 16:9 - width-driven, capped by screen height - so the canvas
+     fills it edge to edge at true scale, no bars on any side. */
   html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero{
-    height:100%;
+    height:auto;
+    aspect-ratio:16 / 9;
+    width:min(100%,calc((100dvh - 330px) * 16 / 9));
+    justify-self:center;
     min-height:120px;
+    flex:none;
   }
   html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
     position:absolute;

@@ -9851,3 +9851,10 @@ Players need one refresh at least once.
 * **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/eclipse_ui_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
 
 Players need one refresh at least once.
+
+### 2026-11-04 — `haven-v326 grand atlas true-scale map hero`
+
+* **Fixed (`assets/ui/eclipse.css` — Atlas Hero Shape):** in the Grand Atlas the map still rendered small with empty ocean bars on the left and right (owner screenshot from a smaller preview screen). The hero box took whatever height was left in the window (~940x255) while the world art is 16:9, so the whole-world fit shrank it into the middle at ~45% width. The hero is now aspect-locked 16:9 — width-driven, and capped by screen height so short screens narrow it instead of squashing it — and the canvas fills it edge to edge at true scale. The route column scrolls on short screens rather than compressing the map. The illustrated world now renders roughly 3x larger in the panel.
+* **Files:** `assets/ui/eclipse.css`, `tools/tests/eclipse_ui_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+Players need one refresh at least once.
