@@ -1,6 +1,10 @@
 /* Real-time chat, Fountain Plaza scene and multiplayer 2-table Plaza Hold'em. Never changes farming combat. */
 (function(){
 'use strict';
+// v323: a bad merge once shipped index.html with this script loaded twice. Two boots mean
+// two sockets, and the room kicks the first with 4001 ("another tab") - world chat looked
+// moved to another tab in a single tab. Boot once, ever.
+if(window.__pgSocialBooted)return;window.__pgSocialBooted=true;
 const R=PGSocialRules,P=globalThis.PGSocialPoker||null,$id=id=>document.getElementById(id);
 const app={socket:null,user:null,id:null,room:0,rooms:[],plazaFriends:0,wanted:false,channel:'world',messages:[],unread:new Set(),muted:new Set(),friends:new Set(),players:new Map(),retry:0,connected:false,nextConnect:0,blocked:false,scene:null,owner:null,nextChat:0,lastSeen:0,probeAt:0,resume:null,poker:null,pokerTables:null};
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

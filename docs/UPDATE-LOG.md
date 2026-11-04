@@ -9821,6 +9821,13 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Note (operations):** the $25 donation floor from v321 is served by the shop API catalog (`functions/_lib/shop.js` imports `assets/shop-catalog.js` once at process start), so a long-running local dev server keeps quoting $20 until it is restarted — the preview server was restarted with this build.
 * **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/eclipse_ui_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
 
+### 2026-11-04 — `haven-v323 world chat duplicate script fix`
+
+* **Fixed (`index.html`, `assets/social.js` — World Chat Dead: Page Booted the Chat Client Twice):**
+  * `index.html` carried a corrupted duplicated tail after its first `</html>` (the splice even began mid-token at `etInterval(...)`), loading `social.js`, `friends.js`, `shop.js` and the rest of the block a second time. Two social boots opened two sockets for one account; the room kicked the first with `4001`, so the visible chat reported "Chat moved to another tab. Reload to reconnect." and sending died while history still rendered. The file now ends at its first `</html>` and every external script loads exactly once (pinned by a new `eclipse_ui_sim` test).
+  * `assets/social.js` now refuses to boot twice (`window.__pgSocialBooted`), so a future bad merge degrades to a no-op instead of a second socket.
+* **Files:** `index.html`, `assets/social.js`, `tools/tests/eclipse_ui_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
 
 
 
