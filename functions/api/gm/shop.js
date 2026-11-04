@@ -1,5 +1,5 @@
 // GET  /api/gm/shop?id=<userId>                         -> { entitlements:[...], orders:[...], catalog }
-// POST /api/gm/shop { id, action:'grant'|'revoke', sku, note }
+// POST /api/gm/shop { id, action:'grant'|'revoke'|'grant-all', sku, note }
 //
 // Owner tooling for the Cash Shop: see what an account owns and has paid for, hand out a cosmetic
 // (prize, apology, refund-and-keep) or take one back (refund, chargeback). Supplies are not here on
@@ -39,9 +39,23 @@ export const onRequestPost = guard(async ({ request, env }) => {
   const id = userIdFrom(body.id);
   const target = id ? await db.userById(D, id) : null;
   if (!target) return fail('No such player.', 404);
+  const note = String(body.note || '').slice(0, 200);
+  // haven-v325 (owner): "grant all cosmetics at 1 button". One request hands over the whole
+  // cosmetic wardrobe - every SKU the catalog has, minus whatever the account already owns.
+  // INSERT OR IGNORE per SKU keeps it idempotent, and one audit line counts the result.
+  if (body.action === 'grant-all') {
+    const items = CATALOG.items.filter(i => i.kind === 'cosmetic');
+    let granted = 0;
+    for (const i of items) {
+      const r = await D.prepare("INSERT OR IGNORE INTO entitlements(user_id, sku, source, order_id, granted_at) VALUES(?, ?, 'gm', NULL, ?)").bind(id, i.sku, Date.now()).run();
+      if (r.meta && r.meta.changes) granted++;
+    }
+    const skipped = items.length - granted;
+    await db.logEvent(D, user.username, id, 'shop-grant-all', granted + ' granted, ' + skipped + ' already owned' + (note ? ' — ' + note : ''));
+    return json({ ok: true, granted, skipped, total: items.length });
+  }
   const item = findSku(body.sku);
   if (!item || item.kind !== 'cosmetic') return fail('Pick a wardrobe item.', 400);
-  const note = String(body.note || '').slice(0, 200);
   if (body.action === 'grant') {
     const r = await D.prepare("INSERT OR IGNORE INTO entitlements(user_id, sku, source, order_id, granted_at) VALUES(?, ?, 'gm', NULL, ?)").bind(id, item.sku, Date.now()).run();
     await db.logEvent(D, user.username, id, 'shop-grant', item.sku + (r.meta && r.meta.changes ? '' : ' (already owned)') + (note ? ' — ' + note : ''));

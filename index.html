@@ -913,11 +913,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="assets/ui/eclipse.css?v=324">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=321">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=324">
-<link rel="stylesheet" href="assets/social-fishing.css?v=324">
+<link rel="stylesheet" href="assets/social.css?v=325">
+<link rel="stylesheet" href="assets/social-fishing.css?v=325">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-04 haven-v324 mobile map fit and panel scroll fix';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-05 haven-v325 quest chip, gm console on phones, grant all cosmetics';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -7060,7 +7060,7 @@ function gmUnlockAll(){
 function gmToolsPanel(){
  const section=GM_SECTIONS.some(([k])=>k===gmSection)?gmSection:'quick';
  const tab=([k,label])=>`<button type="button" data-a="gmsub" data-v="${k}" class="${section===k?'on':''}" aria-pressed="${section===k}">${label}</button>`;
- const head=`<div class="hd">Player management</div><p><a href="/gm.html" target="_blank" rel="noopener">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Everything on this panel changes <b>your</b> character only, and is saved with it.</small>`;
+ const head=`<div class="hd">Player management</div><p><a href="/gm.html" onclick="openGmConsole();return false">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Everything on this panel changes <b>your</b> character only, and is saved with it.</small>`;
  let body='';
  const bodies={};if(1){bodies.quick=`<div class="hd">One click: a complete test account</div>
    <small>Base Lv 150 with its stat points, every job level maxed, every class unlocked (the fourth jobs included - no Crucible trial), every map and stage unlocked, and a testing fortune: <b>1,000,000,000 Zeny</b>, 100,000 Oridecon and Elunium, 100,000 Echo Shards, 10,000 Refine Protection Scrolls, 1,000 Mythic Protection Scrolls, 100,000 of every Ascension material and Nightmare material, and Stats Ascension rank 50. Nothing is erased - the other sections reset one system at a time.</small>
@@ -13290,10 +13290,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=324"></script>
-<script src="assets/social-poker.js?v=324"></script>
-<script src="assets/social-scene.js?v=324"></script>
-<script src="assets/social-fishing.js?v=324"></script>
-<script src="assets/social.js?v=324"></script>
+<script src="assets/social-rules.js?v=325"></script>
+<script src="assets/social-poker.js?v=325"></script>
+<script src="assets/social-scene.js?v=325"></script>
+<script src="assets/social-fishing.js?v=325"></script>
+<script src="assets/social.js?v=325"></script>
 </body>
 </html>

@@ -535,6 +535,29 @@ await T('GM console: list, grant and revoke cosmetics; a revoked item is refused
   assert.deepStrictEqual(kinds, ['shop-fulfilled', 'shop-grant', 'shop-grant', 'shop-revoke']);
 });
 
+await T('GM console: grant-all hands over every cosmetic at once, skipping what is owned', async () => {
+  const { env, sqlite } = freshEnv({ SHOP_FAKE_CHECKOUT: '1' });
+  const owner = (await api.register(env, { u: 'KzeR', p: 'owner-password-1' })).cookie;   // first account = owner
+  sqlite.prepare("UPDATE users SET gm=2 WHERE username='KzeR'").run();
+  const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
+  const aliceId = sqlite.prepare("SELECT id FROM users WHERE username='Alice'").get().id;
+  await api.checkout(env, c, { sku: 'cos:mouthwear:flower' });
+  assert.strictEqual((await api.gmShopAct(env, c, { id: aliceId, action: 'grant-all' })).status, 403, 'GM only');
+  const total = (await api.gmShop(env, owner, aliceId)).data.catalog.length;
+  let r = await api.gmShopAct(env, owner, { id: aliceId, action: 'grant-all', note: 'wardrobe grant' });
+  assert.strictEqual(r.status, 200);
+  assert.deepStrictEqual({ granted: r.data.granted, skipped: r.data.skipped, total: r.data.total },
+    { granted: total - 1, skipped: 1, total }, 'the one bought cosmetic is skipped, the rest are added');
+  const after = await api.gmShop(env, owner, aliceId);
+  assert.strictEqual(after.data.entitlements.length, total, 'the whole catalog is now owned');
+  r = await api.gmShopAct(env, owner, { id: aliceId, action: 'grant-all' });
+  assert.deepStrictEqual({ granted: r.data.granted, skipped: r.data.skipped }, { granted: 0, skipped: total }, 'running it again grants nothing');
+  assert.strictEqual((await api.gmShopAct(env, owner, { id: 999, action: 'grant-all' })).status, 404);
+  const kinds = sqlite.prepare("SELECT kind, detail FROM events WHERE kind LIKE 'shop-%' ORDER BY id").all();
+  assert.deepStrictEqual(kinds.map(e => e.kind), ['shop-fulfilled', 'shop-grant-all', 'shop-grant-all']);
+  assert.match(kinds[1].detail, /granted, 1 already owned — wardrobe grant/, 'one audit line counts the batch');
+});
+
 // -------------------------------------------------------- before migration ----
 await T('a database without migration 0005 behaves exactly like the build before the shop (safe to deploy first)', async () => {
   const sqlite = new DatabaseSync(':memory:');
@@ -558,6 +581,7 @@ await T('a database without migration 0005 behaves exactly like the build before
   const gm = await api.gmShop(env, owner, 2);
   assert.strictEqual(gm.status, 503); assert.match(gm.data.err, /0005_shop\.sql/, 'the GM console says which step is missing');
   assert.strictEqual((await api.gmShopAct(env, owner, { id: 2, action: 'grant', sku: 'cos:backwear:wings' })).status, 503);
+  assert.strictEqual((await api.gmShopAct(env, owner, { id: 2, action: 'grant-all' })).status, 503, 'the one-button grant too');
   // ... and the moment the migration runs, the worn items are grandfathered and the lock engages
   sqlite.exec(fs.readFileSync(path.join(root, 'migrations', migrationFiles().find(n => n.startsWith('0005'))), 'utf8'));
   const after = await api.catalog(env, c);

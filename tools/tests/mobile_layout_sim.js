@@ -122,6 +122,25 @@ test('the quest chip lives in the right rail, clear of the world chat', () => {
   assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)[\s\S]*#pgQuests\{height:24px;top:calc\(4px \+ 38px \+ 6px\)/, 'landscape keeps the chip off the chat');
 });
 
+test('v325: the GM console button keeps its place on a phone', () => {
+  // mobile.css swept #gmBtn into the header-hide list with the account chrome
+  // (cloudBadge / userBadge / logoutBtn), and eclipse.css hid it again with
+  // display:none!important at <=700px - both overrode the page's own gm-gated inline
+  // display, which left a GM on a phone with no way to open the console ("where did
+  // the GM console in mobile ui went?"). The button is now JS-controlled everywhere;
+  // the phone layer just shrinks it to an icon-only button like the header row.
+  const eclipse = fs.readFileSync(path.join(ROOT, 'assets/ui/eclipse.css'), 'utf8');
+  assert.ok(!/#gmBtn\{display:none/.test(css), 'mobile.css no longer force-hides it on a phone');
+  assert.ok(!/#gmBtn\{display:none!important\}/.test(eclipse), 'and eclipse.css does not override the page with !important either');
+  assert.match(css, /html\.pg-mobile #eclipseHeader #gmBtn\{width:28px/, 'compact like the other header buttons');
+  assert.match(css, /html\.pg-mobile #eclipseHeader #gmBtn::after\{content:'🛠'/, 'icon-only');
+  assert.match(html, /id="gmBtn" onclick="openGmConsole\(\)"/, 'and it opens the console overlay');
+  // The account chrome stays hidden: the header row has no room for it.
+  assert.match(css, /html\.pg-mobile #eclipseHeader #logoutBtn\{display:none!important\}/);
+  assert.match(eclipse, /#eclipseHeader #userBadge,#eclipseHeader #logoutBtn\{display:none!important\}/,
+    'userBadge and logoutBtn keep their desk-side hiding');
+});
+
 test('the player card clears the header and the combat pill clears the player card', () => {
   // #hud is a child of #wrap, so it must add the header height itself...
   assert.match(declOf('html.pg-mobile #hud', 'top'), /var\(--pg-header\)/);
@@ -295,7 +314,11 @@ test('v274: a closed sheet is not left covering the field when a panel opens', (
   // The chip is the sheet's only visible close control, so it has to sit above the scrim.
   const z = n => Number((css.match(new RegExp('html\\.pg-mobile #' + n + '\\{[^}]*z-index:(\\d+)')) || [])[1]);
   assert.ok(z('pgQuests') > z('pgScrim'), 'the chip is above its own scrim');
-  assert.ok(z('pgQuests') > 50, 'and above the panel windows, so it is never buried');
+  // v325: it no longer fights the panel windows (z 50) for the front of the screen -
+  // while a panel is open the chip stands down entirely (owner: "the quest button still
+  // overlapping in front of all the UI"), so z 59 is only about the sheet's scrim.
+  assert.equal(declOf('html.pg-mobile.pg-panel #pgQuests', 'display'), 'none!important',
+    'and it never floats in front of an open panel window again');
   chip.click();
   assert.ok(!rail.classList.contains('pg-open'));
   assert.equal(scrim.hidden, true, 'closing returns the field');
@@ -430,6 +453,23 @@ if (game) {
     ev("tabs.length=0;renderWin()");
     await Promise.resolve(); await Promise.resolve();
     assert.ok(!d.documentElement.classList.contains('pg-panel'), 'closing the panel brings the chat back');
+  });
+
+  testAsync('v325: an open panel stands the❖ Quests chip down too', async () => {
+    // The chip is z 59 so it can close its own sheet above the scrim (v274/v287), which
+    // left it floating over every panel window's title bar and close button. While a
+    // panel owns the screen the chip hides; the dock's More button reaches the sheet.
+    assert.equal(declOf('html.pg-mobile.pg-panel #pgQuests', 'display'), 'none!important');
+    ev("S=fresh();S.auto=false;tabs.length=0;tabs.push('map');renderWin()");
+    await Promise.resolve(); await Promise.resolve();
+    assert.ok(d.documentElement.classList.contains('pg-panel'), 'the panel is open');
+    const chip = d.getElementById('pgQuests');
+    assert.ok(chip, 'the chip is still in the page, only stood down');
+    assert.match(css, /html\.pg-mobile\.pg-panel #pgQuests\{display:none!important\}/,
+      'the stylesheet hides it while pg-panel is on');
+    ev("tabs.length=0;renderWin()");
+    await Promise.resolve(); await Promise.resolve();
+    assert.ok(!d.documentElement.classList.contains('pg-panel'), 'closing the panel brings the chip back');
   });
 
   testAsync('the dock More button opens the destinations list through the rail', async () => {
