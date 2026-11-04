@@ -732,17 +732,19 @@ test('v319: Social Hub button sits third in minimapTools with a population badge
  assert.equal(badge.hidden,true,'the badge starts hidden: an unknown population never invents a count');
  const eclipseCss=fs.readFileSync(path.join(root,'assets/ui/eclipse.css'),'utf8');
  assert.match(eclipseCss,/@keyframes socialHubRing/);
- assert.match(eclipseCss,/prefers-reduced-motion:reduce\)\{\.social-hub-btn::before,\.social-hub-btn::after/,'reduced motion stills the rainbow spin and the pulse');
+ assert.match(eclipseCss,/prefers-reduced-motion:reduce\)\{\.social-hub-btn::after/,'reduced motion stills the pulse');
  assert.match(eclipseCss,/\.social-hub-btn\.has-friends \.social-hub-badge\{background:var\(--gold\)/,'a friend inside turns the badge gold');
  assert.match(eclipseCss,/@media\(min-width:701px\) and \(max-width:980px\)\{\s*#sideRail\{top:182px/,'the 701-980px rail drops clear of the taller tool column');
  // v320 (owner: too small to notice): the seat is oversized and its attract pulse never sleeps.
  // v321 (owner): a little shorter, Mail/Daily match the footprint, rainbow frame spins.
  assert.match(eclipseCss,/\.minimap-tool-btn\{position:relative;width:82px;height:44px/,'all three seats share the wide, shorter 82x44 footprint');
- assert.match(eclipseCss,/\.social-hub-btn::before\{[^}]*conic-gradient\(from var\(--social-spin\),#ff004c/,'a rainbow conic frame rings the Social seat');
- assert.match(eclipseCss,/@keyframes socialSpin\{to\{--social-spin:360deg/,'and the rainbow frame spins');
- assert.match(eclipseCss,/\.social-hub-btn::after\{[^}]*animation:socialHubRing 3s[^}]*infinite/,'a slow gold attract ring breathes even on an empty plaza');
+ // v322 (owner): the rainbow is the pulsing frame itself, not a rainbow button body.
+ assert.match(eclipseCss,/\.social-hub-btn::after\{[^}]*background:conic-gradient\(from 0deg,#ff004c,#ff8a00,#ffee00,#37ff7a,#00cfff,#7a5cff,#ff004c\)/,'the expanding pulse ring carries the rainbow');
+ assert.match(eclipseCss,/\.social-hub-btn::after\{[^}]*mask-composite:exclude/,'clipped to the ring, so the button keeps its gold border');
+ assert.match(eclipseCss,/@keyframes socialHueSpin\{to\{filter:hue-rotate\(360deg\)\}\}/,'and the rainbow slowly cycles while it pulses');
+ assert.match(eclipseCss,/\.social-hub-btn::after\{[^}]*animation:socialHubRing 3s[^}]*infinite/,'the attract ring breathes even on an empty plaza');
  assert.match(eclipseCss,/\.social-hub-btn\.is-live\{animation:socialHubGlow 2s/,'a busy plaza adds a green glow pulse on top');
- assert.match(eclipseCss,/\.social-hub-btn\.is-live::after\{border-color:#57e389;animation-duration:2s/);
+ assert.match(eclipseCss,/\.social-hub-btn\.is-live::after\{animation-duration:2s,5s/);
  assert.match(eclipseCss,/#minimapTools\{[^}]*align-items:flex-end/,'the wider seat grows leftwards, Mail/Daily keep their spot');
 });
 test('v318: Social Hub destination showcases scenic Fountain Plaza background and Fishing + Hold\'em mini-games',()=>{

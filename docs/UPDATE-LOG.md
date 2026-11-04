@@ -9814,6 +9814,13 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   * The donation card and tab intro now say the quiet part out loud: Horizon Haven is built by a solo developer, and donations go toward the hosting and application fees that keep the server running.
 * **Files:** `index.html`, `assets/shop-catalog.js`, `assets/shop.js`, `assets/ui/{eclipse,mobile}.css`, `tools/tests/{eclipse_ui_sim,mobile_layout_sim,shop_sim,shop_api_sim}.js`, `docs/MONETIZATION-SETUP.md`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
 
+### 2026-11-04 — `haven-v322 rainbow pulse frame`
+
+* **Changed (`assets/ui/eclipse.css` — Rainbow Moves to the Pulsing Frame):**
+  * Removed the spinning rainbow border from the Social button body (the seat keeps its gold border and green gradient); the expanding pulse ring (`::after`) now carries the rainbow — a conic gradient clipped to the ring via `mask-composite:exclude`, breathing on the existing 3s/2s/1.6s cadence while a 5s `socialHueSpin` hue rotation cycles its colours. Live glow and gold friend badge are unchanged, and `prefers-reduced-motion` stills the lot.
+* **Note (operations):** the $25 donation floor from v321 is served by the shop API catalog (`functions/_lib/shop.js` imports `assets/shop-catalog.js` once at process start), so a long-running local dev server keeps quoting $20 until it is restarted — the preview server was restarted with this build.
+* **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/eclipse_ui_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
 
 
 
