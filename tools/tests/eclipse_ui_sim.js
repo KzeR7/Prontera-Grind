@@ -747,6 +747,12 @@ test('v319: Social Hub button sits third in minimapTools with a population badge
  assert.match(eclipseCss,/\.social-hub-btn\.is-live::after\{animation-duration:2s,5s/);
  assert.match(eclipseCss,/#minimapTools\{[^}]*align-items:flex-end/,'the wider seat grows leftwards, Mail/Daily keep their spot');
 });
+test('v323: every external script loads exactly once (a duplicated tail killed world chat)',()=>{
+ const srcs=[...doc.querySelectorAll('script[src]')].map(s=>s.getAttribute('src'));
+ const dup=[...new Set(srcs.filter((s,i)=>srcs.indexOf(s)!==i))];
+ assert.deepEqual(dup,[],'duplicate script loads create a second chat socket: '+dup.join(', '));
+ assert.equal(srcs.filter(s=>/assets\/social\.js\?/.test(s)).length,1,'one social.js boot, one chat socket');
+});
 test('v318: Social Hub destination showcases scenic Fountain Plaza background and Fishing + Hold\'em mini-games',()=>{
  ev('tabs.splice(0,tabs.length,"map");mapSeason="social";renderWin()');
  const dest=doc.querySelector('#wins .social-destination');
