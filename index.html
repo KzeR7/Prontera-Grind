@@ -912,12 +912,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=324">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=324">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=325">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=325">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=324">
-<link rel="stylesheet" href="assets/social-fishing.css?v=324">
+<link rel="stylesheet" href="assets/social.css?v=325">
+<link rel="stylesheet" href="assets/social-fishing.css?v=325">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-04 haven-v324 whole world atlas fit and mobile polish';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-04 haven-v325 grand atlas immersive map window';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6811,6 +6811,9 @@ const WORLD_ATLAS_CLOUDS=[
   {id:'cloud-i',x:74,y:28,size:10,puffs:2}
 ];
 let worldAtlasFullscreen=false,worldAtlasDrawerHidden=false;
+// v325 Grand Atlas: Field Intelligence is a collapsible drawer beside the map, not a
+// permanent column - closing it hands the whole panel width back to the world.
+let worldAtlasIntelOpen=true;
 const WORLD_ATLAS_MINI_ZOOM=1;
 const worldAtlasPan={x:0,y:0,zoom:WORLD_ATLAS_MINI_ZOOM,cw:1600,ch:900};
 function worldAtlasPlaceOf(mi){return WORLD_ATLAS_PLACES.find(p=>p.maps.includes(+mi))||WORLD_ATLAS_PLACES[0]}
@@ -7617,7 +7620,7 @@ function arrangePanel(k,root){
     put(routeTarget,fields);
     if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')],nodes=[...fields.querySelectorAll('.map-node')],grid=fields.querySelector('.lvgrid'),advRow=fields.querySelector('.row');
       if(mapM<10){const head=buildIllustratedStageHead(mapM,make);if(advRow){const lbl=advRow.querySelector('label');if(lbl){lbl.title='Auto-advance through stages and maps — turn off to farm where you stand';if(lbl.lastChild&&lbl.lastChild.nodeType===3)lbl.lastChild.textContent=' Auto-advance'}put(head,advRow)}fields.prepend(head)}
-      if(grid){const normal=make('div','eclipse-stages'),nightmare=make('div','eclipse-stages eclipse-nightmare');nodes.forEach((node,i)=>{node.querySelector('b').textContent=i<10?(i===normalStages(mapM)-1?(mapM<10?'MVP':'♛'):String(i+1).padStart(2,'0')):'NM '+(i-9);node.setAttribute('aria-label',node.title);node.setAttribute('aria-pressed',String(mapL===i+1));put(i<10?normal:nightmare,node)});grid.replaceChildren(normal,nightmare)}
+      if(grid){const normal=make('div','eclipse-stages'),nightmare=make('div','eclipse-stages eclipse-nightmare');nodes.forEach((node,i)=>{node.querySelector('b').textContent=i<10?(i===normalStages(mapM)-1?(mapM<10?'MVP':'♛'):String(i+1).padStart(2,'0')):'NM '+(i-9);node.setAttribute('aria-label',node.title);node.setAttribute('aria-pressed',String(mapL===i+1));put(i<10?normal:nightmare,node)});grid.replaceChildren(normal,nightmare);if(mapM<10){const glass=make('div','rm-stage-glass');put(glass,normal,nightmare);hero.append(glass)}}
       const go=fields.querySelector('.go');if(go){go.textContent=S.mp===mapM&&S.lvl===mapL?'You are here · '+MAPS[mapM].n:'Travel to '+MAPS[mapM].n+' · '+(mapL>10?'NM '+(mapL-10):'Stage '+String(mapL).padStart(2,'0'))+' →';put(fields,put(make('div','ui-primary-action'),go))}
       put(fields,fold('Stage rules & requirements',notes,'stage-rules'));
     }
@@ -7642,7 +7645,16 @@ function arrangePanel(k,root){
         }
       }
     }
-    intel.dataset.panelScroll='field-intelligence';put(intel,drops);body.replaceChildren(destinations,route,intel);
+    intel.dataset.panelScroll='field-intelligence';put(intel,drops);
+    // v325 Grand Atlas: intel is a collapsible drawer. The toggle lives in its own
+    // header; when closed, a slim edge tab on the route brings it back.
+    if(body.id==='map-panel-atlas'){
+      body.classList.toggle('intel-closed',!worldAtlasIntelOpen);
+      const intelHead=intel.querySelector('.ui-section-label');
+      if(intelHead){const tgl=make('button','rm-intel-toggle','Hide »');tgl.type='button';tgl.dataset.a='atlasintel';tgl.setAttribute('aria-label','Hide field intelligence');tgl.setAttribute('aria-expanded',String(worldAtlasIntelOpen));put(intelHead,tgl)}
+      if(!worldAtlasIntelOpen){const tab=make('button','rm-intel-reopen','Field Intel');tab.type='button';tab.dataset.a='atlasintel';tab.setAttribute('aria-label','Show field intelligence');tab.setAttribute('aria-expanded','false');put(route,tab)}
+    }
+    body.replaceChildren(destinations,route,intel);
   }else if(mode==='stats'){
     const slots=direct().filter(e=>e.classList.contains('slot')),attrs=slots.filter(e=>e.querySelector('[data-a="stat"]')),combat=slots.find(e=>!e.querySelector('[data-a="stat"]')),reset=q('[data-a="rstat"]');
     const attributes=section('Allocate attributes','ui-attribute-section');put(attributes,put(make('div','ui-attributes'),attrs));
@@ -7982,13 +7994,13 @@ function renderWin(anchor){
     if(!win){win=document.createElement('div');win.dataset.win=k;win.innerHTML='<div class="title"><span></span><span class="ui-window-tools"><small class="eclipse-farming">● Farming continues</small><button data-ui-expand></button><button data-x>&#10005;</button></span></div><div class="body wbody"></div><footer class="eclipse-window-footer"><span class="eclipse-save-status"></span><span class="eclipse-footer-message">Select an item to inspect or manage it.</span><kbd>ESC</kbd></footer>'}
     const workspaceEquip=k==='equip'&&['cardsWork','autosell','reforge'].includes(sub.equip);
     const fullAtlas=k==='map'&&worldAtlasFullscreen&&mapSeason==='atlas';
-    win.className='win wp'+(k==='map'?' wide':'')+(expandedPanels.has(k)?' ui-expanded':'')+(workspaceEquip?' eclipse-equipment-workspace-window':'')+(fullAtlas?' rm-fullscreen-mode':'')+(fullAtlas&&worldAtlasDrawerHidden?' rm-drawer-hidden':'');
+    win.className='win wp'+(k==='map'?' wide':'')+(expandedPanels.has(k)?' ui-expanded':'')+(workspaceEquip?' eclipse-equipment-workspace-window':'')+(fullAtlas?' rm-fullscreen-mode':'')+(fullAtlas&&worldAtlasDrawerHidden?' rm-drawer-hidden':'')+(k==='map'&&mapSeason==='atlas'&&!fullAtlas?' grand-atlas':'');
     const name=TABS[k][1],expand=win.querySelector('[data-ui-expand]'),close=win.querySelector('[data-x]');
     win.hidden=!!focused&&focused!==k;
     close.innerHTML=uiIcon('close');
     expand.dataset.uiExpand=k;expand.innerHTML=uiIcon(expandedPanels.has(k)?'compact':'expand');expand.setAttribute('aria-label',(expandedPanels.has(k)?'Restore shared layout for ':'Focus ')+name);expand.setAttribute('aria-pressed',String(expandedPanels.has(k)));expand.title=expandedPanels.has(k)?'Restore all open panels':'Focus this panel using the available screen space';
     close.dataset.x=k;close.setAttribute('aria-label','Close '+name);
-    const body=win.querySelector('.wbody'),source=V[k](),viewKey=k==='map'?[worldAtlasFullscreen?1:0,worldAtlasDrawerHidden?1:0].join(':'):k==='equip'&&['refine','reforge'].includes(sub.equip)?selE+':'+JSON.stringify(eclipseRefineOutcome&&eclipseRefineOutcome.owner===S?{id:eclipseRefineOutcome.id,rank:eclipseRefineOutcome.rank,from:eclipseRefineOutcome.previousRank,success:eclipseRefineOutcome.succeeded}:null):k==='job'?String(eclipseJobsBrowse):k==='pet'?sub.pet:k==='market'&&sub.market!=='echo'?[S.ore.ori,S.ore.elu,S.refineScrolls,S.shards].join(':'):'';
+    const body=win.querySelector('.wbody'),source=V[k](),viewKey=k==='map'?[worldAtlasFullscreen?1:0,worldAtlasDrawerHidden?1:0,worldAtlasIntelOpen?1:0].join(':'):k==='equip'&&['refine','reforge'].includes(sub.equip)?selE+':'+JSON.stringify(eclipseRefineOutcome&&eclipseRefineOutcome.owner===S?{id:eclipseRefineOutcome.id,rank:eclipseRefineOutcome.rank,from:eclipseRefineOutcome.previousRank,success:eclipseRefineOutcome.succeeded}:null):k==='job'?String(eclipseJobsBrowse):k==='pet'?sub.pet:k==='market'&&sub.market!=='echo'?[S.ore.ori,S.ore.elu,S.refineScrolls,S.shards].join(':'):'';
     if((body._panelSource!==source||body._panelViewKey!==viewKey)&&!body.querySelector('.autosell-editor input[type=number]:focus,.autosell-editor textarea:focus,[data-autosell-workspace] [data-sell-min]:focus,[data-autosell-workspace] [data-autosell-affix-stat]:focus,.ore-quantity:focus')){
       const fresh=document.createElement('div');fresh.className=body.className;fresh.innerHTML=source;arrangePanel(k,fresh);polishIcons(fresh);
       eclipsePatch(body,fresh);body.className=fresh.className;body.dataset.layout=fresh.dataset.layout;body.dataset.view=fresh.dataset.view;
@@ -8647,6 +8659,7 @@ const ACT={
   mapseason:v=>{if(!['atlas','ascension','echo','social'].includes(v)||!tabs.includes('map'))return;if(v!=='atlas'){worldAtlasFullscreen=false;worldAtlasDrawerHidden=false;}mapSeason=v;if(!['echo','social'].includes(v)&&(mapM>=10)!==(v==='ascension')){mapM=v==='ascension'?10:0;mapL=1;}renderWin();$('wins').querySelector('.map-season-tabs [aria-selected="true"]')?.focus();},
   selm:v=>{if(!Number.isInteger(+v)||+v<0||+v>=MAPS.length)return;mapM=+v;mapL=Math.min(mapL,mapM>=10?5:Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on');if(mapM<10&&worldAtlasFullscreen&&worldAtlasPan.zoom>1.02)syncIllustratedAtlas(worldAtlasPlaceOf(mapM))},
   atlasplace:id=>{const p=WORLD_ATLAS_PLACES.find(x=>x.id===id);if(!p)return;const nextMap=p.maps.includes(mapM)?mapM:(p.maps.includes(S.mp)?S.mp:p.maps[0]);mapM=nextMap;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on');if(worldAtlasFullscreen&&worldAtlasPan.zoom>1.02)syncIllustratedAtlas(p)},
+  atlasintel:()=>{worldAtlasIntelOpen=!worldAtlasIntelOpen;renderWin()},
   atlassub:v=>{if(!Number.isInteger(+v)||+v<0||+v>=10)return;mapM=+v;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on')},
   atlaszoom:v=>{if(!worldAtlasFullscreen)return;if(v==='reset')zoomIllustratedAtlas('reset');else if(v==='in'||v==='out')zoomIllustratedAtlas(v==='in'?1.28:1/1.28)},
   atlasfull:()=>setWorldAtlasFullscreen(!worldAtlasFullscreen),
@@ -13289,10 +13302,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=324"></script>
-<script src="assets/social-poker.js?v=324"></script>
-<script src="assets/social-scene.js?v=324"></script>
-<script src="assets/social-fishing.js?v=324"></script>
-<script src="assets/social.js?v=324"></script>
+<script src="assets/social-rules.js?v=325"></script>
+<script src="assets/social-poker.js?v=325"></script>
+<script src="assets/social-scene.js?v=325"></script>
+<script src="assets/social-fishing.js?v=325"></script>
+<script src="assets/social.js?v=325"></script>
 </body>
 </html>

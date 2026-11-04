@@ -9842,3 +9842,12 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Files:** `index.html`, `assets/ui/eclipse.css`, `assets/ui/mobile.css`, `tools/tests/eclipse_ui_sim.js`, `tools/tests/mobile_layout_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
 
 Players need one refresh at least once.
+
+### 2026-11-04 — `haven-v325 grand atlas immersive map window`
+
+* **Changed (`index.html`, `assets/ui/eclipse.css` — Grand Atlas):** the World Atlas tab now opens BIG (owner: the whole-world fit at panel size "lost the point of showing the world map"). In Atlas season the map window claims up to 1180px and extra height, so the illustrated world renders at a size where its labels, pins and painted regions actually read.
+* **Changed (Layout):** the old 10-column master grid became map-first: destinations stay as the compact top strip, the route column takes every free pixel, and Field Intelligence is a fixed 308px drawer with a Hide toggle in its header — closing it hands the width back to the world, and a slim "Field Intel" edge tab brings it back.
+* **Changed (Stage Path):** the stage strip (01–10 + Nightmare) now rides the map's bottom edge as a frosted-glass bar instead of a separate card under it, so the hero gains that height; the stage head, auto-advance and Travel stay in the slim card below. On phones the glass bar drops into flow under the map so it never buries the southern pins. Full Map is unchanged.
+* **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/eclipse_ui_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+Players need one refresh at least once.

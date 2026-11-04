@@ -678,8 +678,8 @@ test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar
  assert.deepEqual(s10Mobs,['Mastering','Peco Peco','Poring'],'Prontera Stage 10 MVP shows Mastering plus both escort species');
  assert.ok(win.querySelector('.ui-field-guide .rm-boss-loot-priority'),'Boss stage hoists MVP drops into priority loot card directly beneath monster roster');
  assert.match(eclipseCss,/\.rm-subzones\.rm-subzones-overlay\{[\s\S]*?bottom:auto;/,'sub-zone overlay resets bottom:auto so .eclipse-atlas-hero>div never stretches it');
- assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-route\{[\s\S]*?grid-column:1 \/ 7;/,'left map/stage column aligns cleanly across columns 1..6 of the 10-column grid');
- assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-field-guide\{[\s\S]*?grid-column:7 \/ -1;/,'right Field Intelligence column aligns cleanly across columns 7..10 of the 10-column grid');
+ assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-route\{[\s\S]*?grid-column:1;/,'v325: route column takes every free pixel beside the intel drawer');
+ assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-field-guide\{[\s\S]*?grid-column:2;/,'v325: Field Intelligence is the fixed drawer column');
  // v324: the whole world stays framed - selecting a distant region moves the
  // highlight, never the camera (Comodo at 23%/79% must stay on the map):
  win.querySelector('[data-a="selm"][data-v="2"]').click();
@@ -765,6 +765,27 @@ test('v324: whole-world hero letterbox and mobile atlas polish are in the styles
  assert.match(eclipseCss,/html\.pg-mobile[^\n]*#map-panel-atlas[^\n]*\.mapcard b\{\s*font-size:8\.5px;\s*white-space:nowrap;/,'phone destinations stay on one line');
  assert.match(eclipseCss,/html\.pg-mobile[^\n]*\.rm-optb-head>\.row>small\{\s*display:none;/,'the auto-advance hint sentence is hidden on phones instead of clipping mid-word');
  assert.match(mobileCss,/html\.pg-mobile\.pg-panel #pgQuests\{display:none!important\}/,'the Quests chip steps aside while a panel is open');
+});
+test('v325: Grand Atlas opens big, stages ride the map as glass, intel is a collapsible drawer',()=>{
+ const eclipseCss=fs.readFileSync(path.join(root,'assets/ui/eclipse.css'),'utf8');
+ assert.match(eclipseCss,/#wins>\.wp\[data-win="map"\]\.grand-atlas\{[\s\S]*?flex:1 1 1180px;/,'the map window claims 1180px in atlas season');
+ assert.match(eclipseCss,/#map-panel-atlas\.ui-content\{[\s\S]*?grid-template-columns:minmax\(0,1fr\) 308px;/,'route takes free width beside a fixed 308px intel drawer');
+ assert.match(eclipseCss,/#map-panel-atlas\.intel-closed\{[\s\S]*?grid-template-columns:minmax\(0,1fr\) 0px;/,'closing the drawer returns its width to the world');
+ assert.match(eclipseCss,/#wins \.rm-stage-glass\{[\s\S]*?position:absolute;[\s\S]*?backdrop-filter:blur\(7px\);/,'stage path is a glass bar on the map');
+ ev("worldAtlasFullscreen=false;worldAtlasIntelOpen=true;if(!tabs.includes('map'))tabs.push('map');mapSeason='atlas';mapM=0;renderWin()");
+ const winEl=doc.querySelector('[data-win="map"]');
+ assert.ok(winEl.classList.contains('grand-atlas'),'map window carries the grand-atlas class in atlas season');
+ const panel=doc.querySelector('#map-panel-atlas');
+ const glass=panel.querySelector('.rm-illustrated-hero .rm-stage-glass');
+ assert.ok(glass,'stage glass bar renders inside the hero');
+ assert.equal(glass.querySelectorAll('.eclipse-stages:not(.eclipse-nightmare) .map-node').length,10,'all 10 stage nodes ride the glass bar');
+ assert.ok(!panel.classList.contains('intel-closed'),'intel drawer starts open');
+ panel.querySelector('[data-a="atlasintel"]').click();
+ const closed=doc.querySelector('#map-panel-atlas');
+ assert.ok(closed.classList.contains('intel-closed'),'Hide collapses the intel drawer');
+ assert.ok(closed.querySelector('.rm-intel-reopen'),'a slim edge tab offers to bring intel back');
+ closed.querySelector('.rm-intel-reopen').click();
+ assert.ok(!doc.querySelector('#map-panel-atlas').classList.contains('intel-closed'),'edge tab restores the intel drawer');
 });
 test('v318: Social Hub destination showcases scenic Fountain Plaza background and Fishing + Hold\'em mini-games',()=>{
  ev('tabs.splice(0,tabs.length,"map");mapSeason="social";renderWin()');

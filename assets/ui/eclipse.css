@@ -3790,6 +3790,14 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
   html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
     max-height:230px;
   }
+  /* v325: on a phone the glass bar leaves the map and sits in flow right under it -
+     overlaying a 230px hero would bury the southern pins. */
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas .rm-stage-glass{
+    position:static;
+    margin:0 6px 6px;
+    background:#0d131bf2;
+    backdrop-filter:none;
+  }
   html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.rm-route-drawer{
     padding:9px 10px;
     border-radius:8px;
@@ -3889,6 +3897,19 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"]>.e
   padding:0 14px;
 }
 
+/* v325 Grand Atlas (owner): the map tab opens BIG - near the full play area - so the
+   whole-world fit reads as an illustrated world again instead of a thumbnail. */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"].grand-atlas{
+  flex:1 1 1180px;
+  width:1180px;
+  max-width:100%;
+}
+@media(min-width:701px){
+  html:not(.pg-mobile) #wins:has(>.wp[data-win="map"].grand-atlas){
+    height:min(800px,calc(100% - 168px));
+  }
+}
+
 /* Option B Desktop & Tablet World Atlas: Unified 10-Column Master Grid */
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins .ui-panel[data-layout=map]:has(>#map-panel-atlas)>.ui-hero{
   display:none;
@@ -3915,7 +3936,8 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins .ui-panel[data-layout=
 }
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content{
   display:grid;
-  grid-template-columns:repeat(10,minmax(0,1fr));
+  /* v325 Grand Atlas: route takes every free pixel, intel is a fixed 308px drawer. */
+  grid-template-columns:minmax(0,1fr) 308px;
   grid-template-rows:auto minmax(0,1fr);
   gap:8px;
   padding:8px 14px 10px;
@@ -4021,8 +4043,9 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-d
 
 /* Row 2, Cols 1..6 (Exact Alignment Under Maps 01..06): Map Card + Stage/Travel Card */
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route{
-  grid-column:1 / 7;
+  grid-column:1;
   grid-row:2;
+  position:relative;
   display:grid;
   grid-template-rows:minmax(0,1fr) auto;
   gap:8px;
@@ -4239,7 +4262,7 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-r
 
 /* Row 2, Cols 7..10 (Exact Alignment Under Maps 07..10): Full-Height 03 / Field Intelligence */
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-field-guide{
-  grid-column:7 / -1;
+  grid-column:2;
   grid-row:2;
   min-height:0;
   height:100%;
@@ -4252,6 +4275,70 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-f
   border:1px solid #243040;
   border-radius:8px;
 }
+
+/* v325 Grand Atlas: drawer shut - the world takes the drawer's width back. */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.intel-closed{
+  grid-template-columns:minmax(0,1fr) 0px;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.intel-closed>.ui-field-guide{
+  display:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-field-guide>.ui-section-label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+#wins .rm-intel-toggle{
+  margin-left:auto;
+  flex:none;
+  padding:3px 8px;
+  border-radius:5px;
+  background:#16202c;
+  border:1px solid #2b3c50;
+  color:#9fb4c8;
+  font:600 9.5px/1.2 var(--e-font);
+  cursor:pointer;
+}
+#wins .rm-intel-toggle:hover{color:#f5d68e;border-color:#dfb96e}
+#wins .rm-intel-reopen{
+  position:absolute;
+  right:0;
+  top:50%;
+  transform:translateY(-50%);
+  writing-mode:vertical-rl;
+  z-index:7;
+  padding:10px 4px;
+  border-radius:6px 0 0 6px;
+  background:rgba(10,16,24,.88);
+  border:1px solid rgba(223,185,110,.45);
+  border-right:0;
+  color:#f5d68e;
+  font:700 9.5px/1.2 var(--e-font);
+  letter-spacing:.08em;
+  cursor:pointer;
+}
+#wins .rm-intel-reopen:hover{background:rgba(42,34,21,.92)}
+
+/* v325: stage path rides the map's bottom edge as a glass bar (travel + stage head
+   stay in the slim drawer card below, so the hero gains their old height). */
+#wins .rm-stage-glass{
+  position:absolute;
+  left:10px;
+  right:10px;
+  bottom:10px;
+  z-index:6;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  padding:7px 8px;
+  background:rgba(7,12,19,.74);
+  border:1px solid rgba(223,185,110,.38);
+  border-radius:8px;
+  backdrop-filter:blur(7px);
+  box-shadow:0 8px 22px rgba(0,0,0,.42);
+}
+#wins .rm-stage-glass>.eclipse-nightmare:empty{display:none}
+body.rm-atlas-fullscreen #wins .rm-stage-glass{display:none}
 
 #wins .eclipse-atlas-hero.rm-illustrated-hero{
   position:relative;
