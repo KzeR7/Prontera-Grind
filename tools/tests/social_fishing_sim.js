@@ -887,7 +887,10 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  // The module can be told to reel in by that dialog.
  assert(/stop:message=>stopFishing\(message\)/.test(mod),'the fishing module exposes stop()');
  assert(mod.includes("typeof opts.announce==='function'"),'a mega/secret catch fires the announce hook');
- assert(/\(sp\.mega\|\|sp\.rarity==='secret'\)/.test(mod),'only mega and secret species are announced');
+ // v324: the hook also fires for a mythical/secret catch heavy enough for a World line; the rule
+ // still announces every mega and secret catch, so it is strictly wider, never narrower.
+ assert(/sp\.mega\|\|sp\.rarity==='secret'\|\|worldCatch/.test(mod),'mega and secret species stay announced, heavy mythical catches join them');
+ assert(/FISH_WORLD_MIN_KG\|\|800/.test(mod),'the World-catch weight threshold comes from the shared announcer config');
  // Local-chat announcements: the worker relays, the plaza renders a system line.
  assert(room.includes("m.type==='fishbrag'"),'the room accepts a fish announcement');
  assert(room.includes("type:'fishnote'"),'the room relays it as a fishnote');

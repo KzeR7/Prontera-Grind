@@ -295,6 +295,10 @@ checks (`social_poker_sim.js`, `social_table_chat_sim.js`, `social_ledger_sim.js
 v225 the validated look also carries `lv` (field level aura) and `speed` (field run
 speed); `PGSocialRules.walkSpeed` clamps and advances every player with it, and the
 plaza reuses `buildLevelAura`/`LEVEL_AURAS` for the Base 50/99/150 sigil.
+Since v324 the DO also schedules World-chat announcements (tips, community counts,
+spotlights, welcomes, milestones) from the shared owner-editable copy in
+`assets/social-announcements.js`; see [the announcer section](SOCIAL-HUB.md#the-world-chat-announcer-haven-v324)
+and `social_announce_sim.js`.
 
 Recovery (v263): the write pause is a separate Worker, `workers/gate/`, holding one
 Durable Object with no D1 binding. A D1 Time Travel restore overwrites the database

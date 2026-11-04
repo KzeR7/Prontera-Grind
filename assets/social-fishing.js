@@ -8,6 +8,8 @@
    visuals live in assets/social-scene.js; farming state is never touched. */
 (function(root,factory){const api=factory(root);if(typeof module==='object'&&module.exports)module.exports=api;root.PGSocialFishing=api})(globalThis,root=>{
 'use strict';
+// v324: World-catch threshold comes from the shared announcer config (social.js relays the brag).
+const ANN=globalThis.PGSocialAnnouncements||{};
 // ------------------------------- pure core (covered by tools/tests/social_fishing_sim.js) --
 // v304/v305 (owner): "the last two rarities should be hard - about two weeks to complete the index -
 // and it should be random and luck". The old table was .58/.24/.12/.045/.012/.003, which fed a Secret
@@ -1571,9 +1573,15 @@ function finishReel(kind){
   }
   if(!entry)status('Bag full — the catch could not be kept!');
   // v297: a pond monster or a secret find goes to the room's Local chat. Fired from the catch
-  // itself (not the Show off button) so auto-fishing announces too.
-  if(sp&&typeof opts.announce==='function'&&(sp.mega||sp.rarity==='secret')){
-   try{opts.announce({sp:sp.id,name:sp.name,w:ui.result.entry.w,kind:sp.rarity==='secret'?'secret':'mega'})}catch{}
+  // itself (not the Show off button) so auto-fishing announces too. v324: a mythical or secret
+  // catch of World weight is relayed to World chat as well - social.js turns it into a `fishworld`
+  // brag - so the hook fires for those too, with a null kind so a plain mythical never masquerades
+  // as a pond monster in Local chat.
+  if(sp){
+   const worldCatch=(sp.rarity==='mythical'||sp.rarity==='secret')&&ui.result.entry.w>=(ANN.FISH_WORLD_MIN_KG||800);
+   if(typeof opts.announce==='function'&&(sp.mega||sp.rarity==='secret'||worldCatch)){
+    try{opts.announce({sp:sp.id,name:sp.name,w:ui.result.entry.w,kind:sp.rarity==='secret'?'secret':sp.mega?'mega':null,rarity:sp.rarity})}catch{}
+   }
   }
  }else{
   state().stats.escapes++;persist();

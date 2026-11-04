@@ -49,6 +49,7 @@ const start=()=>new Miniflare({
   {type:'ESModule',path:'workers/social/room.mjs'},
   {type:'ESModule',path:'assets/social-rules.js'},
   {type:'ESModule',path:'assets/social-poker.js'},
+  {type:'ESModule',path:'assets/social-announcements.js'},
  ],
  modulesRoot:'.',compatibilityDate:useDate,
  durableObjects:{SOCIAL:{className:'Social',useSQLite:true}},durableObjectsPersist:persist,

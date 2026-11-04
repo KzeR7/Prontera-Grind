@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=321">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=323">
-<link rel="stylesheet" href="assets/social-fishing.css?v=323">
+<link rel="stylesheet" href="assets/social.css?v=324">
+<link rel="stylesheet" href="assets/social-fishing.css?v=324">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-04 haven-v323 world chat duplicate script fix';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-04 haven-v324 world chat announcer';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2549,10 +2549,11 @@ function trialEnter(mode){
 function trialFinish(){
   if(!TRIAL.on)return;
   const dmg=Math.max(0,(S.dmg||0)-TRIAL.dmg0),dps=dmg/TRIAL_SECS,st=trialState();
-  let shards=0,best=false;const chests=[];
+  let shards=0,best=false;const chests=[],prevBest=st.best;
   if(TRIAL.mode==='ranked'){
     shards=trialShardsFor(dps);
     if(dps>st.best){best=true;st.best=dps}   // v77.2: the record moves, the payout does not
+    if(best&&typeof socialEchoBrag==='function')socialEchoBrag(prevBest,dps);   // haven-v324: a new record is World-chat news
     trialRecordBoard(st,dps);   // haven-v248: today's / this week's best for the Echo leaderboard
     st.used=(st.used|0)+1;st.runs=(st.runs|0)+1;questEvent('echo');
     // one-off chests, lowest rung first, so a single big run opens everything it has passed
@@ -5719,8 +5720,9 @@ function resolveSwing(s){
 function addJob(x){const j=jobOf(),c=C();if(j.jl>=c.mj)return;j.jx+=x;
   while(j.jl<c.mj&&j.jx>=jneed(j.jl)){j.jx-=jneed(j.jl);const before=skEarned();j.jl++;const gained=skEarned()-before;log(`JOB LEVEL UP! ${S.cls} Job Lv ${j.jl}${gained?` (+${gained} skill point${gained===1?'':'s'})`:' (skill budget already full)'}`,'r3','lvl');addFloat(pl.x,3.2,pl.z,'JOB UP!','#8fe9ff',true)}
   if(j.jl>=c.mj)j.jx=0}
-function checkLevel(){while(S.lv<150&&S.exp>=need()){S.exp-=need();S.lv++;const p=4+Math.floor(S.lv/5);S.pts+=p;S.hp=maxHp();
+function checkLevel(){const lv0=S.lv;while(S.lv<150&&S.exp>=need()){S.exp-=need();S.lv++;const p=4+Math.floor(S.lv/5);S.pts+=p;S.hp=maxHp();
   log(`LEVEL UP! Lv ${S.lv}. +${p} stat points`,'r4','lvl');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true)}
+  if(S.lv!==lv0&&typeof socialLevelBrag==='function')socialLevelBrag(lv0);
   qRefresh()}
 const qProg=type=>{questEvent(type)};
 // A balance difference is not income: a purchase in the same frame can hide earned Zeny.
@@ -5931,7 +5933,7 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
   if(protectedAttempt){if(needsMythicScroll)S.mythicScrolls--;else S.refineScrolls--;}
   const buy=refineOreShortfall(it);
   if(buy.miss>0){S.zeny-=buy.cost;S.ore[o]=safeCount(S.ore[o])+buy.miss;log(`Bought ${buy.miss} ${ORE[o]} for ${buy.cost.toLocaleString()}z to finish this refine.`,'r3','zeny')}
-  S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){succeeded=true;it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
+  S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){succeeded=true;it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f');if(typeof socialRefineBrag==='function')socialRefineBrag(it.r)}
   else{if(protectedAttempt){log(`Refine failed, but your ${needsMythicScroll?'Mythic ':''}Protection Scroll kept +${it.r}.`,'r3','gear')}
     else if(it.r>=5&&(it.sec!==6||it.r<10)){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
     else if(it.sec===6&&it.r>=11){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
@@ -13290,10 +13292,11 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=323"></script>
-<script src="assets/social-poker.js?v=323"></script>
-<script src="assets/social-scene.js?v=323"></script>
-<script src="assets/social-fishing.js?v=323"></script>
-<script src="assets/social.js?v=323"></script>
+<script src="assets/social-announcements.js?v=324"></script>
+<script src="assets/social-rules.js?v=324"></script>
+<script src="assets/social-poker.js?v=324"></script>
+<script src="assets/social-scene.js?v=324"></script>
+<script src="assets/social-fishing.js?v=324"></script>
+<script src="assets/social.js?v=324"></script>
 </body>
 </html>

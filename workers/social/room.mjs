@@ -1,6 +1,7 @@
 import '../../assets/social-rules.js';
 import '../../assets/social-poker.js';
-const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker;
+import '../../assets/social-announcements.js';
+const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker,ANN=globalThis.PGSocialAnnouncements;
 // v236: two different clocks. IDLE_MS is how long a silent connection may sit before the sweep
 // removes it - that is what kills half-open sockets. REAUTH_MS is the security bound: a connection
 // has to go back through Pages (which re-checks the D1 session and the ban flag) this often, because
@@ -70,6 +71,11 @@ export class SocialRoom {
   this.ledgerQueues=new Map(cleanPokerLedgerQueues(opts.ledgers));
   this.ledgerWrites=Promise.resolve();this.ledgerDirty=new Set();this.ledgerVersions=new Map();
   this.tables=new Map();this.timers=new Map();this.resumes=new Map();
+  // v324: the World-chat announcer. One clock for the scheduled pools (tips, community,
+  // spotlights, welcomes) plus per-account spotlight cooldowns, so the same adventurer is never
+  // the subject twice in a row. Everything resets when the last client leaves: an empty room
+  // never fires lines and nobody returns to a burst of catch-up announcements.
+  this.annSerial=0;this.nextAnnounceAt=0;this.spotAt=new Map();this.welcomed=new Set();
  }
  send(c,event){try{c.send(JSON.stringify(event))}catch{this.disconnect(c)}}
  persistPokerLedger(accountId){
@@ -84,6 +90,12 @@ export class SocialRoom {
   if(!Number.isInteger(accountId)||accountId<1)return;
   const event=cleanPokerLedger({type:'poker_ledger',id:'poker:'+crypto.randomUUID(),at:this.now(),...detail});if(!event)return;
   const queue=this.ledgerQueues.get(accountId)||[];queue.push(event);this.ledgerQueues.set(accountId,queue);
+  // v324: a single pot big enough is World news. The delta is server-computed by the table, so
+  // this milestone never trusts the client; a disconnected winner is simply not announced.
+  if(event.reason==='win'&&event.delta>=ANN.POKER_WIN_MIN){
+   const winner=this.clients.get(accountId);
+   if(winner)this.announce('milestone',{sub:'poker',body:ANN.fill(ANN.MILESTONE.poker,{name:winner.name,chips:ANN.fmt(event.delta)})});
+  }
   this.persistPokerLedger(accountId).then(()=>{
    const c=this.clients.get(accountId);if(!c)return;
    (c.ledgerAckPending||(c.ledgerAckPending=new Set())).add(event.id);this.send(c,event);
@@ -113,6 +125,49 @@ export class SocialRoom {
  // without showing a failure or losing the player's seat.
  refresh(c){c.refreshing=true;this.disconnect(c);this.send(c,{type:'reauth'});c.close(4000,'Refresh session')}
  broadcast(event,filter=()=>true){for(const c of this.clients.values())if(filter(c))this.send(c,event)}
+ // v324: a World announcement is delivery-only. It is never a `message`, so cleanWorldHistory
+ // keeps it out of the 100-line backlog, and the browser never caches it either - a scripted line
+ // can never push a real player message out of either store.
+ announce(kind,event={}){this.broadcast({type:'announce',id:'ann:'+(++this.annSerial),at:this.now(),kind,...event})}
+ announceGap(now=this.now()){return now+ANN.MIN_GAP+Math.random()*(ANN.MAX_GAP-ANN.MIN_GAP)}
+ weightedPool(weights){let total=0;for(const k in weights)total+=weights[k];let r=Math.random()*total;for(const k in weights){r-=weights[k];if(r<0)return k}return null}
+ maybeAnnounce(now=this.now()){
+  if(!this.clients.size){this.nextAnnounceAt=0;this.spotAt.clear();this.welcomed.clear();return}
+  // A greeting is personal timing, not a scheduled pool: it fires on its own short clock shortly
+  // after a fresh arrival - the 8-18 minute world line would almost always find them stale. Only
+  // fresh arrivals with a look qualify (the line names their class), only while somebody else is
+  // online, and never twice for the same adventurer in one session. An arrival that went stale
+  // waiting for company is marked greeted and quietly skipped.
+  for(const c of this.clients.values()){
+   if(!c.welcomeDueAt||!c.look||this.welcomed.has(c.id)||now<c.welcomeDueAt)continue;
+   this.welcomed.add(c.id);c.welcomeDueAt=0;
+   if(now-c.at>=ANN.WELCOME_MS||this.clients.size<ANN.MIN_AUDIENCE)break;
+   return this.announce('welcome',{body:ANN.fill(ANN.WELCOME[Math.floor(Math.random()*ANN.WELCOME.length)],{name:c.name,cls:c.look.cls,lv:c.look.lv})});
+  }
+  if(!this.nextAnnounceAt){this.nextAnnounceAt=this.announceGap(now);return}
+  if(now<this.nextAnnounceAt)return;
+  this.nextAnnounceAt=this.announceGap(now);
+  const weights={...ANN.WEIGHTS},audience=this.clients.size>=ANN.MIN_AUDIENCE;
+  const spottable=audience?[...this.clients.values()].filter(c=>c.look&&(!this.spotAt.has(c.id)||now-this.spotAt.get(c.id)>=ANN.SPOT_COOLDOWN)):[];
+  if(!spottable.length)delete weights.spotlight;
+  const counts=new Map();let plazaTotal=0;
+  for(const p of this.clients.values())if(p.room>0){counts.set(p.room,(counts.get(p.room)||0)+1);plazaTotal++}
+  if(!audience)delete weights.community;
+  const pick=this.weightedPool(weights)||'tip';
+  if(pick==='spotlight'){
+   const c=spottable[Math.floor(Math.random()*spottable.length)];
+   this.spotAt.set(c.id,now);
+   const pool=ANN.SPOTLIGHT.filter(t=>!t.need||(t.need==='fish'?!!c.fish:t.need==='poker'?Number.isInteger(c.pokerSeat):t.need==='title'?!!c.look.title:true));
+   const tpl=pool.length?pool[Math.floor(Math.random()*pool.length)]:ANN.SPOTLIGHT[0];
+   return this.announce('spotlight',{body:ANN.fill(tpl.text,{name:c.name,cls:c.look.cls,lv:c.look.lv,title:c.look.title,ftitle:c.look.fishTitle,plaza:c.room||1})});
+  }
+  if(pick==='community'){
+   let plaza=1,players=0;for(const [id,n] of counts)if(n>players){plaza=id;players=n}
+   const pool=plazaTotal?ANN.COMMUNITY_PLAZA:ANN.COMMUNITY_ONLINE;
+   return this.announce('community',{body:ANN.fill(pool[Math.floor(Math.random()*pool.length)],{online:this.clients.size,plaza,players})});
+  }
+  return this.announce('tip',{body:ANN.fill(ANN.TIPS[Math.floor(Math.random()*ANN.TIPS.length)],{})});
+ }
  // A player event is personal: `friend` is true only for a client whose account is friends with this
  // one, so the same character cannot be described identically to everybody in the plaza.
  broadcastPlayer(subject,filter=()=>true,except=null){for(const p of this.clients.values())if(p!==except&&filter(p))this.send(p,{type:'player',player:this.snapshot(subject,p)})}
@@ -260,7 +315,7 @@ export class SocialRoom {
   if(resume){
    Object.assign(c,{room:resume.room,x:resume.x,z:resume.z,dir:resume.dir,path:[],at:this.now(),sit:resume.sit,seat:resume.seat,pokerSeat:resume.pokerSeat,look:resume.look,resumed:true});
    if(Number.isInteger(c.seat)&&[...this.clients.values()].some(p=>p!==c&&p.room===c.room&&p.seat===c.seat)){c.seat=null;c.sit=false}
-  }
+  }else c.welcomeDueAt=this.now()+ANN.WELCOME_DELAY_MIN+Math.random()*(ANN.WELCOME_DELAY_MAX-ANN.WELCOME_DELAY_MIN);
   this.clients.set(c.id,c);
   // The list Pages sent at connect time is mirrored at once, so a player who is already in a plaza
   // and is on your list is drawn as a friend even if you connected second.
@@ -477,6 +532,22 @@ export class SocialRoom {
    this.broadcastPoker(c.room,now);this.schedulePoker(c.room);
    return;
   }
+  // v324: milestone brags. The browser detects the real moment (a base-level milestone, a refine
+  // success, a new Endless Echo record) and relays it; the room validates the shape, rate-limits
+  // each connection and relays to the whole world. Cosmetic only - no economy ever moves - so
+  // shape checks plus cooldowns are the trust model, the same one the fishing brag uses.
+  if(m.type==='brag')return this.receiveBrag(c,m,now);
+  // v324: a mythical or secret catch of World weight is announced to everybody, not only the
+  // pond's plaza. Same validation as the Local brag; the species name (and its real rarity)
+  // resolves on the client from the catalog, so the wire carries just the slug and the weight.
+  if(m.type==='fishworld'&&c.room){
+   if(now-(c.fishWorldAt||0)<10000)return;
+   if(typeof m.sp!=='string'||!/^[a-z][a-z0-9]{1,23}$/.test(m.sp))return;
+   const w=Math.round(Math.max(.01,Math.min(MAX_FISH_W,Number(m.w)||0))*100)/100;
+   if(w<ANN.FISH_WORLD_MIN_KG)return;
+   c.fishWorldAt=now;
+   return this.announce('fishing',{name:c.name,sp:m.sp,w});
+  }
   if(m.type!=='chat'&&m.type!=='emotion')return;
   if(now<c.nextChat)return this.send(c,{type:'error',message:'Please wait 3 seconds between messages and emotions.'});
   // An emotion rides the channel it was sent on: the hub's emotion tray is the
@@ -496,6 +567,25 @@ export class SocialRoom {
   else if(channel==='local')this.broadcast(event,p=>p.room===c.room);
   else {this.send(c,event);if(recipient!==c)this.send(recipient,event)}
  }
+ // v324: milestone brag validation. Only whitelisted kinds at whitelisted values pass; anything
+ // else is quietly dropped, and each connection may relay at most one brag every 10 seconds.
+ receiveBrag(c,m,now){
+  if(now-(c.bragAt||0)<10000)return;
+  let body=null;
+  if(m.kind==='level'){
+   const lv=Number(m.lv);
+   if(ANN.LEVELS.includes(lv))body=ANN.fill(ANN.MILESTONE.level,{name:c.name,lv});
+  }else if(m.kind==='refine'){
+   const r=Number(m.r);
+   if(ANN.REFINES.includes(r))body=ANN.fill(ANN.MILESTONE.refine,{name:c.name,r});
+  }else if(m.kind==='echo'){
+   const dps=Number(m.dps);
+   if(Number.isFinite(dps)&&dps>0&&dps<=1e12)body=ANN.fill(ANN.MILESTONE.echo,{name:c.name,dps:ANN.fmt(dps)});
+  }
+  if(!body)return;
+  c.bragAt=now;
+  return this.announce('milestone',{sub:m.kind,body});
+ }
  sweep(){const now=this.now();let populationChanged=false;
   for(const [id,r] of [...this.resumes]){
    if(now>r.expires){this.takeResume(id,now);populationChanged=true;continue}
@@ -504,5 +594,6 @@ export class SocialRoom {
   }
   // v319: an expired reservation quietly leaves the plaza counts; tell the field badges.
   if(populationChanged)this.syncRooms();
+  this.maybeAnnounce(now);
   this.tickAll(now);for(const c of [...this.clients.values()])if(now>c.reauthAt||now>c.expires)this.refresh(c)}
 }

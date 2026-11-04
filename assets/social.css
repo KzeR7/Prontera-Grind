@@ -420,3 +420,6 @@ body.social-open #bgmPlayer{display:none!important}
 /* v297: pond announcements in Local chat - a centred system line, not a player message. */
 .social-line.social-line-sys{display:block;padding:5px 8px;margin:3px 0;border-left:2px solid #7fd3e8;border-radius:4px;background:#7fd3e815;color:#cdeaf5;font-style:italic}
 .social-line.social-line-sys time{opacity:.55;margin-right:6px;font-style:normal}
+/* v324: World-chat announcer lines share the system shape but wear the gold of the town crier.
+   Personal hints (kind "personal") keep the teal so they read as quiet, private notes. */
+.social-line.social-line-ann{border-left-color:#e9d39a;background:#e9d39a14;color:#f2e6c8}

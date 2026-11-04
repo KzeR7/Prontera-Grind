@@ -695,6 +695,72 @@ front of it instead of loose dodecahedrons.
 mirrored low-opacity sprites as reflections where a prop actually mirrors into the water, lily-pad
 clusters in two greens with a few flowers, and the ambient fish still swimming over the top.
 
+## The World-chat announcer (haven-v324)
+
+A random, timed announcer speaks in the **World** tab as **Horizon Herald**. All of
+its copy and thresholds live in one owner-editable file,
+`assets/social-announcements.js` (exported as `PGSocialAnnouncements`, imported by
+the Worker and loaded by the browser before `social.js`). Edit the strings freely:
+unknown `{placeholders}` render as-is instead of crashing.
+
+**Scheduled World lines** run inside the Social Durable Object. `sweep()` (the
+existing 60-second alarm) calls `maybeAnnounce(now)`: while anybody is connected it
+fires one line every `MIN_GAP`–`MAX_GAP` (8–18 minutes, jittered); when the last
+client leaves the clock and the cooldowns reset, so nobody returns to a burst. The
+weighted pools are tips (40%), community (20%), spotlights (25%); a pool with no
+eligible content is skipped and its weight is silently redistributed. Community and
+spotlights need at least `MIN_AUDIENCE` (2) connected players; community reads the
+live plaza counts (busiest plaza + headcount, or the online total when nobody is in
+a plaza). Spotlights pick a connected adventurer with a `look`, gated by template
+(`need: 'fish' | 'poker' | 'title'`) on live state, and never repeat the same
+account inside `SPOT_COOLDOWN` (90 minutes).
+
+**Welcomes** are not a weighted pool: an 8–18 minute line would find a newcomer
+stale. Each fresh connection arms a private `welcomeDueAt` 20–45 seconds out; when
+it comes due and the arrival still has a `look`, somebody else is online, the
+arrival is still fresh (`WELCOME_MS`), and the account has not been greeted this
+session, one greeting fires. A reconnected replacement socket inherits no greeting.
+
+**Announcements are delivery-only.** They travel as `{type:'announce', id, at,
+kind, body?}` (fishing lines instead carry `name/sp/w` for the client to resolve
+against the catalog), never as `message`, so `cleanWorldHistory` keeps them out of
+the DO's 100-line backlog and `saveWorldHistory` never sees them — a scripted line
+can never push a player message out of either cache. The client keeps a bounded
+`app.announces` list (15) merged into the World tab render, styled by
+`.social-line-ann` (gold variant of the system line); personal hints keep the teal
+style. They never speech-bubble.
+
+**Milestones** are real events relayed by the client and validated by the room —
+the `fishbrag` trust model (cosmetic, no economy, so shape checks + rate limits):
+- `{type:'brag', kind:'level', lv}` — `index.html` `checkLevel()` relays Base 99
+  and 150 once per session (`socialLevelBrag`).
+- `{type:'brag', kind:'refine', r}` — refine success relays +10 and +15
+  (`socialRefineBrag`).
+- `{type:'brag', kind:'echo', dps}` — a new ranked Endless Echo record relays with
+  the previous best as the gate (`socialEchoBrag`, 30-minute cooldown).
+- `{type:'fishworld', sp, w}` — a mythical or secret catch at `FISH_WORLD_MIN_KG`
+  (800 kg) or heavier. `social-fishing.js` extends the v297 announce hook to those
+  catches (with a null `kind`, so a plain mythical never masquerades as a pond
+  monster in Local chat), and `social.js` `fishingAnnounce` sends the World relay
+  while the pond-side Local brag still runs for mega/secret kinds.
+- Hold'em: the room itself announces a single pot win at `POKER_WIN_MIN` (5000
+  chips) from the authoritative `poker_ledger` movement — no client message is
+  involved, a disconnected winner is simply not announced.
+
+Every inbound relay is whitelisted (`LEVELS`, `REFINES`, positive bounded DPS,
+species slug + weight clamped like `fishbrag`) and rate-limited to one message per
+connection per 10 seconds. Off-list values are dropped, not rounded.
+
+**Personal hints** never touch the wire: `hintTick()` in `social.js`'s heartbeat
+reads the local save at most once a minute and writes a `kind:'personal'`
+announcement only into that player's own list — bag-percentage thresholds
+(`BAG_PCTS`, highest first, once per session) and one "you have been grinding N h —
+stretch and hydrate" note after `GRIND_MS` (6 hours) of session time.
+
+Checks: `social_announce_sim.js` (schedule, weights, cooldowns, validation,
+history purity, client pins), plus the extended `social_fishing_sim.js` announce
+rule and the miniflare module list in `social_worker_sim.mjs`.
+
 ## Friends (haven-v273)
 
 Friendship is a relationship between two **accounts**, stored in its own D1 table

@@ -6,7 +6,11 @@
 // moved to another tab in a single tab. Boot once, ever.
 if(window.__pgSocialBooted)return;window.__pgSocialBooted=true;
 const R=PGSocialRules,P=globalThis.PGSocialPoker||null,$id=id=>document.getElementById(id);
-const app={socket:null,user:null,id:null,room:0,rooms:[],plazaFriends:0,wanted:false,channel:'world',messages:[],unread:new Set(),muted:new Set(),friends:new Set(),players:new Map(),retry:0,connected:false,nextConnect:0,blocked:false,scene:null,owner:null,nextChat:0,lastSeen:0,probeAt:0,resume:null,poker:null,pokerTables:null};
+// v324: shared announcer copy and thresholds (assets/social-announcements.js, loaded before this
+// script). The stub keeps every read safe if the file ever fails to load - features just go quiet.
+const ANN=globalThis.PGSocialAnnouncements||{PERSONA:'Horizon Haven',MILESTONE:{},HINT:{},fill:(t,v)=>String(t==null?'':t).replace(/\{(\w+)\}/g,(all,k)=>v&&v[k]!=null?String(v[k]):all),fmt:n=>String(Math.round(Number(n)||0))};
+const socBoot=Date.now();
+const app={socket:null,user:null,id:null,room:0,rooms:[],plazaFriends:0,wanted:false,channel:'world',messages:[],announces:[],unread:new Set(),muted:new Set(),friends:new Set(),players:new Map(),retry:0,connected:false,nextConnect:0,blocked:false,scene:null,owner:null,nextChat:0,lastSeen:0,probeAt:0,resume:null,poker:null,pokerTables:null};
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const emojiURL=id=>'assets/social/emotions/'+id+'.png';
 // World is public and may be cached per account. Never put whispers or Local messages in storage.
@@ -93,7 +97,7 @@ function playerMenu(name,id){const menu=$id('socialPeople');menu.replaceChildren
 function messageNode(m){const p=document.createElement('div');p.className='social-line';p.dataset.channel=m.channel;const t=document.createElement('time');t.textContent=new Date(m.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});p.append(t);
  // v297: pond announcements are system lines, not something a player typed.
  if(m.sys){p.classList.add('social-line-sys');const span=document.createElement('span');span.className='social-sys-text';span.textContent=m.body;p.append(span);return p}const b=document.createElement('button');b.type='button';b.textContent=(m.gm?'🛠 ':'')+(app.friends.has(m.from)?'★ ':'')+m.name+(m.channel==='whisper'?' → '+m.toName:'');b.title=(m.gm?'Game Master':'')+(m.gm&&app.friends.has(m.from)?' · ':'')+(app.friends.has(m.from)?'Friend':'');b.classList.toggle('social-gm',!!m.gm);b.onclick=()=>playerMenu(m.name,m.from);p.append(b,document.createTextNode(': '));if(m.emotion){const im=document.createElement('img');im.src=emojiURL(m.emotion);im.alt='/'+m.emotion;im.title='/'+m.emotion;p.append(im)}else p.append(document.createTextNode(m.body));return p}
-function renderMessages(preserve=false){const box=$id('socialLines'),bottom=box.scrollHeight-box.scrollTop-box.clientHeight<35,top=box.scrollTop;box.replaceChildren();if(app.channel==='log'){for(const l of logShown()){const p=document.createElement('div');p.className='social-line '+(l.cls||'');p.textContent=l.m;box.append(p)}const b=document.createElement('button');b.textContent='Log filters';b.onclick=()=>openTab('log');box.append(b)}else for(const m of app.messages.filter(m=>m.channel===app.channel&&!app.muted.has(m.from)))box.append(messageNode(m));if(!box.childNodes.length)notice(app.channel==='local'?'Messages here are visible only to this plaza.':'No messages yet.');if(!preserve||bottom){box.scrollTop=box.scrollHeight;$id('socialNew').hidden=true}else {box.scrollTop=top;$id('socialNew').hidden=false}}
+function renderMessages(preserve=false){const box=$id('socialLines'),bottom=box.scrollHeight-box.scrollTop-box.clientHeight<35,top=box.scrollTop;box.replaceChildren();if(app.channel==='log'){for(const l of logShown()){const p=document.createElement('div');p.className='social-line '+(l.cls||'');p.textContent=l.m;box.append(p)}const b=document.createElement('button');b.textContent='Log filters';b.onclick=()=>openTab('log');box.append(b)}else{let lines=app.messages.filter(m=>m.channel===app.channel&&!app.muted.has(m.from));if(app.channel==='world'&&app.announces.length)lines=[...lines,...app.announces].sort((a,b)=>a.at-b.at);for(const m of lines)box.append(m.type==='announce'?announceNode(m):messageNode(m))}if(!box.childNodes.length)notice(app.channel==='local'?'Messages here are visible only to this plaza.':'No messages yet.');if(!preserve||bottom){box.scrollTop=box.scrollHeight;$id('socialNew').hidden=true}else {box.scrollTop=top;$id('socialNew').hidden=false}}
 $id('socialNew').onclick=()=>{$id('socialLines').scrollTop=$id('socialLines').scrollHeight;$id('socialNew').hidden=true};
 let lastCooldownKey='';
 // v274 (owner): the tray works on World and Whisper too, not just in a plaza. The
@@ -1037,14 +1041,83 @@ function pushFishNote(m){
 }
 function fishingAnnounce(fish){
  if(!fish||typeof fish.sp!=='string')return false;
- if(app.room&&send({type:'fishbrag',sp:fish.sp,w:fish.w,kind:fish.kind==='secret'?'secret':'mega'}))return true;
- return pushFishNote({sp:fish.sp,w:fish.w,kind:fish.kind,name:'You',from:app.id||SOLO_ID,at:Date.now()});
+ // v324: a mythical or secret catch heavy enough is World news (`fishworld`, relayed by the room);
+ // the local/room brag below still runs for the pond-side note. A plain mythical carries no kind,
+ // so it can never masquerade as a pond monster in Local chat.
+ let sent=false;
+ if((fish.rarity==='mythical'||fish.rarity==='secret')&&Number(fish.w)>=(ANN.FISH_WORLD_MIN_KG||800))
+  sent=!!send({type:'fishworld',sp:fish.sp,w:fish.w});
+ if(fish.kind&&app.room&&send({type:'fishbrag',sp:fish.sp,w:fish.w,kind:fish.kind}))return true;
+ if(sent)return true;
+ return fish.kind?pushFishNote({sp:fish.sp,w:fish.w,kind:fish.kind,name:'You',from:app.id||SOLO_ID,at:Date.now()}):sent;
 }
 function bindFishing(){const F=FISHING();if(!F)return;F.bind({host:()=>typeof S==='object'&&S?S:null,scene:()=>app.scene,self:fishingSelf,moveTo:(x,z)=>moveAction(x,z),walkTo:(x,z)=>performMoveAction(x,z,true),showOff:fishingShowOff,announce:fishingAnnounce,rig:fishingRig,titleChanged:fishingTitleChanged,notice,save:()=>{if(typeof save==='function'&&typeof S==='object'&&S)save()},button:$id('socialFishBtn')})}
 async function enter(){if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),sitting,camera:cameraUI});if(app.wanted){app.scene.active=true;bindFishing();cameraUI(app.scene.cameraState);for(const p of app.players.values())app.scene.putPlayer(p);join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
 function leave(){FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');if(app.scene)app.scene.active=false;resetPlayers();stashLocal();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}
 $id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick()))return;confirmPokerLeave(()=>leave())};
 const socialHubBtn=$id('socialHubBtn');if(socialHubBtn)socialHubBtn.onclick=()=>enter();syncHubButton();$id('socialSit').onclick=toggleSit;
+// v324: World announcements. Delivery-only system lines in the World tab - the room never stores
+// them in its 100-line backlog and saveWorldHistory never sees them (they never enter
+// app.messages), so a scripted line can never push a real player message out of either cache.
+// Tips/community/spotlights/welcomes are scheduled server-side; milestones are relayed brags;
+// personal hints are written locally and only ever seen by that player.
+const ANNOUNCE_MAX=15;
+function announceNode(m){
+ const p=document.createElement('p');p.className='social-line social-line-sys'+(m.kind==='personal'?'':' social-line-ann');
+ const span=document.createElement('span');span.className='social-sys-text';
+ const speaker=!m.kind||m.kind==='tip'||m.kind==='community'||m.kind==='spotlight'||m.kind==='welcome'?ANN.PERSONA+': ':'';
+ span.textContent=speaker+m.body;p.append(span);return p;
+}
+function fishingAnnounceBody(m){
+ const F=FISHING(),sp=F&&typeof F.speciesById==='function'?F.speciesById(m.sp):null;
+ if(!sp)return null;
+ return ANN.fill(ANN.MILESTONE.fishing,{name:m.name||'An angler',species:sp.name,rarity:sp.rarity,w:ANN.fmt(m.w)});
+}
+function pushAnnounce(m){
+ if(!m)return;
+ const body=m.kind==='fishing'?fishingAnnounceBody(m):typeof m.body==='string'?m.body:'';
+ if(!body)return;
+ app.announces.push({type:'announce',id:typeof m.id==='string'?m.id:'',at:Number.isFinite(m.at)?m.at:Date.now(),kind:m.kind||'',body});
+ if(app.announces.length>ANNOUNCE_MAX)app.announces.splice(0,app.announces.length-ANNOUNCE_MAX);
+ if(app.channel!=='world'||chat.classList.contains('minimized'))app.unread.add('world');
+ if(app.channel==='world')renderMessages(true);else tabsUI();
+}
+// v324: milestone brags. The client detects the real moment and relays it once; the room validates
+// the shape and rate-limits. Cosmetic only - no economy - so this follows the fishbrag trust model.
+const brags={fired:{},lastEcho:0};
+function socialLevelBrag(prevLv){
+ if(!app.connected||typeof S!=='object'||!S)return;
+ for(const lv of ANN.LEVELS||[])if(prevLv<lv&&S.lv>=lv&&!brags.fired['lv'+lv]){brags.fired['lv'+lv]=true;send({type:'brag',kind:'level',lv})}
+}
+function socialRefineBrag(r){
+ if(!app.connected)return;
+ r=Number(r)||0;
+ for(const t of ANN.REFINES||[])if(r>=t&&!brags.fired['r'+t]){brags.fired['r'+t]=true;send({type:'brag',kind:'refine',r:t})}
+}
+function socialEchoBrag(prevBest,dps){
+ if(!app.connected||!(prevBest>0)||!(dps>0))return;
+ if(Date.now()-brags.lastEcho<ANN.ECHO_BRAG_COOLDOWN)return;
+ brags.lastEcho=Date.now();
+ send({type:'brag',kind:'echo',dps:Math.round(dps)});
+}
+// v324: personal hints - only that player sees these, driven by the local save. Checked at most
+// once a minute; each threshold fires at most once per session.
+const hintState={nextAt:0,bag:{},grind:false};
+function hintTick(){
+ if(typeof S!=='object'||!S)return;
+ const nowMs=Date.now();
+ if(nowMs<hintState.nextAt)return;
+ hintState.nextAt=nowMs+60000;
+ const pcts=ANN.HINT.BAG_PCTS||[];
+ if(pcts.length){
+  const bagMax=typeof BAGMAX==='number'?BAGMAX:1000,pct=Math.floor((S.inv?S.inv.length:0)/bagMax*100);
+  for(const t of pcts)if(pct>=t&&!hintState.bag[t]){hintState.bag[t]=true;pushAnnounce({id:'hint:bag:'+t,at:nowMs,kind:'personal',body:ANN.fill(ANN.HINT.BAG,{pct:t})});break}
+ }
+ if(ANN.HINT.GRIND_MS>0&&!hintState.grind&&nowMs-socBoot>=ANN.HINT.GRIND_MS){
+  hintState.grind=true;
+  pushAnnounce({id:'hint:grind',at:nowMs,kind:'personal',body:ANN.fill(ANN.HINT.GRIND,{hours:Math.round(ANN.HINT.GRIND_MS/3600000)})});
+ }
+}
 function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retry=0;status('Connected · World & private chat');app.messages=mergeChatMessages(app.messages.filter(x=>x.channel!=='world'),readWorldHistory(),m.history);saveWorldHistory();renderMessages();if(app.wanted&&app.scene)join();else app.resume=null}
  if(m.type==='error'){status(m.message);population();}
  if(m.type==='rooms'&&Array.isArray(m.rooms)){app.rooms=m.rooms;if(Number.isInteger(m.plaza?.friends))app.plazaFriends=m.plaza.friends;population();}
@@ -1085,6 +1158,7 @@ function receive(m){if(m.type==='hello'){app.connected=true;app.id=m.id;app.retr
  if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
 
  if(m.type==='left'&&m.room===app.room){app.players.delete(m.id);app.scene?.removePlayer(m.id);population();friendPresenceChanged()}
+ if(m.type==='announce'){pushAnnounce(m);return}
  if(m.type==='message'){if(m.channel==='local'&&m.room!==app.room)return;app.messages=mergeChatMessages(app.messages,[m]);if(m.channel==='world')saveWorldHistory();else if(m.channel==='local')stashLocal();if(app.channel!==m.channel||chat.classList.contains('minimized'))app.unread.add(m.channel);if(!app.muted.has(m.from)){if(m.channel==='local'){const fishShown=FISHING()?.onLocalMessage?.(m.from,m.body||'');if(!fishShown)app.scene?.bubble(m.from,m);pokerTableChatBubble(m)}if(app.channel===m.channel)renderMessages(true)}tabsUI()}}
 // v295: the watchdog used to allow 20 s of silence plus a 6 s probe grace - longer than the
 // server's old 15 s resume window, so a silent drop always came back as a fresh join at the
@@ -1169,7 +1243,7 @@ function connect(){if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextCo
   // resetPlayers() wipes the map it comes from.
   if(e.code!==4001)app.resume=seatState();
   stashLocal();clearPokerResult();app.room=0;app.rooms=[];app.plazaFriends=0;app.poker=null;app.pokerTables=null;pokerTableChat.clear();resetPlayers();syncSoloPlayer();population();tabsUI();renderPokerMini();renderPokerUI(true);status(e.code===4001?'Chat moved to another tab. Reload to reconnect.':'Chat unavailable — retrying…');app.blocked=e.code===4001;app.nextConnect=Date.now()+retryDelay()};ws.onerror=()=>status('Chat unavailable — checking connection…');}
-let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();
+let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{hintTick();if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();
  // v313: a socket can open against a cold Durable Object and then sit there - Pages accepted the
  // upgrade, the room has not said hello. Nothing used to notice: the plaza showed "Connecting to
  // chat…" forever with a healthy-looking socket and no reconnect. A handshake that takes longer than
