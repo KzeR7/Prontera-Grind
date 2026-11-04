@@ -9858,3 +9858,10 @@ Players need one refresh at least once.
 * **Files:** `assets/ui/eclipse.css`, `tools/tests/eclipse_ui_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
 
 Players need one refresh at least once.
+
+### 2026-11-04 — `haven-v327 grand atlas flex route canvas fill`
+
+* **Fixed (`assets/ui/eclipse.css` — Atlas Clash With Intel Hidden):** with Field Intelligence hidden, the widened hero overlapped the stage/Travel card and the map rendered vertically cropped (Morroc's label cut at the bottom). Two structural hardenings: (1) the route column is now a flex column instead of a grid, so the hero and the Travel card stack in flow and can never overlap; the column scrolls on short screens. (2) In panel mode the world canvas is filled to the 16:9 hero by CSS (`width/height:100%`, no camera transform) instead of trusting pixel measurements from a camera sync that could run against a stale viewport size — the world now touches every edge of the hero regardless of sync timing. Full Map keeps its px zoom/pan camera.
+* **Files:** `assets/ui/eclipse.css`, `tools/tests/eclipse_ui_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+Players need one refresh at least once.
