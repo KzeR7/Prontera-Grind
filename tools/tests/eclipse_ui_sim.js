@@ -666,7 +666,11 @@ test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar
  assert.deepEqual(s1Mobs,['Poring','Fabre'],'Prontera Stage 1 shows both Poring and Fabre in Field Intelligence');
  const poringTile=win.querySelector('.ui-field-guide .eclipse-field-encounter .rm-mob-tile');
  assert.match(poringTile.querySelector('.rm-mob-stats').textContent,/HP \d+ · ATK \d+/,'monster tile shows stage HP and ATK instead of repeating card name');
- assert.match(poringTile.querySelector('.rm-card-pop-fx').textContent,/LUK \+3/,'hover/tap card tooltip shows exact Poring Card effect');
+ assert.equal(poringTile.querySelector('.rm-card-chip'),null,'no cluttering card percentage text chip on monster tile');
+ poringTile.dispatchEvent(new g.window.MouseEvent('mouseover',{bubbles:true}));
+ const floatTip=doc.getElementById('rmCardFloat');
+ assert.ok(floatTip&&floatTip.classList.contains('on'),'hovering monster tile opens viewport-clamped floating card tooltip');
+ assert.match(floatTip.textContent,/Poring Card.*LUK \+3/,'floating hover tooltip shows card name and exact card effect');
  poringTile.click();
  assert.equal(poringTile.classList.contains('is-open'),true,'tapping monster tile toggles card effect tooltip open for touch/mobile');
  ev("mapM=0;mapL=10;renderWin()");

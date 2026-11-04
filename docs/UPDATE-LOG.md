@@ -9769,5 +9769,15 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   * Replaced the redundant truncated card name subtitle on `.rm-mob-tile` with actual stage combat stats (`HP · ATK · Phys/Magic` + `[🃏 %]` chip) via `stageMobPreviewStats`, and added a hover/focus/tap `.rm-card-pop` tooltip showing the card's name, rarity grade, exact stat effect (`cardEffectText`), equipment slot fit, drop rate, and owned/equipped status.
 * **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/{eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
 
+### 2026-11-04 — `haven-v317 compact preview grid breakpoints & unclippable floating card-effect hover tooltip`
+
+* **Fixed (`assets/ui/eclipse.css` — Compact Preview / Split-Screen Grid Stability at `640px–980px`):**
+  * Removed the `@container(max-width:850px)` `.mapgrid { grid-template-columns: repeat(5, 1fr) }` override and lowered the desktop 2-column World Atlas breakpoint from `820px` to `640px`, preventing split-screen / preview viewports (`640px–880px`) from wrapping the 10-map top bar into 2 rows or collapsing the 2-column layout.
+  * Lowered `.rm-illustrated-hero` desktop `min-height` from `175px` to `120px` with compact `640px–980px` stage/card spacing so shorter viewports never clip the stage/Travel drawer, and switched `.rm-mob-grid` to `repeat(auto-fit, minmax(175px, 1fr))` so narrow `Field Intelligence` columns display 1 full-width un-truncated row per monster while wide PC screens display 2 columns.
+* **Changed (`index.html`, `assets/ui/eclipse.css` — Clean Monster Tiles & Unclippable `#rmCardFloat` Hover Tooltip):**
+  * Removed visible card drop percentage text from `.rm-mob-tile` (keeping only sprite + monster name + stage `HP · ATK · Phys/Magic` + subtle `🃏` hover cue) and added `showAtlasCardFloat` (`#rmCardFloat`, `position: fixed; z-index: 9999`) so hovering on PC or tapping on mobile always displays the Card Name, Rarity Grade, exact Card Effect, Slot Fit, and Drop Rate without clipping inside `.ui-field-guide`'s scroll container.
+* **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/{eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+
 
 

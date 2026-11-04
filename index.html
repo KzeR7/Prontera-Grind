@@ -912,12 +912,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=316">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=317">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=316">
-<link rel="stylesheet" href="assets/social-fishing.css?v=316">
+<link rel="stylesheet" href="assets/social.css?v=317">
+<link rel="stylesheet" href="assets/social-fishing.css?v=317">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-04 haven-v316 illustrated rune-midgard world atlas';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-04 haven-v317 illustrated rune-midgard world atlas';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6863,15 +6863,32 @@ function buildFieldEncounterRoster(mi,li,field,make){
     const fx=cardEffects(c).map(cardEffectText).join(' · ');
     const fits=(c.fit||[CFIT[c.stat]]).filter(Boolean).map(k=>fitMap[k]||CFL[k]||k).join(', ');
     const owned=looseCards.filter(x=>x.cardKey===c.cardKey).length,worn=wornKeys.has(c.cardKey);
+    const meta=`Fits ${fits} · Drop ${m.cardCh}%${worn?' · Equipped':owned?' · Owned ×'+owned:''}`;
     const roleTag=isBoss?' <span class="rm-mob-tag boss">MVP</span>':field.boss?' <span class="rm-mob-tag escort">Escort</span>':'';
     const sub=`HP ${fmtN(st.hp)} · ATK ${fmtN(st.atk)} · ${isBoss?escorts+' escorts':st.mag?'Magic':'Phys'}`;
-    return `<div class="rm-mob-tile${isBoss?' is-boss':''}" tabindex="0"><img src="${mobImg(m)}" alt=""><div class="rm-mob-copy"><div class="rm-mob-top"><b>${esc(m.n)}${roleTag}</b><span class="rm-card-chip g${c.g}">🃏 ${m.cardCh}%</span></div><small class="rm-mob-stats">${esc(sub)}</small></div><div class="rm-card-pop" role="tooltip"><div class="rm-card-pop-hd"><strong>🃏 ${esc(c.n)}</strong><em class="g${c.g}">${esc(GRADE[c.g]||'Common')}</em></div><div class="rm-card-pop-fx">${esc(fx)}</div><div class="rm-card-pop-meta">Fits ${esc(fits)} · Drop ${m.cardCh}%${worn?' · Equipped':owned?' · Owned ×'+owned:''}</div></div></div>`;
+    return `<div class="rm-mob-tile${isBoss?' is-boss':''}" tabindex="0" data-card-name="${esc(c.n)}" data-card-grade="${esc(GRADE[c.g]||'Common')}" data-card-g="${c.g}" data-card-fx="${esc(fx)}" data-card-meta="${esc(meta)}"><img src="${mobImg(m)}" alt=""><div class="rm-mob-copy"><div class="rm-mob-top"><b>${esc(m.n)}${roleTag}</b><span class="rm-card-hint g${c.g}" aria-hidden="true">🃏</span></div><small class="rm-mob-stats">${esc(sub)}</small></div><div class="rm-card-pop" role="tooltip"><div class="rm-card-pop-hd"><strong>🃏 ${esc(c.n)}</strong><em class="g${c.g}">${esc(GRADE[c.g]||'Common')}</em></div><div class="rm-card-pop-fx">${esc(fx)}</div><div class="rm-card-pop-meta">${esc(meta)}</div></div></div>`;
   };
   const encounter=make('div','eclipse-field-encounter');
   const bossHtml=field.boss?renderTile(field.boss,true):'';
   const mobsHtml=`<div class="rm-mob-grid">${field.mobs.map(m=>renderTile(m,false)).join('')}</div>`;
-  encounter.innerHTML=`<div class="rm-encounter-head"><span>MONSTERS ON THIS STAGE</span><small>${field.boss?`MVP + ${escorts} escorts · hover for card`:`${field.mobs.length} monsters · hover for card effect`}</small></div>${bossHtml}${mobsHtml}`;
+  encounter.innerHTML=`<div class="rm-encounter-head"><span>MONSTERS ON THIS STAGE</span><small>Hover monster for card effect</small></div>${bossHtml}${mobsHtml}`;
   return encounter;
+}
+function showAtlasCardFloat(tile){
+  if(typeof document==='undefined'||!document.body)return;
+  let fl=document.getElementById('rmCardFloat');
+  if(!tile){if(fl)fl.classList.remove('on');return;}
+  if(!fl){fl=document.createElement('div');fl.id='rmCardFloat';fl.className='rm-card-float';fl.setAttribute('role','tooltip');document.body.appendChild(fl);}
+  const g=tile.dataset.cardG||'0';
+  fl.innerHTML=`<div class="rm-card-pop-hd"><strong>🃏 ${esc(tile.dataset.cardName||'')}</strong><em class="g${esc(g)}">${esc(tile.dataset.cardGrade||'Common')}</em></div><div class="rm-card-pop-fx">${esc(tile.dataset.cardFx||'')}</div><div class="rm-card-pop-meta">${esc(tile.dataset.cardMeta||'')}</div>`;
+  fl.classList.add('on');
+  const r=tile.getBoundingClientRect?tile.getBoundingClientRect():null;
+  if(r&&(r.width>0||r.height>0)){
+    const vw=window.innerWidth||800,vh=window.innerHeight||600,fw=Math.min(248,vw-16),fh=fl.offsetHeight||74;
+    const left=Math.max(8,Math.min(vw-fw-8,r.left+(r.width-fw)/2));
+    const top=r.top-fh-8>=8?r.top-fh-8:Math.min(vh-fh-8,r.bottom+8);
+    fl.style.width=fw+'px';fl.style.left=Math.round(left)+'px';fl.style.top=Math.round(top)+'px';
+  }
 }
 function syncIllustratedAtlas(centerPlace){
   if(typeof document==='undefined'||!document.getElementById)return;
@@ -6932,11 +6949,31 @@ if(typeof addEventListener==='function'&&$('wins')&&$('wins').addEventListener){
     if(tile){
       const was=tile.classList.contains('is-open');
       winsEl.querySelectorAll('.rm-mob-tile.is-open').forEach(el=>el.classList.remove('is-open'));
-      if(!was)tile.classList.add('is-open');
+      if(!was){tile.classList.add('is-open');showAtlasCardFloat(tile);}
+      else showAtlasCardFloat(null);
     }else if(winsEl.querySelector('.rm-mob-tile.is-open')){
       winsEl.querySelectorAll('.rm-mob-tile.is-open').forEach(el=>el.classList.remove('is-open'));
+      showAtlasCardFloat(null);
     }
   },true);
+  winsEl.addEventListener('mouseover',e=>{
+    const tile=e.target&&e.target.closest?e.target.closest('.rm-mob-tile'):null;
+    if(tile)showAtlasCardFloat(tile);
+  });
+  winsEl.addEventListener('mouseout',e=>{
+    const tile=e.target&&e.target.closest?e.target.closest('.rm-mob-tile'):null;
+    const rel=e.relatedTarget&&e.relatedTarget.closest?e.relatedTarget.closest('.rm-mob-tile'):null;
+    if(tile&&tile!==rel&&!tile.classList.contains('is-open'))showAtlasCardFloat(rel||null);
+  });
+  winsEl.addEventListener('focusin',e=>{
+    const tile=e.target&&e.target.closest?e.target.closest('.rm-mob-tile'):null;
+    if(tile)showAtlasCardFloat(tile);
+  });
+  winsEl.addEventListener('focusout',e=>{
+    const tile=e.target&&e.target.closest?e.target.closest('.rm-mob-tile'):null;
+    if(tile&&!tile.classList.contains('is-open'))showAtlasCardFloat(null);
+  });
+  winsEl.addEventListener('scroll',()=>showAtlasCardFloat(null),true);
   winsEl.addEventListener('pointerdown',e=>{
     if(!worldAtlasFullscreen||(e.button!==undefined&&e.button!==0))return;
     const t=e.target&&e.target.closest?e.target:null;
@@ -7922,6 +7959,7 @@ function renderWin(anchor){
   renderDock();
   renderQ();const host=$('wins');host.style.display=tabs.length?'flex':'none';
   if(!tabs.includes('map')||mapSeason!=='atlas'){worldAtlasFullscreen=false;worldAtlasDrawerHidden=false}
+  if(!tabs.includes('map'))showAtlasCardFloat(null);
   const equipmentWorkspaceOpen=tabs.includes('equip')&&['cardsWork','autosell','reforge'].includes(sub.equip);
   document.body?.classList?.toggle('equipment-workspace-open',equipmentWorkspaceOpen);
   document.body?.classList?.toggle('rm-atlas-fullscreen',tabs.includes('map')&&worldAtlasFullscreen&&mapSeason==='atlas');
@@ -13252,10 +13290,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=316"></script>
-<script src="assets/social-poker.js?v=316"></script>
-<script src="assets/social-scene.js?v=316"></script>
-<script src="assets/social-fishing.js?v=316"></script>
-<script src="assets/social.js?v=316"></script>
+<script src="assets/social-rules.js?v=317"></script>
+<script src="assets/social-poker.js?v=317"></script>
+<script src="assets/social-scene.js?v=317"></script>
+<script src="assets/social-fishing.js?v=317"></script>
+<script src="assets/social.js?v=317"></script>
 </body>
 </html>
