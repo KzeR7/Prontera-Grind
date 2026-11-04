@@ -762,5 +762,18 @@ test('v318: Social Hub destination showcases scenic Fountain Plaza background an
  assert.match(dest.textContent,/155 species.*Hold'em.*Your farming keeps going/s,'Social Hub copy covers 155-species fishing, Texas Hold\'em tables, and background farming');
  ev('mapSeason="atlas";tabs.length=0;renderWin()');
 });
+test('v324: phone World Atlas panel fits the screen and the Social/Echo wrappers scroll instead of clipping',()=>{
+ const eclipseCss=require('node:fs').readFileSync(__dirname+'/../../assets/ui/eclipse.css','utf8');
+ // Phone portrait keeps the desk grid's align-items:start out of the column flex:
+ // with it, the 16:9 hero derived its WIDTH from max-height:230px (230x16/9 = 409px)
+ // and overflowed a phone sideways - the map was cut off and the body scrolled
+ // left/right. Stretch pins every row to the panel width (ratio drives height).
+ assert.match(eclipseCss,/html\.pg-mobile body:not\(\.rm-atlas-fullscreen\) #wins #map-panel-atlas\.ui-content\{[^}]*align-items:stretch[^}]*\}/,'phone atlas panel stretches rows to the panel width');
+ assert.match(eclipseCss,/html\.pg-mobile body:not\(\.rm-atlas-fullscreen\) #wins #map-panel-atlas>\.ui-route>\.eclipse-atlas-hero\.rm-illustrated-hero\{[^}]*aspect-ratio:16 \/ 9;[^}]*max-height:230px[^}]*\}/,'the 16:9 hero keeps its height cap under the stretch');
+ // The Echo wrapper is content-fit by default: with overflow-y:auto but no height
+ // cap it claimed every pan gesture and overscroll-behavior:contain blocked the
+ // chain, so an over-tall destination was cut off with no way to scroll to it.
+ assert.match(eclipseCss,/#wins \.echo-panel\{[^}]*max-height:100%;[^}]*overflow-y:auto!important[^}]*\}/,'Endless Echo wrapper is height-capped so its own scroller engages');
+});
 console.log(`${passed} passed`);
 }finally{g.close()}

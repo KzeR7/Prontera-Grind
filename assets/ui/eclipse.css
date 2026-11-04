@@ -1755,7 +1755,11 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .ascension-evolution button[data-a="transformasc"]{width:100%;min-height:40px;margin-top:4px;padding:9px 14px;font-weight:700;font-size:12px;line-height:1.35;white-space:normal;border:1px solid var(--gold);border-radius:6px;background:var(--gold);color:var(--e-bg)}
 #wins .ascension-evolution button[data-a="transformasc"]:disabled{background:var(--e-raised);color:var(--ink);border-color:var(--edge2);opacity:.78;cursor:not-allowed}
 #wins .ascension-empty{padding:18px 0;line-height:1.7;color:var(--e-muted)}
-#wins .echo-panel{display:block!important;overflow-y:auto!important;overscroll-behavior:contain;padding:16px 20px!important}#wins .echo-destination{padding:24px;max-width:800px;margin:auto}
+/* max-height makes this wrapper a REAL scroller when the window body clips it. As a
+   content-fit box with overflow-y:auto it claimed every pan gesture (its
+   overscroll-behavior:contain then blocked chaining), so an over-tall destination
+   card was cut off with no way to scroll to it. */
+#wins .echo-panel{display:block!important;max-height:100%;overflow-y:auto!important;overscroll-behavior:contain;padding:16px 20px!important}#wins .echo-destination{padding:24px;max-width:800px;margin:auto}
 #wins .ascension-progression{padding:20px;line-height:1.8}
 #wins .ascension-skill-preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}
 #wins .ascension-skill-preview article{display:grid;justify-items:center;gap:9px;text-align:center;padding:14px;border:1px solid var(--e-line);border-radius:8px}
@@ -3728,6 +3732,12 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
   html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content{
     display:flex;
     flex-direction:column;
+    /* The desk grid leaves align-items:start on this panel; carried into the phone's
+       column flex it stops the 16:9 hero from stretching, and its aspect-ratio then
+       derives WIDTH from max-height:230px (230x16/9 = 409px) - wider than a phone,
+       so the map and the stage row overflowed and the body scrolled sideways.
+       Stretch pins every row to the panel width; the ratio drives height instead. */
+    align-items:stretch;
     gap:8px;
     padding:8px 10px 14px;
   }
