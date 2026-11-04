@@ -912,12 +912,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=294">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=274">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=322">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=321">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=313">
-<link rel="stylesheet" href="assets/social-fishing.css?v=313">
+<link rel="stylesheet" href="assets/social.css?v=322">
+<link rel="stylesheet" href="assets/social-fishing.css?v=322">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -954,7 +954,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>HORIZON HAVEN / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
 <div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Horizon <small>HAVEN</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover">&#9679; <b id="zeny">0</b> Zeny</div>
-<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="fsBtn" type="button" aria-pressed="false" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button><button id="pgFocusBtn" type="button" aria-pressed="false" aria-label="Toggle field only mode" title="Hide field panels (field only)">◎</button><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="openGmConsole()" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="fieldLoading" hidden role="status" aria-live="polite"><i></i><span>Loading field…</span></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs and daily roulette boosts - hover an icon for what it does"></div><div id="minimapTools" aria-label="Mail and daily rewards"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
+<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="fsBtn" type="button" aria-pressed="false" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button><button id="pgFocusBtn" type="button" aria-pressed="false" aria-label="Toggle field only mode" title="Hide field panels (field only)">◎</button><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="openGmConsole()" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="fieldLoading" hidden role="status" aria-live="polite"><i></i><span>Loading field…</span></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs and daily roulette boosts - hover an icon for what it does"></div><div id="minimapTools" aria-label="Mail, daily rewards and Social Hub"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button><button id="socialHubBtn" type="button" class="minimap-tool-btn social-hub-btn" title="Fountain Plaza — Social Hub" aria-label="Social Hub, Fountain Plaza. Enter plaza"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.6 19.2c.6-3.1 2.7-4.7 5.4-4.7s4.8 1.6 5.4 4.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="17.2" cy="9.2" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.9 14.6c2.2.3 3.9 1.7 4.4 4.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="minimap-tool-label">Social</span><b id="socialHubBadge" class="minimap-tool-badge social-hub-badge" hidden>0</b></button></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
 <div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd" hidden>Speed x1</button></div><div id="wins"></div></div><div id="pgScrim" hidden aria-hidden="true"></div><button id="pgQuests" type="button" aria-controls="sideRail" aria-expanded="false" title="Quests and destinations"><span aria-hidden="true">❖</span><b>Quests</b><span class="pg-q-dot" id="pgQuestDot" hidden aria-hidden="true"></span></button></div>
 <div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health"><span>HP</span> <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
 </div></div>
@@ -1044,9 +1044,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="comboFieldStatus" data-combo-status aria-label="Combat combo status"></div>
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
-<link rel="stylesheet" href="assets/shop.css?v=273">
+<link rel="stylesheet" href="assets/shop.css?v=318">
 <script src="assets/wardrobe.js?v=199"></script>
-<script src="assets/shop-catalog.js?v=273"></script>
+<script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-03 haven-v313 refine purchase confirmation, plaza chat history';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-04 haven-v322 rainbow pulse frame';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6778,6 +6778,243 @@ function eclipseInventoryTools(){const known=new Set(eclipseInventoryState?.owne
 // Map collection tabs are UI-only; never saved as farming-map IDs/unlocks.
 let mapSeason='atlas';
 function mapCollectionTabs(){return `<div class="atabs map-season-tabs" role="tablist" aria-label="Map collections">${[['atlas','World Atlas'],['ascension','Ascension Map'],['echo','Endless Echo'],['social','Social Hub']].map(([id,label])=>`<button type="button" id="map-tab-${id}" role="tab" aria-selected="${mapSeason===id}" aria-controls="map-panel-${id}" tabindex="${mapSeason===id?0:-1}" class="${mapSeason===id?'on':''}" data-a="mapseason" data-v="${id}">${label}</button>`).join('')}</div>`;}
+// ---------- Illustrated World Map of Rune-Midgard (v283) ----------
+const WORLD_ATLAS_PLACES=[
+  {id:'prontera',title:'Prontera & Izlude',maps:[0,1],x:50,y:44,size:7,cutout:'assets/world-map/cutout/prontera.png'},
+  {id:'geffen',title:'Geffen',maps:[2],x:25,y:40,size:7,cutout:'assets/world-map/cutout/geffen.png'},
+  {id:'payon',title:'Payon',maps:[4],x:71,y:37,size:7,cutout:'assets/world-map/cutout/payon.png'},
+  {id:'morroc',title:'Morroc',maps:[3],x:47,y:70,size:7,cutout:'assets/world-map/cutout/morroc.png'},
+  {id:'comodo',title:'Comodo',maps:[5],x:23,y:79,size:7,cutout:'assets/world-map/cutout/comodo.png'},
+  {id:'niflheim',title:'Niflheim & the Abyss',maps:[8,9],x:42,y:14,size:7,cutout:'assets/world-map/cutout/niflheim.png'},
+  {id:'amatsu',title:'Amatsu',maps:[7],x:87,y:22,size:7,cutout:'assets/world-map/cutout/amatsu.png'},
+  {id:'louyang',title:'Louyang',maps:[6],x:87,y:69,size:7,cutout:'assets/world-map/cutout/louyang.png'}
+];
+const WORLD_ATLAS_BIRDS=[
+  {id:'birds-a',x:70,y:54,size:3.2,img:'assets/world-map/birds-flock-a.webp'},
+  {id:'birds-b',x:14,y:62,size:4.2,img:'assets/world-map/birds-flock-b.webp'},
+  {id:'birds-c',x:60,y:24,size:3.0,img:'assets/world-map/birds-flock-a.webp'},
+  {id:'birds-d',x:35,y:55,size:3.6,img:'assets/world-map/birds-flock-b.webp'},
+  {id:'birds-e',x:78,y:45,size:2.8,img:'assets/world-map/birds-flock-a.webp'},
+  {id:'birds-f',x:18,y:26,size:3.4,img:'assets/world-map/birds-flock-b.webp'},
+  {id:'birds-g',x:54,y:84,size:3.8,img:'assets/world-map/birds-flock-a.webp'},
+  {id:'birds-h',x:92,y:48,size:3.0,img:'assets/world-map/birds-flock-b.webp'}
+];
+const WORLD_ATLAS_CLOUDS=[
+  {id:'cloud-a',x:16,y:16,size:15,puffs:3},
+  {id:'cloud-b',x:62,y:14,size:13,puffs:2},
+  {id:'cloud-c',x:80,y:86,size:16,puffs:3},
+  {id:'cloud-d',x:36,y:26,size:11,puffs:2},
+  {id:'cloud-e',x:8,y:50,size:14,puffs:3},
+  {id:'cloud-f',x:60,y:60,size:12,puffs:2},
+  {id:'cloud-g',x:92,y:38,size:13,puffs:2},
+  {id:'cloud-h',x:32,y:88,size:15,puffs:3},
+  {id:'cloud-i',x:74,y:28,size:10,puffs:2}
+];
+let worldAtlasFullscreen=false,worldAtlasDrawerHidden=false;
+const WORLD_ATLAS_MINI_ZOOM=1.20;
+const worldAtlasPan={x:0,y:0,zoom:WORLD_ATLAS_MINI_ZOOM,cw:1600,ch:900};
+function worldAtlasPlaceOf(mi){return WORLD_ATLAS_PLACES.find(p=>p.maps.includes(+mi))||WORLD_ATLAS_PLACES[0]}
+function computeMiniAtlasPan(place,vw,vh){
+  const scale=vw/vh>(16/9)*1.12?vh/900:Math.max(vw/1600,vh/900),cw=Math.round(1600*scale*100)/100,ch=Math.round(900*scale*100)/100;
+  const z=WORLD_ATLAS_MINI_ZOOM,W=cw*z,H=ch*z;
+  const tx=vw/2-(place.x/100)*W,ty=vh/2-(place.y/100)*H;
+  const x=W>=vw?Math.min(0,Math.max(vw-W,tx)):(vw-W)/2;
+  const y=H>=vh?Math.min(0,Math.max(vh-H,ty)):(vh-H)/2;
+  return{cw,ch,x:Math.round(x*100)/100,y:Math.round(y*100)/100,zoom:z};
+}
+function buildIllustratedAtlasHero(mi){
+  const place=worldAtlasPlaceOf(mi);
+  const liveVp=!worldAtlasFullscreen&&typeof document!=='undefined'&&document.getElementById?document.getElementById('rmViewport'):null;
+  if(liveVp&&liveVp.clientWidth>0&&liveVp.clientHeight>0){
+    const cam=computeMiniAtlasPan(place,liveVp.clientWidth,liveVp.clientHeight);
+    worldAtlasPan.cw=cam.cw;worldAtlasPan.ch=cam.ch;worldAtlasPan.x=cam.x;worldAtlasPan.y=cam.y;worldAtlasPan.zoom=cam.zoom;
+  }
+  const subOverlay=place.maps.length>1?`<div class="rm-subzones rm-subzones-overlay" role="group" aria-label="${esc(place.title)} field zones">${place.maps.map(idx=>{const zm=MAPS[idx],on=idx===mi,here=!!S&&idx===S.mp;return`<button type="button" class="rm-subzone-btn${on?' on':''}${here?' here':''}" data-a="atlassub" data-v="${idx}" aria-pressed="${on}"><b>${here?'● ':''}${esc(zm.n)}</b></button>`;}).join('')}</div>`:'';
+  const toolbar=`<div class="rm-controls" role="toolbar" aria-label="World map controls">${worldAtlasFullscreen?`<button type="button" class="rm-ctrl-btn" data-a="atlaszoom" data-v="out" aria-label="Zoom out" title="Zoom out">−</button><button type="button" class="rm-ctrl-btn" data-a="atlaszoom" data-v="in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" class="rm-ctrl-btn" data-a="atlaszoom" data-v="reset" aria-label="Reset map view" title="Reset zoom and center">⟲</button><button type="button" class="rm-ctrl-btn rm-ctrl-pill${worldAtlasDrawerHidden?'':' on'}" data-a="atlasdrawer" aria-pressed="${!worldAtlasDrawerHidden}" title="Show or hide stages and drops panel">${worldAtlasDrawerHidden?'☷ Stages & Drops':'☷ Hide Panel'}</button>`:''}<button type="button" class="rm-ctrl-btn rm-ctrl-pill${worldAtlasFullscreen?' on':''}" data-a="atlasfull" aria-pressed="${worldAtlasFullscreen}" title="${worldAtlasFullscreen?'Return to panel view (Esc)':'Expand illustrated map to full screen'}">${worldAtlasFullscreen?'✕ Exit Full Map':'⛶ Full Map'}</button></div>`;
+  const viewportBody=`<div id="rmCanvas" class="rm-canvas" style="--cw: ${worldAtlasPan.cw}px; --ch: ${worldAtlasPan.ch}px; --x: ${worldAtlasPan.x}px; --y: ${worldAtlasPan.y}px; --zoom: ${worldAtlasPan.zoom};"><img class="rm-map" src="assets/world-map/world-map-cleaned.webp?v=283" alt="Illustrated map of Rune-Midgard" draggable="false"><img class="rm-clouds-veil" src="assets/world-map/cloud-mask-16x9.webp?v=283" alt="" draggable="false">${WORLD_ATLAS_BIRDS.map(b=>`<div id="rmAmb-${b.id}" class="rm-ambient rm-birds ${b.id}" style="--ax:${b.x}%;--ay:${b.y}%;--size:${b.size}%" aria-hidden="true"><img src="${b.img}?v=283" alt="" draggable="false"></div>`).join('')}${WORLD_ATLAS_CLOUDS.map(c=>`<div id="rmAmb-${c.id}" class="rm-ambient rm-cloud ${c.id}" style="--ax:${c.x}%;--ay:${c.y}%;--size:${c.size}%" aria-hidden="true">${Array.from({length:c.puffs},(_,pi)=>`<img class="rm-puff rm-puff-${pi+1}" src="assets/world-map/cloud-direct.webp?v=283" alt="" draggable="false">`).join('')}</div>`).join('')}<div id="rmLocationLayer" class="rm-location-layer">${WORLD_ATLAS_PLACES.map(p=>{const selected=p.id===place.id,here=!!S&&p.maps.includes(S.mp);return`<button type="button" class="rm-loc${selected?' is-selected':''}${here?' is-here':''}" data-a="atlasplace" data-v="${p.id}" aria-pressed="${selected}" aria-label="${esc(p.title)}${here?' (Current location)':''}" style="--x:${p.x}%;--y:${p.y}%;--size:${p.size}%"><img src="${p.cutout}?v=283" alt="" draggable="false"><span class="rm-loc-label">${here?'<i class="rm-here-dot" aria-hidden="true"></i>':''}${esc(p.title)}</span></button>`;}).join('')}</div></div>`;
+  const caption=`<div class="rm-hero-caption"><span class="ui-eyebrow">RUNE-MIDGARD / ${String(mi+1).padStart(2,'0')} · ${esc(place.title.toUpperCase())}</span><h2>${esc(MAPS[mi].n)}</h2><p>${esc(MAPS[mi].t)} · Recommended ${esc(MAPS[mi].rec)}</p></div>`;
+  return `<div id="rmViewport" class="rm-viewport">${viewportBody}</div>${subOverlay}${toolbar}${caption}`;
+}
+function buildIllustratedStageHead(mi,make){
+  const m=MAPS[mi],pr=S?Math.min(S.prog[mi]||0,normalStages(mi)):0,nmo=typeof nmMapOpen==='function'&&S?nmMapOpen(mi):false;
+  const status=`${pr}/${normalStages(mi)} open · ${nmo?'NM open':'NM Lv '+NMLV[nmTierOf(mi)]}`;
+  const wrap=make('div','rm-optb-head');
+  wrap.innerHTML=`<div class="rm-optb-meta"><span class="rm-optb-kicker">02 / ${esc(m.n.toUpperCase())}</span><span class="rm-optb-lv">${esc(m.rec)}</span><span class="rm-optb-sub">${esc(status)}</span></div>`;
+  return wrap;
+}
+function stageMobPreviewStats(mi,li,m,isBoss){
+  const l=fieldPower(mi,li),mb=1+mi*.15+Math.max(0,mi-4)*.2,nm1=li>10,nm=nm1?NMHP*nm15Of(li):1,na=nm1?NMATK*nm15Of(li):1;
+  if(mi>=10){const a=ascensionCombatStats(mi,li,!!isBoss);return{hp:a.hp,atk:a.atk,mag:isBoss||['demon','tree','blob'].includes(m.shape)};}
+  if(isBoss)return{hp:Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(li):1)),atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),mag:true};
+  const early=starterStage(mi,li);
+  const hp=early?Math.min(starterHp(li),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm);
+  const atk=early?starterAtk(li):Math.floor((5+l*4.6)*mb*na*eaOf(l));
+  return{hp,atk,mag:['demon','tree','blob'].includes(m.shape)};
+}
+function buildFieldEncounterRoster(mi,li,field,make){
+  const mobImg=m=>esc(ASCENSION_MOB_IDS.has(m.spriteId)?'assets/mobs/v1/thumb-'+m.spriteId+'.png':mobSpriteUrl(m.spriteId));
+  const fmtN=n=>n>=1e6?(Math.round(n/1e5)/10).toString().replace(/\.0$/,'')+'M':n>=1e3?(Math.round(n/1e2)/10).toString().replace(/\.0$/,'')+'K':String(Math.round(n));
+  const fitMap={weapon:'Weapons',armor:'Armor',head:'Headgear',acc:'Accessories',off:'Off-hand',leg:'Legwear'};
+  const wornKeys=new Set(S&&typeof items==='function'?items().flatMap(x=>(x.cards||[]).map(c=>c.cardKey)):[]);
+  const looseCards=S&&Array.isArray(S.cards)?S.cards:[];
+  const escorts=mi<5?3:5;
+  const renderTile=(m,isBoss)=>{
+    const st=stageMobPreviewStats(mi,li,m,isBoss),c=m.card;
+    const fx=cardEffects(c).map(cardEffectText).join(' · ');
+    const fits=(c.fit||[CFIT[c.stat]]).filter(Boolean).map(k=>fitMap[k]||CFL[k]||k).join(', ');
+    const owned=looseCards.filter(x=>x.cardKey===c.cardKey).length,worn=wornKeys.has(c.cardKey);
+    const meta=`Fits ${fits} · Drop ${m.cardCh}%${worn?' · Equipped':owned?' · Owned ×'+owned:''}`;
+    const roleTag=isBoss?' <span class="rm-mob-tag boss">MVP</span>':field.boss?' <span class="rm-mob-tag escort">Escort</span>':'';
+    const sub=`HP ${fmtN(st.hp)} · ATK ${fmtN(st.atk)} · ${isBoss?escorts+' escorts':st.mag?'Magic':'Phys'}`;
+    return `<div class="rm-mob-tile${isBoss?' is-boss':''}" tabindex="0" data-card-name="${esc(c.n)}" data-card-grade="${esc(GRADE[c.g]||'Common')}" data-card-g="${c.g}" data-card-fx="${esc(fx)}" data-card-meta="${esc(meta)}"><img src="${mobImg(m)}" alt=""><div class="rm-mob-copy"><div class="rm-mob-top"><b>${esc(m.n)}${roleTag}</b><span class="rm-card-hint g${c.g}" aria-hidden="true">🃏</span></div><small class="rm-mob-stats">${esc(sub)}</small></div><div class="rm-card-pop" role="tooltip"><div class="rm-card-pop-hd"><strong>🃏 ${esc(c.n)}</strong><em class="g${c.g}">${esc(GRADE[c.g]||'Common')}</em></div><div class="rm-card-pop-fx">${esc(fx)}</div><div class="rm-card-pop-meta">${esc(meta)}</div></div></div>`;
+  };
+  const encounter=make('div','eclipse-field-encounter');
+  const bossHtml=field.boss?renderTile(field.boss,true):'';
+  const mobsHtml=`<div class="rm-mob-grid">${field.mobs.map(m=>renderTile(m,false)).join('')}</div>`;
+  encounter.innerHTML=`<div class="rm-encounter-head"><span>MONSTERS ON THIS STAGE</span><small>Hover monster for card effect</small></div>${bossHtml}${mobsHtml}`;
+  return encounter;
+}
+function showAtlasCardFloat(tile){
+  if(typeof document==='undefined'||!document.body)return;
+  let fl=document.getElementById('rmCardFloat');
+  if(!tile){if(fl)fl.classList.remove('on');return;}
+  if(!fl){fl=document.createElement('div');fl.id='rmCardFloat';fl.className='rm-card-float';fl.setAttribute('role','tooltip');document.body.appendChild(fl);}
+  const g=tile.dataset.cardG||'0';
+  fl.innerHTML=`<div class="rm-card-pop-hd"><strong>🃏 ${esc(tile.dataset.cardName||'')}</strong><em class="g${esc(g)}">${esc(tile.dataset.cardGrade||'Common')}</em></div><div class="rm-card-pop-fx">${esc(tile.dataset.cardFx||'')}</div><div class="rm-card-pop-meta">${esc(tile.dataset.cardMeta||'')}</div>`;
+  fl.classList.add('on');
+  const r=tile.getBoundingClientRect?tile.getBoundingClientRect():null;
+  if(r&&(r.width>0||r.height>0)){
+    const vw=window.innerWidth||800,vh=window.innerHeight||600,fw=Math.min(248,vw-16),fh=fl.offsetHeight||74;
+    const left=Math.max(8,Math.min(vw-fw-8,r.left+(r.width-fw)/2));
+    const top=r.top-fh-8>=8?r.top-fh-8:Math.min(vh-fh-8,r.bottom+8);
+    fl.style.width=fw+'px';fl.style.left=Math.round(left)+'px';fl.style.top=Math.round(top)+'px';
+  }
+}
+function syncIllustratedAtlas(centerPlace){
+  if(typeof document==='undefined'||!document.getElementById)return;
+  const vp=document.getElementById('rmViewport');
+  if(!vp)return;
+  const vw=vp.clientWidth||640,vh=vp.clientHeight||360;
+  if(!worldAtlasFullscreen){
+    const cam=computeMiniAtlasPan(worldAtlasPlaceOf(mapM),vw,vh);
+    worldAtlasPan.cw=cam.cw;worldAtlasPan.ch=cam.ch;worldAtlasPan.x=cam.x;worldAtlasPan.y=cam.y;worldAtlasPan.zoom=cam.zoom;
+  }else{
+    const scale=Math.max(vw/1600,vh/900),cw=Math.round(1600*scale*100)/100,ch=Math.round(900*scale*100)/100;
+    worldAtlasPan.cw=cw;worldAtlasPan.ch=ch;
+    const z=Math.max(1,Math.min(2.8,worldAtlasPan.zoom||1)),W=cw*z,H=ch*z;
+    worldAtlasPan.zoom=z;
+    if(centerPlace){
+      worldAtlasPan.x=vw/2-(centerPlace.x/100)*W;
+      worldAtlasPan.y=vh/2-(centerPlace.y/100)*H;
+    }
+    worldAtlasPan.x=Math.min(0,Math.max(vw-W,worldAtlasPan.x));
+    worldAtlasPan.y=Math.min(0,Math.max(vh-H,worldAtlasPan.y));
+  }
+  const cv=document.getElementById('rmCanvas');
+  if(cv){cv.style.setProperty('--cw',worldAtlasPan.cw+'px');cv.style.setProperty('--ch',worldAtlasPan.ch+'px');cv.style.setProperty('--x',worldAtlasPan.x+'px');cv.style.setProperty('--y',worldAtlasPan.y+'px');cv.style.setProperty('--zoom',String(worldAtlasPan.zoom));}
+}
+function zoomIllustratedAtlas(factor,ax,ay){
+  if(!worldAtlasFullscreen||typeof document==='undefined'||!document.getElementById)return;
+  const vp=document.getElementById('rmViewport');
+  if(!vp)return;
+  const vw=vp.clientWidth||640,vh=vp.clientHeight||360;
+  if(factor==='reset'){worldAtlasPan.zoom=1;worldAtlasPan.x=0;worldAtlasPan.y=0;syncIllustratedAtlas();return;}
+  const scale=Math.max(vw/1600,vh/900),cw=1600*scale,ch=900*scale;
+  const mx=Number.isFinite(ax)?ax:vw/2,my=Number.isFinite(ay)?ay:vh/2;
+  const oldZ=worldAtlasPan.zoom;
+  const newZ=Math.max(1,Math.min(2.8,Math.round(oldZ*factor*1000)/1000));
+  if(newZ===oldZ)return;
+  const u=(mx-worldAtlasPan.x)/(cw*oldZ),v=(my-worldAtlasPan.y)/(ch*oldZ);
+  worldAtlasPan.zoom=newZ;
+  worldAtlasPan.x=mx-u*(cw*newZ);
+  worldAtlasPan.y=my-v*(ch*newZ);
+  syncIllustratedAtlas();
+}
+function setWorldAtlasFullscreen(on){
+  worldAtlasFullscreen=!!(on&&tabs.includes('map')&&mapSeason==='atlas');
+  if(worldAtlasFullscreen){worldAtlasPan.zoom=1;worldAtlasPan.x=0;worldAtlasPan.y=0;}
+  else{worldAtlasDrawerHidden=false;worldAtlasPan.zoom=WORLD_ATLAS_MINI_ZOOM;}
+  renderWin();
+  if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>syncIllustratedAtlas(worldAtlasFullscreen?worldAtlasPlaceOf(mapM):null));
+  else syncIllustratedAtlas(worldAtlasFullscreen?worldAtlasPlaceOf(mapM):null);
+}
+let rmDragState=null,rmSuppressClickUntil=0;
+if(typeof addEventListener==='function'&&$('wins')&&$('wins').addEventListener){
+  const winsEl=$('wins');
+  winsEl.addEventListener('click',e=>{
+    if(rmSuppressClickUntil>Date.now()&&e.target&&e.target.closest&&e.target.closest('#rmViewport')){
+      rmSuppressClickUntil=0;e.stopPropagation();e.preventDefault();return;
+    }
+    const tile=e.target&&e.target.closest?e.target.closest('.rm-mob-tile'):null;
+    if(tile){
+      const was=tile.classList.contains('is-open');
+      winsEl.querySelectorAll('.rm-mob-tile.is-open').forEach(el=>el.classList.remove('is-open'));
+      if(!was){tile.classList.add('is-open');showAtlasCardFloat(tile);}
+      else showAtlasCardFloat(null);
+    }else if(winsEl.querySelector('.rm-mob-tile.is-open')){
+      winsEl.querySelectorAll('.rm-mob-tile.is-open').forEach(el=>el.classList.remove('is-open'));
+      showAtlasCardFloat(null);
+    }
+  },true);
+  winsEl.addEventListener('mouseover',e=>{
+    const tile=e.target&&e.target.closest?e.target.closest('.rm-mob-tile'):null;
+    if(tile)showAtlasCardFloat(tile);
+  });
+  winsEl.addEventListener('mouseout',e=>{
+    const tile=e.target&&e.target.closest?e.target.closest('.rm-mob-tile'):null;
+    const rel=e.relatedTarget&&e.relatedTarget.closest?e.relatedTarget.closest('.rm-mob-tile'):null;
+    if(tile&&tile!==rel&&!tile.classList.contains('is-open'))showAtlasCardFloat(rel||null);
+  });
+  winsEl.addEventListener('focusin',e=>{
+    const tile=e.target&&e.target.closest?e.target.closest('.rm-mob-tile'):null;
+    if(tile)showAtlasCardFloat(tile);
+  });
+  winsEl.addEventListener('focusout',e=>{
+    const tile=e.target&&e.target.closest?e.target.closest('.rm-mob-tile'):null;
+    if(tile&&!tile.classList.contains('is-open'))showAtlasCardFloat(null);
+  });
+  winsEl.addEventListener('scroll',()=>showAtlasCardFloat(null),true);
+  winsEl.addEventListener('pointerdown',e=>{
+    if(!worldAtlasFullscreen||(e.button!==undefined&&e.button!==0))return;
+    const t=e.target&&e.target.closest?e.target:null;
+    if(!t||t.closest('.rm-controls'))return;
+    const vp=t.closest('#rmViewport');
+    if(!vp)return;
+    rmDragState={id:e.pointerId,vp,sx:e.clientX,sy:e.clientY,ox:worldAtlasPan.x,oy:worldAtlasPan.y,moved:false};
+  });
+  addEventListener('pointermove',e=>{
+    if(!rmDragState||e.pointerId!==rmDragState.id)return;
+    const dx=e.clientX-rmDragState.sx,dy=e.clientY-rmDragState.sy;
+    if(!rmDragState.moved){
+      if(Math.hypot(dx,dy)<6)return;
+      rmDragState.moved=true;
+      rmDragState.vp.classList.add('is-dragging');
+      try{rmDragState.vp.setPointerCapture(e.pointerId)}catch{}
+    }
+    worldAtlasPan.x=rmDragState.ox+dx;worldAtlasPan.y=rmDragState.oy+dy;
+    syncIllustratedAtlas();
+  });
+  const endRmDrag=e=>{
+    if(!rmDragState||(e&&e.pointerId!==undefined&&e.pointerId!==rmDragState.id))return;
+    if(rmDragState.moved){
+      rmSuppressClickUntil=Date.now()+200;
+      rmDragState.vp.classList.remove('is-dragging');
+      try{rmDragState.vp.releasePointerCapture(rmDragState.id)}catch{}
+    }
+    rmDragState=null;
+  };
+  addEventListener('pointerup',endRmDrag);
+  addEventListener('pointercancel',endRmDrag);
+  addEventListener('resize',()=>{if(tabs.includes('map')&&mapSeason==='atlas')syncIllustratedAtlas()});
+  winsEl.addEventListener('wheel',e=>{
+    if(!worldAtlasFullscreen)return;
+    const vp=e.target&&e.target.closest?e.target.closest('#rmViewport'):null;
+    if(!vp)return;
+    e.preventDefault();
+    const r=vp.getBoundingClientRect();
+    zoomIllustratedAtlas(e.deltaY<0?1.16:1/1.16,e.clientX-r.left,e.clientY-r.top);
+  },{passive:false});
+}
 // ---------- GM tools (v2, 2026-10-27 owner request) ----------
 // The panel used to be one long scroll of headings. It is now a row of clickable sections, and the
 // first one is a single button that makes this account a complete test account: every class, every
@@ -6865,7 +7102,7 @@ function gmToolsPanel(){
  return `<div class="gm-tools"><div class="atabs gm-sections" role="tablist" aria-label="GM tool sections">${GM_SECTIONS.map(tab).join('')}</div>${head}${GM_SECTIONS.map(([k])=>`<section class="gm-section" data-gmsec="${k}"${section===k?'':' hidden'}>${bodies[k]||''}</section>`).join('')}</div>`;
 }
 const V={
-  map(){const navigation=mapCollectionTabs();if(mapSeason==='social')return navigation+`<section class="social-destination"><small>PRONTERA · SOCIAL HUB</small><h2>Meet at the fountain</h2><p>A quiet plaza for conversation, company, and a moment beneath the trees.</p><p>Walk freely, sit with friends, and share your favourite RO emotions. Up to 20 adventurers in each plaza.</p><p><b>Your farming keeps going.</b> World and Whisper follow you here; Local chat stays in this plaza.</p><button type="button" onclick="PGSocial.enter()">Enter Fountain Plaza →</button></section>`;if(mapSeason==='echo')return navigation+`<section class="echo-destination"><div class="echo-scene" role="img" aria-label="A moonlit underworld court with ruined pillars and a ritual stone floor"><span>ENDLESS ECHO</span><strong>The silent court</strong><small>Three minutes. One unbroken challenge.</small></div><div class="hd">Endless Echo</div><p>Face the Lord of Death Illusion in a three-minute damage trial.</p><div class="trial-stats"><span>Personal best <b>${Math.round(trialState().best||0).toLocaleString()} DPS</b></span><span><b>${trialLeftToday()}/2</b> ranked attempts left</span><span><b>${S.shards|0}</b> Echo Shards</span></div><button data-trial="lobby">Enter Endless Echo</button></section>`;const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM));
+  map(){const navigation=mapCollectionTabs();if(mapSeason==='social')return navigation+`<section class="social-destination"><div class="social-scene" role="img" aria-label="Prontera town fountain square with market stalls, half-timbered houses and cascading canal"><span>PRONTERA · SOCIAL HUB · UP TO 20 ADVENTURERS</span><h2>Meet at the Fountain Plaza</h2><p>Take a breather by the central fountain, fish the twin waterfall ponds, or pull up a chair at live Hold'em tables — all while your field grind keeps running.</p></div><div class="social-features"><article class="social-feat"><small>MINI-GAME · WATERFALL PONDS</small><h3>🎣 Plaza Fishing</h3><p>Cast from arched bridges or pondside chairs for <b>155 species</b> across <b>6 rarities</b> (up to 1.8t giants &amp; rare mutations). Earn Fishcoins for rods, bait &amp; bag tiers, collect <b>20 Fishing Titles</b>, show off catches, or toggle <b>Auto-Fish</b>.</p></article><article class="social-feat"><small>MINI-GAME · WEST PROMENADE</small><h3>♠️ Texas Hold'em Poker</h3><p>Join <b>two live 6-seat Hold'em tables</b> hosted by Dealer Vane &amp; Dealer Mira. Claim <b>1,000 free chips daily</b> or buy Zeny stacks, play live hands with fellow adventurers &amp; table bots, and build your chip bank.</p></article><article class="social-feat"><small>HANGOUT · ZERO DOWNTIME</small><h3>💬 Promenade &amp; Idle Grind</h3><p><b>Your farming keeps going.</b> Walk freely at your field speed, sit with friends on two-seater park benches, and share <b>32 classic RO emotions</b>. World &amp; Whisper follow you here; Local chat stays in this plaza.</p></article></div><div class="social-cta"><div class="social-pills"><span>155 Fish Species</span><span>2 Live Hold'em Tables</span><span>32 RO Emotions</span><span>Background Farming Active</span></div><button type="button" class="eclipse-primary" onclick="PGSocial.enter()">Enter Fountain Plaza →</button></div></section>`;if(mapSeason==='echo')return navigation+`<section class="echo-destination"><div class="echo-scene" role="img" aria-label="A moonlit underworld court with ruined pillars and a ritual stone floor"><span>ENDLESS ECHO</span><strong>The silent court</strong><small>Three minutes. One unbroken challenge.</small></div><div class="hd">Endless Echo</div><p>Face the Lord of Death Illusion in a three-minute damage trial.</p><div class="trial-stats"><span>Personal best <b>${Math.round(trialState().best||0).toLocaleString()} DPS</b></span><span><b>${trialLeftToday()}/2</b> ranked attempts left</span><span><b>${S.shards|0}</b> Echo Shards</span></div><button data-trial="lobby">Enter Endless Echo</button></section>`;const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM));
     // The map tab is a compact 450px, two-band panel: pick a map on the top band, walk its fields on the
     // next one, read the drop tables underneath. The field band is sticky, so the level you are
     // choosing stays on screen while the tables below it scroll - no scrolling down to find it.
@@ -7364,7 +7601,7 @@ function arrangePanel(k,root){
   const tabs=q('.atabs');if(tabs)root.prepend(tabs);
   const mode=k==='status'?sub.status:k==='bag'?sub.bag:k==='equip'?(sub.equip==='equip0'?'equip':sub.equip):k;
   root.dataset.view=mode;
-  const labels={reforge:['EQUIPMENT','Affixes','Select affixes, review the cost, then keep or accept your paid offer.'],cardsWork:['EQUIPMENT','Card workspace','Inspect card effects, fit, copies, socket costs and real actions.'],autosell:['EQUIPMENT','Auto-sell','Review what will be sold on future drops and what stays protected.'],refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:mapSeason==='social'?['COMMUNITY','Fountain Plaza','Meet adventurers while your farming continues']:mapSeason==='echo'?['CHALLENGE','Endless Echo','Three minutes · your best damage']:mapSeason==='ascension'?['EXPLORE / ASCENSION','Ascension Map','Fourth-job classes unlock Astral Citadel and Thor Volcano']:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Inspect gear, compare stats and manage cards, refinement or sale.'],ascension:['EQUIPMENT','Ascension Forge','Evolve owned N+ equipment into a Mythic set piece.'],job:['PROGRESSION','Class Tree','Follow your current lineage or explore every class.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],friends:['COMMUNITY','Friends','Add the adventurers you meet in World chat or by whisper'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
+  const labels={reforge:['EQUIPMENT','Affixes','Select affixes, review the cost, then keep or accept your paid offer.'],cardsWork:['EQUIPMENT','Card workspace','Inspect card effects, fit, copies, socket costs and real actions.'],autosell:['EQUIPMENT','Auto-sell','Review what will be sold on future drops and what stays protected.'],refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:mapSeason==='social'?['COMMUNITY','Fountain Plaza','Fishing ponds, Texas Hold\'em tables & live hangout while your farming continues']:mapSeason==='echo'?['CHALLENGE','Endless Echo','Three minutes · your best damage']:mapSeason==='ascension'?['EXPLORE / ASCENSION','Ascension Map','Fourth-job classes unlock Astral Citadel and Thor Volcano']:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Inspect gear, compare stats and manage cards, refinement or sale.'],ascension:['EQUIPMENT','Ascension Forge','Evolve owned N+ equipment into a Mythic set piece.'],job:['PROGRESSION','Class Tree','Follow your current lineage or explore every class.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],shop:['CASH SHOP','Cash Shop','Support Horizon Haven & unlock permanent account cosmetics.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],friends:['COMMUNITY','Friends','Add the adventurers you meet in World chat or by whisper'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
   const info=labels[mode]||labels[k];
   if(info){const h=make('header','ui-hero');put(h,make('span','ui-eyebrow',info[0]),make('h2','',info[1]),make('p','',info[2]));root.insertBefore(h,body)}
   if(k==='map'){body.id='map-panel-'+mapSeason;body.setAttribute('role','tabpanel');body.setAttribute('aria-labelledby','map-tab-'+mapSeason);}
@@ -7373,17 +7610,39 @@ function arrangePanel(k,root){
     const band=q('.mapband:not(.fields)'),maps=q('.mapgrid'),fields=q('.fields'),special=q('.map-specials'),drops=q('.mapcols');
     const destinations=section('01 / Destination','ui-destinations');put(destinations,maps);
     maps?.querySelectorAll('.mapcard').forEach((card,i)=>card.prepend(make('span','eclipse-map-number',String(+card.dataset.v+1).padStart(2,'0'))));
-    const route=section('02 / Choose your stage','ui-route'),hero=make('div','eclipse-atlas-hero');
-    hero.innerHTML=(mapM>=10?'<img class="ascension-preview" src="'+(mapM===10?'assets/atlas/astral-citadel.png?v=156':'assets/atlas/thor-volcano.png?v=162')+'" width="750" height="350" alt="'+(mapM===10?'Connected stone bridge through an indigo starfield, ruined arches and a luminous boss seal':'Basalt cavern, molten lava channels and glowing volcanic vents')+'">':'<canvas id="eclipseAtlas" width="750" height="350" aria-label="Terrain preview for '+esc(MAPS[mapM].n)+'"></canvas>')+'<div><span class="ui-eyebrow">'+(mapM>=10?'ASCENSION':'RUNE-MIDGARD')+' / '+String(mapM+1).padStart(2,'0')+'</span><h2>'+esc(MAPS[mapM].n)+'</h2><p>'+esc(MAPS[mapM].t)+(mapM>=10?' · Requires a fourth-job class':' · Recommended '+esc(MAPS[mapM].rec))+'</p></div>';
-    route.prepend(hero);put(route,fields);
-    if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')],nodes=[...fields.querySelectorAll('.map-node')],grid=fields.querySelector('.lvgrid');
-      if(grid){const normal=make('div','eclipse-stages'),nightmare=make('div','eclipse-stages eclipse-nightmare');nodes.forEach((node,i)=>{node.querySelector('b').textContent=i<10?(i===normalStages(mapM)-1?'♛':String(i+1).padStart(2,'0')):'NM '+(i-9);node.setAttribute('aria-label',node.title);node.setAttribute('aria-pressed',String(mapL===i+1));put(i<10?normal:nightmare,node)});grid.replaceChildren(normal,nightmare)}
+    const route=section('02 / Choose your stage','ui-route'),hero=make('div',mapM>=10?'eclipse-atlas-hero':'eclipse-atlas-hero rm-illustrated-hero');
+    hero.innerHTML=mapM>=10?'<img class="ascension-preview" src="'+(mapM===10?'assets/atlas/astral-citadel.png?v=156':'assets/atlas/thor-volcano.png?v=162')+'" width="750" height="350" alt="'+(mapM===10?'Connected stone bridge through an indigo starfield, ruined arches and a luminous boss seal':'Basalt cavern, molten lava channels and glowing volcanic vents')+'"><div><span class="ui-eyebrow">ASCENSION / '+String(mapM+1).padStart(2,'0')+'</span><h2>'+esc(MAPS[mapM].n)+'</h2><p>'+esc(MAPS[mapM].t)+' · Requires a fourth-job class</p></div>':buildIllustratedAtlasHero(mapM);
+    route.prepend(hero);
+    const routeTarget=mapM>=10?route:make('div','rm-route-drawer');
+    if(mapM<10)put(route,routeTarget);
+    put(routeTarget,fields);
+    if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')],nodes=[...fields.querySelectorAll('.map-node')],grid=fields.querySelector('.lvgrid'),advRow=fields.querySelector('.row');
+      if(mapM<10){const head=buildIllustratedStageHead(mapM,make);if(advRow){const lbl=advRow.querySelector('label');if(lbl){lbl.title='Auto-advance through stages and maps — turn off to farm where you stand';if(lbl.lastChild&&lbl.lastChild.nodeType===3)lbl.lastChild.textContent=' Auto-advance'}put(head,advRow)}fields.prepend(head)}
+      if(grid){const normal=make('div','eclipse-stages'),nightmare=make('div','eclipse-stages eclipse-nightmare');nodes.forEach((node,i)=>{node.querySelector('b').textContent=i<10?(i===normalStages(mapM)-1?(mapM<10?'MVP':'♛'):String(i+1).padStart(2,'0')):'NM '+(i-9);node.setAttribute('aria-label',node.title);node.setAttribute('aria-pressed',String(mapL===i+1));put(i<10?normal:nightmare,node)});grid.replaceChildren(normal,nightmare)}
       const go=fields.querySelector('.go');if(go){go.textContent=S.mp===mapM&&S.lvl===mapL?'You are here · '+MAPS[mapM].n:'Travel to '+MAPS[mapM].n+' · '+(mapL>10?'NM '+(mapL-10):'Stage '+String(mapL).padStart(2,'0'))+' →';put(fields,put(make('div','ui-primary-action'),go))}
       put(fields,fold('Stage rules & requirements',notes,'stage-rules'));
     }
-    if(special)put(route,put(section('CHALLENGE / Endless Echo','ui-challenge'),special));
+    if(special)put(routeTarget,put(section('CHALLENGE / Endless Echo','ui-challenge'),special));
     const intel=section('03 / Field intelligence','ui-field-guide');
-    if(drops){const field=fieldOf(mapM,mapL),mob=field.boss||field.mobs[0],encounter=make('div','eclipse-field-encounter');encounter.innerHTML='<img src="'+esc(ASCENSION_MOB_IDS.has(mob.spriteId)?'assets/mobs/v1/thumb-'+mob.spriteId+'.png':mobSpriteUrl(mob.spriteId))+'" alt=""><div><b>'+esc(mob.n)+'</b><small>'+(field.boss?'MVP + escorts':'Normal field · independent loot rolls')+'</small></div>';drops.querySelector('.hd')?.after(encounter)}
+    if(drops){
+      const field=fieldOf(mapM,mapL),encounter=buildFieldEncounterRoster(mapM,mapL,field,make),cards=[...drops.querySelectorAll(':scope > .mob-card')];
+      const topHd=cards[0]?.querySelector('.hd');
+      if(topHd){
+        const rarBadge=mapM>=10?`<span class="rm-intel-badge r3">Ascension</span>`:`<span class="rm-intel-badge ${rarCls({sec:field.sec,tier:field.tier})}">${esc(rarOf({sec:field.sec,tier:field.tier}).n)} · ${esc(SECN[field.sec])}</span>`;
+        topHd.classList.add('rm-intel-hd');
+        topHd.insertAdjacentHTML('beforeend',rarBadge);
+        topHd.after(encounter);
+      }
+      if(field.boss&&cards[0]&&cards[1]){
+        const bossEntry=cards[1].querySelector('.mobentry');
+        if(bossEntry){
+          const bossWrap=make('div','rm-boss-loot-priority');
+          bossWrap.innerHTML='<div class="dropgrp"><small>👑 MVP Boss Drops ('+esc(field.boss.n)+')</small></div>';
+          bossWrap.append(bossEntry);
+          encounter.after(bossWrap);
+        }
+      }
+    }
     intel.dataset.panelScroll='field-intelligence';put(intel,drops);body.replaceChildren(destinations,route,intel);
   }else if(mode==='stats'){
     const slots=direct().filter(e=>e.classList.contains('slot')),attrs=slots.filter(e=>e.querySelector('[data-a="stat"]')),combat=slots.find(e=>!e.querySelector('[data-a="stat"]')),reset=q('[data-a="rstat"]');
@@ -7699,8 +7958,11 @@ function renderWin(anchor){
   if(!tabs.includes('bag')&&!tabs.includes('equip'))eclipseInventoryState=null;
   renderDock();
   renderQ();const host=$('wins');host.style.display=tabs.length?'flex':'none';
+  if(!tabs.includes('map')||mapSeason!=='atlas'){worldAtlasFullscreen=false;worldAtlasDrawerHidden=false}
+  if(!tabs.includes('map'))showAtlasCardFloat(null);
   const equipmentWorkspaceOpen=tabs.includes('equip')&&['cardsWork','autosell','reforge'].includes(sub.equip);
-  document.body.classList.toggle('equipment-workspace-open',equipmentWorkspaceOpen);
+  document.body?.classList?.toggle('equipment-workspace-open',equipmentWorkspaceOpen);
+  document.body?.classList?.toggle('rm-atlas-fullscreen',tabs.includes('map')&&worldAtlasFullscreen&&mapSeason==='atlas');
   for(const k of expandedPanels)if(!tabs.includes(k))expandedPanels.delete(k);
   const focused=[...expandedPanels][0];host.classList.toggle('has-focus',!!focused);
   // Keep every open window as the same live DOM node across combat redraws. The v93 layout used to
@@ -7720,13 +7982,14 @@ function renderWin(anchor){
     let win=existing.get(k);
     if(!win){win=document.createElement('div');win.dataset.win=k;win.innerHTML='<div class="title"><span></span><span class="ui-window-tools"><small class="eclipse-farming">● Farming continues</small><button data-ui-expand></button><button data-x>&#10005;</button></span></div><div class="body wbody"></div><footer class="eclipse-window-footer"><span class="eclipse-save-status"></span><span class="eclipse-footer-message">Select an item to inspect or manage it.</span><kbd>ESC</kbd></footer>'}
     const workspaceEquip=k==='equip'&&['cardsWork','autosell','reforge'].includes(sub.equip);
-    win.className='win wp'+(k==='map'?' wide':'')+(expandedPanels.has(k)?' ui-expanded':'')+(workspaceEquip?' eclipse-equipment-workspace-window':'');
+    const fullAtlas=k==='map'&&worldAtlasFullscreen&&mapSeason==='atlas';
+    win.className='win wp'+(k==='map'?' wide':'')+(expandedPanels.has(k)?' ui-expanded':'')+(workspaceEquip?' eclipse-equipment-workspace-window':'')+(fullAtlas?' rm-fullscreen-mode':'')+(fullAtlas&&worldAtlasDrawerHidden?' rm-drawer-hidden':'');
     const name=TABS[k][1],expand=win.querySelector('[data-ui-expand]'),close=win.querySelector('[data-x]');
     win.hidden=!!focused&&focused!==k;
     close.innerHTML=uiIcon('close');
     expand.dataset.uiExpand=k;expand.innerHTML=uiIcon(expandedPanels.has(k)?'compact':'expand');expand.setAttribute('aria-label',(expandedPanels.has(k)?'Restore shared layout for ':'Focus ')+name);expand.setAttribute('aria-pressed',String(expandedPanels.has(k)));expand.title=expandedPanels.has(k)?'Restore all open panels':'Focus this panel using the available screen space';
     close.dataset.x=k;close.setAttribute('aria-label','Close '+name);
-    const body=win.querySelector('.wbody'),source=V[k](),viewKey=k==='equip'&&['refine','reforge'].includes(sub.equip)?selE+':'+JSON.stringify(eclipseRefineOutcome&&eclipseRefineOutcome.owner===S?{id:eclipseRefineOutcome.id,rank:eclipseRefineOutcome.rank,from:eclipseRefineOutcome.previousRank,success:eclipseRefineOutcome.succeeded}:null):k==='job'?String(eclipseJobsBrowse):k==='pet'?sub.pet:k==='market'&&sub.market!=='echo'?[S.ore.ori,S.ore.elu,S.refineScrolls,S.shards].join(':'):'';
+    const body=win.querySelector('.wbody'),source=V[k](),viewKey=k==='map'?[worldAtlasFullscreen?1:0,worldAtlasDrawerHidden?1:0].join(':'):k==='equip'&&['refine','reforge'].includes(sub.equip)?selE+':'+JSON.stringify(eclipseRefineOutcome&&eclipseRefineOutcome.owner===S?{id:eclipseRefineOutcome.id,rank:eclipseRefineOutcome.rank,from:eclipseRefineOutcome.previousRank,success:eclipseRefineOutcome.succeeded}:null):k==='job'?String(eclipseJobsBrowse):k==='pet'?sub.pet:k==='market'&&sub.market!=='echo'?[S.ore.ori,S.ore.elu,S.refineScrolls,S.shards].join(':'):'';
     if((body._panelSource!==source||body._panelViewKey!==viewKey)&&!body.querySelector('.autosell-editor input[type=number]:focus,.autosell-editor textarea:focus,[data-autosell-workspace] [data-sell-min]:focus,[data-autosell-workspace] [data-autosell-affix-stat]:focus,.ore-quantity:focus')){
       const fresh=document.createElement('div');fresh.className=body.className;fresh.innerHTML=source;arrangePanel(k,fresh);polishIcons(fresh);
       eclipsePatch(body,fresh);body.className=fresh.className;body.dataset.layout=fresh.dataset.layout;body.dataset.view=fresh.dataset.view;
@@ -7776,7 +8039,7 @@ function renderWin(anchor){
       if(er.top<br.top)body.scrollTop+=er.top-br.top;
       else if(er.bottom>br.bottom)body.scrollTop+=er.bottom-br.bottom}}
   const inSocial=!!(document.body&&document.body.classList&&document.body.classList.contains('social-open'));
-  if(!inSocial)eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();if(!inSocial)drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview();if(typeof wardrobeSync==='function')wardrobeSync();if(typeof guideFinderSync==='function')guideFinderSync();if(typeof coachSync==='function')coachSync()}
+  if(!inSocial)eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();if(tabs.includes('map')&&mapSeason==='atlas')syncIllustratedAtlas();if(!inSocial)drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview();if(typeof wardrobeSync==='function')wardrobeSync();if(typeof guideFinderSync==='function')guideFinderSync();if(typeof coachSync==='function')coachSync()}
 let winPress=false,winDirty=false;
 const winUp=()=>{winPress=false;if(winDirty){winDirty=false;renderWin()}};
 // Guarded so the headless UI harness (which pulls this slice into a bare vm) still loads.
@@ -8382,8 +8645,13 @@ const ACT={
   boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
   boardkind:v=>{if(!['kills','echo'].includes(v))return;boardKind=v;boardError='';renderWin();boardRefresh(boardPeriod,v)},
   boardrefresh:()=>boardRefresh(boardPeriod),
-  mapseason:v=>{if(!['atlas','ascension','echo','social'].includes(v)||!tabs.includes('map'))return;mapSeason=v;if(!['echo','social'].includes(v)&&(mapM>=10)!==(v==='ascension')){mapM=v==='ascension'?10:0;mapL=1;}renderWin();$('wins').querySelector('.map-season-tabs [aria-selected="true"]')?.focus();},
-  selm:v=>{if(!Number.isInteger(+v)||+v<0||+v>=MAPS.length)return;mapM=+v;mapL=Math.min(mapL,mapM>=10?5:Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on')},
+  mapseason:v=>{if(!['atlas','ascension','echo','social'].includes(v)||!tabs.includes('map'))return;if(v!=='atlas'){worldAtlasFullscreen=false;worldAtlasDrawerHidden=false;}mapSeason=v;if(!['echo','social'].includes(v)&&(mapM>=10)!==(v==='ascension')){mapM=v==='ascension'?10:0;mapL=1;}renderWin();$('wins').querySelector('.map-season-tabs [aria-selected="true"]')?.focus();},
+  selm:v=>{if(!Number.isInteger(+v)||+v<0||+v>=MAPS.length)return;mapM=+v;mapL=Math.min(mapL,mapM>=10?5:Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on');if(mapM<10&&worldAtlasFullscreen&&worldAtlasPan.zoom>1.02)syncIllustratedAtlas(worldAtlasPlaceOf(mapM))},
+  atlasplace:id=>{const p=WORLD_ATLAS_PLACES.find(x=>x.id===id);if(!p)return;const nextMap=p.maps.includes(mapM)?mapM:(p.maps.includes(S.mp)?S.mp:p.maps[0]);mapM=nextMap;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on');if(worldAtlasFullscreen&&worldAtlasPan.zoom>1.02)syncIllustratedAtlas(p)},
+  atlassub:v=>{if(!Number.isInteger(+v)||+v<0||+v>=10)return;mapM=+v;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on')},
+  atlaszoom:v=>{if(!worldAtlasFullscreen)return;if(v==='reset')zoomIllustratedAtlas('reset');else if(v==='in'||v==='out')zoomIllustratedAtlas(v==='in'?1.28:1/1.28)},
+  atlasfull:()=>setWorldAtlasFullscreen(!worldAtlasFullscreen),
+  atlasdrawer:()=>{if(!worldAtlasFullscreen)return;worldAtlasDrawerHidden=!worldAtlasDrawerHidden;renderWin();if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>syncIllustratedAtlas());else syncIllustratedAtlas()},
   // v75 test control: feed the selected pet (or the first one) n duplicates and let petFold do
   // the rest, so the owner can watch a species' passive climb without farming 15 drops.
   gmnm:()=>{S.gmnm=true;S.lv=Math.max(S.lv,150);S.prog=MAPS.map(()=>10);S.hp=Math.min(S.hp,maxHp());
@@ -8606,7 +8874,8 @@ function escapeUI(){
   if($('modal').style.display==='flex'){$('mn').click();return}
   if($('gmStudioModal')?.classList.contains('on')){closeGmStudio();return}
   if($('mailDailyModal')?.classList.contains('on')){closeMailDaily();return}
-  if(tabs.length){tabs.length=0;expandedPanels.clear();eqPick=null;selS=null;sideOpen=false;renderWin();return}
+  if(worldAtlasFullscreen&&tabs.includes('map')&&mapSeason==='atlas'){setWorldAtlasFullscreen(false);return}
+  if(tabs.length){tabs.length=0;expandedPanels.clear();worldAtlasFullscreen=false;worldAtlasDrawerHidden=false;eqPick=null;selS=null;sideOpen=false;renderWin();return}
   if(typeof guideFindStage!=='undefined'&&['more','guide'].includes(guideFindStage)){guideFinderFinish();return}
   if(sideOpen||!$('screenOptions').hidden){sideOpen=false;$('screenOptions').hidden=true;$('screenBtn').setAttribute('aria-expanded','false');renderQ();return}
   ask('Log out of Horizon Haven? Your progress will be saved.',()=>logout(),{yes:'Log out',no:'Stay'});
@@ -13019,12 +13288,27 @@ setInterval(updateWatch,60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-PAGE_STARTED_AT>30000)updateWatch()});
 </script>
 <script src="assets/wardrobe-ui.js?v=199"></script>
-<script src="assets/shop.js?v=273"></script>
+<script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=313"></script>
-<script src="assets/social-poker.js?v=313"></script>
-<script src="assets/social-scene.js?v=313"></script>
-<script src="assets/social-fishing.js?v=313"></script>
-<script src="assets/social.js?v=313"></script>
+<script src="assets/social-rules.js?v=322"></script>
+<script src="assets/social-poker.js?v=322"></script>
+<script src="assets/social-scene.js?v=322"></script>
+<script src="assets/social-fishing.js?v=322"></script>
+<script src="assets/social.js?v=322"></script>
+</body>
+</html>
+etInterval(updateWatch,60000);
+// v299: coming back to a tab that has been away is the best moment to look again - the page may
+// be hours old while the player was on another tab, and the check is a 60-byte text file.
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-PAGE_STARTED_AT>30000)updateWatch()});
+</script>
+<script src="assets/wardrobe-ui.js?v=199"></script>
+<script src="assets/shop.js?v=321"></script>
+<script src="assets/friends.js?v=273"></script>
+<script src="assets/social-rules.js?v=322"></script>
+<script src="assets/social-poker.js?v=322"></script>
+<script src="assets/social-scene.js?v=322"></script>
+<script src="assets/social-fishing.js?v=322"></script>
+<script src="assets/social.js?v=322"></script>
 </body>
 </html>

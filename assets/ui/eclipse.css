@@ -1340,11 +1340,15 @@ body.clean-screen #eclipseCompanions{display:none}
 #sideMenu.eclipse-more-open{pointer-events:auto;max-height: min(60vh,440px)}
 body.clean-screen #sideMenu{display:none}
 #wins .ui-field-guide{max-height:360px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-gutter:stable}
-@media(min-width:1101px){
-  #wins>.wp[data-win=map]:only-child{height:100%}
-  #wins .wbody[data-layout=map]{display:flex;flex-direction:column;overflow:hidden;flex:1 1 auto}
-  #wins .ui-panel[data-layout=map] .ui-content{min-height:0;flex:1;align-items:stretch;overflow:hidden}
-  #wins .ui-panel[data-layout=map] .ui-content>.ui-section{min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+@container(min-width:851px){
+  #wins .ui-panel[data-layout=map] .ui-content{align-items:stretch}
+  #wins .ui-panel[data-layout=map] .ui-field-guide{max-height:none}
+}
+@media(min-width:640px){
+  html:not(.pg-mobile) #wins>.wp[data-win=map]:only-child{height:100%}
+  html:not(.pg-mobile) #wins .wbody[data-layout=map]{display:flex;flex-direction:column;overflow:hidden;flex:1 1 auto}
+  html:not(.pg-mobile) #wins .ui-panel[data-layout=map] .ui-content{min-height:0;flex:1;align-items:stretch;overflow:hidden}
+  html:not(.pg-mobile) #wins .ui-panel[data-layout=map] .ui-content>.ui-section{min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
 }
 #wins .ui-skill-catalog .skg{grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:8px}
 #wins .ui-skill-catalog .sk{grid-template-columns:38px minmax(0,1fr) 36px;align-content:start;gap:4px 8px;cursor:default}
@@ -1751,7 +1755,7 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .ascension-evolution button[data-a="transformasc"]{width:100%;min-height:40px;margin-top:4px;padding:9px 14px;font-weight:700;font-size:12px;line-height:1.35;white-space:normal;border:1px solid var(--gold);border-radius:6px;background:var(--gold);color:var(--e-bg)}
 #wins .ascension-evolution button[data-a="transformasc"]:disabled{background:var(--e-raised);color:var(--ink);border-color:var(--edge2);opacity:.78;cursor:not-allowed}
 #wins .ascension-empty{padding:18px 0;line-height:1.7;color:var(--e-muted)}
-#wins .echo-panel{display:block!important}#wins .echo-destination{padding:24px;max-width:800px;margin:auto}
+#wins .echo-panel{display:block!important;overflow-y:auto!important;overscroll-behavior:contain;padding:16px 20px!important}#wins .echo-destination{padding:24px;max-width:800px;margin:auto}
 #wins .ascension-progression{padding:20px;line-height:1.8}
 #wins .ascension-skill-preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}
 #wins .ascension-skill-preview article{display:grid;justify-items:center;gap:9px;text-align:center;padding:14px;border:1px solid var(--e-line);border-radius:8px}
@@ -1847,9 +1851,9 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .ascension-forge-status{font-size:12px;line-height:1.5}
 
 /* Minimap-left quick icons: Mail (Announcements & Gifts) + Daily Material Roulette */
-#minimapTools{position:absolute;right:254px;top:19px;z-index:6;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+#minimapTools{position:absolute;right:254px;top:19px;z-index:6;display:flex;flex-direction:column;gap:6px;pointer-events:auto;align-items:flex-end}
 body.social-open #minimapTools{display:none!important}
-.minimap-tool-btn{position:relative;width:44px;height:42px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--panel);border:1px solid var(--edge2);border-radius:8px;color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,.42);cursor:pointer;transition:border-color .15s,background .15s,transform .12s}
+.minimap-tool-btn{position:relative;width:82px;height:44px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--panel);border:1px solid var(--edge2);border-radius:8px;color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,.42);cursor:pointer;transition:border-color .15s,background .15s,transform .12s}
 .minimap-tool-btn:hover{border-color:var(--gold);background:var(--e-raised);color:var(--gold);transform:translateY(-1px)}
 .minimap-tool-btn svg{width:18px;height:18px;flex:none;color:var(--gold)}
 .minimap-tool-label{font-size:8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1;color:var(--e-muted)}
@@ -1857,6 +1861,34 @@ body.social-open #minimapTools{display:none!important}
 .minimap-tool-badge{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#d94848;border:1.5px solid #161822;color:#fff;font-size:9px;font-weight:900;line-height:13px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.5)}
 .minimap-tool-badge[hidden]{display:none!important}
 .minimap-tool-badge.is-dot{background:var(--gold);color:#17151c}
+
+/* v320: Social Hub quick button - the third seat in the minimap tool column, deliberately
+   oversized next to Mail/Daily (owner: the 44px seat was too small to notice). It keeps the
+   column's right edge and grows leftwards into the field margin. The attract pulse never
+   fully sleeps: the rainbow frame breathes even on an empty plaza (all a test server ever
+   shows), a busy plaza adds a green glow and quickens it, and a friend inside turns the
+   badge gold and quickens it further. */
+.social-hub-btn{align-self:flex-end;gap:2px;background:linear-gradient(165deg,#2e5240,#14231c);border:1.5px solid #c9a35b;color:#ffe9a8;box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 14px #c9a35b33}
+.social-hub-btn svg{width:21px;height:21px;color:#ffd977}
+.social-hub-btn .minimap-tool-label{font-size:9px;letter-spacing:.1em;color:#ffe9a8}
+.social-hub-btn:hover{transform:translateY(-1px) scale(1.03)}
+.social-hub-badge{background:#2fbf71;border-color:#161822;color:#07130c;min-width:21px;height:21px;padding:0 5px;font-size:11px;line-height:18px;top:-7px;right:-7px}
+.social-hub-btn.is-empty .social-hub-badge{background:#5b6a60;color:#d8e2da}
+.social-hub-btn.has-friends .social-hub-badge{background:var(--gold);color:#17151c}
+/* v322 (owner): the rainbow belongs to the pulsing frame, not the button body - the seat
+   keeps its gold border, and the expanding pulse ring carries the rainbow (a conic
+   gradient clipped to the ring by mask) while slowly cycling its hue. */
+.social-hub-btn::after{content:'';position:absolute;inset:-1px;border-radius:9px;padding:2px;background:conic-gradient(from 0deg,#ff004c,#ff8a00,#ffee00,#37ff7a,#00cfff,#7a5cff,#ff004c);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;opacity:0;pointer-events:none;animation:socialHubRing 3s ease-out infinite,socialHueSpin 5s linear infinite}
+.social-hub-btn.is-live{animation:socialHubGlow 2s ease-in-out infinite}
+.social-hub-btn.is-live::after{animation-duration:2s,5s}
+.social-hub-btn.has-friends::after{animation-duration:1.6s,5s}
+@keyframes socialHueSpin{to{filter:hue-rotate(360deg)}}
+.social-hub-btn.is-live .social-hub-badge{animation:socialHubBadge 2s ease-in-out infinite}
+.social-hub-btn.has-friends .social-hub-badge{animation-duration:1.6s}
+@keyframes socialHubRing{0%{opacity:.85;transform:scale(1)}70%{opacity:0;transform:scale(1.16)}100%{opacity:0;transform:scale(1.16)}}
+@keyframes socialHubBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@keyframes socialHubGlow{0%,100%{box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 10px #57e38940}50%{box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 24px #57e38990}}
+@media (prefers-reduced-motion:reduce){.social-hub-btn::after,.social-hub-btn.is-live,.social-hub-btn.is-live .social-hub-badge{animation:none}}
 
 /* The studio is a real top-level modal. Its root was missing its fixed overlay rules,
    which made the Compose action add a class without ever bringing a visible dialog up. */
@@ -2184,7 +2216,15 @@ body.social-open #minimapTools{display:none!important}
 }
 
 @media(max-width:980px){
-  #minimapTools{right:188px;top:19px}
+  /* v321: the seats are 82px wide now, and at this band the minimized AUTO COMBAT bar
+     holds the top-right (right:8, 210px). 228px parks the whole column left of it
+     instead of tucking the Mail badge under the bar. */
+  #minimapTools{right:228px;top:19px}
+}
+/* v319/v320: with a third, oversized tool button the column reaches y=171px at this band,
+   where the rail otherwise starts at y=142px - drop the rail clear of the Social badge. */
+@media(min-width:701px) and (max-width:980px){
+  #sideRail{top:182px;max-height:calc(100% - 150px)}
 }
 
 /* Loadout workbench — live equipment and inventory controls, styled without changing game rules. */
@@ -3671,3 +3711,1409 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
   border:1px solid var(--edge);border-radius:6px;padding:14px 8px;margin:14px 0;font-size:16px;letter-spacing:1px;
 }
 #loginOverlay .recovery-success .login-btn{white-space:normal}
+
+/* ---------- Illustrated World Map of Rune-Midgard — Option B Layout (v316) ---------- */
+#wins .ui-panel[data-layout=map] #map-panel-ascension.ui-content{
+  grid-template-columns:152px minmax(0,1.45fr) 256px;
+}
+
+/* Mobile landscape guard: keep landscape phone's compact 205px zero-scroll travel budget */
+@media (orientation:landscape) and (max-height:560px){
+  html.pg-mobile #wins .rm-optb-meta{display:none}
+  html.pg-mobile #wins .rm-route-drawer{padding:0;border:0;background:none}
+}
+
+/* Mobile portrait tuning: crisp 16:9 Illustrated Map + Stage Card + Tap-for-Card Roster */
+@media not all and (orientation:landscape) and (max-height:560px){
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:8px 10px 14px;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations>.ui-section-label,
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.ui-section-label,
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .mapband-t,
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-fold{
+    display:none;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapgrid{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:4px;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard{
+    min-height:38px;
+    padding:4px 2px;
+    border-radius:6px;
+    background:#111923;
+    border:1px solid #263446;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.on{
+    background:#2a2215;
+    border-color:#dfb96e;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:0;
+    border:0!important;
+    background:none;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero{
+    aspect-ratio:16 / 9;
+    min-height:176px;
+    max-height:230px;
+    height:auto;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
+    max-height:230px;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.rm-route-drawer{
+    padding:9px 10px;
+    border-radius:8px;
+    background:#0d131b;
+    border:1px solid #243040;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .fields{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin:0;
+    padding:0;
+    border:0;
+    background:none;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare){
+    display:grid;
+    grid-template-columns:repeat(10,minmax(0,1fr));
+    gap:3px;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:4px;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node{
+    min-height:28px;
+    height:28px;
+    opacity:1!important;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node>small{
+    display:none;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action{
+    margin:2px 0 0;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action>.go{
+    min-height:38px;
+    border-radius:6px;
+    background:linear-gradient(180deg,#dfc080,#c49e58);
+    border:1px solid #f4dca0;
+    color:#14181f;
+    font:700 11.5px/1 var(--e-font);
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-field-guide{
+    max-height:none;
+    padding:10px 12px;
+    border-radius:8px;
+    background:#0d131b;
+    border:1px solid #243040;
+  }
+  html.pg-mobile #wins .rm-mob-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+/* Slim Desktop Map Window Chrome (Reclaims ~54px of Oversized Header/Tab/Footer Space) */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"]>.title{
+  height:44px;
+  min-height:44px;
+  padding:0 14px;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"]>.title>span:first-child{
+  gap:10px;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"]>.title>span:first-child>.ui-icon{
+  width:28px;
+  height:28px;
+  padding:5px;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"] .eclipse-window-heading{
+  gap:1px;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"] .eclipse-window-heading small{
+  font-size:6.5px;
+  line-height:1.1;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"] .eclipse-window-heading b{
+  font-size:15.5px;
+  line-height:1.15;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"]>.eclipse-window-footer{
+  height:22px;
+  min-height:22px;
+  padding:0 14px;
+}
+
+/* Option B Desktop & Tablet World Atlas: Unified 10-Column Master Grid */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins .ui-panel[data-layout=map]:has(>#map-panel-atlas)>.ui-hero{
+  display:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins .ui-panel[data-layout=map]>.atabs.map-season-tabs{
+  min-height:34px;
+  padding:4px 14px;
+  gap:6px;
+  border:0;
+  border-bottom:1px solid var(--e-line);
+  border-radius:0;
+  background:rgba(11,16,23,.55);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins .ui-panel[data-layout=map]>.atabs.map-season-tabs button{
+  min-height:26px;
+  height:26px;
+  padding:0 10px;
+  border-radius:5px;
+  font-size:10.5px;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content{
+  display:grid;
+  grid-template-columns:repeat(10,minmax(0,1fr));
+  grid-template-rows:auto minmax(0,1fr);
+  gap:8px;
+  padding:8px 14px 10px;
+  align-items:stretch;
+  min-height:0;
+  flex:1 1 auto;
+  overflow:hidden;
+}
+
+/* Row 1: Full-width 10-Map Horizontal Bar (Cols 1..10) */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations{
+  grid-column:1 / -1;
+  grid-row:1;
+  padding:0;
+  margin:0;
+  background:none;
+  border:0;
+  border-radius:0;
+  overflow:visible;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations>.ui-section-label{
+  display:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapgrid{
+  display:grid;
+  grid-template-columns:repeat(10,minmax(0,1fr));
+  gap:8px;
+  margin:0;
+  padding:0;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:2px;
+  min-height:38px;
+  height:38px;
+  padding:3px 4px;
+  margin:0;
+  border-radius:6px;
+  background:#111923;
+  border:1px solid #263446;
+  text-align:center;
+  box-shadow:none;
+  transition:background .15s ease,border-color .15s ease;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard .eclipse-map-number{
+  position:absolute;
+  top:3px;
+  left:4px;
+  margin:0;
+  font:700 7.5px/1 var(--e-font);
+  font-variant-numeric:tabular-nums;
+  color:#6c8196;
+  pointer-events:none;
+}
+@media(max-width:1100px){
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard .eclipse-map-number{
+    display:none;
+  }
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard b{
+  margin:0;
+  max-width:100%;
+  font:700 10.5px/1.1 var(--e-font);
+  color:#e4ebf2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard small{
+  margin:0;
+  max-width:100%;
+  font:500 8.5px/1.1 var(--e-font);
+  font-variant-numeric:tabular-nums;
+  color:#7f93a6;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard:hover{
+  background:#182330;
+  border-color:#445c77;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.here:not(.on){
+  border-color:rgba(70,196,126,.55);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.on{
+  background:#2a2215;
+  border:1.5px solid #dfb96e;
+  box-shadow:inset 0 0 0 1px rgba(245,214,142,.18);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.on .eclipse-map-number,
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.on b{
+  color:#f5d68e;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.on small{
+  color:#cbb07a;
+}
+
+/* Row 2, Cols 1..6 (Exact Alignment Under Maps 01..06): Map Card + Stage/Travel Card */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route{
+  grid-column:1 / 7;
+  grid-row:2;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  gap:8px;
+  min-height:0;
+  height:100%;
+  padding:0;
+  margin:0;
+  border:0!important;
+  background:none;
+  overflow:hidden;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.ui-section-label{
+  display:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.rm-route-drawer{
+  margin:0;
+  padding:10px 12px;
+  background:#0d131b;
+  border:1px solid #243040;
+  border-radius:8px;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .fields{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  margin:0;
+  padding:0;
+  border:0;
+  background:none;
+  position:static;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .mapband-t{
+  display:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-fold{
+  display:none;
+}
+
+/* Option B Fixed Single-Line Header Inside Stage Card (Never Wraps -> Zero Map Shake) */
+#wins .rm-optb-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:nowrap;
+  height:22px;
+  min-height:22px;
+  max-height:22px;
+  padding:0;
+  overflow:hidden;
+}
+#wins .rm-optb-meta{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:nowrap;
+  min-width:0;
+  overflow:hidden;
+  white-space:nowrap;
+}
+#wins .rm-optb-kicker{
+  flex:none;
+  font:700 11.5px/1 var(--e-font);
+  letter-spacing:.04em;
+  color:#e8c987;
+}
+#wins .rm-optb-lv{
+  flex:none;
+  padding:2px 6px;
+  border-radius:4px;
+  background:#16202c;
+  border:1px solid #2b3c50;
+  font:600 9.5px/1.1 var(--e-font);
+  font-variant-numeric:tabular-nums;
+  color:#c8d6e4;
+}
+#wins .rm-optb-sub{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font:500 10px/1.1 var(--e-font);
+  color:#8498ac;
+}
+#wins .rm-optb-head>.row{
+  flex:none;
+  margin:0!important;
+  padding:0!important;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-size:10.5px;
+  color:#b7c5d3;
+}
+#wins .rm-optb-head>.row label{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin:0;
+  cursor:pointer;
+  font-size:10.5px;
+  color:#b7c5d3;
+  white-space:nowrap;
+}
+html:not(.pg-mobile) #wins .rm-optb-head>.row>small{
+  display:none;
+}
+
+/* Option B Stage Grid (01..09, MVP + NM 1..5) & Gold Travel Button */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .lvgrid{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  margin:0;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare){
+  display:grid;
+  grid-template-columns:repeat(10,minmax(0,1fr));
+  gap:5px;
+  margin:0;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:5px;
+  margin:0;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node{
+  min-height:30px;
+  height:30px;
+  padding:0 2px;
+  border-radius:5px;
+  background:#151f2b;
+  border:1px solid #2a394c;
+  color:#cbd7e3;
+  opacity:1!important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:none;
+  font-variant-numeric:tabular-nums;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node>small{
+  display:none;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node b{
+  font:700 10.5px/1 var(--e-font);
+  color:inherit;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare) .map-node.locked{
+  background:#101720;
+  border-color:#1f2a37;
+  color:#586879;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node.active:not(.picked){
+  border-color:rgba(70,196,126,.65);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare .map-node{
+  min-height:26px;
+  height:26px;
+  background:#181629;
+  border-color:#443763;
+  color:#b1a3d1;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare .map-node.locked{
+  background:#12121e;
+  border-color:#29233d;
+  color:#6c6187;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare) .map-node.picked,
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare) .map-node[aria-pressed="true"]{
+  background:#cca965!important;
+  border-color:#f3d999!important;
+  color:#14181f!important;
+  box-shadow:0 2px 8px rgba(204,169,101,.28);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare) .map-node.picked b,
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare) .map-node[aria-pressed="true"] b{
+  color:#14181f!important;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare .map-node.picked,
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare .map-node[aria-pressed="true"]{
+  background:#533e7d!important;
+  border-color:#c2abf4!important;
+  color:#f7f2ff!important;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action{
+  margin:1px 0 0;
+  padding:0;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action>.go{
+  width:100%;
+  min-height:36px;
+  height:36px;
+  padding:0 14px;
+  border-radius:6px;
+  background:linear-gradient(180deg,#dfc080,#c49e58);
+  border:1px solid #f4dca0;
+  color:#14181f;
+  font:700 12px/1 var(--e-font);
+  letter-spacing:.01em;
+  box-shadow:0 4px 12px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,250,232,.55);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action>.go:hover:not(:disabled){
+  filter:brightness(1.06);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action>.go:disabled{
+  background:#19222e;
+  border-color:#344457;
+  color:#9bb0c4;
+  box-shadow:none;
+  opacity:1;
+}
+
+/* Row 2, Cols 7..10 (Exact Alignment Under Maps 07..10): Full-Height 03 / Field Intelligence */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-field-guide{
+  grid-column:7 / -1;
+  grid-row:2;
+  min-height:0;
+  height:100%;
+  max-height:none;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:10px 14px;
+  margin:0;
+  background:#0d131b;
+  border:1px solid #243040;
+  border-radius:8px;
+}
+
+#wins .eclipse-atlas-hero.rm-illustrated-hero{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  min-height:175px;
+  height:auto;
+  aspect-ratio:auto;
+  max-height:none;
+  width:100%;
+  margin:0;
+  background:#223842;
+  border:1px solid color-mix(in srgb,var(--gold) 45%,#5e4a2b);
+  border-radius:8px;
+  box-shadow:0 10px 24px rgba(0,0,0,.4),inset 0 0 0 1px rgba(255,232,178,.14);
+  overflow:hidden;
+  user-select:none;
+}
+#wins .eclipse-atlas-hero.rm-illustrated-hero:after{display:none}
+#wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
+  position:relative;
+  inset:auto;
+  width:100%;
+  height:auto;
+  aspect-ratio:16 / 9;
+  min-height:185px;
+  max-height:380px;
+  flex:none;
+  overflow:hidden;
+  cursor:default;
+  touch-action:auto;
+  background:#223842;
+  z-index:1;
+}
+@media(min-width:640px){
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero{
+    height:100%;
+    min-height:120px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    min-height:0;
+    max-height:none;
+    aspect-ratio:auto;
+  }
+}
+@media(min-width:640px) and (max-width:980px){
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content{
+    gap:6px;
+    padding:6px 10px 8px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapgrid{
+    gap:4px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard{
+    min-height:34px;
+    height:34px;
+    padding:2px 3px;
+    gap:1px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard b{
+    font-size:9.5px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard small{
+    font-size:7.5px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route{
+    gap:6px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.rm-route-drawer{
+    padding:7px 9px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .fields{
+    gap:5px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare){
+    gap:3px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare{
+    gap:4px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node{
+    min-height:26px;
+    height:26px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node b{
+    font-size:9.5px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare .map-node{
+    min-height:22px;
+    height:22px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action>.go{
+    min-height:32px;
+    height:32px;
+    font-size:11px;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-field-guide{
+    padding:8px 10px;
+  }
+}
+@media(max-width:860px){
+  #wins .rm-optb-sub{display:none}
+}
+body.rm-atlas-fullscreen #wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  min-height:0;
+  max-height:none;
+  aspect-ratio:auto;
+  cursor:grab;
+  touch-action:none;
+}
+body.rm-atlas-fullscreen #wins .rm-viewport.is-dragging{cursor:grabbing}
+
+#wins .rm-canvas{
+  position:relative;
+  width:var(--cw,100%);
+  height:var(--ch,100%);
+  transform-origin:0 0;
+  transform:translate3d(var(--x,0px),var(--y,0px),0) scale(var(--zoom,1));
+  transition:transform .52s cubic-bezier(.22,1,.36,1);
+  will-change:transform;
+}
+body.rm-atlas-fullscreen #wins .rm-viewport.is-dragging .rm-canvas{
+  transition:none!important;
+}
+#wins .rm-canvas>.rm-map{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  pointer-events:none;
+  user-select:none;
+}
+#wins .rm-clouds-veil{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  pointer-events:none;
+  mix-blend-mode:screen;
+  opacity:.32;
+  z-index:2;
+}
+
+/* Ambient birds & drifting multi-puff clouds */
+#wins .rm-ambient{
+  position:absolute;
+  left:var(--ax);
+  top:var(--ay);
+  width:var(--size);
+  pointer-events:none;
+  z-index:3;
+}
+#wins .rm-ambient img{
+  display:block;
+  width:100%;
+  height:auto;
+  pointer-events:none;
+}
+#wins .rm-birds{opacity:.68}
+#wins .rm-birds.birds-a{animation:rmFlyBirdsA 46s linear infinite}
+#wins .rm-birds.birds-b{animation:rmFlyBirdsB 58s linear -17s infinite}
+#wins .rm-birds.birds-c{animation:rmFlyBirdsC 52s linear -9s infinite}
+#wins .rm-birds.birds-d{animation:rmFlyBirdsD 62s linear -31s infinite}
+#wins .rm-birds.birds-e{animation:rmFlyBirdsE 48s linear -22s infinite}
+#wins .rm-birds.birds-f{animation:rmFlyBirdsF 56s linear -41s infinite}
+#wins .rm-birds.birds-g{animation:rmFlyBirdsG 64s linear -13s infinite}
+#wins .rm-birds.birds-h{animation:rmFlyBirdsH 50s linear -27s infinite}
+
+@keyframes rmFlyBirdsA{
+  0%{transform:translate(160%,-30%);opacity:0}
+  12%,88%{opacity:.68}
+  100%{transform:translate(-190%,35%);opacity:0}
+}
+@keyframes rmFlyBirdsB{
+  0%{transform:translate(-150%,24%);opacity:0}
+  12%,88%{opacity:.62}
+  100%{transform:translate(185%,-28%);opacity:0}
+}
+@keyframes rmFlyBirdsC{
+  0%{transform:translate(145%,22%);opacity:0}
+  12%,88%{opacity:.65}
+  100%{transform:translate(-175%,-32%);opacity:0}
+}
+@keyframes rmFlyBirdsD{
+  0%{transform:translate(-170%,-20%);opacity:0}
+  12%,88%{opacity:.64}
+  100%{transform:translate(175%,28%);opacity:0}
+}
+@keyframes rmFlyBirdsE{
+  0%{transform:translate(155%,-18%);opacity:0}
+  12%,88%{opacity:.6}
+  100%{transform:translate(-165%,30%);opacity:0}
+}
+@keyframes rmFlyBirdsF{
+  0%{transform:translate(-155%,28%);opacity:0}
+  12%,88%{opacity:.65}
+  100%{transform:translate(170%,-26%);opacity:0}
+}
+@keyframes rmFlyBirdsG{
+  0%{transform:translate(175%,16%);opacity:0}
+  12%,88%{opacity:.62}
+  100%{transform:translate(-185%,-24%);opacity:0}
+}
+@keyframes rmFlyBirdsH{
+  0%{transform:translate(150%,26%);opacity:0}
+  12%,88%{opacity:.6}
+  100%{transform:translate(-170%,-28%);opacity:0}
+}
+
+#wins .rm-cloud{
+  aspect-ratio:2 / 1;
+  transform:translate(-50%,-50%);
+  z-index:4;
+}
+#wins .rm-cloud .rm-puff{
+  position:absolute;
+  width:72%;
+  height:auto;
+  filter:drop-shadow(0 8px 10px rgba(24,30,38,.12));
+}
+#wins .rm-cloud .rm-puff-1{left:0;top:14%;opacity:.48}
+#wins .rm-cloud .rm-puff-2{left:28%;top:0;width:76%;opacity:.42}
+#wins .rm-cloud .rm-puff-3{left:16%;top:28%;width:66%;opacity:.36}
+
+#wins .rm-cloud.cloud-a{animation:rmDriftCloudA 90s ease-in-out infinite alternate}
+#wins .rm-cloud.cloud-b{animation:rmDriftCloudB 108s ease-in-out -19s infinite alternate}
+#wins .rm-cloud.cloud-c{animation:rmDriftCloudC 96s ease-in-out -37s infinite alternate}
+#wins .rm-cloud.cloud-d{animation:rmDriftCloudD 84s ease-in-out -11s infinite alternate}
+#wins .rm-cloud.cloud-e{animation:rmDriftCloudE 102s ease-in-out -29s infinite alternate}
+#wins .rm-cloud.cloud-f{animation:rmDriftCloudF 88s ease-in-out -43s infinite alternate}
+#wins .rm-cloud.cloud-g{animation:rmDriftCloudG 94s ease-in-out -23s infinite alternate}
+#wins .rm-cloud.cloud-h{animation:rmDriftCloudH 112s ease-in-out -51s infinite alternate}
+#wins .rm-cloud.cloud-i{animation:rmDriftCloudI 80s ease-in-out -15s infinite alternate}
+
+@keyframes rmDriftCloudA{from{transform:translate(-62%,-50%)}to{transform:translate(-38%,-47%)}}
+@keyframes rmDriftCloudB{from{transform:translate(-40%,-52%)}to{transform:translate(-60%,-48%)}}
+@keyframes rmDriftCloudC{from{transform:translate(-58%,-48%)}to{transform:translate(-42%,-52%)}}
+@keyframes rmDriftCloudD{from{transform:translate(-44%,-50%)}to{transform:translate(-58%,-47%)}}
+@keyframes rmDriftCloudE{from{transform:translate(-60%,-51%)}to{transform:translate(-38%,-49%)}}
+@keyframes rmDriftCloudF{from{transform:translate(-42%,-49%)}to{transform:translate(-57%,-52%)}}
+@keyframes rmDriftCloudG{from{transform:translate(-56%,-52%)}to{transform:translate(-42%,-48%)}}
+@keyframes rmDriftCloudH{from{transform:translate(-62%,-49%)}to{transform:translate(-38%,-51%)}}
+@keyframes rmDriftCloudI{from{transform:translate(-44%,-51%)}to{transform:translate(-58%,-49%)}}
+
+/* 8 Isometric Town Cutout Pins */
+#wins .rm-location-layer{
+  position:absolute;
+  inset:0;
+  z-index:8;
+  pointer-events:none;
+}
+#wins .rm-loc{
+  position:absolute;
+  left:var(--x);
+  top:var(--y);
+  width:calc(var(--size) * 1.38);
+  min-width:40px;
+  min-height:0;
+  height:auto;
+  padding:0!important;
+  margin:0;
+  border:0!important;
+  border-radius:0;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:translate(-50%,-50%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  cursor:pointer;
+  pointer-events:auto;
+  overflow:visible;
+  transition:transform .2s cubic-bezier(.22,1,.36,1),filter .2s ease;
+  z-index:10;
+}
+#wins .rm-loc img{
+  display:block;
+  width:100%;
+  height:auto;
+  object-fit:contain;
+  pointer-events:none;
+  filter:drop-shadow(0 5px 8px rgba(18,12,6,.55)) drop-shadow(0 0 2px rgba(255,238,196,.4));
+  transition:filter .2s ease;
+}
+#wins .rm-loc-label{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  margin-top:-4px;
+  padding:2px 7px;
+  border-radius:999px;
+  background:rgba(236,214,168,.95);
+  border:1px solid rgba(92,58,24,.68);
+  box-shadow:0 3px 8px rgba(14,9,4,.48),inset 0 1px 0 rgba(255,250,235,.72);
+  color:#2d1c0e;
+  font:700 clamp(7.5px,0.72vw,10.5px)/1.2 Georgia,"Times New Roman",serif;
+  letter-spacing:.02em;
+  white-space:nowrap;
+  pointer-events:none;
+  text-shadow:0 1px 0 rgba(255,248,228,.65);
+}
+#wins .rm-loc:hover,
+#wins .rm-loc:focus-visible{
+  transform:translate(-50%,-53%) scale(1.11);
+  z-index:24;
+  outline:none;
+}
+#wins .rm-loc:hover img,
+#wins .rm-loc:focus-visible img{
+  filter:drop-shadow(0 0 6px rgba(255,245,205,.95)) drop-shadow(0 6px 12px rgba(20,12,4,.62));
+}
+#wins .rm-loc.is-selected{
+  transform:translate(-50%,-53%) scale(1.1);
+  z-index:22;
+}
+#wins .rm-loc.is-selected img{
+  filter:drop-shadow(0 0 7px rgba(255,232,150,.98)) drop-shadow(0 0 16px rgba(240,185,75,.68)) drop-shadow(0 6px 12px rgba(16,10,4,.6));
+}
+#wins .rm-loc.is-selected .rm-loc-label{
+  background:linear-gradient(180deg,#fff6d6,#ecc97e);
+  border-color:#7b4b12;
+  color:#231305;
+  box-shadow:0 0 0 1.5px rgba(255,222,135,.82),0 4px 10px rgba(12,8,3,.58);
+}
+#wins .rm-here-dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#1f9d55;
+  box-shadow:0 0 0 2px rgba(31,157,85,.32),0 0 6px #37e27d;
+  flex:none;
+}
+
+/* Top-right Map Toolbar & Bottom-left Region Caption */
+#wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-controls{
+  position:absolute;
+  top:8px;
+  right:8px;
+  left:auto;
+  bottom:auto;
+  z-index:30;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:5px;
+}
+#wins .rm-ctrl-btn{
+  min-width:26px;
+  height:26px;
+  min-height:26px;
+  padding:0 7px;
+  border-radius:6px;
+  border:1px solid rgba(226,194,132,.48);
+  background:rgba(13,18,25,.84);
+  backdrop-filter:blur(6px);
+  color:#f2e5c7;
+  font:600 10.5px/1 var(--e-font);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  cursor:pointer;
+  box-shadow:0 4px 12px rgba(0,0,0,.42);
+  transition:background .15s ease,border-color .15s ease,color .15s ease;
+}
+#wins .rm-ctrl-btn.rm-ctrl-pill{
+  padding:0 9px;
+  font-size:9.5px;
+  letter-spacing:.02em;
+}
+#wins .rm-ctrl-btn:hover,
+#wins .rm-ctrl-btn.on{
+  background:rgba(36,29,18,.94);
+  border-color:var(--gold);
+  color:var(--gold);
+}
+
+#wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+  display:none;
+  position:relative;
+}
+#wins .rm-hero-caption .ui-eyebrow{
+  display:block;
+  font-size:7.5px;
+  letter-spacing:.08em;
+  color:#e4c483;
+}
+#wins .rm-hero-caption h2{
+  font:500 15px/1.15 var(--e-display);
+  margin:1px 0;
+  color:#f5f0e4;
+}
+#wins .rm-hero-caption p{
+  font-size:8.5px;
+  margin:0;
+  color:#c8d4cf;
+}
+
+/* Floating Paired Region Sub-Zone Overlay (Top-Left Ocean — Explicit bottom/right:auto prevents .eclipse-atlas-hero>div stretch!) */
+#wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-subzones.rm-subzones-overlay{
+  position:absolute;
+  top:8px;
+  left:8px;
+  bottom:auto;
+  right:auto;
+  width:auto;
+  height:auto;
+  z-index:30;
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  padding:2px 3px;
+  border-radius:7px;
+  background:rgba(13,18,25,.86);
+  backdrop-filter:blur(6px);
+  border:1px solid rgba(226,194,132,.45);
+  box-shadow:0 4px 12px rgba(0,0,0,.42);
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-subzones.rm-subzones-overlay{
+  top:auto;
+  bottom:14px;
+  left:50%;
+  right:auto;
+  transform:translateX(-50%);
+}
+#wins .rm-subzone-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:22px;
+  height:22px;
+  padding:0 9px;
+  border-radius:5px;
+  border:1px solid transparent;
+  background:transparent;
+  cursor:pointer;
+  transition:background .15s ease,border-color .15s ease;
+}
+#wins .rm-subzone-btn b{
+  font:600 9.5px/1 var(--e-font);
+  color:#c5d2de;
+}
+#wins .rm-subzone-btn:hover{
+  background:rgba(255,255,255,.06);
+}
+#wins .rm-subzone-btn.on{
+  background:#2d2415;
+  border-color:#dfb96e;
+  box-shadow:inset 0 0 0 1px rgba(245,214,142,.2);
+}
+#wins .rm-subzone-btn.on b{color:#f5d68e}
+
+/* Structured Field Intelligence Monster Roster, Hover Card Effect Tooltip & MVP Loot Priority */
+#wins .ui-field-guide .rm-intel-hd{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:6px 10px;
+}
+#wins .ui-field-guide .rm-intel-hd>small{
+  flex-basis:100%;
+  margin-top:2px;
+}
+#wins .ui-field-guide .rm-intel-badge{
+  padding:2px 8px;
+  border-radius:999px;
+  background:#151f2b;
+  border:1px solid #2b3c50;
+  font:600 9px/1.2 var(--e-font);
+  letter-spacing:.02em;
+}
+#wins .ui-field-guide .eclipse-field-encounter{
+  position:relative;
+  overflow:visible;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:6px;
+  padding:9px 10px;
+  margin:10px 0 12px;
+  border:1px solid #253447;
+  border-radius:7px;
+  background:#111923;
+}
+#wins .rm-encounter-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+#wins .rm-encounter-head>span{
+  font:700 8.5px/1.2 var(--e-font);
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  color:#90a4b8;
+}
+#wins .rm-encounter-head>small{
+  margin:0;
+  font:500 8.5px/1.2 var(--e-font);
+  color:#7e93a7;
+}
+#wins .rm-mob-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(175px,1fr));
+  gap:6px;
+}
+#wins .rm-mob-tile{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+  padding:6px 8px;
+  border-radius:6px;
+  background:#16202d;
+  border:1px solid #263649;
+  cursor:pointer;
+  transition:border-color .15s ease,background .15s ease;
+}
+#wins .rm-mob-tile:hover,
+#wins .rm-mob-tile:focus-visible,
+#wins .rm-mob-tile.is-open{
+  background:#1b2838;
+  border-color:#536e8c;
+  outline:none;
+  z-index:20;
+}
+#wins .rm-mob-tile.is-boss{
+  background:linear-gradient(90deg,rgba(219,181,104,.16),rgba(22,32,45,.92));
+  border-color:rgba(223,185,110,.5);
+}
+#wins .rm-mob-tile.is-boss:hover,
+#wins .rm-mob-tile.is-boss:focus-visible,
+#wins .rm-mob-tile.is-boss.is-open{
+  border-color:#f0cb7e;
+}
+#wins .rm-mob-tile img{
+  width:32px;
+  height:32px;
+  flex:none;
+  object-fit:contain;
+  image-rendering:pixelated;
+}
+#wins .rm-mob-copy{
+  min-width:0;
+  flex:1;
+}
+#wins .rm-mob-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:4px;
+  min-width:0;
+}
+#wins .rm-mob-tile b{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+  font:600 10px/1.2 var(--e-font);
+  color:#e8eef4;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#wins .rm-card-hint{
+  flex:none;
+  font-size:11px;
+  line-height:1;
+  opacity:.48;
+  filter:saturate(.85);
+  transition:opacity .15s ease,transform .15s ease;
+}
+#wins .rm-mob-tile:hover .rm-card-hint,
+#wins .rm-mob-tile:focus-visible .rm-card-hint,
+#wins .rm-mob-tile.is-open .rm-card-hint{
+  opacity:1;
+  transform:scale(1.1);
+}
+#wins .rm-mob-tile small.rm-mob-stats{
+  display:block;
+  margin-top:2px;
+  font:500 8.5px/1.2 var(--e-font);
+  font-variant-numeric:tabular-nums;
+  color:#92a6ba;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#wins .rm-card-pop{
+  display:none;
+}
+.rm-card-float{
+  position:fixed;
+  left:12px;
+  top:12px;
+  width:236px;
+  max-width:calc(100vw - 16px);
+  padding:8px 10px;
+  border-radius:7px;
+  background:rgba(10,15,22,.97);
+  border:1px solid rgba(223,185,110,.6);
+  box-shadow:0 12px 28px rgba(0,0,0,.68),inset 0 1px 0 rgba(255,244,214,.14);
+  pointer-events:none;
+  opacity:0;
+  visibility:hidden;
+  transform:translateY(3px);
+  transition:opacity .13s ease,transform .13s ease,visibility .13s ease;
+  z-index:9999;
+}
+.rm-card-float.on{
+  opacity:1;
+  visibility:visible;
+  transform:translateY(0);
+}
+.rm-card-float .rm-card-pop-hd,
+#wins .rm-card-pop-hd{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:4px;
+}
+.rm-card-float .rm-card-pop-hd strong,
+#wins .rm-card-pop-hd strong{
+  font:700 10.5px/1.2 var(--e-font);
+  color:#f3ead5;
+}
+.rm-card-float .rm-card-pop-hd em,
+#wins .rm-card-pop-hd em{
+  font:700 8px/1.2 var(--e-font);
+  font-style:normal;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#9fb2c5;
+}
+.rm-card-float .rm-card-pop-hd em.g1,#wins .rm-card-pop-hd em.g1{color:#7bd8a4}
+.rm-card-float .rm-card-pop-hd em.g2,#wins .rm-card-pop-hd em.g2{color:#8cbcff}
+.rm-card-float .rm-card-pop-hd em.g3,#wins .rm-card-pop-hd em.g3{color:#f5d68e}
+.rm-card-float .rm-card-pop-fx,
+#wins .rm-card-pop-fx{
+  font:700 11px/1.3 var(--e-font);
+  color:#f5d68e;
+  margin-bottom:3px;
+}
+.rm-card-float .rm-card-pop-meta,
+#wins .rm-card-pop-meta{
+  font:500 8.5px/1.25 var(--e-font);
+  color:#8da1b5;
+}
+#wins .rm-mob-tag{
+  display:inline-block;
+  padding:1px 5px;
+  border-radius:4px;
+  font:700 7.5px/1.2 var(--e-font);
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+#wins .rm-mob-tag.boss{
+  background:rgba(223,185,110,.22);
+  border:1px solid rgba(223,185,110,.55);
+  color:#f5d68e;
+}
+#wins .rm-mob-tag.escort{
+  background:rgba(130,158,186,.16);
+  border:1px solid rgba(130,158,186,.35);
+  color:#b8cade;
+}
+#wins .rm-boss-loot-priority{
+  margin:0 0 12px;
+  padding:8px 10px;
+  border-radius:7px;
+  background:rgba(43,35,22,.36);
+  border:1px solid rgba(223,185,110,.32);
+}
+#wins .rm-boss-loot-priority>.dropgrp{
+  margin-top:0;
+  border-bottom-color:rgba(223,185,110,.28);
+  color:#f2d28b;
+}
+
+/* Fullscreen Illustrated World Map Mode */
+body.rm-atlas-fullscreen #wins{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100dvh!important;
+  max-width:none!important;
+  max-height:none!important;
+  padding:0!important;
+  margin:0!important;
+  z-index:95!important;
+  transform:none!important;
+  overflow:hidden!important;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode{
+  flex:1 1 100%!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  border-radius:0!important;
+  border:0!important;
+  background:#142028;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode>.title,
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode>.eclipse-window-footer,
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-panel>.ui-hero,
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-panel>.atabs.map-season-tabs{
+  display:none!important;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode>.wbody{
+  overflow:hidden!important;
+  height:100%!important;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-content{
+  position:relative;
+  display:grid!important;
+  grid-template-columns:156px 1fr min(392px,calc(100vw - 24px));
+  grid-template-rows:minmax(0,54%) minmax(0,46%);
+  gap:10px;
+  width:100%;
+  height:100%;
+  padding:52px 12px 12px!important;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-route{
+  display:contents!important;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero{
+  display:block!important;
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  z-index:1;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-controls{
+  top:12px;
+  right:12px;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+  display:block;
+  position:absolute;
+  top:12px;
+  bottom:auto;
+  left:182px;
+  width:auto;
+  max-width:min(360px,calc(100vw - 600px));
+  padding:6px 10px;
+  border-radius:7px;
+  border:1px solid rgba(219,187,124,.38);
+  background:linear-gradient(135deg,rgba(10,16,22,.88),rgba(16,23,31,.76));
+  backdrop-filter:blur(6px);
+  pointer-events:none;
+  z-index:25;
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-destinations{
+  display:block!important;
+  position:static!important;
+  width:auto!important;
+  max-height:none!important;
+  grid-column:1;
+  grid-row:1 / 3;
+  z-index:12;
+  overflow-y:auto;
+  padding:12px 10px!important;
+  border-radius:10px!important;
+  border:1px solid rgba(224,191,126,.35)!important;
+  background:rgba(11,16,23,.84)!important;
+  backdrop-filter:blur(10px);
+  box-shadow:0 12px 32px rgba(0,0,0,.48);
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .rm-route-drawer{
+  display:block!important;
+  max-height:none!important;
+  grid-column:3;
+  grid-row:1;
+  z-index:12;
+  overflow-y:auto;
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid rgba(224,191,126,.38);
+  background:rgba(11,16,23,.86);
+  backdrop-filter:blur(10px);
+  box-shadow:0 12px 32px rgba(0,0,0,.5);
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-field-guide{
+  display:block!important;
+  grid-column:3;
+  grid-row:2;
+  z-index:12;
+  overflow-y:auto;
+  padding:12px 14px!important;
+  border-radius:10px!important;
+  border:1px solid rgba(224,191,126,.34)!important;
+  background:rgba(11,16,23,.86)!important;
+  backdrop-filter:blur(10px);
+  box-shadow:0 12px 32px rgba(0,0,0,.5);
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-hidden .ui-destinations,
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-hidden .rm-route-drawer,
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-hidden .ui-field-guide{
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(8px);
+}
+body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-hidden .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+  left:14px;
+  max-width:min(460px,calc(100vw - 28px));
+}
+
+@media(max-width:960px){
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-content{
+    grid-template-columns:1fr min(360px,calc(100vw - 20px));
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-destinations{
+    display:none!important;
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .rm-route-drawer,
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-field-guide{
+    grid-column:2;
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+    left:12px;
+    max-width:calc(100vw - 395px);
+  }
+}
+@media(max-width:680px){
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-content{
+    display:flex!important;
+    flex-direction:column;
+    justify-content:flex-end;
+    padding:48px 8px 8px!important;
+    gap:8px;
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .rm-route-drawer{
+    max-height:42dvh!important;
+    flex:0 1 auto;
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .ui-field-guide{
+    display:none!important;
+  }
+  body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-hero-caption{
+    display:none;
+  }
+}
+@media(max-width:639px){
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content{
+    grid-template-columns:1fr;
+    grid-template-rows:auto;
+    overflow-y:auto;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapgrid{
+    grid-template-columns:repeat(5,minmax(0,1fr));
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route,
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-field-guide{
+    grid-column:1;
+    grid-row:auto;
+    height:auto;
+    overflow:visible;
+  }
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero{
+    flex:none;
+    aspect-ratio:16 / 9;
+    min-height:180px;
+  }
+}
+@container(max-width:850px){
+  #wins .ui-panel[data-layout=map] #map-panel-ascension.ui-content{grid-template-columns:145px minmax(0,1fr)}
+}
+@container(max-width:560px){
+  #wins .ui-panel[data-layout=map] #map-panel-ascension.ui-content{grid-template-columns:1fr}
+  #wins .rm-hero-caption h2{font-size:14px}
+}
+@media(prefers-reduced-motion:reduce){
+  #wins .rm-birds,#wins .rm-cloud,#wins .rm-canvas{animation:none!important;transition:none!important}
+}
+

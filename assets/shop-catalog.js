@@ -13,7 +13,7 @@
    gone; a slot price is now the whole story.
 
    v3 (2026-10-31, owner): a Donations tab. One donor item — `don:all-cosmetics` — unlocks every
-   cosmetic in the shop on the first payment of $20.00 (2000 cents) or more, and is then simply a
+   cosmetic in the shop on the first payment of $25.00 (2500 cents) or more, and is then simply a
    donation: the player picks any amount from that floor upward, and may pay as often as they like.
    Paying it again unlocks nothing new and charges nothing unexpected; the order and the books record
    every payment. There is no upper limit and no entitlement beyond the one the first payment grants.
@@ -69,8 +69,8 @@ const BUNDLES=[
 // every unlock already owned, marks the order fulfilled with `donated:true`, and the books show it.
 // `maxQty` is 1 because one payment is one donation - the amount is the knob, not the quantity.
 const DONATIONS=[
- {sku:'don:all-cosmetics',name:'Donor: every cosmetic unlocked',price:2000,floor:2000,step:500,max:500000,
-  group:'Donations',blurb:'Unlocks all 52 cosmetics the first time you pay $20.00 or more. Every later payment is a donation - nothing changes, nothing breaks, and you can pay as often as you like.',
+ {sku:'don:all-cosmetics',name:'Donor: every cosmetic unlocked',price:2500,floor:2500,step:500,max:500000,
+  group:'Donations',blurb:'Unlocks all 52 cosmetics the first time you pay $25.00 or more. Every later payment is a donation - nothing changes, nothing breaks, and you can pay as often as you like. Horizon Haven is built by a solo developer, and every donation helps a lot: it goes toward the hosting and application fees that keep the server running.',
   unlocks:{all:true},donation:true},
 ].map(d=>Object.assign({kind:'donation',slotLabel:'Donation',maxQty:1},d));
 // What a donation hands over, using the same rules as a bundle. Idempotent by construction: an

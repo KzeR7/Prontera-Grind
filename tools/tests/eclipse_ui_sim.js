@@ -620,5 +620,141 @@ test('v265: Display separates Chat box from Activity log and Ascension Forge scr
  assert.match(doc.querySelector('#wins [data-win="equip"] .eclipse-footer-message').textContent,/refinement, socketed cards, and existing affixes/);
  styleEl.remove();
 });
+
+test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar, 2-column zero-scroll split, inline stage header + paired sub-zones, and Full Map zoom + Escape',()=>{
+ ev("closeMailDaily();closeGmStudio();S.mp=1;S.lvl=3;S.prog=MAPS.map(()=>10);tabs.length=0;openTab('map');renderWin()");
+ const win=doc.querySelector('#wins [data-win="map"]');
+ assert.ok(win,'map window opens');
+ assert.equal(win.querySelectorAll('[data-a="selm"]').length,10,'all 10 destination cards remain intact');
+ assert.equal(win.querySelectorAll('.ui-route [data-a="sell_"]').length,15,'all 15 stage buttons remain intact');
+ assert.equal(win.querySelector('.ui-route [data-a="sell_"][data-v="10"] b').textContent,'MVP','Stage 10 displays MVP label on World Atlas');
+ assert.ok(win.querySelector('.rm-optb-head .rm-optb-kicker').textContent.includes('02 / IZLUDE'),'Option B inline stage header displays 02 / MAP kicker');
+ assert.ok(win.querySelector('.rm-optb-head [data-a="adv"]'),'Auto-advance toggle sits inline inside Option B stage header');
+ assert.equal(win.querySelector('.rm-lore-card'),null,'lore/landmark card is completely removed');
+ assert.equal(win.querySelectorAll('[data-a="atlaszoom"]').length,0,'mini-map omits zoom controls');
+ assert.equal(win.querySelectorAll('.rm-controls button').length,1,'mini-map toolbar shows only Full Map button');
+ assert.ok(win.querySelector('.rm-controls [data-a="atlasfull"]'),'Full Map button is present on mini-map');
+ const eclipseCss=require('fs').readFileSync(require('path').join(__dirname,'../../assets/ui/eclipse.css'),'utf8');
+ assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-destinations \.mapgrid\{[\s\S]*?repeat\(10,minmax\(0,1fr\)\)/,'Option B top bar renders all 10 maps in one horizontal row');
+ assert.match(eclipseCss,/#wins \.eclipse-atlas-hero\.rm-illustrated-hero>\.rm-hero-caption\{[\s\S]*?display:none;/,'mini-map hides caption box so Comodo and the coastline remain unobstructed');
+ assert.match(eclipseCss,/body\.rm-atlas-fullscreen #wins>\.wp\[data-win="map"\]\.rm-fullscreen-mode \.eclipse-atlas-hero\.rm-illustrated-hero>\.rm-hero-caption\{[\s\S]*?display:block;[\s\S]*?top:12px;[\s\S]*?bottom:auto;/,'Full Map description box sits in top-left ocean clear of Comodo');
+ win.querySelector('[data-a="atlasplace"][data-v="comodo"]').click();
+ assert.equal(ev('mapM'),5,'clicking Comodo pin selects Comodo');
+ ev("mapM=1;renderWin()");
+ const canvasNode=win.querySelector('#rmCanvas');
+ const birdNode=win.querySelector('#rmAmb-birds-a');
+ assert.ok(canvasNode&&birdNode,'illustrated map canvas and ambient bird flocks render');
+ assert.equal(win.querySelectorAll('.rm-birds').length,8,'all 8 bird flocks render');
+ assert.equal(win.querySelectorAll('.rm-cloud').length,9,'all 9 drifting multi-puff clouds render');
+ const pins=[...win.querySelectorAll('[data-a="atlasplace"]')];
+ assert.equal(pins.length,8,'all 8 illustrated town cutout pins render');
+ // Player is in Izlude (S.mp === 1), which belongs to Prontera & Izlude:
+ const pronteraPin=win.querySelector('[data-a="atlasplace"][data-v="prontera"]');
+ assert.ok(pronteraPin.classList.contains('is-selected')&&pronteraPin.classList.contains('is-here'),'paired Prontera & Izlude pin shows selected + current location');
+ assert.ok(win.querySelector('.rm-illustrated-hero > .rm-subzones-overlay'),'paired sub-zone toggle floats over top-left ocean so stage card height never shifts');
+ assert.equal(win.querySelectorAll('[data-a="atlassub"]').length,2,'Prontera & Izlude renders 2 sub-zone buttons');
+ const izludeStyle=canvasNode.getAttribute('style');
+ assert.equal(canvasNode.style.getPropertyValue('--zoom'),'1.2','mini-map focuses at 1.2x regional zoom');
+ win.querySelector('[data-a="atlassub"][data-v="0"]').click();
+ assert.equal(ev('mapM'),0,'sub-zone switches to Prontera while player remains in Izlude');
+ assert.strictEqual(win.querySelector('#rmCanvas'),canvasNode,'eclipsePatch preserves live #rmCanvas node across zone switch');
+ assert.strictEqual(win.querySelector('#rmAmb-birds-a'),birdNode,'eclipsePatch preserves live bird animation node');
+ assert.equal(canvasNode.getAttribute('style'),izludeStyle,'switching between Prontera and Izlude produces zero camera jump');
+ // Complete stage monster roster, combat stats & card-effect hover/tap tooltip checks:
+ ev("mapM=0;mapL=1;renderWin()");
+ const s1Mobs=[...win.querySelectorAll('.ui-field-guide .eclipse-field-encounter .rm-mob-tile b')].map(el=>el.textContent.trim());
+ assert.deepEqual(s1Mobs,['Poring','Fabre'],'Prontera Stage 1 shows both Poring and Fabre in Field Intelligence');
+ const poringTile=win.querySelector('.ui-field-guide .eclipse-field-encounter .rm-mob-tile');
+ assert.match(poringTile.querySelector('.rm-mob-stats').textContent,/HP \d+ · ATK \d+/,'monster tile shows stage HP and ATK instead of repeating card name');
+ assert.equal(poringTile.querySelector('.rm-card-chip'),null,'no cluttering card percentage text chip on monster tile');
+ poringTile.dispatchEvent(new g.window.MouseEvent('mouseover',{bubbles:true}));
+ const floatTip=doc.getElementById('rmCardFloat');
+ assert.ok(floatTip&&floatTip.classList.contains('on'),'hovering monster tile opens viewport-clamped floating card tooltip');
+ assert.match(floatTip.textContent,/Poring Card.*LUK \+3/,'floating hover tooltip shows card name and exact card effect');
+ poringTile.click();
+ assert.equal(poringTile.classList.contains('is-open'),true,'tapping monster tile toggles card effect tooltip open for touch/mobile');
+ ev("mapM=0;mapL=10;renderWin()");
+ const s10Mobs=[...win.querySelectorAll('.ui-field-guide .eclipse-field-encounter .rm-mob-tile b')].map(el=>el.childNodes[0].textContent.trim());
+ assert.deepEqual(s10Mobs,['Mastering','Peco Peco','Poring'],'Prontera Stage 10 MVP shows Mastering plus both escort species');
+ assert.ok(win.querySelector('.ui-field-guide .rm-boss-loot-priority'),'Boss stage hoists MVP drops into priority loot card directly beneath monster roster');
+ assert.match(eclipseCss,/\.rm-subzones\.rm-subzones-overlay\{[\s\S]*?bottom:auto;/,'sub-zone overlay resets bottom:auto so .eclipse-atlas-hero>div never stretches it');
+ assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-route\{[\s\S]*?grid-column:1 \/ 7;/,'left map/stage column aligns cleanly across columns 1..6 of the 10-column grid');
+ assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-field-guide\{[\s\S]*?grid-column:7 \/ -1;/,'right Field Intelligence column aligns cleanly across columns 7..10 of the 10-column grid');
+ // Regional camera pans smoothly between distant regions (Geffen vs Amatsu):
+ win.querySelector('[data-a="selm"][data-v="2"]').click();
+ const geffenX=canvasNode.style.getPropertyValue('--x'),geffenY=canvasNode.style.getPropertyValue('--y');
+ win.querySelector('[data-a="selm"][data-v="7"]').click();
+ const amatsuX=canvasNode.style.getPropertyValue('--x'),amatsuY=canvasNode.style.getPropertyValue('--y');
+ assert.notEqual(`${geffenX},${geffenY}`,`${amatsuX},${amatsuY}`,'selecting distant maps pans the 1.2x camera smoothly toward each region');
+ assert.match(eclipseCss,/#wins \.rm-canvas\{[\s\S]*?transition:transform \.52s cubic-bezier\(/,'#rmCanvas animates regional focus smoothly');
+ // Switching to Morroc omits both paired sub-zones and lore card:
+ win.querySelector('[data-a="selm"][data-v="3"]').click();
+ assert.equal(ev('mapM'),3);
+ assert.equal(win.querySelector('.rm-lore-card'),null,'no lore card on Morroc');
+ assert.equal(win.querySelectorAll('[data-a="atlassub"]').length,0,'single-field region omits paired sub-zone bar');
+ assert.ok(win.querySelector('[data-a="atlasplace"][data-v="morroc"]').classList.contains('is-selected'));
+ assert.ok(win.querySelector('[data-a="atlasplace"][data-v="prontera"]').classList.contains('is-here'),'player location dot stays on Prontera & Izlude');
+ // Clicking Niflheim & the Abyss pin exposes Niflheim (8) and Abyss (9) sub-zones:
+ win.querySelector('[data-a="atlasplace"][data-v="niflheim"]').click();
+ assert.equal(ev('mapM'),8);
+ assert.deepEqual([...win.querySelectorAll('[data-a="atlassub"]')].map(b=>b.dataset.v),['8','9']);
+ win.querySelector('[data-a="atlassub"][data-v="9"]').click();
+ assert.equal(ev('mapM'),9);
+ // Full Map mode enables zoom + drawer toggle + two-step Escape (fullscreen -> mini-map at 1.2x -> close):
+ win.querySelector('[data-a="atlasfull"]').click();
+ assert.equal(doc.body.classList.contains('rm-atlas-fullscreen'),true);
+ assert.equal(win.classList.contains('rm-fullscreen-mode'),true);
+ assert.equal(win.querySelectorAll('[data-a="atlaszoom"]').length,3,'Full Map exposes zoom in/out/reset controls');
+ win.querySelector('[data-a="atlaszoom"][data-v="in"]').click();
+ const zoomed=ev('worldAtlasPan.zoom');
+ assert.ok(zoomed>1,'zoom in increases worldAtlasPan.zoom inside Full Map');
+ win.querySelector('.ui-route [data-a="sell_"][data-v="5"]').click();
+ assert.equal(ev('worldAtlasPan.zoom'),zoomed,'stage click inside Full Map preserves zoom level');
+ win.querySelector('[data-a="atlasdrawer"]').click();
+ assert.equal(win.classList.contains('rm-drawer-hidden'),true);
+ const escKey=()=>doc.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+ escKey();
+ assert.equal(doc.body.classList.contains('rm-atlas-fullscreen'),false,'first Escape exits fullscreen map');
+ assert.equal(ev('worldAtlasPan.zoom'),1.2,'exiting Full Map restores 1.2x mini-map focus zoom');
+ assert.equal(win.querySelectorAll('[data-a="atlaszoom"]').length,0,'mini-map hides zoom controls again');
+ assert.equal(ev('tabs.includes("map")'),true,'map panel remains open in embedded view after exiting fullscreen');
+ escKey();
+ assert.equal(ev('tabs.length'),0,'second Escape closes the map panel');
+});
+
+test('v319: Social Hub button sits third in minimapTools with a population badge slot and a badge-only pulse',()=>{
+ const btn=doc.getElementById('socialHubBtn'),badge=doc.getElementById('socialHubBadge');
+ assert.ok(btn&&badge,'the Social Hub button and its count badge render on the main screen');
+ assert.equal(doc.getElementById('dailyBtn').nextElementSibling,btn,'Social is the third seat under Mail and Daily, left of the minimap');
+ assert.equal(btn.parentElement.id,'minimapTools','it inherits the Mail/Daily column and its hide rules');
+ assert.ok(btn.classList.contains('minimap-tool-btn'),'it reuses the Mail/Daily button chrome');
+ assert.match(btn.textContent,/Social/);
+ assert.equal(badge.hidden,true,'the badge starts hidden: an unknown population never invents a count');
+ const eclipseCss=fs.readFileSync(path.join(root,'assets/ui/eclipse.css'),'utf8');
+ assert.match(eclipseCss,/@keyframes socialHubRing/);
+ assert.match(eclipseCss,/prefers-reduced-motion:reduce\)\{\.social-hub-btn::after/,'reduced motion stills the pulse');
+ assert.match(eclipseCss,/\.social-hub-btn\.has-friends \.social-hub-badge\{background:var\(--gold\)/,'a friend inside turns the badge gold');
+ assert.match(eclipseCss,/@media\(min-width:701px\) and \(max-width:980px\)\{\s*#sideRail\{top:182px/,'the 701-980px rail drops clear of the taller tool column');
+ // v320 (owner: too small to notice): the seat is oversized and its attract pulse never sleeps.
+ // v321 (owner): a little shorter, Mail/Daily match the footprint, rainbow frame spins.
+ assert.match(eclipseCss,/\.minimap-tool-btn\{position:relative;width:82px;height:44px/,'all three seats share the wide, shorter 82x44 footprint');
+ // v322 (owner): the rainbow is the pulsing frame itself, not a rainbow button body.
+ assert.match(eclipseCss,/\.social-hub-btn::after\{[^}]*background:conic-gradient\(from 0deg,#ff004c,#ff8a00,#ffee00,#37ff7a,#00cfff,#7a5cff,#ff004c\)/,'the expanding pulse ring carries the rainbow');
+ assert.match(eclipseCss,/\.social-hub-btn::after\{[^}]*mask-composite:exclude/,'clipped to the ring, so the button keeps its gold border');
+ assert.match(eclipseCss,/@keyframes socialHueSpin\{to\{filter:hue-rotate\(360deg\)\}\}/,'and the rainbow slowly cycles while it pulses');
+ assert.match(eclipseCss,/\.social-hub-btn::after\{[^}]*animation:socialHubRing 3s[^}]*infinite/,'the attract ring breathes even on an empty plaza');
+ assert.match(eclipseCss,/\.social-hub-btn\.is-live\{animation:socialHubGlow 2s/,'a busy plaza adds a green glow pulse on top');
+ assert.match(eclipseCss,/\.social-hub-btn\.is-live::after\{animation-duration:2s,5s/);
+ assert.match(eclipseCss,/#minimapTools\{[^}]*align-items:flex-end/,'the wider seat grows leftwards, Mail/Daily keep their spot');
+});
+test('v318: Social Hub destination showcases scenic Fountain Plaza background and Fishing + Hold\'em mini-games',()=>{
+ ev('tabs.splice(0,tabs.length,"map");mapSeason="social";renderWin()');
+ const dest=doc.querySelector('#wins .social-destination');
+ assert.ok(dest,'Social Hub destination renders');
+ assert.ok(dest.querySelector('.social-scene[role="img"]'),'Social Hub includes scenic Fountain Plaza banner');
+ assert.equal(dest.querySelectorAll('.social-feat').length,3,'Social Hub highlights Fishing, Hold\'em Poker, and Idle Promenade');
+ assert.match(dest.textContent,/155 species.*Hold'em.*Your farming keeps going/s,'Social Hub copy covers 155-species fishing, Texas Hold\'em tables, and background farming');
+ ev('mapSeason="atlas";tabs.length=0;renderWin()');
+});
 console.log(`${passed} passed`);
 }finally{g.close()}

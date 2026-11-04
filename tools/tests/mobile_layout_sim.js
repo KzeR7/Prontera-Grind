@@ -116,10 +116,10 @@ test('the quest chip lives in the right rail, clear of the world chat', () => {
   // chip sits under Mail and Daily instead of on top of the chat's tabs.
   assert.equal(declOf('html.pg-mobile #pgQuests', 'left'), 'auto');
   assert.match(declOf('html.pg-mobile #pgQuests', 'right'), /--pg-safe-r/);
-  assert.match(declOf('html.pg-mobile #pgQuests', 'top'), /36px/, 'just under the 36px Mail / Daily buttons');
+  assert.match(declOf('html.pg-mobile #pgQuests', 'top'), /42px/, 'just under the 42px Mail / Daily / Social buttons');
   assert.equal(declOf('html.pg-mobile #pgQuests', 'bottom'), 'auto');
-  // Landscape keeps the same corner with the smaller 32px tools.
-  assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)[\s\S]*#pgQuests\{height:24px;top:calc\(4px \+ 32px \+ 6px\)/, 'landscape keeps the chip off the chat');
+  // Landscape keeps the same corner with the smaller 38px tools.
+  assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)[\s\S]*#pgQuests\{height:24px;top:calc\(4px \+ 38px \+ 6px\)/, 'landscape keeps the chip off the chat');
 });
 
 test('the player card clears the header and the combat pill clears the player card', () => {
@@ -458,7 +458,11 @@ if (game) {
 
   test('mail and the daily roulette sit in one corner row on a phone', () => {
     assert.equal(declOf('html.pg-mobile #minimapTools', 'flex-direction'), 'row');
-    assert.equal(declOf('html.pg-mobile .minimap-tool-btn', 'width'), '36px');
+    // v321: all three seats share the thumb-sized footprint on a phone too.
+    assert.equal(declOf('html.pg-mobile .minimap-tool-btn', 'width'), '48px');
+    assert.equal(declOf('html.pg-mobile .minimap-tool-btn', 'height'), '42px');
+    assert.equal(declOf('html.pg-mobile .social-hub-btn', 'width'), '48px');
+    assert.equal(declOf('html.pg-mobile .social-hub-btn', 'height'), '42px');
   });
 
   test('a landscape phone shows the whole map page without scrolling', () => {

@@ -186,13 +186,18 @@ html.pg-mobile #minimapTools{
   flex-direction:row;align-items:flex-start;
 }
 html.pg-mobile .minimap-tool-btn{
-  width:36px;height:36px;border-radius:9px;padding:3px 2px;gap:0;
+  width:48px;height:42px;border-radius:9px;padding:3px 2px;gap:0;
 }
 html.pg-mobile .minimap-tool-btn svg{width:16px;height:16px}
 html.pg-mobile .minimap-tool-label{
   font-size:6px;letter-spacing:.02em;line-height:1;margin-top:2px;
 }
 html.pg-mobile .minimap-tool-badge{top:-4px;right:-4px;min-width:14px;height:14px;font-size:8px;line-height:11px}
+/* v320: the Social Hub seat outgrows Mail/Daily on a phone too - it is the one
+   button whose whole job is to be noticed, badge included. */
+html.pg-mobile .social-hub-btn{width:48px;height:42px;border-width:1.5px}
+html.pg-mobile .social-hub-btn svg{width:20px;height:20px}
+html.pg-mobile .social-hub-badge{min-width:17px;height:17px;font-size:9.5px;line-height:14px;top:-6px;right:-6px;padding:0 4px}
 
 /* Quests: one thumb-sized chip that opens the rail sheet. It sits in the RIGHT
    rail, directly under Mail and Daily, because the bottom-left corner belongs
@@ -204,7 +209,7 @@ html.pg-mobile .minimap-tool-badge{top:-4px;right:-4px;min-width:14px;height:14p
    player was left on a darkened field with no way back (owner, v274). */
 html.pg-mobile #pgQuests{
   position:absolute;right:calc(6px + var(--pg-safe-r));left:auto;
-  top:calc(6px + 36px + 8px);bottom:auto;
+  top:calc(6px + 42px + 8px);bottom:auto;
   z-index:59;display:inline-flex;align-items:center;gap:5px;
   height:28px;padding:0 10px 0 8px;border-radius:999px;
   background:var(--e-glass,#1b2b24f5);border:1px solid var(--e-line-bright,#61725b);
@@ -490,15 +495,18 @@ html.pg-mobile .modal-card{max-width:calc(100vw - 20px)}
   html.pg-mobile #eclipseCombat:not(.minimized){max-height:calc(100% - 70px);overflow-y:auto}
 
   html.pg-mobile #minimapTools{top:4px;right:calc(4px + var(--pg-safe-r));flex-direction:row;gap:4px}
-  html.pg-mobile .minimap-tool-btn{width:32px;height:30px}
+  html.pg-mobile .minimap-tool-btn{width:44px;height:38px}
   html.pg-mobile .minimap-tool-label{display:none}
+  /* v320: even in the short-landscape squeeze the Social seat stays thumb-sized. */
+  html.pg-mobile .social-hub-btn{width:44px;height:38px}
+  html.pg-mobile .social-hub-btn svg{width:18px;height:18px}
 
   /* The log would cover the middle of a short field; the Log tab has it all. */
   html.pg-mobile #feedWrap{display:none!important}
   html.pg-mobile #hudBuffs{bottom:calc(var(--docktop) + 2px);right:calc(4px + var(--pg-safe-r))}
   html.pg-mobile #hudBuffs .pbx{width:26px;height:26px;font-size:13px}
   html.pg-mobile #eclipseCompanions{bottom:calc(var(--docktop) + 30px);right:calc(4px + var(--pg-safe-r))}
-  html.pg-mobile #pgQuests{height:24px;top:calc(4px + 32px + 6px);right:calc(4px + var(--pg-safe-r));font-size:8px}
+  html.pg-mobile #pgQuests{height:24px;top:calc(4px + 38px + 6px);right:calc(4px + var(--pg-safe-r));font-size:8px}
 
   html.pg-mobile #xp-dock{padding:2px calc(6px + var(--pg-safe-r)) calc(2px + var(--pg-safe-b)) calc(6px + var(--pg-safe-l))}
   html.pg-mobile #xp-track{height:18px;border-radius:5px}

@@ -9740,3 +9740,88 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 * **Files:** `index.html` (`refine` purchase confirmation with per-question `answered` state, wording in `V.refine`/workshop preview/`refineUI`, BUILD v313, asset `?v=313`), `assets/social.js` (`localHistory`/`stashLocal`/`recallLocal`, room snapshot only clears Local on a real room change, `retryDelay`, handshake watchdog, probed visibility resume, honest connecting status, close-code log), `tools/tests/material_sim.js` (purchase asked first, cancel spends nothing, purchase-then-scroll order), `tools/tests/eclipse_ui_sim.js` (the v312 test now walks the modal: text, cancel, confirm), `tools/tests/social_ui_sim.js` (Local history across reconnect and plaza switch, probed quiet socket, handshake timeout), `tools/tests/social_fishing_sim.js` (build tag), build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
 * **Checks:** `material_sim` 17/17, `eclipse_ui_sim` 55, `ui_sim` 64/0, `social_ui_sim` PASS (new block), `social_sim`/`social_scene_sim`/`social_fishing_sim` PASS, `cloud_sim` 67/0, `session_lost_sim` 10/0, `update_watch_sim` 16/0. The Local-history test was verified against the old code — restoring the blanket filter makes it fail with "a reconnect keeps the Local history it was showing".
 * **Delivery:** committed to `arena/0c692046-prontera-grind`. Client-only — `assets/social.js` ships with Pages; no Worker or Durable Object change, so the usual Pages publish is the whole deploy.
+
+### 2026-11-03 — `haven-v314 illustrated rune-midgard world atlas`
+
+* **Added (`assets/world-map/`):** Integrated the 16:9 hand-illustrated Map of Rune-Midgard (`world-map-cleaned.webp`), all 8 isometric town island cutouts (`prontera.png`, `geffen.png`, `payon.png`, `morroc.png`, `comodo.png`, `niflheim.png`, `amatsu.png`, `louyang.png`), 8 flying bird flocks (`birds-flock-a.webp`, `birds-flock-b.webp`), and 9 drifting multi-puff clouds (`cloud-direct.webp`, `cloud-mask-16x9.webp`) into the World Atlas tab (`mapSeason === 'atlas'`).
+* **Changed (`index.html`, `assets/ui/eclipse.css` — Option B Zero-Scroll World Atlas):**
+  * Rearranged desktop `#map-panel-atlas` into the approved Option B layout: a full-width 1-row 10-destination bar across the top (`01 Prontera` … `10 Abyss` with level ranges) over a ~55% / ~45% 2-column split where the left column stacks the larger 16:9 Illustrated Map (`⛶ Full Map` top-right, Comodo unobstructed, no caption box over the mini-map), an inline `02 / <MAP> · Lv <range>` + Auto-advance header row (with inline sub-zone pills on `Prontera & Izlude` and `Niflheim & the Abyss`), the 10-stage (`01`–`09`, `MVP`) + 5-Nightmare (`NM 1`–`NM 5`) grid, and a full-width gold `Travel to <Map> · Stage <NN> →` button visible immediately with zero scrolling, paired against a wider full-height `03 / Field intelligence` panel on the right.
+  * Preserved Full Map (`⛶ Full Map`) zoom/pan (`−`, `+`, `⟲`, drag-to-pan, wheel-zoom), collapsible Stages & Drops drawer, and two-step `Escape` exit (`Full Map` → `World Atlas` → `Close`), while keeping `html.pg-mobile` portrait/landscape rules and `Ascension Map` untouched.
+* **Files:** `index.html`, `assets/ui/eclipse.css`, `assets/world-map/*`, `tools/staging/{hosted_launch_stage,package_hosted_launch,stage_v283}.mjs`, `tools/tests/{publish_sim,eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, and build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html`, `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
+
+### 2026-11-04 — `haven-v315 world atlas grid alignment, smooth regional zoom & full stage monster roster`
+
+* **Changed (`index.html`, `assets/ui/eclipse.css` — Option B Grid, Camera Stability & Field Intelligence):**
+  * **Symmetrical UI Grid:** Aligned the 10-map horizontal bar flush with the two-column grid beneath it, framed the stage/travel controls inside a clean `.rm-route-drawer` card matching `03 / Field Intelligence`, locked `.rm-optb-head` to a single non-wrapping `22px` row (`02 / <MAP>`, `<Lv badge>`, `<open · NM>`, `Auto-advance`), and styled locked/Nightmare stage tiles with solid readable contrast instead of washed-out `0.4` opacity.
+  * **Smooth `1.20x` Regional Camera Focus & Zero Map Shake:** Moved paired sub-zone pills (`Prontera / Izlude`, `Niflheim / Abyss`) into `.rm-subzones-overlay` over the top-left ocean so `#rmViewport` never changes height when switching maps; precomputed `--cw/--ch/--x/--y/--zoom` synchronously inside `buildIllustratedAtlasHero` to eliminate two-frame snap; and added `WORLD_ATLAS_MINI_ZOOM = 1.20` with a smooth `0.52s cubic-bezier(.22, 1, .36, 1)` transform glide toward each selected region while keeping paired sub-zones at zero camera movement.
+  * **Complete Stage Monster Roster & Boss Drop Priority:** Replaced the single-species `.eclipse-field-encounter` preview with `buildFieldEncounterRoster` so every stage displays **all** resident monsters (`2` field species side-by-side on normal/Nightmare stages; featured `MVP` card + both `Escort` species on Stage 10 / NM 5 / Ascension Stage 5) with accurate sprites and card drop rates, plus hoisted `.rm-boss-loot-priority` directly beneath the monster roster on boss stages.
+* **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/{eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+### 2026-11-04 — `haven-v316 unified 10-column world atlas grid, slim top chrome, mobile portrait tuning & card-effect hover tooltips`
+
+* **Fixed (`assets/ui/eclipse.css` — `.rm-subzones-overlay` Stretch, Unified 10-Column Grid & Slim Top Chrome):**
+  * Reset `bottom: auto; right: auto; width: auto; height: auto;` on `.rm-subzones.rm-subzones-overlay` so `.eclipse-atlas-hero > div { bottom: 15px; }` no longer stretches the paired sub-zone pill (`Prontera / Izlude`, `Niflheim / Abyss`) vertically down the left side of the map.
+  * Converted `#map-panel-atlas.ui-content` to a true 10-column master grid (`repeat(10, minmax(0, 1fr)); gap: 8px;`) so `.ui-route` (`grid-column: 1 / 7`) aligns pixel-for-pixel beneath maps `01`–`06` and `.ui-field-guide` (`grid-column: 7 / -1`) aligns pixel-for-pixel beneath maps `07`–`10`, with centered 2-line `.mapcard` tiles across both narrow (~960px) and wide PC viewports.
+  * Slimmed the Map window's top header (`71px` → `44px`), 4-collection tab bar (`56px` → `34px`), and footer (`29px` → `22px`) to reclaim ~54px of vertical height on desktop & preview viewports.
+* **Changed (`assets/ui/eclipse.css` — Mobile Portrait & Landscape Tuning):**
+  * Tuned `html.pg-mobile` portrait World Atlas (`5×2` destination grid, `16:9` Illustrated Map hero with `1.20×` regional camera pan & Full Map touch zoom/pan, visible `02 / <MAP>` stage header, framed stage/travel card, and 1-column readable monster roster), while keeping landscape phone's ~205px zero-scroll travel layout intact.
+* **Changed (`index.html`, `assets/ui/eclipse.css` — Monster Combat Stats & Card-Effect Hover/Tap Tooltip):**
+  * Replaced the redundant truncated card name subtitle on `.rm-mob-tile` with actual stage combat stats (`HP · ATK · Phys/Magic` + `[🃏 %]` chip) via `stageMobPreviewStats`, and added a hover/focus/tap `.rm-card-pop` tooltip showing the card's name, rarity grade, exact stat effect (`cardEffectText`), equipment slot fit, drop rate, and owned/equipped status.
+* **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/{eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+### 2026-11-04 — `haven-v317 compact preview grid breakpoints & unclippable floating card-effect hover tooltip`
+
+* **Fixed (`assets/ui/eclipse.css` — Compact Preview / Split-Screen Grid Stability at `640px–980px`):**
+  * Removed the `@container(max-width:850px)` `.mapgrid { grid-template-columns: repeat(5, 1fr) }` override and lowered the desktop 2-column World Atlas breakpoint from `820px` to `640px`, preventing split-screen / preview viewports (`640px–880px`) from wrapping the 10-map top bar into 2 rows or collapsing the 2-column layout.
+  * Lowered `.rm-illustrated-hero` desktop `min-height` from `175px` to `120px` with compact `640px–980px` stage/card spacing so shorter viewports never clip the stage/Travel drawer, and switched `.rm-mob-grid` to `repeat(auto-fit, minmax(175px, 1fr))` so narrow `Field Intelligence` columns display 1 full-width un-truncated row per monster while wide PC screens display 2 columns.
+* **Changed (`index.html`, `assets/ui/eclipse.css` — Clean Monster Tiles & Unclippable `#rmCardFloat` Hover Tooltip):**
+  * Removed visible card drop percentage text from `.rm-mob-tile` (keeping only sprite + monster name + stage `HP · ATK · Phys/Magic` + subtle `🃏` hover cue) and added `showAtlasCardFloat` (`#rmCardFloat`, `position: fixed; z-index: 9999`) so hovering on PC or tapping on mobile always displays the Card Name, Rarity Grade, exact Card Effect, Slot Fit, and Drop Rate without clipping inside `.ui-field-guide`'s scroll container.
+* **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/{eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+### 2026-11-04 — `haven-v318 cash shop donations layout & social hub mini-games destination`
+
+* **Fixed (`assets/shop.js`, `assets/shop.css`, `index.html` — Cash Shop `Donations` Tab Layout):**
+  * Fixed `.shop-donation` being squeezed into a single `190px` `.shop-grid` `auto-fill` column where the `USD` number input, quick-pick chips, and `Donate` button overflowed past the gold border.
+  * Styled `.shop-grid-donation` / `.shop-card.shop-donation` as a full-width balanced 2-column supporter card on desktop (stacking cleanly on compact/mobile viewports) with `box-sizing: border-box; min-width: 0` across all Cash Shop cards and a dedicated `shop` Eclipse header entry.
+* **Changed (`index.html`, `assets/social.css`, `assets/ui/eclipse.css`, `assets/atlas/fountain-plaza.jpg` — Social Hub Scenic Background & Mini-Games Copy):**
+  * Replaced the legacy mint-white Social Hub card with a Moonstone/Eclipse destination card featuring a scenic Prontera Fountain Plaza background (`assets/atlas/fountain-plaza.jpg`), 3 structured feature cards (**🎣 Plaza Fishing** — 155 species, 6 rarities, Fishcoins, 20 Titles & Auto-Fish; **♠️ Texas Hold'em Poker** — 2 live 6-seat tables & 1,000 daily free chips; **💬 Promenade & Idle Grind** — 20-player plaza, 32 RO emotions & uninterrupted background farming), and safe scroll handling on `.social-panel` / `.echo-panel`.
+* **Files:** `index.html`, `assets/shop.{js,css}`, `assets/social.css`, `assets/ui/eclipse.css`, `assets/atlas/fountain-plaza.jpg`, `tools/staging/{hosted_launch_stage,package_hosted_launch,stage_v283}.mjs`, `tools/tests/{publish_sim,shop_sim,eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+### 2026-11-04 — `haven-v319 social hub live button`
+
+* **Added (`index.html`, `assets/ui/eclipse.css`, `assets/social.js` — Social Hub Quick Button with Live Population Badge):**
+  * Added a `⛲ SOCIAL` button as the third seat of `#minimapTools` (under Mail / Daily on PC, third square of the top-right row on mobile) that enters Fountain Plaza in one click via `PGSocial.enter()`, inheriting the column's existing hide rules (inside the plaza, field-only mode).
+  * The count badge totals adventurers across every Plaza room with a per-plaza tooltip breakdown and a dynamic `aria-label`; the blink is a soft ~2.4s ring + badge pulse on the badge only (gold and faster when a friend is inside, still grey `0` when empty, hidden when the population is unknown), with `prefers-reduced-motion` disabling the animation.
+* **Changed (`workers/social/room.mjs` — Plaza Population Broadcast):**
+  * `syncRooms` now sends room counts to every connected chat client (not only players already in a plaza), personalised with a per-client friend count (`plaza.friends`, including reserved reconnect spots); fresh connections receive the population immediately after `hello`, friend syncs and reservation expiries refresh it too.
+* **Files:** `index.html`, `assets/social.js`, `assets/ui/eclipse.css`, `workers/social/room.mjs`, `tools/tests/{eclipse_ui_sim,social_sim}.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+### 2026-11-04 — `haven-v320 social hub big button`
+
+* **Changed (`assets/ui/eclipse.css`, `assets/ui/mobile.css` — Oversized Social Hub Button & Always-On Attract Pulse):**
+  * Enlarged the field Social Hub button from the shared 44×42px Mail/Daily seat to an 82×56px gold-bordered green-gradient seat (48×42px on phones, 44×38px in short landscape) with a 25px icon, growing leftwards from the column's right edge (`align-items:flex-end`) so Mail/Daily keep their exact spot; the count badge grows to 21px with it.
+  * The pulse no longer sleeps on an empty plaza: a slow 3s gold attract ring always breathes (the only state an empty test server ever shows), a busy plaza turns the ring green at 2s and adds a `socialHubGlow` box-shadow pulse, and a friend inside turns the badge gold and quickens the cycle to 1.6s — all still stilled by `prefers-reduced-motion`.
+  * Raised the 701–980px side-rail clearance (`top:182px`) for the taller column.
+* **Files:** `index.html`, `assets/ui/{eclipse,mobile}.css`, `tools/tests/{eclipse_ui_sim,mobile_layout_sim}.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+### 2026-11-04 — `haven-v321 rainbow social button and donation floor`
+
+* **Changed (`assets/ui/eclipse.css`, `assets/ui/mobile.css` — Uniform Seats & Spinning Rainbow Frame):**
+  * The Social seat is a little shorter (82×44px) and Mail / Daily now match that footprint exactly on PC (48×42px on phones, 44×38px in short landscape, Quests chip offsets adjusted); at ≤980px the column parks at `right:228px` so the wider seats clear the minimized AUTO COMBAT bar instead of tucking the Mail badge under it.
+  * Social's frame is now a rainbow conic gradient (`@property --social-spin`, hue-rotate fallback) that spins continuously around the border while the attract/live pulse keeps breathing; `prefers-reduced-motion` stills both.
+* **Fixed (`assets/shop-catalog.js`, `assets/shop.js` — Donation Floor $20 → $25):**
+  * The Donor tier's floor was $20.00 while the all-cosmetics Wardrobe bundle runs $25.00; the catalog `floor`/`price` are now 2500 so the amount box, quick-pick chips ($25/$30/$35/$45/$65), the server clamp, and the Stripe description all agree at $25+.
+  * The donation card and tab intro now say the quiet part out loud: Horizon Haven is built by a solo developer, and donations go toward the hosting and application fees that keep the server running.
+* **Files:** `index.html`, `assets/shop-catalog.js`, `assets/shop.js`, `assets/ui/{eclipse,mobile}.css`, `tools/tests/{eclipse_ui_sim,mobile_layout_sim,shop_sim,shop_api_sim}.js`, `docs/MONETIZATION-SETUP.md`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+### 2026-11-04 — `haven-v322 rainbow pulse frame`
+
+* **Changed (`assets/ui/eclipse.css` — Rainbow Moves to the Pulsing Frame):**
+  * Removed the spinning rainbow border from the Social button body (the seat keeps its gold border and green gradient); the expanding pulse ring (`::after`) now carries the rainbow — a conic gradient clipped to the ring via `mask-composite:exclude`, breathing on the existing 3s/2s/1.6s cadence while a 5s `socialHueSpin` hue rotation cycles its colours. Live glow and gold friend badge are unchanged, and `prefers-reduced-motion` stills the lot.
+* **Note (operations):** the $25 donation floor from v321 is served by the shop API catalog (`functions/_lib/shop.js` imports `assets/shop-catalog.js` once at process start), so a long-running local dev server keeps quoting $20 until it is restarted — the preview server was restarted with this build.
+* **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/eclipse_ui_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+
+
+
+

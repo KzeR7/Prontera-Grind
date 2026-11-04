@@ -39,6 +39,7 @@ require assets/wardrobe/v5/catalog.json
 require assets/wardrobe/fourth/v1/catalog.json
 require assets/kit/ro-spritesheet.png
 require assets/kit/ro-spritesheet.json
+require assets/world-map/world-map-cleaned.webp
 require Updates/Sprite
 
 cp "$ROOT/index.html" "$OUT/index.html"

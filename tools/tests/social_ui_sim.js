@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');const {JSDOM}=require('jsdom');
-const dom=new JSDOM('<div id="view"><div id="feedWrap"></div></div>',{url:'http://localhost/',runScripts:'outside-only'}),w=dom.window;
+const dom=new JSDOM('<div id="view"><div id="feedWrap"></div><div id="minimapTools"><button id="socialHubBtn" type="button" class="minimap-tool-btn social-hub-btn"><span class="minimap-tool-label">Social</span><b id="socialHubBadge" class="minimap-tool-badge social-hub-badge" hidden>0</b></button></div></div>',{url:'http://localhost/',runScripts:'outside-only'}),w=dom.window;
 Object.assign(w,{CLOUD:{on:false,user:null},S:{cls:'Novice',eq:{}},tabs:[],wardrobeAppearance:()=>({version:1,sex:'m'}),logShown:()=>[],openTab:()=>{},HUNT_TITLES:[{id:'poring',name:'Poring Hunter'}],titleUnlocked:()=>true,setInterval:fn=>{w.sessionTick=fn},PGSocialScene:{}});
 w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social.js','utf8'));
 assert.equal(w.document.getElementById('socialMin').tagName,'SPAN','minimize is a line in the header, without a button box');assert.equal(w.document.getElementById('socialResize').tagName,'SPAN','resize uses the border, without a separate button');
@@ -177,5 +177,30 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   w.Date.now=realNow2;
   app.socket=null;app.connected=false;app.nextConnect=0;app.room=0;
  }
- console.log('PASS chat UI: stable hover/click tabs, dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local history across reconnects and plaza switches, a probed (not killed) quiet socket, a handshake timeout, Local privacy on exit, emotion tray on world/whisper/local, recipient control, minimize, history cap, solo/preview plaza fallback, decoupled chat/log visibility and text-only message rendering');dom.window.close();
+ // ---- v319: the field Social Hub button counts the plaza without entering it ----
+ {
+  const hubBtn=w.document.getElementById('socialHubBtn'),hubBadge=w.document.getElementById('socialHubBadge');
+  assert.ok(hubBtn&&hubBadge,'the harness carries the field Social Hub button');
+  app.socket=null;app.connected=false;app.room=0;app.rooms=[];app.plazaFriends=0;
+  const popSockets=[];w.WebSocket=class{constructor(){popSockets.push(this);socket=this;this.readyState=1;this.sent=[]}close(){this.readyState=3}send(m){this.sent.push(JSON.parse(m))}};
+  w.CLOUD.on=true;w.CLOUD.user='local-tester';w.CLOUD.previewToken='';app.nextConnect=0;app.retry=0;app.blocked=false;
+  w.sessionTick();assert.equal(popSockets.length,1,'the field button rides the existing chat socket');
+  socket.onmessage({data:JSON.stringify({type:'hello',id:31,history:[]})});
+  socket.onmessage({data:JSON.stringify({type:'rooms',rooms:[{id:1,count:8},{id:2,count:4}],plaza:{total:12,friends:2}})});
+  assert.equal(hubBadge.hidden,false);assert.equal(hubBadge.textContent,'12','the badge totals every Plaza room');
+  assert.ok(hubBtn.classList.contains('is-live')&&hubBtn.classList.contains('has-friends'),'a busy plaza with a friend inside gets the gold pulse');
+  assert.match(hubBtn.getAttribute('aria-label'),/12 adventurers inside/);
+  assert.match(hubBtn.getAttribute('aria-label'),/2 friends inside/);
+  assert.match(hubBtn.title,/Plaza 1: 8 · Plaza 2: 4/,'the tooltip breaks the total down per plaza');
+  socket.onmessage({data:JSON.stringify({type:'rooms',rooms:[{id:1,count:0}],plaza:{total:0,friends:0}})});
+  assert.equal(hubBadge.textContent,'0');assert.ok(hubBtn.classList.contains('is-empty')&&!hubBtn.classList.contains('is-live'),'an empty plaza shows a still 0, no blink');
+  hubBtn.click();
+  assert.equal(w.document.body.classList.contains('social-open'),true,'one click enters Fountain Plaza directly');
+  w.PGSocial.leave();
+  assert.equal(w.document.body.classList.contains('social-open'),false,'leaving the plaza restores the field');
+  socket.onclose({code:1006});
+  assert.equal(hubBadge.hidden,true,'losing the chat socket hides the badge instead of freezing a stale count');
+  app.socket=null;app.connected=false;
+ }
+ console.log('PASS chat UI: stable hover/click tabs, dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local history across reconnects and plaza switches, a probed (not killed) quiet socket, a handshake timeout, Local privacy on exit, emotion tray on world/whisper/local, recipient control, minimize, history cap, solo/preview plaza fallback, decoupled chat/log visibility and text-only message rendering; v319 field Social Hub button with live population badge and one-click entry');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -232,15 +232,15 @@ await T('a donation is unlocked by the first payment of at least the floor, and 
   assert.strictEqual((await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 'abc' })).status, 400);
   assert.strictEqual((await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 0 })).status, 400);
   assert.strictEqual((await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 1999, qty: 2 })).status, 400, 'one payment is one donation');
-  assert.strictEqual((await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 1999 })).status, 200, 'below the floor is raised, not refused');
+  assert.strictEqual((await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 2499 })).status, 200, 'below the floor is raised, not refused');
   const row = sqlite.prepare("SELECT amount, quantity, status FROM shop_orders WHERE sku = 'don:all-cosmetics'").get();
-  assert.strictEqual(row.amount, 2000); assert.strictEqual(row.quantity, 1); assert.strictEqual(row.status, 'fulfilled');
+  assert.strictEqual(row.amount, 2500); assert.strictEqual(row.quantity, 1); assert.strictEqual(row.status, 'fulfilled');
   const owned = (await api.catalog(env, c)).data.owned;
   assert.strictEqual(owned.length, 52, 'the first payment unlocks the whole wardrobe');
   // The amount above the floor is honoured as asked, rounded to the catalog step.
-  const big = (await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 2500 })).data;
+  const big = (await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 3000 })).data;
   assert.strictEqual(big.fulfilled, true);
-  assert.strictEqual(sqlite.prepare('SELECT amount FROM shop_orders WHERE id = ?').get(big.order).amount, 2500);
+  assert.strictEqual(sqlite.prepare('SELECT amount FROM shop_orders WHERE id = ?').get(big.order).amount, 3000);
   // The catalog's own ceiling holds, so a fat finger cannot charge a fortune.
   const huge = (await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 99999999 })).data;
   assert.strictEqual(sqlite.prepare('SELECT amount FROM shop_orders WHERE id = ?').get(huge.order).amount, 500000);
@@ -249,11 +249,11 @@ await T('a donation is unlocked by the first payment of at least the floor, and 
 await T('paying again is a donation: fulfilled, nothing delivered, nothing duplicated, one audit line', async () => {
   const { env, sqlite } = freshEnv({ SHOP_FAKE_CHECKOUT: '1' });
   const c = (await api.register(env, { u: 'Alice', p: 'alice-password-1' })).cookie;
-  const first = await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 2000 });
+  const first = await api.checkout(env, c, { sku: 'don:all-cosmetics', amount: 2500 });
   assert.strictEqual(first.status, 200);
   const before = sqlite.prepare('SELECT COUNT(*) n FROM entitlements').get().n;
   assert.strictEqual(before, 52);
-  for (const amount of [2000, 2000, 3500]) {
+  for (const amount of [2500, 2500, 3500]) {
     const again = await api.checkout(env, c, { sku: 'don:all-cosmetics', amount });
     assert.strictEqual(again.status, 200, JSON.stringify(again.data));
     assert.strictEqual(again.data.fulfilled, true);
