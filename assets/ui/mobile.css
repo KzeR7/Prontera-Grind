@@ -105,8 +105,14 @@ html.pg-mobile #eclipseHeader .hud-zeny>b{font-size:10px}
 html.pg-mobile #eclipseHeader>div:last-child{gap:4px!important;margin-left:0!important;flex:none}
 html.pg-mobile #cloudBadge,
 html.pg-mobile #eclipseHeader #userBadge,
-html.pg-mobile #eclipseHeader #logoutBtn,
-html.pg-mobile #eclipseHeader #gmBtn{display:none!important}
+html.pg-mobile #eclipseHeader #logoutBtn{display:none!important}
+/* The GM console button keeps its place on a phone (owner: "where did the GM console in
+   mobile ui went?"). It was swept into the header-hide list with the account chrome, which
+   left a GM with no way to open the console - the page's own JS only ever shows the button
+   for the GM account (inline display), so an ordinary player's header is unchanged; on a
+   phone it just shrinks to an icon-only 28px button like the rest of the header row. */
+html.pg-mobile #eclipseHeader #gmBtn{width:28px;font-size:0!important}
+html.pg-mobile #eclipseHeader #gmBtn::after{content:'🛠';font-size:13px;line-height:1}
 html.pg-mobile #eclipseHeader button{
   font-size:8px;padding:0;height:28px;min-width:28px;border-radius:7px;
   display:inline-flex;align-items:center;justify-content:center;
@@ -258,6 +264,12 @@ html.pg-mobile #socialChat.minimized{height:auto!important}
 /* An open panel owns the field; the chat card (and its tab strip) would float
    on top of it. It comes back the moment the panel closes. */
 html.pg-mobile.pg-panel #socialChat{display:none}
+/* The ❖ Quests chip had the same problem, worse: at z-index 59 (it must sit above
+   its scrim and sheet to close them) it floated in front of the panel windows
+   (z 50) too - over every window's title bar and close button ("the quest button
+   still overlapping at the front of all the UI"). While a panel is open the chip
+   stands down like the chat; the dock's More button still reaches the sheet. */
+html.pg-mobile.pg-panel #pgQuests{display:none!important}
 
 /* Pet buffs: small tiles tucked above the dock on the right. */
 html.pg-mobile #hudBuffs{

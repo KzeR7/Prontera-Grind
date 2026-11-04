@@ -18,6 +18,9 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
  // v280: /api/me and /api/sessions now return the durable account id, which the save stamp needs.
  'functions/api/me.js','functions/api/sessions.js',
  'functions/api/shop/checkout.js','functions/api/gm/damage.js',
+ // v325: the GM console's Cash Shop tab gained the one-button grant-all action, so the GM shop
+ // endpoint is a runtime change this candidate contains - it ships with the package.
+ 'functions/api/gm/shop.js',
  // v263: the write-pause control endpoint. It answers 404 without the `GATE` binding, so packaging it
  // does not enable anything; it is listed because it is a runtime file this candidate contains.
  'functions/api/gate.js','migrations/0008_damage_monitoring.sql',

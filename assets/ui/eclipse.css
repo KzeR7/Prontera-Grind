@@ -305,7 +305,7 @@ body.clean-screen #screenBtn{visibility:visible}
 #eclipseHeader .hud-zeny{font-size:9px}
 #eclipseHeader .hud-zeny>b{font-size:10px}
 #cloudBadge{max-width:none;overflow:visible;white-space:nowrap;font-variant-numeric:tabular-nums}   /* v282: it carries a clock time now - 18px could never show one */
-#eclipseHeader #userBadge,#eclipseHeader #logoutBtn,#eclipseHeader #gmBtn{display:none!important}
+#eclipseHeader #userBadge,#eclipseHeader #logoutBtn{display:none!important}   /* v325: #gmBtn left this hide list - the page shows it only for the GM account (inline display), and display:none!important here overrode that at <=700px, so the GM console was unreachable on every phone ("where did the GM console in mobile ui went?"); the 740px block below sizes it as a 'GM' pill and mobile.css gives a phone its icon */
 #eclipseHeader button{font-size:8px;padding:5px}
 #eclipseHeader #screenBtn{font-size:0}
 #eclipseHeader #screenBtn:after{content:'Display';font-size:8px}

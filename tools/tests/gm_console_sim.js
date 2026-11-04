@@ -67,11 +67,26 @@ t('the "never claim what you cannot apply" contract is stated for the player-fac
     'the console should tell the GM that an unapplied gift stays visible');
 });
 
-t('every action the console offers exists on the server', async () => {
-  const server = fs.readFileSync(path.join(root, 'functions/api/gm/player.js'), 'utf8');
+// This was an `async` function under the sync `t` runner - an async throw becomes a rejected
+// promise the runner never sees, so every assertion below silently passed without running.
+// Found while adding the grant-all action (haven-v325); the function is sync now, and the
+// action contract spans both GM endpoints the console drives: /gm/player and /gm/shop.
+t('every action the console offers exists on the server', () => {
+  const server = ['functions/api/gm/player.js', 'functions/api/gm/shop.js']
+    .map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
   const actions = [...new Set([...src.matchAll(/action:\s*'([a-z-]+)'/g)].map(m => m[1]))];
   assert.ok(actions.length >= 6, 'expected several GM actions, got ' + actions.join(','));
   for (const a of actions) assert.ok(server.includes(`'${a}'`), `the server must implement ${a}`);
+});
+
+t('the Cash Shop hands over the whole wardrobe in one confirmed action', () => {
+  assert.match(src, /data-act="shop-grant-all"/, 'the one-button grant exists');
+  assert.match(src, /Grant all cosmetics/, 'and the button names what it does');
+  assert.match(src, /shop-grant-all'[\s\S]{0,600}?confirm\('Grant EVERY cosmetic/, 'it asks before it acts');
+  assert.match(src, /action:\s*'grant-all'/, 'the request is a grant-all action');
+  const server = fs.readFileSync(path.join(root, 'functions/api/gm/shop.js'), 'utf8');
+  assert.match(server, /'grant-all'/, 'the server implements it');
+  assert.match(server, /INSERT OR IGNORE INTO entitlements/, 'owned items are skipped, not duplicated');
 });
 
 t('the page is safe to serve publicly: it degrades to a sign-in card', () => {
