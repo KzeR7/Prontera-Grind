@@ -3676,35 +3676,184 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
 }
 #loginOverlay .recovery-success .login-btn{white-space:normal}
 
-/* ---------- Illustrated World Map of Rune-Midgard — Option B Layout (v314) ---------- */
+/* ---------- Illustrated World Map of Rune-Midgard — Option B Layout (v316) ---------- */
 #wins .ui-panel[data-layout=map] #map-panel-ascension.ui-content{
   grid-template-columns:152px minmax(0,1.45fr) 256px;
 }
 
-/* Mobile guard: hide Option B inline kicker so landscape phone keeps its compact 205px budget */
-html.pg-mobile #wins .rm-optb-meta{display:none}
+/* Mobile landscape guard: keep landscape phone's compact 205px zero-scroll travel budget */
+@media (orientation:landscape) and (max-height:560px){
+  html.pg-mobile #wins .rm-optb-meta{display:none}
+  html.pg-mobile #wins .rm-route-drawer{padding:0;border:0;background:none}
+}
 
-/* Option B Desktop & Tablet World Atlas: Top 10-Map Bar + 2-Column Split (Zero-Scroll Left) */
+/* Mobile portrait tuning: crisp 16:9 Illustrated Map + Stage Card + Tap-for-Card Roster */
+@media not all and (orientation:landscape) and (max-height:560px){
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:8px 10px 14px;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations>.ui-section-label,
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.ui-section-label,
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .mapband-t,
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-fold{
+    display:none;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapgrid{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:4px;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard{
+    min-height:38px;
+    padding:4px 2px;
+    border-radius:6px;
+    background:#111923;
+    border:1px solid #263446;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard.on{
+    background:#2a2215;
+    border-color:#dfb96e;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:0;
+    border:0!important;
+    background:none;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero{
+    aspect-ratio:16 / 9;
+    min-height:176px;
+    height:auto;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.rm-route-drawer{
+    padding:9px 10px;
+    border-radius:8px;
+    background:#0d131b;
+    border:1px solid #243040;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .fields{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin:0;
+    padding:0;
+    border:0;
+    background:none;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare){
+    display:grid;
+    grid-template-columns:repeat(10,minmax(0,1fr));
+    gap:3px;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:4px;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node{
+    min-height:28px;
+    height:28px;
+    opacity:1!important;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages .map-node>small{
+    display:none;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action{
+    margin:2px 0 0;
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .ui-primary-action>.go{
+    min-height:38px;
+    border-radius:6px;
+    background:linear-gradient(180deg,#dfc080,#c49e58);
+    border:1px solid #f4dca0;
+    color:#14181f;
+    font:700 11.5px/1 var(--e-font);
+  }
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-field-guide{
+    max-height:none;
+    padding:10px 12px;
+    border-radius:8px;
+    background:#0d131b;
+    border:1px solid #243040;
+  }
+  html.pg-mobile #wins .rm-mob-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+/* Slim Desktop Map Window Chrome (Reclaims ~54px of Oversized Header/Tab/Footer Space) */
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"]>.title{
+  height:44px;
+  min-height:44px;
+  padding:0 14px;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"]>.title>span:first-child{
+  gap:10px;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"]>.title>span:first-child>.ui-icon{
+  width:28px;
+  height:28px;
+  padding:5px;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"] .eclipse-window-heading{
+  gap:1px;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"] .eclipse-window-heading small{
+  font-size:6.5px;
+  line-height:1.1;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"] .eclipse-window-heading b{
+  font-size:15.5px;
+  line-height:1.15;
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins>.wp[data-win="map"]>.eclipse-window-footer{
+  height:22px;
+  min-height:22px;
+  padding:0 14px;
+}
+
+/* Option B Desktop & Tablet World Atlas: Unified 10-Column Master Grid */
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins .ui-panel[data-layout=map]:has(>#map-panel-atlas)>.ui-hero{
   display:none;
 }
-html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins .ui-panel[data-layout=map]:has(>#map-panel-atlas)>.atabs.map-season-tabs{
-  padding:6px 14px;
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins .ui-panel[data-layout=map]>.atabs.map-season-tabs{
+  min-height:34px;
+  padding:4px 14px;
   gap:6px;
+  border:0;
+  border-bottom:1px solid var(--e-line);
+  border-radius:0;
+  background:rgba(11,16,23,.55);
+}
+html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins .ui-panel[data-layout=map]>.atabs.map-season-tabs button{
+  min-height:26px;
+  height:26px;
+  padding:0 10px;
+  border-radius:5px;
+  font-size:10.5px;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
 }
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content{
   display:grid;
-  grid-template-columns:minmax(0,1.22fr) minmax(320px,1fr);
+  grid-template-columns:repeat(10,minmax(0,1fr));
   grid-template-rows:auto minmax(0,1fr);
-  gap:10px 12px;
-  padding:10px 14px 12px;
+  gap:8px;
+  padding:8px 14px 10px;
   align-items:stretch;
   min-height:0;
   flex:1 1 auto;
   overflow:hidden;
 }
 
-/* Row 1: Full-width 10-Map Horizontal Bar (aligned flush with columns below) */
+/* Row 1: Full-width 10-Map Horizontal Bar (Cols 1..10) */
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations{
   grid-column:1 / -1;
   grid-row:1;
@@ -3721,20 +3870,20 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-d
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapgrid{
   display:grid;
   grid-template-columns:repeat(10,minmax(0,1fr));
-  gap:6px;
+  gap:8px;
   margin:0;
   padding:0;
 }
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard{
-  display:grid;
-  grid-template-columns:auto minmax(0,auto);
+  position:relative;
+  display:flex;
+  flex-direction:column;
   justify-content:center;
-  align-content:center;
-  align-items:baseline;
-  gap:2px 4px;
-  min-height:40px;
-  height:40px;
-  padding:4px 5px;
+  align-items:center;
+  gap:2px;
+  min-height:38px;
+  height:38px;
+  padding:3px 4px;
   margin:0;
   border-radius:6px;
   background:#111923;
@@ -3744,14 +3893,23 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-d
   transition:background .15s ease,border-color .15s ease;
 }
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard .eclipse-map-number{
-  position:static;
+  position:absolute;
+  top:3px;
+  left:4px;
   margin:0;
-  font:700 9.5px/1.1 var(--e-font);
+  font:700 7.5px/1 var(--e-font);
   font-variant-numeric:tabular-nums;
-  color:#7f93a6;
+  color:#6c8196;
+  pointer-events:none;
+}
+@media(max-width:1100px){
+  html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard .eclipse-map-number{
+    display:none;
+  }
 }
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard b{
   margin:0;
+  max-width:100%;
   font:700 10.5px/1.1 var(--e-font);
   color:#e4ebf2;
   white-space:nowrap;
@@ -3759,8 +3917,8 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-d
   text-overflow:ellipsis;
 }
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations .mapcard small{
-  grid-column:1 / -1;
   margin:0;
+  max-width:100%;
   font:500 8.5px/1.1 var(--e-font);
   font-variant-numeric:tabular-nums;
   color:#7f93a6;
@@ -3789,13 +3947,13 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-d
   color:#cbb07a;
 }
 
-/* Row 2, Col 1: Fixed-Ratio Map Card + Framed Stage/Travel Card (Zero Shift, Zero Scroll) */
+/* Row 2, Cols 1..6 (Exact Alignment Under Maps 01..06): Map Card + Stage/Travel Card */
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route{
-  grid-column:1;
+  grid-column:1 / 7;
   grid-row:2;
   display:grid;
   grid-template-rows:minmax(0,1fr) auto;
-  gap:10px;
+  gap:8px;
   min-height:0;
   height:100%;
   padding:0;
@@ -4007,15 +4165,16 @@ html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-r
   opacity:1;
 }
 
-/* Row 2, Col 2: Wider Full-Height 03 / Field Intelligence */
+/* Row 2, Cols 7..10 (Exact Alignment Under Maps 07..10): Full-Height 03 / Field Intelligence */
 html:not(.pg-mobile) body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-field-guide{
-  grid-column:2;
+  grid-column:7 / -1;
   grid-row:2;
   min-height:0;
   height:100%;
   max-height:none;
   overflow-y:auto;
-  padding:12px 16px;
+  overflow-x:hidden;
+  padding:10px 14px;
   margin:0;
   background:#0d131b;
   border:1px solid #243040;
@@ -4370,26 +4529,31 @@ body.rm-atlas-fullscreen #wins .rm-viewport.is-dragging .rm-canvas{
   color:#c8d4cf;
 }
 
-/* Floating Paired Region Sub-Zone Overlay (Top-Left Ocean — Zero Layout Shift) */
+/* Floating Paired Region Sub-Zone Overlay (Top-Left Ocean — Explicit bottom/right:auto prevents .eclipse-atlas-hero>div stretch!) */
 #wins .eclipse-atlas-hero.rm-illustrated-hero>.rm-subzones.rm-subzones-overlay{
   position:absolute;
   top:8px;
   left:8px;
+  bottom:auto;
+  right:auto;
+  width:auto;
+  height:auto;
   z-index:30;
   display:inline-flex;
   align-items:center;
   gap:3px;
-  padding:3px;
+  padding:2px 3px;
   border-radius:7px;
   background:rgba(13,18,25,.86);
   backdrop-filter:blur(6px);
-  border:1px solid rgba(226,194,132,.42);
+  border:1px solid rgba(226,194,132,.45);
   box-shadow:0 4px 12px rgba(0,0,0,.42);
 }
 body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-atlas-hero.rm-illustrated-hero>.rm-subzones.rm-subzones-overlay{
   top:auto;
   bottom:14px;
   left:50%;
+  right:auto;
   transform:translateX(-50%);
 }
 #wins .rm-subzone-btn{
@@ -4419,7 +4583,7 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-a
 }
 #wins .rm-subzone-btn.on b{color:#f5d68e}
 
-/* Structured Field Intelligence Monster Roster & MVP Loot Priority */
+/* Structured Field Intelligence Monster Roster, Hover Card Effect Tooltip & MVP Loot Priority */
 #wins .ui-field-guide .rm-intel-hd{
   display:flex;
   align-items:baseline;
@@ -4440,6 +4604,8 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-a
   letter-spacing:.02em;
 }
 #wins .ui-field-guide .eclipse-field-encounter{
+  position:relative;
+  overflow:visible;
   display:flex;
   flex-direction:column;
   align-items:stretch;
@@ -4473,46 +4639,153 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode .eclipse-a
   gap:6px;
 }
 #wins .rm-mob-tile{
+  position:relative;
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:7px;
   min-width:0;
   padding:6px 8px;
   border-radius:6px;
   background:#16202d;
   border:1px solid #263649;
+  cursor:pointer;
+  transition:border-color .15s ease,background .15s ease;
+}
+#wins .rm-mob-tile:hover,
+#wins .rm-mob-tile:focus-visible,
+#wins .rm-mob-tile.is-open{
+  background:#1b2838;
+  border-color:#536e8c;
+  outline:none;
+  z-index:20;
 }
 #wins .rm-mob-tile.is-boss{
   background:linear-gradient(90deg,rgba(219,181,104,.16),rgba(22,32,45,.92));
   border-color:rgba(223,185,110,.5);
 }
+#wins .rm-mob-tile.is-boss:hover,
+#wins .rm-mob-tile.is-boss:focus-visible,
+#wins .rm-mob-tile.is-boss.is-open{
+  border-color:#f0cb7e;
+}
 #wins .rm-mob-tile img{
-  width:34px;
-  height:34px;
+  width:32px;
+  height:32px;
   flex:none;
   object-fit:contain;
   image-rendering:pixelated;
 }
-#wins .rm-mob-tile>div{
+#wins .rm-mob-copy{
   min-width:0;
   flex:1;
 }
-#wins .rm-mob-tile b{
+#wins .rm-mob-top{
   display:flex;
   align-items:center;
-  gap:5px;
-  flex-wrap:wrap;
-  font:600 10.5px/1.2 var(--e-font);
-  color:#e8eef4;
+  justify-content:space-between;
+  gap:4px;
+  min-width:0;
 }
-#wins .rm-mob-tile small{
+#wins .rm-mob-tile b{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+  font:600 10px/1.2 var(--e-font);
+  color:#e8eef4;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#wins .rm-card-chip{
+  flex:none;
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+  padding:1px 5px;
+  border-radius:4px;
+  background:rgba(15,22,31,.85);
+  border:1px solid #33465c;
+  font:600 8px/1.2 var(--e-font);
+  font-variant-numeric:tabular-nums;
+  color:#b8cade;
+}
+#wins .rm-card-chip.g1{border-color:rgba(92,196,138,.45);color:#8ce0b1}
+#wins .rm-card-chip.g2{border-color:rgba(110,168,245,.5);color:#9bc5ff}
+#wins .rm-card-chip.g3{border-color:rgba(228,188,108,.6);color:#f5d68e}
+#wins .rm-mob-tile small.rm-mob-stats{
   display:block;
-  margin-top:2px;
-  font:500 8.5px/1.25 var(--e-font);
+  margin-top:3px;
+  font:500 8.5px/1.2 var(--e-font);
+  font-variant-numeric:tabular-nums;
   color:#92a6ba;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+}
+#wins .rm-card-pop{
+  position:absolute;
+  bottom:calc(100% + 6px);
+  left:0;
+  min-width:196px;
+  max-width:248px;
+  padding:8px 10px;
+  border-radius:7px;
+  background:rgba(10,15,22,.97);
+  border:1px solid rgba(223,185,110,.55);
+  box-shadow:0 10px 24px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,244,214,.12);
+  pointer-events:none;
+  opacity:0;
+  visibility:hidden;
+  transform:translateY(4px);
+  transition:opacity .14s ease,transform .14s ease,visibility .14s ease;
+  z-index:45;
+}
+#wins .rm-mob-grid>.rm-mob-tile:nth-child(even)>.rm-card-pop{
+  left:auto;
+  right:0;
+}
+html.pg-mobile #wins .rm-mob-grid>.rm-mob-tile>.rm-card-pop{
+  left:0;
+  right:0;
+  max-width:none;
+}
+#wins .rm-mob-tile:hover>.rm-card-pop,
+#wins .rm-mob-tile:focus-visible>.rm-card-pop,
+#wins .rm-mob-tile.is-open>.rm-card-pop{
+  opacity:1;
+  visibility:visible;
+  transform:translateY(0);
+}
+#wins .rm-card-pop-hd{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:4px;
+}
+#wins .rm-card-pop-hd strong{
+  font:700 10px/1.2 var(--e-font);
+  color:#f3ead5;
+}
+#wins .rm-card-pop-hd em{
+  font:700 8px/1.2 var(--e-font);
+  font-style:normal;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#9fb2c5;
+}
+#wins .rm-card-pop-hd em.g1{color:#7bd8a4}
+#wins .rm-card-pop-hd em.g2{color:#8cbcff}
+#wins .rm-card-pop-hd em.g3{color:#f5d68e}
+#wins .rm-card-pop-fx{
+  font:700 10.5px/1.3 var(--e-font);
+  color:#f5d68e;
+  margin-bottom:3px;
+}
+#wins .rm-card-pop-meta{
+  font:500 8.5px/1.25 var(--e-font);
+  color:#8da1b5;
 }
 #wins .rm-mob-tag{
   display:inline-block;

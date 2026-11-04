@@ -660,14 +660,22 @@ test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar
  assert.strictEqual(win.querySelector('#rmCanvas'),canvasNode,'eclipsePatch preserves live #rmCanvas node across zone switch');
  assert.strictEqual(win.querySelector('#rmAmb-birds-a'),birdNode,'eclipsePatch preserves live bird animation node');
  assert.equal(canvasNode.getAttribute('style'),izludeStyle,'switching between Prontera and Izlude produces zero camera jump');
- // Complete stage monster roster & drop accuracy checks:
+ // Complete stage monster roster, combat stats & card-effect hover/tap tooltip checks:
  ev("mapM=0;mapL=1;renderWin()");
  const s1Mobs=[...win.querySelectorAll('.ui-field-guide .eclipse-field-encounter .rm-mob-tile b')].map(el=>el.textContent.trim());
  assert.deepEqual(s1Mobs,['Poring','Fabre'],'Prontera Stage 1 shows both Poring and Fabre in Field Intelligence');
+ const poringTile=win.querySelector('.ui-field-guide .eclipse-field-encounter .rm-mob-tile');
+ assert.match(poringTile.querySelector('.rm-mob-stats').textContent,/HP \d+ · ATK \d+/,'monster tile shows stage HP and ATK instead of repeating card name');
+ assert.match(poringTile.querySelector('.rm-card-pop-fx').textContent,/LUK \+3/,'hover/tap card tooltip shows exact Poring Card effect');
+ poringTile.click();
+ assert.equal(poringTile.classList.contains('is-open'),true,'tapping monster tile toggles card effect tooltip open for touch/mobile');
  ev("mapM=0;mapL=10;renderWin()");
  const s10Mobs=[...win.querySelectorAll('.ui-field-guide .eclipse-field-encounter .rm-mob-tile b')].map(el=>el.childNodes[0].textContent.trim());
  assert.deepEqual(s10Mobs,['Mastering','Peco Peco','Poring'],'Prontera Stage 10 MVP shows Mastering plus both escort species');
  assert.ok(win.querySelector('.ui-field-guide .rm-boss-loot-priority'),'Boss stage hoists MVP drops into priority loot card directly beneath monster roster');
+ assert.match(eclipseCss,/\.rm-subzones\.rm-subzones-overlay\{[\s\S]*?bottom:auto;/,'sub-zone overlay resets bottom:auto so .eclipse-atlas-hero>div never stretches it');
+ assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-route\{[\s\S]*?grid-column:1 \/ 7;/,'left map/stage column aligns cleanly across columns 1..6 of the 10-column grid');
+ assert.match(eclipseCss,/#wins #map-panel-atlas>\.ui-field-guide\{[\s\S]*?grid-column:7 \/ -1;/,'right Field Intelligence column aligns cleanly across columns 7..10 of the 10-column grid');
  // Regional camera pans smoothly between distant regions (Geffen vs Amatsu):
  win.querySelector('[data-a="selm"][data-v="2"]').click();
  const geffenX=canvasNode.style.getPropertyValue('--x'),geffenY=canvasNode.style.getPropertyValue('--y');

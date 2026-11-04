@@ -9757,4 +9757,17 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   * **Complete Stage Monster Roster & Boss Drop Priority:** Replaced the single-species `.eclipse-field-encounter` preview with `buildFieldEncounterRoster` so every stage displays **all** resident monsters (`2` field species side-by-side on normal/Nightmare stages; featured `MVP` card + both `Escort` species on Stage 10 / NM 5 / Ascension Stage 5) with accurate sprites and card drop rates, plus hoisted `.rm-boss-loot-priority` directly beneath the monster roster on boss stages.
 * **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/{eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
 
+### 2026-11-04 — `haven-v316 unified 10-column world atlas grid, slim top chrome, mobile portrait tuning & card-effect hover tooltips`
+
+* **Fixed (`assets/ui/eclipse.css` — `.rm-subzones-overlay` Stretch, Unified 10-Column Grid & Slim Top Chrome):**
+  * Reset `bottom: auto; right: auto; width: auto; height: auto;` on `.rm-subzones.rm-subzones-overlay` so `.eclipse-atlas-hero > div { bottom: 15px; }` no longer stretches the paired sub-zone pill (`Prontera / Izlude`, `Niflheim / Abyss`) vertically down the left side of the map.
+  * Converted `#map-panel-atlas.ui-content` to a true 10-column master grid (`repeat(10, minmax(0, 1fr)); gap: 8px;`) so `.ui-route` (`grid-column: 1 / 7`) aligns pixel-for-pixel beneath maps `01`–`06` and `.ui-field-guide` (`grid-column: 7 / -1`) aligns pixel-for-pixel beneath maps `07`–`10`, with centered 2-line `.mapcard` tiles across both narrow (~960px) and wide PC viewports.
+  * Slimmed the Map window's top header (`71px` → `44px`), 4-collection tab bar (`56px` → `34px`), and footer (`29px` → `22px`) to reclaim ~54px of vertical height on desktop & preview viewports.
+* **Changed (`assets/ui/eclipse.css` — Mobile Portrait & Landscape Tuning):**
+  * Tuned `html.pg-mobile` portrait World Atlas (`5×2` destination grid, `16:9` Illustrated Map hero with `1.20×` regional camera pan & Full Map touch zoom/pan, visible `02 / <MAP>` stage header, framed stage/travel card, and 1-column readable monster roster), while keeping landscape phone's ~205px zero-scroll travel layout intact.
+* **Changed (`index.html`, `assets/ui/eclipse.css` — Monster Combat Stats & Card-Effect Hover/Tap Tooltip):**
+  * Replaced the redundant truncated card name subtitle on `.rm-mob-tile` with actual stage combat stats (`HP · ATK · Phys/Magic` + `[🃏 %]` chip) via `stageMobPreviewStats`, and added a hover/focus/tap `.rm-card-pop` tooltip showing the card's name, rarity grade, exact stat effect (`cardEffectText`), equipment slot fit, drop rate, and owned/equipped status.
+* **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/{eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+
 

@@ -912,12 +912,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=315">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=316">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=315">
-<link rel="stylesheet" href="assets/social-fishing.css?v=315">
+<link rel="stylesheet" href="assets/social.css?v=316">
+<link rel="stylesheet" href="assets/social-fishing.css?v=316">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-04 haven-v315 illustrated rune-midgard world atlas';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-04 haven-v316 illustrated rune-midgard world atlas';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6842,13 +6842,35 @@ function buildIllustratedStageHead(mi,make){
   wrap.innerHTML=`<div class="rm-optb-meta"><span class="rm-optb-kicker">02 / ${esc(m.n.toUpperCase())}</span><span class="rm-optb-lv">${esc(m.rec)}</span><span class="rm-optb-sub">${esc(status)}</span></div>`;
   return wrap;
 }
+function stageMobPreviewStats(mi,li,m,isBoss){
+  const l=fieldPower(mi,li),mb=1+mi*.15+Math.max(0,mi-4)*.2,nm1=li>10,nm=nm1?NMHP*nm15Of(li):1,na=nm1?NMATK*nm15Of(li):1;
+  if(mi>=10){const a=ascensionCombatStats(mi,li,!!isBoss);return{hp:a.hp,atk:a.atk,mag:isBoss||['demon','tree','blob'].includes(m.shape)};}
+  if(isBoss)return{hp:Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(li):1)),atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),mag:true};
+  const early=starterStage(mi,li);
+  const hp=early?Math.min(starterHp(li),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm);
+  const atk=early?starterAtk(li):Math.floor((5+l*4.6)*mb*na*eaOf(l));
+  return{hp,atk,mag:['demon','tree','blob'].includes(m.shape)};
+}
 function buildFieldEncounterRoster(mi,li,field,make){
   const mobImg=m=>esc(ASCENSION_MOB_IDS.has(m.spriteId)?'assets/mobs/v1/thumb-'+m.spriteId+'.png':mobSpriteUrl(m.spriteId));
+  const fmtN=n=>n>=1e6?(Math.round(n/1e5)/10).toString().replace(/\.0$/,'')+'M':n>=1e3?(Math.round(n/1e2)/10).toString().replace(/\.0$/,'')+'K':String(Math.round(n));
+  const fitMap={weapon:'Weapons',armor:'Armor',head:'Headgear',acc:'Accessories',off:'Off-hand',leg:'Legwear'};
+  const wornKeys=new Set(S&&typeof items==='function'?items().flatMap(x=>(x.cards||[]).map(c=>c.cardKey)):[]);
+  const looseCards=S&&Array.isArray(S.cards)?S.cards:[];
   const escorts=mi<5?3:5;
+  const renderTile=(m,isBoss)=>{
+    const st=stageMobPreviewStats(mi,li,m,isBoss),c=m.card;
+    const fx=cardEffects(c).map(cardEffectText).join(' · ');
+    const fits=(c.fit||[CFIT[c.stat]]).filter(Boolean).map(k=>fitMap[k]||CFL[k]||k).join(', ');
+    const owned=looseCards.filter(x=>x.cardKey===c.cardKey).length,worn=wornKeys.has(c.cardKey);
+    const roleTag=isBoss?' <span class="rm-mob-tag boss">MVP</span>':field.boss?' <span class="rm-mob-tag escort">Escort</span>':'';
+    const sub=`HP ${fmtN(st.hp)} · ATK ${fmtN(st.atk)} · ${isBoss?escorts+' escorts':st.mag?'Magic':'Phys'}`;
+    return `<div class="rm-mob-tile${isBoss?' is-boss':''}" tabindex="0"><img src="${mobImg(m)}" alt=""><div class="rm-mob-copy"><div class="rm-mob-top"><b>${esc(m.n)}${roleTag}</b><span class="rm-card-chip g${c.g}">🃏 ${m.cardCh}%</span></div><small class="rm-mob-stats">${esc(sub)}</small></div><div class="rm-card-pop" role="tooltip"><div class="rm-card-pop-hd"><strong>🃏 ${esc(c.n)}</strong><em class="g${c.g}">${esc(GRADE[c.g]||'Common')}</em></div><div class="rm-card-pop-fx">${esc(fx)}</div><div class="rm-card-pop-meta">Fits ${esc(fits)} · Drop ${m.cardCh}%${worn?' · Equipped':owned?' · Owned ×'+owned:''}</div></div></div>`;
+  };
   const encounter=make('div','eclipse-field-encounter');
-  const bossHtml=field.boss?`<div class="rm-mob-tile is-boss"><img src="${mobImg(field.boss)}" alt=""><div><b>${esc(field.boss.n)} <span class="rm-mob-tag boss">MVP</span></b><small>${escorts} escorts · 🃏 ${esc(field.boss.card.n)} (${field.boss.cardCh}%)</small></div></div>`:'';
-  const mobsHtml=`<div class="rm-mob-grid">${field.mobs.map(m=>`<div class="rm-mob-tile"><img src="${mobImg(m)}" alt=""><div><b>${esc(m.n)}${field.boss?' <span class="rm-mob-tag escort">Escort</span>':''}</b><small>🃏 ${esc(m.card.n)} (${m.cardCh}%)</small></div></div>`).join('')}</div>`;
-  encounter.innerHTML=`<div class="rm-encounter-head"><span>MONSTERS ON THIS STAGE</span><small>${field.boss?`MVP + ${escorts} escorts`:`${field.mobs.length} field monsters · independent loot rolls`}</small></div>${bossHtml}${mobsHtml}`;
+  const bossHtml=field.boss?renderTile(field.boss,true):'';
+  const mobsHtml=`<div class="rm-mob-grid">${field.mobs.map(m=>renderTile(m,false)).join('')}</div>`;
+  encounter.innerHTML=`<div class="rm-encounter-head"><span>MONSTERS ON THIS STAGE</span><small>${field.boss?`MVP + ${escorts} escorts · hover for card`:`${field.mobs.length} monsters · hover for card effect`}</small></div>${bossHtml}${mobsHtml}`;
   return encounter;
 }
 function syncIllustratedAtlas(centerPlace){
@@ -6904,7 +6926,15 @@ if(typeof addEventListener==='function'&&$('wins')&&$('wins').addEventListener){
   const winsEl=$('wins');
   winsEl.addEventListener('click',e=>{
     if(rmSuppressClickUntil>Date.now()&&e.target&&e.target.closest&&e.target.closest('#rmViewport')){
-      rmSuppressClickUntil=0;e.stopPropagation();e.preventDefault();
+      rmSuppressClickUntil=0;e.stopPropagation();e.preventDefault();return;
+    }
+    const tile=e.target&&e.target.closest?e.target.closest('.rm-mob-tile'):null;
+    if(tile){
+      const was=tile.classList.contains('is-open');
+      winsEl.querySelectorAll('.rm-mob-tile.is-open').forEach(el=>el.classList.remove('is-open'));
+      if(!was)tile.classList.add('is-open');
+    }else if(winsEl.querySelector('.rm-mob-tile.is-open')){
+      winsEl.querySelectorAll('.rm-mob-tile.is-open').forEach(el=>el.classList.remove('is-open'));
     }
   },true);
   winsEl.addEventListener('pointerdown',e=>{
@@ -13222,10 +13252,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=273"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=315"></script>
-<script src="assets/social-poker.js?v=315"></script>
-<script src="assets/social-scene.js?v=315"></script>
-<script src="assets/social-fishing.js?v=315"></script>
-<script src="assets/social.js?v=315"></script>
+<script src="assets/social-rules.js?v=316"></script>
+<script src="assets/social-poker.js?v=316"></script>
+<script src="assets/social-scene.js?v=316"></script>
+<script src="assets/social-fishing.js?v=316"></script>
+<script src="assets/social.js?v=316"></script>
 </body>
 </html>
