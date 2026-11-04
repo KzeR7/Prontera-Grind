@@ -1862,6 +1862,21 @@ body.social-open #minimapTools{display:none!important}
 .minimap-tool-badge[hidden]{display:none!important}
 .minimap-tool-badge.is-dot{background:var(--gold);color:#17151c}
 
+/* v319: Social Hub quick button - the third seat in the minimap tool column.
+   The blink lives on the count badge and a soft ring, never on the button
+   body, so it reads as "someone is at the plaza" instead of an alarm. Green
+   means adventurers are inside; gold is reserved for a friend inside. */
+.social-hub-badge{background:#2fbf71;border-color:#161822;color:#07130c}
+.social-hub-btn.is-empty .social-hub-badge{background:#5b6a60;color:#d8e2da}
+.social-hub-btn.has-friends .social-hub-badge{background:var(--gold);color:#17151c}
+.social-hub-btn.is-live::after{content:'';position:absolute;inset:-1px;border-radius:9px;border:1.5px solid #57e389;opacity:0;pointer-events:none;animation:socialHubRing 2.4s ease-out infinite}
+.social-hub-btn.has-friends::after{border-color:var(--gold);animation-duration:1.8s}
+.social-hub-btn.is-live .social-hub-badge{animation:socialHubBadge 2.4s ease-in-out infinite}
+.social-hub-btn.has-friends .social-hub-badge{animation-duration:1.8s}
+@keyframes socialHubRing{0%{opacity:.8;transform:scale(1)}70%{opacity:0;transform:scale(1.14)}100%{opacity:0;transform:scale(1.14)}}
+@keyframes socialHubBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+@media (prefers-reduced-motion:reduce){.social-hub-btn.is-live::after,.social-hub-btn.is-live .social-hub-badge{animation:none}}
+
 /* The studio is a real top-level modal. Its root was missing its fixed overlay rules,
    which made the Compose action add a class without ever bringing a visible dialog up. */
 #gmStudioModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(12,12,16,.84);z-index:1210;padding:14px}
@@ -2189,6 +2204,11 @@ body.social-open #minimapTools{display:none!important}
 
 @media(max-width:980px){
   #minimapTools{right:188px;top:19px}
+}
+/* v319: with a third tool button the column reaches y=157px at this band, where the
+   rail otherwise starts at y=142px - drop the rail clear of the Social badge. */
+@media(min-width:701px) and (max-width:980px){
+  #sideRail{top:166px;max-height:calc(100% - 134px)}
 }
 
 /* Loadout workbench — live equipment and inventory controls, styled without changing game rules. */

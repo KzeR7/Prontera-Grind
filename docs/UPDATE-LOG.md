@@ -9787,6 +9787,15 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   * Replaced the legacy mint-white Social Hub card with a Moonstone/Eclipse destination card featuring a scenic Prontera Fountain Plaza background (`assets/atlas/fountain-plaza.jpg`), 3 structured feature cards (**🎣 Plaza Fishing** — 155 species, 6 rarities, Fishcoins, 20 Titles & Auto-Fish; **♠️ Texas Hold'em Poker** — 2 live 6-seat tables & 1,000 daily free chips; **💬 Promenade & Idle Grind** — 20-player plaza, 32 RO emotions & uninterrupted background farming), and safe scroll handling on `.social-panel` / `.echo-panel`.
 * **Files:** `index.html`, `assets/shop.{js,css}`, `assets/social.css`, `assets/ui/eclipse.css`, `assets/atlas/fountain-plaza.jpg`, `tools/staging/{hosted_launch_stage,package_hosted_launch,stage_v283}.mjs`, `tools/tests/{publish_sim,shop_sim,eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
 
+### 2026-11-04 — `haven-v319 social hub live button`
+
+* **Added (`index.html`, `assets/ui/eclipse.css`, `assets/social.js` — Social Hub Quick Button with Live Population Badge):**
+  * Added a `⛲ SOCIAL` button as the third seat of `#minimapTools` (under Mail / Daily on PC, third square of the top-right row on mobile) that enters Fountain Plaza in one click via `PGSocial.enter()`, inheriting the column's existing hide rules (inside the plaza, field-only mode).
+  * The count badge totals adventurers across every Plaza room with a per-plaza tooltip breakdown and a dynamic `aria-label`; the blink is a soft ~2.4s ring + badge pulse on the badge only (gold and faster when a friend is inside, still grey `0` when empty, hidden when the population is unknown), with `prefers-reduced-motion` disabling the animation.
+* **Changed (`workers/social/room.mjs` — Plaza Population Broadcast):**
+  * `syncRooms` now sends room counts to every connected chat client (not only players already in a plaza), personalised with a per-client friend count (`plaza.friends`, including reserved reconnect spots); fresh connections receive the population immediately after `hello`, friend syncs and reservation expiries refresh it too.
+* **Files:** `index.html`, `assets/social.js`, `assets/ui/eclipse.css`, `workers/social/room.mjs`, `tools/tests/{eclipse_ui_sim,social_sim}.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
 
 
 

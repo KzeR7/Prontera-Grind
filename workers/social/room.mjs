@@ -162,7 +162,16 @@ export class SocialRoom {
   const list=[];for(let id=1;id<=top;id++)list.push({id,count:counts.get(id)||0});
   return list;
  }
- syncRooms(skip=null){const rooms=this.roomList();this.broadcast({type:'rooms',rooms},p=>p.room>0&&p!==skip);}
+ // v319: the field HUD's Social Hub button shows how busy Fountain Plaza is, so room counts now
+ // go to every connected chat client, not only to players already standing in a plaza. The
+ // friend count is personal, so each client gets its own payload instead of one broadcast.
+ plazaPopulation(c,rooms,now=this.now()){
+  let friends=0;
+  for(const p of this.clients.values())if(p.room>0&&p!==c&&c.friends.has(p.id))friends++;
+  for(const [id,r] of this.resumes)if(r.room>0&&r.expires>now&&id!==c.id&&c.friends.has(id))friends++;
+  return {total:rooms.reduce((n,r)=>n+(r.count||0),0),friends};
+ }
+ syncRooms(skip=null){const rooms=this.roomList();for(const c of this.clients.values()){if(c===skip)continue;this.send(c,{type:'rooms',rooms,plaza:this.plazaPopulation(c,rooms)})}}
  pokerTables(room){
   let list=this.tables.get(room);
   if(!list){
@@ -257,6 +266,9 @@ export class SocialRoom {
   // and is on your list is drawn as a friend even if you connected second.
   this.adoptFriends(c);
   this.send(c,{type:'hello',id:c.id,name:c.name,gm:c.gm,history:this.history});
+  // v319: a freshly connected field client learns the plaza population at once, instead of
+  // waiting for the next join or leave to light the Social Hub badge.
+  const rooms=this.roomList();this.send(c,{type:'rooms',rooms,plaza:this.plazaPopulation(c,rooms)});
   // The durable personal outbox is independent of the short-lived seat reservation.
   this.replayPokerLedgers(c);return c;
  }
@@ -348,7 +360,7 @@ export class SocialRoom {
   let m;try{m=JSON.parse(raw)}catch{return}if(!m||typeof m!=='object')return;
   if(m.type==='ping')return this.send(c,{type:'pong'});
   if(m.type==='poker_ledger_ack')return this.ackPokerLedgers(c,m);
-  if(m.type==='friends'){this.syncFriends(c,m.ids,now);return}
+  if(m.type==='friends'){if(this.syncFriends(c,m.ids,now))this.syncRooms();return}
   if(m.type==='leave'){this.resumes.delete(c.id);this.onResume?.(c.id,null);c.released=true;this.leave(c);return this.send(c,{type:'room',room:0,players:[]})}
   if(m.type==='join'){
    const look=this.cleanLook(m.look);if(!look)return;
@@ -484,11 +496,13 @@ export class SocialRoom {
   else if(channel==='local')this.broadcast(event,p=>p.room===c.room);
   else {this.send(c,event);if(recipient!==c)this.send(recipient,event)}
  }
- sweep(){const now=this.now();
+ sweep(){const now=this.now();let populationChanged=false;
   for(const [id,r] of [...this.resumes]){
-   if(now>r.expires){this.takeResume(id,now);continue}
+   if(now>r.expires){this.takeResume(id,now);populationChanged=true;continue}
    // An abandoned poker seat is released on the sweep, not only when the player reconnects.
    if(Number.isInteger(r.pokerSeat)&&now>(r.seatExpires||0))this.releaseSeat(id,r,now);
   }
+  // v319: an expired reservation quietly leaves the plaza counts; tell the field badges.
+  if(populationChanged)this.syncRooms();
   this.tickAll(now);for(const c of [...this.clients.values()])if(now>c.reauthAt||now>c.expires)this.refresh(c)}
 }

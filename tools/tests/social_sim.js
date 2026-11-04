@@ -222,5 +222,22 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
   }
   assert(R.walkable(p.x,p.z+p.d/2+1.4),'the south bank (and the bridge approach) is walkable');
  }
- console.log('PASS social room: channel privacy, 20-player overflow, native emotion events, collision, movement/sit, rate limit, sliding idle window with a 30-minute re-authentication, per-character walk speed and tab replacement; v304 18x13 ponds whose bridge, falls, lanterns, blossoms and boulders stay out of the water and off every chair');
+ // v319: the field HUD badge needs plaza population for players who are NOT in a plaza.
+ {
+  const popRoom=new SocialRoom({now:()=>now});
+  const popJoin=(id,friends=[])=>{const ev=[];const c=popRoom.connect({id,username:'Pop'+id,friends},s=>ev.push(JSON.parse(s)),()=>{});c.events=ev;return c};
+  const fieldFriend=popJoin(901,[902]),fieldStranger=popJoin(903),plazaGuest=popJoin(902);
+  const lastRooms=c=>c.events.filter(e=>e.type==='rooms').at(-1);
+  assert.equal(lastRooms(fieldFriend).plaza.total,0,'a field client learns the (empty) plaza population on connect');
+  popRoom.receive(plazaGuest,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));
+  assert.equal(plazaGuest.room,1);
+  assert.equal(lastRooms(fieldFriend).plaza.total,1,'a join updates field clients who never entered a plaza');
+  assert.equal(lastRooms(fieldFriend).plaza.friends,1,'the friend count is personal: the friend sees 1');
+  assert.equal(lastRooms(fieldStranger).plaza.friends,0,'and a stranger sees 0');
+  assert.deepEqual(lastRooms(fieldFriend).rooms,[{id:1,count:1},{id:2,count:0}],'room counts ride along for the tooltip breakdown (plus the next open plaza)');
+  popRoom.receive(plazaGuest,JSON.stringify({type:'leave'}));
+  assert.equal(lastRooms(fieldFriend).plaza.total,0,'a leave updates the field badge again');
+  assert.equal(lastRooms(fieldFriend).plaza.friends,0);
+ }
+ console.log('PASS social room: channel privacy, 20-player overflow, native emotion events, collision, movement/sit, rate limit, sliding idle window with a 30-minute re-authentication, per-character walk speed and tab replacement; v304 18x13 ponds whose bridge, falls, lanterns, blossoms and boulders stay out of the water and off every chair; v319 plaza population broadcast to field clients with a personalised friend count');
 })().catch(e=>{console.error(e);process.exitCode=1});

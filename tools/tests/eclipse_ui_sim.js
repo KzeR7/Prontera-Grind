@@ -722,6 +722,21 @@ test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar
  assert.equal(ev('tabs.length'),0,'second Escape closes the map panel');
 });
 
+test('v319: Social Hub button sits third in minimapTools with a population badge slot and a badge-only pulse',()=>{
+ const btn=doc.getElementById('socialHubBtn'),badge=doc.getElementById('socialHubBadge');
+ assert.ok(btn&&badge,'the Social Hub button and its count badge render on the main screen');
+ assert.equal(doc.getElementById('dailyBtn').nextElementSibling,btn,'Social is the third seat under Mail and Daily, left of the minimap');
+ assert.equal(btn.parentElement.id,'minimapTools','it inherits the Mail/Daily column and its hide rules');
+ assert.ok(btn.classList.contains('minimap-tool-btn'),'it reuses the Mail/Daily button chrome');
+ assert.match(btn.textContent,/Social/);
+ assert.equal(badge.hidden,true,'the badge starts hidden: an unknown population never invents a count');
+ const eclipseCss=fs.readFileSync(path.join(root,'assets/ui/eclipse.css'),'utf8');
+ assert.match(eclipseCss,/\.social-hub-btn\.is-live::after\{[^}]*animation:socialHubRing 2\.4s/,'the live state pulses a soft ring, not the button body');
+ assert.match(eclipseCss,/@keyframes socialHubRing/);
+ assert.match(eclipseCss,/prefers-reduced-motion:reduce\)\{\.social-hub-btn\.is-live/,'reduced motion stills the pulse');
+ assert.match(eclipseCss,/\.social-hub-btn\.has-friends \.social-hub-badge\{background:var\(--gold\)/,'a friend inside turns the badge gold');
+ assert.match(eclipseCss,/@media\(min-width:701px\) and \(max-width:980px\)\{\s*#sideRail\{top:166px/,'the 701-980px rail drops clear of the taller tool column');
+});
 test('v318: Social Hub destination showcases scenic Fountain Plaza background and Fishing + Hold\'em mini-games',()=>{
  ev('tabs.splice(0,tabs.length,"map");mapSeason="social";renderWin()');
  const dest=doc.querySelector('#wins .social-destination');
