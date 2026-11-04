@@ -49,7 +49,7 @@ t('every asset path index.html names statically ships with it', () => {
   }
   assert.ok(!bare.includes('assets/sprite_pack_data.js'),'legacy sprite pack must not download on normal startup');
   assert.ok(src.includes("script.src='assets/sprite_pack_data.js?v=2'"),'fallback pack remains available on demand');
-  for(const file of ['assets/atlas/astral-citadel.png','assets/atlas/thor-volcano.png','assets/atlas/endless-echo.svg'])assert.ok(fs.existsSync(path.join(out,file)),'Ascension illustration ships: '+file);
+  for(const file of ['assets/atlas/astral-citadel.png','assets/atlas/thor-volcano.png','assets/atlas/endless-echo.svg','assets/atlas/fountain-plaza.jpg'])assert.ok(fs.existsSync(path.join(out,file)),'Ascension/destination illustration ships: '+file);
   const missing = bare.filter(r => !fs.existsSync(path.join(out, r)));
   assert.deepStrictEqual(missing, [], 'referenced but not published: ' + missing.join(', '));
 });

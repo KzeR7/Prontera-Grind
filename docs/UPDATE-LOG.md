@@ -9778,6 +9778,16 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
   * Removed visible card drop percentage text from `.rm-mob-tile` (keeping only sprite + monster name + stage `HP · ATK · Phys/Magic` + subtle `🃏` hover cue) and added `showAtlasCardFloat` (`#rmCardFloat`, `position: fixed; z-index: 9999`) so hovering on PC or tapping on mobile always displays the Card Name, Rarity Grade, exact Card Effect, Slot Fit, and Drop Rate without clipping inside `.ui-field-guide`'s scroll container.
 * **Files:** `index.html`, `assets/ui/eclipse.css`, `tools/tests/{eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
 
+### 2026-11-04 — `haven-v318 cash shop donations layout & social hub mini-games destination`
+
+* **Fixed (`assets/shop.js`, `assets/shop.css`, `index.html` — Cash Shop `Donations` Tab Layout):**
+  * Fixed `.shop-donation` being squeezed into a single `190px` `.shop-grid` `auto-fill` column where the `USD` number input, quick-pick chips, and `Donate` button overflowed past the gold border.
+  * Styled `.shop-grid-donation` / `.shop-card.shop-donation` as a full-width balanced 2-column supporter card on desktop (stacking cleanly on compact/mobile viewports) with `box-sizing: border-box; min-width: 0` across all Cash Shop cards and a dedicated `shop` Eclipse header entry.
+* **Changed (`index.html`, `assets/social.css`, `assets/ui/eclipse.css`, `assets/atlas/fountain-plaza.jpg` — Social Hub Scenic Background & Mini-Games Copy):**
+  * Replaced the legacy mint-white Social Hub card with a Moonstone/Eclipse destination card featuring a scenic Prontera Fountain Plaza background (`assets/atlas/fountain-plaza.jpg`), 3 structured feature cards (**🎣 Plaza Fishing** — 155 species, 6 rarities, Fishcoins, 20 Titles & Auto-Fish; **♠️ Texas Hold'em Poker** — 2 live 6-seat tables & 1,000 daily free chips; **💬 Promenade & Idle Grind** — 20-player plaza, 32 RO emotions & uninterrupted background farming), and safe scroll handling on `.social-panel` / `.echo-panel`.
+* **Files:** `index.html`, `assets/shop.{js,css}`, `assets/social.css`, `assets/ui/eclipse.css`, `assets/atlas/fountain-plaza.jpg`, `tools/staging/{hosted_launch_stage,package_hosted_launch,stage_v283}.mjs`, `tools/tests/{publish_sim,shop_sim,eclipse_ui_sim,social_fishing_sim}.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
+
+
 
 
 

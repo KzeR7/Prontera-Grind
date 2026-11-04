@@ -912,12 +912,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=317">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=318">
 <link rel="stylesheet" href="assets/ui/mobile.css?v=274">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=317">
-<link rel="stylesheet" href="assets/social-fishing.css?v=317">
+<link rel="stylesheet" href="assets/social.css?v=318">
+<link rel="stylesheet" href="assets/social-fishing.css?v=318">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1044,7 +1044,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="comboFieldStatus" data-combo-status aria-label="Combat combo status"></div>
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
-<link rel="stylesheet" href="assets/shop.css?v=273">
+<link rel="stylesheet" href="assets/shop.css?v=318">
 <script src="assets/wardrobe.js?v=199"></script>
 <script src="assets/shop-catalog.js?v=273"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-04 haven-v317 illustrated rune-midgard world atlas';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-04 haven-v318 cash shop donations and social hub mini-games';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -7102,7 +7102,7 @@ function gmToolsPanel(){
  return `<div class="gm-tools"><div class="atabs gm-sections" role="tablist" aria-label="GM tool sections">${GM_SECTIONS.map(tab).join('')}</div>${head}${GM_SECTIONS.map(([k])=>`<section class="gm-section" data-gmsec="${k}"${section===k?'':' hidden'}>${bodies[k]||''}</section>`).join('')}</div>`;
 }
 const V={
-  map(){const navigation=mapCollectionTabs();if(mapSeason==='social')return navigation+`<section class="social-destination"><small>PRONTERA · SOCIAL HUB</small><h2>Meet at the fountain</h2><p>A quiet plaza for conversation, company, and a moment beneath the trees.</p><p>Walk freely, sit with friends, and share your favourite RO emotions. Up to 20 adventurers in each plaza.</p><p><b>Your farming keeps going.</b> World and Whisper follow you here; Local chat stays in this plaza.</p><button type="button" onclick="PGSocial.enter()">Enter Fountain Plaza →</button></section>`;if(mapSeason==='echo')return navigation+`<section class="echo-destination"><div class="echo-scene" role="img" aria-label="A moonlit underworld court with ruined pillars and a ritual stone floor"><span>ENDLESS ECHO</span><strong>The silent court</strong><small>Three minutes. One unbroken challenge.</small></div><div class="hd">Endless Echo</div><p>Face the Lord of Death Illusion in a three-minute damage trial.</p><div class="trial-stats"><span>Personal best <b>${Math.round(trialState().best||0).toLocaleString()} DPS</b></span><span><b>${trialLeftToday()}/2</b> ranked attempts left</span><span><b>${S.shards|0}</b> Echo Shards</span></div><button data-trial="lobby">Enter Endless Echo</button></section>`;const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM));
+  map(){const navigation=mapCollectionTabs();if(mapSeason==='social')return navigation+`<section class="social-destination"><div class="social-scene" role="img" aria-label="Prontera town fountain square with market stalls, half-timbered houses and cascading canal"><span>PRONTERA · SOCIAL HUB · UP TO 20 ADVENTURERS</span><h2>Meet at the Fountain Plaza</h2><p>Take a breather by the central fountain, fish the twin waterfall ponds, or pull up a chair at live Hold'em tables — all while your field grind keeps running.</p></div><div class="social-features"><article class="social-feat"><small>MINI-GAME · WATERFALL PONDS</small><h3>🎣 Plaza Fishing</h3><p>Cast from arched bridges or pondside chairs for <b>155 species</b> across <b>6 rarities</b> (up to 1.8t giants &amp; rare mutations). Earn Fishcoins for rods, bait &amp; bag tiers, collect <b>20 Fishing Titles</b>, show off catches, or toggle <b>Auto-Fish</b>.</p></article><article class="social-feat"><small>MINI-GAME · WEST PROMENADE</small><h3>♠️ Texas Hold'em Poker</h3><p>Join <b>two live 6-seat Hold'em tables</b> hosted by Dealer Vane &amp; Dealer Mira. Claim <b>1,000 free chips daily</b> or buy Zeny stacks, play live hands with fellow adventurers &amp; table bots, and build your chip bank.</p></article><article class="social-feat"><small>HANGOUT · ZERO DOWNTIME</small><h3>💬 Promenade &amp; Idle Grind</h3><p><b>Your farming keeps going.</b> Walk freely at your field speed, sit with friends on two-seater park benches, and share <b>32 classic RO emotions</b>. World &amp; Whisper follow you here; Local chat stays in this plaza.</p></article></div><div class="social-cta"><div class="social-pills"><span>155 Fish Species</span><span>2 Live Hold'em Tables</span><span>32 RO Emotions</span><span>Background Farming Active</span></div><button type="button" class="eclipse-primary" onclick="PGSocial.enter()">Enter Fountain Plaza →</button></div></section>`;if(mapSeason==='echo')return navigation+`<section class="echo-destination"><div class="echo-scene" role="img" aria-label="A moonlit underworld court with ruined pillars and a ritual stone floor"><span>ENDLESS ECHO</span><strong>The silent court</strong><small>Three minutes. One unbroken challenge.</small></div><div class="hd">Endless Echo</div><p>Face the Lord of Death Illusion in a three-minute damage trial.</p><div class="trial-stats"><span>Personal best <b>${Math.round(trialState().best||0).toLocaleString()} DPS</b></span><span><b>${trialLeftToday()}/2</b> ranked attempts left</span><span><b>${S.shards|0}</b> Echo Shards</span></div><button data-trial="lobby">Enter Endless Echo</button></section>`;const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM));
     // The map tab is a compact 450px, two-band panel: pick a map on the top band, walk its fields on the
     // next one, read the drop tables underneath. The field band is sticky, so the level you are
     // choosing stays on screen while the tables below it scroll - no scrolling down to find it.
@@ -7601,7 +7601,7 @@ function arrangePanel(k,root){
   const tabs=q('.atabs');if(tabs)root.prepend(tabs);
   const mode=k==='status'?sub.status:k==='bag'?sub.bag:k==='equip'?(sub.equip==='equip0'?'equip':sub.equip):k;
   root.dataset.view=mode;
-  const labels={reforge:['EQUIPMENT','Affixes','Select affixes, review the cost, then keep or accept your paid offer.'],cardsWork:['EQUIPMENT','Card workspace','Inspect card effects, fit, copies, socket costs and real actions.'],autosell:['EQUIPMENT','Auto-sell','Review what will be sold on future drops and what stays protected.'],refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:mapSeason==='social'?['COMMUNITY','Fountain Plaza','Meet adventurers while your farming continues']:mapSeason==='echo'?['CHALLENGE','Endless Echo','Three minutes · your best damage']:mapSeason==='ascension'?['EXPLORE / ASCENSION','Ascension Map','Fourth-job classes unlock Astral Citadel and Thor Volcano']:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Inspect gear, compare stats and manage cards, refinement or sale.'],ascension:['EQUIPMENT','Ascension Forge','Evolve owned N+ equipment into a Mythic set piece.'],job:['PROGRESSION','Class Tree','Follow your current lineage or explore every class.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],friends:['COMMUNITY','Friends','Add the adventurers you meet in World chat or by whisper'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
+  const labels={reforge:['EQUIPMENT','Affixes','Select affixes, review the cost, then keep or accept your paid offer.'],cardsWork:['EQUIPMENT','Card workspace','Inspect card effects, fit, copies, socket costs and real actions.'],autosell:['EQUIPMENT','Auto-sell','Review what will be sold on future drops and what stays protected.'],refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:mapSeason==='social'?['COMMUNITY','Fountain Plaza','Fishing ponds, Texas Hold\'em tables & live hangout while your farming continues']:mapSeason==='echo'?['CHALLENGE','Endless Echo','Three minutes · your best damage']:mapSeason==='ascension'?['EXPLORE / ASCENSION','Ascension Map','Fourth-job classes unlock Astral Citadel and Thor Volcano']:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Inspect gear, compare stats and manage cards, refinement or sale.'],ascension:['EQUIPMENT','Ascension Forge','Evolve owned N+ equipment into a Mythic set piece.'],job:['PROGRESSION','Class Tree','Follow your current lineage or explore every class.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],shop:['CASH SHOP','Cash Shop','Support Horizon Haven & unlock permanent account cosmetics.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],friends:['COMMUNITY','Friends','Add the adventurers you meet in World chat or by whisper'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
   const info=labels[mode]||labels[k];
   if(info){const h=make('header','ui-hero');put(h,make('span','ui-eyebrow',info[0]),make('h2','',info[1]),make('p','',info[2]));root.insertBefore(h,body)}
   if(k==='map'){body.id='map-panel-'+mapSeason;body.setAttribute('role','tabpanel');body.setAttribute('aria-labelledby','map-tab-'+mapSeason);}
@@ -13288,12 +13288,12 @@ setInterval(updateWatch,60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-PAGE_STARTED_AT>30000)updateWatch()});
 </script>
 <script src="assets/wardrobe-ui.js?v=199"></script>
-<script src="assets/shop.js?v=273"></script>
+<script src="assets/shop.js?v=318"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=317"></script>
-<script src="assets/social-poker.js?v=317"></script>
-<script src="assets/social-scene.js?v=317"></script>
-<script src="assets/social-fishing.js?v=317"></script>
-<script src="assets/social.js?v=317"></script>
+<script src="assets/social-rules.js?v=318"></script>
+<script src="assets/social-poker.js?v=318"></script>
+<script src="assets/social-scene.js?v=318"></script>
+<script src="assets/social-fishing.js?v=318"></script>
+<script src="assets/social.js?v=318"></script>
 </body>
 </html>

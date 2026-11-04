@@ -127,6 +127,7 @@ const settle=async(n=6)=>{for(let i=0;i<n;i++)await tick()};
  assert.ok(h.includes('data-v="view:donations"')&&h.includes('Donations'),'the donation has its own tab');
  ev(`ACT.shop('view:donations')`);h=ev("$('wins').innerHTML");
  assert.ok(h.includes('data-shop-donate="don:all-cosmetics"'),'the amount box is there');
+ assert.ok(h.includes('shop-grid-donation')&&h.includes('shop-donation-controls')&&h.includes('shop-donation-field'),'v318: donation card spans full width with structured info + amount controls');
  assert.ok(h.includes('Minimum $20.00')&&h.includes('no maximum'),'the floor and the open ceiling are stated');
  assert.equal(ev("document.querySelector('[data-shop-donate]').value"),'20.00','the box starts at the floor, not at nothing');
  const chips=Array.from(ev("[...document.querySelectorAll('.shop-donation-quick button')].map(b=>b.getAttribute('data-v'))"));

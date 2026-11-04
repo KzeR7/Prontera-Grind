@@ -45,6 +45,7 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
  'assets/world-map/cutout/niflheim.png',
  'assets/world-map/cutout/amatsu.png',
   'assets/world-map/cutout/louyang.png',
+  'assets/atlas/fountain-plaza.jpg',
   'functions/api/grants.js',
   'functions/api/messages.js',
   'assets/social/fish/MANIFEST.json',

@@ -721,5 +721,15 @@ test('v314: Illustrated Rune-Midgard World Atlas Option B renders 10-map top bar
  escKey();
  assert.equal(ev('tabs.length'),0,'second Escape closes the map panel');
 });
+
+test('v318: Social Hub destination showcases scenic Fountain Plaza background and Fishing + Hold\'em mini-games',()=>{
+ ev('tabs.splice(0,tabs.length,"map");mapSeason="social";renderWin()');
+ const dest=doc.querySelector('#wins .social-destination');
+ assert.ok(dest,'Social Hub destination renders');
+ assert.ok(dest.querySelector('.social-scene[role="img"]'),'Social Hub includes scenic Fountain Plaza banner');
+ assert.equal(dest.querySelectorAll('.social-feat').length,3,'Social Hub highlights Fishing, Hold\'em Poker, and Idle Promenade');
+ assert.match(dest.textContent,/155 species.*Hold'em.*Your farming keeps going/s,'Social Hub copy covers 155-species fishing, Texas Hold\'em tables, and background farming');
+ ev('mapSeason="atlas";tabs.length=0;renderWin()');
+});
 console.log(`${passed} passed`);
 }finally{g.close()}
