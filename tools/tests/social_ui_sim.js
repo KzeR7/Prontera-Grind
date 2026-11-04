@@ -202,5 +202,15 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert.equal(hubBadge.hidden,true,'losing the chat socket hides the badge instead of freezing a stale count');
   app.socket=null;app.connected=false;
  }
+ // v324 (owner: the Fountain Plaza card was cut off on phones with no way down): the
+ // panel wrapper must be a REAL scroller - a content-fit box with overflow-y:auto
+ // swallows touch pans and its overscroll-behavior:contain blocks the chain to the
+ // window body - and the destination card must keep its height inside the capped
+ // flex column so the panel scrolls instead of compressing the card.
+ {
+  const panelCss=fs.readFileSync('assets/social.css','utf8');
+  assert.match(panelCss,/#wins \.social-panel\{[^}]*max-height:100%;[^}]*overflow-y:auto;overscroll-behavior:contain[^}]*\}/,'the Social Hub panel is height-capped so its own overflow-y:auto actually scrolls');
+  assert.match(panelCss,/#wins \.social-destination\{[^}]*flex:none;[^}]*\}/,'the destination card keeps its height so the panel scrolls instead of compressing the card');
+ }
  console.log('PASS chat UI: stable hover/click tabs, dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local history across reconnects and plaza switches, a probed (not killed) quiet socket, a handshake timeout, Local privacy on exit, emotion tray on world/whisper/local, recipient control, minimize, history cap, solo/preview plaza fallback, decoupled chat/log visibility and text-only message rendering; v319 field Social Hub button with live population badge and one-click entry');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1)});
