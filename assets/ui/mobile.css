@@ -420,6 +420,54 @@ html.pg-mobile #wins>.wp.ui-expanded{
 }
 html.pg-mobile #wins>.wp>.title{height:44px;min-height:44px;padding:0 12px;font-size:11px}
 html.pg-mobile #wins>.wp>.wbody{min-height:0;flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain}
+/* A phone panel scrolls DOWN. One band in the World atlas was 30px wider than
+   the panel (fixed in eclipse.css), which also turned the body into a sideways
+   scroller - the owner's "players can scroll left and right, and have to start
+   the drag at the screen edge". The map panel keeps the guard even if another
+   wide child arrives, and every body asks for a thin scrollbar so a fold reads
+   as "more below" instead of a cut-off sentence wherever the platform draws
+   one. */
+html.pg-mobile #wins>.wp[data-win="map"]>.wbody{overflow-x:hidden}
+html.pg-mobile #wins>.wp>.wbody{scrollbar-width:thin;scrollbar-color:#93a892 transparent}
+html.pg-mobile #wins>.wp>.wbody::-webkit-scrollbar{width:5px}
+html.pg-mobile #wins>.wp>.wbody::-webkit-scrollbar-track{background:transparent}
+html.pg-mobile #wins>.wp>.wbody::-webkit-scrollbar-thumb{background:#93a892;border-radius:3px}
+
+/* The ❖ Quests chip floats over the field, and a panel covers the field: on a
+   360px phone the chip sat on the right end of the atlas tab strip and cut
+   "Social Hub" down to "So". It is a field control, so it stands down while a
+   panel is open and returns with the field. */
+html.pg-mobile.pg-panel #pgQuests{display:none}
+
+/* ── 5b. Fountain Plaza on a phone ───────────────────────────────────────── */
+
+/* The plaza page is a long read - a scene band and three feature cards - and a
+   phone panel is about 560-620px. The last paragraph used to stop mid-sentence
+   at the fold with nothing to say the panel scrolled (owner: "social hub
+   description got cut off in mobile ui"). The tightened band and cards fit the
+   whole description on a 360x780 phone with the scrollbar above as the cue that
+   the Enter-Plaza bar sits just below. */
+html.pg-mobile #wins .social-scene{min-height:128px;padding:13px 14px 14px;gap:5px}
+html.pg-mobile #wins .social-scene>span{font-size:8.5px;letter-spacing:.16em}
+html.pg-mobile #wins .social-scene>h2{font-size:19px;line-height:1.15}
+html.pg-mobile #wins .social-scene>p{margin-top:1px;font-size:11px;line-height:1.45}
+html.pg-mobile #wins .social-features{padding:9px 12px 10px;gap:7px}
+html.pg-mobile #wins .social-feat{padding:9px 10px;gap:3px}
+html.pg-mobile #wins .social-feat>small{font-size:8px}
+html.pg-mobile #wins .social-feat>h3{font-size:12px;line-height:1.2}
+html.pg-mobile #wins .social-feat>p{font-size:10.5px;line-height:1.42}
+html.pg-mobile #wins .social-cta{padding:9px 12px 14px;gap:8px}
+html.pg-mobile #wins .social-pills{gap:5px}
+html.pg-mobile #wins .social-pills>span{padding:3px 8px;font-size:9.5px}
+html.pg-mobile #wins .social-cta>button{min-height:38px;min-width:0;padding:8px 14px;font-size:11.5px}
+
+/* The stage card header is one 22px row: "02 / PRONTERA", its Lv chip, then the
+   auto-advance switch. On a 360px panel the switch plus its "turn off to farm
+   where you stand" tail took the room the map name needed, so the kicker was
+   clipped mid-word and the Lv chip disappeared. The desktop rule already drops
+   that tail (the label keeps it in its title); a phone needs it even more. */
+html.pg-mobile #wins .rm-optb-head>.row>small{display:none}
+html.pg-mobile #wins .rm-optb-kicker{font-size:11px}
 html.pg-mobile body.equipment-workspace-open #wins{
   left:calc(4px + var(--pg-safe-l));right:calc(4px + var(--pg-safe-r));
   width:auto;transform:none;top:4px;bottom:var(--docktop);

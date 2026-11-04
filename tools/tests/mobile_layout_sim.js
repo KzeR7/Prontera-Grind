@@ -10,6 +10,9 @@ try { ({ JSDOM } = require('jsdom')); } catch (e) {
 const ROOT = path.resolve(__dirname, '../..');
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(ROOT, 'assets/ui/mobile.css'), 'utf8');
+const eclipseCss = fs.readFileSync(path.join(ROOT, 'assets/ui/eclipse.css'), 'utf8');
+// The phone rules for the World atlas page live in eclipse.css's portrait block.
+const atlasPortrait = eclipseCss.slice(eclipseCss.indexOf('Mobile portrait tuning'), eclipseCss.indexOf('Slim Desktop Map Window Chrome'));
 const mobileJs = fs.readFileSync(path.join(ROOT, 'assets/ui/mobile.js'), 'utf8');
 const socialJs = fs.readFileSync(path.join(ROOT, 'assets/social.js'), 'utf8');
 
@@ -120,6 +123,52 @@ test('the quest chip lives in the right rail, clear of the world chat', () => {
   assert.equal(declOf('html.pg-mobile #pgQuests', 'bottom'), 'auto');
   // Landscape keeps the same corner with the smaller 38px tools.
   assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)[\s\S]*#pgQuests\{height:24px;top:calc\(4px \+ 38px \+ 6px\)/, 'landscape keeps the chip off the chat');
+});
+
+test('the atlas panel is one column that never scrolls sideways', () => {
+  // The map page used to size its bands from their own content: the illustrated
+  // hero came out 409px wide inside a 338px panel, so the atlas, the stage row
+  // and the Travel button ran past the right edge and the body became a
+  // horizontal scroller ("players can scroll left and right, and have to start
+  // the drag at the screen edge").
+  const column = atlasPortrait.match(/#map-panel-atlas\.ui-content\{[\s\S]*?\}/);
+  assert.ok(column, 'the portrait atlas column rule is still there');
+  for (const decl of ['align-items:stretch', 'width:100%', 'min-width:0']) {
+    assert.ok(column[0].includes(decl), `the atlas column needs ${decl}, or its bands shrink to their content`);
+  }
+  const bands = atlasPortrait.match(/#map-panel-atlas\.ui-content>\*,[\s\S]*?\{[\s\S]*?\}/);
+  assert.ok(bands, 'the bands share one width rule');
+  for (const decl of ['width:100%', 'max-width:100%', 'min-width:0']) {
+    assert.ok(bands[0].includes(decl), `a band needs ${decl}`);
+  }
+  assert.match(bands[0], /\.rm-viewport\{/, 'the illustrated map viewport is covered too, so it clips its panned canvas');
+  // And the panel window body itself only scrolls down.
+  assert.equal(declOf('html.pg-mobile #wins>.wp[data-win="map"]>.wbody', 'overflow-x'), 'hidden');
+});
+
+test('the ten normal stages are a 5x2 roster on a portrait phone', () => {
+  const grid = atlasPortrait.match(/\.eclipse-stages:not\(\.eclipse-nightmare\)\{[\s\S]*?\}/);
+  assert.ok(grid, 'the portrait stage grid rule is still there');
+  const cols = grid[0].match(/grid-template-columns:repeat\((\d+),minmax\(0,1fr\)\)/);
+  assert.equal(cols && cols[1], '5',
+    'ten 31px slivers in one row read as neither buttons nor tap targets; five per row match the Nightmare row');
+});
+
+test('the quest chip stands down while a panel covers the field', () => {
+  // The chip floats over the field at the right edge; on a 360px phone it landed
+  // on the atlas tab strip and cut "Social Hub" down to "So".
+  assert.equal(declOf('html.pg-mobile.pg-panel #pgQuests', 'display'), 'none');
+  const chip = declOf('html.pg-mobile #pgQuests', 'display');
+  assert.ok(chip && chip !== 'none', 'the chip still exists on the field itself');
+});
+
+test('the plaza description fits a phone instead of stopping at the fold', () => {
+  // The page is a scene band plus three cards; tightened, the whole description
+  // is readable on a 360x780 phone (measured in a real Chromium) instead of the
+  // last paragraph being clipped mid-sentence.
+  assert.equal(declOf('html.pg-mobile #wins .social-scene', 'min-height'), '128px');
+  assert.equal(declOf('html.pg-mobile #wins .social-feat>p', 'font-size'), '10.5px');
+  assert.ok(declOf('html.pg-mobile #wins .social-cta', 'padding'), 'the plaza CTA keeps its own spacing');
 });
 
 test('the player card clears the header and the combat pill clears the player card', () => {

@@ -3728,8 +3728,32 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
   html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content{
     display:flex;
     flex-direction:column;
+    /* v324: the map's three bands used to size themselves from their own
+       content (align-items:start came from the 220px two-column rule above),
+       so the illustrated hero - width auto with aspect-ratio 16/9 and a 230px
+       max-height - was 409px wide inside a 338px panel. The atlas, the ten
+       stage buttons and the Travel button all ran past the right edge and the
+       panel body turned into a horizontal scroller ("the map is out of place
+       and players can scroll left and right"). The column stretches instead, so
+       every band is exactly as wide as the panel. */
+    align-items:stretch;
+    width:100%;
+    min-width:0;
     gap:8px;
     padding:8px 10px 14px;
+  }
+  /* Bands are blocks inside that column now: fill the panel, never wider. The
+     16:9 hero keeps its ratio and the panned .rm-canvas stays clipped by its
+     own viewport. */
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas.ui-content>*,
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.rm-route-drawer,
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .fields,
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero,
+  html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.eclipse-atlas-hero.rm-illustrated-hero>.rm-viewport{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
   }
   html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-destinations>.ui-section-label,
   html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route>.ui-section-label,
@@ -3785,10 +3809,14 @@ body.equipment-workspace-open #wins>.wp.eclipse-equipment-workspace-window>.ecli
     border:0;
     background:none;
   }
+  /* v324: five to a row, like the Nightmare row underneath. Ten columns in a
+     338px panel left every stage 31px wide - too small to read as a button and
+     too small to tap - and pushed the last of them under the panel edge. Two
+     rows of five match the destination roster above them. */
   html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages:not(.eclipse-nightmare){
     display:grid;
-    grid-template-columns:repeat(10,minmax(0,1fr));
-    gap:3px;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:4px;
   }
   html.pg-mobile body:not(.rm-atlas-fullscreen) #wins #map-panel-atlas>.ui-route .eclipse-stages.eclipse-nightmare{
     display:grid;

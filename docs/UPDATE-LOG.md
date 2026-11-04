@@ -9832,3 +9832,15 @@ the gate, the `BUILD`-mirror rule and the guide length to be fixed, so they are.
 
 
 
+### 2026-11-04 — `haven-v324 phone atlas fit and plaza copy`
+
+* **Fixed (`assets/ui/eclipse.css`, `assets/ui/mobile.css` — World Atlas Fits a Phone):**
+  * The portrait atlas page sized its bands from their own content (`align-items:start` came from the 220px two-column rule), so the 16:9 hero came out 409px wide inside a 338px panel: the map art, the ten stage buttons and the Travel button all ran past the right edge, and the panel body became a horizontal scroller the player had to drag from the screen edge. The portrait column now stretches, every band and the map viewport fill it, and the atlas window body refuses sideways scroll.
+  * The ten normal stages are a 5x2 roster (64px buttons at 390px wide, matching the Nightmare row) instead of ten 31px slivers.
+  * The floating ❖ Quests chip stands down while a panel is open — it sat on the atlas tab strip and cut "Social Hub" down to "So" — and returns with the field.
+  * The stage card header keeps "02 / PRONTERA" and its Lv chip: the auto-advance helper text is dropped on phones as the desk layout already did (the label keeps the hint in its title).
+  * Fountain Plaza: the scene band, card padding and type are tightened so the whole description reads on a 360x780 phone instead of stopping mid-sentence at the fold; the panel body draws a thin scrollbar and the Enter-Plaza bar sits just below it.
+* **Try it:** `node tools/dev_server.js`, then open `/?phone=1` (or the server's `/phone` frame) and use Maps → World Atlas and Social Hub at 360–390px wide.
+* **Checks:** `node tools/tests/mobile_layout_sim.js` (35 pass, 4 new) and `node tools/tests/eclipse_ui_sim.js` (59 pass). Real Chromium (playwright-core + bundled headless chromium) at 390x844 and 360x780: the atlas body's scrollWidth equals its clientWidth, no band crosses the panel edge, five stage columns, the chip hidden, all four tabs legible, and the plaza copy complete. No physical-device check.
+* **Delivery:** Local changes on `arena/c2fa3350-prontera-grind`, committed and pushed; pull request for owner review.
+* **Files:** `index.html`, `assets/ui/{eclipse,mobile}.css`, `tools/tests/mobile_layout_sim.js`, `tools/staging/stage_v283.mjs`, `docs/UPDATE-LOG.md`, and build-tag mirrors.
