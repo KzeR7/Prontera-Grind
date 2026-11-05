@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');const {JSDOM}=require('jsdom');
 const dom=new JSDOM('<div id="view"><div id="feedWrap"></div><div id="minimapTools"><button id="socialHubBtn" type="button" class="minimap-tool-btn social-hub-btn"><span class="minimap-tool-label">Social</span><b id="socialHubBadge" class="minimap-tool-badge social-hub-badge" hidden>0</b></button></div></div>',{url:'http://localhost/',runScripts:'outside-only'}),w=dom.window;
-Object.assign(w,{CLOUD:{on:false,user:null},S:{cls:'Novice',eq:{}},tabs:[],wardrobeAppearance:()=>({version:1,sex:'m'}),logShown:()=>[],openTab:()=>{},HUNT_TITLES:[{id:'poring',name:'Poring Hunter'}],titleUnlocked:()=>true,setInterval:fn=>{w.sessionTick=fn},PGSocialScene:{}});
-w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social.js','utf8'));
+Object.assign(w,{CLOUD:{on:false,user:null},S:{cls:'Novice',eq:{}},tabs:[],wardrobeAppearance:()=>({version:1,sex:'m'}),logShown:()=>[],openTab:()=>{},HUNT_TITLES:[{id:'poring',name:'Poring Hunter'}],titleUnlocked:()=>true,setInterval:fn=>{if(fn.name==='worldTrainingTick')w.trainingTick=fn;else w.sessionTick=fn},PGSocialScene:{}});
+w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/digimon-sanctuary.js','utf8'));w.eval(fs.readFileSync('assets/social.js','utf8'));
 assert.equal(w.document.getElementById('socialMin').tagName,'SPAN','minimize is a line in the header, without a button box');assert.equal(w.document.getElementById('socialResize').tagName,'SPAN','resize uses the border, without a separate button');
 const app=w.PGSocial.app;app.user='previous';app.messages=[{channel:'whisper',name:'Private',body:'Do not leak'}];app.socket=null;app.room=1;app.wanted=true;app.muted.add(7);w.sessionTick();assert.equal(app.user,null);assert.equal(app.messages.length,0);assert.equal(app.muted.size,0);assert.equal(app.room,0);assert(w.document.getElementById('socialHub').hidden);
 // v274 (owner): the emotion tray works on World and Whisper, not only inside a plaza.
@@ -19,7 +19,7 @@ const bar=w.document.getElementById('socialMin');bar.dispatchEvent(new w.Keyboar
  app.room=0;w.PGSocial.syncDisplay();assert.equal(d.querySelector('#socialTabs [data-channel=world]'),world);assert.equal(d.querySelector('#socialTabs [data-channel=local]'),null);
  app.unread.add('whisper');w.PGSocial.syncDisplay();assert.equal(d.querySelector('#socialTabs [data-channel=whisper]'),whisper);assert.ok(whisper.classList.contains('unread'));app.unread.delete('whisper');
  min.click();assert.equal(d.getElementById('socialMin'),min);assert.equal(d.getElementById('socialChat').classList.contains('minimized'),true);min.click();assert.equal(d.getElementById('socialChat').classList.contains('minimized'),false);
- const socialCss=fs.readFileSync('assets/social.css','utf8');assert.match(socialCss,/#socialTabs button\{position:relative;z-index:7\}/);assert.match(socialCss,/#socialMin\{position:relative;z-index:7;/);
+ const socialCss=fs.readFileSync('assets/social.css','utf8');assert.match(socialCss,/#socialTabs button\{position:relative;z-index:7\}/);assert.match(socialCss,/#sanctuaryWorldStatus\{[^}]*width:min\(360px/,'training status has a fixed width so the stop button does not shift on countdown');assert.match(socialCss,/#sanctuaryNearby\{[^}]*width:190px/,'nearby training control has a fixed width');assert.match(socialCss,/#socialMin\{position:relative;z-index:7;/);
 }
 let socket;w.WebSocket=class {constructor(){socket=this;this.readyState=1;this.sent=[]}close(){}send(m){this.sent.push(JSON.parse(m))}};w.CLOUD.on=true;w.CLOUD.user='new';w.sessionTick();socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:[]})});
 app.messages=Array.from({length:400},(_,i)=>({channel:'whisper',body:'old'+i,name:'Name',from:1,id:'w'+i,at:i}));socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:Array.from({length:100},(_,i)=>({channel:'world',body:'world',name:'Name',from:1,id:'world'+i,at:i}))})});assert.equal(app.messages.length,400);
@@ -47,11 +47,45 @@ w.PGSocialScene={create:async(_host,_labels,cb)=>{sceneCallbacks=cb;return{activ
 app.scene=null;
 w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
 (async()=>{
+ w.S.digimonSanctuary={v:1,partners:{agumon:{stats:{power:3},training:{stat:'power',ends:1}}}};
  await w.PGSocial.enter();
+ assert.equal(w.S.digimonSanctuary.partners.agumon.stats.power,3,'legacy completed progress is preserved');assert.equal(w.S.digimonSanctuary.partners.agumon.training,null,'old pending timer cannot award offline progress');delete w.S.digimonSanctuary;
  assert.equal(app.players.size,1,'offline/reconnecting plaza spawns solo character');
  assert.equal(scenePlayers.get(0).name,'local_hero');assert.equal(sceneCallbacks.self(),0);
  assert.equal(scenePlayers.get(0).look.lv,150,'solo plaza carries the level aura tier');
  assert.equal(scenePlayers.get(0).look.speed,9.5,'solo plaza walks at the field run speed');
+ // The separate visual preview must not touch old RO pets, and an absent/invalid old save stays off.
+ const pick=w.document.getElementById('socialDigimon');let saved=0;w.save=()=>saved++;w.S.pets=[{sp:2,on:true}];
+ w.document.getElementById('sanctuaryOpen').click();assert(!w.document.getElementById('sanctuaryPanel').hidden);assert.equal(w.document.querySelectorAll('[data-sanctuary-pet]').length,4);
+ w.document.querySelector('[data-sanctuary-pet=patamon]').click();assert.equal(pick.value,'patamon');assert.equal(w.S.digimonPartner,'patamon');assert.equal(scenePlayers.get(0).look.digimon,'patamon');assert.equal(saved,1);assert.equal(w.document.querySelector('[data-sanctuary-pet=patamon]').getAttribute('aria-pressed'),'true');
+ w.document.getElementById('sanctuaryDismiss').click();assert.equal(scenePlayers.get(0).look.digimon,undefined);assert.equal(w.S.pets[0].on,true);w.document.getElementById('sanctuaryClose').click();assert(w.document.getElementById('sanctuaryPanel').hidden);saved=0;
+ assert.equal(pick.value,'');pick.value='patamon';pick.dispatchEvent(new w.Event('change'));assert.equal(w.S.digimonPartner,'patamon');assert.equal(scenePlayers.get(0).look.digimon,'patamon');assert.equal(saved,1);assert.equal(w.S.pets[0].sp,2);
+ pick.value='';pick.dispatchEvent(new w.Event('change'));assert.equal(scenePlayers.get(0).look.digimon,undefined);assert.equal(w.S.pets[0].on,true);
+
+ // Real UI actions persist independently of RO pets and require explicit evolution confirmation.
+ w.document.getElementById('sanctuaryOpen').click();w.document.querySelector('[data-sanctuary-pet=agumon]').click();
+ assert.equal(w.document.querySelector('[data-sanctuary-action=train]'),null,'training is no longer started from the old window');w.document.getElementById('sanctuaryClose').click();
+ const trainer=app.players.get(0),realNowGym=w.Date.now;let gymClock=500000;w.Date.now=()=>gymClock;
+ sceneCallbacks.trainStation('power');assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/online plaza/,'offline solo mode cannot train');
+ w.CLOUD.on=true;w.CLOUD.user='local_hero';app.socket=socket;app.connected=true;app.room=1;app.id=0;
+ const train=stat=>{const n=sent.length;sceneCallbacks.trainStation(stat);if(sent.slice(n).some(m=>m.type==='gym_start'))socket.onmessage({data:JSON.stringify({type:'gym_started',request:sent.at(-1).request,gym:{room:1,stat,slot:0}})})};
+ // Cancel and restart before either server reply: stale acknowledgements cannot claim or release the new reservation.
+ Object.assign(trainer,{x:56,z:30,path:[],sit:false});sceneCallbacks.trainStation('power');const oldRequest=sent.at(-1).request;w.document.querySelector('#sanctuaryWorldStatus button').click();sceneCallbacks.trainStation('power');const newRequest=sent.at(-1).request;assert.notEqual(oldRequest,newRequest);socket.onmessage({data:JSON.stringify({type:'gym_started',request:oldRequest,gym:{room:1,stat:'power',slot:0}})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Reserving/);socket.onmessage({data:JSON.stringify({type:'gym_error',request:oldRequest,message:'stale'})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Reserving/);socket.onmessage({data:JSON.stringify({type:'gym_started',request:newRequest,gym:{room:1,stat:'power',slot:0}})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/auto-training/);w.document.querySelector('#sanctuaryWorldStatus button').click();Object.assign(trainer,{x:0,z:12,path:[],sit:false});
+ train('power');assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Walk near/);
+ for(const [stat,x,z] of [['power',56,30],['guard',63,21],['agility',75,26],['focus',86,27]]){
+  Object.assign(trainer,{x,z,path:[],sit:false});train(stat);assert(!w.document.getElementById('sanctuaryWorldStatus').hidden);
+  gymClock+=15000;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats[stat],1,'one point per automatic '+stat+' cycle');
+  w.document.querySelector('#sanctuaryWorldStatus button').click();gymClock+=30000;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats[stat],1,'stopped session cannot award again');
+ }
+ assert.equal(w.PGDigimonSanctuary.level(w.S.digimonSanctuary.partners.agumon),2,'four completed sessions earn a level');
+ Object.assign(trainer,{x:56,z:30,path:[],sit:false});train('power');sceneCallbacks.move(57,33);gymClock+=15000;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats.power,2,'walking away does not cancel auto-training');
+ w.document.getElementById('sanctuaryOpen').click();w.document.querySelector('[data-partner-slot="1"]').click();w.document.querySelector('[data-sanctuary-pet=agumon]').click();assert.equal(w.S.digimonPartner2,'agumon','duplicate species can occupy the other slot');assert.equal(w.PGDigimonSanctuary.normalize(w.S.digimonSanctuary2).partners.agumon.stats.power,0,'the duplicate has independent progress');train('guard');assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Only one partner/,'only one gym session per account');w.document.querySelector('[data-gym-stop]').click();w.document.querySelector('[data-partner-slot="0"]').click();w.document.getElementById('sanctuaryClose').click();
+ Object.assign(trainer,{x:56,z:30,path:[],sit:false});train('power');const owner=w.S;w.S={...owner};gymClock+=15000;w.trainingTick();assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/account changed/);w.S=owner;gymClock+=30000;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats.power,2,'account-state replacement cancels without awarding');
+ Object.assign(trainer,{x:56,z:30,path:[],sit:false});train('power');const loggedIn=w.currentUser;w.currentUser=null;gymClock+=15000;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats.power,2,'logging out cancels before awarding');w.currentUser=loggedIn;
+ Object.assign(trainer,{x:56,z:30,path:[],sit:false});train('power');socket.readyState=3;gymClock+=15000;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats.power,2,'disconnect cancels before awarding');socket.readyState=1;
+ w.CLOUD.on=false;w.CLOUD.user=null;app.socket=null;app.connected=false;app.room=0;w.Date.now=realNowGym;
+ assert.equal(w.S.pets[0].sp,2,'gym never modifies the Ragnarok pet');w.S.digimonSanctuary.partners.agumon.stats.power=4;w.S.digimonSanctuary.partners.agumon.wins=2;w.document.getElementById('sanctuaryOpen').click();
+ w.document.querySelector('[data-sanctuary-action=requestEvolution]').click();assert.equal(w.S.digimonSanctuary.partners.agumon.stage,0);w.document.querySelector('[data-sanctuary-action=evolve]').click();assert.equal(w.S.digimonSanctuary.partners.agumon.stage,1);assert.equal(scenePlayers.get(0).look.digimon,'greymon');assert.equal(w.S.pets[0].sp,2);w.document.getElementById('sanctuaryClose').click();
  w.sessionTick();w.S.auraShow=false;w.sessionTick();assert.equal(scenePlayers.get(0).look.lv,0,'the Display aura switch also hides it in the plaza');w.S.auraShow=true;w.sessionTick();
  sceneCallbacks.move(6,12);assert(scenePlayers.get(0).path.length>0,'solo click-to-walk computes local path');
  w.document.getElementById('socialSit').click();assert.equal(scenePlayers.get(0).sit,true,'solo sit button toggles sitting');
@@ -63,6 +97,8 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  socket.onmessage({data:JSON.stringify({type:'room',room:1,players:[{id:9,name:'new',room:1,x:0,z:12,dir:0,sit:false,seat:null,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:0,title:''}}]})});
  assert.equal(scenePlayers.has(0),false,'multiplayer room join replaces solo placeholder');
  assert.equal(scenePlayers.get(9).name,'new');assert.equal(sceneCallbacks.self(),9);
+ pick.value='agumon';pick.dispatchEvent(new w.Event('change'));assert(socket.sent.some(m=>m.type==='look'&&m.look.digimon==='greymon'),'evolved choice broadcasts as a presentation hint');
+
  // v236: a socket that stops answering is spotted and replaced, and the server's planned
  // re-authentication keeps the plaza on screen and trusts the server-preserved seat.
  let liveDate=1e12;const realNow=Date.now;w.Date.now=()=>liveDate;

@@ -8,13 +8,15 @@ window.PGSocialScene={async create(host,labels,callbacks){
  const focus=new T.Vector3(0,.8,12),target=new T.Vector3(),feet=new T.Vector3(),head=new T.Vector3();
  const freeze=mesh=>{mesh.updateMatrix();mesh.matrixAutoUpdate=false;return mesh};
  // Bridges register their arch here (v308) so the player pass can stand feet on the deck.
- const bridges=[];
+ const bridges=[],bridgeDecks=[];
  const bridgeLift=(x,z)=>{
   for(const b of bridges){
    if(Math.abs(x-b.x)>b.span/2||Math.abs(z-b.z)>b.width/2)continue;
    const t=(x-b.x+b.span/2)/b.span;
    return 4*b.arch*t*(1-t);
   }
+  // The ring platform has a raised canvas; keep player and follower feet above it.
+  const ring=R.SANCTUARY_RING;if(ring&&Math.abs(x-ring.x)<=ring.w/2&&Math.abs(z-ring.z)<=ring.d/2)return ring.height;
   return 0;
  };
  scene.add(new T.HemisphereLight(0xffffff,0x66775a,1));
@@ -31,16 +33,269 @@ window.PGSocialScene={async create(host,labels,callbacks){
    batch.color.push(shade,shade,shade);batch.bounds.push(vertices[o+6],vertices[o+7],vertices[o+8],vertices[o+9]);}
  }
  function addBatch(batch,material){const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(batch.p,3));g.setAttribute('uv',new T.Float32BufferAttribute(batch.uv,2));g.setAttribute('color',new T.Float32BufferAttribute(batch.color,3));g.setAttribute('sourceBounds',new T.Float32BufferAttribute(batch.bounds,4));g.computeBoundingSphere();const mesh=freeze(new T.Mesh(g,material));scene.add(mesh);return mesh}
- // Source paving pixels are sampled from a padded native atlas tile.
- paving.flipY=false;const tile=document.createElement('canvas');tile.width=tile.height=256;tile.getContext('2d').drawImage(paving.image,16,16,256,256,0,0,256,256);const stone=new T.CanvasTexture(tile);stone.wrapS=stone.wrapT=T.RepeatWrapping;stone.repeat.set(20,20);const ground=new T.Mesh(new T.PlaneGeometry(164,164),new T.MeshBasicMaterial({map:stone,color:0xe4e2cf}));ground.rotation.x=-Math.PI/2;ground.position.y=-.02;scene.add(freeze(ground));
+ // Source paving pixels are sampled from a padded native atlas tile. Push the
+ // ground slightly back in depth so water stays solid even from distant views.
+ paving.flipY=false;const tile=document.createElement('canvas');tile.width=tile.height=256;tile.getContext('2d').drawImage(paving.image,16,16,256,256,0,0,256,256);const stone=new T.CanvasTexture(tile);stone.wrapS=stone.wrapT=T.RepeatWrapping;stone.repeat.set(20*192/164,20*218/164);const ground=new T.Mesh(new T.PlaneGeometry(192,218),new T.MeshBasicMaterial({map:stone,color:0xe4e2cf,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2}));ground.rotation.x=-Math.PI/2;ground.position.set(14,-.02,27);scene.add(freeze(ground));
  const plazaTile=document.createElement('canvas');plazaTile.width=plazaTile.height=256;plazaTile.getContext('2d').drawImage(paving.image,16,304,256,256,0,0,256,256);const plazaTex=new T.CanvasTexture(plazaTile);plazaTex.wrapS=plazaTex.wrapT=T.RepeatWrapping;plazaTex.repeat.set(10,10);const plaza=new T.Mesh(new T.PlaneGeometry(62,62),new T.MeshBasicMaterial({map:plazaTex,color:0xe1d9c7}));plaza.rotation.x=-Math.PI/2;plaza.position.y=.005;scene.add(freeze(plaza));
- const roadTexture=plazaTex.clone();roadTexture.needsUpdate=true;roadTexture.repeat.set(3,26);const roadMat=new T.MeshBasicMaterial({map:roadTexture,color:0xe6dfcf}),roadGeo=new T.PlaneGeometry(18,164);for(const turn of [0,Math.PI/2]){const road=new T.Mesh(roadGeo,roadMat);road.rotation.x=-Math.PI/2;road.rotation.z=turn;road.position.y=.001;scene.add(freeze(road))}
+ const roadTexture=plazaTex.clone();roadTexture.repeat.set(3,26*192/164);roadTexture.needsUpdate=true;const roadTextureSouth=plazaTex.clone();roadTextureSouth.repeat.set(3,26*218/164);roadTextureSouth.needsUpdate=true;const roadMat=new T.MeshBasicMaterial({map:roadTexture,color:0xe6dfcf}),roadMatSouth=new T.MeshBasicMaterial({map:roadTextureSouth,color:0xe6dfcf});for(const turn of [0,Math.PI/2]){const road=new T.Mesh(new T.PlaneGeometry(18,turn===0?218:192),turn===0?roadMatSouth:roadMat);road.rotation.x=-Math.PI/2;road.rotation.z=turn;road.position.set(turn===0?0:14,.001,turn===0?27:0);scene.add(freeze(road))}
  model('fountain',0,0,10);
  for(const b of R.BUILDINGS)model(b.name,b.x,b.z,b.size,b.rotation||0);
+ // Sanctuary: arranged south of the plaza from the owner's highlighted lawn.
+ // Architecture and named NPCs share the world with the local training prototype.
+ const loadTile=async(name,rx=1,ry=1)=>{try{const t=await new T.TextureLoader().loadAsync('assets/digimon/sanctuary/'+name+'.webp');t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rx,ry);t.anisotropy=4;return t}catch(e){console.warn('Sanctuary texture unavailable:',name);return null}};
+ const [roofTexture,boardTexture,sandTexture,plasterTexture,beamTexture,doorTexture]=await Promise.all([loadTile('cc0/roof_09',2,2),loadTile('walkway-wood'),loadTile('gym-sand',6,3),loadTile('gym-plaster',4,1),loadTile('cc0/medieval_wood'),loadTile('cc0/rough_pine_door')]);
+ const wood=new T.MeshLambertMaterial({map:beamTexture,color:0xc3a27d}),darkWood=new T.MeshLambertMaterial({map:beamTexture,color:0x997954}),lightWood=new T.MeshLambertMaterial({color:0xb58a59}),metal=new T.MeshLambertMaterial({color:0x5f6860}),iron=new T.MeshLambertMaterial({color:0x303a36}),cream=new T.MeshLambertMaterial({color:0xe8d9ba}),plaster=new T.MeshLambertMaterial({map:plasterTexture,color:0xf1e7d0}),roofMat=new T.MeshLambertMaterial({map:roofTexture,color:0xe0c8a4,side:T.DoubleSide});
+ function flat(geometry,material,x,z,y){const m=new T.Mesh(geometry,material);m.rotation.x=-Math.PI/2;m.position.set(x,y,z);scene.add(freeze(m));return m}
+ function box(x,y,z,w,h,d,mat){const m=new T.Mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);scene.add(freeze(m));return m}
+ function beam(a,b,thick,mat=darkWood){const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],len=Math.hypot(dx,dy,dz);const m=new T.Mesh(new T.CylinderGeometry(thick,thick,len,4),mat);m.position.set((a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3(dx/len,dy/len,dz/len));scene.add(freeze(m));return m}
+ function worldSign(x,y,z,text,width=3.3,height=.65){const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d');if(ctx&&typeof ctx.fillRect==='function'&&typeof ctx.fillText==='function'){ctx.fillStyle='#e7d6ab';ctx.fillRect(0,0,512,128);ctx.strokeStyle='#64432a';ctx.lineWidth=12;ctx.strokeRect(7,7,498,114);ctx.fillStyle='#4a2d1d';ctx.font='bold 43px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,65,470)}const m=new T.Mesh(new T.PlaneGeometry(width,height),new T.MeshBasicMaterial({map:new T.CanvasTexture(c),side:T.DoubleSide}));m.position.set(x,y,z);m.userData.sanctuarySign=text;scene.add(freeze(m));return m}
+ // Wide wooden circulation joins the avenue and runs between the kiosks and field.
+ function boardwalk(x,z,w,d,y=.025){let texture=boardTexture?.clone();if(texture){texture.repeat.set(Math.max(.5,w/7),Math.max(.5,d/7));texture.needsUpdate=true}const m=flat(new T.PlaneGeometry(w,d),new T.MeshBasicMaterial({map:texture,color:0xe7c797}),x,z,y);m.userData.sanctuaryBoardwalk=true;return m}
+ // Short angled runs create a gentle meander while preserving broad walkable junctions.
+ for(const [i,[x1,z1,x2,z2]] of [[35,42,35,50],[35,50,38,62],[38,62,36,75],[36,75,38,84],[38,84,36,104],[36,104,37,120]].entries()){
+  const m=boardwalk((x1+x2)/2,(z1+z2)/2,5,Math.hypot(x2-x1,z2-z1)+1,.025+i*.0002);m.rotation.z=Math.atan2(x2-x1,z2-z1);m.updateMatrix();
+ }
+ boardwalk(22,42,26,4.8,.027);boardwalk(66,42,62,4.8,.029);boardwalk(65,84.5,60,5,.029);boardwalk(65,120,60,4,.029);
+ // Two angled building wings with broad roofs meet at a short central bay.
+ // Their footprint and wall collision come from the same shared segments.
+ const sandMat=new T.MeshBasicMaterial({map:sandTexture,color:0xe8d6b4});
+ const gymShape=new T.Shape();for(const [i,[x,z]] of [[43,18.5],[65,12.5],[73,12.5],[95,18.5],[95,39],[43,39]].entries()){if(i)gymShape.lineTo(x-69,-(z-25.5));else gymShape.moveTo(x-69,-(z-25.5))}gymShape.closePath();
+ flat(new T.ShapeGeometry(gymShape),sandMat,69,25.5,.018).userData.sanctuaryGym=true;
+ const gymStone=new T.MeshLambertMaterial({color:0x9e9a83});
+ const glass=new T.MeshLambertMaterial({color:0x485e55}),windowShine=new T.MeshBasicMaterial({color:0xc7c488});
+ // Gabled roofs for the two small kiosks elsewhere in the Sanctuary.
+ function gable(cx,cz,w,d,eave,rise){const half=w/2,ang=Math.atan2(rise,half);for(const side of [-1,1]){const m=box(cx+side*half/2,eave+rise/2,cz,Math.hypot(half,rise)+.45,.24,d,roofMat);m.rotation.z=-side*ang;m.updateMatrix();m.userData.sanctuaryRoof=true}for(const z of [cz-d/2,cz+d/2]){beam([cx-half,eave,z],[cx,eave+rise,z],.18);beam([cx,eave+rise,z],[cx+half,eave,z],.18)}}
+ // Each wing is placed in its own coordinate frame along the shared angled
+ // wall. Its roof, timbers, windows and foundation all rotate together.
+ for(const [wing,seg] of [['left',R.SANCTUARY_GYM_WALLS[0]],['right',R.SANCTUARY_GYM_WALLS[2]]]){
+  const dx=seg.x2-seg.x1,dz=seg.z2-seg.z1,len=Math.hypot(dx,dz),theta=Math.atan2(-dz,dx),c=Math.cos(theta),sn=Math.sin(theta),cx=(seg.x1+seg.x2)/2,cz=(seg.z1+seg.z2)/2;
+  const point=(u,y,v)=>[cx+c*u+sn*v,y,cz-sn*u+c*v];
+  const piece=(u,y,v,w,h,d,mat)=>{const [x,Y,z]=point(u,y,v),m=box(x,Y,z,w,h,d,mat);m.rotation.y=theta;m.updateMatrix();return m};
+  const brace=(a,b,thick,mat=darkWood)=>beam(point(...a),point(...b),thick,mat);
+  piece(0,.55,0,len,1.1,.8,gymStone);
+  const wall=piece(0,5.15,0,len,8.2,.5,plaster);wall.userData.gymWing=wing;
+  piece(0,10.75,0,len,2,.5,plaster).userData.gymUpperWall=wing;
+  for(const face of [-1,1]){
+   const v=face*.32;
+   for(let i=0;i<=4;i++){const u=-len/2+i*len/4;piece(u,5,v,.42,10,.23,darkWood).userData.gymTimber='rear-post';piece(u,10.8,v,.32,2.1,.24,darkWood)}
+   for(const y of [1.05,4.45,8.8,9.8,11.8])piece(0,y,v,len,.28,.24,darkWood).userData.gymTimber='rear-beam';
+   for(let i=0;i<4;i++){const u=-len/2+(i+.5)*len/4;brace([u-len/8+.22,1.15,v],[u+len/8-.22,4.28,v],.16);brace([u+len/8-.22,1.15,v],[u-len/8+.22,4.28,v],.16)}
+   for(const u of [-len/4,len/4]){
+    piece(u,6.65,v+face*.14,2.45,2.55,.13,darkWood).userData.gymWindow='rear';
+    piece(u,6.65,v+face*.22,1.95,2.05,.07,glass);piece(u,6.65,v+face*.28,.11,2.05,.08,lightWood);piece(u,6.65,v+face*.28,1.95,.11,.08,lightWood);
+    piece(u-.48,7.08,v+face*.33,.42,.42,.035,windowShine);piece(u,5.32,v+face*.32,2.8,.18,.4,lightWood);
+   }
+  }
+  for(let i=0;i<11;i++){const stone=piece(-len/2+(i+.5)*len/11,.54,.43,len/11-.08,.82,.12,i%3===0?cream:gymStone);stone.userData.gymMasonry=true}
+  // Broad sloping shingle plane shelters each wing OUTSIDE the open yard.
+  const rise=2.3,depth=6.5,angle=Math.atan2(rise,depth);
+  const roof=piece(0,10.75,-depth/2,len+.6,.24,Math.hypot(depth,rise)+.4,roofMat);roof.rotation.set(-angle,theta,0,'YXZ');roof.updateMatrix();roof.userData.sanctuaryRoof=true;roof.userData.sanctuaryBuildingWing=wing;roof.userData.gymBroadRoof=true;
+  brace([-len/2-.2,11.9,0],[len/2+.2,11.9,0],.2);brace([-len/2-.2,9.6,-depth],[len/2+.2,9.6,-depth],.18);
+  for(let i=0;i<=4;i++){const u=-len/2+i*len/4;brace([u,9.65,-depth],[u,11.9,0],.14)}
+ }
+ // The back connector reads as an entrance between the two buildings.
+ box(69,.55,12.5,8,1.1,.8,gymStone);box(69,5.15,12.5,8,8.2,.5,plaster);
+ for(const x of [65,73])box(x,5.1,12.84,.48,10.2,.3,darkWood);
+ for(const y of [1.05,5.15,8.8,9.9])box(69,y,12.85,8,.3,.28,darkWood);
+ // Finish the street-facing side too: no unframed plaster block behind the connector.
+ for(const x of [65,69,73])box(x,5.1,12.16,.38,10.2,.26,darkWood);
+ for(const y of [1.05,4.45,8.8,9.9])box(69,y,12.16,8,.26,.25,darkWood);
+ for(const [x1,x2] of [[65.3,68.7],[69.3,72.7]]){beam([x1,1.2,12.15],[x2,4.25,12.15],.13);beam([x2,1.2,12.15],[x1,4.25,12.15],.13)}
+
+ const doorMat=new T.MeshLambertMaterial({map:doorTexture,color:0xe8d4ad});
+ box(69,3.05,12.83,4.4,5.1,.16,darkWood);box(69,3.05,12.94,3.85,4.55,.1,doorMat);box(69,3.05,13.01,.15,4.6,.1,darkWood);
+ for(const dx of [-.3,.3]){const knob=new T.Mesh(new T.SphereGeometry(.12,10,6),new T.MeshLambertMaterial({color:0xc5a15a}));knob.position.set(69+dx,2.7,13.1);scene.add(freeze(knob))}
+ // The exterior flank walls are shorter than the open training yard, with
+ // real timber visible on both sides rather than a flat dark roof over it.
+ for(const x of [43,95]){
+  box(x,.55,23.75,.8,1.1,10.5,gymStone);box(x,5.15,23.75,.5,8.2,10.5,plaster);
+  for(const face of [-1,1]){
+   const xx=x+face*.32;
+   for(const z of [18.5,21,23.75,26.5,29])box(xx,5,z,.23,10,.4,darkWood).userData.gymTimber='side-post';
+   for(const y of [1.05,4.45,8.8,9.8])box(xx,y,23.75,.24,.28,10.5,darkWood).userData.gymTimber='side-beam';
+   for(const z of [20.5,24,27]){beam([xx,1.15,z-1.7],[xx,4.27,z+1.7],.15);beam([xx,1.15,z+1.7],[xx,4.27,z-1.7],.15)}
+   for(const z of [22,26]){
+    box(xx+face*.14,6.65,z,.13,2.55,2.45,darkWood).userData.gymWindow='side';
+    box(xx+face*.22,6.65,z,.07,2.05,1.95,glass);box(xx+face*.28,6.65,z,.08,2.05,.1,lightWood);box(xx+face*.28,6.65,z,.08,.1,1.95,lightWood);
+    box(xx+face*.32,7.05,z-.48,.035,.4,.42,windowShine);box(xx+face*.32,5.32,z,.4,.18,2.8,lightWood);
+   }
+  }
+ }
+ // Each flank terminates in a full timbered gable, with a usable doorway.
+ for(const [cx,side] of [[46,-1],[92,1]]){
+  for(const dx of [-2.25,2.25])box(cx+dx,3,29,1.5,6,.45,plaster);
+  box(cx,7.8,29,6,3.6,.45,plaster);
+  for(const x of [cx-3,cx-1.45,cx+1.45,cx+3])box(x,4.8,29.32,.32,9.6,.24,darkWood).userData.gymTimber='front-post';
+  for(const y of [1,6,8.8,9.6])box(cx,y,29.34,6.4,.25,.2,darkWood);
+  // Framed attic windows and substantial corner blocks complete the end bay.
+  for(const dx of [-1.45,1.45]){box(cx+dx,7.45,29.34,1.4,1.8,.12,darkWood);box(cx+dx,7.45,29.43,1.06,1.4,.07,glass);box(cx+dx,7.45,29.48,.1,1.4,.05,lightWood);box(cx+dx,7.45,29.48,1.06,.1,.05,lightWood);box(cx+dx,6.48,29.5,1.62,.15,.3,lightWood)}
+  for(const x of [cx-2.8,cx+2.8])box(x,.48,29.35,.5,.95,.3,cream);
+
+  for(const x of [cx-2.25,cx+2.25])beam([x-.65,1.2,29.36],[x+.65,5.65,29.36],.13);
+  const triangle=new T.Shape();triangle.moveTo(-3,9.6);triangle.lineTo(0,11.9);triangle.lineTo(3,9.6);triangle.closePath();
+  const face=new T.Mesh(new T.ShapeGeometry(triangle),new T.MeshLambertMaterial({map:plasterTexture,color:0xf1e7d0,side:T.DoubleSide}));face.position.set(cx,0,29.27);face.userData.gymGable=side<0?'left':'right';scene.add(freeze(face));
+  beam([cx-3,9.6,29.38],[cx,11.9,29.38],.2);beam([cx,11.9,29.38],[cx+3,9.6,29.38],.2);beam([cx,9.7,29.4],[cx,11.8,29.4],.14);
+  // A complete broad pitched roof caps each gabled end bay.
+  const angle=Math.atan2(2.3,3);for(const slope of [-1,1]){const roof=box(cx+slope*1.5,10.75,23.75,Math.hypot(3,2.3)+.35,.22,11.3,roofMat);roof.rotation.z=-slope*angle;roof.updateMatrix();roof.userData.sanctuaryRoof=true;roof.userData.sanctuaryBuildingWing=side<0?'left':'right';roof.userData.gymBroadRoof=true}
+  for(const z of [19,21.5,24,26.5,29]){beam([cx-3,9.6,z],[cx,11.9,z],.13);beam([cx,11.9,z],[cx+3,9.6,z],.13)}
+ }
+ // Fence follows the proposed front boundary, leaving the middle entrance open.
+ for(const f of R.SANCTUARY_GYM_FENCES){const dx=f.x2-f.x1,dz=f.z2-f.z1,len=Math.hypot(dx,dz),n=Math.max(1,Math.ceil(len/3.2));for(let i=0;i<=n;i++){const t=i/n;box(f.x1+dx*t,.7,f.z1+dz*t,.22,1.4,.22,darkWood)}for(const y of [.45,1.05])beam([f.x1,y,f.z1],[f.x2,y,f.z2],.085,wood).userData.gymFence=true}
+ worldSign(69,7.1,13.08,'SANCTUARY GYM',6,.72);
+ // Weight rack, barbells and benches: POWER.
+ for(const x of [49,55])box(x,1.6,19,.25,3.2,.25,darkWood);for(const y of [.65,1.45,2.25])box(52,y,19,6,.14,.24,wood);
+ for(let row=0;row<3;row++)for(const x of [50,51.2,52.4,53.6,54.5]){const d=new T.Mesh(new T.CylinderGeometry(.32,.32,.2,12),iron);d.rotation.z=Math.PI/2;d.position.set(x,.9+row*.8,19);scene.add(freeze(d))}
+ for(const x of [49,55])box(x,.85,25,.23,1.7,.23,wood);box(52,1.55,25,6,.15,.15,iron);
+ for(const x of [49.5,54.5]){const d=new T.Mesh(new T.CylinderGeometry(.68,.68,.25,16),iron);d.rotation.z=Math.PI/2;d.position.set(x,1.55,25);scene.add(freeze(d))}
+ box(52,.48,29,3.5,.23,1.1,darkWood);for(const x of [50.8,53.2])box(x,.23,29,.18,.46,.7,wood);
+ // Wooden padded striking dummy: GUARD.
+ box(63,.15,21,2.2,.3,2.2,darkWood);box(63,1.4,21,.4,2.8,.4,wood);const dummy=new T.Mesh(new T.CylinderGeometry(.7,.85,2,12),new T.MeshLambertMaterial({color:0xa48157}));dummy.position.set(63,2.1,21);scene.add(freeze(dummy));for(const dx of [-1,1])beam([63+dx*.25,2.3,21],[63+dx*1.2,1.9,21],.15,wood);
+
+ for(const x of [60,66]){box(x,.15,21,1.8,.3,1.8,darkWood);box(x,1.4,21,.35,2.8,.35,wood);const d=new T.Mesh(new T.CylinderGeometry(.6,.72,2,12),new T.MeshLambertMaterial({color:0xa48157}));d.position.set(x,2.1,21);scene.add(freeze(d));for(const side of [-1,1])beam([x+side*.2,2.3,21],[x+side*.95,1.9,21],.12,wood)}
+ for(let i=0;i<3;i++)box(60+i*.8,.18,28, .55,.35,.55,darkWood);
+ // Obstacles, low hurdles and balance beam: AGILITY.
+ for(const lane of [72,75,78])for(const z of [22,26,30]){for(const x of [lane-1.1,lane+1.1])box(x,.65,z,.18,1.3,.18,wood);box(lane,1.2,z,2.2,.16,.16,lightWood)}
+ box(80,.5,29, .28,1,4,darkWood);box(80,1,29,.8,.2,5,wood);
+ // Target board, hanging rings and two green practice mats: FOCUS.
+ for(const x of [84,89])box(x,2.1,18,.25,4.2,.25,darkWood);box(86.5,3.5,18,5,.18,.18,wood);
+ const targetDisc=new T.Mesh(new T.CylinderGeometry(1.25,1.25,.15,24),cream);targetDisc.rotation.x=Math.PI/2;targetDisc.position.set(86.5,2.3,18.1);scene.add(freeze(targetDisc));
+ for(const [rad,color] of [[.75,0xaa684d],[.32,0x493225]]){const disc=new T.Mesh(new T.CylinderGeometry(rad,rad,.17,24),new T.MeshLambertMaterial({color}));disc.rotation.x=Math.PI/2;disc.position.set(86.5,2.3,18.19);scene.add(freeze(disc))}
+ for(const x of [83,86,89])flat(new T.PlaneGeometry(2.7,4.2),new T.MeshBasicMaterial({color:0x849b6f}),x,27,.032);
+ for(const [x,name] of [[52,'power'],[63,'guard'],[75,'agility'],[86,'focus']]){const marker=box(x,.03,34,.02,.02,.02,wood);marker.userData.sanctuaryStation=name}
+ // Recognisable training fixtures and individual stored items, not flat floor markers.
+ for(const x of [48.5,56]){box(x,1.65,23,.22,3.3,.22,darkWood);box(x,3.25,24,.22,.18,2.5,darkWood)}box(52.25,3.15,24.7,7.7,.18,.2,wood);
+ for(const x of [48.8,55.7]){const plate=new T.Mesh(new T.CylinderGeometry(.55,.55,.18,16),iron);plate.rotation.z=Math.PI/2;plate.position.set(x,2.6,24.7);scene.add(freeze(plate))}
+ for(const x of [59.5,66.5]){box(x,.5,24,.18,1,.18,wood);box(x,1,24,1.8,.14,.14,wood)}
+ for(const x of [52.5,56.5,60.5,65]){const bag=new T.Mesh(new T.CylinderGeometry(.36,.4,1.3,12),new T.MeshLambertMaterial({color:0xa67955}));bag.position.set(x,1.5,30.5);scene.add(freeze(bag));box(x,.48,30.5,.16,.96,.16,darkWood);box(x,.06,30.5,1.4,.12,1.1,wood)}
+ for(const z of [19,21]){box(71,.13,z,1.8,.2,.25,wood);box(74,.13,z,1.8,.2,.25,wood);box(77,.13,z,1.8,.2,.25,wood)}
+ for(const x of [84,86,88])for(const z of [31,32.2]){const d=new T.Mesh(new T.CylinderGeometry(.3,.3,.24,12),iron);d.rotation.z=Math.PI/2;d.position.set(x,.3,z);scene.add(freeze(d))}
+
+ // Stored equipment, pulley and hanging bags fill the training courtyard.
+ for(const x of [56,58,60]){box(x,.5,17.3,1.4,1,1,wood);beam([x-.65,.05,17.85],[x+.65,.95,17.85],.08,lightWood)}
+ for(const x of [78.5,81.2]){box(x,2.6,16,.14,5.2,.14,darkWood);box(x,5.05,16,2.8,.15,.2,wood);const bag=new T.Mesh(new T.CylinderGeometry(.48,.52,1.8,12),new T.MeshLambertMaterial({color:0x87634d}));bag.position.set(x+.9,3.35,16);scene.add(freeze(bag));beam([x+.9,4.3,16],[x+.9,5,16],.045,iron)}
+ for(const x of [47.5,49,50.5]){const d=new T.Mesh(new T.CylinderGeometry(.35,.35,.15,12),iron);d.rotation.z=Math.PI/2;d.position.set(x,.45,31.5);scene.add(freeze(d))}
+ for(const x of [55,67,79,90]){box(x,.22,36,5,.3,.5,wood);for(const dx of [-1.9,1.9])box(x+dx,.12,36,.15,.24,.4,darkWood)}
+ // Bevelled grassy field with matching shared, gated fence geometry.
+ const fieldTex=stone.clone();fieldTex.repeat.set(1/7,1/7);fieldTex.needsUpdate=true;const fieldMat=new T.MeshBasicMaterial({map:fieldTex,color:0xc8dda8});
+ const shape=new T.Shape();for(const [i,[x,z]] of [[44,52],[49,47],[91,47],[96,52],[96,76],[91,81],[49,81],[44,76]].entries()){const px=x-70,py=-(z-64);if(!i)shape.moveTo(px,py);else shape.lineTo(px,py)}shape.closePath();
+ flat(new T.ShapeGeometry(shape),fieldMat,70,64,.021).userData.sanctuaryField=true;
+ const flowerColors=[0xe8d49b,0xf2c8b8,0xe8e9db];for(let i=0;i<50;i++){const x=49+(i*29%42),z=50+(i*17%28);const f=new T.Mesh(new T.SphereGeometry(.10,5,4),new T.MeshBasicMaterial({color:flowerColors[i%3]}));f.position.set(x,.12,z);scene.add(freeze(f))}
+ for(const f of R.SANCTUARY_FENCES){const dx=f.x2-f.x1,dz=f.z2-f.z1,len=Math.hypot(dx,dz),count=Math.max(1,Math.ceil(len/3.5));for(let i=0;i<=count;i++){const t=i/count;box(f.x1+dx*t,.72,f.z1+dz*t,.22,1.44,.22,darkWood)}for(const y of [.48,1.04])beam([f.x1,y,f.z1],[f.x2,y,f.z2],.09,wood).userData.sanctuaryFence=true}
+ // Hand-built food cart and two separate future NPC stations, on the avenue side of the walk.
+ function wheel(x,z){const m=new T.Mesh(new T.CylinderGeometry(.7,.7,.18,14),darkWood);m.rotation.z=Math.PI/2;m.position.set(x,.6,z);scene.add(freeze(m));const hub=new T.Mesh(new T.CylinderGeometry(.24,.24,.2,12),lightWood);hub.rotation.z=Math.PI/2;hub.position.set(x+.11,.6,z);scene.add(freeze(hub))}
+ function kiosk(x,z,kind){
+  box(x,.72,z,5,1.05,3.5,wood).userData.sanctuaryKiosk=kind;box(x,1.28,z,5.3,.16,3.8,lightWood);
+  for(const dx of [-2.2,2.2])for(const dz of [-1.4,1.4])box(x+dx,2.2,z+dz,.22,3.5,.22,darkWood);
+  if(kind==='food'){
+   for(let i=0;i<8;i++)box(x-2.3+i*.66,4.02,z,.66,.18,4,i%2?cream:new T.MeshLambertMaterial({color:0xa45f43}));
+   for(const dx of [-2.6,2.6])for(const dz of [-1.2,1.2])wheel(x+dx,z+dz);
+   for(const [dx,color] of [[-1.4,0xc65b40],[-.7,0xd3a35c],[0,0x91a451],[.7,0xc87d42],[1.4,0xcc6655]]){box(x+dx,1.41,z,.58,.18,1.1,darkWood);for(const zz of [-.3,.05,.35]){const fruit=new T.Mesh(new T.SphereGeometry(.19,8,6),new T.MeshLambertMaterial({color}));fruit.position.set(x+dx,1.65,z+zz);scene.add(freeze(fruit))}}
+  }else{
+   gable(x,z,5.5,4.2,4,1.05);box(x,2.7,z-1.6,4.4,1.2,.18,plaster);
+   for(const dx of [-1.1,0,1.1])box(x+dx,1.42,z,.8,.2,1.1,kind==='guide'?cream:metal);
+  }
+  worldSign(x,3.1,z+1.75,kind==='food'?'FOOD - SOON':kind==='trainer'?'TRAINER - SOON':'FIELD GUIDE - SOON',4,.65);
+ }
+ kiosk(22,41,'food');kiosk(22,56,'trainer');kiosk(22,72,'guide');
+ // Awnings, shelving, painted shop signs and merchandise distinguish the stalls.
+ const canvasBlue=new T.MeshLambertMaterial({color:0x648484}),canvasRed=new T.MeshLambertMaterial({color:0xa96349});
+ for(const [z,color] of [[56,canvasBlue],[72,canvasRed]]){for(let i=0;i<7;i++){const m=box(19.75+i*.75,3.75,z+1.9,.75,.13,1.5,i%2?cream:color);m.rotation.x=.16;m.updateMatrix()}for(const x of [20.2,23.8])box(x,1.9,z-1.53,.15,1.5,.15,darkWood);for(const y of [1.65,2.25])box(22,y,z-1.48,3.8,.13,.45,lightWood)}
+ for(const z of [55.8,71.8])for(const x of [20.6,21.4,22.2,23,23.8]){box(x,1.78,z-.95,.42,.22,.48,z===71.8?cream:wood);box(x,2.38,z-.95,.36,.18,.38,z===71.8?lightWood:metal)}
+ for(const z of [56,72]){box(22,1.38,z+1.91,5.4,.18,.48,lightWood);for(const x of [20.4,21.4,22.4,23.4]){box(x,1.55,z+1.9,.65,.2,.45,z===72?cream:metal);box(x,1.75,z+1.9,.42,.2,.3,z===72?lightWood:wood)}}
+ // Hanging decorative notices and small wood framed notices for the guide.
+ for(const z of [56,72]){for(const x of [19.4,24.6]){box(x,2.35,z+1.85,.24,1.2,.18,darkWood);box(x,2.38,z+1.98,.14,.8,.12,z===56?canvasBlue:canvasRed)}}
+ for(const x of [16.5,27.5]){box(x,2,69.2,2.3,1.3,.06,cream);for(let i=0;i<4;i++)box(x,2.35-i*.23,69.25,1.7,.035,.025,darkWood)}
+ // Lanterns and small pennants along the service strip.
+ for(const z of [49,64,79,90]){box(31,1.7,z,.18,3.4,.18,darkWood);box(31,3.55,z,.6,.16,.6,darkWood);box(31,3.15,z,.42,.65,.42,new T.MeshBasicMaterial({color:0xf4d58d}));box(31,2.78,z,.58,.12,.58,darkWood)}
+ // Bulletin boards, crates and barrels make the guide and cart readable at player scale.
+ for(const [x,z] of [[16.5,69],[27.5,69]]){box(x,1,z,.18,2,.18,darkWood);box(x,2,z,2.6,1.8,.16,lightWood);box(x,2,z+.1,2.2,1.4,.05,cream)}
+ for(const [x,z] of [[18,43],[26.5,44],[18,74]]){const barrel=new T.Mesh(new T.CylinderGeometry(.55,.65,1.2,12),wood);barrel.position.set(x,.6,z);scene.add(freeze(barrel));for(const h of [.2,.95]){const hoop=new T.Mesh(new T.TorusGeometry(.57,.05,5,12),iron);hoop.rotation.x=Math.PI/2;hoop.position.set(x,h,z);scene.add(freeze(hoop))}}
+ // Roped ring on grass, with heavy timber corner posts, steps and three-sided stands.
+ const ring=R.SANCTUARY_RING;
+ const ringGrass=stone.clone();ringGrass.repeat.set(48/7,27/7);ringGrass.needsUpdate=true;
+ flat(new T.PlaneGeometry(48,27),new T.MeshBasicMaterial({map:ringGrass,color:0xc8dda8}),71,105,.018).userData.sanctuaryRing=true;
+ box(ring.x,.35,ring.z,ring.w,.7,ring.d,darkWood);box(ring.x,.74,ring.z,ring.w-.3,.12,ring.d-.3,cream);
+ // Woven canvas and piping prevent the ring from reading as a blank square.
+ const ringCanvas=document.createElement('canvas');ringCanvas.width=ringCanvas.height=512;const rctx=ringCanvas.getContext('2d');
+ if(rctx&&typeof rctx.fillRect==='function'){rctx.fillStyle='#e9dfcb';rctx.fillRect(0,0,512,512);for(let i=0;i<1024;i++){const x=(i*67)%512,y=(i*131)%512;rctx.fillStyle=i%2?'rgba(125,107,84,.035)':'rgba(255,255,255,.09)';rctx.fillRect(x,y,1+(i%3),1)}if(typeof rctx.strokeRect==='function'){rctx.strokeStyle='rgba(124,104,79,.35)';rctx.lineWidth=3;rctx.strokeRect(12,12,488,488)}}
+ const canvasTex=new T.CanvasTexture(ringCanvas);flat(new T.PlaneGeometry(ring.w-.4,ring.d-.4),new T.MeshBasicMaterial({map:canvasTex}),ring.x,ring.z,.806).userData.ringCanvas=true;
+ for(const z of [ring.z-ring.d/2+.28,ring.z+ring.d/2-.28])box(ring.x,.815,z,ring.w-.7,.03,.06,lightWood);
+ for(const x of [ring.x-ring.w/2+.28,ring.x+ring.w/2-.28])box(x,.815,ring.z,.06,.03,ring.d-.7,lightWood);
+ // Face boards and corner hardware add depth under the ropes.
+ for(const z of [ring.z-ring.d/2-.015,ring.z+ring.d/2+.015]){for(const y of [.2,.48])box(ring.x,y,z,ring.w-.5,.09,.04,lightWood);for(const x of [ring.x-6,ring.x,ring.x+6])box(x,.34,z,.1,.52,.05,wood)}
+ for(const x of [ring.x-ring.w/2,ring.x+ring.w/2])for(const z of [ring.z-ring.d/2,ring.z+ring.d/2]){box(x,1.85,z,.46,3.7,.46,darkWood);box(x,3.8,z,.66,.25,.66,lightWood)}
+ for(const h of [1.3,2,2.7]){for(const z of [ring.z-ring.d/2,ring.z+ring.d/2])box(ring.x,h,z,ring.w,.1,.1,h===2?cream:wood);for(const x of [ring.x-ring.w/2,ring.x+ring.w/2])box(x,h,ring.z,.1,.1,ring.d,h===2?cream:wood)}
+ for(const x of [ring.x-ring.w/2,ring.x+ring.w/2])for(const z of [ring.z-ring.d/2,ring.z+ring.d/2])for(const y of [1.3,2,2.7]){box(x,y,z,.62,.2,.62,cream);box(x,y,z,.68,.05,.68,wood)}
+
+ for(let i=0;i<3;i++)box(ring.x-ring.w/2-1.2+i*.4,.12+i*.12,ring.z,.45,.24+i*.24,3.2,wood);
+ // Level, regularly spaced bleacher tiers, with a real mitred corner.
+ // The walkway faces and all three seating heights stay horizontal; the two
+ // runs and their corner share dimensions with the Worker collision boxes.
+ const standPlanks=boardTexture?.clone();if(standPlanks){standPlanks.repeat.set(1,3);standPlanks.needsUpdate=true}
+ const standMat=new T.MeshLambertMaterial({map:standPlanks,color:0xd8bc92});
+ for(let row=0;row<3;row++){
+  const x0=81.7+row*1.05,z0=113.25+row*1.05,y=.55+row*.43,zStart=94.5,xStart=53.6;
+  // Parallel boards have square, flush edges and a consistent height per tier.
+  for(let p=0;p<3;p++){
+   const east=box(x0+(p+.5)/3,y,(zStart+z0)/2,1/3-.015,.14,z0-zStart,standMat);east.userData.sanctuaryBleacher='east';east.userData.bleacherRow=row;
+   const south=box((xStart+x0-1)/2,y,z0+1+(p+.5)/3,x0-1-xStart,.14,1/3-.015,standMat);south.userData.sanctuaryBleacher='south';south.userData.bleacherRow=row;
+  }
+  // Horizontal trapezoid closes the 45-degree corner without skewed, floating planks.
+  const shape=new T.Shape();for(const [i,[x,z]] of [[x0,z0],[x0+1,z0],[x0-1,z0+2],[x0-1,z0+1]].entries()){if(i)shape.lineTo(x,-z);else shape.moveTo(x,-z)}shape.closePath();
+  const corner=flat(new T.ShapeGeometry(shape),standMat,0,0,y+.071);corner.userData.sanctuaryBleacher='corner';corner.userData.bleacherRow=row;
+  for(const z of [95,99,103,107,111]){box(x0+.5,y/2,z,.18,y,.22,darkWood);box(x0+.5,y-.1,z,1,.14,.22,wood)}
+  for(const x of [54,58,62,66,70,74,78]){box(x,y/2,z0+1.5,.22,y,.18,darkWood);box(x,y-.1,z0+1.5,.22,.14,1,wood)}
+  box(x0-.28,y/2,z0+.7,.22,y,.22,darkWood);
+ }
+ // Back rail and posts terminate cleanly at a single bevel around the corner.
+ for(const z of [94.5,99,103,107,111,115.3]){box(85.05,1.5,z,.22,3,.22,darkWood);box(85.05,3.05,z,.36,.14,.36,lightWood)}
+ for(const y of [1.9,2.6]){box(85.05,y,104.9,.14,.14,20.8,wood);beam([85.05,y,115.3],[82.8,y,117.45],.09,wood)}
+ for(const x of [53.6,58,63,68,73,78,82.8]){box(x,1.5,117.45,.22,3,.22,darkWood);box(x,3.05,117.45,.36,.14,.36,lightWood)}
+ for(const y of [1.9,2.6])box(68.2,y,117.45,29.2,.14,.14,wood);
+
+ const sanctuaryLabels=[{x:84,z:37,title:'GYM · LIVE TRAINING'},{x:48,z:48,title:'FARM · WORK IN PROGRESS'},{x:49,z:92,title:'BOXING RING · WORK IN PROGRESS'},...[ [59,27,'POWER'],[65,20,'GUARD'],[74,22,'AGILITY'],[84,24,'FOCUS'] ].map(([x,z,title])=>({x,z,title,station:title.toLowerCase()}))].map(pad=>{const el=document.createElement(pad.station?'button':'div'),entry={pad,el,hover:false,pressed:false};el.className='social-sanctuary-label';el.textContent=pad.title;if(pad.station){el.type='button';el.dataset.station=pad.station;el.title='Train '+pad.title.toLowerCase()+' at this station';el.onclick=()=>callbacks.trainStation?.(pad.station);
+  // World projections move with the follow camera. Hold a station control still
+  // while a mouse is over it or a touch is down so it cannot escape the click.
+  el.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')entry.hover=true});el.addEventListener('pointerleave',()=>{entry.hover=false});el.addEventListener('pointerdown',()=>{entry.pressed=true});
+ }labels.append(el);return entry});
+ const releaseStationPointer=()=>{for(const entry of sanctuaryLabels)entry.pressed=false};
+ addEventListener('pointerup',releaseStationPointer);addEventListener('pointercancel',releaseStationPointer);
+ const digimonStore=globalThis.PGSocialDigimon?.sharedStore();
+ // Idle, non-interactive companions dress the future meadow. They have no combat,
+ // ownership, rewards or authority; the player's own follower remains independent.
+ const residents=globalThis.PGSocialDigimon&&digimonStore?[['agumon',52,55],['palmon',60,70],['gabumon',77,58],['patamon',85,71]].map(([id,x,z],i)=>{
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
+  const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);sprite.scale.set(256*1.45/96,256*1.45/96,1);sprite.position.set(x,.06,z);sprite.userData.sanctuaryResident=id;scene.add(sprite);digimonStore.request(id);
+  return {id,ctx:canvas.getContext('2d'),texture,sprite,frame:-1,flip:i%2===1};
+ }):[];
+ // Training pets are independent world sprites, not followers anchored to their
+ // owners. The room assigns each one an apparatus; the client only animates it.
+ const gymResidents=new Map();
+ function setGymResidents(entries){
+  const keep=new Set();for(const e of (Array.isArray(entries)?entries:[]).slice(0,20)){
+   if(!e||typeof e!=='object'||!Number.isInteger(e.owner)||!Object.hasOwn(R.GYM_STATIONS,e.stat)||!Number.isInteger(e.slot)||!R.GYM_STATIONS[e.stat][e.slot]||!PGSocialDigimon?.clean(e.species))continue;keep.add(e.owner);
+   let unit=gymResidents.get(e.owner);if(!unit){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const effect=new T.Mesh(new T.RingGeometry(.75,.92,24),new T.MeshBasicMaterial({color:0xb6e4cf,transparent:true,opacity:.75,side:T.DoubleSide,depthWrite:false}));effect.rotation.x=-Math.PI/2;scene.add(effect);const impact=new T.Mesh(new T.SphereGeometry(.22,10,8),new T.MeshBasicMaterial({color:0xf8c07a}));scene.add(impact);unit={canvas,ctx:canvas.getContext('2d'),texture,sprite,effect,impact,paint:''};gymResidents.set(e.owner,unit)}unit.spec=e;unit.sprite.userData.gymOwner=e.owner;digimonStore.request(e.species);
+  }
+  for(const [id,u] of gymResidents)if(!keep.has(id)){scene.remove(u.sprite,u.effect,u.impact);u.sprite.material.dispose();u.texture.dispose();u.effect.geometry.dispose();u.effect.material.dispose();u.impact.geometry.dispose();u.impact.material.dispose();gymResidents.delete(id)}
+ }
+ function updateGymResidents(now){for(const u of gymResidents.values()){
+  const {stat,slot,species}=u.spec,anchor=R.GYM_STATIONS[stat][slot],asset=digimonStore.ready(species);u.sprite.visible=!!asset;u.effect.visible=stat==='focus';u.impact.visible=stat==='guard';if(!asset){digimonStore.request(species);continue}
+  const side=camera.matrixWorld.elements,rx=side[0],rz=side[2],cycle=now/1000;
+  // A screen-left offset keeps the fighter beside the dummy from every orbit,
+  // rather than behind its depth-tested mesh.
+  let x=anchor.x-rx*1.65,z=anchor.z-rz*1.65,lift=0,stance='idle',flip=false,time=now;
+  if(stat==='power')stance='attack';
+  if(stat==='guard'){const hit=cycle%1.5,travel=Math.min(1,hit/.7);u.impact.visible=hit<.95;u.impact.position.set(anchor.x+(x-anchor.x)*travel,1.15,anchor.z+(z-anchor.z)*travel);if(hit>.65&&hit<.95){x-=rx*.3;z-=rz*.3}}
+  if(stat==='agility'){stance='walking';x=anchor.x;z=anchor.z+Math.sin(cycle*2.8)*1.5;lift=Math.max(0,Math.sin(cycle*5.6))*.45;flip=Math.cos(cycle*2.8)<0;time=cycle*1400}
+  if(stat==='focus'){x=anchor.x;z=anchor.z;lift=.12+Math.sin(cycle*2)*.1;u.effect.position.set(x,.08,z);u.effect.scale.setScalar(1+.18*Math.sin(now/350))}
+  const stage=Object.values(globalThis.PGDigimonSanctuary?.LINES||{}).map(line=>line.indexOf(species)).find(n=>n>=0)||0,h=1.45*[1,1.2,1.4,1.55][stage];u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(x,.06+lift,z);u.sprite.userData.training=stat;
+  const n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,5),key=[species,stance,n,flip].join(':');if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,5,flip);u.texture.needsUpdate=true;u.paint=key}
+ }}
+ function updateResidents(now){for(const r of residents){const asset=digimonStore.ready(r.id);if(!asset){digimonStore.request(r.id);continue}const frame=PGSocialDigimon.frameIndex(asset.record.actions.idle.length,now,'idle',5);if(frame!==r.frame){r.frame=frame;PGSocialDigimon.draw(r.ctx,asset,'idle',now,5,r.flip);r.texture.needsUpdate=true}}}
  const [gardenCatalog,gardenBuffer,gardenAtlas]=await Promise.all([fetch('assets/native-fields/v1/catalog.json').then(r=>{if(!r.ok)throw Error('Garden metadata unavailable');return r.json()}),fetch('assets/native-fields/v1/prontera/models.bin').then(r=>{if(!r.ok)throw Error('Garden models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/native-fields/v1/prontera/models.webp')]);
  gardenAtlas.flipY=false;const gardenMat=modelMat.clone();gardenMat.map=gardenAtlas;gardenMat.onBeforeCompile=modelMat.onBeforeCompile;
  const garden=gardenCatalog.maps.find(m=>m.name==='prontera'),gardenFloats=new Float32Array(gardenBuffer);
- // Reuse native grass pixels for four bounded gardens, with canopy clearance from paths.
+ // Reuse native grass pixels for the remaining bounded gardens, with path clearance.
  const grass=stone.clone();grass.repeat.set(R.GARDENS[0].w/8,R.GARDENS[0].d/8);grass.needsUpdate=true;
  const grassMat=new T.MeshBasicMaterial({map:grass,color:0xe4e2cf}),curbMaterial=new T.MeshBasicMaterial({color:0xb3ac97});
  for(const g of R.GARDENS){
@@ -49,11 +304,17 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const shrubs=makeBatch();for(const offset of [-4,0,4])for(const side of [-1,1])pushModel(shrubs,'shrub',g.x+offset,g.z+side*5,2.4,0,garden,gardenFloats);addBatch(shrubs,gardenMat);
  }
  for(const {x,z,size} of R.TREES)model('tree2',x,z,size,0,garden,gardenFloats,gardenMat);
+ // Native trees soften the outer Sanctuary edge without crowding its entrances.
+ for(const t of R.SANCTUARY_TREES){const tree=model('tree2',t.x,t.z,6.8,0,garden,gardenFloats,gardenMat);tree.userData.sanctuaryTree=true;if(t.behindGym)tree.userData.nativeGymTree=true}
+ // Small native shrubs fill the outside edge without sealing any of the field gates.
+ const sanctuaryShrubs=makeBatch();for(const [x,z] of [[98,20],[98,32],[98,48],[98,64],[98,78],[98,93],[98,113],[96,124],[89,124],[83,124],[19,112],[27,109],[13,89]])pushModel(sanctuaryShrubs,'shrub',x,z,2.1,0,garden,gardenFloats);addBatch(sanctuaryShrubs,gardenMat);
+
  // v287: Fishing ponds on the open south lawns (R.PONDS), well below the planted tree gardens.
  // All fishing 3D here is visual: water, stone rim, lily pads, ambient fish, and the local
  // player's rod/bobber rig. assets/social-fishing.js drives the states through `fishing` below.
  const fishingApi=(()=>{
-  const roundedRect=(w,d,r)=>{const s=new T.Shape(),hw=w/2,hd=d/2;s.moveTo(-hw+r,-hd);s.lineTo(hw-r,-hd);s.quadraticCurveTo(hw,-hd,hw,-hd+r);s.lineTo(hw,hd-r);s.quadraticCurveTo(hw,hd,hw-r,hd);s.lineTo(-hw+r,hd);s.quadraticCurveTo(-hw,hd,-hw,hd-r);s.lineTo(-hw,-hd+r);s.quadraticCurveTo(-hw,-hd,-hw+r,-hd);return s};
+  // An organically curved oval shared with the movement/fishing rules (local y = -world z).
+  function pondShape(p,offset=0){const shape=new T.Shape();for(let i=0;i<=128;i++){const a=i*Math.PI*2/128,pt=R.pondBoundary(p,a,offset),x=pt.x-p.x,y=-(pt.z-p.z);if(!i)shape.moveTo(x,y);else shape.lineTo(x,y)}shape.closePath();return shape}
   const waterTile=document.createElement('canvas');waterTile.width=waterTile.height=128;const wctx=waterTile.getContext('2d');
   if(wctx&&typeof wctx.fillRect==='function'){wctx.fillStyle='#3e97be';wctx.fillRect(0,0,128,128);if(typeof wctx.arc==='function'&&typeof wctx.stroke==='function'){wctx.strokeStyle='rgba(235,250,255,0.3)';wctx.lineWidth=2;for(let i=0;i<24;i++){const x=(i*53)%128,y=(i*37)%128,r=4+(i*7)%9;wctx.beginPath();wctx.arc(x,y,r,Math.PI*.12,Math.PI*.88);wctx.stroke()}}}
   const makeWaterTex=()=>{const tx=new T.CanvasTexture(waterTile);tx.wrapS=tx.wrapT=T.RepeatWrapping;tx.repeat.set(1/5.5,1/5.5);return tx};
@@ -70,8 +331,8 @@ window.PGSocialScene={async create(host,labels,callbacks){
   // with a falling water sheet and a splash pool behind each pond, stone lanterns, boulders and
   // flowering trees around the rim.
   // The town is unlit flat colour, so "shading" is done by alternating tones per stone.
-  const rockMat=new T.MeshBasicMaterial({color:0x9d9a90}),rockMidMat=new T.MeshBasicMaterial({color:0x87847b}),rockDarkMat=new T.MeshBasicMaterial({color:0x6e6b65});
-  const bridgeMat=new T.MeshBasicMaterial({color:0xc0b9a7}),bridgeRailMat=new T.MeshBasicMaterial({color:0xa79f8d});
+  const rockMat=new T.MeshLambertMaterial({color:0x9d9a90}),rockMidMat=new T.MeshLambertMaterial({color:0x87847b}),rockDarkMat=new T.MeshLambertMaterial({color:0x6e6b65});
+  const bridgeMat=new T.MeshBasicMaterial({color:0xc4a57e}),bridgeRailMat=new T.MeshBasicMaterial({color:0x805738});
   const lanternMat=new T.MeshBasicMaterial({color:0xb5ae9d}),lanternGlowMat=new T.MeshBasicMaterial({color:0xffe4a6});
   const trunkMat=new T.MeshBasicMaterial({color:0x6d4c33}),blossomMat=new T.MeshBasicMaterial({color:0xf6c3d6}),blossomDarkMat=new T.MeshBasicMaterial({color:0xe6a3bf});
   // soft splash pool: three stacked discs fading outwards (no canvas gradient, so the headless
@@ -130,19 +391,33 @@ window.PGSocialScene={async create(host,labels,callbacks){
   // the parapets are real balustrades (newel posts at the ends, a hand rail and a mid rail on
   // turned posts), stone abutments tie it into the banks, and every bridge is registered in
   // `bridges` so the player walk is lifted onto the deck instead of clipping through the arch.
+  // Native plaza stone connects the main avenue to the deck and finishes in a
+  // rounded landing on the far west bank. It lies on land under the deck ends.
+  function bridgePaths(paths){
+   for(const path of paths){
+    const length=path.x2-path.x1,texture=plazaTex.clone();texture.repeat.set(length*26/164,path.width*3/18);texture.needsUpdate=true;
+    const mat=new T.MeshBasicMaterial({map:texture,color:0xe6dfcf});
+    const surface=new T.Mesh(new T.PlaneGeometry(length,path.width),mat);
+    surface.rotation.x=-Math.PI/2;surface.position.set((path.x1+path.x2)/2,.012,path.z);surface.userData.bridgePath=path.name;scene.add(freeze(surface));
+    if(path.name==='west'){
+     const cap=new T.Mesh(new T.CircleGeometry(path.width/2,24),mat);
+     cap.rotation.x=-Math.PI/2;cap.position.set(path.x1,.013,path.z);cap.userData.bridgePathCap=true;scene.add(freeze(cap));
+    }
+   }
+  }
   function archBridge(cx,z,span,width,arch=1.05){
    const half=span/2;
    // deck: the top of the arch, .34 thick, ends sinking into the banks
    const top=t=>4*arch*t*(1-t);
    const shape=new T.Shape();
-   shape.moveTo(-half,-.34);
-   shape.quadraticCurveTo(0,2*arch,half,-.34);
+   shape.moveTo(-half,0);
+   shape.quadraticCurveTo(0,2*arch,half,0);
    shape.lineTo(half,-.36);
-   shape.quadraticCurveTo(0,2*arch-.7,-half,-.36);
+   shape.quadraticCurveTo(0,2*arch-.72,-half,-.36);
    shape.closePath();
    const deck=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:width,bevelEnabled:false}),bridgeMat.clone());
    deck.position.set(cx,0,z-width/2);scene.add(freeze(deck));
-   bridges.push({x:cx,z,span,width,arch});
+   bridges.push({x:cx,z,span,width,arch});bridgeDecks.push(deck);
    const point=t=>({x:-half+span*t,y:top(t)});
    for(const side of [-1,1]){
     const zz=z+side*(width/2-.1);
@@ -154,8 +429,8 @@ window.PGSocialScene={async create(host,labels,callbacks){
     }
     // hand rail + mid rail sampled along the curve
     for(const lift of [1.0,.55]){
-     for(let i=0;i<8;i++){
-      const a=point(i/8),b=point((i+1)/8);
+     for(let i=0;i<24;i++){
+      const a=point(i/24),b=point((i+1)/24);
       const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
       const rail=new T.Mesh(new T.BoxGeometry(len+.03,lift===1?.09:.06,.09),bridgeRailMat);
       rail.position.set(cx+(a.x+b.x)/2,(a.y+b.y)/2+lift,zz);
@@ -163,11 +438,17 @@ window.PGSocialScene={async create(host,labels,callbacks){
      }
     }
     // balusters
-    for(let i=0;i<=10;i++){
-     const t=i/10,pt=point(t);
+    for(let i=0;i<=40;i++){
+     const t=i/40,pt=point(t);
      const post=new T.Mesh(new T.BoxGeometry(.07,.92,.07),bridgeRailMat);
      post.position.set(cx+pt.x,pt.y+.46,zz);scene.add(freeze(post));
     }
+   }
+   // Piers beneath the wooden deck, as in the approved concept. They are scenery below
+   // the deck, not obstacles in the walking corridor.
+   for(const t of [.18,.34,.5,.66,.82])for(const side of [-1,1]){
+    const pt=point(t),h=Math.max(.2,pt.y-.22),pier=new T.Mesh(new T.CylinderGeometry(.18,.23,h,8),bridgeRailMat);
+    pier.position.set(cx+pt.x,h/2,z+side*(width/2-.35));scene.add(freeze(pier));
    }
    // a low stone landing at each end, so the ramp meets masonry instead of hanging over the grass
    for(const side of [-1,1]){
@@ -188,21 +469,22 @@ window.PGSocialScene={async create(host,labels,callbacks){
   function cascade(p,fall,view){
    const zc=fall.z,w=fall.w,h=fall.h,d=fall.dir||1,tone=[rockMat,rockMidMat,rockDarkMat];
    // rock face: taller than the drop, heaped behind the water (away from the pond)
-   const rocks=[[-w/2-1.2,.5,.8,h*.4],[-w/2-.35,.55,1.05,h+.35],[-w/2+.55,.35,.95,h+.5],[.05,.5,1.18,h+.65],
-                [w/2-.55,.35,.92,h+.45],[w/2+.4,.55,.84,h*.65],[w/2+1.15,.45,.68,h*.4],[-.62,1.05,.74,h*.34],[.66,1.0,.7,h*.3]];
-   const rockGroup=new T.Group();scene.add(rockGroup);
+   // Stone flanks leave the waterfall visible even from the south-facing player camera.
+   const rocks=[[-w/2-.3,.5,1.1,h*.45],[-w/2+.1,.55,1.15,h*.85],[-w/2+.25,.5,.9,h*1.3],
+                [w/2+.3,.5,1.1,h*.45],[w/2-.1,.55,1.15,h*.85],[w/2-.25,.5,.9,h*1.3]];
+   const rockGroup=new T.Group();rockGroup.userData.keepCascade=true;scene.add(rockGroup);
    if(view)view.fallback.push(rockGroup);
    // v309: the heap sits left of the pond centre and a little further back, so it never covers the
    // water where the cascade lands (the shelf that used to sit here was removed at the owner's ask).
    rocks.forEach(([dx,dz,r,ry],i)=>{
     const rock=new T.Mesh(new T.DodecahedronGeometry(r,0),tone[i%3]);
-    rock.position.set(fall.x-1.0+dx*.86,ry*.6,zc-d*(dz+.35));
+    rock.position.set(fall.x+dx,ry*.6,zc+d*.42);
     rock.scale.set(1.12,.9,1.02);
     rock.rotation.set(i*.7,i*1.3,i*.45);
     rockGroup.add(rock);
    });
    // the sheet: soft-edged streaks, top tucked under the lip slab, foot in the water
-   const tex=makeFallTex(),H=h+.45,baseZ=zc+d*.55;
+   const tex=makeFallTex(),H=h+.45,baseZ=zc+d*.12;
    const sheet=new T.Mesh(new T.PlaneGeometry(w-1.5,H),new T.MeshBasicMaterial({map:tex,color:0xd2f0fa,transparent:true,opacity:.9,side:T.DoubleSide,depthWrite:false}));
    sheet.position.set(fall.x,.10+H/2,baseZ);scene.add(freeze(sheet));
    falls.push({tex});if(view)view.falls.push({tex});
@@ -214,9 +496,11 @@ window.PGSocialScene={async create(host,labels,callbacks){
    if(view)view.fallSpray.push(spray);
    // The source: a slab of rock sitting ON the sheet's top edge, deeper than the sheet, so the water
    // comes out from under stone instead of starting in mid-air.
-   const lipRock=new T.Mesh(new T.DodecahedronGeometry(w*.34,0),rockMat);
-   lipRock.position.set(fall.x,.10+H-.02,baseZ-d*.05);
-   lipRock.scale.set(1.3,.5,1.05);lipRock.rotation.set(.25,.5,.12);
+   // Layered natural rock lip sits between the flanking boulders, hiding the sheet's
+   // top without a straight, floating slab.
+   const lipRock=new T.Group();lipRock.userData.keepCascade=true;
+   for(let i=-2;i<=2;i++){const rock=new T.Mesh(new T.DodecahedronGeometry(.85,0),tone[(i+2)%3]);
+    rock.position.set(fall.x+i*.92,H-.14+(i%2)*.12,baseZ-.3);rock.scale.set(1.15,.5,.8);rock.rotation.set(.2,i*.4,.1);lipRock.add(rock)}
    scene.add(freeze(lipRock));
    if(view)view.fallback.push(lipRock);
    // splash: broken foam where the water lands, and a shallow pool when it lands on grass
@@ -254,8 +538,8 @@ window.PGSocialScene={async create(host,labels,callbacks){
   // Recipe follows the standard stylised-water breakdown: layer the same hand-painted tile at odd
   // scales scrolling in different directions (so the repeat never lines up), pick the colour from a
   // depth mask, then draw a foam band along the shoreline mask and a moving caustic highlight. The
-  // pond is a ShapeGeometry, so position.xy is already the rounded-rectangle it was drawn from - that
-  // gives an exact signed distance for the shore band instead of a fake rectangle gradient.
+  // pond is a ShapeGeometry; its normalized position follows the same radial shoreline as shared rules,
+  // giving the shader a matching curved shore band instead of a rectangular gradient.
   const WATER_VERT=`
 varying vec2 vPos;varying vec3 vWorld;
 void main(){vPos=position.xy;vec4 wp=modelMatrix*vec4(position,1.0);vWorld=wp.xyz;gl_Position=projectionMatrix*viewMatrix*wp;}`;
@@ -264,14 +548,17 @@ precision highp float;
 uniform sampler2D uA,uB,uN;uniform float uTime,uRadius,uFoamW;
 uniform vec2 uHalf;uniform vec3 uShallow,uDeep,uFoam,uSun,uCam;
 varying vec2 vPos;varying vec3 vWorld;
-float sdRound(vec2 p,vec2 half_,float r){vec2 q=abs(p)-(half_-vec2(r));return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r;}
 void main(){
  vec2 uv=vPos/(uRadius*1.9);
  // two hand-painted caustic frames, drifting against each other at odd scales
  vec3 sh=texture2D(uA,uv*2.1+vec2(uTime*.014,uTime*.008)).rgb;
  vec3 dp=texture2D(uB,uv*1.7-vec2(uTime*.010,-uTime*.013)).rgb;
  vec3 n=texture2D(uN,uv*3.9+vec2(uTime*.026,-uTime*.017)).rgb;
- float sd=sdRound(vPos,uHalf,uRadius);
+ vec2 norm=vec2(vPos.x/uHalf.x,-vPos.y/uHalf.y);
+ float angle=atan(norm.y,norm.x);
+ float ca=abs(cos(angle)),sa=abs(sin(angle));
+ float shore=pow(pow(ca,2.5)+pow(sa,2.5),-.4)*(1.0+.065*sin(3.0*angle+.45)+.04*sin(5.0*angle-1.2)+.018*sin(8.0*angle+.8)+.022*sin(11.0*angle+.7));
+ float sd=(length(norm)-shore)*min(uHalf.x,uHalf.y);
  // 0 at the waterline, 1 in the deep middle
  float depth=clamp(smoothstep(0.0,-2.4,sd),0.0,1.0);
  // the painted frames drive brightness (caustic density); the tint itself stays art-directed
@@ -296,8 +583,8 @@ void main(){
    const mat=new T.ShaderMaterial({
     uniforms:{uA:{value:texA},uB:{value:texB},uN:{value:texN},uTime:{value:0},
      uRadius:{value:2.6},uFoamW:{value:foamW||.3},uHalf:{value:new T.Vector2(p.w/2,p.d/2)},
-     uShallow:{value:new T.Color(0x86d3c9)},uDeep:{value:new T.Color(0x1d6478)},
-     uFoam:{value:new T.Color(0xf3fcff)},uSun:{value:new T.Color(0xfff1c6)},
+     uShallow:{value:new T.Color(0xa8ded2)},uDeep:{value:new T.Color(0x458f96)},
+     uFoam:{value:new T.Color(0xeaf9ed)},uSun:{value:new T.Color(0xfff1c6)},
      uCam:{value:new T.Vector3()}},
     vertexShader:WATER_VERT,fragmentShader:WATER_FRAG});
    pondShaders.push(mat);return mat;
@@ -308,9 +595,8 @@ void main(){
    const S=sheetMeta.sprites||{},TL=tilesMeta.tiles||{};
    const prop=n=>S[n]?cropTex(sheetImg,S[n]):null;
    const tile=n=>TL[n]?cropTex(tilesImg,TL[n]):null;
-   const water0=tile('water_frame_0'),water1=tile('water_frame_1'),stone=tile('limestone_pale'),planks=tile('bridge_planks'),red=tile('bridge_red');
-   const cherry=prop('tree_cherry'),lantern=prop('lantern_stone'),boulder=prop('rock_boulder_mossy'),
-         crag=prop('rock_cliff_crag'),bamboo=prop('bamboo_grove'),bush=prop('tree_bush_bright');
+   const water0=tile('water_frame_0'),water1=tile('water_frame_1'),stone=tile('limestone_pale'),planks=tile('bridge_planks');
+   const cherry=prop('tree_cherry'),lantern=prop('lantern_stone'),boulder=prop('rock_boulder_mossy'),crag=prop('rock_cliff_crag');
    if(!water0)return false;
    // cloned per pond so each surface drifts at its own offset
    const clone=(t,rx,ry)=>{const c=t.clone();c.needsUpdate=true;c.wrapS=c.wrapT=T.RepeatWrapping;c.repeat.set(rx,ry);return c};
@@ -320,31 +606,13 @@ void main(){
     v.water.material=waterShader(w0,w1,wN,v.p);
     v.waterB.visible=false;
     for(const sp of v.fallSpray){
-     sp.material.map=clone(water1||water0,1,2.2);sp.material.opacity=.4;sp.material.needsUpdate=true;
+     sp.material.map=makeFallTex();sp.material.opacity=.4;sp.material.needsUpdate=true;
      fallScroll.push({tex:sp.material.map});
-    }
-    // v308: the fall now pours straight into the pond, so the stone channel that used to run from
-    // the far side of the bridge has gone. What the bridge spans is the pond's outlet: a narrow
-    // canal leaving the south coping and running down to the houses.
-    if(v.props){
-     const mouth=v.p.z+v.p.d/2+.1,len=3.7,zc=mouth+len/2;
-     const chMat=waterShader(clone(water0,1,1),clone(tile('water_dark_0')||water0,1,1),clone(water1||water0,1,1),{w:2.8,d:len},.15);
-     chMat.uniforms.uRadius.value=.5;
-     const ch=new T.Mesh(new T.ShapeGeometry(roundedRect(2.8,len,.5)),chMat);
-     ch.rotation.x=-Math.PI/2;ch.position.set(v.p.x,.13,zc);scene.add(ch);
-     for(const side of [-1,1]){
-      const bank=new T.Mesh(new T.BoxGeometry(.55,.26,len+.9),new T.MeshBasicMaterial({color:0xb9b2a0}));
-      bank.position.set(v.p.x+side*1.68,.07,zc);scene.add(bank);
-      if(stone){bank.material.map=clone(stone,1/2.2,len/4);bank.material.color.set(0xdfd9c8);bank.material.needsUpdate=true}
-     }
-     // a culvert where the canal leaves the coping, so the water never floats over the rim
-     const culvert=new T.Mesh(new T.BoxGeometry(3.1,.3,.62),new T.MeshBasicMaterial({color:0xb7af9c}));
-     culvert.position.set(v.p.x,.15,mouth);scene.add(culvert);
     }
     // stone coping: the same limestone the town's river walls are cut from, now with real height
     // so it casts a lip shadow over the water instead of being a painted flat ring.
     {
-     const outer=roundedRect(v.p.w+1.7,v.p.d+1.7,3.1),inner=roundedRect(v.p.w-.35,v.p.d-.35,2.5);
+     const outer=pondShape(v.p,.6),inner=pondShape(v.p,-.12);
      const shape=new T.Shape(outer.getPoints(64)),hole=new T.Path(inner.getPoints(64));
      shape.holes.push(hole);
      const coping=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:.16,bevelEnabled:false}),
@@ -358,43 +626,38 @@ void main(){
     }
     // planks across the deck, red lacquer on the parapets
     if(planks&&v.bridge){v.bridge.deck.material.map=clone(planks,1/2.3,1/2.3);v.bridge.deck.material.color.set(0xf2e6d2);v.bridge.deck.material.needsUpdate=true;}
-    if(red){
-     bridgeRailMat.map=clone(red,1,1);bridgeRailMat.color.set(0xffffff);bridgeRailMat.needsUpdate=true;
+    if(planks){
+     bridgeRailMat.map=clone(planks,1,1);bridgeRailMat.color.set(0xa8794d);bridgeRailMat.needsUpdate=true;
     }
     // painted props replace the primitives that were standing in for them
-    for(const o of v.fallback)scene.remove(o);
+    for(const o of v.fallback)if(!o.userData.keepCascade)scene.remove(o);
     v.fallback.length=0;
     const props=v.props;if(!props)continue;
-    if(cherry)for(const t of props.blossoms)addSprite(cherry,t.x,t.z,6.8*t.scale);
+    if(cherry)for(const t of props.blossoms){const tree=addSprite(cherry,t.x,t.z,8.6*t.scale);tree.userData.sakura=true;}
     if(lantern)for(const l of props.lanterns)addSprite(lantern,l.x,l.z,1.9);
     if(boulder)for(const b of props.boulders)addSprite(boulder,b.x,b.z,.78+b.r*.6);
     if(props.falls){
      // the rock face the water comes out of: behind the sheet, wide enough to hide it from the far side
-     if(crag){addSprite(crag,props.falls.x-.9,props.falls.z-1.5,3.4);addSprite(crag,props.falls.x+1.1,props.falls.z-2.1,2.9)}
-     // v309 (owner: "there is a bush on one of the chairs"): the bush sat .6 from the north-rim
-     // angler chair. It lives on the pond's east bank now, clear of every chair and the bridge.
-     if(bush)addSprite(bush,v.p.x+v.p.w/2+2.6,v.p.z-3.0,1.3);
+     // The three-dimensional cascade flank rocks remain after painted shore art loads.
+     if(crag){addSprite(crag,props.falls.x-3.05,props.falls.z+.25,3.3,2.6);addSprite(crag,props.falls.x+3.05,props.falls.z+.25,3.3,2.6)}
     }
-    if(bamboo)addSprite(bamboo,v.p.x+(v.p.x<0?-1:1)*(v.p.w/2+4.2),v.p.z+v.p.d/2+2.4,2.3);
+
     // rocks flanking the cascade where it meets the water
     if(boulder&&props.falls){
-     addSprite(boulder,props.falls.x-2.55,props.falls.z+1.1,1.05);
-     addSprite(boulder,props.falls.x+2.6,props.falls.z+1.3,.95);
+     addSprite(boulder,props.falls.x-2.55,props.falls.z+1.1*props.falls.dir,1.05);
+     addSprite(boulder,props.falls.x+2.6,props.falls.z+1.3*props.falls.dir,.95);
     }
     // reflections: the blossom trees mirrored across the pond surface, so the water is not a flat
     // sheet of colour. Only the trees that actually mirror into the water get one.
     const mirror=(tex,x,z,h,objScale=1)=>{
-     const dx=x-v.p.x,dz=z-v.p.z,hx=v.p.w/2,hz=v.p.d/2;
-     // mirror across whichever shore the prop stands beyond
-     const mx=Math.abs(dx)>hx, mz=Math.abs(dz)>hz;
-     let rz=z,rx=x;
-     if(mx&&!mz)rx=2*(v.p.x+Math.sign(dx)*hx)-x; else rz=2*(v.p.z+Math.sign(dz)*hz)-z;
-     if(Math.abs(rx-v.p.x)>hx-.6||Math.abs(rz-v.p.z)>hz-.6)return;
+     const hx=v.p.w/2,hz=v.p.d/2,a=Math.atan2((z-v.p.z)/hz,(x-v.p.x)/hx);
+     const edge=R.pondBoundary(v.p,a),rx=2*edge.x-x,rz=2*edge.z-z;
+     if(!R.pondContains(v.p,rx,rz,-.6))return;
      const m=new T.SpriteMaterial({map:tex,transparent:true,opacity:.2,depthWrite:false});
      const sp=new T.Sprite(m);sp.center.set(.5,1);sp.scale.set(h*(tex.image.width/tex.image.height)*objScale,-h*objScale,1);
      sp.position.set(rx,.035,rz);scene.add(sp);
     };
-    if(cherry)for(const t of props.blossoms)mirror(cherry,t.x,t.z,6.8*t.scale);
+    if(cherry)for(const t of props.blossoms)mirror(cherry,t.x,t.z,8.6*t.scale);
     if(lantern)for(const l of props.lanterns)mirror(lantern,l.x,l.z,1.9);
     if(boulder)for(const b of props.boulders)mirror(boulder,b.x,b.z,.78+b.r*.6);
    }
@@ -407,21 +670,21 @@ void main(){
     .then(([sm,si,tm,ti])=>paintPondArt(sm,si,tm,ti))
     .catch(err=>{if(typeof console!=='undefined')console.error('pond art failed',err&&err.message,err&&err.stack&&err.stack.slice(0,300));return false});
   }
-  const reedBatch=makeBatch();
   for(const p of R.PONDS){
    const view={p,props:null,fallback:[],falls:[],fallSpray:[],bridge:null,stones:[],rim:null,water:null,waterB:null};
    pondViews.push(view);
-   const rim=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w+1.7,p.d+1.7,3.1)),sandMat);rim.rotation.x=-Math.PI/2;rim.position.set(p.x,.008,p.z);scene.add(freeze(rim));view.rim=rim;
-   const water=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w,p.d,2.6)),waterMat);water.rotation.x=-Math.PI/2;water.position.set(p.x,.016,p.z);scene.add(freeze(water));view.water=water;
-   const waterB=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w-.05,p.d-.05,2.6)),waterMatB);waterB.rotation.x=-Math.PI/2;waterB.position.set(p.x,.019,p.z);scene.add(freeze(waterB));view.waterB=waterB;
-   for(const [mat,y] of [[glintMatA,.024],[glintMatB,.028]]){const glint=new T.Mesh(new T.ShapeGeometry(roundedRect(p.w-.6,p.d-.6,2.4)),mat);glint.rotation.x=-Math.PI/2;glint.position.set(p.x,y,p.z);scene.add(freeze(glint));view.fallback.push(glint)}
+   const rim=new T.Mesh(new T.ShapeGeometry(pondShape(p,.75)),sandMat);rim.rotation.x=-Math.PI/2;rim.position.set(p.x,.008,p.z);scene.add(freeze(rim));view.rim=rim;
+   const water=new T.Mesh(new T.ShapeGeometry(pondShape(p)),waterMat);water.rotation.x=-Math.PI/2;water.position.set(p.x,.016,p.z);scene.add(freeze(water));view.water=water;
+   const waterB=new T.Mesh(new T.ShapeGeometry(pondShape(p,-.025)),waterMatB);waterB.rotation.x=-Math.PI/2;waterB.position.set(p.x,.019,p.z);scene.add(freeze(waterB));view.waterB=waterB;
+   for(const [mat,y] of [[glintMatA,.024],[glintMatB,.028]]){const glint=new T.Mesh(new T.ShapeGeometry(pondShape(p,-.3)),mat);glint.rotation.x=-Math.PI/2;glint.position.set(p.x,y,p.z);scene.add(freeze(glint));view.fallback.push(glint)}
    // v304: 28 low stones walked along the pond's own rounded outline. The old ring used an ellipse, so
    // at the corners it dropped stones into the water - now the edging follows the rim exactly.
    {
-    const ring=roundedRect(p.w+1.26,p.d+1.26,3.25).getSpacedPoints(28);
+    const ring=pondShape(p,.65).getSpacedPoints(64);
     ring.forEach((pt,i)=>{
      // leave a mouth in the edging where the cascade enters the water (v308: north shore)
-     if(pt.y>p.d/2&&Math.abs(pt.x)<1.7)return;
+     if(p.z-pt.y>R.POND_FALLS[0].z-1.5&&Math.abs(p.x+pt.x-R.POND_FALLS[0].x)<4)return;
+     if(Math.abs(p.z-pt.y-R.POND_PROPS[0].bridge.z)<2.8)return;
      const nx=ring[(i+1)%ring.length],ang=Math.atan2(nx.y-pt.y,nx.x-pt.x);
      const sx=.58+((i*29)%13)/70;
      const stone=new T.Mesh(new T.BoxGeometry(sx,.18+((i*13)%7)/80,.42),stoneMat);
@@ -433,7 +696,7 @@ void main(){
    // of them flowering, drifting slowly (the drift is animated further down).
    for(let i=0;i<4;i++){
     const g=new T.Group();
-    const bx=p.x+(i-1.5)*(p.w/4.6),bz=p.z+(i%2?-1:1)*(p.d/3.9)+(i===2?1.4:0);
+    const a=i*Math.PI*.5+.65,bx=p.x+Math.cos(a)*p.w*.23,bz=p.z+Math.sin(a)*p.d*.23;
     const pads=[[0,0,.5,0],[-.55,.28,.38,1],[.42,.34,.34,0],[.16,-.46,.3,2]];
     pads.forEach(([dx,dz,r,rot],k)=>{
      const pad=new T.Mesh(new T.CircleGeometry((r+(i%2)*.05)*.82,14,.42,5.7),lilyMat);
@@ -449,13 +712,13 @@ void main(){
     g.position.set(bx,.032,bz);
     lilies.push({mesh:g,x:bx,z:bz,ph:i*2.1});scene.add(g);
    }
-   pushModel(reedBatch,'shrub',p.x-p.w/2-1.5,p.z-p.d/2-.9,2,0,garden,gardenFloats);pushModel(reedBatch,'shrub',p.x+p.w/2+1.5,p.z+p.d/2+.9,2,0,garden,gardenFloats);
    // v304: the garden behind and around the pond. Positions come from R.POND_PROPS so the layout
    // test in tools/tests/social_sim.js can prove no prop sits in the water or on a chair.
    const props=(R.POND_PROPS||[])[R.PONDS.indexOf(p)]||null;
    view.props=props;
    if(props&&props.falls)cascade(p,props.falls,view);
    if(props){
+    bridgePaths(props.paths||[]);
     view.bridge=archBridge(props.bridge.x,props.bridge.z,props.bridge.span,props.bridge.width,props.bridge.arch);
     for(const l of props.lanterns)view.fallback.push(stoneLantern(l.x,l.z));
     for(const t of props.blossoms)view.fallback.push(blossomTree(t.x,t.z,t.scale));
@@ -468,14 +731,13 @@ void main(){
     scene.add(boulders);view.fallback.push(boulders);
    }
   }
-  addBatch(reedBatch,gardenMat);
   // v306: fetch the painted sheets once the pond exists (deferred so the plaza is interactive first);
   // every pond view is repainted in place when they arrive.
   setTimeout(loadPondArt,900);
   // Ambient fish silhouettes swim inside each pond; the Fishing Bag's "Show swimming fish" toggles them.
   const fishShape=new T.Shape();fishShape.moveTo(.4,0);fishShape.quadraticCurveTo(.05,.22,-.26,.06);fishShape.lineTo(-.46,.17);fishShape.lineTo(-.37,0);fishShape.lineTo(-.46,-.17);fishShape.lineTo(-.26,-.06);fishShape.quadraticCurveTo(.05,-.22,.4,0);
   const fishGeo=new T.ShapeGeometry(fishShape),fishGroup=new T.Group(),swimmers=[];scene.add(fishGroup);
-  R.PONDS.forEach((p,pi)=>{for(let i=0;i<7;i++){const m=new T.Mesh(fishGeo,new T.MeshBasicMaterial({color:[0xe08a3c,0xd8dde2,0x8fc9b8][i%3],transparent:true,opacity:.78,depthWrite:false}));m.rotation.x=-Math.PI/2;const sc=.7+((i*31)%12)/16;m.scale.setScalar(sc);fishGroup.add(m);swimmers.push({m,p,ax:(p.w/2-1.6),az:(p.d/2-1.5),fa:.13+((i*17)%10)/90,fb:.1+((i*23)%10)/80,pa:i*1.7+pi,pb:i*2.9+pi*2})}});
+  R.PONDS.forEach((p,pi)=>{for(let i=0;i<7;i++){const m=new T.Mesh(fishGeo,new T.MeshBasicMaterial({color:[0xe08a3c,0xd8dde2,0x8fc9b8][i%3],transparent:true,opacity:.78,depthWrite:false}));m.rotation.x=-Math.PI/2;const sc=.7+((i*31)%12)/16;m.scale.setScalar(sc);fishGroup.add(m);swimmers.push({m,p,ax:(p.w/2-1.6)*.62,az:(p.d/2-1.5)*.62,fa:.13+((i*17)%10)/90,fb:.1+((i*23)%10)/80,pa:i*1.7+pi,pb:i*2.9+pi*2})}});
   // The local player's rod, line, bobber, ripples, splash, bite mark and catch flight.
   // v300 (owner): the rod you hold is painted in your rod's tier colour and wrapped in an additive
   // glow sleeve, so the rod itself reads at a glance - a Golden rod glows gold in the plaza, not
@@ -768,6 +1030,46 @@ void main(){
  // v266: Two Plaza Hold'em tables along the West Promenade, 12 cushioned stools and 2 native Dealers.
  const woodDark=new T.MeshLambertMaterial({color:0x4b2e1b}),woodRail=new T.MeshLambertMaterial({color:0x633a22}),brassMat=new T.MeshLambertMaterial({color:0xcba458}),velvetRed=new T.MeshLambertMaterial({color:0x8d2630}),velvetBlue=new T.MeshLambertMaterial({color:0x274d78}),feltBaseMat=new T.MeshLambertMaterial({color:0x17583b});
  const tableSpecs=R.POKER.tables||[{id:0,label:'Table 1',table:R.POKER.table,dealer:R.POKER.dealer,seats:R.POKER.seats}];
+ // Named on-map staff reuse the native wardrobe sprites, with clickable dialogue.
+ // They do not grant items or start systems that have not been implemented.
+ const sanctuaryNpcSpecs=[
+  {id:'coach',name:'Coach Mara',role:'GYM',x:69,z:20,cls:'Monk',sex:'f',head:14,color:3,text:'Bring your partner close to a station and tap Train. You can walk away while you stay online.'},
+  {id:'food',name:'Cook Lina',role:'FOOD CART',x:28,z:39,cls:'Merchant',sex:'f',head:2,color:3,text:'Fresh treats will be available here once the food shop is ready.'},
+  {id:'trainer',name:'Trainer Jori',role:'TRAINER',x:27.7,z:55,cls:'Knight',sex:'m',head:19,color:6,text:'Choose a partner in Sanctuary, then visit Coach Mara and the gym stations.'},
+  {id:'guide',name:'Guide Nia',role:'FIELD GUIDE',x:27.7,z:71,cls:'Hunter',sex:'f',head:14,color:2,text:'The meadow companions are decorative for now. Automatic encounters are not active yet.'},
+  {id:'ring',name:'Ringkeeper Rook',role:'BOXING RING',x:51,z:94,cls:'Crusader',sex:'m',head:19,color:4,text:'The ring is ready to explore. Matches and spectators are not active yet.'}
+ ];
+ const sanctuaryNpcs=sanctuaryNpcSpecs.map(spec=>{
+  const canvas=document.createElement('canvas');canvas.width=320;canvas.height=280;
+  const ctx=canvas.getContext('2d'),texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
+  const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.userData.sanctuaryNpc=spec.id;sprite.center.set(.5,80/280);sprite.position.set(spec.x,.06,spec.z);scene.add(sprite);
+  const bounds=new T.Box3(new T.Vector3(spec.x-.75,0,spec.z-.75),new T.Vector3(spec.x+.75,3.1,spec.z+.75));
+  const label=document.createElement('div');label.className='social-npc-label sanctuary-npc-label';label.dataset.sanctuaryNpc=spec.id;
+  const tag=document.createElement('span');tag.className='social-npc-tag';tag.textContent=spec.role;
+  const button=document.createElement('button');button.type='button';button.textContent=spec.name;button.title='Talk to '+spec.name;
+  const bubble=document.createElement('div');bubble.className='social-npc-bubble sanctuary-npc-bubble';bubble.hidden=true;bubble.dataset.sanctuaryNpc=spec.id;
+  label.append(tag,button);labels.append(label,bubble);
+  const unit={spec,ctx,texture,sprite,bounds,label,button,bubble,look:null,loading:false,retryAt:0,paint:'',bubbleUntil:0};
+  button.onclick=()=>talkSanctuaryNpc(unit);return unit;
+ });
+ function talkSanctuaryNpc(unit){for(const other of sanctuaryNpcs)if(other!==unit){other.bubble.hidden=true;other.bubbleUntil=0}unit.bubble.textContent=unit.spec.text;unit.bubble.hidden=false;unit.bubbleUntil=Math.max(performance.now(),clock)+9000}
+ // DOM labels do not participate in the WebGL depth buffer. Suppress them
+ // when a camera ray actually crosses a gym wall below its eaves.
+ function behindGymWall(x,y,z){
+  const c=camera.position,rx=x-c.x,rz=z-c.z;
+  for(const wall of R.SANCTUARY_GYM_WALLS){const sx=wall.x2-wall.x1,sz=wall.z2-wall.z1,den=rx*sz-rz*sx;if(Math.abs(den)<1e-8)continue;const qx=wall.x1-c.x,qz=wall.z1-c.z,t=(qx*sz-qz*sx)/den,u=(qx*rz-qz*rx)/den,top=wall.x1===wall.x2?9.7:11.9;if(t>0&&t<1&&u>=0&&u<=1&&c.y+(y-c.y)*t<top)return true}
+  return false;
+ }
+ function updateSanctuaryNpcs(now,w,h){
+  const ready=!players.size||[...players.values()].some(p=>p.looks.normal);
+  for(const n of sanctuaryNpcs){
+   if(ready&&!n.look&&!n.loading&&now>=n.retryAt){const cls=Object.hasOwn(allClasses,n.spec.cls)?n.spec.cls:'Novice';const appearance=PGWardrobe.normalize({version:1,sex:n.spec.sex,heads:{m:n.spec.head,f:n.spec.head},colors:{m:n.spec.color,f:n.spec.color},halo:false,glasses:false,wings:false,headwear:'none',facewear:'none',mouthwear:'none',backwear:'none',outfit:'none'})||PGWardrobe.defaults(n.spec.sex);const store=Object.hasOwn(PGFourthJobs.CLASSES,cls)?stores[1]:stores[0];n.loading=true;store.select('sanctuary-npc-'+n.spec.id,appearance,cls).then(look=>{if(look){n.look=look;n.paint=''}else n.retryAt=performance.now()+3000}).catch(()=>{n.retryAt=performance.now()+3000}).finally(()=>{n.loading=false})}
+   if(n.look){const dir=(Math.round(angle/(Math.PI/4))+8)%8,anim=PGWardrobe.animationKey&&Array.isArray(n.look.pieces)?PGWardrobe.animationKey(n.look,'idle',dir,now,null,now):PGWardrobe.frameIndex(n.look.base.metadata.actions['idle'+dir],now),key=(n.look.key||n.spec.id)+':'+dir+':'+anim;if(key!==n.paint){n.paint=key;PGWardrobe.draw(n.ctx,n.look,'idle',dir,now,null,now,null,null);n.texture.needsUpdate=true;const scale=2.6/n.look.base.figureHeight;n.sprite.scale.set(320*scale,280*scale,1)}}
+   head.copy(n.sprite.position);head.y+=3.35;head.project(camera);const hidden=head.z>1||head.z<-1||Math.abs(head.x)>1||Math.abs(head.y)>1||behindGymWall(n.spec.x,2,n.spec.z);n.label.hidden=hidden||!n.look;
+   if(!hidden){const x=((head.x+1)*w*.5).toFixed(1)+'px',y=((1-head.y)*h*.5).toFixed(1)+'px';n.label.style.left=x;n.label.style.top=y;n.bubble.style.left=x;n.bubble.style.top=((1-head.y)*h*.5-46).toFixed(1)+'px'}
+   n.bubble.hidden=hidden||n.bubbleUntil<=now;
+  }
+ }
  const pokerUnits=tableSpecs.map(spec=>{
   const t=spec.table,dSpec=spec.dealer;
   const grp=new T.Group();grp.position.set(t.x,0,t.z);grp.userData.pokerTable=spec.id;
@@ -912,7 +1214,7 @@ void main(){
  function auraTier(lv){return typeof LEVEL_AURAS==='undefined'?null:LEVEL_AURAS.filter(a=>lv>=a.at).at(-1)||null}
  function syncAura(p){const tier=auraTier(Math.max(0,Math.floor(Number(p.state.look?.lv)||0))),tierAt=tier?tier.at:0;if(p.auraTier===tierAt)return;p.auraTier=tierAt;if(p.aura){scene.remove(p.aura);disposeAura(p.aura);p.aura=null}if(!tier||typeof buildLevelAura!=='function')return;p.aura=buildLevelAura(tier);scene.add(p.aura)}
  function animateAura(p,now,x,z){const aura=p.aura;if(!aura)return;const seconds=now/1000;aura.position.set(x,.07,z);aura.scale.setScalar(1.18*(1+Math.sin(seconds*2)*.025));aura.children.forEach((layer,i)=>{if(!layer.material)return;layer.rotation.y=(seconds*(i?-.3:.22))%(Math.PI*2);layer.material.opacity=.8+Math.sin(seconds*2+i)*.12;if(layer.children[0]?.material)layer.children[0].material.opacity=.85+Math.sin(seconds*2+i)*.1});const data=aura.userData;if(data.floor)data.floor.material.opacity=.4+Math.sin(seconds*1.7)*.07;if(data.veil)data.veil.material.opacity=.2+Math.sin(seconds*1.7)*.035;const motes=data.motes;if(motes){const positions=motes.geometry.attributes.position,colors=motes.geometry.attributes.color;for(let i=0;i<positions.count;i++){const phase=(seconds*.23+i/positions.count)%1,angle=i*2.399+seconds*.24,radius=.55+Math.sin(i*1.7)*.25,fade=Math.sin(phase*Math.PI);positions.setXYZ(i,Math.cos(angle)*radius,phase*1.6,Math.sin(angle)*radius);colors.setXYZ(i,fade,fade,fade)}positions.needsUpdate=colors.needsUpdate=true}}
- function removePlayer(id){const p=players.get(id);if(!p)return;try{fishingApi.api.setRig(id,{on:false})}catch{}for(const s of stores)s.release('social-'+id);if(p.aura){scene.remove(p.aura);disposeAura(p.aura)}scene.remove(p.sprite);p.sprite.material.dispose();p.texture.dispose();p.label.remove();p.bubble.remove();players.delete(id)}
+ function removePlayer(id){const p=players.get(id);if(!p)return;if(p.digimon){scene.remove(p.digimon.sprite);p.digimon.sprite.material.dispose();p.digimon.texture.dispose();p.digimon=null;}try{fishingApi.api.setRig(id,{on:false})}catch{}for(const s of stores)s.release('social-'+id);if(p.aura){scene.remove(p.aura);disposeAura(p.aura)}scene.remove(p.sprite);p.sprite.material.dispose();p.texture.dispose();p.label.remove();p.bubble.remove();players.delete(id)}
  function loadLooks(p,now){
   if(p.loading||now<p.retryAt)return;
   const appearance=PGWardrobe.normalize(p.state.look?.appearance)||PGWardrobe.defaults('m'),cls=Object.hasOwn(allClasses,p.state.look?.cls)?p.state.look.cls:'Novice';
@@ -966,10 +1268,12 @@ void main(){
  // A left drag is a dead zone: it cancels the click-to-walk, but never moves the camera.
  else if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)down.moved=true};
  host.onpointerup=e=>{if(!touches.has(e.pointerId))return;touches.delete(e.pointerId);if(down&&!down.moved&&!(e.button>0)){const rect=host.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
+ const sanctuaryHit=sanctuaryNpcs.find(n=>n.look&&!behindGymWall(n.spec.x,2,n.spec.z)&&ray.ray.intersectBox(n.bounds,new T.Vector3()));
  const pokerSeatHit=pokerStools.map(mesh=>{const point=ray.ray.intersectBox(mesh.userData.pokerSeatBounds,new T.Vector3());return point?{mesh,distance:point.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];
  const tableHit=pokerUnits.map(u=>{const dp=ray.ray.intersectBox(u.dealerBounds,new T.Vector3()),tp=ray.ray.intersectBox(u.tableBounds,new T.Vector3());const pt=dp||tp;return pt?{u,dealerDist:dp?dp.distanceTo(ray.ray.origin):Infinity,distance:pt.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];
  const seatHit=seatTargets.map(target=>{const point=ray.ray.intersectBox(target.bounds,new T.Vector3());return point?{target,distance:point.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];
- if(pokerSeatHit&&(!tableHit||pokerSeatHit.distance<=tableHit.dealerDist+.4)){if(callbacks.pokerSeat)callbacks.pokerSeat(pokerSeatHit.mesh.userData.pokerSeat);else callbacks.pokerOpen?.(pokerSeatHit.mesh.userData.tableId);}
+ if(sanctuaryHit)talkSanctuaryNpc(sanctuaryHit);
+ else if(pokerSeatHit&&(!tableHit||pokerSeatHit.distance<=tableHit.dealerDist+.4)){if(callbacks.pokerSeat)callbacks.pokerSeat(pokerSeatHit.mesh.userData.pokerSeat);else callbacks.pokerOpen?.(pokerSeatHit.mesh.userData.tableId);}
  else if(tableHit)callbacks.pokerOpen?.(tableHit.u.id);
  else if(seatHit){
   let chosen=seatHit.target.seat;
@@ -978,26 +1282,34 @@ void main(){
   if(otherTaken(chosen)&&R.SEATS[partner]&&R.SEATS[partner].bench===R.SEATS[chosen]?.bench&&!otherTaken(partner))chosen=partner;
   callbacks.seat(chosen);
  }
- else{const point=new T.Vector3();if(ray.ray.intersectPlane(plane,point)){
+ else{const deckHit=ray.intersectObjects(bridgeDecks,false).find(hit=>R.onBridge(hit.point.x,hit.point.z));
+ if(deckHit){callbacks.move(deckHit.point.x,deckHit.point.z)}else{const point=new T.Vector3();if(ray.ray.intersectPlane(plane,point)){
   // v311 (owner: "pond clicking is off, it keeps going to the same place"): the fishing target is
   // the water itself plus a narrow lip. The old 1.2-unit skirt around the pond swallowed clicks on
   // the rim, the rocks and the chairs' footing, so a click meant for the bank cast a line instead.
-  const pond=(R.PONDS||[]).findIndex(pd=>Math.abs(point.x-pd.x)<=pd.w/2+.45&&Math.abs(point.z-pd.z)<=pd.d/2+.45);
-  if(pond>=0&&callbacks.pond)callbacks.pond(point.x,point.z,pond);else if(R.walkable(point.x,point.z))callbacks.move(point.x,point.z)}}}
+  const pond=(R.PONDS||[]).findIndex(pd=>R.pondContains(pd,point.x,point.z,.45));
+  if(pond>=0&&callbacks.pond)callbacks.pond(point.x,point.z,pond);else if(R.walkable(point.x,point.z))callbacks.move(point.x,point.z)}}}}
  if(touches.size){const p=[...touches.values()][0];down=startDrag({...p,clientX:p.x,clientY:p.y},true)}else down=null};
  host.onpointercancel=()=>{down=null;touches.clear()};host.addEventListener('wheel',e=>{e.preventDefault();setCamera({distance:distance*Math.exp(e.deltaY*.001)})},{passive:false});
  // Subtle +5.5% optical offset keeps the player slightly higher than vertical screen center (~44% from top).
  function syncSize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h||(w===viewW&&h===viewH))return;viewW=w;viewH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.setViewOffset(w,h,0,h*.055,w,h);camera.updateProjectionMatrix()}
  syncSize();const observer=new ResizeObserver(syncSize);observer.observe(host);
- function frame(now){requestAnimationFrame(frame);if(!active||document.hidden)return;if(!viewW||!viewH)syncSize();const dt=last?Math.min(.1,Math.max(0,(now-last)/1000)):0;last=clock=now;
+ function frame(now){requestAnimationFrame(frame);if(!active||document.hidden)return;if(!viewW||!viewH)syncSize();const walkDt=last?Math.min(2,Math.max(0,(now-last)/1000)):0,dt=Math.min(.1,walkDt);last=clock=now;
  for(const p of players.values())R.advance(p.state,now);
- const self=players.get(callbacks.self()),selfChair=self?.state.sit&&!Number.isInteger(self?.state.pokerSeat)&&R.SEATS[self?.state.seat];
+ const self=players.get(callbacks.self());callbacks.trainingNearby?.(self?.state);const selfChair=self?.state.sit&&!Number.isInteger(self?.state.pokerSeat)&&R.SEATS[self?.state.seat];
  const focusX=self?(Number.isFinite(selfChair?.sitX)?selfChair.sitX:self.state.x):0,focusZ=self?self.state.z:12;
- target.set(focusX,.8,focusZ);if(!focused||focus.distanceTo(target)>12){focus.copy(target);focused=true}else focus.lerp(target,1-Math.exp(-dt*12));
+ target.set(focusX,.8,focusZ);
+ // At the gym a stopped player needs steady map controls, not a camera that
+ // continues drifting under the cursor after the walk has finished.
+ const settledAtGym=self&&!self.state.path.length&&focusX>=43&&focusX<=95&&focusZ>=12&&focusZ<=39;
+ if(!focused||settledAtGym||focus.distanceTo(target)>12){focus.copy(target);focused=true}else focus.lerp(target,1-Math.exp(-dt*12));
  const tilt=pitch*Math.PI/180;camera.position.set(focus.x+Math.sin(angle)*distance*Math.cos(tilt),focus.y+Math.sin(tilt)*distance,focus.z+Math.cos(angle)*distance*Math.cos(tilt));camera.lookAt(focus);camera.updateMatrixWorld();
  for(let i=0;i<72;i++){const t=(now/1500+i/72)%1,a=i*2.399;spray[i*3]=Math.cos(a)*t*2.6;spray[i*3+1]=1.5+Math.sin(t*Math.PI)*3;spray[i*3+2]=Math.sin(a)*t*2.6}sprayGeo.attributes.position.needsUpdate=true;
  fishingApi.update(now,dt);
  const w=viewW||host.clientWidth,h=viewH||host.clientHeight;
+ for(const {pad,el,hover,pressed} of sanctuaryLabels){if(pad.station&&(hover||pressed))continue;head.set(pad.x,.08,pad.z).project(camera);const hidden=head.z>1||head.z<-1||Math.abs(head.x)>1||Math.abs(head.y)>1||behindGymWall(pad.x,.08,pad.z);el.hidden=hidden;if(!hidden){el.style.left=((head.x+1)*w*.5).toFixed(1)+'px';el.style.top=((1-head.y)*h*.5).toFixed(1)+'px'}}
+ updateResidents(now);updateGymResidents(now);
+ updateSanctuaryNpcs(now,w,h);
  // Render table Dealers first so cached frames stay quiet and player stance draws remain authoritative.
  loadDealers(now);
  for(const u of pokerUnits){
@@ -1056,6 +1368,24 @@ void main(){
   const baseX=chair&&!pokerChair&&Number.isFinite(chair.sitX)?chair.sitX:state.x;
   const seatOffset=pokerChair?0:chair?.35:0;
   p.sprite.position.set(baseX+(chair?Math.sin(chair.rotation)*seatOffset:0),floor,state.z+(chair?Math.cos(chair.rotation)*seatOffset:0));
+  // Fixed-view sprites track the same movement path/speed as the avatar, without touching RO pets.
+  const digimon=globalThis.PGSocialDigimon,id=digimon?.clean(state.look?.digimon);
+  if(!id&&p.digimon){scene.remove(p.digimon.sprite);p.digimon.sprite.material.dispose();p.digimon.texture.dispose();p.digimon=null}
+  if(id&&digimonStore){
+   const asset=digimonStore.ready(id);if(!asset)digimonStore.request(id);
+   if(asset){
+    if(!p.digimon){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);sprite.scale.set(256*1.45/96,256*1.45/96,1);sprite.userData.digimonOwner=state.id;scene.add(sprite);p.digimon={canvas,ctx:canvas.getContext('2d'),texture,sprite,paint:'',flip:false,follower:digimon.createFollower(state,state.dir,R.walkable)}}
+    const d=p.digimon,stage=Object.values(globalThis.PGDigimonSanctuary?.LINES||{}).map(line=>line.indexOf(id)).find(n=>n>=0)||0,visualHeight=1.45*[1,1.2,1.4,1.55][stage];d.sprite.scale.set(256*visualHeight/96,256*visualHeight/96,1);
+    const f=digimon.stepFollower(d.follower,state,walkDt,R.walkSpeed(state),R.walkable,R.path),stance=f.walking?'walking':'idle';
+    // The companion faces its own direction, not the player's current direction. Walking phase
+    // accumulates distance so pausing, turning and speed changes cannot desynchronise footsteps.
+    if(f.walking){const dir=(Math.round(Math.atan2(-f.dx,f.dz)/(Math.PI/4))+8)%8,facing=(dir+Math.round(angle/(Math.PI/4))+8)%8;if(facing>0&&facing<4)d.flip=true;else if(facing>4)d.flip=false}
+    const time=f.walking?f.travel*200:now,n=digimon.frameIndex(asset.record.actions[stance].length,time,stance,5),key=[id,stance,n,d.flip].join(':');
+    if(d.paint!==key){digimon.draw(d.ctx,asset,stance,time,5,d.flip);d.texture.needsUpdate=true;d.paint=key}
+    d.sprite.position.set(f.x,.06+bridgeLift(f.x,f.z),f.z);
+   }else if(p.digimon)p.digimon.sprite.visible=false;
+   if(asset&&p.digimon)p.digimon.sprite.visible=true;
+  }
   animateAura(p,now,baseX,state.z);
   feet.copy(p.sprite.position).project(camera);
   const lhid=feet.z>1||feet.z< -1||Math.abs(feet.x)>1||Math.abs(feet.y)>1;
@@ -1069,6 +1399,6 @@ void main(){
   }else if(p.bubbleUntil){p.bubbleUntil=0;p.bhid=true;p.bubble.hidden=true;p.bubble.replaceChildren()}
  }
  renderer.render(scene,camera)}requestAnimationFrame(frame);
- return {putPlayer,removePlayer,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
+ return {putPlayer,removePlayer,setGymResidents,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
  }catch(error){renderer.dispose();renderer.domElement.remove();throw error}
 }};

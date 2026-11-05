@@ -144,7 +144,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const scene=await sw.PGSocialScene.create(host,sw.document.getElementById('labels'),{self:()=>1,menu(){},move(){},seat(){},pokerSeat(id){clickedPokerSeat=id},pokerOpen(tid){openedTable=tid}});
  scene.active=true;scene.putPlayer({id:1,name:'Hero',x:-33,z:4,dir:0,sit:false,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'}}});
  frameFn(1100);
- const npcLabels=sw.document.querySelectorAll('.social-npc-label');
+ const npcLabels=sw.document.querySelectorAll('.social-npc-label[data-table]');
  assert.equal(npcLabels.length,2,'both Dealer Vane and Dealer Mira labels render');
  npcLabels[1].querySelector('button').click();assert.equal(openedTable,1,'clicking Dealer Mira opens Table 2');
  const stoolT2=scene.scene.children.find(o=>o.userData.pokerSeat===8);

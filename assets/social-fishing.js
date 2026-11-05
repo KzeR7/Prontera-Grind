@@ -730,8 +730,7 @@ function equippedRod(){return RODS_BY_ID[state().rod]||RODS[0]}
 function selectedBait(){const st=state();return st.baitSel&&st.bait[st.baitSel]>0?BAITS_BY_ID[st.baitSel]:null}
 function distToPond(){
  const p=pondCenter(),s=selfPos();if(!p||!s)return Infinity;
- const dx=Math.max(0,Math.abs(s.x-p.x)-p.w/2),dz=Math.max(0,Math.abs(s.z-p.z)-p.d/2);
- return Math.hypot(dx,dz);
+ return R().pondDistance(p,s.x,s.z);
 }
 function standPoint(p,s){
  // v309 (owner: "can u fix to fish on the bridge & on the rocks?"): the pond's own fishing places
@@ -1521,7 +1520,12 @@ function releaseCast(){
  const nearX=Math.max(inX[0],Math.min(inX[1],s.x)),nearZ=Math.max(inZ[0],Math.min(inZ[1],s.z));
  const farX=Math.max(inX[0],Math.min(inX[1],2*p.x-nearX)),farZ=Math.max(inZ[0],Math.min(inZ[1],2*p.z-nearZ));
  const t=ui.castR.dist,tx=nearX+(farX-nearX)*t+(Math.random()-.5)*.8,tz=nearZ+(farZ-nearZ)*t+(Math.random()-.5)*.8;
- const target={x:Math.max(inX[0],Math.min(inX[1],tx)),z:Math.max(inZ[0],Math.min(inZ[1],tz))};
+ let target=R().clampPond(p,tx,tz,1.2);
+ // A fisher on the new bridge should cast into water, not onto the deck below their feet.
+ if(R().onBridge?.(target.x,target.z)){
+  const bridge=(R().POND_PROPS||[])[ui.pond]?.bridge;
+  if(bridge){target.z=bridge.z+(s.z>bridge.z?1:-1)*(bridge.width/2+1.2);target=R().clampPond(p,target.x,target.z,1.2);if(R().onBridge(target.x,target.z))target=R().clampPond(p,p.x,bridge.z-5,1.2);}
+ }
  ui.rigTarget=target;
  sound('cast');
  setPhase('flight');
@@ -1658,7 +1662,7 @@ function startFishing(pondIdx,at){
  ui.pond=Number.isInteger(pondIdx)&&R().PONDS[pondIdx]?pondIdx:R().PONDS.reduce((best,p,i)=>{
   const d=Math.hypot(s.x-p.x,s.z-p.z);return d<best.d?{i,d}:best;
  },{i:0,d:Infinity}).i;
- els.spot.textContent='🎣 '+(ui.pond===0?'West':'East')+' Lawn Pond';
+ els.spot.textContent='🎣 West Lake';
  const p=pondCenter();
  if(distToPond()>2.4){
   // v294: phase goes to 'walking' BEFORE moveTo so the movement lock (busy()) never blocks

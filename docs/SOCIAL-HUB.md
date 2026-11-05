@@ -825,3 +825,250 @@ room clients and isolation/overflow; it is not a 20-browser FPS benchmark.
 
 See [native source reproduction](../tools/social/README.md). Existing wardrobe,
 UI/map, ownership, combat, API and publishing suites remain applicable.
+
+## Digimon Sanctuary foundation (haven-v326)
+
+The east-pond lawn has two walk-through pads reserved for future training and an
+arena. The east houses at (46, 56) and (27, 65) were removed in the **shared**
+plaza rules; both ponds, bridge and fishing chairs remain. The toolbar's Digimon
+selector is a free, changeable *presentation preview* of four companions, not
+acquisition or ownership. The choice is saved separately as `digimonPartner`;
+old saves need no migration, and the existing Ragnarok pets and field combat
+are unchanged. Idle and walking use the Digimon Up frames, mirrored horizontally
+for left/right. Walking frame rate follows the shared player speed; idle uses
+50 ms per frame. There are no implemented care, training, evolution, battles,
+rewards or Digimon attack actions yet.
+
+The Social Room relays a whitelisted presentation ID in `look`; it is not a
+server-verified entitlement. The browser can show the choice in solo mode, and
+other room members can see it when both the client and updated Social Worker
+are installed. The Worker and Pages client must be rolled out together because
+they also share the changed collision layout; an old Worker drops the new look
+field and still blocks the old houses. No release was performed by this change.
+The versioned compact sprite pack is built by `tools/digimon/build_pack.py`; see
+its README for provenance and regeneration. Run `node tools/tests/social_digimon_sim.js`
+plus the social, fishing, scene and worker simulations when changing it.
+
+## Sanctuary companion follow and window (haven-v327)
+
+The Sanctuary toolbar button opens a dedicated companion window with animated
+previews, a current-selection indicator and a dismiss control. The choices are
+still free visual previews rather than owned Digimon; no care, battle or growth
+rules have been added. The previous `digimonPartner` save field and Social Room
+look relay are unchanged, as are Ragnarok pets.
+
+Each viewer simulates a cosmetic follower along the interpolated player's recent
+path. It waits behind, moves separately, follows turns and can continue catching
+up when the player stops; its walking frame phase is based on distance traveled.
+The shared walkability rules avoid ponds and buildings, with a safe reset on a
+large position correction. This visual trail is not a server-owned battle actor;
+viewers can see slightly different follower positions after reconnecting.
+
+## Sanctuary care, evolution and solo practice (haven-v328)
+
+The east lawn now has textured courts, gem pedestals, archways, planters and
+stepping stones. Pedestal, arch and planter footprints are shared browser/room
+navigation; ponds and fishing seats are unchanged. This is an initial art pass,
+not the final high-detail arena. The Sanctuary window supports four separate
+starter lines. Feeding and rest replenish fullness/reduce fatigue; a 15-second
+training session awards one stat point (individual cap 12, total cap 24).
+Sessions are saved and completed once when the Sanctuary window next updates;
+there is no offline care decay or permanent loss. Four training points allow a
+same-form mastery improvement; additional mastery requires four points each.
+
+A player can explicitly confirm evolution after meeting the displayed training
+and solo-spar-win requirements, or remain and build mastery. Evolution is not
+reversible yet. Four lines through three further forms are included. The arena
+window offers turn-based, no-stakes solo practice against local Digimon opponents
+with Attack, Guard and Special; it is not an in-world real-time fight, ranked
+PvP or a multiplayer duel. Results award only Sanctuary wins for evolution gates.
+The actions, training deadlines and wins are **client-authored casual state**,
+not competitive proof. `S.digimonSanctuary` is separate from `S.pets`, and old
+preview selections migrate by simply starting with default Sanctuary progress.
+Unknown future schema versions are not overwritten. Multiplayer viewers see the
+chosen form through the whitelisted look hint; the Social Worker and client must
+be deployed together because the obstacle layout and look whitelist changed.
+See `assets/digimon-sanctuary.js`, `tools/digimon/README.md` and
+`tools/tests/digimon_sanctuary_sim.js`. There is no online duel or ranked reward
+settlement in this version.
+
+## Owner-directed Sanctuary redesign (planning, 2026-11-05)
+
+The owner rejected the v328 layout and window-based training/PvE presentation.
+The desired replacement uses the whole east side for an on-map animated gym,
+food/trainer/PvE NPCs, grassy auto-PvE mob/boss farm and boxing-ring PvP, while
+the east pond becomes part of a larger west pond with a walkable long bridge.
+This is a **roadmap, not yet implemented**. Begin with an owner-reviewed master
+layout and preserve fishing, existing Social Hub functions, RO pets and field
+combat. See [live-world redesign roadmap](proposals/digimon-sanctuary-world-redesign-roadmap.md).
+
+A first **unapproved** layout board and its fit notes are available in
+[Sanctuary master plan](proposals/digimon-sanctuary-master-plan.md); the
+underlay is the existing v328 scene and its overlaid locations are proposals.
+
+
+### Sanctuary layout foundation (haven-v329, incomplete)
+
+The owner approved the master layout and added a south-shore waterfall. The
+local build now has one larger west lake, an east–west bridge with shared
+client/Worker deck navigation and elevation, relocated fishing chairs, a
+south-bank cascade and initial east gym, grass field and boxing-ring scenery.
+The structures are explicitly works in progress: they are not functional gym,
+auto-PvE or PvP, the NPCs are not yet present, and the old window activity is
+only a labeled temporary prototype. Saved fishing and Sanctuary data are kept.
+`social_sim`, `social_digimon_sim`, `social_scene_sim` and `social_fishing_sim`
+cover the changed layout, resume recovery and bridge.
+
+
+### Lake correction (haven-v330)
+
+The owner rejected v329's wide horizontal rectangle. The west lake is now a
+north–south 34 × 46 gently irregular oval, wider and much longer than the
+original pond. Eighteen sakura trees ring its banks, a brown arched bridge spans
+the lake east–west, and the waterfall remains at the south. Shape-aware shared
+walking, land/water clicking, fishing distance and cast points now follow the
+curved shoreline. The nearby west house and southwest garden were removed for
+space; the main roads, eight fishing seat IDs, poker and other gardens remain.
+The image proposal is art direction, not a pixel-exact game screenshot; further
+Sanctuary gameplay remains unfinished.
+
+
+### Lake moved south and garden restored (haven-v331)
+
+After the owner identified the displaced southwest tree and the overly oval
+shore, the lake was moved farther south and widened to 38 × 46, with an
+asymmetrical, softly scalloped outline. The original southwest garden and tree
+are back, with clearance from the sakura. The long walkable bridge, 18 sakura,
+eight fishing seats and southern waterfall moved with the lake. The ground,
+north–south road and shared walkable bounds extend south; the east–west road
+and old northern and x limits are unchanged. Fishing rigs beyond the old
+southern boundary are relayed, and old invalid resume positions are rescued.
+The illustration remains an art target rather than a pixel-exact recreation.
+The east Sanctuary NPCs, live training, auto-PvE and authoritative PvP remain
+unimplemented.
+
+
+### Longer lake and connected bridge (haven-v332)
+
+The west lake is longer to the south and shifted slightly west. Twenty-five
+sakura line its banks; clearings keep the southern waterfall and bridge
+approaches visible. The bridge has a higher arch. A paved stone approach joins
+the central avenue to its east end, and a second paved path finishes at the west
+end. Shared navigation and the ground extend farther south; fishing seats, the
+restored southwest garden and tree, and other plaza facilities remain. The
+east-side Sanctuary is still a work in progress.
+
+
+### Sanctuary architecture and lake adjustment (haven-v333, incomplete)
+
+The bridge now crosses the lake's center and the south waterfall sits at the
+shore rather than in the pond. The east side has a cutaway timber gym with four
+marked station areas, boardwalks, a gated grassy field, food and guide kiosk
+structures, a trainer sign and an improved boxing ring precinct. Shared
+navigation respects the new solid walls and field fences and their entrances.
+These are preliminary world buildings and scenery; the NPCs, on-map training,
+automated mobs and bosses and server-authoritative PvP are not implemented.
+
+### Owner-corrected Sanctuary footprint (haven-v334, visual phase)
+
+The v333 gym north of the east–west avenue was rejected. The rebuilt district
+starts beside the southeast plaza garden: gym x 43–95 / z 12–39, then the
+bevelled, gated meadow, then the ring farther south. Food, trainer and guide
+structures occupy the strip between the north–south avenue and the winding
+plank path. The gym has plaster-and-timber walls, gabled side wings, a cutaway
+centre and four apparatus areas; the ring has a raised canvas and tiered seats.
+Native trees/shrubs frame the east edge. The accepted lake is unchanged.
+
+Shared client/Worker walk bounds now run x −74 to 102 and z −74 to 126; the
+scene ground and east–west avenue extend east to suit. Gym walls, doors,
+stands, kiosks, trees and each straight or diagonal meadow rail use shared
+collision; the north, west and south gates stay open. Old blocked resumes are
+recovered. The visible shops and exercise areas are scenery, not interactive
+NPCs, live-world training, automated PvE or server-authoritative PvP.
+
+### Detailed Sanctuary and visible staff (haven-v335)
+
+The gym's two roofed back wings now join at a central gable/entrance, with
+window frames, timber braces, doors, extra equipment and wooded foliage behind.
+The service strip has more detailed stalls, awnings, shelves and lanterns.
+Five named native-sprite NPCs can be clicked for short status dialogue, and
+four animated Digimon sprites decorate the meadow. These residents are not
+player-owned creatures or simulated encounters. NPC dialogue does not sell
+items or start training; on-map training, automatic encounters and
+server-authoritative PvP remain unimplemented. The accepted lake is unchanged.
+Third-party CC0 material/tree credits and rebuild commands are documented in
+`tools/digimon/cc0-materials/README.md`.
+
+### Exposed framing and ring seating (haven-v336)
+
+The gym perimeter has visible timber posts, rails, diagonal braces, framed
+windows and shutters on both sides of the plaster, with roofed wings around an
+open training court. The rear foliage uses upright planes to avoid crossing the
+roof. The ring's two spectator stands use tiered planks, legs, bracing, guard
+rails and a corner return; the canvas and rope corners also have extra detail.
+These benches are scenery rather than usable seats. Power dummy attacks, Guard
+receiving attacks, Agility running/jumping and a Focus animation are recorded as
+future **on-map** training requirements, not implemented training.
+
+### Reference-led gym rebuild (haven-v337)
+
+The owner clarified that the approved illustration is the design target rather
+than just a source of textures. The local gym now has two taller timber-framed
+wings with gabled end bays, a central back entrance, pitched outer roof slopes
+and an open-front exercise courtyard. Inward roof slopes are cut away for the
+camera. The six flat backdrop trees have been replaced with native game trees;
+their depth is reduced to keep foliage out of the gym and roof. The front
+fence has a wide central opening and shared collision. This is an in-engine
+interpretation awaiting visual review, not live training or a pixel-perfect
+copy of the illustration.
+
+### Angled gym wings and ring seating (haven-v338)
+
+The previously collinear rear gym walls now angle inwards to a short entrance
+bay. Their timber, plaster and broad outer roof sections rotate with the shared
+wall segments; the full-depth native trees sit outside those walls. The central
+courtyard remains open. The ring's decorative spectator stands are level plank
+tiers with a mitred corner; they are not interactive seats. Both structures
+remain visual approximations awaiting review, and on-map training is future work.
+
+### Live gym first slice (haven-v339)
+
+Select a Digimon in Sanctuary, walk near a gym station and use the nearby Train
+button (the station labels are also clickable). The companion approaches and
+performs a 15-second Power, Guard, Agility or Focus exercise on the map. Each
+completed session adds one Sanctuary point, 10 fatigue and consumes 5 fullness;
+the existing 12-per-stat/24-total and care gates apply. Moving, leaving, changing
+partner/account, hiding the tab or cancelling interrupts without a gain. Previous
+prototype timers still resolve under their original rules. Training animation is
+currently local-view only, and the saved progress is casual and client-authored.
+The food shop, live auto-PvE and authoritative PvP are not implemented; free
+panel care and the old solo practice spar are still temporary prototype features.
+
+### Automatic gym and partner slots (haven-v340; supersedes v339 above)
+
+A signed-in player in a connected plaza can select either of two independent
+Sanctuary partner slots, including the same species twice. The original slot and
+its completed progress are retained. Each completed 15-second gym cycle earns one
+stat point and one XP; four XP earn a cosmetic prototype level. Fatigue, fullness,
+per-stat and total caps still apply. Old uncompleted window timers are cancelled
+on plaza entry; no new gym timer is persisted across reload or logout.
+
+Start an activity near its station. Exactly one partner per player can occupy
+the gym; the other remains independently selectable. The player can walk away,
+return to the field or switch the active partner while training repeats. Stop
+from the gym HUD or Sanctuary panel. A lost connection, changed account or
+plaza switch stops the session; solo/offline plaza cannot start one. Three
+positions per activity are reserved in the shared room and broadcast to observers;
+when full, a station asks the next player to wait. Reservation acknowledgements
+are request-scoped so an old reply cannot start a newer session. Stats and levels
+are client-saved and not authoritative for competitive play. Live auto-PvE,
+food purchases and server-authoritative PvP remain unimplemented; the old panel
+spar is a temporary solo feature.
+
+### Steady gym controls (v341)
+
+When standing still in the gym, the follow camera stops drifting. Projected
+station controls hold their screen position while hovered or pressed, and the
+nearby and training-status controls have stable widths. Training rules and
+reservation authority are unchanged. Physical touch-device review remains
+recommended before integration.

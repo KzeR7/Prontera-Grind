@@ -35,7 +35,7 @@ measurements remain qualified by their saved source hashes.
 | Page interaction: selection, right-click, image drag | `index.html`: `isTextField`; the document `contextmenu` / capture-phase `dragstart` listeners; the `user-select` and `-webkit-touch-callout` rules on `*,*::before,*::after` with the text-field exception | `interaction_guard_sim.js` |
 | Cash Shop (Stripe Checkout, cosmetics + supplies + the donor tier) | `assets/shop-catalog.js` (the price list, shared; `DONATIONS` holds `don:all-cosmetics` and its floor/step/ceiling), `assets/shop.js` (the Donations view and the amount box), `assets/shop.css`; `functions/_lib/shop.js`, `functions/api/shop/{catalog,checkout,order,webhook}.js`, `functions/api/gm/shop.js`, `migrations/0005_shop.sql`; `functions/api/save.js` (`lockedCosmetics`), `assets/wardrobe-ui.js` (`wardrobeLocked`), `gm.html` (Cash Shop tab) | `shop_api_sim.js`, `shop_sim.js`, `dev_server_sim.js`; setup and donation rules in [MONETIZATION-SETUP.md](MONETIZATION-SETUP.md) §10b |
 | Friends (haven-v273) | `assets/friends.js`, `assets/friends.css` (More ▸ Friends panel), `assets/social.js` (`Add friend` in the name menu, `★` marks, `syncFriends`), `functions/_lib/friends.js`, `functions/api/friends.js`, `migrations/0012_friends.sql`, `workers/social/room.mjs` (per-viewer `friend` flag); save-clock badge through `dot('friends')` in `index.html` | `friends_sim.js`, `friends_ui_sim.js`, `social_sim.js`, `social_ui_sim.js`, `social_api_sim.mjs`, `social_worker_sim.mjs`; see [Social hub](SOCIAL-HUB.md#friends-haven-v273) |
-| Plaza fishing (haven-v287, economy/index/auto haven-v288, public rigs/titles/bag tiers haven-v295, art drop haven-v302) | `assets/social-fishing.js` (`PGSocialFishing`: 100-species catalog across 25 painted body plans + catch rates, 7 mutations, Fishcoin economy with rods/bait, cast rating, reel physics, auto-fishing, draggable dock + tabbed Bag/Index/Shop/Titles window, bag tiers, twenty fishing titles, painted rods with tier auras, 146 cropped species out of a 155-species catalog + candy painter for nine (v303), a per-tier glow on the rod held in the plaza (v300), soft rod gates + fully random catches + gear-aware Index odds (v304/v305: `ROD_GATE`, `rodCeiling`, `GATE_ESCAPE`, `tierShares`, `rateWith`), `parseShowOff`, `S.fishing` persistence), `assets/social-fishing.css`, `assets/social-rules.js` (`PONDS` 18x13, `POND_FALLS`, `POND_PROPS` + `CHAIRS` and walkable/SEATS), `assets/social-scene.js` (pond water/fish/bobber rig, pond chairs, v304 pond garden: coping ring, arch bridge, boulder cascade with an animated sheet, lanterns, blossom trees, `scene.fishing` incl. `showFish` overhead show-off sprites with a weight label, `setRig` for other anglers, pond-click callback), `assets/social.js` (`🎣 Fishing` toolbar button, `bindFishing`, `showoff`/`rig` relay wiring, `onLocalMessage` legacy hook, `huntTitleName`/`fishingTitleName`, `confirmFishingStop` leave-warning, `pushFishNote` Local announcements), `index.html` (`S.fishing` defaults + load sanitizer incl. coins/rods/bait/bagTier/title) | `social_fishing_sim.js` (core, scene rig and the window's tabs), `social_sim.js` (rig broadcast, show-off relay, resume windows), `social_scene_sim.js`, `update_watch_sim.js`; see [Social hub](SOCIAL-HUB.md#ponds-public-rigs-titles-and-the-afk-spawn-fix-haven-v295), [owner fixes after v295](SOCIAL-HUB.md#owner-fixes-after-v295-haven-v296) [v297](SOCIAL-HUB.md#a-hundred-species-pond-giants-and-quiet-exits-haven-v297) [v299](SOCIAL-HUB.md#twenty-titles-rod-auras-no-doubled-show-offs-haven-v299) [v300](SOCIAL-HUB.md#the-rod-you-hold-glows-in-its-own-colour-haven-v300) [v302](SOCIAL-HUB.md#whales-honest-prices-harder-titles-and-an-afk-walk-that-works-haven-v303) |
+| Plaza fishing (haven-v287, economy/index/auto haven-v288, public rigs/titles/bag tiers haven-v295, art drop haven-v302) | `assets/social-fishing.js` (`PGSocialFishing`: 100-species catalog across 25 painted body plans + catch rates, 7 mutations, Fishcoin economy with rods/bait, cast rating, reel physics, auto-fishing, draggable dock + tabbed Bag/Index/Shop/Titles window, bag tiers, twenty fishing titles, painted rods with tier auras, 146 cropped species out of a 155-species catalog + candy painter for nine (v303), a per-tier glow on the rod held in the plaza (v300), soft rod gates + fully random catches + gear-aware Index odds (v304/v305: `ROD_GATE`, `rodCeiling`, `GATE_ESCAPE`, `tierShares`, `rateWith`), `parseShowOff`, `S.fishing` persistence), `assets/social-fishing.css`, `assets/social-rules.js` (`PONDS` (one 38 × 60 north–south, irregular west lake shifted west and extended south), `POND_FALLS`, `POND_PROPS` + `CHAIRS`, `onBridge` and walkable/SEATS), `assets/social-scene.js` (pond water/fish/bobber rig, pond chairs, v304 pond garden: coping ring, arch bridge, boulder cascade with an animated sheet, lanterns, blossom trees, `scene.fishing` incl. `showFish` overhead show-off sprites with a weight label, `setRig` for other anglers, pond-click callback), `assets/social.js` (`🎣 Fishing` toolbar button, `bindFishing`, `showoff`/`rig` relay wiring, `onLocalMessage` legacy hook, `huntTitleName`/`fishingTitleName`, `confirmFishingStop` leave-warning, `pushFishNote` Local announcements), `index.html` (`S.fishing` defaults + load sanitizer incl. coins/rods/bait/bagTier/title) | `social_fishing_sim.js` (core, scene rig and the window's tabs), `social_sim.js` (rig broadcast, show-off relay, resume windows), `social_scene_sim.js`, `update_watch_sim.js`; see [Social hub](SOCIAL-HUB.md#ponds-public-rigs-titles-and-the-afk-spawn-fix-haven-v295), [owner fixes after v295](SOCIAL-HUB.md#owner-fixes-after-v295-haven-v296) [v297](SOCIAL-HUB.md#a-hundred-species-pond-giants-and-quiet-exits-haven-v297) [v299](SOCIAL-HUB.md#twenty-titles-rod-auras-no-doubled-show-offs-haven-v299) [v300](SOCIAL-HUB.md#the-rod-you-hold-glows-in-its-own-colour-haven-v300) [v302](SOCIAL-HUB.md#whales-honest-prices-harder-titles-and-an-afk-walk-that-works-haven-v303) |
 | Browser saves, login, cloud sync, away rewards | `index.html`: `fresh`, `load`, `save`, `saveKey`, `CLOUD`, `offlinePlan` | `save_load_sim.js`, `save_owner_sim.js`, `cloud_sim.js`, `offline_sim.js`, `migration_sim.js` |
 | API accounts, sessions and saves | `functions/api/`, `functions/_lib/auth.js`, `functions/_lib/db.js` (`startVerifiedSession` — one live session per account, enforced in the same transaction as the insert), `functions/_lib/validate.js`; the kicked-device dialog `#sessionGate`, `cloudSessionReplaced()`, and the fast `cloudSessionTick()` /api/me probe in `index.html` | `api_sim.js`, `registration_sim.js`, `cloud_sim.js`, `dev_server_sim.js` |
 | GM console and grants | `gm.html` (own `@media(max-width:820px)` phone block since v274: one column, no nested scroller, 40px targets, players as one line each below 480px, `closeDetail()`), `functions/api/gm/`, `functions/api/grants.js`, `functions/_lib/gm-tools.js` | `gm_console_sim.js`, `gm_tools_sim.js`, `gm_auth_sim.js` |
@@ -313,3 +313,177 @@ the game and the server can never disagree on a price. Ownership is server-side
 the client strips it. With no `STRIPE_SECRET_KEY` the shop is browse-only;
 `node tools/dev_server.js --fake-payments` rehearses purchases without Stripe. See
 [Cash Shop setup](MONETIZATION-SETUP.md).
+
+### Digimon Sanctuary foundation (haven-v326)
+
+`assets/social-digimon.js` renders the four fixed-view companions from the small
+`assets/digimon/v1` pack (generated by `tools/digimon/build_pack.py`); the plaza
+selector and `digimonPartner` save field live in `assets/social.js` and are
+separate from Ragnarok pets. `assets/social-rules.js` defines the two open pads
+and validates IDs; `assets/social-scene.js` draws them and the companions;
+`workers/social/room.mjs` relays the optional presentation ID. This is not a
+care, evolution or battle implementation. See [Social hub](SOCIAL-HUB.md#digimon-sanctuary-foundation-haven-v326)
+and `tools/tests/social_digimon_sim.js`.
+
+`haven-v327`: `assets/social-digimon.js` also owns the independent cosmetic
+breadcrumb follower and distance-based walk phase; `assets/social-scene.js`
+advances one follower per visible player. `assets/social.js` and
+`assets/social.css` contain the Sanctuary companion window, still backed by the
+same `digimonPartner` choice. See `social_digimon_sim.js` and `social_ui_sim.js`.
+
+`haven-v328`: `assets/digimon-sanctuary.js` defines separate casual saved
+care/training/mastery/evolution and turn-based no-stakes solo spars. The Social
+UI hosts the controls, `assets/social-rules.js` shares new scenery collision and
+16 display IDs, and `assets/social-scene.js` renders the textured grounds and
+stage-sized followers. Art packing and generated floor sources are in
+`tools/digimon`; `digimon_sanctuary_sim.js` and `social_digimon_sim.js` cover
+rules, paths and atlas bounds. This is not authoritative PvP.
+
+**Sanctuary redesign direction (2026-11-05):** the owner rejected the v328
+layout and tab-based activity presentation. The authoritative requested direction
+and recommended sequencing are recorded in
+[Digimon Sanctuary live-world redesign roadmap](proposals/digimon-sanctuary-world-redesign-roadmap.md).
+It is planning only; v328 code remains the current implementation until replaced.
+
+
+### Sanctuary world foundation (haven-v329, partial)
+
+The approved map footprint replaces both ponds with one west lake, a shared
+walkable deck and a south cascade. `assets/social-rules.js` owns collision, seat
+positions and bridge dimensions; `assets/social-scene.js` owns the raised deck
+and preliminary east gym/field/ring scenery; `assets/social-fishing.js` avoids
+casting onto the deck; `workers/social/room.mjs` repairs invalid old resumed
+positions. The NPCs and on-map activity systems are not implemented yet. See
+[redesign roadmap](proposals/digimon-sanctuary-world-redesign-roadmap.md).
+
+
+### Curved sakura lake (haven-v330)
+
+The owner corrected the v329 lake orientation and appearance: the shared
+`pondRadius`, `pondBoundary`, `pondContains`, `pondDistance` and `clampPond`
+rules describe a north–south, gently irregular oval. `assets/social-scene.js`
+uses the same boundary for water geometry and shader, and paints an oak-toned
+bridge and sakura around the banks. `assets/social-fishing.js` uses the curved
+shape for distance and cast targets; bridge clicks still use the deck. The west
+house at (−46, 16) and southwest garden were removed to fit the taller lake.
+
+
+### South lake and restored garden (haven-v331)
+
+The owner rejected v330's high, oval-looking lake because it displaced the
+southwest tree. The lake is now centred at (−34, 66), with a broader irregular
+38 × 46 outline, 18 sakura, the bridge at z 64, and a south-shore waterfall.
+`pondRadius` and the water shader share the same rounded, asymmetrical shape;
+collision, fishing and click tests follow it. The southwest garden and original
+tree are restored. Shared `MIN_Z`/`MAX_Z` extend navigation south to 112 while
+retaining the old northern and x limits. The scene's ground and north–south road
+extend south accordingly; the Worker validates rig coordinates against shared
+bounds, and old invalid resumes are recovered. The west house at (−46, 16) is
+still absent. The east Sanctuary remains preliminary, not completed gameplay.
+
+
+### Longer lake and bridge approaches (haven-v332)
+
+The lake is centred at (−38, 73), nominally 38 × 60: its northern shore is
+roughly unchanged while its southern end extends by about 13 units. The shared
+bridge is taller (arch 2.9), with matching native stone paving from the main
+road to the east landing and a rounded-ended path on the west bank. The 25
+sakura avoid the approaches and the view of the southern waterfall. Its eight
+seat IDs and restored garden remain. Ground and the north–south road extend
+south, and `MAX_Z` is 126; x and north bounds remain unchanged. Ground depth
+bias prevents long-distance water z-fighting. Shared bridge/shore rules, Worker
+rig bounds and resume recovery continue to apply; Sanctuary gameplay is still
+unfinished.
+
+
+### Sanctuary buildings and centered bridge (haven-v333, visual phase)
+
+`assets/social-scene.js` now builds a cutaway half-timber gym with four stat
+station props, shingled roof, boardwalk, gated field fence, future food and
+field-guide kiosks, trainer sign, outer native trees, and a ring with steps and
+spectator seating. `assets/social-rules.js` defines matching gym walls, posts,
+kiosk/sign barriers, field fence gates and outer-tree obstacles for client and
+Worker; invalid old resumes are recovered. The bridge and both stone approaches
+move to the lake center. The south waterfall is aligned with the actual lobe:
+its flanking rocks rest on land and the splash enters water. The new roof source
+and rebuild script are in `tools/digimon/`; boardwalk reuses the native kit.
+This is a visual building pass, not a completed implementation of NPCs, live
+world training, auto-PvE or authoritative PvP.
+
+### Corrected east Sanctuary (haven-v334, visual phase)
+
+`assets/social-rules.js` owns the asymmetric `MIN_X` / `MAX_X`, the south-east
+Sanctuary pads, gym and stand barriers, `SANCTUARY_FENCES` segment collision
+(including bevels/gaps), and `SANCTUARY_RING` canvas dimensions/height. The
+Worker validates fishing rigs against the same explicit bounds. Scene geometry
+in `assets/social-scene.js` renders the cutaway gabled gym and equipment,
+three distinct future kiosks, angled plank walkway, gated meadow, ring and
+bleachers; player and follower height uses the shared ring. The new material
+sources and reproduction script are in `tools/digimon/`. This supersedes the
+v333 placement and native-kit-boardwalk description above. `LIMIT` remains a
+legacy value, not the eastern boundary. Live-world interactions remain absent.
+
+### Sanctuary staff and art (haven-v335)
+
+`assets/social-scene.js` builds the joined gym back wings, fills the shop strip
+and renders five stationary NPCs with native `PGWardrobe` sprites, label/button
+and raycast dialogue. They are client-side presentation and status dialogue,
+not services or progression. Four explicitly decorative idle meadow residents
+use the existing shared `PGSocialDigimon` atlas store. `SANCTUARY_TREES` in
+`assets/social-rules.js` supplies shared obstacles; the rear-gym trees use a
+CC0 sprite rather than the native tree model. CC0 sources and local reproduction
+are documented in `tools/digimon/cc0-materials/README.md`. The lake and
+competitive-authority requirements are unchanged.
+
+### Timber gym and ring seating (haven-v336)
+
+`assets/social-scene.js` places exposed half-timber grids outside both faces of
+the gym side walls and the courtyard side of the rear wall. Side and rear roofs
+stay over the perimeter, while the centre remains open. Rear woodland trees
+use fixed upright planes, with the rear eave kept clear of their trunks. The
+ring's two three-tier stands have individual planks, supports, rails and a
+corner return; they are scenery, not interactive seats. The ring canvas uses
+a small procedurally drawn texture. DOM staff/station labels are hidden when a
+camera ray crosses a gym wall. `assets/social-rules.js` contains the extended
+side-wall and stand-corner collision used by browser and Worker. Owner-specified
+future training animations are recorded in the redesign roadmap, not implemented.
+
+### Reference-led gym rebuild (haven-v337)
+
+`assets/social-scene.js` replaces the v336 low, roof-dominated wings with two
+separate taller timber/plaster wall sections, gabled front bays and a central
+connector around an open exercise court. The inward roof slopes are deliberately
+cut away while the outer pitched slopes, rafters, foundations, windows and
+braces remain visible. Rear trees are existing `tree2` native field meshes,
+with narrowed depth to avoid penetrating the wall and capped height below the
+roof. `SANCTUARY_GYM_FENCES` in `assets/social-rules.js` shares the front-rail
+collision with the Worker; the shortened side walls and end-bay openings have
+matching barrier bounds. The earlier external 3D asset study is not used by
+this runtime. Gym apparatus is still scenery, not live training.
+
+* **Sanctuary gym correction (v338):** `assets/social-rules.js` exports the angled
+  `SANCTUARY_GYM_WALLS` shared by collision and the scene; `assets/social-scene.js`
+  builds the two rotated timber wings and broad outer roofs from those segments,
+  and assembles level mitred ring stands. The social room and scene simulations
+  exercise navigation, tree clearance, geometry and tier alignment.
+
+* **Live gym first slice (v339):** `assets/social.js` owns the ephemeral local
+  station session, proximity UI, approach, cancellation and completion;
+  `assets/social-scene.js` renders the partner's per-stat poses and effects.
+  `assets/digimon-sanctuary.js` validates and applies completed casual gains to
+  the existing versioned save, without persisting a new offline timer. Training
+  poses are not relayed to other plaza viewers and are not PvP authority.
+
+* **Automatic gym partners (v340):** `assets/social.js` keeps the original
+  `S.digimonPartner`/`S.digimonSanctuary` as slot one and adds independent
+  `S.digimonPartner2`, `S.digimonSanctuary2` and `S.digimonActiveSlot`. Its
+  ephemeral one-per-player controller repeats validated 15-second completions
+  while a cloud plaza socket remains live, including in the field. It cancels
+  on logout/disconnection and discards uncompleted legacy saved timers on entry.
+  `assets/digimon-sanctuary.js` adds client-saved XP/level; `social-rules.js`
+  defines three positions per activity; `workers/social/room.mjs` reserves and
+  broadcasts them, with request-scoped acknowledgements; `social-scene.js`
+  renders independent training residents and the extra equipment. Neither XP nor
+  stats are server-authoritative. Deploy client and Social Worker together.
+  `tools/tests/social_gym_sim.js` covers room reservations and lifecycle;
+  `social_ui_sim.js` covers auto-cycles, dual slots and cancellation/races.

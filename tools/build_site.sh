@@ -35,6 +35,20 @@ require _routes.json
 require assets/sprite_pack_data.js
 require assets/class_skins_data.js
 require assets/weapon_joints_data.js
+require assets/digimon-sanctuary.js
+require assets/social-digimon.js
+require assets/digimon/v2/catalog.json
+for name in agumon gabumon patamon palmon greymon metalgreymon wargreymon garurumon weregarurumon metalgarurumon angemon magnaangemon seraphimon togemon lillymon rosemon; do require "assets/digimon/v2/$name.png"; done
+require assets/digimon/sanctuary/arena-stone.webp
+require assets/digimon/sanctuary/timber-roof.webp
+for name in walkway-wood gym-sand gym-plaster; do require "assets/digimon/sanctuary/$name.webp"; done
+require assets/digimon/sanctuary/cc0/woodland-tree.webp
+for name in medieval_wood rough_pine_door roof_09; do require "assets/digimon/sanctuary/cc0/$name.webp"; done
+require assets/digimon/v1/catalog.json
+require assets/digimon/v1/agumon.png
+require assets/digimon/v1/gabumon.png
+require assets/digimon/v1/patamon.png
+require assets/digimon/v1/palmon.png
 require assets/wardrobe/v5/catalog.json
 require assets/wardrobe/fourth/v1/catalog.json
 require assets/kit/ro-spritesheet.png

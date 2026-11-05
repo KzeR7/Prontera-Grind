@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#20241f;font:15px system-ui}canvas{touch-action:none}#info{position:absolute;top:20px;left:20px;background:#17221cdd;color:white;padding:12px}canvas{display:block}</style></head><body><div id="info"><strong>3D asset study — not the finished gym</strong><br>Real Quaternius CC0 building modules and tree<br>Drag to rotate · scroll to zoom<br>Game world has not been changed</div><script src="three.js"></script><script src="gltf.js"></script><script>
+(async()=>{
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(1);renderer.outputEncoding=THREE.sRGBEncoding;document.body.append(renderer.domElement);
+const s=new THREE.Scene();s.background=new THREE.Color(0xb9cbbb);s.add(new THREE.HemisphereLight(0xffffff,0x776b58,1));const sun=new THREE.DirectionalLight(0xffffff,.8);sun.position.set(20,40,15);s.add(sun);
+const c=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,500);let angle=0,pitch=.55,distance=54;const target=new THREE.Vector3(0,3,-7);const u=()=>{c.position.set(target.x+Math.sin(angle)*distance*Math.cos(pitch),target.y+Math.sin(pitch)*distance,target.z+Math.cos(angle)*distance*Math.cos(pitch));c.lookAt(target)};u();
+let down;renderer.domElement.onpointerdown=e=>{down=[e.clientX,e.clientY,angle,pitch];renderer.domElement.setPointerCapture(e.pointerId)};renderer.domElement.onpointermove=e=>{if(!down)return;angle=down[2]-(e.clientX-down[0])*.006;pitch=Math.max(.3,Math.min(1.2,down[3]+(e.clientY-down[1])*.005));u()};renderer.domElement.onpointerup=()=>down=null;renderer.domElement.onwheel=e=>{distance=Math.max(30,Math.min(110,distance+e.deltaY*.03));u()};
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(110,100),new THREE.MeshLambertMaterial({color:0x93a77c}));floor.rotation.x=-Math.PI/2;s.add(floor);
+
+let L=new THREE.GLTFLoader(), names=['Wall_Plaster_Straight','Wall_Plaster_Window_Wide_Flat','Wall_Plaster_Door_Flat','Roof_RoundTiles_8x14','Roof_Front_Brick8','Window_Wide_Flat1','Door_2_Flat'];let models={};await Promise.all(names.map(async n=>{models[n]=(await L.loadAsync('kit/'+n+'.gltf')).scene}));let tree=(await L.loadAsync('nature/CommonTree_1.gltf')).scene;
+function piece(n,x,y,z,sx=2,sy=2,sz=2,r=0){let g=models[n].clone();g.position.set(x,y,z);g.scale.set(sx,sy,sz);g.rotation.y=r;s.add(g);return g}
+for(let cx of [0]){
+ for(let x of [-6,-2,2,6])for(let level=0;level<2;level++){
+  let n=level?'Wall_Plaster_Window_Wide_Flat':(x===-2?'Wall_Plaster_Door_Flat':'Wall_Plaster_Window_Wide_Flat');piece(n,cx+x,level*4.5,-2,2,1.5,1);if(x===-2&&level===0){piece('Door_2_Flat',cx+x-1,0,-1.9,2,1.5,1)}else piece('Window_Wide_Flat1',cx+x,level*4.5,-1.8,2,1.5,1);
+  piece(level?'Wall_Plaster_Straight':'Wall_Plaster_Window_Wide_Flat',cx+x,level*4.5,-14,2,1.5,1,Math.PI);
+ }
+ for(let x of [cx-8,cx+8])for(let z of [-12,-8,-4])for(let level=0;level<2;level++)piece('Wall_Plaster_Straight',x,level*4.5,z,2,1.5,1,Math.PI/2);
+ piece('Roof_Front_Brick8',cx,9,-1.9,2,1.2,1);piece('Roof_RoundTiles_8x14',cx,9,-8,2,1.2,.85);
+}
+for(const [x,z,scale] of [[-13,-8,2.0],[13,-11,2.25],[-8,-22,2.0],[4,-22,1.9]]){let t=tree.clone();t.scale.setScalar(scale);t.position.set(x,0,z);t.rotation.y=x*.17;s.add(t)}
+window.studyCamera=c;window.studyScene=s;window.ready=true;function frame(){requestAnimationFrame(frame);renderer.render(s,c)}frame();
+})().catch(e=>{document.body.insertAdjacentHTML('beforeend','<pre style="color:red">'+e.stack+'</pre>');throw e});</script></body></html>

@@ -259,6 +259,9 @@ export class SocialRoom {
   const resume=this.takeResume(c.id,this.now());
   if(resume){
    Object.assign(c,{room:resume.room,x:resume.x,z:resume.z,dir:resume.dir,path:[],at:this.now(),sit:resume.sit,seat:resume.seat,pokerSeat:resume.pokerSeat,look:resume.look,resumed:true});
+   // Old resumable locations may now be underwater or the old pond chairs may have moved.
+   if(Number.isInteger(c.seat)&&R.SEATS[c.seat]){const seat=R.SEATS[c.seat];c.x=seat.x;c.z=seat.z;}
+   else if(!Number.isInteger(c.pokerSeat)&&!R.walkable(c.x,c.z)){c.x=0;c.z=12;c.sit=false;c.seat=null;}
    if(Number.isInteger(c.seat)&&[...this.clients.values()].some(p=>p!==c&&p.room===c.room&&p.seat===c.seat)){c.seat=null;c.sit=false}
   }
   this.clients.set(c.id,c);
@@ -275,14 +278,28 @@ export class SocialRoom {
  // v225: lv drives the level aura and speed is the character's field run speed. Both are
  // presentation hints: lv is clamped to a display tier input, speed to the shared walk band, so a
  // client cannot make itself faster than the fastest legal character in the plaza.
- cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',fishTitle:typeof look.fishTitle==='string'?look.fishTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED))};}
+ cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',fishTitle:typeof look.fishTitle==='string'?look.fishTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED)),...(R.cleanDigimon(look.digimon)?{digimon:R.cleanDigimon(look.digimon)}:{})};}
+ // Gym reservations are per room and per apparatus, with at most one per owner.
+ // They are presentation only, not trusted progression or competitive stats.
+ gymSnapshot(room){return [...this.clients.values()].filter(p=>p.gym&&p.gym.room===room).map(p=>({owner:p.id,...p.gym}))}
+ broadcastGym(room){if(room)this.broadcast({type:'gym',room,entries:this.gymSnapshot(room)},p=>p.room===room)}
+ stopGym(c){if(!c.gym)return;const room=c.gym.room;c.gym=null;this.broadcastGym(room)}
+ startGym(c,m,now){
+  const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
+  const slots=Object.hasOwn(R.GYM_STATIONS,m.stat)?R.GYM_STATIONS[m.stat]:null,species=R.cleanDigimon(m.species);if(!c.room||!slots||!species)return this.send(c,{type:'gym_error',request,message:'Choose a valid companion and gym station.'});
+  if(c.gym)return this.send(c,{type:'gym_error',request,message:'Only one companion can train in the gym at a time.'});
+  R.advance(c,now);if(c.sit||c.path.length||!slots.some(s=>Math.hypot(c.x-s.x,c.z-s.z)<=9))return this.send(c,{type:'gym_error',request,message:'Walk close to the station and stand still first.'});
+  const used=new Set([...this.clients.values()].filter(p=>p.gym?.room===c.room&&p.gym.stat===m.stat).map(p=>p.gym.slot)),slot=slots.findIndex((_,i)=>!used.has(i));
+  if(slot<0)return this.send(c,{type:'gym_error',request,message:'All '+m.stat+' equipment is in use. Please try again shortly.'});
+  c.gym={room:c.room,stat:m.stat,slot,species};this.send(c,{type:'gym_started',request,gym:c.gym});this.broadcastGym(c.room);
+ }
  // `viewer` is who is asking: whether this person is a friend is a fact about the two accounts, so
  // the same player is flagged for one client and not for another. Omit it for a neutral snapshot.
  snapshot(c,viewer=null){R.advance(c,this.now());return {id:c.id,name:c.name,gm:c.gm,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat,pokerSeat:c.pokerSeat,fish:c.fish||null,friend:!!(viewer&&viewer!==c&&viewer.friends.has(c.id))};}
  leave(c){const room=c.room;this.standPoker(c,this.now(),false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;if(room){this.broadcast({type:'left',id:c.id,room},p=>p.room===room);this.broadcastPoker(room,this.now());this.schedulePoker(room);this.syncRooms();}}
  disconnect(c){
   if(this.clients.get(c.id)!==c)return;
-  const now=this.now(),room=c.room;
+  const now=this.now(),room=c.room;this.stopGym(c);
   // A lost socket is not a decision to fold. Keep the exact position and reserved poker seat
   // for 15 seconds, including planned re-authentication. The turn clock still runs; an explicit
   // leave has already cleared the room; a replacement tab may inherit the same reservation.
@@ -333,6 +350,7 @@ export class SocialRoom {
   this.syncPokerArrivals(c.room,now);
   const rooms=this.roomList();
   this.send(c,{type:'room',room:c.room,rooms,players:[...this.clients.values()].filter(p=>p.room===c.room).map(p=>this.snapshot(p,c))});
+  this.send(c,{type:'gym',room:c.room,entries:this.gymSnapshot(c.room)});
   this.send(c,this.pokerPayload(c.room,c.id,now));
   this.broadcastPlayer(c,p=>p.room===c.room,c);
   this.syncRooms(c);this.schedulePoker(c.room);
@@ -359,6 +377,8 @@ export class SocialRoom {
   if(typeof raw!=='string'||raw.length>4096)return this.send(c,{type:'error',message:'Message is too large.'});
   let m;try{m=JSON.parse(raw)}catch{return}if(!m||typeof m!=='object')return;
   if(m.type==='ping')return this.send(c,{type:'pong'});
+  if(m.type==='gym_start')return this.startGym(c,m,now);
+  if(m.type==='gym_stop')return this.stopGym(c);
   if(m.type==='poker_ledger_ack')return this.ackPokerLedgers(c,m);
   if(m.type==='friends'){if(this.syncFriends(c,m.ids,now))this.syncRooms();return}
   if(m.type==='leave'){this.resumes.delete(c.id);this.onResume?.(c.id,null);c.released=true;this.leave(c);return this.send(c,{type:'room',room:0,players:[]})}
@@ -380,7 +400,7 @@ export class SocialRoom {
    c.moveAt=now;
    const count=this.roomCount(target,now);
    if(count>=R.CAPACITY)return this.send(c,{type:'error',message:`Plaza ${target} is full (${R.CAPACITY} / ${R.CAPACITY}).`});
-   const prev=c.room;
+   const prev=c.room;this.stopGym(c);
    this.standPoker(c,now,false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;c.sit=false;
    this.broadcast({type:'left',id:c.id,room:prev},p=>p.room===prev);
    this.broadcastPoker(prev,now);this.schedulePoker(prev);
@@ -394,7 +414,7 @@ export class SocialRoom {
   if(m.type==='rig'&&c.room){
    if(m.on!==true){if(c.fish){c.fish=null;this.broadcastPlayer(c,p=>p.room===c.room)}return}
    const x=Number(m.x),z=Number(m.z);
-   if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>70||Math.abs(z)>70)return;
+   if(!Number.isFinite(x)||!Number.isFinite(z)||x<R.MIN_X||x>R.MAX_X||z<R.MIN_Z||z>R.MAX_Z)return;
    c.fish={on:true,pond:Number.isInteger(m.pond)?Math.max(0,Math.min(7,m.pond)):0,x:Math.round(x*100)/100,z:Math.round(z*100)/100,mode:FISH_MODES.has(m.mode)?m.mode:'wait',rod:FISH_RODS.has(m.rod)?m.rod:'twig'};
    return this.broadcastPlayer(c,p=>p.room===c.room);
   }

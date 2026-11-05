@@ -19,8 +19,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  now+=3000;assert.equal(a.room,1);send(a,{type:'emotion',emotion:'heart',channel:'world'});assert.equal(b.events.find(e=>e.emotion==='heart'&&e.channel==='world').channel,'world');assert(outsider.events.some(e=>e.emotion==='heart'&&e.channel==='world'),'a world emotion crosses plazas');
  const before=b.events.filter(e=>e.emotion==='laugh').length;now+=3000;send(a,{type:'emotion',emotion:'laugh',channel:'whisper',to:b.name});const whispered=b.events.filter(e=>e.emotion==='laugh');assert.equal(whispered.length,before+1);assert.equal(whispered.at(-1).channel,'whisper');assert.equal(whispered.at(-1).toName,b.name);assert.equal(b.events.filter(e=>e.emotion==='laugh').length>0&&outsider.events.filter(e=>e.emotion==='laugh').length,0,'a whispered emotion stays between the two');
  const delivered=room.serial;send(a,{type:'chat',channel:'world',body:'too soon'});assert.equal(room.serial,delivered);now+=2999;send(a,{type:'emotion',emotion:'heart'});assert.equal(room.serial,delivered);now++;send(a,{type:'chat',channel:'world',body:'after 3 seconds'});assert.equal(room.serial,delivered+1);
- for(const point of [{x:0,z:65},{x:70,z:30},{x:-70,z:-30},{x:0,z:-34}]){const route=R.path({x:0,z:12},point);assert(route.length,'new avenues reachable');assert(route.every(p=>R.walkable(p.x,p.z)))}
- assert(!R.walkable(56,16),'houses block walking');assert(!R.walkable(0,-61),'castle blocks walking');assert(!R.walkable(75,10));
+ for(const point of [{x:0,z:65},{x:0,z:120},{x:70,z:30},{x:-70,z:-30},{x:0,z:-34}]){const route=R.path({x:0,z:12},point);assert(route.length,'new avenues reachable');assert(route.every(p=>R.walkable(p.x,p.z)))}
+ assert(!R.walkable(-46,-25),'remaining houses block walking');assert(R.walkable(56,16),'former east houses are cleared for the farm');assert(!R.walkable(0,-61),'castle blocks walking');assert(!R.walkable(R.MAX_X+1,10));assert(R.walkable(0,126));assert(!R.walkable(0,127));assert(!R.walkable(0,-75));
  for(const seat of R.SEATS){assert(R.path({x:0,z:12},seat).length,'each chair reachable')}
  for(const garden of R.GARDENS){assert(!R.walkable(garden.x,garden.z),'bounded garden cannot be crossed');assert(R.TREES.some(t=>t.x===garden.x&&t.z===garden.z&&t.size<=garden.w-4),'tree canopy has a garden setback')}
  for(let n=-30;n<=30;n++){if(Math.abs(n)>6){assert(R.walkable(0,n),'north/south promenade stays clear');assert(R.walkable(n,0),'east/west promenade stays clear')}}
@@ -102,6 +102,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  assert(rigged&&rigged.player.fish.on===true,'everyone in the plaza is told where the line is');
  assert.equal(rigged.player.fish.x,23);assert.equal(rigged.player.fish.pond,1);
  assert.equal(rigged.player.fish.rod,'mythril','the rod tier is relayed verbatim');
+ // Fishing lines in the newly extended south must be sent to the other player.
+ sendF(angler,{type:'rig',on:true,pond:0,x:-38,z:100,mode:'wait'});
+ assert.equal(angler.fish.z,100);assert(watcher.events.some(e=>e.type==='player'&&e.player.id===401&&e.player.fish?.z===100),'south rig is broadcast');
+ sendF(angler,{type:'rig',on:true,pond:0,x:100,z:100,mode:'wait'});assert.equal(angler.fish.x,100,'rig validation accepts the expanded eastern bounds');
+ sendF(angler,{type:'rig',on:true,pond:0,x:-38,z:100,mode:'wait'});
+ for(const bad of [{x:0,z:R.MAX_Z+1},{x:0,z:R.MIN_Z-1},{x:R.MAX_X+1,z:100},{x:R.MIN_X-1,z:100}]){sendF(angler,{type:'rig',on:true,...bad,mode:'wait'});assert.equal(angler.fish.z,100,'out-of-bounds rig is rejected')}
+ sendF(angler,{type:'rig',on:true,pond:1,x:23,z:42,mode:'wait',rod:'mythril'});
  assert.equal(fishRoom.snapshot(angler,watcher).fish.on,true,'the rig rides the ordinary snapshot too');
  // A forged position or an unknown phase is dropped rather than broadcast.
  sendF(angler,{type:'rig',on:true,x:999,z:-999,mode:'nonsense'});
@@ -133,7 +140,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  const durableRoom=new SocialRoom({now:()=>fClock.t,onResume:(id,rec)=>{rec?stored.set(id,rec):stored.delete(id)}});
  const dJoin=(id)=>{const ev=[];const c=durableRoom.connect({id,username:'Durable'+id},raw=>ev.push(JSON.parse(raw)),()=>{});c.events=ev;durableRoom.receive(c,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));return c};
  const keeper=dJoin(501);
- keeper.x=pond0.x+8;keeper.z=pond0.z+1;keeper.at=fClock.t;
+ keeper.x=pond0.x+8;keeper.z=R.POND_PROPS[0].bridge.z;keeper.at=fClock.t;
  durableRoom.disconnect(keeper);
  assert(stored.has(501),'a drop writes the spot to storage');
  assert.equal(stored.get(501).x,pond0.x+8);
@@ -142,9 +149,25 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  for(const [id,rec] of stored)evicted.resumes.set(id,rec);
  const revivedEv=[];const revived=evicted.connect({id:501,username:'Durable501'},raw=>revivedEv.push(JSON.parse(raw)),()=>{});
  evicted.receive(revived,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));
- assert(Math.hypot(revived.x-(pond0.x+8),revived.z-(pond0.z+1))<2,'a restarted room resumes the stored spot instead of spawning');
+ assert(Math.hypot(revived.x-(pond0.x+8),revived.z-R.POND_PROPS[0].bridge.z)<2,'a restarted room resumes the stored spot instead of spawning');
  assert.equal(revived.room,1);
  evicted.disconnect(revived);
+ // A dry position south of the v331 lake is flooded by the extension and must be rescued.
+ const flooded=new SocialRoom({now:()=>fClock.t});
+ assert(!R.pondContains({x:-34,z:66,w:38,d:46},-34,95)&&!R.walkable(-34,95),'v331 dry land became water');
+ flooded.resumes.set(510,{room:1,x:-34,z:95,dir:0,sit:false,seat:null,pokerSeat:null,expires:fClock.t+5000});
+ const rescued=flooded.connect({id:510,username:'Rescued'},()=>{},()=>{});
+ assert(R.walkable(rescued.x,rescued.z),'old water position is relocated safely');
+ assert.equal(rescued.room,1,'room is preserved after relocation');
+ // A location occupied by a new Sanctuary wall is also safely relocated after an upgrade.
+ flooded.resumes.set(512,{room:1,x:52,z:12.5,dir:0,sit:false,seat:null,pokerSeat:null,expires:fClock.t+5000});
+ const wallRescue=flooded.connect({id:512,username:'WallRescue'},()=>{},()=>{});assert(R.walkable(wallRescue.x,wallRescue.z),'old position inside new gym wall is recovered');
+
+ // Existing pond-seat reservations keep the same ID but follow the relocated chair.
+ flooded.resumes.set(511,{room:1,x:23,z:48,dir:0,sit:true,seat:28,pokerSeat:null,expires:fClock.t+5000});
+ const reseated=flooded.connect({id:511,username:'Reseated'},()=>{},()=>{});
+ assert.equal(reseated.seat,28);assert.equal(reseated.x,R.SEATS[28].x);assert.equal(reseated.z,R.SEATS[28].z);
+
  // Taking the reservation clears the stored copy, so nothing stale is reloaded later.
  const cleared=new Map();
  const tidyRoom=new SocialRoom({now:()=>fClock.t,onResume:(id,rec)=>{rec?cleared.set(id,rec):cleared.delete(id)}});
@@ -155,7 +178,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
 
  assert(Math.hypot(0-pond0.x,12-pond0.z)>6.5,'the entrance is far outside fishing range - a respawn there cancels the cast');
  // A silent drop keeps the spot for the whole idle window, not the old 15 seconds.
- fClock.t+=1000;angler.x=pond0.x+9;angler.z=pond0.z;angler.at=fClock.t;
+ fClock.t+=1000;angler.x=pond0.x+9;angler.z=R.POND_PROPS[0].bridge.z;angler.at=fClock.t;
  const pondSpot={x:angler.x,z:angler.z};
  fishRoom.disconnect(angler);
  fClock.t+=60000;const resumed=mk(401);
@@ -183,45 +206,71 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  fishRoom.disconnect(resumed);
  fClock.t+=310000;const fresh=mk(401);
  assert(Math.hypot(fresh.x,12-fresh.z)<1||Math.abs(fresh.z-12)<8,'an expired reservation spawns at the entrance again');
- // --- v304: the pond garden ----------------------------------------------------------------
- // The ponds are the plaza centrepiece now (18x13, a bridge, a waterfall garden). These are the
- // checks the owner asked for by eye: nothing in the water, nothing on a chair, no prop in a house.
- for(const p of R.PONDS){
-  assert.equal(p.w,18,'the pond is 18 wide');assert.equal(p.d,13,'and 13 deep');
-  const inWater=(x,z,m=0)=>Math.abs(x-p.x)<p.w/2-m&&Math.abs(z-p.z)<p.d/2-m;
-  const onTop=(x,z,r,o)=>Math.hypot(x-o.x,z-o.z)<r;
-  const props=R.POND_PROPS[R.PONDS.indexOf(p)];
-  assert(props,'every pond has its garden props');
-  for(const b of props.boulders){
-   assert(!inWater(b.x,b.z,b.r),'a boulder never sits in the water');
-   for(const c of R.CHAIRS)assert(!onTop(b.x,b.z,b.r+1,c),'a boulder never crowds an angler chair');
-   for(const b2 of R.BENCHES)assert(Math.hypot(b.x-b2.x,b.z-b2.z)>4,'a boulder stays off the bench rows');
-  }
-  for(const l of props.lanterns){
-   assert(!inWater(l.x,l.z,.5),'a stone lantern stands on the shore, not in the water');
-   for(const c of R.CHAIRS)assert(!onTop(l.x,l.z,1.2,c),'a lantern never crowds a chair');
-  }
-  for(const t of props.blossoms){
-   assert(!inWater(t.x,t.z,1.2),'a blossom tree is planted on the grass');
-   for(const c of R.CHAIRS)assert(!onTop(t.x,t.z,1.6,c),'a bloom never hides a chair');
-  }
-  // The bridge tunnels the outflow: it sits south of the water and clears both south chairs.
-  assert(props.bridge.z>p.z+p.d/2,'the bridge is past the south rim');
-  for(const c of R.CHAIRS)assert(Math.abs(c.x-props.bridge.x)>props.bridge.span/2||Math.abs(c.z-props.bridge.z)>props.bridge.width/2+1,'the bridge never sits on a chair');
-  // It is a garden behind the pond, so it must stay clear of the houses at z=56 and the planting.
-  for(const b of R.BUILDINGS)assert(Math.hypot(p.x-b.x,p.z-b.z)>Math.max(p.w,b.w)/2+Math.max(p.d,b.d)/2-12,'the pond does not run into a building');
-  for(const g of R.GARDENS)assert(Math.abs(p.x-g.x)>g.w/2+p.w/2||Math.abs(p.z-g.z)>g.d/2+p.d/2,'the pond does not run into a garden');
-  // Fishing spots: the rim is walkable all the way round except where the cascade's boulder heap
-  // stands (v309: it is solid, so you can no longer end up standing inside the rock face).
-  assert(!R.walkable(p.x,p.z),'pond water is not walkable');
-  // The pond blocks as a box, so the walkable rim is the box offset by the fishing stand-off.
-  for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){
-   const x=p.x+dx*(p.w/2+1.7),z=p.z+dz*(p.d/2+1.7);
-   if(R.cragBlocked(x,z)){assert(!R.walkable(x,z),'the boulder heap behind the cascade is solid');continue}
-   assert(R.walkable(x,z),'the rim at '+dx+'/'+dz+' is walkable');
-  }
-  assert(R.walkable(p.x,p.z+p.d/2+1.4),'the south bank (and the bridge approach) is walkable');
+ // Approved west lake: the bridge crosses water, while other water remains blocked.
+ assert.equal(R.PONDS.length,1);
+ const lake=R.PONDS[0],pr=R.POND_PROPS[0],bri=pr.bridge;
+ assert.equal(lake.w,38);assert.equal(lake.d,60);assert(lake.d>lake.w,'lake runs north–south');
+ assert(pr.falls.z>lake.z&&pr.falls.dir===-1&&pr.falls.intoPond,'south waterfall flows into lake');
+ assert(R.cragBlocked(pr.crag.x,pr.crag.z)&&!R.walkable(pr.crag.x,pr.crag.z),'rock heap stays solid');
+ assert(bri.x-bri.span/2<lake.x-lake.w/2&&bri.x+bri.span/2>lake.x+lake.w/2,'deck reaches both banks');
+ assert(!R.walkable(lake.x,lake.z-5),'water outside deck blocks walking');
+ assert(R.walkable(bri.x,bri.z),'bridge deck is walkable over water');
+ assert.equal(bri.z,lake.z,'bridge crosses through the lake center');
+ assert(!R.pondContains(lake,pr.falls.x,pr.falls.z),'waterfall source is on the south bank');
+ for(const dx of [-3,3])assert(!R.pondContains(lake,pr.falls.x+dx,pr.falls.z-.42),'waterfall flanking rocks rest on the bank');
+ assert(R.pondContains(lake,pr.falls.x,pr.falls.z-.57),'waterfall lands in the lake');
+
+ assert(pr.blossoms.length>=25,'additional sakura surround the longer lake');
+ assert(lake.x<-34&&lake.z+lake.d/2>66+46/2+10,'lake moved west and extends substantially farther south');
+ assert(Math.abs(R.pondBoundary(lake,-Math.PI/2).z-41.9)<2,'northern shore remains in place while the lake grows south');
+ assert(bri.arch>2.15,'bridge is taller than before');
+ const westPath=pr.paths.find(p=>p.name==='west'),eastPath=pr.paths.find(p=>p.name==='east');
+ assert(westPath.x1<=-70&&westPath.x2>bri.x-bri.span/2,'west path ends on land and overlaps the bridge');
+ assert(eastPath.x1<bri.x+bri.span/2&&eastPath.x2>=-9,'east path joins the bridge to the main road');
+ for(let x=westPath.x1;x<=eastPath.x2;x+=.5)assert(R.walkable(x,bri.z),'both approaches and the whole bridge are walkable');
+ for(const path of pr.paths)for(const prop of [...pr.lanterns,...R.CHAIRS])assert(prop.x<path.x1-1||prop.x>path.x2+1||Math.abs(prop.z-path.z)>path.width/2+1,'furniture and lamps clear the paths');
+ for(const t of pr.blossoms)assert(!(Math.abs(t.z-bri.z)<6&&(t.x<bri.x-bri.span/2+5||t.x>bri.x+bri.span/2-5)),'sakura do not obscure either approach');
+ for(const t of pr.blossoms)assert(!(Math.abs(t.x-pr.falls.x)<11&&t.z>pr.falls.z-3),'sakura leave the waterfall visible from the southern approach');
+ assert(R.GARDENS.some(g=>g.x===-23&&g.z===23)&&R.TREES.some(t=>t.x===-23&&t.z===23),'original southwest garden and tree are restored');
+ assert(R.pondBoundary(lake,-Math.PI/2).z>35,'lake stays south of the original garden');
+ assert(pr.blossoms.every(t=>Math.hypot(t.x+23,t.z-23)>15),'sakura clear the original tree canopy');
+ assert(R.pondRadius(Math.PI/4)>1.1,'broad rounded bay, not an ellipse');
+ assert(Math.abs(R.pondRadius(Math.PI/4)-R.pondRadius(5*Math.PI/4))>.05,'shore has an irregular asymmetric outline');
+ for(const x of [bri.x-bri.span/2,bri.x+bri.span/2])for(const z of [bri.z-bri.width/2,bri.z,bri.z+bri.width/2])assert(!R.pondContains(lake,x,z,.5),'bridge reaches land across its width');
+ for(let i=0;i<64;i++){const angle=i*Math.PI*2/64,inside=R.pondBoundary(lake,angle,-.8),outside=R.pondBoundary(lake,angle,1.3);
+  assert(R.pondContains(lake,inside.x,inside.z),'inside curved shoreline is water');assert(!R.pondContains(lake,outside.x,outside.z),'outside curved shoreline is land');
+  if(!R.onBridge(inside.x,inside.z))assert(!R.walkable(inside.x,inside.z),'water blocks player feet');}
+ const corner={x:lake.x+lake.w*.46,z:lake.z+lake.d*.46};assert(!R.pondContains(lake,corner.x,corner.z),'rounded lake has no rectangular water corners');assert(R.pondDistance(lake,corner.x,corner.z)>2.4,'fishing distance respects curved land corners');
+ for(let i=0;i<128;i++){const a=i*Math.PI*2/128,point=R.clampPond(lake,lake.x+Math.cos(a)*100,lake.z+Math.sin(a)*100,1.2);assert(R.pondContains(lake,point.x,point.z),'clamped cast stays inside curved water');}
+ for(const from of [-71,-10]){const route=R.path({x:from,z:bri.z},{x:from===-71?-10:-71,z:bri.z});assert(route.length&&route.every(p=>R.walkable(p.x,p.z)),'bridge route works in both directions');assert(route.some(p=>R.onBridge(p.x,p.z)),'route crosses the deck');}
+ for(const stand of pr.stands){assert(R.walkable(stand.x,stand.z));assert(R.path({x:0,z:12},stand).length,'each fishing stand reachable')}
+ for(const c of R.CHAIRS){assert(R.walkable(c.x,c.z));assert(R.path({x:0,z:12},c).length,'relocated chair reachable')}
+ // Preserve shore-prop and furniture clearance checks from the original pond design.
+ const inLake=(x,z,m=0)=>R.pondContains(lake,x,z,-m);
+ for(const rock of pr.boulders){assert(!inLake(rock.x,rock.z,rock.r),'shore boulders stay outside water');for(const c of R.CHAIRS)assert(Math.hypot(rock.x-c.x,rock.z-c.z)>=rock.r+1,'boulder clears chairs');for(const bench of R.BENCHES)assert(Math.hypot(rock.x-bench.x,rock.z-bench.z)>4,'boulder clears benches')}
+ for(const [items,gap] of [[pr.lanterns,1.2],[pr.blossoms,1.6]])for(const prop of items){assert(!inLake(prop.x,prop.z,.5),'shore prop stands outside lake');for(const chair of R.CHAIRS)assert(Math.hypot(prop.x-chair.x,prop.z-chair.z)>=gap,'shore prop clears chairs')}
+ for(const chair of R.CHAIRS)assert(Math.abs(chair.x-bri.x)>bri.span/2||Math.abs(chair.z-bri.z)>bri.width/2+1,'bridge clears chairs');
+ for(const wall of R.SANCTUARY_BARRIERS)assert(!R.walkable(wall.x,wall.z),'shared gym walls, kiosk and fences are solid');
+ for(const wall of R.SANCTUARY_GYM_WALLS){const x=(wall.x1+wall.x2)/2,z=(wall.z1+wall.z2)/2;assert(!R.walkable(x,z),'angled gym segments use shared collision')}
+ assert(R.SANCTUARY_GYM_WALLS[0].z1>R.SANCTUARY_GYM_WALLS[0].z2&&R.SANCTUARY_GYM_WALLS[2].z1<R.SANCTUARY_GYM_WALLS[2].z2,'two walls angle into the middle');
+ for(const tree of R.SANCTUARY_TREES)assert(!R.walkable(tree.x,tree.z),'native outer Sanctuary trees are solid');
+ for(const f of R.SANCTUARY_FENCES){const x=(f.x1+f.x2)/2,z=(f.z1+f.z2)/2;assert(R.fenceBlocked(x,z)&&!R.walkable(x,z),'shared straight and diagonal rails block movement')}
+ assert(R.SANCTUARY[0].z-R.SANCTUARY[0].d/2>=10,'gym begins beside the south-east garden, south of the original avenue');
+ assert(R.walkable(100,100)&&!R.walkable(R.MAX_X+1,100)&&!R.walkable(R.MIN_X-1,100),'asymmetric eastern expansion respects world bounds');
+ for(const x of [46,92])assert(R.walkable(x,29)&&R.path({x,z:31},{x,z:27}).length,'the gym wing doorways remain reachable');
+ for(const x of [43,95]){assert(!R.walkable(x,24),'wing side perimeter is solid');assert(R.walkable(x===43?44:94,34),'open court beside shorter wings remains clear')}
+ assert(R.walkable(69,39)&&R.path({x:69,z:44},{x:69,z:28}).length,'the central gym courtyard entrance stays open');
+ for(const f of R.SANCTUARY_GYM_FENCES){const x=(f.x1+f.x2)/2,z=(f.z1+f.z2)/2;assert(R.fenceBlocked(x,z)&&!R.walkable(x,z),'the front fence has shared collision')}
+ assert(R.walkable(69,38.5),'centre gap is not blocked by the gym fence');
+ for(const b of R.SANCTUARY_BARRIERS.filter(b=>b.kind.startsWith('stand')))assert(!R.walkable(b.x,b.z),'solid spectator structure matches navigation');
+ for(let row=0;row<3;row++){const x=81.7+row*1.05,z=113.25+row*1.05;for(const [px,pz] of [[x+.5,100],[70,z+1.5],[x-.3,z+.7]])assert(!R.walkable(px,pz),'each bleacher tier and its corner are enclosed by collision')}
+ assert(R.walkable(79,113)&&R.path({x:68,z:104},{x:79,z:113}).length,'the aisle between the ring and stands remains usable');
+ assert(R.path({x:35,z:90},{x:68,z:104}).length,'the ring remains reachable after the bleacher rebuild');
+ for(const [start,end] of [[{x:35,z:42},{x:69,z:25}],[{x:66,z:43},{x:66,z:50}],[{x:35,z:60},{x:50,z:60}],[{x:68,z:84},{x:68,z:77}],[{x:35,z:90},{x:68,z:104}]]){
+  const route=R.path(start,end);assert(route.length&&route.every(p=>R.walkable(p.x,p.z)),'world gym and field gates remain reachable');
  }
+ for(const g of R.GARDENS)assert(Math.abs(lake.x-g.x)>g.w/2+lake.w/2||Math.abs(lake.z-g.z)>g.d/2+lake.d/2,'lake clears gardens');
+ for(const building of R.BUILDINGS)assert(Math.abs(lake.x-building.x)>building.w/2+lake.w/2||Math.abs(lake.z-building.z)>building.d/2+lake.d/2,'lake clears buildings');
  // v319: the field HUD badge needs plaza population for players who are NOT in a plaza.
  {
   const popRoom=new SocialRoom({now:()=>now});
@@ -239,5 +288,5 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
   assert.equal(lastRooms(fieldFriend).plaza.total,0,'a leave updates the field badge again');
   assert.equal(lastRooms(fieldFriend).plaza.friends,0);
  }
- console.log('PASS social room: channel privacy, 20-player overflow, native emotion events, collision, movement/sit, rate limit, sliding idle window with a 30-minute re-authentication, per-character walk speed and tab replacement; v304 18x13 ponds whose bridge, falls, lanterns, blossoms and boulders stay out of the water and off every chair; v319 plaza population broadcast to field clients with a personalised friend count');
+ console.log('PASS social room: channel privacy, 20-player overflow, native emotion events, collision, movement/sit, rate limit, sliding idle window with a 30-minute re-authentication, per-character walk speed and tab replacement; single west lake with south falls, accessible fishing and a crossable bridge; v319 plaza population broadcast to field clients with a personalised friend count');
 })().catch(e=>{console.error(e);process.exitCode=1});

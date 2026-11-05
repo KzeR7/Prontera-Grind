@@ -6,60 +6,91 @@
 // server and client read it here, so nobody rubber-bands. SPEED stays the fallback for older
 // clients, and for a Pages Worker that still strips the field. A new client + new Worker always
 // agree; an old Worker echoes no speed, so the client falls back to the same 5 u/s it advances at.
-const LIMIT=74,SPEED=5,MIN_SPEED=2,MAX_SPEED=13,CAPACITY=20,CHAT_DELAY=3000;
+// LIMIT is retained for legacy callers; east and west are now intentionally asymmetric.
+const LIMIT=74,MIN_X=-74,MAX_X=102,MIN_Z=-74,MAX_Z=126,SPEED=5,MIN_SPEED=2,MAX_SPEED=13,CAPACITY=20,CHAT_DELAY=3000;
 const EMOTIONS=['surprise','question','music','heart','love','sweat','idea','anger','cloud','money','dots','rock','scissors','paper','kiss','ok','dead','sorry','laugh','smile','cry','shy','kissheart','think','hmm','blush','drool','meh','panic','sleep','mail','gg'];
-const BUILDINGS=[{name:'stall',x:-32,z:-15,size:4.5,rotation:Math.PI/2,w:4.5,d:4.5},{name:'cart',x:32,z:-15,size:4.5,rotation:-Math.PI/2,w:4.5,d:4.5},{name:'hall',x:0,z:-57,size:62,rotation:Math.PI,w:62,d:39},...[-1,1].map(side=>({name:'tower',x:side*33,z:-59,size:22,w:22,d:22})),...[-1,1].flatMap(side=>[-25,16,56].map(z=>({name:'house',x:side*46,z,size:21,rotation:side*Math.PI/2,w:21,d:21}))),...[-1,1].map(side=>({name:'house',x:side*27,z:65,size:17,rotation:Math.PI,w:17,d:17}))];
-// Four planted corners leave both crossing avenues and the fountain promenade open.
+// The former east houses and southwest houses make room for the approved Sanctuary and lake.
+const BUILDINGS=[{name:'stall',x:-32,z:-15,size:4.5,rotation:Math.PI/2,w:4.5,d:4.5},{name:'cart',x:32,z:-15,size:4.5,rotation:-Math.PI/2,w:4.5,d:4.5},{name:'hall',x:0,z:-57,size:62,rotation:Math.PI,w:62,d:39},...[-1,1].map(side=>({name:'tower',x:side*33,z:-59,size:22,w:22,d:22})),...[-25].map(z=>({name:'house',x:-46,z,size:21,rotation:-Math.PI/2,w:21,d:21}))];
+// The Sanctuary begins on the south-east green, alongside the lake, not north of the avenue.
+const SANCTUARY=[{id:'gym',x:69,z:25.5,w:52,d:27},{id:'farm',x:70,z:64,w:52,d:34},{id:'ring',x:71,z:105,w:48,d:27}];
+const SANCTUARY_RING={x:68,z:104,w:18,d:16,height:.8};
+const SANCTUARY_PLANTERS=[],SANCTUARY_ARCHES=[];
+const SANCTUARY_TREES=[...[46,50,54,84,88,92].map(x=>({x,z:10.2,behindGym:true})),...[47,62,82,100].map(z=>({x:12,z})),{x:100,z:14},{x:100,z:41},{x:100,z:57},{x:100,z:71},{x:100,z:85},{x:100,z:104},{x:100,z:121},{x:15,z:119},{x:26,z:119}];
+const SANCTUARY_OBSTACLES=SANCTUARY_TREES.map(t=>({...t,r:.7}));
+// Gym wall, end posts, shop structures and signs. The center of the gym is open.
+const SANCTUARY_BARRIERS=[
+ ...[43,49,89,95].map(x=>({kind:'gym-post',x,z:29,w:.5,d:.5})),
+ ...[43.75,48.25,89.75,94.25].map(x=>({kind:'gym-front',x,z:29,w:1.5,d:.45})),
+ {kind:'food',x:22,z:41,w:5.5,d:4},{kind:'trainer',x:22,z:56,w:5,d:4},
+ {kind:'guide',x:22,z:72,w:5,d:4},
+ ...[49,64,79,90].map(z=>({kind:'lamp',x:31,z,w:.5,d:.5})),
+ {kind:'stand',x:83.4,z:104.9,w:3.5,d:21},{kind:'stand',x:68.15,z:115.8,w:29.3,d:3.3},{kind:'stand-corner',x:82.8,z:115.3,w:4.2,d:4.2}
+];
+// Bevelled meadow fence, with wide north, west and south gates. Shared segment
+// collision matches the rendered rails, including angled corner pieces.
+// Back wings are true angled segments, shared by geometry, pathfinding and Worker.
+const SANCTUARY_GYM_WALLS=[[43,18.5,65,12.5],[65,12.5,73,12.5],[73,12.5,95,18.5],[43,18.5,43,29],[95,18.5,95,29]].map(([x1,z1,x2,z2])=>({x1,z1,x2,z2}));
+const SANCTUARY_GYM_FENCES=[[45,38.5,62,38.5],[76,38.5,93,38.5]].map(([x1,z1,x2,z2])=>({x1,z1,x2,z2}));
+const SANCTUARY_FENCES=[
+ [44,52,49,47],[49,47,62,47],[70,47,91,47],[91,47,96,52],
+ [96,52,96,76],[96,76,91,81],[91,81,72,81],[64,81,49,81],
+ [49,81,44,76],[44,76,44,64],[44,57,44,52]
+].map(([x1,z1,x2,z2])=>({x1,z1,x2,z2}));
+const ALL_SANCTUARY_FENCES=[...SANCTUARY_FENCES,...SANCTUARY_GYM_FENCES,...SANCTUARY_GYM_WALLS];
+function fenceBlocked(x,z){return ALL_SANCTUARY_FENCES.some(f=>{const dx=f.x2-f.x1,dz=f.z2-f.z1,t=Math.max(0,Math.min(1,((x-f.x1)*dx+(z-f.z1)*dz)/(dx*dx+dz*dz))),ex=x-f.x1-t*dx,ez=z-f.z1-t*dz;return ex*ex+ez*ez<.55*.55})}
+// Distinct gym apparatus are reserved per plaza; the owner can move away while a
+// companion trains. Anchor points identify the prop, not a client-supplied location.
+const GYM_STATIONS={power:[{x:52.5,z:30.5},{x:56.5,z:30.5},{x:60.5,z:30.5}],guard:[{x:60,z:21},{x:63,z:21},{x:66,z:21}],agility:[{x:72,z:26},{x:75,z:26},{x:78,z:26}],focus:[{x:83,z:27},{x:86,z:27},{x:89,z:27}]};
+const cleanDigimon=value=>['agumon','gabumon','patamon','palmon','greymon','metalgreymon','wargreymon','garurumon','weregarurumon','metalgarurumon','angemon','magnaangemon','seraphimon','togemon','lillymon','rosemon'].includes(value)?value:null;
+// All four original garden trees remain; the lake now starts farther south.
 const GARDENS=[...[-1,1].flatMap(x=>[-1,1].map(z=>({x:x*23,z:z*23,w:12,d:12})))];
 const TREES=GARDENS.map(g=>({x:g.x,z:g.z,size:8}));
-// v287: Two fishing ponds on the open south lawns, below the planted corner gardens
-// (south of the tree canopies at z=23, north of the houses at z=56). Water is not walkable;
-// players fish from the grass around the rim. Shared here so server paths agree with the client.
-// v304 (owner): the ponds are the plaza's centrepiece now, so they are 18x13 instead of 14x10 and
-// each has a waterfall garden behind it (see assets/social-scene.js). Widening them moves the angler
-// chairs automatically - CHAIRS, walkable() and path() all derive from these numbers.
-const PONDS=[-1,1].map(side=>({x:side*23,z:42,w:18,d:13}));
-// v308: the waterfall moved from behind the bridge to the pond's far (north) rim, so it pours INTO
-// the pond and the default camera - anglers stand on the south shore looking north - sees the water
-// coming toward it out of a rock face instead of the back of a slab hanging in the air. `dir` is the
-// way the water runs (+1 = toward +z, into the pond); `intoPond` drops the splash straight into the
-// water instead of onto a stone channel.
-const POND_FALLS=PONDS.map(p=>({x:p.x,z:p.z-p.d/2+.1,w:4.4,h:2.8,dir:1,intoPond:true}));
-// v304: the garden furniture around each pond (bridge, lanterns, blossom trees, boulders) in one
-// place, so the scene builds what the layout test checks. Boulders keep to the corners of the shore
-// because the angler chairs own the rim's mid-points.
-const SHORE_ROCKS=[[-1,-.62],[.62,-.9],[1,.55],[-.9,.75],[.15,-1]];
-const POND_PROPS=PONDS.map((p,i)=>{
- const hx=p.w/2,hz=p.d/2;
- return {
-  bridge:{x:p.x,z:p.z+hz+3.1,span:7.2,width:3.1,deck:.3,arch:1.45},
-  // v309 (owner: "both bridge & stone can pass through... can u fix to fish on the bridge & on the
-  // rocks?"). The boulder heap behind the cascade is solid, and there is a flat stone shelf beside it
-  // that you stand on to fish. `stands` are the real fishing places around the pond, so walking to
-  // the pond lands you on the bridge crown or the shelf instead of inside a rock.
-  crag:{x:p.x-.9,z:POND_FALLS[i].z-1.9,hx:2.5,hz:1.0},
-  stands:[{x:p.x,z:p.z+hz+3.1,name:'bridge'},
-          {x:p.x+hx+2.0,z:p.z,name:'east'},{x:p.x-hx-2.0,z:p.z,name:'west'},
-          {x:p.x,z:p.z+hz+1.6,name:'south'},{x:p.x+hx+1.6,z:p.z+hz+1.6,name:'south-east'},
-          {x:p.x-hx+1.6,z:p.z-hz-2.4,name:'north-west'}],
-  lanterns:[{x:p.x-hx-2.1,z:p.z+hz+1.1},{x:p.x+hx+2.1,z:p.z+hz+1.1}],
-  blossoms:[{x:p.x-hx-3.4,z:p.z-1.6,scale:1.05},{x:p.x+hx+3.4,z:p.z+.4,scale:.95}],
-  boulders:SHORE_ROCKS.map(([dx,dz],n)=>({x:p.x+dx*(hx+1.15),z:p.z+dz*(hz+1.15),r:.34+((n*23)%17)/40})),
-  falls:POND_FALLS[i],
- };
-});
+// North–south, broad irregular lake; shape, collisions, fishing
+// and the shader use the same radial shoreline. The bridge spans its width, bank to bank.
+const PONDS=[{x:-38,z:73,w:38,d:60}];
+// Broad, softly rounded bays and gentle irregularities, not a pointed symmetric ellipse.
+function pondRadius(a){const c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a)),b=Math.pow(Math.pow(c,2.5)+Math.pow(s,2.5),-.4);return b*(1+.065*Math.sin(3*a+.45)+.04*Math.sin(5*a-1.2)+.018*Math.sin(8*a+.8)+.022*Math.sin(11*a+.7))}
+function pondContains(p,x,z,pad=0){
+ const hx=Math.max(.1,p.w/2+pad),hz=Math.max(.1,p.d/2+pad),nx=(x-p.x)/hx,nz=(z-p.z)/hz;
+ return Math.hypot(nx,nz)<=pondRadius(Math.atan2(nz,nx));
+}
+function pondBoundary(p,a,offset=0){const r=pondRadius(a);return {x:p.x+Math.cos(a)*(p.w/2*r+offset),z:p.z+Math.sin(a)*(p.d/2*r+offset)}}
+// Exact closest distance to a fine polygon of the same outline, including curved corners.
+const pondOutlines=new WeakMap();
+function pondDistance(p,x,z){if(pondContains(p,x,z))return 0;let pts=pondOutlines.get(p);if(!pts){pts=Array.from({length:97},(_,i)=>pondBoundary(p,i*Math.PI*2/96));pondOutlines.set(p,pts)}let best=Infinity;
+ for(let i=1;i<pts.length;i++){const prev=pts[i-1],next=pts[i],dx=next.x-prev.x,dz=next.z-prev.z,t=Math.max(0,Math.min(1,((x-prev.x)*dx+(z-prev.z)*dz)/(dx*dx+dz*dz)));best=Math.min(best,Math.hypot(x-prev.x-dx*t,z-prev.z-dz*t))}return best}
+function clampPond(p,x,z,inset=1){const hx=p.w/2-inset,hz=p.d/2-inset,nx=(x-p.x)/hx,nz=(z-p.z)/hz,a=Math.atan2(nz,nx),r=pondRadius(a),len=Math.hypot(nx,nz),scale=len>r?r/len:1;return {x:p.x+nx*scale*hx,z:p.z+nz*scale*hz}}
+// The southern lobe is offset west: place the cascade on its real shoreline.
+const SOUTH_LIP=pondBoundary(PONDS[0],1.77);
+const POND_FALLS=[{x:SOUTH_LIP.x,z:SOUTH_LIP.z+.3,w:6,h:3.6,dir:-1,intoPond:true}];
+const SHORE_ROCKS=[];
+const shore=(angle,offset)=>pondBoundary(PONDS[0],angle,offset);
+const LAKE_BRIDGE={x:PONDS[0].x,z:PONDS[0].z,span:44,width:4.2,deck:.3,arch:2.9};
+const POND_PROPS=[{
+ bridge:LAKE_BRIDGE,
+ paths:[{name:'west',x1:-71,x2:LAKE_BRIDGE.x-LAKE_BRIDGE.span/2+.3,z:LAKE_BRIDGE.z,width:5.2},
+  {name:'east',x1:LAKE_BRIDGE.x+LAKE_BRIDGE.span/2-.3,x2:-8.8,z:LAKE_BRIDGE.z,width:5.2}],
+ crag:{x:POND_FALLS[0].x,z:POND_FALLS[0].z+1.3,hx:3.8,hz:1.2},
+ stands:[{x:LAKE_BRIDGE.x,z:LAKE_BRIDGE.z,name:'bridge'},{x:LAKE_BRIDGE.x-11,z:LAKE_BRIDGE.z,name:'bridge-west'},{x:LAKE_BRIDGE.x+11,z:LAKE_BRIDGE.z,name:'bridge-east'},
+  {...shore(-.48,2.1),name:'north-east'},{...shore(.5,2.1),name:'south-east'},
+  {...shore(-2.65,2.1),name:'north-west'},{...shore(2.65,2.1),name:'south-west'},
+  {...shore(-Math.PI/2,2),name:'north'}],
+ lanterns:[-1,1].flatMap(side=>[-1,1].map(bank=>({x:LAKE_BRIDGE.x+bank*(LAKE_BRIDGE.span/2+1.7),z:LAKE_BRIDGE.z+side*(LAKE_BRIDGE.width/2+2)}))),
+ blossoms:[...[-2.88,-2.3,-1.76,-1.34,-.86,-.3,.3,.87,1.18,1.96,2.3,2.88].map((a,i)=>({...shore(a,4),scale:i%3===0?1.16:1})),...[-2.55,-2,-1.13,-.58,.58,2.55].map(a=>({...shore(a,7),scale:.88})),...[-2.65,-2.12,-1.53,-1.02,-.72,.05,.48,.73,1.45,1.7,2.15,2.72,3.08].map((a,i)=>({...shore(a,6.5),scale:i%3===0?1.04:.92}))].filter(t=>!(Math.abs(t.z-LAKE_BRIDGE.z)<6&&(t.x<LAKE_BRIDGE.x-LAKE_BRIDGE.span/2+5||t.x>LAKE_BRIDGE.x+LAKE_BRIDGE.span/2-5))&&!(Math.abs(t.x-POND_FALLS[0].x)<11&&t.z>POND_FALLS[0].z-3)),
+ boulders:[-2.7,-1.75,-.85,.85,2.65].map((a,i)=>({...shore(a,1.3),r:.45+(i%2)*.12})),
+ falls:POND_FALLS[0]
+}];
 // The source "lamp" is a stone column; it is not used as street furniture.
 // v269: Each of the 12 metal park benches seats 2 adventurers side-by-side (24 total bench seats).
 const BENCHES=[...[-1,1].flatMap(side=>[-1,1].flatMap(bank=>[11,15,19].map(x=>({x:bank*x,z:side*13,dir:side===1?4:0,rotation:side===1?Math.PI:0,height:.95,size:3.4}))))].map((b,id)=>({...b,id,seats:[id*2,id*2+1]}));
 // v288: 8 single-seat wooden angler chairs on the pond rims (4 per pond), facing the water.
 // They take seat ids 24-31, after the 24 bench seats, so bench reservations are untouched.
 // v308: the pairs moved out to +-4.8 so the wider bridge and the rock face of the cascade have room.
-const CHAIRS=PONDS.flatMap(p=>[
- {x:p.x-4.8,z:p.z-p.d/2-1.8,dir:0,rotation:0},
- {x:p.x+4.8,z:p.z-p.d/2-1.8,dir:0,rotation:0},
- {x:p.x-4.8,z:p.z+p.d/2+1.8,dir:4,rotation:Math.PI},
- {x:p.x+4.8,z:p.z+p.d/2+1.8,dir:4,rotation:Math.PI},
-]).map((c,i)=>({...c,id:24+i,height:.66,size:1.1}));
+// Keep all eight old seat IDs, relocated around the enlarged pond.
+const CHAIRS=[-2.55,-2.0,-1.13,-.58,.58,1.13,2.0,2.55].map((a,i)=>{
+ const p=shore(a,1.8),dir=(Math.round(Math.atan2(p.x-PONDS[0].x,PONDS[0].z-p.z)/(Math.PI/4))+8)%8;
+ return {...p,id:24+i,dir,rotation:-dir*Math.PI/4,height:.66,size:1.1};
+});
 const SEATS=[
  ...BENCHES.flatMap(b=>[-1,1].map((slotSign,slot)=>({id:b.id*2+slot,bench:b.id,slot,x:b.x+slotSign,sitX:b.x+slotSign*.74,z:b.z,dir:b.dir,rotation:b.rotation,height:b.height,size:b.size}))),
  ...CHAIRS.map(c=>({id:c.id,bench:100+c.id,slot:0,x:c.x,sitX:c.x,z:c.z,dir:c.dir,rotation:c.rotation,height:c.height,size:c.size})),
@@ -104,7 +135,8 @@ const POKER={
 function pokerBlocked(x,z){return POKER_TABLES.some(({table:t})=>x>=t.minX&&x<=t.maxX&&z>=t.minZ&&z<=t.maxZ);}
 // v309: the cascade's boulder heap is solid - you walk around it instead of standing inside it.
 function cragBlocked(x,z){return POND_PROPS.some(pr=>pr.crag&&Math.abs(x-pr.crag.x)<=pr.crag.hx&&Math.abs(z-pr.crag.z)<=pr.crag.hz)}
-function walkable(x,z){return Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<=LIMIT&&Math.abs(z)<=LIMIT&&Math.hypot(x,z)>5.6&&!pokerBlocked(x,z)&&!cragBlocked(x,z)&&BUILDINGS.every(b=>Math.abs(x-b.x)>b.w/2+.7||Math.abs(z-b.z)>b.d/2+.7)&&GARDENS.every(g=>Math.abs(x-g.x)>g.w/2+.5||Math.abs(z-g.z)>g.d/2+.5)&&PONDS.every(p=>Math.abs(x-p.x)>p.w/2+.5||Math.abs(z-p.z)>p.d/2+.5);}
+function onBridge(x,z){return POND_PROPS.some(({bridge:b})=>Math.abs(x-b.x)<=b.span/2&&Math.abs(z-b.z)<=b.width/2-.35)}
+function walkable(x,z){return Number.isFinite(x)&&Number.isFinite(z)&&x>=MIN_X&&x<=MAX_X&&z>=MIN_Z&&z<=MAX_Z&&Math.hypot(x,z)>5.6&&!pokerBlocked(x,z)&&!cragBlocked(x,z)&&!fenceBlocked(x,z)&&SANCTUARY_OBSTACLES.every(o=>Math.hypot(x-o.x,z-o.z)>o.r+.25)&&SANCTUARY_BARRIERS.every(b=>Math.abs(x-b.x)>b.w/2+.3||Math.abs(z-b.z)>b.d/2+.3)&&BUILDINGS.every(b=>Math.abs(x-b.x)>b.w/2+.7||Math.abs(z-b.z)>b.d/2+.7)&&GARDENS.every(g=>Math.abs(x-g.x)>g.w/2+.5||Math.abs(z-g.z)>g.d/2+.5)&&(onBridge(x,z)||PONDS.every(p=>!pondContains(p,x,z,.5)));}
 function path(from,to){
  if(!walkable(to.x,to.z))return [];
  const start=[Math.round(from.x),Math.round(from.z)],end=[Math.round(to.x),Math.round(to.z)],key=(x,z)=>x+','+z;
@@ -115,5 +147,5 @@ function path(from,to){
 }
 function walkSpeed(p){const value=Number(p&&p.look&&p.look.speed);return Number.isFinite(value)&&value>0?Math.max(MIN_SPEED,Math.min(MAX_SPEED,value)):SPEED}
 function advance(p,now){let distance=Math.max(0,(now-p.at)/1000)*walkSpeed(p);p.at=now;while(p.path.length&&distance>0){const t=p.path[0],dx=t.x-p.x,dz=t.z-p.z,d=Math.hypot(dx,dz);p.dir=(Math.round(Math.atan2(-dx,dz)/(Math.PI/4))+8)%8;if(d<=distance){p.x=t.x;p.z=t.z;p.path.shift();distance-=d}else{p.x+=dx/d*distance;p.z+=dz/d*distance;break}}if(!p.path.length&&Number.isInteger(p.seat)&&SEATS[p.seat]){p.sit=true;p.dir=SEATS[p.seat].dir}else if(!p.path.length&&Number.isInteger(p.pokerSeat)&&POKER.seats[p.pokerSeat]){p.sit=true;p.dir=POKER.seats[p.pokerSeat].dir}return p;}
-return {LIMIT,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,SEATS,POKER,cragBlocked,walkable,path,advance};
+return {LIMIT,MIN_X,MAX_X,MIN_Z,MAX_Z,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,SANCTUARY,SANCTUARY_ARCHES,SANCTUARY_PLANTERS,SANCTUARY_TREES,SANCTUARY_OBSTACLES,SANCTUARY_BARRIERS,SANCTUARY_FENCES,SANCTUARY_GYM_FENCES,SANCTUARY_GYM_WALLS,SANCTUARY_RING,GYM_STATIONS,fenceBlocked,cleanDigimon,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,SEATS,POKER,pondRadius,pondContains,pondBoundary,pondDistance,clampPond,cragBlocked,onBridge,walkable,path,advance};
 });

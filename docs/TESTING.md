@@ -491,3 +491,26 @@ available; otherwise report that portion as unverified.
 Record exact commands, results and material missing coverage in the handoff. Historical
 pass counts and old workspace-only records are not evidence for a new checkout or a
 combined branch.
+
+### Sanctuary automatic gym (v340)
+
+Run `node tools/tests/social_gym_sim.js` alongside `social_ui_sim.js`,
+`social_scene_sim.js`, `social_sim.js` and `digimon_sanctuary_sim.js`.
+The reservation test covers shared capacity, room isolation, late snapshots,
+field leave, disconnect, switching rooms and malformed input; the UI simulation
+covers repeated cycles, duplicate slots, logout/disconnect and stale replies.
+For visual multiplayer QA, use two signed-in clients and the matching Social
+Worker: check each station at multiple camera angles and sizes, then leave one
+player in the field, stop/disconnect and confirm reservation release. Training
+progress is client-saved, so these tests are not PvP-authority tests.
+
+### Draft handoff gate (v341)
+
+The full gate measured 199 passes and three blockers after fetching the documented
+historical commits: `publish_sim.js` exceeds the existing classic-game asset budget
+(the draft build measured 65.38 MiB against 59.5 MiB); `skill_balance_sim.js`
+reports stale combat fixture hashes after the BUILD change; and
+`hosted_launch_stage_sim.js` rejects new runtime files not included in its fixed
+historical staging package. Do not weaken the budget or re-hash fixtures just to
+make the gate pass. Resolve and review these for integration. The Digimon Up
+sprites also require separate publication-rights authorization.

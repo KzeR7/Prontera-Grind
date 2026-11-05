@@ -13,15 +13,68 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  Object.defineProperty(w.document,'hidden',{value:false});w.performance.now=()=>now;w.console.warn=()=>{};
  w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(url)),arrayBuffer:async()=>{const b=fs.readFileSync(url);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)}});
  // v300: the scene tints the held rod from the fishing module's own tier palette.
+ w.PGSocialDigimon={clean:()=>null,sharedStore:()=>({ready:()=>null,request:()=>Promise.resolve(null)})};
  w.PGSocialFishing={ROD_TIER_COLORS:{twig:'#8b6b45',oak:'#b07a3c',brass:'#c8873a',silver:'#cfd8e0',golden:'#ffcb45',mythril:'#7fe3ff'}};
  w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social-scene.js','utf8'));
  const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(){},move(x,z){moves.push({x,z})},seat(id){selectedSeat=id}}),flush=async()=>{for(let i=0;i<6;i++)await Promise.resolve()};
+ const groundPlane=scene.scene.children.find(o=>o.geometry?.parameters?.width===192&&o.geometry?.parameters?.height===218);
+ assert(groundPlane&&groundPlane.position.z===27&&groundPlane.position.x===14,'ground extends south and east while retaining the original north and west edges');
+ assert(scene.scene.children.some(o=>o.geometry?.parameters?.width===18&&o.geometry?.parameters?.height===218&&o.position.z===27),'north-south road extends south');
+ assert(scene.scene.children.some(o=>o.geometry?.parameters?.width===18&&o.geometry?.parameters?.height===192&&o.position.z===0&&o.position.x===14),'east-west road extends to the new eastern edge');
+ assert(groundPlane.material.polygonOffset,'ground depth bias keeps the large lake free of distant z-fighting');
+ for(const name of ['east','west'])assert(scene.scene.children.some(o=>o.userData.bridgePath===name),'stone bridge approach '+name+' is rendered');
+ assert(scene.scene.children.some(o=>o.userData.bridgePathCap),'west path has a finished rounded end');
+ for(const tag of ['sanctuaryGym','sanctuaryField','sanctuaryRing'])assert(scene.scene.children.some(o=>o.userData[tag]),tag+' area rendered');
+ for(const name of ['power','guard','agility','focus'])assert(scene.scene.children.some(o=>o.userData.sanctuaryStation===name),name+' station rendered');
+ for(const [name,x,z] of [['power',59,30],['guard',65,23],['agility',74,25],['focus',84,27]]){assert(w.document.querySelector('[data-station="'+name+'"]'),'world station is a button');assert(w.PGSocialRules.walkable(x,z),'station destination is walkable');assert(w.PGSocialRules.path({x:69,z:35},{x,z}).length,'station destination is reachable from the courtyard')}
+
+ for(const name of ['food','trainer','guide'])assert(scene.scene.children.some(o=>o.userData.sanctuaryKiosk===name),name+' kiosk rendered');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryTree).length,w.PGSocialRules.SANCTUARY_TREES.length,'outer Sanctuary trees are rendered');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryTree&&o.userData.nativeGymTree).length,6,'six native trees are behind the gym');
+ assert.equal(scene.scene.children.filter(o=>o.userData.gymWindow==='side').length,8,'both gym sides have windows on inside and outside faces');
+ assert(scene.scene.children.filter(o=>o.userData.gymTimber==='side-post').length>=20,'both faces of side walls have exposed posts');
+ for(const x of [43,95])for(const side of [-1,1])assert(scene.scene.children.some(o=>o.userData.gymTimber==='side-post'&&Math.abs(o.position.x-(x+side*.32))<.001),'posts stand proud on both faces of wall '+x);
+ for(const tree of scene.scene.children.filter(o=>o.userData.nativeGymTree)){
+  assert(tree.isMesh&&!tree.isSprite&&tree.geometry.type==='BufferGeometry','rear trees use native three-dimensional field geometry');
+  const bounds=new T.Box3().setFromObject(tree),wall=w.PGSocialRules.SANCTUARY_GYM_WALLS[tree.position.x<69?0:2],dx=wall.x2-wall.x1,dz=wall.z2-wall.z1,len=Math.hypot(dx,dz);
+  for(const x of [bounds.min.x,bounds.max.x])for(const z of [bounds.min.z,bounds.max.z])assert((-(dz)*(x-wall.x1)+dx*(z-wall.z1))/len<-.25,'native canopy stays outside the angled gym wall');
+  assert(bounds.max.y<9.5,'native canopy stays below the roof to avoid visible tree/roof clipping');
+ }
+ assert.equal(scene.scene.children.filter(o=>o.userData.gymMasonry).length,22,'wing foundations have individual masonry blocks');
+ assert(scene.scene.children.some(o=>o.userData.gymTimber==='rear-post'&&o.position.z>12.8),'rear posts are visible from the open court');
+ for(const [side,count] of [['east',9],['south',9],['corner',3]])assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryBleacher===side).length,count,'three constructed ring seating tiers at '+side);
+ assert(scene.scene.children.some(o=>o.userData.ringCanvas),'ring canvas has a woven surface');
+ for(let row=0;row<3;row++){const tiers=scene.scene.children.filter(o=>o.userData.bleacherRow===row),h=.55+row*.43;assert.equal(tiers.length,7,'each tier has six boards and a corner');for(const m of tiers)assert(Math.abs(m.position.y-(m.userData.sanctuaryBleacher==='corner'?h+.071:h))<.001,'all bench boards and corner align on a level tier');}
+
+ for(const side of ['left','right']){assert(scene.scene.children.some(o=>o.userData.gymWing===side&&o.geometry.parameters.height>=8),'substantial tall '+side+' wing');assert(scene.scene.children.some(o=>o.userData.gymGable===side),'visible '+side+' gable');assert(scene.scene.children.some(o=>o.userData.gymUpperWall===side),'roof ridge is supported by the '+side+' wall');assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryBuildingWing===side).length,3,'broad pitched roofs of '+side+' wing')}
+ assert.equal(scene.scene.children.filter(o=>o.userData.gymFence).length,w.PGSocialRules.SANCTUARY_GYM_FENCES.length*2,'open-court front fence has matching rails');
+ const left=scene.scene.children.find(o=>o.userData.gymWing==='left'),right=scene.scene.children.find(o=>o.userData.gymWing==='right');assert(left.rotation.y>.2&&right.rotation.y<-.2,'both wings are genuinely angled toward the short central connector');
+ assert.equal(scene.scene.children.filter(o=>o.userData.gymBroadRoof).length,6,'the two wings each have a wide rear roof and two roofed gable slopes');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryResident).length,4,'four decorative Digimon are present in the field');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryRoof).length,10,'angled gym wings and kiosks have broad shingle roofs');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryBoardwalk).length,10,'angled boardwalk surrounds and links field');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryFence).length,w.PGSocialRules.SANCTUARY_FENCES.length*2,'each shared field fence has visible rails');
+ for(const sign of ['SANCTUARY GYM','TRAINER - SOON','FOOD - SOON','FIELD GUIDE - SOON'])assert(scene.scene.children.some(o=>o.userData.sanctuarySign===sign),sign+' is visibly labeled');
+ for(const id of ['coach','food','trainer','guide','ring']){assert(scene.scene.children.some(o=>o.userData.sanctuaryNpc===id),'native NPC sprite '+id+' exists');assert(w.document.querySelector('[data-sanctuary-npc="'+id+'"] button'),'NPC has a talk button')}
+ const cook=w.document.querySelector('[data-sanctuary-npc="food"] button');cook.click();const talk=w.document.querySelector('.sanctuary-npc-bubble[data-sanctuary-npc="food"]');assert(!talk.hidden&&talk.textContent.includes('not')===false&&talk.textContent.includes('ready'),'NPC explains the shop is not active');
+
  const state={id:1,name:'Synthetic',x:0,z:12,dir:0,sit:true,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:10,title:'Poring Hunter',lv:150}};
  scene.active=true;scene.putPlayer(state);await flush();frame(now+=100);assert.equal(draws.length,0);frame(now+=3100);await flush();frame(now+=100);assert(draws.length,'failed download automatically retries without network movement');assert.equal(draws.at(-1)[2],'idle','pending sitting atlas falls back to visible standing sprite');assert.equal(typeof draws.at(-1)[7],'function','native weapon glow hook');assert.equal(typeof draws.at(-1)[8],'function','stowed weapon glow hook');
  sitReady=true;frame(now+=100);await flush();frame(now+=100);assert.equal(draws.at(-1)[2],'sit');
  const before=scene.camera.position.clone();scene.putPlayer({...state,sit:false,x:34,z:25});frame(now+=100);assert(scene.camera.position.x>before.x,'camera follows self');assert(scene.camera.position.z>before.z);const label=w.document.querySelector('.social-player-label');assert.equal(label.hidden,false);const sprite=scene.scene.children.find(o=>o.userData.socialId===1),feet=sprite.position.clone().project(scene.camera);assert(parseFloat(label.style.top)>(1-feet.y)*350,'name starts below feet');assert.equal(label.querySelector('small').textContent,'Poring Hunter');assert(feet.y>.03&&feet.y<.22,'player stands slightly higher than the middle of the screen by default');
+
+
  // v225: the field's own level sigil appears under the character and moves with them.
  const aura=scene.scene.children.find(o=>o.userData.tier===150);assert.ok(aura,'Base 150 character has a level aura');assert.equal(aura.position.y,.07);assert.equal(aura.position.x,34);assert.equal(aura.position.z,25);
+ const powerLabel=[...w.document.querySelectorAll('.social-sanctuary-label')].find(e=>e.textContent==='POWER');
+ scene.putPlayer({...state,sit:false,x:39,z:12});scene.setCamera({angle:-1.1,pitch:35,distance:46});for(let i=0;i<30;i++)frame(now+=100);assert(powerLabel.hidden,'station labels do not show through exterior walls');
+ scene.putPlayer({...state,sit:false,x:69,z:29});scene.setCamera({angle:0,pitch:35,distance:46});frame(now+=100);assert(!powerLabel.hidden,'station labels remain visible in the open courtyard');const still=[powerLabel.style.left,powerLabel.style.top];frame(now+=100);assert.deepEqual([powerLabel.style.left,powerLabel.style.top],still,'camera settles immediately when the player stops in the gym');
+ // A world-projected label must not chase the pointer while the camera follows.
+ const stationPointer=(type,kind)=>{const e=new w.Event(type);Object.defineProperty(e,'pointerType',{value:kind});return e};
+ powerLabel.dispatchEvent(stationPointer('pointerenter','mouse'));const pinned=[powerLabel.style.left,powerLabel.style.top];scene.setCamera({angle:.3});frame(now+=100);assert.deepEqual([powerLabel.style.left,powerLabel.style.top],pinned,'hover pins station control during camera movement');
+ powerLabel.dispatchEvent(stationPointer('pointerleave','mouse'));frame(now+=100);assert.notDeepEqual([powerLabel.style.left,powerLabel.style.top],pinned,'label resumes world positioning after hover');
+ powerLabel.dispatchEvent(stationPointer('pointerdown','touch'));const touched=[powerLabel.style.left,powerLabel.style.top];scene.setCamera({angle:.5});frame(now+=100);assert.deepEqual([powerLabel.style.left,powerLabel.style.top],touched,'touch pins control until release');w.dispatchEvent(stationPointer('pointerup','touch'));frame(now+=100);assert.notDeepEqual([powerLabel.style.left,powerLabel.style.top],touched,'touch release restores world positioning');
+
  scene.putPlayer({...state,x:0,z:12,look:{...state.look,lv:49}});frame(now+=100);assert.equal(scene.scene.children.some(o=>o.userData.tier),false,'no aura below Base 50');assert.ok(w.auraDisposals>0,'removing a tier disposes its geometry and material');
  scene.putPlayer({...state,x:0,z:12,look:{...state.look,lv:99}});frame(now+=100);assert.ok(scene.scene.children.some(o=>o.userData.tier===99),'the sigil follows the character level tier');
 
@@ -30,14 +83,15 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const bridge=w.PGSocialRules.POND_PROPS[0].bridge;
  scene.putPlayer({...state,sit:false,x:bridge.x-.6,z:bridge.z});frame(now+=100);
  const onBridge=scene.scene.children.find(o=>o.userData.socialId===1);
- assert(onBridge.position.y>1.1&&onBridge.position.y<2,'the hero stands on the bridge deck, not inside it');
+ assert(onBridge.position.y>bridge.arch&&onBridge.position.y<bridge.arch+.2,'the hero stands on the bridge deck, not inside it');
  scene.putPlayer({...state,sit:false,x:bridge.x-.6,z:bridge.z+7});frame(now+=100);
  assert(scene.scene.children.find(o=>o.userData.socialId===1).position.y<.3,'off the deck the hero is back on the ground');
+ scene.putPlayer({...state,sit:false,x:68,z:104});frame(now+=100);assert(scene.scene.children.find(o=>o.userData.socialId===1).position.y>.8,'the player stands above the raised ring canvas');
  // v308: the cascade pours into the pond from its far rim, not from behind the bridge
  for(const [i,fall] of w.PGSocialRules.POND_FALLS.entries()){
   const pond=w.PGSocialRules.PONDS[i];
-  assert(fall.z<pond.z,'fall '+i+' sits on the pond\'s far side so it pours toward the south shore');
-  assert(fall.dir===1&&fall.intoPond,'fall '+i+' runs into the pond');
+  assert(fall.z>pond.z,'fall '+i+' sits on the south shore');
+  assert(fall.dir===-1&&fall.intoPond,'fall '+i+' runs north into the pond');
  }
  // v308: garden furniture grew to hero scale
  assert(w.PGSocialRules.POND_PROPS[0].bridge.span>=7&&w.PGSocialRules.POND_PROPS[0].bridge.width>=3,'the bridge is wider than the v304 span');
@@ -154,7 +208,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert.equal(rodGlows().length,1,'reeling in removes the other rod and its glow');
  assert.equal(rodGlows()[0],held[0],'and leaving your own rod untouched');
  // Is it actually *obvious*? Project the glow shell at the plaza camera and measure it on screen.
- const pond=w.PGSocialRules.PONDS[1];
+ const pond=w.PGSocialRules.PONDS[0];
  scene.putPlayer({...state,sit:false,x:pond.x,z:pond.z-pond.d/2-1.7,dir:0});
  frame(now+=100);
  scene.fishing.cast({x:pond.x,z:pond.z},400,()=>{});
