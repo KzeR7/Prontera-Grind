@@ -279,7 +279,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   for(const [id,u] of gymResidents)if(!keep.has(id)){scene.remove(u.sprite,u.effect,u.impact);u.sprite.material.dispose();u.texture.dispose();u.effect.geometry.dispose();u.effect.material.dispose();u.impact.geometry.dispose();u.impact.material.dispose();gymResidents.delete(id)}
  }
  function updateGymResidents(now){for(const u of gymResidents.values()){
-  const {stat,slot,species}=u.spec,anchor=R.GYM_STATIONS[stat][slot],asset=digimonStore.ready(species);u.sprite.visible=!!asset;u.effect.visible=stat==='focus';u.impact.visible=stat==='guard';if(!asset){digimonStore.request(species);continue}
+   const {stat,slot,species}=u.spec,anchor=R.GYM_STATIONS[stat][slot],asset=digimonStore.ready(species);u.sprite.visible=!!asset;u.effect.visible=stat==='focus';u.impact.visible=stat==='guard';if(!asset){digimonStore.request(species);continue}
   const side=camera.matrixWorld.elements,rx=side[0],rz=side[2],cycle=now/1000;
   // A screen-left offset keeps the fighter beside the dummy from every orbit,
   // rather than behind its depth-tested mesh.
@@ -288,7 +288,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   if(stat==='guard'){const hit=cycle%1.5,travel=Math.min(1,hit/.7);u.impact.visible=hit<.95;u.impact.position.set(anchor.x+(x-anchor.x)*travel,1.15,anchor.z+(z-anchor.z)*travel);if(hit>.65&&hit<.95){x-=rx*.3;z-=rz*.3}}
   if(stat==='agility'){stance='walking';x=anchor.x;z=anchor.z+Math.sin(cycle*2.8)*1.5;lift=Math.max(0,Math.sin(cycle*5.6))*.45;flip=Math.cos(cycle*2.8)<0;time=cycle*1400}
   if(stat==='focus'){x=anchor.x;z=anchor.z;lift=.12+Math.sin(cycle*2)*.1;u.effect.position.set(x,.08,z);u.effect.scale.setScalar(1+.18*Math.sin(now/350))}
-  const stage=Object.values(globalThis.PGDigimonSanctuary?.LINES||{}).map(line=>line.indexOf(species)).find(n=>n>=0)||0,h=1.45*[1,1.2,1.4,1.55][stage];u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(x,.06+lift,z);u.sprite.userData.training=stat;
+  const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(species)||1);u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(x,.06+lift,z);u.sprite.userData.training=stat;
   const n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,5),key=[species,stance,n,flip].join(':');if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,5,flip);u.texture.needsUpdate=true;u.paint=key}
  }}
  function updateResidents(now){for(const r of residents){const asset=digimonStore.ready(r.id);if(!asset){digimonStore.request(r.id);continue}const frame=PGSocialDigimon.frameIndex(asset.record.actions.idle.length,now,'idle',5);if(frame!==r.frame){r.frame=frame;PGSocialDigimon.draw(r.ctx,asset,'idle',now,5,r.flip);r.texture.needsUpdate=true}}}
@@ -1375,7 +1375,7 @@ void main(){
    const asset=digimonStore.ready(id);if(!asset)digimonStore.request(id);
    if(asset){
     if(!p.digimon){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);sprite.scale.set(256*1.45/96,256*1.45/96,1);sprite.userData.digimonOwner=state.id;scene.add(sprite);p.digimon={canvas,ctx:canvas.getContext('2d'),texture,sprite,paint:'',flip:false,follower:digimon.createFollower(state,state.dir,R.walkable)}}
-    const d=p.digimon,stage=Object.values(globalThis.PGDigimonSanctuary?.LINES||{}).map(line=>line.indexOf(id)).find(n=>n>=0)||0,visualHeight=1.45*[1,1.2,1.4,1.55][stage];d.sprite.scale.set(256*visualHeight/96,256*visualHeight/96,1);
+    const d=p.digimon,visualHeight=1.45*(globalThis.PGDigimonSanctuary?.visualScale(id)||1);d.sprite.scale.set(256*visualHeight/96,256*visualHeight/96,1);
     const f=digimon.stepFollower(d.follower,state,walkDt,R.walkSpeed(state),R.walkable,R.path),stance=f.walking?'walking':'idle';
     // The companion faces its own direction, not the player's current direction. Walking phase
     // accumulates distance so pausing, turning and speed changes cannot desynchronise footsteps.

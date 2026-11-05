@@ -15,6 +15,11 @@ const BASE = '7511a03c0787ec9b8d94cfc6658570ac402dc297';
 const DB_NAME = 'pg-staging', DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
 const PROJECT = 'prontera-grind-staging';
 const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js',
+ // v342: complete Sanctuary runtime and its catalog-driven, on-demand sprite pack.
+ 'assets/digimon-sanctuary.js','assets/social-digimon.js','assets/digimon/roster.js','assets/digimon/index.json','assets/digimon/v3/catalog.json',
+ 'assets/digimon/v1/catalog.json','assets/digimon/v1/agumon.png','assets/digimon/v1/gabumon.png','assets/digimon/v1/patamon.png','assets/digimon/v1/palmon.png',
+ 'assets/digimon/sanctuary/arena-stone.webp','assets/digimon/sanctuary/timber-roof.webp','assets/digimon/sanctuary/walkway-wood.webp','assets/digimon/sanctuary/gym-sand.webp','assets/digimon/sanctuary/gym-plaster.webp',
+ 'assets/digimon/sanctuary/cc0/woodland-tree.webp','assets/digimon/sanctuary/cc0/medieval_wood.webp','assets/digimon/sanctuary/cc0/rough_pine_door.webp','assets/digimon/sanctuary/cc0/roof_09.webp',
  // v287: plaza pond fishing module + stylesheet (loaded by index.html alongside the social client).
  'assets/social-fishing.js','assets/social-fishing.css',
  'assets/ui/eclipse.css','assets/ui/mobile.css','assets/ui/mobile.js',
@@ -212,7 +217,12 @@ export function unpackPayload(encoded=PAYLOAD_B64,expected=PAYLOAD_SHA256){
   const compressed=Buffer.from(encoded,'base64');
   assert.equal(createHash('sha256').update(compressed).digest('hex'),expected,'Package integrity check failed');
   const files=JSON.parse(gunzipSync(compressed).toString('utf8'));
-  assert.deepEqual(Object.keys(files).sort(),[...FILES].sort(),'Unexpected package contents');
+  const expectedFiles=[...FILES];
+  const digimonCatalog=JSON.parse(files['assets/digimon/v3/catalog.json']||'{}');
+  assert.equal(digimonCatalog.version,3,'Digimon v3 catalog required');
+  assert.equal(Object.keys(digimonCatalog.species||{}).length,280,'Complete Digimon catalog required');
+  for(const record of Object.values(digimonCatalog.species))for(const key of ['image','meta'])expectedFiles.push('assets/digimon/v3/'+record[key]);
+  assert.deepEqual(Object.keys(files).sort(),expectedFiles.sort(),'Unexpected package contents');
   for(const v of Object.values(files))assert.equal(typeof v,'string');
   return files;
 }

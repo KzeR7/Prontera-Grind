@@ -47,6 +47,7 @@ const start=()=>new Miniflare({
  modules:[
   {type:'ESModule',path:'workers/social/index.mjs'},
   {type:'ESModule',path:'workers/social/room.mjs'},
+  {type:'ESModule',path:'assets/digimon/roster.js'},
   {type:'ESModule',path:'assets/social-rules.js'},
   {type:'ESModule',path:'assets/social-poker.js'},
  ],

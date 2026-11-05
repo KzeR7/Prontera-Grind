@@ -19,14 +19,15 @@ installed in **one** command — with no `package.json`, installing one at a tim
 the previous one:
 
 ```sh
-npm install --no-save --package-lock=false jsdom three@0.128.0 ws miniflare@4.20260730.0
-node -e "require('jsdom');require('three');require('ws');require('node:sqlite');console.log('test dependencies ready')"
+npm install --no-save --package-lock=false jsdom three@0.128.0 ws miniflare@4.20260730.0 sharp@0.35.2
+node -e "require('jsdom');require('three');require('ws');require('sharp');require('node:sqlite');console.log('test dependencies ready')"
 ```
 
 `jsdom` + `three` are needed by anything that boots `index.html`; `ws` by anything that
 loads `tools/dev_server.js` (`dev_server_sim.js`, `social_api_sim.mjs`); `miniflare` by
 `social_worker_sim.mjs`, which now runs the plaza Worker's real modules in the local
-Cloudflare runtime. The game itself needs no npm install.
+Cloudflare runtime. `sharp` validates all 280 WebP atlases in `social_digimon_sim.js`
+and rebuilds the v3 pack. The game itself needs no npm install.
 
 **Full git history.** A few suites read old revisions (`skill_balance_sim.js`,
 `card_star_balance_sim.js`, `hosted_launch_stage_sim.js`, `hosted_scrypt_prepare_sim.js`)
@@ -46,15 +47,14 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```
 
-## Latest local gate (haven-v262)
+## Latest local gate (haven-v342)
 
-The most recent complete local run had **164 passes / 1 failure** across 165 suites.
-The one failure is the previously known intermittent camp-ring smoke assertion; the
-owner chose to retain the current camp layout, and that assertion was not changed.
-The new preview runtime and hosted launch package tests were added after the run began
-and passed separately; their complete-suite run is still pending. No dependency skips
-were reported. Preview configuration, local workerd preview routing and all three
-generated-asset checks passed. This is local evidence only.
+The 2026-11-06 complete local run passed **203 checks / 0 failures** on Node
+22.22.3: four generated-asset/config checks, 186 `*_sim.js`, seven `*_sim.mjs`,
+and six `*_smoke.js` suites. There were no dependency skips. This includes the
+complete 280-form asset validation, publish-size checks, real local Social Worker
+runtime, and fixed historical staging-package rehearsal. It is local evidence,
+not a hosted deployment or physical-device certification.
 
 ## Account security and unverified competitive boards (haven-v262)
 
@@ -206,7 +206,7 @@ decoding need HTTP. A platform may provide a different entry URL; use its previe
 
 ## Before pushing
 
-The gate is: the three generated-asset checks, the Pages preview config check, every `*_sim.js` and every `*_smoke.js`.
+The gate is: the three generated-asset checks, the Pages preview config check, every `*_sim.js`, every `*_sim.mjs` and every `*_smoke.js`.
 Read the output, not just the exit code — a suite that prints a dependency skip and exits
 0 has not passed.
 
@@ -223,7 +223,7 @@ python3 tools/tests/pages_preview_config_sim.py  # Python 3.11+ (tomllib)
 python3 tools/make_sprite_viewer.py --check
 python3 tools/make_class_skins.py --check
 python3 tools/make_weapon_pack.py --check
-for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
+for t in tools/tests/*_sim.js tools/tests/*_sim.mjs; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
@@ -504,13 +504,29 @@ Worker: check each station at multiple camera angles and sizes, then leave one
 player in the field, stop/disconnect and confirm reservation release. Training
 progress is client-saved, so these tests are not PvP-authority tests.
 
-### Draft handoff gate (v341)
+### Complete Digimon roster gate (v342)
 
-The full gate measured 199 passes and three blockers after fetching the documented
-historical commits: `publish_sim.js` exceeds the existing classic-game asset budget
-(the draft build measured 65.38 MiB against 59.5 MiB); `skill_balance_sim.js`
-reports stale combat fixture hashes after the BUILD change; and
-`hosted_launch_stage_sim.js` rejects new runtime files not included in its fixed
-historical staging package. Do not weaken the budget or re-hash fixtures just to
-make the gate pass. Resolve and review these for integration. The Digimon Up
-sprites also require separate publication-rights authorization.
+The clean full-gate rerun passed **203/203 checks with no dependency skips**.
+`social_digimon_sim.js` validates all 561 v3 files, 280 forms, 17,666 frames,
+follower-canvas bounds, request coalescing and the 32-atlas LRU. Sanctuary and
+Worker suites cover all-form save keys, exact-ID multiplayer looks and direct
+branching evolution. `publish_sim.js` passes 18/18: the classic 59.5 MiB ceiling
+is unchanged, the approved lazy Digimon group is below 40 MiB (35.92 MiB of v3
+files), and combined delivery remains below 180 MiB.
+`hosted_launch_stage_sim.js` passes with the catalog-derived, integrity-checked
+runtime payload; it is a local rehearsal, not a hosted deployment.
+
+For the BUILD-only combat-hash refresh, all three progression fixtures were
+regenerated with `--reuse-baseline`. Before replacing them, the old fixtures were
+preserved; all **126 current measurements and 126 reused historical measurements**
+(42 gear, 21 moving, 63 growth in each set) remained byte-for-byte identical.
+Only source/combat hashes advanced. `skill_balance_sim.js` passes.
+
+Real Chromium acceptance exercised 15 unique lazy WebP forms without bulk-loading
+the pack, failed local requests or page errors. It verified 12 painted desktop
+cards, Aegiomon selection without fabricated evolution, Agumon → Meramon branch
+evolution, selected-form attack frames in practice spar, a two-column 390 px
+roster without horizontal overflow, and the 14-entry stage-not-listed filter.
+This is not an exhaustive visual review of all 280 forms or a physical-touch
+performance pass. The Digimon Up sprites still require separate publication
+rights authorization; the upstream fan-use statement is not a rights grant.

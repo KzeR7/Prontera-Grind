@@ -1,6 +1,7 @@
 /* Shared plaza layout/navigation: server and browser use the same walkable space. */
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;root.PGSocialRules=api})(globalThis,()=>{
+(function(root,factory){const data=typeof module==='object'&&module.exports?require('./digimon/roster.js'):root.PGDigimonRoster;const api=factory(data);if(typeof module==='object'&&module.exports)module.exports=api;root.PGSocialRules=api})(globalThis,DATA=>{
 'use strict';
+if(!DATA)throw Error('Digimon roster data must load before social rules');
 // v225 (owner): plaza walking uses the character's own field run speed instead of a flat 5 u/s.
 // The field game reports moveSpd(true) in its look, the room validates it into this band, and both
 // server and client read it here, so nobody rubber-bands. SPEED stays the fallback for older
@@ -41,7 +42,9 @@ function fenceBlocked(x,z){return ALL_SANCTUARY_FENCES.some(f=>{const dx=f.x2-f.
 // Distinct gym apparatus are reserved per plaza; the owner can move away while a
 // companion trains. Anchor points identify the prop, not a client-supplied location.
 const GYM_STATIONS={power:[{x:52.5,z:30.5},{x:56.5,z:30.5},{x:60.5,z:30.5}],guard:[{x:60,z:21},{x:63,z:21},{x:66,z:21}],agility:[{x:72,z:26},{x:75,z:26},{x:78,z:26}],focus:[{x:83,z:27},{x:86,z:27},{x:89,z:27}]};
-const cleanDigimon=value=>['agumon','gabumon','patamon','palmon','greymon','metalgreymon','wargreymon','garurumon','weregarurumon','metalgarurumon','angemon','magnaangemon','seraphimon','togemon','lillymon','rosemon'].includes(value)?value:null;
+// The same generated 280-form whitelist runs in the browser and Social Worker.
+// Unknown names and path-like values never become cosmetic look or gym payloads.
+const cleanDigimon=value=>DATA.clean(value);
 // All four original garden trees remain; the lake now starts farther south.
 const GARDENS=[...[-1,1].flatMap(x=>[-1,1].map(z=>({x:x*23,z:z*23,w:12,d:12})))];
 const TREES=GARDENS.map(g=>({x:g.x,z:g.z,size:8}));

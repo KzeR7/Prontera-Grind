@@ -7,6 +7,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js',
+ // v342: complete Sanctuary runtime and its catalog-driven, on-demand sprite pack.
+ 'assets/digimon-sanctuary.js','assets/social-digimon.js','assets/digimon/roster.js','assets/digimon/index.json','assets/digimon/v3/catalog.json',
+ 'assets/digimon/v1/catalog.json','assets/digimon/v1/agumon.png','assets/digimon/v1/gabumon.png','assets/digimon/v1/patamon.png','assets/digimon/v1/palmon.png',
+ 'assets/digimon/sanctuary/arena-stone.webp','assets/digimon/sanctuary/timber-roof.webp','assets/digimon/sanctuary/walkway-wood.webp','assets/digimon/sanctuary/gym-sand.webp','assets/digimon/sanctuary/gym-plaster.webp',
+ 'assets/digimon/sanctuary/cc0/woodland-tree.webp','assets/digimon/sanctuary/cc0/medieval_wood.webp','assets/digimon/sanctuary/cc0/rough_pine_door.webp','assets/digimon/sanctuary/cc0/roof_09.webp',
  // v287: plaza pond fishing module + stylesheet (loaded by index.html alongside the social client).
  'assets/social-fishing.js','assets/social-fishing.css',
  'assets/ui/eclipse.css','assets/ui/mobile.css','assets/ui/mobile.js',
@@ -198,6 +203,11 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
   'assets/social/fish/voidshrimp.png',
   'assets/social/fish/whaleshark.png',
   'assets/social/fish/zander.png'];
+// The catalog is part of the integrity-checked payload. Require exactly the two
+// per-form files it names; no 561-entry duplicate manifest can drift out of sync.
+const digimonCatalog=JSON.parse(fs.readFileSync(path.join(root,'assets/digimon/v3/catalog.json'),'utf8'));
+if(digimonCatalog.version!==3||Object.keys(digimonCatalog.species||{}).length!==280)throw Error('Complete Digimon v3 catalog required');
+for(const record of Object.values(digimonCatalog.species))for(const key of ['image','meta'])files.push('assets/digimon/v3/'+record[key]);
 if(process.argv.length!==3)throw Error('Usage: node tools/staging/package_hosted_launch.mjs <output.mjs>');
 // Refuse to generate a mixed-version deployment if the runtime or assets have
 // changed beyond this explicit overlay. The archive comes from the fixed base.

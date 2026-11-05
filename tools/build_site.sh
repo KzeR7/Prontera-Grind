@@ -37,8 +37,18 @@ require assets/class_skins_data.js
 require assets/weapon_joints_data.js
 require assets/digimon-sanctuary.js
 require assets/social-digimon.js
-require assets/digimon/v2/catalog.json
-for name in agumon gabumon patamon palmon greymon metalgreymon wargreymon garurumon weregarurumon metalgarurumon angemon magnaangemon seraphimon togemon lillymon rosemon; do require "assets/digimon/v2/$name.png"; done
+require assets/digimon/roster.js
+require assets/digimon/v3/catalog.json
+node - "$ROOT" <<'NODE'
+const fs=require('fs'),path=require('path'),root=process.argv[2];
+const catalog=JSON.parse(fs.readFileSync(path.join(root,'assets/digimon/v3/catalog.json'),'utf8'));
+const entries=Object.entries(catalog.species||{});
+if(catalog.version!==3||entries.length!==280)throw Error('The complete 280-form Digimon v3 catalog is required');
+for(const [id,record] of entries)for(const key of ['image','meta']){
+ const file=path.join(root,'assets/digimon/v3',record[key]);
+ if(!fs.existsSync(file)||!fs.statSync(file).size)throw Error('Missing Digimon runtime asset: '+id+'/'+record[key]);
+}
+NODE
 require assets/digimon/sanctuary/arena-stone.webp
 require assets/digimon/sanctuary/timber-roof.webp
 for name in walkway-wood gym-sand gym-plaster; do require "assets/digimon/sanctuary/$name.webp"; done

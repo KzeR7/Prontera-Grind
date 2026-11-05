@@ -63,7 +63,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   Object.assign(w,{CLOUD:{on:online,user:online?user:null},S:{cls:'Novice',eq:{},zeny:100000,poker:{chips:5000,freeClaimed:0}},tabs:[],wardrobeAppearance:()=>({version:1,sex:'m'}),logShown:()=>[],openTab:()=>{},setInterval:(fn,ms)=>{timers.push({fn,ms});if(ms===2000)w.sessionTick=fn;return timers.length},
    PGSocialScene:{create:async(_host,_labels,cb)=>{callbacks=cb;return{active:false,cameraState:{angle:0,pitch:48,distance:48},setCamera(){},resetCamera(){},clearPlayers(){},putPlayer(){},removePlayer(){},updatePoker(){},dealerBubble(){}}}}});
   for(const [key,value] of Object.entries(seed))w.localStorage.setItem(key,value);
-  w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social-poker.js','utf8'));w.eval(fs.readFileSync('assets/social.js','utf8'));
+  w.eval(fs.readFileSync('assets/digimon/roster.js','utf8'));w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social-poker.js','utf8'));w.eval(fs.readFileSync('assets/social.js','utf8'));
   return {dom,w,timers,callbacks:()=>callbacks};
  }
  // World survives an empty hello and a real new document. Whisper/Local never enter localStorage.

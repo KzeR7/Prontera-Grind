@@ -2,8 +2,8 @@
 """Generate the full Digimon profile/evolution index from the pinned upstream data.
 
 Usage: python3 tools/digimon/build_full_index.py /path/to/digimon-up-sprites/digimon.json
-The upstream sprite repository contains 251 profile records; this index is metadata
-only and does not import its artwork.
+The upstream sprite repository contains 251 profile records. This index links those
+profiles to any matching v3 runtime atlas; variants remain in the 280-entry roster.
 """
 import json
 import sys
@@ -39,10 +39,10 @@ def main():
         edge_count += len(evolves_to)
         unresolved.update(ref for ref in evolves_to + evolves_from if ref not in known)
 
-        v2_image = ROOT / "assets/digimon/v2" / f"{sid}.png"
+        v3_image = ROOT / "assets/digimon/v3" / f"{sid}.webp"
         v1_image = ROOT / "assets/digimon/v1" / f"{sid}.png"
-        if v2_image.is_file():
-            image = {"path": f"assets/digimon/v2/{sid}.png", "atlas": "v2"}
+        if v3_image.is_file():
+            image = {"path": f"assets/digimon/v3/{sid}.webp", "atlas": "v3"}
             local_sprites += 1
         elif v1_image.is_file():
             image = {"path": f"assets/digimon/v1/{sid}.png", "atlas": "v1"}
@@ -74,6 +74,8 @@ def main():
         },
         "coverage": {
             "profileCount": len(species),
+            "animationEntryCount": 280,
+            "animationVariantCount": 32,
             "evolutionLinksListed": edge_count,
             "localSpriteCount": local_sprites,
             "profilesWithoutLocalSprite": len(species) - local_sprites,
@@ -82,8 +84,8 @@ def main():
             "notes": [
                 "This is a 251-profile index, not a claim that every Digimon ever published is included.",
                 "Evolution links reproduce the source data; the source describes its profile/evolution data as incomplete and some links point to profiles not in this dataset.",
-                "Image is null when this game does not already bundle a matching sprite. No additional sprite artwork is included by this index.",
-                "The upstream animated sprite repository has 280 animation entries including variants; those entries are not 280 distinct profiles.",
+                "Image is null when the pinned source has no matching animation entry for this profile.",
+                "The runtime roster has 280 animation entries including 32 variants; those entries are not 280 distinct profiles. Variants can inherit a base profile where the source naming establishes one.",
             ],
         },
         "species": species,

@@ -5,14 +5,16 @@
 `assets/digimon/index.json` is the metadata index of **251 Digimon profiles**,
 including stage, attribute, type, profile links, and the source-listed `evolvesFrom`
 and `evolvesTo` links. Its source revision and coverage notes are in the JSON.
-It is data only: it does not import additional character art or register all
-profiles as selectable in the game. The repository's Digimon Up source has 280
-animated entries including variants, while its profile JSON contains 251
-records; these counts are not interchangeable. The source itself notes gaps in
+The index itself remains data only; the separately generated `roster.js` controls
+runtime selection. Of the 251 profiles, **248 have an exact local v3 animation
+entry** and the other three have `image: null`.
+
+The repository's pinned Digimon Up source has **280 animated entries**, including
+32 variants; those entries are not 280 unique profiles. Eighteen variants inherit
+a base profile and 14 animation-only entries have no profile, leaving 266
+profiled animation entries in the runtime roster. The source itself notes gaps in
 evolution data, and the index preserves links to missing/variant profiles as
-unresolved references rather than guessing their identities. Only 16 of the
-indexed profiles currently reference sprites already present in this project;
-the other 235 have `image: null`.
+unresolved references rather than guessing their identities.
 
 Rebuild the index from the exact pinned Digimon Up checkout's `digimon.json`:
 
@@ -27,28 +29,40 @@ official franchise catalogue.
 
 ## Sprite and floor packs
 
-`assets/digimon/v2` contains the four approved starter lines: Agumon,
-Gabumon, Patamon and Palmon, each through its three named later forms. For
-all 16 species, idle, walking, attack and faint are packed from the source
-`dannyphang/digimon-up-sprites` commit
+`assets/digimon/v3` contains all **280 animation entries and 17,666 frames**:
+one lossless WebP atlas and one JSON frame record per entry, plus one catalog
+(561 files, 35.92 MiB total; the images alone are 33.50 MiB). Idle, walking,
+attack and faint are packed from `dannyphang/digimon-up-sprites` commit
 `4eaee71cc949953e45ce5a77564469ba93e36907`. The older `v1` four-follower pack
-is retained for already-cached clients. The upstream project describes the art
-as Bandai Namco artwork shared for fan use; its statement is not a grant of
-rights. Publication authorization is a separate decision.
+is retained for already-cached clients; the superseded 16-form v2 pack is not
+shipped alongside v3. The upstream project describes the art as Bandai Namco
+artwork shared for fan use; its statement is **not a grant of rights**.
+Publication authorization is a separate decision.
 
-To regenerate v2, check out the exact source revision and run:
+To regenerate v3 and the shared roster, check out the exact source revision and
+run (use a temporary tooling directory or install Sharp together with the other
+project test dependencies so npm does not prune them):
 
 ```
-python3 -m pip install Pillow
-python3 tools/digimon/build_pack.py /path/to/digimon-up-sprites/baked
+npm install --no-save --package-lock=false sharp@0.35.2
+node tools/digimon/build_pack.js /path/to/digimon-up-sprites
 ```
 
-The packer crops only transparent margins, stores each source-frame SHA-256,
+The packer verifies the source revision, entry/frame counts and profile
+coverage. It crops only transparent margins, stores each source-frame SHA-256,
 original offset and a common idle-figure anchor, and retains the RGBA pixels.
 Blank source frames are retained. Each atlas is wide enough for its largest
 frame. The renderer has one fixed viewpoint, not eight directions, and flips it
-for horizontal movement. Companions use Patamon-referenced rookie height with a
-modest stage-size increase. The UI and scene share an on-demand image cache.
+for horizontal movement. Each form is normalized from its own idle bounds;
+stage metadata controls its world-presentation scale.
+
+The UI and scene share a 32-entry LRU decoded-atlas cache. The catalog and small
+shared roster load first, but a form's metadata and WebP are requested only when
+that form is shown. Selection, followers, gym residents, spar partners and the
+Social Worker all use the same 280-ID whitelist. Evolution offers only exact,
+direct source-listed links to another bundled ID; it does not invent tagged,
+fusion or missing-profile paths. The four original save keys and their preferred
+original evolution paths remain compatible.
 
 The stone flooring is an AI-generated original texture, stored as
 `tools/digimon/arena-stone-source.png`. Run

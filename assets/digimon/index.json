@@ -9,9 +9,11 @@
   },
   "coverage": {
     "profileCount": 251,
+    "animationEntryCount": 280,
+    "animationVariantCount": 32,
     "evolutionLinksListed": 876,
-    "localSpriteCount": 16,
-    "profilesWithoutLocalSprite": 235,
+    "localSpriteCount": 248,
+    "profilesWithoutLocalSprite": 3,
     "unresolvedEvolutionReferenceCount": 175,
     "unresolvedEvolutionReferences": [
       "agumon[dark]",
@@ -193,8 +195,8 @@
     "notes": [
       "This is a 251-profile index, not a claim that every Digimon ever published is included.",
       "Evolution links reproduce the source data; the source describes its profile/evolution data as incomplete and some links point to profiles not in this dataset.",
-      "Image is null when this game does not already bundle a matching sprite. No additional sprite artwork is included by this index.",
-      "The upstream animated sprite repository has 280 animation entries including variants; those entries are not 280 distinct profiles."
+      "Image is null when the pinned source has no matching animation entry for this profile.",
+      "The runtime roster has 280 animation entries including 32 variants; those entries are not 280 distinct profiles. Variants can inherit a base profile where the source naming establishes one."
     ]
   },
   "species": [
@@ -211,7 +213,10 @@
         "koromon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=botamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/botamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "chibomon",
@@ -225,7 +230,10 @@
         "demiveemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=chicomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/chibomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "choromon",
@@ -242,7 +250,10 @@
         "sakuttomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=choromon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/choromon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "cotsucomon",
@@ -257,7 +268,10 @@
         "tumblemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=cotsucomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/cotsucomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "jyarimon",
@@ -271,7 +285,10 @@
         "gigimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=jyarimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/jyarimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "kuramon",
@@ -286,7 +303,10 @@
         "tsumemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kuramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/kuramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "leafmon",
@@ -300,7 +320,10 @@
         "minomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=leafmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/leafmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "nyokimon",
@@ -316,7 +339,10 @@
         "yokomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=nyokimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/nyokimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "pabumon",
@@ -332,7 +358,10 @@
         "yokomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=bubbmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/pabumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "pichimon",
@@ -347,7 +376,10 @@
         "upamon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pitchmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/pichimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "poyomon",
@@ -361,7 +393,10 @@
         "tokomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=poyomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/poyomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "punimon",
@@ -376,7 +411,10 @@
         "tumblemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=punimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/punimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "pupumon",
@@ -390,7 +428,10 @@
         "tanemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pupumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/pupumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "pururumon",
@@ -404,7 +445,10 @@
         "poromon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pururumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/pururumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "putimon",
@@ -418,7 +462,10 @@
         "cupimon"
       ],
       "profileUrl": null,
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/putimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "puwamon",
@@ -433,7 +480,10 @@
         "biyomon[warp]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=puwamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/puwamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "relemon",
@@ -447,7 +497,10 @@
         "viximon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=relemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/relemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "sakumon",
@@ -461,7 +514,10 @@
         "sakuttomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sakumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/sakumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tsubumon",
@@ -475,7 +531,10 @@
         "upamon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tsubumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tsubumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "yukimibotamon",
@@ -491,7 +550,10 @@
         "icemon[warp]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=yukimibotamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/yukimibotamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "yuramon",
@@ -507,7 +569,10 @@
         "tri"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=yuramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/yuramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "zerimon",
@@ -521,7 +586,10 @@
         "gummymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=zerimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/zerimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "budmon",
@@ -540,7 +608,10 @@
         "palmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=budmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/budmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "bukamon",
@@ -561,7 +632,10 @@
         "syakomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pukamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/bukamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "cupimon",
@@ -579,7 +653,10 @@
         "terriermon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=cupimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/cupimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "demimeramon",
@@ -597,7 +674,10 @@
         "solarmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=petimeramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/demimeramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "demiveemon",
@@ -613,7 +693,10 @@
         "veemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=chibimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/demiveemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gigimon",
@@ -630,7 +713,10 @@
         "lavorvomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gigimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gigimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gummymon",
@@ -646,7 +732,10 @@
         "terriermon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gummymon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gummymon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "kakkinmon",
@@ -665,7 +754,10 @@
         "zubamon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kakkinmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/kakkinmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "kodokugumon",
@@ -684,7 +776,10 @@
         "dokugumon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kodokugumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/kodokugumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "koromon",
@@ -700,7 +795,10 @@
         "agumon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=koromon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/koromon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "minomon",
@@ -719,7 +817,10 @@
         "wormmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=minomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/minomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "missimon",
@@ -736,7 +837,10 @@
         "hagurumon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=missimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/missimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "motimon",
@@ -759,7 +863,10 @@
         "tentomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mochimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/motimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "nyaromon",
@@ -778,7 +885,10 @@
         "gatomon[warp]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=nyaromon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/nyaromon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "pagumon",
@@ -798,7 +908,10 @@
         "gizamon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pagumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/pagumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "pinamon",
@@ -815,7 +928,10 @@
         "kokatorimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pinamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/pinamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "poromon",
@@ -831,7 +947,10 @@
         "hawkmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=poromon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/poromon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "sakuttomon",
@@ -849,7 +968,10 @@
         "zubamon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sakuttomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/sakuttomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tanemon",
@@ -870,7 +992,10 @@
         "palmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tanemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tanemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tokomon",
@@ -887,7 +1012,10 @@
         "salamon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tokomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tokomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tri",
@@ -924,7 +1052,10 @@
         "madleomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tsumemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tsumemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tsunomon",
@@ -942,7 +1073,10 @@
         "veemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tunomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tsunomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tumblemon",
@@ -961,7 +1095,10 @@
         "zubamon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=goromon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tumblemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "upamon",
@@ -979,7 +1116,10 @@
         "gekkomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=upamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/upamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "viximon",
@@ -995,7 +1135,10 @@
         "renamon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pokomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/viximon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "yokomon",
@@ -1013,7 +1156,10 @@
         "wormmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pyocomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/yokomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "agumon",
@@ -1039,8 +1185,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=agumon",
       "image": {
-        "path": "assets/digimon/v2/agumon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/agumon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -1063,7 +1209,10 @@
         "tortomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=armadimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/armadillomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "biyomon",
@@ -1088,7 +1237,10 @@
         "unimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=piyomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/biyomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "candlemon",
@@ -1110,7 +1262,10 @@
         "woodmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=candmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/candlemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "crabmon",
@@ -1131,7 +1286,10 @@
         "shellmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ganimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/crabmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "demidevilmon",
@@ -1155,7 +1313,10 @@
         "vilemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=picodevimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/demidevilmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "dracmon",
@@ -1178,7 +1339,10 @@
         "youkomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=dracumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/dracmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "espimon",
@@ -1198,7 +1362,10 @@
         "numemon[mistake]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=espimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/espimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gabumon",
@@ -1222,8 +1389,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gabumon",
       "image": {
-        "path": "assets/digimon/v2/gabumon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/gabumon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -1250,7 +1417,10 @@
         "vilemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gazimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gazimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gekkomon",
@@ -1269,7 +1439,10 @@
         "fumamon[warp]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gekkomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gekkomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "ghostmon",
@@ -1290,7 +1463,10 @@
         "petermon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ghostmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/ghostmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gizamon",
@@ -1315,7 +1491,10 @@
         "tyrannomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gizamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gizamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gomamon",
@@ -1340,7 +1519,10 @@
         "tortomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gomamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gomamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gotsumon",
@@ -1366,7 +1548,10 @@
         "tortomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gottsumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gotsumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "guilmon",
@@ -1390,7 +1575,10 @@
         "gallantmon[warp]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=guilmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/guilmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "hagurumon",
@@ -1419,7 +1607,10 @@
         "troopmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hagurumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/hagurumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "hawkmon",
@@ -1441,7 +1632,10 @@
         "numemon[mistake]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hawkmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/hawkmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "keramon",
@@ -1460,7 +1654,10 @@
         "infermon[warp]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=keramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/keramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "kokabuterimon",
@@ -1482,7 +1679,10 @@
         "tortomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kokabuterimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/kokabuterimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "kokuwamon",
@@ -1507,7 +1707,10 @@
         "tankmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kokuwamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/kokuwamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "lalamon",
@@ -1530,7 +1733,10 @@
         "yakiimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=lalamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/lalamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "ludomon",
@@ -1550,7 +1756,10 @@
         "tialudomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ludomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/ludomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "mushroomon",
@@ -1574,7 +1783,10 @@
         "yakiimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mushmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/mushroomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "otamamon",
@@ -1596,7 +1808,10 @@
         "shellmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=otamamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/otamamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "palmon",
@@ -1623,8 +1838,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=palmon",
       "image": {
-        "path": "assets/digimon/v2/palmon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/palmon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -1650,8 +1865,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=patamon",
       "image": {
-        "path": "assets/digimon/v2/patamon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/patamon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -1671,7 +1886,10 @@
         "sakuyamon[warp]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=renamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/renamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "salamon",
@@ -1697,7 +1915,10 @@
         "unimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=plotmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/salamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "sangomon",
@@ -1718,7 +1939,10 @@
         "tobiumon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sangomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/sangomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "solarmon",
@@ -1745,7 +1969,10 @@
         "tankmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=solarmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/solarmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "syakomon",
@@ -1767,7 +1994,10 @@
         "shellmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=shakomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/syakomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tentomon",
@@ -1791,7 +2021,10 @@
         "stingmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tentomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tentomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "terriermon",
@@ -1810,7 +2043,10 @@
         "megagargomon[warp]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=terriermon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/terriermon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "veemon",
@@ -1830,7 +2066,10 @@
         "tyrannomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=v-mon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/veemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "wormmon",
@@ -1856,7 +2095,10 @@
         "woodmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=wormmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/wormmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "zubamon",
@@ -1878,7 +2120,10 @@
         "zubaeagermon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=zubamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/zubamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "akatorimon",
@@ -1899,7 +2144,10 @@
         "piximon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=akatorimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/akatorimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "angemon",
@@ -1921,8 +2169,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=angemon",
       "image": {
-        "path": "assets/digimon/v2/angemon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/angemon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -1944,7 +2192,10 @@
         "zudomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ankylomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/ankiromon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "aquilamon",
@@ -1964,7 +2215,10 @@
         "silphymon(+gatomon)"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=aquilamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/aquilamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "bakemon",
@@ -1993,7 +2247,10 @@
         "warumonzaemon[mistake]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=bakemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/bakemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "birdramon",
@@ -2012,7 +2269,10 @@
         "parrotmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=birdramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/birdramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "clockmon",
@@ -2034,7 +2294,10 @@
         "phantomon[dark]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=clockmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/clockmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "devidramon",
@@ -2059,7 +2322,10 @@
         "wingdramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=devidramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/devidramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "devimon",
@@ -2085,7 +2351,10 @@
         "phantomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=devimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/devimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "digmon",
@@ -2103,7 +2372,10 @@
         "shakkoumon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=digmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/digmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "dokugumon",
@@ -2125,7 +2397,10 @@
         "okuwamon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=dokugumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/dokugumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "ebidramon",
@@ -2146,7 +2421,10 @@
         "shogungekomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ebidramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/ebidramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "exveemon",
@@ -2165,7 +2443,10 @@
         "wingdramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=xv-mon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/exveemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "flamedramon",
@@ -2183,7 +2464,10 @@
         "wingdramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=fladramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/flamedramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "flarerizamon",
@@ -2207,7 +2491,10 @@
         "wargrowlmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=flarelizamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/flarerizamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "flymon",
@@ -2229,7 +2516,10 @@
         "piximon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=flymon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/flymon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "frigimon",
@@ -2251,7 +2541,10 @@
         "zudomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=yukidarumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/frigimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gargomon",
@@ -2269,7 +2562,10 @@
         "warumonzaemon[dark]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gargomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gargomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "garurumon",
@@ -2291,8 +2587,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=garurumon",
       "image": {
-        "path": "assets/digimon/v2/garurumon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/garurumon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -2316,7 +2612,10 @@
         "silphymon(+aquilamon)"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tailmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gatomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gekomon",
@@ -2334,7 +2633,10 @@
         "shogungekomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gekomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gekomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gesomon",
@@ -2358,7 +2660,10 @@
         "scorpiomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gesomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gesomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gladimon",
@@ -2379,7 +2684,10 @@
         "knightmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gladimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gladimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "golemon",
@@ -2400,7 +2708,10 @@
         "zudomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=golemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/golemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "greymon",
@@ -2422,8 +2733,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=greymon",
       "image": {
-        "path": "assets/digimon/v2/greymon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/greymon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -2444,7 +2755,10 @@
         "machinedramon[dark]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=growmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/growlmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "guardromon",
@@ -2467,7 +2781,10 @@
         "warumonzaemon[mistake]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=guardromon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/guardromon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "halsemon",
@@ -2485,7 +2802,10 @@
         "silphymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=holsmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/halsemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "hi-commandramon",
@@ -2502,7 +2822,10 @@
         "tankdramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hi-commandramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/hi-commandramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "hoverespimon",
@@ -2520,7 +2843,10 @@
         "tankdramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hoverespimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/hoverespimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "hudiemon",
@@ -2537,7 +2863,10 @@
         "lillymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hudiemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/hudiemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "icemon",
@@ -2557,7 +2886,10 @@
         "zudomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=icemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/icemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "ikkakumon",
@@ -2576,7 +2908,10 @@
         "zudomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ikkakumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/ikkakumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "jazardmon",
@@ -2595,7 +2930,10 @@
         "tankdramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=jazardmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/jazardmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "kabuterimon",
@@ -2617,7 +2955,10 @@
         "piximon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kabuterimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/kabuterimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "kiwimon",
@@ -2643,7 +2984,10 @@
         "piximon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kiwimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/kiwimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "kokatorimon",
@@ -2664,7 +3008,10 @@
         "piximon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=cockatrimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/kokatorimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "kuwagamon",
@@ -2689,7 +3036,10 @@
         "piximon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kuwagamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/kuwagamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "kyubimon",
@@ -2707,7 +3057,10 @@
         "taomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kyubimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/kyubimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "lavorvomon",
@@ -2727,7 +3080,10 @@
         "metalgreymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=lavorvomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/lavorvomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "leomon",
@@ -2751,7 +3107,10 @@
         "weregarurumon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=leomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/leomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "machmon",
@@ -2770,7 +3129,10 @@
         "tankdramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=machmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/machmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "madleomon",
@@ -2791,7 +3153,10 @@
         "weregarurumon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=madleomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/madleomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "mekanorimon",
@@ -2813,7 +3178,10 @@
         "tankdramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mechanorimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/mekanorimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "meramon",
@@ -2835,7 +3203,10 @@
         "wargrowlmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=meramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/meramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "mojyamon",
@@ -2859,7 +3230,10 @@
         "warumonzaemon[mistake]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mojyamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/mojyamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "monochromon",
@@ -2882,7 +3256,10 @@
         "triceramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=monochromon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/monochromon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "nefertimon",
@@ -2900,7 +3277,10 @@
         "silphymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=nefertimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/nefertimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "numemon",
@@ -2953,7 +3333,10 @@
         "warumonzaemon[dark]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=numemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/numemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "oboromon",
@@ -2971,7 +3354,10 @@
         "phantomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=oboromon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/oboromon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "octmon",
@@ -2991,7 +3377,10 @@
         "shogungekomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=octmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/octmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "pegasusmon",
@@ -3009,7 +3398,10 @@
         "shakkoumon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pegasmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/pegasusmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "petermon",
@@ -3028,7 +3420,10 @@
         "pumpkinmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=petermon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/petermon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "porcupamon",
@@ -3046,7 +3441,10 @@
         "warumonzaemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=porcupamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/porcupamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "raremon",
@@ -3077,7 +3475,10 @@
         "warumonzaemon[mistake]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=raremon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/raremon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "redvegiemon",
@@ -3097,7 +3498,10 @@
         "jagamon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=redvegimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/redvegiemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "roachmon",
@@ -3119,7 +3523,10 @@
         "warumonzaemon[mistake]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gokimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/roachmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "seadramon",
@@ -3143,7 +3550,10 @@
         "scorpiomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=seadramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/seadramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "shellmon",
@@ -3169,7 +3579,10 @@
         "zudomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=shellmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/shellmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "sistermon_ciel",
@@ -3189,7 +3602,10 @@
         "taomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sistermon_ciel",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/sistermon_ciel.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "sistermon_noir",
@@ -3208,7 +3624,10 @@
         "weregarurumon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sistermonnoir",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/sistermon_noir.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "skullknightmon",
@@ -3232,7 +3651,10 @@
         "phantomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=skullknightmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/skullknightmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "starmon",
@@ -3256,7 +3678,10 @@
         "warumonzaemon[mistake]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=starmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/starmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "stingmon",
@@ -3275,7 +3700,10 @@
         "paildramon(+exveemon)"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=stingmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/stingmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "sunflowmon",
@@ -3296,7 +3724,10 @@
         "pumpkinmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sunflowmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/sunflowmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tankmon",
@@ -3322,7 +3753,10 @@
         "warumonzaemon[mistake]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tankmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tankmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tialudomon",
@@ -3340,7 +3774,10 @@
         "raijiludomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tialudomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tialudomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tobiumon",
@@ -3358,7 +3795,10 @@
         "megaseadramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tobiumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tobiumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "togemon",
@@ -3384,8 +3824,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=togemon",
       "image": {
-        "path": "assets/digimon/v2/togemon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/togemon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -3412,7 +3852,10 @@
         "zudomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tortamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tortomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "troopmon",
@@ -3429,7 +3872,10 @@
         "warumonzaemon[mistake]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=troopmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/troopmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tuskmon",
@@ -3452,7 +3898,10 @@
         "wargrowlmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tuskmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tuskmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tyrannomon",
@@ -3477,7 +3926,10 @@
         "wargrowlmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tyranomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tyrannomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "unimon",
@@ -3501,7 +3953,10 @@
         "shakkoumon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=yunimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/unimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "vilemon",
@@ -3525,7 +3980,10 @@
         "piedmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=evilmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/vilemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "woodmon",
@@ -3548,7 +4006,10 @@
         "pumpkinmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=woodmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/woodmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "yakiimon",
@@ -3567,7 +4028,10 @@
         "pumpkinmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=yakiimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/yakiimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "youkomon",
@@ -3586,7 +4050,10 @@
         "taomon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=youkomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/youkomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "zubaeagermon",
@@ -3602,7 +4069,10 @@
         "duramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=zubaeagermon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/zubaeagermon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "andromon",
@@ -3622,7 +4092,10 @@
         "machinedramon[dark]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=andromon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/andromon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "angewomon",
@@ -3644,7 +4117,10 @@
         "valkyrimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=angewomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/angewomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "bluemeramon",
@@ -3662,7 +4138,10 @@
         "piedmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=bluemeramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/bluemeramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "cherrymon",
@@ -3685,7 +4164,10 @@
         "rosemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=jyureimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/cherrymon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "datamon",
@@ -3707,7 +4189,10 @@
         "machinedramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=nanomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/datamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "digitamamon",
@@ -3730,7 +4215,10 @@
         "rosemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=digitamamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/digitamamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "dinobeemon",
@@ -3749,7 +4237,10 @@
         "imperialdramon_dragonmode"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=dinobeemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/dinobeemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "divermon",
@@ -3772,7 +4263,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hangyomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/divermon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "duramon",
@@ -3791,7 +4285,10 @@
         "slashangemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=duramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/duramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "etemon",
@@ -3811,7 +4308,10 @@
         "piedmon[dark]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=etemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/etemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "fumamon",
@@ -3829,7 +4329,10 @@
         "slashangemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=fumamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/fumamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "garbagemon",
@@ -3854,7 +4357,10 @@
         "puppetmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gerbemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/garbagemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "garudamon",
@@ -3875,7 +4381,10 @@
         "valkyrimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=garudamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/garudamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gigadramon",
@@ -3898,7 +4407,10 @@
         "wargreymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gigadramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gigadramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "hippogryphonmon",
@@ -3921,7 +4433,10 @@
         "valkyrimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hippogriffomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/hippogryphonmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "infermon",
@@ -3941,7 +4456,10 @@
         "armageddemon[dark]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=infermon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/infermon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "jagamon",
@@ -3966,7 +4484,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=jyagamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/jagamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "jazarichmon",
@@ -3984,7 +4505,10 @@
         "machinedramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=jazarichmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/jazarichmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "knightmon",
@@ -4006,7 +4530,10 @@
         "slashangemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=knightmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/knightmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "kyukimon",
@@ -4028,7 +4555,10 @@
         "valkyrimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kyukimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/kyukimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "ladydevimon",
@@ -4055,7 +4585,10 @@
         "rosemon[dark]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ladydevimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/ladydevimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "lavogaritamon",
@@ -4077,7 +4610,10 @@
         "wargreymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=lavogaritamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/lavogaritamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "lilamon",
@@ -4097,7 +4633,10 @@
         "rosemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=lilamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/lilamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "lillymon",
@@ -4120,8 +4659,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=lilimon",
       "image": {
-        "path": "assets/digimon/v2/lillymon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/lillymon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -4143,7 +4682,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=loaderleomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/loaderliomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "magnaangemon",
@@ -4166,8 +4708,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=holyangemon",
       "image": {
-        "path": "assets/digimon/v2/magnaangemon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/magnaangemon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -4194,7 +4736,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mammon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/mammothmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "marinbullmon",
@@ -4215,7 +4760,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=marinbullmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/marinbullmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "megadramon",
@@ -4241,7 +4789,10 @@
         "wargreymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=megadramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/megadramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "megakabuterimon",
@@ -4261,7 +4812,10 @@
         "herculeskabuterimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=atlurkabuterimon-blue",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/megakabuterimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "megaseadramon",
@@ -4283,7 +4837,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=megaseadramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/megaseadramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "metalgreymon",
@@ -4309,8 +4866,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=metalgreymon",
       "image": {
-        "path": "assets/digimon/v2/metalgreymon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/metalgreymon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -4334,7 +4891,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=insekimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/meteormon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "monzaemon",
@@ -4359,7 +4919,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=monzaemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/monzaemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "myotismon",
@@ -4381,7 +4944,10 @@
         "piedmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=vamdemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/myotismon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "okuwamon",
@@ -4403,7 +4969,10 @@
         "rosemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=okuwamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/okuwamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "paildramon",
@@ -4421,7 +4990,10 @@
         "wargreymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=paildramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/paildramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "parrotmon",
@@ -4442,7 +5014,10 @@
         "valkyrimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=parrotmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/parrotmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "phantomon",
@@ -4464,7 +5039,10 @@
         "piedmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=fantomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/phantomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "piccolomon",
@@ -4525,7 +5103,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=picklemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/piximon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "polarbearmon",
@@ -4545,7 +5126,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=polarbearmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/polarbearmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "pumpkinmon",
@@ -4568,7 +5152,10 @@
         "rosemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pumpmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/pumpkinmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "raijiludomon",
@@ -4588,7 +5175,10 @@
         "slashangemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=raijiludomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/raijiludomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "rapidmon",
@@ -4611,7 +5201,10 @@
         "slashangemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=rapidmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/rapidmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "scorpiomon",
@@ -4632,7 +5225,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=scorpiomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/scorpiomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "shakkoumon",
@@ -4656,7 +5252,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=shakkoumon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/shakkoumon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "shogungekomon",
@@ -4677,7 +5276,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tonosamagekomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/shogungekomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "silphymon",
@@ -4699,7 +5301,10 @@
         "valkyrimon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=silphymon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/silphymon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "tankdramon",
@@ -4723,7 +5328,10 @@
         "machinedramon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tankdramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/tankdramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "taomon",
@@ -4741,7 +5349,10 @@
         "sakuyamon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=taomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/taomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "triceramon",
@@ -4764,7 +5375,10 @@
         "wargreymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=triceramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/triceramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "wargrowlmon",
@@ -4788,7 +5402,10 @@
         "wargreymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=megalogrowmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/wargrowlmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "warumonzaemon",
@@ -4819,7 +5436,10 @@
         "puppetmon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=warumonzaemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/warumonzaemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "weregarurumon",
@@ -4840,8 +5460,8 @@
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=weregarrumon",
       "image": {
-        "path": "assets/digimon/v2/weregarurumon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/weregarurumon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -4861,7 +5481,10 @@
         "wargreymon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=wingdramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/wingdramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "zudomon",
@@ -4887,7 +5510,10 @@
         "vikemon"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=zudomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/zudomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "apocalymon",
@@ -4901,7 +5527,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=apoclymon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/apocalymon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "bryweludramon",
@@ -4915,7 +5544,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=bryweludramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/bryweludramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "diablomon",
@@ -4932,7 +5564,10 @@
         "armageddemon[mode]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=diablomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/diablomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "durandamon",
@@ -4947,7 +5582,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=durandamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/durandamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "gallantmon",
@@ -4965,7 +5603,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=dukemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/gallantmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "heavyleomon",
@@ -4980,7 +5621,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=heavyleomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/heavyleomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "herculeskabuterimon",
@@ -4996,7 +5640,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=heraklekabuterimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/herculeskabuterimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "hiandromon",
@@ -5015,7 +5662,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hiandromon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/hiandromon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "hydramon",
@@ -5031,7 +5681,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hydramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/hydramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "imperialdramon_dragonmode",
@@ -5050,7 +5703,10 @@
         "imperialdramon_fightermode[mode]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=imperialdramondragonmode",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/imperialdramon_dragonmode.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "jijimon",
@@ -5105,7 +5761,10 @@
         "armageddemon[dark]"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mugendramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/machinedramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "magnadramon",
@@ -5123,7 +5782,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=holydramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/magnadramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "megagargomon",
@@ -5138,7 +5800,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=saintgalgomon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/megagargomon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "metalgarurumon",
@@ -5158,8 +5823,8 @@
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=metalgarurumon",
       "image": {
-        "path": "assets/digimon/v2/metalgarurumon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/metalgarurumon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -5182,7 +5847,10 @@
         "apocalymon(+machinedramon+piedmon+puppetmon)"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=metalseadramon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/metalseadramon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "phoenixmon",
@@ -5201,7 +5869,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hououmon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/phoenixmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "piedmon",
@@ -5228,7 +5899,10 @@
         "apocalymon(+machinedramon+metalseadramon+puppetmon)"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=piemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/piedmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "puppetmon",
@@ -5248,7 +5922,10 @@
         "apocalymon(+machinedramon+metalseadramon+piedmon)"
       ],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pinochimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/puppetmon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "rosemon",
@@ -5274,8 +5951,8 @@
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=rosemon",
       "image": {
-        "path": "assets/digimon/v2/rosemon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/rosemon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -5295,7 +5972,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sakuyamon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/sakuyamon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "seraphimon",
@@ -5314,8 +5994,8 @@
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=seraphimon",
       "image": {
-        "path": "assets/digimon/v2/seraphimon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/seraphimon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -5331,7 +6011,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=skadimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/skadimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "slashangemon",
@@ -5353,7 +6036,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=slashangemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/slashangemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "valkyrimon",
@@ -5375,7 +6061,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=valkyrimon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/valkyrimon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "vikemon",
@@ -5403,7 +6092,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=vikemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/vikemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "wargreymon",
@@ -5426,8 +6118,8 @@
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=wargreymon",
       "image": {
-        "path": "assets/digimon/v2/wargreymon.png",
-        "atlas": "v2"
+        "path": "assets/digimon/v3/wargreymon.webp",
+        "atlas": "v3"
       }
     },
     {
@@ -5444,7 +6136,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=armagemon",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/armageddemon.webp",
+        "atlas": "v3"
+      }
     },
     {
       "id": "imperialdramon_fightermode",
@@ -5458,7 +6153,10 @@
       ],
       "evolvesTo": [],
       "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=imperialdramonfightermode",
-      "image": null
+      "image": {
+        "path": "assets/digimon/v3/imperialdramon_fightermode.webp",
+        "atlas": "v3"
+      }
     }
   ]
 }

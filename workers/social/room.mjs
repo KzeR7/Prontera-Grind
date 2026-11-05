@@ -1,3 +1,4 @@
+import '../../assets/digimon/roster.js';
 import '../../assets/social-rules.js';
 import '../../assets/social-poker.js';
 const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker;

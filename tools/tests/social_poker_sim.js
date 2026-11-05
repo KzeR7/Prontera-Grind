@@ -140,7 +140,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  Object.assign(sw,{THREE:T,devicePixelRatio:1,requestAnimationFrame:cb=>frameFn=cb,ResizeObserver:class{constructor(fn){this.fn=fn}observe(){this.fn()}},PGWardrobe:{CLASSES:{Novice:0,Whitesmith:4011,Sniper:4012},Store,normalize:a=>a,defaults:()=>({version:1,sex:'m'}),frameIndex:()=>0,animationKey:()=>'0',draw(){}},PGFourthJobs:{CLASSES:{},Store},milestone:()=>null,REFINE_GLOWS:[],drawNativeWeaponGlow(){},drawNativeArmGlow(){}});
  Object.defineProperty(sw.document,'hidden',{value:false});sw.performance.now=()=>1000;
  sw.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(url)),arrayBuffer:async()=>{const b=fs.readFileSync(url);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)}});
- sw.eval(fs.readFileSync('assets/social-rules.js','utf8'));sw.eval(fs.readFileSync('assets/social-scene.js','utf8'));
+ sw.eval(fs.readFileSync('assets/digimon/roster.js','utf8'));sw.eval(fs.readFileSync('assets/social-rules.js','utf8'));sw.eval(fs.readFileSync('assets/social-scene.js','utf8'));
  const scene=await sw.PGSocialScene.create(host,sw.document.getElementById('labels'),{self:()=>1,menu(){},move(){},seat(){},pokerSeat(id){clickedPokerSeat=id},pokerOpen(tid){openedTable=tid}});
  scene.active=true;scene.putPlayer({id:1,name:'Hero',x:-33,z:4,dir:0,sit:false,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'}}});
  frameFn(1100);
@@ -183,7 +183,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  let vw=1280,vh=720,chatRect={left:12,top:490,right:402,bottom:704,width:390,height:214};
  uw.document.getElementById('view').getBoundingClientRect=()=>({left:0,top:0,right:vw,bottom:vh,width:vw,height:vh});
  uw.document.getElementById('eclipseDock').getBoundingClientRect=()=>({left:380,top:vh-68,right:vw-380,bottom:vh,width:520,height:68});
- uw.eval(fs.readFileSync('assets/social-rules.js','utf8'));
+ uw.eval(fs.readFileSync('assets/digimon/roster.js','utf8'));uw.eval(fs.readFileSync('assets/social-rules.js','utf8'));
  uw.eval(fs.readFileSync('assets/social-poker.js','utf8'));
  uw.eval(fs.readFileSync('assets/social.js','utf8'));
  const chatEl=uw.document.getElementById('socialChat');
