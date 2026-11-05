@@ -1,0 +1,5464 @@
+{
+  "schemaVersion": 1,
+  "title": "Digimon Profile and Evolution Index",
+  "source": {
+    "repository": "https://github.com/dannyphang/digimon-up-sprites",
+    "revision": "4eaee71cc949953e45ce5a77564469ba93e36907",
+    "profileData": "digimon.json",
+    "profileReference": "https://digimon.net/reference_en/"
+  },
+  "coverage": {
+    "profileCount": 251,
+    "evolutionLinksListed": 876,
+    "localSpriteCount": 16,
+    "profilesWithoutLocalSprite": 235,
+    "unresolvedEvolutionReferenceCount": 175,
+    "unresolvedEvolutionReferences": [
+      "agumon[dark]",
+      "agumon[mistake]",
+      "agumon[warp]",
+      "andromon[dark]",
+      "angemon+ankiromon",
+      "angemon[dark]",
+      "angewomon[dark]",
+      "apocalymon(+machinedramon+metalseadramon+piedmon)",
+      "apocalymon(+machinedramon+metalseadramon+puppetmon)",
+      "apocalymon(+machinedramon+piedmon+puppetmon)",
+      "apocalymon(+metalseadramon+piedmon+puppetmon)",
+      "aquilamon+gatomon",
+      "armadillomon[armor]",
+      "armadillomon[mistake]",
+      "armageddemon[dark]",
+      "armageddemon[mode]",
+      "bakemon[dark]",
+      "bakemon[mistake]",
+      "biyomon[dark]",
+      "biyomon[mistake]",
+      "biyomon[warp]",
+      "candlemon[dark]",
+      "candlemon[mistake]",
+      "clockmon[dark]",
+      "crabmon[mistake]",
+      "datamon[dark]",
+      "datamon[mistake]",
+      "demidevilmon[mistake]",
+      "devidramon[dark]",
+      "devimon[dark]",
+      "diablomon[dark]",
+      "diablomon[mode]",
+      "digitamamon[dark]",
+      "digmon[armor]",
+      "dinobeemon(+exveemon)",
+      "dinobeemon(+stingmon)",
+      "dokugumon[dark]",
+      "dokugumon[mistake]",
+      "dracmon[mistake]",
+      "espimon[mistake]",
+      "etemon[dark]",
+      "exveemon+stingmon",
+      "exveemon[dark]",
+      "flamedramon[armor]",
+      "flarerizamon[dark]",
+      "frigimon[warp]",
+      "fumamon[warp]",
+      "gabumon[mistake]",
+      "gabumon[warp]",
+      "gallantmon[warp]",
+      "garbagemon[mistake]",
+      "gargomon[dark]",
+      "garurumon[dark]",
+      "gatomon[armor]",
+      "gatomon[dark]",
+      "gatomon[warp]",
+      "gazimon[dark]",
+      "gazimon[mistake]",
+      "gekkomon[mistake]",
+      "gekkomon[warp]",
+      "gesomon[dark]",
+      "ghostmon[mistake]",
+      "gigadramon[dark]",
+      "gizamon[mistake]",
+      "gladimon[dark]",
+      "gomamon[mistake]",
+      "gotsumon[mistake]",
+      "greymon[dark]",
+      "growlmon[dark]",
+      "guardromon[mistake]",
+      "guilmon[dark]",
+      "guilmon[mistake]",
+      "guilmon[warp]",
+      "hagurumon[mistake]",
+      "halsemon[armor]",
+      "hawkmon[armor]",
+      "hawkmon[dark]",
+      "hawkmon[mistake]",
+      "icemon[warp]",
+      "imperialdramon_dragonmode[mode]",
+      "imperialdramon_fightermode[mode]",
+      "infermon[dark]",
+      "infermon[warp]",
+      "jagamon[dark]",
+      "kabuterimon[dark]",
+      "keramon[mistake]",
+      "keramon[warp]",
+      "kokabuterimon[mistake]",
+      "kokatorimon[dark]",
+      "kokuwamon[mistake]",
+      "kuwagamon[dark]",
+      "kyubimon[dark]",
+      "ladydevimon[dark]",
+      "lalamon[mistake]",
+      "lavogaritamon[dark]",
+      "leomon[dark]",
+      "loaderliomon[dark]",
+      "ludomon[mistake]",
+      "machinedramon+metalseadramon+piedmon+puppetmon",
+      "machinedramon[dark]",
+      "madleomon[dark]",
+      "madleomon[mistake]",
+      "megadramon[dark]",
+      "megagargomon[warp]",
+      "metalgarurumon[warp]",
+      "metalgreymon[dark]",
+      "mojyamon[mistake]",
+      "monzaemon[dark]",
+      "mushroomon[mistake]",
+      "myotismon[dark]",
+      "nefertimon[armor]",
+      "numemon[dark]",
+      "numemon[mistake]",
+      "nyaromon[warp]",
+      "okuwamon[dark]",
+      "otamamon[mistake]",
+      "paildramon(+exveemon)",
+      "paildramon(+stingmon)",
+      "palmon[dark]",
+      "palmon[mistake]",
+      "patamon[armor]",
+      "patamon[dark]",
+      "patamon[mistake]",
+      "pegasusmon[armor]",
+      "phantomon[dark]",
+      "piedmon[dark]",
+      "puppetmon[dark]",
+      "puwamon[warp]",
+      "rapidmon[dark]",
+      "raremon[mistake]",
+      "redvegiemon[mistake]",
+      "renamon[dark]",
+      "renamon[mistake]",
+      "renamon[warp]",
+      "roachmon[mistake]",
+      "rosemon[dark]",
+      "sakuyamon[warp]",
+      "salamon[dark]",
+      "salamon[mistake]",
+      "sangomon[mistake]",
+      "shakkoumon(+angemon)",
+      "shakkoumon(+ankiromon)",
+      "shogungekomon[dark]",
+      "silphymon(+aquilamon)",
+      "silphymon(+gatomon)",
+      "sistermon_ciel[dark]",
+      "sistermon_ciel[mode]",
+      "sistermon_noir[dark]",
+      "sistermon_noir[mode]",
+      "skullknightmon[dark]",
+      "solarmon[mistake]",
+      "starmon[mistake]",
+      "stingmon[dark]",
+      "syakomon[mistake]",
+      "tankmon[mistake]",
+      "tentomon[dark]",
+      "tentomon[mistake]",
+      "terriermon[mistake]",
+      "terriermon[warp]",
+      "togemon[mistake]",
+      "troopmon[mistake]",
+      "tyrannomon[dark]",
+      "veemon[armor]",
+      "veemon[mistake]",
+      "vilemon[mistake]",
+      "wargreymon[warp]",
+      "wargrowlmon[dark]",
+      "warumonzaemon[dark]",
+      "warumonzaemon[mistake]",
+      "woodmon[mistake]",
+      "wormmon[mistake]",
+      "youkomon[dark]",
+      "yukimibotamon[warp]",
+      "zubamon[dark]",
+      "zubamon[mistake]"
+    ],
+    "notes": [
+      "This is a 251-profile index, not a claim that every Digimon ever published is included.",
+      "Evolution links reproduce the source data; the source describes its profile/evolution data as incomplete and some links point to profiles not in this dataset.",
+      "Image is null when this game does not already bundle a matching sprite. No additional sprite artwork is included by this index.",
+      "The upstream animated sprite repository has 280 animation entries including variants; those entries are not 280 distinct profiles."
+    ]
+  },
+  "species": [
+    {
+      "id": "botamon",
+      "name": "Botamon",
+      "nameZh": "黑球獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "demimeramon",
+        "koromon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=botamon",
+      "image": null
+    },
+    {
+      "id": "chibomon",
+      "name": "Chibomon",
+      "nameZh": "芝高獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "demiveemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=chicomon",
+      "image": null
+    },
+    {
+      "id": "choromon",
+      "name": "Choromon",
+      "nameZh": "電鼠獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Machine",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "kakkinmon",
+        "missimon",
+        "motimon",
+        "sakuttomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=choromon",
+      "image": null
+    },
+    {
+      "id": "cotsucomon",
+      "name": "Cotsucomon",
+      "nameZh": "孜孜獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Armor",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "kakkinmon",
+        "tumblemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=cotsucomon",
+      "image": null
+    },
+    {
+      "id": "jyarimon",
+      "name": "Jyarimon",
+      "nameZh": "沙礫獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "gigimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=jyarimon",
+      "image": null
+    },
+    {
+      "id": "kuramon",
+      "name": "Kuramon",
+      "nameZh": "水母獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Unidentified",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "pagumon",
+        "tsumemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kuramon",
+      "image": null
+    },
+    {
+      "id": "leafmon",
+      "name": "Leafmon",
+      "nameZh": "綠葉獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "minomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=leafmon",
+      "image": null
+    },
+    {
+      "id": "nyokimon",
+      "name": "Nyokimon",
+      "nameZh": "豆苗獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Seed",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "budmon",
+        "tanemon",
+        "yokomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=nyokimon",
+      "image": null
+    },
+    {
+      "id": "pabumon",
+      "name": "Pabumon",
+      "nameZh": "泡沫獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "motimon",
+        "tanemon",
+        "yokomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=bubbmon",
+      "image": null
+    },
+    {
+      "id": "pichimon",
+      "name": "Pichimon",
+      "nameZh": "比基獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "bukamon",
+        "upamon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pitchmon",
+      "image": null
+    },
+    {
+      "id": "poyomon",
+      "name": "Poyomon",
+      "nameZh": "浮游獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "tokomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=poyomon",
+      "image": null
+    },
+    {
+      "id": "punimon",
+      "name": "Punimon",
+      "nameZh": "普尼獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "tsunomon",
+        "tumblemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=punimon",
+      "image": null
+    },
+    {
+      "id": "pupumon",
+      "name": "Pupumon",
+      "nameZh": "X抗體",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "tanemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pupumon",
+      "image": null
+    },
+    {
+      "id": "pururumon",
+      "name": "Pururumon",
+      "nameZh": "震震獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "poromon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pururumon",
+      "image": null
+    },
+    {
+      "id": "putimon",
+      "name": "Putimon",
+      "nameZh": "布丁獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": null,
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "cupimon"
+      ],
+      "profileUrl": null,
+      "image": null
+    },
+    {
+      "id": "puwamon",
+      "name": "Puwamon",
+      "nameZh": "綿綿獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Baby Bird",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "pinamon",
+        "biyomon[warp]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=puwamon",
+      "image": null
+    },
+    {
+      "id": "relemon",
+      "name": "Relemon",
+      "nameZh": "狐裘獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "viximon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=relemon",
+      "image": null
+    },
+    {
+      "id": "sakumon",
+      "name": "Sakumon",
+      "nameZh": "薩庫獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Weapon",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "sakuttomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sakumon",
+      "image": null
+    },
+    {
+      "id": "tsubumon",
+      "name": "Tsubumon",
+      "nameZh": "粒粒獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "upamon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tsubumon",
+      "image": null
+    },
+    {
+      "id": "yukimibotamon",
+      "name": "YukimiBotamon",
+      "nameZh": "雪球獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "nyaromon",
+        "frigimon[warp]",
+        "icemon[warp]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=yukimibotamon",
+      "image": null
+    },
+    {
+      "id": "yuramon",
+      "name": "Yuramon",
+      "nameZh": "浮球獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Seed",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "budmon",
+        "tanemon",
+        "tri"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=yuramon",
+      "image": null
+    },
+    {
+      "id": "zerimon",
+      "name": "Zerimon",
+      "nameZh": "果凍獸",
+      "stage": "Baby I",
+      "attribute": null,
+      "type": "Slime",
+      "evolvesFrom": [],
+      "evolvesTo": [
+        "gummymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=zerimon",
+      "image": null
+    },
+    {
+      "id": "budmon",
+      "name": "Budmon",
+      "nameZh": "花蕾獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "nyokimon",
+        "yuramon"
+      ],
+      "evolvesTo": [
+        "lalamon",
+        "mushroomon",
+        "palmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=budmon",
+      "image": null
+    },
+    {
+      "id": "bukamon",
+      "name": "Bukamon",
+      "nameZh": "布加獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Lesser",
+      "evolvesFrom": [
+        "pichimon"
+      ],
+      "evolvesTo": [
+        "crabmon",
+        "gizamon",
+        "gomamon",
+        "otamamon",
+        "sangomon",
+        "syakomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pukamon",
+      "image": null
+    },
+    {
+      "id": "cupimon",
+      "name": "Cupimon",
+      "nameZh": "丘比獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Mini Angel",
+      "evolvesFrom": [
+        "putimon"
+      ],
+      "evolvesTo": [
+        "patamon",
+        "salamon",
+        "terriermon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=cupimon",
+      "image": null
+    },
+    {
+      "id": "demimeramon",
+      "name": "DemiMeramon",
+      "nameZh": "小火焰獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Fire",
+      "evolvesFrom": [
+        "botamon"
+      ],
+      "evolvesTo": [
+        "candlemon",
+        "ghostmon",
+        "solarmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=petimeramon",
+      "image": null
+    },
+    {
+      "id": "demiveemon",
+      "name": "DemiVeemon",
+      "nameZh": "豆丁獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Baby Dragon",
+      "evolvesFrom": [
+        "chibomon"
+      ],
+      "evolvesTo": [
+        "veemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=chibimon",
+      "image": null
+    },
+    {
+      "id": "gigimon",
+      "name": "Gigimon",
+      "nameZh": "基基獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Lesser",
+      "evolvesFrom": [
+        "jyarimon"
+      ],
+      "evolvesTo": [
+        "guilmon",
+        "lavorvomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gigimon",
+      "image": null
+    },
+    {
+      "id": "gummymon",
+      "name": "Gummymon",
+      "nameZh": "軟糖獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Lesser",
+      "evolvesFrom": [
+        "zerimon"
+      ],
+      "evolvesTo": [
+        "terriermon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gummymon",
+      "image": null
+    },
+    {
+      "id": "kakkinmon",
+      "name": "Kakkinmon",
+      "nameZh": "恪勤獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Armor",
+      "evolvesFrom": [
+        "choromon",
+        "cotsucomon"
+      ],
+      "evolvesTo": [
+        "gotsumon",
+        "ludomon",
+        "zubamon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kakkinmon",
+      "image": null
+    },
+    {
+      "id": "kodokugumon",
+      "name": "Kodokugumon",
+      "nameZh": "小蜘蛛獸",
+      "stage": "Baby II",
+      "attribute": "Virus",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "minomon",
+        "tsumemon"
+      ],
+      "evolvesTo": [
+        "tentomon",
+        "wormmon",
+        "dokugumon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kodokugumon",
+      "image": null
+    },
+    {
+      "id": "koromon",
+      "name": "Koromon",
+      "nameZh": "滾球獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Lesser",
+      "evolvesFrom": [
+        "botamon"
+      ],
+      "evolvesTo": [
+        "agumon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=koromon",
+      "image": null
+    },
+    {
+      "id": "minomon",
+      "name": "Minomon",
+      "nameZh": "幼蟲獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Larva",
+      "evolvesFrom": [
+        "leafmon"
+      ],
+      "evolvesTo": [
+        "kodokugumon",
+        "kokabuterimon",
+        "kokuwamon",
+        "wormmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=minomon",
+      "image": null
+    },
+    {
+      "id": "missimon",
+      "name": "Missimon",
+      "nameZh": "飛彈獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Machine",
+      "evolvesFrom": [
+        "choromon"
+      ],
+      "evolvesTo": [
+        "espimon",
+        "hagurumon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=missimon",
+      "image": null
+    },
+    {
+      "id": "motimon",
+      "name": "Motimon",
+      "nameZh": "年糕獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Lesser",
+      "evolvesFrom": [
+        "choromon",
+        "pabumon"
+      ],
+      "evolvesTo": [
+        "espimon",
+        "gotsumon",
+        "hagurumon",
+        "kokabuterimon",
+        "kokuwamon",
+        "solarmon",
+        "tentomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mochimon",
+      "image": null
+    },
+    {
+      "id": "nyaromon",
+      "name": "Nyaromon",
+      "nameZh": "貓貓獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Lesser",
+      "evolvesFrom": [
+        "yukimibotamon"
+      ],
+      "evolvesTo": [
+        "gekkomon",
+        "ghostmon",
+        "salamon",
+        "gatomon[warp]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=nyaromon",
+      "image": null
+    },
+    {
+      "id": "pagumon",
+      "name": "Pagumon",
+      "nameZh": "柏古獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Lesser",
+      "evolvesFrom": [
+        "kuramon"
+      ],
+      "evolvesTo": [
+        "demidevilmon",
+        "dracmon",
+        "gazimon",
+        "ghostmon",
+        "gizamon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pagumon",
+      "image": null
+    },
+    {
+      "id": "pinamon",
+      "name": "Pinamon",
+      "nameZh": "皮那獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Baby Bird",
+      "evolvesFrom": [
+        "puwamon"
+      ],
+      "evolvesTo": [
+        "biyomon",
+        "kokatorimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pinamon",
+      "image": null
+    },
+    {
+      "id": "poromon",
+      "name": "Poromon",
+      "nameZh": "鈍鈍獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Mini Bird",
+      "evolvesFrom": [
+        "pururumon"
+      ],
+      "evolvesTo": [
+        "hawkmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=poromon",
+      "image": null
+    },
+    {
+      "id": "sakuttomon",
+      "name": "Sakuttomon",
+      "nameZh": "薩庫托獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Weapon",
+      "evolvesFrom": [
+        "choromon",
+        "sakumon"
+      ],
+      "evolvesTo": [
+        "solarmon",
+        "zubamon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sakuttomon",
+      "image": null
+    },
+    {
+      "id": "tanemon",
+      "name": "Tanemon",
+      "nameZh": "種子獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Bulb",
+      "evolvesFrom": [
+        "nyokimon",
+        "pabumon",
+        "pupumon",
+        "yuramon"
+      ],
+      "evolvesTo": [
+        "lalamon",
+        "mushroomon",
+        "palmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tanemon",
+      "image": null
+    },
+    {
+      "id": "tokomon",
+      "name": "Tokomon",
+      "nameZh": "迪哥獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Lesser",
+      "evolvesFrom": [
+        "poyomon"
+      ],
+      "evolvesTo": [
+        "patamon",
+        "salamon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tokomon",
+      "image": null
+    },
+    {
+      "id": "tri",
+      "name": "Tri",
+      "nameZh": "種子獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": null,
+      "evolvesFrom": [
+        "yuramon"
+      ],
+      "evolvesTo": [
+        "palmon"
+      ],
+      "profileUrl": null,
+      "image": null
+    },
+    {
+      "id": "tsumemon",
+      "name": "Tsumemon",
+      "nameZh": "妖爪獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Unidentified",
+      "evolvesFrom": [
+        "kuramon"
+      ],
+      "evolvesTo": [
+        "kodokugumon",
+        "demidevilmon",
+        "dracmon",
+        "gizamon",
+        "keramon",
+        "madleomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tsumemon",
+      "image": null
+    },
+    {
+      "id": "tsunomon",
+      "name": "Tsunomon",
+      "nameZh": "獨角獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Lesser",
+      "evolvesFrom": [
+        "punimon"
+      ],
+      "evolvesTo": [
+        "gabumon",
+        "gazimon",
+        "veemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tunomon",
+      "image": null
+    },
+    {
+      "id": "tumblemon",
+      "name": "Tumblemon",
+      "nameZh": "滾石獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Ore",
+      "evolvesFrom": [
+        "cotsucomon",
+        "punimon"
+      ],
+      "evolvesTo": [
+        "gotsumon",
+        "ludomon",
+        "zubamon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=goromon",
+      "image": null
+    },
+    {
+      "id": "upamon",
+      "name": "Upamon",
+      "nameZh": "奧柏獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Amphibian",
+      "evolvesFrom": [
+        "pichimon",
+        "tsubumon"
+      ],
+      "evolvesTo": [
+        "armadillomon",
+        "gekkomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=upamon",
+      "image": null
+    },
+    {
+      "id": "viximon",
+      "name": "Viximon",
+      "nameZh": "小狐獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Lesser",
+      "evolvesFrom": [
+        "relemon"
+      ],
+      "evolvesTo": [
+        "renamon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pokomon",
+      "image": null
+    },
+    {
+      "id": "yokomon",
+      "name": "Yokomon",
+      "nameZh": "比高獸",
+      "stage": "Baby II",
+      "attribute": null,
+      "type": "Bulb",
+      "evolvesFrom": [
+        "nyokimon",
+        "pabumon"
+      ],
+      "evolvesTo": [
+        "biyomon",
+        "wormmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pyocomon",
+      "image": null
+    },
+    {
+      "id": "agumon",
+      "name": "Agumon",
+      "nameZh": "亞古獸",
+      "stage": "Rookie",
+      "attribute": "Vaccine",
+      "type": "Reptile",
+      "evolvesFrom": [
+        "koromon"
+      ],
+      "evolvesTo": [
+        "bakemon[mistake]",
+        "devidramon[dark]",
+        "flarerizamon",
+        "greymon",
+        "meramon",
+        "monochromon",
+        "numemon[mistake]",
+        "tuskmon",
+        "tyrannomon",
+        "wargreymon[warp]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=agumon",
+      "image": {
+        "path": "assets/digimon/v2/agumon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "armadillomon",
+      "name": "Armadillomon",
+      "nameZh": "穿山獸",
+      "stage": "Rookie",
+      "attribute": "Free",
+      "type": "Mammal",
+      "evolvesFrom": [
+        "upamon"
+      ],
+      "evolvesTo": [
+        "ankiromon",
+        "digmon[armor]",
+        "golemon",
+        "monochromon",
+        "numemon[mistake]",
+        "shellmon",
+        "tortomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=armadimon",
+      "image": null
+    },
+    {
+      "id": "biyomon",
+      "name": "Biyomon",
+      "nameZh": "比丘獸",
+      "stage": "Rookie",
+      "attribute": "Vaccine",
+      "type": "Baby Bird",
+      "evolvesFrom": [
+        "puwamon[warp]",
+        "pinamon",
+        "yokomon"
+      ],
+      "evolvesTo": [
+        "akatorimon",
+        "aquilamon",
+        "bakemon[mistake]",
+        "birdramon",
+        "kiwimon",
+        "kokatorimon[dark]",
+        "numemon[mistake]",
+        "unimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=piyomon",
+      "image": null
+    },
+    {
+      "id": "candlemon",
+      "name": "Candlemon",
+      "nameZh": "蠟燭獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Fire",
+      "evolvesFrom": [
+        "demimeramon"
+      ],
+      "evolvesTo": [
+        "bakemon",
+        "clockmon",
+        "devimon[dark]",
+        "flarerizamon",
+        "meramon",
+        "raremon[mistake]",
+        "woodmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=candmon",
+      "image": null
+    },
+    {
+      "id": "crabmon",
+      "name": "Crabmon",
+      "nameZh": "螃蟹獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Crustacean",
+      "evolvesFrom": [
+        "bukamon"
+      ],
+      "evolvesTo": [
+        "ebidramon",
+        "gesomon",
+        "numemon[mistake]",
+        "raremon[mistake]",
+        "seadramon",
+        "shellmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ganimon",
+      "image": null
+    },
+    {
+      "id": "demidevilmon",
+      "name": "DemiDevimon",
+      "nameZh": "小惡魔獸",
+      "stage": "Rookie",
+      "attribute": "Virus",
+      "type": "Little Devil",
+      "evolvesFrom": [
+        "pagumon",
+        "tsumemon"
+      ],
+      "evolvesTo": [
+        "bakemon",
+        "devidramon",
+        "devimon",
+        "dokugumon",
+        "numemon[mistake]",
+        "raremon[mistake]",
+        "skullknightmon",
+        "vilemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=picodevimon",
+      "image": null
+    },
+    {
+      "id": "dracmon",
+      "name": "Dracmon",
+      "nameZh": "德古獸",
+      "stage": "Rookie",
+      "attribute": "Virus",
+      "type": "Undead",
+      "evolvesFrom": [
+        "pagumon",
+        "tsumemon"
+      ],
+      "evolvesTo": [
+        "bakemon",
+        "devidramon",
+        "devimon",
+        "porcupamon",
+        "raremon[mistake]",
+        "vilemon",
+        "youkomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=dracumon",
+      "image": null
+    },
+    {
+      "id": "espimon",
+      "name": "Espimon",
+      "nameZh": "諜鼠獸",
+      "stage": "Rookie",
+      "attribute": "Virus",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "missimon",
+        "motimon"
+      ],
+      "evolvesTo": [
+        "guardromon",
+        "hoverespimon",
+        "mekanorimon",
+        "numemon[mistake]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=espimon",
+      "image": null
+    },
+    {
+      "id": "gabumon",
+      "name": "Gabumon",
+      "nameZh": "加布獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Reptile",
+      "evolvesFrom": [
+        "tsunomon"
+      ],
+      "evolvesTo": [
+        "frigimon",
+        "garurumon",
+        "leomon",
+        "mojyamon",
+        "monochromon",
+        "numemon[mistake]",
+        "unimon",
+        "metalgarurumon[warp]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gabumon",
+      "image": {
+        "path": "assets/digimon/v2/gabumon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "gazimon",
+      "name": "Gazimon",
+      "nameZh": "加支獸",
+      "stage": "Rookie",
+      "attribute": "Virus",
+      "type": "Mammal",
+      "evolvesFrom": [
+        "pagumon",
+        "tsunomon"
+      ],
+      "evolvesTo": [
+        "devidramon",
+        "devimon",
+        "garurumon",
+        "leomon",
+        "madleomon[dark]",
+        "numemon[mistake]",
+        "porcupamon",
+        "raremon[mistake]",
+        "tuskmon",
+        "vilemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gazimon",
+      "image": null
+    },
+    {
+      "id": "gekkomon",
+      "name": "Gekkomon",
+      "nameZh": "月光壁虎獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Reptile",
+      "evolvesFrom": [
+        "nyaromon",
+        "upamon"
+      ],
+      "evolvesTo": [
+        "gekomon",
+        "numemon[mistake]",
+        "fumamon[warp]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gekkomon",
+      "image": null
+    },
+    {
+      "id": "ghostmon",
+      "name": "Ghostmon",
+      "nameZh": "幽靈獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Ghost",
+      "evolvesFrom": [
+        "demimeramon",
+        "nyaromon",
+        "pagumon"
+      ],
+      "evolvesTo": [
+        "bakemon",
+        "numemon[mistake]",
+        "oboromon",
+        "petermon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ghostmon",
+      "image": null
+    },
+    {
+      "id": "gizamon",
+      "name": "Gizamon",
+      "nameZh": "基剎獸",
+      "stage": "Rookie",
+      "attribute": "Virus",
+      "type": "Sea Animal",
+      "evolvesFrom": [
+        "bukamon",
+        "pagumon",
+        "tsumemon"
+      ],
+      "evolvesTo": [
+        "devidramon",
+        "ebidramon",
+        "gesomon",
+        "numemon[mistake]",
+        "raremon[mistake]",
+        "seadramon",
+        "tuskmon",
+        "tyrannomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gizamon",
+      "image": null
+    },
+    {
+      "id": "gomamon",
+      "name": "Gomamon",
+      "nameZh": "哥瑪獸",
+      "stage": "Rookie",
+      "attribute": "Vaccine",
+      "type": "Sea Beast",
+      "evolvesFrom": [
+        "bukamon"
+      ],
+      "evolvesTo": [
+        "ankiromon",
+        "bakemon[mistake]",
+        "frigimon",
+        "gesomon",
+        "ikkakumon",
+        "mojyamon",
+        "numemon[mistake]",
+        "seadramon",
+        "shellmon",
+        "tortomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gomamon",
+      "image": null
+    },
+    {
+      "id": "gotsumon",
+      "name": "Gotsumon",
+      "nameZh": "礦石獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Ore",
+      "evolvesFrom": [
+        "kakkinmon",
+        "motimon",
+        "tumblemon"
+      ],
+      "evolvesTo": [
+        "ankiromon",
+        "gladimon",
+        "golemon",
+        "icemon",
+        "monochromon",
+        "numemon[mistake]",
+        "starmon",
+        "tankmon",
+        "tortomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gottsumon",
+      "image": null
+    },
+    {
+      "id": "guilmon",
+      "name": "Guilmon",
+      "nameZh": "基爾獸",
+      "stage": "Rookie",
+      "attribute": "Virus",
+      "type": "Reptile",
+      "evolvesFrom": [
+        "gigimon"
+      ],
+      "evolvesTo": [
+        "devidramon[dark]",
+        "flarerizamon",
+        "growlmon",
+        "lavorvomon",
+        "meramon",
+        "numemon[mistake]",
+        "tuskmon",
+        "tyrannomon",
+        "gallantmon[warp]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=guilmon",
+      "image": null
+    },
+    {
+      "id": "hagurumon",
+      "name": "Hagurumon",
+      "nameZh": "齒輪獸",
+      "stage": "Rookie",
+      "attribute": "Virus",
+      "type": "Machine",
+      "evolvesFrom": [
+        "missimon",
+        "motimon"
+      ],
+      "evolvesTo": [
+        "clockmon",
+        "gladimon",
+        "golemon",
+        "guardromon",
+        "hi-commandramon",
+        "jazardmon",
+        "machmon",
+        "mekanorimon",
+        "numemon[mistake]",
+        "raremon[mistake]",
+        "starmon",
+        "tankmon",
+        "troopmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hagurumon",
+      "image": null
+    },
+    {
+      "id": "hawkmon",
+      "name": "Hawkmon",
+      "nameZh": "麻鷹獸",
+      "stage": "Rookie",
+      "attribute": "Free",
+      "type": "Bird",
+      "evolvesFrom": [
+        "poromon"
+      ],
+      "evolvesTo": [
+        "akatorimon",
+        "aquilamon",
+        "birdramon",
+        "halsemon[armor]",
+        "kiwimon",
+        "kokatorimon[dark]",
+        "numemon[mistake]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hawkmon",
+      "image": null
+    },
+    {
+      "id": "keramon",
+      "name": "Keramon",
+      "nameZh": "哈哈獸",
+      "stage": "Rookie",
+      "attribute": "Unknown",
+      "type": "Unidentified",
+      "evolvesFrom": [
+        "tsumemon"
+      ],
+      "evolvesTo": [
+        "raremon[mistake]",
+        "roachmon[mistake]",
+        "vilemon",
+        "infermon[warp]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=keramon",
+      "image": null
+    },
+    {
+      "id": "kokabuterimon",
+      "name": "Kokabuterimon",
+      "nameZh": "小比多獸",
+      "stage": "Rookie",
+      "attribute": "Virus",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "minomon",
+        "motimon"
+      ],
+      "evolvesTo": [
+        "flymon",
+        "kabuterimon",
+        "kuwagamon",
+        "numemon[mistake]",
+        "roachmon[mistake]",
+        "tortomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kokabuterimon",
+      "image": null
+    },
+    {
+      "id": "kokuwamon",
+      "name": "Kokuwamon",
+      "nameZh": "小古加獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Machine",
+      "evolvesFrom": [
+        "minomon",
+        "motimon"
+      ],
+      "evolvesTo": [
+        "clockmon",
+        "guardromon",
+        "jazardmon",
+        "kabuterimon",
+        "kuwagamon",
+        "mekanorimon",
+        "numemon[mistake]",
+        "roachmon[mistake]",
+        "tankmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kokuwamon",
+      "image": null
+    },
+    {
+      "id": "lalamon",
+      "name": "Lalamon",
+      "nameZh": "拉拉獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "budmon",
+        "tanemon"
+      ],
+      "evolvesTo": [
+        "kiwimon",
+        "numemon[mistake]",
+        "redvegiemon[mistake]",
+        "sunflowmon",
+        "togemon",
+        "woodmon",
+        "yakiimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=lalamon",
+      "image": null
+    },
+    {
+      "id": "ludomon",
+      "name": "Ludomon",
+      "nameZh": "路德獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Armor",
+      "evolvesFrom": [
+        "kakkinmon",
+        "tumblemon"
+      ],
+      "evolvesTo": [
+        "hi-commandramon",
+        "numemon[mistake]",
+        "tankmon",
+        "tialudomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ludomon",
+      "image": null
+    },
+    {
+      "id": "mushroomon",
+      "name": "Mushroomon",
+      "nameZh": "蘑菇獸",
+      "stage": "Rookie",
+      "attribute": "Virus",
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "budmon",
+        "tanemon"
+      ],
+      "evolvesTo": [
+        "kiwimon",
+        "kuwagamon",
+        "numemon[mistake]",
+        "redvegiemon[mistake]",
+        "sunflowmon",
+        "togemon",
+        "woodmon",
+        "yakiimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mushmon",
+      "image": null
+    },
+    {
+      "id": "otamamon",
+      "name": "Otamamon",
+      "nameZh": "蝌蚪獸",
+      "stage": "Rookie",
+      "attribute": "Virus",
+      "type": "Amphibian",
+      "evolvesFrom": [
+        "bukamon"
+      ],
+      "evolvesTo": [
+        "gekomon",
+        "gesomon",
+        "numemon[mistake]",
+        "octmon",
+        "raremon[mistake]",
+        "seadramon",
+        "shellmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=otamamon",
+      "image": null
+    },
+    {
+      "id": "palmon",
+      "name": "Palmon",
+      "nameZh": "巴魯獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "budmon",
+        "tanemon",
+        "tri"
+      ],
+      "evolvesTo": [
+        "bakemon[mistake]",
+        "kiwimon",
+        "kuwagamon[dark]",
+        "numemon[mistake]",
+        "redvegiemon[mistake]",
+        "sunflowmon",
+        "togemon",
+        "woodmon",
+        "yakiimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=palmon",
+      "image": {
+        "path": "assets/digimon/v2/palmon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "patamon",
+      "name": "Patamon",
+      "nameZh": "巴達獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Mammal",
+      "evolvesFrom": [
+        "cupimon",
+        "tokomon"
+      ],
+      "evolvesTo": [
+        "angemon",
+        "bakemon[mistake]",
+        "devimon[dark]",
+        "gatomon",
+        "leomon",
+        "numemon[mistake]",
+        "pegasusmon[armor]",
+        "unimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=patamon",
+      "image": {
+        "path": "assets/digimon/v2/patamon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "renamon",
+      "name": "Renamon",
+      "nameZh": "妖狐獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Beast Man",
+      "evolvesFrom": [
+        "viximon"
+      ],
+      "evolvesTo": [
+        "kyubimon",
+        "numemon[mistake]",
+        "youkomon[dark]",
+        "sakuyamon[warp]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=renamon",
+      "image": null
+    },
+    {
+      "id": "salamon",
+      "name": "Salamon",
+      "nameZh": "小狗獸",
+      "stage": "Rookie",
+      "attribute": "Vaccine",
+      "type": "Mammal",
+      "evolvesFrom": [
+        "cupimon",
+        "nyaromon",
+        "tokomon"
+      ],
+      "evolvesTo": [
+        "angemon",
+        "frigimon",
+        "garurumon",
+        "gatomon",
+        "mojyamon",
+        "numemon[mistake]",
+        "sistermon_ciel",
+        "sistermon_noir[dark]",
+        "unimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=plotmon",
+      "image": null
+    },
+    {
+      "id": "sangomon",
+      "name": "Sangomon",
+      "nameZh": "珊瑚獸",
+      "stage": "Rookie",
+      "attribute": "Data",
+      "type": "Mollusk",
+      "evolvesFrom": [
+        "bukamon"
+      ],
+      "evolvesTo": [
+        "ebidramon",
+        "numemon[mistake]",
+        "raremon[mistake]",
+        "seadramon",
+        "shellmon",
+        "tobiumon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sangomon",
+      "image": null
+    },
+    {
+      "id": "solarmon",
+      "name": "Solarmon",
+      "nameZh": "太陽獸",
+      "stage": "Rookie",
+      "attribute": "Vaccine",
+      "type": "Machine",
+      "evolvesFrom": [
+        "demimeramon",
+        "motimon",
+        "sakuttomon"
+      ],
+      "evolvesTo": [
+        "clockmon",
+        "flarerizamon",
+        "gladimon",
+        "guardromon",
+        "lavorvomon",
+        "meramon",
+        "numemon[mistake]",
+        "raremon[mistake]",
+        "starmon",
+        "tankmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=solarmon",
+      "image": null
+    },
+    {
+      "id": "syakomon",
+      "name": "Syakomon",
+      "nameZh": "蝦蛄獸",
+      "stage": "Rookie",
+      "attribute": "Virus",
+      "type": "Crustacean",
+      "evolvesFrom": [
+        "bukamon"
+      ],
+      "evolvesTo": [
+        "ebidramon",
+        "gesomon",
+        "numemon[mistake]",
+        "octmon",
+        "raremon[mistake]",
+        "seadramon",
+        "shellmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=shakomon",
+      "image": null
+    },
+    {
+      "id": "tentomon",
+      "name": "Tentomon",
+      "nameZh": "甲蟲獸",
+      "stage": "Rookie",
+      "attribute": "Vaccine",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "kodokugumon",
+        "motimon"
+      ],
+      "evolvesTo": [
+        "bakemon[mistake]",
+        "dokugumon[dark]",
+        "flymon",
+        "kabuterimon",
+        "kuwagamon[dark]",
+        "numemon[mistake]",
+        "roachmon[mistake]",
+        "stingmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tentomon",
+      "image": null
+    },
+    {
+      "id": "terriermon",
+      "name": "Terriermon",
+      "nameZh": "大耳獸",
+      "stage": "Rookie",
+      "attribute": "Vaccine",
+      "type": "Beast",
+      "evolvesFrom": [
+        "cupimon",
+        "gummymon"
+      ],
+      "evolvesTo": [
+        "gargomon",
+        "numemon[mistake]",
+        "megagargomon[warp]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=terriermon",
+      "image": null
+    },
+    {
+      "id": "veemon",
+      "name": "Veemon",
+      "nameZh": "V仔獸",
+      "stage": "Rookie",
+      "attribute": "Free",
+      "type": "Mini Dragon",
+      "evolvesFrom": [
+        "demiveemon",
+        "tsunomon"
+      ],
+      "evolvesTo": [
+        "exveemon",
+        "flamedramon[armor]",
+        "numemon[mistake]",
+        "tyrannomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=v-mon",
+      "image": null
+    },
+    {
+      "id": "wormmon",
+      "name": "Wormmon",
+      "nameZh": "蟲蟲獸",
+      "stage": "Rookie",
+      "attribute": "Free",
+      "type": "Larva",
+      "evolvesFrom": [
+        "kodokugumon",
+        "minomon",
+        "yokomon"
+      ],
+      "evolvesTo": [
+        "dokugumon",
+        "flymon",
+        "hudiemon",
+        "kuwagamon",
+        "numemon[mistake]",
+        "raremon[mistake]",
+        "roachmon[mistake]",
+        "stingmon",
+        "woodmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=wormmon",
+      "image": null
+    },
+    {
+      "id": "zubamon",
+      "name": "Zubamon",
+      "nameZh": "茲巴獸",
+      "stage": "Rookie",
+      "attribute": "Vaccine",
+      "type": "Weapon",
+      "evolvesFrom": [
+        "kakkinmon",
+        "sakuttomon",
+        "tumblemon"
+      ],
+      "evolvesTo": [
+        "gladimon",
+        "numemon[mistake]",
+        "skullknightmon[dark]",
+        "tialudomon",
+        "zubaeagermon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=zubamon",
+      "image": null
+    },
+    {
+      "id": "akatorimon",
+      "name": "Akatorimon",
+      "nameZh": "紅雞獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Giant Bird",
+      "evolvesFrom": [
+        "biyomon",
+        "hawkmon"
+      ],
+      "evolvesTo": [
+        "digitamamon",
+        "garudamon",
+        "parrotmon",
+        "piccolomon",
+        "piximon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=akatorimon",
+      "image": null
+    },
+    {
+      "id": "angemon",
+      "name": "Angemon",
+      "nameZh": "天使獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Angel",
+      "evolvesFrom": [
+        "patamon",
+        "salamon"
+      ],
+      "evolvesTo": [
+        "devimon[dark]",
+        "hippogryphonmon",
+        "magnaangemon",
+        "myotismon[dark]",
+        "shakkoumon(+ankiromon)"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=angemon",
+      "image": {
+        "path": "assets/digimon/v2/angemon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "ankiromon",
+      "name": "Ankylomon",
+      "nameZh": "戰甲獸",
+      "stage": "Champion",
+      "attribute": "Free",
+      "type": "Armored Dragon",
+      "evolvesFrom": [
+        "armadillomon",
+        "gomamon",
+        "gotsumon"
+      ],
+      "evolvesTo": [
+        "meteormon",
+        "shakkoumon(+angemon)",
+        "triceramon",
+        "zudomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ankylomon",
+      "image": null
+    },
+    {
+      "id": "aquilamon",
+      "name": "Aquilamon",
+      "nameZh": "亞古拉獸",
+      "stage": "Champion",
+      "attribute": "Free",
+      "type": "Giant Bird",
+      "evolvesFrom": [
+        "biyomon",
+        "hawkmon"
+      ],
+      "evolvesTo": [
+        "garudamon",
+        "hippogryphonmon",
+        "parrotmon",
+        "silphymon(+gatomon)"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=aquilamon",
+      "image": null
+    },
+    {
+      "id": "bakemon",
+      "name": "Bakemon",
+      "nameZh": "猛鬼獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Ghost",
+      "evolvesFrom": [
+        "agumon[mistake]",
+        "biyomon[mistake]",
+        "candlemon",
+        "demidevilmon",
+        "dracmon",
+        "ghostmon",
+        "gomamon[mistake]",
+        "palmon[mistake]",
+        "patamon[mistake]",
+        "tentomon[mistake]"
+      ],
+      "evolvesTo": [
+        "ladydevimon[dark]",
+        "myotismon",
+        "phantomon",
+        "pumpkinmon",
+        "warumonzaemon[mistake]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=bakemon",
+      "image": null
+    },
+    {
+      "id": "birdramon",
+      "name": "Birdramon",
+      "nameZh": "巴多拉獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Giant Bird",
+      "evolvesFrom": [
+        "biyomon",
+        "hawkmon"
+      ],
+      "evolvesTo": [
+        "garudamon",
+        "hippogryphonmon",
+        "parrotmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=birdramon",
+      "image": null
+    },
+    {
+      "id": "clockmon",
+      "name": "Clockmon",
+      "nameZh": "時鐘獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Machine",
+      "evolvesFrom": [
+        "candlemon",
+        "hagurumon",
+        "kokuwamon",
+        "solarmon"
+      ],
+      "evolvesTo": [
+        "andromon",
+        "datamon",
+        "knightmon",
+        "phantomon[dark]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=clockmon",
+      "image": null
+    },
+    {
+      "id": "devidramon",
+      "name": "Devidramon",
+      "nameZh": "邪龍獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Evil Dragon",
+      "evolvesFrom": [
+        "agumon[dark]",
+        "demidevilmon",
+        "dracmon",
+        "gazimon",
+        "gizamon",
+        "guilmon[dark]"
+      ],
+      "evolvesTo": [
+        "gigadramon",
+        "ladydevimon",
+        "megadramon",
+        "myotismon",
+        "wingdramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=devidramon",
+      "image": null
+    },
+    {
+      "id": "devimon",
+      "name": "Devimon",
+      "nameZh": "惡魔獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Dark Angel",
+      "evolvesFrom": [
+        "candlemon[dark]",
+        "demidevilmon",
+        "dracmon",
+        "gazimon",
+        "patamon[dark]",
+        "angemon[dark]"
+      ],
+      "evolvesTo": [
+        "skullknightmon",
+        "infermon",
+        "ladydevimon",
+        "megadramon",
+        "myotismon",
+        "phantomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=devimon",
+      "image": null
+    },
+    {
+      "id": "digmon",
+      "name": "Digmon",
+      "nameZh": "鋼鑽獸",
+      "stage": "Armor",
+      "attribute": "Free",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "armadillomon[armor]"
+      ],
+      "evolvesTo": [
+        "jagamon",
+        "megakabuterimon",
+        "shakkoumon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=digmon",
+      "image": null
+    },
+    {
+      "id": "dokugumon",
+      "name": "Dokugumon",
+      "nameZh": "蜘蛛獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "kodokugumon",
+        "demidevilmon",
+        "tentomon[dark]",
+        "wormmon"
+      ],
+      "evolvesTo": [
+        "garbagemon[mistake]",
+        "ladydevimon",
+        "myotismon",
+        "okuwamon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=dokugumon",
+      "image": null
+    },
+    {
+      "id": "ebidramon",
+      "name": "Ebidramon",
+      "nameZh": "龍蝦獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Aquatic",
+      "evolvesFrom": [
+        "crabmon",
+        "gizamon",
+        "sangomon",
+        "syakomon"
+      ],
+      "evolvesTo": [
+        "megaseadramon",
+        "scorpiomon",
+        "shogungekomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ebidramon",
+      "image": null
+    },
+    {
+      "id": "exveemon",
+      "name": "ExVeemon",
+      "nameZh": "V仔獸EX",
+      "stage": "Champion",
+      "attribute": "Free",
+      "type": "Mythical Dragon",
+      "evolvesFrom": [
+        "veemon"
+      ],
+      "evolvesTo": [
+        "dinobeemon(+stingmon)",
+        "megadramon[dark]",
+        "paildramon(+stingmon)",
+        "wingdramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=xv-mon",
+      "image": null
+    },
+    {
+      "id": "flamedramon",
+      "name": "Flamedramon",
+      "nameZh": "烈焰獸",
+      "stage": "Armor",
+      "attribute": "Free",
+      "type": "Dragon Man",
+      "evolvesFrom": [
+        "veemon[armor]"
+      ],
+      "evolvesTo": [
+        "paildramon",
+        "wargrowlmon",
+        "wingdramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=fladramon",
+      "image": null
+    },
+    {
+      "id": "flarerizamon",
+      "name": "Flarerizamon",
+      "nameZh": "火蜥蜴獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Fire Dragon",
+      "evolvesFrom": [
+        "agumon",
+        "candlemon",
+        "guilmon",
+        "solarmon",
+        "lavorvomon"
+      ],
+      "evolvesTo": [
+        "bluemeramon",
+        "lavogaritamon",
+        "megadramon[dark]",
+        "metalgreymon",
+        "wargrowlmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=flarelizamon",
+      "image": null
+    },
+    {
+      "id": "flymon",
+      "name": "Flymon",
+      "nameZh": "黃蜂獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "kokabuterimon",
+        "tentomon",
+        "wormmon"
+      ],
+      "evolvesTo": [
+        "dinobeemon",
+        "megakabuterimon",
+        "okuwamon",
+        "piccolomon",
+        "piximon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=flymon",
+      "image": null
+    },
+    {
+      "id": "frigimon",
+      "name": "Frigimon",
+      "nameZh": "雪人獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Ice-Snow",
+      "evolvesFrom": [
+        "yukimibotamon[warp]",
+        "gabumon",
+        "gomamon",
+        "salamon"
+      ],
+      "evolvesTo": [
+        "mammothmon",
+        "monzaemon",
+        "polarbearmon",
+        "zudomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=yukidarumon",
+      "image": null
+    },
+    {
+      "id": "gargomon",
+      "name": "Gargomon",
+      "nameZh": "石像鬼獸",
+      "stage": "Champion",
+      "attribute": "Free",
+      "type": "Dark Beast",
+      "evolvesFrom": [
+        "terriermon"
+      ],
+      "evolvesTo": [
+        "monzaemon",
+        "rapidmon",
+        "warumonzaemon[dark]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gargomon",
+      "image": null
+    },
+    {
+      "id": "garurumon",
+      "name": "Garurumon",
+      "nameZh": "加魯魯獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Beast",
+      "evolvesFrom": [
+        "gabumon",
+        "gazimon",
+        "salamon"
+      ],
+      "evolvesTo": [
+        "skullknightmon[dark]",
+        "mammothmon",
+        "weregarurumon",
+        "zudomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=garurumon",
+      "image": {
+        "path": "assets/digimon/v2/garurumon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "gatomon",
+      "name": "Gatomon",
+      "nameZh": "迪路獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Holy Beast",
+      "evolvesFrom": [
+        "nyaromon[warp]",
+        "patamon",
+        "salamon"
+      ],
+      "evolvesTo": [
+        "nefertimon[armor]",
+        "angewomon",
+        "kyukimon",
+        "ladydevimon[dark]",
+        "lillymon",
+        "silphymon(+aquilamon)"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tailmon",
+      "image": null
+    },
+    {
+      "id": "gekomon",
+      "name": "Gekomon",
+      "nameZh": "怪蛙獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Amphibian",
+      "evolvesFrom": [
+        "gekkomon",
+        "otamamon"
+      ],
+      "evolvesTo": [
+        "digitamamon",
+        "shogungekomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gekomon",
+      "image": null
+    },
+    {
+      "id": "gesomon",
+      "name": "Gesomon",
+      "nameZh": "墨魚獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Mollusk",
+      "evolvesFrom": [
+        "crabmon",
+        "gizamon",
+        "gomamon",
+        "otamamon",
+        "syakomon"
+      ],
+      "evolvesTo": [
+        "divermon",
+        "marinbullmon",
+        "megaseadramon",
+        "myotismon[dark]",
+        "scorpiomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gesomon",
+      "image": null
+    },
+    {
+      "id": "gladimon",
+      "name": "Gladimon",
+      "nameZh": "劍鬥士獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Warrior",
+      "evolvesFrom": [
+        "gotsumon",
+        "hagurumon",
+        "solarmon",
+        "zubamon"
+      ],
+      "evolvesTo": [
+        "skullknightmon[dark]",
+        "duramon",
+        "knightmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gladimon",
+      "image": null
+    },
+    {
+      "id": "golemon",
+      "name": "Golemon",
+      "nameZh": "岩石獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Mineral",
+      "evolvesFrom": [
+        "armadillomon",
+        "gotsumon",
+        "hagurumon"
+      ],
+      "evolvesTo": [
+        "mammothmon",
+        "meteormon",
+        "triceramon",
+        "zudomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=golemon",
+      "image": null
+    },
+    {
+      "id": "greymon",
+      "name": "Greymon",
+      "nameZh": "暴龍獸 (2010年動畫版)",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Dinosaur",
+      "evolvesFrom": [
+        "agumon"
+      ],
+      "evolvesTo": [
+        "gigadramon[dark]",
+        "megadramon[dark]",
+        "metalgreymon",
+        "triceramon",
+        "wargrowlmon",
+        "machinedramon[dark]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=greymon",
+      "image": {
+        "path": "assets/digimon/v2/greymon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "growlmon",
+      "name": "Growlmon",
+      "nameZh": "古拉獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Dark Dragon",
+      "evolvesFrom": [
+        "guilmon"
+      ],
+      "evolvesTo": [
+        "lavogaritamon",
+        "megadramon[dark]",
+        "metalgreymon",
+        "wargrowlmon",
+        "machinedramon[dark]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=growmon",
+      "image": null
+    },
+    {
+      "id": "guardromon",
+      "name": "Guardromon",
+      "nameZh": "守衛獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Machine",
+      "evolvesFrom": [
+        "espimon",
+        "hagurumon",
+        "kokuwamon",
+        "solarmon"
+      ],
+      "evolvesTo": [
+        "andromon",
+        "datamon",
+        "rapidmon",
+        "tankdramon",
+        "warumonzaemon[mistake]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=guardromon",
+      "image": null
+    },
+    {
+      "id": "halsemon",
+      "name": "Halsemon",
+      "nameZh": "鐵鷹獸",
+      "stage": "Armor",
+      "attribute": "Free",
+      "type": "Beast",
+      "evolvesFrom": [
+        "hawkmon[armor]"
+      ],
+      "evolvesTo": [
+        "garudamon",
+        "hippogryphonmon",
+        "silphymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=holsmon",
+      "image": null
+    },
+    {
+      "id": "hi-commandramon",
+      "name": "Hi-Commandramon",
+      "nameZh": "高階突擊龍獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "hagurumon",
+        "ludomon"
+      ],
+      "evolvesTo": [
+        "tankdramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hi-commandramon",
+      "image": null
+    },
+    {
+      "id": "hoverespimon",
+      "name": "HoverEspimon",
+      "nameZh": "懸浮諜鼠獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "espimon"
+      ],
+      "evolvesTo": [
+        "datamon",
+        "jazarichmon",
+        "tankdramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hoverespimon",
+      "image": null
+    },
+    {
+      "id": "hudiemon",
+      "name": "Hudiemon",
+      "nameZh": "羽蝶獸",
+      "stage": "Champion",
+      "attribute": "Free",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "wormmon"
+      ],
+      "evolvesTo": [
+        "lilamon",
+        "lillymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hudiemon",
+      "image": null
+    },
+    {
+      "id": "icemon",
+      "name": "Icemon",
+      "nameZh": "冰石獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Ice-Snow",
+      "evolvesFrom": [
+        "yukimibotamon[warp]",
+        "gotsumon"
+      ],
+      "evolvesTo": [
+        "mammothmon",
+        "meteormon",
+        "polarbearmon",
+        "zudomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=icemon",
+      "image": null
+    },
+    {
+      "id": "ikkakumon",
+      "name": "Ikkakumon",
+      "nameZh": "海獅獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Sea Beast",
+      "evolvesFrom": [
+        "gomamon"
+      ],
+      "evolvesTo": [
+        "divermon",
+        "mammothmon",
+        "megaseadramon",
+        "zudomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ikkakumon",
+      "image": null
+    },
+    {
+      "id": "jazardmon",
+      "name": "Jazardmon",
+      "nameZh": "機龍獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Machine Dragon",
+      "evolvesFrom": [
+        "hagurumon",
+        "kokuwamon"
+      ],
+      "evolvesTo": [
+        "gigadramon",
+        "jazarichmon",
+        "tankdramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=jazardmon",
+      "image": null
+    },
+    {
+      "id": "kabuterimon",
+      "name": "Kabuterimon",
+      "nameZh": "比多獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "kokabuterimon",
+        "kokuwamon",
+        "tentomon"
+      ],
+      "evolvesTo": [
+        "jagamon",
+        "megakabuterimon",
+        "okuwamon[dark]",
+        "piccolomon",
+        "piximon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kabuterimon",
+      "image": null
+    },
+    {
+      "id": "kiwimon",
+      "name": "Kiwimon",
+      "nameZh": "奇鳥獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Ancient Bird",
+      "evolvesFrom": [
+        "biyomon",
+        "hawkmon",
+        "lalamon",
+        "mushroomon",
+        "palmon"
+      ],
+      "evolvesTo": [
+        "cherrymon",
+        "garudamon",
+        "lilamon",
+        "lillymon",
+        "parrotmon",
+        "piccolomon",
+        "piximon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kiwimon",
+      "image": null
+    },
+    {
+      "id": "kokatorimon",
+      "name": "Kokatorimon",
+      "nameZh": "巨雞獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Giant Bird",
+      "evolvesFrom": [
+        "pinamon",
+        "biyomon[dark]",
+        "hawkmon[dark]"
+      ],
+      "evolvesTo": [
+        "digitamamon",
+        "parrotmon",
+        "piccolomon",
+        "piximon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=cockatrimon",
+      "image": null
+    },
+    {
+      "id": "kuwagamon",
+      "name": "Kuwagamon",
+      "nameZh": "古加獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "kokabuterimon",
+        "kokuwamon",
+        "mushroomon",
+        "palmon[dark]",
+        "tentomon[dark]",
+        "wormmon"
+      ],
+      "evolvesTo": [
+        "dinobeemon",
+        "megakabuterimon",
+        "okuwamon",
+        "piccolomon",
+        "piximon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kuwagamon",
+      "image": null
+    },
+    {
+      "id": "kyubimon",
+      "name": "Kyubimon",
+      "nameZh": "九尾狐獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Mysterious Beast",
+      "evolvesFrom": [
+        "renamon"
+      ],
+      "evolvesTo": [
+        "kyukimon",
+        "ladydevimon[dark]",
+        "taomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kyubimon",
+      "image": null
+    },
+    {
+      "id": "lavorvomon",
+      "name": "Lavorvomon",
+      "nameZh": "熔火波獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Rock Dragon",
+      "evolvesFrom": [
+        "gigimon",
+        "guilmon",
+        "solarmon"
+      ],
+      "evolvesTo": [
+        "flarerizamon",
+        "lavogaritamon",
+        "metalgreymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=lavorvomon",
+      "image": null
+    },
+    {
+      "id": "leomon",
+      "name": "Leomon",
+      "nameZh": "獅子獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Beast Man",
+      "evolvesFrom": [
+        "gabumon",
+        "gazimon",
+        "patamon"
+      ],
+      "evolvesTo": [
+        "madleomon[dark]",
+        "etemon",
+        "kyukimon",
+        "loaderliomon",
+        "mammothmon",
+        "monzaemon",
+        "weregarurumon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=leomon",
+      "image": null
+    },
+    {
+      "id": "machmon",
+      "name": "Machmon",
+      "nameZh": "馬赫獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "hagurumon"
+      ],
+      "evolvesTo": [
+        "gigadramon",
+        "loaderliomon",
+        "rapidmon",
+        "tankdramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=machmon",
+      "image": null
+    },
+    {
+      "id": "madleomon",
+      "name": "MadLeomon",
+      "nameZh": "瘋狂獅子獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Undead",
+      "evolvesFrom": [
+        "tsumemon",
+        "gazimon[dark]",
+        "leomon[dark]"
+      ],
+      "evolvesTo": [
+        "skullknightmon[dark]",
+        "loaderliomon",
+        "warumonzaemon[mistake]",
+        "weregarurumon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=madleomon",
+      "image": null
+    },
+    {
+      "id": "mekanorimon",
+      "name": "Mekanorimon",
+      "nameZh": "機械裝甲獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Machine",
+      "evolvesFrom": [
+        "espimon",
+        "hagurumon",
+        "kokuwamon"
+      ],
+      "evolvesTo": [
+        "andromon",
+        "datamon",
+        "gigadramon",
+        "jazarichmon",
+        "tankdramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mechanorimon",
+      "image": null
+    },
+    {
+      "id": "meramon",
+      "name": "Meramon",
+      "nameZh": "火焰獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Fire",
+      "evolvesFrom": [
+        "agumon",
+        "candlemon",
+        "guilmon",
+        "solarmon"
+      ],
+      "evolvesTo": [
+        "bluemeramon",
+        "lavogaritamon",
+        "metalgreymon",
+        "wargrowlmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=meramon",
+      "image": null
+    },
+    {
+      "id": "mojyamon",
+      "name": "Mojyamon",
+      "nameZh": "毛人獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Rare Animal",
+      "evolvesFrom": [
+        "gabumon",
+        "gomamon",
+        "salamon"
+      ],
+      "evolvesTo": [
+        "etemon",
+        "mammothmon",
+        "monzaemon",
+        "piccolomon",
+        "piximon",
+        "polarbearmon",
+        "warumonzaemon[mistake]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mojyamon",
+      "image": null
+    },
+    {
+      "id": "monochromon",
+      "name": "Monochromon",
+      "nameZh": "角龍獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Armored Dragon",
+      "evolvesFrom": [
+        "agumon",
+        "armadillomon",
+        "gabumon",
+        "gotsumon"
+      ],
+      "evolvesTo": [
+        "digitamamon",
+        "megadramon",
+        "metalgreymon",
+        "meteormon",
+        "triceramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=monochromon",
+      "image": null
+    },
+    {
+      "id": "nefertimon",
+      "name": "Nefertimon",
+      "nameZh": "尼菲迪獸",
+      "stage": "Armor",
+      "attribute": "Free",
+      "type": "Holy Beast",
+      "evolvesFrom": [
+        "gatomon[armor]"
+      ],
+      "evolvesTo": [
+        "angewomon",
+        "kyukimon",
+        "silphymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=nefertimon",
+      "image": null
+    },
+    {
+      "id": "numemon",
+      "name": "Numemon",
+      "nameZh": "鼻涕獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Mollusk",
+      "evolvesFrom": [
+        "agumon[mistake]",
+        "armadillomon[mistake]",
+        "biyomon[mistake]",
+        "crabmon[mistake]",
+        "demidevilmon[mistake]",
+        "espimon[mistake]",
+        "gabumon[mistake]",
+        "gazimon[mistake]",
+        "gekkomon[mistake]",
+        "ghostmon[mistake]",
+        "gizamon[mistake]",
+        "gomamon[mistake]",
+        "gotsumon[mistake]",
+        "guilmon[mistake]",
+        "hagurumon[mistake]",
+        "hawkmon[mistake]",
+        "kokabuterimon[mistake]",
+        "kokuwamon[mistake]",
+        "lalamon[mistake]",
+        "ludomon[mistake]",
+        "mushroomon[mistake]",
+        "otamamon[mistake]",
+        "palmon[mistake]",
+        "patamon[mistake]",
+        "renamon[mistake]",
+        "salamon[mistake]",
+        "sangomon[mistake]",
+        "solarmon[mistake]",
+        "syakomon[mistake]",
+        "tentomon[mistake]",
+        "terriermon[mistake]",
+        "veemon[mistake]",
+        "wormmon[mistake]",
+        "zubamon[mistake]"
+      ],
+      "evolvesTo": [
+        "digitamamon",
+        "etemon",
+        "garbagemon[mistake]",
+        "monzaemon",
+        "warumonzaemon[dark]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=numemon",
+      "image": null
+    },
+    {
+      "id": "oboromon",
+      "name": "Oboromon",
+      "nameZh": "朧魂獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Undead",
+      "evolvesFrom": [
+        "ghostmon"
+      ],
+      "evolvesTo": [
+        "skullknightmon",
+        "fumamon",
+        "phantomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=oboromon",
+      "image": null
+    },
+    {
+      "id": "octmon",
+      "name": "Octomon",
+      "nameZh": "八爪魚獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Mollusk",
+      "evolvesFrom": [
+        "otamamon",
+        "syakomon"
+      ],
+      "evolvesTo": [
+        "divermon",
+        "marinbullmon",
+        "scorpiomon",
+        "shogungekomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=octmon",
+      "image": null
+    },
+    {
+      "id": "pegasusmon",
+      "name": "Pegasusmon",
+      "nameZh": "天馬獸",
+      "stage": "Armor",
+      "attribute": "Free",
+      "type": "Holy Beast",
+      "evolvesFrom": [
+        "patamon[armor]"
+      ],
+      "evolvesTo": [
+        "hippogryphonmon",
+        "magnaangemon",
+        "shakkoumon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pegasmon",
+      "image": null
+    },
+    {
+      "id": "petermon",
+      "name": "Petermon",
+      "nameZh": "彼得獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Pixie",
+      "evolvesFrom": [
+        "ghostmon"
+      ],
+      "evolvesTo": [
+        "phantomon",
+        "piccolomon",
+        "piximon",
+        "pumpkinmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=petermon",
+      "image": null
+    },
+    {
+      "id": "porcupamon",
+      "name": "Porcupamon",
+      "nameZh": "豪豬獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Puppet",
+      "evolvesFrom": [
+        "dracmon",
+        "gazimon"
+      ],
+      "evolvesTo": [
+        "skullknightmon",
+        "warumonzaemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=porcupamon",
+      "image": null
+    },
+    {
+      "id": "raremon",
+      "name": "Raremon",
+      "nameZh": "爛泥獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Undead",
+      "evolvesFrom": [
+        "candlemon[mistake]",
+        "crabmon[mistake]",
+        "demidevilmon[mistake]",
+        "dracmon[mistake]",
+        "gazimon[mistake]",
+        "gizamon[mistake]",
+        "hagurumon[mistake]",
+        "keramon[mistake]",
+        "otamamon[mistake]",
+        "sangomon[mistake]",
+        "solarmon[mistake]",
+        "syakomon[mistake]",
+        "wormmon[mistake]"
+      ],
+      "evolvesTo": [
+        "datamon[mistake]",
+        "garbagemon",
+        "infermon",
+        "warumonzaemon[mistake]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=raremon",
+      "image": null
+    },
+    {
+      "id": "redvegiemon",
+      "name": "RedVegiemon",
+      "nameZh": "紅鼻屎獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "lalamon[mistake]",
+        "mushroomon[mistake]",
+        "palmon[mistake]"
+      ],
+      "evolvesTo": [
+        "cherrymon",
+        "garbagemon[mistake]",
+        "jagamon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=redvegimon",
+      "image": null
+    },
+    {
+      "id": "roachmon",
+      "name": "Roachmon",
+      "nameZh": "蟑螂獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "keramon[mistake]",
+        "kokabuterimon[mistake]",
+        "kokuwamon[mistake]",
+        "tentomon[mistake]",
+        "wormmon[mistake]"
+      ],
+      "evolvesTo": [
+        "garbagemon",
+        "okuwamon",
+        "warumonzaemon[mistake]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gokimon",
+      "image": null
+    },
+    {
+      "id": "seadramon",
+      "name": "Seadramon",
+      "nameZh": "海龍獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Aquatic",
+      "evolvesFrom": [
+        "crabmon",
+        "gizamon",
+        "gomamon",
+        "otamamon",
+        "sangomon",
+        "syakomon"
+      ],
+      "evolvesTo": [
+        "divermon",
+        "marinbullmon",
+        "megaseadramon",
+        "scorpiomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=seadramon",
+      "image": null
+    },
+    {
+      "id": "shellmon",
+      "name": "Shellmon",
+      "nameZh": "貝殼獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Mollusk",
+      "evolvesFrom": [
+        "armadillomon",
+        "crabmon",
+        "gomamon",
+        "otamamon",
+        "sangomon",
+        "syakomon"
+      ],
+      "evolvesTo": [
+        "digitamamon",
+        "divermon",
+        "marinbullmon",
+        "megaseadramon",
+        "scorpiomon",
+        "zudomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=shellmon",
+      "image": null
+    },
+    {
+      "id": "sistermon_ciel",
+      "name": "Sistermon Ciel",
+      "nameZh": "修女獸天藍",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Puppet",
+      "evolvesFrom": [
+        "salamon",
+        "sistermon_noir[mode]"
+      ],
+      "evolvesTo": [
+        "sistermon_noir[mode]",
+        "angewomon",
+        "ladydevimon[dark]",
+        "taomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sistermon_ciel",
+      "image": null
+    },
+    {
+      "id": "sistermon_noir",
+      "name": "Sistermon Noir",
+      "nameZh": "修女獸漆黑",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Puppet",
+      "evolvesFrom": [
+        "salamon[dark]",
+        "sistermon_ciel[mode]"
+      ],
+      "evolvesTo": [
+        "sistermon_ciel[mode]",
+        "ladydevimon",
+        "weregarurumon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sistermonnoir",
+      "image": null
+    },
+    {
+      "id": "skullknightmon",
+      "name": "SkullKnightmon",
+      "nameZh": "骷髏騎士獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Undead",
+      "evolvesFrom": [
+        "demidevilmon",
+        "zubamon[dark]",
+        "devimon",
+        "garurumon[dark]",
+        "gladimon[dark]",
+        "madleomon[dark]",
+        "oboromon",
+        "porcupamon"
+      ],
+      "evolvesTo": [
+        "knightmon",
+        "phantomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=skullknightmon",
+      "image": null
+    },
+    {
+      "id": "starmon",
+      "name": "Starmon",
+      "nameZh": "星星獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Mutant",
+      "evolvesFrom": [
+        "gotsumon",
+        "hagurumon",
+        "solarmon"
+      ],
+      "evolvesTo": [
+        "meteormon",
+        "monzaemon",
+        "piccolomon",
+        "piximon",
+        "rapidmon",
+        "shakkoumon",
+        "warumonzaemon[mistake]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=starmon",
+      "image": null
+    },
+    {
+      "id": "stingmon",
+      "name": "Stingmon",
+      "nameZh": "飛蟲獸",
+      "stage": "Champion",
+      "attribute": "Free",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "tentomon",
+        "wormmon"
+      ],
+      "evolvesTo": [
+        "dinobeemon(+exveemon)",
+        "okuwamon[dark]",
+        "paildramon(+exveemon)"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=stingmon",
+      "image": null
+    },
+    {
+      "id": "sunflowmon",
+      "name": "Sunflowmon",
+      "nameZh": "向日葵獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "lalamon",
+        "mushroomon",
+        "palmon"
+      ],
+      "evolvesTo": [
+        "cherrymon",
+        "lilamon",
+        "lillymon",
+        "pumpkinmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sunflowmon",
+      "image": null
+    },
+    {
+      "id": "tankmon",
+      "name": "Tankmon",
+      "nameZh": "坦克獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "gotsumon",
+        "hagurumon",
+        "kokuwamon",
+        "ludomon",
+        "solarmon"
+      ],
+      "evolvesTo": [
+        "andromon",
+        "gigadramon",
+        "metalgreymon",
+        "raijiludomon",
+        "rapidmon",
+        "tankdramon",
+        "warumonzaemon[mistake]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tankmon",
+      "image": null
+    },
+    {
+      "id": "tialudomon",
+      "name": "TiaLudomon",
+      "nameZh": "提亞路德獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Armor",
+      "evolvesFrom": [
+        "ludomon",
+        "zubamon"
+      ],
+      "evolvesTo": [
+        "loaderliomon",
+        "raijiludomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tialudomon",
+      "image": null
+    },
+    {
+      "id": "tobiumon",
+      "name": "Tobiumon",
+      "nameZh": "飛魚獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Aquatic",
+      "evolvesFrom": [
+        "sangomon"
+      ],
+      "evolvesTo": [
+        "divermon",
+        "marinbullmon",
+        "megaseadramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tobiumon",
+      "image": null
+    },
+    {
+      "id": "togemon",
+      "name": "Togemon",
+      "nameZh": "仙人掌獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "lalamon",
+        "mushroomon",
+        "palmon"
+      ],
+      "evolvesTo": [
+        "cherrymon",
+        "garbagemon[mistake]",
+        "jagamon",
+        "lilamon",
+        "lillymon",
+        "piccolomon",
+        "piximon",
+        "pumpkinmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=togemon",
+      "image": {
+        "path": "assets/digimon/v2/togemon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "tortomon",
+      "name": "Tortomon",
+      "nameZh": "陸龜獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Reptile",
+      "evolvesFrom": [
+        "armadillomon",
+        "gomamon",
+        "gotsumon",
+        "kokabuterimon"
+      ],
+      "evolvesTo": [
+        "jagamon",
+        "megakabuterimon",
+        "piccolomon",
+        "piximon",
+        "shakkoumon",
+        "shogungekomon",
+        "triceramon",
+        "zudomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tortamon",
+      "image": null
+    },
+    {
+      "id": "troopmon",
+      "name": "Troopmon",
+      "nameZh": "兵卒獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Undead",
+      "evolvesFrom": [
+        "hagurumon"
+      ],
+      "evolvesTo": [
+        "tankdramon",
+        "warumonzaemon[mistake]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=troopmon",
+      "image": null
+    },
+    {
+      "id": "tuskmon",
+      "name": "Tuskmon",
+      "nameZh": "大角獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Dinosaur",
+      "evolvesFrom": [
+        "agumon",
+        "gazimon",
+        "gizamon",
+        "guilmon"
+      ],
+      "evolvesTo": [
+        "mammothmon",
+        "megadramon",
+        "metalgreymon",
+        "triceramon",
+        "wargrowlmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tuskmon",
+      "image": null
+    },
+    {
+      "id": "tyrannomon",
+      "name": "Tyrannomon",
+      "nameZh": "巨龍獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Dinosaur",
+      "evolvesFrom": [
+        "agumon",
+        "gizamon",
+        "guilmon",
+        "veemon"
+      ],
+      "evolvesTo": [
+        "lavogaritamon",
+        "megadramon[dark]",
+        "metalgreymon",
+        "piccolomon",
+        "piximon",
+        "triceramon",
+        "wargrowlmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tyranomon",
+      "image": null
+    },
+    {
+      "id": "unimon",
+      "name": "Unimon",
+      "nameZh": "獨角馬獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Mythical Beast",
+      "evolvesFrom": [
+        "biyomon",
+        "gabumon",
+        "patamon",
+        "salamon"
+      ],
+      "evolvesTo": [
+        "hippogryphonmon",
+        "magnaangemon",
+        "mammothmon",
+        "piccolomon",
+        "piximon",
+        "shakkoumon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=yunimon",
+      "image": null
+    },
+    {
+      "id": "vilemon",
+      "name": "Vilemon",
+      "nameZh": "邪魔獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Little Devil",
+      "evolvesFrom": [
+        "demidevilmon",
+        "dracmon",
+        "gazimon",
+        "keramon"
+      ],
+      "evolvesTo": [
+        "infermon",
+        "ladydevimon",
+        "myotismon",
+        "phantomon",
+        "warumonzaemon[mistake]",
+        "piedmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=evilmon",
+      "image": null
+    },
+    {
+      "id": "woodmon",
+      "name": "Woodmon",
+      "nameZh": "朽木獸",
+      "stage": "Champion",
+      "attribute": "Virus",
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "candlemon",
+        "lalamon",
+        "mushroomon",
+        "palmon",
+        "wormmon"
+      ],
+      "evolvesTo": [
+        "cherrymon",
+        "garbagemon[mistake]",
+        "jagamon",
+        "pumpkinmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=woodmon",
+      "image": null
+    },
+    {
+      "id": "yakiimon",
+      "name": "Yaki-imon",
+      "nameZh": "烤地瓜獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "lalamon",
+        "mushroomon",
+        "palmon"
+      ],
+      "evolvesTo": [
+        "jagamon",
+        "pumpkinmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=yakiimon",
+      "image": null
+    },
+    {
+      "id": "youkomon",
+      "name": "Youkomon",
+      "nameZh": "狐妖獸",
+      "stage": "Champion",
+      "attribute": "Data",
+      "type": "Mysterious Beast",
+      "evolvesFrom": [
+        "dracmon",
+        "renamon[dark]"
+      ],
+      "evolvesTo": [
+        "kyukimon",
+        "ladydevimon",
+        "taomon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=youkomon",
+      "image": null
+    },
+    {
+      "id": "zubaeagermon",
+      "name": "ZubaEagermon",
+      "nameZh": "茲巴伊戈獸",
+      "stage": "Champion",
+      "attribute": "Vaccine",
+      "type": "Weapon",
+      "evolvesFrom": [
+        "zubamon"
+      ],
+      "evolvesTo": [
+        "duramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=zubaeagermon",
+      "image": null
+    },
+    {
+      "id": "andromon",
+      "name": "Andromon",
+      "nameZh": "安杜路獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "clockmon",
+        "guardromon",
+        "mekanorimon",
+        "tankmon"
+      ],
+      "evolvesTo": [
+        "hiandromon",
+        "machinedramon[dark]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=andromon",
+      "image": null
+    },
+    {
+      "id": "angewomon",
+      "name": "Angewomon",
+      "nameZh": "天女獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "High Angel",
+      "evolvesFrom": [
+        "gatomon",
+        "nefertimon",
+        "sistermon_ciel"
+      ],
+      "evolvesTo": [
+        "ladydevimon[dark]",
+        "magnadramon",
+        "rosemon",
+        "seraphimon",
+        "valkyrimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=angewomon",
+      "image": null
+    },
+    {
+      "id": "bluemeramon",
+      "name": "BlueMeramon",
+      "nameZh": "藍色火焰獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Fire",
+      "evolvesFrom": [
+        "flarerizamon",
+        "meramon"
+      ],
+      "evolvesTo": [
+        "machinedramon",
+        "piedmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=bluemeramon",
+      "image": null
+    },
+    {
+      "id": "cherrymon",
+      "name": "Cherrymon",
+      "nameZh": "祖利獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "kiwimon",
+        "redvegiemon",
+        "sunflowmon",
+        "togemon",
+        "woodmon"
+      ],
+      "evolvesTo": [
+        "hydramon",
+        "jijimon",
+        "puppetmon",
+        "rosemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=jyureimon",
+      "image": null
+    },
+    {
+      "id": "datamon",
+      "name": "Datamon",
+      "nameZh": "分子獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Machine",
+      "evolvesFrom": [
+        "clockmon",
+        "guardromon",
+        "hoverespimon",
+        "mekanorimon",
+        "raremon[mistake]"
+      ],
+      "evolvesTo": [
+        "diablomon[dark]",
+        "hiandromon",
+        "machinedramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=nanomon",
+      "image": null
+    },
+    {
+      "id": "digitamamon",
+      "name": "Digitamamon",
+      "nameZh": "蛋蛋獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Perfect",
+      "evolvesFrom": [
+        "akatorimon",
+        "gekomon",
+        "kokatorimon",
+        "monochromon",
+        "numemon",
+        "shellmon"
+      ],
+      "evolvesTo": [
+        "jijimon",
+        "piedmon[dark]",
+        "rosemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=digitamamon",
+      "image": null
+    },
+    {
+      "id": "dinobeemon",
+      "name": "Dinobeemon",
+      "nameZh": "恐蜂獸",
+      "stage": "Ultimate",
+      "attribute": "Free",
+      "type": "Mutant",
+      "evolvesFrom": [
+        "exveemon+stingmon",
+        "flymon",
+        "kuwagamon"
+      ],
+      "evolvesTo": [
+        "herculeskabuterimon",
+        "imperialdramon_dragonmode"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=dinobeemon",
+      "image": null
+    },
+    {
+      "id": "divermon",
+      "name": "Divermon",
+      "nameZh": "奇蛙獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Aquatic Beast Man",
+      "evolvesFrom": [
+        "gesomon",
+        "ikkakumon",
+        "octmon",
+        "seadramon",
+        "shellmon",
+        "tobiumon"
+      ],
+      "evolvesTo": [
+        "zudomon",
+        "metalseadramon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hangyomon",
+      "image": null
+    },
+    {
+      "id": "duramon",
+      "name": "Duramon",
+      "nameZh": "杜蘭獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Weapon",
+      "evolvesFrom": [
+        "gladimon",
+        "zubaeagermon"
+      ],
+      "evolvesTo": [
+        "durandamon",
+        "gallantmon",
+        "slashangemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=duramon",
+      "image": null
+    },
+    {
+      "id": "etemon",
+      "name": "Etemon",
+      "nameZh": "悟空獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Puppet",
+      "evolvesFrom": [
+        "leomon",
+        "mojyamon",
+        "numemon"
+      ],
+      "evolvesTo": [
+        "jijimon",
+        "machinedramon[dark]",
+        "piedmon[dark]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=etemon",
+      "image": null
+    },
+    {
+      "id": "fumamon",
+      "name": "Fumamon",
+      "nameZh": "風魔獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "gekkomon[warp]",
+        "oboromon"
+      ],
+      "evolvesTo": [
+        "sakuyamon",
+        "slashangemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=fumamon",
+      "image": null
+    },
+    {
+      "id": "garbagemon",
+      "name": "Garbagemon",
+      "nameZh": "垃圾桶獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Mutant",
+      "evolvesFrom": [
+        "dokugumon[mistake]",
+        "numemon[mistake]",
+        "raremon",
+        "redvegiemon[mistake]",
+        "roachmon",
+        "togemon[mistake]",
+        "woodmon[mistake]"
+      ],
+      "evolvesTo": [
+        "jijimon",
+        "machinedramon",
+        "piedmon",
+        "puppetmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gerbemon",
+      "image": null
+    },
+    {
+      "id": "garudamon",
+      "name": "Garudamon",
+      "nameZh": "伽樓達獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Bird Man",
+      "evolvesFrom": [
+        "akatorimon",
+        "aquilamon",
+        "birdramon",
+        "halsemon",
+        "kiwimon"
+      ],
+      "evolvesTo": [
+        "phoenixmon",
+        "valkyrimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=garudamon",
+      "image": null
+    },
+    {
+      "id": "gigadramon",
+      "name": "Gigadramon",
+      "nameZh": "千兆龍獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "devidramon",
+        "greymon[dark]",
+        "jazardmon",
+        "machmon",
+        "mekanorimon",
+        "tankmon"
+      ],
+      "evolvesTo": [
+        "machinedramon",
+        "metalseadramon",
+        "wargreymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=gigadramon",
+      "image": null
+    },
+    {
+      "id": "hippogryphonmon",
+      "name": "Hippogryphonmon",
+      "nameZh": "仙鷹獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Mythical Beast",
+      "evolvesFrom": [
+        "angemon",
+        "aquilamon",
+        "birdramon",
+        "halsemon",
+        "pegasusmon",
+        "unimon"
+      ],
+      "evolvesTo": [
+        "magnadramon",
+        "phoenixmon",
+        "valkyrimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hippogriffomon",
+      "image": null
+    },
+    {
+      "id": "infermon",
+      "name": "Infermon",
+      "nameZh": "地獄使者獸",
+      "stage": "Ultimate",
+      "attribute": "Unknown",
+      "type": "Unidentified",
+      "evolvesFrom": [
+        "keramon[warp]",
+        "devimon",
+        "raremon",
+        "vilemon"
+      ],
+      "evolvesTo": [
+        "diablomon",
+        "armageddemon[dark]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=infermon",
+      "image": null
+    },
+    {
+      "id": "jagamon",
+      "name": "Jagamon",
+      "nameZh": "薯仔獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "digmon",
+        "kabuterimon",
+        "redvegiemon",
+        "togemon",
+        "tortomon",
+        "woodmon",
+        "yakiimon"
+      ],
+      "evolvesTo": [
+        "jijimon",
+        "puppetmon[dark]",
+        "rosemon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=jyagamon",
+      "image": null
+    },
+    {
+      "id": "jazarichmon",
+      "name": "Jazarichmon",
+      "nameZh": "機戰鳥獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Machine Dragon",
+      "evolvesFrom": [
+        "hoverespimon",
+        "jazardmon",
+        "mekanorimon"
+      ],
+      "evolvesTo": [
+        "machinedramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=jazarichmon",
+      "image": null
+    },
+    {
+      "id": "knightmon",
+      "name": "Knightmon",
+      "nameZh": "騎士獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Warrior",
+      "evolvesFrom": [
+        "clockmon",
+        "gladimon",
+        "skullknightmon"
+      ],
+      "evolvesTo": [
+        "durandamon",
+        "gallantmon",
+        "hiandromon",
+        "seraphimon",
+        "slashangemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=knightmon",
+      "image": null
+    },
+    {
+      "id": "kyukimon",
+      "name": "Kyukimon",
+      "nameZh": "窮奇獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Mysterious Beast",
+      "evolvesFrom": [
+        "gatomon",
+        "kyubimon",
+        "leomon",
+        "nefertimon",
+        "youkomon"
+      ],
+      "evolvesTo": [
+        "sakuyamon",
+        "slashangemon",
+        "valkyrimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=kyukimon",
+      "image": null
+    },
+    {
+      "id": "ladydevimon",
+      "name": "LadyDevimon",
+      "nameZh": "淑女惡魔獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Dark Angel",
+      "evolvesFrom": [
+        "bakemon[dark]",
+        "devidramon",
+        "devimon",
+        "dokugumon",
+        "gatomon[dark]",
+        "kyubimon[dark]",
+        "sistermon_ciel[dark]",
+        "sistermon_noir",
+        "vilemon",
+        "youkomon",
+        "angewomon[dark]"
+      ],
+      "evolvesTo": [
+        "piedmon",
+        "rosemon[dark]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=ladydevimon",
+      "image": null
+    },
+    {
+      "id": "lavogaritamon",
+      "name": "Lavogaritamon",
+      "nameZh": "熔火加里塔獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Rock Dragon",
+      "evolvesFrom": [
+        "flarerizamon",
+        "growlmon",
+        "lavorvomon",
+        "meramon",
+        "tyrannomon"
+      ],
+      "evolvesTo": [
+        "machinedramon[dark]",
+        "phoenixmon",
+        "wargreymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=lavogaritamon",
+      "image": null
+    },
+    {
+      "id": "lilamon",
+      "name": "Lilamon",
+      "nameZh": "丁香獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Pixie",
+      "evolvesFrom": [
+        "hudiemon",
+        "kiwimon",
+        "sunflowmon",
+        "togemon"
+      ],
+      "evolvesTo": [
+        "hydramon",
+        "rosemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=lilamon",
+      "image": null
+    },
+    {
+      "id": "lillymon",
+      "name": "Lillymon",
+      "nameZh": "花仙獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Pixie",
+      "evolvesFrom": [
+        "gatomon",
+        "hudiemon",
+        "kiwimon",
+        "sunflowmon",
+        "togemon"
+      ],
+      "evolvesTo": [
+        "hydramon",
+        "magnadramon",
+        "rosemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=lilimon",
+      "image": {
+        "path": "assets/digimon/v2/lillymon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "loaderliomon",
+      "name": "Loaderliomon",
+      "nameZh": "裝甲獅子獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Machine",
+      "evolvesFrom": [
+        "leomon",
+        "machmon",
+        "madleomon",
+        "tialudomon"
+      ],
+      "evolvesTo": [
+        "heavyleomon",
+        "machinedramon[dark]",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=loaderleomon",
+      "image": null
+    },
+    {
+      "id": "magnaangemon",
+      "name": "MagnaAngemon",
+      "nameZh": "神聖天使獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "High Angel",
+      "evolvesFrom": [
+        "angemon",
+        "pegasusmon",
+        "unimon"
+      ],
+      "evolvesTo": [
+        "gallantmon",
+        "magnadramon",
+        "seraphimon",
+        "slashangemon",
+        "valkyrimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=holyangemon",
+      "image": {
+        "path": "assets/digimon/v2/magnaangemon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "mammothmon",
+      "name": "Mammothmon",
+      "nameZh": "長毛象獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Ancient Beast",
+      "evolvesFrom": [
+        "frigimon",
+        "garurumon",
+        "golemon",
+        "icemon",
+        "ikkakumon",
+        "leomon",
+        "mojyamon",
+        "tuskmon",
+        "unimon"
+      ],
+      "evolvesTo": [
+        "metalgarurumon",
+        "skadimon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mammon",
+      "image": null
+    },
+    {
+      "id": "marinbullmon",
+      "name": "Marinbullmon",
+      "nameZh": "海蛞蝓獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Mollusk",
+      "evolvesFrom": [
+        "gesomon",
+        "octmon",
+        "seadramon",
+        "shellmon",
+        "tobiumon"
+      ],
+      "evolvesTo": [
+        "metalseadramon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=marinbullmon",
+      "image": null
+    },
+    {
+      "id": "megadramon",
+      "name": "Megadramon",
+      "nameZh": "超蛇龍獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "devidramon",
+        "devimon",
+        "exveemon[dark]",
+        "flarerizamon[dark]",
+        "greymon[dark]",
+        "growlmon[dark]",
+        "monochromon",
+        "tuskmon",
+        "tyrannomon[dark]"
+      ],
+      "evolvesTo": [
+        "imperialdramon_dragonmode",
+        "machinedramon",
+        "wargreymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=megadramon",
+      "image": null
+    },
+    {
+      "id": "megakabuterimon",
+      "name": "MegaKabuterimon",
+      "nameZh": "超比多獸 (藍)",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "digmon",
+        "flymon",
+        "kabuterimon",
+        "kuwagamon",
+        "tortomon"
+      ],
+      "evolvesTo": [
+        "herculeskabuterimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=atlurkabuterimon-blue",
+      "image": null
+    },
+    {
+      "id": "megaseadramon",
+      "name": "MegaSeadramon",
+      "nameZh": "超海龍獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Aquatic",
+      "evolvesFrom": [
+        "ebidramon",
+        "gesomon",
+        "ikkakumon",
+        "seadramon",
+        "shellmon",
+        "tobiumon"
+      ],
+      "evolvesTo": [
+        "metalseadramon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=megaseadramon",
+      "image": null
+    },
+    {
+      "id": "metalgreymon",
+      "name": "MetalGreymon",
+      "nameZh": "機械暴龍獸 (2010年動畫版)",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "flarerizamon",
+        "greymon",
+        "growlmon",
+        "lavorvomon",
+        "meramon",
+        "monochromon",
+        "tankmon",
+        "tuskmon",
+        "tyrannomon"
+      ],
+      "evolvesTo": [
+        "machinedramon[dark]",
+        "wargreymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=metalgreymon",
+      "image": {
+        "path": "assets/digimon/v2/metalgreymon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "meteormon",
+      "name": "Meteormon",
+      "nameZh": "隕石獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Ore",
+      "evolvesFrom": [
+        "ankiromon",
+        "golemon",
+        "icemon",
+        "monochromon",
+        "starmon"
+      ],
+      "evolvesTo": [
+        "machinedramon",
+        "metalgarurumon",
+        "piedmon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=insekimon",
+      "image": null
+    },
+    {
+      "id": "monzaemon",
+      "name": "Monzaemon",
+      "nameZh": "熊仔獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Puppet",
+      "evolvesFrom": [
+        "frigimon",
+        "gargomon",
+        "leomon",
+        "mojyamon",
+        "numemon",
+        "starmon"
+      ],
+      "evolvesTo": [
+        "warumonzaemon[dark]",
+        "jijimon",
+        "sakuyamon",
+        "seraphimon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=monzaemon",
+      "image": null
+    },
+    {
+      "id": "myotismon",
+      "name": "Myotismon",
+      "nameZh": "吸血魔獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Undead",
+      "evolvesFrom": [
+        "angemon[dark]",
+        "bakemon",
+        "devidramon",
+        "devimon",
+        "dokugumon",
+        "gesomon[dark]",
+        "vilemon"
+      ],
+      "evolvesTo": [
+        "piedmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=vamdemon",
+      "image": null
+    },
+    {
+      "id": "okuwamon",
+      "name": "Okuwamon",
+      "nameZh": "大古加獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "dokugumon",
+        "flymon",
+        "kabuterimon[dark]",
+        "kuwagamon",
+        "roachmon",
+        "stingmon[dark]"
+      ],
+      "evolvesTo": [
+        "herculeskabuterimon",
+        "rosemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=okuwamon",
+      "image": null
+    },
+    {
+      "id": "paildramon",
+      "name": "Paildramon",
+      "nameZh": "機甲龍獸",
+      "stage": "Ultimate",
+      "attribute": "Free",
+      "type": "Dragon Man",
+      "evolvesFrom": [
+        "exveemon+stingmon",
+        "flamedramon"
+      ],
+      "evolvesTo": [
+        "imperialdramon_dragonmode",
+        "wargreymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=paildramon",
+      "image": null
+    },
+    {
+      "id": "parrotmon",
+      "name": "Parrotmon",
+      "nameZh": "鸚鵡獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Giant Bird",
+      "evolvesFrom": [
+        "akatorimon",
+        "aquilamon",
+        "birdramon",
+        "kiwimon",
+        "kokatorimon"
+      ],
+      "evolvesTo": [
+        "phoenixmon",
+        "valkyrimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=parrotmon",
+      "image": null
+    },
+    {
+      "id": "phantomon",
+      "name": "Phantomon",
+      "nameZh": "死神獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Ghost",
+      "evolvesFrom": [
+        "bakemon",
+        "clockmon[dark]",
+        "devimon",
+        "oboromon",
+        "petermon",
+        "skullknightmon",
+        "vilemon"
+      ],
+      "evolvesTo": [
+        "piedmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=fantomon",
+      "image": null
+    },
+    {
+      "id": "piccolomon",
+      "name": "Piccolomon",
+      "nameZh": "妖精獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Pixie",
+      "evolvesFrom": [
+        "akatorimon",
+        "flymon",
+        "kabuterimon",
+        "kiwimon",
+        "kokatorimon",
+        "kuwagamon",
+        "mojyamon",
+        "petermon",
+        "starmon",
+        "togemon",
+        "tortomon",
+        "tyrannomon",
+        "unimon"
+      ],
+      "evolvesTo": [
+        "jijimon",
+        "rosemon",
+        "valkyrimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=picklemon",
+      "image": null
+    },
+    {
+      "id": "piximon",
+      "name": "Piximon",
+      "nameZh": "妖精獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Pixie",
+      "evolvesFrom": [
+        "akatorimon",
+        "flymon",
+        "kabuterimon",
+        "kiwimon",
+        "kokatorimon",
+        "kuwagamon",
+        "mojyamon",
+        "petermon",
+        "starmon",
+        "togemon",
+        "tortomon",
+        "tyrannomon",
+        "unimon"
+      ],
+      "evolvesTo": [
+        "jijimon",
+        "rosemon",
+        "valkyrimon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=picklemon",
+      "image": null
+    },
+    {
+      "id": "polarbearmon",
+      "name": "Polarbearmon",
+      "nameZh": "北極熊獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Ice-Snow",
+      "evolvesFrom": [
+        "frigimon",
+        "icemon",
+        "mojyamon"
+      ],
+      "evolvesTo": [
+        "metalgarurumon",
+        "skadimon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=polarbearmon",
+      "image": null
+    },
+    {
+      "id": "pumpkinmon",
+      "name": "Pumpkinmon",
+      "nameZh": "南瓜獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Puppet",
+      "evolvesFrom": [
+        "bakemon",
+        "petermon",
+        "sunflowmon",
+        "togemon",
+        "woodmon",
+        "yakiimon"
+      ],
+      "evolvesTo": [
+        "piedmon",
+        "puppetmon",
+        "rosemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pumpmon",
+      "image": null
+    },
+    {
+      "id": "raijiludomon",
+      "name": "RaijiLudomon",
+      "nameZh": "雷神路德獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Armor",
+      "evolvesFrom": [
+        "tankmon",
+        "tialudomon"
+      ],
+      "evolvesTo": [
+        "bryweludramon",
+        "heavyleomon",
+        "hiandromon",
+        "slashangemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=raijiludomon",
+      "image": null
+    },
+    {
+      "id": "rapidmon",
+      "name": "Rapidmon",
+      "nameZh": "拉比獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "gargomon",
+        "guardromon",
+        "machmon",
+        "starmon",
+        "tankmon"
+      ],
+      "evolvesTo": [
+        "hiandromon",
+        "machinedramon[dark]",
+        "megagargomon",
+        "slashangemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=rapidmon",
+      "image": null
+    },
+    {
+      "id": "scorpiomon",
+      "name": "Scorpiomon",
+      "nameZh": "毒蠍獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "ebidramon",
+        "gesomon",
+        "octmon",
+        "seadramon",
+        "shellmon"
+      ],
+      "evolvesTo": [
+        "metalseadramon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=scorpiomon",
+      "image": null
+    },
+    {
+      "id": "shakkoumon",
+      "name": "Shakkoumon",
+      "nameZh": "古神獸",
+      "stage": "Ultimate",
+      "attribute": "Free",
+      "type": "Mutant",
+      "evolvesFrom": [
+        "angemon+ankiromon",
+        "digmon",
+        "pegasusmon",
+        "starmon",
+        "tortomon",
+        "unimon"
+      ],
+      "evolvesTo": [
+        "phoenixmon",
+        "seraphimon",
+        "slashangemon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=shakkoumon",
+      "image": null
+    },
+    {
+      "id": "shogungekomon",
+      "name": "ShogunGekomon",
+      "nameZh": "怪蛙皇",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Amphibian",
+      "evolvesFrom": [
+        "ebidramon",
+        "gekomon",
+        "octmon",
+        "tortomon"
+      ],
+      "evolvesTo": [
+        "metalseadramon",
+        "piedmon[dark]",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tonosamagekomon",
+      "image": null
+    },
+    {
+      "id": "silphymon",
+      "name": "Silphymon",
+      "nameZh": "人面戰鷹獸",
+      "stage": "Ultimate",
+      "attribute": "Free",
+      "type": "Beast Man",
+      "evolvesFrom": [
+        "aquilamon+gatomon",
+        "halsemon",
+        "nefertimon"
+      ],
+      "evolvesTo": [
+        "phoenixmon",
+        "rosemon",
+        "sakuyamon",
+        "slashangemon",
+        "valkyrimon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=silphymon",
+      "image": null
+    },
+    {
+      "id": "tankdramon",
+      "name": "Tankdramon",
+      "nameZh": "坦克龍獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Machine",
+      "evolvesFrom": [
+        "guardromon",
+        "hi-commandramon",
+        "hoverespimon",
+        "jazardmon",
+        "machmon",
+        "mekanorimon",
+        "tankmon",
+        "troopmon"
+      ],
+      "evolvesTo": [
+        "hiandromon",
+        "machinedramon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=tankdramon",
+      "image": null
+    },
+    {
+      "id": "taomon",
+      "name": "Taomon",
+      "nameZh": "祭師獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Wizard",
+      "evolvesFrom": [
+        "kyubimon",
+        "sistermon_ciel",
+        "youkomon"
+      ],
+      "evolvesTo": [
+        "sakuyamon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=taomon",
+      "image": null
+    },
+    {
+      "id": "triceramon",
+      "name": "Triceramon",
+      "nameZh": "三觭龍獸",
+      "stage": "Ultimate",
+      "attribute": "Data",
+      "type": "Ceratopsian",
+      "evolvesFrom": [
+        "ankiromon",
+        "golemon",
+        "greymon",
+        "monochromon",
+        "tortomon",
+        "tuskmon",
+        "tyrannomon"
+      ],
+      "evolvesTo": [
+        "vikemon",
+        "wargreymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=triceramon",
+      "image": null
+    },
+    {
+      "id": "wargrowlmon",
+      "name": "WarGrowlmon",
+      "nameZh": "大古拉獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "flamedramon",
+        "flarerizamon",
+        "greymon",
+        "growlmon",
+        "meramon",
+        "tuskmon",
+        "tyrannomon"
+      ],
+      "evolvesTo": [
+        "gallantmon",
+        "machinedramon[dark]",
+        "wargreymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=megalogrowmon",
+      "image": null
+    },
+    {
+      "id": "warumonzaemon",
+      "name": "WaruMonzaemon",
+      "nameZh": "惡霸熊仔獸",
+      "stage": "Ultimate",
+      "attribute": "Virus",
+      "type": "Puppet",
+      "evolvesFrom": [
+        "bakemon[mistake]",
+        "gargomon[dark]",
+        "guardromon[mistake]",
+        "madleomon[mistake]",
+        "mojyamon[mistake]",
+        "numemon[dark]",
+        "porcupamon",
+        "raremon[mistake]",
+        "roachmon[mistake]",
+        "starmon[mistake]",
+        "tankmon[mistake]",
+        "troopmon[mistake]",
+        "vilemon[mistake]",
+        "monzaemon[dark]"
+      ],
+      "evolvesTo": [
+        "machinedramon",
+        "piedmon",
+        "puppetmon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=warumonzaemon",
+      "image": null
+    },
+    {
+      "id": "weregarurumon",
+      "name": "WereGarurumon",
+      "nameZh": "獸人加魯魯獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Beast Man",
+      "evolvesFrom": [
+        "garurumon",
+        "leomon",
+        "madleomon",
+        "sistermon_noir"
+      ],
+      "evolvesTo": [
+        "magnadramon",
+        "metalgarurumon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=weregarrumon",
+      "image": {
+        "path": "assets/digimon/v2/weregarurumon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "wingdramon",
+      "name": "Wingdramon",
+      "nameZh": "翔龍獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Sky Dragon",
+      "evolvesFrom": [
+        "devidramon",
+        "exveemon",
+        "flamedramon"
+      ],
+      "evolvesTo": [
+        "imperialdramon_dragonmode",
+        "wargreymon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=wingdramon",
+      "image": null
+    },
+    {
+      "id": "zudomon",
+      "name": "Zudomon",
+      "nameZh": "祖頓獸",
+      "stage": "Ultimate",
+      "attribute": "Vaccine",
+      "type": "Sea Beast",
+      "evolvesFrom": [
+        "ankiromon",
+        "frigimon",
+        "garurumon",
+        "golemon",
+        "icemon",
+        "ikkakumon",
+        "shellmon",
+        "tortomon",
+        "divermon"
+      ],
+      "evolvesTo": [
+        "metalgarurumon",
+        "metalseadramon",
+        "vikemon"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=zudomon",
+      "image": null
+    },
+    {
+      "id": "apocalymon",
+      "name": "Apocalymon",
+      "nameZh": "啟示錄獸",
+      "stage": "Mega",
+      "attribute": "Unknown",
+      "type": "Unidentified",
+      "evolvesFrom": [
+        "machinedramon+metalseadramon+piedmon+puppetmon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=apoclymon",
+      "image": null
+    },
+    {
+      "id": "bryweludramon",
+      "name": "BryweLudramon",
+      "nameZh": "布利維路德獸",
+      "stage": "Mega",
+      "attribute": "Data",
+      "type": "Armor",
+      "evolvesFrom": [
+        "raijiludomon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=bryweludramon",
+      "image": null
+    },
+    {
+      "id": "diablomon",
+      "name": "Diaboromon",
+      "nameZh": "超惡魔獸",
+      "stage": "Mega",
+      "attribute": "Unknown",
+      "type": "Unidentified",
+      "evolvesFrom": [
+        "datamon[dark]",
+        "infermon"
+      ],
+      "evolvesTo": [
+        "armageddemon[mode]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=diablomon",
+      "image": null
+    },
+    {
+      "id": "durandamon",
+      "name": "Durandamon",
+      "nameZh": "杜蘭達獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Holy Sword",
+      "evolvesFrom": [
+        "duramon",
+        "knightmon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=durandamon",
+      "image": null
+    },
+    {
+      "id": "gallantmon",
+      "name": "Gallantmon",
+      "nameZh": "紅蓮騎士獸",
+      "stage": "Mega",
+      "attribute": "Virus",
+      "type": "Holy Knight",
+      "evolvesFrom": [
+        "guilmon[warp]",
+        "duramon",
+        "knightmon",
+        "magnaangemon",
+        "wargrowlmon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=dukemon",
+      "image": null
+    },
+    {
+      "id": "heavyleomon",
+      "name": "HeavyLeomon",
+      "nameZh": "重裝獅子獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Machine",
+      "evolvesFrom": [
+        "loaderliomon",
+        "raijiludomon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=heavyleomon",
+      "image": null
+    },
+    {
+      "id": "herculeskabuterimon",
+      "name": "HerculesKabuterimon",
+      "nameZh": "力神比多獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Insectoid",
+      "evolvesFrom": [
+        "dinobeemon",
+        "megakabuterimon",
+        "okuwamon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=heraklekabuterimon",
+      "image": null
+    },
+    {
+      "id": "hiandromon",
+      "name": "HiAndromon",
+      "nameZh": "高級安杜路獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "andromon",
+        "datamon",
+        "knightmon",
+        "raijiludomon",
+        "rapidmon",
+        "tankdramon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hiandromon",
+      "image": null
+    },
+    {
+      "id": "hydramon",
+      "name": "Hydramon",
+      "nameZh": "水蛇獸",
+      "stage": "Mega",
+      "attribute": "Virus",
+      "type": "Vegetation",
+      "evolvesFrom": [
+        "cherrymon",
+        "lilamon",
+        "lillymon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hydramon",
+      "image": null
+    },
+    {
+      "id": "imperialdramon_dragonmode",
+      "name": "Imperialdramon (Dragon Mode)",
+      "nameZh": "帝皇龍甲獸：龍型態",
+      "stage": "Mega",
+      "attribute": "Free",
+      "type": "Ancient Dragon",
+      "evolvesFrom": [
+        "dinobeemon",
+        "megadramon",
+        "paildramon",
+        "wingdramon"
+      ],
+      "evolvesTo": [
+        "imperialdramon_fightermode[mode]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=imperialdramondragonmode",
+      "image": null
+    },
+    {
+      "id": "jijimon",
+      "name": "Jijimon",
+      "nameZh": "公公獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Ancient",
+      "evolvesFrom": [
+        "cherrymon",
+        "digitamamon",
+        "etemon",
+        "garbagemon",
+        "jagamon",
+        "monzaemon",
+        "piccolomon",
+        "piximon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=jijimon",
+      "image": null
+    },
+    {
+      "id": "machinedramon",
+      "name": "Machinedramon",
+      "nameZh": "機械邪龍獸",
+      "stage": "Mega",
+      "attribute": "Virus",
+      "type": "Machine",
+      "evolvesFrom": [
+        "greymon[dark]",
+        "growlmon[dark]",
+        "andromon[dark]",
+        "bluemeramon",
+        "datamon",
+        "etemon[dark]",
+        "garbagemon",
+        "gigadramon",
+        "jazarichmon",
+        "lavogaritamon[dark]",
+        "loaderliomon[dark]",
+        "megadramon",
+        "metalgreymon[dark]",
+        "meteormon",
+        "rapidmon[dark]",
+        "tankdramon",
+        "wargrowlmon[dark]",
+        "warumonzaemon"
+      ],
+      "evolvesTo": [
+        "apocalymon(+metalseadramon+piedmon+puppetmon)",
+        "armageddemon[dark]"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=mugendramon",
+      "image": null
+    },
+    {
+      "id": "magnadramon",
+      "name": "Magnadramon",
+      "nameZh": "聖龍獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Holy Dragon",
+      "evolvesFrom": [
+        "angewomon",
+        "hippogryphonmon",
+        "lillymon",
+        "magnaangemon",
+        "weregarurumon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=holydramon",
+      "image": null
+    },
+    {
+      "id": "megagargomon",
+      "name": "MegaGargomon",
+      "nameZh": "撒多格杜獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Machine",
+      "evolvesFrom": [
+        "terriermon[warp]",
+        "rapidmon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=saintgalgomon",
+      "image": null
+    },
+    {
+      "id": "metalgarurumon",
+      "name": "MetalGarurumon",
+      "nameZh": "鋼鐵加魯魯獸",
+      "stage": "Mega",
+      "attribute": "Data",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "gabumon[warp]",
+        "mammothmon",
+        "meteormon",
+        "polarbearmon",
+        "weregarurumon",
+        "zudomon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=metalgarurumon",
+      "image": {
+        "path": "assets/digimon/v2/metalgarurumon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "metalseadramon",
+      "name": "MetalSeadramon",
+      "nameZh": "鋼鐵海龍獸",
+      "stage": "Mega",
+      "attribute": "Data",
+      "type": "Cyborg",
+      "evolvesFrom": [
+        "divermon",
+        "gigadramon",
+        "marinbullmon",
+        "megaseadramon",
+        "scorpiomon",
+        "shogungekomon",
+        "zudomon"
+      ],
+      "evolvesTo": [
+        "apocalymon(+machinedramon+piedmon+puppetmon)"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=metalseadramon",
+      "image": null
+    },
+    {
+      "id": "phoenixmon",
+      "name": "Phoenixmon",
+      "nameZh": "鳳凰獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Holy Beast",
+      "evolvesFrom": [
+        "garudamon",
+        "hippogryphonmon",
+        "lavogaritamon",
+        "parrotmon",
+        "shakkoumon",
+        "silphymon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=hououmon",
+      "image": null
+    },
+    {
+      "id": "piedmon",
+      "name": "Piedmon",
+      "nameZh": "小丑皇",
+      "stage": "Mega",
+      "attribute": "Virus",
+      "type": "Wizard",
+      "evolvesFrom": [
+        "vilemon",
+        "bluemeramon",
+        "digitamamon[dark]",
+        "etemon[dark]",
+        "garbagemon",
+        "ladydevimon",
+        "meteormon",
+        "myotismon",
+        "phantomon",
+        "pumpkinmon",
+        "shogungekomon[dark]",
+        "warumonzaemon"
+      ],
+      "evolvesTo": [
+        "apocalymon(+machinedramon+metalseadramon+puppetmon)"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=piemon",
+      "image": null
+    },
+    {
+      "id": "puppetmon",
+      "name": "Puppetmon",
+      "nameZh": "木偶獸",
+      "stage": "Mega",
+      "attribute": "Virus",
+      "type": "Puppet",
+      "evolvesFrom": [
+        "cherrymon",
+        "garbagemon",
+        "jagamon[dark]",
+        "pumpkinmon",
+        "warumonzaemon"
+      ],
+      "evolvesTo": [
+        "apocalymon(+machinedramon+metalseadramon+piedmon)"
+      ],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=pinochimon",
+      "image": null
+    },
+    {
+      "id": "rosemon",
+      "name": "Rosemon",
+      "nameZh": "薔薇獸",
+      "stage": "Mega",
+      "attribute": "Data",
+      "type": "Pixie",
+      "evolvesFrom": [
+        "angewomon",
+        "cherrymon",
+        "digitamamon",
+        "jagamon",
+        "ladydevimon[dark]",
+        "lilamon",
+        "lillymon",
+        "okuwamon",
+        "piccolomon",
+        "piximon",
+        "pumpkinmon",
+        "silphymon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=rosemon",
+      "image": {
+        "path": "assets/digimon/v2/rosemon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "sakuyamon",
+      "name": "Sakuyamon",
+      "nameZh": "沙古牙獸",
+      "stage": "Mega",
+      "attribute": "Data",
+      "type": "Deity",
+      "evolvesFrom": [
+        "renamon[warp]",
+        "fumamon",
+        "kyukimon",
+        "monzaemon",
+        "silphymon",
+        "taomon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=sakuyamon",
+      "image": null
+    },
+    {
+      "id": "seraphimon",
+      "name": "Seraphimon",
+      "nameZh": "究極天使獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Seraph",
+      "evolvesFrom": [
+        "angewomon",
+        "knightmon",
+        "magnaangemon",
+        "monzaemon",
+        "shakkoumon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=seraphimon",
+      "image": {
+        "path": "assets/digimon/v2/seraphimon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "skadimon",
+      "name": "Skadimon",
+      "nameZh": "冰雪女王獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Ice-Snow",
+      "evolvesFrom": [
+        "mammothmon",
+        "polarbearmon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=skadimon",
+      "image": null
+    },
+    {
+      "id": "slashangemon",
+      "name": "SlashAngemon",
+      "nameZh": "斬擊天使獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Great Angel",
+      "evolvesFrom": [
+        "duramon",
+        "fumamon",
+        "knightmon",
+        "kyukimon",
+        "magnaangemon",
+        "raijiludomon",
+        "rapidmon",
+        "shakkoumon",
+        "silphymon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=slashangemon",
+      "image": null
+    },
+    {
+      "id": "valkyrimon",
+      "name": "Valkyrimon",
+      "nameZh": "女戰神獸",
+      "stage": "Mega",
+      "attribute": "Free",
+      "type": "Warrior",
+      "evolvesFrom": [
+        "angewomon",
+        "garudamon",
+        "hippogryphonmon",
+        "kyukimon",
+        "magnaangemon",
+        "parrotmon",
+        "piccolomon",
+        "piximon",
+        "silphymon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=valkyrimon",
+      "image": null
+    },
+    {
+      "id": "vikemon",
+      "name": "Vikemon",
+      "nameZh": "維京毛人獸",
+      "stage": "Mega",
+      "attribute": "Free",
+      "type": "Beast Man",
+      "evolvesFrom": [
+        "divermon",
+        "jagamon",
+        "loaderliomon",
+        "mammothmon",
+        "marinbullmon",
+        "megaseadramon",
+        "meteormon",
+        "monzaemon",
+        "piximon",
+        "polarbearmon",
+        "scorpiomon",
+        "shakkoumon",
+        "shogungekomon",
+        "triceramon",
+        "zudomon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=vikemon",
+      "image": null
+    },
+    {
+      "id": "wargreymon",
+      "name": "WarGreymon",
+      "nameZh": "戰鬥暴龍獸",
+      "stage": "Mega",
+      "attribute": "Vaccine",
+      "type": "Dragon Man",
+      "evolvesFrom": [
+        "agumon[warp]",
+        "gigadramon",
+        "lavogaritamon",
+        "megadramon",
+        "metalgreymon",
+        "paildramon",
+        "triceramon",
+        "wargrowlmon",
+        "wingdramon"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=wargreymon",
+      "image": {
+        "path": "assets/digimon/v2/wargreymon.png",
+        "atlas": "v2"
+      }
+    },
+    {
+      "id": "armageddemon",
+      "name": "Armageddemon",
+      "nameZh": "滅世魔獸",
+      "stage": "Mega+",
+      "attribute": "Unknown",
+      "type": "Unidentified",
+      "evolvesFrom": [
+        "infermon[dark]",
+        "diablomon[mode]",
+        "machinedramon[dark]"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=armagemon",
+      "image": null
+    },
+    {
+      "id": "imperialdramon_fightermode",
+      "name": "Imperialdramon (Fighter Mode)",
+      "nameZh": "帝皇龍甲獸：龍人型態",
+      "stage": "Mega+",
+      "attribute": "Free",
+      "type": "Ancient Dragon Man",
+      "evolvesFrom": [
+        "imperialdramon_dragonmode[mode]"
+      ],
+      "evolvesTo": [],
+      "profileUrl": "https://digimon.net/reference_en/detail.php?directory_name=imperialdramonfightermode",
+      "image": null
+    }
+  ]
+}

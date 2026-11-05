@@ -1,4 +1,31 @@
-# Digimon Sanctuary sprite and floor packs
+# Digimon Sanctuary sprite, index and floor packs
+
+## Full profile and evolution index
+
+`assets/digimon/index.json` is the metadata index of **251 Digimon profiles**,
+including stage, attribute, type, profile links, and the source-listed `evolvesFrom`
+and `evolvesTo` links. Its source revision and coverage notes are in the JSON.
+It is data only: it does not import additional character art or register all
+profiles as selectable in the game. The repository's Digimon Up source has 280
+animated entries including variants, while its profile JSON contains 251
+records; these counts are not interchangeable. The source itself notes gaps in
+evolution data, and the index preserves links to missing/variant profiles as
+unresolved references rather than guessing their identities. Only 16 of the
+indexed profiles currently reference sprites already present in this project;
+the other 235 have `image: null`.
+
+Rebuild the index from the exact pinned Digimon Up checkout's `digimon.json`:
+
+```
+python3 tools/digimon/build_full_index.py /path/to/digimon-up-sprites/digimon.json
+```
+
+This generator copies profile metadata and reference URLs only. It does not
+copy the source repository's animation art. Digimon names and profiles are
+provided for reference; this is not a claim of affiliation or a complete
+official franchise catalogue.
+
+## Sprite and floor packs
 
 `assets/digimon/v2` contains the four approved starter lines: Agumon,
 Gabumon, Patamon and Palmon, each through its three named later forms. For
