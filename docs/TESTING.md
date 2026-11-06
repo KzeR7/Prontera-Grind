@@ -227,6 +227,15 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-06 (`haven-v328`): a request that never settles, and a save that goes quiet.**
+`cloud_sim` drives a `fetch` that stays pending until its signal aborts — the shape of a dropped socket —
+and requires the attempt to end as `offline` with `pushing` cleared and the save still dirty, then a real
+push on the next flush; it fails *fast* (a raced 2 s sentinel) rather than hanging, so removing the
+deadline is a red test and not a slow one. The watchdog and the five-minute stall note have their own
+cases, and all three were mutation-checked. The account-side fingerprint lives in the ladder query in
+`docs/CHECK-A-SAVE.md`: a healthy account moves every 10–25 minutes, and a stalled queue is a run of no
+rows at all.
+
 **2026-11-06 (`haven-v327` follow-up): the 428-during-login adopt and the fishing handler.**
 `cloud_sim` grew to 80 checks (a 428 at login must not adopt the older copy — mutation-checked) and
 `social_fishing_sim` pins the Sell-duplicates handler; the BUILD-sensitive suites and the three

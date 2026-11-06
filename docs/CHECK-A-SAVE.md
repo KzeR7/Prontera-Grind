@@ -52,15 +52,164 @@ The `LEFT JOIN` matters: an account with no save still shows up, with `lv` and `
 one. List them first — never restore blind:
 
 ```sql
-SELECT version, json_extract(blob, '$.lv') AS lv,
-       datetime(saved_at / 1000, 'unixepoch') AS saved
+-- The ladder: progress should rise down the list. A step DOWN is the moment a copy that was behind
+-- won, and the version either side of it says which client wrote it.
+SELECT version,
+       json_extract(blob, '$.lv')              AS lv,
+       json_extract(blob, '$.zeny')            AS zeny,
+       json_extract(blob, '$.ascension.level') AS ascension,
+       json_extract(blob, '$.fishing.coins')   AS fishcoins,
+       json_extract(blob, '$.cloud.v')         AS client_says_account_was,
+       datetime(saved_at / 1000, 'unixepoch')  AS saved
 FROM save_history
-WHERE user_id = (SELECT id FROM users WHERE username = 'cloud8909')
+WHERE user_id = (SELECT id FROM users WHERE lower(username) = lower('cloud8909'))
 ORDER BY version DESC;
 ```
 
 Any write is destructive, so `docs/LAUNCH-SECURITY.md` §2 applies: run the `SELECT` first, and guard
 the `UPDATE` with both the id and the value you expect to replace.
+
+## "It still isn't saved" with a clean console (v327)
+
+A report of lost progress with **no red `/api/save` line at all** points the other way: a 4xx would
+have been printed by the browser, so nothing was refused. Either the pushes are landing and the
+*load* is what loses them, or the pushes were never sent (`CLOUD.on` false, sync paused, the tab
+believing it is signed in as someone else). Those two look identical to the player and are opposite
+fixes, so measure before touching code.
+
+The player pastes this into the console **on the game page** (it needs `currentUser`, `CLOUD` and
+`saveKey`, which only exist there). It fetches the account's copy once and prints every field where
+the two disagree:
+
+```js
+(async () => {
+  const L = JSON.parse(localStorage.getItem('pg_save3_' + currentUser) || 'null') || {};
+  const d = await (await fetch('/api/save', { credentials: 'same-origin', cache: 'no-store' })).json();
+  const Sv = JSON.parse(d.blob || 'null') || {};
+  const isO = v => v && typeof v === 'object';
+  const diffs = [];
+  (function walk(a, b, p) {
+    if (isO(a) && isO(b)) {
+      for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) walk(a[k], b[k], p + '.' + k);
+      return;
+    }
+    const sa = JSON.stringify(a), sb = JSON.stringify(b);
+    if (sa !== sb) diffs.push(p.slice(1) + '  browser=' + String(sa).slice(0, 80) + '  account=' + String(sb).slice(0, 80));
+  })(L, Sv, '');
+  console.log('account:', currentUser, '| bytes browser/account:', JSON.stringify(L).length, JSON.stringify(Sv).length);
+  console.log('account version:', d.version, '| written:', new Date(d.savedAt).toLocaleString());
+  console.log('sync:', { on: CLOUD.on, ver: CLOUD.ver, dirty: CLOUD.dirty, pushing: CLOUD.pushing, lost: CLOUD.lost, paused: CLOUD.paused, lastPushSecsAgo: Math.round((Date.now() - CLOUD.lastPush) / 1000) });
+  console.log('browser stamp cloud.v:', (L.cloud || {}).v, '| browser offlineAt:', new Date(L.offlineAt || 0).toLocaleString());
+  console.log('DIFFS (' + diffs.length + ')');
+  diffs.slice(0, 40).forEach(x => console.log('  ' + x));
+})()
+```
+
+| What the output shows | What it means |
+|---|---|
+| `sync.on: false` or `paused: true`, `lastPushSecsAgo` huge | **Nothing was ever uploaded.** The player's progress is only in that browser; the account copy is not the bug. Look at why sync is off: the badge says `☁ ⛔` for a session/owner mismatch, `☁ ⇅` stuck means a push that never returns. |
+| `browser=…` newer than `account=…` on the lost fields, `version` not advancing between two runs a minute apart | The pushes are **not landing** — compare `CLOUD.ver` with `account version`: if they stay equal while the device keeps playing, the flush is being skipped (the debounce) or refused silently. |
+| `account=…` newer than the browser on the lost fields | The account **has** the progress and the client did not load it: a load/adopt problem, not a save problem. Check `cloud.v` against the account's `version`; a stale stamp means the login took the "account wins" road. |
+| the lost field is absent from both (`account=undefined`) | It never entered the save object at all — a serialisation gap in the module that owns it, not cloud sync. |
+| `DIFFS (0)` | The two copies agree, so the progress was never lost: it is a display or a rule problem (a forge that charged but did not apply, a stat capped in the UI). |
+
+One warning: that `fetch('/api/save')` is a real save exchange, so it counts as a return. If the tab
+had genuinely been away for three minutes it mints an away claim, and the next push acknowledges it —
+one red 428, once. It writes no save row (see the WRITE ECONOMY note in `functions/api/save.js`).
+
+The authoritative version of the same question is the D1 query at the top of this page; the console
+version just needs no dashboard access and no waiting.
+
+## "The whole character came back older, after I logged back in"
+
+That shape is not the 428 story. A refused save loses at most one sync window; a *character* that is
+older is the account's own copy being old (or empty) and the login faithfully loading it. Two things
+answer it, in this order.
+
+**First: this browser is already holding every copy it has ever stashed.** `cloudAdopt` never deletes
+the copy it replaces — it writes it to `pg_save3_<name>_local_<ms>`. So before logging in again:
+
+```js
+// Every save this browser holds. Reads only - nothing is written.
+console.table(Object.keys(localStorage)
+  .filter(k => k.startsWith('pg_save3_'))
+  .map(k => {
+    let s = {}; try { s = JSON.parse(localStorage.getItem(k) || '{}') || {}; } catch (e) {}
+    return { key: k, lv: s.lv, zeny: s.zeny,
+             ascension: (s.ascension || {}).level,
+             fishcoins: (s.fishing || {}).coins,
+             account_version: (s.cloud || {}).v,
+             last_written: s.offlineAt ? new Date(s.offlineAt).toLocaleString() : '',
+             bytes: (localStorage.getItem(k) || '').length };
+  }))
+```
+
+If a `_local_` row is the character the player remembers and the live `pg_save3_<name>` row is not,
+it can be put back:
+
+```js
+// Put a stashed copy back as this browser's copy, stamped so the login keeps it.
+async function restoreFrom(key) {
+  if (!/^pg_save3_.+_local_\d+$/.test(key)) throw new Error('Pass a backup key (pg_save3_<name>_local_<ms>), not the live slot.');
+  const main = 'pg_save3_' + currentUser;
+  const copy = JSON.parse(localStorage.getItem(key) || 'null');
+  if (!copy) throw new Error('No such copy: ' + key);
+  const d = await (await fetch('/api/save', { credentials: 'same-origin', cache: 'no-store' })).json();
+  const live = JSON.parse(d.blob || 'null') || {};
+  console.log('restoring lv', copy.lv, 'zeny', copy.zeny, '| the account now has lv', live.lv, 'zeny', live.zeny, 'version', d.version);
+  if (!confirm('Replace this account\'s copy with lv ' + copy.lv + ' / zeny ' + copy.zeny + '? The copy being replaced stays on this device and in the save history.')) return 'cancelled';
+  localStorage.setItem(main + '_before_restore_' + Date.now(), localStorage.getItem(main) || '');
+  copy.owner = currentUser;
+  // The stamp is what makes the next login upload this copy instead of adopting over it: same version
+  // as the account, written after it (see localAheadOfServer in index.html). cloud.at must be OLDER
+  // than offlineAt, which is the whole test.
+  copy.cloud = { v: Number(d.version) || 0, at: Date.now() - 60000 };
+  copy.offlineAt = Date.now();
+  localStorage.setItem(main, JSON.stringify(copy));
+  return 'written - reload and log in; the login will upload it.';
+}
+```
+
+The copy being replaced is kept twice (a `_before_restore_` key here, and the account's own history
+server-side), so this is reversible both ways. It **overwrites the account** on the next login, so
+only do it when the browser's copy really is the better one — the dry run prints both levels and both
+Zeny totals first, and nothing is written until the confirm.
+
+**Second: the account's own version ladder** — the `save_history` query above. The row where `lv` /
+`zeny` step *down* is the moment a copy that was behind won, and `client_says_account_was` on the row
+above it names the client (its own `cloud.v`) that wrote over the good copy. That version is also what
+`POST /api/gm/player {action:'restore', version}` takes, so the good blob can be put back from the
+server side without touching the browser at all — which is the right tool when the device's copies are
+all older than the history.
+
+## "An hour of play never reached the account" (v328)
+
+The shape: hours of progress, a console with nothing in it, and a login that loads an older copy. A save
+that is *refused* prints in red; a save that is *never sent* prints nothing at all, and until v328 the
+second one had a one-way door in front of it: every request was fetched with no deadline, `cloudPush`
+keeps `CLOUD.pushing` true until its request settles, and `cloudPush` returns `idle` while that flag is
+set. One socket the network dropped and the whole session stopped uploading — silently, for ever, with
+the in-game badge frozen on "☁ ⇅ Syncing…".
+
+Three things now make that state impossible to hide:
+
+* **Every request has a deadline** (`CLOUD_TIMEOUT_MS`, 20 s, via an `AbortController`). The abort takes
+  the ordinary offline path: the save stays dirty and the next flush sends it.
+* **A watchdog on the poll tick** drops a push that outlived its own deadline and re-queues its save, so
+  the flag cannot outlive the request even where `AbortController` is missing.
+* **A quiet save says so.** If the save is dirty and has not reached the account for `CLOUD_STALL_MS`
+  (5 min) while the session is live, the badge reads "Not saved for N min" and the log explains that the
+  progress is in this browser but the account still holds the older copy.
+
+So the first question for a report like this is now answerable from the page itself: **what did the
+badge say?** `☁ ⇅ Syncing…` frozen meant a dead request (v328 fixes it); `☁ … Not saved for 12 min` means
+the flush is being refused or skipped, and the log line above it says why; `☁ ✓` with an older
+character on screen means the loss happened before, not now — go to the ladder.
+
+On the server side the same event looks like a *gap*: `save_history` samples every tenth version
+(`HISTORY_EVERY`) and keeps five, so a run of zero writes leaves no row at all, and the ladder simply
+stops advancing at the last version that really landed. That is a fingerprint worth recognising: a
+healthy account's ladder moves every 10–25 minutes.
 
 ## A note on the v280 fix
 
