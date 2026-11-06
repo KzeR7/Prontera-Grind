@@ -910,11 +910,15 @@ await T('the poll fetches announcements and gifts, and saves receipts without re
 // ------------------------------------------------- the v82 usage diet ----
 // Every push is one Function request and one D1 row written, so the cadence IS the cost. These
 // pin the numbers the free-plan arithmetic in tools/server-shift-plan.md §3b is built on.
-await T('a push waits a minute while you play, and five while the tab is hidden', async () => {
+await T('a push waits a minute while you play, and two and a half while the tab is hidden', async () => {
   const h = harness({ routes: { '/save': { status: 200, body: { version: 2 } } } });
   h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 1; h.sandbox.currentUser = 'X';
   assert.strictEqual(h.sandbox.CLOUD_DEBOUNCE, 60000, 'the plan\'s own budget assumes a 60-second debounce');
-  assert.strictEqual(h.sandbox.CLOUD_HIDDEN_DEBOUNCE, 300000, 'a hidden tab backs off to five minutes');
+  // v327: three, not five. A background cadence slower than the server's away threshold (three minutes)
+  // made every hidden-tab save look like a return from absence - an away claim, a 428 and a retry each
+  // time, which is what AFK fishing produced. The diet survives: the 428 path cost two requests and two
+  // row writes for the same window, so this is strictly cheaper as well as quieter.
+  assert.strictEqual(h.sandbox.CLOUD_HIDDEN_DEBOUNCE, 150000, 'a hidden tab backs off to two and a half minutes');
   const realNow = Date.now;
   try {
     let t = realNow();
@@ -928,8 +932,8 @@ await T('a push waits a minute while you play, and five while the tab is hidden'
     assert.strictEqual(h.sandbox.cloudHidden(), true, 'the block must notice a background tab');
     h.sandbox.CLOUD.dirty = true; t += 60000;
     assert.strictEqual(await h.sandbox.cloudFlush(), 'idle', 'a hidden tab does not push every minute');
-    t += 300000;
-    assert.strictEqual(await h.sandbox.cloudFlush(), 'ok', 'five minutes hidden is the cadence');
+    t += 150000;
+    assert.strictEqual(await h.sandbox.cloudFlush(), 'ok', 'two and a half minutes hidden is the cadence');
     // ...and a forced flush (tab closing, player chose a save) always sends, whatever the clock says.
     h.sandbox.CLOUD.dirty = true;
     assert.strictEqual(await h.sandbox.cloudFlushNow(), 'ok', 'a forced flush ignores the back-off');
@@ -1299,6 +1303,41 @@ await T('v326: another device that moved the account on still wins at login', as
   assert.ok(!h.calls.some(c => c.url === '/api/save' && c.init.method === 'PUT'), 'nothing is uploaded over it');
 });
 
+await T('v326: a 428 during a login push does not adopt the older account copy', async () => {
+  // The login path pushes the newer device copy. If the server answers 428 (an away claim must be
+  // acknowledged first), that is not a conflict - but the code fell through to cloudAdopt and loaded
+  // the older account copy on top of the forge it had just failed to upload. The owner's console is
+  // full of these 428s, so this is the path that kept the rollback alive after the first fix.
+  const claim = { id: 99, awayMs: 8 * 3600000, creditedMs: 4 * 3600000, rateKph: 100, kills: 200, remainder: 0 };
+  let puts = 0;
+  const h = harness({
+    storage: { 'pg_save3_FRIEND': JSON.stringify(forgedBlade) },
+    S: JSON.parse(JSON.stringify(forgedBlade)),
+    loadReturn: { lv: 150, q: [] },
+    runTimers: true,
+    routes: {
+      '/save': (n, init) => {
+        if (!(init && init.method === 'PUT'))
+          return { status: 200, body: { owner: 'FRIEND', version: 40, blob: JSON.stringify(nPlusBlade), savedAt: 900 } };
+        puts++;
+        if (puts === 1) return { status: 428, body: { version: 40, offlineClaim: claim } };
+        return { status: 200, body: { version: 41, offlineClaimId: claim.id } };
+      },
+      '/grants': { status: 200, body: { grants: [] } },
+      '/messages': { status: 200, body: { messages: [] } },
+    },
+  });
+  signIn(h);
+  await h.sandbox.cloudJoin('FRIEND', JSON.stringify(forgedBlade));
+  await h.sandbox.settle();
+  assert.strictEqual(JSON.parse(h.store.get('pg_save3_FRIEND')).weapon, 'Mythic Celestial Blade',
+    'the forge survives the away-claim round trip instead of being replaced by the older copy');
+  assert.ok(![...h.store.keys()].some(k => k.startsWith('pg_save3_FRIEND_local_')),
+    'nothing was stashed as a loss');
+  assert.ok(puts >= 2, 'and the claim was pushed back');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 41, 'the accepted retry is the live version');
+});
+
 await T('v326: a device copy with nothing unsynced still loads the account copy', async () => {
   const quiet = { ...forgedBlade, cloud: { v: 40, at: 3000 }, offlineAt: 3000 };
   const account = { owner: 'FRIEND', lv: 150, zeny: 5, weapon: 'N+ Blade' };
@@ -1342,6 +1381,24 @@ await T('v326: leaving the page writes the device copy and asks for a keepalive 
 // other half of the report. The old logout fired the upload without waiting, deleted the session beside
 // it and reloaded, so the PUT was cancelled or arrived after the session was gone (401). The account
 // copy on the server stayed a minute behind, which is what the next login downloads.
+// AFK fishing leaves the game tab hidden (DevTools focused, another window on top), and a hidden tab
+// saves on a slower cadence. If that cadence is slower than the server's "you were away" threshold,
+// every single background save is measured as a return from absence: a claim is minted, the write is
+// refused with 428, and the client acknowledges and retries - for ever, one red pair per cadence.
+await T('v327: no save cadence is slower than the away threshold, or a running tab looks absent', async () => {
+  const server = fs.readFileSync(path.join(root, 'functions', 'api', 'save.js'), 'utf8');
+  const expr = (server.match(/const OFFLINE_MIN_MS = ([0-9* ]+);/) || [])[1] || '';
+  const offlineMin = expr.split('*').reduce((n, part) => n * Number(part.trim()), 1);
+  assert.strictEqual(offlineMin, 3 * 60 * 1000, 'the server\'s away threshold is three minutes');
+  const h = harness({});
+  assert.ok(h.sandbox.CLOUD_DEBOUNCE < offlineMin,
+    'the visible cadence (' + h.sandbox.CLOUD_DEBOUNCE + 'ms) is under the away threshold');
+  const hidden = Number((src.match(/const CLOUD_HIDDEN_DEBOUNCE=(\d+);/) || [])[1]);
+  assert.ok(hidden > 0, 'the hidden cadence is declared');
+  assert.ok(hidden < offlineMin,
+    'AFK fishing or a background window must not look like an absence: ' + hidden + 'ms < ' + offlineMin + 'ms');
+});
+
 await T('v326: logging out lands the last minute before the session is deleted', async () => {
   const h = harness({ routes: { '/save': { status: 200, body: { version: 8 } }, '/sessions': { status: 200, body: { ok: true } } } });
   h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 7;

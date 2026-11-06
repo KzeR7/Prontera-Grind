@@ -217,8 +217,18 @@ take the same 20-player workload to about a quarter of its writes:
 |---|---|
 | An accepted `PUT /api/save` writes the save row **exactly once** — its own UPDATE carries `last_seen`, and only the paths that write no save (GET, 409, 428, a raced update) touch the baseline | **half** of all D1 rows written |
 | The push debounce is **60 s** while the tab is being played (was 30 s) | half of the sync requests *and* half of the writes per player |
-| A **hidden** tab pushes every **5 min** instead of ~1/min (a background tab's timers are clamped to ~1 s, so the old cadence was the real one) | a tab left open overnight: ~1,400 writes a day becomes ~290 |
+| A **hidden** tab pushes every **2.5 min** instead of ~1/min (a background tab's timers are clamped to ~1 s, so the old cadence was the real one) | a tab left open overnight: ~1,400 writes a day becomes ~580 — see the v327 note below on why 5 min was *more* expensive, not less |
 | The announcement/gift poll is **5 min visible / 15 min hidden** (the tick still runs every minute; it only asks when due) | most of a background tab's poll requests |
+
+**v327 correction: the hidden cadence has a floor above it, and it is 3 minutes.** The server treats
+`now - last_seen >= 3 min` as a return from absence (`OFFLINE_MIN_MS`) and refuses the write with a
+**428** until the client acknowledges the away claim and pushes again. A 5-minute hidden cadence was
+therefore *over* the threshold on every single background save: one refused write, one `touchSeen`
+row, one retry row — for the whole time a tab sat in the background (AFK fishing, DevTools focused,
+another window on top). At 2.5 min the same window costs one request and one row, so this is cheaper
+than the 5-minute setting it replaces, not a diet regression. **Rule: every background sync interval
+must stay strictly under the server's away threshold, or the client's own clock turns a running tab
+into an absent one.**
 | The town's **9.6 MB** atlas is fetched when a player heads for town, not at boot | 9.6 MB per cold load for every player who never goes there — *player* bandwidth, not the server's quota, but it is the difference between a ~12 MB and a ~22 MB first visit |
 
 Per player, per active hour, and then for 20 players at 4 h/day each:

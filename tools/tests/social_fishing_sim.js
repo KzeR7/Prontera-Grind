@@ -697,6 +697,16 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert.equal(FISH.bagMax(hostS.fishing),200);
  assert.equal(hostS.fishing.coins,0,'the tier is paid for once');
  assert(/Reinforced Creel/.test(d2.getElementById('fishingShopView').textContent),'the shop reflects the new tier');
+ // v326 (owner's console): `Sell duplicates` read `st.settings.autoSell`, and `st` is not in scope in
+ // ensureDom - the page happened to expose some global of that name, so the click died with
+ // "Cannot read properties of undefined (reading 'autoSell')" instead of explaining the empty bag.
+ hostS.fishing.bag.length=0;
+ d2.getElementById('fishingSellDupes').onclick();
+ assert(/Nothing to sell/i.test(d2.getElementById('fishingStatus').textContent),'an empty bag is explained, not thrown');
+ hostS.fishing.settings.autoSell=true;
+ d2.getElementById('fishingSellDupes').onclick();
+ assert(/auto-sell is on/i.test(d2.getElementById('fishingStatus').textContent),'and with auto-sell on it says why the bag is empty');
+ hostS.fishing.settings.autoSell=false;
  // --- Part C2: Auto fishing survives being moved (the AFK spawn teleport) -----------------
  let frame2=null,clock2=1000,moved=null;
  w2.requestAnimationFrame=cb=>{frame2=cb};
