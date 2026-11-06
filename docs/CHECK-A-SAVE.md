@@ -122,9 +122,21 @@ will not let the save land until those away minutes are acknowledged. The client
 console as a red line and a retried PUT. Two in a row can happen after a long break (one claim per away
 window, and a page load before the retry). It is not a lost save.
 
-What matters is the response after it: `{"version":2740,"bytes":138306,"offlineClaimId":…}` is an
+What matters is the response after it: `{"version":2830,"bytes":140637,"offlineClaimId":null,…}` is an
 **accepted** write. If the same claim id keeps coming back, nothing is being written — v326 stops
 retrying that claim and says so in the chat log instead of looping silently.
+
+A wall of them in one console is usually just history: the server mints a claim after any absence of
+three minutes or more, so a session that has been open (and reloaded) for hours collects one per
+return. They are red because browsers paint every 4xx red, not because anything failed.
+
+**The one case where a 428 did cost a save (fixed in v327).** At login the client pushes a device copy
+that is ahead of the account. If that push was answered with 428, the code treated the refusal as "a
+real conflict after all" and fell through to `cloudAdopt` — which loaded the older account copy on top
+of the play it had just failed to upload. The claim handshake retried a moment later, but by then the
+live save was the old one. So a login that hit the claim window threw the forge away even with v326's
+newer-copy rule. `cloudJoin` now returns on every answer except `ok`/`adopted`: a 428 is a handshake,
+not a conflict, and an `offline` push never adopts an older copy either.
 
 ## "I keep several accounts and log in and out" (v326)
 

@@ -227,6 +227,12 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-06 (`haven-v327` follow-up): the 428-during-login adopt and the fishing handler.**
+`cloud_sim` grew to 80 checks (a 428 at login must not adopt the older copy — mutation-checked) and
+`social_fishing_sim` pins the Sell-duplicates handler; the BUILD-sensitive suites and the three
+generated-asset checks were re-run after the tag bump. The full 194-suite run below is the v326 tree
+these two fixes sit on.
+
 **2026-11-06 (`haven-v326` gate result): 194 suites pass, 0 fail, 0 dependency skips.**
 The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and `*_smoke.js` ran. New
 `tools/tests/social_room_recovery_sim.mjs` (unit, fake storage) proves one failed poker-outbox read no

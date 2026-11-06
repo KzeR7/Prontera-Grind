@@ -1299,6 +1299,41 @@ await T('v326: another device that moved the account on still wins at login', as
   assert.ok(!h.calls.some(c => c.url === '/api/save' && c.init.method === 'PUT'), 'nothing is uploaded over it');
 });
 
+await T('v326: a 428 during a login push does not adopt the older account copy', async () => {
+  // The login path pushes the newer device copy. If the server answers 428 (an away claim must be
+  // acknowledged first), that is not a conflict - but the code fell through to cloudAdopt and loaded
+  // the older account copy on top of the forge it had just failed to upload. The owner's console is
+  // full of these 428s, so this is the path that kept the rollback alive after the first fix.
+  const claim = { id: 99, awayMs: 8 * 3600000, creditedMs: 4 * 3600000, rateKph: 100, kills: 200, remainder: 0 };
+  let puts = 0;
+  const h = harness({
+    storage: { 'pg_save3_FRIEND': JSON.stringify(forgedBlade) },
+    S: JSON.parse(JSON.stringify(forgedBlade)),
+    loadReturn: { lv: 150, q: [] },
+    runTimers: true,
+    routes: {
+      '/save': (n, init) => {
+        if (!(init && init.method === 'PUT'))
+          return { status: 200, body: { owner: 'FRIEND', version: 40, blob: JSON.stringify(nPlusBlade), savedAt: 900 } };
+        puts++;
+        if (puts === 1) return { status: 428, body: { version: 40, offlineClaim: claim } };
+        return { status: 200, body: { version: 41, offlineClaimId: claim.id } };
+      },
+      '/grants': { status: 200, body: { grants: [] } },
+      '/messages': { status: 200, body: { messages: [] } },
+    },
+  });
+  signIn(h);
+  await h.sandbox.cloudJoin('FRIEND', JSON.stringify(forgedBlade));
+  await h.sandbox.settle();
+  assert.strictEqual(JSON.parse(h.store.get('pg_save3_FRIEND')).weapon, 'Mythic Celestial Blade',
+    'the forge survives the away-claim round trip instead of being replaced by the older copy');
+  assert.ok(![...h.store.keys()].some(k => k.startsWith('pg_save3_FRIEND_local_')),
+    'nothing was stashed as a loss');
+  assert.ok(puts >= 2, 'and the claim was pushed back');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 41, 'the accepted retry is the live version');
+});
+
 await T('v326: a device copy with nothing unsynced still loads the account copy', async () => {
   const quiet = { ...forgedBlade, cloud: { v: 40, at: 3000 }, offlineAt: 3000 };
   const account = { owner: 'FRIEND', lv: 150, zeny: 5, weapon: 'N+ Blade' };
