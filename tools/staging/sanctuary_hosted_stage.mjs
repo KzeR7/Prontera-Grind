@@ -11,6 +11,7 @@ export const SANCTUARY_STAGE=Object.freeze({
  commit:'342cdcaad8efc06f43a782b880ebf11b4ac7e513',
  build:'2026-11-06 haven-v346 Sanctuary battle service recovery',
  pagesProject:'prontera-grind-staging',
+ branchUrl:'https://main.prontera-grind-staging.pages.dev',
  socialProject:'prontera-social-staging',
  dbName:'pg-staging',
  dbId:'3a38c6fc-96a8-491d-b97b-fd536e575ca4'
@@ -70,13 +71,17 @@ function repoWithStageCommit(){
  throw Error('Cannot find the reviewed v346 commit in a Prontera-Grind checkout. Fetch PR #180 first; nothing was deployed.');
 }
 
-async function verifyDeployment(url){
- const version=await fetch(url+'/version.txt',{cache:'no-store',signal:AbortSignal.timeout(30000)});
- assert.equal(version.status,200,'Staging version.txt is unavailable');
+export async function verifyDeployment(url,fetchImpl=fetch){
+ async function get(route,options={}){
+  try{return await fetchImpl(url+route,{...options,signal:AbortSignal.timeout(30000)})}
+  catch(e){throw Error(`Staging ${route} request failed: ${e?.cause?.code||e.message||'network error'}`)}
+ }
+ const version=await get('/version.txt',{cache:'no-store'});
+ assert.equal(version.status,200,'Staging /version.txt returned HTTP '+version.status);
  assert.equal((await version.text()).trim(),SANCTUARY_STAGE.build,'The staged site is not the reviewed v346 build');
  // With no session, the Function must reach the auth check (401). A missing SOCIAL binding is 503.
- const social=await fetch(url+'/api/social',{headers:{Origin:url,Upgrade:'websocket'},redirect:'manual',signal:AbortSignal.timeout(30000)});
- assert.equal(social.status,401,'Staging SOCIAL binding did not reach the authenticated plaza endpoint');
+ const social=await get('/api/social',{headers:{Origin:url,Upgrade:'websocket'},redirect:'manual'});
+ assert.equal(social.status,401,'Staging /api/social returned HTTP '+social.status+'; expected 401 with the binding present and no session');
 }
 
 async function main(){
@@ -104,8 +109,10 @@ async function main(){
  wrangler(path.join(temp,'workers','social'),['deploy']);
  console.log('Deploying only '+SANCTUARY_STAGE.pagesProject+' with the staging Social binding…');
  const url=sanctuaryDeploymentUrl(wrangler(temp,['pages','deploy','dist','--project-name',SANCTUARY_STAGE.pagesProject,'--branch','main']));
- await verifyDeployment(url);
- console.log('\nSanctuary staging is ready: '+url);
+ console.log('\nStaging deployment: '+url);
+ console.log('Staging branch URL: '+SANCTUARY_STAGE.branchUrl+' (the project root may belong to an older production branch)');
+ try{await verifyDeployment(url);console.log('Sanctuary staging is verified and ready.')}
+ catch(e){console.error('VERIFY: deployment completed, but automatic verification did not pass: '+String(e.message||e));console.log('Open the staging URL above and check it in your browser before retrying anything.')}
  console.log('Use synthetic accounts only. Open two isolated browser profiles for two-player PvP.');
  console.log('No production project/database was targeted. Temporary audited copy: '+temp);
 }

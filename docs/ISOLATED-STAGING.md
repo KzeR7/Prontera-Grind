@@ -48,9 +48,12 @@ The launcher requires the owner's existing Windows setup, an already
 authenticated Wrangler CLI, Node/npm, Git Bash and a checkout containing PR #180.
 It archives the pinned commit into a fresh temporary directory, verifies the
 remote staging database identity and account schema before either deployment,
-builds `dist`, verifies the deployed v346 `version.txt`, checks that `/api/social`
-reaches authentication (401 rather than a missing-binding 503), and prints the
-unique staging URL. It cannot accept another project, commit or database through
+builds `dist`, prints the unique staging URL, then verifies the deployed v346
+`version.txt` and checks that `/api/social` reaches authentication (401 rather
+than a missing-binding 503). Because the URL is printed first, a local network
+or probe failure cannot hide a completed deployment; the launcher distinguishes
+`verified and ready` from `deployment completed, but automatic verification did
+not pass`. It cannot accept another project, commit or database through
 arguments. No production project or database is targeted.
 
 From the owner checkout, fetch the PR and materialize only this launcher, then
@@ -62,7 +65,10 @@ git checkout FETCH_HEAD -- tools/staging/sanctuary_hosted_stage.mjs
 node tools/staging/sanctuary_hosted_stage.mjs
 ```
 
-Use synthetic accounts only, in two isolated browser profiles for PvP. The
+Use the printed unique deployment URL or
+**`https://main.prontera-grind-staging.pages.dev`**. The bare project root can
+serve a different, older production-branch deployment; it is not the v346 branch
+URL. Use synthetic accounts only, in two isolated browser profiles for PvP. The
 launcher proves deployment identity and binding presence; it is not a two-client
 combat rehearsal. If post-deploy verification fails, inspect the named staging
 project before retrying rather than assuming that nothing changed.
