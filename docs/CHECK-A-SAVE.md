@@ -130,6 +130,14 @@ A wall of them in one console is usually just history: the server mints a claim 
 three minutes or more, so a session that has been open (and reloaded) for hours collects one per
 return. They are red because browsers paint every 4xx red, not because anything failed.
 
+**Why a tab you are watching can produce them (fixed in v327).** The client backs off to a slower save
+cadence while the tab is hidden — and that cadence used to be five minutes, *above* the three-minute
+away threshold. AFK fishing with the game behind DevTools or another window therefore measured every
+background save as a return from absence: claim, 428, retry, for as long as the tab stayed in the
+background. The hidden cadence is 2.5 minutes now. The rule that keeps it fixed: **no background sync
+interval may reach the away threshold**, and `cloud_sim` reads `OFFLINE_MIN_MS` straight out of
+`functions/api/save.js` to check it.
+
 **The one case where a 428 did cost a save (fixed in v327).** At login the client pushes a device copy
 that is ahead of the account. If that push was answered with 428, the code treated the refusal as "a
 real conflict after all" and fell through to `cloudAdopt` — which loaded the older account copy on top

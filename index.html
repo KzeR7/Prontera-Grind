@@ -3698,8 +3698,16 @@ let boardPeriod='daily',boardKind='kills',boardCache=Object.create(null),boardLo
 // a 60-second debounce, and localStorage still saves every 5 seconds, so nothing can be lost by
 // syncing less often - the cloud is a vault, not the running state.
 const CLOUD_DEBOUNCE=60000;          // push at most this often while the tab is being played
-const CLOUD_HIDDEN_DEBOUNCE=300000;  // ...and this often while it is hidden (a hidden tab's timers
-                                     // are clamped to ~1/minute anyway, so without this a tab left
+// v327 (owner: a wall of 428s "in social hub, where I was AFK fishing"): a hidden tab is not an absent
+// player, but this cadence said otherwise. Five minutes is LONGER than the server's three-minute away
+// threshold (OFFLINE_MIN_MS in functions/api/save.js), so every background save of a running tab was
+// measured as a return from absence: the server minted an away claim, refused the write with 428, and
+// the client acknowledged it and pushed again - one red pair every five minutes for as long as the tab
+// stayed in the background (AFK fishing, DevTools focused, another window on top), plus a second row
+// write each time. Two and a half minutes keeps the invariant: whatever the slowest background cadence
+// is, it must be strictly under the away threshold, or the client's own clock turns it into a ghost.
+const CLOUD_HIDDEN_DEBOUNCE=150000;  // ...and this often while it is hidden (a hidden tab's timers
+                                     // are clamped to ~1/minute anyway, so without a floor a tab left
                                      // open overnight wrote ~1,400 save rows by morning)
 const CLOUD_POLL_MS=300000;          // announcements and gifts while the tab is visible
 const CLOUD_HIDDEN_POLL_MS=900000;   // ...and while it is hidden: a message may wait 15 minutes
