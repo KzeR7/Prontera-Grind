@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict');
 const B=require('../../assets/digimon-battle.js');
 const R=require('../../assets/digimon/roster.js');
+const basePreview=B.combatPreview('agumon');assert.equal(basePreview.maxHp,161);assert.equal(basePreview.attack,25);assert.equal(basePreview.defense,6);assert.equal(basePreview.attackMs,B.TICK_MS);const trainedPreview=B.combatPreview('agumon',{level:10,mastery:2,stats:{power:5,guard:3}});assert.equal(trainedPreview.maxHp,245);assert.equal(trainedPreview.attack,54);assert.equal(trainedPreview.defense,10);assert.equal(trainedPreview.stats.power,5);assert.equal(B.combatPreview('not-a-digimon'),null);
 const profile={lineId:'agumon',form:'agumon',level:5,xp:16,wins:0,mastery:0,fatigue:0,fullness:70,stats:{power:12,guard:12,agility:0,focus:0}};
 const run=B.createPve({id:'test-pve',owner:1,room:1,profile,now:0,random:()=>.5});
 assert.equal(run.enemies.length,3,'a wave is a group');

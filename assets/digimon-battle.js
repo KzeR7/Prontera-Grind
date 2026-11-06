@@ -28,6 +28,8 @@ function combatant(p,id,enemy=false){
  const maxHp=Math.round((92+rank*31+level*7+p.stats.guard*7)*scale);
  return {id,form:p.form,stage:p.stage,level:p.level,maxHp,hp:maxHp,attack:Math.round((13+rank*5+level*1.5+p.stats.power*2.5+p.mastery*1.5)*(enemy ? .32 : 1)),defense:Math.round((2+rank*2+p.stats.guard*1.2)*(enemy ? .65 : 1)),attackAt:0,hitAt:0};
 }
+// Read-only DigiDex layer: the same live formula, never a second species-stat table.
+function combatPreview(form,raw={}){const p=profile({...raw,form});if(!p)return null;const u=combatant(p,'preview');return {form:p.form,stage:p.stage,level:p.level,xp:p.xp,wins:p.wins,mastery:p.mastery,stats:{...p.stats},maxHp:u.maxHp,attack:u.attack,defense:u.defense,attackMs:TICK_MS}}
 function strike(a,b,random){
  const roll=Math.max(0,Math.min(.999999999,Number(random())||0));
  const amount=Math.max(1,Math.round((a.attack-b.defense*.35)*(.88+roll*.24)));
@@ -125,5 +127,5 @@ function stepPvp(match,now,random=randomUnit){
 function unitSnapshot(u){return {id:u.id,form:u.form,stage:u.stage,level:u.level,hp:u.hp,maxHp:u.maxHp,attackAt:u.attackAt||0,hitAt:u.hitAt||0}}
 function pveSnapshot(run){return {id:run.id,owner:run.owner,room:run.room,wave:run.wave,phase:run.phase,reason:run.reason,nextAt:run.nextAt,profile:{lineId:run.profile.lineId,form:run.profile.form,stage:run.profile.stage,level:run.profile.level,fatigue:run.profile.fatigue,fullness:run.profile.fullness},partner:unitSnapshot(run.partner),enemies:run.enemies.map(unitSnapshot),earned:{...run.earned},slot:run.slot||0}}
 function pvpSnapshot(match){return {id:match.id,room:match.room,phase:match.phase,createdAt:match.createdAt,expiresAt:match.expiresAt,countdownUntil:match.countdownUntil,resultUntil:match.resultUntil,winnerId:match.winnerId,reason:match.reason,participants:match.participants.map(p=>({id:p.id,name:p.name,side:p.side,accepted:p.accepted,profile:{lineId:p.profile.lineId,form:p.profile.form,stage:p.profile.stage,level:p.profile.level},unit:unitSnapshot(p.unit)}))}}
-return {STATS,TICK_MS,WAVE_DELAY_MS,COUNTDOWN_MS,OFFER_MS,RESULT_MS,MAX_WAVE,MAX_ROUNDS,PVE_COIN_DROP_CHANCE,PVE_EGG_DROP_CHANCE,profile,stageRank,sameStage,createPve,stepPve,pveSnapshot,createPvp,acceptPvp,stepPvp,finishPvp,pvpRewards,pvpSnapshot,randomUnit};
+return {STATS,TICK_MS,WAVE_DELAY_MS,COUNTDOWN_MS,OFFER_MS,RESULT_MS,MAX_WAVE,MAX_ROUNDS,PVE_COIN_DROP_CHANCE,PVE_EGG_DROP_CHANCE,profile,combatPreview,stageRank,sameStage,createPve,stepPve,pveSnapshot,createPvp,acceptPvp,stepPvp,finishPvp,pvpRewards,pvpSnapshot,randomUnit};
 });

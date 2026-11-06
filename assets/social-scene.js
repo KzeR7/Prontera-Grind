@@ -268,7 +268,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);sprite.scale.set(256*1.45/96,256*1.45/96,1);sprite.position.set(x,.06,z);sprite.userData.sanctuaryResident=id;scene.add(sprite);digimonStore.request(id);
   return {id,ctx:canvas.getContext('2d'),texture,sprite,frame:-1,flip:i%2===1,homeX:x,homeZ:z,phase:i*1.7};
  }):[];
- let battleState={pve:[],pvp:null};const battleParticipantIds=new Set(),battleResidents=new Map(),BATTLE_RUN_SPEED=6.4,BATTLE_RANGE=1.7;
+ let battleState={pve:[],pvp:null};const battleParticipantIds=new Set(),battleResidents=new Map(),BATTLE_RUN_SPEED=6.4,BATTLE_RADIUS=4.1,PVP_RADIUS=2.2;
  const battleName=id=>globalThis.PGDigimonRoster?.name(id)||String(id||'Digimon');
  function battleSpecs(){
   const specs=[];
@@ -279,7 +279,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
    (run.enemies||[]).forEach((u,i)=>add(runKey+':'+u.id,u,fx-3+i*3,fz+4,true));
   }
   const match=battleState.pvp;if(match&&match.phase!=='closed')for(const [i,p] of (match.participants||[]).entries()){
-   const u=p.unit;if(!u||!PGSocialDigimon?.clean(u.form))continue;const r=R.SANCTUARY_RING;specs.push({key:'pvp:'+match.id+':'+p.id,role:'pvp',species:u.form,x:r.x+(p.side==='left'?-4:4),z:r.z,hp:u.hp,maxHp:u.maxHp,label:p.name||('PLAYER '+(i+1)),enemy:i===1,phase:match.phase,kind:'pvp',owner:p.id,winnerId:match.winnerId,attackAt:u.attackAt||0});
+   const u=p.unit;if(!u||!PGSocialDigimon?.clean(u.form))continue;const r=R.SANCTUARY_RING;specs.push({key:'pvp:'+match.id+':'+p.id,role:'pvp',side:p.side,species:u.form,x:r.x+(p.side==='left'?-4:4),z:r.z,hp:u.hp,maxHp:u.maxHp,label:p.name||('PLAYER '+(i+1)),enemy:i===1,phase:match.phase,kind:'pvp',owner:p.id,winnerId:match.winnerId,attackAt:u.attackAt||0});
   }
   return specs;
  }
@@ -291,7 +291,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const angle=battleHash(s.key+':angle')*Math.PI*2,radius=8+battleHash(s.key+':radius')*8;
   return {x:Math.max(47,Math.min(93,s.x+Math.cos(angle)*radius)),z:Math.max(50,Math.min(78,s.z+Math.sin(angle)*radius))};
  }
- function battleApproach(from,to,distance){const dx=to.x-from.x,dz=to.z-from.z,length=Math.hypot(dx,dz);if(length<=BATTLE_RANGE)return {x:to.x,z:to.z};const travel=Math.min(distance,Math.max(0,length-BATTLE_RANGE));return {x:from.x+dx/length*travel,z:from.z+dz/length*travel}}
+ function battleApproach(from,to,distance,tolerance=.05){const dx=to.x-from.x,dz=to.z-from.z,length=Math.hypot(dx,dz);if(length<=tolerance)return {x:to.x,z:to.z};const travel=Math.min(Math.max(0,distance),Math.max(0,length-tolerance));return {x:from.x+dx/length*travel,z:from.z+dz/length*travel}}
  function setBattleState(next){
   battleState={pve:Array.isArray(next?.pve)?next.pve:[],pvp:next?.pvp||null};battleParticipantIds.clear();
   for(const run of battleState.pve)if(Number.isInteger(run.owner))battleParticipantIds.add(run.owner);
@@ -304,21 +304,23 @@ window.PGSocialScene={async create(host,labels,callbacks){
  }
  function battleTravel(unit,now){const elapsed=Math.max(0,Math.min(.5,(now-(unit.lastMove??now))/1000));unit.lastMove=now;return elapsed*BATTLE_RUN_SPEED}
  function updateBattleResidents(now){
-  const positions=new Map(),targets=new Map(),groups=new Map();
-  for(const s of battleSpecs()){if(s.kind!=='pve')continue;if(!groups.has(s.runKey))groups.set(s.runKey,[]);groups.get(s.runKey).push(s)}
+  const positions=new Map(),targets=new Map(),groups=new Map(),specs=battleSpecs();
+  for(const s of specs){if(s.kind!=='pve')continue;if(!groups.has(s.runKey))groups.set(s.runKey,[]);groups.get(s.runKey).push(s)}
   for(const list of groups.values()){
    const partner=list.find(s=>s.role==='partner'),enemies=list.filter(s=>s.role==='enemy'),partnerUnit=partner&&battleResidents.get(partner.key),partnerTravel=partnerUnit?battleTravel(partnerUnit,now):0;
-   if(partner&&partnerUnit){
-    const from=partnerUnit.sprite.position,living=enemies.filter(s=>s.hp>0),target=living.sort((a,b)=>{const au=battleResidents.get(a.key).sprite.position,bu=battleResidents.get(b.key).sprite.position;return Math.hypot(au.x-from.x,au.z-from.z)-Math.hypot(bu.x-from.x,bu.z-from.z)})[0];
-    // Move from the current rendered position, not the original spawn plus total elapsed
-    // time. Target changes and new waves therefore turn smoothly instead of teleporting.
-    if(partner.phase==='fighting'&&partner.hp>0&&target){const targetUnit=battleResidents.get(target.key),pos=battleApproach(from,targetUnit.sprite.position,partnerTravel);positions.set(partner.key,pos);targets.set(partner.key,{x:targetUnit.sprite.position.x,z:targetUnit.sprite.position.z})}
-   }
-   for(const enemy of enemies){const unit=battleResidents.get(enemy.key);if(!unit)continue;const travel=battleTravel(unit,now);if(enemy.phase==='fighting'&&enemy.hp>0){const target=positions.get(partner?.key)||partnerUnit?.sprite.position||{x:enemy.x,z:enemy.z};positions.set(enemy.key,battleApproach(unit.sprite.position,target,travel));targets.set(enemy.key,{...target})}}
+   if(!partner||!partnerUnit)continue;
+   const enemyUnits=enemies.map(s=>({s,u:battleResidents.get(s.key)})).filter(x=>x.u),anchors=[partnerUnit.spawn,...enemyUnits.map(x=>x.u.spawn)],center={x:Math.max(51,Math.min(89,anchors.reduce((n,p)=>n+p.x,0)/anchors.length)),z:Math.max(54,Math.min(74,anchors.reduce((n,p)=>n+p.z,0)/anchors.length))};
+   const from=partnerUnit.sprite.position,living=enemies.filter(s=>s.hp>0),target=living.sort((a,b)=>{const au=battleResidents.get(a.key).sprite.position,bu=battleResidents.get(b.key).sprite.position;return Math.hypot(au.x-from.x,au.z-from.z)-Math.hypot(bu.x-from.x,bu.z-from.z)})[0];
+   // Every unit approaches a stable attack slot. Nobody chases the partner's centre or
+   // snaps onto it when the target moves; new waves simply receive a new formation.
+   if(partner.phase==='fighting'&&partner.hp>0){positions.set(partner.key,battleApproach(from,center,partnerTravel));if(target){const targetUnit=battleResidents.get(target.key);targets.set(partner.key,{x:targetUnit.sprite.position.x,z:targetUnit.sprite.position.z})}}
+   const start=battleHash(partner.runKey+':wave'+partner.wave+':formation')*Math.PI*2;
+   for(const [index,enemy]of enemies.entries()){const unit=battleResidents.get(enemy.key);if(!unit)continue;const travel=battleTravel(unit,now);if(enemy.phase==='fighting'&&enemy.hp>0){const angle=start+index*Math.PI*2/Math.max(1,enemies.length),slot={x:center.x+Math.cos(angle)*BATTLE_RADIUS,z:center.z+Math.sin(angle)*BATTLE_RADIUS};positions.set(enemy.key,battleApproach(unit.sprite.position,slot,travel));const target=positions.get(partner.key)||center;targets.set(enemy.key,{...target})}}
   }
+  for(const s of specs.filter(s=>s.kind==='pvp')){const unit=battleResidents.get(s.key);if(!unit)continue;const travel=battleTravel(unit,now);if(s.phase==='fighting'&&s.hp>0){const r=R.SANCTUARY_RING,slot={x:r.x+(s.side==='left'?-PVP_RADIUS:PVP_RADIUS),z:r.z};positions.set(s.key,battleApproach(unit.sprite.position,slot,travel));const other=specs.find(o=>o.kind==='pvp'&&o.key!==s.key),otherUnit=other&&battleResidents.get(other.key);if(otherUnit)targets.set(s.key,{x:otherUnit.sprite.position.x,z:otherUnit.sprite.position.z})}}
   for(const u of battleResidents.values()){
    const s=u.spec,asset=digimonStore?.ready(s.species);u.sprite.visible=!!asset;u.ring.visible=!!asset;if(!asset){digimonStore?.request(s.species);continue}
-   const dead=s.hp<=0||(s.kind==='pvp'&&s.phase==='result'&&s.winnerId!=null&&s.winnerId!==s.owner),previous={x:u.sprite.position.x,z:u.sprite.position.z};let pos=s.kind==='pve'?positions.get(s.key):{x:s.x,z:s.z};if(!pos||dead||s.phase!=='fighting')pos=previous;const target=s.kind==='pve'?targets.get(s.key):null;if(s.attackAt!==u.lastAttack){u.lastAttack=s.attackAt;u.attackStarted=now}
+   const dead=s.hp<=0||(s.kind==='pvp'&&s.phase==='result'&&s.winnerId!=null&&s.winnerId!==s.owner),previous={x:u.sprite.position.x,z:u.sprite.position.z};let pos=positions.get(s.key)||previous;if(dead||s.phase!=='fighting')pos=previous;const target=targets.get(s.key);if(s.attackAt!==u.lastAttack){u.lastAttack=s.attackAt;u.attackStarted=now}
    const walking=!dead&&Math.hypot(pos.x-previous.x,pos.z-previous.z)>.015,attacking=!dead&&s.phase==='fighting'&&now-u.attackStarted<360;let stance=dead?'faint':attacking?'attack':walking?'walking':'idle';if(!asset.record.actions[stance])stance='idle';
    const time=stance==='faint'?(asset.record.actions[stance].length-1)*50:stance==='attack'?Math.max(0,now-u.attackStarted):now,flip=target?target.x<pos.x:s.enemy,n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,6),key=[s.species,stance,n,flip,s.hp,s.label].join(':');
    if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.ctx.fillRect==='function'){const ctx=u.ctx;ctx.fillStyle='rgba(28,35,30,.85)';ctx.fillRect(38,3,180,13);ctx.fillStyle=s.hp/s.maxHp>.35?'#9bd36d':'#e87868';ctx.fillRect(40,5,176*Math.max(0,Math.min(1,s.hp/Math.max(1,s.maxHp))),9);if(typeof ctx.fillText==='function'){ctx.fillStyle='rgba(12,24,22,.9)';ctx.fillRect(24,20,208,31);ctx.font='bold 22px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,36,198)}}u.texture.needsUpdate=true;u.paint=key}

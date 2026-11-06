@@ -18,4 +18,20 @@ for(const s of index.species){
 }
 assert.ok(index.species.find(s=>s.id==='agumon').evolvesTo.includes('greymon'));
 assert.ok(index.species.find(s=>s.id==='greymon').evolvesFrom.includes('agumon'));
-console.log(`digimon_index_sim: PASS (${index.species.length} profiles, ${index.coverage.evolutionLinksListed} listed evolution links, ${index.coverage.localSpriteCount} local sprites)`);
+const crypto=require('node:crypto');
+const roster=require('../../assets/digimon/roster.js');
+const sanctuary=require('../../assets/digimon-sanctuary.js');
+const graph=sanctuary.evolutionCatalog();
+assert.deepEqual(graph.outgoing.get('agumon'),['greymon','flarerizamon','meramon','monochromon','tuskmon','tyrannomon']);
+assert.deepEqual(graph.incoming.get('agumon'),['koromon']);
+assert.equal(graph.outgoing.get('machinedramon').length,0);
+assert.equal(graph.incoming.get('machinedramon').length,9);
+assert.equal(graph.incoming.get('gallantmon').length,4);
+assert.equal(graph.incoming.get('apocalymon').length,0);
+assert.equal(graph.reachable.has('apocalymon'),false);
+assert.equal(graph.reachable.size,232);
+for(const id of roster.IDS){for(const target of graph.outgoing.get(id))assert.ok(graph.incoming.get(target).includes(id),`incoming reciprocal ${id} -> ${target}`);for(const source of graph.incoming.get(id))assert.ok(graph.outgoing.get(source).includes(id),`outgoing reciprocal ${source} -> ${id}`)}
+const manifest=JSON.parse(fs.readFileSync(path.join(root,'assets/digimon/digidex-portraits.json'),'utf8'));
+const portrait=fs.readFileSync(path.join(root,'assets/digimon',manifest.image));
+assert.equal(manifest.count,roster.IDS.length);assert.deepEqual(manifest.ids,roster.IDS);assert.equal(manifest.width,manifest.columns*manifest.cell);assert.equal(manifest.height,manifest.rows*manifest.cell);assert.equal(manifest.rows,Math.ceil(roster.IDS.length/manifest.columns));assert.equal(crypto.createHash('sha256').update(portrait).digest('hex'),manifest.sha256);assert.ok(portrait.length<700*1024,'the complete static portrait sheet stays below 700 KiB');
+console.log(`digimon_index_sim: PASS (${index.species.length} profiles, ${index.coverage.evolutionLinksListed} listed evolution links, ${graph.reachable.size} reachable forms, ${manifest.count} portraits / ${Math.round(portrait.length/1024)} KiB)`);

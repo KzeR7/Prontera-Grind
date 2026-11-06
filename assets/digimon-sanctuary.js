@@ -37,6 +37,14 @@ function evolutionOptions(form,line,stage=0){
  const options=DATA.directEvolutions(form),preferred=LINES[line]?.[stage+1];
  return preferred&&options.includes(preferred)?[preferred,...options.filter(id=>id!==preferred)]:options;
 }
+let catalogCache;
+function evolutionCatalog(){
+ if(catalogCache)return catalogCache;
+ const outgoing=new Map(),incoming=new Map(DATA.IDS.map(id=>[id,[]]));
+ for(const id of DATA.IDS){const options=evolutionOptions(id,id,0);outgoing.set(id,options);for(const target of options)incoming.get(target)?.push(id)}
+ const reachable=new Set(STARTER_POOL),queue=[...STARTER_POOL];for(let i=0;i<queue.length;i++)for(const target of outgoing.get(queue[i])||[])if(!reachable.has(target)){reachable.add(target);queue.push(target)}
+ catalogCache={outgoing,incoming,reachable};return catalogCache;
+}
 function requirements(p,line){
  const stage=cap(p?.stage,0,MAX_EVOLUTIONS),form=clean(p?.form)||LINES[line]?.[stage]||line,options=evolutionOptions(form,line,stage);
  if(stage>=MAX_EVOLUTIONS||!options.length)return null;
@@ -133,5 +141,5 @@ function applyBattleReward(raw,bagRaw,line,reward){
  const coinGain=bag.coins-before,bonusGain=Math.min(coinGain,cap(reward.dropCoins,0,coins)),baseGain=coinGain-bonusGain,eggGain=bag.eggs-beforeEggs,eggMessage=eggs?(eggGain?' · +'+eggGain+' Digi-Egg'+(eggGain===1?'':'s'):' · Digi-Egg bag full'):'';
  return {ok:true,state,bag,changed:true,amount:coinGain,bonus:bonusGain,eggs:eggGain,message:'+'+baseGain+' Pet Coins'+(bonusGain?' · +'+bonusGain+' bonus petgold':'')+' · +'+xp+' XP'+(wins?' · +1 win':'')+eggMessage};
 }
-return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,level,normalize,update,act,species,total,requirements,evolutionOptions,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagFeed,bagReward,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
+return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,level,normalize,update,act,species,total,requirements,evolutionOptions,evolutionCatalog,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagFeed,bagReward,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
 });
