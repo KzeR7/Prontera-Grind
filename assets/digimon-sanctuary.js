@@ -4,7 +4,7 @@
  const api=factory(data);if(typeof module==='object'&&module.exports)module.exports=api;else root.PGDigimonSanctuary=api;
 })(globalThis,function(DATA){
 'use strict';
-if(!DATA)throw Error('Digimon roster data must load before Sanctuary rules');
+if(!DATA)throw Error('Digimon roster data must load before DigiPet rules');
 const LINES={agumon:['agumon','greymon','metalgreymon','wargreymon'],gabumon:['gabumon','garurumon','weregarurumon','metalgarurumon'],patamon:['patamon','angemon','magnaangemon','seraphimon'],palmon:['palmon','togemon','lillymon','rosemon']};
 // STARTERS remains the original four save keys. ROSTER/SPECIES are the complete
 // catalog; the owned bag gates selection while existing saves keep progression.
@@ -47,7 +47,7 @@ function update(raw,now,line){const state=normalize(raw,line);if(!state)return {
   if(p.battle?.status==='active'&&now>=p.battle.deadline){p.battle.status='loss';p.battle.log='Time is up. Your partner can try again.';changed=true}}
  return {state,changed};
 }
-function act(raw,line,action,now){now=Number.isFinite(now)?now:Date.now();const u=update(raw,now,clean(line)?line:undefined),state=u.state;if(!state||!clean(line))return {ok:false,state,changed:u.changed,message:'Sanctuary data is unavailable.'};const p=state.partners[line],done=message=>({ok:true,state,changed:true,message}),fail=message=>({ok:false,state,changed:u.changed,message});
+function act(raw,line,action,now){now=Number.isFinite(now)?now:Date.now();const u=update(raw,now,clean(line)?line:undefined),state=u.state;if(!state||!clean(line))return {ok:false,state,changed:u.changed,message:'DigiPet data is unavailable.'};const p=state.partners[line],done=message=>({ok:true,state,changed:true,message}),fail=message=>({ok:false,state,changed:u.changed,message});
  if(!action||typeof action!=='object')return fail('Choose an action.');
  if(action.type==='feed'){if(p.fullness>=100)return fail('Your partner is already full.');p.fullness=cap(p.fullness+25,0,100);return done('Your partner enjoyed a meal.')}
  if(action.type==='rest'){if(p.fatigue===0)return fail('Your partner is already rested.');p.fatigue=cap(p.fatigue-30,0,100);return done('Your partner rested and recovered.')}
@@ -66,7 +66,7 @@ function act(raw,line,action,now){now=Number.isFinite(now)?now:Date.now();const 
  }
  if(action.type==='battle'){const b=p.battle;if(!b||b.status!=='active')return fail('No active spar.');if(!['attack','guard','special'].includes(action.command))return fail('Choose a valid command.');if(action.command==='special'&&b.energy<2)return fail('Special needs 2 energy.');let damage=0;if(action.command==='attack')damage=9+p.stats.power*2+p.mastery;if(action.command==='special'){damage=20+p.stats.focus*2+p.mastery;b.energy-=2}if(action.command==='guard')b.energy=Math.min(5,b.energy+1);b.enemyHp=Math.max(0,b.enemyHp-damage);b.turn++;if(!b.enemyHp){b.status='win';b.log='Victory! Your partner won a friendly spar.';p.wins=cap(p.wins+1,0,999);return done(b.log)}const level=Math.min(4,Math.floor(p.wins/2));let incoming=Math.max(2,8+level*2-Math.floor(p.stats.guard/2));if(action.command==='guard')incoming=Math.max(1,Math.floor(incoming/2));const evadeEvery=Math.max(2,8-Math.floor(p.stats.agility/2));if(p.stats.agility>0&&b.turn%evadeEvery===0)incoming=0;b.hp=Math.max(0,b.hp-incoming);b.log=(damage?'You dealt '+damage+' damage. ':'You guarded and gained energy. ')+(incoming?'Opponent dealt '+incoming+'.':'Your partner evaded the attack.');if(!b.hp){b.status='loss';b.log='Your partner was defeated. Rest and try again.'}return done(b.log)}
  if(action.type==='endBattle'){if(!p.battle)return fail('No spar to close.');p.battle=null;return done('Spar closed.')}
- return fail('Unknown Sanctuary action.');
+ return fail('Unknown DigiPet action.');
 }
 // A completed live-world session uses the same limits as the old timed prototype,
 // but does not persist a timer that could finish while the scene is closed.
@@ -128,9 +128,10 @@ function combatProfile(raw,line,slot=0){
 function applyBattleReward(raw,bagRaw,line,reward){
  const state=normalize(raw,line),bag=normalizeBag(bagRaw),p=state?.partners?.[line];
  if(!state||!bag||!p||!reward||typeof reward!=='object')return {ok:false,state,bag,changed:false,message:'This battle reward could not be applied.'};
- const coins=cap(reward.coins,0,10000),xp=cap(reward.xp,0,100),wins=cap(reward.wins,0,1),fatigue=cap(reward.fatigue,0,20),fullness=cap(reward.fullness,-20,0);
- const before=bag.coins;bag.coins=cap(bag.coins+coins,0,999999);p.xp=cap(p.xp+xp,0,3996);p.wins=cap(p.wins+wins,0,999);p.fatigue=cap(p.fatigue+fatigue,0,100);p.fullness=cap(p.fullness+fullness,0,100);
- return {ok:true,state,bag,changed:true,amount:bag.coins-before,message:'+'+(bag.coins-before)+' Pet Coins · +'+xp+' XP'+(wins?' · +1 win':'')};
+ const coins=cap(reward.coins,0,10000),eggs=cap(reward.eggs,0,99),xp=cap(reward.xp,0,100),wins=cap(reward.wins,0,1),fatigue=cap(reward.fatigue,0,20),fullness=cap(reward.fullness,-20,0);
+ const before=bag.coins,beforeEggs=bag.eggs;bag.coins=cap(bag.coins+coins,0,999999);bag.eggs=cap(bag.eggs+eggs,0,STARTER_POOL.length);p.xp=cap(p.xp+xp,0,3996);p.wins=cap(p.wins+wins,0,999);p.fatigue=cap(p.fatigue+fatigue,0,100);p.fullness=cap(p.fullness+fullness,0,100);
+ const coinGain=bag.coins-before,bonusGain=Math.min(coinGain,cap(reward.dropCoins,0,coins)),baseGain=coinGain-bonusGain,eggGain=bag.eggs-beforeEggs,eggMessage=eggs?(eggGain?' · +'+eggGain+' Digi-Egg'+(eggGain===1?'':'s'):' · Digi-Egg bag full'):'';
+ return {ok:true,state,bag,changed:true,amount:coinGain,bonus:bonusGain,eggs:eggGain,message:'+'+baseGain+' Pet Coins'+(bonusGain?' · +'+bonusGain+' bonus petgold':'')+' · +'+xp+' XP'+(wins?' · +1 win':'')+eggMessage};
 }
 return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,level,normalize,update,act,species,total,requirements,evolutionOptions,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagFeed,bagReward,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
 });

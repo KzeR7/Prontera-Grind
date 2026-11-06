@@ -42,7 +42,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
  for(const b of R.BUILDINGS)model(b.name,b.x,b.z,b.size,b.rotation||0);
  // Sanctuary: arranged south of the plaza from the owner's highlighted lawn.
  // Architecture and named NPCs share the world with the local training prototype.
- const loadTile=async(name,rx=1,ry=1)=>{try{const t=await new T.TextureLoader().loadAsync('assets/digimon/sanctuary/'+name+'.webp');t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rx,ry);t.anisotropy=4;return t}catch(e){console.warn('Sanctuary texture unavailable:',name);return null}};
+ const loadTile=async(name,rx=1,ry=1)=>{try{const t=await new T.TextureLoader().loadAsync('assets/digimon/sanctuary/'+name+'.webp');t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rx,ry);t.anisotropy=4;return t}catch(e){console.warn('DigiPet texture unavailable:',name);return null}};
  const [roofTexture,boardTexture,sandTexture,plasterTexture,beamTexture,doorTexture]=await Promise.all([loadTile('cc0/roof_09',2,2),loadTile('walkway-wood'),loadTile('gym-sand',6,3),loadTile('gym-plaster',4,1),loadTile('cc0/medieval_wood'),loadTile('cc0/rough_pine_door')]);
  const wood=new T.MeshLambertMaterial({map:beamTexture,color:0xc3a27d}),darkWood=new T.MeshLambertMaterial({map:beamTexture,color:0x997954}),lightWood=new T.MeshLambertMaterial({color:0xb58a59}),metal=new T.MeshLambertMaterial({color:0x5f6860}),iron=new T.MeshLambertMaterial({color:0x303a36}),cream=new T.MeshLambertMaterial({color:0xe8d9ba}),plaster=new T.MeshLambertMaterial({map:plasterTexture,color:0xf1e7d0}),roofMat=new T.MeshLambertMaterial({map:roofTexture,color:0xe0c8a4,side:T.DoubleSide});
  function flat(geometry,material,x,z,y){const m=new T.Mesh(geometry,material);m.rotation.x=-Math.PI/2;m.position.set(x,y,z);scene.add(freeze(m));return m}
@@ -141,7 +141,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
  }
  // Fence follows the proposed front boundary, leaving the middle entrance open.
  for(const f of R.SANCTUARY_GYM_FENCES){const dx=f.x2-f.x1,dz=f.z2-f.z1,len=Math.hypot(dx,dz),n=Math.max(1,Math.ceil(len/3.2));for(let i=0;i<=n;i++){const t=i/n;box(f.x1+dx*t,.7,f.z1+dz*t,.22,1.4,.22,darkWood)}for(const y of [.45,1.05])beam([f.x1,y,f.z1],[f.x2,y,f.z2],.085,wood).userData.gymFence=true}
- worldSign(69,7.1,13.08,'SANCTUARY GYM',6,.72);
+ worldSign(69,7.1,13.08,'DIGIPET GYM',6,.72);
  // Weight rack, barbells and benches: POWER.
  for(const x of [49,55])box(x,1.6,19,.25,3.2,.25,darkWood);for(const y of [.65,1.45,2.25])box(52,y,19,6,.14,.24,wood);
  for(let row=0;row<3;row++)for(const x of [50,51.2,52.4,53.6,54.5]){const d=new T.Mesh(new T.CylinderGeometry(.32,.32,.2,12),iron);d.rotation.z=Math.PI/2;d.position.set(x,.9+row*.8,19);scene.add(freeze(d))}
@@ -194,7 +194,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
    gable(x,z,5.5,4.2,4,1.05);box(x,2.7,z-1.6,4.4,1.2,.18,plaster);
    for(const dx of [-1.1,0,1.1])box(x+dx,1.42,z,.8,.2,1.1,kind==='guide'?cream:metal);
   }
-  worldSign(x,3.1,z+1.75,kind==='food'?'FOOD - PET SHOP':kind==='trainer'?'TRAINER - SOON':'FIELD GUIDE - SOON',4,.65);
+  worldSign(x,3.1,z+1.75,kind==='food'?'FOOD - PET SHOP':kind==='trainer'?'TRAINER - DIGIPET':'FIELD GUIDE - DIGIDEX',4,.65);
  }
  kiosk(22,41,'food');kiosk(22,56,'trainer');kiosk(22,72,'guide');
  // Awnings, shelving, painted shop signs and merchandise distinguish the stalls.
@@ -268,37 +268,61 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);sprite.scale.set(256*1.45/96,256*1.45/96,1);sprite.position.set(x,.06,z);sprite.userData.sanctuaryResident=id;scene.add(sprite);digimonStore.request(id);
   return {id,ctx:canvas.getContext('2d'),texture,sprite,frame:-1,flip:i%2===1,homeX:x,homeZ:z,phase:i*1.7};
  }):[];
- let battleState={pve:[],pvp:null};const battleParticipantIds=new Set(),battleResidents=new Map();
+ let battleState={pve:[],pvp:null};const battleParticipantIds=new Set(),battleResidents=new Map(),BATTLE_RUN_SPEED=6.4,BATTLE_RANGE=1.7;
+ const battleName=id=>globalThis.PGDigimonRoster?.name(id)||String(id||'Digimon');
  function battleSpecs(){
   const specs=[];
   for(const run of battleState.pve||[]){
-   if(!run||run.phase==='ended')continue;const slot=Number(run.slot)||0,fx=70+(slot%4-1.5)*8,fz=60+Math.floor(slot/4)*10;
-   const add=(key,u,x,z,label,enemy=false)=>{if(!u||!PGSocialDigimon?.clean(u.form))return;specs.push({key,species:u.form,x,z,hp:u.hp,maxHp:u.maxHp,label,enemy,phase:run.phase,kind:'pve',owner:run.owner,wave:run.wave})};
-   add('pve:'+run.id+':partner',run.partner,fx,fz,'WAVE '+run.wave+' · PARTNER');
-   (run.enemies||[]).forEach((u,i)=>add('pve:'+run.id+':'+u.id,u,fx-3+i*3,fz+4,'WAVE '+run.wave+' · BOT',true));
+   if(!run||run.phase==='ended')continue;const slot=Number(run.slot)||0,fx=70+(slot%4-1.5)*8,fz=60+Math.floor(slot/4)*10,runKey='pve:'+run.id;
+   const add=(key,u,x,z,enemy=false,role='enemy')=>{if(!u||!PGSocialDigimon?.clean(u.form))return;specs.push({key,runKey,role,species:u.form,x,z,hp:u.hp,maxHp:u.maxHp,label:battleName(u.form),enemy,phase:run.phase,kind:'pve',owner:run.owner,wave:run.wave,attackAt:u.attackAt||0})};
+   add(runKey+':partner',run.partner,fx,fz,false,'partner');
+   (run.enemies||[]).forEach((u,i)=>add(runKey+':'+u.id,u,fx-3+i*3,fz+4,true));
   }
   const match=battleState.pvp;if(match&&match.phase!=='closed')for(const [i,p] of (match.participants||[]).entries()){
-   const u=p.unit;if(!u||!PGSocialDigimon?.clean(u.form))continue;const r=R.SANCTUARY_RING;specs.push({key:'pvp:'+match.id+':'+p.id,species:u.form,x:r.x+(p.side==='left'?-4:4),z:r.z,hp:u.hp,maxHp:u.maxHp,label:p.name||('PLAYER '+(i+1)),enemy:i===1,phase:match.phase,kind:'pvp',owner:p.id,winnerId:match.winnerId});
+   const u=p.unit;if(!u||!PGSocialDigimon?.clean(u.form))continue;const r=R.SANCTUARY_RING;specs.push({key:'pvp:'+match.id+':'+p.id,role:'pvp',species:u.form,x:r.x+(p.side==='left'?-4:4),z:r.z,hp:u.hp,maxHp:u.maxHp,label:p.name||('PLAYER '+(i+1)),enemy:i===1,phase:match.phase,kind:'pvp',owner:p.id,winnerId:match.winnerId,attackAt:u.attackAt||0});
   }
   return specs;
  }
+ function battleHash(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0)/4294967296}
+ function battleSpawn(s){
+  if(s.kind==='pvp'||s.role==='partner')return {x:s.x,z:s.z};
+  // Stable per battle/unit random-looking spawns are shared by every spectator and do not
+  // reroll when a 250 ms server snapshot arrives. They affect presentation, never combat.
+  const angle=battleHash(s.key+':angle')*Math.PI*2,radius=8+battleHash(s.key+':radius')*8;
+  return {x:Math.max(47,Math.min(93,s.x+Math.cos(angle)*radius)),z:Math.max(50,Math.min(78,s.z+Math.sin(angle)*radius))};
+ }
+ function battleApproach(from,to,distance){const dx=to.x-from.x,dz=to.z-from.z,length=Math.hypot(dx,dz);if(length<=BATTLE_RANGE)return {x:to.x,z:to.z};const travel=Math.min(distance,Math.max(0,length-BATTLE_RANGE));return {x:from.x+dx/length*travel,z:from.z+dz/length*travel}}
  function setBattleState(next){
   battleState={pve:Array.isArray(next?.pve)?next.pve:[],pvp:next?.pvp||null};battleParticipantIds.clear();
   for(const run of battleState.pve)if(Number.isInteger(run.owner))battleParticipantIds.add(run.owner);
   for(const p of battleState.pvp?.participants||[])if(Number.isInteger(p.id))battleParticipantIds.add(p.id);
   const keep=new Set();for(const spec of battleSpecs()){
-   keep.add(spec.key);let u=battleResidents.get(spec.key);if(!u){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const ring=new T.Mesh(new T.RingGeometry(.8,1,24),new T.MeshBasicMaterial({color:spec.kind==='pvp'?0xf3c876:0x9ed6b0,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;scene.add(ring);u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec};battleResidents.set(spec.key,u)}u.spec=spec;u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;digimonStore?.request(spec.species);
+   keep.add(spec.key);let u=battleResidents.get(spec.key);if(!u){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const ring=new T.Mesh(new T.RingGeometry(.8,1,24),new T.MeshBasicMaterial({color:spec.kind==='pvp'?0xf3c876:0x9ed6b0,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;scene.add(ring);const spawn=battleSpawn(spec),lastMove=performance.now();sprite.position.set(spawn.x,.06,spawn.z);u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec,spawn,lastMove,lastAttack:spec.attackAt,attackStarted:-Infinity};battleResidents.set(spec.key,u)}u.spec=spec;u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;u.sprite.userData.battleRole=spec.role;u.sprite.userData.battleName=spec.label;u.sprite.userData.battleSpawn={...u.spawn};digimonStore?.request(spec.species);
   }
   for(const [key,u] of battleResidents)if(!keep.has(key)){scene.remove(u.sprite,u.ring);u.sprite.material.dispose();u.texture.dispose();u.ring.geometry.dispose();u.ring.material.dispose();battleResidents.delete(key)}
   for(const r of residents)r.sprite.visible=!battleState.pve.length;
  }
+ function battleTravel(unit,now){const elapsed=Math.max(0,Math.min(.5,(now-(unit.lastMove??now))/1000));unit.lastMove=now;return elapsed*BATTLE_RUN_SPEED}
  function updateBattleResidents(now){
+  const positions=new Map(),targets=new Map(),groups=new Map();
+  for(const s of battleSpecs()){if(s.kind!=='pve')continue;if(!groups.has(s.runKey))groups.set(s.runKey,[]);groups.get(s.runKey).push(s)}
+  for(const list of groups.values()){
+   const partner=list.find(s=>s.role==='partner'),enemies=list.filter(s=>s.role==='enemy'),partnerUnit=partner&&battleResidents.get(partner.key),partnerTravel=partnerUnit?battleTravel(partnerUnit,now):0;
+   if(partner&&partnerUnit){
+    const from=partnerUnit.sprite.position,living=enemies.filter(s=>s.hp>0),target=living.sort((a,b)=>{const au=battleResidents.get(a.key).sprite.position,bu=battleResidents.get(b.key).sprite.position;return Math.hypot(au.x-from.x,au.z-from.z)-Math.hypot(bu.x-from.x,bu.z-from.z)})[0];
+    // Move from the current rendered position, not the original spawn plus total elapsed
+    // time. Target changes and new waves therefore turn smoothly instead of teleporting.
+    if(partner.phase==='fighting'&&partner.hp>0&&target){const targetUnit=battleResidents.get(target.key),pos=battleApproach(from,targetUnit.sprite.position,partnerTravel);positions.set(partner.key,pos);targets.set(partner.key,{x:targetUnit.sprite.position.x,z:targetUnit.sprite.position.z})}
+   }
+   for(const enemy of enemies){const unit=battleResidents.get(enemy.key);if(!unit)continue;const travel=battleTravel(unit,now);if(enemy.phase==='fighting'&&enemy.hp>0){const target=positions.get(partner?.key)||partnerUnit?.sprite.position||{x:enemy.x,z:enemy.z};positions.set(enemy.key,battleApproach(unit.sprite.position,target,travel));targets.set(enemy.key,{...target})}}
+  }
   for(const u of battleResidents.values()){
    const s=u.spec,asset=digimonStore?.ready(s.species);u.sprite.visible=!!asset;u.ring.visible=!!asset;if(!asset){digimonStore?.request(s.species);continue}
-   const fighting=s.phase==='fighting',dead=s.hp<=0||(s.kind==='pvp'&&s.phase==='result'&&s.winnerId!=null&&s.winnerId!==s.owner);let stance=dead?'faint':fighting&&Math.floor(now/500)%2===0?'attack':'idle';if(!asset.record.actions[stance])stance='idle';
-   const time=stance==='faint'?(asset.record.actions[stance].length-1)*50:now,flip=s.enemy;const n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,5),key=[s.species,stance,n,flip,s.hp,s.label].join(':');
-   if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,5,flip);if(u.ctx&&typeof u.ctx.fillRect==='function'){const ctx=u.ctx;ctx.fillStyle='rgba(28,35,30,.85)';ctx.fillRect(38,3,180,13);ctx.fillStyle=s.hp/s.maxHp>.35?'#9bd36d':'#e87868';ctx.fillRect(40,5,176*Math.max(0,Math.min(1,s.hp/Math.max(1,s.maxHp))),9);if(typeof ctx.fillText==='function'){ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,29,190)}}u.texture.needsUpdate=true;u.paint=key}
-   const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(s.species)||1),lunge=stance==='attack'?(s.enemy?-.22:.22):0;u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(s.x+lunge,.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),s.z);u.ring.position.set(s.x,.08+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),s.z);u.ring.scale.setScalar(1+.08*Math.sin(now/180));
+   const dead=s.hp<=0||(s.kind==='pvp'&&s.phase==='result'&&s.winnerId!=null&&s.winnerId!==s.owner),previous={x:u.sprite.position.x,z:u.sprite.position.z};let pos=s.kind==='pve'?positions.get(s.key):{x:s.x,z:s.z};if(!pos||dead||s.phase!=='fighting')pos=previous;const target=s.kind==='pve'?targets.get(s.key):null;if(s.attackAt!==u.lastAttack){u.lastAttack=s.attackAt;u.attackStarted=now}
+   const walking=!dead&&Math.hypot(pos.x-previous.x,pos.z-previous.z)>.015,attacking=!dead&&s.phase==='fighting'&&now-u.attackStarted<360;let stance=dead?'faint':attacking?'attack':walking?'walking':'idle';if(!asset.record.actions[stance])stance='idle';
+   const time=stance==='faint'?(asset.record.actions[stance].length-1)*50:stance==='attack'?Math.max(0,now-u.attackStarted):now,flip=target?target.x<pos.x:s.enemy,n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,6),key=[s.species,stance,n,flip,s.hp,s.label].join(':');
+   if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.ctx.fillRect==='function'){const ctx=u.ctx;ctx.fillStyle='rgba(28,35,30,.85)';ctx.fillRect(38,3,180,13);ctx.fillStyle=s.hp/s.maxHp>.35?'#9bd36d':'#e87868';ctx.fillRect(40,5,176*Math.max(0,Math.min(1,s.hp/Math.max(1,s.maxHp))),9);if(typeof ctx.fillText==='function'){ctx.fillStyle='rgba(12,24,22,.9)';ctx.fillRect(24,20,208,31);ctx.font='bold 22px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,36,198)}}u.texture.needsUpdate=true;u.paint=key}
+   let drawX=pos.x,drawZ=pos.z;if(stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1;drawX+=dx/length*.24;drawZ+=dz/length*.24}const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(s.species)||1);u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(drawX,.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),drawZ);u.ring.position.set(pos.x,.08+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),pos.z);u.ring.scale.setScalar(1+.08*Math.sin(now/180));u.sprite.userData.battleWalking=walking;
   }
  }
  // Training pets are independent world sprites, not followers anchored to their
@@ -1064,12 +1088,12 @@ void main(){
  const woodDark=new T.MeshLambertMaterial({color:0x4b2e1b}),woodRail=new T.MeshLambertMaterial({color:0x633a22}),brassMat=new T.MeshLambertMaterial({color:0xcba458}),velvetRed=new T.MeshLambertMaterial({color:0x8d2630}),velvetBlue=new T.MeshLambertMaterial({color:0x274d78}),feltBaseMat=new T.MeshLambertMaterial({color:0x17583b});
  const tableSpecs=R.POKER.tables||[{id:0,label:'Table 1',table:R.POKER.table,dealer:R.POKER.dealer,seats:R.POKER.seats}];
  // Named on-map staff reuse the native wardrobe sprites, with clickable dialogue.
- // Cook Lina opens the real Sanctuary pet-provisions shop; other future systems stay labeled.
+ // Cook Lina opens provisions and Guide Nia opens the real roster-backed DigiDex.
  const sanctuaryNpcSpecs=[
   {id:'coach',name:'Coach Mara',role:'GYM',x:69,z:20,cls:'Monk',sex:'f',head:14,color:3,text:'Bring your partner close to a station and tap Train. You can walk away while you stay online.'},
-  {id:'food',name:'Cook Lina',role:'FOOD CART',x:28,z:39,cls:'Merchant',sex:'f',head:2,color:3,text:'Pet Meals and Mystery Digi-Eggs are ready! I accept Pet Coins for your Sanctuary bag.'},
-  {id:'trainer',name:'Trainer Jori',role:'TRAINER',x:27.7,z:55,cls:'Knight',sex:'m',head:19,color:6,text:'Choose a partner in Sanctuary, then visit Coach Mara and the gym stations.'},
-  {id:'guide',name:'Guide Nia',role:'FIELD GUIDE',x:27.7,z:71,cls:'Hunter',sex:'f',head:14,color:2,text:'The meadow companions roam while the field is quiet. Start grinding to bring your owned partner in and clear repeating same-stage groups.'},
+  {id:'food',name:'Cook Lina',role:'FOOD CART',x:28,z:39,cls:'Merchant',sex:'f',head:2,color:3,text:'Pet Meals and Mystery Digi-Eggs are ready! I accept Pet Coins for your DigiPet bag.'},
+  {id:'trainer',name:'Trainer Jori',role:'TRAINER',x:27.7,z:55,cls:'Knight',sex:'m',head:19,color:6,text:'Choose a partner in DigiPet, then visit Coach Mara and the gym stations.'},
+  {id:'guide',name:'Guide Nia',role:'FIELD GUIDE',x:27.7,z:71,cls:'Hunter',sex:'f',head:14,color:2,text:'The DigiDex lists every bundled form and all supported direct evolution branches. Start grinding to meet named same-stage groups and find bonus petgold or Digi-Eggs.'},
   {id:'ring',name:'Ringkeeper Rook',role:'BOXING RING',x:51,z:94,cls:'Crusader',sex:'m',head:19,color:4,text:'Two trainers: take opposite sides below the ring, enter together, and both accept. Your Digimon fight automatically after a three-second countdown.'}
  ];
  const sanctuaryNpcs=sanctuaryNpcSpecs.map(spec=>{
@@ -1085,7 +1109,7 @@ void main(){
   const unit={spec,ctx,texture,sprite,bounds,label,button,bubble,look:null,loading:false,retryAt:0,paint:'',bubbleUntil:0};
   button.onclick=()=>talkSanctuaryNpc(unit);return unit;
  });
- function talkSanctuaryNpc(unit){for(const other of sanctuaryNpcs)if(other!==unit){other.bubble.hidden=true;other.bubbleUntil=0}unit.bubble.textContent=unit.spec.text;unit.bubble.hidden=false;unit.bubbleUntil=Math.max(performance.now(),clock)+9000;if(unit.spec.id==='food')callbacks.sanctuaryShop?.()}
+ function talkSanctuaryNpc(unit){for(const other of sanctuaryNpcs)if(other!==unit){other.bubble.hidden=true;other.bubbleUntil=0}unit.bubble.textContent=unit.spec.text;unit.bubble.hidden=false;unit.bubbleUntil=Math.max(performance.now(),clock)+9000;if(unit.spec.id==='food')callbacks.sanctuaryShop?.();if(unit.spec.id==='guide')callbacks.sanctuaryIndex?.()}
  // DOM labels do not participate in the WebGL depth buffer. Suppress them
  // when a camera ray actually crosses a gym wall below its eaves.
  function behindGymWall(x,y,z){

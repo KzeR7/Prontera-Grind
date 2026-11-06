@@ -325,8 +325,8 @@ export class SocialRoom {
  battleError(c,message,request=null){this.send(c,{type:'battle_error',request,message})}
  startPve(c,m,now){
   const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
-  if(c.pve||c.pvp||c.gym)return this.battleError(c,'Finish the current Sanctuary activity first.',request);
-  if(!this.fieldReady(c,now))return this.battleError(c,'Stand still inside the middle Sanctuary field to grind.',request);
+  if(c.pve||c.pvp||c.gym)return this.battleError(c,'Finish the current DigiPet activity first.',request);
+  if(!this.fieldReady(c,now))return this.battleError(c,'Stand still inside the middle DigiPet farm to grind.',request);
   const p=this.battleProfile(c,m.profile);if(!p)return this.battleError(c,'Choose your current owned partner and make sure it is fed and rested.',request);
   if([...this.pveRuns.values()].filter(r=>r.room===c.room).length>=8)return this.battleError(c,'The field is full. Try another plaza.',request);
   const run=B.createPve({id:this.battleId('pve'),owner:c.id,room:c.room,profile:p,now,random:this.random});
@@ -339,7 +339,7 @@ export class SocialRoom {
  }
  queuePvp(c,m,now){
   const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
-  if(c.pve||c.gym||c.pvp)return this.battleError(c,'Finish the current Sanctuary activity first.',request);
+  if(c.pve||c.gym||c.pvp)return this.battleError(c,'Finish the current DigiPet activity first.',request);
   const side=this.ringSide(c,now);if(!side)return this.battleError(c,'Stand on the left or right side of the ring, or its marked approach below, and stand still.',request);
   const p=this.battleProfile(c,m.profile);if(!p)return this.battleError(c,'Choose your current owned partner and make sure it is fed and rested.',request);
   const queue=this.pvpQueues.get(c.room)||[];this.pvpQueues.set(c.room,queue);

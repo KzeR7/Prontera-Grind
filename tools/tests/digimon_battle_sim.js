@@ -12,6 +12,12 @@ assert.equal(run.wave,2,'a new group is spawned after the whole group dies');
 assert.equal(clears,1,'the first group settles once');
 assert(run.enemies.every(e=>R.entry(e.form).stage==='Rookie'),'regenerated bots retain stage matching');
 const frozen=B.stepPve(run,0,()=>.5);assert.equal(frozen,null,'time cannot run backwards or duplicate a wave');
+// Zeroed deterministic rolls force every bonus drop: three per-bot petgold rolls and eggs.
+const dropRun=B.createPve({id:'drop-pve',owner:1,room:1,profile,now:0,random:()=>0});let dropClear=null;
+for(let now=500;now<18000&&!dropClear;now+=500){const result=B.stepPve(dropRun,now,()=>0);dropClear=result?.events.find(e=>e.type==='wave_clear')||null}
+assert(dropClear,'forced drop wave clears');assert.equal(dropClear.reward.eggs,3,'each defeated bot can drop a Digi-Egg');assert(dropClear.reward.dropCoins>0,'bonus petgold is rolled per defeated bot');
+assert.equal(dropClear.reward.coins,10+B.stageRank(dropRun.profile.form)*4+dropClear.reward.dropCoins,'bonus petgold is added to the authoritative wave reward');
+assert.equal(dropRun.earned.eggs,3);assert.equal(dropRun.earned.dropCoins,dropClear.reward.dropCoins);assert.equal(B.pveSnapshot(dropRun).earned.eggs,3,'snapshots expose earned eggs for the live HUD');
 const match=B.createPvp({id:'test-pvp',room:1,now:0,players:[{id:1,name:'One',profile},{id:2,name:'Two',profile:{...profile,lineId:'palmon',form:'palmon',stats:{power:0,guard:0,agility:0,focus:0}}}]});
 assert.equal(match.phase,'offer');B.acceptPvp(match,1,0);assert.equal(match.phase,'offer','one acceptance is not enough');
 B.acceptPvp(match,2,0);assert.equal(match.phase,'countdown');assert.equal(match.countdownUntil,3000,'the countdown is exactly three seconds');

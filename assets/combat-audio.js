@@ -45,7 +45,9 @@
   document.addEventListener('pointerdown', unlock);
   document.addEventListener('keydown', unlock);
   function play(files, folder, weapon, enabled, kind, critical = false) {
-    if (!enabled || !context || context.state !== 'running' || document.hidden) return;
+    // The main-field simulation may continue behind the plaza. Its combat sounds must not
+    // bleed into the Social Hub; leaving the hub removes this gate and restores them.
+    if (!enabled || document.body?.classList?.contains('social-open') || !context || context.state !== 'running' || document.hidden) return;
     const file = folder + '/' + (Object.hasOwn(files, weapon) ? files[weapon] : files.fist);
     const buffer = buffers.get(file);
     // Drop sounds while loading: replaying them later would detach them from the animation.

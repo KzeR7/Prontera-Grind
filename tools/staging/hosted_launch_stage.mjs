@@ -14,7 +14,7 @@ const PAYLOAD_SHA256 = '__LAUNCH_PACKAGE_SHA256__';
 const BASE = '7511a03c0787ec9b8d94cfc6658570ac402dc297';
 const DB_NAME = 'pg-staging', DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
 const PROJECT = 'prontera-grind-staging';
-const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js',
+const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/combat-audio.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js',
  // v342: complete Sanctuary runtime and its catalog-driven, on-demand sprite pack.
  'assets/digimon-sanctuary.js','assets/digimon-battle.js','assets/social-battle.css','assets/social-digimon.js','assets/digimon/roster.js','assets/digimon/index.json','assets/digimon/v3/catalog.json',
  'assets/digimon/v1/catalog.json','assets/digimon/v1/agumon.png','assets/digimon/v1/gabumon.png','assets/digimon/v1/patamon.png','assets/digimon/v1/palmon.png',

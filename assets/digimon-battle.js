@@ -9,6 +9,9 @@ if(!DATA)throw Error('Digimon roster data must load before battle rules');
 const STATS=['power','guard','agility','focus'];
 const TICK_MS=500,WAVE_DELAY_MS=1200,COUNTDOWN_MS=3000,OFFER_MS=20000,RESULT_MS=9000;
 const MAX_WAVE=100,MAX_ROUNDS=120;
+// Each bot in a cleared farm wave gets an independent server-owned drop roll. These are
+// bonus drops on top of the existing wave reward, not a browser-declared inventory grant.
+const PVE_COIN_DROP_CHANCE=.45,PVE_EGG_DROP_CHANCE=.08;
 const cap=(n,min,max)=>Math.max(min,Math.min(max,Math.floor(Number.isFinite(Number(n))?Number(n):min)));
 const cleanId=id=>DATA.clean(id);
 function randomUnit(){const c=globalThis.crypto;if(c&&typeof c.getRandomValues==='function'){const a=new Uint32Array(1);c.getRandomValues(a);return a[0]/4294967296}return Math.random()}
@@ -31,6 +34,14 @@ function strike(a,b,random){
  b.hp=Math.max(0,b.hp-amount);b.hitAt=(b.hitAt||0)+1;a.attackAt=(a.attackAt||0)+1;return amount;
 }
 function pveReward(run){const rank=stageRank(run.profile.form);return {coins:10+rank*4+Math.min(10,run.wave-1),xp:1+Math.floor(rank/2),wins:1,fatigue:2,fullness:-1}}
+function pveDrops(run,random){
+ let coins=0,eggs=0;const roll=()=>Math.max(0,Math.min(.999999999,Number(random())||0));
+ for(const enemy of run.enemies){
+  if(roll()<PVE_COIN_DROP_CHANCE)coins+=2+stageRank(enemy.form)+Math.floor(roll()*4);
+  if(roll()<PVE_EGG_DROP_CHANCE)eggs++;
+ }
+ return {coins,eggs};
+}
 function spawnWave(run,now,random){
  run.wave++;run.phase='fighting';run.partner.attackAt=0;run.partner.hitAt=0;
  const pool=sameStage(run.profile.form),forms=pool.length?pool:[run.profile.form],count=3;
@@ -44,7 +55,7 @@ function spawnWave(run,now,random){
 }
 function createPve({id,owner,room,profile:raw,now,random=randomUnit}){
  const p=profile(raw);if(!p)throw Error('A valid owned Digimon profile is required');
- const run={id,owner,room,profile:p,wave:0,phase:'fighting',partner:combatant(p,'partner'),enemies:[],nextAt:now,pulse:0,earned:{coins:0,xp:0,wins:0},reason:'',slot:0};
+ const run={id,owner,room,profile:p,wave:0,phase:'fighting',partner:combatant(p,'partner'),enemies:[],nextAt:now,pulse:0,earned:{coins:0,xp:0,wins:0,eggs:0,dropCoins:0},reason:'',slot:0};
  spawnWave(run,now,random);return run;
 }
 function stepPve(run,now,random=randomUnit){
@@ -56,7 +67,8 @@ function stepPve(run,now,random=randomUnit){
  run.pulse++;const living=run.enemies.filter(e=>e.hp>0),target=living[0];
  if(target){strike(run.partner,target,random);events.push({type:'hit',from:'partner',to:target.id,hp:target.hp});}
  if(run.enemies.every(e=>e.hp<=0)){
-  const reward=pveReward(run);run.earned.coins+=reward.coins;run.earned.xp+=reward.xp;run.earned.wins+=reward.wins;
+  const drops=pveDrops(run,random),reward={...pveReward(run),dropCoins:drops.coins,eggs:drops.eggs};reward.coins+=drops.coins;
+  run.earned.coins+=reward.coins;run.earned.xp+=reward.xp;run.earned.wins+=reward.wins;run.earned.eggs+=drops.eggs;run.earned.dropCoins+=drops.coins;
   run.profile.fatigue=cap(run.profile.fatigue+reward.fatigue,0,100);run.profile.fullness=cap(run.profile.fullness+reward.fullness,0,100);
   run.partner.hp=Math.min(run.partner.maxHp,run.partner.hp+Math.ceil(run.partner.maxHp*.2));
   events.push({type:'wave_clear',wave:run.wave,reward:{...reward},earned:{...run.earned},partnerHp:run.partner.hp});
@@ -113,5 +125,5 @@ function stepPvp(match,now,random=randomUnit){
 function unitSnapshot(u){return {id:u.id,form:u.form,stage:u.stage,level:u.level,hp:u.hp,maxHp:u.maxHp,attackAt:u.attackAt||0,hitAt:u.hitAt||0}}
 function pveSnapshot(run){return {id:run.id,owner:run.owner,room:run.room,wave:run.wave,phase:run.phase,reason:run.reason,nextAt:run.nextAt,profile:{lineId:run.profile.lineId,form:run.profile.form,stage:run.profile.stage,level:run.profile.level,fatigue:run.profile.fatigue,fullness:run.profile.fullness},partner:unitSnapshot(run.partner),enemies:run.enemies.map(unitSnapshot),earned:{...run.earned},slot:run.slot||0}}
 function pvpSnapshot(match){return {id:match.id,room:match.room,phase:match.phase,createdAt:match.createdAt,expiresAt:match.expiresAt,countdownUntil:match.countdownUntil,resultUntil:match.resultUntil,winnerId:match.winnerId,reason:match.reason,participants:match.participants.map(p=>({id:p.id,name:p.name,side:p.side,accepted:p.accepted,profile:{lineId:p.profile.lineId,form:p.profile.form,stage:p.profile.stage,level:p.profile.level},unit:unitSnapshot(p.unit)}))}}
-return {STATS,TICK_MS,WAVE_DELAY_MS,COUNTDOWN_MS,OFFER_MS,RESULT_MS,MAX_WAVE,MAX_ROUNDS,profile,stageRank,sameStage,createPve,stepPve,pveSnapshot,createPvp,acceptPvp,stepPvp,finishPvp,pvpRewards,pvpSnapshot,randomUnit};
+return {STATS,TICK_MS,WAVE_DELAY_MS,COUNTDOWN_MS,OFFER_MS,RESULT_MS,MAX_WAVE,MAX_ROUNDS,PVE_COIN_DROP_CHANCE,PVE_EGG_DROP_CHANCE,profile,stageRank,sameStage,createPve,stepPve,pveSnapshot,createPvp,acceptPvp,stepPvp,finishPvp,pvpRewards,pvpSnapshot,randomUnit};
 });

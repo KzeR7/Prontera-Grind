@@ -10,9 +10,9 @@ function harness({fail=false}={}){
   createBufferSource(){const v={connect(g){v.gain=g.gain},disconnect(){v.disconnected=true},start(time){v.started=time}};voices.push(v);return v;}
   createGain(){return {gain:{},connect(){},disconnect(){}};}
  }
- const document={hidden:false,addEventListener:(name,cb)=>events[name]=cb},window={AudioContext};
+ const classes=new Set(),document={hidden:false,body:{classList:{contains:name=>classes.has(name)}},addEventListener:(name,cb)=>events[name]=cb},window={AudioContext};
  vm.runInNewContext(code,{window,document,fetch:async url=>{requests.push(url);if(broken)throw Error('offline');return {ok:true,arrayBuffer:async()=>url}}});
- return {events,voices,requests,document,window,audio:window.CombatAudio,get ctx(){return ctx},recover(){broken=false}};
+ return {events,voices,requests,document,window,audio:window.CombatAudio,get ctx(){return ctx},recover(){broken=false},social(open){open?classes.add('social-open'):classes.delete('social-open')}};
 }
 (async()=>{
  const h=harness(),{audio,voices}=h;
@@ -40,6 +40,8 @@ function harness({fail=false}={}){
  }
  count=voices.length;audio.attack(false);assert.equal(voices.length,count);
  h.document.hidden=true;audio.attack();assert.equal(voices.length,count);h.document.hidden=false;
+ h.social(true);h.ctx.currentTime+=1;audio.attack(true,'sword');audio.hit(true,true,'sword');assert.equal(voices.length,count,'main-field attack and hit audio are muted inside the Social Hub');
+ h.social(false);h.ctx.currentTime+=1;audio.attack(true,'sword');assert.equal(voices.length,count+1,'field attack audio resumes after leaving the Social Hub');voices.at(-1).onended();
  const crowded=harness();crowded.events.pointerdown();await flush();
  for(let i=0;i<20;i++){crowded.ctx.currentTime+=1;crowded.audio.hit(true,true,'fist','pet');crowded.audio.hit(true,true,'sword','skill')}
  assert.equal(crowded.voices.length,4,'pet/skill channels are bounded');
