@@ -20,6 +20,20 @@ const src = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 let pass = 0, fail = 0;
 const t = (n, fn) => { try { fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 const T = async (n, fn) => { try { await fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + (e && e.message)); fail++; } };
+await T('v327: the paste-in save comparison still matches the real client', async () => {
+  // docs/CHECK-A-SAVE.md hands the player a console snippet when "it still isn\'t saved" arrives with
+  // no red line. A snippet quoting a global that has since been renamed is worse than no snippet, so
+  // the names it depends on are checked against index.html here.
+  const doc = fs.readFileSync(path.join(root, 'docs', 'CHECK-A-SAVE.md'), 'utf8');
+  const block = doc.split('```js')[1] || '';
+  assert.ok(block.includes("'pg_save3_' + currentUser"), 'the snippet reads the account\'s own slot');
+  assert.ok(block.includes('/api/save'), 'and asks the server for the same endpoint the client uses');
+  assert.ok(block.includes('CLOUD.on'), 'and reports whether sync is on');
+  assert.ok(/let currentUser=/.test(src), 'currentUser is still a console-reachable binding');
+  assert.ok(/const CLOUD=\{/.test(src), 'CLOUD is still a console-reachable binding');
+  assert.ok(/const saveKey=\(\)=>'pg_save3_'\+currentUser/.test(src), 'and the slot key is still pg_save3_<name>');
+});
+
 console.log('client cloud layer: offline-first sync with a conflict-safe save\n');
 // Read a `const NAME=<number>` straight out of the page, for the two constants whose value is a
 // request budget rather than an implementation detail.
