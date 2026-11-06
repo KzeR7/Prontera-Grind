@@ -11,7 +11,7 @@ const PROJECT = 'prontera-grind-staging';
 const DB_NAME = 'pg-staging';
 const DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
 const BRANCH = 'arena/017d3a5c-prontera-grind';
-const EXPECTED_BUILD = '2026-11-06 haven-v331 console sync-log command';
+const EXPECTED_BUILD = '2026-11-06 haven-v332 owner stamp by id, save watchdog';
 
 const CONFIG = [
   `name = "${PROJECT}"`,
