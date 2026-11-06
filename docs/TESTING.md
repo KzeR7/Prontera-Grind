@@ -227,6 +227,11 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-06 (`haven-v331`): documented console commands must exist.**
+`cloud_sim` extracts every `pgXxx()` from `docs/CHECK-A-SAVE.md` and asserts `index.html` defines it —
+the rule that v330 broke by shipping docs for `pgSyncLog()` while defining only `syncLogShow`. Renaming
+the binding back reproduces the failure in the deployed build.
+
 **2026-11-06 (`haven-v330`): self-rebase, the sync ledger, and a swap that loses progress.**
 `cloud_sim` answers a `PUT` with a 409 carrying a copy that is the device's own previous upload one
 version ahead (31.7M against the device's 33.3M): the client must **rebase** — return `rebase`, adopt
