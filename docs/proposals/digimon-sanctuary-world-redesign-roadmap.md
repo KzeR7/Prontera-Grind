@@ -306,3 +306,30 @@ and use the existing temporary spar, but live auto-PvE and PvP remain separate
 future work. Gym XP/levels are prototype, client-saved and have no combat effect.
 Training stops on disconnect, logout, reload or care/stat caps; no offline gym
 progress is intended. See `docs/SOCIAL-HUB.md` for the current behavior.
+
+## Owned collection and pet-economy foundation (current implementation slice)
+
+The next foundation slice is implemented in the client rules and Sanctuary UI:
+
+- New/companion-less saves receive one saved starter egg. Every new starting
+  partner hatches randomly from the complete 48-form Baby I/Baby II pool; the
+  result is added to the owned collection and selected in the active slot.
+- `S.digimonBag` is versioned separately from Ragnarok `S.pets`. Existing
+  current/progressed lines from both slots are migrated into `owned` without
+  resetting either slot's progress. Unknown future bag versions are refused.
+- The Partners roster is owned-only. The Pet Bag displays eggs and Pet Meals;
+  Cook Lina is a working Pet Coin seller. Feeding consumes one Pet Meal instead
+  of being a free prototype action. Gym cycles are 20 minutes.
+- Pet Coins are a distinct casual currency. This slice uses provisional values
+  of 50 starting coins, 25 coins per meal, 500 coins per additional egg and 20
+  coins per temporary solo-spar win; these are implementation choices for the
+  foundation, not a separately approved live economy balance.
+- The solo spar is still client-authored and is not server-authoritative PvP.
+  Live auto-PvE and authoritative PvP have no active reward paths. PvE remains
+  the intended future primary money/XP grinding activity, and its money/XP curve
+  is a later slice. Future PvP rewards must be settled by the server-authoritative
+  service rather than by trusting this temporary spar.
+
+Regression coverage is in `tools/tests/digimon_sanctuary_sim.js`,
+`tools/tests/digimon_sanctuary_ui_sim.js`, `social_ui_sim.js` and
+`social_scene_sim.js`. This slice does not deploy or authorize a release.

@@ -7,9 +7,14 @@
 if(!DATA)throw Error('Digimon roster data must load before Sanctuary rules');
 const LINES={agumon:['agumon','greymon','metalgreymon','wargreymon'],gabumon:['gabumon','garurumon','weregarurumon','metalgarurumon'],patamon:['patamon','angemon','magnaangemon','seraphimon'],palmon:['palmon','togemon','lillymon','rosemon']};
 // STARTERS remains the original four save keys. ROSTER/SPECIES are the complete
-// selectable set; existing saves therefore keep their original progression.
-const STARTERS=Object.keys(LINES),ROSTER=[...DATA.IDS],SPECIES=ROSTER,STATS=['power','guard','agility','focus'],DURATION=15000,MAX_EVOLUTIONS=6;
+// catalog; the owned bag gates selection while existing saves keep progression.
+const STARTERS=Object.keys(LINES),ROSTER=[...DATA.IDS],SPECIES=ROSTER,STATS=['power','guard','agility','focus'],DURATION=20*60*1000,MAX_EVOLUTIONS=6;
 const EVOLUTION_REQUIREMENTS=[{points:4,wins:2},{points:10,wins:5},{points:18,wins:9},{points:22,wins:12},{points:24,wins:16},{points:24,wins:20}];
+// The owned collection and pet-item economy are separate from Zeny, Cash Shop
+// purchases and Ragnarok pets. Eggs only reveal bundled Baby I / Baby II forms.
+const STARTER_POOL=ROSTER.filter(id=>['Baby I','Baby II'].includes(DATA.entry(id)?.stage));
+const ITEMS={food:{name:'Pet Meal',price:25},egg:{name:'Mystery Digi-Egg',price:500}};
+const COIN_START=50,SPAR_COINS=20;
 const cap=(n,min,max)=>Math.max(min,Math.min(max,Math.floor(Number.isFinite(Number(n))?Number(n):min)));
 const total=p=>STATS.reduce((a,k)=>a+p.stats[k],0);
 const clean=id=>DATA.clean(id);
@@ -46,7 +51,7 @@ function act(raw,line,action,now){now=Number.isFinite(now)?now:Date.now();const 
  if(!action||typeof action!=='object')return fail('Choose an action.');
  if(action.type==='feed'){if(p.fullness>=100)return fail('Your partner is already full.');p.fullness=cap(p.fullness+25,0,100);return done('Your partner enjoyed a meal.')}
  if(action.type==='rest'){if(p.fatigue===0)return fail('Your partner is already rested.');p.fatigue=cap(p.fatigue-30,0,100);return done('Your partner rested and recovered.')}
- if(action.type==='train'){const stat=action.stat;if(!STATS.includes(stat))return fail('Choose a training stat.');if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');if(p.stats[stat]>=12||total(p)>=24)return fail('Training cap reached.');if(p.fatigue>=80)return fail('Your partner needs to rest first.');if(p.fullness<10)return fail('Feed your partner before training.');p.training={stat,ends:now+DURATION};return done('Training started. It completes in 15 seconds.')}
+ if(action.type==='train'){const stat=action.stat;if(!STATS.includes(stat))return fail('Choose a training stat.');if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');if(p.stats[stat]>=12||total(p)>=24)return fail('Training cap reached.');if(p.fatigue>=80)return fail('Your partner needs to rest first.');if(p.fullness<10)return fail('Feed your partner before training.');p.training={stat,ends:now+DURATION};return done('Training started. It completes in 20 minutes.')}
  if(action.type==='mastery'){if(p.mastery>=6||total(p)<(p.mastery+1)*4)return fail('Train four more points for the next mastery.');p.mastery++;return done('Mastery improved without changing form.')}
  if(action.type==='evolve'){
   if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');const req=requirements(p,line);if(!req||!req.ready)return fail('Evolution requirements are not met.');
@@ -57,7 +62,7 @@ function act(raw,line,action,now){now=Number.isFinite(now)?now:Date.now();const 
   if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');const level=Math.min(4,Math.floor(p.wins/2));let opponent;
   if(LINES[line]){const enemyLine=STARTERS[(STARTERS.indexOf(line)+1+level)%STARTERS.length];opponent=LINES[enemyLine][Math.min(2,Math.floor(p.wins/3))]}
   else{const index=Math.max(0,SPECIES.indexOf(p.form));opponent=SPECIES[(index+1+level*17)%SPECIES.length]}
-  const maxHp=100+p.stats.guard*5,enemyMaxHp=45+level*12;p.battle={opponent,hp:maxHp,maxHp,enemyHp:enemyMaxHp,enemyMaxHp,energy:2,turn:0,status:'active',deadline:now+90000,log:'A friendly spar begins. Choose a command.'};return done('Spar started. No items or currency are at stake.');
+  const maxHp=100+p.stats.guard*5,enemyMaxHp=45+level*12;p.battle={opponent,hp:maxHp,maxHp,enemyHp:enemyMaxHp,enemyMaxHp,energy:2,turn:0,status:'active',deadline:now+90000,log:'A friendly spar begins. Choose a command.'};return done('Spar started. Win for '+SPAR_COINS+' Pet Coins; this is local practice, not server-authoritative PvP.');
  }
  if(action.type==='battle'){const b=p.battle;if(!b||b.status!=='active')return fail('No active spar.');if(!['attack','guard','special'].includes(action.command))return fail('Choose a valid command.');if(action.command==='special'&&b.energy<2)return fail('Special needs 2 energy.');let damage=0;if(action.command==='attack')damage=9+p.stats.power*2+p.mastery;if(action.command==='special'){damage=20+p.stats.focus*2+p.mastery;b.energy-=2}if(action.command==='guard')b.energy=Math.min(5,b.energy+1);b.enemyHp=Math.max(0,b.enemyHp-damage);b.turn++;if(!b.enemyHp){b.status='win';b.log='Victory! Your partner won a friendly spar.';p.wins=cap(p.wins+1,0,999);return done(b.log)}const level=Math.min(4,Math.floor(p.wins/2));let incoming=Math.max(2,8+level*2-Math.floor(p.stats.guard/2));if(action.command==='guard')incoming=Math.max(1,Math.floor(incoming/2));const evadeEvery=Math.max(2,8-Math.floor(p.stats.agility/2));if(p.stats.agility>0&&b.turn%evadeEvery===0)incoming=0;b.hp=Math.max(0,b.hp-incoming);b.log=(damage?'You dealt '+damage+' damage. ':'You guarded and gained energy. ')+(incoming?'Opponent dealt '+incoming+'.':'Your partner evaded the attack.');if(!b.hp){b.status='loss';b.log='Your partner was defeated. Rest and try again.'}return done(b.log)}
  if(action.type==='endBattle'){if(!p.battle)return fail('No spar to close.');p.battle=null;return done('Spar closed.')}
@@ -67,5 +72,49 @@ function act(raw,line,action,now){now=Number.isFinite(now)?now:Date.now();const 
 // but does not persist a timer that could finish while the scene is closed.
 function completeWorldTraining(raw,line,stat,now){const start=act(raw,line,{type:'train',stat},now);if(!start.ok)return start;start.state.partners[line].training.ends=now;const finished=update(start.state,now,line);finished.state.partners[line].xp=cap(finished.state.partners[line].xp+1,0,3996);return {ok:true,state:finished.state,changed:true,message:stat[0].toUpperCase()+stat.slice(1)+' training complete: +1 point.'}}
 const level=p=>1+Math.floor(cap(p?.xp,0,3996)/4);
-return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,level,normalize,update,act,species,total,requirements,evolutionOptions,completeWorldTraining,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
+// Versioned pet bag / owned-species collection. Unknown future versions are
+// refused rather than overwritten, matching the Sanctuary save contract.
+function cleanOwned(raw){return [...new Set((Array.isArray(raw)?raw:[]).map(clean).filter(Boolean))].slice(0,ROSTER.length)}
+function normalizeBag(raw){
+ if(raw&&typeof raw==='object'&&Number(raw.v)>1)return null;
+ return {v:1,coins:cap(raw?.coins??COIN_START,0,999999),food:cap(raw?.food,0,999),eggs:cap(raw?.eggs,0,STARTER_POOL.length),owned:cleanOwned(raw?.owned)};
+}
+function ensureBag(raw,legacyOwned=[]){
+ const state=normalizeBag(raw);if(!state)return null;
+ state.owned=cleanOwned([...state.owned,...legacyOwned]);
+ if(raw==null&&!state.owned.length)state.eggs=1;
+ return state;
+}
+function bagBuy(raw,item,quantity=1){
+ const state=normalizeBag(raw),qty=Number(quantity),entry=ITEMS[item];
+ if(!state||!entry||!Number.isInteger(qty)||qty<1||qty>99)return {ok:false,state,changed:false,message:'Choose a valid pet-shop purchase.'};
+ if(item==='egg'){
+  const available=STARTER_POOL.filter(id=>!state.owned.includes(id)).length;
+  if(qty+state.eggs>available)return {ok:false,state,changed:false,message:available?'Hatch your current eggs first; every egg is duplicate-protected.':'You already own every starter-pool species.'};
+ }
+ if(item==='food'&&qty+state.food>999)return {ok:false,state,changed:false,message:'Your Pet Meal stack is full.'};
+ const cost=entry.price*qty;if(state.coins<cost)return {ok:false,state,changed:false,message:'Not enough Pet Coins.'};
+ state.coins-=cost;if(item==='food')state.food=cap(state.food+qty,0,999);else state.eggs+=qty;
+ return {ok:true,state,changed:true,message:'Bought '+qty+' × '+entry.name+' for '+cost+' Pet Coins.'};
+}
+function randomUnit(){const c=globalThis.crypto;if(c&&typeof c.getRandomValues==='function'){const a=new Uint32Array(1);c.getRandomValues(a);return a[0]/4294967296}return Math.random()}
+function bagHatch(raw,random=randomUnit){
+ const state=normalizeBag(raw);if(!state)return {ok:false,state,changed:false,message:'This pet bag uses a newer save version.'};
+ if(state.eggs<1)return {ok:false,state,changed:false,message:'No Digi-Egg to hatch.'};
+ const available=STARTER_POOL.filter(id=>!state.owned.includes(id));if(!available.length)return {ok:false,state,changed:false,message:'Your starter-pool collection is already complete.'};
+ const roll=Math.max(0,Math.min(.999999999,Number(random())||0)),line=available[Math.floor(roll*available.length)];
+ state.eggs--;state.owned.push(line);return {ok:true,state,changed:true,line,message:DATA.name(line)+' hatched from the Digi-Egg!'};
+}
+function bagFeed(raw,sanctuaryRaw,line,now){
+ const bag=normalizeBag(raw);if(!bag)return {ok:false,state:sanctuaryRaw,bag,changed:false,message:'This pet bag uses a newer save version.'};
+ if(bag.food<1)return {ok:false,state:sanctuaryRaw,bag,changed:false,message:'Buy a Pet Meal from Cook Lina first.'};
+ const result=act(sanctuaryRaw,line,{type:'feed'},now);if(!result.ok)return {...result,bag};
+ bag.food--;return {ok:true,state:result.state,bag,changed:true,message:result.message+' One Pet Meal was used.'};
+}
+function bagReward(raw,kind){
+ const state=normalizeBag(raw);if(!state||kind!=='spar')return {ok:false,state,changed:false,message:'This pet reward is not available.'};
+ const before=state.coins;state.coins=cap(state.coins+SPAR_COINS,0,999999);
+ return {ok:true,state,changed:state.coins!==before,amount:state.coins-before,message:state.coins>before?'+'+(state.coins-before)+' Pet Coins from the spar.':'Pet Coin pouch is full.'};
+}
+return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,level,normalize,update,act,species,total,requirements,evolutionOptions,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagFeed,bagReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
 });

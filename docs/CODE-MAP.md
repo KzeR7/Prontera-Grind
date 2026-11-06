@@ -477,7 +477,7 @@ this runtime. Gym apparatus is still scenery, not live training.
 * **Automatic gym partners (v340):** `assets/social.js` keeps the original
   `S.digimonPartner`/`S.digimonSanctuary` as slot one and adds independent
   `S.digimonPartner2`, `S.digimonSanctuary2` and `S.digimonActiveSlot`. Its
-  ephemeral one-per-player controller repeats validated 15-second completions
+  ephemeral one-per-player controller repeats validated 20-minute completions
   while a cloud plaza socket remains live, including in the field. It cancels
   on logout/disconnection and discards uncompleted legacy saved timers on entry.
   `assets/digimon-sanctuary.js` adds client-saved XP/level; `social-rules.js`
@@ -487,3 +487,18 @@ this runtime. Gym apparatus is still scenery, not live training.
   stats are server-authoritative. Deploy client and Social Worker together.
   `tools/tests/social_gym_sim.js` covers room reservations and lifecycle;
   `social_ui_sim.js` covers auto-cycles, dual slots and cancellation/races.
+
+* **Owned Sanctuary bag and Pet Coins (current):** `assets/digimon-sanctuary.js`
+  owns the versioned `S.digimonBag` normalizer and atomic bag transactions. A
+  new/companion-less save receives one starter egg and 50 Pet Coins; hatching
+  uses the 48 bundled Baby I/Baby II forms without duplicates. `owned` contains
+  save-line IDs, while the two existing partner fields and Sanctuary progress
+  remain independent and are unioned into ownership during migration. `food`
+  and `eggs` are pet-bag items; `coins` is not Zeny, Fishcoins, Chips or Cash
+  Shop currency. `assets/social.js` renders the owned-only roster, Pet Bag and
+  Cook Lina shop, consumes one Pet Meal per successful feed and grants the
+  explicitly temporary local-spar reward once per win. `assets/social-scene.js`
+  opens that shop from Cook Lina. Live PvE and server-authoritative PvP reward
+  paths are not present; do not infer them from the client-authored spar.
+  `digimon_sanctuary_sim.js` and `digimon_sanctuary_ui_sim.js` cover migration,
+  random-pool bounds, purchase/feed/reward failures and the fresh-account flow.

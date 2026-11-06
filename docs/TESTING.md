@@ -47,14 +47,15 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```
 
-## Latest local gate (haven-v342)
+## Latest local gate (haven-v343)
 
-The 2026-11-06 complete local run passed **203 checks / 0 failures** on Node
-22.22.3: four generated-asset/config checks, 186 `*_sim.js`, seven `*_sim.mjs`,
+The 2026-11-06 complete local run passed **204 checks / 0 failures** on Node
+22.22.3: four generated-asset/config checks, 187 `*_sim.js`, seven `*_sim.mjs`,
 and six `*_smoke.js` suites. There were no dependency skips. This includes the
-complete 280-form asset validation, publish-size checks, real local Social Worker
-runtime, and fixed historical staging-package rehearsal. It is local evidence,
-not a hosted deployment or physical-device certification.
+complete 280-form asset validation, the new saved-egg/owned-bag/Pet Coin UI
+regression, publish-size checks, real local Social Worker runtime, and fixed
+historical staging-package rehearsal. It is local evidence, not a hosted
+deployment or physical-device certification.
 
 ## Account security and unverified competitive boards (haven-v262)
 

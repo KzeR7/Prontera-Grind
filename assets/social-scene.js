@@ -194,7 +194,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
    gable(x,z,5.5,4.2,4,1.05);box(x,2.7,z-1.6,4.4,1.2,.18,plaster);
    for(const dx of [-1.1,0,1.1])box(x+dx,1.42,z,.8,.2,1.1,kind==='guide'?cream:metal);
   }
-  worldSign(x,3.1,z+1.75,kind==='food'?'FOOD - SOON':kind==='trainer'?'TRAINER - SOON':'FIELD GUIDE - SOON',4,.65);
+  worldSign(x,3.1,z+1.75,kind==='food'?'FOOD - PET SHOP':kind==='trainer'?'TRAINER - SOON':'FIELD GUIDE - SOON',4,.65);
  }
  kiosk(22,41,'food');kiosk(22,56,'trainer');kiosk(22,72,'guide');
  // Awnings, shelving, painted shop signs and merchandise distinguish the stalls.
@@ -1031,10 +1031,10 @@ void main(){
  const woodDark=new T.MeshLambertMaterial({color:0x4b2e1b}),woodRail=new T.MeshLambertMaterial({color:0x633a22}),brassMat=new T.MeshLambertMaterial({color:0xcba458}),velvetRed=new T.MeshLambertMaterial({color:0x8d2630}),velvetBlue=new T.MeshLambertMaterial({color:0x274d78}),feltBaseMat=new T.MeshLambertMaterial({color:0x17583b});
  const tableSpecs=R.POKER.tables||[{id:0,label:'Table 1',table:R.POKER.table,dealer:R.POKER.dealer,seats:R.POKER.seats}];
  // Named on-map staff reuse the native wardrobe sprites, with clickable dialogue.
- // They do not grant items or start systems that have not been implemented.
+ // Cook Lina opens the real Sanctuary pet-provisions shop; other future systems stay labeled.
  const sanctuaryNpcSpecs=[
   {id:'coach',name:'Coach Mara',role:'GYM',x:69,z:20,cls:'Monk',sex:'f',head:14,color:3,text:'Bring your partner close to a station and tap Train. You can walk away while you stay online.'},
-  {id:'food',name:'Cook Lina',role:'FOOD CART',x:28,z:39,cls:'Merchant',sex:'f',head:2,color:3,text:'Fresh treats will be available here once the food shop is ready.'},
+  {id:'food',name:'Cook Lina',role:'FOOD CART',x:28,z:39,cls:'Merchant',sex:'f',head:2,color:3,text:'Pet Meals and Mystery Digi-Eggs are ready! I accept Pet Coins for your Sanctuary bag.'},
   {id:'trainer',name:'Trainer Jori',role:'TRAINER',x:27.7,z:55,cls:'Knight',sex:'m',head:19,color:6,text:'Choose a partner in Sanctuary, then visit Coach Mara and the gym stations.'},
   {id:'guide',name:'Guide Nia',role:'FIELD GUIDE',x:27.7,z:71,cls:'Hunter',sex:'f',head:14,color:2,text:'The meadow companions are decorative for now. Automatic encounters are not active yet.'},
   {id:'ring',name:'Ringkeeper Rook',role:'BOXING RING',x:51,z:94,cls:'Crusader',sex:'m',head:19,color:4,text:'The ring is ready to explore. Matches and spectators are not active yet.'}
@@ -1052,7 +1052,7 @@ void main(){
   const unit={spec,ctx,texture,sprite,bounds,label,button,bubble,look:null,loading:false,retryAt:0,paint:'',bubbleUntil:0};
   button.onclick=()=>talkSanctuaryNpc(unit);return unit;
  });
- function talkSanctuaryNpc(unit){for(const other of sanctuaryNpcs)if(other!==unit){other.bubble.hidden=true;other.bubbleUntil=0}unit.bubble.textContent=unit.spec.text;unit.bubble.hidden=false;unit.bubbleUntil=Math.max(performance.now(),clock)+9000}
+ function talkSanctuaryNpc(unit){for(const other of sanctuaryNpcs)if(other!==unit){other.bubble.hidden=true;other.bubbleUntil=0}unit.bubble.textContent=unit.spec.text;unit.bubble.hidden=false;unit.bubbleUntil=Math.max(performance.now(),clock)+9000;if(unit.spec.id==='food')callbacks.sanctuaryShop?.()}
  // DOM labels do not participate in the WebGL depth buffer. Suppress them
  // when a camera ray actually crosses a gym wall below its eaves.
  function behindGymWall(x,y,z){

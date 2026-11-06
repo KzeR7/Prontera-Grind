@@ -1048,7 +1048,7 @@ panel care and the old solo practice spar are still temporary prototype features
 
 A signed-in player in a connected plaza can select either of two independent
 Sanctuary partner slots, including the same species twice. The original slot and
-its completed progress are retained. Each completed 15-second gym cycle earns one
+its completed progress are retained. Each completed 20-minute gym cycle earns one
 stat point and one XP; four XP earn a cosmetic prototype level. Fatigue, fullness,
 per-stat and total caps still apply. Old uncompleted window timers are cancelled
 on plaza entry; no new gym timer is persisted across reload or logout.
@@ -1061,9 +1061,10 @@ plaza switch stops the session; solo/offline plaza cannot start one. Three
 positions per activity are reserved in the shared room and broadcast to observers;
 when full, a station asks the next player to wait. Reservation acknowledgements
 are request-scoped so an old reply cannot start a newer session. Stats and levels
-are client-saved and not authoritative for competitive play. Live auto-PvE,
-food purchases and server-authoritative PvP remain unimplemented; the old panel
-spar is a temporary solo feature.
+are client-saved and not authoritative for competitive play. Live auto-PvE and
+server-authoritative PvP remain unimplemented; the current food shop and Pet
+Coin bag are described below. The old panel spar is a temporary solo feature
+with an explicitly labeled local reward.
 
 ### Steady gym controls (v341)
 
@@ -1072,3 +1073,44 @@ station controls hold their screen position while hovered or pressed, and the
 nearby and training-status controls have stable widths. Training rules and
 reservation authority are unchanged. Physical touch-device review remains
 recommended before integration.
+
+### Owned collection, Pet Bag and Pet Coins (current Sanctuary foundation)
+
+The Sanctuary no longer offers the full roster as an unrestricted preview. A
+new or companion-less save receives one saved Mystery Digi-Egg and 50 Pet Coins
+when the Sanctuary is entered. Hatching randomly selects one of the **48 bundled
+Baby I/Baby II forms** (22 Baby I and 26 Baby II), saves the resulting owned
+line and selects it in the active partner slot. Eggs are duplicate-protected;
+additional Mystery Digi-Eggs cost 500 Pet Coins and cannot exceed the remaining
+unowned starter pool. The owned collection is stored separately as
+`S.digimonBag = {v:1, coins, food, eggs, owned}`. Existing current/progressed
+lines from both partner slots are unioned into `owned` during migration, and
+`S.digimonPartner`, `S.digimonPartner2`, `S.digimonSanctuary` and
+`S.digimonSanctuary2` retain their progress. Unknown future bag versions are
+refused without being overwritten.
+
+The Partners view only lists owned lines. The Pet Bag shows eggs and Pet Meals;
+Cook Lina's food cart now opens a working shop. A Pet Meal costs 25 Pet Coins
+and a successful feed consumes one meal for +25 fullness. Rest remains the
+existing casual recovery action. The first wallet grant and these prices are
+Sanctuary-only implementation values, not Zeny or Ragnarok pet drops. Nothing
+in this system reads from or writes to `S.pets`, field combat, Ragnarok pet
+acquisition, Zeny, Fishcoins, Chips or Cash Shop purchases.
+
+Gym sessions are now **20 minutes** per completed cycle. Each cycle still gives
+one stat point and one XP, with four XP per cosmetic prototype level and the
+existing 12-per-stat/24-total caps. The online reservation, cancellation and
+one-active-partner rules are unchanged; gym progress is still client-saved and
+not competitive proof.
+
+The temporary solo practice spar is explicitly client-authored and grants 20
+Pet Coins on a win, once when the win is recorded. It is not server-authoritative
+PvP and closing a result cannot pay twice. **Live auto-PvE and
+server-authoritative PvP remain unimplemented and have no reward path.** PvE is
+still the intended future primary money/XP grinding activity; its economy and
+XP curve must be designed separately rather than inferred from this spar.
+Future PvP currency rewards must be settled by that authoritative service.
+
+Run `node tools/tests/digimon_sanctuary_sim.js` and
+`node tools/tests/digimon_sanctuary_ui_sim.js` for the rules and fresh-account
+flow, plus `social_ui_sim.js` and `social_scene_sim.js` for integration.
