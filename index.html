@@ -3633,7 +3633,19 @@ function submitAuth(e,confirmed=false){
   }catch(err){showErr('Error: '+err.message)}
 }
 $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>setMode('login');$('tabReg').onclick=()=>setMode('reg');
-function logout(){save();cloudLogout();location.reload()}
+// v326: switching accounts is how this game is actually played, and the old order lost the last
+// minute every single time. It saved the device copy, fired the upload WITHOUT waiting for it, deleted
+// the session beside it and reloaded - so the PUT was cancelled by the navigation, or reached the
+// server after the session row was gone and came back 401. The account copy stayed a minute behind,
+// and the next login (or any other device) downloaded that older copy.
+async function logout(){
+  if(logout.inflight)return;
+  logout.inflight=true;
+  save();
+  if(CLOUD.on)cloudBadge('☁ ⇅','Saving before logout…');
+  try{await cloudLogout()}catch(e){}
+  location.reload()
+}
 function initSession(gm,newAccount=false){
   // v88.6: a save in this browser that belongs to another account is not loaded - nothing starts, and
   // nothing is written over it. The login card says why.
@@ -4379,11 +4391,19 @@ async function cloudAuth(u,p,isReg){
     if(btn)btn.disabled=false;
   }
 }
-function cloudLogout(){
+async function cloudLogout(){
   if(!CLOUD.on)return;
   CLOUD.signingOut=true;      // the session is being ended on purpose; do not report a kick
-  cloudFlushNow();
-  cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}).catch(()=>{});
+  // v326: the last minute has to be ON THE SERVER before the session that authorises it is deleted.
+  // This used to be a fire-and-forget cloudFlushNow() racing the DELETE and the reload, so a logout
+  // left the account copy behind on the server - the account-switching report, exactly. The leaving
+  // path writes the device copy and keepalives the upload; the wait is capped so a dead network can
+  // never trap the player on the way out.
+  // Both waits are capped: a server that stops answering must not leave the player stuck on a page
+  // they asked to leave. cloudFetch has no timeout of its own.
+  const cap=(p,ms)=>Promise.race([p.catch(()=>{}),new Promise(r=>setTimeout(r,ms))]);
+  try{await cap(cloudFlushLeaving(),2500)}catch(e){}
+  try{await cap(cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}),1500)}catch(e){}
   CLOUD.on=false;CLOUD.user=null;CLOUD.previewToken=null;
   // v280: the signed-in account id is part of the save's identity. It must not outlive the session,
   // or the next login on this browser would judge that player's own old copy by the wrong account.

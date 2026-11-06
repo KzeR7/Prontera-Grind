@@ -13,7 +13,9 @@ const vm = require('node:vm');
 const assert = require('node:assert');
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const start = src.indexOf('const AUTH_TIMEOUT_MS=');
-const end = src.indexOf('\nfunction cloudLogout()', start);
+// v326 made cloudLogout() async (it waits for the last upload before deleting the session), so the end
+// of the auth block is found by name instead of by the exact declaration.
+const end = Math.max(src.indexOf('\nfunction cloudLogout()', start), src.indexOf('\nasync function cloudLogout()', start));
 assert.ok(start >= 0 && end > start, 'cloudAuth is not where this suite expects it');
 const authCode = src.slice(start, end);
 

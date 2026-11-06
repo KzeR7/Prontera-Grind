@@ -454,7 +454,8 @@ await T('signing out clears the gate and every connection flag', async () => {
   await h.sandbox.cloudPush(true);
   assert.strictEqual(h.sandbox.CLOUD.lost, true);
   assert.strictEqual(h.els.get('cloudGate').style.display, 'flex');
-  h.sandbox.cloudLogout();
+  // v326: ending the session now waits for the last upload, so the caller awaits it too.
+  await h.sandbox.cloudLogout();
   assert.strictEqual(h.sandbox.CLOUD.lost, false, 'a signed-out page is not marked as away');
   assert.strictEqual(h.sandbox.CLOUD.gate, false);
   assert.strictEqual(h.sandbox.CLOUD.on, false);
@@ -1335,6 +1336,103 @@ await T('v326: leaving the page writes the device copy and asks for a keepalive 
   const put = h.calls.find(c => c.url === '/api/save' && c.init.method === 'PUT');
   assert.strictEqual(put.init.keepalive, true, 'the browser is told not to cancel the request with the page');
   assert.strictEqual(h.sandbox.CLOUD.ver, 7);
+});
+
+// The owner keeps several accounts in one browser and logs in and out constantly - and that is the
+// other half of the report. The old logout fired the upload without waiting, deleted the session beside
+// it and reloaded, so the PUT was cancelled or arrived after the session was gone (401). The account
+// copy on the server stayed a minute behind, which is what the next login downloads.
+await T('v326: logging out lands the last minute before the session is deleted', async () => {
+  const h = harness({ routes: { '/save': { status: 200, body: { version: 8 } }, '/sessions': { status: 200, body: { ok: true } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 7;
+  h.sandbox.CLOUD.user = 'X'; h.sandbox.currentUser = 'X'; h.sandbox.CLOUD.dirty = true;
+  const pending = h.sandbox.cloudLogout();
+  assert.ok(pending && typeof pending.then === 'function', 'ending the session is awaitable now, so the caller can order it');
+  await pending;
+  const putAt = h.calls.findIndex(c => c.url === '/api/save' && c.init.method === 'PUT');
+  const delAt = h.calls.findIndex(c => c.url === '/api/sessions' && c.init.method === 'DELETE');
+  assert.ok(putAt >= 0, 'the last minute is uploaded on the way out');
+  assert.ok(delAt > putAt, 'and only then is the session it needs deleted');
+  assert.strictEqual(h.calls[putAt].init.keepalive, true, 'the upload survives the reload that follows');
+  assert.strictEqual(h.sandbox.CLOUD.on, false, 'the tab ends up signed out');
+  assert.strictEqual(h.sandbox.CLOUD.user, null);
+});
+
+await T('v326: two accounts in one browser - switching back never trades one player\'s copy for another\'s', async () => {
+  // A fake server: one row per account, and a version that only moves when that account pushes.
+  const server = {
+    A: { version: 7, blob: JSON.stringify({ owner: 'A', accountId: 11, lv: 50, zeny: 1000, weapon: 'N+ Blade' }) },
+    B: { version: 2, blob: JSON.stringify({ owner: 'B', accountId: 12, lv: 20, zeny: 50, weapon: 'Short Sword' }) },
+  };
+  let who = 'A';
+  const routes = {
+    '/save': (seq, init) => {
+      const row = server[who];
+      if (init && init.method === 'PUT') {
+        const body = JSON.parse(init.body);
+        if (String(body.owner).toLowerCase() !== who.toLowerCase())
+          return { status: 409, body: { err: 'This tab is playing a different account. Nothing was saved.', accountMismatch: true, owner: who } };
+        if (Number(body.version) !== row.version)
+          return { status: 409, body: { conflict: true, version: row.version, blob: row.blob, savedAt: 1, updatedAt: 1, offlineClaim: null } };
+        server[who] = { version: row.version + 1, blob: body.blob };
+        return { status: 200, body: { version: row.version + 1, bytes: body.blob.length, offlineClaimId: null, leaderboardPending: false } };
+      }
+      return { status: 200, body: { owner: who, version: row.version, blob: row.blob, savedAt: 1, updatedAt: 1, serverNow: 9e12, offlineClaim: null, pending: [] } };
+    },
+    '/sessions': { status: 200, body: { ok: true } },
+    '/grants': { status: 200, body: { grants: [] } },
+    '/messages': { status: 200, body: { messages: [] } },
+    '/me': { status: 200, body: { u: 'A', gm: 0 } },
+  };
+  // A's browser copy: the account's version 7 plus a forge nobody has uploaded yet.
+  const forged = { owner: 'A', accountId: 11, lv: 50, zeny: 40, weapon: 'Mythic Celestial Blade', cloud: { v: 7, at: 1000 }, offlineAt: 9000 };
+  const disk = { 'pg_save3_A': JSON.stringify(forged) };
+  const keep = h => { for (const [k, v] of h.store) disk[k] = v; };
+  const login = (acct, device) => {
+    who = acct;
+    const h = harness({ storage: disk, S: device ? JSON.parse(JSON.stringify(device)) : undefined, loadReturn: { lv: 50, q: [] }, routes });
+    h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = acct;
+    // The session response names the account id, and that id (not the name) is what every copy is judged by.
+    h.sandbox.CLOUD.id = acct === 'A' ? 11 : 12;
+    h.sandbox.currentUser = acct; h.sandbox.CLOUD.ver = server[acct].version;
+    return h;
+  };
+
+  // 1. A logs in: the forge is this account's own copy plus unsynced play, so it is uploaded, not discarded.
+  const a1 = login('A', forged);
+  await a1.sandbox.cloudJoin('A', disk['pg_save3_A']);
+  assert.strictEqual(server.A.version, 8, 'A\'s login uploaded the forge');
+  assert.match(server.A.blob, /Mythic Celestial Blade/, 'the account copy now holds it');
+  keep(a1);
+
+  // 2. A logs out. The upload must land before the session goes away.
+  await a1.sandbox.cloudLogout();
+  keep(a1);
+  assert.strictEqual(server.A.version, 9, 'the logout upload reached the server');
+  const putAt = a1.calls.findIndex(c => c.url === '/api/save' && c.init.method === 'PUT');
+  const delAt = a1.calls.findIndex(c => c.url === '/api/sessions' && c.init.method === 'DELETE');
+  assert.ok(delAt > putAt, 'and it was not racing the session DELETE');
+
+  // 3. B logs in on the same browser. A's slot is not read, written or stashed.
+  const b1 = login('B');
+  const got = await b1.sandbox.cloudReadSave();
+  assert.strictEqual(got.data.owner, 'B', 'the cookie now answers for B');
+  assert.doesNotMatch(got.data.blob, /Mythic Celestial Blade/, 'and nothing of A\'s is in it');
+  b1.store.set('pg_save3_B', got.data.blob);           // what initSessionFromCloud does with a new device
+  b1.sandbox.S = JSON.parse(got.data.blob);
+  b1.sandbox.CLOUD.dirty = true;
+  assert.strictEqual(await b1.sandbox.cloudPush(true), 'ok', 'B saves normally');
+  assert.strictEqual(JSON.parse(b1.store.get('pg_save3_A')).weapon, 'Mythic Celestial Blade', 'A\'s copy is untouched by B');
+  assert.strictEqual(server.A.version, 9, 'and B\'s push did not write A\'s row');
+  keep(b1);
+
+  // 4. A logs back in: same progress on both sides, so nothing is adopted and nothing is stashed.
+  const a2 = login('A', JSON.parse(disk['pg_save3_A']));
+  await a2.sandbox.cloudJoin('A', disk['pg_save3_A']);
+  assert.strictEqual(JSON.parse(a2.store.get('pg_save3_A')).weapon, 'Mythic Celestial Blade', 'the forge is still there');
+  assert.strictEqual(a2.sandbox.CLOUD.ver, server.A.version, 'and the tab is on the account\'s version');
+  assert.ok(![...a2.store.keys()].some(k => k.startsWith('pg_save3_A_local_')), 'nothing had to be stashed as a loss');
+  assert.strictEqual(JSON.parse(a2.store.get('pg_save3_B')).weapon, 'Short Sword', 'B\'s character is intact too');
 });
 
 await T('v326: a leaving upload that is cut short does not open the connection gate', async () => {

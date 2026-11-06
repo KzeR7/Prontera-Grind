@@ -125,3 +125,26 @@ window, and a page load before the retry). It is not a lost save.
 What matters is the response after it: `{"version":2740,"bytes":138306,"offlineClaimId":…}` is an
 **accepted** write. If the same claim id keeps coming back, nothing is being written — v326 stops
 retrying that claim and says so in the chat log instead of looping silently.
+
+## "I keep several accounts and log in and out" (v326)
+
+Switching accounts in one browser is a normal way to play, and it was the worst case for the old
+logout: `logout()` saved the device copy, fired the upload **without waiting for it**, deleted the
+session beside it, and reloaded. The navigation cancelled the PUT, or the PUT reached the server after
+the session row was gone and came back 401 — so the account copy on the server stayed a minute behind
+**every time**, and the next login (or any other device) downloaded that older copy.
+
+It now waits: `save()` → flush on the leaving path (`keepalive`, capped at 2.5 s) → **then** the
+`DELETE /api/sessions`, capped at 1.5 s → reload. Both waits are capped so a dead server cannot trap
+the player on a page they asked to leave.
+
+Two related facts worth knowing when someone reports this:
+
+* A save **larger than 60 KB** cannot use `keepalive` (the browser caps it), so on a plain refresh or a
+  closed tab the upload is still cancellable. That is fine now, because `save()` writes the device copy
+  synchronously and the v326 login rule keeps a device copy that descends from the account's own
+  version — the progress waits for the next login instead of being deleted.
+* Every account has its own slot (`pg_save3_<name>`) and every copy carries `accountId`, so one
+  account's login can never read, overwrite or stash another's. `tools/tests/cloud_sim.js` drives the
+  whole round trip (A forges → logs out → B logs in and saves → A logs back in) against a fake server
+  with a real version counter.

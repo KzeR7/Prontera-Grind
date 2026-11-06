@@ -5,7 +5,9 @@ const vm = require('node:vm');
 const assert = require('node:assert');
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const start = src.indexOf("const REMEMBER_USER_KEY='pg_remember_user';");
-const end = src.indexOf('\nfunction logout()', start);
+// v326 made logout() async (it waits for the last upload before ending the session), so the marker is
+// matched on the name rather than the exact declaration.
+const end = Math.max(src.indexOf('\nfunction logout()', start), src.indexOf('\nasync function logout()', start));
 assert.ok(start >= 0 && end > start, 'auth flow is not where this suite expects it');
 const authCode = src.slice(start, end);
 
