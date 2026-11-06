@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=331">
-<link rel="stylesheet" href="assets/social-fishing.css?v=331">
+<link rel="stylesheet" href="assets/social.css?v=332">
+<link rel="stylesheet" href="assets/social-fishing.css?v=332">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-06 haven-v331 console sync-log command';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-06 haven-v332 owner stamp by id, save watchdog';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3311,6 +3311,21 @@ const sameAccount=(a,b)=>!!a&&!!b&&String(a).trim().toLowerCase()===String(b).tr
 // made the game refuse its own cached copy: load() returns fresh() and the player starts at Lv 1, which
 // is exactly the "relog and I am level 1" report. A copy claiming another account's id is still refused.
 const saveAccountIdOf=raw=>{let s=raw;if(typeof raw==='string'){if(!raw)return 0;try{s=JSON.parse(raw)}catch(e){return 0}}const id=s&&typeof s==='object'?Number(s.accountId):NaN;return Number.isInteger(id)&&id>0?id:0};
+// v332: ONE ownership test for the whole client - the durable account id when the copy carries one, the
+// name only when it does not, which is what saveRefusal() and the server already do. save() used the
+// NAME alone, so a copy that was provably this account's own (matching id, stale name from a rename or
+// from before v280) stopped save() at its first line: no slot write, and - because cloudTouch() was
+// never reached - no CLOUD.dirty either. cloudPush() then returned 'idle' at its dirty check on every
+// single flush, before any code that could have noticed or said anything. That is a permanent, silent
+// end to syncing: the badge keeps its last tick, the console stays empty, the character keeps grinding
+// in memory, and the next login adopts the account's older copy. It is the shape of "I left it in the
+// plaza for an hour and logging back in took it away".
+function saveIsOurs(o){
+  if(!o||typeof o!=='object')return false;
+  const id=Number(o.accountId)||0;
+  if(id)return!!CLOUD.id&&id===Number(CLOUD.id);
+  return!o.owner||sameAccount(o.owner,currentUser);
+}
 const saveRefusal=(raw,name)=>{
   const o=saveOwnerOf(raw), id=saveAccountIdOf(raw);
   // A copy that carries an id is judged by the id ALONE: the name beside it is only a leftover from
@@ -3541,10 +3556,15 @@ function offlineRateSample(now=Date.now()){
 let saveElsewhereSaid=null;   // the last refusal said aloud, so a refused slot does not spam the log every 5 seconds
 function saveElsewhere(other){if(saveElsewhereSaid===other)return;saveElsewhereSaid=other;log('This browser\'s save for '+currentUser+' belongs to '+other+', so nothing was written over it. '+(CLOUD.on?'Your progress still syncs to your account.':'Progress from now on is not kept in this browser.')+' Restore this browser\'s copy from a backup to save here again.','r0')}
 function save(){if(!currentUser||!S)return;const now=Date.now();
-  if(S.owner&&!sameAccount(S.owner,currentUser)){saveElsewhere(S.owner);return}   // never write a save stamped for someone else
+  // v332: never write or upload a copy that belongs to another account... but decide that by the id,
+  // as everything else does. A stale *name* on our own copy is repaired here, not turned into a
+  // permanent refusal to save.
+  if(!saveIsOurs(S)){saveElsewhere(S.owner);return}
+  if(S.owner&&!sameAccount(S.owner,currentUser))syncLog('restamp',{was:String(S.owner),now:String(currentUser),id:Number(S.accountId)||0});
   offlineRateSample(now);S.offlineAt=now;S.owner=currentUser;S.accountId=CLOUD.id||S.accountId;S.gmStats=gmStatSnapshot();
   const other=saveRefusal(lsGet(saveKey()),currentUser);
   if(other)saveElsewhere(other);else lsPut(saveKey(),JSON.stringify(S));
+  CLOUD.localSaveAt=now;   // v332: proof that a save completed, not that one was attempted
   cloudTouch()}
 function offlinePlan(lastAt,now,rateKph,remainder=0){
   const start=Number(lastAt),current=Number(now),awayMs=Number.isFinite(start)&&Number.isFinite(current)?Math.max(0,current-start):0,carry=cl(Number(remainder)||0,0,.999999);
@@ -3831,7 +3851,7 @@ async function cloudPush(push,leave){
   if(!push&&(!CLOUD.dirty||Date.now()-CLOUD.lastPush<(cloudHidden()?CLOUD_HIDDEN_DEBOUNCE:CLOUD_DEBOUNCE)))return 'idle';
   if(CLOUD.pushing)return 'idle';
   // v88.6: a save that belongs to another account is never uploaded; this tab stops syncing instead.
-  if(S.owner&&!sameAccount(S.owner,currentUser)){cloudSaveRefused();return 'idle'}
+  if(!saveIsOurs(S)){cloudSaveRefused();return 'idle'}
   const seq=cloudTouchSeq;
   // v280: the stamp carries the account's durable id as well as its name. The name is mutable - a
   // rename used to strand the save so every later sync was refused - while the id never changes.
@@ -4288,7 +4308,21 @@ function cloudPushWatchdog(){
   cloudSay('The last cloud save request never came back, so it was abandoned and will be retried. Nothing on this device was lost.','r0','cloud');
 }
 function cloudStallNote(){
-  if(!CLOUD.on||CLOUD.paused||CLOUD.lost||!CLOUD.dirty)return;
+  if(!CLOUD.on||CLOUD.paused||CLOUD.lost||CLOUD.gate)return;
+  // v332: this must NOT require CLOUD.dirty. The failure it exists to catch is the one that stops save()
+  // from ever setting dirty, so the old condition could only fire in the cases that were already
+  // visible. A completed save is now timestamped, and two silent minutes without one is the game
+  // itself failing to persist - say so with the stamps that explain why.
+  if(CLOUD.localSaveAt&&Date.now()-CLOUD.localSaveAt>120000){
+    if(Date.now()-cloudStallSaid<CLOUD_STALL_MS)return;
+    cloudStallSaid=Date.now();
+    const mins=Math.max(1,Math.round((Date.now()-CLOUD.localSaveAt)/60000));
+    syncLog('save-stalled',{mins,owner:(S&&S.owner)||null,accountId:(S&&Number(S.accountId))||0,cloudId:Number(CLOUD.id)||0,dirty:!!CLOUD.dirty});
+    cloudBadgeStale('This device has not saved for '+mins+' min');
+    cloudSay('This device has not written a save for '+mins+' minutes, so nothing is being uploaded - the character is grinding in memory only. Reload once; if the line below repeats, that is the bug: save stamped for '+(S&&S.owner||'(none)')+', account id '+(S&&Number(S.accountId)||0)+' against '+Number(CLOUD.id)+'.','r0','cloud');
+    return;
+  }
+  if(!CLOUD.dirty)return;
   // Measure from the last accepted push, or from the sign-in when this session has never pushed: a
   // brand-new login is not a stalled save.
   const since=CLOUD.lastPush||CLOUD.onSince||0;
@@ -4387,7 +4421,7 @@ function ptsSpent(){let c=0;for(const k of['str','agi','dex','luk','int','vit'])
 
 function cloudSession(u,gm,id){
   CLOUD.epoch=(CLOUD.epoch||0)+1;   // v289: requests already in flight belong to the previous session
-  CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;if(id)CLOUD.id=Number(id);CLOUD.onSince=Date.now();
+  CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;if(id)CLOUD.id=Number(id);CLOUD.onSince=Date.now();CLOUD.localSaveAt=CLOUD.localSaveAt||Date.now();
   if(typeof shopSession==='function')shopSession(u);   // haven-v215: what this account owns in the Cash Shop
   if(typeof friendsSession==='function')friendsSession(u);   // haven-v273: the account's friends list
   cloudBadge('☁ ✓',CLOUD.lastPush?'Signed in as '+u+' · last save '+clockHHMM(CLOUD.lastPush):'Signed in as '+u);
@@ -13575,10 +13609,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=331"></script>
-<script src="assets/social-poker.js?v=331"></script>
-<script src="assets/social-scene.js?v=331"></script>
-<script src="assets/social-fishing.js?v=331"></script>
-<script src="assets/social.js?v=331"></script>
+<script src="assets/social-rules.js?v=332"></script>
+<script src="assets/social-poker.js?v=332"></script>
+<script src="assets/social-scene.js?v=332"></script>
+<script src="assets/social-fishing.js?v=332"></script>
+<script src="assets/social.js?v=332"></script>
 </body>
 </html>

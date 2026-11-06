@@ -243,6 +243,27 @@ claim a save that did not happen.
 The same comparison is spoken in the game's own log: an `adopt-behind` puts both figures and the
 backup key in front of the player, so it is visible at the time rather than reconstructed afterwards.
 
+## "The badge had a tick and the account stopped hearing from me" (v332)
+
+There was a state in which the client stopped uploading **and stopped saying anything**, with a tick
+still on the badge: `save()` refused a copy on its **name** stamp alone, and that refusal returned
+before `cloudTouch()`, so `CLOUD.dirty` stayed false — and `cloudPush()` returns `idle` on the dirty
+check before any code that could have noticed. One stale name stamp (a rename, a copy from before
+v280) was enough, and it lasted the whole session.
+
+Now:
+
+* **ownership is decided by the id** when the copy carries one, exactly as `saveRefusal()` and the
+  server already did. A stale name on our own copy is repaired on the next save; another account's id
+  is still refused, writes nothing, and is still explained in the log.
+* **a completed save is timestamped**, and `cloudStallNote()` reports two silent minutes without one —
+  with the `owner`, `accountId` and account id it was judged against — regardless of `CLOUD.dirty`. A
+  guard that depends on the flag the fault clears cannot see the fault.
+
+A report of this shape now has two artefacts instead of none: the log line
+(`This device has not written a save for N minutes … save stamped for X, account id N against M`) and a
+`save-stalled` row from `pgSyncLog()`.
+
 ## A note on the v280 fix
 
 v280 makes the save's identity the account id instead of its name. It fixes an account whose **name

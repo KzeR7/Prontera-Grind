@@ -1598,6 +1598,31 @@ await T('v328: the watchdog abandons a push that outlived its own deadline', asy
   assert.strictEqual(h.state.logs.length, said, 'a healthy push is none of its business');
 });
 
+await T('v332: a save that stopped happening is reported even when nothing is dirty', async () => {
+  // The failure this guards is the one that stops save() from ever reaching cloudTouch(), so CLOUD.dirty
+  // stays false: a stall detector that requires dirty is blind to it by construction.
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.CLOUD.id = 7;
+  b.S = { lv: 150, zeny: 37e6, owner: 'StaleName', accountId: 7 };
+  b.CLOUD.dirty = false;                       // exactly the state the old guard produced
+  b.CLOUD.lastPush = Date.now() - 600000;
+  b.CLOUD.localSaveAt = Date.now() - 600000;   // and no save has completed for ten minutes
+  b.cloudStallNote();
+  const said = h.state.logs.map(l => l.m).join('\n');
+  assert.match(said, /has not written a save for 10 minutes/, 'the game itself failing to persist is reported');
+  assert.match(said, /StaleName/, 'with the stamp that explains it...');
+  assert.match(said, /account id 7/, '...and the id it was judged against');
+  const rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY) || '[]');
+  assert.ok(rows.some(r => r.kind === 'save-stalled' && r.mins === 10), 'and it lands in the ledger');
+  const count = h.state.logs.length;
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, count, 'said once, not every tick');
+  b.CLOUD.localSaveAt = Date.now();
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, count, 'a healthy local save is left alone');
+});
+
 await T('v328: an unsent save says so instead of looking saved', async () => {
   const h = harness({});
   const { sandbox: b } = h;

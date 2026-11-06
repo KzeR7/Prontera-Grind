@@ -227,6 +227,13 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-06 (`haven-v332`): ownership by id, and a save that stopped happening.**
+`save_owner_sim` runs the real `save()` against a copy whose name is stale but whose id is this
+account's: it must be re-stamped, written, and queued for upload — while a copy carrying another
+account's id writes nothing and queues nothing (mutation-checked by restoring the name-only guard, which
+reproduces the silent stop). `cloud_sim` requires a ten-minute gap in completed saves to be reported
+with the stamps, even with `CLOUD.dirty` false, and to land in the ledger.
+
 **2026-11-06 (`haven-v331`): documented console commands must exist.**
 `cloud_sim` extracts every `pgXxx()` from `docs/CHECK-A-SAVE.md` and asserts `index.html` defines it —
 the rule that v330 broke by shipping docs for `pgSyncLog()` while defining only `syncLogShow`. Renaming

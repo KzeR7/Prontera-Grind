@@ -28,6 +28,7 @@ function sandbox() {
     const lsGet = k => (store.has(k) ? store.get(k) : null);
     const lsPut = (k, v) => { writes.push(k); store.set(k, String(v)); };
     const cloudTouch = () => { touched.n++ };
+    const syncLog = () => {};   // the cloud block's ledger; not extracted by this suite
     const log = (m, cls) => logs.push({ m, cls });
     const offlineRateSample = () => {};
     const gmStatSnapshot = () => ({});
@@ -37,7 +38,9 @@ function sandbox() {
       save: () => save(),
       getS: () => S, setS: v => { S = v },
       setUser: v => { currentUser = v },
-      setCloud: v => { CLOUD.on = !!v },
+      setCloud: (v, id) => { CLOUD.on = !!v; if (id !== undefined) CLOUD.id = Number(id); },
+      touchedCount: () => touched.n,
+      writesList: () => writes.slice(),
       saveElsewhereSaid: () => saveElsewhereSaid,
     };
   `, box);
@@ -222,6 +225,30 @@ t('every write of a save slot is one of the checked places, so a new one must be
   const block = src.slice(src.indexOf('function load()'), src.indexOf('function load()') + 900);
   assert.ok(/if\(raw&&saveIsMine\(raw\)\)/.test(block), 'the load() re-stamp is guarded by saveIsMine()');
   assert.ok(block.indexOf('saveIsMine(raw)') < block.indexOf('lsPut(saveKey(),raw)'), 'and the check precedes the write');
+});
+
+t('v332: a stale NAME on our own copy is repaired, not a permanent refusal to save', () => {
+  // The id is the authority (v280, and the server agrees). This copy is id 7 - this account - but the
+  // name beside it is from before a rename. The name-only guard used to stop save() dead at its first
+  // line, which also stopped cloudTouch(), which meant CLOUD.dirty was never set and every flush was
+  // skipped as 'idle' - silently, for the rest of the session.
+  const b = sandbox();
+  const r = c => vm.runInContext(c, b);
+  r("api.setCloud(true, 7); api.setUser('KzeR'); api.setS({ lv: 60, owner: 'OldName', accountId: 7 });");
+  r('api.save()');
+  assert.strictEqual(r('api.getS().owner'), 'KzeR', 'the stale name is re-stamped to the account playing it');
+  assert.strictEqual(r('api.touchedCount()'), 1, 'and the cloud is told there is something to upload');
+  assert.ok(r('api.writesList()').includes('pg_save3_KzeR'), 'and the device copy is written');
+});
+
+t('v332: a copy carrying ANOTHER account id is still refused, and writes nothing', () => {
+  const b = sandbox();
+  const r = c => vm.runInContext(c, b);
+  r("api.setCloud(true, 7); api.setUser('KzeR'); api.setS({ lv: 60, owner: 'KzeR', accountId: 9 });");
+  r('api.save()');
+  assert.strictEqual(r('api.touchedCount()'), 0, 'nothing is queued for upload');
+  assert.deepStrictEqual(r('api.writesList()'), [], 'and no slot is written');
+  assert.ok(r('api.saveElsewhereSaid()') !== null, 'but the player is told');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
