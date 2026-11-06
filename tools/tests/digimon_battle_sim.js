@@ -51,4 +51,53 @@ assert.equal(legacy.level,1000);assert.equal(legacy.stats.power,12);assert.equal
 assert.equal(B.profile({form:'agumon',fullness:60,fatigue:20}).energy,70,'a healthy legacy profile migrates to a fair energy level');
 // Four partner slots travel with the profile and are clamped server-side.
 assert.equal(B.profile({form:'agumon',slot:3}).slot,3);assert.equal(B.profile({form:'agumon',slot:9}).slot,B.MAX_SLOT);assert.equal(B.profile({form:'agumon',slot:-2}).slot,0);
-console.log('digimon_battle_sim: PASS (per-form stats, energy waves, free PvP, 4-slot profiles)');
+// v350 field stages: five waves per stage, boss on every fifth, one named stage up.
+assert.equal(B.stageOf(1),1);assert.equal(B.stageOf(5),1);assert.equal(B.stageOf(6),2);assert.equal(B.stageOf(10),2);assert.equal(B.stageOf(11),3);assert.equal(B.stageOf(0),1);assert.equal(B.stageOf(-3),1);
+assert.deepEqual([1,4,5,6,9,10,11,15].map(w=>B.isBossWave(w)),[false,false,true,false,false,true,false,true]);
+assert.equal(B.BOSS_EVERY,5);
+// Presentation ranges are deterministic per form: brawlers press in, quick forms skirmish.
+const meleeRange=B.attackRange('agumon'),rangedRange=B.attackRange('birdramon');
+assert.equal(meleeRange.ranged,false);assert.equal(meleeRange.range,1.8);
+assert.equal(rangedRange.ranged,true);assert.ok(rangedRange.range>=3.2&&rangedRange.range<=4.6,JSON.stringify(rangedRange));
+assert.deepEqual(B.attackRange('agumon'),meleeRange,'the range class is stable per form');
+const rangedForms=R.IDS.filter(id=>B.attackRange(id).ranged).length;
+assert.ok(rangedForms>Math.floor(R.IDS.length*.15)&&rangedForms<Math.ceil(R.IDS.length*.4),rangedForms+' of '+R.IDS.length+' forms are ranged');
+for(const id of R.IDS){const r=B.attackRange(id);assert.ok(r.range>=1.8&&r.range<=4.6&&typeof r.ranged==='boolean',id)}
+// A deterministic half-roll keeps every normal wave on the same mid-pool form, so stage
+// scaling and boss relations compare identical forms instead of random species spreads.
+const strongProfile={lineId:'agumon',form:'agumon',level:5,xp:16,wins:0,mastery:0,energy:100,stats:{power:12,guard:12,agility:0,focus:0}};
+const stageRun=B.createPve({id:'stage-pve',owner:1,room:1,profile:strongProfile,now:0,random:()=>.5});
+const waveOne=stageRun.enemies.map(e=>({hp:e.maxHp,atk:e.attack}));
+assert.equal(waveOne.length,3);assert(stageRun.enemies.every(e=>!e.boss));
+let nowMs=500,bossWave=null,bossClear=null,stageTwoBots=null,bossHits=0,bossTicks=0,normalGaps=[];
+for(let guard=0;guard<6000&&stageRun.phase!=='ended';guard++,nowMs+=500){
+ const result=B.stepPve(stageRun,nowMs,()=>.5);if(!result)continue;
+ for(const e of result.events){
+  if(e.type==='wave'){
+   if(e.wave===5){bossWave={wave:e.wave,count:stageRun.enemies.length,boss:e.boss,form:e.forms[0],stage:R.entry(e.forms[0]).stage,hp:stageRun.enemies[0].maxHp,atk:stageRun.enemies[0].attack,id:stageRun.enemies[0].id};
+   }
+   if(e.wave===6)stageTwoBots=stageRun.enemies.map(x=>({hp:x.maxHp,atk:x.attack}));
+  }
+  if(e.type==='wave_clear'&&e.wave===5)bossClear={reward:e.reward,boss:e.boss};
+ }
+ if(bossWave&&stageRun.wave===5&&stageRun.phase==='fighting'){bossTicks++;if(result.events.some(e=>e.type==='hit'&&e.from===bossWave.id))bossHits++}
+ if(stageRun.wave===1&&stageRun.phase==='fighting'&&result){const enemyHits=result.events.filter(e=>e.type==='hit'&&e.from!=='partner').length;if(enemyHits)normalGaps.push(bossTicks)}
+}
+assert(bossWave,'the fifth wave spawns');assert.equal(bossWave.count,1,'a boss wave is a single enemy');
+assert.equal(bossWave.boss,true);assert.equal(bossWave.stage,'Champion','the boss sits one named stage above a Rookie partner');
+assert.ok(bossWave.hp>Math.max(...waveOne.map(b=>b.hp))*1.5,'the boss outweighs the stage bots: '+bossWave.hp+' vs '+JSON.stringify(waveOne));
+assert.ok(bossWave.atk>Math.max(...waveOne.map(b=>b.atk)),'the boss out-hits the stage bots');
+assert(bossClear&&bossClear.boss===true);assert.equal(bossClear.reward.wins,2,'a boss kill counts double wins');
+assert.ok(bossClear.reward.coins>=30+B.stageRank(stageRun.profile.form)*8,'boss coins beat any normal wave');
+assert(bossHits>=Math.max(1,bossTicks-1),'the lone boss retaliates on every tick, not alternating ones');
+assert(stageTwoBots&&stageTwoBots.length===3,'stage two returns to three-bot groups');
+assert(stageTwoBots.every((b,i)=>b.hp>waveOne[i].hp),'stage-two bots are sturdier than stage-one bots of the same form');
+assert(stageTwoBots.every((b,i)=>b.atk>=waveOne[i].atk),'stage-two bots hit at least as hard');
+assert.equal(stageRun.wave>=6,true);
+// The 100-wave safety cap ends the run with an explicit completion reason.
+const capRun=B.createPve({id:'cap-pve',owner:1,room:1,profile:strongProfile,now:0,random:()=>.5});
+capRun.wave=99;capRun.phase='between';let capEnd=null;
+for(let capMs=500;capMs<60000&&!capEnd;capMs+=500){const result=B.stepPve(capRun,capMs,()=>.5);capEnd=result?.events.find(e=>e.type==='end')||null}
+assert.equal(capRun.phase,'ended');assert.equal(capRun.reason,'complete','clearing the last wave completes the field circuit');
+assert.equal(capEnd.reason,'complete');assert.equal(capRun.wave,100);
+console.log('digimon_battle_sim: PASS (per-form stats, energy waves, free PvP, 4-slot profiles, stages, bosses, ranges)');

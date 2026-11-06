@@ -270,16 +270,34 @@ window.PGSocialScene={async create(host,labels,callbacks){
  }):[];
  let battleState={pve:[],pvp:null};const battleParticipantIds=new Set(),battleResidents=new Map(),BATTLE_RUN_SPEED=6.4,BATTLE_RADIUS=4.1,PVP_RADIUS=2.2;
  const battleName=id=>globalThis.PGDigimonRoster?.name(id)||String(id||'Digimon');
+ // v350 presentation ranges: the shared battle module classifies each form once from the
+ // reproducible base-stat table, so every client agrees without extra messages.
+ const battleRangeCache=new Map();
+ function unitRange(species){let r=battleRangeCache.get(species);if(!r){r=globalThis.PGDigimonBattle?.attackRange?.(species)||{ranged:false,range:1.8};battleRangeCache.set(species,r)}return r}
+ const battleShots=[];
+ function spawnBattleShot(from,to,now,boss=false,enemy=false){
+  if(battleShots.length>24)return;
+  const mesh=new T.Mesh(new T.SphereGeometry(boss?.24:.15,10,8),new T.MeshBasicMaterial({color:boss?0xffd27a:enemy?0xef9c86:0xbfe8c6,transparent:true,opacity:.95}));
+  mesh.position.set(from.x,.55,from.z);mesh.userData.battleShot=true;scene.add(mesh);
+  battleShots.push({mesh,fromX:from.x,fromZ:from.z,toX:to.x,toZ:to.z,at:now,dur:280});
+ }
+ function updateBattleShots(now){
+  for(let i=battleShots.length-1;i>=0;i--){const shot=battleShots[i],t=(now-shot.at)/shot.dur;
+   if(t>=1){scene.remove(shot.mesh);shot.mesh.geometry.dispose();shot.mesh.material.dispose();battleShots.splice(i,1);continue}
+   shot.mesh.position.set(shot.fromX+(shot.toX-shot.fromX)*t,.55,shot.fromZ+(shot.toZ-shot.fromZ)*t);
+   shot.mesh.scale.setScalar(.8+.45*Math.sin(Math.PI*t));
+  }
+ }
  function battleSpecs(){
   const specs=[];
   for(const run of battleState.pve||[]){
    if(!run||run.phase==='ended')continue;const slot=Number(run.slot)||0,fx=70+(slot%4-1.5)*8,fz=60+Math.floor(slot/4)*10,runKey='pve:'+run.id;
-   const add=(key,u,x,z,enemy=false,role='enemy')=>{if(!u||!PGSocialDigimon?.clean(u.form))return;specs.push({key,runKey,role,species:u.form,x,z,hp:u.hp,maxHp:u.maxHp,label:battleName(u.form),enemy,phase:run.phase,kind:'pve',owner:run.owner,wave:run.wave,attackAt:u.attackAt||0})};
+   const add=(key,u,x,z,enemy=false,role='enemy')=>{if(!u||!PGSocialDigimon?.clean(u.form))return;specs.push({key,runKey,role,species:u.form,x,z,hp:u.hp,maxHp:u.maxHp,label:(u.boss?'BOSS · ':'')+battleName(u.form),enemy,boss:!!u.boss,phase:run.phase,kind:'pve',owner:run.owner,wave:run.wave,attackAt:u.attackAt||0,hitAt:u.hitAt||0})};
    add(runKey+':partner',run.partner,fx,fz,false,'partner');
    (run.enemies||[]).forEach((u,i)=>add(runKey+':'+u.id,u,fx-3+i*3,fz+4,true));
   }
   const match=battleState.pvp;if(match&&match.phase!=='closed')for(const [i,p] of (match.participants||[]).entries()){
-   const u=p.unit;if(!u||!PGSocialDigimon?.clean(u.form))continue;const r=R.SANCTUARY_RING;specs.push({key:'pvp:'+match.id+':'+p.id,role:'pvp',side:p.side,species:u.form,x:r.x+(p.side==='left'?-4:4),z:r.z,hp:u.hp,maxHp:u.maxHp,label:p.name||('PLAYER '+(i+1)),enemy:i===1,phase:match.phase,kind:'pvp',owner:p.id,winnerId:match.winnerId,attackAt:u.attackAt||0});
+   const u=p.unit;if(!u||!PGSocialDigimon?.clean(u.form))continue;const r=R.SANCTUARY_RING;specs.push({key:'pvp:'+match.id+':'+p.id,role:'pvp',side:p.side,species:u.form,x:r.x+(p.side==='left'?-4:4),z:r.z,hp:u.hp,maxHp:u.maxHp,label:p.name||('PLAYER '+(i+1)),enemy:i===1,boss:false,phase:match.phase,kind:'pvp',owner:p.id,winnerId:match.winnerId,attackAt:u.attackAt||0,hitAt:u.hitAt||0});
   }
   return specs;
  }
@@ -297,7 +315,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   for(const run of battleState.pve)if(Number.isInteger(run.owner))battleParticipantIds.add(run.owner);
   for(const p of battleState.pvp?.participants||[])if(Number.isInteger(p.id))battleParticipantIds.add(p.id);
   const keep=new Set();for(const spec of battleSpecs()){
-   keep.add(spec.key);let u=battleResidents.get(spec.key);if(!u){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const ring=new T.Mesh(new T.RingGeometry(.8,1,24),new T.MeshBasicMaterial({color:spec.kind==='pvp'?0xf3c876:0x9ed6b0,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;scene.add(ring);const spawn=battleSpawn(spec),lastMove=performance.now();sprite.position.set(spawn.x,.06,spawn.z);u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec,spawn,lastMove,lastAttack:spec.attackAt,attackStarted:-Infinity};battleResidents.set(spec.key,u)}u.spec=spec;u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;u.sprite.userData.battleRole=spec.role;u.sprite.userData.battleName=spec.label;u.sprite.userData.battleSpawn={...u.spawn};digimonStore?.request(spec.species);
+   keep.add(spec.key);let u=battleResidents.get(spec.key);if(!u){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const ring=new T.Mesh(new T.RingGeometry(.8,1,24),new T.MeshBasicMaterial({color:spec.kind==='pvp'?0xf3c876:0x9ed6b0,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;scene.add(ring);const spawn=battleSpawn(spec),lastMove=performance.now();sprite.position.set(spawn.x,.06,spawn.z);u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec,spawn,lastMove,lastAttack:spec.attackAt,attackStarted:-Infinity,lastHit:spec.hitAt,hitStarted:-Infinity,ranged:false};battleResidents.set(spec.key,u)}u.spec=spec;u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;u.sprite.userData.battleRole=spec.role;u.sprite.userData.battleName=spec.label;u.sprite.userData.battleSpawn={...u.spawn};digimonStore?.request(spec.species);
   }
   for(const [key,u] of battleResidents)if(!keep.has(key)){scene.remove(u.sprite,u.ring);u.sprite.material.dispose();u.texture.dispose();u.ring.geometry.dispose();u.ring.material.dispose();battleResidents.delete(key)}
   for(const r of residents)r.sprite.visible=!battleState.pve.length;
@@ -313,19 +331,31 @@ window.PGSocialScene={async create(host,labels,callbacks){
    const from=partnerUnit.sprite.position,living=enemies.filter(s=>s.hp>0),target=living.sort((a,b)=>{const au=battleResidents.get(a.key).sprite.position,bu=battleResidents.get(b.key).sprite.position;return Math.hypot(au.x-from.x,au.z-from.z)-Math.hypot(bu.x-from.x,bu.z-from.z)})[0];
    // Every unit approaches a stable attack slot. Nobody chases the partner's centre or
    // snaps onto it when the target moves; new waves simply receive a new formation.
-   if(partner.phase==='fighting'&&partner.hp>0){positions.set(partner.key,battleApproach(from,center,partnerTravel));if(target){const targetUnit=battleResidents.get(target.key);targets.set(partner.key,{x:targetUnit.sprite.position.x,z:targetUnit.sprite.position.z})}}
-   const start=battleHash(partner.runKey+':wave'+partner.wave+':formation')*Math.PI*2;
-   for(const [index,enemy]of enemies.entries()){const unit=battleResidents.get(enemy.key);if(!unit)continue;const travel=battleTravel(unit,now);if(enemy.phase==='fighting'&&enemy.hp>0){const angle=start+index*Math.PI*2/Math.max(1,enemies.length),slot={x:center.x+Math.cos(angle)*BATTLE_RADIUS,z:center.z+Math.sin(angle)*BATTLE_RADIUS};positions.set(enemy.key,battleApproach(unit.sprite.position,slot,travel));const target=positions.get(partner.key)||center;targets.set(enemy.key,{...target})}}
+   // v350: a form's attack range decides how close its slot sits. Brawlers press in,
+   // quick forms skirmish from a distance, and a boss holds the middle on its own.
+   const start=battleHash(partner.runKey+':wave'+partner.wave+':formation')*Math.PI*2,enemySlots=new Map();
+   for(const [index,enemy]of enemies.entries()){const unit=battleResidents.get(enemy.key);if(!unit||enemy.phase!=='fighting'||enemy.hp<=0)continue;const range=unitRange(enemy.species),radius=enemy.boss?3.4:range.ranged?Math.max(4.4,range.range+1.2):2.8;const angle=start+index*Math.PI*2/Math.max(1,enemies.length);enemySlots.set(enemy.key,{x:center.x+Math.cos(angle)*radius,z:center.z+Math.sin(angle)*radius})}
+   if(partner.phase==='fighting'&&partner.hp>0){
+    let slot=center;
+    if(target&&enemySlots.has(target.key)){const es=enemySlots.get(target.key),dx=center.x-es.x,dz=center.z-es.z,len=Math.hypot(dx,dz)||1,pr=unitRange(partner.species),standoff=pr.ranged?pr.range:1.6;slot={x:Math.max(49,Math.min(91,es.x+dx/len*standoff)),z:Math.max(52,Math.min(76,es.z+dz/len*standoff))}}
+    positions.set(partner.key,battleApproach(from,slot,partnerTravel));
+    if(target){const targetUnit=battleResidents.get(target.key);targets.set(partner.key,{x:targetUnit.sprite.position.x,z:targetUnit.sprite.position.z})}
+   }
+   for(const [index,enemy]of enemies.entries()){const unit=battleResidents.get(enemy.key);if(!unit)continue;const slot=enemySlots.get(enemy.key);if(!slot)continue;const travel=battleTravel(unit,now);positions.set(enemy.key,battleApproach(unit.sprite.position,slot,travel));const aim=positions.get(partner.key)||center;targets.set(enemy.key,{...aim})}
   }
   for(const s of specs.filter(s=>s.kind==='pvp')){const unit=battleResidents.get(s.key);if(!unit)continue;const travel=battleTravel(unit,now);if(s.phase==='fighting'&&s.hp>0){const r=R.SANCTUARY_RING,slot={x:r.x+(s.side==='left'?-PVP_RADIUS:PVP_RADIUS),z:r.z};positions.set(s.key,battleApproach(unit.sprite.position,slot,travel));const other=specs.find(o=>o.kind==='pvp'&&o.key!==s.key),otherUnit=other&&battleResidents.get(other.key);if(otherUnit)targets.set(s.key,{x:otherUnit.sprite.position.x,z:otherUnit.sprite.position.z})}}
   for(const u of battleResidents.values()){
    const s=u.spec,asset=digimonStore?.ready(s.species);u.sprite.visible=!!asset;u.ring.visible=!!asset;if(!asset){digimonStore?.request(s.species);continue}
-   const dead=s.hp<=0||(s.kind==='pvp'&&s.phase==='result'&&s.winnerId!=null&&s.winnerId!==s.owner),previous={x:u.sprite.position.x,z:u.sprite.position.z};let pos=positions.get(s.key)||previous;if(dead||s.phase!=='fighting')pos=previous;const target=targets.get(s.key);if(s.attackAt!==u.lastAttack){u.lastAttack=s.attackAt;u.attackStarted=now}
+   const dead=s.hp<=0||(s.kind==='pvp'&&s.phase==='result'&&s.winnerId!=null&&s.winnerId!==s.owner),previous={x:u.sprite.position.x,z:u.sprite.position.z};let pos=positions.get(s.key)||previous;if(dead||s.phase!=='fighting')pos=previous;const target=targets.get(s.key);u.ranged=unitRange(s.species).ranged;
+   if(s.attackAt!==u.lastAttack){u.lastAttack=s.attackAt;u.attackStarted=now;if(u.ranged&&target&&!dead&&s.phase==='fighting')spawnBattleShot(pos,target,now,s.boss,s.enemy)}
+   if(s.hitAt!==u.lastHit){u.lastHit=s.hitAt;u.hitStarted=now}
    const walking=!dead&&Math.hypot(pos.x-previous.x,pos.z-previous.z)>.015,attacking=!dead&&s.phase==='fighting'&&now-u.attackStarted<360;let stance=dead?'faint':attacking?'attack':walking?'walking':'idle';if(!asset.record.actions[stance])stance='idle';
-   const time=stance==='faint'?(asset.record.actions[stance].length-1)*50:stance==='attack'?Math.max(0,now-u.attackStarted):now,flip=target?target.x<pos.x:s.enemy,n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,6),key=[s.species,stance,n,flip,s.hp,s.label].join(':');
-   if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.ctx.fillRect==='function'){const ctx=u.ctx;ctx.fillStyle='rgba(28,35,30,.85)';ctx.fillRect(38,3,180,13);ctx.fillStyle=s.hp/s.maxHp>.35?'#9bd36d':'#e87868';ctx.fillRect(40,5,176*Math.max(0,Math.min(1,s.hp/Math.max(1,s.maxHp))),9);if(typeof ctx.fillText==='function'){ctx.fillStyle='rgba(12,24,22,.9)';ctx.fillRect(24,20,208,31);ctx.font='bold 22px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,36,198)}}u.texture.needsUpdate=true;u.paint=key}
-   let drawX=pos.x,drawZ=pos.z;if(stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1;drawX+=dx/length*.24;drawZ+=dz/length*.24}const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(s.species)||1);u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(drawX,.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),drawZ);u.ring.position.set(pos.x,.08+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),pos.z);u.ring.scale.setScalar(1+.08*Math.sin(now/180));u.sprite.userData.battleWalking=walking;
+   const flash=!dead&&now-u.hitStarted<210?1+Math.floor((now-u.hitStarted)/70):0;
+   const time=stance==='faint'?(asset.record.actions[stance].length-1)*50:stance==='attack'?Math.max(0,now-u.attackStarted):now,flip=target?target.x<pos.x:s.enemy,n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,6),key=[s.species,stance,n,flip,s.hp,s.label,flash].join(':');
+   if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.ctx.fillRect==='function'){const ctx=u.ctx;if(flash){ctx.fillStyle='rgba(255,96,72,.3)';ctx.fillRect(0,0,256,256)}ctx.fillStyle='rgba(28,35,30,.85)';ctx.fillRect(38,3,180,13);ctx.fillStyle=s.hp/s.maxHp>.35?'#9bd36d':'#e87868';ctx.fillRect(40,5,176*Math.max(0,Math.min(1,s.hp/Math.max(1,s.maxHp))),9);if(typeof ctx.fillText==='function'){ctx.fillStyle='rgba(12,24,22,.9)';ctx.fillRect(24,20,208,31);ctx.font='bold 22px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=s.boss?'#ffd98a':'#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,36,198)}}u.texture.needsUpdate=true;u.paint=key}
+   let drawX=pos.x,drawZ=pos.z;if(stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1,lunge=Math.sin(Math.min(1,(now-u.attackStarted)/360)*Math.PI)*(u.ranged?.12:.5);drawX+=dx/length*lunge;drawZ+=dz/length*lunge}const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(s.species)||1)*(s.boss?1.5:1);u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(drawX,.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),drawZ);u.ring.position.set(pos.x,.08+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),pos.z);u.ring.scale.setScalar((s.boss?1.5:1)*(1+.08*Math.sin(now/180)));u.ring.material.color.setHex(s.boss?0xe8a54a:s.kind==='pvp'?0xf3c876:0x9ed6b0);u.sprite.userData.battleWalking=walking;u.sprite.userData.battleRanged=u.ranged;u.sprite.userData.battleBoss=!!s.boss;
   }
+  updateBattleShots(now);
  }
  // Training pets are independent world sprites, not followers anchored to their
  // owners. The room assigns each one an apparatus; the client only animates it.

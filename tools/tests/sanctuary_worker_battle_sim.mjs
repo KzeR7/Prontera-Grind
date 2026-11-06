@@ -39,5 +39,17 @@ try{
  const [ra,rb]=await Promise.all([until(a.messages,m=>m.type==='battle_result','winner settlement'),until(b.messages,m=>m.type==='battle_result','loser settlement')]);
  assert(ra.reward&&rb.reward);assert.notEqual(ra.outcome,undefined);assert.notEqual(rb.outcome,undefined);assert(ra.battleId===rb.battleId);assert(ra.outcome!==rb.outcome||ra.outcome==='draw');
  const count=a.messages.filter(m=>m.type==='battle_result').length;a.ws.send(JSON.stringify({type:'battle_result',battleId:'forged',reward:{coins:999999}}));await sleep(300);assert.equal(a.messages.filter(m=>m.type==='battle_result').length,count,'client cannot inject another result');
- a.ws.close();b.ws.close();console.log('PASS local workerd Sanctuary battle: two real WebSockets, movement, mutual offers, alarm countdown, automatic combat and server-only settlement');
+ // v350 field stages: a real server-driven PvE run reaches its fifth-wave boss and settles double wins.
+ const c=await connect(103);
+ c.ws.send(JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'f'},digimon:'agumon',speed:20}}));await until(c.messages,m=>m.type==='room','plaza join for pve');
+ c.ws.send(JSON.stringify({type:'move',x:70,z:64}));await sleep(10000);
+ c.ws.send(JSON.stringify({type:'pve_start',request:1,profile:profile('agumon','agumon')}));
+ const bossSnap=await until(c.messages,m=>m.type==='battle'&&m.pve?.some(r=>r.wave===5&&r.enemies?.length===1&&r.enemies[0].boss),'fifth-wave boss snapshot',90000);
+ const bossRun=bossSnap.pve.find(r=>r.wave===5);
+ assert.equal(bossRun.enemies[0].stage,'Champion','the boss is one named stage above the Rookie partner');
+ assert(bossRun.partner.hp>0,'the partner is still fighting through its first stage');
+ const bossReward=await until(c.messages,m=>m.type==='battle_reward'&&m.wave===5,'boss wave reward',90000);
+ assert.equal(bossReward.reward.wins,2,'a boss kill settles double wins');assert.ok(bossReward.reward.coins>=30+2*8,'boss coins beat any normal wave');
+ c.ws.send(JSON.stringify({type:'pve_stop'}));await sleep(300);c.ws.close();
+ a.ws.close();b.ws.close();console.log('PASS local workerd Sanctuary battle: two real WebSockets, movement, mutual offers, alarm countdown, automatic combat, server-only settlement and a fifth-wave boss');
 }finally{await mf.dispose();fs.rmSync(persist,{recursive:true,force:true})}
