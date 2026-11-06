@@ -20,6 +20,34 @@ const src = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 let pass = 0, fail = 0;
 const t = (n, fn) => { try { fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 const T = async (n, fn) => { try { await fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + (e && e.message)); fail++; } };
+await T('v327: the documented restore-from-stash actually satisfies the login rule', async () => {
+  // docs/CHECK-A-SAVE.md tells an owner how to put a stashed copy back. It "works" only if the copy it
+  // writes passes localAheadOfServer at the next login - same version as the account, offlineAt newer
+  // than cloud.at - so the login uploads it instead of adopting over it. Run the documented code.
+  const doc = fs.readFileSync(path.join(root, 'docs', 'CHECK-A-SAVE.md'), 'utf8');
+  const block = [...doc.matchAll(/```js\n([\s\S]*?)```/g)].map(m => m[1]).find(b => b.includes('function restoreFrom'));
+  assert.ok(block, 'the restore snippet is still in the doc');
+  new vm.Script(block);                                   // and still parses
+  const store = new Map([
+    ['pg_save3_A', JSON.stringify({ lv: 5, zeny: 100, owner: 'A' })],
+    ['pg_save3_A_local_111', JSON.stringify({ lv: 88, zeny: 9999, owner: 'A', accountId: 7 })],
+  ]);
+  const ctx = {
+    localStorage: { getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v)) },
+    currentUser: 'A', confirm: () => true, console: { log() {}, table() {} },
+    fetch: async () => ({ json: async () => ({ version: 41, blob: JSON.stringify({ lv: 5, zeny: 100 }) }) }),
+  };
+  vm.createContext(ctx);
+  new vm.Script(block).runInContext(ctx);
+  assert.strictEqual(await ctx.restoreFrom('pg_save3_A_local_111'), 'written - reload and log in; the login will upload it.');
+  const main = JSON.parse(store.get('pg_save3_A'));
+  assert.strictEqual(main.lv, 88, 'the stashed character is the live copy now');
+  assert.strictEqual(main.cloud.v, 41, 'stamped with the account version the server just reported');
+  assert.ok(main.offlineAt > main.cloud.at, 'and written after it, which is the whole login test');
+  assert.ok([...store.keys()].some(k => k.includes('_before_restore_')), 'the replaced copy is kept, so it is reversible');
+  await assert.rejects(() => ctx.restoreFrom('pg_save3_A'), /backup key/, 'and the live slot cannot be restored over itself');
+});
+
 await T('v327: the paste-in save comparison still matches the real client', async () => {
   // docs/CHECK-A-SAVE.md hands the player a console snippet when "it still isn\'t saved" arrives with
   // no red line. A snippet quoting a global that has since been renamed is worse than no snippet, so

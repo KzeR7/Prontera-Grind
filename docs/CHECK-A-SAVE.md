@@ -120,6 +120,68 @@ one red 428, once. It writes no save row (see the WRITE ECONOMY note in `functio
 The authoritative version of the same question is the D1 query at the top of this page; the console
 version just needs no dashboard access and no waiting.
 
+## "The whole character came back older, after I logged back in"
+
+That shape is not the 428 story. A refused save loses at most one sync window; a *character* that is
+older is the account's own copy being old (or empty) and the login faithfully loading it. Two things
+answer it, in this order.
+
+**First: this browser is already holding every copy it has ever stashed.** `cloudAdopt` never deletes
+the copy it replaces — it writes it to `pg_save3_<name>_local_<ms>`. So before logging in again:
+
+```js
+// Every save this browser holds. Reads only - nothing is written.
+console.table(Object.keys(localStorage)
+  .filter(k => k.startsWith('pg_save3_'))
+  .map(k => {
+    let s = {}; try { s = JSON.parse(localStorage.getItem(k) || '{}') || {}; } catch (e) {}
+    return { key: k, lv: s.lv, zeny: s.zeny,
+             ascension: (s.ascension || {}).level,
+             fishcoins: (s.fishing || {}).coins,
+             account_version: (s.cloud || {}).v,
+             last_written: s.offlineAt ? new Date(s.offlineAt).toLocaleString() : '',
+             bytes: (localStorage.getItem(k) || '').length };
+  }))
+```
+
+If a `_local_` row is the character the player remembers and the live `pg_save3_<name>` row is not,
+it can be put back:
+
+```js
+// Put a stashed copy back as this browser's copy, stamped so the login keeps it.
+async function restoreFrom(key) {
+  if (!/^pg_save3_.+_local_\d+$/.test(key)) throw new Error('Pass a backup key (pg_save3_<name>_local_<ms>), not the live slot.');
+  const main = 'pg_save3_' + currentUser;
+  const copy = JSON.parse(localStorage.getItem(key) || 'null');
+  if (!copy) throw new Error('No such copy: ' + key);
+  const d = await (await fetch('/api/save', { credentials: 'same-origin', cache: 'no-store' })).json();
+  const live = JSON.parse(d.blob || 'null') || {};
+  console.log('restoring lv', copy.lv, 'zeny', copy.zeny, '| the account now has lv', live.lv, 'zeny', live.zeny, 'version', d.version);
+  if (!confirm('Replace this account\'s copy with lv ' + copy.lv + ' / zeny ' + copy.zeny + '? The copy being replaced stays on this device and in the save history.')) return 'cancelled';
+  localStorage.setItem(main + '_before_restore_' + Date.now(), localStorage.getItem(main) || '');
+  copy.owner = currentUser;
+  // The stamp is what makes the next login upload this copy instead of adopting over it: same version
+  // as the account, written after it (see localAheadOfServer in index.html). cloud.at must be OLDER
+  // than offlineAt, which is the whole test.
+  copy.cloud = { v: Number(d.version) || 0, at: Date.now() - 60000 };
+  copy.offlineAt = Date.now();
+  localStorage.setItem(main, JSON.stringify(copy));
+  return 'written - reload and log in; the login will upload it.';
+}
+```
+
+The copy being replaced is kept twice (a `_before_restore_` key here, and the account's own history
+server-side), so this is reversible both ways. It **overwrites the account** on the next login, so
+only do it when the browser's copy really is the better one — the dry run prints both levels and both
+Zeny totals first, and nothing is written until the confirm.
+
+**Second: the account's own version ladder** — the `save_history` query above. The row where `lv` /
+`zeny` step *down* is the moment a copy that was behind won, and `client_says_account_was` on the row
+above it names the client (its own `cloud.v`) that wrote over the good copy. That version is also what
+`POST /api/gm/player {action:'restore', version}` takes, so the good blob can be put back from the
+server side without touching the browser at all — which is the right tool when the device's copies are
+all older than the history.
+
 ## A note on the v280 fix
 
 v280 makes the save's identity the account id instead of its name. It fixes an account whose **name
