@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=330">
-<link rel="stylesheet" href="assets/social-fishing.css?v=330">
+<link rel="stylesheet" href="assets/social.css?v=331">
+<link rel="stylesheet" href="assets/social-fishing.css?v=331">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-06 haven-v330 self-rebase, honest badge, sync ledger';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-06 haven-v331 console sync-log command';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4123,12 +4123,20 @@ const SYNC_LOG_KEY='pg_synclog1',SYNC_LOG_MAX=40;
 function syncLog(kind,data){
   try{
     const prev=JSON.parse(localStorage.getItem(SYNC_LOG_KEY)||'[]');
-    prev.push(Object.assign({at:new Date().toISOString().slice(11,19),kind},data||{}));
+    // Local clock, not UTC: the ledger is read beside the badge and the game log, which are local, and a
+    // table eight hours off from the number on screen is a puzzle instead of evidence.
+    const d=new Date(),pad=n=>String(n).padStart(2,'0');
+    prev.push(Object.assign({at:pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds()),kind},data||{}));
     while(prev.length>SYNC_LOG_MAX)prev.shift();
     localStorage.setItem(SYNC_LOG_KEY,JSON.stringify(prev));
   }catch(e){}
 }
 const syncLogShow=()=>{try{const rows=JSON.parse(localStorage.getItem(SYNC_LOG_KEY)||'[]');console.table(rows);return rows}catch(e){return []}};
+// v331: the name the docs tell an owner to type. They said `pgSyncLog()` and the page only ever defined
+// `syncLogShow` - a documented command that throws `is not a function` is worse than no command, and no
+// test noticed. The alias is the documented name, and `cloud_sim` now reads every `pgXxx()` out of
+// docs/CHECK-A-SAVE.md and fails if the page does not define it.
+const pgSyncLog=syncLogShow;
 // The four numbers a lost session is measured in. `null` when a copy is missing rather than zero, so
 // "the account has nothing" can never be confused with "the account has 0 Zeny".
 const saveFigures=blob=>{try{const o=JSON.parse(blob);if(!o||typeof o!=='object')return null;
@@ -13567,10 +13575,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=330"></script>
-<script src="assets/social-poker.js?v=330"></script>
-<script src="assets/social-scene.js?v=330"></script>
-<script src="assets/social-fishing.js?v=330"></script>
-<script src="assets/social.js?v=330"></script>
+<script src="assets/social-rules.js?v=331"></script>
+<script src="assets/social-poker.js?v=331"></script>
+<script src="assets/social-scene.js?v=331"></script>
+<script src="assets/social-fishing.js?v=331"></script>
+<script src="assets/social.js?v=331"></script>
 </body>
 </html>

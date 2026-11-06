@@ -182,7 +182,7 @@ function harness(opts = {}) {
     // v328: the request deadline, the stuck-push watchdog and the quiet-save note.
     'CLOUD_TIMEOUT_MS','CLOUD_STALL_MS','cloudPushWatchdog','cloudStallNote',
     // v330: the decision ledger, and the figures a lost session is measured in.
-    'syncLog','syncLogShow','saveFigures','SYNC_LOG_KEY',
+    'syncLog','syncLogShow','pgSyncLog','saveFigures','SYNC_LOG_KEY',
     // v326: which copy is newer, and the version stamp that makes it answerable after a reload.
     'cloudBaseOf','localAheadOfServer','cloudStampBase','cloudFlushLeaving',
     // v82 usage diet: the cadence constants and the poll tick are asserted on directly.
@@ -1669,6 +1669,9 @@ await T('v330: every push outcome lands in the ledger, and the ring stays bounde
   await dead.sandbox.cloudPush(true);
   rows = JSON.parse(dead.store.get(dead.sandbox.SYNC_LOG_KEY));
   assert.strictEqual(rows[rows.length - 1].kind, 'push-fail', 'and a save that never landed is recorded too');
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  assert.ok(rows[rows.length - 1].at.startsWith(pad(d.getHours()) + ':' + pad(d.getMinutes())),
+    'the ledger stamps local time, the clock the badge and the game log use');
   for (let i = 0; i < 60; i++) b.syncLog('tick', { i });
   rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY));
   assert.strictEqual(rows.length, 40, 'the ring keeps the last 40 decisions, not the session');
@@ -1729,6 +1732,19 @@ await T('v330: the badge stops claiming a save after an adopt', async () => {
   assert.match(badge.title, /Loaded the account save/, 'the badge says what happened...');
   assert.match(badge.textContent, /↺/, 'with its own glyph rather than a tick');
   assert.doesNotMatch(badge.title, /On your account since/, 'and never repaints the old upload time as if it were now');
+});
+
+await T('v331: every console command the docs tell an owner to type exists in the page', async () => {
+  // This suite exists to stop documentation from rotting; it caught the docs a different way round -
+  // CHECK-A-SAVE.md said "run pgSyncLog()" while index.html had only ever defined syncLogShow, so the
+  // one command the owner was told to run threw "is not a function" in the deployed build.
+  const doc = fs.readFileSync(path.join(root, 'docs', 'CHECK-A-SAVE.md'), 'utf8');
+  const names = [...new Set([...doc.matchAll(/(pg[A-Za-z]+)\(\)/g)].map(m => m[1]))];
+  assert.ok(names.includes('pgSyncLog'), 'the ledger command is still documented');
+  for (const n of names) {
+    const defined = new RegExp('(const|let|var)\\s+' + n + '\\s*=').test(src) || new RegExp('function\\s+' + n + '\\s*\\(').test(src);
+    assert.ok(defined, n + '() is documented but not defined by index.html');
+  }
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
