@@ -8,8 +8,8 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 export const SANCTUARY_STAGE=Object.freeze({
- commit:'342cdcaad8efc06f43a782b880ebf11b4ac7e513',
- build:'2026-11-06 haven-v346 Sanctuary battle service recovery',
+ commit:'557e36dbef491cd611193d8e0b1be7092694ce97',
+ build:'2026-11-06 haven-v347 DigiPet farm and DigiDex update',
  pagesProject:'prontera-grind-staging',
  branchUrl:'https://main.prontera-grind-staging.pages.dev',
  socialProject:'prontera-social-staging',
@@ -68,7 +68,7 @@ function repoWithStageCommit(){
   const result=spawnSync('git',['-C',repo,'rev-parse','--verify',SANCTUARY_STAGE.commit+'^{commit}'],{encoding:'utf8'});
   if(result.status===0&&result.stdout.trim()===SANCTUARY_STAGE.commit)return repo;
  }
- throw Error('Cannot find the reviewed v346 commit in a Prontera-Grind checkout. Fetch PR #180 first; nothing was deployed.');
+ throw Error('Cannot find the reviewed v347 commit in a Prontera-Grind checkout. Fetch PR #180 first; nothing was deployed.');
 }
 
 export async function verifyDeployment(url,fetchImpl=fetch){
@@ -78,7 +78,7 @@ export async function verifyDeployment(url,fetchImpl=fetch){
  }
  const version=await get('/version.txt',{cache:'no-store'});
  assert.equal(version.status,200,'Staging /version.txt returned HTTP '+version.status);
- assert.equal((await version.text()).trim(),SANCTUARY_STAGE.build,'The staged site is not the reviewed v346 build');
+ assert.equal((await version.text()).trim(),SANCTUARY_STAGE.build,'The staged site is not the reviewed v347 build');
  // With no session, the Function must reach the auth check (401). A missing SOCIAL binding is 503.
  const social=await get('/api/social',{headers:{Origin:url,Upgrade:'websocket'},redirect:'manual'});
  assert.equal(social.status,401,'Staging /api/social returned HTTP '+social.status+'; expected 401 with the binding present and no session');

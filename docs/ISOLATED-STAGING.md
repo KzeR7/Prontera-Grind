@@ -37,7 +37,7 @@ only; it does not validate live migration, anti-cheat integrity or load/cost.
 ## Sanctuary online battle staging (owner-run)
 
 `tools/staging/sanctuary_hosted_stage.mjs` is the coordinated Pages + Social
-Worker launcher for reviewed commit `342cdca` (`haven-v346`). Unlike the older
+Worker launcher for reviewed commit `557e36d` (`haven-v347`). Unlike the older
 Pages-only rehearsal, it deploys **`prontera-social-staging` first**, then
 **`prontera-grind-staging`** with `SOCIAL` bound to that staging Worker and `DB`
 bound only to the documented `pg-staging` UUID. Its Durable Object namespace is
@@ -48,7 +48,7 @@ The launcher requires the owner's existing Windows setup, an already
 authenticated Wrangler CLI, Node/npm, Git Bash and a checkout containing PR #180.
 It archives the pinned commit into a fresh temporary directory, verifies the
 remote staging database identity and account schema before either deployment,
-builds `dist`, prints the unique staging URL, then verifies the deployed v346
+builds `dist`, prints the unique staging URL, then verifies the deployed v347
 `version.txt` and checks that `/api/social` reaches authentication (401 rather
 than a missing-binding 503). Because the URL is printed first, a local network
 or probe failure cannot hide a completed deployment; the launcher distinguishes
@@ -67,7 +67,7 @@ node tools/staging/sanctuary_hosted_stage.mjs
 
 Use the printed unique deployment URL or
 **`https://main.prontera-grind-staging.pages.dev`**. The bare project root can
-serve a different, older production-branch deployment; it is not the v346 branch
+serve a different, older production-branch deployment; it is not the v347 branch
 URL. Use synthetic accounts only, in two isolated browser profiles for PvP. The
 launcher proves deployment identity and binding presence; it is not a two-client
 combat rehearsal. If post-deploy verification fails, inspect the named staging
