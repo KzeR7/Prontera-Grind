@@ -122,8 +122,9 @@ function combatProfile(raw,line,slot=0){
  const state=normalize(raw,line),p=state?.partners?.[line];if(!p)return null;
  return {lineId:line,form:p.form,slot:slot===1?1:0,level:level(p),xp:p.xp,wins:p.wins,mastery:p.mastery,fatigue:p.fatigue,fullness:p.fullness,stats:{...p.stats}};
 }
-// Apply only a server-issued result to the existing owned line. The caller deduplicates the
-// battle id; this function deliberately has no client-selected outcome or reward amount API.
+// Apply a clamped result to the existing owned line. Online callers accept only server-issued
+// messages; Solo plaza uses the same math for explicitly labeled local practice. The caller
+// deduplicates the battle id; this helper never chooses an outcome or reward amount itself.
 function applyBattleReward(raw,bagRaw,line,reward){
  const state=normalize(raw,line),bag=normalizeBag(bagRaw),p=state?.partners?.[line];
  if(!state||!bag||!p||!reward||typeof reward!=='object')return {ok:false,state,bag,changed:false,message:'This battle reward could not be applied.'};

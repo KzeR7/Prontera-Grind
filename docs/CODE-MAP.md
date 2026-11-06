@@ -511,10 +511,15 @@ this runtime. Gym apparatus is still scenery, not live training.
   `tools/social/dev-sockets.mjs` schedule battle ticks alongside the existing
   alarms/timers. `assets/social.js` sends only start/accept/stop intents,
   applies deduplicated server rewards to the original owned line, and renders
-  the field HUD, acceptance dialog, countdown and animated result.
-  `assets/social-scene.js` roams decorative residents only while no PvE run is
-  active, then renders independent partner/bot/ring sprites with health bars.
-  `social-battle.css` supplies the responsive presentation. Existing gym,
-  feeding, bag, Ragnarok-pet and Zeny boundaries are unchanged. Coverage:
-  `digimon_battle_sim.js`, `sanctuary_battle_sim.js`, the battle additions in
-  `social_scene_sim.js`, and the real two-client browser rehearsal.
+  the field HUD, acceptance dialog, countdown and animated result. In the
+  v345 no-cloud Solo plaza it instead runs the shared simulator locally with
+  owner/room `0`, `SOLO` labels and separate `solo-pve:` reward IDs; the gym
+  likewise uses labeled local practice without a reservation. Account/state
+  changes, leaving or connecting online stop that local run, and ring PvP
+  remains online-only. `assets/social-scene.js` roams decorative residents only
+  while no PvE run is active, then renders independent partner/bot/ring sprites
+  with health bars. `social-battle.css` supplies the responsive presentation.
+  Existing gym, feeding, bag, Ragnarok-pet and Zeny boundaries are unchanged.
+  Coverage: `digimon_battle_sim.js`, `sanctuary_battle_sim.js`, Solo/online
+  `social_ui_sim.js`, the battle additions in `social_scene_sim.js`, and the
+  real Solo/two-client browser rehearsals.

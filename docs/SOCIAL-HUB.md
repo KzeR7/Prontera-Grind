@@ -1124,6 +1124,16 @@ Pet Coins, XP and one win, with small fullness/fatigue costs. They are applied
 once to the original owned line and do not touch Zeny, Ragnarok pets, Fishcoins,
 Chips or Cash Shop inventory.
 
+**Solo plaza local practice (v345):** a local character without a cloud room can
+use the same middle-field control and shared combat simulation. The HUD says
+`SOLO · AUTO-GRINDING`; wave rewards use distinct `solo-pve:` IDs and are saved
+locally rather than described as server-issued. Leaving, changing account/state,
+or connecting online stops the local run. Gym stations likewise work in Solo
+plaza with a `local solo` countdown and the usual care limits; no equipment
+reservation is needed for the single local character. These paths exist so the
+activities are testable without an account connection. Two-player PvP still
+requires an online room, and the nearby ring control says `Online PvP only`.
+
 The boxing ring supports two distinct online players. Stand on opposite left/
 right sides at the ring edges or the open approach below the southern stands,
 then enter. Same-side players wait rather than being paired. Each player gets

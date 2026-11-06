@@ -47,23 +47,28 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```
 
-## Latest local gate (haven-v344)
+## Latest local gate (haven-v345)
 
 The 2026-11-06 complete local run passed **207 checks / 0 failures** on Node
 22.22.3: four generated-asset/config checks, 189 `*_sim.js`, eight `*_sim.mjs`,
 and six `*_smoke.js` suites. There were no dependency skips. This includes the
 complete 280-form asset validation, deterministic Sanctuary combat and room
-authority, a real workerd/two-WebSocket field-and-ring rehearsal, publish-size
-checks, and the fixed historical staging-package rehearsal. For the BUILD-only
-combat-hash refresh, all three progression fixtures retained all 126 historical
-and 126 current measurements byte-for-byte; only their source/combat hashes
-advanced.
+authority, Solo gym/field UI simulation, a real workerd/two-WebSocket
+field-and-ring rehearsal, publish-size checks, and the fixed historical
+staging-package rehearsal. For the BUILD-only combat-hash refresh, all three
+progression fixtures retained all 126 historical and 126 current measurements
+byte-for-byte; only their source/combat hashes advanced.
 
-Real Chromium acceptance against the final built site passed **12 checks** with
-zero page errors or failed local requests: owned partners, same-stage PvE waves,
-server-issued Pet Coins, resident restoration, opposite-side offers, a genuine
-countdown cancellation with no result/reward, requeue and mutual acceptance,
-automatic PvP, WIN/LOSE presentation, and distinct settlement IDs. These are
+Real Chromium acceptance against the final built site passed **8 Solo checks**
+and **12 online checks**, with zero page errors or failed local requests in
+both runs. Solo covered local entry, hatching, a gym stat cycle with a test-only
+accelerated clock, shared-simulator field waves, explicitly local Pet Coin
+rewards, Stop, and online-only PvP messaging. The two-client online run covered
+owned partners, same-stage PvE waves, server-issued Pet Coins, resident
+restoration, opposite-side offers, genuine countdown cancellation with no
+result/reward, requeue and mutual acceptance, automatic PvP, WIN/LOSE
+presentation, and distinct settlement IDs. Its movement helper allowed enough
+time for the real client walk; it did not bypass position validation. These are
 local disposable-environment results, not hosted staging, production deployment,
 physical-device certification, or an exhaustive visual review of all 280 forms.
 

@@ -629,3 +629,11 @@ is still visual world-building, not the requested on-map training gameplay.
   clamped loadout inputs, not ranked authority; the old solo spar is still local.
   See `SOCIAL-HUB.md` for protocol and `digimon_battle_sim.js` /
   `sanctuary_battle_sim.js` for deterministic coverage.
+
+* **Solo Sanctuary practice (v345):** The no-cloud Solo plaza is no longer a
+  dead end for the field or gym. A local character uses the same stations,
+  world sprites and shared wave simulator with explicit `local solo` / `SOLO`
+  labels. Field rewards use separate `solo-pve:` IDs and save locally; online
+  rooms retain server-issued rewards and reservations. Leaving, account/state
+  replacement or an online transition cancels the local activity. Two-player
+  ring PvP remains online-only rather than receiving a fabricated local opponent.
