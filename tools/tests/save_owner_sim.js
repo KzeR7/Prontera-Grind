@@ -192,8 +192,12 @@ t('initSessionFromCloud checks the device copy before it starts a session or wri
 });
 
 t('cloudAdopt refuses another account\'s copy before it is written into the slot', () => {
-  const b = body('async function cloudAdopt(server,resumeOffline=false){', 500);
-  assert.ok(b.indexOf('saveRefusal(server.blob,currentUser)') < b.indexOf('lsPut(saveKeyFor(currentUser),server.blob)'));
+  // The window has to reach past the v330 ledger code that now sits between the check and the write;
+  // the assertion is the ordering, so both markers must be found rather than one silently missing.
+  const b = body('async function cloudAdopt(server,resumeOffline=false){', 2000);
+  const check = b.indexOf('saveRefusal(server.blob,currentUser)'), write = b.indexOf('lsPut(saveKeyFor(currentUser),server.blob)');
+  assert.ok(check >= 0 && write >= 0, 'both the refusal and the write are inside the function');
+  assert.ok(check < write);
 });
 
 t('restoring a backup leaves out another account\'s save before anything is written', () => {

@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=328">
-<link rel="stylesheet" href="assets/social-fishing.css?v=328">
+<link rel="stylesheet" href="assets/social.css?v=330">
+<link rel="stylesheet" href="assets/social-fishing.css?v=330">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-06 haven-v328 sync deadline, watchdog, stall notice';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-06 haven-v330 self-rebase, honest badge, sync ledger';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3820,6 +3820,7 @@ function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;cloudTouchSeq++;CLOUD.di
 // network must not interrupt play - it only leaves the local copy leading, and the badge says so.
 let cloudLockWarned=false,cloudBoardWarned=false;   // warnings are explained once, not once a minute
 let cloudClaimRetried=0;   // v326: the away claim whose one immediate retry was already spent
+let cloudRebaseRetried=0;  // v330: the version whose rebase retry was already spent
 async function cloudPush(push,leave){
   if(!CLOUD.on||!S||!currentUser||CLOUD.paused)return 'idle';
   if(CLOUD.lost)return 'idle';   // the character is away until /api/save answers again
@@ -3852,6 +3853,25 @@ async function cloudPush(push,leave){
       // haven-v215: the look wears a Cash Shop item this account does not own. Those slots come off
       // and the save goes straight back up; the character itself is never refused.
       if(c.cosmeticLocked){if(typeof shopLockedByServer==='function'&&shopLockedByServer(c.locked)){CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'locked'}if(!cloudLockWarned){cloudLockWarned=true;cloudSay((c.err||'This look uses Cash Shop items this account does not own.')+' Reload the page to pick up the latest build, then open the Wardrobe and reset the look.','r0')}CLOUD.dirty=true;return 'locked'}
+      // v330 (the owner's two screenshots, same badge time 22:58, 33.3M and 31.7M): a 409 whose
+      // server copy is exactly ONE version ahead of ours, while ours is at least as far along in Zeny,
+      // kills and level, is this device's own previous upload whose answer never arrived - not another
+      // device. Adopting there deleted every minute since that upload, and it did it without touching
+      // the badge, which reports the last accepted push and therefore kept saying "saved 22:58".
+      // So that one case rebases instead: take the server's version NUMBER, keep this device's save,
+      // and push it on top. Anything else - further ahead, or ahead of us in any figure - still loses
+      // to the account exactly as v2 decided.
+      const mine=saveFigures(JSON.stringify(S)),theirs=saveFigures(c.blob);
+      const selfEcho=!!(theirs&&mine)&&Number(c.version)===Number(CLOUD.ver)+1
+        &&mine.zeny>=theirs.zeny&&mine.kills>=theirs.kills&&mine.lv>=theirs.lv;
+      if(selfEcho&&Number(c.version)!==cloudRebaseRetried){
+        cloudRebaseRetried=Number(c.version);
+        syncLog('rebase',{from:CLOUD.ver,to:c.version,serverZeny:theirs.zeny,keptZeny:mine.zeny});
+        CLOUD.ver=Number(c.version);CLOUD.dirty=true;
+        cloudBadge('☁ ⇅','Re-sending this device\'s save on the account\'s version');
+        setTimeout(()=>cloudPush(true),0);
+        return 'rebase';
+      }
       // v2 (owner): cloud is the only save, so the ACCOUNT's copy always wins. cloudAdopt keeps the
       // copy this device held under a backup key, so nothing is deleted - there is just no question
       // to answer any more.
@@ -3871,7 +3891,8 @@ async function cloudPush(push,leave){
         return 'offline-claim'}
       throw new Error(d.err||'A server-timed offline claim is required.')}
     if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=cloudTouchSeq!==seq||!!d.leaderboardPending;CLOUD.lastPush=Date.now();CLOUD.offline=false;cloudClaimRetried=0;
+    const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=cloudTouchSeq!==seq||!!d.leaderboardPending;CLOUD.lastPush=Date.now();CLOUD.offline=false;cloudClaimRetried=0;cloudRebaseRetried=0;
+    syncLog('push-ok',{v:d.version,lv:S&&S.lv,zeny:S&&S.zeny,kills:S&&S.kills,leave:!!leave});
     // v326: remember which account version this device's copy now corresponds to. Without it a login
     // could not tell "this is the account's own save plus a minute of play" from "another device moved
     // on", and it always threw the minute away (see localAheadOfServer/cloudJoin).
@@ -3885,6 +3906,7 @@ async function cloudPush(push,leave){
   }catch(e){
     // The save is NOT on the server, so it stays dirty: the next flush (or the next tab-hide) retries
     // it. Clearing the flag here would silently drop the sync until the player changed something.
+    syncLog('push-fail',{err:String((e&&e.message)||e).slice(0,60),ver:CLOUD.ver,leave:!!leave,zeny:S&&S.zeny});
     CLOUD.dirty=true;CLOUD.offline=true;
     // v326: a request that was cut short because the page was leaving says nothing about the
     // connection, and by then there is no page to put a gate on. The next ordinary flush confirms it.
@@ -4091,19 +4113,54 @@ async function cloudReconnect(){
   return true;
 }
 
+// ---------- what the sync layer actually decided (v330) ----------
+// "It went back to the older number after I logged out" has three causes that look identical on screen -
+// a stalled push, the account winning, or the player reading a number that never left this tab - and the
+// numbers that tell them apart exist only for the second a decision is made. So the decision itself is
+// recorded: a small ring in localStorage, surviving reloads, dumped with one call in the console.
+// Nothing here is sent anywhere and no blob is stored, only counts.
+const SYNC_LOG_KEY='pg_synclog1',SYNC_LOG_MAX=40;
+function syncLog(kind,data){
+  try{
+    const prev=JSON.parse(localStorage.getItem(SYNC_LOG_KEY)||'[]');
+    prev.push(Object.assign({at:new Date().toISOString().slice(11,19),kind},data||{}));
+    while(prev.length>SYNC_LOG_MAX)prev.shift();
+    localStorage.setItem(SYNC_LOG_KEY,JSON.stringify(prev));
+  }catch(e){}
+}
+const syncLogShow=()=>{try{const rows=JSON.parse(localStorage.getItem(SYNC_LOG_KEY)||'[]');console.table(rows);return rows}catch(e){return []}};
+// The four numbers a lost session is measured in. `null` when a copy is missing rather than zero, so
+// "the account has nothing" can never be confused with "the account has 0 Zeny".
+const saveFigures=blob=>{try{const o=JSON.parse(blob);if(!o||typeof o!=='object')return null;
+  return {lv:Number(o.lv)||0,zeny:Number(o.zeny)||0,kills:Number(o.kills)||0,asc:Number(o.ascension&&o.ascension.level)||0,ver:Number(o.cloud&&o.cloud.v)||0}}catch(e){return null}};
+
 // Take the server's copy as the live save. This device's copy is stashed under its own backup key
 // first, so "keep cloud" is never a deletion either.
 async function cloudAdopt(server,resumeOffline=false){
   // v88.6: a copy that belongs to another account is never written into this account's slot.
   if(saveRefusal(server.blob,currentUser)){cloudSaveRefused();return}
-  try{const old=localStorage.getItem(saveKeyFor(currentUser));if(old)localStorage.setItem(saveKeyFor(currentUser)+'_local_'+Date.now(),old)}catch(e){}
+  let replacedKey=null,replacedBlob=null;
+  try{const old=localStorage.getItem(saveKeyFor(currentUser));if(old){replacedKey=saveKeyFor(currentUser)+'_local_'+Date.now();localStorage.setItem(replacedKey,old);replacedBlob=old}}catch(e){}
+  // v330: the account winning is a normal, silent path - which is exactly why a *worse* account copy
+  // used to be indistinguishable from a good one. When the copy being thrown away is ahead of the one
+  // being loaded (more Zeny and no fewer kills), say so with both numbers and name the backup, and
+  // write it to the sync ledger either way.
+  const lost=saveFigures(replacedBlob),got=saveFigures(server.blob);
+  const behind=!!(lost&&got&&lost.zeny>got.zeny&&lost.kills>=got.kills);
+  syncLog(behind?'adopt-behind':'adopt',{v:server.version,wasV:CLOUD.ver,
+    wasZeny:lost&&lost.zeny,nowZeny:got&&got.zeny,wasKills:lost&&lost.kills,nowKills:got&&got.kills,
+    wasLv:lost&&lost.lv,nowLv:got&&got.lv,backup:replacedKey?replacedKey.slice(0,34):null});
+  if(behind)cloudSay('Your account\'s copy is BEHIND this browser\'s: '+got.zeny.toLocaleString()+' Zeny against '+lost.zeny.toLocaleString()+', '+(lost.lv-got.lv>0?(lost.lv-got.lv)+' levels':'(same level)')+'. The account copy was loaded anyway, and the newer one is kept as '+replacedKey+'. Report this line - it is the one that names the loss.','r0','cloud');
   lsPut(saveKeyFor(currentUser),server.blob);
   const wasGm=S&&S.gm;S=load();S.gm=!!wasGm;
   if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);
   CLOUD.ver=server.version;CLOUD.dirty=false;CLOUD.paused=false;
   cloudStampBase(server.version,false);   // v326: this copy now IS the account's version
   if(server.offlineClaim){applyOfflineProgress(Date.now(),server.offlineClaim);await cloudPush(true)}
-  ui();cloudBadgeSaved();   // v282
+  ui();
+  // v330: cloudBadgeSaved() reports CLOUD.lastPush, so after an adopt it repainted the time of the last
+  // *upload* - a rollback looked exactly like a healthy save. The badge says what actually happened.
+  cloudBadge('☁ ↺','Loaded the account save (v'+server.version+') just now');
   log('Loaded your cloud save (Lv '+S.lv+'). The copy this device had was kept as a local backup.','r1','cloud');
 }
 
@@ -4121,6 +4178,8 @@ async function cloudJoin(u,localBlob){
   if(!cloudOwnedBy(data,u)){cloudAccountMismatch(data.owner);return}
   if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true);return}
   if(saveRefusal(data.blob,u)){cloudSaveRefused();return}
+  syncLog('join',{serverV:data.version,localV:(cloudBaseOf((()=>{try{return JSON.parse(localBlob)}catch(e){return null}})())||{}).v,
+    serverZeny:(saveFigures(data.blob)||{}).zeny,localZeny:(saveFigures(localBlob)||{}).zeny});
   if(sameSave(data.blob,localBlob)){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadgeSaved();   // v282: same save both sides
     cloudStampBase(data.version,false);
     if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
@@ -13508,10 +13567,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=328"></script>
-<script src="assets/social-poker.js?v=328"></script>
-<script src="assets/social-scene.js?v=328"></script>
-<script src="assets/social-fishing.js?v=328"></script>
-<script src="assets/social.js?v=328"></script>
+<script src="assets/social-rules.js?v=330"></script>
+<script src="assets/social-poker.js?v=330"></script>
+<script src="assets/social-scene.js?v=330"></script>
+<script src="assets/social-fishing.js?v=330"></script>
+<script src="assets/social.js?v=330"></script>
 </body>
 </html>
