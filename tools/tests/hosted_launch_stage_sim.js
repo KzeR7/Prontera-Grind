@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { freshDb,makeD1,createApp } from '../dev_server.js';
 import { syntheticProbe,unpackPayload,deployedUrl,safeSql } from '../staging/hosted_launch_stage.mjs';
+import { SANCTUARY_STAGE,sanctuaryPagesConfig,sanctuarySocialConfig,sanctuaryDeploymentUrl } from '../staging/sanctuary_hosted_stage.mjs';
 const target=path.join(os.tmpdir(),'launch-package-test-'+randomUUID()+'.mjs');
 try{
  // Git's Windows clean filter must accept unchanged CRLF files without
@@ -26,6 +27,14 @@ try{
  assert.equal(deployedUrl('https://abcdef12.prontera-grind-staging.pages.dev'),'https://abcdef12.prontera-grind-staging.pages.dev');
  assert.throws(()=>deployedUrl('https://horizonhaven.pages.dev'));
  assert.throws(()=>deployedUrl('https://prontera-grind.pages.dev'));
+ // Sanctuary staging is a separate, fixed-target owner launcher: reviewed code, isolated D1,
+ // and a matching staging Social Worker. Importing it must not execute Wrangler or deploy anything.
+ assert.equal(SANCTUARY_STAGE.commit,'342cdcaad8efc06f43a782b880ebf11b4ac7e513');assert.equal(runGit(['cat-file','-e',SANCTUARY_STAGE.commit+'^{commit}']).status,0);
+ const sanctuaryPages=sanctuaryPagesConfig(),sanctuarySocial=sanctuarySocialConfig();
+ assert.match(sanctuaryPages,/name = "prontera-grind-staging"/);assert.match(sanctuaryPages,/database_id = "3a38c6fc-96a8-491d-b97b-fd536e575ca4"/);assert.match(sanctuaryPages,/script_name = "prontera-social-staging"/);
+ assert.doesNotMatch(sanctuaryPages,/50a6448b-1f12-466c-a28a-10544bedf750|script_name = "prontera-social"\s/);assert.doesNotMatch(sanctuaryPages,/name = "horizonhaven"/);
+ assert.match(sanctuarySocial,/name = "prontera-social-staging"/);assert.match(sanctuarySocial,/workers_dev = false/);assert.match(sanctuarySocial,/new_sqlite_classes = \["Social"\]/);assert.doesNotMatch(sanctuarySocial,/name = "prontera-social"\s/);
+ assert.equal(sanctuaryDeploymentUrl('https://abcdef12.prontera-grind-staging.pages.dev'),'https://abcdef12.prontera-grind-staging.pages.dev');assert.throws(()=>sanctuaryDeploymentUrl('https://abcdef12.horizonhaven.pages.dev'));
  const sqlite=freshDb(),DB=makeD1(sqlite),app=createApp({sqlite});
  const db={exec(sql){let rows=[];for(const part of sql.split(';').map(x=>x.trim()).filter(Boolean)){
   const q=sqlite.prepare(part);if(/^(SELECT|PRAGMA)\b/i.test(part))rows=q.all();else q.run();
