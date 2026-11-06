@@ -177,6 +177,66 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   w.Date.now=realNow2;
   app.socket=null;app.connected=false;app.nextConnect=0;app.room=0;
  }
+ // ---- v326 (owner: "random disconnect, I lose local chat but world chat is fine") ----
+ // A reload in the same tab is what really loses it: this page reloads itself when a build goes live
+ // (v276), and Local used to live only in a variable. It is now mirrored into THIS TAB's sessionStorage
+ // - never localStorage, never shared, never sent to the server - so the same tab keeps reading the
+ // plaza it was in.
+ {
+  const lines=[{channel:'local',room:3,from:31,name:'Talker 31',at:2e12,id:'saved-1',body:'the fountain is lovely tonight'},
+               {channel:'local',room:3,from:32,name:'Talker 32',at:2e12+1,id:'saved-2',body:'meet at the south pond'},
+               {channel:'world',room:0,from:33,name:'Talker 33',at:2e12+2,id:'saved-3',body:'world line'}];
+  app.user='local-tester';
+  // What the old page leaves behind for the new one: this tab's sessionStorage, and nothing on disk.
+  w.sessionStorage.setItem('pg_social_local_v1_local-tester_3',JSON.stringify(lines));
+  for(const k of ['saved-1','saved-2','saved-3'])
+   assert.equal(w.localStorage.getItem(k),null,'Local chat is never written to localStorage');
+  assert.equal([...Array(w.localStorage.length)].map((_,i)=>w.localStorage.key(i)).filter(k=>k.startsWith('pg_social_local')&&!k.startsWith('pg_social_world')).length,0,
+   'only the World cache uses local storage');
+  const reload=new JSDOM('<div id="view"><div id="feedWrap"></div><div id="minimapTools"><button id="socialHubBtn" type="button"><b id="socialHubBadge" hidden>0</b></button></div></div>',{url:'http://localhost/',runScripts:'outside-only'});
+  const w2=reload.window;
+  let socket2;w2.WebSocket=class{constructor(){socket2=this;this.readyState=1;this.sent=[]}close(){}send(m){this.sent.push(JSON.parse(m))}};
+  Object.assign(w2,{CLOUD:{on:true,user:'local-tester'},S:{cls:'Novice',eq:{}},tabs:[],wardrobeAppearance:()=>({version:1,sex:'m'}),logShown:()=>[],openTab:()=>{},HUNT_TITLES:[],titleUnlocked:()=>true,setInterval:()=>0,PGSocialScene:{}});
+  w2.sessionStorage.setItem('pg_social_local_v1_local-tester_3',w.sessionStorage.getItem('pg_social_local_v1_local-tester_3'));
+  w2.eval(fs.readFileSync('assets/social-rules.js','utf8'));
+  w2.eval(fs.readFileSync('assets/social.js','utf8'));
+  const app2=w2.PGSocial.app;app2.room=0;app2.messages=[];
+  socket2.onmessage({data:JSON.stringify({type:'hello',id:41,history:[]})});
+  socket2.onmessage({data:JSON.stringify({type:'room',room:3,players:[]})});
+  w2.PGSocial.select('local');
+  const shown=w2.document.getElementById('socialLines').textContent;
+  assert.match(shown,/the fountain is lovely tonight/,'after a reload the same tab still shows the plaza conversation');
+  assert.match(shown,/meet at the south pond/);
+  assert.ok(!shown.includes('world line'),'and only this plaza Local lines, not the World cache');
+  // Another account in the same tab never inherits it: the key is account-scoped, and a real account
+  // switch also empties the in-memory cache (the session tick does that, covered above).
+  assert.equal(w2.sessionStorage.getItem('pg_social_local_v1_someone-else_3'),null,
+   'the kept transcript is scoped to the account that saw it');
+  reload.window.close();
+ }
+ // A network that comes back reconnects at once instead of finishing the 30-second backoff ladder,
+ // and a network that goes away says so instead of claiming it is retrying a connection that is gone.
+ {
+  const realNow3=Date.now;const now3=realNow3()+3600e3;w.Date.now=()=>now3;
+  const made=[];w.WebSocket=class{constructor(){made.push(this);socket=this;this.readyState=1;this.sent=[]}close(){this.readyState=3}send(m){this.sent.push(JSON.parse(m))}};
+  w.CLOUD.on=true;w.CLOUD.user='local-tester';w.CLOUD.previewToken='';
+  app.blocked=false;app.retry=4;app.room=0;app.connected=false;
+  const dead={readyState:3,close(){},send(){}};app.socket=dead;app.nextConnect=now3+28000;app.wanted=true;
+  w.dispatchEvent(new w.Event('online'));
+  assert.equal(app.socket!==dead,true,'coming back online does not keep riding the dead socket');
+  assert.equal(made.length,1,'and connects immediately instead of waiting out the backoff');
+  assert.equal(app.retry,0,'the ladder starts over');
+  // The same must not fight the "moved to another tab" block: that socket is never re-opened.
+  app.blocked=true;const blockedSockets=made.length;app.socket=dead;app.nextConnect=now3+28000;
+  w.dispatchEvent(new w.Event('online'));
+  assert.equal(made.length,blockedSockets,'a blocked account is left alone');
+  app.blocked=false;
+  // Losing the network is stated plainly while the socket is up.
+  app.socket={readyState:1,close(){},send(){}};
+  w.dispatchEvent(new w.Event('offline'));
+  assert.match(w.document.getElementById('socialConnection').textContent,/offline/i,'going offline is named, not called a retry');
+  w.Date.now=realNow3;app.socket=null;app.connected=false;app.nextConnect=0;app.wanted=false;
+ }
  // ---- v319: the field Social Hub button counts the plaza without entering it ----
  {
   const hubBtn=w.document.getElementById('socialHubBtn'),hubBadge=w.document.getElementById('socialHubBadge');
@@ -212,5 +272,5 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert.match(panelCss,/#wins \.social-panel\{[^}]*max-height:100%;[^}]*overflow-y:auto;overscroll-behavior:contain[^}]*\}/,'the Social Hub panel is height-capped so its own overflow-y:auto actually scrolls');
   assert.match(panelCss,/#wins \.social-destination\{[^}]*flex:none;[^}]*\}/,'the destination card keeps its height so the panel scrolls instead of compressing the card');
  }
- console.log('PASS chat UI: stable hover/click tabs, dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local history across reconnects and plaza switches, a probed (not killed) quiet socket, a handshake timeout, Local privacy on exit, emotion tray on world/whisper/local, recipient control, minimize, history cap, solo/preview plaza fallback, decoupled chat/log visibility and text-only message rendering; v319 field Social Hub button with live population badge and one-click entry');dom.window.close();
+ console.log('PASS chat UI: stable hover/click tabs, dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local history across reconnects, plaza switches and a same-tab reload (sessionStorage, never localStorage), an immediate reconnect when the network returns, a probed (not killed) quiet socket, a handshake timeout, Local privacy on exit, emotion tray on world/whisper/local, recipient control, minimize, history cap, solo/preview plaza fallback, decoupled chat/log visibility and text-only message rendering; v319 field Social Hub button with live population badge and one-click entry');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1)});

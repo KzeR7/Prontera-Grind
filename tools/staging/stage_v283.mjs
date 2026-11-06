@@ -10,8 +10,8 @@ import { fileURLToPath } from 'node:url';
 const PROJECT = 'prontera-grind-staging';
 const DB_NAME = 'pg-staging';
 const DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
-const BRANCH = 'arena/b0caa7f9-prontera-grind';
-const EXPECTED_BUILD = '2026-11-05 haven-v325 quest chip, gm console on phones, grant all cosmetics';
+const BRANCH = 'arena/017d3a5c-prontera-grind';
+const EXPECTED_BUILD = '2026-11-06 haven-v326 save recovery after a reload, local chat kept';
 
 const CONFIG = [
   `name = "${PROJECT}"`,

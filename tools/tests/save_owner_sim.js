@@ -202,13 +202,18 @@ t('restoring a backup leaves out another account\'s save before anything is writ
 });
 
 t('every write of a save slot is one of the checked places, so a new one must be checked too', () => {
-  // save() / cloudAdopt() / initSessionFromCloud() / the v280 re-stamp in load() are the only
-  // lsPut(...) calls that write a save slot; restoreBackup() writes its keys through the filter
-  // checked above. The v280 site rewrites ONLY the owner field of a copy that `saveIsMine()` has
-  // already proved is this account's own - it cannot introduce another account's data.
+  // save() / cloudAdopt() / initSessionFromCloud() / the v280 re-stamp in load() / the v326
+  // cloudStampBase() version stamp are the only lsPut(...) calls that write a save slot;
+  // restoreBackup() writes its keys through the filter checked above. The v280 site rewrites ONLY the
+  // owner field of a copy that `saveIsMine()` has already proved is this account's own, and the v326
+  // site only adds `cloud` to a copy that `saveRefusal()` has proved is this account's own.
   // Add a write site -> add its check, then update this count.
   const sites = src.match(/lsPut\((?:saveKey|saveKeyFor)\(/g) || [];
-  assert.strictEqual(sites.length, 4, 'found ' + sites.length + ' save-slot writes');
+  assert.strictEqual(sites.length, 5, 'found ' + sites.length + ' save-slot writes');
+  const stampStart = src.indexOf('function cloudStampBase(version,write=true){');
+  const stamp = src.slice(stampStart, src.indexOf('function cloudFlushLeaving(){', stampStart));
+  assert.ok(stamp.indexOf('saveRefusal(raw,currentUser)') > 0 && stamp.indexOf('saveRefusal(raw,currentUser)') < stamp.indexOf('lsPut(saveKey(),JSON.stringify(copy))'),
+    'the v326 version stamp refuses another account\'s copy before it writes');
   // and the v280 re-stamp must stay behind saveIsMine()
   const block = src.slice(src.indexOf('function load()'), src.indexOf('function load()') + 900);
   assert.ok(/if\(raw&&saveIsMine\(raw\)\)/.test(block), 'the load() re-stamp is guarded by saveIsMine()');
