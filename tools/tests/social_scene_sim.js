@@ -13,7 +13,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  Object.defineProperty(w.document,'hidden',{value:false});w.performance.now=()=>now;w.console.warn=()=>{};
  w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(url)),arrayBuffer:async()=>{const b=fs.readFileSync(url);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)}});
  // v300: the scene tints the held rod from the fishing module's own tier palette.
- w.PGSocialDigimon={clean:()=>null,sharedStore:()=>({ready:()=>null,request:()=>Promise.resolve(null)})};
+ let battleReady=false;const battleAsset={record:{actions:{idle:[0],walking:[0],attack:[0],faint:[0]}}};
+ w.PGSocialDigimon={clean:id=>battleReady?id:null,frameIndex:()=>0,draw:()=>{},sharedStore:()=>({ready:()=>battleReady?battleAsset:null,request:()=>Promise.resolve(null)})};
  w.PGSocialFishing={ROD_TIER_COLORS:{twig:'#8b6b45',oak:'#b07a3c',brass:'#c8873a',silver:'#cfd8e0',golden:'#ffcb45',mythril:'#7fe3ff'}};
  w.eval(fs.readFileSync('assets/digimon/roster.js','utf8'));w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social-scene.js','utf8'));
  const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(){},move(x,z){moves.push({x,z})},seat(id){selectedSeat=id},sanctuaryShop(){shopOpens++}}),flush=async()=>{for(let i=0;i<6;i++)await Promise.resolve()};
@@ -254,6 +255,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   scene.putPlayer({...state,fish:{on:false}});
   scene.fishing.off();
  }
+ // v344: live field/ring snapshots own separate world sprites and suppress idle residents only
+ // during grinding. The fake asset keeps this a geometry/lifecycle test, not an image audit.
+ battleReady=true;scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:2,phase:'fighting',profile:{form:'agumon'},partner:{form:'agumon',hp:80,maxHp:100},enemies:[{id:'e0',form:'agumon',hp:40,maxHp:50},{id:'e1',form:'palmon',hp:40,maxHp:50},{id:'e2',form:'gabumon',hp:40,maxHp:50}]}],pvp:null});frame(now+=100);
+ assert.equal(scene.scene.children.filter(o=>o.userData.battleKind==='pve').length,4,'partner and three bot sprites are rendered');assert(scene.scene.children.filter(o=>o.userData.sanctuaryResident).every(o=>!o.visible),'idle residents are hidden during grinding');
+ scene.setBattleState({pve:[],pvp:{id:'pvp-test',phase:'fighting',winnerId:null,participants:[{id:1,name:'One',side:'left',unit:{form:'agumon',hp:80,maxHp:100}},{id:2,name:'Two',side:'right',unit:{form:'palmon',hp:70,maxHp:100}}]}});frame(now+=100);assert.equal(scene.scene.children.filter(o=>o.userData.battleKind==='pvp').length,2,'two accepted ring fighters are rendered');assert(scene.scene.children.filter(o=>o.userData.sanctuaryResident).every(o=>o.visible),'residents return when PvE ends');
+ scene.setBattleState({pve:[],pvp:null});assert.equal(scene.scene.children.filter(o=>o.userData.battleKind).length,0,'battle sprites are disposed when the room clears');
  dom.window.close();
- console.log('PASS social scene: v300 per-tier rod glow, download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor and reentry');
+ console.log('PASS social scene: v300 per-tier rod glow, download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor, reentry and live battle sprite lifecycle');
 })().catch(e=>{console.error(e);process.exitCode=1});

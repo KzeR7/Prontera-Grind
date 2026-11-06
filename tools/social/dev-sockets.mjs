@@ -14,5 +14,5 @@ export function attachSocial(server,DB,{previewAuth=false}={}){
  if(!user){socket.end('HTTP/1.1 401 Unauthorized\r\n\r\n');return;}
  wss.handleUpgrade(req,socket,head,ws=>{const c=room.connect(user,s=>ws.send(s),(code,why)=>ws.close(code,why));ws.on('message',data=>room.receive(c,data.toString()));ws.on('close',()=>room.disconnect(c));ws.on('error',()=>room.disconnect(c));});
  }catch{socket.destroy()}});
- const timer=setInterval(()=>room.sweep(),60000);timer.unref();server.on('close',()=>{clearInterval(timer);wss.close()});
+ const timer=setInterval(()=>room.sweep(),60000),battleTimer=setInterval(()=>room.tickBattles(),250);timer.unref();battleTimer.unref();server.on('close',()=>{clearInterval(timer);clearInterval(battleTimer);wss.close()});
 }

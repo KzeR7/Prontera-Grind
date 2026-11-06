@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js',
  // v342: complete Sanctuary runtime and its catalog-driven, on-demand sprite pack.
- 'assets/digimon-sanctuary.js','assets/social-digimon.js','assets/digimon/roster.js','assets/digimon/index.json','assets/digimon/v3/catalog.json',
+ 'assets/digimon-sanctuary.js','assets/digimon-battle.js','assets/social-battle.css','assets/social-digimon.js','assets/digimon/roster.js','assets/digimon/index.json','assets/digimon/v3/catalog.json',
  'assets/digimon/v1/catalog.json','assets/digimon/v1/agumon.png','assets/digimon/v1/gabumon.png','assets/digimon/v1/patamon.png','assets/digimon/v1/palmon.png',
  'assets/digimon/sanctuary/arena-stone.webp','assets/digimon/sanctuary/timber-roof.webp','assets/digimon/sanctuary/walkway-wood.webp','assets/digimon/sanctuary/gym-sand.webp','assets/digimon/sanctuary/gym-plaster.webp',
  'assets/digimon/sanctuary/cc0/woodland-tree.webp','assets/digimon/sanctuary/cc0/medieval_wood.webp','assets/digimon/sanctuary/cc0/rough_pine_door.webp','assets/digimon/sanctuary/cc0/roof_09.webp',

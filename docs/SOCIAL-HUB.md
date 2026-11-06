@@ -1105,12 +1105,50 @@ not competitive proof.
 
 The temporary solo practice spar is explicitly client-authored and grants 20
 Pet Coins on a win, once when the win is recorded. It is not server-authoritative
-PvP and closing a result cannot pay twice. **Live auto-PvE and
-server-authoritative PvP remain unimplemented and have no reward path.** PvE is
-still the intended future primary money/XP grinding activity; its economy and
-XP curve must be designed separately rather than inferred from this spar.
-Future PvP currency rewards must be settled by that authoritative service.
+PvP and closing a result cannot pay twice. It remains separate from the live
+field and ring below.
 
-Run `node tools/tests/digimon_sanctuary_sim.js` and
-`node tools/tests/digimon_sanctuary_ui_sim.js` for the rules and fresh-account
-flow, plus `social_ui_sim.js` and `social_scene_sim.js` for integration.
+### Live field grinding and two-player ring PvP (haven-v344)
+
+The middle Sanctuary field is now an online, room-driven grinding activity.
+Walk into the field with an owned partner selected and use **Start auto-grinding**
+(or the Partners view button). The four decorative residents roam while the
+field is idle, disappear while a run is active, and return when the last run
+ends. The selected Digimon receives its own world sprite and fights a group of
+three random bots. Every bot is drawn from the roster's exact same stage as the
+partner (Baby I, Baby II, Rookie, Champion, Ultimate, Mega, Mega+ or Armor;
+unlisted stages use their matching unlisted pool). When the whole group faints,
+the next group spawns after a short telegraph. A run stops on request, defeat,
+or the existing hunger/fatigue limits. Wave rewards are server-issued events:
+Pet Coins, XP and one win, with small fullness/fatigue costs. They are applied
+once to the original owned line and do not touch Zeny, Ragnarok pets, Fishcoins,
+Chips or Cash Shop inventory.
+
+The boxing ring supports two distinct online players. Stand on opposite left/
+right sides at the ring edges or the open approach below the southern stands,
+then enter. Same-side players wait rather than being paired. Each player gets
+an acceptance dialog; one acceptance is not enough. After both accept, the
+room places the two Digimon on the raised canvas and broadcasts a three-second
+countdown, then runs automatic combat with no attack command packets. The
+result is settled by the Social Worker, not by a client-reported winner. Both
+participants receive an animated WIN, LOSE or DRAW result and server-selected
+Pet Coin/XP/win rewards (winner, loser and draw amounts differ). Decline,
+cancellation, disconnect and forfeit clean up the match; a disconnect during
+active combat forfeits to the remaining participant.
+
+`assets/digimon-battle.js` is the shared deterministic simulation used by the
+browser-facing protocol tests and `workers/social/room.mjs`. The room owns
+random rolls, timers, wave/match ids and settlement. Client loadouts are
+normalized and clamped before combat; the existing Sanctuary save remains a
+casual, client-saved collection rather than ranked/competitive proof. The
+server never accepts a client `battle_result`, damage total or reward amount.
+The local solo spar is still explicitly not authoritative PvP.
+
+Run `node tools/tests/digimon_battle_sim.js` and
+`node tools/tests/sanctuary_battle_sim.js` for combat/protocol coverage, plus
+`node tools/tests/digimon_sanctuary_sim.js`,
+`node tools/tests/digimon_sanctuary_ui_sim.js`, `social_ui_sim.js` and
+`social_scene_sim.js` for the existing collection and integration contracts.
+`tools/tests/social_worker_sim.mjs` also loads the battle module in the real
+local Durable Object runtime. The browser rehearsal uses two isolated clients
+and checks movement, waves, acceptance, countdown, results and reward dedupe.

@@ -498,7 +498,23 @@ this runtime. Gym apparatus is still scenery, not live training.
   Shop currency. `assets/social.js` renders the owned-only roster, Pet Bag and
   Cook Lina shop, consumes one Pet Meal per successful feed and grants the
   explicitly temporary local-spar reward once per win. `assets/social-scene.js`
-  opens that shop from Cook Lina. Live PvE and server-authoritative PvP reward
-  paths are not present; do not infer them from the client-authored spar.
-  `digimon_sanctuary_sim.js` and `digimon_sanctuary_ui_sim.js` cover migration,
-  random-pool bounds, purchase/feed/reward failures and the fresh-account flow.
+  opens that shop from Cook Lina. `digimon_sanctuary_sim.js` and
+  `digimon_sanctuary_ui_sim.js` cover migration, random-pool bounds,
+  purchase/feed/reward failures and the fresh-account flow.
+
+* **Live Sanctuary field and ring (v344):** `assets/digimon-battle.js` contains
+  the shared clamped loadout, same-stage three-bot wave simulation, mutual
+  acceptance, three-second countdown, automatic PvP rounds and stable reward
+  tables. `workers/social/room.mjs` owns room membership, positions, random
+  rolls, timers, wave/match IDs, cancellation and settlement; it ignores client
+  result/reward packets. `workers/social/index.mjs` and
+  `tools/social/dev-sockets.mjs` schedule battle ticks alongside the existing
+  alarms/timers. `assets/social.js` sends only start/accept/stop intents,
+  applies deduplicated server rewards to the original owned line, and renders
+  the field HUD, acceptance dialog, countdown and animated result.
+  `assets/social-scene.js` roams decorative residents only while no PvE run is
+  active, then renders independent partner/bot/ring sprites with health bars.
+  `social-battle.css` supplies the responsive presentation. Existing gym,
+  feeding, bag, Ragnarok-pet and Zeny boundaries are unchanged. Coverage:
+  `digimon_battle_sim.js`, `sanctuary_battle_sim.js`, the battle additions in
+  `social_scene_sim.js`, and the real two-client browser rehearsal.

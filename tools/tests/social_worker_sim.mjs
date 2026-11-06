@@ -50,6 +50,7 @@ const start=()=>new Miniflare({
   {type:'ESModule',path:'assets/digimon/roster.js'},
   {type:'ESModule',path:'assets/social-rules.js'},
   {type:'ESModule',path:'assets/social-poker.js'},
+  {type:'ESModule',path:'assets/digimon-battle.js'},
  ],
  modulesRoot:'.',compatibilityDate:useDate,
  durableObjects:{SOCIAL:{className:'Social',useSQLite:true}},durableObjectsPersist:persist,

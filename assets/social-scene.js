@@ -253,7 +253,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
  for(const x of [53.6,58,63,68,73,78,82.8]){box(x,1.5,117.45,.22,3,.22,darkWood);box(x,3.05,117.45,.36,.14,.36,lightWood)}
  for(const y of [1.9,2.6])box(68.2,y,117.45,29.2,.14,.14,wood);
 
- const sanctuaryLabels=[{x:84,z:37,title:'GYM · LIVE TRAINING'},{x:48,z:48,title:'FARM · WORK IN PROGRESS'},{x:49,z:92,title:'BOXING RING · WORK IN PROGRESS'},...[ [59,27,'POWER'],[65,20,'GUARD'],[74,22,'AGILITY'],[84,24,'FOCUS'] ].map(([x,z,title])=>({x,z,title,station:title.toLowerCase()}))].map(pad=>{const el=document.createElement(pad.station?'button':'div'),entry={pad,el,hover:false,pressed:false};el.className='social-sanctuary-label';el.textContent=pad.title;if(pad.station){el.type='button';el.dataset.station=pad.station;el.title='Train '+pad.title.toLowerCase()+' at this station';el.onclick=()=>callbacks.trainStation?.(pad.station);
+ const sanctuaryLabels=[{x:84,z:37,title:'GYM · LIVE TRAINING'},{x:48,z:48,title:'MIDDLE FIELD · AUTO GRINDING'},{x:49,z:92,title:'BOXING RING · TWO-PLAYER PVP'},...[ [59,27,'POWER'],[65,20,'GUARD'],[74,22,'AGILITY'],[84,24,'FOCUS'] ].map(([x,z,title])=>({x,z,title,station:title.toLowerCase()}))].map(pad=>{const el=document.createElement(pad.station?'button':'div'),entry={pad,el,hover:false,pressed:false};el.className='social-sanctuary-label';el.textContent=pad.title;if(pad.station){el.type='button';el.dataset.station=pad.station;el.title='Train '+pad.title.toLowerCase()+' at this station';el.onclick=()=>callbacks.trainStation?.(pad.station);
   // World projections move with the follow camera. Hold a station control still
   // while a mouse is over it or a touch is down so it cannot escape the click.
   el.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')entry.hover=true});el.addEventListener('pointerleave',()=>{entry.hover=false});el.addEventListener('pointerdown',()=>{entry.pressed=true});
@@ -266,8 +266,41 @@ window.PGSocialScene={async create(host,labels,callbacks){
  const residents=globalThis.PGSocialDigimon&&digimonStore?[['agumon',52,55],['palmon',60,70],['gabumon',77,58],['patamon',85,71]].map(([id,x,z],i)=>{
   const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);sprite.scale.set(256*1.45/96,256*1.45/96,1);sprite.position.set(x,.06,z);sprite.userData.sanctuaryResident=id;scene.add(sprite);digimonStore.request(id);
-  return {id,ctx:canvas.getContext('2d'),texture,sprite,frame:-1,flip:i%2===1};
+  return {id,ctx:canvas.getContext('2d'),texture,sprite,frame:-1,flip:i%2===1,homeX:x,homeZ:z,phase:i*1.7};
  }):[];
+ let battleState={pve:[],pvp:null};const battleParticipantIds=new Set(),battleResidents=new Map();
+ function battleSpecs(){
+  const specs=[];
+  for(const run of battleState.pve||[]){
+   if(!run||run.phase==='ended')continue;const slot=Number(run.slot)||0,fx=70+(slot%4-1.5)*8,fz=60+Math.floor(slot/4)*10;
+   const add=(key,u,x,z,label,enemy=false)=>{if(!u||!PGSocialDigimon?.clean(u.form))return;specs.push({key,species:u.form,x,z,hp:u.hp,maxHp:u.maxHp,label,enemy,phase:run.phase,kind:'pve',owner:run.owner,wave:run.wave})};
+   add('pve:'+run.id+':partner',run.partner,fx,fz,'WAVE '+run.wave+' · PARTNER');
+   (run.enemies||[]).forEach((u,i)=>add('pve:'+run.id+':'+u.id,u,fx-3+i*3,fz+4,'WAVE '+run.wave+' · BOT',true));
+  }
+  const match=battleState.pvp;if(match&&match.phase!=='closed')for(const [i,p] of (match.participants||[]).entries()){
+   const u=p.unit;if(!u||!PGSocialDigimon?.clean(u.form))continue;const r=R.SANCTUARY_RING;specs.push({key:'pvp:'+match.id+':'+p.id,species:u.form,x:r.x+(p.side==='left'?-4:4),z:r.z,hp:u.hp,maxHp:u.maxHp,label:p.name||('PLAYER '+(i+1)),enemy:i===1,phase:match.phase,kind:'pvp',owner:p.id,winnerId:match.winnerId});
+  }
+  return specs;
+ }
+ function setBattleState(next){
+  battleState={pve:Array.isArray(next?.pve)?next.pve:[],pvp:next?.pvp||null};battleParticipantIds.clear();
+  for(const run of battleState.pve)if(Number.isInteger(run.owner))battleParticipantIds.add(run.owner);
+  for(const p of battleState.pvp?.participants||[])if(Number.isInteger(p.id))battleParticipantIds.add(p.id);
+  const keep=new Set();for(const spec of battleSpecs()){
+   keep.add(spec.key);let u=battleResidents.get(spec.key);if(!u){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const ring=new T.Mesh(new T.RingGeometry(.8,1,24),new T.MeshBasicMaterial({color:spec.kind==='pvp'?0xf3c876:0x9ed6b0,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;scene.add(ring);u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec};battleResidents.set(spec.key,u)}u.spec=spec;u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;digimonStore?.request(spec.species);
+  }
+  for(const [key,u] of battleResidents)if(!keep.has(key)){scene.remove(u.sprite,u.ring);u.sprite.material.dispose();u.texture.dispose();u.ring.geometry.dispose();u.ring.material.dispose();battleResidents.delete(key)}
+  for(const r of residents)r.sprite.visible=!battleState.pve.length;
+ }
+ function updateBattleResidents(now){
+  for(const u of battleResidents.values()){
+   const s=u.spec,asset=digimonStore?.ready(s.species);u.sprite.visible=!!asset;u.ring.visible=!!asset;if(!asset){digimonStore?.request(s.species);continue}
+   const fighting=s.phase==='fighting',dead=s.hp<=0||(s.kind==='pvp'&&s.phase==='result'&&s.winnerId!=null&&s.winnerId!==s.owner);let stance=dead?'faint':fighting&&Math.floor(now/500)%2===0?'attack':'idle';if(!asset.record.actions[stance])stance='idle';
+   const time=stance==='faint'?(asset.record.actions[stance].length-1)*50:now,flip=s.enemy;const n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,5),key=[s.species,stance,n,flip,s.hp,s.label].join(':');
+   if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,5,flip);if(u.ctx&&typeof u.ctx.fillRect==='function'){const ctx=u.ctx;ctx.fillStyle='rgba(28,35,30,.85)';ctx.fillRect(38,3,180,13);ctx.fillStyle=s.hp/s.maxHp>.35?'#9bd36d':'#e87868';ctx.fillRect(40,5,176*Math.max(0,Math.min(1,s.hp/Math.max(1,s.maxHp))),9);if(typeof ctx.fillText==='function'){ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,29,190)}}u.texture.needsUpdate=true;u.paint=key}
+   const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(s.species)||1),lunge=stance==='attack'?(s.enemy?-.22:.22):0;u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(s.x+lunge,.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),s.z);u.ring.position.set(s.x,.08+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),s.z);u.ring.scale.setScalar(1+.08*Math.sin(now/180));
+  }
+ }
  // Training pets are independent world sprites, not followers anchored to their
  // owners. The room assigns each one an apparatus; the client only animates it.
  const gymResidents=new Map();
@@ -291,7 +324,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(species)||1);u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(x,.06+lift,z);u.sprite.userData.training=stat;
   const n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,5),key=[species,stance,n,flip].join(':');if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,5,flip);u.texture.needsUpdate=true;u.paint=key}
  }}
- function updateResidents(now){for(const r of residents){const asset=digimonStore.ready(r.id);if(!asset){digimonStore.request(r.id);continue}const frame=PGSocialDigimon.frameIndex(asset.record.actions.idle.length,now,'idle',5);if(frame!==r.frame){r.frame=frame;PGSocialDigimon.draw(r.ctx,asset,'idle',now,5,r.flip);r.texture.needsUpdate=true}}}
+ function updateResidents(now){for(const r of residents){if(battleState.pve.length){r.sprite.visible=false;continue}r.sprite.visible=true;const asset=digimonStore.ready(r.id);if(!asset){digimonStore.request(r.id);continue}const t=now/1000+r.phase,x=r.homeX+Math.sin(t*.34)*2.4,z=r.homeZ+Math.cos(t*.27)*1.8,walking=Math.abs(Math.cos(t*.34))>.18;r.sprite.position.set(x,.06,z);r.flip=Math.cos(t*.34)<0;const stance=walking?'walking':'idle',frame=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,now,stance,5);if(frame!==r.frame||r.stance!==stance){r.frame=frame;r.stance=stance;PGSocialDigimon.draw(r.ctx,asset,stance,now,5,r.flip);r.texture.needsUpdate=true}}}
  const [gardenCatalog,gardenBuffer,gardenAtlas]=await Promise.all([fetch('assets/native-fields/v1/catalog.json').then(r=>{if(!r.ok)throw Error('Garden metadata unavailable');return r.json()}),fetch('assets/native-fields/v1/prontera/models.bin').then(r=>{if(!r.ok)throw Error('Garden models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/native-fields/v1/prontera/models.webp')]);
  gardenAtlas.flipY=false;const gardenMat=modelMat.clone();gardenMat.map=gardenAtlas;gardenMat.onBeforeCompile=modelMat.onBeforeCompile;
  const garden=gardenCatalog.maps.find(m=>m.name==='prontera'),gardenFloats=new Float32Array(gardenBuffer);
@@ -1036,8 +1069,8 @@ void main(){
   {id:'coach',name:'Coach Mara',role:'GYM',x:69,z:20,cls:'Monk',sex:'f',head:14,color:3,text:'Bring your partner close to a station and tap Train. You can walk away while you stay online.'},
   {id:'food',name:'Cook Lina',role:'FOOD CART',x:28,z:39,cls:'Merchant',sex:'f',head:2,color:3,text:'Pet Meals and Mystery Digi-Eggs are ready! I accept Pet Coins for your Sanctuary bag.'},
   {id:'trainer',name:'Trainer Jori',role:'TRAINER',x:27.7,z:55,cls:'Knight',sex:'m',head:19,color:6,text:'Choose a partner in Sanctuary, then visit Coach Mara and the gym stations.'},
-  {id:'guide',name:'Guide Nia',role:'FIELD GUIDE',x:27.7,z:71,cls:'Hunter',sex:'f',head:14,color:2,text:'The meadow companions are decorative for now. Automatic encounters are not active yet.'},
-  {id:'ring',name:'Ringkeeper Rook',role:'BOXING RING',x:51,z:94,cls:'Crusader',sex:'m',head:19,color:4,text:'The ring is ready to explore. Matches and spectators are not active yet.'}
+  {id:'guide',name:'Guide Nia',role:'FIELD GUIDE',x:27.7,z:71,cls:'Hunter',sex:'f',head:14,color:2,text:'The meadow companions roam while the field is quiet. Start grinding to bring your owned partner in and clear repeating same-stage groups.'},
+  {id:'ring',name:'Ringkeeper Rook',role:'BOXING RING',x:51,z:94,cls:'Crusader',sex:'m',head:19,color:4,text:'Two trainers: take opposite sides below the ring, enter together, and both accept. Your Digimon fight automatically after a three-second countdown.'}
  ];
  const sanctuaryNpcs=sanctuaryNpcSpecs.map(spec=>{
   const canvas=document.createElement('canvas');canvas.width=320;canvas.height=280;
@@ -1308,7 +1341,7 @@ void main(){
  fishingApi.update(now,dt);
  const w=viewW||host.clientWidth,h=viewH||host.clientHeight;
  for(const {pad,el,hover,pressed} of sanctuaryLabels){if(pad.station&&(hover||pressed))continue;head.set(pad.x,.08,pad.z).project(camera);const hidden=head.z>1||head.z<-1||Math.abs(head.x)>1||Math.abs(head.y)>1||behindGymWall(pad.x,.08,pad.z);el.hidden=hidden;if(!hidden){el.style.left=((head.x+1)*w*.5).toFixed(1)+'px';el.style.top=((1-head.y)*h*.5).toFixed(1)+'px'}}
- updateResidents(now);updateGymResidents(now);
+ updateResidents(now);updateGymResidents(now);updateBattleResidents(now);
  updateSanctuaryNpcs(now,w,h);
  // Render table Dealers first so cached frames stay quiet and player stance draws remain authoritative.
  loadDealers(now);
@@ -1369,9 +1402,9 @@ void main(){
   const seatOffset=pokerChair?0:chair?.35:0;
   p.sprite.position.set(baseX+(chair?Math.sin(chair.rotation)*seatOffset:0),floor,state.z+(chair?Math.cos(chair.rotation)*seatOffset:0));
   // Fixed-view sprites track the same movement path/speed as the avatar, without touching RO pets.
-  const digimon=globalThis.PGSocialDigimon,id=digimon?.clean(state.look?.digimon);
-  if(!id&&p.digimon){scene.remove(p.digimon.sprite);p.digimon.sprite.material.dispose();p.digimon.texture.dispose();p.digimon=null}
-  if(id&&digimonStore){
+  const digimon=globalThis.PGSocialDigimon,id=digimon?.clean(state.look?.digimon),battleHidden=battleParticipantIds.has(state.id);
+  if((!id||battleHidden)&&p.digimon){scene.remove(p.digimon.sprite);p.digimon.sprite.material.dispose();p.digimon.texture.dispose();p.digimon=null}
+  if(id&&digimonStore&&!battleHidden){
    const asset=digimonStore.ready(id);if(!asset)digimonStore.request(id);
    if(asset){
     if(!p.digimon){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);sprite.scale.set(256*1.45/96,256*1.45/96,1);sprite.userData.digimonOwner=state.id;scene.add(sprite);p.digimon={canvas,ctx:canvas.getContext('2d'),texture,sprite,paint:'',flip:false,follower:digimon.createFollower(state,state.dir,R.walkable)}}
@@ -1399,6 +1432,6 @@ void main(){
   }else if(p.bubbleUntil){p.bubbleUntil=0;p.bhid=true;p.bubble.hidden=true;p.bubble.replaceChildren()}
  }
  renderer.render(scene,camera)}requestAnimationFrame(frame);
- return {putPlayer,removePlayer,setGymResidents,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
+ return {putPlayer,removePlayer,setGymResidents,setBattleState,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
  }catch(error){renderer.dispose();renderer.domElement.remove();throw error}
 }};

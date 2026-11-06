@@ -36,6 +36,7 @@ require assets/sprite_pack_data.js
 require assets/class_skins_data.js
 require assets/weapon_joints_data.js
 require assets/digimon-sanctuary.js
+require assets/digimon-battle.js
 require assets/social-digimon.js
 require assets/digimon/roster.js
 require assets/digimon/v3/catalog.json

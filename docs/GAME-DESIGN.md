@@ -611,7 +611,21 @@ is still visual world-building, not the requested on-map training gameplay.
   other may follow or use the existing temporary solo spar. Connected room
   reservations prevent simultaneous pets using the same equipment; each stat
   has three positions per plaza. Care/stat gates stop training. One XP is earned
-  per cycle and four XP per level; levels currently have no combat effect. No
+  per cycle and four XP per level; levels were cosmetic before the v344 battle loadout. No
   training continues across logout/reload/disconnect. Stats are casual and
   client-authored, not PvP authority. Live automatic PvE and authoritative PvP
   remain future systems.
+
+* **Live Sanctuary grinding and ring PvP (v344):** The middle field hides its
+  roaming decorative residents during an online run, places the selected owned
+  Digimon in the world, and repeatedly spawns three random bots from the
+  partner's exact stage after each full-group defeat. The room controls combat
+  and sends wave rewards to the existing Pet Coin/XP/win progression. Two
+  distinct players can queue from opposite ring sides, mutually accept, watch a
+  three-second countdown and let their Digimon auto-fight on the canvas. The
+  Social Worker settles the result and rewards; animated WIN/LOSE/DRAW feedback
+  is sent to each participant. Care limits, feeding, gym reservations, owned
+  lines, Ragnarok pets and Zeny remain separate. Casual client-saved stats are
+  clamped loadout inputs, not ranked authority; the old solo spar is still local.
+  See `SOCIAL-HUB.md` for protocol and `digimon_battle_sim.js` /
+  `sanctuary_battle_sim.js` for deterministic coverage.

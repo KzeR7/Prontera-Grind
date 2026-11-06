@@ -116,5 +116,20 @@ function bagReward(raw,kind){
  const before=state.coins;state.coins=cap(state.coins+SPAR_COINS,0,999999);
  return {ok:true,state,changed:state.coins!==before,amount:state.coins-before,message:state.coins>before?'+'+(state.coins-before)+' Pet Coins from the spar.':'Pet Coin pouch is full.'};
 }
-return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,level,normalize,update,act,species,total,requirements,evolutionOptions,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagFeed,bagReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
+// The room sends this profile as a battle loadout. It contains no inventory or Zeny and is
+// normalized again by the server before it can influence a match.
+function combatProfile(raw,line,slot=0){
+ const state=normalize(raw,line),p=state?.partners?.[line];if(!p)return null;
+ return {lineId:line,form:p.form,slot:slot===1?1:0,level:level(p),xp:p.xp,wins:p.wins,mastery:p.mastery,fatigue:p.fatigue,fullness:p.fullness,stats:{...p.stats}};
+}
+// Apply only a server-issued result to the existing owned line. The caller deduplicates the
+// battle id; this function deliberately has no client-selected outcome or reward amount API.
+function applyBattleReward(raw,bagRaw,line,reward){
+ const state=normalize(raw,line),bag=normalizeBag(bagRaw),p=state?.partners?.[line];
+ if(!state||!bag||!p||!reward||typeof reward!=='object')return {ok:false,state,bag,changed:false,message:'This battle reward could not be applied.'};
+ const coins=cap(reward.coins,0,10000),xp=cap(reward.xp,0,100),wins=cap(reward.wins,0,1),fatigue=cap(reward.fatigue,0,20),fullness=cap(reward.fullness,-20,0);
+ const before=bag.coins;bag.coins=cap(bag.coins+coins,0,999999);p.xp=cap(p.xp+xp,0,3996);p.wins=cap(p.wins+wins,0,999);p.fatigue=cap(p.fatigue+fatigue,0,100);p.fullness=cap(p.fullness+fullness,0,100);
+ return {ok:true,state,bag,changed:true,amount:bag.coins-before,message:'+'+(bag.coins-before)+' Pet Coins · +'+xp+' XP'+(wins?' · +1 win':'')};
+}
+return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,level,normalize,update,act,species,total,requirements,evolutionOptions,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagFeed,bagReward,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
 });

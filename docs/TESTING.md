@@ -47,15 +47,25 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```
 
-## Latest local gate (haven-v343)
+## Latest local gate (haven-v344)
 
-The 2026-11-06 complete local run passed **204 checks / 0 failures** on Node
-22.22.3: four generated-asset/config checks, 187 `*_sim.js`, seven `*_sim.mjs`,
+The 2026-11-06 complete local run passed **207 checks / 0 failures** on Node
+22.22.3: four generated-asset/config checks, 189 `*_sim.js`, eight `*_sim.mjs`,
 and six `*_smoke.js` suites. There were no dependency skips. This includes the
-complete 280-form asset validation, the new saved-egg/owned-bag/Pet Coin UI
-regression, publish-size checks, real local Social Worker runtime, and fixed
-historical staging-package rehearsal. It is local evidence, not a hosted
-deployment or physical-device certification.
+complete 280-form asset validation, deterministic Sanctuary combat and room
+authority, a real workerd/two-WebSocket field-and-ring rehearsal, publish-size
+checks, and the fixed historical staging-package rehearsal. For the BUILD-only
+combat-hash refresh, all three progression fixtures retained all 126 historical
+and 126 current measurements byte-for-byte; only their source/combat hashes
+advanced.
+
+Real Chromium acceptance against the final built site passed **12 checks** with
+zero page errors or failed local requests: owned partners, same-stage PvE waves,
+server-issued Pet Coins, resident restoration, opposite-side offers, a genuine
+countdown cancellation with no result/reward, requeue and mutual acceptance,
+automatic PvP, WIN/LOSE presentation, and distinct settlement IDs. These are
+local disposable-environment results, not hosted staging, production deployment,
+physical-device certification, or an exhaustive visual review of all 280 forms.
 
 ## Account security and unverified competitive boards (haven-v262)
 
@@ -467,6 +477,7 @@ the page or the server.
 | Shop | `shop_api_sim` (Pages Functions + in-memory D1), `shop_sim` (the page in jsdom), `ascension_drop_shop_sim`, `dev_server_sim` |
 | GM tools and leaderboard | `gm_console_sim`, `gm_tools_sim`, `gm_auth_sim`, `gm_presets_sim`, `gm_setup_sim`, `leaderboard_sim` |
 | Social hub | `social_sim`, `social_ui_sim`, `social_scene_sim`, `social_config_sim`, `social_api_sim.mjs`, `social_worker_sim.mjs` |
+| Sanctuary field/ring combat | `digimon_battle_sim`, `sanctuary_battle_sim`, `sanctuary_worker_battle_sim.mjs` (real workerd, two actual WebSockets, movement, offers, countdown, combat and server-only settlement) |
 | Friends (accounts, not saves) | `friends_sim` (migration, auth, one-way request, limits, privacy, audit rows, per-viewer plaza flags), `friends_ui_sim` (the panel in jsdom: add box, accept, unfriend, dock badge, chat name menu, sign-out wipe) |
 | Publishing and build labels | `publish_sim` (builds `dist/`), `update_watch_sim` (the `BUILD` mirrors) |
 | Smoke (boot the real page) | `field_loop_smoke`, `save_owner_boot_smoke`, `panel_layout_smoke` |
@@ -504,6 +515,24 @@ For visual multiplayer QA, use two signed-in clients and the matching Social
 Worker: check each station at multiple camera angles and sizes, then leave one
 player in the field, stop/disconnect and confirm reservation release. Training
 progress is client-saved, so these tests are not PvP-authority tests.
+
+### Sanctuary field grinding and ring PvP (v344)
+
+Run `node tools/tests/digimon_battle_sim.js` for exact-stage bot groups, waves,
+automatic combat, PvP outcomes, rewards and care-stat clamping. Run
+`node tools/tests/sanctuary_battle_sim.js` for room authority, forged-result
+rejection, opposite-side matchmaking, mutual acceptance, cancellation and
+disconnect cleanup. `node tools/tests/sanctuary_worker_battle_sim.mjs` repeats
+the multiplayer path in real workerd with two actual WebSockets; do not replace
+it with a direct room mock when changing Worker alarms or position validation.
+
+For browser acceptance, use two isolated signed-in browser contexts against the
+built site and matching Social Worker. Exercise a field wave and Stop grinding,
+then enter from opposite ring approaches. Verify that the countdown's **Cancel
+match** button remains clickable while 250 ms snapshots arrive, produces no
+result or reward on either client, and permits a fresh queue/rematch. Finish the
+rematch and compare both server-issued result/reward IDs. A local Chromium or
+workerd pass is not evidence of a hosted deployment.
 
 ### Complete Digimon roster gate (v342)
 
