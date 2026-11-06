@@ -227,6 +227,21 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-06 (`haven-v330`): self-rebase, the sync ledger, and a swap that loses progress.**
+`cloud_sim` answers a `PUT` with a 409 carrying a copy that is the device's own previous upload one
+version ahead (31.7M against the device's 33.3M): the client must **rebase** — return `rebase`, adopt
+version 8 without adopting the blob, arm one retry that sends 33.3M on version 8, and record both
+figures. A copy that is genuinely ahead (41M) must still be adopted, and a device two versions stale
+must not be allowed to force its copy up — mutation-checked both ways. An adopt must also paint `☁ ↺`
+rather than `☁ ✓`, because the tick printed the previous upload's time and made a rollback look healthy.
+
+**2026-11-06 (`haven-v330`): the sync ledger, and a swap that loses progress.**
+`cloud_sim` drives `cloudAdopt` with an account copy that is behind the browser's (33,000,000 vs
+31,200,000 Zeny) and requires an `adopt-behind` row carrying both figures, a log line naming both, and
+the newer copy still stashed — while a copy that is ahead must be a plain `adopt` that says nothing, so
+the warning cannot become noise. It also requires `push-ok` (with the version and the Zeny it carried)
+and `push-fail` to be recorded, and the ring to keep exactly the last 40. All mutation-checked.
+
 **2026-11-06 (`haven-v328`): a request that never settles, and a save that goes quiet.**
 `cloud_sim` drives a `fetch` that stays pending until its signal aborts — the shape of a dropped socket —
 and requires the attempt to end as `offline` with `pushing` cleared and the save still dirty, then a real

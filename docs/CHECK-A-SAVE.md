@@ -211,6 +211,38 @@ On the server side the same event looks like a *gap*: `save_history` samples eve
 stops advancing at the last version that really landed. That is a fingerprint worth recognising: a
 healthy account's ladder moves every 10–25 minutes.
 
+## "The badge had a tick and I still lost the last hour" (v330)
+
+`☁ ✓` proves the last **accepted** push happened; it does not prove the Zeny on screen was inside it.
+Those are different facts, and the gap between them is where the remaining reports live. Since the
+decision is made once and never shown, the client now keeps a ledger of it:
+
+```js
+pgSyncLog()   // the last 40 decisions, oldest first
+```
+
+| `kind` | What it means |
+|---|---|
+| `push-ok` | A save was accepted. `v` is the version it produced, `zeny`/`kills` are what it carried — **this is what the account now holds**. |
+| `push-fail` | A save was not accepted, with the reason. The save stays dirty and retries. |
+| `join` | A login compared the two copies: `serverV`/`serverZeny` against `localV`/`localZeny`. Which one was kept follows on the next row. |
+| `rebase` | A conflict that was this device's **own last upload** (server one version ahead, this copy at least as far along in Zeny, kills and level). The account's version *number* was taken and this save pushed on top — nothing was rolled back. |
+| `adopt` | The account copy replaced this browser's, and it was **not** behind. Normal. |
+| `adopt-behind` | The account copy replaced this browser's **and it was behind** — fewer Zeny, no more kills. `wasZeny` → `nowZeny` is the loss, `backup` is the key the newer copy was stashed under. This is the row a report like "it went back to 31m" should contain. |
+
+So a report is answerable in one paste: look for the last `push-ok` before the logout — if its `zeny`
+is the number the player saw, the account really had it and something *later* wrote over it; if it is
+an older number, that push simply never took the last window. Then look at the `join`/`adopt-behind`
+rows for the login.
+
+A rollback that leaves the badge on an old `☁ ✓ HH:MM` is the `409`-then-adopt shape, not a stalled push: the
+badge reports the last *accepted* upload, and adopting does not change that time. Since v330 that case is
+rebased instead (row `rebase`), and an adopt paints `☁ ↺` rather than a tick, so the badge can no longer
+claim a save that did not happen.
+
+The same comparison is spoken in the game's own log: an `adopt-behind` puts both figures and the
+backup key in front of the player, so it is visible at the time rather than reconstructed afterwards.
+
 ## A note on the v280 fix
 
 v280 makes the save's identity the account id instead of its name. It fixes an account whose **name

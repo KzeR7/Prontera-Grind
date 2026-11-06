@@ -181,6 +181,8 @@ function harness(opts = {}) {
     'cloudJoin','cloudRefresh','cloudStart','saveBackup','restoreBackup',
     // v328: the request deadline, the stuck-push watchdog and the quiet-save note.
     'CLOUD_TIMEOUT_MS','CLOUD_STALL_MS','cloudPushWatchdog','cloudStallNote',
+    // v330: the decision ledger, and the figures a lost session is measured in.
+    'syncLog','syncLogShow','saveFigures','SYNC_LOG_KEY',
     // v326: which copy is newer, and the version stamp that makes it answerable after a reload.
     'cloudBaseOf','localAheadOfServer','cloudStampBase','cloudFlushLeaving',
     // v82 usage diet: the cadence constants and the poll tick are asserted on directly.
@@ -1616,6 +1618,117 @@ await T('v328: an unsent save says so instead of looking saved', async () => {
   b.CLOUD.dirty = true; b.CLOUD.lastPush = 0; b.CLOUD.onSince = Date.now();
   b.cloudStallNote();
   assert.strictEqual(h.state.logs.length, said, 'the clock starts at the sign-in, not at zero');
+});
+
+await T('v330: an account copy that is behind this browser is named, with both numbers', async () => {
+  // The owner: "it was 33m when i logout. cloud with a tick. then relog back to 31m+". The account
+  // winning is a normal silent path, so the one moment the loss is visible is the swap itself.
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A';
+  h.store.set('pg_save3_A', JSON.stringify({ lv: 150, zeny: 33e6, kills: 1000, owner: 'A', cloud: { v: 40, at: 1 }, offlineAt: 2 }));
+  await b.cloudAdopt({ version: 41, blob: JSON.stringify({ lv: 150, zeny: 31.2e6, kills: 1000, owner: 'A' }) });
+  const rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY));
+  const last = rows[rows.length - 1];
+  assert.strictEqual(last.kind, 'adopt-behind', 'the swap is recorded as the downgrade it was');
+  assert.strictEqual(last.wasZeny, 33e6, 'with what this browser held...');
+  assert.strictEqual(last.nowZeny, 31.2e6, '...and what replaced it');
+  assert.strictEqual(last.v, 41, 'and the account version that won');
+  const said = h.state.logs.map(l => l.m).join('\n');
+  assert.match(said, /BEHIND this browser/, 'the player is told, in the log, not just in a table');
+  assert.match(said, /33,000,000/, 'with the Zeny they lost');
+  assert.match(said, /31,200,000/, 'and the Zeny they got');
+  assert.ok([...h.store.keys()].some(k => k.startsWith('pg_save3_A_local_')), 'and the newer copy is still on the device');
+  assert.strictEqual(JSON.parse(h.store.get('pg_save3_A')).zeny, 31.2e6, 'the account copy is the live one, as decided in v2');
+});
+
+await T('v330: a normal adopt, or one that gains, is recorded but not alarming', async () => {
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A';
+  h.store.set('pg_save3_A', JSON.stringify({ lv: 140, zeny: 5e6, kills: 900, owner: 'A' }));
+  await b.cloudAdopt({ version: 41, blob: JSON.stringify({ lv: 150, zeny: 31.2e6, kills: 1000, owner: 'A' }) });
+  const rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY));
+  assert.strictEqual(rows[rows.length - 1].kind, 'adopt', 'an account copy that is ahead is just an adopt');
+  assert.ok(!h.state.logs.some(l => /BEHIND this browser/.test(l.m)), 'and nobody is told about a loss that did not happen');
+});
+
+await T('v330: every push outcome lands in the ledger, and the ring stays bounded', async () => {
+  const h = harness({ routes: { '/save': { body: { version: 7 } } } });
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true;
+  b.S = { lv: 150, zeny: 33e6, kills: 1000 };
+  assert.strictEqual(await b.cloudPush(true), 'ok');
+  let rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY));
+  assert.strictEqual(rows[rows.length - 1].kind, 'push-ok', 'a landed save is recorded with its version');
+  assert.strictEqual(rows[rows.length - 1].v, 7);
+  assert.strictEqual(rows[rows.length - 1].zeny, 33e6, 'and the Zeny it carried - which is the number the account keeps');
+  const dead = harness({ routes: { '/save': { throw: 'offline' }, '/me': { throw: 'offline' } } });
+  dead.sandbox.currentUser = 'A'; dead.sandbox.CLOUD.on = true; dead.sandbox.CLOUD.user = 'A'; dead.sandbox.CLOUD.api = true;
+  dead.sandbox.S = { lv: 150, zeny: 33e6, kills: 1000 };
+  await dead.sandbox.cloudPush(true);
+  rows = JSON.parse(dead.store.get(dead.sandbox.SYNC_LOG_KEY));
+  assert.strictEqual(rows[rows.length - 1].kind, 'push-fail', 'and a save that never landed is recorded too');
+  for (let i = 0; i < 60; i++) b.syncLog('tick', { i });
+  rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY));
+  assert.strictEqual(rows.length, 40, 'the ring keeps the last 40 decisions, not the session');
+  assert.strictEqual(rows[rows.length - 1].i, 59, 'the newest is last');
+});
+
+await T('v330: a 409 that is this device\'s own last upload rebases instead of rolling back', async () => {
+  // The owner's screenshots: same badge time in both, 33.3M then 31.7M. That is our own accepted upload
+  // coming back as a conflict after its answer was lost - adopting it deletes everything since.
+  const h = harness({ runTimers: true, routes: {
+    '/save': (seq) => {
+      if (seq === 1) return { status: 409, body: { conflict: true, version: 8,
+        blob: JSON.stringify({ lv: 150, kills: 1000, zeny: 31700000, owner: 'A' }) } };
+      return { body: { version: 9 } };
+    },
+  } });
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.CLOUD.ver = 7;
+  b.S = { lv: 150, kills: 1100, zeny: 33300000, owner: 'A' };
+  assert.strictEqual(await b.cloudPush(true), 'rebase', 'the conflict is recognised as our own echo');
+  assert.strictEqual(b.CLOUD.ver, 8, 'and the account\'s version number is taken, not its save');
+  assert.strictEqual(b.S.zeny, 33300000, 'this device keeps the 33.3M it ground');
+  await h.sandbox.settle();                                  // the armed retry goes out on version 8
+  const puts = h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.strictEqual(puts.length, 2, 'one refused attempt and one rebased retry');
+  assert.strictEqual(JSON.parse(puts[1].init.body).version, 8, 'the retry carries the account\'s version');
+  assert.strictEqual(JSON.parse(puts[1].init.body).blob.includes('33300000'), true, 'and this device\'s save');
+  const rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY) || '[]');
+  assert.ok(rows.some(r => r.kind === 'rebase' && r.serverZeny === 31700000 && r.keptZeny === 33300000),
+    'the ledger records both numbers');
+});
+
+await T('v330: a conflict that is really another copy still loses to the account', async () => {
+  const ahead = harness({ routes: { '/save': { status: 409, body: { conflict: true, version: 8,
+    blob: JSON.stringify({ lv: 150, kills: 1200, zeny: 41000000, owner: 'A' }) } } } });
+  const a = ahead.sandbox;
+  a.currentUser = 'A'; a.CLOUD.on = true; a.CLOUD.user = 'A'; a.CLOUD.api = true; a.CLOUD.ver = 7;
+  a.S = { lv: 150, kills: 1100, zeny: 33300000, owner: 'A' };
+  assert.strictEqual(await a.cloudPush(true), 'adopted', 'a copy that is genuinely ahead wins, as v2 decided');
+  assert.strictEqual(a.CLOUD.ver, 8);
+  // and one that is two versions ahead is never a rebase, whatever the figures say
+  const far = harness({ routes: { '/save': { status: 409, body: { conflict: true, version: 12,
+    blob: JSON.stringify({ lv: 150, kills: 900, zeny: 100, owner: 'A' }) } } } });
+  const f = far.sandbox;
+  f.currentUser = 'A'; f.CLOUD.on = true; f.CLOUD.user = 'A'; f.CLOUD.api = true; f.CLOUD.ver = 7;
+  f.S = { lv: 150, kills: 1100, zeny: 33300000, owner: 'A' };
+  assert.strictEqual(await f.cloudPush(true), 'adopted', 'a stale device is not allowed to force its copy up');
+});
+
+await T('v330: the badge stops claiming a save after an adopt', async () => {
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A';
+  b.CLOUD.lastPush = Date.now() - 3600000;                   // an hour-old upload
+  h.store.set('pg_save3_A', JSON.stringify({ lv: 150, zeny: 33e6, kills: 1000, owner: 'A' }));
+  await b.cloudAdopt({ version: 41, blob: JSON.stringify({ lv: 150, zeny: 31.2e6, kills: 1000, owner: 'A' }) });
+  const badge = h.els.get('cloudBadge');
+  assert.match(badge.title, /Loaded the account save/, 'the badge says what happened...');
+  assert.match(badge.textContent, /↺/, 'with its own glyph rather than a tick');
+  assert.doesNotMatch(badge.title, /On your account since/, 'and never repaints the old upload time as if it were now');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
