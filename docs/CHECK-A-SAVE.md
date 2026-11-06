@@ -182,6 +182,35 @@ above it names the client (its own `cloud.v`) that wrote over the good copy. Tha
 server side without touching the browser at all — which is the right tool when the device's copies are
 all older than the history.
 
+## "An hour of play never reached the account" (v328)
+
+The shape: hours of progress, a console with nothing in it, and a login that loads an older copy. A save
+that is *refused* prints in red; a save that is *never sent* prints nothing at all, and until v328 the
+second one had a one-way door in front of it: every request was fetched with no deadline, `cloudPush`
+keeps `CLOUD.pushing` true until its request settles, and `cloudPush` returns `idle` while that flag is
+set. One socket the network dropped and the whole session stopped uploading — silently, for ever, with
+the in-game badge frozen on "☁ ⇅ Syncing…".
+
+Three things now make that state impossible to hide:
+
+* **Every request has a deadline** (`CLOUD_TIMEOUT_MS`, 20 s, via an `AbortController`). The abort takes
+  the ordinary offline path: the save stays dirty and the next flush sends it.
+* **A watchdog on the poll tick** drops a push that outlived its own deadline and re-queues its save, so
+  the flag cannot outlive the request even where `AbortController` is missing.
+* **A quiet save says so.** If the save is dirty and has not reached the account for `CLOUD_STALL_MS`
+  (5 min) while the session is live, the badge reads "Not saved for N min" and the log explains that the
+  progress is in this browser but the account still holds the older copy.
+
+So the first question for a report like this is now answerable from the page itself: **what did the
+badge say?** `☁ ⇅ Syncing…` frozen meant a dead request (v328 fixes it); `☁ … Not saved for 12 min` means
+the flush is being refused or skipped, and the log line above it says why; `☁ ✓` with an older
+character on screen means the loss happened before, not now — go to the ladder.
+
+On the server side the same event looks like a *gap*: `save_history` samples every tenth version
+(`HISTORY_EVERY`) and keeps five, so a run of zero writes leaves no row at all, and the ladder simply
+stops advancing at the last version that really landed. That is a fingerprint worth recognising: a
+healthy account's ladder moves every 10–25 minutes.
+
 ## A note on the v280 fix
 
 v280 makes the save's identity the account id instead of its name. It fixes an account whose **name

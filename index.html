@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=327">
-<link rel="stylesheet" href="assets/social-fishing.css?v=327">
+<link rel="stylesheet" href="assets/social.css?v=328">
+<link rel="stylesheet" href="assets/social-fishing.css?v=328">
 <link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
@@ -1312,7 +1312,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-06 haven-v327 away-claim login fix, fishing sell fix';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-11-06 haven-v328 sync deadline, watchdog, stall notice';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3682,6 +3682,9 @@ $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>s
 // debounced push. Nothing here can lose progress - every conflict keeps both copies, and the loser
 // stays in the account's save history where the GM console can restore it.
 const CLOUD={api:false,on:false,user:null,id:0,gm:false,ver:0,dirty:false,lastPush:0,pushing:false,
+  // v328: when the push in flight started, and when this session opened. Without them a request that
+  // never settles is indistinguishable from one that is merely slow, and a silent stall has no clock.
+  pushSince:0,onSince:0,
   offline:false,paused:false,checking:false,
   // v2: set when the server cannot be reached at all. While it is true the character is treated as
   // AWAY (the simulation stops), and reconnecting adopts the account's save and pays the gap at the
@@ -3711,6 +3714,14 @@ const CLOUD_HIDDEN_DEBOUNCE=150000;  // ...and this often while it is hidden (a 
                                      // open overnight wrote ~1,400 save rows by morning)
 const CLOUD_POLL_MS=300000;          // announcements and gifts while the tab is visible
 const CLOUD_HIDDEN_POLL_MS=900000;   // ...and while it is hidden: a message may wait 15 minutes
+// v328 (owner: "afk for 1 hour reaches 50m zeny, then logout and login and it is back to 30m"): the
+// push that was in flight when the network died never settled, and CLOUD.pushing stayed true for
+// ever - so every later flush returned 'idle' without a line in the console, the whole session
+// stopped uploading, and the next login found whatever the account last received. No request may
+// now outlive CLOUD_TIMEOUT_MS, and a save that has not reached the account for CLOUD_STALL_MS says
+// so in the log and on the badge instead of looking exactly like one that did.
+const CLOUD_TIMEOUT_MS=20000;        // one request's whole life; past this it is treated as lost
+const CLOUD_STALL_MS=300000;         // how long an unsent save may stay unmentioned
 const CLOUD_MAX_AGE=900000;          // a tab hidden longer than this re-pulls before pushing again
 // v274 (owner): "no multiple login - the second login kicks the first out". The
 // server has ended the older session for a long time (db.startVerifiedSession
@@ -3759,7 +3770,25 @@ function cloudBadgeStale(why){
   cloudBadge('☁ …',(why||'Not on the server yet')+(hhmm?' - last save reached it at '+hhmm:''));
 }
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
-async function cloudFetch(path,opt){const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});const epoch=CLOUD.epoch||0;const res=await fetch(cloudUrl(path),Object.assign({credentials:'same-origin'},o,{headers:hdrs}));
+async function cloudFetch(path,opt){
+  const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});
+  const epoch=CLOUD.epoch||0;
+  // v328: every request gets a deadline. A fetch sitting on a socket the network has already dropped
+  // never settles by itself, and cloudPush holds CLOUD.pushing until it does - so one dead request used
+  // to silence every later save on the page with nothing in the console. The abort lands in the ordinary
+  // catch, which marks the save offline and leaves it dirty for the next flush: the same road a refused
+  // connection takes, and the one the badge already reports.
+  const init=Object.assign({credentials:'same-origin'},o,{headers:hdrs});
+  let ctl=null,timer=null;
+  if(typeof AbortController==='function'){
+    try{ctl=new AbortController();init.signal=ctl.signal;
+      if(o.signal&&typeof o.signal.addEventListener==='function')o.signal.addEventListener('abort',()=>{try{ctl.abort()}catch(e){}});
+      timer=setTimeout(()=>{try{ctl.abort()}catch(e){}},CLOUD_TIMEOUT_MS);
+    }catch(e){ctl=null;timer=null}
+  }
+  let res;
+  try{res=await fetch(cloudUrl(path),init)}
+  finally{if(timer!==null){try{clearTimeout(timer)}catch(e){}timer=null}}
   // v253: one live session per account (functions/api/sessions.js). A 401 while this tab holds a
   // session means another device signed in as this player, so this tab stops instead of grinding
   // a copy nobody will ever see and losing it to the next save conflict.
@@ -3807,7 +3836,7 @@ async function cloudPush(push,leave){
   // rename used to strand the save so every later sync was refused - while the id never changes.
   S.owner=currentUser;S.accountId=CLOUD.id||S.accountId;
   S.gmStats=gmStatSnapshot();
-  CLOUD.pushing=true;cloudBadge('☁ ⇅','Syncing…');
+  CLOUD.pushing=true;CLOUD.pushSince=Date.now();cloudBadge('☁ ⇅','Syncing…');
   try{
     const body=JSON.stringify({version:CLOUD.ver,owner:CLOUD.user,blob:JSON.stringify(S),savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null});
     const opt={method:'PUT',body};
@@ -4179,11 +4208,37 @@ async function cloudPull(){
 // tab is not reading announcements; it is grinding unattended, and this is most of what a left-open
 // tab used to cost). The tick itself is a Date.now() compare, so it can run every minute for free.
 let cloudLastPoll=0;
+// v328: pushing is not allowed to be a one-way door, and an unsent save is not allowed to be quiet.
+// Both guards ride the poll tick, which already runs every 15 seconds and costs one Date.now().
+let cloudStallSaid=0;
+function cloudPushWatchdog(){
+  if(!CLOUD.pushing)return;
+  if(Date.now()-(CLOUD.pushSince||0)<CLOUD_TIMEOUT_MS+10000)return;
+  // The request has outlived its own deadline, so the abort did not reach this path (an older browser
+  // without AbortController, or a fetch stubbed by something). The save is still here; let it retry.
+  CLOUD.pushing=false;CLOUD.dirty=true;CLOUD.pushSince=0;
+  cloudBadgeStale('A save request stopped answering');
+  cloudSay('The last cloud save request never came back, so it was abandoned and will be retried. Nothing on this device was lost.','r0','cloud');
+}
+function cloudStallNote(){
+  if(!CLOUD.on||CLOUD.paused||CLOUD.lost||!CLOUD.dirty)return;
+  // Measure from the last accepted push, or from the sign-in when this session has never pushed: a
+  // brand-new login is not a stalled save.
+  const since=CLOUD.lastPush||CLOUD.onSince||0;
+  if(!since||Date.now()-since<CLOUD_STALL_MS)return;
+  if(Date.now()-cloudStallSaid<CLOUD_STALL_MS)return;
+  cloudStallSaid=Date.now();
+  const mins=Math.max(1,Math.round((Date.now()-since)/60000));
+  cloudBadgeStale('Not saved for '+mins+' min');
+  cloudSay('Your progress has not reached your account for '+mins+' minutes - it is safe in this browser, but the account still has the older copy. Leave the page open and it retries; if this repeats, check the connection and reload once.','r0','cloud');
+}
 function cloudPollTick(){
   // The session probe runs on its own, faster clock and before the poll budget: it
   // is how a kicked tab stands down (v274). A 401 here is already handled by
   // cloudFetch, which calls cloudSessionReplaced().
   cloudSessionTick();
+  cloudPushWatchdog();
+  cloudStallNote();
   const wait=cloudHidden()?CLOUD_HIDDEN_POLL_MS:CLOUD_POLL_MS;
   if(Date.now()-cloudLastPoll<wait)return;
   cloudLastPoll=Date.now();cloudPull();
@@ -4265,7 +4320,7 @@ function ptsSpent(){let c=0;for(const k of['str','agi','dex','luk','int','vit'])
 
 function cloudSession(u,gm,id){
   CLOUD.epoch=(CLOUD.epoch||0)+1;   // v289: requests already in flight belong to the previous session
-  CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;if(id)CLOUD.id=Number(id);
+  CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;if(id)CLOUD.id=Number(id);CLOUD.onSince=Date.now();
   if(typeof shopSession==='function')shopSession(u);   // haven-v215: what this account owns in the Cash Shop
   if(typeof friendsSession==='function')friendsSession(u);   // haven-v273: the account's friends list
   cloudBadge('☁ ✓',CLOUD.lastPush?'Signed in as '+u+' · last save '+clockHHMM(CLOUD.lastPush):'Signed in as '+u);
@@ -13453,10 +13508,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=327"></script>
-<script src="assets/social-poker.js?v=327"></script>
-<script src="assets/social-scene.js?v=327"></script>
-<script src="assets/social-fishing.js?v=327"></script>
-<script src="assets/social.js?v=327"></script>
+<script src="assets/social-rules.js?v=328"></script>
+<script src="assets/social-poker.js?v=328"></script>
+<script src="assets/social-scene.js?v=328"></script>
+<script src="assets/social-fishing.js?v=328"></script>
+<script src="assets/social.js?v=328"></script>
 </body>
 </html>

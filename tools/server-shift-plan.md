@@ -220,6 +220,12 @@ take the same 20-player workload to about a quarter of its writes:
 | A **hidden** tab pushes every **2.5 min** instead of ~1/min (a background tab's timers are clamped to ~1 s, so the old cadence was the real one) | a tab left open overnight: ~1,400 writes a day becomes ~580 — see the v327 note below on why 5 min was *more* expensive, not less |
 | The announcement/gift poll is **5 min visible / 15 min hidden** (the tick still runs every minute; it only asks when due) | most of a background tab's poll requests |
 
+**v328: a stalled queue costs every row it never wrote.** The budget below assumes the pushes
+happen. A request with no deadline can hold `CLOUD.pushing` for ever, and then the client writes *no*
+rows at all for the rest of the session — cheaper on paper, and the exact opposite of what the player
+wants. Requests are now bounded (20 s) and a watchdog re-queues a push that outlives its deadline, so
+the numbers here are a ceiling on a working session rather than a description of a broken one.
+
 **v327 correction: the hidden cadence has a floor above it, and it is 3 minutes.** The server treats
 `now - last_seen >= 3 min` as a return from absence (`OFFLINE_MIN_MS`) and refuses the write with a
 **428** until the client acknowledges the away claim and pushes again. A 5-minute hidden cadence was

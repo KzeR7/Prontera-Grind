@@ -91,6 +91,7 @@ function harness(opts = {}) {
   };
   const fetchStub = async (url, init) => {
     calls.push({ url, init: init || {} });
+    if (opts.fetch) return opts.fetch(url, init || {}, calls);
     const route = (opts.routes || {})[url.replace('/api', '')] || {};
     const seq = calls.filter(c => c.url === url).length;
     const r = typeof route === 'function' ? route(seq, init) : route;
@@ -178,6 +179,8 @@ function harness(opts = {}) {
     'cloudAdopt','cloudPull','cloudApplyGrants','ptsSpent','cloudAuth','cloudLogout','cloudTouch',
     'cloudSession','initSessionFromCloud','saveKeyFor','cloudBadge','cloudSay','cloudFetch',
     'cloudJoin','cloudRefresh','cloudStart','saveBackup','restoreBackup',
+    // v328: the request deadline, the stuck-push watchdog and the quiet-save note.
+    'CLOUD_TIMEOUT_MS','CLOUD_STALL_MS','cloudPushWatchdog','cloudStallNote',
     // v326: which copy is newer, and the version stamp that makes it answerable after a reload.
     'cloudBaseOf','localAheadOfServer','cloudStampBase','cloudFlushLeaving',
     // v82 usage diet: the cadence constants and the poll tick are asserted on directly.
@@ -1540,6 +1543,79 @@ await T('v326: a leaving upload that is cut short does not open the connection g
   assert.strictEqual(await h.sandbox.cloudFlushLeaving(), 'offline');
   assert.strictEqual(h.sandbox.CLOUD.lost, false, 'there is no page left to explain a gate to');
   assert.strictEqual(h.sandbox.CLOUD.dirty, true, 'and the save is still queued for the next ordinary flush');
+});
+
+await T('v328: a save request that never settles cannot silence the session', async () => {
+  // The owner: "afk for 1 hour reaches 50m zeny, then logout and login and it is back to 30m", with
+  // nothing in the console. A fetch parked on a dropped socket never settles, cloudPush holds
+  // CLOUD.pushing until it does, and every later flush returned 'idle' - the whole session stopped
+  // uploading in silence. One request may now outlive CLOUD_TIMEOUT_MS only in the harness.
+  let hung = false;
+  const h = harness({ runTimers: true, fetch: (url, init, calls) => {
+    if (url.endsWith('/save') && (init.method || 'GET') === 'PUT' && !hung) {
+      hung = true;
+      return new Promise((_, reject) => {                       // a socket the network already dropped
+        if (init.signal && typeof init.signal.addEventListener === 'function')
+          init.signal.addEventListener('abort', () => reject(new Error('aborted')));
+      });
+    }
+    return { status: 200, ok: true, headers: { get: () => 'application/json' },
+             json: async () => ({ version: 9 }), text: async () => '{}' };
+  } });
+  const { sandbox: b } = h;
+  b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.currentUser = 'A'; b.S = { lv: 3, zeny: 50e6, kills: 1 };
+  const first = b.cloudPush(true);
+  await Promise.resolve();
+  assert.strictEqual(b.CLOUD.pushing, true, 'the attempt is marked in flight');
+  assert.ok(b.CLOUD.pushSince > 0, 'and it is timestamped, or nothing can tell slow from dead');
+  await h.sandbox.settle();                                   // the deadline fires and aborts it
+  // Without a deadline this promise never settles at all, so the harness's own clock fails the test
+  // instead of hanging the suite - a hang here would look like a slow CI, not like the bug.
+  const settled = await Promise.race([first, new Promise(r => setTimeout(() => r('STILL PENDING'), 2000))]);
+  assert.notStrictEqual(settled, 'STILL PENDING', 'the request ends instead of holding the queue for ever');
+  assert.strictEqual(settled, 'offline', 'a dead request ends as an ordinary offline save');
+  assert.strictEqual(b.CLOUD.pushing, false, 'the queue is not wedged behind it');
+  assert.strictEqual(b.CLOUD.dirty, true, 'and the save is still queued for the next flush');
+  b.CLOUD.dirty = true;
+  assert.strictEqual(await b.cloudPush(true), 'ok', 'the next flush really is sent');
+});
+
+await T('v328: the watchdog abandons a push that outlived its own deadline', async () => {
+  // Belt and braces for the same fault: if the abort never reached the push (an older browser with no
+  // AbortController, or a stubbed fetch), the flag must not stay true for the life of the page.
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.currentUser = 'A';
+  b.CLOUD.pushing = true; b.CLOUD.pushSince = Date.now() - 60000; b.CLOUD.dirty = false;
+  b.cloudPushWatchdog();
+  assert.strictEqual(b.CLOUD.pushing, false, 'the stuck attempt is dropped');
+  assert.strictEqual(b.CLOUD.dirty, true, 'and its save is queued again');
+  assert.ok(h.state.logs.some(l => /never came back/i.test(l.m)), 'and the player is told, once');
+  const said = h.state.logs.length;
+  b.CLOUD.pushing = false; b.cloudPushWatchdog();
+  assert.strictEqual(h.state.logs.length, said, 'a healthy push is none of its business');
+});
+
+await T('v328: an unsent save says so instead of looking saved', async () => {
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.currentUser = 'A';
+  b.CLOUD.dirty = true; b.CLOUD.lastPush = Date.now() - 600000;
+  b.cloudStallNote();
+  assert.ok(h.state.logs.some(l => /not reached your account for 10 minutes/i.test(l.m)), 'ten silent minutes are reported');
+  const said = h.state.logs.length;
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, said, 'and not repeated every tick');
+  b.CLOUD.paused = true; b.CLOUD.lastPush = Date.now() - 600000;
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, said, 'a paused session is explained by its own message');
+  b.CLOUD.paused = false; b.CLOUD.dirty = false; b.CLOUD.lastPush = Date.now() - 600000;
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, said, 'and a save that is already on the account is not stalled');
+  // A fresh sign-in is not a stalled save: nothing has had time to fail yet.
+  b.CLOUD.dirty = true; b.CLOUD.lastPush = 0; b.CLOUD.onSince = Date.now();
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, said, 'the clock starts at the sign-in, not at zero');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
