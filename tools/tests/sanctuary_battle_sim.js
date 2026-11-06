@@ -4,8 +4,10 @@ const assert=require('node:assert/strict');
  const {SocialRoom}=await import('../../workers/social/room.mjs');let now=1000;const room=new SocialRoom({now:()=>now,random:()=>.5});
  const join=(id,x,z,form='agumon')=>{const events=[];const c=room.connect({id,username:'Battle'+id},s=>events.push(JSON.parse(s)),()=>{});c.events=events;room.receive(c,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'},digimon:form}}));Object.assign(c,{x,z,at:now,path:[],sit:false});return c};
  const send=(c,m)=>room.receive(c,JSON.stringify(m));
- const profile=(line='agumon',form=line,power=12)=>({lineId:line,form,level:5,stats:{power,guard:12,agility:0,focus:0},fullness:70,fatigue:0});
+ const profile=(line='agumon',form=line,power=12)=>({lineId:line,form,level:5,stats:{power,guard:12,agility:0,focus:0},energy:70});
  const a=join(1,70,64),b=join(2,74,118,'palmon'),c=join(3,62,118,'agumon');
+ // v349: an exhausted partner cannot start grinding, but the ring never charges energy.
+ send(a,{type:'pve_start',request:6,profile:{...profile(),energy:5}});assert(a.events.some(e=>e.type==='battle_error'&&e.request===6&&/out of energy/.test(e.message)),'an empty energy bar is rejected with an explicit reason');
  send(a,{type:'pve_start',request:7,profile:{...profile(),slot:1}});assert(a.events.some(e=>e.type==='pve_started'&&e.request===7));assert.equal(room.pveRuns.size,1);assert(b.events.some(e=>e.type==='battle'&&e.pve.length===1),'room observers receive the field snapshot');
  const run=a.pve;for(now=1500;now<16000&&run.wave<2;now+=500)room.tickBattles(now);assert(run.wave>=2,'room timer regenerates a group');const rewards=a.events.filter(e=>e.type==='battle_reward');assert(rewards.length>=1);assert(rewards.every(e=>e.slot===1),'settlement returns the originating partner slot for duplicate-species collections');assert(rewards.every(e=>Number.isInteger(e.reward.eggs)&&e.reward.eggs>=0&&e.reward.eggs<=3&&Number.isInteger(e.reward.dropCoins)),'worker wave messages carry bounded server-rolled egg and bonus-petgold fields');const rewardCount=rewards.length;room.tickBattles(now);assert.equal(a.events.filter(e=>e.type==='battle_reward').length,rewardCount,'same-tick replay cannot duplicate a wave reward');
  send(a,{type:'battle_result',battleId:'forged',outcome:'win',reward:{coins:999999}});assert(!a.events.some(e=>e.type==='battle_result'&&e.battleId==='forged'),'client cannot inject a settlement event');
@@ -19,5 +21,17 @@ const assert=require('node:assert/strict');
  now+=10000;room.tickBattles(now);assert.equal(room.pvpMatches.size,0);send(b,{type:'pvp_enter',profile:profile('palmon','palmon',0)});send(c,{type:'pvp_enter',profile:profile('agumon','agumon',0)});const second=[...room.pvpMatches.values()][0];send(b,{type:'pvp_decline'});assert(!room.pvpMatches.has(second.id));assert(!c.pvp);assert(c.events.at(-1).type==='battle'||c.events.some(e=>e.type==='pvp_cancelled'));
  // A disconnected grinder releases its field run and cannot leave a ghost resident behind.
  send(a,{type:'pve_start',profile:profile()});assert(a.pve);room.disconnect(a);assert.equal(room.pveRuns.size,0);
- console.log('PASS Sanctuary room: authoritative wave/reward events, forged-result rejection, opposite-side mutual PvP, countdown, settlement, cancellation and disconnect cleanup');
+ // v349: a partner in gym training is barred from battles, but only that partner slot.
+ const gym=join(4,52.5,30.5,'agumon');
+ send(gym,{type:'gym_start',request:41,stat:'power',species:'agumon',slot:2});assert(gym.events.some(e=>e.type==='gym_started'&&e.request===41&&e.gym.partnerSlot===2),'the gym reservation records the training partner slot');
+ Object.assign(gym,{x:70,z:64,at:now,path:[],sit:false});
+ send(gym,{type:'pve_start',request:42,profile:{...profile(),slot:2}});assert(gym.events.some(e=>e.type==='battle_error'&&e.request===42&&/training partner cannot battle/.test(e.message)),'the training slot cannot enter the field');
+ Object.assign(gym,{x:74,z:118,at:now,path:[],sit:false});
+ send(gym,{type:'pvp_enter',request:43,profile:{...profile(),slot:2}});assert(gym.events.some(e=>e.type==='battle_error'&&e.request===43&&/training partner cannot battle/.test(e.message)),'the training slot cannot enter the ring');
+ Object.assign(gym,{x:70,z:64,at:now,path:[],sit:false});
+ send(gym,{type:'pve_start',request:44,profile:{...profile(),slot:0}});assert(gym.events.some(e=>e.type==='pve_started'&&e.request===44),'another slot of the same player may still grind');
+ send(gym,{type:'pve_stop'});send(gym,{type:'gym_stop'});assert(!gym.gym);
+ send(gym,{type:'pve_start',request:45,profile:{...profile(),slot:2}});assert(gym.events.some(e=>e.type==='pve_started'&&e.request===45),'stopping training reopens the slot');
+ room.disconnect(gym);
+ console.log('PASS Sanctuary room: authoritative wave/reward events, forged-result rejection, energy gate, training-slot gate, opposite-side mutual PvP, countdown, settlement, cancellation and disconnect cleanup');
 })().catch(e=>{console.error(e);process.exitCode=1});

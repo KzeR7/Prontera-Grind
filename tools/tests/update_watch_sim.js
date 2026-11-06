@@ -306,7 +306,8 @@ t('every asset versioned in index.html points at a build, never at a stale cache
   for (const f of ['assets/social.js', 'assets/social.css', 'assets/social-poker.js',
                    'assets/social-rules.js', 'assets/social-scene.js',
                    'assets/social-fishing.js', 'assets/social-fishing.css',
-                   'assets/digimon/roster.js', 'assets/digimon-sanctuary.js',
+                   'assets/digimon/roster.js', 'assets/digimon/base-stats.js',
+                   'assets/digimon-sanctuary.js',
                    'assets/social-digimon.js']) {
     const found = tags.find(([, file]) => file === f);
     assert.ok(found, f + ' is loaded by index.html');

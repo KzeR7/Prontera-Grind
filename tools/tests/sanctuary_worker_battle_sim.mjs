@@ -10,6 +10,7 @@ const mf=new Miniflare({
   {type:'ESModule',path:'workers/social/index.mjs'},
   {type:'ESModule',path:'workers/social/room.mjs'},
   {type:'ESModule',path:'assets/digimon/roster.js'},
+  {type:'ESModule',path:'assets/digimon/base-stats.js'},
   {type:'ESModule',path:'assets/social-rules.js'},
   {type:'ESModule',path:'assets/social-poker.js'},
   {type:'ESModule',path:'assets/digimon-battle.js'},
@@ -29,7 +30,7 @@ try{
  }
  // Real movement packets put the two characters on opposite open approaches below the ring.
  a.ws.send(JSON.stringify({type:'move',x:62,z:118}));b.ws.send(JSON.stringify({type:'move',x:74,z:118}));await sleep(15000);
- const profile=(line,form)=>({lineId:line,form,level:5,fullness:70,fatigue:0,stats:{power:12,guard:12,agility:0,focus:0}});
+ const profile=(line,form)=>({lineId:line,form,level:5,energy:70,stats:{power:12,guard:12,agility:0,focus:0}});
  a.ws.send(JSON.stringify({type:'pvp_enter',profile:profile('agumon','agumon')}));b.ws.send(JSON.stringify({type:'pvp_enter',profile:profile('palmon','palmon')}));
  await until(a.messages,m=>m.type==='pvp_offer','first acceptance offer');await until(b.messages,m=>m.type==='pvp_offer','second acceptance offer');
  a.ws.send(JSON.stringify({type:'pvp_accept'}));b.ws.send(JSON.stringify({type:'pvp_accept'}));

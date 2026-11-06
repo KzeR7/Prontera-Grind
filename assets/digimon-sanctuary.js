@@ -10,6 +10,10 @@ const LINES={agumon:['agumon','greymon','metalgreymon','wargreymon'],gabumon:['g
 // catalog; the owned bag gates selection while existing saves keep progression.
 const STARTERS=Object.keys(LINES),ROSTER=[...DATA.IDS],SPECIES=ROSTER,STATS=['power','guard','agility','focus'],DURATION=20*60*1000,MAX_EVOLUTIONS=6;
 const EVOLUTION_REQUIREMENTS=[{points:4,wins:2},{points:10,wins:5},{points:18,wins:9},{points:22,wins:12},{points:24,wins:16},{points:24,wins:20}];
+// v349 care model: one Energy meter replaces the old fatigue/fullness pair. Gym sessions
+// and grind waves spend it; real time and Pet Meals restore it; ring PvP is always free.
+// A 20-minute gym session costs more than the regen it passes, so training stays a choice.
+const ENERGY_START=70,ENERGY_REGEN_MS=2*60*1000,ENERGY_TRAIN_COST=20,ENERGY_TRAIN_MIN=10,ENERGY_FEED=25,ENERGY_PVE_MIN=10,MAX_SLOT=3;
 // The owned collection and pet-item economy are separate from Zeny, Cash Shop
 // purchases and Ragnarok pets. Eggs only reveal bundled Baby I / Baby II forms.
 const STARTER_POOL=ROSTER.filter(id=>['Baby I','Baby II'].includes(DATA.entry(id)?.stage));
@@ -18,14 +22,17 @@ const COIN_START=50,SPAR_COINS=20;
 const cap=(n,min,max)=>Math.max(min,Math.min(max,Math.floor(Number.isFinite(Number(n))?Number(n):min)));
 const total=p=>STATS.reduce((a,k)=>a+p.stats[k],0);
 const clean=id=>DATA.clean(id);
-function freshPartner(line){return {stage:0,form:line,stats:{power:0,guard:0,agility:0,focus:0},fatigue:0,fullness:70,mastery:0,wins:0,xp:0,training:null,battle:null}}
+function freshPartner(line){return {stage:0,form:line,stats:{power:0,guard:0,agility:0,focus:0},energy:ENERGY_START,energyAt:null,mastery:0,wins:0,xp:0,training:null,battle:null}}
+// v349 migration for one-roll saves: the old meters collapse into Energy once.
+function migrateEnergy(p){return cap(Math.round(((p?.fullness??70)+(100-(p?.fatigue??0)))/2),0,100)}
 function normalize(raw,line){
  if(raw&&typeof raw==='object'&&Number(raw.v)>1)return null;
  const state={v:1,partners:{}},keys=[...STARTERS,...Object.keys(raw?.partners||{}).filter(clean)];
  if(clean(line))keys.push(line);
  for(const key of new Set(keys)){
   const p=raw?.partners?.[key]||{},q=freshPartner(key);q.stage=cap(p.stage,0,MAX_EVOLUTIONS);q.form=clean(p.form)||LINES[key]?.[q.stage]||key;
-  q.fatigue=cap(p.fatigue,0,100);q.fullness=cap(p.fullness??70,0,100);q.mastery=cap(p.mastery,0,6);q.wins=cap(p.wins,0,999);q.xp=cap(p.xp,0,3996);for(const k of STATS)q.stats[k]=cap(p.stats?.[k],0,12);
+  q.energy=cap(p.energy??(p.fatigue!=null||p.fullness!=null?migrateEnergy(p):ENERGY_START),0,100);q.mastery=cap(p.mastery,0,6);q.wins=cap(p.wins,0,999);q.xp=cap(p.xp,0,3996);for(const k of STATS)q.stats[k]=cap(p.stats?.[k],0,12);
+  if(Number.isFinite(p.energyAt)&&p.energyAt>=0&&q.energy<100)q.energyAt=Math.floor(p.energyAt);
   if(p.training&&STATS.includes(p.training.stat)&&Number.isFinite(p.training.ends)&&p.training.ends>=0)q.training={stat:p.training.stat,ends:p.training.ends};
   const b=p.battle;if(b&&clean(b.opponent)&&['active','win','loss'].includes(b.status)&&Number.isFinite(b.deadline))q.battle={opponent:clean(b.opponent),hp:cap(b.hp,0,200),maxHp:cap(b.maxHp,1,200),enemyHp:cap(b.enemyHp,0,200),enemyMaxHp:cap(b.enemyMaxHp,1,200),energy:cap(b.energy,0,5),turn:cap(b.turn,0,500),status:b.status,deadline:b.deadline,log:typeof b.log==='string'?b.log.slice(0,180):''};
   state.partners[key]=q;
@@ -51,20 +58,34 @@ function requirements(p,line){
  const needed=EVOLUTION_REQUIREMENTS[stage];return {...needed,ready:total(p)>=needed.points&&p.wins>=needed.wins,options};
 }
 function update(raw,now,line){const state=normalize(raw,line);if(!state)return {state:null,changed:false};let changed=false;now=Number.isFinite(now)?now:Date.now();
- for(const p of Object.values(state.partners)){if(p.training&&now>=p.training.ends){const stat=p.training.stat;p.training=null;if(p.stats[stat]<12&&total(p)<24){p.stats[stat]++;p.fatigue=cap(p.fatigue+10,0,100);p.fullness=cap(p.fullness-5,0,100)}changed=true}
+ for(const p of Object.values(state.partners)){
+  // Energy refills over real time, online or off, one point per ENERGY_REGEN_MS.
+  if(p.energy<100){
+   if(p.energyAt==null){p.energyAt=now;changed=true}
+   else{const gained=Math.floor((now-p.energyAt)/ENERGY_REGEN_MS);if(gained>0){p.energy=cap(p.energy+gained,0,100);p.energyAt=p.energy>=100?null:p.energyAt+gained*ENERGY_REGEN_MS;changed=true}}
+  }else if(p.energyAt!=null){p.energyAt=null;changed=true}
+  if(p.training&&now>=p.training.ends){const stat=p.training.stat;p.training=null;if(p.stats[stat]<12&&total(p)<24){p.stats[stat]++;p.energy=cap(p.energy-ENERGY_TRAIN_COST,0,100)}changed=true}
   if(p.battle?.status==='active'&&now>=p.battle.deadline){p.battle.status='loss';p.battle.log='Time is up. Your partner can try again.';changed=true}}
  return {state,changed};
 }
-function act(raw,line,action,now){now=Number.isFinite(now)?now:Date.now();const u=update(raw,now,clean(line)?line:undefined),state=u.state;if(!state||!clean(line))return {ok:false,state,changed:u.changed,message:'DigiPet data is unavailable.'};const p=state.partners[line],done=message=>({ok:true,state,changed:true,message}),fail=message=>({ok:false,state,changed:u.changed,message});
+function act(raw,line,action,now,random=randomUnit){now=Number.isFinite(now)?now:Date.now();const u=update(raw,now,clean(line)?line:undefined),state=u.state;if(!state||!clean(line))return {ok:false,state,changed:u.changed,message:'DigiPet data is unavailable.'};const p=state.partners[line],done=message=>({ok:true,state,changed:true,message}),fail=message=>({ok:false,state,changed:u.changed,message});
  if(!action||typeof action!=='object')return fail('Choose an action.');
- if(action.type==='feed'){if(p.fullness>=100)return fail('Your partner is already full.');p.fullness=cap(p.fullness+25,0,100);return done('Your partner enjoyed a meal.')}
- if(action.type==='rest'){if(p.fatigue===0)return fail('Your partner is already rested.');p.fatigue=cap(p.fatigue-30,0,100);return done('Your partner rested and recovered.')}
- if(action.type==='train'){const stat=action.stat;if(!STATS.includes(stat))return fail('Choose a training stat.');if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');if(p.stats[stat]>=12||total(p)>=24)return fail('Training cap reached.');if(p.fatigue>=80)return fail('Your partner needs to rest first.');if(p.fullness<10)return fail('Feed your partner before training.');p.training={stat,ends:now+DURATION};return done('Training started. It completes in 20 minutes.')}
+ if(action.type==='feed'){if(p.energy>=100)return fail('Your partner is already full of energy.');p.energy=cap(p.energy+ENERGY_FEED,0,100);return done('Your partner enjoyed a meal. +'+ENERGY_FEED+' energy.')}
+ if(action.type==='train'){const stat=action.stat;if(!STATS.includes(stat))return fail('Choose a training stat.');if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');if(p.stats[stat]>=12||total(p)>=24)return fail('Training cap reached.');if(p.energy<ENERGY_TRAIN_MIN)return fail('Your partner needs energy. Feed a Pet Meal or wait for it to recover.');p.training={stat,ends:now+DURATION};return done('Training started. It completes in 20 minutes.')}
  if(action.type==='mastery'){if(p.mastery>=6||total(p)<(p.mastery+1)*4)return fail('Train four more points for the next mastery.');p.mastery++;return done('Mastery improved without changing form.')}
+ // v349: the evolution branch is rolled, not chosen. The possible pool stays visible in
+ // the DigiDex so players know what a form can become before they commit.
  if(action.type==='evolve'){
   if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');const req=requirements(p,line);if(!req||!req.ready)return fail('Evolution requirements are not met.');
-  const preferred=LINES[line]?.[p.stage+1],requested=clean(action.target),target=requested||(req.options.includes(preferred)?preferred:req.options.length===1?req.options[0]:null);
-  if(!target||!req.options.includes(target))return fail('Choose one of the source-listed evolution paths.');p.form=target;p.stage++;return done('Your partner evolved into '+DATA.name(target)+'.');
+  if(req.options.length<1)return fail('No direct evolution is available.');
+  const roll=Math.max(0,Math.min(.999999999,Number(random())||0)),target=req.options[Math.floor(roll*req.options.length)];
+  p.form=target;p.stage++;return done('Your partner evolved into '+DATA.name(target)+'!');
+ }
+ // v349 reroll loop: a fresh egg restarts this line's training, wins and level. The owned
+ // collection is untouched, so the species stays unlocked while you raise it again.
+ if(action.type==='reset'){
+  if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');
+  Object.assign(p,freshPartner(line));return done('Your partner returned to its egg. Level, training and wins start fresh.');
  }
  if(action.type==='startBattle'){
   if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');const level=Math.min(4,Math.floor(p.wins/2));let opponent;
@@ -128,7 +149,7 @@ function bagReward(raw,kind){
 // normalized again by the server before it can influence a match.
 function combatProfile(raw,line,slot=0){
  const state=normalize(raw,line),p=state?.partners?.[line];if(!p)return null;
- return {lineId:line,form:p.form,slot:slot===1?1:0,level:level(p),xp:p.xp,wins:p.wins,mastery:p.mastery,fatigue:p.fatigue,fullness:p.fullness,stats:{...p.stats}};
+ return {lineId:line,form:p.form,slot:cap(slot,0,MAX_SLOT),level:level(p),xp:p.xp,wins:p.wins,mastery:p.mastery,energy:p.energy,stats:{...p.stats}};
 }
 // Apply a clamped result to the existing owned line. Online callers accept only server-issued
 // messages; Solo plaza uses the same math for explicitly labeled local practice. The caller
@@ -136,10 +157,10 @@ function combatProfile(raw,line,slot=0){
 function applyBattleReward(raw,bagRaw,line,reward){
  const state=normalize(raw,line),bag=normalizeBag(bagRaw),p=state?.partners?.[line];
  if(!state||!bag||!p||!reward||typeof reward!=='object')return {ok:false,state,bag,changed:false,message:'This battle reward could not be applied.'};
- const coins=cap(reward.coins,0,10000),eggs=cap(reward.eggs,0,99),xp=cap(reward.xp,0,100),wins=cap(reward.wins,0,1),fatigue=cap(reward.fatigue,0,20),fullness=cap(reward.fullness,-20,0);
- const before=bag.coins,beforeEggs=bag.eggs;bag.coins=cap(bag.coins+coins,0,999999);bag.eggs=cap(bag.eggs+eggs,0,STARTER_POOL.length);p.xp=cap(p.xp+xp,0,3996);p.wins=cap(p.wins+wins,0,999);p.fatigue=cap(p.fatigue+fatigue,0,100);p.fullness=cap(p.fullness+fullness,0,100);
+ const coins=cap(reward.coins,0,10000),eggs=cap(reward.eggs,0,99),xp=cap(reward.xp,0,100),wins=cap(reward.wins,0,1),energy=cap(reward.energy,-20,0);
+ const before=bag.coins,beforeEggs=bag.eggs;bag.coins=cap(bag.coins+coins,0,999999);bag.eggs=cap(bag.eggs+eggs,0,STARTER_POOL.length);p.xp=cap(p.xp+xp,0,3996);p.wins=cap(p.wins+wins,0,999);p.energy=cap(p.energy+energy,0,100);
  const coinGain=bag.coins-before,bonusGain=Math.min(coinGain,cap(reward.dropCoins,0,coins)),baseGain=coinGain-bonusGain,eggGain=bag.eggs-beforeEggs,eggMessage=eggs?(eggGain?' · +'+eggGain+' Digi-Egg'+(eggGain===1?'':'s'):' · Digi-Egg bag full'):'';
  return {ok:true,state,bag,changed:true,amount:coinGain,bonus:bonusGain,eggs:eggGain,message:'+'+baseGain+' Pet Coins'+(bonusGain?' · +'+bonusGain+' bonus petgold':'')+' · +'+xp+' XP'+(wins?' · +1 win':'')+eggMessage};
 }
-return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,level,normalize,update,act,species,total,requirements,evolutionOptions,evolutionCatalog,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagFeed,bagReward,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
+return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,MAX_SLOT,ENERGY_START,ENERGY_REGEN_MS,ENERGY_TRAIN_COST,ENERGY_TRAIN_MIN,ENERGY_FEED,ENERGY_PVE_MIN,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,level,normalize,update,act,species,total,requirements,evolutionOptions,evolutionCatalog,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagFeed,bagReward,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
 });

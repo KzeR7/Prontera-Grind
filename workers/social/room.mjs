@@ -1,4 +1,5 @@
 import '../../assets/digimon/roster.js';
+import '../../assets/digimon/base-stats.js';
 import '../../assets/social-rules.js';
 import '../../assets/social-poker.js';
 import '../../assets/digimon-battle.js';
@@ -298,14 +299,17 @@ export class SocialRoom {
   R.advance(c,now);if(c.sit||c.path.length||!slots.some(s=>Math.hypot(c.x-s.x,c.z-s.z)<=9))return this.send(c,{type:'gym_error',request,message:'Walk close to the station and stand still first.'});
   const used=new Set([...this.clients.values()].filter(p=>p.gym?.room===c.room&&p.gym.stat===m.stat).map(p=>p.gym.slot)),slot=slots.findIndex((_,i)=>!used.has(i));
   if(slot<0)return this.send(c,{type:'gym_error',request,message:'All '+m.stat+' equipment is in use. Please try again shortly.'});
-  c.gym={room:c.room,stat:m.stat,slot,species};this.send(c,{type:'gym_started',request,gym:c.gym});this.broadcastGym(c.room);
+  // v349: the client reports which partner slot is training. Only that slot is barred
+  // from battles; the same player's other three slots may still grind or spar.
+  const partnerSlot=Math.max(0,Math.min(3,Number.isSafeInteger(m.slot)?m.slot:0));
+  c.gym={room:c.room,stat:m.stat,slot,species,partnerSlot};this.send(c,{type:'gym_started',request,gym:c.gym});this.broadcastGym(c.room);
  }
  // ----------------------------- Sanctuary PvE / PvP -----------------------------
  battleId(kind){return kind+':'+this.now().toString(36)+':'+(++this.battleSerial).toString(36)}
  battleProfile(c,raw){
-  const p=B.profile(raw);if(!p||!c.look?.digimon||c.look.digimon!==p.form)return null;
-  if(p.fullness<10||p.fatigue>=100)return null;return p;
+  const p=B.profile(raw);if(!p||!c.look?.digimon||c.look.digimon!==p.form)return null;return p;
  }
+ trainingBlocks(c,p){return !!(c.gym&&Number.isInteger(c.gym.partnerSlot)&&p.slot===c.gym.partnerSlot)}
  fieldReady(c,now){R.advance(c,now);return c.room>0&&!c.sit&&!c.path.length&&Math.abs(c.x-70)<=25&&Math.abs(c.z-64)<=16}
  ringSide(c,now){
   R.advance(c,now);const r=R.SANCTUARY_RING;if(!c.room||c.sit||c.path.length)return null;
@@ -325,9 +329,11 @@ export class SocialRoom {
  battleError(c,message,request=null){this.send(c,{type:'battle_error',request,message})}
  startPve(c,m,now){
   const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
-  if(c.pve||c.pvp||c.gym)return this.battleError(c,'Finish the current DigiPet activity first.',request);
+  if(c.pve||c.pvp)return this.battleError(c,'Finish the current DigiPet activity first.',request);
   if(!this.fieldReady(c,now))return this.battleError(c,'Stand still inside the middle DigiPet farm to grind.',request);
-  const p=this.battleProfile(c,m.profile);if(!p)return this.battleError(c,'Choose your current owned partner and make sure it is fed and rested.',request);
+  const p=this.battleProfile(c,m.profile);if(!p)return this.battleError(c,'Choose your current owned partner first.',request);
+  if(this.trainingBlocks(c,p))return this.battleError(c,'The training partner cannot battle. Switch to another partner slot first.',request);
+  if(p.energy<B.ENERGY_PVE_MIN)return this.battleError(c,'Your partner is out of energy. Feed a Pet Meal or wait for it to recover.',request);
   if([...this.pveRuns.values()].filter(r=>r.room===c.room).length>=8)return this.battleError(c,'The field is full. Try another plaza.',request);
   const run=B.createPve({id:this.battleId('pve'),owner:c.id,room:c.room,profile:p,now,random:this.random});
   const used=new Set([...this.pveRuns.values()].filter(r=>r.room===c.room).map(r=>r.slot));run.slot=Array.from({length:8},(_,i)=>i).find(i=>!used.has(i))||0;
@@ -339,9 +345,10 @@ export class SocialRoom {
  }
  queuePvp(c,m,now){
   const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
-  if(c.pve||c.gym||c.pvp)return this.battleError(c,'Finish the current DigiPet activity first.',request);
+  if(c.pve||c.pvp)return this.battleError(c,'Finish the current DigiPet activity first.',request);
   const side=this.ringSide(c,now);if(!side)return this.battleError(c,'Stand on the left or right side of the ring, or its marked approach below, and stand still.',request);
-  const p=this.battleProfile(c,m.profile);if(!p)return this.battleError(c,'Choose your current owned partner and make sure it is fed and rested.',request);
+  const p=this.battleProfile(c,m.profile);if(!p)return this.battleError(c,'Choose your current owned partner first.',request);
+  if(this.trainingBlocks(c,p))return this.battleError(c,'The training partner cannot battle. Switch to another partner slot first.',request);
   const queue=this.pvpQueues.get(c.room)||[];this.pvpQueues.set(c.room,queue);
   const entry={id:c.id,name:c.name,side,profile:p,at:now};queue.push(entry);c.pvp={queue:true,side};
   this.send(c,{type:'pvp_waiting',request,side});this.pairPvp(c.room,now);this.broadcastBattle(c.room);this.battleActivity();
