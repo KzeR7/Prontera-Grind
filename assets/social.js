@@ -1098,10 +1098,11 @@ const TRAIN_STATIONS={power:{x:56,z:30},guard:{x:63,z:21},agility:{x:75,z:26},fo
 let worldTraining=null,worldNoticeTimer=0,worldNearbyStat='',gymEntries=[],gymSerial=0;
 worldNearby.onclick=()=>startWorldTraining(worldNearbyStat);
 let battleRequest=0,battleOffer=null,soloPve=null;
+const BATTLE_INTENT_MS=10000;
 function soloPractice(){return !app.room&&!CLOUD.on}
 function myPve(){const id=app.room?app.id:SOLO_ID;return app.battle.pve.find(r=>r.owner===id)||null}
 function myPvp(){const m=app.battle.pvp;return m&&m.participants?.some(p=>p.id===app.id)?m:null}
-function battleBusy(){return !!(myPve()||myPvp()||battleOffer)}
+function battleBusy(){return !!(myPve()||myPvp()||battleOffer||app.battleIntent)}
 function battleProfileFor(slot=activePartnerSlot()){const G=globalThis.PGDigimonSanctuary,line=partnerLine(slot);return G&&line&&ownsDigimon(line)?G.combatProfile(partnerData(slot),line,slot):null}
 function battleNearbyFrame(player){
  const p=player&&!player.sit&&!player.path?.length?player:null;let action='',label='';
@@ -1138,14 +1139,14 @@ function startPve(){
  const profile=battleProfileFor();if(!profile)return worldNotice('Hatch and choose an owned partner first.');
  if(soloPractice())return startSoloPve(profile);
  if(!app.room||!app.connected||app.socket?.readyState!==1)return worldNotice('Connect to the online plaza, or use local solo mode, to grind.');
- const request=++battleRequest;app.battleIntent={kind:'pve',request};if(send({type:'pve_start',request,profile})){worldNotice('Entering the middle field…');worldBattleNearby.hidden=true}else app.battleIntent=null;
+ const request=++battleRequest;app.battleIntent={kind:'pve',request,at:Date.now()};if(send({type:'pve_start',request,profile})){worldNotice('Entering the middle field…');worldBattleNearby.hidden=true}else app.battleIntent=null;
 }
 function startPvp(){
  if(worldTraining||battleBusy())return worldNotice('Finish the current Sanctuary activity first.');
  if(soloPractice())return worldNotice('Two-player PvP needs an online plaza. Solo practice is available in the middle field.');
  if(!app.room||!app.connected||app.socket?.readyState!==1)return worldNotice('Enter an online plaza to challenge another player.');
  const profile=battleProfileFor();if(!profile)return worldNotice('Hatch and choose an owned partner first.');
- const request=++battleRequest;app.battleIntent={kind:'pvp',request};if(send({type:'pvp_enter',request,profile})){worldNotice('Waiting for a player on the opposite side of the ring…');worldBattleNearby.hidden=true}else app.battleIntent=null;
+ const request=++battleRequest;app.battleIntent={kind:'pvp',request,at:Date.now()};if(send({type:'pvp_enter',request,profile})){worldNotice('Waiting for a player on the opposite side of the ring…');worldBattleNearby.hidden=true}else app.battleIntent=null;
 }
 function stopPve(){if(soloPve)stopSoloPve();else if(myPve())send({type:'pve_stop'})}
 function stopPvp(){if(myPvp()||battleOffer)send({type:'pvp_cancel'})}
@@ -1183,7 +1184,7 @@ function applyBattleReward(m){
 function receiveBattleReward(m){const result=applyBattleReward(m);if(result)worldNotice((m.local?'Local wave '+m.wave+' cleared · ':m.kind==='pve'?'Wave '+m.wave+' cleared · ':'Battle reward · ')+result.message)}
 function receiveBattleResult(m){applyBattleReward({...m,kind:'pvp'});app.battleResult=m;battleOffer=null;renderPvpDialog();renderBattleResult();renderBattleHUD()}
 function battleSnapshot(m){if(m.room!==app.room)return;if(soloPve)stopSoloPve('stopped',false);app.battle={pve:Array.isArray(m.pve)?m.pve:[],pvp:m.pvp||null,queue:Array.isArray(m.queue)?m.queue:[]};if(Number.isFinite(m.at))app.battleOffset=m.at-Date.now();battleOffer=null;app.scene?.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();if(app.battleIntent)app.battleIntent=null}
-function battleUITick(){tickSoloPve();const match=myPvp();if(match?.phase==='countdown'){const el=$id('pvpCountdownNumber');if(el){const left=Math.max(0,Math.ceil((match.countdownUntil-(Date.now()+app.battleOffset))/1000));el.textContent=left>0?left:'FIGHT!'}}}
+function battleUITick(){tickSoloPve();if(app.battleIntent&&Date.now()-(app.battleIntent.at||0)>=BATTLE_INTENT_MS){app.battleIntent=null;worldNotice('The plaza battle service did not respond. Reconnect, or use a preview with the matching Social Worker deployment.')}const match=myPvp();if(match?.phase==='countdown'){const el=$id('pvpCountdownNumber');if(el){const left=Math.max(0,Math.ceil((match.countdownUntil-(Date.now()+app.battleOffset))/1000));el.textContent=left>0?left:'FIGHT!'}}}
 setInterval(battleUITick,100);
 function worldNotice(text,active=false){clearTimeout(worldNoticeTimer);worldTrainingText.textContent=text;worldTrainingCancel.hidden=!active;worldTrainingHUD.hidden=false;if(!active)worldNoticeTimer=setTimeout(()=>{if(!worldTraining)worldTrainingHUD.hidden=true},5500)}
 function refreshGymVisuals(){if(app.scene?.setGymResidents)app.scene.setGymResidents(app.room?gymEntries:(worldTraining?.phase==='active'&&worldTraining.room===0?[{owner:0,room:0,stat:worldTraining.stat,slot:worldTraining.equipment,species:worldTraining.species}]:[]))}
@@ -1316,7 +1317,7 @@ for(const b of sanctuaryPanel.querySelectorAll('[data-sanctuary-view]'))b.onclic
 $id('sanctuaryBagView').onclick=e=>{const button=e.target.closest('[data-bag-action]');if(!button||button.disabled)return;if(button.dataset.bagAction==='hatch')sanctuaryHatchEgg();else if(button.dataset.bagAction==='show-partner'){sanctuarySetView('partners');sanctuarySync();sanctuaryRender()}};
 $id('sanctuaryShopView').onclick=e=>{const button=e.target.closest('[data-shop-item]');if(button&&!button.disabled)sanctuaryBuy(button.dataset.shopItem,Number(button.dataset.quantity)||1)};
 async function enter(){ensureDigimonBag();discardLegacyGymTimers();digimonSelect.value=partnerLine()||'';if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),trainStation:startWorldTraining,sanctuaryShop:openSanctuaryShop,trainingNearby:worldNearbyFrame,sitting,camera:cameraUI});if(app.wanted){app.scene.active=true;bindFishing();cameraUI(app.scene.cameraState);for(const p of app.players.values())app.scene.putPlayer(p);refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
-function leave(){worldNearbyStat='';worldNearby.hidden=true;worldBattleNearby.hidden=true;stopSoloPve('stopped',false);battleOffer=null;app.battleResult=null;app.battle={pve:[],pvp:null,queue:[]};battleHUD.hidden=true;pvpDialog.hidden=true;renderBattleResult();app.scene?.setBattleState?.(app.battle);if(!sanctuaryPanel.hidden)sanctuaryClose();FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');if(app.scene)app.scene.active=false;resetPlayers();stashLocal();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}
+function leave(){worldNearbyStat='';worldNearby.hidden=true;worldBattleNearby.hidden=true;stopSoloPve('stopped',false);app.battleIntent=null;battleOffer=null;app.battleResult=null;app.battle={pve:[],pvp:null,queue:[]};battleHUD.hidden=true;pvpDialog.hidden=true;renderBattleResult();app.scene?.setBattleState?.(app.battle);if(!sanctuaryPanel.hidden)sanctuaryClose();FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');if(app.scene)app.scene.active=false;resetPlayers();stashLocal();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}
 $id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick()))return;confirmPokerLeave(()=>leave())};
 const socialHubBtn=$id('socialHubBtn');if(socialHubBtn)socialHubBtn.onclick=()=>enter();syncHubButton();$id('socialSit').onclick=toggleSit;
 function receive(m){
@@ -1379,7 +1380,7 @@ function receive(m){
 // visibilitychange probes the moment a throttled background tab wakes up.
 const WATCHDOG_MS=10000,PROBE_GRACE_MS=5000,HANDSHAKE_MS=12000;
 function seatState(){const me=app.players.get(app.id);const seated=seatedPokerSnapshot();return me?{seat:Number.isInteger(me.seat)?me.seat:null,pokerSeat:Number.isInteger(me.pokerSeat)?me.pokerSeat:null,pokerBuyIn:seated?.me?.stack||pokerUI.buyIn,sit:!!me.sit}:app.resume}
-function dropSocket(message,keep){const ws=app.socket;app.socket=null;app.connected=false;app.probeAt=0;if(keep)app.resume=seatState();
+function dropSocket(message,keep){const ws=app.socket;app.socket=null;app.connected=false;app.battleIntent=null;app.probeAt=0;if(keep)app.resume=seatState();
  // v311 (owner: "the hero jumps around on reconnect"): a dropped socket used to leave the local
  // character walking a route the room no longer knew about, and the room then restored its own
  // copy - two different heroes, one of them moving on its own. Stop the walk where it stands and
@@ -1445,7 +1446,7 @@ function retryDelay(){return Math.min(30000,1000*2**Math.min(app.retry++,5))}
 function connect(){if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextConnect)return;const user=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username;if(app.user!==user){app.user=user;localHistory.clear();app.messages=readWorldHistory();renderMessages();app.unread.clear();try{app.muted=new Set(JSON.parse(localStorage.getItem('pg_social_mute_'+user))||[])}catch{app.muted=new Set()}}
  const qs=CLOUD.previewToken?'?preview_session='+encodeURIComponent(CLOUD.previewToken):'';
  const ws=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/api/social'+qs);app.socket=ws;app.socketAt=Date.now();status('Connecting to chat…');ws.onmessage=e=>{if(app.socket!==ws)return;app.lastSeen=Date.now();app.probeAt=0;try{receive(JSON.parse(e.data))}catch(err){console.error('Social message',err)}};
- ws.onclose=e=>{if(app.socket!==ws)return;if(worldTraining?.room)cancelWorldTraining('Gym training stopped after disconnection.');app.socket=null;app.connected=false;app.probeAt=0;
+ ws.onclose=e=>{if(app.socket!==ws)return;if(worldTraining?.room)cancelWorldTraining('Gym training stopped after disconnection.');app.socket=null;app.connected=false;app.battleIntent=null;app.probeAt=0;
   // Logged on purpose: "why did it reconnect" is the question the plaza keeps being asked, and the
   // browser console is the only place that can answer it (1000/1006 = network or edge, 4000 = the
   // server's planned session refresh, 4001 = the same account signed in somewhere else).

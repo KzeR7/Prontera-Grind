@@ -516,7 +516,10 @@ this runtime. Gym apparatus is still scenery, not live training.
   owner/room `0`, `SOLO` labels and separate `solo-pve:` reward IDs; the gym
   likewise uses labeled local practice without a reservation. Account/state
   changes, leaving or connecting online stop that local run, and ring PvP
-  remains online-only. `assets/social-scene.js` roams decorative residents only
+  remains online-only. Online start intents also block duplicate clicks and
+  have a ten-second no-response recovery (plus leave/socket cleanup), so an
+  older Worker that ignores battle packets cannot leave the client waiting
+  forever. `assets/social-scene.js` roams decorative residents only
   while no PvE run is active, then renders independent partner/bot/ring sprites
   with health bars. `social-battle.css` supplies the responsive presentation.
   Existing gym, feeding, bag, Ragnarok-pet and Zeny boundaries are unchanged.

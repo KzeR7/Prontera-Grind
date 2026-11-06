@@ -637,3 +637,10 @@ is still visual world-building, not the requested on-map training gameplay.
   rooms retain server-issued rewards and reservations. Leaving, account/state
   replacement or an online transition cancels the local activity. Two-player
   ring PvP remains online-only rather than receiving a fabricated local opponent.
+
+* **Battle-service recovery (v346):** Online field/ring start requests are
+  pending activities that block duplicate clicks. A ten-second no-response
+  timeout, disconnect and leaving all restore a clean state. This makes an
+  outdated or unavailable Social Worker visible instead of leaving `Entering
+  the middle field…` forever; it does not substitute local combat for online
+  authority. Online combat still requires the matching client/Worker deployment.

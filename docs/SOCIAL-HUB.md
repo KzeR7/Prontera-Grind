@@ -1154,6 +1154,16 @@ casual, client-saved collection rather than ranked/competitive proof. The
 server never accepts a client `battle_result`, damage total or reward amount.
 The local solo spar is still explicitly not authoritative PvP.
 
+**Matching Worker recovery (v346):** online start requests now count as pending
+activities, preventing duplicate clicks while the client waits. If neither a
+snapshot nor an error arrives within ten seconds, the client clears the pending
+intent, restores the controls and explains that the preview may need its
+matching Social Worker. Leaving or dropping the socket also clears the intent.
+This is important during preview/staging review: an older Worker can accept the
+socket but ignore unknown `pve_start` / `pvp_enter` packets. The client must not
+invent a local online battle or remain stuck on `Entering the middle field…`;
+deploy the coordinated client and Worker for online combat.
+
 Run `node tools/tests/digimon_battle_sim.js` and
 `node tools/tests/sanctuary_battle_sim.js` for combat/protocol coverage, plus
 `node tools/tests/digimon_sanctuary_sim.js`,
