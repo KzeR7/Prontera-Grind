@@ -314,6 +314,16 @@ t('every asset versioned in index.html points at a build, never at a stale cache
   }
 });
 
+// v326 (owner: "save rolls back", "random disconnects"): the automatic update reset is one of the
+// disconnects, and it is also the moment the last minute of play can vanish - a save over the 64 KB
+// keepalive cap cannot be protected by the leaving flush. The auto path must land the upload first.
+t('v326: the automatic update reset flushes the save before it navigates', () => {
+  assert.match(watcherSrc,
+    /if\(typeof cloudFlushNow==='function'&&typeof save==='function'&&typeof CLOUD!=='undefined'&&CLOUD\.on&&!CLOUD\.lost&&!updateResetSeen\(txt\)\)\{[\s\S]{0,500}?Promise\.race\(\[cloudFlushNow\(\)/,
+    'the automatic reset waits for the cloud flush instead of racing it');
+  assert.match(watcherSrc, /if\(hardReload\(txt\)\)return;/, 'and still has the plain path for a page with no cloud');
+});
+
 // The build tag is copied into a few documents so a reader can tell which build a sheet or a note is about.
 // A bump that leaves one of those copies behind would show a stale build name to whoever reads it.
 t('every build-tag mirror names the BUILD this page runs (a bump that misses one fails here)', () => {

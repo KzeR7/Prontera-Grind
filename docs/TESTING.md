@@ -227,6 +227,18 @@ for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-06 (`haven-v326` gate result): 194 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and `*_smoke.js` ran. New
+`tools/tests/social_room_recovery_sim.mjs` (unit, fake storage) proves one failed poker-outbox read no
+longer refuses every later socket. `cloud_sim` (77) gained the 428 away-claim handshake — applied once,
+pushed back with its id, and a repeated claim reported instead of looping — plus a source pin for the
+`online`/`pagehide` flush pair; `social_ui_sim` gained a same-tab reload that restores Local from
+`sessionStorage` (and writes nothing to `localStorage`) and the `online`/`offline` reconnect. The three
+progression fixtures were regenerated with `--reuse-baseline`: every measurement byte-identical, only
+`sourceHash`/`combatHash` moved. Two suites (`hosted_launch_stage_sim`, `hosted_scrypt_prepare_sim`) fail
+in a shallow clone until their pinned commits are fetched — that is the documented environment issue,
+not a regression.
+
 **2026-11-02 (`haven-v286` gate result): 195 suites pass, 0 fail, 0 dependency skips.**
 The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and
 `*_smoke.js` ran. New `social_ledger_sim.js` covers durable poker payouts before and

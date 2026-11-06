@@ -28,12 +28,20 @@ export class Social {
     this.room.resumes.set(id,record);
    }
   }).catch(error=>console.error('Plaza resume load failed',error));
-  const ledgerReady=ctx.storage.list({prefix:LEDGER_PREFIX}).then(entries=>{
+  const ledgerReady=this.loadLedgers().catch(error=>{this.ledgerLoadFailed=true;console.error('Poker ledger load failed',error)});
+  this.ready=Promise.all([historyReady,ledgerReady,resumeReady]);
+ }
+ // v326: one failed read used to brick this room for the whole life of the object - every socket was
+ // answered 503, so the plaza read as "chat unavailable, retrying..." until the object happened to be
+ // evicted minutes later, even though storage was healthy again a moment after the failure. The load is
+ // now a method fetch() can retry, and a failure is only a refusal for that one attempt.
+ loadLedgers(){
+  return this.ctx.storage.list({prefix:LEDGER_PREFIX}).then(entries=>{
    const queues=[];
    for(const [key,events] of entries){const id=Number(key.slice(LEDGER_PREFIX.length));if(Number.isInteger(id)&&id>0)queues.push([id,events])}
    this.room.ledgerQueues=new Map(cleanPokerLedgerQueues(queues));
-  }).catch(error=>{this.ledgerLoadFailed=true;console.error('Poker ledger load failed',error)});
-  this.ready=Promise.all([historyReady,ledgerReady,resumeReady]);
+   this.ledgerLoadFailed=false;
+  });
  }
  // Fire-and-forget like the world history: a failed write only costs the resume, never the save.
  saveResume(accountId,record){
@@ -49,7 +57,11 @@ export class Social {
  }
  async fetch(request){
   await this.ready;
-  if(this.ledgerLoadFailed)return new Response('Poker ledger unavailable',{status:503});
+  if(this.ledgerLoadFailed){
+   // Retry once per connection attempt instead of refusing this room until it is evicted (v326).
+   try{await this.loadLedgers()}
+   catch(error){console.error('Poker ledger load failed',error);return new Response('Poker ledger unavailable',{status:503})}
+  }
   if(request.headers.get('Upgrade')?.toLowerCase()!=='websocket')return new Response('WebSocket required',{status:426});
   const identity=JSON.parse(request.headers.get('X-Social-Identity')||'null');if(!identity||!Number.isInteger(identity.id)||typeof identity.username!=='string')return new Response('Invalid identity',{status:400});
   const pair=new WebSocketPair(),client=pair[0],server=pair[1];server.accept();
