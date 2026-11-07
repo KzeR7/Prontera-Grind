@@ -30,7 +30,7 @@ try{
  assert.throws(()=>deployedUrl('https://prontera-grind.pages.dev'));
  // Sanctuary staging is a separate, fixed-target owner launcher: reviewed code, isolated D1,
  // and a matching staging Social Worker. Importing it must not execute Wrangler or deploy anything.
- assert.equal(SANCTUARY_STAGE.commit,'fe8e7b9adc8908a3d643b826e35a1894c91ecfec');assert.equal(SANCTUARY_STAGE.branchUrl,'https://main.prontera-grind-staging.pages.dev');assert.equal(runGit(['cat-file','-e',SANCTUARY_STAGE.commit+'^{commit}']).status,0);
+ assert.equal(SANCTUARY_STAGE.commit,'e046c743427c95aff9504cb998920e912c3a0dde');assert.equal(SANCTUARY_STAGE.branchUrl,'https://main.prontera-grind-staging.pages.dev');assert.equal(runGit(['cat-file','-e',SANCTUARY_STAGE.commit+'^{commit}']).status,0);
  const sanctuaryPages=sanctuaryPagesConfig(),sanctuarySocial=sanctuarySocialConfig();
  assert.match(sanctuaryPages,/name = "prontera-grind-staging"/);assert.match(sanctuaryPages,/database_id = "3a38c6fc-96a8-491d-b97b-fd536e575ca4"/);assert.match(sanctuaryPages,/script_name = "prontera-social-staging"/);
  assert.doesNotMatch(sanctuaryPages,/50a6448b-1f12-466c-a28a-10544bedf750|script_name = "prontera-social"\s/);assert.doesNotMatch(sanctuaryPages,/name = "horizonhaven"/);
