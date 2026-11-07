@@ -3,6 +3,8 @@
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
+import http from 'node:http';
+import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -71,9 +73,25 @@ function repoWithStageCommit(){
  throw Error('Cannot find the reviewed v350 commit in a Prontera-Grind checkout. Fetch PR #180 first; nothing was deployed.');
 }
 
-export async function verifyDeployment(url,fetchImpl=fetch){
+// v360: undici's fetch rejects `Upgrade` as a fetch-spec forbidden header (the owner's first
+// v360 verify died with UND_ERR_INVALID_ARG), but /api/social needs that header to get past
+// its WebSocket gate (426) to the binding (503) and session (401) checks. The default
+// transport therefore probes upgrade requests over raw node:https/http - which has no
+// forbidden-header list and never follows redirects - and keeps fetch for everything else.
+const defaultGet=async(target,options={})=>{
+ if(options.headers&&options.headers.Upgrade){
+  const u=new URL(target);
+  return await new Promise((resolve,reject)=>{
+   const req=(u.protocol==='https:'?https:http).request(u,{method:'GET',headers:options.headers},res=>{res.resume();resolve({status:res.statusCode})});
+   req.setTimeout(30000,()=>req.destroy(Error('network timeout')));
+   req.on('error',reject);req.end();
+  });
+ }
+ return fetch(target,{...options,signal:AbortSignal.timeout(30000)});
+};
+export async function verifyDeployment(url,getImpl=defaultGet){
  async function get(route,options={}){
-  try{return await fetchImpl(url+route,{...options,signal:AbortSignal.timeout(30000)})}
+  try{return await getImpl(url+route,options)}
   catch(e){throw Error(`Staging ${route} request failed: ${e?.cause?.code||e.message||'network error'}`)}
  }
  const version=await get('/version.txt',{cache:'no-store'});

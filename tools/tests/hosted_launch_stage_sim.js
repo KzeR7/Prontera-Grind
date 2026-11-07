@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { freshDb,makeD1,createApp } from '../dev_server.js';
@@ -45,6 +46,21 @@ try{
  assert.deepEqual(verifiedRoutes,[stageHost+'/version.txt',stageHost+'/api/social']);
  await assert.rejects(verifyDeployment(stageHost,async()=>{throw Error('fetch failed')}),/\/version\.txt request failed: fetch failed/);
  await assert.rejects(verifyDeployment(stageHost,async target=>target.endsWith('/version.txt')?{status:200,text:async()=>SANCTUARY_STAGE.build}:{status:503}),/\/api\/social returned HTTP 503/);
+ // v360 regression: the owner's real verify died with UND_ERR_INVALID_ARG because the socket
+ // probe sends `Upgrade: websocket`, which undici's fetch rejects as a forbidden header while
+ // the Function needs it past its 426 gate. Exercise the DEFAULT transport (not a stub) against
+ // a live local server: fetch for /version.txt, raw node:http for the upgrade probe.
+ {
+  const seenUpgrade=[];
+  const okSrv=http.createServer((req,res)=>{ if(req.url==='/version.txt'){res.writeHead(200);res.end(SANCTUARY_STAGE.build+'\n')} else if(req.url==='/api/social'){seenUpgrade.push(req.headers.upgrade);res.writeHead(401);res.end('no session')} else {res.writeHead(404);res.end()} });
+  await new Promise(r=>okSrv.listen(0,'127.0.0.1',r));
+  await verifyDeployment('http://127.0.0.1:'+okSrv.address().port);
+  assert.deepEqual(seenUpgrade,['websocket'],'the socket probe must carry the Upgrade header');
+  const badSrv=http.createServer((req,res)=>{ if(req.url==='/version.txt'){res.writeHead(200);res.end(SANCTUARY_STAGE.build+'\n')} else {res.writeHead(503);res.end('no binding')} });
+  await new Promise(r=>badSrv.listen(0,'127.0.0.1',r));
+  await assert.rejects(verifyDeployment('http://127.0.0.1:'+badSrv.address().port),/\/api\/social returned HTTP 503/);
+  okSrv.close();badSrv.close();
+ }
  const sqlite=freshDb(),DB=makeD1(sqlite),app=createApp({sqlite});
  const db={exec(sql){let rows=[];for(const part of sql.split(';').map(x=>x.trim()).filter(Boolean)){
   const q=sqlite.prepare(part);if(/^(SELECT|PRAGMA)\b/i.test(part))rows=q.all();else q.run();
