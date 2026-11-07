@@ -60,6 +60,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  // path is exercised independently below/in the Sanctuary bag regression.
  w.S.digimonBag={v:1,coins:1000,food:99,eggs:0,owned:w.PGDigimonSanctuary.ROSTER};
  w.document.getElementById('sanctuaryOpen').click();assert(!w.document.getElementById('sanctuaryPanel').hidden);assert.equal(w.document.querySelectorAll('[data-sanctuary-pet]').length,12);assert.equal(w.PGDigimonSanctuary.ROSTER.length,280);
+ assert.equal(w.S.digimonBag.v,2,'a v1 bag upgrades to the v2 gear schema when the panel opens');saved=0;
  w.document.querySelector('[data-sanctuary-pet=patamon]').click();assert.equal(pick.value,'patamon');assert.equal(w.S.digimonPartner,'patamon');assert.equal(scenePlayers.get(0).look.digimon,'patamon');assert.equal(saved,1);assert.equal(w.document.querySelector('[data-sanctuary-pet=patamon]').getAttribute('aria-pressed'),'true');
  w.document.getElementById('sanctuaryDismiss').click();assert.equal(scenePlayers.get(0).look.digimon,undefined);assert.equal(w.S.pets[0].on,true);w.document.getElementById('sanctuaryClose').click();assert(w.document.getElementById('sanctuaryPanel').hidden);saved=0;
  // The real roster browser reaches an animation-only entry without mounting all 280 cards.

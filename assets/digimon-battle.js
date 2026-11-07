@@ -22,6 +22,24 @@ const MAX_SLOT=3,ENERGY_PVE_COST=2,ENERGY_PVE_MIN=10;
 // Each bot in a cleared farm wave gets an independent server-owned drop roll. These are
 // bonus drops on top of the existing wave reward, not a browser-declared inventory grant.
 const PVE_COIN_DROP_CHANCE=.45,PVE_EGG_DROP_CHANCE=.08;
+// v351 partner equipment: four gear slots per partner. Each piece carries one main stat and
+// at most one special; nothing sockets, nothing crafts. Bots never wear gear — cleared
+// enemies and bosses instead roll drops for the owner's Pet Bag, so the grind has a chase
+// and the Forge's reroll/tier-up fees give saturated Pet Coins somewhere to go.
+const GEAR_KINDS=['weapon','armor','accessory','relic'];
+const GEAR_MAIN={weapon:['atk'],armor:['hp','def'],accessory:['spdPct','hp'],relic:['hp','atk','def','spdPct']};
+const GEAR_MAIN_VALUE={hp:{armor:[8,13,20,28,38],accessory:[6,9,14,20,27],relic:[7,11,16,22,30]},atk:{weapon:[3,5,7,9,12],relic:[2,3,4,6,7]},def:{armor:[1,2,3,4,6],relic:[1,2,3,4,5]},spdPct:{accessory:[2,3,4,6,8],relic:[1,2,3,4,5]}};
+const GEAR_SPECIAL={crit:[1,1,2,3,4],lifesteal:[1,1,1,2,3],thorns:[1,1,1,2,2],xpPct:[2,3,4,6,8]};
+// Aggregate caps a profile may carry. A full set of maximum-roll tier-5 pieces lands just
+// under these, so the server-side clamp only bites on doctored submissions.
+const GEAR_CAP={hp:116,atk:24,def:14,spdPct:16,crit:20,lifesteal:15,thorns:10,xpPct:40};
+const PVE_GEAR_DROP_CHANCE=.08,BOSS_GEAR_DROP_CHANCE=.55,GEAR_SPECIAL_CHANCE=.4,BOSS_GEAR_SPECIAL_CHANCE=.65,GEAR_VARIANCE=.2;
+function gearZero(){return {hp:0,atk:0,def:0,spdPct:0,crit:0,lifesteal:0,thorns:0,xpPct:0}}
+function normalizeGear(raw){
+ const g=gearZero();if(!raw||typeof raw!=='object')return g;
+ for(const k of Object.keys(g))g[k]=Math.max(0,Math.min(GEAR_CAP[k],Math.round(Number(raw[k])||0)));
+ return g;
+}
 const cap=(n,min,max)=>Math.max(min,Math.min(max,Math.floor(Number.isFinite(Number(n))?Number(n):min)));
 const cleanId=id=>DATA.clean(id);
 function randomUnit(){const c=globalThis.crypto;if(c&&typeof c.getRandomValues==='function'){const a=new Uint32Array(1);c.getRandomValues(a);return a[0]/4294967296}return Math.random()}
@@ -43,32 +61,40 @@ function profile(raw){
  const lineId=typeof raw.lineId==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(raw.lineId)?raw.lineId:form;
  // v349 migration: a profile from an older save may still carry fatigue/fullness instead of energy.
  const legacyEnergy=raw.fullness!=null||raw.fatigue!=null?Math.round(((raw.fullness??70)+(100-(raw.fatigue??0)))/2):70;
- return {lineId,form,slot:cap(raw.slot,0,MAX_SLOT),stage:DATA.entry(form)?.stage||'Rookie',level:cap(raw.level??1,1,1000),xp:cap(raw.xp,0,3996),wins:cap(raw.wins,0,999),mastery:cap(raw.mastery,0,6),energy:cap(raw.energy??legacyEnergy,0,100),stats};
+ return {lineId,form,slot:cap(raw.slot,0,MAX_SLOT),stage:DATA.entry(form)?.stage||'Rookie',level:cap(raw.level??1,1,1000),xp:cap(raw.xp,0,3996),wins:cap(raw.wins,0,999),mastery:cap(raw.mastery,0,6),energy:cap(raw.energy??legacyEnergy,0,100),stats,gear:normalizeGear(raw.gear)};
 }
 function combatant(p,id,enemy=false,boss=false){
- const rank=stageRank(p.form),level=Math.min(100,p.level);
+ const rank=stageRank(p.form),level=Math.min(100,p.level),g=p.gear||gearZero();
  // Bosses scale on top of the bot scale: ~2.4 bots of health, ~1.55 bots of attack.
  const hpScale=enemy?(boss?BOSS_HP*.52:.52):1,atkScale=enemy?(boss?BOSS_ATK*.32:.32):1,defScale=enemy?(boss?BOSS_DEF*.65:.65):1;
  // Per-form base modifiers: Cyber Sleuth-derived where catalogued, documented house
  // archetypes otherwise. The stage curve of the base formula is unchanged (mean 1000).
  const base=BASE.stats(p.form);
- const maxHp=Math.round((92+rank*31+level*7+p.stats.guard*7)*hpScale*base.hp/1000);
- return {id,form:p.form,stage:p.stage,level:p.level,spd:base.spd/1000,maxHp,hp:maxHp,boss:!!boss,attack:Math.round((13+rank*5+level*1.5+p.stats.power*2.5+p.mastery*1.5)*atkScale*base.atk/1000),defense:Math.round((2+rank*2+p.stats.guard*1.2)*defScale*base.def/1000),attackAt:0,hitAt:0};
+ // Gear main stats are flat adds after the form scaling, so a piece that says +38 HP means +38 HP.
+ const maxHp=Math.round((92+rank*31+level*7+p.stats.guard*7)*hpScale*base.hp/1000+g.hp);
+ return {id,form:p.form,stage:p.stage,level:p.level,spd:base.spd/1000*(1+g.spdPct/100),maxHp,hp:maxHp,boss:!!boss,attack:Math.round((13+rank*5+level*1.5+p.stats.power*2.5+p.mastery*1.5)*atkScale*base.atk/1000+g.atk),defense:Math.round((2+rank*2+p.stats.guard*1.2)*defScale*base.def/1000+g.def),attackAt:0,hitAt:0,crit:g.crit,lifesteal:g.lifesteal,thorns:g.thorns};
 }
 // Read-only DigiDex layer: the same live formula, never a second species-stat table.
-function combatPreview(form,raw={}){const p=profile({...raw,form});if(!p)return null;const u=combatant(p,'preview');return {form:p.form,stage:p.stage,level:p.level,xp:p.xp,wins:p.wins,mastery:p.mastery,stats:{...p.stats},energy:p.energy,maxHp:u.maxHp,attack:u.attack,defense:u.defense,attackMs:TICK_MS,spd:u.spd}}
+function combatPreview(form,raw={}){const p=profile({...raw,form});if(!p)return null;const u=combatant(p,'preview');return {form:p.form,stage:p.stage,level:p.level,xp:p.xp,wins:p.wins,mastery:p.mastery,stats:{...p.stats},energy:p.energy,maxHp:u.maxHp,attack:u.attack,defense:u.defense,attackMs:TICK_MS,spd:u.spd,gear:{...p.gear}}}
 function strike(a,b,random){
  const roll=Math.max(0,Math.min(.999999999,Number(random())||0));
  // Speed decides the swing, not the average: quick forms connect reliably, heavy forms
  // hit hard or graze. Both windows keep the same expected damage.
  const fast=(a.spd||1)>=1,lo=fast?.94:.76,width=fast?.12:.48;
- const amount=Math.max(1,Math.round((a.attack-b.defense*.35)*(lo+roll*width)));
- b.hp=Math.max(0,b.hp-amount);b.hitAt=(b.hitAt||0)+1;a.attackAt=(a.attackAt||0)+1;return amount;
+ let amount=Math.max(1,Math.round((a.attack-b.defense*.35)*(lo+roll*width)));
+ let crit=false;
+ // The crit roll is only consumed when the attacker can actually crit, so unequipped
+ // partners keep the exact random stream and damage they had before gear existed.
+ if(a.crit>0&&Math.max(0,Math.min(.999999999,Number(random())||0))<a.crit/100){amount=Math.round(amount*1.5);crit=true}
+ b.hp=Math.max(0,b.hp-amount);b.hitAt=(b.hitAt||0)+1;a.attackAt=(a.attackAt||0)+1;
+ if(a.lifesteal>0)a.hp=Math.min(a.maxHp,a.hp+Math.ceil(amount*a.lifesteal/100));
+ if(b.thorns>0)a.hp=Math.max(0,a.hp-b.thorns);
+ return {amount,crit};
 }
 function pveReward(run){
- const rank=stageRank(run.profile.form);
- if(isBossWave(run.wave))return {coins:30+rank*8+(stageOf(run.wave)-1)*6,xp:3+Math.floor(rank/2),wins:2,energy:-ENERGY_PVE_COST};
- return {coins:10+rank*4+Math.min(10,run.wave-1),xp:1+Math.floor(rank/2),wins:1,energy:-ENERGY_PVE_COST};
+ const rank=stageRank(run.profile.form),xpPct=1+(run.profile.gear?.xpPct||0)/100;
+ if(isBossWave(run.wave))return {coins:30+rank*8+(stageOf(run.wave)-1)*6,xp:Math.round((3+Math.floor(rank/2))*xpPct),wins:2,energy:-ENERGY_PVE_COST};
+ return {coins:10+rank*4+Math.min(10,run.wave-1),xp:Math.round((1+Math.floor(rank/2))*xpPct),wins:1,energy:-ENERGY_PVE_COST};
 }
 function pveDrops(run,random){
  let coins=0,eggs=0;const roll=()=>Math.max(0,Math.min(.999999999,Number(random())||0));
@@ -81,6 +107,29 @@ function pveDrops(run,random){
   if(roll()<PVE_EGG_DROP_CHANCE)eggs++;
  }
  return {coins,eggs};
+}
+// Equipment drops are random per clear, never milestone-gated: every defeated bot has a
+// small chance and every boss a large one, with the boss piece drawn from a higher tier.
+// These rolls happen after pveDrops() so coin and egg outcomes keep their exact streams.
+function gearTierFor(wave,boss){
+ const stage=stageOf(wave);
+ return boss?Math.min(5,Math.max(2,2+Math.floor((stage-1)/2))):Math.min(3,1+Math.floor((stage-1)/3));
+}
+function rollGearItem(tier,random,specialChance=GEAR_SPECIAL_CHANCE,kind=null){
+ const roll=()=>Math.max(0,Math.min(.999999999,Number(random())||0));
+ const t=cap(tier,1,5);
+ const piece=kind&&GEAR_KINDS.includes(kind)?kind:GEAR_KINDS[Math.floor(roll()*GEAR_KINDS.length)];
+ const mains=GEAR_MAIN[piece],stat=mains[Math.floor(roll()*mains.length)];
+ const value=Math.max(1,Math.round(GEAR_MAIN_VALUE[stat][piece][t-1]*(1-GEAR_VARIANCE+roll()*GEAR_VARIANCE*2)));
+ let special=null;
+ if(roll()<specialChance){const keys=Object.keys(GEAR_SPECIAL),s=keys[Math.floor(roll()*keys.length)];special={stat:s,value:GEAR_SPECIAL[s][t-1]}}
+ return {kind:piece,tier:t,main:{stat,value},special};
+}
+function pveGearDrops(run,random){
+ const roll=()=>Math.max(0,Math.min(.999999999,Number(random())||0));
+ if(isBossWave(run.wave))return roll()<BOSS_GEAR_DROP_CHANCE?rollGearItem(gearTierFor(run.wave,true),random,BOSS_GEAR_SPECIAL_CHANCE):null;
+ for(const enemy of run.enemies){if(roll()<PVE_GEAR_DROP_CHANCE)return rollGearItem(gearTierFor(run.wave,false),random,GEAR_SPECIAL_CHANCE)}
+ return null;
 }
 function spawnWave(run,now,random){
  run.wave++;run.phase='fighting';run.partner.attackAt=0;run.partner.hitAt=0;
@@ -97,13 +146,13 @@ function spawnWave(run,now,random){
  const bonus=Math.min(4,stage-1);
  if(boss){
   const form=forms[Math.floor(Math.max(0,Math.min(.999999999,Number(random())||0))*forms.length)];
-  const bossProfile={...run.profile,form,stage:DATA.entry(form)?.stage||run.profile.stage,lineId:'boss',stats:{power:Math.min(12,Math.floor(run.profile.stats.power*.7)+bonus),guard:Math.min(12,Math.floor(run.profile.stats.guard*.6)+bonus),agility:0,focus:0},mastery:0};
+  const bossProfile={...run.profile,form,stage:DATA.entry(form)?.stage||run.profile.stage,lineId:'boss',stats:{power:Math.min(12,Math.floor(run.profile.stats.power*.7)+bonus),guard:Math.min(12,Math.floor(run.profile.stats.guard*.6)+bonus),agility:0,focus:0},mastery:0,gear:null};
   run.enemies=[combatant(bossProfile,'wave'+run.wave+'-boss',true,true)];
  }else{
   const count=3;
   run.enemies=Array.from({length:count},(_,i)=>{
    const form=forms[Math.floor(Math.max(0,Math.min(.999999999,Number(random())||0))*forms.length)];
-   const enemyProfile={...run.profile,form,stage:DATA.entry(form)?.stage||run.profile.stage,lineId:'bot',stats:{power:Math.min(12,Math.floor(run.profile.stats.power*.55)+bonus),guard:Math.min(12,Math.floor(run.profile.stats.guard*.55)+bonus),agility:0,focus:0},mastery:0};
+   const enemyProfile={...run.profile,form,stage:DATA.entry(form)?.stage||run.profile.stage,lineId:'bot',stats:{power:Math.min(12,Math.floor(run.profile.stats.power*.55)+bonus),guard:Math.min(12,Math.floor(run.profile.stats.guard*.55)+bonus),agility:0,focus:0},mastery:0,gear:null};
    return combatant(enemyProfile,'wave'+run.wave+'-enemy'+i,true);
   });
  }
@@ -112,7 +161,7 @@ function spawnWave(run,now,random){
 }
 function createPve({id,owner,room,profile:raw,now,random=randomUnit}){
  const p=profile(raw);if(!p)throw Error('A valid owned Digimon profile is required');
- const run={id,owner,room,profile:p,wave:0,phase:'fighting',partner:combatant(p,'partner'),enemies:[],nextAt:now,pulse:0,earned:{coins:0,xp:0,wins:0,eggs:0,dropCoins:0},reason:'',slot:0};
+ const run={id,owner,room,profile:p,wave:0,phase:'fighting',partner:combatant(p,'partner'),enemies:[],nextAt:now,pulse:0,earned:{coins:0,xp:0,wins:0,eggs:0,dropCoins:0,gear:0},reason:'',slot:0};
  spawnWave(run,now,random);return run;
 }
 function stepPve(run,now,random=randomUnit){
@@ -122,13 +171,14 @@ function stepPve(run,now,random=randomUnit){
   events.push(spawnWave(run,now,random));return {events,changed:true};
  }
  run.pulse++;const living=run.enemies.filter(e=>e.hp>0),target=living[0],bossWave=isBossWave(run.wave);
- if(target){strike(run.partner,target,random);events.push({type:'hit',from:'partner',to:target.id,hp:target.hp});}
+ if(target){const hit=strike(run.partner,target,random);events.push({type:'hit',from:'partner',to:target.id,amount:hit.amount,crit:hit.crit,hp:target.hp});}
  if(run.enemies.every(e=>e.hp<=0)){
   const drops=pveDrops(run,random),reward={...pveReward(run),dropCoins:drops.coins,eggs:drops.eggs};reward.coins+=drops.coins;
-  run.earned.coins+=reward.coins;run.earned.xp+=reward.xp;run.earned.wins+=reward.wins;run.earned.eggs+=drops.eggs;run.earned.dropCoins+=drops.coins;
+  const gearDrop=pveGearDrops(run,random);
+  run.earned.coins+=reward.coins;run.earned.xp+=reward.xp;run.earned.wins+=reward.wins;run.earned.eggs+=drops.eggs;run.earned.dropCoins+=drops.coins;if(gearDrop)run.earned.gear++;
   run.profile.energy=cap(run.profile.energy+reward.energy,0,100);
   run.partner.hp=Math.min(run.partner.maxHp,run.partner.hp+Math.ceil(run.partner.maxHp*.3));
-  events.push({type:'wave_clear',wave:run.wave,boss:bossWave,reward:{...reward},earned:{...run.earned},partnerHp:run.partner.hp});
+  events.push({type:'wave_clear',wave:run.wave,boss:bossWave,reward:{...reward},earned:{...run.earned},partnerHp:run.partner.hp,gearDrop});
   if(run.profile.energy<ENERGY_PVE_MIN){run.phase='ended';run.reason='exhausted';events.push({type:'end',reason:run.reason});}
   else if(run.wave>=MAX_WAVE){run.phase='ended';run.reason='complete';events.push({type:'end',reason:run.reason});}
   else {run.phase='between';run.nextAt=now+WAVE_DELAY_MS;}
@@ -137,7 +187,7 @@ function stepPve(run,now,random=randomUnit){
  // The whole group retaliates on alternating ticks. This leaves a readable attack rhythm and
  // prevents three same-stage bots from deleting a fresh partner before the first wave is visible.
  // A lone boss retaliates every tick instead, keeping stage-end pressure comparable.
- if(run.pulse%2===0||bossWave)for(const enemy of living)if(enemy.hp>0){strike(enemy,run.partner,random);events.push({type:'hit',from:enemy.id,to:'partner',hp:run.partner.hp});}
+ if(run.pulse%2===0||bossWave)for(const enemy of living)if(enemy.hp>0){const hit=strike(enemy,run.partner,random);events.push({type:'hit',from:enemy.id,to:'partner',amount:hit.amount,crit:hit.crit,hp:run.partner.hp});}
  if(run.partner.hp<=0){run.phase='ended';run.reason='defeat';events.push({type:'end',reason:'defeat'});}
  run.nextAt=now+TICK_MS;return {events,changed:true};
 }
@@ -155,7 +205,8 @@ function pvpRewards(match){
  if(match.rewards)return match.rewards;const rank=Math.max(...match.participants.map(p=>stageRank(p.profile.form)));
  match.rewards=Object.fromEntries(match.participants.map(p=>{
   const outcome=match.winnerId==null?'draw':match.winnerId===p.id?'win':'lose';
-  return [p.id,{outcome,coins:outcome==='win'?60+rank*10:outcome==='lose'?15+rank*2:25,xp:outcome==='win'?4+rank:outcome==='lose'?1:2,wins:outcome==='win'?1:0,energy:0}];
+  const xpPct=1+(p.profile.gear?.xpPct||0)/100;
+  return [p.id,{outcome,coins:outcome==='win'?60+rank*10:outcome==='lose'?15+rank*2:25,xp:Math.round((outcome==='win'?4+rank:outcome==='lose'?1:2)*xpPct),wins:outcome==='win'?1:0,energy:0}];
  }));return match.rewards;
 }
 function finishPvp(match,winnerId,reason,now){
@@ -175,14 +226,14 @@ function stepPvp(match,now,random=randomUnit){
  if(match.phase!=='fighting'||now<match.nextAt)return null;
  const [a,b]=match.participants,events=[];match.turn++;
  // Alternate the first attacker, while both combatants still retaliate in the same round.
- const order=match.turn%2?[a,b]:[b,a];for(const attacker of order){const defender=attacker===a?b:a;if(attacker.unit.hp<=0||defender.unit.hp<=0)continue;const amount=strike(attacker.unit,defender.unit,random);events.push({type:'hit',from:attacker.id,to:defender.id,amount,hp:defender.unit.hp});}
+ const order=match.turn%2?[a,b]:[b,a];for(const attacker of order){const defender=attacker===a?b:a;if(attacker.unit.hp<=0||defender.unit.hp<=0)continue;const hit=strike(attacker.unit,defender.unit,random);events.push({type:'hit',from:attacker.id,to:defender.id,amount:hit.amount,crit:hit.crit,hp:defender.unit.hp});}
  const aDead=a.unit.hp<=0,bDead=b.unit.hp<=0;
  if(aDead||bDead){finishPvp(match,aDead&&bDead?null:aDead?b.id:a.id,'knockout',now);events.push({type:'result',winnerId:match.winnerId,rewards:pvpRewards(match)});}
  else if(match.turn>=MAX_ROUNDS){const ar=a.unit.hp/a.unit.maxHp,br=b.unit.hp/b.unit.maxHp;finishPvp(match,ar===br?null:ar>br?a.id:b.id,'decision',now);events.push({type:'result',winnerId:match.winnerId,rewards:pvpRewards(match)});}
  match.nextAt=now+TICK_MS;return {events,changed:true};
 }
 function unitSnapshot(u){return {id:u.id,form:u.form,stage:u.stage,level:u.level,hp:u.hp,maxHp:u.maxHp,boss:!!u.boss,attackAt:u.attackAt||0,hitAt:u.hitAt||0}}
-function pveSnapshot(run){return {id:run.id,owner:run.owner,room:run.room,wave:run.wave,phase:run.phase,reason:run.reason,nextAt:run.nextAt,profile:{lineId:run.profile.lineId,form:run.profile.form,stage:run.profile.stage,level:run.profile.level,energy:run.profile.energy},partner:unitSnapshot(run.partner),enemies:run.enemies.map(unitSnapshot),earned:{...run.earned},slot:run.slot||0}}
+function pveSnapshot(run){return {id:run.id,owner:run.owner,room:run.room,wave:run.wave,phase:run.phase,reason:run.reason,nextAt:run.nextAt,profile:{lineId:run.profile.lineId,form:run.profile.form,stage:run.profile.stage,level:run.profile.level,energy:run.profile.energy,slot:run.profile.slot},partner:unitSnapshot(run.partner),enemies:run.enemies.map(unitSnapshot),earned:{...run.earned},slot:run.slot||0}}
 function pvpSnapshot(match){return {id:match.id,room:match.room,phase:match.phase,createdAt:match.createdAt,expiresAt:match.expiresAt,countdownUntil:match.countdownUntil,resultUntil:match.resultUntil,winnerId:match.winnerId,reason:match.reason,participants:match.participants.map(p=>({id:p.id,name:p.name,side:p.side,accepted:p.accepted,profile:{lineId:p.profile.lineId,form:p.profile.form,stage:p.profile.stage,level:p.profile.level},unit:unitSnapshot(p.unit)}))}}
-return {STATS,TICK_MS,WAVE_DELAY_MS,COUNTDOWN_MS,OFFER_MS,RESULT_MS,MAX_WAVE,MAX_ROUNDS,PVE_COIN_DROP_CHANCE,PVE_EGG_DROP_CHANCE,MAX_SLOT,ENERGY_PVE_COST,ENERGY_PVE_MIN,BOSS_EVERY,BOSS_EGG_CHANCE,RANGED_SPD,stageOf,isBossWave,attackRange,profile,combatPreview,stageRank,sameStage,createPve,stepPve,pveSnapshot,createPvp,acceptPvp,stepPvp,finishPvp,pvpRewards,pvpSnapshot,randomUnit};
+return {STATS,TICK_MS,WAVE_DELAY_MS,COUNTDOWN_MS,OFFER_MS,RESULT_MS,MAX_WAVE,MAX_ROUNDS,PVE_COIN_DROP_CHANCE,PVE_EGG_DROP_CHANCE,MAX_SLOT,ENERGY_PVE_COST,ENERGY_PVE_MIN,BOSS_EVERY,BOSS_EGG_CHANCE,RANGED_SPD,GEAR_KINDS,GEAR_MAIN,GEAR_MAIN_VALUE,GEAR_SPECIAL,GEAR_CAP,PVE_GEAR_DROP_CHANCE,BOSS_GEAR_DROP_CHANCE,GEAR_SPECIAL_CHANCE,BOSS_GEAR_SPECIAL_CHANCE,GEAR_VARIANCE,stageOf,isBossWave,attackRange,profile,combatPreview,stageRank,sameStage,gearZero,normalizeGear,gearTierFor,rollGearItem,pveGearDrops,strike,createPve,stepPve,pveSnapshot,createPvp,acceptPvp,stepPvp,finishPvp,pvpRewards,pvpSnapshot,randomUnit};
 });

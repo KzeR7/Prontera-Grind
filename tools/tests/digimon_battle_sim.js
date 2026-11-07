@@ -100,4 +100,72 @@ capRun.wave=99;capRun.phase='between';let capEnd=null;
 for(let capMs=500;capMs<60000&&!capEnd;capMs+=500){const result=B.stepPve(capRun,capMs,()=>.5);capEnd=result?.events.find(e=>e.type==='end')||null}
 assert.equal(capRun.phase,'ended');assert.equal(capRun.reason,'complete','clearing the last wave completes the field circuit');
 assert.equal(capEnd.reason,'complete');assert.equal(capRun.wave,100);
-console.log('digimon_battle_sim: PASS (per-form stats, energy waves, free PvP, 4-slot profiles, stages, bosses, ranges)');
+// v351 partner equipment: four slots, one main stat and at most one special per piece.
+const gearedPreview=B.combatPreview('agumon',{level:5,stats:{power:5,guard:3},gear:{hp:40,atk:10,def:5,spdPct:8,crit:6,lifesteal:4,thorns:3,xpPct:12}});
+const plainPreview=B.combatPreview('agumon',{level:5,stats:{power:5,guard:3}});
+assert.equal(gearedPreview.maxHp,plainPreview.maxHp+40,'+HP gear raises health');
+assert.equal(gearedPreview.attack,plainPreview.attack+10,'+ATK gear raises attack');
+assert.equal(gearedPreview.defense,plainPreview.defense+5,'+DEF gear raises defense');
+assert.ok(Math.abs(gearedPreview.spd-plainPreview.spd*(1+8/100))<1e-9,'+SPD gear scales the swing multiplier');
+assert.deepEqual(B.profile({form:'agumon',gear:{hp:9999,atk:999,crit:99}}).gear,{...B.gearZero(),hp:B.GEAR_CAP.hp,atk:B.GEAR_CAP.atk,crit:B.GEAR_CAP.crit},'doctored aggregates clamp to the legal maximum');
+assert.deepEqual(B.profile({form:'agumon'}).gear,B.gearZero(),'an unequipped profile carries zero gear');
+// Zero-gear partners keep the exact random stream: absent and explicit-zero gear agree.
+const lcg=s=>()=>(s=(s*1103515245+12345)%2147483648)/2147483648,rngA=lcg(7),rngB=lcg(7);
+const noGearRun=B.createPve({id:'gearless-pve',owner:1,room:1,profile:{...profile},now:0,random:rngA});
+const zeroGearRun=B.createPve({id:'zeroed-pve',owner:1,room:1,profile:{...profile,gear:B.gearZero()},now:0,random:rngB});
+for(let now=500;now<30000;now+=500){B.stepPve(noGearRun,now,rngA);B.stepPve(zeroGearRun,now,rngB)}
+const snapA=B.pveSnapshot(noGearRun),snapB=B.pveSnapshot(zeroGearRun);
+assert.equal(snapA.wave,snapB.wave);assert.equal(snapA.partner.hp,snapB.partner.hp);assert.deepEqual(snapA.earned,snapB.earned);assert.equal(JSON.stringify(snapA.enemies),JSON.stringify(snapB.enemies),'explicit zero gear is indistinguishable from no gear');
+// Crit multiplies, lifesteal heals the attacker, thorns bite the striker.
+const strikeUnit=(over={})=>({attack:100,defense:0,spd:1,hp:500,maxHp:500,attackAt:0,hitAt:0,crit:0,lifesteal:0,thorns:0,...over});
+const plainHit=B.strike(strikeUnit(),strikeUnit(),()=>.5);
+assert.equal(plainHit.crit,false);assert.equal(plainHit.amount,100);
+const critHit=B.strike(strikeUnit({crit:100}),strikeUnit(),()=>.5);
+assert.equal(critHit.crit,true);assert.equal(critHit.amount,150,'a crit strike deals 1.5x damage');
+const thief=strikeUnit({hp:100,lifesteal:20});
+const drainHit=B.strike(thief,strikeUnit({thorns:5}),()=>.5);
+assert.equal(thief.hp,115,'lifesteal heals 20% of 100 and thorns bite back for 5');
+// +XP% gear raises experience without touching coins or energy.
+let xpEvent=null,plainWaveEvent=null;
+const xpRun=B.createPve({id:'xp-pve',owner:1,room:1,profile:{...profile,gear:{xpPct:40}},now:0,random:()=>.5});
+const plainXpRun=B.createPve({id:'plain-xp-pve',owner:1,room:1,profile:{...profile},now:0,random:()=>.5});
+for(let now=500;now<20000&&!(xpEvent&&plainWaveEvent);now+=500){const r=B.stepPve(xpRun,now,()=>.5);xpEvent=xpEvent||r?.events.find(e=>e.type==='wave_clear');const p=B.stepPve(plainXpRun,now,()=>.5);plainWaveEvent=plainWaveEvent||p?.events.find(e=>e.type==='wave_clear')}
+assert.equal(xpEvent.reward.coins,plainWaveEvent.reward.coins,'coins ignore gear');
+assert.equal(xpEvent.reward.xp,Math.round(plainWaveEvent.reward.xp*1.4),'+XP% gear multiplies experience');
+assert.equal(xpEvent.reward.energy,plainWaveEvent.reward.energy,'the energy toll ignores gear');
+assert.ok(xpRun.enemies.every(e=>!e.crit&&!e.lifesteal&&!e.thorns),'bots never inherit the partner\'s gear');
+const bossGearRun=B.createPve({id:'boss-gear-pve',owner:1,room:1,profile:{...profile,gear:{hp:40,atk:10,crit:15}},now:0,random:()=>.5});
+bossGearRun.wave=4;bossGearRun.phase='between';B.stepPve(bossGearRun,500,()=>.5);
+assert.equal(bossGearRun.enemies.length,1);assert.equal(bossGearRun.enemies[0].boss,true);
+assert.ok(!bossGearRun.enemies[0].crit&&!bossGearRun.enemies[0].thorns,'the boss does not inherit equipped gear');
+assert.equal(bossGearRun.partner.crit,15,'the partner keeps its own gear');
+// Equipment drops: random per clear, bosses drop better tiers, normal waves cap at tier 3.
+assert.equal(B.gearTierFor(5,true),2);assert.equal(B.gearTierFor(15,true),3);assert.equal(B.gearTierFor(25,true),4);assert.equal(B.gearTierFor(45,true),5);
+assert.equal(B.gearTierFor(1,false),1);assert.equal(B.gearTierFor(16,false),2);assert.equal(B.gearTierFor(35,false),3);assert.equal(B.gearTierFor(90,false),3);
+const forgedPiece=B.rollGearItem(4,()=>.1,.5,'weapon');
+assert.equal(forgedPiece.kind,'weapon');assert.equal(forgedPiece.tier,4);assert.equal(forgedPiece.main.stat,'atk');
+assert.equal(forgedPiece.main.value,Math.round(B.GEAR_MAIN_VALUE.atk.weapon[3]*(1-B.GEAR_VARIANCE+.1*B.GEAR_VARIANCE*2)));
+assert.ok(forgedPiece.special&&['crit','lifesteal','thorns','xpPct'].includes(forgedPiece.special.stat),'a lucky special roll grants one special');
+const barePiece=B.rollGearItem(2,()=>.9,.1,'armor');
+assert.equal(barePiece.special,null,'a failed special roll leaves the piece clean');
+assert.ok(['hp','def'].includes(barePiece.main.stat));
+assert.equal(B.rollGearItem(9,()=>.5).tier,5,'tiers clamp to 5');
+assert.equal(B.rollGearItem(0,()=>.5).tier,1,'tiers clamp to 1');
+const dropShape={profile:{form:'agumon'},enemies:[{form:'numemon'},{form:'numemon'},{form:'numemon'}]};
+const bossDrop=B.pveGearDrops({...dropShape,wave:5},()=>.05);
+assert.ok(bossDrop&&bossDrop.tier===2,'a stage-1 boss clear rolls a tier-2 piece at the 55% chance');
+assert.equal(B.pveGearDrops({...dropShape,wave:5},()=>.9),null,'a failed boss roll drops nothing');
+const botDrop=B.pveGearDrops({...dropShape,wave:2},()=>.05);
+assert.ok(botDrop&&botDrop.tier<=3,'normal clears roll low-tier pieces');
+const luckyRun=B.createPve({id:'lucky-pve',owner:1,room:1,profile:{...profile},now:0,random:()=>.05});
+let dropEvent=null;
+for(let now=500;now<25000&&!dropEvent;now+=500){const r=B.stepPve(luckyRun,now,()=>.05);dropEvent=r?.events.find(e=>e.type==='wave_clear'&&e.gearDrop)||null}
+assert.ok(dropEvent,'a lucky clear announces its gear drop in the wave_clear event');
+assert.equal(luckyRun.earned.gear,1);assert.ok(dropEvent.gearDrop.kind&&dropEvent.gearDrop.main.value>=1);
+// Ring matches stay free and apply +XP% per fighter.
+const gearMatch=B.createPvp({id:'pvp-gear',room:1,now:0,players:[{id:1,name:'A',profile:{form:'agumon',level:5,stats:{power:5,guard:3},gear:{xpPct:25}}},{id:2,name:'B',profile:{form:'patamon',level:5,stats:{power:5,guard:3}}}]});
+B.acceptPvp(gearMatch,1,0);B.acceptPvp(gearMatch,2,0);B.finishPvp(gearMatch,1,'knockout',0);
+const gearRewards=B.pvpRewards(gearMatch);
+assert.equal(gearRewards[1].xp,Math.round((4+B.stageRank('agumon'))*1.25),'the winner\'s +XP% applies');
+assert.equal(gearRewards[2].xp,1,'the loser without gear keeps the base xp');
+console.log('digimon_battle_sim: PASS (per-form stats, energy waves, free PvP, 4-slot profiles, stages, bosses, ranges, equipment)');

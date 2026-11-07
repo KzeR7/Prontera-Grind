@@ -19,6 +19,20 @@ const ENERGY_START=70,ENERGY_REGEN_MS=2*60*1000,ENERGY_TRAIN_COST=20,ENERGY_TRAI
 const STARTER_POOL=ROSTER.filter(id=>['Baby I','Baby II'].includes(DATA.entry(id)?.stage));
 const ITEMS={food:{name:'Pet Meal',price:25},egg:{name:'Mystery Digi-Egg',price:500}};
 const COIN_START=50,SPAR_COINS=20;
+// v351 partner equipment: the Pet Bag owns the gear inventory and each owned line equips at
+// most one piece per kind, so the four partner slots can carry different builds. Drops come
+// from field grind (see digimon-battle.js); the Forge's reroll and tier-up fees are the Pet
+// Coin sink for a pouch that already owns every egg and meal it needs.
+const BAG_VERSION=2,GEAR_ITEM_CAP=80;
+const GEAR_KINDS=['weapon','armor','accessory','relic'];
+const GEAR_MAIN_STATS=['hp','atk','def','spdPct'],GEAR_SPECIAL_STATS=['crit','lifesteal','thorns','xpPct'];
+const GEAR_KIND_NOUN={weapon:['Claw','Fang','Core'],armor:['Hide','Plate','Mail'],accessory:['Charm','Band','Talisman'],relic:['Chip','Core','Matrix']};
+const GEAR_TIER_NAME=['Field','Iron','Chrome','Mythril','Legend'];
+const GEAR_STAT_NAME={hp:'+HP',atk:'+ATK',def:'+DEF',spdPct:'+SPD %',crit:'Crit %',lifesteal:'Lifesteal %',thorns:'Thorns',xpPct:'+XP %'};
+// Shape caps for a single stored piece. The battle-side aggregate caps in digimon-battle.js
+// are the real competitive boundary; these only keep saved items sane.
+const GEAR_STAT_CAP={hp:200,atk:40,def:25,spdPct:25,crit:25,lifesteal:20,thorns:15,xpPct:50};
+const FORGE_REROLL_COST=[40,60,90,130,180],FORGE_TIER_COST=[120,200,320,480],GEAR_SALVAGE=15;
 const cap=(n,min,max)=>Math.max(min,Math.min(max,Math.floor(Number.isFinite(Number(n))?Number(n):min)));
 const total=p=>STATS.reduce((a,k)=>a+p.stats[k],0);
 const clean=id=>DATA.clean(id);
@@ -104,13 +118,43 @@ const level=p=>1+Math.floor(cap(p?.xp,0,3996)/4);
 // Versioned pet bag / owned-species collection. Unknown future versions are
 // refused rather than overwritten, matching the Sanctuary save contract.
 function cleanOwned(raw){return [...new Set((Array.isArray(raw)?raw:[]).map(clean).filter(Boolean))].slice(0,ROSTER.length)}
+function cleanGearStat(raw,allowed){
+ if(!raw||typeof raw!=='object'||!allowed.includes(raw.stat))return null;
+ return {stat:raw.stat,value:cap(raw.value,1,GEAR_STAT_CAP[raw.stat])};
+}
+function cleanGearItem(raw){
+ if(!raw||typeof raw!=='object'||!GEAR_KINDS.includes(raw.kind))return null;
+ const main=cleanGearStat(raw.main,GEAR_MAIN_STATS);if(!main)return null;
+ const special=cleanGearStat(raw.special,GEAR_SPECIAL_STATS);
+ return {kind:raw.kind,tier:cap(raw.tier,1,5),main,special};
+}
+function gearItemName(item){return item?GEAR_TIER_NAME[item.tier-1]+' '+GEAR_KIND_NOUN[item.kind][Math.min(2,Math.floor((item.tier-1)/2))]:''}
+function gearItemLabel(item){return item?gearItemName(item)+' · '+GEAR_STAT_NAME[item.main.stat]+' '+item.main.value+(item.special?' · '+GEAR_STAT_NAME[item.special.stat]+' '+item.special.value:''):''}
+function normalizeBagGear(raw){
+ const gear={seq:cap(raw?.seq,0,999999),items:{},equip:{}};
+ if(!raw||typeof raw!=='object')return gear;
+ if(raw.items&&typeof raw.items==='object')for(const [uid,item] of Object.entries(raw.items)){
+  if(!/^[A-Za-z0-9_-]{1,24}$/.test(uid))continue;const piece=cleanGearItem(item);if(piece)gear.items[uid]=piece;
+ }
+ if(Object.keys(gear.items).length>GEAR_ITEM_CAP){
+  const keep=Object.entries(gear.items).slice(0,GEAR_ITEM_CAP);gear.items=Object.fromEntries(keep);
+ }
+ if(raw.equip&&typeof raw.equip==='object')for(const [line,slots] of Object.entries(raw.equip)){
+  const key=clean(line);if(!key||!slots||typeof slots!=='object')continue;
+  const map={};for(const kind of GEAR_KINDS){const uid=slots[kind];if(typeof uid==='string'&&gear.items[uid]&&cleanGearItem(gear.items[uid])?.kind===kind)map[kind]=uid}
+  if(Object.keys(map).length)gear.equip[key]=map;
+ }
+ return gear;
+}
 function normalizeBag(raw){
- if(raw&&typeof raw==='object'&&Number(raw.v)>1)return null;
- return {v:1,coins:cap(raw?.coins??COIN_START,0,999999),food:cap(raw?.food,0,999),eggs:cap(raw?.eggs,0,STARTER_POOL.length),owned:cleanOwned(raw?.owned)};
+ if(raw&&typeof raw==='object'&&Number(raw.v)>BAG_VERSION)return null;
+ return {v:BAG_VERSION,coins:cap(raw?.coins??COIN_START,0,999999),food:cap(raw?.food,0,999),eggs:cap(raw?.eggs,0,STARTER_POOL.length),owned:cleanOwned(raw?.owned),gear:normalizeBagGear(raw?.gear)};
 }
 function ensureBag(raw,legacyOwned=[]){
  const state=normalizeBag(raw);if(!state)return null;
  state.owned=cleanOwned([...state.owned,...legacyOwned]);
+ // Equipment can only be equipped by a line the bag actually owns.
+ for(const line of Object.keys(state.gear.equip))if(!state.owned.includes(line))delete state.gear.equip[line];
  if(raw==null&&!state.owned.length)state.eggs=1;
  return state;
 }
@@ -145,22 +189,90 @@ function bagReward(raw,kind){
  const before=state.coins;state.coins=cap(state.coins+SPAR_COINS,0,999999);
  return {ok:true,state,changed:state.coins!==before,amount:state.coins-before,message:state.coins>before?'+'+(state.coins-before)+' Pet Coins from the spar.':'Pet Coin pouch is full.'};
 }
+// ----------------------------- Partner equipment -----------------------------
+function gearUid(state){state.gear.seq=cap(state.gear.seq+1,0,999999);return 'g'+state.gear.seq.toString(36)+Math.floor(randomUnit()*46656).toString(36)}
+function gearAdd(state,item){
+ const piece=cleanGearItem(item);if(!piece)return null;
+ if(Object.keys(state.gear.items).length>=GEAR_ITEM_CAP)return null;
+ const uid=gearUid(state);state.gear.items[uid]=piece;return uid;
+}
+function gearEquip(raw,uid,line){
+ const state=normalizeBag(raw);
+ if(!state)return {ok:false,state,changed:false,message:'This pet bag uses a newer save version.'};
+ const fail=message=>({ok:false,state,changed:false,message}),done=message=>({ok:true,state,changed:true,message});
+ const item=state.gear.items[uid],key=clean(line);
+ if(!item)return fail('Choose a gear piece from your Pet Bag.');
+ if(!key||!state.owned.includes(key))return fail('Hatch that species before equipping gear on it.');
+ // One piece per kind: unequip it from whichever line currently holds it.
+ for(const [held,slots] of Object.entries(state.gear.equip))if(slots[item.kind]===uid){delete slots[item.kind];if(!Object.keys(slots).length)delete state.gear.equip[held]}
+ (state.gear.equip[key]=state.gear.equip[key]||{})[item.kind]=uid;
+ return done(gearItemLabel(item)+' equipped.');
+}
+function gearUnequip(raw,uid){
+ const state=normalizeBag(raw);
+ if(!state)return {ok:false,state,changed:false,message:'This pet bag uses a newer save version.'};
+ const fail=message=>({ok:false,state,changed:false,message}),done=message=>({ok:true,state,changed:true,message});
+ const item=state.gear.items[uid];if(!item)return fail('Choose a gear piece from your Pet Bag.');
+ let held=false;
+ for(const [line,slots] of Object.entries(state.gear.equip))if(slots[item.kind]===uid){delete slots[item.kind];held=true;if(!Object.keys(slots).length)delete state.gear.equip[line]}
+ if(!held)return fail('That piece is not equipped.');
+ return done(gearItemLabel(item)+' returned to the Pet Bag.');
+}
+// Sum the equipped pieces of one line into the aggregate bonuses a battle profile carries.
+// The server re-clamps these aggregates in digimon-battle.js before they can affect a match.
+function gearBonuses(state,line){
+ const g={hp:0,atk:0,def:0,spdPct:0,crit:0,lifesteal:0,thorns:0,xpPct:0};
+ const slots=state?.gear?.equip?.[clean(line)||''];
+ if(slots)for(const uid of Object.values(slots)){
+  const item=state.gear.items[uid];if(!item)continue;
+  g[item.main.stat]=Math.min(GEAR_STAT_CAP[item.main.stat],g[item.main.stat]+item.main.value);
+  if(item.special)g[item.special.stat]=Math.min(GEAR_STAT_CAP[item.special.stat],g[item.special.stat]+item.special.value);
+ }
+ return g;
+}
+function bagForge(raw,uid,mode,random=randomUnit){
+ const state=normalizeBag(raw);
+ if(!state)return {ok:false,state,changed:false,message:'This pet bag uses a newer save version.'};
+ const fail=message=>({ok:false,state,changed:false,message}),done=message=>({ok:true,state,changed:true,message});
+ const item=state.gear.items[uid];
+ if(!item)return fail('Choose a gear piece from your Pet Bag.');
+ if(!['reroll','tier'].includes(mode))return fail('Choose a Forge action.');
+ if(mode==='tier'&&item.tier>=5)return fail(gearItemName(item)+' is already at the maximum tier.');
+ const battle=globalThis.PGDigimonBattle;
+ if(!battle||typeof battle.rollGearItem!=='function')return fail('Battle rules are not loaded yet. Reload and try again.');
+ const cost=(mode==='reroll'?FORGE_REROLL_COST:FORGE_TIER_COST)[item.tier-1];
+ if(state.coins<cost)return fail('Not enough Pet Coins — the Forge needs '+cost+'.');
+ state.coins-=cost;
+ const tier=mode==='tier'?item.tier+1:item.tier;
+ const rolled=battle.rollGearItem(tier,random,.5,item.kind);
+ state.gear.items[uid]=cleanGearItem({kind:item.kind,tier,main:rolled.main,special:rolled.special});
+ return done('The Forge reforged it into '+gearItemLabel(state.gear.items[uid])+'.');
+}
 // The room sends this profile as a battle loadout. It contains no inventory or Zeny and is
-// normalized again by the server before it can influence a match.
-function combatProfile(raw,line,slot=0){
+// normalized again by the server before it can influence a match. Equipped gear travels as
+// clamped aggregate bonuses, never as the item list itself.
+function combatProfile(raw,line,slot=0,bag=null){
  const state=normalize(raw,line),p=state?.partners?.[line];if(!p)return null;
- return {lineId:line,form:p.form,slot:cap(slot,0,MAX_SLOT),level:level(p),xp:p.xp,wins:p.wins,mastery:p.mastery,energy:p.energy,stats:{...p.stats}};
+ return {lineId:line,form:p.form,slot:cap(slot,0,MAX_SLOT),level:level(p),xp:p.xp,wins:p.wins,mastery:p.mastery,energy:p.energy,stats:{...p.stats},gear:gearBonuses(bag,line)};
 }
 // Apply a clamped result to the existing owned line. Online callers accept only server-issued
 // messages; Solo plaza uses the same math for explicitly labeled local practice. The caller
 // deduplicates the battle id; this helper never chooses an outcome or reward amount itself.
-function applyBattleReward(raw,bagRaw,line,reward){
+function applyBattleReward(raw,bagRaw,line,reward,gearDrop=null){
  const state=normalize(raw,line),bag=normalizeBag(bagRaw),p=state?.partners?.[line];
  if(!state||!bag||!p||!reward||typeof reward!=='object')return {ok:false,state,bag,changed:false,message:'This battle reward could not be applied.'};
  const coins=cap(reward.coins,0,10000),eggs=cap(reward.eggs,0,99),xp=cap(reward.xp,0,100),wins=cap(reward.wins,0,1),energy=cap(reward.energy,-20,0);
  const before=bag.coins,beforeEggs=bag.eggs;bag.coins=cap(bag.coins+coins,0,999999);bag.eggs=cap(bag.eggs+eggs,0,STARTER_POOL.length);p.xp=cap(p.xp+xp,0,3996);p.wins=cap(p.wins+wins,0,999);p.energy=cap(p.energy+energy,0,100);
  const coinGain=bag.coins-before,bonusGain=Math.min(coinGain,cap(reward.dropCoins,0,coins)),baseGain=coinGain-bonusGain,eggGain=bag.eggs-beforeEggs,eggMessage=eggs?(eggGain?' · +'+eggGain+' Digi-Egg'+(eggGain===1?'':'s'):' · Digi-Egg bag full'):'';
- return {ok:true,state,bag,changed:true,amount:coinGain,bonus:bonusGain,eggs:eggGain,message:'+'+baseGain+' Pet Coins'+(bonusGain?' · +'+bonusGain+' bonus petgold':'')+' · +'+xp+' XP'+(wins?' · +1 win':'')+eggMessage};
+ // A gear drop lands in the Pet Bag; a full bag salvages it into Pet Coins instead of losing it.
+ let gearItem=null;
+ if(gearDrop&&typeof gearDrop==='object'){
+  const uid=gearAdd(bag,gearDrop);
+  if(uid)gearItem=bag.gear.items[uid];
+  else{const salvage=cap(gearDrop.tier,1,5)*GEAR_SALVAGE;bag.coins=cap(bag.coins+salvage,0,999999);return {ok:true,state,bag,changed:true,amount:bag.coins-before,bonus:bonusGain,eggs:eggGain,gear:null,message:'+'+baseGain+' Pet Coins'+(bonusGain?' · +'+bonusGain+' bonus petgold':'')+' · +'+xp+' XP'+(wins?' · +1 win':'')+eggMessage+' · Gear bag full — salvaged the '+gearItemName(cleanGearItem(gearDrop))+' for '+salvage+' Pet Coins'}
+  }
+ }
+ return {ok:true,state,bag,changed:true,amount:coinGain,bonus:bonusGain,eggs:eggGain,gear:gearItem,message:'+'+baseGain+' Pet Coins'+(bonusGain?' · +'+bonusGain+' bonus petgold':'')+' · +'+xp+' XP'+(wins?' · +1 win':'')+eggMessage+(gearItem?' · ⚙ '+gearItemLabel(gearItem):'')};
 }
-return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,MAX_SLOT,ENERGY_START,ENERGY_REGEN_MS,ENERGY_TRAIN_COST,ENERGY_TRAIN_MIN,ENERGY_FEED,ENERGY_PVE_MIN,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,level,normalize,update,act,species,total,requirements,evolutionOptions,evolutionCatalog,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagFeed,bagReward,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
+return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,MAX_SLOT,ENERGY_START,ENERGY_REGEN_MS,ENERGY_TRAIN_COST,ENERGY_TRAIN_MIN,ENERGY_FEED,ENERGY_PVE_MIN,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,BAG_VERSION,GEAR_ITEM_CAP,GEAR_KINDS,GEAR_MAIN_STATS,GEAR_SPECIAL_STATS,GEAR_STAT_CAP,FORGE_REROLL_COST,FORGE_TIER_COST,level,normalize,update,act,species,total,requirements,evolutionOptions,evolutionCatalog,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagFeed,bagReward,cleanGearItem,gearItemName,gearItemLabel,gearAdd,gearEquip,gearUnequip,gearBonuses,bagForge,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
 });

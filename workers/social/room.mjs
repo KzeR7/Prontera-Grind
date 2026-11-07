@@ -393,7 +393,7 @@ export class SocialRoom {
   for(const run of [...this.pveRuns.values()]){
    const result=B.stepPve(run,now,this.random);if(!result)continue;const c=this.clients.get(run.owner);rooms.add(run.room);
    for(const event of result.events){
-    if(event.type==='wave_clear'&&c)this.send(c,{type:'battle_reward',kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned}});
+    if(event.type==='wave_clear'&&c)this.send(c,{type:'battle_reward',kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});
     if(event.type==='end'){if(c)this.send(c,{type:'pve_end',battleId:run.id,reason:event.reason,earned:{...run.earned}});if(c)c.pve=null;this.pveRuns.delete(run.id)}
    }
   }
