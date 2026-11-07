@@ -35,6 +35,23 @@ const assert=require('node:assert/strict');
  for(let i=0;i<140&&match.phase!=='result';i++){now+=500;room.tickBattles(now)}assert.equal(match.phase,'result');const settled=[...b.events,...c.events].filter(e=>e.type==='battle_result'&&e.battleId===match.id);assert.equal(settled.length,2,'each participant receives one authoritative result');
  const ringFx=[...b.events,...c.events,...a.events].filter(e=>e.type==='battle_fx'&&e.kind==='pvp');
  assert(ringFx.length>=1,'ring strikes are forwarded as PvP FX events');assert(ringFx.every(e=>e.battleId===match.id&&(e.to===b.id||e.to===c.id)&&Number.isInteger(e.amount)&&typeof e.crit==='boolean'),'PvP FX events address participants by id');assert(settled.every(e=>e.reward&&Number.isInteger(e.reward.coins)));assert.equal(b.events.find(e=>e.type==='battle_result'&&e.battleId===match.id).slot,1,'PvP settlement preserves the originating slot');const resultCount=settled.length;room.tickBattles(now);assert.equal([...b.events,...c.events].filter(e=>e.type==='battle_result'&&e.battleId===match.id).length,resultCount);
+// v355: a queued player who walks away from the ring is dropped from the matchmaking queue
+// instead of being stuck refusing every other activity with "Finish the current DigiPet activity first."
+{
+ const q=join(5,74,118,'agumon');const inQueue=()=>[...room.pvpQueues.values()].flat().some(e=>e.id===5);
+ send(q,{type:'pvp_enter',request:50,profile:profile()});
+ assert(q.events.some(e=>e.type==='pvp_waiting'&&e.request===50),'queueing is answered with pvp_waiting');
+ assert(inQueue(),'the player is in the room queue');
+ send(q,{type:'pve_start',request:51,profile:profile()});
+ assert(q.events.some(e=>e.type==='battle_error'&&e.request===51&&/Finish the current DigiPet activity/.test(e.message)),'a queued player cannot start a second activity');
+ Object.assign(q,{x:20,z:40,at:now,path:[],sit:false});
+ now+=1000;room.tickBattles(now);
+ assert(!inQueue(),'walking away from the ring clears the queue entry');
+ assert(q.events.some(e=>e.type==='pvp_cancelled'&&e.reason==='left-ring'),'the walker is told why the queue cleared');
+ send(q,{type:'pve_start',request:52,profile:profile()});
+ assert(q.events.some(e=>e.type==='battle_error'&&e.request===52&&/middle DigiPet farm/.test(e.message)),'after cleanup the refusal is about position, not a stuck activity');
+ room.disconnect(q);
+}
  // A declined offer is removed from the public snapshot and does not leave a stuck participant.
  now+=10000;room.tickBattles(now);assert.equal(room.pvpMatches.size,0);send(b,{type:'pvp_enter',profile:profile('palmon','palmon',0)});send(c,{type:'pvp_enter',profile:profile('agumon','agumon',0)});const second=[...room.pvpMatches.values()][0];send(b,{type:'pvp_decline'});assert(!room.pvpMatches.has(second.id));assert(!c.pvp);assert(c.events.at(-1).type==='battle'||c.events.some(e=>e.type==='pvp_cancelled'));
  // A disconnected grinder releases its field run and cannot leave a ghost resident behind.

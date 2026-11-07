@@ -826,6 +826,30 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  assert(!R.onBridge(bridgeTarget.x,bridgeTarget.z),'bridge fishing lands the bobber in water rather than on the deck');
  assert(R.pondContains(lake,bridgeTarget.x,bridgeTarget.z),'cast target is within curved lake');
  FISH.stop('done');
+ // v355 (owner: "the cast must follow the direction you face, and the line must not cross the
+ // bridge"): from the south-west shore, facing the water keeps the bobber on your own side of
+ // the bridge, and facing inland still finds water through the toward-pond fallback.
+ {
+  const sw=props.stands.find(st=>st.name==='south-west');
+  let aimed=null;const aimFish=new Proxy({cast:(target)=>{aimed=target}},{get:(t,k)=>t[k]||(()=>{})});
+  const bindSW=(self)=>FISH.bind({host:()=>hostS,scene:()=>({fishing:aimFish}),self,moveTo:()=>{},notice:()=>{},save:()=>{}});
+  bindSW(()=>({x:sw.x,z:sw.z,face:Math.atan2(lake.z-sw.z,lake.x-sw.x)}));
+  FISH.toggle();assert.equal(FISH.phase,'ready');
+  if(!FISH.auto)d2.getElementById('fishingAutoBtn').onclick();
+  frame2(clock2+=1400);assert.equal(FISH.phase,'charge','auto begins the charge');
+  frame2(clock2+=1150);assert(aimed,'a facing cast reaches the 3D scene');
+  assert(R.pondContains(lake,aimed.x,aimed.z),'the facing cast lands in water');
+  assert(aimed.z>bridge.z+bridge.width/2,'a south-shore cast stays south of the bridge instead of crossing it');
+  FISH.stop('done');
+  let inland=null;const inlandFish=new Proxy({cast:(target)=>{inland=target}},{get:(t,k)=>t[k]||(()=>{})});
+  FISH.bind({host:()=>hostS,scene:()=>({fishing:inlandFish}),self:()=>({x:sw.x,z:sw.z,face:Math.atan2(sw.z-lake.z,sw.x-lake.x)}),moveTo:()=>{},notice:()=>{},save:()=>{}});
+  FISH.toggle();assert.equal(FISH.phase,'ready');
+  if(!FISH.auto)d2.getElementById('fishingAutoBtn').onclick();
+  frame2(clock2+=1400);assert.equal(FISH.phase,'charge','auto begins the charge after the fallback bind');
+  frame2(clock2+=1150);assert(inland,'an inland-facing cast still reaches the scene');
+  assert(R.pondContains(lake,inland.x,inland.z),'facing away from the pond falls back to open water');
+  FISH.stop('done');
+ }
  dom2.window.close();
  // --- Part D: the page wires v295 up (save shape, cache versions, build tag) ---------------
  const page=fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');

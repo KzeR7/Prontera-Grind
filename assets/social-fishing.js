@@ -1516,16 +1516,33 @@ function releaseCast(){
  if(bait){st.bait[bait.id]--;if(st.bait[bait.id]<=0){delete st.bait[bait.id];st.baitSel=null}}
  ui.mods={rod:rod.id,luck:rod.luck+(bait?bait.luck:0),weight:rod.strength+(bait?bait.weight:0),mutation:bait?bait.mutation:1,control:rod.control,lure:rod.lure};
  st.stats.casts++;persist();renderDockGear();
- const inX=[p.x-p.w/2+1.2,p.x+p.w/2-1.2],inZ=[p.z-p.d/2+1.1,p.z+p.d/2-1.1];
- const nearX=Math.max(inX[0],Math.min(inX[1],s.x)),nearZ=Math.max(inZ[0],Math.min(inZ[1],s.z));
- const farX=Math.max(inX[0],Math.min(inX[1],2*p.x-nearX)),farZ=Math.max(inZ[0],Math.min(inZ[1],2*p.z-nearZ));
- const t=ui.castR.dist,tx=nearX+(farX-nearX)*t+(Math.random()-.5)*.8,tz=nearZ+(farZ-nearZ)*t+(Math.random()-.5)*.8;
- let target=R().clampPond(p,tx,tz,1.2);
- // A fisher on the new bridge should cast into water, not onto the deck below their feet.
- if(R().onBridge?.(target.x,target.z)){
-  const bridge=(R().POND_PROPS||[])[ui.pond]?.bridge;
-  if(bridge){target.z=bridge.z+(s.z>bridge.z?1:-1)*(bridge.width/2+1.2);target=R().clampPond(p,target.x,target.z,1.2);if(R().onBridge(target.x,target.z))target=R().clampPond(p,p.x,bridge.z-5,1.2);}
- }
+ // v355 (owner: "the cast must follow the direction you face, and the line must never cross
+ // the bridge"): march a ray along the fisher's facing and land the bobber in the FIRST run of
+ // open water it meets. Casting from the bridge drops the bobber beside the deck; casting from
+ // either shore keeps the line on your own side of the bridge; turning turns your cast. If the
+ // facing finds no water at all (facing inland), the aim falls back toward the pond center and
+ // then to the nearest wet compass ray, so a stand can never produce a dry cast.
+ const water=(x,z)=>R().pondContains(p,x,z,-1.1)&&!R().onBridge?.(x,z)&&!R().cragBlocked?.(x,z);
+ const waterRun=a=>{
+  const ux=Math.cos(a),uz=Math.sin(a);let run=null;
+  for(let t=1.2;t<=46;t+=.4){
+   if(water(s.x+ux*t,s.z+uz*t)){if(!run)run={t0:t,t1:t,ux,uz};run.t1=t}
+   else if(run)break;
+  }
+  return run;
+ };
+ const toCenter=Math.atan2(p.z-s.z,p.x-s.x),aims=[];
+ if(Number.isFinite(s.face))aims.push(s.face);
+ if(Math.hypot(p.x-s.x,p.z-s.z)>.75)aims.push(toCenter);
+ for(let k=1;k<8&&aims.length<6;k++){aims.push(toCenter+k*Math.PI/4,toCenter-k*Math.PI/4)}
+ let run=null;for(const a of aims){run=waterRun(a);if(run)break}
+ let target;
+ if(run){
+  const t=run.t0+(run.t1-run.t0)*(.3+.6*ui.castR.dist);
+  target={x:s.x+run.ux*t,z:s.z+run.uz*t};
+  const jx=(Math.random()-.5)*.8,jz=(Math.random()-.5)*.8;
+  if(water(target.x+jx,target.z+jz)){target.x+=jx;target.z+=jz}
+ }else target=R().clampPond(p,p.x-(p.x-s.x)*.5,p.z-(p.z-s.z)*.5,1.2);
  ui.rigTarget=target;
  sound('cast');
  setPhase('flight');

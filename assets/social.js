@@ -1028,7 +1028,13 @@ function join(){if(!app.connected)return;send({type:'join',look:currentLook(),fr
 // v287: plaza fishing. The logic/UI module reads the self position, walks the player to a pond,
 // and announces show-offs on Local chat; everything else stays in assets/social-fishing.js.
 const FISHING=()=>globalThis.PGSocialFishing||null;
-function fishingSelf(){const p=app.players.get(app.room?app.id:SOLO_ID);if(!p)return null;const c={...p,path:(p.path||[]).map(v=>({...v}))};R.advance(c,performance.now());return {x:c.x,z:c.z}}
+function fishingSelf(){const p=app.players.get(app.room?app.id:SOLO_ID);if(!p)return null;const c={...p,path:(p.path||[]).map(v=>({...v}))};R.advance(c,performance.now());
+ // v355: report the facing too, so a cast follows the fisher's direction. While walking it is
+ // the exact segment angle; standing or seated it comes from the facing octant (dir*45°+90°).
+ let face=null;
+ if(c.path&&c.path.length){const t=c.path[0],dx=t.x-c.x,dz=t.z-c.z;if(dx||dz)face=Math.atan2(dz,dx)}
+ else if(Number.isInteger(c.dir)&&c.dir>=0&&c.dir<8)face=c.dir*Math.PI/4+Math.PI/2;
+ return {x:c.x,z:c.z,face}}
 // v295: Show off is no longer a Local-chat line. The fishing module paints the fish locally and
 // hands the same payload here, which relays it to the room as data.
 function fishingShowOff(fish){
@@ -1127,7 +1133,11 @@ const BATTLE_INTENT_MS=10000;
 function soloPractice(){return !app.room&&!CLOUD.on}
 function myPve(){const id=app.room?app.id:SOLO_ID;return app.battle.pve.find(r=>r.owner===id)||null}
 function myPvp(){const m=app.battle.pvp;return m&&m.participants?.some(p=>p.id===app.id)?m:null}
-function battleBusy(){return !!(myPve()||myPvp()||battleOffer||app.battleIntent)}
+// v355: waiting in the PvP matchmaking queue is a visible, cancellable activity. Before this,
+// a queued player saw an idle UI while the server refused every other action with
+// "Finish the current DigiPet activity first" — and had no control to leave the queue.
+function myQueue(){return (app.battle.queue||[]).find(q=>q.id===app.id)||null}
+function battleBusy(){return !!(myPve()||myPvp()||myQueue()||battleOffer||app.battleIntent)}
 // The partner slot currently in a field or ring battle, if any. Only that slot is barred
 // from gym training, care edits and evolution while the battle runs.
 function battleBusySlot(){
@@ -1183,14 +1193,15 @@ function startPvp(){
  const request=++battleRequest;app.battleIntent={kind:'pvp',request,at:Date.now()};if(send({type:'pvp_enter',request,profile})){worldNotice('Waiting for a player on the opposite side of the ring…');worldBattleNearby.hidden=true}else app.battleIntent=null;
 }
 function stopPve(){if(soloPve)stopSoloPve();else if(myPve())send({type:'pve_stop'})}
-function stopPvp(){if(myPvp()||battleOffer)send({type:'pvp_cancel'})}
+function stopPvp(){if(myPvp()||battleOffer||myQueue())send({type:'pvp_cancel'})}
 function renderBattleHUD(){
- const run=myPve(),match=myPvp();let html='',key='';
+ const run=myPve(),match=myPvp(),waiting=myQueue();let html='',key='';
  if(run){
   const G=globalThis.PGDigimonBattle,stage=G?.stageOf?.(run.wave)||1+Math.floor(((run.wave||1)-1)/5),inWave=((run.wave||1)-1)%5+1,bossWave=!!G?.isBossWave?.(run.wave);
   key='pve:'+run.id+':'+run.wave+':'+run.phase+':'+run.partner?.hp+':'+run.earned?.coins+':'+run.earned?.dropCoins+':'+run.earned?.eggs+':'+(run.earned?.gear||0);
   html=`<div class="sanctuary-battle-hud-card${bossWave?' is-boss':''}"><strong>⚔ ${soloPve?'SOLO · ':''}${bossWave?'STAGE '+stage+' · BOSS FIGHT':'AUTO-GRINDING · STAGE '+stage+' · WAVE '+inWave+'/5'}</strong><span>${run.phase==='between'?'Next group incoming…':escape(sanctuaryName(run.partner?.form))+' · HP '+Math.max(0,run.partner?.hp||0)+'/'+Math.max(1,run.partner?.maxHp||1)}</span><small>${soloPve?'Local practice · ':''}${run.enemies?.filter(e=>e.hp>0).length||0} ${bossWave?'boss':'bots'} remaining</small><small class="battle-loot">◈ ${run.earned?.coins||0} petgold${run.earned?.dropCoins?` (${run.earned.dropCoins} bonus)`:''} · 🥚 ${run.earned?.eggs||0} Digi-Eggs${run.earned?.gear?` · ⚙ ${run.earned.gear} gear`:''}</small><button type="button" data-battle-stop="pve">Stop grinding</button></div>`}
  else if(match&&['countdown','fighting'].includes(match.phase)){key='pvp:'+match.id+':'+match.phase;html=`<div class="sanctuary-battle-hud-card"><strong>⚔ RING MATCH</strong><span>${match.phase==='countdown'?'Both trainers accepted.':'Auto-battle in progress.'}</span><small>Server-settled · no manual attacks</small><button type="button" data-battle-stop="pvp">${match.phase==='fighting'?'Forfeit match':'Cancel match'}</button></div>`}
+ else if(waiting){key='queue:'+waiting.id;html=`<div class="sanctuary-battle-hud-card"><strong>⚔ WAITING FOR OPPONENT</strong><span>Standing by the ${waiting.side==='left'?'left':'right'} side of the ring.</span><small>Someone must stand on the other side to start the match</small><button type="button" data-battle-stop="pvp">Leave queue</button></div>`}
  battleHUD.hidden=!html;if(html&&battleHUD.dataset.key!==key){battleHUD.dataset.key=key;battleHUD.innerHTML=html}if(!html)battleHUD.dataset.key='';
 }
 battleHUD.onclick=e=>{const b=e.target.closest('[data-battle-stop]');if(!b)return;if(b.dataset.battleStop==='pve')stopPve();else stopPvp()};
@@ -1472,9 +1483,9 @@ function receive(m){
  if(m.type==='battle_error'){app.battleIntent=null;battleOffer=null;renderPvpDialog();worldNotice(m.message||'DigiPet battle action failed.');return}
  if(m.type==='pve_end'){app.battleIntent=null;worldNotice(m.reason==='defeat'?'Your partner fainted. Feed it and try grinding again.':m.reason==='exhausted'?'Grinding stopped.':m.reason==='complete'?'Field run complete! A very strong partner.':'Grinding stopped.');renderBattleHUD();return}
  if(m.type==='pvp_offer'){battleOffer=m;renderPvpDialog();return}
- if(m.type==='pvp_waiting'){worldNotice('Waiting for an opponent on the opposite side of the ring…');return}
+ if(m.type==='pvp_waiting'){app.battleIntent=null;renderBattleHUD();worldNotice('Waiting for an opponent on the opposite side of the ring…');return}
  if(m.type==='pvp_countdown'){battleOffer=null;if(Number.isFinite(m.serverNow))app.battleOffset=m.serverNow-Date.now();renderPvpDialog();return}
- if(m.type==='pvp_cancelled'){battleOffer=null;app.battleResult=null;pvpDialog.hidden=true;renderBattleResult();worldNotice(m.reason==='disconnect'?'The other trainer disconnected. Match cancelled.':'Ring match cancelled.');return}
+ if(m.type==='pvp_cancelled'){battleOffer=null;app.battleResult=null;pvpDialog.hidden=true;renderBattleResult();worldNotice(m.reason==='disconnect'?'The other trainer disconnected. Match cancelled.':m.reason==='left-ring'?'You left the ring, so the PvP queue was cleared.':'Ring match cancelled.');if(myQueue())app.battle={...app.battle,queue:(app.battle.queue||[]).filter(q=>q.id!==app.id)};renderBattleHUD();return}
  if(m.type==='gym_started'){if(worldTraining?.phase==='pending'&&worldTraining.request===m.request&&worldTraining.room===m.gym?.room&&worldTraining.stat===m.gym?.stat)beginWorldTraining(m.gym.slot);return}
  if(m.type==='gym_error'){if(worldTraining?.phase==='pending'&&worldTraining.request===m.request){worldTraining=null;worldNotice(m.message||'Could not reserve equipment.')}return}
  if(m.type==='gym'&&m.room===app.room){gymEntries=Array.isArray(m.entries)?m.entries:[];refreshGymVisuals();return}

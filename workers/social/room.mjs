@@ -389,6 +389,22 @@ export class SocialRoom {
  }
  tickBattles(now=this.now()){
   const rooms=new Set();
+  // v355: queue hygiene. A queued player who walks away from the ring (or disconnects) is
+  // removed from the matchmaking queue instead of silently blocking their next activity —
+  // the stuck "Finish the current DigiPet activity first." state this replaces.
+  for(const [room,queue] of [...this.pvpQueues]){
+   if(!queue.length)continue;
+   const kept=queue.filter(q=>{
+    const c=this.clients.get(q.id);
+    if(!c)return false;
+    const side=this.ringSide(c,now);
+    if(side&&side===q.side)return true;
+    if(c.pvp?.queue)c.pvp=null;
+    this.send(c,{type:'pvp_cancelled',reason:'left-ring'});
+    return false;
+   });
+   if(kept.length!==queue.length){this.pvpQueues.set(room,kept);rooms.add(room)}
+  }
   for(const run of [...this.pveRuns.values()]){
    const result=B.stepPve(run,now,this.random);if(!result)continue;const c=this.clients.get(run.owner);rooms.add(run.room);
    for(const event of result.events){
