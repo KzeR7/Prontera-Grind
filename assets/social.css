@@ -547,3 +547,58 @@ body.social-open #bgmPlayer{display:none!important}
 .digidex-assign:disabled{opacity:.55;cursor:default}
 .sanctuary-index-owned{display:flex;align-items:center;gap:6px;color:#c9dbcf;font-size:11px;white-space:nowrap;cursor:pointer}
 .sanctuary-index-owned input{accent-color:#e2c882}
+
+/* v355: plaza mini-map (bottom-right, above Sit), the big map dialog and the hub music player. */
+#socialMiniMap{position:absolute;right:18px;bottom:calc(var(--docktop,76px) + 58px);z-index:8;padding:3px;border:1.5px solid #c5a76b;border-radius:10px;background:linear-gradient(180deg,#243b31,#101f1a);box-shadow:inset 0 1px #ffe8ad26,0 5px 16px #0008;cursor:pointer;overflow:hidden}
+#socialMiniMap:hover,#socialMiniMap:focus-visible{border-color:#f3d68b;outline:2px solid #d8ba7044;outline-offset:2px}
+#socialMiniMap canvas{display:block;width:148px;height:148px;border-radius:7px;image-rendering:auto}
+#socialMapModal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:62;width:min(92vw,620px);max-height:min(92vh,720px);box-sizing:border-box;padding:12px 14px 12px;background:linear-gradient(180deg,#1c3129f5,#0e1c17f5);border:1.5px solid #d4b26a;border-radius:14px;box-shadow:0 18px 48px #000b;color:#f4dfaa;font:12px/1.45 "Trebuchet MS",sans-serif}
+#socialMapModal .social-map-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px}
+#socialMapModal .social-map-head strong{font-size:15px;letter-spacing:.4px;text-shadow:0 1px 2px #000}
+#socialMapClose{min-width:30px;min-height:30px;padding:4px 9px;border:1px solid #c5a76b;border-radius:6px;background:linear-gradient(180deg,#3a4a44,#182622);color:#f4dfaa;font:700 13px "Trebuchet MS",sans-serif;cursor:pointer}
+#socialMapClose:hover{border-color:#f3d68b;background:linear-gradient(180deg,#4b5e55,#20373a)}
+#socialMapCanvas{display:block;width:100%;height:auto;border:1px solid #849b9c66;border-radius:10px;background:#15221c}
+#socialMapModal .social-map-legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:9px;font-size:10.5px;color:#d8e2d0}
+#socialMapModal .social-map-legend span{display:inline-flex;align-items:center;gap:5px}
+.map-dot{width:9px;height:9px;border-radius:50%;display:inline-block;border:1px solid #0d1512}
+.map-dot.dot-self{background:#ffd257}.map-dot.dot-friend{background:#59d98c}.map-dot.dot-player{background:#8fb3ff}.map-dot.dot-fish{background:#5fd6d0}.map-dot.dot-battle{background:#ff6b57}
+.map-chip{width:10px;height:10px;border-radius:2px;display:inline-block;border:1px solid #0d1512}
+.map-chip.chip-farm{background:#7bb24f}.map-chip.chip-gym{background:#d08a3e}.map-chip.chip-ring{background:#c8543f}.map-chip.chip-poker{background:#b89652}.map-chip.chip-lake{background:#2e6f8a}
+#socialBgmMount{position:absolute;left:12px;top:calc(var(--socialhub-top,64px) + 8px);z-index:47;width:304px;background:linear-gradient(130deg,#22342ef7,#16241ff7);border:1px solid #c5a76b;border-radius:8px;box-shadow:0 12px 30px #0009;pointer-events:auto;font:10px/1.5 var(--e-font,"Trebuchet MS",sans-serif);color:#edf2e9}
+#socialBgmMount .bgm-player-bar{display:flex;align-items:center;gap:6px;padding:6px 8px}
+#socialBgmMount .bgm-ico{flex:none;color:#ffd257;font-size:12px}
+#socialBgmMount .bgm-now{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f4dfaa}
+#socialBgmMount .bgm-mode{flex:none;color:#9fb8a8}
+#socialBgmMount .bgm-ib{flex:none;width:24px;height:22px;border:1px solid #849b9c66;border-radius:4px;background:#1c2f2a;color:#d8e2d0;cursor:pointer;font:inherit}
+#socialBgmMount .bgm-ib:hover{border-color:#f3d68b;color:#ffe9ad}
+#socialBgmMount .bgm-player-body{border-top:1px solid #849b9c44;padding:6px 8px}
+#socialBgmMount .bgm-row{display:block;width:100%;text-align:left;padding:5px 7px;border:0;border-radius:4px;background:transparent;color:#d8e2d0;cursor:pointer;font:inherit}
+#socialBgmMount .bgm-row:hover{background:#ffffff12;color:#ffe9ad}
+#socialBgmMount .bgm-row.on{background:#ffd25722;color:#ffe9ad}
+#socialBgmMount .bgm-list{list-style:none;margin:4px 0;padding:0;max-height:180px;overflow:auto}
+#socialBgmMount .bgm-vol label{display:flex;align-items:center;gap:8px;color:#9fb8a8}
+#socialBgmMount .bgm-vol-range{flex:1;accent-color:#d4b26a}
+@media(max-width:760px){#socialMiniMap{right:12px;bottom:calc(var(--docktop,76px) + 52px)}#socialMiniMap canvas{width:104px;height:104px}#socialMapModal{width:calc(100% - 12px)}#socialBgmMount{width:min(304px,calc(100% - 24px))}}
+
+/* v355: grind-party panel and PvP lobby. */
+#socialPartyPanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:63;width:min(92vw,420px);box-sizing:border-box;padding:12px 14px;background:linear-gradient(180deg,#1c3129f5,#0e1c17f5);border:1.5px solid #d4b26a;border-radius:14px;box-shadow:0 18px 48px #000b;color:#f4dfaa;font:12px/1.5 "Trebuchet MS",sans-serif}
+#socialPartyPanel .social-party-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px}
+#socialPartyPanel .social-party-head strong{font-size:15px;text-shadow:0 1px 2px #000}
+#socialPartyClose{min-width:30px;min-height:30px;padding:4px 9px;border:1px solid #c5a76b;border-radius:6px;background:linear-gradient(180deg,#3a4a44,#182622);color:#f4dfaa;font:700 13px "Trebuchet MS",sans-serif;cursor:pointer}
+#socialPartyClose:hover{border-color:#f3d68b}
+#socialPartyPanel .social-party-section{margin:0 0 12px;padding:9px 10px;border:1px solid #849b9c44;border-radius:9px;background:#0d1815aa}
+#socialPartyPanel .social-party-section small{display:block;color:#9fb8a8;letter-spacing:.6px;font-size:9.5px;margin-bottom:6px}
+#socialPartyPanel .social-party-members,#socialPartyPanel .social-party-queue{list-style:none;margin:0 0 8px;padding:0}
+#socialPartyPanel .social-party-members li,#socialPartyPanel .social-party-queue li{padding:3px 6px;border-radius:5px;background:#ffffff0d;margin-bottom:3px;color:#d8e2d0}
+#socialPartyPanel .social-party-members li.is-leader{color:#ffe9ad;background:#ffd2571a}
+#socialPartyPanel .social-party-members em,#socialPartyPanel .social-party-queue em{color:#9fb8a8;font-style:normal;font-size:10.5px}
+#socialPartyPanel .social-party-invite{display:flex;gap:7px;margin:6px 0}
+#socialPartyPanel .social-party-invite select{flex:1;min-width:0;padding:6px 8px;border:1px solid #849b9c88;border-radius:6px;background:#0d1815;color:#edf2e9;font:inherit}
+#socialPartyPanel button{cursor:pointer;font:600 11.5px "Trebuchet MS",sans-serif;border-radius:6px;padding:7px 12px;border:1px solid #c5a76b;background:linear-gradient(180deg,#3a4a44,#182622);color:#f4dfaa}
+#socialPartyPanel button:hover:not([disabled]){border-color:#f3d68b}
+#socialPartyPanel button[disabled]{opacity:.45;cursor:not-allowed}
+#socialPartyPanel .social-party-start{border-color:#7bb24f;background:linear-gradient(180deg,#3d5c33,#1d3220);color:#dff3c9}
+#socialPartyPanel .social-party-leave{border-color:#a06055;background:linear-gradient(180deg,#4a2f2a,#2a1714);color:#f3d0c9}
+#socialPartyPanel .social-party-note{color:#9fb8a8;font-size:10.5px;margin:6px 0}
+#socialPartyPanel .social-party-invite-card{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 10px;border:1.5px solid #d4b26a;border-radius:9px;background:#241d0ecc;color:#ffe9ad}
+#socialPartyPanel .social-party-invite-card span{flex:1;min-width:140px}

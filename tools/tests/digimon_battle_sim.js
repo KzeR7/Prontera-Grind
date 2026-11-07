@@ -48,6 +48,34 @@ const before=match.winnerId;B.stepPvp(match,70000,()=>.5);assert.equal(match.win
 const legacy=B.profile({form:'agumon',level:99999,stats:{power:999,guard:-4},fullness:-10,fatigue:1000});
 assert.equal(legacy.level,1000);assert.equal(legacy.stats.power,12);assert.equal(legacy.stats.guard,0);assert.equal(legacy.energy,undefined,'legacy meter fields are dropped on read');
 assert.equal(B.profile({form:'agumon',fullness:60,fatigue:20}).energy,undefined,'no meter is invented for legacy profiles');
+// v355: party runs - up to three partners share one field, field a bigger group, rotate
+// enemy focus, heal together, and only end in defeat when every partner has fainted.
+{
+ const mk=(form,slot)=>({lineId:form,form,level:5,xp:16,wins:0,mastery:0,stats:{power:12,guard:12,agility:0,focus:0},slot});
+ const partyRun=B.createPve({id:'party-pve',owner:1,room:1,profiles:[mk('agumon',0),mk('palmon',1),mk('birdramon',2)],now:0,random:()=>.5});
+ assert.equal(partyRun.partners.length,3,'three partners join one run');
+ assert.equal(partyRun.party,true,'the run is flagged as a party');
+ assert.equal(partyRun.partner,partyRun.partners[0],'the leader partner stays the compat partner');
+ assert.equal(partyRun.enemies.length,5,'a full party faces five bots');
+ let clears=0,allyHits=0,rotated=0;
+ for(let t=650;t<90000&&partyRun.wave<2;t+=650){const result=B.stepPve(partyRun,t,()=>.5);if(result)clears+=result.events.filter(e=>e.type==='wave_clear').length;allyHits+=result?result.events.filter(e=>e.type==='hit'&&/^partner[12]$/.test(e.from)).length:0;rotated+=result?result.events.filter(e=>e.type==='hit'&&/^partner[12]$/.test(e.to)).length:0}
+ assert.equal(partyRun.wave,2,'the party clears into the second wave');
+ assert.equal(clears,1,'the first group settles once');
+ assert(allyHits>0,'the extra partners strike too');
+ assert(partyRun.partners.every(p=>p.hp>0),'the wave-clear heal revives the whole party');
+ const snap=B.pveSnapshot(partyRun);
+ assert.equal(snap.party,true);assert.equal(snap.partners.length,3);
+ assert.deepEqual(snap.slots.map(x=>x.slot),[0,1,2],'the snapshot maps every member to their slot');
+ const mine=B.pveReward(partyRun,partyRun.profiles[1]);
+ assert(Number.isInteger(mine.coins)&&mine.coins>0,'per-member rewards compute from that member\'s partner');
+ // Defeat needs every partner down: a lone survivor keeps the run alive.
+ partyRun.partners[0].hp=0;partyRun.partners[2].hp=0;
+ const survivor=B.stepPve(partyRun,partyRun.nextAt+650,()=>.5);
+ assert(partyRun.phase!=='ended','one standing partner keeps the party fighting');
+ partyRun.partners[1].hp=0;
+ B.stepPve(partyRun,partyRun.nextAt+1300,()=>.5);
+ assert.equal(partyRun.reason,'defeat','the run only ends when every partner fainted');
+}
 // Four partner slots travel with the profile and are clamped server-side.
 assert.equal(B.profile({form:'agumon',slot:3}).slot,3);assert.equal(B.profile({form:'agumon',slot:9}).slot,B.MAX_SLOT);assert.equal(B.profile({form:'agumon',slot:-2}).slot,0);
 // v350 field stages: five waves per stage, boss on every fifth, one named stage up.
@@ -167,4 +195,4 @@ B.acceptPvp(gearMatch,1,0);B.acceptPvp(gearMatch,2,0);B.finishPvp(gearMatch,1,'k
 const gearRewards=B.pvpRewards(gearMatch);
 assert.equal(gearRewards[1].xp,Math.round((4+B.stageRank('agumon'))*1.25),'the winner\'s +XP% applies');
 assert.equal(gearRewards[2].xp,1,'the loser without gear keeps the base xp');
-console.log('digimon_battle_sim: PASS (per-form stats, meter-free waves, free PvP, 4-slot profiles, stages, bosses, spread ranges, equipment)');
+console.log('digimon_battle_sim: PASS (per-form stats, meter-free waves, free PvP, 4-slot profiles, stages, bosses, spread ranges, equipment, three-trainer party runs)');

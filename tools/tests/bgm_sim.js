@@ -182,15 +182,15 @@ test('plaza uses Theme of Prontera and restores the current farming map on exit'
 
 test('the widget builds minimized, showing what plays, with the list hidden until pressed', () => {
   assert.equal(root.hidden, false, 'widget mounts');
-  assert.equal(root.querySelector('#bgmPlayerBody').hidden, true, 'list starts collapsed');
+  assert.equal(root.querySelector('.bgm-player-body').hidden, true, 'list starts collapsed');
   assert.equal(root.querySelector('[data-bgm=expand]').getAttribute('aria-expanded'), 'false');
   assert.match(root.querySelector('.bgm-now').textContent, /Astral Citadel/);
   assert.equal(root.querySelector('.bgm-mode').textContent, 'map');
   click({ 'data-bgm': 'expand' });
-  assert.equal(root.querySelector('#bgmPlayerBody').hidden, false, 'pressing opens the list');
+  assert.equal(root.querySelector('.bgm-player-body').hidden, false, 'pressing opens the list');
   assert.equal(root.querySelector('[data-bgm=expand]').getAttribute('aria-expanded'), 'true');
   click({ 'data-bgm': 'expand' });
-  assert.equal(root.querySelector('#bgmPlayerBody').hidden, true, 'minimize option closes it again');
+  assert.equal(root.querySelector('.bgm-player-body').hidden, true, 'minimize option closes it again');
 });
 
 test('the song list offers every added track and the Auto row is on by default', () => {

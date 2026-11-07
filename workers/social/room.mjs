@@ -76,7 +76,7 @@ export class SocialRoom {
   // Sanctuary combat is room-owned. Client messages are intents only; the simulation and
   // settlement below never accept a client-reported winner, damage total or reward amount.
   this.random=opts.random||B.randomUnit;this.battleSerial=0;this.pveRuns=new Map();
-  this.pvpQueues=new Map();this.pvpMatches=new Map();this.pvpByRoom=new Map();
+  this.pvpQueues=new Map();this.pvpMatches=new Map();this.pvpByRoom=new Map();this.parties=new Map();this.partyInvites=new Map();
   this.onBattleActivity=opts.onBattleActivity||null;
  }
  send(c,event){try{c.send(JSON.stringify(event))}catch{this.disconnect(c)}}
@@ -339,7 +339,9 @@ export class SocialRoom {
   c.pve=run;this.pveRuns.set(run.id,run);this.send(c,{type:'pve_started',request,battleId:run.id});this.broadcastBattle(c.room);this.battleActivity();
  }
  stopPve(c,reason='stopped',notify=true){
-  const run=c.pve;if(!run)return false;c.pve=null;this.pveRuns.delete(run.id);
+  const run=c.pve;if(!run)return false;
+  if(run.party&&Array.isArray(run.members)){this.leavePartyRun(c,run,reason);return true}
+  c.pve=null;this.pveRuns.delete(run.id);
   if(notify)this.send(c,{type:'pve_end',battleId:run.id,reason,earned:{...run.earned}});this.broadcastBattle(run.room);return true;
  }
  queuePvp(c,m,now){
@@ -384,6 +386,99 @@ export class SocialRoom {
   for(const p of match.participants){const c=this.clients.get(p.id);if(c?.pvp?.matchId===match.id)c.pvp=null}
   this.pairPvp(match.room,this.now());
  }
+ // ---------------- v355: grind parties (up to three trainers, one shared field) -----------
+ partyOf(c){for(const party of this.parties.values())if(party.members.some(m=>m.id===c.id))return party;return null}
+ partyBroadcast(party,event){for(const m of party.members){const c=this.clients.get(m.id);if(c)this.send(c,event)}}
+ partySync(party){
+  if(!party||!party.members.length)return;
+  const view={id:party.id,leader:party.leader,members:party.members.map(m=>({id:m.id,name:m.name}))};
+  this.partyBroadcast(party,{type:'party',party:view});
+  // Membership is public so the invite list can gray out trainers who are already taken.
+  const room=this.clients.get(party.members[0].id)?.room;
+  if(room)this.broadcast({type:'party_roster',parties:[...this.parties.values()].filter(p=>p.members.some(m=>this.clients.get(m.id)?.room===room)).map(p=>({id:p.id,members:p.members.map(m=>m.id)}))},c=>c.room===room);
+ }
+ partyError(c,request,message){this.send(c,{type:'party_error',request,message})}
+ partyInvite(c,m,now){
+  const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
+  if(!c.room)return this.partyError(c,request,'Join a plaza before forming a party.');
+  if(c.pve||c.pvp)return this.partyError(c,request,'Finish the current DigiPet activity first.');
+  let party=this.partyOf(c);
+  if(party&&party.leader!==c.id)return this.partyError(c,request,'Only the party leader can invite.');
+  if(!party){party={id:'party:'+this.battleId('party'),leader:c.id,members:[{id:c.id,name:c.name}],createdAt:now};this.parties.set(party.id,party)}
+  if(party.members.length>=3)return this.partyError(c,request,'The party is full (three trainers).');
+  const target=this.clients.get(Number(m.targetId));
+  if(!target||target.room!==c.room)return this.partyError(c,request,'That trainer is not in this plaza.');
+  if(target.id===c.id)return this.partyError(c,request,'You are already in the party.');
+  if(this.partyOf(target))return this.partyError(c,request,'That trainer is already in a party.');
+  if(target.pve||target.pvp)return this.partyError(c,request,'That trainer is busy with a DigiPet activity.');
+  const invite={partyId:party.id,fromId:c.id,fromName:c.name,expiresAt:now+30000};
+  this.partyInvites.set(target.id,invite);
+  this.send(target,{type:'party_invite',partyId:party.id,from:{id:c.id,name:c.name},expiresAt:invite.expiresAt});
+  this.partySync(party);
+ }
+ partyAccept(c,m,now){
+  const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
+  const invite=this.partyInvites.get(c.id);
+  if(!invite||invite.expiresAt<now)return this.partyError(c,request,'That party invite has expired.');
+  const party=this.parties.get(invite.partyId);
+  this.partyInvites.delete(c.id);
+  if(!party||!party.members.length)return this.partyError(c,request,'That party no longer exists.');
+  if(party.members.length>=3)return this.partyError(c,request,'The party filled up while you decided.');
+  if(c.pve||c.pvp)return this.partyError(c,request,'Finish the current DigiPet activity first.');
+  party.members.push({id:c.id,name:c.name});
+  this.partySync(party);
+ }
+ partyDecline(c,now){
+  const invite=this.partyInvites.get(c.id);this.partyInvites.delete(c.id);
+  if(!invite)return;
+  const from=this.clients.get(invite.fromId);if(from)this.send(from,{type:'party_notice',message:c.name+' declined the party invite.'});
+ }
+ partyRemove(c,reason='left'){
+  const party=this.partyOf(c);if(!party)return;
+  party.members=party.members.filter(m=>m.id!==c.id);
+  if(!party.members.length){this.parties.delete(party.id);this.partySync(party);return}
+  if(party.leader===c.id)party.leader=party.members[0].id;
+  this.partySync(party);
+  const leader=this.clients.get(party.leader);
+  if(leader)this.send(leader,{type:'party_notice',message:reason==='left'?(c.name+' left the party.'):('The party leader is now '+party.members[0].name+'.')});
+ }
+ // Leaving a party run removes only that trainer's partner; the field stays alive for the rest.
+ leavePartyRun(c,run,reason='stopped'){
+  const idx=Array.isArray(run.members)?run.members.indexOf(c.id):-1;
+  if(idx>=0){run.members.splice(idx,1);run.profiles.splice(idx,1);run.partners.splice(idx,1)}
+  if(run.partners.length===0){run.phase='ended';run.reason=reason;this.pveRuns.delete(run.id)}
+  else run.partner=run.partners[0];
+  c.pve=null;
+  const earned=(run.earnedBy&&run.earnedBy[c.id])||{...run.earned};
+  this.send(c,{type:'pve_end',battleId:run.id,reason,earned:{...earned}});
+  if(run.room)this.broadcastBattle(run.room);
+ }
+ startPartyPve(c,m,now){
+  const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
+  const party=this.partyOf(c);
+  if(!party||party.leader!==c.id)return this.partyError(c,request,'Only the party leader can start the grind.');
+  if(c.pve||c.pvp)return this.partyError(c,request,'Finish the current DigiPet activity first.');
+  const members=party.members.map(m=>this.clients.get(m.id));
+  if(members.some(mem=>!mem))return this.partyError(c,request,'Every party member must be online.');
+  const validProfile=mem=>{const p=mem.partyProfile;if(!p||!mem.look?.digimon||mem.look.digimon!==p.form)return null;return p};
+  for(const mem of members){
+   if(mem.pve||mem.pvp)return this.partyError(c,request,(mem===c?'You are':mem.name+' is')+' busy with another DigiPet activity.');
+   if(!this.fieldReady(mem,now))return this.partyError(c,request,mem===c?'Stand still inside the middle DigiPet farm to grind.':mem.name+' must stand still inside the middle DigiPet farm.');
+   const p=validProfile(mem);
+   if(!p)return this.partyError(c,request,mem===c?'Equip an owned partner, then reopen the Party panel.':mem.name+' has no owned partner equipped - they should reopen the Party panel.');
+   if(this.trainingBlocks(mem,p))return this.partyError(c,request,mem.name+"'s training partner cannot battle.");
+  }
+  if([...this.pveRuns.values()].filter(r=>r.room===c.room).length>=8)return this.partyError(c,request,'The field is full. Try another plaza.');
+  const profiles=members.map(validProfile);
+  const run=B.createPve({id:this.battleId('pve'),owner:c.id,room:c.room,profiles,now,random:this.random});
+  run.members=members.map(mem=>mem.id);run.earnedBy={};
+  const used=new Set([...this.pveRuns.values()].filter(r=>r.room===c.room).map(r=>r.slot));
+  run.slot=Array.from({length:8},(_,i)=>i).find(i=>!used.has(i))||0;
+  for(const mem of members)mem.pve=run;
+  this.pveRuns.set(run.id,run);
+  for(const mem of members)this.send(mem,{type:'pve_started',request:mem===c?request:null,battleId:run.id,party:true});
+  this.broadcastBattle(c.room);this.battleActivity();
+ }
  stopBattle(c,reason='stopped',now=this.now()){
   const room=c.room;if(c.pve)this.stopPve(c,reason,false);if(c.pvp)this.cancelPvp(c,reason,now);if(room)this.broadcastBattle(room);
  }
@@ -408,11 +503,28 @@ export class SocialRoom {
   for(const run of [...this.pveRuns.values()]){
    const result=B.stepPve(run,now,this.random);if(!result)continue;const c=this.clients.get(run.owner);rooms.add(run.room);
    for(const event of result.events){
-    if(event.type==='wave_clear'&&c)this.send(c,{type:'battle_reward',kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});
+    if(event.type==='wave_clear'&&run.party){
+     // v355: every member is paid with their own partner's rank, and gear drops roll per member.
+     run.earnedBy=run.earnedBy||{};
+     for(let i=0;i<run.members.length;i++){
+      const member=this.clients.get(run.members[i]);if(!member)continue;
+      const prof=run.profiles[i]||run.profile,mine={...B.pveReward(run,prof),dropCoins:event.reward.dropCoins,eggs:event.reward.eggs};
+      mine.coins+=mine.dropCoins;
+      const gearDrop=B.pveGearDrops(run,this.random)||null;
+      const totals=run.earnedBy[run.members[i]]||(run.earnedBy[run.members[i]]={coins:0,xp:0,wins:0,eggs:0,dropCoins:0,gear:0});
+      totals.coins+=mine.coins;totals.xp+=mine.xp;totals.wins+=mine.wins;totals.eggs+=mine.eggs;totals.dropCoins+=mine.dropCoins;if(gearDrop)totals.gear++;
+      this.send(member,{type:'battle_reward',kind:'pve',battleId:run.id+':wave'+event.wave+':'+run.members[i],lineId:prof.lineId,form:prof.form,slot:prof.slot,wave:event.wave,reward:mine,earned:{...totals},gearDrop});
+     }
+    }
+    else if(event.type==='wave_clear'&&c)this.send(c,{type:'battle_reward',kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});
     // v352: strikes are forwarded as presentation-only FX events. They carry no authority —
     // clients still render from snapshots; older clients simply ignore the message.
     if(event.type==='hit')this.broadcast({type:'battle_fx',kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit},p=>p.room===run.room);
-    if(event.type==='end'){if(c)this.send(c,{type:'pve_end',battleId:run.id,reason:event.reason,earned:{...run.earned}});if(c)c.pve=null;this.pveRuns.delete(run.id)}
+    if(event.type==='end'){
+     if(run.party&&Array.isArray(run.members))for(const id of run.members){const member=this.clients.get(id);if(!member)continue;member.pve=null;this.send(member,{type:'pve_end',battleId:run.id,reason:event.reason,earned:{...((run.earnedBy&&run.earnedBy[id])||run.earned)}})}
+     else{if(c)this.send(c,{type:'pve_end',battleId:run.id,reason:event.reason,earned:{...run.earned}});if(c)c.pve=null}
+     this.pveRuns.delete(run.id);
+    }
    }
   }
   for(const match of [...this.pvpMatches.values()]){
@@ -426,10 +538,11 @@ export class SocialRoom {
  }
  // `viewer` is who is asking: whether this person is a friend is a fact about the two accounts, so
  // the same player is flagged for one client and not for another. Omit it for a neutral snapshot.
- snapshot(c,viewer=null){R.advance(c,this.now());return {id:c.id,name:c.name,gm:c.gm,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat,pokerSeat:c.pokerSeat,fish:c.fish||null,friend:!!(viewer&&viewer!==c&&viewer.friends.has(c.id))};}
- leave(c){const room=c.room;this.stopBattle(c,'left');this.standPoker(c,this.now(),false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;if(room){this.broadcast({type:'left',id:c.id,room},p=>p.room===room);this.broadcastPoker(room,this.now());this.schedulePoker(room);this.syncRooms();}}
+ snapshot(c,viewer=null){R.advance(c,this.now());return {id:c.id,name:c.name,gm:c.gm,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat,pokerSeat:c.pokerSeat,fish:c.fish||null,party:this.partyOf(c)?.id||null,friend:!!(viewer&&viewer!==c&&viewer.friends.has(c.id))};}
+ leave(c){const room=c.room;this.stopBattle(c,'left');this.partyRemove(c,'left');this.partyInvites.delete(c.id);this.standPoker(c,this.now(),false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;if(room){this.broadcast({type:'left',id:c.id,room},p=>p.room===room);this.broadcastPoker(room,this.now());this.schedulePoker(room);this.syncRooms();}}
  disconnect(c){
   if(this.clients.get(c.id)!==c)return;
+  this.partyRemove(c,'disconnect');this.partyInvites.delete(c.id);
   const now=this.now(),room=c.room;this.stopBattle(c,'disconnect',now);this.stopGym(c);
   // A lost socket is not a decision to fold. Keep the exact position and reserved poker seat
   // for 15 seconds, including planned re-authentication. The turn clock still runs; an explicit
@@ -514,6 +627,12 @@ export class SocialRoom {
   if(m.type==='pve_start')return this.startPve(c,m,now);
   if(m.type==='pve_stop'){this.stopPve(c);return}
   if(m.type==='pvp_enter')return this.queuePvp(c,m,now);
+  if(m.type==='party_invite')return this.partyInvite(c,m,now);
+  if(m.type==='party_accept')return this.partyAccept(c,m,now);
+  if(m.type==='party_decline')return this.partyDecline(c,now);
+  if(m.type==='party_leave')return this.partyRemove(c,'left');
+  if(m.type==='party_start')return this.startPartyPve(c,m,now);
+  if(m.type==='party_profile'){const p=this.battleProfile(c,m.profile);if(p)c.partyProfile=p;return}
   if(m.type==='pvp_accept')return this.acceptPvp(c,now);
   if(m.type==='pvp_decline'||m.type==='pvp_cancel')return this.cancelPvp(c,m.type==='pvp_decline'?'declined':'cancelled',now);
   if(m.type==='poker_ledger_ack')return this.ackPokerLedgers(c,m);

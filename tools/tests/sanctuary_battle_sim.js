@@ -35,6 +35,46 @@ const assert=require('node:assert/strict');
  for(let i=0;i<140&&match.phase!=='result';i++){now+=500;room.tickBattles(now)}assert.equal(match.phase,'result');const settled=[...b.events,...c.events].filter(e=>e.type==='battle_result'&&e.battleId===match.id);assert.equal(settled.length,2,'each participant receives one authoritative result');
  const ringFx=[...b.events,...c.events,...a.events].filter(e=>e.type==='battle_fx'&&e.kind==='pvp');
  assert(ringFx.length>=1,'ring strikes are forwarded as PvP FX events');assert(ringFx.every(e=>e.battleId===match.id&&(e.to===b.id||e.to===c.id)&&Number.isInteger(e.amount)&&typeof e.crit==='boolean'),'PvP FX events address participants by id');assert(settled.every(e=>e.reward&&Number.isInteger(e.reward.coins)));assert.equal(b.events.find(e=>e.type==='battle_result'&&e.battleId===match.id).slot,1,'PvP settlement preserves the originating slot');const resultCount=settled.length;room.tickBattles(now);assert.equal([...b.events,...c.events].filter(e=>e.type==='battle_result'&&e.battleId===match.id).length,resultCount);
+// v355: grind parties - invite/accept, leader start, one shared run, per-member rewards, and
+// a member leaving only removes their own partner while the field stays alive for the rest.
+{
+ const p1=join(6,70,64,'agumon'),p2=join(7,74,66,'palmon'),p3=join(8,66,66,'agumon');
+ const prof=(form,slot=0)=>({lineId:form,form,level:5,stats:{power:12,guard:12,agility:0,focus:0},slot});
+ send(p1,{type:'party_invite',request:60,targetId:7});
+ assert(p2.events.some(e=>e.type==='party_invite'&&e.from.id===6),'the invited trainer receives the invite');
+ assert(p1.events.some(e=>e.type==='party'&&e.party&&e.party.leader===6),'inviting forms the party with the inviter as leader');
+ send(p2,{type:'party_accept',request:61});
+ send(p1,{type:'party_profile',profile:prof('agumon')});
+ send(p2,{type:'party_profile',profile:prof('palmon')});
+ assert(p2.events.some(e=>e.type==='party'&&e.party&&e.party.members.length===2),'acceptance is broadcast to members');
+ send(p1,{type:'party_start',request:62});
+ assert(p1.events.some(e=>e.type==='pve_started'&&e.party===true),'the leader hears the party start');
+ assert(p2.events.some(e=>e.type==='pve_started'&&e.party===true),'every member hears the party start');
+ const run=[...room.pveRuns.values()].find(r=>r.party);
+ assert(run&&run.members.includes(6)&&run.members.includes(7),'the run carries both member ids');
+ assert.equal(run.partners.length,2,'both partners share one field');
+ assert.equal(run.enemies.length,4,'a pair faces a bigger bot group');
+ // A busy leader cannot invite a third trainer mid-grind.
+ send(p1,{type:'party_invite',request:63,targetId:8});
+ assert(p1.events.some(e=>e.type==='party_error'&&/Finish the current DigiPet activity/.test(e.message)),'a grinding leader cannot invite');
+ for(let t=now+700;t<now+60000&&!p2.events.some(e=>e.type==='battle_reward');t+=650)room.tickBattles(t);
+ const mine=p2.events.filter(e=>e.type==='battle_reward');
+ assert(mine.length>=1,'the member is paid for the shared clear');
+ assert(mine.every(e=>e.lineId==='palmon'&&e.slot===0),'member rewards carry their own partner and slot');
+ assert(p1.events.filter(e=>e.type==='battle_reward').every(e=>e.lineId==='agumon'),'the leader is paid with their own partner');
+ // A member leaving only removes their partner; the leader keeps grinding.
+ send(p2,{type:'pve_stop'});
+ assert(p2.events.some(e=>e.type==='pve_end'&&e.reason==='stopped'),'the leaver is told the run stopped for them');
+ const after=[...room.pveRuns.values()].find(r=>r.id===run.id);
+ assert(after&&after.partners.length===1&&after.members.length===1&&after.members[0]===6,'the shared run continues for the leader');
+ send(p1,{type:'pve_stop'});
+ assert(!room.pveRuns.has(run.id),'the last member out ends the run');
+ // The party survives the grind; leadership transfers when the leader leaves.
+ send(p1,{type:'party_leave'});
+ const promoted=p2.events.filter(e=>e.type==='party').at(-1);
+ assert(promoted&&promoted.party&&promoted.party.leader===7,'leadership transfers to the remaining trainer');
+ room.disconnect(p2);room.disconnect(p3);
+}
 // v355: a queued player who walks away from the ring is dropped from the matchmaking queue
 // instead of being stuck refusing every other activity with "Finish the current DigiPet activity first."
 {
@@ -68,5 +108,5 @@ const assert=require('node:assert/strict');
  send(gym,{type:'pve_stop'});send(gym,{type:'gym_stop'});assert(!gym.gym);
  send(gym,{type:'pve_start',request:45,profile:{...profile(),slot:2}});assert(gym.events.some(e=>e.type==='pve_started'&&e.request===45),'stopping training reopens the slot');
  room.disconnect(gym);
- console.log('PASS Sanctuary room: authoritative wave/reward events, strike FX forwarding, forged-result rejection, stale-meter tolerance, training-slot gate, opposite-side mutual PvP, countdown, settlement, cancellation and disconnect cleanup');
+ console.log('PASS Sanctuary room: authoritative wave/reward events, strike FX forwarding, forged-result rejection, stale-meter tolerance, training-slot gate, opposite-side mutual PvP, queue hygiene, three-trainer grind parties with per-member rewards, countdown, settlement, cancellation and disconnect cleanup');
 })().catch(e=>{console.error(e);process.exitCode=1});

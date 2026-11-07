@@ -93,8 +93,10 @@ function strike(a,b,random){
  if(b.thorns>0)a.hp=Math.max(0,a.hp-b.thorns);
  return {amount,crit};
 }
-function pveReward(run){
- const rank=stageRank(run.profile.form),xpPct=1+(run.profile.gear?.xpPct||0)/100;
+function pveReward(run,prof){
+ // v355: an optional profile override lets a party run pay every member with their own
+ // partner's rank and +XP% gear, instead of the leader's numbers.
+ const p=prof||run.profile,rank=stageRank(p.form),xpPct=1+(p.gear?.xpPct||0)/100;
  if(isBossWave(run.wave))return {coins:30+rank*8+(stageOf(run.wave)-1)*6,xp:Math.round((3+Math.floor(rank/2))*xpPct),wins:2};
  return {coins:10+rank*4+Math.min(10,run.wave-1),xp:Math.round((1+Math.floor(rank/2))*xpPct),wins:1};
 }
@@ -134,7 +136,7 @@ function pveGearDrops(run,random){
  return null;
 }
 function spawnWave(run,now,random){
- run.wave++;run.phase='fighting';run.partner.attackAt=0;run.partner.hitAt=0;
+ run.wave++;run.phase='fighting';for(const p of run.partners){p.attackAt=0;p.hitAt=0}
  const boss=isBossWave(run.wave),stage=stageOf(run.wave);
  let pool;
  if(boss){
@@ -149,9 +151,14 @@ function spawnWave(run,now,random){
  if(boss){
   const form=forms[Math.floor(Math.max(0,Math.min(.999999999,Number(random())||0))*forms.length)];
   const bossProfile={...run.profile,form,stage:DATA.entry(form)?.stage||run.profile.stage,lineId:'boss',stats:{power:Math.min(12,Math.floor(run.profile.stats.power*.7)+bonus),guard:Math.min(12,Math.floor(run.profile.stats.guard*.6)+bonus),agility:0,focus:0},mastery:0,gear:null};
-  run.enemies=[combatant(bossProfile,'wave'+run.wave+'-boss',true,true)];
+  const bossUnit=combatant(bossProfile,'wave'+run.wave+'-boss',true,true);
+  // v355: a party of partners faces a proportionally sturdier boss so stage ends stay events.
+  if(run.party){const scale=1+.45*(run.partners.length-1);bossUnit.maxHp=Math.round(bossUnit.maxHp*scale);bossUnit.hp=bossUnit.maxHp}
+  run.enemies=[bossUnit];
  }else{
-  const count=3;
+  // v355: party grinds field a bigger group (2 + one per partner, max 5) so a full party
+  // does not triple its clear speed - and its reward rate - over a solo trainer.
+  const count=run.party?Math.min(5,2+run.partners.length):3;
   run.enemies=Array.from({length:count},(_,i)=>{
    const form=forms[Math.floor(Math.max(0,Math.min(.999999999,Number(random())||0))*forms.length)];
    const enemyProfile={...run.profile,form,stage:DATA.entry(form)?.stage||run.profile.stage,lineId:'bot',stats:{power:Math.min(12,Math.floor(run.profile.stats.power*.55)+bonus),guard:Math.min(12,Math.floor(run.profile.stats.guard*.55)+bonus),agility:0,focus:0},mastery:0,gear:null};
@@ -161,9 +168,13 @@ function spawnWave(run,now,random){
  run.nextAt=now+TICK_MS;run.pulse=0;
  return {type:'wave',wave:run.wave,boss,forms:run.enemies.map(e=>e.form)};
 }
-function createPve({id,owner,room,profile:raw,now,random=randomUnit}){
- const p=profile(raw);if(!p)throw Error('A valid owned Digimon profile is required');
- const run={id,owner,room,profile:p,wave:0,phase:'fighting',partner:combatant(p,'partner'),enemies:[],nextAt:now,pulse:0,earned:{coins:0,xp:0,wins:0,eggs:0,dropCoins:0,gear:0},reason:'',slot:0};
+function createPve({id,owner,room,profile:raw,profiles,now,random=randomUnit}){
+ // v355: a party grind passes up to three owned profiles; they fight together in one field.
+ const list=(Array.isArray(profiles)&&profiles.length?profiles:[raw]).map(p=>profile(p)).filter(Boolean);
+ if(!list.length)throw Error('A valid owned Digimon profile is required');
+ if(list.length>3)list.length=3;
+ const run={id,owner,room,profile:list[0],profiles:list,members:[],wave:0,phase:'fighting',partners:list.map((p,i)=>combatant(p,i?'partner'+i:'partner')),enemies:[],nextAt:now,pulse:0,earned:{coins:0,xp:0,wins:0,eggs:0,dropCoins:0,gear:0},reason:'',slot:0,party:list.length>1};
+ run.partner=run.partners[0];
  spawnWave(run,now,random);return run;
 }
 function stepPve(run,now,random=randomUnit){
@@ -172,14 +183,16 @@ function stepPve(run,now,random=randomUnit){
  if(run.phase==='between'){
   events.push(spawnWave(run,now,random));return {events,changed:true};
  }
- run.pulse++;const living=run.enemies.filter(e=>e.hp>0),target=living[0],bossWave=isBossWave(run.wave);
- if(target){const hit=strike(run.partner,target,random);events.push({type:'hit',from:'partner',to:target.id,amount:hit.amount,crit:hit.crit,hp:target.hp});}
+ run.pulse++;const living=run.enemies.filter(e=>e.hp>0),target=living[0],bossWave=isBossWave(run.wave),fighters=run.partners.filter(p=>p.hp>0);
+ // v355: every living partner strikes on the shared tick; enemies rotate their target so
+ // a party shares the pressure instead of one trainer tanking every retaliation.
+ for(const partner of fighters)if(target){const hit=strike(partner,target,random);events.push({type:'hit',from:partner.id,to:target.id,amount:hit.amount,crit:hit.crit,hp:target.hp});}
  if(run.enemies.every(e=>e.hp<=0)){
   const drops=pveDrops(run,random),reward={...pveReward(run),dropCoins:drops.coins,eggs:drops.eggs};reward.coins+=drops.coins;
   const gearDrop=pveGearDrops(run,random);
   run.earned.coins+=reward.coins;run.earned.xp+=reward.xp;run.earned.wins+=reward.wins;run.earned.eggs+=drops.eggs;run.earned.dropCoins+=drops.coins;if(gearDrop)run.earned.gear++;
-  run.partner.hp=Math.min(run.partner.maxHp,run.partner.hp+Math.ceil(run.partner.maxHp*.3));
-  events.push({type:'wave_clear',wave:run.wave,boss:bossWave,reward:{...reward},earned:{...run.earned},partnerHp:run.partner.hp,gearDrop});
+  for(const p of run.partners)p.hp=Math.min(p.maxHp,p.hp+Math.ceil(p.maxHp*.3));
+  events.push({type:'wave_clear',wave:run.wave,boss:bossWave,reward:{...reward},earned:{...run.earned},partnerHp:run.partner.hp,partners:run.partners.map(p=>({id:p.id,form:p.form,hp:p.hp,maxHp:p.maxHp})),gearDrop});
   if(run.wave>=MAX_WAVE){run.phase='ended';run.reason='complete';events.push({type:'end',reason:run.reason});}
   else {run.phase='between';run.nextAt=now+WAVE_DELAY_MS;}
   return {events,changed:true};
@@ -187,8 +200,8 @@ function stepPve(run,now,random=randomUnit){
  // The whole group retaliates on alternating ticks. This leaves a readable attack rhythm and
  // prevents three same-stage bots from deleting a fresh partner before the first wave is visible.
  // A lone boss retaliates every tick instead, keeping stage-end pressure comparable.
- if(run.pulse%2===0||bossWave)for(const enemy of living)if(enemy.hp>0){const hit=strike(enemy,run.partner,random);events.push({type:'hit',from:enemy.id,to:'partner',amount:hit.amount,crit:hit.crit,hp:run.partner.hp});}
- if(run.partner.hp<=0){run.phase='ended';run.reason='defeat';events.push({type:'end',reason:'defeat'});}
+ if(run.pulse%2===0||bossWave)for(const enemy of living)if(enemy.hp>0&&fighters.length){const victim=fighters[run.pulse%fighters.length];const hit=strike(enemy,victim,random);events.push({type:'hit',from:enemy.id,to:victim.id,amount:hit.amount,crit:hit.crit,hp:victim.hp});}
+ if(run.partners.every(p=>p.hp<=0)){run.phase='ended';run.reason='defeat';events.push({type:'end',reason:'defeat'});}
  run.nextAt=now+TICK_MS;return {events,changed:true};
 }
 function createPvp({id,room,players,now}){
@@ -233,7 +246,7 @@ function stepPvp(match,now,random=randomUnit){
  match.nextAt=now+TICK_MS;return {events,changed:true};
 }
 function unitSnapshot(u){return {id:u.id,form:u.form,stage:u.stage,level:u.level,hp:u.hp,maxHp:u.maxHp,boss:!!u.boss,attackAt:u.attackAt||0,hitAt:u.hitAt||0}}
-function pveSnapshot(run){return {id:run.id,owner:run.owner,room:run.room,wave:run.wave,phase:run.phase,reason:run.reason,nextAt:run.nextAt,profile:{lineId:run.profile.lineId,form:run.profile.form,stage:run.profile.stage,level:run.profile.level,slot:run.profile.slot},partner:unitSnapshot(run.partner),enemies:run.enemies.map(unitSnapshot),earned:{...run.earned},slot:run.slot||0}}
+function pveSnapshot(run){return {id:run.id,owner:run.owner,room:run.room,wave:run.wave,phase:run.phase,reason:run.reason,nextAt:run.nextAt,profile:{lineId:run.profile.lineId,form:run.profile.form,stage:run.profile.stage,level:run.profile.level,slot:run.profile.slot},partner:unitSnapshot(run.partner),partners:(run.partners||[run.partner]).filter(Boolean).map(unitSnapshot),members:Array.isArray(run.members)&&run.members.length?[...run.members]:[run.owner],slots:(run.profiles&&run.profiles.length?run.profiles:[run.profile]).map((p,i)=>({id:Array.isArray(run.members)?run.members[i]:undefined,slot:p?.slot||0})),party:run.party===true,enemies:run.enemies.map(unitSnapshot),earned:{...run.earned},slot:run.slot||0}}
 function pvpSnapshot(match){return {id:match.id,room:match.room,phase:match.phase,createdAt:match.createdAt,expiresAt:match.expiresAt,countdownUntil:match.countdownUntil,resultUntil:match.resultUntil,winnerId:match.winnerId,reason:match.reason,participants:match.participants.map(p=>({id:p.id,name:p.name,side:p.side,accepted:p.accepted,profile:{lineId:p.profile.lineId,form:p.profile.form,stage:p.profile.stage,level:p.profile.level},unit:unitSnapshot(p.unit)}))}}
-return {STATS,TICK_MS,WAVE_DELAY_MS,COUNTDOWN_MS,OFFER_MS,RESULT_MS,MAX_WAVE,MAX_ROUNDS,PVE_COIN_DROP_CHANCE,PVE_EGG_DROP_CHANCE,MAX_SLOT,BOSS_EVERY,BOSS_EGG_CHANCE,RANGED_SPD,GEAR_KINDS,GEAR_MAIN,GEAR_MAIN_VALUE,GEAR_SPECIAL,GEAR_CAP,PVE_GEAR_DROP_CHANCE,BOSS_GEAR_DROP_CHANCE,GEAR_SPECIAL_CHANCE,BOSS_GEAR_SPECIAL_CHANCE,GEAR_VARIANCE,stageOf,isBossWave,attackRange,profile,combatPreview,stageRank,sameStage,gearZero,normalizeGear,gearTierFor,rollGearItem,pveGearDrops,strike,createPve,stepPve,pveSnapshot,createPvp,acceptPvp,stepPvp,finishPvp,pvpRewards,pvpSnapshot,randomUnit};
+return {STATS,TICK_MS,WAVE_DELAY_MS,COUNTDOWN_MS,OFFER_MS,RESULT_MS,MAX_WAVE,MAX_ROUNDS,PVE_COIN_DROP_CHANCE,PVE_EGG_DROP_CHANCE,MAX_SLOT,BOSS_EVERY,BOSS_EGG_CHANCE,RANGED_SPD,GEAR_KINDS,GEAR_MAIN,GEAR_MAIN_VALUE,GEAR_SPECIAL,GEAR_CAP,PVE_GEAR_DROP_CHANCE,BOSS_GEAR_DROP_CHANCE,GEAR_SPECIAL_CHANCE,BOSS_GEAR_SPECIAL_CHANCE,GEAR_VARIANCE,stageOf,isBossWave,attackRange,profile,combatPreview,stageRank,sameStage,gearZero,normalizeGear,gearTierFor,rollGearItem,pveGearDrops,pveReward,strike,createPve,stepPve,pveSnapshot,createPvp,acceptPvp,stepPvp,finishPvp,pvpRewards,pvpSnapshot,randomUnit};
 });

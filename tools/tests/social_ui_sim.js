@@ -106,6 +106,37 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  w.document.querySelector('[data-sanctuary-action=evolve]').click();w.Math.random=realRandom;if(realGetValues)w.crypto.getRandomValues=realGetValues;
  assert.equal(w.S.digimonSanctuary.partners.agumon.stage,1);assert.equal(scenePlayers.get(0).look.digimon,'greymon');assert.equal(w.S.pets[0].sp,2);w.document.getElementById('sanctuaryClose').click();
  w.sessionTick();w.S.auraShow=false;w.sessionTick();assert.equal(scenePlayers.get(0).look.lv,0,'the Display aura switch also hides it in the plaza');w.S.auraShow=true;w.sessionTick();
+ // v355: plaza mini-map, big map dialog and music player mount.
+ {
+  const mini=w.document.getElementById('socialMiniMap'),modal=w.document.getElementById('socialMapModal'),mount=w.document.getElementById('socialBgmMount');
+  assert(mini&&mini.querySelector('#socialMiniMapCanvas'),'the corner mini-map is a button with a live canvas');
+  assert(modal.hidden,'the big map starts closed');
+  mini.click();assert(!modal.hidden,'clicking the mini-map opens the big map');
+  w.document.getElementById('socialMapClose').click();assert(modal.hidden,'the big map closes');
+  assert(mount.hidden,'the music player mount starts closed');
+  w.document.getElementById('socialBgmBtn').click();assert(!mount.hidden&&w.document.getElementById('socialBgmBtn').getAttribute('aria-pressed')==='true','the Music button opens the player mount');
+  w.document.getElementById('socialBgmBtn').click();assert(mount.hidden,'the Music button toggles the mount closed again');
+  // A drawable stub canvas proves the painter covers the shared geometry and every live player.
+  const ops=[];let fill=0;
+  const ctx=new Proxy({fillRect(){ops.push('rect')},strokeRect(){ops.push('rect')},arc(){ops.push('arc')},beginPath(){ops.push('begin')},moveTo(){},lineTo(){},closePath(){},fill(){fill++},stroke(){},clearRect(){},setLineDash(){},fillText(t){ops.push('text:'+t)},strokeText(){}},{get:(t,k)=>k in t?t[k]:()=>{}});
+  const canvas={width:640,height:640,getContext:()=>ctx};
+  w.PGSocial.drawPlazaMap(canvas,true);
+  assert(ops.some(o=>String(o).startsWith('text:WEST LAKE')),'the big map labels the fishing lake');
+  assert(ops.some(o=>String(o).startsWith('text:DIGIPET FARM')),'the big map labels the DigiPet farm');
+  assert(ops.some(o=>String(o).startsWith('text:PVP RING')),'the big map labels the PvP ring');
+  assert(ops.some(o=>String(o).startsWith('text:PLAZA POKER')),'the big map labels the poker tables');
+  assert(ops.includes('text:You'),'the self marker is labelled on the big map');
+  assert(fill>8,'the map paints its geometry');
+ }
+ // v355: the party panel exists and solo mode explains that parties need an online plaza.
+ {
+  const btn=w.document.getElementById('socialPartyBtn'),panel=w.document.getElementById('socialPartyPanel');
+  assert(btn&&panel,'the Party button and panel exist');
+  assert(panel.hidden,'the party panel starts closed');
+  btn.click();assert(!panel.hidden,'the Party button opens the panel');
+  assert.match(w.document.getElementById('socialPartyBody').textContent,/online plaza/i,'solo mode explains the online requirement');
+  w.document.getElementById('socialPartyClose').click();assert(panel.hidden,'the party panel closes');
+ }
  sceneCallbacks.move(6,12);assert(scenePlayers.get(0).path.length>0,'solo click-to-walk computes local path');
  w.document.getElementById('socialSit').click();assert.equal(scenePlayers.get(0).sit,true,'solo sit button toggles sitting');
  assert.equal(w.document.getElementById('socialSit').getAttribute('aria-pressed'),'true');

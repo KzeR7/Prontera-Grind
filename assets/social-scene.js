@@ -373,7 +373,9 @@ window.PGSocialScene={async create(host,labels,callbacks){
   for(const run of battleState.pve||[]){
    if(!run||run.phase==='ended')continue;const slot=Number(run.slot)||0,fx=70+(slot%4-1.5)*8,fz=60+Math.floor(slot/4)*10,runKey='pve:'+run.id;
    const add=(key,u,x,z,enemy=false,role='enemy')=>{if(!u||!PGSocialDigimon?.clean(u.form))return;specs.push({key,runKey,role,species:u.form,x,z,hp:u.hp,maxHp:u.maxHp,label:(u.boss?'BOSS · ':'')+battleName(u.form),enemy,boss:!!u.boss,phase:run.phase,kind:'pve',owner:run.owner,wave:run.wave,attackAt:u.attackAt||0,hitAt:u.hitAt||0})};
-   add(runKey+':partner',run.partner,fx,fz,false,'partner');
+   // v355: a party run carries up to three partners; they spawn in a small spread row.
+   const partners=(run.partners&&run.partners.length?run.partners:[run.partner]).filter(Boolean);
+   partners.forEach((u,i)=>add(runKey+':partner'+(i||''),u,fx+(i-(partners.length-1)/2)*4.5,fz-(i?1.2:0),false,'partner'));
    (run.enemies||[]).forEach((u,i)=>add(runKey+':'+u.id,u,fx-3+i*3,fz+4,true));
   }
   const match=battleState.pvp;if(match&&match.phase!=='closed')for(const [i,p] of (match.participants||[]).entries()){
@@ -405,7 +407,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const positions=new Map(),targets=new Map(),groups=new Map(),specs=battleSpecs();
   for(const s of specs){if(s.kind!=='pve')continue;if(!groups.has(s.runKey))groups.set(s.runKey,[]);groups.get(s.runKey).push(s)}
   for(const list of groups.values()){
-   const partner=list.find(s=>s.role==='partner'),enemies=list.filter(s=>s.role==='enemy'),partnerUnit=partner&&battleResidents.get(partner.key),partnerTravel=partnerUnit?battleTravel(partnerUnit,now):0;
+   const partners=list.filter(s=>s.role==='partner'),partner=partners[0],enemies=list.filter(s=>s.role==='enemy'),partnerUnit=partner&&battleResidents.get(partner.key),partnerTravel=partnerUnit?battleTravel(partnerUnit,now):0;
    if(!partner||!partnerUnit)continue;
    const enemyUnits=enemies.map(s=>({s,u:battleResidents.get(s.key)})).filter(x=>x.u),anchors=[partnerUnit.spawn,...enemyUnits.map(x=>x.u.spawn)],center={x:Math.max(51,Math.min(89,anchors.reduce((n,p)=>n+p.x,0)/anchors.length)),z:Math.max(54,Math.min(74,anchors.reduce((n,p)=>n+p.z,0)/anchors.length))};
    const from=partnerUnit.sprite.position,living=enemies.filter(s=>s.hp>0),target=living.sort((a,b)=>{const au=battleResidents.get(a.key).sprite.position,bu=battleResidents.get(b.key).sprite.position;return Math.hypot(au.x-from.x,au.z-from.z)-Math.hypot(bu.x-from.x,bu.z-from.z)})[0];
@@ -421,7 +423,16 @@ window.PGSocialScene={async create(host,labels,callbacks){
     positions.set(partner.key,battleApproach(from,slot,partnerTravel));
     if(target){const targetUnit=battleResidents.get(target.key);targets.set(partner.key,{x:targetUnit.sprite.position.x,z:targetUnit.sprite.position.z})}
    }
-   for(const [index,enemy]of enemies.entries()){const unit=battleResidents.get(enemy.key);if(!unit)continue;const slot=enemySlots.get(enemy.key);if(!slot)continue;const travel=battleTravel(unit,now);positions.set(enemy.key,battleApproach(unit.sprite.position,slot,travel));const aim=positions.get(partner.key)||center;targets.set(enemy.key,{...aim})}
+   // v355: the rest of the party flanks the leader in a readable row, each aiming at its
+   // own nearest living enemy instead of stacking on the primary partner.
+   for(let pi=1;pi<partners.length;pi++){
+    const ally=partners[pi],unit=battleResidents.get(ally.key);if(!unit||ally.phase!=='fighting'||ally.hp<=0)continue;
+    const rowSlot={x:Math.max(49,Math.min(91,center.x+(pi-(partners.length-1)/2)*2.6)),z:Math.max(52,Math.min(76,center.z-2.6))};
+    positions.set(ally.key,battleApproach(unit.sprite.position,rowSlot,battleTravel(unit,now)));
+    const near=enemies.filter(e=>e.hp>0&&battleResidents.get(e.key)).sort((a,b)=>{const au=battleResidents.get(a.key).sprite.position,bu=battleResidents.get(b.key).sprite.position;return Math.hypot(au.x-unit.sprite.position.x,au.z-unit.sprite.position.z)-Math.hypot(bu.x-unit.sprite.position.x,bu.z-unit.sprite.position.z)})[0];
+    if(near){const nu=battleResidents.get(near.key);targets.set(ally.key,{x:nu.sprite.position.x,z:nu.sprite.position.z})}
+   }
+   for(const [index,enemy]of enemies.entries()){const unit=battleResidents.get(enemy.key);if(!unit)continue;const slot=enemySlots.get(enemy.key);if(!slot)continue;const travel=battleTravel(unit,now);positions.set(enemy.key,battleApproach(unit.sprite.position,slot,travel));const aimUnits=partners.map(p=>battleResidents.get(p.key)).filter(Boolean);const aimU=aimUnits.sort((a,b)=>Math.hypot(a.sprite.position.x-unit.sprite.position.x,a.sprite.position.z-unit.sprite.position.z)-Math.hypot(b.sprite.position.x-unit.sprite.position.x,b.sprite.position.z-unit.sprite.position.z))[0];const aim=(aimU&&positions.get(aimU.spec.key))||positions.get(partner.key)||center;targets.set(enemy.key,{...aim})}
   }
   for(const s of specs.filter(s=>s.kind==='pvp')){const unit=battleResidents.get(s.key);if(!unit)continue;const travel=battleTravel(unit,now);if(s.phase==='fighting'&&s.hp>0){const r=R.SANCTUARY_RING,slot={x:r.x+(s.side==='left'?-PVP_RADIUS:PVP_RADIUS),z:r.z};positions.set(s.key,battleApproach(unit.sprite.position,slot,travel));const other=specs.find(o=>o.kind==='pvp'&&o.key!==s.key),otherUnit=other&&battleResidents.get(other.key);if(otherUnit)targets.set(s.key,{x:otherUnit.sprite.position.x,z:otherUnit.sprite.position.z})}}
   for(const u of battleResidents.values()){
