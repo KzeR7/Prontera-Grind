@@ -24,6 +24,10 @@ try{
  const payload=unpackPayload(encoded,sha);assert.equal(payload['index.html'],fs.readFileSync('index.html','utf8'));
  assert.equal(payload['assets/combat-audio.js'],fs.readFileSync('assets/combat-audio.js','utf8'));
  assert.equal(payload['functions/api/save.js'],fs.readFileSync('functions/api/save.js','utf8'));
+ // v360: the binary centerpiece must ride the package as base64, byte for byte - an utf8
+ // detour would silently corrupt the glTF container.
+ assert.equal(payload['assets/Fountainfile/Prontera_Grand_Aetherwell.glb'],'base64:'+fs.readFileSync('assets/Fountainfile/Prontera_Grand_Aetherwell.glb').toString('base64'));
+ assert.equal(payload['assets/vendor/GLTFLoader.r128.js'],fs.readFileSync('assets/vendor/GLTFLoader.r128.js','utf8'));
  assert.throws(()=>unpackPayload(encoded,'bad'));assert.throws(()=>safeSql('DROP TABLE users > file'));
  assert.equal(deployedUrl('https://abcdef12.prontera-grind-staging.pages.dev'),'https://abcdef12.prontera-grind-staging.pages.dev');
  assert.throws(()=>deployedUrl('https://horizonhaven.pages.dev'));

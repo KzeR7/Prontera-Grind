@@ -81,6 +81,9 @@ rm -rf "$OUT/assets/wardrobe/v1" "$OUT/assets/wardrobe/v3" "$OUT/assets/wardrobe
 #   weapons_manifest.json   build metadata for make_weapon_pack.py, never fetched
 rm -rf "$OUT/assets/weapons" "$OUT/assets/weapons_manifest.json"
 rm -f "$OUT"/assets/mob_*.png
+# v360: the Aetherwell preview render is human reference material (2.7 MiB); the hub only ever
+# fetches assets/Fountainfile/Prontera_Grand_Aetherwell.glb itself.
+rm -f "$OUT/assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png"
 mkdir -p "$OUT/Updates"
 cp -r "$ROOT/Updates/Sprite" "$OUT/Updates/Sprite"
 

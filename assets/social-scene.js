@@ -47,7 +47,80 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  const roadTexture=plazaTex.clone();roadTexture.repeat.set(3,26*192/164);roadTexture.needsUpdate=true;const roadTextureSouth=plazaTex.clone();roadTextureSouth.repeat.set(3,26*218/164);roadTextureSouth.needsUpdate=true;// v359: both avenues pull toward the camera in depth so the fountain's paved/grass apron
  // and the base ground can never shimmer through them, whatever the viewing angle.
  const roadMat=new T.MeshBasicMaterial({map:roadTexture,color:0xe6dfcf,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),roadMatSouth=new T.MeshBasicMaterial({map:roadTextureSouth,color:0xe6dfcf,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});for(const turn of [0,Math.PI/2]){const road=new T.Mesh(new T.PlaneGeometry(18,turn===0?218:192),turn===0?roadMatSouth:roadMat);road.rotation.x=-Math.PI/2;road.rotation.z=turn;road.position.set(turn===0?0:14,turn===0?.001:.006,turn===0?27:0);scene.add(freeze(road))}
- model('fountain',0,0,10);
+ // v360 (owner: "replace the social hub middle fountain with this" - the Prontera Grand
+ // Aetherwell GLB committed under assets/Fountainfile/). The atlas fountain below stays
+ // as the instant stand-in; when the vendored r128 GLTFLoader is present the centerpiece
+ // swaps in over it - same philosophy as the digimon models: the fallback sprite shows
+ // only when the browser says the GLB is dead. Collision lives in social-rules.js.
+ const fountainFallback=model('fountain',0,0,10);fountainFallback.userData.fountainFallback=true;
+ const aetherwell={group:null,tried:false};
+ // Model bounds (blender export): radial paving to +-14.84, its own bench ring to +-17.02,
+ // floating spire tip at 14.39. Scaled so the benches land at ~6.5, just inside the shared
+ // fountain collision radius (6.6 in R.walkable), with the paving clear of the plaza plane.
+ const AETHERWELL_SCALE=.382,AETHERWELL_Y=.05;
+ function mountAetherwell(gltf){
+  const root=gltf.scene||(gltf.scenes&&gltf.scenes[0]);
+  if(!root||typeof root.traverse!=='function')return false;
+  root.scale.setScalar(AETHERWELL_SCALE);root.position.set(0,AETHERWELL_Y,0);
+  root.userData.aetherwell=true;
+  let spire=null,inverted=null,motes=null,crystalMat=null;const shards=[];
+  root.traverse(o=>{
+   const n=o.name||'';
+   if(n==='AETHER \u2022 main floating spire')spire=o;
+   else if(n==='Floating inverted crystal')inverted=o;
+   else if(n==='Aetherwell \u2022 Aether motes \u2022 ice white')motes=o;
+   else if(/^Orbiting shard( detailed)? \d\d$/.test(n)){
+    const r=Math.hypot(o.position.x,o.position.z);
+    if(r>.05)shards.push({node:o,a0:Math.atan2(o.position.z,o.position.x),r,y0:o.position.y,ph:shards.length*.9,w:/detailed/.test(n)?-.32:.26});
+   }
+   if(o.isMesh&&o.material&&/Crystal facet 0/.test(o.material.name||''))crystalMat=o.material;
+  });
+  aetherwell.group=root;aetherwell.spire=spire;aetherwell.spireY=spire?spire.position.y:0;
+  aetherwell.inverted=inverted;aetherwell.invertedY=inverted?inverted.position.y:0;
+  aetherwell.motes=motes;aetherwell.shards=shards;aetherwell.crystalMat=crystalMat||null;
+  scene.add(root);
+  fountainFallback.visible=false;
+  // PBR metals render near-black without something to reflect; feed them a tiny daytime
+  // sky gradient. Only MeshStandardMaterial samples scene.environment, so the flat-colour
+  // town (MeshBasicMaterial) and the Lambert props are untouched.
+  try{
+   if(T.PMREMGenerator&&renderer.isWebGLRenderer&&!scene.environment){
+    const c=document.createElement('canvas');c.width=64;c.height=32;const g=c.getContext('2d');
+    if(g&&g.createLinearGradient){
+     const grad=g.createLinearGradient(0,0,0,32);
+     grad.addColorStop(0,'#cfe6ff');grad.addColorStop(.52,'#f2ead6');grad.addColorStop(.6,'#9db08a');grad.addColorStop(1,'#66784f');
+     g.fillStyle=grad;g.fillRect(0,0,64,32);
+     const tex=new T.CanvasTexture(c);tex.mapping=T.EquirectangularReflectionMapping;
+     const pm=new T.PMREMGenerator(renderer);scene.environment=pm.fromEquirectangular(tex).texture;
+     tex.dispose();pm.dispose();
+    }
+   }
+  }catch(e){/* losing the env only dulls the brass; the town itself is unlit by design */}
+  return true;
+ }
+ function loadAetherwell(){
+  if(aetherwell.tried)return;aetherwell.tried=true;
+  if(typeof T.GLTFLoader!=='function')return; // vendored loader absent: keep the atlas fountain
+  try{
+   new T.GLTFLoader().load('assets/Fountainfile/Prontera_Grand_Aetherwell.glb',gltf=>{
+    try{if(!mountAetherwell(gltf))console.warn('Aetherwell GLB had no scene - keeping the plaza fountain')}
+    catch(e){console.warn('Aetherwell mount failed - keeping the plaza fountain',e)}
+   },undefined,()=>console.warn('Aetherwell unavailable - keeping the plaza fountain'));
+  }catch(e){console.warn('Aetherwell load failed - keeping the plaza fountain',e)}
+ }
+ // The GLB exports no animation tracks; the aether turns in code instead - the spire
+ // bobs and rotates, the shard rings orbit against each other, the crystals breathe.
+ // Absolute time math keeps it deterministic for the scene sim.
+ function animateAetherwell(now){
+  if(!aetherwell.group)return;
+  const t=now/1000;
+  if(aetherwell.spire){aetherwell.spire.position.y=aetherwell.spireY+Math.sin(t*.85)*.16;aetherwell.spire.rotation.y=t*.22}
+  if(aetherwell.inverted){aetherwell.inverted.position.y=aetherwell.invertedY+Math.sin(t*.85+2.4)*.11;aetherwell.inverted.rotation.y=-t*.3}
+  if(aetherwell.motes)aetherwell.motes.rotation.y=t*.05;
+  for(const s of aetherwell.shards){s.node.position.x=Math.cos(s.a0+t*s.w)*s.r;s.node.position.z=Math.sin(s.a0+t*s.w)*s.r;s.node.position.y=s.y0+Math.sin(t*1.2+s.ph)*.07;s.node.rotation.y=t*s.w*2.2}
+  if(aetherwell.crystalMat)aetherwell.crystalMat.emissiveIntensity=.85+.25*Math.sin(t*1.9);
+ }
+ loadAetherwell();
  for(const b of R.BUILDINGS)model(b.name,b.x,b.z,b.size,b.rotation||0);
  // Sanctuary: arranged south of the plaza from the owner's highlighted lawn.
  // Architecture and named NPCs share the world with the local training prototype.
@@ -1391,6 +1464,7 @@ void main(){
    waterTexA.offset.x=(now/14000)%1;waterTexA.offset.y=(now/23000)%1;waterTexB.offset.x=1-(now/17000)%1;waterTexB.offset.y=(now/19000)%1;
    for(const f of falls)f.tex.offset.y=(now/700)%1;
    for(const l of lilies){l.mesh.position.x=l.x+Math.sin(now/2600+l.ph)*.22;l.mesh.position.z=l.z+Math.cos(now/3100+l.ph)*.18;l.mesh.rotation.z=Math.sin(now/4000+l.ph)*.4}
+   animateAetherwell(now);
    if(fishGroup.visible){const tNow=now/1000;for(const s of swimmers){const t=tNow,x=s.p.x+Math.sin(t*s.fa+s.pa)*s.ax,z=s.p.z+Math.sin(t*s.fb+s.pb)*s.az,vx=Math.cos(t*s.fa+s.pa)*s.fa*s.ax,vz=Math.cos(t*s.fb+s.pb)*s.fb*s.az;s.m.position.set(x,.03,z);s.m.rotation.z=Math.atan2(-vz,vx)+Math.sin(t*6+s.pa)*.12}
     updateDeep(tNow,now)}
    for(const r of ripples)if(r.m.visible){const t=(now-r.t0)/r.dur;if(t>=1)r.m.visible=false;else{const s=(r.base||1)*(.4+t*1.6);r.m.scale.set(s,s,1);r.m.material.opacity=.55*(1-t)}}

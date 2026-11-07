@@ -277,6 +277,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  // v359 (owner: "the L-shaped stands behind the ring should be sittable"): each tier is a
  // walkable sitting row; the mitred corner stays solid collision.
  for(let row=0;row<3;row++){const x=81.7+row*1.05,z=113.25+row*1.05;assert(R.walkable(x+.5,100)&&R.walkable(70,z+1),'east and south tier '+row+' are walkable sitting rows');assert(!R.walkable(x-.3,z+.7),'the mitred corner stays solid collision')}
+ // v360: the Aetherwell GLB's own bench ring lands at radius ~6.5, so the shared fountain
+ // collision grew from 5.6 to 6.6. The promenade loop above already proves |n|>=7 stays open.
+ assert(!R.walkable(0,6.5)&&R.walkable(0,6.7)&&!R.walkable(4.6,4.6),'the Aetherwell bench ring is enclosed by the fountain collision');
  assert(R.walkable(79,113)&&R.path({x:68,z:104},{x:79,z:113}).length,'the aisle between the ring and stands remains usable');
  assert(R.path({x:35,z:90},{x:68,z:104}).length,'the ring remains reachable after the bleacher rebuild');
  for(const [start,end] of [[{x:35,z:42},{x:69,z:25}],[{x:66,z:43},{x:66,z:50}],[{x:35,z:60},{x:50,z:60}],[{x:68,z:84},{x:68,z:77}],[{x:35,z:90},{x:68,z:104}]]){

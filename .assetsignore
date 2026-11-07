@@ -50,3 +50,6 @@ assets/wardrobe/v1/
 /assets/wardrobe/v3/
 
 /assets/wardrobe/v4/
+
+# --- v360: Aetherwell reference render (the hub fetches only the GLB) ----------
+assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png

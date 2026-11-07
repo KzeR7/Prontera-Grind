@@ -115,6 +115,8 @@ t('dev-only art does not ride along in the publish tree', () => {
   assert.ok(!fs.existsSync(path.join(out,'assets/weapons_manifest.json')), 'the weapons manifest is build metadata');
   assert.deepStrictEqual(fs.readdirSync(path.join(out,'assets')).filter(f=>/^mob_.+\.png$/.test(f)), [],
     'mob preview art is dev-only');
+  assert.ok(!fs.existsSync(path.join(out,'assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png')),
+    'the Aetherwell preview render is dev-only reference material');
 });
 
 t('the published tree is small enough to stay honest', () => {
@@ -139,6 +141,11 @@ t('the published tree is small enough to stay honest', () => {
   // World Map window, budgeted separately at < 3.5 MiB (2.69 MiB measured) while still covered by
   // the combined runtime ceiling below.
   const worldMapBytes=walk(path.join(out,'assets/world-map'));
+  // v360: the owner's Prontera Grand Aetherwell GLB is the one deliberately-heavy classic-tree
+  // centerpiece (5.39 MiB measured 2026-11-07). Its 2.7 MiB preview render never ships - the hub
+  // fetches only the GLB - so it is measured here on its own instead of diluting the classic set.
+  const fountainBytes=walk(path.join(out,'assets/Fountainfile'));
+  assert.ok(fountainBytes > 0 && fountainBytes/1048576 < 6.5, 'the Aetherwell centerpiece exceeds its separate 6.5 MiB budget');
   assert.ok(worldMapBytes > 0 && worldMapBytes/1048576 < 3.5, 'illustrated world-map assets exceed their separate 3.5 MiB budget');
   for (const rel of [
     'world-map-cleaned.webp',
@@ -166,7 +173,7 @@ t('the published tree is small enough to stay honest', () => {
   // 59.75 MiB, not 59.5: v355's plaza additions (grind-party UI, mini-map/big-map painter, the
   // Social-Hub BGM player mount) are classic-tree code and pushed the measured set to 59.51 MiB.
   // The v354 care/DigiDex/gear work had already spent the old 0.5 MiB of deliberate headroom.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes)/1048576 < 59.75, 'existing classic runtime assets exceed their unchanged 59.75 MiB budget');
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes)/1048576 < 59.75, 'existing classic runtime assets exceed their unchanged 59.75 MiB budget');
   assert.ok(digimonBytes/1048576 < 40, 'lazy Digimon roster exceeds its separate 40 MiB budget');
   assert.ok(nativeBytes/1048576 < 68, 'ten native field sets and seventy lossless monster atlases exceed their separate 68 MiB budget');
   // v342 owner approval: all 280 forms as a roughly 36 MiB on-demand pack. The

@@ -39,6 +39,10 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
  // may keep the entry point. A staging package built with the old copy would serve a stale
  // index.html and reintroduce exactly the bug the v275 change fixes, so it ships with the package.
  'tools/build_site.sh',
+ // v360: the Prontera Grand Aetherwell centerpiece - the vendored r128 GLTFLoader, the owner's
+ // 5.6 MB GLB and its reference preview render, plus the build-script rule (tools/build_site.sh
+ // above) that keeps the preview out of the published dist tree.
+ 'assets/vendor/GLTFLoader.r128.js','assets/Fountainfile/Prontera_Grand_Aetherwell.glb','assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png',
  // v283: Illustrated Rune-Midgard World Atlas assets referenced by index.html and verified by build_site.sh.
  'assets/world-map/world-map-cleaned.webp',
  'assets/world-map/birds-flock-a.webp',
@@ -234,7 +238,8 @@ for(const p of new Set(all)){
 }
 for(const p of baseline.keys())if(relevant(p)&&!fs.existsSync(path.join(root,p)))throw Error('Missing archive runtime file: '+p);
 
-const isBin=p=>/\.(?:png|webp)$/i.test(p);
+// v360: the Aetherwell GLB is binary like the atlases - utf8 would silently corrupt it.
+const isBin=p=>/\.(?:png|webp|glb)$/i.test(p);
 const data=Object.fromEntries(files.map(p=>[p,isBin(p)?'base64:'+fs.readFileSync(path.join(root,p)).toString('base64'):fs.readFileSync(path.join(root,p),'utf8')]));
 const packed=gzipSync(Buffer.from(JSON.stringify(data))),hash=createHash('sha256').update(packed).digest('hex');
 let src=fs.readFileSync(path.join(root,'tools/staging/hosted_launch_stage.mjs'),'utf8');

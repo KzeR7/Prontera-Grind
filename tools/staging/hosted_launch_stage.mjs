@@ -40,6 +40,9 @@ const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css'
   'migrations/0013_gm_owner_name.sql',
   // v280: both now return the durable account id used by the save stamp.
   'functions/api/me.js','functions/api/sessions.js','tools/build_site.sh',
+  // v360: the Prontera Grand Aetherwell centerpiece rides with the package (same list as
+  // tools/staging/package_hosted_launch.mjs).
+  'assets/vendor/GLTFLoader.r128.js','assets/Fountainfile/Prontera_Grand_Aetherwell.glb','assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png',
   // v283: Illustrated Rune-Midgard World Atlas assets.
   'assets/world-map/world-map-cleaned.webp',
   'assets/world-map/birds-flock-a.webp',
@@ -376,7 +379,7 @@ async function main(){
   console.log('Preparing a new temporary staging copy; your existing checkouts will not be changed.');
   run('git',['-C',repo,'archive','--format=tar','--output='+archive,BASE]);
   run('tar.exe',['-xf',archive,'-C',temp]);fs.unlinkSync(archive);
-  for(const [name,text] of Object.entries(files)){const dest=path.join(temp,...name.split('/'));fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,/\.(?:png|webp)$/i.test(name)&&text.startsWith('base64:')?Buffer.from(text.slice(7),'base64'):text);}
+  for(const [name,text] of Object.entries(files)){const dest=path.join(temp,...name.split('/'));fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,/\.(?:png|webp|glb)$/i.test(name)&&text.startsWith('base64:')?Buffer.from(text.slice(7),'base64'):text);}
   fs.writeFileSync(path.join(temp,'wrangler.toml'),CONFIG);
   run(bash,['tools/build_site.sh'],{cwd:temp,allowOutput:true});
   const db=remote(temp);db.verify();

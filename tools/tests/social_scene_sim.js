@@ -379,6 +379,42 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  }
  scene.setBattleState({pve:[],pvp:{id:'pvp-test',phase:'fighting',winnerId:null,participants:[{id:1,name:'One',side:'left',unit:{form:'agumon',hp:80,maxHp:100}},{id:2,name:'Two',side:'right',unit:{form:'palmon',hp:70,maxHp:100}}]}});frame(now+=100);assert.equal(scene.scene.children.filter(o=>o.userData.battleKind==='pvp').length,2,'two accepted ring fighters are rendered');const ringFighters=scene.scene.children.filter(o=>o.userData.battleKind==='pvp');for(let i=0;i<12;i++)frame(now+=100);const ringDistance=Math.hypot(ringFighters[0].position.x-ringFighters[1].position.x,ringFighters[0].position.z-ringFighters[1].position.z);assert(ringDistance>4.2&&ringDistance<4.6,'ring fighters approach opposite marks without clumping');assert(scene.scene.children.filter(o=>o.userData.sanctuaryResident).every(o=>o.visible),'residents return when PvE ends');
  assert.equal(scene.battleEvent({kind:'pvp',battleId:'pvp-test',to:1,amount:9,crit:false}),true,'ring strikes land their FX too');frame(now+=40);assert(scene.scene.children.some(o=>o.userData.battlePopup&&o.userData.battlePopupText==='9'),'the ring damage number floats');
+ // v360 (owner: "replace the social hub middle fountain with this"): the Prontera Grand
+ // Aetherwell GLB takes the plaza centre when its vendored loader exists; the atlas
+ // fountain is the dead-GLB fallback.
+ assert(fs.existsSync('assets/Fountainfile/Prontera_Grand_Aetherwell.glb')&&fs.existsSync('assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png'),'the Aetherwell GLB and its preview ship in the repo');
+ assert.equal(fs.readFileSync('assets/Fountainfile/Prontera_Grand_Aetherwell.glb').subarray(0,4).toString('latin1'),'glTF','the fountain file is a binary glTF container');
+ assert(fs.readFileSync('index.html','utf8').includes('assets/vendor/GLTFLoader.r128.js?v='),'the page loads the vendored r128 GLTFLoader after three.min.js');
+ assert(scene.scene.children.some(o=>o.userData.fountainFallback&&o.visible===true),'the atlas fountain stands in while no GLTFLoader exists');
+ assert(!scene.scene.children.some(o=>o.userData.aetherwell),'nothing mounts without the loader');
+ assert(!w.PGSocialRules.walkable(0,6.5)&&w.PGSocialRules.walkable(0,6.7),'the Aetherwell bench ring is enclosed by the shared fountain collision');
+ // Rebuild the scene with a stubbed loader that hands over a stand-in gltf scene shaped
+ // like the real export (named nodes), then drive the animation loop.
+ const fakeRoot=new T.Group();
+ const spire=new T.Group();spire.name='AETHER \u2022 main floating spire';spire.position.set(0,10.4,0);spire.add(new T.Mesh(new T.BoxGeometry(.5,.5,.5)));fakeRoot.add(spire);
+ const inverted=new T.Group();inverted.name='Floating inverted crystal';inverted.position.set(0,4.2,0);fakeRoot.add(inverted);
+ const motes=new T.Group();motes.name='Aetherwell \u2022 Aether motes \u2022 ice white';fakeRoot.add(motes);
+ const shardA=new T.Group();shardA.name='Orbiting shard 00';shardA.position.set(2,6.5,0);fakeRoot.add(shardA);
+ const shardB=new T.Group();shardB.name='Orbiting shard detailed 00';shardB.position.set(-1.5,8,1);fakeRoot.add(shardB);
+ const crystalMat=new T.MeshBasicMaterial();crystalMat.name='Crystal facet 0';
+ fakeRoot.add(new T.Mesh(new T.BoxGeometry(.3,.3,.3),crystalMat));
+ let requestedUrl='';
+ T.GLTFLoader=class{load(url,onLoad){requestedUrl=url;onLoad({scene:fakeRoot})}};
+ const host2=w.document.createElement('div');host2.setPointerCapture=()=>{};host2.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});Object.defineProperties(host2,{clientWidth:{get(){return 1000}},clientHeight:{get(){return 700}}});
+ const scene2=await w.PGSocialScene.create(host2,w.document.createElement('div'),{self:()=>2,menu(){},move(){},seat(){}});
+ assert.equal(requestedUrl,'assets/Fountainfile/Prontera_Grand_Aetherwell.glb','the hub requests the Aetherwell GLB');
+ const well=scene2.scene.children.find(o=>o.userData.aetherwell);
+ assert(well,'the Aetherwell mounts over the plaza');
+ assert(Math.abs(well.scale.x-.382)<1e-9&&Math.abs(well.position.y-.05)<1e-9,'the centerpiece is scaled to the shared fountain collision');
+ const fallback2=scene2.scene.children.find(o=>o.userData.fountainFallback);
+ assert(fallback2&&fallback2.visible===false,'the atlas fountain hides once the GLB is alive');
+ assert.equal(well.children.filter(c=>/^Orbiting shard( detailed)? 00$/.test(c.name)).length,2,'both shard rings are tracked for the orbit animation');
+ const spireBefore=spire.position.y,shardBefore=shardA.position.x,shardZBefore=shardB.position.z;
+ scene2.active=true;frame(now+=1600);
+ assert(Math.abs(spire.position.y-spireBefore)>.001,'the floating spire bobs on the aether');
+ assert(Math.abs(shardA.position.x-shardBefore)>.001||Math.abs(shardA.position.z-shardZBefore)>.001,'the simple shard ring orbits the spire');
+ assert(Math.abs(shardB.position.x-shardBefore)>.001||Math.abs(shardB.position.z-shardZBefore)>.001,'the detailed shard ring counter-orbits the spire');
+ assert(crystalMat.emissiveIntensity>=.6&&crystalMat.emissiveIntensity<=1.1,'the shared crystal material breathes');
  scene.setBattleState({pve:[],pvp:null});assert.equal(scene.scene.children.filter(o=>o.userData.battleKind).length,0,'battle sprites are disposed when the room clears');
  dom.window.close();
  console.log('PASS social scene: v300 per-tier rod glow, download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor, reentry, live battle sprite lifecycle, v357 soft-light strike FX, native RO species trees and the stair-gated ring');
