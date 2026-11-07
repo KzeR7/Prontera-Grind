@@ -45,18 +45,20 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert(scene.scene.children.some(o=>o.userData.gymTimber==='rear-post'&&o.position.z>12.8),'rear posts are visible from the open court');
  for(const [side,count] of [['east',9],['south',9],['corner',3]])assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryBleacher===side).length,count,'three constructed ring seating tiers at '+side);
  assert(scene.scene.children.some(o=>o.userData.ringCanvas),'ring canvas has a woven surface');
- // v356 map-art pass: mixed tree species, zoned gym court, dressed ring and field, pond shadows.
+ // v357 map-art pass: native RO species trees, stair-gated ring, pond shadows, soft FX.
  const kinded=w.PGSocialRules.SANCTUARY_TREES.filter(t=>t.kind);
  assert(kinded.length>=18,'shared rules carry mixed-species tree spots');
  const kinds=new Set(scene.scene.children.filter(o=>o.userData.treeKind).map(o=>o.userData.treeKind));
- for(const k of ['pine','cypress','birch','maple','willow','blossom'])assert(kinds.has(k),k+' species is rendered');
- assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryTree).length,w.PGSocialRules.SANCTUARY_TREES.length,'every shared tree renders, native or procedural');
+ for(const k of ['pine','palm','broad','sakura'])assert(kinds.has(k),k+' species is rendered from the native RO sets');
+ assert(scene.scene.children.filter(o=>o.userData.treeKind).every(o=>o.isMesh&&o.geometry.type==='BufferGeometry'),'species trees use native three-dimensional field geometry');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryTree).length,w.PGSocialRules.SANCTUARY_TREES.length,'every shared tree renders, native or species');
+ assert(scene.scene.children.some(o=>o.userData.sanctuaryFieldEdge),'field-edge stumps replace the removed grind-field clutter');
+ assert(!scene.scene.children.some(o=>o.userData.sanctuaryTrack||o.userData.sanctuaryScarecrow||o.userData.sanctuaryPennant),'the painted circuit, scarecrow and pennants are gone');
+ assert(scene.scene.children.some(o=>o.userData.ringRunner),'the west stair mouth wears a runner: the one way onto the ring');
  assert(scene.scene.children.some(o=>o.userData.ringPad==='red'&&o.position.x>68)&&scene.scene.children.some(o=>o.userData.ringPad==='blue'&&o.position.x<68),'ring has red and blue corner pads');
  assert(scene.scene.children.some(o=>o.userData.ringApron),'ring wears an apron skirt');
- assert(scene.scene.children.some(o=>o.userData.sanctuarySign==='CHAMPION RING')&&scene.scene.children.some(o=>o.userData.sanctuarySign==='GRIND FIELDS'),'ring and field gate signs are painted');
+ assert(scene.scene.children.some(o=>o.userData.sanctuarySign==='CHAMPION RING'),'the ring sign is painted');
  for(const stat of ['power','guard','agility','focus'])assert(scene.scene.children.some(o=>o.userData.gymZone===stat),stat+' training zone mat is laid');
- assert(scene.scene.children.some(o=>o.userData.sanctuaryTrack)&&scene.scene.children.some(o=>o.userData.sanctuaryScarecrow),'grind field has a training circuit and a scarecrow');
- assert(scene.scene.children.filter(o=>o.userData.sanctuaryPennant).length>=10,'field fence flies pennants');
  const deep=[];scene.scene.traverse(o=>{if(o.userData.deepKind)deep.push(o.userData.deepKind)});
  assert(deep.includes('octopus')&&deep.includes('shark'),'octopus and shark shadows swim in the pond');
  assert(scene.scene.children.filter(o=>o.userData.bench!=null).length===w.PGSocialRules.BENCHES.length,'all 19 benches render, including the v356 viewing benches');
@@ -298,8 +300,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:1,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,attackAt:0,hitAt:0}]}],pvp:null});frame(now+=100);
  assert(scene.scene.children.some(o=>o.userData.battleShot),'a quick ranged attacker fires a visible projectile');
  frame(now+=400);assert(!scene.scene.children.some(o=>o.userData.battleShot),'the projectile expires after its flight');
- // v352 full-pixel FX: every landed strike answers with a pixel burst, a floating damage
- // number and a defender shake; crits add a contact freeze and a shockwave; faints puff dust.
+ // v352/v357 FX: every landed strike answers with a soft-light burst - radial glows,
+ // rotating streaks and star sparkles, never square pixels - plus a floating damage number
+ // and a defender shake; crits add a contact freeze and a soft shockwave; faints puff dust.
  {
   const bursts=()=>scene.scene.children.filter(o=>o.userData.battleBurst),popups=()=>scene.scene.children.filter(o=>o.userData.battlePopup),waves=()=>scene.scene.children.filter(o=>o.userData.battleShockwave),ghosts=()=>scene.scene.children.filter(o=>o.userData.battleGhost);
   frame(now+=500);assert.equal(bursts().length,0,'no FX linger once the field is quiet');
@@ -310,7 +313,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   assert.equal(scene.battleEvent({kind:'pve',battleId:'pve-test',to:'w5-boss',amount:12,crit:false}),true,'a strike on a live unit lands its FX');
   frame(now+=40);
   assert.equal(popups().length,1,'the damage number floats above the defender');assert.equal(popups()[0].userData.battlePopupText,'12');assert.equal(popups()[0].userData.battlePopupCrit,false);
-  assert.equal(bursts().length,11,'a normal hit bursts eleven pixel squares');assert.equal(waves().length,0,'normal hits send no shockwave');
+  assert.equal(bursts().length,11,'a normal hit bursts eleven soft sparks');assert.equal(waves().length,0,'normal hits send no shockwave');
   let shook=false;for(let i=0;i<3;i++){frame(now+=40);const off=Math.hypot(bossSprite.position.x-settled.x,bossSprite.position.z-settled.z);if(off>.01)shook=true;assert(off<=.26,'the shake stays inside its amplitude: '+off)}
   assert(shook,'the hit shakes the defending boss sprite');
   frame(now+=600);assert.equal(popups().length,0,'the damage number expires');assert.equal(bursts().length,0,'the burst particles expire');
@@ -335,5 +338,5 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert.equal(scene.battleEvent({kind:'pvp',battleId:'pvp-test',to:1,amount:9,crit:false}),true,'ring strikes land their FX too');frame(now+=40);assert(scene.scene.children.some(o=>o.userData.battlePopup&&o.userData.battlePopupText==='9'),'the ring damage number floats');
  scene.setBattleState({pve:[],pvp:null});assert.equal(scene.scene.children.filter(o=>o.userData.battleKind).length,0,'battle sprites are disposed when the room clears');
  dom.window.close();
- console.log('PASS social scene: v300 per-tier rod glow, download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor, reentry, live battle sprite lifecycle and v352 pixel strike FX');
+ console.log('PASS social scene: v300 per-tier rod glow, download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor, reentry, live battle sprite lifecycle, v357 soft-light strike FX, native RO species trees and the stair-gated ring');
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -511,7 +511,8 @@ body.social-open #bgmPlayer{display:none!important}
 #socialSit{position:absolute;right:18px;bottom:calc(var(--docktop,76px) + 10px);z-index:8;min-width:58px;padding:8px 13px;border:1px solid #c5a76b;border-radius:5px;background:linear-gradient(180deg,#354a46,#14272c);box-shadow:inset 0 1px #ffe8ad30,0 3px 10px #0007;color:#f4dfaa;font:600 12px "Trebuchet MS",sans-serif;text-shadow:0 1px 2px #000;cursor:pointer}
 #socialSit:hover,#socialSit:focus-visible{border-color:#f3d68b;background:linear-gradient(180deg,#4b5e55,#20373a);outline:2px solid #d8ba7044;outline-offset:2px}
 #sanctuaryWorldStatus,#sanctuaryNearby{top:82px}
-@media(max-width:760px){#socialHubToolbar{top:6px;width:calc(100% - 12px);max-width:calc(100% - 12px);min-height:50px;gap:7px;padding:6px 8px}#socialHubHeader{gap:5px;padding-right:7px}#socialHubHeader h2{font-size:13px}#socialHubHeader p{font-size:9px}#socialHubControls{gap:4px}#socialHubControls button{min-height:30px;padding:6px 7px;font-size:10px}#socialSit{right:12px;bottom:calc(var(--docktop,76px) + 8px);padding:7px 11px}#sanctuaryWorldStatus,#sanctuaryNearby{top:68px}}
+@media(max-width:760px){#socialMiniMap{top:auto;right:10px;bottom:calc(var(--docktop,76px) + 58px);width:108px}#socialMiniMap canvas{width:106px;height:106px}
+#socialHubToolbar{top:6px;width:calc(100% - 12px);max-width:calc(100% - 12px);min-height:50px;gap:7px;padding:6px 8px}#socialHubHeader{gap:5px;padding-right:7px}#socialHubHeader h2{font-size:13px}#socialHubHeader p{font-size:9px}#socialHubControls{gap:4px}#socialHubControls button{min-height:30px;padding:6px 7px;font-size:10px}#socialSit{right:12px;bottom:calc(var(--docktop,76px) + 8px);padding:7px 11px}#sanctuaryWorldStatus,#sanctuaryNearby{top:68px}}
 @media(max-width:420px){#socialHubToolbar{gap:4px;padding:5px}#socialHubHeader{padding-right:5px}#socialHubControls{gap:3px}#socialHubControls button{min-height:29px;padding:5px;font-size:9px}#sanctuaryWorldStatus,#sanctuaryNearby{top:62px}}
 
 /* DigiPet: the header and close button stay put while only the content scrolls. */
@@ -549,7 +550,8 @@ body.social-open #bgmPlayer{display:none!important}
 .sanctuary-index-owned input{accent-color:#e2c882}
 
 /* v355: plaza mini-map (bottom-right, above Sit), the big map dialog and the hub music player. */
-#socialMiniMap{position:absolute;right:18px;bottom:calc(var(--docktop,76px) + 58px);z-index:8;padding:3px;border:1.5px solid #c5a76b;border-radius:10px;background:linear-gradient(180deg,#243b31,#101f1a);box-shadow:inset 0 1px #ffe8ad26,0 5px 16px #0008;cursor:pointer;overflow:hidden}
+/* v357: the mini-map lives at the top right, under the toolbar, where map overviews sit. */
+#socialMiniMap{position:absolute;right:14px;top:calc(var(--socialhub-top,64px) + 10px);z-index:8;padding:3px;border:1.5px solid #c5a76b;border-radius:10px;background:linear-gradient(180deg,#243b31,#101f1a);box-shadow:inset 0 1px #ffe8ad26,0 5px 16px #0008;cursor:pointer;overflow:hidden}
 #socialMiniMap:hover,#socialMiniMap:focus-visible{border-color:#f3d68b;outline:2px solid #d8ba7044;outline-offset:2px}
 #socialMiniMap canvas{display:block;width:148px;height:148px;border-radius:7px;image-rendering:auto}
 #socialMapModal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:62;width:min(92vw,620px);max-height:min(92vh,720px);box-sizing:border-box;padding:12px 14px 12px;background:linear-gradient(180deg,#1c3129f5,#0e1c17f5);border:1.5px solid #d4b26a;border-radius:14px;box-shadow:0 18px 48px #000b;color:#f4dfaa;font:12px/1.45 "Trebuchet MS",sans-serif}

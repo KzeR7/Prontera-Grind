@@ -24,7 +24,9 @@ window.PGSocialScene={async create(host,labels,callbacks){
  atlas.flipY=false;atlas.magFilter=T.LinearFilter;const modelMat=new T.MeshBasicMaterial({map:atlas,vertexColors:true,side:T.DoubleSide,alphaTest:.35});
  modelMat.onBeforeCompile=shader=>{shader.vertexShader='attribute vec4 sourceBounds; varying vec4 nativeBounds;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <uv_vertex>','#include <uv_vertex>\nnativeBounds=sourceBounds;');shader.fragmentShader='varying vec4 nativeBounds;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','vec4 texelColor = texture2D(map, clamp(vUv, nativeBounds.xy, nativeBounds.zw)); texelColor = mapTexelToLinear(texelColor); diffuseColor *= texelColor;')};
  const floats=new Float32Array(data),geometries={};
- function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=modelMat){const cacheKey=(source===catalog?'town:':'garden:')+name;const rec=source.models[name];if(!geometries[cacheKey]){const g=new T.BufferGeometry(),p=[],uv=[],color=[],bounds=[];for(let i=rec.first;i<rec.first+rec.count;i++){const v=vertices.subarray(i*10,i*10+10);p.push(v[0],v[1],v[2]);uv.push(v[3],v[4]);color.push(.58+.42*v[5],.58+.42*v[5],.58+.42*v[5]);bounds.push(...v.slice(6,10))}g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('color',new T.Float32BufferAttribute(color,3));g.setAttribute('sourceBounds',new T.Float32BufferAttribute(bounds,4));g.computeBoundingSphere();geometries[cacheKey]=g}const mesh=new T.Mesh(geometries[cacheKey],material);mesh.scale.setScalar(size/Math.max(rec.size[0],rec.size[2]));mesh.position.set(x,0,z);mesh.rotation.y=rotation;scene.add(freeze(mesh));return mesh}
+ const sourceKeys=new WeakMap();let sourceKeySeq=0;
+function sourceKey(source){let k=sourceKeys.get(source);if(!k){k='src'+(++sourceKeySeq)+':';sourceKeys.set(source,k)}return k}
+function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=modelMat){const cacheKey=sourceKey(source)+name;const rec=source.models[name];if(!geometries[cacheKey]){const g=new T.BufferGeometry(),p=[],uv=[],color=[],bounds=[];for(let i=rec.first;i<rec.first+rec.count;i++){const v=vertices.subarray(i*10,i*10+10);p.push(v[0],v[1],v[2]);uv.push(v[3],v[4]);color.push(.58+.42*v[5],.58+.42*v[5],.58+.42*v[5]);bounds.push(...v.slice(6,10))}g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('color',new T.Float32BufferAttribute(color,3));g.setAttribute('sourceBounds',new T.Float32BufferAttribute(bounds,4));g.computeBoundingSphere();geometries[cacheKey]=g}const mesh=new T.Mesh(geometries[cacheKey],material);mesh.scale.setScalar(size/Math.max(rec.size[0],rec.size[2]));mesh.position.set(x,0,z);mesh.rotation.y=rotation;scene.add(freeze(mesh));return mesh}
  const makeBatch=()=>({p:[],uv:[],color:[],bounds:[]});
  function pushModel(batch,name,x,z,size,rotation=0,source=catalog,vertices=floats){
   const rec=source.models[name],s=size/Math.max(rec.size[0],rec.size[2]),c=Math.cos(rotation)*s,sn=Math.sin(rotation)*s;
@@ -208,44 +210,6 @@ window.PGSocialScene={async create(host,labels,callbacks){
  const fieldTex=stone.clone();fieldTex.repeat.set(1/7,1/7);fieldTex.needsUpdate=true;const fieldMat=new T.MeshBasicMaterial({map:fieldTex,color:0xc8dda8});
  const shape=new T.Shape();for(const [i,[x,z]] of [[44,52],[49,47],[91,47],[96,52],[96,76],[91,81],[49,81],[44,76]].entries()){const px=x-70,py=-(z-64);if(!i)shape.moveTo(px,py);else shape.lineTo(px,py)}shape.closePath();
  flat(new T.ShapeGeometry(shape),fieldMat,70,64,.021).userData.sanctuaryField=true;
- // v356 (owner: "pve grinding area redesign"): the wild field gets a worn training circuit,
- // wooden combat dummies along it, a scarecrow guard, hay and a water trough by the fence,
- // pennants on the fence posts and a proper gate - it reads as the trainers' grind ground.
- flat(new T.RingGeometry(11,13.2,44),new T.MeshBasicMaterial({color:0xcbb489,transparent:true,opacity:.92}),70,64,.0225).userData.sanctuaryTrack=true;
- const dummyMat=new T.MeshLambertMaterial({color:0x9a7a52}),ropeMat=new T.MeshLambertMaterial({color:0xb59b6d});
- for(const a of [.5,2.6,4.7]){
-  const dx=70+Math.cos(a)*12.2,dz=64+Math.sin(a)*12.2;
-  const post=new T.Mesh(new T.CylinderGeometry(.22,.28,2.7,8),dummyMat);post.position.set(dx,1.35,dz);scene.add(freeze(post));
-  for(const ry of [1.9,2.35]){const arm=new T.Mesh(new T.CylinderGeometry(.09,.09,1.7,6),ropeMat);arm.rotation.z=Math.PI/2;arm.position.set(dx,ry,dz);scene.add(freeze(arm))}
-  const cap=new T.Mesh(new T.SphereGeometry(.26,8,6),ropeMat);cap.position.set(dx,2.75,dz);scene.add(freeze(cap));
- }
- // Scarecrow keeps the wild flowers company.
- box(54,1.3,58,.18,2.6,.18,darkWood);box(54,2.05,58,1.7,.16,.16,darkWood);
- const scareHead=new T.Mesh(new T.SphereGeometry(.42,10,8),new T.MeshLambertMaterial({color:0xd8b56a}));scareHead.position.set(54,2.85,58);scene.add(freeze(scareHead));
- const scareHat=new T.Mesh(new T.ConeGeometry(.55,.5,10),new T.MeshLambertMaterial({color:0x7a5a3a}));scareHat.position.set(54,3.35,58);scene.add(freeze(scareHat));
- box(54,1.75,58,.9,.85,.28,new T.MeshLambertMaterial({color:0x8a5f46})).userData.sanctuaryScarecrow=true;
- // Hay bales and a water trough along the east fence.
- const hayMat=new T.MeshLambertMaterial({color:0xc9a86a});
- for(const [hx,hz,rot] of [[88.4,52.6,.4],[90.2,54.4,-.2]]){
-  const bale=new T.Mesh(new T.CylinderGeometry(.75,.75,1.5,12),hayMat);bale.rotation.z=Math.PI/2;bale.rotation.y=rot;bale.position.set(hx,.75,hz);bale.userData.sanctuaryHay=true;scene.add(freeze(bale));
- }
- box(47.4,.55,60,2.6,.8,1.1,new T.MeshLambertMaterial({color:0x9e9a83})).userData.sanctuaryTrough=true;
- flat(new T.PlaneGeometry(2.3,.85),new T.MeshBasicMaterial({color:0x3e97be}),47.4,60,.93).userData.sanctuaryTroughWater=true;
- // Pennants fly from every third field fence post.
- const fieldPennant=new T.Shape();fieldPennant.moveTo(-.26,0);fieldPennant.lineTo(.26,0);fieldPennant.lineTo(0,-.72);fieldPennant.closePath();
- for(const f of R.SANCTUARY_FENCES){
-  const dx=f.x2-f.x1,dz=f.z2-f.z1,len=Math.hypot(dx,dz),count=Math.max(1,Math.ceil(len/3.5));
-  for(let i=1;i<count;i+=3){
-   const t=i/count,px=f.x1+dx*t,pz=f.z1+dz*t;
-   box(px,1.68,pz,.07,.5,.07,darkWood);
-   const flag=new T.Mesh(new T.ShapeGeometry(fieldPennant),new T.MeshLambertMaterial({color:pennantColors[(i+f.x1)%5],side:T.DoubleSide}));
-   flag.position.set(px,1.9,pz);flag.rotation.y=Math.atan2(dx,dz);flag.userData.sanctuaryPennant=true;scene.add(freeze(flag));
-  }
- }
- // A proper gate arch announces the grind fields from the avenue.
- for(const gx of [61.6,70.4]){box(gx,1.7,47,.3,3.4,.3,darkWood);box(gx,3.25,47,.5,.3,.5,lightWood)}
- beam([61.6,3.5,47],[70.4,3.5,47],.14,darkWood);
- worldSign(66,3.95,47,'GRIND FIELDS',5.4,.68);
  const flowerColors=[0xe8d49b,0xf2c8b8,0xe8e9db];for(let i=0;i<50;i++){const x=49+(i*29%42),z=50+(i*17%28);const f=new T.Mesh(new T.SphereGeometry(.10,5,4),new T.MeshBasicMaterial({color:flowerColors[i%3]}));f.position.set(x,.12,z);scene.add(freeze(f))}
  for(const f of R.SANCTUARY_FENCES){const dx=f.x2-f.x1,dz=f.z2-f.z1,len=Math.hypot(dx,dz),count=Math.max(1,Math.ceil(len/3.5));for(let i=0;i<=count;i++){const t=i/count;box(f.x1+dx*t,.72,f.z1+dz*t,.22,1.44,.22,darkWood)}for(const y of [.48,1.04])beam([f.x1,y,f.z1],[f.x2,y,f.z2],.09,wood).userData.sanctuaryFence=true}
  // Hand-built food cart and two separate future NPC stations, on the avenue side of the walk.
@@ -331,7 +295,12 @@ window.PGSocialScene={async create(host,labels,callbacks){
  for(const h of [1.3,2,2.7]){for(const z of [ring.z-ring.d/2,ring.z+ring.d/2])box(ring.x,h,z,ring.w,.1,.1,h===2?cream:wood);for(const x of [ring.x-ring.w/2,ring.x+ring.w/2])box(x,h,ring.z,.1,.1,ring.d,h===2?cream:wood)}
  for(const x of [ring.x-ring.w/2,ring.x+ring.w/2])for(const z of [ring.z-ring.d/2,ring.z+ring.d/2])for(const y of [1.3,2,2.7]){box(x,y,z,.62,.2,.62,cream);box(x,y,z,.68,.05,.68,wood)}
 
+ // v357 (owner: "enter only from the stairs"): the west mouth is the one way up, so it is
+ // built as a real entrance - three treads with side rails and a red runner - while the
+ // shared rules block the ropes everywhere else.
  for(let i=0;i<3;i++)box(ring.x-ring.w/2-1.2+i*.4,.12+i*.12,ring.z,.45,.24+i*.24,3.2,wood);
+ for(const dz of [-1.7,1.7]){box(ring.x-ring.w/2-1,.42,ring.z+dz,2.4,.14,.16,darkWood);for(const dx of [-1.1,1.1])box(ring.x-ring.w/2-1+dx,.24,ring.z+dz,.14,.48,.14,lightWood)}
+ flat(new T.PlaneGeometry(1.5,2.9),new T.MeshBasicMaterial({color:0x8e3b32}),ring.x-ring.w/2-.2,ring.z,.58).userData.ringRunner=true;
  // Level, regularly spaced bleacher tiers, with a real mitred corner.
  // The walkway faces and all three seating heights stay horizontal; the two
  // runs and their corner share dimensions with the Worker collision boxes.
@@ -381,7 +350,11 @@ window.PGSocialScene={async create(host,labels,callbacks){
  const battleShots=[];
  function spawnBattleShot(from,to,now,boss=false,enemy=false){
   if(battleShots.length>24)return;
-  const mesh=new T.Mesh(new T.SphereGeometry(boss?.24:.15,10,8),new T.MeshBasicMaterial({color:boss?0xffd27a:enemy?0xef9c86:0xbfe8c6,transparent:true,opacity:.95}));
+  const col=boss?0xffd27a:enemy?0xef9c86:0xbfe8c6;
+  const mesh=new T.Mesh(new T.SphereGeometry(boss?.2:.12,10,8),new T.MeshBasicMaterial({color:col,transparent:true,opacity:.95}));
+  const tex=fxTex();
+  const halo=new T.Sprite(new T.SpriteMaterial({map:tex.glow,color:col,transparent:true,opacity:.75,depthWrite:false,blending:T.AdditiveBlending}));
+  halo.scale.setScalar(boss?1.1:.7);mesh.add(halo);
   mesh.position.set(from.x,.55,from.z);mesh.userData.battleShot=true;scene.add(mesh);
   battleShots.push({mesh,fromX:from.x,fromZ:from.z,toX:to.x,toZ:to.z,at:now,dur:280});
  }
@@ -391,7 +364,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
    shot.mesh.position.set(shot.fromX+(shot.toX-shot.fromX)*t,.55,shot.fromZ+(shot.toZ-shot.fromZ)*t);
    shot.mesh.scale.setScalar(.8+.45*Math.sin(Math.PI*t));
    // A short pixel spark trail behind each travelling shot.
-   if(now-(shot.sparkAt||0)>85){shot.sparkAt=now;spawnBattleBurst(shot.mesh.position.x,shot.mesh.position.z,shot.mesh.material.color.getHex(),1,.12,.07,240)}
+   if(now-(shot.sparkAt||0)>110){shot.sparkAt=now;spawnBattleBurst(shot.mesh.position.x,shot.mesh.position.z,shot.mesh.material.color.getHex(),1,.1,.09,300)}
   }
  }
  // ---------- v352 full-pixel battle FX ----------
@@ -399,26 +372,74 @@ window.PGSocialScene={async create(host,labels,callbacks){
  // landed strike with its amount and crit flag, and the scene answers with readable pixel
  // feedback — burst particles, a floating damage number, a contact freeze and a shake on the
  // defender. Nothing here reads or touches authoritative combat state.
- const battleBursts=[],battlePopups=[],battleWaves=[];let burstTexture=null;
- function burstTex(){
-  if(!burstTexture){const c=document.createElement('canvas');c.width=c.height=8;const x=c.getContext('2d');
-   if(x&&typeof x.fillRect==='function'){x.fillStyle='#fff';x.fillRect(1,1,6,6);x.fillStyle='rgba(255,255,255,.5)';x.fillRect(0,2,8,4);x.fillRect(2,0,4,8)}
-   burstTexture=new T.CanvasTexture(c);burstTexture.magFilter=burstTexture.minFilter=T.NearestFilter;burstTexture.generateMipmaps=false}
-  return burstTexture;
+ const battleBursts=[],battlePopups=[],battleWaves=[];let fxTextures=null;
+ // v357 (owner: "the battle FX are still boxes" - third request): every particle was an
+ // 8x8 white square, so hits read as flying pixels of cardboard. The whole particle set is
+ // redrawn as painted light: soft radial glows, tapered comet streaks that rotate with
+ // their velocity, and four-point star sparkles for crits. The shockwave becomes a wide
+ // soft ring with an alpha falloff instead of a hard-edged torus band. Everything still
+ // paints onto small canvases with full feature guards, so headless scenes degrade
+ // quietly to the plain fallback instead of throwing.
+ function fxTex(){
+  if(fxTextures)return fxTextures;
+  const make=(size,draw)=>{const c=document.createElement('canvas');c.width=c.height=size;const x=c.getContext('2d');
+   if(x&&typeof x.fillRect==='function'&&typeof x.beginPath==='function'&&typeof x.arc==='function'){draw(x,size);return new T.CanvasTexture(c)}
+   return null};
+  const glow=make(64,(x,n)=>{const cx=n/2;
+   if(typeof x.createRadialGradient==='function'){const g=x.createRadialGradient(cx,cx,0,cx,cx,n/2);
+    g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.35,'rgba(255,255,255,.85)');g.addColorStop(.7,'rgba(255,255,255,.28)');g.addColorStop(1,'rgba(255,255,255,0)');
+    x.fillStyle=g;x.fillRect(0,0,n,n)}
+   else{for(let i=8;i>0;i--){x.fillStyle='rgba(255,255,255,'+(i/9)+')';x.beginPath();x.arc(cx,cx,n/2*i/8,0,Math.PI*2);x.fill()}}});
+  const streak=make(64,(x,n)=>{
+   if(typeof x.createLinearGradient==='function'){const g=x.createLinearGradient(0,0,n,0);
+    g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.75,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,1)');
+    x.fillStyle=g;x.beginPath();x.moveTo(0,n/2-3);x.lineTo(n*.72,n/2-7);x.lineTo(n,n/2);x.lineTo(n*.72,n/2+7);x.lineTo(0,n/2+3);x.closePath();x.fill()}
+   else{x.fillStyle='rgba(255,255,255,.9)';x.beginPath();x.moveTo(0,n/2-3);x.lineTo(n,n/2);x.lineTo(0,n/2+3);x.closePath();x.fill()}});
+  const star=make(64,(x,n)=>{const cx=n/2;x.fillStyle='rgba(255,255,255,.95)';
+   for(let i=0;i<4;i++){const a=i*Math.PI/4;x.beginPath();
+    x.moveTo(cx+Math.cos(a)*n*.46,cx+Math.sin(a)*n*.46);
+    x.quadraticCurveTo(cx+Math.cos(a+.42)*n*.1,cx+Math.sin(a+.42)*n*.1,cx+Math.cos(a+Math.PI/4)*n*.46,cx+Math.sin(a+Math.PI/4)*n*.46);
+    x.closePath();x.fill()}
+   if(typeof x.createRadialGradient==='function'){const g=x.createRadialGradient(cx,cx,0,cx,cx,n*.16);
+    g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,n,n)}
+   else{x.fillStyle='rgba(255,255,255,.9)';x.beginPath();x.arc(cx,cx,n*.14,0,Math.PI*2);x.fill()}});
+  // Fallbacks when no 2D painting is possible at all: a plain white disc beats a square.
+  if(!glow){const c=document.createElement('canvas');c.width=c.height=32;const x=c.getContext('2d');
+   if(x&&typeof x.beginPath==='function'&&typeof x.arc==='function'){x.fillStyle='#fff';x.beginPath();x.arc(16,16,14,0,Math.PI*2);x.fill();glow=new T.CanvasTexture(c)}}
+  fxTextures={glow,streak,star};
+  return fxTextures;
  }
  function spawnBattleBurst(x,z,color,count,speed=.9,size=.11,dur=320){
   if(battleBursts.length>64)return;
+  const tex=fxTex();
   for(let i=0;i<count;i++){
-   const mesh=new T.Sprite(new T.SpriteMaterial({map:burstTex(),color,transparent:true,depthWrite:false}));
    const a=battleHash('burst:'+i+':'+x.toFixed(2)+':'+z.toFixed(2))*Math.PI*2,r=(.55+battleHash('br:'+i+':'+z.toFixed(2))* .45)*speed;
-   mesh.position.set(x,.55,z);mesh.scale.setScalar(size*(.6+battleHash('bs:'+i+':'+x.toFixed(2))*.8));
+   // A mix of light: mostly soft glows, a third rotating streaks, and the first particle
+   // of a big burst is always a star so crits read instantly.
+   const star=i===0&&count>=11,streak=!star&&i%3===0;
+   const mesh=new T.Sprite(new T.SpriteMaterial({map:star?tex.star:streak?tex.streak:tex.glow,color,transparent:true,depthWrite:false,blending:T.AdditiveBlending}));
+   if(streak)mesh.material.rotation=a;
+   mesh.position.set(x,.55,z);
+   mesh.scale.setScalar(size*(.6+battleHash('bs:'+i+':'+x.toFixed(2))*.8));
+   if(streak)mesh.scale.set(size*2.4,size*.7,1);
+   if(star)mesh.scale.setScalar(size*2.6);
    mesh.userData.battleBurst=true;scene.add(mesh);
    battleBursts.push({mesh,vx:Math.cos(a)*r,vy:.9+battleHash('by:'+i+':'+x.toFixed(2))*1.2,vz:Math.sin(a)*r,at:clock,dur,last:clock});
   }
  }
  function spawnBattleShockwave(x,z,color=0xffd98a,dur=460){
   if(battleWaves.length>12)return;
-  const ring=new T.Mesh(new T.RingGeometry(.5,.66,26),new T.MeshBasicMaterial({color,transparent:true,opacity:.95,side:T.DoubleSide,depthWrite:false}));
+  const c=document.createElement('canvas');c.width=c.height=128;const x2=c.getContext('2d');let tex=null;
+  if(x2&&typeof x2.beginPath==='function'&&typeof x2.arc==='function'){
+   for(let i=0;i<9;i++){x2.strokeStyle='rgba(255,255,255,'+(0.85-i*0.09)+')';x2.lineWidth=2+i*1.4;
+    x2.beginPath();x2.arc(64,64,52-i*1.5,0,Math.PI*2);x2.stroke()}
+   if(typeof x2.createRadialGradient==='function'){const g=x2.createRadialGradient(64,64,40,64,64,64);
+    g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.85,'rgba(255,255,255,.25)');g.addColorStop(1,'rgba(255,255,255,0)');
+    x2.fillStyle=g;x2.fillRect(0,0,128,128)}
+   tex=new T.CanvasTexture(c);
+  }
+  const ring=tex?new T.Mesh(new T.PlaneGeometry(3.4,3.4),new T.MeshBasicMaterial({map:tex,color,transparent:true,opacity:.95,side:T.DoubleSide,depthWrite:false,blending:T.AdditiveBlending}))
+   :new T.Mesh(new T.RingGeometry(.5,.66,26),new T.MeshBasicMaterial({color,transparent:true,opacity:.95,side:T.DoubleSide,depthWrite:false}));
   ring.rotation.x=-Math.PI/2;ring.position.set(x,.14,z);ring.userData.battleShockwave=true;scene.add(ring);
   battleWaves.push({mesh:ring,at:clock,dur});
  }
@@ -608,40 +629,35 @@ window.PGSocialScene={async create(host,labels,callbacks){
  for(const [gx,gz] of R.GARDENS.map(g=>[g.x,g.z])){
   model('stump',gx-4.6,gz+4.4,3.1,0,garden,gardenFloats,gardenMat);
  }
- // v356 (owner: "more different types of trees"): species builder for the shared
- // SANCTUARY_TREES kinds - pine, cypress, birch, maple, willow and blossom. Everything
- // is flat-coloured primitives in the town palette, frozen like the rest of the static
- // world, with a deterministic per-tree jitter so a row never reads as one cloned prop.
- const barkMat=new T.MeshLambertMaterial({color:0x6b4a30}),birchBarkMat=new T.MeshLambertMaterial({color:0xe6e2d6}),
-  pineDark=new T.MeshLambertMaterial({color:0x2f5d34}),pineMid=new T.MeshLambertMaterial({color:0x3c7040}),
-  cypressMat=new T.MeshLambertMaterial({color:0x2e4f33}),leafLight=new T.MeshLambertMaterial({color:0x7fae5e}),
-  leafMid=new T.MeshLambertMaterial({color:0x5f9a52}),mapleOrange=new T.MeshLambertMaterial({color:0xd98a3c}),
-  mapleRed=new T.MeshLambertMaterial({color:0xc05a3a}),willowMat=new T.MeshLambertMaterial({color:0x6f9a4e}),
-  blossomCanopy=new T.MeshLambertMaterial({color:0xf6c3d6}),blossomDeep=new T.MeshLambertMaterial({color:0xe6a3bf}),
-  mulchMat=new T.MeshBasicMaterial({color:0x8a7355});
- const treeJitter=(x,z,salt)=>{const h=Math.abs(Math.sin(x*127.1+z*311.7+salt*74.7))*43758.5453;return h-Math.floor(h)};
- function propTree(kind,x,z){
-  const j1=treeJitter(x,z,1),j2=treeJitter(x,z,2),j3=treeJitter(x,z,3);
-  const g=new T.Group();g.position.set(x+(j1-.5)*.5,0,z+(j2-.5)*.5);g.rotation.y=j3*Math.PI*2;
-  const trunk=(h,r,mat)=>{const m=new T.Mesh(new T.CylinderGeometry(r*.8,r,h,7),mat||barkMat);m.position.y=h/2;g.add(m);return m};
-  const cone=(y,r,h,mat)=>{const m=new T.Mesh(new T.ConeGeometry(r,h,8),mat);m.position.y=y;g.add(m);return m};
-  const blob=(y,r,mat,dx=0,dz=0)=>{const m=new T.Mesh(new T.SphereGeometry(r,8,6),mat);m.position.set(dx,y,dz);g.add(m);return m};
-  const mulch=new T.Mesh(new T.CircleGeometry(1.15,14),mulchMat);mulch.rotation.x=-Math.PI/2;mulch.position.y=.02;g.add(mulch);
-  if(kind==='pine'){trunk(2.1,.26);cone(2.6,1.9,1.9,pineDark);cone(3.7,1.45,1.7,pineMid);cone(4.8,.95,1.5,pineDark);blob(5.9,.34,pineMid)}
-  else if(kind==='cypress'){trunk(1.2,.2);cone(3.1,.85,4.4,cypressMat);cone(5.1,.42,1.6,cypressMat)}
-  else if(kind==='birch'){const t=trunk(3.4,.24,birchBarkMat);for(const y of [1,1.9,2.8]){const band=new T.Mesh(new T.CylinderGeometry(.245,.245,.14,7),barkMat);band.position.y=y;g.add(band)}blob(3.9,1.5,leafLight);blob(4.7,1.05,leafMid,.75,.4);blob(3.5,.85,leafMid,-.8,-.35)}
-  else if(kind==='maple'){trunk(2.6,.34);blob(3.6,1.75,mapleOrange);blob(4.5,1.2,mapleRed,.8,.3);blob(3.2,1,mapleOrange,-.85,.4);blob(4,.95,mapleRed,.1,-.9)}
-  else if(kind==='willow'){trunk(2.9,.4);blob(3.9,1.35,leafMid);const frondMat=willowMat;for(let i=0;i<9;i++){const a=i/9*Math.PI*2,f=new T.Mesh(new T.BoxGeometry(.16,2.6,.16),frondMat);f.position.set(Math.cos(a)*1.45,2.9,Math.sin(a)*1.45);f.rotation.z=Math.cos(a)*.34;f.rotation.x=-Math.sin(a)*.34;g.add(f)}}
-  else{ /* blossom */ trunk(2.5,.3);blob(3.4,1.5,blossomCanopy);blob(4.2,1.05,blossomDeep,.7,.35);blob(3.1,.9,blossomDeep,-.75,-.3);blob(4.6,.5,blossomCanopy,-.2,.6)}
-  g.userData.sanctuaryTree=true;g.userData.treeKind=kind;g.traverse(o=>{o.userData.sanctuaryTree=true});
-  scene.add(freeze(g));return g;
- }
- // Native trees soften the outer Sanctuary edge without crowding its entrances;
- // kinded entries from the shared rules become their own species (v356).
+ // v357 (owner: "the trees are ugly - use real Ragnarok-style ones"): the species are no
+ // longer primitive cones and spheres. They are the repo's own native RO field models -
+ // izlude firs, morocc palms, payon broadleafs and amatsu cherries - each with a per-tree
+ // size and rotation so a grove reads as grown, not cloned. A missing atlas degrades to the
+ // prontera tree instead of failing the hub.
+ const speciesSources=await Promise.all(['izlude','morocc','payon','amatsu'].map(async name=>{
+  try{
+   const map=gardenCatalog.maps.find(m=>m.name===name);if(!map)return null;
+   const [bin,atlas]=await Promise.all([fetch('assets/native-fields/v1/'+name+'/models.bin').then(r=>{if(!r.ok)throw Error('Tree models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/native-fields/v1/'+name+'/models.webp')]);
+   atlas.flipY=false;const mat=modelMat.clone();mat.map=atlas;mat.onBeforeCompile=modelMat.onBeforeCompile;
+   return {map,floats:new Float32Array(bin),mat};
+  }catch(e){console.warn('DigiPet tree set '+name+' unavailable',e);return null}
+ }));
+ const species={pine:speciesSources[0],palm:speciesSources[1],broad:speciesSources[2],sakura:speciesSources[3]};
+ const treeHash=(x,z,salt)=>{const h=Math.abs(Math.sin(x*127.1+z*311.7+salt*74.7))*43758.5453;return h-Math.floor(h)};
+ // Native trees soften the outer Sanctuary edge without crowding its entrances; kinded
+ // entries from the shared rules render as their own RO species (v357).
  for(const t of R.SANCTUARY_TREES){
-  if(t.kind){const tree=propTree(t.kind,t.x,t.z);if(t.behindGym)tree.userData.nativeGymTree=true;continue}
-  const tree=model('tree2',t.x,t.z,6.8,0,garden,gardenFloats,gardenMat);tree.userData.sanctuaryTree=true;if(t.behindGym)tree.userData.nativeGymTree=true;
+  const src=t.kind&&species[t.kind];
+  const tree=src?model('tree',t.x,t.z,5.4+treeHash(t.x,t.z,1)*2.4,treeHash(t.x,t.z,2)*Math.PI*2,src.map,src.floats,src.mat)
+   :model('tree2',t.x,t.z,6.8,0,garden,gardenFloats,gardenMat);
+  tree.userData.sanctuaryTree=true;if(t.kind)tree.userData.treeKind=t.kind;if(t.behindGym)tree.userData.nativeGymTree=true;
  }
+ // v357 (owner: "the grind-field details were wrong"): the procedural clutter - painted
+ // circuit, dummies, scarecrow, hay, trough and pennants - is removed. The field stays a
+ // clean wild training ground; its dressing is a few native prontera stumps set outside
+ // the fence, clear of the battle area and the viewing benches.
+ for(const [x,z,sz] of [[45.5,44.6,3],[94.5,44.6,3.2],[42.5,60,2.8],[97.5,70,3],[43,77,2.9],[96.5,78,3.1]])
+  model('stump',x,z,sz,(x*13.7+z*7.3)%6.283,garden,gardenFloats,gardenMat).userData.sanctuaryFieldEdge=true;
  // Small native shrubs fill the outside edge without sealing any of the field gates.
  const sanctuaryShrubs=makeBatch();for(const [x,z] of [[98,20],[98,32],[98,48],[98,64],[98,78],[98,93],[98,113],[96,124],[89,124],[83,124],[19,112],[27,109],[13,89]])pushModel(sanctuaryShrubs,'shrub',x,z,2.1,0,garden,gardenFloats);addBatch(sanctuaryShrubs,gardenMat);
 

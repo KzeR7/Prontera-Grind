@@ -6,7 +6,7 @@
 // moved to another tab in a single tab. Boot once, ever.
 if(window.__pgSocialBooted)return;window.__pgSocialBooted=true;
 const R=PGSocialRules,P=globalThis.PGSocialPoker||null,$id=id=>document.getElementById(id);
-const app={socket:null,user:null,id:null,room:0,rooms:[],plazaFriends:0,wanted:false,party:null,partyRoster:[],partyInvite:null,channel:'world',messages:[],unread:new Set(),muted:new Set(),friends:new Set(),players:new Map(),retry:0,connected:false,nextConnect:0,blocked:false,scene:null,owner:null,nextChat:0,lastSeen:0,probeAt:0,resume:null,poker:null,pokerTables:null,battle:{pve:[],pvp:null,queue:[]},battleOffset:0,battleRewards:new Set(),battleResult:null,battleIntent:null};
+const app={socket:null,user:null,id:null,room:0,rooms:[],plazaFriends:0,wanted:false,party:null,partyRoster:[],partyInvite:null,partyTab:'pve',channel:'world',messages:[],unread:new Set(),muted:new Set(),friends:new Set(),players:new Map(),retry:0,connected:false,nextConnect:0,blocked:false,scene:null,owner:null,nextChat:0,lastSeen:0,probeAt:0,resume:null,poker:null,pokerTables:null,battle:{pve:[],pvp:null,queue:[]},battleOffset:0,battleRewards:new Set(),battleResult:null,battleIntent:null};
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const emojiURL=id=>'assets/social/emotions/'+id+'.png';
 // World is public and may be cached per account. Never put whispers or Local messages in storage.
@@ -73,7 +73,7 @@ function saveWorldHistory(){
 const chat=document.createElement('section');chat.id='socialChat';chat.setAttribute('aria-label','Player chat');
 chat.innerHTML='<div id="socialTabs" role="tablist" aria-label="Chat channels"></div><div id="socialLines" role="log" aria-label="Chat messages"></div><div id="socialEmoji" hidden></div><form id="socialCompose"><input id="socialTo" aria-label="Whisper recipient" placeholder="Player name" maxlength="32" hidden><input id="socialInput" aria-label="Message" placeholder="Press Enter to chat" maxlength="300" autocomplete="off"><button id="socialEmojiToggle" type="button" aria-label="Choose an emotion" aria-expanded="false" aria-controls="socialEmoji">Emoji</button><button id="socialSend" type="submit">Send</button></form><div id="socialStatus"><span id="socialConnection">Connecting…</span><button id="socialNew" type="button" hidden>New messages ↓</button></div><span id="socialResizeTop" data-resize="n" aria-hidden="true" title="Drag top edge to resize chat"></span><span id="socialResizeCorner" data-resize="ne" aria-hidden="true" title="Drag corner to resize chat"></span><span id="socialResize" data-resize="ne" role="separator" tabindex="0" aria-label="Resize chat; drag the top or right edge, corner, or use arrow keys" aria-orientation="vertical" title="Drag to resize chat"></span><div id="socialPeople" hidden></div>';
 $id('view').append(chat);$id('feedWrap').hidden=true;$id('feedWrap').style.display='none';
-const hub=document.createElement('section');hub.id='socialHub';hub.hidden=true;hub.setAttribute('aria-label','Prontera Fountain Plaza');hub.innerHTML='<div id="socialScene"></div><div id="socialLabels"></div><div id="socialHubToolbar"><header id="socialHubHeader"><div class="social-hub-title-row"><h2>Plaza</h2><select id="socialRoomSelect" aria-label="Switch plaza room" title="Switch Plaza server room" hidden></select></div><p id="socialPopulation">Joining plaza…</p></header><div id="socialHubControls"><button id="socialPokerBtn" type="button" title="Open Fountain Plaza Hold\'em"><span id="socialPokerBtnText">🃏 Hold\'em</span><i id="socialPokerDot" hidden></i></button><button id="socialFishBtn" type="button" title="Fish at the South Lawn ponds — cast, reel and fill your Fishing Bag" aria-pressed="false">🎣 Fishing</button><button id="sanctuaryOpen" type="button" aria-haspopup="dialog" aria-controls="sanctuaryPanel">🥚 DigiPet</button><label class="social-digimon-label" hidden>Digimon <select id="socialDigimon" aria-label="Choose an owned Digimon companion" title="Choose from your owned DigiPet collection"><option value="">None</option></select></label><button id="socialPartyBtn" type="button" title="Form a grind party or join the PvP lobby" aria-haspopup="dialog" aria-controls="socialPartyPanel">👥 Party</button><button id="socialBgmBtn" type="button" title="Open the music player" aria-pressed="false" aria-haspopup="dialog" aria-controls="socialBgmMount">🎵 Music</button><button id="socialLeave">↩ Field</button></div></div><div id="socialBgmMount" hidden aria-label="Plaza music player"></div><button id="socialMiniMap" type="button" title="Open the plaza map" aria-label="Open the plaza map"><canvas id="socialMiniMapCanvas" width="150" height="150"></canvas></button><section id="socialPartyPanel" role="dialog" aria-label="Grind party and PvP lobby" hidden><header class="social-party-head"><strong>👥 Party</strong><button id="socialPartyClose" type="button" title="Close the party panel" aria-label="Close the party panel">✕</button></header><div id="socialPartyBody"></div></section><section id="socialMapModal" role="dialog" aria-label="Plaza map" hidden><header class="social-map-head"><strong>🗺 Plaza Map</strong><button id="socialMapClose" type="button" title="Close the map" aria-label="Close the map">✕</button></header><canvas id="socialMapCanvas" width="640" height="640"></canvas><footer class="social-map-legend"><span><i class="map-dot dot-self"></i>You</span><span><i class="map-dot dot-friend"></i>Friends</span><span><i class="map-dot dot-player"></i>Players</span><span><i class="map-dot dot-fish"></i>Fishing</span><span><i class="map-dot dot-battle"></i>DigiPet battle</span><span><i class="map-chip chip-farm"></i>DigiPet farm</span><span><i class="map-chip chip-gym"></i>Gym</span><span><i class="map-chip chip-ring"></i>PvP ring</span><span><i class="map-chip chip-poker"></i>Poker</span><span><i class="map-chip chip-lake"></i>West Lake</span></footer></section><button id="socialSit" type="button" title="Sit or stand (Insert)" aria-label="Sit or stand">Sit</button><button id="socialPokerMini" type="button" hidden></button><section id="socialPokerModal" role="dialog" aria-label="Fountain Plaza Hold\'em" hidden><header id="socialPokerHead"><div class="poker-head-title"><strong id="socialPokerHeadTitle">🃏 Plaza Hold\'em · Table 1</strong><small id="socialPokerRoomSub">Dealer Vane · Blinds 10 / 20 · AFK Kick 2×</small></div><div class="poker-head-right"><span id="socialPokerWalletPill" class="poker-wallet-pill"><i class="fishcoin" aria-hidden="true"></i> 1,000 Chips</span><button id="socialPokerMinBtn" type="button" title="Minimize table (shows live timer &amp; turn alert)" aria-label="Minimize poker table">—</button><button id="socialPokerCloseBtn" type="button" title="Close poker window" aria-label="Close poker window">✕</button></div></header><nav id="socialPokerNav" role="tablist" aria-label="Poker sections"><button type="button" role="tab" data-ptab="t0" aria-selected="true">♠ Table 1 <small id="pokerTabCount0">0/6</small></button><button type="button" role="tab" data-ptab="t1" aria-selected="false">♠ Table 2 <small id="pokerTabCount1">0/6</small></button><button type="button" role="tab" data-ptab="bank" aria-selected="false"><i class="fishcoin" aria-hidden="true"></i> Chip Bank <i id="pokerBankFreeDot" hidden>!</i></button><button type="button" role="tab" data-ptab="gifts" aria-selected="false" aria-disabled="true" class="is-locked" title="Locked — rewards coming in a later update">🔒 Gift Exchange <small>Later</small></button><span id="socialPokerToast" hidden role="status" aria-live="polite"></span></nav><div id="socialPokerBody"></div><div id="socialPokerResult" hidden aria-live="polite"></div></section>';$id('view').append(hub);
+const hub=document.createElement('section');hub.id='socialHub';hub.hidden=true;hub.setAttribute('aria-label','Prontera Fountain Plaza');hub.innerHTML='<div id="socialScene"></div><div id="socialLabels"></div><div id="socialHubToolbar"><header id="socialHubHeader"><div class="social-hub-title-row"><h2>Plaza</h2><select id="socialRoomSelect" aria-label="Switch plaza room" title="Switch Plaza server room" hidden></select></div><p id="socialPopulation">Joining plaza…</p></header><div id="socialHubControls"><button id="socialPokerBtn" type="button" title="Open Fountain Plaza Hold\'em"><span id="socialPokerBtnText">🃏 Hold\'em</span><i id="socialPokerDot" hidden></i></button><button id="socialFishBtn" type="button" title="Fish at the South Lawn ponds — cast, reel and fill your Fishing Bag" aria-pressed="false">🎣 Fishing</button><button id="sanctuaryOpen" type="button" aria-haspopup="dialog" aria-controls="sanctuaryPanel">🥚 DigiPet</button><label class="social-digimon-label" hidden>Digimon <select id="socialDigimon" aria-label="Choose an owned Digimon companion" title="Choose from your owned DigiPet collection"><option value="">None</option></select></label><button id="socialPartyBtn" type="button" title="Form a grind party - invite up to two trainers and start a shared field grind" aria-haspopup="dialog" aria-controls="socialPartyPanel">⚔ Grind</button><button id="socialPvpBtn" type="button" title="Join the PvP lobby - queue for the boxing ring and step in from the stairs" aria-haspopup="dialog" aria-controls="socialPartyPanel">🥊 PvP</button><button id="socialBgmBtn" type="button" title="Open the music player" aria-pressed="false" aria-haspopup="dialog" aria-controls="socialBgmMount">🎵 Music</button><button id="socialLeave">↩ Field</button></div></div><div id="socialBgmMount" hidden aria-label="Plaza music player"></div><button id="socialMiniMap" type="button" title="Open the plaza map" aria-label="Open the plaza map"><canvas id="socialMiniMapCanvas" width="150" height="150"></canvas></button><section id="socialPartyPanel" role="dialog" aria-label="Grind party and PvP lobby" hidden><header class="social-party-head"><nav class="social-party-tabs" role="tablist" aria-label="Party sections"><button type="button" role="tab" id="socialPartyTabPve" aria-selected="true" title="Team up with up to two other trainers and grind the field together">⚔ Grind Party</button><button type="button" role="tab" id="socialPartyTabPvp" aria-selected="false" title="Queue for the boxing ring - the referee pairs the first two trainers">🥊 PvP Ring</button></nav><button id="socialPartyClose" type="button" title="Close the party panel" aria-label="Close the party panel">✕</button></header><div id="socialPartyBody"></div></section><section id="socialMapModal" role="dialog" aria-label="Plaza map" hidden><header class="social-map-head"><strong>🗺 Plaza Map</strong><button id="socialMapClose" type="button" title="Close the map" aria-label="Close the map">✕</button></header><canvas id="socialMapCanvas" width="640" height="640"></canvas><footer class="social-map-legend"><span><i class="map-dot dot-self"></i>You</span><span><i class="map-dot dot-friend"></i>Friends</span><span><i class="map-dot dot-player"></i>Players</span><span><i class="map-dot dot-fish"></i>Fishing</span><span><i class="map-dot dot-battle"></i>DigiPet battle</span><span><i class="map-chip chip-farm"></i>DigiPet farm</span><span><i class="map-chip chip-gym"></i>Gym</span><span><i class="map-chip chip-ring"></i>PvP ring</span><span><i class="map-chip chip-poker"></i>Poker</span><span><i class="map-chip chip-lake"></i>West Lake</span></footer></section><button id="socialSit" type="button" title="Sit or stand (Insert)" aria-label="Sit or stand">Sit</button><button id="socialPokerMini" type="button" hidden></button><section id="socialPokerModal" role="dialog" aria-label="Fountain Plaza Hold\'em" hidden><header id="socialPokerHead"><div class="poker-head-title"><strong id="socialPokerHeadTitle">🃏 Plaza Hold\'em · Table 1</strong><small id="socialPokerRoomSub">Dealer Vane · Blinds 10 / 20 · AFK Kick 2×</small></div><div class="poker-head-right"><span id="socialPokerWalletPill" class="poker-wallet-pill"><i class="fishcoin" aria-hidden="true"></i> 1,000 Chips</span><button id="socialPokerMinBtn" type="button" title="Minimize table (shows live timer &amp; turn alert)" aria-label="Minimize poker table">—</button><button id="socialPokerCloseBtn" type="button" title="Close poker window" aria-label="Close poker window">✕</button></div></header><nav id="socialPokerNav" role="tablist" aria-label="Poker sections"><button type="button" role="tab" data-ptab="t0" aria-selected="true">♠ Table 1 <small id="pokerTabCount0">0/6</small></button><button type="button" role="tab" data-ptab="t1" aria-selected="false">♠ Table 2 <small id="pokerTabCount1">0/6</small></button><button type="button" role="tab" data-ptab="bank" aria-selected="false"><i class="fishcoin" aria-hidden="true"></i> Chip Bank <i id="pokerBankFreeDot" hidden>!</i></button><button type="button" role="tab" data-ptab="gifts" aria-selected="false" aria-disabled="true" class="is-locked" title="Locked — rewards coming in a later update">🔒 Gift Exchange <small>Later</small></button><span id="socialPokerToast" hidden role="status" aria-live="polite"></span></nav><div id="socialPokerBody"></div><div id="socialPokerResult" hidden aria-live="polite"></div></section>';$id('view').append(hub);
 // A separate DigiPet window; no existing field-pet state is changed here.
 const sanctuaryPanel=document.createElement('section');sanctuaryPanel.id='sanctuaryPanel';sanctuaryPanel.hidden=true;sanctuaryPanel.setAttribute('role','dialog');sanctuaryPanel.setAttribute('aria-labelledby','sanctuaryTitle');
 sanctuaryPanel.innerHTML=`<header class="sanctuary-head"><div><small>FOUNTAIN PLAZA · COMPANION CARE</small><h2 id="sanctuaryTitle"><span class="digipet-logo" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><defs><linearGradient id="digipetEggGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3bd"/><stop offset=".55" stop-color="#e5c76f"/><stop offset="1" stop-color="#9dbb86"/></linearGradient></defs><path d="M20 3C12 3 5 16 5 24c0 8 6 13 15 13s15-5 15-13C35 16 28 3 20 3Z" fill="url(#digipetEggGradient)" stroke="#fff4cf" stroke-width="1.4"/><path d="m7 25 5-4 5 5 5-5 5 5 5-4" fill="none" stroke="#38564a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 12c2-3 4-4 6-4" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="2" stroke-linecap="round"/><path d="m31 6 .8 2.2L34 9l-2.2.8L31 12l-.8-2.2L28 9l2.2-.8Z" fill="#fff3bd"/></svg></span><span>DigiPet</span></h2><p>Hatch partners, care for them and discover every evolution branch.</p></div><button id="sanctuaryClose" type="button" aria-label="Close DigiPet">×</button></header>
@@ -1490,37 +1490,47 @@ function partyCandidates(){
 }
 function renderPartyPanel(){
  const body=$id('socialPartyBody');if(!body)return;
- const online=!!(app.room&&app.connected&&app.socket?.readyState===1),party=app.party;
- let html='';
+ const online=!!(app.room&&app.connected&&app.socket?.readyState===1),party=app.party,tab=app.partyTab==='pvp'?'pvp':'pve';
+ // Tab strip: PvE grind party and the PvP ring lobby are separate sections now, each
+ // opened by its own toolbar button (v357).
+ let html='<div class="social-party-tabs-inner" role="tablist" aria-label="Party sections">'
+  +'<button type="button" role="tab" data-party-tab="pve" aria-selected="'+(tab==='pve')+'" class="'+(tab==='pve'?'is-active':'')+'">⚔ Grind Party <small>up to 3</small></button>'
+  +'<button type="button" role="tab" data-party-tab="pvp" aria-selected="'+(tab==='pvp')+'" class="'+(tab==='pvp'?'is-active':'')+'">🥊 PvP Ring <small>lobby</small></button></div>';
  if(!online){
-  html='<div class="social-party-note">Parties and the PvP lobby need an online plaza. Local solo grinding stays in the middle field.</div>';
- }else{
-  html+='<div class="social-party-section"><small>GRIND PARTY · UP TO 3 TRAINERS</small>';
+  html+='<div class="social-party-note">'+(tab==='pvp'
+   ?'The PvP lobby needs an online plaza. Local solo practice stays on the ring stairs.'
+   :'Parties need an online plaza. Local solo grinding stays in the middle field.')+'</div>';
+ }else if(tab==='pve'){
+  html+='<div class="social-party-section"><small>GRIND PARTY · UP TO 3 TRAINERS · ONE SHARED FIELD</small>';
   if(party&&party.members&&party.members.length){
-   html+='<ul class="social-party-members">'+party.members.map(m=>'<li'+(m.id===party.leader?' class="is-leader"':'')+'>'+(m.id===party.leader?'👑 ':'')+escape(m.name)+(m.id===(app.room?app.id:SOLO_ID)?' <em>(you)</em>':'')+'</li>').join('')+'</ul>';
+   html+='<ul class="social-party-members">'+party.members.map(m=>'<li'+(m.id===party.leader?' class="is-leader"':'')+'>'+(m.id===party.leader?'👑 ':'')+escape(m.name)+(m.id===(app.room?app.id:SOLO_ID)?' <em>(you)</em>':'')+' <em>'+escape(m.form||'')+'</em></li>').join('')+'</ul>';
    const isLeader=party.leader===(app.room?app.id:SOLO_ID);
    if(party.members.length<3&&isLeader){
     const candidates=partyCandidates();
-    html+='<div class="social-party-invite"><select id="socialPartyInvitee" aria-label="Choose a trainer to invite">'+(candidates.length?candidates.map(p=>'<option value="'+p.id+'">'+escape(p.name)+'</option>').join(''):'<option value="">No free trainers in the plaza</option>')+'</select><button type="button" id="socialPartyInviteBtn"'+(candidates.length?'':' disabled')+'>Invite</button></div>';
+    html+='<div class="social-party-invite"><select id="socialPartyInvitee" aria-label="Choose a trainer to invite">'+(candidates.length?candidates.map(p=>'<option value="'+p.id+'">'+escape(p.name)+'</option>').join(''):'<option value="">No trainers free to invite</option>')+'</select><button type="button" id="socialPartyInviteBtn" class="social-party-start">Invite</button></div>';
    }else if(party.members.length<3)html+='<div class="social-party-note">The leader can invite one more trainer.</div>';
-   if(isLeader)html+='<button type="button" id="socialPartyStartBtn" class="social-party-start">⚔ Start party grind</button><div class="social-party-note">Everyone must stand still in the middle DigiPet farm with an owned partner equipped.</div>';
+   if(isLeader)html+='<button type="button" id="socialPartyStartBtn" class="social-party-start">⚔ Start party grind</button><div class="social-party-note">Everyone must stand still in the middle DigiPet farm field. All partners fight in one shared run with bigger bot groups.</div>';
    html+='<button type="button" id="socialPartyLeaveBtn" class="social-party-leave">Leave party</button>';
   }else{
    html+='<div class="social-party-note">No party yet. Invite a trainer to form one - you become the leader and can start the shared grind.</div>';
    const candidates=partyCandidates();
-   html+='<div class="social-party-invite"><select id="socialPartyInvitee" aria-label="Choose a trainer to invite">'+(candidates.length?candidates.map(p=>'<option value="'+p.id+'">'+escape(p.name)+'</option>').join(''):'<option value="">No free trainers in the plaza</option>')+'</select><button type="button" id="socialPartyInviteBtn"'+(candidates.length?'':' disabled')+'>Invite</button></div>';
+   html+='<div class="social-party-invite"><select id="socialPartyInvitee" aria-label="Choose a trainer to invite">'+(candidates.length?candidates.map(p=>'<option value="'+p.id+'">'+escape(p.name)+'</option>').join(''):'<option value="">No trainers free to invite</option>')+'</select><button type="button" id="socialPartyInviteBtn" class="social-party-start">Invite</button></div>';
   }
   html+='</div>';
-  // PvP lobby: who is waiting by the ring, with one click to walk over and queue.
-  const queue=app.battle.queue||[],meQueued=myQueue(),selfId=app.room?app.id:SOLO_ID;
-  html+='<div class="social-party-section"><small>PVP LOBBY · RING QUEUE</small>';
-  html+=queue.length?'<ul class="social-party-queue">'+queue.map(q=>'<li>'+escape(q.name||('Trainer '+q.id))+' <em>'+escape(q.side||'?')+' side</em></li>').join('')+'</ul>':'<div class="social-party-note">Nobody is waiting yet. Two trainers on opposite sides start a match.</div>';
+ }else{
+  // PvP lobby tab: who is waiting by the ring, one click to walk to the stairs and queue.
+  const queue=app.battle.queue||[],meQueued=myQueue();
+  html+='<div class="social-party-section"><small>PVP RING LOBBY · FIRST TWO TRAINERS FIGHT</small>';
+  html+=queue.length?'<ul class="social-party-queue">'+queue.map(q=>'<li>'+escape(q.name||('Trainer '+q.id))+' <em>'+escape(q.side||'?')+' side</em></li>').join('')+'</ul>':'<div class="social-party-note">Nobody is queued. Join the lobby to walk to the ring stairs - the first two trainers are paired for a match.</div>';
+  const match=myPvp();
+  if(match&&match.phase!=='result')html+='<div class="social-party-note">A match is in progress - the winner stays on for the next challenger.</div>';
   if(meQueued)html+='<button type="button" id="socialPartyLobbyBtn" class="social-party-leave">Leave the PvP queue</button>';
-  else html+='<button type="button" id="socialPartyLobbyBtn" class="social-party-start">Join the PvP lobby</button>';
+  else html+='<button type="button" id="socialPartyLobbyBtn" class="social-party-start">🥊 Join the PvP lobby</button>';
   html+='</div>';
-  if(app.partyInvite)html+='<div class="social-party-invite-card"><span>'+escape(app.partyInvite.from?.name||'A trainer')+' invites you to their party.</span><button type="button" id="socialPartyAcceptBtn">Accept</button><button type="button" id="socialPartyDeclineBtn" class="social-party-leave">Decline</button></div>';
  }
+ if(app.partyInvite)html+='<div class="social-party-invite-card"><span>'+escape(app.partyInvite.from?.name||'A trainer')+' invites you to their party.</span><button type="button" id="socialPartyAcceptBtn">Accept</button><button type="button" id="socialPartyDeclineBtn">Decline</button></div>';
  body.innerHTML=html;
+ for(const b of body.querySelectorAll('[data-party-tab]'))b.onclick=()=>{app.partyTab=b.dataset.partyTab;renderPartyPanel()};
  const inviteBtn=$id('socialPartyInviteBtn');
  if(inviteBtn)inviteBtn.onclick=()=>{const sel=$id('socialPartyInvitee');if(!sel||!sel.value)return;send({type:'party_invite',targetId:Number(sel.value)});worldNotice('Party invite sent.')};
  const startBtn=$id('socialPartyStartBtn');
@@ -1532,19 +1542,22 @@ function renderPartyPanel(){
   if(myQueue())return send({type:'pvp_cancel'});
   const ring=R.SANCTUARY_RING,taken=new Set((app.battle.queue||[]).map(q=>q.side));
   const side=taken.has('left')?'right':taken.has('right')?'left':(Math.random()<.5?'left':'right');
-  performMoveAction(ring.x+(side==='left'?-6:6),ring.z+6,true);
-  worldNotice('Walking to the '+side+' side of the ring - press Enter PvP ring when you arrive.');
+  // v357: the ring is entered only from the west stairs, so the lobby walks you beside
+  // the ring - the west stair side or the east side - never onto the platform itself.
+  performMoveAction(side==='left'?ring.x-ring.w/2-3.5:ring.x+ring.w/2+3.5,side==='left'?ring.z:ring.z+6,true);
+  worldNotice(side==='left'?'Walking to the ring stairs - press Enter PvP ring when you arrive.':'Walking to the east side of the ring - press Enter PvP ring when you arrive.');
  };
  const acceptBtn=$id('socialPartyAcceptBtn');
  if(acceptBtn)acceptBtn.onclick=()=>{send({type:'party_accept'});partySendProfile();app.partyInvite=null;renderPartyPanel()};
  const declineBtn=$id('socialPartyDeclineBtn');
  if(declineBtn)declineBtn.onclick=()=>{send({type:'party_decline'});app.partyInvite=null;renderPartyPanel()};
 }
-$id('socialPartyBtn').onclick=()=>{
+function openPartyPanel(tab){
  const panel=$id('socialPartyPanel');
- panel.hidden=!panel.hidden;
- if(!panel.hidden){partySendProfile();renderPartyPanel()}
-};
+ if(panel.hidden||app.partyTab!==tab){panel.hidden=false;app.partyTab=tab;partySendProfile();renderPartyPanel()}
+}
+$id('socialPartyBtn').onclick=()=>openPartyPanel('pve');
+$id('socialPvpBtn').onclick=()=>openPartyPanel('pvp');
 $id('socialPartyClose').onclick=()=>{$id('socialPartyPanel').hidden=true};
 // v355: plaza mini-map + full map. The Social Hub never had a spatial overview; this paints the
 // shared social-rules geometry (lake, bridge, paths, buildings, gym, farm, ring, poker tables)
@@ -1561,55 +1574,130 @@ function mapPlayerColor(pl,selfId,battlers){
  return '#8fb3ff';
 }
 function drawPlazaMap(canvas,detailed){
+ // v357 (owner: "the mini-map sucks - remake it"): a full repaint as a painted overview
+ // rather than flat colour blocks - layered water with shimmer, road strokes, tree
+ // canopies with shadows that merge into groves, roof-shaded buildings, tinted grounds
+ // with landmark icons, and players with direction wedges. Everything still derives from
+ // the shared social-rules geometry, so dots stay honest to the live world.
  if(!canvas)return;let ctx=null;try{ctx=canvas.getContext&&canvas.getContext('2d')}catch{ctx=null}
  if(!ctx||!ctx.fillRect)return;
- const w=canvas.width,h=canvas.height,c=mapColors();
- const ww=MAP_WORLD.x1-MAP_WORLD.x0,wh=MAP_WORLD.z1-MAP_WORLD.z0,margin=detailed?36:8;
+ const w=canvas.width,h=canvas.height,t=Date.now()/1000;
+ const ww=MAP_WORLD.x1-MAP_WORLD.x0,wh=MAP_WORLD.z1-MAP_WORLD.z0,margin=detailed?30:6;
  const sc=Math.min((w-margin*2)/ww,(h-margin*2)/wh),ox=(w-ww*sc)/2-MAP_WORLD.x0*sc,oz=(h-wh*sc)/2-MAP_WORLD.z0*sc;
  const X=x=>x*sc+ox,Z=z=>z*sc+oz;
+ const P=detailed
+  ?{frame:'#5b4629',frameEdge:'#8a6b45',ground:'#28371f',mottle:'#2f4226',road:'#8d7a58',roadEdge:'#66532f',
+    water:'#1d4f6b',waterShore:'#3f7185',waterCore:'#2f7d9d',shimmer:'#bfe4ef',bridge:'#a5825a',
+    treeRim:'#1d3018',pine:'#2c4a2e',broad:'#3d5c35',sakura:'#c989a4',palm:'#4a6e3d',treeShadow:'rgba(10,16,8,.4)',
+    roof:'#937450',roofBase:'#5f4c39',roofEdge:'#33281d',label:'#f6e9c4',labelHalo:'rgba(20,14,6,.85)'}
+  :{frame:'#0f1c14',frameEdge:'#5b4629',ground:'#1b2a1c',mottle:'#223425',road:'#6e6046',roadEdge:'#4c4028',
+    water:'#173d52',waterShore:'#2b6a86',waterCore:'#2e7ea6',shimmer:'#9fd4e6',bridge:'#8a6b45',
+    treeRim:'#152511',pine:'#26422a',broad:'#35522f',sakura:'#a87490',palm:'#405c36',treeShadow:'rgba(6,10,5,.45)',
+    roof:'#7d6244',roofBase:'#4c3d2f',roofEdge:'#291f16',label:'#e9dcba',labelHalo:'rgba(10,8,4,.85)'};
  ctx.clearRect(0,0,w,h);
- // Ground plate with a soft edge, like the painted scene floor.
- if(ctx.roundRect){ctx.beginPath();ctx.roundRect(1,1,w-2,h-2,detailed?14:8)}else ctx.rect(1,1,w-2,h-2);
- ctx.fillStyle=c.ground;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=c.groundEdge;ctx.stroke();
- // Lake: the same 96-point outline the walkable grid uses.
- const pond=R.PONDS&&R.PONDS[0];
- if(pond){ctx.beginPath();for(let i=0;i<=96;i++){const pt=R.pondBoundary(pond,i*Math.PI*2/96);const px=X(pt.x),pz=Z(pt.z);i?ctx.lineTo(px,pz):ctx.moveTo(px,pz)}ctx.closePath();ctx.fillStyle=c.water;ctx.fill();ctx.lineWidth=detailed?2:1.4;ctx.strokeStyle=c.waterEdge;ctx.stroke()}
- const props=(R.POND_PROPS||[])[0];
- if(props){
-  if(props.bridge){const b=props.bridge;ctx.fillStyle=c.bridge;ctx.fillRect(X(b.x-b.span/2),Z(b.z-b.width/2),b.span*sc,b.width*sc)}
-  ctx.strokeStyle=c.path;ctx.lineWidth=detailed?3:2;ctx.lineCap='round';
-  for(const p of props.paths||[]){ctx.beginPath();ctx.moveTo(X(p.x1),Z(p.z));ctx.lineTo(X(p.x2),Z(p.z));ctx.stroke()}
+ // Framed plate with a bevel, like a field map on a table.
+ if(ctx.roundRect){ctx.beginPath();ctx.roundRect(1,1,w-2,h-2,detailed?10:7)}else ctx.rect(1,1,w-2,h-2);
+ ctx.fillStyle=P.ground;ctx.fill();ctx.lineWidth=detailed?3:2;ctx.strokeStyle=P.frame;ctx.stroke();
+ ctx.lineWidth=1;ctx.strokeStyle=P.frameEdge;ctx.strokeRect(3.5,3.5,w-7,h-7);
+ // Mottled grass so the ground is not one flat colour.
+ for(let i=0;i<(detailed?150:50);i++){
+  const gx=(i*97+31)%Math.max(1,w),gz=(i*57+13)%Math.max(1,h);
+  ctx.fillStyle=i%2?P.mottle:P.ground;
+  ctx.fillRect(gx,gz,detailed?10:6,detailed?10:6);
  }
- for(const t of R.TREES||[]){ctx.beginPath();ctx.arc(X(t.x),Z(t.z),Math.max(2,t.size*sc*.32),0,7);ctx.fillStyle=c.tree;ctx.fill();ctx.strokeStyle=c.treeEdge;ctx.lineWidth=1;ctx.stroke()}
- // v356: the mixed-species border trees and every sittable bench join the overview.
- for(const t of R.SANCTUARY_TREES||[]){ctx.beginPath();ctx.arc(X(t.x),Z(t.z),Math.max(1.6,3.2*sc),0,7);ctx.fillStyle=t.kind&&t.kind!=='pine'&&t.kind!=='cypress'?'#3a5a33':c.tree;ctx.fill()}
+ const rr=(x,y,rw,rh,r)=>{if(ctx.roundRect){ctx.beginPath();ctx.roundRect(x,y,rw,rh,r)}else ctx.rect(x,y,rw,rh)};
+ // Roads: the avenue and the promenade as soft strokes with an edge.
+ const road=(x1,z1,x2,z2,wd)=>{ctx.lineCap='round';ctx.lineWidth=wd+2;ctx.strokeStyle=P.roadEdge;ctx.beginPath();ctx.moveTo(X(x1),Z(z1));ctx.lineTo(X(x2),Z(z2));ctx.stroke();ctx.lineWidth=wd;ctx.strokeStyle=P.road;ctx.beginPath();ctx.moveTo(X(x1),Z(z1));ctx.lineTo(X(x2),Z(z2));ctx.stroke()};
+ road(14,-74,14,126,detailed?7:4);road(-74,0,102,0,detailed?7:4);road(14,12,66,42,detailed?5:3);
+ const props=(R.POND_PROPS||[])[0];
+ if(props)for(const p of props.paths||[])road(p.x1,p.z,p.x2,p.z,detailed?4:2.5);
+ // Grounds: tinted rounded plates under the DigiPet areas before their contents.
+ for(const [id,tint] of [['gym','rgba(150,110,70,.30)'],['farm','rgba(90,130,70,.30)'],['ring','rgba(150,70,58,.30)']]){
+  const z=(R.SANCTUARY||[]).find(a=>a.id===id);if(!z)continue;
+  rr(X(z.x-z.w/2),Z(z.z-z.d/2),z.w*sc,z.d*sc,detailed?10:6);ctx.fillStyle=tint;ctx.fill();
+  ctx.setLineDash([5,3]);ctx.lineWidth=detailed?1.6:1;ctx.strokeStyle=P.frameEdge;ctx.stroke();ctx.setLineDash([]);
+ }
+ // Lake: shore band, water body, deep core and animated shimmer dashes.
+ const pond=R.PONDS&&R.PONDS[0];
+ const pondPath=(pad)=>{ctx.beginPath();for(let i=0;i<=96;i++){const pt=R.pondBoundary(pond,i*Math.PI*2/96,pad);const px=X(pt.x),pz=Z(pt.z);i?ctx.lineTo(px,pz):ctx.moveTo(px,pz)}ctx.closePath()};
+ if(pond){
+  pondPath(2.2);ctx.fillStyle=P.waterShore;ctx.fill();
+  pondPath(0);ctx.fillStyle=P.water;ctx.fill();
+  pondPath(-3);ctx.fillStyle=P.waterCore;ctx.fill();
+  ctx.strokeStyle=P.shimmer;ctx.lineWidth=detailed?1.6:1;
+  for(let i=0;i<14;i++){const a=i/14*Math.PI*2+Math.sin(t*.6+i)*.14,r=pond.w*.3+((i*53)%100)/100*pond.w*.24;
+   const px=X(pond.x+Math.cos(a)*r*.5),pz=Z(pond.z+Math.sin(a)*r*.5);
+   ctx.beginPath();ctx.moveTo(px-3,pz);ctx.lineTo(px+3,pz);ctx.stroke()}
+ }
+ if(props&&props.bridge){const b=props.bridge;
+  ctx.fillStyle=P.bridge;ctx.fillRect(X(b.x-b.span/2),Z(b.z-b.width/2),b.span*sc,b.width*sc);
+  ctx.strokeStyle=P.roofEdge;ctx.lineWidth=1;ctx.strokeRect(X(b.x-b.span/2),Z(b.z-b.width/2),b.span*sc,b.width*sc)}
+ // Tree canopies: shadow first, then a two-tone canopy whose rim makes neighbours merge
+ // into groves. Species keep their own greens; sakura reads pink, palms lean olive.
+ const canopy=(x,z,r,fill)=>{
+  ctx.beginPath();ctx.arc(X(x)+r*.28,Z(z)+r*.36,r*.92,0,7);ctx.fillStyle=P.treeShadow;ctx.fill();
+  ctx.beginPath();ctx.arc(X(x),Z(z),r,0,7);ctx.fillStyle=P.treeRim;ctx.fill();
+  ctx.beginPath();ctx.arc(X(x)-r*.12,Z(z)-r*.14,r*.82,0,7);ctx.fillStyle=fill;ctx.fill();
+ };
+ for(const t of R.TREES||[])canopy(t.x,t.z,Math.max(3,t.size*sc*.36),P.broad);
+ for(const t of R.SANCTUARY_TREES||[]){
+  const r=Math.max(detailed?3.4:2.2,(t.kind?3.4:3)*sc);
+  canopy(t.x,t.z,r,t.kind==='sakura'?P.sakura:t.kind==='palm'?P.palm:t.kind==='pine'?P.pine:P.broad);
+ }
+ // Benches: tiny warm ticks.
  for(const b of R.BENCHES||[]){ctx.fillStyle='#c9b98a';ctx.fillRect(X(b.x)-1.5,Z(b.z)-1,3,2)}
- for(const b of R.BUILDINGS||[]){ctx.fillStyle=c.building;ctx.strokeStyle=c.buildingEdge;ctx.lineWidth=1;ctx.fillRect(X(b.x-b.w/2),Z(b.z-b.d/2),b.w*sc,b.d*sc);ctx.strokeRect(X(b.x-b.w/2),Z(b.z-b.d/2),b.w*sc,b.d*sc)}
- // DigiPet grounds: gym, farm and ring zones with their landmarks.
- const zones=[['gym',c.gymFill,c.gymEdge,'GYM'],['farm',c.farmFill,c.farmEdge,'DIGIPET FARM'],['ring',c.ringFill,c.ringEdge,'PVP RING']];
- for(const [id,fill,edge] of zones){const z=(R.SANCTUARY||[]).find(a=>a.id===id);if(!z)continue;
-  ctx.fillStyle=fill;ctx.fillRect(X(z.x-z.w/2),Z(z.z-z.d/2),z.w*sc,z.d*sc);ctx.strokeStyle=edge;ctx.lineWidth=detailed?2:1.2;ctx.setLineDash([5,3]);ctx.strokeRect(X(z.x-z.w/2),Z(z.z-z.d/2),z.w*sc,z.d*sc);ctx.setLineDash([])}
+ // Buildings: dark base, roof plate offset toward the light, crisp outline.
+ for(const b of R.BUILDINGS||[]){
+  const bx=X(b.x-b.w/2),bz=Z(b.z-b.d/2),bw=b.w*sc,bd=b.d*sc;
+  ctx.fillStyle=P.roofBase;ctx.fillRect(bx,bz,bw,bd);
+  ctx.fillStyle=P.roof;ctx.fillRect(bx-1,bz-2,bw,bd*.72);
+  ctx.strokeStyle=P.roofEdge;ctx.lineWidth=1;ctx.strokeRect(bx-1,bz-2,bw,bd);
+ }
+ // Boxing ring: the platform, ropes and the west stair notch (the only way in, v357).
  const ring=R.SANCTUARY_RING;
- if(ring){ctx.fillStyle=c.ringEdge;ctx.fillRect(X(ring.x-ring.w/2),Z(ring.z-ring.d/2),ring.w*sc,ring.d*sc)}
- for(const t of (R.POKER&&R.POKER.tables)||[]){const tb=t.table||t;ctx.beginPath();ctx.arc(X(tb.x),Z(tb.z),Math.max(3,3.2*sc),0,7);ctx.fillStyle=c.poker;ctx.fill();ctx.strokeStyle='#f4dfaa';ctx.lineWidth=1;ctx.stroke()}
- // Live players: others first, then friends/activities, self always on top.
+ if(ring){
+  const rx=X(ring.x-ring.w/2),rz=Z(ring.z-ring.d/2),rw=ring.w*sc,rd=ring.d*sc;
+  ctx.fillStyle='#7e3c34';ctx.fillRect(rx,rz,rw,rd);
+  ctx.fillStyle='#d9cdb4';ctx.fillRect(rx+2,rz+2,rw-4,rd-4);
+  ctx.strokeStyle='#7e3c34';ctx.lineWidth=detailed?1.6:1;ctx.strokeRect(rx,rz,rw,rd);
+  ctx.strokeStyle='#8a2f28';ctx.lineWidth=detailed?2:1.4;
+  ctx.beginPath();ctx.moveTo(rx,rz+rd*.5-rd*.16);ctx.lineTo(rx+rw*.16,rz+rd*.5);ctx.lineTo(rx,rz+rd*.5+rd*.16);ctx.closePath();ctx.stroke();
+ }
+ // Poker tables as chips.
+ for(const tb2 of (R.POKER&&R.POKER.tables)||[]){const tb=tb2.table||tb2;
+  ctx.beginPath();ctx.arc(X(tb.x),Z(tb.z),Math.max(3,3.2*sc),0,7);ctx.fillStyle='#3f6b4a';ctx.fill();ctx.strokeStyle='#f4dfaa';ctx.lineWidth=1;ctx.stroke()}
+ // Live players: others first, self on top with a pulse ring and a heading wedge.
  const selfId=app.room?app.id:SOLO_ID,battlers=mapBattlers(),players=[...app.players.values()].sort((a,b)=>(a.id===selfId)-(b.id===selfId));
  for(const pl of players){
   if(!Number.isFinite(pl.x)||!Number.isFinite(pl.z))continue;
-  const px=X(pl.x),pz=Z(pl.z),r=detailed?6:3.6,col=mapPlayerColor(pl,selfId,battlers);
-  if(pl.id===selfId){ctx.beginPath();ctx.arc(px,pz,r+3,0,7);ctx.strokeStyle='#ffffff88';ctx.lineWidth=2;ctx.stroke()}
+  const px=X(pl.x),pz=Z(pl.z),r=detailed?6:3.8,col=mapPlayerColor(pl,selfId,battlers),dir=Number.isFinite(pl.dir)?pl.dir:0;
+  if(pl.id===selfId){const pulse=2.5+Math.sin(t*3)*1.2;
+   ctx.beginPath();ctx.arc(px,pz,r+pulse,0,7);ctx.strokeStyle='#ffd25766';ctx.lineWidth=2;ctx.stroke()}
+  ctx.beginPath();ctx.arc(px,pz,r+2,0,7);ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1.4;ctx.stroke();
   ctx.beginPath();ctx.arc(px,pz,r,0,7);ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#0d1512';ctx.lineWidth=detailed?1.5:1;ctx.stroke();
+  const wa=dir*Math.PI/4;
+  ctx.beginPath();ctx.moveTo(px+Math.cos(wa)*(r+4),pz+Math.sin(wa)*(r+4));
+  ctx.lineTo(px+Math.cos(wa+.5)*(r+1.5),pz+Math.sin(wa+.5)*(r+1.5));
+  ctx.lineTo(px+Math.cos(wa-.5)*(r+1.5),pz+Math.sin(wa-.5)*(r+1.5));ctx.closePath();
+  ctx.fillStyle=col;ctx.fill();
   if(detailed&&pl.id===selfId){ctx.font='bold 12px "Trebuchet MS",sans-serif';ctx.fillStyle='#ffe9ad';ctx.textAlign='left';ctx.fillText('You',px+r+4,pz+4)}
   else if(detailed&&pl.name){ctx.font='10px "Trebuchet MS",sans-serif';ctx.fillStyle='#e8f0e2';ctx.textAlign='left';ctx.fillText(String(pl.name).slice(0,14),px+r+3,pz+3)}
  }
  if(detailed){
-  ctx.font='bold 11px "Trebuchet MS",sans-serif';ctx.textAlign='center';ctx.fillStyle=c.label;
-  const label=(x,z,text)=>{ctx.strokeStyle='#0d151299';ctx.lineWidth=3;ctx.strokeText(text,X(x),Z(z));ctx.fillText(text,X(x),Z(z))};
-  if(pond)label(pond.x,pond.z,'WEST LAKE · FISHING');
-  const farm=(R.SANCTUARY||[]).find(a=>a.id==='farm');if(farm)label(farm.x,farm.z,'DIGIPET FARM');
-  const gym=(R.SANCTUARY||[]).find(a=>a.id==='gym');if(gym)label(gym.x,gym.z,'GYM');
-  const rz=(R.SANCTUARY||[]).find(a=>a.id==='ring');if(rz)label(rz.x,rz.z,'PVP RING');
-  const pt=(R.POKER&&R.POKER.tables&&R.POKER.tables[0]&&(R.POKER.tables[0].table||R.POKER.tables[0]));if(pt)label(pt.x,pt.z-6,'PLAZA POKER');
+  ctx.font='bold 11px "Trebuchet MS",sans-serif';ctx.textAlign='center';
+  const label=(x,z,text)=>{ctx.strokeStyle=P.labelHalo;ctx.lineWidth=3;ctx.strokeText(text,X(x),Z(z));ctx.fillStyle=P.label;ctx.fillText(text,X(x),Z(z))};
+  const icon=(x,z,glyph)=>{ctx.font='13px serif';ctx.strokeStyle=P.labelHalo;ctx.lineWidth=2.5;ctx.strokeText(glyph,X(x),Z(z));ctx.fillText(glyph,X(x),Z(z))};
+  if(pond){label(pond.x,pond.z,'WEST LAKE · FISHING');icon(pond.x+pond.w*.22,pond.z-pond.d*.3,'🎣')}
+  const farm=(R.SANCTUARY||[]).find(a=>a.id==='farm');if(farm){label(farm.x,farm.z,'DIGIPET FARM');icon(farm.x-farm.w/2+5,farm.z-farm.d/2+6,'🥚')}
+  const gym=(R.SANCTUARY||[]).find(a=>a.id==='gym');if(gym){label(gym.x,gym.z,'GYM');icon(gym.x-gym.w/2+5,gym.z-gym.d/2+6,'💪')}
+  const rz=(R.SANCTUARY||[]).find(a=>a.id==='ring');if(rz){label(rz.x,rz.z,'PVP RING');icon(rz.x+rz.w/2-5,rz.z-rz.d/2+6,'🥊')}
+  const pt=(R.POKER&&R.POKER.tables&&R.POKER.tables[0]&&(R.POKER.tables[0].table||R.POKER.tables[0]));if(pt){label(pt.x,pt.z-6,'PLAZA POKER');icon(pt.x+5,pt.z-6,'🃏')}
+  label(0,-6,'PRONTERA PLAZA');
+  // Compass rose in the free north-east corner.
+  const cx=w-34,cy=34;ctx.strokeStyle=P.label;ctx.lineWidth=1.4;
+  ctx.beginPath();ctx.arc(cx,cy,13,0,7);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy-17);ctx.lineTo(cx-4,cy+2);ctx.lineTo(cx,cy-3);ctx.lineTo(cx+4,cy+2);ctx.closePath();
+  ctx.fillStyle=P.label;ctx.fill();ctx.font='bold 10px "Trebuchet MS",sans-serif';ctx.fillText('N',cx,cy+26);
  }
 }
 // The redraw rides the existing battleUITick interval (every 4th tick ~400 ms) instead of
@@ -1619,7 +1707,10 @@ function mapTick(){if(hub.hidden)return;drawPlazaMap($id('socialMiniMapCanvas'),
 $id('socialMiniMap').onclick=()=>{const m=$id('socialMapModal');m.hidden=!m.hidden;if(!m.hidden){drawPlazaMap($id('socialMapCanvas'),true)}};
 $id('socialMapClose').onclick=()=>{$id('socialMapModal').hidden=true};
 $id('socialBgmBtn').onclick=()=>{const mount=$id('socialBgmMount');mount.hidden=!mount.hidden;$id('socialBgmBtn').setAttribute('aria-pressed',String(!mount.hidden));if(!mount.hidden&&typeof BGM!=='undefined'){BGM.renderUI()}};
-async function enter(){ensureDigimonBag();discardLegacyActivities();digimonSelect.value=partnerLine()||'';if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),trainStation:startWorldTraining,sanctuaryShop:openSanctuaryShop,sanctuaryIndex:openSanctuaryIndex,trainingNearby:worldNearbyFrame,sitting});if(app.wanted){app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
+async function enter(){ensureDigimonBag();discardLegacyActivities();digimonSelect.value=partnerLine()||'';if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');
+ // v357 (owner: "where is the BGM player?"): the music bar is visible by default while the
+ // Social Hub is open - the toolbar button still toggles it away and back.
+ {const bgmMount=$id('socialBgmMount');if(bgmMount.hidden){bgmMount.hidden=false;$id('socialBgmBtn').setAttribute('aria-pressed','true');if(typeof BGM!=='undefined')BGM.renderUI()}}syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),trainStation:startWorldTraining,sanctuaryShop:openSanctuaryShop,sanctuaryIndex:openSanctuaryIndex,trainingNearby:worldNearbyFrame,sitting});if(app.wanted){app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
 function leave(){worldNearbyStat='';worldNearby.hidden=true;worldBattleNearby.hidden=true;stopSoloPve('stopped',false);app.battleIntent=null;battleOffer=null;app.battleResult=null;app.battle={pve:[],pvp:null,queue:[]};battleHUD.hidden=true;pvpDialog.hidden=true;renderBattleResult();app.scene?.setBattleState?.(app.battle);if(!sanctuaryPanel.hidden)sanctuaryClose();FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});stashLocal(app.room);app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');$id('socialMapModal').hidden=true;$id('socialBgmMount').hidden=true;$id('socialBgmBtn').setAttribute('aria-pressed','false');if(app.scene)app.scene.active=false;resetPlayers();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}$id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick()))return;confirmPokerLeave(()=>leave())};
 const socialHubBtn=$id('socialHubBtn');if(socialHubBtn)socialHubBtn.onclick=()=>enter();syncHubButton();$id('socialSit').onclick=toggleSit;
 function receive(m){

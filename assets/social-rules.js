@@ -16,26 +16,48 @@ const BUILDINGS=[{name:'stall',x:-32,z:-15,size:4.5,rotation:Math.PI/2,w:4.5,d:4
 const SANCTUARY=[{id:'gym',x:69,z:25.5,w:52,d:27},{id:'farm',x:70,z:64,w:52,d:34},{id:'ring',x:71,z:105,w:48,d:27}];
 const SANCTUARY_RING={x:68,z:104,w:18,d:16,height:.8};
 const SANCTUARY_PLANTERS=[],SANCTUARY_ARCHES=[];
-// v356 (owner: "more different types of trees"): entries may carry a kind - pine, cypress,
-// birch, maple, willow, blossom - rendered as distinct procedural trees by the client. Entries
-// without a kind stay native atlas trees. All of them remain shared obstacles for pathfinding.
+// v357 (owner: "the trees are ugly - use real Ragnarok-style ones, and place them like a
+// landscape, not a grid"): entries may carry a kind - pine (izlude fir), palm (morocc),
+// broad (payon broadleaf) or sakura (amatsu cherry) - rendered from the repo's own native
+// RO field model sets. Kindless entries stay prontera atlas trees. Placement is clustered
+// groves with varied depth and spacing along borders, banks and landmarks; the old straight
+// species runs are gone. All trees remain shared pathfinding obstacles.
 const SANCTUARY_TREES=[
  ...[46,50,54,84,88,92].map(x=>({x,z:10.2,behindGym:true})),
  ...[47,62,82,100].map(z=>({x:12,z})),
  {x:100,z:14},{x:100,z:41},{x:100,z:57},{x:100,z:71},{x:100,z:85},{x:100,z:104},{x:100,z:121},
  {x:15,z:119},{x:26,z:119},
- // v356 west border species run.
- {x:12,z:32,kind:'pine'},{x:12,z:55,kind:'birch'},{x:12,z:70,kind:'cypress'},{x:12,z:90,kind:'maple'},{x:12,z:112,kind:'willow'},
- // v356 east border species run, interleaved with the native line.
- {x:100,z:28,kind:'pine'},{x:100,z:50,kind:'birch'},{x:100,z:64,kind:'cypress'},{x:100,z:78,kind:'maple'},{x:100,z:93,kind:'willow'},{x:100,z:112,kind:'pine'},
- // v356 south hedge fill.
- {x:38,z:119,kind:'birch'},{x:50,z:119.5,kind:'pine'},
- // v356 lake east bank - willows leaning toward the water.
- {x:-12,z:58,kind:'willow'},{x:-10,z:76,kind:'birch'},{x:-13,z:90,kind:'cypress'},
- // v356 open west lawn grove.
- {x:-66,z:58,kind:'pine'},{x:-63,z:82,kind:'maple'},{x:-67,z:102,kind:'birch'},
- // v356 blossom pair framing the great hall steps.
- {x:-10,z:-33,kind:'blossom'},{x:10,z:-33,kind:'blossom'}
+ // v357 west border groves (between the plaza and the Sanctuary).
+ {x:11,z:29,kind:'pine'},{x:14.5,z:33,kind:'broad'},{x:9,z:36.5,kind:'sakura'},
+ {x:13.5,z:52,kind:'broad'},{x:10,z:56,kind:'pine'},
+ {x:11,z:71,kind:'pine'},{x:14.5,z:75,kind:'sakura'},{x:9,z:78.5,kind:'broad'},
+ {x:12.5,z:93,kind:'broad'},{x:15.5,z:96.5,kind:'pine'},
+ {x:10,z:111,kind:'sakura'},{x:13,z:114.5,kind:'pine'},
+ // v357 east edge groves, set back from the fence line at varied depths.
+ {x:97,z:27,kind:'pine'},{x:101,z:30,kind:'broad'},
+ {x:97,z:49,kind:'sakura'},{x:101,z:52,kind:'pine'},
+ {x:96,z:64,kind:'broad'},
+ {x:97,z:77,kind:'pine'},{x:101,z:80,kind:'sakura'},
+ {x:96,z:92,kind:'broad'},{x:99.5,z:95,kind:'pine'},
+ {x:97.5,z:112,kind:'sakura'},
+ // v357 south hedge fill.
+ {x:38,z:118,kind:'broad'},{x:42,z:121,kind:'pine'},{x:52,z:120,kind:'sakura'},
+ // v357 lake west-bank wood - a dense mixed grove, not a line.
+ {x:-64,z:56,kind:'broad'},{x:-67,z:60,kind:'palm'},{x:-62,z:63,kind:'sakura'},
+ {x:-66,z:68,kind:'broad'},{x:-63,z:72,kind:'pine'},
+ {x:-67,z:84,kind:'broad'},{x:-63,z:88,kind:'palm'},
+ {x:-66,z:100,kind:'broad'},{x:-62,z:104,kind:'sakura'},
+ // v357 lake east bank accents behind the angler chairs.
+ {x:-12,z:58,kind:'sakura'},{x:-9,z:76,kind:'broad'},{x:-12,z:90,kind:'pine'},
+ // v357 formal sakura pair framing the great hall steps.
+ {x:-10,z:-33,kind:'sakura'},{x:10,z:-33,kind:'sakura'},
+ // v357 gym flank pair, west of the wing wall.
+ {x:40,z:22,kind:'pine'},{x:40.5,z:33,kind:'broad'},
+ // v357 loose hedgerow screening the grind field's north fence (outside the battle ground).
+ {x:49,z:43,kind:'broad'},{x:53,z:44.5,kind:'pine'},{x:60,z:43.5,kind:'sakura'},
+ {x:80,z:43.8,kind:'pine'},{x:87,z:44.2,kind:'broad'},{x:91,z:43.2,kind:'pine'},
+ // v357 ring-side pair and a north-east anchor.
+ {x:50,z:94,kind:'pine'},{x:54,z:97.5,kind:'sakura'},{x:89,z:112.5,kind:'broad'}
 ];
 const SANCTUARY_OBSTACLES=SANCTUARY_TREES.map(t=>({...t,r:.7}));
 // Gym wall, end posts, shop structures and signs. The center of the gym is open.
@@ -59,6 +81,14 @@ const SANCTUARY_FENCES=[
 ].map(([x1,z1,x2,z2])=>({x1,z1,x2,z2}));
 const ALL_SANCTUARY_FENCES=[...SANCTUARY_FENCES,...SANCTUARY_GYM_FENCES,...SANCTUARY_GYM_WALLS];
 function fenceBlocked(x,z){return ALL_SANCTUARY_FENCES.some(f=>{const dx=f.x2-f.x1,dz=f.z2-f.z1,t=Math.max(0,Math.min(1,((x-f.x1)*dx+(z-f.z1)*dz)/(dx*dx+dz*dz))),ex=x-f.x1-t*dx,ez=z-f.z1-t*dz;return ex*ex+ez*ez<.55*.55})}
+// v357 (owner: "the ring should be entered only from the stairs"): the boxing ring is a
+// raised platform and the ropes are a real barrier. The perimeter band of the ring is
+// unwalkable everywhere except the west stair mouth; the interior stays walkable so
+// battles, stairs and clicks keep working. The BFS in path() routes through the mouth.
+function ringBlocked(x,z){const r=SANCTUARY_RING;
+ if(Math.abs(x-r.x)>r.w/2||Math.abs(z-r.z)>r.d/2)return false;
+ if(Math.abs(x-r.x)<r.w/2-.9&&Math.abs(z-r.z)<r.d/2-.9)return false;
+ return !(x<r.x-r.w/2+1.1&&Math.abs(z-r.z)<=1.75)}
 // Distinct gym apparatus are reserved per plaza; the owner can move away while a
 // companion trains. Anchor points identify the prop, not a client-supplied location.
 const GYM_STATIONS={power:[{x:52.5,z:30.5},{x:56.5,z:30.5},{x:60.5,z:30.5}],guard:[{x:60,z:21},{x:63,z:21},{x:66,z:21}],agility:[{x:72,z:26},{x:75,z:26},{x:78,z:26}],focus:[{x:83,z:27},{x:86,z:27},{x:89,z:27}]};
@@ -176,7 +206,7 @@ function pokerBlocked(x,z){return POKER_TABLES.some(({table:t})=>x>=t.minX&&x<=t
 // v309: the cascade's boulder heap is solid - you walk around it instead of standing inside it.
 function cragBlocked(x,z){return POND_PROPS.some(pr=>pr.crag&&Math.abs(x-pr.crag.x)<=pr.crag.hx&&Math.abs(z-pr.crag.z)<=pr.crag.hz)}
 function onBridge(x,z){return POND_PROPS.some(({bridge:b})=>Math.abs(x-b.x)<=b.span/2&&Math.abs(z-b.z)<=b.width/2-.35)}
-function walkable(x,z){return Number.isFinite(x)&&Number.isFinite(z)&&x>=MIN_X&&x<=MAX_X&&z>=MIN_Z&&z<=MAX_Z&&Math.hypot(x,z)>5.6&&!pokerBlocked(x,z)&&!cragBlocked(x,z)&&!fenceBlocked(x,z)&&SANCTUARY_OBSTACLES.every(o=>Math.hypot(x-o.x,z-o.z)>o.r+.25)&&SANCTUARY_BARRIERS.every(b=>Math.abs(x-b.x)>b.w/2+.3||Math.abs(z-b.z)>b.d/2+.3)&&BUILDINGS.every(b=>Math.abs(x-b.x)>b.w/2+.7||Math.abs(z-b.z)>b.d/2+.7)&&GARDENS.every(g=>Math.abs(x-g.x)>g.w/2+.5||Math.abs(z-g.z)>g.d/2+.5)&&(onBridge(x,z)||PONDS.every(p=>!pondContains(p,x,z,.5)));}
+function walkable(x,z){return Number.isFinite(x)&&Number.isFinite(z)&&x>=MIN_X&&x<=MAX_X&&z>=MIN_Z&&z<=MAX_Z&&Math.hypot(x,z)>5.6&&!pokerBlocked(x,z)&&!cragBlocked(x,z)&&!fenceBlocked(x,z)&&!ringBlocked(x,z)&&SANCTUARY_OBSTACLES.every(o=>Math.hypot(x-o.x,z-o.z)>o.r+.25)&&SANCTUARY_BARRIERS.every(b=>Math.abs(x-b.x)>b.w/2+.3||Math.abs(z-b.z)>b.d/2+.3)&&BUILDINGS.every(b=>Math.abs(x-b.x)>b.w/2+.7||Math.abs(z-b.z)>b.d/2+.7)&&GARDENS.every(g=>Math.abs(x-g.x)>g.w/2+.5||Math.abs(z-g.z)>g.d/2+.5)&&(onBridge(x,z)||PONDS.every(p=>!pondContains(p,x,z,.5)));}
 function path(from,to){
  if(!walkable(to.x,to.z))return [];
  const start=[Math.round(from.x),Math.round(from.z)],end=[Math.round(to.x),Math.round(to.z)],key=(x,z)=>x+','+z;
@@ -187,5 +217,5 @@ function path(from,to){
 }
 function walkSpeed(p){const value=Number(p&&p.look&&p.look.speed);return Number.isFinite(value)&&value>0?Math.max(MIN_SPEED,Math.min(MAX_SPEED,value)):SPEED}
 function advance(p,now){let distance=Math.max(0,(now-p.at)/1000)*walkSpeed(p);p.at=now;while(p.path.length&&distance>0){const t=p.path[0],dx=t.x-p.x,dz=t.z-p.z,d=Math.hypot(dx,dz);p.dir=(Math.round(Math.atan2(-dx,dz)/(Math.PI/4))+8)%8;if(d<=distance){p.x=t.x;p.z=t.z;p.path.shift();distance-=d}else{p.x+=dx/d*distance;p.z+=dz/d*distance;break}}if(!p.path.length&&Number.isInteger(p.seat)&&SEATS[p.seat]){p.sit=true;p.dir=SEATS[p.seat].dir}else if(!p.path.length&&Number.isInteger(p.pokerSeat)&&POKER.seats[p.pokerSeat]){p.sit=true;p.dir=POKER.seats[p.pokerSeat].dir}return p;}
-return {LIMIT,MIN_X,MAX_X,MIN_Z,MAX_Z,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,SANCTUARY,SANCTUARY_ARCHES,SANCTUARY_PLANTERS,SANCTUARY_TREES,SANCTUARY_OBSTACLES,SANCTUARY_BARRIERS,SANCTUARY_FENCES,SANCTUARY_GYM_FENCES,SANCTUARY_GYM_WALLS,SANCTUARY_RING,GYM_STATIONS,fenceBlocked,cleanDigimon,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,SEATS,POKER,pondRadius,pondContains,pondBoundary,pondDistance,clampPond,cragBlocked,onBridge,walkable,path,advance};
+return {LIMIT,MIN_X,MAX_X,MIN_Z,MAX_Z,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,SANCTUARY,SANCTUARY_ARCHES,SANCTUARY_PLANTERS,SANCTUARY_TREES,SANCTUARY_OBSTACLES,SANCTUARY_BARRIERS,SANCTUARY_FENCES,SANCTUARY_GYM_FENCES,SANCTUARY_GYM_WALLS,SANCTUARY_RING,GYM_STATIONS,fenceBlocked,ringBlocked,cleanDigimon,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,SEATS,POKER,pondRadius,pondContains,pondBoundary,pondDistance,clampPond,cragBlocked,onBridge,walkable,path,advance};
 });

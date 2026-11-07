@@ -29,6 +29,17 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  send(a,{type:'sit'});assert(a.sit);assert.equal(a.path.length,0);now+=200;send(a,{type:'move',x:10,z:-12});assert(!a.sit);
  // Real server walking settles into a reserved bench, with per-plaza occupancy.
  assert.equal(R.BENCHES.length,19);assert.equal(R.SEATS.length,46,'12 plaza + 7 v356 viewing benches (38 bench seats) plus 8 pond-side angler chairs');
+// v357: the boxing ring is entered only through the west stairs.
+{
+ const ring=R.SANCTUARY_RING;
+ assert(R.walkable(ring.x,ring.z),'the ring interior stays walkable for battles and stairs');
+ assert(!R.walkable(ring.x,ring.z-ring.d/2+.4)&&!R.walkable(ring.x+ring.w/2-.4,ring.z)&&!R.walkable(ring.x-ring.w/2+.4,ring.z+ring.d/2-.4),'the north, east and south rope lines are barriers');
+ assert(R.walkable(ring.x-ring.w/2+.5,ring.z),'the west stair mouth is open');
+ assert(R.path({x:ring.x-ring.w/2-4,z:ring.z},{x:ring.x,z:ring.z}).length>0,'the pathfinder routes onto the ring through the stairs');
+ // Kinded trees are all species entries and all remain obstacles.
+ for(const t of R.SANCTUARY_TREES)if(t.kind)assert(['pine','palm','broad','sakura'].includes(t.kind),'known species '+t.kind);
+ assert(R.SANCTUARY_TREES.filter(t=>t.kind).length>=18,'the species groves are planted');
+}
  for(const seat of R.SEATS){assert(R.walkable(seat.x,seat.z));assert(R.path(a,seat).length>0)}
  now+=200;send(a,{type:'seat',id:0});assert.equal(a.seat,0);assert(a.path.length>0);assert(!a.sit);
  send(b,{type:'seat',id:0});assert.equal(b.seat,null);assert(b.events.some(e=>e.message==='That bench is occupied.'));

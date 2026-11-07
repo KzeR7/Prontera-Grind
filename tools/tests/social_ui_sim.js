@@ -113,9 +113,10 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert(modal.hidden,'the big map starts closed');
   mini.click();assert(!modal.hidden,'clicking the mini-map opens the big map');
   w.document.getElementById('socialMapClose').click();assert(modal.hidden,'the big map closes');
-  assert(mount.hidden,'the music player mount starts closed');
-  w.document.getElementById('socialBgmBtn').click();assert(!mount.hidden&&w.document.getElementById('socialBgmBtn').getAttribute('aria-pressed')==='true','the Music button opens the player mount');
-  w.document.getElementById('socialBgmBtn').click();assert(mount.hidden,'the Music button toggles the mount closed again');
+  // v357: the music bar shows itself when the hub opens; the button still toggles it away and back.
+  assert(!mount.hidden,'the music player bar is visible once the hub is open');
+  w.document.getElementById('socialBgmBtn').click();assert(mount.hidden&&w.document.getElementById('socialBgmBtn').getAttribute('aria-pressed')==='false','the Music button hides the player bar');
+  w.document.getElementById('socialBgmBtn').click();assert(!mount.hidden,'the Music button toggles the player bar back on');
   // A drawable stub canvas proves the painter covers the shared geometry and every live player.
   const ops=[];let fill=0;
   const ctx=new Proxy({fillRect(){ops.push('rect')},strokeRect(){ops.push('rect')},arc(){ops.push('arc')},beginPath(){ops.push('begin')},moveTo(){},lineTo(){},closePath(){},fill(){fill++},stroke(){},clearRect(){},setLineDash(){},fillText(t){ops.push('text:'+t)},strokeText(){}},{get:(t,k)=>k in t?t[k]:()=>{}});
@@ -128,12 +129,18 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert(ops.includes('text:You'),'the self marker is labelled on the big map');
   assert(fill>8,'the map paints its geometry');
  }
- // v355: the party panel exists and solo mode explains that parties need an online plaza.
+ // v355/v357: the party panel exists, is tabbed (grind party vs PvP ring lobby) and solo
+ // mode explains that both need an online plaza.
  {
-  const btn=w.document.getElementById('socialPartyBtn'),panel=w.document.getElementById('socialPartyPanel');
-  assert(btn&&panel,'the Party button and panel exist');
+  const btn=w.document.getElementById('socialPartyBtn'),pvpBtn=w.document.getElementById('socialPvpBtn'),panel=w.document.getElementById('socialPartyPanel');
+  assert(btn&&panel,'the Grind button and panel exist');
+  assert(pvpBtn,'the PvP lobby button exists');
   assert(panel.hidden,'the party panel starts closed');
-  btn.click();assert(!panel.hidden,'the Party button opens the panel');
+  btn.click();assert(!panel.hidden,'the Grind button opens the panel on the PvE tab');
+  assert.match(w.document.getElementById('socialPartyBody').textContent,/GRIND PARTY/i,'the PvE tab is shown first');
+  pvpBtn.click();assert(!panel.hidden,'the PvP button keeps the panel open');
+  assert.match(w.document.getElementById('socialPartyBody').textContent,/PVP RING LOBBY/i,'the PvP button switches to the ring lobby tab');
+  assert(!/GRIND PARTY ·/.test(w.document.getElementById('socialPartyBody').textContent),'only one tab renders at a time');
   assert.match(w.document.getElementById('socialPartyBody').textContent,/online plaza/i,'solo mode explains the online requirement');
   w.document.getElementById('socialPartyClose').click();assert(panel.hidden,'the party panel closes');
  }
