@@ -21,14 +21,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  const delivered=room.serial;send(a,{type:'chat',channel:'world',body:'too soon'});assert.equal(room.serial,delivered);now+=2999;send(a,{type:'emotion',emotion:'heart'});assert.equal(room.serial,delivered);now++;send(a,{type:'chat',channel:'world',body:'after 3 seconds'});assert.equal(room.serial,delivered+1);
  for(const point of [{x:0,z:65},{x:0,z:120},{x:70,z:30},{x:-70,z:-30},{x:0,z:-34}]){const route=R.path({x:0,z:12},point);assert(route.length,'new avenues reachable');assert(route.every(p=>R.walkable(p.x,p.z)))}
  assert(!R.walkable(-46,-25),'remaining houses block walking');assert(R.walkable(56,16),'former east houses are cleared for the farm');assert(!R.walkable(0,-61),'castle blocks walking');assert(!R.walkable(R.MAX_X+1,10));assert(R.walkable(0,126));assert(!R.walkable(0,127));assert(!R.walkable(0,-75));
- for(const seat of R.SEATS){assert(R.path({x:0,z:12},seat).length,'each chair reachable')}
+ for(const seat of R.SEATS)if(seat){assert(R.path({x:0,z:12},seat).length,'each chair reachable')}
  for(const garden of R.GARDENS){assert(!R.walkable(garden.x,garden.z),'bounded garden cannot be crossed');assert(R.TREES.some(t=>t.x===garden.x&&t.z===garden.z&&t.size<=garden.w-4),'tree canopy has a garden setback')}
  for(let n=-30;n<=30;n++){if(Math.abs(n)>6){assert(R.walkable(0,n),'north/south promenade stays clear');assert(R.walkable(n,0),'east/west promenade stays clear')}}
  now+=200;send(b,{type:'seat',id:0});assert(b.path.length);now+=30000;const seated=room.snapshot(b);assert(seated.sit);assert.equal(seated.seat,0);assert.equal(seated.x,R.SEATS[0].x);assert.equal(seated.dir,R.SEATS[0].dir);now+=200;send(b,{type:'move',x:0,z:12});assert(!b.sit);assert.equal(b.seat,null);
  send(a,{type:'move',x:0,z:0});assert.equal(a.path.length,0);send(a,{type:'move',x:0,z:-12});now+=101;send(a,{type:'move',x:0,z:-12});assert(a.path.length>0);assert(a.path.every(p=>R.walkable(p.x,p.z)));for(let t=0;t<300;t++){now+=50;R.advance(a,now);assert(R.walkable(a.x,a.z))}assert.equal(a.z,-12);
  send(a,{type:'sit'});assert(a.sit);assert.equal(a.path.length,0);now+=200;send(a,{type:'move',x:10,z:-12});assert(!a.sit);
  // Real server walking settles into a reserved bench, with per-plaza occupancy.
- assert.equal(R.BENCHES.length,19);assert.equal(R.SEATS.length,46,'12 plaza + 7 v356 viewing benches (38 bench seats) plus 8 pond-side angler chairs');
+ assert.equal(R.BENCHES.length,15);assert.equal(R.SEATS.filter(Boolean).length,104,'12 plaza benches (24 seats) + gym/field benches (6 seats) + 8 angler chairs + 66 v359 bleacher seats');assert.equal(R.BLEACHER_ROWS.length,6,'three sittable tiers on each run of the L');
 // v357: the boxing ring is entered only through the west stairs.
 {
  const ring=R.SANCTUARY_RING;
@@ -40,7 +40,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  for(const t of R.SANCTUARY_TREES)if(t.kind)assert(['pine','palm','broad','sakura'].includes(t.kind),'known species '+t.kind);
  assert(R.SANCTUARY_TREES.filter(t=>t.kind).length>=18,'the species groves are planted');
 }
- for(const seat of R.SEATS){assert(R.walkable(seat.x,seat.z));assert(R.path(a,seat).length>0)}
+ for(const seat of R.SEATS)if(seat){assert(R.walkable(seat.x,seat.z));assert(R.path(a,seat).length>0)}
  now+=200;send(a,{type:'seat',id:0});assert.equal(a.seat,0);assert(a.path.length>0);assert(!a.sit);
  send(b,{type:'seat',id:0});assert.equal(b.seat,null);assert(b.events.some(e=>e.message==='That bench is occupied.'));
  // Second spot on the same metal bench (id:1, bench:0) is open for a friend to sit side-by-side!
@@ -274,7 +274,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  for(const f of R.SANCTUARY_GYM_FENCES){const x=(f.x1+f.x2)/2,z=(f.z1+f.z2)/2;assert(R.fenceBlocked(x,z)&&!R.walkable(x,z),'the front fence has shared collision')}
  assert(R.walkable(69,38.5),'centre gap is not blocked by the gym fence');
  for(const b of R.SANCTUARY_BARRIERS.filter(b=>b.kind.startsWith('stand')))assert(!R.walkable(b.x,b.z),'solid spectator structure matches navigation');
- for(let row=0;row<3;row++){const x=81.7+row*1.05,z=113.25+row*1.05;for(const [px,pz] of [[x+.5,100],[70,z+1.5],[x-.3,z+.7]])assert(!R.walkable(px,pz),'each bleacher tier and its corner are enclosed by collision')}
+ // v359 (owner: "the L-shaped stands behind the ring should be sittable"): each tier is a
+ // walkable sitting row; the mitred corner stays solid collision.
+ for(let row=0;row<3;row++){const x=81.7+row*1.05,z=113.25+row*1.05;assert(R.walkable(x+.5,100)&&R.walkable(70,z+1),'east and south tier '+row+' are walkable sitting rows');assert(!R.walkable(x-.3,z+.7),'the mitred corner stays solid collision')}
  assert(R.walkable(79,113)&&R.path({x:68,z:104},{x:79,z:113}).length,'the aisle between the ring and stands remains usable');
  assert(R.path({x:35,z:90},{x:68,z:104}).length,'the ring remains reachable after the bleacher rebuild');
  for(const [start,end] of [[{x:35,z:42},{x:69,z:25}],[{x:66,z:43},{x:66,z:50}],[{x:35,z:60},{x:50,z:60}],[{x:68,z:84},{x:68,z:77}],[{x:35,z:90},{x:68,z:104}]]){

@@ -67,7 +67,7 @@ const SANCTUARY_BARRIERS=[
  {kind:'food',x:22,z:41,w:5.5,d:4},{kind:'trainer',x:22,z:56,w:5,d:4},
  {kind:'guide',x:22,z:72,w:5,d:4},
  ...[49,64,79,90].map(z=>({kind:'lamp',x:31,z,w:.5,d:.5})),
- {kind:'stand',x:83.4,z:104.9,w:3.5,d:21},{kind:'stand',x:68.15,z:115.8,w:29.3,d:3.3},{kind:'stand-corner',x:82.8,z:115.3,w:4.2,d:4.2}
+ {kind:'stand-wall',x:85.25,z:104.85,w:.6,d:21.5},{kind:'stand-wall',x:66.65,z:117.25,w:27.3,d:.6},{kind:'stand-corner',x:82.8,z:115.3,w:4.2,d:4.2}
 ];
 // Bevelled meadow fence, with wide north, west and south gates. Shared segment
 // collision matches the rendered rails, including angled corner pieces.
@@ -140,10 +140,9 @@ const POND_PROPS=[{
 // land at 32-45 - strictly after the pond chairs' 24-31 - and no existing reservation moves.
 const BENCHES=[
  ...[-1,1].flatMap(side=>[-1,1].flatMap(bank=>[11,15,19].map(x=>({x:bank*x,z:side*13,dir:side===1?4:0,rotation:side===1?Math.PI:0,height:.95,size:3.4})))),
- // v356: east ringside stand (facing the ring, dir 2 = west).
- ...[[79.8,98],[79.8,110]].map(([x,z],i)=>({id:16+i,x,z,dir:2,rotation:-Math.PI/2,height:.95,size:3.4})),
- // v356: south ringside stand (facing north, dir 4).
- ...[[62,112.8],[74,112.8]].map(([x,z],i)=>({id:18+i,x,z,dir:4,rotation:Math.PI,height:.95,size:3.4})),
+ // v359 (owner: "I don't want the wood chairs around the boxing ring - the L-shaped
+ // stands behind should be the sittable seats"): the four ringside wooden benches are
+ // removed; the long bleacher rows carry the seating now (BLEACHER_ROWS below).
  // v356: gym court entrance bench, facing the training yard (dir 0 = south).
  {id:20,x:69,z:16.2,dir:0,rotation:0,height:.95,size:3.4},
  // v356: grind-field north fence, looking south across the wild field (dir 0).
@@ -157,13 +156,34 @@ const CHAIRS=[-2.55,-2.0,-1.13,-.58,.58,1.13,2.0,2.55].map((a,i)=>{
  const p=shore(a,1.8),dir=(Math.round(Math.atan2(p.x-PONDS[0].x,PONDS[0].z-p.z)/(Math.PI/4))+8)%8;
  return {...p,id:24+i,dir,rotation:-dir*Math.PI/4,height:.66,size:1.1};
 });
-// v356: SEATS stays a dense id-keyed array - every consumer (room validation, client sit
-// pose, partner-swap) reads R.SEATS[seatId]. Bench seats fill 0-23 and 32-45, the pond
-// chairs 24-31, so assigning by id keeps SEATS[id].id===id true for all 46 entries.
+// v359: the L-shaped spectator stands behind the ring are the ringside seating. Each tier
+// is a long sitting row: the boards are walkable (the stands' front is open, a low rear
+// wall and the solid corner keep anyone from walking off the back), seats every two
+// steps, facing the ring. Heights are the board tops (.62 / 1.05 / 1.48).
+const BLEACHER_ROWS=[
+ {side:'east', row:0,x1:81.55,x2:82.8, z1:94.4,z2:112.8,height:.62},
+ {side:'east', row:1,x1:82.6, x2:83.85,z1:94.4,z2:112.8,height:1.05},
+ {side:'east', row:2,x1:83.65,x2:84.9, z1:94.4,z2:112.8,height:1.48},
+ {side:'south',row:0,x1:53.5, x2:80.8, z1:113.55,z2:114.6,height:.62},
+ {side:'south',row:1,x1:53.5, x2:81.85,z1:114.6,z2:115.65,height:1.05},
+ {side:'south',row:2,x1:53.5, x2:82.9, z1:115.65,z2:116.7,height:1.48}
+].map(r=>{
+ const seats=[];
+ if(r.side==='east')for(let z=95;z<=111;z+=2)seats.push({x:82+r.row,z,dir:2});
+ else for(let x=55;x<=79;x+=2)seats.push({x,z:114+r.row,dir:4});
+ return {...r,seats};
+});
+// v356: SEATS stays an id-keyed array - every consumer (room validation, client sit
+// pose, partner-swap) reads R.SEATS[seatId]. Bench seats fill 0-23 and 40-45, the pond
+// chairs 24-31, and the bleacher rows take 46 up; ids 32-39 stayed with the removed
+// ringside benches so old reservations simply fall through to a fresh spawn.
 const SEATS=[];
+let bleacherId=46;
+for(const row of BLEACHER_ROWS)row.seats.forEach((seat,slot)=>{seat.id=bleacherId++;seat.bench=200+row.row+(row.side==='south'?10:0);seat.slot=slot;seat.stand=row.side;seat.height=row.height});
 for(const seat of [
  ...BENCHES.flatMap(b=>[-1,1].map((slotSign,slot)=>({id:b.id*2+slot,bench:b.id,slot,x:b.x+slotSign,sitX:b.x+slotSign*.74,z:b.z,dir:b.dir,rotation:b.rotation,height:b.height,size:b.size}))),
- ...CHAIRS.map(c=>({id:c.id,bench:100+c.id,slot:0,x:c.x,sitX:c.x,z:c.z,dir:c.dir,rotation:c.rotation,height:c.height,size:c.size}))
+ ...CHAIRS.map(c=>({id:c.id,bench:100+c.id,slot:0,x:c.x,sitX:c.x,z:c.z,dir:c.dir,rotation:c.rotation,height:c.height,size:c.size})),
+ ...BLEACHER_ROWS.flatMap(r=>r.seats)
 ])SEATS[seat.id]=seat;
 
 // v266: Two Plaza Hold'em tables along the West Promenade (Table 1 at (-27,-1) & Table 2 at (-39,-1)).
@@ -217,5 +237,5 @@ function path(from,to){
 }
 function walkSpeed(p){const value=Number(p&&p.look&&p.look.speed);return Number.isFinite(value)&&value>0?Math.max(MIN_SPEED,Math.min(MAX_SPEED,value)):SPEED}
 function advance(p,now){let distance=Math.max(0,(now-p.at)/1000)*walkSpeed(p);p.at=now;while(p.path.length&&distance>0){const t=p.path[0],dx=t.x-p.x,dz=t.z-p.z,d=Math.hypot(dx,dz);p.dir=(Math.round(Math.atan2(-dx,dz)/(Math.PI/4))+8)%8;if(d<=distance){p.x=t.x;p.z=t.z;p.path.shift();distance-=d}else{p.x+=dx/d*distance;p.z+=dz/d*distance;break}}if(!p.path.length&&Number.isInteger(p.seat)&&SEATS[p.seat]){p.sit=true;p.dir=SEATS[p.seat].dir}else if(!p.path.length&&Number.isInteger(p.pokerSeat)&&POKER.seats[p.pokerSeat]){p.sit=true;p.dir=POKER.seats[p.pokerSeat].dir}return p;}
-return {LIMIT,MIN_X,MAX_X,MIN_Z,MAX_Z,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,SANCTUARY,SANCTUARY_ARCHES,SANCTUARY_PLANTERS,SANCTUARY_TREES,SANCTUARY_OBSTACLES,SANCTUARY_BARRIERS,SANCTUARY_FENCES,SANCTUARY_GYM_FENCES,SANCTUARY_GYM_WALLS,SANCTUARY_RING,GYM_STATIONS,fenceBlocked,ringBlocked,cleanDigimon,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,SEATS,POKER,pondRadius,pondContains,pondBoundary,pondDistance,clampPond,cragBlocked,onBridge,walkable,path,advance};
+return {LIMIT,MIN_X,MAX_X,MIN_Z,MAX_Z,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,SANCTUARY,SANCTUARY_ARCHES,SANCTUARY_PLANTERS,SANCTUARY_TREES,SANCTUARY_OBSTACLES,SANCTUARY_BARRIERS,SANCTUARY_FENCES,SANCTUARY_GYM_FENCES,SANCTUARY_GYM_WALLS,SANCTUARY_RING,GYM_STATIONS,fenceBlocked,ringBlocked,cleanDigimon,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,BLEACHER_ROWS,SEATS,POKER,pondRadius,pondContains,pondBoundary,pondDistance,clampPond,cragBlocked,onBridge,walkable,path,advance};
 });

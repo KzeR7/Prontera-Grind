@@ -15,6 +15,11 @@ window.PGSocialScene={async create(host,labels,callbacks){
    const t=(x-b.x+b.span/2)/b.span;
    return 4*b.arch*t*(1-t);
   }
+  // v359: the spectator stands are sittable, so feet climb the tiers with the boards.
+  if(R.BLEACHER_ROWS)for(const row of R.BLEACHER_ROWS){
+   if(x<row.x1||x>row.x2||z<row.z1||z>row.z2)continue;
+   return row.height;
+  }
   // The ring platform has a raised canvas; keep player and follower feet above it.
   const ring=R.SANCTUARY_RING;if(ring&&Math.abs(x-ring.x)<=ring.w/2&&Math.abs(z-ring.z)<=ring.d/2)return ring.height;
   return 0;
@@ -39,7 +44,9 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  // ground slightly back in depth so water stays solid even from distant views.
  paving.flipY=false;const tile=document.createElement('canvas');tile.width=tile.height=256;tile.getContext('2d').drawImage(paving.image,16,16,256,256,0,0,256,256);const stone=new T.CanvasTexture(tile);stone.wrapS=stone.wrapT=T.RepeatWrapping;stone.repeat.set(20*192/164,20*218/164);const ground=new T.Mesh(new T.PlaneGeometry(192,218),new T.MeshBasicMaterial({map:stone,color:0xe4e2cf,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2}));ground.rotation.x=-Math.PI/2;ground.position.set(14,-.02,27);scene.add(freeze(ground));
  const plazaTile=document.createElement('canvas');plazaTile.width=plazaTile.height=256;plazaTile.getContext('2d').drawImage(paving.image,16,304,256,256,0,0,256,256);const plazaTex=new T.CanvasTexture(plazaTile);plazaTex.wrapS=plazaTex.wrapT=T.RepeatWrapping;plazaTex.repeat.set(10,10);const plaza=new T.Mesh(new T.PlaneGeometry(62,62),new T.MeshBasicMaterial({map:plazaTex,color:0xe1d9c7}));plaza.rotation.x=-Math.PI/2;plaza.position.y=.01;scene.add(freeze(plaza));
- const roadTexture=plazaTex.clone();roadTexture.repeat.set(3,26*192/164);roadTexture.needsUpdate=true;const roadTextureSouth=plazaTex.clone();roadTextureSouth.repeat.set(3,26*218/164);roadTextureSouth.needsUpdate=true;const roadMat=new T.MeshBasicMaterial({map:roadTexture,color:0xe6dfcf}),roadMatSouth=new T.MeshBasicMaterial({map:roadTextureSouth,color:0xe6dfcf});for(const turn of [0,Math.PI/2]){const road=new T.Mesh(new T.PlaneGeometry(18,turn===0?218:192),turn===0?roadMatSouth:roadMat);road.rotation.x=-Math.PI/2;road.rotation.z=turn;road.position.set(turn===0?0:14,turn===0?.001:.006,turn===0?27:0);scene.add(freeze(road))}
+ const roadTexture=plazaTex.clone();roadTexture.repeat.set(3,26*192/164);roadTexture.needsUpdate=true;const roadTextureSouth=plazaTex.clone();roadTextureSouth.repeat.set(3,26*218/164);roadTextureSouth.needsUpdate=true;// v359: both avenues pull toward the camera in depth so the fountain's paved/grass apron
+ // and the base ground can never shimmer through them, whatever the viewing angle.
+ const roadMat=new T.MeshBasicMaterial({map:roadTexture,color:0xe6dfcf,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),roadMatSouth=new T.MeshBasicMaterial({map:roadTextureSouth,color:0xe6dfcf,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});for(const turn of [0,Math.PI/2]){const road=new T.Mesh(new T.PlaneGeometry(18,turn===0?218:192),turn===0?roadMatSouth:roadMat);road.rotation.x=-Math.PI/2;road.rotation.z=turn;road.position.set(turn===0?0:14,turn===0?.001:.006,turn===0?27:0);scene.add(freeze(road))}
  model('fountain',0,0,10);
  for(const b of R.BUILDINGS)model(b.name,b.x,b.z,b.size,b.rotation||0);
  // Sanctuary: arranged south of the plaza from the owner's highlighted lawn.
@@ -149,16 +156,19 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  // painted medallion marks the entrance bay, stat-coloured banners hang from both wings, and
  // two pennant strings cross the yard so the space reads as a designed gymnasium.
  const zoneMats={power:new T.MeshLambertMaterial({color:0xb0684f}),guard:new T.MeshLambertMaterial({color:0x5f7d95}),agility:new T.MeshLambertMaterial({color:0xc9a256}),focus:new T.MeshLambertMaterial({color:0x7d9a6a})};
- for(const [zx,zz,zw,zd,stat] of [[56.5,25.5,13,14.5,'power'],[63,22.6,10.6,8.8,'guard'],[75,26,10.6,11.6,'agility'],[86,25.6,10.6,13,'focus']]){
-  flat(new T.PlaneGeometry(zw,zd),zoneMats[stat],zx,zz,.034).userData.gymZone=stat;
+ // v359: the zone mats and the entrance medallion interlock around their stations, so
+ // every overlapping flat in the yard sits on its own clear step of the ladder:
+ // sand .018 < power .030 < guard .034 < medallion .040/.042/.044 < agility .046 < focus .050.
+ for(const [zx,zz,zw,zd,stat,zy] of [[56.5,25.5,13,14.5,'power',.03],[63,22.6,10.6,8.8,'guard',.034],[75,26,10.6,11.6,'agility',.046],[86,25.6,10.6,13,'focus',.05]]){
+  flat(new T.PlaneGeometry(zw,zd),zoneMats[stat],zx,zz,zy).userData.gymZone=stat;
   const y=.031;
   box(zx,y,zz-zd/2,zw+.24,.05,.16,cream);box(zx,y,zz+zd/2,zw+.24,.05,.16,cream);
   box(zx-zw/2,y,zz,.16,.05,zd,cream);box(zx+zw/2,y,zz,.16,.05,zd,cream);
  }
  // Entrance medallion: a painted roundel between the two wings.
- flat(new T.CircleGeometry(2.05,28),new T.MeshBasicMaterial({color:0xe7d6ab}),69,20.5,.042).userData.gymMedallion=true;
- flat(new T.RingGeometry(1.55,1.8,28),new T.MeshBasicMaterial({color:0x997954}),69,20.5,.0445);
- flat(new T.CircleGeometry(.55,20),new T.MeshBasicMaterial({color:0xb0684f}),69,20.5,.0445);
+ flat(new T.CircleGeometry(2.05,28),new T.MeshBasicMaterial({color:0xe7d6ab}),69,20.5,.04).userData.gymMedallion=true;
+ flat(new T.RingGeometry(1.55,1.8,28),new T.MeshBasicMaterial({color:0x997954}),69,20.5,.042);
+ flat(new T.CircleGeometry(.55,20),new T.MeshBasicMaterial({color:0xb0684f}),69,20.5,.044);
  // Stat banners on the court-facing wing walls.
  const bannerBar=new T.MeshLambertMaterial({color:0xb58a59});
  for(const [bx,bz,stat] of [[43.72,21,'power'],[43.72,25,'agility'],[43.72,29,'focus'],[94.28,21,'guard'],[94.28,25,'power'],[94.28,29,'agility']]){
@@ -302,8 +312,9 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  for(const dz of [-1.7,1.7]){box(ring.x-ring.w/2-1,.42,ring.z+dz,2.4,.14,.16,darkWood);for(const dx of [-1.1,1.1])box(ring.x-ring.w/2-1+dx,.24,ring.z+dz,.14,.48,.14,lightWood)}
  flat(new T.PlaneGeometry(1.5,2.9),new T.MeshBasicMaterial({color:0x8e3b32}),ring.x-ring.w/2-.2,ring.z,.58).userData.ringRunner=true;
  // Level, regularly spaced bleacher tiers, with a real mitred corner.
- // The walkway faces and all three seating heights stay horizontal; the two
- // runs and their corner share dimensions with the Worker collision boxes.
+ // v359: the boards are the sittable rows (shared BLEACHER_ROWS carry the seats); a low
+ // rear wall on each run and the solid corner are the Worker collision, so spectators
+ // climb the tiers freely but cannot walk off the back.
  const standPlanks=boardTexture?.clone();if(standPlanks){standPlanks.repeat.set(1,3);standPlanks.needsUpdate=true}
  const standMat=new T.MeshLambertMaterial({map:standPlanks,color:0xd8bc92});
  for(let row=0;row<3;row++){
@@ -311,13 +322,15 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   // Parallel boards have square, flush edges and a consistent height per tier.
   for(let p=0;p<3;p++){
    const east=box(x0+(p+.5)/3,y,(zStart+z0)/2,1/3-.015,.14,z0-zStart,standMat);east.userData.sanctuaryBleacher='east';east.userData.bleacherRow=row;
-   const south=box((xStart+x0-1)/2,y,z0+1+(p+.5)/3,x0-1-xStart,.14,1/3-.015,standMat);south.userData.sanctuaryBleacher='south';south.userData.bleacherRow=row;
+   // v359: the south boards shift half a step forward so each sitting row lands on a
+   // whole pathfinding cell - the seats and the boards share the same line.
+   const south=box((xStart+x0-1)/2,y,z0+.5+(p+.5)/3,x0-1-xStart,.14,1/3-.015,standMat);south.userData.sanctuaryBleacher='south';south.userData.bleacherRow=row;
   }
   // Horizontal trapezoid closes the 45-degree corner without skewed, floating planks.
   const shape=new T.Shape();for(const [i,[x,z]] of [[x0,z0],[x0+1,z0],[x0-1,z0+2],[x0-1,z0+1]].entries()){if(i)shape.lineTo(x,-z);else shape.moveTo(x,-z)}shape.closePath();
   const corner=flat(new T.ShapeGeometry(shape),standMat,0,0,y+.071);corner.userData.sanctuaryBleacher='corner';corner.userData.bleacherRow=row;
   for(const z of [95,99,103,107,111]){box(x0+.5,y/2,z,.18,y,.22,darkWood);box(x0+.5,y-.1,z,1,.14,.22,wood)}
-  for(const x of [54,58,62,66,70,74,78]){box(x,y/2,z0+1.5,.22,y,.18,darkWood);box(x,y-.1,z0+1.5,.22,.14,1,wood)}
+  for(const x of [54,58,62,66,70,74,78]){box(x,y/2,z0+1,.22,y,.18,darkWood);box(x,y-.1,z0+1,.22,.14,1,wood)}
   box(x0-.28,y/2,z0+.7,.22,y,.22,darkWood);
  }
  // Back rail and posts terminate cleanly at a single bevel around the corner.
@@ -341,7 +354,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);sprite.scale.set(256*1.45/96,256*1.45/96,1);sprite.position.set(x,.06,z);sprite.userData.sanctuaryResident=id;scene.add(sprite);digimonStore.request(id);
   return {id,ctx:canvas.getContext('2d'),texture,sprite,frame:-1,flip:i%2===1,homeX:x,homeZ:z,phase:i*1.7};
  }):[];
- let battleState={pve:[],pvp:null};const battleParticipantIds=new Set(),battleResidents=new Map(),BATTLE_RUN_SPEED=6.4,BATTLE_RADIUS=4.1,PVP_RADIUS=2.2;
+ let battleState={pve:[],pvp:null};const battleParticipantIds=new Set(),battleResidents=new Map(),/* v359 (owner: "movements are too fast, I can't see the animations"): the run is a calm trot now */BATTLE_RUN_SPEED=3.2,BATTLE_RADIUS=4.1,PVP_RADIUS=2.2;
  const battleName=id=>globalThis.PGDigimonRoster?.name(id)||String(id||'Digimon');
  // v350 presentation ranges: the shared battle module classifies each form once from the
  // reproducible base-stat table, so every client agrees without extra messages.
@@ -447,12 +460,14 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   const value=Math.max(0,Math.round(Number(amount)||0));
   if(battlePopups.length>=24||value<=0)return;
   const text=crit?value+'!':String(value);
-  const canvas=document.createElement('canvas');canvas.width=128;canvas.height=64;
+  // v359 (owner: "increase the damage size, it's too small"): a wider sheet, bigger type
+  // and a larger sprite scale - damage reads across the whole plaza camera.
+  const canvas=document.createElement('canvas');canvas.width=192;canvas.height=96;
   const ctx=canvas.getContext('2d');
-  if(ctx&&typeof ctx.fillText==='function'){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold '+(crit?40:32)+'px "Courier New",monospace';
-   ctx.fillStyle='rgba(16,22,20,.92)';for(const [ox,oz] of [[2,0],[-2,0],[0,2],[0,-2]])ctx.fillText(String(text),64+ox,34+oz);
-   ctx.fillStyle=crit?'#ffd98a':tint;ctx.fillText(String(text),64,34);
-   if(crit){ctx.font='bold 13px "Courier New",monospace';ctx.fillStyle='#ffd98a';ctx.fillText('CRIT',64,56)}}
+  if(ctx&&typeof ctx.fillText==='function'){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold '+(crit?58:46)+'px "Courier New",monospace';
+   ctx.fillStyle='rgba(16,22,20,.92)';for(const [ox,oz] of [[3,0],[-3,0],[0,3],[0,-3]])ctx.fillText(String(text),96+ox,44+oz);
+   ctx.fillStyle=crit?'#ffd98a':tint;ctx.fillText(String(text),96,44);
+   if(crit){ctx.font='bold 20px "Courier New",monospace';ctx.fillStyle='#ffd98a';ctx.fillText('CRIT',96,80)}}
   const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthWrite:false}));
   sprite.center.set(.5,.5);sprite.position.set(x+(battleHash('pop:'+text+':'+z.toFixed(2))-.5)*.7,1.55,z);
@@ -484,7 +499,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
    if(t>=1){scene.remove(pop.mesh);pop.mesh.material.map.dispose();pop.mesh.material.dispose();battlePopups.splice(i,1);continue}
    const popIn=t<.16?.6+2.5*t:1;
    pop.mesh.position.y=1.55+.85*t;
-   pop.mesh.scale.set(pop.crit?1.5:1.2,.75*(pop.crit?1.5:1.2),1);
+   pop.mesh.scale.set(pop.crit?3:2.4,.5*(pop.crit?3:2.4),1);
    pop.mesh.scale.multiplyScalar(popIn);
    pop.mesh.material.opacity=t>.62?Math.max(0,1-(t-.62)/.38):1;
   }
@@ -522,7 +537,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   for(const run of battleState.pve)if(Number.isInteger(run.owner))battleParticipantIds.add(run.owner);
   for(const p of battleState.pvp?.participants||[])if(Number.isInteger(p.id))battleParticipantIds.add(p.id);
   const keep=new Set();for(const spec of battleSpecs()){
-   keep.add(spec.key);let u=battleResidents.get(spec.key);if(!u){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const ring=new T.Mesh(new T.RingGeometry(.8,1,24),new T.MeshBasicMaterial({color:spec.kind==='pvp'?0xf3c876:0x9ed6b0,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;scene.add(ring);const spawn=battleSpawn(spec),lastMove=performance.now();sprite.position.set(spawn.x,.06,spawn.z);u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec,spawn,lastMove,lastAttack:spec.attackAt,attackStarted:-Infinity,lastHit:spec.hitAt,hitStarted:-Infinity,ranged:false,shakeUntil:0,shakeAmp:0,hitStopUntil:0,hitStopClock:0,fainted:false,ghosts:null};battleResidents.set(spec.key,u)}u.spec=spec;u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;u.sprite.userData.battleRole=spec.role;u.sprite.userData.battleName=spec.label;u.sprite.userData.battleSpawn={...u.spawn};digimonStore?.request(spec.species);
+   keep.add(spec.key);let u=battleResidents.get(spec.key);if(!u){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const ring=new T.Mesh(new T.RingGeometry(.8,1,24),new T.MeshBasicMaterial({color:spec.kind==='pvp'?0xf3c876:0x9ed6b0,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.userData.battleAccent=true;scene.add(ring);const spawn=battleSpawn(spec),lastMove=performance.now();sprite.position.set(spawn.x,.06,spawn.z);u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec,spawn,lastMove,lastAttack:spec.attackAt,attackStarted:-Infinity,lastHit:spec.hitAt,hitStarted:-Infinity,ranged:false,shakeUntil:0,shakeAmp:0,hitStopUntil:0,hitStopClock:0,fainted:false,ghosts:null};battleResidents.set(spec.key,u)}u.spec=spec;u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;u.sprite.userData.battleRole=spec.role;u.sprite.userData.battleName=spec.label;u.sprite.userData.battleSpawn={...u.spawn};digimonStore?.request(spec.species);
   }
   for(const [key,u] of battleResidents)if(!keep.has(key)){scene.remove(u.sprite,u.ring);if(u.ghosts)for(const g of u.ghosts)scene.remove(g);u.sprite.material.dispose();u.texture.dispose();u.ring.geometry.dispose();u.ring.material.dispose();battleResidents.delete(key)}
   for(const r of residents)r.sprite.visible=!battleState.pve.length;
@@ -640,13 +655,10 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   for(const side of [-1,1])for(const axis of ['x','z']){const curb=new T.Mesh(new T.BoxGeometry(axis==='x'?.35:g.w+.35,.22,axis==='z'?.35:g.d+.35),curbMaterial);curb.position.set(g.x+(axis==='x'?side*g.w/2:0),.1,g.z+(axis==='z'?side*g.d/2:0));scene.add(freeze(curb))}
   const shrubs=makeBatch();for(const offset of [-4,0,4])for(const side of [-1,1])pushModel(shrubs,'shrub',g.x+offset,g.z+side*5,2.4,0,garden,gardenFloats);addBatch(shrubs,gardenMat);
  }
- // v356: the four plaza gardens no longer repeat one cloned tree - alternate the two
- // atlas species and flank each bed with a stump and a young birch so the square
- // reads as planted rather than stamped.
+ // v356: the four plaza gardens no longer repeat one cloned tree - the two atlas
+ // species alternate so the square reads as planted rather than stamped.
+ // v359 (owner: "remove all dead tree sprites"): the garden stumps are gone too.
  R.TREES.forEach((tr,i)=>model(i%2?'tree2':'tree',tr.x,tr.z,tr.size,0,garden,gardenFloats,gardenMat));
- for(const [gx,gz] of R.GARDENS.map(g=>[g.x,g.z])){
-  model('stump',gx-4.6,gz+4.4,3.1,0,garden,gardenFloats,gardenMat);
- }
  // v357 (owner: "the trees are ugly - use real Ragnarok-style ones"): the species are no
  // longer primitive cones and spheres. They are the repo's own native RO field models -
  // izlude firs, morocc palms, payon broadleafs and amatsu cherries - each with a per-tree
@@ -1079,7 +1091,7 @@ void main(){
       tip.position.set(dx+.06,.19,dz);g.add(tip);
      }
     });
-    g.position.set(bx,.032,bz);
+    g.position.set(bx,.03+.0012*(i%6),bz);
     lilies.push({mesh:g,x:bx,z:bz,ph:i*2.1});scene.add(g);
    }
    // v304: the garden behind and around the pond. Positions come from R.POND_PROPS so the layout
@@ -1413,7 +1425,8 @@ void main(){
   return {api,update};
  })();
  // 12 physical metal park benches, each split into 2 side-by-side seat targets (24 seats total).
- // v358 (owner: "why metal chairs around the boxing area?"): the plaza keeps its metal
+ // v359: only the gym-court and field-fence benches remain wooden (ids >= 20); the ring
+ // seating lives on the bleacher tiers. The plaza keeps its metal
  // frames, but every viewing bench - the ring stands, the gym court and the field fence -
  // is a wooden park bench in the town palette, with a generous click pad so a tap
  // anywhere near the seat sits you.
@@ -1475,6 +1488,11 @@ void main(){
    // A generous pad: the whole seat, its back and a hand's width of rim.
    seatTargets.push({seat:c.id,bench:100+c.id,bounds:new T.Box3().setFromObject(g).expandByScalar(.55)});
   }
+ }
+ // v359: each bleacher seat answers a click on its tier - a flat slab just above the
+ // boards, so a click on the front row is never stolen by the taller tiers behind it.
+ if(R.BLEACHER_ROWS)for(const row of R.BLEACHER_ROWS)for(const seat of row.seats){
+  seatTargets.push({seat:seat.id,bench:seat.bench,bounds:new T.Box3(new T.Vector3(seat.x-.8,row.height-.2,seat.z-.8),new T.Vector3(seat.x+.8,row.height+.35,seat.z+.8))});
  }
 
  const water=new T.Mesh(new T.CircleGeometry(3.7,48),new T.MeshBasicMaterial({color:0x60c9dc,transparent:true,opacity:.65}));water.rotation.x=-Math.PI/2;water.position.y=.7;scene.add(freeze(water));

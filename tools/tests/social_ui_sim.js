@@ -113,10 +113,10 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert(modal.hidden,'the big map starts closed');
   mini.click();assert(!modal.hidden,'clicking the mini-map opens the big map');
   w.document.getElementById('socialMapClose').click();assert(modal.hidden,'the big map closes');
-  // v358: the music bar stays closed until the Music button opens it (no auto-show at the top).
-  assert(mount.hidden&&w.document.getElementById('socialBgmBtn').getAttribute('aria-pressed')==='false','the music player bar starts hidden');
-  w.document.getElementById('socialBgmBtn').click();assert(!mount.hidden,'the Music button opens the player bar');
-  w.document.getElementById('socialBgmBtn').click();assert(mount.hidden,'the Music button hides the player bar again');
+  // v359 (owner: "I want the BGM permanent and the toggle removed"): the player bar is
+  // hub chrome - always visible while the hub is open, with no toolbar toggle.
+  assert(!mount.hidden,'the music player bar is visible with the hub');
+  assert(!w.document.getElementById('socialBgmBtn'),'the music toolbar toggle is gone');
   // A drawable stub canvas proves the painter covers the shared geometry and every live player.
   const ops=[];let fill=0;
   const ctx=new Proxy({fillRect(){ops.push('rect')},strokeRect(){ops.push('rect')},arc(){ops.push('arc')},beginPath(){ops.push('begin')},moveTo(){},lineTo(){},closePath(){},fill(){fill++},stroke(){},clearRect(){},setLineDash(){},fillText(t){ops.push('text:'+t)},strokeText(){}},{get:(t,k)=>k in t?t[k]:()=>{}});

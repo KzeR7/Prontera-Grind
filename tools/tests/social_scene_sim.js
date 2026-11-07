@@ -66,7 +66,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  for(const stat of ['power','guard','agility','focus'])assert(scene.scene.children.some(o=>o.userData.gymZone===stat),stat+' training zone mat is laid');
  const deep=[];scene.scene.traverse(o=>{if(o.userData.deepKind)deep.push(o.userData.deepKind)});
  assert(deep.includes('octopus')&&deep.includes('shark'),'octopus and shark shadows swim in the pond');
- assert(scene.scene.children.filter(o=>o.userData.bench!=null).length===w.PGSocialRules.BENCHES.length,'all 19 benches render, including the v356 viewing benches');
+ assert(scene.scene.children.filter(o=>o.userData.bench!=null).length===w.PGSocialRules.BENCHES.length,'all shared benches render, including the v356 gym and field benches');
  for(let row=0;row<3;row++){const tiers=scene.scene.children.filter(o=>o.userData.bleacherRow===row),h=.55+row*.43;assert.equal(tiers.length,7,'each tier has six boards and a corner');for(const m of tiers)assert(Math.abs(m.position.y-(m.userData.sanctuaryBleacher==='corner'?h+.071:h))<.001,'all bench boards and corner align on a level tier');}
 
  for(const side of ['left','right']){assert(scene.scene.children.some(o=>o.userData.gymWing===side&&o.geometry.parameters.height>=8),'substantial tall '+side+' wing');assert(scene.scene.children.some(o=>o.userData.gymGable===side),'visible '+side+' gable');assert(scene.scene.children.some(o=>o.userData.gymUpperWall===side),'roof ridge is supported by the '+side+' wall');assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryBuildingWing===side).length,3,'broad pitched roofs of '+side+' wing')}
@@ -121,7 +121,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
 
  // v269: 12 physical metal park benches, each seating 2 players side-by-side (24 seats total).
  // v288 adds 8 single-seat angler chairs on the pond rims (seat ids 24-31) => 32 seats.
- assert.equal(w.PGSocialRules.BENCHES.length,19);assert.equal(w.PGSocialRules.CHAIRS.length,8);assert.equal(w.PGSocialRules.SEATS.length,46);
+ assert.equal(w.PGSocialRules.BENCHES.length,15);assert.equal(w.PGSocialRules.CHAIRS.length,8);
+ // v359: the four ringside wooden benches are gone; the bleacher rows (46-111) carry the
+ // ring seating, and ids 32-39 retired with the removed benches.
+ const seatList=w.PGSocialRules.SEATS.filter(Boolean);assert.equal(seatList.length,104,'15 benches (30 seats) + 8 chairs + 66 bleacher seats');
+ for(let i=32;i<=39;i++)assert(!w.PGSocialRules.SEATS[i],'retired ringside seat '+i+' is gone');
+ assert.equal(w.PGSocialRules.SEATS[46].x,82);assert.equal(w.PGSocialRules.SEATS[46].height||w.PGSocialRules.SEATS[46].rowHeight,.62);assert.equal(w.PGSocialRules.SEATS[111].z,116);
  for(const c of w.PGSocialRules.CHAIRS){
   assert(w.PGSocialRules.walkable(c.x,c.z),'chair '+c.id+' stands on walkable ground');
   const seat=w.PGSocialRules.SEATS[c.id];
@@ -137,24 +142,33 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  scene.putPlayer({id:2,name:'Buddy',x:w.PGSocialRules.SEATS[10].x,z:w.PGSocialRules.SEATS[10].z,dir:0,sit:true,seat:10,path:[],look:state.look});
  clickAt(leftPt);assert.equal(selectedSeat,11,'clicking occupied bench half auto-picks free partner seat on same bench');
  scene.removePlayer(2);
- // v358 (owner: "benches cant sit on"): the ring-side viewing benches are wooden and their
- // whole seat answers a click, proving the sit path end to end.
+ // v359 (owner: "no wood chairs at the ring - the L-shaped stands are the seats"): the
+ // gym and field benches stay wooden, and the bleacher tiers are click-sittable end to end.
  {
-  const wooden=scene.scene.children.find(o=>o.userData.bench===16);
-  assert(wooden,'viewing bench 16 renders');
-  assert.equal(wooden.type,'Group','the viewing bench is a built wooden group, not the metal model');
+  assert(!scene.scene.children.some(o=>o.userData.bench===16||o.userData.bench===17||o.userData.bench===18||o.userData.bench===19),'the four ringside wooden benches are gone');
+  const wooden=scene.scene.children.find(o=>o.userData.bench===20);
+  assert(wooden&&wooden.type==='Group','the gym bench is still a built wooden group');
   const mats=new Set(wooden.children.map(m=>m.material&&m.material.color&&m.material.color.getHexString()));
-  assert(mats.has('7d5c3b')&&mats.has('54402a'),'the viewing bench uses weathered wood tones');
-  assert(wooden.children.length>=9,'the bench has legs, seat slats and a backrest');
-  const wb=w.PGSocialRules.BENCHES.find(b=>b.id===16),wc=wooden.userData.seatBounds.getCenter(new T.Vector3());
-  const wLeft=new T.Vector3(wc.x-.9,wc.y,wc.z).project(scene.camera),wRight=new T.Vector3(wc.x+.9,wc.y,wc.z).project(scene.camera);
-  clickAt(wLeft);assert.equal(selectedSeat,wb.seats[0],'clicking the wooden viewing bench selects its first seat');
-  scene.putPlayer({id:2,name:'Viewer',x:w.PGSocialRules.SEATS[wb.seats[0]].x,z:w.PGSocialRules.SEATS[wb.seats[0]].z,dir:0,sit:true,seat:wb.seats[0],path:[],look:state.look});
+  assert(mats.has('7d5c3b')&&mats.has('54402a'),'the gym bench uses weathered wood tones');
+  // The L-shaped stands: every tier is a long sitting row of walkable boards.
+  for(const row of w.PGSocialRules.BLEACHER_ROWS){
+   assert(row.seats.length>=9,'row '+row.side+row.row+' carries a long sitting row');
+   for(const seat of row.seats){assert(w.PGSocialRules.walkable(seat.x,seat.z),'bleacher seat stands on walkable boards');assert(w.PGSocialRules.path({x:60,z:104},seat).length,'bleacher seat is reachable from the ring walkway')}
+  }
+  assert(!w.PGSocialRules.walkable(85.25,104)&&!w.PGSocialRules.walkable(66.65,117.25),'the low rear walls keep walkers off the back of the stands');
+  // Clicking a tier picks its seat; sitting rests on the board tops, standing climbs them.
+  const first=w.PGSocialRules.SEATS[46],top=w.PGSocialRules.SEATS[111];
+  const pt=new T.Vector3(first.x,.62,first.z).project(scene.camera);
+  clickAt(pt);assert.equal(selectedSeat,46,'clicking the front east tier selects its first bleacher seat');
+  scene.putPlayer({id:2,name:'Viewer',x:first.x,z:first.z,dir:first.dir,sit:true,seat:46,path:[],look:state.look});
   frame(now+=100);
   const viewer=scene.scene.children.find(o=>o.userData.socialId===2);
-  assert.equal(viewer.position.y,.95,'a trainer sits down on the wooden viewing bench');
+  assert.equal(viewer.position.y,.62,'a trainer sits on the front bleacher tier');
+  scene.putPlayer({id:2,name:'Climber',x:top.x,z:top.z,dir:top.dir,sit:false,seat:null,path:[],look:state.look});
+  frame(now+=100);
+  const climber=scene.scene.children.find(o=>o.userData.socialId===2);
+  assert(Math.abs(climber.position.y-(.06+1.48))<.01,'standing feet climb to the top tier');
   scene.removePlayer(2);
-  clickAt(wRight);assert.equal(selectedSeat,wb.seats[1],'the padded click pad reaches the second seat too');
  }
  scene.putPlayer({...state,x:w.PGSocialRules.SEATS[0].x,z:w.PGSocialRules.SEATS[0].z,sit:true,seat:0});
  scene.putPlayer({id:2,name:'Buddy',x:w.PGSocialRules.SEATS[1].x,z:w.PGSocialRules.SEATS[1].z,dir:0,sit:true,seat:1,path:[],look:state.look});
@@ -305,7 +319,10 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert.equal(scene.scene.children.filter(o=>o.userData.battleKind==='pve').length,4,'partner and three bot sprites are rendered');assert(scene.scene.children.filter(o=>o.userData.sanctuaryResident).every(o=>!o.visible),'idle residents are hidden during grinding');
  const farmSprites=scene.scene.children.filter(o=>o.userData.battleKind==='pve'),enemySprites=farmSprites.filter(o=>o.userData.battleRole==='enemy'),partnerSprite=farmSprites.find(o=>o.userData.battleRole==='partner');
  assert.deepEqual(enemySprites.map(o=>o.userData.battleName).sort(),['Agumon','Biyomon','Palmon'],'farm bots show species names instead of generic wave labels');assert.equal(new Set(enemySprites.map(o=>JSON.stringify(o.userData.battleSpawn))).size,3,'each bot receives a distinct stable random-looking spawn');
- const partnerBefore=partnerSprite.position.clone(),enemyBefore=enemySprites.map(o=>o.position.clone());frame(now+=500);assert(partnerSprite.position.distanceTo(partnerBefore)>2,'the partner runs toward its opponent at the faster farm animation speed');assert(partnerSprite.position.distanceTo(partnerBefore)<=3.21,'a delayed frame cannot teleport the partner beyond its capped travel budget');enemySprites.forEach((o,i)=>assert(o.position.distanceTo(enemyBefore[i])>2,'each living bot runs toward the partner rather than remaining in a fixed row'));
+ const partnerBefore=partnerSprite.position.clone(),enemyBefore=enemySprites.map(o=>o.position.clone());frame(now+=500);
+ // v359: the run is a calm trot (6.4 -> 3.2 u/s) so the walk animation is readable; a
+ // half-second frame still covers well over a unit of ground.
+ assert(partnerSprite.position.distanceTo(partnerBefore)>1.2&&partnerSprite.position.distanceTo(partnerBefore)<2,'the partner trots toward its opponent at the v359 pace');assert(partnerSprite.position.distanceTo(partnerBefore)<=1.61,'a delayed frame cannot teleport the partner beyond its capped travel budget');enemySprites.forEach((o,i)=>assert(o.position.distanceTo(enemyBefore[i])>1.2,'each living bot runs toward the partner rather than remaining in a fixed row'));
  for(let i=0;i<40;i++)frame(now+=100);
  const dist=o=>Math.hypot(o.position.x-partnerSprite.position.x,o.position.z-partnerSprite.position.z),rangedSprite=enemySprites.find(o=>o.userData.battleName==='Biyomon'),meleeSprites=enemySprites.filter(o=>o!==rangedSprite);
  assert(Math.min(...meleeSprites.map(dist))>1.9&&Math.min(...meleeSprites.map(dist))<3.0,'v354 brawlers keep a readable gap instead of overlapping the partner: '+meleeSprites.map(dist).map(x=>x.toFixed(2)));
@@ -318,7 +335,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const bossSprite=scene.scene.children.find(o=>o.userData.battleBoss);
  assert(bossSprite,'the boss sprite is flagged for oversized presentation');assert.equal(bossSprite.userData.battleName,'BOSS · Greymon','the boss wears a BOSS nameplate');
  assert(bossSprite.scale.x>partnerSprite.scale.x*1.4,'the boss renders visibly larger than a normal fighter');
- const bossRing=scene.scene.children.find(o=>o!==bossSprite&&Math.abs(o.position.x-bossSprite.position.x)<.6&&Math.abs(o.position.z-bossSprite.position.z)<.6&&o.material&&o.material.color);
+ // v359: the accent ring is marked (units attack while closing in, so neighbours can sit
+ // within a bench-length of the boss); assert on the marker, not on bare proximity.
+ const bossRing=scene.scene.children.find(o=>o.userData.battleAccent&&o!==bossSprite&&Math.abs(o.position.x-bossSprite.position.x)<.95&&Math.abs(o.position.z-bossSprite.position.z)<.95);
  assert(bossRing&&bossRing.material.color.getHex()===0xe8a54a,'the boss stands on a gold accent ring');
  assert(!scene.scene.children.some(o=>o.userData.battleShot),'melee fighters fire no projectiles');
  scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:1,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,attackAt:0,hitAt:0}]}],pvp:null});frame(now+=100);
