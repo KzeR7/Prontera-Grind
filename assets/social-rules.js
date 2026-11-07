@@ -42,13 +42,13 @@ const SANCTUARY_TREES=[
  {x:97.5,z:112,kind:'sakura'},
  // v357 south hedge fill.
  {x:38,z:118,kind:'broad'},{x:42,z:121,kind:'pine'},{x:52,z:120,kind:'sakura'},
- // v357 lake west-bank wood - a dense mixed grove, not a line.
- {x:-64,z:56,kind:'broad'},{x:-67,z:60,kind:'palm'},{x:-62,z:63,kind:'sakura'},
- {x:-66,z:68,kind:'broad'},{x:-63,z:72,kind:'pine'},
- {x:-67,z:84,kind:'broad'},{x:-63,z:88,kind:'palm'},
- {x:-66,z:100,kind:'broad'},{x:-62,z:104,kind:'sakura'},
- // v357 lake east bank accents behind the angler chairs.
- {x:-12,z:58,kind:'sakura'},{x:-9,z:76,kind:'broad'},{x:-12,z:90,kind:'pine'},
+ // v358 (owner: "remove all pond-area trees except sakura"): the lake wood is cherries
+ // only - amatsu sakura from the native RO set - kept as a loose natural grouping.
+ {x:-64,z:56,kind:'sakura'},{x:-67,z:60,kind:'sakura'},{x:-62,z:63,kind:'sakura'},
+ {x:-66,z:68,kind:'sakura'},{x:-63,z:72,kind:'sakura'},
+ {x:-67,z:84,kind:'sakura'},{x:-63,z:88,kind:'sakura'},
+ {x:-66,z:100,kind:'sakura'},{x:-62,z:104,kind:'sakura'},
+ {x:-12,z:58,kind:'sakura'},{x:-9,z:76,kind:'sakura'},{x:-12,z:90,kind:'sakura'},
  // v357 formal sakura pair framing the great hall steps.
  {x:-10,z:-33,kind:'sakura'},{x:10,z:-33,kind:'sakura'},
  // v357 gym flank pair, west of the wing wall.

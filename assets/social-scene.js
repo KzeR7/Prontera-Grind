@@ -38,8 +38,8 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  // Source paving pixels are sampled from a padded native atlas tile. Push the
  // ground slightly back in depth so water stays solid even from distant views.
  paving.flipY=false;const tile=document.createElement('canvas');tile.width=tile.height=256;tile.getContext('2d').drawImage(paving.image,16,16,256,256,0,0,256,256);const stone=new T.CanvasTexture(tile);stone.wrapS=stone.wrapT=T.RepeatWrapping;stone.repeat.set(20*192/164,20*218/164);const ground=new T.Mesh(new T.PlaneGeometry(192,218),new T.MeshBasicMaterial({map:stone,color:0xe4e2cf,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2}));ground.rotation.x=-Math.PI/2;ground.position.set(14,-.02,27);scene.add(freeze(ground));
- const plazaTile=document.createElement('canvas');plazaTile.width=plazaTile.height=256;plazaTile.getContext('2d').drawImage(paving.image,16,304,256,256,0,0,256,256);const plazaTex=new T.CanvasTexture(plazaTile);plazaTex.wrapS=plazaTex.wrapT=T.RepeatWrapping;plazaTex.repeat.set(10,10);const plaza=new T.Mesh(new T.PlaneGeometry(62,62),new T.MeshBasicMaterial({map:plazaTex,color:0xe1d9c7}));plaza.rotation.x=-Math.PI/2;plaza.position.y=.005;scene.add(freeze(plaza));
- const roadTexture=plazaTex.clone();roadTexture.repeat.set(3,26*192/164);roadTexture.needsUpdate=true;const roadTextureSouth=plazaTex.clone();roadTextureSouth.repeat.set(3,26*218/164);roadTextureSouth.needsUpdate=true;const roadMat=new T.MeshBasicMaterial({map:roadTexture,color:0xe6dfcf}),roadMatSouth=new T.MeshBasicMaterial({map:roadTextureSouth,color:0xe6dfcf});for(const turn of [0,Math.PI/2]){const road=new T.Mesh(new T.PlaneGeometry(18,turn===0?218:192),turn===0?roadMatSouth:roadMat);road.rotation.x=-Math.PI/2;road.rotation.z=turn;road.position.set(turn===0?0:14,.001,turn===0?27:0);scene.add(freeze(road))}
+ const plazaTile=document.createElement('canvas');plazaTile.width=plazaTile.height=256;plazaTile.getContext('2d').drawImage(paving.image,16,304,256,256,0,0,256,256);const plazaTex=new T.CanvasTexture(plazaTile);plazaTex.wrapS=plazaTex.wrapT=T.RepeatWrapping;plazaTex.repeat.set(10,10);const plaza=new T.Mesh(new T.PlaneGeometry(62,62),new T.MeshBasicMaterial({map:plazaTex,color:0xe1d9c7}));plaza.rotation.x=-Math.PI/2;plaza.position.y=.01;scene.add(freeze(plaza));
+ const roadTexture=plazaTex.clone();roadTexture.repeat.set(3,26*192/164);roadTexture.needsUpdate=true;const roadTextureSouth=plazaTex.clone();roadTextureSouth.repeat.set(3,26*218/164);roadTextureSouth.needsUpdate=true;const roadMat=new T.MeshBasicMaterial({map:roadTexture,color:0xe6dfcf}),roadMatSouth=new T.MeshBasicMaterial({map:roadTextureSouth,color:0xe6dfcf});for(const turn of [0,Math.PI/2]){const road=new T.Mesh(new T.PlaneGeometry(18,turn===0?218:192),turn===0?roadMatSouth:roadMat);road.rotation.x=-Math.PI/2;road.rotation.z=turn;road.position.set(turn===0?0:14,turn===0?.001:.006,turn===0?27:0);scene.add(freeze(road))}
  model('fountain',0,0,10);
  for(const b of R.BUILDINGS)model(b.name,b.x,b.z,b.size,b.rotation||0);
  // Sanctuary: arranged south of the plaza from the owner's highlighted lawn.
@@ -150,15 +150,15 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  // two pennant strings cross the yard so the space reads as a designed gymnasium.
  const zoneMats={power:new T.MeshLambertMaterial({color:0xb0684f}),guard:new T.MeshLambertMaterial({color:0x5f7d95}),agility:new T.MeshLambertMaterial({color:0xc9a256}),focus:new T.MeshLambertMaterial({color:0x7d9a6a})};
  for(const [zx,zz,zw,zd,stat] of [[56.5,25.5,13,14.5,'power'],[63,22.6,10.6,8.8,'guard'],[75,26,10.6,11.6,'agility'],[86,25.6,10.6,13,'focus']]){
-  flat(new T.PlaneGeometry(zw,zd),zoneMats[stat],zx,zz,.0225).userData.gymZone=stat;
+  flat(new T.PlaneGeometry(zw,zd),zoneMats[stat],zx,zz,.034).userData.gymZone=stat;
   const y=.031;
   box(zx,y,zz-zd/2,zw+.24,.05,.16,cream);box(zx,y,zz+zd/2,zw+.24,.05,.16,cream);
   box(zx-zw/2,y,zz,.16,.05,zd,cream);box(zx+zw/2,y,zz,.16,.05,zd,cream);
  }
  // Entrance medallion: a painted roundel between the two wings.
- flat(new T.CircleGeometry(2.05,28),new T.MeshBasicMaterial({color:0xe7d6ab}),69,20.5,.024).userData.gymMedallion=true;
- flat(new T.RingGeometry(1.55,1.8,28),new T.MeshBasicMaterial({color:0x997954}),69,20.5,.0245);
- flat(new T.CircleGeometry(.55,20),new T.MeshBasicMaterial({color:0xb0684f}),69,20.5,.0245);
+ flat(new T.CircleGeometry(2.05,28),new T.MeshBasicMaterial({color:0xe7d6ab}),69,20.5,.042).userData.gymMedallion=true;
+ flat(new T.RingGeometry(1.55,1.8,28),new T.MeshBasicMaterial({color:0x997954}),69,20.5,.0445);
+ flat(new T.CircleGeometry(.55,20),new T.MeshBasicMaterial({color:0xb0684f}),69,20.5,.0445);
  // Stat banners on the court-facing wing walls.
  const bannerBar=new T.MeshLambertMaterial({color:0xb58a59});
  for(const [bx,bz,stat] of [[43.72,21,'power'],[43.72,25,'agility'],[43.72,29,'focus'],[94.28,21,'guard'],[94.28,25,'power'],[94.28,29,'agility']]){
@@ -574,10 +574,28 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
    const walking=!dead&&Math.hypot(pos.x-previous.x,pos.z-previous.z)>.015,attacking=!dead&&s.phase==='fighting'&&visualNow-u.attackStarted<360;let stance=dead?'faint':attacking?'attack':walking?'walking':'idle';if(!asset.record.actions[stance])stance='idle';
    const flash=!dead&&now-u.hitStarted<210?1+Math.floor((now-u.hitStarted)/70):0;
    const time=stance==='faint'?(asset.record.actions[stance].length-1)*50:stance==='attack'?Math.max(0,visualNow-u.attackStarted):visualNow,flip=target?target.x<pos.x:s.enemy,n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,6),key=[s.species,stance,n,flip,s.hp,s.label,flash].join(':');
-   if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.ctx.fillRect==='function'){const ctx=u.ctx;if(flash){ctx.fillStyle='rgba(255,96,72,.3)';ctx.fillRect(0,0,256,256)}ctx.fillStyle='rgba(28,35,30,.85)';ctx.fillRect(38,3,180,13);ctx.fillStyle=s.hp/s.maxHp>.35?'#9bd36d':'#e87868';ctx.fillRect(40,5,176*Math.max(0,Math.min(1,s.hp/Math.max(1,s.maxHp))),9);if(typeof ctx.fillText==='function'){ctx.fillStyle='rgba(12,24,22,.9)';ctx.fillRect(24,20,208,31);ctx.font='bold 22px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=s.boss?'#ffd98a':'#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,36,198)}}u.texture.needsUpdate=true;u.paint=key}
+   // v358 (owner, fourth report - the actual "pixel boxes"): every unit painted a big dark
+   // name-plate rectangle plus a fat HP bar onto its sprite, so the field read as floating
+   // boxes. Plates are gone: names are clean outlined text, and the health capsule is a
+   // slim rounded pill that only appears once a unit is actually hurt.
+   if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.fillText==='function'){const ctx=u.ctx;
+    const frac=Math.max(0,Math.min(1,s.hp/Math.max(1,s.maxHp)));
+    if(frac<.999){
+     const bw=132,bx=(256-bw)/2,by=13,bh=8;
+     const pill=(x,y,pw,ph,r)=>{if(typeof ctx.beginPath==='function'&&typeof ctx.roundRect==='function'){ctx.beginPath();ctx.roundRect(x,y,pw,ph,r);ctx.fill()}else if(typeof ctx.fillRect==='function')ctx.fillRect(x,y,pw,ph)};
+     ctx.fillStyle='rgba(14,20,16,.55)';pill(bx-3,by-3,bw+6,bh+6,(bh+6)/2);
+     ctx.fillStyle=frac>.35?'#8fca66':'#e07862';pill(bx,by,Math.max(bh,bw*frac),bh,bh/2);
+    }
+    ctx.font=(s.boss?'bold 20px':'600 17px')+' "Trebuchet MS",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    if(typeof ctx.strokeText==='function'){ctx.strokeStyle='rgba(10,14,10,.85)';ctx.lineWidth=4;ctx.strokeText(String(s.label).slice(0,25),128,frac<.999?36:22,198)}
+    ctx.fillStyle=s.boss?'#ffd98a':s.enemy?'#f3e6c8':'#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,frac<.999?36:22,198);
+   }u.texture.needsUpdate=true;u.paint=key}
    let drawX=pos.x,drawZ=pos.z;if(stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1,lunge=Math.sin(Math.min(1,(visualNow-u.attackStarted)/360)*Math.PI)*(u.ranged?.12:.5);drawX+=dx/length*lunge;drawZ+=dz/length*lunge}
    if(now<u.shakeUntil){const amp=u.shakeAmp*Math.max(0,(u.shakeUntil-now)/(u.shakeAmp>.15?260:150));drawX+=(battleHash('sx:'+s.key+':'+Math.floor(now/40))-.5)*2*amp;drawZ+=(battleHash('sz:'+s.key+':'+Math.floor(now/40))-.5)*2*amp}
-   const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(s.species)||1)*(s.boss?1.5:1);u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(drawX,.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),drawZ);u.ring.position.set(pos.x,.08+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),pos.z);u.ring.scale.setScalar((s.boss?1.5:1)*(1+.08*Math.sin(now/180)));u.ring.material.color.setHex(s.boss?0xe8a54a:s.kind==='pvp'?0xf3c876:0x9ed6b0);u.sprite.userData.battleWalking=walking;u.sprite.userData.battleRanged=u.ranged;u.sprite.userData.battleBoss=!!s.boss;
+   const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(s.species)||1)*(s.boss?1.5:1);u.sprite.scale.set(256*h/96,256*h/96,1);
+   // Hit flash tints the sprite material itself - nothing rectangular is ever painted onto
+   // the unit canvas (the old full-canvas red fillRect read as a flashing box).
+   u.sprite.material.color.setHex(flash?(flash>2?0xff8f7c:flash>1?0xffa08e:0xffb2a2):0xffffff);u.sprite.position.set(drawX,.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),drawZ);u.ring.position.set(pos.x,.08+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),pos.z);u.ring.scale.setScalar((s.boss?1.5:1)*(1+.08*Math.sin(now/180)));u.ring.material.color.setHex(s.boss?0xe8a54a:s.kind==='pvp'?0xf3c876:0x9ed6b0);u.sprite.userData.battleWalking=walking;u.sprite.userData.battleRanged=u.ranged;u.sprite.userData.battleBoss=!!s.boss;
    // After-images trail a lunging brawler: ghost sprites share the live canvas texture,
    // so they echo whatever frame the unit has painted without any extra draw work.
    if(!u.ranged&&!u.ghosts){u.ghosts=[.3,.15].map(o=>{const g=new T.Sprite(new T.SpriteMaterial({map:u.texture,transparent:true,opacity:o,depthWrite:false,alphaTest:.02}));g.center.copy(u.sprite.center);g.userData.battleGhost=true;g.visible=false;scene.add(g);return g})}
@@ -648,16 +666,16 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  // entries from the shared rules render as their own RO species (v357).
  for(const t of R.SANCTUARY_TREES){
   const src=t.kind&&species[t.kind];
-  const tree=src?model('tree',t.x,t.z,5.4+treeHash(t.x,t.z,1)*2.4,treeHash(t.x,t.z,2)*Math.PI*2,src.map,src.floats,src.mat)
+  // v358: each species gets its own size band - firs run tall and narrow, cherries stay
+  // small and airy with wider spread, palms and broadleafs sit between - so a mixed
+  // grove reads as grown rather than stamped from one scale.
+  const band=t.kind==='pine'?[6,8.6]:t.kind==='sakura'?[4.4,6.9]:t.kind==='palm'?[5.6,7.4]:[5.6,8];
+  const tree=src?model('tree',t.x,t.z,band[0]+treeHash(t.x,t.z,1)*(band[1]-band[0]),treeHash(t.x,t.z,2)*Math.PI*2,src.map,src.floats,src.mat)
    :model('tree2',t.x,t.z,6.8,0,garden,gardenFloats,gardenMat);
   tree.userData.sanctuaryTree=true;if(t.kind)tree.userData.treeKind=t.kind;if(t.behindGym)tree.userData.nativeGymTree=true;
  }
- // v357 (owner: "the grind-field details were wrong"): the procedural clutter - painted
- // circuit, dummies, scarecrow, hay, trough and pennants - is removed. The field stays a
- // clean wild training ground; its dressing is a few native prontera stumps set outside
- // the fence, clear of the battle area and the viewing benches.
- for(const [x,z,sz] of [[45.5,44.6,3],[94.5,44.6,3.2],[42.5,60,2.8],[97.5,70,3],[43,77,2.9],[96.5,78,3.1]])
-  model('stump',x,z,sz,(x*13.7+z*7.3)%6.283,garden,gardenFloats,gardenMat).userData.sanctuaryFieldEdge=true;
+ // v358 (owner: "remove the dead trees around the pve grind area"): the field-edge stumps
+ // are gone too. The grind ground stays completely clear around its fence.
  // Small native shrubs fill the outside edge without sealing any of the field gates.
  const sanctuaryShrubs=makeBatch();for(const [x,z] of [[98,20],[98,32],[98,48],[98,64],[98,78],[98,93],[98,113],[96,124],[89,124],[83,124],[19,112],[27,109],[13,89]])pushModel(sanctuaryShrubs,'shrub',x,z,2.1,0,garden,gardenFloats);addBatch(sanctuaryShrubs,gardenMat);
 
@@ -1395,11 +1413,26 @@ void main(){
   return {api,update};
  })();
  // 12 physical metal park benches, each split into 2 side-by-side seat targets (24 seats total).
+ // v358 (owner: "why metal chairs around the boxing area?"): the plaza keeps its metal
+ // frames, but every viewing bench - the ring stands, the gym court and the field fence -
+ // is a wooden park bench in the town palette, with a generous click pad so a tap
+ // anywhere near the seat sits you.
+ const viewWoodMat=new T.MeshLambertMaterial({color:0x7d5c3b}),viewWoodDark=new T.MeshLambertMaterial({color:0x54402a});
  const benches=(R.BENCHES||R.SEATS).map(b=>{
-  const mesh=model('bench',b.x,b.z,b.size,b.rotation);
+  let mesh;
+  if(Number.isInteger(b.id)&&b.id>=16){
+   const g=new T.Group();g.position.set(b.x,0,b.z);g.rotation.y=b.rotation||0;
+   const put=(w,h,d,mat,x,y,z)=>{const m=new T.Mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);g.add(m);return m};
+   for(const lx of [-1.5,1.5])for(const lz of [-.36,.36])put(.14,.52,.14,viewWoodDark,lx,.26,lz);
+   for(const lz of [-.3,0,.3])put(3.25,.09,.27,viewWoodMat,0,.54,lz);
+   for(const lx of [-1.5,1.5])put(.13,.6,.13,viewWoodDark,lx,.82,-.42);
+   for(const ly of [.74,.98])put(3.25,.15,.07,viewWoodMat,0,ly,-.46);
+   put(3.25,.07,.34,viewWoodDark,0,.6,0);
+   scene.add(freeze(g));mesh=g;
+  }else mesh=model('bench',b.x,b.z,b.size,b.rotation);
   mesh.userData.bench=b.id;
   mesh.userData.seat=Array.isArray(b.seats)?b.seats[0]:b.id;
-  mesh.userData.seatBounds=new T.Box3().setFromObject(mesh).expandByScalar(.25);
+  mesh.userData.seatBounds=new T.Box3().setFromObject(mesh).expandByScalar(b.id>=16?.45:.25);
   return mesh;
  });
  const seatTargets=R.BENCHES?benches.flatMap(mesh=>{

@@ -49,10 +49,15 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const kinded=w.PGSocialRules.SANCTUARY_TREES.filter(t=>t.kind);
  assert(kinded.length>=18,'shared rules carry mixed-species tree spots');
  const kinds=new Set(scene.scene.children.filter(o=>o.userData.treeKind).map(o=>o.userData.treeKind));
- for(const k of ['pine','palm','broad','sakura'])assert(kinds.has(k),k+' species is rendered from the native RO sets');
+ // v358: the pond wood is cherries only, so morocc palms are no longer placed anywhere;
+ // the three remaining species still render from the native RO sets.
+ for(const k of ['pine','broad','sakura'])assert(kinds.has(k),k+' species is rendered from the native RO sets');
+ assert(!kinds.has('palm'),'the pond wood carries no palms after the sakura-only pass');
  assert(scene.scene.children.filter(o=>o.userData.treeKind).every(o=>o.isMesh&&o.geometry.type==='BufferGeometry'),'species trees use native three-dimensional field geometry');
  assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryTree).length,w.PGSocialRules.SANCTUARY_TREES.length,'every shared tree renders, native or species');
- assert(scene.scene.children.some(o=>o.userData.sanctuaryFieldEdge),'field-edge stumps replace the removed grind-field clutter');
+ // v358 (owner: "remove the dead trees/stumps around the pve grind area"): no stumps remain
+ // anywhere in the sanctuary.
+ assert(!scene.scene.children.some(o=>o.userData.sanctuaryFieldEdge),'no field-edge stumps remain around the grind field');
  assert(!scene.scene.children.some(o=>o.userData.sanctuaryTrack||o.userData.sanctuaryScarecrow||o.userData.sanctuaryPennant),'the painted circuit, scarecrow and pennants are gone');
  assert(scene.scene.children.some(o=>o.userData.ringRunner),'the west stair mouth wears a runner: the one way onto the ring');
  assert(scene.scene.children.some(o=>o.userData.ringPad==='red'&&o.position.x>68)&&scene.scene.children.some(o=>o.userData.ringPad==='blue'&&o.position.x<68),'ring has red and blue corner pads');
@@ -132,6 +137,25 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  scene.putPlayer({id:2,name:'Buddy',x:w.PGSocialRules.SEATS[10].x,z:w.PGSocialRules.SEATS[10].z,dir:0,sit:true,seat:10,path:[],look:state.look});
  clickAt(leftPt);assert.equal(selectedSeat,11,'clicking occupied bench half auto-picks free partner seat on same bench');
  scene.removePlayer(2);
+ // v358 (owner: "benches cant sit on"): the ring-side viewing benches are wooden and their
+ // whole seat answers a click, proving the sit path end to end.
+ {
+  const wooden=scene.scene.children.find(o=>o.userData.bench===16);
+  assert(wooden,'viewing bench 16 renders');
+  assert.equal(wooden.type,'Group','the viewing bench is a built wooden group, not the metal model');
+  const mats=new Set(wooden.children.map(m=>m.material&&m.material.color&&m.material.color.getHexString()));
+  assert(mats.has('7d5c3b')&&mats.has('54402a'),'the viewing bench uses weathered wood tones');
+  assert(wooden.children.length>=9,'the bench has legs, seat slats and a backrest');
+  const wb=w.PGSocialRules.BENCHES.find(b=>b.id===16),wc=wooden.userData.seatBounds.getCenter(new T.Vector3());
+  const wLeft=new T.Vector3(wc.x-.9,wc.y,wc.z).project(scene.camera),wRight=new T.Vector3(wc.x+.9,wc.y,wc.z).project(scene.camera);
+  clickAt(wLeft);assert.equal(selectedSeat,wb.seats[0],'clicking the wooden viewing bench selects its first seat');
+  scene.putPlayer({id:2,name:'Viewer',x:w.PGSocialRules.SEATS[wb.seats[0]].x,z:w.PGSocialRules.SEATS[wb.seats[0]].z,dir:0,sit:true,seat:wb.seats[0],path:[],look:state.look});
+  frame(now+=100);
+  const viewer=scene.scene.children.find(o=>o.userData.socialId===2);
+  assert.equal(viewer.position.y,.95,'a trainer sits down on the wooden viewing bench');
+  scene.removePlayer(2);
+  clickAt(wRight);assert.equal(selectedSeat,wb.seats[1],'the padded click pad reaches the second seat too');
+ }
  scene.putPlayer({...state,x:w.PGSocialRules.SEATS[0].x,z:w.PGSocialRules.SEATS[0].z,sit:true,seat:0});
  scene.putPlayer({id:2,name:'Buddy',x:w.PGSocialRules.SEATS[1].x,z:w.PGSocialRules.SEATS[1].z,dir:0,sit:true,seat:1,path:[],look:state.look});
  frame(now+=100);

@@ -113,10 +113,10 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert(modal.hidden,'the big map starts closed');
   mini.click();assert(!modal.hidden,'clicking the mini-map opens the big map');
   w.document.getElementById('socialMapClose').click();assert(modal.hidden,'the big map closes');
-  // v357: the music bar shows itself when the hub opens; the button still toggles it away and back.
-  assert(!mount.hidden,'the music player bar is visible once the hub is open');
-  w.document.getElementById('socialBgmBtn').click();assert(mount.hidden&&w.document.getElementById('socialBgmBtn').getAttribute('aria-pressed')==='false','the Music button hides the player bar');
-  w.document.getElementById('socialBgmBtn').click();assert(!mount.hidden,'the Music button toggles the player bar back on');
+  // v358: the music bar stays closed until the Music button opens it (no auto-show at the top).
+  assert(mount.hidden&&w.document.getElementById('socialBgmBtn').getAttribute('aria-pressed')==='false','the music player bar starts hidden');
+  w.document.getElementById('socialBgmBtn').click();assert(!mount.hidden,'the Music button opens the player bar');
+  w.document.getElementById('socialBgmBtn').click();assert(mount.hidden,'the Music button hides the player bar again');
   // A drawable stub canvas proves the painter covers the shared geometry and every live player.
   const ops=[];let fill=0;
   const ctx=new Proxy({fillRect(){ops.push('rect')},strokeRect(){ops.push('rect')},arc(){ops.push('arc')},beginPath(){ops.push('begin')},moveTo(){},lineTo(){},closePath(){},fill(){fill++},stroke(){},clearRect(){},setLineDash(){},fillText(t){ops.push('text:'+t)},strokeText(){}},{get:(t,k)=>k in t?t[k]:()=>{}});
@@ -133,13 +133,19 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  // mode explains that both need an online plaza.
  {
   const btn=w.document.getElementById('socialPartyBtn'),pvpBtn=w.document.getElementById('socialPvpBtn'),panel=w.document.getElementById('socialPartyPanel');
-  assert(btn&&panel,'the Grind button and panel exist');
-  assert(pvpBtn,'the PvP lobby button exists');
+  // v358: one Party button replaces the separate Grind and PvP buttons; the panel keeps a
+  // single inner tab strip and no second header strip.
+  assert(btn&&panel,'the Party button and panel exist');
+  assert(!pvpBtn,'the separate PvP button is gone');
+  assert.match(btn.textContent,/party/i,'the button is labelled Party');
+  assert(!w.document.getElementById('socialPartyTabPve')&&!w.document.getElementById('socialPartyTabPvp'),'no header tab strip duplicates the inner one');
   assert(panel.hidden,'the party panel starts closed');
-  btn.click();assert(!panel.hidden,'the Grind button opens the panel on the PvE tab');
+  btn.click();assert(!panel.hidden,'the Party button opens the panel');
   assert.match(w.document.getElementById('socialPartyBody').textContent,/GRIND PARTY/i,'the PvE tab is shown first');
-  pvpBtn.click();assert(!panel.hidden,'the PvP button keeps the panel open');
-  assert.match(w.document.getElementById('socialPartyBody').textContent,/PVP RING LOBBY/i,'the PvP button switches to the ring lobby tab');
+  const tabs=w.document.querySelectorAll('#socialPartyBody [data-party-tab]');
+  assert.equal(tabs.length,2,'the inner tab strip carries both sections');
+  tabs[1].click();assert(!panel.hidden,'switching tabs keeps the panel open');
+  assert.match(w.document.getElementById('socialPartyBody').textContent,/PVP RING LOBBY/i,'the ring lobby tab renders');
   assert(!/GRIND PARTY ·/.test(w.document.getElementById('socialPartyBody').textContent),'only one tab renders at a time');
   assert.match(w.document.getElementById('socialPartyBody').textContent,/online plaza/i,'solo mode explains the online requirement');
   w.document.getElementById('socialPartyClose').click();assert(panel.hidden,'the party panel closes');
