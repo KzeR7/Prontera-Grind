@@ -1142,7 +1142,7 @@ function stopSoloPve(reason='stopped',notify=true){
 function tickSoloPve(){
  const run=soloPve;if(!run)return;if(!soloPractice()||typeof S!=='object'||S!==run.localOwner||run.localAccount!==(typeof currentUser==='string'?currentUser:null)){stopSoloPve('stopped',false);return}
  const result=globalThis.PGDigimonBattle?.stepPve(run,Date.now());if(!result)return;let end='';
- for(const event of result.events){if(event.type==='wave_clear')receiveBattleReward({local:true,kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});if(event.type==='end')end=event.reason}
+ for(const event of result.events){if(event.type==='wave_clear')receiveBattleReward({local:true,kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});if(event.type==='hit')app.scene?.battleEvent?.({kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit});if(event.type==='end')end=event.reason}
  if(end)stopSoloPve(end);else syncSoloBattle();
 }
 function startPve(){
@@ -1424,6 +1424,7 @@ $id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick
 const socialHubBtn=$id('socialHubBtn');if(socialHubBtn)socialHubBtn.onclick=()=>enter();syncHubButton();$id('socialSit').onclick=toggleSit;
 function receive(m){
  if(m.type==='battle'){battleSnapshot(m);return}
+ if(m.type==='battle_fx'){app.scene?.battleEvent?.(m);return}
  if(m.type==='battle_reward'){receiveBattleReward(m);return}
  if(m.type==='battle_result'){receiveBattleResult(m);return}
  if(m.type==='battle_error'){app.battleIntent=null;battleOffer=null;renderPvpDialog();worldNotice(m.message||'DigiPet battle action failed.');return}

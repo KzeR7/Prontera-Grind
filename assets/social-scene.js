@@ -286,6 +286,86 @@ window.PGSocialScene={async create(host,labels,callbacks){
    if(t>=1){scene.remove(shot.mesh);shot.mesh.geometry.dispose();shot.mesh.material.dispose();battleShots.splice(i,1);continue}
    shot.mesh.position.set(shot.fromX+(shot.toX-shot.fromX)*t,.55,shot.fromZ+(shot.toZ-shot.fromZ)*t);
    shot.mesh.scale.setScalar(.8+.45*Math.sin(Math.PI*t));
+   // A short pixel spark trail behind each travelling shot.
+   if(now-(shot.sparkAt||0)>85){shot.sparkAt=now;spawnBattleBurst(shot.mesh.position.x,shot.mesh.position.z,shot.mesh.material.color.getHex(),1,.12,.07,240)}
+  }
+ }
+ // ---------- v352 full-pixel battle FX ----------
+ // Presentation only, and purely event-driven: the room (or the local solo loop) reports each
+ // landed strike with its amount and crit flag, and the scene answers with readable pixel
+ // feedback — burst particles, a floating damage number, a contact freeze and a shake on the
+ // defender. Nothing here reads or touches authoritative combat state.
+ const battleBursts=[],battlePopups=[],battleWaves=[];let burstTexture=null;
+ function burstTex(){
+  if(!burstTexture){const c=document.createElement('canvas');c.width=c.height=8;const x=c.getContext('2d');
+   if(x&&typeof x.fillRect==='function'){x.fillStyle='#fff';x.fillRect(1,1,6,6);x.fillStyle='rgba(255,255,255,.5)';x.fillRect(0,2,8,4);x.fillRect(2,0,4,8)}
+   burstTexture=new T.CanvasTexture(c);burstTexture.magFilter=burstTexture.minFilter=T.NearestFilter;burstTexture.generateMipmaps=false}
+  return burstTexture;
+ }
+ function spawnBattleBurst(x,z,color,count,speed=.9,size=.11,dur=320){
+  if(battleBursts.length>64)return;
+  for(let i=0;i<count;i++){
+   const mesh=new T.Sprite(new T.SpriteMaterial({map:burstTex(),color,transparent:true,depthWrite:false}));
+   const a=battleHash('burst:'+i+':'+x.toFixed(2)+':'+z.toFixed(2))*Math.PI*2,r=(.55+battleHash('br:'+i+':'+z.toFixed(2))* .45)*speed;
+   mesh.position.set(x,.55,z);mesh.scale.setScalar(size*(.6+battleHash('bs:'+i+':'+x.toFixed(2))*.8));
+   mesh.userData.battleBurst=true;scene.add(mesh);
+   battleBursts.push({mesh,vx:Math.cos(a)*r,vy:.9+battleHash('by:'+i+':'+x.toFixed(2))*1.2,vz:Math.sin(a)*r,at:clock,dur,last:clock});
+  }
+ }
+ function spawnBattleShockwave(x,z,color=0xffd98a,dur=460){
+  if(battleWaves.length>12)return;
+  const ring=new T.Mesh(new T.RingGeometry(.5,.66,26),new T.MeshBasicMaterial({color,transparent:true,opacity:.95,side:T.DoubleSide,depthWrite:false}));
+  ring.rotation.x=-Math.PI/2;ring.position.set(x,.14,z);ring.userData.battleShockwave=true;scene.add(ring);
+  battleWaves.push({mesh:ring,at:clock,dur});
+ }
+ function spawnBattlePopup(x,z,amount,crit=false,tint='#fff6e0'){
+  const value=Math.max(0,Math.round(Number(amount)||0));
+  if(battlePopups.length>=24||value<=0)return;
+  const text=crit?value+'!':String(value);
+  const canvas=document.createElement('canvas');canvas.width=128;canvas.height=64;
+  const ctx=canvas.getContext('2d');
+  if(ctx&&typeof ctx.fillText==='function'){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold '+(crit?40:32)+'px "Courier New",monospace';
+   ctx.fillStyle='rgba(16,22,20,.92)';for(const [ox,oz] of [[2,0],[-2,0],[0,2],[0,-2]])ctx.fillText(String(text),64+ox,34+oz);
+   ctx.fillStyle=crit?'#ffd98a':tint;ctx.fillText(String(text),64,34);
+   if(crit){ctx.font='bold 13px "Courier New",monospace';ctx.fillStyle='#ffd98a';ctx.fillText('CRIT',64,56)}}
+  const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
+  const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthWrite:false}));
+  sprite.center.set(.5,.5);sprite.position.set(x+(battleHash('pop:'+text+':'+z.toFixed(2))-.5)*.7,1.55,z);
+  sprite.userData.battlePopup=true;sprite.userData.battlePopupText=String(text);sprite.userData.battlePopupCrit=!!crit;
+  scene.add(sprite);battlePopups.push({mesh:sprite,at:clock,dur:crit?840:680,crit});
+ }
+ function battleEvent(ev){
+  if(!ev||typeof ev!=='object')return false;
+  const kind=ev.kind==='pvp'?'pvp':'pve',unit=battleResidents.get(kind+':'+ev.battleId+':'+ev.to);
+  if(!unit)return false;
+  const p=unit.sprite.position,crit=!!ev.crit,amount=Math.max(0,Math.round(Number(ev.amount)||0));
+  // Contact freeze + shake live on the defender; both are purely visual timers.
+  unit.shakeUntil=clock+(crit?260:150);unit.shakeAmp=crit?.22:.11;
+  if(crit){unit.hitStopUntil=clock+90;unit.hitStopClock=clock}
+  spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff2df,crit?12:7,crit?1.3:.9,crit?.16:.1,crit?380:300);
+  if(crit)spawnBattleShockwave(p.x,p.z);
+  if(amount>0)spawnBattlePopup(p.x,p.z,amount,crit,unit.spec.enemy?'#fff6e0':'#ff9c86');
+  return true;
+ }
+ function updateBattleFx(now){
+  for(let i=battleBursts.length-1;i>=0;i--){const b=battleBursts[i],t=(now-b.at)/b.dur;
+   if(t>=1){scene.remove(b.mesh);b.mesh.material.dispose();battleBursts.splice(i,1);continue}
+   const dt=Math.min(.05,(now-b.last)/1000);b.last=now;
+   b.vy-=4.4*dt;b.mesh.position.x+=b.vx*dt;b.mesh.position.z+=b.vz*dt;
+   b.mesh.position.y=Math.max(.12,b.mesh.position.y+b.vy*dt);
+   b.mesh.material.opacity=Math.max(0,1-t*t);
+  }
+  for(let i=battlePopups.length-1;i>=0;i--){const pop=battlePopups[i],t=(now-pop.at)/pop.dur;
+   if(t>=1){scene.remove(pop.mesh);pop.mesh.material.map.dispose();pop.mesh.material.dispose();battlePopups.splice(i,1);continue}
+   const popIn=t<.16?.6+2.5*t:1;
+   pop.mesh.position.y=1.55+.85*t;
+   pop.mesh.scale.set(pop.crit?1.5:1.2,.75*(pop.crit?1.5:1.2),1);
+   pop.mesh.scale.multiplyScalar(popIn);
+   pop.mesh.material.opacity=t>.62?Math.max(0,1-(t-.62)/.38):1;
+  }
+  for(let i=battleWaves.length-1;i>=0;i--){const w=battleWaves[i],t=(now-w.at)/w.dur;
+   if(t>=1){scene.remove(w.mesh);w.mesh.geometry.dispose();w.mesh.material.dispose();battleWaves.splice(i,1);continue}
+   w.mesh.scale.setScalar(1+t*4.6);w.mesh.material.opacity=Math.max(0,.95*(1-t));
   }
  }
  function battleSpecs(){
@@ -315,9 +395,9 @@ window.PGSocialScene={async create(host,labels,callbacks){
   for(const run of battleState.pve)if(Number.isInteger(run.owner))battleParticipantIds.add(run.owner);
   for(const p of battleState.pvp?.participants||[])if(Number.isInteger(p.id))battleParticipantIds.add(p.id);
   const keep=new Set();for(const spec of battleSpecs()){
-   keep.add(spec.key);let u=battleResidents.get(spec.key);if(!u){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const ring=new T.Mesh(new T.RingGeometry(.8,1,24),new T.MeshBasicMaterial({color:spec.kind==='pvp'?0xf3c876:0x9ed6b0,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;scene.add(ring);const spawn=battleSpawn(spec),lastMove=performance.now();sprite.position.set(spawn.x,.06,spawn.z);u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec,spawn,lastMove,lastAttack:spec.attackAt,attackStarted:-Infinity,lastHit:spec.hitAt,hitStarted:-Infinity,ranged:false};battleResidents.set(spec.key,u)}u.spec=spec;u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;u.sprite.userData.battleRole=spec.role;u.sprite.userData.battleName=spec.label;u.sprite.userData.battleSpawn={...u.spawn};digimonStore?.request(spec.species);
+   keep.add(spec.key);let u=battleResidents.get(spec.key);if(!u){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const ring=new T.Mesh(new T.RingGeometry(.8,1,24),new T.MeshBasicMaterial({color:spec.kind==='pvp'?0xf3c876:0x9ed6b0,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;scene.add(ring);const spawn=battleSpawn(spec),lastMove=performance.now();sprite.position.set(spawn.x,.06,spawn.z);u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec,spawn,lastMove,lastAttack:spec.attackAt,attackStarted:-Infinity,lastHit:spec.hitAt,hitStarted:-Infinity,ranged:false,shakeUntil:0,shakeAmp:0,hitStopUntil:0,hitStopClock:0,fainted:false,ghosts:null};battleResidents.set(spec.key,u)}u.spec=spec;u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;u.sprite.userData.battleRole=spec.role;u.sprite.userData.battleName=spec.label;u.sprite.userData.battleSpawn={...u.spawn};digimonStore?.request(spec.species);
   }
-  for(const [key,u] of battleResidents)if(!keep.has(key)){scene.remove(u.sprite,u.ring);u.sprite.material.dispose();u.texture.dispose();u.ring.geometry.dispose();u.ring.material.dispose();battleResidents.delete(key)}
+  for(const [key,u] of battleResidents)if(!keep.has(key)){scene.remove(u.sprite,u.ring);if(u.ghosts)for(const g of u.ghosts)scene.remove(g);u.sprite.material.dispose();u.texture.dispose();u.ring.geometry.dispose();u.ring.material.dispose();battleResidents.delete(key)}
   for(const r of residents)r.sprite.visible=!battleState.pve.length;
  }
  function battleTravel(unit,now){const elapsed=Math.max(0,Math.min(.5,(now-(unit.lastMove??now))/1000));unit.lastMove=now;return elapsed*BATTLE_RUN_SPEED}
@@ -347,15 +427,29 @@ window.PGSocialScene={async create(host,labels,callbacks){
   for(const u of battleResidents.values()){
    const s=u.spec,asset=digimonStore?.ready(s.species);u.sprite.visible=!!asset;u.ring.visible=!!asset;if(!asset){digimonStore?.request(s.species);continue}
    const dead=s.hp<=0||(s.kind==='pvp'&&s.phase==='result'&&s.winnerId!=null&&s.winnerId!==s.owner),previous={x:u.sprite.position.x,z:u.sprite.position.z};let pos=positions.get(s.key)||previous;if(dead||s.phase!=='fighting')pos=previous;const target=targets.get(s.key);u.ranged=unitRange(s.species).ranged;
+   // Faint dust: a small pixel puff when a unit drops, and a golden burst plus shockwave for bosses.
+   if(dead&&!u.fainted){u.fainted=true;if(s.boss){spawnBattleBurst(pos.x,pos.z,0xffd98a,16,1.35,.17,520);spawnBattleShockwave(pos.x,pos.z,0xffd98a,560)}else spawnBattleBurst(pos.x,pos.z,0xd8d2c4,8,.8,.09,360)}
+   else if(!dead)u.fainted=false;
+   // Crit contact freeze: while frozen the paint clock stands still, so the defender holds
+   // its exact frame for a beat without repainting.
+   const visualNow=now<u.hitStopUntil?u.hitStopClock:now;
    if(s.attackAt!==u.lastAttack){u.lastAttack=s.attackAt;u.attackStarted=now;if(u.ranged&&target&&!dead&&s.phase==='fighting')spawnBattleShot(pos,target,now,s.boss,s.enemy)}
    if(s.hitAt!==u.lastHit){u.lastHit=s.hitAt;u.hitStarted=now}
-   const walking=!dead&&Math.hypot(pos.x-previous.x,pos.z-previous.z)>.015,attacking=!dead&&s.phase==='fighting'&&now-u.attackStarted<360;let stance=dead?'faint':attacking?'attack':walking?'walking':'idle';if(!asset.record.actions[stance])stance='idle';
+   const walking=!dead&&Math.hypot(pos.x-previous.x,pos.z-previous.z)>.015,attacking=!dead&&s.phase==='fighting'&&visualNow-u.attackStarted<360;let stance=dead?'faint':attacking?'attack':walking?'walking':'idle';if(!asset.record.actions[stance])stance='idle';
    const flash=!dead&&now-u.hitStarted<210?1+Math.floor((now-u.hitStarted)/70):0;
-   const time=stance==='faint'?(asset.record.actions[stance].length-1)*50:stance==='attack'?Math.max(0,now-u.attackStarted):now,flip=target?target.x<pos.x:s.enemy,n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,6),key=[s.species,stance,n,flip,s.hp,s.label,flash].join(':');
+   const time=stance==='faint'?(asset.record.actions[stance].length-1)*50:stance==='attack'?Math.max(0,visualNow-u.attackStarted):visualNow,flip=target?target.x<pos.x:s.enemy,n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,6),key=[s.species,stance,n,flip,s.hp,s.label,flash].join(':');
    if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.ctx.fillRect==='function'){const ctx=u.ctx;if(flash){ctx.fillStyle='rgba(255,96,72,.3)';ctx.fillRect(0,0,256,256)}ctx.fillStyle='rgba(28,35,30,.85)';ctx.fillRect(38,3,180,13);ctx.fillStyle=s.hp/s.maxHp>.35?'#9bd36d':'#e87868';ctx.fillRect(40,5,176*Math.max(0,Math.min(1,s.hp/Math.max(1,s.maxHp))),9);if(typeof ctx.fillText==='function'){ctx.fillStyle='rgba(12,24,22,.9)';ctx.fillRect(24,20,208,31);ctx.font='bold 22px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=s.boss?'#ffd98a':'#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,36,198)}}u.texture.needsUpdate=true;u.paint=key}
-   let drawX=pos.x,drawZ=pos.z;if(stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1,lunge=Math.sin(Math.min(1,(now-u.attackStarted)/360)*Math.PI)*(u.ranged?.12:.5);drawX+=dx/length*lunge;drawZ+=dz/length*lunge}const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(s.species)||1)*(s.boss?1.5:1);u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(drawX,.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),drawZ);u.ring.position.set(pos.x,.08+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),pos.z);u.ring.scale.setScalar((s.boss?1.5:1)*(1+.08*Math.sin(now/180)));u.ring.material.color.setHex(s.boss?0xe8a54a:s.kind==='pvp'?0xf3c876:0x9ed6b0);u.sprite.userData.battleWalking=walking;u.sprite.userData.battleRanged=u.ranged;u.sprite.userData.battleBoss=!!s.boss;
+   let drawX=pos.x,drawZ=pos.z;if(stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1,lunge=Math.sin(Math.min(1,(visualNow-u.attackStarted)/360)*Math.PI)*(u.ranged?.12:.5);drawX+=dx/length*lunge;drawZ+=dz/length*lunge}
+   if(now<u.shakeUntil){const amp=u.shakeAmp*Math.max(0,(u.shakeUntil-now)/(u.shakeAmp>.15?260:150));drawX+=(battleHash('sx:'+s.key+':'+Math.floor(now/40))-.5)*2*amp;drawZ+=(battleHash('sz:'+s.key+':'+Math.floor(now/40))-.5)*2*amp}
+   const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(s.species)||1)*(s.boss?1.5:1);u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(drawX,.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),drawZ);u.ring.position.set(pos.x,.08+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),pos.z);u.ring.scale.setScalar((s.boss?1.5:1)*(1+.08*Math.sin(now/180)));u.ring.material.color.setHex(s.boss?0xe8a54a:s.kind==='pvp'?0xf3c876:0x9ed6b0);u.sprite.userData.battleWalking=walking;u.sprite.userData.battleRanged=u.ranged;u.sprite.userData.battleBoss=!!s.boss;
+   // After-images trail a lunging brawler: ghost sprites share the live canvas texture,
+   // so they echo whatever frame the unit has painted without any extra draw work.
+   if(!u.ranged&&!u.ghosts){u.ghosts=[.3,.15].map(o=>{const g=new T.Sprite(new T.SpriteMaterial({map:u.texture,transparent:true,opacity:o,depthWrite:false,alphaTest:.02}));g.center.copy(u.sprite.center);g.userData.battleGhost=true;g.visible=false;scene.add(g);return g})}
+   if(u.ghosts){const gdx=drawX-pos.x,gdz=drawZ-pos.z,gmag=Math.hypot(gdx,gdz),gy=.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0);
+    for(const [i,g] of u.ghosts.entries()){const back=(i+1)/(u.ghosts.length+1);g.visible=!u.ranged&&stance==='attack'&&gmag>.12;g.scale.copy(u.sprite.scale);g.position.set(pos.x+gdx*(1-back),gy,pos.z+gdz*(1-back))}}
   }
   updateBattleShots(now);
+  updateBattleFx(now);
  }
  // Training pets are independent world sprites, not followers anchored to their
  // owners. The room assigns each one an apparatus; the client only animates it.
@@ -1488,6 +1582,6 @@ void main(){
   }else if(p.bubbleUntil){p.bubbleUntil=0;p.bhid=true;p.bubble.hidden=true;p.bubble.replaceChildren()}
  }
  renderer.render(scene,camera)}requestAnimationFrame(frame);
- return {putPlayer,removePlayer,setGymResidents,setBattleState,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
+ return {putPlayer,removePlayer,setGymResidents,setBattleState,battleEvent,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
  }catch(error){renderer.dispose();renderer.domElement.remove();throw error}
 }};

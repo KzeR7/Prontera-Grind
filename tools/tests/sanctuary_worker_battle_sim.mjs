@@ -50,6 +50,10 @@ try{
  assert(bossRun.partner.hp>0,'the partner is still fighting through its first stage');
  const bossReward=await until(c.messages,m=>m.type==='battle_reward'&&m.wave===5,'boss wave reward',90000);
  assert.equal(bossReward.reward.wins,2,'a boss kill settles double wins');assert.ok(bossReward.reward.coins>=30+2*8,'boss coins beat any normal wave');
+ // v352: real WebSocket clients receive the strike FX stream alongside the snapshots.
+ const fx=c.messages.filter(m=>m.type==='battle_fx');
+ assert(fx.length>=3,'strikes stream as FX events over the socket');assert(fx.every(m=>m.kind==='pve'&&typeof m.battleId==='string'&&Number.isInteger(m.amount)&&typeof m.crit==='boolean'),'socket FX events stay presentation-only');
+ assert(a.messages.some(m=>m.type==='battle_fx'),'the ring PvP match streamed its FX to participants');
  c.ws.send(JSON.stringify({type:'pve_stop'}));await sleep(300);c.ws.close();
- a.ws.close();b.ws.close();console.log('PASS local workerd Sanctuary battle: two real WebSockets, movement, mutual offers, alarm countdown, automatic combat, server-only settlement and a fifth-wave boss');
+ a.ws.close();b.ws.close();console.log('PASS local workerd Sanctuary battle: two real WebSockets, movement, mutual offers, alarm countdown, automatic combat, strike FX streaming, server-only settlement and a fifth-wave boss');
 }finally{await mf.dispose();fs.rmSync(persist,{recursive:true,force:true})}

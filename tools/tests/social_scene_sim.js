@@ -283,8 +283,42 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:1,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,attackAt:0,hitAt:0}]}],pvp:null});frame(now+=100);
  assert(scene.scene.children.some(o=>o.userData.battleShot),'a quick ranged attacker fires a visible projectile');
  frame(now+=400);assert(!scene.scene.children.some(o=>o.userData.battleShot),'the projectile expires after its flight');
+ // v352 full-pixel FX: every landed strike answers with a pixel burst, a floating damage
+ // number and a defender shake; crits add a contact freeze and a shockwave; faints puff dust.
+ {
+  const bursts=()=>scene.scene.children.filter(o=>o.userData.battleBurst),popups=()=>scene.scene.children.filter(o=>o.userData.battlePopup),waves=()=>scene.scene.children.filter(o=>o.userData.battleShockwave),ghosts=()=>scene.scene.children.filter(o=>o.userData.battleGhost);
+  frame(now+=500);assert.equal(bursts().length,0,'no FX linger once the field is quiet');
+  assert.equal(scene.battleEvent({kind:'pve',battleId:'missing',to:'nobody',amount:5,crit:false}),false,'FX for an unknown unit are refused');
+  const bossSprite=scene.scene.children.find(o=>o.userData.battleBoss);
+  for(let i=0;i<20;i++)frame(now+=100);
+  const settled={x:bossSprite.position.x,z:bossSprite.position.z};
+  assert.equal(scene.battleEvent({kind:'pve',battleId:'pve-test',to:'w5-boss',amount:12,crit:false}),true,'a strike on a live unit lands its FX');
+  frame(now+=40);
+  assert.equal(popups().length,1,'the damage number floats above the defender');assert.equal(popups()[0].userData.battlePopupText,'12');assert.equal(popups()[0].userData.battlePopupCrit,false);
+  assert.equal(bursts().length,7,'a normal hit bursts seven pixel squares');assert.equal(waves().length,0,'normal hits send no shockwave');
+  let shook=false;for(let i=0;i<3;i++){frame(now+=40);const off=Math.hypot(bossSprite.position.x-settled.x,bossSprite.position.z-settled.z);if(off>.01)shook=true;assert(off<=.26,'the shake stays inside its amplitude: '+off)}
+  assert(shook,'the hit shakes the defending boss sprite');
+  frame(now+=600);assert.equal(popups().length,0,'the damage number expires');assert.equal(bursts().length,0,'the burst particles expire');
+  assert.equal(scene.battleEvent({kind:'pve',battleId:'pve-test',to:'w5-boss',amount:30,crit:true}),true,'a critical strike lands its FX');
+  frame(now+=40);
+  assert.equal(popups().length,1);assert.equal(popups()[0].userData.battlePopupText,'30!');assert.equal(popups()[0].userData.battlePopupCrit,true,'crits mark their damage number');
+  assert.equal(waves().length,1,'crits ring a shockwave');assert(bursts().length>=12,'crits burst harder');
+  frame(now+=900);assert.equal(waves().length,0,'the shockwave expires');
+  // After-images trail a lunging brawler: the melee boss lunges on attack, ghosts echo it.
+  scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:0,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,attackAt:2,hitAt:0}]}],pvp:null});frame(now+=100);frame(now+=120);
+  assert(ghosts().length>=2,'a brawler carries after-image ghosts');
+  assert(ghosts().filter(g=>g.visible).length>=2,'the brawler lunge echoes in its after-images');
+  assert(ghosts().every(g=>g.visible||Math.hypot(g.position.x-scene.scene.children.find(o=>o.userData.battleRole==='partner').position.x,g.position.z-scene.scene.children.find(o=>o.userData.battleRole==='partner').position.z)<1.5),'a ranged form never shows after-images — stale ghosts stay hidden');
+  scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:0,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,attackAt:2,hitAt:0}]}],pvp:null});frame(now+=600);
+  assert(ghosts().every(g=>!g.visible),'ghosts hide once the lunge is over');
+  // A faint puffs dust; a boss faint bursts gold with a shockwave.
+  scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:0,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:0,maxHp:300,boss:true,attackAt:0,hitAt:0}]}],pvp:null});frame(now+=40);
+  assert(bursts().length>=16,'the boss faint bursts gold');assert.equal(waves().length,1,'the boss faint rings a shockwave');
+  frame(now+=800);assert.equal(bursts().length,0);assert.equal(waves().length,0);
+ }
  scene.setBattleState({pve:[],pvp:{id:'pvp-test',phase:'fighting',winnerId:null,participants:[{id:1,name:'One',side:'left',unit:{form:'agumon',hp:80,maxHp:100}},{id:2,name:'Two',side:'right',unit:{form:'palmon',hp:70,maxHp:100}}]}});frame(now+=100);assert.equal(scene.scene.children.filter(o=>o.userData.battleKind==='pvp').length,2,'two accepted ring fighters are rendered');const ringFighters=scene.scene.children.filter(o=>o.userData.battleKind==='pvp');for(let i=0;i<12;i++)frame(now+=100);const ringDistance=Math.hypot(ringFighters[0].position.x-ringFighters[1].position.x,ringFighters[0].position.z-ringFighters[1].position.z);assert(ringDistance>4.2&&ringDistance<4.6,'ring fighters approach opposite marks without clumping');assert(scene.scene.children.filter(o=>o.userData.sanctuaryResident).every(o=>o.visible),'residents return when PvE ends');
+ assert.equal(scene.battleEvent({kind:'pvp',battleId:'pvp-test',to:1,amount:9,crit:false}),true,'ring strikes land their FX too');frame(now+=40);assert(scene.scene.children.some(o=>o.userData.battlePopup&&o.userData.battlePopupText==='9'),'the ring damage number floats');
  scene.setBattleState({pve:[],pvp:null});assert.equal(scene.scene.children.filter(o=>o.userData.battleKind).length,0,'battle sprites are disposed when the room clears');
  dom.window.close();
- console.log('PASS social scene: v300 per-tier rod glow, download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor, reentry and live battle sprite lifecycle');
+ console.log('PASS social scene: v300 per-tier rod glow, download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor, reentry, live battle sprite lifecycle and v352 pixel strike FX');
 })().catch(e=>{console.error(e);process.exitCode=1});

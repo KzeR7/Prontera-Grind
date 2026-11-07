@@ -394,11 +394,15 @@ export class SocialRoom {
    const result=B.stepPve(run,now,this.random);if(!result)continue;const c=this.clients.get(run.owner);rooms.add(run.room);
    for(const event of result.events){
     if(event.type==='wave_clear'&&c)this.send(c,{type:'battle_reward',kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});
+    // v352: strikes are forwarded as presentation-only FX events. They carry no authority —
+    // clients still render from snapshots; older clients simply ignore the message.
+    if(event.type==='hit')this.broadcast({type:'battle_fx',kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit},p=>p.room===run.room);
     if(event.type==='end'){if(c)this.send(c,{type:'pve_end',battleId:run.id,reason:event.reason,earned:{...run.earned}});if(c)c.pve=null;this.pveRuns.delete(run.id)}
    }
   }
   for(const match of [...this.pvpMatches.values()]){
    const result=B.stepPvp(match,now,this.random);if(!result)continue;rooms.add(match.room);
+   for(const event of result.events)if(event.type==='hit')this.broadcast({type:'battle_fx',kind:'pvp',battleId:match.id,to:event.to,amount:event.amount,crit:!!event.crit},p=>p.room===match.room);
    if(result.events.some(e=>e.type==='result'))this.settlePvp(match);
    if(result.events.some(e=>e.type==='cancel'))this.sendMatchCancel(match,match.reason);
    if(match.phase==='closed'){this.cleanupPvp(match);rooms.add(match.room)}
