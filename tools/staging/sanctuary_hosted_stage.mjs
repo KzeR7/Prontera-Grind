@@ -8,8 +8,8 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 export const SANCTUARY_STAGE=Object.freeze({
- commit:'a964ace5e1994ddd8b18bc0ac65ff1f29bc77b8f',
- build:'2026-11-07 haven-v358 plaza fix round: plates, seats, party UI, parchment map',
+ commit:'9386b713966439540864a549924198481f04333a',
+ build:'2026-11-07 haven-v359 bleacher seating, ground depth audit, readable battles',
  pagesProject:'prontera-grind-staging',
  branchUrl:'https://main.prontera-grind-staging.pages.dev',
  socialProject:'prontera-social-staging',
