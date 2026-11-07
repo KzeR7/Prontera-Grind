@@ -6,8 +6,8 @@ const assert=require('node:assert/strict');
  const send=(c,m)=>room.receive(c,JSON.stringify(m));
  const profile=(line='agumon',form=line,power=12)=>({lineId:line,form,level:5,stats:{power,guard:12,agility:0,focus:0},energy:70});
  const a=join(1,70,64),b=join(2,74,118,'palmon'),c=join(3,62,118,'agumon');
- // v349: an exhausted partner cannot start grinding, but the ring never charges energy.
- send(a,{type:'pve_start',request:6,profile:{...profile(),energy:5}});assert(a.events.some(e=>e.type==='battle_error'&&e.request===6&&/out of energy/.test(e.message)),'an empty energy bar is rejected with an explicit reason');
+ // v354: the energy gate is retired; a stale meter in the profile no longer blocks a start.
+ send(a,{type:'pve_start',request:6,profile:{...profile(),energy:5}});assert(a.events.some(e=>e.type==='pve_started'&&e.request===6),'a stale meter no longer blocks a grind start');send(a,{type:'pve_stop'});assert(a.events.some(e=>e.type==='pve_end'&&e.reason==='stopped'));
  send(a,{type:'pve_start',request:7,profile:{...profile(),slot:1}});assert(a.events.some(e=>e.type==='pve_started'&&e.request===7));assert.equal(room.pveRuns.size,1);assert(b.events.some(e=>e.type==='battle'&&e.pve.length===1),'room observers receive the field snapshot');
  const run=a.pve;for(now=1500;now<16000&&run.wave<2;now+=500)room.tickBattles(now);assert(run.wave>=2,'room timer regenerates a group');const rewards=a.events.filter(e=>e.type==='battle_reward');assert(rewards.length>=1);assert(rewards.every(e=>e.slot===1),'settlement returns the originating partner slot for duplicate-species collections');assert(rewards.every(e=>Number.isInteger(e.reward.eggs)&&e.reward.eggs>=0&&e.reward.eggs<=3&&Number.isInteger(e.reward.dropCoins)),'worker wave messages carry bounded server-rolled egg and bonus-petgold fields');const rewardCount=rewards.length;room.tickBattles(now);assert.equal(a.events.filter(e=>e.type==='battle_reward').length,rewardCount,'same-tick replay cannot duplicate a wave reward');
  // v352: every landed strike is forwarded as a presentation-only FX event, to participants and spectators alike.
@@ -51,5 +51,5 @@ const assert=require('node:assert/strict');
  send(gym,{type:'pve_stop'});send(gym,{type:'gym_stop'});assert(!gym.gym);
  send(gym,{type:'pve_start',request:45,profile:{...profile(),slot:2}});assert(gym.events.some(e=>e.type==='pve_started'&&e.request===45),'stopping training reopens the slot');
  room.disconnect(gym);
- console.log('PASS Sanctuary room: authoritative wave/reward events, strike FX forwarding, forged-result rejection, energy gate, training-slot gate, opposite-side mutual PvP, countdown, settlement, cancellation and disconnect cleanup');
+ console.log('PASS Sanctuary room: authoritative wave/reward events, strike FX forwarding, forged-result rejection, stale-meter tolerance, training-slot gate, opposite-side mutual PvP, countdown, settlement, cancellation and disconnect cleanup');
 })().catch(e=>{console.error(e);process.exitCode=1});

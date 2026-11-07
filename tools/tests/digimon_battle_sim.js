@@ -1,4 +1,4 @@
-// Deterministic combat rules: per-form base stats, energy-gated waves and server-owned PvP timing.
+// Deterministic combat rules: per-form base stats, meter-free waves and server-owned PvP timing.
 const assert=require('node:assert/strict');
 const B=require('../../assets/digimon-battle.js');
 const R=require('../../assets/digimon/roster.js');
@@ -22,20 +22,19 @@ for(let now=500;now<18000&&run.wave<2;now+=500){const result=B.stepPve(run,now,(
 assert.equal(run.wave,2,'a new group is spawned after the whole group dies');
 assert.equal(clears,1,'the first group settles once');
 assert(run.enemies.every(e=>R.entry(e.form).stage==='Rookie'),'regenerated bots retain stage matching');
-assert.equal(run.profile.energy,68,'a cleared wave spends energy');
+assert.equal(run.profile.energy,undefined,'the retired meter no longer spends anything');
 const frozen=B.stepPve(run,0,()=>.5);assert.equal(frozen,null,'time cannot run backwards or duplicate a wave');
-// Energy gates the grind: below the floor the run ends instead of spawning another group.
-const tiredRun=B.createPve({id:'tired-pve',owner:1,room:1,profile:{...profile,energy:B.ENERGY_PVE_MIN},now:0,random:()=>.5});
-let tiredEnd=null;for(let now=500;now<18000&&!tiredEnd;now+=500){const result=B.stepPve(tiredRun,now,()=>.5);tiredEnd=result?.events.find(e=>e.type==='end')||null}
-assert.equal(tiredRun.phase,'ended');assert.equal(tiredRun.reason,'exhausted','running dry ends the grind with an explicit reason');
-assert.equal(tiredEnd.reason,'exhausted');
+// v354: the meter is retired; a drained-looking profile no longer ends a run early.
+const tiredRun=B.createPve({id:'tired-pve',owner:1,room:1,profile:{...profile,energy:0},now:0,random:()=>.5});
+for(let now=500;now<8000;now+=500)B.stepPve(tiredRun,now,()=>.5);
+assert.notEqual(tiredRun.reason,'exhausted','a stale meter value cannot end the grind');
 // Zeroed deterministic rolls force every bonus drop: three per-bot petgold rolls and eggs.
 const dropRun=B.createPve({id:'drop-pve',owner:1,room:1,profile,now:0,random:()=>0});let dropClear=null;
 for(let now=500;now<18000&&!dropClear;now+=500){const result=B.stepPve(dropRun,now,()=>0);dropClear=result?.events.find(e=>e.type==='wave_clear')||null}
 assert(dropClear,'forced drop wave clears');assert.equal(dropClear.reward.eggs,3,'each defeated bot can drop a Digi-Egg');assert(dropClear.reward.dropCoins>0,'bonus petgold is rolled per defeated bot');
 assert.equal(dropClear.reward.coins,10+B.stageRank(dropRun.profile.form)*4+dropClear.reward.dropCoins,'bonus petgold is added to the authoritative wave reward');
 assert.equal(dropRun.earned.eggs,3);assert.equal(dropRun.earned.dropCoins,dropClear.reward.dropCoins);assert.equal(B.pveSnapshot(dropRun).earned.eggs,3,'snapshots expose earned eggs for the live HUD');
-assert.equal(B.pveSnapshot(dropRun).profile.energy,dropRun.profile.energy,'snapshots expose energy for the live HUD');
+assert.equal(B.pveSnapshot(dropRun).profile.energy,undefined,'snapshots no longer carry the retired meter');
 const match=B.createPvp({id:'test-pvp',room:1,now:0,players:[{id:1,name:'One',profile},{id:2,name:'Two',profile:{...profile,lineId:'palmon',form:'palmon',stats:{power:0,guard:0,agility:0,focus:0}}}]});
 assert.equal(match.phase,'offer');B.acceptPvp(match,1,0);assert.equal(match.phase,'offer','one acceptance is not enough');
 B.acceptPvp(match,2,0);assert.equal(match.phase,'countdown');
@@ -43,12 +42,12 @@ assert.equal(match.countdownUntil,3000,'the countdown is exactly three seconds')
 assert.equal(B.stepPvp(match,2999,()=>.5).events.some(e=>e.type==='fight'),false);assert.equal(B.stepPvp(match,3000,()=>.5).events[0].type,'fight');
 for(let now=3500;now<70000&&match.phase!=='result';now+=500)B.stepPvp(match,now,()=>.5);
 assert.equal(match.phase,'result','PvP auto-fights to a result without command messages');assert(match.winnerId===1||match.winnerId===2||match.winnerId===null);
-const rewards=B.pvpRewards(match);assert.deepEqual(Object.keys(rewards).sort(),['1','2']);assert(rewards[1].coins>=0&&rewards[2].coins>=0);assert.equal(rewards[1].energy,0,'ring matches are free of energy costs');assert.equal(B.pvpRewards(match),rewards,'settlement is stable and idempotent');
+const rewards=B.pvpRewards(match);assert.deepEqual(Object.keys(rewards).sort(),['1','2']);assert(rewards[1].coins>=0&&rewards[2].coins>=0);assert.equal(rewards[1].energy,undefined,'ring matches carry no meter field at all');assert.equal(B.pvpRewards(match),rewards,'settlement is stable and idempotent');
 const before=match.winnerId;B.stepPvp(match,70000,()=>.5);assert.equal(match.winnerId,before,'later ticks cannot change a settled winner');
 // Legacy saves keep working: an old fatigue/fullness profile migrates into energy on read.
 const legacy=B.profile({form:'agumon',level:99999,stats:{power:999,guard:-4},fullness:-10,fatigue:1000});
-assert.equal(legacy.level,1000);assert.equal(legacy.stats.power,12);assert.equal(legacy.stats.guard,0);assert.equal(legacy.energy,0,'impossible legacy meters collapse to an empty energy bar');
-assert.equal(B.profile({form:'agumon',fullness:60,fatigue:20}).energy,70,'a healthy legacy profile migrates to a fair energy level');
+assert.equal(legacy.level,1000);assert.equal(legacy.stats.power,12);assert.equal(legacy.stats.guard,0);assert.equal(legacy.energy,undefined,'legacy meter fields are dropped on read');
+assert.equal(B.profile({form:'agumon',fullness:60,fatigue:20}).energy,undefined,'no meter is invented for legacy profiles');
 // Four partner slots travel with the profile and are clamped server-side.
 assert.equal(B.profile({form:'agumon',slot:3}).slot,3);assert.equal(B.profile({form:'agumon',slot:9}).slot,B.MAX_SLOT);assert.equal(B.profile({form:'agumon',slot:-2}).slot,0);
 // v350 field stages: five waves per stage, boss on every fifth, one named stage up.
@@ -57,7 +56,7 @@ assert.deepEqual([1,4,5,6,9,10,11,15].map(w=>B.isBossWave(w)),[false,false,true,
 assert.equal(B.BOSS_EVERY,5);
 // Presentation ranges are deterministic per form: brawlers press in, quick forms skirmish.
 const meleeRange=B.attackRange('agumon'),rangedRange=B.attackRange('birdramon');
-assert.equal(meleeRange.ranged,false);assert.equal(meleeRange.range,1.8);
+assert.equal(meleeRange.ranged,false);assert.equal(meleeRange.range,2.4,'v354 brawlers hold a wider gap so sprites never overlap');
 assert.equal(rangedRange.ranged,true);assert.ok(rangedRange.range>=3.2&&rangedRange.range<=4.6,JSON.stringify(rangedRange));
 assert.deepEqual(B.attackRange('agumon'),meleeRange,'the range class is stable per form');
 const rangedForms=R.IDS.filter(id=>B.attackRange(id).ranged).length;
@@ -135,7 +134,7 @@ assert.equal(xpEvent.reward.xp,Math.round(plainWaveEvent.reward.xp*1.4),'+XP% ge
 assert.equal(xpEvent.reward.energy,plainWaveEvent.reward.energy,'the energy toll ignores gear');
 assert.ok(xpRun.enemies.every(e=>!e.crit&&!e.lifesteal&&!e.thorns),'bots never inherit the partner\'s gear');
 const bossGearRun=B.createPve({id:'boss-gear-pve',owner:1,room:1,profile:{...profile,gear:{hp:40,atk:10,crit:15}},now:0,random:()=>.5});
-bossGearRun.wave=4;bossGearRun.phase='between';B.stepPve(bossGearRun,500,()=>.5);
+bossGearRun.wave=4;bossGearRun.phase='between';B.stepPve(bossGearRun,700,()=>.5);
 assert.equal(bossGearRun.enemies.length,1);assert.equal(bossGearRun.enemies[0].boss,true);
 assert.ok(!bossGearRun.enemies[0].crit&&!bossGearRun.enemies[0].thorns,'the boss does not inherit equipped gear');
 assert.equal(bossGearRun.partner.crit,15,'the partner keeps its own gear');
@@ -168,4 +167,4 @@ B.acceptPvp(gearMatch,1,0);B.acceptPvp(gearMatch,2,0);B.finishPvp(gearMatch,1,'k
 const gearRewards=B.pvpRewards(gearMatch);
 assert.equal(gearRewards[1].xp,Math.round((4+B.stageRank('agumon'))*1.25),'the winner\'s +XP% applies');
 assert.equal(gearRewards[2].xp,1,'the loser without gear keeps the base xp');
-console.log('digimon_battle_sim: PASS (per-form stats, energy waves, free PvP, 4-slot profiles, stages, bosses, ranges, equipment)');
+console.log('digimon_battle_sim: PASS (per-form stats, meter-free waves, free PvP, 4-slot profiles, stages, bosses, spread ranges, equipment)');

@@ -9,19 +9,21 @@
 if(!DATA)throw Error('Digimon roster data must load before battle rules');
 if(!BASE)throw Error('Digimon base stats must load before battle rules');
 const STATS=['power','guard','agility','focus'];
-const TICK_MS=500,WAVE_DELAY_MS=1200,COUNTDOWN_MS=3000,OFFER_MS=20000,RESULT_MS=9000;
+const TICK_MS=650,WAVE_DELAY_MS=1200,COUNTDOWN_MS=3000,OFFER_MS=20000,RESULT_MS=9000;
 const MAX_WAVE=100,MAX_ROUNDS=120;
 // v350 field stages: waves group into stages of five, and every fifth wave is a single
 // boss drawn one stage above the partner. Ranged presentation: the fastest quarter of
 // forms (Cyber Sleuth spd >= 1050) skirmish from a distance instead of pressing in.
-const BOSS_EVERY=5,BOSS_HP=2.0,BOSS_ATK=1.35,BOSS_DEF=1.15,BOSS_EGG_CHANCE=.25,RANGED_SPD=1050;
-// One care meter since v349: grind waves and gym sessions spend Energy, meals and real
-// time restore it, and ring PvP stays free. Partner slots grew from two to four, and a
-// training partner is barred from battles without blocking the player's other slots.
-const MAX_SLOT=3,ENERGY_PVE_COST=2,ENERGY_PVE_MIN=10;
+const BOSS_EVERY=5,BOSS_HP=2.0,BOSS_ATK=1.35,BOSS_DEF=1.15,BOSS_EGG_CHANCE=.10,RANGED_SPD=1050;
+// v354: the Energy meter is gone. Gym pacing is the 20-minute session timer and grind runs
+// are bounded by waves and defeat, so no care meter is carried into battle profiles anymore.
+// Partner slots grew from two to four, and a training partner is barred from battles without
+// blocking the player's other slots.
+const MAX_SLOT=3;
 // Each bot in a cleared farm wave gets an independent server-owned drop roll. These are
 // bonus drops on top of the existing wave reward, not a browser-declared inventory grant.
-const PVE_COIN_DROP_CHANCE=.45,PVE_EGG_DROP_CHANCE=.08;
+// v354: eggs are rarer on the owner's call — 5% per bot, 10% per boss.
+const PVE_COIN_DROP_CHANCE=.45,PVE_EGG_DROP_CHANCE=.05;
 // v351 partner equipment: four gear slots per partner. Each piece carries one main stat and
 // at most one special; nothing sockets, nothing crafts. Bots never wear gear — cleared
 // enemies and bosses instead roll drops for the owner's Pet Bag, so the grind has a chase
@@ -53,15 +55,13 @@ function isBossWave(wave){return (Number(wave)||0)>0&&(Number(wave)||0)%BOSS_EVE
 // only from the reproducible base-stat table, so every client agrees without a message.
 function attackRange(form){
  const spd=Number(BASE.stats(form)?.spd)||1000;
- return {ranged:spd>=RANGED_SPD,range:spd>=RANGED_SPD?Math.min(4.6,3.2+(spd-RANGED_SPD)/200):1.8};
+ return {ranged:spd>=RANGED_SPD,range:spd>=RANGED_SPD?Math.min(4.6,3.2+(spd-RANGED_SPD)/200):2.4};
 }
 function profile(raw){
  if(!raw||typeof raw!=='object')return null;const form=cleanId(raw.form||raw.species);if(!form)return null;
  const stats={};for(const k of STATS)stats[k]=cap(raw.stats?.[k],0,12);
  const lineId=typeof raw.lineId==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(raw.lineId)?raw.lineId:form;
- // v349 migration: a profile from an older save may still carry fatigue/fullness instead of energy.
- const legacyEnergy=raw.fullness!=null||raw.fatigue!=null?Math.round(((raw.fullness??70)+(100-(raw.fatigue??0)))/2):70;
- return {lineId,form,slot:cap(raw.slot,0,MAX_SLOT),stage:DATA.entry(form)?.stage||'Rookie',level:cap(raw.level??1,1,1000),xp:cap(raw.xp,0,3996),wins:cap(raw.wins,0,999),mastery:cap(raw.mastery,0,6),energy:cap(raw.energy??legacyEnergy,0,100),stats,gear:normalizeGear(raw.gear)};
+ return {lineId,form,slot:cap(raw.slot,0,MAX_SLOT),stage:DATA.entry(form)?.stage||'Rookie',level:cap(raw.level??1,1,1000),xp:cap(raw.xp,0,3996),wins:cap(raw.wins,0,999),mastery:cap(raw.mastery,0,6),stats,gear:normalizeGear(raw.gear)};
 }
 function combatant(p,id,enemy=false,boss=false){
  const rank=stageRank(p.form),level=Math.min(100,p.level),g=p.gear||gearZero();
@@ -71,11 +71,13 @@ function combatant(p,id,enemy=false,boss=false){
  // archetypes otherwise. The stage curve of the base formula is unchanged (mean 1000).
  const base=BASE.stats(p.form);
  // Gear main stats are flat adds after the form scaling, so a piece that says +38 HP means +38 HP.
+ // v354: trained Agility feeds swing speed (+2.5% each) and Focus feeds crit chance (+1% each),
+ // so all four gym stats now move the field formula, not just Power and Guard.
  const maxHp=Math.round((92+rank*31+level*7+p.stats.guard*7)*hpScale*base.hp/1000+g.hp);
- return {id,form:p.form,stage:p.stage,level:p.level,spd:base.spd/1000*(1+g.spdPct/100),maxHp,hp:maxHp,boss:!!boss,attack:Math.round((13+rank*5+level*1.5+p.stats.power*2.5+p.mastery*1.5)*atkScale*base.atk/1000+g.atk),defense:Math.round((2+rank*2+p.stats.guard*1.2)*defScale*base.def/1000+g.def),attackAt:0,hitAt:0,crit:g.crit,lifesteal:g.lifesteal,thorns:g.thorns};
+ return {id,form:p.form,stage:p.stage,level:p.level,spd:base.spd/1000*(1+(g.spdPct+p.stats.agility*2.5)/100),maxHp,hp:maxHp,boss:!!boss,attack:Math.round((13+rank*5+level*1.5+p.stats.power*2.5+p.mastery*1.5)*atkScale*base.atk/1000+g.atk),defense:Math.round((2+rank*2+p.stats.guard*1.2)*defScale*base.def/1000+g.def),attackAt:0,hitAt:0,crit:Math.min(40,g.crit+p.stats.focus),lifesteal:g.lifesteal,thorns:g.thorns};
 }
 // Read-only DigiDex layer: the same live formula, never a second species-stat table.
-function combatPreview(form,raw={}){const p=profile({...raw,form});if(!p)return null;const u=combatant(p,'preview');return {form:p.form,stage:p.stage,level:p.level,xp:p.xp,wins:p.wins,mastery:p.mastery,stats:{...p.stats},energy:p.energy,maxHp:u.maxHp,attack:u.attack,defense:u.defense,attackMs:TICK_MS,spd:u.spd,gear:{...p.gear}}}
+function combatPreview(form,raw={}){const p=profile({...raw,form});if(!p)return null;const u=combatant(p,'preview');return {form:p.form,stage:p.stage,level:p.level,xp:p.xp,wins:p.wins,mastery:p.mastery,stats:{...p.stats},maxHp:u.maxHp,attack:u.attack,defense:u.defense,attackMs:TICK_MS,spd:u.spd,gear:{...p.gear}}}
 function strike(a,b,random){
  const roll=Math.max(0,Math.min(.999999999,Number(random())||0));
  // Speed decides the swing, not the average: quick forms connect reliably, heavy forms
@@ -93,8 +95,8 @@ function strike(a,b,random){
 }
 function pveReward(run){
  const rank=stageRank(run.profile.form),xpPct=1+(run.profile.gear?.xpPct||0)/100;
- if(isBossWave(run.wave))return {coins:30+rank*8+(stageOf(run.wave)-1)*6,xp:Math.round((3+Math.floor(rank/2))*xpPct),wins:2,energy:-ENERGY_PVE_COST};
- return {coins:10+rank*4+Math.min(10,run.wave-1),xp:Math.round((1+Math.floor(rank/2))*xpPct),wins:1,energy:-ENERGY_PVE_COST};
+ if(isBossWave(run.wave))return {coins:30+rank*8+(stageOf(run.wave)-1)*6,xp:Math.round((3+Math.floor(rank/2))*xpPct),wins:2};
+ return {coins:10+rank*4+Math.min(10,run.wave-1),xp:Math.round((1+Math.floor(rank/2))*xpPct),wins:1};
 }
 function pveDrops(run,random){
  let coins=0,eggs=0;const roll=()=>Math.max(0,Math.min(.999999999,Number(random())||0));
@@ -176,11 +178,9 @@ function stepPve(run,now,random=randomUnit){
   const drops=pveDrops(run,random),reward={...pveReward(run),dropCoins:drops.coins,eggs:drops.eggs};reward.coins+=drops.coins;
   const gearDrop=pveGearDrops(run,random);
   run.earned.coins+=reward.coins;run.earned.xp+=reward.xp;run.earned.wins+=reward.wins;run.earned.eggs+=drops.eggs;run.earned.dropCoins+=drops.coins;if(gearDrop)run.earned.gear++;
-  run.profile.energy=cap(run.profile.energy+reward.energy,0,100);
   run.partner.hp=Math.min(run.partner.maxHp,run.partner.hp+Math.ceil(run.partner.maxHp*.3));
   events.push({type:'wave_clear',wave:run.wave,boss:bossWave,reward:{...reward},earned:{...run.earned},partnerHp:run.partner.hp,gearDrop});
-  if(run.profile.energy<ENERGY_PVE_MIN){run.phase='ended';run.reason='exhausted';events.push({type:'end',reason:run.reason});}
-  else if(run.wave>=MAX_WAVE){run.phase='ended';run.reason='complete';events.push({type:'end',reason:run.reason});}
+  if(run.wave>=MAX_WAVE){run.phase='ended';run.reason='complete';events.push({type:'end',reason:run.reason});}
   else {run.phase='between';run.nextAt=now+WAVE_DELAY_MS;}
   return {events,changed:true};
  }
@@ -206,7 +206,7 @@ function pvpRewards(match){
  match.rewards=Object.fromEntries(match.participants.map(p=>{
   const outcome=match.winnerId==null?'draw':match.winnerId===p.id?'win':'lose';
   const xpPct=1+(p.profile.gear?.xpPct||0)/100;
-  return [p.id,{outcome,coins:outcome==='win'?60+rank*10:outcome==='lose'?15+rank*2:25,xp:Math.round((outcome==='win'?4+rank:outcome==='lose'?1:2)*xpPct),wins:outcome==='win'?1:0,energy:0}];
+  return [p.id,{outcome,coins:outcome==='win'?60+rank*10:outcome==='lose'?15+rank*2:25,xp:Math.round((outcome==='win'?4+rank:outcome==='lose'?1:2)*xpPct),wins:outcome==='win'?1:0}];
  }));return match.rewards;
 }
 function finishPvp(match,winnerId,reason,now){
@@ -233,7 +233,7 @@ function stepPvp(match,now,random=randomUnit){
  match.nextAt=now+TICK_MS;return {events,changed:true};
 }
 function unitSnapshot(u){return {id:u.id,form:u.form,stage:u.stage,level:u.level,hp:u.hp,maxHp:u.maxHp,boss:!!u.boss,attackAt:u.attackAt||0,hitAt:u.hitAt||0}}
-function pveSnapshot(run){return {id:run.id,owner:run.owner,room:run.room,wave:run.wave,phase:run.phase,reason:run.reason,nextAt:run.nextAt,profile:{lineId:run.profile.lineId,form:run.profile.form,stage:run.profile.stage,level:run.profile.level,energy:run.profile.energy,slot:run.profile.slot},partner:unitSnapshot(run.partner),enemies:run.enemies.map(unitSnapshot),earned:{...run.earned},slot:run.slot||0}}
+function pveSnapshot(run){return {id:run.id,owner:run.owner,room:run.room,wave:run.wave,phase:run.phase,reason:run.reason,nextAt:run.nextAt,profile:{lineId:run.profile.lineId,form:run.profile.form,stage:run.profile.stage,level:run.profile.level,slot:run.profile.slot},partner:unitSnapshot(run.partner),enemies:run.enemies.map(unitSnapshot),earned:{...run.earned},slot:run.slot||0}}
 function pvpSnapshot(match){return {id:match.id,room:match.room,phase:match.phase,createdAt:match.createdAt,expiresAt:match.expiresAt,countdownUntil:match.countdownUntil,resultUntil:match.resultUntil,winnerId:match.winnerId,reason:match.reason,participants:match.participants.map(p=>({id:p.id,name:p.name,side:p.side,accepted:p.accepted,profile:{lineId:p.profile.lineId,form:p.profile.form,stage:p.profile.stage,level:p.profile.level},unit:unitSnapshot(p.unit)}))}}
-return {STATS,TICK_MS,WAVE_DELAY_MS,COUNTDOWN_MS,OFFER_MS,RESULT_MS,MAX_WAVE,MAX_ROUNDS,PVE_COIN_DROP_CHANCE,PVE_EGG_DROP_CHANCE,MAX_SLOT,ENERGY_PVE_COST,ENERGY_PVE_MIN,BOSS_EVERY,BOSS_EGG_CHANCE,RANGED_SPD,GEAR_KINDS,GEAR_MAIN,GEAR_MAIN_VALUE,GEAR_SPECIAL,GEAR_CAP,PVE_GEAR_DROP_CHANCE,BOSS_GEAR_DROP_CHANCE,GEAR_SPECIAL_CHANCE,BOSS_GEAR_SPECIAL_CHANCE,GEAR_VARIANCE,stageOf,isBossWave,attackRange,profile,combatPreview,stageRank,sameStage,gearZero,normalizeGear,gearTierFor,rollGearItem,pveGearDrops,strike,createPve,stepPve,pveSnapshot,createPvp,acceptPvp,stepPvp,finishPvp,pvpRewards,pvpSnapshot,randomUnit};
+return {STATS,TICK_MS,WAVE_DELAY_MS,COUNTDOWN_MS,OFFER_MS,RESULT_MS,MAX_WAVE,MAX_ROUNDS,PVE_COIN_DROP_CHANCE,PVE_EGG_DROP_CHANCE,MAX_SLOT,BOSS_EVERY,BOSS_EGG_CHANCE,RANGED_SPD,GEAR_KINDS,GEAR_MAIN,GEAR_MAIN_VALUE,GEAR_SPECIAL,GEAR_CAP,PVE_GEAR_DROP_CHANCE,BOSS_GEAR_DROP_CHANCE,GEAR_SPECIAL_CHANCE,BOSS_GEAR_SPECIAL_CHANCE,GEAR_VARIANCE,stageOf,isBossWave,attackRange,profile,combatPreview,stageRank,sameStage,gearZero,normalizeGear,gearTierFor,rollGearItem,pveGearDrops,strike,createPve,stepPve,pveSnapshot,createPvp,acceptPvp,stepPvp,finishPvp,pvpRewards,pvpSnapshot,randomUnit};
 });

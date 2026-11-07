@@ -267,7 +267,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const partnerBefore=partnerSprite.position.clone(),enemyBefore=enemySprites.map(o=>o.position.clone());frame(now+=500);assert(partnerSprite.position.distanceTo(partnerBefore)>2,'the partner runs toward its opponent at the faster farm animation speed');assert(partnerSprite.position.distanceTo(partnerBefore)<=3.21,'a delayed frame cannot teleport the partner beyond its capped travel budget');enemySprites.forEach((o,i)=>assert(o.position.distanceTo(enemyBefore[i])>2,'each living bot runs toward the partner rather than remaining in a fixed row'));
  for(let i=0;i<40;i++)frame(now+=100);
  const dist=o=>Math.hypot(o.position.x-partnerSprite.position.x,o.position.z-partnerSprite.position.z),rangedSprite=enemySprites.find(o=>o.userData.battleName==='Biyomon'),meleeSprites=enemySprites.filter(o=>o!==rangedSprite);
- assert(Math.min(...meleeSprites.map(dist))>1.3&&Math.min(...meleeSprites.map(dist))<2.1,'v350 brawlers press close to the partner: '+meleeSprites.map(dist).map(x=>x.toFixed(2)));
+ assert(Math.min(...meleeSprites.map(dist))>1.9&&Math.min(...meleeSprites.map(dist))<3.0,'v354 brawlers keep a readable gap instead of overlapping the partner: '+meleeSprites.map(dist).map(x=>x.toFixed(2)));
  assert(dist(rangedSprite)>4,'the quick ranged form skirmishes from a distance: '+dist(rangedSprite).toFixed(2));
  for(let i=0;i<enemySprites.length;i++)for(let j=i+1;j<enemySprites.length;j++)assert(Math.hypot(enemySprites[i].position.x-enemySprites[j].position.x,enemySprites[i].position.z-enemySprites[j].position.z)>4.2,'farm bots occupy separated attack slots instead of clumping');
  partnerSprite.position.set(58,.06,60);const retargetBefore=partnerSprite.position.clone();scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:3,phase:'fighting',profile:{form:'agumon'},partner:{form:'agumon',hp:80,maxHp:100},enemies:[{id:'w3-e0',form:'agumon',hp:40,maxHp:50},{id:'w3-e1',form:'palmon',hp:40,maxHp:50},{id:'w3-e2',form:'gabumon',hp:40,maxHp:50}]}],pvp:null});frame(now+=100);assert(partnerSprite.position.distanceTo(retargetBefore)<=.65,'a new wave retargets from the current position without an elapsed-time teleport');
@@ -295,7 +295,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   assert.equal(scene.battleEvent({kind:'pve',battleId:'pve-test',to:'w5-boss',amount:12,crit:false}),true,'a strike on a live unit lands its FX');
   frame(now+=40);
   assert.equal(popups().length,1,'the damage number floats above the defender');assert.equal(popups()[0].userData.battlePopupText,'12');assert.equal(popups()[0].userData.battlePopupCrit,false);
-  assert.equal(bursts().length,7,'a normal hit bursts seven pixel squares');assert.equal(waves().length,0,'normal hits send no shockwave');
+  assert.equal(bursts().length,11,'a normal hit bursts eleven pixel squares');assert.equal(waves().length,0,'normal hits send no shockwave');
   let shook=false;for(let i=0;i<3;i++){frame(now+=40);const off=Math.hypot(bossSprite.position.x-settled.x,bossSprite.position.z-settled.z);if(off>.01)shook=true;assert(off<=.26,'the shake stays inside its amplitude: '+off)}
   assert(shook,'the hit shakes the defending boss sprite');
   frame(now+=600);assert.equal(popups().length,0,'the damage number expires');assert.equal(bursts().length,0,'the burst particles expire');

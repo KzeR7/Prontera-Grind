@@ -342,7 +342,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   // Contact freeze + shake live on the defender; both are purely visual timers.
   unit.shakeUntil=clock+(crit?260:150);unit.shakeAmp=crit?.22:.11;
   if(crit){unit.hitStopUntil=clock+90;unit.hitStopClock=clock}
-  spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff2df,crit?12:7,crit?1.3:.9,crit?.16:.1,crit?380:300);
+  spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?16:11,crit?1.45:1.05,crit?.18:.12,crit?430:340);
   if(crit)spawnBattleShockwave(p.x,p.z);
   if(amount>0)spawnBattlePopup(p.x,p.z,amount,crit,unit.spec.enemy?'#fff6e0':'#ff9c86');
   return true;
@@ -414,10 +414,10 @@ window.PGSocialScene={async create(host,labels,callbacks){
    // v350: a form's attack range decides how close its slot sits. Brawlers press in,
    // quick forms skirmish from a distance, and a boss holds the middle on its own.
    const start=battleHash(partner.runKey+':wave'+partner.wave+':formation')*Math.PI*2,enemySlots=new Map();
-   for(const [index,enemy]of enemies.entries()){const unit=battleResidents.get(enemy.key);if(!unit||enemy.phase!=='fighting'||enemy.hp<=0)continue;const range=unitRange(enemy.species),radius=enemy.boss?3.4:range.ranged?Math.max(4.4,range.range+1.2):2.8;const angle=start+index*Math.PI*2/Math.max(1,enemies.length);enemySlots.set(enemy.key,{x:center.x+Math.cos(angle)*radius,z:center.z+Math.sin(angle)*radius})}
+   for(const [index,enemy]of enemies.entries()){const unit=battleResidents.get(enemy.key);if(!unit||enemy.phase!=='fighting'||enemy.hp<=0)continue;const range=unitRange(enemy.species),radius=enemy.boss?3.8:range.ranged?Math.max(4.8,range.range+1.6):3.6;const angle=start+index*Math.PI*2/Math.max(1,enemies.length);enemySlots.set(enemy.key,{x:center.x+Math.cos(angle)*radius,z:center.z+Math.sin(angle)*radius})}
    if(partner.phase==='fighting'&&partner.hp>0){
     let slot=center;
-    if(target&&enemySlots.has(target.key)){const es=enemySlots.get(target.key),dx=center.x-es.x,dz=center.z-es.z,len=Math.hypot(dx,dz)||1,pr=unitRange(partner.species),standoff=pr.ranged?pr.range:1.6;slot={x:Math.max(49,Math.min(91,es.x+dx/len*standoff)),z:Math.max(52,Math.min(76,es.z+dz/len*standoff))}}
+    if(target&&enemySlots.has(target.key)){const es=enemySlots.get(target.key),dx=center.x-es.x,dz=center.z-es.z,len=Math.hypot(dx,dz)||1,pr=unitRange(partner.species),standoff=pr.ranged?pr.range:2.2;slot={x:Math.max(49,Math.min(91,es.x+dx/len*standoff)),z:Math.max(52,Math.min(76,es.z+dz/len*standoff))}}
     positions.set(partner.key,battleApproach(from,slot,partnerTravel));
     if(target){const targetUnit=battleResidents.get(target.key);targets.set(partner.key,{x:targetUnit.sprite.position.x,z:targetUnit.sprite.position.z})}
    }
