@@ -28,6 +28,7 @@ function sandbox() {
     const lsGet = k => (store.has(k) ? store.get(k) : null);
     const lsPut = (k, v) => { writes.push(k); store.set(k, String(v)); };
     const cloudTouch = () => { touched.n++ };
+    const syncLog = () => {};   // the cloud block's ledger; not extracted by this suite
     const log = (m, cls) => logs.push({ m, cls });
     const offlineRateSample = () => {};
     const gmStatSnapshot = () => ({});
@@ -37,7 +38,9 @@ function sandbox() {
       save: () => save(),
       getS: () => S, setS: v => { S = v },
       setUser: v => { currentUser = v },
-      setCloud: v => { CLOUD.on = !!v },
+      setCloud: (v, id) => { CLOUD.on = !!v; if (id !== undefined) CLOUD.id = Number(id); },
+      touchedCount: () => touched.n,
+      writesList: () => writes.slice(),
       saveElsewhereSaid: () => saveElsewhereSaid,
     };
   `, box);
@@ -192,8 +195,12 @@ t('initSessionFromCloud checks the device copy before it starts a session or wri
 });
 
 t('cloudAdopt refuses another account\'s copy before it is written into the slot', () => {
-  const b = body('async function cloudAdopt(server,resumeOffline=false){', 500);
-  assert.ok(b.indexOf('saveRefusal(server.blob,currentUser)') < b.indexOf('lsPut(saveKeyFor(currentUser),server.blob)'));
+  // The window has to reach past the v330 ledger code that now sits between the check and the write;
+  // the assertion is the ordering, so both markers must be found rather than one silently missing.
+  const b = body('async function cloudAdopt(server,resumeOffline=false){', 2000);
+  const check = b.indexOf('saveRefusal(server.blob,currentUser)'), write = b.indexOf('lsPut(saveKeyFor(currentUser),server.blob)');
+  assert.ok(check >= 0 && write >= 0, 'both the refusal and the write are inside the function');
+  assert.ok(check < write);
 });
 
 t('restoring a backup leaves out another account\'s save before anything is written', () => {
@@ -202,17 +209,46 @@ t('restoring a backup leaves out another account\'s save before anything is writ
 });
 
 t('every write of a save slot is one of the checked places, so a new one must be checked too', () => {
-  // save() / cloudAdopt() / initSessionFromCloud() / the v280 re-stamp in load() are the only
-  // lsPut(...) calls that write a save slot; restoreBackup() writes its keys through the filter
-  // checked above. The v280 site rewrites ONLY the owner field of a copy that `saveIsMine()` has
-  // already proved is this account's own - it cannot introduce another account's data.
+  // save() / cloudAdopt() / initSessionFromCloud() / the v280 re-stamp in load() / the v326
+  // cloudStampBase() version stamp are the only lsPut(...) calls that write a save slot;
+  // restoreBackup() writes its keys through the filter checked above. The v280 site rewrites ONLY the
+  // owner field of a copy that `saveIsMine()` has already proved is this account's own, and the v326
+  // site only adds `cloud` to a copy that `saveRefusal()` has proved is this account's own.
   // Add a write site -> add its check, then update this count.
   const sites = src.match(/lsPut\((?:saveKey|saveKeyFor)\(/g) || [];
-  assert.strictEqual(sites.length, 4, 'found ' + sites.length + ' save-slot writes');
+  assert.strictEqual(sites.length, 5, 'found ' + sites.length + ' save-slot writes');
+  const stampStart = src.indexOf('function cloudStampBase(version,write=true){');
+  const stamp = src.slice(stampStart, src.indexOf('function cloudFlushLeaving(){', stampStart));
+  assert.ok(stamp.indexOf('saveRefusal(raw,currentUser)') > 0 && stamp.indexOf('saveRefusal(raw,currentUser)') < stamp.indexOf('lsPut(saveKey(),JSON.stringify(copy))'),
+    'the v326 version stamp refuses another account\'s copy before it writes');
   // and the v280 re-stamp must stay behind saveIsMine()
   const block = src.slice(src.indexOf('function load()'), src.indexOf('function load()') + 900);
   assert.ok(/if\(raw&&saveIsMine\(raw\)\)/.test(block), 'the load() re-stamp is guarded by saveIsMine()');
   assert.ok(block.indexOf('saveIsMine(raw)') < block.indexOf('lsPut(saveKey(),raw)'), 'and the check precedes the write');
+});
+
+t('v332: a stale NAME on our own copy is repaired, not a permanent refusal to save', () => {
+  // The id is the authority (v280, and the server agrees). This copy is id 7 - this account - but the
+  // name beside it is from before a rename. The name-only guard used to stop save() dead at its first
+  // line, which also stopped cloudTouch(), which meant CLOUD.dirty was never set and every flush was
+  // skipped as 'idle' - silently, for the rest of the session.
+  const b = sandbox();
+  const r = c => vm.runInContext(c, b);
+  r("api.setCloud(true, 7); api.setUser('KzeR'); api.setS({ lv: 60, owner: 'OldName', accountId: 7 });");
+  r('api.save()');
+  assert.strictEqual(r('api.getS().owner'), 'KzeR', 'the stale name is re-stamped to the account playing it');
+  assert.strictEqual(r('api.touchedCount()'), 1, 'and the cloud is told there is something to upload');
+  assert.ok(r('api.writesList()').includes('pg_save3_KzeR'), 'and the device copy is written');
+});
+
+t('v332: a copy carrying ANOTHER account id is still refused, and writes nothing', () => {
+  const b = sandbox();
+  const r = c => vm.runInContext(c, b);
+  r("api.setCloud(true, 7); api.setUser('KzeR'); api.setS({ lv: 60, owner: 'KzeR', accountId: 9 });");
+  r('api.save()');
+  assert.strictEqual(r('api.touchedCount()'), 0, 'nothing is queued for upload');
+  assert.deepStrictEqual(r('api.writesList()'), [], 'and no slot is written');
+  assert.ok(r('api.saveElsewhereSaid()') !== null, 'but the player is told');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

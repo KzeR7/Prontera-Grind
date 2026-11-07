@@ -21,12 +21,38 @@ const worldHistoryKey=user=>'pg_social_world_v1_'+String(user||'').toLowerCase()
 // so a dropped socket, a planned re-authentication, or a walk back to the plaza you just left shows
 // the conversation you were reading instead of an empty tab.
 const LOCAL_CACHE_MAX=60,localHistory=new Map();
-function stashLocal(){
- const room=app.room;if(!room)return;
- const lines=app.messages.filter(m=>m.channel==='local'&&m.room===room);
- if(lines.length)localHistory.set(room,lines.slice(-LOCAL_CACHE_MAX));
+// v326 (owner: "random disconnect, I lose local chat but world chat is fine"). Two things were wrong.
+//   1. The cache lived in a variable, so it died with the page - and this game reloads itself when a
+//      new build goes live (v276), which is also what drops the socket. World chat came back because it
+//      is cached per account; Local came back empty. It is now mirrored into THIS TAB's sessionStorage:
+//      per tab, gone when the tab closes, never shared with another tab, never sent to the server and
+//      never in local storage - the privacy rule ("no Local transcript on disk") is unchanged, because
+//      a reload is the same tab still open. v313's in-memory cache is still the first stop.
+//   2. A stash always used app.room, and the room snapshot below assigns app.room BEFORE it stashes, so
+//      a rebalance into another plaza saved the conversation under the wrong key. stashLocal now takes
+//      the room it is leaving, and every path that can drop the socket (close, watchdog, re-auth,
+//      handshake timeout) stashes first.
+const localKey=room=>'pg_social_local_v1_'+String(app.user||'').toLowerCase()+'_'+room;
+function rememberLocal(room,lines){
+ if(!room||!lines||!lines.length)return;
+ localHistory.set(room,lines);
+ try{sessionStorage.setItem(localKey(room),JSON.stringify(lines))}catch{}
 }
-function recallLocal(room){return room&&localHistory.get(room)||[]}
+function stashLocal(room=app.room){
+ if(!room)return;
+ const lines=app.messages.filter(m=>m.channel==='local'&&m.room===room);
+ if(lines.length)rememberLocal(room,lines.slice(-LOCAL_CACHE_MAX));
+}
+function recallLocal(room){
+ if(!room)return[];
+ const kept=localHistory.get(room);
+ if(kept&&kept.length)return kept;
+ try{
+  const clean=mergeChatMessages(JSON.parse(sessionStorage.getItem(localKey(room))||'null')).filter(m=>m.channel==='local'&&m.room===room).slice(-LOCAL_CACHE_MAX);
+  if(clean.length){localHistory.set(room,clean);return clean}
+ }catch{}
+ return [];
+}
 function cleanChatMessage(m){
  if(!m||!['world','whisper','local'].includes(m.channel)||!Number.isFinite(m.at)||!Number.isInteger(m.from)||typeof m.name!=='string'||typeof m.body!=='string'||m.body.length>300||(m.emotion&&!R.EMOTIONS.includes(m.emotion)))return null;
  return {type:'message',id:typeof m.id==='number'||typeof m.id==='string'?m.id:'',at:m.at,from:m.from,name:m.name.slice(0,32),gm:m.gm===true,channel:m.channel,body:m.body,...(m.channel==='local'&&m.sys===true?{sys:true}:{}),room:Number.isInteger(m.room)?m.room:0,...(m.emotion?{emotion:m.emotion}:{}),...(Number.isInteger(m.to)?{to:m.to}:{}),...(typeof m.toName==='string'?{toName:m.toName.slice(0,32)}:{})};
@@ -1419,8 +1445,7 @@ $id('sanctuaryBagView').onclick=e=>{
 };
 $id('sanctuaryShopView').onclick=e=>{const button=e.target.closest('[data-shop-item]');if(button&&!button.disabled)sanctuaryBuy(button.dataset.shopItem,Number(button.dataset.quantity)||1)};
 async function enter(){ensureDigimonBag();discardLegacyActivities();digimonSelect.value=partnerLine()||'';if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),trainStation:startWorldTraining,sanctuaryShop:openSanctuaryShop,sanctuaryIndex:openSanctuaryIndex,trainingNearby:worldNearbyFrame,sitting});if(app.wanted){app.scene.active=true;bindFishing();for(const p of app.players.values())app.scene.putPlayer(p);refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
-function leave(){worldNearbyStat='';worldNearby.hidden=true;worldBattleNearby.hidden=true;stopSoloPve('stopped',false);app.battleIntent=null;battleOffer=null;app.battleResult=null;app.battle={pve:[],pvp:null,queue:[]};battleHUD.hidden=true;pvpDialog.hidden=true;renderBattleResult();app.scene?.setBattleState?.(app.battle);if(!sanctuaryPanel.hidden)sanctuaryClose();FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');if(app.scene)app.scene.active=false;resetPlayers();stashLocal();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}
-$id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick()))return;confirmPokerLeave(()=>leave())};
+function leave(){worldNearbyStat='';worldNearby.hidden=true;worldBattleNearby.hidden=true;stopSoloPve('stopped',false);app.battleIntent=null;battleOffer=null;app.battleResult=null;app.battle={pve:[],pvp:null,queue:[]};battleHUD.hidden=true;pvpDialog.hidden=true;renderBattleResult();app.scene?.setBattleState?.(app.battle);if(!sanctuaryPanel.hidden)sanctuaryClose();FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});stashLocal(app.room);app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');if(app.scene)app.scene.active=false;resetPlayers();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}$id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick()))return;confirmPokerLeave(()=>leave())};
 const socialHubBtn=$id('socialHubBtn');if(socialHubBtn)socialHubBtn.onclick=()=>enter();syncHubButton();$id('socialSit').onclick=toggleSit;
 function receive(m){
  if(m.type==='battle'){battleSnapshot(m);return}
@@ -1472,8 +1497,7 @@ function receive(m){
   if(m.from!==app.id)try{FISHING()?.showOffEvent?.(m.from,{sp:m.sp,w:m.w,mut:m.mut,perfect:m.perfect})}catch{}
   return}
  if(m.type==='reauth')return refreshSocket();
- if(m.type==='room'){if(worldTraining?.room&&m.room&&m.room!==worldTraining.room)cancelWorldTraining('Gym training stopped after changing plazas.');friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());const moved=app.room!==m.room;if(moved){clearPokerResult();app.poker=null;app.pokerTables=null;pokerUI.renderKey='';}app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;resetPlayers();if(moved){stashLocal();app.messages=app.messages.filter(x=>x.channel!=='local');const back=recallLocal(m.room);if(back.length)app.messages=mergeChatMessages(app.messages,back)}pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)}
- if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
+ if(m.type==='room'){if(worldTraining?.room&&m.room&&m.room!==worldTraining.room)cancelWorldTraining('Gym training stopped after changing plazas.');friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());const moved=app.room!==m.room;if(moved){stashLocal(app.room);clearPokerResult();app.poker=null;app.pokerTables=null;pokerUI.renderKey='';}app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;resetPlayers();if(moved){app.messages=app.messages.filter(x=>x.channel!=='local');const back=recallLocal(m.room);if(back.length)app.messages=mergeChatMessages(app.messages,back)}pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)} if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
 
  if(m.type==='left'&&m.room===app.room){app.players.delete(m.id);app.scene?.removePlayer(m.id);population();friendPresenceChanged()}
  if(m.type==='message'){if(m.channel==='local'&&m.room!==app.room)return;app.messages=mergeChatMessages(app.messages,[m]);if(m.channel==='world')saveWorldHistory();else if(m.channel==='local')stashLocal();if(app.channel!==m.channel||chat.classList.contains('minimized'))app.unread.add(m.channel);if(!app.muted.has(m.from)){if(m.channel==='local'){const fishShown=FISHING()?.onLocalMessage?.(m.from,m.body||'');if(!fishShown)app.scene?.bubble(m.from,m);pokerTableChatBubble(m)}if(app.channel===m.channel)renderMessages(true)}tabsUI()}}
@@ -1483,8 +1507,7 @@ function receive(m){
 // visibilitychange probes the moment a throttled background tab wakes up.
 const WATCHDOG_MS=10000,PROBE_GRACE_MS=5000,HANDSHAKE_MS=12000;
 function seatState(){const me=app.players.get(app.id);const seated=seatedPokerSnapshot();return me?{seat:Number.isInteger(me.seat)?me.seat:null,pokerSeat:Number.isInteger(me.pokerSeat)?me.pokerSeat:null,pokerBuyIn:seated?.me?.stack||pokerUI.buyIn,sit:!!me.sit}:app.resume}
-function dropSocket(message,keep){const ws=app.socket;app.socket=null;app.connected=false;app.battleIntent=null;app.probeAt=0;if(keep)app.resume=seatState();
- // v311 (owner: "the hero jumps around on reconnect"): a dropped socket used to leave the local
+function dropSocket(message,keep){const ws=app.socket;stashLocal(app.room);app.socket=null;app.connected=false;app.battleIntent=null;app.probeAt=0;if(keep)app.resume=seatState(); // v311 (owner: "the hero jumps around on reconnect"): a dropped socket used to leave the local
  // character walking a route the room no longer knew about, and the room then restored its own
  // copy - two different heroes, one of them moving on its own. Stop the walk where it stands and
  // let the resumed spot take over.
@@ -1554,7 +1577,7 @@ function connect(){if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextCo
   // browser console is the only place that can answer it (1000/1006 = network or edge, 4000 = the
   // server's planned session refresh, 4001 = the same account signed in somewhere else).
   if(e.code!==4000)console.info('[plaza] chat socket closed',e.code,e.reason||'');
-  if(e.code===4000){app.resume=seatState();app.nextConnect=0;status('Refreshing chat…');return}
+  if(e.code===4000){stashLocal(app.room);app.resume=seatState();app.nextConnect=0;status('Refreshing chat…');return}
   // v295: a silent drop or a network blip reserves the same thing a planned refresh does, so the
   // reconnect resumes the seat/room instead of spawning at the plaza entrance. Read it BEFORE
   // resetPlayers() wipes the map it comes from.
@@ -1580,6 +1603,19 @@ document.addEventListener('visibilitychange',()=>{
  // reconnect, and a reconnect that was not needed is exactly what the plaza was reporting. The
  // socket is now asked first: one probe, five seconds to answer, and only silence past that drops it.
  if(app.connected&&app.socket.readyState===1&&Date.now()-(app.lastSeen||0)>=WATCHDOG_MS)heartbeat(Date.now());
+});
+// v326: the network coming back is not the tab coming back. A socket that died while the connection
+// was down was retried on the retryDelay() ladder - up to 30 s - so chat could sit dark for half a
+// minute after the wifi returned, which reads as another "random disconnect". Ask at once instead.
+window.addEventListener('online',()=>{
+ if(!CLOUD.on||app.blocked)return;
+ app.nextConnect=0;app.retry=0;
+ if(app.socket&&app.socket.readyState>1)dropSocket('Chat reconnecting…',true);
+ if(!app.socket)connect();
+});
+// And say what is actually happening rather than "retrying…" at a connection that is not there.
+window.addEventListener('offline',()=>{
+ if(app.socket||app.wanted)status('Chat offline — it reconnects when the network returns.');
 });
 // Someone appeared, moved or left: the friends panel's "in the plaza now" label is drawn from this
 // list, so it is redrawn when (and only when) the panel is open.

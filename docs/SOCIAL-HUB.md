@@ -12,8 +12,9 @@ The plaza holds 20 authenticated players per room; additional arrivals automatic
 `Plaza 2`, `Plaza 3`, and so on, and online visitors can also hop between open numbered plazas
 via the `#socialRoomSelect` switcher in the plaza header. World spans all plazas and fields.
 Local messages, bench seats, and each room's two West Avenue Hold'em tables belong to
-that numbered plaza; no Local replay is sent to newcomers. Local lines clear on
-leaving/rejoining. Whispers are delivered only to sender and online recipient.
+that numbered plaza; no Local replay is sent to newcomers. The server keeps no Local
+backlog: it clears on leaving/rejoining, and only your own tab remembers what it saw
+(v326 below). Whispers are delivered only to sender and online recipient.
 
 **Emotions ride the channel they were sent on (v274).** The tray used to be a plaza
 feature: `room.mjs` rewrote every `emotion` to `channel:'local'` and refused it
@@ -31,6 +32,21 @@ merges/deduplicates them with the server backlog on hello/reconnect. An empty he
 cannot erase that cache. Whispers and Local are never written to this storage; they
 remain delivery-only/private, and the combined in-memory chat cap is still 400.
 This is recent public history, not offline mail or an unlimited archive.
+
+**Local chat survives a reconnect and a reload (v326).** The owner reported "random
+disconnects, I lose local chat but world chat is fine". The most common trigger is the game
+itself: the update watcher resets the page on a new build (v299 — inside 12 s of load, or
+whenever the tab is hidden), which drops the plaza socket with a `1006` and reloads the page. The disconnects were the
+symptom; the loss was the design. World has a per-account cache, but Local lived only
+in a variable in the page, so anything that reloads or replaces the page - including the
+game's own reload-on-new-build (v276), which is also what drops the socket - wiped it.
+Local is now mirrored into **this tab's `sessionStorage`**, under
+`pg_social_local_v1_<account>_<plaza>`, at most 60 lines per plaza, read back through the
+same `mergeChatMessages` dedupe. That storage is per tab and per account: it dies with
+the tab, is never shared with another tab or account, is never written to
+`localStorage`, and is never sent to the server. Walking to another plaza, or leaving and
+coming back to the same one in that tab, shows that plaza's own lines again; the server
+still sends no Local replay, so newcomers see nothing they did not witness.
 
 Click/tap to walk at your character's own field run speed (AGI, movement affixes, pets and movement buffs, including the 1.4 running factor); the room clamps the reported value to 2–13 u/s and both client and server advance with it, so the plaza no longer feels slower than farming. Like the main field camera (`PerspectiveCamera(38)`), the camera stays smoothly locked to your character without map-wide free-panning: drag (mouse or 1 finger) to rotate and tilt (`26°–77°`, default `45°`), and scroll or pinch to zoom (`22–72` distance, default `44`). Camera exposes Rotate, Tilt, and Zoom sliders, and Reset view restores defaults. Your character is framed slightly higher than the middle of the screen (`~44–46%` from the top) so overhead bubbles, the top toolbar, and the bottom dock/chat all stay clear. Names appear below the feet, with an equipped Hunt title underneath. Appearance, title and refinement updates preserve your position. Insert or `/sit` toggles sitting; walking stands up. Twelve native slatted metal park benches form four groups along the fountain promenade, and each bench seats **2 adventurers side-by-side** (`24` bench seats total; clicking a half-occupied bench automatically claims the open partner spot beside them). Reservations are per plaza and clear on standing, walking, switching rooms or disconnecting. A larger castle,
 flanking houses, two market stalls, two West Avenue Hold'em tables and four bounded corner gardens surround the expanded avenues; trees stay inside
@@ -754,7 +770,17 @@ npx wrangler deploy --config workers/social/wrangler.toml
 No production deployment is performed by the feature tests. A missing binding
 leaves the game playable and shows chat as unavailable. The latest 100 World
 messages and unacknowledged per-account poker ledger events survive a Durable Object
-restart in its existing SQLite storage; no new D1 migration is required. Deploy the Social Worker before the matching Pages
+restart in its existing SQLite storage; no new D1 migration is required.
+
+**A failed storage read no longer bricks the room (v326).** Before admitting a socket
+the object loads the World backlog, the plaza resume records and every account's
+unacknowledged poker outbox. If that last read failed, a flag answered **503 to every
+connection for the rest of the object's life** - the client shows *"Chat unavailable,
+retrying..."*, a reload does not help, and only a Durable Object eviction minutes later
+clears it. Storage that was healthy a moment later could not get in. The ledger load is
+now a retried method: a failure refuses only that one attempt, and the next connection
+recovers. `tools/tests/social_room_recovery_sim.mjs` pins it (unit-level, fake storage);
+`social_worker_sim.mjs` still rehearses the real runtime with miniflare. Deploy the Social Worker before the matching Pages
 client so the leave guard, reconnect reservation and durable backlog are active.
 This first service
 uses one coordinating Durable Object for the world and numbered plazas, intended

@@ -20,6 +20,48 @@ const src = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 let pass = 0, fail = 0;
 const t = (n, fn) => { try { fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 const T = async (n, fn) => { try { await fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + (e && e.message)); fail++; } };
+await T('v327: the documented restore-from-stash actually satisfies the login rule', async () => {
+  // docs/CHECK-A-SAVE.md tells an owner how to put a stashed copy back. It "works" only if the copy it
+  // writes passes localAheadOfServer at the next login - same version as the account, offlineAt newer
+  // than cloud.at - so the login uploads it instead of adopting over it. Run the documented code.
+  const doc = fs.readFileSync(path.join(root, 'docs', 'CHECK-A-SAVE.md'), 'utf8');
+  const block = [...doc.matchAll(/```js\n([\s\S]*?)```/g)].map(m => m[1]).find(b => b.includes('function restoreFrom'));
+  assert.ok(block, 'the restore snippet is still in the doc');
+  new vm.Script(block);                                   // and still parses
+  const store = new Map([
+    ['pg_save3_A', JSON.stringify({ lv: 5, zeny: 100, owner: 'A' })],
+    ['pg_save3_A_local_111', JSON.stringify({ lv: 88, zeny: 9999, owner: 'A', accountId: 7 })],
+  ]);
+  const ctx = {
+    localStorage: { getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v)) },
+    currentUser: 'A', confirm: () => true, console: { log() {}, table() {} },
+    fetch: async () => ({ json: async () => ({ version: 41, blob: JSON.stringify({ lv: 5, zeny: 100 }) }) }),
+  };
+  vm.createContext(ctx);
+  new vm.Script(block).runInContext(ctx);
+  assert.strictEqual(await ctx.restoreFrom('pg_save3_A_local_111'), 'written - reload and log in; the login will upload it.');
+  const main = JSON.parse(store.get('pg_save3_A'));
+  assert.strictEqual(main.lv, 88, 'the stashed character is the live copy now');
+  assert.strictEqual(main.cloud.v, 41, 'stamped with the account version the server just reported');
+  assert.ok(main.offlineAt > main.cloud.at, 'and written after it, which is the whole login test');
+  assert.ok([...store.keys()].some(k => k.includes('_before_restore_')), 'the replaced copy is kept, so it is reversible');
+  await assert.rejects(() => ctx.restoreFrom('pg_save3_A'), /backup key/, 'and the live slot cannot be restored over itself');
+});
+
+await T('v327: the paste-in save comparison still matches the real client', async () => {
+  // docs/CHECK-A-SAVE.md hands the player a console snippet when "it still isn\'t saved" arrives with
+  // no red line. A snippet quoting a global that has since been renamed is worse than no snippet, so
+  // the names it depends on are checked against index.html here.
+  const doc = fs.readFileSync(path.join(root, 'docs', 'CHECK-A-SAVE.md'), 'utf8');
+  const block = doc.split('```js')[1] || '';
+  assert.ok(block.includes("'pg_save3_' + currentUser"), 'the snippet reads the account\'s own slot');
+  assert.ok(block.includes('/api/save'), 'and asks the server for the same endpoint the client uses');
+  assert.ok(block.includes('CLOUD.on'), 'and reports whether sync is on');
+  assert.ok(/let currentUser=/.test(src), 'currentUser is still a console-reachable binding');
+  assert.ok(/const CLOUD=\{/.test(src), 'CLOUD is still a console-reachable binding');
+  assert.ok(/const saveKey=\(\)=>'pg_save3_'\+currentUser/.test(src), 'and the slot key is still pg_save3_<name>');
+});
+
 console.log('client cloud layer: offline-first sync with a conflict-safe save\n');
 // Read a `const NAME=<number>` straight out of the page, for the two constants whose value is a
 // request budget rather than an implementation detail.
@@ -49,6 +91,7 @@ function harness(opts = {}) {
   };
   const fetchStub = async (url, init) => {
     calls.push({ url, init: init || {} });
+    if (opts.fetch) return opts.fetch(url, init || {}, calls);
     const route = (opts.routes || {})[url.replace('/api', '')] || {};
     const seq = calls.filter(c => c.url === url).length;
     const r = typeof route === 'function' ? route(seq, init) : route;
@@ -61,6 +104,7 @@ function harness(opts = {}) {
       text: async () => JSON.stringify(r.body ?? {}),
     };
   };
+  const timers = [];
   const sandbox = {
     console, JSON, Math, Date, Number, String, Array, Object, Promise, Blob,
     AbortController, clearTimeout,   // cloudAuth gives up after AUTH_TIMEOUT_MS (v88.3); setTimeout is stubbed below
@@ -85,7 +129,10 @@ function harness(opts = {}) {
     navigator: {},
     addEventListener: () => {},
     setInterval: () => 0,
-    setTimeout: (fn) => { if (opts.runTimers) fn(); return 0; },
+    // A queued timer must NOT run inline: cloudPush's retry would fire while CLOUD.pushing is still
+    // true and be swallowed as 'idle' - a harness artefact that would hide a real loop. So a timer is
+    // parked on a queue that `settle()` drains after the current attempt has finished.
+    setTimeout: (fn) => { if (opts.runTimers) timers.push(fn); return 0; },
     log: (m, cls, cat) => state.logs.push({ m, cls, cat }),
     cloudMsg: null,
     $: id => els.get(id) || null,
@@ -101,6 +148,8 @@ function harness(opts = {}) {
     },
     lsPut: (k, v) => { store.set(k, String(v)); },
     lsGet: k => (store.has(k) ? store.get(k) : null),
+    // index.html defines this just above the extracted block; the v326 version stamp writes through it.
+    saveKey: () => 'pg_save3_' + (sandbox.currentUser || ''),
     iname: it => it.name,
     totalPts: () => 100,
     ELITELV: 100,
@@ -115,6 +164,7 @@ function harness(opts = {}) {
     authMode: 'login', hudRate: null, zenyEarned: 0,
   };
   sandbox.$ = sandbox.$;
+  sandbox.__timers = timers;   // the parked setTimeout queue settle() drains
   sandbox.globalThis = sandbox;
   sandbox.S = state.S;                 // the game state the block mutates
   sandbox.currentUser = null;          // and the account name it works against
@@ -129,6 +179,12 @@ function harness(opts = {}) {
     'cloudAdopt','cloudPull','cloudApplyGrants','ptsSpent','cloudAuth','cloudLogout','cloudTouch',
     'cloudSession','initSessionFromCloud','saveKeyFor','cloudBadge','cloudSay','cloudFetch',
     'cloudJoin','cloudRefresh','cloudStart','saveBackup','restoreBackup',
+    // v328: the request deadline, the stuck-push watchdog and the quiet-save note.
+    'CLOUD_TIMEOUT_MS','CLOUD_STALL_MS','cloudPushWatchdog','cloudStallNote',
+    // v330: the decision ledger, and the figures a lost session is measured in.
+    'syncLog','syncLogShow','pgSyncLog','saveFigures','SYNC_LOG_KEY',
+    // v326: which copy is newer, and the version stamp that makes it answerable after a reload.
+    'cloudBaseOf','localAheadOfServer','cloudStampBase','cloudFlushLeaving',
     // v82 usage diet: the cadence constants and the poll tick are asserted on directly.
     'CLOUD_DEBOUNCE','CLOUD_HIDDEN_DEBOUNCE','CLOUD_POLL_MS','CLOUD_HIDDEN_POLL_MS',
     'cloudPollTick','cloudHidden',
@@ -147,7 +203,7 @@ function harness(opts = {}) {
   vm.runInContext(cloudCode + '\n;' + EXPORTS.map(n => `globalThis.${n}=${n};`).join('') +
     ';globalThis.sessionWasReplaced=()=>cloudReplaced;' +
     ';globalThis.resetSessionCheck=()=>{cloudLastCheck=0;CLOUD.checking=false};' +
-    ';globalThis.settle=async()=>{for(let i=0;i<12;i++)await Promise.resolve()};', sandbox);
+    ';globalThis.settle=async()=>{for(let i=0;i<12;i++){await Promise.resolve();}while(globalThis.__timers.length){const f=globalThis.__timers.shift();await Promise.resolve();f();for(let i=0;i<12;i++)await Promise.resolve();}};', sandbox);
   return { sandbox, state, calls, els, store };
 }
 
@@ -209,6 +265,72 @@ await T('cloud login hands the server claim to the reward applier and syncs its 
   assert.strictEqual(h.state.offlineClaims[0].id,41);
   const body=JSON.parse(h.calls.find(c=>c.url==='/api/save'&&c.init.method==='PUT').init.body);
   assert.strictEqual(body.offlineClaimId,41,'the acknowledged save carries the server claim ID');
+});
+
+// v326, seen in the owner's own console: /api/save answering 428. That answer is the away-time claim
+// handshake - the client is told to apply a server-timed claim and push it back with its id. It used
+// to re-arm itself without limit, and every refused push is progress that never reached D1.
+await T('v326: a network that comes back flushes what the outage left unsent', async () => {
+  // The listeners live in index.html outside the extracted block, so this is a source pin: the offline
+  // window is the one a refresh can still swallow, and it must not wait for the 60-second debounce.
+  assert.match(src, /addEventListener\('online',\(\)=>\{if\(!CLOUD\.on\|\|CLOUD\.lost\|\|CLOUD\.paused\)return;if\(CLOUD\.dirty\)cloudPush\(true\)\}\)/,
+    'coming back online pushes a dirty save at once, and stays out of the away gate');
+  assert.match(src, /addEventListener\('pagehide',\(\)=>\{if\(CLOUD\.on&&!CLOUD\.lost\)cloudFlushLeaving\(\)\}\)/,
+    'and leaving the page still flushes with keepalive');
+});
+
+await T('a 428 away claim is applied and pushed back exactly once', async () => {
+  const claim = { id: 77, awayMs: 8 * 3600000, creditedMs: 4 * 3600000, rateKph: 100, kills: 200, remainder: 0 };
+  let puts = 0;
+  const h = harness({
+    runTimers: true,
+    routes: {
+      '/save': (n, init) => {
+        if (!(init && init.method === 'PUT')) return { status: 200, body: { version: 4, blob: null, offlineClaim: null } };
+        puts++;
+        if (puts === 1) return { status: 428, body: { err: 'A server-timed offline claim must be applied before this cloud save can sync.', version: 4, offlineClaim: claim } };
+        const body = JSON.parse(init.body);
+        return body.offlineClaimId === 77
+          ? { status: 200, body: { version: 5, offlineClaimId: 77 } }
+          : { status: 428, body: { err: 'again', version: 4, offlineClaim: claim } };
+      },
+    },
+  });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 4; h.sandbox.currentUser = 'FRIEND';
+  h.sandbox.S = { lv: 12, cls: 'Novice', zeny: 100, kills: 5, st: { str: 1 } };
+  h.state.S = h.sandbox.S;
+  const r = await h.sandbox.cloudPush(true);
+  await h.sandbox.settle(); await h.sandbox.settle();
+  assert.strictEqual(r, 'offline-claim', 'the first attempt answers the claim, not an error');
+  assert.strictEqual(h.state.offlineCalls, 1, 'the claim was handed to the reward applier');
+  assert.strictEqual(h.state.offlineClaims[0].id, 77);
+  const put = h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.strictEqual(put.length, 2, 'one retry, no more');
+  assert.strictEqual(JSON.parse(put[1].init.body).offlineClaimId, 77, 'the retry pushes the claim id back');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 5, 'and the accepted retry moves the version');
+});
+
+await T('the same claim twice stops the loop and says so', async () => {
+  const claim = { id: 88, awayMs: 8 * 3600000, creditedMs: 4 * 3600000, rateKph: 100, kills: 200, remainder: 0 };
+  let puts = 0;
+  const h = harness({
+    runTimers: true,
+    routes: {
+      '/save': (n, init) => {
+        if (!(init && init.method === 'PUT')) return { status: 200, body: { version: 4, blob: null } };
+        puts++;
+        return { status: 428, body: { version: 4, offlineClaim: claim } };
+      },
+    },
+  });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 4; h.sandbox.currentUser = 'FRIEND';
+  h.sandbox.S = { lv: 12, cls: 'Novice', zeny: 100, kills: 5, st: { str: 1 } };
+  h.state.S = h.sandbox.S;
+  await h.sandbox.cloudPush(true);
+  await h.sandbox.settle(); await h.sandbox.settle(); await h.sandbox.settle();
+  assert.strictEqual(puts, 2, 'the second refusal of the same claim is not retried again');
+  assert.ok(h.state.logs.some(l => /away-time claim again \(88\)/.test(l.m)), 'and the player is told, instead of a silent spin');
+  assert.strictEqual(h.sandbox.CLOUD.dirty, true, 'the save stays queued for the next sync');
 });
 
 await T('a failing push never throws, and one bad request does not freeze the session', async () => {
@@ -364,7 +486,10 @@ await T('reconnecting adopts the account save, pays the away claim and resumes',
   assert.strictEqual(await h.sandbox.cloudReconnect(), true);
   assert.strictEqual(h.sandbox.CLOUD.lost, false);
   assert.strictEqual(h.els.get('cloudGate').style.display, 'none', 'the gate closes');
-  assert.strictEqual(h.store.get('pg_save3_X'), serverBlob, 'the account copy is what resumes');
+  // v326: the claim's accepted upload stamps the local copy with the version it became (`cloud`), so
+  // the bytes gain that one field - everything the server sent is still what is played.
+  assert.deepStrictEqual({ ...JSON.parse(h.store.get('pg_save3_X')), cloud: undefined },
+    { ...JSON.parse(serverBlob), cloud: undefined }, 'the account copy is what resumes');
   assert.strictEqual(h.state.offlineCalls, 1, 'the server-timed away claim is applied');
   assert.strictEqual(h.state.offlineClaims[0].id, 7);
   assert.strictEqual(h.sandbox.S.offlineClaimId, 7, 'and recorded in the save');
@@ -376,7 +501,8 @@ await T('signing out clears the gate and every connection flag', async () => {
   await h.sandbox.cloudPush(true);
   assert.strictEqual(h.sandbox.CLOUD.lost, true);
   assert.strictEqual(h.els.get('cloudGate').style.display, 'flex');
-  h.sandbox.cloudLogout();
+  // v326: ending the session now waits for the last upload, so the caller awaits it too.
+  await h.sandbox.cloudLogout();
   assert.strictEqual(h.sandbox.CLOUD.lost, false, 'a signed-out page is not marked as away');
   assert.strictEqual(h.sandbox.CLOUD.gate, false);
   assert.strictEqual(h.sandbox.CLOUD.on, false);
@@ -525,7 +651,9 @@ await T('registering with progress already in this browser: it is uploaded, neve
   assert.strictEqual(pushed.cls, 'Knight');
   assert.strictEqual(pushed.zeny, 500);
   assert.strictEqual(pushed.kills, 7);
-  assert.strictEqual(h.store.get('pg_save3_KzeR'), local, 'and the device keeps its own copy');
+  // v326: the accepted upload also writes the version stamp (`cloud`) into the device copy.
+  assert.deepStrictEqual({ ...JSON.parse(h.store.get('pg_save3_KzeR')), cloud: undefined },
+    { ...JSON.parse(local), cloud: undefined }, 'and the device keeps its own copy');
   assert.strictEqual(h.els.get('cloudGate').style.display || 'none', 'none', 'nothing to choose between here');
 });
 
@@ -829,11 +957,15 @@ await T('the poll fetches announcements and gifts, and saves receipts without re
 // ------------------------------------------------- the v82 usage diet ----
 // Every push is one Function request and one D1 row written, so the cadence IS the cost. These
 // pin the numbers the free-plan arithmetic in tools/server-shift-plan.md §3b is built on.
-await T('a push waits a minute while you play, and five while the tab is hidden', async () => {
+await T('a push waits a minute while you play, and two and a half while the tab is hidden', async () => {
   const h = harness({ routes: { '/save': { status: 200, body: { version: 2 } } } });
   h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 1; h.sandbox.currentUser = 'X';
   assert.strictEqual(h.sandbox.CLOUD_DEBOUNCE, 60000, 'the plan\'s own budget assumes a 60-second debounce');
-  assert.strictEqual(h.sandbox.CLOUD_HIDDEN_DEBOUNCE, 300000, 'a hidden tab backs off to five minutes');
+  // v327: three, not five. A background cadence slower than the server's away threshold (three minutes)
+  // made every hidden-tab save look like a return from absence - an away claim, a 428 and a retry each
+  // time, which is what AFK fishing produced. The diet survives: the 428 path cost two requests and two
+  // row writes for the same window, so this is strictly cheaper as well as quieter.
+  assert.strictEqual(h.sandbox.CLOUD_HIDDEN_DEBOUNCE, 150000, 'a hidden tab backs off to two and a half minutes');
   const realNow = Date.now;
   try {
     let t = realNow();
@@ -847,8 +979,8 @@ await T('a push waits a minute while you play, and five while the tab is hidden'
     assert.strictEqual(h.sandbox.cloudHidden(), true, 'the block must notice a background tab');
     h.sandbox.CLOUD.dirty = true; t += 60000;
     assert.strictEqual(await h.sandbox.cloudFlush(), 'idle', 'a hidden tab does not push every minute');
-    t += 300000;
-    assert.strictEqual(await h.sandbox.cloudFlush(), 'ok', 'five minutes hidden is the cadence');
+    t += 150000;
+    assert.strictEqual(await h.sandbox.cloudFlush(), 'ok', 'two and a half minutes hidden is the cadence');
     // ...and a forced flush (tab closing, player chose a save) always sends, whatever the clock says.
     h.sandbox.CLOUD.dirty = true;
     assert.strictEqual(await h.sandbox.cloudFlushNow(), 'ok', 'a forced flush ignores the back-off');
@@ -1166,6 +1298,478 @@ await T('v264: opening and closing the GM console keeps the live session open wi
   assert.strictEqual(h.sandbox.CLOUD.on, true, 'GM remains signed in');
   assert.ok(!h.calls.some(c => c.url === '/api/sessions' && c.init.method === 'DELETE'), 'no session DELETE occurs on return');
   assert.strictEqual(h.sandbox.S.zeny, 350, 'any grant sent during the GM console visit lands immediately on close');
+});
+
+// --------------------------------------------------- v326: which copy is newer ----
+// The owner's report ("I ascended the same weapon three times and it went back to N+") is a LOGIN
+// bug, not a lost save: the account copy was simply older than the device copy, and every login
+// replaced one with the other. These tests pin both halves of the answer - the newer device copy is
+// kept, and a real "another device moved on" still loads the account copy.
+const joinHarness = (deviceSave, accountSave, version = 40) => harness({
+  storage: deviceSave ? { 'pg_save3_FRIEND': JSON.stringify(deviceSave) } : {},
+  S: deviceSave ? { ...JSON.parse(JSON.stringify(deviceSave)) } : undefined,
+  loadReturn: { lv: 150, q: [] },
+  routes: {
+    '/save': (seq, init) => (init && init.method === 'PUT'
+      ? { status: 200, body: { version: version + 1 } }
+      : { status: 200, body: { owner: 'FRIEND', version, blob: JSON.stringify(accountSave), savedAt: 900 } }),
+    '/grants': { status: 200, body: { grants: [] } },
+    '/messages': { status: 200, body: { messages: [] } },
+  },
+});
+const signIn = h => { h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'FRIEND'; h.sandbox.currentUser = 'FRIEND'; };
+const forgedBlade = { owner: 'FRIEND', lv: 150, zeny: 5, weapon: 'Mythic Celestial Blade', cloud: { v: 40, at: 1000 }, offlineAt: 2000, gmStats: { at: 2000 } };
+const nPlusBlade = { owner: 'FRIEND', lv: 150, zeny: 5, weapon: 'N+ Blade', gmStats: { at: 1500 } };
+
+await T('v326: a login keeps the device copy when it is the account copy plus play the server has not had', async () => {
+  const h = joinHarness(forgedBlade, nPlusBlade);
+  signIn(h);
+  await h.sandbox.cloudJoin('FRIEND', JSON.stringify(forgedBlade));
+  const put = h.calls.find(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.ok(put, 'the newer device copy is uploaded instead of being thrown away');
+  const body = JSON.parse(put.init.body);
+  assert.strictEqual(body.version, 40, 'uploaded on top of the version the account still holds');
+  assert.ok(body.blob.includes('Mythic Celestial Blade'), 'the forge is in the upload');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 41, 'and the accepted upload advances the version');
+  assert.ok(![...h.store.keys()].some(k => k.startsWith('pg_save3_FRIEND_local_')),
+    'nothing was adopted, so nothing had to be stashed as a backup');
+  assert.strictEqual(JSON.parse(h.store.get('pg_save3_FRIEND')).weapon, 'Mythic Celestial Blade', 'the device copy still holds the forge');
+  assert.ok(h.state.logs.some(l => /Kept this device/.test(l.m)), 'the player is told the device copy was kept');
+});
+
+await T('v326: another device that moved the account on still wins at login', async () => {
+  // Same shape, but the account is on a version this device never synced: a different device wrote.
+  const behind = { ...forgedBlade, cloud: { v: 39, at: 1000 }, offlineAt: 2000 };
+  const moved = { owner: 'FRIEND', lv: 151, zeny: 9, weapon: 'N+ Blade' };
+  const h = joinHarness(behind, moved, 42);
+  signIn(h);
+  await h.sandbox.cloudJoin('FRIEND', JSON.stringify(behind));
+  assert.strictEqual(h.store.get('pg_save3_FRIEND'), JSON.stringify(moved), 'the account copy becomes the live save');
+  assert.ok([...h.store.keys()].some(k => k.startsWith('pg_save3_FRIEND_local_')), 'the device copy is kept as a backup');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 42);
+  assert.ok(!h.calls.some(c => c.url === '/api/save' && c.init.method === 'PUT'), 'nothing is uploaded over it');
+});
+
+await T('v326: a 428 during a login push does not adopt the older account copy', async () => {
+  // The login path pushes the newer device copy. If the server answers 428 (an away claim must be
+  // acknowledged first), that is not a conflict - but the code fell through to cloudAdopt and loaded
+  // the older account copy on top of the forge it had just failed to upload. The owner's console is
+  // full of these 428s, so this is the path that kept the rollback alive after the first fix.
+  const claim = { id: 99, awayMs: 8 * 3600000, creditedMs: 4 * 3600000, rateKph: 100, kills: 200, remainder: 0 };
+  let puts = 0;
+  const h = harness({
+    storage: { 'pg_save3_FRIEND': JSON.stringify(forgedBlade) },
+    S: JSON.parse(JSON.stringify(forgedBlade)),
+    loadReturn: { lv: 150, q: [] },
+    runTimers: true,
+    routes: {
+      '/save': (n, init) => {
+        if (!(init && init.method === 'PUT'))
+          return { status: 200, body: { owner: 'FRIEND', version: 40, blob: JSON.stringify(nPlusBlade), savedAt: 900 } };
+        puts++;
+        if (puts === 1) return { status: 428, body: { version: 40, offlineClaim: claim } };
+        return { status: 200, body: { version: 41, offlineClaimId: claim.id } };
+      },
+      '/grants': { status: 200, body: { grants: [] } },
+      '/messages': { status: 200, body: { messages: [] } },
+    },
+  });
+  signIn(h);
+  await h.sandbox.cloudJoin('FRIEND', JSON.stringify(forgedBlade));
+  await h.sandbox.settle();
+  assert.strictEqual(JSON.parse(h.store.get('pg_save3_FRIEND')).weapon, 'Mythic Celestial Blade',
+    'the forge survives the away-claim round trip instead of being replaced by the older copy');
+  assert.ok(![...h.store.keys()].some(k => k.startsWith('pg_save3_FRIEND_local_')),
+    'nothing was stashed as a loss');
+  assert.ok(puts >= 2, 'and the claim was pushed back');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 41, 'the accepted retry is the live version');
+});
+
+await T('v326: a device copy with nothing unsynced still loads the account copy', async () => {
+  const quiet = { ...forgedBlade, cloud: { v: 40, at: 3000 }, offlineAt: 3000 };
+  const account = { owner: 'FRIEND', lv: 150, zeny: 5, weapon: 'N+ Blade' };
+  const h = joinHarness(quiet, account);
+  signIn(h);
+  await h.sandbox.cloudJoin('FRIEND', JSON.stringify(quiet));
+  assert.strictEqual(h.store.get('pg_save3_FRIEND'), JSON.stringify(account), 'no local play to protect');
+  assert.ok(!h.calls.some(c => c.url === '/api/save' && c.init.method === 'PUT'), 'so no needless upload row');
+});
+
+await T('v326: a save with no cloud stamp (written by an older build) is still reconciled the old way', async () => {
+  const legacy = { owner: 'FRIEND', lv: 150, weapon: 'N+ Blade' };
+  const account = { owner: 'FRIEND', lv: 150, weapon: 'Mythic Celestial Blade' };
+  const h = joinHarness(legacy, account);
+  signIn(h);
+  await h.sandbox.cloudJoin('FRIEND', JSON.stringify(legacy));
+  assert.strictEqual(h.store.get('pg_save3_FRIEND'), JSON.stringify(account), 'the account copy is adopted as before');
+});
+
+await T('v326: two copies of the same progress are one save even though save() re-takes the diagnostics', () => {
+  const h = harness({});
+  const a = JSON.stringify({ owner: 'X', lv: 10, zeny: 5, gmStats: { at: 111, combat: { ATK: 3 } }, inv: [1] });
+  const b = JSON.stringify({ owner: 'X', lv: 10, zeny: 5, gmStats: { at: 999, combat: { ATK: 3 } }, inv: [1] });
+  assert.strictEqual(h.sandbox.sameSave(a, b), true, 'the derived gmStats timestamp must not make a save look different');
+  const c = JSON.stringify({ owner: 'X', lv: 11, zeny: 5, gmStats: { at: 999, combat: { ATK: 3 } }, inv: [1] });
+  assert.strictEqual(h.sandbox.sameSave(a, c), false, 'real progress still differs');
+});
+
+await T('v326: leaving the page writes the device copy and asks for a keepalive upload', async () => {
+  const h = harness({ routes: { '/save': { status: 200, body: { version: 7 } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 6; h.sandbox.CLOUD.user = 'X'; h.sandbox.currentUser = 'X';
+  const savesBefore = h.state.saves;
+  assert.strictEqual(await h.sandbox.cloudFlushLeaving(), 'ok');
+  assert.strictEqual(h.state.saves, savesBefore + 1, 'the device copy is written before the page goes away');
+  const put = h.calls.find(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.strictEqual(put.init.keepalive, true, 'the browser is told not to cancel the request with the page');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 7);
+});
+
+// The owner keeps several accounts in one browser and logs in and out constantly - and that is the
+// other half of the report. The old logout fired the upload without waiting, deleted the session beside
+// it and reloaded, so the PUT was cancelled or arrived after the session was gone (401). The account
+// copy on the server stayed a minute behind, which is what the next login downloads.
+// AFK fishing leaves the game tab hidden (DevTools focused, another window on top), and a hidden tab
+// saves on a slower cadence. If that cadence is slower than the server's "you were away" threshold,
+// every single background save is measured as a return from absence: a claim is minted, the write is
+// refused with 428, and the client acknowledges and retries - for ever, one red pair per cadence.
+await T('v327: no save cadence is slower than the away threshold, or a running tab looks absent', async () => {
+  const server = fs.readFileSync(path.join(root, 'functions', 'api', 'save.js'), 'utf8');
+  const expr = (server.match(/const OFFLINE_MIN_MS = ([0-9* ]+);/) || [])[1] || '';
+  const offlineMin = expr.split('*').reduce((n, part) => n * Number(part.trim()), 1);
+  assert.strictEqual(offlineMin, 3 * 60 * 1000, 'the server\'s away threshold is three minutes');
+  const h = harness({});
+  assert.ok(h.sandbox.CLOUD_DEBOUNCE < offlineMin,
+    'the visible cadence (' + h.sandbox.CLOUD_DEBOUNCE + 'ms) is under the away threshold');
+  const hidden = Number((src.match(/const CLOUD_HIDDEN_DEBOUNCE=(\d+);/) || [])[1]);
+  assert.ok(hidden > 0, 'the hidden cadence is declared');
+  assert.ok(hidden < offlineMin,
+    'AFK fishing or a background window must not look like an absence: ' + hidden + 'ms < ' + offlineMin + 'ms');
+});
+
+await T('v326: logging out lands the last minute before the session is deleted', async () => {
+  const h = harness({ routes: { '/save': { status: 200, body: { version: 8 } }, '/sessions': { status: 200, body: { ok: true } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 7;
+  h.sandbox.CLOUD.user = 'X'; h.sandbox.currentUser = 'X'; h.sandbox.CLOUD.dirty = true;
+  const pending = h.sandbox.cloudLogout();
+  assert.ok(pending && typeof pending.then === 'function', 'ending the session is awaitable now, so the caller can order it');
+  await pending;
+  const putAt = h.calls.findIndex(c => c.url === '/api/save' && c.init.method === 'PUT');
+  const delAt = h.calls.findIndex(c => c.url === '/api/sessions' && c.init.method === 'DELETE');
+  assert.ok(putAt >= 0, 'the last minute is uploaded on the way out');
+  assert.ok(delAt > putAt, 'and only then is the session it needs deleted');
+  assert.strictEqual(h.calls[putAt].init.keepalive, true, 'the upload survives the reload that follows');
+  assert.strictEqual(h.sandbox.CLOUD.on, false, 'the tab ends up signed out');
+  assert.strictEqual(h.sandbox.CLOUD.user, null);
+});
+
+await T('v326: two accounts in one browser - switching back never trades one player\'s copy for another\'s', async () => {
+  // A fake server: one row per account, and a version that only moves when that account pushes.
+  const server = {
+    A: { version: 7, blob: JSON.stringify({ owner: 'A', accountId: 11, lv: 50, zeny: 1000, weapon: 'N+ Blade' }) },
+    B: { version: 2, blob: JSON.stringify({ owner: 'B', accountId: 12, lv: 20, zeny: 50, weapon: 'Short Sword' }) },
+  };
+  let who = 'A';
+  const routes = {
+    '/save': (seq, init) => {
+      const row = server[who];
+      if (init && init.method === 'PUT') {
+        const body = JSON.parse(init.body);
+        if (String(body.owner).toLowerCase() !== who.toLowerCase())
+          return { status: 409, body: { err: 'This tab is playing a different account. Nothing was saved.', accountMismatch: true, owner: who } };
+        if (Number(body.version) !== row.version)
+          return { status: 409, body: { conflict: true, version: row.version, blob: row.blob, savedAt: 1, updatedAt: 1, offlineClaim: null } };
+        server[who] = { version: row.version + 1, blob: body.blob };
+        return { status: 200, body: { version: row.version + 1, bytes: body.blob.length, offlineClaimId: null, leaderboardPending: false } };
+      }
+      return { status: 200, body: { owner: who, version: row.version, blob: row.blob, savedAt: 1, updatedAt: 1, serverNow: 9e12, offlineClaim: null, pending: [] } };
+    },
+    '/sessions': { status: 200, body: { ok: true } },
+    '/grants': { status: 200, body: { grants: [] } },
+    '/messages': { status: 200, body: { messages: [] } },
+    '/me': { status: 200, body: { u: 'A', gm: 0 } },
+  };
+  // A's browser copy: the account's version 7 plus a forge nobody has uploaded yet.
+  const forged = { owner: 'A', accountId: 11, lv: 50, zeny: 40, weapon: 'Mythic Celestial Blade', cloud: { v: 7, at: 1000 }, offlineAt: 9000 };
+  const disk = { 'pg_save3_A': JSON.stringify(forged) };
+  const keep = h => { for (const [k, v] of h.store) disk[k] = v; };
+  const login = (acct, device) => {
+    who = acct;
+    const h = harness({ storage: disk, S: device ? JSON.parse(JSON.stringify(device)) : undefined, loadReturn: { lv: 50, q: [] }, routes });
+    h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = acct;
+    // The session response names the account id, and that id (not the name) is what every copy is judged by.
+    h.sandbox.CLOUD.id = acct === 'A' ? 11 : 12;
+    h.sandbox.currentUser = acct; h.sandbox.CLOUD.ver = server[acct].version;
+    return h;
+  };
+
+  // 1. A logs in: the forge is this account's own copy plus unsynced play, so it is uploaded, not discarded.
+  const a1 = login('A', forged);
+  await a1.sandbox.cloudJoin('A', disk['pg_save3_A']);
+  assert.strictEqual(server.A.version, 8, 'A\'s login uploaded the forge');
+  assert.match(server.A.blob, /Mythic Celestial Blade/, 'the account copy now holds it');
+  keep(a1);
+
+  // 2. A logs out. The upload must land before the session goes away.
+  await a1.sandbox.cloudLogout();
+  keep(a1);
+  assert.strictEqual(server.A.version, 9, 'the logout upload reached the server');
+  const putAt = a1.calls.findIndex(c => c.url === '/api/save' && c.init.method === 'PUT');
+  const delAt = a1.calls.findIndex(c => c.url === '/api/sessions' && c.init.method === 'DELETE');
+  assert.ok(delAt > putAt, 'and it was not racing the session DELETE');
+
+  // 3. B logs in on the same browser. A's slot is not read, written or stashed.
+  const b1 = login('B');
+  const got = await b1.sandbox.cloudReadSave();
+  assert.strictEqual(got.data.owner, 'B', 'the cookie now answers for B');
+  assert.doesNotMatch(got.data.blob, /Mythic Celestial Blade/, 'and nothing of A\'s is in it');
+  b1.store.set('pg_save3_B', got.data.blob);           // what initSessionFromCloud does with a new device
+  b1.sandbox.S = JSON.parse(got.data.blob);
+  b1.sandbox.CLOUD.dirty = true;
+  assert.strictEqual(await b1.sandbox.cloudPush(true), 'ok', 'B saves normally');
+  assert.strictEqual(JSON.parse(b1.store.get('pg_save3_A')).weapon, 'Mythic Celestial Blade', 'A\'s copy is untouched by B');
+  assert.strictEqual(server.A.version, 9, 'and B\'s push did not write A\'s row');
+  keep(b1);
+
+  // 4. A logs back in: same progress on both sides, so nothing is adopted and nothing is stashed.
+  const a2 = login('A', JSON.parse(disk['pg_save3_A']));
+  await a2.sandbox.cloudJoin('A', disk['pg_save3_A']);
+  assert.strictEqual(JSON.parse(a2.store.get('pg_save3_A')).weapon, 'Mythic Celestial Blade', 'the forge is still there');
+  assert.strictEqual(a2.sandbox.CLOUD.ver, server.A.version, 'and the tab is on the account\'s version');
+  assert.ok(![...a2.store.keys()].some(k => k.startsWith('pg_save3_A_local_')), 'nothing had to be stashed as a loss');
+  assert.strictEqual(JSON.parse(a2.store.get('pg_save3_B')).weapon, 'Short Sword', 'B\'s character is intact too');
+});
+
+await T('v326: a leaving upload that is cut short does not open the connection gate', async () => {
+  const h = harness({ routes: { '/save': { throw: 'page went away' }, '/me': { throw: 'page went away' } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'X'; h.sandbox.currentUser = 'X';
+  assert.strictEqual(await h.sandbox.cloudFlushLeaving(), 'offline');
+  assert.strictEqual(h.sandbox.CLOUD.lost, false, 'there is no page left to explain a gate to');
+  assert.strictEqual(h.sandbox.CLOUD.dirty, true, 'and the save is still queued for the next ordinary flush');
+});
+
+await T('v328: a save request that never settles cannot silence the session', async () => {
+  // The owner: "afk for 1 hour reaches 50m zeny, then logout and login and it is back to 30m", with
+  // nothing in the console. A fetch parked on a dropped socket never settles, cloudPush holds
+  // CLOUD.pushing until it does, and every later flush returned 'idle' - the whole session stopped
+  // uploading in silence. One request may now outlive CLOUD_TIMEOUT_MS only in the harness.
+  let hung = false;
+  const h = harness({ runTimers: true, fetch: (url, init, calls) => {
+    if (url.endsWith('/save') && (init.method || 'GET') === 'PUT' && !hung) {
+      hung = true;
+      return new Promise((_, reject) => {                       // a socket the network already dropped
+        if (init.signal && typeof init.signal.addEventListener === 'function')
+          init.signal.addEventListener('abort', () => reject(new Error('aborted')));
+      });
+    }
+    return { status: 200, ok: true, headers: { get: () => 'application/json' },
+             json: async () => ({ version: 9 }), text: async () => '{}' };
+  } });
+  const { sandbox: b } = h;
+  b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.currentUser = 'A'; b.S = { lv: 3, zeny: 50e6, kills: 1 };
+  const first = b.cloudPush(true);
+  await Promise.resolve();
+  assert.strictEqual(b.CLOUD.pushing, true, 'the attempt is marked in flight');
+  assert.ok(b.CLOUD.pushSince > 0, 'and it is timestamped, or nothing can tell slow from dead');
+  await h.sandbox.settle();                                   // the deadline fires and aborts it
+  // Without a deadline this promise never settles at all, so the harness's own clock fails the test
+  // instead of hanging the suite - a hang here would look like a slow CI, not like the bug.
+  const settled = await Promise.race([first, new Promise(r => setTimeout(() => r('STILL PENDING'), 2000))]);
+  assert.notStrictEqual(settled, 'STILL PENDING', 'the request ends instead of holding the queue for ever');
+  assert.strictEqual(settled, 'offline', 'a dead request ends as an ordinary offline save');
+  assert.strictEqual(b.CLOUD.pushing, false, 'the queue is not wedged behind it');
+  assert.strictEqual(b.CLOUD.dirty, true, 'and the save is still queued for the next flush');
+  b.CLOUD.dirty = true;
+  assert.strictEqual(await b.cloudPush(true), 'ok', 'the next flush really is sent');
+});
+
+await T('v328: the watchdog abandons a push that outlived its own deadline', async () => {
+  // Belt and braces for the same fault: if the abort never reached the push (an older browser with no
+  // AbortController, or a stubbed fetch), the flag must not stay true for the life of the page.
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.currentUser = 'A';
+  b.CLOUD.pushing = true; b.CLOUD.pushSince = Date.now() - 60000; b.CLOUD.dirty = false;
+  b.cloudPushWatchdog();
+  assert.strictEqual(b.CLOUD.pushing, false, 'the stuck attempt is dropped');
+  assert.strictEqual(b.CLOUD.dirty, true, 'and its save is queued again');
+  assert.ok(h.state.logs.some(l => /never came back/i.test(l.m)), 'and the player is told, once');
+  const said = h.state.logs.length;
+  b.CLOUD.pushing = false; b.cloudPushWatchdog();
+  assert.strictEqual(h.state.logs.length, said, 'a healthy push is none of its business');
+});
+
+await T('v332: a save that stopped happening is reported even when nothing is dirty', async () => {
+  // The failure this guards is the one that stops save() from ever reaching cloudTouch(), so CLOUD.dirty
+  // stays false: a stall detector that requires dirty is blind to it by construction.
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.CLOUD.id = 7;
+  b.S = { lv: 150, zeny: 37e6, owner: 'StaleName', accountId: 7 };
+  b.CLOUD.dirty = false;                       // exactly the state the old guard produced
+  b.CLOUD.lastPush = Date.now() - 600000;
+  b.CLOUD.localSaveAt = Date.now() - 600000;   // and no save has completed for ten minutes
+  b.cloudStallNote();
+  const said = h.state.logs.map(l => l.m).join('\n');
+  assert.match(said, /has not written a save for 10 minutes/, 'the game itself failing to persist is reported');
+  assert.match(said, /StaleName/, 'with the stamp that explains it...');
+  assert.match(said, /account id 7/, '...and the id it was judged against');
+  const rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY) || '[]');
+  assert.ok(rows.some(r => r.kind === 'save-stalled' && r.mins === 10), 'and it lands in the ledger');
+  const count = h.state.logs.length;
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, count, 'said once, not every tick');
+  b.CLOUD.localSaveAt = Date.now();
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, count, 'a healthy local save is left alone');
+});
+
+await T('v328: an unsent save says so instead of looking saved', async () => {
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.currentUser = 'A';
+  b.CLOUD.dirty = true; b.CLOUD.lastPush = Date.now() - 600000;
+  b.cloudStallNote();
+  assert.ok(h.state.logs.some(l => /not reached your account for 10 minutes/i.test(l.m)), 'ten silent minutes are reported');
+  const said = h.state.logs.length;
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, said, 'and not repeated every tick');
+  b.CLOUD.paused = true; b.CLOUD.lastPush = Date.now() - 600000;
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, said, 'a paused session is explained by its own message');
+  b.CLOUD.paused = false; b.CLOUD.dirty = false; b.CLOUD.lastPush = Date.now() - 600000;
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, said, 'and a save that is already on the account is not stalled');
+  // A fresh sign-in is not a stalled save: nothing has had time to fail yet.
+  b.CLOUD.dirty = true; b.CLOUD.lastPush = 0; b.CLOUD.onSince = Date.now();
+  b.cloudStallNote();
+  assert.strictEqual(h.state.logs.length, said, 'the clock starts at the sign-in, not at zero');
+});
+
+await T('v330: an account copy that is behind this browser is named, with both numbers', async () => {
+  // The owner: "it was 33m when i logout. cloud with a tick. then relog back to 31m+". The account
+  // winning is a normal silent path, so the one moment the loss is visible is the swap itself.
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A';
+  h.store.set('pg_save3_A', JSON.stringify({ lv: 150, zeny: 33e6, kills: 1000, owner: 'A', cloud: { v: 40, at: 1 }, offlineAt: 2 }));
+  await b.cloudAdopt({ version: 41, blob: JSON.stringify({ lv: 150, zeny: 31.2e6, kills: 1000, owner: 'A' }) });
+  const rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY));
+  const last = rows[rows.length - 1];
+  assert.strictEqual(last.kind, 'adopt-behind', 'the swap is recorded as the downgrade it was');
+  assert.strictEqual(last.wasZeny, 33e6, 'with what this browser held...');
+  assert.strictEqual(last.nowZeny, 31.2e6, '...and what replaced it');
+  assert.strictEqual(last.v, 41, 'and the account version that won');
+  const said = h.state.logs.map(l => l.m).join('\n');
+  assert.match(said, /BEHIND this browser/, 'the player is told, in the log, not just in a table');
+  assert.match(said, /33,000,000/, 'with the Zeny they lost');
+  assert.match(said, /31,200,000/, 'and the Zeny they got');
+  assert.ok([...h.store.keys()].some(k => k.startsWith('pg_save3_A_local_')), 'and the newer copy is still on the device');
+  assert.strictEqual(JSON.parse(h.store.get('pg_save3_A')).zeny, 31.2e6, 'the account copy is the live one, as decided in v2');
+});
+
+await T('v330: a normal adopt, or one that gains, is recorded but not alarming', async () => {
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A';
+  h.store.set('pg_save3_A', JSON.stringify({ lv: 140, zeny: 5e6, kills: 900, owner: 'A' }));
+  await b.cloudAdopt({ version: 41, blob: JSON.stringify({ lv: 150, zeny: 31.2e6, kills: 1000, owner: 'A' }) });
+  const rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY));
+  assert.strictEqual(rows[rows.length - 1].kind, 'adopt', 'an account copy that is ahead is just an adopt');
+  assert.ok(!h.state.logs.some(l => /BEHIND this browser/.test(l.m)), 'and nobody is told about a loss that did not happen');
+});
+
+await T('v330: every push outcome lands in the ledger, and the ring stays bounded', async () => {
+  const h = harness({ routes: { '/save': { body: { version: 7 } } } });
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true;
+  b.S = { lv: 150, zeny: 33e6, kills: 1000 };
+  assert.strictEqual(await b.cloudPush(true), 'ok');
+  let rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY));
+  assert.strictEqual(rows[rows.length - 1].kind, 'push-ok', 'a landed save is recorded with its version');
+  assert.strictEqual(rows[rows.length - 1].v, 7);
+  assert.strictEqual(rows[rows.length - 1].zeny, 33e6, 'and the Zeny it carried - which is the number the account keeps');
+  const dead = harness({ routes: { '/save': { throw: 'offline' }, '/me': { throw: 'offline' } } });
+  dead.sandbox.currentUser = 'A'; dead.sandbox.CLOUD.on = true; dead.sandbox.CLOUD.user = 'A'; dead.sandbox.CLOUD.api = true;
+  dead.sandbox.S = { lv: 150, zeny: 33e6, kills: 1000 };
+  await dead.sandbox.cloudPush(true);
+  rows = JSON.parse(dead.store.get(dead.sandbox.SYNC_LOG_KEY));
+  assert.strictEqual(rows[rows.length - 1].kind, 'push-fail', 'and a save that never landed is recorded too');
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  assert.ok(rows[rows.length - 1].at.startsWith(pad(d.getHours()) + ':' + pad(d.getMinutes())),
+    'the ledger stamps local time, the clock the badge and the game log use');
+  for (let i = 0; i < 60; i++) b.syncLog('tick', { i });
+  rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY));
+  assert.strictEqual(rows.length, 40, 'the ring keeps the last 40 decisions, not the session');
+  assert.strictEqual(rows[rows.length - 1].i, 59, 'the newest is last');
+});
+
+await T('v330: a 409 that is this device\'s own last upload rebases instead of rolling back', async () => {
+  // The owner's screenshots: same badge time in both, 33.3M then 31.7M. That is our own accepted upload
+  // coming back as a conflict after its answer was lost - adopting it deletes everything since.
+  const h = harness({ runTimers: true, routes: {
+    '/save': (seq) => {
+      if (seq === 1) return { status: 409, body: { conflict: true, version: 8,
+        blob: JSON.stringify({ lv: 150, kills: 1000, zeny: 31700000, owner: 'A' }) } };
+      return { body: { version: 9 } };
+    },
+  } });
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.CLOUD.ver = 7;
+  b.S = { lv: 150, kills: 1100, zeny: 33300000, owner: 'A' };
+  assert.strictEqual(await b.cloudPush(true), 'rebase', 'the conflict is recognised as our own echo');
+  assert.strictEqual(b.CLOUD.ver, 8, 'and the account\'s version number is taken, not its save');
+  assert.strictEqual(b.S.zeny, 33300000, 'this device keeps the 33.3M it ground');
+  await h.sandbox.settle();                                  // the armed retry goes out on version 8
+  const puts = h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.strictEqual(puts.length, 2, 'one refused attempt and one rebased retry');
+  assert.strictEqual(JSON.parse(puts[1].init.body).version, 8, 'the retry carries the account\'s version');
+  assert.strictEqual(JSON.parse(puts[1].init.body).blob.includes('33300000'), true, 'and this device\'s save');
+  const rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY) || '[]');
+  assert.ok(rows.some(r => r.kind === 'rebase' && r.serverZeny === 31700000 && r.keptZeny === 33300000),
+    'the ledger records both numbers');
+});
+
+await T('v330: a conflict that is really another copy still loses to the account', async () => {
+  const ahead = harness({ routes: { '/save': { status: 409, body: { conflict: true, version: 8,
+    blob: JSON.stringify({ lv: 150, kills: 1200, zeny: 41000000, owner: 'A' }) } } } });
+  const a = ahead.sandbox;
+  a.currentUser = 'A'; a.CLOUD.on = true; a.CLOUD.user = 'A'; a.CLOUD.api = true; a.CLOUD.ver = 7;
+  a.S = { lv: 150, kills: 1100, zeny: 33300000, owner: 'A' };
+  assert.strictEqual(await a.cloudPush(true), 'adopted', 'a copy that is genuinely ahead wins, as v2 decided');
+  assert.strictEqual(a.CLOUD.ver, 8);
+  // and one that is two versions ahead is never a rebase, whatever the figures say
+  const far = harness({ routes: { '/save': { status: 409, body: { conflict: true, version: 12,
+    blob: JSON.stringify({ lv: 150, kills: 900, zeny: 100, owner: 'A' }) } } } });
+  const f = far.sandbox;
+  f.currentUser = 'A'; f.CLOUD.on = true; f.CLOUD.user = 'A'; f.CLOUD.api = true; f.CLOUD.ver = 7;
+  f.S = { lv: 150, kills: 1100, zeny: 33300000, owner: 'A' };
+  assert.strictEqual(await f.cloudPush(true), 'adopted', 'a stale device is not allowed to force its copy up');
+});
+
+await T('v330: the badge stops claiming a save after an adopt', async () => {
+  const h = harness({});
+  const { sandbox: b } = h;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A';
+  b.CLOUD.lastPush = Date.now() - 3600000;                   // an hour-old upload
+  h.store.set('pg_save3_A', JSON.stringify({ lv: 150, zeny: 33e6, kills: 1000, owner: 'A' }));
+  await b.cloudAdopt({ version: 41, blob: JSON.stringify({ lv: 150, zeny: 31.2e6, kills: 1000, owner: 'A' }) });
+  const badge = h.els.get('cloudBadge');
+  assert.match(badge.title, /Loaded the account save/, 'the badge says what happened...');
+  assert.match(badge.textContent, /↺/, 'with its own glyph rather than a tick');
+  assert.doesNotMatch(badge.title, /On your account since/, 'and never repaints the old upload time as if it were now');
+});
+
+await T('v331: every console command the docs tell an owner to type exists in the page', async () => {
+  // This suite exists to stop documentation from rotting; it caught the docs a different way round -
+  // CHECK-A-SAVE.md said "run pgSyncLog()" while index.html had only ever defined syncLogShow, so the
+  // one command the owner was told to run threw "is not a function" in the deployed build.
+  const doc = fs.readFileSync(path.join(root, 'docs', 'CHECK-A-SAVE.md'), 'utf8');
+  const names = [...new Set([...doc.matchAll(/(pg[A-Za-z]+)\(\)/g)].map(m => m[1]))];
+  assert.ok(names.includes('pgSyncLog'), 'the ledger command is still documented');
+  for (const n of names) {
+    const defined = new RegExp('(const|let|var)\\s+' + n + '\\s*=').test(src) || new RegExp('function\\s+' + n + '\\s*\\(').test(src);
+    assert.ok(defined, n + '() is documented but not defined by index.html');
+  }
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

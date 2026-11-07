@@ -247,6 +247,60 @@ for t in tools/tests/*_sim.js tools/tests/*_sim.mjs; do node "$t" || exit 1; don
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
+**2026-11-06 (`haven-v332`): ownership by id, and a save that stopped happening.**
+`save_owner_sim` runs the real `save()` against a copy whose name is stale but whose id is this
+account's: it must be re-stamped, written, and queued for upload — while a copy carrying another
+account's id writes nothing and queues nothing (mutation-checked by restoring the name-only guard, which
+reproduces the silent stop). `cloud_sim` requires a ten-minute gap in completed saves to be reported
+with the stamps, even with `CLOUD.dirty` false, and to land in the ledger.
+
+**2026-11-06 (`haven-v331`): documented console commands must exist.**
+`cloud_sim` extracts every `pgXxx()` from `docs/CHECK-A-SAVE.md` and asserts `index.html` defines it —
+the rule that v330 broke by shipping docs for `pgSyncLog()` while defining only `syncLogShow`. Renaming
+the binding back reproduces the failure in the deployed build.
+
+**2026-11-06 (`haven-v330`): self-rebase, the sync ledger, and a swap that loses progress.**
+`cloud_sim` answers a `PUT` with a 409 carrying a copy that is the device's own previous upload one
+version ahead (31.7M against the device's 33.3M): the client must **rebase** — return `rebase`, adopt
+version 8 without adopting the blob, arm one retry that sends 33.3M on version 8, and record both
+figures. A copy that is genuinely ahead (41M) must still be adopted, and a device two versions stale
+must not be allowed to force its copy up — mutation-checked both ways. An adopt must also paint `☁ ↺`
+rather than `☁ ✓`, because the tick printed the previous upload's time and made a rollback look healthy.
+
+**2026-11-06 (`haven-v330`): the sync ledger, and a swap that loses progress.**
+`cloud_sim` drives `cloudAdopt` with an account copy that is behind the browser's (33,000,000 vs
+31,200,000 Zeny) and requires an `adopt-behind` row carrying both figures, a log line naming both, and
+the newer copy still stashed — while a copy that is ahead must be a plain `adopt` that says nothing, so
+the warning cannot become noise. It also requires `push-ok` (with the version and the Zeny it carried)
+and `push-fail` to be recorded, and the ring to keep exactly the last 40. All mutation-checked.
+
+**2026-11-06 (`haven-v328`): a request that never settles, and a save that goes quiet.**
+`cloud_sim` drives a `fetch` that stays pending until its signal aborts — the shape of a dropped socket —
+and requires the attempt to end as `offline` with `pushing` cleared and the save still dirty, then a real
+push on the next flush; it fails *fast* (a raced 2 s sentinel) rather than hanging, so removing the
+deadline is a red test and not a slow one. The watchdog and the five-minute stall note have their own
+cases, and all three were mutation-checked. The account-side fingerprint lives in the ladder query in
+`docs/CHECK-A-SAVE.md`: a healthy account moves every 10–25 minutes, and a stalled queue is a run of no
+rows at all.
+
+**2026-11-06 (`haven-v327` follow-up): the 428-during-login adopt and the fishing handler.**
+`cloud_sim` grew to 80 checks (a 428 at login must not adopt the older copy — mutation-checked) and
+`social_fishing_sim` pins the Sell-duplicates handler; the BUILD-sensitive suites and the three
+generated-asset checks were re-run after the tag bump. The full 194-suite run below is the v326 tree
+these two fixes sit on.
+
+**2026-11-06 (`haven-v326` gate result): 194 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and `*_smoke.js` ran. New
+`tools/tests/social_room_recovery_sim.mjs` (unit, fake storage) proves one failed poker-outbox read no
+longer refuses every later socket. `cloud_sim` (77) gained the 428 away-claim handshake — applied once,
+pushed back with its id, and a repeated claim reported instead of looping — plus a source pin for the
+`online`/`pagehide` flush pair; `social_ui_sim` gained a same-tab reload that restores Local from
+`sessionStorage` (and writes nothing to `localStorage`) and the `online`/`offline` reconnect. The three
+progression fixtures were regenerated with `--reuse-baseline`: every measurement byte-identical, only
+`sourceHash`/`combatHash` moved. Two suites (`hosted_launch_stage_sim`, `hosted_scrypt_prepare_sim`) fail
+in a shallow clone until their pinned commits are fetched — that is the documented environment issue,
+not a regression.
+
 **2026-11-02 (`haven-v286` gate result): 195 suites pass, 0 fail, 0 dependency skips.**
 The four generated-asset/config checks plus every `*_sim.js`, `*_sim.mjs` and
 `*_smoke.js` ran. New `social_ledger_sim.js` covers durable poker payouts before and
