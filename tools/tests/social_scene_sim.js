@@ -45,6 +45,21 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert(scene.scene.children.some(o=>o.userData.gymTimber==='rear-post'&&o.position.z>12.8),'rear posts are visible from the open court');
  for(const [side,count] of [['east',9],['south',9],['corner',3]])assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryBleacher===side).length,count,'three constructed ring seating tiers at '+side);
  assert(scene.scene.children.some(o=>o.userData.ringCanvas),'ring canvas has a woven surface');
+ // v356 map-art pass: mixed tree species, zoned gym court, dressed ring and field, pond shadows.
+ const kinded=w.PGSocialRules.SANCTUARY_TREES.filter(t=>t.kind);
+ assert(kinded.length>=18,'shared rules carry mixed-species tree spots');
+ const kinds=new Set(scene.scene.children.filter(o=>o.userData.treeKind).map(o=>o.userData.treeKind));
+ for(const k of ['pine','cypress','birch','maple','willow','blossom'])assert(kinds.has(k),k+' species is rendered');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryTree).length,w.PGSocialRules.SANCTUARY_TREES.length,'every shared tree renders, native or procedural');
+ assert(scene.scene.children.some(o=>o.userData.ringPad==='red'&&o.position.x>68)&&scene.scene.children.some(o=>o.userData.ringPad==='blue'&&o.position.x<68),'ring has red and blue corner pads');
+ assert(scene.scene.children.some(o=>o.userData.ringApron),'ring wears an apron skirt');
+ assert(scene.scene.children.some(o=>o.userData.sanctuarySign==='CHAMPION RING')&&scene.scene.children.some(o=>o.userData.sanctuarySign==='GRIND FIELDS'),'ring and field gate signs are painted');
+ for(const stat of ['power','guard','agility','focus'])assert(scene.scene.children.some(o=>o.userData.gymZone===stat),stat+' training zone mat is laid');
+ assert(scene.scene.children.some(o=>o.userData.sanctuaryTrack)&&scene.scene.children.some(o=>o.userData.sanctuaryScarecrow),'grind field has a training circuit and a scarecrow');
+ assert(scene.scene.children.filter(o=>o.userData.sanctuaryPennant).length>=10,'field fence flies pennants');
+ const deep=[];scene.scene.traverse(o=>{if(o.userData.deepKind)deep.push(o.userData.deepKind)});
+ assert(deep.includes('octopus')&&deep.includes('shark'),'octopus and shark shadows swim in the pond');
+ assert(scene.scene.children.filter(o=>o.userData.bench!=null).length===w.PGSocialRules.BENCHES.length,'all 19 benches render, including the v356 viewing benches');
  for(let row=0;row<3;row++){const tiers=scene.scene.children.filter(o=>o.userData.bleacherRow===row),h=.55+row*.43;assert.equal(tiers.length,7,'each tier has six boards and a corner');for(const m of tiers)assert(Math.abs(m.position.y-(m.userData.sanctuaryBleacher==='corner'?h+.071:h))<.001,'all bench boards and corner align on a level tier');}
 
  for(const side of ['left','right']){assert(scene.scene.children.some(o=>o.userData.gymWing===side&&o.geometry.parameters.height>=8),'substantial tall '+side+' wing');assert(scene.scene.children.some(o=>o.userData.gymGable===side),'visible '+side+' gable');assert(scene.scene.children.some(o=>o.userData.gymUpperWall===side),'roof ridge is supported by the '+side+' wall');assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryBuildingWing===side).length,3,'broad pitched roofs of '+side+' wing')}
@@ -99,7 +114,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
 
  // v269: 12 physical metal park benches, each seating 2 players side-by-side (24 seats total).
  // v288 adds 8 single-seat angler chairs on the pond rims (seat ids 24-31) => 32 seats.
- assert.equal(w.PGSocialRules.BENCHES.length,12);assert.equal(w.PGSocialRules.CHAIRS.length,8);assert.equal(w.PGSocialRules.SEATS.length,32);
+ assert.equal(w.PGSocialRules.BENCHES.length,19);assert.equal(w.PGSocialRules.CHAIRS.length,8);assert.equal(w.PGSocialRules.SEATS.length,46);
  for(const c of w.PGSocialRules.CHAIRS){
   assert(w.PGSocialRules.walkable(c.x,c.z),'chair '+c.id+' stands on walkable ground');
   const seat=w.PGSocialRules.SEATS[c.id];

@@ -16,7 +16,27 @@ const BUILDINGS=[{name:'stall',x:-32,z:-15,size:4.5,rotation:Math.PI/2,w:4.5,d:4
 const SANCTUARY=[{id:'gym',x:69,z:25.5,w:52,d:27},{id:'farm',x:70,z:64,w:52,d:34},{id:'ring',x:71,z:105,w:48,d:27}];
 const SANCTUARY_RING={x:68,z:104,w:18,d:16,height:.8};
 const SANCTUARY_PLANTERS=[],SANCTUARY_ARCHES=[];
-const SANCTUARY_TREES=[...[46,50,54,84,88,92].map(x=>({x,z:10.2,behindGym:true})),...[47,62,82,100].map(z=>({x:12,z})),{x:100,z:14},{x:100,z:41},{x:100,z:57},{x:100,z:71},{x:100,z:85},{x:100,z:104},{x:100,z:121},{x:15,z:119},{x:26,z:119}];
+// v356 (owner: "more different types of trees"): entries may carry a kind - pine, cypress,
+// birch, maple, willow, blossom - rendered as distinct procedural trees by the client. Entries
+// without a kind stay native atlas trees. All of them remain shared obstacles for pathfinding.
+const SANCTUARY_TREES=[
+ ...[46,50,54,84,88,92].map(x=>({x,z:10.2,behindGym:true})),
+ ...[47,62,82,100].map(z=>({x:12,z})),
+ {x:100,z:14},{x:100,z:41},{x:100,z:57},{x:100,z:71},{x:100,z:85},{x:100,z:104},{x:100,z:121},
+ {x:15,z:119},{x:26,z:119},
+ // v356 west border species run.
+ {x:12,z:32,kind:'pine'},{x:12,z:55,kind:'birch'},{x:12,z:70,kind:'cypress'},{x:12,z:90,kind:'maple'},{x:12,z:112,kind:'willow'},
+ // v356 east border species run, interleaved with the native line.
+ {x:100,z:28,kind:'pine'},{x:100,z:50,kind:'birch'},{x:100,z:64,kind:'cypress'},{x:100,z:78,kind:'maple'},{x:100,z:93,kind:'willow'},{x:100,z:112,kind:'pine'},
+ // v356 south hedge fill.
+ {x:38,z:119,kind:'birch'},{x:50,z:119.5,kind:'pine'},
+ // v356 lake east bank - willows leaning toward the water.
+ {x:-12,z:58,kind:'willow'},{x:-10,z:76,kind:'birch'},{x:-13,z:90,kind:'cypress'},
+ // v356 open west lawn grove.
+ {x:-66,z:58,kind:'pine'},{x:-63,z:82,kind:'maple'},{x:-67,z:102,kind:'birch'},
+ // v356 blossom pair framing the great hall steps.
+ {x:-10,z:-33,kind:'blossom'},{x:10,z:-33,kind:'blossom'}
+];
 const SANCTUARY_OBSTACLES=SANCTUARY_TREES.map(t=>({...t,r:.7}));
 // Gym wall, end posts, shop structures and signs. The center of the gym is open.
 const SANCTUARY_BARRIERS=[
@@ -85,7 +105,20 @@ const POND_PROPS=[{
 }];
 // The source "lamp" is a stone column; it is not used as street furniture.
 // v269: Each of the 12 metal park benches seats 2 adventurers side-by-side (24 total bench seats).
-const BENCHES=[...[-1,1].flatMap(side=>[-1,1].flatMap(bank=>[11,15,19].map(x=>({x:bank*x,z:side*13,dir:side===1?4:0,rotation:side===1?Math.PI:0,height:.95,size:3.4}))))].map((b,id)=>({...b,id,seats:[id*2,id*2+1]}));
+// v356 (owner: "bench needs to be able to be seated"): the boxing ring stands, the gym court and
+// the grind-field fence line get viewing benches too. They take bench ids 16-22, so their seats
+// land at 32-45 - strictly after the pond chairs' 24-31 - and no existing reservation moves.
+const BENCHES=[
+ ...[-1,1].flatMap(side=>[-1,1].flatMap(bank=>[11,15,19].map(x=>({x:bank*x,z:side*13,dir:side===1?4:0,rotation:side===1?Math.PI:0,height:.95,size:3.4})))),
+ // v356: east ringside stand (facing the ring, dir 2 = west).
+ ...[[79.8,98],[79.8,110]].map(([x,z],i)=>({id:16+i,x,z,dir:2,rotation:-Math.PI/2,height:.95,size:3.4})),
+ // v356: south ringside stand (facing north, dir 4).
+ ...[[62,112.8],[74,112.8]].map(([x,z],i)=>({id:18+i,x,z,dir:4,rotation:Math.PI,height:.95,size:3.4})),
+ // v356: gym court entrance bench, facing the training yard (dir 0 = south).
+ {id:20,x:69,z:16.2,dir:0,rotation:0,height:.95,size:3.4},
+ // v356: grind-field north fence, looking south across the wild field (dir 0).
+ ...[[56,44],[84,44]].map(([x,z],i)=>({id:21+i,x,z,dir:0,rotation:0,height:.95,size:3.4}))
+].map((b,i)=>{const id=b.id??i;return {...b,id,seats:[id*2,id*2+1]}});
 // v288: 8 single-seat wooden angler chairs on the pond rims (4 per pond), facing the water.
 // They take seat ids 24-31, after the 24 bench seats, so bench reservations are untouched.
 // v308: the pairs moved out to +-4.8 so the wider bridge and the rock face of the cascade have room.
@@ -94,10 +127,14 @@ const CHAIRS=[-2.55,-2.0,-1.13,-.58,.58,1.13,2.0,2.55].map((a,i)=>{
  const p=shore(a,1.8),dir=(Math.round(Math.atan2(p.x-PONDS[0].x,PONDS[0].z-p.z)/(Math.PI/4))+8)%8;
  return {...p,id:24+i,dir,rotation:-dir*Math.PI/4,height:.66,size:1.1};
 });
-const SEATS=[
+// v356: SEATS stays a dense id-keyed array - every consumer (room validation, client sit
+// pose, partner-swap) reads R.SEATS[seatId]. Bench seats fill 0-23 and 32-45, the pond
+// chairs 24-31, so assigning by id keeps SEATS[id].id===id true for all 46 entries.
+const SEATS=[];
+for(const seat of [
  ...BENCHES.flatMap(b=>[-1,1].map((slotSign,slot)=>({id:b.id*2+slot,bench:b.id,slot,x:b.x+slotSign,sitX:b.x+slotSign*.74,z:b.z,dir:b.dir,rotation:b.rotation,height:b.height,size:b.size}))),
- ...CHAIRS.map(c=>({id:c.id,bench:100+c.id,slot:0,x:c.x,sitX:c.x,z:c.z,dir:c.dir,rotation:c.rotation,height:c.height,size:c.size})),
-];
+ ...CHAIRS.map(c=>({id:c.id,bench:100+c.id,slot:0,x:c.x,sitX:c.x,z:c.z,dir:c.dir,rotation:c.rotation,height:c.height,size:c.size}))
+])SEATS[seat.id]=seat;
 
 // v266: Two Plaza Hold'em tables along the West Promenade (Table 1 at (-27,-1) & Table 2 at (-39,-1)).
 function makePokerTable(tableId,label,sub,cx,cz,dealerSpec){

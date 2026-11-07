@@ -142,6 +142,35 @@ window.PGSocialScene={async create(host,labels,callbacks){
  // Fence follows the proposed front boundary, leaving the middle entrance open.
  for(const f of R.SANCTUARY_GYM_FENCES){const dx=f.x2-f.x1,dz=f.z2-f.z1,len=Math.hypot(dx,dz),n=Math.max(1,Math.ceil(len/3.2));for(let i=0;i<=n;i++){const t=i/n;box(f.x1+dx*t,.7,f.z1+dz*t,.22,1.4,.22,darkWood)}for(const y of [.45,1.05])beam([f.x1,y,f.z1],[f.x2,y,f.z2],.085,wood).userData.gymFence=true}
  worldSign(69,7.1,13.08,'DIGIPET GYM',6,.72);
+ // v356 (owner: "gym definitely need to be redesigned"): the open court is zoned like a real
+ // training floor. Each apparatus group sits on its own rubber mat with a cream keyline, a
+ // painted medallion marks the entrance bay, stat-coloured banners hang from both wings, and
+ // two pennant strings cross the yard so the space reads as a designed gymnasium.
+ const zoneMats={power:new T.MeshLambertMaterial({color:0xb0684f}),guard:new T.MeshLambertMaterial({color:0x5f7d95}),agility:new T.MeshLambertMaterial({color:0xc9a256}),focus:new T.MeshLambertMaterial({color:0x7d9a6a})};
+ for(const [zx,zz,zw,zd,stat] of [[56.5,25.5,13,14.5,'power'],[63,22.6,10.6,8.8,'guard'],[75,26,10.6,11.6,'agility'],[86,25.6,10.6,13,'focus']]){
+  flat(new T.PlaneGeometry(zw,zd),zoneMats[stat],zx,zz,.0225).userData.gymZone=stat;
+  const y=.031;
+  box(zx,y,zz-zd/2,zw+.24,.05,.16,cream);box(zx,y,zz+zd/2,zw+.24,.05,.16,cream);
+  box(zx-zw/2,y,zz,.16,.05,zd,cream);box(zx+zw/2,y,zz,.16,.05,zd,cream);
+ }
+ // Entrance medallion: a painted roundel between the two wings.
+ flat(new T.CircleGeometry(2.05,28),new T.MeshBasicMaterial({color:0xe7d6ab}),69,20.5,.024).userData.gymMedallion=true;
+ flat(new T.RingGeometry(1.55,1.8,28),new T.MeshBasicMaterial({color:0x997954}),69,20.5,.0245);
+ flat(new T.CircleGeometry(.55,20),new T.MeshBasicMaterial({color:0xb0684f}),69,20.5,.0245);
+ // Stat banners on the court-facing wing walls.
+ const bannerBar=new T.MeshLambertMaterial({color:0xb58a59});
+ for(const [bx,bz,stat] of [[43.72,21,'power'],[43.72,25,'agility'],[43.72,29,'focus'],[94.28,21,'guard'],[94.28,25,'power'],[94.28,29,'agility']]){
+  box(bx,3.35,bz,.1,.12,1.5,bannerBar);
+  box(bx,2.3,bz,.09,2.1,1.12,zoneMats[stat]).userData.gymBanner=stat;
+  box(bx,1.22,bz,.1,.12,1.24,cream);
+ }
+ // Two pennant strings across the open yard.
+ const pennantColors=[0xb0684f,0xe7d6ab,0x5f7d95,0xc9a256,0x7d9a6a];
+ const pennantShape=new T.Shape();pennantShape.moveTo(-.34,0);pennantShape.lineTo(.34,0);pennantShape.lineTo(0,-.95);pennantShape.closePath();
+ for(const z of [16.2,33.8]){
+  beam([44,4.35,z],[94,4.35,z],.05,darkWood);
+  for(let i=1;i<21;i++){const x=44+i*2.5,m=new T.Mesh(new T.ShapeGeometry(pennantShape),new T.MeshLambertMaterial({color:pennantColors[i%5],side:T.DoubleSide}));m.position.set(x,4.3,z);scene.add(freeze(m))}
+ }
  // Weight rack, barbells and benches: POWER.
  for(const x of [49,55])box(x,1.6,19,.25,3.2,.25,darkWood);for(const y of [.65,1.45,2.25])box(52,y,19,6,.14,.24,wood);
  for(let row=0;row<3;row++)for(const x of [50,51.2,52.4,53.6,54.5]){const d=new T.Mesh(new T.CylinderGeometry(.32,.32,.2,12),iron);d.rotation.z=Math.PI/2;d.position.set(x,.9+row*.8,19);scene.add(freeze(d))}
@@ -179,6 +208,44 @@ window.PGSocialScene={async create(host,labels,callbacks){
  const fieldTex=stone.clone();fieldTex.repeat.set(1/7,1/7);fieldTex.needsUpdate=true;const fieldMat=new T.MeshBasicMaterial({map:fieldTex,color:0xc8dda8});
  const shape=new T.Shape();for(const [i,[x,z]] of [[44,52],[49,47],[91,47],[96,52],[96,76],[91,81],[49,81],[44,76]].entries()){const px=x-70,py=-(z-64);if(!i)shape.moveTo(px,py);else shape.lineTo(px,py)}shape.closePath();
  flat(new T.ShapeGeometry(shape),fieldMat,70,64,.021).userData.sanctuaryField=true;
+ // v356 (owner: "pve grinding area redesign"): the wild field gets a worn training circuit,
+ // wooden combat dummies along it, a scarecrow guard, hay and a water trough by the fence,
+ // pennants on the fence posts and a proper gate - it reads as the trainers' grind ground.
+ flat(new T.RingGeometry(11,13.2,44),new T.MeshBasicMaterial({color:0xcbb489,transparent:true,opacity:.92}),70,64,.0225).userData.sanctuaryTrack=true;
+ const dummyMat=new T.MeshLambertMaterial({color:0x9a7a52}),ropeMat=new T.MeshLambertMaterial({color:0xb59b6d});
+ for(const a of [.5,2.6,4.7]){
+  const dx=70+Math.cos(a)*12.2,dz=64+Math.sin(a)*12.2;
+  const post=new T.Mesh(new T.CylinderGeometry(.22,.28,2.7,8),dummyMat);post.position.set(dx,1.35,dz);scene.add(freeze(post));
+  for(const ry of [1.9,2.35]){const arm=new T.Mesh(new T.CylinderGeometry(.09,.09,1.7,6),ropeMat);arm.rotation.z=Math.PI/2;arm.position.set(dx,ry,dz);scene.add(freeze(arm))}
+  const cap=new T.Mesh(new T.SphereGeometry(.26,8,6),ropeMat);cap.position.set(dx,2.75,dz);scene.add(freeze(cap));
+ }
+ // Scarecrow keeps the wild flowers company.
+ box(54,1.3,58,.18,2.6,.18,darkWood);box(54,2.05,58,1.7,.16,.16,darkWood);
+ const scareHead=new T.Mesh(new T.SphereGeometry(.42,10,8),new T.MeshLambertMaterial({color:0xd8b56a}));scareHead.position.set(54,2.85,58);scene.add(freeze(scareHead));
+ const scareHat=new T.Mesh(new T.ConeGeometry(.55,.5,10),new T.MeshLambertMaterial({color:0x7a5a3a}));scareHat.position.set(54,3.35,58);scene.add(freeze(scareHat));
+ box(54,1.75,58,.9,.85,.28,new T.MeshLambertMaterial({color:0x8a5f46})).userData.sanctuaryScarecrow=true;
+ // Hay bales and a water trough along the east fence.
+ const hayMat=new T.MeshLambertMaterial({color:0xc9a86a});
+ for(const [hx,hz,rot] of [[88.4,52.6,.4],[90.2,54.4,-.2]]){
+  const bale=new T.Mesh(new T.CylinderGeometry(.75,.75,1.5,12),hayMat);bale.rotation.z=Math.PI/2;bale.rotation.y=rot;bale.position.set(hx,.75,hz);bale.userData.sanctuaryHay=true;scene.add(freeze(bale));
+ }
+ box(47.4,.55,60,2.6,.8,1.1,new T.MeshLambertMaterial({color:0x9e9a83})).userData.sanctuaryTrough=true;
+ flat(new T.PlaneGeometry(2.3,.85),new T.MeshBasicMaterial({color:0x3e97be}),47.4,60,.93).userData.sanctuaryTroughWater=true;
+ // Pennants fly from every third field fence post.
+ const fieldPennant=new T.Shape();fieldPennant.moveTo(-.26,0);fieldPennant.lineTo(.26,0);fieldPennant.lineTo(0,-.72);fieldPennant.closePath();
+ for(const f of R.SANCTUARY_FENCES){
+  const dx=f.x2-f.x1,dz=f.z2-f.z1,len=Math.hypot(dx,dz),count=Math.max(1,Math.ceil(len/3.5));
+  for(let i=1;i<count;i+=3){
+   const t=i/count,px=f.x1+dx*t,pz=f.z1+dz*t;
+   box(px,1.68,pz,.07,.5,.07,darkWood);
+   const flag=new T.Mesh(new T.ShapeGeometry(fieldPennant),new T.MeshLambertMaterial({color:pennantColors[(i+f.x1)%5],side:T.DoubleSide}));
+   flag.position.set(px,1.9,pz);flag.rotation.y=Math.atan2(dx,dz);flag.userData.sanctuaryPennant=true;scene.add(freeze(flag));
+  }
+ }
+ // A proper gate arch announces the grind fields from the avenue.
+ for(const gx of [61.6,70.4]){box(gx,1.7,47,.3,3.4,.3,darkWood);box(gx,3.25,47,.5,.3,.5,lightWood)}
+ beam([61.6,3.5,47],[70.4,3.5,47],.14,darkWood);
+ worldSign(66,3.95,47,'GRIND FIELDS',5.4,.68);
  const flowerColors=[0xe8d49b,0xf2c8b8,0xe8e9db];for(let i=0;i<50;i++){const x=49+(i*29%42),z=50+(i*17%28);const f=new T.Mesh(new T.SphereGeometry(.10,5,4),new T.MeshBasicMaterial({color:flowerColors[i%3]}));f.position.set(x,.12,z);scene.add(freeze(f))}
  for(const f of R.SANCTUARY_FENCES){const dx=f.x2-f.x1,dz=f.z2-f.z1,len=Math.hypot(dx,dz),count=Math.max(1,Math.ceil(len/3.5));for(let i=0;i<=count;i++){const t=i/count;box(f.x1+dx*t,.72,f.z1+dz*t,.22,1.44,.22,darkWood)}for(const y of [.48,1.04])beam([f.x1,y,f.z1],[f.x2,y,f.z2],.09,wood).userData.sanctuaryFence=true}
  // Hand-built food cart and two separate future NPC stations, on the avenue side of the walk.
@@ -218,7 +285,44 @@ window.PGSocialScene={async create(host,labels,callbacks){
  // Woven canvas and piping prevent the ring from reading as a blank square.
  const ringCanvas=document.createElement('canvas');ringCanvas.width=ringCanvas.height=512;const rctx=ringCanvas.getContext('2d');
  if(rctx&&typeof rctx.fillRect==='function'){rctx.fillStyle='#e9dfcb';rctx.fillRect(0,0,512,512);for(let i=0;i<1024;i++){const x=(i*67)%512,y=(i*131)%512;rctx.fillStyle=i%2?'rgba(125,107,84,.035)':'rgba(255,255,255,.09)';rctx.fillRect(x,y,1+(i%3),1)}if(typeof rctx.strokeRect==='function'){rctx.strokeStyle='rgba(124,104,79,.35)';rctx.lineWidth=3;rctx.strokeRect(12,12,488,488)}}
+ // v356: champion canvas - concentric medallion and diagonally split corner wedges, painted
+ // into the same woven base so the ring floor stops reading as a blank square of cloth.
+ if(rctx&&typeof rctx.beginPath==='function'&&typeof rctx.arc==='function'){
+  rctx.save();rctx.translate(256,256);
+  rctx.fillStyle='rgba(122,90,61,.22)';rctx.beginPath();rctx.arc(0,0,118,0,Math.PI*2);rctx.fill();
+  rctx.strokeStyle='rgba(122,90,61,.5)';rctx.lineWidth=7;rctx.beginPath();rctx.arc(0,0,126,0,Math.PI*2);rctx.stroke();
+  rctx.lineWidth=4;rctx.beginPath();rctx.arc(0,0,88,0,Math.PI*2);rctx.stroke();
+  rctx.fillStyle='rgba(122,90,61,.4)';rctx.beginPath();rctx.arc(0,0,34,0,Math.PI*2);rctx.fill();
+  rctx.fillStyle='rgba(150,60,48,.3)';rctx.beginPath();rctx.moveTo(-256,-256);rctx.lineTo(-150,-256);rctx.lineTo(-256,-150);rctx.closePath();rctx.fill();
+  rctx.beginPath();rctx.moveTo(256,256);rctx.lineTo(150,256);rctx.lineTo(256,150);rctx.closePath();rctx.fill();
+  rctx.fillStyle='rgba(72,102,128,.3)';rctx.beginPath();rctx.moveTo(256,-256);rctx.lineTo(150,-256);rctx.lineTo(256,-150);rctx.closePath();rctx.fill();
+  rctx.beginPath();rctx.moveTo(-256,256);rctx.lineTo(-150,256);rctx.lineTo(-256,150);rctx.closePath();rctx.fill();
+  rctx.restore();
+ }
  const canvasTex=new T.CanvasTexture(ringCanvas);flat(new T.PlaneGeometry(ring.w-.4,ring.d-.4),new T.MeshBasicMaterial({map:canvasTex}),ring.x,ring.z,.806).userData.ringCanvas=true;
+ // v356: red and blue corner pads on the turnbuckles, an apron skirt, ringside floodlight
+ // masts, a timekeeper's bell and a champion board - the boxing ring reads as a venue.
+ const padRed=new T.MeshLambertMaterial({color:0xa8433a}),padBlue=new T.MeshLambertMaterial({color:0x46698c});
+ for(const x of [ring.x-ring.w/2,ring.x+ring.w/2])for(const z of [ring.z-ring.d/2,ring.z+ring.d/2])for(const y of [1.3,2,2.7]){
+  const corner=Math.sign(x-ring.x)*Math.sign(z-ring.z)>0?padRed:padBlue;
+  box(x,y,z,.62,.2,.62,corner).userData.ringPad=Math.sign(x-ring.x)*Math.sign(z-ring.z)>0?'red':'blue';box(x,y,z,.68,.05,.68,wood);
+ }
+ const apronMat=new T.MeshLambertMaterial({color:0x7e3c34});
+ for(const z of [ring.z-ring.d/2-.1,ring.z+ring.d/2+.1])box(ring.x,.4,z,ring.w-.1,.5,.16,apronMat).userData.ringApron=true;
+ for(const x of [ring.x-ring.w/2-.1,ring.x+ring.w/2+.1])box(x,.4,ring.z,.16,.5,ring.d-.1,apronMat).userData.ringApron=true;
+ for(const x of [56,80]){
+  box(x,3.1,92.5,.2,6.2,.2,darkWood).userData.ringLight=true;
+  box(x,6.05,92.5,.9,.4,.5,metal);box(x,5.9,92.75,1.5,.22,.7,darkWood);
+  box(x-.28,5.82,92.9,.34,.3,.34,new T.MeshBasicMaterial({color:0xf4d58d}));box(x+.28,5.82,92.9,.34,.3,.34,new T.MeshBasicMaterial({color:0xf4d58d}));
+ }
+ // Timekeeper's bell on a short post by the west steps.
+ box(ring.x-ring.w/2-2.1,.75,ring.z+2.6,.14,1.5,.14,darkWood);
+ box(ring.x-ring.w/2-2.1,1.52,ring.z+2.6,.5,.08,.14,darkWood);
+ const bellMat=new T.MeshLambertMaterial({color:0xc5a15a});
+ const bellBody=new T.Mesh(new T.CylinderGeometry(.16,.24,.26,10),bellMat);bellBody.position.set(ring.x-ring.w/2-2.1,1.42,ring.z+2.72);scene.add(freeze(bellBody));
+ const bellCap=new T.Mesh(new T.SphereGeometry(.1,8,6),bellMat);bellCap.position.set(ring.x-ring.w/2-2.1,1.56,ring.z+2.72);scene.add(freeze(bellCap));
+ const bellHammer=new T.Mesh(new T.SphereGeometry(.06,6,5),metal);bellHammer.position.set(ring.x-ring.w/2-2.32,1.42,ring.z+2.72);scene.add(freeze(bellHammer));
+ worldSign(ring.x,1.5,ring.z+ring.d/2+2.35,'CHAMPION RING',4.6,.62);
  for(const z of [ring.z-ring.d/2+.28,ring.z+ring.d/2-.28])box(ring.x,.815,z,ring.w-.7,.03,.06,lightWood);
  for(const x of [ring.x-ring.w/2+.28,ring.x+ring.w/2-.28])box(x,.815,ring.z,.06,.03,ring.d-.7,lightWood);
  // Face boards and corner hardware add depth under the ropes.
@@ -497,9 +601,47 @@ window.PGSocialScene={async create(host,labels,callbacks){
   for(const side of [-1,1])for(const axis of ['x','z']){const curb=new T.Mesh(new T.BoxGeometry(axis==='x'?.35:g.w+.35,.22,axis==='z'?.35:g.d+.35),curbMaterial);curb.position.set(g.x+(axis==='x'?side*g.w/2:0),.1,g.z+(axis==='z'?side*g.d/2:0));scene.add(freeze(curb))}
   const shrubs=makeBatch();for(const offset of [-4,0,4])for(const side of [-1,1])pushModel(shrubs,'shrub',g.x+offset,g.z+side*5,2.4,0,garden,gardenFloats);addBatch(shrubs,gardenMat);
  }
- for(const {x,z,size} of R.TREES)model('tree2',x,z,size,0,garden,gardenFloats,gardenMat);
- // Native trees soften the outer Sanctuary edge without crowding its entrances.
- for(const t of R.SANCTUARY_TREES){const tree=model('tree2',t.x,t.z,6.8,0,garden,gardenFloats,gardenMat);tree.userData.sanctuaryTree=true;if(t.behindGym)tree.userData.nativeGymTree=true}
+ // v356: the four plaza gardens no longer repeat one cloned tree - alternate the two
+ // atlas species and flank each bed with a stump and a young birch so the square
+ // reads as planted rather than stamped.
+ R.TREES.forEach((tr,i)=>model(i%2?'tree2':'tree',tr.x,tr.z,tr.size,0,garden,gardenFloats,gardenMat));
+ for(const [gx,gz] of R.GARDENS.map(g=>[g.x,g.z])){
+  model('stump',gx-4.6,gz+4.4,3.1,0,garden,gardenFloats,gardenMat);
+ }
+ // v356 (owner: "more different types of trees"): species builder for the shared
+ // SANCTUARY_TREES kinds - pine, cypress, birch, maple, willow and blossom. Everything
+ // is flat-coloured primitives in the town palette, frozen like the rest of the static
+ // world, with a deterministic per-tree jitter so a row never reads as one cloned prop.
+ const barkMat=new T.MeshLambertMaterial({color:0x6b4a30}),birchBarkMat=new T.MeshLambertMaterial({color:0xe6e2d6}),
+  pineDark=new T.MeshLambertMaterial({color:0x2f5d34}),pineMid=new T.MeshLambertMaterial({color:0x3c7040}),
+  cypressMat=new T.MeshLambertMaterial({color:0x2e4f33}),leafLight=new T.MeshLambertMaterial({color:0x7fae5e}),
+  leafMid=new T.MeshLambertMaterial({color:0x5f9a52}),mapleOrange=new T.MeshLambertMaterial({color:0xd98a3c}),
+  mapleRed=new T.MeshLambertMaterial({color:0xc05a3a}),willowMat=new T.MeshLambertMaterial({color:0x6f9a4e}),
+  blossomCanopy=new T.MeshLambertMaterial({color:0xf6c3d6}),blossomDeep=new T.MeshLambertMaterial({color:0xe6a3bf}),
+  mulchMat=new T.MeshBasicMaterial({color:0x8a7355});
+ const treeJitter=(x,z,salt)=>{const h=Math.abs(Math.sin(x*127.1+z*311.7+salt*74.7))*43758.5453;return h-Math.floor(h)};
+ function propTree(kind,x,z){
+  const j1=treeJitter(x,z,1),j2=treeJitter(x,z,2),j3=treeJitter(x,z,3);
+  const g=new T.Group();g.position.set(x+(j1-.5)*.5,0,z+(j2-.5)*.5);g.rotation.y=j3*Math.PI*2;
+  const trunk=(h,r,mat)=>{const m=new T.Mesh(new T.CylinderGeometry(r*.8,r,h,7),mat||barkMat);m.position.y=h/2;g.add(m);return m};
+  const cone=(y,r,h,mat)=>{const m=new T.Mesh(new T.ConeGeometry(r,h,8),mat);m.position.y=y;g.add(m);return m};
+  const blob=(y,r,mat,dx=0,dz=0)=>{const m=new T.Mesh(new T.SphereGeometry(r,8,6),mat);m.position.set(dx,y,dz);g.add(m);return m};
+  const mulch=new T.Mesh(new T.CircleGeometry(1.15,14),mulchMat);mulch.rotation.x=-Math.PI/2;mulch.position.y=.02;g.add(mulch);
+  if(kind==='pine'){trunk(2.1,.26);cone(2.6,1.9,1.9,pineDark);cone(3.7,1.45,1.7,pineMid);cone(4.8,.95,1.5,pineDark);blob(5.9,.34,pineMid)}
+  else if(kind==='cypress'){trunk(1.2,.2);cone(3.1,.85,4.4,cypressMat);cone(5.1,.42,1.6,cypressMat)}
+  else if(kind==='birch'){const t=trunk(3.4,.24,birchBarkMat);for(const y of [1,1.9,2.8]){const band=new T.Mesh(new T.CylinderGeometry(.245,.245,.14,7),barkMat);band.position.y=y;g.add(band)}blob(3.9,1.5,leafLight);blob(4.7,1.05,leafMid,.75,.4);blob(3.5,.85,leafMid,-.8,-.35)}
+  else if(kind==='maple'){trunk(2.6,.34);blob(3.6,1.75,mapleOrange);blob(4.5,1.2,mapleRed,.8,.3);blob(3.2,1,mapleOrange,-.85,.4);blob(4,.95,mapleRed,.1,-.9)}
+  else if(kind==='willow'){trunk(2.9,.4);blob(3.9,1.35,leafMid);const frondMat=willowMat;for(let i=0;i<9;i++){const a=i/9*Math.PI*2,f=new T.Mesh(new T.BoxGeometry(.16,2.6,.16),frondMat);f.position.set(Math.cos(a)*1.45,2.9,Math.sin(a)*1.45);f.rotation.z=Math.cos(a)*.34;f.rotation.x=-Math.sin(a)*.34;g.add(f)}}
+  else{ /* blossom */ trunk(2.5,.3);blob(3.4,1.5,blossomCanopy);blob(4.2,1.05,blossomDeep,.7,.35);blob(3.1,.9,blossomDeep,-.75,-.3);blob(4.6,.5,blossomCanopy,-.2,.6)}
+  g.userData.sanctuaryTree=true;g.userData.treeKind=kind;g.traverse(o=>{o.userData.sanctuaryTree=true});
+  scene.add(freeze(g));return g;
+ }
+ // Native trees soften the outer Sanctuary edge without crowding its entrances;
+ // kinded entries from the shared rules become their own species (v356).
+ for(const t of R.SANCTUARY_TREES){
+  if(t.kind){const tree=propTree(t.kind,t.x,t.z);if(t.behindGym)tree.userData.nativeGymTree=true;continue}
+  const tree=model('tree2',t.x,t.z,6.8,0,garden,gardenFloats,gardenMat);tree.userData.sanctuaryTree=true;if(t.behindGym)tree.userData.nativeGymTree=true;
+ }
  // Small native shrubs fill the outside edge without sealing any of the field gates.
  const sanctuaryShrubs=makeBatch();for(const [x,z] of [[98,20],[98,32],[98,48],[98,64],[98,78],[98,93],[98,113],[96,124],[89,124],[83,124],[19,112],[27,109],[13,89]])pushModel(sanctuaryShrubs,'shrub',x,z,2.1,0,garden,gardenFloats);addBatch(sanctuaryShrubs,gardenMat);
 
@@ -931,6 +1073,72 @@ void main(){
   // Ambient fish silhouettes swim inside each pond; the Fishing Bag's "Show swimming fish" toggles them.
   const fishShape=new T.Shape();fishShape.moveTo(.4,0);fishShape.quadraticCurveTo(.05,.22,-.26,.06);fishShape.lineTo(-.46,.17);fishShape.lineTo(-.37,0);fishShape.lineTo(-.46,-.17);fishShape.lineTo(-.26,-.06);fishShape.quadraticCurveTo(.05,-.22,.4,0);
   const fishGeo=new T.ShapeGeometry(fishShape),fishGroup=new T.Group(),swimmers=[];scene.add(fishGroup);
+  // v356 (owner: "smaller details like pond water having octopus & shark shadows swimming"):
+  // two big residents live UNDER the surface. They are soft dark silhouettes a hair above the
+  // bed colour and below the glint sheets, on slower and wider loops than the little fish, so
+  // the water reads as deep. The octopus drifts and turns; the shark patrols end to end and
+  // now and then a ripple ring breaks the surface above it.
+  const deepGroup=new T.Group();fishGroup.add(deepGroup);const deepSwimmers=[];
+  const shadowMat=new T.MeshBasicMaterial({color:0x12303e,transparent:true,opacity:.34,depthWrite:false});
+  const octopusCanvas=document.createElement('canvas');octopusCanvas.width=192;octopusCanvas.height=128;
+  const octx=octopusCanvas.getContext('2d');let octoPainted=false;
+  if(octx&&typeof octx.fillRect==='function'&&typeof octx.beginPath==='function'&&typeof octx.arc==='function'&&typeof octx.quadraticCurveTo==='function'){octoPainted=true;
+   octx.clearRect(0,0,192,128);
+   // Soft octopus: layered translucent circles instead of one hard blob, then six
+   // curling tentacles swept with round line caps.
+   octx.fillStyle='rgba(6,24,33,.55)';
+   for(let i=0;i<9;i++)octx.beginPath(),octx.arc(96,52,40-i*3.4,0,Math.PI*2),octx.fill();
+   octx.strokeStyle='rgba(6,24,33,.5)';octx.lineWidth=11;octx.lineCap='round';
+   for(let i=0;i<6;i++){const a=Math.PI*.22+i/5*Math.PI*.56;octx.beginPath();octx.moveTo(96+Math.cos(a)*30,64+Math.sin(a)*22);
+    octx.quadraticCurveTo(96+Math.cos(a)*54,92,96+Math.cos(a)*54+(i-2.5)*10,112);octx.stroke()}
+  }
+  const sharkCanvas=document.createElement('canvas');sharkCanvas.width=256;sharkCanvas.height=96;
+  const shctx=sharkCanvas.getContext('2d');let sharkPainted=false;
+  if(shctx&&typeof shctx.fillRect==='function'&&typeof shctx.beginPath==='function'&&typeof shctx.arc==='function'&&typeof shctx.ellipse==='function'&&typeof shctx.quadraticCurveTo==='function'){sharkPainted=true;
+   shctx.clearRect(0,0,256,96);
+   // Soft shark: fusiform body from stacked ellipses, a tall dorsal fin, pectoral fins
+   // and a caudal tail with the classic notch, all in the same translucent ink.
+   shctx.fillStyle='rgba(6,24,33,.55)';
+   for(let i=0;i<10;i++)shctx.beginPath(),shctx.ellipse(118,52,66-i*5.2,22-i*1.5,0,0,Math.PI*2),shctx.fill();
+   shctx.beginPath();shctx.moveTo(120,32);shctx.quadraticCurveTo(134,4,152,10);shctx.quadraticCurveTo(136,20,132,34);shctx.fill();
+   for(const side of [-1,1]){shctx.beginPath();shctx.moveTo(108,64);shctx.quadraticCurveTo(96,side*30+52,74,side*34+54);shctx.quadraticCurveTo(92,72,108,72);shctx.fill()}
+   shctx.beginPath();shctx.moveTo(180,52);shctx.quadraticCurveTo(224,20,248,16);shctx.quadraticCurveTo(226,44,224,52);shctx.quadraticCurveTo(228,62,244,84);shctx.quadraticCurveTo(210,74,180,58);shctx.fill();
+  }
+  const octopusTex=octoPainted?new T.CanvasTexture(octopusCanvas):null,sharkTex=sharkPainted?new T.CanvasTexture(sharkCanvas):null;
+  R.PONDS.forEach((p,pi)=>{
+   const octoMat=octopusTex?new T.MeshBasicMaterial({map:octopusTex,transparent:true,opacity:.5,depthWrite:false}):shadowMat;
+   const sharkMat2=sharkTex?new T.MeshBasicMaterial({map:sharkTex,transparent:true,opacity:.5,depthWrite:false}):shadowMat;
+   const octo=new T.Mesh(new T.PlaneGeometry(3.1,2.1),octoMat);octo.rotation.x=-Math.PI/2;
+   const shark=new T.Mesh(new T.PlaneGeometry(4.6,1.75),sharkMat2);shark.rotation.x=-Math.PI/2;
+   octo.userData.deepKind='octopus';shark.userData.deepKind='shark';deepGroup.add(octo,shark);
+   deepSwimmers.push({m:octo,p,kind:'octopus',ax:(p.w/2-3.4)*.5,az:(p.d/2-3.2)*.42,fa:.05+pi*.011,fb:.041+pi*.007,pa:pi*2.1,pb:pi*3.7,y:.0215});
+   deepSwimmers.push({m:shark,p,kind:'shark',ax:(p.w/2-4)*.72,az:(p.d/2-3.4)*.3,fa:.085+pi*.013,fb:.062+pi*.009,pa:pi*1.3+2,pb:pi*2.6+1,y:.0225});
+  });
+  // Ripple rings that occasionally open above the patrolling shark.
+  const rippleMat=new T.MeshBasicMaterial({color:0xd8f0f8,transparent:true,opacity:0,depthWrite:false});
+  const deepRipples=[0,1,2].map(i=>{const r=new T.Mesh(new T.RingGeometry(.5,.62,26),rippleMat.clone());r.rotation.x=-Math.PI/2;r.visible=false;deepGroup.add(r);return {mesh:r,at:-i*2.4,x:0,z:0}});
+  const sharkRipple=(x,z,now)=>{const r=deepRipples.reduce((a,b)=>a.at<=b.at?a:b);r.at=now/1000;r.x=x;r.z=z;r.mesh.visible=true};
+  const updateDeep=(t,now)=>{
+   for(const s of deepSwimmers){
+    const x=s.p.x+Math.sin(t*s.fa+s.pa)*s.ax,z=s.p.z+Math.sin(t*s.fb+s.pb)*s.az;
+    const vx=Math.cos(t*s.fa+s.pa)*s.fa*s.ax,vz=Math.cos(t*s.fb+s.pb)*s.fb*s.az;
+    s.m.position.set(x,s.y+Math.sin(t*.8+s.pb)*.004,z);
+    s.m.rotation.z=Math.atan2(-vz,vx);
+    if(s.kind==='octopus')s.m.scale.setScalar(.9+Math.sin(t*.5+s.pa)*.07);
+   }
+   for(const r of deepRipples){
+    if(!r.mesh.visible)continue;
+    const age=t-r.at;
+    if(age>2.6){r.mesh.visible=false;continue}
+    if(age<0){r.mesh.visible=false;continue}
+    r.mesh.position.set(r.x,.034,r.z);
+    r.mesh.scale.setScalar(.6+age*2.6);
+    r.mesh.material.opacity=Math.max(0,.34*(1-age/2.6));
+   }
+   const shark=deepSwimmers.find(s=>s.kind==='shark');
+   if(shark&&t-(shark.lastRipple||0)>7.5){shark.lastRipple=t;sharkRipple(shark.m.position.x,shark.m.position.z,t)}
+  };
+
   R.PONDS.forEach((p,pi)=>{for(let i=0;i<7;i++){const m=new T.Mesh(fishGeo,new T.MeshBasicMaterial({color:[0xe08a3c,0xd8dde2,0x8fc9b8][i%3],transparent:true,opacity:.78,depthWrite:false}));m.rotation.x=-Math.PI/2;const sc=.7+((i*31)%12)/16;m.scale.setScalar(sc);fishGroup.add(m);swimmers.push({m,p,ax:(p.w/2-1.6)*.62,az:(p.d/2-1.5)*.62,fa:.13+((i*17)%10)/90,fb:.1+((i*23)%10)/80,pa:i*1.7+pi,pb:i*2.9+pi*2})}});
   // The local player's rod, line, bobber, ripples, splash, bite mark and catch flight.
   // v300 (owner): the rod you hold is painted in your rod's tier colour and wrapped in an additive
@@ -1137,7 +1345,8 @@ void main(){
    waterTexA.offset.x=(now/14000)%1;waterTexA.offset.y=(now/23000)%1;waterTexB.offset.x=1-(now/17000)%1;waterTexB.offset.y=(now/19000)%1;
    for(const f of falls)f.tex.offset.y=(now/700)%1;
    for(const l of lilies){l.mesh.position.x=l.x+Math.sin(now/2600+l.ph)*.22;l.mesh.position.z=l.z+Math.cos(now/3100+l.ph)*.18;l.mesh.rotation.z=Math.sin(now/4000+l.ph)*.4}
-   if(fishGroup.visible)for(const s of swimmers){const t=now/1000,x=s.p.x+Math.sin(t*s.fa+s.pa)*s.ax,z=s.p.z+Math.sin(t*s.fb+s.pb)*s.az,vx=Math.cos(t*s.fa+s.pa)*s.fa*s.ax,vz=Math.cos(t*s.fb+s.pb)*s.fb*s.az;s.m.position.set(x,.03,z);s.m.rotation.z=Math.atan2(-vz,vx)+Math.sin(t*6+s.pa)*.12}
+   if(fishGroup.visible){const tNow=now/1000;for(const s of swimmers){const t=tNow,x=s.p.x+Math.sin(t*s.fa+s.pa)*s.ax,z=s.p.z+Math.sin(t*s.fb+s.pb)*s.az,vx=Math.cos(t*s.fa+s.pa)*s.fa*s.ax,vz=Math.cos(t*s.fb+s.pb)*s.fb*s.az;s.m.position.set(x,.03,z);s.m.rotation.z=Math.atan2(-vz,vx)+Math.sin(t*6+s.pa)*.12}
+    updateDeep(tNow,now)}
    for(const r of ripples)if(r.m.visible){const t=(now-r.t0)/r.dur;if(t>=1)r.m.visible=false;else{const s=(r.base||1)*(.4+t*1.6);r.m.scale.set(s,s,1);r.m.material.opacity=.55*(1-t)}}
    if(splashPts.visible&&splashDrops){const t=(now-splashT0)/650;if(t>=1){splashPts.visible=false;splashDrops=null}else{splashDrops.forEach((drop,i)=>{splashPos[i*3]=Math.cos(drop.a)*drop.v*t;splashPos[i*3+1]=drop.vy*t-4.4*t*t;splashPos[i*3+2]=Math.sin(drop.a)*drop.v*t});splashGeo.attributes.position.needsUpdate=true;splashPts.material.opacity=.95*(1-t)}}
    if(catchAnim){const t=Math.min(1,(now-catchAnim.t0)/catchAnim.dur),p=selfPos();if(p){glyph.position.set(catchAnim.fx+(p.x-catchAnim.fx)*t,.4+Math.sin(t*Math.PI)*2.6+t*1.6,catchAnim.fz+(p.z-catchAnim.fz)*t)}if(t>=1){glyph.visible=false;pole.visible=false;line.visible=false;const done=catchAnim.done;catchAnim=null;done&&done()}}
@@ -1178,7 +1387,9 @@ void main(){
   return mesh;
  });
  const seatTargets=R.BENCHES?benches.flatMap(mesh=>{
-  const b=R.BENCHES[mesh.userData.bench],bb=mesh.userData.seatBounds;
+  // v356: bench ids are sparse (16-22 skip the pond chairs' 24-31 seat range), so resolve
+  // by id - never by array position.
+  const b=R.BENCHES.find(x=>x.id===mesh.userData.bench),bb=mesh.userData.seatBounds;
   return [
    {seat:b.seats[0],bench:b.id,bounds:new T.Box3(new T.Vector3(bb.min.x,bb.min.y,bb.min.z),new T.Vector3(b.x,bb.max.y,bb.max.z))},
    {seat:b.seats[1],bench:b.id,bounds:new T.Box3(new T.Vector3(b.x,bb.min.y,bb.min.z),new T.Vector3(bb.max.x,bb.max.y,bb.max.z))}

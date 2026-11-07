@@ -28,7 +28,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  send(a,{type:'move',x:0,z:0});assert.equal(a.path.length,0);send(a,{type:'move',x:0,z:-12});now+=101;send(a,{type:'move',x:0,z:-12});assert(a.path.length>0);assert(a.path.every(p=>R.walkable(p.x,p.z)));for(let t=0;t<300;t++){now+=50;R.advance(a,now);assert(R.walkable(a.x,a.z))}assert.equal(a.z,-12);
  send(a,{type:'sit'});assert(a.sit);assert.equal(a.path.length,0);now+=200;send(a,{type:'move',x:10,z:-12});assert(!a.sit);
  // Real server walking settles into a reserved bench, with per-plaza occupancy.
- assert.equal(R.BENCHES.length,12);assert.equal(R.SEATS.length,32,'12 metal benches (24 seats) plus 8 pond-side angler chairs (v288)');
+ assert.equal(R.BENCHES.length,19);assert.equal(R.SEATS.length,46,'12 plaza + 7 v356 viewing benches (38 bench seats) plus 8 pond-side angler chairs');
  for(const seat of R.SEATS){assert(R.walkable(seat.x,seat.z));assert(R.path(a,seat).length>0)}
  now+=200;send(a,{type:'seat',id:0});assert.equal(a.seat,0);assert(a.path.length>0);assert(!a.sit);
  send(b,{type:'seat',id:0});assert.equal(b.seat,null);assert(b.events.some(e=>e.message==='That bench is occupied.'));

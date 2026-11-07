@@ -1581,6 +1581,9 @@ function drawPlazaMap(canvas,detailed){
   for(const p of props.paths||[]){ctx.beginPath();ctx.moveTo(X(p.x1),Z(p.z));ctx.lineTo(X(p.x2),Z(p.z));ctx.stroke()}
  }
  for(const t of R.TREES||[]){ctx.beginPath();ctx.arc(X(t.x),Z(t.z),Math.max(2,t.size*sc*.32),0,7);ctx.fillStyle=c.tree;ctx.fill();ctx.strokeStyle=c.treeEdge;ctx.lineWidth=1;ctx.stroke()}
+ // v356: the mixed-species border trees and every sittable bench join the overview.
+ for(const t of R.SANCTUARY_TREES||[]){ctx.beginPath();ctx.arc(X(t.x),Z(t.z),Math.max(1.6,3.2*sc),0,7);ctx.fillStyle=t.kind&&t.kind!=='pine'&&t.kind!=='cypress'?'#3a5a33':c.tree;ctx.fill()}
+ for(const b of R.BENCHES||[]){ctx.fillStyle='#c9b98a';ctx.fillRect(X(b.x)-1.5,Z(b.z)-1,3,2)}
  for(const b of R.BUILDINGS||[]){ctx.fillStyle=c.building;ctx.strokeStyle=c.buildingEdge;ctx.lineWidth=1;ctx.fillRect(X(b.x-b.w/2),Z(b.z-b.d/2),b.w*sc,b.d*sc);ctx.strokeRect(X(b.x-b.w/2),Z(b.z-b.d/2),b.w*sc,b.d*sc)}
  // DigiPet grounds: gym, farm and ring zones with their landmarks.
  const zones=[['gym',c.gymFill,c.gymEdge,'GYM'],['farm',c.farmFill,c.farmEdge,'DIGIPET FARM'],['ring',c.ringFill,c.ringEdge,'PVP RING']];
