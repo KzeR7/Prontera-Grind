@@ -1891,6 +1891,22 @@ async function diagnoseSocket(){
   else if(r.status===401)verdict='Your session has ended (signed in elsewhere or expired). Sign in again.';
   else if(r.ok)verdict='The API is healthy, so the plaza Worker itself is not answering.';
   else verdict='The API answered HTTP '+r.status+'.';
+  // v365: the API being healthy is not the whole answer. /api/chatcheck probes the Pages -> Worker
+  // hop on the server, where the binding lives, and returns the reason the upgrade is refused.
+  // Its verdict replaces the generic one: "no SOCIAL binding", "storage could not be read",
+  // "the Worker is reachable" (which means the fault is elsewhere), and so on.
+  if(r.ok){
+   try{
+    const c=await fetch('/api/chatcheck',{cache:'no-store',credentials:'same-origin'});
+    const d=await c.json().catch(()=>({}));
+    if(d&&d.verdict){
+     verdict=d.verdict;
+     if(d.rules&&globalThis.PGSocialRules&&typeof PGSocialRules.rulesFingerprint==='function'&&d.rules!==PGSocialRules.rulesFingerprint())
+      verdict+=' Plaza rules mismatch: page '+PGSocialRules.rulesFingerprint()+' vs Worker '+d.rules+' - redeploy workers/social from the same commit.';
+     if(d.detail)console.warn('[plaza] chatcheck detail:',d.detail);
+    }
+   }catch{}
+  }
  }catch{verdict='The API could not be reached at all (network or DNS).'}
  finally{diagnosing=false}
  console.warn('[plaza] chat unavailable:',verdict);
