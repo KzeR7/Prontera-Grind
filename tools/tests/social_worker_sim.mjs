@@ -88,6 +88,23 @@ try{
  assert(!hello.history.some(m=>m.channel!=='world'||m.body==='never durable'),'only public World history is durable');
  second.ws.close();
 
+ // Regression: real closed transports must not recursively broadcast their own cleanup.
+ const observer=await connect(mf,1001);
+ observer.ws.send(JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));
+ await until(observer.messages,m=>m.type==='room','disconnect observer join');
+ let peer=await connect(mf,1000);
+ const joinPeer=async()=>{peer.ws.send(JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));await until(peer.messages,m=>m.type==='room','reconnected plaza join')};
+ await joinPeer();
+ for(let i=0;i<6;i++){
+  peer.ws.close(1000,'disconnect regression');
+  await until(observer.messages,m=>m.type==='left'&&m.id===1000,'closed peer removed');observer.messages.length=0;
+  peer=await connect(mf,1000);await joinPeer();assert.equal(peer.messages.find(m=>m.type==='room').room,1);
+  peer.ws.send(JSON.stringify({type:'ping'}));await until(peer.messages,m=>m.type==='pong','reconnected pong');
+ }
+ peer.ws.send(JSON.stringify({type:'chat',channel:'world',body:'World chat after six disconnects'}));
+ await until(observer.messages,m=>m.type==='message'&&m.body==='World chat after six disconnects','World chat still reaches another client');
+ peer.ws.close();observer.ws.close();await new Promise(r=>setTimeout(r,100));
+
  // A real folded pot pays the disconnected winner. The payout must survive a DO restart,
  // replay with the same id until the wallet ACKs, and never leak into World history.
  const p1=await connect(mf,10),p2=await connect(mf,11);

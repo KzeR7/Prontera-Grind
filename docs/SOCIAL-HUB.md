@@ -1198,3 +1198,18 @@ Run `node tools/tests/digimon_battle_sim.js` and
 `tools/tests/social_worker_sim.mjs` also loads the battle module in the real
 local Durable Object runtime. The browser rehearsal uses two isolated clients
 and checks movement, waves, acceptance, countdown, results and reward dedupe.
+
+
+## Closed-transport cleanup and tab ownership (haven-v369)
+
+Disconnect removes the client from the live map before party, battle or gym
+cleanup broadcasts. Sends to a disconnecting client are skipped. Previously
+those broadcasts retried a closed socket, recursively re-entered disconnect,
+overflowed the stack and left a ghost client without its resume record.
+Deleting room membership does not itself close the WebSocket; the fault was
+re-entrant cleanup, not an automatic transport close on map deletion.
+
+A 4001 close yields to the replacement tab until logout/account change or
+reload; it must not be cleared by the retry timer. Network drops and scheduled
+reauthentication still reconnect normally. See the Windows deployment and
+verification steps in [Chat connection fix](CHAT-CONNECTION-FIX.md).
