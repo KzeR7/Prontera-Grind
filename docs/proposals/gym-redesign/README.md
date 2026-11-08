@@ -21,9 +21,10 @@ Sanctuary textures, and the real courtyard coordinates from
 in vertex colour - the same pipeline the plaza uses - so the frames show what
 the engine would actually draw, not a Blender render.
 
-Measured on this scene at 800x654: **~18,000 triangles, 16 draw calls,
-17 textures, no console errors.** That is cheaper than most single character
-sprites and comfortably inside the mobile budget the hub already holds.
+Measured on this scene at 800x654: **18,354 triangles, 18 draw calls,
+17 textures, 18 geometries, no console errors or warnings.** That is cheaper
+than most single character sprites and comfortably inside the mobile budget the
+hub already holds.
 
 ## Run it
 
@@ -136,9 +137,13 @@ threshold, and the four training rows stay clear from the court to the veranda.
 2. **Collision.** Add footprints for the rack, gantry, platforms, deck, butts
    and masts to the Sanctuary obstacle list; verify the gate and the four
    station rows stay reachable.
-3. **Life.** Hook the existing station markers to the live training animation
+3. **Clearance.** The wing roofs pitch up to a ridge behind the back wall, with
+   the rear eave at ~10.6 m. The six `behindGym` trees at `z = 10.2` are 6.8 m
+   tall, so they pass under the pitch without clipping, but they will read as a
+   covered grove behind the gym. Confirm that is wanted before porting.
+4. **Life.** Hook the existing station markers to the live training animation
    (v360 already has the on-map clock), then the NPC/coach lines.
-4. **Gates.** `tools/tests/digimon_sanctuary_sim.js` and
+5. **Gates.** `tools/tests/digimon_sanctuary_sim.js` and
    `tools/tests/social_gym_sim.js` should extend their scene checks to the new
    props before the change leaves draft.
 
@@ -147,11 +152,23 @@ threshold, and the four training rows stay clear from the court to the veranda.
 Automated checks run against the study:
 
 - zero console errors or warnings at every view, desktop and phone frame;
-- geometry audit: nothing sits below the court, no roof or prop outside the
-  courtyard envelope, ridge heights consistent at 13.1 m;
-- framing audit: all four courtyard corners and all four bay centres project
-  inside the frame at the overview and plan views;
-- budget: ~18k triangles, 16 draw calls, 17 textures.
+- geometry audit (`?audit=1`, 1,087 parts): nothing sits below the court plane;
+  no loose prop leaves the courtyard envelope - only the shell's own roof
+  overhangs and the gate threshold step project past the floor polygon - and
+  the three ridges agree at 13.2 m;
+- reachability audit: every station is clear at floor and body height. The
+  six remaining AABB hits are false positives - the three stone weights at the
+  corners of the lifting platforms, which are intended dressing, and the
+  diagonal veranda beam at the three guard stations (its bounding box reaches
+  the row; the real beam is 4.2 m away);
+- connectivity audit: every freestanding prop chain resolves to the ground.
+  The twelve components the AABB probe still reads as floating are all carried
+  by `beamBetween` hardware it cannot see: the two gate-sign chains, the chalk
+  stool, the bell-post bell and clapper, the three archery-butt legs, the
+  broom, the barrel ladle and the two lantern strings;
+- framing audit: all four courtyard corners and all four ridges project inside
+  the frame at the overview and plan views; each bay view centres its bay;
+- budget: 18.4k triangles (18,354), 18 draw calls, 17 textures.
 
 **Not** verified: the visual judgement itself. This pass was made without a
 human or vision-capable reviewer looking at the frames, so colour balance, prop

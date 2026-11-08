@@ -97,6 +97,10 @@ function boxGeo(w,h,d,tile){
   return g;
 }
 const _m4=new T.Matrix4(),_q=new T.Quaternion(),_e=new T.Euler(),_v=new T.Vector3(),_s=new T.Vector3();
+/* ?audit=1 records every part's world bounding box so the geometry can be
+   checked for floating props, coplanar sheets and out-of-court volume. */
+const AUDIT=new URLSearchParams(location.search).get('audit')==='1';
+const PARTS=[];
 function put(geo,matName,colour,x,y,z,rot,scale){
   const g=tint(geo,colour);
   if(rot)_e.set(rot[0]||0,rot[1]||0,rot[2]||0,rot[3]||'XYZ');else _e.set(0,0,0);
@@ -104,6 +108,12 @@ function put(geo,matName,colour,x,y,z,rot,scale){
   if(typeof scale==='number')_s.set(scale,scale,scale);else if(scale)_s.set(scale[0],scale[1],scale[2]);else _s.set(1,1,1);
   _m4.compose(_v.set(x,y,z),_q,_s);
   g.applyMatrix4(_m4);
+  if(AUDIT){
+    g.computeBoundingBox();
+    const b=g.boundingBox;
+    const st=(new Error()).stack.split('\n').slice(2,4).map(s=>s.trim().replace(/^at /,'')).join(' <- ');
+    PARTS.push({m:matName,c:colour,min:[b.min.x,b.min.y,b.min.z],max:[b.max.x,b.max.y,b.max.z],at:st});
+  }
   let b=batches.get(matName);
   if(!b){b=[];batches.set(matName,b)}
   b.push(g);
@@ -522,18 +532,20 @@ function buildGate(){
 const IRON=0x3d4540,BRASS=0xc9a227,ROPE=0xb8a27a,CANVAS=0xe6dcc6,LEATHER=0x8a6547,STRAW=0xc9b071;
 
 function sleeperPlatform(x,z,w=2.9,d=2.6){
-  for(let i=0;i<3;i++)box(w,.10,.30,'board',0x9c7448,x,.05+i*.11,z-d/2+.35+i*.42);
-  box(w-.1,.06,.10,'flat',IRON,x,.34,z-d/2);
+  // stone plinth, then three board sleepers with reveals, all resting on it
+  box(w,.12,d,'flat',0x8d8974,x,.06,z);
+  for(let i=0;i<3;i++)box(w,.10,.72,'board',0x9c7448,x,.17,z-d/2+.46+i*.84);
+  box(w-.1,.06,.10,'flat',IRON,x,.13,z-d/2+.05);
   shadow(x,z,w*.62,d*.62,.34);
-  // a stone weight on the platform edge
-  lathe([[0,0],[.30,0],[.34,.16],[.26,.34],[.26,.46],[.12,.5],[0,.5]],10,'flat',0x7d7a6c,x+w*.34,.10,z+d*.22);
-  lathe([[0,0],[.20,0],[.22,.10],[.16,.20],[.16,.26],[0,.28]],8,'flat',0x6b6759,x+w*.34,.60,z+d*.22);
+  // a stone weight on the platform edge, resting on the boards
+  lathe([[0,0],[.30,0],[.34,.16],[.26,.34],[.26,.46],[.12,.5],[0,.5]],10,'flat',0x7d7a6c,x+w*.34,.22,z+d*.22);
+  lathe([[0,0],[.20,0],[.22,.10],[.16,.20],[.16,.26],[0,.28]],8,'flat',0x6b6759,x+w*.34,.72,z+d*.22);
 }
 function weightRack(x1,x2,z){
   for(const x of [x1,x2]){
     box(.30,3.0,.30,'wood',WALNUT,x,1.5,z);
-    box(.30,.24,1.5,'wood',WALNUT,x,1.5,z+.6);
-    box(.26,.26,1.5,'flat',IRON,x,1.35,z+.6);
+    box(.30,.16,1.3,'wood',WALNUT,x,.08,z+.45);       // floor foot
+    beamBetween([x,1.35,z],[x,.20,z+1.0],.06,'wood',WALNUT); // diagonal brace
   }
   for(const y of [.85,1.55,2.25]){
     box(x2-x1,.14,.16,'wood',OAK,(x1+x2)/2,y,z+.02);
@@ -557,31 +569,33 @@ function strikeDummy(x,z){
   // spring
   for(let i=0;i<4;i++)put(new T.TorusGeometry(.16,.035,4,10),'flat',IRON,x,.22+i*.10,z,[Math.PI/2,0,0]);
   cyl(.30,.34,.55,10,'wood',ASH,x,.70,z);
-  lathe([[0,0],[.44,0],[.52,.18],[.52,1.05],[.44,1.30],[.26,1.42],[0,1.42]],12,'flat',LEATHER,x,1.15,z);
+  lathe([[0,0],[.44,0],[.52,.18],[.52,1.05],[.44,1.30],[.26,1.42],[0,1.42]],12,'flat',LEATHER,x,.97,z);
   for(const y of [1.45,1.75,2.05])put(new T.TorusGeometry(.44,.045,4,12),'flat',ROPE,x,y,z,[Math.PI/2,0,0]);
   box(.62,.34,.50,'flat',0x6f4f37,x,2.02,z);
   shadow(x,z,.8,.8,.36);
 }
 function kettlebell(x,z,tilt){
-  put(new T.SphereGeometry(.34,12,8),'flat',0x6d7268,x,.30,z);
-  put(new T.TorusGeometry(.20,.05,5,10),'flat',IRON,x,.62,z,[tilt||0,0,.2]);
+  put(new T.SphereGeometry(.34,12,8),'flat',0x6d7268,x,.34,z);
+  put(new T.TorusGeometry(.20,.05,5,10),'flat',IRON,x,.66,z,[tilt||0,0,.2]);
   shadow(x,z,.5,.5,.28);
 }
 function sandbagGantry(x1,x2,z){
   for(const x of [x1,x2]){
     box(.34,4.35,.34,'wood',WALNUT,x,2.17,z);
-    box(.34,.26,1.7,'wood',WALNUT,x,2.17,z+.8);
-    beamBetween([x-.1,4.15,z],[x-.1,3.3,z+.95],.09,'wood',WALNUT);
+    box(.34,.16,1.5,'wood',WALNUT,x,.08,z);           // ground skid
+    // knee brace in the x-y plane, from the post up into the beam
+    const inward=x===x1?.62:-.62;
+    beamBetween([x+inward,3.28,z],[x,4.12,z],.09,'wood',WALNUT);
   }
   box(x2-x1+.6,.30,.34,'wood',WALNUT,(x1+x2)/2,4.30,z);
   shadow((x1+x2)/2,z,1.6,.55,.32);
   const bags=[[x1+.9,1.55],[(x1+x2)/2,1.95],[x2-.9,1.35]];
   for(const [x,base] of bags){
-    const y=4.20;
-    // chain + swivel
-    for(let i=0;i<5;i++)put(new T.TorusGeometry(.055,.016,3,6),'flat',IRON,x,y-.05-i*.13,z,[0,0,Math.PI/2]);
-    box(.14,.14,.14,'flat',IRON,x,y-.80,z);
-    const h=1.55,r=.40;
+    const beamY=4.20,h=1.55,r=.40,top=base+h;
+    // continuous chain from the beam down to the swivel, with links threaded on it
+    beamBetween([x,beamY,z],[x,top,z],.018,'flat',IRON);
+    for(let y=beamY-.08;y>top+.10;y-=.13)put(new T.TorusGeometry(.055,.016,3,6),'flat',IRON,x,y,z,[0,0,Math.PI/2]);
+    box(.14,.14,.14,'flat',IRON,x,top+.07,z);
     lathe([[0,0],[r,0],[r*.94,h*.16],[r*1.02,h*.5],[r*.9,h*.86],[r*.55,h],[0,h]],12,'flat',0x9b7a58,x,base,z);
     for(const yy of [base+.55,base+.95,base+1.35])put(new T.TorusGeometry(r*.99,.028,4,12),'flat',0xe0d3bd,x,yy,z,[Math.PI/2,0,0]);
     // patches
@@ -589,9 +603,9 @@ function sandbagGantry(x1,x2,z){
     if(base<1.5)box(.30,.30,.06,'flat',0xc9b071,x-.10,base+.12,z+.34,[0,0,.1]);
   }
   // sand spill + bucket under the patched bag
-  for(let i=0;i<9;i++){const a=i/9*Math.PI*2;put(new T.SphereGeometry(.10,5,4),'flat',0xcdb98c,x2-1.4+Math.cos(a)*.6,.03,z+.55+Math.sin(a)*.5)}
-  cyl(.26,.22,.42,10,'wood',OAK,x2-1.4,.21,z+.9);
-  shadow(x2-1.4,z+.7,.7,.6,.24);
+  for(let i=0;i<9;i++){const a=i/9*Math.PI*2;put(new T.SphereGeometry(.10,5,4),'flat',0xcdb98c,x2-1.4+Math.cos(a)*.6,.10,z-.55+Math.sin(a)*.5)}
+  cyl(.26,.22,.42,10,'wood',OAK,x2-1.4,.21,z-.9);
+  shadow(x2-1.4,z-.7,.7,.6,.24);
 }
 function guardPost(x,z){
   box(.8,.16,.8,'flat',0x8d8974,x,.08,z);
@@ -772,9 +786,15 @@ function barrel(x,z){
   put(new T.SphereGeometry(.09,8,6),'flat',0x8d9a92,x+.58,1.28,z+.06,[0,0,0]);
 }
 function bench(x,z,w){
+  // seat on four legs, with a slatted back against the fence
   box(w,.10,.42,'board',0x9c7448,x,.46,z);
-  box(w,.08,.44,'flat',0xb59b74,x,.50,z);
-  for(const dx of [-w/2+.22,w/2-.22]){box(.14,.46,.36,'wood',WALNUT,x+dx,.23,z)}
+  box(w,.06,.44,'flat',0xb59b74,x,.54,z);
+  for(const dx of [-w/2+.22,w/2-.22]){
+    box(.14,.46,.36,'wood',WALNUT,x+dx,.23,z);
+    box(.12,.62,.12,'wood',WALNUT,x+dx,.71,z-.18);
+  }
+  box(w-.1,.16,.06,'board',0x9c7448,x,.86,z-.18);
+  box(w-.1,.12,.06,'board',0x9c7448,x,.66,z-.18);
   shadow(x,z,w*.5,.35,.22);
 }
 function broom(x,z,tilt){
@@ -799,9 +819,14 @@ function buildBays(){
   weightRack(48.4,61.2,27.9);
   strikeDummy(47.6,34.4);
   kettlebell(58.4,33.6,.35);kettlebell(59.2,36.2,-.2);
-  box(2.2,.10,.10,'wood',WALNUT,45.0,3.1,30.4,[0,0,0]);
-  for(const dx of [0,.55])box(.42,.9,.05,'flat',0xd8cdb4,45.6+dx,2.62,30.4);
-  shadow(45.2,30.4,.4,.4,.2);
+  // towel stand: two turned uprights, a rail, and two towels over it
+  for(const x of [44.3,46.2]){
+    box(.34,.14,.34,'flat',0x8d8974,x,.07,30.6);
+    box(.14,3.24,.14,'wood',WALNUT,x,1.62,30.6);
+  }
+  box(2.3,.12,.12,'wood',WALNUT,45.25,3.18,30.6);
+  for(const dx of [0,.55])box(.42,.9,.05,'flat',0xd8cdb4,45.55+dx,2.67,30.62);
+  shadow(45.25,30.6,.7,.4,.22);
 
   /* GUARD - The Wall: sandbags, guard post, bucklers, wall tool rack. */
   sandbagGantry(57.0,67.0,19.4);
@@ -820,7 +845,7 @@ function buildBays(){
 
   /* AGILITY - The Run: staggered hurdles, vault, beam, bell. */
   hurdle(72.0,23.3,2.5,.90);
-  hurdle(75.0,25.9,2.5,1.20);
+  hurdle(75.0,24.4,2.5,1.20);
   hurdle(78.0,23.9,2.5,1.45);
   vaultBox(80.2,28.4);
   balanceBeam(69.6,74.4,29.7);
@@ -835,8 +860,11 @@ function buildBays(){
   // standing bronze bell
   for(const dx of [-.7,.7])box(.16,2.4,.16,'wood',WALNUT,92.2+dx,1.2,24.4);
   box(1.9,.18,.30,'wood',WALNUT,92.2,2.42,24.4);
+  // the bell hangs from a crown rod; a log striker is slung in front of it
+  box(.10,.92,.10,'flat',IRON,92.2,1.97,24.4);
   lathe([[0,.95],[.46,.98],[.52,.55],[.40,0],[.28,.02],[.28,.10],[0,.10]],14,'flat',BRASS,92.2,.55,24.4);
-  beamBetween([91.9,1.55,24.1],[92.9,2.05,24.7],.05,'wood',0x6f5236);
+  for(const x of [91.35,93.05])beamBetween([x,2.40,24.62],[x,1.36,25.06],.025,'flat',IRON);
+  cyl(.10,.10,1.9,8,'wood',0x6f5236,92.2,1.32,25.06,[0,0,Math.PI/2]);
   shadow(92.2,24.4,.8,.5,.3);
   // raked gravel bed
   box(3.4,.12,2.4,'flat',0xd6cdb3,83.0,.06,32.6);
@@ -847,15 +875,16 @@ function buildBays(){
   box(1.2,.10,.36,'flat',BRASS,85.6,1.28,30.2);
   for(const dx of [-.30,0,.30])cyl(.012,.012,.34,5,'flat',0x6b5a44,85.6+dx,1.50,30.2);
 
-  /* Entry: a short queue line to the side of the opening, desk, noticeboard,
-     trophy case, water barrel, benches. */
-  for(const x of [63.0,66.0])queuePost(x,36.4);
-  ropeSag([63.0,1.16,36.4],[66.0,1.16,36.4],.26);
-  lectern(73.4,35.6,0);
-  noticeBoard(65.4,37.5,0);
-  trophyCase(75.6,34.6);
+  /* Entry: a check-in desk with its queue guide on the right of the opening,
+     a notice board on the left fence wing and a trophy case inside the right
+     one, so the gate throat itself stays clear. */
+  lectern(73.2,35.0,0);
+  for(const x of [70.6,72.9])queuePost(x,36.5);
+  ropeSag([70.6,1.16,36.5],[72.9,1.16,36.5],.24);
+  noticeBoard(52.6,37.35,0);
+  trophyCase(79.4,36.8);
   barrel(64.0,32.9);
-  bench(66.4,31.6,2.2);bench(71.2,31.6,2.2);
+  bench(65.2,31.6,2.2);bench(72.4,31.6,2.2);
 }
 
 /* ---- 8. build everything ------------------------------------------------------------------- */
@@ -865,7 +894,7 @@ buildBays();
 
 /* Banner masts stand clear of the training lanes, one per bay. */
 banner(45.9,36.2,BAYS.power.label,BAYS.power.css);
-banner(66.4,21.4,BAYS.guard.label,BAYS.guard.css);
+banner(66.5,24.7,BAYS.guard.label,BAYS.guard.css);
 banner(79.7,33.4,BAYS.agility.label,BAYS.agility.css);
 banner(93.1,27.2,BAYS.focus.label,BAYS.focus.css);
 
@@ -1035,5 +1064,5 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-window.__gym={scene,camera,renderer,setView,snap,applyCamera,get stats(){return {triangles,calls:renderer.info.render.calls,textures:renderer.info.memory.textures,geometries:renderer.info.memory.geometries}}};
+window.__gym={scene,camera,renderer,setView,snap,applyCamera,parts:PARTS,get stats(){return {triangles,calls:renderer.info.render.calls,textures:renderer.info.memory.textures,geometries:renderer.info.memory.geometries}}};
 })();
