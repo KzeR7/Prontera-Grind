@@ -1879,7 +1879,26 @@ void main(){
  // Subtle +5.5% optical offset keeps the player slightly higher than vertical screen center (~44% from top).
  function syncSize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h||(w===viewW&&h===viewH))return;viewW=w;viewH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.setViewOffset(w,h,0,h*.055,w,h);camera.updateProjectionMatrix()}
  syncSize();const observer=new ResizeObserver(syncSize);observer.observe(host);
- function frame(now){requestAnimationFrame(frame);if(!active||document.hidden)return;if(!viewW||!viewH)syncSize();const walkDt=last?Math.min(2,Math.max(0,(now-last)/1000)):0,dt=Math.min(.1,walkDt);last=clock=now;
+  // v364: a decorative draw must never take the frame down with it. `PGWardrobe.draw` on a poker
+  // Dealer threw `InvalidStateError: The image source is detached from the canvas` on every frame,
+  // and because this loop had no guard the throw aborted everything BELOW it - player sprite
+  // placement, nameplates, digimon followers and `renderer.render` itself. The visible result was a
+  // hero who "teleported": the sprite stayed at the last position that was committed before the
+  // fault, then snapped to the current one on the frames that happened to survive. The guard is a
+  // fence around each risky stage, not a blanket catch - the camera, the walk clock and the render
+  // call must still run. It reports once per fault site so a console is a report, not a flood.
+  function frame(now){requestAnimationFrame(frame);if(!active||document.hidden)return;
+   let failed=0;const stage=(name,fn)=>{try{fn()}catch(error){failed++;reportFrameFault(name,error)}};
+   // The render call runs in `finally`: a broken stage costs its own draw, never the whole picture.
+   try{frameBody(now,stage)}finally{try{renderer.render(scene,camera)}catch(error){reportFrameFault('render',error)}}}
+  // One line per distinct fault site, plus a repeat count: a permanent fault (a detached atlas that
+  // is never re-fetched) would otherwise fill the console 60 times a second and hide the first one.
+  const frameFaults=new Map();
+  function reportFrameFault(where,error){
+   const n=(frameFaults.get(where)||0)+1;frameFaults.set(where,n);
+   if(n===1||n%600===0)console.warn('[plaza] frame stage "'+where+'" failed'+(n>1?' ('+n+'×)':'')+':',error&&error.message||error);
+  }
+  function frameBody(now,stage){if(!viewW||!viewH)syncSize();const walkDt=last?Math.min(2,Math.max(0,(now-last)/1000)):0,dt=Math.min(.1,walkDt);last=clock=now;
  for(const p of players.values())R.advance(p.state,now);
  const self=players.get(callbacks.self());callbacks.trainingNearby?.(self?.state);const selfChair=self?.state.sit&&!Number.isInteger(self?.state.pokerSeat)&&R.SEATS[self?.state.seat];
  const focusX=self?(Number.isFinite(selfChair?.sitX)?selfChair.sitX:self.state.x):0,focusZ=self?self.state.z:12;
@@ -1893,22 +1912,33 @@ void main(){
  fishingApi.update(now,dt);
  const w=viewW||host.clientWidth,h=viewH||host.clientHeight;
  for(const {pad,el,hover,pressed} of sanctuaryLabels){if(pad.station&&(hover||pressed))continue;head.set(pad.x,.08,pad.z).project(camera);const hidden=head.z>1||head.z<-1||Math.abs(head.x)>1||Math.abs(head.y)>1||behindGymWall(pad.x,.08,pad.z);el.hidden=hidden;if(!hidden){el.style.left=((head.x+1)*w*.5).toFixed(1)+'px';el.style.top=((1-head.y)*h*.5).toFixed(1)+'px'}}
- updateResidents(now);updateGymResidents(now);updateBattleResidents(now);
- updateSanctuaryNpcs(now,w,h);
+ stage('residents',()=>{updateResidents(now);updateGymResidents(now);updateBattleResidents(now)});
+ stage('sanctuary-npcs',()=>updateSanctuaryNpcs(now,w,h));
  // Render table Dealers first so cached frames stay quiet and player stance draws remain authoritative.
- loadDealers(now);
+ stage('dealers-load',()=>loadDealers(now));
+ stage('dealers-paint',()=>{
  for(const u of pokerUnits){
   if(u.look){
    const dfacing=(u.dSpec.dir+Math.round(angle/(Math.PI/4))+8)%8;
    const danim=PGWardrobe.animationKey&&Array.isArray(u.look.pieces)?PGWardrobe.animationKey(u.look,'idle',dfacing,now,null,now):PGWardrobe.frameIndex(u.look.base.metadata.actions['idle'+dfacing],now);
    const dpaint=(u.look.key||u.dSpec.id)+':idle'+dfacing+':'+danim;
    if(u.paint!==dpaint){
-    u.paint=dpaint;
-    PGWardrobe.draw(u.dCtx,u.look,'idle',dfacing,now,null,now,null,null);
-    u.dTex.needsUpdate=true;
-    const dscale=2.6/u.look.base.figureHeight;u.dSprite.scale.set(320*dscale,280*dscale,1);
-    const dtop=Math.min(...[u.look.base,u.look.hair].flatMap(part=>{const act=part.metadata.actions['idle'+dfacing];return act.frames[PGWardrobe.frameIndex(act,now)].filter(l=>l[7]!=='shadow').map(l=>l[5])}));
-    u.height=(200-dtop)*dscale+.25;
+    // v364: `u.paint` is committed only when the draw actually succeeded. It used to be set first,
+    // so one throw (a detached atlas) left the dealer marked as painted and the frame was never
+    // retried - the sprite stayed blank for the rest of the session. A failure now drops the
+    // selection as well, so loadDealers() re-selects this dealer from the store instead of
+    // re-drawing a dead bitmap forever.
+    try{
+     PGWardrobe.draw(u.dCtx,u.look,'idle',dfacing,now,null,now,null,null);
+     u.dTex.needsUpdate=true;
+     const dscale=2.6/u.look.base.figureHeight;u.dSprite.scale.set(320*dscale,280*dscale,1);
+     const dtop=Math.min(...[u.look.base,u.look.hair].flatMap(part=>{const act=part.metadata.actions['idle'+dfacing];return act.frames[PGWardrobe.frameIndex(act,now)].filter(l=>l[7]!=='shadow').map(l=>l[5])}));
+     u.height=(200-dtop)*dscale+.25;
+     u.paint=dpaint;
+    }catch(error){
+     reportFrameFault('dealer:'+u.dSpec.id,error);
+     u.paint='';u.look=null;u.retryAt=performance.now()+3000;
+    }
    }
   }
   // Anchor dealer nameplate above the dealer's head so it never covers the 3D table felt.
@@ -1923,6 +1953,8 @@ void main(){
    if(!dbhid){const bx=((head.x+1)*w*.5).toFixed(1)+'px',by=((1-head.y)*h*.5-52).toFixed(1)+'px';if(u.bx!==bx){u.bx=bx;u.npcBubble.style.left=bx}if(u.by!==by){u.by=by;u.npcBubble.style.top=by}}
   }else if(u.bubbleUntil){u.bubbleUntil=0;u.bhid=true;u.npcBubble.hidden=true;u.npcBubble.textContent=''}
  }
+ });
+ stage('players',()=>{
  for(const p of players.values()){
   const state=p.state;if(state.id===callbacks.self()&&p.wasSitting!==state.sit){p.wasSitting=state.sit;callbacks.sitting?.(state.sit)}if(p.loaded!==p.requested||!p.looks.normal||!p.looks.sit)loadLooks(p,now);
   const look=(state.sit?p.looks.sit:null)||p.looks.normal;let height=p.height;
@@ -1938,14 +1970,22 @@ void main(){
    const animKey=PGWardrobe.animationKey&&Array.isArray(look.pieces)?PGWardrobe.animationKey(look,stance,facing,now,null,now):PGWardrobe.frameIndex(look.base.metadata.actions[stance+facing],now);
    const paint=(look.key||p.loaded)+':'+stance+facing+':'+animKey+(glow?':r'+glow.at+':'+Math.floor(now/50):'');
    if(p.paint!==paint){
-    p.paint=paint;
-    PGWardrobe.draw(p.ctx,look,stance,facing,now,null,now,
-     glow?(ctx,image,layer,phase)=>drawNativeWeaponGlow(ctx,image,layer,phase,glow,p.trail,null,now):null,
-     glow?(ctx,image,layer,phase)=>drawNativeArmGlow(ctx,image,layer,phase,glow,now):null);
-    p.texture.needsUpdate=true;p.label.dataset.stance=stance;
-    const scale=2.6/(p.looks.normal?.base.figureHeight||look.base.figureHeight);p.sprite.scale.set(320*scale,280*scale,1);
-    const top=Math.min(...[look.base,look.hair].flatMap(part=>{const action=part.metadata.actions[stance+facing];return action.frames[PGWardrobe.frameIndex(action,now)].filter(l=>l[7]!=='shadow').map(l=>l[5])}));
-    p.height=(200-top)*scale+.25;
+    // v364: same rule as the dealers - paint is committed only after a successful draw, so a
+    // detached atlas is retried next frame instead of leaving that player invisible for good.
+    try{
+     PGWardrobe.draw(p.ctx,look,stance,facing,now,null,now,
+      glow?(ctx,image,layer,phase)=>drawNativeWeaponGlow(ctx,image,layer,phase,glow,p.trail,null,now):null,
+      glow?(ctx,image,layer,phase)=>drawNativeArmGlow(ctx,image,layer,phase,glow,now):null);
+     p.texture.needsUpdate=true;p.label.dataset.stance=stance;
+     const scale=2.6/(p.looks.normal?.base.figureHeight||look.base.figureHeight);p.sprite.scale.set(320*scale,280*scale,1);
+     const top=Math.min(...[look.base,look.hair].flatMap(part=>{const action=part.metadata.actions[stance+facing];return action.frames[PGWardrobe.frameIndex(action,now)].filter(l=>l[7]!=='shadow').map(l=>l[5])}));
+     p.height=(200-top)*scale+.25;
+     p.paint=paint;
+    }catch(error){
+     reportFrameFault('player:'+state.id,error);
+     // Drop the selection so loadLooks() re-selects from the store (a fresh decode) next time.
+     p.paint='';p.looks.normal=null;p.looks.sit=null;p.loaded='';p.requested='';p.retryAt=performance.now()+3000;
+    }
    }
    height=p.height;
   }
@@ -1983,7 +2023,9 @@ void main(){
    if(!bhid){const bx=((head.x+1)*w*.5).toFixed(1)+'px',by=((1-head.y)*h*.5).toFixed(1)+'px';if(p.bx!==bx){p.bx=bx;p.bubble.style.left=bx}if(p.by!==by){p.by=by;p.bubble.style.top=by}}
   }else if(p.bubbleUntil){p.bubbleUntil=0;p.bhid=true;p.bubble.hidden=true;p.bubble.replaceChildren()}
  }
- renderer.render(scene,camera)}requestAnimationFrame(frame); // v361: fire the Aetherwell load LAST, once every binding the mount touches (seatTargets
+ });
+ }   // end frameBody
+ requestAnimationFrame(frame); // v361: fire the Aetherwell load LAST, once every binding the mount touches (seatTargets
  // especially - the v359 bleacher slabs taught us that const) is initialized. The network GLB
  // always resolves after create() anyway; this also keeps synchronous loader stubs safe.
  loadAetherwell();

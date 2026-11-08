@@ -1872,6 +1872,30 @@ function population(){
 // v313: one place decides how long to wait before the next attempt, so a socket that opens but never
 // completes the handshake backs off exactly like a socket that closed.
 function retryDelay(){return Math.min(30000,1000*2**Math.min(app.retry++,5))}
+// v364: a failed WebSocket upgrade is invisible to JavaScript. The browser reports nothing but
+// "connection failed" and then `close 1006`, so "Chat unavailable - retrying..." was the only thing
+// a player could see while the actual cause - a maintenance pause, a lost cookie, a Pages deployment
+// with no SOCIAL binding - stayed in the network tab. A plain GET to /api/me runs the SAME Functions
+// middleware the socket traverses, and unlike the upgrade it can be read. So after two failed
+// attempts, ask /me and name the reason in the plaza status line and the console.
+let diagnosing=false;
+async function diagnoseSocket(){
+ if(diagnosing)return;diagnosing=true;
+ let verdict='The chat service did not answer.';
+ try{
+  const r=await fetch('/api/me',{cache:'no-store',credentials:'same-origin'});
+  const body=await r.json().catch(()=>({}));
+  if(r.status===503&&body&&body.maintenance)verdict='The server is paused for maintenance. Chat returns when the pause is lifted.';
+  else if(r.status===503)verdict='This deployment has no chat or database binding: '+((body&&(body.err||body.error))||'503')+'.';
+  else if(r.status===401&&r.headers.get('X-Session')==='none')verdict='This browser has no session cookie, so chat cannot authorise you. Sign in again.';
+  else if(r.status===401)verdict='Your session has ended (signed in elsewhere or expired). Sign in again.';
+  else if(r.ok)verdict='The API is healthy, so the plaza Worker itself is not answering.';
+  else verdict='The API answered HTTP '+r.status+'.';
+ }catch{verdict='The API could not be reached at all (network or DNS).'}
+ finally{diagnosing=false}
+ console.warn('[plaza] chat unavailable:',verdict);
+ status(verdict);
+}
 function connect(){if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextConnect)return;const user=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username;if(app.user!==user){app.user=user;localHistory.clear();app.messages=readWorldHistory();renderMessages();app.unread.clear();try{app.muted=new Set(JSON.parse(localStorage.getItem('pg_social_mute_'+user))||[])}catch{app.muted=new Set()}}
  const qs=CLOUD.previewToken?'?preview_session='+encodeURIComponent(CLOUD.previewToken):'';
  const ws=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/api/social'+qs);app.socket=ws;app.socketAt=Date.now();app.rulesNoticed=false;status('Connecting to chat…');ws.onmessage=e=>{if(app.socket!==ws)return;app.lastSeen=Date.now();app.probeAt=0;try{receive(JSON.parse(e.data))}catch(err){console.error('Social message',err)}};
@@ -1887,7 +1911,11 @@ function connect(){if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextCo
   // v363: taken for 4001 too. That code blocks reconnecting, so the record is never replayed - it
   // is only what keeps the standing spot (see syncSoloPlayer) instead of the fountain ring.
   app.resume=seatState();
-  stashLocal();clearPokerResult();app.room=0;app.rooms=[];app.plazaFriends=0;app.poker=null;app.pokerTables=null;pokerTableChat.clear();resetPlayers();syncSoloPlayer();population();tabsUI();renderPokerMini();renderPokerUI(true);status(e.code===4001?'Chat moved to another tab. Reload to reconnect.':'Chat unavailable — retrying…');app.blocked=e.code===4001;app.nextConnect=Date.now()+retryDelay()};ws.onerror=()=>status('Chat unavailable — checking connection…');}
+  stashLocal();clearPokerResult();app.room=0;app.rooms=[];app.plazaFriends=0;app.poker=null;app.pokerTables=null;pokerTableChat.clear();resetPlayers();syncSoloPlayer();population();tabsUI();renderPokerMini();renderPokerUI(true);status(e.code===4001?'Chat moved to another tab. Reload to reconnect.':'Chat unavailable — retrying…');app.blocked=e.code===4001;app.nextConnect=Date.now()+retryDelay();
+   // v364: 1006 means the upgrade never completed and the browser will never say why. Ask the API
+   // once the retry ladder has had a chance, so the status line names the cause instead of repeating
+   // "retrying" forever. Not for 4001 (that one explains itself) and not before a second attempt.
+   if(e.code!==4001&&app.retry>=2)diagnoseSocket()};ws.onerror=()=>status('Chat unavailable — checking connection…');}
 let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();
  // v313: a socket can open against a cold Durable Object and then sit there - Pages accepted the
  // upgrade, the room has not said hello. Nothing used to notice: the plaza showed "Connecting to
