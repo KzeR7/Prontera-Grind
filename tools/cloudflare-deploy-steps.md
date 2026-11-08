@@ -46,9 +46,20 @@ starts the Pages production build/deploy. Wait for the Cloudflare Pages check/de
 If you need to deploy manually instead, build and upload the production branch explicitly:
 
 ```sh
+git pull --ff-only origin main          # the merge happened on GitHub, not in this folder
+node tools/preflight_deploy.mjs         # refuses to let a stale tree be deployed
 bash tools/build_site.sh
+node tools/preflight_deploy.mjs --expect haven-v365
 npx wrangler pages deploy dist --project-name horizonhaven --branch main
 ```
+
+**Read the deploy output, do not skim it.** `Uploaded 0 files (NNNN already uploaded)` means the
+bytes did not change, which after a merge means the build is stale - a build from a folder that was
+never pulled publishes the PREVIOUS release and prints a success line while doing it. That is how
+v363 and v364 were each shipped by accident. `node tools/preflight_deploy.mjs` exists to catch it
+before the upload: it checks that `origin/main` is in this checkout, that `dist/version.txt` matches
+`index.html`, that `dist/` is newer than its sources, and that the published page still writes the
+build tag. It changes nothing and needs no network beyond one `git fetch`.
 
 The Render site is deliberately kept as your backup; this update does not change or remove it.
 
@@ -119,7 +130,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-08 haven-v364 the plaza frame survives a broken draw, chat says why it failed, and the login card names the build` || Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
+| Build tag at the bottom of the card | `2026-11-08 haven-v365 chat diagnosis now probes the plaza Worker itself and names the refusal` || Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
 | `/gm.html` | after deliberate D1 owner provisioning, the GM console lists players and shows **👑 owner** |
