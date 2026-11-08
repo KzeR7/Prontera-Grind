@@ -69,6 +69,28 @@ await check('a 5xx is reported as the object refusing work', async () => {
   assert.match(body.verdict, /refusing work/i);
 });
 
+// v367: the probe used to be able to say "Chat should connect" while the room was refusing every
+// greeting - a probe that verifies a prerequisite must never answer the question. The room now
+// reports its last greeting failure on the 426, and that has to flip the verdict.
+await check('a room that could not greet the last socket is NOT reported healthy', async () => {
+  const { body } = await call({
+    SOCIAL: readyNamespace(() => new Response('WebSocket required', {
+      status: 426,
+      headers: { 'X-Greet-Failed': 'write after close' },
+    })),
+  });
+  assert.equal(body.ok, false, '"reachable" is not "chat works"');
+  assert.match(body.verdict, /could not greet the last connection/, 'the verdict names the real fault');
+  assert.match(body.verdict, /write after close/, 'and quotes the error the client could never see');
+  assert.match(body.detail, /4002/, 'it names the close code the client will report');
+});
+
+await check('a cleared greeting failure returns the probe to healthy', async () => {
+  const { body } = await call({ SOCIAL: readyNamespace() });
+  assert.equal(body.ok, true);
+  assert.match(body.verdict, /should connect/);
+});
+
 await check('the probe is read-only: it asks for no upgrade and reads no session', async () => {
   let seen = null;
   await call({ SOCIAL: readyNamespace((req) => { seen = req; return new Response('WebSocket required', { status: 426 }); }) });

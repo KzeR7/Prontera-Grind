@@ -81,7 +81,18 @@ export const onRequestGet = guard(async ({ env }) => {
   // for this probe: the object exists, its bindings resolve and its state loaded.
   if (http === 426) {
     out.ok = true;
-    out.verdict = 'The plaza Worker is reachable and its storage loaded. Chat should connect.';
+    // v367: "reachable" is not the whole story. A 426 proves the object loads, but the greeting a real
+    // socket needs is written later and can fail on its own - and when it does the client only sees a
+    // close, never the cause. The room records its last greeting failure; report it here so this
+    // endpoint stops reassuring a player whose socket is being refused.
+    const greet = res.headers.get('X-Greet-Failed');
+    if (greet) {
+      out.ok = false;
+      out.verdict = 'The plaza Worker is reachable, but it could not greet the last connection: ' + greet;
+      out.detail = 'A socket that cannot be greeted is closed immediately (code 4002). This is a room-side fault, not a binding or session problem.';
+    } else {
+      out.verdict = 'The plaza Worker is reachable and its storage loaded. Chat should connect.';
+    }
   } else if (http === 400) {
     out.verdict = 'The plaza Worker answered "Invalid identity": the probe request was rejected before reaching the room.';
   } else if (http === 503) {

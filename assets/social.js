@@ -1936,6 +1936,12 @@ function connect(){
   // browser console is the only place that can answer it (1000/1006 = network or edge, 4000 = the
   // server's planned session refresh, 4001 = the same account signed in somewhere else).
   if(e.code!==4000)console.info('[plaza] chat socket closed',e.code,e.reason||'');
+   // v367: 4002 is the room saying "I could not greet you" - the one failure that used to be totally
+   // silent, because v366 refused the upgrade outright and the browser could only report 1006 with no
+   // body. The room now completes the upgrade and closes with this code, so the reason string carries
+   // the real error instead of us inferring it from a chatcheck probe that only says "reachable".
+   if(e.code===4002){console.warn('[plaza] the room refused the greeting:',e.reason||'(no reason given)');
+    status('Chat could not start: '+(e.reason||'the plaza room could not greet this tab')+' — retrying.')}
   if(e.code===4000){stashLocal(app.room);app.resume=seatState();app.nextConnect=0;status('Refreshing chat…');return}
   // v295: a silent drop or a network blip reserves the same thing a planned refresh does, so the
   // reconnect resumes the seat/room instead of spawning at the plaza entrance. Read it BEFORE
@@ -1943,7 +1949,7 @@ function connect(){
   // v363: taken for 4001 too. That code blocks reconnecting, so the record is never replayed - it
   // is only what keeps the standing spot (see syncSoloPlayer) instead of the fountain ring.
   app.resume=seatState();
-  stashLocal();clearPokerResult();app.room=0;app.rooms=[];app.plazaFriends=0;app.poker=null;app.pokerTables=null;pokerTableChat.clear();resetPlayers();syncSoloPlayer();population();tabsUI();renderPokerMini();renderPokerUI(true);status(e.code===4001?'Chat moved to another tab. Reload to reconnect.':'Chat unavailable — retrying…');app.blocked=e.code===4001;app.nextConnect=Date.now()+retryDelay();
+  stashLocal();clearPokerResult();app.room=0;app.rooms=[];app.plazaFriends=0;app.poker=null;app.pokerTables=null;pokerTableChat.clear();resetPlayers();syncSoloPlayer();population();tabsUI();renderPokerMini();renderPokerUI(true);if(e.code!==4002)status(e.code===4001?'Chat moved to another tab. Reload to reconnect.':'Chat unavailable — retrying…');app.blocked=e.code===4001;app.nextConnect=Date.now()+retryDelay();
    // v364: 1006 means the upgrade never completed and the browser will never say why. Ask the API
    // once the retry ladder has had a chance, so the status line names the cause instead of repeating
    // "retrying" forever. Not for 4001 (that one explains itself) and not before a second attempt.

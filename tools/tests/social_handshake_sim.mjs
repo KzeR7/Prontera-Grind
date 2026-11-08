@@ -4,7 +4,13 @@
 // (`replayPokerLedgers`), and `send()` swallowed the throw. A socket whose `send` failed therefore
 // stayed OPEN forever - the client saw a successful upgrade, waited out its 12 s handshake timeout,
 // dropped, and repeated. From the plaza that is indistinguishable from "chat is broken", which is
-// exactly what it was reported as. connect() now returns null so the Worker can refuse the upgrade.
+// exactly what it was reported as. connect() now returns null so the Worker can act on it.
+//
+// v367 corrects what "act on it" means. v366 answered HTTP 503 to the upgrade, and that was a
+// regression in diagnosability: a refused upgrade hands the browser no socket at all, so the client
+// reports only 1006 with no code and no reason - the exact silence this whole work is about.
+// The Worker now completes the upgrade and closes with 4002 plus the captured error text, and the
+// failure is recorded on the room so /api/chatcheck can report it too.
 import assert from 'node:assert/strict';
 import { SocialRoom } from '../../workers/social/room.mjs';
 
@@ -33,9 +39,19 @@ check('a socket that cannot be written to is REFUSED, not left open', () => {
   const room = makeRoom();
   let closed = null;
   const c = room.connect(identity(2), () => { throw new Error('socket closed'); }, (code) => { closed = code; });
-  assert.equal(c, null, 'connect() reports the failure so the Worker can answer 503');
+  assert.equal(c, null, 'connect() reports the failure so the Worker can close with 4002');
   assert.equal(room.clients.has(2), false, 'and the dead connection is not left in the room');
   assert.equal(closed, null, 'the room leaves closing to the caller that owns the socket');
+});
+
+check('a failed greeting records WHY, so the cause is reportable', () => {
+  const room = makeRoom();
+  room.connect(identity(5), () => { throw new Error('write after close'); }, () => {});
+  assert.equal(room.lastSendError, 'write after close', 'the room keeps the error text');
+  // The Worker and /api/chatcheck both read this; without it the client can only ever say "closed".
+  assert.equal(typeof room.lastSendError, 'string');
+  const ok = room.connect(identity(6), () => {}, () => {});
+  assert.ok(ok, 'a later healthy connection still succeeds alongside the recorded error');
 });
 
 check('a refused greeting does not poison the next attempt', () => {

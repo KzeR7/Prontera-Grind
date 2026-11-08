@@ -70,14 +70,25 @@ export class Social {
    try{await this.loadLedgers()}
    catch(error){console.error('Poker ledger load failed',error);return new Response('Poker ledger unavailable',{status:503})}
   }
-  if(request.headers.get('Upgrade')?.toLowerCase()!=='websocket')return new Response('WebSocket required',{status:426});
+  if(request.headers.get('Upgrade')?.toLowerCase()!=='websocket'){
+   // v367: the 426 is the only non-destructive probe of this room. Let it carry the last greeting
+   // failure, so /api/chatcheck can report a room-side fault instead of declaring victory.
+   const failed=this.room.lastSendError;
+   return new Response('WebSocket required',{status:426,headers:failed?{'X-Greet-Failed':failed}:{}});
+  }
   const identity=JSON.parse(request.headers.get('X-Social-Identity')||'null');if(!identity||!Number.isInteger(identity.id)||typeof identity.username!=='string')return new Response('Invalid identity',{status:400});
   const pair=new WebSocketPair(),client=pair[0],server=pair[1];server.accept();
   const c=this.room.connect(identity,s=>server.send(s),(code,reason)=>server.close(code,reason));
-  // v366: a connection the room refused to greet is not a connection. Close it instead of returning
-  // a 101 for a socket that will never send `hello` - that shape is indistinguishable to a player
-  // from "chat is broken", and it costs 12 s of handshake timeout to find out.
-  if(!c){try{server.close(1011,'Greeting failed')}catch{};return new Response('Chat could not start',{status:503})}
+  // v367: v366 answered 503 here, which was a design error - refusing the upgrade means the browser
+  // hands the client NO socket at all, so all it can report is "connection failed" and close 1006.
+  // That is the same silence the whole diagnosis fought against. Complete the upgrade and then close
+  // with a code and a reason the client can read: 4002 means "the room could not greet you", and the
+  // reason string carries the actual error. `hello` is sent synchronously inside connect(), so this
+  // is a decision the client sees immediately, not after a 12 s handshake timeout.
+  if(!c){
+   try{server.close(4002,'Greeting failed: '+(this.room.lastSendError||'unknown'))}catch{}
+   return new Response(null,{status:101,webSocket:client});
+  }
   server.addEventListener('message',e=>{this.room.receive(c,e.data);if(this.room.hasActiveBattles())this.scheduleBattleAlarm()});server.addEventListener('close',()=>this.room.disconnect(c));server.addEventListener('error',()=>this.room.disconnect(c));
   if(await this.ctx.storage.getAlarm()===null)await this.ctx.storage.setAlarm(Date.now()+60000);
   return new Response(null,{status:101,webSocket:client});
