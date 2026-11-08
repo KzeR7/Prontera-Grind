@@ -74,6 +74,10 @@ export class Social {
   const identity=JSON.parse(request.headers.get('X-Social-Identity')||'null');if(!identity||!Number.isInteger(identity.id)||typeof identity.username!=='string')return new Response('Invalid identity',{status:400});
   const pair=new WebSocketPair(),client=pair[0],server=pair[1];server.accept();
   const c=this.room.connect(identity,s=>server.send(s),(code,reason)=>server.close(code,reason));
+  // v366: a connection the room refused to greet is not a connection. Close it instead of returning
+  // a 101 for a socket that will never send `hello` - that shape is indistinguishable to a player
+  // from "chat is broken", and it costs 12 s of handshake timeout to find out.
+  if(!c){try{server.close(1011,'Greeting failed')}catch{};return new Response('Chat could not start',{status:503})}
   server.addEventListener('message',e=>{this.room.receive(c,e.data);if(this.room.hasActiveBattles())this.scheduleBattleAlarm()});server.addEventListener('close',()=>this.room.disconnect(c));server.addEventListener('error',()=>this.room.disconnect(c));
   if(await this.ctx.storage.getAlarm()===null)await this.ctx.storage.setAlarm(Date.now()+60000);
   return new Response(null,{status:101,webSocket:client});

@@ -1757,7 +1757,7 @@ function receive(m){
  if(m.type==='gym_started'){if(worldTraining?.phase==='pending'&&worldTraining.request===m.request&&worldTraining.room===m.gym?.room&&worldTraining.stat===m.gym?.stat)beginWorldTraining(m.gym.slot);return}
  if(m.type==='gym_error'){if(worldTraining?.phase==='pending'&&worldTraining.request===m.request){worldTraining=null;worldNotice(m.message||'Could not reserve equipment.')}return}
  if(m.type==='gym'&&m.room===app.room){gymEntries=Array.isArray(m.entries)?m.entries:[];refreshGymVisuals();return}
- if(m.type==='hello'){app.connected=true;app.id=m.id;app.retry=0;status('Connected · World & private chat');app.messages=mergeChatMessages(app.messages.filter(x=>x.channel!=='world'),readWorldHistory(),m.history);saveWorldHistory();renderMessages();if(app.wanted&&app.scene)join();else app.resume=null}
+ if(m.type==='hello'){app.connected=true;app.id=m.id;app.retry=0;app.blocked=false;console.info('[plaza] hello after '+(Date.now()-(app.socketAt||Date.now()))+' ms');status('Connected · World & private chat');app.messages=mergeChatMessages(app.messages.filter(x=>x.channel!=='world'),readWorldHistory(),m.history);saveWorldHistory();renderMessages();if(app.wanted&&app.scene)join();else app.resume=null}
  if(m.type==='error'){status(m.message);population();}
  if(m.type==='rooms'&&Array.isArray(m.rooms)){app.rooms=m.rooms;if(Number.isInteger(m.plaza?.friends))app.plazaFriends=m.plaza.friends;population();}
  if(m.type==='poker_error'||m.type==='poker_leave_required'){showPokerToast(m.message,'warn');pokerOpen('table');renderPokerUI(true);}
@@ -1900,7 +1900,12 @@ async function diagnoseSocket(){
     const c=await fetch('/api/chatcheck',{cache:'no-store',credentials:'same-origin'});
     const d=await c.json().catch(()=>({}));
     if(d&&d.verdict){
-     verdict=d.verdict;
+     // v366: chatcheck proves the BINDING, not the socket. When it says the Worker is reachable and
+     // the plaza is still failing, say so honestly and point at the two things that can produce it,
+     // instead of printing a reassurance that contradicts the screen.
+     verdict=d.ok
+      ? 'The plaza Worker answers, but this tab could not keep a chat socket. If a second device is signed in to this account it evicts this one (4001); otherwise open /api/chatcheck for the details.'
+      : d.verdict;
      if(d.rules&&globalThis.PGSocialRules&&typeof PGSocialRules.rulesFingerprint==='function'&&d.rules!==PGSocialRules.rulesFingerprint())
       verdict+=' Plaza rules mismatch: page '+PGSocialRules.rulesFingerprint()+' vs Worker '+d.rules+' - redeploy workers/social from the same commit.';
      if(d.detail)console.warn('[plaza] chatcheck detail:',d.detail);
@@ -1912,9 +1917,20 @@ async function diagnoseSocket(){
  console.warn('[plaza] chat unavailable:',verdict);
  status(verdict);
 }
-function connect(){if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextConnect)return;const user=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username;if(app.user!==user){app.user=user;localHistory.clear();app.messages=readWorldHistory();renderMessages();app.unread.clear();try{app.muted=new Set(JSON.parse(localStorage.getItem('pg_social_mute_'+user))||[])}catch{app.muted=new Set()}}
+function connect(){
+ // v366: `blocked` (set by close 4001, "connected in another tab") used to be one-way - nothing but
+ // a full page reload ever cleared it. After a relog the account is fine and the server is fine, but
+ // the tab kept refusing to even try, so chat stayed dead with no new information. The flag now
+ // clears itself after the backoff window: the worst case is one wasted upgrade, which the ladder
+ // already handles, against a plaza that can never come back without a reload.
+ if(app.blocked&&Date.now()>=app.nextConnect)app.blocked=false;
+ if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextConnect)return;const user=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username;if(app.user!==user){app.user=user;localHistory.clear();app.messages=readWorldHistory();renderMessages();app.unread.clear();try{app.muted=new Set(JSON.parse(localStorage.getItem('pg_social_mute_'+user))||[])}catch{app.muted=new Set()}}
  const qs=CLOUD.previewToken?'?preview_session='+encodeURIComponent(CLOUD.previewToken):'';
- const ws=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/api/social'+qs);app.socket=ws;app.socketAt=Date.now();app.rulesNoticed=false;status('Connecting to chat…');ws.onmessage=e=>{if(app.socket!==ws)return;app.lastSeen=Date.now();app.probeAt=0;try{receive(JSON.parse(e.data))}catch(err){console.error('Social message',err)}};
+ const ws=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/api/social'+qs);app.socket=ws;app.socketAt=Date.now();app.rulesNoticed=false;status('Connecting to chat…');
+  // v366: the upgrade succeeding is NOT the same as the room answering. When it opens and then goes
+  // quiet the client has no way to tell "accepted" from "accepted and ignored", so say both out loud
+  // with timings. The next incident then has a clock on it instead of a guess.
+  ws.onopen=()=>{if(app.socket!==ws)return;console.info('[plaza] socket open, waiting for hello ('+(Date.now()-app.socketAt)+' ms)')};ws.onmessage=e=>{if(app.socket!==ws)return;app.lastSeen=Date.now();app.probeAt=0;try{receive(JSON.parse(e.data))}catch(err){console.error('Social message',err)}};
  ws.onclose=e=>{if(app.socket!==ws)return;if(worldTraining?.room)cancelWorldTraining('Gym training stopped after disconnection.');app.socket=null;app.connected=false;app.battleIntent=null;app.probeAt=0;
   // Logged on purpose: "why did it reconnect" is the question the plaza keeps being asked, and the
   // browser console is the only place that can answer it (1000/1006 = network or edge, 4000 = the

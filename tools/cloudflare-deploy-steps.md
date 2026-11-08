@@ -47,11 +47,16 @@ If you need to deploy manually instead, build and upload the production branch e
 
 ```sh
 git pull --ff-only origin main          # the merge happened on GitHub, not in this folder
-node tools/preflight_deploy.mjs         # refuses to let a stale tree be deployed
-bash tools/build_site.sh
-node tools/preflight_deploy.mjs --expect haven-v365
+bash tools/build_site.sh                # rebuild dist/ FROM the pulled source
+node tools/preflight_deploy.mjs --expect haven-v366   # check the tree you just built
 npx wrangler pages deploy dist --project-name horizonhaven --branch main
 ```
+
+**The order matters: pull, then build, then check, then deploy.** The preflight compares `dist/`
+against the source, so running it BEFORE the build always fails whenever you have just pulled - the
+old `dist/` is correctly stale at that point. It was documented the other way round for one release,
+which cost a deploy attempt. Build first; the preflight then answers "is this the tree I think it
+is".
 
 **Read the deploy output, do not skim it.** `Uploaded 0 files (NNNN already uploaded)` means the
 bytes did not change, which after a merge means the build is stale - a build from a folder that was
@@ -130,7 +135,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-08 haven-v365 chat diagnosis now probes the plaza Worker itself and names the refusal` || Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
+| Build tag at the bottom of the card | `2026-11-08 haven-v366 the plaza handshake fails loudly, and a relog is no longer blocked forever` || Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
 | `/gm.html` | after deliberate D1 owner provisioning, the GM console lists players and shows **👑 owner** |
