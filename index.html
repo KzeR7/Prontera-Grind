@@ -919,9 +919,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=362">
-<link rel="stylesheet" href="assets/social-battle.css?v=362">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=362"><link rel="stylesheet" href="assets/friends.css?v=273">
+<link rel="stylesheet" href="assets/social.css?v=363">
+<link rel="stylesheet" href="assets/social-battle.css?v=363">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=363"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1075,7 +1075,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
      asserts it is never loaded again. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
    <!-- v360: vendored r128 examples/js loader so the Social Hub can mount the owner's Prontera Grand Aetherwell GLB (assets/Fountainfile/). -->
-   <script src="assets/vendor/GLTFLoader.r128.js?v=362"></script>
+   <script src="assets/vendor/GLTFLoader.r128.js?v=363"></script>
 <script>
 const $=id=>document.getElementById(id);
 // Owner request (2026-10-24): no browser menu anywhere in the game - a right-click used to offer
@@ -1317,7 +1317,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-08 haven-v362 plaza fingerprint guard — page and Social Worker must match';   // shown on the login card - confirms which file you loaded$('buildTag').textContent='build '+BUILD;
+const BUILD='2026-11-08 haven-v363 hub-first login for everyone; a dropped socket no longer teleports you';   // shown on the login card - confirms which file you loaded$('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
 // Assassin and Assassin Cross use katars or daggers. A katar occupies both hands; daggers support an offhand dagger.
@@ -3673,7 +3673,12 @@ async function logout(){
 // v361 (owner plan, from the arena/6673f39f round): a brand-new account starts in the Social
 // Hub around the Aetherwell instead of on the field. While this is pending the field render and
 // the battle are held back; the first map pick (gotoField) or the hub's Field button starts
-// them. Returning players are exactly as before.
+// them.
+// v363 (owner: "I want all players to spawn in the social hub when they log in, not just new
+// players"): the welcome is no longer a brand-new-account perk. Every login - local or cloud,
+// returning or fresh - opens the plaza, so the first thing a player sees is where everyone else
+// is. The field is one click away (map pick, or the hub's Field button) and behaves exactly as
+// before from there.
 let hubFirstPending=false;
 function initSession(gm,newAccount=false){
   // v88.6: a save in this browser that belongs to another account is not loaded - nothing starts, and
@@ -3693,7 +3698,7 @@ function initSession(gm,newAccount=false){
     if(typeof foldDupPets==='function')foldDupPets();        // v75: one pet per species, duplicates become Bond
     applyOfflineProgress();
     $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';
-    if(newAccount&&typeof PGSocial!=='undefined'){hubFirstPending=true;respawn=1e9}
+    if(typeof PGSocial!=='undefined'){hubFirstPending=true;respawn=1e9}
     else ui();
     $('loginOverlay').style.display='none';log(newAccount?`Account ready — welcome, ${currentUser}!`:`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
     if(hubFirstPending){PGSocial.enter() /* the beginner guide runs on the first field render instead */}
@@ -4493,10 +4498,21 @@ function cloudStart(u,gm){
   if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);   // v74: same repair on a cloud login
   if(typeof foldDupPets==='function')foldDupPets();                                // v75: same fold on a cloud login
   if(typeof BGM!=='undefined')BGM.sync(S.mp);
-  cloudSession(u,gm,CLOUD.id);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
+  // v363: every cloud login opens the Social Hub first (see initSession). Holding respawn back is
+  // what keeps a field battle from starting behind the plaza; gotoField releases it on the first
+  // map pick. Note there is deliberately no ui() here - gotoField calls it.
+  if(typeof hubFirstPending!=='undefined'&&hubFirstPending)respawn=1e9;
+  cloudSession(u,gm,CLOUD.id);if(typeof hubFirstPending==='undefined'||!hubFirstPending)ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
 }
 async function initSessionFromCloud(u,gm,isNew,id){
   currentUser=u;if(id)CLOUD.id=Number(id);hudRate=null;zenyEarned=0;expEarned=0;
+  // v363 (owner: "all players spawn in the social hub when they log in"): every cloud login
+  // opens the plaza first, whatever the save situation is - a brand-new account, a device that
+  // already had a copy, or a fresh device downloading the account. The field render is held back
+  // until the first map pick (gotoField runs ui()) and the hub's Field button does the same.
+  // typeof-guarded: builds without the plaza, and the cloud suite that runs this block on its own,
+  // have neither the flag nor PGSocial.
+  if(typeof PGSocial!=='undefined'&&typeof hubFirstPending!=='undefined'){hubFirstPending=true;respawn=1e9}
   const local=localStorage.getItem(saveKeyFor(u));
   // v88.6: a copy in this browser that belongs to another account is not loaded, and nothing is written over it.
   const elsewhere=saveRefusal(local,u);
@@ -4525,14 +4541,17 @@ async function initSessionFromCloud(u,gm,isNew,id){
       S=fresh();S.gm=!!gm;S.q=['kill','loot','boss'].map(newQuest);CLOUD.ver=0;CLOUD.dirty=true;
       if(typeof BGM!=='undefined')BGM.sync(S.mp);
       // v361: a brand-new cloud account gets the same hub-first welcome as a local one.
-      if(isNew&&typeof PGSocial!=='undefined'){hubFirstPending=true;respawn=1e9}
-      else{cloudSession(u,gm,CLOUD.id);ui()}
+      // v363: and so does every other cloud login - the flag is set at the top of this function.
+      cloudSession(u,gm,CLOUD.id);if(typeof hubFirstPending==='undefined'||!hubFirstPending)ui();
       $('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
-      if(hubFirstPending){cloudSession(u,gm,CLOUD.id);PGSocial.enter()}
       log('Welcome, '+u+'! Your progress will follow you to any device.','r1','cloud');
     }
   }
   cloudLastPoll=Date.now();cloudLastCheck=Date.now();
+  // v363: one entry point for the plaza, after whichever save branch above won. cloudJoin can
+  // adopt the account copy and cloudAdopt runs ui() itself, so the hub is entered here rather
+  // than in each branch.
+  if(typeof hubFirstPending!=='undefined'&&hubFirstPending)PGSocial.enter();
   await cloudPull();          // announcements and gifts land at login, then cloudPollTick takes over
 }
 
@@ -13628,14 +13647,14 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=362"></script>
-<script src="assets/digimon/base-stats.js?v=362"></script>
-<script src="assets/social-rules.js?v=362"></script>
-<script src="assets/social-poker.js?v=362"></script>
-<script src="assets/digimon-sanctuary.js?v=362"></script>
-<script src="assets/digimon-battle.js?v=362"></script>
-<script src="assets/social-digimon.js?v=362"></script>
-<script src="assets/social-scene.js?v=362"></script>
-<script src="assets/social-fishing.js?v=362"></script>
-<script src="assets/social.js?v=362"></script></body>
+<script src="assets/digimon/roster.js?v=363"></script>
+<script src="assets/digimon/base-stats.js?v=363"></script>
+<script src="assets/social-rules.js?v=363"></script>
+<script src="assets/social-poker.js?v=363"></script>
+<script src="assets/digimon-sanctuary.js?v=363"></script>
+<script src="assets/digimon-battle.js?v=363"></script>
+<script src="assets/social-digimon.js?v=363"></script>
+<script src="assets/social-scene.js?v=363"></script>
+<script src="assets/social-fishing.js?v=363"></script>
+<script src="assets/social.js?v=363"></script></body>
 </html>

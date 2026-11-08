@@ -40,6 +40,25 @@ let cameraValues,reset=0;app.scene={cameraState:{angle:0,pitch:48,distance:48,pa
 for(const id of ['socialCamera','socialCameraReset','socialCameraPanel','socialOrbit','socialTilt','socialZoom'])assert.equal(w.document.getElementById(id),null,id+' is removed from the compact plaza UI');assert.equal(w.document.getElementById('sanctuaryOpen').textContent,'🥚 DigiPet');assert(!/Camera|Reset view/.test(w.document.getElementById('socialHubToolbar').textContent));assert.equal(w.document.getElementById('socialHubHelp'),null,'the top question-mark control is removed');assert.equal(w.document.getElementById('socialSit').parentElement.id,'socialHub','Sit is independent of the top toolbar');assert(!w.document.getElementById('socialHubToolbar').contains(w.document.getElementById('socialSit')));const unifiedCss=fs.readFileSync('assets/social.css','utf8');assert.match(unifiedCss,/#socialHubToolbar\{[^}]*linear-gradient/);assert.match(unifiedCss,/#socialHubToolbar\{[^}]*border:1px solid #c5a76b/);assert.match(unifiedCss,/#socialSit\{position:absolute;[^}]*var\(--docktop/);assert.match(unifiedCss,/#sanctuaryClose\{[^}]*display:inline-flex;align-items:center;justify-content:center/);assert.match(unifiedCss,/background-image:url\('digimon\/digidex-portraits.webp'\)/);assert.match(unifiedCss,/data-rank=mega-plus/);
 const sent=[];socket.send=s=>sent.push(JSON.parse(s));app.room=1;w.S.equippedTitle='poring';w.sessionTick();w.S.equippedTitle=null;w.sessionTick();assert(sent.some(m=>m.type==='look'&&m.look.title===''));assert(!sent.some(m=>m.type==='leave'),'appearance/title updates must preserve seat and coordinates');
 w.PGSocial.select('emoji');assert.equal(w.document.querySelectorAll('#socialEmoji button').length,32);
+// v363 (owner: "when I walk around I keep being teleported back to spawn"): a plaza socket drop
+// used to rebuild the local placeholder on the fountain ring, so every reconnect blip looked like a
+// teleport. The spot the walk was standing on when the close arrived is kept instead.
+{
+ app.wanted=true;app.resume=null;
+ const spot={id:app.id,room:1,x:15,z:-8,dir:3,sit:false,seat:null,pokerSeat:null,path:[],at:0,look:{}};
+ app.players.set(app.id,spot);
+ socket.onclose({code:1006,reason:''});
+ assert.equal(app.room,0,'the drop leaves the plaza');
+ assert.equal(app.resume&&app.resume.x,15,'the close captures the standing spot');
+ assert.equal(app.resume.z,-8,'and its depth');
+ const solo=app.players.get(0);
+ assert.ok(solo,'the local placeholder exists while reconnecting');
+ assert.equal(solo.x,15,'the hero is not teleported to the fountain ring: x');
+ assert.equal(solo.z,-8,'the hero is not teleported to the fountain ring: z');
+ assert.equal(solo.dir,3,'the facing is kept with the spot');
+ assert.equal(Math.hypot(solo.x,solo.z)>13,true,'and this is not on the promenade ring');
+ app.resume=null;
+}
 // Solo plaza fallback spawns the local character when offline or before room join, supports walk/sit, and yields cleanly to multiplayer room state.
 w.PGSocial.leave();w.CLOUD.on=false;w.CLOUD.user=null;w.currentUser='local_hero';app.socket=null;app.user=null;app.connected=false;app.room=0;
 let sceneCallbacks=null;const scenePlayers=new Map();
@@ -52,6 +71,9 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  assert.equal(w.S.digimonSanctuary.partners.agumon.stats.power,3,'legacy completed progress is preserved');assert.equal(w.S.digimonSanctuary.partners.agumon.training,null,'old pending timer cannot award offline progress');delete w.S.digimonSanctuary;
  assert.equal(app.players.size,1,'offline/reconnecting plaza spawns solo character');
  assert.equal(scenePlayers.get(0).name,'local_hero');assert.equal(sceneCallbacks.self(),0);
+ // v363: with no drop to continue, a true first entry still walks in on the promenade ring.
+ { const sp=scenePlayers.get(0),r=Math.hypot(sp.x,sp.z);
+   assert.equal(r>=10.4-1e-9&&r<=12.2+1e-9,true,'a fresh entry spawns on the fountain ring ('+r.toFixed(2)+')'); }
  assert.equal(scenePlayers.get(0).look.lv,150,'solo plaza carries the level aura tier');
  assert.equal(scenePlayers.get(0).look.speed,9.5,'solo plaza walks at the field run speed');
  // The separate visual preview must not touch old RO pets, and an absent/invalid old save stays off.

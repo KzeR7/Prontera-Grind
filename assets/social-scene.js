@@ -750,10 +750,16 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  gardenAtlas.flipY=false;const gardenMat=modelMat.clone();gardenMat.map=gardenAtlas;gardenMat.onBeforeCompile=modelMat.onBeforeCompile;
  const garden=gardenCatalog.maps.find(m=>m.name==='prontera'),gardenFloats=new Float32Array(gardenBuffer);
  // Reuse native grass pixels for the remaining bounded gardens, with path clearance.
+ // v363 (owner: "the 4 grass platforms near the fountain are shimmering - the floors overlap"):
+ // these beds sat at y=.012 on a plaza floor at y=.01. Two millimetres is far below depth-buffer
+ // precision at plaza distances, so the two surfaces fought for every pixel and the grass crawled
+ // as the camera moved. The beds now take their own step in the floor ladder - a full centimetre
+ // over the plaza, below the sanctuary boardwalks at .025 - the same separation the ground/plaza
+ // pair gets.
  const grass=stone.clone();grass.repeat.set(R.GARDENS[0].w/8,R.GARDENS[0].d/8);grass.needsUpdate=true;
  const grassMat=new T.MeshBasicMaterial({map:grass,color:0xe4e2cf}),curbMaterial=new T.MeshBasicMaterial({color:0xb3ac97});
  for(const g of R.GARDENS){
-  const bed=new T.Mesh(new T.PlaneGeometry(g.w,g.d),grassMat);bed.rotation.x=-Math.PI/2;bed.position.set(g.x,.012,g.z);scene.add(freeze(bed));
+  const bed=new T.Mesh(new T.PlaneGeometry(g.w,g.d),grassMat);bed.rotation.x=-Math.PI/2;bed.position.set(g.x,.02,g.z);scene.add(freeze(bed));
   for(const side of [-1,1])for(const axis of ['x','z']){const curb=new T.Mesh(new T.BoxGeometry(axis==='x'?.35:g.w+.35,.22,axis==='z'?.35:g.d+.35),curbMaterial);curb.position.set(g.x+(axis==='x'?side*g.w/2:0),.1,g.z+(axis==='z'?side*g.d/2:0));scene.add(freeze(curb))}
   const shrubs=makeBatch();for(const offset of [-4,0,4])for(const side of [-1,1])pushModel(shrubs,'shrub',g.x+offset,g.z+side*5,2.4,0,garden,gardenFloats);addBatch(shrubs,gardenMat);
  }
@@ -879,13 +885,17 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   // rounded landing on the far west bank. It lies on land under the deck ends.
   function bridgePaths(paths){
    for(const path of paths){
+    // v363 floor audit (same owner report): the path surfaces sit on .012 and the west cap was
+    // .013 - one millimetre apart where the half-disc overlaps the path it terminates, which
+    // shimmered at the landing. The cap now sits a centimetre over its path, like the gardens
+    // over the plaza.
     const length=path.x2-path.x1,texture=plazaTex.clone();texture.repeat.set(length*26/164,path.width*3/18);texture.needsUpdate=true;
     const mat=new T.MeshBasicMaterial({map:texture,color:0xe6dfcf});
     const surface=new T.Mesh(new T.PlaneGeometry(length,path.width),mat);
     surface.rotation.x=-Math.PI/2;surface.position.set((path.x1+path.x2)/2,.012,path.z);surface.userData.bridgePath=path.name;scene.add(freeze(surface));
     if(path.name==='west'){
      const cap=new T.Mesh(new T.CircleGeometry(path.width/2,24),mat);
-     cap.rotation.x=-Math.PI/2;cap.position.set(path.x1,.013,path.z);cap.userData.bridgePathCap=true;scene.add(freeze(cap));
+     cap.rotation.x=-Math.PI/2;cap.position.set(path.x1,.022,path.z);cap.userData.bridgePathCap=true;scene.add(freeze(cap));
     }
    }
   }

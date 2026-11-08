@@ -146,9 +146,10 @@ t('when the context comes back the notice goes and the game draws again', () => 
 });
 live.close();
 
-// ---------------------------------------------------------------- 3. v361: hub-first login for brand-new accounts
-// A brand-new account opens the Social Hub around the Aetherwell instead of the field; the
-// battle starts on the first map pick. Returning accounts are byte-for-byte as before.
+// ---------------------------------------------------------------- 3. v361/v363: hub-first login for every account
+// v361 opened the plaza for brand-new accounts; v363 (owner: "I want all players to spawn in the
+// social hub when they log in, not just new players") opens it for every login. The battle still
+// starts on the first map pick, and the hub's Field button takes the same road.
 const hubFirst = boot('ok');
 const ev3 = c => hubFirst.eval(c);
 const hubFirstErrors = [];
@@ -171,12 +172,20 @@ t('a brand-new account enters the hub first and starts the battle from the first
   assert.strictEqual(ev3('respawn') < 1e9, true, 'spawning is released');
   assert.strictEqual(ev3('(window.__guideRuns||0)'), 1, 'the guide runs on the first field render');
 });
-t('a returning account logs in exactly as before', () => {
+t('v363: a returning account logs into the hub too, then goes straight back to its field', () => {
   const enters = ev3('(window.__hubEnters||0)');
-  ev3(`currentUser='veteran';initSession(false);`);
-  assert.strictEqual(ev3('(window.__hubEnters||0)'), enters, 'the hub is not entered for a returning account');
-  assert.strictEqual(ev3('hubFirstPending'), false, 'no hub-first flag');
-  assert.strictEqual(ev3('respawn') < 1e9, true, 'the field is armed normally');
+  ev3(`currentUser='veteran';window.__guideRuns=0;initSession(false);`);
+  assert.strictEqual(ev3('(window.__hubEnters||0)'), enters + 1, 'the hub is entered for a returning account');
+  assert.strictEqual(ev3('hubFirstPending'), true, 'hub-first is pending');
+  assert.strictEqual(ev3('respawn'), 1e9, 'field spawning is held back behind the plaza');
+  assert.strictEqual(ev3('mobs.length'), 0, 'no battle starts behind the hub');
+  assert.strictEqual(ev3('(window.__guideRuns||0)'), 0, 'the beginner guide still waits for the field');
+  // the saved map and level are what the Field button (and the first map pick) resume
+  ev3(`S.mp=3;S.lvl=4;gotoField(S.mp,S.lvl);`);
+  assert.strictEqual(ev3('hubFirstPending'), false, 'leaving for the field clears the flag');
+  assert.strictEqual(ev3('respawn') < 1e9, true, 'and releases spawning');
+  assert.strictEqual(ev3('S.mp'), 3, 'on the account\'s own map, not a fresh one');
+  assert.strictEqual(ev3('(window.__guideRuns||0)'), 1, 'the first field render runs the guide check');
   assert.strictEqual(hubFirstErrors.length, 0, 'nothing threw: ' + hubFirstErrors.join(' | '));
 });
 hubFirst.close();
