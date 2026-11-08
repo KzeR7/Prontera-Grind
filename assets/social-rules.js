@@ -186,6 +186,14 @@ for(const row of BLEACHER_ROWS)row.seats.forEach((seat,slot)=>{seat.id=bleacherI
 // export: 8 benches every 45 degrees at model radius 12.81 (x .62 scene scale = 7.43 world),
 // each ~1.64 world units long, backrest on the outer edge so sitters face the fountain across
 // the planter, seat plank at .65 world units.
+// v362: the page and the Social Worker both load this module, and the plaza only behaves when
+// they load the SAME build of it - a stale Worker redeploy rejects walks through tiles the page
+// thinks are open, drops seat ids it has never seen and strips digimon from looks. The owner's
+// post-merge staging pass hit exactly that ("walking clunky", "cant sit", "digimon not appearing")
+// and the only clue was a battle-intent timeout a minute later. The worker now stamps every room
+// snapshot with this fingerprint and the page compares it on arrival, so a mismatch announces
+// itself the moment the plaza opens instead of as mystery rubber-banding.
+const rulesFingerprint=()=>[CAPACITY,BENCHES.length,CHAIRS.length,BLEACHER_ROWS.length,FOUNTAIN_BENCHES.length,SEATS.filter(Boolean).length,walkable(0,7.7)?1:0,walkable(0,7.8)?1:0].join('/');
 const FOUNTAIN_BENCHES=(()=>{const seats=[];for(let k=0;k<8;k++){
  const a=k*Math.PI/4,ca=Math.cos(a),sa=Math.sin(a),dir=[2,3,4,5,6,7,0,1][k],r=12.81*.62;
  for(let slot=0;slot<2;slot++){const off=slot?0.45:-0.45;
@@ -274,5 +282,5 @@ function path(from,to){
 }
 function walkSpeed(p){const value=Number(p&&p.look&&p.look.speed);return Number.isFinite(value)&&value>0?Math.max(MIN_SPEED,Math.min(MAX_SPEED,value)):SPEED}
 function advance(p,now){let distance=Math.max(0,(now-p.at)/1000)*walkSpeed(p);p.at=now;while(p.path.length&&distance>0){const t=p.path[0],dx=t.x-p.x,dz=t.z-p.z,d=Math.hypot(dx,dz);p.dir=(Math.round(Math.atan2(-dx,dz)/(Math.PI/4))+8)%8;if(d<=distance){p.x=t.x;p.z=t.z;p.path.shift();distance-=d}else{p.x+=dx/d*distance;p.z+=dz/d*distance;break}}if(!p.path.length&&Number.isInteger(p.seat)&&SEATS[p.seat]){p.sit=true;p.dir=SEATS[p.seat].dir}else if(!p.path.length&&Number.isInteger(p.pokerSeat)&&POKER.seats[p.pokerSeat]){p.sit=true;p.dir=POKER.seats[p.pokerSeat].dir}return p;}
-return {LIMIT,MIN_X,MAX_X,MIN_Z,MAX_Z,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,FOUNTAIN_BENCHES,fountainSpawn,SANCTUARY,SANCTUARY_ARCHES,SANCTUARY_PLANTERS,SANCTUARY_TREES,SANCTUARY_OBSTACLES,SANCTUARY_BARRIERS,SANCTUARY_FENCES,SANCTUARY_GYM_FENCES,SANCTUARY_GYM_WALLS,SANCTUARY_RING,GYM_STATIONS,fenceBlocked,ringBlocked,cleanDigimon,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,BLEACHER_ROWS,SEATS,POKER,pondRadius,pondContains,pondBoundary,pondDistance,clampPond,cragBlocked,onBridge,walkable,path,advance};
+return {LIMIT,MIN_X,MAX_X,MIN_Z,MAX_Z,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,FOUNTAIN_BENCHES,fountainSpawn,rulesFingerprint,SANCTUARY,SANCTUARY_ARCHES,SANCTUARY_PLANTERS,SANCTUARY_TREES,SANCTUARY_OBSTACLES,SANCTUARY_BARRIERS,SANCTUARY_FENCES,SANCTUARY_GYM_FENCES,SANCTUARY_GYM_WALLS,SANCTUARY_RING,GYM_STATIONS,fenceBlocked,ringBlocked,cleanDigimon,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,BLEACHER_ROWS,SEATS,POKER,pondRadius,pondContains,pondBoundary,pondDistance,clampPond,cragBlocked,onBridge,walkable,path,advance};
 });

@@ -7,6 +7,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  assert.deepEqual([...R.EMOTIONS].sort(),Object.keys(emotionMap).sort());assert.deepEqual([...R.EMOTIONS].sort(),Object.keys(emotionLock.outputs).sort());
  for(const id of R.EMOTIONS)assert.equal(createHash('sha256').update(fs.readFileSync('assets/social/emotions/'+id+'.png')).digest('hex'),emotionLock.outputs[id].sha256);
  const clients=Array.from({length:21},(_,i)=>join(i+1));assert.equal(clients[19].room,1);assert.equal(clients[20].room,2);assert.equal(clients[0].events.find(x=>x.type==='room').players.length,1);
+ // v362: every room snapshot carries the plaza fingerprint so the page can refuse to trust a
+ // Social Worker that runs a different rules build (the post-merge staging round: a stale Worker
+ // rejected v361 walks, seats and digimon with no explanation but a battle timeout).
+ assert.equal(clients[0].events.find(x=>x.type==='room').rules,R.rulesFingerprint(),'the room snapshot stamps the shared plaza fingerprint');
+ assert.equal(R.rulesFingerprint(),'20/15/8/6/16/120/0/1','the fingerprint pins capacity, every seat ring and the fountain annulus');
  assert.equal(new Set(clients.slice(0,20).map(p=>p.x+','+p.z)).size,20,'arrivals have distinct visible spawn positions');
  // v361: fresh arrivals drop on the Aetherwell promenade ring (outside the paving lip at 9.2,
  // inside the old entrance row at 12+), on walkable tiles - never inside the fountain collision.

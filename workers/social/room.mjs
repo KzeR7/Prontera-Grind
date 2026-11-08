@@ -593,7 +593,7 @@ export class SocialRoom {
   this.adoptFriends(c);
   this.syncPokerArrivals(c.room,now);
   const rooms=this.roomList();
-  this.send(c,{type:'room',room:c.room,rooms,players:[...this.clients.values()].filter(p=>p.room===c.room).map(p=>this.snapshot(p,c))});
+  this.send(c,{type:'room',room:c.room,rooms,rules:R.rulesFingerprint(),players:[...this.clients.values()].filter(p=>p.room===c.room).map(p=>this.snapshot(p,c))});
   this.send(c,{type:'gym',room:c.room,entries:this.gymSnapshot(c.room)});
   this.send(c,{type:'battle',room:c.room,at:now,...this.battleSnapshot(c.room)});
   this.send(c,this.pokerPayload(c.room,c.id,now));

@@ -159,6 +159,20 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  socket.onmessage({data:JSON.stringify({type:'hello',id:9,history:[]})});
  socket.onmessage({data:JSON.stringify({type:'room',room:1,players:[{id:9,name:'new',room:1,x:0,z:12,dir:0,sit:false,seat:null,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:0,title:''}}]})});
  assert.equal(scenePlayers.has(0),false,'multiplayer room join replaces solo placeholder');
+ // v362: the page compares the Worker's plaza fingerprint the moment a room opens, and says so
+ // clearly instead of leaving a stale deployment to surface as rubber-banded walks and dead seats.
+ {const el=w.document.getElementById('sanctuaryWorldStatus'),txt=()=>el.querySelector('span').textContent;
+  const payload=rules=>({type:'room',room:1,...(rules?{rules}:{}),players:[{id:9,name:'new',room:1,x:0,z:12,dir:0,sit:false,seat:null,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:0,title:''}}]});
+  app.rulesNoticed=false;el.hidden=true;
+  socket.onmessage({data:JSON.stringify(payload(w.PGSocialRules.rulesFingerprint()))});
+  assert(el.hidden,'a matching Social Worker fingerprint raises no notice');
+  app.rulesNoticed=false;el.hidden=true;
+  socket.onmessage({data:JSON.stringify(payload('20/15/8/6/0/104/1/1'))});
+  assert(!el.hidden&&/Plaza mismatch/.test(txt()),'a stale Social Worker fingerprint is announced the moment the room opens: '+txt());
+  app.rulesNoticed=false;el.hidden=true;
+  socket.onmessage({data:JSON.stringify(payload(null))});
+  assert(!el.hidden&&/older than the page/.test(txt()),'a fingerprint-less pre-v362 Social Worker is announced as older: '+txt());
+ }
  assert.equal(scenePlayers.get(9).name,'new');assert.equal(sceneCallbacks.self(),9);
  pick.value='agumon';pick.dispatchEvent(new w.Event('change'));assert(socket.sent.some(m=>m.type==='look'&&m.look.digimon==='greymon'),'evolved choice broadcasts as a presentation hint');
 
