@@ -79,7 +79,12 @@ export class SocialRoom {
   this.pvpQueues=new Map();this.pvpMatches=new Map();this.pvpByRoom=new Map();this.parties=new Map();this.partyInvites=new Map();
   this.onBattleActivity=opts.onBattleActivity||null;
  }
- send(c,event){try{c.send(JSON.stringify(event))}catch{this.disconnect(c)}}
+ // v366: `send` reports whether the bytes actually left. The handshake below is delivered from a
+ // promise continuation, so a synchronous throw cannot reach the caller and used to be swallowed:
+ // the socket stayed open, the client never got its `hello`, and the only thing a player saw was a
+ // plaza that sat on "Connecting to chat…" and then died - the 12 s HANDSHAKE_MS giving up, then a
+ // reconnect that looked identical. Returning the result lets connect() fail loudly instead.
+ send(c,event){try{c.send(JSON.stringify(event));return true}catch{this.disconnect(c);return false}}
  persistPokerLedger(accountId){
   const version=(this.ledgerVersions.get(accountId)||0)+1;this.ledgerVersions.set(accountId,version);this.ledgerDirty.add(accountId);
   const snapshot=(this.ledgerQueues.get(accountId)||[]).map(event=>({...event}));
@@ -276,7 +281,12 @@ export class SocialRoom {
   // The list Pages sent at connect time is mirrored at once, so a player who is already in a plaza
   // and is on your list is drawn as a friend even if you connected second.
   this.adoptFriends(c);
-  this.send(c,{type:'hello',id:c.id,name:c.name,gm:c.gm,history:this.history});
+  // v366: the greeting is the handshake. If it cannot be written the connection is dead weight -
+  // the room must drop it rather than leave a socket open that will never say hello. The client's
+  // 12 s HANDSHAKE_MS otherwise has to discover this, which reads as a flaky plaza.
+  if(!this.send(c,{type:'hello',id:c.id,name:c.name,gm:c.gm,history:this.history})){
+   this.clients.delete(c.id);return null;
+  }
   // v319: a freshly connected field client learns the plaza population at once, instead of
   // waiting for the next join or leave to light the Social Hub badge.
   const rooms=this.roomList();this.send(c,{type:'rooms',rooms,plaza:this.plazaPopulation(c,rooms)});
