@@ -10,8 +10,8 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 export const SANCTUARY_STAGE=Object.freeze({
- commit:'7af6df027db611c9f1965f132abc741216654ead',
- build:'2026-11-07 haven-v360 the Grand Aetherwell centrepiece',
+ commit:'ccd3553649be09c3d6184906dd55d61c5080f525',
+ build:'2026-11-08 haven-v361 Aetherwell at true scale, seatable ring, hub-first arrivals',
  pagesProject:'prontera-grind-staging',
  branchUrl:'https://main.prontera-grind-staging.pages.dev',
  socialProject:'prontera-social-staging',
