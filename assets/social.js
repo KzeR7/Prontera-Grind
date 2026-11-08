@@ -984,7 +984,14 @@ function fishingTitleName(st){
 function currentLook(){const st=typeof S==='object'&&S?S:null,slot=activePartnerSlot(),partner=partnerLine(slot),creature=worldTraining&&worldTraining.slot===slot?null:(globalThis.PGDigimonSanctuary?.species(partnerData(slot),partner)||partner);return {cls:st?.cls||'Novice',appearance:st&&typeof wardrobeAppearance==='function'?wardrobeAppearance():{version:1,sex:'m'},refine:Math.max(0,Math.min(15,st?.eq?.weapon?.r||0)),title:huntTitleName(st),fishTitle:fishingTitleName(st),lv:st&&st.auraShow!==false&&!st.hideUI?Math.max(0,Math.min(999,Math.floor(Number(st.lv)||0))):0,speed:st&&typeof moveSpd==='function'?Math.round(moveSpd(true)*100)/100:0,...(creature?{digimon:creature}:{})}}
 function soloName(){const u=typeof CLOUD!=='undefined'&&CLOUD.user?(typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username):typeof currentUser==='string'&&currentUser?currentUser:'';return u||app.user||'Adventurer'}
 function syncSoloPlayer(){if(!app.wanted||!app.scene||app.room)return;let p=app.players.get(SOLO_ID);const look=currentLook(),name=soloName();if(!p){ // v361: the solo plaza spawns on the Aetherwell promenade ring, like the shared rooms.
-   const sp=R.fountainSpawn();p={id:SOLO_ID,name,room:0,x:sp.x,z:sp.z,dir:0,sit:false,seat:null,pokerSeat:null,path:[],at:performance.now(),look}}else{R.advance(p,performance.now());p.name=name;p.look=look}putPlayer(p)}
+   // v363 (owner: "when I walk around I keep being teleported back to spawn"): while a drop is
+   // being reconnected the room is 0 for a moment, and re-creating the placeholder on the ring
+   // every time turned each blip into a teleport. The spot captured when the socket closed -
+   // or a solo hero already standing in the map - is kept, so the walk simply continues; only a
+   // true first entry, with no position to keep, spawns on the promenade.
+   const r=app.resume,keep=r&&Number.isFinite(r.x)&&Number.isFinite(r.z)&&R.walkable(r.x,r.z);
+   const sp=keep?{x:r.x,z:r.z}:R.fountainSpawn();
+   p={id:SOLO_ID,name,room:0,x:sp.x,z:sp.z,dir:keep&&Number.isInteger(r.dir)?r.dir:0,sit:false,seat:null,pokerSeat:null,path:[],at:performance.now(),look}}else{R.advance(p,performance.now());p.name=name;p.look=look}putPlayer(p)}
 function clearSoloPokerIfSeated(p){
  if(Number.isInteger(p.pokerSeat)&&soloTables){
   const tid=Math.floor(p.pokerSeat/6);
@@ -1802,7 +1809,7 @@ function receive(m){
 // plaza spawn. Detection is now 10 s + 5 s, comfortably inside the resume window, and
 // visibilitychange probes the moment a throttled background tab wakes up.
 const WATCHDOG_MS=10000,PROBE_GRACE_MS=5000,HANDSHAKE_MS=12000;
-function seatState(){const me=app.players.get(app.id);const seated=seatedPokerSnapshot();return me?{seat:Number.isInteger(me.seat)?me.seat:null,pokerSeat:Number.isInteger(me.pokerSeat)?me.pokerSeat:null,pokerBuyIn:seated?.me?.stack||pokerUI.buyIn,sit:!!me.sit}:app.resume}
+function seatState(){const me=app.players.get(app.id);const seated=seatedPokerSnapshot();return me?{seat:Number.isInteger(me.seat)?me.seat:null,pokerSeat:Number.isInteger(me.pokerSeat)?me.pokerSeat:null,pokerBuyIn:seated?.me?.stack||pokerUI.buyIn,sit:!!me.sit,x:me.x,z:me.z,dir:Number.isInteger(me.dir)?me.dir:0}:app.resume}
 function dropSocket(message,keep){const ws=app.socket;stashLocal(app.room);app.socket=null;app.connected=false;app.battleIntent=null;app.probeAt=0;if(keep)app.resume=seatState(); // v311 (owner: "the hero jumps around on reconnect"): a dropped socket used to leave the local
  // character walking a route the room no longer knew about, and the room then restored its own
  // copy - two different heroes, one of them moving on its own. Stop the walk where it stands and
@@ -1877,7 +1884,9 @@ function connect(){if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextCo
   // v295: a silent drop or a network blip reserves the same thing a planned refresh does, so the
   // reconnect resumes the seat/room instead of spawning at the plaza entrance. Read it BEFORE
   // resetPlayers() wipes the map it comes from.
-  if(e.code!==4001)app.resume=seatState();
+  // v363: taken for 4001 too. That code blocks reconnecting, so the record is never replayed - it
+  // is only what keeps the standing spot (see syncSoloPlayer) instead of the fountain ring.
+  app.resume=seatState();
   stashLocal();clearPokerResult();app.room=0;app.rooms=[];app.plazaFriends=0;app.poker=null;app.pokerTables=null;pokerTableChat.clear();resetPlayers();syncSoloPlayer();population();tabsUI();renderPokerMini();renderPokerUI(true);status(e.code===4001?'Chat moved to another tab. Reload to reconnect.':'Chat unavailable — retrying…');app.blocked=e.code===4001;app.nextConnect=Date.now()+retryDelay()};ws.onerror=()=>status('Chat unavailable — checking connection…');}
 let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();
  // v313: a socket can open against a cold Durable Object and then sit there - Pages accepted the

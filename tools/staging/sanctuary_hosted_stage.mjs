@@ -11,7 +11,7 @@ import {fileURLToPath} from 'node:url';
 
 export const SANCTUARY_STAGE=Object.freeze({
  commit:'adf4f99eef86aa7af3bc5effdb84cf362716cde3',
- build:'2026-11-08 haven-v362 plaza fingerprint guard — page and Social Worker must match',
+ build:'2026-11-08 haven-v363 hub-first login for everyone; a dropped socket no longer teleports you',
  pagesProject:'prontera-grind-staging',
  branchUrl:'https://main.prontera-grind-staging.pages.dev',
  socialProject:'prontera-social-staging',

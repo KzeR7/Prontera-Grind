@@ -186,7 +186,8 @@ t('initSession checks the stamp before it loads the save', () => {
 t('initSessionFromCloud checks the device copy before it starts a session or writes anything', () => {
   // v280: the signature now also carries the account id, which the save stamp needs.
   // v280: the function grew (the account id and the identity comments), so the window had to.
-  const b = body('async function initSessionFromCloud(u,gm,isNew,id){', 1800);
+  // v363: and again - the hub-first login comment now opens the function.
+  const b = body('async function initSessionFromCloud(u,gm,isNew,id){', 2400);
   const check = b.indexOf('saveRefusal(local,u)');
   assert.ok(check > 0, 'the device-copy check is missing');
   assert.ok(check < b.indexOf('cloudStart(u,gm)'), 'before the session starts');
