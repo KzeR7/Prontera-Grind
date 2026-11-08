@@ -84,7 +84,11 @@ export class SocialRoom {
  // the socket stayed open, the client never got its `hello`, and the only thing a player saw was a
  // plaza that sat on "Connecting to chat…" and then died - the 12 s HANDSHAKE_MS giving up, then a
  // reconnect that looked identical. Returning the result lets connect() fail loudly instead.
- send(c,event){try{c.send(JSON.stringify(event));return true}catch{this.disconnect(c);return false}}
+ send(c,event){try{c.send(JSON.stringify(event));return true}catch(error){
+  // v367: keep the reason. A failed greeting is the one thing a player cannot see from the browser,
+  // so the text is stored on the room and /api/chatcheck reports it instead of it vanishing.
+  this.lastSendError=String((error&&error.message)||error);
+  this.disconnect(c);return false}}
  persistPokerLedger(accountId){
   const version=(this.ledgerVersions.get(accountId)||0)+1;this.ledgerVersions.set(accountId,version);this.ledgerDirty.add(accountId);
   const snapshot=(this.ledgerQueues.get(accountId)||[]).map(event=>({...event}));
@@ -284,8 +288,9 @@ export class SocialRoom {
   // v366: the greeting is the handshake. If it cannot be written the connection is dead weight -
   // the room must drop it rather than leave a socket open that will never say hello. The client's
   // 12 s HANDSHAKE_MS otherwise has to discover this, which reads as a flaky plaza.
-  if(!this.send(c,{type:'hello',id:c.id,name:c.name,gm:c.gm,history:this.history})){
-   this.clients.delete(c.id);return null;
+  const greeted=this.send(c,{type:'hello',id:c.id,name:c.name,gm:c.gm,history:this.history});
+  if(!greeted){
+   this.clients.delete(c.id);c.greetFailed=this.lastSendError||'unknown';return null;
   }
   // v319: a freshly connected field client learns the plaza population at once, instead of
   // waiting for the next join or leave to light the Social Hub badge.
