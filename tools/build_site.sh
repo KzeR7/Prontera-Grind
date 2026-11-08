@@ -130,6 +130,21 @@ for forbidden in _login.html _shot.html logic2.js docs tools Sprite image-search
   [ -e "$OUT/$forbidden" ] && { echo "BUILD BROKEN: $forbidden must never be published" >&2; exit 1; }
 done
 [ -d "$OUT/tools" ] && { echo "BUILD BROKEN: tools/ leaked into the publish directory" >&2; exit 1; }
+
+# v364: the login card's build tag was empty for a whole release because the statement that fills it
+# had been swallowed by a trailing `//` comment. Nothing checked the result, so the one readout that
+# says WHICH file the browser loaded silently vanished and every later bug report started with
+# "which build am I even running?". Two checks, both on the built artifact rather than the source:
+#   1. the exact bug signature - a `//` sitting before a buildTag textContent write on one line;
+#   2. at least one real, uncommented write exists at all.
+grep -q 'id="buildTag"' "$OUT/index.html" || { echo "BUILD BROKEN: #buildTag is missing from dist/index.html" >&2; exit 1; }
+grep -q "const BUILD='" "$OUT/index.html" || { echo "BUILD BROKEN: const BUILD missing in dist/index.html" >&2; exit 1; }
+if grep -Eq '^[^<]*//[^<]*buildTag[^<]*textContent' "$OUT/index.html"; then
+  echo "BUILD BROKEN: the #buildTag write is inside a // comment in dist/index.html" >&2; exit 1
+fi
+# The write itself: whatever shape it takes, something must put `'build '+BUILD` into the card.
+grep -q "'build '+BUILD" "$OUT/index.html" \
+  || { echo "BUILD BROKEN: nothing writes 'build '+BUILD into #buildTag in dist/index.html" >&2; exit 1; }
 compgen -G "$OUT/assets/mob_*.png" > /dev/null && { echo "BUILD BROKEN: dev-only mob previews leaked into the publish directory" >&2; exit 1; }
 
 # Cloudflare Pages Free: keep the generated tree below 20,000 files and 25 MiB/file.
