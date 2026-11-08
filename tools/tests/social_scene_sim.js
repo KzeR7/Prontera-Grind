@@ -124,9 +124,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert.equal(w.PGSocialRules.BENCHES.length,15);assert.equal(w.PGSocialRules.CHAIRS.length,8);
  // v359: the four ringside wooden benches are gone; the bleacher rows (46-111) carry the
  // ring seating, and ids 32-39 retired with the removed benches.
- const seatList=w.PGSocialRules.SEATS.filter(Boolean);assert.equal(seatList.length,104,'15 benches (30 seats) + 8 chairs + 66 bleacher seats');
+ const seatList=w.PGSocialRules.SEATS.filter(Boolean);assert.equal(seatList.length,120,'15 benches (30 seats) + 8 chairs + 66 bleacher seats + 16 Aetherwell bench seats');
  for(let i=32;i<=39;i++)assert(!w.PGSocialRules.SEATS[i],'retired ringside seat '+i+' is gone');
  assert.equal(w.PGSocialRules.SEATS[46].x,82);assert.equal(w.PGSocialRules.SEATS[46].height||w.PGSocialRules.SEATS[46].rowHeight,.62);assert.equal(w.PGSocialRules.SEATS[111].z,116);
+ // v361: the Aetherwell's own bench ring - eight benches every 45 degrees, measured from the
+ // model export at scene scale .62 (model radius 12.81 -> world 7.94), seats on walkable tiles.
+ assert.equal(w.PGSocialRules.FOUNTAIN_BENCHES.length,16);
+ for(const seat of w.PGSocialRules.FOUNTAIN_BENCHES){
+  assert(w.PGSocialRules.walkable(seat.x,seat.z)&&seat.bench>=220&&seat.bench<228&&Math.abs(seat.height-.649)<.001,'Aetherwell seat '+seat.id+' sits on the bench ring at bench height');
+  assert(Math.hypot(seat.x,seat.z)>7.7&&Math.hypot(seat.x,seat.z)<8.3,'Aetherwell seat '+seat.id+' lies on the measured bench radius');
+ }
  for(const c of w.PGSocialRules.CHAIRS){
   assert(w.PGSocialRules.walkable(c.x,c.z),'chair '+c.id+' stands on walkable ground');
   const seat=w.PGSocialRules.SEATS[c.id];
@@ -387,7 +394,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert(fs.readFileSync('index.html','utf8').includes('assets/vendor/GLTFLoader.r128.js?v='),'the page loads the vendored r128 GLTFLoader after three.min.js');
  assert(scene.scene.children.some(o=>o.userData.fountainFallback&&o.visible===true),'the atlas fountain stands in while no GLTFLoader exists');
  assert(!scene.scene.children.some(o=>o.userData.aetherwell),'nothing mounts without the loader');
- assert(!w.PGSocialRules.walkable(0,6.5)&&w.PGSocialRules.walkable(0,6.7),'the Aetherwell bench ring is enclosed by the shared fountain collision');
+ // v361: the solid heart is the basin + planter (7.75); the bench ring and paving are walkable
+ // sitting ground like every other hub bench.
+ assert(!w.PGSocialRules.walkable(0,7.7)&&w.PGSocialRules.walkable(0,7.8),'the Aetherwell planter is enclosed by the shared fountain collision');
  // Rebuild the scene with a stubbed loader that hands over a stand-in gltf scene shaped
  // like the real export (named nodes), then drive the animation loop.
  const fakeRoot=new T.Group();
@@ -398,14 +407,19 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const shardB=new T.Group();shardB.name='Orbiting shard detailed 00';shardB.position.set(-1.5,8,1);fakeRoot.add(shardB);
  const crystalMat=new T.MeshBasicMaterial();crystalMat.name='Crystal facet 0';
  fakeRoot.add(new T.Mesh(new T.BoxGeometry(.3,.3,.3),crystalMat));
+ // v361: a PBR material whose name carries a KHR_materials_emissive_strength value the r128
+ // loader drops, plus a known linear albedo, so the mount's fidelity pass is observable.
+ const inscriptionMat=new T.MeshStandardMaterial({name:'Crystal inscriptions \u2022 electric blue'});
+ inscriptionMat.color.setRGB(.25,.5,1);inscriptionMat.emissive.setRGB(.018,.54,1);
+ fakeRoot.add(new T.Mesh(new T.BoxGeometry(.2,.2,.2),inscriptionMat));
  let requestedUrl='';
  T.GLTFLoader=class{load(url,onLoad){requestedUrl=url;onLoad({scene:fakeRoot})}};
  const host2=w.document.createElement('div');host2.setPointerCapture=()=>{};host2.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});Object.defineProperties(host2,{clientWidth:{get(){return 1000}},clientHeight:{get(){return 700}}});
- const scene2=await w.PGSocialScene.create(host2,w.document.createElement('div'),{self:()=>2,menu(){},move(){},seat(){}});
+ let wellSeat=null;const scene2=await w.PGSocialScene.create(host2,w.document.createElement('div'),{self:()=>2,menu(){},move(){},seat(id){wellSeat=id}});
  assert.equal(requestedUrl,'assets/Fountainfile/Prontera_Grand_Aetherwell.glb','the hub requests the Aetherwell GLB');
  const well=scene2.scene.children.find(o=>o.userData.aetherwell);
  assert(well,'the Aetherwell mounts over the plaza');
- assert(Math.abs(well.scale.x-.382)<1e-9&&Math.abs(well.position.y-.05)<1e-9,'the centerpiece is scaled to the shared fountain collision');
+ assert(Math.abs(well.scale.x-.62)<1e-9&&Math.abs(well.position.y-.06)<1e-9,'the v361 centerpiece is scaled up to the grand plaza size');
  const fallback2=scene2.scene.children.find(o=>o.userData.fountainFallback);
  assert(fallback2&&fallback2.visible===false,'the atlas fountain hides once the GLB is alive');
  assert.equal(well.children.filter(c=>/^Orbiting shard( detailed)? 00$/.test(c.name)).length,2,'both shard rings are tracked for the orbit animation');
@@ -415,6 +429,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert(Math.abs(shardA.position.x-shardBefore)>.001||Math.abs(shardA.position.z-shardZBefore)>.001,'the simple shard ring orbits the spire');
  assert(Math.abs(shardB.position.x-shardBefore)>.001||Math.abs(shardB.position.z-shardZBefore)>.001,'the detailed shard ring counter-orbits the spire');
  assert(crystalMat.emissiveIntensity>=.6&&crystalMat.emissiveIntensity<=1.1,'the shared crystal material breathes');
+ // v361 fidelity: the albedo was converted from linear to display space and the dropped
+ // KHR_materials_emissive_strength value (5.5 for the inscriptions) is re-applied on mount.
+ assert(Math.abs(inscriptionMat.color.g-.7354)<.01,'the GLB albedo is gamma-corrected for the unencoded backbuffer');
+ assert(Math.abs(inscriptionMat.emissiveIntensity-5.5)<1e-9,'the inscriptions glow at their authored emissive strength');
+ // v361 seating: the model's bench ring carries real seats (ids 112-127); clicking one through
+ // the camera picks the seat, exactly like the plaza benches and the bleacher tiers.
+ scene2.active=true;frame(now+=100);scene2.camera.updateMatrixWorld();
+ const seat112=w.PGSocialRules.SEATS[112],seatPt=new T.Vector3(seat112.x,seat112.height+.2,seat112.z).project(scene2.camera);
+ const clickWell=pt=>{const ev={clientX:(pt.x+1)*500,clientY:(1-pt.y)*350,pointerId:2,button:0,preventDefault(){}};host2.onpointerdown(ev);host2.onpointerup(ev)};
+ clickWell(seatPt);assert.equal(wellSeat,112,'clicking the Aetherwell bench ring selects its seat');
  scene.setBattleState({pve:[],pvp:null});assert.equal(scene.scene.children.filter(o=>o.userData.battleKind).length,0,'battle sprites are disposed when the room clears');
  dom.window.close();
  console.log('PASS social scene: v300 per-tier rod glow, download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor, reentry, live battle sprite lifecycle, v357 soft-light strike FX, native RO species trees and the stair-gated ring');

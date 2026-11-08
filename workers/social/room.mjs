@@ -602,7 +602,10 @@ export class SocialRoom {
  }
  enterPlazaRoom(c,room,now){
   const members=[...this.clients.values()].filter(p=>p.room===room&&p!==c);members.forEach(p=>R.advance(p,now));
-  const spawn=Array.from({length:R.CAPACITY},(_,i)=>({x:(i%5-2)*4,z:12+Math.floor(i/5)*4})).find(s=>members.every(p=>Math.hypot(p.x-s.x,p.z-s.z)>2))||{x:0,z:12};
+  // v361 (owner: "make players spawn in social hub first around the new fountain randomly"):
+  // fresh joins drop at a random angle on the Aetherwell promenade (R.fountainSpawn keeps
+  // arrivals mutually distinct) instead of the old entrance grid.
+  const spawn=R.fountainSpawn(members)||{x:0,z:12};
   c.room=room;c.x=spawn.x;c.z=spawn.z;c.dir=0;c.at=now;c.sit=false;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;
   this.sendRoom(c,now);
  }

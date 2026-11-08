@@ -52,17 +52,30 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  // as the instant stand-in; when the vendored r128 GLTFLoader is present the centerpiece
  // swaps in over it - same philosophy as the digimon models: the fallback sprite shows
  // only when the browser says the GLB is dead. Collision lives in social-rules.js.
+ // v361 (owner: "fountain size is too small ... i want them to be able to be seated"):
+ // scale .382 -> .62 so the bench ring, paving and spire read at plaza camera distance,
+ // and the model's own eight benches become real seats (R.FOUNTAIN_BENCHES).
  const fountainFallback=model('fountain',0,0,10);fountainFallback.userData.fountainFallback=true;
  const aetherwell={group:null,tried:false};
- // Model bounds (blender export): radial paving to +-14.84, its own bench ring to +-17.02,
- // floating spire tip at 14.39. Scaled so the benches land at ~6.5, just inside the shared
- // fountain collision radius (6.6 in R.walkable), with the paving clear of the plaza plane.
- const AETHERWELL_SCALE=.382,AETHERWELL_Y=.05;
+ // Model bounds (blender export): radial paving to +-14.84, bench centers at 12.81, solid
+ // planter toe at 12.43, floating spire tip at 14.39. At .62 the benches land at 7.94 (the
+ // sittable ring, R.FOUNTAIN_BENCHES), the planter toe at 7.71 just inside the shared
+ // fountain collision (7.75 in R.walkable), and the paving lip at 9.2 - grand, but clear of
+ // the plaza plane and the roads beneath it.
+ const AETHERWELL_SCALE=.62,AETHERWELL_Y=.06;
  function mountAetherwell(gltf){
   const root=gltf.scene||(gltf.scenes&&gltf.scenes[0]);
   if(!root||typeof root.traverse!=='function')return false;
   root.scale.setScalar(AETHERWELL_SCALE);root.position.set(0,AETHERWELL_Y,0);
   root.userData.aetherwell=true;
+  // v361 (owner: "why does the colour is off? where are the small details went?"): two
+  // fidelity fixes the r128 pipeline needs. (1) The page renders straight to an unencoded
+  // backbuffer, so the GLB's linear-space albedo displays dark; converting colour and
+  // emissive to display space restores the authored tones. (2) r128's loader ignores
+  // KHR_materials_emissive_strength, which is exactly where the small details live - the
+  // luminous cyan aether (x2.3), the electric-blue inscriptions (x5.5) and the ice-white
+  // motes (x7) were all glowing at plain strength. Both values are read from the export.
+  const AETHER_STRENGTH={'Aether \u2022 luminous cyan':2.3,'Crystal inscriptions \u2022 electric blue':5.5,'Aether motes \u2022 ice white':7};
   let spire=null,inverted=null,motes=null,crystalMat=null;const shards=[];
   root.traverse(o=>{
    const n=o.name||'';
@@ -73,13 +86,30 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
     const r=Math.hypot(o.position.x,o.position.z);
     if(r>.05)shards.push({node:o,a0:Math.atan2(o.position.z,o.position.x),r,y0:o.position.y,ph:shards.length*.9,w:/detailed/.test(n)?-.32:.26});
    }
-   if(o.isMesh&&o.material&&/Crystal facet 0/.test(o.material.name||''))crystalMat=o.material;
+   if(o.isMesh&&o.material){
+    for(const m of Array.isArray(o.material)?o.material:[o.material]){
+     if(!m.userData.aetherTuned){
+      m.userData.aetherTuned=true;
+      if(m.color&&m.color.convertLinearToSRGB)m.color.convertLinearToSRGB();
+      if(m.emissive&&m.emissive.convertLinearToSRGB)m.emissive.convertLinearToSRGB();
+      if(AETHER_STRENGTH[m.name])m.emissiveIntensity=AETHER_STRENGTH[m.name];
+      if(m.isMeshStandardMaterial)m.envMapIntensity=.9;
+     }
+    }
+    if(/Crystal facet 0/.test(o.material.name||''))crystalMat=o.material;
+   }
   });
   aetherwell.group=root;aetherwell.spire=spire;aetherwell.spireY=spire?spire.position.y:0;
   aetherwell.inverted=inverted;aetherwell.invertedY=inverted?inverted.position.y:0;
   aetherwell.motes=motes;aetherwell.shards=shards;aetherwell.crystalMat=crystalMat||null;
   scene.add(root);
   fountainFallback.visible=false;
+  // v361: the model's eight benches are real seats (R.FOUNTAIN_BENCHES, ids 112-127). Their
+  // click pads join the shared seatTargets only on a live mount, so a dead GLB never leaves
+  // invisible benches to click. Flat slabs like the bleachers: nearest-hit wins after NPCs.
+  for(const seat of R.FOUNTAIN_BENCHES){
+   seatTargets.push({seat:seat.id,bench:seat.bench,bounds:new T.Box3(new T.Vector3(seat.x-.55,.3,seat.z-.55),new T.Vector3(seat.x+.55,1.05,seat.z+.55))});
+  }
   // PBR metals render near-black without something to reflect; feed them a tiny daytime
   // sky gradient. Only MeshStandardMaterial samples scene.environment, so the flat-colour
   // town (MeshBasicMaterial) and the Lambert props are untouched.
@@ -120,7 +150,6 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   for(const s of aetherwell.shards){s.node.position.x=Math.cos(s.a0+t*s.w)*s.r;s.node.position.z=Math.sin(s.a0+t*s.w)*s.r;s.node.position.y=s.y0+Math.sin(t*1.2+s.ph)*.07;s.node.rotation.y=t*s.w*2.2}
   if(aetherwell.crystalMat)aetherwell.crystalMat.emissiveIntensity=.85+.25*Math.sin(t*1.9);
  }
- loadAetherwell();
  for(const b of R.BUILDINGS)model(b.name,b.x,b.z,b.size,b.rotation||0);
  // Sanctuary: arranged south of the plaza from the owner's highlighted lawn.
  // Architecture and named NPCs share the world with the local training prototype.
@@ -1944,7 +1973,10 @@ void main(){
    if(!bhid){const bx=((head.x+1)*w*.5).toFixed(1)+'px',by=((1-head.y)*h*.5).toFixed(1)+'px';if(p.bx!==bx){p.bx=bx;p.bubble.style.left=bx}if(p.by!==by){p.by=by;p.bubble.style.top=by}}
   }else if(p.bubbleUntil){p.bubbleUntil=0;p.bhid=true;p.bubble.hidden=true;p.bubble.replaceChildren()}
  }
- renderer.render(scene,camera)}requestAnimationFrame(frame);
+ renderer.render(scene,camera)}requestAnimationFrame(frame); // v361: fire the Aetherwell load LAST, once every binding the mount touches (seatTargets
+ // especially - the v359 bleacher slabs taught us that const) is initialized. The network GLB
+ // always resolves after create() anyway; this also keeps synchronous loader stubs safe.
+ loadAetherwell();
  return {putPlayer,removePlayer,setGymResidents,setBattleState,battleEvent,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
  }catch(error){renderer.dispose();renderer.domElement.remove();throw error}
 }};

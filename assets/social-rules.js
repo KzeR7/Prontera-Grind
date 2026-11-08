@@ -180,11 +180,42 @@ const BLEACHER_ROWS=[
 const SEATS=[];
 let bleacherId=46;
 for(const row of BLEACHER_ROWS)row.seats.forEach((seat,slot)=>{seat.id=bleacherId++;seat.bench=200+row.row+(row.side==='south'?10:0);seat.slot=slot;seat.stand=row.side;seat.height=row.height});
+// v361 (owner: "notice the chairs surrounding it? i want them to be able to be seated"): the
+// Aetherwell's own bench ring is sittable. The GLB carries the visuals; these entries carry
+// the seats - ids 112-127, reservation benches 220-227. Geometry is measured from the model
+// export: 8 benches every 45 degrees at model radius 12.81 (x .62 scene scale = 7.43 world),
+// each ~1.64 world units long, backrest on the outer edge so sitters face the fountain across
+// the planter, seat plank at .65 world units.
+const FOUNTAIN_BENCHES=(()=>{const seats=[];for(let k=0;k<8;k++){
+ const a=k*Math.PI/4,ca=Math.cos(a),sa=Math.sin(a),dir=[2,3,4,5,6,7,0,1][k],r=12.81*.62;
+ for(let slot=0;slot<2;slot++){const off=slot?0.45:-0.45;
+  seats.push({id:112+k*2+slot,bench:220+k,slot,x:+(ca*r-sa*off).toFixed(3),z:+(sa*r+ca*off).toFixed(3),dir,rotation:-dir*Math.PI/4,height:.95*.62+.06,size:1.1});
+ }
+}return seats})();
 for(const seat of [
  ...BENCHES.flatMap(b=>[-1,1].map((slotSign,slot)=>({id:b.id*2+slot,bench:b.id,slot,x:b.x+slotSign,sitX:b.x+slotSign*.74,z:b.z,dir:b.dir,rotation:b.rotation,height:b.height,size:b.size}))),
  ...CHAIRS.map(c=>({id:c.id,bench:100+c.id,slot:0,x:c.x,sitX:c.x,z:c.z,dir:c.dir,rotation:c.rotation,height:c.height,size:c.size})),
- ...BLEACHER_ROWS.flatMap(r=>r.seats)
+ ...BLEACHER_ROWS.flatMap(r=>r.seats),
+ ...FOUNTAIN_BENCHES
 ])SEATS[seat.id]=seat;
+
+// v361 (owner: "make players spawn in social hub first around the new fountain randomly"):
+// fresh arrivals drop at a random angle on the Aetherwell promenade ring (outside the paving
+// lip at ~9.2) instead of the old entrance grid. Random tries give the organic spread; the
+// fixed ring ladder behind them guarantees 32 mutually-distinct slots, so a full 20-player
+// room always spawns everyone at a distinct visible position.
+function fountainSpawn(others=[]){
+ const free=p=>walkable(p.x,p.z)&&others.every(q=>Math.hypot(q.x-p.x,q.z-p.z)>2);
+ for(let i=0;i<40;i++){
+  const a=Math.random()*Math.PI*2,r=10.4+Math.random()*1.8,x=Math.round(Math.cos(a)*r*10)/10,z=Math.round(Math.sin(a)*r*10)/10;
+  if(free({x,z}))return {x,z};
+ }
+ for(let k=0;k<32;k++){
+  const a=k*Math.PI/16,r=10.4+(k%2)*.9,x=Math.round(Math.cos(a)*r*10)/10,z=Math.round(Math.sin(a)*r*10)/10;
+  if(free({x,z}))return {x,z};
+ }
+ return {x:0,z:12};
+}
 
 // v266: Two Plaza Hold'em tables along the West Promenade (Table 1 at (-27,-1) & Table 2 at (-39,-1)).
 function makePokerTable(tableId,label,sub,cx,cz,dealerSpec){
@@ -226,12 +257,13 @@ function pokerBlocked(x,z){return POKER_TABLES.some(({table:t})=>x>=t.minX&&x<=t
 // v309: the cascade's boulder heap is solid - you walk around it instead of standing inside it.
 function cragBlocked(x,z){return POND_PROPS.some(pr=>pr.crag&&Math.abs(x-pr.crag.x)<=pr.crag.hx&&Math.abs(z-pr.crag.z)<=pr.crag.hz)}
 function onBridge(x,z){return POND_PROPS.some(({bridge:b})=>Math.abs(x-b.x)<=b.span/2&&Math.abs(z-b.z)<=b.width/2-.35)}
-// v360: the plaza centrepiece is the owner's Prontera Grand Aetherwell GLB. At its scene
-// scale (.382) the model's own bench ring lands at radius ~6.5, so the shared fountain
-// collision grows from 5.6 to 6.6 to enclose the benches instead of letting players walk
-// through them. Nothing else sits in that annulus: the nearest plaza benches are at
-// radius ~17, the poker tables at ~27, the gardens at ~32.
-function walkable(x,z){return Number.isFinite(x)&&Number.isFinite(z)&&x>=MIN_X&&x<=MAX_X&&z>=MIN_Z&&z<=MAX_Z&&Math.hypot(x,z)>6.6&&!pokerBlocked(x,z)&&!cragBlocked(x,z)&&!fenceBlocked(x,z)&&!ringBlocked(x,z)&&SANCTUARY_OBSTACLES.every(o=>Math.hypot(x-o.x,z-o.z)>o.r+.25)&&SANCTUARY_BARRIERS.every(b=>Math.abs(x-b.x)>b.w/2+.3||Math.abs(z-b.z)>b.d/2+.3)&&BUILDINGS.every(b=>Math.abs(x-b.x)>b.w/2+.7||Math.abs(z-b.z)>b.d/2+.7)&&GARDENS.every(g=>Math.abs(x-g.x)>g.w/2+.5||Math.abs(z-g.z)>g.d/2+.5)&&(onBridge(x,z)||PONDS.every(p=>!pondContains(p,x,z,.5)));}
+// v360/v361: the plaza centrepiece is the owner's Prontera Grand Aetherwell GLB, now at
+// scene scale .62. The solid heart is the water basin and its raised planter ring out to
+// the bench toe (model radius 12.43), so the shared fountain collision is 7.75. The bench
+// ring itself (7.71..8.08) and the paving around it stay walkable like every other hub
+// bench, and the seats are the FOUNTAIN_BENCHES below. Nothing else sits in that annulus:
+// the nearest plaza benches are at radius ~17, the poker tables at ~27, the gardens at ~32.
+function walkable(x,z){return Number.isFinite(x)&&Number.isFinite(z)&&x>=MIN_X&&x<=MAX_X&&z>=MIN_Z&&z<=MAX_Z&&Math.hypot(x,z)>7.75&&!pokerBlocked(x,z)&&!cragBlocked(x,z)&&!fenceBlocked(x,z)&&!ringBlocked(x,z)&&SANCTUARY_OBSTACLES.every(o=>Math.hypot(x-o.x,z-o.z)>o.r+.25)&&SANCTUARY_BARRIERS.every(b=>Math.abs(x-b.x)>b.w/2+.3||Math.abs(z-b.z)>b.d/2+.3)&&BUILDINGS.every(b=>Math.abs(x-b.x)>b.w/2+.7||Math.abs(z-b.z)>b.d/2+.7)&&GARDENS.every(g=>Math.abs(x-g.x)>g.w/2+.5||Math.abs(z-g.z)>g.d/2+.5)&&(onBridge(x,z)||PONDS.every(p=>!pondContains(p,x,z,.5)));}
 function path(from,to){
  if(!walkable(to.x,to.z))return [];
  const start=[Math.round(from.x),Math.round(from.z)],end=[Math.round(to.x),Math.round(to.z)],key=(x,z)=>x+','+z;
@@ -242,5 +274,5 @@ function path(from,to){
 }
 function walkSpeed(p){const value=Number(p&&p.look&&p.look.speed);return Number.isFinite(value)&&value>0?Math.max(MIN_SPEED,Math.min(MAX_SPEED,value)):SPEED}
 function advance(p,now){let distance=Math.max(0,(now-p.at)/1000)*walkSpeed(p);p.at=now;while(p.path.length&&distance>0){const t=p.path[0],dx=t.x-p.x,dz=t.z-p.z,d=Math.hypot(dx,dz);p.dir=(Math.round(Math.atan2(-dx,dz)/(Math.PI/4))+8)%8;if(d<=distance){p.x=t.x;p.z=t.z;p.path.shift();distance-=d}else{p.x+=dx/d*distance;p.z+=dz/d*distance;break}}if(!p.path.length&&Number.isInteger(p.seat)&&SEATS[p.seat]){p.sit=true;p.dir=SEATS[p.seat].dir}else if(!p.path.length&&Number.isInteger(p.pokerSeat)&&POKER.seats[p.pokerSeat]){p.sit=true;p.dir=POKER.seats[p.pokerSeat].dir}return p;}
-return {LIMIT,MIN_X,MAX_X,MIN_Z,MAX_Z,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,SANCTUARY,SANCTUARY_ARCHES,SANCTUARY_PLANTERS,SANCTUARY_TREES,SANCTUARY_OBSTACLES,SANCTUARY_BARRIERS,SANCTUARY_FENCES,SANCTUARY_GYM_FENCES,SANCTUARY_GYM_WALLS,SANCTUARY_RING,GYM_STATIONS,fenceBlocked,ringBlocked,cleanDigimon,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,BLEACHER_ROWS,SEATS,POKER,pondRadius,pondContains,pondBoundary,pondDistance,clampPond,cragBlocked,onBridge,walkable,path,advance};
+return {LIMIT,MIN_X,MAX_X,MIN_Z,MAX_Z,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,FOUNTAIN_BENCHES,fountainSpawn,SANCTUARY,SANCTUARY_ARCHES,SANCTUARY_PLANTERS,SANCTUARY_TREES,SANCTUARY_OBSTACLES,SANCTUARY_BARRIERS,SANCTUARY_FENCES,SANCTUARY_GYM_FENCES,SANCTUARY_GYM_WALLS,SANCTUARY_RING,GYM_STATIONS,fenceBlocked,ringBlocked,cleanDigimon,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,BLEACHER_ROWS,SEATS,POKER,pondRadius,pondContains,pondBoundary,pondDistance,clampPond,cragBlocked,onBridge,walkable,path,advance};
 });

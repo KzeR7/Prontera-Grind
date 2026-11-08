@@ -19,7 +19,8 @@ assert(props.stands.some(s=>s.name==='bridge'),'the bridge crown remains a fishi
 assert.equal(props.ledge,undefined,'the old stone shelf stays removed');
 for(const stand of props.stands){assert(R.walkable(stand.x,stand.z));const route=R.path({x:0,z:12},stand);assert(route.length&&route.every(q=>R.walkable(q.x,q.z)),'fishing stand is reachable')}
 for(const chair of R.CHAIRS){assert(R.walkable(chair.x,chair.z));assert(R.path({x:0,z:12},chair).length,'each relocated chair is reachable')}
-for(let n=-30;n<=30;n++)if(Math.abs(n)>6){assert(R.walkable(0,n),'promenade clear');assert(R.walkable(n,0),'avenue clear')}
+// v361: the Aetherwell's solid heart (basin + planter) reaches 7.75; the promenade opens beyond it.
+for(let n=-30;n<=30;n++)if(Math.abs(n)>7){assert(R.walkable(0,n),'promenade clear');assert(R.walkable(n,0),'avenue clear')}
 
 // --- v309: bait icons are painted, not emoji -------------------------------------------------
 // The owner's shop screenshot showed a blank box where the worm and the grub were: those glyphs are

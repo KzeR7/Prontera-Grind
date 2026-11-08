@@ -141,10 +141,45 @@ t('when the context comes back the notice goes and the game draws again', () => 
   const canvas = live.document.querySelector('#view canvas');
   canvas.dispatchEvent(new live.Event('webglcontextrestored'));
   assert.strictEqual(ev2('gpuLost'), false, 'the game is live again');
-  assert.strictEqual(live.document.getElementById('renderNotice'), null, 'the notice is gone');
+  assert.strictEqual(live.document.getElementById('renderNotice') === null, true, 'the notice is gone');
   assert.strictEqual(liveErrors.length, 0, 'nothing threw: ' + liveErrors.join(' | '));
 });
 live.close();
+
+// ---------------------------------------------------------------- 3. v361: hub-first login for brand-new accounts
+// A brand-new account opens the Social Hub around the Aetherwell instead of the field; the
+// battle starts on the first map pick. Returning accounts are byte-for-byte as before.
+const hubFirst = boot('ok');
+const ev3 = c => hubFirst.eval(c);
+const hubFirstErrors = [];
+hubFirst.addEventListener('error', e => hubFirstErrors.push(String(e.message)));
+t('a brand-new account enters the hub first and starts the battle from the first map pick', () => {
+  // PGSocial is eval'd separately by the page in a real browser; a stub keeps this smoke
+  // about the index.html wiring, not the hub itself.
+  ev3(`window.PGSocial={enter(){window.__hubEnters=(window.__hubEnters||0)+1}};window.__guideRuns=0;
+       const realGuide=typeof maybeGuide==='function'?maybeGuide:null;
+       if(realGuide){window.maybeGuide=function(){window.__guideRuns++}}`);
+  ev3(`currentUser='newbie';initSession(false,true);`);
+  assert.strictEqual(ev3('hubFirstPending'), true, 'the hub-first flag is pending after login');
+  assert.strictEqual(ev3('(window.__hubEnters||0)'), 1, 'the hub was entered');
+  assert.strictEqual(ev3('respawn'), 1e9, 'field spawning is held back');
+  assert.strictEqual(ev3('mobs.length'), 0, 'no battle is running behind the hub');
+  assert.strictEqual(hubFirst.document.getElementById('loginOverlay').style.display, 'none', 'the login card is gone');
+  // the first map pick releases the held-back battle and runs the beginner guide there
+  ev3('gotoField(0,1)');
+  assert.strictEqual(ev3('hubFirstPending'), false, 'the map pick clears the flag');
+  assert.strictEqual(ev3('respawn') < 1e9, true, 'spawning is released');
+  assert.strictEqual(ev3('(window.__guideRuns||0)'), 1, 'the guide runs on the first field render');
+});
+t('a returning account logs in exactly as before', () => {
+  const enters = ev3('(window.__hubEnters||0)');
+  ev3(`currentUser='veteran';initSession(false);`);
+  assert.strictEqual(ev3('(window.__hubEnters||0)'), enters, 'the hub is not entered for a returning account');
+  assert.strictEqual(ev3('hubFirstPending'), false, 'no hub-first flag');
+  assert.strictEqual(ev3('respawn') < 1e9, true, 'the field is armed normally');
+  assert.strictEqual(hubFirstErrors.length, 0, 'nothing threw: ' + hubFirstErrors.join(' | '));
+});
+hubFirst.close();
 
 let pass = 0, fail = 0;
 for (const [st, name] of check) {

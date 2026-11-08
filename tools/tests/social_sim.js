@@ -8,6 +8,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  for(const id of R.EMOTIONS)assert.equal(createHash('sha256').update(fs.readFileSync('assets/social/emotions/'+id+'.png')).digest('hex'),emotionLock.outputs[id].sha256);
  const clients=Array.from({length:21},(_,i)=>join(i+1));assert.equal(clients[19].room,1);assert.equal(clients[20].room,2);assert.equal(clients[0].events.find(x=>x.type==='room').players.length,1);
  assert.equal(new Set(clients.slice(0,20).map(p=>p.x+','+p.z)).size,20,'arrivals have distinct visible spawn positions');
+ // v361: fresh arrivals drop on the Aetherwell promenade ring (outside the paving lip at 9.2,
+ // inside the old entrance row at 12+), on walkable tiles - never inside the fountain collision.
+ for(const p of clients){const r=Math.hypot(p.x,p.z);assert(r>9.3&&r<12.5&&R.walkable(p.x,p.z),'arrival spawns on the Aetherwell promenade ring: '+p.x+','+p.z)}
  const a=clients[0],b=clients[1],outsider=clients[20],send=(c,m)=>room.receive(c,JSON.stringify(m));
  send(a,{type:'chat',channel:'local',body:'Only plaza one'});assert(b.events.some(e=>e.body==='Only plaza one'));assert(!outsider.events.some(e=>e.body==='Only plaza one'));
  now+=3000;send(a,{type:'chat',channel:'whisper',to:b.name,body:'Private'});assert(b.events.some(e=>e.body==='Private'));assert(!clients[2].events.some(e=>e.body==='Private'));
@@ -23,12 +26,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  assert(!R.walkable(-46,-25),'remaining houses block walking');assert(R.walkable(56,16),'former east houses are cleared for the farm');assert(!R.walkable(0,-61),'castle blocks walking');assert(!R.walkable(R.MAX_X+1,10));assert(R.walkable(0,126));assert(!R.walkable(0,127));assert(!R.walkable(0,-75));
  for(const seat of R.SEATS)if(seat){assert(R.path({x:0,z:12},seat).length,'each chair reachable')}
  for(const garden of R.GARDENS){assert(!R.walkable(garden.x,garden.z),'bounded garden cannot be crossed');assert(R.TREES.some(t=>t.x===garden.x&&t.z===garden.z&&t.size<=garden.w-4),'tree canopy has a garden setback')}
- for(let n=-30;n<=30;n++){if(Math.abs(n)>6){assert(R.walkable(0,n),'north/south promenade stays clear');assert(R.walkable(n,0),'east/west promenade stays clear')}}
+ for(let n=-30;n<=30;n++){if(Math.abs(n)>7){assert(R.walkable(0,n),'north/south promenade stays clear');assert(R.walkable(n,0),'east/west promenade stays clear')}}
  now+=200;send(b,{type:'seat',id:0});assert(b.path.length);now+=30000;const seated=room.snapshot(b);assert(seated.sit);assert.equal(seated.seat,0);assert.equal(seated.x,R.SEATS[0].x);assert.equal(seated.dir,R.SEATS[0].dir);now+=200;send(b,{type:'move',x:0,z:12});assert(!b.sit);assert.equal(b.seat,null);
  send(a,{type:'move',x:0,z:0});assert.equal(a.path.length,0);send(a,{type:'move',x:0,z:-12});now+=101;send(a,{type:'move',x:0,z:-12});assert(a.path.length>0);assert(a.path.every(p=>R.walkable(p.x,p.z)));for(let t=0;t<300;t++){now+=50;R.advance(a,now);assert(R.walkable(a.x,a.z))}assert.equal(a.z,-12);
  send(a,{type:'sit'});assert(a.sit);assert.equal(a.path.length,0);now+=200;send(a,{type:'move',x:10,z:-12});assert(!a.sit);
  // Real server walking settles into a reserved bench, with per-plaza occupancy.
- assert.equal(R.BENCHES.length,15);assert.equal(R.SEATS.filter(Boolean).length,104,'12 plaza benches (24 seats) + gym/field benches (6 seats) + 8 angler chairs + 66 v359 bleacher seats');assert.equal(R.BLEACHER_ROWS.length,6,'three sittable tiers on each run of the L');
+ assert.equal(R.BENCHES.length,15);assert.equal(R.SEATS.filter(Boolean).length,120,'12 plaza benches (24 seats) + gym/field benches (6 seats) + 8 angler chairs + 66 v359 bleacher seats + 16 v361 Aetherwell bench seats');assert.equal(R.BLEACHER_ROWS.length,6,'three sittable tiers on each run of the L');
 // v357: the boxing ring is entered only through the west stairs.
 {
  const ring=R.SANCTUARY_RING;
@@ -216,7 +219,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  // The reservation is still bounded: past the idle window it is a fresh join at the entrance.
  fishRoom.disconnect(resumed);
  fClock.t+=310000;const fresh=mk(401);
- assert(Math.hypot(fresh.x,12-fresh.z)<1||Math.abs(fresh.z-12)<8,'an expired reservation spawns at the entrance again');
+ {const r=Math.hypot(fresh.x,fresh.z);assert(r>9.3&&r<12.5&&R.walkable(fresh.x,fresh.z),'an expired reservation spawns on the Aetherwell promenade ring again')}
  // Approved west lake: the bridge crosses water, while other water remains blocked.
  assert.equal(R.PONDS.length,1);
  const lake=R.PONDS[0],pr=R.POND_PROPS[0],bri=pr.bridge;
@@ -279,7 +282,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  for(let row=0;row<3;row++){const x=81.7+row*1.05,z=113.25+row*1.05;assert(R.walkable(x+.5,100)&&R.walkable(70,z+1),'east and south tier '+row+' are walkable sitting rows');assert(!R.walkable(x-.3,z+.7),'the mitred corner stays solid collision')}
  // v360: the Aetherwell GLB's own bench ring lands at radius ~6.5, so the shared fountain
  // collision grew from 5.6 to 6.6. The promenade loop above already proves |n|>=7 stays open.
- assert(!R.walkable(0,6.5)&&R.walkable(0,6.7)&&!R.walkable(4.6,4.6),'the Aetherwell bench ring is enclosed by the fountain collision');
+ assert(!R.walkable(0,7.7)&&R.walkable(0,7.8)&&!R.walkable(5.4,5.4),'the Aetherwell planter is enclosed by the fountain collision');
+ // v361: the model's own benches are sittable seats on walkable tiles - ids 112-127, benches 220-227.
+ assert.equal(R.FOUNTAIN_BENCHES.length,16,'the Aetherwell bench ring carries sixteen seats');
+ for(const seat of R.FOUNTAIN_BENCHES){assert(R.walkable(seat.x,seat.z)&&seat.height>.6&&seat.height<.7,'Aetherwell seat '+seat.id+' sits on a walkable tile at bench height')}
+ assert(R.FOUNTAIN_BENCHES.every(s=>s.bench>=220&&s.bench<228),'Aetherwell seats reserve on their own bench ids');
  assert(R.walkable(79,113)&&R.path({x:68,z:104},{x:79,z:113}).length,'the aisle between the ring and stands remains usable');
  assert(R.path({x:35,z:90},{x:68,z:104}).length,'the ring remains reachable after the bleacher rebuild');
  for(const [start,end] of [[{x:35,z:42},{x:69,z:25}],[{x:66,z:43},{x:66,z:50}],[{x:35,z:60},{x:50,z:60}],[{x:68,z:84},{x:68,z:77}],[{x:35,z:90},{x:68,z:104}]]){
