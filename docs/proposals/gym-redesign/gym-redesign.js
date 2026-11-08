@@ -120,6 +120,10 @@ function put(geo,matName,colour,x,y,z,rot,scale){
   return g;
 }
 function mergeInto(geos){
+  // Batches are triangle lists. Indexed primitives must be expanded first;
+  // otherwise adjacent objects are stitched into long, unrelated triangles.
+  geos=geos.map(g=>g.index?g.toNonIndexed():g);
+  for(const g of geos)if(g.attributes.position.count%3!==0)throw Error('Gym batch contains an incomplete triangle');
   let n=0;for(const g of geos)n+=g.attributes.position.count;
   const pos=new Float32Array(n*3),nor=new Float32Array(n*3),uv=new Float32Array(n*2),col=new Float32Array(n*3);
   let o=0;
@@ -351,9 +355,8 @@ function buildShell(){
       box(.86,.30,.9,'flat',0xa8a48c,x,.15,z,[0,f.theta,0]);
     }
     box(f.len,1.0,.62,'flat',0x9e9a83,...f.point(0,.5,0),[0,f.theta,0]);
-    // plaster wall + upper band
-    box(f.len,7.6,.5,'plaster',PLASTER,...f.point(0,5.2,0),[0,f.theta,0]);
-    box(f.len,1.5,.5,'plaster',PLASTER,...f.point(0,10.1,0),[0,f.theta,0]);
+    // Continuous plaster backing up to the roof eave: no open horizontal slit.
+    box(f.len,9.8,.5,'plaster',PLASTER,...f.point(0,5.9,0),[0,f.theta,0]);
     // exposed frame: posts, rails, knee braces on both faces
     for(const face of [-1,1]){
       const v=face*.30;
@@ -385,8 +388,7 @@ function buildShell(){
   }
   // connector bay between the wings
   box(8,1.0,.72,'flat',0x9e9a83,69,.5,12.5);
-  box(8,7.6,.5,'plaster',PLASTER,69,5.2,12.5);
-  box(8,1.5,.5,'plaster',PLASTER,69,10.1,12.5);
+  box(8,9.8,.5,'plaster',PLASTER,69,5.9,12.5);
   for(const x of [65,69,73]){
     box(.42,9.6,.24,'wood',WALNUT,x,4.9,12.85);box(.42,9.6,.24,'wood',WALNUT,x,4.9,12.15);
   }
@@ -398,8 +400,7 @@ function buildShell(){
   for(const [wx,face] of [[43,-1],[95,1]]){
     const zc=23.75,len=10.5;
     box(len,1.0,.66,'flat',0x9e9a83,wx,.5,zc,[0,Math.PI/2,0]);
-    box(len,7.6,.52,'plaster',PLASTER,wx,5.2,zc,[0,Math.PI/2,0]);
-    box(len,1.5,.52,'plaster',PLASTER,wx,10.1,zc,[0,Math.PI/2,0]);
+    box(len,9.8,.52,'plaster',PLASTER,wx,5.9,zc,[0,Math.PI/2,0]);
     for(const z of [18.5,21.1,23.7,26.3,29]){
       box(.32,9.5,.22,'wood',WALNUT,wx+face*.30,4.9,z,[0,Math.PI/2,0]);
       box(.26,1.9,.20,'wood',WALNUT,wx+face*.30,10.2,z,[0,Math.PI/2,0]);
@@ -468,18 +469,12 @@ function buildShell(){
       const u=-f.len/2+(i+.5)*f.len/Math.round(f.len/1.05);
       lathe([[0,0],[.055,0],[.075,.30],[.055,.62],[.09,.66],[.09,.74],[0,.74]],7,'wood',ASH,...f.point(u,.30,depth),[0,f.theta,0]);
     }
-    // veranda roof: fewer, wider plank strips so it reads as a clean plane
-    const top=10.4,bot=9.45,ang=Math.atan2(top-bot,depth);
-    const nStrip=Math.max(5,Math.round(f.len/2.4));
-    for(let i=0;i<nStrip;i++){
-      const u=-f.len/2+(i+.5)*f.len/nStrip;
-      box(1.9,.10,Math.hypot(depth,top-bot)+.5,'roof',0xcbb08a,...f.point(u,(top+bot)/2-.06,depth/2),[ang,f.theta,0,'YXZ']);
-    }
-    box(f.len+.4,.16,.22,'wood',WALNUT,...f.point(0,bot-.02,depth),[0,f.theta,0]);
-    for(let i=0;i<Math.round(f.len/1.6);i++){
-      const u=-f.len/2+(i+.5)*f.len/Math.round(f.len/1.6);
-      box(.10,.30,.10,'wood',WALNUT,...f.point(u,bot-.20,depth+.04),[0,f.theta,0]); // turned eave pegs
-    }
+    // One continuous canopy, seated on the 3.06 m posts rather than floating
+    // at the upper wall. Roof texture supplies the detail without open strips.
+    const top=3.80,bot=3.06,ang=Math.atan2(top-bot,depth);
+    box(f.len+.4,.14,Math.hypot(depth,top-bot)+.28,'roof',0xcbb08a,...f.point(0,(top+bot)/2,depth/2),[ang,f.theta,0,'YXZ']);
+    box(f.len+.4,.22,.20,'wood',WALNUT,...f.point(0,bot-.11,depth),[0,f.theta,0]);
+    box(f.len+.4,.18,.20,'wood',WALNUT,...f.point(0,top-.14,0),[0,f.theta,0]);
   }
 }
 function buildGate(){
@@ -720,17 +715,17 @@ function banner(x,z,text,css){
   /* Self-supporting banner mast: stone base, turned mast, iron crossarm and
      brass finials. The cloth hangs from real hardware instead of mid-air. */
   box(.50,.34,.50,'flat',0x8d8974,x,.17,z);
-  post(x,.30,z,4.55,'wood',WALNUT);
-  lathe([[0,0],[.10,0],[.10,.12],[.04,.22],[.12,.30],[.12,.40],[0,.46]],8,'flat',BRASS,x,4.80,z);
-  box(1.94,.11,.11,'wood',ASH,x,4.52,z);
+  post(x,.30,z,5.65,'wood',WALNUT);
+  lathe([[0,0],[.10,0],[.10,.12],[.04,.22],[.12,.30],[.12,.40],[0,.46]],8,'flat',BRASS,x,5.90,z);
+  box(1.94,.11,.11,'wood',ASH,x,5.76,z);
   for(const dx of [-.86,.86]){
-    box(.06,.30,.06,'flat',IRON,x+dx,4.40,z);
-    put(new T.SphereGeometry(.055,6,5),'flat',BRASS,x+dx,4.24,z);
+    box(.06,.30,.06,'flat',IRON,x+dx,5.59,z);
+    put(new T.SphereGeometry(.055,6,5),'flat',BRASS,x+dx,5.43,z);
   }
   const m=new T.Mesh(new T.PlaneGeometry(1.55,2.20),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}));
   m.position.set(x,4.6,z+.005);scene.add(m);
-  box(1.66,.06,.06,'wood',ASH,x,4.50,z);
-  box(1.70,.06,.08,'wood',ASH,x,3.20,z);
+  box(1.66,.06,.06,'wood',ASH,x,5.70,z);
+  box(1.70,.06,.08,'wood',ASH,x,3.50,z);
   shadow(x,z,.44,.44,.26);
   return m;
 }
@@ -900,8 +895,8 @@ banner(79.7,33.4,BAYS.agility.label,BAYS.agility.css);
 banner(93.1,27.2,BAYS.focus.label,BAYS.focus.css);
 
 /* Festoon lights hang from the two veranda eaves, sagging between posts. */
-lanternString([44.2,20.9],[65.2,15.2],9.32,.55);
-lanternString([72.8,20.9],[93.8,15.2],9.32,.55);
+lanternString([44.2,20.9],[65.2,15.2],3.0,.15);
+lanternString([72.8,20.9],[93.8,15.2],3.0,.15);
 
 
 

@@ -21,9 +21,15 @@ Sanctuary textures, and the real courtyard coordinates from
 in vertex colour - the same pipeline the plaza uses - so the frames show what
 the engine would actually draw, not a Blender render.
 
-Measured on this scene at 800x654: **17,322 triangles, 18 draw calls,
-17 textures, no console errors or warnings.** That is cheaper than most single
-character sprites and comfortably inside the mobile budget the hub already holds.
+Measured after the topology correction: **38,484 batched triangles, 18 draw calls,
+17 textures, no console errors or warnings.** Separate floor/decal meshes are not
+included in the batch triangle counter. Mobile performance is not certified.
+
+The previous 17,322-triangle report was invalid: indexed primitives were copied
+into a non-indexed buffer without expanding their indices. This both corrupted
+the count and joined unrelated objects into long triangles across the courtyard.
+`geometry-regression.cjs` now tests indexed lathes, rings and spheres separated
+in space, including triangle preservation and absence of cross-object edges.
 
 ## Run it
 
@@ -148,28 +154,21 @@ threshold, and the four training rows stay clear from the court to the veranda.
 
 ## Review status
 
-Automated checks run against the study:
+The owner's repeat report of building lines exposed the indexed-mesh batching
+bug described above. Earlier AABB and image-contrast checks did not detect it;
+they were not evidence of a finished visual result.
 
-- zero console errors or warnings at every view, desktop and phone frame;
-- geometry audit (`?audit=1`, 1,001 parts): nothing sits below the court plane;
-  no loose prop leaves the courtyard envelope - only the shell's own roof
-  overhangs and the gate threshold step project past the floor polygon - and
-  the three ridges agree at 13.2 m;
-- reachability audit: every station is clear at floor and body height. The
-  six remaining AABB hits are false positives - the three stone weights at the
-  corners of the lifting platforms, which are intended dressing, and the
-  diagonal veranda beam at the three guard stations (its bounding box reaches
-  the row; the real beam is 4.2 m away);
-- connectivity audit: every freestanding prop chain resolves to the ground.
-  The twelve components the AABB probe still reads as floating are all carried
-  by `beamBetween` hardware it cannot see: the two gate-sign chains, the chalk
-  stool, the bell-post bell and clapper, the three archery-butt legs, the
-  broom, the barrel ladle and the two lantern strings;
-- framing audit: all four courtyard corners and all four ridges project inside
-  the frame at the overview and plan views; each bay view centres its bay;
-- budget: 17.3k triangles (17,322), 18 draw calls, 17 textures.
+Current checks:
 
-**Not** verified: the visual judgement itself. This pass was made without a
-human or vision-capable reviewer looking at the frames, so colour balance, prop
-clutter and whether each bay reads as its stat still need the owner's eye. The
-plan is to iterate on that feedback before anything is ported into the game.
+- topology regression passes for mixed indexed and non-indexed primitives;
+- audit records 952 parts, with none below the court plane;
+- overview rendered with 18 calls / 17 textures and no console errors or warnings;
+- veranda roofs are continuous surfaces at the supporting posts, rather than
+  disconnected strips floating near the upper wall;
+- wall backing is continuous, and banner hardware meets the raised cloth;
+- corrected overview and entry were inspected in the actual game scene in a
+  temporary staging build, not only in the standalone viewer.
+
+The game preview leaves shared collision and gameplay rules unchanged. A full
+prop-collision/seat review and owner visual acceptance are still required before
+production integration. Neither production nor PR #180 is part of this work.
