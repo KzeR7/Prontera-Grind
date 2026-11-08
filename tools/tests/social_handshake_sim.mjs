@@ -72,6 +72,62 @@ check('send() reports delivery, which is what connect() depends on', () => {
   assert.equal(room.send(c, { type: 'pong' }), true, 'a live socket reports true');
 });
 
+// v368: THE actual relog bug, pinned. `refresh()` called disconnect() and THEN send(), so the
+// `reauth` frame was written to a socket that had just been torn down - "Can't call WebSocket
+// send() after close()". The client therefore saw close 4000 with no instruction, and any greeting
+// built after a stale socket threw the same way. The frame must be written BEFORE teardown.
+// The socket models reality: once the room has torn the entry down (disconnect), the underlying
+// WebSocket is gone, so a write throws "Can't call WebSocket send() after close()" - the exact
+// message from the owner's console. That is what makes the ORDER testable.
+check('refresh() writes reauth BEFORE the socket is torn down', () => {
+  const room = makeRoom();
+  const seen = [];
+  let closedAt = 0;
+  let c = null;
+  c = room.connect(identity(8), (s) => {
+    if (!room.clients.has(8)) throw new Error("Can't call WebSocket send() after close()");
+    seen.push(JSON.parse(s));
+  }, (code) => { closedAt = code; });
+  const sentBefore = seen.length;
+  room.refresh(c);
+  assert.equal(seen.length, sentBefore + 1, 'the reauth frame reached the client before teardown');
+  assert.equal(seen[seen.length - 1].type, 'reauth', 'and it is reauth');
+  assert.equal(closedAt, 4000, 'the socket is then closed with the planned-refresh code');
+  assert.equal(room.clients.has(8), false, 'and it is gone from the room');
+});
+
+check('a socket that dies mid-refresh is still closed, and does not throw', () => {
+  const room = makeRoom();
+  let code = 0;
+  const c = room.connect(identity(9), () => {}, (k) => { code = k; });
+  assert.ok(c, 'connected normally first');
+  // Then the socket dies, exactly as a half-closed one does - send() now throws.
+  c.send = () => { throw new Error("Can't call WebSocket send() after close()"); };
+  room.refresh(c); // must not throw out of refresh()
+  assert.equal(code, 4000, 'the client is still told to refresh rather than left hanging');
+  assert.equal(room.clients.has(9), false, 'and the dead client is not kept');
+});
+
+check('refresh() on a null client is a no-op, not a crash', () => {
+  const room = makeRoom();
+  room.refresh(null);
+});
+
+// The relog case in the field: the previous socket is already dead, so BOTH its close() and the
+// disconnect behind it throw. That must not be able to stop the new connection being greeted.
+check('a dead previous socket cannot block the new greeting', () => {
+  const room = makeRoom();
+  const dead = room.connect(identity(10), () => {}, () => {});
+  assert.ok(dead, 'first connection is healthy');
+  // Make the stored client's close() explode exactly like a real closed socket.
+  dead.close = () => { throw new Error("Can't call WebSocket close() after close()"); };
+  const seen = [];
+  const fresh = room.connect(identity(10), (s) => seen.push(JSON.parse(s)), () => {});
+  assert.ok(fresh, 'the new connection is returned, not swallowed by the dead one');
+  assert.equal(seen[0].type, 'hello', 'and it is greeted');
+  assert.equal(room.clients.get(10), fresh, 'the room now points at the new client');
+});
+
 check('a replacement socket still evicts the previous one with 4001', () => {
   const room = makeRoom();
   const closed = [];

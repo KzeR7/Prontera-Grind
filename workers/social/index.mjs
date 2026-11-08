@@ -78,7 +78,13 @@ export class Social {
   }
   const identity=JSON.parse(request.headers.get('X-Social-Identity')||'null');if(!identity||!Number.isInteger(identity.id)||typeof identity.username!=='string')return new Response('Invalid identity',{status:400});
   const pair=new WebSocketPair(),client=pair[0],server=pair[1];server.accept();
-  const c=this.room.connect(identity,s=>server.send(s),(code,reason)=>server.close(code,reason));
+  // v368: connect() must never be able to leave this handler without a websocket answer. Anything it
+  // throws used to become a plain HTTP 500 to an upgrade request, which the browser reports as a bare
+  // "connection failed" / close 1006 with no reason at all - the exact blindness three releases were
+  // spent removing. If the room cannot greet, say so on the socket with 4002 and the error text.
+  let c=null,greetError='';
+  try{c=this.room.connect(identity,s=>server.send(s),(code,reason)=>server.close(code,reason))}
+  catch(error){greetError=String((error&&error.message)||error);this.room.lastSendError=greetError;console.error('Plaza greeting threw',error)}
   // v367: v366 answered 503 here, which was a design error - refusing the upgrade means the browser
   // hands the client NO socket at all, so all it can report is "connection failed" and close 1006.
   // That is the same silence the whole diagnosis fought against. Complete the upgrade and then close
@@ -86,7 +92,7 @@ export class Social {
   // reason string carries the actual error. `hello` is sent synchronously inside connect(), so this
   // is a decision the client sees immediately, not after a 12 s handshake timeout.
   if(!c){
-   try{server.close(4002,'Greeting failed: '+(this.room.lastSendError||'unknown'))}catch{}
+   try{server.close(4002,'Greeting failed: '+(greetError||this.room.lastSendError||'unknown'))}catch{}
    return new Response(null,{status:101,webSocket:client});
   }
   server.addEventListener('message',e=>{this.room.receive(c,e.data);if(this.room.hasActiveBattles())this.scheduleBattleAlarm()});server.addEventListener('close',()=>this.room.disconnect(c));server.addEventListener('error',()=>this.room.disconnect(c));

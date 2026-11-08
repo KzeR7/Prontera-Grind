@@ -128,7 +128,18 @@ export class SocialRoom {
  }
  // A planned refresh tells the client before the socket closes, so it can reconnect and rejoin
  // without showing a failure or losing the player's seat.
- refresh(c){c.refreshing=true;this.disconnect(c);this.send(c,{type:'reauth'});c.close(4000,'Refresh session')}
+ refresh(c){
+  if(!c)return;
+  // v368: the ORDER here was wrong, and it is the relog bug. disconnect() deletes the client from
+  // this.clients and tears the entry down, and then send() was called on it - writing to a socket that
+  // was already gone, which throws "Can't call WebSocket send() after close()". The planned
+  // `reauth` frame therefore NEVER reached the browser: the client saw close 4000 with no
+  // instruction, and any greeting built after that threw the same way. Write first, tear down after.
+  c.refreshing=true;
+  this.send(c,{type:'reauth'});
+  this.disconnect(c);
+  try{c.close(4000,'Refresh session')}catch{}
+ }
  broadcast(event,filter=()=>true){for(const c of this.clients.values())if(filter(c))this.send(c,event)}
  // A player event is personal: `friend` is true only for a client whose account is friends with this
  // one, so the same character cannot be described identically to everybody in the plaza.
@@ -267,7 +278,16 @@ export class SocialRoom {
   return true;
  }
  connect(identity,send,close){
-  const prior=this.clients.get(identity.id);if(prior){this.disconnect(prior);prior.close(4001,'Connected in another tab');}
+  // v368: evicting the previous socket must never be able to take the NEW connection down with it.
+  // `prior.close()` throws if that socket is already closed, and this runs on the same identity that
+  // the replog is about: the old, half-dead socket from the previous session is exactly the one that
+  // throws. Uncaught, it aborted connect() before the greeting and the browser saw only 1006.
+  // Nothing here is allowed to prevent the greeting below from being written.
+  const prior=this.clients.get(identity.id);
+  if(prior){
+   try{this.disconnect(prior)}catch(error){console.error('Evicting the previous socket failed',error)}
+   try{prior.close(4001,'Connected in another tab')}catch{}
+  }
   // v279: `gm` comes from the same server-resolved identity header as `friends` - it is never sent by
   // the browser, so a player cannot label themselves staff by editing anything on the client.
   const c={id:identity.id,name:identity.username,gm:identity.gm===true,send,close,room:0,at:this.now(),path:[],x:0,z:12,dir:0,sit:false,nextChat:0,seat:null,pokerSeat:null,moveAt:0,lookAt:0,expires:this.now()+IDLE_MS,reauthAt:this.now()+REAUTH_MS,friends:new Set(Array.isArray(identity.friends)?identity.friends.filter(cleanFriendId).slice(0,200):[])};
