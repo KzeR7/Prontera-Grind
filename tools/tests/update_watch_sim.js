@@ -299,15 +299,16 @@ await T('build_site.sh writes static version.txt and a revalidating _headers mat
 t('every asset versioned in index.html points at a build, never at a stale cache', () => {
   const tags = [...src.matchAll(/(?:src|href)="(assets\/[^"?]+\.(?:js|css))\?v=(\d+)"/g)];
   assert.ok(tags.length > 0, 'index.html versions its assets');
-  // Only the files this build actually changed. Untouched assets keep their old number on purpose -
-  // bumping those would throw away a warm cache for nothing. v287 adds plaza fishing: the shared
-  // layout rules, the scene renderer, the social client/stylesheet and the new fishing module all
-  // changed together, so they must all carry the current build number.
+  // v342 adds the complete Digimon roster and uses one coordinated cache bust
+  // for the social/Sanctuary runtime, including its shared rules and scene code.
   const build = (src.match(/haven-v(\d+)/) || [])[1];
   assert.ok(build, 'the page declares a numbered build');
   for (const f of ['assets/social.js', 'assets/social.css', 'assets/social-poker.js',
                    'assets/social-rules.js', 'assets/social-scene.js',
-                   'assets/social-fishing.js', 'assets/social-fishing.css']) {
+                   'assets/social-fishing.js', 'assets/social-fishing.css',
+                   'assets/digimon/roster.js', 'assets/digimon/base-stats.js',
+                   'assets/digimon-sanctuary.js',
+                   'assets/social-digimon.js']) {
     const found = tags.find(([, file]) => file === f);
     assert.ok(found, f + ' is loaded by index.html');
     assert.strictEqual(found[2], build, f + ' must be busted to the build that changed it');

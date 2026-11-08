@@ -12,7 +12,9 @@ export class Social {
    onWorldMessage:()=>this.saveHistory(),
    onPokerLedger:(accountId,events)=>ctx.storage.put(LEDGER_PREFIX+accountId,events),
    onResume:(accountId,record)=>this.saveResume(accountId,record),
+   onBattleActivity:()=>this.scheduleBattleAlarm(),
   });
+  this.battleAlarmAt=0;this.battleAlarmWrite=Promise.resolve();
   // SQLite Durable Object storage survives eviction/restarts. Do not admit a socket until
   // both public history and every account's unacknowledged poker outbox are loaded.
   const historyReady=ctx.storage.get(HISTORY_KEY).then(saved=>{
@@ -43,6 +45,12 @@ export class Social {
    this.ledgerLoadFailed=false;
   });
  }
+ scheduleBattleAlarm(){
+  if(!this.room.hasActiveBattles())return;
+  const now=Date.now();if(this.battleAlarmAt-now>100&&this.battleAlarmAt-now<1000)return;
+  const at=now+250;this.battleAlarmAt=at;
+  this.battleAlarmWrite=this.battleAlarmWrite.then(()=>this.ctx.storage.setAlarm(at)).catch(error=>console.error('Battle alarm failed',error));
+ }
  // Fire-and-forget like the world history: a failed write only costs the resume, never the save.
  saveResume(accountId,record){
   const storage=this.ctx.storage,key=RESUME_PREFIX+accountId;
@@ -66,14 +74,15 @@ export class Social {
   const identity=JSON.parse(request.headers.get('X-Social-Identity')||'null');if(!identity||!Number.isInteger(identity.id)||typeof identity.username!=='string')return new Response('Invalid identity',{status:400});
   const pair=new WebSocketPair(),client=pair[0],server=pair[1];server.accept();
   const c=this.room.connect(identity,s=>server.send(s),(code,reason)=>server.close(code,reason));
-  server.addEventListener('message',e=>this.room.receive(c,e.data));server.addEventListener('close',()=>this.room.disconnect(c));server.addEventListener('error',()=>this.room.disconnect(c));
+  server.addEventListener('message',e=>{this.room.receive(c,e.data);if(this.room.hasActiveBattles())this.scheduleBattleAlarm()});server.addEventListener('close',()=>this.room.disconnect(c));server.addEventListener('error',()=>this.room.disconnect(c));
   if(await this.ctx.storage.getAlarm()===null)await this.ctx.storage.setAlarm(Date.now()+60000);
   return new Response(null,{status:101,webSocket:client});
  }
  async alarm(){
   await this.ready;this.room.retryPokerLedgers();this.room.sweep();
-  await this.room.ledgerWrites;await this.historyWrites;
-  if(this.room.clients.size||this.room.resumes.size||this.room.ledgerDirty.size)await this.ctx.storage.setAlarm(Date.now()+60000);
+  await this.room.ledgerWrites;await this.historyWrites;await this.battleAlarmWrite;
+  if(this.room.hasActiveBattles()){this.battleAlarmAt=Date.now()+250;await this.ctx.storage.setAlarm(this.battleAlarmAt)}
+  else {this.battleAlarmAt=0;if(this.room.clients.size||this.room.resumes.size||this.room.ledgerDirty.size)await this.ctx.storage.setAlarm(Date.now()+60000)}
  }
 }
 export default {fetch(){return new Response('Not found',{status:404})}};

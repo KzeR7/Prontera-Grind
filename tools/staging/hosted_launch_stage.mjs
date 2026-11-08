@@ -14,7 +14,12 @@ const PAYLOAD_SHA256 = '__LAUNCH_PACKAGE_SHA256__';
 const BASE = '7511a03c0787ec9b8d94cfc6658570ac402dc297';
 const DB_NAME = 'pg-staging', DB_ID = '3a38c6fc-96a8-491d-b97b-fd536e575ca4';
 const PROJECT = 'prontera-grind-staging';
-const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js',
+const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js','assets/combat-audio.js','assets/bgm.js','assets/bgm-tracks.js','assets/social.css','assets/social.js','assets/social-rules.js','assets/social-poker.js','assets/social-scene.js',
+ // v342: complete Sanctuary runtime and its catalog-driven, on-demand sprite pack.
+ 'assets/digimon-sanctuary.js','assets/digimon-battle.js','assets/social-battle.css','assets/social-digimon.js','assets/digimon/roster.js','assets/digimon/base-stats.js','assets/digimon/digidex-portraits.webp','assets/digimon/digidex-portraits.json','assets/digimon/index.json','assets/digimon/v3/catalog.json',
+ 'assets/digimon/v1/catalog.json','assets/digimon/v1/agumon.png','assets/digimon/v1/gabumon.png','assets/digimon/v1/patamon.png','assets/digimon/v1/palmon.png',
+ 'assets/digimon/sanctuary/arena-stone.webp','assets/digimon/sanctuary/timber-roof.webp','assets/digimon/sanctuary/walkway-wood.webp','assets/digimon/sanctuary/gym-sand.webp','assets/digimon/sanctuary/gym-plaster.webp',
+ 'assets/digimon/sanctuary/cc0/woodland-tree.webp','assets/digimon/sanctuary/cc0/medieval_wood.webp','assets/digimon/sanctuary/cc0/rough_pine_door.webp','assets/digimon/sanctuary/cc0/roof_09.webp',
  // v287: plaza pond fishing module + stylesheet (loaded by index.html alongside the social client).
  'assets/social-fishing.js','assets/social-fishing.css',
  'assets/ui/eclipse.css','assets/ui/mobile.css','assets/ui/mobile.js',
@@ -35,6 +40,9 @@ const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css'
   'migrations/0013_gm_owner_name.sql',
   // v280: both now return the durable account id used by the save stamp.
   'functions/api/me.js','functions/api/sessions.js','tools/build_site.sh',
+  // v360: the Prontera Grand Aetherwell centerpiece rides with the package (same list as
+  // tools/staging/package_hosted_launch.mjs).
+  'assets/vendor/GLTFLoader.r128.js','assets/Fountainfile/Prontera_Grand_Aetherwell.glb','assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png',
   // v283: Illustrated Rune-Midgard World Atlas assets.
   'assets/world-map/world-map-cleaned.webp',
   'assets/world-map/birds-flock-a.webp',
@@ -212,7 +220,12 @@ export function unpackPayload(encoded=PAYLOAD_B64,expected=PAYLOAD_SHA256){
   const compressed=Buffer.from(encoded,'base64');
   assert.equal(createHash('sha256').update(compressed).digest('hex'),expected,'Package integrity check failed');
   const files=JSON.parse(gunzipSync(compressed).toString('utf8'));
-  assert.deepEqual(Object.keys(files).sort(),[...FILES].sort(),'Unexpected package contents');
+  const expectedFiles=[...FILES];
+  const digimonCatalog=JSON.parse(files['assets/digimon/v3/catalog.json']||'{}');
+  assert.equal(digimonCatalog.version,3,'Digimon v3 catalog required');
+  assert.equal(Object.keys(digimonCatalog.species||{}).length,280,'Complete Digimon catalog required');
+  for(const record of Object.values(digimonCatalog.species))for(const key of ['image','meta'])expectedFiles.push('assets/digimon/v3/'+record[key]);
+  assert.deepEqual(Object.keys(files).sort(),expectedFiles.sort(),'Unexpected package contents');
   for(const v of Object.values(files))assert.equal(typeof v,'string');
   return files;
 }
@@ -366,7 +379,7 @@ async function main(){
   console.log('Preparing a new temporary staging copy; your existing checkouts will not be changed.');
   run('git',['-C',repo,'archive','--format=tar','--output='+archive,BASE]);
   run('tar.exe',['-xf',archive,'-C',temp]);fs.unlinkSync(archive);
-  for(const [name,text] of Object.entries(files)){const dest=path.join(temp,...name.split('/'));fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,/\.(?:png|webp)$/i.test(name)&&text.startsWith('base64:')?Buffer.from(text.slice(7),'base64'):text);}
+  for(const [name,text] of Object.entries(files)){const dest=path.join(temp,...name.split('/'));fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,/\.(?:png|webp|glb)$/i.test(name)&&text.startsWith('base64:')?Buffer.from(text.slice(7),'base64'):text);}
   fs.writeFileSync(path.join(temp,'wrangler.toml'),CONFIG);
   run(bash,['tools/build_site.sh'],{cwd:temp,allowOutput:true});
   const db=remote(temp);db.verify();

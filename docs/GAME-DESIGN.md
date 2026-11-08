@@ -538,3 +538,109 @@ returning save is never told to "spend your first points"; `S.hints === false`
 
 Nothing here gates progression, spends currency or changes a rule: the Guide and the tips
 only point at systems that already exist.
+
+### Digimon Sanctuary (haven-v328)
+
+The Social Hub's separate Digimon Sanctuary has casual, client-saved care,
+training, optional evolution or same-form mastery, and no-stakes solo practice.
+It does not change Ragnarok field pets or combat; competitive multiplayer and
+ranked rewards are not yet implemented. See [Social hub](SOCIAL-HUB.md#sanctuary-care-evolution-and-solo-practice-haven-v328).
+
+
+The owner approved the Digimon Sanctuary master layout and requested a south
+waterfall. Haven-v329 is a **partial world foundation**, not the finished
+Sanctuary: the west lake/bridge and initial eastern scenery exist, while NPCs,
+live-world training, auto-PvE and authoritative PvP still need implementation.
+
+The owner subsequently corrected the lake to run north–south as a curved oval
+with many sakura trees; haven-v330 replaces the v329 rectangular lake.
+
+
+Haven-v331 moves the west lake farther south, restores the southwest garden and
+tree, broadens the irregular curved shoreline and extends the map south. The
+bridge, sakura, seats and south waterfall remain; the separate Digimon
+Sanctuary still needs the live-world systems described above.
+
+
+Haven-v332 extends the west lake farther south, shifts it slightly west, adds
+more sakura and connects a taller bridge to stone paths at both ends. The
+waterfall, fishing seats and southwest garden remain.
+
+
+Haven-v333 centers the bridge, places the waterfall rocks on the southern
+shore and starts the Sanctuary building pass: open timber gym, four station
+areas, food/guide kiosks, boardwalk, fenced field and ring improvements. The
+NPCs and live training/PvE/PvP gameplay remain unfinished.
+
+Haven-v334 corrects the eastern Sanctuary location: the gym starts beside
+(the east side of) the southeast garden, with the meadow and ring farther south,
+and food/trainer/guide structures along the avenue-side plank path. The lake
+is unchanged. These are navigable visual spaces, not completed on-map training,
+auto-PvE, NPC interactions or server-authoritative PvP.
+
+Haven-v335 expands the gym into connected roofed wings with a wooded backdrop,
+adds detailed stalls and five talkable on-map staff, and places decorative idle
+Digimon in the meadow. Staff dialogue describes unfinished services; no food
+shop, live-world training, automatic encounters or authoritative PvP is claimed.
+
+Haven-v336 refines the open-air Sanctuary gym with visible half-timbered
+perimeter framing and rebuilds the boxing ring's two spectator stands. The
+owner's planned on-map training animations are Power attacking a dummy, Guard
+being attacked, Agility running/jumping and a distinct Focus action. These and
+interactive spectator seating remain future work, not the current scenery.
+
+Haven-v337 rebuilds the gym toward the approved illustration rather than
+substituting a different house: two tall framed wings and gabled end bays around
+an open-front court, with cutaway inner roof slopes and native game trees. This
+is still visual world-building, not the requested on-map training gameplay.
+
+* **Sanctuary gym/ring visual correction (v338):** The courtyard is bounded by
+  two angled timber wings and a short connecting bay. The ring's level tiered
+  spectator stands are scenery, not player seats. On-map Digimon activities and
+  their Power, Guard, Agility and Focus animations remain future work.
+
+* **Live gym (v339, partial):** Four on-map, local-view Digimon exercises use
+  the existing casual Sanctuary caps and care costs. A completed 15-second
+  session grants one point; interruption cancels it without progress. The
+  food shop, shared training presentation, live PvE and server-owned PvP remain
+  future work. Ragnarok pets and field balance are unaffected.
+
+* **Automatic gym/partners (v340, supersedes v339):** Two independently saved
+  Digimon slots can even hold the same species. One may automatically repeat
+  live on-map gym exercises while its player moves or returns to the field; the
+  other may follow or use the existing temporary solo spar. Connected room
+  reservations prevent simultaneous pets using the same equipment; each stat
+  has three positions per plaza. Care/stat gates stop training. One XP is earned
+  per cycle and four XP per level; levels were cosmetic before the v344 battle loadout. No
+  training continues across logout/reload/disconnect. Stats are casual and
+  client-authored, not PvP authority. Live automatic PvE and authoritative PvP
+  remain future systems.
+
+* **Live Sanctuary grinding and ring PvP (v344):** The middle field hides its
+  roaming decorative residents during an online run, places the selected owned
+  Digimon in the world, and repeatedly spawns three random bots from the
+  partner's exact stage after each full-group defeat. The room controls combat
+  and sends wave rewards to the existing Pet Coin/XP/win progression. Two
+  distinct players can queue from opposite ring sides, mutually accept, watch a
+  three-second countdown and let their Digimon auto-fight on the canvas. The
+  Social Worker settles the result and rewards; animated WIN/LOSE/DRAW feedback
+  is sent to each participant. Care limits, feeding, gym reservations, owned
+  lines, Ragnarok pets and Zeny remain separate. Casual client-saved stats are
+  clamped loadout inputs, not ranked authority; the old solo spar is still local.
+  See `SOCIAL-HUB.md` for protocol and `digimon_battle_sim.js` /
+  `sanctuary_battle_sim.js` for deterministic coverage.
+
+* **Solo Sanctuary practice (v345):** The no-cloud Solo plaza is no longer a
+  dead end for the field or gym. A local character uses the same stations,
+  world sprites and shared wave simulator with explicit `local solo` / `SOLO`
+  labels. Field rewards use separate `solo-pve:` IDs and save locally; online
+  rooms retain server-issued rewards and reservations. Leaving, account/state
+  replacement or an online transition cancels the local activity. Two-player
+  ring PvP remains online-only rather than receiving a fabricated local opponent.
+
+* **Battle-service recovery (v346):** Online field/ring start requests are
+  pending activities that block duplicate clicks. A ten-second no-response
+  timeout, disconnect and leaving all restore a clean state. This makes an
+  outdated or unavailable Social Worker visible instead of leaving `Entering
+  the middle field…` forever; it does not substitute local combat for online
+  authority. Online combat still requires the matching client/Worker deployment.

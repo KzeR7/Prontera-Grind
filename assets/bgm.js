@@ -297,15 +297,24 @@
         case 'auto': this.setAutoMode(); break;
       }
     },
+    // v355: the player renders into every mounted root - the main-screen #bgmPlayer and the
+    // Social Hub's #socialBgmMount - so plaza visitors keep full track control without leaving.
+    roots: function () {
+      const out = [];
+      const main = document.getElementById('bgmPlayer'); if (main) out.push(main);
+      const social = document.getElementById('socialBgmMount'); if (social) out.push(social);
+      return out;
+    },
     renderUI: function () {
-      const root = document.getElementById('bgmPlayer');
-      if (!root) return;
-      if (!this._widgetBuilt) {
-        this._widgetBuilt = true;
-        root.hidden = false;
-        root.innerHTML =
+      const roots = this.roots();
+      if (!roots.length) return;
+      for (const root of roots) {
+        if (!root._widgetBuilt) {
+          root._widgetBuilt = true;
+          if (root.id !== 'socialBgmMount') root.hidden = false;
+          root.innerHTML =
           '<div class="bgm-player-bar">' +
-            '<button type="button" class="bgm-ib" data-bgm="expand" aria-expanded="false" aria-controls="bgmPlayerBody" title="Show every track">▾</button>' +
+            '<button type="button" class="bgm-ib" data-bgm="expand" aria-expanded="false" title="Show every track">▾</button>' +
             '<span class="bgm-ico" aria-hidden="true">♫</span>' +
             '<b class="bgm-now">Map BGM</b><small class="bgm-mode">map</small>' +
             '<button type="button" class="bgm-ib" data-bgm="prev" title="Previous track" aria-label="Previous track">⏮</button>' +
@@ -313,17 +322,21 @@
             '<button type="button" class="bgm-ib" data-bgm="shuffle" title="Shuffle tracks" aria-label="Shuffle tracks" aria-pressed="false">⤨</button>' +
             '<button type="button" class="bgm-ib" data-bgm="power" title="Turn BGM on or off" aria-pressed="true">⏻</button>' +
           '</div>' +
-          '<div class="bgm-player-body" id="bgmPlayerBody" hidden>' +
+          '<div class="bgm-player-body" hidden>' +
             '<button type="button" class="bgm-row bgm-auto" data-bgm="auto">● Auto · map BGM</button>' +
             '<ul class="bgm-list"></ul>' +
             '<div class="bgm-vol"><label>Volume <input type="range" min="0" max="100" step="5" class="bgm-vol-range" aria-label="BGM volume"></label></div>' +
           '</div>';
-        root.addEventListener('click', (e) => this._widgetClick(e));
-        const vr = root.querySelector('.bgm-vol-range');
-        if (vr) vr.addEventListener('input', () => { this.setVolume(vr.value / 100); });
+          root.addEventListener('click', (e) => this._widgetClick(e));
+          const vr = root.querySelector('.bgm-vol-range');
+          if (vr) vr.addEventListener('input', () => { this.setVolume(vr.value / 100); });
+        }
+        this._renderRoot(root);
       }
+    },
+    _renderRoot: function (root) {
       const bar = root.querySelector('.bgm-player-bar');
-      const body = root.querySelector('#bgmPlayerBody');
+      const body = root.querySelector('.bgm-player-body');
       const chev = root.querySelector('[data-bgm=expand]');
       const now = root.querySelector('.bgm-now');
       const modeTag = root.querySelector('.bgm-mode');

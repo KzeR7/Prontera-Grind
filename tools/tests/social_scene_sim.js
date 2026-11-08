@@ -1,7 +1,7 @@
 // Exercise the actual scene lifecycle with Three geometry and controlled asset timing.
 const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require('jsdom');
 (async()=>{
- const dom=new JSDOM('<div id="host"></div><div id="labels"></div>',{runScripts:'outside-only'}),w=dom.window,T={...require('three')};let frame,now=1000,failNormal=true,sitReady=false,draws=[],selectedSeat=null,moves=[];
+ const dom=new JSDOM('<div id="host"></div><div id="labels"></div>',{runScripts:'outside-only'}),w=dom.window,T={...require('three')};let frame,now=1000,failNormal=true,sitReady=false,draws=[],selectedSeat=null,moves=[],shopOpens=0,indexOpens=0;
  const ctx={drawImage(){}};w.HTMLCanvasElement.prototype.getContext=()=>ctx;
  const host=w.document.getElementById('host');host.setPointerCapture=()=>{};host.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});Object.defineProperties(host,{clientWidth:{value:1000},clientHeight:{value:700}});
  T.WebGLRenderer=class{constructor(){this.domElement=w.document.createElement('canvas')}setPixelRatio(){}setSize(){}render(){}dispose(){}};
@@ -13,15 +13,91 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  Object.defineProperty(w.document,'hidden',{value:false});w.performance.now=()=>now;w.console.warn=()=>{};
  w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(url)),arrayBuffer:async()=>{const b=fs.readFileSync(url);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)}});
  // v300: the scene tints the held rod from the fishing module's own tier palette.
+ let battleReady=false;const battleAsset={record:{actions:{idle:[0],walking:[0],attack:[0],faint:[0]}}};
+ w.PGSocialDigimon={clean:id=>battleReady?id:null,frameIndex:()=>0,draw:()=>{},sharedStore:()=>({ready:()=>battleReady?battleAsset:null,request:()=>Promise.resolve(null)})};
  w.PGSocialFishing={ROD_TIER_COLORS:{twig:'#8b6b45',oak:'#b07a3c',brass:'#c8873a',silver:'#cfd8e0',golden:'#ffcb45',mythril:'#7fe3ff'}};
- w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social-scene.js','utf8'));
- const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(){},move(x,z){moves.push({x,z})},seat(id){selectedSeat=id}}),flush=async()=>{for(let i=0;i<6;i++)await Promise.resolve()};
+ w.eval(fs.readFileSync('assets/digimon/roster.js','utf8'));w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social-scene.js','utf8'));
+ const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(){},move(x,z){moves.push({x,z})},seat(id){selectedSeat=id},sanctuaryShop(){shopOpens++},sanctuaryIndex(){indexOpens++}}),flush=async()=>{for(let i=0;i<6;i++)await Promise.resolve()};
+ const groundPlane=scene.scene.children.find(o=>o.geometry?.parameters?.width===192&&o.geometry?.parameters?.height===218);
+ assert(groundPlane&&groundPlane.position.z===27&&groundPlane.position.x===14,'ground extends south and east while retaining the original north and west edges');
+ assert(scene.scene.children.some(o=>o.geometry?.parameters?.width===18&&o.geometry?.parameters?.height===218&&o.position.z===27),'north-south road extends south');
+ assert(scene.scene.children.some(o=>o.geometry?.parameters?.width===18&&o.geometry?.parameters?.height===192&&o.position.z===0&&o.position.x===14),'east-west road extends to the new eastern edge');
+ assert(groundPlane.material.polygonOffset,'ground depth bias keeps the large lake free of distant z-fighting');
+ for(const name of ['east','west'])assert(scene.scene.children.some(o=>o.userData.bridgePath===name),'stone bridge approach '+name+' is rendered');
+ assert(scene.scene.children.some(o=>o.userData.bridgePathCap),'west path has a finished rounded end');
+ for(const tag of ['sanctuaryGym','sanctuaryField','sanctuaryRing'])assert(scene.scene.children.some(o=>o.userData[tag]),tag+' area rendered');
+ for(const name of ['power','guard','agility','focus'])assert(scene.scene.children.some(o=>o.userData.sanctuaryStation===name),name+' station rendered');
+ for(const [name,x,z] of [['power',59,30],['guard',65,23],['agility',74,25],['focus',84,27]]){assert(w.document.querySelector('[data-station="'+name+'"]'),'world station is a button');assert(w.PGSocialRules.walkable(x,z),'station destination is walkable');assert(w.PGSocialRules.path({x:69,z:35},{x,z}).length,'station destination is reachable from the courtyard')}
+
+ for(const name of ['food','trainer','guide'])assert(scene.scene.children.some(o=>o.userData.sanctuaryKiosk===name),name+' kiosk rendered');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryTree).length,w.PGSocialRules.SANCTUARY_TREES.length,'outer Sanctuary trees are rendered');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryTree&&o.userData.nativeGymTree).length,6,'six native trees are behind the gym');
+ assert.equal(scene.scene.children.filter(o=>o.userData.gymWindow==='side').length,8,'both gym sides have windows on inside and outside faces');
+ assert(scene.scene.children.filter(o=>o.userData.gymTimber==='side-post').length>=20,'both faces of side walls have exposed posts');
+ for(const x of [43,95])for(const side of [-1,1])assert(scene.scene.children.some(o=>o.userData.gymTimber==='side-post'&&Math.abs(o.position.x-(x+side*.32))<.001),'posts stand proud on both faces of wall '+x);
+ for(const tree of scene.scene.children.filter(o=>o.userData.nativeGymTree)){
+  assert(tree.isMesh&&!tree.isSprite&&tree.geometry.type==='BufferGeometry','rear trees use native three-dimensional field geometry');
+  const bounds=new T.Box3().setFromObject(tree),wall=w.PGSocialRules.SANCTUARY_GYM_WALLS[tree.position.x<69?0:2],dx=wall.x2-wall.x1,dz=wall.z2-wall.z1,len=Math.hypot(dx,dz);
+  for(const x of [bounds.min.x,bounds.max.x])for(const z of [bounds.min.z,bounds.max.z])assert((-(dz)*(x-wall.x1)+dx*(z-wall.z1))/len<-.25,'native canopy stays outside the angled gym wall');
+  assert(bounds.max.y<9.5,'native canopy stays below the roof to avoid visible tree/roof clipping');
+ }
+ assert.equal(scene.scene.children.filter(o=>o.userData.gymMasonry).length,22,'wing foundations have individual masonry blocks');
+ assert(scene.scene.children.some(o=>o.userData.gymTimber==='rear-post'&&o.position.z>12.8),'rear posts are visible from the open court');
+ for(const [side,count] of [['east',9],['south',9],['corner',3]])assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryBleacher===side).length,count,'three constructed ring seating tiers at '+side);
+ assert(scene.scene.children.some(o=>o.userData.ringCanvas),'ring canvas has a woven surface');
+ // v357 map-art pass: native RO species trees, stair-gated ring, pond shadows, soft FX.
+ const kinded=w.PGSocialRules.SANCTUARY_TREES.filter(t=>t.kind);
+ assert(kinded.length>=18,'shared rules carry mixed-species tree spots');
+ const kinds=new Set(scene.scene.children.filter(o=>o.userData.treeKind).map(o=>o.userData.treeKind));
+ // v358: the pond wood is cherries only, so morocc palms are no longer placed anywhere;
+ // the three remaining species still render from the native RO sets.
+ for(const k of ['pine','broad','sakura'])assert(kinds.has(k),k+' species is rendered from the native RO sets');
+ assert(!kinds.has('palm'),'the pond wood carries no palms after the sakura-only pass');
+ assert(scene.scene.children.filter(o=>o.userData.treeKind).every(o=>o.isMesh&&o.geometry.type==='BufferGeometry'),'species trees use native three-dimensional field geometry');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryTree).length,w.PGSocialRules.SANCTUARY_TREES.length,'every shared tree renders, native or species');
+ // v358 (owner: "remove the dead trees/stumps around the pve grind area"): no stumps remain
+ // anywhere in the sanctuary.
+ assert(!scene.scene.children.some(o=>o.userData.sanctuaryFieldEdge),'no field-edge stumps remain around the grind field');
+ assert(!scene.scene.children.some(o=>o.userData.sanctuaryTrack||o.userData.sanctuaryScarecrow||o.userData.sanctuaryPennant),'the painted circuit, scarecrow and pennants are gone');
+ assert(scene.scene.children.some(o=>o.userData.ringRunner),'the west stair mouth wears a runner: the one way onto the ring');
+ assert(scene.scene.children.some(o=>o.userData.ringPad==='red'&&o.position.x>68)&&scene.scene.children.some(o=>o.userData.ringPad==='blue'&&o.position.x<68),'ring has red and blue corner pads');
+ assert(scene.scene.children.some(o=>o.userData.ringApron),'ring wears an apron skirt');
+ assert(scene.scene.children.some(o=>o.userData.sanctuarySign==='CHAMPION RING'),'the ring sign is painted');
+ for(const stat of ['power','guard','agility','focus'])assert(scene.scene.children.some(o=>o.userData.gymZone===stat),stat+' training zone mat is laid');
+ const deep=[];scene.scene.traverse(o=>{if(o.userData.deepKind)deep.push(o.userData.deepKind)});
+ assert(deep.includes('octopus')&&deep.includes('shark'),'octopus and shark shadows swim in the pond');
+ assert(scene.scene.children.filter(o=>o.userData.bench!=null).length===w.PGSocialRules.BENCHES.length,'all shared benches render, including the v356 gym and field benches');
+ for(let row=0;row<3;row++){const tiers=scene.scene.children.filter(o=>o.userData.bleacherRow===row),h=.55+row*.43;assert.equal(tiers.length,7,'each tier has six boards and a corner');for(const m of tiers)assert(Math.abs(m.position.y-(m.userData.sanctuaryBleacher==='corner'?h+.071:h))<.001,'all bench boards and corner align on a level tier');}
+
+ for(const side of ['left','right']){assert(scene.scene.children.some(o=>o.userData.gymWing===side&&o.geometry.parameters.height>=8),'substantial tall '+side+' wing');assert(scene.scene.children.some(o=>o.userData.gymGable===side),'visible '+side+' gable');assert(scene.scene.children.some(o=>o.userData.gymUpperWall===side),'roof ridge is supported by the '+side+' wall');assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryBuildingWing===side).length,3,'broad pitched roofs of '+side+' wing')}
+ assert.equal(scene.scene.children.filter(o=>o.userData.gymFence).length,w.PGSocialRules.SANCTUARY_GYM_FENCES.length*2,'open-court front fence has matching rails');
+ const left=scene.scene.children.find(o=>o.userData.gymWing==='left'),right=scene.scene.children.find(o=>o.userData.gymWing==='right');assert(left.rotation.y>.2&&right.rotation.y<-.2,'both wings are genuinely angled toward the short central connector');
+ assert.equal(scene.scene.children.filter(o=>o.userData.gymBroadRoof).length,6,'the two wings each have a wide rear roof and two roofed gable slopes');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryResident).length,4,'four decorative Digimon are present in the field');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryRoof).length,10,'angled gym wings and kiosks have broad shingle roofs');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryBoardwalk).length,10,'angled boardwalk surrounds and links field');
+ assert.equal(scene.scene.children.filter(o=>o.userData.sanctuaryFence).length,w.PGSocialRules.SANCTUARY_FENCES.length*2,'each shared field fence has visible rails');
+ for(const sign of ['DIGIPET GYM','TRAINER - DIGIPET','FOOD - PET SHOP','FIELD GUIDE - DIGIDEX'])assert(scene.scene.children.some(o=>o.userData.sanctuarySign===sign),sign+' is visibly labeled');
+ for(const id of ['coach','food','trainer','guide','ring']){assert(scene.scene.children.some(o=>o.userData.sanctuaryNpc===id),'native NPC sprite '+id+' exists');assert(w.document.querySelector('[data-sanctuary-npc="'+id+'"] button'),'NPC has a talk button')}
+ const cook=w.document.querySelector('[data-sanctuary-npc="food"] button');cook.click();const talk=w.document.querySelector('.sanctuary-npc-bubble[data-sanctuary-npc="food"]');assert(!talk.hidden&&talk.textContent.includes('Pet Coins'),'Cook Lina explains the Pet Coin shop');assert.equal(shopOpens,1,'Cook Lina opens the real pet-provisions shop');const guideButton=w.document.querySelector('[data-sanctuary-npc="guide"] button');guideButton.click();assert.equal(indexOpens,1,'Guide Nia opens the roster-backed DigiDex');
+
  const state={id:1,name:'Synthetic',x:0,z:12,dir:0,sit:true,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:10,title:'Poring Hunter',lv:150}};
  scene.active=true;scene.putPlayer(state);await flush();frame(now+=100);assert.equal(draws.length,0);frame(now+=3100);await flush();frame(now+=100);assert(draws.length,'failed download automatically retries without network movement');assert.equal(draws.at(-1)[2],'idle','pending sitting atlas falls back to visible standing sprite');assert.equal(typeof draws.at(-1)[7],'function','native weapon glow hook');assert.equal(typeof draws.at(-1)[8],'function','stowed weapon glow hook');
  sitReady=true;frame(now+=100);await flush();frame(now+=100);assert.equal(draws.at(-1)[2],'sit');
  const before=scene.camera.position.clone();scene.putPlayer({...state,sit:false,x:34,z:25});frame(now+=100);assert(scene.camera.position.x>before.x,'camera follows self');assert(scene.camera.position.z>before.z);const label=w.document.querySelector('.social-player-label');assert.equal(label.hidden,false);const sprite=scene.scene.children.find(o=>o.userData.socialId===1),feet=sprite.position.clone().project(scene.camera);assert(parseFloat(label.style.top)>(1-feet.y)*350,'name starts below feet');assert.equal(label.querySelector('small').textContent,'Poring Hunter');assert(feet.y>.03&&feet.y<.22,'player stands slightly higher than the middle of the screen by default');
+
+
  // v225: the field's own level sigil appears under the character and moves with them.
  const aura=scene.scene.children.find(o=>o.userData.tier===150);assert.ok(aura,'Base 150 character has a level aura');assert.equal(aura.position.y,.07);assert.equal(aura.position.x,34);assert.equal(aura.position.z,25);
+ const powerLabel=[...w.document.querySelectorAll('.social-sanctuary-label')].find(e=>e.textContent==='POWER');
+ scene.putPlayer({...state,sit:false,x:39,z:12});scene.setCamera({angle:-1.1,pitch:35,distance:46});for(let i=0;i<30;i++)frame(now+=100);assert(powerLabel.hidden,'station labels do not show through exterior walls');
+ scene.putPlayer({...state,sit:false,x:69,z:29});scene.setCamera({angle:0,pitch:35,distance:46});frame(now+=100);assert(!powerLabel.hidden,'station labels remain visible in the open courtyard');const still=[powerLabel.style.left,powerLabel.style.top];frame(now+=100);assert.deepEqual([powerLabel.style.left,powerLabel.style.top],still,'camera settles immediately when the player stops in the gym');
+ // A world-projected label must not chase the pointer while the camera follows.
+ const stationPointer=(type,kind)=>{const e=new w.Event(type);Object.defineProperty(e,'pointerType',{value:kind});return e};
+ powerLabel.dispatchEvent(stationPointer('pointerenter','mouse'));const pinned=[powerLabel.style.left,powerLabel.style.top];scene.setCamera({angle:.3});frame(now+=100);assert.deepEqual([powerLabel.style.left,powerLabel.style.top],pinned,'hover pins station control during camera movement');
+ powerLabel.dispatchEvent(stationPointer('pointerleave','mouse'));frame(now+=100);assert.notDeepEqual([powerLabel.style.left,powerLabel.style.top],pinned,'label resumes world positioning after hover');
+ powerLabel.dispatchEvent(stationPointer('pointerdown','touch'));const touched=[powerLabel.style.left,powerLabel.style.top];scene.setCamera({angle:.5});frame(now+=100);assert.deepEqual([powerLabel.style.left,powerLabel.style.top],touched,'touch pins control until release');w.dispatchEvent(stationPointer('pointerup','touch'));frame(now+=100);assert.notDeepEqual([powerLabel.style.left,powerLabel.style.top],touched,'touch release restores world positioning');
+
  scene.putPlayer({...state,x:0,z:12,look:{...state.look,lv:49}});frame(now+=100);assert.equal(scene.scene.children.some(o=>o.userData.tier),false,'no aura below Base 50');assert.ok(w.auraDisposals>0,'removing a tier disposes its geometry and material');
  scene.putPlayer({...state,x:0,z:12,look:{...state.look,lv:99}});frame(now+=100);assert.ok(scene.scene.children.some(o=>o.userData.tier===99),'the sigil follows the character level tier');
 
@@ -30,21 +106,34 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const bridge=w.PGSocialRules.POND_PROPS[0].bridge;
  scene.putPlayer({...state,sit:false,x:bridge.x-.6,z:bridge.z});frame(now+=100);
  const onBridge=scene.scene.children.find(o=>o.userData.socialId===1);
- assert(onBridge.position.y>1.1&&onBridge.position.y<2,'the hero stands on the bridge deck, not inside it');
+ assert(onBridge.position.y>bridge.arch&&onBridge.position.y<bridge.arch+.2,'the hero stands on the bridge deck, not inside it');
  scene.putPlayer({...state,sit:false,x:bridge.x-.6,z:bridge.z+7});frame(now+=100);
  assert(scene.scene.children.find(o=>o.userData.socialId===1).position.y<.3,'off the deck the hero is back on the ground');
+ scene.putPlayer({...state,sit:false,x:68,z:104});frame(now+=100);assert(scene.scene.children.find(o=>o.userData.socialId===1).position.y>.8,'the player stands above the raised ring canvas');
  // v308: the cascade pours into the pond from its far rim, not from behind the bridge
  for(const [i,fall] of w.PGSocialRules.POND_FALLS.entries()){
   const pond=w.PGSocialRules.PONDS[i];
-  assert(fall.z<pond.z,'fall '+i+' sits on the pond\'s far side so it pours toward the south shore');
-  assert(fall.dir===1&&fall.intoPond,'fall '+i+' runs into the pond');
+  assert(fall.z>pond.z,'fall '+i+' sits on the south shore');
+  assert(fall.dir===-1&&fall.intoPond,'fall '+i+' runs north into the pond');
  }
  // v308: garden furniture grew to hero scale
  assert(w.PGSocialRules.POND_PROPS[0].bridge.span>=7&&w.PGSocialRules.POND_PROPS[0].bridge.width>=3,'the bridge is wider than the v304 span');
 
  // v269: 12 physical metal park benches, each seating 2 players side-by-side (24 seats total).
  // v288 adds 8 single-seat angler chairs on the pond rims (seat ids 24-31) => 32 seats.
- assert.equal(w.PGSocialRules.BENCHES.length,12);assert.equal(w.PGSocialRules.CHAIRS.length,8);assert.equal(w.PGSocialRules.SEATS.length,32);
+ assert.equal(w.PGSocialRules.BENCHES.length,15);assert.equal(w.PGSocialRules.CHAIRS.length,8);
+ // v359: the four ringside wooden benches are gone; the bleacher rows (46-111) carry the
+ // ring seating, and ids 32-39 retired with the removed benches.
+ const seatList=w.PGSocialRules.SEATS.filter(Boolean);assert.equal(seatList.length,120,'15 benches (30 seats) + 8 chairs + 66 bleacher seats + 16 Aetherwell bench seats');
+ for(let i=32;i<=39;i++)assert(!w.PGSocialRules.SEATS[i],'retired ringside seat '+i+' is gone');
+ assert.equal(w.PGSocialRules.SEATS[46].x,82);assert.equal(w.PGSocialRules.SEATS[46].height||w.PGSocialRules.SEATS[46].rowHeight,.62);assert.equal(w.PGSocialRules.SEATS[111].z,116);
+ // v361: the Aetherwell's own bench ring - eight benches every 45 degrees, measured from the
+ // model export at scene scale .62 (model radius 12.81 -> world 7.94), seats on walkable tiles.
+ assert.equal(w.PGSocialRules.FOUNTAIN_BENCHES.length,16);
+ for(const seat of w.PGSocialRules.FOUNTAIN_BENCHES){
+  assert(w.PGSocialRules.walkable(seat.x,seat.z)&&seat.bench>=220&&seat.bench<228&&Math.abs(seat.height-.649)<.001,'Aetherwell seat '+seat.id+' sits on the bench ring at bench height');
+  assert(Math.hypot(seat.x,seat.z)>7.7&&Math.hypot(seat.x,seat.z)<8.3,'Aetherwell seat '+seat.id+' lies on the measured bench radius');
+ }
  for(const c of w.PGSocialRules.CHAIRS){
   assert(w.PGSocialRules.walkable(c.x,c.z),'chair '+c.id+' stands on walkable ground');
   const seat=w.PGSocialRules.SEATS[c.id];
@@ -60,6 +149,34 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  scene.putPlayer({id:2,name:'Buddy',x:w.PGSocialRules.SEATS[10].x,z:w.PGSocialRules.SEATS[10].z,dir:0,sit:true,seat:10,path:[],look:state.look});
  clickAt(leftPt);assert.equal(selectedSeat,11,'clicking occupied bench half auto-picks free partner seat on same bench');
  scene.removePlayer(2);
+ // v359 (owner: "no wood chairs at the ring - the L-shaped stands are the seats"): the
+ // gym and field benches stay wooden, and the bleacher tiers are click-sittable end to end.
+ {
+  assert(!scene.scene.children.some(o=>o.userData.bench===16||o.userData.bench===17||o.userData.bench===18||o.userData.bench===19),'the four ringside wooden benches are gone');
+  const wooden=scene.scene.children.find(o=>o.userData.bench===20);
+  assert(wooden&&wooden.type==='Group','the gym bench is still a built wooden group');
+  const mats=new Set(wooden.children.map(m=>m.material&&m.material.color&&m.material.color.getHexString()));
+  assert(mats.has('7d5c3b')&&mats.has('54402a'),'the gym bench uses weathered wood tones');
+  // The L-shaped stands: every tier is a long sitting row of walkable boards.
+  for(const row of w.PGSocialRules.BLEACHER_ROWS){
+   assert(row.seats.length>=9,'row '+row.side+row.row+' carries a long sitting row');
+   for(const seat of row.seats){assert(w.PGSocialRules.walkable(seat.x,seat.z),'bleacher seat stands on walkable boards');assert(w.PGSocialRules.path({x:60,z:104},seat).length,'bleacher seat is reachable from the ring walkway')}
+  }
+  assert(!w.PGSocialRules.walkable(85.25,104)&&!w.PGSocialRules.walkable(66.65,117.25),'the low rear walls keep walkers off the back of the stands');
+  // Clicking a tier picks its seat; sitting rests on the board tops, standing climbs them.
+  const first=w.PGSocialRules.SEATS[46],top=w.PGSocialRules.SEATS[111];
+  const pt=new T.Vector3(first.x,.62,first.z).project(scene.camera);
+  clickAt(pt);assert.equal(selectedSeat,46,'clicking the front east tier selects its first bleacher seat');
+  scene.putPlayer({id:2,name:'Viewer',x:first.x,z:first.z,dir:first.dir,sit:true,seat:46,path:[],look:state.look});
+  frame(now+=100);
+  const viewer=scene.scene.children.find(o=>o.userData.socialId===2);
+  assert.equal(viewer.position.y,.62,'a trainer sits on the front bleacher tier');
+  scene.putPlayer({id:2,name:'Climber',x:top.x,z:top.z,dir:top.dir,sit:false,seat:null,path:[],look:state.look});
+  frame(now+=100);
+  const climber=scene.scene.children.find(o=>o.userData.socialId===2);
+  assert(Math.abs(climber.position.y-(.06+1.48))<.01,'standing feet climb to the top tier');
+  scene.removePlayer(2);
+ }
  scene.putPlayer({...state,x:w.PGSocialRules.SEATS[0].x,z:w.PGSocialRules.SEATS[0].z,sit:true,seat:0});
  scene.putPlayer({id:2,name:'Buddy',x:w.PGSocialRules.SEATS[1].x,z:w.PGSocialRules.SEATS[1].z,dir:0,sit:true,seat:1,path:[],look:state.look});
  frame(now+=100);
@@ -154,7 +271,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert.equal(rodGlows().length,1,'reeling in removes the other rod and its glow');
  assert.equal(rodGlows()[0],held[0],'and leaving your own rod untouched');
  // Is it actually *obvious*? Project the glow shell at the plaza camera and measure it on screen.
- const pond=w.PGSocialRules.PONDS[1];
+ const pond=w.PGSocialRules.PONDS[0];
  scene.putPlayer({...state,sit:false,x:pond.x,z:pond.z-pond.d/2-1.7,dir:0});
  frame(now+=100);
  scene.fishing.cast({x:pond.x,z:pond.z},400,()=>{});
@@ -200,6 +317,129 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   scene.putPlayer({...state,fish:{on:false}});
   scene.fishing.off();
  }
+ // v344: live field/ring snapshots own separate world sprites and suppress idle residents only
+ // during grinding. The fake asset keeps this a geometry/lifecycle test, not an image audit.
+ // v350: the shared battle module classifies presentation ranges; this geometry test stubs
+ // a deterministic classifier (Biyomon skirmishes, everyone else brawls).
+ w.PGDigimonBattle={attackRange:form=>({ranged:form==='biyomon',range:form==='biyomon'?4.2:1.8})};
+ battleReady=true;scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:2,phase:'fighting',profile:{form:'agumon'},partner:{form:'agumon',hp:80,maxHp:100},enemies:[{id:'e0',form:'agumon',hp:40,maxHp:50},{id:'e1',form:'palmon',hp:40,maxHp:50},{id:'e2',form:'biyomon',hp:40,maxHp:50}]}],pvp:null});frame(now+=100);
+ assert.equal(scene.scene.children.filter(o=>o.userData.battleKind==='pve').length,4,'partner and three bot sprites are rendered');assert(scene.scene.children.filter(o=>o.userData.sanctuaryResident).every(o=>!o.visible),'idle residents are hidden during grinding');
+ const farmSprites=scene.scene.children.filter(o=>o.userData.battleKind==='pve'),enemySprites=farmSprites.filter(o=>o.userData.battleRole==='enemy'),partnerSprite=farmSprites.find(o=>o.userData.battleRole==='partner');
+ assert.deepEqual(enemySprites.map(o=>o.userData.battleName).sort(),['Agumon','Biyomon','Palmon'],'farm bots show species names instead of generic wave labels');assert.equal(new Set(enemySprites.map(o=>JSON.stringify(o.userData.battleSpawn))).size,3,'each bot receives a distinct stable random-looking spawn');
+ const partnerBefore=partnerSprite.position.clone(),enemyBefore=enemySprites.map(o=>o.position.clone());frame(now+=500);
+ // v359: the run is a calm trot (6.4 -> 3.2 u/s) so the walk animation is readable; a
+ // half-second frame still covers well over a unit of ground.
+ assert(partnerSprite.position.distanceTo(partnerBefore)>1.2&&partnerSprite.position.distanceTo(partnerBefore)<2,'the partner trots toward its opponent at the v359 pace');assert(partnerSprite.position.distanceTo(partnerBefore)<=1.61,'a delayed frame cannot teleport the partner beyond its capped travel budget');enemySprites.forEach((o,i)=>assert(o.position.distanceTo(enemyBefore[i])>1.2,'each living bot runs toward the partner rather than remaining in a fixed row'));
+ for(let i=0;i<40;i++)frame(now+=100);
+ const dist=o=>Math.hypot(o.position.x-partnerSprite.position.x,o.position.z-partnerSprite.position.z),rangedSprite=enemySprites.find(o=>o.userData.battleName==='Biyomon'),meleeSprites=enemySprites.filter(o=>o!==rangedSprite);
+ assert(Math.min(...meleeSprites.map(dist))>1.9&&Math.min(...meleeSprites.map(dist))<3.0,'v354 brawlers keep a readable gap instead of overlapping the partner: '+meleeSprites.map(dist).map(x=>x.toFixed(2)));
+ assert(dist(rangedSprite)>4,'the quick ranged form skirmishes from a distance: '+dist(rangedSprite).toFixed(2));
+ for(let i=0;i<enemySprites.length;i++)for(let j=i+1;j<enemySprites.length;j++)assert(Math.hypot(enemySprites[i].position.x-enemySprites[j].position.x,enemySprites[i].position.z-enemySprites[j].position.z)>4.2,'farm bots occupy separated attack slots instead of clumping');
+ partnerSprite.position.set(58,.06,60);const retargetBefore=partnerSprite.position.clone();scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:3,phase:'fighting',profile:{form:'agumon'},partner:{form:'agumon',hp:80,maxHp:100},enemies:[{id:'w3-e0',form:'agumon',hp:40,maxHp:50},{id:'w3-e1',form:'palmon',hp:40,maxHp:50},{id:'w3-e2',form:'gabumon',hp:40,maxHp:50}]}],pvp:null});frame(now+=100);assert(partnerSprite.position.distanceTo(retargetBefore)<=.65,'a new wave retargets from the current position without an elapsed-time teleport');
+ // v350 boss waves: one oversized gold-ringed boss with a BOSS nameplate, and quick ranged
+ // attackers fire a visible travelling shot instead of only bumping into each other.
+ scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'agumon',hp:80,maxHp:100,attackAt:0,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,attackAt:0,hitAt:0}]}],pvp:null});frame(now+=100);
+ const bossSprite=scene.scene.children.find(o=>o.userData.battleBoss);
+ assert(bossSprite,'the boss sprite is flagged for oversized presentation');assert.equal(bossSprite.userData.battleName,'BOSS · Greymon','the boss wears a BOSS nameplate');
+ assert(bossSprite.scale.x>partnerSprite.scale.x*1.4,'the boss renders visibly larger than a normal fighter');
+ // v359: the accent ring is marked (units attack while closing in, so neighbours can sit
+ // within a bench-length of the boss); assert on the marker, not on bare proximity.
+ const bossRing=scene.scene.children.find(o=>o.userData.battleAccent&&o!==bossSprite&&Math.abs(o.position.x-bossSprite.position.x)<.95&&Math.abs(o.position.z-bossSprite.position.z)<.95);
+ assert(bossRing&&bossRing.material.color.getHex()===0xe8a54a,'the boss stands on a gold accent ring');
+ assert(!scene.scene.children.some(o=>o.userData.battleShot),'melee fighters fire no projectiles');
+ scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:1,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,attackAt:0,hitAt:0}]}],pvp:null});frame(now+=100);
+ assert(scene.scene.children.some(o=>o.userData.battleShot),'a quick ranged attacker fires a visible projectile');
+ frame(now+=400);assert(!scene.scene.children.some(o=>o.userData.battleShot),'the projectile expires after its flight');
+ // v352/v357 FX: every landed strike answers with a soft-light burst - radial glows,
+ // rotating streaks and star sparkles, never square pixels - plus a floating damage number
+ // and a defender shake; crits add a contact freeze and a soft shockwave; faints puff dust.
+ {
+  const bursts=()=>scene.scene.children.filter(o=>o.userData.battleBurst),popups=()=>scene.scene.children.filter(o=>o.userData.battlePopup),waves=()=>scene.scene.children.filter(o=>o.userData.battleShockwave),ghosts=()=>scene.scene.children.filter(o=>o.userData.battleGhost);
+  frame(now+=500);assert.equal(bursts().length,0,'no FX linger once the field is quiet');
+  assert.equal(scene.battleEvent({kind:'pve',battleId:'missing',to:'nobody',amount:5,crit:false}),false,'FX for an unknown unit are refused');
+  const bossSprite=scene.scene.children.find(o=>o.userData.battleBoss);
+  for(let i=0;i<20;i++)frame(now+=100);
+  const settled={x:bossSprite.position.x,z:bossSprite.position.z};
+  assert.equal(scene.battleEvent({kind:'pve',battleId:'pve-test',to:'w5-boss',amount:12,crit:false}),true,'a strike on a live unit lands its FX');
+  frame(now+=40);
+  assert.equal(popups().length,1,'the damage number floats above the defender');assert.equal(popups()[0].userData.battlePopupText,'12');assert.equal(popups()[0].userData.battlePopupCrit,false);
+  assert.equal(bursts().length,11,'a normal hit bursts eleven soft sparks');assert.equal(waves().length,0,'normal hits send no shockwave');
+  let shook=false;for(let i=0;i<3;i++){frame(now+=40);const off=Math.hypot(bossSprite.position.x-settled.x,bossSprite.position.z-settled.z);if(off>.01)shook=true;assert(off<=.26,'the shake stays inside its amplitude: '+off)}
+  assert(shook,'the hit shakes the defending boss sprite');
+  frame(now+=600);assert.equal(popups().length,0,'the damage number expires');assert.equal(bursts().length,0,'the burst particles expire');
+  assert.equal(scene.battleEvent({kind:'pve',battleId:'pve-test',to:'w5-boss',amount:30,crit:true}),true,'a critical strike lands its FX');
+  frame(now+=40);
+  assert.equal(popups().length,1);assert.equal(popups()[0].userData.battlePopupText,'30!');assert.equal(popups()[0].userData.battlePopupCrit,true,'crits mark their damage number');
+  assert.equal(waves().length,1,'crits ring a shockwave');assert(bursts().length>=12,'crits burst harder');
+  frame(now+=900);assert.equal(waves().length,0,'the shockwave expires');
+  // After-images trail a lunging brawler: the melee boss lunges on attack, ghosts echo it.
+  scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:0,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,attackAt:2,hitAt:0}]}],pvp:null});frame(now+=100);frame(now+=120);
+  assert(ghosts().length>=2,'a brawler carries after-image ghosts');
+  assert(ghosts().filter(g=>g.visible).length>=2,'the brawler lunge echoes in its after-images');
+  assert(ghosts().every(g=>g.visible||Math.hypot(g.position.x-scene.scene.children.find(o=>o.userData.battleRole==='partner').position.x,g.position.z-scene.scene.children.find(o=>o.userData.battleRole==='partner').position.z)<1.5),'a ranged form never shows after-images — stale ghosts stay hidden');
+  scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:0,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,attackAt:2,hitAt:0}]}],pvp:null});frame(now+=600);
+  assert(ghosts().every(g=>!g.visible),'ghosts hide once the lunge is over');
+  // A faint puffs dust; a boss faint bursts gold with a shockwave.
+  scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:0,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:0,maxHp:300,boss:true,attackAt:0,hitAt:0}]}],pvp:null});frame(now+=40);
+  assert(bursts().length>=16,'the boss faint bursts gold');assert.equal(waves().length,1,'the boss faint rings a shockwave');
+  frame(now+=800);assert.equal(bursts().length,0);assert.equal(waves().length,0);
+ }
+ scene.setBattleState({pve:[],pvp:{id:'pvp-test',phase:'fighting',winnerId:null,participants:[{id:1,name:'One',side:'left',unit:{form:'agumon',hp:80,maxHp:100}},{id:2,name:'Two',side:'right',unit:{form:'palmon',hp:70,maxHp:100}}]}});frame(now+=100);assert.equal(scene.scene.children.filter(o=>o.userData.battleKind==='pvp').length,2,'two accepted ring fighters are rendered');const ringFighters=scene.scene.children.filter(o=>o.userData.battleKind==='pvp');for(let i=0;i<12;i++)frame(now+=100);const ringDistance=Math.hypot(ringFighters[0].position.x-ringFighters[1].position.x,ringFighters[0].position.z-ringFighters[1].position.z);assert(ringDistance>4.2&&ringDistance<4.6,'ring fighters approach opposite marks without clumping');assert(scene.scene.children.filter(o=>o.userData.sanctuaryResident).every(o=>o.visible),'residents return when PvE ends');
+ assert.equal(scene.battleEvent({kind:'pvp',battleId:'pvp-test',to:1,amount:9,crit:false}),true,'ring strikes land their FX too');frame(now+=40);assert(scene.scene.children.some(o=>o.userData.battlePopup&&o.userData.battlePopupText==='9'),'the ring damage number floats');
+ // v360 (owner: "replace the social hub middle fountain with this"): the Prontera Grand
+ // Aetherwell GLB takes the plaza centre when its vendored loader exists; the atlas
+ // fountain is the dead-GLB fallback.
+ assert(fs.existsSync('assets/Fountainfile/Prontera_Grand_Aetherwell.glb')&&fs.existsSync('assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png'),'the Aetherwell GLB and its preview ship in the repo');
+ assert.equal(fs.readFileSync('assets/Fountainfile/Prontera_Grand_Aetherwell.glb').subarray(0,4).toString('latin1'),'glTF','the fountain file is a binary glTF container');
+ assert(fs.readFileSync('index.html','utf8').includes('assets/vendor/GLTFLoader.r128.js?v='),'the page loads the vendored r128 GLTFLoader after three.min.js');
+ assert(scene.scene.children.some(o=>o.userData.fountainFallback&&o.visible===true),'the atlas fountain stands in while no GLTFLoader exists');
+ assert(!scene.scene.children.some(o=>o.userData.aetherwell),'nothing mounts without the loader');
+ // v361: the solid heart is the basin + planter (7.75); the bench ring and paving are walkable
+ // sitting ground like every other hub bench.
+ assert(!w.PGSocialRules.walkable(0,7.7)&&w.PGSocialRules.walkable(0,7.8),'the Aetherwell planter is enclosed by the shared fountain collision');
+ // Rebuild the scene with a stubbed loader that hands over a stand-in gltf scene shaped
+ // like the real export (named nodes), then drive the animation loop.
+ const fakeRoot=new T.Group();
+ const spire=new T.Group();spire.name='AETHER \u2022 main floating spire';spire.position.set(0,10.4,0);spire.add(new T.Mesh(new T.BoxGeometry(.5,.5,.5)));fakeRoot.add(spire);
+ const inverted=new T.Group();inverted.name='Floating inverted crystal';inverted.position.set(0,4.2,0);fakeRoot.add(inverted);
+ const motes=new T.Group();motes.name='Aetherwell \u2022 Aether motes \u2022 ice white';fakeRoot.add(motes);
+ const shardA=new T.Group();shardA.name='Orbiting shard 00';shardA.position.set(2,6.5,0);fakeRoot.add(shardA);
+ const shardB=new T.Group();shardB.name='Orbiting shard detailed 00';shardB.position.set(-1.5,8,1);fakeRoot.add(shardB);
+ const crystalMat=new T.MeshBasicMaterial();crystalMat.name='Crystal facet 0';
+ fakeRoot.add(new T.Mesh(new T.BoxGeometry(.3,.3,.3),crystalMat));
+ // v361: a PBR material whose name carries a KHR_materials_emissive_strength value the r128
+ // loader drops, plus a known linear albedo, so the mount's fidelity pass is observable.
+ const inscriptionMat=new T.MeshStandardMaterial({name:'Crystal inscriptions \u2022 electric blue'});
+ inscriptionMat.color.setRGB(.25,.5,1);inscriptionMat.emissive.setRGB(.018,.54,1);
+ fakeRoot.add(new T.Mesh(new T.BoxGeometry(.2,.2,.2),inscriptionMat));
+ let requestedUrl='';
+ T.GLTFLoader=class{load(url,onLoad){requestedUrl=url;onLoad({scene:fakeRoot})}};
+ const host2=w.document.createElement('div');host2.setPointerCapture=()=>{};host2.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});Object.defineProperties(host2,{clientWidth:{get(){return 1000}},clientHeight:{get(){return 700}}});
+ let wellSeat=null;const scene2=await w.PGSocialScene.create(host2,w.document.createElement('div'),{self:()=>2,menu(){},move(){},seat(id){wellSeat=id}});
+ assert.equal(requestedUrl,'assets/Fountainfile/Prontera_Grand_Aetherwell.glb','the hub requests the Aetherwell GLB');
+ const well=scene2.scene.children.find(o=>o.userData.aetherwell);
+ assert(well,'the Aetherwell mounts over the plaza');
+ assert(Math.abs(well.scale.x-.62)<1e-9&&Math.abs(well.position.y-.06)<1e-9,'the v361 centerpiece is scaled up to the grand plaza size');
+ const fallback2=scene2.scene.children.find(o=>o.userData.fountainFallback);
+ assert(fallback2&&fallback2.visible===false,'the atlas fountain hides once the GLB is alive');
+ assert.equal(well.children.filter(c=>/^Orbiting shard( detailed)? 00$/.test(c.name)).length,2,'both shard rings are tracked for the orbit animation');
+ const spireBefore=spire.position.y,shardBefore=shardA.position.x,shardZBefore=shardB.position.z;
+ scene2.active=true;frame(now+=1600);
+ assert(Math.abs(spire.position.y-spireBefore)>.001,'the floating spire bobs on the aether');
+ assert(Math.abs(shardA.position.x-shardBefore)>.001||Math.abs(shardA.position.z-shardZBefore)>.001,'the simple shard ring orbits the spire');
+ assert(Math.abs(shardB.position.x-shardBefore)>.001||Math.abs(shardB.position.z-shardZBefore)>.001,'the detailed shard ring counter-orbits the spire');
+ assert(crystalMat.emissiveIntensity>=.6&&crystalMat.emissiveIntensity<=1.1,'the shared crystal material breathes');
+ // v361 fidelity: the albedo was converted from linear to display space and the dropped
+ // KHR_materials_emissive_strength value (5.5 for the inscriptions) is re-applied on mount.
+ assert(Math.abs(inscriptionMat.color.g-.7354)<.01,'the GLB albedo is gamma-corrected for the unencoded backbuffer');
+ assert(Math.abs(inscriptionMat.emissiveIntensity-5.5)<1e-9,'the inscriptions glow at their authored emissive strength');
+ // v361 seating: the model's bench ring carries real seats (ids 112-127); clicking one through
+ // the camera picks the seat, exactly like the plaza benches and the bleacher tiers.
+ scene2.active=true;frame(now+=100);scene2.camera.updateMatrixWorld();
+ const seat112=w.PGSocialRules.SEATS[112],seatPt=new T.Vector3(seat112.x,seat112.height+.2,seat112.z).project(scene2.camera);
+ const clickWell=pt=>{const ev={clientX:(pt.x+1)*500,clientY:(1-pt.y)*350,pointerId:2,button:0,preventDefault(){}};host2.onpointerdown(ev);host2.onpointerup(ev)};
+ clickWell(seatPt);assert.equal(wellSeat,112,'clicking the Aetherwell bench ring selects its seat');
+ scene.setBattleState({pve:[],pvp:null});assert.equal(scene.scene.children.filter(o=>o.userData.battleKind).length,0,'battle sprites are disposed when the room clears');
  dom.window.close();
- console.log('PASS social scene: v300 per-tier rod glow, download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor and reentry');
+ console.log('PASS social scene: v300 per-tier rod glow, download retry, visible sitting fallback, native glow hooks, level aura tiers, follow camera, name anchor, reentry, live battle sprite lifecycle, v357 soft-light strike FX, native RO species trees and the stair-gated ring');
 })().catch(e=>{console.error(e);process.exitCode=1});

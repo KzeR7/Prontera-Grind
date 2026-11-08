@@ -27,7 +27,10 @@ img,canvas{-webkit-user-drag:none}
 .title{font-weight:bold;background:linear-gradient(#f3d98b,#d9b25c);border-bottom:2px solid var(--edge2);padding:4px 10px;font-size:14px;display:flex;justify-content:space-between;align-items:center}
 #wrap{width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;border:none;border-radius:0;box-shadow:none}
 #view{position:relative;flex:1;width:100%;line-height:0;touch-action:none;cursor:grab;overflow:hidden;background:#2b3a55}  /* v281: an absent or blank canvas must show scenery, not the white page */
-#view canvas{width:100% !important;height:100% !important;display:block}
+/* v359: scope the fill rule to the game canvas itself (#view's direct child). The DigiPet
+   panel and the Social Hub are also hosted in #view, and the old bare-descendant rule was
+   stretching every UI canvas inside them - the Pet Bag gear icons rendered huge. */
+#view>canvas{width:100% !important;height:100% !important;display:block}
 #ov{position:absolute;inset:0;pointer-events:none;overflow:hidden;line-height:1.2}
 #mobSpriteLayer,#weaponSpriteLayer{position:absolute;inset:0;overflow:hidden;pointer-events:none;user-select:none}
 /* v231: shown instead of the old map while the real field is still arriving. Before this the
@@ -916,9 +919,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=332">
-<link rel="stylesheet" href="assets/social-fishing.css?v=332">
-<link rel="stylesheet" href="assets/friends.css?v=273">
+<link rel="stylesheet" href="assets/social.css?v=361">
+<link rel="stylesheet" href="assets/social-battle.css?v=361">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=361"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1061,8 +1064,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/boss-fx.js?v=249"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
-<script src="assets/bgm.js?v=206"></script>
-<script src="assets/combat-audio.js?v=190"></script>
+<script src="assets/bgm.js?v=207"></script>
+<script src="assets/combat-audio.js?v=354"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1071,6 +1074,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
      kit v2 shipped, and this tag pointed at a file that no longer exists in the tree. kit_sim
      asserts it is never loaded again. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
+   <!-- v360: vendored r128 examples/js loader so the Social Hub can mount the owner's Prontera Grand Aetherwell GLB (assets/Fountainfile/). -->
+   <script src="assets/vendor/GLTFLoader.r128.js?v=361"></script>
 <script>
 const $=id=>document.getElementById(id);
 // Owner request (2026-10-24): no browser menu anywhere in the game - a right-click used to offer
@@ -1312,8 +1317,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-06 haven-v332 owner stamp by id, save watchdog';   // shown on the login card - confirms which file you loaded
-$('buildTag').textContent='build '+BUILD;
+const BUILD='2026-11-08 haven-v361 Aetherwell at true scale, seatable ring, hub-first arrivals';   // shown on the login card - confirms which file you loaded$('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
 // Assassin and Assassin Cross use katars or daggers. A katar occupies both hands; daggers support an offhand dagger.
@@ -3666,6 +3670,11 @@ async function logout(){
   try{await cloudLogout()}catch(e){}
   location.reload()
 }
+// v361 (owner plan, from the arena/6673f39f round): a brand-new account starts in the Social
+// Hub around the Aetherwell instead of on the field. While this is pending the field render and
+// the battle are held back; the first map pick (gotoField) or the hub's Field button starts
+// them. Returning players are exactly as before.
+let hubFirstPending=false;
 function initSession(gm,newAccount=false){
   // v88.6: a save in this browser that belongs to another account is not loaded - nothing starts, and
   // nothing is written over it. The login card says why.
@@ -3683,9 +3692,12 @@ function initSession(gm,newAccount=false){
     if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);
     if(typeof foldDupPets==='function')foldDupPets();        // v75: one pet per species, duplicates become Bond
     applyOfflineProgress();
-    $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';ui();
+    $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';
+    if(newAccount&&typeof PGSocial!=='undefined'){hubFirstPending=true;respawn=1e9}
+    else ui();
     $('loginOverlay').style.display='none';log(newAccount?`Account ready — welcome, ${currentUser}!`:`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
-    if(typeof maybeGuide==='function')maybeGuide();
+    if(hubFirstPending){PGSocial.enter() /* the beginner guide runs on the first field render instead */}
+    else if(typeof maybeGuide==='function')maybeGuide();
     try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
   }catch(err){S=null;showErr('Could not start: '+err.message)}
 }
@@ -4512,7 +4524,11 @@ async function initSessionFromCloud(u,gm,isNew,id){
     }else{
       S=fresh();S.gm=!!gm;S.q=['kill','loot','boss'].map(newQuest);CLOUD.ver=0;CLOUD.dirty=true;
       if(typeof BGM!=='undefined')BGM.sync(S.mp);
-      cloudSession(u,gm,CLOUD.id);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
+      // v361: a brand-new cloud account gets the same hub-first welcome as a local one.
+      if(isNew&&typeof PGSocial!=='undefined'){hubFirstPending=true;respawn=1e9}
+      else{cloudSession(u,gm,CLOUD.id);ui()}
+      $('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
+      if(hubFirstPending){cloudSession(u,gm,CLOUD.id);PGSocial.enter()}
       log('Welcome, '+u+'! Your progress will follow you to any device.','r1','cloud');
     }
   }
@@ -8410,7 +8426,10 @@ const gotoField=(m,l)=>{
   // haven-v158: on ascension maps, place the hero at the field entry so they walk into the zone
   // instead of appearing in the middle of it. The roam logic will then walk them forward.
   if(walk)startAstralJourney(from,l);else if(m>=10){pl.x=0;pl.z=Z1-1.5;pl.wz=Z1-1.5;pl.wx=null;}
-  qRefresh();ui();save()};
+  qRefresh();ui();save();
+  // v361: the first map pick of a hub-first account starts the field - release the battle that
+  // was held back at login and run the beginner guide that normally accompanies the first render.
+  if(hubFirstPending){hubFirstPending=false;if(typeof maybeGuide==='function')maybeGuide()}};
 // ---------- Mail & Announcements + Daily Reward Roulette ----------
 const DAILY_WHEEL_SEGMENTS=[
   {id:'ori',resource:'ori',amount:15,badge:'×15',rate:33,label:'15 × Oridecon',short:'Oridecon',desc:'Weapon refinement ore (33%)',weight:33,color:'#9c3b16',colorInner:'#42160a',accent:'#ffd08a',tier:'common',icon:'⛏'},
@@ -13609,10 +13628,14 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/social-rules.js?v=332"></script>
-<script src="assets/social-poker.js?v=332"></script>
-<script src="assets/social-scene.js?v=332"></script>
-<script src="assets/social-fishing.js?v=332"></script>
-<script src="assets/social.js?v=332"></script>
-</body>
+<script src="assets/digimon/roster.js?v=361"></script>
+<script src="assets/digimon/base-stats.js?v=361"></script>
+<script src="assets/social-rules.js?v=361"></script>
+<script src="assets/social-poker.js?v=361"></script>
+<script src="assets/digimon-sanctuary.js?v=361"></script>
+<script src="assets/digimon-battle.js?v=361"></script>
+<script src="assets/social-digimon.js?v=361"></script>
+<script src="assets/social-scene.js?v=361"></script>
+<script src="assets/social-fishing.js?v=361"></script>
+<script src="assets/social.js?v=361"></script></body>
 </html>

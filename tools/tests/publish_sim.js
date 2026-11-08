@@ -115,6 +115,8 @@ t('dev-only art does not ride along in the publish tree', () => {
   assert.ok(!fs.existsSync(path.join(out,'assets/weapons_manifest.json')), 'the weapons manifest is build metadata');
   assert.deepStrictEqual(fs.readdirSync(path.join(out,'assets')).filter(f=>/^mob_.+\.png$/.test(f)), [],
     'mob preview art is dev-only');
+  assert.ok(!fs.existsSync(path.join(out,'assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png')),
+    'the Aetherwell preview render is dev-only reference material');
 });
 
 t('the published tree is small enough to stay honest', () => {
@@ -129,12 +131,21 @@ t('the published tree is small enough to stay honest', () => {
   // asserts `src="assets/endgame/` never appears in index.html - and it already carries its own
   // 4.25 MiB ceiling below, so it is measured there and not again here, exactly like the parked
   // native field pack and the social portraits above. Everything that ships is still covered by a
-  // ceiling: this line for the classic game, 4.25 for the explorer, plus the combined 140.5.
+  // ceiling: this line for the classic game, separate optional packs, plus combined delivery.
   const endgameBytes=walk(path.join(out,'assets/endgame'));
+  // Approved complete Digimon roster: a small shared catalog, then one metadata JSON
+  // and one lossless WebP only when a form is shown. It has its own ceiling below,
+  // is excluded from classic, and remains part of combined delivery.
+  const digimonBytes=walk(path.join(out,'assets/digimon'));
   // Illustrated Rune-Midgard World Atlas pack (v314): only requested when the player opens the
   // World Map window, budgeted separately at < 3.5 MiB (2.69 MiB measured) while still covered by
   // the combined runtime ceiling below.
   const worldMapBytes=walk(path.join(out,'assets/world-map'));
+  // v360: the owner's Prontera Grand Aetherwell GLB is the one deliberately-heavy classic-tree
+  // centerpiece (5.39 MiB measured 2026-11-07). Its 2.7 MiB preview render never ships - the hub
+  // fetches only the GLB - so it is measured here on its own instead of diluting the classic set.
+  const fountainBytes=walk(path.join(out,'assets/Fountainfile'));
+  assert.ok(fountainBytes > 0 && fountainBytes/1048576 < 6.5, 'the Aetherwell centerpiece exceeds its separate 6.5 MiB budget');
   assert.ok(worldMapBytes > 0 && worldMapBytes/1048576 < 3.5, 'illustrated world-map assets exceed their separate 3.5 MiB budget');
   for (const rel of [
     'world-map-cleaned.webp',
@@ -159,15 +170,32 @@ t('the published tree is small enough to stay honest', () => {
   // whale family: the fish pack is 2.4 MiB of the 11.32 measured here; the other three social packs
   // are unchanged. The combined ceiling below still covers every byte.
   assert.ok(socialBytes/1048576 < 12, 'native social assets exceed their separate 12 MiB budget (11.32 measured 2026-11-03)');
-  // 59.5 MiB, not the original 62.5: the classic game measures 58.98 MiB once the separately-budgeted
-  // explorer is out of the sum, so 62.5 would have handed back 3.5 MiB of silent headroom.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes)/1048576 < 59.5, 'existing runtime assets exceed their 59.5 MiB budget (59.00 measured 2026-11-03)');
+  // 59.75 MiB, not 59.5: v355's plaza additions (grind-party UI, mini-map/big-map painter, the
+  // Social-Hub BGM player mount) are classic-tree code and pushed the measured set to 59.51 MiB.
+  // The v354 care/DigiDex/gear work had already spent the old 0.5 MiB of deliberate headroom.
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes)/1048576 < 59.75, 'existing classic runtime assets exceed their unchanged 59.75 MiB budget');
+  assert.ok(digimonBytes/1048576 < 40, 'lazy Digimon roster exceeds its separate 40 MiB budget');
   assert.ok(nativeBytes/1048576 < 68, 'ten native field sets and seventy lossless monster atlases exceed their separate 68 MiB budget');
-  assert.ok(mb < 143.5, 'combined runtime delivery exceeds 143.5 MiB');
+  // v342 owner approval: all 280 forms as a roughly 36 MiB on-demand pack. The
+  // combined ceiling moves from 143.5 to 180 MiB for that explicit addition;
+  // classic remains 59.5 and every optional group retains a separate ceiling.
+  assert.ok(mb < 180, 'combined runtime delivery exceeds the approved 180 MiB ceiling');
   const fourth=path.join(out,'assets/wardrobe/fourth/v1');assert.ok(walk(fourth)<6.25*1048576,'six fourth jobs share hair and accessory pixels');
   const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<13.5*1048576,'nineteen classes and fifty-two accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));
   for(const r of Object.values(catalog.assets))for(const key of ['meta','image'])assert.ok(fs.existsSync(path.join(wardrobe,r[key])),'native catalog asset is published');
+});
+
+t('all 280 Digimon forms ship as bounded per-form lazy assets',()=>{
+ const dir=path.join(out,'assets/digimon/v3'),catalog=JSON.parse(fs.readFileSync(path.join(dir,'catalog.json'),'utf8')),entries=Object.entries(catalog.species);
+ assert.equal(catalog.version,3);assert.equal(entries.length,280);assert.equal(fs.readdirSync(dir).length,561,'280 WebP + 280 metadata + one catalog');
+ assert.ok(!fs.existsSync(path.join(out,'assets/digimon/v2')),'superseded 16-form pack is not shipped twice');
+ assert.ok(src.includes('assets/digimon/roster.js'),'shared roster whitelist is published');
+ assert.ok(!/(?:src|href)="assets\/digimon\/v3\//.test(src),'HTML must not eagerly load an atlas or per-form record');
+ let frames=0,imageBytes=0;
+ for(const [id,r] of entries){assert.equal(r.image,id+'.webp');assert.equal(r.meta,id+'.json');const image=fs.statSync(path.join(dir,r.image));assert.equal(image.size,r.bytes);assert.ok(fs.statSync(path.join(dir,r.meta)).size>0);imageBytes+=image.size;frames+=r.frames}
+ assert.equal(frames,17666);assert.ok(imageBytes/1048576<34,'lossless animation images stay within the measured 34 MiB allowance');
+ const loader=fs.readFileSync(path.join(out,'assets/social-digimon.js'),'utf8');assert.ok(loader.includes("fetch('assets/digimon/v3/'+descriptor.meta)"));assert.ok(loader.includes('CACHE_LIMIT=32'));
 });
 
 t('native fields ship only pinned runtime outputs byte for byte',()=>{

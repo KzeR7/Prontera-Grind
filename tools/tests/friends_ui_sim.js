@@ -9,7 +9,7 @@
  let html = fs.readFileSync(path.join(repo, 'index.html'), 'utf8');
  // Swap the tagged script tags for their real source, so nothing here can drift from what ships.
  for (const file of ['assets/wardrobe.js', 'assets/shop-catalog.js', 'assets/fourth-jobs.js', 'assets/wardrobe-ui.js',
-                     'assets/shop.js', 'assets/friends.js', 'assets/social-rules.js', 'assets/social.js']) {
+                     'assets/shop.js', 'assets/friends.js', 'assets/digimon/roster.js', 'assets/social-rules.js', 'assets/social.js']) {
    const start = html.indexOf('<script src="' + file + '?v=');
    assert.ok(start >= 0, file + ' is loaded by index.html');
    const end = html.indexOf('</script>', start) + '</script>'.length;

@@ -424,3 +424,194 @@ body.social-open #bgmPlayer{display:none!important}
 /* v297: pond announcements in Local chat - a centred system line, not a player message. */
 .social-line.social-line-sys{display:block;padding:5px 8px;margin:3px 0;border-left:2px solid #7fd3e8;border-radius:4px;background:#7fd3e815;color:#cdeaf5;font-style:italic}
 .social-line.social-line-sys time{opacity:.55;margin-right:6px;font-style:normal}
+
+/* Sanctuary companion is a separate, cosmetic preview, never the field pet selector. */
+.social-digimon-label{white-space:nowrap;color:#f2ecdb;font:11px "Trebuchet MS",sans-serif}.social-digimon-label select{background:#294147;color:#f2ecdb;border:1px solid #7e9391;border-radius:3px;padding:6px 3px;font:inherit}
+
+.social-sanctuary-label{position:absolute;transform:translate(-50%,-50%);pointer-events:none;color:#36564e;background:#e7e1cbdd;border:1px solid #82988a;border-radius:4px;padding:5px 8px;white-space:nowrap;font:700 10px "Trebuchet MS",sans-serif;letter-spacing:.08em;text-shadow:none}
+
+/* Dedicated Digimon Sanctuary window. The companion is still a presentation preview. */
+#sanctuaryPanel{position:absolute;z-index:60;left:50%;top:50%;transform:translate(-50%,-50%);width:min(840px,calc(100% - 24px));max-height:calc(100% - 28px);overflow:auto;box-sizing:border-box;background:#101c22;color:#edf5ed;border:1px solid #6b9385;border-radius:14px;box-shadow:0 24px 80px #081116c9;font:13px/1.45 "Trebuchet MS",sans-serif}
+#sanctuaryPanel[hidden]{display:none!important}#sanctuaryOpen{border-color:#91bda2!important;color:#e0f6dc!important;background:linear-gradient(180deg,#315849,#1d3c33)!important}
+.sanctuary-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:22px 26px 19px;background:radial-gradient(ellipse at 85% 0%,#547c67 0%,transparent 52%),linear-gradient(130deg,#203e37,#172d30);border-bottom:1px solid #516c62}
+.sanctuary-head small,.sanctuary-kicker{font-size:9px;font-weight:bold;letter-spacing:.18em;color:#c2d9b3}.sanctuary-head h2{margin:5px 0 1px;color:#f5f1dd;font:26px/1.2 Georgia,serif}.sanctuary-head p,.sanctuary-intro p{margin:4px 0 0;color:#aec3bb;font-size:12px}.sanctuary-head button{flex:none;width:34px;height:34px;border:1px solid #789588;border-radius:7px;background:#172e2a;color:#e7f0e6;font-size:22px;cursor:pointer}
+.sanctuary-content{padding:22px 26px 24px}.sanctuary-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.sanctuary-intro h3{margin:4px 0;font:20px Georgia,serif;color:#f2ead6}.sanctuary-badge{border:1px solid #678b79;border-radius:20px;padding:5px 9px;color:#b5d3b6;font-size:9px;font-weight:bold;letter-spacing:.12em}
+.sanctuary-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}.sanctuary-card{min-width:0;text-align:left;padding:9px;border:1px solid #3a554f;border-radius:9px;background:#1a2b2d;color:#f1f0e6;cursor:pointer}.sanctuary-card:hover,.sanctuary-card:focus-visible{border-color:#b7d6b2;outline:none}.sanctuary-card[aria-pressed=true]{border-color:#e2c882;box-shadow:0 0 0 1px #e2c882;background:#253b35}.sanctuary-art{display:block;height:100px;overflow:hidden;border-radius:6px;background:radial-gradient(ellipse at center,#53735e 0%,#293f38 55%,#20332f 100%)}.sanctuary-art canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;transform:scale(1.6) translateY(-5%)}.sanctuary-card strong,.sanctuary-card small{display:block;margin:8px 2px 0}.sanctuary-card strong{font:16px Georgia,serif}.sanctuary-card small{font-size:8px;letter-spacing:.1em;color:#9fbdae}
+.sanctuary-card-stage{display:block;margin:5px 2px 0;color:#b4c8bd;font-size:10px}.sanctuary-roster-tools{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:10px;margin-top:16px}.sanctuary-roster-tools label{color:#aac2b3;font-size:10px;font-weight:bold;letter-spacing:.08em}.sanctuary-roster-tools input,.sanctuary-roster-tools select{display:block;box-sizing:border-box;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #547467;border-radius:6px;background:#172a29;color:#edf5ed;font:12px "Trebuchet MS",sans-serif;letter-spacing:normal}.sanctuary-roster-tools input:focus,.sanctuary-roster-tools select:focus{outline:2px solid #b7d6b2;outline-offset:1px}.sanctuary-roster-status{display:flex;justify-content:space-between;gap:10px;margin-top:10px;color:#9fb8aa;font-size:10px}.sanctuary-roster-status span+span{color:#c4d5bd}.sanctuary-pager{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px}.sanctuary-pager button{padding:6px 10px;border:1px solid #5d7c6d;border-radius:5px;background:#203730;color:#e3f0e7;cursor:pointer;font-size:11px}.sanctuary-pager button:disabled{opacity:.4;cursor:default}.sanctuary-pager span{min-width:80px;text-align:center;color:#b8ccbf;font-size:11px}
+@media(max-width:600px){.sanctuary-roster-tools{grid-template-columns:minmax(0,1fr) 126px}.sanctuary-roster-status span+span{display:none}}
+.sanctuary-selection{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 0;color:#dbe8d9}.sanctuary-selection button{padding:8px 12px;border:1px solid #658276;border-radius:5px;background:#203730;color:#e3f0e7;cursor:pointer}.sanctuary-selection button:disabled{opacity:.45;cursor:default}
+.sanctuary-future{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:13px;border:1px solid #394b49;border-radius:8px;background:#152426}.sanctuary-future b{width:100%;font-size:9px;letter-spacing:.14em;color:#9cb8a9}.sanctuary-future span{font-size:10px;color:#bdcfc4;background:#263b36;padding:3px 8px;border-radius:20px}.sanctuary-future small{color:#9baea7;font-size:11px}
+@media(max-width:600px){#sanctuaryPanel{max-height:calc(100% - 16px);width:calc(100% - 16px)}.sanctuary-head{padding:15px 16px}.sanctuary-head h2{font-size:21px}.sanctuary-content{padding:14px 16px 16px}.sanctuary-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}.sanctuary-art{height:68px}.sanctuary-card{padding:6px}.sanctuary-card strong,.sanctuary-card small{margin-top:4px}.sanctuary-selection{padding:10px 0}.sanctuary-future{padding:9px}}
+/* Sanctuary care, progression and no-stakes sparring. */
+.sanctuary-message{color:#a8c0b4;font-size:11px;margin:8px 0}.sanctuary-message:empty{display:none}.sanctuary-empty{padding:20px;border:1px dashed #526e61;border-radius:8px;color:#bed0c2;text-align:center}
+.sanctuary-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.sanctuary-section{min-width:0;padding:15px;border:1px solid #3c5750;border-radius:9px;background:#192a29}.sanctuary-section-head{display:flex;justify-content:space-between;gap:8px;align-items:start}.sanctuary-section small{color:#a8c6b2;font-weight:bold;font-size:9px;letter-spacing:.12em}.sanctuary-section h3{margin:4px 0 8px;font:18px Georgia,serif;color:#f3ecd9}.sanctuary-section p{font-size:11px;line-height:1.5;color:#bbcec2;margin:6px 0 10px}.sanctuary-level{font-size:10px;color:#e5d29a;white-space:nowrap}.sanctuary-meters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.sanctuary-meters span{font-size:11px;color:#c5d7cc}.sanctuary-meters b{float:right}.sanctuary-meters i{display:block;clear:both;height:5px;margin-top:5px;background:#0e1b1a;border-radius:6px;overflow:hidden}.sanctuary-meters em{display:block;height:100%;background:#b4d08e}.sanctuary-meters span+span em{background:#dcaa78}
+.sanctuary-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+/* v359: the training rows stretch to a shared height per row so all four stat boxes match -
+   the focus box no longer reads smaller next to a wrapped description. */
+.sanctuary-train{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px}.sanctuary-actions button,.sanctuary-train button{padding:7px 10px;color:#e9f3e8;border:1px solid #729581;border-radius:5px;background:#29463a;font:11px "Trebuchet MS",sans-serif;cursor:pointer}.sanctuary-actions button:hover:not(:disabled),.sanctuary-train button:hover:not(:disabled){border-color:#dfcd91;background:#355a47}.sanctuary-actions button:disabled,.sanctuary-train button:disabled{opacity:.48;cursor:not-allowed}.sanctuary-train button{flex:1 1 42%;display:flex;justify-content:space-between}.sanctuary-battle{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;text-align:center;gap:6px;background:radial-gradient(ellipse,#4c6c57,#243b32);border-radius:7px}.sanctuary-battle>div{min-width:0;display:flex;flex-direction:column;align-items:center}.sanctuary-battle canvas{width:100px;height:82px;object-fit:contain;image-rendering:pixelated;transform:scale(1.5);transform-origin:center}.sanctuary-battle strong{font:14px Georgia,serif;z-index:1}.sanctuary-battle small{font-size:10px;letter-spacing:0;z-index:1}.sanctuary-battle>span{color:#e7d093;font:bold 15px Georgia,serif}.sanctuary-battle-log{min-height:18px}
+@media(max-width:600px){.sanctuary-sections{grid-template-columns:1fr}.sanctuary-section{padding:12px}.sanctuary-selection{position:sticky;top:0;z-index:2;background:#101c22}}
+
+/* On-map station controls and compact live training status. */
+.social-sanctuary-label[data-station]{pointer-events:auto;cursor:pointer;appearance:none}.social-sanctuary-label[data-station]:hover,.social-sanctuary-label[data-station]:focus-visible{background:#fff2c7;outline:2px solid #bb9952}
+#sanctuaryWorldStatus{position:absolute;z-index:20;top:116px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;width:min(360px,calc(100% - 24px));box-sizing:border-box;padding:8px 12px;border:1px solid #99b29d;border-radius:7px;background:#172e2aee;color:#ecf1df;font:12px "Trebuchet MS",sans-serif;box-shadow:0 4px 15px #0005}#sanctuaryWorldStatus[hidden]{display:none}#sanctuaryWorldStatus span{flex:1;min-width:0}#sanctuaryWorldStatus button{flex:none;border:1px solid #a9bda1;border-radius:5px;background:#354e3e;color:#fff;padding:5px 8px;white-space:nowrap} @media(max-width:600px){#sanctuaryWorldStatus{top:158px;font-size:11px}}
+/* v358: the stat rows are a two-line stack - stat and value on the first line, the plain
+   description on its own muted line, instead of three flex items squeezed onto one row. */
+.sanctuary-train span{flex:1 1 42%;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 8px;padding:8px 11px;color:#f0f6ec;border:1px solid #4c6c5e;border-radius:5px;background:#243a31;font:600 12px "Trebuchet MS",sans-serif}
+.sanctuary-meter-note{display:block;margin-top:7px;color:#8fae9d;font-size:10.5px}.sanctuary-roll-pool{margin:7px 0 0;padding:7px 9px;border:1px dashed #6b8f7c;border-radius:6px;color:#cfe4d4;font-size:11px}
+
+#sanctuaryNearby{position:absolute;z-index:20;top:116px;left:50%;transform:translateX(-50%);box-sizing:border-box;width:190px;padding:9px 14px;border:1px solid #d0c28d;border-radius:7px;background:#28493af2;color:#fff3cd;font:bold 12px "Trebuchet MS",sans-serif;box-shadow:0 4px 15px #0005;cursor:pointer}#sanctuaryNearby[hidden]{display:none}@media(max-width:600px){#sanctuaryNearby{top:158px}}
+.sanctuary-slot-picker{display:flex;gap:8px;margin-top:14px}.sanctuary-slot-picker button{flex:1;padding:8px;border:1px solid #6d8d7b;border-radius:6px;background:#1b302c;color:#c7dacc;cursor:pointer}.sanctuary-slot-picker button[aria-pressed=true]{border-color:#e2c882;color:#fff3cb;background:#36513f}
+
+/* v351 partner slots and gear: four status cards up top, the owned collection below. */
+.sanctuary-partners-section{margin-top:14px}
+.sanctuary-partner-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.sanctuary-partner-card{display:flex;flex-direction:column;min-width:0;padding:10px;border:1px solid #3a554f;border-radius:9px;background:#1a2b2d;color:#f1f0e6;cursor:pointer;text-align:left}
+.sanctuary-partner-card:hover,.sanctuary-partner-card:focus-visible{border-color:#b7d6b2;outline:none}
+.sanctuary-partner-card.is-active{border-color:#e2c882;box-shadow:0 0 0 1px #e2c882;background:#253b35}
+.sanctuary-partner-card.is-empty{opacity:.72;background:#152426}
+.sanctuary-partner-card canvas{width:100%;height:96px;object-fit:contain;image-rendering:pixelated;transform:scale(1.5) translateY(-4%)}
+.sanctuary-partner-empty{display:flex;align-items:center;justify-content:center;height:96px;font-size:26px;color:#5c7a6c;border-radius:6px;background:radial-gradient(ellipse at center,#33503f 0%,#223831 60%,#1c2d29 100%)}
+.sanctuary-partner-head{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-bottom:7px}
+.sanctuary-partner-head b{font-size:9px;letter-spacing:.12em;color:#9fbdae}
+.sanctuary-partner-activity{padding:2px 6px;border-radius:4px;border:1px solid #557768;background:#1b302c;color:#c9dbcf;font-size:8px;letter-spacing:.08em;font-style:normal}
+.sanctuary-partner-card.is-training .sanctuary-partner-activity{border-color:#e2c882;color:#fff3cb}
+.sanctuary-partner-card.is-grinding .sanctuary-partner-activity{border-color:#9ed6b0;color:#dff5e4}
+.sanctuary-partner-card.is-pvp .sanctuary-partner-activity{border-color:#f3c876;color:#ffe9bd}
+.sanctuary-partner-activity.is-idle{opacity:.6}
+.sanctuary-partner-flag{padding:2px 6px;border-radius:4px;background:#e2c882;color:#2a2410;font-size:8px;font-weight:bold;letter-spacing:.1em;font-style:normal}
+.sanctuary-partner-card>strong{margin-top:7px;font:15px Georgia,serif}
+.sanctuary-partner-card>small{margin-top:4px;font-size:8px;letter-spacing:.06em;color:#9fbdae;line-height:1.5}
+.sanctuary-collection{margin-top:16px}
+.sanctuary-collection-note{margin:8px 0 0;color:#9fb8aa;font-size:10px}
+#sanctuaryCollectionHint{color:#e5d29a}
+.sanctuary-gear{margin-top:16px}
+.sanctuary-gear-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sanctuary-gear-item b{color:#e5d29a}
+.sanctuary-gear-holder{color:#dfcd91!important}
+.sanctuary-gear-item .sanctuary-actions{display:flex;flex-wrap:wrap;gap:6px;width:100%;margin-top:auto}
+.sanctuary-gear-item .sanctuary-actions button{width:auto;flex:1 1 auto;margin-top:0;padding:7px 8px;white-space:nowrap}
+/* v358: gear cards - the equip select and the max-tier / refined labels sit in line with
+   the buttons as matching controls, not loose small text on their own rows. */
+.sanctuary-gear-equip{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid #729581;border-radius:5px;background:#29463a;color:#e9f3e8;font:11px "Trebuchet MS",sans-serif}
+.sanctuary-gear-equip select{max-width:130px;padding:3px 4px;border:1px solid #557768;border-radius:4px;background:#16211d;color:#f0f6ec;font:11px "Trebuchet MS",sans-serif}
+.sanctuary-gear-max{display:inline-flex;align-items:center;padding:7px 10px;border:1px dashed #55705f;border-radius:5px;background:#1d322c;color:#9fb8aa!important;font:11px "Trebuchet MS",sans-serif}
+.sanctuary-gear-item .sanctuary-actions{margin-top:8px}
+.sanctuary-gear-strip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:4px}
+.sanctuary-gear-strip span{padding:7px 9px;border:1px solid #405e51;border-radius:6px;background:#142523;color:#cfe2d3;font-size:10px}
+.sanctuary-gear-strip span b{text-transform:uppercase;font-size:8px;letter-spacing:.12em;color:#9fbdae;margin-right:6px}
+.sanctuary-gear-strip span.is-empty{opacity:.6}
+#sanctuaryIndexBranchClear{padding:7px 10px;border:1px solid #c5a961;border-radius:5px;background:#3b4934;color:#ffe9bd;font:11px "Trebuchet MS",sans-serif;cursor:pointer}
+@media(max-width:600px){.sanctuary-partner-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.sanctuary-partner-card canvas{height:66px}.sanctuary-gear-grid{grid-template-columns:1fr}.sanctuary-gear-strip{grid-template-columns:1fr}}
+
+/* Owned collection, pet bag and Cook Lina's Pet Coin shop. */
+.sanctuary-nav{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:17px;padding-bottom:12px;border-bottom:1px solid #304a43}.sanctuary-nav button{padding:8px 12px;border:1px solid #557768;border-radius:5px;background:#1b302c;color:#c9dbcf;font:11px "Trebuchet MS",sans-serif;cursor:pointer}.sanctuary-nav button[aria-pressed=true]{border-color:#e2c882;background:#36513f;color:#fff3cb}.sanctuary-wallet{margin-left:auto;color:#e5d29a;font-size:11px;white-space:nowrap}.sanctuary-wallet b{color:#fff1bd}.sanctuary-item-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.sanctuary-item{display:flex;flex-direction:column;align-items:flex-start;min-width:0;padding:13px;border:1px solid #405e51;border-radius:8px;background:#142523}.sanctuary-item-icon{font-size:27px;line-height:1.2}.sanctuary-item strong{margin-top:7px;color:#f1ead8;font:16px Georgia,serif}.sanctuary-item>b{margin-top:5px;color:#e5d29a;font-size:14px}.sanctuary-item small{margin:5px 0 12px;color:#a8c6b2;font-size:10px;line-height:1.45;letter-spacing:0}.sanctuary-item button{width:100%;margin-top:auto;padding:8px 7px;border:1px solid #729581;border-radius:5px;background:#29463a;color:#e9f3e8;font:11px "Trebuchet MS",sans-serif;cursor:pointer}.sanctuary-item button:hover:not(:disabled){border-color:#dfcd91;background:#355a47}.sanctuary-item button:disabled{opacity:.45;cursor:not-allowed}.sanctuary-bag,.sanctuary-shop{margin-top:16px}.sanctuary-hatch-result{margin-top:12px;padding:14px;border:1px solid #c5a961;border-radius:8px;background:linear-gradient(120deg,#3b4934,#273c32);text-align:center}.sanctuary-hatch-result>span{display:block;color:#e5d29a;font-size:9px;font-weight:bold;letter-spacing:.16em}.sanctuary-hatch-result>strong{display:block;margin:5px 0;color:#fff2c9;font:23px Georgia,serif}.sanctuary-hatch-result p{margin:5px 0 10px}.sanctuary-hatch-result button{padding:7px 12px;border:1px solid #d5c17e;border-radius:5px;background:#526044;color:#fff4d1;cursor:pointer}.sanctuary-help{color:#9fb8aa!important;font-size:10px!important}.sanctuary-shop .sanctuary-item{min-height:170px}@media(max-width:600px){.sanctuary-nav{gap:5px}.sanctuary-nav button{padding:7px 9px}.sanctuary-wallet{flex-basis:100%;margin:4px 0 0}.sanctuary-item-grid{grid-template-columns:1fr}.sanctuary-item{min-height:0!important}.sanctuary-section-head{flex-wrap:wrap}.sanctuary-level{white-space:normal}}
+
+/* v348: gold-trimmed plaza dock; camera gestures remain in-scene. */
+#socialHubToolbar{top:10px;width:max-content;max-width:calc(100% - 24px);min-height:58px;height:auto;flex-direction:row;align-items:center;gap:14px;padding:9px 12px;border:1px solid #c5a76b;border-radius:7px;background:linear-gradient(180deg,#293b39f5 0%,#172b2cf5 52%,#0e1d24f8 100%);box-shadow:inset 0 1px #ffe8ad38,inset 0 -1px #050b0d,0 6px 18px #07141266}
+#socialHubHeader{position:static;display:flex;align-items:center;gap:8px;padding:0 13px 0 1px;border-right:1px solid #a98c5466;white-space:nowrap;pointer-events:auto}
+#socialHubHeader h2{margin:0;color:#f4dfaa;font:600 17px/1.1 Georgia,serif;letter-spacing:.03em;text-shadow:0 1px 2px #000}
+#socialHubHeader p{margin:0;color:#c2d2c6;font-size:10px;line-height:1.2}
+.social-hub-title-row{gap:6px}#socialRoomSelect{padding:4px 6px;border:1px solid #aa9565;border-radius:4px;background:linear-gradient(#354944,#1a2d30);color:#f2e5c4;font-size:11px}
+#socialHubControls{position:static;max-width:none;flex-wrap:wrap;gap:6px}
+#socialHubControls button{min-height:34px;padding:7px 10px;border:1px solid #aa9565;border-radius:4px;background:linear-gradient(180deg,#3b4c49,#1c3032);color:#f4ecd8;font-size:11px;font-weight:600;line-height:1.15;box-shadow:inset 0 1px #fff2c422,0 1px 2px #0008;text-shadow:0 1px 2px #000}
+#socialHubControls button:hover,#socialHubControls button:focus-visible{border-color:#efd38b;background:linear-gradient(180deg,#50605a,#263b3b);outline:2px solid #d8ba7044;outline-offset:1px}
+#sanctuaryOpen{border-color:#c4ac6d!important;background:linear-gradient(180deg,#405848,#233b34)!important;color:#fff0c7!important}
+#socialSit{position:absolute;right:18px;bottom:calc(var(--docktop,76px) + 10px);z-index:8;min-width:58px;padding:8px 13px;border:1px solid #c5a76b;border-radius:5px;background:linear-gradient(180deg,#354a46,#14272c);box-shadow:inset 0 1px #ffe8ad30,0 3px 10px #0007;color:#f4dfaa;font:600 12px "Trebuchet MS",sans-serif;text-shadow:0 1px 2px #000;cursor:pointer}
+#socialSit:hover,#socialSit:focus-visible{border-color:#f3d68b;background:linear-gradient(180deg,#4b5e55,#20373a);outline:2px solid #d8ba7044;outline-offset:2px}
+#sanctuaryWorldStatus,#sanctuaryNearby{top:82px}
+@media(max-width:760px){#socialMiniMap{top:auto;left:10px;bottom:calc(var(--docktop,76px) + 58px);width:108px}#socialMiniMap canvas{width:106px;height:106px}
+#socialHubToolbar{top:6px;width:calc(100% - 12px);max-width:calc(100% - 12px);min-height:50px;gap:7px;padding:6px 8px}#socialHubHeader{gap:5px;padding-right:7px}#socialHubHeader h2{font-size:13px}#socialHubHeader p{font-size:9px}#socialHubControls{gap:4px}#socialHubControls button{min-height:30px;padding:6px 7px;font-size:10px}#socialSit{right:12px;bottom:calc(var(--docktop,76px) + 8px);padding:7px 11px}#sanctuaryWorldStatus,#sanctuaryNearby{top:68px}}
+@media(max-width:420px){#socialHubToolbar{gap:4px;padding:5px}#socialHubHeader{padding-right:5px}#socialHubControls{gap:3px}#socialHubControls button{min-height:29px;padding:5px;font-size:9px}#sanctuaryWorldStatus,#sanctuaryNearby{top:62px}}
+
+/* DigiPet: the header and close button stay put while only the content scrolls. */
+#sanctuaryPanel{display:flex;flex-direction:column;height:min(850px,calc(100% - 28px));max-height:calc(100% - 28px);overflow:hidden}
+#sanctuaryPanel[hidden]{display:none!important}.sanctuary-head{position:relative;z-index:3;flex:0 0 auto;align-items:center}.sanctuary-head>div{min-width:0}
+.sanctuary-head h2{display:flex;align-items:center;gap:9px}.digipet-logo{display:inline-flex;flex:0 0 35px;width:35px;height:35px;filter:drop-shadow(0 2px 3px #07140d88)}.digipet-logo svg{display:block;width:100%;height:100%}
+#sanctuaryClose{position:relative;z-index:4;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0 0 2px;line-height:1;text-align:center;box-shadow:0 2px 8px #0003}#sanctuaryClose:hover,#sanctuaryClose:focus-visible{border-color:#f0d58c;outline:2px solid #f0d58c55}
+.sanctuary-content{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#658579 transparent}
+.sanctuary-index{margin-top:16px}.sanctuary-index-tools{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:10px;margin-top:14px}.sanctuary-index-tools label{color:#aac2b3;font-size:10px;font-weight:bold;letter-spacing:.08em}.sanctuary-index-tools input,.sanctuary-index-tools select{display:block;box-sizing:border-box;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #547467;border-radius:6px;background:#172a29;color:#edf5ed;font:12px "Trebuchet MS",sans-serif;letter-spacing:normal}.sanctuary-index-tools input:focus,.sanctuary-index-tools select:focus{outline:2px solid #b7d6b2;outline-offset:1px}
+.digidex-stat-note{color:#9fb8aa!important;font-size:10px!important;line-height:1.5}.sanctuary-index-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.sanctuary-index-entry{--rank:#9db8a7;min-width:0;padding:12px;border:1px solid #3b5750;border-top:3px solid var(--rank);border-radius:8px;background:linear-gradient(145deg,#1a2d2b,#101f23);box-shadow:inset 0 1px #ffffff08}
+.sanctuary-index-entry[data-rank=baby1]{--rank:#bcc8c0}.sanctuary-index-entry[data-rank=baby2]{--rank:#8ed1a4}.sanctuary-index-entry[data-rank=rookie]{--rank:#78bce8}.sanctuary-index-entry[data-rank=champion]{--rank:#b59aea}.sanctuary-index-entry[data-rank=ultimate]{--rank:#e8a56c}.sanctuary-index-entry[data-rank=mega]{--rank:#f0d071}.sanctuary-index-entry[data-rank=mega-plus]{--rank:#f1889c}.sanctuary-index-entry[data-rank=armor]{--rank:#6ed7cf}
+.sanctuary-index-entry.is-owned{border-left-color:#d4ba72;box-shadow:inset 0 0 0 1px #d4ba7233}
+.digidex-owned-badge{margin-left:auto;flex:0 0 auto;padding:3px 9px;border:1px solid #d4ba72;border-radius:4px;background:linear-gradient(180deg,#4a3d1d,#2e2612);color:#ffe9a8;font:bold 10.5px "Trebuchet MS",sans-serif;letter-spacing:.09em;white-space:nowrap}.sanctuary-index-entry.is-current{box-shadow:inset 0 0 0 1px #d4ba7255}.sanctuary-index-entry>.digidex-card-head{display:flex;align-items:center;justify-content:flex-start;gap:10px}.digidex-portrait{display:block;flex:0 0 64px;width:64px;height:64px;border:1px solid var(--rank);border-radius:7px;background-color:#203831;background-image:url('digimon/digidex-portraits.webp');background-size:1280px 896px;background-position:var(--portrait-x) var(--portrait-y);background-repeat:no-repeat;image-rendering:pixelated;box-shadow:inset 0 0 14px #07141188}
+.digidex-title{display:flex;min-width:0;flex-direction:column;align-items:flex-start;gap:4px}.sanctuary-index-entry strong{min-width:0;color:#f2ead8;font:17px Georgia,serif;line-height:1.15;overflow-wrap:anywhere}.digidex-stage{display:inline-flex;padding:2px 7px;border:1px solid var(--rank);border-radius:12px;background:#0d1c20;color:var(--rank);font-size:9px;font-weight:700;line-height:1.2}.digidex-status{color:#a8bdb1;font-size:9.5px;font-weight:700;letter-spacing:.06em;line-height:1.35}.is-current .digidex-status{color:#efd58e}.is-unreachable .digidex-status{color:#e3a79b}
+.sanctuary-index-entry>.digidex-meta{display:block;margin-top:8px;color:#9db8a7;font-size:8px;letter-spacing:.09em;text-transform:uppercase}.digidex-base-layer{margin-top:9px;padding:8px;border:1px solid #334d48;border-radius:5px;background:#0e1d20}.digidex-base-layer>small{display:block;color:var(--rank);font-size:8px;font-weight:700;letter-spacing:.09em}.digidex-base-layer>div{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:6px}.digidex-base-layer span{color:#9eb4aa;font-size:8px;white-space:nowrap}.digidex-base-layer b{display:block;margin-top:2px;color:#f1e6c9;font-size:13px;font-weight:600}
+.digidex-owned-layer{margin-top:6px;padding:7px 8px;border-left:2px solid #d4ba72;background:#2a3329}.digidex-owned-layer>b{display:block;color:#e7cd84;font-size:8px;letter-spacing:.06em}.digidex-owned-layer>span{display:block;margin-top:4px;color:#e2e9db;font-size:10px}.digidex-owned-layer>small{display:block;margin-top:3px;color:#b5c8b7;font-size:8px;letter-spacing:.04em}
+.sanctuary-index-entry .digidex-paths{margin-top:8px}.sanctuary-index-entry p{margin:0!important}.sanctuary-index-entry p+p{margin-top:7px!important;padding-top:7px;border-top:1px solid #314842}.sanctuary-index-entry p b{display:block;color:var(--rank);font-size:9px;letter-spacing:.05em}.sanctuary-index-entry p span{display:block;margin-top:4px;color:#c0d1c5;font-size:10px;line-height:1.45;overflow-wrap:anywhere}.digidex-paths button{display:inline-block;margin:0 4px 4px 0;padding:2px 5px;border:1px solid #4f6e63;border-radius:3px;background:#1d3230;color:#d7e6d8;font:9px "Trebuchet MS",sans-serif;cursor:pointer}.digidex-paths button:hover,.digidex-paths button:focus-visible{border-color:var(--rank);color:#fff3cf;outline:1px solid var(--rank);outline-offset:1px}
+.sanctuary-index-entry>.digidex-route-note{display:block;margin-top:7px;color:#e0a795;font-size:9px;letter-spacing:normal;line-height:1.45}
+.battle-loot{color:#ead58e!important;font-weight:700}
+@media(max-width:720px){.sanctuary-index-list{grid-template-columns:1fr}}
+@media(max-width:600px){#sanctuaryPanel{height:calc(100% - 16px);max-height:calc(100% - 16px)}.digipet-logo{flex-basis:30px;width:30px;height:30px}.sanctuary-index-tools{grid-template-columns:minmax(0,1fr) 126px}.sanctuary-index-entry{padding:10px}}
+/* v354: compact gear cards with painted pixel icons, DigiDex assign + owned toggle, stat help */
+.sanctuary-gear-item{padding:10px}
+.sanctuary-gear-row{display:flex;align-items:center;gap:10px;width:100%;min-width:0}
+.sanctuary-gear-row canvas{width:48px;height:48px;flex:0 0 auto;border:1px solid #405e51;border-radius:6px;background:#0d1b19;image-rendering:pixelated}
+.sanctuary-gear-head{display:flex;flex-direction:column;min-width:0}
+.sanctuary-gear-head strong{margin-top:0;font-size:14px}
+.sanctuary-gear-head small{margin:2px 0 0}
+.sanctuary-care-note{margin:6px 0 0;color:#a8c6b2;font-size:10px;line-height:1.5}
+.sanctuary-train span small{flex-basis:100%;margin-top:2px;color:#9fb8aa;font-size:9.5px;line-height:1.35;font-weight:400;letter-spacing:.02em}
+.digidex-assign{margin-top:6px;padding:5px 9px;border:1px solid #729581;border-radius:5px;background:#29463a;color:#e9f3e8;font:10px "Trebuchet MS",sans-serif;letter-spacing:.06em;cursor:pointer;align-self:flex-start}
+.digidex-assign:hover:not(:disabled){border-color:#dfcd91;background:#355a47}
+.digidex-assign:disabled{opacity:.55;cursor:default}
+.sanctuary-index-owned{display:flex;align-items:center;gap:6px;color:#c9dbcf;font-size:11px;white-space:nowrap;cursor:pointer}
+.sanctuary-index-owned input{accent-color:#e2c882}
+
+/* v355: plaza mini-map (bottom-right, above Sit), the big map dialog and the hub music player. */
+/* v357: the mini-map lives at the top right, under the toolbar, where map overviews sit. */
+/* v358: the poker mini-bar owns the top right, so the mini-map sits top left, under
+   the toolbar, clear of every other panel. */
+#socialMiniMap{position:absolute;left:12px;top:calc(var(--socialhub-top,64px) + 10px);z-index:8;padding:3px;border:1.5px solid #c5a76b;border-radius:10px;background:linear-gradient(180deg,#243b31,#101f1a);box-shadow:inset 0 1px #ffe8ad26,0 5px 16px #0008;cursor:pointer;overflow:hidden}
+#socialMiniMap:hover,#socialMiniMap:focus-visible{border-color:#f3d68b;outline:2px solid #d8ba7044;outline-offset:2px}
+#socialMiniMap canvas{display:block;width:148px;height:148px;border-radius:7px;image-rendering:auto}
+#socialMapModal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:62;width:min(92vw,620px);max-height:min(92vh,720px);box-sizing:border-box;padding:12px 14px 12px;background:linear-gradient(180deg,#1c3129f5,#0e1c17f5);border:1.5px solid #d4b26a;border-radius:14px;box-shadow:0 18px 48px #000b;color:#f4dfaa;font:12px/1.45 "Trebuchet MS",sans-serif}
+#socialMapModal .social-map-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px}
+#socialMapModal .social-map-head strong{font-size:15px;letter-spacing:.4px;text-shadow:0 1px 2px #000}
+#socialMapClose{min-width:30px;min-height:30px;padding:4px 9px;border:1px solid #c5a76b;border-radius:6px;background:linear-gradient(180deg,#3a4a44,#182622);color:#f4dfaa;font:700 13px "Trebuchet MS",sans-serif;cursor:pointer}
+#socialMapClose:hover{border-color:#f3d68b;background:linear-gradient(180deg,#4b5e55,#20373a)}
+#socialMapCanvas{display:block;width:100%;height:auto;border:1px solid #849b9c66;border-radius:10px;background:#15221c}
+#socialMapModal .social-map-legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:9px;font-size:10.5px;color:#d8e2d0}
+#socialMapModal .social-map-legend span{display:inline-flex;align-items:center;gap:5px}
+.map-dot{width:9px;height:9px;border-radius:50%;display:inline-block;border:1px solid #0d1512}
+.map-dot.dot-self{background:#ffd257}.map-dot.dot-friend{background:#59d98c}.map-dot.dot-player{background:#8fb3ff}.map-dot.dot-fish{background:#5fd6d0}.map-dot.dot-battle{background:#ff6b57}
+.map-chip{width:10px;height:10px;border-radius:2px;display:inline-block;border:1px solid #0d1512}
+.map-chip.chip-farm{background:#7bb24f}.map-chip.chip-gym{background:#d08a3e}.map-chip.chip-ring{background:#c8543f}.map-chip.chip-poker{background:#b89652}.map-chip.chip-lake{background:#2e6f8a}
+#socialBgmMount{position:absolute;left:12px;top:calc(var(--socialhub-top,64px) + 178px);z-index:47;width:304px;background:linear-gradient(130deg,#22342ef7,#16241ff7);border:1px solid #c5a76b;border-radius:8px;box-shadow:0 12px 30px #0009;pointer-events:auto;font:10px/1.5 var(--e-font,"Trebuchet MS",sans-serif);color:#edf2e9}
+#socialBgmMount .bgm-player-bar{display:flex;align-items:center;gap:6px;padding:6px 8px}
+#socialBgmMount .bgm-ico{flex:none;color:#ffd257;font-size:12px}
+#socialBgmMount .bgm-now{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f4dfaa}
+#socialBgmMount .bgm-mode{flex:none;color:#9fb8a8}
+#socialBgmMount .bgm-ib{flex:none;width:24px;height:22px;border:1px solid #849b9c66;border-radius:4px;background:#1c2f2a;color:#d8e2d0;cursor:pointer;font:inherit}
+#socialBgmMount .bgm-ib:hover{border-color:#f3d68b;color:#ffe9ad}
+#socialBgmMount .bgm-player-body{border-top:1px solid #849b9c44;padding:6px 8px}
+#socialBgmMount .bgm-row{display:block;width:100%;text-align:left;padding:5px 7px;border:0;border-radius:4px;background:transparent;color:#d8e2d0;cursor:pointer;font:inherit}
+#socialBgmMount .bgm-row:hover{background:#ffffff12;color:#ffe9ad}
+#socialBgmMount .bgm-row.on{background:#ffd25722;color:#ffe9ad}
+#socialBgmMount .bgm-list{list-style:none;margin:4px 0;padding:0;max-height:180px;overflow:auto}
+#socialBgmMount .bgm-vol label{display:flex;align-items:center;gap:8px;color:#9fb8a8}
+#socialBgmMount .bgm-vol-range{flex:1;accent-color:#d4b26a}
+@media(max-width:760px){#socialMiniMap{right:12px;bottom:calc(var(--docktop,76px) + 52px)}#socialMiniMap canvas{width:104px;height:104px}#socialMapModal{width:calc(100% - 12px)}#socialBgmMount{width:min(304px,calc(100% - 24px))}}
+
+/* v355: grind-party panel and PvP lobby. */
+#socialPartyPanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:63;width:min(92vw,420px);box-sizing:border-box;padding:12px 14px;background:linear-gradient(180deg,#1c3129f5,#0e1c17f5);border:1.5px solid #d4b26a;border-radius:14px;box-shadow:0 18px 48px #000b;color:#f4dfaa;font:12px/1.5 "Trebuchet MS",sans-serif}
+#socialPartyPanel .social-party-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px}
+#socialPartyPanel .social-party-head strong{font-size:15px;text-shadow:0 1px 2px #000}
+#socialPartyClose{min-width:30px;min-height:30px;padding:4px 9px;border:1px solid #c5a76b;border-radius:6px;background:linear-gradient(180deg,#3a4a44,#182622);color:#f4dfaa;font:700 13px "Trebuchet MS",sans-serif;cursor:pointer}
+#socialPartyClose:hover{border-color:#f3d68b}
+#socialPartyPanel .social-party-section{margin:0 0 12px;padding:9px 10px;border:1px solid #849b9c44;border-radius:9px;background:#0d1815aa}
+#socialPartyPanel .social-party-section small{display:block;color:#9fb8a8;letter-spacing:.6px;font-size:9.5px;margin-bottom:6px}
+#socialPartyPanel .social-party-members,#socialPartyPanel .social-party-queue{list-style:none;margin:0 0 8px;padding:0}
+#socialPartyPanel .social-party-members li,#socialPartyPanel .social-party-queue li{padding:3px 6px;border-radius:5px;background:#ffffff0d;margin-bottom:3px;color:#d8e2d0}
+#socialPartyPanel .social-party-members li.is-leader{color:#ffe9ad;background:#ffd2571a}
+#socialPartyPanel .social-party-members em,#socialPartyPanel .social-party-queue em{color:#9fb8a8;font-style:normal;font-size:10.5px}
+#socialPartyPanel .social-party-invite{display:flex;gap:7px;margin:6px 0}
+#socialPartyPanel .social-party-invite select{flex:1;min-width:0;padding:6px 8px;border:1px solid #849b9c88;border-radius:6px;background:#0d1815;color:#edf2e9;font:inherit}
+#socialPartyPanel button{cursor:pointer;font:600 11.5px "Trebuchet MS",sans-serif;border-radius:6px;padding:7px 12px;border:1px solid #c5a76b;background:linear-gradient(180deg,#3a4a44,#182622);color:#f4dfaa}
+#socialPartyPanel button:hover:not([disabled]){border-color:#f3d68b}
+#socialPartyPanel button[disabled]{opacity:.45;cursor:not-allowed}
+#socialPartyPanel .social-party-start{border-color:#7bb24f;background:linear-gradient(180deg,#3d5c33,#1d3220);color:#dff3c9}
+#socialPartyPanel .social-party-leave{border-color:#a06055;background:linear-gradient(180deg,#4a2f2a,#2a1714);color:#f3d0c9}
+#socialPartyPanel .social-party-note{color:#9fb8a8;font-size:10.5px;margin:6px 0}
+#socialPartyPanel .social-party-invite-card{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 10px;border:1.5px solid #d4b26a;border-radius:9px;background:#241d0ecc;color:#ffe9ad}
+#socialPartyPanel .social-party-invite-card span{flex:1;min-width:140px}

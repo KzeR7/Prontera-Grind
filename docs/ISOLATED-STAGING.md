@@ -34,6 +34,45 @@ binding, synthetic save and unverified score, flags, prize creation and duplicat
 retries, and confirmed synthetic account and period cleanup. This is staging
 only; it does not validate live migration, anti-cheat integrity or load/cost.
 
+## Sanctuary online battle staging (owner-run)
+
+`tools/staging/sanctuary_hosted_stage.mjs` is the coordinated Pages + Social
+Worker launcher for reviewed commit `9a5fcec` (`haven-v350`). Unlike the older
+Pages-only rehearsal, it deploys **`prontera-social-staging` first**, then
+**`prontera-grind-staging`** with `SOCIAL` bound to that staging Worker and `DB`
+bound only to the documented `pg-staging` UUID. Its Durable Object namespace is
+therefore separate from the production `prontera-social` service. It applies no
+migrations and creates no test account.
+
+The launcher requires the owner's existing Windows setup, an already
+authenticated Wrangler CLI, Node/npm, Git Bash and a checkout containing PR #180.
+It archives the pinned commit into a fresh temporary directory, verifies the
+remote staging database identity and account schema before either deployment,
+builds `dist`, prints the unique staging URL, then verifies the deployed v350
+`version.txt` and checks that `/api/social` reaches authentication (401 rather
+than a missing-binding 503). Because the URL is printed first, a local network
+or probe failure cannot hide a completed deployment; the launcher distinguishes
+`verified and ready` from `deployment completed, but automatic verification did
+not pass`. It cannot accept another project, commit or database through
+arguments. No production project or database is targeted.
+
+From the owner checkout, fetch the PR and materialize only this launcher, then
+run it with the existing Wrangler login (do not paste credentials into chat):
+
+```sh
+git fetch origin arena/2a992c15-prontera-grind
+git checkout FETCH_HEAD -- tools/staging/sanctuary_hosted_stage.mjs
+node tools/staging/sanctuary_hosted_stage.mjs
+```
+
+Use the printed unique deployment URL or
+**`https://main.prontera-grind-staging.pages.dev`**. The bare project root can
+serve a different, older production-branch deployment; it is not the v350 branch
+URL. Use synthetic accounts only, in two isolated browser profiles for PvP. The
+launcher proves deployment identity and binding presence; it is not a two-client
+combat rehearsal. If post-deploy verification fails, inspect the named staging
+project before retrying rather than assuming that nothing changed.
+
 ## Safety boundaries
 
 - `tools/staging/local.mjs` creates an OS temporary directory with a freshly generated

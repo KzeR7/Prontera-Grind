@@ -35,6 +35,31 @@ require _routes.json
 require assets/sprite_pack_data.js
 require assets/class_skins_data.js
 require assets/weapon_joints_data.js
+require assets/digimon-sanctuary.js
+require assets/digimon-battle.js
+require assets/social-digimon.js
+require assets/digimon/roster.js
+require assets/digimon/v3/catalog.json
+node - "$ROOT" <<'NODE'
+const fs=require('fs'),path=require('path'),root=process.argv[2];
+const catalog=JSON.parse(fs.readFileSync(path.join(root,'assets/digimon/v3/catalog.json'),'utf8'));
+const entries=Object.entries(catalog.species||{});
+if(catalog.version!==3||entries.length!==280)throw Error('The complete 280-form Digimon v3 catalog is required');
+for(const [id,record] of entries)for(const key of ['image','meta']){
+ const file=path.join(root,'assets/digimon/v3',record[key]);
+ if(!fs.existsSync(file)||!fs.statSync(file).size)throw Error('Missing Digimon runtime asset: '+id+'/'+record[key]);
+}
+NODE
+require assets/digimon/sanctuary/arena-stone.webp
+require assets/digimon/sanctuary/timber-roof.webp
+for name in walkway-wood gym-sand gym-plaster; do require "assets/digimon/sanctuary/$name.webp"; done
+require assets/digimon/sanctuary/cc0/woodland-tree.webp
+for name in medieval_wood rough_pine_door roof_09; do require "assets/digimon/sanctuary/cc0/$name.webp"; done
+require assets/digimon/v1/catalog.json
+require assets/digimon/v1/agumon.png
+require assets/digimon/v1/gabumon.png
+require assets/digimon/v1/patamon.png
+require assets/digimon/v1/palmon.png
 require assets/wardrobe/v5/catalog.json
 require assets/wardrobe/fourth/v1/catalog.json
 require assets/kit/ro-spritesheet.png
@@ -56,6 +81,9 @@ rm -rf "$OUT/assets/wardrobe/v1" "$OUT/assets/wardrobe/v3" "$OUT/assets/wardrobe
 #   weapons_manifest.json   build metadata for make_weapon_pack.py, never fetched
 rm -rf "$OUT/assets/weapons" "$OUT/assets/weapons_manifest.json"
 rm -f "$OUT"/assets/mob_*.png
+# v360: the Aetherwell preview render is human reference material (2.7 MiB); the hub only ever
+# fetches assets/Fountainfile/Prontera_Grand_Aetherwell.glb itself.
+rm -f "$OUT/assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png"
 mkdir -p "$OUT/Updates"
 cp -r "$ROOT/Updates/Sprite" "$OUT/Updates/Sprite"
 

@@ -60,7 +60,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   w.WebSocket=class{constructor(){this.readyState=1;this.sent=[];sockets.push(this)}close(){this.readyState=3}send(raw){this.sent.push(JSON.parse(raw))}};
   Object.assign(w,{CLOUD:{on:true,user},S:{cls:'Novice',eq:{},zeny:0,poker:structuredClone(wallet)},trialDay:()=>day,tabs:[],wardrobeAppearance:()=>({version:1,sex:'m'}),logShown:()=>[],openTab:()=>{},save:()=>{saves.push(structuredClone(w.S.poker));w.localStorage.setItem('wallet_'+user,JSON.stringify(w.S.poker))},bars:()=>{},setInterval:()=>0,
    PGSocialScene:{create:async()=>({active:false,cameraState:{angle:0,pitch:0,distance:40},setCamera(){},resetCamera(){},clearPlayers(){},putPlayer(){},removePlayer(){},updatePoker(){},dealerBubble(){}})}});
-  w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social-poker.js','utf8'));w.eval(fs.readFileSync('assets/social.js','utf8'));
+  w.eval(fs.readFileSync('assets/digimon/roster.js','utf8'));w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social-poker.js','utf8'));w.eval(fs.readFileSync('assets/social.js','utf8'));
   const ws=sockets.at(-1);ws.onmessage({data:JSON.stringify({type:'hello',id:1,history:[]})});
   return {w,ws,saves,setDay:value=>{day=value}};
  }

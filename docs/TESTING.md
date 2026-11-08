@@ -19,14 +19,15 @@ installed in **one** command — with no `package.json`, installing one at a tim
 the previous one:
 
 ```sh
-npm install --no-save --package-lock=false jsdom three@0.128.0 ws miniflare@4.20260730.0
-node -e "require('jsdom');require('three');require('ws');require('node:sqlite');console.log('test dependencies ready')"
+npm install --no-save --package-lock=false jsdom three@0.128.0 ws miniflare@4.20260730.0 sharp@0.35.2
+node -e "require('jsdom');require('three');require('ws');require('sharp');require('node:sqlite');console.log('test dependencies ready')"
 ```
 
 `jsdom` + `three` are needed by anything that boots `index.html`; `ws` by anything that
 loads `tools/dev_server.js` (`dev_server_sim.js`, `social_api_sim.mjs`); `miniflare` by
 `social_worker_sim.mjs`, which now runs the plaza Worker's real modules in the local
-Cloudflare runtime. The game itself needs no npm install.
+Cloudflare runtime. `sharp` validates all 280 WebP atlases in `social_digimon_sim.js`
+and rebuilds the v3 pack. The game itself needs no npm install.
 
 **Full git history.** A few suites read old revisions (`skill_balance_sim.js`,
 `card_star_balance_sim.js`, `hosted_launch_stage_sim.js`, `hosted_scrypt_prepare_sim.js`)
@@ -46,15 +47,34 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```
 
-## Latest local gate (haven-v262)
+## Latest local gate (haven-v346)
 
-The most recent complete local run had **164 passes / 1 failure** across 165 suites.
-The one failure is the previously known intermittent camp-ring smoke assertion; the
-owner chose to retain the current camp layout, and that assertion was not changed.
-The new preview runtime and hosted launch package tests were added after the run began
-and passed separately; their complete-suite run is still pending. No dependency skips
-were reported. Preview configuration, local workerd preview routing and all three
-generated-asset checks passed. This is local evidence only.
+The 2026-11-06 complete local run passed **207 checks / 0 failures** on Node
+22.22.3: four generated-asset/config checks, 189 `*_sim.js`, eight `*_sim.mjs`,
+and six `*_smoke.js` suites. There were no dependency skips. This includes the
+complete 280-form asset validation, deterministic Sanctuary combat and room
+authority, Solo gym/field UI simulation, unresponsive-Worker intent recovery,
+a real workerd/two-WebSocket field-and-ring rehearsal, publish-size checks, and
+the fixed historical staging-package rehearsal. For the BUILD-only combat-hash
+refresh, all three progression fixtures retained all 126 historical and 126
+current measurements byte-for-byte; only their source/combat hashes advanced.
+
+Real Chromium acceptance against the final built site passed **9 Solo real-UI
+checks**, **12 online two-client checks**, and **3 no-response recovery checks**,
+with zero page errors or failed local requests in every run. Solo covered actual
+local Register/login, plaza entry, hatching, a gym stat cycle with a test-only
+accelerated clock, shared-simulator field waves, explicitly local Pet Coin
+rewards, Stop, and online-only PvP messaging. The two-client online run covered
+owned partners, same-stage PvE waves, server-issued Pet Coins, resident
+restoration, opposite-side offers, genuine countdown cancellation with no
+result/reward, requeue and mutual acceptance, automatic PvP, WIN/LOSE
+presentation, and distinct settlement IDs. Its movement helper allowed enough
+time for the real client walk; it did not bypass position validation. The
+recovery rehearsal deliberately swallowed `pve_start`, verified duplicate
+controls stayed locked, then observed the ten-second explanation and restored
+control with no fabricated battle or reward. These are local
+disposable-environment results, not hosted staging, production deployment,
+physical-device certification, or an exhaustive visual review of all 280 forms.
 
 ## Account security and unverified competitive boards (haven-v262)
 
@@ -206,7 +226,7 @@ decoding need HTTP. A platform may provide a different entry URL; use its previe
 
 ## Before pushing
 
-The gate is: the three generated-asset checks, the Pages preview config check, every `*_sim.js` and every `*_smoke.js`.
+The gate is: the three generated-asset checks, the Pages preview config check, every `*_sim.js`, every `*_sim.mjs` and every `*_smoke.js`.
 Read the output, not just the exit code — a suite that prints a dependency skip and exits
 0 has not passed.
 
@@ -223,7 +243,7 @@ python3 tools/tests/pages_preview_config_sim.py  # Python 3.11+ (tomllib)
 python3 tools/make_sprite_viewer.py --check
 python3 tools/make_class_skins.py --check
 python3 tools/make_weapon_pack.py --check
-for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
+for t in tools/tests/*_sim.js tools/tests/*_sim.mjs; do node "$t" || exit 1; done
 for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done
 ```
 
@@ -520,6 +540,7 @@ the page or the server.
 | Shop | `shop_api_sim` (Pages Functions + in-memory D1), `shop_sim` (the page in jsdom), `ascension_drop_shop_sim`, `dev_server_sim` |
 | GM tools and leaderboard | `gm_console_sim`, `gm_tools_sim`, `gm_auth_sim`, `gm_presets_sim`, `gm_setup_sim`, `leaderboard_sim` |
 | Social hub | `social_sim`, `social_ui_sim`, `social_scene_sim`, `social_config_sim`, `social_api_sim.mjs`, `social_worker_sim.mjs` |
+| Sanctuary field/ring combat | `digimon_battle_sim`, `sanctuary_battle_sim`, `sanctuary_worker_battle_sim.mjs` (real workerd, two actual WebSockets, movement, offers, countdown, combat and server-only settlement) |
 | Friends (accounts, not saves) | `friends_sim` (migration, auth, one-way request, limits, privacy, audit rows, per-viewer plaza flags), `friends_ui_sim` (the panel in jsdom: add box, accept, unfriend, dock badge, chat name menu, sign-out wipe) |
 | Publishing and build labels | `publish_sim` (builds `dist/`), `update_watch_sim` (the `BUILD` mirrors) |
 | Smoke (boot the real page) | `field_loop_smoke`, `save_owner_boot_smoke`, `panel_layout_smoke` |
@@ -545,3 +566,60 @@ available; otherwise report that portion as unverified.
 Record exact commands, results and material missing coverage in the handoff. Historical
 pass counts and old workspace-only records are not evidence for a new checkout or a
 combined branch.
+
+### Sanctuary automatic gym (v340)
+
+Run `node tools/tests/social_gym_sim.js` alongside `social_ui_sim.js`,
+`social_scene_sim.js`, `social_sim.js` and `digimon_sanctuary_sim.js`.
+The reservation test covers shared capacity, room isolation, late snapshots,
+field leave, disconnect, switching rooms and malformed input; the UI simulation
+covers repeated cycles, duplicate slots, logout/disconnect and stale replies.
+For visual multiplayer QA, use two signed-in clients and the matching Social
+Worker: check each station at multiple camera angles and sizes, then leave one
+player in the field, stop/disconnect and confirm reservation release. Training
+progress is client-saved, so these tests are not PvP-authority tests.
+
+### Sanctuary field grinding and ring PvP (v344)
+
+Run `node tools/tests/digimon_battle_sim.js` for exact-stage bot groups, waves,
+automatic combat, PvP outcomes, rewards and care-stat clamping. Run
+`node tools/tests/sanctuary_battle_sim.js` for room authority, forged-result
+rejection, opposite-side matchmaking, mutual acceptance, cancellation and
+disconnect cleanup. `node tools/tests/sanctuary_worker_battle_sim.mjs` repeats
+the multiplayer path in real workerd with two actual WebSockets; do not replace
+it with a direct room mock when changing Worker alarms or position validation.
+
+For browser acceptance, use two isolated signed-in browser contexts against the
+built site and matching Social Worker. Exercise a field wave and Stop grinding,
+then enter from opposite ring approaches. Verify that the countdown's **Cancel
+match** button remains clickable while 250 ms snapshots arrive, produces no
+result or reward on either client, and permits a fresh queue/rematch. Finish the
+rematch and compare both server-issued result/reward IDs. A local Chromium or
+workerd pass is not evidence of a hosted deployment.
+
+### Complete Digimon roster gate (v342)
+
+The clean full-gate rerun passed **203/203 checks with no dependency skips**.
+`social_digimon_sim.js` validates all 561 v3 files, 280 forms, 17,666 frames,
+follower-canvas bounds, request coalescing and the 32-atlas LRU. Sanctuary and
+Worker suites cover all-form save keys, exact-ID multiplayer looks and direct
+branching evolution. `publish_sim.js` passes 18/18: the classic 59.5 MiB ceiling
+is unchanged, the approved lazy Digimon group is below 40 MiB (35.92 MiB of v3
+files), and combined delivery remains below 180 MiB.
+`hosted_launch_stage_sim.js` passes with the catalog-derived, integrity-checked
+runtime payload; it is a local rehearsal, not a hosted deployment.
+
+For the BUILD-only combat-hash refresh, all three progression fixtures were
+regenerated with `--reuse-baseline`. Before replacing them, the old fixtures were
+preserved; all **126 current measurements and 126 reused historical measurements**
+(42 gear, 21 moving, 63 growth in each set) remained byte-for-byte identical.
+Only source/combat hashes advanced. `skill_balance_sim.js` passes.
+
+Real Chromium acceptance exercised 15 unique lazy WebP forms without bulk-loading
+the pack, failed local requests or page errors. It verified 12 painted desktop
+cards, Aegiomon selection without fabricated evolution, Agumon → Meramon branch
+evolution, selected-form attack frames in practice spar, a two-column 390 px
+roster without horizontal overflow, and the 14-entry stage-not-listed filter.
+This is not an exhaustive visual review of all 280 forms or a physical-touch
+performance pass. The Digimon Up sprites still require separate publication
+rights authorization; the upstream fan-use statement is not a rights grant.

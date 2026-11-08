@@ -6,37 +6,21 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const R=require(path.join(__dirname,'..','..','assets','social-rules.js'));
 const F=require(path.join(__dirname,'..','..','assets','social-fishing.js'));
 
-// --- layout: water starts on the lower (south) lawns, clear of the tree gardens -----------
-assert.equal(R.PONDS.length,2,'two ponds, one per south lawn');
-for(const p of R.PONDS){
- assert(p.z-p.d/2>=34,'pond starts below the garden/tree area (gardens end at z=29)');
- assert(p.z+p.d/2<=52,'pond ends before the southern houses (z=45.5)');
- assert(Math.abs(p.x)-p.w/2>=9+2,'pond clears the central promenade');
- assert(Math.abs(p.x)+p.w/2<=35.5-1,'pond clears the avenue houses');
- for(const t of R.TREES)assert(Math.hypot(p.x-t.x,p.z-t.z)>t.size+2,'pond is not under a tree canopy');
- assert(!R.walkable(p.x,p.z),'water is not walkable');
- assert(!R.walkable(p.x-p.w/2+.3,p.z),'water edge is not walkable');
- const props=R.POND_PROPS[R.PONDS.indexOf(p)];
- // v309: the north-rim point behind the cascade is the boulder heap, and it is solid on purpose, so
- // the ring test skips it and checks the heap really is unwalkable instead.
- const rim=[{x:p.x,z:p.z-p.d/2-1.7},{x:p.x,z:p.z+p.d/2+1.7},{x:p.x-p.w/2-1.7,z:p.z},{x:p.x+p.w/2+1.7,z:p.z}]
-  .filter(q=>!R.cragBlocked(q.x,q.z));
- assert.equal(rim.length,3,'only the cascade footprint leaves the ring');
- for(const s of rim)assert(R.walkable(s.x,s.z),'grass ring around the pond stays walkable');
- assert(R.cragBlocked(props.crag.x,props.crag.z)&&!R.walkable(props.crag.x,props.crag.z),'the cascade boulder heap is solid');
- for(const stand of props.stands)assert(R.walkable(stand.x,stand.z),'fishing stand "'+stand.name+'" is walkable');
- assert(props.stands.some(s=>s.name==='bridge'),'the bridge crown is a real fishing stand');
- assert.equal(props.ledge,undefined,'the stone shelf was removed at the owner\'s request');
- const route=R.path({x:0,z:12},rim[1]);
- assert(route.length,'players can walk from spawn to the pond rim');
- assert(route.every(q=>R.walkable(q.x,q.z)));
- for(const stand of props.stands){
-  const r2=R.path({x:0,z:12},stand);
-  assert(r2.length>1,'spawn can reach the '+stand.name+' stand');
-  assert(r2.every(q=>R.walkable(q.x,q.z)));
- }
-}
-for(let n=-30;n<=30;n++)if(Math.abs(n)>6){assert(R.walkable(0,n),'promenade clear');assert(R.walkable(n,0),'avenue clear')}
+// --- Enlarged west lake, southern cascade and traversable bridge ------------------------------
+assert.equal(R.PONDS.length,1,'the old east pond was merged into the west lake');
+const lake=R.PONDS[0],props=R.POND_PROPS[0],bridge=props.bridge;
+assert.equal(lake.w,38);assert.equal(lake.d,60);assert(lake.d>lake.w,'lake is longer north–south');
+assert(lake.x+lake.w/2<-9,'lake clears the central avenue');
+assert(!R.walkable(lake.x,lake.z-5),'water away from the deck is blocked');
+assert(R.walkable(bridge.x,bridge.z),'bridge deck is walkable');
+assert(props.falls.z>lake.z&&props.falls.dir===-1&&props.falls.intoPond,'south fall enters lake');
+assert(R.cragBlocked(props.crag.x,props.crag.z)&&!R.walkable(props.crag.x,props.crag.z),'cascade heap is solid');
+assert(props.stands.some(s=>s.name==='bridge'),'the bridge crown remains a fishing stand');
+assert.equal(props.ledge,undefined,'the old stone shelf stays removed');
+for(const stand of props.stands){assert(R.walkable(stand.x,stand.z));const route=R.path({x:0,z:12},stand);assert(route.length&&route.every(q=>R.walkable(q.x,q.z)),'fishing stand is reachable')}
+for(const chair of R.CHAIRS){assert(R.walkable(chair.x,chair.z));assert(R.path({x:0,z:12},chair).length,'each relocated chair is reachable')}
+// v361: the Aetherwell's solid heart (basin + planter) reaches 7.75; the promenade opens beyond it.
+for(let n=-30;n<=30;n++)if(Math.abs(n)>7){assert(R.walkable(0,n),'promenade clear');assert(R.walkable(n,0),'avenue clear')}
 
 // --- v309: bait icons are painted, not emoji -------------------------------------------------
 // The owner's shop screenshot showed a blank box where the worm and the grub were: those glyphs are
@@ -53,7 +37,7 @@ for(let n=-30;n<=30;n++)if(Math.abs(n)>6){assert(R.walkable(0,n),'promenade clea
  },set(){return true}});
  w.HTMLCanvasElement.prototype.getContext=()=>g;
  w.HTMLCanvasElement.prototype.toDataURL=()=>'data:image/png;base64,AAAA';
- w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
+ w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','digimon','roster.js'),'utf8'));w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
  w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8'));
  const FB=w.PGSocialFishing;
  assert.equal(FB.BAITS.length,4,'four baits in the shop');
@@ -556,7 +540,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  Object.assign(w,{THREE:T,devicePixelRatio:1,requestAnimationFrame:cb=>frame=cb,ResizeObserver:class{constructor(fn){this.fn=fn}observe(){this.fn()}},PGWardrobe:{CLASSES:{Novice:0},Store,normalize:a=>a,defaults:()=>({version:1,sex:'m'}),frameIndex:()=>0,draw(){}},PGFourthJobs:{CLASSES:{},Store},milestone:()=>null,REFINE_GLOWS:[],drawNativeWeaponGlow(){},drawNativeArmGlow(){},LEVEL_AURAS:[],buildLevelAura:()=>new T.Group()});
  Object.defineProperty(w.document,'hidden',{value:false});w.performance.now=()=>now;w.console.warn=()=>{};
  w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(url)),arrayBuffer:async()=>{const b=fs.readFileSync(url);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)}});
- w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
+ w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','digimon','roster.js'),'utf8'));w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
  w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-scene.js'),'utf8'));
  const seatClicks=[];
  const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(){},move(x,z){moves.push({x,z})},seat(id){seatClicks.push(id)},pond(x,z,idx){pondClicks.push({x,z,idx})}});
@@ -564,17 +548,41 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(scene.fishing,'the scene exposes a fishing rig');
  for(const fn of ['setFishVisible','cast','bite','reel','catchFly','escapeSplash','ripple','splash','hide','off','showFish'])assert.equal(typeof scene.fishing[fn],'function','fishing.'+fn);
  // Stand the local player on the east pond rim.
- const pond=w.PGSocialRules.PONDS[1];
+ const pond=w.PGSocialRules.PONDS[0];
  scene.putPlayer({id:1,name:'Angler',x:pond.x,z:pond.z-pond.d/2-1.7,dir:0,sit:false,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'}}});
  frame(now+=100);
  // Clicking the water reports the pond to the fishing callback instead of walking in.
  scene.camera.updateMatrixWorld();
- const pt=new T.Vector3(pond.x,0,pond.z).project(scene.camera);
+ const pt=new T.Vector3(pond.x,0,pond.z-6).project(scene.camera);
  const ev={clientX:(pt.x+1)*500,clientY:(1-pt.y)*350,pointerId:1,button:0,preventDefault(){}};
  host.onpointerdown(ev);host.onpointerup(ev);
  assert.equal(moves.length,0,'a pond click never walks into the water');
  assert.equal(pondClicks.length,1,'a pond click reaches the fishing callback');
- assert.equal(pondClicks[0].idx,1,'the clicked pond index is reported');
+ assert.equal(pondClicks[0].idx,0,'the clicked lake index is reported');
+ // The elevated deck is a walking target, not a click on the water underneath.
+ const deck=w.PGSocialRules.POND_PROPS[0].bridge;
+ scene.scene.updateMatrixWorld(true);
+ const deckPoint=new T.Vector3(deck.x,deck.arch,deck.z).project(scene.camera);
+ const deckEv={clientX:(deckPoint.x+1)*500,clientY:(1-deckPoint.y)*350,pointerId:2,button:0,preventDefault(){}};
+ host.onpointerdown(deckEv);host.onpointerup(deckEv);
+ assert.equal(moves.length,1,'clicking the visible bridge walks rather than fishing');
+ assert(w.PGSocialRules.onBridge(moves[0].x,moves[0].z),'bridge click resolves onto the deck');
+ assert.equal(pondClicks.length,1,'bridge click does not start fishing');
+ // Corners of the former bounding rectangle are now dry land, and clicks must walk there.
+ const land={x:pond.x+pond.w*.46,z:pond.z+pond.d*.46};assert(!w.PGSocialRules.pondContains(pond,land.x,land.z));assert(w.PGSocialRules.walkable(land.x,land.z));
+ scene.putPlayer({id:1,name:'Angler',x:land.x+4,z:land.z+2,dir:0,sit:false,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'}}});
+ for(let i=0;i<8;i++)frame(now+=100);scene.camera.updateMatrixWorld();scene.scene.updateMatrixWorld(true);
+ const landPt=new T.Vector3(land.x,0,land.z).project(scene.camera),landEv={clientX:(landPt.x+1)*500,clientY:(1-landPt.y)*350,pointerId:3,button:0,preventDefault(){}};
+ host.onpointerdown(landEv);host.onpointerup(landEv);
+ assert.equal(moves.length,2,'clicking the dry rounded corner walks');assert.equal(pondClicks.length,1,'dry corner does not start fishing');
+ // Both new paved landings are real walking targets, not water clicks.
+ for(const x of [-69,-11]){
+  scene.camera.position.set(x,20,deck.z+20);scene.camera.lookAt(x,0,deck.z);scene.camera.updateMatrixWorld();scene.scene.updateMatrixWorld(true);
+  const pos=new T.Vector3(x,0,deck.z).project(scene.camera),event={clientX:(pos.x+1)*500,clientY:(1-pos.y)*350,pointerId:4,button:0,preventDefault(){}};
+  const before=moves.length;host.onpointerdown(event);host.onpointerup(event);
+  assert.equal(moves.length,before+1,'stone approach click starts walking');assert(Math.abs(moves.at(-1).x-x)<1,'click lands on the chosen approach');assert.equal(pondClicks.length,1,'approach never starts fishing');
+ }
+
  // Cast: the bobber flies to the water and the landing callback fires exactly once.
  let landed=0;
  scene.fishing.cast({x:pond.x,z:pond.z},400,()=>landed++);
@@ -591,7 +599,9 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  // v288: clicking a pond-side chair is a seat action (never a fishing or walk action).
  const chair=w.PGSocialRules.CHAIRS.find(ch=>ch.id===29); // east pond, north rim
  assert(chair,'chairs exist in the rules');
- scene.camera.updateMatrixWorld();
+ scene.putPlayer({id:1,name:'Angler',x:chair.x+2,z:chair.z+3,dir:0,sit:false,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'}}});
+ for(let i=0;i<8;i++)frame(now+=100);
+ scene.camera.updateMatrixWorld();scene.scene.updateMatrixWorld(true);
  const cpt=new T.Vector3(chair.x,.6,chair.z).project(scene.camera);
  const cev={clientX:(cpt.x+1)*500,clientY:(1-cpt.y)*350,pointerId:2,button:0,preventDefault(){}};
  const movesBefore=moves.length,pondBefore=pondClicks.length;
@@ -635,7 +645,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  dom.window.close();
  // --- Part C: the real Fishing window in a DOM - tabs, titles and the bag upgrade ----------
  const dom2=new JSDOM('<div id="socialHub"></div>',{runScripts:'outside-only'}),w2=dom2.window;
- w2.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
+ w2.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','digimon','roster.js'),'utf8'));w2.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
  w2.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8'));
  w2.HTMLCanvasElement.prototype.getContext=()=>null; // no canvas package here: prove the emoji fallback
  const FISH=w2.PGSocialFishing,hostS={fishing:null},d2=w2.document;
@@ -725,15 +735,15 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert.equal(FISH.phase,'walking','the session is in its walk-back phase');
  // v304: the pond is 18x13 now, so the rim offset is bigger than the old fixed 12-unit radius.
 // What matters is that the target sits on the pond's rim, not the distance from its centre.
-const rimDist=Math.hypot(Math.max(0,Math.abs(moved.x-pondA.x)-pondA.w/2),Math.max(0,Math.abs(moved.z-pondA.z)-pondA.d/2));
+const rimDist=w2.PGSocialRules.pondDistance(pondA,moved.x,moved.z);
 assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
 // v311 (owner: "pond clicking is off - it keeps going to the same place"): the water you click now
 // decides the stand, so two clicks on opposite banks walk to opposite banks.
 {
  const pondB=w2.PGSocialRules.PONDS[0],targets=[];
  FISH.bind({host:()=>hostS,scene:()=>null,self:()=>({x:0,z:12}),moveTo:(x,z)=>targets.push({x,z}),notice:()=>{},save:()=>{}});
- FISH.pondClick(pondB.x-5,pondB.z,0);const west=targets.at(-1);
- FISH.pondClick(pondB.x+5,pondB.z,0);const east=targets.at(-1);
+ FISH.pondClick(pondB.x-18,pondB.z,0);const west=targets.at(-1);
+ FISH.pondClick(pondB.x+18,pondB.z,0);const east=targets.at(-1);
  assert(west&&east&&Math.hypot(west.x-east.x,west.z-east.z)>5,'clicking the far bank walks somewhere else');
  assert(east.x>west.x,'the east click lands east of the west click');
  FISH.bind({host:()=>hostS,scene:()=>null,self:()=>({x:me.x,z:me.z}),moveTo:(x,z)=>{moved={x,z}},notice:()=>{},save:()=>{}});
@@ -806,6 +816,41 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  FISH.toggle();
  assert.equal(rodCalls.at(-1),'golden','a better rod repaints the pole you are holding');
  FISH.stop('done');
+ // Cast from the middle of the deck: the bobber must land beside the bridge, in water.
+ let bridgeTarget=null;
+ const bridgeFish=new Proxy({cast:(target)=>{bridgeTarget=target}},{get:(t,k)=>t[k]||(()=>{})});
+ FISH.bind({host:()=>hostS,scene:()=>({fishing:bridgeFish}),self:()=>({x:bridge.x,z:bridge.z}),moveTo:()=>{},notice:()=>{},save:()=>{}});
+ FISH.toggle();assert.equal(FISH.phase,'ready');
+ if(!FISH.auto)d2.getElementById('fishingAutoBtn').onclick();
+ frame2(clock2+=1000);assert.equal(FISH.phase,'charge');
+ frame2(clock2+=1050);assert(bridgeTarget,'auto cast reaches the 3D scene');
+ assert(!R.onBridge(bridgeTarget.x,bridgeTarget.z),'bridge fishing lands the bobber in water rather than on the deck');
+ assert(R.pondContains(lake,bridgeTarget.x,bridgeTarget.z),'cast target is within curved lake');
+ FISH.stop('done');
+ // v355 (owner: "the cast must follow the direction you face, and the line must not cross the
+ // bridge"): from the south-west shore, facing the water keeps the bobber on your own side of
+ // the bridge, and facing inland still finds water through the toward-pond fallback.
+ {
+  const sw=props.stands.find(st=>st.name==='south-west');
+  let aimed=null;const aimFish=new Proxy({cast:(target)=>{aimed=target}},{get:(t,k)=>t[k]||(()=>{})});
+  const bindSW=(self)=>FISH.bind({host:()=>hostS,scene:()=>({fishing:aimFish}),self,moveTo:()=>{},notice:()=>{},save:()=>{}});
+  bindSW(()=>({x:sw.x,z:sw.z,face:Math.atan2(lake.z-sw.z,lake.x-sw.x)}));
+  FISH.toggle();assert.equal(FISH.phase,'ready');
+  if(!FISH.auto)d2.getElementById('fishingAutoBtn').onclick();
+  frame2(clock2+=1400);assert.equal(FISH.phase,'charge','auto begins the charge');
+  frame2(clock2+=1150);assert(aimed,'a facing cast reaches the 3D scene');
+  assert(R.pondContains(lake,aimed.x,aimed.z),'the facing cast lands in water');
+  assert(aimed.z>bridge.z+bridge.width/2,'a south-shore cast stays south of the bridge instead of crossing it');
+  FISH.stop('done');
+  let inland=null;const inlandFish=new Proxy({cast:(target)=>{inland=target}},{get:(t,k)=>t[k]||(()=>{})});
+  FISH.bind({host:()=>hostS,scene:()=>({fishing:inlandFish}),self:()=>({x:sw.x,z:sw.z,face:Math.atan2(sw.z-lake.z,sw.x-lake.x)}),moveTo:()=>{},notice:()=>{},save:()=>{}});
+  FISH.toggle();assert.equal(FISH.phase,'ready');
+  if(!FISH.auto)d2.getElementById('fishingAutoBtn').onclick();
+  frame2(clock2+=1400);assert.equal(FISH.phase,'charge','auto begins the charge after the fallback bind');
+  frame2(clock2+=1150);assert(inland,'an inland-facing cast still reaches the scene');
+  assert(R.pondContains(lake,inland.x,inland.z),'facing away from the pond falls back to open water');
+  FISH.stop('done');
+ }
  dom2.window.close();
  // --- Part D: the page wires v295 up (save shape, cache versions, build tag) ---------------
  const page=fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
