@@ -1918,12 +1918,8 @@ async function diagnoseSocket(){
  status(verdict);
 }
 function connect(){
- // v366: `blocked` (set by close 4001, "connected in another tab") used to be one-way - nothing but
- // a full page reload ever cleared it. After a relog the account is fine and the server is fine, but
- // the tab kept refusing to even try, so chat stayed dead with no new information. The flag now
- // clears itself after the backoff window: the worst case is one wasted upgrade, which the ladder
- // already handles, against a plaza that can never come back without a reload.
- if(app.blocked&&Date.now()>=app.nextConnect)app.blocked=false;
+ // A 4001 yields to the tab that owns this account. Retrying on a timer makes two
+ // tabs evict each other forever. Logout/account change (below) or a reload resets it.
  if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextConnect)return;const user=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username;if(app.user!==user){app.user=user;localHistory.clear();app.messages=readWorldHistory();renderMessages();app.unread.clear();try{app.muted=new Set(JSON.parse(localStorage.getItem('pg_social_mute_'+user))||[])}catch{app.muted=new Set()}}
  const qs=CLOUD.previewToken?'?preview_session='+encodeURIComponent(CLOUD.previewToken):'';
  const ws=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/api/social'+qs);app.socket=ws;app.socketAt=Date.now();app.rulesNoticed=false;status('Connecting to chat…');

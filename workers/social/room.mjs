@@ -84,7 +84,7 @@ export class SocialRoom {
  // the socket stayed open, the client never got its `hello`, and the only thing a player saw was a
  // plaza that sat on "Connecting to chat…" and then died - the 12 s HANDSHAKE_MS giving up, then a
  // reconnect that looked identical. Returning the result lets connect() fail loudly instead.
- send(c,event){try{c.send(JSON.stringify(event));return true}catch(error){
+ send(c,event){if(c.disconnecting)return false;try{c.send(JSON.stringify(event));return true}catch(error){
   // v367: keep the reason. A failed greeting is the one thing a player cannot see from the browser,
   // so the text is stored on the room and /api/chatcheck reports it instead of it vanishing.
   this.lastSendError=String((error&&error.message)||error);
@@ -577,6 +577,10 @@ export class SocialRoom {
  leave(c){const room=c.room;this.stopBattle(c,'left');this.partyRemove(c,'left');this.partyInvites.delete(c.id);this.standPoker(c,this.now(),false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;if(room){this.broadcast({type:'left',id:c.id,room},p=>p.room===room);this.broadcastPoker(room,this.now());this.schedulePoker(room);this.syncRooms();}}
  disconnect(c){
   if(this.clients.get(c.id)!==c)return;
+  // Remove membership BEFORE any party, battle or gym cleanup can broadcast. A closed
+  // transport otherwise receives its own cleanup, send() calls disconnect() again, and
+  // the room overflows its stack before it saves the resume or removes the old client.
+  c.disconnecting=true;this.clients.delete(c.id);
   this.partyRemove(c,'disconnect');this.partyInvites.delete(c.id);
   const now=this.now(),room=c.room;this.stopBattle(c,'disconnect',now);this.stopGym(c);
   // A lost socket is not a decision to fold. Keep the exact position and reserved poker seat
@@ -594,12 +598,11 @@ export class SocialRoom {
    // which used to empty this Map and turn the next reconnect into a fresh join at the entrance.
    this.onResume?.(c.id,saved);
    if(Number.isInteger(c.pokerSeat))this.tables.get(room)?.[Math.floor(c.pokerSeat/6)]?.markArrived(c.id,false,now);
-   this.clients.delete(c.id);
    this.broadcast({type:'left',id:c.id,room},p=>p.room===room);
    this.broadcastPoker(room,now);this.syncRooms();
    return;
   }
-  this.leave(c);this.clients.delete(c.id);
+  this.leave(c);
  }
  // The plaza spot and the poker seat expire on their own clocks: the spot keeps the whole idle
  // window so a dropped or throttled client resumes where it stood, while the seat falls back to
