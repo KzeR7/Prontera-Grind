@@ -1317,7 +1317,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-08 haven-v361 Aetherwell at true scale, seatable ring, hub-first arrivals';   // shown on the login card - confirms which file you loaded$('buildTag').textContent='build '+BUILD;
+const BUILD='2026-11-08 haven-v361 gym-preview-r2 indexed geometry fixed';   // Staging-only gym preview, not a production release.
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
 // Assassin and Assassin Cross use katars or daggers. A katar occupies both hands; daggers support an offhand dagger.
@@ -13635,7 +13635,8 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now(
 <script src="assets/digimon-sanctuary.js?v=361"></script>
 <script src="assets/digimon-battle.js?v=361"></script>
 <script src="assets/social-digimon.js?v=361"></script>
-<script src="assets/social-scene.js?v=361"></script>
+<script src="assets/social-gym-redesign.js?v=361-gym-topology-r2"></script>
+<script src="assets/social-scene.js?v=361-gym-topology-r2"></script>
 <script src="assets/social-fishing.js?v=361"></script>
 <script src="assets/social.js?v=361"></script></body>
 </html>

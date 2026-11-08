@@ -169,155 +169,11 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  boardwalk(22,42,26,4.8,.027);boardwalk(66,42,62,4.8,.029);boardwalk(65,84.5,60,5,.029);boardwalk(65,120,60,4,.029);
  // Two angled building wings with broad roofs meet at a short central bay.
  // Their footprint and wall collision come from the same shared segments.
- const sandMat=new T.MeshBasicMaterial({map:sandTexture,color:0xe8d6b4});
- const gymShape=new T.Shape();for(const [i,[x,z]] of [[43,18.5],[65,12.5],[73,12.5],[95,18.5],[95,39],[43,39]].entries()){if(i)gymShape.lineTo(x-69,-(z-25.5));else gymShape.moveTo(x-69,-(z-25.5))}gymShape.closePath();
- flat(new T.ShapeGeometry(gymShape),sandMat,69,25.5,.018).userData.sanctuaryGym=true;
- const gymStone=new T.MeshLambertMaterial({color:0x9e9a83});
- const glass=new T.MeshLambertMaterial({color:0x485e55}),windowShine=new T.MeshBasicMaterial({color:0xc7c488});
- // Gabled roofs for the two small kiosks elsewhere in the Sanctuary.
+ // v362 staging preview: the AAA gym redesign from docs/proposals/gym-redesign,
+ // built as merged batches against the same SANCTUARY_GYM_WALLS/FENCES contract.
+ // gable() stays here because the Sanctuary kiosks reuse it.
  function gable(cx,cz,w,d,eave,rise){const half=w/2,ang=Math.atan2(rise,half);for(const side of [-1,1]){const m=box(cx+side*half/2,eave+rise/2,cz,Math.hypot(half,rise)+.45,.24,d,roofMat);m.rotation.z=-side*ang;m.updateMatrix();m.userData.sanctuaryRoof=true}for(const z of [cz-d/2,cz+d/2]){beam([cx-half,eave,z],[cx,eave+rise,z],.18);beam([cx,eave+rise,z],[cx+half,eave,z],.18)}}
- // Each wing is placed in its own coordinate frame along the shared angled
- // wall. Its roof, timbers, windows and foundation all rotate together.
- for(const [wing,seg] of [['left',R.SANCTUARY_GYM_WALLS[0]],['right',R.SANCTUARY_GYM_WALLS[2]]]){
-  const dx=seg.x2-seg.x1,dz=seg.z2-seg.z1,len=Math.hypot(dx,dz),theta=Math.atan2(-dz,dx),c=Math.cos(theta),sn=Math.sin(theta),cx=(seg.x1+seg.x2)/2,cz=(seg.z1+seg.z2)/2;
-  const point=(u,y,v)=>[cx+c*u+sn*v,y,cz-sn*u+c*v];
-  const piece=(u,y,v,w,h,d,mat)=>{const [x,Y,z]=point(u,y,v),m=box(x,Y,z,w,h,d,mat);m.rotation.y=theta;m.updateMatrix();return m};
-  const brace=(a,b,thick,mat=darkWood)=>beam(point(...a),point(...b),thick,mat);
-  piece(0,.55,0,len,1.1,.8,gymStone);
-  const wall=piece(0,5.15,0,len,8.2,.5,plaster);wall.userData.gymWing=wing;
-  piece(0,10.75,0,len,2,.5,plaster).userData.gymUpperWall=wing;
-  for(const face of [-1,1]){
-   const v=face*.32;
-   for(let i=0;i<=4;i++){const u=-len/2+i*len/4;piece(u,5,v,.42,10,.23,darkWood).userData.gymTimber='rear-post';piece(u,10.8,v,.32,2.1,.24,darkWood)}
-   for(const y of [1.05,4.45,8.8,9.8,11.8])piece(0,y,v,len,.28,.24,darkWood).userData.gymTimber='rear-beam';
-   for(let i=0;i<4;i++){const u=-len/2+(i+.5)*len/4;brace([u-len/8+.22,1.15,v],[u+len/8-.22,4.28,v],.16);brace([u+len/8-.22,1.15,v],[u-len/8+.22,4.28,v],.16)}
-   for(const u of [-len/4,len/4]){
-    piece(u,6.65,v+face*.14,2.45,2.55,.13,darkWood).userData.gymWindow='rear';
-    piece(u,6.65,v+face*.22,1.95,2.05,.07,glass);piece(u,6.65,v+face*.28,.11,2.05,.08,lightWood);piece(u,6.65,v+face*.28,1.95,.11,.08,lightWood);
-    piece(u-.48,7.08,v+face*.33,.42,.42,.035,windowShine);piece(u,5.32,v+face*.32,2.8,.18,.4,lightWood);
-   }
-  }
-  for(let i=0;i<11;i++){const stone=piece(-len/2+(i+.5)*len/11,.54,.43,len/11-.08,.82,.12,i%3===0?cream:gymStone);stone.userData.gymMasonry=true}
-  // Broad sloping shingle plane shelters each wing OUTSIDE the open yard.
-  const rise=2.3,depth=6.5,angle=Math.atan2(rise,depth);
-  const roof=piece(0,10.75,-depth/2,len+.6,.24,Math.hypot(depth,rise)+.4,roofMat);roof.rotation.set(-angle,theta,0,'YXZ');roof.updateMatrix();roof.userData.sanctuaryRoof=true;roof.userData.sanctuaryBuildingWing=wing;roof.userData.gymBroadRoof=true;
-  brace([-len/2-.2,11.9,0],[len/2+.2,11.9,0],.2);brace([-len/2-.2,9.6,-depth],[len/2+.2,9.6,-depth],.18);
-  for(let i=0;i<=4;i++){const u=-len/2+i*len/4;brace([u,9.65,-depth],[u,11.9,0],.14)}
- }
- // The back connector reads as an entrance between the two buildings.
- box(69,.55,12.5,8,1.1,.8,gymStone);box(69,5.15,12.5,8,8.2,.5,plaster);
- for(const x of [65,73])box(x,5.1,12.84,.48,10.2,.3,darkWood);
- for(const y of [1.05,5.15,8.8,9.9])box(69,y,12.85,8,.3,.28,darkWood);
- // Finish the street-facing side too: no unframed plaster block behind the connector.
- for(const x of [65,69,73])box(x,5.1,12.16,.38,10.2,.26,darkWood);
- for(const y of [1.05,4.45,8.8,9.9])box(69,y,12.16,8,.26,.25,darkWood);
- for(const [x1,x2] of [[65.3,68.7],[69.3,72.7]]){beam([x1,1.2,12.15],[x2,4.25,12.15],.13);beam([x2,1.2,12.15],[x1,4.25,12.15],.13)}
-
- const doorMat=new T.MeshLambertMaterial({map:doorTexture,color:0xe8d4ad});
- box(69,3.05,12.83,4.4,5.1,.16,darkWood);box(69,3.05,12.94,3.85,4.55,.1,doorMat);box(69,3.05,13.01,.15,4.6,.1,darkWood);
- for(const dx of [-.3,.3]){const knob=new T.Mesh(new T.SphereGeometry(.12,10,6),new T.MeshLambertMaterial({color:0xc5a15a}));knob.position.set(69+dx,2.7,13.1);scene.add(freeze(knob))}
- // The exterior flank walls are shorter than the open training yard, with
- // real timber visible on both sides rather than a flat dark roof over it.
- for(const x of [43,95]){
-  box(x,.55,23.75,.8,1.1,10.5,gymStone);box(x,5.15,23.75,.5,8.2,10.5,plaster);
-  for(const face of [-1,1]){
-   const xx=x+face*.32;
-   for(const z of [18.5,21,23.75,26.5,29])box(xx,5,z,.23,10,.4,darkWood).userData.gymTimber='side-post';
-   for(const y of [1.05,4.45,8.8,9.8])box(xx,y,23.75,.24,.28,10.5,darkWood).userData.gymTimber='side-beam';
-   for(const z of [20.5,24,27]){beam([xx,1.15,z-1.7],[xx,4.27,z+1.7],.15);beam([xx,1.15,z+1.7],[xx,4.27,z-1.7],.15)}
-   for(const z of [22,26]){
-    box(xx+face*.14,6.65,z,.13,2.55,2.45,darkWood).userData.gymWindow='side';
-    box(xx+face*.22,6.65,z,.07,2.05,1.95,glass);box(xx+face*.28,6.65,z,.08,2.05,.1,lightWood);box(xx+face*.28,6.65,z,.08,.1,1.95,lightWood);
-    box(xx+face*.32,7.05,z-.48,.035,.4,.42,windowShine);box(xx+face*.32,5.32,z,.4,.18,2.8,lightWood);
-   }
-  }
- }
- // Each flank terminates in a full timbered gable, with a usable doorway.
- for(const [cx,side] of [[46,-1],[92,1]]){
-  for(const dx of [-2.25,2.25])box(cx+dx,3,29,1.5,6,.45,plaster);
-  box(cx,7.8,29,6,3.6,.45,plaster);
-  for(const x of [cx-3,cx-1.45,cx+1.45,cx+3])box(x,4.8,29.32,.32,9.6,.24,darkWood).userData.gymTimber='front-post';
-  for(const y of [1,6,8.8,9.6])box(cx,y,29.34,6.4,.25,.2,darkWood);
-  // Framed attic windows and substantial corner blocks complete the end bay.
-  for(const dx of [-1.45,1.45]){box(cx+dx,7.45,29.34,1.4,1.8,.12,darkWood);box(cx+dx,7.45,29.43,1.06,1.4,.07,glass);box(cx+dx,7.45,29.48,.1,1.4,.05,lightWood);box(cx+dx,7.45,29.48,1.06,.1,.05,lightWood);box(cx+dx,6.48,29.5,1.62,.15,.3,lightWood)}
-  for(const x of [cx-2.8,cx+2.8])box(x,.48,29.35,.5,.95,.3,cream);
-
-  for(const x of [cx-2.25,cx+2.25])beam([x-.65,1.2,29.36],[x+.65,5.65,29.36],.13);
-  const triangle=new T.Shape();triangle.moveTo(-3,9.6);triangle.lineTo(0,11.9);triangle.lineTo(3,9.6);triangle.closePath();
-  const face=new T.Mesh(new T.ShapeGeometry(triangle),new T.MeshLambertMaterial({map:plasterTexture,color:0xf1e7d0,side:T.DoubleSide}));face.position.set(cx,0,29.27);face.userData.gymGable=side<0?'left':'right';scene.add(freeze(face));
-  beam([cx-3,9.6,29.38],[cx,11.9,29.38],.2);beam([cx,11.9,29.38],[cx+3,9.6,29.38],.2);beam([cx,9.7,29.4],[cx,11.8,29.4],.14);
-  // A complete broad pitched roof caps each gabled end bay.
-  const angle=Math.atan2(2.3,3);for(const slope of [-1,1]){const roof=box(cx+slope*1.5,10.75,23.75,Math.hypot(3,2.3)+.35,.22,11.3,roofMat);roof.rotation.z=-slope*angle;roof.updateMatrix();roof.userData.sanctuaryRoof=true;roof.userData.sanctuaryBuildingWing=side<0?'left':'right';roof.userData.gymBroadRoof=true}
-  for(const z of [19,21.5,24,26.5,29]){beam([cx-3,9.6,z],[cx,11.9,z],.13);beam([cx,11.9,z],[cx+3,9.6,z],.13)}
- }
- // Fence follows the proposed front boundary, leaving the middle entrance open.
- for(const f of R.SANCTUARY_GYM_FENCES){const dx=f.x2-f.x1,dz=f.z2-f.z1,len=Math.hypot(dx,dz),n=Math.max(1,Math.ceil(len/3.2));for(let i=0;i<=n;i++){const t=i/n;box(f.x1+dx*t,.7,f.z1+dz*t,.22,1.4,.22,darkWood)}for(const y of [.45,1.05])beam([f.x1,y,f.z1],[f.x2,y,f.z2],.085,wood).userData.gymFence=true}
- worldSign(69,7.1,13.08,'DIGIPET GYM',6,.72);
- // v356 (owner: "gym definitely need to be redesigned"): the open court is zoned like a real
- // training floor. Each apparatus group sits on its own rubber mat with a cream keyline, a
- // painted medallion marks the entrance bay, stat-coloured banners hang from both wings, and
- // two pennant strings cross the yard so the space reads as a designed gymnasium.
- const zoneMats={power:new T.MeshLambertMaterial({color:0xb0684f}),guard:new T.MeshLambertMaterial({color:0x5f7d95}),agility:new T.MeshLambertMaterial({color:0xc9a256}),focus:new T.MeshLambertMaterial({color:0x7d9a6a})};
- // v359: the zone mats and the entrance medallion interlock around their stations, so
- // every overlapping flat in the yard sits on its own clear step of the ladder:
- // sand .018 < power .030 < guard .034 < medallion .040/.042/.044 < agility .046 < focus .050.
- for(const [zx,zz,zw,zd,stat,zy] of [[56.5,25.5,13,14.5,'power',.03],[63,22.6,10.6,8.8,'guard',.034],[75,26,10.6,11.6,'agility',.046],[86,25.6,10.6,13,'focus',.05]]){
-  flat(new T.PlaneGeometry(zw,zd),zoneMats[stat],zx,zz,zy).userData.gymZone=stat;
-  const y=.031;
-  box(zx,y,zz-zd/2,zw+.24,.05,.16,cream);box(zx,y,zz+zd/2,zw+.24,.05,.16,cream);
-  box(zx-zw/2,y,zz,.16,.05,zd,cream);box(zx+zw/2,y,zz,.16,.05,zd,cream);
- }
- // Entrance medallion: a painted roundel between the two wings.
- flat(new T.CircleGeometry(2.05,28),new T.MeshBasicMaterial({color:0xe7d6ab}),69,20.5,.04).userData.gymMedallion=true;
- flat(new T.RingGeometry(1.55,1.8,28),new T.MeshBasicMaterial({color:0x997954}),69,20.5,.042);
- flat(new T.CircleGeometry(.55,20),new T.MeshBasicMaterial({color:0xb0684f}),69,20.5,.044);
- // Stat banners on the court-facing wing walls.
- const bannerBar=new T.MeshLambertMaterial({color:0xb58a59});
- for(const [bx,bz,stat] of [[43.72,21,'power'],[43.72,25,'agility'],[43.72,29,'focus'],[94.28,21,'guard'],[94.28,25,'power'],[94.28,29,'agility']]){
-  box(bx,3.35,bz,.1,.12,1.5,bannerBar);
-  box(bx,2.3,bz,.09,2.1,1.12,zoneMats[stat]).userData.gymBanner=stat;
-  box(bx,1.22,bz,.1,.12,1.24,cream);
- }
- // Two pennant strings across the open yard.
- const pennantColors=[0xb0684f,0xe7d6ab,0x5f7d95,0xc9a256,0x7d9a6a];
- const pennantShape=new T.Shape();pennantShape.moveTo(-.34,0);pennantShape.lineTo(.34,0);pennantShape.lineTo(0,-.95);pennantShape.closePath();
- for(const z of [16.2,33.8]){
-  beam([44,4.35,z],[94,4.35,z],.05,darkWood);
-  for(let i=1;i<21;i++){const x=44+i*2.5,m=new T.Mesh(new T.ShapeGeometry(pennantShape),new T.MeshLambertMaterial({color:pennantColors[i%5],side:T.DoubleSide}));m.position.set(x,4.3,z);scene.add(freeze(m))}
- }
- // Weight rack, barbells and benches: POWER.
- for(const x of [49,55])box(x,1.6,19,.25,3.2,.25,darkWood);for(const y of [.65,1.45,2.25])box(52,y,19,6,.14,.24,wood);
- for(let row=0;row<3;row++)for(const x of [50,51.2,52.4,53.6,54.5]){const d=new T.Mesh(new T.CylinderGeometry(.32,.32,.2,12),iron);d.rotation.z=Math.PI/2;d.position.set(x,.9+row*.8,19);scene.add(freeze(d))}
- for(const x of [49,55])box(x,.85,25,.23,1.7,.23,wood);box(52,1.55,25,6,.15,.15,iron);
- for(const x of [49.5,54.5]){const d=new T.Mesh(new T.CylinderGeometry(.68,.68,.25,16),iron);d.rotation.z=Math.PI/2;d.position.set(x,1.55,25);scene.add(freeze(d))}
- box(52,.48,29,3.5,.23,1.1,darkWood);for(const x of [50.8,53.2])box(x,.23,29,.18,.46,.7,wood);
- // Wooden padded striking dummy: GUARD.
- box(63,.15,21,2.2,.3,2.2,darkWood);box(63,1.4,21,.4,2.8,.4,wood);const dummy=new T.Mesh(new T.CylinderGeometry(.7,.85,2,12),new T.MeshLambertMaterial({color:0xa48157}));dummy.position.set(63,2.1,21);scene.add(freeze(dummy));for(const dx of [-1,1])beam([63+dx*.25,2.3,21],[63+dx*1.2,1.9,21],.15,wood);
-
- for(const x of [60,66]){box(x,.15,21,1.8,.3,1.8,darkWood);box(x,1.4,21,.35,2.8,.35,wood);const d=new T.Mesh(new T.CylinderGeometry(.6,.72,2,12),new T.MeshLambertMaterial({color:0xa48157}));d.position.set(x,2.1,21);scene.add(freeze(d));for(const side of [-1,1])beam([x+side*.2,2.3,21],[x+side*.95,1.9,21],.12,wood)}
- for(let i=0;i<3;i++)box(60+i*.8,.18,28, .55,.35,.55,darkWood);
- // Obstacles, low hurdles and balance beam: AGILITY.
- for(const lane of [72,75,78])for(const z of [22,26,30]){for(const x of [lane-1.1,lane+1.1])box(x,.65,z,.18,1.3,.18,wood);box(lane,1.2,z,2.2,.16,.16,lightWood)}
- box(80,.5,29, .28,1,4,darkWood);box(80,1,29,.8,.2,5,wood);
- // Target board, hanging rings and two green practice mats: FOCUS.
- for(const x of [84,89])box(x,2.1,18,.25,4.2,.25,darkWood);box(86.5,3.5,18,5,.18,.18,wood);
- const targetDisc=new T.Mesh(new T.CylinderGeometry(1.25,1.25,.15,24),cream);targetDisc.rotation.x=Math.PI/2;targetDisc.position.set(86.5,2.3,18.1);scene.add(freeze(targetDisc));
- for(const [rad,color] of [[.75,0xaa684d],[.32,0x493225]]){const disc=new T.Mesh(new T.CylinderGeometry(rad,rad,.17,24),new T.MeshLambertMaterial({color}));disc.rotation.x=Math.PI/2;disc.position.set(86.5,2.3,18.19);scene.add(freeze(disc))}
- for(const x of [83,86,89])flat(new T.PlaneGeometry(2.7,4.2),new T.MeshBasicMaterial({color:0x849b6f}),x,27,.032);
- for(const [x,name] of [[52,'power'],[63,'guard'],[75,'agility'],[86,'focus']]){const marker=box(x,.03,34,.02,.02,.02,wood);marker.userData.sanctuaryStation=name}
- // Recognisable training fixtures and individual stored items, not flat floor markers.
- for(const x of [48.5,56]){box(x,1.65,23,.22,3.3,.22,darkWood);box(x,3.25,24,.22,.18,2.5,darkWood)}box(52.25,3.15,24.7,7.7,.18,.2,wood);
- for(const x of [48.8,55.7]){const plate=new T.Mesh(new T.CylinderGeometry(.55,.55,.18,16),iron);plate.rotation.z=Math.PI/2;plate.position.set(x,2.6,24.7);scene.add(freeze(plate))}
- for(const x of [59.5,66.5]){box(x,.5,24,.18,1,.18,wood);box(x,1,24,1.8,.14,.14,wood)}
- for(const x of [52.5,56.5,60.5,65]){const bag=new T.Mesh(new T.CylinderGeometry(.36,.4,1.3,12),new T.MeshLambertMaterial({color:0xa67955}));bag.position.set(x,1.5,30.5);scene.add(freeze(bag));box(x,.48,30.5,.16,.96,.16,darkWood);box(x,.06,30.5,1.4,.12,1.1,wood)}
- for(const z of [19,21]){box(71,.13,z,1.8,.2,.25,wood);box(74,.13,z,1.8,.2,.25,wood);box(77,.13,z,1.8,.2,.25,wood)}
- for(const x of [84,86,88])for(const z of [31,32.2]){const d=new T.Mesh(new T.CylinderGeometry(.3,.3,.24,12),iron);d.rotation.z=Math.PI/2;d.position.set(x,.3,z);scene.add(freeze(d))}
-
- // Stored equipment, pulley and hanging bags fill the training courtyard.
- for(const x of [56,58,60]){box(x,.5,17.3,1.4,1,1,wood);beam([x-.65,.05,17.85],[x+.65,.95,17.85],.08,lightWood)}
- for(const x of [78.5,81.2]){box(x,2.6,16,.14,5.2,.14,darkWood);box(x,5.05,16,2.8,.15,.2,wood);const bag=new T.Mesh(new T.CylinderGeometry(.48,.52,1.8,12),new T.MeshLambertMaterial({color:0x87634d}));bag.position.set(x+.9,3.35,16);scene.add(freeze(bag));beam([x+.9,4.3,16],[x+.9,5,16],.045,iron)}
- for(const x of [47.5,49,50.5]){const d=new T.Mesh(new T.CylinderGeometry(.35,.35,.15,12),iron);d.rotation.z=Math.PI/2;d.position.set(x,.45,31.5);scene.add(freeze(d))}
- for(const x of [55,67,79,90]){box(x,.22,36,5,.3,.5,wood);for(const dx of [-1.9,1.9])box(x+dx,.12,36,.15,.24,.4,darkWood)}
+ await window.PGSocialGymRedesign.build(scene,T);
  // Bevelled grassy field with matching shared, gated fence geometry.
  const fieldTex=stone.clone();fieldTex.repeat.set(1/7,1/7);fieldTex.needsUpdate=true;const fieldMat=new T.MeshBasicMaterial({map:fieldTex,color:0xc8dda8});
  const shape=new T.Shape();for(const [i,[x,z]] of [[44,52],[49,47],[91,47],[96,52],[96,76],[91,81],[49,81],[44,76]].entries()){const px=x-70,py=-(z-64);if(!i)shape.moveTo(px,py);else shape.lineTo(px,py)}shape.closePath();
@@ -1977,6 +1833,9 @@ void main(){
  // especially - the v359 bleacher slabs taught us that const) is initialized. The network GLB
  // always resolves after create() anyway; this also keeps synchronous loader stubs safe.
  loadAetherwell();
- return {putPlayer,removePlayer,setGymResidents,setBattleState,battleEvent,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
+ const api={putPlayer,removePlayer,setGymResidents,setBattleState,battleEvent,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer,walkTo:(x,z)=>callbacks.move?.(x,z)};
+ // Staging preview hook: lets the review harness walk the solo player to the gym.
+ window.__PGSocialSceneApi=api;
+ return api;
  }catch(error){renderer.dispose();renderer.domElement.remove();throw error}
 }};
