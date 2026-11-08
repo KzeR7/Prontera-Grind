@@ -21,10 +21,9 @@ Sanctuary textures, and the real courtyard coordinates from
 in vertex colour - the same pipeline the plaza uses - so the frames show what
 the engine would actually draw, not a Blender render.
 
-Measured on this scene at 800x654: **18,354 triangles, 18 draw calls,
-17 textures, 18 geometries, no console errors or warnings.** That is cheaper
-than most single character sprites and comfortably inside the mobile budget the
-hub already holds.
+Measured on this scene at 800x654: **17,322 triangles, 18 draw calls,
+17 textures, no console errors or warnings.** That is cheaper than most single
+character sprites and comfortably inside the mobile budget the hub already holds.
 
 ## Run it
 
@@ -152,7 +151,7 @@ threshold, and the four training rows stay clear from the court to the veranda.
 Automated checks run against the study:
 
 - zero console errors or warnings at every view, desktop and phone frame;
-- geometry audit (`?audit=1`, 1,087 parts): nothing sits below the court plane;
+- geometry audit (`?audit=1`, 1,001 parts): nothing sits below the court plane;
   no loose prop leaves the courtyard envelope - only the shell's own roof
   overhangs and the gate threshold step project past the floor polygon - and
   the three ridges agree at 13.2 m;
@@ -168,7 +167,7 @@ Automated checks run against the study:
   broom, the barrel ladle and the two lantern strings;
 - framing audit: all four courtyard corners and all four ridges project inside
   the frame at the overview and plan views; each bay view centres its bay;
-- budget: 18.4k triangles (18,354), 18 draw calls, 17 textures.
+- budget: 17.3k triangles (17,322), 18 draw calls, 17 textures.
 
 **Not** verified: the visual judgement itself. This pass was made without a
 human or vision-capable reviewer looking at the frames, so colour balance, prop

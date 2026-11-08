@@ -468,16 +468,17 @@ function buildShell(){
       const u=-f.len/2+(i+.5)*f.len/Math.round(f.len/1.05);
       lathe([[0,0],[.055,0],[.075,.30],[.055,.62],[.09,.66],[.09,.74],[0,.74]],7,'wood',ASH,...f.point(u,.30,depth),[0,f.theta,0]);
     }
-    // veranda roof: 16 plank strips, slight reveal between them
+    // veranda roof: fewer, wider plank strips so it reads as a clean plane
     const top=10.4,bot=9.45,ang=Math.atan2(top-bot,depth);
-    for(let i=0;i<Math.round(f.len/.62);i++){
-      const u=-f.len/2+(i+.5)*f.len/Math.round(f.len/.62);
-      box(.58,.10,Math.hypot(depth,top-bot)+.5,'roof',0xcbb08a,...f.point(u,(top+bot)/2-.06,depth/2),[ang,f.theta,0,'YXZ']);
+    const nStrip=Math.max(5,Math.round(f.len/2.4));
+    for(let i=0;i<nStrip;i++){
+      const u=-f.len/2+(i+.5)*f.len/nStrip;
+      box(1.9,.10,Math.hypot(depth,top-bot)+.5,'roof',0xcbb08a,...f.point(u,(top+bot)/2-.06,depth/2),[ang,f.theta,0,'YXZ']);
     }
     box(f.len+.4,.16,.22,'wood',WALNUT,...f.point(0,bot-.02,depth),[0,f.theta,0]);
-    for(let i=0;i<Math.round(f.len/.75);i++){
-      const u=-f.len/2+(i+.5)*f.len/Math.round(f.len/.75);
-      box(.09,.30,.09,'wood',WALNUT,...f.point(u,bot-.20,depth+.04),[0,f.theta,0]); // turned eave pegs
+    for(let i=0;i<Math.round(f.len/1.6);i++){
+      const u=-f.len/2+(i+.5)*f.len/Math.round(f.len/1.6);
+      box(.10,.30,.10,'wood',WALNUT,...f.point(u,bot-.20,depth+.04),[0,f.theta,0]); // turned eave pegs
     }
   }
 }
@@ -617,7 +618,7 @@ function guardPost(x,z){
 function bucklerRack(x,z,ry){
   /* A floor-standing rack: two legs, a rail, and three bucklers hooked over it. */
   for(const dx of [-1.5,1.5]){
-    box(.18,3.25,.18,'wood',WALNUT,x+Math.cos(ry)*dx,1.62,z-Math.sin(ry)*dx,[0,ry,0]);
+    box(.18,3.0,.18,'wood',WALNUT,x+Math.cos(ry)*dx,1.68,z-Math.sin(ry)*dx,[0,ry,0]);
     box(.46,.10,.46,'flat',0x8d8974,x+Math.cos(ry)*dx,.05,z-Math.sin(ry)*dx,[0,ry,0]);
   }
   box(3.2,.2,.18,'wood',WALNUT,x,3.15,z,[0,ry,0]);
@@ -727,9 +728,9 @@ function banner(x,z,text,css){
     put(new T.SphereGeometry(.055,6,5),'flat',BRASS,x+dx,4.24,z);
   }
   const m=new T.Mesh(new T.PlaneGeometry(1.55,2.20),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}));
-  m.position.set(x,3.24,z+.005);scene.add(m);
-  box(1.66,.06,.06,'wood',ASH,x,4.32,z);
-  box(1.70,.06,.08,'wood',ASH,x,2.16,z);
+  m.position.set(x,4.6,z+.005);scene.add(m);
+  box(1.66,.06,.06,'wood',ASH,x,4.50,z);
+  box(1.70,.06,.08,'wood',ASH,x,3.20,z);
   shadow(x,z,.44,.44,.26);
   return m;
 }
