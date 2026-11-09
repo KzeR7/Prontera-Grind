@@ -14,6 +14,14 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
  'assets/digimon/sanctuary/cc0/woodland-tree.webp','assets/digimon/sanctuary/cc0/medieval_wood.webp','assets/digimon/sanctuary/cc0/rough_pine_door.webp','assets/digimon/sanctuary/cc0/roof_09.webp',
  // v287: plaza pond fishing module + stylesheet (loaded by index.html alongside the social client).
  'assets/social-fishing.js','assets/social-fishing.css',
+ // v372: the v371 gym redesign module is loaded by index.html like any other runtime asset, but
+ // it was missing from the overlay allowlist, so the staging package failed closed with
+ // "Unpackaged runtime change". v371 already shipped it to main; the overlay must carry it.
+ 'assets/social-gym-redesign.js',
+ // v372: same class of oversight - the v371/v372 plaza page loads the pond module alongside
+ // social-scene.js, and the client's plaza health probe calls /api/chatcheck (added in the
+ // plaza reliability work). Without both, the staged site 404s the module/endpoint.
+ 'assets/social-pond-design.js','functions/api/chatcheck.js',
  'assets/ui/eclipse.css','assets/ui/mobile.css','assets/ui/mobile.js',
  'functions/_lib/db.js','functions/_lib/echo-board.js','functions/_lib/http.js','functions/_lib/friends.js',
  'functions/_lib/validate.js','functions/_lib/damage-monitor.js','functions/_lib/competition-baseline.js',
