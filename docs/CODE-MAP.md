@@ -558,3 +558,30 @@ this runtime. Gym apparatus is still scenery, not live training.
   no Audio/YouTube), `update_watch_sim.js` (hidden-tab remember),
   `digimon_sanctuary_sim.js` / `digimon_sanctuary_ui_sim.js` (5-minute session),
   `eclipse_ui_sim.js` / `mail_roulette_ui_sim.js` (announcement description).
+
+* **One tabbed DigiPet panel, per-activity partners, session logs, idle keep-alive (v372):**
+  `assets/social.js` renders the field grind and the gym through a single movable
+  `#sanctuaryActivityPanel` with a `Training | PvE grind | Logs` tab strip
+  (`data-sap-tab`, `role=tablist`). Proximity opens the matching tab; a visible
+  Logs tab is never auto-switched. Every activity keeps its own partner in the save
+  (`S.plazaPartners.gym` / `.pve`, same normalize-on-read style as `S.plazaRepeat`):
+  `activitySlot(kind)` resolves it with a fall-back to the followed partner, and
+  `setActivitySlot` writes it with the same guards as the gym/PvE start flows
+  (a slot mid-battle cannot be picked for the gym and vice versa; changing a
+  running session's partner requires stopping it). `gymPanelPartner`,
+  `battleProfileFor`, `pvePanelMarkup`, `battleNearbyFrame`, `repeatPveRun`,
+  `startWorldTraining`, `trainingSlotBusy()` and `currentLook()` all take/resolve
+  the per-activity slot instead of the followed one; the DigiPet partner grid and
+  `assignPartner` no longer block the *followed* slot on battle — only the species
+  change of a busy slot stays locked. Logs live in an in-memory ring
+  (`ACTIVITY_LOG_MAX=40`, `pushActivityLog`) teed from `worldNotice` plus gym
+  completions; no save-format change. The plaza socket keep-alive in `social.js`
+  now pings unconditionally every 45 s (previously only while fishing/gym), and
+  `workers/social/room.mjs` exempts fishing reservations (`c.fish` / `c.seat`)
+  from the silence sweep (only `REAUTH_MS` claims them) and extends their
+  disconnect resume record to `ACTIVITY_RESUME_MS=30 minutes`. `index.html`
+  gates `maybeGuide` with a once-ever `<kind>Seen` marker in `S.handbook`, written
+  on first player interaction (`guideStep`, `guidepage`, `escapeUI`), so the
+  beginner/ascension tour never auto-opens again. Suites: `social_ui_sim.js`
+  (tabs, parallel partners, follower switch mid-grind, Logs tab), `social_sim.js`
+  (sweep exemption + REAUTH bound), `guide_sim.js` (tour-once contract).
