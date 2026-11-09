@@ -169,6 +169,8 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  boardwalk(22,42,26,4.8,.027);boardwalk(66,42,62,4.8,.029);boardwalk(65,84.5,60,5,.029);boardwalk(65,120,60,4,.029);
  // Two angled building wings with broad roofs meet at a short central bay.
  // Their footprint and wall collision come from the same shared segments.
+ function gable(cx,cz,w,d,eave,rise){const half=w/2,ang=Math.atan2(rise,half);for(const side of [-1,1]){const m=box(cx+side*half/2,eave+rise/2,cz,Math.hypot(half,rise)+.45,.24,d,roofMat);m.rotation.z=-side*ang;m.updateMatrix();m.userData.sanctuaryRoof=true}for(const z of [cz-d/2,cz+d/2]){beam([cx-half,eave,z],[cx,eave+rise,z],.18);beam([cx,eave+rise,z],[cx+half,eave,z],.18)}}
+ if(window.PGSocialGymRedesign){await window.PGSocialGymRedesign.build(scene)}else{
  const sandMat=new T.MeshBasicMaterial({map:sandTexture,color:0xe8d6b4});
  const gymShape=new T.Shape();for(const [i,[x,z]] of [[43,18.5],[65,12.5],[73,12.5],[95,18.5],[95,39],[43,39]].entries()){if(i)gymShape.lineTo(x-69,-(z-25.5));else gymShape.moveTo(x-69,-(z-25.5))}gymShape.closePath();
  flat(new T.ShapeGeometry(gymShape),sandMat,69,25.5,.018).userData.sanctuaryGym=true;
@@ -318,6 +320,8 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  for(const x of [78.5,81.2]){box(x,2.6,16,.14,5.2,.14,darkWood);box(x,5.05,16,2.8,.15,.2,wood);const bag=new T.Mesh(new T.CylinderGeometry(.48,.52,1.8,12),new T.MeshLambertMaterial({color:0x87634d}));bag.position.set(x+.9,3.35,16);scene.add(freeze(bag));beam([x+.9,4.3,16],[x+.9,5,16],.045,iron)}
  for(const x of [47.5,49,50.5]){const d=new T.Mesh(new T.CylinderGeometry(.35,.35,.15,12),iron);d.rotation.z=Math.PI/2;d.position.set(x,.45,31.5);scene.add(freeze(d))}
  for(const x of [55,67,79,90]){box(x,.22,36,5,.3,.5,wood);for(const dx of [-1.9,1.9])box(x+dx,.12,36,.15,.24,.4,darkWood)}
+
+ }
  // Bevelled grassy field with matching shared, gated fence geometry.
  const fieldTex=stone.clone();fieldTex.repeat.set(1/7,1/7);fieldTex.needsUpdate=true;const fieldMat=new T.MeshBasicMaterial({map:fieldTex,color:0xc8dda8});
  const shape=new T.Shape();for(const [i,[x,z]] of [[44,52],[49,47],[91,47],[96,52],[96,76],[91,81],[49,81],[44,76]].entries()){const px=x-70,py=-(z-64);if(!i)shape.moveTo(px,py);else shape.lineTo(px,py)}shape.closePath();
@@ -1012,6 +1016,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   // water frames, limestone, planks). They are loaded after the plaza is on screen and dress the ponds
   // in the same hand-painted style as the town. If they never arrive the primitives above stay.
   const pondViews=[];
+  const pondDesigns=[];
   const cropTex=(img,rect)=>{
    if(!img||!rect||typeof document==='undefined')return null;
    const c=document.createElement('canvas');c.width=Math.max(1,rect.w);c.height=Math.max(1,rect.h);
@@ -1095,6 +1100,7 @@ void main(){
    // cloned per pond so each surface drifts at its own offset
    const clone=(t,rx,ry)=>{const c=t.clone();c.needsUpdate=true;c.wrapS=c.wrapT=T.RepeatWrapping;c.repeat.set(rx,ry);return c};
    for(const v of pondViews){
+    const beforePaint=new Set(scene.children);
     // water: one shader per pond, layering the painted frames and the shoreline mask
     const w0=clone(water0,1,1),w1=clone(tile('water_dark_0')||water1||water0,1,1),wN=clone(water1||water0,1,1);
     v.water.material=waterShader(w0,w1,wN,v.p);
@@ -1154,6 +1160,10 @@ void main(){
     if(cherry)for(const t of props.blossoms)mirror(cherry,t.x,t.z,8.6*t.scale);
     if(lantern)for(const l of props.lanterns)mirror(lantern,l.x,l.z,1.9);
     if(boulder)for(const b of props.boulders)mirror(boulder,b.x,b.z,.78+b.r*.6);
+    if(window.PGSocialPondDesign){
+     const design=window.PGSocialPondDesign.build({T,R,scene,view:v,textures:{stone},legacy:[...v.designLegacy,...scene.children.filter(o=>!beforePaint.has(o))]});
+     pondDesigns.push(design);
+    }
    }
    pondPainted=true;return true;
   }
@@ -1165,6 +1175,7 @@ void main(){
     .catch(err=>{if(typeof console!=='undefined')console.error('pond art failed',err&&err.message,err&&err.stack&&err.stack.slice(0,300));return false});
   }
   for(const p of R.PONDS){
+    const beforePond=new Set(scene.children);
    const view={p,props:null,fallback:[],falls:[],fallSpray:[],bridge:null,stones:[],rim:null,water:null,waterB:null};
    pondViews.push(view);
    const rim=new T.Mesh(new T.ShapeGeometry(pondShape(p,.75)),sandMat);rim.rotation.x=-Math.PI/2;rim.position.set(p.x,.008,p.z);scene.add(freeze(rim));view.rim=rim;
@@ -1224,6 +1235,7 @@ void main(){
     });
     scene.add(boulders);view.fallback.push(boulders);
    }
+   view.designLegacy=scene.children.filter(o=>!beforePond.has(o));
   }
   // v306: fetch the painted sheets once the pond exists (deferred so the plaza is interactive first);
   // every pond view is repainted in place when they arrive.
@@ -1499,6 +1511,7 @@ void main(){
    lineGeo.attributes.position.needsUpdate=true;lineGeo.computeBoundingSphere?.();
   }
   function update(now,dt){
+   for(const design of pondDesigns)design.update(now/1000,camera);
    updateRemoteRigs(now,dt);
    waterTexA.offset.x=(now/14000)%1;waterTexA.offset.y=(now/23000)%1;waterTexB.offset.x=1-(now/17000)%1;waterTexB.offset.y=(now/19000)%1;
    for(const f of falls)f.tex.offset.y=(now/700)%1;

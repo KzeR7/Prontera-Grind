@@ -73,6 +73,17 @@ const SANCTUARY_BARRIERS=[
 // collision matches the rendered rails, including angled corner pieces.
 // Back wings are true angled segments, shared by geometry, pathfinding and Worker.
 const SANCTUARY_GYM_WALLS=[[43,18.5,65,12.5],[65,12.5,73,12.5],[73,12.5,95,18.5],[43,18.5,43,29],[95,18.5,95,29]].map(([x1,z1,x2,z2])=>({x1,z1,x2,z2}));
+// The roofed U now has enclosed rooms behind its original court-facing walls.
+// Shared by browser/Worker so players cannot walk through the new rear shell.
+const SANCTUARY_GYM_SHELL=(()=>{
+ const p=[[43,29],[43,18.5],[65,12.5],[73,12.5],[95,18.5],[95,29]];
+ const n=p.slice(1).map((b,i)=>{const a=p[i],l=Math.hypot(b[0]-a[0],b[1]-a[1]);return [(b[1]-a[1])/l,-(b[0]-a[0])/l]});
+ const q=p.map((v,i)=>{const a=n[Math.max(0,i-1)],b=n[Math.min(i,n.length-1)],d=1+a[0]*b[0]+a[1]*b[1];return [v[0]+5.55*(a[0]+b[0])/d,v[1]+5.55*(a[1]+b[1])/d]});
+ return p.slice(1).map((b,i)=>[p[i],b,q[i+1],q[i]]);
+})();
+function gymShellBlocked(x,z){return SANCTUARY_GYM_SHELL.some(poly=>{
+ let pos=false,neg=false;for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],c=(b[0]-a[0])*(z-a[1])-(b[1]-a[1])*(x-a[0]);if(c>.00001)pos=true;if(c<-.00001)neg=true}return !(pos&&neg);
+})}
 const SANCTUARY_GYM_FENCES=[[45,38.5,62,38.5],[76,38.5,93,38.5]].map(([x1,z1,x2,z2])=>({x1,z1,x2,z2}));
 const SANCTUARY_FENCES=[
  [44,52,49,47],[49,47,62,47],[70,47,91,47],[91,47,96,52],
@@ -193,7 +204,7 @@ for(const row of BLEACHER_ROWS)row.seats.forEach((seat,slot)=>{seat.id=bleacherI
 // and the only clue was a battle-intent timeout a minute later. The worker now stamps every room
 // snapshot with this fingerprint and the page compares it on arrival, so a mismatch announces
 // itself the moment the plaza opens instead of as mystery rubber-banding.
-const rulesFingerprint=()=>[CAPACITY,BENCHES.length,CHAIRS.length,BLEACHER_ROWS.length,FOUNTAIN_BENCHES.length,SEATS.filter(Boolean).length,walkable(0,7.7)?1:0,walkable(0,7.8)?1:0].join('/');
+const rulesFingerprint=()=>[CAPACITY,BENCHES.length,CHAIRS.length,BLEACHER_ROWS.length,FOUNTAIN_BENCHES.length,SEATS.filter(Boolean).length,walkable(0,7.7)?1:0,walkable(0,7.8)?1:0,SANCTUARY_GYM_SHELL.length].join('/');
 const FOUNTAIN_BENCHES=(()=>{const seats=[];for(let k=0;k<8;k++){
  const a=k*Math.PI/4,ca=Math.cos(a),sa=Math.sin(a),dir=[2,3,4,5,6,7,0,1][k],r=12.81*.62;
  for(let slot=0;slot<2;slot++){const off=slot?0.45:-0.45;
@@ -271,7 +282,7 @@ function onBridge(x,z){return POND_PROPS.some(({bridge:b})=>Math.abs(x-b.x)<=b.s
 // ring itself (7.71..8.08) and the paving around it stay walkable like every other hub
 // bench, and the seats are the FOUNTAIN_BENCHES below. Nothing else sits in that annulus:
 // the nearest plaza benches are at radius ~17, the poker tables at ~27, the gardens at ~32.
-function walkable(x,z){return Number.isFinite(x)&&Number.isFinite(z)&&x>=MIN_X&&x<=MAX_X&&z>=MIN_Z&&z<=MAX_Z&&Math.hypot(x,z)>7.75&&!pokerBlocked(x,z)&&!cragBlocked(x,z)&&!fenceBlocked(x,z)&&!ringBlocked(x,z)&&SANCTUARY_OBSTACLES.every(o=>Math.hypot(x-o.x,z-o.z)>o.r+.25)&&SANCTUARY_BARRIERS.every(b=>Math.abs(x-b.x)>b.w/2+.3||Math.abs(z-b.z)>b.d/2+.3)&&BUILDINGS.every(b=>Math.abs(x-b.x)>b.w/2+.7||Math.abs(z-b.z)>b.d/2+.7)&&GARDENS.every(g=>Math.abs(x-g.x)>g.w/2+.5||Math.abs(z-g.z)>g.d/2+.5)&&(onBridge(x,z)||PONDS.every(p=>!pondContains(p,x,z,.5)));}
+function walkable(x,z){return Number.isFinite(x)&&Number.isFinite(z)&&x>=MIN_X&&x<=MAX_X&&z>=MIN_Z&&z<=MAX_Z&&Math.hypot(x,z)>7.75&&!pokerBlocked(x,z)&&!cragBlocked(x,z)&&!fenceBlocked(x,z)&&!gymShellBlocked(x,z)&&!ringBlocked(x,z)&&SANCTUARY_OBSTACLES.every(o=>Math.hypot(x-o.x,z-o.z)>o.r+.25)&&SANCTUARY_BARRIERS.every(b=>Math.abs(x-b.x)>b.w/2+.3||Math.abs(z-b.z)>b.d/2+.3)&&BUILDINGS.every(b=>Math.abs(x-b.x)>b.w/2+.7||Math.abs(z-b.z)>b.d/2+.7)&&GARDENS.every(g=>Math.abs(x-g.x)>g.w/2+.5||Math.abs(z-g.z)>g.d/2+.5)&&(onBridge(x,z)||PONDS.every(p=>!pondContains(p,x,z,.5)));}
 function path(from,to){
  if(!walkable(to.x,to.z))return [];
  const start=[Math.round(from.x),Math.round(from.z)],end=[Math.round(to.x),Math.round(to.z)],key=(x,z)=>x+','+z;
