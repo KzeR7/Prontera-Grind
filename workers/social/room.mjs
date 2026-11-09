@@ -338,7 +338,7 @@ export class SocialRoom {
   const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
   const slots=Object.hasOwn(R.GYM_STATIONS,m.stat)?R.GYM_STATIONS[m.stat]:null,species=R.cleanDigimon(m.species);if(!c.room||!slots||!species)return this.send(c,{type:'gym_error',request,message:'Choose a valid companion and gym station.'});
   if(c.gym)return this.send(c,{type:'gym_error',request,message:'Only one companion can train in the gym at a time.'});
-  R.advance(c,now);if(c.sit||c.path.length||!slots.some(s=>Math.hypot(c.x-s.x,c.z-s.z)<=9))return this.send(c,{type:'gym_error',request,message:'Walk close to the station and stand still first.'});
+  R.advance(c,now);if(c.sit||c.path.length||!R.inGymArea(c.x,c.z))return this.send(c,{type:'gym_error',request,message:'Walk into the gym and stand still first.'});
   const used=new Set([...this.clients.values()].filter(p=>p.gym?.room===c.room&&p.gym.stat===m.stat).map(p=>p.gym.slot)),slot=slots.findIndex((_,i)=>!used.has(i));
   if(slot<0)return this.send(c,{type:'gym_error',request,message:'All '+m.stat+' equipment is in use. Please try again shortly.'});
   // v349: the client reports which partner slot is training. Only that slot is barred

@@ -222,11 +222,11 @@ const RODS=[
  // fishing in the 250-casts/h model, so the grind is the fish, not the gear. The ladder still decides
  // how much of the rare table you can reach (ROD_GATE).
  {id:'twig',name:'Training Rod',icon:'🎣',cost:0,luck:0,control:0,strength:0,lure:0},
- {id:'oak',name:'Oak Rod',icon:'🪵',cost:300,luck:.15,control:.1,strength:.1,lure:.1},
- {id:'brass',name:'Brass Rod',icon:'🥉',cost:1000,luck:.3,control:.18,strength:.22,lure:.2},
- {id:'silver',name:'Silver Rod',icon:'🥈',cost:3000,luck:.5,control:.28,strength:.35,lure:.3},
- {id:'golden',name:'Golden Rod',icon:'🥇',cost:8000,luck:.75,control:.38,strength:.5,lure:.45},
- {id:'mythril',name:'Mythril Rod',icon:'💠',cost:20000,luck:1.1,control:.5,strength:.7,lure:.6},
+ {id:'oak',name:'Oak Rod',icon:'🪵',cost:600,luck:.15,control:.1,strength:.1,lure:.1},
+ {id:'brass',name:'Brass Rod',icon:'🥉',cost:2000,luck:.3,control:.18,strength:.22,lure:.2},
+ {id:'silver',name:'Silver Rod',icon:'🥈',cost:6000,luck:.5,control:.28,strength:.35,lure:.3},
+ {id:'golden',name:'Golden Rod',icon:'🥇',cost:16000,luck:.75,control:.38,strength:.5,lure:.45},
+ {id:'mythril',name:'Mythril Rod',icon:'💠',cost:40000,luck:1.1,control:.5,strength:.7,lure:.6},
 ];
 const RODS_BY_ID=Object.fromEntries(RODS.map(r=>[r.id,r]));
 // v304/v305 (owner): a rod does not only raise luck, it is what lets the boss tiers bite. The cart
@@ -404,12 +404,12 @@ const RARITY_VALUE={common:18,uncommon:48,rare:120,legendary:360,mythical:1200,s
 // base capacity so older callers and saves keep working, and bagMax(state) is the live cap.
 const BAG_TIERS=[
  {tier:0,cap:120,cost:0,label:'Canvas Satchel'},
- // v296 (owner): the first upgrade has to be reachable in a session, so the ladder starts low and
- // grows gently (~2.2x, then ~2x) instead of jumping straight to five figures.
- {tier:1,cap:200,cost:600,label:'Reinforced Creel'},
- {tier:2,cap:300,cost:1400,label:'Angler\'s Basket'},
- {tier:3,cap:400,cost:3000,label:'Deep Keep-Net'},
- {tier:4,cap:500,cost:6500,label:'Bottomless Creel'},
+ {tier:1,cap:200,cost:900,label:'Reinforced Creel'},
+ {tier:2,cap:300,cost:2100,label:'Angler\'s Basket'},
+ {tier:3,cap:400,cost:4500,label:'Deep Keep-Net'},
+ {tier:4,cap:500,cost:9750,label:'Bottomless Creel'},
+ {tier:5,cap:750,cost:15200,label:'Ocean Hold'},
+ {tier:6,cap:1000,cost:24000,label:'Aether Keep'},
 ];
 const BAG_MAX=BAG_TIERS[0].cap,COIN_MAX=1e9,CAST_GREEN=[.82,.96],CAST_PERFECT=[.87,.93];
 const bagTierOf=state=>{const t=state&&Number.isInteger(state.bagTier)?state.bagTier:0;return BAG_TIERS[Math.max(0,Math.min(BAG_TIERS.length-1,t))]};
@@ -1896,7 +1896,7 @@ function renderShop(){
  const tier=bagTierOf(st),next=nextBagTier(st),cap=bagMax(st);
  // v295: one permanent bag upgrade per tier, bought in order - never a skip.
  const bagRow=`<div class="fishing-shop-row equipped"><span class="fishing-shop-icon">🧺</span><span class="fishing-shop-name">${esc(tier.label)}<small>holds ${cap} fish · ${st.bag.length}/${cap} stored${next?` · next: ${esc(next.label)} holds ${next.cap}`:' · fully upgraded'}</small></span>${next?`<button type="button" data-bagup ${st.coins<next.cost?'disabled':''}>${COIN_HTML} ${fmt(next.cost)}</button>`:'<button type="button" disabled>Max</button>'}</div>`;
- els.shopView.innerHTML=`<p class="fishing-shop-head">${COIN_HTML} <b>${fmt(st.coins)}</b> Fishcoins — earn them by selling fish from the Bag.</p><h4>Bag <small>permanent capacity · 120 → 200 → 300 → 400 → 500</small></h4>${bagRow}<h4>Rods <small>permanent · luck / control / strength / lure speed</small></h4>${rodRows}<h4>Bait <small>one is used per cast</small></h4>${baitRows}<div class="fishing-shop-row${st.baitSel===null?' equipped':''}"><span class="fishing-shop-icon">🚫</span><span class="fishing-shop-name">No bait<small>fish with the rod alone</small></span><button type="button" data-use="none" ${st.baitSel===null?'disabled':''}>Use</button></div>`;
+ els.shopView.innerHTML=`<p class="fishing-shop-head">${COIN_HTML} <b>${fmt(st.coins)}</b> Fishcoins — earn them by selling fish from the Bag.</p><h4>Bag <small>permanent capacity · 120 → 200 → 300 → 400 → 500 → 750 → 1000</small></h4>${bagRow}<h4>Rods <small>permanent · luck / control / strength / lure speed</small></h4>${rodRows}<h4>Bait <small>one is used per cast</small></h4>${baitRows}<div class="fishing-shop-row${st.baitSel===null?' equipped':''}"><span class="fishing-shop-icon">🚫</span><span class="fishing-shop-name">No bait<small>fish with the rod alone</small></span><button type="button" data-use="none" ${st.baitSel===null?'disabled':''}>Use</button></div>`;
  for(const b of els.shopView.querySelectorAll('button[data-rod]'))b.onclick=()=>{const r=buyRod(st,b.dataset.rod);if(r.ok){persist();sound('coin');status('Bought and equipped the '+RODS_BY_ID[b.dataset.rod].name+'!')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-equip]'))b.onclick=()=>{equipRod(st,b.dataset.equip);syncRodLook();persist();renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-bagup]'))b.onclick=()=>{const r=buyBagUpgrade(st);if(r.ok){persist();sound('coin');status('Bag upgraded — it now holds '+r.cap+' fish.')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel();renderDockGear()};
