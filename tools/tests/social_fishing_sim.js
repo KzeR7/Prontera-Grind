@@ -701,7 +701,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  const cart=d2.getElementById('fishingShopView').textContent;
  assert(/unlocks Rare\+/.test(cart),'the Oak Rod advertises the rare tier');
  assert(/unlocks Legendary\+/.test(cart),'the Silver Rod advertises legendaries');
- assert(/unlocks Secret\+/.test(cart),'the Mythril Rod advertises secrets');
+ assert(/unlocks (Secret|MVP)\+/.test(cart),'the Mythril Rod advertises its top tier');
  const buyBtn=d2.querySelector('#fishingShopView button[data-bagup]');
  assert(buyBtn,'the shop offers the next bag tier');
  assert.equal(buyBtn.disabled,true,'it cannot be bought without the Fishcoins');
@@ -861,7 +861,7 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  // --- Part D: the page wires v295 up (save shape, cache versions, build tag) ---------------
  const page=fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
  assert(page.includes('baitSel:null,bagTier:0,title:null'),'a fresh save carries the bag tier and the fishing title');
- assert(/const fishBagTiers=\[120,200,300,400,500\]/.test(page),'the page sanitizer knows the bag ladder');
+ assert(/const fishBagTiers=\[120,200,300,400,500,750,1000\]/.test(page),'the page sanitizer knows the 7-tier bag ladder');
  assert(/f\.fishing\.bagTier=Math\.max\(0,Math\.min\(fishBagTiers\.length-1/.test(page),'the saved bag tier is clamped');
  assert(/\.slice\(-fishBagCap\)/.test(page),'the bag is sliced to the tier the player owns');
  assert(/const fishTitleIds=\['dockhand'/.test(page),'the page sanitizer whitelists the fishing titles');
@@ -914,7 +914,7 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  const artDir=path.join(__dirname,'..','..','assets','social','fish');
  const manifest=JSON.parse(fs.readFileSync(path.join(artDir,'MANIFEST.json'),'utf8'));
  const artIds=Object.keys(manifest);
- assert.equal(artIds.length,146,'146 species ship a real drawing');
+ assert.equal(artIds.length,153,'153 species ship a real drawing (146 + 7 MVP)');
  assert.deepEqual(artIds.slice().sort(),Object.keys(F.FISH_ART).sort(),'the module and the manifest agree');
  assert.equal(new Set(Object.values(manifest)).size,artIds.length,'no two species share one file');
  const PNG=Buffer.from([137,80,78,71,13,10,26,10]);
