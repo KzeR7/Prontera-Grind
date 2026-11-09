@@ -10,6 +10,7 @@
 //   ban / unban                                 - suspend and restore an account
 //   logout          {}                          - kill every session (a "force sign-out")
 //   grant           { kind, payload, note }      - zeny | item | level | message  (see gm-panel-plan §4)
+//   systems         { system, resource, ... }   - queued Fishing / DigiPet resource with save receipt
 //   announce        { body, kind }               - to everyone, or to this player alone
 //   restore         { version }                 - put a save_history blob back as the live save
 //
@@ -20,7 +21,7 @@
 import { currentUser, isGm, hashPassword } from '../../_lib/auth.js';
 import { json, guard, readJson, fail } from '../../_lib/http.js';
 import { checkGrant, checkAnnouncement, GRANT_KINDS, checkSaveBlob, publicFields, savedElsewhere } from '../../_lib/validate.js';
-import { inspectSave, giftPayload, equipmentPayload } from '../../_lib/gm-tools.js';
+import { inspectSave, giftPayload, equipmentPayload, systemsPayload } from '../../_lib/gm-tools.js';
 import { GM_CATALOG } from '../../_lib/gm-catalog.js';
 import * as db from '../../_lib/db.js';
 
@@ -120,6 +121,14 @@ export const onRequestPost = guard(async ({ request, env }) => {
         D.prepare('INSERT INTO events(at,actor,user_id,kind,detail) VALUES(?,?,?,?,?)').bind(Date.now(),user.username,id,'gm-'+kind,JSON.stringify(payload).slice(0,1500)),
       ]);
       return json({ok:true,note:'Queued — applies on their next login or sync. Check Backups for delivery status.'});
+    }
+    case 'systems': {
+      const payload=systemsPayload(body);
+      await D.batch([
+        D.prepare('INSERT INTO grants(user_id,kind,payload,note,created_by,created_at) VALUES(?,?,?,?,?,?)').bind(id,'systems',JSON.stringify(payload),String(body.note||'').slice(0,200),user.username,Date.now()),
+        D.prepare('INSERT INTO events(at,actor,user_id,kind,detail) VALUES(?,?,?,?,?)').bind(Date.now(),user.username,id,'gm-systems',JSON.stringify(payload).slice(0,1500)),
+      ]);
+      return json({ok:true,note:'Queued — applies on their next login or sync. If the resource is full, it remains pending.'});
     }
     case 'grant': {
       const kind = String(body.kind || '');

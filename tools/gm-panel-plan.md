@@ -1,7 +1,7 @@
 # Horizon Haven — the GM panel plan
 
-*Written 2026-10-06 for BUILD `2026-10-06 grind-v61 local GM password + publish-only build`.*
-*Companion to `tools/server-shift-plan.md` (the Cloudflare migration). Nothing here is built yet.*
+*Original plan written 2026-10-06 for BUILD `2026-10-06 grind-v61 local GM password + publish-only build`.*
+*Companion to `tools/server-shift-plan.md`. The plan below is historical where it differs from the shipped implementation; see **Shipped in v101** and **Shipped in v373** at the end for the current behavior.*
 
 ---
 
@@ -19,21 +19,19 @@ Four capabilities, in plain terms:
 3. **Mail players things** — items, Zeny, levels, compensation.
 4. **Announce** — messages to everyone, and a way to reach one player.
 
-**The one sentence that shapes everything below: you cannot edit another player's account while
-their save lives in their own browser.** Today every player's progress is in *their* localStorage
-(`pg_save3_<user>`); the server has never seen it. A panel that "edits players" only becomes possible
-once the accounts and saves live in D1 — i.e. **after phase 1 of the server shift**. The GM panel is
-not a separate app you can build first; it is a layer on top of the server.
-
-What *is* available today is a GM login and a single-player test panel (§2). Keep using those while
-phase 1 is built.
+**Original plan context (pre-cloud):** saves lived only in each player's localStorage, so the
+server could not edit another player's account. The cloud migration has since shipped: current
+account saves are synced to D1 and the cloud GM console exists. It is still unsafe for server code to
+invent or hand-edit a client save; state changes use the receipt-protected client grant flow described
+in §4 and **Shipped in v373** below. This plan's old phase-1 sequencing is history, not current setup guidance.
 
 ---
 
 ## 2. What already exists in the game
 
-The `🛠️ GM Tools` tab (visible only when `S.gm` is true) is a **dev/testing panel that only affects
-your own save in your own browser**:
+The `🛠️ GM Tools` tab (visible only when `S.gm` is true) remains the **single-player dev/testing
+panel that only affects your own save in your own browser**. It is separate from the cloud GM console
+in `gm.html`, which is authorized by the D1 GM role and session:
 
 | Already there | What it does |
 |---|---|
@@ -47,7 +45,10 @@ your own save in your own browser**:
 That is already a good *single-player* GM toolset. What it cannot do is touch anyone else, and it
 cannot do the three things the owner listed (edit accounts, mail, announce).
 
-### The GM login today
+### Legacy offline GM credentials (not cloud authorization)
+
+These notes are for the old local/dev path only. The cloud console trusts the authenticated D1
+session's `users.gm` role; a browser `S.gm` flag does not authorize any cloud endpoint.
 
 * `GM` + the hashed long password (the owner holds it), **or**
 * `GM` + a **local password** stored in the GM's own browser:
@@ -104,12 +105,13 @@ This distinction decides the whole architecture:
 
 ### The delivery mechanisms, best first
 
-1. **Pending grants applied at next login (recommended).** The GM writes a row to a `grants` table
-   (`user_id, kind, payload, note, created_by, created_at, claimed_at`). On login the server applies
-   pending grants to the save blob *server-side, before handing it to the client*, and marks them
-   claimed. The player's client never needs new code for items/zeny/levels, and there is nothing to
-   click, nothing to lose, and nothing to expire. Works for offline players — which is nearly all of
-   them in an idle game.
+1. **Pending grants applied by the client on login/sync (shipped).** The GM writes a row to the
+   `grants` table (`user_id, kind, payload, note, created_by, created_at, claimed_at`). The server
+   validates and queues the payload but never edits a save blob. For stateful deliveries, the client
+   applies the grant, saves its matching `gmReceipts` ID, and the claim endpoint marks it delivered
+   only after the saved receipt exists. A full bag or unsupported future save version remains
+   pending instead of being silently overwritten. This works for offline players and keeps every
+   grant subject to the game's own save-format rules.
 2. **In-game mail with a claim button.** Nicer feel (a mailbox tab, "GM gift", expiry), but it needs
    a new UI tab, a claim endpoint, and a rule for what happens when the bag is full. Worth doing
    later, on top of (1) — the `grants` row is exactly what a mailbox item would be.
@@ -132,7 +134,7 @@ from the migration plan already exists.
 | 1 | **GM role server-side** | `users.gm = 1`; the login response says `gm:true`; `S.gm` can no longer be forged in a save; the GM tab unlocks from the session, not a flag | 2–3 h | phase 1 |
 | 2 | **`/gm` console (read + moderate)** | Who is online, last sync, save size, level/class, flags; ban/unban; force logout; reset a password; restore one of the 5 save backups | 4–6 h | 1 |
 | 3 | **Account editor** | A form per player: Zeny, Base Lv, Job Lv, stats, Zeny, class change, HP, GM multiplier. Every field validated against the game's own caps (`MAXST`, `statCap()`, `BASECAP`) | 4–6 h | 2 |
-| 4 | **Grants + mail** | "Send items/Zeny/levels to <player>"; a `grants` table applied at login; a GM-only history of what was sent and claimed | 4–6 h | 2 |
+| 4 | **Grants + mail** | "Send items/Zeny/levels to <player>"; client-applied `grants` with saved receipts; a GM-only history of what was sent and claimed | shipped | 2 |
 | 5 | **Announcements** | Server-wide banner + per-player message; needs the phase-2 channel for live delivery | 2–3 h | phase 2 |
 | 6 | **Audit log screen** | Every GM action with who/when/what/target, from the `events` table; "no GM action without an audit row" | 2 h | 2 |
 | 7 | **Item picker** | Search the real drop tables for an item id instead of typing ids; copy an item's exact schema (`slot`,`wt`,`tier`,`aff`) from the game's own database | 3 h | 4 |
@@ -219,3 +221,34 @@ phase 2. The owner gets a working "control the game" panel in the same week the 
 * New gifts and equipment changes are acknowledged only once their receipt is in a cloud save. Full bags retain waiting equipment gifts. The game remains client authoritative; snapshots are inspection data, not anti-cheat evidence.
 * Before deploying Functions, apply `migrations/0004_gm_gift_batches.sql` through the normal D1 migration process. Locally `tools/dev_server.js` applies migrations once and keeps a ledger when `--db` is used.
 * Regenerate the catalog after drop-table changes: `node tools/build_gm_catalog.cjs`; verify with `--check` (requires the documented jsdom and Three.js test dependencies).
+
+## Shipped in haven-v373 — Fishing/DigiPet resources and manual MVP spawn
+
+* **System resource grants:** `POST /api/gm/player` with `action: "systems"` validates a bounded
+  catalog payload and queues a `systems` row plus audit event. Fishing supports Fishcoins (up to
+  1,000,000,000), owned rod unlocks, and bait quantities (up to 999 per grant). DigiPet supports Pet
+  Coins (up to 999,999) and Digi-Eggs (up to the 48-form starter pool); the client also checks the
+  player's current unowned-species/egg capacity before applying. The route never calls `updateSave`
+  or edits a `saves.blob`.
+* **Delivery receipts:** `index.html` applies supported system payloads to the player's current save,
+  appends the grant ID to `S.gmReceipts`, saves and pushes. `POST /api/grants` only claims a system
+  grant if that ID appears in the stored receipt. Full pouches, full egg capacity, unavailable
+  DigiPet code and future-version Pet Bags remain pending. First-time bag creation merges existing
+  partner lines and progressed legacy partner records before it saves, so granting resources cannot
+  erase legacy ownership/progress.
+* **Safe console summary:** `functions/_lib/gm-tools.js` returns bounded Fishcoin/Pet Coin/egg counts,
+  known owned rods, catalog bait counts, and DigiPet ownership/gear counts; it does not return private
+  tokens, raw roster contents or unvalidated resource values. The player detail's **Fishing & DigiPet**
+  tab uses that summary and queues grants with a per-action audit note.
+* **Manual Fishing MVP:** the authenticated Pages route `GET/POST /api/gm/fishing` returns the catalog
+  or sends a selected/random MVP and room (1–50) through the private `SOCIAL` binding to
+  `/gm/fishing-mvp`. The Durable Object requires the internal GM identity, validates its own room and
+  species lists, rejects a second active MVP in one room, broadcasts a ten-minute spawn and schedules
+  expiry without replacing an active battle alarm. D1 records request and outcome events
+  (`gm-fishing-mvp-request`, `gm-fishing-mvp`, or `gm-fishing-mvp-failed`). Pages and the Social Worker
+  must be deployed from matching source for this control to function.
+* **Affix offer clarity:** every changed reforge replacement displays the new roll's possible range,
+  including different-stat replacements. Unchanged rows remain labeled unchanged.
+* **Planning boundary:** the DigiPet Rift campaign is only in
+  `docs/proposals/digipet-rift-campaign-proposal-2026-11-09.md`. No redesign gameplay, save migration,
+  combat or map work is part of this release.

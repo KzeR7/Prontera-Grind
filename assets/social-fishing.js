@@ -2050,6 +2050,7 @@ return {
  setMvp,clearMvp,getMvp:()=>mvpActive, isMvpClaimed:id=>mvpClaimed.has(id),
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,
+ refresh:()=>{if(els){renderDockGear();renderPanel();renderMvpBanner()}},
  // v297: the plaza's leave-warning reels the line in through this, so chat no longer has to nag.
  stop:message=>stopFishing(message),openBag:()=>toggleBag(true),openIndex:()=>{toggleBag(true);switchTab('index')},openTitles:()=>{toggleBag(true);switchTab('titles')},
  // v295: sit/stand are allowed with a line in the water, so the plaza asks these two separately

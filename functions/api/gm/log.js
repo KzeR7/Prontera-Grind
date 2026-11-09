@@ -11,7 +11,9 @@ const NICE = {
   register: 'Account created', login: 'Logged in', 'login-failed': 'Failed login',
   'gm-note': 'GM note', 'gm-set-password': 'Password reset', 'gm-set-level': 'GM level changed',
   'gm-ban': 'Suspended', 'gm-unban': 'Unsuspended', 'gm-logout': 'Signed out everywhere',
-  'gm-grant': 'Sent something', 'gm-announce': 'Announcement', 'gm-restore': 'Save restored',
+  'gm-grant': 'Sent something', 'gm-systems': 'Fishing / DigiPet resources',
+  'gm-fishing-mvp-request': 'Fishing MVP spawn requested', 'gm-fishing-mvp': 'Fishing MVP spawned', 'gm-fishing-mvp-failed': 'Fishing MVP spawn failed or refused',
+  'gm-announce': 'Announcement', 'gm-restore': 'Save restored',
 };
 
 export const onRequestGet = guard(async ({ request, env }) => {
