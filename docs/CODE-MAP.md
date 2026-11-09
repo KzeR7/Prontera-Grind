@@ -526,3 +526,35 @@ this runtime. Gym apparatus is still scenery, not live training.
   Coverage: `digimon_battle_sim.js`, `sanctuary_battle_sim.js`, Solo/online
   `social_ui_sim.js`, the battle additions in `social_scene_sim.js`, and the
   real Solo/two-client browser rehearsals.
+
+* **One activity panel, movable: gym and grind (v371):** `assets/social.js`
+  now renders every "you are standing somewhere actionable" moment through a single
+  `#sanctuaryActivityPanel` inside the plaza frame. `renderActivityPanel` picks the
+  mode (`gym` at the gym, `pve` at the PvE farm) and — importantly — **renders its
+  contents even while the panel is hidden**, so the document always carries the
+  current action control (e.g. `[data-gym-stop]`) instead of dropping it. The panel
+  drags by its `.sap-head`; the spot persists to `localStorage[pg_plaza_panel_pos]`,
+  is clamped to the plaza bounds, and toggles `.is-moved` to release the centred
+  `translateX(-50%)` default. Gym sessions are **5 minutes**
+  (`G.DURATION = 5 * 60 * 1000` in `assets/digimon-sanctuary.js`). The footer carries
+  the **"Keep repeating"** switch backed by the save (`S.plazaRepeat.gym`, default ON
+  because auto-training always repeated, and `S.plazaRepeat.pve`, default OFF). The
+  grind mode reuses the battle CTA (`#sanctuaryBattleNearby`, re-parented into the
+  panel, 1.8 s after a completed/defeated `pve_end`); the gym mode lists all four
+  stat buttons with the per-session countdown. Closing mutes the panel until
+  proximity changes. `assets/social.css` owns the panel palette, the dragged
+  `.is-moved` state, the countdown, 600px layout and the `html.pg-mobile`
+  suppression of `#socialBgmMount` and the collapsed `#socialMiniMap` chip.
+  `assets/bgm.js` refuses to build `Audio` or load the YouTube iframe on the phone
+  shell (detected via `html.pg-mobile` plus the `pg-mobile-change` window event, so
+  resizing stops playback without a reload), and `assets/ui/mobile.css` hides
+  `#bgmPlayer` and swaps the desktop Settings -> Background music rows for a
+  phone-only note (`.bgm-pc-only` / `.bgm-phone-note`). `index.html` wires the GM
+  announcement studio description to the composer element (`#gmStudioBody` is the
+  textarea; the wrapper is `#gmStudioPanel`) and makes the update watcher remember a
+  hidden tab's new build instead of reloading it (`pendingUpdateBuild`, reapplied on
+  `visibilitychange`). Suites: `social_ui_sim.js` (CSS hooks, drag, clamps, Stop
+  button, keep-repeating switch, solo grind repeat), `bgm_sim.js` (phone sandbox with
+  no Audio/YouTube), `update_watch_sim.js` (hidden-tab remember),
+  `digimon_sanctuary_sim.js` / `digimon_sanctuary_ui_sim.js` (5-minute session),
+  `eclipse_ui_sim.js` / `mail_roulette_ui_sim.js` (announcement description).
