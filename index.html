@@ -3425,11 +3425,11 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   // v295: permanent bag tiers (120 → 200 → 300 → 400 → 500) and the equipped fishing title.
   // The tier is clamped to the ladder and the slice uses THAT cap, so upgrading never appears to
   // lose fish and a tampered tier can never grant capacity the ladder does not sell.
-  const fishBagTiers=[120,200,300,400,500];
+  const fishBagTiers=[120,200,300,400,500,750,1000];
   f.fishing.bagTier=Math.max(0,Math.min(fishBagTiers.length-1,Math.floor(num_(f.fishing.bagTier,0))||0));
   const fishBagCap=fishBagTiers[f.fishing.bagTier];
-  f.fishing.bag=(Array.isArray(f.fishing.bag)?f.fishing.bag:[]).filter(e=>e&&typeof e==='object'&&typeof e.sp==='string').slice(-fishBagCap).map(e=>({id:typeof e.id==='string'?e.id.slice(0,40):'',sp:e.sp.slice(0,24),w:Math.round(cl(num_(e.w,0),0,999)*100)/100,mut:fishMuts.includes(e.mut)?e.mut:null,at:Math.max(0,Math.floor(num_(e.at,0))),perfect:e.perfect===true}));
-  f.fishing.dex=f.fishing.dex&&typeof f.fishing.dex==='object'&&!Array.isArray(f.fishing.dex)?Object.fromEntries(Object.entries(f.fishing.dex).slice(0,96).filter(([k,d])=>typeof k==='string'&&d&&typeof d==='object').map(([k,d])=>[k.slice(0,24),{n:safeCount(d.n),bw:Math.round(cl(num_(d.bw,0),0,999)*100)/100,at:Math.max(0,Math.floor(num_(d.at,0))),mut:[...new Set((Array.isArray(d.mut)?d.mut:[]).filter(m=>fishMuts.includes(m)))]}])):{};
+  f.fishing.bag=(Array.isArray(f.fishing.bag)?f.fishing.bag:[]).filter(e=>e&&typeof e==='object'&&typeof e.sp==='string').slice(-fishBagCap).map(e=>({id:typeof e.id==='string'?e.id.slice(0,40):'',sp:e.sp.slice(0,24),w:Math.round(cl(num_(e.w,0),0,3000)*100)/100,mut:fishMuts.includes(e.mut)?e.mut:null,at:Math.max(0,Math.floor(num_(e.at,0))),perfect:e.perfect===true}));
+  f.fishing.dex=f.fishing.dex&&typeof f.fishing.dex==='object'&&!Array.isArray(f.fishing.dex)?Object.fromEntries(Object.entries(f.fishing.dex).slice(0,96).filter(([k,d])=>typeof k==='string'&&d&&typeof d==='object').map(([k,d])=>[k.slice(0,24),{n:safeCount(d.n),bw:Math.round(cl(num_(d.bw,0),0,3000)*100)/100,at:Math.max(0,Math.floor(num_(d.at,0))),mut:[...new Set((Array.isArray(d.mut)?d.mut:[]).filter(m=>fishMuts.includes(m)))]}])):{};
   f.fishing.stats={casts:safeCount(f.fishing.stats?.casts),catches:safeCount(f.fishing.stats?.catches),escapes:safeCount(f.fishing.stats?.escapes),perfects:safeCount(f.fishing.stats?.perfects)};
   // v297 (owner bug): autoSell was dropped here, so the toggle looked on in a live session but
   // every save wrote a settings object without it and the next load turned auto-sell back off.

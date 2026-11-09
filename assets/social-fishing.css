@@ -272,3 +272,8 @@ img.fishing-rod-art{filter:drop-shadow(0 0 3px var(--rod-tint,#8b6b45))}
 .fishing-rod-art[data-rod-tier="mythril"]{animation-duration:2s}
 @keyframes rod-aura{0%,100%{filter:drop-shadow(0 0 6px var(--rod-tint)) drop-shadow(0 0 10px var(--rod-tint))}50%{filter:drop-shadow(0 0 9px var(--rod-tint)) drop-shadow(0 0 18px var(--rod-tint))}}
 @media(prefers-reduced-motion:reduce){.fishing-rod-art[data-rod-tier]{animation:none}}
+
+/* MVP banner */
+#fishingMvpBanner{margin:6px 10px 0;padding:8px 10px;border-radius:8px;background:linear-gradient(90deg,#5a1020,#b02238);border:1.5px solid #ff4d6d;color:#fff;font:bold 11px "Trebuchet MS",sans-serif;text-align:center;box-shadow:0 0 12px #ff244788;animation:mvp-pulse 1.2s ease-in-out infinite}
+#fishingMvpBanner[hidden]{display:none}
+@keyframes mvp-pulse{0%,100%{box-shadow:0 0 12px #ff244788}50%{box-shadow:0 0 18px #ff2447cc}}

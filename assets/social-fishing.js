@@ -23,6 +23,7 @@ const RARITIES=[
  {id:'legendary',label:'Legendary',color:'#ffb84d',weight:.008343},
  {id:'mythical',label:'Mythical',color:'#c792ea',weight:.000874},
  {id:'secret',label:'Secret',color:'#ff7ab8',weight:.00035},
+ {id:'mvp',label:'MVP',color:'#ff2447',weight:0},
 ];
 const RARITY_INDEX=Object.fromEntries(RARITIES.map((r,i)=>[r.id,i]));
 // 70 species. The 14 v287 ids keep their exact id/rarity so bagged fish stay valid.
@@ -95,6 +96,12 @@ const SPECIES_DATA={
   // v297: the largest fish alive, and the deep oddities that go with them.
   ['whaleshark','Whale Shark','🦈',205,600,1800,'whale',true],['beluga','Beluga Sturgeon','🐟',205,400,1400,'sturgeon',true],
   ['anglerdeep','Abyssal Angler','🐡',280,80,260,'angler',true],['colossus','Plaza Colossus','🐙',270,300,1000,'octopus',true],
+ ],
+ mvp:[
+  ['mvp_azure_drake','Azure Drake','🐉',195,1000,1700],['mvp_tide_drake','Tide Drake','🐉',200,1200,2000],
+  ['mvp_abyss_drake','Abyss Drake','🐉',235,1500,2400],['mvp_iron_crab','Iron Crab Titan','🦀',18,1100,1800],
+  ['mvp_crimson_shark','Crimson Tyrant','🦈',0,1800,2600],['mvp_gilded_shark','Gilded Tyrant','🦈',40,2000,2850],
+  ['mvp_void_maw','Void Maw','🐙',270,2200,3000],
  ],
 };
 // v297: a species may name its own body plan (shape) and be flagged mega - the giants that get a
@@ -222,16 +229,16 @@ const RODS=[
  // fishing in the 250-casts/h model, so the grind is the fish, not the gear. The ladder still decides
  // how much of the rare table you can reach (ROD_GATE).
  {id:'twig',name:'Training Rod',icon:'🎣',cost:0,luck:0,control:0,strength:0,lure:0},
- {id:'oak',name:'Oak Rod',icon:'🪵',cost:300,luck:.15,control:.1,strength:.1,lure:.1},
- {id:'brass',name:'Brass Rod',icon:'🥉',cost:1000,luck:.3,control:.18,strength:.22,lure:.2},
- {id:'silver',name:'Silver Rod',icon:'🥈',cost:3000,luck:.5,control:.28,strength:.35,lure:.3},
- {id:'golden',name:'Golden Rod',icon:'🥇',cost:8000,luck:.75,control:.38,strength:.5,lure:.45},
- {id:'mythril',name:'Mythril Rod',icon:'💠',cost:20000,luck:1.1,control:.5,strength:.7,lure:.6},
+ {id:'oak',name:'Oak Rod',icon:'🪵',cost:600,luck:.15,control:.1,strength:.1,lure:.1},
+ {id:'brass',name:'Brass Rod',icon:'🥉',cost:2000,luck:.3,control:.18,strength:.22,lure:.2},
+ {id:'silver',name:'Silver Rod',icon:'🥈',cost:6000,luck:.5,control:.28,strength:.35,lure:.3},
+ {id:'golden',name:'Golden Rod',icon:'🥇',cost:16000,luck:.75,control:.38,strength:.5,lure:.45},
+ {id:'mythril',name:'Mythril Rod',icon:'💠',cost:40000,luck:1.1,control:.5,strength:.7,lure:.6},
 ];
 const RODS_BY_ID=Object.fromEntries(RODS.map(r=>[r.id,r]));
 // v304/v305 (owner): a rod does not only raise luck, it is what lets the boss tiers bite. The cart
 // lists the unlock on each rod, and rollCatch holds a roll above the ceiling back most of the time.
-const ROD_GATE={rare:'oak',legendary:'silver',mythical:'golden',secret:'mythril'};
+const ROD_GATE={rare:'oak',legendary:'silver',mythical:'golden',secret:'mythril',mvp:'mythril'};
 // v305 (owner): "give a small little chance for lower rod to catch high rarity fishes". A roll one tier
 // above the rod's ceiling gets through 8% of the time, and every tier further up is worth 0.35 of the
 // one below it (2.8% for two tiers, 1% for three, 0.34% for four). So a training rod lands a rare now
@@ -393,23 +400,24 @@ const DIFF={
  legendary:{bar:.25,speed:.74,dash:.44,fill:.12,drain:.115},
  mythical:{bar:.22,speed:.86,dash:.56,fill:.108,drain:.12},
  secret:{bar:.24,speed:.8,dash:.5,fill:.112,drain:.118},
+ mvp:{bar:.18,speed:1.05,dash:.72,fill:.085,drain:.14},
 };
 // v304 (owner): v303's prices were tuned against the old (looser) rarity weights. Cutting the top
 // tiers made an average catch worth a quarter of what it was, so the base values scale ~6x to put
 // income back where the shop ladder assumes it is (about 40 coins a catch on a training rod,
 // 160 on mythril + Royal Jelly).
-const RARITY_VALUE={common:18,uncommon:48,rare:120,legendary:360,mythical:1200,secret:3600};
+const RARITY_VALUE={common:18,uncommon:48,rare:120,legendary:360,mythical:1200,secret:3600,mvp:9000};
 // v295: the bag is upgradeable. Tier 0 is the v288 bag (120) and is always owned; each later
 // tier is bought once with Fishcoins and is permanent, exactly like a rod. BAG_MAX stays the
 // base capacity so older callers and saves keep working, and bagMax(state) is the live cap.
 const BAG_TIERS=[
  {tier:0,cap:120,cost:0,label:'Canvas Satchel'},
- // v296 (owner): the first upgrade has to be reachable in a session, so the ladder starts low and
- // grows gently (~2.2x, then ~2x) instead of jumping straight to five figures.
- {tier:1,cap:200,cost:600,label:'Reinforced Creel'},
- {tier:2,cap:300,cost:1400,label:'Angler\'s Basket'},
- {tier:3,cap:400,cost:3000,label:'Deep Keep-Net'},
- {tier:4,cap:500,cost:6500,label:'Bottomless Creel'},
+ {tier:1,cap:200,cost:900,label:'Reinforced Creel'},
+ {tier:2,cap:300,cost:2100,label:'Angler\'s Basket'},
+ {tier:3,cap:400,cost:4500,label:'Deep Keep-Net'},
+ {tier:4,cap:500,cost:9750,label:'Bottomless Creel'},
+ {tier:5,cap:750,cost:15200,label:'Ocean Hold'},
+ {tier:6,cap:1000,cost:24000,label:'Aether Keep'},
 ];
 const BAG_MAX=BAG_TIERS[0].cap,COIN_MAX=1e9,CAST_GREEN=[.82,.96],CAST_PERFECT=[.87,.93];
 const bagTierOf=state=>{const t=state&&Number.isInteger(state.bagTier)?state.bagTier:0;return BAG_TIERS[Math.max(0,Math.min(BAG_TIERS.length-1,t))]};
@@ -497,7 +505,7 @@ function cleanEntry(e){
  return {
   id:typeof e.id==='string'&&e.id?e.id.slice(0,40):'f'+Math.random().toString(36).slice(2,10),
   sp:sp.id,
-  w:Math.round(Math.max(.01,Math.min(999,Number(e.w)||sp.min))*100)/100,
+  w:Math.round(Math.max(.01,Math.min(3000,Number(e.w)||sp.min))*100)/100,
   mut:Object.hasOwn(MUTATIONS,e.mut)?e.mut:null,
   at:Math.max(0,Math.floor(Number(e.at)||0)),
   perfect:e.perfect===true,
@@ -515,7 +523,7 @@ function normalize(raw){
  const dex={};
  if(f.dex&&typeof f.dex==='object'&&!Array.isArray(f.dex))for(const sp of SPECIES){
   const d=f.dex[sp.id];
-  if(d&&typeof d==='object')dex[sp.id]={n:cnt(d.n),bw:Math.round(Math.max(0,Math.min(999,Number(d.bw)||0))*100)/100,at:Math.max(0,Math.floor(Number(d.at)||0)),mut:[...new Set((Array.isArray(d.mut)?d.mut:[]).filter(m=>Object.hasOwn(MUTATIONS,m)))]};
+  if(d&&typeof d==='object')dex[sp.id]={n:cnt(d.n),bw:Math.round(Math.max(0,Math.min(3000,Number(d.bw)||0))*100)/100,at:Math.max(0,Math.floor(Number(d.at)||0)),mut:[...new Set((Array.isArray(d.mut)?d.mut:[]).filter(m=>Object.hasOwn(MUTATIONS,m)))]};
  }
  const st=f.stats&&typeof f.stats==='object'?f.stats:{};
  const se=f.settings&&typeof f.settings==='object'?f.settings:{};
@@ -554,7 +562,7 @@ function addCatch(state,c,now=Date.now()){
  const sp=speciesById(c.sp);if(!sp)return null;
  let id='f'+now.toString(36)+Math.floor(Math.random()*46656).toString(36);
  while(state.bag.some(e=>e.id===id))id+='x';
- const entry={id,sp:sp.id,w:Math.round(Math.max(.01,Math.min(999,Number(c.w)||sp.min))*100)/100,mut:Object.hasOwn(MUTATIONS,c.mut)?c.mut:null,at:now,perfect:c.perfect===true,lock:false};
+ const entry={id,sp:sp.id,w:Math.round(Math.max(.01,Math.min(3000,Number(c.w)||sp.min))*100)/100,mut:Object.hasOwn(MUTATIONS,c.mut)?c.mut:null,at:now,perfect:c.perfect===true,lock:false};
  state.bag.push(entry);
  const d=state.dex[entry.sp]||(state.dex[entry.sp]={n:0,bw:0,at:now,mut:[]});
  d.n++;if(entry.w>d.bw)d.bw=entry.w;if(entry.mut&&!d.mut.includes(entry.mut))d.mut.push(entry.mut);
@@ -650,7 +658,7 @@ function cleanShowOff(raw){
  // Same contract as the worker: a weight that is not a positive number is not a fish.
  const w0=Number(raw.w);
  if(!Number.isFinite(w0)||w0<=0)return null;
- const w=Math.round(Math.max(.01,Math.min(999,w0))*100)/100;
+ const w=Math.round(Math.max(.01,Math.min(3000,w0))*100)/100;
  return {sp:sp.id,w,mut:Object.hasOwn(MUTATIONS,raw.mut)?raw.mut:null,perfect:raw.perfect===true};
 }
 // The reverse: recognize a show-off line from any player so everyone sees the actual fish,
@@ -664,7 +672,7 @@ function parseShowOff(body){
  if(!SPECIES_BY_NAME[label])for(const [id,mm] of Object.entries(MUTATIONS)){const p=mm.label+' ';if(label.startsWith(p)&&SPECIES_BY_NAME[label.slice(p.length)]){mut=id;label=label.slice(p.length);break}}
  const spId=SPECIES_BY_NAME[label];if(!spId)return null;
  const w=Number(m[2]);
- if(!Number.isFinite(w)||w<=0||w>999)return null;
+ if(!Number.isFinite(w)||w<=0||w>3000)return null;
  return {sp:spId,w:Math.round(w*100)/100,mut};
 }
 // Overhead sprite scale from weight. v304 flattened nothing but still topped out at 11 units after a
@@ -672,12 +680,12 @@ function parseShowOff(body){
 function showOffScale(w){
  // v311 (owner: "a 922 kg fish looks small next to the pond - the max is 1000 kg, it should be as
  // big as the pond"). One curve from a minnow to the pond itself: at the 1,000 kg ceiling the fish
- // is 13 units across in a 13 x 18 pond, 922 kg reads 12.46, 400 kg 8.13 and a 50 kg fish 3.06, so
+ // is 13 units across in a 13 x 18 pond, 922 kg reads ~8.5 and a 50 kg fish ~1.5, so
  // the ladder never flattens out the way the old x/(x+6) and sqrt curves did at the top end.
- // The pond is 13 units deep and 18 wide; 1,000 kg (the weight every catch is clamped to) is the
- // fish that fills it, and anything heavier - the whale-shark class in the catalog - sits at the cap.
- const x=Math.max(.01,Math.min(1000,Number(w)||.01));
- return Math.round(Math.min(13,0.7+12.3*Math.pow(x/1000,.55))*100)/100;
+ // The pond is 13 units deep and 18 wide; 3,000 kg (the MVP ceiling) is the fish that
+ // fills it, and the whale-shark class now scales to that cap.
+ const x=Math.max(.01,Math.min(3000,Number(w)||.01));
+ return Math.round(Math.min(13,0.7+12.3*Math.pow(x/3000,.55))*100)/100;
 }
 // ------------------------------- browser UI ------------------------------------------------
 const doc=root.document;
@@ -720,6 +728,10 @@ function sound(kind){
 }
 const ui={phase:'off',pond:-1,holding:false,chargeT0:0,castR:null,mods:null,biteAt:0,biteEnd:0,shakeAt:0,shakeEl:null,roll:null,reel:null,raf:0,last:0,selected:null,sort:'new',result:null,
  tab:'bag',auto:false,autoNext:0,autoPower:.8,autoHookAt:0,autoSampleAt:0,autoTarget:.5,rigTarget:null,walkT0:0};
+// MVP fishing: active spawn from the Social Worker, one catch per spawn per player.
+let mvpActive=null; // {sp,id,spawnedAt,endsAt}
+const mvpClaimed=new Set(); // spawn ids already caught by this player
+const MVP_HOOK=.10,MVP_CATCH=.30;
 let uiPos={};
 try{uiPos=JSON.parse(root.localStorage.getItem('pg_fishing_ui_v1'))||{}}catch{}
 function saveUiPos(){try{root.localStorage.setItem('pg_fishing_ui_v1',JSON.stringify(uiPos))}catch{}}
@@ -777,7 +789,7 @@ function ensureDom(){
  if(els||!doc)return;
  const hub=doc.getElementById('socialHub');if(!hub)return;
  const dock=doc.createElement('section');dock.id='fishingDock';dock.hidden=true;dock.setAttribute('aria-label','Fishing');
- dock.innerHTML='<div id="fishingDockHead" title="Drag to move"><span id="fishingSpot">🎣 South Lawn Pond</span><span id="fishingDockBtns"><button id="fishingAutoBtn" type="button" title="Auto fishing: casts, hooks and reels by itself until you stop it" aria-pressed="false">▶ Auto</button><button id="fishingBagBtn" type="button" aria-haspopup="dialog">🧺 Bag <small id="fishingBagCount"></small></button><button id="fishingStopBtn" type="button" title="Stop fishing" aria-label="Stop fishing">✕</button></span></div><button id="fishingGearLine" type="button" title="Open the rod &amp; bait shop"></button><div id="fishingStage" role="button" tabindex="0" aria-label="Fishing action area"></div><p id="fishingStatus" aria-live="polite"></p>';
+ dock.innerHTML='<div id="fishingDockHead" title="Drag to move"><span id="fishingSpot">🎣 South Lawn Pond</span><span id="fishingDockBtns"><button id="fishingAutoBtn" type="button" title="Auto fishing: casts, hooks and reels by itself until you stop it" aria-pressed="false">▶ Auto</button><button id="fishingBagBtn" type="button" aria-haspopup="dialog">🧺 Bag <small id="fishingBagCount"></small></button><button id="fishingStopBtn" type="button" title="Stop fishing" aria-label="Stop fishing">✕</button></span></div><div id="fishingMvpBanner" hidden aria-live="polite"></div><button id="fishingGearLine" type="button" title="Open the rod &amp; bait shop"></button><div id="fishingStage" role="button" tabindex="0" aria-label="Fishing action area"></div><p id="fishingStatus" aria-live="polite"></p>';
  const panel=doc.createElement('section');panel.id='fishingPanel';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Fishing Bag');
  panel.innerHTML='<header id="fishingPanelHead" title="Drag to move"><strong>🎣 Fishing</strong><span id="fishingCoins" title="Fishcoins — sell catches to earn, spend on rods &amp; bait"></span><button id="fishingPanelClose" type="button" aria-label="Close Fishing window">✕</button></header><nav id="fishingTabs" role="tablist" aria-label="Fishing sections"><button type="button" role="tab" data-ftab="bag" aria-selected="true">🧺 Bag</button><button type="button" role="tab" data-ftab="index" aria-selected="false">📖 Index</button><button type="button" role="tab" data-ftab="shop" aria-selected="false">🛒 Shop</button><button type="button" role="tab" data-ftab="titles" aria-selected="false">🏅 Titles</button></nav><div id="fishingBagView"><div id="fishingRecords"></div><div id="fishingTools"><select id="fishingSort" aria-label="Sort fish"><option value="new">Newest</option><option value="heavy">Heaviest</option><option value="rare">Rarest</option><option value="value">Most valuable</option></select><button id="fishingSellDupes" type="button" title="Sells everything except your heaviest of each species, every mutated fish and every 🔒 locked fish">💰 Sell dupes</button><label title="After every catch, automatically sell it unless it is mutated, locked, or your new heaviest of that species"><input type="checkbox" id="fishingAutoSell"> Auto-sell dupes</label><label title="Fishing sound effects"><input type="checkbox" id="fishingSound"> Sounds</label></div><div id="fishingGrid" role="listbox" aria-label="Caught fish"></div><footer id="fishingDetail" hidden></footer></div><div id="fishingIndexView" hidden></div><div id="fishingShopView" hidden></div><div id="fishingTitlesView" hidden></div>';
  const shakes=doc.createElement('div');shakes.id='fishingShakes';shakes.hidden=true;
@@ -786,7 +798,7 @@ function ensureDom(){
  const menu=doc.createElement('div');menu.id='fishingMenu';menu.hidden=true;menu.setAttribute('role','menu');menu.setAttribute('aria-label','Fishing menu');
  if(REDUCED()){dock.classList.add('reduced');shakes.classList.add('reduced')}
  hub.append(dock,panel,shakes,menu);
- els={hub,dock,panel,shakes,menu,stage:doc.getElementById('fishingStage'),status:doc.getElementById('fishingStatus'),grid:doc.getElementById('fishingGrid'),records:doc.getElementById('fishingRecords'),detail:doc.getElementById('fishingDetail'),bagCount:doc.getElementById('fishingBagCount'),spot:doc.getElementById('fishingSpot'),gearLine:doc.getElementById('fishingGearLine'),coins:doc.getElementById('fishingCoins'),bagView:doc.getElementById('fishingBagView'),indexView:doc.getElementById('fishingIndexView'),shopView:doc.getElementById('fishingShopView'),titlesView:doc.getElementById('fishingTitlesView'),autoBtn:doc.getElementById('fishingAutoBtn')};
+ els={hub,dock,panel,shakes,menu,stage:doc.getElementById('fishingStage'),status:doc.getElementById('fishingStatus'),grid:doc.getElementById('fishingGrid'),records:doc.getElementById('fishingRecords'),detail:doc.getElementById('fishingDetail'),bagCount:doc.getElementById('fishingBagCount'),spot:doc.getElementById('fishingSpot'),gearLine:doc.getElementById('fishingGearLine'),coins:doc.getElementById('fishingCoins'),bagView:doc.getElementById('fishingBagView'),indexView:doc.getElementById('fishingIndexView'),shopView:doc.getElementById('fishingShopView'),titlesView:doc.getElementById('fishingTitlesView'),autoBtn:doc.getElementById('fishingAutoBtn'),mvpBanner:doc.getElementById('fishingMvpBanner')};
  doc.getElementById('fishingStopBtn').onclick=()=>stopFishing();
  doc.getElementById('fishingBagBtn').onclick=()=>toggleBag();
  doc.getElementById('fishingPanelClose').onclick=()=>toggleBag(false);
@@ -847,6 +859,40 @@ function toggleMenu(force){
  }
 }
 function status(text){if(els)els.status.textContent=text||''}
+function mvpTimeLeft(){if(!mvpActive) return 0; return Math.max(0, Math.floor((mvpActive.endsAt - Date.now())/1000));}
+function renderMvpBanner(){
+ if(!els||!els.mvpBanner) return;
+ if(!mvpActive){els.mvpBanner.hidden=true;els.mvpBanner.textContent='';return}
+ const sp=speciesById(mvpActive.sp);
+ const name=sp?sp.name:mvpActive.sp;
+ const secs=mvpTimeLeft();
+ const claimed=mvpClaimed.has(mvpActive.id);
+ const mins=Math.floor(secs/60), sec=String(secs%60).padStart(2,'0');
+ els.mvpBanner.hidden=false;
+ els.mvpBanner.innerHTML=(claimed?`✅ <b>${esc(name)}</b> caught! Next spawn soon.`:`⚠️ <b>MVP ${esc(name)}</b> at the pond! ${mins}:${sec} left · 10% hook · 30% catch · one per spawn`);
+}
+function setMvp(data){
+ if(!data||!data.sp||!data.id) return;
+ mvpActive={sp:data.sp,id:data.id,spawnedAt:Number(data.spawnedAt)||Date.now(),endsAt:Number(data.endsAt)||Date.now()+10*60*1000};
+ renderMvpBanner();
+ if(opts&&opts.notice){
+  const sp=speciesById(mvpActive.sp);
+  opts.notice(`⚠️ MVP ${sp?sp.name:mvpActive.sp} has spawned at the pond! 10 min — 10% hook, 30% land.`);
+ }
+ // also create pond warning sign in scene
+ try{const f=sceneFishing(); if(f&&f.setMvp) f.setMvp(mvpActive.sp, true)}catch{}
+ // refresh ticker
+ if(!setMvp._ticker){setMvp._ticker=setInterval(()=>{ if(mvpActive&&Date.now()>=mvpActive.endsAt){clearMvp({id:mvpActive.id});} else renderMvpBanner(); },1000); }
+}
+function clearMvp(data){
+ if(mvpActive&&data&&data.id&&mvpActive.id!==data.id) return;
+ if(!mvpActive) return;
+ const sp=speciesById(mvpActive.sp);
+ if(opts&&opts.notice) opts.notice(`The MVP ${sp?sp.name:mvpActive.sp} has fled the pond.`);
+ mvpActive=null;
+ renderMvpBanner();
+ try{const f=sceneFishing(); if(f&&f.setMvp) f.setMvp(null,false)}catch{}
+}
 function setAuto(on){
  ui.auto=!!on;
  if(els){els.autoBtn.textContent=ui.auto?'⏸ Auto':'▶ Auto';els.autoBtn.setAttribute('aria-pressed',String(ui.auto));els.autoBtn.classList.toggle('on',ui.auto)}
@@ -1254,8 +1300,12 @@ const FISH_ART={
   rosedolphin:'assets/social/fish/rosedolphin.png', violetbeluga:'assets/social/fish/violetbeluga.png',
   greywhale:'assets/social/fish/greywhale.png', mintwhale:'assets/social/fish/mintwhale.png',
   azurwhale:'assets/social/fish/azurwhale.png', starwhale:'assets/social/fish/starwhale.png',
+  mvp_azure_drake:'assets/social/fish/mvp_azure_drake.png', mvp_tide_drake:'assets/social/fish/mvp_tide_drake.png',
+  mvp_abyss_drake:'assets/social/fish/mvp_abyss_drake.png', mvp_iron_crab:'assets/social/fish/mvp_iron_crab.png',
+  mvp_crimson_shark:'assets/social/fish/mvp_crimson_shark.png', mvp_gilded_shark:'assets/social/fish/mvp_gilded_shark.png',
+  mvp_void_maw:'assets/social/fish/mvp_void_maw.png',
 };
-const FISH_ART_VERSION='303';
+const FISH_ART_VERSION='304';
 const FISH_IMG=new Map();
 function preloadFishArt(){
  if(typeof Image!=='function'||typeof document==='undefined'||!document.createElement)return;
@@ -1560,7 +1610,20 @@ function landed(){
 function hook(){
  clearShake();
  const f=sceneFishing();f&&f.bite(false);
- ui.roll=rollCatch(Math.random,!!(ui.castR&&ui.castR.perfect),ui.mods);
+ let rng=Math.random;
+ // MVP: when a 10-min spawn is active and we have not yet caught it, 10% of hooks become the MVP.
+ if(mvpActive&&!mvpClaimed.has(mvpActive.id)&&rng()<MVP_HOOK){
+  const sp=speciesById(mvpActive.sp);
+  if(sp){
+   const wb=Math.max(0,Math.min(3,(ui.mods&&ui.mods.weight)||0));
+   const mm=Math.max(0,Math.min(6,(ui.mods&&ui.mods.mutation)||1));
+   const heft=Math.pow(rng(),2/(1+wb));
+   const w=Math.round((sp.min+(sp.max-sp.min)*heft)*100)/100;
+   const roll=rng();let acc=0,mut=null;
+   for(const [id,m] of Object.entries(MUTATIONS)){acc+=Math.min(.5,m.chance*mm);if(roll<acc){mut=id;break}}
+   ui.roll={sp:sp.id,rarity:'mvp',w,mut};
+  } else ui.roll=rollCatch(rng,!!(ui.castR&&ui.castR.perfect),ui.mods);
+ } else ui.roll=rollCatch(rng,!!(ui.castR&&ui.castR.perfect),ui.mods);
  ui.reel=makeReel(ui.roll,Math.random,(ui.mods&&ui.mods.control)||0);
  ui.last=now();
  ui.autoSampleAt=0;
@@ -1570,6 +1633,11 @@ function hook(){
 function finishReel(kind){
  const f=sceneFishing();
  ui.holding=false;
+ // MVP: even a perfect reel only lands 30% of the time, and one per spawn per player.
+ if(kind==='catch'&&ui.roll&&ui.roll.rarity==='mvp'){
+  if(mvpActive&&mvpClaimed.has(mvpActive.id)) kind='escape';
+  else if(Math.random()>=MVP_CATCH) kind='mvp_escape';
+ }
  if(kind==='catch'){
   const isNew=!state().dex[ui.roll.sp];
   // v311 (owner: "players with the qualifying fish don't get their titles"): the ladder is checked
@@ -1593,14 +1661,19 @@ function finishReel(kind){
   if(!entry)status('Bag full — the catch could not be kept!');
   // v297: a pond monster or a secret find goes to the room's Local chat. Fired from the catch
   // itself (not the Show off button) so auto-fishing announces too.
-  if(sp&&typeof opts.announce==='function'&&(sp.mega||sp.rarity==='secret')){
+  if(sp&&ui.roll&&ui.roll.rarity==='mvp'){
+   if(mvpActive) mvpClaimed.add(mvpActive.id);
+   if(typeof opts.announce==='function'){try{opts.announce({sp:sp.id,name:sp.name,w:ui.result.entry.w,kind:'secret'})}catch{}}
+   if(els) status('MVP CAUGHT! '+sp.name+' '+ui.result.entry.w+' kg — one per spawn claimed.');
+  } else if(sp&&typeof opts.announce==='function'&&(sp.mega||sp.rarity==='secret')){
    try{opts.announce({sp:sp.id,name:sp.name,w:ui.result.entry.w,kind:sp.rarity==='secret'?'secret':'mega'})}catch{}
   }
  }else{
   state().stats.escapes++;persist();
   sound('fail');
   f&&f.escapeSplash();
-  ui.result={kind};
+  ui.result={kind:(kind==='mvp_escape'?'escape':kind),mvpFail:kind==='mvp_escape'};
+  if(kind==='mvp_escape') status('The MVP broke free! Only a 30% catch chance — try again before it despawns.');
  }
  ui.roll=null;ui.reel=null;
  ui.autoNext=now()+1300;
@@ -1896,7 +1969,7 @@ function renderShop(){
  const tier=bagTierOf(st),next=nextBagTier(st),cap=bagMax(st);
  // v295: one permanent bag upgrade per tier, bought in order - never a skip.
  const bagRow=`<div class="fishing-shop-row equipped"><span class="fishing-shop-icon">🧺</span><span class="fishing-shop-name">${esc(tier.label)}<small>holds ${cap} fish · ${st.bag.length}/${cap} stored${next?` · next: ${esc(next.label)} holds ${next.cap}`:' · fully upgraded'}</small></span>${next?`<button type="button" data-bagup ${st.coins<next.cost?'disabled':''}>${COIN_HTML} ${fmt(next.cost)}</button>`:'<button type="button" disabled>Max</button>'}</div>`;
- els.shopView.innerHTML=`<p class="fishing-shop-head">${COIN_HTML} <b>${fmt(st.coins)}</b> Fishcoins — earn them by selling fish from the Bag.</p><h4>Bag <small>permanent capacity · 120 → 200 → 300 → 400 → 500</small></h4>${bagRow}<h4>Rods <small>permanent · luck / control / strength / lure speed</small></h4>${rodRows}<h4>Bait <small>one is used per cast</small></h4>${baitRows}<div class="fishing-shop-row${st.baitSel===null?' equipped':''}"><span class="fishing-shop-icon">🚫</span><span class="fishing-shop-name">No bait<small>fish with the rod alone</small></span><button type="button" data-use="none" ${st.baitSel===null?'disabled':''}>Use</button></div>`;
+ els.shopView.innerHTML=`<p class="fishing-shop-head">${COIN_HTML} <b>${fmt(st.coins)}</b> Fishcoins — earn them by selling fish from the Bag.</p><h4>Bag <small>permanent capacity · 120 → 200 → 300 → 400 → 500 → 750 → 1000</small></h4>${bagRow}<h4>Rods <small>permanent · luck / control / strength / lure speed</small></h4>${rodRows}<h4>Bait <small>one is used per cast</small></h4>${baitRows}<div class="fishing-shop-row${st.baitSel===null?' equipped':''}"><span class="fishing-shop-icon">🚫</span><span class="fishing-shop-name">No bait<small>fish with the rod alone</small></span><button type="button" data-use="none" ${st.baitSel===null?'disabled':''}>Use</button></div>`;
  for(const b of els.shopView.querySelectorAll('button[data-rod]'))b.onclick=()=>{const r=buyRod(st,b.dataset.rod);if(r.ok){persist();sound('coin');status('Bought and equipped the '+RODS_BY_ID[b.dataset.rod].name+'!')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-equip]'))b.onclick=()=>{equipRod(st,b.dataset.equip);syncRodLook();persist();renderPanel()};
  for(const b of els.shopView.querySelectorAll('button[data-bagup]'))b.onclick=()=>{const r=buyBagUpgrade(st);if(r.ok){persist();sound('coin');status('Bag upgraded — it now holds '+r.cap+' fish.')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel();renderDockGear()};
@@ -1973,6 +2046,8 @@ return {
  fishSprite,fishSpriteURL,
  // v309: painted bait icons, so the shop no longer depends on Unicode-13 emoji fonts.
  baitSprite,baitSpriteURL,baitHTML,titleBadge,titleBadgeURL,
+ // MVP
+ setMvp,clearMvp,getMvp:()=>mvpActive, isMvpClaimed:id=>mvpClaimed.has(id),
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,
  // v297: the plaza's leave-warning reels the line in through this, so chat no longer has to nag.

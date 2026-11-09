@@ -1467,8 +1467,60 @@ void main(){
     r.pole.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3((tx2-hx)/len,(ty-hy)/len,(tz2-hz)/len));
    }
   }
+  // MVP warning sign at the pond — a wooden post with a flashing canvas banner
+  let mvpSign=null,mvpSignCanvas=null,mvpSignCtx=null,mvpSignTex=null;
+  function ensureMvpSign(){
+   if(mvpSign) return mvpSign;
+   if(!pondViews.length) return null;
+   const p=pondViews[0].p || R.PONDS[0];
+   // place south of pond near lantern
+   const sx=p.x+4, sz=p.z+p.d/2+3.2;
+   const group=new T.Group();
+   // post
+   const post=new T.Mesh(new T.CylinderGeometry(.08,.09,1.6,6), new T.MeshBasicMaterial({color:0x6b4a2a}));
+   post.position.set(sx,0.8,sz); group.add(post);
+   // board
+   mvpSignCanvas=document.createElement('canvas'); mvpSignCanvas.width=512; mvpSignCanvas.height=128;
+   mvpSignCtx=mvpSignCanvas.getContext('2d');
+   mvpSignTex=new T.CanvasTexture(mvpSignCanvas);
+   const board=new T.Mesh(new T.PlaneGeometry(2.6,0.65), new T.MeshBasicMaterial({map:mvpSignTex, transparent:true}));
+   board.position.set(sx,1.35,sz); board.rotation.y= Math.PI; // face north
+   group.add(board);
+   group.visible=false; scene.add(group);
+   mvpSign={group,canvas:mvpSignCanvas,ctx:mvpSignCtx,tex:mvpSignTex,board,sx,sz};
+   return mvpSign;
+  }
+  function paintMvpSign(text){
+   const m=ensureMvpSign(); if(!m||!m.ctx) return;
+   const c=m.canvas, g=m.ctx;
+   g.clearRect(0,0,c.width,c.height);
+   // wooden sign bg
+   g.fillStyle='#8b3a1a'; g.fillRect(0,0,c.width,c.height);
+   g.fillStyle='#ff2447'; g.fillRect(0,0,c.width,12); g.fillRect(0,c.height-12,c.width,12);
+   g.fillStyle='#fff'; g.font='bold 42px Trebuchet MS, sans-serif'; g.textAlign='center'; g.textBaseline='middle';
+   // flash pulse
+   const pulse=0.85+0.15*Math.sin(Date.now()/200);
+   g.globalAlpha=pulse;
+   g.fillText(text||'⚠️ MVP SPAWN!', c.width/2, c.height/2);
+   g.globalAlpha=1;
+   g.fillStyle='#ffe9a0'; g.font='12px Trebuchet MS, sans-serif'; g.fillText('10 min · 10% hook · 30% catch', c.width/2, c.height-22);
+   m.tex.needsUpdate=true;
+  }
+  let mvpActiveSign=null, mvpSignTimer=0;
+  function setMvpSign(spId, on){
+   const m=ensureMvpSign();
+   if(!m) return;
+   if(!on){ m.group.visible=false; mvpActiveSign=null; if(mvpSignTimer){clearInterval(mvpSignTimer); mvpSignTimer=0;} return; }
+   mvpActiveSign=spId;
+   const F=globalThis.PGSocialFishing; let name=spId; try{const sp=F&&F.speciesById?F.speciesById(spId):null; if(sp) name=sp.name;}catch{}
+   paintMvpSign('⚠️ MVP '+name);
+   m.group.visible=true;
+   if(mvpSignTimer) clearInterval(mvpSignTimer);
+   mvpSignTimer=setInterval(()=> paintMvpSign('⚠️ MVP '+name), 200);
+  }
   const api={
    setFishVisible(v){fishGroup.visible=v!==false},
+   setMvp:(spId,on)=> setMvpSign(spId,on),
    setRig,
    clearRigs(){for(const pid of [...remoteRigs.keys()])dropRig(pid)},
    cast(to,dur,onLand){const from=selfPos();rig={mode:'flight',fx:from?from.x:to.x,fz:from?from.z:to.z,tx:to.x,tz:to.z,t0:clock||performance.now(),dur:Math.max(250,dur||700),onLand};bobber.visible=true;pole.visible=true;line.visible=true},
