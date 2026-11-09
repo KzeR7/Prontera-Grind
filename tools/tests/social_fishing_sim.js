@@ -78,6 +78,7 @@ assert.equal(F.SPECIES.length,162,'162 fish species (155 + 7 MVP)');
  assert.equal(F.FISHING_TITLE_BY_ID['secret-circle'].goal,F.SPECIES.filter(sp=>sp.rarity==='secret').length,'Secret Circle wants the whole secret pool');
 assert.equal(new Set(F.SPECIES.map(sp=>sp.id)).size,F.SPECIES.length,'no duplicate species ids in the index');
 assert.equal(F.SPECIES.filter(sp=>sp.rarity==='mvp').length,7,'seven MVP species');
+assert.equal(F.MVP_REEL_CATCH_CHANCE,.30,'a hooked MVP has an exact 30% reel-catch chance');
 assert(F.DIFF.mvp,'mvp difficulty exists');
 // v297: every species is either a glyph body or one of the named body plans the renderer paints.
 const SHAPES=new Set(['fish','tropical','puffer','shark','whale','shrimp','lobster','crab','squid','octopus','tadpole','gar','eel','hammer','saw','ray','sunfish','thresher','goblin','sturgeon','angler','deep']);
@@ -536,7 +537,9 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  const {JSDOM}=require('jsdom');
  const dom=new JSDOM('<div id="host"></div><div id="labels"></div>',{runScripts:'outside-only'}),w=dom.window,T={...THREE};
  let frame,now=1000,moves=[],pondClicks=[];
- const ctx={drawImage(){}};w.HTMLCanvasElement.prototype.getContext=()=>ctx;
+ const mvpSignText=[];
+ const ctx={drawImage(){},clearRect(){},fillRect(){},strokeRect(){},fillText(text){mvpSignText.push(String(text))},measureText(text){return {width:String(text).length*36}}};
+ w.HTMLCanvasElement.prototype.getContext=()=>ctx;
  const host=w.document.getElementById('host');host.setPointerCapture=()=>{};host.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});Object.defineProperties(host,{clientWidth:{value:1000},clientHeight:{value:700}});
  T.WebGLRenderer=class{constructor(){this.domElement=w.document.createElement('canvas')}setPixelRatio(){}setSize(){}render(){}dispose(){}};
  T.TextureLoader=class{async loadAsync(){return new T.Texture(w.document.createElement('canvas'))}};
@@ -544,6 +547,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  for(const stance of ['idle','walk','sit'])for(let d=0;d<8;d++)look.base.metadata.actions[stance+d]=look.hair.metadata.actions[stance+d]=action;
  class Store{release(){}async select(){return look}}
  Object.assign(w,{THREE:T,devicePixelRatio:1,requestAnimationFrame:cb=>frame=cb,ResizeObserver:class{constructor(fn){this.fn=fn}observe(){this.fn()}},PGWardrobe:{CLASSES:{Novice:0},Store,normalize:a=>a,defaults:()=>({version:1,sex:'m'}),frameIndex:()=>0,draw(){}},PGFourthJobs:{CLASSES:{},Store},milestone:()=>null,REFINE_GLOWS:[],drawNativeWeaponGlow(){},drawNativeArmGlow(){},LEVEL_AURAS:[],buildLevelAura:()=>new T.Group()});
+ w.PGSocialFishing={speciesById:id=>id==='mvp_void_maw'?{id,name:'Void Maw',glyph:'🐋'}:null,fishSprite:()=>{const c=w.document.createElement('canvas');c.width=c.height=256;return c}};
  Object.defineProperty(w.document,'hidden',{value:false});w.performance.now=()=>now;w.console.warn=()=>{};
  w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(url)),arrayBuffer:async()=>{const b=fs.readFileSync(url);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)}});
  w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','digimon','roster.js'),'utf8'));w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
@@ -552,9 +556,23 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(){},move(x,z){moves.push({x,z})},seat(id){seatClicks.push(id)},pond(x,z,idx){pondClicks.push({x,z,idx})}});
  scene.active=true;
  assert(scene.fishing,'the scene exposes a fishing rig');
- for(const fn of ['setFishVisible','cast','bite','reel','catchFly','escapeSplash','ripple','splash','hide','off','showFish'])assert.equal(typeof scene.fishing[fn],'function','fishing.'+fn);
- // Stand the local player on the east pond rim.
+ for(const fn of ['setFishVisible','setMvp','cast','bite','reel','catchFly','escapeSplash','ripple','splash','hide','off','showFish'])assert.equal(typeof scene.fishing[fn],'function','fishing.'+fn);
  const pond=w.PGSocialRules.PONDS[0];
+ // The alert is a large, live-only board, and the server-selected species floats above the lake.
+ scene.fishing.setMvp('mvp_void_maw',true);
+ const mvpSign=scene.scene.children.find(o=>o.userData&&o.userData.socialMvpSign);
+ const mvpBoard=mvpSign&&mvpSign.children.find(o=>o.userData&&o.userData.socialMvpSignBoard);
+ const mvpFloat=scene.scene.children.find(o=>o.userData&&o.userData.socialMvpFloat);
+ const mvpSprite=mvpFloat&&mvpFloat.children.find(o=>o.userData&&o.userData.socialMvpFish);
+ assert(mvpSign&&mvpSign.visible&&mvpBoard&&mvpBoard.geometry.parameters.width>=9&&mvpBoard.geometry.parameters.height>=2&&mvpBoard.position.y>=5,'a large elevated alert sign appears over the pond approach');
+ assert(mvpFloat&&mvpFloat.visible&&mvpFloat.userData.spId==='mvp_void_maw','the selected MVP has its own visible pond sprite');
+ assert(mvpSprite&&mvpSprite.position.y>2&&Math.abs(mvpFloat.position.x-pond.x)<.01&&Math.abs(mvpFloat.position.z-pond.z)<.01,'the selected MVP gently floats over the pond center');
+ frame(now+=100);
+ assert(mvpSprite.position.y>2.2&&mvpSprite.position.y<2.9,'the MVP sprite bobs slightly above the surface');
+ assert(mvpSignText.some(text=>/MVP ALERT: VOID MAW/.test(text))&&!mvpSignText.some(text=>/%|hook|catch chance|land chance/i.test(text)),'the alert sign names the MVP without displaying rates');
+ scene.fishing.setMvp(null,false);
+ assert(!mvpSign.visible&&!mvpFloat.visible,'the sign and MVP disappear when the spawn ends');
+ // Stand the local player on the east pond rim.
  scene.putPlayer({id:1,name:'Angler',x:pond.x,z:pond.z-pond.d/2-1.7,dir:0,sit:false,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'}}});
  frame(now+=100);
  // Clicking the water reports the pond to the fishing callback instead of walking in.
@@ -857,6 +875,17 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
   assert(R.pondContains(lake,inland.x,inland.z),'facing away from the pond falls back to open water');
   FISH.stop('done');
  }
+ // MVP rates stay gameplay data, not player-facing copy: verify the banner and room notices.
+ const mvpNotices=[];
+ FISH.bind({host:()=>hostS,scene:()=>null,self:()=>null,moveTo:()=>{},notice:m=>mvpNotices.push(m),save:()=>{}});
+ const mvpEnds=Date.now()+10*60*1000;
+ FISH.setMvp({sp:'mvp_void_maw',id:'mvp-ui-test',spawnedAt:Date.now(),endsAt:mvpEnds});
+ const mvpBannerText=d2.getElementById('fishingMvpBanner').textContent;
+ assert(/Void Maw/.test(mvpBannerText)&&!/\d+%|hook|catch chance|land chance/i.test(mvpBannerText),'the active MVP banner names the fish and omits rates');
+ assert(mvpNotices[0]&&/Void Maw/.test(mvpNotices[0])&&!/\d+%|hook|catch chance|land chance/i.test(mvpNotices[0]),'the spawn announcement omits rates');
+ FISH.clearMvp({id:'mvp-ui-test'});
+ assert(mvpNotices[1]&&/fled the pond/i.test(mvpNotices[1])&&!/\d+%|hook|catch chance|land chance/i.test(mvpNotices[1]),'the despawn notice omits rates');
+ if(FISH.setMvp._ticker){clearInterval(FISH.setMvp._ticker);FISH.setMvp._ticker=null}
  dom2.window.close();
  // --- Part D: the page wires v295 up (save shape, cache versions, build tag) ---------------
  const page=fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
@@ -878,6 +907,9 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  const social=fs.readFileSync(path.join(__dirname,'..','..','assets','social.js'),'utf8');
  const mod=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8');
  const room=fs.readFileSync(path.join(__dirname,'..','..','workers','social','room.mjs'),'utf8');
+ const mvpSpawnRoute=(social.match(/if\(m\.type==='mvp_spawn'\)[\s\S]*?return\}/)||[])[0]||'';
+ assert(mvpSpawnRoute&&!/\d+%|hook|catch chance|land chance/i.test(mvpSpawnRoute),'the plaza spawn alert contains no catch-rate wording');
+ assert(mod.includes("status('The MVP broke free! Try again before it despawns.')"),'the reel-failure status gives a retry hint without exposing the rate');
  // Clicking away from the pond asks first, exactly like the poker table, instead of nagging chat.
  assert(!social.includes('press ✕ Stop fishing before moving'),'chat no longer nags about the X button');
  assert(social.includes('function confirmFishingStop('),'the plaza has a fishing leave-confirm');

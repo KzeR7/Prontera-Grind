@@ -731,7 +731,7 @@ const ui={phase:'off',pond:-1,holding:false,chargeT0:0,castR:null,mods:null,bite
 // MVP fishing: active spawn from the Social Worker, one catch per spawn per player.
 let mvpActive=null; // {sp,id,spawnedAt,endsAt}
 const mvpClaimed=new Set(); // spawn ids already caught by this player
-const MVP_HOOK=.10,MVP_CATCH=.30;
+const MVP_HOOK_CHANCE=.10,MVP_REEL_CATCH_CHANCE=.30;
 let uiPos={};
 try{uiPos=JSON.parse(root.localStorage.getItem('pg_fishing_ui_v1'))||{}}catch{}
 function saveUiPos(){try{root.localStorage.setItem('pg_fishing_ui_v1',JSON.stringify(uiPos))}catch{}}
@@ -869,7 +869,7 @@ function renderMvpBanner(){
  const claimed=mvpClaimed.has(mvpActive.id);
  const mins=Math.floor(secs/60), sec=String(secs%60).padStart(2,'0');
  els.mvpBanner.hidden=false;
- els.mvpBanner.innerHTML=(claimed?`✅ <b>${esc(name)}</b> caught! Next spawn soon.`:`⚠️ <b>MVP ${esc(name)}</b> at the pond! ${mins}:${sec} left · 10% hook · 30% catch · one per spawn`);
+ els.mvpBanner.innerHTML=(claimed?`✅ <b>${esc(name)}</b> caught! Next spawn soon.`:`⚠️ <b>MVP ${esc(name)}</b> at the pond! ${mins}:${sec} left · one per spawn`);
 }
 function setMvp(data){
  if(!data||!data.sp||!data.id) return;
@@ -877,7 +877,7 @@ function setMvp(data){
  renderMvpBanner();
  if(opts&&opts.notice){
   const sp=speciesById(mvpActive.sp);
-  opts.notice(`⚠️ MVP ${sp?sp.name:mvpActive.sp} has spawned at the pond! 10 min — 10% hook, 30% land.`);
+  opts.notice(`⚠️ MVP ${sp?sp.name:mvpActive.sp} has spawned at the pond! 10-minute window — reel it in!`);
  }
  // also create pond warning sign in scene
  try{const f=sceneFishing(); if(f&&f.setMvp) f.setMvp(mvpActive.sp, true)}catch{}
@@ -1612,7 +1612,7 @@ function hook(){
  const f=sceneFishing();f&&f.bite(false);
  let rng=Math.random;
  // MVP: when a 10-min spawn is active and we have not yet caught it, 10% of hooks become the MVP.
- if(mvpActive&&!mvpClaimed.has(mvpActive.id)&&rng()<MVP_HOOK){
+ if(mvpActive&&!mvpClaimed.has(mvpActive.id)&&rng()<MVP_HOOK_CHANCE){
   const sp=speciesById(mvpActive.sp);
   if(sp){
    const wb=Math.max(0,Math.min(3,(ui.mods&&ui.mods.weight)||0));
@@ -1636,7 +1636,7 @@ function finishReel(kind){
  // MVP: even a perfect reel only lands 30% of the time, and one per spawn per player.
  if(kind==='catch'&&ui.roll&&ui.roll.rarity==='mvp'){
   if(mvpActive&&mvpClaimed.has(mvpActive.id)) kind='escape';
-  else if(Math.random()>=MVP_CATCH) kind='mvp_escape';
+  else if(Math.random()>=MVP_REEL_CATCH_CHANCE) kind='mvp_escape';
  }
  if(kind==='catch'){
   const isNew=!state().dex[ui.roll.sp];
@@ -1673,7 +1673,7 @@ function finishReel(kind){
   sound('fail');
   f&&f.escapeSplash();
   ui.result={kind:(kind==='mvp_escape'?'escape':kind),mvpFail:kind==='mvp_escape'};
-  if(kind==='mvp_escape') status('The MVP broke free! Only a 30% catch chance — try again before it despawns.');
+  if(kind==='mvp_escape') status('The MVP broke free! Try again before it despawns.');
  }
  ui.roll=null;ui.reel=null;
  ui.autoNext=now()+1300;
@@ -2047,7 +2047,7 @@ return {
  // v309: painted bait icons, so the shop no longer depends on Unicode-13 emoji fonts.
  baitSprite,baitSpriteURL,baitHTML,titleBadge,titleBadgeURL,
  // MVP
- setMvp,clearMvp,getMvp:()=>mvpActive, isMvpClaimed:id=>mvpClaimed.has(id),
+ MVP_REEL_CATCH_CHANCE,setMvp,clearMvp,getMvp:()=>mvpActive, isMvpClaimed:id=>mvpClaimed.has(id),
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,
  refresh:()=>{if(els){renderDockGear();renderPanel();renderMvpBanner()}},
