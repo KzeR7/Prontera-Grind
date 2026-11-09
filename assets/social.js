@@ -1553,7 +1553,7 @@ function assignPartner(chosen){
  return true;
 }
 digimonSelect.onchange=()=>{assignPartner(R.cleanDigimon(digimonSelect.value))};
-$id('sanctuaryPartnerGrid').onclick=e=>{const card=e.target.closest('[data-partner-slot]');if(!card||typeof S!=='object'||!S)return;const next=Number(card.dataset.partnerSlot);S.digimonActiveSlot=Number.isInteger(next)&&next>=0&&next<=3?next:0;sanctuaryEvolveConfirm=null;if(typeof save==='function')save();refreshCompanionLook();sanctuarySync();sanctuaryRender()};
+$id('sanctuaryPartnerGrid').onclick=e=>{const card=e.target.closest('[data-partner-slot]');if(!card||typeof S!=='object'||!S)return;const next=Number(card.dataset.partnerSlot);if(!Number.isInteger(next)||next<0||next>3)return;{const busy=battleBusySlot();if(busy!=null&&busy===next){$id('sanctuaryMessage').textContent='That partner is in a field or ring battle - stop it before making it your follower.';return}}if(worldTraining&&worldTraining.slot===next){$id('sanctuaryMessage').textContent='That partner is in the gym - stop that session before making it your follower.';return}S.digimonActiveSlot=next;sanctuaryEvolveConfirm=null;if(typeof save==='function')save();refreshCompanionLook();sanctuarySync();sanctuaryRender()};
 {const ownedToggle=$id('sanctuaryIndexOwned');if(ownedToggle)ownedToggle.addEventListener('change',()=>{sanctuaryIndexPage=0;sanctuaryRenderIndex()});}
 $id('sanctuaryIndexSearch').addEventListener('input',()=>{sanctuaryIndexPage=0;sanctuaryRenderIndex()});
 $id('sanctuaryIndexBranchClear').onclick=()=>{sanctuaryIndexBranch=null;sanctuaryIndexPage=0;sanctuaryRenderIndex()};
