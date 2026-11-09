@@ -40,6 +40,9 @@ const FISH_MUTATIONS=new Set(['shiny','sparkling','frozen','electric','ghostly',
 // v297: the biggest catch in the catalog is a 1.8 t whale shark, so the show-off weight clamp
 // follows the game's weight ceiling instead of the old 60 kg-era 999.
 const MAX_FISH_W=5000;
+// v304: MVP fish - server-random spawn every 1-2h, 10min active at the pond.
+const MVP_IDS=['mvp_azure_drake','mvp_tide_drake','mvp_abyss_drake','mvp_iron_crab','mvp_crimson_shark','mvp_gilded_shark','mvp_void_maw'];
+const MVP_SPAWN_MIN=60*60*1000,MVP_SPAWN_MAX=2*60*60*1000,MVP_DURATION=10*60*1000;
 const ledgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id);
 // Only public World text/emotions are durable. Whispers and Local never enter this record.
 export function cleanWorldHistory(value){
@@ -84,6 +87,8 @@ export class SocialRoom {
   // settlement below never accept a client-reported winner, damage total or reward amount.
   this.random=opts.random||B.randomUnit;this.battleSerial=0;this.pveRuns=new Map();
   this.pvpQueues=new Map();this.pvpMatches=new Map();this.pvpByRoom=new Map();this.parties=new Map();this.partyInvites=new Map();
+  // MVP fishing: per-room active spawn + next spawn timer
+  this.mvpActive=new Map();this.mvpNextAt=new Map();
   this.onBattleActivity=opts.onBattleActivity||null;
  }
  // v366: `send` reports whether the bytes actually left. The handshake below is delivered from a
@@ -334,6 +339,36 @@ export class SocialRoom {
  gymSnapshot(room){return [...this.clients.values()].filter(p=>p.gym&&p.gym.room===room).map(p=>({owner:p.id,...p.gym}))}
  broadcastGym(room){if(room)this.broadcast({type:'gym',room,entries:this.gymSnapshot(room)},p=>p.room===room)}
  stopGym(c){if(!c.gym)return;const room=c.gym.room;c.gym=null;this.broadcastGym(room)}
+ // ----------------------------- MVP fishing spawn -----------------------------
+ mvpSnapshot(room){const a=this.mvpActive.get(room);return a?{room,sp:a.sp,id:a.id,spawnedAt:a.spawnedAt,endsAt:a.endsAt}:null}
+ broadcastMvp(room){const snap=this.mvpSnapshot(room);if(snap)this.broadcast({type:'mvp_spawn',...snap},p=>p.room===room)}
+ scheduleMvp(room,now=this.now()){const delay=MVP_SPAWN_MIN+this.random()*(MVP_SPAWN_MAX-MVP_SPAWN_MIN);this.mvpNextAt.set(room,now+delay)}
+ spawnMvp(room,now=this.now()){
+  const sp=MVP_IDS[Math.floor(this.random()*MVP_IDS.length)];
+  const id='mvp:'+now.toString(36)+':'+Math.random().toString(36).slice(2,8);
+  const endsAt=now+MVP_DURATION;
+  this.mvpActive.set(room,{sp,id,spawnedAt:now,endsAt});
+  this.mvpNextAt.delete(room);
+  this.broadcast({type:'mvp_spawn',room,sp,id,spawnedAt:now,endsAt},p=>p.room===room);
+ }
+ despawnMvp(room,now=this.now()){
+  const cur=this.mvpActive.get(room);if(!cur)return;
+  this.mvpActive.delete(room);
+  this.broadcast({type:'mvp_despawn',room,sp:cur.sp,id:cur.id},p=>p.room===room);
+  this.scheduleMvp(room,now);
+ }
+ tickMvp(now=this.now()){
+  // collect rooms that exist or have pending mvp state
+  const rooms=new Set([...this.mvpActive.keys(),...this.mvpNextAt.keys()]);
+  for(const p of this.clients.values())if(p.room)rooms.add(p.room);
+  for(const room of rooms){
+   const active=this.mvpActive.get(room);
+   if(active){if(now>=active.endsAt)this.despawnMvp(room,now);continue}
+   let next=this.mvpNextAt.get(room);
+   if(next===undefined){this.scheduleMvp(room,now);continue}
+   if(now>=next)this.spawnMvp(room,now);
+  }
+ }
  startGym(c,m,now){
   const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
   const slots=Object.hasOwn(R.GYM_STATIONS,m.stat)?R.GYM_STATIONS[m.stat]:null,species=R.cleanDigimon(m.species);if(!c.room||!slots||!species)return this.send(c,{type:'gym_error',request,message:'Choose a valid companion and gym station.'});
@@ -640,6 +675,8 @@ export class SocialRoom {
   const rooms=this.roomList();
   this.send(c,{type:'room',room:c.room,rooms,rules:R.rulesFingerprint(),players:[...this.clients.values()].filter(p=>p.room===c.room).map(p=>this.snapshot(p,c))});
   this.send(c,{type:'gym',room:c.room,entries:this.gymSnapshot(c.room)});
+  // MVP active state for this room
+  {const m=this.mvpSnapshot(c.room);if(m)this.send(c,{type:'mvp_spawn',...m})}
   this.send(c,{type:'battle',room:c.room,at:now,...this.battleSnapshot(c.room)});
   this.send(c,this.pokerPayload(c.room,c.id,now));
   this.broadcastPlayer(c,p=>p.room===c.room,c);
@@ -652,6 +689,7 @@ export class SocialRoom {
   // arrivals mutually distinct) instead of the old entrance grid.
   const spawn=R.fountainSpawn(members)||{x:0,z:12};
   c.room=room;c.x=spawn.x;c.z=spawn.z;c.dir=0;c.at=now;c.sit=false;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;
+  if(!this.mvpActive.has(room)&&!this.mvpNextAt.has(room))this.scheduleMvp(room,now);
   this.sendRoom(c,now);
  }
  // The warning is a client affordance; this is the authority. An old client, a queued floor
@@ -828,5 +866,5 @@ export class SocialRoom {
   }
   // v319: an expired reservation quietly leaves the plaza counts; tell the field badges.
   if(populationChanged)this.syncRooms();
-  this.tickAll(now);this.tickBattles(now);for(const c of [...this.clients.values()])if(now>c.reauthAt||(now>c.expires&&!fishingHeld(c)))this.refresh(c)}
+  this.tickMvp(now);this.tickAll(now);this.tickBattles(now);for(const c of [...this.clients.values()])if(now>c.reauthAt||(now>c.expires&&!fishingHeld(c)))this.refresh(c)}
 }

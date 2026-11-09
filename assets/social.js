@@ -1908,6 +1908,8 @@ function receive(m){
   app.scene?.updatePoker?.(list);
   renderPokerMini();renderPokerUI();updatePokerTurnClock();
  }
+ if(m.type==='mvp_spawn'){try{FISHING()?.setMvp?.(m)}catch{} if(app.room===m.room) worldNotice(`⚠️ MVP ${m.sp} spawned at the pond — 10 min!`); return}
+ if(m.type==='mvp_despawn'){try{FISHING()?.clearMvp?.(m)}catch{} if(app.room===m.room) worldNotice(`The MVP has fled the pond.`); return}
  if(m.type==='fishnote'){pushFishNote(m);return}
  if(m.type==='showoff'){
   // v299: our own show-off is already on screen - the echo would draw it a second time.
