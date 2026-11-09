@@ -1,6 +1,11 @@
 (function () {
   'use strict';
   const BGM = {
+    // v371 (owner): no background music on the phone shell. The player and the YouTube iframe
+    // together covered most of a phone screen - and the tracks cost data - so phones stay silent.
+    phoneShell: function () {
+      try { return document.documentElement.classList.contains('pg-mobile'); } catch (e) { return false; }
+    },
     tracks: {},
     enabled: true,
     volume: 0.05,
@@ -20,6 +25,7 @@
     ytPendingVideo: null,
     initDone: false,
     init: function () {
+      if (this.phoneShell()) return;
       if (this.initDone) return;
       this.initDone = true;
       this.tracks = (window.BGM_TRACKS && typeof window.BGM_TRACKS === 'object') ? window.BGM_TRACKS : {};
@@ -170,6 +176,9 @@
       this.loadPrefs();
       this._applyVolume();
       this.currentMap = document.body.classList.contains('social-open') ? 'social' : (mp === undefined ? this.currentMap : mp);
+      // v371: phones are silent. Ending the media here is covered even if the player switched
+      // to the phone shell mid-track (the change listener also calls stopMedia()).
+      if (this.phoneShell()) { this.stopMedia(); this.playingMap = this.currentMap; this.currentTrack = null; this.renderUI(); return; }
       if (!this.enabled) { this.stopMedia(); this.playingMap = this.currentMap; this.currentTrack = null; this.renderUI(); return; }
       if (this.mode !== 'map') { this.playingMap = this.currentMap; this.renderUI(); return; }
       const list = this.listFor(this.currentMap);
@@ -306,6 +315,11 @@
       return out;
     },
     renderUI: function () {
+      if (this.phoneShell()) {
+        const mounted = this.roots();
+        for (const root of mounted) root.hidden = true;
+        return;
+      }
       const roots = this.roots();
       if (!roots.length) return;
       for (const root of roots) {
@@ -378,6 +392,21 @@
     }
   };
   window.BGM = BGM;
+  // v371: keep the phone rule live - turning into a phone stops the music, back into a desktop
+  // starts the map track again without a reload.
+  const shellChanged = (event) => {
+    const detail = event && event.detail;
+    const mobile = detail && detail.layout ? (detail.layout === 'phone' || detail.layout === 'focus') : BGM.phoneShell();
+    if (mobile) { BGM.stopMedia(); BGM.currentTrack = null; BGM.renderUI(); }
+    else { BGM.sync(BGM.currentMap != null ? BGM.currentMap : 'login'); }
+  };
+  // assets/ui/mobile.js dispatches pg-mobile-change on window, not document.
+  // window is the event target (assets/ui/mobile.js dispatches there); fall back to document,
+  // and to silence rather than a crash in bare-bones DOMs.
+  const changeTarget = (typeof window !== 'undefined' && window !== document && typeof window.addEventListener === 'function')
+    ? window
+    : (typeof document !== 'undefined' && typeof document.addEventListener === 'function' ? document : null);
+  if (changeTarget) changeTarget.addEventListener('pg-mobile-change', shellChanged);
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => { BGM.renderUI(); });
   } else {

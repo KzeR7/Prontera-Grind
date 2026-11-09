@@ -1,7 +1,7 @@
 // Separate Sanctuary progression: deterministic local rules, never an authority for PvP/rewards.
 const assert=require('node:assert/strict'),G=require('../../assets/digimon-sanctuary.js');
 let state=null,now=1000;const action=(line,type,extras={})=>{const r=G.act(state,line,{type,...extras},now);if(r.changed&&r.state)state=r.state;return r};
-assert.deepEqual(G.STARTERS,['agumon','gabumon','patamon','palmon']);assert.equal(G.DURATION,10*60*1000);assert.equal(G.STARTER_POOL.length,48);assert.equal(new Set(G.STARTER_POOL).size,48);assert(G.STARTER_POOL.every(id=>['Baby I','Baby II'].includes(G.entry(id)?.stage)));assert.equal(G.species(null,'agumon'),'agumon');assert.equal(G.normalize({v:2,partners:{secret:'do not destroy'}}),null,'future versions are not overwritten');
+assert.deepEqual(G.STARTERS,['agumon','gabumon','patamon','palmon']);assert.equal(G.DURATION,5*60*1000);assert.equal(G.STARTER_POOL.length,48);assert.equal(new Set(G.STARTER_POOL).size,48);assert(G.STARTER_POOL.every(id=>['Baby I','Baby II'].includes(G.entry(id)?.stage)));assert.equal(G.species(null,'agumon'),'agumon');assert.equal(G.normalize({v:2,partners:{secret:'do not destroy'}}),null,'future versions are not overwritten');
 // v354: the Energy meter is retired; old saves simply drop their stale meter values.
 assert.equal(G.ENERGY_REGEN_MS,undefined);assert.equal(G.ENERGY_TRAIN_COST,undefined);assert.equal(G.ENERGY_FEED,undefined);
 let migrated=G.normalize({v:1,partners:{agumon:{stage:0,form:'agumon',fatigue:40,fullness:50,wins:0,xp:0,stats:{power:0,guard:0,agility:0,focus:0}}}});

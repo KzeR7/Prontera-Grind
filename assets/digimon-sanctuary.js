@@ -8,7 +8,7 @@ if(!DATA)throw Error('Digimon roster data must load before DigiPet rules');
 const LINES={agumon:['agumon','greymon','metalgreymon','wargreymon'],gabumon:['gabumon','garurumon','weregarurumon','metalgarurumon'],patamon:['patamon','angemon','magnaangemon','seraphimon'],palmon:['palmon','togemon','lillymon','rosemon']};
 // STARTERS remains the original four save keys. ROSTER/SPECIES are the complete
 // catalog; the owned bag gates selection while existing saves keep progression.
-const STARTERS=Object.keys(LINES),ROSTER=[...DATA.IDS],SPECIES=ROSTER,STATS=['power','guard','agility','focus'],DURATION=10*60*1000 /* v359 (owner: "make gym timer 10 mins"): sessions halved from 20 */,MAX_EVOLUTIONS=6;
+const STARTERS=Object.keys(LINES),ROSTER=[...DATA.IDS],SPECIES=ROSTER,STATS=['power','guard','agility','focus'],DURATION=5*60*1000 /* v371 (owner: "change to 5min per session"): halved again from v359's 10 */,MAX_EVOLUTIONS=6;
 const EVOLUTION_REQUIREMENTS=[{points:4,wins:2},{points:10,wins:5},{points:18,wins:9},{points:22,wins:12},{points:24,wins:16},{points:24,wins:20}];
 // v354: the Energy meter is retired. Gym sessions are paced by their 20-minute timer alone
 // and grind runs end on waves or defeat; old saves simply drop their stale meter values.
@@ -77,7 +77,7 @@ function update(raw,now,line){const state=normalize(raw,line);if(!state)return {
 }
 function act(raw,line,action,now,random=randomUnit){now=Number.isFinite(now)?now:Date.now();const u=update(raw,now,clean(line)?line:undefined),state=u.state;if(!state||!clean(line))return {ok:false,state,changed:u.changed,message:'DigiPet data is unavailable.'};const p=state.partners[line],done=message=>({ok:true,state,changed:true,message}),fail=message=>({ok:false,state,changed:u.changed,message});
  if(!action||typeof action!=='object')return fail('Choose an action.');
- if(action.type==='train'){const stat=action.stat;if(!STATS.includes(stat))return fail('Choose a training stat.');if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');if(p.stats[stat]>=12||total(p)>=24)return fail('Training cap reached.');p.training={stat,ends:now+DURATION};return done('Training started. It completes in 10 minutes.')}
+ if(action.type==='train'){const stat=action.stat;if(!STATS.includes(stat))return fail('Choose a training stat.');if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');if(p.stats[stat]>=12||total(p)>=24)return fail('Training cap reached.');p.training={stat,ends:now+DURATION};return done('Training started. It completes in 5 minutes.')}
  if(action.type==='mastery'){if(p.mastery>=6||total(p)<(p.mastery+1)*4)return fail('Train four more points for the next mastery.');p.mastery++;return done('Mastery improved without changing form.')}
  // v349: the evolution branch is rolled, not chosen. The possible pool stays visible in
  // the DigiDex so players know what a form can become before they commit.

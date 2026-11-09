@@ -18,7 +18,8 @@
 //   * volume, mute and on/off preferences persist with the save and load back - through the
 //     global `S` binding (`let S` in index.html is never `window.S`, so a window.S guard would
 //     silently disable persistence in the browser);
-//   * phones never get the widget (hidden by CSS) and the page wires playLogin + travel syncs.
+//   * v371: phones are silent - assets/bgm.js refuses to build audio or the YouTube API there,
+//     mobile.css hides both players (the main one and the plaza mount) and swaps in a note.
 //
 // This drives the REAL assets/bgm-tracks.js and assets/bgm.js in a vm with a fake document and
 // a fake YouTube API, so the assertions read the same code the browser runs.
@@ -283,18 +284,59 @@ test('shuffle skips the current track and auto restores map mode', () => {
   assert.match(cssSrc,/\.bgm-player-body\[hidden\]\{display:none!important\}/);
 });
 
-test('phones keep plain autoplay: the widget is CSS-hidden and the page wires the hooks', () => {
-  assert.match(cssSrc, /@media \(max-width:900px\),\(pointer:coarse\)\{#bgmPlayer\{display:none!important\}\}/);
-  assert.match(cssSrc, /#bgmPlayer\{position:absolute;left:max\(8px,env\(safe-area-inset-left\)\);top:179px/, 'sits under the HP box');
-  assert.match(cssSrc, /body\.clean-screen #bgmPlayer\{visibility:hidden\}/);
+test('phones keep the hooks wired, and the desktop rules live where mobile.css watches them', () => {
+  assert.match(cssSrc, /@media \(max-width:900px\),\(pointer:coarse\)\{#bgmPlayer\{display:none!important\}\}/, 'the old media query still hides the player on small or coarse-pointer screens');
+  assert.match(cssSrc, /#bgmPlayer\{position:absolute;left:max\(8px,env\(safe-area-inset-left\)\);top:179px/, 'it sits under the HP box on desktop');
   assert.match(indexSrc, /<section id="bgmPlayer" hidden/);
   assert.match(indexSrc, /assets\/bgm-tracks\.js/);
   assert.match(indexSrc, /assets\/bgm\.js/);
   assert.match(indexSrc, /BGM\.playLogin\(\)/, 'login screen music starts');
   assert.ok((indexSrc.match(/BGM\.sync\(S\.mp\)/g) || []).length >= 2, 'travel and auto-advance resync');
   assert.match(indexSrc, /data-a="bgm"/, 'settings controls present');
-  assert.ok(!/window\.S\b/.test(bgmSrc), 'prefs use the global S binding (S is `let`, never window.S)');
   assert.match(bgmSrc, /typeof S !== 'undefined'/);
+  assert.ok(!/window\.S\b/.test(bgmSrc), 'prefs use the global S binding (S is `let`, never window.S)');
+});
+
+test('phones are silent (v371): no audio, no YouTube script, both players hidden', () => {
+  // The phone shell (.pg-mobile, toggled by assets/ui/mobile.js) hides the main player there,
+  // the plaza music mount on top of it, and the PC-only settings rows with a note in place.
+  const mobileCssSrc = fs.readFileSync(path + 'assets/ui/mobile.css', 'utf8');
+  assert.match(mobileCssSrc, /html\.pg-mobile #bgmPlayer\{display:none!important\}/, 'the phone shell hides the main BGM player');
+  assert.match(mobileCssSrc, /html\.pg-mobile \.bgm-pc-only\{display:none!important\}/, 'the PC controls are hidden with their note');
+  assert.match(mobileCssSrc, /\.bgm-phone-note\{/, 'the phone shell shows an explanation instead of dead controls');
+  const socialCssSrc = fs.readFileSync(path + 'assets/social.css', 'utf8');
+  assert.match(socialCssSrc, /html\.pg-mobile #socialBgmMount\{display:none!important\}/, 'and the plaza music player is hidden too');
+  assert.match(indexSrc, /class="bgm-pc-only"/, 'the phone settings swap the rows for the note');
+
+  // The phone shell never boots audio or the YouTube iframe API in the first place.
+  let headKids = 0;
+  const phoneDocument = {
+    readyState: 'complete', hidden: false,
+    documentElement: { classList: { contains: c => c === 'pg-mobile' } },
+    body: makeEl('body'),
+    head: { appendChild() { headKids++; } },
+    getElementById: () => null,
+    createElement: t => makeEl(t),
+    addEventListener: () => {}
+  };
+  const phoneSandbox = { console, document: phoneDocument, Audio: function () { throw new Error('no audio element may be built on a phone'); }, save() {} };
+  phoneSandbox.window = phoneSandbox;
+  vm.createContext(phoneSandbox);
+  vm.runInContext('let S = {};', phoneSandbox, { filename: 's-binding.js' });
+  vm.runInContext(tracksSrc, phoneSandbox, { filename: 'bgm-tracks.js' });
+  vm.runInContext(bgmSrc, phoneSandbox, { filename: 'bgm.js' });
+  const phone = phoneSandbox.window.BGM;
+  phone.init();
+  assert.equal(phone.audio, null, 'the phone shell never builds an Audio element');
+  assert.equal(phone.initDone, false, 'so the desktop shell can still initialise later without a reload');
+  phone.playLogin();
+  assert.equal(phone.currentTrack, null, 'playLogin changes nothing on a phone');
+  assert.equal(phone.ytPendingVideo, null, 'and never queues a YouTube video');
+  phone.sync(0);
+  assert.equal(phone.currentTrack, null, 'map sync changes nothing either');
+  assert.equal(headKids, 0, 'the YouTube iframe API is never added to the page on a phone');
+  phone.renderUI();
+  assert.equal(headKids, 0, 'renderUI builds nothing either');
 });
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
