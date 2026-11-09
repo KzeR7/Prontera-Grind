@@ -648,11 +648,35 @@ body.social-open #bgmPlayer{display:none!important}
 #sanctuaryBattleNearby{display:block;width:100%;margin-top:8px;padding:10px;border:1px solid #ffd257;border-radius:8px;background:linear-gradient(180deg,#4a3a1f,#241a08);color:#ffe9ad;font:700 12.5px "Trebuchet MS",sans-serif;letter-spacing:.4px;cursor:pointer}
 #sanctuaryBattleNearby:hover{border-color:#ffe9ad;color:#fff4ce}
 #sanctuaryBattleNearby[hidden]{display:none}
+/* v372: three tabs share one panel - Training, PvE grind, Logs - and each activity keeps its
+   own partner pick (the row of sap-partner cards). */
+.sap-tabs{display:flex;gap:4px;padding:8px 8px 0;border-bottom:1px solid #c5a76b33;border-radius:10px 10px 0 0;background:#00000022}
+.sap-tabs button{flex:1;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;background:transparent;color:#9fb8a8;padding:7px 4px 6px;cursor:pointer;font:700 10.5px "Trebuchet MS",sans-serif;letter-spacing:.7px;text-transform:uppercase}
+.sap-tabs button:hover{color:#f4dfaa}
+.sap-tabs button.is-selected,.sap-tabs button[aria-selected="true"]{background:#ffffff10;border-color:#c5a76b55;color:#ffe9ad;box-shadow:inset 0 -2px 0 #d4b26a}
+.sap-partners{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:5px;margin-bottom:8px}
+.sap-partner{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 3px;min-width:0;border:1px solid #849b9c33;border-radius:8px;background:#0d1815aa;color:#d8e2d0;cursor:pointer;font-family:"Trebuchet MS",sans-serif}
+.sap-partner:hover:not([disabled]){border-color:#c5a76b}
+.sap-partner b{font-size:9.5px;color:#f4dfaa;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sap-partner small{color:#9fb8a8;font-size:8px;white-space:nowrap}
+.sap-partner-slot{color:#728f7e;font-size:8px;letter-spacing:.8px;text-transform:uppercase}
+.sap-partner.is-selected{border-color:#ffd257;box-shadow:inset 0 0 0 1px #ffd25766;background:#1a2412}
+.sap-partner.is-busy:not(.is-selected){opacity:.7}
+.sap-partner:disabled{cursor:default;opacity:.55}
+.sap-logs-head{display:flex;justify-content:space-between;align-items:center;margin:2px 0 6px}
+.sap-logs-head small{color:#9fb8a8;font-size:9px;letter-spacing:.8px}
+.sap-logs-clear{border:1px solid #849b9c55;background:transparent;color:#9fb8a8;border-radius:6px;font-size:9px;padding:3px 9px;cursor:pointer}
+.sap-logs-clear:hover{color:#f4dfaa;border-color:#c5a76b}
+.sap-logs{list-style:none;margin:0;padding:0;max-height:158px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.sap-logs li{display:flex;gap:8px;align-items:baseline;font-size:10.5px;color:#d8e2d0;border-bottom:1px solid #ffffff0d;padding:3px 2px}
+.sap-logs time{color:#728f7e;font-size:9px;flex:none;font-variant-numeric:tabular-nums}
+.sap-logs span{overflow-wrap:anywhere}
+.sap-repeat[hidden]{display:none}
 .sap-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-top:1px solid #c5a76b33;border-radius:0 0 10px 10px}
 .sap-repeat{display:flex;align-items:center;gap:7px;color:#d8e2d0;font-size:11.5px;cursor:pointer;white-space:nowrap}
 .sap-repeat input{width:14px;height:14px;accent-color:#d4b26a;cursor:pointer}
 .sap-foot small{color:#9fb8a8;font-size:9px;text-align:right}
-@media(max-width:600px){#sanctuaryActivityPanel{top:158px;width:min(322px,calc(100% - 16px));font-size:11px}.sap-move{display:none}}
+@media(max-width:600px){#sanctuaryActivityPanel{top:158px;width:min(322px,calc(100% - 16px));font-size:11px}.sap-move{display:none}.sap-partners{grid-auto-flow:row;grid-template-columns:repeat(4,1fr)}.sap-partner small{display:none}}
 
 /* v371 (owner): phones - the plaza's music player covered a whole corner and the mini-map sat on
    top of the map it describes. BGM is gone entirely on phones (assets/bgm.js never starts it
