@@ -19,7 +19,7 @@ const bar=w.document.getElementById('socialMin');bar.dispatchEvent(new w.Keyboar
  app.room=0;w.PGSocial.syncDisplay();assert.equal(d.querySelector('#socialTabs [data-channel=world]'),world);assert.equal(d.querySelector('#socialTabs [data-channel=local]'),null);
  app.unread.add('whisper');w.PGSocial.syncDisplay();assert.equal(d.querySelector('#socialTabs [data-channel=whisper]'),whisper);assert.ok(whisper.classList.contains('unread'));app.unread.delete('whisper');
  min.click();assert.equal(d.getElementById('socialMin'),min);assert.equal(d.getElementById('socialChat').classList.contains('minimized'),true);min.click();assert.equal(d.getElementById('socialChat').classList.contains('minimized'),false);
- const socialCss=fs.readFileSync('assets/social.css','utf8');assert.match(socialCss,/#socialTabs button\{position:relative;z-index:7\}/);assert.match(socialCss,/#sanctuaryWorldStatus\{[^}]*width:min\(360px/,'training status has a fixed width so the stop button does not shift on countdown');assert.match(socialCss,/#sanctuaryNearby\{[^}]*width:190px/,'nearby training control has a fixed width');assert.match(socialCss,/#socialMin\{position:relative;z-index:7;/);
+ const socialCss=fs.readFileSync('assets/social.css','utf8');assert.match(socialCss,/#socialTabs button\{position:relative;z-index:7\}/);assert.match(socialCss,/#sanctuaryWorldStatus\{[^}]*width:min\(360px/,'training status has a fixed width so the stop button does not shift on countdown');assert.match(socialCss,/#sanctuaryActivityPanel\{[^}]*position:absolute/,'the gym and the middle farm share one positioned activity panel');assert.match(socialCss,/#sanctuaryActivityPanel\.is-moved\{transform:none\}/,'dragging switches it out of the default centered slot');assert.match(socialCss,/\.sap-repeat input\{/,'the panel carries the keep-repeating switch');assert.match(socialCss,/#socialMin\{position:relative;z-index:7;/);
 }
 let socket;w.WebSocket=class {constructor(){socket=this;this.readyState=1;this.sent=[]}close(){}send(m){this.sent.push(JSON.parse(m))}};w.CLOUD.on=true;w.CLOUD.user='new';w.sessionTick();socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:[]})});
 app.messages=Array.from({length:400},(_,i)=>({channel:'whisper',body:'old'+i,name:'Name',from:1,id:'w'+i,at:i}));socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:Array.from({length:100},(_,i)=>({channel:'world',body:'world',name:'Name',from:1,id:'world'+i,at:i}))})});assert.equal(app.messages.length,400);
@@ -103,6 +103,24 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  // An older/unavailable Worker can accept the socket but ignore unknown battle packets. The pending
  // intent must lock duplicate clicks, then recover with an actionable mismatch message.
  sceneCallbacks.trainingNearby(trainer);assert.equal(w.document.getElementById('sanctuaryBattleNearby').textContent,'Start auto-grinding');w.document.getElementById('sanctuaryBattleNearby').click();assert.equal(sent.at(-1).type,'pve_start');assert(app.battleIntent);sceneCallbacks.trainingNearby(trainer);assert(w.document.getElementById('sanctuaryBattleNearby').hidden,'a pending battle request cannot be spammed');gymClock+=10001;w.battleTick();assert.equal(app.battleIntent,null);assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/did not respond.*matching Social Worker/);assert.equal(app.battle.pve.length,0,'a missing reply never fabricates a battle or reward');sceneCallbacks.trainingNearby(trainer);assert(!w.document.getElementById('sanctuaryBattleNearby').hidden,'battle control recovers after the timeout');
+ // v371 (owner): the middle field opens the same panel, and "Keep repeating" starts the next run by itself.
+ {
+  const panel=w.document.getElementById('sanctuaryActivityPanel');
+  Object.assign(trainer,{x:70,z:64,path:[],sit:false});sceneCallbacks.trainingNearby(trainer);
+  assert(!panel.hidden,'standing in the middle field opens the grinding panel');
+  assert.equal(w.document.getElementById('sapTitle').textContent,'DigiPet grinding');
+  const repeat=w.document.getElementById('sapRepeat');
+  assert.equal(repeat.checked,false,'field runs do not repeat until the player asks');
+  repeat.checked=true;repeat.dispatchEvent(new w.Event('change',{bubbles:true}));
+  assert.equal(w.S.plazaRepeat.pve,true,'and the choice is saved with the character');
+  const before=sent.length;
+  socket.onmessage({data:JSON.stringify({type:'pve_end',reason:'complete'})});
+  await new Promise(r=>setTimeout(r,2100));
+  assert(sent.slice(before).some(m=>m.type==='pve_start'),'the next run starts by itself after a completed one');
+  repeat.checked=false;repeat.dispatchEvent(new w.Event('change',{bubbles:true}));
+  assert.equal(w.S.plazaRepeat.pve,false,'and switching it off stops the repeat');
+  w.battleTick();app.battleIntent=null;sceneCallbacks.trainingNearby(trainer);
+ }
  const train=stat=>{const n=sent.length;sceneCallbacks.trainStation(stat);if(sent.slice(n).some(m=>m.type==='gym_start'))socket.onmessage({data:JSON.stringify({type:'gym_started',request:sent.at(-1).request,gym:{room:1,stat,slot:0}})})};
  // Cancel and restart before either server reply: stale acknowledgements cannot claim or release the new reservation.
  Object.assign(trainer,{x:56,z:30,path:[],sit:false});sceneCallbacks.trainStation('power');const oldRequest=sent.at(-1).request;w.document.querySelector('#sanctuaryWorldStatus button').click();sceneCallbacks.trainStation('power');const newRequest=sent.at(-1).request;assert.notEqual(oldRequest,newRequest);socket.onmessage({data:JSON.stringify({type:'gym_started',request:oldRequest,gym:{room:1,stat:'power',slot:0}})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Reserving/);socket.onmessage({data:JSON.stringify({type:'gym_error',request:oldRequest,message:'stale'})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Reserving/);socket.onmessage({data:JSON.stringify({type:'gym_started',request:newRequest,gym:{room:1,stat:'power',slot:0}})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/auto-training/);w.document.querySelector('#sanctuaryWorldStatus button').click();Object.assign(trainer,{x:0,z:12,path:[],sit:false});
@@ -120,6 +138,50 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  Object.assign(trainer,{x:56,z:30,path:[],sit:false});train('power');const owner=w.S;w.S={...owner};gymClock+=w.PGDigimonSanctuary.DURATION;w.trainingTick();assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/account changed/);w.S=owner;gymClock+=30000;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats.power,2,'account-state replacement cancels without awarding');
  Object.assign(trainer,{x:56,z:30,path:[],sit:false});train('power');const loggedIn=w.currentUser;w.currentUser=null;gymClock+=w.PGDigimonSanctuary.DURATION;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats.power,2,'logging out cancels before awarding');w.currentUser=loggedIn;
  Object.assign(trainer,{x:56,z:30,path:[],sit:false});train('power');socket.readyState=3;gymClock+=w.PGDigimonSanctuary.DURATION;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats.power,2,'disconnect cancels before awarding');socket.readyState=1;
+ // v371 (owner): the gym is one movable panel - every training stat is picked in it instead of walking
+ // to a station, it drags by its header, and "Keep repeating" is a switch that is remembered.
+ {
+  const panel=w.document.getElementById('sanctuaryActivityPanel'),body=w.document.getElementById('sapBody');
+  Object.assign(trainer,{x:56,z:30,path:[],sit:false});sceneCallbacks.trainingNearby(trainer);
+  assert(!panel.hidden,'stepping into the gym opens the panel on its own');
+  assert.equal(w.document.getElementById('sapTitle').textContent,'Gym training');
+  assert.equal(body.querySelectorAll('[data-gym-stat]').length,4,'every training stat is offered at once');
+  body.querySelector('[data-gym-stat="guard"]').click();
+  assert.equal(sent.at(-1).type,'gym_start');assert.equal(sent.at(-1).stat,'guard','any stat can be picked from anywhere in the gym');
+  socket.onmessage({data:JSON.stringify({type:'gym_started',request:sent.at(-1).request,gym:{room:1,stat:'guard',slot:0}})});
+  assert((body.querySelector('[data-gym-stop]')),'the running session shows a stop control in the panel');
+  const repeat=w.document.getElementById('sapRepeat');
+  assert.equal(repeat.checked,true,'gym auto-training keeps repeating by default');
+  repeat.checked=false;repeat.dispatchEvent(new w.Event('change',{bubbles:true}));
+  assert.equal(w.S.plazaRepeat.gym,false,'and the choice is saved with the character');
+  const guardBefore=w.S.digimonSanctuary.partners.agumon.stats.guard;
+  gymClock+=w.PGDigimonSanctuary.DURATION;w.trainingTick();
+  assert.equal(w.S.digimonSanctuary.partners.agumon.stats.guard,guardBefore+1,'one session still pays its point');
+  assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Keep repeating is off/,'and then stops instead of rolling straight into the next one');
+  assert(body.querySelector('[data-gym-stat="guard"]'),'the panel goes back to the training choices');
+  // The header drags the panel; the spot it is dropped in is remembered.
+  const head=panel.querySelector('.sap-head'),hubEl=w.document.getElementById('socialHub');
+  Object.defineProperties(hubEl,{clientWidth:{configurable:true,get:()=>1280},clientHeight:{configurable:true,get:()=>800}});
+  const prect=panel.getBoundingClientRect;panel.getBoundingClientRect=()=>({left:400,top:300,width:274,height:230,right:674,bottom:530});
+  const offw=Object.getOwnPropertyDescriptor(w.HTMLElement.prototype,'offsetWidth'),offh=Object.getOwnPropertyDescriptor(w.HTMLElement.prototype,'offsetHeight');
+  Object.defineProperty(w.HTMLElement.prototype,'offsetWidth',{configurable:true,get(){return 274}});Object.defineProperty(w.HTMLElement.prototype,'offsetHeight',{configurable:true,get(){return 230}});
+  const pd=new w.Event('pointerdown',{bubbles:true});Object.assign(pd,{clientX:420,clientY:310,pointerId:1,preventDefault(){}});head.dispatchEvent(pd);
+  const pm=new w.Event('pointermove',{bubbles:true});Object.assign(pm,{clientX:900,clientY:520,pointerId:1,preventDefault(){}});head.dispatchEvent(pm);
+  const pu=new w.Event('pointerup',{bubbles:true});Object.assign(pu,{pointerId:1});head.dispatchEvent(pu);
+  assert(panel.classList.contains('is-moved'),'dragging drops the centered default');
+  assert.equal(panel.style.left,'880px','the panel ends where the pointer left it');
+  assert.equal(panel.style.top,'510px','and the height sticks too');
+  assert(w.localStorage.getItem('pg_plaza_panel_pos'),'the spot the player chose is remembered');
+  panel.getBoundingClientRect=prect;
+  if(offw)Object.defineProperty(w.HTMLElement.prototype,'offsetWidth',offw);if(offh)Object.defineProperty(w.HTMLElement.prototype,'offsetHeight',offh);
+  // Walking out puts it away; a hand-closed panel does not pop back while the player stays put.
+  Object.assign(trainer,{x:0,z:12,path:[],sit:false});sceneCallbacks.trainingNearby(trainer);assert(panel.hidden,'walking away puts the panel away');
+  Object.assign(trainer,{x:56,z:30,path:[],sit:false});sceneCallbacks.trainingNearby(trainer);assert(!panel.hidden,'and coming back brings it back');
+  w.document.getElementById('sapClose').click();assert(panel.hidden,'the close control hides it');
+  sceneCallbacks.trainingNearby(trainer);assert(panel.hidden,'and it does not pop back while the player stays put');
+  Object.assign(trainer,{x:0,z:12,path:[],sit:false});sceneCallbacks.trainingNearby(trainer);Object.assign(trainer,{x:56,z:30,path:[],sit:false});sceneCallbacks.trainingNearby(trainer);assert(!panel.hidden,'leaving and re-entering reopens it');
+  w.document.getElementById('sapClose').click();repeat.checked=true;repeat.dispatchEvent(new w.Event('change',{bubbles:true}));
+ }
  w.CLOUD.on=false;w.CLOUD.user=null;app.socket=null;app.connected=false;app.room=0;w.Date.now=realNowGym;
  assert.equal(w.S.pets[0].sp,2,'gym never modifies the Ragnarok pet');w.S.digimonSanctuary.partners.agumon.stats.power=4;w.S.digimonSanctuary.partners.agumon.wins=2;w.document.getElementById('sanctuaryOpen').click();
  w.document.querySelector('[data-sanctuary-action=requestEvolution]').click();assert.equal(w.S.digimonSanctuary.partners.agumon.stage,0);assert.match(w.document.getElementById('sanctuaryGameplay').textContent,/Possible: /,'the confirm step lists the rolled pool');

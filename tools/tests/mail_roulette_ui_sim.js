@@ -209,8 +209,8 @@ test('the GM studio is a separate screen: three steps, a live preview, then a co
   assert.match(doc.getElementById('gmStudioPreview').textContent,/Back online at 10:00\./,'and the body as the letter');
   assert.match(doc.getElementById('gmStudioCount').textContent,/^41 \/ 500$/,'headline and body share one 500-character budget');
   click('[data-a=gmstudioreview]');
-  assert.match(doc.getElementById('gmStudioBody').textContent,/all players/,'the confirmation names the audience');
-  assert.match(doc.getElementById('gmStudioBody').textContent,/20 × Oridecon/,'and the per-recipient gift');
+  assert.match(doc.getElementById('gmStudioPanel').textContent,/all players/,'the confirmation names the audience');
+  assert.match(doc.getElementById('gmStudioPanel').textContent,/20 × Oridecon/,'and the per-recipient gift');
   click('[data-a=gmstudiocancel]');
   assert.equal(doc.getElementById('gmStudioHeadline').value,'Server maintenance','cancelling keeps the draft');
   assert.equal(doc.querySelector('[data-a=gmstudiosend]'),null,'and returns to editing');
@@ -236,10 +236,10 @@ test('the studio refuses an over-budget message and never posts a typed name as 
   assert.ok(picker,'targeting one player swaps in a picker');
   assert.equal(picker.tagName,'SELECT','never a free-text name field');
   click('[data-a=gmstudioreview]');
-  assert.match(doc.getElementById('gmStudioBody').textContent,/Choose the player/,'an unresolved recipient is refused');
+  assert.match(doc.getElementById('gmStudioPanel').textContent,/Choose the player/,'an unresolved recipient is refused');
   assert.equal(doc.querySelector('[data-a=gmstudiosend]'),null,'and cannot be sent');
   ev('gmStudioPlayers=[{id:4242,u:"Ada"}];gmStudioDraft.player="4242";renderGmStudio()');
-  assert.match(doc.getElementById('gmStudioBody').textContent,/Ada/,'the confirmation names the resolved player');
+  assert.match(doc.getElementById('gmStudioPanel').textContent,/Ada/,'the confirmation names the resolved player');
   ev('closeGmStudio()');
   assert.ok(!doc.getElementById('gmStudioModal').classList.contains('on'),'closing the studio leaves the game running');
   assert.equal(ev('S.mail.length'),1,'and sent nothing');

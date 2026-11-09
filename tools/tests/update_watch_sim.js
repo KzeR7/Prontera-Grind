@@ -73,6 +73,17 @@ const harness = (opts) => {
   return { box, calls, clock };
 };
 
+// v371 (owner: "the game stops working when the tab is backgrounded"): a hidden tab used to reset
+// itself onto the newest build - and a reload logs in hub-first, so the field stayed parked and the
+// grind never resumed. A hidden tab now never navigates; it remembers the build and the moment the
+// player returns falls under the ordinary visible-tab rule (ask, or a fresh-page reset).
+t('a hidden tab never navigates to the new build (v371)', () => {
+  assert.match(watcherSrc, /if\(document\.hidden===true\)\{pendingUpdateBuild=txt;return\}/, 'a hidden tab remembers the build instead of resetting');
+  assert.ok(!/document\.hidden===true[\s\S]{0,300}?hardReload/.test(watcherSrc), 'nothing in the watcher navigates while the tab is hidden');
+  assert.ok(src.includes("document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});"), 'returning to the tab reapplies the watcher');
+  assert.ok(src.includes('var pendingUpdateBuild=null;'), 'the pending build is page-local');
+});
+
 t('the watcher polls static version.txt with no-store and compares it with the running BUILD', () => {
   assert.ok(/fetch\('version\.txt\?_='\+Date\.now\(\),\{cache:'no-store'\}\)/.test(watcherSrc), 'the poll hits static version.txt, cache-busted and never served stale');
   assert.ok(/if\(!txt\|\|txt===BUILD\)return;/.test(watcherSrc), 'only a different build does anything');
@@ -99,7 +110,7 @@ await T('a matching build changes nothing; a different build prompts once withou
   assert.deepStrictEqual(next.calls.order,[],'no save, sync or session change before the player clicks');
 });
 
-await T('a fresh page or a background tab hard-resets itself onto the new build (v299)', async () => {
+await T('a fresh page hard-resets itself; a background tab never does (v299, tightened in v371)', async () => {
   // Nobody has done anything yet: reset without asking, and cache-bust the URL so the browser
   // cannot answer the navigation from its own copy of the old shell.
   const fresh = harness({ answer: 'new build', freshPage: true });
@@ -109,11 +120,20 @@ await T('a fresh page or a background tab hard-resets itself onto the new build 
   assert.ok(/[?&]build=new-build/.test(fresh.calls.replaceUrl || ''), 'the reset URL carries the new build, so it cannot be served from cache');
   assert.strictEqual(fresh.box.document.querySelector('#updateToast')?.textContent.indexOf('Updating'), 0, 'the player sees one short line, not a dialog');
 
-  // Same rule for a tab that is in the background, however long it has been open.
+  // v371: a tab in the background is never navigated - the reload used to land on the hub/login
+  // screen and stop the grind. It just remembers the build, whatever its age.
   const away = harness({ answer: 'new build', hidden: true });
   await away.box.updateWatch();
-  assert.strictEqual(away.calls.reloads, 1, 'a backgrounded tab resets itself');
+  assert.strictEqual(away.calls.reloads, 0, 'a backgrounded tab is not navigated');
+  assert.strictEqual(away.box.pendingUpdateBuild, 'new build', 'the build is remembered for the moment the player returns');
   assert.strictEqual(away.box.document.querySelector('#updatePrompt'), null, 'no prompt for a tab nobody is looking at');
+  assert.strictEqual(away.calls.fetch.length, 1, 'the background check is still cheap');
+
+  // The player comes back to the tab: ordinary mid-session rules apply - ask, never navigate.
+  Object.defineProperty(away.box.document, 'hidden', { value: false, configurable: true });
+  await away.box.updateWatch();
+  assert.strictEqual(away.calls.reloads, 0, 'returning players are asked, never reloaded behind their back');
+  assert.ok(away.box.document.querySelector('#updatePrompt'), 'the player sees the update prompt on return');
 
   // A visible, mid-session page is never reset behind the player's back.
   const busy = harness({ answer: 'new build' });

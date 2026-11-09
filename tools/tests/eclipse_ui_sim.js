@@ -463,7 +463,7 @@ test('Mail is an index beside a reading pane, the GM studio sends the announceme
  assert.match(doc.getElementById('gmStudioPreview').textContent,/35 × Oridecon/,'the preview shows the attached reward and quantity');
  assert.match(doc.getElementById('gmStudioCount').textContent,/^49 \/ 500$/,'headline + body count toward the same 500-character budget');
  doc.querySelector('[data-a=gmstudioreview]').click();
- assert.match(doc.getElementById('gmStudioBody').textContent,/all players/,'the confirmation lists the audience before sending');
+ assert.equal(studio.querySelectorAll('#gmStudioBody').length,1,'the composer textarea id is unique - a duplicate used to swallow the description');assert.match(doc.getElementById('gmStudioPanel').textContent,/all players/,'the confirmation lists the audience before sending');
  doc.querySelector('[data-a=gmstudiosend]').click();
  assert.ok(!doc.getElementById('gmStudioModal').querySelector('[data-a=gmstudiocancel]'),'the confirmation closes once it is sent');
  assert.equal(doc.getElementById('mailBadge').hidden,false,'unclaimed gift keeps mail badge visible');

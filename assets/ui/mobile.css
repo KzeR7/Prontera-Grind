@@ -187,6 +187,11 @@ html.pg-mobile #rangedMovement select{font-size:9px;min-height:26px;max-width:10
    become two square buttons in the top-right corner. */
 /* Mail and the daily roulette: one row of two squares in the top-right corner
    instead of a 200px column with labels. */
+/* v371 (owner): no background music on phones - the player covered the screen and cost data.
+   The desktop build never had a module-level BGM block to hide, so the whole bgmPlayer goes. */
+html.pg-mobile #bgmPlayer{display:none!important}
+html.pg-mobile .bgm-pc-only{display:none!important}
+html.pg-mobile .bgm-phone-note{display:block;color:var(--e-accent,#d4b26a);font-size:11px;line-height:1.4;padding:2px 2px 4px}
 html.pg-mobile #minimapTools{
   right:calc(6px + var(--pg-safe-r));top:6px;gap:5px;z-index:46;
   flex-direction:row;align-items:flex-start;
