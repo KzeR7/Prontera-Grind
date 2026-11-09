@@ -11,7 +11,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  // Social Worker that runs a different rules build (the post-merge staging round: a stale Worker
  // rejected v361 walks, seats and digimon with no explanation but a battle timeout).
  assert.equal(clients[0].events.find(x=>x.type==='room').rules,R.rulesFingerprint(),'the room snapshot stamps the shared plaza fingerprint');
- assert.equal(R.rulesFingerprint(),'20/15/8/6/16/120/0/1','the fingerprint pins capacity, every seat ring and the fountain annulus');
+ assert.equal(R.rulesFingerprint(),'20/15/8/6/16/120/0/1/5','the fingerprint pins capacity, every seat ring, the fountain annulus and five enclosed gym shell sections');
  assert.equal(new Set(clients.slice(0,20).map(p=>p.x+','+p.z)).size,20,'arrivals have distinct visible spawn positions');
  // v361: fresh arrivals drop on the Aetherwell promenade ring (outside the paving lip at 9.2,
  // inside the old entrance row at 12+), on walkable tiles - never inside the fountain collision.
