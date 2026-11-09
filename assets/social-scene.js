@@ -1965,7 +1965,7 @@ void main(){
   }
   function frameBody(now,stage){if(!viewW||!viewH)syncSize();const walkDt=last?Math.min(2,Math.max(0,(now-last)/1000)):0,dt=Math.min(.1,walkDt);last=clock=now;
  for(const p of players.values())R.advance(p.state,now);
- const self=players.get(callbacks.self());callbacks.trainingNearby?.(self?.state);const selfChair=self?.state.sit&&!Number.isInteger(self?.state.pokerSeat)&&R.SEATS[self?.state.seat];
+ const self=players.get(callbacks.self());try{callbacks.trainingNearby?.(self?.state)}catch(e){reportFrameFault('trainingNearby',e)}const selfChair=self?.state.sit&&!Number.isInteger(self?.state.pokerSeat)&&R.SEATS[self?.state.seat];
  const focusX=self?(Number.isFinite(selfChair?.sitX)?selfChair.sitX:self.state.x):0,focusZ=self?self.state.z:12;
  target.set(focusX,.8,focusZ);
  // At the gym a stopped player needs steady map controls, not a camera that
