@@ -981,7 +981,7 @@ function fishingTitleName(st){
  if(!F||typeof F.equippedTitle!=='function')return '';
  try{const t=F.equippedTitle(st&&st.fishing);return t?'🎣 '+t.name:''}catch{return ''}
 }
-function currentLook(){const st=typeof S==='object'&&S?S:null,slot=activePartnerSlot(),partner=partnerLine(slot),creature=worldTraining&&worldTraining.slot===slot?null:(globalThis.PGDigimonSanctuary?.species(partnerData(slot),partner)||partner);return {cls:st?.cls||'Novice',appearance:st&&typeof wardrobeAppearance==='function'?wardrobeAppearance():{version:1,sex:'m'},refine:Math.max(0,Math.min(15,st?.eq?.weapon?.r||0)),title:huntTitleName(st),fishTitle:fishingTitleName(st),lv:st&&st.auraShow!==false&&!st.hideUI?Math.max(0,Math.min(999,Math.floor(Number(st.lv)||0))):0,speed:st&&typeof moveSpd==='function'?Math.round(moveSpd(true)*100)/100:0,...(creature?{digimon:creature}:{})}}
+function currentLook(){const st=typeof S==='object'&&S?S:null,slot=activePartnerSlot(),partner=partnerLine(slot),creature=(worldTraining&&worldTraining.slot===slot)||battleBusySlot()===slot?null:(globalThis.PGDigimonSanctuary?.species(partnerData(slot),partner)||partner);return {cls:st?.cls||'Novice',appearance:st&&typeof wardrobeAppearance==='function'?wardrobeAppearance():{version:1,sex:'m'},refine:Math.max(0,Math.min(15,st?.eq?.weapon?.r||0)),title:huntTitleName(st),fishTitle:fishingTitleName(st),lv:st&&st.auraShow!==false&&!st.hideUI?Math.max(0,Math.min(999,Math.floor(Number(st.lv)||0))):0,speed:st&&typeof moveSpd==='function'?Math.round(moveSpd(true)*100)/100:0,...(creature?{digimon:creature}:{})}}
 function soloName(){const u=typeof CLOUD!=='undefined'&&CLOUD.user?(typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username):typeof currentUser==='string'&&currentUser?currentUser:'';return u||app.user||'Adventurer'}
 function syncSoloPlayer(){if(!app.wanted||!app.scene||app.room)return;let p=app.players.get(SOLO_ID);const look=currentLook(),name=soloName();if(!p){ // v361: the solo plaza spawns on the Aetherwell promenade ring, like the shared rooms.
    // v363 (owner: "when I walk around I keep being teleported back to spawn"): while a drop is
@@ -1138,10 +1138,14 @@ let battleRequest=0,battleOffer=null,soloPve=null;
 /* v371 (owner): the gym and the middle field used to offer one button each, so picking another
    training stat meant walking to another station. Both places now open one movable panel with
    every choice in it, and both can repeat on their own (a 'keep repeating' switch per activity). */
-const activityPanel=document.createElement('section');activityPanel.id='sanctuaryActivityPanel';activityPanel.className='sanctuary-activity-panel';activityPanel.hidden=true;activityPanel.setAttribute('role','dialog');activityPanel.setAttribute('aria-label','Plaza activity');activityPanel.innerHTML='<header class="sap-head"><b id="sapTitle">Training grounds</b><span class="sap-move" aria-hidden="true">⠿ drag to move</span><button type="button" id="sapClose" aria-label="Close this panel">&times;</button></header><div class="sap-body" id="sapBody"></div><footer class="sap-foot"><label class="sap-repeat"><input type="checkbox" id="sapRepeat"><span>Keep repeating</span></label><small id="sapNote"></small></footer>';hub.append(activityPanel);
+const activityPanel=document.createElement('section');activityPanel.id='sanctuaryActivityPanel';activityPanel.className='sanctuary-activity-panel';activityPanel.hidden=true;activityPanel.setAttribute('role','dialog');activityPanel.setAttribute('aria-label','DigiPet activities');activityPanel.innerHTML='<header class="sap-head"><b id="sapTitle">DigiPet</b><span class="sap-move" aria-hidden="true">⠿ drag to move</span><button type="button" id="sapClose" aria-label="Close this panel">&times;</button></header><nav class="sap-tabs" role="tablist" aria-label="DigiPet activities"><button type="button" role="tab" data-sap-tab="training" aria-selected="true">Training</button><button type="button" role="tab" data-sap-tab="pve" aria-selected="false">PvE grind</button><button type="button" role="tab" data-sap-tab="logs" aria-selected="false">Logs</button></nav><div class="sap-body" id="sapBody" role="tabpanel"></div><footer class="sap-foot"><label class="sap-repeat"><input type="checkbox" id="sapRepeat"><span>Keep repeating</span></label><small id="sapNote"></small></footer>';hub.append(activityPanel);
 const sapHead=activityPanel.querySelector('.sap-head'),sapTitle=$id('sapTitle'),sapBodyEl=$id('sapBody'),sapRepeatEl=$id('sapRepeat'),sapNoteEl=$id('sapNote'),sapCloseBtn=$id('sapClose');
+const sapTabButtons=[...activityPanel.querySelectorAll('[data-sap-tab]')],sapRepeatWrap=sapRepeatEl.closest('.sap-repeat');
 const sapPos={left:null,top:null};
-let activityMode='',activityMutedFor='',pveRepeatTimer=0;
+/* v372 (owner): one panel, three tabs - Training, PvE grind and Logs. The tab remembered for
+   the session opens by itself; stepping into an area only chooses the OUTCOME (open + that
+   tab), never which partner - each activity keeps its own partner pick in the save. */
+let sapTab='training',activityMutedFor='',pveRepeatTimer=0;
 const ACTIVITY_POS_KEY='pg_plaza_panel_pos';
 try{const saved=JSON.parse(localStorage.getItem(ACTIVITY_POS_KEY)||'null');if(saved&&Number.isFinite(saved.left)&&Number.isFinite(saved.top)){sapPos.left=saved.left;sapPos.top=saved.top;activityPanel.classList.add('is-moved');activityPanel.style.left=saved.left+'px';activityPanel.style.top=saved.top+'px'}}catch(e){}
 function clampActivityPos(left,top){const w=hub.clientWidth||0,h=hub.clientHeight||0,pw=activityPanel.offsetWidth||300,ph=activityPanel.offsetHeight||230;return{left:Math.max(0,Math.min(Math.round(left),Math.max(0,w-pw))),top:Math.max(0,Math.min(Math.round(top),Math.max(0,h-ph)))}}
@@ -1156,35 +1160,57 @@ addEventListener('resize',()=>{if(sapPos.left!=null&&!activityPanel.hidden)moveA
    repeated itself, so the gym stays on by default; the grind run is opt-in. */
 function plazaRepeat(kind){const st=typeof S==='object'&&S?S.plazaRepeat:null;if(kind==='gym')return!(st&&st.gym===false);return!!(st&&st.pve)}
 function setPlazaRepeat(kind,on){if(typeof S!=='object'||!S)return;if(!S.plazaRepeat||typeof S.plazaRepeat!=='object')S.plazaRepeat={};S.plazaRepeat[kind]=!!on;if(typeof save==='function')save()}
-sapRepeatEl.addEventListener('change',()=>{if(!activityMode)return;setPlazaRepeat(activityMode,sapRepeatEl.checked);if(activityMode==='gym'&&worldTraining)worldNotice('Keep repeating '+(sapRepeatEl.checked?'on':'off')+' for gym sessions.',true);renderActivityPanel(true)});
-sapCloseBtn.addEventListener('click',()=>{activityMutedFor=activityMode;activityMode='';activityPanel.hidden=true});
+/* v372 (owner): each activity keeps its own partner slot, saved with the character, so one
+   partner can camp the gym, another farms the middle field and a third follows the player.
+   An absent or unusable choice falls back to the followed (active) partner. */
+function activitySlot(kind){const st=typeof S==='object'&&S?S.plazaPartners:null,saved=st?(kind==='gym'?st.gym:st.pve):null,ok=i=>Number.isInteger(i)&&i>=0&&i<=3,usable=i=>ok(i)&&!!partnerLine(i)&&ownsDigimon(partnerLine(i)),a=activePartnerSlot();if(usable(saved))return saved;if(usable(a))return a;return ok(saved)?saved:a}
+function setActivitySlot(kind,slot){const i=Math.floor(Number(slot));if(![0,1,2,3].includes(i))return false;if(kind==='gym'){if(worldTraining&&worldTraining.slot!==i){worldNotice('Stop the running gym session to switch its partner.');return false}const busy=battleBusySlot();if(busy!=null&&busy===i){worldNotice('Partner '+(i+1)+' is in a battle - stop it before gym training.');return false}}else{const run=myPve()||soloPve;if(run&&battleBusySlot()!==i){worldNotice('Stop the running grind to switch its partner.');return false}if(worldTraining&&worldTraining.slot===i){worldNotice('Partner '+(i+1)+' is in the gym - stop that session first.');return false}}
+if(typeof S!=='object'||!S)return false;if(!S.plazaPartners||typeof S.plazaPartners!=='object')S.plazaPartners={};if(kind==='gym')S.plazaPartners.gym=i;else S.plazaPartners.pve=i;if(typeof save==='function')save();renderActivityPanel(true);return true}
+/* v372: the Logs tab keeps, for the rest of the session, every notice the plaza shows above
+   the frame - session completions, battle results, hatches, connection loss. In memory only:
+   the save format stays untouched and a reload starts a fresh page (the per-line budget is
+   small and every line is re-derivable from play). */
+const ACTIVITY_LOG_MAX=40,activityLog=[];
+function pushActivityLog(text){const body=typeof text==='string'?text.trim():'';if(!body)return;activityLog.push({at:Date.now(),text:body});if(activityLog.length>ACTIVITY_LOG_MAX)activityLog.shift();if(sapTab==='logs'&&!activityPanel.hidden)renderActivityPanel(true)}
+sapRepeatEl.addEventListener('change',()=>{const kind=sapTab==='pve'?'pve':'gym';setPlazaRepeat(kind,sapRepeatEl.checked);if(kind==='gym'&&worldTraining)worldNotice('Keep repeating '+(sapRepeatEl.checked?'on':'off')+' for gym sessions.',true);renderActivityPanel(true)});
+sapCloseBtn.addEventListener('click',()=>{activityMutedFor=sapTab==='logs'?'':sapTab;closeActivityPanel()});
 function nearGym(p){return Object.values(TRAIN_STATIONS).some(st=>Math.hypot(p.x-st.x,p.z-st.z)<=9)}
 function nearFarm(p){return Math.abs(p.x-70)<=25&&Math.abs(p.z-64)<=16}
-function gymPanelPartner(){const G=globalThis.PGDigimonSanctuary,slot=activePartnerSlot(),line=partnerLine(slot);if(!G||!line||!ownsDigimon(line))return null;const data=G.normalize(partnerData(slot),line);return data?{G,slot,line,p:data.partners[line]}:null}
-function gymPanelMarkup(){const info=gymPanelPartner();if(!info)return'<p class="sap-empty">Hatch and choose an owned partner in DigiPet first.</p>';const{G,line,p}=info,total=G.total(p),training=worldTraining&&worldTraining.line===line?worldTraining:null;let html='<div class="sap-stats">';
-for(const stat of G.STATS){const have=Math.max(0,Math.min(12,Number(p.stats?.[stat])||0)),full=have>=12||total>=24,active=training&&training.stat===stat,dis=full||!!training;html+='<div class="sap-stat'+(active?' is-active':'')+'"><span class="sap-stat-name">'+escape(sanctuaryName(stat))+'</span><b class="sap-stat-points">'+have+'/12</b><button type="button" data-gym-stat="'+escape(stat)+'"'+(dis?' disabled':'')+'>'+(active?'Training':'Train')+'</button></div>'}
+function gymPanelPartner(){const G=globalThis.PGDigimonSanctuary,slot=activitySlot('gym'),line=partnerLine(slot);if(!G||!line||!ownsDigimon(line))return null;const data=G.normalize(partnerData(slot),line);return data?{G,slot,line,p:data.partners[line]}:null}
+/* One row of partner cards per activity. Empty slots and busy partners are visible (so the
+   player can see WHY they cannot pick them) but not selectable; during a running session the
+   whole row locks - the session owns that partner until it ends. */
+function partnerPickerMarkup(kind){const G=globalThis.PGDigimonSanctuary,pick=activitySlot(kind),running=kind==='gym'?!!worldTraining:(!!(myPve()||soloPve)),parts=[0,1,2,3].map(slot=>{const line=partnerLine(slot),data=line?G?.normalize(partnerData(slot),line):null,p=line&&G?.ROSTER?.includes(line)?data?.partners?.[line]:null,form=p?(G.species(data,line)||line):null,owned=!!(line&&ownsDigimon(line)),busy=(worldTraining&&worldTraining.slot===slot)||(battleBusySlot()===slot),selected=slot===pick,dis=running||!p||!owned;return '<button type="button" class="sap-partner'+(selected?' is-selected':'')+(busy?' is-busy':'')+'" role="radio" aria-checked="'+selected+'" data-activity-slot="'+slot+'" data-kind="'+kind+'"'+(dis?' disabled':'')+'><span class="sap-partner-slot">Partner '+(slot+1)+'</span><b>'+(form?escape(sanctuaryName(form)):owned?escape(sanctuaryName(line)):'Empty slot')+'</b><small>'+(form?'Lv '+G.level(p):owned?'Hatched':'No partner')+(busy?' · BUSY':'')+'</small></button>'});return '<div class="sap-partners" role="radiogroup" aria-label="Partner for this activity">'+parts.join('')+'</div>'+(running?'<p class="sap-note">Stop the running session to switch partners.</p>':'')}
+function gymPanelMarkup(){const info=gymPanelPartner(),training=worldTraining;let html=partnerPickerMarkup('gym');if(!info){html+='<p class="sap-empty">Hatch and choose an owned partner in DigiPet first.</p>';return html}const{G,line,p}=info,total=G.total(p),session=training&&training.slot===info.slot?training:null;html+='<div class="sap-stats">';
+for(const stat of G.STATS){const have=Math.max(0,Math.min(12,Number(p.stats?.[stat])||0)),full=have>=12||total>=24,active=session&&session.stat===stat,dis=full||!!session;html+='<div class="sap-stat'+(active?' is-active':'')+'"><span class="sap-stat-name">'+escape(sanctuaryName(stat))+'</span><b class="sap-stat-points">'+have+'/12</b><button type="button" data-gym-stat="'+escape(stat)+'"'+(dis?' disabled':'')+'>'+(active?'Training':'Train')+'</button></div>'}
 html+='</div><small class="sap-total">'+total+'/24 total points</small>';
-if(training)html+='<div class="sap-status" role="status"><b>'+escape(sanctuaryName(training.stat))+' · +1 point</b><small>every 5 minutes</small><span id="sapCountdown">'+(training.phase==='active'?gymClock(Math.max(0,G.DURATION-(training.elapsed||0))):'…')+'</span><small>'+(training.completed||0)+' completed</small><button type="button" data-gym-stop class="sap-stop">Stop training</button></div>';
+if(session)html+='<div class="sap-status" role="status"><b>'+escape(sanctuaryName(session.stat))+' · +1 point</b><small>every 5 minutes</small><span id="sapCountdown">'+(session.phase==='active'?gymClock(Math.max(0,G.DURATION-(session.elapsed||0))):'…')+'</span><small>'+(session.completed||0)+' completed</small><button type="button" data-gym-stop class="sap-stop">Stop training</button></div>';
 else html+='<p class="sap-lead">Pick a training stat below. No need to walk to the station you want - every stat trains from anywhere in the gym.</p>';
 return html}
-function pvePanelMarkup(){const G=globalThis.PGDigimonBattle,profile=battleProfileFor(),run=myPve()||soloPve;let html='<p class="sap-lead">'+(profile?escape(sanctuaryName(profile.form))+' trains itself in the middle field. Loot, petgold and Digi-Eggs are yours.</p>':'Hatch and choose an owned partner in DigiPet first.')+'</p>';
+function pvePanelMarkup(){const G=globalThis.PGDigimonBattle,slot=activitySlot('pve'),profile=battleProfileFor(slot),run=myPve()||soloPve;let html=partnerPickerMarkup('pve');html+='<p class="sap-lead">'+(profile?escape(sanctuaryName(profile.form))+' trains itself in the middle field. Loot, petgold and Digi-Eggs are yours.':'Hatch and choose an owned partner in DigiPet first.')+'</p>';
 if(run)html+='<div class="sap-status" role="status"><b>'+(soloPve?'SOLO':'PARTY')+' · GRINDING'+(G?' · STAGE '+(G.stageOf?.(run.wave)||1):'')+'</b><small>The battle card above tracks HP and loot.</small></div>';
 else if(profile)html+='<p class="sap-note">Tap Start and your partner fights on its own.</p>';
+html+='<div class="sap-pve-action"></div>';
 return html}
-function activityPanelKey(){if(activityMode==='gym'){const info=gymPanelPartner(),t=worldTraining,stats=info?[info.p.stats.power,info.p.stats.guard,info.p.stats.agility,info.p.stats.focus,info.G.total(info.p)].map(Number).join(','):'none';return 'gym:'+stats+':'+(t?[t.stat,t.slot,t.phase,t.completed].join(','):'idle')}const profile=battleProfileFor(),run=myPve()||soloPve;return 'pve:'+(profile?profile.slot+':'+profile.form+':'+profile.level:'none')+':'+(run?'run':'idle')}
+function logsPanelMarkup(){let html='<div class="sap-logs-head"><small>SESSION LOG</small><button type="button" class="sap-logs-clear" data-sap-clear-logs>Clear</button></div>';
+if(!activityLog.length)return html+'<p class="sap-empty">Nothing yet this session - training points, grind results and DigiPet notices will collect here.</p>';
+html+='<ul class="sap-logs">';for(let i=activityLog.length-1;i>=0;i--){const e=activityLog[i],d=new Date(e.at),hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0'),ss=String(d.getSeconds()).padStart(2,'0');html+='<li><time>'+hh+':'+mm+':'+ss+'</time><span>'+escape(e.text)+'</span></li>'}return html+'</ul>'}
+function activityPanelKey(){if(sapTab==='logs')return 'logs:'+activityLog.length;if(sapTab==='training'){const info=gymPanelPartner(),t=worldTraining,stats=info?[info.p.stats.power,info.p.stats.guard,info.p.stats.agility,info.p.stats.focus,info.G.total(info.p)].map(Number).join(','):'none';return 'training:'+stats+':'+(t?[t.stat,t.slot,t.phase,t.completed].join(','):'idle')+':'+activitySlot('gym')}const slot=activitySlot('pve'),profile=battleProfileFor(slot),run=myPve()||soloPve;return 'pve:'+(profile?profile.slot+':'+profile.form+':'+profile.level:'none')+':'+(run?'run':'idle')}
+function syncPanelTabs(){for(const btn of sapTabButtons){const on=btn.dataset.sapTab===sapTab;btn.setAttribute('aria-selected',String(on));btn.classList.toggle('is-selected',on)}}
 /* The content is refreshed even while the panel is hidden, so the live session's Stop control always exists
    in the document (tests and - more importantly - the one-click gym flow rely on it). Visibility stays
    governed by proximity in worldNearbyFrame. */
-function renderActivityPanel(force){const want=activityMode||(worldTraining?'gym':(myPve()||soloPve)?'pve':'');if(!want)return;if(!activityMode)activityMode=want;const key=activityPanelKey();if(!force&&activityPanel.dataset.key===key)return;activityPanel.dataset.key=key;
-if(activityMode==='gym'){sapTitle.textContent='Gym training';sapBodyEl.innerHTML=gymPanelMarkup();sapNoteEl.textContent='Sessions cap at 12 per stat, 24 in total.'}
-else{sapTitle.textContent='DigiPet grinding';sapBodyEl.innerHTML=pvePanelMarkup();sapBodyEl.append(worldBattleNearby);sapNoteEl.textContent='Stops on defeat or a completed field run.'}
-sapRepeatEl.checked=plazaRepeat(activityMode);syncActivityCountdown()}
-function syncActivityCountdown(){if(activityMode!=='gym')return;const t=worldTraining,left=$id('sapCountdown');if(!left)return;left.textContent=!t?'':(t.phase==='active'?gymClock(Math.max(0,PGDigimonSanctuary.DURATION-(t.elapsed||0))):'…')}
-activityPanel.addEventListener('click',e=>{const stop=e.target.closest('[data-gym-stop]');if(stop){cancelWorldTraining();return}const btn=e.target.closest('[data-gym-stat]');if(!btn||btn.disabled)return;startWorldTraining(btn.dataset.gymStat)});
-function openActivityPanel(mode){if(!mode)return;activityMode=mode;activityPanel.hidden=false;renderActivityPanel(true)}
-function closeActivityPanel(){activityPanel.hidden=true;activityPanel.dataset.key='';activityMode=''}
+function renderActivityPanel(force){const key=activityPanelKey();if(!force&&activityPanel.dataset.key===key)return;activityPanel.dataset.key=key;syncPanelTabs();
+if(sapTab==='training'){sapTitle.textContent='DigiPet · Training';sapBodyEl.innerHTML=gymPanelMarkup();sapNoteEl.textContent='Sessions cap at 12 per stat, 24 in total.'}
+else if(sapTab==='pve'){sapTitle.textContent='DigiPet · PvE grind';sapBodyEl.innerHTML=pvePanelMarkup();const host=sapBodyEl.querySelector('.sap-pve-action');if(host&&worldBattleNearby.parentElement!==host)host.append(worldBattleNearby);sapNoteEl.textContent='Stops on defeat or a completed field run.'}
+else{sapTitle.textContent='DigiPet · Log';sapBodyEl.innerHTML=logsPanelMarkup();sapNoteEl.textContent='Every notice above the plaza, kept for this session.'}
+sapRepeatWrap.hidden=sapTab==='logs';sapRepeatEl.checked=plazaRepeat(sapTab==='pve'?'pve':'gym');syncActivityCountdown()}
+function syncActivityCountdown(){if(sapTab!=='training')return;const t=worldTraining,left=$id('sapCountdown');if(!left)return;const session=t&&t.slot===activitySlot('gym')?t:null;left.textContent=!session?'':(session.phase==='active'?gymClock(Math.max(0,PGDigimonSanctuary.DURATION-(session.elapsed||0))):'…')}
+activityPanel.addEventListener('click',e=>{const tab=e.target.closest('[data-sap-tab]');if(tab){sapTab=tab.dataset.sapTab;renderActivityPanel(true);return}const clear=e.target.closest('[data-sap-clear-logs]');if(clear){activityLog.length=0;renderActivityPanel(true);return}const pick=e.target.closest('[data-activity-slot]');if(pick&&!pick.disabled){setActivitySlot(pick.dataset.kind,Number(pick.dataset.activitySlot));return}const stop=e.target.closest('[data-gym-stop]');if(stop){cancelWorldTraining();return}const btn=e.target.closest('[data-gym-stat]');if(!btn||btn.disabled)return;startWorldTraining(btn.dataset.gymStat)});
+function openActivityPanel(tab){if(tab)sapTab=tab;activityPanel.hidden=false;renderActivityPanel(true)}
+function closeActivityPanel(){activityPanel.hidden=true;activityPanel.dataset.key=''}
 /* Called after a run ends: if the player switched "Keep repeating" on, schedule the next run. */
-function repeatPveRun(delay=1800){if(pveRepeatTimer)return;if(!plazaRepeat('pve'))return;pveRepeatTimer=setTimeout(()=>{pveRepeatTimer=0;if(!plazaRepeat('pve')||battleBusy()||trainingSlotBusy()||!battleProfileFor())return;
+function repeatPveRun(delay=1800){if(pveRepeatTimer)return;if(!plazaRepeat('pve'))return;pveRepeatTimer=setTimeout(()=>{pveRepeatTimer=0;if(!plazaRepeat('pve')||battleBusy()||trainingSlotBusy()||!battleProfileFor(activitySlot('pve')))return;
 if(soloPractice()){const source=app.players.get(SOLO_ID),player=source?R.advance({...source,path:(source.path||[]).map(p=>({...p}))},performance.now()):null;if(!player||player.sit||player.path?.length||!nearFarm(player))return}
 startPve()},delay)}
 function clearPveRepeat(){clearTimeout(pveRepeatTimer);pveRepeatTimer=0}
@@ -1207,19 +1233,22 @@ function battleBusySlot(){
  if(soloPve)return soloPve.profile?.slot??0;
  const m=myPvp(),me=m&&m.participants?.find(p=>p.id===app.id);return me?(me.profile?.slot??0):null;
 }
-function trainingSlotBusy(){return !!(worldTraining&&worldTraining.slot===activePartnerSlot())}
+/* v372: this guard used to mean "the followed partner is in the gym". With per-activity partners
+   it means "the PvE-chosen partner is in the gym" - the followed partner may train, battle or
+   walk anywhere without blocking local grinding. */
+function trainingSlotBusy(){return !!(worldTraining&&worldTraining.slot===activitySlot('pve'))}
 function battleProfileFor(slot=activePartnerSlot()){const G=globalThis.PGDigimonSanctuary,line=partnerLine(slot);return G&&line&&ownsDigimon(line)?G.combatProfile(partnerData(slot),line,slot,petBag()):null}
 function battleNearbyFrame(player){
  const p=player&&!player.sit&&!player.path?.length?player:null;let action='',label='';
- const line=partnerLine(),bag=typeof S==='object'&&S?S.digimonBag:null,hasPartner=!!(line&&Array.isArray(bag?.owned)&&bag.owned.includes(line));
+ const pveSlot=activitySlot('pve'),line=partnerLine(pveSlot),bag=typeof S==='object'&&S?S.digimonBag:null,hasPartner=!!(line&&Array.isArray(bag?.owned)&&bag.owned.includes(line));
  if(p&&!trainingSlotBusy()&&!battleBusy()&&hasPartner){
 if(Math.abs(p.x-70)<=25&&Math.abs(p.z-64)<=16){action='pve';label=soloPractice()?'Start solo grinding':'Start auto-grinding'}
  else {const r=R.SANCTUARY_RING;if(Math.abs(p.x-r.x)<=r.w/2+6&&p.z>=r.z-r.d/2-2&&p.z<=r.z+r.d/2+11&&Math.abs(p.x-r.x)>.1){action='pvp';label=soloPractice()?'Online PvP only':'Enter PvP ring'}}
  }
  worldBattleNearby.hidden=!action;worldBattleNearby.dataset.battleAction=action;worldBattleNearby.textContent=label;
- // The PvE start button lives inside the activity panel; only the PvP ring keeps a control beside it.
- const actionHost=action==='pve'?sapBodyEl:hub;
- if(worldBattleNearby.parentElement!==actionHost)actionHost.append(worldBattleNearby);
+ // The PvE start button lives inside the PvE tab of the activity panel; only the PvP ring keeps a control beside it.
+ const actionHost=action==='pve'?sapBodyEl.querySelector('.sap-pve-action'):hub;
+ if(actionHost&&worldBattleNearby.parentElement!==actionHost)actionHost.append(worldBattleNearby);
 }
 worldBattleNearby.onclick=()=>{const action=worldBattleNearby.dataset.battleAction;if(action==='pve')startPve();else if(action==='pvp')startPvp()};
 function syncSoloBattle(){
@@ -1242,19 +1271,19 @@ function tickSoloPve(){
  if(end){stopSoloPve(end);repeatPveRun()}else syncSoloBattle();
 }
 function startPve(){
- if(trainingSlotBusy())return worldNotice('The training partner cannot battle. Switch to another partner slot first.');
+ if(trainingSlotBusy())return worldNotice('The grind partner is in the gym. Switch the PvE grind partner or stop that session first.');
  if(battleBusy())return worldNotice('Finish the current DigiPet activity first.');
- const profile=battleProfileFor();if(!profile)return worldNotice('Hatch and choose an owned partner first.');
+ const profile=battleProfileFor(activitySlot('pve'));if(!profile)return worldNotice('Hatch and choose an owned partner first.');
  if(soloPractice())return startSoloPve(profile);
  if(!app.room||!app.connected||app.socket?.readyState!==1)return worldNotice('Connect to the online plaza, or use local solo mode, to grind.');
  const request=++battleRequest;app.battleIntent={kind:'pve',request,at:Date.now()};if(send({type:'pve_start',request,profile})){worldNotice('Entering the middle field…');worldBattleNearby.hidden=true}else app.battleIntent=null;
 }
 function startPvp(){
- if(trainingSlotBusy())return worldNotice('The training partner cannot battle. Switch to another partner slot first.');
+ if(trainingSlotBusy())return worldNotice('The grind partner is in the gym. Switch the PvE grind partner or stop that session first.');
  if(battleBusy())return worldNotice('Finish the current DigiPet activity first.');
  if(soloPractice())return worldNotice('Two-player PvP needs an online plaza. Solo practice is available in the middle field.');
  if(!app.room||!app.connected||app.socket?.readyState!==1)return worldNotice('Enter an online plaza to challenge another player.');
- const profile=battleProfileFor();if(!profile)return worldNotice('Hatch and choose an owned partner first.');
+ const profile=battleProfileFor(activitySlot('pve'));if(!profile)return worldNotice('Hatch and choose an owned partner first.');
  const request=++battleRequest;app.battleIntent={kind:'pvp',request,at:Date.now()};if(send({type:'pvp_enter',request,profile})){worldNotice('Waiting for a player on the opposite side of the ring…');worldBattleNearby.hidden=true}else app.battleIntent=null;
 }
 function stopPve(){if(soloPve)stopSoloPve();else if(myPve())send({type:'pve_stop'})}
@@ -1302,7 +1331,7 @@ function battleUITick(){tickSoloPve();if(++mapTickFrame%4===0)mapTick();
  if(app.partyInvite&&Number.isFinite(app.partyInvite.expiresAt)&&Date.now()>app.partyInvite.expiresAt+500){app.partyInvite=null;renderPartyPanel()}
  if(!$id('socialPartyPanel').hidden){const roster=(app.partyRoster||[]).map(p=>p.id+':'+(p.members||[]).join(',')).join('|');const key=(app.party?app.party.members.map(m=>m.id).join(','):'none')+'#'+((app.battle.queue||[]).map(q=>q.id+q.side).join(','))+'#'+(app.partyInvite?app.partyInvite.partyId:'')+'#'+roster+'#'+partyCandidates().length;if(battleUITick.partyKey!==key){battleUITick.partyKey=key;renderPartyPanel()}}if(app.battleIntent&&Date.now()-(app.battleIntent.at||0)>=BATTLE_INTENT_MS){app.battleIntent=null;worldNotice('The plaza battle service did not respond. Reconnect, or use a preview with the matching Social Worker deployment.')}const match=myPvp();if(match?.phase==='countdown'){const el=$id('pvpCountdownNumber');if(el){const left=Math.max(0,Math.ceil((match.countdownUntil-(Date.now()+app.battleOffset))/1000));el.textContent=left>0?left:'FIGHT!'}}}
 setInterval(battleUITick,100);
-function worldNotice(text,active=false){clearTimeout(worldNoticeTimer);worldTrainingText.textContent=text;worldTrainingCancel.hidden=!active;worldTrainingHUD.hidden=false;if(!active)worldNoticeTimer=setTimeout(()=>{if(!worldTraining)worldTrainingHUD.hidden=true},5500)}
+function worldNotice(text,active=false,log=true){if(log)pushActivityLog(text);clearTimeout(worldNoticeTimer);worldTrainingText.textContent=text;worldTrainingCancel.hidden=!active;worldTrainingHUD.hidden=false;if(!active)worldNoticeTimer=setTimeout(()=>{if(!worldTraining)worldTrainingHUD.hidden=true},5500)}
 function refreshGymVisuals(){if(app.scene?.setGymResidents)app.scene.setGymResidents(app.room?gymEntries:(worldTraining?.phase==='active'&&worldTraining.room===0?[{owner:0,room:0,stat:worldTraining.stat,slot:worldTraining.equipment,species:worldTraining.species}]:[]))}
 function cancelWorldTraining(reason='Gym training stopped.'){
  if(!worldTraining)return;const t=worldTraining;worldTraining=null;if(t.room&&app.socket?.readyState===1)send({type:'gym_stop'});refreshGymVisuals();refreshCompanionLook();worldNotice(reason);if(!sanctuaryPanel.hidden){sanctuarySync();sanctuaryRender()}renderActivityPanel(true)
@@ -1313,11 +1342,15 @@ function worldNearbyFrame(player){
  const still=player&&!player.sit&&!player.path?.length?player:null;
  const gymHere=!!still&&nearGym(still),farmHere=!!still&&nearFarm(still);
  // Leaving an area clears the hand-closed flag for that area, so stepping out and back in reopens it.
- if(!gymHere&&activityMutedFor==='gym')activityMutedFor='';
+ if(!gymHere&&activityMutedFor==='training')activityMutedFor='';
  if(!farmHere&&activityMutedFor==='pve')activityMutedFor='';
- const mode=worldTraining?'gym':soloPve?'pve':gymHere&&activityMutedFor!=='gym'?'gym':farmHere&&activityMutedFor!=='pve'?'pve':'';
- if(!mode){if(activityMode)closeActivityPanel();return}
- if(mode!==activityMode||activityPanel.hidden)openActivityPanel(mode);
+ // v372: the panel opens itself on whichever tab matches where you stand - Training at the gym,
+ // PvE grind at the farm. Walking into the OTHER area re-fronts that area's tab; the Logs tab is
+ // never yanked out from under a player mid-read.
+ const want=worldTraining?'training':soloPve?'pve':gymHere&&activityMutedFor!=='training'?'training':farmHere&&activityMutedFor!=='pve'?'pve':'';
+ if(!want){if(!activityPanel.hidden)closeActivityPanel();return}
+ if(activityPanel.hidden){if(activityMutedFor!==want)openActivityPanel(want)}
+ else if((want==='training'&&sapTab==='pve')||(want==='pve'&&sapTab==='training')){sapTab=want;renderActivityPanel(true)}
 }
 function gymClock(ms){const seconds=Math.max(0,Math.ceil(ms/1000));return Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0')}
 function beginWorldTraining(equipment){const t=worldTraining;if(!t||!R.GYM_STATIONS[t.stat]?.[equipment])return;t.equipment=equipment;t.phase='active';t.last=Date.now();t.elapsed=0;t.completed=0;worldNotice(sanctuaryName(t.stat)+' auto-training · '+gymClock(PGDigimonSanctuary.DURATION)+(t.room?'':' · local solo'),true);refreshCompanionLook();refreshGymVisuals();if(!sanctuaryPanel.hidden)sanctuaryRender();renderActivityPanel(true)}
@@ -1342,8 +1375,8 @@ function worldTrainingTick(){
  const now=Date.now(),delta=Math.max(0,now-t.last);t.last=now;t.elapsed+=delta;
  // Each completion is applied once. Excess elapsed time is bounded by the existing
  // energy/stat caps, so a throttled online tab cannot run an unbounded loop.
- while(t.elapsed>=PGDigimonSanctuary.DURATION&&worldTraining===t){t.elapsed-=PGDigimonSanctuary.DURATION;const result=PGDigimonSanctuary.completeWorldTraining(partnerData(t.slot),t.line,t.stat,now);if(result.changed&&result.state){setPartnerData(t.slot,result.state);if(typeof save==='function')save()}if(!result.ok){cancelWorldTraining(result.message+' Gym training stopped.');return}t.completed++;if(!plazaRepeat('gym')){cancelWorldTraining(result.message+' Session complete. Keep repeating is off for the gym.');return}const next=PGDigimonSanctuary.act(partnerData(t.slot),t.line,{type:'train',stat:t.stat},now);if(!next.ok){cancelWorldTraining(result.message+' '+next.message+' Gym training stopped.');return}}
- const left=PGDigimonSanctuary.DURATION-t.elapsed;worldNotice(sanctuaryName(t.stat)+' auto-training · '+gymClock(left)+' · '+t.completed+' completed'+(t.room?'':' · local solo'),true);
+ while(t.elapsed>=PGDigimonSanctuary.DURATION&&worldTraining===t){t.elapsed-=PGDigimonSanctuary.DURATION;const result=PGDigimonSanctuary.completeWorldTraining(partnerData(t.slot),t.line,t.stat,now);if(result.changed&&result.state){setPartnerData(t.slot,result.state);if(typeof save==='function')save()}if(!result.ok){cancelWorldTraining(result.message+' Gym training stopped.');return}t.completed++;pushActivityLog('Partner '+(t.slot+1)+' · '+sanctuaryName(t.stat)+' session complete · +1 point ('+t.completed+' this session)');if(!plazaRepeat('gym')){cancelWorldTraining(result.message+' Session complete. Keep repeating is off for the gym.');return}const next=PGDigimonSanctuary.act(partnerData(t.slot),t.line,{type:'train',stat:t.stat},now);if(!next.ok){cancelWorldTraining(result.message+' '+next.message+' Gym training stopped.');return}}
+ const left=PGDigimonSanctuary.DURATION-t.elapsed;worldNotice(sanctuaryName(t.stat)+' auto-training · '+gymClock(left)+' · '+t.completed+' completed'+(t.room?'':' · local solo'),true,false);
  renderActivityPanel();syncActivityCountdown();
 }
 setInterval(worldTrainingTick,1000);
@@ -1510,7 +1543,7 @@ function openSanctuaryIndex(){ensureDigimonBag();if(sanctuaryPanel.hidden)sanctu
 $id('sanctuaryOpen').onclick=sanctuaryOpen;$id('sanctuaryClose').onclick=sanctuaryClose;sanctuaryPanel.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();sanctuaryClose()}};
 function assignPartner(chosen){
  if(typeof S!=='object'||!S)return false;const slot=activePartnerSlot();
- if(battleBusy()){$id('sanctuaryMessage').textContent='Stop the current battle before changing partners.';return false}
+ {const busy=battleBusySlot();if(busy!=null&&busy===slot){$id('sanctuaryMessage').textContent='Stop this partner\u2019s field or ring battle before changing it.';return false}}
  if(worldTraining&&worldTraining.slot===slot){$id('sanctuaryMessage').textContent='Stop this partner\u2019s gym training before changing it.';return false}
  sanctuaryEvolveConfirm=null;
  // An empty choice is the Dismiss path: the slot keeps its progress, it just walks alone.
@@ -1520,7 +1553,7 @@ function assignPartner(chosen){
  return true;
 }
 digimonSelect.onchange=()=>{assignPartner(R.cleanDigimon(digimonSelect.value))};
-$id('sanctuaryPartnerGrid').onclick=e=>{const card=e.target.closest('[data-partner-slot]');if(!card||typeof S!=='object'||!S)return;if(battleBusy()){$id('sanctuaryMessage').textContent='Stop the current battle before changing partner slots.';return}const next=Number(card.dataset.partnerSlot);S.digimonActiveSlot=Number.isInteger(next)&&next>=0&&next<=3?next:0;sanctuaryEvolveConfirm=null;if(typeof save==='function')save();refreshCompanionLook();sanctuarySync();sanctuaryRender()};
+$id('sanctuaryPartnerGrid').onclick=e=>{const card=e.target.closest('[data-partner-slot]');if(!card||typeof S!=='object'||!S)return;const next=Number(card.dataset.partnerSlot);if(!Number.isInteger(next)||next<0||next>3)return;{const busy=battleBusySlot();if(busy!=null&&busy===next){$id('sanctuaryMessage').textContent='That partner is in a field or ring battle - stop it before making it your follower.';return}}if(worldTraining&&worldTraining.slot===next){$id('sanctuaryMessage').textContent='That partner is in the gym - stop that session before making it your follower.';return}S.digimonActiveSlot=next;sanctuaryEvolveConfirm=null;if(typeof save==='function')save();refreshCompanionLook();sanctuarySync();sanctuaryRender()};
 {const ownedToggle=$id('sanctuaryIndexOwned');if(ownedToggle)ownedToggle.addEventListener('change',()=>{sanctuaryIndexPage=0;sanctuaryRenderIndex()});}
 $id('sanctuaryIndexSearch').addEventListener('input',()=>{sanctuaryIndexPage=0;sanctuaryRenderIndex()});
 $id('sanctuaryIndexBranchClear').onclick=()=>{sanctuaryIndexBranch=null;sanctuaryIndexPage=0;sanctuaryRenderIndex()};
@@ -2018,9 +2051,11 @@ let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{if(app.channel==='log'
  // this is treated as a failed attempt, with the same backoff a close gets.
  else if(!app.connected&&Date.now()-(app.socketAt||0)>HANDSHAKE_MS){dropSocket('Chat took too long to answer — retrying…',true);app.nextConnect=Date.now()+retryDelay()}
  heartbeat(Date.now());
- // v295: fishing holds two minutes or more without a single movement packet. A light ping keeps
- // the socket warm through proxies and NAT so an AFK session never looks dead.
- if(app.connected&&app.socket&&app.socket.readyState===1&&(fishingBusy()||worldTraining)&&Date.now()>=keepAliveAt){keepAliveAt=Date.now()+45000;send({type:'ping'})}if(app.channel==='log'){const key=JSON.stringify(logShown().map(l=>l.id));if(key!==lastLog){lastLog=key;renderMessages(true)}}const look=JSON.stringify(currentLook());if(app.room&&lastLook&&look!==lastLook)send({type:'look',look:currentLook()});else if(!app.room&&app.wanted&&app.scene&&lastLook&&look!==lastLook)syncSoloPlayer();lastLook=look},2000);
+ // v372: a light ping every 45 s keeps the socket warm through proxies and NAT, whatever the
+ // player is doing. PvE battles and the gaps between casts are silent in both directions -
+ // the server owns the battle sim, so a grinding AFK player used to look dead and get a
+ // five-minute forced reauth ("random rejoin") - now silence is never a reason to drop.
+ if(app.connected&&app.socket&&app.socket.readyState===1&&Date.now()>=keepAliveAt){keepAliveAt=Date.now()+45000;send({type:'ping'})}if(app.channel==='log'){const key=JSON.stringify(logShown().map(l=>l.id));if(key!==lastLog){lastLog=key;renderMessages(true)}}const look=JSON.stringify(currentLook());if(app.room&&lastLook&&look!==lastLook)send({type:'look',look:currentLook()});else if(!app.room&&app.wanted&&app.scene&&lastLook&&look!==lastLook)syncSoloPlayer();lastLook=look},2000);
 // v295: browsers throttle timers in a hidden tab, so an AFK player can sit behind a dead socket
 // well past the watchdog. Coming back to the tab checks it at once instead of waiting a cycle.
 document.addEventListener('visibilitychange',()=>{

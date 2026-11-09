@@ -70,7 +70,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  for(let i=0;i<20;i++)send(a,{type:'chat',channel:'world',body:'flood'});assert(a.events.some(e=>e.type==='error'&&e.message.includes('wait')));
  room.disconnect(b);assert(!room.clients.has(b.id));assert(clients[2].events.some(e=>e.type==='left'&&e.id===b.id));
  let closed=false;const old=room.connect({id:100,username:'Replacement'},()=>{},()=>closed=true);room.connect({id:100,username:'Replacement'},()=>{},()=>{});assert(closed);room.disconnect(old);assert(room.clients.has(100));
- now+=301000;room.sweep();assert.equal(room.clients.size,0);
+ now+=301000;room.sweep();assert.equal(room.clients.size,1,'the angler sitting on a chair is parked on purpose and survives the silence sweep');assert.equal(room.clients.get(outsider.id)?.seat,0,'the survivor is the client holding the fishing seat');
+ now+=1800000;room.sweep();assert.equal(room.clients.size,0,'the reauth wall clock still refreshes everyone, angler included');
  // v225: each character walks at its own field run speed; the room clamps the reported value into
  // the shared band and both server and client read it back through PGSocialRules.walkSpeed.
  const walkRoom=new SocialRoom({now:()=>now});

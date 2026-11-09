@@ -919,9 +919,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=371">
-<link rel="stylesheet" href="assets/social-battle.css?v=371">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=371"><link rel="stylesheet" href="assets/friends.css?v=273">
+<link rel="stylesheet" href="assets/social.css?v=372">
+<link rel="stylesheet" href="assets/social-battle.css?v=372">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=372"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1075,7 +1075,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
      asserts it is never loaded again. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
    <!-- v360: vendored r128 examples/js loader so the Social Hub can mount the owner's Prontera Grand Aetherwell GLB (assets/Fountainfile/). -->
-   <script src="assets/vendor/GLTFLoader.r128.js?v=371"></script>
+   <script src="assets/vendor/GLTFLoader.r128.js?v=372"></script>
 <script>
 const $=id=>document.getElementById(id);
 // Owner request (2026-10-24): no browser menu anywhere in the game - a right-click used to offer
@@ -1317,7 +1317,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-09 haven-v371 gym and grind panels, silent phones';
+const BUILD='2026-11-09 haven-v372 DigiPet tabs, party partners, idle-plaza keep-alive';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -6451,7 +6451,14 @@ const GUIDE_LESSONS={
  ['Plan your endgame','Evolution keeps item identity, refinement, cards and existing affixes, filling up to four affixes. Sets give bonuses at 2/4/6 pieces. Mythic gear is fourth-job only and refines up to +15. Build stable farming first; these maps are much tougher than Nightmare.','map']
  ]};
 function guideProgress(){const o=S.handbook;return o&&typeof o==='object'&&!Array.isArray(o)?o:{};}
-function maybeGuide(){guideTour=null;guideFindOwner=null;guideFindStage='';guideFinderClear();const p=guideProgress(),kind=fourthJob()?(p.ascension!==true?'ascension':null):p.beginner!==true?'beginner':null;if(!kind)return;guideTour=kind;guidePage=kind;if(kind==='beginner'&&p.findGuide!==true){guideFindOwner=S;guideFindStage='waiting';}if(!tabs.includes('guide'))openTab('guide');else renderWin();}
+/* The tour used to pop up on EVERY hub-first login (owner: "the build guide keep popping out
+   even if im not a new player") - and dismissing it with Escape never marked it seen, so the
+   next login showed it again forever. Each character now gets one automatic opening per tour
+   until the player interacts with it (finish or "Read later" in the panel, Escape, or picking
+   a chapter in the handbook) - then a once-ever marker is written into the save and the tour
+   never opens by itself again. Both tours remain replayable from the handbook (H) at any time. */
+function tourMarkSeen(){const kind=guideTour;if(!kind)return;const p=guideProgress();try{S.handbook={...p,[kind+'Seen']:true};save()}catch(e){}}
+function maybeGuide(){guideTour=null;guideFindOwner=null;guideFindStage='';guideFinderClear();const p=guideProgress(),kind=fourthJob()?(p.ascension!==true?'ascension':null):p.beginner!==true?'beginner':null;if(!kind)return;if(p[kind+'Seen']===true)return;guideTour=kind;guidePage=kind;if(kind==='beginner'&&p.findGuide!==true){guideFindOwner=S;guideFindStage='waiting';}if(!tabs.includes('guide'))openTab('guide');else renderWin();}
 // One-time, account-owned route back to the handbook after its first automatic opening.
 function guideFinderClear(){document.getElementById('guideFinder')?.remove();document.getElementById('guideFinderRing')?.remove();}
 function guideFinderFinish(){
@@ -6490,7 +6497,7 @@ function guideFinderSync(){
 if(typeof addEventListener==='function')addEventListener('resize',()=>{if(guideFindStage&&guideFindStage!=='waiting')guideFinderSync()});
 $('dock')?.addEventListener?.('scroll',()=>{if(guideFindStage&&guideFindStage!=='waiting')guideFinderSync()});
 function guideTourPanel(){if(!guideTour)return '';const p=guideProgress(),steps=GUIDE_LESSONS[guideTour],i=Math.max(0,Math.min(steps.length-1,Number.isInteger(p[guideTour+'Step'])?p[guideTour+'Step']:0)),[title,body,target]=steps[i];return `<section class="guide-tour" aria-label="Getting started"><small>${guideTour==='ascension'?'ASCENSION ORIENTATION':'FIRST STEPS'} · ${i+1} / ${steps.length}</small><h2>${title}</h2><p>${body}</p><div class="guide-actions"><button data-t="${target}">Open ${TABS[target][1]}</button><button data-a="guidestep" data-v="back" ${i?'':'disabled'}>Back</button><button data-a="guidestep" data-v="next">${i===steps.length-1?'Finish tour':'Next'}</button><button data-a="guidestep" data-v="dismiss">Read later</button></div><small>You can replay this tour from the guide at any time.</small></section>`;}
-function guideStep(action){if(!guideTour||!['next','back','dismiss'].includes(action))return;const kind=guideTour,p={...guideProgress()},key=kind+'Step',last=GUIDE_LESSONS[kind].length-1,i=Math.max(0,Math.min(last,Number.isInteger(p[key])?p[key]:0));if(action==='dismiss'||action==='next'&&i===last){p[kind]=true;guideTour=null;}else p[key]=Math.max(0,Math.min(last,i+(action==='back'?-1:1)));S.handbook=p;save();renderWin();}
+function guideStep(action){if(!guideTour||!['next','back','dismiss'].includes(action))return;const kind=guideTour,p={...guideProgress()},key=kind+'Step',last=GUIDE_LESSONS[kind].length-1,i=Math.max(0,Math.min(last,Number.isInteger(p[key])?p[key]:0));if(action==='dismiss'||action==='next'&&i===last){p[kind]=true;p[kind+'Seen']=true;guideTour=null;}else p[key]=Math.max(0,Math.min(last,i+(action==='back'?-1:1)));S.handbook=p;save();renderWin();}
 // ---------- new-player coach tips (v255) ------------------------------------------------
 // One small card at a time, anchored to the control it is about. A tip hides itself the moment its
 // condition stops being true (points spent, skill learned, card socketed), is remembered per account
@@ -9087,7 +9094,7 @@ const ACT={
   indexall:name=>{const owner=S,count=Math.min(cardMasteryCardByName(String(name)).length,CARD_MASTERY_PER_CARD-cardMasteryLevel(String(name)));if(count<1)return;ask(`Permanently consume ${count} ${name} for the Card Index? These copies will be gone and cannot be equipped or merged. Each adds one Mastery rank and one token.`,()=>{if(S!==owner)return;const r=donateAllToMastery(String(name),count);if(!r.donated)return;S.hp=Math.min(S.hp,maxHp());
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()})},
-  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),buymythicscroll:()=>buyMythicScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),craftasc:v=>ACT.transformasc(v),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpool:v=>{reforgePoolOpen=reforgePoolOpen===v?null:v;renderWin()},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guideforge:v=>{if(!ASC_SETS[v])return;ascensionSetPick=v;if(!tabs.includes('equip'))openTab('equip');sub.equip='ascension';renderWin()},guidepage:v=>{if(['beginner','leveling','build','cards','ascension'].includes(v)){guidePage=v;guideTour=null;}renderWin()},guidestep:v=>guideStep(v),guidereplay:v=>{if(!GUIDE_LESSONS[v])return;guideTour=v;guidePage=v;S.handbook={...guideProgress(),[v+'Step']:0};renderWin()},guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare','ascension'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!Number.isInteger(m)||m<0||m>=MAPS.length||!Number.isInteger(l)||l<1||l>(m>=10?5:15))return;if(!tabs.includes('map'))openTab('map');mapSeason=m>=10?'ascension':'atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
+  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),buymythicscroll:()=>buyMythicScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),craftasc:v=>ACT.transformasc(v),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpool:v=>{reforgePoolOpen=reforgePoolOpen===v?null:v;renderWin()},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guideforge:v=>{if(!ASC_SETS[v])return;ascensionSetPick=v;if(!tabs.includes('equip'))openTab('equip');sub.equip='ascension';renderWin()},guidepage:v=>{if(['beginner','leveling','build','cards','ascension'].includes(v)){guidePage=v;tourMarkSeen();guideTour=null;}renderWin()},guidestep:v=>guideStep(v),guidereplay:v=>{if(!GUIDE_LESSONS[v])return;guideTour=v;guidePage=v;S.handbook={...guideProgress(),[v+'Step']:0};renderWin()},guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare','ascension'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!Number.isInteger(m)||m<0||m>=MAPS.length||!Number.isInteger(l)||l<1||l>(m>=10?5:15))return;if(!tabs.includes('map'))openTab('map');mapSeason=m>=10?'ascension':'atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
   petmotion:v=>{if(['idle','walk','attack'].includes(v)){petPreviewStance=v;renderWin()}},
   petretry:()=>{const p=gp(selP);if(p&&petSpriteStore){const id=PETS[p.sp].spriteId;petSpriteStore.retry(petAssetKey(id,petPreviewStance,0)).catch(()=>{})}},
   pswap:id=>{const pet=gp(id),select=$('wins').querySelector('[data-pet-replace="'+id+'"]'),previous=gp(select?.value);if(!pet||pet.on||!previous?.on)return;previous.on=false;pet.on=true;ui();save()},
@@ -9229,7 +9236,7 @@ function escapeUI(){
   if($('gmStudioModal')?.classList.contains('on')){closeGmStudio();return}
   if($('mailDailyModal')?.classList.contains('on')){closeMailDaily();return}
   if(worldAtlasFullscreen&&tabs.includes('map')&&mapSeason==='atlas'){setWorldAtlasFullscreen(false);return}
-  if(tabs.length){tabs.length=0;expandedPanels.clear();worldAtlasFullscreen=false;worldAtlasDrawerHidden=false;eqPick=null;selS=null;sideOpen=false;renderWin();return}
+  if(tabs.length){tourMarkSeen();guideTour=null;tabs.length=0;expandedPanels.clear();worldAtlasFullscreen=false;worldAtlasDrawerHidden=false;eqPick=null;selS=null;sideOpen=false;renderWin();return}
   if(typeof guideFindStage!=='undefined'&&['more','guide'].includes(guideFindStage)){guideFinderFinish();return}
   if(sideOpen||!$('screenOptions').hidden){sideOpen=false;$('screenOptions').hidden=true;$('screenBtn').setAttribute('aria-expanded','false');renderQ();return}
   ask('Log out of Horizon Haven? Your progress will be saved.',()=>logout(),{yes:'Log out',no:'Stay'});
@@ -13664,16 +13671,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=371"></script>
-<script src="assets/digimon/base-stats.js?v=371"></script>
-<script src="assets/social-rules.js?v=371"></script>
-<script src="assets/social-poker.js?v=371"></script>
-<script src="assets/digimon-sanctuary.js?v=371"></script>
-<script src="assets/digimon-battle.js?v=371"></script>
-<script src="assets/social-digimon.js?v=371"></script>
-<script src="assets/social-gym-redesign.js?v=371"></script>
-<script src="assets/social-pond-design.js?v=371"></script>
-<script src="assets/social-scene.js?v=371"></script>
-<script src="assets/social-fishing.js?v=371"></script>
-<script src="assets/social.js?v=371"></script></body>
+<script src="assets/digimon/roster.js?v=372"></script>
+<script src="assets/digimon/base-stats.js?v=372"></script>
+<script src="assets/social-rules.js?v=372"></script>
+<script src="assets/social-poker.js?v=372"></script>
+<script src="assets/digimon-sanctuary.js?v=372"></script>
+<script src="assets/digimon-battle.js?v=372"></script>
+<script src="assets/social-digimon.js?v=372"></script>
+<script src="assets/social-gym-redesign.js?v=372"></script>
+<script src="assets/social-pond-design.js?v=372"></script>
+<script src="assets/social-scene.js?v=372"></script>
+<script src="assets/social-fishing.js?v=372"></script>
+<script src="assets/social.js?v=372"></script></body>
 </html>

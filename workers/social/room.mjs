@@ -20,6 +20,13 @@ const IDLE_MS=300000,REAUTH_MS=1800000,MAX_ROOMS=50,LEDGER_BATCH=100;
 // reservation is still single-use (takeResume deletes it), still authenticated by Pages before
 // the socket exists, and still bounded - it just covers realistic reconnect latency.
 const RESUME_MS=IDLE_MS;
+// v372 (owner: "random rejoin when afk fishing"): a fishing reservation - the chair or a live
+// cast - is proof the player is parked on purpose, not a dead socket. Fishing clients used to
+// go silent between casts; the 5-minute sweep then refreshed them, which is what they felt as
+// randomly rejoining. An angler's socket now answers to the REAUTH_MS wall clock only, and a
+// dropped angler's resume record lasts half an hour instead of the five-minute window.
+const ACTIVITY_RESUME_MS=30*60*1000;
+const fishingHeld=c=>!!c.fish||Number.isInteger(c.seat);
 // A poker seat is a different promise from a plaza spot: an abandoned seat must free up quickly
 // or it stalls the hand for everyone else, so it keeps the short v290 grace.
 const POKER_RESUME_MS=15000;
@@ -592,7 +599,7 @@ export class SocialRoom {
    // restored. The spot is where the character actually stood; replaying a half-finished walk meant
    // a reconnected player watched their character stroll off on its own, and the client's own copy
    // of that walk had already been stopped.
-   const saved={room,x:c.x,z:c.z,dir:c.dir,path:[],sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look,expires:now+RESUME_MS,seatExpires:now+POKER_RESUME_MS};
+   const saved={room,x:c.x,z:c.z,dir:c.dir,path:[],sit:c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look,expires:now+(fishingHeld(c)?ACTIVITY_RESUME_MS:RESUME_MS),seatExpires:now+POKER_RESUME_MS};
    this.resumes.set(c.id,saved);
    // v296: also hand it to storage. A Durable Object can be evicted while nobody is connected,
    // which used to empty this Map and turn the next reconnect into a fresh join at the entrance.
@@ -657,7 +664,7 @@ export class SocialRoom {
  receive(c,raw){
   if(this.clients.get(c.id)!==c)return;
   const now=this.now();
-  if(now>c.reauthAt||now>c.expires)return this.refresh(c);
+  if(now>c.reauthAt||(now>c.expires&&!fishingHeld(c)))return this.refresh(c);
   c.expires=now+IDLE_MS;
   if(c.room)this.tickRoom(c.room,now);
   if(typeof raw!=='string'||raw.length>4096)return this.send(c,{type:'error',message:'Message is too large.'});
@@ -821,5 +828,5 @@ export class SocialRoom {
   }
   // v319: an expired reservation quietly leaves the plaza counts; tell the field badges.
   if(populationChanged)this.syncRooms();
-  this.tickAll(now);this.tickBattles(now);for(const c of [...this.clients.values()])if(now>c.reauthAt||now>c.expires)this.refresh(c)}
+  this.tickAll(now);this.tickBattles(now);for(const c of [...this.clients.values()])if(now>c.reauthAt||(now>c.expires&&!fishingHeld(c)))this.refresh(c)}
 }
