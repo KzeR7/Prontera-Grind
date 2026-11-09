@@ -2018,9 +2018,11 @@ let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{if(app.channel==='log'
  // this is treated as a failed attempt, with the same backoff a close gets.
  else if(!app.connected&&Date.now()-(app.socketAt||0)>HANDSHAKE_MS){dropSocket('Chat took too long to answer — retrying…',true);app.nextConnect=Date.now()+retryDelay()}
  heartbeat(Date.now());
- // v295: fishing holds two minutes or more without a single movement packet. A light ping keeps
- // the socket warm through proxies and NAT so an AFK session never looks dead.
- if(app.connected&&app.socket&&app.socket.readyState===1&&(fishingBusy()||worldTraining)&&Date.now()>=keepAliveAt){keepAliveAt=Date.now()+45000;send({type:'ping'})}if(app.channel==='log'){const key=JSON.stringify(logShown().map(l=>l.id));if(key!==lastLog){lastLog=key;renderMessages(true)}}const look=JSON.stringify(currentLook());if(app.room&&lastLook&&look!==lastLook)send({type:'look',look:currentLook()});else if(!app.room&&app.wanted&&app.scene&&lastLook&&look!==lastLook)syncSoloPlayer();lastLook=look},2000);
+ // v372: a light ping every 45 s keeps the socket warm through proxies and NAT, whatever the
+ // player is doing. PvE battles and the gaps between casts are silent in both directions -
+ // the server owns the battle sim, so a grinding AFK player used to look dead and get a
+ // five-minute forced reauth ("random rejoin") - now silence is never a reason to drop.
+ if(app.connected&&app.socket&&app.socket.readyState===1&&Date.now()>=keepAliveAt){keepAliveAt=Date.now()+45000;send({type:'ping'})}if(app.channel==='log'){const key=JSON.stringify(logShown().map(l=>l.id));if(key!==lastLog){lastLog=key;renderMessages(true)}}const look=JSON.stringify(currentLook());if(app.room&&lastLook&&look!==lastLook)send({type:'look',look:currentLook()});else if(!app.room&&app.wanted&&app.scene&&lastLook&&look!==lastLook)syncSoloPlayer();lastLook=look},2000);
 // v295: browsers throttle timers in a hidden tab, so an AFK player can sit behind a dead socket
 // well past the watchdog. Coming back to the tab checks it at once instead of waiting a cycle.
 document.addEventListener('visibilitychange',()=>{
