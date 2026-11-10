@@ -10,7 +10,8 @@ const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker,B=globalThis.PGDigim
 // the socket itself is the only thing that proves who the player is. The age of a connection is
 // measured from when it was accepted, and activity slides the idle window forward, so an active
 // player is no longer dropped every five minutes the way REAUTH_MS alone used to force.
-const IDLE_MS=300000,REAUTH_MS=1800000,MAX_ROOMS=50,LEDGER_BATCH=100;
+export const SOCIAL_MAX_ROOMS=50;
+const IDLE_MS=300000,REAUTH_MS=1800000,MAX_ROOMS=SOCIAL_MAX_ROOMS,LEDGER_BATCH=100;
 // v295: RESUME_MS is the window in which a replacement socket may inherit the position, room and
 // seat of the one it replaced. It used to be 15 s, which was shorter than the client's own
 // dead-socket detection (20 s of silence + a 6 s probe grace) - so any silent drop, and every
@@ -41,7 +42,8 @@ const FISH_MUTATIONS=new Set(['shiny','sparkling','frozen','electric','ghostly',
 // follows the game's weight ceiling instead of the old 60 kg-era 999.
 const MAX_FISH_W=5000;
 // v304: MVP fish - server-random spawn every 1-2h, 10min active at the pond.
-const MVP_IDS=['mvp_azure_drake','mvp_tide_drake','mvp_abyss_drake','mvp_iron_crab','mvp_crimson_shark','mvp_gilded_shark','mvp_void_maw'];
+export const FISHING_MVP_IDS=Object.freeze(['mvp_azure_drake','mvp_tide_drake','mvp_abyss_drake','mvp_iron_crab','mvp_crimson_shark','mvp_gilded_shark','mvp_void_maw']);
+const MVP_IDS=FISHING_MVP_IDS;
 const MVP_SPAWN_MIN=60*60*1000,MVP_SPAWN_MAX=2*60*60*1000,MVP_DURATION=10*60*1000;
 const ledgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id);
 // Only public World text/emotions are durable. Whispers and Local never enter this record.
@@ -343,14 +345,18 @@ export class SocialRoom {
  mvpSnapshot(room){const a=this.mvpActive.get(room);return a?{room,sp:a.sp,id:a.id,spawnedAt:a.spawnedAt,endsAt:a.endsAt}:null}
  broadcastMvp(room){const snap=this.mvpSnapshot(room);if(snap)this.broadcast({type:'mvp_spawn',...snap},p=>p.room===room)}
  scheduleMvp(room,now=this.now()){const delay=MVP_SPAWN_MIN+this.random()*(MVP_SPAWN_MAX-MVP_SPAWN_MIN);this.mvpNextAt.set(room,now+delay)}
- spawnMvp(room,now=this.now()){
-  const sp=MVP_IDS[Math.floor(this.random()*MVP_IDS.length)];
+ spawnMvp(room,now=this.now(),requestedSp=null){
+  if(!Number.isInteger(room)||room<1||room>MAX_ROOMS||this.mvpActive.has(room))return null;
+  if(requestedSp!==null&&!MVP_IDS.includes(requestedSp))return null;
+  const sp=requestedSp||MVP_IDS[Math.floor(this.random()*MVP_IDS.length)];
   const id='mvp:'+now.toString(36)+':'+Math.random().toString(36).slice(2,8);
-  const endsAt=now+MVP_DURATION;
+  const endsAt=now+MVP_DURATION,spawn={room,sp,id,spawnedAt:now,endsAt};
   this.mvpActive.set(room,{sp,id,spawnedAt:now,endsAt});
   this.mvpNextAt.delete(room);
-  this.broadcast({type:'mvp_spawn',room,sp,id,spawnedAt:now,endsAt},p=>p.room===room);
+  this.broadcast({type:'mvp_spawn',...spawn},p=>p.room===room);
+  return spawn;
  }
+ hasActiveMvp(){return this.mvpActive.size>0}
  despawnMvp(room,now=this.now()){
   const cur=this.mvpActive.get(room);if(!cur)return;
   this.mvpActive.delete(room);

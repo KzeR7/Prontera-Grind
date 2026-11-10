@@ -82,6 +82,8 @@ export const ROUTES = {
   'GET /api/grants': ['onRequestGet', 'api/grants.js'],
   'POST /api/grants': ['onRequestPost', 'api/grants.js'],
   'GET /api/gm/catalog': ['onRequestGet', 'api/gm/catalog.js'],
+  'GET /api/gm/fishing': ['onRequestGet', 'api/gm/fishing.js'],
+  'POST /api/gm/fishing': ['onRequestPost', 'api/gm/fishing.js'],
   'POST /api/gm/gifts': ['onRequestPost', 'api/gm/gifts.js'],
   'GET /api/gm/players': ['onRequestGet', 'api/gm/players.js'],
   'GET /api/gm/player': ['onRequestGet', 'api/gm/player.js'],
@@ -134,7 +136,7 @@ export function createApp({ sqlite, site, gmAll = false, fakePayments = false })
     return handlerCache.get(file);
   };
 
-  return async function app(request) {
+  const app = async function app(request) {
     const url = new URL(request.url);
     // Dev-only: /phone puts the game in a phone-sized frame (tools/phone_preview.html) so the
     // small-screen layout can be reviewed in a desktop browser. It is repo material, never part
@@ -173,6 +175,10 @@ export function createApp({ sqlite, site, gmAll = false, fakePayments = false })
     }
     return response;
   };
+  // The local Social namespace is attached after the HTTP server exists; expose the same mutable
+  // environment to that bootstrap step, just as Pages injects its service binding in production.
+  app.env = env;
+  return app;
 }
 
 function serveStatic(url, dir) {
@@ -240,7 +246,7 @@ export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = f
       res.end(JSON.stringify({ err: String(e && e.message || e) }));
     }
   });
-  attachSocial(server, makeD1(sqlite), { previewAuth: bridge });
+  app.env.SOCIAL = attachSocial(server, makeD1(sqlite), { previewAuth: bridge });
   return new Promise(resolve => server.listen(port, host, () => resolve({
     server, sqlite, port: server.address().port, close: () => new Promise(r => server.close(r)),
   })));

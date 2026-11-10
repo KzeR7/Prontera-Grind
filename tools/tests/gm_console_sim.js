@@ -79,6 +79,27 @@ t('every action the console offers exists on the server', () => {
   for (const a of actions) assert.ok(server.includes(`'${a}'`), `the server must implement ${a}`);
 });
 
+t('Fishing and DigiPet controls use the audited queue and authenticated Social MVP route', () => {
+  assert.match(src, /Fishing & DigiPet/, 'the player detail has a systems resource tab');
+  assert.match(src, /data-act="systems-grant"/, 'resource delivery is an explicit action');
+  assert.match(src, /action:'systems'/, 'the browser queues resources instead of writing a save');
+  assert.match(src, /api\('\/gm\/fishing'\)/, 'the console loads the server-owned Fishing catalog');
+  assert.match(src, /api\('\/gm\/fishing',[\s\S]{0,150}?JSON\.stringify\(\{room,species\}\)/, 'manual MVP requests go through the Pages Function');
+  assert.match(src, /confirm\(`Spawn \$\{label\}[\s\S]{0,200}?audit log/, 'manual spawn asks before it acts and says it is audited');
+  const player = fs.readFileSync(path.join(root, 'functions/api/gm/player.js'), 'utf8');
+  const systemsAction=player.slice(player.indexOf("case 'systems':"),player.indexOf("case 'grant':"));
+  assert.match(systemsAction, /INSERT INTO grants[\s\S]{0,300}?gm-systems/, 'the server queues and audits the resource action');
+  assert.match(systemsAction, /systemsPayload\(body\)/, 'server-side resource IDs and caps are validated');
+  assert.ok(!/saveByUser|updateSave|save_blob/.test(systemsAction), 'systems actions never edit a save blob');
+  const grants = fs.readFileSync(path.join(root, 'functions/api/grants.js'), 'utf8');
+  assert.match(grants, /'gift','equipment','systems'/, 'systems grants require the same saved receipt as gifts');
+  const fishing = fs.readFileSync(path.join(root, 'functions/api/gm/fishing.js'), 'utf8');
+  assert.match(fishing, /currentUser\(request, env\.DB\)[\s\S]{0,180}?isGm\(user\)/, 'the Pages route checks the D1 session GM flag');
+  assert.match(fishing, /X-Social-Admin.*JSON\.stringify\(\{ id: user\.id, username: user\.username, gm: Number\(user\.gm\) \}\)/, 'only the authenticated Pages handler derives the private admin identity');
+  const worker = fs.readFileSync(path.join(root, 'workers/social/index.mjs'), 'utf8');
+  assert.match(worker, /requestPath==='\/gm\/fishing-mvp'[\s\S]{0,80}?adminFishingMvp/, 'the private Social DO has a narrow manual-spawn route');
+});
+
 t('the Cash Shop hands over the whole wardrobe in one confirmed action', () => {
   assert.match(src, /data-act="shop-grant-all"/, 'the one-button grant exists');
   assert.match(src, /Grant all cosmetics/, 'and the button names what it does');

@@ -157,6 +157,17 @@ tr:hover{background:#2a2014;cursor:pointer}
     <div id="damagealerts" class="small">Loading…</div>
   </section>
 
+  <section id="fishingops" class="card">
+    <h2>Fishing operations</h2>
+    <p class="small">Spawn a Fishing MVP in a plaza room for 10 minutes. Choose a species or let the Social room pick randomly. Requests and outcomes appear in the GM audit log.</p>
+    <div class="row" style="align-items:flex-end;flex-wrap:wrap">
+      <label>Plaza room <select id="mvproom" disabled><option>Loading…</option></select></label>
+      <label>MVP <select id="mvpspecies" disabled><option value="">Random MVP</option></select></label>
+      <button id="spawnmvp" class="primary" disabled>Spawn MVP</button>
+    </div>
+    <div id="mvpresult" class="small" role="status" aria-live="polite">Loading Fishing controls…</div>
+  </section>
+
   <section class="card">
     <h2>Players <span id="count" class="small"></span></h2>
     <div class="row"><input id="search" placeholder="filter by name" style="flex:1"></div>
@@ -175,7 +186,7 @@ tr:hover{background:#2a2014;cursor:pointer}
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
-let PLAYERS = [], SEL = null, TAB = 'character', CATALOG=null, playerRequest=0, giftRequest=null;
+let PLAYERS = [], SEL = null, TAB = 'character', CATALOG=null, FISHING_TOOLS=null, playerRequest=0, giftRequest=null;
 const say = (m, bad) => { const t = $('toast'); t.textContent = m; t.style.color = bad ? '#ff9d9f' : '#7ddc8a'; t.style.display = 'block'; clearTimeout(say._t); say._t = setTimeout(() => t.style.display = 'none', 4000); };
 const api = async (path, opt) => {
   const r = await fetch('/api' + path, Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opt || {}));
@@ -233,6 +244,25 @@ async function loadDamageAlerts() {
 }
 function damageNumber(n) { return n == null ? '—' : Number(n)>=1e12 ? '≥1,000,000,000,000' : nfmt(Math.round(Number(n))); }
 $('damagealerts').onclick=e=>{const b=e.target.closest('[data-damage-player]');if(b){TAB='damage';openPlayer(+b.dataset.damagePlayer).catch(err=>say(err.message,1));}};
+async function loadFishingTools(){
+  const status=$('mvpresult'),room=$('mvproom'),species=$('mvpspecies'),button=$('spawnmvp');
+  try{
+    const data=await api('/gm/fishing');FISHING_TOOLS=data;
+    room.innerHTML=Array.from({length:data.roomCap},(_,i)=>`<option value="${i+1}">Room ${i+1}</option>`).join('');
+    species.innerHTML='<option value="">Random MVP</option>'+data.mvp.map(x=>`<option value="${esc(x.id)}">${esc(x.label)}</option>`).join('');
+    room.disabled=species.disabled=button.disabled=false;
+    status.textContent='Ready · manual MVPs last 10 minutes. An already-active room will refuse a second spawn.';
+  }catch(e){status.textContent='Fishing controls unavailable: '+e.message;room.disabled=species.disabled=button.disabled=true;}
+}
+$('spawnmvp').onclick=async()=>{
+  const button=$('spawnmvp'),room=Number($('mvproom').value),species=$('mvpspecies').value||null;
+  const label=FISHING_TOOLS?.mvp.find(x=>x.id===species)?.label||'Random MVP';
+  if(!confirm(`Spawn ${label} in plaza room ${room} for 10 minutes? This action is recorded in the GM audit log.`))return;
+  button.disabled=true;$('mvpresult').textContent='Sending authenticated request to the Social room…';
+  try{const result=await api('/gm/fishing',{method:'POST',body:JSON.stringify({room,species})});$('mvpresult').textContent=result.note;say(result.note);}
+  catch(e){$('mvpresult').textContent='Spawn refused: '+e.message;say(e.message,1);}
+  finally{button.disabled=false;}
+};
 async function renderDamage(body,id) {
   body.innerHTML='<p class="small">Loading damage observations…</p>';
   try {
@@ -329,7 +359,7 @@ function renderDetail() {
       <div class="stat"><b>${s ? nfmt(s.kills) : '—'}</b><span class="small">lifetime kills</span></div>
     </div>
     <div class="tabs">
-      ${['character', 'equipment', 'damage', 'account', 'send', 'shop', 'announce', 'history', 'log'].map(t => `<button data-tab="${t}" class="${TAB === t ? 'on' : ''}">${({ character:'Full stats',equipment:'Equipment & affixes',damage:'Damage',account: 'Account', send: 'Send items & Zeny', shop: 'Cash Shop', announce: 'Announce', history: 'Backups', log: "This player's log" })[t]}</button>`).join('')}
+      ${['character', 'equipment', 'damage', 'systems', 'account', 'send', 'shop', 'announce', 'history', 'log'].map(t => `<button data-tab="${t}" class="${TAB === t ? 'on' : ''}">${({ character:'Full stats',equipment:'Equipment & affixes',damage:'Damage',systems:'Fishing & DigiPet',account: 'Account', send: 'Send items & Zeny', shop: 'Cash Shop', announce: 'Announce', history: 'Backups', log: "This player's log" })[t]}</button>`).join('')}
     </div>
     <div id="tabbody"></div>`;
   renderTab();
@@ -340,6 +370,7 @@ function renderTab() {
   if(TAB==='character'){renderCharacter(body,s);
   }else if(TAB==='equipment'){renderEquipment(body,s);
   }else if(TAB==='damage'){renderDamage(body,a.id);
+  }else if(TAB==='systems'){renderSystems(body,s);
   }else if (TAB === 'account') {
     body.innerHTML = `
       <div class="row"><button data-act="note">Add a note to the log</button></div>
@@ -472,6 +503,34 @@ async function renderShop(body, id) {
 }
 
 function statRows(o){return Object.entries(o||{}).map(([k,v])=>`<div class="stat">${esc(CATALOG.affixes[k]||CATALOG.skills[k]||k)}<b>${typeof v==='number'?nfmt(Math.round(v*100)/100):esc(v)}</b></div>`).join('')}
+function renderSystems(body,save){
+ const c=save?.character||{},f=c.fishing,bag=c.digimonBag,rods=FISHING_TOOLS?.rods||[],bait=FISHING_TOOLS?.bait||[];
+ const rodNames=(f?.rods||[]).map(id=>rods.find(x=>x.id===id)?.label||id).join(', ')||'—';
+ const baitText=bait.map(x=>`${x.label} ×${nfmt(f?.bait?.[x.id]||0)}`).join(' · ')||'Not available';
+ body.innerHTML=`<p class="small">These audited deliveries are queued for the next login or sync. The server does not edit save blobs: the game applies each resource locally, saves a matching GM receipt, then claims it. If a pouch or duplicate-protected egg capacity is full, that grant stays pending.</p>
+   <h2>Current resource summary</h2>
+   <div class="grid2">
+     <div class="stat">Fishing · Fishcoins<b>${f?nfmt(f.coins):'No Fishing save'}</b><span class="small">${f?`Equipped ${esc(rods.find(x=>x.id===f.rod)?.label||f.rod)} · owned rods: ${esc(rodNames)}<br>${esc(baitText)}`:'No Fishing data yet'}</span></div>
+     <div class="stat">DigiPet · Pet Coins<b>${bag?nfmt(bag.coins):'No Pet Bag yet'}</b><span class="small">${bag?`${nfmt(bag.eggs)} Digi-Eggs · ${nfmt(bag.ownedCount)} owned species · ${nfmt(bag.gearCount)} gear items`:'A first delivery initializes the bag and preserves legacy partners.'}</span></div>
+   </div>
+   <h2 style="margin-top:12px">Queue a Fishing or DigiPet resource</h2>
+   <div class="row" style="align-items:flex-end;flex-wrap:wrap;gap:8px">
+     <label>Resource <select id="systemsResource"><option value="fishing:fishcoins">Fishing · Fishcoins</option><option value="fishing:rod">Fishing · Rod unlock</option><option value="fishing:bait">Fishing · Bait</option><option value="digimon:petcoins">DigiPet · Pet Coins</option><option value="digimon:eggs">DigiPet · Digi-Egg</option></select></label>
+     <label id="systemsItemWrap" hidden>Rod / bait <select id="systemsItem"></select></label>
+     <label id="systemsAmountWrap">Quantity <input id="systemsAmount" type="number" min="1" step="1" value="1" style="width:150px"></label>
+   </div>
+   <div class="row" style="margin-top:8px"><label style="flex:1">Audit note <input id="systemsNote" maxlength="200" placeholder="Event, compensation, test grant…" style="width:100%"></label><button class="primary" data-act="systems-grant">Queue resource</button></div>`;
+ const resource=$('systemsResource'),itemWrap=$('systemsItemWrap'),item=$('systemsItem'),amountWrap=$('systemsAmountWrap'),amount=$('systemsAmount');
+ const paint=()=>{
+   const [system,kind]=resource.value.split(':');
+   const choices=kind==='rod'?rods:kind==='bait'?bait:[];
+   itemWrap.hidden=!choices.length;amountWrap.hidden=kind==='rod';
+   item.innerHTML=choices.map(x=>`<option value="${esc(x.id)}">${esc(x.label)}</option>`).join('');
+   const max=kind==='fishcoins'?1_000_000_000:kind==='petcoins'?999_999:kind==='eggs'?48:999;
+   amount.max=String(max);amount.value='1';
+ };
+ resource.onchange=paint;paint();
+}
 function gearDescription(it){
  if(!it)return '<span class="small">Empty</span>';
  const aff=(it.aff||[]).map(a=>esc(CATALOG.affixes[a.k]||a.k)+' +'+esc(a.v)).join(' · ');
@@ -562,6 +621,15 @@ $('detail').addEventListener('click', async e => {
       if(!confirm('Queue this equipment change for '+SEL.account.u+'? It applies when their game syncs.'))return;
       btn.disabled=true;
       try{const r=await api('/gm/player',{method:'POST',body:JSON.stringify({id,action:'equipment',mode,itemId:btn.dataset.item,slot:$('editslot')?.value,aff,refine:+$('editrefine').value})});say(r.note);}finally{btn.disabled=false;}
+    } else if(act==='systems-grant'){
+      const [system,resource]=$('systemsResource').value.split(':'),needsItem=resource==='rod'||resource==='bait',hasAmount=resource!=='rod',amount=hasAmount?Number($('systemsAmount').value):undefined,resourceId=needsItem?$('systemsItem').value:undefined,max=resource==='fishcoins'?1_000_000_000:resource==='petcoins'?999_999:resource==='bait'?999:48;
+      if(hasAmount&&(!Number.isInteger(amount)||amount<1||amount>max))return say('Enter a whole-number quantity within the displayed resource cap.',1);
+      if(needsItem&&!resourceId)return say('Choose a Fishing rod or bait.',1);
+      const systemLabel=system==='fishing'?'Fishing':'DigiPet',resourceLabel=$('systemsResource').selectedOptions[0].textContent,itemLabel=needsItem?$('systemsItem').selectedOptions[0].textContent:resourceLabel;
+      const delivery=hasAmount?`${amount.toLocaleString()} × ${itemLabel}`:itemLabel;
+      if(!confirm(`Queue ${delivery} for ${SEL.account.u}? It will apply on their next login or sync and is recorded in the audit log.`))return;
+      btn.disabled=true;
+      try{const r=await api('/gm/player',{method:'POST',body:JSON.stringify({id,action:'systems',system,resource,resourceId,amount,note:$('systemsNote').value})});say(r.note||`${systemLabel} resource queued.`);}finally{btn.disabled=false;}
     } else if (act === 'announce') {
       const body = $('abody').value, toAll = $('atoall').checked, kind = $('akind').value;
       const giftKind = $('agiftkind') ? $('agiftkind').value : 'none';
@@ -616,7 +684,7 @@ $('detail').addEventListener('click', async e => {
     const me = await api('/me');
     if (!me.gm) { document.body.innerHTML = '<main><section class="card"><h2>Not a GM</h2><p>Sign in with the owner account in the game first, then come back. <a href="/" onclick="backToGame();return false" style="color:var(--gold)">Back to the game</a></p></section></main>'; return; }
     CATALOG=await api('/gm/catalog');
-    await Promise.all([loadUsage(),loadDamageAlerts()]);
+    await Promise.all([loadUsage(),loadDamageAlerts(),loadFishingTools()]);
     await loadPlayers();
   } catch (e) {
     document.body.innerHTML = '<main><section class="card"><h2>Sign in first</h2><p>This console works from the session you already have in the game. <a href="/" target="_top" style="color:var(--gold)">Open the game and sign in</a>, then return here.</p></section></main>';

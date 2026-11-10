@@ -919,9 +919,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=373">
+<link rel="stylesheet" href="assets/social.css?v=374">
 <link rel="stylesheet" href="assets/social-battle.css?v=372">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=372"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=374"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1317,7 +1317,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-09 haven-v372 DigiPet tabs, party partners, idle-plaza keep-alive';
+const BUILD='2026-11-09 haven-v374 MVP pond alert and floating display';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -4417,6 +4417,62 @@ function gmApplyGear(p){
     S.hp=Math.min(S.hp,maxHp());
   }else throw Error('Unknown equipment change');
 }
+const GM_FISHING_RODS=['twig','oak','brass','silver','golden','mythril'],GM_FISHING_BAIT=['worm','shrimp','grub','jelly'];
+function gmLegacyPetOwned(){
+  const G=globalThis.PGDigimonSanctuary;if(!G||!Array.isArray(G.ROSTER))return[];
+  const lineFields=['digimonPartner','digimonPartner2','digimonPartner3','digimonPartner4'],dataFields=['digimonSanctuary','digimonSanctuary2','digimonSanctuary3','digimonSanctuary4'];
+  const clean=id=>typeof id==='string'&&G.ROSTER.includes(id)?id:null,owned=lineFields.map(k=>clean(S[k])).filter(Boolean);
+  for(const key of dataFields){const raw=S[key];if(!raw||typeof raw!=='object')continue;
+    for(const [line,p] of Object.entries(raw.partners||{})){
+      if(!clean(line)||!p||typeof p!=='object')continue;
+      const progressed=Number(p.stage)>0||Number(p.wins)>0||Number(p.xp)>0||Number(p.mastery)>0||(p.energy!=null&&Number(p.energy)!==70)||Number(p.fatigue)>0||(p.fullness!=null&&Number(p.fullness)!==70)||p.form&&clean(p.form)!==line||p.training||p.battle||Object.values(p.stats||{}).some(v=>Number(v)>0);
+      if(progressed)owned.push(line);
+    }
+  }
+  return [...new Set(owned)];
+}
+function gmApplySystems(p){
+  const positiveInt=(n,max)=>Number.isInteger(n)&&n>0&&n<=max;
+  if(p.system==='fishing'){
+    if(!S.fishing||typeof S.fishing!=='object'||Array.isArray(S.fishing))S.fishing={v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true},coins:0,rods:['twig'],rod:'twig',bait:{},baitSel:null,bagTier:0,title:null};
+    const f=S.fishing;
+    if(p.resource==='fishcoins'){
+      if(!positiveInt(p.amount,1e9))throw Error('Invalid Fishcoin grant');
+      const have=Math.max(0,Math.min(1e9,Math.floor(Number(f.coins)||0)));
+      if(p.amount>1e9-have)throw Error('Fishcoin pouch full; this grant will remain pending');
+      f.coins=have+p.amount;
+    }else if(p.resource==='rod'){
+      if(!GM_FISHING_RODS.includes(p.id))throw Error('Unknown fishing rod');
+      const owned=Array.isArray(f.rods)?f.rods.filter(id=>GM_FISHING_RODS.includes(id)):[];
+      f.rods=[...new Set(['twig',...owned,p.id])];
+      if(!f.rods.includes(f.rod))f.rod='twig';
+    }else if(p.resource==='bait'){
+      if(!GM_FISHING_BAIT.includes(p.id)||!positiveInt(p.amount,999))throw Error('Invalid bait grant');
+      if(!f.bait||typeof f.bait!=='object'||Array.isArray(f.bait))f.bait={};
+      const have=Math.max(0,Math.min(999,Math.floor(Number(f.bait[p.id])||0)));
+      if(p.amount>999-have)throw Error('Bait pouch full; this grant will remain pending');
+      f.bait[p.id]=have+p.amount;
+    }else throw Error('Unknown Fishing resource');
+    return;
+  }
+  if(p.system==='digimon'){
+    const G=globalThis.PGDigimonSanctuary;if(!G||typeof G.ensureBag!=='function')throw Error('DigiPet data is not ready; this grant will remain pending');
+    const bag=G.ensureBag(S.digimonBag,gmLegacyPetOwned());if(!bag)throw Error('This Pet Bag uses a newer version; this grant will remain pending');
+    if(p.resource==='petcoins'){
+      if(!positiveInt(p.amount,999999))throw Error('Invalid Pet Coin grant');
+      if(p.amount>999999-bag.coins)throw Error('Pet Coin pouch full; this grant will remain pending');
+      bag.coins+=p.amount;
+    }else if(p.resource==='eggs'){
+      if(!positiveInt(p.amount,48))throw Error('Invalid Digi-Egg grant');
+      const available=G.STARTER_POOL.filter(id=>!bag.owned.includes(id)).length;
+      if(bag.eggs+p.amount>available)throw Error('Digi-Egg bag would exceed the unowned starter pool; this grant will remain pending');
+      bag.eggs+=p.amount;
+    }else throw Error('Unknown DigiPet resource');
+    S.digimonBag=bag;
+    return;
+  }
+  throw Error('Unknown GM system resource');
+}
 function cloudApplyGrants(list){
   const ids=[];
   for(const g of list){
@@ -4426,6 +4482,10 @@ function cloudApplyGrants(list){
       if(S.gmReceipts.includes(g.id)){ids.push(g.id);continue}
       if(g.kind==='gift'){gmApplyGift(p);log(g.from==='Cash Shop'?'🛒 Cash Shop delivery: '+String(g.note||'your order').replace(/^Cash Shop: /,'')+'.':'🎁 GM gift received.','r1','cloud')}
       else if(g.kind==='equipment'){gmApplyGear(p);log('GM equipment change applied.','r1','cloud')}
+      else if(g.kind==='systems'){
+        gmApplySystems(p);log((p.system==='fishing'?'🎣 Fishing':'🐣 DigiPet')+' GM resources received.','r1','cloud');
+        try{if(p.system==='fishing')globalThis.PGSocialFishing?.refresh?.();else globalThis.PGSocial?.refreshDigimon?.()}catch{}
+      }
       else if(g.kind==='zeny'&&Number.isFinite(p.amount)){S.zeny=Math.max(0,S.zeny+Math.floor(p.amount));log('🎁 GM'+(g.from?' '+g.from:'')+' sent you '+Math.abs(Math.floor(p.amount)).toLocaleString()+' Zeny.','r1','cloud')}
       else if(g.kind==='level'&&Number.isFinite(p.amount)){const n=Math.floor(p.amount);S.lv=Math.max(1,Math.min(150,S.lv+n));S.pts=Math.max(0,totalPts()-ptsSpent());log('🎁 GM sent you '+Math.abs(n)+' base level'+(Math.abs(n)===1?'':'s')+'.','r1','cloud')}
       else if(g.kind==='item'&&p.item){const it=Object.assign({},p.item);if(it.id==null)it.id=Date.now()+Math.random();S.inv.push(it);log('🎁 GM sent you '+iname(it)+'. Check your bag.','r1','cloud')}
@@ -6377,7 +6437,8 @@ function reforgeMaterialLine(name,need,have,missing=0){return need?`<div class="
 function reforgeOfferPanel(pending,it){
  const old=JSON.parse(pending.before),selected=Array.isArray(pending.chosen)?pending.chosen:[],selectedN=reforgeRepeatSelection(pending,it).length,rows=old.map((a,i)=>{
   const b=pending.after[i],same=JSON.stringify(a)===JSON.stringify(b),tag=same?'Unchanged':a.k!==b.k?'Different stat':a.v===b.v?'Changed':'Different roll';
-  return `<div class="reforge-comparison-row${same?' unchanged':' changed'}${selected.includes(i)?' rerolled':''}"><span>${esc(affTxt(a))}${selected.includes(i)?'<small>Selected for reroll</small>':''}</span><span aria-hidden="true">→</span><strong>${esc(affTxt(b))}<small>${esc(tag)}${a.k===b.k&&a.v!==b.v?' · '+esc(affixRangeText(b,it).match(/\[.*?\]/)?.[0]||'') :''}</small></strong></div>`;
+  const range=!same?affixRangeText(b,it).match(/\[.*?\]/)?.[0]||'':'';
+  return `<div class="reforge-comparison-row${same?' unchanged':' changed'}${selected.includes(i)?' rerolled':''}"><span>${esc(affTxt(a))}${selected.includes(i)?'<small>Selected for reroll</small>':''}</span><span aria-hidden="true">→</span><strong>${esc(affTxt(b))}<small>${esc(tag)}${range?' · '+esc(range):''}</small></strong></div>`;
  }).join('');
  return `<section class="reforge-offer eclipse-reforge-offer"><div class="eclipse-offer-banner">${uiIcon('check')}Reforge complete. Review before replacing.</div><div class="reforge-comparison"><div class="reforge-comparison-row reforge-comparison-labels"><span>CURRENT</span><span></span><span>NEW OFFER</span></div>${rows}</div><p class="eclipse-offer-note">Your current affixes remain unchanged on the item. ${selectedN<old.length?old.length-selectedN+' affix'+(old.length-selectedN===1?' is':'es are')+' unchanged. ':''}A different stat is not automatically an upgrade for your build.</p></section>`;
 }
@@ -13671,16 +13732,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=372"></script>
-<script src="assets/digimon/base-stats.js?v=372"></script>
-<script src="assets/social-rules.js?v=372"></script>
-<script src="assets/social-poker.js?v=372"></script>
-<script src="assets/digimon-sanctuary.js?v=372"></script>
+<script src="assets/digimon/roster.js?v=374"></script>
+<script src="assets/digimon/base-stats.js?v=374"></script>
+<script src="assets/social-rules.js?v=374"></script>
+<script src="assets/social-poker.js?v=374"></script>
+<script src="assets/digimon-sanctuary.js?v=374"></script>
 <script src="assets/digimon-battle.js?v=372"></script>
-<script src="assets/social-digimon.js?v=372"></script>
+<script src="assets/social-digimon.js?v=374"></script>
 <script src="assets/social-gym-redesign.js?v=372"></script>
 <script src="assets/social-pond-design.js?v=372"></script>
-<script src="assets/social-scene.js?v=373"></script>
-<script src="assets/social-fishing.js?v=372"></script>
-<script src="assets/social.js?v=373"></script></body>
+<script src="assets/social-scene.js?v=374"></script>
+<script src="assets/social-fishing.js?v=374"></script>
+<script src="assets/social.js?v=374"></script></body>
 </html>

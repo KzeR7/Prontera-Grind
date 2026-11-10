@@ -7,6 +7,10 @@ try{
  assert.match(ev('affixRangeText(mask.aff[1],mask)'),/ATK % \+62 \[42~66%\]$/);
  assert.match(ev('affixRangeText(mask.aff[2],mask)'),/LUK \+60 \[44~69\]$/);
  assert.match(ev('affixRangeText(mask.aff[3],mask)'),/INT \+74 \[44~69\] · saved roll outside current range$/);
+ const offer=ev(`reforgeOfferPanel({before:JSON.stringify([{k:'str',v:44},{k:'luk',v:60},{k:'int',v:74}]),after:[{k:'agi',v:50},{k:'luk',v:61},{k:'int',v:74}],chosen:[0,1]},mask)`);
+ assert.match(offer,/AGI \+50<small>Different stat · \[44~69\]<\/small>/,'a different-stat replacement shows its possible roll range');
+ assert.match(offer,/LUK \+61<small>Different roll · \[44~69\]<\/small>/,'a same-stat replacement still shows its possible roll range');
+ assert.match(offer,/INT \+74<small>Unchanged<\/small>/,'unchanged affixes are not mislabeled as replacements');
  // Every grade, pool, quality, rounding and movement cap: endpoints must be attainable.
  let cases=0;
  for(let sec=0;sec<=6;sec++)for(let tier=0;tier<=4;tier++)for(const quality of [1,1.25,1.5])for(const slot of ['weapon','head','armor','off','leg','acc']){
