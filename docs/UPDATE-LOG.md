@@ -10459,3 +10459,10 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Balance fixtures** are regenerated for the new build (the BUILD line is inside the hashed combat slice).
 * **Hosted staging package:** the five GM runtime files from `main` (`functions/_lib/gm-systems.js`, `gm-tools.js`, `functions/api/gm/fishing.js`, `log.js`, `player.js`) are on both package lists, like the MVP fish art earlier. `hosted_launch_stage_sim` passes.
 * **Gate:** full local suite, see the PR description for the result.
+
+### 2026-11-10 — `haven-v378 Afterdark hub, DigiPet and shared chat`
+
+* **Changed:** Approved charcoal/bevelled hub and DigiPet treatment, native companion/gear art, circular training gauges, compact top controls and More → real Equipment/Refine. Minimap stays at the top; truthful field EXP/min and Zeny/min stay at the bottom. One management window at a time, with running DigiPet activities still accessible. Shared field chat inherits the existing selected palette, and PR #201's DigiPet titles, one-line activity panel, uniform emotion tray and typed RO commands keep working inside it.
+* **Try it:** Enter the hub, open More → Refine, switch through the four DigiPet views, wear a title, shrink the running activity to one line, expand the top map, and compare the bottom monitor before/after starting field farming. Switch Moonstone/Aurora/Ember and return to the field to check chat.
+* **Checks:** Build succeeds; 206 of 217 configured checks pass on latest main, with all 11 remaining failures reproduced on the untouched latest-main snapshot. Real Chromium passes 24 desktop/tablet/phone panel checks, three field-chat palettes, native rendering, continued field farming, title wear/order, one-line activity expand and the 32-emote tray, with no page exceptions or failed local assets. Details and remaining failures: [Afterdark UI](AFTERDARK-UI.md). No test budget or combat fixture changes.
+* **Delivery:** Prepared for a GitHub PR using the API archive and Git data API; no clone or deployment.

@@ -93,6 +93,57 @@ sanctuaryPanel.innerHTML=`<header class="sanctuary-head"><div><small>FOUNTAIN PL
  <div id="sanctuaryBagView" hidden></div><div id="sanctuaryEvolutionView" hidden></div>
  <p id="sanctuaryMessage" class="sanctuary-message" role="status" aria-live="polite"></p></div>`;
 $id('view').append(sanctuaryPanel);
+// Afterdark: keep the existing game windows and actions available inside the hub.
+const moreButton=document.createElement('button');moreButton.id='socialMore';moreButton.type='button';moreButton.textContent='More ···';moreButton.setAttribute('aria-expanded','false');moreButton.setAttribute('aria-controls','socialMorePanel');
+hub.querySelector('#socialLeave').before(moreButton);
+// Reuse bundled artwork in the compact controls; the original labels stay intact.
+for(const [id,icon,label] of [['socialFishBtn','🎣','Fishing'],['sanctuaryOpen','🥚','DigiPet'],['socialPartyBtn','👥','Party']]){
+ const button=hub.querySelector('#'+id);button.innerHTML='<span class="ad-legacy-icon" aria-hidden="true">'+icon+' </span>'+(id==='socialFishBtn'?'<img class="ad-toolbar-art" src="assets/social/fish/bass.png" alt="">':id==='sanctuaryOpen'?'<span class="ad-toolbar-partner" aria-hidden="true"></span>':'')+label;
+}
+const morePanel=document.createElement('section');morePanel.id='socialMorePanel';morePanel.hidden=true;morePanel.setAttribute('aria-label','Hub and field tools');hub.append(morePanel);
+const fieldMonitor=document.createElement('section');fieldMonitor.id='socialFieldMonitor';fieldMonitor.setAttribute('aria-label','Background field activity');fieldMonitor.innerHTML='<span id="socialFieldState">Field not started</span><span><b id="socialFieldExp">—</b><small>EXP/min</small></span><span><b id="socialFieldZeny">—</b><small>Zeny/min</small></span>';hub.append(fieldMonitor);
+const activityStatus=document.createElement('button');activityStatus.id='socialActivityStatus';activityStatus.type='button';activityStatus.hidden=true;activityStatus.title='Open running DigiPet activities';hub.append(activityStatus);
+activityStatus.onclick=()=>{focusHubPanel('activity');openActivityPanel(worldTraining?'training':'pve');syncFieldMonitor()};
+const hubToolbar=hub.querySelector('#socialHubToolbar');
+function measureHubToolbar(){if(hub.hidden)return;const height=hubToolbar.getBoundingClientRect().bottom-hub.getBoundingClientRect().top;if(height>0)$id('view').style.setProperty('--socialhub-top',Math.ceil(height)+'px')}
+if(typeof ResizeObserver!=='undefined')new ResizeObserver(measureHubToolbar).observe(hubToolbar);
+addEventListener('resize',measureHubToolbar);
+function closeHubMore(){morePanel.hidden=true;moreButton.setAttribute('aria-expanded','false')}
+function focusHubPanel(kind){
+ if(hub.hidden)return;
+ if(kind!=='pet'&&!sanctuaryPanel.hidden){sanctuaryPanel.hidden=true;sanctuaryFrame++}
+ if(kind!=='party')$id('socialPartyPanel').hidden=true;
+ if(kind!=='map')$id('socialMapModal').hidden=true;
+ if(kind!=='more')closeHubMore();
+ if(kind!=='poker'&&!$id('socialPokerModal').hidden)minimizePokerModal();
+ if(kind!=='fishing'){for(const id of ['fishingPanel','fishingMenu']){const el=$id(id);if(el)el.hidden=true}}
+ if(kind!=='field'&&typeof tabs!=='undefined'&&tabs.length){tabs.length=0;expandedPanels.clear();renderWin()}
+}
+moreButton.onclick=()=>{
+ if(!morePanel.hidden){closeHubMore();return}focusHubPanel('more');
+ morePanel.innerHTML='<header><strong>More</strong><button type="button" data-hub-close aria-label="Close More">×</button></header><small>FIELD CHARACTER</small><div class="social-more-grid"><button type="button" data-hub-tab="equip">Equipment</button><button type="button" data-hub-tab="equip" data-hub-sub="refine">Refine</button></div><small>ALL DESTINATIONS</small><div class="social-more-grid">'+Object.entries(TABS).filter(([k])=>k!=='equip'&&(k!=='gm'||S?.gm)).map(([k,v])=>'<button type="button" data-hub-tab="'+escape(k)+'">'+escape(v[1])+'</button>').join('')+'</div>';
+ morePanel.hidden=false;moreButton.setAttribute('aria-expanded','true');morePanel.querySelector('button').focus();
+};
+morePanel.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-hub-close')){closeHubMore();moreButton.focus();return}const key=b.dataset.hubTab;if(!key||!TABS[key])return;focusHubPanel('field');if(!tabs.includes(key))openTab(key);if(b.dataset.hubSub){sub[key]=b.dataset.hubSub;renderWin()}};
+morePanel.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();closeHubMore();moreButton.focus()}};
+// Rates come from the field's existing rolling HUD sampler, never a second accumulator.
+function syncFieldMonitor(){
+ if(hub.hidden)return;
+ const ready=typeof S==='object'&&S&&typeof currentUser!=='undefined'&&currentUser;
+ const waiting=typeof hubFirstPending!=='undefined'&&hubFirstPending;
+ const paused=typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.paused||CLOUD.gate);
+ const trial=(typeof TRIAL!=='undefined'&&TRIAL.on)||(typeof JOB_RITE!=='undefined'&&JOB_RITE.on);
+ const live=!!ready&&!waiting&&!paused&&!trial;
+ const managing=['sanctuaryPanel','socialPartyPanel','socialMapModal','socialMorePanel','fishingPanel','socialPokerModal'].some(id=>{const el=$id(id);return el&&!el.hidden})||(typeof tabs!=='undefined'&&tabs.length>0);
+ hub.classList.toggle('has-management',!!managing);
+ const activities=[];
+ if(worldTraining)activities.push('P'+(worldTraining.slot+1)+' · '+sanctuaryName(worldTraining.stat)+' '+(worldTraining.phase==='active'?gymClock(PGDigimonSanctuary.DURATION-(worldTraining.elapsed||0)):'joining'));
+ if(myPve())activities.push('PvE grinding');if(myPvp())activities.push('Ring battle');
+ activityStatus.hidden=!managing||!activities.length;activityStatus.textContent=activities.join(' · ')+' ↗';
+ fieldMonitor.dataset.live=String(live);
+ $id('socialFieldState').textContent=!ready?'Signed out':paused?'Field paused':waiting?'Field not started':trial?'Field trial':typeof respawn!=='undefined'&&respawn>0?'Field · respawning':'Field farming';
+ for(const [target,source] of [['socialFieldExp','expmin'],['socialFieldZeny','zenymin']]){const el=$id(source);$id(target).textContent=live&&el?el.textContent:'—';$id(target).title=live&&el?(el.title||el.getAttribute('aria-label')||'Last 60 seconds'):''}
+}
 const leaveWarning=document.createElement('div');leaveWarning.id='socialPokerLeaveWarning';leaveWarning.hidden=true;
 leaveWarning.innerHTML='<section class="poker-leave-card" role="dialog" aria-modal="true" aria-labelledby="pokerLeaveTitle" aria-describedby="pokerLeaveCopy"><span class="poker-leave-eyebrow">YOU’RE STILL AT THE TABLE</span><h2 id="pokerLeaveTitle">Leave this poker game?</h2><p id="pokerLeaveCopy"></p><p class="poker-leave-note">You can minimize the table instead and keep playing.</p><div class="poker-leave-actions"><button id="pokerLeaveStay" type="button" class="poker-primary-btn">Stay at table</button><button id="pokerLeaveConfirm" type="button" class="poker-danger-btn">Fold &amp; leave</button></div></section>';
 $id('view').append(leaveWarning);
@@ -415,7 +466,7 @@ function pokerOpen(tabOrTable){
   if(my){pokerUI.tableId=my.tableId||0;pokerUI.tab='t'+pokerUI.tableId;}
   else if(pokerUI.tab!=='bank')pokerUI.tab='t'+pokerUI.tableId;
  }
- pokerUI.open=true;pokerUI.minimized=false;
+ focusHubPanel('poker');pokerUI.open=true;pokerUI.minimized=false;
  $id('socialPokerModal').hidden=false;
  $id('socialPokerMini').hidden=true;
  if(app.room)send({type:'poker_watch'});
@@ -1566,7 +1617,7 @@ function sanctuaryRender(){const G=globalThis.PGDigimonSanctuary,box=$id('sanctu
  // description line, so all four boxes measure identically; the fuller wording stays in
  // the hover tooltip.
  const statText={power:'+2.5 attack each',guard:'+7 HP, +1.2 defense each',agility:'+2.5% swing speed each',focus:'+1% crit chance each'};
- const statButtons=G.STATS.map(k=>`<span title="${{power:'+2.5 attack each',guard:'+7 HP and +1.2 defense each',agility:'+2.5% swing speed each — quicker, more reliable hits',focus:'+1% crit chance each'}[k]}">${sanctuaryName(k)} <b>${p.stats[k]}/12</b><small>${statText[k]}</small></span>`).join('');
+ const statButtons=G.STATS.map(k=>`<span title="${{power:'+2.5 attack each',guard:'+7 HP and +1.2 defense each',agility:'+2.5% swing speed each — quicker, more reliable hits',focus:'+1% crit chance each'}[k]}"><i class="sanctuary-gauge" style="--progress:${Math.min(100,Math.max(0,p.stats[k]/12*100))}%"><b>${p.stats[k]}<em>/12</em></b></i>${sanctuaryName(k)}<small>${statText[k]}</small></span>`).join('');
  const confirming=sanctuaryEvolveConfirm?.line===line&&req?.ready&&!busy;
  const evolutionCopy=req?`Evolve: reach ${req.points} training points and ${req.wins} battle wins, then roll one of ${req.options.length} possible branch${req.options.length===1?'':'es'} — the pool is shown below before you commit. You keep your level, training and wins. · ${G.total(p)}/${req.points} points · ${p.wins}/${req.wins} wins.`:p.stage>=G.MAX_EVOLUTIONS?'This partner has reached the casual evolution-count limit.':'No direct source-listed evolution is available from this form. Special, fusion and missing-profile paths are not invented.';
  const evolutionButtons=confirming?`<button type="button" data-sanctuary-action="evolve">Evolve now — roll the branch</button><button type="button" data-sanctuary-action="cancelEvolution">Cancel</button>`:req?`<button type="button" data-sanctuary-action="requestEvolution" ${!req.ready||busy?'disabled':''}>Evolve</button>`:'<button type="button" disabled>No direct evolution</button>';
@@ -1574,6 +1625,12 @@ function sanctuaryRender(){const G=globalThis.PGDigimonSanctuary,box=$id('sanctu
  <section class="sanctuary-section"><div class="sanctuary-section-head"><div><small>EQUIPMENT</small><h3>Gear build</h3></div><span class="sanctuary-level">${['weapon','armor','accessory','relic'].filter(k=>equippedMap[k]).length}/4 slots used</span></div><div class="sanctuary-gear-strip">${['weapon','armor','accessory','relic'].map(k=>{const item=equippedMap[k]&&bag.gear.items[equippedMap[k]];return `<span class="${item?'':'is-empty'}"><b>${k}</b>${item?escape(G.gearItemName(item))+' · '+escape(G.gearItemLabel(item).split(' · ').slice(1).join(' · ')):'— empty —'}</span>`}).join('')}</div><div class="sanctuary-actions"><button type="button" data-open-bag>Equip gear in the Pet Bag</button></div></section>
  <section class="sanctuary-section"><div class="sanctuary-section-head"><div><small>TRAINING GROUNDS</small><h3>Grow your strengths</h3></div><span class="sanctuary-level">${G.total(p)}/24 points</span></div><p>${p.training?'Training '+sanctuaryName(p.training.stat)+' · <span id="sanctuaryCountdown"></span>':'5 min per session · +1 point · caps 12 per stat, 24 total'}</p><div class="sanctuary-train">${statButtons}</div></section>
  <section class="sanctuary-section"><div class="sanctuary-section-head"><div><small>YOUR PATH</small><h3>Evolution or mastery</h3></div></div><p>${evolutionCopy}</p>${confirming&&req?.options?.length?`<p class="sanctuary-roll-pool">Possible: ${req.options.map(t=>escape(sanctuaryName(t))).join(' · ')}</p>`:''}<div class="sanctuary-actions">${evolutionButtons}<button type="button" data-open-digidex>Browse branches in DigiDex</button><button type="button" data-sanctuary-action="mastery" title="Stays this form; +1.5 attack per mastery point in the field formula" ${p.mastery>=6||G.total(p)<(p.mastery+1)*4?'disabled':''}>Keep form · improve mastery</button></div></section>${digiTitlesMarkup()}</div>`;
+ const sections=box.querySelector('.sanctuary-sections');
+ if(sections){
+  const portrait=document.createElement('section');portrait.className='sanctuary-specimen';portrait.innerHTML='<small>PARTNER / 0'+(activePartnerSlot()+1)+'</small><canvas id="sanctuaryHero" width="256" height="256" aria-label="'+escape(sanctuaryName(form))+'"></canvas><strong>'+escape(sanctuaryName(form))+'</strong><span>'+escape(G.entry(form)?.stage||'Stage not listed')+' · Level '+G.level(p)+'</span><button type="button" data-open-digidex>Change companion ↗</button>';
+  sections.before(portrait);
+  for(const [i,k] of ['weapon','armor','accessory','relic'].entries()){const slot=box.querySelectorAll('.sanctuary-gear-strip>span')[i],item=equippedMap[k]&&bag.gear.items[equippedMap[k]];if(item){const c=document.createElement('canvas');c.width=48;c.height=48;c.setAttribute('aria-hidden','true');sanctuaryGearIcon(c,k,item.tier);slot.prepend(c)}}
+ }
  sanctuaryCountdown();
 }
 // v373 (owner): DigiPet titles in the Partners view. Each row shows its rarity colour, how far along
@@ -1599,9 +1656,9 @@ function sanctuaryCommit(action){
  if(action.type==='evolve'&&result.ok){if(app.room)send({type:'look',look:currentLook()});else syncSoloPlayer()}
 }
 function sanctuaryClose(){sanctuaryPanel.hidden=true;sanctuaryFrame++;sanctuaryHatch=null;$id('sanctuaryOpen').focus()}
-function sanctuaryOpen(){ensureDigimonBag();discardLegacyActivities();sanctuarySync();sanctuaryRender();sanctuaryPanel.hidden=false;$id('sanctuaryClose').focus();const D=globalThis.PGSocialDigimon;if(!D)return;sanctuaryStore ||= D.sharedStore();const run=++sanctuaryFrame;
+function sanctuaryOpen(){focusHubPanel('pet');ensureDigimonBag();discardLegacyActivities();sanctuarySync();sanctuaryRender();sanctuaryPanel.hidden=false;$id('sanctuaryClose').focus();const D=globalThis.PGSocialDigimon;if(!D)return;sanctuaryStore ||= D.sharedStore();const run=++sanctuaryFrame;
  function paintOne(canvas,id,now,flip,actionAt,status){if(!canvas||!id)return;const asset=sanctuaryStore.ready(id);if(!asset){sanctuaryStore.request(id);return}let stance='idle',time=now;if(status==='faint'){stance='faint';time=(asset.record.actions.faint.length-1)*50}else if(actionAt&&now-actionAt<asset.record.actions.attack.length*50){stance='attack';time=now-actionAt}const frame=D.frameIndex(asset.record.actions[stance].length,time,stance,5),key=[id,stance,frame,flip].join(':');if(canvas.dataset.paint!==key){canvas.dataset.paint=key;D.draw(canvas.getContext('2d'),asset,stance,time,5,flip)}}
- function paint(now){if(run!==sanctuaryFrame||sanctuaryPanel.hidden)return;if(sanctuaryView==='partners'){const grid=$id('sanctuaryPartnerGrid');if(grid)for(const card of grid.querySelectorAll('[data-partner-slot]'))if(card.dataset.form)paintOne(card.querySelector('canvas'),card.dataset.form,now,false,0,'')}requestAnimationFrame(paint)}requestAnimationFrame(paint);
+ function paint(now){if(run!==sanctuaryFrame||sanctuaryPanel.hidden)return;if(sanctuaryView==='partners'){const grid=$id('sanctuaryPartnerGrid');if(grid)for(const card of grid.querySelectorAll('[data-partner-slot]'))if(card.dataset.form)paintOne(card.querySelector('canvas'),card.dataset.form,now,false,0,'');const line=partnerLine();paintOne($id('sanctuaryHero'),globalThis.PGDigimonSanctuary?.species(partnerData(),line)||line,now,false,0,'')}requestAnimationFrame(paint)}requestAnimationFrame(paint);
  function tick(){if(run!==sanctuaryFrame||sanctuaryPanel.hidden)return;const G=globalThis.PGDigimonSanctuary;if(G&&typeof S==='object'&&S){const slot=activePartnerSlot(),u=G.update(partnerData(slot),Date.now(),partnerLine(slot));if(u.changed&&u.state){setPartnerData(slot,u.state);if(typeof save==='function')save();sanctuarySync();sanctuaryRender()}else sanctuaryCountdown()}setTimeout(tick,1000)}setTimeout(tick,1000);
 }
 function openSanctuaryShop(){ensureDigimonBag();if(sanctuaryPanel.hidden)sanctuaryOpen();sanctuarySetView('evolution');$id('sanctuaryMessage').textContent='Evolution Guide: review branch requirements and roll your next form.'}
@@ -1738,6 +1795,7 @@ function renderPartyPanel(){
  if(declineBtn)declineBtn.onclick=()=>{send({type:'party_decline'});app.partyInvite=null;renderPartyPanel()};
 }
 function openPartyPanel(tab){
+ focusHubPanel('party');
  const panel=$id('socialPartyPanel');
  if(panel.hidden||app.partyTab!==tab){app.partyTab=tab||'pve'}
  if(panel.hidden){panel.hidden=false;partySendProfile();renderPartyPanel()}
@@ -1770,19 +1828,17 @@ function drawPlazaMap(canvas,detailed){
  const ww=MAP_WORLD.x1-MAP_WORLD.x0,wh=MAP_WORLD.z1-MAP_WORLD.z0,margin=detailed?30:6;
  const sc=Math.min((w-margin*2)/ww,(h-margin*2)/wh),ox=(w-ww*sc)/2-MAP_WORLD.x0*sc,oz=(h-wh*sc)/2-MAP_WORLD.z0*sc;
  const X=x=>x*sc+ox,Z=z=>z*sc+oz;
- // v358 (owner: "the mini-map is still ugly"): both maps are parchment field maps now -
- // warm cream ground, brown ink lines, soft blue water - the same family as the game's
- // illustrated world map, instead of the dark green tile look.
- const P={frame:'#6b5433',frameEdge:'#9a7c4e',ground:'#ead9ae',mottle:'#e2cd9c',road:'#c9b283',roadEdge:'#a08756',
-  water:'#9cc3d8',waterShore:'#cfe0dd',waterCore:'#7fb2cc',shimmer:'#ffffff',bridge:'#a5825a',
-  treeRim:'#4a5c33',pine:'#5d7a44',broad:'#6c8a4e',sakura:'#d9a3b8',palm:'#7a9450',treeShadow:'rgba(107,84,51,.35)',
-  roof:'#a5825a',roofBase:'#7d6244',roofEdge:'#4a3820',label:'#4a3820',labelHalo:'rgba(248,240,214,.9)'};
+ // Afterdark map plate; keep the same live markers and shared geometry.
+ const P={frame:'#151a22',frameEdge:'#55616b',ground:'#202a30',mottle:'#253238',road:'#526269',roadEdge:'#35434c',
+  water:'#477d8e',waterShore:'#365761',waterCore:'#315f72',shimmer:'#a6d0d2',bridge:'#aa8b6c',
+  treeRim:'#233b35',pine:'#50735d',broad:'#668875',sakura:'#b88da4',palm:'#7f9572',treeShadow:'rgba(0,0,0,.35)',
+  roof:'#af8b6c',roofBase:'#6b5c51',roofEdge:'#1c242c',label:'#dbe5e5',labelHalo:'rgba(16,23,30,.95)'};
  ctx.clearRect(0,0,w,h);
  // Framed plate with a bevel, like a field map on a table.
  if(ctx.roundRect){ctx.beginPath();ctx.roundRect(1,1,w-2,h-2,detailed?10:7)}else ctx.rect(1,1,w-2,h-2);
  ctx.fillStyle=P.ground;ctx.fill();ctx.lineWidth=detailed?3:2;ctx.strokeStyle=P.frame;ctx.stroke();
  ctx.lineWidth=1;ctx.strokeStyle=P.frameEdge;ctx.strokeRect(3.5,3.5,w-7,h-7);
- // Soft large patches keep the parchment from reading flat, without confetti noise.
+ // Soft large patches keep the ground from reading flat, without confetti noise.
  for(let i=0;i<(detailed?26:10);i++){
   const gx=((i*173+41)%Math.max(1,w+40))-20,gz=((i*89+17)%Math.max(1,h+40))-20;
   ctx.fillStyle=i%2?P.mottle:P.ground;
@@ -1791,7 +1847,7 @@ function drawPlazaMap(canvas,detailed){
  const rr=(x,y,rw,rh,r)=>{if(ctx.roundRect){ctx.beginPath();ctx.roundRect(x,y,rw,rh,r)}else ctx.rect(x,y,rw,rh)};
  // Roads: the avenue and the promenade as soft strokes with an edge.
  const road=(x1,z1,x2,z2,wd)=>{ctx.lineCap='round';ctx.lineWidth=wd+2;ctx.strokeStyle=P.roadEdge;ctx.beginPath();ctx.moveTo(X(x1),Z(z1));ctx.lineTo(X(x2),Z(z2));ctx.stroke();ctx.lineWidth=wd;ctx.strokeStyle=P.road;ctx.beginPath();ctx.moveTo(X(x1),Z(z1));ctx.lineTo(X(x2),Z(z2));ctx.stroke()};
- road(14,-74,14,126,detailed?7:4);road(-74,0,102,0,detailed?7:4);road(14,12,66,42,detailed?5:3);
+ road(0,R.MIN_Z,0,R.MAX_Z,detailed?7:4);road(-74,0,102,0,detailed?7:4);road(14,12,66,42,detailed?5:3);
  const props=(R.POND_PROPS||[])[0];
  if(props)for(const p of props.paths||[])road(p.x1,p.z,p.x2,p.z,detailed?4:2.5);
  // Grounds: tinted rounded plates under the DigiPet areas before their contents.
@@ -1836,6 +1892,9 @@ function drawPlazaMap(canvas,detailed){
   ctx.fillStyle=P.roof;ctx.fillRect(bx-1,bz-2,bw,bd*.72);
   ctx.strokeStyle=P.roofEdge;ctx.lineWidth=1;ctx.strokeRect(bx-1,bz-2,bw,bd);
  }
+ // Actual angled gym wings, shared with the scene and collision rules.
+ ctx.strokeStyle=P.roof;ctx.lineWidth=Math.max(2,3*sc);ctx.lineCap='square';
+ for(const wall of R.SANCTUARY_GYM_WALLS||[]){ctx.beginPath();ctx.moveTo(X(wall.x1),Z(wall.z1));ctx.lineTo(X(wall.x2),Z(wall.z2));ctx.stroke()}
  // Boxing ring: the platform, ropes and the west stair notch (the only way in, v357).
  const ring=R.SANCTUARY_RING;
  if(ring){
@@ -1886,10 +1945,10 @@ function drawPlazaMap(canvas,detailed){
 // The redraw rides the existing battleUITick interval (every 4th tick ~400 ms) instead of
 // registering another timer, so nothing new competes with the session loop.
 let mapTickFrame=0;
-function mapTick(){if(hub.hidden)return;if(!(typeof BGM!=='undefined'&&BGM.phoneShell&&BGM.phoneShell()))drawPlazaMap($id('socialMiniMapCanvas'),false);if(!$id('socialMapModal').hidden)drawPlazaMap($id('socialMapCanvas'),true)}
-$id('socialMiniMap').onclick=()=>{const m=$id('socialMapModal');m.hidden=!m.hidden;if(!m.hidden){drawPlazaMap($id('socialMapCanvas'),true)}};
+function mapTick(){if(hub.hidden)return;syncFieldMonitor();drawPlazaMap($id('socialMiniMapCanvas'),false);if(!$id('socialMapModal').hidden)drawPlazaMap($id('socialMapCanvas'),true)}
+$id('socialMiniMap').onclick=()=>{const m=$id('socialMapModal');if(m.hidden)focusHubPanel('map');m.hidden=!m.hidden;if(!m.hidden){drawPlazaMap($id('socialMapCanvas'),true)}};
 $id('socialMapClose').onclick=()=>{$id('socialMapModal').hidden=true};
-async function enter(){ensureDigimonBag();discardLegacyActivities();digimonSelect.value=partnerLine()||'';if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');
+async function enter(){ensureDigimonBag();discardLegacyActivities();digimonSelect.value=partnerLine()||'';if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');measureHubToolbar();syncFieldMonitor();closeHubMore();
  // v359 (owner: "I want the BGM permanent and the toggle removed"): the music player is
  // part of the hub chrome - it shows whenever the hub is open, with no toolbar toggle.
  {$id('socialBgmMount').hidden=typeof BGM!=='undefined'&&BGM.phoneShell?BGM.phoneShell():false;if(typeof BGM!=='undefined')BGM.renderUI()}syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),trainStation:startWorldTraining,sanctuaryShop:openSanctuaryShop,sanctuaryIndex:openSanctuaryIndex,trainingNearby:worldNearbyFrame,sitting});if(app.wanted){app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
@@ -2161,5 +2220,5 @@ function friendPresenceChanged(){
 // plaza's per-viewer `friend` flag follow immediately instead of at the next reconnect.
 function syncFriends(ids){const next=new Set((Array.isArray(ids)?ids:[]).filter(Number.isInteger));const changed=next.size!==app.friends.size||[...next].some(id=>!app.friends.has(id));app.friends=next;if(changed){renderMessages(true);if(app.connected&&app.socket&&app.socket.readyState===1)send({type:'friends',ids:[...next]})}}
 function whisper(name){const clean=String(name||'').trim();if(!clean)return;$id('socialTo').value=clean;select('whisper');$id('socialInput').focus()}
-window.PGSocial={enter,leave,app,select,syncDisplay,pokerOpen,minimizePokerModal,syncPokerBounds,pokerSeatAction,claimDailyPokerChips,buyPokerChipsWithZeny,syncFriends,whisper,drawPlazaMap,refreshDigimon:()=>{if(!sanctuaryPanel.hidden){sanctuarySync();sanctuaryRender()}}};select('world');connect();
+window.PGSocial={enter,leave,app,select,syncDisplay,pokerOpen,minimizePokerModal,syncPokerBounds,pokerSeatAction,claimDailyPokerChips,buyPokerChipsWithZeny,syncFriends,whisper,drawPlazaMap,focusHubPanel,refreshDigimon:()=>{if(!sanctuaryPanel.hidden){sanctuarySync();sanctuaryRender()}}};select('world');connect();
 })();

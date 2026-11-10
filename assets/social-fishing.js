@@ -1814,6 +1814,7 @@ function stopFishing(message){
 function toggleBag(force){
  ensureDom();if(!els)return;
  const show=typeof force==='boolean'?force:els.panel.hidden;
+ if(show)globalThis.PGSocial?.focusHubPanel?.('fishing');
  els.panel.hidden=!show;
  if(show){applyPos(els.panel,'panel');syncSettings();renderPanel()}
 }
