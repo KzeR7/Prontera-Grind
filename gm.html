@@ -252,7 +252,13 @@ async function loadFishingTools(){
     species.innerHTML='<option value="">Random MVP</option>'+data.mvp.map(x=>`<option value="${esc(x.id)}">${esc(x.label)}</option>`).join('');
     room.disabled=species.disabled=button.disabled=false;
     status.textContent='Ready · manual MVPs last 10 minutes. An already-active room will refuse a second spawn.';
-  }catch(e){status.textContent='Fishing controls unavailable: '+e.message;room.disabled=species.disabled=button.disabled=true;}
+  }catch(e){
+    const notGm=/not a gm/i.test(String(e.message));
+    status.textContent=notGm
+      ?'This account is not an owner (GM). On a local preview run "PORT=8788 tools/preview.sh --gm-all" and register or re-login there — every preview account is an owner, and existing ones are upgraded at boot.'
+      :'Fishing controls unavailable: '+e.message;
+    room.disabled=species.disabled=button.disabled=true;}
+
 }
 $('spawnmvp').onclick=async()=>{
   const button=$('spawnmvp'),room=Number($('mvproom').value),species=$('mvpspecies').value||null;

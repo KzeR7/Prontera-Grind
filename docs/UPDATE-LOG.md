@@ -10527,3 +10527,25 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   regenerated with `--reuse-baseline` for the BUILD bump, so `skill_balance_sim` and
   `card_star_balance_sim` pass for the first time since v377. Full gate in the PR description.
 * **Delivery:** Pages client + tools + fixtures only; the Social Worker is unchanged.
+
+### 2026-11-10 — `haven-v381 DigiPet titles tab, merged training panel, Prontera naming`
+
+* **Owner eight-point pass.** DigiDex: every portrait now draws exactly one 64px sheet cell
+  (the 96px boxes were showing a 2×2 collage of neighbours — background-size/position now
+  scaled per box: 96px dex portrait, 30px tree node, 26px pill face), and the grid gets
+  equal-height cards with compact route chips. **Titles** get their own DigiPet tab (removed
+  from Partners). **World chat** is semi-transparent with a backdrop blur. **Prontera**
+  naming: hub header, room dropdown ("Prontera 1 (n/20)"), poker title/subtitle, map modal
+  and map label. **Poker button** joins the painted-art set with an SVG card fan (the 🃏
+  emoji was the odd one out; the YOUR TURN blink reads text-only now).
+* **Training surfaces merged:** the old floating "DigiPet · Training" panel and the new
+  top-right pill are one surface — the pill expands into the activity panel (anchored under
+  the pill, Afterdark-skinned, still draggable), and Minimize/Close collapse back to the
+  pill. A new **Party** tab (the landing tab) lists all four partners with their live state
+  (POWER TRAINING / GRINDING · STAGE N / RING MATCH / RESTING) and jumps to that partner's
+  controls. Wording aligned to the mock: "Power training · 4:43 left · 0 done".
+* **GM console on previews:** `--gm-all` now upgrades **existing** preview accounts at boot
+  (they used to stay players forever), and the console's Fishing card explains the non-GM
+  case instead of a bare 403. Spawn chain re-verified end-to-end.
+* **Checks:** build passes; DigiPet/fishing/social suites + full gate results in the PR
+  description. Delivery: Pages client + preview tooling only; Social Worker unchanged.

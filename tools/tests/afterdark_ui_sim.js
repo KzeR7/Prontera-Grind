@@ -17,7 +17,11 @@ try{
  assert(d.querySelector('#wins [data-win=equip]'),'real equipment window rendered');
  click('sanctuaryOpen');assert.equal(d.getElementById('sanctuaryPanel').hidden,false);assert.equal(ev('tabs.length'),0,'DigiPet replaces field management');
  assert.equal(d.querySelectorAll('[data-partner-slot]').length,4);assert(d.getElementById('sanctuaryHero'));assert.equal(d.querySelectorAll('.sanctuary-gauge').length,4);
- for(const view of ['index','bag','evolution','partners']){d.querySelector('[data-sanctuary-view='+view+']').click();assert.equal(d.getElementById('sanctuary'+({index:'Index',bag:'Bag',evolution:'Evolution',partners:'Partners'}[view])+'View').hidden,false)}
+ for(const view of ['index','bag','evolution','mastery','titles','partners']){d.querySelector('[data-sanctuary-view='+view+']').click();assert.equal(d.getElementById('sanctuary'+({index:'Index',bag:'Bag',evolution:'Evolution',mastery:'Mastery',titles:'Titles',partners:'Partners'}[view])+'View').hidden,false)}
+ assert(d.querySelector('#sanctuaryTitlesView .digi-title'),'the Titles tab renders the title rows');
+ assert(!d.getElementById('sanctuaryGameplay').querySelector('.digi-title'),'titles no longer render inside the Partners view');
+ {const css=fs.readFileSync('assets/social.css','utf8');assert(css.includes('background-size:1920px 1344px'),'the 96px dex portrait shows exactly one 64px sheet cell');assert(css.includes('background-size:600px 420px'),'tree-node faces use single-cell math too');}
+ {d.querySelector('[data-sanctuary-view=partners]').click();const panel=d.getElementById('sanctuaryActivityPanel');assert(panel.querySelector('[data-sap-tab=party]'),'the merged training panel has a Party overview tab');}
  click('socialPartyBtn');assert(d.getElementById('sanctuaryPanel').hidden);assert(!d.getElementById('socialPartyPanel').hidden);
  click('socialMiniMap');assert(d.getElementById('socialPartyPanel').hidden);assert(!d.getElementById('socialMapModal').hidden);
  click('socialMore');assert(d.getElementById('socialMapModal').hidden);

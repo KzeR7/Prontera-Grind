@@ -193,8 +193,8 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  {
   const panel=w.document.getElementById('sanctuaryActivityPanel');
   const tabs=[...panel.querySelectorAll('[data-sap-tab]')];
-  assert.equal(tabs.map(t=>t.dataset.sapTab).join(','),'training,pve,logs','the panel offers Training, PvE grind and Logs');
-  assert.equal(tabs.length,3);
+  assert.equal(tabs.map(t=>t.dataset.sapTab).join(','),'party,training,pve,logs','the panel offers Party, Training, PvE grind and Logs');
+  assert.equal(tabs.length,4);
   Object.assign(trainer,{x:56,z:30,path:[],sit:false});sceneCallbacks.trainingNearby(trainer);
   assert.equal(w.document.getElementById('sapTitle').textContent,'DigiPet · Training','standing in the gym fronts the Training tab');
   panel.querySelector('[data-sap-tab="logs"]').click();
@@ -280,7 +280,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert(ops.some(o=>String(o).startsWith('text:WEST LAKE')),'the big map labels the fishing lake');
   assert(ops.some(o=>String(o).startsWith('text:DIGIPET FARM')),'the big map labels the DigiPet farm');
   assert(ops.some(o=>String(o).startsWith('text:PVP RING')),'the big map labels the PvP ring');
-  assert(ops.some(o=>String(o).startsWith('text:PLAZA POKER')),'the big map labels the poker tables');
+  assert(ops.some(o=>String(o).startsWith('text:PRONTERA POKER')),'the big map labels the poker tables');
   assert(ops.includes('text:You'),'the self marker is labelled on the big map');
   assert(fill>8,'the map paints its geometry');
  }
@@ -520,7 +520,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert.ok(hubBtn.classList.contains('is-live')&&hubBtn.classList.contains('has-friends'),'a busy plaza with a friend inside gets the gold pulse');
   assert.match(hubBtn.getAttribute('aria-label'),/12 adventurers inside/);
   assert.match(hubBtn.getAttribute('aria-label'),/2 friends inside/);
-  assert.match(hubBtn.title,/Plaza 1: 8 · Plaza 2: 4/,'the tooltip breaks the total down per plaza');
+  assert.match(hubBtn.title,/Prontera 1: 8 · Prontera 2: 4/,'the tooltip breaks the total down per plaza');
   socket.onmessage({data:JSON.stringify({type:'rooms',rooms:[{id:1,count:0}],plaza:{total:0,friends:0}})});
   assert.equal(hubBadge.textContent,'0');assert.ok(hubBtn.classList.contains('is-empty')&&!hubBtn.classList.contains('is-live'),'an empty plaza shows a still 0, no blink');
   hubBtn.click();

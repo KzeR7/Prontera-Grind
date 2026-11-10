@@ -983,7 +983,6 @@ button.sanctuary-node:hover{border-color:rgba(var(--ad-rgb),.55);background:rgba
 .sanctuary-mastery .sanctuary-req-bar{margin-top:2px}
 
 /* --- the one training indicator: top-right pill + expandable card (mock 6) --- */
-#socialHub.has-management :is(#sanctuaryWorldPill,#sanctuaryTrainingCard){display:none}
 #sanctuaryWorldPill{position:absolute;z-index:40;top:calc(var(--socialhub-top,64px) + 12px);right:12px;left:auto;transform:none;display:flex;align-items:center;gap:9px;min-width:0;max-width:min(300px,calc(100% - 24px));padding:7px 11px 7px 8px;border:1px solid rgba(var(--ad-rgb),.45);border-radius:12px;background:var(--ad-shell);box-shadow:var(--ad-bevel);color:var(--ad-ink);cursor:pointer;text-align:left}
 #sanctuaryWorldPill[hidden]{display:none}
 #sanctuaryWorldPill .pill-face{display:block;flex:0 0 26px;width:26px;height:26px;border-radius:50%;background-color:#0d1218;background-image:url('digimon/digidex-portraits.webp');background-size:1280px 896px;background-position:var(--portrait-x) var(--portrait-y);image-rendering:pixelated;box-shadow:inset 0 0 6px #00000099,0 0 0 1px #ffffff14}
@@ -992,19 +991,6 @@ button.sanctuary-node:hover{border-color:rgba(var(--ad-rgb),.55);background:rgba
 #sanctuaryWorldPill .pill-text small{color:#aab4bd;font-size:9px;white-space:nowrap}
 #sanctuaryWorldPill .pill-ring{flex:0 0 20px;width:20px;height:20px;border-radius:50%;background:conic-gradient(var(--ad-accent) calc(var(--progress,0%)*.78),#101720 0 78%,transparent 78%);position:relative}
 #sanctuaryWorldPill .pill-ring::after{content:'';position:absolute;inset:3px;border-radius:50%;background:#141a20}
-#sanctuaryTrainingCard{position:absolute;z-index:41;top:calc(var(--socialhub-top,64px) + 12px);right:12px;width:min(280px,calc(100% - 24px));padding:12px 14px;background:var(--ad-shell);border:1px solid rgba(var(--ad-rgb),.45);border-radius:12px;box-shadow:var(--ad-bevel);color:var(--ad-ink)}
-#sanctuaryTrainingCard[hidden]{display:none}
-#sanctuaryTrainingCard header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-#sanctuaryTrainingCard header small{color:var(--ad-accent);font:600 8.5px "Trebuchet MS",sans-serif;letter-spacing:.16em}
-#sanctuaryTrainingCard header button{border:none;background:none;color:#8d97a1;font-size:13px;cursor:pointer;padding:0 3px}
-#sanctuaryTrainingCard h3{margin:0 0 3px;font-size:17px;letter-spacing:.01em}
-#sanctuaryTrainingCard p{margin:0 0 10px;color:#aab4bd;font-size:10px;line-height:1.5}
-#sanctuaryTrainingCard .card-bar{height:6px;border-radius:999px;background:#ffffff10;overflow:hidden}
-#sanctuaryTrainingCard .card-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,rgba(var(--ad-rgb),.7),var(--ad-accent))}
-#sanctuaryTrainingCard .card-times{display:flex;justify-content:space-between;margin:5px 0 11px;color:#8d97a1;font-size:9px}
-#sanctuaryTrainingCard .card-actions{display:flex;gap:8px}
-#sanctuaryTrainingCard .card-actions button{flex:1}
-@media(max-width:600px){#sanctuaryWorldPill,#sanctuaryTrainingCard{top:calc(var(--socialhub-top,92px) + 10px)}#sanctuaryWorldPill .pill-text small{max-width:130px;overflow:hidden;text-overflow:ellipsis}}
 
 /* --- v380: live Fishing MVP spawn banner (the element was missing from the DOM before) --- */
 #fishingMvpBanner{position:absolute;z-index:45;top:calc(var(--socialhub-top,64px) + 12px);left:50%;transform:translateX(-50%);max-width:min(420px,calc(100% - 200px));padding:8px 16px;border:1px solid #ff244788;border-radius:999px;background:linear-gradient(180deg,#3a1220,#22101e);box-shadow:0 4px 16px #0008,0 0 18px #ff244733;color:#ffe9ad;font:bold 12px "Trebuchet MS",sans-serif;text-align:center;pointer-events:none;animation:mvpPulse 1.6s ease-in-out infinite}
@@ -1012,3 +998,61 @@ button.sanctuary-node:hover{border-color:rgba(var(--ad-rgb),.55);background:rgba
 #fishingMvpBanner b{color:#fff4dc}
 @keyframes mvpPulse{0%,100%{box-shadow:0 4px 16px #0008,0 0 10px #ff24472e}50%{box-shadow:0 4px 16px #0008,0 0 24px #ff244761}}
 @media(max-width:600px){#fishingMvpBanner{max-width:calc(100% - 24px);top:calc(var(--socialhub-top,92px) + 10px);font-size:10.5px}}
+
+/* ================= v381 (owner pass): portrait math, Titles tab, Prontera naming,
+   merged training panel, translucent chat, remaining old-palette sweep ================= */
+
+/* --- 1. one sprite per portrait: the box shows exactly one 64px sheet cell, scaled --- */
+.digidex-portrait{background-size:1920px 1344px;background-position:calc(var(--portrait-x)*1.5) calc(var(--portrait-y)*1.5)}
+.sanctuary-node .sanctuary-node-face{background-size:600px 420px;background-position:calc(var(--portrait-x)*.46875) calc(var(--portrait-y)*.46875)}
+#sanctuaryWorldPill .pill-face{background-size:520px 364px;background-position:calc(var(--portrait-x)*.40625) calc(var(--portrait-y)*.40625)}
+/* grid tidy: equal-height cards, compact route chips, aligned paths block */
+.sanctuary-index-list{align-items:stretch}
+.sanctuary-index-entry{height:100%}
+.sanctuary-index-entry>.digidex-paths{gap:4px;margin-top:auto;padding-top:8px}
+.sanctuary-index-entry>.digidex-paths [data-digidex-form]{padding:2px 7px;font-size:8.5px}
+
+/* --- 3. semi-transparent world chat --- */
+#socialChat{background:rgba(15,19,26,.72);border-color:#59616a99;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#socialChat.minimized{background:rgba(15,19,26,.66)}
+
+/* --- 4. old-palette holdouts -> Afterdark --- */
+#sanctuaryActivityPanel{border-color:#59616a80;background:var(--ad-shell);box-shadow:var(--ad-bevel);color:var(--ad-ink);transform:none}
+.sap-head{border-bottom:1px solid #ffffff14}
+.sap-tabs{border-bottom:1px solid #ffffff12;gap:2px;padding:0 8px}
+.sap-tabs [data-sap-tab]{border:none;background:none;box-shadow:none;padding:9px 10px 7px;border-radius:0;color:#aab4bd;font:600 10.5px "Trebuchet MS",sans-serif}
+.sap-tabs [data-sap-tab]:hover{color:#e8edf2}
+.sap-tabs [data-sap-tab].is-selected{color:#fff;box-shadow:inset 0 -2px 0 var(--ad-accent)}
+.sap-body .sap-status{border:1px solid rgba(var(--ad-rgb),.3);background:rgba(var(--ad-rgb),.08);border-radius:8px}
+.sap-body .sap-status b{color:#fff}
+.sap-body .sap-status #sapCountdown{color:var(--ad-accent)}
+.sap-body .sap-stat.is-active{border-color:rgba(var(--ad-rgb),.5)}
+.sap-foot{border-top:1px solid #ffffff12}
+.sanctuary-head small,.sanctuary-kicker{color:#8d97a1}
+.sanctuary-head h2{color:#fff;font-family:"Trebuchet MS",sans-serif;letter-spacing:.04em}
+.sanctuary-head p,.sanctuary-intro p{color:#aab4bd}
+.sanctuary-head button{border-color:#59616a66;background:#ffffff08;color:var(--ad-ink)}
+#fishingDock,#fishingMenu{background:var(--ad-shell);border:1px solid #59616a80;box-shadow:var(--ad-bevel);color:var(--ad-ink)}
+#fishingMenu button{background:none;border:none;color:var(--ad-ink)}
+#fishingMenu button:hover{background:#ffffff0a}
+
+/* --- 7. merged training panel: anchored under the pill, Party overview rows --- */
+#sanctuaryActivityPanel:not(.is-moved){left:auto;right:12px;top:calc(var(--socialhub-top,64px) + 68px)}
+#sanctuaryWorldPill[aria-expanded="true"]{border-color:var(--ad-accent)}
+.sap-party{display:flex;flex-direction:column;gap:6px}
+.sap-party-row{display:grid;grid-template-columns:1fr auto;grid-template-areas:'b state' 's state';gap:1px 10px;align-items:center;padding:8px 10px;border:1px solid #ffffff12;border-radius:8px;background:#ffffff06;color:var(--ad-ink);text-align:left;font-family:inherit}
+.sap-party-row b{grid-area:b;font-size:11.5px}
+.sap-party-row small{grid-area:s;color:#8d97a1;font-size:9px}
+.sap-party-row .sap-state{grid-area:state;padding:3px 8px;border:1px solid #ffffff1c;border-radius:999px;background:#ffffff08;color:#aab4bd;font:bold 8.5px "Trebuchet MS",sans-serif;letter-spacing:.08em;white-space:nowrap}
+.sap-party-row.is-training .sap-state{border-color:rgba(var(--ad-rgb),.55);color:var(--ad-accent)}
+.sap-party-row.is-grinding .sap-state,.sap-party-row.is-pvp .sap-state{border-color:#ffd46b55;color:#ffd46b}
+.sap-party-row.is-active{border-color:rgba(var(--ad-rgb),.45);box-shadow:inset 0 0 0 1px rgba(var(--ad-rgb),.25)}
+.sap-party-row:disabled{opacity:.55}
+button.sap-party-row{cursor:pointer}
+button.sap-party-row:hover:not(:disabled){border-color:rgba(var(--ad-rgb),.5);background:rgba(var(--ad-rgb),.08)}
+
+/* --- 6. the poker SVG joins the painted-art set --- */
+svg.ad-toolbar-art{width:22px;height:22px;vertical-align:middle;margin-right:5px;filter:drop-shadow(0 1px 1px #0007)}
+
+/* --- titles view --- */
+#sanctuaryTitlesView .sanctuary-section{margin-top:14px}

@@ -208,6 +208,12 @@ function serveStatic(url, dir) {
 export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = false, previewAuth = gmAll, fakePayments = false } = {}) {
   const bridge = !!(previewAuth || gmAll);
   const sqlite = freshDb(dbFile);
+  // v381: on a --gm-all preview, accounts registered before the flag existed would stay plain
+  // players forever (the db persists across restarts) - upgrade everyone at boot so the owner can
+  // always reach the GM console with any local account. Preview-only: gmAll defaults off.
+  if (gmAll && dbFile) {
+    try { sqlite.prepare('UPDATE users SET gm=2 WHERE gm<2').run(); } catch {}
+  }
   const app = createApp({ sqlite, site, gmAll, fakePayments });
   const server = createServer(async (req, res) => {
     try {
