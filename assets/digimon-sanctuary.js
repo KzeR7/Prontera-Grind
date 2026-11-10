@@ -284,5 +284,41 @@ function applyBattleReward(raw,bagRaw,line,reward,gearDrop=null){
  }
  return {ok:true,state,bag,changed:true,amount:coinGain,bonus:bonusGain,eggs:eggGain,gear:gearItem,message:'+'+baseGain+' Pet Coins'+(bonusGain?' · +'+bonusGain+' bonus petgold':'')+' · +'+xp+' XP'+(wins?' · +1 win':'')+eggMessage+(gearItem?' · ⚙ '+gearItemLabel(gearItem):'')};
 }
-return {LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,MAX_SLOT,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,BAG_VERSION,GEAR_ITEM_CAP,GEAR_KINDS,GEAR_MAIN_STATS,GEAR_SPECIAL_STATS,GEAR_STAT_NAME,GEAR_STAT_CAP,FORGE_TIER_COST,REFINE_MAX,REFINE_BONUS,REFINE_COST,REFINE_SUCCESS,level,normalize,update,act,species,total,requirements,evolutionOptions,evolutionCatalog,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagReward,cleanGearItem,gearItemName,gearItemLabel,gearRefineTag,gearStatValue,gearAdd,gearEquip,gearUnequip,gearBonuses,bagForge,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
+// v373 DigiPet titles. Worn above the head in the plaza, on the line under the fishing title.
+// Every requirement is read from the saved DigiPet state (owned species, every partner's wins,
+// stage, mastery and training points), so no counter is stored twice and an old save earns what
+// it already did. The tier colour is also the colour the worn title is drawn in.
+const DIGI_TITLE_COLOR={common:'#b9c6c4',uncommon:'#7fd98a',rare:'#58a6ff',legendary:'#ffb84d',mythical:'#c792ea',secret:'#ff7ab8'};
+const DIGI_TITLES=[
+ {id:'stable-hand',name:'Stable Hand',tier:'common',req:'own 2 DigiPets',cur:c=>c.owned,goal:2},
+ {id:'field-regular',name:'Field Regular',tier:'common',req:'win 5 field battles',cur:c=>c.wins,goal:5},
+ {id:'gym-regular',name:'Gym Regular',tier:'common',req:'hold 12 training points across your DigiPets',cur:c=>c.points,goal:12},
+ {id:'evolved',name:'Evolved',tier:'uncommon',req:'evolve a DigiPet once',cur:c=>c.stage,goal:1},
+ {id:'battle-tested',name:'Battle-Tested',tier:'uncommon',req:'win 25 battles',cur:c=>c.wins,goal:25},
+ {id:'stable-keeper',name:'Stable Keeper',tier:'uncommon',req:'own 6 DigiPets',cur:c=>c.owned,goal:6},
+ {id:'mastery-keeper',name:'Mastery Keeper',tier:'rare',req:'reach mastery 6 on a DigiPet',cur:c=>c.mastery,goal:6},
+ {id:'fully-trained',name:'Fully Trained',tier:'rare',req:'put 24 training points into one DigiPet',cur:c=>c.maxPoints,goal:24},
+ {id:'grinder',name:'Grinder',tier:'legendary',req:'win 150 battles',cur:c=>c.wins,goal:150},
+ {id:'stable-master',name:'Stable Master',tier:'legendary',req:'own 12 DigiPets',cur:c=>c.owned,goal:12},
+ {id:'mega-tamer',name:'Mega Tamer',tier:'mythical',req:'evolve a DigiPet to its final form',cur:c=>c.stage,goal:Math.max(...Object.values(LINES).map(a=>a.length))-1},
+ {id:'sanctuary-legend',name:'Sanctuary Legend',tier:'secret',req:'win 1,000 battles',cur:c=>c.wins,goal:1000},
+];
+const DIGI_TITLE_BY_ID=Object.fromEntries(DIGI_TITLES.map(t=>[t.id,t]));
+// partners: the normalized partner records (one per owned slot); owned: the Pet Bag's owned count.
+function digiTitleStats(partners,owned){
+ const list=(Array.isArray(partners)?partners:[]).filter(Boolean);
+ return {
+  owned:cap(owned,0,ROSTER.length),
+  wins:list.reduce((n,p)=>n+cap(p.wins,0,999999),0),
+  stage:list.reduce((n,p)=>Math.max(n,cap(p.stage,0,MAX_EVOLUTIONS)),0),
+  mastery:list.reduce((n,p)=>Math.max(n,cap(p.mastery,0,6)),0),
+  points:list.reduce((n,p)=>n+total(p),0),
+  maxPoints:list.reduce((n,p)=>Math.max(n,total(p)),0),
+ };
+}
+function digiTitleUnlocked(t,stats){return !!(t&&t.cur(stats)>=t.goal)}
+// Only an earned title can be worn; anything else (locked, unknown or from a newer build) reads as none.
+function equippedDigiTitle(id,stats){const t=DIGI_TITLE_BY_ID[id];return t&&digiTitleUnlocked(t,stats)?t:null}
+function digiTitleColor(t){return t?DIGI_TITLE_COLOR[t.tier]||DIGI_TITLE_COLOR.common:''}
+return {DIGI_TITLES,DIGI_TITLE_BY_ID,DIGI_TITLE_COLOR,digiTitleStats,digiTitleUnlocked,equippedDigiTitle,digiTitleColor,LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,MAX_SLOT,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,BAG_VERSION,GEAR_ITEM_CAP,GEAR_KINDS,GEAR_MAIN_STATS,GEAR_SPECIAL_STATS,GEAR_STAT_NAME,GEAR_STAT_CAP,FORGE_TIER_COST,REFINE_MAX,REFINE_BONUS,REFINE_COST,REFINE_SUCCESS,level,normalize,update,act,species,total,requirements,evolutionOptions,evolutionCatalog,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagReward,cleanGearItem,gearItemName,gearItemLabel,gearRefineTag,gearStatValue,gearAdd,gearEquip,gearUnequip,gearBonuses,bagForge,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
 });

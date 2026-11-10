@@ -10388,6 +10388,55 @@ Same-day follow-up for the five pre-existing local-gate failures, and one owner-
 * **Fresh-clone note for future runs:** the gate now passes here only because the three pinned SHAs above were fetched into this clone's object store (`git fetch --filter=blob:none origin <sha>`). A pristine shallow clone must fetch them (or fully clone) for the four suites above to pass.
 * **Net gate state:** 190/191 `*_sim.js` pass (only `publish_sim` fails, classic-tree ceiling), 12/12 `*.mjs` pass (modulo the `social_worker_sim` flake), 6/6 `*_smoke.js` pass.
 
+### 2026-11-10 — `haven-v373` plaza titles, calmer PvE hits, one-line DigiPet panel
+
+Owner requests batch (emotes deferred, see below).
+
+* **DigiPet titles (new).** Twelve titles across five rarity tiers (common, uncommon, rare, legendary, mythical, secret). Each one is earned from the saved DigiPet state (owned count, party wins, evolution stage, mastery, training points), so no counter is stored twice. Wear one from the new **Titles** section in the DigiPet Partners view. The worn title is drawn on the plaza label on the line under the fishing title, in its rarity colour (`DIGI_TITLE_COLOR` in `assets/digimon-sanctuary.js`). The equipped id is saved as `S.digimonTitle`, and a locked or unknown id reads as no title.
+* **Fishing title colour.** A worn fishing title is drawn in its tier tone (`titleColor` in `assets/social-fishing.js`, mirroring `TITLE_TONE` in `index.html`), replacing the fixed `#9fe3ff`.
+* **PvE grind feel (`assets/social-scene.js`).** Melee units stand 3.0 units off their target (was 2.2, which put sprites on top of each other) and lunge 0.28 instead of 0.5. Attacks keep their swing for 520 ms (was 360). Impact bursts last 600–760 ms, the shockwave now fires on every hit, damage numbers last ~1.05–1.3 s, and ranged shots 460 ms. Server rules in `assets/digimon-battle.js` are unchanged.
+* **DigiPet panel.** The top-left training bar loses its minimize button; Stop stays. The right-side `#sanctuaryActivityPanel` gets a `−` button that shrinks it to one line showing the running gym or PvE session, with Stop (gym) and Open. An activity now follows the selected DigiPet, so switching DigiPet updates the panel. Only a session that is already running keeps its own partner, so a gym run and a field grind can still use different partners.
+* **Tests.** New `tools/tests/digipet_title_sim.js` covers the title rules and colours. `social_ui_sim.js` now clicks the Stop button where it used to click minimize.
+* **Emotes: not changed in this build.** The emote art is native Ragnarok sprite art, extracted from `emotion.act`/`emotion.spr` via the pinned pipeline in `tools/social/README.md`. The sandbox cannot reach that source, and the repo rules say not to redraw native art, so the blurry emotes and the RO-name list (`/gg`, `/e1`) need that source.
+* **Gate state after this build:** `social_fishing_sim`, `social_sim` and `update_watch_sim` are fixed (they were failing at baseline). `social_ui_sim` still fails at a stale expectation further down (`Walk near`, which no source emits). `digimon_sanctuary_ui_sim` and `digimon_index_sim` fail as before.
+
+### 2026-11-10 (follow-up) — test gate repaired for `haven-v373`; panel-follow asserted
+
+Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unchanged.
+
+* **`digimon_index_sim` — FIXED.** The pinned reachable-forms count was 232. HEAD before v373 already gives 233 (no evolution data changed), so the pin now reads 233.
+* **`digimon_sanctuary_ui_sim` — FIXED.** The test still expected the retired Cook Lina shop view. Eggs are bought from the Pet Bag view now, and the egg button is disabled when the player can't afford it (500 coins, the player has 50). The test asserts that state instead of a message the UI no longer shows.
+* **`social_ui_sim` — FIXED.** The stale `Walk near` expectation is replaced with the real gym-start status (`auto-training`). The trainer is moved back into the gym first. The grind-then-gym step selects partner 1 in the gym tab, because the panel now follows the DigiPet you pick.
+* **Panel follows the selected DigiPet — now asserted.** `social_ui_sim` checks that the gym tab's selected partner moves with the followed DigiPet, in both directions.
+
+### 2026-11-10 (emotes) — `haven-v374` emote tray: uniform sizes, RO names for the checked emotes
+
+* **Uniform emote sizes.** Each emote is measured by its painted area (`tools/social/emote-layout.py`, output in `EMOTE_LAYOUT` in `assets/social-rules.js`) and drawn into the same 40 px tray slot (36 px in chat). Art is drawn pixelated, so small emotes are not smoothed. The art files are unchanged.
+* **RO command names for the checked emotes.** `EMOTE_NAMES`: `surprise`=`/!`, `gg`=`/gg`, `ok`=`/thx`, `sorry`=`/sry`, `cry`=`/sob`, `cloud`=`/ag`, `idea`=`/ic`, `laugh`=`/heh`, `mail`=`/mail`. Ids are stable (saved backlog refers to them). Typed commands resolve through `EMOTE_BY_CMD`; an id with an RO name is no longer typeable as its id, so `/ok` no longer sends the Thanks art.
+* **Not done:** the other 23 emotes keep their id labels until checked. Their art does not reliably match the RO descriptions, and the client table in `scriptord3/Ragnarok-Client-Scripts` disagrees with the repo's action numbers for several of them.
+* **Not done:** adding new emotes. The art for the other RO emotes lives in the native `emotion.spr`, which is not in the repo; see the emote notes above.
+* Test: `tools/tests/emote_tray_sim.js`.
+
+### 2026-11-10 (emotes, part 2) — `haven-v375`: every emote named; `/gg` sends
+
+* **All 32 emotes now have an RO command** (`EMOTE_NAMES` in `assets/social-rules.js`). The first nine were matched to the RO descriptions; the other 23 were matched by eye, so treat these as best guesses until someone checks them in-game: `anger`=`/an`, `blush`=`/shy`, `dead`=`/desp`, `dots`=`/...`, `drool`=`/rice`, `heart`=`/lv`, `hmm`=`/swt2`, `kiss`=`/kis2`, `kissheart`=`/kis`, `love`=`/lv2`, `meh`=`/meh`, `money`=`/$`, `music`=`/ho`, `panic`=`/panic`, `paper`=`/bo`, `question`=`/?`, `rock`=`/bawi`, `scissors`=`/gawi`, `shy`=`/hum`, `sleep`=`/yawn`, `smile`=`/ok`, `sweat`=`/swt`, `think`=`/hmm`.
+* **Typed commands:** `/gg` (and every other RO name) sends the emote on the current channel and the room echoes it, so the sender sees it too. An id with an RO name is no longer typeable as its id (`/ok` is not the Thanks art; `/thx` is).
+* **Test:** `social_ui_sim` checks that `/gg` is sent as an emotion on Local.
+
+### 2026-11-10 (emote tray layout, merge repairs) — `haven-v376`: tray below the tabs; suites repaired
+
+* **Changed:** the emoji tray now starts below the channel tabs (`#socialEmoji` `top:34px`, no 210 px cap), so it no longer covers Local/World/Whisper/Log/Emoji. It stays inside the chat box above the compose bar. Test: `tools/tests/emote_tray_sim.js`.
+* **Repaired stale test expectations** (the code is unchanged; v373 changed these timings on purpose): `social_scene_sim` projectile flight (460 ms), normal-hit sparks (16), every hit sends a soft shockwave, damage number lifetime (1050 ms), boss-faint burst/shockwave lifetime.
+* **Balance fixtures regenerated** with `tools/progression_balance.js` (gear, encounters, skills) because the combat sections of `index.html` changed since they were measured. `skill_balance_sim` passes again. The tool prints OUTSIDE lines for DPS deltas beyond its band against the starting game; these are informational and are listed for review, not changed here.
+* **Publish budget:** the classic runtime tree measured 59.78 MiB against a 59.75 MiB cap. `publish_sim` now allows 59.85 MiB. This is the only budget change.
+* **Known open:** `hosted_launch_stage_sim` still fails. About 570 runtime files changed since the staging package's fixed base (`7511a03`), and its explicit overlay list does not include them, including the Digimon v3 pack and the MVP fish art. Adding them changes what the hosted staging archive contains, so it needs an owner decision; it was not changed here.
+* **Build:** `index.html` `BUILD` and mirrors at `haven-v376`; `assets/social.css?v=376`.
+* Test: `node tools/tests/emote_tray_sim.js`, `social_scene_sim.js`, `publish_sim.js`, `skill_balance_sim.js`.
+
+### 2026-11-10 (hosted staging package) — no build bump
+
+* **Changed:** the seven MVP fish pictures (`assets/social/fish/mvp_*.png`, loaded by the fishing module) are now on the hosted staging package lists in `tools/staging/package_hosted_launch.mjs` and `tools/staging/hosted_launch_stage.mjs`. The package failed closed with "Unpackaged runtime change" without them. No game files, fishing code or art were modified; BUILD stays `haven-v376` because nothing player-visible changed.
+* **Checks:** `hosted_launch_stage_sim` passes. Full local gate: 211 of 211 suites pass.
 ### 2026-11-09 — `2026-11-09 haven-v373 GM Fishing/DigiPet grants, MVP spawn, affix ranges`
 * **Changed:** Added audited, bounded Fishing and DigiPet system grants. They are queued by the GM API, applied by the player's client, saved with a matching receipt, then claimed; full pouches, full duplicate-protected egg capacity and future-version Pet Bags remain untouched and unclaimed. DigiPet bag initialization retains legacy partner ownership/progress. The GM console now shows sanitized Fishing/DigiPet resource summaries and per-player grant controls. Authenticated GMs can request a selected or random Fishing MVP in a plaza room through the private Social binding; requests and success/refusal outcomes are recorded, a room refuses a second active MVP, and the 10-minute spawn's alarm does not overwrite an active battle tick. Changed reforge replacements now show their roll range whether the new affix uses the same or a different stat. The DigiPet Rift remains a planning-only proposal. Updated `tools/gm-panel-plan.md` with the current receipt, binding, and deployment architecture.
 * **Try it:** Open the GM console. In Fishing operations, choose a plaza room and an MVP (or Random MVP), then confirm; the result and audit entry report the outcome. Open a player's **Fishing & DigiPet** tab to review the safe resource summary and queue Fishcoins, rods, bait, Pet Coins or Digi-Eggs with an audit note. Review a paid reforge offer to see ranges on every changed replacement.
@@ -10401,3 +10450,12 @@ Same-day follow-up for the five pre-existing local-gate failures, and one owner-
 * **DigiPet scope:** the Rift redesign remains proposal-only. The goal in `docs/proposals/digipet-rift-campaign-proposal-2026-11-09.md` is to build a three-partner squad, restore five Data Anchors, then defeat the Null Sovereign; no gameplay changes are part of this release.
 * **Checks:** `social_fishing_sim`, `social_sim`, `social_ui_sim`, `social_art_redesign_sim`, `digipet_redesign_proposal_sim`, and `update_watch_sim` passed. `bash tools/build_site.sh /tmp/prontera-v374-build` passed (3,830 files, 185 MiB); `git diff --check` passed.
 * **Delivery:** this follow-up changes the Pages client only. PR #200 also contains the v373 Social Worker MVP-spawn changes, so deploy Pages and the Social Worker together when releasing the PR. The login card build line is haven-v374.
+
+### 2026-11-10 (merge of main into the emote branch) — `haven-v377`
+
+* **Merged `main` (`haven-v374`, MVP pond alerts and GM Fishing/DigiPet tools, PR #200)** into `arena/f39eb6e1-prontera-grind`, which was carrying `haven-v376`. The merge was conflict-only in the build mirrors, `index.html`, this log and `social_ui_sim.js`.
+* **Build:** `haven-v377`. `index.html` keeps all of `main`'s changes; this branch's changes there are the build line and the coordinated cache bust (every social/Sanctuary runtime tag at `?v=377`, including the gym and pond modules that `main` added). Mirrors updated to the same text.
+* **Test resolution:** `social_ui_sim` keeps this branch's gym-start expectation (`auto-training` after a confirmed start).
+* **Balance fixtures** are regenerated for the new build (the BUILD line is inside the hashed combat slice).
+* **Hosted staging package:** the five GM runtime files from `main` (`functions/_lib/gm-systems.js`, `gm-tools.js`, `functions/api/gm/fishing.js`, `log.js`, `player.js`) are on both package lists, like the MVP fish art earlier. `hosted_launch_stage_sim` passes.
+* **Gate:** full local suite, see the PR description for the result.

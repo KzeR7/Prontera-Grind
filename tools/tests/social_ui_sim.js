@@ -24,7 +24,13 @@ const bar=w.document.getElementById('socialMin');bar.dispatchEvent(new w.Keyboar
 let socket;w.WebSocket=class {constructor(){socket=this;this.readyState=1;this.sent=[]}close(){}send(m){this.sent.push(JSON.parse(m))}};w.CLOUD.on=true;w.CLOUD.user='new';w.sessionTick();socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:[]})});
 app.messages=Array.from({length:400},(_,i)=>({channel:'whisper',body:'old'+i,name:'Name',from:1,id:'w'+i,at:i}));socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:Array.from({length:100},(_,i)=>({channel:'world',body:'world',name:'Name',from:1,id:'world'+i,at:i}))})});assert.equal(app.messages.length,400);
 w.PGSocial.select('world');socket.onmessage({data:JSON.stringify({type:'message',channel:'world',body:'<img src=x onerror=alert(1)>',name:'<script>',from:3,at:1000})});assert.equal(w.document.querySelectorAll('#socialLines img,#socialLines script').length,0);assert(w.document.getElementById('socialLines').textContent.includes('<img'));
-w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='first';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'first');const count=socket.sent.length;w.document.getElementById('socialInput').value='second';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count);assert.equal(w.document.getElementById('socialInput').value,'second');assert(w.document.getElementById('socialSend').disabled);w.PGSocial.select('world');w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count,'changing channel cannot evade cooldown');app.nextChat=0;w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'second');
+ // v374 (owner): typing /gg and pressing Enter sends the evil-grin emote on the current channel and the
+ // room echoes it back, so the sender sees it too. /thx is the Thanks art (id ok), not the id 'ok'.
+ app.nextChat=0;w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='/gg';
+ w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));
+ assert.equal(socket.sent.at(-1).type,'emotion','typed /gg is sent as an emotion');assert.equal(socket.sent.at(-1).emotion,'gg','/gg is the gg art');assert.equal(socket.sent.at(-1).channel,'local');
+ w.document.getElementById('socialInput').value='';
+app.nextChat=0;w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='first';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'first');const count=socket.sent.length;w.document.getElementById('socialInput').value='second';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count);assert.equal(w.document.getElementById('socialInput').value,'second');assert(w.document.getElementById('socialSend').disabled);w.PGSocial.select('world');w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count,'changing channel cannot evade cooldown');app.nextChat=0;w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'second');
 // Pointer and keyboard resizing uses the actual view bounds and restores a preferred size.
 const view=w.document.getElementById('view'),chat=w.document.getElementById('socialChat'),handle=w.document.getElementById('socialResize'),topHandle=w.document.getElementById('socialResizeTop'),cornerHandle=w.document.getElementById('socialResizeCorner');
 assert.equal(topHandle.tagName,'SPAN','top resize uses the border');assert.equal(cornerHandle.tagName,'SPAN','corner resize uses the header corner');
@@ -124,7 +130,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  const train=stat=>{const n=sent.length;sceneCallbacks.trainStation(stat);if(sent.slice(n).some(m=>m.type==='gym_start'))socket.onmessage({data:JSON.stringify({type:'gym_started',request:sent.at(-1).request,gym:{room:1,stat,slot:0}})})};
  // Cancel and restart before either server reply: stale acknowledgements cannot claim or release the new reservation.
  Object.assign(trainer,{x:56,z:30,path:[],sit:false});sceneCallbacks.trainStation('power');const oldRequest=sent.at(-1).request;w.document.querySelector('#sanctuaryWorldStatus button[data-action="stop"]').click();sceneCallbacks.trainStation('power');const newRequest=sent.at(-1).request;assert.notEqual(oldRequest,newRequest);socket.onmessage({data:JSON.stringify({type:'gym_started',request:oldRequest,gym:{room:1,stat:'power',slot:0}})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Reserving/);socket.onmessage({data:JSON.stringify({type:'gym_error',request:oldRequest,message:'stale'})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Reserving/);socket.onmessage({data:JSON.stringify({type:'gym_started',request:newRequest,gym:{room:1,stat:'power',slot:0}})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/auto-training/);w.document.querySelector('#sanctuaryWorldStatus button[data-action="stop"]').click();Object.assign(trainer,{x:0,z:12,path:[],sit:false});
- train('power');assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Walk into the gym/);
+ Object.assign(trainer,{x:56,z:30,path:[],sit:false});train('power');assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/auto-training/,'a confirmed gym start shows the running session');
  for(const [stat,x,z] of [['power',56,30],['guard',63,21],['agility',75,26],['focus',86,27]]){
   Object.assign(trainer,{x,z,path:[],sit:false});train(stat);assert(!w.document.getElementById('sanctuaryWorldStatus').hidden);
   gymClock+=w.PGDigimonSanctuary.DURATION;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats[stat],1,'one point per automatic '+stat+' cycle');
@@ -217,6 +223,15 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   const topped=w.PGDigimonSanctuary.normalize(w.S.digimonSanctuary);topped.partners.agumon.energy=70;w.S.digimonSanctuary=topped;
   Object.assign(trainer,{x:56,z:30,path:[],sit:false});
   panel.querySelector('[data-sap-tab="training"]').click();
+  // v373 (owner): the panel follows the selected DigiPet. Picking a grind partner made partner 2 the followed one,
+  // so the gym tab must show partner 2 as selected; picking partner 1 in the gym tab must move the selection back.
+  const gymPick=k=>panel.querySelector('[data-activity-slot="'+k+'"][data-kind="gym"]');
+  assert.equal(gymPick(1).getAttribute('aria-checked'),'true','the gym tab follows the DigiPet picked for the grind');
+  assert.equal(gymPick(0).getAttribute('aria-checked'),'false');
+  gymPick(0).click();
+  assert.equal(w.S.digimonActiveSlot,0,'picking a gym partner makes it the followed DigiPet');
+  assert.equal(gymPick(0).getAttribute('aria-checked'),'true','the gym tab moves its selection with the DigiPet');
+  assert.equal(gymPick(1).getAttribute('aria-checked'),'false');
   panel.querySelector('[data-gym-stat="agility"]').click();
   const gymStart=sent.slice(before).find(m=>m.type==='gym_start');
   assert(gymStart,'the gym still accepts the other partner while one grinds');
@@ -526,5 +541,6 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert.match(panelCss,/#wins \.social-panel\{[^}]*max-height:100%;[^}]*overflow-y:auto;overscroll-behavior:contain[^}]*\}/,'the Social Hub panel is height-capped so its own overflow-y:auto actually scrolls');
   assert.match(panelCss,/#wins \.social-destination\{[^}]*flex:none;[^}]*\}/,'the destination card keeps its height so the panel scrolls instead of compressing the card');
  }
+
  console.log('PASS chat UI: stable hover/click tabs, dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local history across reconnects, plaza switches and a same-tab reload (sessionStorage, never localStorage), an immediate reconnect when the network returns, a probed (not killed) quiet socket, a handshake timeout, Local privacy on exit, emotion tray on world/whisper/local, recipient control, minimize, history cap, solo/preview plaza fallback, decoupled chat/log visibility and text-only message rendering; v319 field Social Hub button with live population badge and one-click entry; v355 plaza maps with party panel and v356 tree-and-bench map cover');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -2033,10 +2033,14 @@ function pondClick(x,z,idx){
 }
 function hubClosed(){stopFishing();if(els){els.panel.hidden=true;els.menu.hidden=true}}
 preloadFishArt();
+// v373: the colour a worn fishing title is drawn in - the same tone its Titles-tab row uses, with
+// the rarity colour as the fallback for tones this map does not name. Mirrors TITLE_TONE in index.html.
+const TITLE_TONE_COLOR={bronze:'#c08a52',copper:'#a86f4a',silver:'#cdd6de',jade:'#6ee0a8',sapphire:'#6cb8ff',amethyst:'#c792ea',obsidian:'#8f96b8',crimson:'#ff7a7a',gold:'#ffcc55',valkyrie:'#f0e6ff'};
+function titleColor(t){if(!t)return '';return TITLE_TONE_COLOR[t.tone]||(RARITIES.find(r=>r.id===t.tier)||RARITIES[0]).color}
 return {
  // pure core (tests)
  RARITIES,SPECIES,DIFF,MUTATIONS,RODS,BAITS,BAG_MAX,BAG_TIERS,bagMax,bagTierOf,nextBagTier,buyBagUpgrade,CAST_GREEN,CAST_PERFECT,MAX_W,
- FISHING_TITLES,FISHING_TITLE_BY_ID,titleUnlocked,equipTitle,equippedTitle,discoveredSpecies,bestWeight,mutationKinds,
+ FISHING_TITLES,FISHING_TITLE_BY_ID,titleUnlocked,equipTitle,equippedTitle,titleColor,discoveredSpecies,bestWeight,mutationKinds,
  speciesById,rarityById,rate,rateWith,tierShares,value,rollCatch,castRating,makeReel,reelStep,normalize,addCatch,
  ROD_GATE,ROD_RANK,rodCeiling,gateRodFor,GATE_ESCAPE,
  buyRod,equipRod,buyBait,selectBait,sellFish,sellBulk,toggleLock,shouldAutoSell,showOffText,parseShowOff,showOffScale,

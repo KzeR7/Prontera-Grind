@@ -475,7 +475,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   const halo=new T.Sprite(new T.SpriteMaterial({map:tex.glow,color:col,transparent:true,opacity:.75,depthWrite:false,blending:T.AdditiveBlending}));
   halo.scale.setScalar(boss?1.1:.7);mesh.add(halo);
   mesh.position.set(from.x,.55,from.z);mesh.userData.battleShot=true;scene.add(mesh);
-  battleShots.push({mesh,fromX:from.x,fromZ:from.z,toX:to.x,toZ:to.z,at:now,dur:280});
+  battleShots.push({mesh,fromX:from.x,fromZ:from.z,toX:to.x,toZ:to.z,at:now,dur:460});
  }
  function updateBattleShots(now){
   for(let i=battleShots.length-1;i>=0;i--){const shot=battleShots[i],t=(now-shot.at)/shot.dur;
@@ -491,7 +491,10 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  // landed strike with its amount and crit flag, and the scene answers with readable pixel
  // feedback — burst particles, a floating damage number, a contact freeze and a shake on the
  // defender. Nothing here reads or touches authoritative combat state.
- const battleBursts=[],battlePopups=[],battleWaves=[];let fxTextures=null;
+ const battleBursts=[],battlePopups=[],battleWaves=[];
+// v373 (owner: "the attacks are too fast to see and the melee ones headbutt each other"): melee units hold
+// MELEE_STANDOFF units from their target, and an attack keeps its swing for ATTACK_MS.
+const MELEE_STANDOFF=3.0,ATTACK_MS=520;let fxTextures=null;
  // v357 (owner: "the battle FX are still boxes" - third request): every particle was an
  // 8x8 white square, so hits read as flying pixels of cardboard. The whole particle set is
  // redrawn as painted light: soft radial glows, tapered comet streaks that rotate with
@@ -546,7 +549,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
    battleBursts.push({mesh,vx:Math.cos(a)*r,vy:.9+battleHash('by:'+i+':'+x.toFixed(2))*1.2,vz:Math.sin(a)*r,at:clock,dur,last:clock});
   }
  }
- function spawnBattleShockwave(x,z,color=0xffd98a,dur=460){
+ function spawnBattleShockwave(x,z,color=0xffd98a,dur=620){
   if(battleWaves.length>12)return;
   const c=document.createElement('canvas');c.width=c.height=128;const x2=c.getContext('2d');let tex=null;
   if(x2&&typeof x2.beginPath==='function'&&typeof x2.arc==='function'){
@@ -578,7 +581,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthWrite:false}));
   sprite.center.set(.5,.5);sprite.position.set(x+(battleHash('pop:'+text+':'+z.toFixed(2))-.5)*.7,1.55,z);
   sprite.userData.battlePopup=true;sprite.userData.battlePopupText=String(text);sprite.userData.battlePopupCrit=!!crit;
-  scene.add(sprite);battlePopups.push({mesh:sprite,at:clock,dur:crit?840:680,crit});
+  scene.add(sprite);battlePopups.push({mesh:sprite,at:clock,dur:crit?1300:1050,crit});
  }
  function battleEvent(ev){
   if(!ev||typeof ev!=='object')return false;
@@ -586,10 +589,10 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   if(!unit)return false;
   const p=unit.sprite.position,crit=!!ev.crit,amount=Math.max(0,Math.round(Number(ev.amount)||0));
   // Contact freeze + shake live on the defender; both are purely visual timers.
-  unit.shakeUntil=clock+(crit?260:150);unit.shakeAmp=crit?.22:.11;
-  if(crit){unit.hitStopUntil=clock+90;unit.hitStopClock=clock}
-  spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?16:11,crit?1.45:1.05,crit?.18:.12,crit?430:340);
-  if(crit)spawnBattleShockwave(p.x,p.z);
+  unit.shakeUntil=clock+(crit?340:220);unit.shakeAmp=crit?.24:.13;
+  if(crit){unit.hitStopUntil=clock+120;unit.hitStopClock=clock}
+  spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?22:16,crit?1.6:1.3,crit?.24:.17,crit?760:600);
+  spawnBattleShockwave(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?700:560);
   if(amount>0)spawnBattlePopup(p.x,p.z,amount,crit,unit.spec.enemy?'#fff6e0':'#ff9c86');
   return true;
  }
@@ -605,7 +608,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
    if(t>=1){scene.remove(pop.mesh);pop.mesh.material.map.dispose();pop.mesh.material.dispose();battlePopups.splice(i,1);continue}
    const popIn=t<.16?.6+2.5*t:1;
    pop.mesh.position.y=1.55+.85*t;
-   pop.mesh.scale.set(pop.crit?3:2.4,.5*(pop.crit?3:2.4),1);
+   const k=pop.crit?3.8:3.1;pop.mesh.scale.set(k,.5*k,1);
    pop.mesh.scale.multiplyScalar(popIn);
    pop.mesh.material.opacity=t>.62?Math.max(0,1-(t-.62)/.38):1;
   }
@@ -665,7 +668,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
    for(const [index,enemy]of enemies.entries()){const unit=battleResidents.get(enemy.key);if(!unit||enemy.phase!=='fighting'||enemy.hp<=0)continue;const range=unitRange(enemy.species),radius=enemy.boss?3.8:range.ranged?Math.max(4.8,range.range+1.6):3.6;const angle=start+index*Math.PI*2/Math.max(1,enemies.length);enemySlots.set(enemy.key,{x:center.x+Math.cos(angle)*radius,z:center.z+Math.sin(angle)*radius})}
    if(partner.phase==='fighting'&&partner.hp>0){
     let slot=center;
-    if(target&&enemySlots.has(target.key)){const es=enemySlots.get(target.key),dx=center.x-es.x,dz=center.z-es.z,len=Math.hypot(dx,dz)||1,pr=unitRange(partner.species),standoff=pr.ranged?pr.range:2.2;slot={x:Math.max(49,Math.min(91,es.x+dx/len*standoff)),z:Math.max(52,Math.min(76,es.z+dz/len*standoff))}}
+    if(target&&enemySlots.has(target.key)){const es=enemySlots.get(target.key),dx=center.x-es.x,dz=center.z-es.z,len=Math.hypot(dx,dz)||1,pr=unitRange(partner.species),standoff=pr.ranged?pr.range:MELEE_STANDOFF;slot={x:Math.max(49,Math.min(91,es.x+dx/len*standoff)),z:Math.max(52,Math.min(76,es.z+dz/len*standoff))}}
     positions.set(partner.key,battleApproach(from,slot,partnerTravel));
     if(target){const targetUnit=battleResidents.get(target.key);targets.set(partner.key,{x:targetUnit.sprite.position.x,z:targetUnit.sprite.position.z})}
    }
@@ -685,14 +688,14 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
    const s=u.spec,asset=digimonStore?.ready(s.species);u.sprite.visible=!!asset;u.ring.visible=!!asset;if(!asset){digimonStore?.request(s.species);continue}
    const dead=s.hp<=0||(s.kind==='pvp'&&s.phase==='result'&&s.winnerId!=null&&s.winnerId!==s.owner),previous={x:u.sprite.position.x,z:u.sprite.position.z};let pos=positions.get(s.key)||previous;if(dead||s.phase!=='fighting')pos=previous;const target=targets.get(s.key);u.ranged=unitRange(s.species).ranged;
    // Faint dust: a small pixel puff when a unit drops, and a golden burst plus shockwave for bosses.
-   if(dead&&!u.fainted){u.fainted=true;if(s.boss){spawnBattleBurst(pos.x,pos.z,0xffd98a,16,1.35,.17,520);spawnBattleShockwave(pos.x,pos.z,0xffd98a,560)}else spawnBattleBurst(pos.x,pos.z,0xd8d2c4,8,.8,.09,360)}
+   if(dead&&!u.fainted){u.fainted=true;if(s.boss){spawnBattleBurst(pos.x,pos.z,0xffd98a,16,1.35,.17,760);spawnBattleShockwave(pos.x,pos.z,0xffd98a,820)}else spawnBattleBurst(pos.x,pos.z,0xd8d2c4,8,.8,.09,560)}
    else if(!dead)u.fainted=false;
    // Crit contact freeze: while frozen the paint clock stands still, so the defender holds
    // its exact frame for a beat without repainting.
    const visualNow=now<u.hitStopUntil?u.hitStopClock:now;
    if(s.attackAt!==u.lastAttack){u.lastAttack=s.attackAt;u.attackStarted=now;if(u.ranged&&target&&!dead&&s.phase==='fighting')spawnBattleShot(pos,target,now,s.boss,s.enemy)}
    if(s.hitAt!==u.lastHit){u.lastHit=s.hitAt;u.hitStarted=now}
-   const walking=!dead&&Math.hypot(pos.x-previous.x,pos.z-previous.z)>.015,attacking=!dead&&s.phase==='fighting'&&visualNow-u.attackStarted<360;let stance=dead?'faint':attacking?'attack':walking?'walking':'idle';if(!asset.record.actions[stance])stance='idle';
+   const walking=!dead&&Math.hypot(pos.x-previous.x,pos.z-previous.z)>.015,attacking=!dead&&s.phase==='fighting'&&visualNow-u.attackStarted<ATTACK_MS;let stance=dead?'faint':attacking?'attack':walking?'walking':'idle';if(!asset.record.actions[stance])stance='idle';
    const flash=!dead&&now-u.hitStarted<210?1+Math.floor((now-u.hitStarted)/70):0;
    const time=stance==='faint'?(asset.record.actions[stance].length-1)*50:stance==='attack'?Math.max(0,visualNow-u.attackStarted):visualNow,flip=target?target.x<pos.x:s.enemy,n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,6),key=[s.species,stance,n,flip,s.hp,s.label,flash].join(':');
    // v358 (owner, fourth report - the actual "pixel boxes"): every unit painted a big dark
@@ -711,7 +714,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
     if(typeof ctx.strokeText==='function'){ctx.strokeStyle='rgba(10,14,10,.85)';ctx.lineWidth=4;ctx.strokeText(String(s.label).slice(0,25),128,frac<.999?36:22,198)}
     ctx.fillStyle=s.boss?'#ffd98a':s.enemy?'#f3e6c8':'#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,frac<.999?36:22,198);
    }u.texture.needsUpdate=true;u.paint=key}
-   let drawX=pos.x,drawZ=pos.z;if(stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1,lunge=Math.sin(Math.min(1,(visualNow-u.attackStarted)/360)*Math.PI)*(u.ranged?.12:.5);drawX+=dx/length*lunge;drawZ+=dz/length*lunge}
+   let drawX=pos.x,drawZ=pos.z;if(stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1,lunge=Math.sin(Math.min(1,(visualNow-u.attackStarted)/ATTACK_MS)*Math.PI)*(u.ranged?.14:.28);drawX+=dx/length*lunge;drawZ+=dz/length*lunge}
    if(now<u.shakeUntil){const amp=u.shakeAmp*Math.max(0,(u.shakeUntil-now)/(u.shakeAmp>.15?260:150));drawX+=(battleHash('sx:'+s.key+':'+Math.floor(now/40))-.5)*2*amp;drawZ+=(battleHash('sz:'+s.key+':'+Math.floor(now/40))-.5)*2*amp}
    const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(s.species)||1)*(s.boss?1.5:1);u.sprite.scale.set(256*h/96,256*h/96,1);
    // Hit flash tints the sprite material itself - nothing rectangular is ever painted onto
@@ -1924,12 +1927,16 @@ void main(){
  function putPlayer(state){let p=players.get(state.id);if(!p){
   const canvas=document.createElement('canvas');canvas.width=320;canvas.height=280;const ctx=canvas.getContext('2d'),texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.userData.socialId=state.id;sprite.center.set(.5,80/280);scene.add(sprite);
-  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');if(state.gm){name.textContent='🛠 '+state.name;name.title='Game Master';name.classList.add('social-gm')}else name.textContent=state.name;name.onclick=()=>callbacks.menu(state.name,state.id);const title=document.createElement('small');title.className='social-player-title';const fishTitle=document.createElement('small');fishTitle.className='social-player-fish-title';label.append(name,title,fishTitle);labels.append(label,bubble);
-  p={canvas,ctx,texture,sprite,label,bubble,title,fishTitle,state,loaded:'',paint:'',height:3.2,aura:null,auraTier:-1,lx:'',ly:'',lhid:null,bx:'',by:'',bhid:null,bubbleUntil:0,looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
+  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');if(state.gm){name.textContent='🛠 '+state.name;name.title='Game Master';name.classList.add('social-gm')}else name.textContent=state.name;name.onclick=()=>callbacks.menu(state.name,state.id);const title=document.createElement('small');title.className='social-player-title';const fishTitle=document.createElement('small');fishTitle.className='social-player-fish-title';const digiTitle=document.createElement('small');digiTitle.className='social-player-digi-title';label.append(name,title,fishTitle,digiTitle);labels.append(label,bubble);
+  p={canvas,ctx,texture,sprite,label,bubble,title,fishTitle,digiTitle,state,loaded:'',paint:'',height:3.2,aura:null,auraTier:-1,lx:'',ly:'',lhid:null,bx:'',by:'',bhid:null,bubbleUntil:0,looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
  }
  const nextTitle=state.look?.title||'';if(p.title.textContent!==nextTitle){p.title.textContent=nextTitle;p.title.hidden=!nextTitle}else if(p.title.hidden!==!nextTitle)p.title.hidden=!nextTitle;
  // v296: the fishing title is a second line, so it never displaces the Hunt title.
  const nextFish=state.look?.fishTitle||'';if(p.fishTitle.textContent!==nextFish){p.fishTitle.textContent=nextFish;p.fishTitle.hidden=!nextFish}else if(p.fishTitle.hidden!==!nextFish)p.fishTitle.hidden=!nextFish;
+ // v373: the fishing title takes its tier colour; the DigiPet title sits on the line under it in its own tier colour.
+ p.fishTitle.style.color=state.look?.fishTitleColor||'';
+ const nextDigi=state.look?.digiTitle||'';if(p.digiTitle.textContent!==nextDigi){p.digiTitle.textContent=nextDigi;p.digiTitle.hidden=!nextDigi}else if(p.digiTitle.hidden!==!nextDigi)p.digiTitle.hidden=!nextDigi;
+ p.digiTitle.style.color=state.look?.digiTitleColor||'';
  p.state={...state,path:(state.path||[]).map(v=>({...v})),at:performance.now()};
  syncAura(p);
  const key=JSON.stringify([Object.hasOwn(allClasses,state.look?.cls)?state.look.cls:'Novice',PGWardrobe.normalize(state.look?.appearance)||PGWardrobe.defaults('m')]);

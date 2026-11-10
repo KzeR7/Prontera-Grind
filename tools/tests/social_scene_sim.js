@@ -349,7 +349,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert(!scene.scene.children.some(o=>o.userData.battleShot),'melee fighters fire no projectiles');
  scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:1,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,attackAt:0,hitAt:0}]}],pvp:null});frame(now+=100);
  assert(scene.scene.children.some(o=>o.userData.battleShot),'a quick ranged attacker fires a visible projectile');
- frame(now+=400);assert(!scene.scene.children.some(o=>o.userData.battleShot),'the projectile expires after its flight');
+ frame(now+=200);assert(scene.scene.children.some(o=>o.userData.battleShot),'the projectile is still in flight before its 460 ms flight ends');frame(now+=400);assert(!scene.scene.children.some(o=>o.userData.battleShot),'the projectile expires after its flight');
  // v352/v357 FX: every landed strike answers with a soft-light burst - radial glows,
  // rotating streaks and star sparkles, never square pixels - plus a floating damage number
  // and a defender shake; crits add a contact freeze and a soft shockwave; faints puff dust.
@@ -360,13 +360,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   const bossSprite=scene.scene.children.find(o=>o.userData.battleBoss);
   for(let i=0;i<20;i++)frame(now+=100);
   const settled={x:bossSprite.position.x,z:bossSprite.position.z};
+  const burstBase=bursts().length;
   assert.equal(scene.battleEvent({kind:'pve',battleId:'pve-test',to:'w5-boss',amount:12,crit:false}),true,'a strike on a live unit lands its FX');
   frame(now+=40);
   assert.equal(popups().length,1,'the damage number floats above the defender');assert.equal(popups()[0].userData.battlePopupText,'12');assert.equal(popups()[0].userData.battlePopupCrit,false);
-  assert.equal(bursts().length,11,'a normal hit bursts eleven soft sparks');assert.equal(waves().length,0,'normal hits send no shockwave');
+  assert.equal(bursts().length-burstBase,16,'a normal hit bursts sixteen soft sparks (v373 calmer hits; projectile trail sparks are counted separately)');assert.equal(waves().length,1,'every hit sends one soft shockwave (v373 calmer hits; crits are larger)');
   let shook=false;for(let i=0;i<3;i++){frame(now+=40);const off=Math.hypot(bossSprite.position.x-settled.x,bossSprite.position.z-settled.z);if(off>.01)shook=true;assert(off<=.26,'the shake stays inside its amplitude: '+off)}
   assert(shook,'the hit shakes the defending boss sprite');
-  frame(now+=600);assert.equal(popups().length,0,'the damage number expires');assert.equal(bursts().length,0,'the burst particles expire');
+  frame(now+=1200);assert.equal(popups().length,0,'the damage number expires (v373 popup lasts 1050 ms)');assert.equal(bursts().length,0,'the burst particles expire');
   assert.equal(scene.battleEvent({kind:'pve',battleId:'pve-test',to:'w5-boss',amount:30,crit:true}),true,'a critical strike lands its FX');
   frame(now+=40);
   assert.equal(popups().length,1);assert.equal(popups()[0].userData.battlePopupText,'30!');assert.equal(popups()[0].userData.battlePopupCrit,true,'crits mark their damage number');
@@ -382,7 +383,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   // A faint puffs dust; a boss faint bursts gold with a shockwave.
   scene.setBattleState({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'agumon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:0,hitAt:0},enemies:[{id:'w5-boss',form:'greymon',hp:0,maxHp:300,boss:true,attackAt:0,hitAt:0}]}],pvp:null});frame(now+=40);
   assert(bursts().length>=16,'the boss faint bursts gold');assert.equal(waves().length,1,'the boss faint rings a shockwave');
-  frame(now+=800);assert.equal(bursts().length,0);assert.equal(waves().length,0);
+  frame(now+=1000);assert.equal(bursts().length,0);assert.equal(waves().length,0);
  }
  scene.setBattleState({pve:[],pvp:{id:'pvp-test',phase:'fighting',winnerId:null,participants:[{id:1,name:'One',side:'left',unit:{form:'agumon',hp:80,maxHp:100}},{id:2,name:'Two',side:'right',unit:{form:'palmon',hp:70,maxHp:100}}]}});frame(now+=100);assert.equal(scene.scene.children.filter(o=>o.userData.battleKind==='pvp').length,2,'two accepted ring fighters are rendered');const ringFighters=scene.scene.children.filter(o=>o.userData.battleKind==='pvp');for(let i=0;i<12;i++)frame(now+=100);const ringDistance=Math.hypot(ringFighters[0].position.x-ringFighters[1].position.x,ringFighters[0].position.z-ringFighters[1].position.z);assert(ringDistance>4.2&&ringDistance<4.6,'ring fighters approach opposite marks without clumping');assert(scene.scene.children.filter(o=>o.userData.sanctuaryResident).every(o=>o.visible),'residents return when PvE ends');
  assert.equal(scene.battleEvent({kind:'pvp',battleId:'pvp-test',to:1,amount:9,crit:false}),true,'ring strikes land their FX too');frame(now+=40);assert(scene.scene.children.some(o=>o.userData.battlePopup&&o.userData.battlePopupText==='9'),'the ring damage number floats');
