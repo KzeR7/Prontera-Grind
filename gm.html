@@ -188,12 +188,36 @@ tr:hover{background:#2a2014;cursor:pointer}
 const $ = id => document.getElementById(id);
 let PLAYERS = [], SEL = null, TAB = 'character', CATALOG=null, FISHING_TOOLS=null, playerRequest=0, giftRequest=null;
 const say = (m, bad) => { const t = $('toast'); t.textContent = m; t.style.color = bad ? '#ff9d9f' : '#7ddc8a'; t.style.display = 'block'; clearTimeout(say._t); say._t = setTimeout(() => t.style.display = 'none', 4000); };
+// v382 (owner: the console showed "SIGN IN FIRST" inside the embedded preview): the preview
+// runs the game in an iframe and the browser blocks its third-party cookie, so the game signs
+// in through the X-Preview-Session header bridge. The console now speaks the same bridge: the
+// game hands over the token on the URL, we keep it for this tab (sessionStorage) and send the
+// header with every call - the SAME token over the SAME channel the cookie would use, no extra
+// privilege. A standalone tab can also use the inline sign-in form below.
+let PREVIEW_TOKEN = null;
+try {
+  const qs = new URLSearchParams(location.search).get('preview_session') || /[#&]preview_session=([^&]+)/.exec(location.hash)?.[1];
+  if (qs) { PREVIEW_TOKEN = qs; try { sessionStorage.setItem('pg_gm_preview_token', qs); } catch {} 
+    history.replaceState(null, '', location.pathname + location.search.replace(/([?&])preview_session=[^&]*/, '$1').replace(/[?&]$/, '') + location.hash); }
+  else { PREVIEW_TOKEN = sessionStorage.getItem('pg_gm_preview_token'); }
+} catch {}
 const api = async (path, opt) => {
-  const r = await fetch('/api' + path, Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opt || {}));
+  const o = opt || {}, hdrs = Object.assign({ 'Content-Type': 'application/json' }, PREVIEW_TOKEN ? { 'X-Preview-Session': PREVIEW_TOKEN } : null, o.headers || {});
+  const r = await fetch('/api' + path, Object.assign({ credentials: 'same-origin' }, o, { headers: hdrs }));
+  const pt = r.headers && typeof r.headers.get === 'function' ? r.headers.get('x-preview-session') : null;
+  if (pt) { PREVIEW_TOKEN = pt; try { sessionStorage.setItem('pg_gm_preview_token', pt); } catch {} }
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.err || ('HTTP ' + r.status));
   return d;
 };
+async function consoleSignIn() {
+  const u = document.getElementById('gmSignUser').value.trim(), p = document.getElementById('gmSignPass').value;
+  if (!u || !p) return;
+  try {
+    await api('/sessions', { method: 'POST', body: JSON.stringify({ u, p }) });
+    location.reload();
+  } catch (e) { const err = document.getElementById('gmSignErr'); err.textContent = e.message; }
+}
 const when = t => t ? new Date(t).toLocaleString() : 'never';
 const nfmt = n => (n == null ? '—' : Number(n).toLocaleString());
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -693,7 +717,17 @@ $('detail').addEventListener('click', async e => {
     await Promise.all([loadUsage(),loadDamageAlerts(),loadFishingTools()]);
     await loadPlayers();
   } catch (e) {
-    document.body.innerHTML = '<main><section class="card"><h2>Sign in first</h2><p>This console works from the session you already have in the game. <a href="/" target="_top" style="color:var(--gold)">Open the game and sign in</a>, then return here.</p></section></main>';
+    document.body.innerHTML = '<main><section class="card"><h2>Sign in first</h2><p>This console signs in with the same account as the game. On the embedded preview it now carries the session itself; or sign in right here:</p>'
+      + '<div style="display:flex;flex-direction:column;gap:8px;margin:12px 0;max-width:280px">'
+      + '<input id="gmSignUser" placeholder="Username" autocomplete="username" style="padding:8px 10px;border:1px solid var(--edge,#444);border-radius:6px;background:#171410;color:#f0e6d2">'
+      + '<input id="gmSignPass" type="password" placeholder="Password" autocomplete="current-password" style="padding:8px 10px;border:1px solid var(--edge,#444);border-radius:6px;background:#171410;color:#f0e6d2">'
+      + '<button id="gmSignBtn" style="padding:9px 10px;border:1px solid var(--edge,#444);border-radius:6px;background:#2a241a;color:#f0e6d2;cursor:pointer">Sign in</button>'
+      + '<span id="gmSignErr" class="bad" role="status"></span></div>'
+      + '<p class="small">Or <a href="/" target="_top" style="color:var(--gold)">open the game and sign in</a>, then return here.</p></section></main>';
+    document.getElementById('gmSignBtn').onclick = consoleSignIn;
+    document.getElementById('gmSignUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('gmSignPass').focus(); });
+    document.getElementById('gmSignPass').addEventListener('keydown', e => { if (e.key === 'Enter') consoleSignIn(); });
+    document.getElementById('gmSignUser').focus();
   }
 })();
 </script>

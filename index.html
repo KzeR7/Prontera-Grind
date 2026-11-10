@@ -4514,11 +4514,14 @@ function cloudSession(u,gm,id){
 // Navigating away and back reloads /, where cloudProbe() enforces the v83 rule that every page load
 // stops at the login card and ends any leftover cookie session.
 function openGmConsole(){
-  if(!CLOUD.on||!CLOUD.gm){if(typeof location!=='undefined')location.href='gm.html';return}
+  // v382: hand the preview-session token to the console (the embedded preview has no cookie, and
+  // gm.html now speaks the same X-Preview-Session bridge the game does).
+  const gmUrl='gm.html'+(CLOUD.previewToken?'?preview_session='+encodeURIComponent(CLOUD.previewToken):'');
+  if(!CLOUD.on||!CLOUD.gm){if(typeof location!=='undefined')location.href=gmUrl;return}
   save();if(!CLOUD.lost)cloudFlushNow();
   const m=$('gmConsoleModal'),f=$('gmConsoleFrame');
-  if(!m||!f){if(typeof location!=='undefined')location.href='gm.html';return}
-  f.src='gm.html';m.hidden=false;
+  if(!m||!f){if(typeof location!=='undefined')location.href=gmUrl;return}
+  f.src=gmUrl;m.hidden=false;
 }
 function closeGmConsole(){
   const m=$('gmConsoleModal'),f=$('gmConsoleFrame');
