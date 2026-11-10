@@ -10399,3 +10399,12 @@ Owner requests batch (emotes deferred, see below).
 * **Tests.** New `tools/tests/digipet_title_sim.js` covers the title rules and colours. `social_ui_sim.js` now clicks the Stop button where it used to click minimize.
 * **Emotes: not changed in this build.** The emote art is native Ragnarok sprite art, extracted from `emotion.act`/`emotion.spr` via the pinned pipeline in `tools/social/README.md`. The sandbox cannot reach that source, and the repo rules say not to redraw native art, so the blurry emotes and the RO-name list (`/gg`, `/e1`) need that source.
 * **Gate state after this build:** `social_fishing_sim`, `social_sim` and `update_watch_sim` are fixed (they were failing at baseline). `social_ui_sim` still fails at a stale expectation further down (`Walk near`, which no source emits). `digimon_sanctuary_ui_sim` and `digimon_index_sim` fail as before.
+
+### 2026-11-10 (follow-up) — test gate repaired for `haven-v373`; panel-follow asserted
+
+Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unchanged.
+
+* **`digimon_index_sim` — FIXED.** The pinned reachable-forms count was 232. HEAD before v373 already gives 233 (no evolution data changed), so the pin now reads 233.
+* **`digimon_sanctuary_ui_sim` — FIXED.** The test still expected the retired Cook Lina shop view. Eggs are bought from the Pet Bag view now, and the egg button is disabled when the player can't afford it (500 coins, the player has 50). The test asserts that state instead of a message the UI no longer shows.
+* **`social_ui_sim` — FIXED.** The stale `Walk near` expectation is replaced with the real gym-start status (`auto-training`). The trainer is moved back into the gym first. The grind-then-gym step selects partner 1 in the gym tab, because the panel now follows the DigiPet you pick.
+* **Panel follows the selected DigiPet — now asserted.** `social_ui_sim` checks that the gym tab's selected partner moves with the followed DigiPet, in both directions.

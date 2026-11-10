@@ -124,7 +124,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  const train=stat=>{const n=sent.length;sceneCallbacks.trainStation(stat);if(sent.slice(n).some(m=>m.type==='gym_start'))socket.onmessage({data:JSON.stringify({type:'gym_started',request:sent.at(-1).request,gym:{room:1,stat,slot:0}})})};
  // Cancel and restart before either server reply: stale acknowledgements cannot claim or release the new reservation.
  Object.assign(trainer,{x:56,z:30,path:[],sit:false});sceneCallbacks.trainStation('power');const oldRequest=sent.at(-1).request;w.document.querySelector('#sanctuaryWorldStatus button[data-action="stop"]').click();sceneCallbacks.trainStation('power');const newRequest=sent.at(-1).request;assert.notEqual(oldRequest,newRequest);socket.onmessage({data:JSON.stringify({type:'gym_started',request:oldRequest,gym:{room:1,stat:'power',slot:0}})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Reserving/);socket.onmessage({data:JSON.stringify({type:'gym_error',request:oldRequest,message:'stale'})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Reserving/);socket.onmessage({data:JSON.stringify({type:'gym_started',request:newRequest,gym:{room:1,stat:'power',slot:0}})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/auto-training/);w.document.querySelector('#sanctuaryWorldStatus button[data-action="stop"]').click();Object.assign(trainer,{x:0,z:12,path:[],sit:false});
- train('power');assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Walk near/);
+ Object.assign(trainer,{x:56,z:30,path:[],sit:false});train('power');assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/auto-training/,'a confirmed gym start shows the running session');
  for(const [stat,x,z] of [['power',56,30],['guard',63,21],['agility',75,26],['focus',86,27]]){
   Object.assign(trainer,{x,z,path:[],sit:false});train(stat);assert(!w.document.getElementById('sanctuaryWorldStatus').hidden);
   gymClock+=w.PGDigimonSanctuary.DURATION;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats[stat],1,'one point per automatic '+stat+' cycle');
@@ -217,6 +217,15 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   const topped=w.PGDigimonSanctuary.normalize(w.S.digimonSanctuary);topped.partners.agumon.energy=70;w.S.digimonSanctuary=topped;
   Object.assign(trainer,{x:56,z:30,path:[],sit:false});
   panel.querySelector('[data-sap-tab="training"]').click();
+  // v373 (owner): the panel follows the selected DigiPet. Picking a grind partner made partner 2 the followed one,
+  // so the gym tab must show partner 2 as selected; picking partner 1 in the gym tab must move the selection back.
+  const gymPick=k=>panel.querySelector('[data-activity-slot="'+k+'"][data-kind="gym"]');
+  assert.equal(gymPick(1).getAttribute('aria-checked'),'true','the gym tab follows the DigiPet picked for the grind');
+  assert.equal(gymPick(0).getAttribute('aria-checked'),'false');
+  gymPick(0).click();
+  assert.equal(w.S.digimonActiveSlot,0,'picking a gym partner makes it the followed DigiPet');
+  assert.equal(gymPick(0).getAttribute('aria-checked'),'true','the gym tab moves its selection with the DigiPet');
+  assert.equal(gymPick(1).getAttribute('aria-checked'),'false');
   panel.querySelector('[data-gym-stat="agility"]').click();
   const gymStart=sent.slice(before).find(m=>m.type==='gym_start');
   assert(gymStart,'the gym still accepts the other partner while one grinds');

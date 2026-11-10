@@ -29,7 +29,7 @@ assert.equal(graph.incoming.get('machinedramon').length,9);
 assert.equal(graph.incoming.get('gallantmon').length,4);
 assert.equal(graph.incoming.get('apocalymon').length,0);
 assert.equal(graph.reachable.has('apocalymon'),false);
-assert.equal(graph.reachable.size,232);
+assert.equal(graph.reachable.size,233);
 for(const id of roster.IDS){for(const target of graph.outgoing.get(id))assert.ok(graph.incoming.get(target).includes(id),`incoming reciprocal ${id} -> ${target}`);for(const source of graph.incoming.get(id))assert.ok(graph.outgoing.get(source).includes(id),`outgoing reciprocal ${source} -> ${id}`)}
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'assets/digimon/digidex-portraits.json'),'utf8'));
 const portrait=fs.readFileSync(path.join(root,'assets/digimon',manifest.image));
