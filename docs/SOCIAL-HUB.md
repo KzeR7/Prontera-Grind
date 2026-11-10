@@ -1213,3 +1213,38 @@ A 4001 close yields to the replacement tab until logout/account change or
 reload; it must not be cleared by the retry timer. Network drops and scheduled
 reauthentication still reconnect normally. See the Windows deployment and
 verification steps in [Chat connection fix](CHAT-CONNECTION-FIX.md).
+
+
+## Boss mechanics, raids, level evolutions and longer rings (haven-v382)
+
+Boss waves in the middle field are mechanic fights now, and the same rules run in the
+Social Worker because both sides share `assets/digimon-battle.js`:
+
+* **Slam.** Every eighth pulse the boss telegraphs (event `boss_tell`, `mech.slamIn` in the
+  snapshot) and two ticks later the slam lands on *every* standing partner for 1.6× a
+  normal hit (`boss_slam`, `hit.slam`).
+* **Shield.** At half health the boss doubles its defence for five pulses (`boss_shield`
+  with `on:true`, then `on:false` when it drops).
+* **Enrage.** At a third of its health it gains 30% attack (`boss_enrage`), once.
+* **Adds.** At 66% and 33% it calls same-stage adds (`boss_summon`): one for a solo boss,
+  two in a party. Killing the boss routs the survivors (`boss_rout`), so a stage never
+  ends on cleanup.
+
+**Boss raids.** `pve_start` and `party_start` accept `mode:'boss'`. A raid opens straight
+on one boss whose pool is the party's summed attack × 45 ticks and whose per-hit damage is
+a fraction of the weakest partner's health pool, so its length is level-independent
+(~30 s). Raids replace the between-wave heal with a 6% sustain pulse every eighth pulse,
+pay `80 + rank×12` petgold, `6 + rank×2` XP, 2 wins and one guaranteed gear piece, and end
+the run (`reason:'complete'`) when the boss falls. Add attacks are pinned to the fighter
+pool in raids so a high-level add cannot one-shot a partner.
+
+**Evolution** is gated on the partner's level (`30/110/230/480/850/1250`) plus the existing
+training-point gates; wins still feed titles and the casual spar. The XP ceiling is 7,996
+(level 2,000) so the curve fits, while combat keeps reading level 100.
+
+**Ring matches** scale health ×6 and attack ×1.35 in `createPvp`, so a match is a trade of
+blows (~19 rounds) rather than a burst race; the 120-round decision fallback is unchanged.
+
+Clients patch the mechanic state from the presentation-only `battle_fx` channel
+(`fx.type` `boss_*`), so the battle card can show the charge, the shield, the enrage and
+adds between authoritative snapshots.

@@ -1315,9 +1315,11 @@ if(session)html+='<div class="sap-status" role="status"><b>'+escape(sanctuaryNam
 else html+='<p class="sap-lead">Pick a training stat below. No need to walk to the station you want - every stat trains from anywhere in the gym.</p>';
 return html}
 function pvePanelMarkup(){const G=globalThis.PGDigimonBattle,slot=activitySlot('pve'),profile=battleProfileFor(slot),run=myPve()||soloPve;let html=partnerPickerMarkup('pve');html+='<p class="sap-lead">'+(profile?escape(sanctuaryName(profile.form))+' trains itself in the middle field. Loot, petgold and Digi-Eggs are yours.':'Hatch and choose an owned partner in DigiPet first.')+'</p>';
-if(run)html+='<div class="sap-status" role="status"><b>'+(soloPve?'SOLO':'PARTY')+' · GRINDING'+(G?' · STAGE '+(G.stageOf?.(run.wave)||1):'')+'</b><small>The battle card above tracks HP and loot.</small></div>';
-else if(profile)html+='<p class="sap-note">Tap Start and your partner fights on its own.</p>';
+const raid=run&&run.mode==='boss';
+if(run)html+='<div class="sap-status'+(raid?' is-raid':'')+'" role="status"><b>'+(soloPve?'SOLO':'PARTY')+' · '+(raid?'BOSS RAID':'GRINDING')+(G&&!raid?' · STAGE '+(G.stageOf?.(run.wave)||1):'')+'</b><small>The battle card above tracks HP, loot and the boss charge.</small></div>';
+else if(profile)html+='<p class="sap-note">Start a field run, or challenge the boss: one long fight with charges, a shield phase, enrage and backup adds.</p>';
 html+='<div class="sap-pve-action"></div>';
+if(!run&&profile)html+='<button type="button" class="sap-pve-boss" data-sap-pve-boss>☠ Boss raid · one long fight, richer loot</button>';
 return html}
 function logsPanelMarkup(){let html='<div class="sap-logs-head"><small>SESSION LOG</small><button type="button" class="sap-logs-clear" data-sap-clear-logs>Clear</button></div>';
 if(!activityLog.length)return html+'<p class="sap-empty">Nothing yet this session - training points, grind results and DigiPet notices will collect here.</p>';
@@ -1330,7 +1332,7 @@ function syncPanelTabs(){for(const btn of sapTabButtons){const on=btn.dataset.sa
 function renderActivityPanel(force){const key=activityPanelKey();if(!force&&activityPanel.dataset.key===key)return;activityPanel.dataset.key=key;syncPanelTabs();
 if(sapTab==='party'){sapTitle.textContent='DigiPet · Party';sapBodyEl.innerHTML=partyPanelMarkup();sapNoteEl.textContent='All four partners at a glance — training, grinding or resting.'}
 else if(sapTab==='training'){sapTitle.textContent='DigiPet · Training';sapBodyEl.innerHTML=gymPanelMarkup();sapNoteEl.textContent='Sessions cap at 12 per stat, 24 in total.'}
-else if(sapTab==='pve'){sapTitle.textContent='DigiPet · PvE grind';sapBodyEl.innerHTML=pvePanelMarkup();const host=sapBodyEl.querySelector('.sap-pve-action');if(host&&worldBattleNearby.parentElement!==host)host.append(worldBattleNearby);sapNoteEl.textContent='Stops on defeat or a completed field run.'}
+else if(sapTab==='pve'){sapTitle.textContent='DigiPet · PvE grind';sapBodyEl.innerHTML=pvePanelMarkup();const host=sapBodyEl.querySelector('.sap-pve-action');if(host&&worldBattleNearby.parentElement!==host)host.append(worldBattleNearby);const bossBtn=sapBodyEl.querySelector('[data-sap-pve-boss]');if(bossBtn)bossBtn.onclick=()=>startPve('boss');sapNoteEl.textContent='Stops on defeat or a completed field run.'}
 else{sapTitle.textContent='DigiPet · Log';sapBodyEl.innerHTML=logsPanelMarkup();sapNoteEl.textContent='Every notice above the plaza, kept for this session.'}
 sapRepeatWrap.hidden=sapTab==='logs';sapRepeatEl.checked=plazaRepeat(sapTab==='pve'?'pve':'gym');syncActivityCountdown()}
 function syncActivityCountdown(){if(activityPanel.classList.contains('is-mini'))updateActivityMini();if(sapTab!=='training')return;const t=worldTraining,left=$id('sapCountdown');if(!left)return;const session=t&&t.slot===activitySlot('gym')?t:null;left.textContent=!session?'':(session.phase==='active'?gymClock(Math.max(0,PGDigimonSanctuary.DURATION-(session.elapsed||0))):'…')}
@@ -1350,7 +1352,7 @@ function updateActivityMini(){
 /* Called after a run ends: if the player switched "Keep repeating" on, schedule the next run. */
 function repeatPveRun(delay=1800){if(pveRepeatTimer)return;if(!plazaRepeat('pve'))return;pveRepeatTimer=setTimeout(()=>{pveRepeatTimer=0;if(!plazaRepeat('pve')||battleBusy()||trainingSlotBusy()||!battleProfileFor(activitySlot('pve')))return;
 if(soloPractice()){const source=app.players.get(SOLO_ID),player=source?R.advance({...source,path:(source.path||[]).map(p=>({...p}))},performance.now()):null;if(!player||player.sit||player.path?.length||!nearFarm(player))return}
-startPve()},delay)}
+startPve(lastPveMode)},delay)}
 function clearPveRepeat(){clearTimeout(pveRepeatTimer);pveRepeatTimer=0}
 const BATTLE_INTENT_MS=10000;
 function soloPractice(){return !app.room&&!CLOUD.on}
@@ -1393,28 +1395,32 @@ function syncSoloBattle(){
  if(!soloPractice())return;const B=globalThis.PGDigimonBattle;
  app.battle={pve:soloPve&&B?[B.pveSnapshot(soloPve)]:[],pvp:null,queue:[]};app.scene?.setBattleState?.(app.battle);renderBattleHUD();
 }
-function startSoloPve(profile){
+function startSoloPve(profile,boss=false){
  const B=globalThis.PGDigimonBattle,source=app.players.get(SOLO_ID),player=source?R.advance({...source,path:(source.path||[]).map(p=>({...p}))},performance.now()):null,p=B?.profile(profile);
  if(!B||!p)return worldNotice('DigiPet combat is unavailable in this copy.');
  if(!player||player.sit||player.path?.length||Math.abs(player.x-70)>25||Math.abs(player.z-64)>16)return worldNotice('Walk to the middle DigiPet farm and stand still first.');
- const now=Date.now();soloPve=B.createPve({id:'solo-pve:'+now.toString(36)+':'+(++battleRequest),owner:SOLO_ID,room:0,profile:p,now});soloPve.localOwner=S;soloPve.localAccount=typeof currentUser==='string'?currentUser:null;app.battleIntent=null;syncSoloBattle();worldNotice('Local solo grinding · practice rewards are saved locally, not server-issued.');
+ const now=Date.now();soloPve=B.createPve({id:'solo-pve:'+now.toString(36)+':'+(++battleRequest),owner:SOLO_ID,room:0,profile:p,now,bossMode:!!boss});soloPve.localOwner=S;soloPve.localAccount=typeof currentUser==='string'?currentUser:null;app.battleIntent=null;syncSoloBattle();worldNotice(boss?'Local boss raid · one long fight, practice rewards stay local.':'Local solo grinding · practice rewards are saved locally, not server-issued.');
 }
 function stopSoloPve(reason='stopped',notify=true){
- if(!soloPve)return false;soloPve=null;clearPveRepeat();app.battle={pve:[],pvp:null,queue:[]};app.scene?.setBattleState?.(app.battle);renderBattleHUD();renderActivityPanel(true);if(notify)worldNotice(reason==='defeat'?'Your partner fainted during local practice. Rest, feed, and try again.':reason==='exhausted'?'Local grinding stopped: your partner is out of energy.':reason==='complete'?'Local field run complete! A very strong partner.':'Local solo grinding stopped.');return true;
+ if(!soloPve)return false;soloPve=null;clearPveRepeat();app.battle={pve:[],pvp:null,queue:[]};app.scene?.setBattleState?.(app.battle);renderBattleHUD();renderActivityPanel(true);if(notify)worldNotice(reason==='defeat'?'Your partner fainted during local practice. Rest, feed, and try again.':reason==='exhausted'?'Local grinding stopped: your partner is out of energy.':reason==='complete'?'Local run complete! A very strong partner.':'Local solo grinding stopped.');return true;
 }
 function tickSoloPve(){
  const run=soloPve;if(!run)return;if(!soloPractice()||typeof S!=='object'||S!==run.localOwner||run.localAccount!==(typeof currentUser==='string'?currentUser:null)){stopSoloPve('stopped',false);return}
  const result=globalThis.PGDigimonBattle?.stepPve(run,Date.now());if(!result)return;let end='';
- for(const event of result.events){if(event.type==='wave_clear')receiveBattleReward({local:true,kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});if(event.type==='hit')app.scene?.battleEvent?.({kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit});if(event.type==='end')end=event.reason}
+ for(const event of result.events){if(String(event.type).startsWith('boss_'))bossFxNotice(event);if(event.type==='wave_clear')receiveBattleReward({local:true,kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});if(event.type==='hit')app.scene?.battleEvent?.({kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit});if(event.type==='end')end=event.reason}
  if(end){stopSoloPve(end);repeatPveRun()}else syncSoloBattle();
 }
-function startPve(){
+// v382: 'boss' starts a raid — one long boss instead of a field run. The choice is remembered so
+// "Keep repeating" repeats the same kind of fight.
+let lastPveMode='grind';
+function startPve(mode='grind'){
+ const boss=mode==='boss';lastPveMode=boss?'boss':'grind';
  if(trainingSlotBusy())return worldNotice('The grind partner is in the gym. Switch the PvE grind partner or stop that session first.');
  if(battleBusy())return worldNotice('Finish the current DigiPet activity first.');
  const profile=battleProfileFor(activitySlot('pve'));if(!profile)return worldNotice('Hatch and choose an owned partner first.');
- if(soloPractice())return startSoloPve(profile);
- if(!app.room||!app.connected||app.socket?.readyState!==1)return worldNotice('Connect to the online plaza, or use local solo mode, to grind.');
- const request=++battleRequest;app.battleIntent={kind:'pve',request,at:Date.now()};if(send({type:'pve_start',request,profile})){worldNotice('Entering the middle field…');worldBattleNearby.hidden=true}else app.battleIntent=null;
+ if(soloPractice())return startSoloPve(profile,boss);
+ if(!app.room||!app.connected||app.socket?.readyState!==1)return worldNotice('Connect to the online plaza, or use local solo mode, to fight.');
+ const request=++battleRequest;app.battleIntent={kind:'pve',request,at:Date.now()};if(send({type:'pve_start',request,profile,mode:boss?'boss':'grind'})){worldNotice(boss?'Challenging the field boss…':'Entering the middle field…');worldBattleNearby.hidden=true}else app.battleIntent=null;
 }
 function startPvp(){
  if(trainingSlotBusy())return worldNotice('The grind partner is in the gym. Switch the PvE grind partner or stop that session first.');
@@ -1426,13 +1432,35 @@ function startPvp(){
 }
 function stopPve(){if(soloPve)stopSoloPve();else if(myPve())send({type:'pve_stop'})}
 function stopPvp(){if(myPvp()||battleOffer||myQueue())send({type:'pvp_cancel'})}
+// v382: one notice per boss mechanic, shared by local solo runs and relayed room events.
+function bossFxNotice(fx){
+ if(!fx)return;
+ if(fx.type==='boss_tell')worldNotice('☠ The boss is winding up a slam — every partner takes it.',false,false);
+ else if(fx.type==='boss_slam')worldNotice('☠ The boss SLAMS the whole field.',false,false);
+ else if(fx.type==='boss_enrage')worldNotice('🔥 The boss is ENRAGED — it hits harder now.',false,false);
+ else if(fx.type==='boss_shield')worldNotice(fx.on?'🛡 The boss raises a barrier — your hits land softer.':'The boss barrier falls.',false,false);
+ else if(fx.type==='boss_summon')worldNotice('The boss calls in backup!',false,false);
+}
+function battleMechLine(run,G){
+ const mech=run&&run.mech&&(run.enemies||[]).some(e=>e.boss&&e.hp>0)?run.mech:null;if(!mech)return '';
+ const adds=(run.enemies||[]).filter(e=>!e.boss&&e.hp>0).length;
+ const tick=(G&&G.TICK_MS)||650;
+ let out='';
+ if(mech.slamIn>0)out+='<b class="mech-slam">☠ SLAM '+((mech.slamIn*tick)/1000).toFixed(1)+'s</b>';
+ if(mech.shieldPulses>0)out+='<b class="mech-shield">🛡 SHIELD '+mech.shieldPulses+'</b>';
+ if(mech.enraged)out+='<b class="mech-enrage">🔥 ENRAGED</b>';
+ if(adds)out+='<b class="mech-add">+'+adds+' adds</b>';
+ return out?'<small class="battle-mech">'+out+'</small>':'';
+}
 function renderBattleHUD(){
  const run=myPve(),match=myPvp(),waiting=myQueue();let html='',key='';
  if(run){
   const G=globalThis.PGDigimonBattle,stage=G?.stageOf?.(run.wave)||1+Math.floor(((run.wave||1)-1)/5),inWave=((run.wave||1)-1)%5+1,bossWave=!!G?.isBossWave?.(run.wave);
-  key='pve:'+run.id+':'+run.wave+':'+run.phase+':'+run.partner?.hp+':'+run.earned?.coins+':'+run.earned?.dropCoins+':'+run.earned?.eggs+':'+(run.earned?.gear||0);
+  const raid=run.mode==='boss',mech=run.mech||{},mechKey=mech?(mech.slamIn||0)+','+(mech.shieldPulses||0)+','+(mech.enraged?1:0)+','+(mech.summons||0)+','+(run.enemies||[]).filter(e=>e.hp>0).length:'';
+  key='pve:'+run.id+':'+run.wave+':'+run.phase+':'+run.partner?.hp+':'+run.earned?.coins+':'+run.earned?.dropCoins+':'+run.earned?.eggs+':'+(run.earned?.gear||0)+':'+mechKey;
   const partyLine=run.party&&Array.isArray(run.members)?'<small>'+run.members.map(id=>id===(app.room?app.id:SOLO_ID)?'You':((app.players.get(id)||{}).name||'Trainer')).join(' \u00b7 ')+'</small>':'';
-  html=`<div class="sanctuary-battle-hud-card${bossWave?' is-boss':''}"><strong>⚔ ${soloPve?'SOLO · ':''}${run.party?'PARTY GRIND · ':''}${bossWave?'STAGE '+stage+' · BOSS FIGHT':'AUTO-GRINDING · STAGE '+stage+' · WAVE '+inWave+'/5'}</strong><span>${run.phase==='between'?'Next group incoming…':escape(sanctuaryName(run.partner?.form))+' · HP '+Math.max(0,run.partner?.hp||0)+'/'+Math.max(1,run.partner?.maxHp||1)}</span><small>${soloPve?'Local practice · ':''}${run.enemies?.filter(e=>e.hp>0).length||0} ${bossWave?'boss':'bots'} remaining</small><small class="battle-loot">◈ ${run.earned?.coins||0} petgold${run.earned?.dropCoins?` (${run.earned.dropCoins} bonus)`:''} · 🥚 ${run.earned?.eggs||0} Digi-Eggs${run.earned?.gear?` · ⚙ ${run.earned.gear} gear`:''}</small>${partyLine}<button type="button" data-battle-stop="pve">Stop grinding</button></div>`}
+  const title=raid?'☠ BOSS RAID':bossWave?'STAGE '+stage+' · BOSS FIGHT':'AUTO-GRINDING · STAGE '+stage+' · WAVE '+inWave+'/5';
+  html=`<div class="sanctuary-battle-hud-card${bossWave||raid?' is-boss':''}"><strong>⚔ ${soloPve?'SOLO · ':''}${run.party?'PARTY · ':''}${title}</strong><span>${run.phase==='between'?'Next group incoming…':escape(sanctuaryName(run.partner?.form))+' · HP '+Math.max(0,run.partner?.hp||0)+'/'+Math.max(1,run.partner?.maxHp||1)}</span>${battleMechLine(run,G)}<small>${soloPve?'Local practice · ':''}${run.enemies?.filter(e=>e.hp>0).length||0} ${bossWave||raid?'boss':'bots'} remaining</small><small class="battle-loot">◈ ${run.earned?.coins||0} petgold${run.earned?.dropCoins?` (${run.earned.dropCoins} bonus)`:''} · 🥚 ${run.earned?.eggs||0} Digi-Eggs${run.earned?.gear?` · ⚙ ${run.earned.gear} gear`:''}</small>${partyLine}<button type="button" data-battle-stop="pve">${raid?'Forfeit raid':'Stop grinding'}</button></div>`}
  else if(match&&['countdown','fighting'].includes(match.phase)){key='pvp:'+match.id+':'+match.phase;html=`<div class="sanctuary-battle-hud-card"><strong>⚔ RING MATCH</strong><span>${match.phase==='countdown'?'Both trainers accepted.':'Auto-battle in progress.'}</span><small>Server-settled · no manual attacks</small><button type="button" data-battle-stop="pvp">${match.phase==='fighting'?'Forfeit match':'Cancel match'}</button></div>`}
  else if(waiting){key='queue:'+waiting.id;html=`<div class="sanctuary-battle-hud-card"><strong>⚔ WAITING FOR OPPONENT</strong><span>Standing by the ${waiting.side==='left'?'left':'right'} side of the ring.</span><small>Someone must stand on the other side to start the match</small><button type="button" data-battle-stop="pvp">Leave queue</button></div>`}
  battleHUD.hidden=!html;if(html&&battleHUD.dataset.key!==key){battleHUD.dataset.key=key;battleHUD.innerHTML=html}if(!html)battleHUD.dataset.key='';
@@ -1655,13 +1683,13 @@ function sanctuaryRenderAux(){
   // requirements could never look satisfied — the tree now reflects the true partner.
   const line=partnerLine(),data=G.normalize(partnerData(),line),cur=data?.partners?.[line],req=cur?G.requirements(cur,line):null,form=cur?.form||line,graph=G.evolutionCatalog();
   const incoming=graph.incoming.get(form)||[],outgoing=graph.outgoing.get(form)||[],stage=G.entry(form)?.stage||'Stage not listed';
-  const evoCopy=req?`Evolve: reach ${req.points} training points and ${req.wins} battle wins, then roll one of ${req.options.length} branches — pool shown below. You keep level, training and wins. · ${G.total(cur)}/${req.points} pts · ${cur.wins}/${req.wins} wins.`:(cur&&cur.stage>=G.MAX_EVOLUTIONS?'Max evolutions reached.':'No direct evolution available — special/fusion paths not enabled.');
+  const evoCopy=req?`Evolve: reach ${req.points} training points and partner level ${req.level}, then roll one of ${req.options.length} branches — pool shown below. You keep level, training and wins. · ${G.total(cur)}/${req.points} pts · Lv ${G.level(cur)}/${req.level}.`:(cur&&cur.stage>=G.MAX_EVOLUTIONS?'Max evolutions reached.':'No direct evolution available — special/fusion paths not enabled.');
   const confirm=sanctuaryEvolveConfirm?.line===line&&req?.ready&&!cur?.training;
   const faceStyle=id=>{const idx=G.ROSTER.indexOf(id);return idx<0?'':` style="--portrait-x:${-(idx%20)*64}px;--portrait-y:${-Math.floor(idx/20)*64}px"`};
   const nodeChip=(id,isCurrent)=>`<${isCurrent?'span':'button type="button" data-digidex-form="'+escape(id)+'" title="Inspect '+escape(G.name(id))+' in the DigiDex"'} class="sanctuary-node${isCurrent?' is-current':''}"${isCurrent?' aria-current="step"':''}><i class="sanctuary-node-face"${faceStyle(id)} aria-hidden="true"></i><span class="sanctuary-node-text"><b>${escape(G.name(id))}</b><small>${escape(G.entry(id)?.stage||'')}${isCurrent?' · current form':''}</small></span></${isCurrent?'span':'button'}>`;
   const treeRow=(label,ids,emptyText)=>`<div class="sanctuary-tree-row"><small>${label}</small><div class="sanctuary-tree-cells">${ids.length?ids.map(id=>nodeChip(id,false)).join(''):`<span class="sanctuary-node is-empty"><span class="sanctuary-node-text"><b>${emptyText}</b></span></span>`}</div></div>`;
   const tree=treeRow('EVOLVES FROM',incoming,'Baby egg pool')+'<div class="sanctuary-tree-trunk" aria-hidden="true"></div><div class="sanctuary-tree-row"><div class="sanctuary-tree-cells">'+nodeChip(form,true)+'</div></div><div class="sanctuary-tree-trunk" aria-hidden="true"></div>'+treeRow('EVOLVES TO · '+outgoing.length,outgoing,'Final form in the current catalog');
-  shopBox.innerHTML=!bag?'<div class="sanctuary-empty">This pet bag uses a newer save version and has not been changed.</div>':!cur?'<div class="sanctuary-empty">Hatch a Digi-Egg and choose a partner to preview its evolution tree.</div>':`<section class="sanctuary-section sanctuary-evolution"><div class="sanctuary-section-head"><div><small>EVOLUTION GUIDE</small><h3>${escape(sanctuaryName(form))} · ${escape(stage)}</h3></div><span class="sanctuary-level">${outgoing.length} branches · Mastery ${cur?.mastery||0}</span></div><div class="sanctuary-tree">${tree}</div><p class="sanctuary-tree-note">The branch you get is rolled when you evolve — every listed branch stays a direct possibility. Select a form to inspect it in the DigiDex.</p>${!req&&!confirm?'<p class="sanctuary-tree-note">No direct source-listed evolution is available from this form. Special, fusion and missing-profile paths are not invented.</p>':''}${req?`<div class="sanctuary-req"><div class="sanctuary-req-stat"><span>Training points</span><b>${G.total(cur)}/${req.points}</b><div class="sanctuary-req-bar"><i style="width:${Math.min(100,G.total(cur)/req.points*100)}%"></i></div></div><div class="sanctuary-req-stat"><span>Battle wins</span><b>${cur.wins}/${req.wins}</b><div class="sanctuary-req-bar"><i style="width:${Math.min(100,cur.wins/Math.max(1,req.wins)*100)}%"></i></div></div></div>`:''}${req&&req.options.length?`<p class="sanctuary-roll-pool">Possible: ${req.options.map(id=>escape(sanctuaryName(id))).join(' · ')}</p>`:''}<div class="sanctuary-actions">${confirm?`<button type="button" data-sanctuary-action="evolve">Evolve now — roll</button><button type="button" data-sanctuary-action="cancelEvolution">Cancel</button>`:req?`<button type="button" data-sanctuary-action="requestEvolution" ${!req.ready||cur?.training?'disabled':''}>Evolve</button>`:'<button type="button" disabled>No direct evolution</button>'}<button type="button" data-open-digidex>Browse DigiDex</button></div></section>`;
+  shopBox.innerHTML=!bag?'<div class="sanctuary-empty">This pet bag uses a newer save version and has not been changed.</div>':!cur?'<div class="sanctuary-empty">Hatch a Digi-Egg and choose a partner to preview its evolution tree.</div>':`<section class="sanctuary-section sanctuary-evolution"><div class="sanctuary-section-head"><div><small>EVOLUTION GUIDE</small><h3>${escape(sanctuaryName(form))} · ${escape(stage)}</h3></div><span class="sanctuary-level">${outgoing.length} branches · Mastery ${cur?.mastery||0}</span></div><div class="sanctuary-tree">${tree}</div><p class="sanctuary-tree-note">The branch you get is rolled when you evolve — every listed branch stays a direct possibility. Select a form to inspect it in the DigiDex.</p>${!req&&!confirm?'<p class="sanctuary-tree-note">No direct source-listed evolution is available from this form. Special, fusion and missing-profile paths are not invented.</p>':''}${req?`<div class="sanctuary-req"><div class="sanctuary-req-stat"><span>Training points</span><b>${G.total(cur)}/${req.points}</b><div class="sanctuary-req-bar"><i style="width:${Math.min(100,G.total(cur)/req.points*100)}%"></i></div></div><div class="sanctuary-req-stat"><span>Partner level</span><b>${G.level(cur)}/${req.level}</b><div class="sanctuary-req-bar"><i style="width:${Math.min(100,G.level(cur)/Math.max(1,req.level)*100)}%"></i></div></div></div>`:''}${req&&req.options.length?`<p class="sanctuary-roll-pool">Possible: ${req.options.map(id=>escape(sanctuaryName(id))).join(' · ')}</p>`:''}<div class="sanctuary-actions">${confirm?`<button type="button" data-sanctuary-action="evolve">Evolve now — roll</button><button type="button" data-sanctuary-action="cancelEvolution">Cancel</button>`:req?`<button type="button" data-sanctuary-action="requestEvolution" ${!req.ready||cur?.training?'disabled':''}>Evolve</button>`:'<button type="button" disabled>No direct evolution</button>'}<button type="button" data-open-digidex>Browse DigiDex</button></div></section>`;
  }
  const masteryBox=$id('sanctuaryMasteryView');
  if(masteryBox){
@@ -1810,7 +1838,7 @@ function renderPartyPanel(){
     const candidates=partyCandidates();
     html+='<div class="social-party-invite"><select id="socialPartyInvitee" aria-label="Choose a trainer to invite">'+(candidates.length?candidates.map(p=>'<option value="'+p.id+'">'+escape(p.name)+'</option>').join(''):'<option value="">No trainers free to invite</option>')+'</select><button type="button" id="socialPartyInviteBtn" class="social-party-start">Invite</button></div>';
    }else if(party.members.length<3)html+='<div class="social-party-note">The leader can invite one more trainer.</div>';
-   if(isLeader)html+='<button type="button" id="socialPartyStartBtn" class="social-party-start">⚔ Start party grind</button><div class="social-party-note">Everyone must stand still in the middle DigiPet farm field. All partners fight in one shared run with bigger bot groups.</div>';
+   if(isLeader)html+='<button type="button" id="socialPartyStartBtn" class="social-party-start">⚔ Start party grind</button><button type="button" id="socialPartyBossBtn" class="social-party-start is-boss">☠ Party boss raid</button><div class="social-party-note">Everyone must stand still in the middle DigiPet farm field. A grind sends a bigger bot group; a boss raid puts the whole party against one boss with charges, a shield phase, enrage and backup adds.</div>';
    html+='<button type="button" id="socialPartyLeaveBtn" class="social-party-leave">Leave party</button>';
   }else{
    html+='<div class="social-party-note">No party yet. Invite a trainer to form one - you become the leader and can start the shared grind.</div>';
@@ -1835,7 +1863,9 @@ function renderPartyPanel(){
  const inviteBtn=$id('socialPartyInviteBtn');
  if(inviteBtn)inviteBtn.onclick=()=>{const sel=$id('socialPartyInvitee');if(!sel||!sel.value)return;send({type:'party_invite',targetId:Number(sel.value)});worldNotice('Party invite sent.')};
  const startBtn=$id('socialPartyStartBtn');
- if(startBtn)startBtn.onclick=()=>{partySendProfile();send({type:'party_start'})};
+ if(startBtn)startBtn.onclick=()=>{partySendProfile();send({type:'party_start',mode:'grind'})};
+ const bossBtn=$id('socialPartyBossBtn');
+ if(bossBtn)bossBtn.onclick=()=>{partySendProfile();send({type:'party_start',mode:'boss'})};
  const leaveBtn=$id('socialPartyLeaveBtn');
  if(leaveBtn)leaveBtn.onclick=()=>send({type:'party_leave'});
  const lobbyBtn=$id('socialPartyLobbyBtn');
@@ -2019,11 +2049,33 @@ function leave(){worldNearbyStat='';worldNearby.hidden=true;worldTrainingHUD.hid
 const socialHubBtn=$id('socialHubBtn');if(socialHubBtn)socialHubBtn.onclick=()=>enter();syncHubButton();$id('socialSit').onclick=toggleSit;
 function receive(m){
  if(m.type==='battle'){battleSnapshot(m);return}
- if(m.type==='battle_fx'){app.scene?.battleEvent?.(m);return}
+ if(m.type==='battle_fx'){
+  app.scene?.battleEvent?.(m);
+  // v382: boss mechanics arrive on the presentation channel. Patch the local snapshot so the HUD
+  // tracks HP, the charge and the barrier between authoritative battle snapshots.
+  if(m.kind==='pve'&&m.battleId&&Array.isArray(app.battle?.pve)){
+   const run=app.battle.pve.find(r=>r.id===m.battleId);
+   if(run){
+    let dirty=false;
+    if(m.to){const enemy=(run.enemies||[]).find(e=>e.id===m.to);if(enemy){enemy.hp=Math.max(0,enemy.hp-Math.max(0,Number(m.amount)||0));dirty=true}}
+    if(m.fx){
+     const fx=m.fx;
+     run.mech=run.mech||{slamIn:0,shieldPulses:0,enraged:false,summons:0};
+     if(fx.type==='boss_tell')run.mech.slamIn=Math.max(0,Number(fx.inTicks)||0);
+     else if(fx.type==='boss_slam')run.mech.slamIn=0;
+     else if(fx.type==='boss_enrage')run.mech.enraged=true;
+     else if(fx.type==='boss_shield')run.mech.shieldPulses=fx.on?5:0;
+     else if(fx.type==='boss_summon')run.mech.summons=(run.mech.summons||0)+1;
+     bossFxNotice(fx);dirty=true;
+    }
+    if(dirty)renderBattleHUD();
+   }
+  }
+  return}
  if(m.type==='battle_reward'){receiveBattleReward(m);return}
  if(m.type==='battle_result'){receiveBattleResult(m);return}
  if(m.type==='battle_error'){app.battleIntent=null;battleOffer=null;renderPvpDialog();worldNotice(m.message||'DigiPet battle action failed.');return}
- if(m.type==='pve_end'){app.battleIntent=null;worldNotice(m.reason==='defeat'?'Your partner fainted. Feed it and try grinding again.':m.reason==='exhausted'?'Grinding stopped.':m.reason==='complete'?'Field run complete! A very strong partner.':'Grinding stopped.');renderBattleHUD();renderActivityPanel(true);repeatPveRun();return}
+ if(m.type==='pve_end'){app.battleIntent=null;worldNotice(m.reason==='defeat'?(m.mode==='boss'?'The raid boss won this time. Train up and challenge it again.':'Your partner fainted. Feed it and try grinding again.'):m.reason==='exhausted'?'Grinding stopped.':m.reason==='complete'?(m.mode==='boss'?'Boss raid cleared! Loot paid out.':'Field run complete! A very strong partner.'):'Grinding stopped.');renderBattleHUD();renderActivityPanel(true);repeatPveRun();return}
  if(m.type==='party'){const p=m.party;if(!p||p.members.some(x=>x.id===(app.room?app.id:SOLO_ID))){app.party=p;renderPartyPanel()}return}
  if(m.type==='party_roster'){app.partyRoster=Array.isArray(m.parties)?m.parties:[];return}
  if(m.type==='party_invite'){app.partyInvite=m;worldNotice((m.from?.name||'A trainer')+' invites you to a party - open \u{1F465} Party to answer.');if(!$id('socialPartyPanel').hidden)renderPartyPanel();return}

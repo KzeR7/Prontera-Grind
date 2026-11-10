@@ -10549,3 +10549,38 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   case instead of a bare 403. Spawn chain re-verified end-to-end.
 * **Checks:** build passes; DigiPet/fishing/social suites + full gate results in the PR
   description. Delivery: Pages client + preview tooling only; Social Worker unchanged.
+
+### 2026-11-10 — `haven-v382 level evolutions, boss mechanics + party raids, longer rings`
+
+* **Changed:** evolution gates now ask for the partner's **level**, not battle wins:
+  `30 → 110 → 230 → 480 → 850 → 1250` alongside the old training-point gates. Field
+  waves pay 1-3 XP (measured ~1,300-1,900 XP/hour on the live engine), so a partner goes
+  from fresh to max evolution in roughly three hours of grinding; the stored XP ceiling
+  doubled (level 1,000 → 2,000) so the curve fits, while combat still reads level 100.
+* **Bosses are mechanic fights, not stat-sticks.** Every boss wave telegraphs a slam that
+  lands on every standing partner, shields itself at half health, enrages at a third, and
+  calls same-stage adds at 66% and 33%. Slain bosses take their adds with them. Solo
+  bosses summon one add, parties two.
+* **Boss raids.** The PvE tab has a new ☠ Boss raid button and the Party panel a ☠ Party
+  boss raid button. A raid is one boss whose pool comes from the party's own DPS and whose
+  damage comes from a fighter's HP pool, so it lasts ~45 ticks (~30 s) at every level,
+  pays raid rewards (80+ petgold, 6+ XP, 2 wins, a guaranteed gear piece at the raider's
+  tier) and ends the run when the boss falls. Raids keep a soft sustain pulse instead of
+  wave heals.
+* **Ring PvP lasts longer:** ring health now scales ×6 and ring attack ×1.35, so matches
+  run ~19 rounds instead of ~7. The 120-round decision cap stays the fallback.
+* **Answers for the owner:** mastery is a parallel track on the same gym points — rank n
+  needs 4×n total points (4…24), is never spent, and adds +1.5 attack per rank; dismissing
+  a companion only empties the slot (`assignPartner('')`) — level, XP, wins, mastery,
+  training and gear stay with that line, and it can be re-selected from the DigiPet picker
+  or the DigiDex at any time.
+* **Also:** the GM console keeps its preview-session token in page memory only (the
+  browser-storage rule in `gm_console_sim` is back to green).
+* **Try it:** open DigiPet → PvE, press ☠ Boss raid (or Party → ☠ Party boss raid with a
+  formed party), watch the battle card chips (SLAM countdown, SHIELD, ENRAGED, adds), then
+  evolve a partner from the Partners tab.
+* **Checks:** `digimon_battle_sim` (new boss-mechanic/raid/ring coverage),
+  `digimon_sanctuary_sim` (level gates), `social_ui_sim`, `digimon_sanctuary_ui_sim`,
+  `social_worker_sim.mjs`, `gm_console_sim` and the full gate run are green; the
+  progression fixtures were refreshed for the BUILD hash only (measurements unchanged).
+* **Delivery:** local branch only in this session.

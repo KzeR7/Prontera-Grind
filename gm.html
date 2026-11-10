@@ -190,22 +190,22 @@ let PLAYERS = [], SEL = null, TAB = 'character', CATALOG=null, FISHING_TOOLS=nul
 const say = (m, bad) => { const t = $('toast'); t.textContent = m; t.style.color = bad ? '#ff9d9f' : '#7ddc8a'; t.style.display = 'block'; clearTimeout(say._t); say._t = setTimeout(() => t.style.display = 'none', 4000); };
 // v382 (owner: the console showed "SIGN IN FIRST" inside the embedded preview): the preview
 // runs the game in an iframe and the browser blocks its third-party cookie, so the game signs
-// in through the X-Preview-Session header bridge. The console now speaks the same bridge: the
-// game hands over the token on the URL, we keep it for this tab (sessionStorage) and send the
-// header with every call - the SAME token over the SAME channel the cookie would use, no extra
-// privilege. A standalone tab can also use the inline sign-in form below.
+// in through the X-Preview-Session header bridge. The console speaks the same bridge: the game
+// hands over the token on the URL and we keep it in this page's memory for the tab's lifetime -
+// the SAME token over the SAME channel the cookie would use, no extra privilege and nothing
+// left behind in browser storage. Reopening the console from the game hands it a fresh token; a
+// standalone tab can use the inline sign-in form below.
 let PREVIEW_TOKEN = null;
 try {
   const qs = new URLSearchParams(location.search).get('preview_session') || /[#&]preview_session=([^&]+)/.exec(location.hash)?.[1];
-  if (qs) { PREVIEW_TOKEN = qs; try { sessionStorage.setItem('pg_gm_preview_token', qs); } catch {} 
+  if (qs) { PREVIEW_TOKEN = qs;
     history.replaceState(null, '', location.pathname + location.search.replace(/([?&])preview_session=[^&]*/, '$1').replace(/[?&]$/, '') + location.hash); }
-  else { PREVIEW_TOKEN = sessionStorage.getItem('pg_gm_preview_token'); }
 } catch {}
 const api = async (path, opt) => {
   const o = opt || {}, hdrs = Object.assign({ 'Content-Type': 'application/json' }, PREVIEW_TOKEN ? { 'X-Preview-Session': PREVIEW_TOKEN } : null, o.headers || {});
   const r = await fetch('/api' + path, Object.assign({ credentials: 'same-origin' }, o, { headers: hdrs }));
   const pt = r.headers && typeof r.headers.get === 'function' ? r.headers.get('x-preview-session') : null;
-  if (pt) { PREVIEW_TOKEN = pt; try { sessionStorage.setItem('pg_gm_preview_token', pt); } catch {} }
+  if (pt) PREVIEW_TOKEN = pt;
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.err || ('HTTP ' + r.status));
   return d;

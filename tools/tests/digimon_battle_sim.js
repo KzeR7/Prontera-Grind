@@ -46,7 +46,7 @@ const rewards=B.pvpRewards(match);assert.deepEqual(Object.keys(rewards).sort(),[
 const before=match.winnerId;B.stepPvp(match,70000,()=>.5);assert.equal(match.winnerId,before,'later ticks cannot change a settled winner');
 // Legacy saves keep working: an old fatigue/fullness profile migrates into energy on read.
 const legacy=B.profile({form:'agumon',level:99999,stats:{power:999,guard:-4},fullness:-10,fatigue:1000});
-assert.equal(legacy.level,1000);assert.equal(legacy.stats.power,12);assert.equal(legacy.stats.guard,0);assert.equal(legacy.energy,undefined,'legacy meter fields are dropped on read');
+assert.equal(legacy.level,2000,'v382: the level ceiling doubled with the evolution curve');assert.equal(legacy.stats.power,12);assert.equal(legacy.stats.guard,0);assert.equal(legacy.energy,undefined,'legacy meter fields are dropped on read');
 assert.equal(B.profile({form:'agumon',fullness:60,fatigue:20}).energy,undefined,'no meter is invented for legacy profiles');
 // v355: party runs - up to three partners share one field, field a bigger group, rotate
 // enemy focus, heal together, and only end in defeat when every partner has fainted.
@@ -195,4 +195,47 @@ B.acceptPvp(gearMatch,1,0);B.acceptPvp(gearMatch,2,0);B.finishPvp(gearMatch,1,'k
 const gearRewards=B.pvpRewards(gearMatch);
 assert.equal(gearRewards[1].xp,Math.round((4+B.stageRank('agumon'))*1.25),'the winner\'s +XP% applies');
 assert.equal(gearRewards[2].xp,1,'the loser without gear keeps the base xp');
-console.log('digimon_battle_sim: PASS (per-form stats, meter-free waves, free PvP, 4-slot profiles, stages, bosses, spread ranges, equipment, three-trainer party runs)');
+// v382: bosses are mechanic fights, a raid is one long boss, and ring matches scale health.
+const ticker=run=>{const step=()=>{run.nextAt=Math.min(run.nextAt,0);const out=B.stepPve(run,1e9,()=>.5);return out?out.events:[]};return step};
+{const mechRun=B.createPve({id:'mech-pve',owner:1,room:1,profile:strongProfile,now:0,random:()=>.5});
+ mechRun.wave=4;mechRun.phase='between';mechRun.nextAt=0;
+ let events=B.stepPve(mechRun,1e9,()=>.5).events;
+ assert.equal(mechRun.wave,5);assert(mechRun.enemies[0].boss);assert(mechRun.mech,'a boss wave carries mechanic state');
+ const boss=mechRun.enemies[0];
+ const step=()=>{mechRun.nextAt=0;return B.stepPve(mechRun,1e9,()=>.5)?.events||[]};
+ boss.hp=Math.round(boss.maxHp*.6);events=step();
+ assert(events.some(e=>e.type==='boss_summon'),'a boss calls adds at 66%');assert.equal(mechRun.enemies.length,2,'a solo boss summons one add');
+ boss.hp=Math.round(boss.maxHp*.3);const phaseEvents=events.concat(step());
+ assert(phaseEvents.some(e=>e.type==='boss_shield'&&e.on===true),'a boss shields at half health');
+ assert(phaseEvents.some(e=>e.type==='boss_enrage'),'a boss enrages at a third of its health');
+ let expired=false,defBefore=0;
+ for(let i=0;i<8&&!expired;i++){boss.hp=Math.round(boss.maxHp*.3);defBefore=boss.defense;const stepEvents=step();expired=stepEvents.some(e=>e.type==='boss_shield'&&e.on===false);if(mechRun.phase!=='fighting'){boss.hp=Math.round(boss.maxHp*.3)}}
+ assert(expired,'the shield expires on its own');
+ assert.equal(mechRun.mech.shielded,true);
+ mechRun.pulse=7;boss.hp=boss.maxHp;events=step();
+ assert(events.some(e=>e.type==='boss_tell'),'the boss telegraphs its slam');
+ events=step();events=step();
+ assert(events.some(e=>e.type==='boss_slam'),'the telegraphed slam lands');
+ assert(events.some(e=>e.type==='hit'&&e.slam),'a slam is reported as a slam hit');
+ const snap=B.pveSnapshot(mechRun);assert.equal(snap.mode,'grind');assert(snap.mech,'the snapshot carries mechanic state for the HUD');}
+{const raid=B.createPve({id:'raid-pve',owner:1,room:1,profile:strongProfile,now:0,random:()=>.5,bossMode:true});
+ assert.equal(raid.mode,'boss','a raid opens in boss mode');assert.equal(raid.enemies.length,1);assert(raid.enemies[0].boss);
+ assert.equal(B.isBossWave(raid.wave),false,'the raid boss is not the wave-5 case');
+ assert.equal(B.bossFight(raid),true,'bossFight covers raids');
+ let ticks=0,raidEvents=[];for(let now=0;now<1e7&&raid.phase!=='ended';now+=B.TICK_MS){ticks++;const out=B.stepPve(raid,now,()=>.5);if(out)raidEvents.push(...out.events)}
+ assert.equal(raid.reason,'complete','a raid ends after its single boss');
+ assert(ticks>=20&&ticks<=120,'a raid is a long fight, not a mob wave: '+ticks+' ticks');
+ const raidKinds=new Set(raidEvents.map(e=>e.type));
+ for(const kind of ['boss_tell','boss_slam','boss_shield','boss_enrage','boss_summon'])assert(raidKinds.has(kind),'a raid shows every mechanic: '+kind);
+ assert(raid.earned.gear>=1,'a raid always pays one gear piece');
+ assert(raid.earned.coins>=80+B.stageRank(raid.profile.form)*12,'raid coins beat a stage boss');
+ assert.equal(B.pveSnapshot(raid).mode,'boss');}
+{const pvpScale=B.createPvp({id:'pvp-scale',room:1,now:0,players:[{id:1,name:'A',profile:{form:'agumon',level:5,stats:{power:5,guard:3}}},{id:2,name:'B',profile:{form:'patamon',level:5,stats:{power:5,guard:3}}}]});
+ const preview=B.combatPreview('agumon',{level:5,stats:{power:5,guard:3}}),unit=pvpScale.participants[0].unit;
+ assert.equal(unit.maxHp,Math.round(preview.maxHp*B.PVP_HP_SCALE),'ring health is scaled');
+ assert.equal(unit.attack,Math.round(preview.attack*B.PVP_ATK_SCALE),'ring attack is scaled');
+ assert.ok(B.PVP_HP_SCALE>B.PVP_ATK_SCALE,'ring health outgrows ring attack so fights last');
+ B.acceptPvp(pvpScale,1,0);B.acceptPvp(pvpScale,2,0);B.stepPvp(pvpScale,B.COUNTDOWN_MS,()=>.5);
+ let rounds=0;while(pvpScale.phase==='fighting'&&rounds<200){rounds++;B.stepPvp(pvpScale,pvpScale.nextAt,()=>.5)}
+ assert.equal(pvpScale.phase,'result','a scaled ring match still settles');assert(rounds>=12,'ring matches run longer than a few blows: '+rounds+' rounds');}
+console.log('digimon_battle_sim: PASS (per-form stats, meter-free waves, free PvP, 4-slot profiles, stages, boss mechanics, boss raids, scaled rings, spread ranges, equipment, three-trainer party runs)');

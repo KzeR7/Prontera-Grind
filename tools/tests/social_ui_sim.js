@@ -115,6 +115,13 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   Object.assign(trainer,{x:70,z:64,path:[],sit:false});sceneCallbacks.trainingNearby(trainer);
   assert(!panel.hidden,'standing in the middle field opens the grinding panel');
   assert.equal(w.document.getElementById('sapTitle').textContent,'DigiPet · PvE grind');
+  // v382: the same tab offers a boss raid, and it asks the room for boss mode explicitly.
+  const raidBtn=w.document.querySelector('[data-sap-pve-boss]');
+  assert(raidBtn,'the PvE tab offers a boss raid button');
+  const raidBefore=sent.length;raidBtn.click();
+  const raidStart=sent.slice(raidBefore).find(m=>m.type==='pve_start');
+  assert(raidStart&&raidStart.mode==='boss','the raid asks the room for boss mode');
+  app.battleIntent=null;w.document.getElementById('sanctuaryBattleNearby').hidden=false;
   const repeat=w.document.getElementById('sapRepeat');
   assert.equal(repeat.checked,false,'field runs do not repeat until the player asks');
   repeat.checked=true;repeat.dispatchEvent(new w.Event('change',{bubbles:true}));
@@ -254,7 +261,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   w.S.plazaPartners={gym:0,pve:0};
  }
  w.CLOUD.on=false;w.CLOUD.user=null;app.socket=null;app.connected=false;app.room=0;w.Date.now=realNowGym;
- assert.equal(w.S.pets[0].sp,2,'gym never modifies the Ragnarok pet');w.S.digimonSanctuary.partners.agumon.stats.power=4;w.S.digimonSanctuary.partners.agumon.wins=2;w.document.getElementById('sanctuaryOpen').click();
+ assert.equal(w.S.pets[0].sp,2,'gym never modifies the Ragnarok pet');w.S.digimonSanctuary.partners.agumon.stats.power=4;w.S.digimonSanctuary.partners.agumon.wins=2;w.S.digimonSanctuary.partners.agumon.xp=116;w.document.getElementById('sanctuaryOpen').click();
  w.document.querySelector('[data-sanctuary-action=requestEvolution]').click();assert.equal(w.S.digimonSanctuary.partners.agumon.stage,0);assert.match(w.document.getElementById('sanctuaryEvolutionView').textContent,/Possible: /,'the confirm step lists the rolled pool in the evolution view');
  // v349: the branch is rolled. Pin both randomness sources to the first option (Greymon).
  const realRandom=w.Math.random.bind(w.Math),realGetValues=w.crypto?.getRandomValues?.bind(w.crypto);w.Math.random=()=>0;if(w.crypto?.getRandomValues)w.crypto.getRandomValues=arr=>{arr[0]=0;return arr};

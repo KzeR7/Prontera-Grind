@@ -11,14 +11,22 @@ now+=G.DURATION;let u=G.update(state,now);assert(u.changed);state=u.state;assert
 assert(!G.update(state,now).changed,'completion is idempotent');
 assert.equal(state.partners.gabumon.stats.power,0,'partner lines keep separate progress');
 for(let i=0;i<3;i++){assert(action('agumon','train',{stat:'power'}).ok);now+=G.DURATION;state=G.update(state,now).state}
-assert.equal(G.total(state.partners.agumon),4);assert(action('agumon','mastery').ok);assert.equal(G.species(state,'agumon'),'agumon','mastery retains species');assert(!action('agumon','mastery').ok,'mastery cannot be spammed');assert(!action('agumon','evolve').ok,'wins required');
+assert.equal(G.total(state.partners.agumon),4);assert(action('agumon','mastery').ok);assert.equal(G.species(state,'agumon'),'agumon','mastery retains species');assert(!action('agumon','mastery').ok,'mastery cannot be spammed');// v382: evolution is gated on the partner's level, not battle wins.
+assert(!action('agumon','evolve').ok,'training points alone do not open the first evolution');
+{const gated=JSON.parse(JSON.stringify({v:1,partners:{agumon:{...state.partners.agumon,form:'agumon',stage:0}}}));
+ assert(!G.act(gated,'agumon',{type:'evolve'},now,()=>0).ok,'a low-level partner cannot evolve no matter how many points it has');
+ const levelled=JSON.parse(JSON.stringify(gated));levelled.partners.agumon.xp=116;
+ assert.equal(G.level(levelled.partners.agumon),30,'116 XP is level 30');
+ const opened=G.act(levelled,'agumon',{type:'evolve'},now,()=>0);assert(opened.ok,'level 30 opens the first gate');
+ assert.equal(opened.state.partners.agumon.stage,1);
+ assert(!G.act({...opened.state,partners:{agumon:{...opened.state.partners.agumon,stage:1}}},'agumon',{type:'evolve'},now,()=>0).ok,'the second gate needs level 110');}
 for(let i=0;i<2;i++){assert(action('agumon','startBattle').ok);let n=0;while(state.partners.agumon.battle.status==='active'&&n++<30)assert(action('agumon','battle',{command:'attack'}).ok);assert.equal(state.partners.agumon.battle.status,'win');assert(action('agumon','endBattle').ok)}
 assert.equal(state.partners.agumon.wins,2);
 // v349: evolution branches are rolled, not chosen, but only among source-listed options.
-{const pool=G.requirements(state.partners.agumon,'agumon').options;const seen=new Set();for(let i=0;i<pool.length;i++){const raw=JSON.parse(JSON.stringify({v:1,partners:{agumon:{...state.partners.agumon,form:'agumon',stage:0}}}));const res=G.act(raw,'agumon',{type:'evolve'},now,()=>i/pool.length);assert(res.ok);seen.add(res.state.partners.agumon.form);assert(pool.includes(res.state.partners.agumon.form))}assert.equal(seen.size,pool.length,'every branch is reachable through its roll')}
-const rolled=G.act(JSON.parse(JSON.stringify({v:1,partners:{agumon:{...state.partners.agumon,form:'agumon',stage:0}}})),'agumon',{type:'evolve'},now,()=>0);
+{const pool=G.requirements(state.partners.agumon,'agumon').options;const seen=new Set();for(let i=0;i<pool.length;i++){const raw=JSON.parse(JSON.stringify({v:1,partners:{agumon:{...state.partners.agumon,form:'agumon',stage:0,xp:116}}}));const res=G.act(raw,'agumon',{type:'evolve'},now,()=>i/pool.length);assert(res.ok);seen.add(res.state.partners.agumon.form);assert(pool.includes(res.state.partners.agumon.form))}assert.equal(seen.size,pool.length,'every branch is reachable through its roll')}
+const rolled=G.act(JSON.parse(JSON.stringify({v:1,partners:{agumon:{...state.partners.agumon,form:'agumon',stage:0,xp:116}}})),'agumon',{type:'evolve'},now,()=>0);
 assert(rolled.ok);assert.equal(rolled.state.partners.agumon.form,'greymon','the preferred classic line is the first listed roll');
-assert(!G.act({v:1,partners:{agumon:{...state.partners.agumon,form:'greymon',stage:1}}},'agumon',{type:'evolve'},now).ok,'higher stages have separate gates');
+assert(!G.act({v:1,partners:{agumon:{...state.partners.agumon,form:'greymon',stage:1,xp:116}}},'agumon',{type:'evolve'},now).ok,'higher stages have separate level gates');
 // v349 reroll loop: restarting as an egg clears this line's progress but keeps the collection.
 let reroll=G.normalize({v:1,partners:{agumon:{stage:1,form:'greymon',stats:{power:6,guard:4,agility:2,focus:0},energy:33,wins:9,xp:40,mastery:1}}});
 const restart=G.act(reroll,'agumon',{type:'reset'},now);assert(restart.ok);reroll=restart.state;
@@ -28,7 +36,7 @@ assert(action('agumon','startBattle').ok);assert(action('agumon','battle',{comma
 const before=JSON.stringify({v:99,partners:{agumon:{stage:2}}}),newer=JSON.parse(before);assert(!G.act(newer,'agumon',{type:'feed'},now).ok);assert.equal(JSON.stringify(newer),before);
 assert(!G.act(state,'agumon',{type:'rest'},now).ok,'the removed rest action no longer exists');
 // All lines can evolve only after their explicit stat/win gates; no forced form change.
-for(const line of G.STARTERS){let raw=G.normalize(null),p=raw.partners[line];p.stats.power=12;p.stats.guard=6;p.wins=9;for(let stage=1;stage<=3;stage++){const res=G.act(raw,line,{type:'evolve'},now,()=>0);assert(res.ok);raw=res.state;assert.equal(G.species(raw,line),G.LINES[line][stage])}assert(!G.act(raw,line,{type:'evolve'},now,()=>0).ok)}
+for(const line of G.STARTERS){let raw=G.normalize(null),p=raw.partners[line];p.stats.power=12;p.stats.guard=6;p.xp=916;for(let stage=1;stage<=3;stage++){const res=G.act(raw,line,{type:'evolve'},now,()=>0);assert(res.ok);raw=res.state;assert.equal(G.species(raw,line),G.LINES[line][stage])}assert(!G.act(raw,line,{type:'evolve'},now,()=>0).ok)}
 // Agility has a real defensive effect in the deterministic practice rules.
 let agile=G.normalize(null);agile.partners.patamon.stats.agility=4;agile=G.act(agile,'patamon',{type:'startBattle'},now).state;for(let i=0;i<5;i++)agile=G.act(agile,'patamon',{type:'battle',command:'guard'},now).state;const hp=agile.partners.patamon.battle.hp;agile=G.act(agile,'patamon',{type:'battle',command:'guard'},now).state;assert.equal(agile.partners.patamon.battle.hp,hp,'agility evades every sixth attack at four points');
 const escapedState=G.normalize(null);escapedState.partners.agumon.wins=3;let higher=G.act(escapedState,'agumon',{type:'startBattle'},now);assert.notEqual(higher.state.partners.agumon.battle.opponent,'gabumon','stronger opponents advance beyond beginner forms');
@@ -41,7 +49,7 @@ const legacy=G.act(null,'agumon',{type:'train',stat:'focus'},1000).state;assert(
 assert.equal(G.ROSTER.length,280);assert.equal(G.name('blackwargreymon'),'BlackWarGreymon');
 for(const id of G.ROSTER){const raw=G.normalize(null,id);assert(raw.partners[id],id+' receives independent progress');assert.equal(G.species(raw,id),id);for(const target of G.evolutionOptions(id,id))assert(G.ROSTER.includes(target),id+' evolution target is bundled')}
 assert(G.evolutionOptions('agumon','agumon').includes('greymon'));assert(!G.evolutionOptions('agumon','agumon').includes('bakemon'),'mistake evolution is not an ordinary training path');assert(!G.evolutionOptions('agumon','agumon').includes('wargreymon'),'warp evolution is not an ordinary training path');assert(!G.evolutionOptions('angemon','angemon').includes('shakkoumon'),'fusion evolution is not invented');assert(G.evolutionOptions('agumon_adventure','agumon_adventure').includes('greymon'),'named variant inherits its source base profile');assert.deepEqual(G.evolutionOptions('aegiomon','aegiomon'),[],'unprofiled entry receives no fabricated evolution');
-let modern=G.normalize(null,'renamon');Object.assign(modern.partners.renamon.stats,{power:12,guard:12});modern.partners.renamon.wins=25;
+let modern=G.normalize(null,'renamon');Object.assign(modern.partners.renamon.stats,{power:12,guard:12});modern.partners.renamon.wins=25;modern.partners.renamon.xp=916;
 modern=G.act(modern,'renamon',{type:'evolve'},now,()=>0);assert(modern.ok);modern=modern.state;assert(G.evolutionOptions('renamon','renamon').includes(modern.partners.renamon.form),'the roll lands on a source-listed branch');assert.equal(modern.partners.renamon.stage,1);assert.equal(G.species(modern,'agumon'),'agumon','new line does not alter legacy partner');assert.equal(G.species(G.normalize(modern),'renamon'),modern.partners.renamon.form,'current form survives save normalization');
 let unprofiled=G.normalize(null,'aegiomon');Object.assign(unprofiled.partners.aegiomon.stats,{power:12,guard:12});unprofiled.partners.aegiomon.wins=25;assert.equal(G.requirements(unprofiled.partners.aegiomon,'aegiomon'),null);assert(!G.act(unprofiled,'aegiomon',{type:'evolve'},now,()=>0).ok);const spar=G.act(unprofiled,'aegiomon',{type:'startBattle'},now);assert(spar.ok&&G.ROSTER.includes(spar.state.partners.aegiomon.battle.opponent),'every form can use the casual spar');
 const legacyForm=G.normalize({v:1,partners:{agumon:{stage:2}}});assert.equal(G.species(legacyForm,'agumon'),'metalgreymon','legacy stage-only saves derive their original form');
