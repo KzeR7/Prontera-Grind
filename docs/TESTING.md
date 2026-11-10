@@ -283,6 +283,18 @@ cases, and all three were mutation-checked. The account-side fingerprint lives i
 `docs/CHECK-A-SAVE.md`: a healthy account moves every 10–25 minutes, and a stalled queue is a run of no
 rows at all.
 
+**2026-11-10 (`haven-v383` gate result): 218 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks, the new `mvp_art_crop.py --check` (pixel comparison
+against the owner's reference crops) and every `*_sim.js`, `*_sim.mjs`, `*_smoke.js` ran on
+Node 22.22.3 with `jsdom`/`three`/`ws`/`miniflare`/`sharp` installed. Five suites need
+history the clone does not carry by default - `skill_balance_sim` and `card_star_balance_sim`
+(`d164bd0`), `hosted_launch_stage_sim` (`7511a03c` and the staging pin `adf4f99e`),
+`hosted_scrypt_prepare_sim` and the launch packager - so run `git fetch --unshallow origin`
+and `git fetch origin <sha>` for those before blaming code. The three progression fixtures
+were regenerated with `--reuse-baseline`: every measurement byte-identical, only
+`sourceHash`/`combatHash` moved. `drop_card_sheet_sim --refresh-snapshot` re-pinned the
+worksheet baseline to the new BUILD.
+
 **2026-11-06 (`haven-v327` follow-up): the 428-during-login adopt and the fishing handler.**
 `cloud_sim` grew to 80 checks (a 428 at login must not adopt the older copy — mutation-checked) and
 `social_fishing_sim` pins the Sell-duplicates handler; the BUILD-sensitive suites and the three

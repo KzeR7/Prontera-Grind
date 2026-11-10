@@ -568,9 +568,21 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(mvpFloat&&mvpFloat.visible&&mvpFloat.userData.spId==='mvp_void_maw','the selected MVP has its own visible pond sprite');
  assert.equal(mvpSign.children.length,1,'the warning sign floats above the lake - no posts');
  assert(mvpBoard.position.y>=6,'the floating alert hovers well over the water');
- assert(mvpSprite&&mvpSprite.position.y>2&&Math.abs(mvpFloat.position.x-pond.x)<.01&&Math.abs(mvpFloat.position.z-pond.z)<.01,'the selected MVP gently floats over the pond center');
+ /* v383 (owner: "the mvp fish should be floating around the pond randomly, not one spot"): every
+    spawn surfaces somewhere else, but always inside the water and never under the bridge deck. */
+ const R=w.PGSocialRules,bridge=R.POND_PROPS[0].bridge;
+ const inWater=(x,z)=>R.pondContains(pond,x,z,-.4);
+ assert(mvpSprite&&mvpSprite.position.y>2&&inWater(mvpFloat.position.x,mvpFloat.position.z),'the selected MVP floats inside the pond');
+ assert(Math.abs(mvpFloat.position.z-bridge.z)>bridge.width/2,'the MVP never surfaces underneath the bridge deck');
+ const spots=new Set();
+ for(let i=0;i<18;i++){scene.fishing.setMvp('mvp_void_maw',true);spots.add(mvpFloat.position.x.toFixed(2)+':'+mvpFloat.position.z.toFixed(2));assert(inWater(mvpFloat.position.x,mvpFloat.position.z),'every spawn lands in the water')}
+ assert(spots.size>=6,'the MVP surfaces at random pond positions, not one fixed spot ('+spots.size+' of 18)');
  frame(now+=100);
  assert(mvpSprite.position.y>2.2&&mvpSprite.position.y<2.9,'the MVP sprite bobs slightly above the surface');
+ /* v383 (owner: "the text is mirrored, not mirror from the other side"): the board turns to face
+    the camera, so the printed side - never the mirrored one - is what the player reads. */
+ const cam=scene.camera||null;
+ if(cam&&cam.position){const want=Math.atan2(cam.position.x-mvpBoard.position.x,cam.position.z-mvpBoard.position.z);assert(Math.abs(Math.atan2(Math.sin(mvpBoard.rotation.y-want),Math.cos(mvpBoard.rotation.y-want)))<.02,'the MVP alert board faces the camera instead of showing its mirrored back')}
  assert(mvpSignText.some(text=>/MVP ALERT: VOID MAW/.test(text))&&!mvpSignText.some(text=>/%|hook|catch chance|land chance/i.test(text)),'the alert sign names the MVP without displaying rates');
  // v380: the half-body peek scales with the species' real weight range.
  const voidScale=mvpSprite.scale.x;
@@ -975,7 +987,7 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  // v380 (owner): the live spawn banner is created with the fishing DOM - it used to be read
  // from an index.html node that never existed, so MVP notices never rendered.
  assert(mod.includes("mvpBanner.id='fishingMvpBanner'"),'the live MVP banner is created in ensureDom');
- assert(mod.includes("FISH_ART_VERSION='380'"),'the fish-art cache version is bumped with the redraw');
+ assert(mod.includes("FISH_ART_VERSION='383'"),'the fish-art cache version is bumped with the redraw');
  // v380 (owner: "cropped, HD"): every MVP crop is a real transparent sprite - decode when sharp
  // is installed and require an empty top-left corner plus a real cutout (some transparency).
  (async()=>{

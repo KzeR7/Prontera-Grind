@@ -1308,7 +1308,7 @@ const FISH_ART={
   mvp_crimson_shark:'assets/social/fish/mvp_crimson_shark.png', mvp_gilded_shark:'assets/social/fish/mvp_gilded_shark.png',
   mvp_void_maw:'assets/social/fish/mvp_void_maw.png',
 };
-const FISH_ART_VERSION='380'; // v380: the seven MVP crops are redrawn as transparent chibi sprites
+const FISH_ART_VERSION='383'; // v383: the seven MVPs are crops of the owner's own references (tools/mvp_art_crop.py)
 const FISH_IMG=new Map();
 function preloadFishArt(){
  if(typeof Image!=='function'||typeof document==='undefined'||!document.createElement)return;

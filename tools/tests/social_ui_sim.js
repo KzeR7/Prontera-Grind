@@ -140,6 +140,14 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  Object.assign(trainer,{x:56,z:30,path:[],sit:false});train('power');assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/auto-training/,'a confirmed gym start shows the running session');
  for(const [stat,x,z] of [['power',56,30],['guard',63,21],['agility',75,26],['focus',86,27]]){
   Object.assign(trainer,{x,z,path:[],sit:false});train(stat);assert(!w.document.getElementById('sanctuaryWorldPill').hidden,'the top-right pill is the one visible training indicator');
+  // v383 (owner): the pill is the DigiPet activity meter - main ring plus a thin second ring, and it
+  // opens the activity surface on the tab that matches whatever is running.
+  {const pill=w.document.getElementById('sanctuaryWorldPill');
+   assert(pill.querySelector('.pill-ring')&&pill.querySelector('.pill-ring-alt'),'the pill meters the activity with a ring plus a second ring for a parallel activity');
+   assert(pill.querySelector('.pill-alt'),'the pill carries a second activity line');
+   assert.equal(pill.dataset.tab,'training','a gym session points the pill at the Training tab');
+   assert(/%$/.test(pill.querySelector('.pill-ring').style.getPropertyValue('--progress')),'the training ring shows a live progress value');
+   for(const tab of w.document.querySelectorAll('#sanctuaryActivityPanel [data-sap-tab]'))assert.equal(typeof tab.onclick,'function','every activity tab owns its click handler');}
   gymClock+=w.PGDigimonSanctuary.DURATION;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats[stat],1,'one point per automatic '+stat+' cycle');
   w.document.querySelector('#sanctuaryWorldStatus button[data-action="stop"]').click();gymClock+=30000;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats[stat],1,'stopped session cannot award again');
  }

@@ -10584,3 +10584,46 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   `social_worker_sim.mjs`, `gm_console_sim` and the full gate run are green; the
   progression fixtures were refreshed for the BUILD hash only (measurements unchanged).
 * **Delivery:** local branch only in this session.
+
+### 2026-11-10 — `haven-v383 owner pass: MVP crops, random pond spawns, findable DigiDex, one-tone toolbar`
+
+* **MVP art is your art.** The seven Fishing bosses are now **crops of the references you
+  sent** (`tools/mvp-art-source/`, kept verbatim), cut by `tools/mvp_art_crop.py`
+  instead of the procedural chibi painter that shipped in v380. The tool floods the plate
+  colour in from the borders, drops a white-background drop shadow, keeps the main subject
+  (which is how the Iron Crab sheet loses its smaller sketches), feathers the cut, trims,
+  and upscales to 256 px with Lanczos + unsharp so the 64 px Index cell and the ~256 px pond
+  float both stay crisp. `tools/mvp_sprite_art.py` is retired; `--check` now compares
+  pixels against the crops.
+* **The warning board reads normally.** It used to bake `rotation.y = π` on a `DoubleSide`
+  plane, so the bridge side saw the mirrored back face. It is now a Y-axis billboard that
+  turns to face the camera - the printed face is always the one you read.
+* **The MVP surfaces at random pond positions.** Every spawn picks a fresh point inside the
+  water, clear of the bank and of the bridge deck, instead of the fixed pond centre.
+* **Level auras ride the walking surface.** The sigil used `y = .07` everywhere, so it drew
+  under the arched bridge deck; it now adds `bridgeLift(x, z)` like the avatar's own feet
+  (bridge arch, spectator stands and the ring platform all lift it).
+* **DigiDex is findable.** A typed name searches **every** attainable form; the partner
+  branch view is browse-mode only and pauses while a query is active, so Terriermon is
+  reachable without clearing a scope first. Jumping to a form link clears the scope too.
+* **DigiPet opens on Partners, every time** (no remembered section), and the **duplicate
+  minimise button is gone** - Close is the only exit.
+* **One toolbar treatment.** Every `#socialHubControls` button now uses the DigiPet shell
+  (dark plate, accent trim, accent hover); the green Hold'em gradient is gone.
+* **The activity pill actually meters the DigiPet.** It no longer appears only for gym
+  sessions: it shows for a field grind or a ring bout too, its ring meters whatever is
+  running (gym countdown %, PvE stage %), and a thin outer ring + second line report the
+  parallel activity when training and grinding run at once. Clicking it opens the activity
+  panel on the matching tab. Tabs also answer their own clicks (they were losing taps to the
+  panel's delegated handler / drag gesture) and opening the panel always leaves mini mode.
+* **Mastery answers in numbers.** The Mastery tab now states what a point does (+1.5 attack
+  in every battle: field grind, boss raid, PvP ring; +9 at rank 6), that enemies never have
+  mastery, that points cost 4/8/12/16/20/24 training points and are never spent, and shows
+  the live bonus for the selected partner.
+* **Pet Bag egg card is compact** - the bag grid packs narrow cards instead of stretching the
+  Mystery Digi-Egg across half the panel.
+* **Checks:** `social_fishing_sim` (random in-water spawns, no under-bridge spawn, board
+  faces the camera), `digimon_sanctuary_ui_sim` (search inside a branch, reopen-on-Partners,
+  no minimise control, mastery copy), `social_ui_sim` (pill rings/second line/tab routing),
+  plus the full gate run.
+* **Delivery:** Pages client only; no Worker, function or migration change.
