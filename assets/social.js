@@ -2051,25 +2051,26 @@ function receive(m){
  if(m.type==='battle'){battleSnapshot(m);return}
  if(m.type==='battle_fx'){
   app.scene?.battleEvent?.(m);
-  // v382: boss mechanics arrive on the presentation channel. Patch the local snapshot so the HUD
-  // tracks HP, the charge and the barrier between authoritative battle snapshots.
-  if(m.kind==='pve'&&m.battleId&&Array.isArray(app.battle?.pve)){
-   const run=app.battle.pve.find(r=>r.id===m.battleId);
-   if(run){
-    let dirty=false;
-    if(m.to){const enemy=(run.enemies||[]).find(e=>e.id===m.to);if(enemy){enemy.hp=Math.max(0,enemy.hp-Math.max(0,Number(m.amount)||0));dirty=true}}
-    if(m.fx){
-     const fx=m.fx;
-     run.mech=run.mech||{slamIn:0,shieldPulses:0,enraged:false,summons:0};
-     if(fx.type==='boss_tell')run.mech.slamIn=Math.max(0,Number(fx.inTicks)||0);
-     else if(fx.type==='boss_slam')run.mech.slamIn=0;
-     else if(fx.type==='boss_enrage')run.mech.enraged=true;
-     else if(fx.type==='boss_shield')run.mech.shieldPulses=fx.on?5:0;
-     else if(fx.type==='boss_summon')run.mech.summons=(run.mech.summons||0)+1;
-     bossFxNotice(fx);dirty=true;
-    }
-    if(dirty)renderBattleHUD();
-   }
+  // v382: patch the local snapshot from the strike stream so the HUD tracks enemy HP between
+  // authoritative battle snapshots.
+  if(m.kind==='pve'&&m.battleId&&m.to&&Array.isArray(app.battle?.pve)){
+   const run=app.battle.pve.find(r=>r.id===m.battleId),enemy=run&&(run.enemies||[]).find(e=>e.id===m.to);
+   if(enemy){enemy.hp=Math.max(0,enemy.hp-Math.max(0,Number(m.amount)||0));renderBattleHUD()}
+  }
+  return}
+ if(m.type==='battle_mech'){
+  // v382: the boss's own presentation stream (charge, barrier, enrage, adds). It carries no
+  // authority; the room's snapshots and settlement stay the source of truth.
+  const run=Array.isArray(app.battle?.pve)?app.battle.pve.find(r=>r.id===m.battleId):null;
+  if(run&&m.fx){
+   const fx=m.fx;
+   run.mech=run.mech||{slamIn:0,shieldPulses:0,enraged:false,summons:0};
+   if(fx.type==='boss_tell')run.mech.slamIn=Math.max(0,Number(fx.inTicks)||0);
+   else if(fx.type==='boss_slam')run.mech.slamIn=0;
+   else if(fx.type==='boss_enrage')run.mech.enraged=true;
+   else if(fx.type==='boss_shield')run.mech.shieldPulses=fx.on?5:0;
+   else if(fx.type==='boss_summon')run.mech.summons=(run.mech.summons||0)+1;
+   bossFxNotice(fx);renderBattleHUD();
   }
   return}
  if(m.type==='battle_reward'){receiveBattleReward(m);return}

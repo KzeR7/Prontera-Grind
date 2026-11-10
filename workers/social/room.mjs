@@ -607,9 +607,9 @@ export class SocialRoom {
     // v352: strikes are forwarded as presentation-only FX events. They carry no authority —
     // clients still render from snapshots; older clients simply ignore the message.
     if(event.type==='hit')this.broadcast({type:'battle_fx',kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit},p=>p.room===run.room);
-    // v382: boss mechanics ride the same presentation-only channel as strikes so every client
-    // can show the charge, the barrier and the enrage without a new authoritative message.
-    if(String(event.type).startsWith('boss_'))this.broadcast({type:'battle_fx',kind:'pve',battleId:run.id,fx:event},p=>p.room===run.room);
+    // v382: boss mechanics travel on their own presentation-only message so the strike-FX shape
+    // stays untouched and older clients simply ignore an unknown type.
+    if(String(event.type).startsWith('boss_'))this.broadcast({type:'battle_mech',kind:'pve',battleId:run.id,fx:event},p=>p.room===run.room);
     if(event.type==='end'){
      if(run.party&&Array.isArray(run.members))for(const id of run.members){const member=this.clients.get(id);if(!member)continue;member.pve=null;this.send(member,{type:'pve_end',battleId:run.id,reason:event.reason,mode:run.mode||'grind',earned:{...((run.earnedBy&&run.earnedBy[id])||run.earned)}})}
      else{if(c)this.send(c,{type:'pve_end',battleId:run.id,reason:event.reason,mode:run.mode||'grind',earned:{...run.earned}});if(c)c.pve=null}

@@ -54,6 +54,10 @@ try{
  const fx=c.messages.filter(m=>m.type==='battle_fx');
  assert(fx.length>=3,'strikes stream as FX events over the socket');assert(fx.every(m=>m.kind==='pve'&&typeof m.battleId==='string'&&Number.isInteger(m.amount)&&typeof m.crit==='boolean'),'socket FX events stay presentation-only');
  assert(a.messages.some(m=>m.type==='battle_fx'),'the ring PvP match streamed its FX to participants');
+ // v382: boss mechanics travel on their own presentation-only type, never on the strike stream.
+ const mech=c.messages.filter(m=>m.type==='battle_mech');
+ assert(mech.length>=1,'the boss fight streams its mechanic events');
+ assert(mech.every(m=>m.kind==='pve'&&typeof m.battleId==='string'&&m.fx&&String(m.fx.type).startsWith('boss_')),'mechanic events stay presentation-only and self-describing');
  c.ws.send(JSON.stringify({type:'pve_stop'}));await sleep(300);c.ws.close();
  a.ws.close();b.ws.close();console.log('PASS local workerd Sanctuary battle: two real WebSockets, movement, mutual offers, alarm countdown, automatic combat, strike FX streaming, server-only settlement and a fifth-wave boss');
 }finally{await mf.dispose();fs.rmSync(persist,{recursive:true,force:true})}
