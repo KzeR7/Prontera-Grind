@@ -12,6 +12,9 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
  'assets/digimon/v1/catalog.json','assets/digimon/v1/agumon.png','assets/digimon/v1/gabumon.png','assets/digimon/v1/patamon.png','assets/digimon/v1/palmon.png',
  'assets/digimon/sanctuary/arena-stone.webp','assets/digimon/sanctuary/timber-roof.webp','assets/digimon/sanctuary/walkway-wood.webp','assets/digimon/sanctuary/gym-sand.webp','assets/digimon/sanctuary/gym-plaster.webp',
  'assets/digimon/sanctuary/cc0/woodland-tree.webp','assets/digimon/sanctuary/cc0/medieval_wood.webp','assets/digimon/sanctuary/cc0/rough_pine_door.webp','assets/digimon/sanctuary/cc0/roof_09.webp',
+ // v376: the MVP fish art (fishing v-series) is loaded by social-fishing.js but was missing from the
+// overlay, so the staging package failed closed with "Unpackaged runtime change".
+'assets/social/fish/mvp_abyss_drake.png','assets/social/fish/mvp_azure_drake.png','assets/social/fish/mvp_crimson_shark.png','assets/social/fish/mvp_gilded_shark.png','assets/social/fish/mvp_iron_crab.png','assets/social/fish/mvp_tide_drake.png','assets/social/fish/mvp_void_maw.png',
  // v287: plaza pond fishing module + stylesheet (loaded by index.html alongside the social client).
  'assets/social-fishing.js','assets/social-fishing.css',
  // v372: the v371 gym redesign module is loaded by index.html like any other runtime asset, but

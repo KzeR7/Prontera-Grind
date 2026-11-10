@@ -10432,3 +10432,8 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Known open:** `hosted_launch_stage_sim` still fails. About 570 runtime files changed since the staging package's fixed base (`7511a03`), and its explicit overlay list does not include them, including the Digimon v3 pack and the MVP fish art. Adding them changes what the hosted staging archive contains, so it needs an owner decision; it was not changed here.
 * **Build:** `index.html` `BUILD` and mirrors at `haven-v376`; `assets/social.css?v=376`.
 * Test: `node tools/tests/emote_tray_sim.js`, `social_scene_sim.js`, `publish_sim.js`, `skill_balance_sim.js`.
+
+### 2026-11-10 (hosted staging package) — no build bump
+
+* **Changed:** the seven MVP fish pictures (`assets/social/fish/mvp_*.png`, loaded by the fishing module) are now on the hosted staging package lists in `tools/staging/package_hosted_launch.mjs` and `tools/staging/hosted_launch_stage.mjs`. The package failed closed with "Unpackaged runtime change" without them. No game files, fishing code or art were modified; BUILD stays `haven-v376` because nothing player-visible changed.
+* **Checks:** `hosted_launch_stage_sim` passes. Full local gate: 211 of 211 suites pass.
