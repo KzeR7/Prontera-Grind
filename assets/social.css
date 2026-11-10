@@ -94,6 +94,8 @@ body.social-open #bgmPlayer{display:none!important}
 /* v296: the fishing title is its own line under the name, so wearing one never hides the Hunt title. */
 .social-player-fish-title{display:block;margin-top:1px;color:#9fe3ff;font-size:10.5px;letter-spacing:.2px;text-shadow:0 1px 3px #000,0 0 5px #000}
 .social-player-fish-title[hidden]{display:none}
+.social-player-digi-title{display:block;margin-top:1px;color:#f3e6c8;font-size:10.5px;letter-spacing:.2px;text-shadow:0 1px 3px #000,0 0 5px #000}
+.social-player-digi-title[hidden]{display:none}
 .social-bubble.social-emotion{background:transparent;border:0;box-shadow:none;border-radius:0;padding:0;margin:0;min-width:48px}
 
 #socialCameraPanel{position:absolute;z-index:4;right:16px;top:82px;width:220px;max-width:calc(100% - 32px);padding:12px;background:#213a3bf5;color:#f2ecdb;border:1px solid #c7ccba;border-radius:5px;font:12px/1.5 "Trebuchet MS",sans-serif}
@@ -689,3 +691,23 @@ html.pg-mobile #socialMiniMap{left:auto;right:10px;top:auto;bottom:calc(var(--do
 html.pg-mobile #socialMiniMap canvas{width:36px;height:36px;border-radius:50%}
 html.pg-mobile #socialPokerMini{padding:4px 8px;max-width:calc(100% - 20px);border-radius:12px}
 html.pg-mobile #socialPokerMini .poker-mini-pot{display:none}
+
+/* v373: DigiPet title list (Partners view). Rows carry their rarity colour through --tier and the tier label. */
+.digi-titles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:8px}
+.digi-title{display:grid;gap:3px;padding:8px;border:1px solid var(--tier,#90a5a6);border-radius:6px;background:#10191d}
+.digi-title.is-worn{box-shadow:0 0 0 2px var(--tier,#90a5a6) inset}
+.digi-title.is-locked{opacity:.55}
+.digi-title-tier{font-size:10px;letter-spacing:.6px;text-transform:uppercase}
+.digi-title small{color:#c8c4b2}
+.digi-title button{justify-self:start;margin-top:4px}
+.digi-title-lock{font-size:11px;color:#8a9499}
+
+/* v373 (owner): the DigiPet panel can shrink to one line. Tabs, body and footer hide; the status line and
+   Stop/Open buttons show. #sapMin uses the same header-button look as the close button. */
+#sanctuaryActivityPanel .sap-mini{display:none;align-items:center;gap:8px;padding:9px 10px;color:#e9e2c8;font-size:12px}
+#sanctuaryActivityPanel.is-mini .sap-mini{display:flex}
+#sanctuaryActivityPanel.is-mini .sap-tabs,#sanctuaryActivityPanel.is-mini .sap-body,#sanctuaryActivityPanel.is-mini .sap-foot{display:none}
+#sanctuaryActivityPanel .sap-mini span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sanctuaryActivityPanel .sap-mini button{flex:none;min-height:26px;padding:0 9px;border:1px solid #849b9c66;border-radius:6px;background:#1c2f2a;color:#d8e2d0;cursor:pointer;font-size:11px}
+#sanctuaryActivityPanel .sap-mini button[hidden]{display:none}
+#sapMin{font-size:18px}
