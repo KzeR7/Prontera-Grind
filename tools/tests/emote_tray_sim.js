@@ -15,4 +15,12 @@ for (const [id, cmd] of Object.entries(R.EMOTE_NAMES)) {
 assert.equal(R.EMOTE_BY_CMD.thx, 'ok', '/thx is the Thanks art (id ok)');
 assert.equal(R.EMOTE_BY_CMD.gg, 'gg', '/gg is the evil grin');
 assert.equal(new Set(Object.values(R.EMOTE_NAMES)).size, Object.keys(R.EMOTE_NAMES).length, 'names are unique');
+// v376: the emoji tray sits inside the chat box below the channel tabs (it used to start above them).
+{
+  const css = require('fs').readFileSync(path.join(__dirname, '..', '..', 'assets', 'social.css'), 'utf8');
+  const rule = (css.match(/#socialEmoji\{position:absolute[^}]*\}/) || [''])[0];
+  assert.ok(rule, 'emoji tray rule exists');
+  assert.match(rule, /top:34px/, 'tray starts below the tabs');
+  assert.doesNotMatch(rule, /max-height:210px/, 'tray is not capped so it cannot reach the tabs');
+}
 console.log('emote tray sim: all checks passed');

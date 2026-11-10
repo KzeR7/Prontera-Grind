@@ -51,7 +51,7 @@ body.social-open #hud,body.social-open #afterglowCanvas,body.social-open #mobSpr
 #socialResize:hover::after,#socialResize:focus-visible::after{background:#ffe0a0;width:3px;right:2px}
 #socialResize:hover{border-right:1px solid #ffe0a088}
 #socialResize:focus-visible{outline:1px solid #d8ca93;outline-offset:-2px}
-#socialEmoji{position:absolute;bottom:62px;left:6px;right:6px;max-height:210px;background:#182b32;border:1px solid #90a5a6;box-shadow:0 -4px 16px #0006;border-radius:5px;z-index:2}
+#socialEmoji{position:absolute;top:34px;bottom:62px;left:6px;right:6px;max-height:none;background:#182b32;border:1px solid #90a5a6;box-shadow:0 -4px 16px #0006;border-radius:5px;z-index:2}
 #socialCompose button:disabled,#socialEmoji button:disabled{opacity:.5;cursor:wait}
 #socialSend{min-width:58px}
 /* max-height keeps this wrapper a REAL scroller: as a content-fit box its overflow-y
