@@ -10416,3 +10416,9 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Not done:** the other 23 emotes keep their id labels until checked. Their art does not reliably match the RO descriptions, and the client table in `scriptord3/Ragnarok-Client-Scripts` disagrees with the repo's action numbers for several of them.
 * **Not done:** adding new emotes. The art for the other RO emotes lives in the native `emotion.spr`, which is not in the repo; see the emote notes above.
 * Test: `tools/tests/emote_tray_sim.js`.
+
+### 2026-11-10 (emotes, part 2) — `haven-v375`: every emote named; `/gg` sends
+
+* **All 32 emotes now have an RO command** (`EMOTE_NAMES` in `assets/social-rules.js`). The first nine were matched to the RO descriptions; the other 23 were matched by eye, so treat these as best guesses until someone checks them in-game: `anger`=`/an`, `blush`=`/shy`, `dead`=`/desp`, `dots`=`/...`, `drool`=`/rice`, `heart`=`/lv`, `hmm`=`/swt2`, `kiss`=`/kis2`, `kissheart`=`/kis`, `love`=`/lv2`, `meh`=`/meh`, `money`=`/$`, `music`=`/ho`, `panic`=`/panic`, `paper`=`/bo`, `question`=`/?`, `rock`=`/bawi`, `scissors`=`/gawi`, `shy`=`/hum`, `sleep`=`/yawn`, `smile`=`/ok`, `sweat`=`/swt`, `think`=`/hmm`.
+* **Typed commands:** `/gg` (and every other RO name) sends the emote on the current channel and the room echoes it, so the sender sees it too. An id with an RO name is no longer typeable as its id (`/ok` is not the Thanks art; `/thx` is).
+* **Test:** `social_ui_sim` checks that `/gg` is sent as an emotion on Local.

@@ -10,10 +10,9 @@ if(!DATA)throw Error('Digimon roster data must load before social rules');
 // LIMIT is retained for legacy callers; east and west are now intentionally asymmetric.
 const LIMIT=74,MIN_X=-74,MAX_X=102,MIN_Z=-74,MAX_Z=126,SPEED=5,MIN_SPEED=2,MAX_SPEED=13,CAPACITY=20,CHAT_DELAY=3000;
 const EMOTIONS=['surprise','question','music','heart','love','sweat','idea','anger','cloud','money','dots','rock','scissors','paper','kiss','ok','dead','sorry','laugh','smile','cry','shy','kissheart','think','hmm','blush','drool','meh','panic','sleep','mail','gg'];
-// v374: RO command names for the emotes whose art was checked against the RO description. Only these get a
-// /command label or a typed shortcut; the other ids keep their id name until they are checked. Ids are stable:
-// saved chat backlog refers to them, so a label change never renames an id.
-const EMOTE_NAMES={surprise:'!',gg:'gg',ok:'thx',sorry:'sry',cry:'sob',cloud:'ag',idea:'ic',laugh:'heh',mail:'mail'};
+// v374: RO command name for every emote id. The art was matched to the RO description by eye (best guesses are
+// listed in UPDATE-LOG). Ids are stable: saved chat backlog refers to them, so a label change never renames an id.
+const EMOTE_NAMES={surprise:'!',gg:'gg',ok:'thx',sorry:'sry',cry:'sob',cloud:'ag',idea:'ic',laugh:'heh',mail:'mail',anger:'an',blush:'shy',dead:'desp',dots:'...',drool:'rice',heart:'lv',hmm:'swt2',kiss:'kis2',kissheart:'kis',love:'lv2',meh:'meh',money:'$',music:'ho',panic:'panic',paper:'bo',question:'?',rock:'bawi',scissors:'gawi',shy:'hum',sleep:'yawn',smile:'ok',sweat:'swt',think:'hmm'};
 const EMOTE_BY_CMD=Object.fromEntries(Object.entries(EMOTE_NAMES).map(([id,c])=>[c,id]));
 // v374: painted size of each emote (tools/social/emote-layout.py). Each one is drawn at the same visual size in the
 // tray and in chat, so a small emote is not dwarfed by a big one. Presentation only.
