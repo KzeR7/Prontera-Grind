@@ -1484,7 +1484,11 @@ void main(){
    mvpSignCtx=mvpSignCanvas.getContext('2d');
    mvpSignTex=new T.CanvasTexture(mvpSignCanvas);
    const board=new T.Mesh(new T.PlaneGeometry(9.2,2.3),new T.MeshBasicMaterial({map:mvpSignTex,transparent:true,side:T.DoubleSide,depthWrite:false}));
-   board.userData.socialMvpSignBoard=true;board.position.set(sx,6.4,sz);board.rotation.y=Math.PI;
+   /* v383 (owner: "the text is mirrored, not mirror from the other side"): a baked yaw meant the
+      DoubleSide plane showed its back face - the mirrored one - to whoever stood on the bridge.
+      The board is now a Y billboard (see updateMvpFloat), so the printed face always looks at the
+      camera and the alert reads correctly from every bank. */
+   board.userData.socialMvpSignBoard=true;board.position.set(sx,6.4,sz);
    group.add(board);
    group.visible=false;scene.add(group);
    mvpSign={group,canvas:mvpSignCanvas,ctx:mvpSignCtx,tex:mvpSignTex,board,sx,sz};
@@ -1562,9 +1566,26 @@ void main(){
     return {canvas:c,scale:k};
    }catch{return {canvas:art,scale:k}}
   }
+  /* v383 (owner: "the mvp fish should be floating around the pond randomly, not one spot"): each
+     spawn picks a fresh point inside the water, away from the bank and clear of the bridge deck,
+     so the boss surfaces somewhere different every time. */
+  function mvpPondSpot(){
+   const p=(pondViews[0]&&pondViews[0].p)||R.PONDS[0];
+   const bridge=R.POND_PROPS&&R.POND_PROPS[0]&&R.POND_PROPS[0].bridge;
+   for(let i=0;i<32;i++){
+    const a=Math.random()*Math.PI*2,reach=Math.sqrt(Math.random())*.72;
+    const x=p.x+Math.cos(a)*p.w/2*reach,z=p.z+Math.sin(a)*p.d/2*reach;
+    if(!R.pondContains(p,x,z,-1.6))continue;
+    if(bridge&&Math.abs(z-bridge.z)<bridge.width/2+2.4&&Math.abs(x-bridge.x)<bridge.span/2)continue;
+    return {x,z};
+   }
+   return {x:p.x,z:p.z};
+  }
   function setMvpFloat(spId,on){
    const m=ensureMvpFloat();if(!m)return;
    if(!on){m.group.visible=false;m.group.userData.spId=null;return}
+   const spot=mvpPondSpot();
+   m.group.position.set(spot.x,0,spot.z);m.group.userData.spot=spot;
    const peek=mvpPeekCanvas(spId);
    const tex=new T.CanvasTexture(peek.canvas);
    if(m.texture)m.texture.dispose();
@@ -1583,7 +1604,13 @@ void main(){
    m.ring.material.opacity=.5+.12*Math.sin(now/470);
    // v380: the floating warning sign above the lake breathes with the same pulse.
    const sign=ensureMvpSign();
-   if(sign&&sign.group.visible)sign.board.position.y=6.4+pulse*.12;
+   if(sign&&sign.group.visible){
+    sign.board.position.y=6.4+pulse*.12;
+    if(typeof camera==='object'&&camera&&camera.position){
+     const dx=camera.position.x-sign.board.position.x,dz=camera.position.z-sign.board.position.z;
+     if(dx*dx+dz*dz>1e-4)sign.board.rotation.y=Math.atan2(dx,dz);
+    }
+   }
   }
   let mvpActiveSign=null,mvpSignTimer=0;
   function setMvpSign(spId,on){
@@ -1944,7 +1971,7 @@ void main(){
  // is the same object and animation here. Textures are private to one player and freed on leave.
  function auraTier(lv){return typeof LEVEL_AURAS==='undefined'?null:LEVEL_AURAS.filter(a=>lv>=a.at).at(-1)||null}
  function syncAura(p){const tier=auraTier(Math.max(0,Math.floor(Number(p.state.look?.lv)||0))),tierAt=tier?tier.at:0;if(p.auraTier===tierAt)return;p.auraTier=tierAt;if(p.aura){scene.remove(p.aura);disposeAura(p.aura);p.aura=null}if(!tier||typeof buildLevelAura!=='function')return;p.aura=buildLevelAura(tier);scene.add(p.aura)}
- function animateAura(p,now,x,z){const aura=p.aura;if(!aura)return;const seconds=now/1000;aura.position.set(x,.07,z);aura.scale.setScalar(1.18*(1+Math.sin(seconds*2)*.025));aura.children.forEach((layer,i)=>{if(!layer.material)return;layer.rotation.y=(seconds*(i?-.3:.22))%(Math.PI*2);layer.material.opacity=.8+Math.sin(seconds*2+i)*.12;if(layer.children[0]?.material)layer.children[0].material.opacity=.85+Math.sin(seconds*2+i)*.1});const data=aura.userData;if(data.floor)data.floor.material.opacity=.4+Math.sin(seconds*1.7)*.07;if(data.veil)data.veil.material.opacity=.2+Math.sin(seconds*1.7)*.035;const motes=data.motes;if(motes){const positions=motes.geometry.attributes.position,colors=motes.geometry.attributes.color;for(let i=0;i<positions.count;i++){const phase=(seconds*.23+i/positions.count)%1,angle=i*2.399+seconds*.24,radius=.55+Math.sin(i*1.7)*.25,fade=Math.sin(phase*Math.PI);positions.setXYZ(i,Math.cos(angle)*radius,phase*1.6,Math.sin(angle)*radius);colors.setXYZ(i,fade,fade,fade)}positions.needsUpdate=colors.needsUpdate=true}}
+ function animateAura(p,now,x,z){const aura=p.aura;if(!aura)return;const seconds=now/1000;aura.position.set(x,.07+bridgeLift(x,z),z);aura.scale.setScalar(1.18*(1+Math.sin(seconds*2)*.025));aura.children.forEach((layer,i)=>{if(!layer.material)return;layer.rotation.y=(seconds*(i?-.3:.22))%(Math.PI*2);layer.material.opacity=.8+Math.sin(seconds*2+i)*.12;if(layer.children[0]?.material)layer.children[0].material.opacity=.85+Math.sin(seconds*2+i)*.1});const data=aura.userData;if(data.floor)data.floor.material.opacity=.4+Math.sin(seconds*1.7)*.07;if(data.veil)data.veil.material.opacity=.2+Math.sin(seconds*1.7)*.035;const motes=data.motes;if(motes){const positions=motes.geometry.attributes.position,colors=motes.geometry.attributes.color;for(let i=0;i<positions.count;i++){const phase=(seconds*.23+i/positions.count)%1,angle=i*2.399+seconds*.24,radius=.55+Math.sin(i*1.7)*.25,fade=Math.sin(phase*Math.PI);positions.setXYZ(i,Math.cos(angle)*radius,phase*1.6,Math.sin(angle)*radius);colors.setXYZ(i,fade,fade,fade)}positions.needsUpdate=colors.needsUpdate=true}}
  function removePlayer(id){const p=players.get(id);if(!p)return;if(p.digimon){scene.remove(p.digimon.sprite);p.digimon.sprite.material.dispose();p.digimon.texture.dispose();p.digimon=null;}try{fishingApi.api.setRig(id,{on:false})}catch{}for(const s of stores)s.release('social-'+id);if(p.aura){scene.remove(p.aura);disposeAura(p.aura)}scene.remove(p.sprite);p.sprite.material.dispose();p.texture.dispose();p.label.remove();p.bubble.remove();players.delete(id)}
  function loadLooks(p,now){
   if(p.loading||now<p.retryAt)return;

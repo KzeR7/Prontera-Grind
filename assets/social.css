@@ -1071,3 +1071,33 @@ svg.ad-toolbar-art{width:22px;height:22px;vertical-align:middle;margin-right:5px
 .sanctuary-battle-hud-card .battle-mech .mech-shield{border-color:#7fb8ff88;color:#bcd9ff}
 .sanctuary-battle-hud-card .battle-mech .mech-enrage{border-color:#ff5a5a99;color:#ffb3b3}
 .sanctuary-battle-hud-card .battle-mech .mech-add{border-color:#c9a3ff88;color:#dcc9ff}
+
+/* --- v383: owner colour pass on the plaza toolbar, the activity pill and the Pet Bag ---------- */
+/* Owner: "the top buttons are not colour-aligned - hold'em is green, the rest are plain black.
+   Make them all match the digipet button." One treatment for every toolbar button: the dark
+   accent-trimmed DigiPet shell, with the accent hover shared by all of them. */
+#socialHubControls button{background:linear-gradient(#2b3438,#1b2429)!important;border-color:rgba(var(--ad-rgb),.35)!important;color:var(--ad-accent)!important;box-shadow:inset 0 -2px var(--ad-accent),0 0 12px rgba(var(--ad-rgb),.07)!important}
+#socialHubControls button:hover,#socialHubControls button:focus-visible{color:#fff!important;border-color:rgba(var(--ad-rgb),.62)!important;background:linear-gradient(#333d43,#232d33)!important}
+#socialHubControls #socialPokerBtn.is-turn-blink{animation:pokerAlertBlink .75s infinite alternate!important}
+/* The pill is the DigiPet activity meter: main ring = the activity in front, thin outer ring = the
+   second one when training and grinding run in parallel. */
+#sanctuaryWorldPill .pill-text{max-width:186px}
+#sanctuaryWorldPill .pill-alt{display:block;color:#8c9aa6;font-size:8.5px;font-style:normal;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sanctuaryWorldPill .pill-alt[hidden]{display:none}
+#sanctuaryWorldPill .pill-ring-alt{position:absolute;right:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;background:conic-gradient(#79e0c4 calc(var(--progress,0%)*.78),#101720 0 78%,transparent 78%)}
+#sanctuaryWorldPill .pill-ring-alt::after{inset:2.5px}
+#sanctuaryWorldPill .pill-ring-alt[hidden]{display:none}
+#sanctuaryWorldPill{overflow:visible}
+/* Tabs get their own stacking context so nothing overlays a tap. */
+.sap-tabs{position:relative;z-index:3}
+.sap-tabs button{position:relative;pointer-events:auto;z-index:1}
+/* Owner: "the mystery digi egg card is too big, it only has hatch and buy." The bag grid now packs
+   narrow cards instead of stretching one item across half the panel. */
+.sanctuary-bag .sanctuary-item-grid{grid-template-columns:repeat(auto-fill,minmax(190px,232px));justify-content:start;gap:10px}
+.sanctuary-bag .sanctuary-item{padding:11px 12px;min-height:0}
+.sanctuary-bag .sanctuary-item-icon{font-size:21px}
+.sanctuary-bag .sanctuary-item strong{margin-top:5px;font-size:14px}
+.sanctuary-bag .sanctuary-item>b{font-size:12px}
+.sanctuary-bag .sanctuary-item small{margin:4px 0 8px;font-size:9.5px}
+.sanctuary-bag .sanctuary-item button{padding:6px 7px;font-size:10px}
+.sanctuary-mastery-now{margin-top:8px;padding:6px 9px;border:1px solid rgba(var(--ad-rgb),.28);border-radius:6px;background:#00000033;color:var(--ad-accent);font-size:10.5px}

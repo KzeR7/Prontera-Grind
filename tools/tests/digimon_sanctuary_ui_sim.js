@@ -34,6 +34,32 @@ nav('partners');d.querySelector('[data-open-digidex]').click();assert(!d.getElem
  for(const card of d.querySelectorAll('[data-index-form]'))assert(family.has(card.dataset.indexForm),'no form outside the family is listed');
  clear.click();assert(clear.hidden,'clearing restores the full guide');assert.equal(d.querySelectorAll('[data-index-form]').length,24);
 }
+// v383 (owner: "digidex not working well, unable to link to the branch - I need to remove zerimon
+// branch to see terriermon"): a typed name searches every attainable form, branch view or not.
+{
+ nav('partners');d.querySelector('[data-open-digidex]').click();
+ const clear=d.getElementById('sanctuaryIndexBranchClear');assert(!clear.hidden,'the browse button still opens the partner branch');
+ const catalog=G.evolutionCatalog(),family=new Set([line,...(catalog.incoming.get(line)||[]),...(catalog.outgoing.get(line)||[])]);
+ const outside=[...catalog.reachable].find(id=>!family.has(id)&&G.STARTER_POOL.includes(id)===false)||[...catalog.reachable].find(id=>!family.has(id));
+ assert(outside,'the roster has an attainable form outside the active partner branch');
+ const search=d.getElementById('sanctuaryIndexSearch');
+ search.value=G.name(outside).toLowerCase();search.dispatchEvent(new w.Event('input'));
+ assert(d.querySelector('[data-index-form="'+outside+'"]'),'a searched form is found without clearing the branch scope');
+ assert.match(d.getElementById('sanctuaryIndexStatus').textContent,/Searching every branch/);
+ search.value='';search.dispatchEvent(new w.Event('input'));
+ assert.equal(d.querySelectorAll('[data-index-form]').length,Math.min(24,family.size),'an empty query returns to the branch view');
+ clear.click();
+}
+// v383: no duplicate minimise control, and reopening DigiPet always lands on the Partners tab.
+assert(!d.getElementById('sanctuaryMin'),'the DigiPet header only offers Close, not a duplicate minimise');
+nav('index');d.getElementById('sanctuaryClose').click();d.getElementById('sanctuaryOpen').click();
+assert(!d.getElementById('sanctuaryPartnersView').hidden&&d.getElementById('sanctuaryIndexView').hidden,'reopening DigiPet lands on Partners');
+// v383: the Mastery tab answers "what does mastery do" in plain numbers.
+nav('mastery');
+const masteryCopy=d.getElementById('sanctuaryMasteryView').textContent;
+assert.match(masteryCopy,/\+1\.5 attack/);assert.match(masteryCopy,/Right now: \+[\d.]+ attack/);
+assert.match(masteryCopy,/never spent/);
+nav('partners');
 nav('partners');
 // v351 gear: the Pet Bag owns the inventory, the Forge spends Pet Coins, and equipping is
 // per partner line through the same DOM the player uses.

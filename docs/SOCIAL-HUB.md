@@ -1248,3 +1248,50 @@ blows (~19 rounds) rather than a burst race; the 120-round decision fallback is 
 Clients patch the mechanic state from the presentation-only `battle_fx` channel
 (`fx.type` `boss_*`), so the battle card can show the charge, the shield, the enrage and
 adds between authoritative snapshots.
+
+## Owner pass: MVP art, pond spawns, aura deck, DigiDex scope, toolbar and the activity meter (haven-v383)
+
+**MVP art is crops, not drawings.** The seven Fishing bosses ship as crops of the owner's
+own reference images. `tools/mvp-art-source/` holds those references verbatim and
+`tools/mvp_art_crop.py` is the only producer of the `assets/social/fish/mvp_*.png` files it
+serves: it floods the plate colour inward from the borders (multi-seed, so a white strip next
+to a dark plate is still background), removes a neutral drop shadow on light plates, keeps the
+largest subject (the Iron Crab concept sheet loses its smaller sketches), feathers the cut,
+trims, square-pads, and upscales to 256 px with Lanczos + unsharp. `--check` compares pixels,
+so a stray hand-edit of the shipped PNGs fails the check. The v380 procedural painter
+(`tools/mvp_sprite_art.py`) is retired and must not be reintroduced.
+
+**Spawn presentation.** The alert board over the pond is a Y-axis billboard: it turns to face
+the camera on every frame, so the printed face is what the player reads from any bank (a baked
+yaw on a `DoubleSide` plane showed the mirrored back face from the bridge). The boss float no
+longer sits at the pond centre: `mvpPondSpot()` draws a fresh point inside `pondContains` with
+a bank margin and rejects anything under the bridge deck, so the MVP surfaces somewhere
+different on every spawn.
+
+**Auras follow the ground.** `animateAura` adds `bridgeLift(x, z)` to its base height, the same
+helper the avatar's feet use, so a level sigil sits on the arched bridge deck, the spectator
+stands and the ring platform instead of being buried under them.
+
+**DigiDex scope.** `sanctuaryIndexBranch` is browse-mode only. A non-empty query clears the
+scope for filtering (the status line says "Searching every branch (branch view paused)"), and
+a route link that jumps to a form clears it as well, so a name is never hidden by the branch
+the panel opened on.
+
+**DigiPet window.** `sanctuaryOpen()` always calls `sanctuarySetView('partners')` (deep links
+such as the shop/evolution guide set their view afterwards), the header has only Close - the
+redundant minimise control is gone - and the Pet Bag egg card uses the narrowed bag grid
+(`minmax(190px, 232px)` columns) rather than stretching across half the panel.
+
+**One toolbar treatment.** Every `#socialHubControls` button renders the DigiPet shell: dark
+plate, `rgba(var(--ad-rgb), .35)` border, accent label and an inset accent underline. The
+legacy green Hold'em gradient and its hover are gone; only the turn-blink animation remains.
+
+**The pill is the activity meter.** `#sanctuaryWorldPill` shows whenever a DigiPet activity
+runs - gym session, field grind, boss raid or ring bout - not just during gym training. The
+main `.pill-ring` meters the activity in front (gym countdown %, PvE stage %), the thin
+`.pill-ring-alt` and the `.pill-alt` line report a parallel activity when training and
+grinding run at once, and the click opens the activity panel on `dataset.tab`
+(`training`/`pve`/`party`). `battleUITick` refreshes it at 500 ms while the panel is closed.
+Each tab button also binds its own `onclick` (calling `stopPropagation`) instead of relying on
+the panel's delegated handler, which could lose a tap to a re-render or the header drag, and
+`openActivityPanel` always leaves mini mode.
