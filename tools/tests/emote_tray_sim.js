@@ -13,7 +13,7 @@ for (const [id, cmd] of Object.entries(R.EMOTE_NAMES)) {
   assert.equal(R.EMOTE_BY_CMD[cmd], id, '/' + cmd + ' resolves to ' + id);
 }
 assert.equal(R.EMOTE_BY_CMD.thx, 'ok', '/thx is the Thanks art (id ok)');
-assert.equal(R.EMOTE_BY_CMD.gg, 'gg', '/gg is the evil grin');
+assert.equal(R.EMOTE_BY_CMD.hz, 'gg', '/hz is the evil grin (v378)');assert.equal(R.EMOTE_BY_CMD.gg, 'shy', '/gg is the shy emote (v378)');
 assert.equal(new Set(Object.values(R.EMOTE_NAMES)).size, Object.keys(R.EMOTE_NAMES).length, 'names are unique');
 // v376: the emoji tray sits inside the chat box below the channel tabs (it used to start above them).
 {

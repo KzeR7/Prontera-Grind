@@ -10459,3 +10459,9 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Balance fixtures** are regenerated for the new build (the BUILD line is inside the hashed combat slice).
 * **Hosted staging package:** the five GM runtime files from `main` (`functions/_lib/gm-systems.js`, `gm-tools.js`, `functions/api/gm/fishing.js`, `log.js`, `player.js`) are on both package lists, like the MVP fish art earlier. `hosted_launch_stage_sim` passes.
 * **Gate:** full local suite, see the PR description for the result.
+
+### 2026-11-10 (emote names from owner list) — `haven-v378`
+
+* **Renamed emotes (`EMOTE_NAMES` in `assets/social-rules.js`).** Owner-confirmed commands: `rock`=`/1`, `scissors`=`/2`, `paper`=`/3`, `kissheart`=`/kf`, `smile`=`/no`, `think`=`/ks`, `hmm`=`/hf`, `blush`=`/ok`, `meh`=`/sh`, `panic`=`/yw`, `shy`=`/gg`, `gg`=`/hz`. Ids are unchanged; saved backlog still refers to them.
+* **Behaviour change:** typed `/gg` now sends the shy emote. The evil grin is `/hz`. Typed `/ok` no longer sends the Thanks art (that is `/thx`).
+* **Tests:** `emote_tray_sim` and `social_ui_sim` updated to the new mapping.
