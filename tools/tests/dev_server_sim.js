@@ -85,6 +85,16 @@ try {
       const cookie = second.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
       const gm = await fetch(host + '/api/gm/players', { headers: { cookie } });
       assert.strictEqual(gm.status, 200, 'the GM API must answer a preview account');
+      const fishing = await fetch(host + '/api/gm/fishing', { headers: { cookie } });
+      assert.strictEqual(fishing.status, 200, 'offline Pages router must expose the authenticated Fishing catalog');
+      const catalog = await fishing.json();assert.equal(catalog.roomCap,50);assert.equal(catalog.mvp.length,7);
+      const spawn = await fetch(host + '/api/gm/fishing', {
+        method:'POST',headers:{cookie,'Content-Type':'application/json'},body:JSON.stringify({room:7,species:'mvp_tide_drake'}),
+      });
+      assert.strictEqual(spawn.status,200,'local private Social binding accepts the authenticated route');
+      const spawned=await spawn.json();assert.equal(spawned.room,7);assert.equal(spawned.sp,'mvp_tide_drake');assert.equal(spawned.label,'Tide Drake');
+      const log=await fetch(host + '/api/gm/log',{headers:{cookie}}).then(r=>r.json());
+      assert.ok(log.events.some(e=>e.kind==='gm-fishing-mvp'&&e.label==='Fishing MVP spawned'),'local spawn is audited');
     } finally { await preview.close(); }
   });
 

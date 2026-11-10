@@ -13,11 +13,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {Social} from '../../workers/social/index.mjs';
 
 // The bundled workerd lags the compatibility date in workers/social/wrangler.toml.
 // Running the Worker under an older date is safe for everything asserted here (a
-// Durable Object binding, its SQLite backend, a WebSocket upgrade and one room
-// message); it is not proof that the deployed date behaves identically. If a newer
+// Durable Object binding, its SQLite backend, a WebSocket upgrade, manual MVP dispatch/alarm
+// routing and room messages); it is not proof that the deployed date behaves identically. If a newer
 // miniflare accepts the real date, this constant is simply no longer reached.
 const LOCAL_RUNTIME_MAX_DATE='2026-08-06';
 
@@ -69,12 +70,37 @@ async function connect(mf,id){
  ws.addEventListener('message',e=>messages.push(JSON.parse(e.data)));
  return {ws,messages};
 }
+async function mvpCommand(mf,body,admin){
+ const ns=await mf.getDurableObjectNamespace('SOCIAL'),stub=ns.get(ns.idFromName('world'));
+ return stub.fetch('https://social/gm/fishing-mvp',{method:'POST',headers:{'Content-Type':'application/json',...(admin?{'X-Social-Admin':JSON.stringify(admin)}:{})},body:JSON.stringify(body)});
+}
+// The DO has one shared alarm. Pin the active-battle branch directly so a manual
+// spawn cannot replace a 250 ms battle tick with its 60-second MVP sweep.
+{
+ const alarmWrites=[],battleSchedules=[],spawned=[];
+ const adminDO=Object.create(Social.prototype);
+ adminDO.ctx={storage:{getAlarm:async()=>null,setAlarm:async at=>alarmWrites.push(at)}};
+ adminDO.room={mvpActive:new Map(),hasActiveBattles:()=>true,spawnMvp:(room,now,species)=>{spawned.push({room,species});return{room,sp:species,id:'mvp:alarm-test',spawnedAt:now,endsAt:now+600000}}};
+ adminDO.battleAlarmWrite=Promise.resolve();adminDO.scheduleBattleAlarm=()=>battleSchedules.push('battle');
+ const result=await adminDO.adminFishingMvp(new Request('https://social/gm/fishing-mvp',{method:'POST',headers:{'Content-Type':'application/json','X-Social-Admin':JSON.stringify({id:9,username:'MvpAdmin',gm:2})},body:JSON.stringify({room:2,species:'mvp_tide_drake'})}));
+ assert.equal(result.status,200);assert.deepEqual(spawned,[{room:2,species:'mvp_tide_drake'}]);
+ assert.deepEqual(battleSchedules,['battle']);assert.deepEqual(alarmWrites,[],'active battle alarm is preserved without a direct 60-second reset');
+}
 let mf=await start();
 try{
  const {ws,messages}=await connect(mf,1);
  await until(messages,m=>m.type==='hello','first hello');
  ws.send(JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));
  const joined=await until(messages,m=>m.type==='room','plaza join');assert.equal(joined.room,1);
+ assert.equal((await mvpCommand(mf,{room:1,species:'mvp_tide_drake'})).status,403,'the private command requires an internal GM identity');
+ assert.equal((await mvpCommand(mf,{room:1,species:'mvp_tide_drake'},{id:8,username:'Player',gm:0})).status,403,'a non-GM identity is refused');
+ const gm={id:9,username:'MvpAdmin',gm:2};
+ assert.equal((await mvpCommand(mf,{room:0,species:'mvp_tide_drake'},gm)).status,400,'rooms outside the plaza bounds are refused');
+ assert.equal((await mvpCommand(mf,{room:1,species:'not_a_fish'},gm)).status,400,'unlisted MVP IDs are refused');
+ const spawnedResponse=await mvpCommand(mf,{room:1,species:'mvp_tide_drake'},gm),spawned=await spawnedResponse.json();
+ assert.equal(spawnedResponse.status,200);assert.equal(spawned.sp,'mvp_tide_drake');assert.equal(spawned.room,1);assert.equal(spawned.endsAt-spawned.spawnedAt,10*60*1000);
+ await until(messages,m=>m.type==='mvp_spawn'&&m.id===spawned.id,'authenticated manual MVP broadcast');
+ assert.equal((await mvpCommand(mf,{room:1,species:'mvp_iron_crab'},gm)).status,409,'a room cannot have two active MVPs');
  ws.send(JSON.stringify({type:'chat',channel:'world',body:'survives a Durable Object restart'}));
  await until(messages,m=>m.type==='message'&&m.body==='survives a Durable Object restart','World echo');
  await new Promise(r=>setTimeout(r,3100));
@@ -128,5 +154,5 @@ try{
  const ackIds=replay.messages.filter(m=>m.type==='poker_ledger').map(m=>m.id);
  replay.ws.send(JSON.stringify({type:'poker_ledger_ack',ids:ackIds}));await new Promise(r=>setTimeout(r,300));replay.ws.close();await mf.dispose();mf=null;
  mf=await start();replay=await connect(mf,winnerId);await until(replay.messages,m=>m.type==='hello','post-ACK hello');await new Promise(r=>setTimeout(r,150));assert(!replay.messages.some(m=>m.type==='poker_ledger'),'ACKed payout is not replayed after restart');replay.ws.close();
- console.log('PASS Cloudflare local runtime: Durable Object binding, WebSocket upgrade, plaza join, World-only backlog and durable acknowledged poker payouts across storage-backed restarts');
+ console.log('PASS Cloudflare local runtime: Durable Object binding, authenticated manual MVP spawn, battle-safe alarms, WebSocket upgrade, plaza join, World-only backlog and durable acknowledged poker payouts across storage-backed restarts');
 }finally{if(mf)await mf.dispose();fs.rmSync(persist,{recursive:true,force:true})}

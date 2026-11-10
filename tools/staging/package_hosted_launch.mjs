@@ -36,6 +36,9 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
  'functions/api/shop/checkout.js','functions/api/gm/damage.js',
  // v325: the GM console's Cash Shop tab gained the one-button grant-all action, so the GM shop
  // endpoint is a runtime change this candidate contains - it ships with the package.
+ // v377: GM Fishing/DigiPet tools from main (PR #200) are runtime functions; without them in the overlay the
+// staging package fails closed with "Unpackaged runtime change".
+'functions/_lib/gm-systems.js','functions/_lib/gm-tools.js','functions/api/gm/fishing.js','functions/api/gm/log.js','functions/api/gm/player.js',
  'functions/api/gm/shop.js',
  // v263: the write-pause control endpoint. It answers 404 without the `GATE` binding, so packaging it
  // does not enable anything; it is listed because it is a runtime file this candidate contains.

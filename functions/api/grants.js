@@ -2,8 +2,8 @@
 // POST /api/grants { ids }  -> marks those grants claimed (the client has applied them to its save)
 //
 // A grant is applied by the CLIENT, which owns the save format and its repair rules — see
-// tools/gm-panel-plan.md §4. The server's job is to keep the queue exactly-once: the client applies
-// and then claims, and a claim only ever matches grants belonging to the caller.
+// tools/gm-panel-plan.md §4. Gift, equipment and Fishing/DigiPet system grants require a matching
+// saved GM receipt before they can be claimed; a claim only ever matches the caller's own queue.
 
 import { currentUser } from '../_lib/auth.js';
 import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
@@ -29,7 +29,7 @@ export const onRequestPost = guard(async ({ request, env }) => {
   const pending=await db.pendingGrants(env.DB,user.id);
   const stored=await db.saveByUser(env.DB,user.id);
   const receipts=stored?JSON.parse(stored.blob).gmReceipts||[]:[];
-  const durable=list.filter(id=>{const g=pending.results.find(g=>g.id===id);return g&&!['gift','equipment'].includes(g.kind)||receipts.includes(id)});
+  const durable=list.filter(id=>{const g=pending.results.find(g=>g.id===id);return !!g&&(!['gift','equipment','systems'].includes(g.kind)||receipts.includes(id))});
   await db.claimGrants(env.DB, user.id, durable);
   return json({ ok: true, claimed: durable.length });
 });

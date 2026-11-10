@@ -1,4 +1,5 @@
 import { GM_CATALOG } from './gm-catalog.js';
+import { DIGIMON_STARTER_EGG_CAP, FISHING_BAIT, FISHING_RODS } from './gm-systems.js';
 import { HttpError } from './http.js';
 const bad = message => { throw new HttpError(400, message); };
 const integer = (v,min,max) => Number.isInteger(v) && v>=min && v<=max;
@@ -10,11 +11,30 @@ export function giftPayload(body) {
 }
 export function inspectSave(blob) {
   if(!blob)return null;
-  const s=JSON.parse(blob);
-  // A deliberate whitelist: account/session information never comes from a save.
+  const s=JSON.parse(blob),fish=s.fishing&&typeof s.fishing==='object'&&!Array.isArray(s.fishing)?s.fishing:null,
+    bag=s.digimonBag&&typeof s.digimonBag==='object'&&!Array.isArray(s.digimonBag)?s.digimonBag:null,
+    count=(value,max)=>Math.max(0,Math.min(max,Math.floor(Number(value)||0))),rodIds=new Set(FISHING_RODS.map(x=>x.id));
+  // A deliberate whitelist: account/session information never comes from a save. Only the
+  // resource summary needed by the GM form is exposed for Fishing and DigiPet.
   return {cls:s.cls,lv:s.lv,hp:s.hp,exp:s.exp,pts:s.pts,st:s.st,jobs:s.jobs,skills:s.sk,
     stats:s.gmStats||null,equipment:s.eq||{},inventory:s.inv||[],pets:s.pets||[],
-    cards:s.cards||[],ore:s.ore||{},shards:s.shards||0,ascensionMat:s.ascensionMat||[0,0,0],nmMat:s.nmMat||[],refineScrolls:s.refineScrolls||0,mythicScrolls:s.mythicScrolls||0};
+    cards:s.cards||[],ore:s.ore||{},shards:s.shards||0,ascensionMat:s.ascensionMat||[0,0,0],nmMat:s.nmMat||[],refineScrolls:s.refineScrolls||0,mythicScrolls:s.mythicScrolls||0,
+    fishing:fish?{coins:count(fish.coins,1_000_000_000),rod:rodIds.has(fish.rod)?fish.rod:'twig',rods:Array.isArray(fish.rods)?[...new Set(['twig',...fish.rods.filter(id=>rodIds.has(id))])]:['twig'],bait:Object.fromEntries(FISHING_BAIT.map(x=>[x.id,count(fish.bait?.[x.id],999)]))}:null,
+    digimonBag:bag?{coins:count(bag.coins??50,999999),eggs:count(bag.eggs,DIGIMON_STARTER_EGG_CAP),ownedCount:Array.isArray(bag.owned)?Math.min(bag.owned.length,280):0,gearCount:bag.gear?.items&&typeof bag.gear.items==='object'?Object.keys(bag.gear.items).length:0}:null};
+}
+export function systemsPayload(body) {
+  const system=body.system,resource=body.resource,amount=body.amount,id=body.resourceId;
+  if(system==='fishing'){
+    if(resource==='fishcoins'&&integer(amount,1,1_000_000_000))return{system,resource,amount};
+    if(resource==='rod'&&FISHING_RODS.some(x=>x.id===id))return{system,resource,id};
+    if(resource==='bait'&&FISHING_BAIT.some(x=>x.id===id)&&integer(amount,1,999))return{system,resource,id,amount};
+  }
+  if(system==='digimon'){
+    if(resource==='petcoins'&&integer(amount,1,999_999))return{system,resource,amount};
+    // The bag itself checks the remaining unowned starter-pool capacity at delivery time.
+    if(resource==='eggs'&&integer(amount,1,DIGIMON_STARTER_EGG_CAP))return{system,resource,amount};
+  }
+  bad('Choose a valid Fishing or DigiPet resource and quantity.');
 }
 export function equipmentPayload(body,blob) {
   if(!blob)bad('This player has no cloud save yet.');

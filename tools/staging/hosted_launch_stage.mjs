@@ -34,6 +34,11 @@ const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css'
  'functions/api/shop/checkout.js','functions/api/gm/damage.js',
   // v325: the GM console's Cash Shop tab gained the one-button grant-all action, so the GM shop
   // endpoint travels with the candidate (same list as tools/staging/package_hosted_launch.mjs).
+  'functions/_lib/gm-systems.js',
+  'functions/_lib/gm-tools.js',
+  'functions/api/gm/fishing.js',
+  'functions/api/gm/log.js',
+  'functions/api/gm/player.js',
   'functions/api/gm/shop.js',
   // v263: the write-pause control endpoint travels with the candidate; it 404s without the GATE binding.
   'functions/api/gate.js','migrations/0008_damage_monitoring.sql',

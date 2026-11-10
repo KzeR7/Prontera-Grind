@@ -1,4 +1,4 @@
-import {SocialRoom,cleanWorldHistory,cleanPokerLedgerQueues} from './room.mjs';
+import {SocialRoom,cleanWorldHistory,cleanPokerLedgerQueues,FISHING_MVP_IDS,SOCIAL_MAX_ROOMS} from './room.mjs';
 const HISTORY_KEY='world-history-v1';
 const LEDGER_PREFIX='poker-ledger-v1:';
 // v296: the plaza spot a dropped client resumes is durable, so a Durable Object eviction between
@@ -63,6 +63,30 @@ export class Social {
   const storage=this.ctx.storage;
   this.historyWrites=this.historyWrites.then(()=>storage.put(HISTORY_KEY,snapshot)).catch(error=>console.error('World history save failed',error));
  }
+ async adminFishingMvp(request){
+  if(request.method!=='POST')return new Response(JSON.stringify({err:'POST required'}),{status:405,headers:{'Content-Type':'application/json'}});
+  let admin=null;try{admin=JSON.parse(request.headers.get('X-Social-Admin')||'null')}catch{}
+  if(!admin||!Number.isInteger(admin.id)||admin.id<1||typeof admin.username!=='string'||admin.username.length>16||!Number.isInteger(admin.gm)||admin.gm<1)
+   return new Response(JSON.stringify({err:'Authenticated GM identity required'}),{status:403,headers:{'Content-Type':'application/json'}});
+  let body=null;try{body=await request.json()}catch{}
+  if(!body||typeof body!=='object'||Array.isArray(body))return new Response(JSON.stringify({err:'Invalid spawn request'}),{status:400,headers:{'Content-Type':'application/json'}});
+  const room=body.room,species=body.species===null||body.species===''||body.species===undefined?null:body.species;
+  if(!Number.isInteger(room)||room<1||room>SOCIAL_MAX_ROOMS)return new Response(JSON.stringify({err:`Choose a plaza room from 1 to ${SOCIAL_MAX_ROOMS}.`}),{status:400,headers:{'Content-Type':'application/json'}});
+  if(species!==null&&(typeof species!=='string'||!FISHING_MVP_IDS.includes(species)))return new Response(JSON.stringify({err:'Unknown Fishing MVP'}),{status:400,headers:{'Content-Type':'application/json'}});
+  if(this.room.mvpActive.has(room))return new Response(JSON.stringify({err:'An MVP is already active in that plaza room.'}),{status:409,headers:{'Content-Type':'application/json'}});
+  // Durable Objects have one alarm for the whole instance. Never replace an active-battle tick
+  // with the 60-second MVP sweep, or an in-progress round would pause for a minute.
+  if(this.room.hasActiveBattles()){
+   this.scheduleBattleAlarm();
+   await this.battleAlarmWrite;
+  }else{
+   const currentAlarm=await this.ctx.storage.getAlarm(),mvpSweep=Date.now()+60000;
+   if(currentAlarm===null||currentAlarm>mvpSweep)await this.ctx.storage.setAlarm(mvpSweep);
+  }
+  const spawn=this.room.spawnMvp(room,Date.now(),species);
+  if(!spawn)return new Response(JSON.stringify({err:'The Social room could not spawn that MVP.'}),{status:409,headers:{'Content-Type':'application/json'}});
+  return new Response(JSON.stringify({ok:true,...spawn}),{status:200,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
+ }
  async fetch(request){
   await this.ready;
   if(this.ledgerLoadFailed){
@@ -70,6 +94,8 @@ export class Social {
    try{await this.loadLedgers()}
    catch(error){console.error('Poker ledger load failed',error);return new Response('Poker ledger unavailable',{status:503})}
   }
+  const requestPath=new URL(request.url).pathname;
+  if(requestPath==='/gm/fishing-mvp')return this.adminFishingMvp(request);
   if(request.headers.get('Upgrade')?.toLowerCase()!=='websocket'){
    // v367: the 426 is the only non-destructive probe of this room. Let it carry the last greeting
    // failure, so /api/chatcheck can report a room-side fault instead of declaring victory.
@@ -103,7 +129,7 @@ export class Social {
   await this.ready;this.room.retryPokerLedgers();this.room.sweep();
   await this.room.ledgerWrites;await this.historyWrites;await this.battleAlarmWrite;
   if(this.room.hasActiveBattles()){this.battleAlarmAt=Date.now()+250;await this.ctx.storage.setAlarm(this.battleAlarmAt)}
-  else {this.battleAlarmAt=0;if(this.room.clients.size||this.room.resumes.size||this.room.ledgerDirty.size)await this.ctx.storage.setAlarm(Date.now()+60000)}
+  else {this.battleAlarmAt=0;if(this.room.clients.size||this.room.resumes.size||this.room.ledgerDirty.size||this.room.hasActiveMvp())await this.ctx.storage.setAlarm(Date.now()+60000)}
  }
 }
 export default {fetch(){return new Response('Not found',{status:404})}};
