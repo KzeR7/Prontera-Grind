@@ -9,7 +9,12 @@ const LINES={agumon:['agumon','greymon','metalgreymon','wargreymon'],gabumon:['g
 // STARTERS remains the original four save keys. ROSTER/SPECIES are the complete
 // catalog; the owned bag gates selection while existing saves keep progression.
 const STARTERS=Object.keys(LINES),ROSTER=[...DATA.IDS],SPECIES=ROSTER,STATS=['power','guard','agility','focus'],DURATION=5*60*1000 /* v371 (owner: "change to 5min per session"): halved again from v359's 10 */,MAX_EVOLUTIONS=6;
-const EVOLUTION_REQUIREMENTS=[{points:4,wins:2},{points:10,wins:5},{points:18,wins:9},{points:22,wins:12},{points:24,wins:16},{points:24,wins:20}];
+// v382 (owner ask): evolution is gated on the partner's LEVEL, not battle wins. Field waves pay
+// 1-3 XP (measured ~1300-1900 XP/hour on the live engine), so this curve lands a fresh partner
+// at max evolution after roughly three hours of field grinding. Gym points stay as the second gate.
+const EVOLUTION_REQUIREMENTS=[{points:4,level:30},{points:10,level:110},{points:18,level:230},{points:22,level:480},{points:24,level:850},{points:24,level:1250}];
+// v382: the final gate sits at level 1250, so stored XP ceiling doubles (level = 1 + floor(xp/4)).
+const XP_MAX=7996;
 // v354: the Energy meter is retired. Gym sessions are paced by their 20-minute timer alone
 // and grind runs end on waves or defeat; old saves simply drop their stale meter values.
 const MAX_SLOT=3;
@@ -44,7 +49,7 @@ function normalize(raw,line){
  if(clean(line))keys.push(line);
  for(const key of new Set(keys)){
   const p=raw?.partners?.[key]||{},q=freshPartner(key);q.stage=cap(p.stage,0,MAX_EVOLUTIONS);q.form=clean(p.form)||LINES[key]?.[q.stage]||key;
-  q.mastery=cap(p.mastery,0,6);q.wins=cap(p.wins,0,999);q.xp=cap(p.xp,0,3996);for(const k of STATS)q.stats[k]=cap(p.stats?.[k],0,12);
+  q.mastery=cap(p.mastery,0,6);q.wins=cap(p.wins,0,999);q.xp=cap(p.xp,0,XP_MAX);for(const k of STATS)q.stats[k]=cap(p.stats?.[k],0,12);
   if(p.training&&STATS.includes(p.training.stat)&&Number.isFinite(p.training.ends)&&p.training.ends>=0)q.training={stat:p.training.stat,ends:p.training.ends};
   const b=p.battle;if(b&&clean(b.opponent)&&['active','win','loss'].includes(b.status)&&Number.isFinite(b.deadline))q.battle={opponent:clean(b.opponent),hp:cap(b.hp,0,200),maxHp:cap(b.maxHp,1,200),enemyHp:cap(b.enemyHp,0,200),enemyMaxHp:cap(b.enemyMaxHp,1,200),energy:cap(b.energy,0,5),turn:cap(b.turn,0,500),status:b.status,deadline:b.deadline,log:typeof b.log==='string'?b.log.slice(0,180):''};
   state.partners[key]=q;
@@ -67,7 +72,7 @@ function evolutionCatalog(){
 function requirements(p,line){
  const stage=cap(p?.stage,0,MAX_EVOLUTIONS),form=clean(p?.form)||LINES[line]?.[stage]||line,options=evolutionOptions(form,line,stage);
  if(stage>=MAX_EVOLUTIONS||!options.length)return null;
- const needed=EVOLUTION_REQUIREMENTS[stage];return {...needed,ready:total(p)>=needed.points&&p.wins>=needed.wins,options};
+ const needed=EVOLUTION_REQUIREMENTS[stage];return {...needed,ready:total(p)>=needed.points&&level(p)>=needed.level,options};
 }
 function update(raw,now,line){const state=normalize(raw,line);if(!state)return {state:null,changed:false};let changed=false;now=Number.isFinite(now)?now:Date.now();
  for(const p of Object.values(state.partners)){
@@ -105,8 +110,8 @@ function act(raw,line,action,now,random=randomUnit){now=Number.isFinite(now)?now
 }
 // A completed live-world session uses the same limits as the old timed prototype,
 // but does not persist a timer that could finish while the scene is closed.
-function completeWorldTraining(raw,line,stat,now){const start=act(raw,line,{type:'train',stat},now);if(!start.ok)return start;start.state.partners[line].training.ends=now;const finished=update(start.state,now,line);finished.state.partners[line].xp=cap(finished.state.partners[line].xp+1,0,3996);return {ok:true,state:finished.state,changed:true,message:stat[0].toUpperCase()+stat.slice(1)+' training complete: +1 point.'}}
-const level=p=>1+Math.floor(cap(p?.xp,0,3996)/4);
+function completeWorldTraining(raw,line,stat,now){const start=act(raw,line,{type:'train',stat},now);if(!start.ok)return start;start.state.partners[line].training.ends=now;const finished=update(start.state,now,line);finished.state.partners[line].xp=cap(finished.state.partners[line].xp+1,0,XP_MAX);return {ok:true,state:finished.state,changed:true,message:stat[0].toUpperCase()+stat.slice(1)+' training complete: +1 point.'}}
+const level=p=>1+Math.floor(cap(p?.xp,0,XP_MAX)/4);
 // Versioned pet bag / owned-species collection. Unknown future versions are
 // refused rather than overwritten, matching the Sanctuary save contract.
 function cleanOwned(raw){return [...new Set((Array.isArray(raw)?raw:[]).map(clean).filter(Boolean))].slice(0,ROSTER.length)}
@@ -272,7 +277,7 @@ function applyBattleReward(raw,bagRaw,line,reward,gearDrop=null){
  const state=normalize(raw,line),bag=normalizeBag(bagRaw),p=state?.partners?.[line];
  if(!state||!bag||!p||!reward||typeof reward!=='object')return {ok:false,state,bag,changed:false,message:'This battle reward could not be applied.'};
  const coins=cap(reward.coins,0,10000),eggs=cap(reward.eggs,0,99),xp=cap(reward.xp,0,100),wins=cap(reward.wins,0,1);
- const before=bag.coins,beforeEggs=bag.eggs;bag.coins=cap(bag.coins+coins,0,999999);bag.eggs=cap(bag.eggs+eggs,0,STARTER_POOL.length);p.xp=cap(p.xp+xp,0,3996);p.wins=cap(p.wins+wins,0,999);
+ const before=bag.coins,beforeEggs=bag.eggs;bag.coins=cap(bag.coins+coins,0,999999);bag.eggs=cap(bag.eggs+eggs,0,STARTER_POOL.length);p.xp=cap(p.xp+xp,0,XP_MAX);p.wins=cap(p.wins+wins,0,999);
  const coinGain=bag.coins-before,bonusGain=Math.min(coinGain,cap(reward.dropCoins,0,coins)),baseGain=coinGain-bonusGain,eggGain=bag.eggs-beforeEggs,eggMessage=eggs?(eggGain?' · +'+eggGain+' Digi-Egg'+(eggGain===1?'':'s'):' · Digi-Egg bag full'):'';
  // A gear drop lands in the Pet Bag; a full bag salvages it into Pet Coins instead of losing it.
  let gearItem=null;

@@ -92,7 +92,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  pick.value='patamon';pick.dispatchEvent(new w.Event('change'));assert.equal(pick.value,'patamon');assert.equal(w.S.digimonPartner,'patamon');assert.equal(scenePlayers.get(0).look.digimon,'patamon');assert.equal(saved,1);
  w.document.getElementById('sanctuaryDismiss').click();assert.equal(scenePlayers.get(0).look.digimon,undefined);assert.equal(w.S.pets[0].on,true);w.document.getElementById('sanctuaryClose').click();assert(w.document.getElementById('sanctuaryPanel').hidden);saved=0;
  // The real roster browser reaches an animation-only entry without mounting all 280 cards.
- w.document.getElementById('sanctuaryOpen').click();w.document.querySelector('.sanctuary-nav [data-sanctuary-view="index"]').click();const dexSearch=w.document.getElementById('sanctuaryIndexSearch');dexSearch.value='aegiomon';dexSearch.dispatchEvent(new w.Event('input',{bubbles:true}));assert(w.document.querySelector('[data-index-form="aegiomon"]'),'a legacy-owned variant stays listed in the DigiDex');w.document.querySelector('[data-digidex-assign="aegiomon"]').click();assert.equal(w.S.digimonPartner,'aegiomon');assert.equal(scenePlayers.get(0).look.digimon,'aegiomon');assert.equal(w.S.pets[0].sp,2);w.document.querySelector('.sanctuary-nav [data-sanctuary-view="partners"]').click();assert.match(w.document.getElementById('sanctuaryGameplay').textContent,/No direct source-listed evolution/);
+ w.document.getElementById('sanctuaryOpen').click();w.document.querySelector('.sanctuary-nav [data-sanctuary-view="index"]').click();const dexSearch=w.document.getElementById('sanctuaryIndexSearch');dexSearch.value='aegiomon';dexSearch.dispatchEvent(new w.Event('input',{bubbles:true}));assert(w.document.querySelector('[data-index-form="aegiomon"]'),'a legacy-owned variant stays listed in the DigiDex');w.document.querySelector('[data-digidex-assign="aegiomon"]').click();assert.equal(w.S.digimonPartner,'aegiomon');assert.equal(scenePlayers.get(0).look.digimon,'aegiomon');assert.equal(w.S.pets[0].sp,2);w.document.querySelector('.sanctuary-nav [data-sanctuary-view="partners"]').click();assert.match(w.document.getElementById('sanctuaryEvolutionView').textContent,/No direct source-listed evolution/,'the moved evolution view still explains a form with no listed branch');
  w.document.getElementById('sanctuaryDismiss').click();w.document.getElementById('sanctuaryClose').click();saved=0;
  assert.equal(pick.value,'');pick.value='patamon';pick.dispatchEvent(new w.Event('change'));assert.equal(w.S.digimonPartner,'patamon');assert.equal(scenePlayers.get(0).look.digimon,'patamon');assert.equal(saved,1);assert.equal(w.S.pets[0].sp,2);
  pick.value='';pick.dispatchEvent(new w.Event('change'));assert.equal(scenePlayers.get(0).look.digimon,undefined);assert.equal(w.S.pets[0].on,true);
@@ -115,6 +115,13 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   Object.assign(trainer,{x:70,z:64,path:[],sit:false});sceneCallbacks.trainingNearby(trainer);
   assert(!panel.hidden,'standing in the middle field opens the grinding panel');
   assert.equal(w.document.getElementById('sapTitle').textContent,'DigiPet · PvE grind');
+  // v382: the same tab offers a boss raid, and it asks the room for boss mode explicitly.
+  const raidBtn=w.document.querySelector('[data-sap-pve-boss]');
+  assert(raidBtn,'the PvE tab offers a boss raid button');
+  const raidBefore=sent.length;raidBtn.click();
+  const raidStart=sent.slice(raidBefore).find(m=>m.type==='pve_start');
+  assert(raidStart&&raidStart.mode==='boss','the raid asks the room for boss mode');
+  app.battleIntent=null;w.document.getElementById('sanctuaryBattleNearby').hidden=false;
   const repeat=w.document.getElementById('sapRepeat');
   assert.equal(repeat.checked,false,'field runs do not repeat until the player asks');
   repeat.checked=true;repeat.dispatchEvent(new w.Event('change',{bubbles:true}));
@@ -132,7 +139,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  Object.assign(trainer,{x:56,z:30,path:[],sit:false});sceneCallbacks.trainStation('power');const oldRequest=sent.at(-1).request;w.document.querySelector('#sanctuaryWorldStatus button[data-action="stop"]').click();sceneCallbacks.trainStation('power');const newRequest=sent.at(-1).request;assert.notEqual(oldRequest,newRequest);socket.onmessage({data:JSON.stringify({type:'gym_started',request:oldRequest,gym:{room:1,stat:'power',slot:0}})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Reserving/);socket.onmessage({data:JSON.stringify({type:'gym_error',request:oldRequest,message:'stale'})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/Reserving/);socket.onmessage({data:JSON.stringify({type:'gym_started',request:newRequest,gym:{room:1,stat:'power',slot:0}})});assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/auto-training/);w.document.querySelector('#sanctuaryWorldStatus button[data-action="stop"]').click();Object.assign(trainer,{x:0,z:12,path:[],sit:false});
  Object.assign(trainer,{x:56,z:30,path:[],sit:false});train('power');assert.match(w.document.querySelector('#sanctuaryWorldStatus span').textContent,/auto-training/,'a confirmed gym start shows the running session');
  for(const [stat,x,z] of [['power',56,30],['guard',63,21],['agility',75,26],['focus',86,27]]){
-  Object.assign(trainer,{x,z,path:[],sit:false});train(stat);assert(!w.document.getElementById('sanctuaryWorldStatus').hidden);
+  Object.assign(trainer,{x,z,path:[],sit:false});train(stat);assert(!w.document.getElementById('sanctuaryWorldPill').hidden,'the top-right pill is the one visible training indicator');
   gymClock+=w.PGDigimonSanctuary.DURATION;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats[stat],1,'one point per automatic '+stat+' cycle');
   w.document.querySelector('#sanctuaryWorldStatus button[data-action="stop"]').click();gymClock+=30000;w.trainingTick();assert.equal(w.S.digimonSanctuary.partners.agumon.stats[stat],1,'stopped session cannot award again');
  }
@@ -193,8 +200,8 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  {
   const panel=w.document.getElementById('sanctuaryActivityPanel');
   const tabs=[...panel.querySelectorAll('[data-sap-tab]')];
-  assert.equal(tabs.map(t=>t.dataset.sapTab).join(','),'training,pve,logs','the panel offers Training, PvE grind and Logs');
-  assert.equal(tabs.length,3);
+  assert.equal(tabs.map(t=>t.dataset.sapTab).join(','),'party,training,pve,logs','the panel offers Party, Training, PvE grind and Logs');
+  assert.equal(tabs.length,4);
   Object.assign(trainer,{x:56,z:30,path:[],sit:false});sceneCallbacks.trainingNearby(trainer);
   assert.equal(w.document.getElementById('sapTitle').textContent,'DigiPet · Training','standing in the gym fronts the Training tab');
   panel.querySelector('[data-sap-tab="logs"]').click();
@@ -254,8 +261,8 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   w.S.plazaPartners={gym:0,pve:0};
  }
  w.CLOUD.on=false;w.CLOUD.user=null;app.socket=null;app.connected=false;app.room=0;w.Date.now=realNowGym;
- assert.equal(w.S.pets[0].sp,2,'gym never modifies the Ragnarok pet');w.S.digimonSanctuary.partners.agumon.stats.power=4;w.S.digimonSanctuary.partners.agumon.wins=2;w.document.getElementById('sanctuaryOpen').click();
- w.document.querySelector('[data-sanctuary-action=requestEvolution]').click();assert.equal(w.S.digimonSanctuary.partners.agumon.stage,0);assert.match(w.document.getElementById('sanctuaryGameplay').textContent,/Possible: /,'the confirm step lists the rolled pool');
+ assert.equal(w.S.pets[0].sp,2,'gym never modifies the Ragnarok pet');w.S.digimonSanctuary.partners.agumon.stats.power=4;w.S.digimonSanctuary.partners.agumon.wins=2;w.S.digimonSanctuary.partners.agumon.xp=116;w.document.getElementById('sanctuaryOpen').click();
+ w.document.querySelector('[data-sanctuary-action=requestEvolution]').click();assert.equal(w.S.digimonSanctuary.partners.agumon.stage,0);assert.match(w.document.getElementById('sanctuaryEvolutionView').textContent,/Possible: /,'the confirm step lists the rolled pool in the evolution view');
  // v349: the branch is rolled. Pin both randomness sources to the first option (Greymon).
  const realRandom=w.Math.random.bind(w.Math),realGetValues=w.crypto?.getRandomValues?.bind(w.crypto);w.Math.random=()=>0;if(w.crypto?.getRandomValues)w.crypto.getRandomValues=arr=>{arr[0]=0;return arr};
  w.document.querySelector('[data-sanctuary-action=evolve]').click();w.Math.random=realRandom;if(realGetValues)w.crypto.getRandomValues=realGetValues;
@@ -280,7 +287,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert(ops.some(o=>String(o).startsWith('text:WEST LAKE')),'the big map labels the fishing lake');
   assert(ops.some(o=>String(o).startsWith('text:DIGIPET FARM')),'the big map labels the DigiPet farm');
   assert(ops.some(o=>String(o).startsWith('text:PVP RING')),'the big map labels the PvP ring');
-  assert(ops.some(o=>String(o).startsWith('text:PLAZA POKER')),'the big map labels the poker tables');
+  assert(ops.some(o=>String(o).startsWith('text:PRONTERA POKER')),'the big map labels the poker tables');
   assert(ops.includes('text:You'),'the self marker is labelled on the big map');
   assert(fill>8,'the map paints its geometry');
  }
@@ -520,7 +527,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert.ok(hubBtn.classList.contains('is-live')&&hubBtn.classList.contains('has-friends'),'a busy plaza with a friend inside gets the gold pulse');
   assert.match(hubBtn.getAttribute('aria-label'),/12 adventurers inside/);
   assert.match(hubBtn.getAttribute('aria-label'),/2 friends inside/);
-  assert.match(hubBtn.title,/Plaza 1: 8 · Plaza 2: 4/,'the tooltip breaks the total down per plaza');
+  assert.match(hubBtn.title,/Prontera 1: 8 · Prontera 2: 4/,'the tooltip breaks the total down per plaza');
   socket.onmessage({data:JSON.stringify({type:'rooms',rooms:[{id:1,count:0}],plaza:{total:0,friends:0}})});
   assert.equal(hubBadge.textContent,'0');assert.ok(hubBtn.classList.contains('is-empty')&&!hubBtn.classList.contains('is-live'),'an empty plaza shows a still 0, no blink');
   hubBtn.click();

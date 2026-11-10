@@ -547,7 +547,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  for(const stance of ['idle','walk','sit'])for(let d=0;d<8;d++)look.base.metadata.actions[stance+d]=look.hair.metadata.actions[stance+d]=action;
  class Store{release(){}async select(){return look}}
  Object.assign(w,{THREE:T,devicePixelRatio:1,requestAnimationFrame:cb=>frame=cb,ResizeObserver:class{constructor(fn){this.fn=fn}observe(){this.fn()}},PGWardrobe:{CLASSES:{Novice:0},Store,normalize:a=>a,defaults:()=>({version:1,sex:'m'}),frameIndex:()=>0,draw(){}},PGFourthJobs:{CLASSES:{},Store},milestone:()=>null,REFINE_GLOWS:[],drawNativeWeaponGlow(){},drawNativeArmGlow(){},LEVEL_AURAS:[],buildLevelAura:()=>new T.Group()});
- w.PGSocialFishing={speciesById:id=>id==='mvp_void_maw'?{id,name:'Void Maw',glyph:'🐋'}:null,fishSprite:()=>{const c=w.document.createElement('canvas');c.width=c.height=256;return c}};
+ w.PGSocialFishing={speciesById:id=>({mvp_void_maw:{id,name:'Void Maw',glyph:'🐋',max:3000},mvp_iron_crab:{id,name:'Iron Crab Titan',glyph:'🦀',max:1800}}[id]||null),fishSprite:()=>{const c=w.document.createElement('canvas');c.width=c.height=256;return c}};
  Object.defineProperty(w.document,'hidden',{value:false});w.performance.now=()=>now;w.console.warn=()=>{};
  w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(url)),arrayBuffer:async()=>{const b=fs.readFileSync(url);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)}});
  w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','digimon','roster.js'),'utf8'));w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
@@ -566,10 +566,17 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  const mvpSprite=mvpFloat&&mvpFloat.children.find(o=>o.userData&&o.userData.socialMvpFish);
  assert(mvpSign&&mvpSign.visible&&mvpBoard&&mvpBoard.geometry.parameters.width>=9&&mvpBoard.geometry.parameters.height>=2&&mvpBoard.position.y>=5,'a large elevated alert sign appears over the pond approach');
  assert(mvpFloat&&mvpFloat.visible&&mvpFloat.userData.spId==='mvp_void_maw','the selected MVP has its own visible pond sprite');
+ assert.equal(mvpSign.children.length,1,'the warning sign floats above the lake - no posts');
+ assert(mvpBoard.position.y>=6,'the floating alert hovers well over the water');
  assert(mvpSprite&&mvpSprite.position.y>2&&Math.abs(mvpFloat.position.x-pond.x)<.01&&Math.abs(mvpFloat.position.z-pond.z)<.01,'the selected MVP gently floats over the pond center');
  frame(now+=100);
  assert(mvpSprite.position.y>2.2&&mvpSprite.position.y<2.9,'the MVP sprite bobs slightly above the surface');
  assert(mvpSignText.some(text=>/MVP ALERT: VOID MAW/.test(text))&&!mvpSignText.some(text=>/%|hook|catch chance|land chance/i.test(text)),'the alert sign names the MVP without displaying rates');
+ // v380: the half-body peek scales with the species' real weight range.
+ const voidScale=mvpSprite.scale.x;
+ scene.fishing.setMvp('mvp_iron_crab',true);
+ const crabScale=mvpSprite.scale.x;
+ assert(voidScale>crabScale,'a 3.0t Void Maw peeks larger than a 1.8t Iron Crab Titan ('+voidScale.toFixed(2)+' vs '+crabScale.toFixed(2)+')');
  scene.fishing.setMvp(null,false);
  assert(!mvpSign.visible&&!mvpFloat.visible,'the sign and MVP disappear when the spawn ends');
  // Stand the local player on the east pond rim.
@@ -957,10 +964,31 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
   assert(buf.subarray(0,8).equals(PNG),id+'.png is a png');
   // v303 (owner): 128, not 96 - the detail panel draws 128 and the index 64, so the art is either
   // 1:1 or an exact halving instead of being upscaled (which is what looked blurry).
-  assert.equal(buf.readUInt32BE(16),128,id+' is 128 wide');
-  assert.equal(buf.readUInt32BE(20),128,id+' is 128 tall');
+  // v380 (owner: "cropped, HD"): the seven MVP bosses ship at 256 - they are the pond's hero
+  // sprites (the floating peek scales past 4 world units), and both smaller draws are exact
+  // halvings/quarters, so nothing upscales anywhere.
+  const want=Number(id.startsWith('mvp_'))?256:128;
+  assert.equal(buf.readUInt32BE(16),want,id+' is '+want+' wide');
+  assert.equal(buf.readUInt32BE(20),want,id+' is '+want+' tall');
   assert.equal(buf[25],6,id+' keeps its transparency (rgba)');
  }
+ // v380 (owner): the live spawn banner is created with the fishing DOM - it used to be read
+ // from an index.html node that never existed, so MVP notices never rendered.
+ assert(mod.includes("mvpBanner.id='fishingMvpBanner'"),'the live MVP banner is created in ensureDom');
+ assert(mod.includes("FISH_ART_VERSION='380'"),'the fish-art cache version is bumped with the redraw');
+ // v380 (owner: "cropped, HD"): every MVP crop is a real transparent sprite - decode when sharp
+ // is installed and require an empty top-left corner plus a real cutout (some transparency).
+ (async()=>{
+  let sharp;try{sharp=require('sharp')}catch{console.log('  (sharp not installed - MVP alpha check skipped)');return}
+  for(const id of artIds.filter(i=>i.startsWith('mvp_'))){
+   const {data}=await sharp(path.join(__dirname,'..','..',manifest[id])).raw().ensureAlpha().toBuffer({resolveWithObject:true});
+   // A photo/sketch background is opaque (alpha ~255); the soft in-game glow may leave a whisker
+   // of alpha in a corner, so "no background" means effectively clear, not bit-zero.
+   assert.ok(data[3]<=8,id+' has a transparent corner (no photo background)');
+   let clear=0;for(let i=3;i<data.length;i+=4)if(data[i]<16)clear++;
+   assert(clear>1000,id+' is a real cutout, not an opaque square');
+  }
+ })();
  const paintedIds=F.SPECIES.filter(sp=>!manifest[sp.id]).map(sp=>sp.id);
  assert.equal(paintedIds.length,9,'the last nine species (crab, gar/pike, angler) paint themselves');
  assert(paintedIds.every(id=>!F.FISH_ART[id]),'no stale art entry for a painted species');

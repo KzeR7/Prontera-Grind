@@ -10459,3 +10459,128 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Balance fixtures** are regenerated for the new build (the BUILD line is inside the hashed combat slice).
 * **Hosted staging package:** the five GM runtime files from `main` (`functions/_lib/gm-systems.js`, `gm-tools.js`, `functions/api/gm/fishing.js`, `log.js`, `player.js`) are on both package lists, like the MVP fish art earlier. `hosted_launch_stage_sim` passes.
 * **Gate:** full local suite, see the PR description for the result.
+
+### 2026-11-10 — `haven-v378 Afterdark hub, DigiPet and shared chat`
+
+* **Changed:** Approved charcoal/bevelled hub and DigiPet treatment, native companion/gear art, circular training gauges, compact top controls and More → real Equipment/Refine. Minimap stays at the top; truthful field EXP/min and Zeny/min stay at the bottom. One management window at a time, with running DigiPet activities still accessible. Shared field chat inherits the existing selected palette, and PR #201's DigiPet titles, one-line activity panel, uniform emotion tray and typed RO commands keep working inside it.
+* **Try it:** Enter the hub, open More → Refine, switch through the four DigiPet views, wear a title, shrink the running activity to one line, expand the top map, and compare the bottom monitor before/after starting field farming. Switch Moonstone/Aurora/Ember and return to the field to check chat.
+* **Checks:** Build succeeds; 206 of 217 configured checks pass on latest main, with all 11 remaining failures reproduced on the untouched latest-main snapshot. Real Chromium passes 24 desktop/tablet/phone panel checks, three field-chat palettes, native rendering, continued field farming, title wear/order, one-line activity expand and the 32-emote tray, with no page exceptions or failed local assets. Details and remaining failures: [Afterdark UI](AFTERDARK-UI.md). No test budget or combat fixture changes.
+* **Delivery:** Prepared for a GitHub PR using the API archive and Git data API; no clone or deployment.
+
+### 2026-11-10 — `haven-v379 DigiPet tabs, DigiDex redesign, evolution tree, one training pill`
+
+* **Owner proposal pass on the v378 DigiPet panel** (six-point feedback against the mock
+  set): the layout points that were already right (map toolbar on top, field EXP monitor at
+  the bottom) stay untouched.
+* **Mastery is its own tab:** the "Evolution or mastery" section left the Partners view; a
+  dedicated **Mastery** tab now sits beside Evolution with the mastery figure, the
+  +1.5 attack/point explainer, next-point progress and the "Keep form · improve mastery"
+  action (plus jump links to Evolution/Partners).
+* **DigiDex redesigned:** centred portrait cards (attribute/stage chip, owned badge,
+  assign button) in a responsive auto-fill grid; base battle, your layer and the
+  evolves-from/to routes remain on every card, and search / stage / owned filters,
+  branch view and pagination are unchanged.
+* **Evolution tab is a class-tree preview:** FROM row → trunk → the current form (accent
+  node) → trunk → every direct TO branch as a clickable chip that jumps into the DigiDex
+  branch view, with truthful requirement bars (training points, battle wins), the roll
+  pool and the same evolve controls. Fixed on the way: the view read the partner store by
+  line instead of slot, so it always showed a phantom fresh copy — requirements could
+  never look satisfied there.
+* **One training indicator:** while a gym session runs, the mock's top-right pill (native
+  portrait, stat, live countdown, progress ring) is the only visible bar and expands into
+  the elapsed/remaining card with Stop; the centred bar keeps only transient notices
+  (stop reasons, completions). Pill hides with the panel focus (`has-management`) and on
+  leave.
+* **Checks:** `afterdark_ui_sim`, `digimon_sanctuary_ui_sim`, `social_ui_sim`,
+  `social_fishing_sim`, `digimon_index_sim`, `digipet_title_sim`, `emote_tray_sim` and
+  `update_watch_sim` pass (sim retargets follow the moved sections; the training-visibility
+  assert now points at the pill). Build succeeds; full local gate in the PR description.
+* **Delivery:** pages client only (social.js/social.css/index.html + docs mirrors); the
+  Social Worker is unchanged, so no joint deploy is required for this build.
+
+### 2026-11-10 — `haven-v380 Fishing MVP art, floating alert, weight-scaled peek`
+
+* **MVP sprites redone (owner: "cropped, HD & scale on the weights"):** the seven Fishing MVP
+  crops were raw reference drops — opaque 128×128 squares (one a pencil-sketch collage), which
+  is why the Fishing Index read "off". They are now generated chibi game art
+  (`tools/mvp_sprite_art.py`, deterministic, `--check`): transparent background, bold outline,
+  256×256 (the Index draws 64 and the detail 128, so nothing upscales), one per species:
+  Azure/Tide/Abyss drakes (Abyss with glow spots), Iron Crab Titan (shell spikes, stalk eyes),
+  Crimson + Gilded tyrant sharks (Gilded crowned), Void Maw (one cyan eye, glowing maw).
+  `FISH_ART_VERSION` bumps to 380; `social_fishing_sim` now requires the MVP crops to be
+  transparent (sharp-decoded corner/cutout checks) and 256-wide.
+* **Floating warning sign:** the pond alert is no longer a posted board beside the water — it
+  hovers above the lake (board at y≈6.4, no posts) and breathes with the same pulse as the
+  boss. Text unchanged (names the MVP, never shows rates).
+* **Half-body peek, weight-true:** the boss rises out of the pond — the sprite is cut at a
+  wavy waterline with a ripple (canvas `destination-out`), and the whole peek scales with the
+  species' real weight range (1,000 kg → ×0.8 … 3,000 kg → ×1.3): a 3.0 t Void Maw looms well
+  over a 1.8 t Iron Crab. Sim pins sign-floating, no-posts, and Void Maw > Iron Crab scale.
+* **Live MVP banner fixed:** the client rendered `#fishingMvpBanner`, but that element never
+  existed in index.html, so spawn notices never showed. It is now created with the rest of the
+  fishing DOM and styled (pulsing crimson pill under the hub toolbar).
+* **GM console spawn:** verified end-to-end on the preview (console → `/api/gm/fishing` →
+  Social DO → `mvp_spawn` broadcast → client). It requires a GM account: previews now document
+  `PORT=8788 tools/preview.sh --gm-all` in `tools/preview.sh` (the arena preview runs it).
+* **Checks:** `social_fishing_sim`, `social_ui_sim`, `afterdark_ui_sim`,
+  `digimon_sanctuary_ui_sim`, `update_watch_sim` pass; the three progression fixtures were
+  regenerated with `--reuse-baseline` for the BUILD bump, so `skill_balance_sim` and
+  `card_star_balance_sim` pass for the first time since v377. Full gate in the PR description.
+* **Delivery:** Pages client + tools + fixtures only; the Social Worker is unchanged.
+
+### 2026-11-10 — `haven-v381 DigiPet titles tab, merged training panel, Prontera naming`
+
+* **Owner eight-point pass.** DigiDex: every portrait now draws exactly one 64px sheet cell
+  (the 96px boxes were showing a 2×2 collage of neighbours — background-size/position now
+  scaled per box: 96px dex portrait, 30px tree node, 26px pill face), and the grid gets
+  equal-height cards with compact route chips. **Titles** get their own DigiPet tab (removed
+  from Partners). **World chat** is semi-transparent with a backdrop blur. **Prontera**
+  naming: hub header, room dropdown ("Prontera 1 (n/20)"), poker title/subtitle, map modal
+  and map label. **Poker button** joins the painted-art set with an SVG card fan (the 🃏
+  emoji was the odd one out; the YOUR TURN blink reads text-only now).
+* **Training surfaces merged:** the old floating "DigiPet · Training" panel and the new
+  top-right pill are one surface — the pill expands into the activity panel (anchored under
+  the pill, Afterdark-skinned, still draggable), and Minimize/Close collapse back to the
+  pill. A new **Party** tab (the landing tab) lists all four partners with their live state
+  (POWER TRAINING / GRINDING · STAGE N / RING MATCH / RESTING) and jumps to that partner's
+  controls. Wording aligned to the mock: "Power training · 4:43 left · 0 done".
+* **GM console on previews:** `--gm-all` now upgrades **existing** preview accounts at boot
+  (they used to stay players forever), and the console's Fishing card explains the non-GM
+  case instead of a bare 403. Spawn chain re-verified end-to-end.
+* **Checks:** build passes; DigiPet/fishing/social suites + full gate results in the PR
+  description. Delivery: Pages client + preview tooling only; Social Worker unchanged.
+
+### 2026-11-10 — `haven-v382 level evolutions, boss mechanics + party raids, longer rings`
+
+* **Changed:** evolution gates now ask for the partner's **level**, not battle wins:
+  `30 → 110 → 230 → 480 → 850 → 1250` alongside the old training-point gates. Field
+  waves pay 1-3 XP (measured ~1,300-1,900 XP/hour on the live engine), so a partner goes
+  from fresh to max evolution in roughly three hours of grinding; the stored XP ceiling
+  doubled (level 1,000 → 2,000) so the curve fits, while combat still reads level 100.
+* **Bosses are mechanic fights, not stat-sticks.** Every boss wave telegraphs a slam that
+  lands on every standing partner, shields itself at half health, enrages at a third, and
+  calls same-stage adds at 66% and 33%. Slain bosses take their adds with them. Solo
+  bosses summon one add, parties two.
+* **Boss raids.** The PvE tab has a new ☠ Boss raid button and the Party panel a ☠ Party
+  boss raid button. A raid is one boss whose pool comes from the party's own DPS and whose
+  damage comes from a fighter's HP pool, so it lasts ~45 ticks (~30 s) at every level,
+  pays raid rewards (80+ petgold, 6+ XP, 2 wins, a guaranteed gear piece at the raider's
+  tier) and ends the run when the boss falls. Raids keep a soft sustain pulse instead of
+  wave heals.
+* **Ring PvP lasts longer:** ring health now scales ×6 and ring attack ×1.35, so matches
+  run ~19 rounds instead of ~7. The 120-round decision cap stays the fallback.
+* **Answers for the owner:** mastery is a parallel track on the same gym points — rank n
+  needs 4×n total points (4…24), is never spent, and adds +1.5 attack per rank; dismissing
+  a companion only empties the slot (`assignPartner('')`) — level, XP, wins, mastery,
+  training and gear stay with that line, and it can be re-selected from the DigiPet picker
+  or the DigiDex at any time.
+* **Also:** the GM console keeps its preview-session token in page memory only (the
+  browser-storage rule in `gm_console_sim` is back to green).
+* **Try it:** open DigiPet → PvE, press ☠ Boss raid (or Party → ☠ Party boss raid with a
+  formed party), watch the battle card chips (SLAM countdown, SHIELD, ENRAGED, adds), then
+  evolve a partner from the Partners tab.
+* **Checks:** `digimon_battle_sim` (new boss-mechanic/raid/ring coverage),
+  `digimon_sanctuary_sim` (level gates), `social_ui_sim`, `digimon_sanctuary_ui_sim`,
+  `social_worker_sim.mjs`, `gm_console_sim` and the full gate run are green; the
+  progression fixtures were refreshed for the BUILD hash only (measurements unchanged).
+* **Delivery:** local branch only in this session.

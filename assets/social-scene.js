@@ -1476,19 +1476,15 @@ void main(){
    if(mvpSign) return mvpSign;
    if(!pondViews.length) return null;
    const p=pondViews[0].p || R.PONDS[0];
-   const sx=p.x+4, sz=p.z+p.d/2+3.2;
+   // v380 (owner: "a Warning Sign floating above the lake when the MVP arrives"): the board
+   // hovers over the water itself - no posts - and updateMvpSign() bobs it with the pulse.
+   const sx=p.x, sz=p.z;
    const group=new T.Group();group.name='socialMvpAlertSign';group.userData.socialMvpSign=true;
-   const postMat=new T.MeshBasicMaterial({color:0x6b4a2a});
-   const postHeight=5.35;
-   for(const dx of [-3.25,3.25]){
-    const post=new T.Mesh(new T.CylinderGeometry(.1,.14,postHeight,8),postMat);
-    post.position.set(sx+dx,postHeight/2,sz);group.add(post);
-   }
    mvpSignCanvas=document.createElement('canvas');mvpSignCanvas.width=1024;mvpSignCanvas.height=256;
    mvpSignCtx=mvpSignCanvas.getContext('2d');
    mvpSignTex=new T.CanvasTexture(mvpSignCanvas);
    const board=new T.Mesh(new T.PlaneGeometry(9.2,2.3),new T.MeshBasicMaterial({map:mvpSignTex,transparent:true,side:T.DoubleSide,depthWrite:false}));
-   board.userData.socialMvpSignBoard=true;board.position.set(sx,5.35,sz);board.rotation.y=Math.PI;
+   board.userData.socialMvpSignBoard=true;board.position.set(sx,6.4,sz);board.rotation.y=Math.PI;
    group.add(board);
    group.visible=false;scene.add(group);
    mvpSign={group,canvas:mvpSignCanvas,ctx:mvpSignCtx,tex:mvpSignTex,board,sx,sz};
@@ -1534,20 +1530,60 @@ void main(){
    if(ctx&&typeof ctx.fillText==='function'){ctx.font='176px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(sp&&sp.glyph||'🐟',128,132)}
    return canvas;
   }
+  /* v380 (owner): "mvp half body is peek above the pond ... scale on the weights". The boss is
+     drawn rising out of the water: the sprite art is cut at a wavy waterline (lower body erased,
+     a ripple drawn along the cut) and the whole peek scales with the species' real weight range -
+     a 3,000 kg Void Maw looms well over a 1,000 kg Azure Drake. Falls back to the plain art when
+     a canvas is too limited for the compositing. */
+  const MVP_BASE_PX=256;
+  function mvpWeightScale(spId){
+   const F=globalThis.PGSocialFishing;let max=1500;
+   try{const sp=F&&typeof F.speciesById==='function'?F.speciesById(spId):null;if(sp&&Number(sp.max)>0)max=Number(sp.max)}catch{}
+   return .8+.5*Math.min(1,Math.max(0,(max-1000)/2000)); // 1,000 kg -> .8 · 3,000 kg -> 1.3
+  }
+  function mvpPeekCanvas(spId){
+   /* The canvas draw is size-independent (head fully in frame, waterline at 62%); the weight
+      scale rides on the sprite mesh in setMvpFloat, so a heavy boss is simply bigger overall. */
+   const art=mvpArt(spId),k=mvpWeightScale(spId),wl=MVP_BASE_PX*.60;
+   try{
+    const c=document.createElement('canvas');c.width=c.height=MVP_BASE_PX;
+    const g=c.getContext('2d');if(!g)return art;
+    const w=246,h=246;
+    g.drawImage(art,(MVP_BASE_PX-w)/2,wl-h*.62,w,h);
+    g.globalCompositeOperation='destination-out';
+    g.beginPath();g.moveTo(0,wl);
+    for(let x=0;x<=MVP_BASE_PX;x+=8)g.lineTo(x,wl+4+Math.sin(x/MVP_BASE_PX*Math.PI*2+1)*5);
+    g.lineTo(MVP_BASE_PX,MVP_BASE_PX);g.lineTo(0,MVP_BASE_PX);g.closePath();g.fill();
+    g.globalCompositeOperation='source-over';
+    g.strokeStyle='rgba(150,236,255,.8)';g.lineWidth=3;
+    g.beginPath();
+    for(let x=4;x<=MVP_BASE_PX-4;x+=8){const y=wl+Math.sin(x/MVP_BASE_PX*Math.PI*2+1)*5;if(x===4)g.moveTo(x,y);else g.lineTo(x,y)}
+    g.stroke();
+    return {canvas:c,scale:k};
+   }catch{return {canvas:art,scale:k}}
+  }
   function setMvpFloat(spId,on){
    const m=ensureMvpFloat();if(!m)return;
    if(!on){m.group.visible=false;m.group.userData.spId=null;return}
-   const tex=new T.CanvasTexture(mvpArt(spId));
+   const peek=mvpPeekCanvas(spId);
+   const tex=new T.CanvasTexture(peek.canvas);
    if(m.texture)m.texture.dispose();
    m.texture=tex;m.sprite.material.map=tex;m.sprite.material.needsUpdate=true;
-   m.group.userData.spId=spId;m.group.visible=true;
+   const k=peek&&peek.scale||1,size=4.4*k;
+   m.sprite.scale.set(size,size,1);
+   m.ring.scale.setScalar(k);
+   m.group.userData.spId=spId;m.group.userData.k=k;m.group.visible=true;
   }
   function updateMvpFloat(now){
    const m=mvpFloat;if(!m||!m.group.visible)return;
    const pulse=Math.sin(now/520);
    m.sprite.position.y=m.baseY+pulse*.16;
-   m.ring.scale.setScalar(1+.08*pulse);
+   const k=m.group.userData.k||1;
+   m.ring.scale.setScalar(k*(1+.08*pulse));
    m.ring.material.opacity=.5+.12*Math.sin(now/470);
+   // v380: the floating warning sign above the lake breathes with the same pulse.
+   const sign=ensureMvpSign();
+   if(sign&&sign.group.visible)sign.board.position.y=6.4+pulse*.12;
   }
   let mvpActiveSign=null,mvpSignTimer=0;
   function setMvpSign(spId,on){

@@ -417,9 +417,11 @@ export class SocialRoom {
   const p=this.battleProfile(c,m.profile);if(!p)return this.battleError(c,'Choose your current owned partner first.',request);
   if(this.trainingBlocks(c,p))return this.battleError(c,'The training partner cannot battle. Switch to another partner slot first.',request);
   if([...this.pveRuns.values()].filter(r=>r.room===c.room).length>=8)return this.battleError(c,'The field is full. Try another plaza.',request);
-  const run=B.createPve({id:this.battleId('pve'),owner:c.id,room:c.room,profile:p,now,random:this.random});
+  // v382: a raid is one long boss rather than a field run — same run object, boss mode.
+  const bossMode=m.mode==='boss';
+  const run=B.createPve({id:this.battleId('pve'),owner:c.id,room:c.room,profile:p,now,random:this.random,bossMode});
   const used=new Set([...this.pveRuns.values()].filter(r=>r.room===c.room).map(r=>r.slot));run.slot=Array.from({length:8},(_,i)=>i).find(i=>!used.has(i))||0;
-  c.pve=run;this.pveRuns.set(run.id,run);this.send(c,{type:'pve_started',request,battleId:run.id});this.broadcastBattle(c.room);this.battleActivity();
+  c.pve=run;this.pveRuns.set(run.id,run);this.send(c,{type:'pve_started',request,battleId:run.id,mode:bossMode?'boss':'grind'});this.broadcastBattle(c.room);this.battleActivity();
  }
  stopPve(c,reason='stopped',notify=true){
   const run=c.pve;if(!run)return false;
@@ -539,7 +541,7 @@ export class SocialRoom {
  startPartyPve(c,m,now){
   const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
   const party=this.partyOf(c);
-  if(!party||party.leader!==c.id)return this.partyError(c,request,'Only the party leader can start the grind.');
+  if(!party||party.leader!==c.id)return this.partyError(c,request,'Only the party leader can start the fight.');
   if(c.pve||c.pvp)return this.partyError(c,request,'Finish the current DigiPet activity first.');
   const members=party.members.map(m=>this.clients.get(m.id));
   if(members.some(mem=>!mem))return this.partyError(c,request,'Every party member must be online.');
@@ -553,13 +555,15 @@ export class SocialRoom {
   }
   if([...this.pveRuns.values()].filter(r=>r.room===c.room).length>=8)return this.partyError(c,request,'The field is full. Try another plaza.');
   const profiles=members.map(validProfile);
-  const run=B.createPve({id:this.battleId('pve'),owner:c.id,room:c.room,profiles,now,random:this.random});
+  // v382 (owner ask): the same party can open a shared boss raid instead of a mob grind.
+  const bossMode=m.mode==='boss';
+  const run=B.createPve({id:this.battleId('pve'),owner:c.id,room:c.room,profiles,now,random:this.random,bossMode});
   run.members=members.map(mem=>mem.id);run.earnedBy={};
   const used=new Set([...this.pveRuns.values()].filter(r=>r.room===c.room).map(r=>r.slot));
   run.slot=Array.from({length:8},(_,i)=>i).find(i=>!used.has(i))||0;
   for(const mem of members)mem.pve=run;
   this.pveRuns.set(run.id,run);
-  for(const mem of members)this.send(mem,{type:'pve_started',request:mem===c?request:null,battleId:run.id,party:true});
+  for(const mem of members)this.send(mem,{type:'pve_started',request:mem===c?request:null,battleId:run.id,party:true,mode:bossMode?'boss':'grind'});
   this.broadcastBattle(c.room);this.battleActivity();
  }
  stopBattle(c,reason='stopped',now=this.now()){
@@ -603,9 +607,12 @@ export class SocialRoom {
     // v352: strikes are forwarded as presentation-only FX events. They carry no authority —
     // clients still render from snapshots; older clients simply ignore the message.
     if(event.type==='hit')this.broadcast({type:'battle_fx',kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit},p=>p.room===run.room);
+    // v382: boss mechanics travel on their own presentation-only message so the strike-FX shape
+    // stays untouched and older clients simply ignore an unknown type.
+    if(String(event.type).startsWith('boss_'))this.broadcast({type:'battle_mech',kind:'pve',battleId:run.id,fx:event},p=>p.room===run.room);
     if(event.type==='end'){
-     if(run.party&&Array.isArray(run.members))for(const id of run.members){const member=this.clients.get(id);if(!member)continue;member.pve=null;this.send(member,{type:'pve_end',battleId:run.id,reason:event.reason,earned:{...((run.earnedBy&&run.earnedBy[id])||run.earned)}})}
-     else{if(c)this.send(c,{type:'pve_end',battleId:run.id,reason:event.reason,earned:{...run.earned}});if(c)c.pve=null}
+     if(run.party&&Array.isArray(run.members))for(const id of run.members){const member=this.clients.get(id);if(!member)continue;member.pve=null;this.send(member,{type:'pve_end',battleId:run.id,reason:event.reason,mode:run.mode||'grind',earned:{...((run.earnedBy&&run.earnedBy[id])||run.earned)}})}
+     else{if(c)this.send(c,{type:'pve_end',battleId:run.id,reason:event.reason,mode:run.mode||'grind',earned:{...run.earned}});if(c)c.pve=null}
      this.pveRuns.delete(run.id);
     }
    }

@@ -790,6 +790,9 @@ function ensureDom(){
  const hub=doc.getElementById('socialHub');if(!hub)return;
  const dock=doc.createElement('section');dock.id='fishingDock';dock.hidden=true;dock.setAttribute('aria-label','Fishing');
  dock.innerHTML='<div id="fishingDockHead" title="Drag to move"><span id="fishingSpot">🎣 South Lawn Pond</span><span id="fishingDockBtns"><button id="fishingAutoBtn" type="button" title="Auto fishing: casts, hooks and reels by itself until you stop it" aria-pressed="false">▶ Auto</button><button id="fishingBagBtn" type="button" aria-haspopup="dialog">🧺 Bag <small id="fishingBagCount"></small></button><button id="fishingStopBtn" type="button" title="Stop fishing" aria-label="Stop fishing">✕</button></span></div><div id="fishingMvpBanner" hidden aria-live="polite"></div><button id="fishingGearLine" type="button" title="Open the rod &amp; bait shop"></button><div id="fishingStage" role="button" tabindex="0" aria-label="Fishing action area"></div><p id="fishingStatus" aria-live="polite"></p>';
+ // v380 (fix): the spawn banner is created here with the rest of the fishing DOM - it used to
+ // be read from index.html where no such element existed, so live MVP notices never rendered.
+ const mvpBanner=doc.createElement('div');mvpBanner.id='fishingMvpBanner';mvpBanner.hidden=true;mvpBanner.setAttribute('role','status');mvpBanner.setAttribute('aria-live','polite');hub.append(mvpBanner);
  const panel=doc.createElement('section');panel.id='fishingPanel';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Fishing Bag');
  panel.innerHTML='<header id="fishingPanelHead" title="Drag to move"><strong>🎣 Fishing</strong><span id="fishingCoins" title="Fishcoins — sell catches to earn, spend on rods &amp; bait"></span><button id="fishingPanelClose" type="button" aria-label="Close Fishing window">✕</button></header><nav id="fishingTabs" role="tablist" aria-label="Fishing sections"><button type="button" role="tab" data-ftab="bag" aria-selected="true">🧺 Bag</button><button type="button" role="tab" data-ftab="index" aria-selected="false">📖 Index</button><button type="button" role="tab" data-ftab="shop" aria-selected="false">🛒 Shop</button><button type="button" role="tab" data-ftab="titles" aria-selected="false">🏅 Titles</button></nav><div id="fishingBagView"><div id="fishingRecords"></div><div id="fishingTools"><select id="fishingSort" aria-label="Sort fish"><option value="new">Newest</option><option value="heavy">Heaviest</option><option value="rare">Rarest</option><option value="value">Most valuable</option></select><button id="fishingSellDupes" type="button" title="Sells everything except your heaviest of each species, every mutated fish and every 🔒 locked fish">💰 Sell dupes</button><label title="After every catch, automatically sell it unless it is mutated, locked, or your new heaviest of that species"><input type="checkbox" id="fishingAutoSell"> Auto-sell dupes</label><label title="Fishing sound effects"><input type="checkbox" id="fishingSound"> Sounds</label></div><div id="fishingGrid" role="listbox" aria-label="Caught fish"></div><footer id="fishingDetail" hidden></footer></div><div id="fishingIndexView" hidden></div><div id="fishingShopView" hidden></div><div id="fishingTitlesView" hidden></div>';
  const shakes=doc.createElement('div');shakes.id='fishingShakes';shakes.hidden=true;
@@ -1305,7 +1308,7 @@ const FISH_ART={
   mvp_crimson_shark:'assets/social/fish/mvp_crimson_shark.png', mvp_gilded_shark:'assets/social/fish/mvp_gilded_shark.png',
   mvp_void_maw:'assets/social/fish/mvp_void_maw.png',
 };
-const FISH_ART_VERSION='304';
+const FISH_ART_VERSION='380'; // v380: the seven MVP crops are redrawn as transparent chibi sprites
 const FISH_IMG=new Map();
 function preloadFishArt(){
  if(typeof Image!=='function'||typeof document==='undefined'||!document.createElement)return;
@@ -1814,6 +1817,7 @@ function stopFishing(message){
 function toggleBag(force){
  ensureDom();if(!els)return;
  const show=typeof force==='boolean'?force:els.panel.hidden;
+ if(show)globalThis.PGSocial?.focusHubPanel?.('fishing');
  els.panel.hidden=!show;
  if(show){applyPos(els.panel,'panel');syncSettings();renderPanel()}
 }
