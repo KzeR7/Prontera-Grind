@@ -10497,3 +10497,33 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   assert now points at the pill). Build succeeds; full local gate in the PR description.
 * **Delivery:** pages client only (social.js/social.css/index.html + docs mirrors); the
   Social Worker is unchanged, so no joint deploy is required for this build.
+
+### 2026-11-10 — `haven-v380 Fishing MVP art, floating alert, weight-scaled peek`
+
+* **MVP sprites redone (owner: "cropped, HD & scale on the weights"):** the seven Fishing MVP
+  crops were raw reference drops — opaque 128×128 squares (one a pencil-sketch collage), which
+  is why the Fishing Index read "off". They are now generated chibi game art
+  (`tools/mvp_sprite_art.py`, deterministic, `--check`): transparent background, bold outline,
+  256×256 (the Index draws 64 and the detail 128, so nothing upscales), one per species:
+  Azure/Tide/Abyss drakes (Abyss with glow spots), Iron Crab Titan (shell spikes, stalk eyes),
+  Crimson + Gilded tyrant sharks (Gilded crowned), Void Maw (one cyan eye, glowing maw).
+  `FISH_ART_VERSION` bumps to 380; `social_fishing_sim` now requires the MVP crops to be
+  transparent (sharp-decoded corner/cutout checks) and 256-wide.
+* **Floating warning sign:** the pond alert is no longer a posted board beside the water — it
+  hovers above the lake (board at y≈6.4, no posts) and breathes with the same pulse as the
+  boss. Text unchanged (names the MVP, never shows rates).
+* **Half-body peek, weight-true:** the boss rises out of the pond — the sprite is cut at a
+  wavy waterline with a ripple (canvas `destination-out`), and the whole peek scales with the
+  species' real weight range (1,000 kg → ×0.8 … 3,000 kg → ×1.3): a 3.0 t Void Maw looms well
+  over a 1.8 t Iron Crab. Sim pins sign-floating, no-posts, and Void Maw > Iron Crab scale.
+* **Live MVP banner fixed:** the client rendered `#fishingMvpBanner`, but that element never
+  existed in index.html, so spawn notices never showed. It is now created with the rest of the
+  fishing DOM and styled (pulsing crimson pill under the hub toolbar).
+* **GM console spawn:** verified end-to-end on the preview (console → `/api/gm/fishing` →
+  Social DO → `mvp_spawn` broadcast → client). It requires a GM account: previews now document
+  `PORT=8788 tools/preview.sh --gm-all` in `tools/preview.sh` (the arena preview runs it).
+* **Checks:** `social_fishing_sim`, `social_ui_sim`, `afterdark_ui_sim`,
+  `digimon_sanctuary_ui_sim`, `update_watch_sim` pass; the three progression fixtures were
+  regenerated with `--reuse-baseline` for the BUILD bump, so `skill_balance_sim` and
+  `card_star_balance_sim` pass for the first time since v377. Full gate in the PR description.
+* **Delivery:** Pages client + tools + fixtures only; the Social Worker is unchanged.

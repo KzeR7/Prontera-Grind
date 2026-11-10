@@ -1005,3 +1005,10 @@ button.sanctuary-node:hover{border-color:rgba(var(--ad-rgb),.55);background:rgba
 #sanctuaryTrainingCard .card-actions{display:flex;gap:8px}
 #sanctuaryTrainingCard .card-actions button{flex:1}
 @media(max-width:600px){#sanctuaryWorldPill,#sanctuaryTrainingCard{top:calc(var(--socialhub-top,92px) + 10px)}#sanctuaryWorldPill .pill-text small{max-width:130px;overflow:hidden;text-overflow:ellipsis}}
+
+/* --- v380: live Fishing MVP spawn banner (the element was missing from the DOM before) --- */
+#fishingMvpBanner{position:absolute;z-index:45;top:calc(var(--socialhub-top,64px) + 12px);left:50%;transform:translateX(-50%);max-width:min(420px,calc(100% - 200px));padding:8px 16px;border:1px solid #ff244788;border-radius:999px;background:linear-gradient(180deg,#3a1220,#22101e);box-shadow:0 4px 16px #0008,0 0 18px #ff244733;color:#ffe9ad;font:bold 12px "Trebuchet MS",sans-serif;text-align:center;pointer-events:none;animation:mvpPulse 1.6s ease-in-out infinite}
+#fishingMvpBanner[hidden]{display:none}
+#fishingMvpBanner b{color:#fff4dc}
+@keyframes mvpPulse{0%,100%{box-shadow:0 4px 16px #0008,0 0 10px #ff24472e}50%{box-shadow:0 4px 16px #0008,0 0 24px #ff244761}}
+@media(max-width:600px){#fishingMvpBanner{max-width:calc(100% - 24px);top:calc(var(--socialhub-top,92px) + 10px);font-size:10.5px}}
