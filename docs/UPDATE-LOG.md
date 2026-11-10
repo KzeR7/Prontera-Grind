@@ -10466,3 +10466,34 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Try it:** Enter the hub, open More → Refine, switch through the four DigiPet views, wear a title, shrink the running activity to one line, expand the top map, and compare the bottom monitor before/after starting field farming. Switch Moonstone/Aurora/Ember and return to the field to check chat.
 * **Checks:** Build succeeds; 206 of 217 configured checks pass on latest main, with all 11 remaining failures reproduced on the untouched latest-main snapshot. Real Chromium passes 24 desktop/tablet/phone panel checks, three field-chat palettes, native rendering, continued field farming, title wear/order, one-line activity expand and the 32-emote tray, with no page exceptions or failed local assets. Details and remaining failures: [Afterdark UI](AFTERDARK-UI.md). No test budget or combat fixture changes.
 * **Delivery:** Prepared for a GitHub PR using the API archive and Git data API; no clone or deployment.
+
+### 2026-11-10 — `haven-v379 DigiPet tabs, DigiDex redesign, evolution tree, one training pill`
+
+* **Owner proposal pass on the v378 DigiPet panel** (six-point feedback against the mock
+  set): the layout points that were already right (map toolbar on top, field EXP monitor at
+  the bottom) stay untouched.
+* **Mastery is its own tab:** the "Evolution or mastery" section left the Partners view; a
+  dedicated **Mastery** tab now sits beside Evolution with the mastery figure, the
+  +1.5 attack/point explainer, next-point progress and the "Keep form · improve mastery"
+  action (plus jump links to Evolution/Partners).
+* **DigiDex redesigned:** centred portrait cards (attribute/stage chip, owned badge,
+  assign button) in a responsive auto-fill grid; base battle, your layer and the
+  evolves-from/to routes remain on every card, and search / stage / owned filters,
+  branch view and pagination are unchanged.
+* **Evolution tab is a class-tree preview:** FROM row → trunk → the current form (accent
+  node) → trunk → every direct TO branch as a clickable chip that jumps into the DigiDex
+  branch view, with truthful requirement bars (training points, battle wins), the roll
+  pool and the same evolve controls. Fixed on the way: the view read the partner store by
+  line instead of slot, so it always showed a phantom fresh copy — requirements could
+  never look satisfied there.
+* **One training indicator:** while a gym session runs, the mock's top-right pill (native
+  portrait, stat, live countdown, progress ring) is the only visible bar and expands into
+  the elapsed/remaining card with Stop; the centred bar keeps only transient notices
+  (stop reasons, completions). Pill hides with the panel focus (`has-management`) and on
+  leave.
+* **Checks:** `afterdark_ui_sim`, `digimon_sanctuary_ui_sim`, `social_ui_sim`,
+  `social_fishing_sim`, `digimon_index_sim`, `digipet_title_sim`, `emote_tray_sim` and
+  `update_watch_sim` pass (sim retargets follow the moved sections; the training-visibility
+  assert now points at the pill). Build succeeds; full local gate in the PR description.
+* **Delivery:** pages client only (social.js/social.css/index.html + docs mirrors); the
+  Social Worker is unchanged, so no joint deploy is required for this build.

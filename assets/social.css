@@ -878,3 +878,130 @@ body.social-open #socialChat{--chat-accent:var(--ad-accent);--chat-panel:#1c2027
  #socialMorePanel{right:8px;width:310px;max-width:calc(100% - 16px)}
  #sanctuaryWorldStatus,#sanctuaryWorldPill,#sanctuaryNearby{top:calc(var(--socialhub-top,92px) + 12px);max-width:calc(100% - 140px);font-size:10px}
 }
+
+/* ================= v379 (owner proposal pass): DigiPet tabs, DigiDex redesign,
+   evolution tree, mastery tab, one top-right training pill ================= */
+
+/* --- header wallet + nav-as-tabs (mock: DIGIPET header, Pet Coins/Eggs top right) --- */
+.sanctuary-head-actions .sanctuary-wallet{display:inline-flex;align-items:center;gap:4px;margin-right:auto;margin-left:10px;padding:5px 11px;border:1px solid #59616a66;border-radius:999px;background:#ffffff08;color:#ffd98a;font:bold 11px "Trebuchet MS",sans-serif;white-space:nowrap}
+.sanctuary-head-actions .sanctuary-wallet b{color:#ffe9ad}
+.sanctuary-nav{border-bottom:1px solid #ffffff12}
+.sanctuary-nav [data-sanctuary-view]{position:relative;border:none;background:none;box-shadow:none;padding:11px 13px 9px;border-radius:0;color:#aab4bd;font:600 11.5px "Trebuchet MS",sans-serif;letter-spacing:.04em;text-shadow:none}
+.sanctuary-nav [data-sanctuary-view]:hover{color:#e8edf2}
+.sanctuary-nav [data-sanctuary-view][aria-pressed="true"]{color:#fff;box-shadow:inset 0 -2px 0 var(--ad-accent)}
+.sanctuary-nav .sanctuary-nav-note{margin-left:auto;align-self:center;padding-right:4px;color:#8d97a1;font:600 9.5px "Trebuchet MS",sans-serif;letter-spacing:.14em}
+.sanctuary-nav .sanctuary-wallet{display:none}
+
+/* --- partners view: specimen card, stat tiles, gear tiles, footer (mock 2) --- */
+.sanctuary-specimen{display:flex;flex-direction:column;align-items:center;text-align:center}
+.sanctuary-specimen .sanctuary-specimen-head{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:8px}
+.sanctuary-specimen .sanctuary-specimen-head em{font-style:normal;padding:3px 9px;border:1px solid #59616a66;border-radius:999px;background:#ffffff08;color:#aab4bd;font:600 9px "Trebuchet MS",sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.sanctuary-specimen .sanctuary-form-chip{margin:10px 0 2px;padding:4px 11px;border:1px solid rgba(var(--ad-rgb),.4);border-radius:999px;background:rgba(var(--ad-rgb),.12);color:var(--ad-accent);font:600 9.5px "Trebuchet MS",sans-serif;letter-spacing:.13em;text-transform:uppercase}
+.sanctuary-specimen strong{font-size:16px;letter-spacing:.02em}
+.sanctuary-specimen .sanctuary-specimen-level{color:#aab4bd;font-size:10.5px}
+.sanctuary-train{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sanctuary-train>span{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:11px 8px 9px;border:1px solid #ffffff10;border-radius:8px;background:#ffffff06}
+.sanctuary-train>span b{font-size:11px;letter-spacing:.05em}
+.sanctuary-train>span small{min-height:24px;color:#8d97a1;font-size:8.5px;line-height:1.35}
+.sanctuary-gauge{margin-bottom:4px!important}
+.sanctuary-gear-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sanctuary-gear-strip>span{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px 8px;border:1px solid #ffffff10;border-radius:8px;background:#ffffff06;text-align:center}
+.sanctuary-gear-strip>span canvas{width:30px;height:30px;image-rendering:pixelated}
+.sanctuary-gear-strip>span b{color:#e8edf2;font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+.sanctuary-gear-strip>span em{position:absolute;top:5px;right:5px;font-style:normal;padding:2px 5px;border:1px solid #d4ba7244;border-radius:4px;color:#ffe9a8;font:bold 8.5px "Trebuchet MS",sans-serif}
+.sanctuary-gear-strip>span small{color:#8d97a1;font-size:8.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sanctuary-gear-strip>span.is-empty{opacity:.55;border-style:dashed}
+.sanctuary-selection{display:flex;align-items:center;gap:12px;padding:9px 14px;border-top:1px solid #ffffff12;background:#ffffff05}
+.sanctuary-selection .sanctuary-field-note{flex:1;text-align:center;color:#9fe0b0;font-size:10px}
+.sanctuary-selection #sanctuaryDismiss{margin-left:auto}
+
+/* --- DigiDex redesign: sleek centered cards (mock 3) --- */
+.sanctuary-index-list{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.sanctuary-index-entry{display:flex;flex-direction:column;align-items:center;text-align:center;gap:0;padding:12px 12px 12px;border:1px solid #ffffff12;border-radius:10px;background:linear-gradient(180deg,#ffffff08,#ffffff03)}
+.sanctuary-index-entry.is-current{border-color:rgba(var(--ad-rgb),.55);box-shadow:inset 0 0 0 1px rgba(var(--ad-rgb),.3)}
+.sanctuary-index-entry>.digidex-card-head{order:0;display:flex;flex-direction:column;align-items:center;width:100%}
+.digidex-portrait{flex-basis:96px;width:96px;height:96px;border-radius:10px;background-color:#0d1218;background-size:1280px 896px;background-position:var(--portrait-x) var(--portrait-y);box-shadow:inset 0 0 18px #00000088,0 0 0 1px #ffffff0a}
+.digidex-title{display:flex;flex-direction:column;align-items:center;margin-top:9px}
+.digidex-title strong{font-size:14.5px;letter-spacing:.02em}
+.digidex-title .digidex-stage{margin-top:2px;color:var(--ad-accent);font:600 9px "Trebuchet MS",sans-serif;letter-spacing:.14em;text-transform:uppercase}
+.digidex-title .digidex-status{margin-top:3px;color:#8d97a1;font-size:8.5px;letter-spacing:.08em}
+.digidex-owned-badge{order:1;margin:8px 0 0;padding:3px 10px;border:1px solid #d4ba7244;border-radius:999px;background:#d4ba720d;color:#ffe9a8;font:bold 8.5px "Trebuchet MS",sans-serif;letter-spacing:.12em}
+.digidex-assign{order:2;margin-top:8px;width:100%}
+.sanctuary-index-entry>.digidex-meta{order:3;margin-top:7px;color:#8d97a1;font-size:9px}
+.sanctuary-index-entry>.digidex-base-layer{order:4;width:100%;margin-top:8px;padding:7px 6px 6px;border:1px solid #ffffff0d;border-radius:7px;background:#ffffff05}
+.sanctuary-index-entry>.digidex-base-layer>small{display:block;margin-bottom:4px;color:#8d97a1;font-size:8px;letter-spacing:.12em}
+.sanctuary-index-entry>.digidex-base-layer>div{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.sanctuary-index-entry>.digidex-base-layer span{color:#c6cfd6;font-size:9px;white-space:nowrap}
+.sanctuary-index-entry>.digidex-owned-layer{order:5;width:100%;margin-top:6px;padding:6px;border:1px solid rgba(var(--ad-rgb),.25);border-radius:7px;background:rgba(var(--ad-rgb),.07);color:#cfe3da;font-size:8.5px;line-height:1.5}
+.sanctuary-index-entry>.digidex-owned-layer b{display:block;margin-bottom:2px;color:var(--ad-accent);font-size:8px;letter-spacing:.1em}
+.sanctuary-index-entry>.digidex-paths{order:6;width:100%;margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.sanctuary-index-entry>.digidex-paths p{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin:0}
+.sanctuary-index-entry>.digidex-paths b{flex:0 0 auto;color:#8d97a1;font-size:8.5px;letter-spacing:.1em}
+.sanctuary-index-entry>.digidex-paths span{display:inline-flex;gap:4px;flex-wrap:wrap}
+.sanctuary-index-entry>.digidex-paths [data-digidex-form]{padding:3px 8px;border:1px solid #ffffff16;border-radius:5px;background:#ffffff08;color:#d6dde3;font:600 9px "Trebuchet MS",sans-serif}
+.sanctuary-index-entry>.digidex-paths [data-digidex-form]:hover{border-color:rgba(var(--ad-rgb),.5);color:#fff}
+.digidex-route-note{order:7;margin-top:7px;color:#77828c;font-size:8.5px;line-height:1.45}
+@media(max-width:720px){.sanctuary-index-list{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.digidex-portrait{flex-basis:84px;width:84px;height:84px}}
+
+/* --- evolution view: class-tree preview (mock 5, per owner: "like a class tree") --- */
+.sanctuary-tree{display:flex;flex-direction:column;gap:0;padding:14px 12px;border:1px solid #ffffff12;border-radius:10px;background:linear-gradient(180deg,#ffffff07,#ffffff02)}
+.sanctuary-tree-row{display:flex;align-items:center;gap:12px}
+.sanctuary-tree-row>small{flex:0 0 92px;color:#8d97a1;font:600 8.5px "Trebuchet MS",sans-serif;letter-spacing:.14em;text-align:right}
+.sanctuary-tree-cells{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.sanctuary-tree-trunk{width:2px;height:12px;margin:2px 0 2px calc(92px + 26px);background:#59616a80}
+.sanctuary-node{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 7px;border:1px solid #ffffff16;border-radius:999px;background:#ffffff08;color:#e8edf2;font-family:inherit;text-align:left}
+.sanctuary-node .sanctuary-node-face{display:block;width:30px;height:30px;border-radius:50%;background-color:#0d1218;background-image:url('digimon/digidex-portraits.webp');background-size:1280px 896px;background-position:var(--portrait-x) var(--portrait-y);image-rendering:pixelated;box-shadow:inset 0 0 8px #00000099}
+.sanctuary-node .sanctuary-node-text{display:flex;flex-direction:column}
+.sanctuary-node .sanctuary-node-text b{font-size:11.5px;line-height:1.2}
+.sanctuary-node .sanctuary-node-text small{color:#8d97a1;font-size:8.5px;letter-spacing:.06em}
+button.sanctuary-node{cursor:pointer}
+button.sanctuary-node:hover{border-color:rgba(var(--ad-rgb),.55);background:rgba(var(--ad-rgb),.1)}
+.sanctuary-node.is-current{border-color:rgba(var(--ad-rgb),.65);background:rgba(var(--ad-rgb),.14);box-shadow:0 0 0 1px rgba(var(--ad-rgb),.25),0 2px 10px rgba(var(--ad-rgb),.15)}
+.sanctuary-node.is-current .sanctuary-node-text b{color:#fff}
+.sanctuary-node.is-current .sanctuary-node-text small{color:var(--ad-accent)}
+.sanctuary-node.is-empty{border-style:dashed;opacity:.7}
+.sanctuary-tree-note{margin-top:8px;color:#8d97a1;font-size:9.5px;line-height:1.5}
+.sanctuary-req{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.sanctuary-req-stat{display:flex;flex-direction:column;gap:4px;padding:9px 11px;border:1px solid #ffffff10;border-radius:8px;background:#ffffff05}
+.sanctuary-req-stat span{color:#8d97a1;font-size:9px;letter-spacing:.1em;text-transform:uppercase}
+.sanctuary-req-stat b{color:#e8edf2;font-size:12px}
+.sanctuary-req-bar{height:5px;border-radius:999px;background:#ffffff10;overflow:hidden}
+.sanctuary-req-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,rgba(var(--ad-rgb),.7),var(--ad-accent));transition:width .3s}
+.sanctuary-evolution .sanctuary-roll-pool,.sanctuary-mastery .sanctuary-roll-pool{margin-top:9px}
+
+/* --- mastery view (new dedicated tab) --- */
+.sanctuary-mastery-row{display:flex;gap:16px;align-items:flex-start;padding:14px 12px;border:1px solid #ffffff12;border-radius:10px;background:linear-gradient(180deg,#ffffff07,#ffffff02)}
+.sanctuary-mastery-figure{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 86px;height:86px;border-radius:50%;background:conic-gradient(from 220deg,var(--ad-accent) calc(var(--progress,0)*1%),#101720 0 78%,transparent 78%);position:relative}
+.sanctuary-mastery-figure::after{content:'';position:absolute;inset:5px;border-radius:50%;background:#141a20}
+.sanctuary-mastery-figure b,.sanctuary-mastery-figure small{position:relative;z-index:1}
+.sanctuary-mastery-figure b{color:#fff;font-size:26px;line-height:1}
+.sanctuary-mastery-figure small{color:#8d97a1;font-size:9px}
+.sanctuary-mastery-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+.sanctuary-mastery-copy p{margin:0;color:#c6cfd6;font-size:11px;line-height:1.55}
+.sanctuary-mastery-copy b{color:#fff}
+.sanctuary-mastery-next{color:#8d97a1!important;font-size:10px!important}
+.sanctuary-mastery .sanctuary-req-bar{margin-top:2px}
+
+/* --- the one training indicator: top-right pill + expandable card (mock 6) --- */
+#socialHub.has-management :is(#sanctuaryWorldPill,#sanctuaryTrainingCard){display:none}
+#sanctuaryWorldPill{position:absolute;z-index:40;top:calc(var(--socialhub-top,64px) + 12px);right:12px;left:auto;transform:none;display:flex;align-items:center;gap:9px;min-width:0;max-width:min(300px,calc(100% - 24px));padding:7px 11px 7px 8px;border:1px solid rgba(var(--ad-rgb),.45);border-radius:12px;background:var(--ad-shell);box-shadow:var(--ad-bevel);color:var(--ad-ink);cursor:pointer;text-align:left}
+#sanctuaryWorldPill[hidden]{display:none}
+#sanctuaryWorldPill .pill-face{display:block;flex:0 0 26px;width:26px;height:26px;border-radius:50%;background-color:#0d1218;background-image:url('digimon/digidex-portraits.webp');background-size:1280px 896px;background-position:var(--portrait-x) var(--portrait-y);image-rendering:pixelated;box-shadow:inset 0 0 6px #00000099,0 0 0 1px #ffffff14}
+#sanctuaryWorldPill .pill-text{display:flex;flex-direction:column;min-width:0}
+#sanctuaryWorldPill .pill-text b{font-size:11px;letter-spacing:.02em;white-space:nowrap}
+#sanctuaryWorldPill .pill-text small{color:#aab4bd;font-size:9px;white-space:nowrap}
+#sanctuaryWorldPill .pill-ring{flex:0 0 20px;width:20px;height:20px;border-radius:50%;background:conic-gradient(var(--ad-accent) calc(var(--progress,0%)*.78),#101720 0 78%,transparent 78%);position:relative}
+#sanctuaryWorldPill .pill-ring::after{content:'';position:absolute;inset:3px;border-radius:50%;background:#141a20}
+#sanctuaryTrainingCard{position:absolute;z-index:41;top:calc(var(--socialhub-top,64px) + 12px);right:12px;width:min(280px,calc(100% - 24px));padding:12px 14px;background:var(--ad-shell);border:1px solid rgba(var(--ad-rgb),.45);border-radius:12px;box-shadow:var(--ad-bevel);color:var(--ad-ink)}
+#sanctuaryTrainingCard[hidden]{display:none}
+#sanctuaryTrainingCard header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+#sanctuaryTrainingCard header small{color:var(--ad-accent);font:600 8.5px "Trebuchet MS",sans-serif;letter-spacing:.16em}
+#sanctuaryTrainingCard header button{border:none;background:none;color:#8d97a1;font-size:13px;cursor:pointer;padding:0 3px}
+#sanctuaryTrainingCard h3{margin:0 0 3px;font-size:17px;letter-spacing:.01em}
+#sanctuaryTrainingCard p{margin:0 0 10px;color:#aab4bd;font-size:10px;line-height:1.5}
+#sanctuaryTrainingCard .card-bar{height:6px;border-radius:999px;background:#ffffff10;overflow:hidden}
+#sanctuaryTrainingCard .card-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,rgba(var(--ad-rgb),.7),var(--ad-accent))}
+#sanctuaryTrainingCard .card-times{display:flex;justify-content:space-between;margin:5px 0 11px;color:#8d97a1;font-size:9px}
+#sanctuaryTrainingCard .card-actions{display:flex;gap:8px}
+#sanctuaryTrainingCard .card-actions button{flex:1}
+@media(max-width:600px){#sanctuaryWorldPill,#sanctuaryTrainingCard{top:calc(var(--socialhub-top,92px) + 10px)}#sanctuaryWorldPill .pill-text small{max-width:130px;overflow:hidden;text-overflow:ellipsis}}
