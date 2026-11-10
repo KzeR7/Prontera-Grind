@@ -711,3 +711,8 @@ html.pg-mobile #socialPokerMini .poker-mini-pot{display:none}
 #sanctuaryActivityPanel .sap-mini button{flex:none;min-height:26px;padding:0 9px;border:1px solid #849b9c66;border-radius:6px;background:#1c2f2a;color:#d8e2d0;cursor:pointer;font-size:11px}
 #sanctuaryActivityPanel .sap-mini button[hidden]{display:none}
 #sapMin{font-size:18px}
+
+/* v374: fixed emote slots. The img is placed by inline left/top/size from EMOTE_LAYOUT; nearest-neighbour keeps small art crisp. */
+.emote-slot{position:relative;display:inline-block;overflow:hidden;flex:none;vertical-align:middle}
+.emote-slot img{position:absolute;max-width:none;image-rendering:pixelated}
+#socialEmoji button{display:flex;flex-direction:column;align-items:center;gap:2px}

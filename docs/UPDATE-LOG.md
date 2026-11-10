@@ -10408,3 +10408,11 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **`digimon_sanctuary_ui_sim` — FIXED.** The test still expected the retired Cook Lina shop view. Eggs are bought from the Pet Bag view now, and the egg button is disabled when the player can't afford it (500 coins, the player has 50). The test asserts that state instead of a message the UI no longer shows.
 * **`social_ui_sim` — FIXED.** The stale `Walk near` expectation is replaced with the real gym-start status (`auto-training`). The trainer is moved back into the gym first. The grind-then-gym step selects partner 1 in the gym tab, because the panel now follows the DigiPet you pick.
 * **Panel follows the selected DigiPet — now asserted.** `social_ui_sim` checks that the gym tab's selected partner moves with the followed DigiPet, in both directions.
+
+### 2026-11-10 (emotes) — `haven-v374` emote tray: uniform sizes, RO names for the checked emotes
+
+* **Uniform emote sizes.** Each emote is measured by its painted area (`tools/social/emote-layout.py`, output in `EMOTE_LAYOUT` in `assets/social-rules.js`) and drawn into the same 40 px tray slot (36 px in chat). Art is drawn pixelated, so small emotes are not smoothed. The art files are unchanged.
+* **RO command names for the checked emotes.** `EMOTE_NAMES`: `surprise`=`/!`, `gg`=`/gg`, `ok`=`/thx`, `sorry`=`/sry`, `cry`=`/sob`, `cloud`=`/ag`, `idea`=`/ic`, `laugh`=`/heh`, `mail`=`/mail`. Ids are stable (saved backlog refers to them). Typed commands resolve through `EMOTE_BY_CMD`; an id with an RO name is no longer typeable as its id, so `/ok` no longer sends the Thanks art.
+* **Not done:** the other 23 emotes keep their id labels until checked. Their art does not reliably match the RO descriptions, and the client table in `scriptord3/Ragnarok-Client-Scripts` disagrees with the repo's action numbers for several of them.
+* **Not done:** adding new emotes. The art for the other RO emotes lives in the native `emotion.spr`, which is not in the repo; see the emote notes above.
+* Test: `tools/tests/emote_tray_sim.js`.
