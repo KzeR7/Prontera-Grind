@@ -994,6 +994,11 @@ button.sanctuary-node:hover{border-color:rgba(var(--ad-rgb),.55);background:rgba
 #socialHudStack>#sanctuaryWorldStatus{order:4;width:min(400px,100%)}
 #socialHudStack>#sanctuaryNearby{order:5;width:auto;min-width:190px}
 #socialHudStack>#sanctuaryBattleNearby{order:6;width:auto;min-width:220px;padding:9px 14px;letter-spacing:0;box-shadow:var(--ad-bevel)}
+/* The activity panel already contains the run card, notice and action. Keeping their top-centre
+   copies behind the open panel was the remaining 701–1080 px clash (and covered most of a phone).
+   Keep only the owner's deliberately small pink MVP alert above it; every duplicate returns as soon
+   as the panel closes, including when a saved/dragged panel position is in use. */
+#socialHub.sap-panel-open #socialHudStack>:is(#socialActivityStatus,#sanctuaryWorldStatus,#sanctuaryNearby,#sanctuaryBattleNearby,#sanctuaryBattleHUD){display:none}
 /* A management window (DigiPet, party, map, More, fishing bag, poker, field tabs) owns the middle
    of the screen: only the MVP alert and the running-activities shortcut stay, side by side in the
    strip between the toolbar and the window. */

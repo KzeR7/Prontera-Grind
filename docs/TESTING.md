@@ -283,6 +283,17 @@ cases, and all three were mutation-checked. The account-side fingerprint lives i
 `docs/CHECK-A-SAVE.md`: a healthy account moves every 10–25 minutes, and a stalled queue is a run of no
 rows at all.
 
+**2026-11-11 (`haven-v384` gate result): 218 suites pass, 0 fail, 0 dependency skips.**
+The four generated-asset/config checks, `mvp_art_crop.py --check`, every `*_sim.js`,
+`*_sim.mjs` and `*_smoke.js` ran on Node 22.22.3 with the documented dependencies.
+The three progression fixtures were regenerated with `--reuse-baseline`: all before/after
+measurements remained byte-identical and only `sourceHash`/`combatHash` advanced with BUILD.
+A real SwiftShader Chromium pass rendered the 12.6 × 3.15 neon MVP board at Y 9.2 above
+the bridge and the 512 px pond sprite; a 1440/1080/900/720/701/700/390 px layout pass
+confirmed the open activity panel suppresses its duplicate centre HUD while retaining the
+small MVP banner. These local browser checks are not hosted staging or physical-device
+certification.
+
 **2026-11-10 (`haven-v383` gate result): 218 suites pass, 0 fail, 0 dependency skips.**
 The four generated-asset/config checks, the new `mvp_art_crop.py --check` (pixel comparison
 against the owner's reference crops) and every `*_sim.js`, `*_sim.mjs`, `*_smoke.js` ran on

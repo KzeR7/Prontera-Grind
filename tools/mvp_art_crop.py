@@ -9,9 +9,10 @@ sent"), so this tool keeps the supplied pixels and only cleans up the framing:
      photo/sketch greys and the dark plates), so interior white bellies stay opaque;
   2. keep the largest subject - this is what isolates the main crab from the concept sheet's
      smaller sketches - plus any piece that overlaps its bounding box;
-  3. feather the cut, trim to the subject, square-pad with a small margin;
-  4. upscale to 256 with Lanczos and a light unsharp, so the 64px Index cell and the ~256px
-     pond float both stay crisp.
+  3. bleed the supplied edge colours under the transparent fringe, feather the cut, trim to the
+     subject, and square-pad with a small margin (no white photo-matte halo in the pond);
+  4. upscale once to 512 with Lanczos and a light unsharp, so the large pond float keeps a native
+     512px texture while the Index and catch cards only ever downsample it.
 
 The untouched references live in tools/mvp-art-source/ (that folder is the source of
 truth). Never repaint, recolour or substitute the art here.
@@ -30,7 +31,7 @@ from PIL import Image, ImageFilter
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, 'tools', 'mvp-art-source')
 OUT = os.path.join(ROOT, 'assets', 'social', 'fish')
-SIZE = 256
+SIZE = 512
 MARGIN = 0.04  # fraction of the square kept clear around the subject
 
 # Per-image tuning. tol = max channel distance that still counts as background; crop = optional
@@ -78,7 +79,11 @@ def background_mask(rgb, tol):
                 queue.append((y, x))
     while queue:
         y, x = queue.popleft()
-        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        # Eight-way fill follows the supplied image's diagonal antialias pixels. Four-way fill
+        # stranded one-pixel white islands around fins and claws, which became a visible photo-matte
+        # halo after the crop was enlarged in the pond.
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1),
+                       (1, 1), (1, -1), (-1, 1), (-1, -1)):
             ny, nx = y + dy, x + dx
             if 0 <= ny < h and 0 <= nx < w and near[ny, nx] and not seen[ny, nx]:
                 seen[ny, nx] = True
@@ -141,6 +146,39 @@ def isolate(mask, main_only=False):
     return keep
 
 
+def bleed_edge_colours(rgb, foreground, steps=4):
+    """Extend real subject colours beneath a soft alpha edge instead of its white/grey matte.
+
+    Opaque supplied pixels are never changed. Only pixels outside the hard mask receive the
+    average colour of their nearest known neighbours, repeated far enough to cover the 0.7 px
+    feather. This is alpha decontamination, not repainting the reference.
+    """
+    colours = rgb.copy()
+    known = foreground.copy()
+    for _ in range(steps):
+        total = np.zeros_like(colours, dtype=np.float32)
+        count = np.zeros(known.shape, dtype=np.float32)
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            neighbour_known = np.roll(known, (dy, dx), axis=(0, 1))
+            neighbour_colours = np.roll(colours, (dy, dx), axis=(0, 1))
+            if dy == 1:
+                neighbour_known[0, :] = False
+            elif dy == -1:
+                neighbour_known[-1, :] = False
+            if dx == 1:
+                neighbour_known[:, 0] = False
+            elif dx == -1:
+                neighbour_known[:, -1] = False
+            total += neighbour_colours * neighbour_known[..., None]
+            count += neighbour_known
+        fill = (~known) & (count > 0)
+        if not fill.any():
+            break
+        colours[fill] = np.rint(total[fill] / count[fill, None]).astype(np.uint8)
+        known[fill] = True
+    return colours
+
+
 def crop_one(sp_id, spec):
     src_path = os.path.join(SRC, sp_id + '.png')
     img = Image.open(src_path).convert('RGB')
@@ -160,11 +198,12 @@ def crop_one(sp_id, spec):
         fg &= box
     if not fg.any():
         raise SystemExit(sp_id + ': the background knockout removed everything')
+    edge_rgb = bleed_edge_colours(rgb, fg)
     alpha = Image.fromarray(np.where(fg, 255, 0).astype(np.uint8), 'L')
-    # Feather by a single source pixel so the 4x upscale does not show a hard stair edge.
+    # Feather by a single source pixel so the 4x upscale does not show a hard stair edge. The RGB
+    # underneath that feather has already been decontaminated, so it cannot reveal a white halo.
     alpha = alpha.filter(ImageFilter.GaussianBlur(0.7))
-    rgba = img.convert('RGBA')
-    rgba.putalpha(alpha)
+    rgba = Image.fromarray(np.dstack((edge_rgb, np.asarray(alpha))), 'RGBA')
     box = alpha.point(lambda v: 255 if v > 24 else 0).getbbox()
     if not box:
         raise SystemExit(sp_id + ': no subject left after trimming')
@@ -181,25 +220,39 @@ def digest(path):
         return hashlib.sha256(handle.read()).hexdigest()
 
 
+def indexed_output(rendered):
+    """Keep the supplied low-resolution palette while bounding seven 512px runtime files."""
+    quantize_api = getattr(Image, 'Quantize', Image)
+    dither_api = getattr(Image, 'Dither', Image)
+    return rendered.quantize(colors=256,
+                             method=getattr(quantize_api, 'FASTOCTREE', 2),
+                             dither=getattr(dither_api, 'FLOYDSTEINBERG', 1))
+
+
 def main():
     check = '--check' in sys.argv
     drift = []
     for sp_id, spec in sorted(SPECS.items()):
         target = os.path.join(OUT, sp_id + '.png')
         rendered = crop_one(sp_id, spec)
+        indexed = indexed_output(rendered)
         if check:
-            # PNG bytes are not stable across Pillow versions, so compare pixels - and allow a
-            # two-level rounding difference from a different resampler build.
+            # PNG bytes are not stable across Pillow versions, so compare the quantized pixels -
+            # and allow a two-level rounding difference from a different resampler build.
             current = Image.open(target).convert('RGBA') if os.path.exists(target) else None
-            if current is None or current.size != rendered.size:
+            expected = indexed.convert('RGBA')
+            if current is None or current.size != expected.size:
                 drift.append(sp_id)
             else:
                 a = np.asarray(current, dtype=np.int16)
-                b = np.asarray(rendered, dtype=np.int16)
+                b = np.asarray(expected, dtype=np.int16)
                 if int(np.abs(a - b).max()) > 2:
                     drift.append(sp_id)
             continue
-        rendered.save(target)
+        # The subjects are 128px references; a 256-colour indexed PNG preserves that supplied
+        # palette while keeping seven 512px runtime textures below the Social asset budget.
+        # (True-colour 512px PNGs added about 1 MiB without adding source detail.)
+        indexed.save(target, optimize=True)
         print('wrote', os.path.relpath(target, ROOT))
     if check:
         if drift:

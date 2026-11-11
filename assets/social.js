@@ -1265,7 +1265,7 @@ function syncDigipetDock(){
  const dock=$id('digipetDock');if(!dock)return;
  let chips=[];try{chips=dockChips()}catch(e){chips=[]}
  const open=!activityPanel.hidden;
- hub.classList.toggle('sap-open',open&&!activityPanel.classList.contains('is-moved'));hub.classList.toggle('has-dock',chips.length>0);
+ hub.classList.toggle('sap-panel-open',open);hub.classList.toggle('sap-open',open&&!activityPanel.classList.contains('is-moved'));hub.classList.toggle('has-dock',chips.length>0);
  dock.hidden=!chips.length;
  const key=chips.map(c=>[c.kind,c.tone,c.tab,c.form,c.stop].join(':')).join('|');
  if(dock.dataset.key!==key){dock.dataset.key=key;dock.innerHTML=chips.map(dockChipMarkup).join('')}

@@ -400,7 +400,11 @@ const DIFF={
  legendary:{bar:.25,speed:.74,dash:.44,fill:.12,drain:.115},
  mythical:{bar:.22,speed:.86,dash:.56,fill:.108,drain:.12},
  secret:{bar:.24,speed:.8,dash:.5,fill:.112,drain:.118},
- mvp:{bar:.18,speed:1.05,dash:.72,fill:.085,drain:.14},
+ // MVP keeps its fast, erratic fish and slow progress bar, but the control window is wide enough
+ // for Auto to win a reel about 3.3%→16.7% from Training→Mythril Rod. The separate 30% landing
+ // roll below therefore makes a hooked MVP about 1%→5% on Auto, while a manual angler still has
+ // to play this reel and then pass the same landing roll.
+ mvp:{bar:.26,speed:1.05,dash:.72,fill:.085,drain:.14},
 };
 // v304 (owner): v303's prices were tuned against the old (looser) rarity weights. Cutting the top
 // tiers made an average catch worth a quarter of what it was, so the base values scale ~6x to put
@@ -472,7 +476,11 @@ function castRating(p){
 function makeReel(fish,rng,control){
  const d=DIFF[fish.rarity]||DIFF.common,sp=speciesById(fish.sp);
  const heft=sp?Math.max(0,Math.min(1,(fish.w-sp.min)/Math.max(.01,sp.max-sp.min))):.5;
- const barW=Math.min(.5,d.bar*(1+Math.max(0,Math.min(.8,control||0))));
+ // MVP needed a much larger base window for a starter rod without making Mythril automatic.
+ // Compressing only its rod-control multiplier keeps the measured Auto landing ladder near 1%→5%;
+ // every ordinary rarity retains the old control formula byte-for-byte.
+ const controlScale=fish.rarity==='mvp'?.22:1;
+ const barW=Math.min(.5,d.bar*(1+Math.max(0,Math.min(.8,control||0))*controlScale));
  return {bar:.5,vel:0,barW,fish:.5,fishVel:0,target:.5,swapIn:.5,speed:d.speed*(1+heft*.25),dash:d.dash,fill:d.fill,drain:d.drain,progress:.33,lock:1.1,t:0,on:true,perfect:true,rng:rng||Math.random};
 }
 // One physics step. Hold pushes the control bar right, release lets it fall left; progress only
@@ -731,7 +739,9 @@ const ui={phase:'off',pond:-1,holding:false,chargeT0:0,castR:null,mods:null,bite
 // MVP fishing: active spawn from the Social Worker, one catch per spawn per player.
 let mvpActive=null; // {sp,id,spawnedAt,endsAt}
 const mvpClaimed=new Set(); // spawn ids already caught by this player
-const MVP_HOOK_CHANCE=.10,MVP_REEL_CATCH_CHANCE=.30;
+const MVP_HOOK_CHANCE=.10,MVP_REEL_CATCH_CHANCE=.30,AUTO_REEL_SAMPLE_MS=130;
+// Kept pure and exported so the odds test drives the same predictive aim used by live Auto fishing.
+const autoReelTarget=s=>s.fish+s.fishVel*.18;
 let uiPos={};
 try{uiPos=JSON.parse(root.localStorage.getItem('pg_fishing_ui_v1'))||{}}catch{}
 function saveUiPos(){try{root.localStorage.setItem('pg_fishing_ui_v1',JSON.stringify(uiPos))}catch{}}
@@ -1311,7 +1321,7 @@ const FISH_ART={
   mvp_crimson_shark:'assets/social/fish/mvp_crimson_shark.png', mvp_gilded_shark:'assets/social/fish/mvp_gilded_shark.png',
   mvp_void_maw:'assets/social/fish/mvp_void_maw.png',
 };
-const FISH_ART_VERSION='383'; // v383: the seven MVPs are crops of the owner's own references (tools/mvp_art_crop.py)
+const FISH_ART_VERSION='384'; // v384: 512px reference crops with decontaminated transparent edges
 const FISH_IMG=new Map();
 function preloadFishArt(){
  if(typeof Image!=='function'||typeof document==='undefined'||!document.createElement)return;
@@ -1731,7 +1741,7 @@ function tick(t){
  }
  if(ui.phase==='reel'&&ui.reel){
   if(ui.auto){
-   if(t>=ui.autoSampleAt){ui.autoSampleAt=t+130;ui.autoTarget=ui.reel.fish+ui.reel.fishVel*.18}
+   if(t>=ui.autoSampleAt){ui.autoSampleAt=t+AUTO_REEL_SAMPLE_MS;ui.autoTarget=autoReelTarget(ui.reel)}
    ui.holding=ui.reel.bar<ui.autoTarget;
   }
   const out=reelStep(ui.reel,dt,ui.holding);
@@ -2058,7 +2068,7 @@ return {
  // v309: painted bait icons, so the shop no longer depends on Unicode-13 emoji fonts.
  baitSprite,baitSpriteURL,baitHTML,titleBadge,titleBadgeURL,
  // MVP
- MVP_REEL_CATCH_CHANCE,setMvp,clearMvp,getMvp:()=>mvpActive, isMvpClaimed:id=>mvpClaimed.has(id),
+ MVP_REEL_CATCH_CHANCE,AUTO_REEL_SAMPLE_MS,autoReelTarget,setMvp,clearMvp,getMvp:()=>mvpActive, isMvpClaimed:id=>mvpClaimed.has(id),
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,
  refresh:()=>{if(els){renderDockGear();renderPanel();renderMvpBanner()}},

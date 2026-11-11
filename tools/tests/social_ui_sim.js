@@ -27,6 +27,7 @@ const bar=w.document.getElementById('socialMin');bar.dispatchEvent(new w.Keyboar
   assert.match(socialCss,/#socialHudStack\{[^}]*pointer-events:none/,'and the column itself never swallows a click on the plaza');
   assert.match(socialCss,/#socialHudStack>:is\([^)]*#fishingMvpBanner[^)]*#sanctuaryBattleHUD[^)]*\)\{position:static;transform:none/,'the MVP alert and the battle card are rows of it, so they cannot overlap');
   assert.match(socialCss,/#socialHub\.has-management #digipetDock\{visibility:hidden\}/,'a management window hides the dock without dropping it');
+  assert.match(socialCss,/#socialHub\.sap-panel-open #socialHudStack>:is\([^)]*#sanctuaryBattleHUD[^)]*\)\{display:none\}/,'an open activity panel hides its duplicate centre HUD instead of clashing with it');
   assert.match(socialCss,/\.dd-face\{[^}]*background-size:600px 420px/,'the dock portrait uses the 30px cell of the portrait sheet');
   assert(!/sanctuaryWorldPill|\.pill-|sap-mini|is-mini/.test(socialCss),'the pill and the mini strip leave no styles behind');
   assert(!/#sanctuaryBattleNearby\{[^}]*position:absolute/.test(battleCss)&&!/#sanctuaryBattleNearby\{[^}]*top:\d/.test(battleCss),'the Start button is not pinned over the panel text any more');

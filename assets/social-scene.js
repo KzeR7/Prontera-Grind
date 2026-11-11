@@ -1740,25 +1740,26 @@ void main(){
     r.pole.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3((tx2-hx)/len,(ty-hy)/len,(tz2-hz)/len));
    }
   }
-  // Large, flashing MVP alert above the southern pond approach. It is shown only for a live spawn.
+  // Large, flashing MVP alert above the lake bridge. It is shown only for a live spawn.
+  const MVP_SIGN_Y=9.2;
   let mvpSign=null,mvpSignCanvas=null,mvpSignCtx=null,mvpSignTex=null;
   function ensureMvpSign(){
    if(mvpSign) return mvpSign;
    if(!pondViews.length) return null;
-   const p=pondViews[0].p || R.PONDS[0];
-   // v380 (owner: "a Warning Sign floating above the lake when the MVP arrives"): the board
-   // hovers over the water itself - no posts - and updateMvpSign() bobs it with the pulse.
-   const sx=p.x, sz=p.z;
+   const p=pondViews[0].p||R.PONDS[0],bridge=R.POND_PROPS?.[0]?.bridge;
+   // v384 owner clarification: this is the board over the bridge, not a sign on a side bank.
+   // Anchor it to the shared bridge coordinates and raise it well above the arched deck.
+   const sx=bridge?.x??p.x,sz=bridge?.z??p.z;
    const group=new T.Group();group.name='socialMvpAlertSign';group.userData.socialMvpSign=true;
-   mvpSignCanvas=document.createElement('canvas');mvpSignCanvas.width=1024;mvpSignCanvas.height=256;
+   mvpSignCanvas=document.createElement('canvas');mvpSignCanvas.width=1536;mvpSignCanvas.height=384;
    mvpSignCtx=mvpSignCanvas.getContext('2d');
    mvpSignTex=new T.CanvasTexture(mvpSignCanvas);
-   const board=new T.Mesh(new T.PlaneGeometry(9.2,2.3),new T.MeshBasicMaterial({map:mvpSignTex,transparent:true,side:T.DoubleSide,depthWrite:false}));
+   const board=new T.Mesh(new T.PlaneGeometry(12.6,3.15),new T.MeshBasicMaterial({map:mvpSignTex,transparent:true,side:T.DoubleSide,depthWrite:false}));
    /* v383 (owner: "the text is mirrored, not mirror from the other side"): a baked yaw meant the
       DoubleSide plane showed its back face - the mirrored one - to whoever stood on the bridge.
       The board is now a Y billboard (see updateMvpFloat), so the printed face always looks at the
       camera and the alert reads correctly from every bank. */
-   board.userData.socialMvpSignBoard=true;board.position.set(sx,6.4,sz);
+   board.userData.socialMvpSignBoard=true;board.position.set(sx,MVP_SIGN_Y,sz);
    group.add(board);
    group.visible=false;scene.add(group);
    mvpSign={group,canvas:mvpSignCanvas,ctx:mvpSignCtx,tex:mvpSignTex,board,sx,sz};
@@ -1766,20 +1767,30 @@ void main(){
   }
   function paintMvpSign(name){
    const m=ensureMvpSign();if(!m||!m.ctx)return;
-   const c=m.canvas,g=m.ctx;
+   const c=m.canvas,g=m.ctx,pad=32,cut=92;
    g.clearRect(0,0,c.width,c.height);
-   g.fillStyle='#2a101b';g.fillRect(0,0,c.width,c.height);
-   g.fillStyle='#8b1d2c';g.fillRect(12,12,c.width-24,c.height-24);
-   g.fillStyle='#ff2447';g.fillRect(0,0,c.width,18);g.fillRect(0,c.height-18,c.width,18);
-   g.strokeStyle='#ffd46b';g.lineWidth=8;if(typeof g.strokeRect==='function')g.strokeRect(9,9,c.width-18,c.height-18);
+   const plate=()=>{g.beginPath();g.moveTo(pad+cut,pad);g.lineTo(c.width-pad-cut,pad);g.lineTo(c.width-pad,pad+cut);g.lineTo(c.width-pad,c.height-pad-cut);g.lineTo(c.width-pad-cut,c.height-pad);g.lineTo(pad+cut,c.height-pad);g.lineTo(pad,c.height-pad-cut);g.lineTo(pad,pad+cut);g.closePath()};
+   // Match the small pink HUD alert: dark glass, clipped corner wings and a pink neon bloom. The
+   // glow is painted into this one texture, so the sign remains a single billboard and never grows
+   // a second mirrored plane behind it.
+   if(typeof g.save==='function')g.save();
+   g.shadowColor='#ff2447';g.shadowBlur=34;g.fillStyle='rgba(255,36,71,.56)';plate();g.fill();
+   g.shadowBlur=0;g.fillStyle='rgba(30,10,24,.96)';plate();g.fill();
+   g.strokeStyle='#ff4d79';g.lineWidth=9;plate();g.stroke();
+   g.strokeStyle='rgba(255,212,107,.8)';g.lineWidth=3;plate();g.stroke();
+   // Bright corner wings make the silhouette read from the bridge even before the text resolves.
+   g.strokeStyle='#ff7598';g.lineWidth=13;g.beginPath();
+   g.moveTo(pad+18,pad+cut+36);g.lineTo(pad+18,pad+20);g.lineTo(pad+cut+36,pad+20);
+   g.moveTo(c.width-pad-18,pad+cut+36);g.lineTo(c.width-pad-18,pad+20);g.lineTo(c.width-pad-cut-36,pad+20);g.stroke();
+   if(typeof g.restore==='function')g.restore();
    g.textAlign='center';g.textBaseline='middle';
    const headline='MVP ALERT: '+String(name||'BOSS FISH').toUpperCase();
-   let size=82;g.font='bold '+size+'px Trebuchet MS, sans-serif';
-   if(typeof g.measureText==='function')while(size>54&&g.measureText(headline).width>c.width-64){size-=4;g.font='bold '+size+'px Trebuchet MS, sans-serif'}
-   const pulse=0.84+0.16*Math.sin(Date.now()/200);
-   g.globalAlpha=pulse;g.fillStyle='#fff4dc';g.fillText(headline,c.width/2,99);g.globalAlpha=1;
-   g.fillStyle='#ffe9a0';g.font='bold 34px Trebuchet MS, sans-serif';
-   g.fillText('ACTIVE AT THE POND · REEL IT IN!',c.width/2,194);
+   let size=102;g.font='bold '+size+'px Trebuchet MS, sans-serif';
+   if(typeof g.measureText==='function')while(size>66&&g.measureText(headline).width>c.width-210){size-=4;g.font='bold '+size+'px Trebuchet MS, sans-serif'}
+   const pulse=.86+.14*Math.sin(Date.now()/200);
+   g.globalAlpha=pulse;g.shadowColor='#ff4068';g.shadowBlur=20;g.fillStyle='#fff4dc';g.fillText(headline,c.width/2,154);g.globalAlpha=1;g.shadowBlur=0;
+   g.fillStyle='#ffe9a0';g.font='bold 45px Trebuchet MS, sans-serif';
+   g.fillText('ACTIVE AT THE POND · REEL IT IN!',c.width/2,278);
    m.tex.needsUpdate=true;
   }
   let mvpFloat=null;
@@ -1798,10 +1809,12 @@ void main(){
   }
   function mvpArt(spId){
    const F=globalThis.PGSocialFishing;
-   try{const canvas=F&&typeof F.fishSprite==='function'?F.fishSprite(spId,null,256):null;if(canvas)return canvas}catch{}
-   const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
+   // The pond float is a hero-sized sprite, so keep the new 512px crop all the way to its GPU
+   // texture instead of rasterising it through the old 256px intermediate canvas.
+   try{const canvas=F&&typeof F.fishSprite==='function'?F.fishSprite(spId,null,512):null;if(canvas)return canvas}catch{}
+   const canvas=document.createElement('canvas');canvas.width=canvas.height=512;
    const ctx=canvas.getContext&&canvas.getContext('2d'),sp=F&&typeof F.speciesById==='function'?F.speciesById(spId):null;
-   if(ctx&&typeof ctx.fillText==='function'){ctx.font='176px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(sp&&sp.glyph||'🐟',128,132)}
+   if(ctx&&typeof ctx.fillText==='function'){ctx.font='352px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(sp&&sp.glyph||'🐟',256,264)}
    return canvas;
   }
   /* v380 (owner): "mvp half body is peek above the pond ... scale on the weights". The boss is
@@ -1809,7 +1822,7 @@ void main(){
      a ripple drawn along the cut) and the whole peek scales with the species' real weight range -
      a 3,000 kg Void Maw looms well over a 1,000 kg Azure Drake. Falls back to the plain art when
      a canvas is too limited for the compositing. */
-  const MVP_BASE_PX=256;
+  const MVP_BASE_PX=512;
   function mvpWeightScale(spId){
    const F=globalThis.PGSocialFishing;let max=1500;
    try{const sp=F&&typeof F.speciesById==='function'?F.speciesById(spId):null;if(sp&&Number(sp.max)>0)max=Number(sp.max)}catch{}
@@ -1822,16 +1835,16 @@ void main(){
    try{
     const c=document.createElement('canvas');c.width=c.height=MVP_BASE_PX;
     const g=c.getContext('2d');if(!g)return art;
-    const w=246,h=246;
+    const w=492,h=492;
     g.drawImage(art,(MVP_BASE_PX-w)/2,wl-h*.62,w,h);
     g.globalCompositeOperation='destination-out';
     g.beginPath();g.moveTo(0,wl);
-    for(let x=0;x<=MVP_BASE_PX;x+=8)g.lineTo(x,wl+4+Math.sin(x/MVP_BASE_PX*Math.PI*2+1)*5);
+    for(let x=0;x<=MVP_BASE_PX;x+=16)g.lineTo(x,wl+8+Math.sin(x/MVP_BASE_PX*Math.PI*2+1)*10);
     g.lineTo(MVP_BASE_PX,MVP_BASE_PX);g.lineTo(0,MVP_BASE_PX);g.closePath();g.fill();
     g.globalCompositeOperation='source-over';
-    g.strokeStyle='rgba(150,236,255,.8)';g.lineWidth=3;
+    g.strokeStyle='rgba(150,236,255,.8)';g.lineWidth=6;
     g.beginPath();
-    for(let x=4;x<=MVP_BASE_PX-4;x+=8){const y=wl+Math.sin(x/MVP_BASE_PX*Math.PI*2+1)*5;if(x===4)g.moveTo(x,y);else g.lineTo(x,y)}
+    for(let x=8;x<=MVP_BASE_PX-8;x+=16){const y=wl+Math.sin(x/MVP_BASE_PX*Math.PI*2+1)*10;if(x===8)g.moveTo(x,y);else g.lineTo(x,y)}
     g.stroke();
     return {canvas:c,scale:k};
    }catch{return {canvas:art,scale:k}}
@@ -1875,7 +1888,7 @@ void main(){
    // v380: the floating warning sign above the lake breathes with the same pulse.
    const sign=ensureMvpSign();
    if(sign&&sign.group.visible){
-    sign.board.position.y=6.4+pulse*.12;
+    sign.board.position.y=MVP_SIGN_Y+pulse*.16;
     if(typeof camera==='object'&&camera&&camera.position){
      const dx=camera.position.x-sign.board.position.x,dz=camera.position.z-sign.board.position.z;
      if(dx*dx+dz*dz>1e-4)sign.board.rotation.y=Math.atan2(dx,dz);

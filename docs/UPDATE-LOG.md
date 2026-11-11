@@ -10627,3 +10627,33 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   no minimise control, mastery copy), `social_ui_sim` (pill rings/second line/tab routing),
   plus the full gate run.
 * **Delivery:** Pages client only; no Worker, function or migration change.
+
+### 2026-11-11 — `haven-v384 DigiPet battle staging, activity dock, HD MVP crops, fairer Auto reels, neon bridge alert`
+
+* **Changed:** PvE presentation now queues and completes each approach, hit, recoil, KO and
+  wave change at a readable pace, with separate contact lanes so DigiPets no longer run through
+  or headbutt each other. Battle authority, damage, rewards and tick rate are unchanged.
+* **Changed:** the plaza uses one ordered top-centre HUD and a top-right DigiPet dock with one
+  portrait/progress chip per active gym, grind/raid or ring activity. Each chip identifies its
+  actual partner and has its own Stop. The activity panel no longer reopens after a manual close,
+  jumps tabs, labels a solo run PARTY, marks the room lane as BUSY, prints `[object Object] xp`,
+  or leaves Start grinding floating over its copy. Opening it hides the duplicate centre run
+  card/notice while retaining the compact pink MVP banner, including at 701–1080 px and phones.
+* **Changed:** all seven Fishing MVP crops are regenerated from the owner's unchanged reference
+  sources at 512 px, with the background colour bled beneath the transparent feather to reduce
+  matte fringe. Indexed-alpha PNGs keep the larger textures inside the publish budget, and the
+  pond renderer retains 512 px through the GPU texture instead of downscaling through 256 px.
+* **Changed:** the requested board above the lake bridge is larger, higher and styled as a glowing
+  clipped-corner pink alert; the separate small top-centre pink banner stays compact.
+* **Changed:** Fishing MVP outcome still has two steps: win the reel, then pass the exact 30%
+  landing roll. The reel/control curve now measures about 1% total success for a hooked MVP on
+  Auto with the free Training Rod, rising to about 5% with Mythril. Auto remains hard and manual
+  players still play the reel and face the same 30% roll.
+* **Try it:** enter the plaza, run one DigiPet in the gym and another in the middle field, close
+  and reopen either dock chip, then watch a full PvE wave. During an MVP spawn, inspect the bridge
+  alert and try the reel manually or with Auto on different rods.
+* **Checks:** the complete local gate passed 218/218 with no dependency skips; all three
+  progression fixtures retained byte-identical measurements. Real local Chromium rendered the
+  bridge sign/pond sprite, and the HUD was measured at 1440, 1080, 900, 720, 701, 700 and 390 px.
+* **Delivery:** local changes on `arena/5defc944-prontera-grind`; no deployment, Worker, Function
+  or migration change.

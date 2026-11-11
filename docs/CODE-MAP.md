@@ -585,3 +585,14 @@ this runtime. Gym apparatus is still scenery, not live training.
   beginner/ascension tour never auto-opens again. Suites: `social_ui_sim.js`
   (tabs, parallel partners, follower switch mid-grind, Logs tab), `social_sim.js`
   (sweep exemption + REAUTH bound), `guide_sim.js` (tour-once contract).
+
+* **Staged combat, activity dock and Fishing MVP pass (haven-v384):**
+  `assets/social-scene.js` owns queued PvE presentation timing through `STAGE`,
+  separate fighter lanes/contact/recoil/KO staging, the 512 px MVP pond texture and
+  the clipped-corner bridge billboard. `assets/social.js`, `assets/social.css` and
+  `assets/social-battle.css` own `#socialHudStack`, one `#digipetDock` chip per gym /
+  PvE / PvP activity, panel lifecycle and the in-panel PvE action. Fishing odds and
+  the 512 px crop manifest remain in `assets/social-fishing.js` and
+  `tools/mvp_art_crop.py`. Coverage: `social_scene_sim.js`, `social_ui_sim.js`,
+  `social_fishing_sim.js`; current behavior is detailed in
+  [Social hub](SOCIAL-HUB.md#staged-digipet-fights-activity-dock-and-fishing-mvp-pass-haven-v384).
