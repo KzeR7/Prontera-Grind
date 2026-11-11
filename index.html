@@ -3553,6 +3553,27 @@ function farmSample(now=Date.now()){
 function recordFarmIncome(xp,zeny,job,kills=1,now=Date.now()){
  farmSample(now);farmSession.events.push({at:now,xp,zeny,job,kills});farmSample(now);
 }
+// Last 60s of *field* combat. Plaza AFK pays this and must not rewrite it (no mobs, no loot).
+function plazaFarmIncome(){
+  if(!S||typeof JOB_RITE!=='undefined'&&JOB_RITE.on||typeof TRIAL!=='undefined'&&TRIAL.on)return null;
+  if(typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused))return null;
+  const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
+  const valid=income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&['xp','zeny','job'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
+  return valid?income:null;
+}
+let plazaAfkAcc={t:0,xp:0,zeny:0,job:0};
+function plazaAfkTick(dt){
+  const income=plazaFarmIncome();if(!income||!(dt>0))return;
+  plazaAfkAcc.t+=dt;plazaAfkAcc.xp+=income.xp*dt/60;plazaAfkAcc.zeny+=income.zeny*dt/60;plazaAfkAcc.job+=income.job*dt/60;
+  if(plazaAfkAcc.t<1)return;plazaAfkAcc.t=0;
+  const xp=Math.floor(plazaAfkAcc.xp),zeny=Math.floor(plazaAfkAcc.zeny),job=Math.floor(plazaAfkAcc.job);
+  plazaAfkAcc.xp-=xp;plazaAfkAcc.zeny-=zeny;plazaAfkAcc.job-=job;
+  if(xp){earnExp(xp);if(typeof gainAscension==='function')gainAscension(xp,String(income.key).split(':')[0]);expEarned=(expEarned||0)+xp}
+  if(zeny){earnZeny(zeny);zenyEarned=(zenyEarned||0)+zeny}
+  if(job&&typeof addJob==='function')addJob(job);
+  if((xp||zeny||job)&&typeof checkLevel==='function')checkLevel();
+  if(typeof bars==='function')bars();
+}
 function offlineRateSample(now=Date.now()){
   farmSample(now);
   if(!S)return;const kills=safeCount(S.kills),at=Number(S.offlineRateAt)||0,base=safeCount(S.offlineRateKills);
@@ -3696,7 +3717,7 @@ let hubFirstPending=false;
 function presentPlazaFirst(){
   hubFirstPending=true;
   try{document.body.classList.add('social-open');const h=$('socialHub');if(h)h.hidden=false}catch(e){}
-  if(!(respawn>0)||respawn>1000)respawn=.35;
+  respawn=1e9;
 }
 function initSession(gm,newAccount=false){
   // v88.6: a save in this browser that belongs to another account is not loaded - nothing starts, and
@@ -3719,7 +3740,7 @@ function initSession(gm,newAccount=false){
     if(typeof PGSocial!=='undefined')presentPlazaFirst();
     else ui();
     $('loginOverlay').style.display='none';log(newAccount?`Account ready — welcome, ${currentUser}!`:`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
-    if(hubFirstPending){PGSocial.enter() /* plaza covers the field before the overlay drops; farming already started */}
+    if(hubFirstPending){PGSocial.enter() /* plaza covers the field first; combat stays off, AFK pays the last field rate */}
     else if(typeof maybeGuide==='function')maybeGuide();
     try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
   }catch(err){S=null;showErr('Could not start: '+err.message)}
@@ -13515,7 +13536,10 @@ let simAt=performance.now(),simPending=0,simOwner=null,simTimer=null,simNeedsUI=
 let simFrameAt=simAt,simFocused=true,simBgSaveAt=simAt,simWorker=null,simWorkerAt=0,simWorkerDrain=false;
 const simWinFocused=()=>{try{return typeof document!=='undefined'&&typeof document.hasFocus==='function'?document.hasFocus():simFocused}catch(e){return simFocused}};
 const simFrameStarved=(now=performance.now())=>!document.hidden&&(now-simFrameAt)>=(simWinFocused()?SIM_STALL_GAP_MS:SIM_BLUR_GAP_MS);
-function simSteps(dt){for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}}
+function simSteps(dt){
+  if(typeof document!=='undefined'&&document.body&&document.body.classList.contains('social-open')){plazaAfkTick(dt);return}
+  for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}
+}
 function simAdvance(now=performance.now()){
   if(simOwner!==S){simOwner=S;simPending=0;simNeedsUI=false;}
   const elapsed=Math.min(SIM_CATCHUP,Math.max(0,(now-simAt)/1000));simAt=Math.max(simAt,now);

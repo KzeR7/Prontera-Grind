@@ -147,10 +147,11 @@ morePanel.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();closeHubMore();
 function syncFieldMonitor(){
  if(hub.hidden)return;
  const ready=typeof S==='object'&&S&&typeof currentUser!=='undefined'&&currentUser;
- const waiting=typeof hubFirstPending!=='undefined'&&hubFirstPending&&typeof respawn==='number'&&respawn>1e6;
+ const plazaAfk=typeof plazaFarmIncome==='function'&&!!plazaFarmIncome();
+ const waiting=typeof hubFirstPending!=='undefined'&&hubFirstPending&&typeof respawn==='number'&&respawn>1e6&&!plazaAfk;
  const paused=typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.paused||CLOUD.gate);
  const trial=(typeof TRIAL!=='undefined'&&TRIAL.on)||(typeof JOB_RITE!=='undefined'&&JOB_RITE.on);
- const live=!!ready&&!waiting&&!paused&&!trial;
+ const live=!!ready&&!paused&&!trial&&(plazaAfk||!waiting);
  const managing=['sanctuaryPanel','socialPartyPanel','socialMapModal','socialMorePanel','fishingPanel','socialPokerModal'].some(id=>{const el=$id(id);return el&&!el.hidden})||(typeof tabs!=='undefined'&&tabs.length>0);
  hub.classList.toggle('has-management',!!managing);
  const activities=[];
@@ -158,7 +159,7 @@ function syncFieldMonitor(){
  if(myPve())activities.push('PvE grinding');if(myPvp())activities.push('Ring battle');
  activityStatus.hidden=!managing||!activities.length;activityStatus.textContent=activities.join(' · ')+' ↗';
  fieldMonitor.dataset.live=String(live);
- $id('socialFieldState').textContent=!ready?'Signed out':paused?'Field paused':waiting?'Field not started':trial?'Field trial':typeof respawn!=='undefined'&&respawn>0?'Field · respawning':'Field farming';
+ $id('socialFieldState').textContent=!ready?'Signed out':paused?'Field paused':plazaAfk?'Plaza AFK':waiting?'Field not started':trial?'Field trial':typeof respawn!=='undefined'&&respawn>0?'Field · respawning':'Field farming';
  for(const [target,source] of [['socialFieldExp','expmin'],['socialFieldZeny','zenymin']]){const el=$id(source);$id(target).textContent=live&&el?el.textContent:'—';$id(target).title=live&&el?(el.title||el.getAttribute('aria-label')||'Last 60 seconds'):''}
  syncDigipetDock();
 }
@@ -2220,9 +2221,8 @@ function leave(){worldNearbyStat='';worldNearby.hidden=true;worldTrainingHUD.hid
    if(typeof hubFirstPending!=='undefined'&&hubFirstPending){
     hubFirstPending=false;
     if(typeof maybeGuide==='function')maybeGuide();
-    if(typeof bars==='function'&&typeof S==='object'&&S)bars();
-    if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();
    }
+   if(typeof S==='object'&&S&&!(typeof mobs!=='undefined'&&mobs.length)&&typeof gotoField==='function')gotoField(S.mp|0,S.lvl||1);
    else{if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin()}
    if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}$id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick()))return;confirmPokerLeave(()=>leave())};
 const socialHubBtn=$id('socialHubBtn');if(socialHubBtn)socialHubBtn.onclick=()=>enter();syncHubButton();$id('socialSit').onclick=toggleSit;

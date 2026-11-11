@@ -163,7 +163,7 @@ t('a brand-new account enters the hub first and starts the battle from the first
   ev3(`currentUser='newbie';initSession(false,true);`);
   assert.strictEqual(ev3('hubFirstPending'), true, 'the hub-first flag is pending after login');
   assert.strictEqual(ev3('(window.__hubEnters||0)'), 1, 'the hub was entered');
-  assert.ok(ev3('respawn')<1, 'v388: field spawning starts behind the plaza');
+  assert.strictEqual(ev3('respawn'), 1e9, 'v388: field combat stays off in the plaza');
   assert.strictEqual(hubFirst.document.body.classList.contains('social-open'), true, 'the plaza covers the field before the login card drops');
   assert.strictEqual(hubFirst.document.getElementById('loginOverlay').style.display, 'none', 'the login card is gone');
   // the first map pick releases the held-back battle and runs the beginner guide there
@@ -177,7 +177,7 @@ t('v363: a returning account logs into the hub too, then goes straight back to i
   ev3(`currentUser='veteran';window.__guideRuns=0;initSession(false);`);
   assert.strictEqual(ev3('(window.__hubEnters||0)'), enters + 1, 'the hub is entered for a returning account');
   assert.strictEqual(ev3('hubFirstPending'), true, 'hub-first is pending');
-  assert.ok(ev3('respawn')<1, 'v388: field spawning already runs behind the plaza');
+  assert.strictEqual(ev3('respawn'), 1e9, 'v388: field combat stays off in the plaza');
   assert.strictEqual(ev3('(window.__guideRuns||0)'), 0, 'the beginner guide still waits for the field');
   // the saved map and level are what the Field button (and the first map pick) resume
   ev3(`S.mp=3;S.lvl=4;gotoField(S.mp,S.lvl);`);
