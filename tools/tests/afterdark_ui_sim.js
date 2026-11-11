@@ -28,7 +28,8 @@ try{
  const tick=()=>{for(let i=0;i<4;i++)w.battleTick()};
  d.getElementById('expmin').textContent='12.3k';d.getElementById('zenymin').textContent='456';tick();
  assert.equal(d.getElementById('socialFieldExp').textContent,'12.3k');assert.equal(d.getElementById('socialFieldZeny').textContent,'456');
- ev('hubFirstPending=true');tick();assert.equal(d.getElementById('socialFieldState').textContent,'Field not started');assert.equal(d.getElementById('socialFieldExp').textContent,'—');
+ ev('hubFirstPending=true;respawn=1e9');tick();assert.equal(d.getElementById('socialFieldState').textContent,'Field not started');assert.equal(d.getElementById('socialFieldExp').textContent,'—');
+ ev('hubFirstPending=true;respawn=.35');tick();assert.equal(d.getElementById('socialFieldExp').textContent,'12.3k','v388: plaza-first still shows live field rates');
  ev('hubFirstPending=false;CLOUD.lost=true');tick();assert.equal(d.getElementById('socialFieldState').textContent,'Field paused');assert.equal(d.getElementById('socialFieldZeny').textContent,'—');
  ev('CLOUD.lost=false');tick();assert.equal(d.getElementById('socialFieldExp').textContent,'12.3k');
  const mini=d.getElementById('socialMiniMapCanvas'),ctx=mini.getContext('2d');let painted=0;ctx.fillRect=()=>painted++;mini.getContext=()=>ctx;w.BGM={phoneShell:()=>true};tick();assert(painted>0,'a phone-first hub paints its top minimap too');

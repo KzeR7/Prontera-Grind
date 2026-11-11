@@ -3693,6 +3693,11 @@ async function logout(){
 // is. The field is one click away (map pick, or the hub's Field button) and behaves exactly as
 // before from there.
 let hubFirstPending=false;
+function presentPlazaFirst(){
+  hubFirstPending=true;
+  try{document.body.classList.add('social-open');const h=$('socialHub');if(h)h.hidden=false}catch(e){}
+  if(!(respawn>0)||respawn>1000)respawn=.35;
+}
 function initSession(gm,newAccount=false){
   // v88.6: a save in this browser that belongs to another account is not loaded - nothing starts, and
   // nothing is written over it. The login card says why.
@@ -3711,10 +3716,10 @@ function initSession(gm,newAccount=false){
     if(typeof foldDupPets==='function')foldDupPets();        // v75: one pet per species, duplicates become Bond
     applyOfflineProgress();
     $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';
-    if(typeof PGSocial!=='undefined'){hubFirstPending=true;respawn=1e9}
+    if(typeof PGSocial!=='undefined')presentPlazaFirst();
     else ui();
     $('loginOverlay').style.display='none';log(newAccount?`Account ready — welcome, ${currentUser}!`:`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
-    if(hubFirstPending){PGSocial.enter() /* the beginner guide runs on the first field render instead */}
+    if(hubFirstPending){PGSocial.enter() /* plaza covers the field before the overlay drops; farming already started */}
     else if(typeof maybeGuide==='function')maybeGuide();
     try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
   }catch(err){S=null;showErr('Could not start: '+err.message)}
@@ -4590,7 +4595,7 @@ function cloudStart(u,gm){
   // v363: every cloud login opens the Social Hub first (see initSession). Holding respawn back is
   // what keeps a field battle from starting behind the plaza; gotoField releases it on the first
   // map pick. Note there is deliberately no ui() here - gotoField calls it.
-  if(typeof hubFirstPending!=='undefined'&&hubFirstPending)respawn=1e9;
+  if(typeof presentPlazaFirst==='function'&&typeof hubFirstPending!=='undefined'&&hubFirstPending)presentPlazaFirst();
   cloudSession(u,gm,CLOUD.id);if(typeof hubFirstPending==='undefined'||!hubFirstPending)ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
 }
 async function initSessionFromCloud(u,gm,isNew,id){
@@ -4601,7 +4606,7 @@ async function initSessionFromCloud(u,gm,isNew,id){
   // until the first map pick (gotoField runs ui()) and the hub's Field button does the same.
   // typeof-guarded: builds without the plaza, and the cloud suite that runs this block on its own,
   // have neither the flag nor PGSocial.
-  if(typeof PGSocial!=='undefined'&&typeof hubFirstPending!=='undefined'){hubFirstPending=true;respawn=1e9}
+  if(typeof PGSocial!=='undefined'&&typeof presentPlazaFirst==='function')presentPlazaFirst();
   const local=localStorage.getItem(saveKeyFor(u));
   // v88.6: a copy in this browser that belongs to another account is not loaded, and nothing is written over it.
   const elsewhere=saveRefusal(local,u);

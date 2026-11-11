@@ -147,7 +147,7 @@ morePanel.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();closeHubMore();
 function syncFieldMonitor(){
  if(hub.hidden)return;
  const ready=typeof S==='object'&&S&&typeof currentUser!=='undefined'&&currentUser;
- const waiting=typeof hubFirstPending!=='undefined'&&hubFirstPending;
+ const waiting=typeof hubFirstPending!=='undefined'&&hubFirstPending&&typeof respawn==='number'&&respawn>1e6;
  const paused=typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.paused||CLOUD.gate);
  const trial=(typeof TRIAL!=='undefined'&&TRIAL.on)||(typeof JOB_RITE!=='undefined'&&JOB_RITE.on);
  const live=!!ready&&!waiting&&!paused&&!trial;
@@ -2217,7 +2217,12 @@ async function enter(){ensureDigimonBag();discardLegacyActivities();digimonSelec
  {$id('socialBgmMount').hidden=typeof BGM!=='undefined'&&BGM.phoneShell?BGM.phoneShell():false;if(typeof BGM!=='undefined')BGM.renderUI()}syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),trainStation:startWorldTraining,sanctuaryShop:openSanctuaryShop,sanctuaryIndex:openSanctuaryIndex,trainingNearby:worldNearbyFrame,sitting});if(app.wanted){app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
 function leave(){worldNearbyStat='';worldNearby.hidden=true;worldTrainingHUD.hidden=true;worldBattleNearby.hidden=true;clearPveRepeat();sapDismissedArea=sapAreaNow='';closeActivityPanel();stopSoloPve('stopped',false);app.battleIntent=null;battleOffer=null;app.battleResult=null;app.battle={pve:[],pvp:null,queue:[]};battleHUD.hidden=true;pvpDialog.hidden=true;renderBattleResult();app.scene?.setBattleState?.(app.battle);if(!sanctuaryPanel.hidden)sanctuaryClose();FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});stashLocal(app.room);app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');$id('socialMapModal').hidden=true;if(app.scene)app.scene.active=false;resetPlayers();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');// v361: a hub-first account has no field behind the hub yet - the Field button drops them
    // into their saved map (which starts the battle) instead of restoring an empty screen.
-   if(typeof hubFirstPending!=='undefined'&&hubFirstPending&&typeof S==='object'&&S&&typeof gotoField==='function'){gotoField(S.mp|0,S.lvl||1)}
+   if(typeof hubFirstPending!=='undefined'&&hubFirstPending){
+    hubFirstPending=false;
+    if(typeof maybeGuide==='function')maybeGuide();
+    if(typeof bars==='function'&&typeof S==='object'&&S)bars();
+    if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin();
+   }
    else{if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin()}
    if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}$id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick()))return;confirmPokerLeave(()=>leave())};
 const socialHubBtn=$id('socialHubBtn');if(socialHubBtn)socialHubBtn.onclick=()=>enter();syncHubButton();$id('socialSit').onclick=toggleSit;
