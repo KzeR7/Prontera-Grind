@@ -4,6 +4,7 @@
 
 import { hashPassword, hashRecovery, newToken, tokenHash, sessionCookie, SESSION_DAYS } from '../_lib/auth.js';
 import { json, guard, readJson, ipHash, userAgent, fail } from '../_lib/http.js';
+import { verifyTurnstile } from '../_lib/turnstile.js';
 import { checkUsername, checkPassword, checkEmail } from '../_lib/validate.js';
 import { MIN_PASS } from '../_lib/auth.js';
 import * as db from '../_lib/db.js';
@@ -16,8 +17,10 @@ export function recoveryCode(len = 16) {
 }
 
 export const onRequestPost = guard(async ({ request, env }) => {
-  const { u, p, email } = await readJson(request, 4096);
+  const { u, p, email, turnstile } = await readJson(request, 8192);
   const D = env.DB;
+  const human = await verifyTurnstile(env, request, turnstile);
+  if (!human.ok) return fail('Human check failed. Refresh and try again.', 403);
   const username = checkUsername(u);
   const password = checkPassword(p, MIN_PASS);
   const address = checkEmail(email);

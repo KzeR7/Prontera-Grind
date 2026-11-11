@@ -586,6 +586,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 #loginOverlay .atabs{gap:0;border-bottom:1px solid #526447;margin-bottom:20px}
 #loginOverlay .atabs button{border:0;background:transparent;border-radius:0;color:#aabc9e}
 #loginOverlay .atabs button.on{color:#f0d69c;border-bottom:2px solid #c8ae79;background:transparent}
+#loginOverlay .cf-turnstile{margin:12px 0}
 .form-group label{font-size:10px;letter-spacing:1px;color:#b7c8a8}.form-group input{padding:10px 11px}
 .remember-user{font-size:10px;color:#b5c6a6}.remember-user input{accent-color:var(--gold)}
 .login-btn:hover{background:#e0c793;color:#18241b}.login-err{color:#f09b87}.login-card a{color:#dcc38b}
@@ -931,7 +932,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div class="form-group" id="emailRow" style="display:none"><label for="email">Email (one account per address)</label><input type="email" id="email" autocomplete="email" maxlength="254"><small>Used with your recovery code; email is not verified yet.</small></div>
 <div class="form-group" id="regRow" style="display:none"><label for="password2">Confirm Password</label><input type="password" id="password2" autocomplete="new-password"></div>
 <label class="remember-user" for="rememberUser"><input type="checkbox" id="rememberUser"> Remember user ID on this device</label>
+<div id="cfTurnstile" class="cf-turnstile" data-sitekey="0x4AAAAAAF855LyJurziYGxk" data-theme="dark"></div>
 <button type="submit" id="authBtn" class="login-btn">Login</button><div id="loginErr" class="login-err"></div></form>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <button type="button" id="recoveryOpen" class="recovery-link">Forgot password?</button>
 <form id="recoveryForm" hidden>
   <p class="recovery-intro">Enter your registered email and saved recovery code. Accounts without email need GM help.</p>
@@ -1317,7 +1320,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-11 haven-v385 DigiPet repeat grind, loadout bag, evolution memory, titles, Fishing Index';
+const BUILD='2026-11-11 haven-v388 client solo PvE, quiet plaza, server updating';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3553,6 +3556,27 @@ function farmSample(now=Date.now()){
 function recordFarmIncome(xp,zeny,job,kills=1,now=Date.now()){
  farmSample(now);farmSession.events.push({at:now,xp,zeny,job,kills});farmSample(now);
 }
+// Last 60s of *field* combat. Plaza AFK pays this and must not rewrite it (no mobs, no loot).
+function plazaFarmIncome(){
+  if(!S||typeof JOB_RITE!=='undefined'&&JOB_RITE.on||typeof TRIAL!=='undefined'&&TRIAL.on)return null;
+  if(typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused))return null;
+  const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
+  const valid=income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&['xp','zeny','job'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
+  return valid?income:null;
+}
+let plazaAfkAcc={t:0,xp:0,zeny:0,job:0};
+function plazaAfkTick(dt){
+  const income=plazaFarmIncome();if(!income||!(dt>0))return;
+  plazaAfkAcc.t+=dt;plazaAfkAcc.xp+=income.xp*dt/60;plazaAfkAcc.zeny+=income.zeny*dt/60;plazaAfkAcc.job+=income.job*dt/60;
+  if(plazaAfkAcc.t<1)return;plazaAfkAcc.t=0;
+  const xp=Math.floor(plazaAfkAcc.xp),zeny=Math.floor(plazaAfkAcc.zeny),job=Math.floor(plazaAfkAcc.job);
+  plazaAfkAcc.xp-=xp;plazaAfkAcc.zeny-=zeny;plazaAfkAcc.job-=job;
+  if(xp){earnExp(xp);if(typeof gainAscension==='function')gainAscension(xp,String(income.key).split(':')[0]);expEarned=(expEarned||0)+xp}
+  if(zeny){earnZeny(zeny);zenyEarned=(zenyEarned||0)+zeny}
+  if(job&&typeof addJob==='function')addJob(job);
+  if((xp||zeny||job)&&typeof checkLevel==='function')checkLevel();
+  if(typeof bars==='function')bars();
+}
 function offlineRateSample(now=Date.now()){
   farmSample(now);
   if(!S)return;const kills=safeCount(S.kills),at=Number(S.offlineRateAt)||0,base=safeCount(S.offlineRateKills);
@@ -3693,6 +3717,11 @@ async function logout(){
 // is. The field is one click away (map pick, or the hub's Field button) and behaves exactly as
 // before from there.
 let hubFirstPending=false;
+function presentPlazaFirst(){
+  hubFirstPending=true;
+  try{document.body.classList.add('social-open');const h=$('socialHub');if(h)h.hidden=false}catch(e){}
+  respawn=1e9;
+}
 function initSession(gm,newAccount=false){
   // v88.6: a save in this browser that belongs to another account is not loaded - nothing starts, and
   // nothing is written over it. The login card says why.
@@ -3711,10 +3740,10 @@ function initSession(gm,newAccount=false){
     if(typeof foldDupPets==='function')foldDupPets();        // v75: one pet per species, duplicates become Bond
     applyOfflineProgress();
     $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';
-    if(typeof PGSocial!=='undefined'){hubFirstPending=true;respawn=1e9}
+    if(typeof PGSocial!=='undefined')presentPlazaFirst();
     else ui();
     $('loginOverlay').style.display='none';log(newAccount?`Account ready — welcome, ${currentUser}!`:`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
-    if(hubFirstPending){PGSocial.enter() /* the beginner guide runs on the first field render instead */}
+    if(hubFirstPending){PGSocial.enter() /* plaza covers the field first; combat stays off, AFK pays the last field rate */}
     else if(typeof maybeGuide==='function')maybeGuide();
     try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
   }catch(err){S=null;showErr('Could not start: '+err.message)}
@@ -4590,7 +4619,7 @@ function cloudStart(u,gm){
   // v363: every cloud login opens the Social Hub first (see initSession). Holding respawn back is
   // what keeps a field battle from starting behind the plaza; gotoField releases it on the first
   // map pick. Note there is deliberately no ui() here - gotoField calls it.
-  if(typeof hubFirstPending!=='undefined'&&hubFirstPending)respawn=1e9;
+  if(typeof presentPlazaFirst==='function'&&typeof hubFirstPending!=='undefined'&&hubFirstPending)presentPlazaFirst();
   cloudSession(u,gm,CLOUD.id);if(typeof hubFirstPending==='undefined'||!hubFirstPending)ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
 }
 async function initSessionFromCloud(u,gm,isNew,id){
@@ -4601,7 +4630,7 @@ async function initSessionFromCloud(u,gm,isNew,id){
   // until the first map pick (gotoField runs ui()) and the hub's Field button does the same.
   // typeof-guarded: builds without the plaza, and the cloud suite that runs this block on its own,
   // have neither the flag nor PGSocial.
-  if(typeof PGSocial!=='undefined'&&typeof hubFirstPending!=='undefined'){hubFirstPending=true;respawn=1e9}
+  if(typeof PGSocial!=='undefined'&&typeof presentPlazaFirst==='function')presentPlazaFirst();
   const local=localStorage.getItem(saveKeyFor(u));
   // v88.6: a copy in this browser that belongs to another account is not loaded, and nothing is written over it.
   const elsewhere=saveRefusal(local,u);
@@ -4654,10 +4683,11 @@ async function cloudAuth(u,p,isReg){
   showErr(isReg?'Creating your account…':'Signing in…',true);
   if(btn)btn.disabled=true;
   try{
-    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:isReg?JSON.stringify({u,p,email:$('email').value.trim()}):JSON.stringify({u,p}),signal:ac.signal});
+    const turnstile=(window.turnstile&&typeof window.turnstile.getResponse==='function'&&window.turnstile.getResponse())||document.querySelector('[name="cf-turnstile-response"]')?.value||'';
+    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:isReg?JSON.stringify({u,p,email:$('email').value.trim(),turnstile}):JSON.stringify({u,p,turnstile}),signal:ac.signal});
     const d=await r.json().catch(()=>null);
     clearTimeout(timer);
-    if(!r.ok)return showErr((d&&d.err)||('Error '+r.status));
+    if(!r.ok){try{window.turnstile&&window.turnstile.reset()}catch{}return showErr((d&&d.err)||('Error '+r.status))}
     if(!d||!d.u)throw new Error('the server sent an unreadable answer');
     showErr('');
     rememberUserId(d.u||u,!!isReg);
@@ -13510,7 +13540,10 @@ let simAt=performance.now(),simPending=0,simOwner=null,simTimer=null,simNeedsUI=
 let simFrameAt=simAt,simFocused=true,simBgSaveAt=simAt,simWorker=null,simWorkerAt=0,simWorkerDrain=false;
 const simWinFocused=()=>{try{return typeof document!=='undefined'&&typeof document.hasFocus==='function'?document.hasFocus():simFocused}catch(e){return simFocused}};
 const simFrameStarved=(now=performance.now())=>!document.hidden&&(now-simFrameAt)>=(simWinFocused()?SIM_STALL_GAP_MS:SIM_BLUR_GAP_MS);
-function simSteps(dt){for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}}
+function simSteps(dt){
+  if(typeof document!=='undefined'&&document.body&&document.body.classList.contains('social-open')){plazaAfkTick(dt);return}
+  for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}
+}
 function simAdvance(now=performance.now()){
   if(simOwner!==S){simOwner=S;simPending=0;simNeedsUI=false;}
   const elapsed=Math.min(SIM_CATCHUP,Math.max(0,(now-simAt)/1000));simAt=Math.max(simAt,now);
@@ -13768,5 +13801,5 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/social-pond-design.js?v=385"></script>
 <script src="assets/social-scene.js?v=385"></script>
 <script src="assets/social-fishing.js?v=385"></script>
-<script src="assets/social.js?v=385"></script></body>
+<script src="assets/social.js?v=388"></script></body>
 </html>

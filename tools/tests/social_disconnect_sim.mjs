@@ -71,4 +71,14 @@ check('multiple dead peers can be cleaned without poisoning the room',()=>{
  assert.equal(a.writes(),1);assert.equal(b.writes(),1);
  assert(c.events.some(e=>e.type==='test'));
 });
+check('a message flood is dropped and then the socket is closed',()=>{
+ const {room,join}=harness(),a=join(1);
+ const before=a.events.length;
+ for(let i=0;i<20;i++)room.receive(a.c,JSON.stringify({type:'ping'}));
+ assert(a.events.slice(before).filter(e=>e.type==='pong').length>=1,'ordinary pings still answer');
+ const mid=a.events.length;
+ for(let i=0;i<25;i++)room.receive(a.c,JSON.stringify({type:'ping'}));
+ assert.equal(a.events.length,mid,'overflow frames are ignored');
+ assert(!room.clients.has(1),'the flood closes the socket');
+});
 console.log(passed+' disconnect regression cases passed');

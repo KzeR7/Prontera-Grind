@@ -147,10 +147,11 @@ morePanel.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();closeHubMore();
 function syncFieldMonitor(){
  if(hub.hidden)return;
  const ready=typeof S==='object'&&S&&typeof currentUser!=='undefined'&&currentUser;
- const waiting=typeof hubFirstPending!=='undefined'&&hubFirstPending;
+ const plazaAfk=typeof plazaFarmIncome==='function'&&!!plazaFarmIncome();
+ const waiting=typeof hubFirstPending!=='undefined'&&hubFirstPending&&typeof respawn==='number'&&respawn>1e6&&!plazaAfk;
  const paused=typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.paused||CLOUD.gate);
  const trial=(typeof TRIAL!=='undefined'&&TRIAL.on)||(typeof JOB_RITE!=='undefined'&&JOB_RITE.on);
- const live=!!ready&&!waiting&&!paused&&!trial;
+ const live=!!ready&&!paused&&!trial&&(plazaAfk||!waiting);
  const managing=['sanctuaryPanel','socialPartyPanel','socialMapModal','socialMorePanel','fishingPanel','socialPokerModal'].some(id=>{const el=$id(id);return el&&!el.hidden})||(typeof tabs!=='undefined'&&tabs.length>0);
  hub.classList.toggle('has-management',!!managing);
  const activities=[];
@@ -158,7 +159,7 @@ function syncFieldMonitor(){
  if(myPve())activities.push('PvE grinding');if(myPvp())activities.push('Ring battle');
  activityStatus.hidden=!managing||!activities.length;activityStatus.textContent=activities.join(' · ')+' ↗';
  fieldMonitor.dataset.live=String(live);
- $id('socialFieldState').textContent=!ready?'Signed out':paused?'Field paused':waiting?'Field not started':trial?'Field trial':typeof respawn!=='undefined'&&respawn>0?'Field · respawning':'Field farming';
+ $id('socialFieldState').textContent=!ready?'Signed out':paused?'Field paused':plazaAfk?'Plaza AFK':waiting?'Field not started':trial?'Field trial':typeof respawn!=='undefined'&&respawn>0?'Field · respawning':'Field farming';
  for(const [target,source] of [['socialFieldExp','expmin'],['socialFieldZeny','zenymin']]){const el=$id(source);$id(target).textContent=live&&el?el.textContent:'—';$id(target).title=live&&el?(el.title||el.getAttribute('aria-label')||'Last 60 seconds'):''}
  syncDigipetDock();
 }
@@ -1501,9 +1502,31 @@ function stopSoloPve(reason='stopped',notify=true){
 }
 function tickSoloPve(){
  const run=soloPve;if(!run)return;if(typeof S!=='object'||S!==run.localOwner||run.localAccount!==(typeof currentUser==='string'?currentUser:null)){stopSoloPve('stopped',false);return}
- const result=globalThis.PGDigimonBattle?.stepPve(run,Date.now());if(!result)return;let end='';
- for(const event of result.events){if(String(event.type).startsWith('boss_'))bossFxNotice(event);if(event.type==='wave_clear')receiveBattleReward({local:true,kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});if(event.type==='hit')app.scene?.battleEvent?.({kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit});if(event.type==='end')end=event.reason}
- if(end){stopSoloPve(end);repeatPveRun()}else syncSoloBattle();
+ const result=globalThis.PGDigimonBattle?.stepPve(run,Date.now(),run.rng);if(!result)return;let end='';
+ const self=app.room?app.id:SOLO_ID,idx=Array.isArray(run.members)?run.members.indexOf(self):-1,prof=(idx>=0&&run.profiles[idx])||run.profile;
+ for(const event of result.events){if(String(event.type).startsWith('boss_'))bossFxNotice(event);if(event.type==='wave_clear')receiveBattleReward({local:true,kind:'pve',battleId:run.id+':wave'+event.wave+':'+(prof.slot||0),lineId:prof.lineId,form:prof.form,slot:prof.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});if(event.type==='hit')app.scene?.battleEvent?.({kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit});if(event.type==='end')end=event.reason}
+ if(end){if(run.clientParty&&app.room)send({type:'pve_stop'});stopSoloPve(end);if(!run.clientParty)repeatPveRun()}else syncSoloBattle();
+}
+let clientPvp=null;
+function beginClientPve(m){
+ const B=globalThis.PGDigimonBattle;if(!B||!Array.isArray(m.profiles))return;
+ const rng=B.rngFromSeed(m.seed);
+ soloPve=B.createPve({id:m.battleId,owner:m.owner,room:app.room||0,profiles:m.profiles,now:m.now||Date.now(),random:rng,bossMode:m.mode==='boss'});
+ soloPve.members=Array.isArray(m.members)?m.members:[];soloPve.rng=rng;soloPve.clientParty=true;soloPve.localOwner=S;soloPve.localAccount=typeof currentUser==='string'?currentUser:null;
+ app.battleIntent=null;syncSoloBattle();worldNotice('Party grind on your devices — the plaza is not billed per hit.');
+}
+function beginClientPvp(m){
+ const B=globalThis.PGDigimonBattle;if(!B||!Array.isArray(m.players)||m.players.length!==2)return;
+ const rng=B.rngFromSeed(m.seed);
+ clientPvp=B.createPvp({id:m.battleId,room:app.room,now:m.now||Date.now(),players:m.players});
+ clientPvp.rng=rng;clientPvp.clientSim=true;clientPvp.participants.forEach(p=>p.accepted=true);clientPvp.phase='countdown';clientPvp.countdownUntil=m.startsAt||Date.now()+3000;
+ battleOffer=null;app.battle.pvp=B.pvpSnapshot(clientPvp);app.scene?.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();
+}
+function tickClientPvp(){
+ const match=clientPvp,B=globalThis.PGDigimonBattle;if(!match||!B)return;
+ const result=B.stepPvp(match,Date.now(),match.rng);if(!result)return;
+ for(const event of result.events){if(event.type==='hit')app.scene?.battleEvent?.({kind:'pvp',battleId:match.id,to:event.to,amount:event.amount,crit:!!event.crit});if(event.type==='result'){send({type:'pvp_client_end',battleId:match.id,winnerId:match.winnerId,reason:match.reason});receiveBattleResult({kind:'pvp',battleId:match.id,winnerId:match.winnerId,reason:match.reason,lineId:match.participants.find(p=>p.id===app.id)?.profile?.lineId,form:match.participants.find(p=>p.id===app.id)?.profile?.form,slot:match.participants.find(p=>p.id===app.id)?.profile?.slot,outcome:match.winnerId===app.id?'win':match.winnerId==null?'draw':'lose',reward:(B.pvpRewards(match)||{})[app.id]});clientPvp=null;return}}
+ app.battle.pvp=B.pvpSnapshot(match);app.scene?.setBattleState?.(app.battle);renderBattleHUD();
 }
 // v382: 'boss' starts a raid — one long boss instead of a field run. The choice is remembered so
 // "Keep repeating" repeats the same kind of fight.
@@ -1592,7 +1615,7 @@ function applyBattleReward(m){
 function receiveBattleReward(m){const result=applyBattleReward(m);if(result){const G=globalThis.PGDigimonBattle,boss=!!G?.isBossWave?.(m.wave);worldNotice((boss?'Boss defeated — stage '+(G?.stageOf?.(m.wave)||1)+' cleared · ':m.local?'Local wave '+m.wave+' cleared · ':m.kind==='pve'?'Wave '+m.wave+' cleared · ':'Battle reward · ')+result.message)}}
 function receiveBattleResult(m){applyBattleReward({...m,kind:'pvp'});app.battleResult=m;battleOffer=null;renderPvpDialog();renderBattleResult();renderBattleHUD()}
 function battleSnapshot(m){if(m.room!==app.room)return;app.battle.pvp=m.pvp||null;app.battle.queue=Array.isArray(m.queue)?m.queue:[];const self=app.room?app.id:SOLO_ID,incoming=Array.isArray(m.pve)?m.pve:[];if(soloPve&&incoming.some(r=>r&&r.owner===self&&String(r.id||'').indexOf('solo-pve:')!==0))stopSoloPve('stopped',false);const mine=soloPve&&globalThis.PGDigimonBattle?globalThis.PGDigimonBattle.pveSnapshot(soloPve):null;const others=incoming.filter(r=>!mine||(r.owner!==mine.owner&&r.id!==mine.id));app.battle.pve=mine?[mine,...others]:others;if(Number.isFinite(m.at))app.battleOffset=m.at-Date.now();battleOffer=null;app.scene?.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();refreshBattleNearby();if(app.battleIntent&&app.battleIntent.kind==='pvp')app.battleIntent=null}
-function battleUITick(){tickSoloPve();if(++mapTickFrame%4===0)mapTick();
+function battleUITick(){tickSoloPve();tickClientPvp();if(++mapTickFrame%4===0)mapTick();
  if(app.partyInvite&&Number.isFinite(app.partyInvite.expiresAt)&&Date.now()>app.partyInvite.expiresAt+500){app.partyInvite=null;renderPartyPanel()}
  if(!$id('socialPartyPanel').hidden){const roster=(app.partyRoster||[]).map(p=>p.id+':'+(p.members||[]).join(',')).join('|');const key=(app.party?app.party.members.map(m=>m.id).join(','):'none')+'#'+((app.battle.queue||[]).map(q=>q.id+q.side).join(','))+'#'+(app.partyInvite?app.partyInvite.partyId:'')+'#'+roster+'#'+partyCandidates().length;if(battleUITick.partyKey!==key){battleUITick.partyKey=key;renderPartyPanel()}}if(app.battleIntent&&Date.now()-(app.battleIntent.at||0)>=BATTLE_INTENT_MS){app.battleIntent=null;worldNotice('The plaza battle service did not respond. Reconnect, or use a preview with the matching Social Worker deployment.')}const match=myPvp();if(match?.phase==='countdown'){const el=$id('pvpCountdownNumber');if(el){const left=Math.max(0,Math.ceil((match.countdownUntil-(Date.now()+app.battleOffset))/1000));el.textContent=left>0?left:'FIGHT!'}}}
 setInterval(battleUITick,100);
@@ -2217,7 +2240,11 @@ async function enter(){ensureDigimonBag();discardLegacyActivities();digimonSelec
  {$id('socialBgmMount').hidden=typeof BGM!=='undefined'&&BGM.phoneShell?BGM.phoneShell():false;if(typeof BGM!=='undefined')BGM.renderUI()}syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),trainStation:startWorldTraining,sanctuaryShop:openSanctuaryShop,sanctuaryIndex:openSanctuaryIndex,trainingNearby:worldNearbyFrame,sitting});if(app.wanted){app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
 function leave(){worldNearbyStat='';worldNearby.hidden=true;worldTrainingHUD.hidden=true;worldBattleNearby.hidden=true;clearPveRepeat();sapDismissedArea=sapAreaNow='';closeActivityPanel();stopSoloPve('stopped',false);app.battleIntent=null;battleOffer=null;app.battleResult=null;app.battle={pve:[],pvp:null,queue:[]};battleHUD.hidden=true;pvpDialog.hidden=true;renderBattleResult();app.scene?.setBattleState?.(app.battle);if(!sanctuaryPanel.hidden)sanctuaryClose();FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});stashLocal(app.room);app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');$id('socialMapModal').hidden=true;if(app.scene)app.scene.active=false;resetPlayers();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');// v361: a hub-first account has no field behind the hub yet - the Field button drops them
    // into their saved map (which starts the battle) instead of restoring an empty screen.
-   if(typeof hubFirstPending!=='undefined'&&hubFirstPending&&typeof S==='object'&&S&&typeof gotoField==='function'){gotoField(S.mp|0,S.lvl||1)}
+   if(typeof hubFirstPending!=='undefined'&&hubFirstPending){
+    hubFirstPending=false;
+    if(typeof maybeGuide==='function')maybeGuide();
+   }
+   if(typeof S==='object'&&S&&!(typeof mobs!=='undefined'&&mobs.length)&&typeof gotoField==='function')gotoField(S.mp|0,S.lvl||1);
    else{if(typeof bars==='function'&&typeof S==='object'&&S)bars();if(typeof renderWin==='function'&&typeof S==='object'&&S)renderWin()}
    if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}$id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick()))return;confirmPokerLeave(()=>leave())};
 const socialHubBtn=$id('socialHubBtn');if(socialHubBtn)socialHubBtn.onclick=()=>enter();syncHubButton();$id('socialSit').onclick=toggleSit;
@@ -2256,6 +2283,8 @@ function receive(m){
  if(m.type==='party_invite'){if(partyMuteOn()){send({type:'party_decline'});return}app.partyInvite=m;worldNotice((m.from?.name||'A trainer')+' invites you to a party.');syncPartyChrome();if(!$id('socialPartyPanel').hidden)renderPartyPanel();return}
  if(m.type==='party_error'){worldNotice(m.message||'Party action failed.');return}
  if(m.type==='party_notice'){worldNotice(m.message||'');return}
+ if(m.type==='pve_client'){beginClientPve(m);return}
+ if(m.type==='pvp_client'){beginClientPvp(m);return}
  if(m.type==='pvp_offer'){battleOffer=m;renderPvpDialog();return}
  if(m.type==='pvp_waiting'){app.battleIntent=null;renderBattleHUD();worldNotice('Waiting for an opponent on the opposite side of the ring…');return}
  if(m.type==='pvp_countdown'){battleOffer=null;if(Number.isFinite(m.serverNow))app.battleOffset=m.serverNow-Date.now();renderPvpDialog();return}

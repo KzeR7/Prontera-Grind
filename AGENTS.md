@@ -65,6 +65,47 @@ There is no root package manifest and no JavaScript bundler.
   Do not push to or merge `main`, deploy, or message other tasks just because an
   older handover tells you to. Report only actions and results actually verified.
 
+## Durable Object budget (haven-v388 — owner standing order)
+
+Cloudflare **Durable Object requests** are a hard cap (free: 100k/day; paid: 1M/month).
+The plaza Worker (`workers/social`, class `Social`) is the only gameplay DO. **Every
+incoming WebSocket message, HTTP fetch, and `setAlarm` firing is one request.** Isolate
+**duration** also bills while the object is awake.
+
+**Do not add plaza-DO traffic without asking the owner first.** If a feature seems to
+need the Social DO (or a new DO), stop, explain *why*, list **client-only / D1 / existing
+message** alternatives, and wait. Do not “just tick it on the room” because it is easier.
+
+Prefer, in order:
+
+1. **Browser / local sim** — field grind, DigiPet **solo** PvE, fishing minigame, gym
+   practice, HUD. These must not `setAlarm` and must not send a WS message per tick.
+2. **Reuse an existing player message** (`move`, `look`, `chat`) instead of a new type
+   or a heartbeat.
+3. **Ask the owner** before party/PvP ticks, new alarms, broadcasts to the whole room,
+   or a second Durable Object.
+
+Standing facts (do not “fix” these by hiding UI):
+
+- **Hiding** other players’ PvE/PvP (a private tab, fog, not drawing the fight) does
+  **not** cut DO usage. The room still ticks and still broadcasts. To save billing,
+  combat must run **on the clients**, with the DO only start/stop/loot.
+- **Solo DigiPet grind/raid** is client-side (`startSoloPve` / `tickSoloPve`). Do not
+  send `pve_start` for solo. Party and PvP still use the DO at **1s** alarms (was 250ms).
+- **Sitters / AFK / fishing minigame:** no 60s alarm unless party/PvP, live poker, or an
+  MVP is up. Client ping is **4 minutes** while sitting. Prefer WebSocket hibernation
+  (`acceptWebSocket`) over keeping the isolate awake.
+- **Field combat vs plaza lag:** `draw()` must stay skipped while `body.social-open`.
+  Do not run a full field WebGL render under the hub. Do not add per-frame plaza traffic
+  to “keep the field in sync.”
+- **DDoS / probes** also count: each upgrade, `ping`, `look`, and `/gm/*` against the
+  Social binding is a DO request. Do not add unauthenticated public routes on
+  `prontera-social`. Identity stays on the Pages hop. Cheap public probes must not
+  `get()` the DO. The room drops a socket after **20 messages/s** (hard close at 40/s
+  in the same window, close 4008). Do not raise that without asking.
+
+When in doubt: **client first, ask before any new `setAlarm` or `send({type:...})`.**
+
 ## Completion and update log
 
 For every repository change, append a short entry to
