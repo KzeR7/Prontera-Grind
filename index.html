@@ -586,6 +586,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 #loginOverlay .atabs{gap:0;border-bottom:1px solid #526447;margin-bottom:20px}
 #loginOverlay .atabs button{border:0;background:transparent;border-radius:0;color:#aabc9e}
 #loginOverlay .atabs button.on{color:#f0d69c;border-bottom:2px solid #c8ae79;background:transparent}
+#loginOverlay .cf-turnstile{margin:12px 0}
 .form-group label{font-size:10px;letter-spacing:1px;color:#b7c8a8}.form-group input{padding:10px 11px}
 .remember-user{font-size:10px;color:#b5c6a6}.remember-user input{accent-color:var(--gold)}
 .login-btn:hover{background:#e0c793;color:#18241b}.login-err{color:#f09b87}.login-card a{color:#dcc38b}
@@ -931,7 +932,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div class="form-group" id="emailRow" style="display:none"><label for="email">Email (one account per address)</label><input type="email" id="email" autocomplete="email" maxlength="254"><small>Used with your recovery code; email is not verified yet.</small></div>
 <div class="form-group" id="regRow" style="display:none"><label for="password2">Confirm Password</label><input type="password" id="password2" autocomplete="new-password"></div>
 <label class="remember-user" for="rememberUser"><input type="checkbox" id="rememberUser"> Remember user ID on this device</label>
+<div id="cfTurnstile" class="cf-turnstile" data-sitekey="0x4AAAAAAF855LyJurziYGxk" data-theme="dark"></div>
 <button type="submit" id="authBtn" class="login-btn">Login</button><div id="loginErr" class="login-err"></div></form>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <button type="button" id="recoveryOpen" class="recovery-link">Forgot password?</button>
 <form id="recoveryForm" hidden>
   <p class="recovery-intro">Enter your registered email and saved recovery code. Accounts without email need GM help.</p>
@@ -4680,10 +4683,11 @@ async function cloudAuth(u,p,isReg){
   showErr(isReg?'Creating your account…':'Signing in…',true);
   if(btn)btn.disabled=true;
   try{
-    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:isReg?JSON.stringify({u,p,email:$('email').value.trim()}):JSON.stringify({u,p}),signal:ac.signal});
+    const turnstile=(window.turnstile&&typeof window.turnstile.getResponse==='function'&&window.turnstile.getResponse())||document.querySelector('[name="cf-turnstile-response"]')?.value||'';
+    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:isReg?JSON.stringify({u,p,email:$('email').value.trim(),turnstile}):JSON.stringify({u,p,turnstile}),signal:ac.signal});
     const d=await r.json().catch(()=>null);
     clearTimeout(timer);
-    if(!r.ok)return showErr((d&&d.err)||('Error '+r.status));
+    if(!r.ok){try{window.turnstile&&window.turnstile.reset()}catch{}return showErr((d&&d.err)||('Error '+r.status))}
     if(!d||!d.u)throw new Error('the server sent an unreadable answer');
     showErr('');
     rememberUserId(d.u||u,!!isReg);

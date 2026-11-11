@@ -7,6 +7,7 @@
 import { verifyPassword, newToken, tokenHash, sessionCookie, clearCookie, readCookie, SESSION_DAYS }
   from '../_lib/auth.js';
 import { json, guard, readJson, ipHash, userAgent, fail } from '../_lib/http.js';
+import { verifyTurnstile } from '../_lib/turnstile.js';
 import * as db from '../_lib/db.js';
 
 const MAX_IP_TRIES = 20;      // per 15 minutes
@@ -14,10 +15,12 @@ const MAX_NAME_TRIES = 5;     // per 15 minutes
 const WINDOW = 900_000;
 
 export const onRequestPost = guard(async ({ request, env }) => {
-  const { u, p } = await readJson(request, 4096);
+  const { u, p, turnstile } = await readJson(request, 8192);
   const D = env.DB;
   const name = String(u || '').trim();
   if (!name || !p) return fail('Enter a username and password.', 400);
+  const human = await verifyTurnstile(env, request, turnstile);
+  if (!human.ok) return fail('Human check failed. Refresh and try again.', 403);
 
   const ip = await ipHash(request);
   const byIp = await db.hitRate(D, `login-ip:${ip || 'noip'}`, MAX_IP_TRIES, WINDOW);
