@@ -619,6 +619,8 @@ const ATTACK_MS=520;let fxTextures=null;
   // Contact freeze + shake live on the defender; both are purely visual timers.
   unit.shakeUntil=clock+(crit?340:220);unit.shakeAmp=crit?.24:.13;unit.hitStarted=clock;
   if(crit){unit.hitStopUntil=clock+120;unit.hitStopClock=clock}
+  // v387: random emoji reaction when hit — crits almost always trigger one, normal hits sometimes.
+  if(field&&amount>0){if(crit&&Math.random()<.55)triggerBattleEmoji(unit,'crit');else if(!crit&&Math.random()<.12)triggerBattleEmoji(unit,'hit')}
   if(field){
    spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?STAGE.CRIT_SPARKS:STAGE.HIT_SPARKS,crit?1.5:1.15,crit?.22:.16,crit?720:540);
    if(crit||heavy)spawnBattleShockwave(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?700:560);
@@ -639,6 +641,59 @@ const ATTACK_MS=520;let fxTextures=null;
  function softBattleHit(unit){
   const p=unit.sprite.position;unit.shakeUntil=clock+160;unit.shakeAmp=.08;unit.hitStarted=clock;
   spawnBattleBurst(p.x,p.z,0xfff6e0,4,.9,.12,380);
+ }
+ // v387 (owner): digipets show random emoji reactions during battles. Each reaction is a
+ // floating emoji sprite above the digipet that rises and fades. Emojis are context-aware:
+ // wave clears get celebration emojis, defeats get sad ones, hits get pain ones, etc.
+ const DIGI_EMOJI_POOLS={
+  win:['😤','💪','🎉','✨','🔥','💥','⭐','🙌','👊','🏆'],
+  lose:['😵','💀','😭','😢','😰','🫠','😿','💔'],
+  hit:['😣','😖','💢','😬','🤕'],
+  crit:['😱','💀','☠️','🫨'],
+  boss:['😈','👹','💀','🔥','⚡'],
+  train:['💪','🏋️','⭐','✨','🔥','💯'],
+ };
+ const battleEmojiPool=[];
+ function spawnBattleEmoji(x,y,z,emoji,dur=1800){
+  let entry=battleEmojiPool.find(e=>!e.active);
+  if(!entry){
+   const c=document.createElement('canvas');c.width=c.height=64;
+   const tex=new T.CanvasTexture(c);tex.magFilter=T.NearestFilter;tex.minFilter=T.NearestFilter;
+   const spr=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+   spr.scale.set(.8,.8,1);spr.visible=false;scene.add(spr);
+   entry={canvas:c,ctx:c.getContext('2d'),texture:tex,sprite:spr,active:false};
+   battleEmojiPool.push(entry);
+  }
+  entry.active=true;entry.at=clock;entry.dur=dur;
+  entry.startY=y;entry.x=x;entry.z=z;entry.emoji=emoji;
+  entry.wobble=Math.random()*Math.PI*2;
+  const ctx=entry.ctx;ctx.clearRect(0,0,64,64);
+  ctx.font='48px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(emoji,32,34);
+  entry.texture.needsUpdate=true;
+  entry.sprite.visible=true;entry.sprite.position.set(x,y,z);entry.sprite.material.opacity=1;
+  return entry;
+ }
+ function updateBattleEmoji(now){
+  for(const e of battleEmojiPool){
+   if(!e.active)continue;
+   const t=(now-e.at)/e.dur;
+   if(t>=1){e.active=false;e.sprite.visible=false;continue}
+   const rise=e.startY+1.8*t;
+   const wobbleX=e.x+.3*Math.sin(t*6+e.wobble);
+   e.sprite.position.set(wobbleX,rise,e.z);
+   e.sprite.material.opacity=t<.2?t/.2:Math.max(0,1-((t-.2)/.8));
+   e.sprite.scale.setScalar(.7+.4*(t<.3?t/.3:1));
+  }
+ }
+ function pickEmoji(pool){return pool[Math.floor(Math.random()*pool.length)]}
+ function triggerBattleEmoji(unit,mood){
+  if(!unit||!unit.sprite)return;
+  const pool=DIGI_EMOJI_POOLS[mood];if(!pool||!pool.length)return;
+  const p=unit.sprite.position;
+  const emoji=pickEmoji(pool);
+  const ox=(Math.random()-.5)*.6;
+  spawnBattleEmoji(p.x+ox,p.y+1.6,p.z,emoji,1400+Math.random()*800);
  }
  function battleEvent(ev){
   if(!ev||typeof ev!=='object')return false;
@@ -783,6 +838,27 @@ const ATTACK_MS=520;let fxTextures=null;
     // Run over: the party is frozen too (a defeat is the blow that felled the last partner).
     const partners=(old.partners&&old.partners.length?old.partners:[old.partner]).filter(Boolean).map((e,i)=>final(runKey+':partner'+(i||''),e));
     battleHolds.set(runKey,{until:clock+STAGE.LINGER_MS,run:{...old,partner:partners[0],partners,enemies},early:[]});
+    // v387: emoji reaction when the run ends.
+    const defeated=old.reason==='defeat';
+    for(const pe of partners){
+     const pu=battleResidents.get(runKey+':partner'+(partners.indexOf(pe)||''));
+     if(pu){
+      if(defeated){triggerBattleEmoji(pu,'lose');if(Math.random()<.5)triggerBattleEmoji(pu,'lose')}
+      else{triggerBattleEmoji(pu,'win');if(Math.random()<.6)triggerBattleEmoji(pu,'win')}
+     }
+    }
+   }
+  }
+  // v387: wave clear emojis - when a new wave replaces the old one, partners celebrate.
+  for(const [runKey,hold] of battleHolds){
+   if(hold.run)continue; // not a wave transition
+   const run=battleState.pve?.find(r=>r&&'pve:'+r.id===runKey);
+   if(run&&run.wave>1){
+    for(const pe of (run.partners||[run.partner]).filter(Boolean)){
+     const idx=(run.partners||[run.partner]).indexOf(pe);
+     const pu=battleResidents.get(runKey+':partner'+(idx||''));
+     if(pu&&Math.random()<.7)triggerBattleEmoji(pu,'win');
+    }
    }
   }
   for(const run of battleState.pve)if(Number.isInteger(run.owner))battleParticipantIds.add(run.owner);
@@ -969,15 +1045,17 @@ const ATTACK_MS=520;let fxTextures=null;
    // slim rounded pill that only appears once a unit is actually hurt.
    if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.fillText==='function'){const ctx=u.ctx;
     const frac=Math.max(0,Math.min(1,shownHp/Math.max(1,s.maxHp)));
-    if(frac<.999){
-     const bw=132,bx=(256-bw)/2,by=13,bh=8;
-     const pill=(x,y,pw,ph,r)=>{if(typeof ctx.beginPath==='function'&&typeof ctx.roundRect==='function'){ctx.beginPath();ctx.roundRect(x,y,pw,ph,r);ctx.fill()}else if(typeof ctx.fillRect==='function')ctx.fillRect(x,y,pw,ph)};
-     ctx.fillStyle='rgba(14,20,16,.55)';pill(bx-3,by-3,bw+6,bh+6,(bh+6)/2);
-     ctx.fillStyle=frac>.35?'#8fca66':'#e07862';pill(bx,by,Math.max(bh,bw*frac),bh,bh/2);
-    }
-    ctx.font=(s.boss?'bold 20px':'600 17px')+' "Trebuchet MS",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    if(typeof ctx.strokeText==='function'){ctx.strokeStyle='rgba(10,14,10,.85)';ctx.lineWidth=4;ctx.strokeText(String(s.label).slice(0,25),128,frac<.999?36:22,198)}
-    ctx.fillStyle=s.boss?'#ffd98a':s.enemy?'#f3e6c8':'#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,frac<.999?36:22,198);
+    // v387 (owner): HP bar is always visible so players can track health from the start.
+    const bw=140,bx=(256-bw)/2,by=10,bh=10;
+    const pill=(x,y,pw,ph,r)=>{if(typeof ctx.beginPath==='function'&&typeof ctx.roundRect==='function'){ctx.beginPath();ctx.roundRect(x,y,pw,ph,r);ctx.fill()}else if(typeof ctx.fillRect==='function')ctx.fillRect(x,y,pw,ph)};
+    ctx.fillStyle='rgba(14,20,16,.65)';pill(bx-3,by-3,bw+6,bh+6,(bh+6)/2);
+    ctx.fillStyle=frac>.6?'#8fca66':frac>.3?'#e8c94a':'#e07862';pill(bx,by,Math.max(bh,bw*frac),bh,bh/2);
+    // v387: HP text over the bar so the exact numbers are readable.
+    ctx.font='bold 9px "Trebuchet MS",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#fff';ctx.fillText(Math.max(0,Math.round(shownHp))+'/'+Math.max(1,s.maxHp),128,by+bh/2+1,198);
+    ctx.font=(s.boss?'bold 22px':'600 18px')+' "Trebuchet MS",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    if(typeof ctx.strokeText==='function'){ctx.strokeStyle='rgba(10,14,10,.9)';ctx.lineWidth=5;ctx.strokeText(String(s.label).slice(0,25),128,38,198)}
+    ctx.fillStyle=s.boss?'#ffd98a':s.enemy?'#f3e6c8':'#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,38,198);
    }u.texture.needsUpdate=true;u.paint=key}
    // The ring duel keeps its short in-place lunge; a staged swing already carries the fighter.
    let drawX=pos.x,drawZ=pos.z;if(!staged&&stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1,lunge=Math.sin(Math.min(1,(visualNow-u.attackStarted)/ATTACK_MS)*Math.PI)*(u.ranged?.14:.28);drawX+=dx/length*lunge;drawZ+=dz/length*lunge}
@@ -1004,6 +1082,7 @@ const ATTACK_MS=520;let fxTextures=null;
   for(let i=battleLeaving.length-1;i>=0;i--){const l=battleLeaving[i],t=(now-l.at)/STAGE.LEAVE_MS;if(t>=1){disposeBattleUnit(l.u);battleLeaving.splice(i,1)}else l.u.sprite.material.opacity=l.from*Math.max(0,1-t)}
   updateBattleShots(now);
   updateBattleFx(now);
+  updateBattleEmoji(now);
  }
  // Training pets are independent world sprites, not followers anchored to their
  // owners. The room assigns each one an apparatus; the client only animates it.
@@ -1593,9 +1672,23 @@ void main(){
   // v300 (owner): the rod you hold is painted in your rod's tier colour and wrapped in an additive
   // glow sleeve, so the rod itself reads at a glance - a Golden rod glows gold in the plaza, not
   // just as an icon in the shop. Same builder is used for other anglers' rods.
-  const ROD_GLOW={twig:.3,oak:.4,brass:.52,silver:.62,golden:.78,mythril:.92};
-  // v300: the two top tiers breathe; anyone who asked their OS for less motion gets a steady glow.
+  // v387 (owner): the old rod was a cone (CylinderGeometry with different top/bottom radii) and
+  // every tier's glow looked the same. Redesigned as a proper rod with handle, shaft and tip
+  // sections, plus per-tier glow character: twig is plain wood, oak is a warm faint shimmer,
+  // brass is amber, silver is cool white-blue, golden pulses with warm sparkle, mythril shifts
+  // through cool ethereal hues with a visible breathing aura.
+  const ROD_GLOW={twig:.15,oak:.32,brass:.46,silver:.62,golden:.82,mythril:.95};
+  // v300: the top tiers breathe; anyone who asked their OS for less motion gets a steady glow.
   const ROD_PULSE=new Set(['golden','mythril']);
+  // v387: each tier has its own glow character so you can tell them apart at a glance.
+  const ROD_GLOW_STYLE={
+   twig:{color:0x8b6b45,glowR:2.2,hazeR:0,pulseSpeed:0,sparkle:false},
+   oak:{color:0xc89050,glowR:2.8,hazeR:4,pulseSpeed:0,sparkle:false},
+   brass:{color:0xe8a84d,glowR:3.2,hazeR:5.5,pulseSpeed:0,sparkle:false},
+   silver:{color:0xc0d8f0,glowR:3.6,hazeR:6,pulseSpeed:1.8,sparkle:false},
+   golden:{color:0xffd866,glowR:4.2,hazeR:7.5,pulseSpeed:2.4,sparkle:true},
+   mythril:{color:0x7fe3ff,glowR:5,hazeR:9,pulseSpeed:1.2,sparkle:true}
+  };
   let reduceMotion=false;try{reduceMotion=!!(typeof window!=='undefined'&&window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)}catch{}
   function rodTint(rodId){
    const F=globalThis.PGSocialFishing;
@@ -1604,33 +1697,48 @@ void main(){
   }
   function makePole(rTop,rBottom,segments){
    const group=new T.Group();
-   const core=new T.Mesh(new T.CylinderGeometry(rTop,rBottom,1,segments),new T.MeshBasicMaterial({color:0x7a5230}));
-   // Two shells: a bright sleeve hugging the blank, and a wide faint haze so the light falls off
-   // instead of ending on a hard tube edge.
-   const glow=new T.Mesh(new T.CylinderGeometry(rTop*4.2,rBottom*4.2,1,segments),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.4,blending:T.AdditiveBlending,depthWrite:false}));
-   const haze=new T.Mesh(new T.CylinderGeometry(rTop*8,rBottom*8,1,Math.max(6,segments-2)),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.12,blending:T.AdditiveBlending,depthWrite:false}));
-   core.name='rodCore';glow.name='rodGlow';haze.name='rodHaze';
-   group.add(core,glow,haze);
-   return {group,core,glow,haze,rod:null};
+   const shaftLen=.62,handleLen=.22,tipLen=.16;
+   // v387: a proper three-part rod. Handle is thicker and warm brown, shaft is the main
+   // uniform cylinder (straight, not tapered), and tip tapers gently to the very end.
+   const handleMat=new T.MeshBasicMaterial({color:0x5a3a22});
+   const shaftMat=new T.MeshBasicMaterial({color:0x7a5230});
+   const tipMat=new T.MeshBasicMaterial({color:0x9a7a55});
+   const handle=new T.Mesh(new T.CylinderGeometry(rBottom*.9,rBottom,handleLen,segments),handleMat);
+   handle.position.y=-shaftLen/2-handleLen/2;
+   const shaft=new T.Mesh(new T.CylinderGeometry(rTop,rTop,shaftLen,segments),shaftMat);
+   const tip=new T.Mesh(new T.CylinderGeometry(rTop*.5,rTop,tipLen,segments),tipMat);
+   tip.position.y=shaftLen/2+tipLen/2;
+   // Two glow shells that wrap the full rod length. The glow is a uniform cylinder (not tapered)
+   // so it reads as a light sleeve rather than a second cone.
+   const glow=new T.Mesh(new T.CylinderGeometry(rTop*3.5,rTop*3.5,shaftLen+handleLen+tipLen,Math.max(8,segments)),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.3,blending:T.AdditiveBlending,depthWrite:false}));
+   const haze=new T.Mesh(new T.CylinderGeometry(rTop*7,rTop*7,shaftLen+handleLen+tipLen,Math.max(6,segments)),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.08,blending:T.AdditiveBlending,depthWrite:false}));
+   handle.name='rodHandle';shaft.name='rodCore';tip.name='rodTip';glow.name='rodGlow';haze.name='rodHaze';
+   group.add(handle,shaft,tip,glow,haze);
+   return {group,core:shaft,handle,tip,glow,haze,rod:null};
   }
   function stylePole(rod,rodId){
    const id=rodId||'twig';
    if(rod.rod===id)return;
    rod.rod=id;
    const tint=new T.Color(rodTint(id));
+   const style=ROD_GLOW_STYLE[id]||ROD_GLOW_STYLE.twig;
    try{rod.core.material.color.copy(tint)}catch{}
-   // the core is lifted toward white so a lit rod never looks like a brown stick with a haze
-   const lit=tint.clone().lerp(new T.Color(0xffffff),.35);
-   rod.base=.22+((ROD_GLOW[id]||.3)*.5);
-   rod.hazeBase=.06+rod.base*.2;
+   try{rod.tip.material.color.copy(tint.clone().lerp(new T.Color(0xffffff),.25))}catch{}
+   try{rod.handle.material.color.setHex(0x5a3a22)}catch{}
+   const glowColor=new T.Color(style.color);
+   rod.base=.18+((ROD_GLOW[id]||.3)*.48);
+   rod.hazeBase=.04+rod.base*.18;
    rod.pulse=ROD_PULSE.has(id)&&!reduceMotion;
-   try{rod.glow.material.color.copy(lit);rod.glow.material.opacity=rod.base}catch{}
-   try{rod.haze.material.color.copy(lit);rod.haze.material.opacity=rod.hazeBase}catch{}
+   rod.pulseSpeed=style.pulseSpeed||0;
+   rod.glowR=style.glowR||3;
+   rod.hazeR=style.hazeR||0;
+   try{rod.glow.material.color.copy(glowColor);rod.glow.material.opacity=rod.base}catch{}
+   try{rod.haze.material.color.copy(glowColor);rod.haze.material.opacity=rod.hazeBase}catch{}
   }
   function disposePole(rod){
    rod.group.traverse(o=>{if(o.isMesh){try{o.geometry.dispose()}catch{}try{o.material.dispose()}catch{}}});
   }
-  const poleRod=makePole(.016,.04,6),pole=poleRod.group;stylePole(poleRod,'twig');pole.visible=false;scene.add(pole);
+  const poleRod=makePole(.016,.04,8),pole=poleRod.group;stylePole(poleRod,'twig');pole.visible=false;scene.add(pole);
   function setRod(rodId){stylePole(poleRod,typeof rodId==='string'?rodId:'twig')}
   const lineGeo=new T.BufferGeometry(),linePts=new Float32Array(8*3);lineGeo.setAttribute('position',new T.BufferAttribute(linePts,3));const line=new T.Line(lineGeo,new T.LineBasicMaterial({color:0xeef2ee,transparent:true,opacity:.75}));line.visible=false;line.frustumCulled=false;scene.add(line);
   const bobber=new T.Group();bobber.visible=false;scene.add(bobber);
@@ -1948,11 +2056,20 @@ void main(){
    const dx=bx-p.x,dz=bz-p.z,d=Math.hypot(dx,dz)||1,ux=dx/d,uz=dz/d;
    const hx=p.x+ux*.35,hz=p.z+uz*.35,hy=base+h*.5,tx=p.x+ux*1.7,tz=p.z+uz*1.7,ty=base+h*.78;
    const mx=(hx+tx)/2,my=(hy+ty)/2,mz=(hz+tz)/2,len=Math.hypot(tx-hx,ty-hy,tz-hz);
-   // v300: golden and mythril poles breathe, so the glow reads as light rather than paint.
+   // v300/v387: golden and mythril poles breathe with distinct speeds and color shifts,
+   // so each high-tier rod looks unique rather than the same pulse everywhere.
    if(poleRod&&Number.isFinite(poleRod.base))try{
-    const k=poleRod.pulse?1+.3*Math.sin(now/420):1;
+    const spd=poleRod.pulseSpeed||0;
+    const k=poleRod.pulse&&spd>0?1+.28*Math.sin(now*spd/1000):1;
     poleRod.glow.material.opacity=Math.min(.85,poleRod.base*k);
     poleRod.haze.material.opacity=Math.min(.3,poleRod.hazeBase*k);
+    // v387: mythril shifts hue slowly so the rod has an ethereal, otherworldly feel.
+    if(poleRod.rod==='mythril'&&!reduceMotion){
+     const hue=(now/3500)%1;
+     const shiftColor=new T.Color().setHSL(.52+.08*Math.sin(hue*Math.PI*2),.7,.72);
+     poleRod.glow.material.color.copy(shiftColor);
+     poleRod.haze.material.color.copy(shiftColor);
+    }
    }catch{}
    pole.position.set(mx,my,mz);pole.scale.set(1,len,1);pole.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3((tx-hx)/len,(ty-hy)/len,(tz-hz)/len));
    for(let i=0;i<8;i++){const t=i/7,sag=Math.sin(t*Math.PI)*Math.max(.2,d*.06),px=tx+(bx-tx)*t,py=ty+(by+.12-ty)*t-sag,pz=tz+(bz-tz)*t;linePts[i*3]=px;linePts[i*3+1]=py;linePts[i*3+2]=pz}

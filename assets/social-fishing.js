@@ -91,8 +91,8 @@ const SPECIES_DATA={
   ['sunfish','Ocean Sunfish','🐠',48,200,600,'sunfish',true],['hammer','Great Hammerhead','🦈',205,150,450,'hammer',true],
  ],
  secret:[
-  ['poring','Poring Puffer','🐡',300,.5,2],['emperium','Emperium Carp','🐠',45,3,12],
-  ['ghostring','Ghostring Fish','🐟',200,.4,1.8],['angeling','Angeling Jelly','🐙',310,.6,2.5],
+  ['poring','Poring Puffer','🐡',300,1,2],['emperium','Emperium Carp','🐠',45,3,12],
+  ['ghostring','Ghostring Fish','🐟',200,1,1.8],['angeling','Angeling Jelly','🐙',310,1,2.5],
   // v297: the largest fish alive, and the deep oddities that go with them.
   ['whaleshark','Whale Shark','🦈',205,600,1800,'whale',true],['beluga','Beluga Sturgeon','🐟',205,400,1400,'sturgeon',true],
   ['anglerdeep','Abyssal Angler','🐡',280,80,260,'angler',true],['colossus','Plaza Colossus','🐙',270,300,1000,'octopus',true],
@@ -131,7 +131,7 @@ const EXTRA_SPECIES=[
  ['opalsnail','Opal Snail','🐌',280,0.04,0.3,'fish','uncommon'],
  ['lavasnail','Lava Snail','🐌',10,0.05,0.4,'fish','rare'],
  ['nebulasnail','Nebula Snail','🐌',265,0.06,0.5,'fish','legendary'],
- ['prismsnail','Prism Snail','🐌',300,0.05,0.45,'fish','mythical'],
+ ['prismsnail','Prism Snail','🐌',300,1,1.5,'fish','mythical'],
  ['krill','Glass Krill','🦐',190,0.01,0.08,'shrimp','common'],
  ['candyshrimp','Candy Shrimp','🦐',340,0.02,0.12,'shrimp','common'],
  ['lanternshrimp','Lantern Shrimp','🦐',45,0.02,0.15,'shrimp','uncommon'],
