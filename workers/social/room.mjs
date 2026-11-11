@@ -603,8 +603,8 @@ export class SocialRoom {
       const prof=run.profiles[i]||run.profile,mine={...B.pveReward(run,prof),dropCoins:event.reward.dropCoins,eggs:event.reward.eggs};
       mine.coins+=mine.dropCoins;
       const gearDrop=B.pveGearDrops(run,this.random)||null;
-      const totals=run.earnedBy[run.members[i]]||(run.earnedBy[run.members[i]]={coins:0,xp:0,wins:0,eggs:0,dropCoins:0,gear:0});
-      totals.coins+=mine.coins;totals.xp+=mine.xp;totals.wins+=mine.wins;totals.eggs+=mine.eggs;totals.dropCoins+=mine.dropCoins;if(gearDrop)totals.gear++;
+      const totals=run.earnedBy[run.members[i]]||(run.earnedBy[run.members[i]]={coins:0,xp:0,wins:0,eggs:0,dropCoins:0,gear:0,evoPoints:0});
+      totals.coins+=mine.coins;totals.xp+=mine.xp;totals.wins+=mine.wins;totals.eggs+=mine.eggs;totals.dropCoins+=mine.dropCoins;totals.evoPoints=(totals.evoPoints||0)+(mine.evoPoints||0);if(gearDrop)totals.gear++;
       this.send(member,{type:'battle_reward',kind:'pve',battleId:run.id+':wave'+event.wave+':'+run.members[i],lineId:prof.lineId,form:prof.form,slot:prof.slot,wave:event.wave,reward:mine,earned:{...totals},gearDrop});
      }
     }

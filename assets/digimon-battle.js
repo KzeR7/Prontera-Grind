@@ -116,16 +116,18 @@ function pveReward(run,prof){
  return {coins:10+rank*4+Math.min(10,run.wave-1),xp:Math.round((1+Math.floor(rank/2))*xpPct),wins:1};
 }
 function pveDrops(run,random){
- let coins=0,eggs=0;const roll=()=>Math.max(0,Math.min(.999999999,Number(random())||0));
+ let coins=0,eggs=0,evoPoints=0;const roll=()=>Math.max(0,Math.min(.999999999,Number(random())||0));
  if(bossFight(run)){const rank=stageRank(run.profile.form);
   coins+=8+rank*3+Math.floor(roll()*8);if(roll()<(run.mode==='boss'?BOSS_EGG_CHANCE*2:BOSS_EGG_CHANCE))eggs++;
-  return {coins,eggs};
+  if(roll()<(run.mode==='boss'?.22:.12))evoPoints+=1+(roll()<.2?1:0);
+  return {coins,eggs,evoPoints};
  }
  for(const enemy of run.enemies){
   if(roll()<PVE_COIN_DROP_CHANCE)coins+=2+stageRank(enemy.form)+Math.floor(roll()*4);
   if(roll()<PVE_EGG_DROP_CHANCE)eggs++;
+  if(roll()<.06)evoPoints++;
  }
- return {coins,eggs};
+ return {coins,eggs,evoPoints};
 }
 // Equipment drops are random per clear, never milestone-gated: every defeated bot has a
 // small chance and every boss a large one, with the boss piece drawn from a higher tier.
@@ -224,7 +226,7 @@ function createPve({id,owner,room,profile:raw,profiles,now,random=randomUnit,bos
  const list=(Array.isArray(profiles)&&profiles.length?profiles:[raw]).map(p=>profile(p)).filter(Boolean);
  if(!list.length)throw Error('A valid owned Digimon profile is required');
  if(list.length>3)list.length=3;
- const run={id,owner,room,profile:list[0],profiles:list,members:[],wave:0,phase:'fighting',partners:list.map((p,i)=>combatant(p,i?'partner'+i:'partner')),enemies:[],nextAt:now,pulse:0,earned:{coins:0,xp:0,wins:0,eggs:0,dropCoins:0,gear:0},reason:'',slot:0,party:list.length>1,mode:bossMode?'boss':'grind'};
+ const run={id,owner,room,profile:list[0],profiles:list,members:[],wave:0,phase:'fighting',partners:list.map((p,i)=>combatant(p,i?'partner'+i:'partner')),enemies:[],nextAt:now,pulse:0,earned:{coins:0,xp:0,wins:0,eggs:0,dropCoins:0,gear:0,evoPoints:0},reason:'',slot:0,party:list.length>1,mode:bossMode?'boss':'grind'};
  run.partner=run.partners[0];
  spawnWave(run,now,random);return run;
 }
@@ -264,9 +266,9 @@ function stepPve(run,now,random=randomUnit){
  // A slain boss takes its summoned adds with it: the stage ends on the boss, not on cleaning up.
  if(run.mech&&!run.mech.routed){const boss=run.enemies.find(e=>e.boss);if(boss&&boss.hp<=0){run.mech.routed=true;const routed=run.enemies.filter(e=>!e.boss&&e.hp>0);if(routed.length){for(const add of routed)add.hp=0;events.push({type:'boss_rout',forms:routed.map(add=>add.form)})}}}
  if(run.enemies.every(e=>e.hp<=0)){
-  const drops=pveDrops(run,random),reward={...pveReward(run),dropCoins:drops.coins,eggs:drops.eggs};reward.coins+=drops.coins;
+  const drops=pveDrops(run,random),reward={...pveReward(run),dropCoins:drops.coins,eggs:drops.eggs,evoPoints:drops.evoPoints||0};reward.coins+=drops.coins;
   const gearDrop=pveGearDrops(run,random);
-  run.earned.coins+=reward.coins;run.earned.xp+=reward.xp;run.earned.wins+=reward.wins;run.earned.eggs+=drops.eggs;run.earned.dropCoins+=drops.coins;if(gearDrop)run.earned.gear++;
+  run.earned.coins+=reward.coins;run.earned.xp+=reward.xp;run.earned.wins+=reward.wins;run.earned.eggs+=drops.eggs;run.earned.dropCoins+=drops.coins;run.earned.evoPoints=(run.earned.evoPoints||0)+(drops.evoPoints||0);if(gearDrop)run.earned.gear++;
   for(const p of run.partners)p.hp=Math.min(p.maxHp,p.hp+Math.ceil(p.maxHp*.3));
   events.push({type:'wave_clear',wave:run.wave,boss:bossWave,reward:{...reward},earned:{...run.earned},partnerHp:run.partner.hp,partners:run.partners.map(p=>({id:p.id,form:p.form,hp:p.hp,maxHp:p.maxHp})),gearDrop});
   if(run.wave>=MAX_WAVE||run.mode==='boss'){run.phase='ended';run.reason='complete';events.push({type:'end',reason:run.reason});}

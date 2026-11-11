@@ -614,3 +614,14 @@ this runtime. Gym apparatus is still scenery, not live training.
   `digimon_sanctuary_sim.js`, `digimon_sanctuary_ui_sim.js`,
   `sanctuary_battle_sim.js`, `social_ui_sim.js`, `social_fishing_sim.js` and
   `social_worker_sim.mjs`.
+
+* **Independent follower, Evo Points, party HUD (haven-v386):**
+  `assets/social.js` keeps the plaza follower (`digimonActiveSlot`) separate from gym/PvE
+  partner picks; gym start uses `activitySlot('gym')`. Bag `evoPoints` and `evoPointCost`
+  in `assets/digimon-sanctuary.js` gate one-way evolution; `switchForm` is refused.
+  `gearSellMatchingAuto` sells unequipped, unrefined Auto-sell tiers; refine max is +10.
+  `assets/social-scene.js` scatters PvE homes by battle id, keeps a battling trainer's
+  idle follower, and lowers/enlarges the MVP pond sprite. Party toast + HUD live in
+  `assets/social.js` / `assets/social.css`. Coverage: `digimon_sanctuary_sim.js`,
+  `digimon_sanctuary_ui_sim.js`, `digimon_battle_sim.js`, `social_scene_sim.js`,
+  `social_ui_sim.js`.

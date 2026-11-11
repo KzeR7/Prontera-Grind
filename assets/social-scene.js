@@ -685,8 +685,14 @@ const ATTACK_MS=520;let fxTextures=null;
  // across an aisle wide enough for the two largest bodies plus room to step in. Slots follow the
  // order of the run's own lists, which never reorder inside a wave, so a unit keeps its slot when
  // a neighbour falls or a boss calls adds.
- function battleFormation(run){
-  const lane=Number(run.slot)||0,fx=70+(lane%4-1.5)*8,fz=60+Math.floor(lane/4)*10;
+  function battleFormation(run){
+  // v386: scatter each run in the middle field from its battle id so two grinds never stack
+  // on the same turf, while a given run keeps one home across its waves.
+  const lane=Number(run.slot)||0;
+  const seed=String(run.id||'')+':'+(run.owner||0);
+  let h=2166136261;for(let i=0;i<seed.length;i++)h=Math.imul(h^seed.charCodeAt(i),16777619);
+  const jitterX=((h>>>8)&255)/255*14-7,jitterZ=((h>>>16)&255)/255*10-5;
+  const fx=70+(lane%4-1.5)*8+jitterX,fz=60+Math.floor(lane/4)*10+jitterZ;
   const partners=(run.partners&&run.partners.length?run.partners:[run.partner]).filter(Boolean),enemies=(run.enemies||[]).filter(Boolean);
   const widest=list=>list.reduce((n,u)=>Math.max(n,battleBody(u.form,u.boss)),.5),pw=widest(partners),ew=widest(enemies);
   const span=(v,lo,hi)=>Math.max(lo,Math.min(hi,v)),aisle=span(pw+ew+STAGE.AISLE_PAD,STAGE.AISLE_MIN,STAGE.AISLE_MAX),rows=w=>span(1.9+w*.9,STAGE.ROW_MIN,STAGE.ROW_MAX);
@@ -1801,10 +1807,10 @@ void main(){
    group.name='socialMvpFloat';group.userData.socialMvpFloat=true;group.position.set(p.x,0,p.z);
    const ringMat=new T.MeshBasicMaterial({color:0x8ceaff,transparent:true,opacity:.58,side:T.DoubleSide,blending:T.AdditiveBlending,depthWrite:false});
    const ring=new T.Mesh(new T.RingGeometry(1.15,1.42,48),ringMat);ring.rotation.x=-Math.PI/2;ring.position.y=.055;ring.userData.socialMvpHalo=true;group.add(ring);
-   const material=new T.SpriteMaterial({transparent:true,depthTest:false,depthWrite:false});
-   const sprite=new T.Sprite(material);sprite.userData.socialMvpFish=true;sprite.position.set(0,2.55,0);sprite.scale.set(4.4,4.4,1);sprite.renderOrder=25;group.add(sprite);
+   const material=new T.SpriteMaterial({transparent:true,depthTest:true,depthWrite:false});
+   const sprite=new T.Sprite(material);sprite.center.set(.5,.18);sprite.userData.socialMvpFish=true;sprite.position.set(0,.72,0);sprite.scale.set(7.2,7.2,1);sprite.renderOrder=25;group.add(sprite);
    group.visible=false;scene.add(group);
-   mvpFloat={group,ring,sprite,texture:null,baseY:2.55};
+   mvpFloat={group,ring,sprite,texture:null,baseY:.72};
    return mvpFloat;
   }
   function mvpArt(spId){
@@ -1826,12 +1832,12 @@ void main(){
   function mvpWeightScale(spId){
    const F=globalThis.PGSocialFishing;let max=1500;
    try{const sp=F&&typeof F.speciesById==='function'?F.speciesById(spId):null;if(sp&&Number(sp.max)>0)max=Number(sp.max)}catch{}
-   return .8+.5*Math.min(1,Math.max(0,(max-1000)/2000)); // 1,000 kg -> .8 · 3,000 kg -> 1.3
+   return 1.05+.55*Math.min(1,Math.max(0,(max-1000)/2000)); // 1,000 kg -> 1.05 · 3,000 kg -> 1.6
   }
   function mvpPeekCanvas(spId){
    /* The canvas draw is size-independent (head fully in frame, waterline at 62%); the weight
       scale rides on the sprite mesh in setMvpFloat, so a heavy boss is simply bigger overall. */
-   const art=mvpArt(spId),k=mvpWeightScale(spId),wl=MVP_BASE_PX*.60;
+   const art=mvpArt(spId),k=mvpWeightScale(spId),wl=MVP_BASE_PX*.72;
    try{
     const c=document.createElement('canvas');c.width=c.height=MVP_BASE_PX;
     const g=c.getContext('2d');if(!g)return art;
@@ -1873,7 +1879,7 @@ void main(){
    const tex=new T.CanvasTexture(peek.canvas);
    if(m.texture)m.texture.dispose();
    m.texture=tex;m.sprite.material.map=tex;m.sprite.material.needsUpdate=true;
-   const k=peek&&peek.scale||1,size=4.4*k;
+   const k=peek&&peek.scale||1,size=7.2*k;
    m.sprite.scale.set(size,size,1);
    m.ring.scale.setScalar(k);
    m.group.userData.spId=spId;m.group.userData.k=k;m.group.visible=true;
@@ -2454,9 +2460,12 @@ void main(){
   const seatOffset=pokerChair?0:chair?.35:0;
   p.sprite.position.set(baseX+(chair?Math.sin(chair.rotation)*seatOffset:0),floor,state.z+(chair?Math.cos(chair.rotation)*seatOffset:0));
   // Fixed-view sprites track the same movement path/speed as the avatar, without touching RO pets.
-  const digimon=globalThis.PGSocialDigimon,id=digimon?.clean(state.look?.digimon),battleHidden=battleParticipantIds.has(state.id);
-  if((!id||battleHidden)&&p.digimon){scene.remove(p.digimon.sprite);p.digimon.sprite.material.dispose();p.digimon.texture.dispose();p.digimon=null}
-  if(id&&digimonStore&&!battleHidden){
+  const digimon=globalThis.PGSocialDigimon,id=digimon?.clean(state.look?.digimon);
+  // v386: a trainer in PvE/PvP still walks a third partner. The look already omits a pet that
+  // is itself in the gym or a battle, so hiding every follower of a battling trainer made the
+  // idle partner vanish. Only hide when this look has no companion to draw.
+  if(!id&&p.digimon){scene.remove(p.digimon.sprite);p.digimon.sprite.material.dispose();p.digimon.texture.dispose();p.digimon=null}
+  if(id&&digimonStore){
    const asset=digimonStore.ready(id);if(!asset)digimonStore.request(id);
    if(asset){
     if(!p.digimon){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);sprite.scale.set(256*1.45/96,256*1.45/96,1);sprite.userData.digimonOwner=state.id;scene.add(sprite);p.digimon={canvas,ctx:canvas.getContext('2d'),texture,sprite,paint:'',flip:false,follower:digimon.createFollower(state,state.dir,R.walkable)}}
