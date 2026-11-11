@@ -1502,9 +1502,31 @@ function stopSoloPve(reason='stopped',notify=true){
 }
 function tickSoloPve(){
  const run=soloPve;if(!run)return;if(typeof S!=='object'||S!==run.localOwner||run.localAccount!==(typeof currentUser==='string'?currentUser:null)){stopSoloPve('stopped',false);return}
- const result=globalThis.PGDigimonBattle?.stepPve(run,Date.now());if(!result)return;let end='';
- for(const event of result.events){if(String(event.type).startsWith('boss_'))bossFxNotice(event);if(event.type==='wave_clear')receiveBattleReward({local:true,kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});if(event.type==='hit')app.scene?.battleEvent?.({kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit});if(event.type==='end')end=event.reason}
- if(end){stopSoloPve(end);repeatPveRun()}else syncSoloBattle();
+ const result=globalThis.PGDigimonBattle?.stepPve(run,Date.now(),run.rng);if(!result)return;let end='';
+ const self=app.room?app.id:SOLO_ID,idx=Array.isArray(run.members)?run.members.indexOf(self):-1,prof=(idx>=0&&run.profiles[idx])||run.profile;
+ for(const event of result.events){if(String(event.type).startsWith('boss_'))bossFxNotice(event);if(event.type==='wave_clear')receiveBattleReward({local:true,kind:'pve',battleId:run.id+':wave'+event.wave+':'+(prof.slot||0),lineId:prof.lineId,form:prof.form,slot:prof.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});if(event.type==='hit')app.scene?.battleEvent?.({kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit});if(event.type==='end')end=event.reason}
+ if(end){if(run.clientParty&&app.room)send({type:'pve_stop'});stopSoloPve(end);if(!run.clientParty)repeatPveRun()}else syncSoloBattle();
+}
+let clientPvp=null;
+function beginClientPve(m){
+ const B=globalThis.PGDigimonBattle;if(!B||!Array.isArray(m.profiles))return;
+ const rng=B.rngFromSeed(m.seed);
+ soloPve=B.createPve({id:m.battleId,owner:m.owner,room:app.room||0,profiles:m.profiles,now:m.now||Date.now(),random:rng,bossMode:m.mode==='boss'});
+ soloPve.members=Array.isArray(m.members)?m.members:[];soloPve.rng=rng;soloPve.clientParty=true;soloPve.localOwner=S;soloPve.localAccount=typeof currentUser==='string'?currentUser:null;
+ app.battleIntent=null;syncSoloBattle();worldNotice('Party grind on your devices — the plaza is not billed per hit.');
+}
+function beginClientPvp(m){
+ const B=globalThis.PGDigimonBattle;if(!B||!Array.isArray(m.players)||m.players.length!==2)return;
+ const rng=B.rngFromSeed(m.seed);
+ clientPvp=B.createPvp({id:m.battleId,room:app.room,now:m.now||Date.now(),players:m.players});
+ clientPvp.rng=rng;clientPvp.clientSim=true;clientPvp.participants.forEach(p=>p.accepted=true);clientPvp.phase='countdown';clientPvp.countdownUntil=m.startsAt||Date.now()+3000;
+ battleOffer=null;app.battle.pvp=B.pvpSnapshot(clientPvp);app.scene?.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();
+}
+function tickClientPvp(){
+ const match=clientPvp,B=globalThis.PGDigimonBattle;if(!match||!B)return;
+ const result=B.stepPvp(match,Date.now(),match.rng);if(!result)return;
+ for(const event of result.events){if(event.type==='hit')app.scene?.battleEvent?.({kind:'pvp',battleId:match.id,to:event.to,amount:event.amount,crit:!!event.crit});if(event.type==='result'){send({type:'pvp_client_end',battleId:match.id,winnerId:match.winnerId,reason:match.reason});receiveBattleResult({kind:'pvp',battleId:match.id,winnerId:match.winnerId,reason:match.reason,lineId:match.participants.find(p=>p.id===app.id)?.profile?.lineId,form:match.participants.find(p=>p.id===app.id)?.profile?.form,slot:match.participants.find(p=>p.id===app.id)?.profile?.slot,outcome:match.winnerId===app.id?'win':match.winnerId==null?'draw':'lose',reward:(B.pvpRewards(match)||{})[app.id]});clientPvp=null;return}}
+ app.battle.pvp=B.pvpSnapshot(match);app.scene?.setBattleState?.(app.battle);renderBattleHUD();
 }
 // v382: 'boss' starts a raid — one long boss instead of a field run. The choice is remembered so
 // "Keep repeating" repeats the same kind of fight.
@@ -1593,7 +1615,7 @@ function applyBattleReward(m){
 function receiveBattleReward(m){const result=applyBattleReward(m);if(result){const G=globalThis.PGDigimonBattle,boss=!!G?.isBossWave?.(m.wave);worldNotice((boss?'Boss defeated — stage '+(G?.stageOf?.(m.wave)||1)+' cleared · ':m.local?'Local wave '+m.wave+' cleared · ':m.kind==='pve'?'Wave '+m.wave+' cleared · ':'Battle reward · ')+result.message)}}
 function receiveBattleResult(m){applyBattleReward({...m,kind:'pvp'});app.battleResult=m;battleOffer=null;renderPvpDialog();renderBattleResult();renderBattleHUD()}
 function battleSnapshot(m){if(m.room!==app.room)return;app.battle.pvp=m.pvp||null;app.battle.queue=Array.isArray(m.queue)?m.queue:[];const self=app.room?app.id:SOLO_ID,incoming=Array.isArray(m.pve)?m.pve:[];if(soloPve&&incoming.some(r=>r&&r.owner===self&&String(r.id||'').indexOf('solo-pve:')!==0))stopSoloPve('stopped',false);const mine=soloPve&&globalThis.PGDigimonBattle?globalThis.PGDigimonBattle.pveSnapshot(soloPve):null;const others=incoming.filter(r=>!mine||(r.owner!==mine.owner&&r.id!==mine.id));app.battle.pve=mine?[mine,...others]:others;if(Number.isFinite(m.at))app.battleOffset=m.at-Date.now();battleOffer=null;app.scene?.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();refreshBattleNearby();if(app.battleIntent&&app.battleIntent.kind==='pvp')app.battleIntent=null}
-function battleUITick(){tickSoloPve();if(++mapTickFrame%4===0)mapTick();
+function battleUITick(){tickSoloPve();tickClientPvp();if(++mapTickFrame%4===0)mapTick();
  if(app.partyInvite&&Number.isFinite(app.partyInvite.expiresAt)&&Date.now()>app.partyInvite.expiresAt+500){app.partyInvite=null;renderPartyPanel()}
  if(!$id('socialPartyPanel').hidden){const roster=(app.partyRoster||[]).map(p=>p.id+':'+(p.members||[]).join(',')).join('|');const key=(app.party?app.party.members.map(m=>m.id).join(','):'none')+'#'+((app.battle.queue||[]).map(q=>q.id+q.side).join(','))+'#'+(app.partyInvite?app.partyInvite.partyId:'')+'#'+roster+'#'+partyCandidates().length;if(battleUITick.partyKey!==key){battleUITick.partyKey=key;renderPartyPanel()}}if(app.battleIntent&&Date.now()-(app.battleIntent.at||0)>=BATTLE_INTENT_MS){app.battleIntent=null;worldNotice('The plaza battle service did not respond. Reconnect, or use a preview with the matching Social Worker deployment.')}const match=myPvp();if(match?.phase==='countdown'){const el=$id('pvpCountdownNumber');if(el){const left=Math.max(0,Math.ceil((match.countdownUntil-(Date.now()+app.battleOffset))/1000));el.textContent=left>0?left:'FIGHT!'}}}
 setInterval(battleUITick,100);
@@ -2261,6 +2283,8 @@ function receive(m){
  if(m.type==='party_invite'){if(partyMuteOn()){send({type:'party_decline'});return}app.partyInvite=m;worldNotice((m.from?.name||'A trainer')+' invites you to a party.');syncPartyChrome();if(!$id('socialPartyPanel').hidden)renderPartyPanel();return}
  if(m.type==='party_error'){worldNotice(m.message||'Party action failed.');return}
  if(m.type==='party_notice'){worldNotice(m.message||'');return}
+ if(m.type==='pve_client'){beginClientPve(m);return}
+ if(m.type==='pvp_client'){beginClientPvp(m);return}
  if(m.type==='pvp_offer'){battleOffer=m;renderPvpDialog();return}
  if(m.type==='pvp_waiting'){app.battleIntent=null;renderBattleHUD();worldNotice('Waiting for an opponent on the opposite side of the ring…');return}
  if(m.type==='pvp_countdown'){battleOffer=null;if(Number.isFinite(m.serverNow))app.battleOffset=m.serverNow-Date.now();renderPvpDialog();return}

@@ -407,7 +407,11 @@ export class SocialRoom {
   return {pve,pvp:match?B.pvpSnapshot(match):null,queue:queue.map(q=>({id:q.id,name:q.name,side:q.side}))};
  }
  broadcastBattle(room){if(room)this.broadcast({type:'battle',room,at:this.now(),...this.battleSnapshot(room)},p=>p.room===room)}
- hasActiveBattles(){return this.pveRuns.size>0||this.pvpMatches.size>0||[...this.pvpQueues.values()].some(q=>q.length)}
+ hasActiveBattles(){
+  for(const run of this.pveRuns.values())if(!run.clientSim)return true;
+  for(const match of this.pvpMatches.values())if(!match.clientSim)return true;
+  return false;
+ }
  // v388: sitters do not keep the plaza alarm. Only work that needs a clock (party/PvP, a live
  // MVP, poker deadlines, unacked ledgers) should wake the Durable Object.
  hasLivePoker(){
@@ -464,7 +468,7 @@ export class SocialRoom {
   if(this.trainingBlocks(c,p))return this.battleError(c,'The training partner cannot battle. Switch to another partner slot first.',request);
   const queue=this.pvpQueues.get(c.room)||[];this.pvpQueues.set(c.room,queue);
   const entry={id:c.id,name:c.name,side,profile:p,at:now};queue.push(entry);c.pvp={queue:true,side};
-  this.send(c,{type:'pvp_waiting',request,side});this.pairPvp(c.room,now);this.broadcastBattle(c.room);this.battleActivity();
+  this.send(c,{type:'pvp_waiting',request,side});this.pairPvp(c.room,now);this.broadcastBattle(c.room);
  }
  pairPvp(room,now){
   if(this.pvpByRoom.has(room))return;const queue=this.pvpQueues.get(room)||[];
@@ -478,7 +482,13 @@ export class SocialRoom {
  acceptPvp(c,now){
   const match=c.pvp?.matchId&&this.pvpMatches.get(c.pvp.matchId);if(!match||match.room!==c.room)return;
   if(match.phase!=='offer')return;if(!this.ringSide(c,now))return this.battleError(c,'Stay by the ring until both players accept.');
-  if(B.acceptPvp(match,c.id,now)){this.broadcastBattle(match.room);this.battleActivity();if(match.phase==='countdown')for(const p of match.participants){const other=this.clients.get(p.id);if(other)this.send(other,{type:'pvp_countdown',battleId:match.id,startsAt:match.countdownUntil,serverNow:now})}}
+  if(B.acceptPvp(match,c.id,now)){
+   if(match.phase==='countdown'){
+    match.clientSim=true;match.seed=(now^((match.id.length||1)*1597334677))>>>0;
+    const payload={type:'pvp_client',battleId:match.id,seed:match.seed,now,startsAt:match.countdownUntil,players:match.participants.map(p=>({id:p.id,name:p.name,side:p.side,profile:p.profile}))};
+    for(const p of match.participants){const other=this.clients.get(p.id);if(other)this.send(other,payload)}
+   }
+  }
  }
  cancelPvp(c,reason='declined',now=this.now()){
   if(c.pvp?.queue){const queue=this.pvpQueues.get(c.room)||[];this.pvpQueues.set(c.room,queue.filter(q=>q.id!==c.id));c.pvp=null;this.broadcastBattle(c.room);return}
@@ -584,14 +594,11 @@ export class SocialRoom {
   const profiles=members.map(validProfile);
   // v382 (owner ask): the same party can open a shared boss raid instead of a mob grind.
   const bossMode=m.mode==='boss';
-  const run=B.createPve({id:this.battleId('pve'),owner:c.id,room:c.room,profiles,now,random:this.random,bossMode});
-  run.members=members.map(mem=>mem.id);run.earnedBy={};
-  const used=new Set([...this.pveRuns.values()].filter(r=>r.room===c.room).map(r=>r.slot));
-  run.slot=Array.from({length:8},(_,i)=>i).find(i=>!used.has(i))||0;
+  const seed=(now^((c.id||1)*2654435761))>>>0,id=this.battleId('pve');
+  const run={id,owner:c.id,room:c.room,clientSim:true,party:true,mode:bossMode?'boss':'grind',members:members.map(mem=>mem.id),profiles,slot:0};
   for(const mem of members)mem.pve=run;
   this.pveRuns.set(run.id,run);
-  for(const mem of members)this.send(mem,{type:'pve_started',request:mem===c?request:null,battleId:run.id,party:true,mode:bossMode?'boss':'grind'});
-  this.broadcastBattle(c.room);this.battleActivity();
+  for(const mem of members)this.send(mem,{type:'pve_client',request:mem===c?request:null,battleId:run.id,party:true,mode:bossMode?'boss':'grind',seed,now,owner:c.id,members:run.members,profiles});
  }
  stopBattle(c,reason='stopped',now=this.now()){
   const room=c.room;c.pveRepeatPermit=null;if(c.pve)this.stopPve(c,reason,false);if(c.pvp)this.cancelPvp(c,reason,now);if(room)this.broadcastBattle(room);
@@ -615,6 +622,7 @@ export class SocialRoom {
    if(kept.length!==queue.length){this.pvpQueues.set(room,kept);rooms.add(room)}
   }
   for(const run of [...this.pveRuns.values()]){
+   if(run.clientSim)continue;
    const result=B.stepPve(run,now,this.random);if(!result)continue;const c=this.clients.get(run.owner);rooms.add(run.room);
    for(const event of result.events){
     if(event.type==='wave_clear'&&run.party){
@@ -645,6 +653,7 @@ export class SocialRoom {
    }
   }
   for(const match of [...this.pvpMatches.values()]){
+   if(match.clientSim)continue;
    const result=B.stepPvp(match,now,this.random);if(!result)continue;rooms.add(match.room);
    for(const event of result.events)if(event.type==='hit')this.broadcast({type:'battle_fx',kind:'pvp',battleId:match.id,to:event.to,amount:event.amount,crit:!!event.crit},p=>p.room===match.room);
    if(result.events.some(e=>e.type==='result'))this.settlePvp(match);
@@ -760,6 +769,16 @@ export class SocialRoom {
   if(m.type==='party_leave')return this.partyRemove(c,'left');
   if(m.type==='party_start')return this.startPartyPve(c,m,now);
   if(m.type==='party_profile'){const p=this.battleProfile(c,m.profile);if(p)c.partyProfile=p;return}
+  if(m.type==='pvp_client_end'){
+   const match=c.pvp?.matchId&&this.pvpMatches.get(c.pvp.matchId);if(!match||!match.clientSim)return;
+   match.reports=match.reports||{};match.reports[c.id]={winnerId:Number.isInteger(m.winnerId)?m.winnerId:null,reason:String(m.reason||'knockout').slice(0,24)};
+   const ids=match.participants.map(p=>p.id);
+   if(!ids.every(id=>match.reports[id]))return;
+   const a=match.reports[ids[0]],b=match.reports[ids[1]];
+   const agree=a.winnerId===b.winnerId;
+   B.finishPvp(match,agree?a.winnerId:null,agree?a.reason:'mismatch',now);this.settlePvp(match);match.phase='closed';this.cleanupPvp(match);
+   return;
+  }
   if(m.type==='pvp_accept')return this.acceptPvp(c,now);
   if(m.type==='pvp_decline'||m.type==='pvp_cancel')return this.cancelPvp(c,m.type==='pvp_decline'?'declined':'cancelled',now);
   if(m.type==='poker_ledger_ack')return this.ackPokerLedgers(c,m);
