@@ -457,7 +457,6 @@ body.social-open #bgmPlayer{display:none!important}
 .social-sanctuary-label[data-station]{pointer-events:auto;cursor:pointer;appearance:none}.social-sanctuary-label[data-station]:hover,.social-sanctuary-label[data-station]:focus-visible{background:#fff2c7;outline:2px solid #bb9952}
 #sanctuaryWorldStatus{position:absolute;z-index:20;top:116px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;width:min(360px,calc(100% - 24px));box-sizing:border-box;padding:8px 12px;border:1px solid #99b29d;border-radius:7px;background:#172e2aee;color:#ecf1df;font:12px "Trebuchet MS",sans-serif;box-shadow:0 4px 15px #0005}#sanctuaryWorldStatus[hidden]{display:none}#sanctuaryWorldStatus span{flex:1;min-width:0}#sanctuaryWorldStatus button{flex:none;border:1px solid #a9bda1;border-radius:5px;background:#354e3e;color:#fff;padding:5px 8px;white-space:nowrap} @media(max-width:600px){#sanctuaryWorldStatus{top:158px;font-size:11px}}
 #sanctuaryNearby{position:absolute;z-index:20;top:116px;left:50%;transform:translateX(-50%);box-sizing:border-box;width:190px;padding:9px 14px;border:1px solid #d0c28d;border-radius:7px;background:#28493af2;color:#fff3cd;font:bold 12px "Trebuchet MS",sans-serif;box-shadow:0 4px 15px #0005;cursor:pointer}#sanctuaryNearby[hidden]{display:none}@media(max-width:600px){#sanctuaryNearby{top:158px}}
-#sanctuaryWorldPill{position:absolute;z-index:20;top:116px;left:50%;transform:translateX(-50%);box-sizing:border-box;min-width:190px;max-width:min(360px,calc(100% - 24px));padding:8px 14px;border:1px solid #c5a76b;border-radius:20px;background:linear-gradient(180deg,#2a4a3f,#1a2d28);color:#ffe9ad;font:bold 12px "Trebuchet MS",sans-serif;box-shadow:0 4px 15px #0005;cursor:pointer;text-align:center}#sanctuaryWorldPill[hidden]{display:none}@media(max-width:600px){#sanctuaryWorldPill{top:158px}}
 /* v358: the stat rows are a two-line stack - stat and value on the first line, the plain
    description on its own muted line, instead of three flex items squeezed onto one row. */
 .sanctuary-train span{flex:1 1 42%;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 8px;padding:8px 11px;color:#f0f6ec;border:1px solid #4c6c5e;border-radius:5px;background:#243a31;font:600 12px "Trebuchet MS",sans-serif}
@@ -521,10 +520,10 @@ body.social-open #bgmPlayer{display:none!important}
 #sanctuaryOpen{border-color:#c4ac6d!important;background:linear-gradient(180deg,#405848,#233b34)!important;color:#fff0c7!important}
 #socialSit{position:absolute;right:18px;bottom:calc(var(--docktop,76px) + 10px);z-index:8;min-width:58px;padding:8px 13px;border:1px solid #c5a76b;border-radius:5px;background:linear-gradient(180deg,#354a46,#14272c);box-shadow:inset 0 1px #ffe8ad30,0 3px 10px #0007;color:#f4dfaa;font:600 12px "Trebuchet MS",sans-serif;text-shadow:0 1px 2px #000;cursor:pointer}
 #socialSit:hover,#socialSit:focus-visible{border-color:#f3d68b;background:linear-gradient(180deg,#4b5e55,#20373a);outline:2px solid #d8ba7044;outline-offset:2px}
-#sanctuaryWorldStatus,#sanctuaryNearby,#sanctuaryWorldPill{top:82px}
+#sanctuaryWorldStatus,#sanctuaryNearby{top:82px}
 @media(max-width:760px){#socialMiniMap{top:auto;left:10px;bottom:calc(var(--docktop,76px) + 58px);width:108px}#socialMiniMap canvas{width:106px;height:106px}
-#socialHubToolbar{top:6px;width:calc(100% - 12px);max-width:calc(100% - 12px);min-height:50px;gap:7px;padding:6px 8px}#socialHubHeader{gap:5px;padding-right:7px}#socialHubHeader h2{font-size:13px}#socialHubHeader p{font-size:9px}#socialHubControls{gap:4px}#socialHubControls button{min-height:30px;padding:6px 7px;font-size:10px}#socialSit{right:12px;bottom:calc(var(--docktop,76px) + 8px);padding:7px 11px}#sanctuaryWorldStatus,#sanctuaryNearby,#sanctuaryWorldPill{top:68px}}
-@media(max-width:420px){#socialHubToolbar{gap:4px;padding:5px}#socialHubHeader{padding-right:5px}#socialHubControls{gap:3px}#socialHubControls button{min-height:29px;padding:5px;font-size:9px}#sanctuaryWorldStatus,#sanctuaryNearby,#sanctuaryWorldPill{top:62px}}
+#socialHubToolbar{top:6px;width:calc(100% - 12px);max-width:calc(100% - 12px);min-height:50px;gap:7px;padding:6px 8px}#socialHubHeader{gap:5px;padding-right:7px}#socialHubHeader h2{font-size:13px}#socialHubHeader p{font-size:9px}#socialHubControls{gap:4px}#socialHubControls button{min-height:30px;padding:6px 7px;font-size:10px}#socialSit{right:12px;bottom:calc(var(--docktop,76px) + 8px);padding:7px 11px}#sanctuaryWorldStatus,#sanctuaryNearby{top:68px}}
+@media(max-width:420px){#socialHubToolbar{gap:4px;padding:5px}#socialHubHeader{padding-right:5px}#socialHubControls{gap:3px}#socialHubControls button{min-height:29px;padding:5px;font-size:9px}#sanctuaryWorldStatus,#sanctuaryNearby{top:62px}}
 
 /* DigiPet: the header and close button stay put while only the content scrolls. */
 #sanctuaryPanel{display:flex;flex-direction:column;height:min(850px,calc(100% - 28px));max-height:calc(100% - 28px);overflow:hidden}
@@ -652,6 +651,11 @@ body.social-open #bgmPlayer{display:none!important}
 #sanctuaryBattleNearby{display:block;width:100%;margin-top:8px;padding:10px;border:1px solid #ffd257;border-radius:8px;background:linear-gradient(180deg,#4a3a1f,#241a08);color:#ffe9ad;font:700 12.5px "Trebuchet MS",sans-serif;letter-spacing:.4px;cursor:pointer}
 #sanctuaryBattleNearby:hover{border-color:#ffe9ad;color:#fff4ce}
 #sanctuaryBattleNearby[hidden]{display:none}
+/* v384 (owner screenshot: "Start auto-grinding" printed across the tab's text): the button is a
+   normal block in the PvE tab - social-battle.css no longer pins it at a fixed height - and it
+   reads as the tab's primary action. */
+.sap-pve-action #sanctuaryBattleNearby{position:static;width:100%;transform:none;border-color:rgba(var(--ad-rgb),.5);color:var(--ad-accent);box-shadow:inset 0 -2px var(--ad-accent),0 2px 4px #0004}
+.sap-pve-action #sanctuaryBattleNearby:hover,.sap-pve-action #sanctuaryBattleNearby:focus-visible{color:#fff;border-color:rgba(var(--ad-rgb),.75)}
 /* v372: three tabs share one panel - Training, PvE grind, Logs - and each activity keeps its
    own partner pick (the row of sap-partner cards). */
 .sap-tabs{display:flex;gap:4px;padding:8px 8px 0;border-bottom:1px solid #c5a76b33;border-radius:10px 10px 0 0;background:#00000022}
@@ -702,14 +706,8 @@ html.pg-mobile #socialPokerMini .poker-mini-pot{display:none}
 .digi-title button{justify-self:start;margin-top:4px}
 .digi-title-lock{font-size:11px;color:#8a9499}
 
-/* v373 (owner): the DigiPet panel can shrink to one line. Tabs, body and footer hide; the status line and
-   Stop/Open buttons show. #sapMin uses the same header-button look as the close button. */
-#sanctuaryActivityPanel .sap-mini{display:none;align-items:center;gap:8px;padding:9px 10px;color:#e9e2c8;font-size:12px}
-#sanctuaryActivityPanel.is-mini .sap-mini{display:flex}
-#sanctuaryActivityPanel.is-mini .sap-tabs,#sanctuaryActivityPanel.is-mini .sap-body,#sanctuaryActivityPanel.is-mini .sap-foot{display:none}
-#sanctuaryActivityPanel .sap-mini span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#sanctuaryActivityPanel .sap-mini button{flex:none;min-height:26px;padding:0 9px;border:1px solid #849b9c66;border-radius:6px;background:#1c2f2a;color:#d8e2d0;cursor:pointer;font-size:11px}
-#sanctuaryActivityPanel .sap-mini button[hidden]{display:none}
+/* v373 (owner): the DigiPet panel can shrink to one line. v384: that one line is the dock chip
+   (top right), so the in-panel mini strip is gone; #sapMin keeps the header-button look. */
 #sapMin{font-size:18px}
 
 /* v374: fixed emote slots. The img is placed by inline left/top/size from EMOTE_LAYOUT; nearest-neighbour keeps small art crisp. */
@@ -723,7 +721,7 @@ html.pg-mobile #socialPokerMini .poker-mini-pot{display:none}
 :root[data-palette=aurora]{--ad-accent:#77e9ca;--ad-rgb:119,233,202}
 :root[data-palette=ember]{--ad-accent:#f0ad87;--ad-rgb:240,173,135}
 #socialHub,#sanctuaryPanel{color:var(--ad-ink);font-family:var(--e-font,system-ui)}
-#socialHubToolbar,#socialMiniMap,#socialMorePanel,#socialFieldMonitor,#socialPartyPanel,#socialMapModal,#sanctuaryPanel,#sanctuaryActivityPanel,#sanctuaryWorldStatus,#sanctuaryWorldPill,#socialBgmMount{background:var(--ad-shell);border:1px solid #59616a80;box-shadow:var(--ad-bevel);color:var(--ad-ink);border-radius:9px}
+#socialHubToolbar,#socialMiniMap,#socialMorePanel,#socialFieldMonitor,#socialPartyPanel,#socialMapModal,#sanctuaryPanel,#sanctuaryActivityPanel,#sanctuaryWorldStatus,#socialBgmMount{background:var(--ad-shell);border:1px solid #59616a80;box-shadow:var(--ad-bevel);color:var(--ad-ink);border-radius:9px}
 #socialHubToolbar{width:max-content;min-height:52px;padding:7px 10px;gap:12px;z-index:49}
 #socialHubToolbar::after{content:'';position:absolute;bottom:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,var(--ad-accent),transparent);pointer-events:none}
 #socialHubHeader{border-color:#ffffff15;gap:8px}
@@ -757,7 +755,6 @@ html.pg-mobile #socialPokerMini .poker-mini-pot{display:none}
 #socialFieldMonitor small{font-size:8px;color:var(--ad-muted)}
 #socialActivityStatus{position:absolute;z-index:50;left:50%;top:calc(var(--socialhub-top,64px) + 12px);transform:translateX(-50%);max-width:calc(100% - 140px);padding:8px 12px;background:var(--ad-shell);border:1px solid rgba(var(--ad-rgb),.3);border-radius:6px;box-shadow:var(--ad-bevel);color:var(--ad-accent);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #socialActivityStatus[hidden]{display:none}
-#socialHub.has-management :is(#sanctuaryWorldStatus,#sanctuaryWorldPill,#sanctuaryBattleHUD){visibility:hidden}
 body.social-open #dock,body.social-open #eclipseQuick{visibility:hidden;pointer-events:none}
 body.social-open #xp-dock{display:none}
 body.social-open #wins{top:calc(var(--socialhub-top,64px) + 58px);bottom:70px;z-index:55}
@@ -770,7 +767,7 @@ body.social-open #wins{top:calc(var(--socialhub-top,64px) + 58px);bottom:70px;z-
 #sanctuaryActivityPanel .sap-tabs button[aria-selected=true],#sanctuaryActivityPanel .sap-partner.is-selected{color:var(--ad-accent);border-color:rgba(var(--ad-rgb),.4);box-shadow:inset 0 -2px var(--ad-accent)}
 .social-sanctuary-label{background:#161e25eb;color:var(--ad-ink);border-color:#ffffff25;box-shadow:inset 0 1px #ffffff12,0 4px 12px #0006}
 .social-sanctuary-label[data-station]:hover,.social-sanctuary-label[data-station]:focus-visible{background:#29343b;color:var(--ad-accent);outline-color:var(--ad-accent)}
-#sanctuaryNearby,#sanctuaryWorldPill{background:var(--ad-shell);border-color:rgba(var(--ad-rgb),.35);color:var(--ad-accent);border-radius:6px}
+#sanctuaryNearby,#socialHudStack>#sanctuaryBattleNearby{background:var(--ad-shell);border-color:rgba(var(--ad-rgb),.35);color:var(--ad-accent);border-radius:6px}
 
 /* DigiPet: live native art and all four existing views, inside a bevelled frame. */
 #sanctuaryPanel{width:min(970px,calc(100% - 32px));height:min(780px,calc(100% - var(--socialhub-top,64px) - 132px));max-height:calc(100% - var(--socialhub-top,64px) - 132px);top:calc(var(--socialhub-top,64px) + 58px);transform:translateX(-50%);padding:5px;border-radius:12px;font-size:12px}
@@ -876,7 +873,7 @@ body.social-open #socialChat{--chat-accent:var(--ad-accent);--chat-panel:#1c2027
  #sanctuaryGameplay{grid-template-columns:minmax(0,1fr)}.sanctuary-specimen{min-height:265px}.sanctuary-specimen::before{top:22px;width:180px;height:180px}#sanctuaryHero{height:165px}.sanctuary-specimen>strong{font-size:20px}
  .sanctuary-gauge{width:49px;height:49px}.sanctuary-train{gap:5px}.sanctuary-train>span{padding:9px 3px}.sanctuary-gear-strip{grid-template-columns:repeat(4,minmax(0,1fr))}
  #socialMorePanel{right:8px;width:310px;max-width:calc(100% - 16px)}
- #sanctuaryWorldStatus,#sanctuaryWorldPill,#sanctuaryNearby{top:calc(var(--socialhub-top,92px) + 12px);max-width:calc(100% - 140px);font-size:10px}
+ #sanctuaryWorldStatus,#sanctuaryNearby{top:calc(var(--socialhub-top,92px) + 12px);max-width:calc(100% - 140px);font-size:10px}
 }
 
 /* ================= v379 (owner proposal pass): DigiPet tabs, DigiDex redesign,
@@ -982,15 +979,68 @@ button.sanctuary-node:hover{border-color:rgba(var(--ad-rgb),.55);background:rgba
 .sanctuary-mastery-next{color:#8d97a1!important;font-size:10px!important}
 .sanctuary-mastery .sanctuary-req-bar{margin-top:2px}
 
-/* --- the one training indicator: top-right pill + expandable card (mock 6) --- */
-#sanctuaryWorldPill{position:absolute;z-index:40;top:calc(var(--socialhub-top,64px) + 12px);right:12px;left:auto;transform:none;display:flex;align-items:center;gap:9px;min-width:0;max-width:min(300px,calc(100% - 24px));padding:7px 11px 7px 8px;border:1px solid rgba(var(--ad-rgb),.45);border-radius:12px;background:var(--ad-shell);box-shadow:var(--ad-bevel);color:var(--ad-ink);cursor:pointer;text-align:left}
-#sanctuaryWorldPill[hidden]{display:none}
-#sanctuaryWorldPill .pill-face{display:block;flex:0 0 26px;width:26px;height:26px;border-radius:50%;background-color:#0d1218;background-image:url('digimon/digidex-portraits.webp');background-size:1280px 896px;background-position:var(--portrait-x) var(--portrait-y);image-rendering:pixelated;box-shadow:inset 0 0 6px #00000099,0 0 0 1px #ffffff14}
-#sanctuaryWorldPill .pill-text{display:flex;flex-direction:column;min-width:0}
-#sanctuaryWorldPill .pill-text b{font-size:11px;letter-spacing:.02em;white-space:nowrap}
-#sanctuaryWorldPill .pill-text small{color:#aab4bd;font-size:9px;white-space:nowrap}
-#sanctuaryWorldPill .pill-ring{flex:0 0 20px;width:20px;height:20px;border-radius:50%;background:conic-gradient(var(--ad-accent) calc(var(--progress,0%)*.78),#101720 0 78%,transparent 78%);position:relative}
-#sanctuaryWorldPill .pill-ring::after{content:'';position:absolute;inset:3px;border-radius:50%;background:#141a20}
+/* --- v384: the top-centre column -----------------------------------------------------------
+   One flex column instead of five absolutely placed boxes that each claimed the same spot (the
+   owner's screenshot: the MVP alert on top of the battle card). Order: MVP alert, the
+   running-activities shortcut, battle card, plaza notice, gym prompt, field / ring prompt. The
+   battle card sits above the notice so a notice coming and going never pushes the card around.
+   The column itself never takes clicks; only what is inside it does. */
+#socialHudStack{position:absolute;z-index:43;top:calc(var(--socialhub-top,64px) + 12px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;width:min(520px,calc(100% - 24px));pointer-events:none}
+#socialHudStack>:is(#fishingMvpBanner,#socialActivityStatus,#sanctuaryWorldStatus,#sanctuaryNearby,#sanctuaryBattleNearby,#sanctuaryBattleHUD){position:static;transform:none;box-sizing:border-box;max-width:100%;margin:0;pointer-events:auto}
+#socialHudStack>[hidden]{display:none!important}
+#socialHudStack>#fishingMvpBanner{order:1;pointer-events:none}
+#socialHudStack>#socialActivityStatus{order:2}
+#socialHudStack>#sanctuaryBattleHUD{order:3;width:min(400px,100%);pointer-events:none}
+#socialHudStack>#sanctuaryWorldStatus{order:4;width:min(400px,100%)}
+#socialHudStack>#sanctuaryNearby{order:5;width:auto;min-width:190px}
+#socialHudStack>#sanctuaryBattleNearby{order:6;width:auto;min-width:220px;padding:9px 14px;letter-spacing:0;box-shadow:var(--ad-bevel)}
+/* The activity panel already contains the run card, notice and action. Keeping their top-centre
+   copies behind the open panel was the remaining 701–1080 px clash (and covered most of a phone).
+   Keep only the owner's deliberately small pink MVP alert above it; every duplicate returns as soon
+   as the panel closes, including when a saved/dragged panel position is in use. */
+#socialHub.sap-panel-open #socialHudStack>:is(#socialActivityStatus,#sanctuaryWorldStatus,#sanctuaryNearby,#sanctuaryBattleNearby,#sanctuaryBattleHUD){display:none}
+/* A management window (DigiPet, party, map, More, fishing bag, poker, field tabs) owns the middle
+   of the screen: only the MVP alert and the running-activities shortcut stay, side by side in the
+   strip between the toolbar and the window. */
+#socialHub.has-management #socialHudStack{flex-direction:row;justify-content:center;width:min(760px,calc(100% - 24px))}
+#socialHub.has-management #socialHudStack>:is(#sanctuaryWorldStatus,#sanctuaryNearby,#sanctuaryBattleNearby,#sanctuaryBattleHUD){display:none}
+#socialHub.has-management #socialHudStack>:is(#fishingMvpBanner,#socialActivityStatus){flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* --- v384: the DigiPet dock (top right) - one chip per running activity ----------------------
+   Replaces the single v379/v383 pill. A chip = a progress ring around the working partner's
+   portrait, one live status line and its own Stop. Tones: gym = palette accent, field grind =
+   gold, boss raid = ember, ring match = rose, "tap to open" = grey. */
+#digipetDock{position:absolute;z-index:42;top:calc(var(--socialhub-top,64px) + 12px);right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;width:max-content;max-width:260px;pointer-events:none}
+#digipetDock[hidden]{display:none}
+#socialHub.has-management #digipetDock{visibility:hidden}
+.dd-chip{--dd-tone:var(--ad-accent);display:flex;align-items:center;gap:6px;box-sizing:border-box;max-width:100%;padding:4px 8px 4px 4px;border:1px solid #59616a80;border-radius:26px;background:var(--ad-shell);box-shadow:var(--ad-bevel);color:var(--ad-ink);pointer-events:auto}
+.dd-chip.is-pve{--dd-tone:#ffd46b}.dd-chip.is-raid{--dd-tone:#ff8c5a}.dd-chip.is-pvp{--dd-tone:#ff6f91}.dd-chip.is-idle{--dd-tone:#7e8792}
+#digipetDock .dd-open{display:flex;align-items:center;gap:8px;flex:1;min-width:0;min-height:0;margin:0;padding:0;border:0;border-radius:22px;background:none;box-shadow:none;color:inherit;font:inherit;text-align:left;text-shadow:none;cursor:pointer}
+.dd-ring{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:conic-gradient(var(--dd-tone) var(--progress,0%),#262d36 0);box-shadow:0 0 0 1px #05090dcc}
+.dd-face{display:block;width:30px;height:30px;border-radius:50%;background-color:#0d1218;background-image:url('digimon/digidex-portraits.webp');background-size:600px 420px;background-position:calc(var(--portrait-x,0px)*.46875) calc(var(--portrait-y,0px)*.46875);image-rendering:pixelated;box-shadow:0 0 0 2px #141a20}
+.dd-face.is-empty{background-image:none}
+.dd-text{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.dd-text b{overflow:hidden;font-size:11.5px;letter-spacing:.02em;text-overflow:ellipsis;white-space:nowrap}
+.dd-text small{overflow:hidden;color:#aab4bd;font-size:9.5px;font-variant-numeric:tabular-nums;text-overflow:ellipsis;white-space:nowrap}
+#digipetDock .dd-open:hover .dd-text b,#digipetDock .dd-open[aria-expanded="true"] .dd-text b{color:var(--dd-tone)}
+#digipetDock .dd-open[aria-expanded="true"] .dd-ring{box-shadow:0 0 0 1px #05090dcc,0 0 0 3px #ffffff2e}
+#digipetDock .dd-stop{flex:none;min-height:0;margin:0;padding:6px 9px;border:1px solid #ffffff24;border-radius:12px;background:#ffffff0a;box-shadow:none;color:#d7dee4;font-family:inherit;font-size:9.5px;font-weight:600;line-height:1;letter-spacing:.05em;text-shadow:none;text-transform:uppercase;cursor:pointer}
+#digipetDock .dd-stop:hover,#digipetDock .dd-stop:focus-visible{border-color:#ff8a7a;background:#ff8a7a1f;color:#ffd2cb}
+/* Rings only - while the panel sits in its default spot right under the dock, and on screens too
+   narrow for a chip beside the centre column. The panel (or a tap on the ring) shows the rest. */
+#socialHub.sap-open #digipetDock{flex-direction:row;align-items:center}
+#socialHub.sap-open #digipetDock :is(.dd-text,.dd-stop){display:none}
+#socialHub.sap-open #digipetDock .dd-chip{padding:0;border:0;background:none;box-shadow:none}
+@media(max-width:1080px){
+ #digipetDock :is(.dd-text,.dd-stop){display:none}
+ #digipetDock .dd-chip{padding:0;border:0;background:none;box-shadow:none}
+ /* clears the mini-map on the left and the ring dock on the right */
+ #socialHudStack{width:min(520px,calc(100% - 348px))}
+}
+@media(max-width:700px){
+ #socialHudStack{width:calc(100% - 140px)}
+ #socialHub.sap-open #digipetDock{display:none}
+}
 
 /* --- v380: live Fishing MVP spawn banner (the element was missing from the DOM before) --- */
 #fishingMvpBanner{position:absolute;z-index:45;top:calc(var(--socialhub-top,64px) + 12px);left:50%;transform:translateX(-50%);max-width:min(420px,calc(100% - 200px));padding:8px 16px;border:1px solid #ff244788;border-radius:999px;background:linear-gradient(180deg,#3a1220,#22101e);box-shadow:0 4px 16px #0008,0 0 18px #ff244733;color:#ffe9ad;font:bold 12px "Trebuchet MS",sans-serif;text-align:center;pointer-events:none;animation:mvpPulse 1.6s ease-in-out infinite}
@@ -1005,7 +1055,6 @@ button.sanctuary-node:hover{border-color:rgba(var(--ad-rgb),.55);background:rgba
 /* --- 1. one sprite per portrait: the box shows exactly one 64px sheet cell, scaled --- */
 .digidex-portrait{background-size:1920px 1344px;background-position:calc(var(--portrait-x)*1.5) calc(var(--portrait-y)*1.5)}
 .sanctuary-node .sanctuary-node-face{background-size:600px 420px;background-position:calc(var(--portrait-x)*.46875) calc(var(--portrait-y)*.46875)}
-#sanctuaryWorldPill .pill-face{background-size:520px 364px;background-position:calc(var(--portrait-x)*.40625) calc(var(--portrait-y)*.40625)}
 /* grid tidy: equal-height cards, compact route chips, aligned paths block */
 .sanctuary-index-list{align-items:stretch}
 .sanctuary-index-entry{height:100%}
@@ -1036,9 +1085,8 @@ button.sanctuary-node:hover{border-color:rgba(var(--ad-rgb),.55);background:rgba
 #fishingMenu button{background:none;border:none;color:var(--ad-ink)}
 #fishingMenu button:hover{background:#ffffff0a}
 
-/* --- 7. merged training panel: anchored under the pill, Party overview rows --- */
+/* --- 7. merged training panel: anchored under the dock (v384: was the pill), Party overview rows --- */
 #sanctuaryActivityPanel:not(.is-moved){left:auto;right:12px;top:calc(var(--socialhub-top,64px) + 68px)}
-#sanctuaryWorldPill[aria-expanded="true"]{border-color:var(--ad-accent)}
 .sap-party{display:flex;flex-direction:column;gap:6px}
 .sap-party-row{display:grid;grid-template-columns:1fr auto;grid-template-areas:'b state' 's state';gap:1px 10px;align-items:center;padding:8px 10px;border:1px solid #ffffff12;border-radius:8px;background:#ffffff06;color:var(--ad-ink);text-align:left;font-family:inherit}
 .sap-party-row b{grid-area:b;font-size:11.5px}
@@ -1072,22 +1120,13 @@ svg.ad-toolbar-art{width:22px;height:22px;vertical-align:middle;margin-right:5px
 .sanctuary-battle-hud-card .battle-mech .mech-enrage{border-color:#ff5a5a99;color:#ffb3b3}
 .sanctuary-battle-hud-card .battle-mech .mech-add{border-color:#c9a3ff88;color:#dcc9ff}
 
-/* --- v383: owner colour pass on the plaza toolbar, the activity pill and the Pet Bag ---------- */
+/* --- v383: owner colour pass on the plaza toolbar and the Pet Bag (the pill became the v384 dock) ---------- */
 /* Owner: "the top buttons are not colour-aligned - hold'em is green, the rest are plain black.
    Make them all match the digipet button." One treatment for every toolbar button: the dark
    accent-trimmed DigiPet shell, with the accent hover shared by all of them. */
 #socialHubControls button{background:linear-gradient(#2b3438,#1b2429)!important;border-color:rgba(var(--ad-rgb),.35)!important;color:var(--ad-accent)!important;box-shadow:inset 0 -2px var(--ad-accent),0 0 12px rgba(var(--ad-rgb),.07)!important}
 #socialHubControls button:hover,#socialHubControls button:focus-visible{color:#fff!important;border-color:rgba(var(--ad-rgb),.62)!important;background:linear-gradient(#333d43,#232d33)!important}
 #socialHubControls #socialPokerBtn.is-turn-blink{animation:pokerAlertBlink .75s infinite alternate!important}
-/* The pill is the DigiPet activity meter: main ring = the activity in front, thin outer ring = the
-   second one when training and grinding run in parallel. */
-#sanctuaryWorldPill .pill-text{max-width:186px}
-#sanctuaryWorldPill .pill-alt{display:block;color:#8c9aa6;font-size:8.5px;font-style:normal;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#sanctuaryWorldPill .pill-alt[hidden]{display:none}
-#sanctuaryWorldPill .pill-ring-alt{position:absolute;right:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;background:conic-gradient(#79e0c4 calc(var(--progress,0%)*.78),#101720 0 78%,transparent 78%)}
-#sanctuaryWorldPill .pill-ring-alt::after{inset:2.5px}
-#sanctuaryWorldPill .pill-ring-alt[hidden]{display:none}
-#sanctuaryWorldPill{overflow:visible}
 /* Tabs get their own stacking context so nothing overlays a tap. */
 .sap-tabs{position:relative;z-index:3}
 .sap-tabs button{position:relative;pointer-events:auto;z-index:1}
@@ -1101,3 +1140,35 @@ svg.ad-toolbar-art{width:22px;height:22px;vertical-align:middle;margin-right:5px
 .sanctuary-bag .sanctuary-item small{margin:4px 0 8px;font-size:9.5px}
 .sanctuary-bag .sanctuary-item button{padding:6px 7px;font-size:10px}
 .sanctuary-mastery-now{margin-top:8px;padding:6px 9px;border:1px solid rgba(var(--ad-rgb),.28);border-radius:6px;background:#00000033;color:var(--ad-accent);font-size:10.5px}
+
+/* haven-v385: compact DigiPet loadout workspace. Inventory is icon-first; one selected piece owns
+   the readable stat/action inspector, so eighty drops no longer become eighty full-size forms. */
+.sanctuary-gear-tabs{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0;border-bottom:1px solid #ffffff12}
+.sanctuary-gear-tabs button{display:flex;align-items:center;gap:5px;padding:7px 9px;border:0;border-bottom:2px solid transparent;border-radius:5px 5px 0 0;background:transparent;color:#aab4bd;font:600 10px "Trebuchet MS",sans-serif;cursor:pointer}
+.sanctuary-gear-tabs button small{padding:1px 5px;border-radius:999px;background:#ffffff0b;color:#8d97a1;font-size:8px}
+.sanctuary-gear-tabs button.is-selected{border-bottom-color:var(--ad-accent);color:#fff;background:rgba(var(--ad-rgb),.07)}
+.sanctuary-gear-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 8px}
+.sanctuary-gear-tools>label{display:flex;align-items:center;gap:6px;color:#aab4bd;font-size:10px}
+.sanctuary-gear-tools select,.sanctuary-gear-detail select{padding:5px 7px;border:1px solid #ffffff1c;border-radius:5px;background:#101820;color:#e8edf2}
+.sanctuary-gear-tools fieldset{display:flex;align-items:center;gap:7px;margin:0;padding:5px 8px;border:1px solid #ffffff12;border-radius:6px}
+.sanctuary-gear-tools legend{padding:0 4px;color:#8d97a1;font-size:8px}.sanctuary-gear-tools fieldset label{color:#c9d0d7;font-size:9px;white-space:nowrap}
+.sanctuary-gear-help{margin:5px 0 9px;color:#8d97a1;font-size:9.5px}
+.sanctuary-gear-workspace{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(220px,.8fr);gap:10px;align-items:start}
+.sanctuary-gear-inventory{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:420px;overflow:auto;padding:1px;scrollbar-width:thin}
+.sanctuary-gear-tile{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;min-height:92px;padding:7px 4px;border:1px solid #ffffff12;border-radius:7px;background:#111a22;color:#dfe6ea;text-align:center;cursor:pointer;box-shadow:inset 0 1px #ffffff05}
+.sanctuary-gear-tile:hover{border-color:rgba(var(--ad-rgb),.45)}.sanctuary-gear-tile.is-selected{border-color:var(--ad-accent);box-shadow:inset 0 0 0 1px rgba(var(--ad-rgb),.35)}
+.sanctuary-gear-tile canvas{width:38px;height:38px;image-rendering:pixelated;background:#091014;border-radius:5px}
+.sanctuary-gear-tile>span{display:flex;flex-direction:column;min-width:0;width:100%}.sanctuary-gear-tile b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9.5px}.sanctuary-gear-tile small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8d97a1;font-size:7.5px}.sanctuary-gear-tile em{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e6cd87;font:normal 7.5px "Trebuchet MS",sans-serif}
+.sanctuary-gear-detail{position:sticky;top:0;display:grid;gap:9px;padding:10px;border:1px solid #ffffff18;border-radius:8px;background:#101820;box-shadow:inset 0 1px #ffffff07}
+.sanctuary-gear-detail>header{display:flex;gap:9px;align-items:center}.sanctuary-gear-detail>header canvas{width:58px;height:58px;flex:none;image-rendering:pixelated;background:#081014;border-radius:7px}.sanctuary-gear-detail>header div{display:flex;flex-direction:column;min-width:0}.sanctuary-gear-detail h4{margin:2px 0;color:#fff;font-size:13px}.sanctuary-gear-detail header small,.sanctuary-gear-detail header span{color:#8d97a1;font-size:8.5px}
+.sanctuary-gear-detail.is-empty{min-height:120px;align-content:center;text-align:center;color:#aab4bd}.sanctuary-gear-detail.is-empty p{margin:0;color:#8d97a1;font-size:9px}
+.sanctuary-gear-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.sanctuary-gear-stats span{display:flex;flex-direction:column;padding:6px;border:1px solid #ffffff0d;border-radius:5px;background:#ffffff05}.sanctuary-gear-stats small{color:#8d97a1;font-size:7.5px;text-transform:uppercase}.sanctuary-gear-stats b{color:#e8edf2;font-size:9px}
+.sanctuary-gear-manage{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.sanctuary-gear-manage label{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:7px;color:#aab4bd;font-size:9px}.sanctuary-gear-manage button{min-height:30px;padding:5px 7px;font-size:9px}.sanctuary-gear-manage .is-sell{border-color:#aa675d;color:#f0b8af}.sanctuary-gear-manage .sanctuary-gear-max{justify-content:center;padding:6px;font-size:8px}
+/* Partner loadout slots are direct controls: a click opens the matching bag sub-tab and selects
+   the equipped piece, making replacement/removal available without hunting through the bag. */
+.sanctuary-gear-strip>button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:10px 6px 8px;border:1px solid #ffffff10;border-radius:8px;background:#ffffff06;color:#e8edf2;text-align:center;cursor:pointer}
+.sanctuary-gear-strip>button:hover{border-color:rgba(var(--ad-rgb),.45);background:rgba(var(--ad-rgb),.07)}.sanctuary-gear-strip>button canvas{width:30px;height:30px;image-rendering:pixelated}.sanctuary-gear-strip>button b{font-size:9px;letter-spacing:.12em;text-transform:uppercase}.sanctuary-gear-strip>button em{position:absolute;top:5px;right:5px;padding:2px 5px;border:1px solid #d4ba7244;border-radius:4px;color:#ffe9a8;font:normal bold 8.5px "Trebuchet MS",sans-serif}.sanctuary-gear-strip>button small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8d97a1;font-size:8.5px}.sanctuary-gear-strip>button.is-empty{opacity:.6;border-style:dashed}
+/* Evolution memory and the three-times-larger title catalog stay dense enough to scan. */
+.sanctuary-unlocked-forms{margin:10px 0;padding:9px;border:1px solid #ffffff12;border-radius:8px;background:#101820}.sanctuary-unlocked-forms>div:first-child{display:flex;justify-content:space-between;gap:8px;color:#aab4bd;font-size:9px}.sanctuary-unlocked-forms>div:nth-child(2){display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:5px;margin-top:7px}.sanctuary-unlocked-forms button{display:flex;align-items:center;gap:6px;min-width:0;padding:5px;border:1px solid #ffffff12;border-radius:6px;background:#ffffff05;color:#dfe6ea;text-align:left;cursor:pointer}.sanctuary-unlocked-forms button.is-current{border-color:var(--ad-accent);background:rgba(var(--ad-rgb),.1)}.sanctuary-unlocked-forms button:disabled{opacity:1}.sanctuary-unlocked-forms button span{display:flex;flex-direction:column;min-width:0;font-size:9px}.sanctuary-unlocked-forms button small{color:#8d97a1;font-size:7.5px}.sanctuary-unlocked-forms .sanctuary-node-face{width:30px;height:30px;flex:none}.sanctuary-unlocked-forms p{margin:7px 0 0;color:#8d97a1;font-size:8.5px}
+.digi-titles{grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:5px}.digi-title{position:relative;grid-template-columns:minmax(0,1fr) auto;gap:2px 5px;padding:6px;border-left:3px solid var(--tier);min-height:92px}.digi-title .digi-title-tier{grid-column:1/-1;color:var(--tier);font-size:7px}.digi-title>b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tier)!important;font-size:9.5px}.digi-title>small{grid-column:1/-1;min-height:22px;color:#9ca6ae;font-size:7.5px;line-height:1.35}.digi-title-progress{grid-column:1/-1;height:4px;overflow:hidden;border-radius:3px;background:#ffffff10}.digi-title-progress i{display:block;height:100%;background:var(--tier)}.digi-title>em{font:normal 7.5px "Trebuchet MS",sans-serif;color:#aab4bd}.digi-title>button,.digi-title>.digi-title-lock{justify-self:end;margin:0;padding:2px 5px;font-size:7.5px}
+@media(max-width:700px){#sanctuaryPanel .sanctuary-nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}#sanctuaryPanel .sanctuary-nav [data-sanctuary-view]{flex:0 0 auto;min-width:max-content;padding:8px 10px}#sanctuaryPanel .sanctuary-nav .sanctuary-nav-note{display:none}.sanctuary-gear-workspace{grid-template-columns:1fr}.sanctuary-gear-inventory{grid-template-columns:repeat(3,minmax(0,1fr));max-height:260px}.sanctuary-gear-detail{position:static}.sanctuary-gear-tools{align-items:flex-start;flex-direction:column}.sanctuary-gear-tools fieldset{flex-wrap:wrap}.digi-titles{grid-template-columns:repeat(2,minmax(0,1fr))}}

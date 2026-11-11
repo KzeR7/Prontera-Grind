@@ -1295,3 +1295,42 @@ grinding run at once, and the click opens the activity panel on `dataset.tab`
 Each tab button also binds its own `onclick` (calling `stopPropagation`) instead of relying on
 the panel's delegated handler, which could lose a tap to a re-render or the header drag, and
 `openActivityPanel` always leaves mini mode.
+
+## Staged DigiPet fights, activity dock and Fishing MVP pass (haven-v384)
+
+**Fight presentation is queued, not rushed.** `assets/social-scene.js` keeps each PvE
+snapshot in a presentation queue. `STAGE` defines the approach, contact, recoil, KO and
+wave-gap timings; fighters use separate home/contact lanes, ease into range, recoil after
+a strike and finish every queued hit/KO before the next wave is drawn. Authoritative
+battle ticks, rewards and outcomes are unchanged. `social_scene_sim.js` drives multi-hit,
+kill, wave-change and snapshot-replacement sequences against the real renderer.
+
+**One HUD column and one chip per activity.** `#socialHudStack` owns the top-centre MVP
+banner, battle card, notices and nearby actions in a fixed order. `#digipetDock` replaces
+the old combined pill with a separate portrait/progress ring for gym, PvE/raid and PvP,
+so simultaneous training and grinding both remain visible and each has its own Stop.
+The activity panel opens on the chip's tab, closing/minimising leaves the chips available,
+and a manual Stop never triggers repeat. The selected activity partner—not the room's
+battle lane—is marked BUSY; solo runs say SOLO and Petgold is always rendered as a number.
+The PvE Start button is a normal block inside the PvE tab. While the panel is open,
+`.sap-panel-open` suppresses the duplicate centre battle/notice rows (but preserves the
+small pink Fishing MVP banner), preventing the 701–1080 px and phone overlap.
+
+**Fishing MVP art remains the owner's supplied art.** `tools/mvp_art_crop.py` now bleeds
+subject colours under the transparent feather to remove the light photo-matte fringe,
+then produces 512 px reference crops. The opaque supplied pixels are not repainted; indexed-alpha
+PNG output preserves the source palette while keeping the seven files inside the publish budget.
+`FISH_ART_VERSION='384'` invalidates old browser caches, and the pond float stays 512 px
+through `mvpArt`/`MVP_BASE_PX` instead of passing through a 256 px texture.
+
+**The bridge warning is the large alert.** The single camera-facing board is anchored to
+`POND_PROPS[0].bridge`, raised to `MVP_SIGN_Y=9.2`, enlarged to 12.6 × 3.15 world units,
+and painted as a dark, clipped-corner pink neon plate. The separate small pink DOM banner
+at the top centre retains its compact size.
+
+**MVP outcome remains two steps.** A player must win the reel, then pass the exact
+`MVP_REEL_CATCH_CHANCE=.30` landing roll. The MVP control window and its compressed
+rod-control multiplier are measured against the live Auto controller: a hooked MVP lands
+about 1% of the time with the free Training Rod and about 5% with Mythril. Auto is still
+hard; manual players still play the reel and face the same 30% roll. The seeded profile in
+`social_fishing_sim.js` pins both ends of the ladder.

@@ -413,18 +413,23 @@ export class SocialRoom {
  startPve(c,m,now){
   const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
   if(c.pve||c.pvp)return this.battleError(c,'Finish the current DigiPet activity first.',request);
-  if(!this.fieldReady(c,now))return this.battleError(c,'Stand still inside the middle DigiPet farm to grind.',request);
   const p=this.battleProfile(c,m.profile);if(!p)return this.battleError(c,'Choose your current owned partner first.',request);
+  // The first run proves the player reached the farm. A completed connected run may then renew the
+  // same line/form/slot from anywhere in that plaza; the permit lives only on this socket/client and
+  // is destroyed by stop, leave, room switch or disconnect.
+  const bossMode=m.mode==='boss',permit=c.pveRepeatPermit,resume=m.resume===true&&m.repeat===true,permitOk=resume&&permit&&permit.room===c.room&&permit.lineId===p.lineId&&permit.form===p.form&&permit.slot===p.slot&&permit.mode===(bossMode?'boss':'grind');
+  if(resume&&!permitOk)return this.battleError(c,'This repeat chain ended. Return to the middle DigiPet farm to start again.',request);
+  if(!resume&&!this.fieldReady(c,now))return this.battleError(c,'Stand still inside the middle DigiPet farm to grind.',request);
   if(this.trainingBlocks(c,p))return this.battleError(c,'The training partner cannot battle. Switch to another partner slot first.',request);
   if([...this.pveRuns.values()].filter(r=>r.room===c.room).length>=8)return this.battleError(c,'The field is full. Try another plaza.',request);
   // v382: a raid is one long boss rather than a field run — same run object, boss mode.
-  const bossMode=m.mode==='boss';
-  const run=B.createPve({id:this.battleId('pve'),owner:c.id,room:c.room,profile:p,now,random:this.random,bossMode});
+  const run=B.createPve({id:this.battleId('pve'),owner:c.id,room:c.room,profile:p,now,random:this.random,bossMode});run.repeat=m.repeat===true;
   const used=new Set([...this.pveRuns.values()].filter(r=>r.room===c.room).map(r=>r.slot));run.slot=Array.from({length:8},(_,i)=>i).find(i=>!used.has(i))||0;
+  c.pveRepeatPermit=run.repeat?{room:c.room,lineId:p.lineId,form:p.form,slot:p.slot,mode:bossMode?'boss':'grind',at:now}:null;
   c.pve=run;this.pveRuns.set(run.id,run);this.send(c,{type:'pve_started',request,battleId:run.id,mode:bossMode?'boss':'grind'});this.broadcastBattle(c.room);this.battleActivity();
  }
  stopPve(c,reason='stopped',notify=true){
-  const run=c.pve;if(!run)return false;
+  const run=c.pve;c.pveRepeatPermit=null;if(!run)return false;
   if(run.party&&Array.isArray(run.members)){this.leavePartyRun(c,run,reason);return true}
   c.pve=null;this.pveRuns.delete(run.id);
   if(notify)this.send(c,{type:'pve_end',battleId:run.id,reason,earned:{...run.earned}});this.broadcastBattle(run.room);return true;
@@ -567,7 +572,7 @@ export class SocialRoom {
   this.broadcastBattle(c.room);this.battleActivity();
  }
  stopBattle(c,reason='stopped',now=this.now()){
-  const room=c.room;if(c.pve)this.stopPve(c,reason,false);if(c.pvp)this.cancelPvp(c,reason,now);if(room)this.broadcastBattle(room);
+  const room=c.room;c.pveRepeatPermit=null;if(c.pve)this.stopPve(c,reason,false);if(c.pvp)this.cancelPvp(c,reason,now);if(room)this.broadcastBattle(room);
  }
  tickBattles(now=this.now()){
   const rooms=new Set();
@@ -612,7 +617,7 @@ export class SocialRoom {
     if(String(event.type).startsWith('boss_'))this.broadcast({type:'battle_mech',kind:'pve',battleId:run.id,fx:event},p=>p.room===run.room);
     if(event.type==='end'){
      if(run.party&&Array.isArray(run.members))for(const id of run.members){const member=this.clients.get(id);if(!member)continue;member.pve=null;this.send(member,{type:'pve_end',battleId:run.id,reason:event.reason,mode:run.mode||'grind',earned:{...((run.earnedBy&&run.earnedBy[id])||run.earned)}})}
-     else{if(c)this.send(c,{type:'pve_end',battleId:run.id,reason:event.reason,mode:run.mode||'grind',earned:{...run.earned}});if(c)c.pve=null}
+     else{if(c){if(run.repeat&&c.pveRepeatPermit)c.pveRepeatPermit.at=now;else c.pveRepeatPermit=null;this.send(c,{type:'pve_end',battleId:run.id,reason:event.reason,mode:run.mode||'grind',earned:{...run.earned}});c.pve=null}}
      this.pveRuns.delete(run.id);
     }
    }
@@ -725,6 +730,7 @@ export class SocialRoom {
   if(m.type==='gym_stop')return this.stopGym(c);
   if(m.type==='pve_start')return this.startPve(c,m,now);
   if(m.type==='pve_stop'){this.stopPve(c);return}
+  if(m.type==='pve_repeat'){if(m.on!==true)c.pveRepeatPermit=null;else if(c.pve&&!c.pve.party){const p=c.pve.profile;c.pve.repeat=true;c.pveRepeatPermit={room:c.room,lineId:p.lineId,form:p.form,slot:p.slot,mode:c.pve.mode||'grind',at:now}}return}
   if(m.type==='pvp_enter')return this.queuePvp(c,m,now);
   if(m.type==='party_invite')return this.partyInvite(c,m,now);
   if(m.type==='party_accept')return this.partyAccept(c,m,now);

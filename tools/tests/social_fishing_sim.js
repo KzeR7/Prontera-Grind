@@ -242,6 +242,31 @@ assert(F.DIFF.mythical.bar<F.DIFF.common.bar);
 assert(F.DIFF.mythical.speed>F.DIFF.common.speed);
 assert(F.DIFF.mythical.fill<F.DIFF.common.fill);
 
+// v384 owner choice: Auto must remain bad at an MVP reel, but not functionally impossible. A
+// successful reel still faces the exact 30% landing roll above. Drive the real reel state and the
+// same exported predictive target as tick(); with a seeded sample that produces about 1% landed on
+// the free Training Rod and about 5% on Mythril. Manual fishing does not call this controller.
+{
+ const seeded=seed=>{let x=seed|0;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296}};
+ const boss=F.speciesById('mvp_void_maw'),N=1500,landed=[];
+ for(let ri=0;ri<F.RODS.length;ri++){
+  const random=seeded((ri+1)*0x12345),rod=F.RODS[ri];let reels=0;
+  for(let n=0;n<N;n++){
+   const fish={sp:boss.id,rarity:'mvp',w:boss.min+(boss.max-boss.min)*random()};
+   const reel=F.makeReel(fish,random,rod.control);let target=.5,result=null,sampleAt=0,t=0;
+   for(let step=0;step<10000&&!result;step++){
+    t+=16;if(t>=sampleAt){sampleAt=t+F.AUTO_REEL_SAMPLE_MS;target=F.autoReelTarget(reel)}
+    result=F.reelStep(reel,.016,reel.bar<target);
+   }
+   if(result==='catch')reels++;
+  }
+  landed.push(reels/N*F.MVP_REEL_CATCH_CHANCE);
+ }
+ assert(landed[0]>=.005&&landed[0]<=.016,'Training Rod lands about 1% of hooked MVPs on Auto ('+(landed[0]*100).toFixed(2)+'%)');
+ assert(landed.at(-1)>=.035&&landed.at(-1)<=.065,'Mythril lands about 5% of hooked MVPs on Auto ('+(landed.at(-1)*100).toFixed(2)+'%)');
+ for(let i=1;i<landed.length;i++)assert(landed[i]>=landed[i-1],'each rod keeps or improves the Auto MVP landing chance');
+}
+
 // --- persistence bounds -------------------------------------------------------------------
 let st=F.normalize(null);
 assert.deepEqual(st.bag,[]);
@@ -261,6 +286,9 @@ assert.equal(st.settings.fish,true,'v295 forces swimming pond fish on for every 
 assert.equal(st.settings.sound,true);
 st=F.normalize({bag:Array.from({length:300},(_,i)=>({sp:'minnow',w:.2,id:'x'+i}))});
 assert.equal(st.bag.length,F.BAG_MAX,'bag caps at '+F.BAG_MAX);
+// v385 player report: storage capacity must never prevent a landed Secret from unlocking its Index row.
+{const secret=F.SPECIES.find(sp=>sp.rarity==='secret');const kept=F.addCatch(st,{sp:secret.id,rarity:'secret',w:secret.min},Date.now());assert.equal(kept,null,'a full bag still cannot store another fish');assert.equal(st.dex[secret.id].n,1,'but the landed Secret is recorded in the Index');assert.equal(st.stats.catches,1,'and counts as a catch even though it was released')}
+
 // v288: the economy fields survive normalization and reject garbage.
 st=F.normalize(null);
 assert.equal(st.coins,0);assert.deepEqual(st.rods,['twig']);assert.equal(st.rod,'twig');assert.deepEqual(st.bait,{});assert.equal(st.baitSel,null);
@@ -538,7 +566,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  const dom=new JSDOM('<div id="host"></div><div id="labels"></div>',{runScripts:'outside-only'}),w=dom.window,T={...THREE};
  let frame,now=1000,moves=[],pondClicks=[];
  const mvpSignText=[];
- const ctx={drawImage(){},clearRect(){},fillRect(){},strokeRect(){},fillText(text){mvpSignText.push(String(text))},measureText(text){return {width:String(text).length*36}}};
+ const ctx={drawImage(){},clearRect(){},fillRect(){},strokeRect(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){},stroke(){},save(){},restore(){},fillText(text){mvpSignText.push(String(text))},measureText(text){return {width:String(text).length*36}}};
  w.HTMLCanvasElement.prototype.getContext=()=>ctx;
  const host=w.document.getElementById('host');host.setPointerCapture=()=>{};host.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});Object.defineProperties(host,{clientWidth:{value:1000},clientHeight:{value:700}});
  T.WebGLRenderer=class{constructor(){this.domElement=w.document.createElement('canvas')}setPixelRatio(){}setSize(){}render(){}dispose(){}};
@@ -557,20 +585,19 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  scene.active=true;
  assert(scene.fishing,'the scene exposes a fishing rig');
  for(const fn of ['setFishVisible','setMvp','cast','bite','reel','catchFly','escapeSplash','ripple','splash','hide','off','showFish'])assert.equal(typeof scene.fishing[fn],'function','fishing.'+fn);
- const pond=w.PGSocialRules.PONDS[0];
+ const R=w.PGSocialRules,pond=R.PONDS[0],bridge=R.POND_PROPS[0].bridge;
  // The alert is a large, live-only board, and the server-selected species floats above the lake.
  scene.fishing.setMvp('mvp_void_maw',true);
  const mvpSign=scene.scene.children.find(o=>o.userData&&o.userData.socialMvpSign);
  const mvpBoard=mvpSign&&mvpSign.children.find(o=>o.userData&&o.userData.socialMvpSignBoard);
  const mvpFloat=scene.scene.children.find(o=>o.userData&&o.userData.socialMvpFloat);
  const mvpSprite=mvpFloat&&mvpFloat.children.find(o=>o.userData&&o.userData.socialMvpFish);
- assert(mvpSign&&mvpSign.visible&&mvpBoard&&mvpBoard.geometry.parameters.width>=9&&mvpBoard.geometry.parameters.height>=2&&mvpBoard.position.y>=5,'a large elevated alert sign appears over the pond approach');
+ assert(mvpSign&&mvpSign.visible&&mvpBoard&&mvpBoard.geometry.parameters.width>=12.5&&mvpBoard.geometry.parameters.height>=3&&mvpBoard.position.y>=9,'the bridge alert is substantially bigger and higher');
  assert(mvpFloat&&mvpFloat.visible&&mvpFloat.userData.spId==='mvp_void_maw','the selected MVP has its own visible pond sprite');
- assert.equal(mvpSign.children.length,1,'the warning sign floats above the lake - no posts');
- assert(mvpBoard.position.y>=6,'the floating alert hovers well over the water');
+ assert.equal(mvpSign.children.length,1,'the warning sign floats above the bridge - no posts or mirrored glow plane');
+ assert.equal(mvpBoard.position.x,bridge.x);assert.equal(mvpBoard.position.z,bridge.z,'the requested sign is the one over the bridge, not a side-bank sign');
  /* v383 (owner: "the mvp fish should be floating around the pond randomly, not one spot"): every
     spawn surfaces somewhere else, but always inside the water and never under the bridge deck. */
- const R=w.PGSocialRules,bridge=R.POND_PROPS[0].bridge;
  const inWater=(x,z)=>R.pondContains(pond,x,z,-.4);
  assert(mvpSprite&&mvpSprite.position.y>2&&inWater(mvpFloat.position.x,mvpFloat.position.z),'the selected MVP floats inside the pond');
  assert(Math.abs(mvpFloat.position.z-bridge.z)>bridge.width/2,'the MVP never surfaces underneath the bridge deck');
@@ -976,18 +1003,18 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
   assert(buf.subarray(0,8).equals(PNG),id+'.png is a png');
   // v303 (owner): 128, not 96 - the detail panel draws 128 and the index 64, so the art is either
   // 1:1 or an exact halving instead of being upscaled (which is what looked blurry).
-  // v380 (owner: "cropped, HD"): the seven MVP bosses ship at 256 - they are the pond's hero
-  // sprites (the floating peek scales past 4 world units), and both smaller draws are exact
-  // halvings/quarters, so nothing upscales anywhere.
-  const want=Number(id.startsWith('mvp_'))?256:128;
+  // v384: the seven MVP bosses ship at 512 - the pond's hero texture stays 512 all the way to
+  // Three.js, while the Index/catch cards only downsample it. Ordinary fish retain their 128 art.
+  const want=Number(id.startsWith('mvp_'))?512:128;
   assert.equal(buf.readUInt32BE(16),want,id+' is '+want+' wide');
   assert.equal(buf.readUInt32BE(20),want,id+' is '+want+' tall');
-  assert.equal(buf[25],6,id+' keeps its transparency (rgba)');
+  assert([3,6].includes(buf[25]),id+' keeps transparency as indexed-alpha or rgba');
  }
  // v380 (owner): the live spawn banner is created with the fishing DOM - it used to be read
  // from an index.html node that never existed, so MVP notices never rendered.
  assert(mod.includes("mvpBanner.id='fishingMvpBanner'"),'the live MVP banner is created in ensureDom');
- assert(mod.includes("FISH_ART_VERSION='383'"),'the fish-art cache version is bumped with the redraw');
+ assert(mod.includes("FISH_ART_VERSION='384'"),'the fish-art cache version is bumped with the 512px recrop');
+ assert(sceneSrc.includes('const MVP_BASE_PX=512')&&sceneSrc.includes("F.fishSprite(spId,null,512)"),'the pond keeps the 512px crop through its GPU texture');
  // v380 (owner: "cropped, HD"): every MVP crop is a real transparent sprite - decode when sharp
  // is installed and require an empty top-left corner plus a real cutout (some transparency).
  (async()=>{

@@ -400,7 +400,11 @@ const DIFF={
  legendary:{bar:.25,speed:.74,dash:.44,fill:.12,drain:.115},
  mythical:{bar:.22,speed:.86,dash:.56,fill:.108,drain:.12},
  secret:{bar:.24,speed:.8,dash:.5,fill:.112,drain:.118},
- mvp:{bar:.18,speed:1.05,dash:.72,fill:.085,drain:.14},
+ // MVP keeps its fast, erratic fish and slow progress bar, but the control window is wide enough
+ // for Auto to win a reel about 3.3%→16.7% from Training→Mythril Rod. The separate 30% landing
+ // roll below therefore makes a hooked MVP about 1%→5% on Auto, while a manual angler still has
+ // to play this reel and then pass the same landing roll.
+ mvp:{bar:.26,speed:1.05,dash:.72,fill:.085,drain:.14},
 };
 // v304 (owner): v303's prices were tuned against the old (looser) rarity weights. Cutting the top
 // tiers made an average catch worth a quarter of what it was, so the base values scale ~6x to put
@@ -472,7 +476,11 @@ function castRating(p){
 function makeReel(fish,rng,control){
  const d=DIFF[fish.rarity]||DIFF.common,sp=speciesById(fish.sp);
  const heft=sp?Math.max(0,Math.min(1,(fish.w-sp.min)/Math.max(.01,sp.max-sp.min))):.5;
- const barW=Math.min(.5,d.bar*(1+Math.max(0,Math.min(.8,control||0))));
+ // MVP needed a much larger base window for a starter rod without making Mythril automatic.
+ // Compressing only its rod-control multiplier keeps the measured Auto landing ladder near 1%→5%;
+ // every ordinary rarity retains the old control formula byte-for-byte.
+ const controlScale=fish.rarity==='mvp'?.22:1;
+ const barW=Math.min(.5,d.bar*(1+Math.max(0,Math.min(.8,control||0))*controlScale));
  return {bar:.5,vel:0,barW,fish:.5,fishVel:0,target:.5,swapIn:.5,speed:d.speed*(1+heft*.25),dash:d.dash,fill:d.fill,drain:d.drain,progress:.33,lock:1.1,t:0,on:true,perfect:true,rng:rng||Math.random};
 }
 // One physics step. Hold pushes the control bar right, release lets it fall left; progress only
@@ -556,18 +564,20 @@ function buyBagUpgrade(state){
  return {ok:true,tier:next.tier,cap:next.cap};
 }
 
-// Adds a rolled catch to the bag and bestiary. Returns the entry, or null when the bag is full.
+// Every landed fish is recorded in the Index even when storage is full. The previous early return
+// happened before dex update, so a player could visibly catch a Secret fish and still see “???”
+// forever. Returns the stored entry, or null only when the bag cannot keep it.
 function addCatch(state,c,now=Date.now()){
- if(!state||state.bag.length>=bagMax(state))return null;
+ if(!state)return null;
  const sp=speciesById(c.sp);if(!sp)return null;
  let id='f'+now.toString(36)+Math.floor(Math.random()*46656).toString(36);
  while(state.bag.some(e=>e.id===id))id+='x';
  const entry={id,sp:sp.id,w:Math.round(Math.max(.01,Math.min(3000,Number(c.w)||sp.min))*100)/100,mut:Object.hasOwn(MUTATIONS,c.mut)?c.mut:null,at:now,perfect:c.perfect===true,lock:false};
- state.bag.push(entry);
  const d=state.dex[entry.sp]||(state.dex[entry.sp]={n:0,bw:0,at:now,mut:[]});
  d.n++;if(entry.w>d.bw)d.bw=entry.w;if(entry.mut&&!d.mut.includes(entry.mut))d.mut.push(entry.mut);
  state.stats.catches++;if(entry.perfect)state.stats.perfects++;
- return entry;
+ if(state.bag.length>=bagMax(state))return null;
+ state.bag.push(entry);return entry;
 }
 // ---- Fishcoin economy. All return {ok,reason?} and never go negative or duplicate rods. ----
 function buyRod(state,id){
@@ -731,7 +741,9 @@ const ui={phase:'off',pond:-1,holding:false,chargeT0:0,castR:null,mods:null,bite
 // MVP fishing: active spawn from the Social Worker, one catch per spawn per player.
 let mvpActive=null; // {sp,id,spawnedAt,endsAt}
 const mvpClaimed=new Set(); // spawn ids already caught by this player
-const MVP_HOOK_CHANCE=.10,MVP_REEL_CATCH_CHANCE=.30;
+const MVP_HOOK_CHANCE=.10,MVP_REEL_CATCH_CHANCE=.30,AUTO_REEL_SAMPLE_MS=130;
+// Kept pure and exported so the odds test drives the same predictive aim used by live Auto fishing.
+const autoReelTarget=s=>s.fish+s.fishVel*.18;
 let uiPos={};
 try{uiPos=JSON.parse(root.localStorage.getItem('pg_fishing_ui_v1'))||{}}catch{}
 function saveUiPos(){try{root.localStorage.setItem('pg_fishing_ui_v1',JSON.stringify(uiPos))}catch{}}
@@ -792,7 +804,10 @@ function ensureDom(){
  dock.innerHTML='<div id="fishingDockHead" title="Drag to move"><span id="fishingSpot">🎣 South Lawn Pond</span><span id="fishingDockBtns"><button id="fishingAutoBtn" type="button" title="Auto fishing: casts, hooks and reels by itself until you stop it" aria-pressed="false">▶ Auto</button><button id="fishingBagBtn" type="button" aria-haspopup="dialog">🧺 Bag <small id="fishingBagCount"></small></button><button id="fishingStopBtn" type="button" title="Stop fishing" aria-label="Stop fishing">✕</button></span></div><div id="fishingMvpBanner" hidden aria-live="polite"></div><button id="fishingGearLine" type="button" title="Open the rod &amp; bait shop"></button><div id="fishingStage" role="button" tabindex="0" aria-label="Fishing action area"></div><p id="fishingStatus" aria-live="polite"></p>';
  // v380 (fix): the spawn banner is created here with the rest of the fishing DOM - it used to
  // be read from index.html where no such element existed, so live MVP notices never rendered.
- const mvpBanner=doc.createElement('div');mvpBanner.id='fishingMvpBanner';mvpBanner.hidden=true;mvpBanner.setAttribute('role','status');mvpBanner.setAttribute('aria-live','polite');hub.append(mvpBanner);
+ const mvpBanner=doc.createElement('div');mvpBanner.id='fishingMvpBanner';mvpBanner.hidden=true;mvpBanner.setAttribute('role','status');mvpBanner.setAttribute('aria-live','polite');
+ // v384: the alert joins the plaza's top-centre column (social.js) so it stacks with the battle card and notices
+ // instead of covering them; a page without that column keeps the old placement.
+ (doc.getElementById('socialHudStack')||hub).append(mvpBanner);
  const panel=doc.createElement('section');panel.id='fishingPanel';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Fishing Bag');
  panel.innerHTML='<header id="fishingPanelHead" title="Drag to move"><strong>🎣 Fishing</strong><span id="fishingCoins" title="Fishcoins — sell catches to earn, spend on rods &amp; bait"></span><button id="fishingPanelClose" type="button" aria-label="Close Fishing window">✕</button></header><nav id="fishingTabs" role="tablist" aria-label="Fishing sections"><button type="button" role="tab" data-ftab="bag" aria-selected="true">🧺 Bag</button><button type="button" role="tab" data-ftab="index" aria-selected="false">📖 Index</button><button type="button" role="tab" data-ftab="shop" aria-selected="false">🛒 Shop</button><button type="button" role="tab" data-ftab="titles" aria-selected="false">🏅 Titles</button></nav><div id="fishingBagView"><div id="fishingRecords"></div><div id="fishingTools"><select id="fishingSort" aria-label="Sort fish"><option value="new">Newest</option><option value="heavy">Heaviest</option><option value="rare">Rarest</option><option value="value">Most valuable</option></select><button id="fishingSellDupes" type="button" title="Sells everything except your heaviest of each species, every mutated fish and every 🔒 locked fish">💰 Sell dupes</button><label title="After every catch, automatically sell it unless it is mutated, locked, or your new heaviest of that species"><input type="checkbox" id="fishingAutoSell"> Auto-sell dupes</label><label title="Fishing sound effects"><input type="checkbox" id="fishingSound"> Sounds</label></div><div id="fishingGrid" role="listbox" aria-label="Caught fish"></div><footer id="fishingDetail" hidden></footer></div><div id="fishingIndexView" hidden></div><div id="fishingShopView" hidden></div><div id="fishingTitlesView" hidden></div>';
  const shakes=doc.createElement('div');shakes.id='fishingShakes';shakes.hidden=true;
@@ -1308,7 +1323,7 @@ const FISH_ART={
   mvp_crimson_shark:'assets/social/fish/mvp_crimson_shark.png', mvp_gilded_shark:'assets/social/fish/mvp_gilded_shark.png',
   mvp_void_maw:'assets/social/fish/mvp_void_maw.png',
 };
-const FISH_ART_VERSION='383'; // v383: the seven MVPs are crops of the owner's own references (tools/mvp_art_crop.py)
+const FISH_ART_VERSION='384'; // v384: 512px reference crops with decontaminated transparent edges
 const FISH_IMG=new Map();
 function preloadFishArt(){
  if(typeof Image!=='function'||typeof document==='undefined'||!document.createElement)return;
@@ -1661,7 +1676,7 @@ function finishReel(kind){
    const res=sellFish(state(),entry.id);
    if(res&&res.ok){persist();ui.result.autoSold=res.coins;sound('coin')}
   }
-  if(!entry)status('Bag full — the catch could not be kept!');
+  if(!entry)status('Bag full — fish released, but the catch is recorded in your Index!');
   // v297: a pond monster or a secret find goes to the room's Local chat. Fired from the catch
   // itself (not the Show off button) so auto-fishing announces too.
   if(sp&&ui.roll&&ui.roll.rarity==='mvp'){
@@ -1728,7 +1743,7 @@ function tick(t){
  }
  if(ui.phase==='reel'&&ui.reel){
   if(ui.auto){
-   if(t>=ui.autoSampleAt){ui.autoSampleAt=t+130;ui.autoTarget=ui.reel.fish+ui.reel.fishVel*.18}
+   if(t>=ui.autoSampleAt){ui.autoSampleAt=t+AUTO_REEL_SAMPLE_MS;ui.autoTarget=autoReelTarget(ui.reel)}
    ui.holding=ui.reel.bar<ui.autoTarget;
   }
   const out=reelStep(ui.reel,dt,ui.holding);
@@ -2055,7 +2070,7 @@ return {
  // v309: painted bait icons, so the shop no longer depends on Unicode-13 emoji fonts.
  baitSprite,baitSpriteURL,baitHTML,titleBadge,titleBadgeURL,
  // MVP
- MVP_REEL_CATCH_CHANCE,setMvp,clearMvp,getMvp:()=>mvpActive, isMvpClaimed:id=>mvpClaimed.has(id),
+ MVP_REEL_CATCH_CHANCE,AUTO_REEL_SAMPLE_MS,autoReelTarget,setMvp,clearMvp,getMvp:()=>mvpActive, isMvpClaimed:id=>mvpClaimed.has(id),
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,
  refresh:()=>{if(els){renderDockGear();renderPanel();renderMvpBanner()}},
