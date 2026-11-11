@@ -10701,3 +10701,9 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Changed:** Plaza toolbar buttons toggle open/closed (DigiPet, Party, More). Esc closes every plaza overlay. Party, More and Field now have toolbar icons. Party invites still pop as an on-screen toast with Accept/Decline.
 * **Checks:** `digimon_sanctuary_sim.js`, `digimon_sanctuary_ui_sim.js`, `social_ui_sim.js`.
 * **Delivery:** local on `arena/9ad267fc-prontera-grind`; no deploy.
+
+### 2026-11-11 — `haven-v388` Durable Object standing order (all agents)
+
+* **Owner rule:** any new feature that would use the plaza Durable Object (`workers/social`), a new DO, `setAlarm`, or a new WebSocket type must **stop and ask** first, with a client-only alternative. Written in [AGENTS.md](../AGENTS.md#durable-object-budget-haven-v388--owner-standing-order).
+* **Fact:** hiding other players’ PvE/PvP (private tab / not drawing the fight) does **not** reduce DO requests. Solo DigiPet PvE is client-side; party/PvP still alarm at 1s. Sitters ping every 4 minutes; empty idle rooms skip the 60s alarm and may hibernate.
+* **Delivery:** `AGENTS.md` on `arena/7a72f13c-prontera-grind`.
