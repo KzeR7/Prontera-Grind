@@ -642,19 +642,30 @@ const ATTACK_MS=520;let fxTextures=null;
   const p=unit.sprite.position;unit.shakeUntil=clock+160;unit.shakeAmp=.08;unit.hitStarted=clock;
   spawnBattleBurst(p.x,p.z,0xfff6e0,4,.9,.12,380);
  }
- // v387 (owner): digipets show random emoji reactions during battles. Each reaction is a
- // floating emoji sprite above the digipet that rises and fades. Emojis are context-aware:
- // wave clears get celebration emojis, defeats get sad ones, hits get pain ones, etc.
+ // v387 (owner): digipets show random emoji reactions during battles — using the same emotion
+ // images that players use in chat (assets/social/emotions/<id>.png). Each reaction is a
+ // floating emotion sprite above the digipet that rises and fades. Context-aware pools.
  const DIGI_EMOJI_POOLS={
-  win:['😤','💪','🎉','✨','🔥','💥','⭐','🙌','👊','🏆'],
-  lose:['😵','💀','😭','😢','😰','🫠','😿','💔'],
-  hit:['😣','😖','💢','😬','🤕'],
-  crit:['😱','💀','☠️','🫨'],
-  boss:['😈','👹','💀','🔥','⚡'],
-  train:['💪','🏋️','⭐','✨','🔥','💯'],
+  win:['laugh','ok','gg','heart','music','rock','love'],
+  lose:['cry','dead','sorry','panic','sleep','sweat'],
+  hit:['anger','panic','sweat','surprise'],
+  crit:['dead','panic','surprise','anger'],
+  boss:['anger','surprise','panic'],
+  train:['ok','rock','heart','idea'],
  };
+ // Cache loaded emotion images so we don't fetch the same PNG dozens of times.
+ const emotionImageCache=new Map();
+ function getEmotionImage(id){
+  if(emotionImageCache.has(id))return emotionImageCache.get(id);
+  const img=new Image();img.crossOrigin='anonymous';
+  img.onload=()=>{emotionImageCache.set(id,img)};
+  img.onerror=()=>{emotionImageCache.set(id,null)};
+  img.src='assets/social/emotions/'+id+'.png';
+  emotionImageCache.set(id,img); // return the loading img; it'll draw when ready
+  return img;
+ }
  const battleEmojiPool=[];
- function spawnBattleEmoji(x,y,z,emoji,dur=1800){
+ function spawnBattleEmoji(x,y,z,emotionId,dur=1800){
   let entry=battleEmojiPool.find(e=>!e.active);
   if(!entry){
    const c=document.createElement('canvas');c.width=c.height=64;
@@ -665,11 +676,14 @@ const ATTACK_MS=520;let fxTextures=null;
    battleEmojiPool.push(entry);
   }
   entry.active=true;entry.at=clock;entry.dur=dur;
-  entry.startY=y;entry.x=x;entry.z=z;entry.emoji=emoji;
+  entry.startY=y;entry.x=x;entry.z=z;entry.emotionId=emotionId;
   entry.wobble=Math.random()*Math.PI*2;
+  // Draw the emotion PNG onto the canvas.
   const ctx=entry.ctx;ctx.clearRect(0,0,64,64);
-  ctx.font='48px serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(emoji,32,34);
+  const img=getEmotionImage(emotionId);
+  if(img&&img.complete&&img.naturalWidth>0){
+   ctx.drawImage(img,4,4,56,56);
+  }
   entry.texture.needsUpdate=true;
   entry.sprite.visible=true;entry.sprite.position.set(x,y,z);entry.sprite.material.opacity=1;
   return entry;
@@ -684,6 +698,14 @@ const ATTACK_MS=520;let fxTextures=null;
    e.sprite.position.set(wobbleX,rise,e.z);
    e.sprite.material.opacity=t<.2?t/.2:Math.max(0,1-((t-.2)/.8));
    e.sprite.scale.setScalar(.7+.4*(t<.3?t/.3:1));
+   // Re-draw once the image finishes loading.
+   if(e._needsRedraw){
+    const img=getEmotionImage(e.emotionId);
+    if(img&&img.complete&&img.naturalWidth>0){
+     const ctx=e.ctx;ctx.clearRect(0,0,64,64);ctx.drawImage(img,4,4,56,56);
+     e.texture.needsUpdate=true;e._needsRedraw=false;
+    }
+   }
   }
  }
  function pickEmoji(pool){return pool[Math.floor(Math.random()*pool.length)]}
@@ -691,9 +713,9 @@ const ATTACK_MS=520;let fxTextures=null;
   if(!unit||!unit.sprite)return;
   const pool=DIGI_EMOJI_POOLS[mood];if(!pool||!pool.length)return;
   const p=unit.sprite.position;
-  const emoji=pickEmoji(pool);
+  const emotionId=pickEmoji(pool);
   const ox=(Math.random()-.5)*.6;
-  spawnBattleEmoji(p.x+ox,p.y+1.6,p.z,emoji,1400+Math.random()*800);
+  spawnBattleEmoji(p.x+ox,p.y+1.6,p.z,emotionId,1400+Math.random()*800);
  }
  function battleEvent(ev){
   if(!ev||typeof ev!=='object')return false;
