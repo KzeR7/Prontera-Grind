@@ -460,7 +460,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   }finally{w.setTimeout=realST;w.clearTimeout=realCT}
  }
  w.CLOUD.on=false;w.CLOUD.user=null;app.socket=null;app.connected=false;app.room=0;w.Date.now=realNowGym;
- assert.equal(w.S.pets[0].sp,2,'gym never modifies the Ragnarok pet');w.S.digimonSanctuary.partners.agumon.stats.power=4;w.S.digimonSanctuary.partners.agumon.wins=2;w.S.digimonSanctuary.partners.agumon.xp=116;w.document.getElementById('sanctuaryOpen').click();
+ assert.equal(w.S.pets[0].sp,2,'gym never modifies the Ragnarok pet');w.S.digimonSanctuary.partners.agumon.stats.power=4;w.S.digimonSanctuary.partners.agumon.wins=2;w.S.digimonSanctuary.partners.agumon.xp=116;w.S.digimonBag.evoPoints=20;w.document.getElementById('sanctuaryOpen').click();
  w.document.querySelector('[data-sanctuary-action=requestEvolution]').click();assert.equal(w.S.digimonSanctuary.partners.agumon.stage,0);assert.match(w.document.getElementById('sanctuaryEvolutionView').textContent,/Possible: /,'the confirm step lists the rolled pool in the evolution view');
  // v349: the branch is rolled. Pin both randomness sources to the first option (Greymon).
  const realRandom=w.Math.random.bind(w.Math),realGetValues=w.crypto?.getRandomValues?.bind(w.crypto);w.Math.random=()=>0;if(w.crypto?.getRandomValues)w.crypto.getRandomValues=arr=>{arr[0]=0;return arr};

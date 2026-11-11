@@ -32,7 +32,10 @@ const BAG_VERSION=3,GEAR_ITEM_CAP=80;
 const GEAR_KINDS=['weapon','armor','accessory','relic'];
 const GEAR_MAIN_STATS=['hp','atk','def','spdPct'],GEAR_SPECIAL_STATS=['crit','lifesteal','thorns','xpPct'];
 const GEAR_KIND_NOUN={weapon:['Claw','Fang','Core'],armor:['Hide','Plate','Mail'],accessory:['Charm','Band','Talisman'],relic:['Chip','Core','Matrix']};
-const GEAR_VARIANCE_FORGE=.2,REFINE_MAX=5,REFINE_BONUS=.08,FORGE_TIER_COST=[120,200,320,480],REFINE_COST=[30,50,80,120,170],REFINE_SUCCESS=[1,.85,.65,.45,.25];
+const GEAR_VARIANCE_FORGE=.2,REFINE_MAX=10,REFINE_BONUS=.08,FORGE_TIER_COST=[120,200,320,480],REFINE_COST=[30,50,80,120,170],
+// Same curve as main-game weapon refine: sure through +3, then 90/80/60/40/40/20/10.
+REFINE_SUCCESS=[1,1,1,.9,.8,.6,.4,.4,.2,.1];
+const EVO_POINT_COST=[8,18,36,64,96,140];
 const GEAR_TIER_NAME=['Field','Iron','Chrome','Mythril','Legend'];
 const GEAR_STAT_NAME={hp:'+HP',atk:'+ATK',def:'+DEF',spdPct:'+SPD %',crit:'Crit %',lifesteal:'Lifesteal %',thorns:'Thorns',xpPct:'+XP %'};
 // Shape caps for a single stored piece. The battle-side aggregate caps in digimon-battle.js
@@ -107,15 +110,9 @@ function act(raw,line,action,now,random=randomUnit){now=Number.isFinite(now)?now
   const roll=Math.max(0,Math.min(.999999999,Number(random())||0)),target=req.options[Math.floor(roll*req.options.length)];
   p.form=target;p.stage=cap(p.stage+1,0,MAX_EVOLUTIONS);p.peakStage=Math.max(p.peakStage||0,p.stage);if(!p.unlocked.includes(target))p.unlocked.push(target);return done('Your partner evolved into '+DATA.name(target)+'!');
  }
- // Previously reached forms remain available in the Evolution tab. Switching form changes the
- // active battle species/stage only; level, training, wins, mastery and the highest reached stage
- // stay intact, including after a dismiss-and-rehatch cycle.
- if(action.type==='switchForm'){
-  if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');
-  const target=clean(action.target);if(!target||!p.unlocked.includes(target))return fail('That evolution has not been unlocked for this DigiPet.');
-  if(target===p.form)return fail(DATA.name(target)+' is already the current form.');
-  p.form=target;p.stage=evolutionDepth(line,target);return done('Your partner switched back to '+DATA.name(target)+'. Progress and unlocked evolutions were kept.');
- }
+ // v386: free form-switching let a tamer hop back to an early stage and roll a different
+ // branch. Evolution is one-way; Evo Points buy the next roll at the current stage.
+ if(action.type==='switchForm')return fail('Evolution is one-way. Spend Evo Points to roll the next stage.');
  // v349 reroll loop: a fresh egg restarts this line's training, wins and level. Evolution history
  // is retained so a returned partner can revisit forms it earned before the restart.
  if(action.type==='reset'){
@@ -174,7 +171,7 @@ function normalizeBagGear(raw){
 function normalizeBag(raw){
  if(raw&&typeof raw==='object'&&Number(raw.v)>BAG_VERSION)return null;
  const gearAutoSell=[...new Set((Array.isArray(raw?.gearAutoSell)?raw.gearAutoSell:[]).map(Number).filter(n=>Number.isInteger(n)&&n>=1&&n<=5))].sort();
- return {v:BAG_VERSION,coins:cap(raw?.coins??COIN_START,0,999999),eggs:cap(raw?.eggs,0,STARTER_POOL.length),owned:cleanOwned(raw?.owned),gearAutoSell,gear:normalizeBagGear(raw?.gear)};
+ return {v:BAG_VERSION,coins:cap(raw?.coins??COIN_START,0,999999),eggs:cap(raw?.eggs,0,STARTER_POOL.length),evoPoints:cap(raw?.evoPoints,0,999999),owned:cleanOwned(raw?.owned),gearAutoSell,gear:normalizeBagGear(raw?.gear)};
 }
 function ensureBag(raw,legacyOwned=[]){
  const state=normalizeBag(raw);if(!state)return null;
@@ -252,6 +249,25 @@ function gearSell(raw,uid){
  const amount=gearSellValue(item);delete state.gear.items[uid];state.coins=cap(state.coins+amount,0,999999);
  return {ok:true,state,changed:true,amount,message:'Sold '+gearItemName(item)+gearRefineTag(item)+' for '+amount+' Pet Coins.'};
 }
+function gearEquippedUids(state){const held=new Set();for(const slots of Object.values(state.gear.equip||{}))for(const uid of Object.values(slots||{}))held.add(uid);return held}
+function gearSellMatchingAuto(raw){
+ const state=normalizeBag(raw);if(!state)return {ok:false,state,changed:false,sold:0,amount:0,message:'This pet bag uses a newer save version.'};
+ const held=gearEquippedUids(state),tiers=new Set(state.gearAutoSell||[]);
+ let sold=0,amount=0;
+ for(const [uid,item] of Object.entries(state.gear.items)){
+  if(held.has(uid)||(item.refine||0)>0||!tiers.has(item.tier))continue;
+  amount+=gearSellValue(item);delete state.gear.items[uid];sold++;
+ }
+ if(!sold)return {ok:true,state,changed:false,sold:0,amount:0,message:tiers.size?'No unequipped, unrefined pieces match Auto-sell.':'Tick Auto-sell tiers first, then Sell matching.'};
+ state.coins=cap(state.coins+amount,0,999999);
+ return {ok:true,state,changed:true,sold,amount,message:'Sold '+sold+' unequipped, unrefined piece'+(sold===1?'':'s')+' for '+amount+' Pet Coins.'};
+}
+function evoPointCost(stage){return EVO_POINT_COST[cap(stage,0,EVO_POINT_COST.length-1)]||EVO_POINT_COST[EVO_POINT_COST.length-1]}
+function spendEvoPoints(raw,amount){
+ const state=normalizeBag(raw),n=cap(amount,1,9999);if(!state)return {ok:false,state,changed:false,message:'This pet bag uses a newer save version.'};
+ if(state.evoPoints<n)return {ok:false,state,changed:false,message:'Not enough Evo Points — this evolution costs '+n+'.'};
+ state.evoPoints-=n;return {ok:true,state,changed:true,message:'Spent '+n+' Evo Points.'};
+}
 function setGearAutoSell(raw,tier,on){
  const state=normalizeBag(raw),n=Number(tier);if(!state||!Number.isInteger(n)||n<1||n>5)return {ok:false,state,changed:false,message:'Choose a valid gear tier.'};
  const set=new Set(state.gearAutoSell);if(on)set.add(n);else set.delete(n);state.gearAutoSell=[...set].sort();
@@ -321,9 +337,9 @@ function combatProfile(raw,line,slot=0,bag=null){
 function applyBattleReward(raw,bagRaw,line,reward,gearDrop=null){
  const state=normalize(raw,line),bag=normalizeBag(bagRaw),p=state?.partners?.[line];
  if(!state||!bag||!p||!reward||typeof reward!=='object')return {ok:false,state,bag,changed:false,message:'This battle reward could not be applied.'};
- const coins=cap(reward.coins,0,10000),eggs=cap(reward.eggs,0,99),xp=cap(reward.xp,0,100),wins=cap(reward.wins,0,1);
- const before=bag.coins,beforeEggs=bag.eggs;bag.coins=cap(bag.coins+coins,0,999999);bag.eggs=cap(bag.eggs+eggs,0,STARTER_POOL.length);p.xp=cap(p.xp+xp,0,XP_MAX);p.wins=cap(p.wins+wins,0,999);
- const coinGain=bag.coins-before,bonusGain=Math.min(coinGain,cap(reward.dropCoins,0,coins)),baseGain=coinGain-bonusGain,eggGain=bag.eggs-beforeEggs,eggMessage=eggs?(eggGain?' · +'+eggGain+' Digi-Egg'+(eggGain===1?'':'s'):' · Digi-Egg bag full'):'';
+ const coins=cap(reward.coins,0,10000),eggs=cap(reward.eggs,0,99),xp=cap(reward.xp,0,100),wins=cap(reward.wins,0,1),evo=cap(reward.evoPoints,0,20);
+ const before=bag.coins,beforeEggs=bag.eggs,beforeEvo=bag.evoPoints;bag.coins=cap(bag.coins+coins,0,999999);bag.eggs=cap(bag.eggs+eggs,0,STARTER_POOL.length);bag.evoPoints=cap(bag.evoPoints+evo,0,999999);p.xp=cap(p.xp+xp,0,XP_MAX);p.wins=cap(p.wins+wins,0,999);
+ const coinGain=bag.coins-before,bonusGain=Math.min(coinGain,cap(reward.dropCoins,0,coins)),baseGain=coinGain-bonusGain,eggGain=bag.eggs-beforeEggs,evoGain=bag.evoPoints-beforeEvo,eggMessage=eggs?(eggGain?' · +'+eggGain+' Digi-Egg'+(eggGain===1?'':'s'):' · Digi-Egg bag full'):'',evoMessage=evoGain?' · ✦ +'+evoGain+' Evo Point'+(evoGain===1?'':'s'):'';
  // A gear drop lands in the Pet Bag. Selected auto-sell tiers pay the same value as a manual
  // sale; a full bag still salvages the drop instead of losing it.
  let gearItem=null,gearMessage='';
@@ -337,7 +353,7 @@ function applyBattleReward(raw,bagRaw,line,reward,gearDrop=null){
    else{const salvage=cap(gearDrop.tier,1,5)*GEAR_SALVAGE;bag.coins=cap(bag.coins+salvage,0,999999);gearMessage=' · Gear bag full — salvaged the '+gearItemName(cleanGearItem(gearDrop))+' for '+salvage+' Pet Coins'}
   }
  }
- return {ok:true,state,bag,changed:true,amount:bag.coins-before,bonus:bonusGain,eggs:eggGain,gear:gearItem,message:'+'+baseGain+' Pet Coins'+(bonusGain?' · +'+bonusGain+' bonus petgold':'')+' · +'+xp+' XP'+(wins?' · +1 win':'')+eggMessage+(gearItem?' · ⚙ '+gearItemLabel(gearItem):gearMessage)};
+ return {ok:true,state,bag,changed:true,amount:bag.coins-before,bonus:bonusGain,eggs:eggGain,evoPoints:evoGain,gear:gearItem,message:'+'+baseGain+' Pet Coins'+(bonusGain?' · +'+bonusGain+' bonus petgold':'')+' · +'+xp+' XP'+(wins?' · +1 win':'')+eggMessage+evoMessage+(gearItem?' · ⚙ '+gearItemLabel(gearItem):gearMessage)};
 }
 // v373 DigiPet titles. Worn above the head in the plaza, on the line under the fishing title.
 // Every requirement is read from the saved DigiPet state (owned species, every partner's wins,
@@ -400,5 +416,5 @@ function digiTitleUnlocked(t,stats){return !!(t&&t.cur(stats)>=t.goal)}
 // Only an earned title can be worn; anything else (locked, unknown or from a newer build) reads as none.
 function equippedDigiTitle(id,stats){const t=DIGI_TITLE_BY_ID[id];return t&&digiTitleUnlocked(t,stats)?t:null}
 function digiTitleColor(t){return t?DIGI_TITLE_COLOR[t.tier]||DIGI_TITLE_COLOR.common:''}
-return {DIGI_TITLES,DIGI_TITLE_BY_ID,DIGI_TITLE_COLOR,digiTitleStats,digiTitleUnlocked,equippedDigiTitle,digiTitleColor,LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,MAX_SLOT,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,BAG_VERSION,GEAR_ITEM_CAP,GEAR_KINDS,GEAR_MAIN_STATS,GEAR_SPECIAL_STATS,GEAR_STAT_NAME,GEAR_STAT_CAP,FORGE_TIER_COST,REFINE_MAX,REFINE_BONUS,REFINE_COST,REFINE_SUCCESS,level,normalize,update,act,species,total,requirements,evolutionOptions,evolutionCatalog,evolutionPath,evolutionDepth,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagDismiss,bagReward,cleanGearItem,gearItemName,gearItemLabel,gearRefineTag,gearStatValue,gearAdd,gearEquip,gearUnequip,gearSellValue,gearSell,setGearAutoSell,gearBonuses,bagForge,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
+return {DIGI_TITLES,DIGI_TITLE_BY_ID,DIGI_TITLE_COLOR,digiTitleStats,digiTitleUnlocked,equippedDigiTitle,digiTitleColor,LINES,STARTERS,ROSTER,SPECIES,STAGES:DATA.STAGES,STATS,DURATION,MAX_EVOLUTIONS,MAX_SLOT,STARTER_POOL,ITEMS,COIN_START,SPAR_COINS,BAG_VERSION,GEAR_ITEM_CAP,GEAR_KINDS,GEAR_MAIN_STATS,GEAR_SPECIAL_STATS,GEAR_STAT_NAME,GEAR_STAT_CAP,FORGE_TIER_COST,REFINE_MAX,REFINE_BONUS,REFINE_COST,REFINE_SUCCESS,EVO_POINT_COST,evoPointCost,spendEvoPoints,level,normalize,update,act,species,total,requirements,evolutionOptions,evolutionCatalog,evolutionPath,evolutionDepth,completeWorldTraining,normalizeBag,ensureBag,bagBuy,bagHatch,bagDismiss,bagReward,cleanGearItem,gearItemName,gearItemLabel,gearRefineTag,gearStatValue,gearAdd,gearEquip,gearUnequip,gearSellValue,gearSell,gearSellMatchingAuto,setGearAutoSell,gearBonuses,bagForge,combatProfile,applyBattleReward,name:DATA.name,entry:DATA.entry,visualScale:DATA.visualScale};
 });

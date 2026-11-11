@@ -10684,3 +10684,12 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   the gear workspace, Evolution history and 36-title grid, with no page errors.
 * **Delivery:** prepared on `arena/5defc944-prontera-grind` for PR #206; includes the Social Worker
   and Pages client, with no migration or deployment.
+
+### 2026-11-11 — `haven-v386 independent follower, Evo Points, party HUD`
+
+* **Fixed:** a third DigiPet follows its trainer while one trains in the gym and another farms PvE. Activity partner picks no longer steal the follower, gym sessions use the Training tab's partner, and the plaza no longer hides every companion of a battling trainer.
+* **Changed:** each PvE run is scattered across the middle field from its battle id. Evolution is one-way; Evo Points drop from grind waves and pay the next roll (higher stages cost more). Pet gear refines to +10 on the main-game success curve. Pet Bag Sell matching dumps unequipped, unrefined pieces on Auto-sell tiers, and the inventory no longer jumps while scrolling.
+* **Changed:** MVP pond bosses sit lower in the water and draw larger. Party invites appear as an on-screen toast; an in-party HUD with a ring sits on the plaza; a Party-tab mute blocks invite pop-ups; the toolbar Party button flags a waiting invite.
+* **Try it:** put partner 1 in the gym, partner 2 on PvE, then walk with partner 3. Evolve with Evo Points, refine a piece toward +10, sell matching Auto-sell, and accept a party invite without opening the Party panel.
+* **Checks:** `digimon_sanctuary_sim.js`, `digimon_sanctuary_ui_sim.js`, `digimon_battle_sim.js`, `social_scene_sim.js` and `social_ui_sim.js` passed locally.
+* **Delivery:** local changes on `arena/ee2852a0-prontera-grind`; no deployment or migration.
