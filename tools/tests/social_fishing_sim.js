@@ -286,6 +286,9 @@ assert.equal(st.settings.fish,true,'v295 forces swimming pond fish on for every 
 assert.equal(st.settings.sound,true);
 st=F.normalize({bag:Array.from({length:300},(_,i)=>({sp:'minnow',w:.2,id:'x'+i}))});
 assert.equal(st.bag.length,F.BAG_MAX,'bag caps at '+F.BAG_MAX);
+// v385 player report: storage capacity must never prevent a landed Secret from unlocking its Index row.
+{const secret=F.SPECIES.find(sp=>sp.rarity==='secret');const kept=F.addCatch(st,{sp:secret.id,rarity:'secret',w:secret.min},Date.now());assert.equal(kept,null,'a full bag still cannot store another fish');assert.equal(st.dex[secret.id].n,1,'but the landed Secret is recorded in the Index');assert.equal(st.stats.catches,1,'and counts as a catch even though it was released')}
+
 // v288: the economy fields survive normalization and reject garbage.
 st=F.normalize(null);
 assert.equal(st.coins,0);assert.deepEqual(st.rods,['twig']);assert.equal(st.rod,'twig');assert.deepEqual(st.bait,{});assert.equal(st.baitSel,null);

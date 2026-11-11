@@ -564,18 +564,20 @@ function buyBagUpgrade(state){
  return {ok:true,tier:next.tier,cap:next.cap};
 }
 
-// Adds a rolled catch to the bag and bestiary. Returns the entry, or null when the bag is full.
+// Every landed fish is recorded in the Index even when storage is full. The previous early return
+// happened before dex update, so a player could visibly catch a Secret fish and still see “???”
+// forever. Returns the stored entry, or null only when the bag cannot keep it.
 function addCatch(state,c,now=Date.now()){
- if(!state||state.bag.length>=bagMax(state))return null;
+ if(!state)return null;
  const sp=speciesById(c.sp);if(!sp)return null;
  let id='f'+now.toString(36)+Math.floor(Math.random()*46656).toString(36);
  while(state.bag.some(e=>e.id===id))id+='x';
  const entry={id,sp:sp.id,w:Math.round(Math.max(.01,Math.min(3000,Number(c.w)||sp.min))*100)/100,mut:Object.hasOwn(MUTATIONS,c.mut)?c.mut:null,at:now,perfect:c.perfect===true,lock:false};
- state.bag.push(entry);
  const d=state.dex[entry.sp]||(state.dex[entry.sp]={n:0,bw:0,at:now,mut:[]});
  d.n++;if(entry.w>d.bw)d.bw=entry.w;if(entry.mut&&!d.mut.includes(entry.mut))d.mut.push(entry.mut);
  state.stats.catches++;if(entry.perfect)state.stats.perfects++;
- return entry;
+ if(state.bag.length>=bagMax(state))return null;
+ state.bag.push(entry);return entry;
 }
 // ---- Fishcoin economy. All return {ok,reason?} and never go negative or duplicate rods. ----
 function buyRod(state,id){
@@ -1674,7 +1676,7 @@ function finishReel(kind){
    const res=sellFish(state(),entry.id);
    if(res&&res.ok){persist();ui.result.autoSold=res.coins;sound('coin')}
   }
-  if(!entry)status('Bag full — the catch could not be kept!');
+  if(!entry)status('Bag full — fish released, but the catch is recorded in your Index!');
   // v297: a pond monster or a secret find goes to the room's Local chat. Fired from the catch
   // itself (not the Show off button) so auto-fishing announces too.
   if(sp&&ui.roll&&ui.roll.rarity==='mvp'){

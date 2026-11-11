@@ -596,3 +596,21 @@ this runtime. Gym apparatus is still scenery, not live training.
   `tools/mvp_art_crop.py`. Coverage: `social_scene_sim.js`, `social_ui_sim.js`,
   `social_fishing_sim.js`; current behavior is detailed in
   [Social hub](SOCIAL-HUB.md#staged-digipet-fights-activity-dock-and-fishing-mvp-pass-haven-v384).
+
+* **Persistent forms, compact gear and connected grind repeats (haven-v385):**
+  `assets/digimon-sanctuary.js` owns Bag schema v3 (`gearAutoSell`), safe manual
+  gear sale, 36 derived-progress titles and each partner's `unlocked` evolution
+  forms plus `peakStage`. Dismissing a species removes it from `owned` but leaves
+  its per-slot progression available for a later duplicate-protected hatch;
+  `switchForm` changes only the active form/stage and retains the progression and
+  form history. `assets/social.js` renders the kind-filtered icon inventory and
+  side inspector, restores the best saved copy when a dismissed species returns,
+  and keeps the Training/PvE panel selections independent from running-session
+  ownership. A PvE run first started in the farm can grant a socket-scoped repeat
+  permit in `workers/social/room.mjs`; only the same room, line, form, partner slot
+  and mode may resume away from the farm, and Stop, leave, room switch or socket
+  disconnect revokes it. `assets/social-fishing.js` records every landed catch in
+  the Index/statistics before deciding whether a full bag can store it. Coverage:
+  `digimon_sanctuary_sim.js`, `digimon_sanctuary_ui_sim.js`,
+  `sanctuary_battle_sim.js`, `social_ui_sim.js`, `social_fishing_sim.js` and
+  `social_worker_sim.mjs`.

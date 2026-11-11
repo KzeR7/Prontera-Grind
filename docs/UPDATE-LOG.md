@@ -10657,3 +10657,30 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   bridge sign/pond sprite, and the HUD was measured at 1440, 1080, 900, 720, 701, 700 and 390 px.
 * **Delivery:** local changes on `arena/5defc944-prontera-grind`; no deployment, Worker, Function
   or migration change.
+
+### 2026-11-11 — `haven-v385 DigiPet repeat grind, loadout bag, evolution memory, titles, Fishing Index`
+
+* **Changed:** PvE Grind now has its own Stop button. A repeat chain that began in the middle
+  field may continue while its trainer visits the rest of the connected plaza, but Stop, leaving,
+  switching rooms or going offline revokes the socket-scoped repeat permission.
+* **Changed:** Pet Bag equipment is a compact loadout workspace with equipment-type tabs, small
+  icons, a hover/click stat inspector, evolved-form holder names, manual selling and tier-based
+  auto-sell for future drops. Partner equipment slots now open the matching Bag tab and selected
+  piece so gear can be replaced or removed directly.
+* **Changed:** the DigiPet title catalog grows from 12 to 36 with smaller progress cards. Evolution
+  now remembers every reached form and the highest stage; dismissed DigiPets restore that history
+  if hatched again, and the Evolution tab can switch freely among unlocked lower or higher forms
+  without losing level, stats, wins or mastery.
+* **Fixed:** Training and PvE tabs retain independent partner choices, so a running activity no
+  longer pins the panel to the wrong DigiPet. A landed fish now updates Index discovery, best
+  weight, mutations and catch statistics before a full bag releases it, fixing missing Secret
+  Index entries.
+* **Try it:** start a repeating grind in the middle field, walk elsewhere in the plaza and use the
+  PvE tab's Stop button. In DigiPet, click a Partner loadout slot, inspect/sell gear in Pet Bag,
+  switch an evolved partner back and forth in Evolution, and review the 36-card Titles grid.
+* **Checks:** the complete local pre-push gate passed 217/217 with no dependency skips. The BUILD
+  refresh changed only the hashes in all three progression fixtures; all 126 measurements stayed
+  byte-identical. The built site also passed a real Chromium desktop and 390×844 layout check for
+  the gear workspace, Evolution history and 36-title grid, with no page errors.
+* **Delivery:** prepared on `arena/5defc944-prontera-grind` for PR #206; includes the Social Worker
+  and Pages client, with no migration or deployment.

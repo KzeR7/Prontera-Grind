@@ -101,13 +101,13 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  // path is exercised independently below/in the Sanctuary bag regression.
  w.S.digimonBag={v:1,coins:1000,food:99,eggs:0,owned:w.PGDigimonSanctuary.ROSTER};
  w.document.getElementById('sanctuaryOpen').click();assert(!w.document.getElementById('sanctuaryPanel').hidden);assert.equal(w.document.querySelectorAll('[data-sanctuary-pet]').length,0,'the owned-forms card grid is retired');assert.equal(w.PGDigimonSanctuary.ROSTER.length,280);
- assert.equal(w.S.digimonBag.v,2,'a v1 bag upgrades to the v2 gear schema when the panel opens');saved=0;
+ assert.equal(w.S.digimonBag.v,3,'a v1 bag upgrades to the v3 gear/auto-sell schema when the panel opens');saved=0;
  pick.value='patamon';pick.dispatchEvent(new w.Event('change'));assert.equal(pick.value,'patamon');assert.equal(w.S.digimonPartner,'patamon');assert.equal(scenePlayers.get(0).look.digimon,'patamon');assert.equal(saved,1);
  w.document.getElementById('sanctuaryDismiss').click();assert.equal(scenePlayers.get(0).look.digimon,undefined);assert.equal(w.S.pets[0].on,true);w.document.getElementById('sanctuaryClose').click();assert(w.document.getElementById('sanctuaryPanel').hidden);saved=0;
  // The real roster browser reaches an animation-only entry without mounting all 280 cards.
  w.document.getElementById('sanctuaryOpen').click();w.document.querySelector('.sanctuary-nav [data-sanctuary-view="index"]').click();const dexSearch=w.document.getElementById('sanctuaryIndexSearch');dexSearch.value='aegiomon';dexSearch.dispatchEvent(new w.Event('input',{bubbles:true}));assert(w.document.querySelector('[data-index-form="aegiomon"]'),'a legacy-owned variant stays listed in the DigiDex');w.document.querySelector('[data-digidex-assign="aegiomon"]').click();assert.equal(w.S.digimonPartner,'aegiomon');assert.equal(scenePlayers.get(0).look.digimon,'aegiomon');assert.equal(w.S.pets[0].sp,2);w.document.querySelector('.sanctuary-nav [data-sanctuary-view="partners"]').click();assert.match(w.document.getElementById('sanctuaryEvolutionView').textContent,/No direct source-listed evolution/,'the moved evolution view still explains a form with no listed branch');
  w.document.getElementById('sanctuaryDismiss').click();w.document.getElementById('sanctuaryClose').click();saved=0;
- assert.equal(pick.value,'');pick.value='patamon';pick.dispatchEvent(new w.Event('change'));assert.equal(w.S.digimonPartner,'patamon');assert.equal(scenePlayers.get(0).look.digimon,'patamon');assert.equal(saved,1);assert.equal(w.S.pets[0].sp,2);
+ assert.equal(pick.value,'');assert(!w.S.digimonBag.owned.includes('patamon'),'Dismiss removes the species from the active collection so it can hatch again');pick.value='agumon';pick.dispatchEvent(new w.Event('change'));assert.equal(w.S.digimonPartner,'agumon');assert.equal(scenePlayers.get(0).look.digimon,'agumon');assert.equal(saved,1);assert.equal(w.S.pets[0].sp,2);
  pick.value='';pick.dispatchEvent(new w.Event('change'));assert.equal(scenePlayers.get(0).look.digimon,undefined);assert.equal(w.S.pets[0].on,true);
 
  // Real UI actions persist independently of RO pets and require explicit evolution confirmation.
@@ -258,11 +258,12 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   const topped=w.PGDigimonSanctuary.normalize(w.S.digimonSanctuary);topped.partners.agumon.energy=70;w.S.digimonSanctuary=topped;
   Object.assign(trainer,{x:56,z:30,path:[],sit:false});
   panel.querySelector('[data-sap-tab="training"]').click();
-  // v373 (owner): the panel follows the selected DigiPet. Picking a grind partner made partner 2 the followed one,
-  // so the gym tab must show partner 2 as selected; picking partner 1 in the gym tab must move the selection back.
+  // v385: Training and PvE keep independent picks. Switching either tab updates immediately even
+  // while another partner owns a running session, instead of pinning the tab to that busy DigiPet.
   const gymPick=k=>panel.querySelector('[data-activity-slot="'+k+'"][data-kind="gym"]');
-  assert.equal(gymPick(1).getAttribute('aria-checked'),'true','the gym tab follows the DigiPet picked for the grind');
-  assert.equal(gymPick(0).getAttribute('aria-checked'),'false');
+  assert.equal(gymPick(0).getAttribute('aria-checked'),'true','the gym keeps its own partner instead of inheriting the PvE pick');
+  assert.equal(gymPick(1).getAttribute('aria-checked'),'false');
+  gymPick(1).click();assert.equal(w.S.plazaPartners.gym,1);assert.equal(gymPick(1).getAttribute('aria-checked'),'true','the training tab switches to partner 2 immediately');
   gymPick(0).click();
   assert.equal(w.S.digimonActiveSlot,0,'picking a gym partner makes it the followed DigiPet');
   assert.equal(gymPick(0).getAttribute('aria-checked'),'true','the gym tab moves its selection with the DigiPet');
@@ -272,6 +273,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert(gymStart,'the gym still accepts the other partner while one grinds');
   assert.equal(gymStart.slot,0,'the gym request names the gym partner');
   socket.onmessage({data:JSON.stringify({type:'gym_started',request:gymStart.request,gym:{room:1,stat:'agility',slot:0}})});
+  gymPick(1).click();assert.equal(gymPick(1).getAttribute('aria-checked'),'true','a running Partner 1 session no longer traps the Training tab on Partner 1');assert.match(panel.querySelector('#sapBody').textContent,/Partner 1 is training Agility/);gymPick(0).click();
   // Follower switch rules: a free slot switches freely, while the partner busy in the gym is refused outright.
   w.document.getElementById('sanctuaryOpen').click();
   w.document.querySelector('[data-partner-slot="1"]').click();
@@ -315,8 +317,8 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
    far();if(!panel.hidden)doc.getElementById('sapClose').click();far();
    assert(panel.hidden&&dock.hidden,'nothing running and nobody near an area: no panel, no dock');
    // Partner 4 fights; partners 1 and 2 stay home.
-   doc.getElementById('sanctuaryOpen').click();doc.querySelector('[data-partner-slot="3"]').click();pick.value='patamon';pick.dispatchEvent(new w.Event('change'));
-   assert.equal(w.S.digimonPartner4,'patamon','partner 4 holds its own DigiPet');assert.equal(w.S.digimonActiveSlot,3);doc.getElementById('sanctuaryClose').click();
+   doc.getElementById('sanctuaryOpen').click();doc.querySelector('[data-partner-slot="3"]').click();pick.value='palmon';pick.dispatchEvent(new w.Event('change'));
+   assert.equal(w.S.digimonPartner4,'palmon','partner 4 holds its own DigiPet');assert.equal(w.S.digimonActiveSlot,3);doc.getElementById('sanctuaryClose').click();
    field();
    assert(!panel.hidden,'standing still in the middle field opens the panel');assert.equal(title(),'DigiPet · PvE grind');
    assert.equal(startBtn.parentElement,panel.querySelector('.sap-pve-action'),'the Start button is a block inside the PvE tab');
@@ -331,7 +333,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
    let pve=chip('pve');
    assert(pve&&!dock.hidden,'a field grind gets its own dock chip');assert.deepEqual(kinds(),['pve']);
    assert(pve.classList.contains('is-pve'),'tinted as a field grind');
-   assert.equal(who(pve),'Patamon','the chip names the partner that is fighting');
+   assert.equal(who(pve),'Palmon','the chip names the partner that is fighting');
    assert.equal(sub(pve),'Stage 1 · wave 1/5 · ◈ 0','and says where the run is');
    assert.equal(pve.querySelector('[data-dock-open]').dataset.dockOpen,'pve','it opens the PvE tab');
    assert.equal(pve.querySelector('.dd-stop[data-dock-stop="pve"]').title,'Stop grinding','and carries its own Stop');
@@ -345,6 +347,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
    assert.equal(panel.querySelector('.sap-status b').textContent,'SOLO · GRINDING · STAGE 1','an own run reads SOLO (every online run used to read PARTY)');
    assert.deepEqual([...panel.querySelectorAll('.sap-partner.is-busy')].map(b=>b.dataset.activitySlot),['3'],'only the fighting partner is BUSY (the room lane was read as the partner slot, so Partner 1 was)');
    assert.equal(panel.querySelector('.sap-partner[data-activity-slot="3"]').getAttribute('aria-checked'),'true','and it is the one shown as picked');
+   assert.equal(panel.querySelector('[data-pve-stop]').textContent,'Stop grinding','the PvE grind tab has its own explicit Stop button');
    assert(startBtn.hidden,'no Start button while the run is on');
    panel.querySelector('[data-sap-tab="party"]').click();
    assert.deepEqual([...panel.querySelectorAll('.sap-party-row.is-grinding')].map(b=>b.dataset.activitySlot),['3'],'the Party overview shows the same partner grinding');
@@ -356,7 +359,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
    snap({party:true,owner:5,members:[5,0],slots:[{id:5,slot:1},{id:0,slot:3}],profile:{...profile,slot:1}});
    assert.equal(panel.querySelector('.sap-status b').textContent,'PARTY · GRINDING · STAGE 1','a party run reads PARTY');
    assert.deepEqual([...panel.querySelectorAll('.sap-partner.is-busy')].map(b=>b.dataset.activitySlot),['3'],'a party member\'s busy partner is their own, not the leader\'s');
-   assert.equal(who(chip('pve')),'Patamon');
+   assert.equal(who(chip('pve')),'Palmon');
    run.wave=1;snap();
    // The battle card is a row in the column, and plaza notices stay readable next to it.
    const card=doc.querySelector('#sanctuaryBattleHUD .sanctuary-battle-hud-card');
@@ -370,7 +373,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
    panel.querySelector('[data-activity-slot="0"][data-kind="gym"]').click();panel.querySelector('[data-gym-stat="power"]').click();
    assert.equal(sent.at(-1).type,'gym_start');room({type:'gym_started',request:sent.at(-1).request,gym:{room:1,stat:'power',slot:0}});
    assert.deepEqual(kinds(),['gym','pve'],'two activities at once are two chips');
-   assert.equal(who(chip('gym')),'Agumon');assert.equal(who(chip('pve')),'Patamon','each chip shows its own partner');
+   assert.equal(who(chip('gym')),'Agumon');assert.equal(who(chip('pve')),'Palmon','each chip shows its own partner');
    assert.match(sub(chip('gym')),/^Power training · \d+:\d\d left$/);
    for(const c of dock.querySelectorAll('.dd-chip')){assert(/%$/.test(ring(c)),'each chip has its own ring');assert(c.querySelector('.dd-stop'),'and its own Stop')}
    assert(bar.hidden,'a running gym session is shown by its chip, not by a second bar (v379)');
@@ -418,20 +421,21 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
    doc.getElementById('sapClose').click();field();
    n=sent.length;startBtn.click();out=sent.slice(n);assert.deepEqual(out.map(m=>m.type),['look','pve_start']);
    run=B.createPve({id:'pve:v384:2',owner:0,room:1,profile:out[1].profile,now:gymClock,random:()=>.5});run.slot=2;snap();
-   const ran=who(chip('pve'));assert.equal(ran,'Agumon','picking a gym partner made partner 1 the followed one, so the next grind is its run');
+   const ran=who(chip('pve'));assert.equal(ran,'Palmon','the PvE pick stays on partner 4 when the Training tab switches to partner 1');
    room({type:'pve_end',battleId:run.id,reason:'complete',mode:'grind',earned:{...run.earned}});run=null;snap();
    assert.equal(repeatDue().length,1,'a completed run schedules the next one');
    const gap=chip('pve');assert(gap,'the chip stays through the gap between two runs');
    assert.equal(sub(gap),'Next run starting…');assert.equal(who(gap),ran,'still showing the partner whose run just ended');assert.equal(gap.querySelector('.dd-stop').title,'Cancel the next run');
-   n=sent.length;const due=repeatDue()[0];due.off=true;due.fn();out=sent.slice(n);
-   assert.deepEqual(out.map(m=>m.type),['look','pve_start'],'the repeat sends the look first as well');
+   far();n=sent.length;const due=repeatDue()[0];due.off=true;due.fn();out=sent.slice(n);
+   assert.deepEqual(out.map(m=>m.type),['look','pve_start'],'the repeat sends the look first even after the player leaves the middle field');
+   assert.equal(out[1].resume,true,'the request identifies a server-authorized repeat rather than forging a new remote start');
    assert.equal(out[0].look.digimon,out[1].profile.form,'so the room sees the partner again before it is asked to field it');
    run=B.createPve({id:'pve:v384:3',owner:0,room:1,profile:out[1].profile,now:gymClock,random:()=>.5});run.slot=0;snap();
    room({type:'pve_end',battleId:run.id,reason:'defeat',mode:'grind',earned:{...run.earned}});run=null;snap();
    assert.equal(repeatDue().length,1,'a lost run repeats too');
    n=sent.length;chip('pve').querySelector('[data-dock-stop]').click();
    assert.equal(repeatDue().length,0,'Stop on the waiting chip cancels the next run');assert.equal(chip('pve'),null);
-   assert(!sent.slice(n).some(m=>m.type==='pve_start'));
+   assert.equal(sent.at(-1).type,'pve_stop','Stop during the repeat gap also revokes the room permit');assert(!sent.slice(n).some(m=>m.type==='pve_start'));
    repeat.checked=false;repeat.dispatchEvent(new w.Event('change',{bubbles:true}));
    // A ring match: the snapshot has no partner slot, and partners 1 and 2 are the same species.
    if(!panel.hidden)doc.getElementById('sapClose').click();far();
