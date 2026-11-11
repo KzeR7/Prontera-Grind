@@ -467,7 +467,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  const battleRangeCache=new Map();
  function unitRange(species){let r=battleRangeCache.get(species);if(!r){r=globalThis.PGDigimonBattle?.attackRange?.(species)||{ranged:false,range:1.8};battleRangeCache.set(species,r)}return r}
  const battleShots=[];
- function spawnBattleShot(from,to,now,boss=false,enemy=false){
+ function spawnBattleShot(from,to,now,boss=false,enemy=false,dur=460){
   if(battleShots.length>24)return;
   const col=boss?0xffd27a:enemy?0xef9c86:0xbfe8c6;
   const mesh=new T.Mesh(new T.SphereGeometry(boss?.2:.12,10,8),new T.MeshBasicMaterial({color:col,transparent:true,opacity:.95}));
@@ -475,7 +475,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   const halo=new T.Sprite(new T.SpriteMaterial({map:tex.glow,color:col,transparent:true,opacity:.75,depthWrite:false,blending:T.AdditiveBlending}));
   halo.scale.setScalar(boss?1.1:.7);mesh.add(halo);
   mesh.position.set(from.x,.55,from.z);mesh.userData.battleShot=true;scene.add(mesh);
-  battleShots.push({mesh,fromX:from.x,fromZ:from.z,toX:to.x,toZ:to.z,at:now,dur:460});
+  battleShots.push({mesh,fromX:from.x,fromZ:from.z,toX:to.x,toZ:to.z,at:now,dur});
  }
  function updateBattleShots(now){
   for(let i=battleShots.length-1;i>=0;i--){const shot=battleShots[i],t=(now-shot.at)/shot.dur;
@@ -492,9 +492,9 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  // feedback — burst particles, a floating damage number, a contact freeze and a shake on the
  // defender. Nothing here reads or touches authoritative combat state.
  const battleBursts=[],battlePopups=[],battleWaves=[];
-// v373 (owner: "the attacks are too fast to see and the melee ones headbutt each other"): melee units hold
-// MELEE_STANDOFF units from their target, and an attack keeps its swing for ATTACK_MS.
-const MELEE_STANDOFF=3.0,ATTACK_MS=520;let fxTextures=null;
+// v373 (owner: "the attacks are too fast to see and the melee ones headbutt each other"): an attack keeps
+// its swing for ATTACK_MS. v384: that now times only the ring duel - field fights are staged by STAGE below.
+const ATTACK_MS=520;let fxTextures=null;
  // v357 (owner: "the battle FX are still boxes" - third request): every particle was an
  // 8x8 white square, so hits read as flying pixels of cardboard. The whole particle set is
  // redrawn as painted light: soft radial glows, tapered comet streaks that rotate with
@@ -565,35 +565,95 @@ const MELEE_STANDOFF=3.0,ATTACK_MS=520;let fxTextures=null;
   ring.rotation.x=-Math.PI/2;ring.position.set(x,.14,z);ring.userData.battleShockwave=true;scene.add(ring);
   battleWaves.push({mesh:ring,at:clock,dur});
  }
- function spawnBattlePopup(x,z,amount,crit=false,tint='#fff6e0'){
-  const value=Math.max(0,Math.round(Number(amount)||0));
-  if(battlePopups.length>=24||value<=0)return;
-  const text=crit?value+'!':String(value);
+ function paintBattlePopup(pop){
+  const text=pop.crit?pop.value+'!':String(pop.value),ctx=pop.ctx;
   // v359 (owner: "increase the damage size, it's too small"): a wider sheet, bigger type
   // and a larger sprite scale - damage reads across the whole plaza camera.
+  if(ctx&&typeof ctx.fillText==='function'){if(typeof ctx.clearRect==='function')ctx.clearRect(0,0,192,96);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold '+(pop.crit?58:46)+'px "Courier New",monospace';
+   ctx.fillStyle='rgba(16,22,20,.92)';for(const [ox,oz] of [[3,0],[-3,0],[0,3],[0,-3]])ctx.fillText(text,96+ox,44+oz);
+   ctx.fillStyle=pop.crit?'#ffd98a':pop.tint;ctx.fillText(text,96,44);
+   if(pop.crit){ctx.font='bold 20px "Courier New",monospace';ctx.fillStyle='#ffd98a';ctx.fillText('CRIT',96,80)}}
+  pop.mesh.userData.battlePopupText=text;pop.mesh.userData.battlePopupCrit=!!pop.crit;pop.mesh.material.map.needsUpdate=true;
+ }
+ function spawnBattlePopup(x,z,amount,crit=false,tint='#fff6e0'){
+  const value=Math.max(0,Math.round(Number(amount)||0));
+  if(battlePopups.length>=24||value<=0)return null;
   const canvas=document.createElement('canvas');canvas.width=192;canvas.height=96;
-  const ctx=canvas.getContext('2d');
-  if(ctx&&typeof ctx.fillText==='function'){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold '+(crit?58:46)+'px "Courier New",monospace';
-   ctx.fillStyle='rgba(16,22,20,.92)';for(const [ox,oz] of [[3,0],[-3,0],[0,3],[0,-3]])ctx.fillText(String(text),96+ox,44+oz);
-   ctx.fillStyle=crit?'#ffd98a':tint;ctx.fillText(String(text),96,44);
-   if(crit){ctx.font='bold 20px "Courier New",monospace';ctx.fillStyle='#ffd98a';ctx.fillText('CRIT',96,80)}}
   const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthWrite:false}));
-  sprite.center.set(.5,.5);sprite.position.set(x+(battleHash('pop:'+text+':'+z.toFixed(2))-.5)*.7,1.55,z);
-  sprite.userData.battlePopup=true;sprite.userData.battlePopupText=String(text);sprite.userData.battlePopupCrit=!!crit;
-  scene.add(sprite);battlePopups.push({mesh:sprite,at:clock,dur:crit?1300:1050,crit});
+  sprite.center.set(.5,.5);sprite.position.set(x+(battleHash('pop:'+(crit?value+'!':value)+':'+z.toFixed(2))-.5)*.7,1.55,z);
+  sprite.userData.battlePopup=true;
+  // v384: the record keeps its canvas so a follow-up blow can add to the number (see landBattleHit).
+  const pop={mesh:sprite,ctx:canvas.getContext('2d'),value,crit:!!crit,tint,at:clock,dur:crit?1300:1050};paintBattlePopup(pop);
+  scene.add(sprite);battlePopups.push(pop);return pop;
+ }
+ // ---------- v384 staged field fights ----------
+ // Owner: "the PvE animation is still too fast and messy". Two tuning passes (v359 run speed, v373
+ // stand-off and swing time) kept the same shape - every unit circling its target and swinging on
+ // every 650 ms sim tick, all at once - so this replaces the shape instead of the numbers:
+ //  * the party holds a column on the west of its lane and the wave lines up across an aisle;
+ //  * the two sides take turns: a side's volley starts only once the other side's has landed;
+ //  * one swing per fighter per volley. Strikes the sim reports faster than that are carried by
+ //    the swing that delivers them, and the number shown is their true sum;
+ //  * a melee swing is one full pass of the form's own attack animation: step in, connect, step
+ //    back. Ranged forms stay on their slot and their shot carries the hit.
+ // Presentation only. Nothing here feeds back into the sim, the HUD or rewards, and the shared
+ // battle module (tick rate, damage, targeting) is untouched - so no balance and no Worker change.
+ const STAGE={
+  // formation (world units)
+  AISLE_MIN:4.2,AISLE_MAX:6.2,AISLE_PAD:2.6,ROW_MIN:2.4,ROW_MAX:3.6,RANGED_BACK:.9,BACK_COLUMN:2.6,REACH:.8,
+  // one swing (ms; speeds in units per second)
+  FAN:.45,DASH_SPEED:7.5,DASH_MIN:260,DASH_MAX:440,HOLD_MS:150,RETURN_SPEED:8.5,RETURN_MIN:280,RETURN_MAX:460,WINDUP_MS:160,SHOT_SPEED:16,SHOT_MIN:260,SHOT_MAX:380,SHOT_SWING_MS:800,IMPACT:.4,WALK_SPEED:5,
+  // volleys
+  SPREAD_MS:240,SPREAD_LATE_MS:120,LATE_MS:800,STAGGER_MIN:60,STAGGER_MAX:160,GAP_MS:160,HOME_SLACK_MS:20,GRACE_MS:120,SOFT_MS:600,FLUSH_MS:3000,DROP_MS:6000,QUEUE:12,COMBO_MS:450,
+  // a cleared wave (or a finished run) may stay up to LINGER_MS so its last blow is seen; FALL_MS shows the collapse
+  LINGER_MS:900,FALL_MS:420,LINGER_QUEUE:32,
+  // looks
+  SPAWN_MS:350,SPAWN_SPARKS:5,BODY_FADE_AT:950,BODY_FADE_MS:350,LEAVE_MS:320,HIT_SPARKS:8,CRIT_SPARKS:14};
+ const battleStages=new Map(),battleHolds=new Map(),battleLeaving=[];
+ // A strike that has arrived on its target: flash, shake, sparks and a number. Crits add the
+ // contact freeze and the ground ring. v384: in the field a normal hit is deliberately quieter
+ // (8 sparks, no ring) - with the sides taking turns a hit no longer has to shout to be noticed.
+ function landBattleHit(unit,amount,crit,heavy=false){
+  const p=unit.sprite.position,field=unit.spec.kind==='pve';
+  // Contact freeze + shake live on the defender; both are purely visual timers.
+  unit.shakeUntil=clock+(crit?340:220);unit.shakeAmp=crit?.24:.13;unit.hitStarted=clock;
+  if(crit){unit.hitStopUntil=clock+120;unit.hitStopClock=clock}
+  if(field){
+   spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?STAGE.CRIT_SPARKS:STAGE.HIT_SPARKS,crit?1.5:1.15,crit?.22:.16,crit?720:540);
+   if(crit||heavy)spawnBattleShockwave(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?700:560);
+  }else{
+   // The ring duel keeps its v373 weight: one fighter strikes at a time there, so nothing piles up.
+   spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?22:16,crit?1.6:1.3,crit?.24:.17,crit?760:600);
+   spawnBattleShockwave(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?700:560);
+  }
+  if(amount<=0)return;
+  // One number per target per volley: a blow that follows within COMBO_MS adds to the number
+  // already floating there instead of stacking a second one on top of it.
+  const pop=unit.popup;
+  if(field&&pop&&clock-pop.at<STAGE.COMBO_MS&&battlePopups.includes(pop)){pop.value+=amount;pop.crit=pop.crit||crit;pop.at=clock;pop.dur=pop.crit?1300:1050;paintBattlePopup(pop)}
+  else unit.popup=spawnBattlePopup(p.x,p.z,amount,crit,unit.spec.enemy?'#fff6e0':'#ff9c86');
+ }
+ // A swing that connects with no reported damage behind it (a room that does not stream its
+ // strikes): the blow still reads, it just carries no number.
+ function softBattleHit(unit){
+  const p=unit.sprite.position;unit.shakeUntil=clock+160;unit.shakeAmp=.08;unit.hitStarted=clock;
+  spawnBattleBurst(p.x,p.z,0xfff6e0,4,.9,.12,380);
  }
  function battleEvent(ev){
   if(!ev||typeof ev!=='object')return false;
   const kind=ev.kind==='pvp'?'pvp':'pve',unit=battleResidents.get(kind+':'+ev.battleId+':'+ev.to);
-  if(!unit)return false;
-  const p=unit.sprite.position,crit=!!ev.crit,amount=Math.max(0,Math.round(Number(ev.amount)||0));
-  // Contact freeze + shake live on the defender; both are purely visual timers.
-  unit.shakeUntil=clock+(crit?340:220);unit.shakeAmp=crit?.24:.13;
-  if(crit){unit.hitStopUntil=clock+120;unit.hitStopClock=clock}
-  spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?22:16,crit?1.6:1.3,crit?.24:.17,crit?760:600);
-  spawnBattleShockwave(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?700:560);
-  if(amount>0)spawnBattlePopup(p.x,p.z,amount,crit,unit.spec.enemy?'#fff6e0':'#ff9c86');
+  // A strike on a wave that is still waiting behind the one on screen is kept for it.
+  if(!unit){const hold=kind==='pve'&&battleHolds.get('pve:'+ev.battleId);if(!hold||hold.early.length>=STAGE.LINGER_QUEUE)return false;hold.early.push(ev);return true}
+  const crit=!!ev.crit,amount=Math.max(0,Math.round(Number(ev.amount)||0));
+  // The ring is a two-fighter duel with nothing to stage: its strikes land as they are reported.
+  if(kind==='pvp'){landBattleHit(unit,amount,crit);return true}
+  // A body that has already gone down has nothing left to show.
+  if(unit.fainted&&unit.spec.hp<=0)return true;
+  // v384: a field strike waits on its target until the attacker's swing (or shot) gets there;
+  // stageBattle() releases it at contact. The queue is bounded - the oldest entries fold together.
+  if(unit.pending.length>=STAGE.QUEUE){const first=unit.pending.shift();unit.pending[0].amount+=first.amount;unit.pending[0].crit=unit.pending[0].crit||first.crit}
+  unit.pending.push({amount,crit,at:clock});unit.owedDamage+=amount;unit.unsynced+=amount;
   return true;
  }
  function updateBattleFx(now){
@@ -617,15 +677,44 @@ const MELEE_STANDOFF=3.0,ATTACK_MS=520;let fxTextures=null;
    w.mesh.scale.setScalar(1+t*4.6);w.mesh.material.opacity=Math.max(0,.95*(1-t));
   }
  }
+ // Half the on-screen width of a fighter, in world units. Sprites are normalised to one figure
+ // height, so the roster's visual scale (and the boss enlargement) is all that is needed.
+ function battleBody(species,boss){return .46*1.45*(globalThis.PGDigimonSanctuary?.visualScale(species)||1)*(boss?1.5:1)}
+ // v384 formation. Each run owns one lane of the middle field. The party column is anchored to the
+ // lane and to the party's own sizes, so it never shifts when a wave changes; the wave lines up
+ // across an aisle wide enough for the two largest bodies plus room to step in. Slots follow the
+ // order of the run's own lists, which never reorder inside a wave, so a unit keeps its slot when
+ // a neighbour falls or a boss calls adds.
+ function battleFormation(run){
+  const lane=Number(run.slot)||0,fx=70+(lane%4-1.5)*8,fz=60+Math.floor(lane/4)*10;
+  const partners=(run.partners&&run.partners.length?run.partners:[run.partner]).filter(Boolean),enemies=(run.enemies||[]).filter(Boolean);
+  const widest=list=>list.reduce((n,u)=>Math.max(n,battleBody(u.form,u.boss)),.5),pw=widest(partners),ew=widest(enemies);
+  const span=(v,lo,hi)=>Math.max(lo,Math.min(hi,v)),aisle=span(pw+ew+STAGE.AISLE_PAD,STAGE.AISLE_MIN,STAGE.AISLE_MAX),rows=w=>span(1.9+w*.9,STAGE.ROW_MIN,STAGE.ROW_MAX);
+  const back=u=>unitRange(u.form).ranged?STAGE.RANGED_BACK:0,px=fx-1.6-pw,ex=px+aisle,pr=rows(pw),er=rows(ew),slots={partners:[],enemies:[]};
+  partners.forEach((u,i)=>slots.partners.push({x:span(px-back(u),47,93),z:span(fz+(i-(partners.length-1)/2)*pr,50,78)}));
+  // A wave fills a front line of up to three and puts the rest in the gaps behind it. A boss
+  // holds the middle of the line; its adds flank it first and then fill in behind.
+  const hasBoss=enemies.some(u=>u.boss),bossOrder=[[0,0],[0,-1],[0,1],[1,-.5],[1,.5],[1,-1.5],[1,1.5]],front=Math.min(3,enemies.length),rest=enemies.length-front;
+  enemies.forEach((u,i)=>{
+   let col=0,row=0;
+   if(hasBoss)[col,row]=bossOrder[Math.min(i,bossOrder.length-1)];
+   else if(i<front)row=i-(front-1)/2;
+   else{col=1;row=(i-front)-(rest-1)/2}
+   slots.enemies.push({x:span(ex+col*STAGE.BACK_COLUMN+back(u),47,93),z:span(fz+row*er,50,78)});
+  });
+  return {partners,enemies,slots};
+ }
  function battleSpecs(){
   const specs=[];
-  for(const run of battleState.pve||[]){
-   if(!run||run.phase==='ended')continue;const slot=Number(run.slot)||0,fx=70+(slot%4-1.5)*8,fz=60+Math.floor(slot/4)*10,runKey='pve:'+run.id;
-   const add=(key,u,x,z,enemy=false,role='enemy')=>{if(!u||!PGSocialDigimon?.clean(u.form))return;specs.push({key,runKey,role,species:u.form,x,z,hp:u.hp,maxHp:u.maxHp,label:(u.boss?'BOSS · ':'')+battleName(u.form),enemy,boss:!!u.boss,phase:run.phase,kind:'pve',owner:run.owner,wave:run.wave,attackAt:u.attackAt||0,hitAt:u.hitAt||0})};
-   // v355: a party run carries up to three partners; they spawn in a small spread row.
-   const partners=(run.partners&&run.partners.length?run.partners:[run.partner]).filter(Boolean);
-   partners.forEach((u,i)=>add(runKey+':partner'+(i||''),u,fx+(i-(partners.length-1)/2)*4.5,fz-(i?1.2:0),false,'partner'));
-   (run.enemies||[]).forEach((u,i)=>add(runKey+':'+u.id,u,fx-3+i*3,fz+4,true));
+  const shown=(battleState.pve||[]).filter(run=>run&&run.phase!=='ended');
+  // v384: a finished run that is still showing its last blow (see setBattleState) is drawn from its frozen copy.
+  for(const [runKey,hold] of battleHolds)if(hold.run&&!shown.some(run=>'pve:'+run.id===runKey))shown.push(hold.run);
+  for(const run of shown){
+   const runKey='pve:'+run.id,hold=battleHolds.get(runKey),form=battleFormation(hold&&hold.enemies?{...run,enemies:hold.enemies}:run);
+   const add=(key,u,slot,enemy=false,role='enemy')=>{if(!u||!PGSocialDigimon?.clean(u.form))return;specs.push({key,runKey,role,species:u.form,x:slot.x,z:slot.z,hp:u.hp,maxHp:u.maxHp,label:(u.boss?'BOSS · ':'')+battleName(u.form),enemy,boss:!!u.boss,phase:run.phase,kind:'pve',owner:run.owner,wave:run.wave,attackAt:u.attackAt||0,hitAt:u.hitAt||0})};
+   // v355: a party run carries up to three partners; v384: they share the party column.
+   form.partners.forEach((u,i)=>add(runKey+':partner'+(i||''),u,form.slots.partners[i],false,'partner'));
+   form.enemies.forEach((u,i)=>add(runKey+':'+u.id,u,form.slots.enemies[i],true));
   }
   const match=battleState.pvp;if(match&&match.phase!=='closed')for(const [i,p] of (match.participants||[]).entries()){
    const u=p.unit;if(!u||!PGSocialDigimon?.clean(u.form))continue;const r=R.SANCTUARY_RING;specs.push({key:'pvp:'+match.id+':'+p.id,role:'pvp',side:p.side,species:u.form,x:r.x+(p.side==='left'?-4:4),z:r.z,hp:u.hp,maxHp:u.maxHp,label:p.name||('PLAYER '+(i+1)),enemy:i===1,boss:false,phase:match.phase,kind:'pvp',owner:p.id,winnerId:match.winnerId,attackAt:u.attackAt||0,hitAt:u.hitAt||0});
@@ -633,77 +722,247 @@ const MELEE_STANDOFF=3.0,ATTACK_MS=520;let fxTextures=null;
   return specs;
  }
  function battleHash(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0)/4294967296}
- function battleSpawn(s){
-  if(s.kind==='pvp'||s.role==='partner')return {x:s.x,z:s.z};
-  // Stable per battle/unit random-looking spawns are shared by every spectator and do not
-  // reroll when a 250 ms server snapshot arrives. They affect presentation, never combat.
-  const angle=battleHash(s.key+':angle')*Math.PI*2,radius=8+battleHash(s.key+':radius')*8;
-  return {x:Math.max(47,Math.min(93,s.x+Math.cos(angle)*radius)),z:Math.max(50,Math.min(78,s.z+Math.sin(angle)*radius))};
- }
+ // v384: every unit appears on its own formation slot. (Field bots used to be dropped 8-16 units
+ // out and run in, so they were being hit while they were still on their way.)
+ function battleSpawn(s){return {x:s.x,z:s.z}}
  function battleApproach(from,to,distance,tolerance=.05){const dx=to.x-from.x,dz=to.z-from.z,length=Math.hypot(dx,dz);if(length<=tolerance)return {x:to.x,z:to.z};const travel=Math.min(Math.max(0,distance),Math.max(0,length-tolerance));return {x:from.x+dx/length*travel,z:from.z+dz/length*travel}}
- function setBattleState(next){
-  battleState={pve:Array.isArray(next?.pve)?next.pve:[],pvp:next?.pvp||null};battleParticipantIds.clear();
-  for(const run of battleState.pve)if(Number.isInteger(run.owner))battleParticipantIds.add(run.owner);
-  for(const p of battleState.pvp?.participants||[])if(Number.isInteger(p.id))battleParticipantIds.add(p.id);
-  const keep=new Set();for(const spec of battleSpecs()){
-   keep.add(spec.key);let u=battleResidents.get(spec.key);if(!u){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const ring=new T.Mesh(new T.RingGeometry(.8,1,24),new T.MeshBasicMaterial({color:spec.kind==='pvp'?0xf3c876:0x9ed6b0,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.userData.battleAccent=true;scene.add(ring);const spawn=battleSpawn(spec),lastMove=performance.now();sprite.position.set(spawn.x,.06,spawn.z);u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec,spawn,lastMove,lastAttack:spec.attackAt,attackStarted:-Infinity,lastHit:spec.hitAt,hitStarted:-Infinity,ranged:false,shakeUntil:0,shakeAmp:0,hitStopUntil:0,hitStopClock:0,fainted:false,ghosts:null};battleResidents.set(spec.key,u)}u.spec=spec;u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;u.sprite.userData.battleRole=spec.role;u.sprite.userData.battleName=spec.label;u.sprite.userData.battleSpawn={...u.spawn};digimonStore?.request(spec.species);
+ function disposeBattleUnit(u){scene.remove(u.sprite);u.sprite.material.dispose();u.texture.dispose()}
+ // v384: a field unit that drops out of the snapshot (its wave was replaced, the run is over)
+ // shows any strike still on its way to it and fades out, instead of blinking off with that
+ // damage never seen. Ring fighters leave at once, as before.
+ // A swing that will never connect (its fighter was felled or removed first): what it carried goes
+ // back to the front of each target's queue, still owed, so it is shown rather than lost.
+ function dropBattleSwing(u){
+  const w=u.swing;u.swing=null;if(!w||w.landed)return;
+  for(const h of w.hits){const t=h.count&&battleResidents.get(h.key);if(t)t.pending.unshift({amount:h.amount,crit:h.crit,at:h.at})}
+ }
+ function retireBattleUnit(u){
+  if(u.owedDamage>0&&u.sprite.visible&&u.bornAt!=null)landBattleHit(u,u.owedDamage,u.pending.some(e=>e.crit));
+  dropBattleSwing(u);u.pending.length=0;u.owedDamage=0;
+  scene.remove(u.ring);u.ring.geometry.dispose();u.ring.material.dispose();
+  if(u.ghosts)for(const g of u.ghosts){scene.remove(g);g.material.dispose()}u.ghosts=null;
+  if(u.bornAt==null||!u.sprite.visible||u.sprite.material.opacity<.05){disposeBattleUnit(u);return}
+  for(const k of ['battleKind','battleOwner','battleRole','battleName','battleSpawn','battleWalking','battleRanged','battleBoss','battleStance'])delete u.sprite.userData[k];
+  u.sprite.userData.battleLeaving=true;u.sprite.material.color.setHex(0xffffff);
+  battleLeaving.push({u,at:clock,from:u.sprite.material.opacity});
+ }
+ // Is what is on screen for this run still finishing? A blow is still to be shown, a collapse is
+ // still playing, or a partner is still out in the field (a new wave must not fade in around it).
+ // For a wave change only the bots can be owed anything that matters; for a finished run everyone can.
+ function battleRunBusy(runKey,now,ended){
+  for(const u of battleResidents.values()){
+   if(u.spec.runKey!==runKey||u.bornAt==null||!u.sprite.visible)continue;
+   if((ended||u.spec.enemy)&&(u.owedDamage>0||(u.fainted&&now-u.faintAt<STAGE.FALL_MS)))return true;
+   if(!u.spec.enemy&&u.swing)return true;
   }
-  for(const [key,u] of battleResidents)if(!keep.has(key)){scene.remove(u.sprite,u.ring);if(u.ghosts)for(const g of u.ghosts)scene.remove(g);u.sprite.material.dispose();u.texture.dispose();u.ring.geometry.dispose();u.ring.material.dispose();battleResidents.delete(key)}
-  for(const r of residents)r.sprite.visible=!battleState.pve.length;
+  return false;
+ }
+ function setBattleState(next){
+  const before=battleState.pve||[];
+  battleState={pve:Array.isArray(next?.pve)?next.pve:[],pvp:next?.pvp||null};battleParticipantIds.clear();
+  // v384: the sim moves on the moment a wave is cleared or a run is over, whether or not the blow
+  // that did it has been shown yet. If it has not, what is on screen stays where it is - felled, as
+  // the sim left it - until that blow lands and the collapse has played (at most LINGER_MS);
+  // updateBattleResidents() then lets the next wave in, or lets the finished run fade out.
+  for(const old of before){
+   if(!old||old.phase==='ended')continue;const runKey='pve:'+old.id,run=battleState.pve.find(r=>r&&r.id===old.id&&r.phase!=='ended');
+   if(run===old||battleHolds.has(runKey)||!battleRunBusy(runKey,clock,!run))continue;
+   // Frozen as the sim left it: the last snapshot minus the strikes reported after it.
+   const final=(key,e)=>{const u=battleResidents.get(key);return u?{...e,hp:Math.max(0,u.spec.hp-u.unsynced)}:{...e}},enemies=(old.enemies||[]).filter(Boolean).map(e=>final(runKey+':'+e.id,e));
+   if(run){
+    // Next wave: every bot on screen was replaced. (A boss calling adds keeps its own id - no hold.)
+    const ids=new Set((run.enemies||[]).map(e=>e&&e.id));
+    if(enemies.length&&enemies.every(e=>!ids.has(e.id)))battleHolds.set(runKey,{until:clock+STAGE.LINGER_MS,enemies,early:[]});
+   }else{
+    // Run over: the party is frozen too (a defeat is the blow that felled the last partner).
+    const partners=(old.partners&&old.partners.length?old.partners:[old.partner]).filter(Boolean).map((e,i)=>final(runKey+':partner'+(i||''),e));
+    battleHolds.set(runKey,{until:clock+STAGE.LINGER_MS,run:{...old,partner:partners[0],partners,enemies},early:[]});
+   }
+  }
+  for(const run of battleState.pve)if(Number.isInteger(run.owner))battleParticipantIds.add(run.owner);
+  for(const hold of battleHolds.values())if(hold.run&&Number.isInteger(hold.run.owner))battleParticipantIds.add(hold.run.owner);
+  for(const p of battleState.pvp?.participants||[])if(Number.isInteger(p.id))battleParticipantIds.add(p.id);
+  const keep=new Set(),runs=new Set();for(const spec of battleSpecs()){
+   keep.add(spec.key);if(spec.runKey)runs.add(spec.runKey);let u=battleResidents.get(spec.key);if(!u){const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.center.set(.5,.25);scene.add(sprite);const ring=new T.Mesh(new T.RingGeometry(.8,1,24),new T.MeshBasicMaterial({color:spec.kind==='pvp'?0xf3c876:0x9ed6b0,transparent:true,opacity:.65,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.userData.battleAccent=true;scene.add(ring);const spawn=battleSpawn(spec),lastMove=performance.now();sprite.position.set(spawn.x,.06,spawn.z);
+    u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec,spawn,lastMove,lastAttack:spec.attackAt,attackStarted:-Infinity,lastHit:spec.hitAt,hitStarted:-Infinity,ranged:false,shakeUntil:0,shakeAmp:0,hitStopUntil:0,hitStopClock:0,fainted:false,faintAt:0,ghosts:null,
+     // v384 staging: where the unit stands and the slot it owns; the strikes waiting to be shown
+     // on it and their total; the swings it owes; the swing it is in; when it first appeared.
+     px:spawn.x,pz:spawn.z,home:{x:spawn.x,z:spawn.z},pending:[],owedDamage:0,unsynced:0,owedSwings:0,owedAt:0,swing:null,bornAt:null,popup:null};
+    battleResidents.set(spec.key,u)}
+   // `unsynced` is the damage reported since the last snapshot - a snapshot already includes it.
+   u.spec=spec;u.unsynced=0;if(spec.kind==='pve'){u.home.x=spec.x;u.home.z=spec.z}
+   u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;u.sprite.userData.battleRole=spec.role;u.sprite.userData.battleName=spec.label;u.sprite.userData.battleSpawn={...u.spawn};digimonStore?.request(spec.species);
+  }
+  for(const [key,u] of battleResidents)if(!keep.has(key)){retireBattleUnit(u);battleResidents.delete(key)}
+  for(const key of [...battleStages.keys()])if(!runs.has(key))battleStages.delete(key);
+  for(const key of [...battleHolds.keys()])if(!runs.has(key))battleHolds.delete(key);
+  for(const r of residents)r.sprite.visible=!battleState.pve.length&&!battleHolds.size;
  }
  function battleTravel(unit,now){const elapsed=Math.max(0,Math.min(.5,(now-(unit.lastMove??now))/1000));unit.lastMove=now;return elapsed*BATTLE_RUN_SPEED}
+ // One swing. Melee: step in to arm's length of the target's slot, hold, step back. Ranged: stay
+ // put, wind up, and let the shot carry the hit. `hits` is what lands at contact; hits[0] is the
+ // target the fighter faces.
+ function makeSwing(u,hits,startAt){
+  const t=battleResidents.get(hits[0].key),from={x:u.px,z:u.pz},aim=t?t.home:from,dx=aim.x-from.x,dz=aim.z-from.z,dist=Math.hypot(dx,dz)||1,span=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  if(unitRange(u.spec.species).ranged){
+   const fireAt=startAt+STAGE.WINDUP_MS;
+   return {hits,ranged:true,startAt,impactAt:fireAt,contactAt:fireAt+span(dist/STAGE.SHOT_SPEED*1000,STAGE.SHOT_MIN,STAGE.SHOT_MAX),holdUntil:fireAt,endAt:startAt+STAGE.SHOT_SWING_MS,from,to:from,fired:false,landed:false};
+  }
+  // REACH keeps a visible gap between the two bodies at contact (v373: "the melee ones headbutt
+  // each other"). The fighter stops in front of its target, on its own side of the aisle and at
+  // most FAN off the straight line across, so a swing from another row never ends beside the
+  // target's neighbours.
+  const reach=battleBody(u.spec.species,u.spec.boss)+(t?battleBody(t.spec.species,t.spec.boss):.6)+STAGE.REACH,ax=from.x-aim.x,az=from.z-aim.z,slope=span(az/Math.max(.001,Math.abs(ax)),-STAGE.FAN,STAGE.FAN),norm=Math.hypot(1,slope);
+  const to=Math.abs(ax)>reach/norm?{x:aim.x+(ax<0?-1:1)*reach/norm,z:aim.z+slope*reach/norm}:from,travel=Math.hypot(to.x-from.x,to.z-from.z),dash=span(travel/STAGE.DASH_SPEED*1000,STAGE.DASH_MIN,STAGE.DASH_MAX),back=span(Math.hypot(to.x-u.home.x,to.z-u.home.z)/STAGE.RETURN_SPEED*1000,STAGE.RETURN_MIN,STAGE.RETURN_MAX);
+  return {hits,ranged:false,startAt,impactAt:startAt+dash,contactAt:startAt+dash,holdUntil:startAt+dash+STAGE.HOLD_MS,endAt:startAt+dash+STAGE.HOLD_MS+back,from,to,fired:true,landed:false};
+ }
+ // Where a swinging fighter stands at `now` and how far through its attack animation it is
+ // (frac -1 = still waiting for its turn in the volley). The animation is mapped onto the swing so
+ // it plays through exactly once, with its IMPACT point on the moment of contact (or the shot).
+ function swingPose(u,w,now){
+  if(now<w.startAt)return {x:w.from.x,z:w.from.z,frac:-1,dash:false};
+  const frac=now<w.impactAt?(now-w.startAt)/(w.impactAt-w.startAt)*STAGE.IMPACT:STAGE.IMPACT+Math.min(1,(now-w.impactAt)/(w.endAt-w.impactAt))*(1-STAGE.IMPACT),ease=t=>t*t*(3-2*t);
+  if(w.ranged)return {x:w.from.x,z:w.from.z,frac,dash:false};
+  if(now<w.contactAt){const k=ease((now-w.startAt)/(w.contactAt-w.startAt));return {x:w.from.x+(w.to.x-w.from.x)*k,z:w.from.z+(w.to.z-w.from.z)*k,frac,dash:true}}
+  if(now<w.holdUntil)return {x:w.to.x,z:w.to.z,frac,dash:false};
+  const k=ease(Math.min(1,(now-w.holdUntil)/(w.endAt-w.holdUntil)));
+  return {x:w.to.x+(u.home.x-w.to.x)*k,z:w.to.z+(u.home.z-w.to.z)*k,frac,dash:false};
+ }
+ // The director for one field run: releases strikes at contact and decides whose volley is next.
+ function stageBattle(runKey,list,now){
+  let st=battleStages.get(runKey);if(!st){st={turn:'',busyUntil:0};battleStages.set(runKey,st)}
+  const units=list.map(s=>battleResidents.get(s.key)).filter(Boolean),ready=u=>!!digimonStore?.ready(u.spec.species),over=!!battleHolds.get(runKey)?.run;
+  // On its feet as drawn: a unit the sim has already felled stands until that blow has been shown.
+  const standing=u=>ready(u)&&!(u.spec.hp<=0&&u.owedDamage<=0);
+  const release=(t,amount,crit,count,heavy)=>{t.owedDamage=Math.max(0,t.owedDamage-amount);if(!ready(t))return;if(count)landBattleHit(t,amount,crit,heavy);else softBattleHit(t)};
+  const drain=t=>{let amount=0,crit=false;for(const e of t.pending){amount+=e.amount;crit=crit||e.crit}t.pending.length=0;return {amount,crit}};
+  for(const u of units){
+   const s=u.spec,w=u.swing;
+   // The sim counts every strike a unit makes; a rise since the last look means it owes a swing.
+   // (A partner's counter restarts at each wave - that is not a strike.)
+   if(s.attackAt!==u.lastAttack){if(s.attackAt>u.lastAttack){if(!u.owedSwings)u.owedAt=now;u.owedSwings=Math.min(4,u.owedSwings+s.attackAt-u.lastAttack)}u.lastAttack=s.attackAt}
+   u.lastHit=s.hitAt;
+   if(w){
+    // Contact: everything this swing carries lands now. A fighter felled before it connects gives
+    // its strikes back to their targets, to be shown once those are standing on their slots.
+    if(!w.landed&&!standing(u))dropBattleSwing(u);
+    else if(!w.landed&&now>=w.contactAt){w.landed=true;for(const h of w.hits){const t=battleResidents.get(h.key);if(t)release(t,h.amount,h.crit,h.count,!!s.boss)}}
+    if(u.swing&&(now>=w.endAt||!standing(u)))u.swing=null;
+   }
+   // Strikes nobody could deliver (their attacker is gone, or art is still loading) land on their
+   // own once stale - and are dropped without a show if they are older than anyone would connect.
+   if(u.pending.length&&now-u.pending[0].at>=STAGE.FLUSH_MS){const quiet=now-u.pending[0].at>=STAGE.DROP_MS;if(quiet||!u.swing){const d=drain(u);if(quiet)u.owedDamage=Math.max(0,u.owedDamage-d.amount);else release(u,d.amount,d.crit,1,false)}}
+  }
+  if(now<st.busyUntil)return;
+  const team={partner:units.filter(u=>u.spec.role==='partner'),enemy:units.filter(u=>u.spec.role!=='partner')};
+  const plan=side=>{
+   const foes=team[side==='partner'?'enemy':'partner'],waiting=foes.filter(u=>u.pending.length&&ready(u)),mine=team[side].filter(standing),owing=mine.filter(u=>u.owedSwings>0);
+   if(waiting.length){
+    // The strike messages arrive just ahead of the snapshot that says who threw them: give that a moment.
+    // (A run that is over gets no further snapshot.)
+    if(!over&&!owing.length&&now-Math.min(...waiting.map(u=>u.pending[0].at))<STAGE.GRACE_MS)return null;
+    // A run that is already over only plays out the blows that fell someone; the rest land as plain hits.
+    const lethal=waiting.some(u=>u.spec.hp<=0);
+    return {side,foes,waiting,fighters:over&&!lethal?[]:owing.length?owing:mine.slice(0,1),lethal,urgent:lethal&&(over||foes.every(u=>u.spec.hp<=0))};
+   }
+   // No strike reports for a while (a room that does not stream them): the swing still plays, without a number.
+   const soft=over?[]:owing.filter(u=>now-u.owedAt>=STAGE.SOFT_MS);
+   return soft.length&&foes.some(standing)?{side,foes,waiting,fighters:soft,lethal:false,urgent:false}:null;
+  };
+  // Turns alternate, with a beat between them. Only the blow that clears the wave (or ends the
+  // run) jumps the queue: the sim replaces a cleared wave after 1.2 s and that kill should be seen.
+  // (Letting every kill go first starved the wave in a party fight - three partners fell a bot
+  // on nearly every tick, so the bots never got a turn and their strikes surfaced as bare numbers.)
+  const plans=[plan('partner'),plan('enemy')].filter(Boolean);
+  // Strikes nobody is left to deliver (their side is down, or the run is over) land as plain hits
+  // once the fighter they are for is back on its slot. That takes nobody's turn.
+  for(const p of plans)if(!p.fighters.length)for(const t of p.waiting)if(!t.swing){const d=drain(t);release(t,d.amount,d.crit,1,false)}
+  const [a,b]=plans.filter(p=>p.fighters.length),next=a&&b?(a.urgent!==b.urgent?(a.urgent?a:b):st.turn===a.side?b:a):a;
+  if(!next)return;
+  // Everyone taking part has to be back on their slot before the volley starts - except for the
+  // blow that fells a unit: a fighter whose last swing has already connected turns straight back
+  // in for it. (The sim replaces a cleared wave after 1.2 s; the kill has to be seen before that.)
+  // Everyone a volley is about to strike has to be back on their slot by the time its first blow
+  // can arrive.
+  if(next.fighters.some(u=>u.swing&&(!next.lethal||!u.swing.landed)))return;
+  const lead=next.fighters.some(u=>!unitRange(u.spec.species).ranged)?STAGE.DASH_MIN:STAGE.WINDUP_MS+STAGE.SHOT_MIN;
+  if(next.waiting.some(t=>t.swing&&t.swing.endAt>now+lead-STAGE.HOME_SLACK_MS))return;
+  // Fighters of one volley step out one after another. When the oldest strike has already waited
+  // a while (a full party fights faster than turn-taking can show) the ripple tightens to catch up.
+  const late=now-Math.min(now,...next.waiting.map(u=>u.pending[0].at))>=STAGE.LATE_MS,fighters=next.fighters,n=fighters.length,stagger=n>1?Math.max(STAGE.STAGGER_MIN,Math.min(STAGE.STAGGER_MAX,(late?STAGE.SPREAD_LATE_MS:STAGE.SPREAD_MS)/(n-1))):0;
+  // The blow that fells a unit is delivered first, then the oldest.
+  const queue=next.waiting.slice().sort((x,y)=>(x.spec.hp<=0?0:1)-(y.spec.hp<=0?0:1)||x.pending[0].at-y.pending[0].at),softFoe=next.foes.find(standing);
+  let total=queue.reduce((sum,u)=>sum+u.pending.length,0),started=0,last=now,sweeper=null;
+  const claim=(t,count)=>{const h={key:t.spec.key,amount:0,crit:false,count:0,at:now};for(const e of t.pending.splice(0,count)){h.amount+=e.amount;h.crit=h.crit||e.crit;h.at=Math.min(h.at,e.at);h.count++}total-=h.count;return h};
+  fighters.forEach((u,i)=>{
+   // Each fighter takes an even share of what is waiting, oldest target first, and delivers it in one swing.
+   const t=queue.find(q=>q.pending.length),hits=[];
+   if(t)hits.push(claim(t,Math.min(t.pending.length,Math.max(1,Math.ceil(total/(n-i))))));
+   else if(!queue.length&&softFoe)hits.push({key:softFoe.spec.key,amount:0,crit:false,count:0});
+   if(!hits.length)return;
+   u.swing=makeSwing(u,hits,now+started*stagger);started++;last=Math.max(last,u.swing.contactAt);if(u.spec.boss)sweeper=u;
+  });
+  // A boss swing sweeps: whatever else is still waiting lands with it (its slam hits the whole party).
+  if(sweeper)for(const q of queue)if(q.pending.length)sweeper.swing.hits.push(claim(q,q.pending.length));
+  for(const u of team[next.side])u.owedSwings=0;
+  st.turn=next.side;st.busyUntil=last+STAGE.GAP_MS;
+ }
  function updateBattleResidents(now){
+  // A lingering wave or run leaves once its last blow and collapse have been seen (or time is up).
+  for(const [runKey,hold] of battleHolds){
+   if(now<hold.until&&battleRunBusy(runKey,now,!!hold.run))continue;
+   battleHolds.delete(runKey);setBattleState(battleState);for(const ev of hold.early)battleEvent(ev);
+  }
   const positions=new Map(),targets=new Map(),groups=new Map(),specs=battleSpecs();
   for(const s of specs){if(s.kind!=='pve')continue;if(!groups.has(s.runKey))groups.set(s.runKey,[]);groups.get(s.runKey).push(s)}
-  for(const list of groups.values()){
-   const partners=list.filter(s=>s.role==='partner'),partner=partners[0],enemies=list.filter(s=>s.role==='enemy'),partnerUnit=partner&&battleResidents.get(partner.key),partnerTravel=partnerUnit?battleTravel(partnerUnit,now):0;
-   if(!partner||!partnerUnit)continue;
-   const enemyUnits=enemies.map(s=>({s,u:battleResidents.get(s.key)})).filter(x=>x.u),anchors=[partnerUnit.spawn,...enemyUnits.map(x=>x.u.spawn)],center={x:Math.max(51,Math.min(89,anchors.reduce((n,p)=>n+p.x,0)/anchors.length)),z:Math.max(54,Math.min(74,anchors.reduce((n,p)=>n+p.z,0)/anchors.length))};
-   const from=partnerUnit.sprite.position,living=enemies.filter(s=>s.hp>0),target=living.sort((a,b)=>{const au=battleResidents.get(a.key).sprite.position,bu=battleResidents.get(b.key).sprite.position;return Math.hypot(au.x-from.x,au.z-from.z)-Math.hypot(bu.x-from.x,bu.z-from.z)})[0];
-   // Every unit approaches a stable attack slot. Nobody chases the partner's centre or
-   // snaps onto it when the target moves; new waves simply receive a new formation.
-   // v350: a form's attack range decides how close its slot sits. Brawlers press in,
-   // quick forms skirmish from a distance, and a boss holds the middle on its own.
-   const start=battleHash(partner.runKey+':wave'+partner.wave+':formation')*Math.PI*2,enemySlots=new Map();
-   for(const [index,enemy]of enemies.entries()){const unit=battleResidents.get(enemy.key);if(!unit||enemy.phase!=='fighting'||enemy.hp<=0)continue;const range=unitRange(enemy.species),radius=enemy.boss?3.8:range.ranged?Math.max(4.8,range.range+1.6):3.6;const angle=start+index*Math.PI*2/Math.max(1,enemies.length);enemySlots.set(enemy.key,{x:center.x+Math.cos(angle)*radius,z:center.z+Math.sin(angle)*radius})}
-   if(partner.phase==='fighting'&&partner.hp>0){
-    let slot=center;
-    if(target&&enemySlots.has(target.key)){const es=enemySlots.get(target.key),dx=center.x-es.x,dz=center.z-es.z,len=Math.hypot(dx,dz)||1,pr=unitRange(partner.species),standoff=pr.ranged?pr.range:MELEE_STANDOFF;slot={x:Math.max(49,Math.min(91,es.x+dx/len*standoff)),z:Math.max(52,Math.min(76,es.z+dz/len*standoff))}}
-    positions.set(partner.key,battleApproach(from,slot,partnerTravel));
-    if(target){const targetUnit=battleResidents.get(target.key);targets.set(partner.key,{x:targetUnit.sprite.position.x,z:targetUnit.sprite.position.z})}
-   }
-   // v355: the rest of the party flanks the leader in a readable row, each aiming at its
-   // own nearest living enemy instead of stacking on the primary partner.
-   for(let pi=1;pi<partners.length;pi++){
-    const ally=partners[pi],unit=battleResidents.get(ally.key);if(!unit||ally.phase!=='fighting'||ally.hp<=0)continue;
-    const rowSlot={x:Math.max(49,Math.min(91,center.x+(pi-(partners.length-1)/2)*2.6)),z:Math.max(52,Math.min(76,center.z-2.6))};
-    positions.set(ally.key,battleApproach(unit.sprite.position,rowSlot,battleTravel(unit,now)));
-    const near=enemies.filter(e=>e.hp>0&&battleResidents.get(e.key)).sort((a,b)=>{const au=battleResidents.get(a.key).sprite.position,bu=battleResidents.get(b.key).sprite.position;return Math.hypot(au.x-unit.sprite.position.x,au.z-unit.sprite.position.z)-Math.hypot(bu.x-unit.sprite.position.x,bu.z-unit.sprite.position.z)})[0];
-    if(near){const nu=battleResidents.get(near.key);targets.set(ally.key,{x:nu.sprite.position.x,z:nu.sprite.position.z})}
-   }
-   for(const [index,enemy]of enemies.entries()){const unit=battleResidents.get(enemy.key);if(!unit)continue;const slot=enemySlots.get(enemy.key);if(!slot)continue;const travel=battleTravel(unit,now);positions.set(enemy.key,battleApproach(unit.sprite.position,slot,travel));const aimUnits=partners.map(p=>battleResidents.get(p.key)).filter(Boolean);const aimU=aimUnits.sort((a,b)=>Math.hypot(a.sprite.position.x-unit.sprite.position.x,a.sprite.position.z-unit.sprite.position.z)-Math.hypot(b.sprite.position.x-unit.sprite.position.x,b.sprite.position.z-unit.sprite.position.z))[0];const aim=(aimU&&positions.get(aimU.spec.key))||positions.get(partner.key)||center;targets.set(enemy.key,{...aim})}
-  }
+  for(const [runKey,list] of groups)stageBattle(runKey,list,now);
   for(const s of specs.filter(s=>s.kind==='pvp')){const unit=battleResidents.get(s.key);if(!unit)continue;const travel=battleTravel(unit,now);if(s.phase==='fighting'&&s.hp>0){const r=R.SANCTUARY_RING,slot={x:r.x+(s.side==='left'?-PVP_RADIUS:PVP_RADIUS),z:r.z};positions.set(s.key,battleApproach(unit.sprite.position,slot,travel));const other=specs.find(o=>o.kind==='pvp'&&o.key!==s.key),otherUnit=other&&battleResidents.get(other.key);if(otherUnit)targets.set(s.key,{x:otherUnit.sprite.position.x,z:otherUnit.sprite.position.z})}}
   for(const u of battleResidents.values()){
    const s=u.spec,asset=digimonStore?.ready(s.species);u.sprite.visible=!!asset;u.ring.visible=!!asset;if(!asset){digimonStore?.request(s.species);continue}
-   const dead=s.hp<=0||(s.kind==='pvp'&&s.phase==='result'&&s.winnerId!=null&&s.winnerId!==s.owner),previous={x:u.sprite.position.x,z:u.sprite.position.z};let pos=positions.get(s.key)||previous;if(dead||s.phase!=='fighting')pos=previous;const target=targets.get(s.key);u.ranged=unitRange(s.species).ranged;
-   // Faint dust: a small pixel puff when a unit drops, and a golden burst plus shockwave for bosses.
-   if(dead&&!u.fainted){u.fainted=true;if(s.boss){spawnBattleBurst(pos.x,pos.z,0xffd98a,16,1.35,.17,760);spawnBattleShockwave(pos.x,pos.z,0xffd98a,820)}else spawnBattleBurst(pos.x,pos.z,0xd8d2c4,8,.8,.09,560)}
-   else if(!dead)u.fainted=false;
+   const staged=s.kind==='pve',lift=s.kind==='pvp'?R.SANCTUARY_RING.height:0,previous={x:u.sprite.position.x,z:u.sprite.position.z};
+   // v384: a field fighter stays on its feet until the blow that felled it has visibly landed.
+   const dead=(s.hp<=0||(s.kind==='pvp'&&s.phase==='result'&&s.winnerId!=null&&s.winnerId!==s.owner))&&!(staged&&u.owedDamage>0);
+   u.ranged=unitRange(s.species).ranged;
    // Crit contact freeze: while frozen the paint clock stands still, so the defender holds
    // its exact frame for a beat without repainting.
    const visualNow=now<u.hitStopUntil?u.hitStopClock:now;
-   if(s.attackAt!==u.lastAttack){u.lastAttack=s.attackAt;u.attackStarted=now;if(u.ranged&&target&&!dead&&s.phase==='fighting')spawnBattleShot(pos,target,now,s.boss,s.enemy)}
-   if(s.hitAt!==u.lastHit){u.lastHit=s.hitAt;u.hitStarted=now}
-   const walking=!dead&&Math.hypot(pos.x-previous.x,pos.z-previous.z)>.015,attacking=!dead&&s.phase==='fighting'&&visualNow-u.attackStarted<ATTACK_MS;let stance=dead?'faint':attacking?'attack':walking?'walking':'idle';if(!asset.record.actions[stance])stance='idle';
-   const flash=!dead&&now-u.hitStarted<210?1+Math.floor((now-u.hitStarted)/70):0;
-   const time=stance==='faint'?(asset.record.actions[stance].length-1)*50:stance==='attack'?Math.max(0,visualNow-u.attackStarted):visualNow,flip=target?target.x<pos.x:s.enemy,n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,6),key=[s.species,stance,n,flip,s.hp,s.label,flash].join(':');
+   let pos=previous,target=null,stance='idle',time=visualNow,walking=false,trail=null;
+   if(staged){
+    const w=u.swing,elapsed=Math.max(0,Math.min(.5,(now-(u.lastMove??now))/1000));u.lastMove=now;
+    // First frame with art: the unit fades in on its slot; a wave arrives with a small puff.
+    if(u.bornAt==null){u.bornAt=now;if(s.enemy&&!dead)spawnBattleBurst(u.home.x,u.home.z,0xdfe9d6,STAGE.SPAWN_SPARKS,.7,.1,420)}
+    if(w&&!dead){
+     const pose=swingPose(u,w,now),aim=battleResidents.get(w.hits[0].key);u.px=pose.x;u.pz=pose.z;if(aim)target={x:aim.px,z:aim.pz};
+     if(pose.frac>=0){stance='attack';const frames=asset.record.actions.attack?.length||1;time=Math.min(frames-1,Math.floor(pose.frac*frames))*50+1}
+     if(w.ranged&&!w.fired&&now>=w.impactAt){w.fired=true;for(const h of w.hits){const hit=battleResidents.get(h.key);if(hit)spawnBattleShot({x:u.px,z:u.pz},{x:hit.px,z:hit.pz},now,s.boss,s.enemy,Math.max(120,w.contactAt-now))}}
+     if(pose.dash)trail=[45,90].map(ms=>swingPose(u,w,now-ms));
+    }else if(!dead){
+     // Off its slot with nothing to do (a partner the wave heal put back on its feet): walk home.
+     const dx=u.home.x-u.px,dz=u.home.z-u.pz,gap=Math.hypot(dx,dz);
+     if(gap>1e-4){const step=Math.min(gap,elapsed*STAGE.WALK_SPEED);u.px+=dx/gap*step;u.pz+=dz/gap*step;walking=step>.015;if(walking)stance='walking'}
+    }
+    pos={x:u.px,z:u.pz};
+   }else{
+    pos=positions.get(s.key)||previous;if(dead||s.phase!=='fighting')pos=previous;target=targets.get(s.key)||null;
+    if(s.attackAt!==u.lastAttack){u.lastAttack=s.attackAt;u.attackStarted=now;if(u.ranged&&target&&!dead&&s.phase==='fighting')spawnBattleShot(pos,target,now,s.boss,s.enemy)}
+    if(s.hitAt!==u.lastHit){u.lastHit=s.hitAt;u.hitStarted=now}
+    walking=!dead&&Math.hypot(pos.x-previous.x,pos.z-previous.z)>.015;
+    if(!dead&&s.phase==='fighting'&&visualNow-u.attackStarted<ATTACK_MS){stance='attack';time=Math.max(0,visualNow-u.attackStarted)}else if(walking)stance='walking';
+   }
+   // Faint dust: a small pixel puff when a unit drops, and a golden burst plus shockwave for bosses.
+   if(dead&&!u.fainted){u.fainted=true;u.faintAt=visualNow;u.swing=null;if(s.boss){spawnBattleBurst(pos.x,pos.z,0xffd98a,16,1.35,.17,760);spawnBattleShockwave(pos.x,pos.z,0xffd98a,820)}else spawnBattleBurst(pos.x,pos.z,0xd8d2c4,8,.8,.09,560)}
+   else if(!dead)u.fainted=false;
+   if(dead)stance='faint';if(!asset.record.actions[stance])stance='idle';
+   // v384: the collapse plays through once and then holds its last frame (it used to jump straight to it).
+   if(stance==='faint')time=Math.min((asset.record.actions.faint.length-1)*50,Math.max(0,visualNow-u.faintAt));
+   const shownHp=staged?Math.min(s.maxHp,s.hp+u.owedDamage):s.hp,flash=!dead&&now-u.hitStarted<210?1+Math.floor((now-u.hitStarted)/70):0;
+   const flip=target?target.x<pos.x:s.enemy,n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,6),key=[s.species,stance,n,flip,shownHp,s.label,flash].join(':');
    // v358 (owner, fourth report - the actual "pixel boxes"): every unit painted a big dark
    // name-plate rectangle plus a fat HP bar onto its sprite, so the field read as floating
    // boxes. Plates are gone: names are clean outlined text, and the health capsule is a
    // slim rounded pill that only appears once a unit is actually hurt.
    if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.fillText==='function'){const ctx=u.ctx;
-    const frac=Math.max(0,Math.min(1,s.hp/Math.max(1,s.maxHp)));
+    const frac=Math.max(0,Math.min(1,shownHp/Math.max(1,s.maxHp)));
     if(frac<.999){
      const bw=132,bx=(256-bw)/2,by=13,bh=8;
      const pill=(x,y,pw,ph,r)=>{if(typeof ctx.beginPath==='function'&&typeof ctx.roundRect==='function'){ctx.beginPath();ctx.roundRect(x,y,pw,ph,r);ctx.fill()}else if(typeof ctx.fillRect==='function')ctx.fillRect(x,y,pw,ph)};
@@ -714,18 +973,29 @@ const MELEE_STANDOFF=3.0,ATTACK_MS=520;let fxTextures=null;
     if(typeof ctx.strokeText==='function'){ctx.strokeStyle='rgba(10,14,10,.85)';ctx.lineWidth=4;ctx.strokeText(String(s.label).slice(0,25),128,frac<.999?36:22,198)}
     ctx.fillStyle=s.boss?'#ffd98a':s.enemy?'#f3e6c8':'#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,frac<.999?36:22,198);
    }u.texture.needsUpdate=true;u.paint=key}
-   let drawX=pos.x,drawZ=pos.z;if(stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1,lunge=Math.sin(Math.min(1,(visualNow-u.attackStarted)/ATTACK_MS)*Math.PI)*(u.ranged?.14:.28);drawX+=dx/length*lunge;drawZ+=dz/length*lunge}
-   if(now<u.shakeUntil){const amp=u.shakeAmp*Math.max(0,(u.shakeUntil-now)/(u.shakeAmp>.15?260:150));drawX+=(battleHash('sx:'+s.key+':'+Math.floor(now/40))-.5)*2*amp;drawZ+=(battleHash('sz:'+s.key+':'+Math.floor(now/40))-.5)*2*amp}
+   // The ring duel keeps its short in-place lunge; a staged swing already carries the fighter.
+   let drawX=pos.x,drawZ=pos.z;if(!staged&&stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1,lunge=Math.sin(Math.min(1,(visualNow-u.attackStarted)/ATTACK_MS)*Math.PI)*(u.ranged?.14:.28);drawX+=dx/length*lunge;drawZ+=dz/length*lunge}
+   // v384: in the field the shake never exceeds its stated amplitude (the decay used to start at 1.3-1.5x of it).
+   if(now<u.shakeUntil){const decay=Math.max(0,(u.shakeUntil-now)/(u.shakeAmp>.15?260:150)),amp=u.shakeAmp*(staged?Math.min(1,decay):decay);drawX+=(battleHash('sx:'+s.key+':'+Math.floor(now/40))-.5)*2*amp;drawZ+=(battleHash('sz:'+s.key+':'+Math.floor(now/40))-.5)*2*amp}
    const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(s.species)||1)*(s.boss?1.5:1);u.sprite.scale.set(256*h/96,256*h/96,1);
+   // v384: a wave fades in on its slots, and a felled bot dissolves once its collapse has played,
+   // so nobody steps over bodies. Fallen partners stay down where the party can see them.
+   const fadeIn=staged?Math.min(1,(now-u.bornAt)/STAGE.SPAWN_MS):1,body=staged&&dead&&s.enemy?1-Math.max(0,Math.min(1,(now-u.faintAt-STAGE.BODY_FADE_AT)/STAGE.BODY_FADE_MS)):1;
+   u.sprite.material.opacity=fadeIn*body;u.ring.material.opacity=.65*fadeIn;if(staged&&dead&&s.enemy)u.ring.visible=false;
    // Hit flash tints the sprite material itself - nothing rectangular is ever painted onto
    // the unit canvas (the old full-canvas red fillRect read as a flashing box).
-   u.sprite.material.color.setHex(flash?(flash>2?0xff8f7c:flash>1?0xffa08e:0xffb2a2):0xffffff);u.sprite.position.set(drawX,.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),drawZ);u.ring.position.set(pos.x,.08+(s.kind==='pvp'?R.SANCTUARY_RING.height:0),pos.z);u.ring.scale.setScalar((s.boss?1.5:1)*(1+.08*Math.sin(now/180)));u.ring.material.color.setHex(s.boss?0xe8a54a:s.kind==='pvp'?0xf3c876:0x9ed6b0);u.sprite.userData.battleWalking=walking;u.sprite.userData.battleRanged=u.ranged;u.sprite.userData.battleBoss=!!s.boss;
+   // The accent ring marks the slot a field fighter owns, so it stays put while the fighter steps out.
+   u.sprite.material.color.setHex(flash?(flash>2?0xff8f7c:flash>1?0xffa08e:0xffb2a2):0xffffff);u.sprite.position.set(drawX,.06+lift,drawZ);u.ring.position.set(staged?u.home.x:pos.x,.08+lift,staged?u.home.z:pos.z);u.ring.scale.setScalar((s.boss?1.5:1)*(1+.08*Math.sin(now/180)));u.ring.material.color.setHex(s.boss?0xe8a54a:s.kind==='pvp'?0xf3c876:0x9ed6b0);u.sprite.userData.battleWalking=walking;u.sprite.userData.battleRanged=u.ranged;u.sprite.userData.battleBoss=!!s.boss;u.sprite.userData.battleStance=stance;
    // After-images trail a lunging brawler: ghost sprites share the live canvas texture,
    // so they echo whatever frame the unit has painted without any extra draw work.
    if(!u.ranged&&!u.ghosts){u.ghosts=[.3,.15].map(o=>{const g=new T.Sprite(new T.SpriteMaterial({map:u.texture,transparent:true,opacity:o,depthWrite:false,alphaTest:.02}));g.center.copy(u.sprite.center);g.userData.battleGhost=true;g.visible=false;scene.add(g);return g})}
-   if(u.ghosts){const gdx=drawX-pos.x,gdz=drawZ-pos.z,gmag=Math.hypot(gdx,gdz),gy=.06+(s.kind==='pvp'?R.SANCTUARY_RING.height:0);
-    for(const [i,g] of u.ghosts.entries()){const back=(i+1)/(u.ghosts.length+1);g.visible=!u.ranged&&stance==='attack'&&gmag>.12;g.scale.copy(u.sprite.scale);g.position.set(pos.x+gdx*(1-back),gy,pos.z+gdz*(1-back))}}
+   if(u.ghosts){const gdx=drawX-pos.x,gdz=drawZ-pos.z,gmag=Math.hypot(gdx,gdz),gy=.06+lift;
+    for(const [i,g] of u.ghosts.entries()){g.scale.copy(u.sprite.scale);
+     // v384: in the field the echoes follow the path the fighter has just covered on its way in.
+     if(staged){const echo=trail&&trail[i];g.visible=!!echo&&Math.hypot(echo.x-pos.x,echo.z-pos.z)>.06;if(echo)g.position.set(echo.x,gy,echo.z)}
+     else{const back=(i+1)/(u.ghosts.length+1);g.visible=!u.ranged&&stance==='attack'&&gmag>.12;g.position.set(pos.x+gdx*(1-back),gy,pos.z+gdz*(1-back))}}}
   }
+  for(let i=battleLeaving.length-1;i>=0;i--){const l=battleLeaving[i],t=(now-l.at)/STAGE.LEAVE_MS;if(t>=1){disposeBattleUnit(l.u);battleLeaving.splice(i,1)}else l.u.sprite.material.opacity=l.from*Math.max(0,1-t)}
   updateBattleShots(now);
   updateBattleFx(now);
  }
@@ -752,7 +1022,7 @@ const MELEE_STANDOFF=3.0,ATTACK_MS=520;let fxTextures=null;
   const h=1.45*(globalThis.PGDigimonSanctuary?.visualScale(species)||1);u.sprite.scale.set(256*h/96,256*h/96,1);u.sprite.position.set(x,.06+lift,z);u.sprite.userData.training=stat;
   const n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,5),key=[species,stance,n,flip].join(':');if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,5,flip);u.texture.needsUpdate=true;u.paint=key}
  }}
- function updateResidents(now){for(const r of residents){if(battleState.pve.length){r.sprite.visible=false;continue}r.sprite.visible=true;const asset=digimonStore.ready(r.id);if(!asset){digimonStore.request(r.id);continue}const t=now/1000+r.phase,x=r.homeX+Math.sin(t*.34)*2.4,z=r.homeZ+Math.cos(t*.27)*1.8,walking=Math.abs(Math.cos(t*.34))>.18;r.sprite.position.set(x,.06,z);r.flip=Math.cos(t*.34)<0;const stance=walking?'walking':'idle',frame=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,now,stance,5);if(frame!==r.frame||r.stance!==stance){r.frame=frame;r.stance=stance;PGSocialDigimon.draw(r.ctx,asset,stance,now,5,r.flip);r.texture.needsUpdate=true}}}
+ function updateResidents(now){for(const r of residents){if(battleState.pve.length||battleHolds.size){r.sprite.visible=false;continue}r.sprite.visible=true;const asset=digimonStore.ready(r.id);if(!asset){digimonStore.request(r.id);continue}const t=now/1000+r.phase,x=r.homeX+Math.sin(t*.34)*2.4,z=r.homeZ+Math.cos(t*.27)*1.8,walking=Math.abs(Math.cos(t*.34))>.18;r.sprite.position.set(x,.06,z);r.flip=Math.cos(t*.34)<0;const stance=walking?'walking':'idle',frame=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,now,stance,5);if(frame!==r.frame||r.stance!==stance){r.frame=frame;r.stance=stance;PGSocialDigimon.draw(r.ctx,asset,stance,now,5,r.flip);r.texture.needsUpdate=true}}}
  const [gardenCatalog,gardenBuffer,gardenAtlas]=await Promise.all([fetch('assets/native-fields/v1/catalog.json').then(r=>{if(!r.ok)throw Error('Garden metadata unavailable');return r.json()}),fetch('assets/native-fields/v1/prontera/models.bin').then(r=>{if(!r.ok)throw Error('Garden models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/native-fields/v1/prontera/models.webp')]);
  gardenAtlas.flipY=false;const gardenMat=modelMat.clone();gardenMat.map=gardenAtlas;gardenMat.onBeforeCompile=modelMat.onBeforeCompile;
  const garden=gardenCatalog.maps.find(m=>m.name==='prontera'),gardenFloats=new Float32Array(gardenBuffer);
