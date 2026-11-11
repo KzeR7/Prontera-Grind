@@ -625,3 +625,8 @@ this runtime. Gym apparatus is still scenery, not live training.
   `assets/social.js` / `assets/social.css`. Coverage: `digimon_sanctuary_sim.js`,
   `digimon_sanctuary_ui_sim.js`, `digimon_battle_sim.js`, `social_scene_sim.js`,
   `social_ui_sim.js`.
+
+* **Form switch + Evo Points, hub toggles (haven-v387):**
+  `switchForm` is free among unlocked forms; `evolve` still spends `evoPoints`.
+  Toolbar buttons toggle; Esc runs `closeAllHubOverlays`. Coverage:
+  `digimon_sanctuary_sim.js`, `digimon_sanctuary_ui_sim.js`, `social_ui_sim.js`.

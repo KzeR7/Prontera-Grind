@@ -10693,3 +10693,11 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Try it:** put partner 1 in the gym, partner 2 on PvE, then walk with partner 3. Evolve with Evo Points, refine a piece toward +10, sell matching Auto-sell, and accept a party invite without opening the Party panel.
 * **Checks:** `digimon_sanctuary_sim.js`, `digimon_sanctuary_ui_sim.js`, `digimon_battle_sim.js`, `social_scene_sim.js` and `social_ui_sim.js` passed locally.
 * **Delivery:** local changes on `arena/ee2852a0-prontera-grind`; no deployment or migration.
+
+### 2026-11-11 — `haven-v387 form switch + Evo Points, hub toggles`
+
+* **Changed:** Evolution switching among reached forms is restored. Rolling a new branch still needs level, training **and** Evo Points so de-evolve spam cannot fill every tree for free. The Evolution tab is a boxed grid of forms again.
+* **Changed:** DigiDex filters reset whenever DigiPet opens or the DigiDex tab is chosen. Titles are medal cards instead of a wall of requirement text. Pet gear icons are smooth vector drawings, not pixel blocks.
+* **Changed:** Plaza toolbar buttons toggle open/closed (DigiPet, Party, More). Esc closes every plaza overlay. Party, More and Field now have toolbar icons. Party invites still pop as an on-screen toast with Accept/Decline.
+* **Checks:** `digimon_sanctuary_sim.js`, `digimon_sanctuary_ui_sim.js`, `social_ui_sim.js`.
+* **Delivery:** local on `arena/9ad267fc-prontera-grind`; no deploy.
