@@ -12,6 +12,7 @@ const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker,B=globalThis.PGDigim
 // player is no longer dropped every five minutes the way REAUTH_MS alone used to force.
 export const SOCIAL_MAX_ROOMS=50;
 const IDLE_MS=300000,REAUTH_MS=1800000,MAX_ROOMS=SOCIAL_MAX_ROOMS,LEDGER_BATCH=100;
+const MSG_WINDOW_MS=1000,MSG_LIMIT=20;
 // v295: RESUME_MS is the window in which a replacement socket may inherit the position, room and
 // seat of the one it replaced. It used to be 15 s, which was shorter than the client's own
 // dead-socket detection (20 s of silence + a 6 s probe grace) - so any silent drop, and every
@@ -751,6 +752,12 @@ export class SocialRoom {
  receive(c,raw){
   if(this.clients.get(c.id)!==c)return;
   const now=this.now();
+  if(!c.rateAt||now-c.rateAt>=MSG_WINDOW_MS){c.rateAt=now;c.rateN=0}
+  c.rateN++;
+  if(c.rateN>MSG_LIMIT){
+   if(c.rateN>MSG_LIMIT*2){try{c.close(4008,'Too many messages')}catch{}this.disconnect(c)}
+   return;
+  }
   if(now>c.reauthAt||(now>c.expires&&!fishingHeld(c)))return this.refresh(c);
   c.expires=now+IDLE_MS;
   if(c.room)this.tickRoom(c.room,now);

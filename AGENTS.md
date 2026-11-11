@@ -101,7 +101,8 @@ Standing facts (do not “fix” these by hiding UI):
 - **DDoS / probes** also count: each upgrade, `ping`, `look`, and `/gm/*` against the
   Social binding is a DO request. Do not add unauthenticated public routes on
   `prontera-social`. Identity stays on the Pages hop. Cheap public probes must not
-  `get()` the DO.
+  `get()` the DO. The room drops a socket after **20 messages/s** (hard close at 40/s
+  in the same window, close 4008). Do not raise that without asking.
 
 When in doubt: **client first, ask before any new `setAlarm` or `send({type:...})`.**
 
