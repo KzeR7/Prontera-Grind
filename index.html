@@ -3621,6 +3621,13 @@ function restoreRememberedUser(){
 restoreRememberedUser();
 let authMode='login';
 function showErr(m,ok){const e=$('loginErr');e.textContent=m;e.style.color=ok?'#2a9d3f':'#e5484d'}
+const HAVEN_UPDATING='The server is updating. Sign-in is paused — your account is still registered. Please try again in a few minutes.';
+function cloudLoginBlocked(){
+  if(CLOUD.probing)return 'Checking the cloud…';
+  if(CLOUD.down)return HAVEN_UPDATING;
+  if(!CLOUD.api&&(location.protocol==='http:'||location.protocol==='https:'))return 'The server is updating. This is not an unregistered account — try again in a few minutes.';
+  return '';
+}
 function setMode(m){authMode=m;$('tabLogin').classList.toggle('on',m==='login');$('tabReg').classList.toggle('on',m==='reg');$('regRow').style.display=m==='reg'?'block':'none';
   if($('emailRow'))$('emailRow').style.display=m==='reg'?'block':'none';if($('email'))$('email').required=m==='reg'&&CLOUD.api;
   $('authBtn').textContent=m==='reg'?'Create Account':'Login';$('password').autocomplete=m==='reg'?'new-password':'current-password';$('password2').required=m==='reg';showErr('')}
@@ -3628,6 +3635,7 @@ function submitAuth(e,confirmed=false){
   if(e)e.preventDefault();
   try{
     const u=$('username').value.trim(),p=$('password').value.trim();if(!u||!p)return showErr('Enter a username and password.');
+    const blocked=cloudLoginBlocked();if(blocked)return showErr(blocked);
     const isGM=u.toLowerCase()===String(GM_USER).toLowerCase();
     if(authMode==='reg'){
       // v277: on a site with the API the GM name may belong to a real (owner-provisioned) cloud account,
@@ -3723,7 +3731,7 @@ $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>s
 // a VAULT, not the running state: localStorage leads during play and the server is kept in step by a
 // debounced push. Nothing here can lose progress - every conflict keeps both copies, and the loser
 // stays in the account's save history where the GM console can restore it.
-const CLOUD={api:false,on:false,user:null,id:0,gm:false,ver:0,dirty:false,lastPush:0,pushing:false,
+const CLOUD={api:false,on:false,down:false,probing:false,user:null,id:0,gm:false,ver:0,dirty:false,lastPush:0,pushing:false,
   // v328: when the push in flight started, and when this session opened. Without them a request that
   // never settles is indistinguishable from one that is merely slow, and a silent stall has no clock.
   pushSince:0,onSince:0,
@@ -4539,22 +4547,35 @@ function closeGmConsole(){
 // included (the GM account is no exception). A leftover session is deleted here rather than left to
 // pile up on the server until it expires.
 async function cloudProbe(){
+  CLOUD.probing=true;
   let r;
-  try{r=await cloudFetch('/me',{cache:'no-store'})}catch(e){cloudLoginLine('');return false}
+  try{r=await cloudFetch('/me',{cache:'no-store'})}catch(e){
+    CLOUD.probing=false;CLOUD.api=false;
+    const hosted=location.protocol==='http:'||location.protocol==='https:';
+    CLOUD.down=hosted;
+    cloudLoginLine(hosted?'⚠ The server is updating. Sign-in is paused — your account is still registered. Try again in a few minutes.':'');
+    return false;
+  }
   // A static host answers /api/me with its 404 page (or hands back the game itself), so the content
   // type is what tells us whether a real API is behind this address. Never treat HTML as a server.
   const ct=(r.headers.get('Content-Type')||'');
+  CLOUD.probing=false;
   if(!ct.includes('json')){
-    CLOUD.api=false;
+    CLOUD.api=false;CLOUD.down=false;
     // v2: cloud is the only save. A host without the API (a static preview, a file, a broken deploy)
     // says so plainly instead of quietly inviting a browser-only character.
     cloudLoginLine('⚠ This address is not connected to the cloud, so saves here stay in this browser only. Open the real game address to continue your character.');
     return false;
   }
-  CLOUD.api=(r.status===200||r.status===401);
-  const line='☁ Cloud accounts are on - '+($('username')&&$('username').value?'sign in to continue.':'register or sign in to play on any device.');
-  if(r.status===200)cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}).catch(()=>{});
-  cloudLoginLine(line);
+  if(r.status===200||r.status===401){
+    CLOUD.api=true;CLOUD.down=false;
+    const line='☁ Cloud accounts are on - '+($('username')&&$('username').value?'sign in to continue.':'register or sign in to play on any device.');
+    if(r.status===200)cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}).catch(()=>{});
+    cloudLoginLine(line);
+    return false;
+  }
+  CLOUD.api=false;CLOUD.down=true;
+  cloudLoginLine('⚠ The server is updating (cloud answered '+r.status+'). Your account is still registered — try again in a few minutes.');
   return false;
 }
 
@@ -4656,8 +4677,9 @@ async function cloudAuth(u,p,isReg){
     catch(e){showErr('Signed in, but the game could not start: '+e.message+'. Your account is fine - reload the page and log in again.')}
     return;
   }catch(e){
-    showErr(ac.signal.aborted?'The server did not answer in time. Check your connection and try again.'
-      :'Could not reach the server: '+e.message+'. You can still play offline.');
+    CLOUD.down=true;
+    showErr(ac.signal.aborted?'The server did not answer in time. It may be updating — your account is still registered. Try again in a few minutes.'
+      :'The server is updating. Sign-in is paused — your account is still registered. Please try again in a few minutes.');
   }finally{
     clearTimeout(timer);
     if(btn)btn.disabled=false;

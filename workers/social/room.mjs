@@ -408,6 +408,28 @@ export class SocialRoom {
  }
  broadcastBattle(room){if(room)this.broadcast({type:'battle',room,at:this.now(),...this.battleSnapshot(room)},p=>p.room===room)}
  hasActiveBattles(){return this.pveRuns.size>0||this.pvpMatches.size>0||[...this.pvpQueues.values()].some(q=>q.length)}
+ // v388: sitters do not keep the plaza alarm. Only work that needs a clock (party/PvP, a live
+ // MVP, poker deadlines, unacked ledgers) should wake the Durable Object.
+ hasLivePoker(){
+  for(const list of this.tables.values()){
+   if(!list)continue;
+   for(const t of list){
+    if(!t)continue;
+    if(typeof t.nextDeadline==='function'&&t.nextDeadline())return true;
+    const seated=Array.isArray(t.seats)?t.seats.filter(Boolean).length:(Array.isArray(t.players)?t.players.filter(Boolean).length:0);
+    if(seated)return true;
+   }
+  }
+  return false;
+ }
+ hasKeepaliveWork(){return this.hasActiveBattles()||this.hasActiveMvp()||this.hasLivePoker()||this.ledgerDirty.size>0}
+ socketState(c){return {id:c.id,name:c.name,gm:!!c.gm,friends:[...c.friends],room:c.room||0,x:c.x,z:c.z,dir:c.dir,sit:!!c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look||null,path:Array.isArray(c.path)?c.path:[],at:c.at,expires:c.expires,reauthAt:c.reauthAt,fish:c.fish||null}}
+ adoptHibernated(state,send,close){
+  if(!state||!Number.isInteger(state.id))return null;
+  const prior=this.clients.get(state.id);if(prior){prior.send=send;prior.close=close;return prior}
+  const c={id:state.id,name:String(state.name||'Adventurer').slice(0,16),gm:state.gm===true,send,close,room:state.room||0,at:state.at||this.now(),path:Array.isArray(state.path)?state.path:[],x:Number(state.x)||0,z:Number(state.z)||12,dir:Number(state.dir)||0,sit:!!state.sit,nextChat:0,seat:state.seat??null,pokerSeat:state.pokerSeat??null,moveAt:0,lookAt:0,look:state.look||null,expires:state.expires||this.now()+IDLE_MS,reauthAt:state.reauthAt||this.now()+REAUTH_MS,friends:new Set(Array.isArray(state.friends)?state.friends.filter(cleanFriendId).slice(0,200):[]),fish:state.fish||null};
+  this.clients.set(c.id,c);return c;
+ }
  battleActivity(){this.onBattleActivity?.()}
  battleError(c,message,request=null){this.send(c,{type:'battle_error',request,message})}
  startPve(c,m,now){

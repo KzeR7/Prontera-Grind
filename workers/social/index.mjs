@@ -1,4 +1,5 @@
 import {SocialRoom,cleanWorldHistory,cleanPokerLedgerQueues,FISHING_MVP_IDS,SOCIAL_MAX_ROOMS} from './room.mjs';
+const BATTLE_ALARM_MS=1000;
 const HISTORY_KEY='world-history-v1';
 const LEDGER_PREFIX='poker-ledger-v1:';
 // v296: the plaza spot a dropped client resumes is durable, so a Durable Object eviction between
@@ -14,7 +15,7 @@ export class Social {
    onResume:(accountId,record)=>this.saveResume(accountId,record),
    onBattleActivity:()=>this.scheduleBattleAlarm(),
   });
-  this.battleAlarmAt=0;this.battleAlarmWrite=Promise.resolve();
+  this.battleAlarmAt=0;this.battleAlarmWrite=Promise.resolve();this.sockets=new WeakMap();this.restored=false;
   // SQLite Durable Object storage survives eviction/restarts. Do not admit a socket until
   // both public history and every account's unacknowledged poker outbox are loaded.
   const historyReady=ctx.storage.get(HISTORY_KEY).then(saved=>{
@@ -45,10 +46,42 @@ export class Social {
    this.ledgerLoadFailed=false;
   });
  }
+ pinSocket(ws,c){
+  if(!ws||!c)return;this.sockets.set(ws,c);c.ws=ws;
+  try{if(typeof ws.serializeAttachment==='function')ws.serializeAttachment(this.room.socketState(c))}catch{}
+ }
+ restoreSockets(){
+  if(this.restored)return;this.restored=true;
+  const list=typeof this.ctx.getWebSockets==='function'?this.ctx.getWebSockets():[];
+  for(const ws of list){
+   let att=null;try{att=typeof ws.deserializeAttachment==='function'?ws.deserializeAttachment():null}catch{}
+   const send=s=>{try{ws.send(s)}catch{}},close=(code,reason)=>{try{ws.close(code,reason)}catch{}};
+   const c=this.room.adoptHibernated(att,send,close);if(c)this.pinSocket(ws,c);
+  }
+ }
+ clientFor(ws){
+  this.restoreSockets();
+  const cached=this.sockets.get(ws);if(cached)return cached;
+  let att=null;try{att=typeof ws.deserializeAttachment==='function'?ws.deserializeAttachment():null}catch{}
+  const send=s=>{try{ws.send(s)}catch{}},close=(code,reason)=>{try{ws.close(code,reason)}catch{}};
+  const c=this.room.adoptHibernated(att,send,close);if(c)this.pinSocket(ws,c);return c;
+ }
+ scheduleKeepalive(){
+  const at=this.nextAlarmAt();if(!at)return;
+  this.battleAlarmWrite=this.battleAlarmWrite.then(()=>this.ctx.storage.setAlarm(at)).catch(error=>console.error('Plaza alarm failed',error));
+ }
+ nextAlarmAt(){
+  const now=Date.now();
+  if(this.room.hasActiveBattles()&&this.room.clients.size)return now+BATTLE_ALARM_MS;
+  if(this.room.hasKeepaliveWork())return now+60000;
+  return 0;
+ }
  scheduleBattleAlarm(){
-  if(!this.room.hasActiveBattles())return;
-  const now=Date.now();if(this.battleAlarmAt-now>100&&this.battleAlarmAt-now<1000)return;
-  const at=now+250;this.battleAlarmAt=at;
+  // v388: 1s ticks (was 250ms). Solo grind no longer uses this alarm at all; party/PvP still do.
+  // Skip when the room is empty so a dropped socket cannot keep billing.
+  if(!this.room.hasActiveBattles()||!this.room.clients.size)return;
+  const now=Date.now();if(this.battleAlarmAt-now>200&&this.battleAlarmAt-now<BATTLE_ALARM_MS)return;
+  const at=now+BATTLE_ALARM_MS;this.battleAlarmAt=at;
   this.battleAlarmWrite=this.battleAlarmWrite.then(()=>this.ctx.storage.setAlarm(at)).catch(error=>console.error('Battle alarm failed',error));
  }
  // Fire-and-forget like the world history: a failed write only costs the resume, never the save.
@@ -103,7 +136,10 @@ export class Social {
    return new Response('WebSocket required',{status:426,headers:failed?{'X-Greet-Failed':failed}:{}});
   }
   const identity=JSON.parse(request.headers.get('X-Social-Identity')||'null');if(!identity||!Number.isInteger(identity.id)||typeof identity.username!=='string')return new Response('Invalid identity',{status:400});
-  const pair=new WebSocketPair(),client=pair[0],server=pair[1];server.accept();
+  this.restoreSockets();
+  const pair=new WebSocketPair(),client=pair[0],server=pair[1];
+  const hibernate=typeof this.ctx.acceptWebSocket==='function';
+  if(hibernate)this.ctx.acceptWebSocket(server);else server.accept();
   // v368: connect() must never be able to leave this handler without a websocket answer. Anything it
   // throws used to become a plain HTTP 500 to an upgrade request, which the browser reports as a bare
   // "connection failed" / close 1006 with no reason at all - the exact blindness three releases were
@@ -121,15 +157,31 @@ export class Social {
    try{server.close(4002,'Greeting failed: '+(greetError||this.room.lastSendError||'unknown'))}catch{}
    return new Response(null,{status:101,webSocket:client});
   }
-  server.addEventListener('message',e=>{this.room.receive(c,e.data);if(this.room.hasActiveBattles())this.scheduleBattleAlarm()});server.addEventListener('close',()=>this.room.disconnect(c));server.addEventListener('error',()=>this.room.disconnect(c));
-  if(await this.ctx.storage.getAlarm()===null)await this.ctx.storage.setAlarm(Date.now()+60000);
+  this.pinSocket(server,c);
+  if(!hibernate){
+   server.addEventListener('message',e=>{this.room.receive(c,e.data);this.pinSocket(server,c);if(this.room.hasActiveBattles())this.scheduleBattleAlarm()});
+   server.addEventListener('close',()=>this.room.disconnect(c));
+   server.addEventListener('error',()=>this.room.disconnect(c));
+  }
+  this.scheduleKeepalive();
   return new Response(null,{status:101,webSocket:client});
  }
+ async webSocketMessage(ws,message){
+  await this.ready;const c=this.clientFor(ws);if(!c)return;
+  this.room.receive(c,typeof message==='string'?message:new TextDecoder().decode(message));
+  this.pinSocket(ws,c);if(this.room.hasActiveBattles())this.scheduleBattleAlarm();
+ }
+ async webSocketClose(ws){
+  await this.ready;const c=this.clientFor(ws);if(c)this.room.disconnect(c);
+ }
+ async webSocketError(ws){
+  await this.ready;const c=this.clientFor(ws);if(c)this.room.disconnect(c);
+ }
  async alarm(){
-  await this.ready;this.room.retryPokerLedgers();this.room.sweep();
+  await this.ready;this.restoreSockets();this.room.retryPokerLedgers();this.room.sweep();
   await this.room.ledgerWrites;await this.historyWrites;await this.battleAlarmWrite;
-  if(this.room.hasActiveBattles()){this.battleAlarmAt=Date.now()+250;await this.ctx.storage.setAlarm(this.battleAlarmAt)}
-  else {this.battleAlarmAt=0;if(this.room.clients.size||this.room.resumes.size||this.room.ledgerDirty.size||this.room.hasActiveMvp())await this.ctx.storage.setAlarm(Date.now()+60000)}
+  const at=this.nextAlarmAt();this.battleAlarmAt=this.room.hasActiveBattles()?at:0;
+  if(at)await this.ctx.storage.setAlarm(at);
  }
 }
 export default {fetch(){return new Response('Not found',{status:404})}};

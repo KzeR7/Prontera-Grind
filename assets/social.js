@@ -1436,7 +1436,7 @@ function dismissActivityPanel(){sapDismissedArea=sapAreaNow;closeActivityPanel()
 /* Called after a run ends. The first run still has to be started from the middle field, but the
    server grants that connected session a repeat permit: subsequent runs may begin while the avatar
    visits the gym, pond or plaza. No socket means no authority and the chain ends immediately. */
-function repeatPveRun(delay=1800){if(pveRepeatTimer||!plazaRepeat('pve'))return;if(soloPractice())return;const online=()=>!!(app.room&&app.connected&&app.socket?.readyState===1&&!CLOUD.signingOut&&!CLOUD.lost);if(!online())return;pveRepeatTimer=setTimeout(()=>{pveRepeatTimer=0;if(!online()||!plazaRepeat('pve')||battleBusy()||trainingSlotBusy()||!battleProfileFor(activitySlot('pve')))return;startPve(lastPveMode,true)},delay)}
+function repeatPveRun(delay=1800){if(pveRepeatTimer||!plazaRepeat('pve'))return;pveRepeatTimer=setTimeout(()=>{pveRepeatTimer=0;if(!plazaRepeat('pve')||battleBusy()||trainingSlotBusy()||!battleProfileFor(activitySlot('pve')))return;startPve(lastPveMode,true)},delay)}
 function clearPveRepeat(){clearTimeout(pveRepeatTimer);pveRepeatTimer=0}
 const BATTLE_INTENT_MS=10000;
 function soloPractice(){return !app.room&&!CLOUD.on}
@@ -1475,26 +1475,32 @@ if(Math.abs(p.x-70)<=25&&Math.abs(p.z-64)<=16){action='pve';label=soloPractice()
  worldBattleNearby.hidden=!action;worldBattleNearby.dataset.battleAction=action;worldBattleNearby.textContent=label;
  homeBattleNearby();
 }
+function refreshBattleNearby(){battleNearbyFrame(app.players.get(app.room?app.id:SOLO_ID)||null)}
 /* The PvE start button lives inside the PvE tab of the activity panel. v384: whenever that tab is not
    on screen (panel closed, or showing another tab) the button joins the centre column as a prompt,
    next to the gym and ring prompts - it used to float at a fixed height over whatever was there. */
 function homeBattleNearby(){const host=worldBattleNearby.dataset.battleAction==='pve'&&!activityPanel.hidden&&sapTab==='pve'?sapBodyEl.querySelector('.sap-pve-action'):null,home=host||hudStack;if(worldBattleNearby.parentElement!==home)home.append(worldBattleNearby)}
 worldBattleNearby.onclick=()=>{const action=worldBattleNearby.dataset.battleAction;if(action==='pve')startPve();else if(action==='pvp')startPvp()};
+let localPvePermit=null;
 function syncSoloBattle(){
- if(!soloPractice())return;const B=globalThis.PGDigimonBattle;
- app.battle={pve:soloPve&&B?[B.pveSnapshot(soloPve)]:[],pvp:null,queue:[]};app.scene?.setBattleState?.(app.battle);renderBattleHUD();
+ const B=globalThis.PGDigimonBattle,mine=soloPve&&B?B.pveSnapshot(soloPve):null;
+ const others=(app.battle.pve||[]).filter(r=>!mine||(r.id!==mine.id&&r.owner!==mine.owner));
+ app.battle.pve=mine?[mine,...others]:others;app.scene?.setBattleState?.(app.battle);renderBattleHUD();refreshBattleNearby();
 }
-function startSoloPve(profile,boss=false){
- const B=globalThis.PGDigimonBattle,source=app.players.get(SOLO_ID),player=source?R.advance({...source,path:(source.path||[]).map(p=>({...p}))},performance.now()):null,p=B?.profile(profile);
+function startSoloPve(profile,boss=false,repeatResume=false){
+ const B=globalThis.PGDigimonBattle,selfId=app.room?app.id:SOLO_ID,source=app.players.get(selfId),player=source?R.advance({...source,path:(source.path||[]).map(p=>({...p}))},performance.now()):null,p=B?.profile(profile);
  if(!B||!p)return worldNotice('DigiPet combat is unavailable in this copy.');
- if(!player||player.sit||player.path?.length||Math.abs(player.x-70)>25||Math.abs(player.z-64)>16)return worldNotice('Walk to the middle DigiPet farm and stand still first.');
- const now=Date.now();soloPve=B.createPve({id:'solo-pve:'+now.toString(36)+':'+(++battleRequest),owner:SOLO_ID,room:0,profile:p,now,bossMode:!!boss});soloPve.localOwner=S;soloPve.localAccount=typeof currentUser==='string'?currentUser:null;app.battleIntent=null;syncSoloBattle();worldNotice(boss?'Local boss raid · one long fight, practice rewards stay local.':'Local solo grinding · practice rewards are saved locally, not server-issued.');
+ const permitOk=repeatResume&&localPvePermit&&localPvePermit.lineId===p.lineId&&localPvePermit.form===p.form&&localPvePermit.slot===p.slot&&localPvePermit.mode===(boss?'boss':'grind');
+ if(!permitOk&&(!player||player.sit||player.path?.length||Math.abs(player.x-70)>25||Math.abs(player.z-64)>16))return worldNotice('Walk to the middle DigiPet farm and stand still first.');
+ const now=Date.now();soloPve=B.createPve({id:'solo-pve:'+now.toString(36)+':'+(++battleRequest),owner:selfId,room:app.room||0,profile:p,now,bossMode:!!boss});soloPve.localOwner=S;soloPve.localAccount=typeof currentUser==='string'?currentUser:null;localPvePermit={lineId:p.lineId,form:p.form,slot:p.slot,mode:boss?'boss':'grind'};app.battleIntent=null;syncSoloBattle();worldNotice(boss?'Boss raid on your device — the plaza is not billed per hit.':'Grinding on your device — loot is saved here; the plaza stays light.');
 }
 function stopSoloPve(reason='stopped',notify=true){
- if(!soloPve)return false;soloPve=null;clearPveRepeat();app.battle={pve:[],pvp:null,queue:[]};app.scene?.setBattleState?.(app.battle);renderBattleHUD();renderActivityPanel(true);if(notify)worldNotice(reason==='defeat'?'Your partner fainted during local practice. Rest, feed, and try again.':reason==='exhausted'?'Local grinding stopped: your partner is out of energy.':reason==='complete'?'Local run complete! A very strong partner.':'Local solo grinding stopped.');return true;
+ if(!soloPve)return false;soloPve=null;clearPveRepeat();if(!plazaRepeat('pve'))localPvePermit=null;
+ const others=(app.battle.pve||[]).filter(r=>r&&String(r.id||'').indexOf('solo-pve:')!==0);app.battle.pve=others;app.scene?.setBattleState?.(app.battle);renderBattleHUD();refreshBattleNearby();renderActivityPanel(true);
+ if(notify)worldNotice(reason==='defeat'?'Your partner fainted. Rest and try again.':reason==='exhausted'?'Grinding stopped: your partner is out of energy.':reason==='complete'?'Run complete.':'Solo grinding stopped.');return true;
 }
 function tickSoloPve(){
- const run=soloPve;if(!run)return;if(!soloPractice()||typeof S!=='object'||S!==run.localOwner||run.localAccount!==(typeof currentUser==='string'?currentUser:null)){stopSoloPve('stopped',false);return}
+ const run=soloPve;if(!run)return;if(typeof S!=='object'||S!==run.localOwner||run.localAccount!==(typeof currentUser==='string'?currentUser:null)){stopSoloPve('stopped',false);return}
  const result=globalThis.PGDigimonBattle?.stepPve(run,Date.now());if(!result)return;let end='';
  for(const event of result.events){if(String(event.type).startsWith('boss_'))bossFxNotice(event);if(event.type==='wave_clear')receiveBattleReward({local:true,kind:'pve',battleId:run.id+':wave'+event.wave,lineId:run.profile.lineId,form:run.profile.form,slot:run.profile.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});if(event.type==='hit')app.scene?.battleEvent?.({kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit});if(event.type==='end')end=event.reason}
  if(end){stopSoloPve(end);repeatPveRun()}else syncSoloBattle();
@@ -1507,13 +1513,8 @@ function startPve(mode='grind',repeatResume=false){
  if(trainingSlotBusy())return worldNotice('The grind partner is in the gym. Switch the PvE grind partner or stop that session first.');
  if(battleBusy())return worldNotice('Finish the current DigiPet activity first.');
  const profile=battleProfileFor(activitySlot('pve'));if(!profile)return worldNotice('Hatch and choose an owned partner first.');
- if(soloPractice())return startSoloPve(profile,boss);
- if(!app.room||!app.connected||app.socket?.readyState!==1)return worldNotice('Connect to the online plaza, or use local solo mode, to fight.');
- // v384: the room only accepts a profile whose form matches the look it last received, and the look
- // drops the companion while that partner is in a battle. Send the current look first so a repeat
- // run (or a quick restart) is never refused with "Choose your current owned partner first".
- refreshCompanionLook(profile.slot);
- const request=++battleRequest;app.battleIntent={kind:'pve',request,at:Date.now()};if(send({type:'pve_start',request,profile,mode:boss?'boss':'grind',repeat:plazaRepeat('pve'),resume:repeatResume===true})){worldNotice(repeatResume?(boss?'Repeating the boss raid…':'Repeating the grind from the plaza…'):(boss?'Challenging the field boss…':'Entering the middle field…'));worldBattleNearby.hidden=true}else app.battleIntent=null;
+ // v388: solo grind always runs on this device so the plaza Durable Object is not woken per hit.
+ return startSoloPve(profile,boss,repeatResume===true);
 }
 function startPvp(){
  if(trainingSlotBusy())return worldNotice('The grind partner is in the gym. Switch the PvE grind partner or stop that session first.');
@@ -1590,7 +1591,7 @@ function applyBattleReward(m){
 }
 function receiveBattleReward(m){const result=applyBattleReward(m);if(result){const G=globalThis.PGDigimonBattle,boss=!!G?.isBossWave?.(m.wave);worldNotice((boss?'Boss defeated — stage '+(G?.stageOf?.(m.wave)||1)+' cleared · ':m.local?'Local wave '+m.wave+' cleared · ':m.kind==='pve'?'Wave '+m.wave+' cleared · ':'Battle reward · ')+result.message)}}
 function receiveBattleResult(m){applyBattleReward({...m,kind:'pvp'});app.battleResult=m;battleOffer=null;renderPvpDialog();renderBattleResult();renderBattleHUD()}
-function battleSnapshot(m){if(m.room!==app.room)return;if(soloPve)stopSoloPve('stopped',false);app.battle={pve:Array.isArray(m.pve)?m.pve:[],pvp:m.pvp||null,queue:Array.isArray(m.queue)?m.queue:[]};if(Number.isFinite(m.at))app.battleOffset=m.at-Date.now();battleOffer=null;app.scene?.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();if(app.battleIntent)app.battleIntent=null}
+function battleSnapshot(m){if(m.room!==app.room)return;app.battle.pvp=m.pvp||null;app.battle.queue=Array.isArray(m.queue)?m.queue:[];const self=app.room?app.id:SOLO_ID,incoming=Array.isArray(m.pve)?m.pve:[];if(soloPve&&incoming.some(r=>r&&r.owner===self&&String(r.id||'').indexOf('solo-pve:')!==0))stopSoloPve('stopped',false);const mine=soloPve&&globalThis.PGDigimonBattle?globalThis.PGDigimonBattle.pveSnapshot(soloPve):null;const others=incoming.filter(r=>!mine||(r.owner!==mine.owner&&r.id!==mine.id));app.battle.pve=mine?[mine,...others]:others;if(Number.isFinite(m.at))app.battleOffset=m.at-Date.now();battleOffer=null;app.scene?.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();refreshBattleNearby();if(app.battleIntent&&app.battleIntent.kind==='pvp')app.battleIntent=null}
 function battleUITick(){tickSoloPve();if(++mapTickFrame%4===0)mapTick();
  if(app.partyInvite&&Number.isFinite(app.partyInvite.expiresAt)&&Date.now()>app.partyInvite.expiresAt+500){app.partyInvite=null;renderPartyPanel()}
  if(!$id('socialPartyPanel').hidden){const roster=(app.partyRoster||[]).map(p=>p.id+':'+(p.members||[]).join(',')).join('|');const key=(app.party?app.party.members.map(m=>m.id).join(','):'none')+'#'+((app.battle.queue||[]).map(q=>q.id+q.side).join(','))+'#'+(app.partyInvite?app.partyInvite.partyId:'')+'#'+roster+'#'+partyCandidates().length;if(battleUITick.partyKey!==key){battleUITick.partyKey=key;renderPartyPanel()}}if(app.battleIntent&&Date.now()-(app.battleIntent.at||0)>=BATTLE_INTENT_MS){app.battleIntent=null;worldNotice('The plaza battle service did not respond. Reconnect, or use a preview with the matching Social Worker deployment.')}const match=myPvp();if(match?.phase==='countdown'){const el=$id('pvpCountdownNumber');if(el){const left=Math.max(0,Math.ceil((match.countdownUntil-(Date.now()+app.battleOffset))/1000));el.textContent=left>0?left:'FIGHT!'}}}
@@ -2325,8 +2326,10 @@ function dropSocket(message,keep){const ws=app.socket;stashLocal(app.room);app.s
  if(me&&me.path&&me.path.length){try{R.advance(me,performance.now())}catch{}me.path=[];me.sit=false;putPlayer(me)}
  try{ws?.close()}catch{}status(message);app.nextConnect=0}
 function refreshSocket(){dropSocket('Refreshing chat…',true)}
+function plazaQuiet(){const me=app.players.get(app.id);return !!(me&&me.sit&&!(me.path&&me.path.length)&&!Number.isInteger(me.pokerSeat)&&!myPve()&&!myPvp()&&!myQueue())}
 function heartbeat(now){if(!app.connected||!app.socket||app.socket.readyState!==1){app.probeAt=0;return}
- if(now-(app.lastSeen||now)<WATCHDOG_MS){app.probeAt=0;return}
+ const quietFor=now-(app.lastSeen||now),limit=plazaQuiet()?240000:WATCHDOG_MS;
+ if(quietFor<limit){app.probeAt=0;return}
  if(!app.probeAt){app.probeAt=now;send({type:'ping'});return}
  if(now-app.probeAt>PROBE_GRACE_MS)dropSocket('Chat connection lost — reconnecting…',true)}
 function sitting(sit){$id('socialSit').textContent=sit?'Stand':'Sit';$id('socialSit').setAttribute('aria-pressed',String(sit))}
@@ -2464,11 +2467,9 @@ let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{if(app.channel==='log'
  // this is treated as a failed attempt, with the same backoff a close gets.
  else if(!app.connected&&Date.now()-(app.socketAt||0)>HANDSHAKE_MS){dropSocket('Chat took too long to answer — retrying…',true);app.nextConnect=Date.now()+retryDelay()}
  heartbeat(Date.now());
- // v372: a light ping every 45 s keeps the socket warm through proxies and NAT, whatever the
- // player is doing. PvE battles and the gaps between casts are silent in both directions -
- // the server owns the battle sim, so a grinding AFK player used to look dead and get a
- // five-minute forced reauth ("random rejoin") - now silence is never a reason to drop.
- if(app.connected&&app.socket&&app.socket.readyState===1&&Date.now()>=keepAliveAt){keepAliveAt=Date.now()+45000;send({type:'ping'})}if(app.channel==='log'){const key=JSON.stringify(logShown().map(l=>l.id));if(key!==lastLog){lastLog=key;renderMessages(true)}}const look=JSON.stringify(currentLook());if(app.room&&lastLook&&look!==lastLook)send({type:'look',look:currentLook()});else if(!app.room&&app.wanted&&app.scene&&lastLook&&look!==lastLook)syncSoloPlayer();lastLook=look},2000);
+ // v388: sitters ping every 4 minutes so the plaza Durable Object can hibernate. Everyone else
+ // still pings every 45 s so proxies/NAT do not drop a walking or fighting socket.
+ if(app.connected&&app.socket&&app.socket.readyState===1&&Date.now()>=keepAliveAt){keepAliveAt=Date.now()+(plazaQuiet()?240000:45000);send({type:'ping'})}if(app.channel==='log'){const key=JSON.stringify(logShown().map(l=>l.id));if(key!==lastLog){lastLog=key;renderMessages(true)}}const look=JSON.stringify(currentLook());if(app.room&&lastLook&&look!==lastLook)send({type:'look',look:currentLook()});else if(!app.room&&app.wanted&&app.scene&&lastLook&&look!==lastLook)syncSoloPlayer();lastLook=look},2000);
 // v295: browsers throttle timers in a hidden tab, so an AFK player can sit behind a dead socket
 // well past the watchdog. Coming back to the tab checks it at once instead of waiting a cycle.
 document.addEventListener('visibilitychange',()=>{

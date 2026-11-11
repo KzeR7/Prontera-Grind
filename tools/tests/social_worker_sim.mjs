@@ -81,10 +81,16 @@ async function mvpCommand(mf,body,admin){
  const adminDO=Object.create(Social.prototype);
  adminDO.ctx={storage:{getAlarm:async()=>null,setAlarm:async at=>alarmWrites.push(at)}};
  adminDO.room={mvpActive:new Map(),hasActiveBattles:()=>true,spawnMvp:(room,now,species)=>{spawned.push({room,species});return{room,sp:species,id:'mvp:alarm-test',spawnedAt:now,endsAt:now+600000}}};
- adminDO.battleAlarmWrite=Promise.resolve();adminDO.scheduleBattleAlarm=()=>battleSchedules.push('battle');
+ adminDO.battleAlarmWrite=Promise.resolve();adminDO.sockets=new WeakMap();adminDO.restored=false;adminDO.scheduleBattleAlarm=()=>battleSchedules.push('battle');
  const result=await adminDO.adminFishingMvp(new Request('https://social/gm/fishing-mvp',{method:'POST',headers:{'Content-Type':'application/json','X-Social-Admin':JSON.stringify({id:9,username:'MvpAdmin',gm:2})},body:JSON.stringify({room:2,species:'mvp_tide_drake'})}));
  assert.equal(result.status,200);assert.deepEqual(spawned,[{room:2,species:'mvp_tide_drake'}]);
  assert.deepEqual(battleSchedules,['battle']);assert.deepEqual(alarmWrites,[],'active battle alarm is preserved without a direct 60-second reset');
+}
+{
+ const idle=Object.create(Social.prototype);
+ idle.room={clients:{size:3},hasActiveBattles:()=>false,hasKeepaliveWork:()=>false};
+ idle.battleAlarmAt=0;
+ assert.equal(idle.nextAlarmAt(),0,'v388: sitters do not schedule a plaza alarm');
 }
 let mf=await start();
 try{
