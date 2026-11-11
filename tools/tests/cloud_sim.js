@@ -127,6 +127,7 @@ function harness(opts = {}) {
     URL: { createObjectURL(b) { state.lastBlob = b; return 'blob:test'; }, revokeObjectURL() {} },
     FileReader: class { readAsText(f) { this.result = f.text; this.onload && this.onload(); } },
     navigator: {},
+    location: { protocol: opts.protocol || 'https:', href: 'https://haven.test/' },
     addEventListener: () => {},
     setInterval: () => 0,
     // A queued timer must NOT run inline: cloudPush's retry would fire while CLOUD.pushing is still
@@ -223,6 +224,18 @@ await T('a network that is simply down is not an error either', async () => {
   const h = harness({ routes: { '/me': { throw: 'no network' } } });
   assert.strictEqual(await h.sandbox.cloudProbe(), false);
   assert.strictEqual(h.sandbox.CLOUD.api, false);
+  assert.strictEqual(h.sandbox.CLOUD.down, true, 'https host: the cloud is marked down');
+  assert.match(h.els.get('loginCloud').textContent, /updating|still registered/i);
+});
+await T('a 503 from /me is a server update, not a missing account', async () => {
+  const h = harness({ routes: { '/me': { status: 503, body: { err: 'unavailable' } } } });
+  assert.strictEqual(await h.sandbox.cloudProbe(), false);
+  assert.strictEqual(h.sandbox.CLOUD.api, false);
+  assert.strictEqual(h.sandbox.CLOUD.down, true);
+  assert.match(h.els.get('loginCloud').textContent, /updating/i);
+  assert.match(src, /cloudLoginBlocked/, 'login refuses local “account not found” while the cloud is down');
+  assert.match(src, /HAVEN_UPDATING/, 'the card names a server update instead of an unregistered account');
+  assert.doesNotMatch(src, /temporarily shut down/, 'players are not told the world is shut down');
 });
 
 await T('an API that answers 401 turns the cloud on and invites the player to sign in', async () => {

@@ -110,9 +110,14 @@ function act(raw,line,action,now,random=randomUnit){now=Number.isFinite(now)?now
   const roll=Math.max(0,Math.min(.999999999,Number(random())||0)),target=req.options[Math.floor(roll*req.options.length)];
   p.form=target;p.stage=cap(p.stage+1,0,MAX_EVOLUTIONS);p.peakStage=Math.max(p.peakStage||0,p.stage);if(!p.unlocked.includes(target))p.unlocked.push(target);return done('Your partner evolved into '+DATA.name(target)+'!');
  }
- // v386: free form-switching let a tamer hop back to an early stage and roll a different
- // branch. Evolution is one-way; Evo Points buy the next roll at the current stage.
- if(action.type==='switchForm')return fail('Evolution is one-way. Spend Evo Points to roll the next stage.');
+ // Switching among reached forms is free. Rolling a new evolution still costs Evo Points, so
+ // hopping back to spam every branch is gated by grind drops rather than banned.
+ if(action.type==='switchForm'){
+  if(p.training||p.battle?.status==='active')return fail('Finish the current activity first.');
+  const target=clean(action.target);if(!target||!p.unlocked.includes(target))return fail('That evolution has not been unlocked for this DigiPet.');
+  if(target===p.form)return fail(DATA.name(target)+' is already the current form.');
+  p.form=target;p.stage=evolutionDepth(line,target);return done('Your partner switched to '+DATA.name(target)+'. Unlocked forms and progress were kept.');
+ }
  // v349 reroll loop: a fresh egg restarts this line's training, wins and level. Evolution history
  // is retained so a returned partner can revisit forms it earned before the restart.
  if(action.type==='reset'){
