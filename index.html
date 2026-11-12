@@ -920,9 +920,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=390">
-<link rel="stylesheet" href="assets/social-battle.css?v=390">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=390"><link rel="stylesheet" href="assets/friends.css?v=273">
+<link rel="stylesheet" href="assets/social.css?v=391">
+<link rel="stylesheet" href="assets/social-battle.css?v=391">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=391"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1320,7 +1320,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-12 haven-v390 plaza field rate shown and paid, client-sim PvP hand-off';
+const BUILD='2026-11-12 haven-v391 plaza rate survives stage advance';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3544,7 +3544,22 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
     n.z=Math.max(0,Math.floor(+n.z||0));n.xp=Math.max(0,Math.floor(+n.xp||0));return n});
   f.ascension=cleanAscension(f.ascension);if(Number(String(f.offlineIncome?.key||'').split(':')[1])>=10&&f.offlineIncome?.rewardVersion!==ASC_REWARD_VERSION)f.offlineIncome=null;repairMastery(f);repairProgression(f,s.progressionVersion);return f}}catch(e){}return fresh()}
 let farmSession=null;
-const farmKey=()=>[S.cls,S.mp,S.lvl].join(':');
+// v391 (owner: "field have exp and go social hub nothing" - Thor Volcano Stage 1, Lv 150):
+// the sampling key used to include the STAGE (S.lvl). With Auto-advance on, a stage clears after
+// MPS (15) kills, and at max level on a high map that is about 28 seconds - less than the 60-second
+// window the rate needs. So the key changed mid-measurement, farmSample() threw the whole window away
+// and started over, and S.offlineIncome was never written at all: the plaza paid nothing and the card
+// sat on "Field · respawning". A stage is not a different farm: the same map spawns the same camps on
+// every stage of it, so the rate belongs to the MAP, not the stage number. Keying on map alone lets the
+// window span the auto-advance, which is exactly what a player farming with the switch on is doing.
+// The stage still travels in the key for display/offline use - see farmStageKey - but not for sampling.
+const farmKey=()=>[S.cls,S.mp].join(':');
+// The stage a measurement was taken on, kept for the stored label and offline reward source. Never
+// used to decide whether a window restarts (that was the v391 bug).
+const farmStageKey=()=>[S.cls,S.mp,S.lvl].join(':');
+// v391: a save written before this change carries a stage in its key ("Cls:map:stage"). Reading it
+// back must not fail just because the live key is now two parts.
+const farmKeyMap=key=>{const p=String(key||'').split(':');const m=Number(p[1]);return Number.isInteger(m)?m:-1};
 // A stopped field is not a zero-income farming minute. Discard the partial window
 // so time in the plaza/trials cannot dilute the next real field sample either.
 function farmSamplingPaused(){
@@ -3559,7 +3574,7 @@ function farmSample(now=Date.now()){
  const f=farmSession;f.events=f.events.filter(e=>e.at>now-60000);
  const elapsed=Math.min(60000,now-f.start);if(elapsed<60000)return;
  const sum=f.events.reduce((a,e)=>({xp:a.xp+e.xp,zeny:a.zeny+e.zeny,job:a.job+e.job,kills:a.kills+e.kills}),{xp:0,zeny:0,job:0,kills:0});
- S.offlineIncome={rewardVersion:ASC_REWARD_VERSION,key:f.key,at:now,version:1,xp:sum.xp*60000/elapsed,zeny:sum.zeny*60000/elapsed,job:sum.job*60000/elapsed,kph:Math.min(OFFLINE_RATE_CAP,sum.kills*3600000/elapsed)};
+ S.offlineIncome={rewardVersion:ASC_REWARD_VERSION,key:farmStageKey(),at:now,version:1,xp:sum.xp*60000/elapsed,zeny:sum.zeny*60000/elapsed,job:sum.job*60000/elapsed,kph:Math.min(OFFLINE_RATE_CAP,sum.kills*3600000/elapsed)};
 }
 function recordFarmIncome(xp,zeny,job,kills=1,now=Date.now()){
  farmSample(now);if(!farmSession)return;farmSession.events.push({at:now,xp,zeny,job,kills});farmSample(now);
@@ -13833,16 +13848,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=390"></script>
-<script src="assets/digimon/base-stats.js?v=390"></script>
-<script src="assets/social-rules.js?v=390"></script>
-<script src="assets/social-poker.js?v=390"></script>
-<script src="assets/digimon-sanctuary.js?v=390"></script>
-<script src="assets/digimon-battle.js?v=390"></script>
-<script src="assets/social-digimon.js?v=390"></script>
-<script src="assets/social-gym-redesign.js?v=390"></script>
-<script src="assets/social-pond-design.js?v=390"></script>
-<script src="assets/social-scene.js?v=390"></script>
-<script src="assets/social-fishing.js?v=390"></script>
-<script src="assets/social.js?v=390"></script></body>
+<script src="assets/digimon/roster.js?v=391"></script>
+<script src="assets/digimon/base-stats.js?v=391"></script>
+<script src="assets/social-rules.js?v=391"></script>
+<script src="assets/social-poker.js?v=391"></script>
+<script src="assets/digimon-sanctuary.js?v=391"></script>
+<script src="assets/digimon-battle.js?v=391"></script>
+<script src="assets/social-digimon.js?v=391"></script>
+<script src="assets/social-gym-redesign.js?v=391"></script>
+<script src="assets/social-pond-design.js?v=391"></script>
+<script src="assets/social-scene.js?v=391"></script>
+<script src="assets/social-fishing.js?v=391"></script>
+<script src="assets/social.js?v=391"></script></body>
 </html>
