@@ -43,8 +43,15 @@ try{
  // claim the plaza is earning before a real field minute exists.
  ev('S.offlineIncome=null;hubFirstPending=true;respawn=1e9');tick();assert.equal(d.getElementById('socialFieldState').textContent,'Field not started');assert.equal(d.getElementById('socialFieldExp').textContent,'—');
  ev('S.offlineIncome={version:1,rewardVersion:1,key:S.cls+":"+S.mp+":"+S.lvl,at:Date.now(),xp:100,zeny:50,job:10}');tick();assert.equal(d.getElementById('socialFieldState').textContent,'Plaza AFK');
- ev('hubFirstPending=false;CLOUD.lost=true');tick();assert.equal(d.getElementById('socialFieldState').textContent,'Field paused');assert.equal(d.getElementById('socialFieldZeny').textContent,'—');
- ev('CLOUD.lost=false');ev(seedRate);tick();assert.equal(d.getElementById('socialFieldExp').textContent,'12,300','the rate returns once the connection does');
+ // v392: a LOST connection keeps the plaza earning and says so; a write GATE is what genuinely pauses.
+ ev('hubFirstPending=false;CLOUD.lost=true');tick();
+ assert.equal(d.getElementById('socialFieldState').textContent,'Plaza AFK · awaiting connection','a dropped socket is named, and still earning');
+  // (the rate in force here is the 100/50 fixture seeded above, not the 12300/456 one)
+ assert.equal(d.getElementById('socialFieldZeny').textContent,'50','and the rate stays on screen');
+ ev('CLOUD.lost=false;CLOUD.gate=true');tick();
+ assert.equal(d.getElementById('socialFieldState').textContent,'Field paused','a write gate still pauses');
+ assert.equal(d.getElementById('socialFieldZeny').textContent,'—');
+ ev('CLOUD.gate=false');ev(seedRate);tick();assert.equal(d.getElementById('socialFieldExp').textContent,'12,300','the rate returns once the connection does');
  const mini=d.getElementById('socialMiniMapCanvas'),ctx=mini.getContext('2d');let painted=0;ctx.fillRect=()=>painted++;mini.getContext=()=>ctx;w.BGM={phoneShell:()=>true};tick();assert(painted>0,'a phone-first hub paints its top minimap too');
  const world=d.querySelector('[data-channel=world]');w.PGSocial.syncDisplay();assert.equal(d.querySelector('[data-channel=world]'),world,'chat buttons remain stable');
  w.PGSocial.select('whisper');assert(!d.getElementById('socialTo').hidden);click('socialMin');assert(d.getElementById('socialChat').classList.contains('minimized'));

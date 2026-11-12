@@ -920,9 +920,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=391">
-<link rel="stylesheet" href="assets/social-battle.css?v=391">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=391"><link rel="stylesheet" href="assets/friends.css?v=273">
+<link rel="stylesheet" href="assets/social.css?v=392">
+<link rel="stylesheet" href="assets/social-battle.css?v=392">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=392"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1320,7 +1320,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-12 haven-v391 plaza rate survives stage advance';
+const BUILD='2026-11-12 haven-v392 plaza keeps earning while awaiting connection';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3582,7 +3582,11 @@ function recordFarmIncome(xp,zeny,job,kills=1,now=Date.now()){
 // Last 60s of *field* combat. Plaza AFK pays this and must not rewrite it (no mobs, no loot).
 function plazaFarmIncome(){
   if(!S||typeof JOB_RITE!=='undefined'&&JOB_RITE.on||typeof TRIAL!=='undefined'&&TRIAL.on)return null;
-  if(typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused))return null;
+  // v392: CLOUD.lost no longer stops the plaza paying. The rate was measured before the drop and is
+  // capped by that measurement, so "awaiting connection" is not a reason to stop earning - it is only a
+  // reason to stop UPLOADING (the gate/pause states below still stop it: those mean the server has
+  // refused writes or is in maintenance, where a wrong local number would be adopted on reconnect).
+  if(typeof CLOUD!=='undefined'&&(CLOUD.gate||CLOUD.paused))return null;
   const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
   const valid=income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&['xp','zeny','job'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
   return valid&&['xp','zeny','job'].some(k=>income[k]>0)?income:null;
@@ -13635,7 +13639,22 @@ function simNoteFrame(now){
     }
   }
 }
-function loop(now){try{if(CLOUD.lost||gpuLost){simAt=now;simPending=0}else simAdvance(now);if(!gpuLost&&!document.hidden&&simPending===0)draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}simNoteFrame(now);requestAnimationFrame(loop)}
+// v392 (owner: "when i tab away the basically doesnt work, exp is stuck" -> "do it by awaiting
+// connection"): a lost connection used to freeze the WHOLE simulation. That was right when the field
+// itself could be farmed while unsynced (v247: cloud-only saves could not accrue), but v388 changed the
+// plaza to pay a rate that was measured BEFORE the disconnect. Replaying that rate cannot inflate it -
+// it is capped by the completed 60-second field minute - so freezing it protects nothing and only
+// leaves the player staring at a frozen number. The FIELD still halts exactly as before (its combat
+// could be inflated by simulating longer); only the plaza, which pays a fixed measured rate, keeps
+// running. `plazaEarningWhileAway()` is the one place that decision lives.
+const plazaEarningWhileAway=()=>{
+  try{
+    if(typeof document==='undefined'||!document.body)return false;
+    if(!document.body.classList.contains('social-open'))return false;
+    return typeof plazaFarmIncome==='function'&&!!plazaFarmIncome();
+  }catch(e){return false}
+};
+function loop(now){try{if((CLOUD.lost&&!plazaEarningWhileAway())||gpuLost){simAt=now;simPending=0}else simAdvance(now);if(!gpuLost&&!document.hidden&&simPending===0)draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}simNoteFrame(now);requestAnimationFrame(loop)}
 
 // ---------- grinding while the tab is hidden ----------
 // Background grinding is permanent. Timers and frames share the same pending-time queue.
@@ -13652,7 +13671,7 @@ function bgTick(fromWorker=false){
   const now=performance.now();
   if(fromWorker===true)simWorkerAt=now;
   else if(simWorker&&simWorkerAt>0&&now-simWorkerAt<SIM_BG_MS*2)return;
-  if(CLOUD.lost){simAt=now;simPending=0;return}
+  if(CLOUD.lost&&!plazaEarningWhileAway()){simAt=now;simPending=0;return}
   if(!document.hidden){
     if(!simFrameStarved(now))return;        // a visible tab getting frames is driven by loop(), not by this
     if(!simOccluded){simOccluded=true;if(!awayAt){awayAt=simAt;awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0}}
@@ -13685,7 +13704,7 @@ try{
   if(typeof Worker==='function'&&typeof Blob==='function'&&typeof URL!=='undefined'&&typeof URL.createObjectURL==='function'){
     const u=URL.createObjectURL(new Blob([`setInterval(()=>postMessage(0),${SIM_BG_MS});onmessage=()=>postMessage(1)`],{type:'text/javascript'}));
     simWorker=new Worker(u);if(typeof URL.revokeObjectURL==='function')URL.revokeObjectURL(u);
-    simWorker.onmessage=e=>{if(e&&e.data===1){simWorkerDrain=false;if(simPending>1e-6&&!CLOUD.lost)try{simAdvance()}catch(err){console.error(err)}}else bgTick(true)};
+    simWorker.onmessage=e=>{if(e&&e.data===1){simWorkerDrain=false;if(simPending>1e-6&&(!CLOUD.lost||plazaEarningWhileAway()))try{simAdvance()}catch(err){console.error(err)}}else bgTick(true)};
     simWorker.onerror=e=>{if(e&&e.preventDefault)e.preventDefault();simWorker=null;simWorkerDrain=false};
   }
 }catch(e){simWorker=null}
@@ -13848,16 +13867,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=391"></script>
-<script src="assets/digimon/base-stats.js?v=391"></script>
-<script src="assets/social-rules.js?v=391"></script>
-<script src="assets/social-poker.js?v=391"></script>
-<script src="assets/digimon-sanctuary.js?v=391"></script>
-<script src="assets/digimon-battle.js?v=391"></script>
-<script src="assets/social-digimon.js?v=391"></script>
-<script src="assets/social-gym-redesign.js?v=391"></script>
-<script src="assets/social-pond-design.js?v=391"></script>
-<script src="assets/social-scene.js?v=391"></script>
-<script src="assets/social-fishing.js?v=391"></script>
-<script src="assets/social.js?v=391"></script></body>
+<script src="assets/digimon/roster.js?v=392"></script>
+<script src="assets/digimon/base-stats.js?v=392"></script>
+<script src="assets/social-rules.js?v=392"></script>
+<script src="assets/social-poker.js?v=392"></script>
+<script src="assets/digimon-sanctuary.js?v=392"></script>
+<script src="assets/digimon-battle.js?v=392"></script>
+<script src="assets/social-digimon.js?v=392"></script>
+<script src="assets/social-gym-redesign.js?v=392"></script>
+<script src="assets/social-pond-design.js?v=392"></script>
+<script src="assets/social-scene.js?v=392"></script>
+<script src="assets/social-fishing.js?v=392"></script>
+<script src="assets/social.js?v=392"></script></body>
 </html>

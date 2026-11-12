@@ -339,6 +339,15 @@ stage-sized followers. Art packing and generated floor sources are in
 `tools/digimon`; `digimon_sanctuary_sim.js` and `social_digimon_sim.js` cover
 rules, paths and atlas bounds.
 
+**Who is allowed to halt the simulation (v392):** `CLOUD.lost` does not stop the plaza. `loop()`,
+`bgTick()` and `simWorker.onmessage` guard on `CLOUD.lost&&!plazaEarningWhileAway()`, and
+`plazaEarningWhileAway()` is `social-open && !!plazaFarmIncome()`. The plaza may replay a rate that was
+measured **before** the drop because that rate is capped by its 60 s measurement; field combat is live and
+stays halted at exactly 0. `CLOUD.gate`/`CLOUD.paused` **do** stop the plaza (the number would not be
+trusted on reconnect), and `farmSamplingPaused()` keeps `CLOUD.lost` — nothing is *measured* while
+awaiting connection, only already-measured income is *paid*. If you add a new halt condition, ask which
+side it belongs on: halting the *clock* is cheap to over-apply and expensive to notice.
+
 **What a "field minute" is keyed to (v391):** `farmKey()` is `class:map` — **not** the stage. A stage
 clears every `MPS` (15) kills, which at high level is ~15–28 s, so including it in the key restarted the
 60 s measurement window before it could ever complete and the plaza was paid nothing (v391 bug). The

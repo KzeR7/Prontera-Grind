@@ -86,8 +86,11 @@ console.log('background: the game keeps grinding when the tab is hidden\n');
 t('the clock keeps one entry point and one dt ceiling', () => {
   assert.strictEqual(bg.timerMs(), 1, 'exactly one background interval is registered');
   assert.ok(bg.SIM_STEP === 0.1 && bg.SIM_BG_MS === 1000, 'the step and the wake cadence are the documented ones');
-  assert.ok(src.includes('function loop(now){try{if(CLOUD.lost||gpuLost){simAt=now;simPending=0}else simAdvance(now);if(!gpuLost&&!document.hidden&&simPending===0)draw()}'),
-    'the frame loop still drives the same clock and draws, and parks it while the session is away');
+  // v392: the park is no longer unconditional - the plaza keeps paying a rate measured before the drop.
+  assert.ok(src.includes('function loop(now){try{if((CLOUD.lost&&!plazaEarningWhileAway())||gpuLost){simAt=now;simPending=0}else simAdvance(now);if(!gpuLost&&!document.hidden&&simPending===0)draw()}'),
+    'the frame loop still drives the same clock and draws, and parks it while the session is away (except the plaza payroll, v392)');
+  assert.ok(src.includes('const plazaEarningWhileAway=()=>{'),
+    'and that exception is one named predicate, not an inline special case');
   assert.ok(src.includes('gpuLost'),
     'and parks it while the GPU is gone too (v281) - a frame that cannot be drawn is not progress');
   assert.ok(src.includes('for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}'), 'every slice still honours the speed setting');
@@ -296,7 +299,10 @@ t('an unfocused window on a second monitor that still gets frames is not double-
   bg.focus();
 });
 
-t('CLOUD.lost parks bgTick so a lost connection never grinds in the background',()=>{
+// Outside the plaza: a lost connection grinds nothing. The plaza is the deliberate exception
+// (it replays a rate measured before the drop, capped by that measurement) and is covered by
+// plaza_stranded_still_paid_sim.js.
+t('CLOUD.lost parks bgTick outside the plaza, so a lost connection never grinds in the background',()=>{
   bg.hide();
   const a=bg.stat();
   bg.setLost(true);

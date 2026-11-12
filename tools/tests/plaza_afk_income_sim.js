@@ -18,7 +18,14 @@ try{
  assert.equal(ev('expEarned'),600,'gross EXP is counted once');
  assert.equal(ev('zenyEarned'),300,'gross Zeny is counted once');
  assert.equal(ev('JSON.stringify(S.offlineIncome)'),ev('savedIncome'),'AFK rewards never train their own rate');
- ev("CLOUD.lost=true;plazaAfkTick(60)");assert.equal(ev('expEarned'),600,'connection loss pays nothing');ev('CLOUD.lost=false');
+ // v392 (owner: "do it by awaiting connection"): a LOST connection no longer stops the plaza paying -
+// the rate was measured before the drop and is capped by that measurement, so replaying it cannot
+// inflate it. What still stops the plaza is the server refusing writes (gate) or a maintenance pause.
+ev("window.__before=expEarned;CLOUD.lost=true;plazaAfkTick(60)");
+assert.ok(ev('expEarned-window.__before')>=600,'a lost connection keeps the plaza earning (was "pays nothing" before v392)');
+ev('CLOUD.lost=false;window.__b2=expEarned;CLOUD.gate=true;plazaAfkTick(60)');
+assert.equal(ev('expEarned-window.__b2'),0,'a write gate still pays nothing: the number would not be trusted on reconnect');
+ev('CLOUD.gate=false');
  ev(`document.body.classList.remove('social-open');hubFirstPending=false;respawn=0;
  offlineRateSample(362000);recordFarmIncome(120,60,42,1,392000);farmSample(421999);`);
  assert.equal(ev('S.offlineIncome.xp'),600,'resuming requires a fresh full field minute');

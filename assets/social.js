@@ -150,7 +150,11 @@ function syncFieldMonitor(){
  const plazaAfk=typeof plazaFarmIncome==='function'&&!!plazaFarmIncome();
  fieldMonitor.title=plazaAfk?'Earning from your last measured field minute.':'No saved farming rate? Enter Field and farm the same stage for one minute, then return to the plaza.';
  const waiting=typeof hubFirstPending!=='undefined'&&hubFirstPending&&typeof respawn==='number'&&respawn>1e6&&!plazaAfk;
- const paused=typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.paused||CLOUD.gate);
+ // v392: a LOST connection no longer pauses the plaza's earnings - only the server refusing writes
+ // (gate/paused) does. `awaiting` is the state the player asked to see stated plainly.
+ const gatePaused=typeof CLOUD!=='undefined'&&(CLOUD.paused||CLOUD.gate);
+ const awaiting=typeof CLOUD!=='undefined'&&!!CLOUD.lost&&!gatePaused;
+ const paused=gatePaused||(awaiting&&!plazaAfk);
  const trial=(typeof TRIAL!=='undefined'&&TRIAL.on)||(typeof JOB_RITE!=='undefined'&&JOB_RITE.on);
  const live=!!ready&&!paused&&!trial&&(plazaAfk||!waiting);
  const managing=['sanctuaryPanel','socialPartyPanel','socialMapModal','socialMorePanel','fishingPanel','socialPokerModal'].some(id=>{const el=$id(id);return el&&!el.hidden})||(typeof tabs!=='undefined'&&tabs.length>0);
@@ -160,7 +164,18 @@ function syncFieldMonitor(){
  if(myPve())activities.push('PvE grinding');if(myPvp())activities.push('Ring battle');
  activityStatus.hidden=!managing||!activities.length;activityStatus.textContent=activities.join(' · ')+' ↗';
  fieldMonitor.dataset.live=String(live);
- $id('socialFieldState').textContent=!ready?'Signed out':paused?'Field paused':plazaAfk?'Plaza AFK':waiting?'Field not started':trial?'Field trial':typeof respawn!=='undefined'&&respawn>0?'Field · respawning':'Field farming';
+ // The player's own words for this state: "awaiting connection". It replaces "Field paused" when the
+ // plaza is still earning, so a dropped socket reads as a reconnect notice rather than a dead game.
+ $id('socialFieldState').textContent=!ready?'Signed out'
+   :gatePaused?'Field paused'
+   :awaiting&&plazaAfk?'Plaza AFK · awaiting connection'
+   :awaiting?'Field paused · awaiting connection'
+   :paused?'Field paused'
+   :plazaAfk?'Plaza AFK'
+   :waiting?'Field not started'
+   :trial?'Field trial'
+   :typeof respawn!=='undefined'&&respawn>0?'Field · respawning'
+   :'Field farming';
  // v390 (owner: "in social hub i still dont get exp from field"): the monitor used to COPY the
  // #expmin/#zenymin HUD samplers. Those are LIVE combat readings on a 30s idle reset (HUD_IDLE_RESET),
  // so the moment the player stood still in the plaza they read 0 - the card advertised "Plaza AFK" with
