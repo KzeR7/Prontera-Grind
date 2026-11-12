@@ -339,6 +339,13 @@ stage-sized followers. Art packing and generated floor sources are in
 `tools/digimon`; `digimon_sanctuary_sim.js` and `social_digimon_sim.js` cover
 rules, paths and atlas bounds.
 
+**What a "field minute" is keyed to (v391):** `farmKey()` is `class:map` — **not** the stage. A stage
+clears every `MPS` (15) kills, which at high level is ~15–28 s, so including it in the key restarted the
+60 s measurement window before it could ever complete and the plaza was paid nothing (v391 bug). The
+stage still lives in `farmStageKey()`, which is what gets stored in `S.offlineIncome.key` (three parts)
+for the label and the offline-reward source. If you add anything that restarts sampling, key it on the
+**map**, and remember `applyOfflineProgress`'s validator expects the three-part key.
+
 **Where the plaza's Field card gets its numbers (v390):** it prints the **measured** rate from
 `plazaFarmIncome()` in `index.html`, never the `#expmin`/`#zenymin` HUD samplers. Those are live combat
 readings that reset after `HUD_IDLE_RESET` (30 s) without a kill, so copying them made a paying plaza

@@ -10708,6 +10708,38 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Fact:** hiding other players’ PvE/PvP (private tab / not drawing the fight) does **not** reduce DO requests. Solo DigiPet PvE is client-side; party/PvP still alarm at 1s. Sitters ping every 4 minutes; empty idle rooms skip the 60s alarm and may hibernate.
 * **Delivery:** `AGENTS.md` on `arena/7a72f13c-prontera-grind`.
 
+### 2026-11-12 — `haven-v391 plaza rate survives stage advance`
+
+* **Fixed — the plaza still paid nothing, and v390 did not fix it.** Owner: *"field have exp and go
+  social hub nothing"*, screenshots showing Thor Volcano Stage 1 at Lv 150, and the plaza card reading
+  **"FIELD · RESPAWNING"** with `—` EXP/min. v390 corrected *which number the card reads*; it did not
+  fix the fact that **no number existed**.
+* **Root cause — the sampling window could never complete.** `farmKey()` was
+  `[S.cls,S.mp,S.lvl]`, so the **stage** was part of the sampling identity. With Auto-advance on, a
+  stage clears after `MPS` (**15**) kills. At max level on a high map that is **~15–28 seconds**, well
+  under the **60-second** window the rate requires. Every auto-advance therefore changed the key,
+  `farmSample()` discarded the entire window and started over — the measured rate was **never written**,
+  so `plazaFarmIncome()` returned `null` and the plaza paid nothing, permanently. Measured window ages
+  on the pre-fix build over 90 s of continuous farming: `0, 10, 5, 0, 10, 5, 0…` — it never reaches 60.
+* **Fix — a stage is not a different farm.** The key is now `[S.cls,S.mp]`; the same map spawns the same
+  camps on every stage of it, so the rate belongs to the **map**. The stage still travels in a separate
+  `farmStageKey()` used for the stored label and the offline-reward source, so nothing downstream lost
+  the stage information. A genuine map change still starts a fresh window.
+* **Why my earlier gates missed it.** Every fixture was stage 1 / low level with clean, widely-spaced
+  samples, so the window always completed before an advance. The failure only appears when kills are
+  fast enough to auto-advance **inside** 60 s. The new regression test drives the **real `kill()` path**
+  on Thor map 11 at Lv 150 with Auto-advance on and **one controlled clock**, and it fails on pre-v391
+  (`payable NO`) while passing now.
+* **Regression test:** `plaza_rate_survives_stage_advance_sim.js` — asserts 3+ auto-advances occur while
+  one unbroken 60 s window completes, that the rate is attributed to Thor and payable, that opening the
+  plaza and standing in it for three more minutes does not zero it, and that a real map change starts a
+  fresh window without touching the already-measured rate.
+* **Tests retargeted (same behaviour, corrected contract):** `adventurer_updates_sim` and `offline_sim`
+  built `offlineIncome` fixtures with `farmKey()`, which is now two-part; the stored key is the three-part
+  `farmStageKey()`. `adventurer_updates_sim`'s "previous sample survives changes" asserted the **old**
+  rule that a stage change keeps the previous key — it now asserts the rate survives the advance while
+  the label follows the stage.
+
 ### 2026-11-12 — `haven-v390 plaza field rate shown and paid, client-sim PvP hand-off`
 
 * **Fixed — the plaza's Field card showed 0/min while the plaza was paying.** Owner report: *"in social
