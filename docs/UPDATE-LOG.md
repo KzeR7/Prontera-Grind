@@ -10708,6 +10708,46 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Fact:** hiding other players’ PvE/PvP (private tab / not drawing the fight) does **not** reduce DO requests. Solo DigiPet PvE is client-side; party/PvP still alarm at 1s. Sitters ping every 4 minutes; empty idle rooms skip the 60s alarm and may hibernate.
 * **Delivery:** `AGENTS.md` on `arena/7a72f13c-prontera-grind`.
 
+### 2026-11-12 — `haven-v392 plaza keeps earning while awaiting connection`
+
+* **Owner's correction, and it was fair:** *"but i thought u said it was a constant update? why would i
+  need to be on the field for a few mins… also when i tab away the basically doesnt work, exp is stuck"*.
+  Three separate things were being conflated, and one of them is a real defect:
+  * **"Constant" was my wrong word.** The rate is measured over a **60-second field minute** and then
+    *paid* continuously. The card re-displays a stored number, so it only moves when a minute completes.
+    Described as a constant update, it reads as a broken live counter. It is a measured rate.
+  * **"It used to be fine" is about v388, not a regression since.** Plaza AFK was introduced in
+    **v388** (`f16e8e60`). Before it, `simSteps` ran the ordinary `update()` inside the hub, so field
+    combat genuinely kept running while browsing — the hub "worked" because the field never stopped.
+    v388 replaced that with a payroll. The 60-second window itself dates to **`e3559ffa` (2026-10-11)**,
+    530 commits before v388, so it is not new either.
+  * **The real defect: a dropped socket froze the plaza too, and never said so.** `CLOUD.lost` halting
+    the simulation is deliberate and old (`08ae3b74`, v247 cloud-only saves; `||gpuLost` in `64e1b536`,
+    v281) — a device that cannot reach the server must not accrue progress it cannot prove. But the
+    halt was written without regard to *what* was being simulated, so losing the socket on a tab you had
+    left switched the plaza's payroll off as well. The clock stopped, the card still read "Plaza AFK",
+    and nothing on screen named the reason — which is exactly "exp is stuck".
+* **Fix — the owner's own instruction, "do it by awaiting connection":** the plaza keeps paying through
+  a lost connection, and the card says `Plaza AFK · awaiting connection`.
+  `plazaEarningWhileAway()` is true only when the hub is open **and** `plazaFarmIncome()` is non-null;
+  `loop()`, `bgTick()` and `simWorker.onmessage` now halt on `CLOUD.lost&&!plazaEarningWhileAway()`.
+  Field combat while lost still pays **exactly 0** — verified. The asymmetry is the whole argument: the
+  plaza replays a rate that was **measured before the drop** and is **capped by that measurement**, so
+  replaying it cannot inflate it; field combat is *live*, and replaying it would mint progress.
+* **What still stops the plaza, deliberately:** a write gate (`CLOUD.gate`) or maintenance pause
+  (`CLOUD.paused`) — the number would not be trusted on reconnect, so it is not accrued.
+  `farmSamplingPaused()` still includes `CLOUD.lost`: nothing is **measured** while awaiting connection,
+  only an already-measured rate is paid.
+* **Regression test:** `plaza_stranded_still_paid_sim.js` — asserts a lost connection does not null the
+  rate, that the plaza pays ≥1190 over 120 frames, that `bgTick` pays, that **the field while lost pays
+  exactly 0**, that a gate/pause still nulls the rate, and the card sequence
+  `Plaza AFK` → `Plaza AFK · awaiting connection` → `Field paused`. Fails on v391, passes now.
+* **Tests retargeted (old rule, now wrong):** `plaza_afk_income_sim` pinned *"connection loss pays
+  nothing"* — it now asserts a lost connection **keeps** earning while a write gate still pays nothing.
+  `afterdark_ui_sim` pinned `Field paused` on a lost socket; it now asserts `Plaza AFK · awaiting
+  connection` with the rate still on screen, and checks the gate case separately. No assertion dropped.
+* **Delivery:** client-only (`index.html`, `assets/social.js`). Build line must read `haven-v392`.
+
 ### 2026-11-12 — `haven-v391 plaza rate survives stage advance`
 
 * **Fixed — the plaza still paid nothing, and v390 did not fix it.** Owner: *"field have exp and go
