@@ -148,6 +148,7 @@ function syncFieldMonitor(){
  if(hub.hidden)return;
  const ready=typeof S==='object'&&S&&typeof currentUser!=='undefined'&&currentUser;
  const plazaAfk=typeof plazaFarmIncome==='function'&&!!plazaFarmIncome();
+ fieldMonitor.title=plazaAfk?'Earning from your last measured field minute.':'No saved farming rate? Enter Field and farm the same stage for one minute, then return to the plaza.';
  const waiting=typeof hubFirstPending!=='undefined'&&hubFirstPending&&typeof respawn==='number'&&respawn>1e6&&!plazaAfk;
  const paused=typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.paused||CLOUD.gate);
  const trial=(typeof TRIAL!=='undefined'&&TRIAL.on)||(typeof JOB_RITE!=='undefined'&&JOB_RITE.on);
