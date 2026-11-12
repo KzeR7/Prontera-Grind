@@ -10707,3 +10707,13 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Owner rule:** any new feature that would use the plaza Durable Object (`workers/social`), a new DO, `setAlarm`, or a new WebSocket type must **stop and ask** first, with a client-only alternative. Written in [AGENTS.md](../AGENTS.md#durable-object-budget-haven-v388--owner-standing-order).
 * **Fact:** hiding other players’ PvE/PvP (private tab / not drawing the fight) does **not** reduce DO requests. Solo DigiPet PvE is client-side; party/PvP still alarm at 1s. Sitters ping every 4 minutes; empty idle rooms skip the 60s alarm and may hibernate.
 * **Delivery:** `AGENTS.md` on `arena/7a72f13c-prontera-grind`.
+
+### 2026-11-12 — `haven-v389 preserve plaza AFK income`
+* **Changed:** Hub autosaves no longer overwrite measured field income or kill rate with zero while combat is stopped. Returning to the field starts a fresh sampling window. Plaza rewards count gross EXP/Zeny once, and the one-second payout clock retains fractional time. Zero/missing rates no longer qualify as earning Plaza AFK; the monitor tooltip explains how to establish a rate. No new Social DO traffic, combat, rendering or loot in the hub.
+* **Try it:** Farm one stage for a full minute (turn Auto-advance off while sampling), enter the plaza and stay longer than a minute, then log back into the hub. EXP/Zeny/Job continue from the saved rate. Saves already zeroed by v388 need that fresh field minute; no old rate or lost earnings are fabricated.
+* **Checks:** Passed new `plaza_afk_income_sim.js`, `adventurer_updates_sim.js` (28), `afterdark_ui_sim.js`, `offline_sim.js` (13), `ascension_tracks_sim.js` (16), `mvp_exp_sim.js` (5), `update_watch_sim.js` (18), and `render_lost_boot_smoke.js` (7). Full repository gate and browser/device checks not run.
+* **Delivery:** Local branch changes only; not pushed, merged or deployed.
+
+### 2026-11-12 — `haven-v389` PR validation
+* **Checks:** Ran the complete 218-suite pre-push gate. After fetching missing historical commits and rerunning the four history-dependent suites: 209 passed, 9 remained red (no dependency skips). Reproduced all nine on unchanged base `e99317c`: `cloud_login_error_sim`, `cloud_sim`, `registration_sim`, `save_owner_boot_smoke`, `sanctuary_battle_sim`, `sanctuary_worker_battle_sim`, `social_fishing_sim` (assertion followed by timeout), `hosted_launch_stage_sim` (unpackaged Turnstile runtime), and `skill_balance_sim` (already-stale progression fixtures). No assertions, balance fixtures or unrelated systems were changed to hide these failures.
+* **Delivery:** Preparing a commit and pull request on `arena/4764470e-prontera-grind`; no merge or deployment.

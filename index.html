@@ -920,9 +920,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=385">
+<link rel="stylesheet" href="assets/social.css?v=389">
 <link rel="stylesheet" href="assets/social-battle.css?v=385">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=385"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=389"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1320,7 +1320,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-11 haven-v388 client solo PvE, quiet plaza, server updating';
+const BUILD='2026-11-12 haven-v389 preserve plaza AFK income';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3545,8 +3545,16 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   f.ascension=cleanAscension(f.ascension);if(Number(String(f.offlineIncome?.key||'').split(':')[1])>=10&&f.offlineIncome?.rewardVersion!==ASC_REWARD_VERSION)f.offlineIncome=null;repairMastery(f);repairProgression(f,s.progressionVersion);return f}}catch(e){}return fresh()}
 let farmSession=null;
 const farmKey=()=>[S.cls,S.mp,S.lvl].join(':');
+// A stopped field is not a zero-income farming minute. Discard the partial window
+// so time in the plaza/trials cannot dilute the next real field sample either.
+function farmSamplingPaused(){
+ return (typeof document!=='undefined'&&document.body?.classList.contains('social-open'))||
+  (typeof hubFirstPending!=='undefined'&&hubFirstPending)||
+  (typeof JOB_RITE!=='undefined'&&JOB_RITE.on)||(typeof TRIAL!=='undefined'&&TRIAL.on)||
+  (typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused));
+}
 function farmSample(now=Date.now()){
- if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on)return;
+ if(farmSamplingPaused()){farmSession=null;return}
  if(!farmSession||farmSession.owner!==S||farmSession.key!==farmKey()||now<farmSession.start){farmSession={owner:S,key:farmKey(),start:now,events:[]};}
  const f=farmSession;f.events=f.events.filter(e=>e.at>now-60000);
  const elapsed=Math.min(60000,now-f.start);if(elapsed<60000)return;
@@ -3554,7 +3562,7 @@ function farmSample(now=Date.now()){
  S.offlineIncome={rewardVersion:ASC_REWARD_VERSION,key:f.key,at:now,version:1,xp:sum.xp*60000/elapsed,zeny:sum.zeny*60000/elapsed,job:sum.job*60000/elapsed,kph:Math.min(OFFLINE_RATE_CAP,sum.kills*3600000/elapsed)};
 }
 function recordFarmIncome(xp,zeny,job,kills=1,now=Date.now()){
- farmSample(now);farmSession.events.push({at:now,xp,zeny,job,kills});farmSample(now);
+ farmSample(now);if(!farmSession)return;farmSession.events.push({at:now,xp,zeny,job,kills});farmSample(now);
 }
 // Last 60s of *field* combat. Plaza AFK pays this and must not rewrite it (no mobs, no loot).
 function plazaFarmIncome(){
@@ -3562,22 +3570,26 @@ function plazaFarmIncome(){
   if(typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused))return null;
   const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
   const valid=income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&['xp','zeny','job'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
-  return valid?income:null;
+  return valid&&['xp','zeny','job'].some(k=>income[k]>0)?income:null;
 }
 let plazaAfkAcc={t:0,xp:0,zeny:0,job:0};
 function plazaAfkTick(dt){
   const income=plazaFarmIncome();if(!income||!(dt>0))return;
   plazaAfkAcc.t+=dt;plazaAfkAcc.xp+=income.xp*dt/60;plazaAfkAcc.zeny+=income.zeny*dt/60;plazaAfkAcc.job+=income.job*dt/60;
-  if(plazaAfkAcc.t<1)return;plazaAfkAcc.t=0;
-  const xp=Math.floor(plazaAfkAcc.xp),zeny=Math.floor(plazaAfkAcc.zeny),job=Math.floor(plazaAfkAcc.job);
+  if(plazaAfkAcc.t<1-1e-9)return;plazaAfkAcc.t=Math.max(0,plazaAfkAcc.t-Math.floor(plazaAfkAcc.t+1e-9));
+  const xp=Math.floor(plazaAfkAcc.xp+1e-9),zeny=Math.floor(plazaAfkAcc.zeny+1e-9),job=Math.floor(plazaAfkAcc.job+1e-9);
   plazaAfkAcc.xp-=xp;plazaAfkAcc.zeny-=zeny;plazaAfkAcc.job-=job;
-  if(xp){earnExp(xp);if(typeof gainAscension==='function')gainAscension(xp,String(income.key).split(':')[0]);expEarned=(expEarned||0)+xp}
-  if(zeny){earnZeny(zeny);zenyEarned=(zenyEarned||0)+zeny}
+  if(xp){earnExp(xp);if(typeof gainAscension==='function')gainAscension(xp,String(income.key).split(':')[0])}
+  if(zeny){earnZeny(zeny)}
   if(job&&typeof addJob==='function')addJob(job);
   if((xp||zeny||job)&&typeof checkLevel==='function')checkLevel();
   if(typeof bars==='function')bars();
 }
 function offlineRateSample(now=Date.now()){
+  if(!S)return;
+  if(farmSamplingPaused()){
+    farmSession=null;S.offlineRateAt=now;S.offlineRateKills=safeCount(S.kills);return;
+  }
   farmSample(now);
   if(!S)return;const kills=safeCount(S.kills),at=Number(S.offlineRateAt)||0,base=safeCount(S.offlineRateKills);
   if(!at||now<at||kills<base){S.offlineRateAt=now;S.offlineRateKills=kills;return}
@@ -13541,7 +13553,7 @@ let simFrameAt=simAt,simFocused=true,simBgSaveAt=simAt,simWorker=null,simWorkerA
 const simWinFocused=()=>{try{return typeof document!=='undefined'&&typeof document.hasFocus==='function'?document.hasFocus():simFocused}catch(e){return simFocused}};
 const simFrameStarved=(now=performance.now())=>!document.hidden&&(now-simFrameAt)>=(simWinFocused()?SIM_STALL_GAP_MS:SIM_BLUR_GAP_MS);
 function simSteps(dt){
-  if(typeof document!=='undefined'&&document.body&&document.body.classList.contains('social-open')){plazaAfkTick(dt);return}
+  if(typeof document!=='undefined'&&document.body&&document.body.classList.contains('social-open')){farmSession=null;plazaAfkTick(dt);return}
   for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}
 }
 function simAdvance(now=performance.now()){
@@ -13790,16 +13802,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=385"></script>
-<script src="assets/digimon/base-stats.js?v=385"></script>
-<script src="assets/social-rules.js?v=385"></script>
-<script src="assets/social-poker.js?v=385"></script>
-<script src="assets/digimon-sanctuary.js?v=385"></script>
+<script src="assets/digimon/roster.js?v=389"></script>
+<script src="assets/digimon/base-stats.js?v=389"></script>
+<script src="assets/social-rules.js?v=389"></script>
+<script src="assets/social-poker.js?v=389"></script>
+<script src="assets/digimon-sanctuary.js?v=389"></script>
 <script src="assets/digimon-battle.js?v=385"></script>
-<script src="assets/social-digimon.js?v=385"></script>
+<script src="assets/social-digimon.js?v=389"></script>
 <script src="assets/social-gym-redesign.js?v=385"></script>
 <script src="assets/social-pond-design.js?v=385"></script>
-<script src="assets/social-scene.js?v=385"></script>
-<script src="assets/social-fishing.js?v=385"></script>
-<script src="assets/social.js?v=388"></script></body>
+<script src="assets/social-scene.js?v=389"></script>
+<script src="assets/social-fishing.js?v=389"></script>
+<script src="assets/social.js?v=389"></script></body>
 </html>
