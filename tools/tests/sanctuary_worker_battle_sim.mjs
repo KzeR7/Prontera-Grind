@@ -34,10 +34,22 @@ try{
  a.ws.send(JSON.stringify({type:'pvp_enter',profile:profile('agumon','agumon')}));b.ws.send(JSON.stringify({type:'pvp_enter',profile:profile('palmon','palmon')}));
  await until(a.messages,m=>m.type==='pvp_offer','first acceptance offer');await until(b.messages,m=>m.type==='pvp_offer','second acceptance offer');
  a.ws.send(JSON.stringify({type:'pvp_accept'}));b.ws.send(JSON.stringify({type:'pvp_accept'}));
- const countdown=await until(a.messages,m=>m.type==='battle'&&m.pvp?.phase==='countdown','three-second countdown');assert(countdown.pvp.countdownUntil-countdown.at>=2900&&countdown.pvp.countdownUntil-countdown.at<=3100);
- await until(a.messages,m=>m.type==='battle'&&m.pvp?.phase==='fighting','alarm-driven combat start');
- const [ra,rb]=await Promise.all([until(a.messages,m=>m.type==='battle_result','winner settlement'),until(b.messages,m=>m.type==='battle_result','loser settlement')]);
- assert(ra.reward&&rb.reward);assert.notEqual(ra.outcome,undefined);assert.notEqual(rb.outcome,undefined);assert(ra.battleId===rb.battleId);assert(ra.outcome!==rb.outcome||ra.outcome==='draw');
+ // v389: v388 replaced the plaza-run fight with a device-simulated one. The plaza still runs the
+ // countdown and hands each device the same seed, but it no longer owns the fight, the strike stream
+ // or the payout - so this rehearsal asserts THAT contract end to end over a real socket instead of
+ // the old server-settled one (which could never fire without the removed 1s battle alarm).
+ const arm=await until(a.messages,m=>m.type==='pvp_client','device-simulated fight hand-off');
+ assert(Number.isInteger(arm.seed),'both devices are given one shared seed');
+ assert(arm.startsAt-arm.now>=2900&&arm.startsAt-arm.now<=3100,'the plaza still runs the three-second countdown');
+ await until(a.messages,m=>m.type==='battle'&&m.pvp?.phase==='fighting','countdown hand-off to the devices');
+ assert(a.messages.some(m=>m.type==='battle'&&m.pvp?.clientSim===true),'the snapshot says the devices own the fight');
+ // The plaza must NOT settle this match. Both devices report, and the room settles once, from their
+ // reports - a mismatched pair of reports is a draw, and a forged 'battle_result' frame buys nothing.
+ const fightId=arm.battleId;
+ a.ws.send(JSON.stringify({type:'pvp_client_end',battleId:fightId,winnerId:101,reason:'knockout'}));
+ b.ws.send(JSON.stringify({type:'pvp_client_end',battleId:fightId,winnerId:101,reason:'knockout'}));
+ const [ra,rb]=await Promise.all([until(a.messages,m=>m.type==='battle_result'&&m.battleId===fightId,'winner settlement'),until(b.messages,m=>m.type==='battle_result'&&m.battleId===fightId,'loser settlement')]);
+ assert(ra.reward&&rb.reward);assert.notEqual(ra.outcome,undefined);assert.notEqual(rb.outcome,undefined);assert.equal(ra.battleId,rb.battleId);assert(ra.outcome!==rb.outcome||ra.outcome==='draw');
  const count=a.messages.filter(m=>m.type==='battle_result').length;a.ws.send(JSON.stringify({type:'battle_result',battleId:'forged',reward:{coins:999999}}));await sleep(300);assert.equal(a.messages.filter(m=>m.type==='battle_result').length,count,'client cannot inject another result');
  // v350 field stages: a real server-driven PvE run reaches its fifth-wave boss and settles double wins.
  const c=await connect(103);
@@ -59,5 +71,5 @@ try{
  assert(mech.length>=1,'the boss fight streams its mechanic events');
  assert(mech.every(m=>m.kind==='pve'&&typeof m.battleId==='string'&&m.fx&&String(m.fx.type).startsWith('boss_')),'mechanic events stay presentation-only and self-describing');
  c.ws.send(JSON.stringify({type:'pve_stop'}));await sleep(300);c.ws.close();
- a.ws.close();b.ws.close();console.log('PASS local workerd Sanctuary battle: two real WebSockets, movement, mutual offers, alarm countdown, automatic combat, strike FX streaming, server-only settlement and a fifth-wave boss');
+a.ws.close();b.ws.close();console.log('PASS local workerd Sanctuary battle: two real WebSockets, movement, mutual offers, three-second countdown handed to both devices with one shared seed, device-reported settlement with a forged-result rejection, and no server-side payout for a device-simulated fight');
 }finally{await mf.dispose();fs.rmSync(persist,{recursive:true,force:true})}

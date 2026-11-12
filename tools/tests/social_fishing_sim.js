@@ -599,13 +599,18 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  /* v383 (owner: "the mvp fish should be floating around the pond randomly, not one spot"): every
     spawn surfaces somewhere else, but always inside the water and never under the bridge deck. */
  const inWater=(x,z)=>R.pondContains(pond,x,z,-.4);
- assert(mvpSprite&&mvpSprite.position.y>2&&inWater(mvpFloat.position.x,mvpFloat.position.z),'the selected MVP floats inside the pond');
+ // v389: v386 deliberately re-anchored the peek - `center.set(.5,.18)` lowers the sprite to baseY .72
+ // so the boss "sits lower and larger" in the water (it was 2.55 before). This predicate still pinned
+ // the OLD floating height, so a correct spawn failed here because of y, not because of the pond.
+ assert(mvpSprite&&inWater(mvpFloat.position.x,mvpFloat.position.z),'the selected MVP floats inside the pond');
  assert(Math.abs(mvpFloat.position.z-bridge.z)>bridge.width/2,'the MVP never surfaces underneath the bridge deck');
  const spots=new Set();
  for(let i=0;i<18;i++){scene.fishing.setMvp('mvp_void_maw',true);spots.add(mvpFloat.position.x.toFixed(2)+':'+mvpFloat.position.z.toFixed(2));assert(inWater(mvpFloat.position.x,mvpFloat.position.z),'every spawn lands in the water')}
  assert(spots.size>=6,'the MVP surfaces at random pond positions, not one fixed spot ('+spots.size+' of 18)');
  frame(now+=100);
- assert(mvpSprite.position.y>2.2&&mvpSprite.position.y<2.9,'the MVP sprite bobs slightly above the surface');
+ // v386 anchor: the sprite sits just above the waterline and bobs around baseY (.72), with the art's
+ // waterline cut (center .18) keeping the head clear of the surface.
+ assert(mvpSprite.position.y>.5&&mvpSprite.position.y<1,'the MVP sprite bobs slightly above the surface');
  /* v383 (owner: "the text is mirrored, not mirror from the other side"): the board turns to face
     the camera, so the printed side - never the mirrored one - is what the player reads. */
  const cam=scene.camera||null;

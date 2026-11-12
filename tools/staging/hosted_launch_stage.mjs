@@ -48,6 +48,8 @@ const FILES = ['index.html','gm.html','assets/shop-catalog.js','assets/shop.css'
   'migrations/0013_gm_owner_name.sql',
   // v280: both now return the durable account id used by the save stamp.
   'functions/api/me.js','functions/api/sessions.js','tools/build_site.sh',
+  // v389: the Turnstile verifier register/sessions import at runtime (same list as the packager).
+  'functions/_lib/turnstile.js','functions/api/register.js','functions/api/recover.js',
   // v360: the Prontera Grand Aetherwell centerpiece rides with the package (same list as
   // tools/staging/package_hosted_launch.mjs).
   'assets/vendor/GLTFLoader.r128.js','assets/Fountainfile/Prontera_Grand_Aetherwell.glb','assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png',

@@ -161,7 +161,18 @@ function syncFieldMonitor(){
  activityStatus.hidden=!managing||!activities.length;activityStatus.textContent=activities.join(' · ')+' ↗';
  fieldMonitor.dataset.live=String(live);
  $id('socialFieldState').textContent=!ready?'Signed out':paused?'Field paused':plazaAfk?'Plaza AFK':waiting?'Field not started':trial?'Field trial':typeof respawn!=='undefined'&&respawn>0?'Field · respawning':'Field farming';
- for(const [target,source] of [['socialFieldExp','expmin'],['socialFieldZeny','zenymin']]){const el=$id(source);$id(target).textContent=live&&el?el.textContent:'—';$id(target).title=live&&el?(el.title||el.getAttribute('aria-label')||'Last 60 seconds'):''}
+ // v390 (owner: "in social hub i still dont get exp from field"): the monitor used to COPY the
+ // #expmin/#zenymin HUD samplers. Those are LIVE combat readings on a 30s idle reset (HUD_IDLE_RESET),
+ // so the moment the player stood still in the plaza they read 0 - the card advertised "Plaza AFK" with
+ // 0 EXP/min while a perfectly good 600 EXP/min sat in S.offlineIncome, and the player read that as
+ // "the plaza pays nothing". Print the measured rate the plaza is actually paying instead.
+ const saved=plazaAfk&&typeof plazaFarmIncome==='function'?plazaFarmIncome():null;
+ const shown={exp:saved?saved.xp:0,zeny:saved?saved.zeny:0};
+ for(const [target,kind] of [['socialFieldExp','exp'],['socialFieldZeny','zeny']]){
+  const el=$id(target);
+  el.textContent=live&&saved?eclipseMetricNumber(shown[kind]):'—';
+  el.title=live&&saved?`Measured from your last field minute: ${Math.round(shown[kind]).toLocaleString()} ${kind==='exp'?'EXP':'Zeny'}/min`:'';
+ }
  syncDigipetDock();
 }
 const leaveWarning=document.createElement('div');leaveWarning.id='socialPokerLeaveWarning';leaveWarning.hidden=true;

@@ -26,12 +26,25 @@ try{
  click('socialMiniMap');assert(d.getElementById('socialPartyPanel').hidden);assert(!d.getElementById('socialMapModal').hidden);
  click('socialMore');assert(d.getElementById('socialMapModal').hidden);
  const tick=()=>{for(let i=0;i<4;i++)w.battleTick()};
- d.getElementById('expmin').textContent='12.3k';d.getElementById('zenymin').textContent='456';tick();
- assert.equal(d.getElementById('socialFieldExp').textContent,'12.3k');assert.equal(d.getElementById('socialFieldZeny').textContent,'456');
- ev('hubFirstPending=true;respawn=1e9');tick();assert.equal(d.getElementById('socialFieldState').textContent,'Field not started');assert.equal(d.getElementById('socialFieldExp').textContent,'—');
- ev('S.offlineIncome={version:1,rewardVersion:1,key:S.cls+\":\"+S.mp+\":\"+S.lvl,at:Date.now(),xp:100,zeny:50,job:10}');tick();assert.equal(d.getElementById('socialFieldState').textContent,'Plaza AFK');
+ // v390: the card prints the MEASURED plaza rate (plazaFarmIncome) - the value the plaza actually
+ // pays - not the live #expmin/#zenymin HUD samplers. Those reset to 0 after HUD_IDLE_RESET (30s)
+ // without a kill, which is how a paying plaza came to read "0 EXP/min" to a standing player.
+ const seedRate=`S.offlineIncome={version:1,rewardVersion:6,key:S.cls+":"+S.mp+":"+S.lvl,at:Date.now(),xp:12300,zeny:456,job:10,kills:1}`;
+ d.getElementById('expmin').textContent='12.3k';d.getElementById('zenymin').textContent='456';
+ ev(seedRate);tick();
+ assert.equal(d.getElementById('socialFieldExp').textContent,'12,300','the card shows the measured EXP/min');
+ assert.equal(d.getElementById('socialFieldZeny').textContent,'456','the card shows the measured Zeny/min');
+
+ // A stale 0 in the live sampler must never zero a paying card - the exact v390 bug.
+ d.getElementById('expmin').textContent='0';d.getElementById('zenymin').textContent='0';tick();
+ assert.equal(d.getElementById('socialFieldExp').textContent,'12,300','a stale HUD sampler cannot zero the card');
+
+ // With NO measured rate a hub-first account is "Field not started" and shows a dash - it must not
+ // claim the plaza is earning before a real field minute exists.
+ ev('S.offlineIncome=null;hubFirstPending=true;respawn=1e9');tick();assert.equal(d.getElementById('socialFieldState').textContent,'Field not started');assert.equal(d.getElementById('socialFieldExp').textContent,'—');
+ ev('S.offlineIncome={version:1,rewardVersion:1,key:S.cls+":"+S.mp+":"+S.lvl,at:Date.now(),xp:100,zeny:50,job:10}');tick();assert.equal(d.getElementById('socialFieldState').textContent,'Plaza AFK');
  ev('hubFirstPending=false;CLOUD.lost=true');tick();assert.equal(d.getElementById('socialFieldState').textContent,'Field paused');assert.equal(d.getElementById('socialFieldZeny').textContent,'—');
- ev('CLOUD.lost=false');tick();assert.equal(d.getElementById('socialFieldExp').textContent,'12.3k');
+ ev('CLOUD.lost=false');ev(seedRate);tick();assert.equal(d.getElementById('socialFieldExp').textContent,'12,300','the rate returns once the connection does');
  const mini=d.getElementById('socialMiniMapCanvas'),ctx=mini.getContext('2d');let painted=0;ctx.fillRect=()=>painted++;mini.getContext=()=>ctx;w.BGM={phoneShell:()=>true};tick();assert(painted>0,'a phone-first hub paints its top minimap too');
  const world=d.querySelector('[data-channel=world]');w.PGSocial.syncDisplay();assert.equal(d.querySelector('[data-channel=world]'),world,'chat buttons remain stable');
  w.PGSocial.select('whisper');assert(!d.getElementById('socialTo').hidden);click('socialMin');assert(d.getElementById('socialChat').classList.contains('minimized'));
