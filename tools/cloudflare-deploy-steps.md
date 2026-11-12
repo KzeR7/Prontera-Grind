@@ -48,7 +48,7 @@ If you need to deploy manually instead, build and upload the production branch e
 ```sh
 git pull --ff-only origin main          # the merge happened on GitHub, not in this folder
 bash tools/build_site.sh                # rebuild dist/ FROM the pulled source
-node tools/preflight_deploy.mjs --expect haven-v392   # check the tree you just built
+node tools/preflight_deploy.mjs --expect haven-v393   # check the tree you just built
 npx wrangler pages deploy dist --project-name horizonhaven --branch main
 ```
 
@@ -135,7 +135,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-12 haven-v392 plaza keeps earning while awaiting connection` || Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
+| Build tag at the bottom of the card | `2026-11-12 haven-v393 plaza pays cards gear and materials` || Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
 | `/gm.html` | after deliberate D1 owner provisioning, the GM console lists players and shows **👑 owner** |

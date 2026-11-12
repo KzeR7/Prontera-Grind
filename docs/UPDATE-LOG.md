@@ -10708,6 +10708,52 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Fact:** hiding other players’ PvE/PvP (private tab / not drawing the fight) does **not** reduce DO requests. Solo DigiPet PvE is client-side; party/PvP still alarm at 1s. Sitters ping every 4 minutes; empty idle rooms skip the 60s alarm and may hibernate.
 * **Delivery:** `AGENTS.md` on `arena/7a72f13c-prontera-grind`.
 
+### 2026-11-12 — `haven-v393 plaza pays cards, gear and materials`
+
+* **Owner:** *"make it drop materials & cards. this is an idle game, i dont need players to stay at the
+  field constantly."* The plaza now pays **loot** as well as EXP/Zeny, at the field's own rate.
+* **Parity, not a discount.** `income.kph` is measured from the player's **own** kills in a completed
+  60-second field minute, so replaying it pays exactly what standing in the field would have paid. On
+  Thor Volcano at Lv 150 that is 2,340 kills/h → 3.5 cards, 59 gear drops and 11.7 ore per hour,
+  identical to farming in person. Anything less would be a nerf with no stated reason.
+* **I had claimed the opposite and was wrong.** Earlier I told the owner a `kph` of 30,000 would make
+  drops "far richer than field farming". Two errors: I quoted `OFFLINE_RATE_CAP` (a corrupted-save
+  ceiling) as if it were a typical rate, and I misread `cardCh: .15` as 15% when `Math.random()*100 <
+  0.15` is **0.15%**. Measured throughput is 2,340/h, 12.8× under the cap. The owner pushed back on the
+  claim, which was the right call.
+* **How it works.** `plazaLootTick()` accrues kills from `income.kph` and replays each through
+  `offlineAwardKill(mob, {measured:true})` — the **away claim's own** function and mode, which pays
+  cards/gear/ore/ascension materials and **zero rate**. EXP and Zeny stay on `plazaAfkTick`'s single
+  payment, so they cannot be paid twice. `offlineMobForCurrentField(map,stage)` supplies the same mobs
+  the away claim uses, read from the stored three-part key.
+* **The duplication hole that had to be closed — and was found by the new test, not by luck.**
+  `offlineAwardKill` bumps `S.kills` unconditionally. `/api/save` **learns the away rate from kill-count
+  deltas** (`updatedRate()` reads `publicFields().kills`), so a plaza that grew that number would tell
+  the server the field was being farmed, and it would mint an away claim on top of what the plaza had
+  already paid. The function now takes an opt-in `r.noKillCount`; the plaza sets it, the away claim does
+  not. Verified: ten plaza minutes replay **390 kills** while `S.kills` stays at **0**.
+* **Details that follow the field, not re-invented:** auto-sold gear pays no extra Zeny here (it is
+  already inside `income.zeny`, which is why `measured` mode zeroes it); ascension maps pay materials
+  and **no gear** because they carry no gear table — same as the away claim; the bag cap holds at
+  `BAGMAX` and refusals are counted, not swallowed; a failing loot notice can never stop the payroll
+  (`plazaLootNotice` is inside the same `try` and rate-limited to one line a minute).
+* **Card:** the plaza monitor now states the promise — `+ drops · 2,340 kills/hr` — because a silent
+  drop is indistinguishable from a broken one.
+* **Isolation (the owner's condition):** plaza loot writes only `S.inv`, `S.cards`, `S.ore`,
+  `S.ascensionMat`, `S.nmMat`, `S.pets` and `S.mobKills`. DigiPet gear lives in `S.digimonBag`; party and
+  PvP live in `workers/social`. The diff touches **no** DigiPet, Sanctuary, party or PvP code, adds no
+  Durable Object traffic (`offlineStoreGear` is pure local generation), and leaves `room.mjs` untouched.
+* **Regression test:** `plaza_loot_sim.js` — asserts the measured rate is used rather than the cap,
+  390 kills per ten plaza minutes, `S.kills` unchanged, EXP/Zeny paid exactly once, a card and
+  Ascension materials actually landing in the real save, gear landing on a normal map, the bag cap
+  holding, a running tick surviving a failing notice, the card naming the rate, and the loot surviving a
+  reload through the real storage key.
+* **Checks:** full local gate **217/217**. The three progression fixtures were regenerated together —
+  only `combatHash`/`sourceHash` moved, **no measured DPS changed**. `bash tools/build_site.sh` clean,
+  `node tools/preflight_deploy.mjs --expect haven-v393` says **Safe to deploy.**
+* **Delivery:** client only (`index.html`, `assets/social.js`). No migration, no new binding, no new
+  alarm, no Social Worker change.
+
 ### 2026-11-12 — `haven-v392 plaza keeps earning while awaiting connection`
 
 * **Owner's correction, and it was fair:** *"but i thought u said it was a constant update? why would i
