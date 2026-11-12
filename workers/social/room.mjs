@@ -12,6 +12,10 @@ const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker,B=globalThis.PGDigim
 // player is no longer dropped every five minutes the way REAUTH_MS alone used to force.
 export const SOCIAL_MAX_ROOMS=50;
 const IDLE_MS=300000,REAUTH_MS=1800000,MAX_ROOMS=SOCIAL_MAX_ROOMS,LEDGER_BATCH=100;
+// v389: how long a device-simulated PvP match may stay 'fighting' with no report from either device
+// before the plaza abandons it. GENEROUS on purpose - it must never cut a real fight short; a normal
+// match settles in well under 45s of ticks. Client-side timers settle this first when a tab is alive.
+const CLIENTSIM_ABANDON_MS=120000;
 const MSG_WINDOW_MS=1000,MSG_LIMIT=20;
 // v295: RESUME_MS is the window in which a replacement socket may inherit the position, room and
 // seat of the one it replaced. It used to be 15 s, which was shorter than the client's own
@@ -486,10 +490,25 @@ export class SocialRoom {
   if(B.acceptPvp(match,c.id,now)){
    if(match.phase==='countdown'){
     match.clientSim=true;match.seed=(now^((match.id.length||1)*1597334677))>>>0;
-    const payload={type:'pvp_client',battleId:match.id,seed:match.seed,now,startsAt:match.countdownUntil,players:match.participants.map(p=>({id:p.id,name:p.name,side:p.side,profile:p.profile}))};
-    for(const p of match.participants){const other=this.clients.get(p.id);if(other)this.send(other,payload)}
+    // v389: v388 dropped the broadcast that used to follow this accept, so every watcher - and each
+    // participant's own HUD - kept the last snapshot, which still said 'offer': the fight had started
+    // on the devices while the plaza showed the challenge card.
+    this.armClientPvp(match,now);
    }
   }
+ }
+ // v389: arm a device-simulated match. The countdown is handed to the devices immediately, and the
+ // phase is flipped to 'fighting' right here rather than from a 1s tick - v388 removed the battle
+ // alarm for these matches, so nothing would ever have ticked the room and `countdown` was a dead end
+ // (the HUD sat on "Battle starts in 3" for ever and the ring stayed occupied). Both devices were told
+ // `startsAt = countdownUntil` and gate their own simulation on it, so the three-second countdown
+ // still plays out on screen; the plaza simply no longer owns that clock. No alarm is armed - that is
+ // the v388 budget - and a fight no device ever reports is abandoned by tickBattles on the next sweep.
+ armClientPvp(match,now){
+  const payload={type:'pvp_client',battleId:match.id,seed:match.seed,now,startsAt:match.countdownUntil,players:match.participants.map(p=>({id:p.id,name:p.name,side:p.side,profile:p.profile}))};
+  match.phase='fighting';match.nextAt=now;match.fightUntil=now+(match.countdownUntil-now)+CLIENTSIM_ABANDON_MS;
+  this.broadcastBattle(match.room);
+  for(const p of match.participants){const other=this.clients.get(p.id);if(other)this.send(other,payload)}
  }
  cancelPvp(c,reason='declined',now=this.now()){
   if(c.pvp?.queue){const queue=this.pvpQueues.get(c.room)||[];this.pvpQueues.set(c.room,queue.filter(q=>q.id!==c.id));c.pvp=null;this.broadcastBattle(c.room);return}
@@ -568,11 +587,20 @@ export class SocialRoom {
  // Leaving a party run removes only that trainer's partner; the field stays alive for the rest.
  leavePartyRun(c,run,reason='stopped'){
   const idx=Array.isArray(run.members)?run.members.indexOf(c.id):-1;
-  if(idx>=0){run.members.splice(idx,1);run.profiles.splice(idx,1);run.partners.splice(idx,1)}
-  if(run.partners.length===0){run.phase='ended';run.reason=reason;this.pveRuns.delete(run.id)}
-  else run.partner=run.partners[0];
+  // v389: a device-simulated party run (v388) has members and profiles but NO server-side partners or
+  // enemies, so the old `run.partners.splice(...)` threw a TypeError the moment anyone left a party
+  // mid-grind. Guard every server-only field rather than assuming the server-built shape.
+  if(idx>=0){
+   run.members.splice(idx,1);
+   if(Array.isArray(run.profiles))run.profiles.splice(idx,1);
+   if(Array.isArray(run.partners))run.partners.splice(idx,1);
+  }
+  if(Array.isArray(run.partners)){
+   if(run.partners.length===0){run.phase='ended';run.reason=reason;this.pveRuns.delete(run.id)}
+   else run.partner=run.partners[0];
+  }else if(!run.members.length){run.phase='ended';run.reason=reason;this.pveRuns.delete(run.id)}
   c.pve=null;
-  const earned=(run.earnedBy&&run.earnedBy[c.id])||{...run.earned};
+  const earned=(run.earnedBy&&run.earnedBy[c.id])||(run.earned?{...run.earned}:{});
   this.send(c,{type:'pve_end',battleId:run.id,reason,earned:{...earned}});
   if(run.room)this.broadcastBattle(run.room);
  }
@@ -654,7 +682,26 @@ export class SocialRoom {
    }
   }
   for(const match of [...this.pvpMatches.values()]){
-   if(match.clientSim)continue;
+   // v389: the countdown is the ONE phase the plaza still owns for device-simulated PvP. v388 moved
+   // the fight itself onto both devices ("PvP countdown still matches in the plaza, then both devices
+   // simulate"), but this loop skipped clientSim matches ENTIRELY, so nothing ever moved a match out of
+   // `countdown`: `fighting` never arrived, no pvp_client payload was needed after the arm, the HUD sat
+   // on "Battle starts in 3" and booting a player did not forfeit anything. Flip that single phase here
+   // and leave every other tick to the devices - no extra DO work, and no 1s alarm for a clientSim match
+   // (hasActiveBattles still ignores them), so the v388 budget is unchanged.
+   if(match.clientSim){
+    // The countdown hand-off happens in armClientPvp (no alarm is armed for these matches, so no tick
+    // could do it). This sweep only abandons a fight that no device ever reported.
+    if(match.phase==='fighting'&&match.fightUntil&&now>=match.fightUntil){
+     // Both devices are meant to report a winner. A tab that was closed, backgrounded or reloaded
+     // mid-fight simply never does, and the match then held the ring, the pair and `battleBusy` for
+     // ever - the player could not start another round. Abandoning after this window is room-side
+     // bookkeeping only: it decides no winner and pays no reward.
+     match.phase='closed';match.reason='abandoned';this.sendMatchCancel(match,match.reason);
+     this.cleanupPvp(match);rooms.add(match.room);
+    }
+    continue;
+   }
    const result=B.stepPvp(match,now,this.random);if(!result)continue;rooms.add(match.room);
    for(const event of result.events)if(event.type==='hit')this.broadcast({type:'battle_fx',kind:'pvp',battleId:match.id,to:event.to,amount:event.amount,crit:!!event.crit},p=>p.room===match.room);
    if(result.events.some(e=>e.type==='result'))this.settlePvp(match);

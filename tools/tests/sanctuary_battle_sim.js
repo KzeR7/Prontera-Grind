@@ -33,11 +33,36 @@ const assert=require('node:assert/strict');
  send(a,{type:'pve_stop'});assert.equal(room.pveRuns.size,0);
  // Same-side players wait; opposite-side players receive offers, never an immediate fight.
  send(b,{type:'pvp_enter',profile:{...profile('palmon','palmon',0),slot:1}});send(c,{type:'pvp_enter',profile:profile('agumon','agumon',0)});assert.equal(room.pvpMatches.size,1);assert(b.events.some(e=>e.type==='pvp_offer')&&c.events.some(e=>e.type==='pvp_offer'));
- const match=[...room.pvpMatches.values()][0];send(b,{type:'pvp_accept'});assert.equal(match.phase,'offer');send(c,{type:'pvp_accept'});assert.equal(match.phase,'countdown');assert.equal(match.countdownUntil-now,3000);
- room.tickBattles(now+1000);assert.equal(match.phase,'countdown');now+=3000;room.tickBattles(now);assert.equal(match.phase,'fighting');
- for(let i=0;i<140&&match.phase!=='result';i++){now+=500;room.tickBattles(now)}assert.equal(match.phase,'result');const settled=[...b.events,...c.events].filter(e=>e.type==='battle_result'&&e.battleId===match.id);assert.equal(settled.length,2,'each participant receives one authoritative result');
+ const match=[...room.pvpMatches.values()][0];send(b,{type:'pvp_accept'});assert.equal(match.phase,'offer');send(c,{type:'pvp_accept'});
+ // v389: the second accept arms the device-simulated fight. v388 removed the 1s battle alarm for
+ // clientSim matches, so nothing ticks the room - a `countdown` phase driven by a tick could never
+ // have advanced (the HUD sat on "Battle starts in 3" and the ring stayed taken). The plaza now tells
+ // both devices `startsAt` and flips to 'fighting' in the same call; the three-second countdown still
+ // plays out on screen, from the timestamp each device was given.
+ assert.equal(match.clientSim,true,'both devices own the fight');
+ assert.equal(match.countdownUntil-now,3000,'the devices are still given the three-second countdown');
+ assert.equal(match.phase,'fighting','the plaza hands off immediately instead of waiting for a tick it never arms');
+ assert.equal(match.fightUntil>now,true,'and records when to abandon an unreported fight');
+ room.tickBattles(now+1000);assert.equal(match.phase,'fighting','ticking does not disturb a live device fight');
+ // v389: v388 moved the FIGHT onto both devices ("PvP countdown still matches in the plaza, then both
+ // devices simulate; they report the winner"). The plaza therefore must NOT settle this match - that
+ // would double-pay. What it must still do is advance the countdown (asserted above) and, if the two
+ // devices never report, abandon the match so it cannot hold the ring for ever. Drive that window.
+ assert.equal(match.phase,'fighting');
+ for(let i=0;i<300&&match.phase==='fighting';i++){now+=500;room.tickBattles(now)}
+ assert.equal(match.phase,'closed','an unreported device-simulated match is abandoned, not settled');
+ assert.equal(match.reason,'abandoned','and it names why');
+ assert.equal([...b.events,...c.events].filter(e=>e.type==='battle_result').length,0,'the plaza pays no result for a device-simulated fight');
+const settled=[...b.events,...c.events].filter(e=>e.type==='battle_result'&&e.battleId===match.id);assert.equal(settled.length,0,'the plaza sends no result for a device-simulated fight - the two devices report it instead (v388)');
  const ringFx=[...b.events,...c.events,...a.events].filter(e=>e.type==='battle_fx'&&e.kind==='pvp');
- assert(ringFx.length>=1,'ring strikes are forwarded as PvP FX events');assert(ringFx.every(e=>e.battleId===match.id&&(e.to===b.id||e.to===c.id)&&Number.isInteger(e.amount)&&typeof e.crit==='boolean'),'PvP FX events address participants by id');assert(settled.every(e=>e.reward&&Number.isInteger(e.reward.coins)));assert.equal(b.events.find(e=>e.type==='battle_result'&&e.battleId===match.id).slot,1,'PvP settlement preserves the originating slot');const resultCount=settled.length;room.tickBattles(now);assert.equal([...b.events,...c.events].filter(e=>e.type==='battle_result'&&e.battleId===match.id).length,resultCount);
+ // v389: v388 put the strike stream on the devices too - the plaza no longer forwards per-hit PvP FX,
+ // and it pays no result, so there is no server-side 'slot' to preserve. What must still hold is that
+ // the plaza stayed silent: no FX, no reward, and no duplicate result when it keeps ticking.
+ assert.equal(ringFx.length,0,'the plaza forwards no PvP strikes for a device-simulated fight (v388)');
+ assert.equal(settled.length,0,'and it pays nothing for one');
+ const resultCount=[...b.events,...c.events].filter(e=>e.type==='battle_result'&&e.battleId===match.id).length;
+ room.tickBattles(now);room.tickBattles(now+1000);
+ assert.equal([...b.events,...c.events].filter(e=>e.type==='battle_result'&&e.battleId===match.id).length,resultCount,'further ticks cannot produce a duplicate result');
 // v355: grind parties - invite/accept, leader start, one shared run, per-member rewards, and
 // a member leaving only removes their own partner while the field stays alive for the rest.
 {
@@ -51,25 +76,36 @@ const assert=require('node:assert/strict');
  send(p2,{type:'party_profile',profile:prof('palmon')});
  assert(p2.events.some(e=>e.type==='party'&&e.party&&e.party.members.length===2),'acceptance is broadcast to members');
  send(p1,{type:'party_start',request:62});
- assert(p1.events.some(e=>e.type==='pve_started'&&e.party===true),'the leader hears the party start');
- assert(p2.events.some(e=>e.type==='pve_started'&&e.party===true),'every member hears the party start');
+ // v389: v388 replaced the server-side `pve_started` handshake with `pve_client` - one shared seed,
+ // every member's device runs the wave and reports. The party is told with the SAME message shape the
+ // client actually handles (assets/social.js beginClientPve).
+ assert(p1.events.some(e=>e.type==='pve_client'&&e.party===true&&e.owner===6),'the leader hears the party start');
+ assert(p2.events.some(e=>e.type==='pve_client'&&e.party===true),'every member hears the party start');
+ assert(p1.events.some(e=>e.type==='pve_client'&&Number.isInteger(e.seed)),'the shared seed travels with it');
+ assert.equal(p1.events.filter(e=>e.type==='pve_client').length,1,'and the leader is told once, not twice');
  const run=[...room.pveRuns.values()].find(r=>r.party);
  assert(run&&run.members.includes(6)&&run.members.includes(7),'the run carries both member ids');
- assert.equal(run.partners.length,2,'both partners share one field');
- assert.equal(run.enemies.length,4,'a pair faces a bigger bot group');
+ // v389: the run is a device-simulated descriptor now - it carries the members, the profiles and the
+ // shared seed, and no server-side units. Both partners still share ONE field (one run, one seed).
+ assert(run.members.length===2 && run.profiles.length===2,'both partners share one field');
+ assert.equal(run.clientSim,true,'and it runs on the devices, not the plaza');
+ assert(!run.partner&&!run.enemies,'the plaza builds no units for a device-simulated run');
  // A busy leader cannot invite a third trainer mid-grind.
  send(p1,{type:'party_invite',request:63,targetId:8});
  assert(p1.events.some(e=>e.type==='party_error'&&/Finish the current DigiPet activity/.test(e.message)),'a grinding leader cannot invite');
- for(let t=now+700;t<now+60000&&!p2.events.some(e=>e.type==='battle_reward');t+=650)room.tickBattles(t);
- const mine=p2.events.filter(e=>e.type==='battle_reward');
- assert(mine.length>=1,'the member is paid for the shared clear');
- assert(mine.every(e=>e.lineId==='palmon'&&e.slot===0),'member rewards carry their own partner and slot');
- assert(p1.events.filter(e=>e.type==='battle_reward').every(e=>e.lineId==='agumon'),'the leader is paid with their own partner');
+ // v389: a party run is device-simulated, so the plaza must not tick it or pay it. Rewards are rolled
+ // on each member's device from the shared seed and reported back; a plaza that also paid would
+ // double-reward every shared clear.
+ for(let t=now+700;t<now+60000;t+=650)room.tickBattles(t);
+ assert.equal(p2.events.filter(e=>e.type==='battle_reward').length,0,'the plaza pays nothing for a device-simulated party clear');
+ assert.equal(p1.events.filter(e=>e.type==='battle_reward').length,0,'not for the leader either');
+ assert.equal(run.clientSim,true,'and the plaza never took the run over');
  // A member leaving only removes their partner; the leader keeps grinding.
  send(p2,{type:'pve_stop'});
  assert(p2.events.some(e=>e.type==='pve_end'&&e.reason==='stopped'),'the leaver is told the run stopped for them');
  const after=[...room.pveRuns.values()].find(r=>r.id===run.id);
- assert(after&&after.partners.length===1&&after.members.length===1&&after.members[0]===6,'the shared run continues for the leader');
+ // v389: the descriptor keeps member ids/profiles, not server-built partners.
+ assert(after&&after.members.length===1&&after.members[0]===6&&after.profiles.length===1,'the shared run continues for the leader');
  send(p1,{type:'pve_stop'});
  assert(!room.pveRuns.has(run.id),'the last member out ends the run');
  // The party survives the grind; leadership transfers when the leader leaves.
@@ -111,5 +147,5 @@ const assert=require('node:assert/strict');
  send(gym,{type:'pve_stop'});send(gym,{type:'gym_stop'});assert(!gym.gym);
  send(gym,{type:'pve_start',request:45,profile:{...profile(),slot:2}});assert(gym.events.some(e=>e.type==='pve_started'&&e.request===45),'stopping training reopens the slot');
  room.disconnect(gym);
- console.log('PASS Sanctuary room: authoritative wave/reward events, strike FX forwarding, forged-result rejection, stale-meter tolerance, training-slot gate, opposite-side mutual PvP, queue hygiene, three-trainer grind parties with per-member rewards, countdown, settlement, cancellation and disconnect cleanup');
+ console.log('PASS Sanctuary room: authoritative wave/reward events, strike FX forwarding, forged-result rejection, stale-meter tolerance, training-slot gate, opposite-side mutual PvP, queue hygiene, three-trainer grind parties, countdown hand-off, device-simulated fights that the plaza never pays or duplicates, abandonment of an unreported match, cancellation and disconnect cleanup');
 })().catch(e=>{console.error(e);process.exitCode=1});

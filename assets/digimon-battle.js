@@ -327,8 +327,29 @@ function stepPvp(match,now,random=randomUnit){
  else if(match.turn>=MAX_ROUNDS){const ar=a.unit.hp/a.unit.maxHp,br=b.unit.hp/b.unit.maxHp;finishPvp(match,ar===br?null:ar>br?a.id:b.id,'decision',now);events.push({type:'result',winnerId:match.winnerId,rewards:pvpRewards(match)});}
  match.nextAt=now+TICK_MS;return {events,changed:true};
 }
-function unitSnapshot(u){return {id:u.id,form:u.form,stage:u.stage,level:u.level,hp:u.hp,maxHp:u.maxHp,boss:!!u.boss,attackAt:u.attackAt||0,hitAt:u.hitAt||0}}
-function pveSnapshot(run){return {id:run.id,owner:run.owner,room:run.room,wave:run.wave,phase:run.phase,reason:run.reason,nextAt:run.nextAt,profile:{lineId:run.profile.lineId,form:run.profile.form,stage:run.profile.stage,level:run.profile.level,slot:run.profile.slot},partner:unitSnapshot(run.partner),partners:(run.partners||[run.partner]).filter(Boolean).map(unitSnapshot),members:Array.isArray(run.members)&&run.members.length?[...run.members]:[run.owner],slots:(run.profiles&&run.profiles.length?run.profiles:[run.profile]).map((p,i)=>({id:Array.isArray(run.members)?run.members[i]:undefined,slot:p?.slot||0})),party:run.party===true,mode:run.mode||'grind',mech:run.mech?{slamIn:run.mech.slamAt>0?Math.max(0,run.mech.slamAt-run.pulse):0,shieldPulses:run.mech.shieldPulses||0,enraged:!!run.mech.enraged,summons:run.mech.summoned||0}:null,enemies:run.enemies.map(unitSnapshot),earned:{...run.earned},slot:run.slot||0}}
-function pvpSnapshot(match){return {id:match.id,room:match.room,phase:match.phase,createdAt:match.createdAt,expiresAt:match.expiresAt,countdownUntil:match.countdownUntil,resultUntil:match.resultUntil,winnerId:match.winnerId,reason:match.reason,participants:match.participants.map(p=>({id:p.id,name:p.name,side:p.side,accepted:p.accepted,profile:{lineId:p.profile.lineId,form:p.profile.form,stage:p.profile.stage,level:p.profile.level},unit:unitSnapshot(p.unit)}))}}
+function unitSnapshot(u){if(!u)return null;return {id:u.id,form:u.form,stage:u.stage,level:u.level,hp:u.hp,maxHp:u.maxHp,boss:!!u.boss,attackAt:u.attackAt||0,hitAt:u.hitAt||0}}
+// v389: a v388 device-simulated party run carries only id/room/members/profiles/mode - NO server-built
+// partner, enemies, mech or earned. Reading those unconditionally threw a TypeError inside the very
+// broadcast that announces the party, so leaving a shared run crashed the room. Everything optional is
+// now guarded; a client-simulated run reports the same shape a client already expects, with no units.
+function pveSnapshot(run){
+ const profile=run.profile||{};
+ const profiles=Array.isArray(run.profiles)&&run.profiles.length?run.profiles:(run.profile?[run.profile]:[]);
+ const units=Array.isArray(run.partners)?run.partners.filter(Boolean):(run.partner?[run.partner]:[]);
+ return {id:run.id,owner:run.owner,room:run.room,wave:run.wave||0,phase:run.phase,reason:run.reason,nextAt:run.nextAt,
+  profile:{lineId:profile.lineId,form:profile.form,stage:profile.stage,level:profile.level,slot:profile.slot},
+  partner:unitSnapshot(run.partner),partners:units.map(unitSnapshot),
+  members:Array.isArray(run.members)&&run.members.length?[...run.members]:[run.owner],
+  slots:profiles.map((p,i)=>({id:Array.isArray(run.members)?run.members[i]:undefined,slot:p?.slot||0})),
+  party:run.party===true,clientSim:run.clientSim===true,mode:run.mode||'grind',
+  mech:run.mech?{slamIn:run.mech.slamAt>0?Math.max(0,run.mech.slamAt-run.pulse):0,shieldPulses:run.mech.shieldPulses||0,enraged:!!run.mech.enraged,summons:run.mech.summoned||0}:null,
+  enemies:(Array.isArray(run.enemies)?run.enemies:[]).map(unitSnapshot),
+  earned:{...(run.earned||{})},slot:run.slot||0};
+}
+// v389: `clientSim` must travel on the snapshot. The room decides "does this battle need a 1s alarm?"
+// from the snapshot it broadcasts (hasActiveBattles reads the match objects, but the client-side
+// 'should I keep ticking?' check reads this), and a device-simulated match that did not say so froze
+// the HUD on "Battle starts in 3" or kept a server tick alive when v388 asked for neither.
+function pvpSnapshot(match){return {id:match.id,room:match.room,phase:match.phase,clientSim:match.clientSim===true,createdAt:match.createdAt,expiresAt:match.expiresAt,countdownUntil:match.countdownUntil,resultUntil:match.resultUntil,winnerId:match.winnerId,reason:match.reason,participants:match.participants.map(p=>({id:p.id,name:p.name,side:p.side,accepted:p.accepted,profile:{lineId:p.profile.lineId,form:p.profile.form,stage:p.profile.stage,level:p.profile.level},unit:unitSnapshot(p.unit)}))}}
 return {STATS,TICK_MS,WAVE_DELAY_MS,COUNTDOWN_MS,OFFER_MS,RESULT_MS,MAX_WAVE,MAX_ROUNDS,BOSS_TELL_EVERY,BOSS_TELL_TICKS,BOSS_SLAM_MULT,BOSS_ENRAGE_HP,BOSS_ENRAGE_MULT,BOSS_SHIELD_HP,BOSS_SHIELD_MULT,BOSS_SHIELD_TICKS,BOSS_SUMMON_STEPS,BOSS_ADD_HP,BOSS_ADD_ATK,RAID_DPS_TICKS,RAID_ATK_DIV,RAID_PARTY_ATK,RAID_HEAL_EVERY,RAID_HEAL_PCT,PVP_HP_SCALE,PVP_ATK_SCALE,bossFight,bossAdds,PVE_COIN_DROP_CHANCE,PVE_EGG_DROP_CHANCE,MAX_SLOT,BOSS_EVERY,BOSS_EGG_CHANCE,RANGED_SPD,GEAR_KINDS,GEAR_MAIN,GEAR_MAIN_VALUE,GEAR_SPECIAL,GEAR_CAP,PVE_GEAR_DROP_CHANCE,BOSS_GEAR_DROP_CHANCE,GEAR_SPECIAL_CHANCE,BOSS_GEAR_SPECIAL_CHANCE,GEAR_VARIANCE,stageOf,isBossWave,attackRange,profile,combatPreview,stageRank,sameStage,gearZero,normalizeGear,gearTierFor,rollGearItem,pveGearDrops,pveReward,strike,createPve,stepPve,pveSnapshot,createPvp,acceptPvp,stepPvp,finishPvp,pvpRewards,pvpSnapshot,randomUnit,rngFromSeed};
 });

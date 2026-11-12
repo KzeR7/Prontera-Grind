@@ -612,8 +612,9 @@ await T('the GM door is checked before the cloud, so the local GM login still wo
 });
 
 await T('the client never sends a plaintext password anywhere but the login endpoint', async () => {
-  const sends = [...src.matchAll(/JSON\.stringify\(\{\s*u\s*,\s*p\s*\}\)/g)];
-  assert.strictEqual(sends.length, 1, 'the password must be stringified in exactly one place');
+  const sends = [...src.matchAll(/JSON\.stringify\(\s*(\{[^}]*\})\s*\)/g)]
+    .filter(m => /(^|[{,])\s*p\s*(,|\})/.test(m[1]));
+  assert.strictEqual(sends.length, 2, 'the password is sent by the login and register bodies only, got ' + sends.length);
   const line = src.slice(src.lastIndexOf('cloudFetch', sends[0].index), sends[0].index + 60);
   assert.ok(/isReg\?'\/register':'\/sessions'/.test(line), 'and that place must be the register/login endpoint, got: ' + line.slice(0, 80));
 });

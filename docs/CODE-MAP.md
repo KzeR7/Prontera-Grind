@@ -337,7 +337,25 @@ UI hosts the controls, `assets/social-rules.js` shares new scenery collision and
 16 display IDs, and `assets/social-scene.js` renders the textured grounds and
 stage-sized followers. Art packing and generated floor sources are in
 `tools/digimon`; `digimon_sanctuary_sim.js` and `social_digimon_sim.js` cover
-rules, paths and atlas bounds. This is not authoritative PvP.
+rules, paths and atlas bounds.
+
+**Where the plaza's Field card gets its numbers (v390):** it prints the **measured** rate from
+`plazaFarmIncome()` in `index.html`, never the `#expmin`/`#zenymin` HUD samplers. Those are live combat
+readings that reset after `HUD_IDLE_RESET` (30 s) without a kill, so copying them made a paying plaza
+read `0 EXP/min` to any player who stood still. If you add another rate readout, read the measured
+value; the samplers answer "what am I killing right now", not "what will the plaza pay".
+
+**Who owns a Sanctuary fight (v388, consolidated in v389):** solo DigiPet PvE is
+entirely client-side. Party and PvP matches are *device-simulated*: the plaza
+(`workers/social/room.mjs`) pairs the players, seeds the match, tells both
+devices `startsAt` (the three-second countdown) and the same seed, and then steps
+out — it does not tick the fight, does not stream strikes and pays **no** reward
+of its own, so a plaza that also settled would double-pay every clear.
+`armClientPvp` performs that hand-off inside the second accept, because v388
+stopped arming the 1s battle alarm for these matches and a tick-driven hand-off
+could therefore never fire. A fight no device reports is abandoned after
+`CLIENTSIM_ABANDON_MS` (120s). Because these runs carry no server-built units,
+every read of `partner`/`partners`/`enemies`/`earned`/`profile` needs a guard.
 
 **Sanctuary redesign direction (2026-11-05):** the owner rejected the v328
 layout and tab-based activity presentation. The authoritative requested direction

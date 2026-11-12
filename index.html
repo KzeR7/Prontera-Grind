@@ -920,9 +920,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=389">
-<link rel="stylesheet" href="assets/social-battle.css?v=385">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=389"><link rel="stylesheet" href="assets/friends.css?v=273">
+<link rel="stylesheet" href="assets/social.css?v=390">
+<link rel="stylesheet" href="assets/social-battle.css?v=390">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=390"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1320,7 +1320,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-12 haven-v389 preserve plaza AFK income';
+const BUILD='2026-11-12 haven-v390 plaza field rate shown and paid, client-sim PvP hand-off';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3658,10 +3658,19 @@ restoreRememberedUser();
 let authMode='login';
 function showErr(m,ok){const e=$('loginErr');e.textContent=m;e.style.color=ok?'#2a9d3f':'#e5484d'}
 const HAVEN_UPDATING='The server is updating. Sign-in is paused — your account is still registered. Please try again in a few minutes.';
+// v389: a local page is the one hosted page allowed to fall back to a browser-only account when no API
+// answers. This is the same three-host list tools/dev_server.js already trusts for --gm-all. Without it
+// every local run (the dev server, a preview, the jsdom smoke) reported "the server is updating" for a
+// server that was never there, which is also the message a player gets - so the two cases were
+// indistinguishable in testing as well as in play.
+const cloudLocalHost=()=>{try{return ['localhost','127.0.0.1','::1'].includes(String(location.hostname||''))}catch(e){return false}};
+// The page's own protocol, read as defensively as the hostname: a harness or a sandboxed frame can
+// lack `location` entirely, and this used to throw right after the guarded call above returned.
+const cloudPageProtocol=()=>{try{return String(location.protocol||'')}catch(e){return 'null'}};
 function cloudLoginBlocked(){
   if(CLOUD.probing)return 'Checking the cloud…';
   if(CLOUD.down)return HAVEN_UPDATING;
-  if(!CLOUD.api&&(location.protocol==='http:'||location.protocol==='https:'))return 'The server is updating. This is not an unregistered account — try again in a few minutes.';
+  if(!CLOUD.api&&!cloudLocalHost()&&(cloudPageProtocol()==='http:'||cloudPageProtocol()==='https:'))return 'The server is updating. This is not an unregistered account — try again in a few minutes.';
   return '';
 }
 function setMode(m){authMode=m;$('tabLogin').classList.toggle('on',m==='login');$('tabReg').classList.toggle('on',m==='reg');$('regRow').style.display=m==='reg'?'block':'none';
@@ -4695,7 +4704,16 @@ async function cloudAuth(u,p,isReg){
   showErr(isReg?'Creating your account…':'Signing in…',true);
   if(btn)btn.disabled=true;
   try{
-    const turnstile=(window.turnstile&&typeof window.turnstile.getResponse==='function'&&window.turnstile.getResponse())||document.querySelector('[name="cf-turnstile-response"]')?.value||'';
+    // v389: read the Turnstile token defensively. This expression used to name `window` directly, so any
+    // context without it threw a ReferenceError BEFORE the request was sent - and the catch below turned
+    // that local JavaScript error into "The server is updating", a server fault that was never there.
+    // A missing captcha widget is simply "no token"; the server decides whether it needs one.
+    let turnstile='';
+    try{
+      turnstile=(typeof window!=='undefined'&&window.turnstile&&typeof window.turnstile.getResponse==='function'&&window.turnstile.getResponse())
+        ||(typeof document!=='undefined'&&document.querySelector&&document.querySelector('[name="cf-turnstile-response"]')?.value)
+        ||'';
+    }catch(e){turnstile=''}
     const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:isReg?JSON.stringify({u,p,email:$('email').value.trim(),turnstile}):JSON.stringify({u,p,turnstile}),signal:ac.signal});
     const d=await r.json().catch(()=>null);
     clearTimeout(timer);
@@ -4719,9 +4737,22 @@ async function cloudAuth(u,p,isReg){
     catch(e){showErr('Signed in, but the game could not start: '+e.message+'. Your account is fine - reload the page and log in again.')}
     return;
   }catch(e){
-    CLOUD.down=true;
-    showErr(ac.signal.aborted?'The server did not answer in time. It may be updating — your account is still registered. Try again in a few minutes.'
-      :'The server is updating. Sign-in is paused — your account is still registered. Please try again in a few minutes.');
+    // v389: this catch used to say "the server is updating" for EVERY failure, including its own local
+    // errors - so a bug in the page looked exactly like a Cloudflare outage, and a player was told to
+    // wait for a server that was healthy the whole time. Now each kind of failure says what it is:
+    //   * the request was abandoned / never answered -> a real connection problem
+    //   * anything else thrown here is this page's own fault -> say so plainly, it is not the server
+    // Only a genuinely unreachable server marks the API as down; a local error must not, or the login
+    // card would block every later attempt for the rest of the page's life.
+    const msg=String(e&&e.message||e);
+    const network=/network|fetch|load failed|Failed to fetch|aborted|ECONN|timed? ?out/i.test(msg);
+    if(ac.signal.aborted||network){
+      CLOUD.down=true;
+      showErr(ac.signal.aborted?'The server did not answer in time. It may be updating — your account is still registered. Try again in a few minutes.'
+        :'Could not reach the server: '+msg+'. Check your connection and try again.');
+    }else{
+      showErr('Could not sign in: '+msg+'. This is a problem in the game page, not the server — reload the page and try again.');
+    }
   }finally{
     clearTimeout(timer);
     if(btn)btn.disabled=false;
@@ -13802,16 +13833,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=389"></script>
-<script src="assets/digimon/base-stats.js?v=389"></script>
-<script src="assets/social-rules.js?v=389"></script>
-<script src="assets/social-poker.js?v=389"></script>
-<script src="assets/digimon-sanctuary.js?v=389"></script>
-<script src="assets/digimon-battle.js?v=385"></script>
-<script src="assets/social-digimon.js?v=389"></script>
-<script src="assets/social-gym-redesign.js?v=385"></script>
-<script src="assets/social-pond-design.js?v=385"></script>
-<script src="assets/social-scene.js?v=389"></script>
-<script src="assets/social-fishing.js?v=389"></script>
-<script src="assets/social.js?v=389"></script></body>
+<script src="assets/digimon/roster.js?v=390"></script>
+<script src="assets/digimon/base-stats.js?v=390"></script>
+<script src="assets/social-rules.js?v=390"></script>
+<script src="assets/social-poker.js?v=390"></script>
+<script src="assets/digimon-sanctuary.js?v=390"></script>
+<script src="assets/digimon-battle.js?v=390"></script>
+<script src="assets/social-digimon.js?v=390"></script>
+<script src="assets/social-gym-redesign.js?v=390"></script>
+<script src="assets/social-pond-design.js?v=390"></script>
+<script src="assets/social-scene.js?v=390"></script>
+<script src="assets/social-fishing.js?v=390"></script>
+<script src="assets/social.js?v=390"></script></body>
 </html>

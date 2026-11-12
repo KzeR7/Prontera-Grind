@@ -10708,6 +10708,88 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Fact:** hiding other players’ PvE/PvP (private tab / not drawing the fight) does **not** reduce DO requests. Solo DigiPet PvE is client-side; party/PvP still alarm at 1s. Sitters ping every 4 minutes; empty idle rooms skip the 60s alarm and may hibernate.
 * **Delivery:** `AGENTS.md` on `arena/7a72f13c-prontera-grind`.
 
+### 2026-11-12 — `haven-v390 plaza field rate shown and paid, client-sim PvP hand-off`
+
+* **Fixed — the plaza's Field card showed 0/min while the plaza was paying.** Owner report: *"in social
+  hub i still dont get exp from field"*. The card copied its numbers from `#expmin`/`#zenymin`, which are
+  the HUD's **live combat samplers** — they reset to zero after `HUD_IDLE_RESET` (30 s) with no kills, so
+  the moment the player stood still in the plaza the card read `0 EXP/min`, under a state label that said
+  "Plaza AFK". A player reading 0/min concludes the plaza pays nothing, even while a valid 600 EXP/min sat
+  in `S.offlineIncome`. The card now prints the **measured rate the plaza is actually paying**, read from
+  `plazaFarmIncome()` — the same validator the payout uses — so the number shown and the number paid can
+  no longer disagree. Tooltip: "Measured from your last field minute".
+* **Verified the payment path itself was sound.** 60 s in the plaza pays `expEarned` 600 and
+  `zenyEarned` 300, the measured rate survives the visit untouched, and a field round-trip does not
+  re-price it. The bug was the readout, not the payout.
+* **Regression test:** `plaza_field_rate_card_sim.js` drives the real `syncFieldMonitor`. It fails on the
+  pre-fix build with `actual '—' / expected '600'`, and also pins the two rules the card must not break:
+  a stale `0` in the HUD sampler cannot zero the card, and with no measured rate the card shows a dash
+  and pays nothing (it never fabricates a rate).
+* **Version numbering:** PR #211 shipped as `haven-v389`, so this work moves to **v390**. Both releases
+  now have distinct build lines; nothing re-uses a version number.
+
+### 2026-11-12 — `haven-v389 honest login errors, client-sim PvP hand-off, cache bust`
+
+* **Fixed — the login card no longer hides its own bugs behind "the server is updating".** `cloudAuth()`
+  turned *every* failure into the server-outage message. Its Turnstile read named `window` unguarded, so
+  any context without it threw a `ReferenceError` **before the request was sent**, and the player was told
+  to wait for a server that was healthy the whole time. The token read is now defensive, the catch
+  separates a genuine connection failure from a page-side error, and only a real network failure marks
+  the API down (a local error used to block every later attempt for the life of the tab). Proven by
+  driving the real handler: the thrown error is `window is not defined`.
+* **Fixed — a local page can use a browser-only account again.** `cloudLoginBlocked()` refused every
+  `http(s)` page without an API, including `localhost`, so the dev server and the jsdom smoke reported a
+  server outage that was never there. The three local hosts `tools/dev_server.js` already trusts
+  (`localhost`, `127.0.0.1`, `::1`) are now the one carve-out. This unblocked `save_owner_boot_smoke`,
+  which had been failing at the guard and never reaching the save-owner logic it exists to test.
+* **Fixed — device-simulated PvP could never leave the countdown.** v388 moved the fight onto both
+  devices and stopped arming the 1 s battle alarm for those matches, but nothing then advanced the
+  match: `tickBattles` skipped `clientSim` matches entirely, so `countdown` was a dead end — the HUD sat
+  on "Battle starts in 3", the ring stayed occupied, and booting a player forfeited nothing. The second
+  accept now arms the match (`armClientPvp`): both devices get `startsAt = countdownUntil` as before, the
+  plaza flips to `fighting` in that same call, and a fight no device reports is abandoned after
+  `CLIENTSIM_ABANDON_MS` (120 s) instead of holding the ring for ever. **No alarm is armed** — the v388
+  budget is unchanged, verified by `hasActiveBattles()` staying false.
+* **Fixed — leaving a party mid-grind crashed the room.** `leavePartyRun` assumed server-built
+  `run.partners`, which a v388 client-simulated run does not have: the first trainer to leave threw a
+  `TypeError`, and `pveSnapshot` threw for the same reason on the broadcast that announces the party.
+  Both now read only what a run actually carries; `pveSnapshot`/`pvpSnapshot` also report `clientSim`.
+* **Fixed — the plaza stopped telling the room a match had started.** v388 dropped the broadcast after
+  `acceptPvp`, so every watcher (and the participants' own HUD) kept the last snapshot, which still said
+  `offer`. The arm now broadcasts.
+* **Fixed — stale cache and build mirrors.** `assets/social.css` and the rest of the social/Sanctuary
+  runtime were still tagged `?v=385` while `BUILD` was `haven-v388`; `social.css` changed in v388, so
+  returning players kept the old stylesheet. Every social/Sanctuary/DigiPet asset is now on one
+  coordinated bust, and the three BUILD mirrors (`affix-ranges.html`, `equipment-cards-tuning.html`,
+  `cloudflare-deploy-steps.md`) name the current build. `digimon-sanctuary.js` sits under a bare
+  `assets/digimon-sanctuary.js` path that the first sweep missed.
+* **Fixed — the staging package was missing live login files.** `functions/_lib/turnstile.js` (imported
+  at runtime by `register.js` and `sessions.js`) was absent from both staging manifests, so the package
+  failed closed with "Unpackaged runtime change". Added there and in `functions/api/register.js` /
+  `recover.js`. `hosted_launch_stage_sim` is green.
+* **Tests repaired, not weakened.** `cloud_sim` pinned the literal `JSON.stringify({u,p})`, which the
+  added `turnstile` field had silently broken (it found zero bodies); it now selects bodies whose `p` is
+  the password and requires exactly login+register. `sanctuary_battle_sim` and
+  `sanctuary_worker_battle_sim` asserted the pre-v388 server-settled fight and now assert the v388
+  contract (hand-off, device settlement, forged-result rejection, plaza pays nothing). In
+  `social_fishing_sim` the pond predicate still pinned the pre-v386 sprite height (`y > 2`); v386
+  deliberately lowered the peek to `baseY .72` with `center.set(.5,.18)` so the boss "sits lower and
+  larger". The predicate now checks the pond (the failing half was the height) and the bob range matches
+  the current anchor. No assertion was deleted; each one asserts the current contract.
+* **Checks:** full local gate green — **213 of 213** (`tools/tests/*_sim.js`, `*_sim.mjs`, `*_smoke.js`;
+  was 199/213 at the start of this pass). `pages_preview_config_sim.py` passes, and
+  `make_sprite_viewer.py --check`, `make_class_skins.py --check`, `make_weapon_pack.py --check` report
+  current. The three `progression_*.json` fixtures were regenerated **together** — they must share one
+  `combatHash`, which is why a `--reuse-baseline` run alone leaves `gear measurements stale`: the hash
+  moved with BUILD while the measurements did not. `bash tools/build_site.sh` runs clean and
+  `node tools/preflight_deploy.mjs --expect haven-v389` says **Safe to deploy.**
+* **One more latent crash, same family as the login bug:** `cloudLoginBlocked()` guarded the hostname
+  read but then read `location.protocol` bare right beside it, so a context without `location` still
+  threw. Now `cloudPageProtocol()`, guarded the same way.
+* **Delivery:** Pages client + `workers/social` + `assets/digimon-battle.js` change, so **Pages and the
+  Social Worker must be deployed from the same commit**. Build line must read `haven-v389`. No
+  migration, no new binding, no secret, no new alarm.
+
 ### 2026-11-12 — `haven-v389 preserve plaza AFK income`
 * **Changed:** Hub autosaves no longer overwrite measured field income or kill rate with zero while combat is stopped. Returning to the field starts a fresh sampling window. Plaza rewards count gross EXP/Zeny once, and the one-second payout clock retains fractional time. Zero/missing rates no longer qualify as earning Plaza AFK; the monitor tooltip explains how to establish a rate. No new Social DO traffic, combat, rendering or loot in the hub.
 * **Try it:** Farm one stage for a full minute (turn Auto-advance off while sampling), enter the plaza and stay longer than a minute, then log back into the hub. EXP/Zeny/Job continue from the saved rate. Saves already zeroed by v388 need that fresh field minute; no old rate or lost earnings are fabricated.
