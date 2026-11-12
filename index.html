@@ -920,9 +920,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=392">
-<link rel="stylesheet" href="assets/social-battle.css?v=392">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=392"><link rel="stylesheet" href="assets/friends.css?v=273">
+<link rel="stylesheet" href="assets/social.css?v=393">
+<link rel="stylesheet" href="assets/social-battle.css?v=393">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=393"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1320,7 +1320,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-12 haven-v392 plaza keeps earning while awaiting connection';
+const BUILD='2026-11-12 haven-v393 plaza pays cards gear and materials';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3592,8 +3592,60 @@ function plazaFarmIncome(){
   return valid&&['xp','zeny','job'].some(k=>income[k]>0)?income:null;
 }
 let plazaAfkAcc={t:0,xp:0,zeny:0,job:0};
+// v393 (owner: "make it drop materials & cards. this is an idle game, i dont need players to
+// stay at the field constantly"): the plaza now pays LOOT as well as EXP/Zeny, at the field's
+// own rate. The rate is not invented and not discounted - income.kph was measured from the
+// player's own kills in a completed 60-second field minute, so replaying it pays exactly what
+// standing in the field would have paid. Paying less would be a nerf with no stated reason.
+//
+// Two rules keep this from becoming a duplication hole:
+//   1. LOOT ONLY. The kills are replayed through offlineAwardKill(mob,{measured:true}), the
+//      exact mode the away claim uses: it pays cards/gear/ore/materials and ZERO rate. EXP and
+//      Zeny stay on plazaAfkTick's single payment above - they cannot be paid twice.
+//   2. S.kills IS NEVER TOUCHED. /api/save learns the away rate from kill-count deltas
+//      (updatedRate() in functions/api/save.js reads publicFields().kills). Feeding plaza
+//      kills into that number would tell the server the field was farmed, and it would mint
+//      an away claim on top of what the plaza already paid.
+const plazaKillAcc={kills:0,frac:0};
+function plazaLootTick(income,dt){
+  if(!income||!(dt>0))return;
+  // Measure against the MEASURED rate, never the OFFLINE_RATE_CAP ceiling: the cap is a
+  // corrupted-save guard, and 30,000/h would pay 45 cards an hour.
+  const kph=cl(Number(income.kph)||0,0,OFFLINE_RATE_CAP);
+  if(!(kph>0))return;
+  const source=String(income.key||'').split(':'),map=Number(source[1]),stage=Number(source[2]);
+  if(!Number.isInteger(map)||map<0||map>=MAPS.length)return;
+  if(!Number.isInteger(stage)||stage<1||stage>(map>=10?5:15))return;
+  plazaKillAcc.frac+=(kph/3600)*dt;
+  const n=Math.floor(plazaKillAcc.frac+1e-9);
+  if(n<=0)return;
+  plazaKillAcc.frac=Math.max(0,plazaKillAcc.frac-n);
+  plazaKillAcc.kills+=n;
+  // A bag that is full stops adding gear, so a long AFK cannot walk past BAGMAX one kill at
+  // a time. The overflow is counted by offlineStoreGear, not swallowed.
+  const r={measured:true,noKillCount:true,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,
+    overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
+  for(let i=0;i<n;i++){const mob=offlineMobForCurrentField(map,stage);if(!mob)break;offlineAwardKill(mob,r)}
+  if(r.cards||r.drops)plazaLootNotice(r);
+}
+// Say what dropped, once per tick, so an idle player can tell the run is paying loot at all.
+let plazaLootSaid=0;
+function plazaLootNotice(r){
+  const bits=[];
+  if(r.cards)bits.push(r.cards+' card'+(r.cards>1?'s':''));
+  if(r.items)bits.push(r.items+' item'+(r.items>1?'s':''));
+  if(r.ori)bits.push(r.ori+' Ori');
+  if(r.elu)bits.push(r.elu+' Elu');
+  if(!bits.length)return;
+  const now=Date.now();if(now-plazaLootSaid<60000)return;plazaLootSaid=now;
+  log('Plaza AFK found '+bits.join(', ')+(r.overflow?' · bag full, '+r.overflow+' left behind':''),'','kills');
+}
 function plazaAfkTick(dt){
   const income=plazaFarmIncome();if(!income||!(dt>0))return;
+  // v393: drops accrue on the same measured rate. Loot only - the EXP/Zeny below are the
+  // single payment for this minute, and offlineAwardKill({measured:true}) pays no rate.
+  // This runs BEFORE the one-second gate so every frame's dt is counted, not one frame in ten.
+  try{plazaLootTick(income,dt)}catch(e){console.error(e)}
   plazaAfkAcc.t+=dt;plazaAfkAcc.xp+=income.xp*dt/60;plazaAfkAcc.zeny+=income.zeny*dt/60;plazaAfkAcc.job+=income.job*dt/60;
   if(plazaAfkAcc.t<1-1e-9)return;plazaAfkAcc.t=Math.max(0,plazaAfkAcc.t-Math.floor(plazaAfkAcc.t+1e-9));
   const xp=Math.floor(plazaAfkAcc.xp+1e-9),zeny=Math.floor(plazaAfkAcc.zeny+1e-9),job=Math.floor(plazaAfkAcc.job+1e-9);
@@ -5425,7 +5477,13 @@ function offlineStoreGear(it,r){
   if(S.auto!==false&&canUse(it))autoEquip(it)
 }
 function offlineAwardKill(mob,r){
-  if(!mob)return;r.kills++;S.kills=safeCount(S.kills)+1;recordMonsterKill(mob);if(!r.measured)S.kl=safeCount(S.kl)+1;qProg('kill');if(mob.boss)qProg('boss');
+  // v393: `r.noKillCount` = the plaza replaying a measured rate. It must pay loot WITHOUT moving
+  // S.kills: /api/save learns the away rate from that number (updatedRate() in functions/api/save.js
+  // reads publicFields().kills), so a plaza that grew it would make the server believe the field was
+  // farmed and issue an away claim on top of what the plaza already paid. The away claim itself
+  // keeps the count (it IS the away pay), so this is opt-in and defaults to the old behaviour.
+  if(!mob)return;r.kills++;if(!r.noKillCount)S.kills=safeCount(S.kills)+1;
+  recordMonsterKill(mob);if(!r.measured)S.kl=safeCount(S.kl)+1;qProg('kill');if(mob.boss)qProg('boss');
   const z=r.measured?0:Math.round(mob.zeny*(1+pv('zeny')/100)*nmZenyRoll(mob))*gx(),xp=r.measured?0:Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;
   if(!r.measured){gainAscension(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();}
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier,mob.mapIndex),r);
@@ -13867,16 +13925,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=392"></script>
-<script src="assets/digimon/base-stats.js?v=392"></script>
-<script src="assets/social-rules.js?v=392"></script>
-<script src="assets/social-poker.js?v=392"></script>
-<script src="assets/digimon-sanctuary.js?v=392"></script>
-<script src="assets/digimon-battle.js?v=392"></script>
-<script src="assets/social-digimon.js?v=392"></script>
-<script src="assets/social-gym-redesign.js?v=392"></script>
-<script src="assets/social-pond-design.js?v=392"></script>
-<script src="assets/social-scene.js?v=392"></script>
-<script src="assets/social-fishing.js?v=392"></script>
-<script src="assets/social.js?v=392"></script></body>
+<script src="assets/digimon/roster.js?v=393"></script>
+<script src="assets/digimon/base-stats.js?v=393"></script>
+<script src="assets/social-rules.js?v=393"></script>
+<script src="assets/social-poker.js?v=393"></script>
+<script src="assets/digimon-sanctuary.js?v=393"></script>
+<script src="assets/digimon-battle.js?v=393"></script>
+<script src="assets/social-digimon.js?v=393"></script>
+<script src="assets/social-gym-redesign.js?v=393"></script>
+<script src="assets/social-pond-design.js?v=393"></script>
+<script src="assets/social-scene.js?v=393"></script>
+<script src="assets/social-fishing.js?v=393"></script>
+<script src="assets/social.js?v=393"></script></body>
 </html>

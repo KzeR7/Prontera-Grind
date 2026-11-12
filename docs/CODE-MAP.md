@@ -339,6 +339,13 @@ stage-sized followers. Art packing and generated floor sources are in
 `tools/digimon`; `digimon_sanctuary_sim.js` and `social_digimon_sim.js` cover
 rules, paths and atlas bounds.
 
+**Plaza loot (v393):** `plazaLootTick()` pays cards/gear/ore/materials at the **measured** `income.kph`
+by replaying kills through `offlineAwardKill(mob,{measured:true,noKillCount:true})` — the away claim's
+own path, which pays loot and zero rate. EXP/Zeny stay on `plazaAfkTick`'s single payment. `noKillCount`
+is load-bearing: `/api/save` learns the away rate from `publicFields().kills`, so a plaza that grew
+`S.kills` would mint a second pay on reconnect. Never gate plaza drops on `OFFLINE_RATE_CAP`; it is a
+corrupted-save ceiling and 30,000/h would pay ~45 cards an hour.
+
 **Who is allowed to halt the simulation (v392):** `CLOUD.lost` does not stop the plaza. `loop()`,
 `bgTick()` and `simWorker.onmessage` guard on `CLOUD.lost&&!plazaEarningWhileAway()`, and
 `plazaEarningWhileAway()` is `social-open && !!plazaFarmIncome()`. The plaza may replay a rate that was

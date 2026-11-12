@@ -113,7 +113,7 @@ moreButton.innerHTML='<span class="ad-legacy-icon" aria-hidden="true">··· </s
 hub.querySelector('#socialLeave').innerHTML='<span class="ad-legacy-icon" aria-hidden="true">↩ </span>'+FIELD_ART_SVG+'Field';
 
 const morePanel=document.createElement('section');morePanel.id='socialMorePanel';morePanel.hidden=true;morePanel.setAttribute('aria-label','Hub and field tools');hub.append(morePanel);
-const fieldMonitor=document.createElement('section');fieldMonitor.id='socialFieldMonitor';fieldMonitor.setAttribute('aria-label','Background field activity');fieldMonitor.innerHTML='<span id="socialFieldState">Field not started</span><span><b id="socialFieldExp">—</b><small>EXP/min</small></span><span><b id="socialFieldZeny">—</b><small>Zeny/min</small></span>';hub.append(fieldMonitor);
+const fieldMonitor=document.createElement('section');fieldMonitor.id='socialFieldMonitor';fieldMonitor.setAttribute('aria-label','Background field activity');fieldMonitor.innerHTML='<span id="socialFieldState">Field not started</span><span><b id="socialFieldExp">—</b><small>EXP/min</small></span><span><b id="socialFieldZeny">—</b><small>Zeny/min</small></span><span id="socialFieldLoot" class="social-field-loot"></span>';hub.append(fieldMonitor);
 /* v384 (owner screenshot: the MVP alert sat on top of the battle card): every top-centre notice
    lives in ONE column - the MVP alert, the running-activities shortcut, the battle card, plaza
    notices and the gym / field / ring prompts. Each of them used to claim its own absolute spot at
@@ -187,6 +187,14 @@ function syncFieldMonitor(){
   const el=$id(target);
   el.textContent=live&&saved?eclipseMetricNumber(shown[kind]):'—';
   el.title=live&&saved?`Measured from your last field minute: ${Math.round(shown[kind]).toLocaleString()} ${kind==='exp'?'EXP':'Zeny'}/min`:'';
+ }
+ // v393: the plaza pays cards, gear and materials at the field's measured rate, so the card
+ // says so. A silent drop is indistinguishable from a broken one.
+ const loot=$id('socialFieldLoot');
+ if(loot){
+  const rate=saved?Math.round(Number(saved.kph)||0):0;
+  loot.textContent=!live||!saved?'':rate?`+ drops · ${rate.toLocaleString()} kills/hr`:'';
+  loot.title=rate?`Cards, gear and materials drop at your field rate of ${rate.toLocaleString()} kills/hr.`:'';
  }
  syncDigipetDock();
 }
