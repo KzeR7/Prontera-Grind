@@ -924,9 +924,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=394">
+<link rel="stylesheet" href="assets/social.css?v=395">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=394"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=395"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1324,7 +1324,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-12 haven-v394 GM restore survives an open tab';
+const BUILD='2026-11-12 haven-v395 GM restore survives the login too';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -4398,7 +4398,15 @@ async function cloudJoin(u,localBlob){
   // exactly what the adopt below used to do to every single login. Anything else (an older save, a
   // version this device never saw, a GM restore) still loses to the account, as decided in v2.
   let localSave=null;try{localSave=JSON.parse(localBlob)}catch(e){}
-  if(localAheadOfServer(data,localSave)){
+  // v395: NEVER over a GM restore this device has not seen. This is the login branch, and it is a
+  // different hole from the one v394 closed (that guard sits in cloudPush's 409 branch, and this path
+  // does not need a 409 - it pushes on the strength of localAheadOfServer alone). A device whose
+  // stored copy is stamped at exactly the restored version and that played a moment after it
+  // satisfies that test outright, so the login uploaded its pre-restore save straight over the
+  // restore - and the upload carried no `gmRestore` stamp, which destroyed the only marker that a
+  // restore had happened, so every later login was free to do it again. That is exactly what the
+  // owner saw: correct in incognito, then the usual browser put the old save back and saved it.
+  if(sawRestore(restoreStamp(data.blob))&&localAheadOfServer(data,localSave)){
     CLOUD.ver=data.version;CLOUD.dirty=true;
     if(data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);
     const sent=await cloudPush(true);
@@ -4441,7 +4449,11 @@ async function cloudRefresh(){
   // v326: the same answer now survives a reload, because it is read from the stamps in the save
   // rather than from this session's memory.
   let localSave=null;try{localSave=JSON.parse(local)}catch(e){}
-  if((CLOUD.dirty&&Number(data.version)===Number(CLOUD.ver))||localAheadOfServer(data,localSave)){await cloudPush(true);return}
+  // v395: the same rule for a returning tab. v394 taught cloudPush's 409 branch to refuse a push
+  // that would bury a GM restore, but this shortcut pushes without ever reaching a 409, so a tab
+  // that came back holding an equal-or-newer copy could still bury the restore that way. When the
+  // server's copy carries a restore this device has not seen, fall through to cloudAdopt instead.
+  if(sawRestore(restoreStamp(data.blob))&&((CLOUD.dirty&&Number(data.version)===Number(CLOUD.ver))||localAheadOfServer(data,localSave))){await cloudPush(true);return}
   // v2: the account always wins, including over unsynced work in this tab. Between the server saving
   // and the connection dropping a tab can hold at most one sync interval of play, and a copy that
   // disagrees with the account is a copy another device already moved past.
@@ -14009,16 +14021,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=394"></script>
-<script src="assets/digimon/base-stats.js?v=394"></script>
-<script src="assets/social-rules.js?v=394"></script>
-<script src="assets/social-poker.js?v=394"></script>
-<script src="assets/digimon-sanctuary.js?v=394"></script>
+<script src="assets/digimon/roster.js?v=395"></script>
+<script src="assets/digimon/base-stats.js?v=395"></script>
+<script src="assets/social-rules.js?v=395"></script>
+<script src="assets/social-poker.js?v=395"></script>
+<script src="assets/digimon-sanctuary.js?v=395"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=394"></script>
+<script src="assets/social-digimon.js?v=395"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=394"></script>
-<script src="assets/social-fishing.js?v=394"></script>
-<script src="assets/social.js?v=394"></script></body>
+<script src="assets/social-scene.js?v=395"></script>
+<script src="assets/social-fishing.js?v=395"></script>
+<script src="assets/social.js?v=395"></script></body>
 </html>

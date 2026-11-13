@@ -1764,6 +1764,40 @@ await T('v394: a 409 that is a GM restore is adopted, never rebased over', async
   assert.ok(rows.some(r => r.kind === 'restore-adopt'), 'the ledger says why the account won');
 });
 
+await T('v395: a login that played a moment after the restore still cannot bury it', async () => {
+  // The owner's report exactly: rollback lands, incognito shows it, then the usual browser logs in
+  // and puts the old save back. That browser is stamped at the restored version (it synced at 8 and
+  // played a minute after), so localAheadOfServer says "mine is ahead" and the login used to push
+  // without ever reaching cloudPush's 409 guard - the restore and its stamp were both destroyed.
+  const stamp = { at: Date.now(), from: 5710 };
+  const restored = { lv: 150, kills: 400, zeny: 12000000, owner: 'FRIEND', gmRestore: stamp };
+  const stale = { lv: 150, kills: 1100, zeny: 33300000, owner: 'FRIEND', cloud: { v: 8, at: 1000 }, offlineAt: 2000 };
+  const h = joinHarness(stale, restored, 8);
+  signIn(h);
+  await h.sandbox.cloudJoin('FRIEND', JSON.stringify(stale));
+  const puts = h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.strictEqual(puts.length, 0, 'the login must not upload the pre-restore save');
+  assert.strictEqual(h.sandbox.S.zeny, 12000000, 'the browser plays the restored copy');
+  assert.ok(JSON.parse(h.store.get('pg_save3_FRIEND')).gmRestore, 'and the restore stamp is still there to guard the next login');
+});
+
+await T('v395: the restore stamp survives the next push, so the guard cannot be erased', async () => {
+  // If an ordinary save after the adopt dropped the stamp, the very next login would be free to
+  // repeat the rollback. The stamp has to outlive the push that follows.
+  const stamp = { at: Date.now(), from: 5710 };
+  const restored = { lv: 150, kills: 400, zeny: 12000000, owner: 'FRIEND', gmRestore: stamp };
+  const h = joinHarness(null, restored, 8);
+  signIn(h);
+  await h.sandbox.cloudJoin('FRIEND', null);
+  assert.strictEqual(h.sandbox.S.zeny, 12000000, 'the browser took the restored copy');
+  h.sandbox.S.zeny = 12000500; // play after the restore
+  await h.sandbox.cloudPush(true);
+  const puts = h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.ok(puts.length >= 1, 'the play is uploaded');
+  assert.ok(JSON.parse(puts[puts.length - 1].init.body).blob.includes('gmRestore'),
+    'the push still carries gmRestore - otherwise the next login could bury the restore again');
+});
+
 await T('v394: a restore this device has already seen does not block a normal rebase', async () => {
   // The stamp is per-restore, not a permanent switch: once this device is playing the restored copy, the
   // ordinary v330 rule applies again, or one restore would disable self-echo recovery for good.
