@@ -82,20 +82,21 @@ const SPECIES_DATA={
   ['manta','Plaza Manta','🐟',210,25,110,'ray',true],
  ],
  mythical:[
-  ['leviathan','Pond Leviathan','🦈',175,12,40,'thresher'],['kraken','Garden Kraken','🐙',270,10,36],
-  ['hydrasquid','Hydra Squid','🦑',285,8,30],['cobblewhale','Cobble Whale','🐋',210,20,60,'whale'],
-  ['angler','Abyss Angler','🐡',260,6,22,'angler'],['seraphkoi','Seraph Koi','🐠',45,5,18,'deep'],
-  ['baphobass','Baphomet Bass','🐟',0,9,28,'goblin'],
-  // v297: the monsters. Weights follow the real record fish the names come from.
-  ['greatwhite','Great White','🦈',205,100,350],['stingray','Giant Stingray','🐟',40,120,400,'ray',true],
-  ['sunfish','Ocean Sunfish','🐠',48,200,600,'sunfish',true],['hammer','Great Hammerhead','🦈',205,150,450,'hammer',true],
+  ['leviathan','Pond Leviathan','🦈',175,1,1000,'thresher'],['kraken','Garden Kraken','🐙',270,1,1000],
+  ['hydrasquid','Hydra Squid','🦑',285,1,1000],['cobblewhale','Cobble Whale','🐋',210,1,1000,'whale'],
+  ['angler','Abyss Angler','🐡',260,1,1000,'angler'],['seraphkoi','Seraph Koi','🐠',45,1,1000,'deep'],
+  ['baphobass','Baphomet Bass','🐟',0,1,1000,'goblin'],
+  // v297/v398: the monsters. All mythical rows weigh 1-1,000 kg, so the show-off scale is consistent
+  // and a mythical catch is worth showing off instead of landing at 2 kg next to a 922 kg common.
+  ['greatwhite','Great White','🦈',205,1,1000],['stingray','Giant Stingray','🐟',40,1,1000,'ray',true],
+  ['sunfish','Ocean Sunfish','🐠',48,1,1000,'sunfish',true],['hammer','Great Hammerhead','🦈',205,1,1000,'hammer',true],
  ],
  secret:[
-  ['poring','Poring Puffer','🐡',300,.5,2],['emperium','Emperium Carp','🐠',45,3,12],
-  ['ghostring','Ghostring Fish','🐟',200,.4,1.8],['angeling','Angeling Jelly','🐙',310,.6,2.5],
-  // v297: the largest fish alive, and the deep oddities that go with them.
-  ['whaleshark','Whale Shark','🦈',205,600,1800,'whale',true],['beluga','Beluga Sturgeon','🐟',205,400,1400,'sturgeon',true],
-  ['anglerdeep','Abyssal Angler','🐡',280,80,260,'angler',true],['colossus','Plaza Colossus','🐙',270,300,1000,'octopus',true],
+  ['poring','Poring Puffer','🐡',300,1,1000],['emperium','Emperium Carp','🐠',45,1,1000],
+  ['ghostring','Ghostring Fish','🐟',200,1,1000],['angeling','Angeling Jelly','🐙',310,1,1000],
+  // v297/v398: the largest fish alive, and the deep oddities that go with them - same 1-1,000 kg scale.
+  ['whaleshark','Whale Shark','🦈',205,1,1000,'whale',true],['beluga','Beluga Sturgeon','🐟',205,1,1000,'sturgeon',true],
+  ['anglerdeep','Abyssal Angler','🐡',280,1,1000,'angler',true],['colossus','Plaza Colossus','🐙',270,1,1000,'octopus',true],
  ],
  mvp:[
   ['mvp_azure_drake','Azure Drake','🐉',195,1000,1700],['mvp_tide_drake','Tide Drake','🐉',200,1200,2000],
@@ -131,7 +132,7 @@ const EXTRA_SPECIES=[
  ['opalsnail','Opal Snail','🐌',280,0.04,0.3,'fish','uncommon'],
  ['lavasnail','Lava Snail','🐌',10,0.05,0.4,'fish','rare'],
  ['nebulasnail','Nebula Snail','🐌',265,0.06,0.5,'fish','legendary'],
- ['prismsnail','Prism Snail','🐌',300,0.05,0.45,'fish','mythical'],
+ ['prismsnail','Prism Snail','🐌',300,1,1000,'fish','mythical'],
  ['krill','Glass Krill','🦐',190,0.01,0.08,'shrimp','common'],
  ['candyshrimp','Candy Shrimp','🦐',340,0.02,0.12,'shrimp','common'],
  ['lanternshrimp','Lantern Shrimp','🦐',45,0.02,0.15,'shrimp','uncommon'],
@@ -141,15 +142,15 @@ const EXTRA_SPECIES=[
  ['staropus','Star Octopus','🐙',45,0.4,2.2,'octopus','uncommon'],
  ['candyopus','Candy Octopus','🐙',330,0.5,2.6,'octopus','rare'],
  ['moonopus','Moon Octopus','🐙',250,0.6,3,'octopus','rare'],
- ['galaxyopus','Galaxy Octopus','🐙',275,1.2,6,'octopus','mythical'],
+ ['galaxyopus','Galaxy Octopus','🐙',275,1,1000,'octopus','mythical'],
  // whales - the seventh sheet, the big ones
  ['rosedolphin','Rosy Dolphin','🐬',335,90,320,'whale','rare'],
  ['sunorca','Sunlit Orca','🐋',25,180,700,'whale','legendary'],
  ['violetbeluga','Violet Beluga','🐋',265,150,560,'whale','legendary'],
  ['azurwhale','Azure Whale','🐋',205,260,900,'whale','legendary'],
  ['greywhale','Greyback Whale','🐋',215,300,950,'whale','legendary'],
- ['mintwhale','Mintback Whale','🐋',150,220,780,'whale','mythical'],
- ['starwhale','Stardust Whale','🐋',195,420,980,'whale','mythical'],
+ ['mintwhale','Mintback Whale','🐋',150,1,1000,'whale','mythical'],
+ ['starwhale','Stardust Whale','🐋',195,1,1000,'whale','mythical'],
  ['catshark','Catshark','🦈',30,2,8,'shark','common'],
  ['hornshark','Horn Shark','🦈',40,3,10,'shark','common'],
  ['nurseshark','Nurse Shark','🦈',20,10,40,'shark','common'],
