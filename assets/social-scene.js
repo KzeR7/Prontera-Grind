@@ -828,10 +828,15 @@ const ATTACK_MS=520;let fxTextures=null;
   if(had)return {x:had.x,z:had.z,arriving:had.arriving};
   // A deterministic point per unit: same key, same approach. Two units of one wave always differ
   // because the key carries their id, so a wave fans out instead of stacking.
+  // The avalanche step is here because ids in one wave differ by a single trailing character and
+  // FNV leaves that difference in the low bits; mixing spreads the derived values (angle, distance)
+  // over the whole range instead of letting them cluster. It is not load-bearing for the wave as a
+  // whole - the full key carries runKey too - but it keeps one unlucky keypace from stacking.
   let h=2166136261;
   for(let i=0;i<key.length;i++)h=Math.imul(h^key.charCodeAt(i),16777619);
-  const a=((h>>>0)/4294967296)*Math.PI*2;
-  const far=STAGE.RUNIN_FAR_MIN+(((h>>>9)&255)/255)*(STAGE.RUNIN_FAR_MAX-STAGE.RUNIN_FAR_MIN);
+  h^=h>>>16;h=Math.imul(h,0x7feb352d);h^=h>>>15;h=Math.imul(h,0x846ca68b);h^=h>>>16;h>>>=0;
+  const a=(h/4294967296)*Math.PI*2;
+  const far=STAGE.RUNIN_FAR_MIN+((((h>>>9)&1023)/1023))*(STAGE.RUNIN_FAR_MAX-STAGE.RUNIN_FAR_MIN);
   const away=s.enemy?1:-1;   // bots enter from the field side, the party from its own
   const pt={x:s.x+Math.cos(a)*far*away,z:s.z+Math.sin(a)*far*.7,arriving:true};
   battleEntryPoints.set(key,pt);

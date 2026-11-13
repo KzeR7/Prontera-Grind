@@ -362,6 +362,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   const fromSlot=entries.map((e,i)=>Math.hypot(e.x-enemySprites[i].userData.battleSpawn.x,e.z-enemySprites[i].userData.battleSpawn.z));
   assert(fromSlot.every(d=>d>5),'each bot enters from out in the field, not on its slot: '+fromSlot.map(d=>d.toFixed(1)));
   assert(new Set(entries.map(e=>e.x.toFixed(2)+','+e.z.toFixed(2))).size===entries.length,'no two bots enter from the same point');
+  // Distinct points are not enough on their own: a hash that leaves one wave's ids in the same
+  // bearing sends them in as a ROW, which is the fixed formation the owner rejected. Their bearing
+  // around the slot has to actually fan out. (This caught FNV without an avalanche step, which put
+  // all three at 85-89 degrees.)
+  const bearings=entries.map((e,i)=>{const sl=enemySprites[i].userData.battleSpawn;return Math.atan2(e.z-sl.z,e.x-sl.x)})
+   .map(r=>{const d=r*180/Math.PI;return d<0?d+360:d}).sort((a,b)=>a-b);
+  const spread=Math.min(...bearings.map((b,i)=>{const next=bearings[(i+1)%bearings.length]+(i+1===bearings.length?360:0);return next-b}));
+  assert(spread>18,'a wave fans out around its slots instead of marching in as a row: '+bearings.map(b=>b.toFixed(0)).join(',')+' deg, tightest gap '+spread.toFixed(0));
   assert(enemySprites.every(o=>o.userData.battleStance==='walking'||o.material.opacity<.2),'an entering bot is drawn walking in');
   // The puff is the ARRIVAL, not the spawn: nothing has burst yet while they are still on their way.
   assert.equal(bursts().length,0,'no arrival puff while the wave is still running in');
