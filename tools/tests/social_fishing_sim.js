@@ -107,6 +107,15 @@ const heaviest=F.SPECIES.slice().sort((a,b)=>b.max-a.max).slice(0,3);
 assert(heaviest.every(sp=>sp.rarity==='mvp'),'the three heaviest species are MVP rarities');
 assert(['mvp','secret','mythical'].includes(F.SPECIES.slice().sort((a,b)=>b.max-a.max)[7].rarity),'the next heaviest is still a boss-tier fish');
 assert(F.SPECIES.filter(sp=>sp.rarity==='secret').length>=4,'the secret pool still has its own fish');
+// v398 (owner: "still 2 fishes in index that does show the 1000kg changes"): EVERY mythical and
+// secret fish weighs 1-1000 kg. This is asserted on the FINAL rarity, not the one written in the
+// table row, because RARITY_OVERRIDE promotes sharks - the first pass fixed only the rows whose text
+// said 'mythical' and left five promoted sharks (thresher, goblin, tigershark, sunshark, abysssaw)
+// at their old weights, which is exactly what the owner saw in the Index.
+const bossTier=F.SPECIES.filter(sp=>sp.rarity==='mythical'||sp.rarity==='secret');
+const wrongWeight=bossTier.filter(sp=>sp.min!==1||sp.max!==1000);
+assert.equal(wrongWeight.length,0,'every mythical/secret fish weighs 1-1000 kg: '+wrongWeight.map(sp=>sp.id+' '+sp.min+'-'+sp.max).join(', '));
+assert(bossTier.length>=30,'the boss tiers are all present after the override: '+bossTier.length);
 assert(F.showOffScale(3000)>=12.9,'the biggest MVP shows off at pond scale');
 assert(F.showOffScale(3000)>F.showOffScale(300)&&F.showOffScale(300)>F.showOffScale(60),'show-off size keeps climbing into the giants');
 const legacy={minnow:'common',carp:'common',smelt:'common',goby:'common',bream:'uncommon',perch:'uncommon',trout:'uncommon',koi:'rare',pike:'rare',tetra:'rare',fountainfish:'legendary',arowana:'legendary',leviathan:'mythical',poring:'secret'};

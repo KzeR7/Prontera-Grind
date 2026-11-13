@@ -613,7 +613,11 @@ const ATTACK_MS=520;let fxTextures=null;
   // v398 run-in: a new wave enters from the field edge instead of blinking onto its slots. FAR_MIN/
   // FAR_MAX is how far out it starts, RUNIN_SPEED is the walk back in, and RUNIN_MS is the hard
   // ceiling - a unit that somehow cannot reach its slot is placed on it rather than stranded.
-  RUNIN_FAR_MIN:7,RUNIN_FAR_MAX:13,RUNIN_SPEED:6.2,RUNIN_MS:2600};
+  RUNIN_FAR_MIN:7,RUNIN_FAR_MAX:13,RUNIN_SPEED:6.2,RUNIN_MS:2600,
+  // v398b: how far a bot's FIGHTING spot may drift from its lane. Small enough that the aisle and the
+  // staged turns still read, wide enough that a wave is spread over the farm instead of standing on
+  // the old grid. The walk-in then starts from further out along the same bearing.
+  SCATTER_MIN:.5,SCATTER_X:2.6,SCATTER_Z:2.2,SCATTER_GAP:2.4};
  const battleStages=new Map(),battleHolds=new Map(),battleLeaving=[];
  // A strike that has arrived on its target: flash, shake, sparks and a number. Crits add the
  // contact freeze and the ground ring. v384: in the field a normal hit is deliberately quieter
@@ -627,7 +631,10 @@ const ATTACK_MS=520;let fxTextures=null;
   // with the same emotion image a player can send in chat - a crit almost always, a normal hit now
   // and then. Purely visual, and only in the field: the ring duel fires many more strikes and would
   // read as noise. See the pools and the sprite pool below.
-  if(field&&amount>0){if(crit&&Math.random()<.55)triggerBattleEmoji(unit,'crit');else if(!crit&&Math.random()<.12)triggerBattleEmoji(unit,'hit')}
+  // A crit ALWAYS reacts - it is the loudest thing on the field and the owner's complaint was that
+  // no reaction was ever visible. A normal hit still reacts now and then so the field is not a
+  // constant stream of stickers.
+  if(field&&amount>0){if(crit)triggerBattleEmoji(unit,'crit');else if(Math.random()<.12)triggerBattleEmoji(unit,'hit')}
   if(field){
    spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?STAGE.CRIT_SPARKS:STAGE.HIT_SPARKS,crit?1.5:1.15,crit?.22:.16,crit?720:540);
    if(crit||heavy)spawnBattleShockwave(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?700:560);
@@ -673,6 +680,17 @@ const ATTACK_MS=520;let fxTextures=null;
   battleEmotionImages.set(id,img);
   return img;
  }
+ // v398b (owner: "still no pet emoji"): WARM THE DECODE. The first reaction used to be the first
+ // request for that PNG, so it fetched and decoded only after the reaction had already started - and
+ // since a reaction lives 1.4-2.2 s, a slow first load meant the player saw a blank sprite (or
+ // nothing) and the emotion only appeared on some later hit, if at all. Every pooled id is now
+ // requested up front, once, so the first reaction paints on its first frame.
+ let battleEmotionWarmed=false;
+ function warmBattleEmotions(){
+  if(battleEmotionWarmed)return;
+  battleEmotionWarmed=true;
+  for(const list of Object.values(BATTLE_EMOJI_POOLS))for(const id of list)battleEmotionImage(id);
+ }
  const battleEmojiPool=[];
  function spawnBattleEmoji(x,y,z,emotionId,dur){
   const life=Math.max(400,Number(dur)||1800);
@@ -683,7 +701,7 @@ const ATTACK_MS=520;let fxTextures=null;
    // Nearest keeps the pixel emotions crisp instead of a blurred smear at plaza distance.
    texture.magFilter=T.NearestFilter;texture.minFilter=T.NearestFilter;
    const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
-   sprite.scale.set(.8,.8,1);sprite.visible=false;sprite.renderOrder=20;scene.add(sprite);
+   sprite.scale.set(.8,.8,1);sprite.visible=false;sprite.renderOrder=20;sprite.userData.battleEmoji=true;scene.add(sprite);
    e={canvas,ctx:canvas.getContext('2d'),texture,sprite,active:false,painted:''};
    battleEmojiPool.push(e);
   }
@@ -706,7 +724,7 @@ const ATTACK_MS=520;let fxTextures=null;
   for(const e of battleEmojiPool){
    if(!e.active)continue;
    const t=(now-e.at)/e.dur;
-   if(t>=1){e.active=false;e.sprite.visible=false;continue}
+   if(t>=1){e.active=false;e.sprite.visible=false;e.sprite.material.opacity=0;continue}
    paintBattleEmoji(e);
    e.sprite.position.set(e.x+.3*Math.sin(t*6+e.wobble),e.startY+1.8*t,e.z);
    e.sprite.material.opacity=t<.2?t/.2:Math.max(0,1-((t-.2)/.8));
@@ -768,6 +786,48 @@ const ATTACK_MS=520;let fxTextures=null;
  // across an aisle wide enough for the two largest bodies plus room to step in. Slots follow the
  // order of the run's own lists, which never reorder inside a wave, so a unit keeps its slot when
  // a neighbour falls or a boss calls adds.
+ // v398b: where an enemy STANDS and FIGHTS. Seeded from the run and the bot's id so it is stable
+ // across every snapshot of the same wave (a body that moved every frame would jitter), and derived
+ // from the same seed battleSpawn() uses, so the point a bot walks to is the point it entered at.
+ // It is bounded so the fight still reads: the bot stays on the enemy side of the aisle and inside
+ // the field, and never lands on top of a partner or another bot of its own wave.
+ const enemyScattered=new Map();   // runKey -> [{x,z}] already placed this wave, for spacing
+ const enemySpotCache=new Map();   // "run|owner|wave|id" -> {x,z}: a bot's fighting spot never moves
+ function enemyScatter(run,unit,index,base,geo){
+  const ck=String(run.id||'')+'|'+(run.owner||0)+'|w'+(run.wave??'')+'|'+(unit.id??index);
+  const cached=enemySpotCache.get(ck);
+  if(cached)return {x:cached.x,z:cached.z};
+  const seed=String(unit.id??index)+'|'+String(run.id||'')+'|'+(run.owner||0),lane=Number(run.slot)||0;
+  const rnd=(salt)=>{let h=2166136261;const k=seed+'#'+salt;
+   for(let i=0;i<k.length;i++)h=Math.imul(h^k.charCodeAt(i),16777619);
+   h^=h>>>16;h=Math.imul(h,0x7feb352d);h^=h>>>15;h=Math.imul(h,0x846ca68b);h^=h>>>16;return (h>>>0)/4294967296};
+  // Keep on the enemy side of the aisle (never behind the partners) and inside the field.
+  const minX=Math.min(93,geo.ex+STAGE.SCATTER_MIN),maxX=93;
+  const jx=(rnd('x')*2-1)*STAGE.SCATTER_X;
+  const jz=(rnd('z')*2-1)*STAGE.SCATTER_Z;
+  const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  // x never moves toward the aisle for a ranged form, and never past the field edge for anyone.
+  const xMin=geo.ranged?geo.laneMin+STAGE.SCATTER_MIN:minX;
+  let x=clamp(base.x+jx,xMin,maxX),z=clamp(base.z+jz,50,78);
+  // Two bots of one wave must not land on top of each other: the staged turns and the swap both read
+  // as a row of bodies, so the rows are kept apart. Slide outward along the lane until it is clear.
+  // Keyed by wave as well as run: a new wave is a new set of bodies and must be able to reuse the
+  // same spots, otherwise the map grows without bound across a long grind.
+  const runKey=String(run.id||'')+'|'+(run.owner||0)+'|w'+(run.wave??''),placed=enemyScattered.get(runKey)||[];
+  const gap=STAGE.SCATTER_GAP;
+  for(let step=1;step<=24&&placed.some(p=>Math.abs(p.z-z)<gap);step++){
+   // Step away from the lane centre, alternating sides, so a crowded wave still ends up spread.
+   const dir=step%2?1:-1,z2=clamp(base.z+dir*Math.ceil(step/2)*gap,50,78);
+   if(!placed.some(p=>Math.abs(p.z-z2)<gap))z=z2;
+  }
+  // If it still cannot clear, fall back to the lane point - a clump is worse than a grid row.
+  if(placed.some(p=>Math.abs(p.z-z)<gap)){x=base.x;z=base.z}
+  placed.push({x,z});enemyScattered.set(runKey,placed);
+  enemySpotCache.set(ck,{x,z});
+  // The cache is per-wave by construction; trim it so a long session cannot grow it forever.
+  if(enemySpotCache.size>240){const first=enemySpotCache.keys().next().value;enemySpotCache.delete(first)}
+  return {x,z};
+ }
   function battleFormation(run){
   // v386: scatter each run in the middle field from its battle id so two grinds never stack
   // on the same turf, while a given run keeps one home across its waves.
@@ -789,7 +849,17 @@ const ATTACK_MS=520;let fxTextures=null;
    if(hasBoss)[col,row]=bossOrder[Math.min(i,bossOrder.length-1)];
    else if(i<front)row=i-(front-1)/2;
    else{col=1;row=(i-front)-(rest-1)/2}
-   slots.enemies.push({x:span(ex+col*STAGE.BACK_COLUMN+back(u),47,93),z:span(fz+row*er,50,78)});
+   // v398b (owner: "the mobs are randomly spawn now but it went back to the old location to
+   // actually start the fight"): the enemy's fighting position IS the seeded point it entered from,
+   // not the old grid - it spawns somewhere on the farm and fights there. The grid above still
+   // decides the ORDER (front line, back column) and the aisle is still enforced, so a staged swing
+   // reads the same; only the address changes. Melee keep to the enemy side of the aisle; a ranged
+   // form may sit further back, which is what `col` already expressed.
+   const laneMin=ex+col*STAGE.BACK_COLUMN+back(u);
+   // A ranged form keeps its guaranteed step behind the brawlers: scattering it forward could put it
+   // level with (or ahead of) the melee line, and the whole point of the ranged slot is that it reads
+   // as firing from the back. It still scatters, just never toward the aisle.
+   slots.enemies.push(enemyScatter(run,u,i,{x:span(laneMin,47,93),z:span(fz+row*er,50,78)},{aisle,ex,fz,er,laneMin,row,ranged:unitRange(u.form).ranged}));
   });
   return {partners,enemies,slots};
  }
@@ -913,11 +983,13 @@ const ATTACK_MS=520;let fxTextures=null;
     // v398: the run ended - the party reacts once, in the world-chat emotions. A defeat is the blow
     // that felled the last partner, so the frozen copy on screen still has units to hang it on.
     const defeated=old.reason==='defeat';
+    // v398b: one reaction per partner, and a partner that is already down does not react - its
+    // collapse is the reaction. (Calling twice on the same pet just re-rolled its own sprite, so the
+    // old second call added nothing and could overwrite a reaction already on screen.)
     partners.forEach((pe,idx)=>{
      const pu=battleResidents.get(runKey+':partner'+(idx||''));
-     if(!pu)return;
+     if(!pu||pu.fainted)return;
      triggerBattleEmoji(pu,defeated?'lose':'win');
-     if(Math.random()<(defeated?.5:.6))triggerBattleEmoji(pu,defeated?'lose':'win');
     });
    }
   }
@@ -930,7 +1002,8 @@ const ATTACK_MS=520;let fxTextures=null;
      // v384 staging: where the unit stands and the slot it owns; the strikes waiting to be shown
      // on it and their total; the swings it owes; the swing it is in; when it first appeared.
      px:spawn.x,pz:spawn.z,home:{x:spec.x,z:spec.z},entered:{x:spawn.x,z:spawn.z},arriving:!!spawn.arriving,pending:[],owedDamage:0,unsynced:0,owedSwings:0,owedAt:0,swing:null,bornAt:null,popup:null};
-    battleResidents.set(spec.key,u)}
+    if(spec.kind==='pve')warmBattleEmotions();
+   battleResidents.set(spec.key,u)}
    // `unsynced` is the damage reported since the last snapshot - a snapshot already includes it.
    u.spec=spec;u.unsynced=0;if(spec.kind==='pve'){u.home.x=spec.x;u.home.z=spec.z}
    // v398: userData.battleSpawn is the slot the unit owns - the test and the HUD read it to mean
@@ -1057,7 +1130,12 @@ const ATTACK_MS=520;let fxTextures=null;
    if(t)hits.push(claim(t,Math.min(t.pending.length,Math.max(1,Math.ceil(total/(n-i))))));
    else if(!queue.length&&softFoe)hits.push({key:softFoe.spec.key,amount:0,crit:false,count:0});
    if(!hits.length)return;
-   u.swing=makeSwing(u,hits,now+started*stagger);started++;last=Math.max(last,u.swing.contactAt);if(u.spec.boss)sweeper=u;
+   u.swing=makeSwing(u,hits,now+started*stagger);started++;
+   // v398b: the turn ends when the fighter is BACK on its spot, not when its blow connects. Attackers
+   // now fight from scattered spots, so the step back can be long; gating on contact let the other
+   // side start swinging while this one was still walking home, which read as two fighters swinging
+   // out of place at once.
+   last=Math.max(last,u.swing.endAt);if(u.spec.boss)sweeper=u;
   });
   // A boss swing sweeps: whatever else is still waiting lands with it (its slam hits the whole party).
   if(sweeper)for(const q of queue)if(q.pending.length)sweeper.swing.hits.push(claim(q,q.pending.length));
@@ -1137,6 +1215,10 @@ const ATTACK_MS=520;let fxTextures=null;
      // Off its slot with nothing to do (a partner the wave heal put back on its feet): walk home.
      const dx=u.home.x-u.px,dz=u.home.z-u.pz,gap=Math.hypot(dx,dz);
      if(gap>1e-4){const step=Math.min(gap,elapsed*STAGE.WALK_SPEED);u.px+=dx/gap*step;u.pz+=dz/gap*step;walking=step>.015;if(walking)stance='walking'}
+     // Snap the last sliver: the walk is a float step, so turning the last 3e-5 of a unit into an
+     // infinite creep leaves the fighter a hair off its spot forever and "-0.000029 off" reads as a
+     // bug to anything measuring it.
+     if(Math.hypot(u.home.x-u.px,u.home.z-u.pz)<1e-3){u.px=u.home.x;u.pz=u.home.z}
     }
     pos={x:u.px,z:u.pz};
    }else{
@@ -1158,7 +1240,7 @@ const ATTACK_MS=520;let fxTextures=null;
    // name-plate rectangle plus a fat HP bar onto its sprite, so the field read as floating
    // boxes. Plates are gone: names are clean outlined text, and the health capsule is a
    // slim rounded pill that only appears once a unit is actually hurt.
-   if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.fillText==='function'){const ctx=u.ctx;
+   if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.ctx.fillText==='function'){const ctx=u.ctx;
     const frac=Math.max(0,Math.min(1,shownHp/Math.max(1,s.maxHp)));
     // v398 (owner: "while pve grind battle, the HP & name"): the health bar used to appear only once
     // a unit had been hurt, and it carried no numbers - so a player watching the grind could not see
