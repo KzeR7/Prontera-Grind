@@ -921,12 +921,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="assets/ui/eclipse.css?v=324">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=323">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=324">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=404">
+<link rel="stylesheet" href="assets/social.css?v=405">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=404"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=405"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1324,7 +1324,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-12 haven-v404 plaza-first beginner tour and the mobile quest sheet below its chip';
+const BUILD='2026-11-12 haven-v405 the HUD rate meters survive a tab switch, and the tour buttons are thumb-sized';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -9797,14 +9797,55 @@ const eclipseMetricNumber=n=>{const value=Math.max(0,Math.round(Number(n)||0));r
 // the kill rate. expGained is the session's gross EXP (earnExp), not S.exp, which level-ups lower.
 function stepHudRate(rate,user,kills,earned,now,damage,exp){
   const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(earned)||0),d=Math.max(0,Number(damage)||0),x=Math.max(0,Number(exp)||0);
-  if(!rate||rate.user!==user||now<rate.lastAt||now-rate.lastAt>HUD_IDLE_RESET||k<rate.lastKills||z<rate.lastEarned||d<rate.lastDmg||x<rate.lastExp)
+  // Only a genuinely broken baseline starts over: another account, a clock running backwards, or a
+  // save that rewound the counters. An IDLE GAP is not a broken baseline - it is a stretch of play
+  // the sampler missed and can still account for. Treating it as one used to wipe the meter to 0
+  // every time the player switched tabs, and it spent the next minute climbing back to their real
+  // rate, which is the moment they check whether the game kept grinding while they were away.
+  // v390 already had to route the plaza Field card around this same reset; the HUD meters now
+  // account for the gap instead of discarding it.
+  if(!rate||rate.user!==user||now<rate.lastAt||k<rate.lastKills||z<rate.lastEarned||d<rate.lastDmg||x<rate.lastExp)
     rate={user,lastAt:now,lastSampleAt:now,lastKills:k,lastEarned:z,lastDmg:d,lastExp:x,started:now,killsPerMin:0,zenyPerMin:0,dps:0,expPerMin:0,killsEvents:[],events:[],dmgEvents:[],expEvents:[]};
   else{
+    const gap=now-rate.lastAt;
     const dk=k-rate.lastKills,dz=z-rate.lastEarned,dd=d-rate.lastDmg,dx=x-rate.lastExp;
-    if(dk)rate.killsEvents.push({at:now,amount:dk});
-    if(dz)rate.events.push({at:now,amount:dz});
-    if(dd)rate.dmgEvents.push({at:now,amount:dd});
-    if(dx)(rate.expEvents=rate.expEvents||[]).push({at:now,amount:dx});
+    // Everything the sampler missed belongs to the gap. Only the slice that still fits inside the
+    // rolling window may be counted: a gap of a minute or less carries in full, a longer one is
+    // prorated to the window. That is the guarantee the old reset was there for - ten minutes of
+    // background grinding must not read as one furious second - without throwing the reading away.
+    // A gap is one of two things, and they need opposite handling. Either the character kept
+    // grinding while nobody was looking - in which case what it earned has to be added to the
+    // window, prorated so ten minutes away cannot read as one furious second - or the game was
+    // parked (a lost cloud connection, a sleeping machine), in which case the window has a hole
+    // where that time should be and a hole reads as a collapse in earnings for a full minute.
+    // Told apart by whether the gap delivered anything near the rate we had been seeing.
+    // Told apart by whether the gap delivered close to the rate we had been seeing - and only once
+    // that rate is trustworthy, i.e. the window has had a full minute to fill. Before that the
+    // estimate is a few seconds old and comparing against it would mistake real production for a
+    // stall. Every metric is checked in its own unit; a metric with no established rate cannot
+    // vouch either way, so anything that moved counts as production.
+    const mature=rate.lastSampleAt-rate.started>=HUD_RATE_WINDOW;
+    const span=Math.max(gap,1),perMin=a=>a*60000/span;
+    const moved=!!(dx||dz||dk||dd);
+    const known=(rate.expPerMin>0||rate.zenyPerMin>0||rate.killsPerMin>0||rate.dps>0);
+    const productive=!mature||!known?moved:
+      (rate.expPerMin>0&&perMin(dx)>=rate.expPerMin*.25)||
+      (rate.zenyPerMin>0&&perMin(dz)>=rate.zenyPerMin*.25)||
+      (rate.killsPerMin>0&&perMin(dk)>=rate.killsPerMin*.25)||
+      (rate.dps>0&&dd*1000/span>=rate.dps*.25);
+    if(gap>HUD_IDLE_RESET&&!productive){
+      // Compress the dead time out: shift what was already measured forward, and leave lastSampleAt
+      // alone so this very call still recomputes - the window just changed shape.
+      for(const key of ['killsEvents','events','dmgEvents','expEvents'])
+        (rate[key]||[]).forEach(e=>{e.at+=gap});
+      rate.started+=gap;
+    }else{
+      const fit=gap>0?Math.min(gap,HUD_RATE_WINDOW)/gap:1;
+      if(dk)rate.killsEvents.push({at:now,amount:dk*fit});
+      if(dz)rate.events.push({at:now,amount:dz*fit});
+      if(dd)rate.dmgEvents.push({at:now,amount:dd*fit});
+      if(dx)(rate.expEvents=rate.expEvents||[]).push({at:now,amount:dx*fit});
+    }
     rate.lastKills=k;rate.lastEarned=z;rate.lastDmg=d;rate.lastExp=x;rate.lastAt=now;
     if(now-rate.lastSampleAt>=HUD_RATE_REFRESH){
       while(rate.killsEvents.length&&rate.killsEvents[0].at<=now-HUD_RATE_WINDOW)rate.killsEvents.shift();
@@ -9822,8 +9863,18 @@ function stepHudRate(rate,user,kills,earned,now,damage,exp){
   return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny:rate.zenyPerMin,dps:rate.dps,exp:rate.expPerMin};
 }
 const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(+value||0)/Math.max(1,+required||1)*100));
+// Sampling the rate is not drawing. The frame driver skips draw() in a hidden tab so a background
+// page stays cheap, but stepHudRate only reads counters and pushes timestamps - it never touches
+// the DOM. Letting the background tick sample too keeps lastAt fresh, so coming back finds a window
+// that is already true instead of one with a hole punched through it.
+function sampleHudRate(now=performance.now()){
+  if(!S)return null;
+  const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,now,S.dmg,expEarned);
+  hudRate=rates.state;
+  return rates;
+}
 function bars(){if(!S||simVisualsOff())return;applyDisplay();
-  const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg,expEarned);hudRate=rates.state;
+  const rates=sampleHudRate();if(!rates)return;
   const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
   if($('eclipseStageLabel'))$('eclipseStageLabel').textContent=(S.lvl>10?'Nightmare ':'Stage ')+(S.lvl>10?S.lvl-10:S.lvl)+' / '+(S.lvl>10?5:normalStages(S.mp));
   if($('eclipseShards'))$('eclipseShards').textContent=safeCount(S.shards).toLocaleString();
@@ -14017,7 +14068,12 @@ function bgTick(fromWorker=false){
     if(!simOccluded){simOccluded=true;if(!awayAt){awayAt=simAt;awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0}}
   }
   if(!bgOn()){simAt=now;return}
-  try{simAdvance(now)}catch(e){if(!bgTick.e){bgTick.e=1;console.error(e);log('Error: '+e.message,'r0')}}}
+  try{
+    simAdvance(now);
+    // Keep the HUD rate window fed while nothing can be drawn. Without this the sampler goes quiet
+    // for the whole absence and the meter has to rebuild from zero the moment the player returns.
+    if(typeof sampleHudRate==='function')sampleHudRate(now);
+  }catch(e){if(!bgTick.e){bgTick.e=1;console.error(e);log('Error: '+e.message,'r0')}}}
 function bgHide(){                      // the tab went to the background: note the moment, then save
   const now=performance.now();awayReturnAt=0;if(!awayAt){awayAt=now;awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0}
   simAdvance(now);save();simBgSaveAt=now}
@@ -14207,16 +14263,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=404"></script>
-<script src="assets/digimon/base-stats.js?v=404"></script>
-<script src="assets/social-rules.js?v=404"></script>
-<script src="assets/social-poker.js?v=404"></script>
-<script src="assets/digimon-sanctuary.js?v=404"></script>
+<script src="assets/digimon/roster.js?v=405"></script>
+<script src="assets/digimon/base-stats.js?v=405"></script>
+<script src="assets/social-rules.js?v=405"></script>
+<script src="assets/social-poker.js?v=405"></script>
+<script src="assets/digimon-sanctuary.js?v=405"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=404"></script>
+<script src="assets/social-digimon.js?v=405"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=404"></script>
-<script src="assets/social-fishing.js?v=404"></script>
-<script src="assets/social.js?v=404"></script></body>
+<script src="assets/social-scene.js?v=405"></script>
+<script src="assets/social-fishing.js?v=405"></script>
+<script src="assets/social.js?v=405"></script></body>
 </html>

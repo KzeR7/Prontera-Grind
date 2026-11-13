@@ -454,6 +454,14 @@ html.pg-mobile body.equipment-workspace-open #wins{
   width:auto;transform:none;top:4px;bottom:var(--docktop);
 }
 
+/* The beginner tour's own buttons. .handbook button only pins min-height:34px, which is
+   below the phone floor the rest of this file uses for anything you actually tap (30-44px),
+   and the tour is the one control a new player is meant to press without hunting. Sized here
+   so Next / Back / "Go to the field" are the largest thing on the panel. */
+html.pg-mobile .guide-actions button{min-height:44px;font-size:12px;padding:11px 16px}
+html.pg-mobile .guide-tour h2{font-size:17px}
+html.pg-mobile .guide-tour p{font-size:13px}
+
 /* ── 6. Display sheet ────────────────────────────────────────────────────── */
 
 html.pg-mobile #screenOptions{
