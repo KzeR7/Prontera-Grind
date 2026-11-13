@@ -230,7 +230,7 @@ export const onRequestPost = guard(async ({ request, env }) => {
       }));
       const pub = publicFields(restored);
       await db.updateSave(D, id, live.version + 1, stamped, blob.saved_at, pub, live.rate_kph);
-      // haven-v399: a restore now ends every live session on the account.
+      // haven-v400: a restore now ends every live session on the account.
       //
       // This is the part three client-side patches kept missing. The owner's log shows the shape that
       // beat them: `login` at 11:22:20, `gm-restore` at 11:22:44 - the tab was already open and
