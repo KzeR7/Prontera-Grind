@@ -587,7 +587,12 @@ await T('every GM action is in the audit log with the actor and the target', asy
 await T('a hostile save cannot smuggle impossible values into the server columns', async () => {
   const friend = globalThis.__friend;
   const v = (await api.getSave(env, friend)).data.version;
-  const evil = JSON.stringify({ lv: 999999, cls: 'x'.repeat(500), zeny: -50, kills: 1e12, pets: [] });
+  // v396: FRIEND carries a GM restore fence from the backup test above, so this push must carry the
+  // stamp forward the way a device that adopted the restore does - otherwise the fence refuses it,
+  // which is the whole point of the fence.
+  const fence = JSON.parse((await api.getSave(env, friend)).data.blob).gmRestore;
+  const evil = JSON.stringify(Object.assign({ lv: 999999, cls: 'x'.repeat(500), zeny: -50, kills: 1e12, pets: [] },
+    fence ? { gmRestore: fence } : {}));
   assert.strictEqual((await api.putSave(env, friend, { version: v, blob: evil, savedAt: 1 })).status, 200);
   const row = sqlite.prepare('SELECT level, cls, zeny FROM saves WHERE user_id = (SELECT id FROM users WHERE username = ?)').get('FRIEND');
   assert.ok(row.level <= 150, 'level must be clamped to the game cap, got ' + row.level);
@@ -893,6 +898,86 @@ await T('every GM endpoint checks gm rights before it queries anything', async (
     const s = fs.readFileSync(path.join(root, f), 'utf8');
     assert.ok(/isGm\(user\)/.test(s), f + ' must call isGm(user)');
   }
+});
+
+
+// ------------------------------------------- the GM restore fence (v396) ----
+// Every one of these runs on its own database: the fence is a property of one account's row.
+const fenceEnv = async (name) => {
+  const h = freshEnv();
+  const reg = await api.register(h.env, { u: name, p: 'fence-password-' + name });
+  assert.strictEqual(reg.status, 201, 'registering ' + name);
+  // an OWNER to perform GM actions: the first account on a fresh database may promote itself
+  const ownerReg = await api.register(h.env, { u: 'FENCEGM', p: 'fence-gm-password' });
+  const ownerId = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('FENCEGM').id;
+  h.sqlite.prepare('UPDATE users SET gm = 2 WHERE id = ?').run(ownerId);
+  const owner = ownerReg.cookie;
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get(name).id;
+  return { h, env: h.env, sqlite: h.sqlite, cookie: reg.cookie, owner, id };
+};
+
+await T('v396: a restore locks the account against a stale tab, and only the GM can lift it', async () => {
+  const { env, sqlite, cookie, owner, id } = await fenceEnv('Fence');
+  // The player grinds and syncs: v1, the big pre-restore Zeny figure.
+  const pre = await api.putSave(env, cookie, { version: 0, blob: saveBlob(150, 33300000), savedAt: 1 });
+  assert.strictEqual(pre.status, 200, 'the first save lands');
+  assert.strictEqual(pre.data.version, 1);
+
+  // A backup of an earlier, smaller save is what the GM rolls the account back to.
+  const earlier = JSON.stringify(Object.assign(JSON.parse(saveBlob(120, 12000000)), { owner: 'Fence' }));
+  sqlite.prepare('INSERT OR REPLACE INTO save_history(user_id,version,blob,saved_at) VALUES (?,?,?,?)')
+    .run(id, 900, earlier, Date.now());
+  const restored = await api.act(env, owner, { id, action: 'restore', version: 900 });
+  assert.strictEqual(restored.status, 200, 'the restore is accepted');
+  const fenceV = restored.data.version;
+
+  // The owner's case: a tab that never reloaded still holds the pre-restore copy and keeps pushing.
+  // It presents the exact version the row is on, so nothing else in the API would stop it.
+  const staleBlob = JSON.stringify(Object.assign(JSON.parse(saveBlob(150, 33300000)), { owner: 'Fence' }));
+  const stale = await api.putSave(env, cookie, { version: fenceV, blob: staleBlob, savedAt: 2 });
+  assert.strictEqual(stale.status, 409, 'the stale copy is refused');
+  assert.strictEqual(stale.data.restoreFenced, true, 'and it says why');
+  assert.ok(stale.data.blob.includes('12000000'), 'the answer carries the restored save, so the client can adopt it');
+  assert.strictEqual(stale.data.version, fenceV, 'the row did not move');
+
+  const after = await api.getSave(env, cookie);
+  assert.ok(after.data.blob.includes('12000000'), 'the account still holds the restored save');
+  assert.ok(JSON.parse(after.data.blob).gmRestore, 'and the fence is still stamped');
+
+  for (let i = 0; i < 3; i++) {
+    const r = await api.putSave(env, cookie, { version: fenceV, blob: staleBlob, savedAt: 3 + i });
+    assert.strictEqual(r.status, 409, 'a stale tab cannot win by retrying');
+  }
+
+  // A device that DID adopt the restore carries the stamp forward, so play after the rollback saves.
+  const stamp = JSON.parse(stale.data.blob).gmRestore;
+  const adoptedBlob = JSON.stringify(Object.assign(JSON.parse(saveBlob(120, 12005000)), { owner: 'Fence', gmRestore: stamp }));
+  const adopted = await api.putSave(env, cookie, { version: fenceV, blob: adoptedBlob, savedAt: 4 });
+  assert.strictEqual(adopted.status, 200, 'play on top of the restored save is saved normally');
+  assert.strictEqual(JSON.parse((await api.getSave(env, cookie)).data.blob).zeny, 12005000, 'and it is the new figure');
+
+  // Only the GM can lift it.
+  const unlocked = await api.act(env, owner, { id, action: 'unlock' });
+  assert.strictEqual(unlocked.status, 200, 'the GM can clear the fence');
+  assert.strictEqual(unlocked.data.cleared, true);
+  assert.ok(!JSON.parse((await api.getSave(env, cookie)).data.blob).gmRestore, 'the stamp is gone after an unlock');
+});
+
+await T('v396: a save that already carries the restore is never refused', async () => {
+  const { env, sqlite, cookie, owner, id } = await fenceEnv('Fence2');
+  await api.putSave(env, cookie, { version: 0, blob: saveBlob(150, 500), savedAt: 1 });
+  const restoredBlob = JSON.stringify(Object.assign(JSON.parse(saveBlob(150, 100)), { owner: 'Fence2' }));
+  sqlite.prepare('INSERT OR REPLACE INTO save_history(user_id,version,blob,saved_at) VALUES (?,?,?,?)')
+    .run(id, 901, restoredBlob, Date.now());
+  const r = await api.act(env, owner, { id, action: 'restore', version: 901 });
+  assert.strictEqual(r.status, 200);
+  // The stamp the server actually wrote - a client reads it from the copy it adopted, never invents it.
+  const stamp = JSON.parse((await api.getSave(env, cookie)).data.blob).gmRestore;
+  assert.ok(stamp && stamp.at, 'the restore left a stamp to adopt');
+  // The very next push from the device that adopted it: same stamp, more play. Allowed.
+  const okBlob = JSON.stringify(Object.assign(JSON.parse(saveBlob(150, 99000)), { owner: 'Fence2', gmRestore: stamp }));
+  const ok = await api.putSave(env, cookie, { version: r.data.version, blob: okBlob, savedAt: 2 });
+  assert.strictEqual(ok.status, 200, 'the restore does not block the account forever');
 });
 
 sqlite.close();

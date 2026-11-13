@@ -116,6 +116,50 @@ export function saveBelongsTo(blob, { id, userId, username }) {
   return !savedElsewhere(blob, username);    // legacy save: the name is all there is
 }
 
+// ------------------------------------------------------- GM restore fence ----
+// haven-v396. A GM restore is a decision about the ACCOUNT, not about one browser, so it has to be
+// enforced where every device meets: the PUT that stores the save.
+//
+// v394 and v395 both put the check in the client (cloudPush's 409 branch, then cloudJoin's login
+// push). Both worked in simulation and both were still undone in the field, because the client is
+// the one thing a stale device fully controls. A tab that is merely *open* keeps uploading: it has
+// its own copy, its own `gmRestore`-free blob, and once it wins a version race the stamp is gone
+// from the row and every later login is free again. The owner rolled back, force-signed-out every
+// session, restored a backup, and logged in three times - and watched the old save come back,
+// because the fence was never on the server side of the wire.
+//
+// What is stored, and why it is checked here:
+//   * `gmRestore` on the LIVE row is the fence. While it is present, a client blob that does not
+//     carry it is a copy from before the restore, whatever version number it presents, so it is
+//     refused rather than written.
+//   * A client that HAS adopted the restore carries the stamp forward (cloudAdopt -> save() -> PUT,
+//     and the stamp is additive, so it survives a round trip through the game's load()).
+//   * The fence lifts only when the GM restores again (a newer `at`), or when an operator clears it
+//     with action:'unlock'. It never lifts by itself, so "rollback then wait" cannot re-open it.
+const restoreAt = save => {
+  const g = save && typeof save === 'object' ? save.gmRestore : null;
+  const at = g && typeof g === 'object' ? Number(g.at) : NaN;
+  return Number.isFinite(at) && at > 0 ? at : 0;
+};
+
+export const RESTORE_FENCED = 'A GM restored this account, so a copy from before the restore was not saved. Reload the game to play the restored save.';
+
+// Is this incoming save allowed to overwrite a row that carries `fenceAt`?
+//   no fence on the row            -> yes (the ordinary path)
+//   the client carries the stamp   -> yes (it has seen the restore; this is play on top of it)
+//   anything else                  -> no  (a pre-restore copy, whichever version it claims)
+export function restoreAllowsWrite(storedBlob, incomingSave, fenceAt) {
+  if (!fenceAt) return true;
+  const seen = restoreAt(incomingSave);
+  return seen >= fenceAt;
+}
+
+// The stamp on a stored blob, so a PUT can compare against what is actually in the row.
+export function storedRestoreAt(blob) {
+  if (typeof blob !== 'string' || !blob) return 0;
+  try { return restoreAt(JSON.parse(blob)); } catch { return 0; }
+}
+
 // The blob this account should store: re-stamped with its current name and id when either is stale.
 // Returns `blob` unchanged when it is already correct, so the common path rewrites nothing.
 // `id` is what currentUser() returns; `userId` is accepted for callers that already have it named.
