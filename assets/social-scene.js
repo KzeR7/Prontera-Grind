@@ -617,7 +617,11 @@ const ATTACK_MS=520;let fxTextures=null;
   // v398b: how far a bot's FIGHTING spot may drift from its lane. Small enough that the aisle and the
   // staged turns still read, wide enough that a wave is spread over the farm instead of standing on
   // the old grid. The walk-in then starts from further out along the same bearing.
-  SCATTER_MIN:.5,SCATTER_X:2.6,SCATTER_Z:2.2,SCATTER_GAP:2.4};
+  SCATTER_MIN:.5,SCATTER_X:2.6,SCATTER_Z:2.2,SCATTER_GAP:2.4,
+  // v398c: how close a melee swing gets, as a multiple of the two bodies. CLOSE_GAP<1 means the
+  // bodies may nearly touch on a tight swing (that is the point - a graze should look like a graze);
+  // the far bound keeps a loose swing from turning into a lunge across the field.
+  CLOSE_GAP:.35,SWING_FAR_MIN:.25,SWING_FAR_SPAN:1.15};
  const battleStages=new Map(),battleHolds=new Map(),battleLeaving=[];
  // A strike that has arrived on its target: flash, shake, sparks and a number. Crits add the
  // contact freeze and the ground ring. v384: in the field a normal hit is deliberately quieter
@@ -668,6 +672,9 @@ const ATTACK_MS=520;let fxTextures=null;
   crit:['dead','panic','surprise','anger'],
   boss:['anger','surprise','panic'],
   train:['ok','rock','heart','idea'],
+  // v398d: the follower's own moods, on its own clock - see the ambient block where it is drawn.
+  idle:['sleep','blush','music','heart','laugh','cloud','idea'],
+  fish:['surprise','ok','heart','laugh','music','idea'],
  };
  // One image per id, shared by every sprite: a pool of 16 reactions must not refetch a PNG each time.
  const battleEmotionImages=new Map();
@@ -691,46 +698,65 @@ const ATTACK_MS=520;let fxTextures=null;
   battleEmotionWarmed=true;
   for(const list of Object.values(BATTLE_EMOJI_POOLS))for(const id of list)battleEmotionImage(id);
  }
+ // v398d (owner: "size of the emoji can be the same as player one"): reactions are DOM elements,
+ // not world sprites. The player's emotion bubble is a 48px <img> that never changes size with the
+ // camera; a world sprite at 0.7-1.1 units measured ~25px on screen, which is why the reaction was
+ // being drawn and still not seen. Reusing the same .social-emotion markup gives the pet exactly the
+ // player's size at every zoom, and it cannot silently shrink again.
  const battleEmojiPool=[];
+ function battleEmojiElement(){
+  const el=document.createElement('div');
+  el.className='social-bubble social-emotion social-pet-emotion';
+  el.hidden=true;
+  const img=document.createElement('img');
+  img.alt='';el.append(img);
+  labels.append(el);
+  return {el,img};
+ }
  function spawnBattleEmoji(x,y,z,emotionId,dur){
   const life=Math.max(400,Number(dur)||1800);
   let e=battleEmojiPool.find(v=>!v.active);
   if(!e){
-   const canvas=document.createElement('canvas');canvas.width=canvas.height=64;
-   const texture=new T.CanvasTexture(canvas);
-   // Nearest keeps the pixel emotions crisp instead of a blurred smear at plaza distance.
-   texture.magFilter=T.NearestFilter;texture.minFilter=T.NearestFilter;
-   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
-   sprite.scale.set(.8,.8,1);sprite.visible=false;sprite.renderOrder=20;sprite.userData.battleEmoji=true;scene.add(sprite);
-   e={canvas,ctx:canvas.getContext('2d'),texture,sprite,active:false,painted:''};
+   const {el,img}=battleEmojiElement();
+   e={el,img,active:false,painted:''};
    battleEmojiPool.push(e);
   }
   e.active=true;e.at=clock;e.dur=life;e.startY=y;e.x=x;e.z=z;e.emotionId=emotionId;
-  e.wobble=Math.random()*Math.PI*2;e.painted='';
-  e.sprite.visible=true;e.sprite.material.opacity=1;e.sprite.position.set(x,y,z);
+  e.wobble=Math.random()*Math.PI*2;
+  if(e.painted!==emotionId){e.painted=emotionId;e.img.src='assets/social/emotions/'+emotionId+'.png'}
+  // The image is already decoded (warmBattleEmotions) so there is no blank first frame.
+  e.el.hidden=false;e.el.style.opacity='1';
   return e;
  }
- function paintBattleEmoji(e){
-  if(e.painted===e.emotionId)return;
-  const img=battleEmotionImage(e.emotionId);
-  // A PNG that has not decoded yet leaves the sprite blank for a frame and is repainted on a later
-  // tick - the alternative is a SpriteMaterial with no map, which three draws as a white square.
-  if(!img||!img.complete||!(img.naturalWidth>0))return;
-  e.ctx.clearRect(0,0,64,64);
-  e.ctx.drawImage(img,4,4,56,56);
-  e.texture.needsUpdate=true;e.painted=e.emotionId;
- }
+ const emojiVec=new T.Vector3();
  function updateBattleEmoji(now){
   for(const e of battleEmojiPool){
    if(!e.active)continue;
    const t=(now-e.at)/e.dur;
-   if(t>=1){e.active=false;e.sprite.visible=false;e.sprite.material.opacity=0;continue}
-   paintBattleEmoji(e);
-   e.sprite.position.set(e.x+.3*Math.sin(t*6+e.wobble),e.startY+1.8*t,e.z);
-   e.sprite.material.opacity=t<.2?t/.2:Math.max(0,1-((t-.2)/.8));
-   e.sprite.scale.setScalar(.7+.4*(t<.3?t/.3:1));
+   if(t>=1){e.active=false;e.el.hidden=true;continue}
+   // Project the point into screen space exactly like the player's own bubble and nameplate: a
+   // fixed 48px regardless of camera distance.
+   emojiVec.set(e.x,e.startY+1.8*t,e.z).project(camera);
+   // viewW/viewH are the module's own live view size (the same pair every other projector reads);
+   // `w`/`h` are locals of frameBody and are not in scope here - reading them here silently left
+   // `left`/`top` unset and the element hidden, which is what the first cut of this did.
+   const vw=viewW||320,vh=viewH||240;
+   const hidden=emojiVec.z>1||emojiVec.z< -1||Math.abs(emojiVec.x)>1||Math.abs(emojiVec.y)>1;
+   if(e.el.hidden!==hidden)e.el.hidden=hidden;
+   if(!hidden){
+    const lx=((emojiVec.x+1)*vw*.5).toFixed(1)+'px',ly=((1-emojiVec.y)*vh*.5).toFixed(1)+'px';
+    if(e.lx!==lx){e.lx=lx;e.el.style.left=lx}
+    if(e.ly!==ly){e.ly=ly;e.el.style.top=ly}
+   }
+   e.el.style.opacity=(t<.2?t/.2:Math.max(0,1-((t-.2)/.8))).toFixed(2);
   }
  }
+ // A roomy interval so an ambient reaction reads as a mood, not a tick: idle 9-22 s, fishing
+ // 5-11 s. Randomised inside the window, so it never lands on a predictable beat.
+ function ambientEmojiDelay(fishing){return (fishing?5000:9000)+Math.random()*(fishing?6000:13000)}
+ // Read-only view of the ambient pools and scheduler, for the sim. Nothing in the game reads this.
+ scene.userData.emojiPools={idle:BATTLE_EMOJI_POOLS.idle,fish:BATTLE_EMOJI_POOLS.fish};
+ scene.userData.emojiSchedule=ambientEmojiDelay;
  function triggerBattleEmoji(unit,mood){
   if(!unit||!unit.sprite)return;
   const pool=BATTLE_EMOJI_POOLS[mood];if(!pool||!pool.length)return;
@@ -1019,6 +1045,16 @@ const ATTACK_MS=520;let fxTextures=null;
   for(const r of residents)r.sprite.visible=!battleState.pve.length&&!battleHolds.size;
  }
  function battleTravel(unit,now){const elapsed=Math.max(0,Math.min(.5,(now-(unit.lastMove??now))/1000));unit.lastMove=now;return elapsed*BATTLE_RUN_SPEED}
+ // A deterministic 0..1 stream for ONE swing, seeded from the unit and the swing's start time. Stable
+ // for the life of the swing (so the fighter does not jitter its approach) but different every time
+ // that unit swings again, which is what makes the movement read as free rather than scripted.
+ function swingRandom(u,startAt){
+  const k=String(u.spec.key||'')+'@'+Math.round(startAt);
+  let h=2166136261;
+  for(let i=0;i<k.length;i++)h=Math.imul(h^k.charCodeAt(i),16777619);
+  h^=h>>>16;h=Math.imul(h,0x7feb352d);h^=h>>>15;h=Math.imul(h,0x846ca68b);h^=h>>>16;
+  return (h>>>0)/4294967296;
+ }
  // One swing. Melee: step in to arm's length of the target's slot, hold, step back. Ranged: stay
  // put, wind up, and let the shot carry the hit. `hits` is what lands at contact; hits[0] is the
  // target the fighter faces.
@@ -1028,11 +1064,16 @@ const ATTACK_MS=520;let fxTextures=null;
    const fireAt=startAt+STAGE.WINDUP_MS;
    return {hits,ranged:true,startAt,impactAt:fireAt,contactAt:fireAt+span(dist/STAGE.SHOT_SPEED*1000,STAGE.SHOT_MIN,STAGE.SHOT_MAX),holdUntil:fireAt,endAt:startAt+STAGE.SHOT_SWING_MS,from,to:from,fired:false,landed:false};
   }
-  // REACH keeps a visible gap between the two bodies at contact (v373: "the melee ones headbutt
-  // each other"). The fighter stops in front of its target, on its own side of the aisle and at
-  // most FAN off the straight line across, so a swing from another row never ends beside the
-  // target's neighbours.
-  const reach=battleBody(u.spec.species,u.spec.boss)+(t?battleBody(t.spec.species,t.spec.boss):.6)+STAGE.REACH,ax=from.x-aim.x,az=from.z-aim.z,slope=span(az/Math.max(.001,Math.abs(ax)),-STAGE.FAN,STAGE.FAN),norm=Math.hypot(1,slope);
+  // v398c (owner: "there is no lock position... even the melee closer random digipets attack from
+  // far now"): there is no fixed stop distance any more. The old code always halted at
+  // body+body+REACH - a constant 2.1-2.6 units out - so every melee bot swung from the same distance
+  // and a big-bodied one looked like it was hitting from across the field.
+  // Each swing now picks its OWN distance and its OWN side from the unit's own seed, and only
+  // guarantees the two bodies do not overlap at contact. `near` can be a graze; `far` is bounded by
+  // the old reach so a swing never becomes a lunge from out of frame.
+  const bodies=battleBody(u.spec.species,u.spec.boss)+(t?battleBody(t.spec.species,t.spec.boss):.5);
+  const r=swingRandom(u,startAt);
+  const reach=bodies*STAGE.CLOSE_GAP+r*(STAGE.SWING_FAR_MIN+STAGE.SWING_FAR_SPAN*r),ax=from.x-aim.x,az=from.z-aim.z,slope=span(az/Math.max(.001,Math.abs(ax)),-STAGE.FAN,STAGE.FAN),norm=Math.hypot(1,slope);
   const to=Math.abs(ax)>reach/norm?{x:aim.x+(ax<0?-1:1)*reach/norm,z:aim.z+slope*reach/norm}:from,travel=Math.hypot(to.x-from.x,to.z-from.z),dash=span(travel/STAGE.DASH_SPEED*1000,STAGE.DASH_MIN,STAGE.DASH_MAX),back=span(Math.hypot(to.x-u.home.x,to.z-u.home.z)/STAGE.RETURN_SPEED*1000,STAGE.RETURN_MIN,STAGE.RETURN_MAX);
   return {hits,ranged:false,startAt,impactAt:startAt+dash,contactAt:startAt+dash,holdUntil:startAt+dash+STAGE.HOLD_MS,endAt:startAt+dash+STAGE.HOLD_MS+back,from,to,fired:true,landed:false};
  }
@@ -2757,6 +2798,17 @@ void main(){
     const time=f.walking?f.travel*200:now,n=digimon.frameIndex(asset.record.actions[stance].length,time,stance,5),key=[id,stance,n,d.flip].join(':');
     if(d.paint!==key){digimon.draw(d.ctx,asset,stance,time,5,d.flip);d.texture.needsUpdate=true;d.paint=key}
     d.sprite.position.set(f.x,.06+bridgeLift(f.x,f.z),f.z);
+    // v398d (owner: "can the random emoji be in random times too like afk or fishing the digipets
+    // following the player do random emoji?"): the follower reacts on its own now and then. Fishing
+    // gets its own, more frequent pool because that is the moment the owner asked for; standing
+    // still is the other. A reaction is suppressed while the owner is in a fight or walking, so it
+    // never competes with the battle reactions.
+    const fishing=!!(state.fish&&state.fish.on),busy=!!battleState.pve.length||!!battleHolds.size||f.walking;
+    if(!busy&&now>=(d.emojiNext||0)){
+     d.emojiNext=now+ambientEmojiDelay(fishing);
+     const pool=fishing?BATTLE_EMOJI_POOLS.fish:BATTLE_EMOJI_POOLS.idle;
+     spawnBattleEmoji(f.x,.06+bridgeLift(f.x,f.z)+visualHeight*1.15,f.z,pool[Math.floor(Math.random()*pool.length)],1800+Math.random()*700);
+    }
    }else if(p.digimon)p.digimon.sprite.visible=false;
    if(asset&&p.digimon)p.digimon.sprite.visible=true;
   }
