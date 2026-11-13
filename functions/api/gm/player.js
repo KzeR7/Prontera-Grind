@@ -230,8 +230,21 @@ export const onRequestPost = guard(async ({ request, env }) => {
       }));
       const pub = publicFields(restored);
       await db.updateSave(D, id, live.version + 1, stamped, blob.saved_at, pub, live.rate_kph);
-      await audit('gm-restore', `version ${version} restored as ${live.version + 1}`);
-      return json({ ok: true, version: live.version + 1 });
+      // haven-v397: a restore now ends every live session on the account.
+      //
+      // This is the part three client-side patches kept missing. The owner's log shows the shape that
+      // beat them: `login` at 11:22:20, `gm-restore` at 11:22:44 - the tab was already open and
+      // signed in when the rollback landed, so it held a copy from before it and went on serving it.
+      // Resetting the browser's cookies was the only thing that fixed it, because that is what forced
+      // the next load to ask the server instead of trusting the copy in front of it.
+      //
+      // A restore is a statement that every copy in the world is now wrong. Rather than ask each
+      // browser to notice, revoke the sessions: every tab is signed out at the same instant, the
+      // session gate stops it uploading, and the next sign-in runs cloudJoin against the restored
+      // save - the path that is actually covered by tests.
+      await db.deleteUserSessions(D, id);
+      await audit('gm-restore', `version ${version} restored as ${live.version + 1}; sessions revoked`);
+      return json({ ok: true, version: live.version + 1, sessionsRevoked: true });
     }
     default:
       return fail('Unknown action.', 400);

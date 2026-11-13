@@ -555,7 +555,9 @@ await T('a save backup can be restored, and the overwritten save is kept', async
   const backup = detail.data.save.history[0];
   const restored = await api.act(env, owner, { id: friendId, action: 'restore', version: backup.version });
   assert.strictEqual(restored.status, 200);
-  const nowSave = await api.getSave(env, friend);
+  // v397: the restore revokes sessions, so this test signs the player back in the way the game does.
+  globalThis.__friend = (await api.login(env, { u: 'FRIEND', p: 'brand-new-password' })).cookie;
+  const nowSave = await api.getSave(env, globalThis.__friend);
   assert.strictEqual(nowSave.data.version, restored.data.version, 'the restore is a new version on top');
   const rows = sqlite.prepare('SELECT COUNT(*) AS n FROM save_history WHERE user_id = ?').get(friendId);
   assert.ok(rows.n >= 2, 'the overwritten save is still recoverable');
@@ -777,7 +779,10 @@ await T('v88.6: the GM cannot restore another account\'s backup onto a player, b
     'the live save is untouched');
   const good = await api.act(h.env, owner, { id: pid, action: 'restore', version: 1 });
   assert.strictEqual(good.status, 200, 'the player\'s own backup restores as before');
-  assert.strictEqual(JSON.parse((await api.getSave(h.env, player.cookie)).data.blob).owner, 'PLAYERR');
+  // v397: the restore revokes the player's sessions, so read the save back the way they would - signed in.
+  const again = await api.login(h.env, { u: 'PLAYERR', p: 'player-password-1' });
+  assert.strictEqual(again.status, 200);
+  assert.strictEqual(JSON.parse((await api.getSave(h.env, again.cookie)).data.blob).owner, 'PLAYERR');
 });
 
 // ------------------------------------------- the v82 usage diet (D1 writes) ----
@@ -929,38 +934,75 @@ await T('v396: a restore locks the account against a stale tab, and only the GM 
     .run(id, 900, earlier, Date.now());
   const restored = await api.act(env, owner, { id, action: 'restore', version: 900 });
   assert.strictEqual(restored.status, 200, 'the restore is accepted');
+  assert.strictEqual(restored.data.sessionsRevoked, true, 'and it signs the account out (v397)');
   const fenceV = restored.data.version;
+  // v397: sign in again, the way the player does - the fence is what stops the stale copy, not the session.
+  const back = await api.login(env, { u: 'Fence', p: 'fence-password-Fence' });
+  assert.strictEqual(back.status, 200);
+  const cookie2 = back.cookie;
 
   // The owner's case: a tab that never reloaded still holds the pre-restore copy and keeps pushing.
   // It presents the exact version the row is on, so nothing else in the API would stop it.
   const staleBlob = JSON.stringify(Object.assign(JSON.parse(saveBlob(150, 33300000)), { owner: 'Fence' }));
-  const stale = await api.putSave(env, cookie, { version: fenceV, blob: staleBlob, savedAt: 2 });
+  const stale = await api.putSave(env, cookie2, { version: fenceV, blob: staleBlob, savedAt: 2 });
   assert.strictEqual(stale.status, 409, 'the stale copy is refused');
   assert.strictEqual(stale.data.restoreFenced, true, 'and it says why');
   assert.ok(stale.data.blob.includes('12000000'), 'the answer carries the restored save, so the client can adopt it');
   assert.strictEqual(stale.data.version, fenceV, 'the row did not move');
 
-  const after = await api.getSave(env, cookie);
+  const after = await api.getSave(env, cookie2);
   assert.ok(after.data.blob.includes('12000000'), 'the account still holds the restored save');
   assert.ok(JSON.parse(after.data.blob).gmRestore, 'and the fence is still stamped');
 
   for (let i = 0; i < 3; i++) {
-    const r = await api.putSave(env, cookie, { version: fenceV, blob: staleBlob, savedAt: 3 + i });
+    const r = await api.putSave(env, cookie2, { version: fenceV, blob: staleBlob, savedAt: 3 + i });
     assert.strictEqual(r.status, 409, 'a stale tab cannot win by retrying');
   }
 
   // A device that DID adopt the restore carries the stamp forward, so play after the rollback saves.
   const stamp = JSON.parse(stale.data.blob).gmRestore;
   const adoptedBlob = JSON.stringify(Object.assign(JSON.parse(saveBlob(120, 12005000)), { owner: 'Fence', gmRestore: stamp }));
-  const adopted = await api.putSave(env, cookie, { version: fenceV, blob: adoptedBlob, savedAt: 4 });
+  const adopted = await api.putSave(env, cookie2, { version: fenceV, blob: adoptedBlob, savedAt: 4 });
   assert.strictEqual(adopted.status, 200, 'play on top of the restored save is saved normally');
-  assert.strictEqual(JSON.parse((await api.getSave(env, cookie)).data.blob).zeny, 12005000, 'and it is the new figure');
+  assert.strictEqual(JSON.parse((await api.getSave(env, cookie2)).data.blob).zeny, 12005000, 'and it is the new figure');
 
   // Only the GM can lift it.
   const unlocked = await api.act(env, owner, { id, action: 'unlock' });
   assert.strictEqual(unlocked.status, 200, 'the GM can clear the fence');
   assert.strictEqual(unlocked.data.cleared, true);
-  assert.ok(!JSON.parse((await api.getSave(env, cookie)).data.blob).gmRestore, 'the stamp is gone after an unlock');
+  const back2 = await api.login(env, { u: 'Fence', p: 'fence-password-Fence' });
+  assert.ok(!JSON.parse((await api.getSave(env, back2.cookie)).data.blob).gmRestore, 'the stamp is gone after an unlock');
+});
+
+await T('v397: a restore signs out every open tab, so none can outlive the rollback', async () => {
+  // The owner's log, in order: `login` at 11:22:20, `gm-restore` at 11:22:44. The tab was already
+  // open and signed in when the rollback landed, so it kept serving the copy it had and only a
+  // browser cookie reset stopped it. A restore is a statement that every copy is now wrong, so it
+  // revokes the sessions rather than asking each browser to notice: the next sign-in is guaranteed
+  // to run cloudJoin against the restored save.
+  const { env, sqlite, cookie, owner, id } = await fenceEnv('Kicked');
+  assert.strictEqual((await api.putSave(env, cookie, { version: 0, blob: saveBlob(150, 500), savedAt: 1 })).status, 200);
+  const earlier = JSON.stringify(Object.assign(JSON.parse(saveBlob(120, 12000000)), { owner: 'Kicked' }));
+  sqlite.prepare('INSERT OR REPLACE INTO save_history(user_id,version,blob,saved_at) VALUES (?,?,?,?)')
+    .run(id, 950, earlier, Date.now());
+
+  // The tab is still signed in and working right up to the restore.
+  assert.strictEqual((await api.me(env, cookie)).status, 200, 'the tab is signed in before the restore');
+
+  const restored = await api.act(env, owner, { id, action: 'restore', version: 950 });
+  assert.strictEqual(restored.status, 200);
+  assert.strictEqual(restored.data.sessionsRevoked, true, 'the restore says it revoked sessions');
+
+  // The tab's own cookie no longer works: it cannot push, and it cannot read the account back.
+  assert.strictEqual((await api.me(env, cookie)).status, 401, 'the old tab is signed out');
+  const stalePush = await api.putSave(env, cookie, { version: restored.data.version, blob: saveBlob(150, 999999), savedAt: 2 });
+  assert.strictEqual(stalePush.status, 401, 'a signed-out tab cannot push its copy');
+
+  // A fresh sign-in sees the restored save - the path the tests cover end to end.
+  const back = await api.login(env, { u: 'Kicked', p: 'fence-password-Kicked' });
+  assert.strictEqual(back.status, 200, 'the player can sign back in');
+  const nowSave = await api.getSave(env, back.cookie);
+  assert.ok(nowSave.data.blob.includes('12000000'), 'and the login loads the restored copy');
 });
 
 await T('v396: a save that already carries the restore is never refused', async () => {
@@ -971,12 +1013,14 @@ await T('v396: a save that already carries the restore is never refused', async 
     .run(id, 901, restoredBlob, Date.now());
   const r = await api.act(env, owner, { id, action: 'restore', version: 901 });
   assert.strictEqual(r.status, 200);
+  const back = await api.login(env, { u: 'Fence2', p: 'fence-password-Fence2' });
+  assert.strictEqual(back.status, 200);
   // The stamp the server actually wrote - a client reads it from the copy it adopted, never invents it.
-  const stamp = JSON.parse((await api.getSave(env, cookie)).data.blob).gmRestore;
+  const stamp = JSON.parse((await api.getSave(env, back.cookie)).data.blob).gmRestore;
   assert.ok(stamp && stamp.at, 'the restore left a stamp to adopt');
   // The very next push from the device that adopted it: same stamp, more play. Allowed.
   const okBlob = JSON.stringify(Object.assign(JSON.parse(saveBlob(150, 99000)), { owner: 'Fence2', gmRestore: stamp }));
-  const ok = await api.putSave(env, cookie, { version: r.data.version, blob: okBlob, savedAt: 2 });
+  const ok = await api.putSave(env, back.cookie, { version: r.data.version, blob: okBlob, savedAt: 2 });
   assert.strictEqual(ok.status, 200, 'the restore does not block the account forever');
 });
 
