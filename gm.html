@@ -683,6 +683,13 @@ $('detail').addEventListener('click', async e => {
       if (!confirm('Restore version ' + v + ' as their live save? The current save is kept as a backup.')) return;
       const r = await api('/gm/player', { method: 'POST', body: JSON.stringify({ id, action: 'restore', version: v }) });
       say('Restored as version ' + r.version + '.');
+      // v394 (owner: "it shows, but when click it doesnt do anything"): the restore DID work - it was the
+      // player's open tab that pushed its pre-restore save back on top seconds later, four times in one
+      // sitting. The client now adopts a restore instead of rebasing over it, but the console must stop
+      // looking like nothing happened: reload the panel so the version and the backups list are the ones
+      // the server now holds, and say plainly that an open tab is the thing that undoes a restore.
+      await openPlayer(id);
+      say('Restored as version ' + r.version + ' - reopen the game to play it. Close any tab the player still has open: a running tab keeps uploading its own copy.');
     } else if (act === 'shop-grant') {
       const sku = $('shopsku').value, note = $('shopnote').value;
       const r = await api('/gm/shop', { method: 'POST', body: JSON.stringify({ id, action: 'grant', sku, note }) });
