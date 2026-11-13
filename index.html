@@ -924,9 +924,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=399">
+<link rel="stylesheet" href="assets/social.css?v=400">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=399"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=400"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1324,7 +1324,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-12 haven-v399 ring formation and correct scroll per rank';
+const BUILD='2026-11-12 haven-v400 tighter refine text and card socket follows the card';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -6518,7 +6518,7 @@ function qRefresh(){if(S)questBook();}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} MVP${q.goal>1?'s':''}`;
 // Older saves may retain refineScrollFrom; protection now has a single On/Off setting.
 const refineScrollFrom=()=>0;
-function refineProtectionUI(){return `<div class="sec">Refine Protection Scrolls</div><small>Regular: ${safeCount(S.refineScrolls)} (for +0 to +10 on all gear)</small><br><small>Mythic: ${safeCount(S.mythicScrolls)} (for +11 to +15 on Mythic gear; boss drops, Black Market or Echo)</small><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>When On, one scroll is used per attempt, including success, and prevents rank loss. +10 is safe on Mythic gear (no scroll needed). Below +5, we ask before spending a scroll. Unprotected failures from +5 to +9 lose one rank on every grade. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
+function refineProtectionUI(){return `<div class="sec">Refine Protection Scrolls</div><small>Regular: ${safeCount(S.refineScrolls)} (for +0 to +10 on all gear)</small><br><small>Mythic: ${safeCount(S.mythicScrolls)} (for +11 to +15 on Mythic gear; boss drops, Black Market or Echo)</small><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>one scroll is consumed on every attempt while On, including success</small>`;}
 function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it.r||0)>=maxRef)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
   // The shortfall is priced up front so the attempt can refuse before it asks anything, but the
   // ore is only bought once the attempt is certain to happen - a cancelled protection-scroll
@@ -7255,6 +7255,9 @@ function itemMain(it){
 const mythicSetState=it=>{const set=typeof ASC_SETS==='undefined'?null:ASC_SETS[it.ascSet];if(!set||!set.bonuses)return null;const worn=S&&S.eq?Object.values(S.eq).filter(x=>x&&x.ascSet===it.ascSet).length:0;return{set,worn,tier:set.bonuses.filter(b=>worn>=b.count).pop()||null}};
 const mythicSetCard=it=>{const m=mythicSetState(it);if(!m)return'';return `<div class="sec">${esc(m.set.name)} set <small>(${m.worn} worn)</small></div>`+m.set.bonuses.map(b=>{const on=m.worn>=b.count;return `<div${on?' class="r1"':''}>${on?'&#9670;':'&#9671;'} <b>${b.count} pieces:</b> ${esc(b.desc)}${on?' — active':''}</div>`}).join('')};
 const mythicSetLine=it=>{const m=mythicSetState(it);if(!m)return'';return `<div class="eclipse-item-set"><div><span>◆</span><b>${esc(m.set.name)} ${m.worn}/6</b> · ${m.tier?esc(m.tier.desc)+' — active':'2 pieces to activate a bonus'}</div></div>`};
+// v400: which equipment slot the cards workspace shows on the right. Declared with `var` directly
+// above the code that reads it, so no load order can leave it in a temporal dead zone.
+var equipmentCardSlot=null;
 function cardWorkspaceCanInsert(card,slot,it){return !!(card&&it&&(it.cards||[]).length<(it.slots||0)&&cardFits(card,it)&&!socketWhy(card,it));}
 function cardWorkspacePanel(){
  const all=ownedCardEntries(),groups=new Map();
@@ -7273,10 +7276,18 @@ function cardWorkspacePanel(){
  const selectedGroup=selected&&groups.get(cardGroup(selected));
  const socketed=all.filter(e=>!S.cards.includes(e.card));
  const equipped=EQK.filter(([slot])=>!!S.eq[slot]).map(([slot])=>[slot,reforgeGearLabel(slot)]);
- const activeSlot=equipped.some(([slot])=>slot===selE)?selE:(equipped[0]?.[0]||'');
+ // v400 (owner: "on the far right which u see is an accessory, can it be change the weapon player
+ // currently equipping following the cards selected?"). This used to follow `selE`, whichever slot
+ // was last touched in Loadout - so selecting a Weapon card could leave an accessory in the sockets
+ // panel. When a card is picked, the panel now follows THAT card: the most recently chosen slot it
+ // can actually go into, falling back to the first compatible one. With no card picked, the old
+ // behaviour is kept.
+ const insertSlots=selectedLoose?EQK.filter(([slot])=>cardWorkspaceCanInsert(selected,slot,S.eq[slot])).map(([slot])=>[slot,reforgeGearLabel(slot)]):[];
+ const cardSlot=selectedLoose?insertSlots.map(([slot])=>slot):[];
+ const preferredSlot=cardSlot.includes(equipmentCardSlot)?equipmentCardSlot:cardSlot[0];
+ const activeSlot=preferredSlot||(equipped.some(([slot])=>slot===selE)?selE:(equipped[0]?.[0]||''));
  const activeItem=activeSlot?S.eq[activeSlot]:null;
  const familyName=card=>card?cardFamily(card):'';
- const insertSlots=selectedLoose?EQK.filter(([slot])=>cardWorkspaceCanInsert(selected,slot,S.eq[slot])).map(([slot])=>[slot,reforgeGearLabel(slot)]):[];
  const focusReason=selected&&activeItem?(activeItem.cards||[]).length>=(activeItem.slots||0)?'No empty socket on this item.':socketWhy(selected,activeItem):'';
  const cardRows=visible.map(group=>{
   const card=group.loose[0]?.card||group.entries[0].card,pressed=group.entries.some(e=>String(e.card.id)===String(equipmentCardPickId));
@@ -7917,7 +7928,7 @@ const V={
   cards(){const entries=ownedCardEntries(),g={};entries.forEach(({card:c,key:k})=>{(g[k]=g[k]||[]).push(c)});const mergeGroups=Object.keys(g).filter(k=>g[k].some(cardMergeable)).length;const ks=Object.keys(g).filter(k=>(collectionGrade<0||g[k][0].g===collectionGrade)&&(!collectionMergeOnly||g[k].some(cardMergeable))).sort((a,b)=>cardStars(g[b][0])-cardStars(g[a][0])||g[b][0].g-g[a][0].g||g[a][0].n.localeCompare(g[b][0].n)||a.localeCompare(b)),sel=ks.includes(selC)?g[selC][0]:null,loose=sel&&S.cards.includes(sel);
     return`<p>Equipped cards stay here and can be merged using loose copies. Compatible cards transfer when replacing gear; cards that cannot fit stay on the old item. Merge identical cards: ★ +9%, ★★ +12%, ★★★ +15% effects. Each step consumes 1 / 3 / 5 extra unstarred copies (10 cards total for ★★★). Normal and Nightmare merge separately. Starred cards are protected from Mastery donations and resets.</p><div class="eclipse-card-filters" role="group" aria-label="Card filters">${[[-1,"All grades"],...GRADE.map((n,i)=>[i,n])].map(([v,n])=>`<button data-a="cardgrade" data-v="${v}" aria-pressed="${collectionGrade===v}">${n}</button>`).join('')}<button data-a="cardmerge" data-v="${collectionMergeOnly?0:1}" aria-pressed="${collectionMergeOnly}">Mergeable now${mergeGroups?' ('+mergeGroups+')':''}</button></div><div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${esc(n)}" data-tip="${g[n][0].id}">🃏<small>${"★".repeat(cardStars(g[n][0]))}</small><i class="rf">x${g[n].length}</i></div>`).join('')||(!entries.length?'<small>No cards yet. Every monster drops its own card at a low chance.</small>':collectionMergeOnly?'<small>Nothing can merge right now. A merge needs extra unstarred copies of the same card; Normal and Nightmare copies merge separately.</small>':'<small>No cards in this grade.</small>')}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<p class="card-location">${esc(entries.find(x=>x.card===sel).location)}</p><div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return loose&&e&&(e.cards||[]).length<(e.slots||0)&&!socketWhy(sel,e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}${!sel.legacy&&sel.cardKey&&cardStars(sel)<3?`<button data-a="mergecard" data-v="${sel.id}">Merge to ${cardStars(sel)+1}★ · ${cardMergeable(sel)?CARD_MERGE_COST[cardStars(sel)]+' extra copies':'need '+cardMergeNeed(sel)+' more'}</button>`:""}${loose?`<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button>`:''}</div></div>`:''}`},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Protection Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, 10 on N and N+, and 15 on Mythic. Mythic gear can reach +15. Enable Refine Protection Scroll below: one scroll is consumed on every attempt while On, including success, and keeps your rank on failure. Only current +5 or above can lose a rank. Below +5 asks for confirmation before spending a scroll. Success chance is unchanged. Crafted and purchased scrolls share this reserve.</small>`
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Protection Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon, everything else Elunium &middot; 1 ore on Common/Fine, 2 Rare/Epic, 5 Legendary, 10 N/N+, 15 Mythicis reserve.</small>`
     +`${refineProtectionUI()}`+dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),maxed=r>=(it.sec===6?15:10),short=refineOreShortfall(it),total=c+short.cost,afford=S.zeny>=total;
       // v312 (owner: "did u even add in the refine? still showing unclickable"). v311 taught refine() to
       // buy the ore it was missing, but this list - the one the workshop builds its rows from - kept the
@@ -9341,9 +9352,13 @@ const ACT={
   openautosell:()=>{if(!tabs.includes('equip'))openTab('equip');sub.equip='autosell';renderWin()},
   cardsBack:()=>{sub.equip='equip0';renderWin()},
   cardmastery:()=>{indexMode='cards';if(!tabs.includes('index'))openTab('index');else renderWin()},
-  cardworkspacepick:id=>{const entry=ownedCardEntries().find(x=>String(x.card.id)===String(id));if(!entry)return;equipmentCardPickId=String(entry.card.id);renderWin()},
+  cardworkspacepick:id=>{const entry=ownedCardEntries().find(x=>String(x.card.id)===String(id));if(!entry)return;equipmentCardPickId=String(entry.card.id);
+   // v400: the sockets panel follows the card. Remember the slot this card can go into so the panel
+   // does not keep showing an accessory that has nothing to do with it.
+   const c=entry.card,fits=EQK.filter(([slot])=>cardWorkspaceCanInsert(c,slot,S.eq[slot])).map(([slot])=>slot);
+   equipmentCardSlot=fits.includes(equipmentCardSlot)?equipmentCardSlot:(fits[0]||null);renderWin()},
   cardworkspacefilter:v=>{if(['all','loose','socketed'].includes(v)){equipmentCardFilter=v;renderWin()}},
-  cardgear:v=>{if(EQK.some(([k])=>k===v&&S.eq[k])){selE=v;renderWin()}},
+  cardgear:v=>{if(EQK.some(([k])=>k===v&&S.eq[k])){selE=v;equipmentCardSlot=v;renderWin()}},
   autosellDraftRarity:v=>{const i=Number(v),draft=autoSellWorkspaceState();if(!Number.isInteger(i)||i<0||i>=RARALL.length)return;draft.rarities[i]=!draft.rarities[i];renderWin()},
   autosellDraftMode:v=>{if(!['any','all'].includes(v))return;autoSellWorkspaceState().rules.mode=v;renderWin()},
   autosellDraftPause:()=>{autoSellWorkspaceState().rarities=RARALL.map(()=>false);renderWin()},
@@ -14039,16 +14054,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=399"></script>
-<script src="assets/digimon/base-stats.js?v=399"></script>
-<script src="assets/social-rules.js?v=399"></script>
-<script src="assets/social-poker.js?v=399"></script>
-<script src="assets/digimon-sanctuary.js?v=399"></script>
+<script src="assets/digimon/roster.js?v=400"></script>
+<script src="assets/digimon/base-stats.js?v=400"></script>
+<script src="assets/social-rules.js?v=400"></script>
+<script src="assets/social-poker.js?v=400"></script>
+<script src="assets/digimon-sanctuary.js?v=400"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=399"></script>
+<script src="assets/social-digimon.js?v=400"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=399"></script>
-<script src="assets/social-fishing.js?v=399"></script>
-<script src="assets/social.js?v=399"></script></body>
+<script src="assets/social-scene.js?v=400"></script>
+<script src="assets/social-fishing.js?v=400"></script>
+<script src="assets/social.js?v=400"></script></body>
 </html>

@@ -143,8 +143,44 @@ try{
   const text=aside.textContent.replace(/\s+/g,' ');
   assert.match(text,/Regular:\s*12/,'the regular scroll count is visible: '+text.slice(0,160));
   assert.match(text,/Mythic:\s*3/,'the mythic scroll count is still visible');
-  assert.match(text,/for \+0 to \+10 on all gear/,'the panel says what the regular scroll covers');
+  // v400 (owner: "i dont need all these description here. the materials quantity should be
+  // sufficient"). The prose that used to end the regular line is gone; what must survive is that the
+  // panel still names BOTH scroll counts, which was the actual bug.
+  assert.match(text,/Regular:\s*12[^]*Mythic:\s*3/,'regular is listed before mythic, both with counts');
   assert.ok(aside.querySelector('[data-a=refprotect]'),'the on/off toggle moved with the block');
+ });
+ // v400 (owner: "on the far right which u see is an accessory, can it be change the weapon player
+ // currently equipping following the cards selected?"). The sockets panel followed whatever slot was
+ // last touched in Loadout, so picking a Weapon card could still show an accessory on the right.
+ test('Card workspace sockets panel follows the selected card',()=>{
+  // Two equipped items, and a weapon-only card. selE points at the accessory, as it would after
+  // browsing Loadout - that is the state that produced the screenshot.
+  ev(`S=fresh();S.auto=false;S.lv=150;
+      window.wc={...newCard(CARD_CATALOG.find(c=>c.fit.includes('weapon')&&!c.bossCard)),id:93101};
+      window.ac={...newCard(CARD_CATALOG.find(c=>c.fit.includes('acc')&&!c.bossCard)),id:93102};
+      S.cards=[wc,ac];
+      S.eq.weapon={...S.eq.weapon,id:1,cards:[],slots:2};
+      S.eq.acc2={id:2,slot:'acc',wt:'acc',tier:3,val:9,name:'Mythic Infernal Charm',aff:[],slots:1,cards:[],sec:6,lvl:150,mythic:true};
+      selE='acc2';equipmentCardSlot=null;equipmentCardPickId=String(wc.id);tabs.push('equip');sub.equip='cardsWork';renderWin()`);
+  const aside=doc.querySelector('.eclipse-card-sockets');
+  assert.ok(aside,'the sockets panel renders');
+  // The card fits a weapon, so the panel must be showing the weapon, not the accessory.
+  // Scope to the SELECTED item, not the whole aside: the gear dropdown legitimately lists every
+  // equipped piece, so asserting on aside.textContent would always see the accessory name.
+  const shownSlot=aside.querySelector('select.eclipse-card-gear-select')||aside.querySelector('.eclipse-card-gear-select select')||aside.querySelector('select');
+  assert.ok(shownSlot,'the panel has a gear selector');
+  // activeSlot is a local of the render, so read what the panel actually displays.
+  // The <select> lists every equipped piece, so assert on which one is SELECTED.
+  const opt=[...shownSlot.options].find(o=>o.selected)||shownSlot.options[0];
+  const label=opt?opt.textContent:'';
+  assert.equal(opt&&opt.value,'weapon','the panel follows the weapon card, not the accessory: '+label);
+  assert.doesNotMatch(label,/Charm/,'the accessory is not the item shown for a weapon card: '+label);
+  assert.equal(ev('selE'),'acc2','selE still points at the accessory, so this is not passing by accident');
+  assert.notEqual(ev('equipmentCardSlot'),'acc2','the remembered slot is not the accessory');
+  // Choosing the accessory card moves the panel to the accessory.
+  ev(`equipmentCardPickId=String(ac.id);renderWin()`);
+  const aside2=doc.querySelector('.eclipse-card-sockets');
+  assert.match(aside2.textContent,/Infernal Charm/,'selecting an accessory card moves the panel to the accessory');
  });
  test('Ascension refine picks the scroll the rank actually needs',()=>{
   const mk=r=>`(()=>{S=fresh();S.auto=false;S.lv=150;S.zeny=1e9;S.ore.ori=9999;S.ore.elu=9999;S.refineScrolls=5;S.mythicScrolls=5;S.useRefineScroll=1;S.items=[];const it={id:88001,slot:'armor',wt:'armor',tier:4,val:100,name:'Mythic Infernal Vest',aff:[],slots:0,cards:[],sec:6,lvl:150,quality:1.5,mythic:true,ascSet:'infernal',r:${r}};S.eq.armor=it;return S})()`;
