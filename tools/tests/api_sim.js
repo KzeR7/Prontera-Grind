@@ -125,6 +125,7 @@ const api = {
   putRaw: (env, cookie, body) => call('onRequestPut', 'api/save.js', { request: req('PUT', '/api/save', { cookie, body }), env }),
   grants: (env, cookie) => call('onRequestGet', 'api/grants.js', { request: req('GET', '/api/grants', { cookie }), env }),
   claim: (env, cookie, ids) => call('onRequestPost', 'api/grants.js', { request: req('POST', '/api/grants', { cookie, body: { ids } }), env }),
+  mailbox: (env, cookie) => call('onRequestGet', 'api/mailbox.js', { request: req('GET', '/api/mailbox', { cookie }), env }),
   messages: (env, cookie) => call('onRequestGet', 'api/messages.js', { request: req('GET', '/api/messages', { cookie }), env }),
   readMsgs: (env, cookie, ids) => call('onRequestPost', 'api/messages.js', { request: req('POST', '/api/messages', { cookie, body: { ids } }), env }),
   players: (env, cookie) => call('onRequestGet', 'api/gm/players.js', { request: req('GET', '/api/gm/players', { cookie }), env }),
@@ -435,6 +436,39 @@ await T('a gift expires 5 days after it was sent and can no longer be claimed', 
   await api.claim(env, freshGrp.cookie, [rows[1].id]);
   assert.ok(sqlite.prepare('SELECT claimed_at FROM grants WHERE id = ?').get(rows[1].id).claimed_at, 'an unexpired gift is still claimable');
   void friendId;
+});
+
+await T('the mailbox lists claimable gifts with a 5-day deadline', async () => {
+  // v401 (owner: "i want endless echo payout to be on mail & with expiry. so 5 days without claim,
+  // rewards will vanish."). The mailbox is the player-facing view of the same grants queue.
+  const owner = globalThis.__owner;
+  const mb = await api.register(env, { u: 'MBTEST', p: 'mailbox-password-1' });
+  const id = sqlite.prepare('SELECT id FROM users WHERE username = ?').get('MBTEST').id;
+  await api.act(env, owner, { id, action: 'grant', kind: 'zeny', payload: { amount: 4321 } });
+  const out = await api.mailbox(env, mb.cookie);
+  assert.strictEqual(out.status, 200, 'the mailbox answers');
+  assert.strictEqual(out.data.ttlDays, 5, 'the window is five days');
+  assert.strictEqual(out.data.mail.length, 1, 'the gift is listed');
+  const row = out.data.mail[0];
+  assert.strictEqual(row.payload.amount, 4321, 'the payload survives the round trip');
+  assert.ok(row.expiresAt - row.at === 5 * 24 * 60 * 60 * 1000, 'expiry is exactly five days after it was sent');
+  // A gift older than the window is gone from the mailbox and cannot be claimed by id.
+  sqlite.prepare('UPDATE grants SET created_at = ? WHERE id = ?').run(Date.now() - 6 * 86400000, row.id);
+  // Assert the QUERY, not just the endpoint: the endpoint also sweeps, which would hide a query that
+  // forgot the age filter. This is the check that keeps the guarantee honest.
+  const mailLib = await import(pathToFileURL(path.join(root, 'functions/_lib/db.js')).href);
+  const raw = await mailLib.mailBox(env.DB, id);
+  assert.strictEqual(raw.results.length, 0, 'the mailbox query itself excludes expired rows');
+  const after = await api.mailbox(env, mb.cookie);
+  assert.strictEqual(after.data.mail.length, 0, 'an expired gift disappears from the mailbox');
+  // Claiming first, before the mailbox read sweeps the row: the claim itself must be refused.
+  await api.claim(env, mb.cookie, [row.id]);
+  const still = sqlite.prepare('SELECT claimed_at FROM grants WHERE id = ?').get(row.id);
+  assert.ok(!still || still.claimed_at === null, 'an expired gift cannot be claimed even by id');
+  // And the sweep the mailbox runs clears it away entirely.
+  const swept = await api.mailbox(env, mb.cookie);
+  assert.strictEqual(swept.data.mail.length, 0, 'nothing expired is offered');
+  assert.strictEqual(sqlite.prepare('SELECT COUNT(*) n FROM grants WHERE id = ?').get(row.id).n, 0, 'expired rows are swept');
 });
 
 await T('one player cannot claim another player\'s grants', async () => {

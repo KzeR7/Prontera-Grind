@@ -205,7 +205,9 @@ export const insertGrant = (db, userId, kind, payload, note, createdBy) =>
 // as gone. Expiry is enforced in the QUERY, not just in the client list, so a save that was loaded
 // before the deadline cannot still redeem an expired gift by posting its id: claimGrants only
 // updates rows that are still pending AND still inside the window.
-const GRANT_TTL_MS = 5 * 24 * 60 * 60 * 1000;
+const GRANT_TTL_DAYS = 5;
+const GRANT_TTL_MS = GRANT_TTL_DAYS * 24 * 60 * 60 * 1000;
+export { GRANT_TTL_DAYS };
 export const grantExpiresAt = createdAt => Number(createdAt) + GRANT_TTL_MS;
 export const grantExpired = (grant, at = now()) => !grant || Number(grant.created_at) + GRANT_TTL_MS <= at;
 
@@ -220,6 +222,13 @@ export const claimGrants = (db, userId, ids) => {
   return db.prepare(`UPDATE grants SET claimed_at = ? WHERE user_id = ? AND claimed_at IS NULL AND created_at > ? AND id IN (${marks})`)
     .bind(now(), userId, now() - GRANT_TTL_MS, ...ids).run();
 };
+
+// v401: everything the player can still claim, in the shape the in-game mailbox renders. One row
+// per grant, oldest first, with the deadline the client shows and the sender's note.
+export const mailBox = (db, userId) =>
+  db.prepare(`SELECT id, kind, payload, note, created_by, created_at FROM grants
+              WHERE user_id = ? AND claimed_at IS NULL AND created_at > ? ORDER BY id`)
+    .bind(userId, now() - GRANT_TTL_MS).all();
 
 // Sweep expired, never-claimed grants. Called opportunistically; nothing depends on it running,
 // because every read and every claim already filters by age.

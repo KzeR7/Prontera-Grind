@@ -255,5 +255,51 @@ test('cloud mail, claim receipts and the roll keep their original functions',()=
   assert.ok(rolls.size>=5,'the roll still covers the pool, not just the demo slice');
 });
 
+// v401 (owner: "i want endless echo payout to be on mail & with expiry. so 5 days without claim,
+// rewards will vanish."). Echo prizes used to be applied silently on sync. They now arrive as a
+// mailbox entry the player claims, carry a deadline, and pay the right resource when claimed.
+test('Endless Echo prizes arrive as claimable mail with an expiry',()=>{
+ const now=Date.now();
+ ev(`S=fresh();S.auto=false;S.lv=150;S.mail=[];S.mailSeeded=true;S.gmReceipts=[];S.refineScrolls=0;ensureMailState()`);
+ // A settled daily prize, exactly as the grants trigger writes it.
+ ev(`syncCloudMail({messages:[]},[{id:9001,kind:'gift',payload:{resource:'refineScrolls',amount:3},from:'Echo competition',at:${now},note:'Endless Echo daily rank #1 · day:2026-10-29',expiresAt:${now}+5*864e5}])`);
+ const mail=ev(`JSON.stringify(ensureMailState().filter(m=>m.kind==='prize'))`);
+ const rows=JSON.parse(mail);
+ assert.equal(rows.length,1,'the prize produces exactly one mailbox entry');
+ assert.equal(rows[0].gift.grantId,9001,'the entry points at the grant');
+ assert.match(rows[0].body,/rank #1/,'the entry says what was won');
+ assert.equal(rows[0].expiresAt,now+5*864e5,'the entry carries the 5-day deadline');
+ // It must NOT have been applied on arrival - that is the bug this replaced.
+ assert.equal(ev('S.refineScrolls'),0,'arriving in mail does not pay the prize');
+  // And the routing itself must send prizes to mail rather than straight into the save. This is the
+  // behaviour that regressed before: cloudPull applied every non-announcement grant silently.
+  // Exercise the page's OWN predicate, not a copy of it, or this assertion could never fail.
+  const routes=ev(`JSON.stringify([{id:1,kind:'gift',from:'Echo competition',payload:{resource:'shards',amount:5}},
+    {id:2,kind:'zeny',from:'GM',payload:{amount:9}},
+    {id:3,kind:'gift',from:'Cash Shop',payload:{resource:'ori',amount:1}},
+    {id:4,kind:'gift',from:'GM',payload:{amount:1,messageId:77}}].filter(grantGoesToMail).map(x=>x.id))`);
+  assert.deepEqual(JSON.parse(routes),[1,4],'Echo prizes and announcement gifts go to the mailbox; GM and Cash Shop gifts apply directly');
+ // Reading shows a human deadline, not a timestamp.
+ ev(`mailSel='prize:9001';mailDetail=true`);
+ const reader=doc.getElementById('mailReader')||doc.querySelector('#mailReader');
+ assert.ok(reader,'the reader exists');
+ ev('renderMailDailyModal()');
+ const text=(doc.querySelector('#mailReader')||reader).textContent;
+ assert.match(text,/Expires in 5 days|Expires in 4 days|Expires in 120 hours|Expires in 119 hours/,'the reader states when the prize expires: '+text.slice(0,160));
+ // Claiming pays it, exactly once.
+ assert.equal(ev(`claimMailGift('prize:9001')`),true,'the prize can be claimed from mail');
+ assert.equal(ev('S.refineScrolls'),3,'claiming pays the prize');
+ assert.equal(ev(`claimMailGift('prize:9001')`),false,'a claimed prize cannot be claimed twice');
+ assert.equal(ev('S.refineScrolls'),3,'the second claim pays nothing');
+});
+test('GM gifts also show their deadline and expire after 5 days',()=>{
+ const now=Date.now();
+ ev(`S=fresh();S.auto=false;S.lv=150;S.mail=[];S.mailSeeded=true;S.gmReceipts=[];S.zeny=0;ensureMailState()`);
+ ev(`syncCloudMail({messages:[]},[{id:9111,kind:'zeny',payload:{amount:5000},from:'GM',at:${now},note:'GM gift',expiresAt:${now}+5*864e5}])`);
+ const rows=JSON.parse(ev(`JSON.stringify(ensureMailState().filter(m=>m.gift&&m.gift.grantId===9111))`));
+ assert.equal(rows.length,1,'a plain GM gift still appears in mail');
+ assert.equal(rows[0].expiresAt,now+5*864e5,'and it carries the same 5-day deadline');
+});
+
 console.log(`${passed} passed`);
 }catch(err){console.error(err);process.exit(1)}

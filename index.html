@@ -924,9 +924,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=401">
+<link rel="stylesheet" href="assets/social.css?v=402">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=401"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=402"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1324,7 +1324,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-12 haven-v401 gift expiry, accessories on Oridecon';
+const BUILD='2026-11-12 haven-v402 echo prizes arrive as mail with a 5-day expiry';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -4471,8 +4471,13 @@ async function cloudPull(){
     // another account's gifts are never applied to this tab's character
     if(!cloudOwnedBy(g,CLOUD.user)){cloudAccountMismatch(g.owner);return}
     if(g.grants&&g.grants.length){
-      const direct=g.grants.filter(x=>!(x&&x.payload&&Number.isInteger(Number(x.payload.messageId))&&Number(x.payload.messageId)>0));
-      mailGrants=g.grants.filter(x=>x&&x.payload&&Number.isInteger(Number(x.payload.messageId))&&Number(x.payload.messageId)>0);
+      // v401 (owner: "i want endless echo payout to be on mail & with expiry. so 5 days without
+      // claim, rewards will vanish."). Competition prizes used to be applied silently on sync, so a
+      // player could win and never see it. They now go to the mailbox like any other gift: the row
+      // is shown, the player claims it, and unclaimed prizes expire with everything else.
+      // Announcement-sourced grants still ride along with their message instead of a separate entry.
+      const direct=g.grants.filter(x=>!grantGoesToMail(x));
+      mailGrants=g.grants.filter(x=>grantGoesToMail(x));
       if(direct.length)cloudApplyGrants(direct);
     }}catch(e){}
   try{
@@ -4644,6 +4649,14 @@ function gmApplySystems(p){
     return;
   }
   throw Error('Unknown GM system resource');
+}
+// v401: which incoming grants are shown in the mailbox instead of being applied the moment the tab
+// sees them. Competition prizes have no announcement message to ride on, so they always need an
+// entry of their own; announcement-sourced gifts ride along with their message.
+function grantGoesToMail(g){
+  if(!g)return false;
+  if(g.payload&&Number.isInteger(Number(g.payload.messageId))&&Number(g.payload.messageId)>0)return true;
+  return g.kind==='competition'||/^Echo competition$/i.test(String(g.from||''));
 }
 function cloudApplyGrants(list){
   const ids=[];
@@ -8894,6 +8907,19 @@ function formatMailGiftLabel(gift){
   if(p.item)return amt.toLocaleString()+' × '+(p.item.name||p.item.n||'Item');
   return 'Attached Gift';
 }
+ // "3 days left" / "expires in 4 hours" / "expired" - never a raw timestamp, because the player is
+ // deciding whether to claim now.
+ function rdExpiryNote(at){
+  if(!at)return'';
+  const left=Number(at)-Date.now();
+  if(!Number.isFinite(left))return'';
+  if(left<=0)return'Expired';
+  const hrs=Math.round(left/3600000);
+  if(hrs<1)return'Expires in under an hour';
+  if(hrs<48)return'Expires in '+hrs+(hrs===1?' hour':' hours');
+  const days=Math.round(hrs/24);
+  return'Expires in '+days+(days===1?' day':' days');
+ }
 function unreadMailCount(){return S?ensureMailState().filter(m=>!m.read||(m.gift&&!m.gift.claimed)).length:0;}
 function unclaimedMailGiftCount(){return S?ensureMailState().filter(m=>m.gift&&!m.gift.claimed).length:0;}
 function syncCloudMail(m,mailGrants=[]){
@@ -8909,6 +8935,19 @@ function syncCloudMail(m,mailGrants=[]){
     const ex=byId.get(key);
     if(ex){if(giftObj&&!ex.gift){ex.gift=giftObj;changed=true;}else if(giftObj&&ex.gift&&giftObj.claimed&&!ex.gift.claimed){ex.gift.claimed=true;changed=true;}}
     else{const entry={id:key,serverId:row.id,kind:row.kind||'notice',from:row.from||'GM',at:row.at||Date.now(),body:String(row.body||''),read:unreadSet.has(Number(row.id))?false:!!row.read,gift:giftObj};list.unshift(entry);byId.set(key,entry);changed=true;}
+  }
+  // v401: competition prizes have no announcement message to ride on, so give each unclaimed one its
+  // own mailbox entry. Keyed by grant id, so a re-poll updates the row instead of duplicating it.
+  for(const g of mailGrants||[]){
+    const gid=g?.id;if(gid==null)continue;
+    if(g.payload&&Number.isInteger(Number(g.payload.messageId))&&Number(g.payload.messageId)>0)continue;
+    const key='prize:'+gid,ex=byId.get(key);
+    const giftObj={grantId:gid,kind:g.kind||'gift',payload:g.payload||{},claimed:!!g.claimed,
+      label:g.payload&&g.payload.resource?formatMailGiftLabel({kind:g.kind,payload:g.payload}):undefined};
+    if(ex){if(ex.gift&&g.claimed&&!ex.gift.claimed){ex.gift.claimed=true;changed=true}continue}
+    list.unshift({id:key,kind:'prize',from:g.from||'Echo competition',at:g.at||Date.now(),
+      body:String(g.note||'Endless Echo prize'),read:false,gift:giftObj,expiresAt:g.expiresAt||null});
+    changed=true;
   }
   if(list.length>50)list.length=50;
   if(changed){try{save()}catch(e){}}
@@ -9057,7 +9096,7 @@ function rdIcon(n){return `<svg class="rd-ico" viewBox="0 0 24 24" aria-hidden="
    gift key. Unknown ids fall back to a spark so a future reward still renders. */
 const RD_SEG_ART={ori:'pickaxe',elu:'gem',buff_zeny:'coins',buff_exp:'exp',zeny_pouch:'pouch',random_card:'card',refineScrolls:'scroll'};
 const RD_GIFT_ART={none:'mail',ori:'pickaxe',elu:'gem',shards:'gem',nmat0:'gem',refineScrolls:'scroll',mythicScrolls:'scroll',ascMat0:'gem',ascMat1:'gem',ascMat2:'gem',zeny:'coins'};
-const RD_KIND={notice:{label:'Official notice',icon:'notice'},event:{label:'Event notice',icon:'star'},welcome:{label:'Welcome',icon:'spark'}};
+const RD_KIND={notice:{label:'Official notice',icon:'notice'},event:{label:'Event notice',icon:'star'},welcome:{label:'Welcome',icon:'spark'},prize:{label:'Endless Echo prize',icon:'gift'}};
 function rdKind(k){return RD_KIND[k]||RD_KIND.notice}
 /* The rate already has its own column, so the trailing "(33%)" in the stored
    description is trimmed for display. The saved segment data is untouched. */
@@ -9093,14 +9132,16 @@ function selectedMail(){
   if(!rows.some(m=>String(m.id)===String(mailSel)))mailSel=rows[0]?rows[0].id:null;
   return rows.find(m=>String(m.id)===String(mailSel))||null;
 }
-function rdAttachmentMarkup(gift,preview){
+function rdAttachmentMarkup(gift,preview,expiresAt){
   const p=gift?.payload||{},art=RD_GIFT_ART[p.resource||(gift?.kind==='zeny'?'zeny':'none')]||'gift';
-  return `<div class="rd-attachment-block"><p class="rd-section-label">${rdIcon('gift')} ENCLOSED REWARD</p><div class="rd-attachment${gift?.claimed?' is-claimed':''}"><span class="rd-attachment-icon">${rdIcon(art)}</span><div class="rd-attachment-copy"><b>${esc(formatMailGiftLabel(gift))}</b><small>${esc(rdGiftDetail(gift))}</small></div><span class="rd-attachment-state">${gift?.claimed?'✓ Claimed':'Ready to claim'}</span></div>${preview?'<span class="rd-draft-btn">Claim reward →</span>':''}</div>`;
+  // v401: gifts vanish 5 days after they are sent, so say when rather than let one disappear silently.
+  const expiryNote=rdExpiryNote(expiresAt!=null?expiresAt:(gift&&gift.expiresAt));
+  return `<div class="rd-attachment-block"><p class="rd-section-label">${rdIcon('gift')} ENCLOSED REWARD</p><div class="rd-attachment${gift?.claimed?' is-claimed':''}"><span class="rd-attachment-icon">${rdIcon(art)}</span><div class="rd-attachment-copy"><b>${esc(formatMailGiftLabel(gift))}</b><small>${esc(rdGiftDetail(gift))}</small></div><span class="rd-attachment-state">${gift?.claimed?'✓ Claimed':'Ready to claim'}</span></div>${!gift?.claimed&&expiryNote?'<small class="rd-expiry">'+rdIcon('clock')+' '+esc(expiryNote)+'</small>':''}${preview?'<span class="rd-draft-btn">Claim reward →</span>':''}</div>`;
 }
 function rdReaderMarkup(m){
   if(!m)return `<div class="rd-empty">${rdIcon('mail')}<h3>A little room to breathe.</h3><p>Select a message on the left to read it here.</p></div>`;
   const k=rdKind(m.kind);
-  return `<button type="button" class="rd-link rd-back" data-a="mailback">${rdIcon('back')} Back to inbox</button><div class="rd-topline"><span class="rd-kind">${rdIcon(k.icon)}${esc(k.label.toUpperCase())}</span><time>${esc(mailTimeLabel(m))}</time></div><h3 tabindex="-1">${esc(mailTitleOf(m))}</h3><div class="rd-sender"><span class="rd-seal" aria-hidden="true">H</span><span>${esc(m.from||'Horizon Haven')}</span>${rdIcon('shield')}<span class="rd-to">To: You</span></div><div class="rd-rule"></div><p class="rd-copy">${esc(mailBodyCopy(m))}</p>${m.gift?rdAttachmentMarkup(m.gift):''}<footer class="rd-actions">${m.gift?`<span class="rd-hint${m.gift.claimed?' success':''}">${rdIcon(m.gift.claimed?'checkCircle':'bag')}${m.gift.claimed?'Reward delivered to your inventory.':'Rewards go straight to your inventory.'}</span>${m.gift.claimed?'<span class="mail-claimed-tag">✓ Gift claimed</span>':`<button type="button" class="rd-btn primary" data-a="claimmail" data-v="${esc(m.id)}">Claim reward ${rdIcon('arrow')}</button>`}`:`<span class="rd-hint">${rdIcon('checkCircle')}${m.read?'Message read':'Open this message to mark it read'}</span><span class="rd-pill">No attachment</span>`}</footer>`;
+  return `<button type="button" class="rd-link rd-back" data-a="mailback">${rdIcon('back')} Back to inbox</button><div class="rd-topline"><span class="rd-kind">${rdIcon(k.icon)}${esc(k.label.toUpperCase())}</span><time>${esc(mailTimeLabel(m))}</time></div><h3 tabindex="-1">${esc(mailTitleOf(m))}</h3><div class="rd-sender"><span class="rd-seal" aria-hidden="true">H</span><span>${esc(m.from||'Horizon Haven')}</span>${rdIcon('shield')}<span class="rd-to">To: You</span></div><div class="rd-rule"></div><p class="rd-copy">${esc(mailBodyCopy(m))}</p>${m.gift?rdAttachmentMarkup(m.gift,undefined,m.expiresAt):''}<footer class="rd-actions">${m.gift?`<span class="rd-hint${m.gift.claimed?' success':''}">${rdIcon(m.gift.claimed?'checkCircle':'bag')}${m.gift.claimed?'Reward delivered to your inventory.':'Rewards go straight to your inventory.'}</span>${m.gift.claimed?'<span class="mail-claimed-tag">✓ Gift claimed</span>':`<button type="button" class="rd-btn primary" data-a="claimmail" data-v="${esc(m.id)}">Claim reward ${rdIcon('arrow')}</button>`}`:`<span class="rd-hint">${rdIcon('checkCircle')}${m.read?'Message read':'Open this message to mark it read'}</span><span class="rd-pill">No attachment</span>`}</footer>`;
 }
 function rdListMarkup(){
   const rows=filteredMail();
@@ -14060,16 +14101,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=401"></script>
-<script src="assets/digimon/base-stats.js?v=401"></script>
-<script src="assets/social-rules.js?v=401"></script>
-<script src="assets/social-poker.js?v=401"></script>
-<script src="assets/digimon-sanctuary.js?v=401"></script>
+<script src="assets/digimon/roster.js?v=402"></script>
+<script src="assets/digimon/base-stats.js?v=402"></script>
+<script src="assets/social-rules.js?v=402"></script>
+<script src="assets/social-poker.js?v=402"></script>
+<script src="assets/digimon-sanctuary.js?v=402"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=401"></script>
+<script src="assets/social-digimon.js?v=402"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=401"></script>
-<script src="assets/social-fishing.js?v=401"></script>
-<script src="assets/social.js?v=401"></script></body>
+<script src="assets/social-scene.js?v=402"></script>
+<script src="assets/social-fishing.js?v=402"></script>
+<script src="assets/social.js?v=402"></script></body>
 </html>
