@@ -591,7 +591,9 @@ const ATTACK_MS=520;let fxTextures=null;
  // Owner: "the PvE animation is still too fast and messy". Two tuning passes (v359 run speed, v373
  // stand-off and swing time) kept the same shape - every unit circling its target and swinging on
  // every 650 ms sim tick, all at once - so this replaces the shape instead of the numbers:
- //  * the party holds a column on the west of its lane and the wave lines up across an aisle;
+ //  * the party holds the middle of its lane and the wave spawns on a ring around it (v399: this
+ //    replaced a two-column layout - party west, wave across an aisle - which kept reading as
+ //    "player on the left, three on the right" no matter how the spots inside it were randomised);
  //  * the two sides take turns: a side's volley starts only once the other side's has landed;
  //  * one swing per fighter per volley. Strikes the sim reports faster than that are carried by
  //    the swing that delivers them, and the number shown is their true sum;
@@ -601,7 +603,7 @@ const ATTACK_MS=520;let fxTextures=null;
  // battle module (tick rate, damage, targeting) is untouched - so no balance and no Worker change.
  const STAGE={
   // formation (world units)
-  AISLE_MIN:4.2,AISLE_MAX:6.2,AISLE_PAD:2.6,ROW_MIN:2.4,ROW_MAX:3.6,RANGED_BACK:.9,BACK_COLUMN:2.6,REACH:.8,
+  ROW_MIN:2.4,ROW_MAX:3.6,REACH:.8,
   // one swing (ms; speeds in units per second)
   FAN:.45,DASH_SPEED:7.5,DASH_MIN:260,DASH_MAX:440,HOLD_MS:150,RETURN_SPEED:8.5,RETURN_MIN:280,RETURN_MAX:460,WINDUP_MS:160,SHOT_SPEED:16,SHOT_MIN:260,SHOT_MAX:380,SHOT_SWING_MS:800,IMPACT:.4,WALK_SPEED:5,
   // volleys
@@ -618,6 +620,11 @@ const ATTACK_MS=520;let fxTextures=null;
   // staged turns still read, wide enough that a wave is spread over the farm instead of standing on
   // the old grid. The walk-in then starts from further out along the same bearing.
   SCATTER_MIN:.5,SCATTER_X:2.6,SCATTER_Z:2.2,SCATTER_GAP:2.4,
+  // v399 ring formation: the wave spawns on a ring AROUND the player's digipet instead of in a
+  // column across an aisle. RING_MIN/MAX bound the radius, RING_SPAN lets each bot sit at its own
+  // depth on the ring, RING_RANGED_PAD pushes a ranged form further out, and RING_GAP is the
+  // minimum angular separation so a wave never collapses into a clump.
+  RING_MIN:2.6,RING_MAX:5.4,RING_SPAN:1.6,RING_RANGED_PAD:1.2,RING_GAP:.34,
   // v398c: how close a melee swing gets, as a multiple of the two bodies. CLOSE_GAP<1 means the
   // bodies may nearly touch on a tight swing (that is the point - a graze should look like a graze);
   // the far bound keeps a loose swing from turning into a lunge across the field.
@@ -817,44 +824,30 @@ const ATTACK_MS=520;let fxTextures=null;
  // from the same seed battleSpawn() uses, so the point a bot walks to is the point it entered at.
  // It is bounded so the fight still reads: the bot stays on the enemy side of the aisle and inside
  // the field, and never lands on top of a partner or another bot of its own wave.
- const enemyScattered=new Map();   // runKey -> [{x,z}] already placed this wave, for spacing
  const enemySpotCache=new Map();   // "run|owner|wave|id" -> {x,z}: a bot's fighting spot never moves
- function enemyScatter(run,unit,index,base,geo){
+ // v399: place one wave member on a ring around the party's anchor. Its bearing is seeded from the
+ // unit so a bot keeps one home for the whole run, and the ring radius varies per bot so the wave
+ // reads as surrounding the digipet rather than as an evenly spaced circle.
+ function ringScatter(run,unit,index,geo){
   const ck=String(run.id||'')+'|'+(run.owner||0)+'|w'+(run.wave??'')+'|'+(unit.id??index);
   const cached=enemySpotCache.get(ck);
   if(cached)return {x:cached.x,z:cached.z};
-  const seed=String(unit.id??index)+'|'+String(run.id||'')+'|'+(run.owner||0),lane=Number(run.slot)||0;
-  const rnd=(salt)=>{let h=2166136261;const k=seed+'#'+salt;
+  const seed=String(unit.id??index)+'|'+String(run.id||'')+'|'+(run.owner||0);
+  const rnd=salt=>{let h=2166136261;const k=seed+'#'+salt;
    for(let i=0;i<k.length;i++)h=Math.imul(h^k.charCodeAt(i),16777619);
    h^=h>>>16;h=Math.imul(h,0x7feb352d);h^=h>>>15;h=Math.imul(h,0x846ca68b);h^=h>>>16;return (h>>>0)/4294967296};
-  // Keep on the enemy side of the aisle (never behind the partners) and inside the field.
-  const minX=Math.min(93,geo.ex+STAGE.SCATTER_MIN),maxX=93;
-  const jx=(rnd('x')*2-1)*STAGE.SCATTER_X;
-  const jz=(rnd('z')*2-1)*STAGE.SCATTER_Z;
+  // Even bearings by index, with a seeded wobble, so no two bots share a line and the arrangement
+  // is not the same every wave. A boss sits nearest dead-front and its adds fan outward.
+  const base=geo.hasBoss&&index===0?0:(index/Math.max(1,geo.count))*Math.PI*2;
+  const bearing=base+(rnd('a')*2-1)*STAGE.RING_GAP;
+  const r=geo.rMin+rnd('r')*(geo.rMax-geo.rMin);
   const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
-  // x never moves toward the aisle for a ranged form, and never past the field edge for anyone.
-  const xMin=geo.ranged?geo.laneMin+STAGE.SCATTER_MIN:minX;
-  let x=clamp(base.x+jx,xMin,maxX),z=clamp(base.z+jz,50,78);
-  // Two bots of one wave must not land on top of each other: the staged turns and the swap both read
-  // as a row of bodies, so the rows are kept apart. Slide outward along the lane until it is clear.
-  // Keyed by wave as well as run: a new wave is a new set of bodies and must be able to reuse the
-  // same spots, otherwise the map grows without bound across a long grind.
-  const runKey=String(run.id||'')+'|'+(run.owner||0)+'|w'+(run.wave??''),placed=enemyScattered.get(runKey)||[];
-  const gap=STAGE.SCATTER_GAP;
-  for(let step=1;step<=24&&placed.some(p=>Math.abs(p.z-z)<gap);step++){
-   // Step away from the lane centre, alternating sides, so a crowded wave still ends up spread.
-   const dir=step%2?1:-1,z2=clamp(base.z+dir*Math.ceil(step/2)*gap,50,78);
-   if(!placed.some(p=>Math.abs(p.z-z2)<gap))z=z2;
-  }
-  // If it still cannot clear, fall back to the lane point - a clump is worse than a grid row.
-  if(placed.some(p=>Math.abs(p.z-z)<gap)){x=base.x;z=base.z}
-  placed.push({x,z});enemyScattered.set(runKey,placed);
+  const x=clamp(geo.cx+Math.cos(bearing)*r,47,93),z=clamp(geo.cz+Math.sin(bearing)*r,50,78);
   enemySpotCache.set(ck,{x,z});
-  // The cache is per-wave by construction; trim it so a long session cannot grow it forever.
   if(enemySpotCache.size>240){const first=enemySpotCache.keys().next().value;enemySpotCache.delete(first)}
   return {x,z};
  }
-  function battleFormation(run){
+ function battleFormation(run){
   // v386: scatter each run in the middle field from its battle id so two grinds never stack
   // on the same turf, while a given run keeps one home across its waves.
   const lane=Number(run.slot)||0;
@@ -864,28 +857,30 @@ const ATTACK_MS=520;let fxTextures=null;
   const fx=70+(lane%4-1.5)*8+jitterX,fz=60+Math.floor(lane/4)*10+jitterZ;
   const partners=(run.partners&&run.partners.length?run.partners:[run.partner]).filter(Boolean),enemies=(run.enemies||[]).filter(Boolean);
   const widest=list=>list.reduce((n,u)=>Math.max(n,battleBody(u.form,u.boss)),.5),pw=widest(partners),ew=widest(enemies);
-  const span=(v,lo,hi)=>Math.max(lo,Math.min(hi,v)),aisle=span(pw+ew+STAGE.AISLE_PAD,STAGE.AISLE_MIN,STAGE.AISLE_MAX),rows=w=>span(1.9+w*.9,STAGE.ROW_MIN,STAGE.ROW_MAX);
-  const back=u=>unitRange(u.form).ranged?STAGE.RANGED_BACK:0,px=fx-1.6-pw,ex=px+aisle,pr=rows(pw),er=rows(ew),slots={partners:[],enemies:[]};
-  partners.forEach((u,i)=>slots.partners.push({x:span(px-back(u),47,93),z:span(fz+(i-(partners.length-1)/2)*pr,50,78)}));
-  // A wave fills a front line of up to three and puts the rest in the gaps behind it. A boss
-  // holds the middle of the line; its adds flank it first and then fill in behind.
-  const hasBoss=enemies.some(u=>u.boss),bossOrder=[[0,0],[0,-1],[0,1],[1,-.5],[1,.5],[1,-1.5],[1,1.5]],front=Math.min(3,enemies.length),rest=enemies.length-front;
+  const span=(v,lo,hi)=>Math.max(lo,Math.min(hi,v)),slots={partners:[],enemies:[]};
+  // v399 (owner: "i dont want them to spawn & lock on into 1 position. they can spawn surrounding
+  // the players digipet then battle"). The old layout was two COLUMNS: the party on the west at
+  // `px`, the wave across an `aisle` at `ex`. Every earlier fix changed the detail inside that
+  // layout - scattered spots, per-swing distance - while the left/right split itself stayed, which
+  // is why the owner kept seeing "player on the left, three on the right". There is no aisle and no
+  // column now: the party holds the middle and the wave spawns on a RING around it, each bot on its
+  // own bearing and distance, and fights there.
+  const ringR=w=>span(2.5+w*1.5,STAGE.RING_MIN,STAGE.RING_MAX);
+  // The party's anchor is the point the wave encircles. With one digipet it is the digipet itself;
+  // a three-pet party shares the middle, spaced so they do not overlap.
+  const pr=span(1.9+pw*.9,STAGE.ROW_MIN,STAGE.ROW_MAX);
+  partners.forEach((u,i)=>slots.partners.push({x:span(fx,47,93),z:span(fz+(i-(partners.length-1)/2)*pr,50,78)}));
+  // Bearing: a boss takes the front and its adds fan out around it; a normal wave spreads evenly so
+  // no two bots share a head-on line. Angles come from the unit's own seed, not a fixed table, so a
+  // wave never repeats the same arrangement and never lines up on the old column axis.
+  const hasBoss=enemies.some(u=>u.boss);
   enemies.forEach((u,i)=>{
-   let col=0,row=0;
-   if(hasBoss)[col,row]=bossOrder[Math.min(i,bossOrder.length-1)];
-   else if(i<front)row=i-(front-1)/2;
-   else{col=1;row=(i-front)-(rest-1)/2}
-   // v398b (owner: "the mobs are randomly spawn now but it went back to the old location to
-   // actually start the fight"): the enemy's fighting position IS the seeded point it entered from,
-   // not the old grid - it spawns somewhere on the farm and fights there. The grid above still
-   // decides the ORDER (front line, back column) and the aisle is still enforced, so a staged swing
-   // reads the same; only the address changes. Melee keep to the enemy side of the aisle; a ranged
-   // form may sit further back, which is what `col` already expressed.
-   const laneMin=ex+col*STAGE.BACK_COLUMN+back(u);
-   // A ranged form keeps its guaranteed step behind the brawlers: scattering it forward could put it
-   // level with (or ahead of) the melee line, and the whole point of the ranged slot is that it reads
-   // as firing from the back. It still scatters, just never toward the aisle.
-   slots.enemies.push(enemyScatter(run,u,i,{x:span(laneMin,47,93),z:span(fz+row*er,50,78)},{aisle,ex,fz,er,laneMin,row,ranged:unitRange(u.form).ranged}));
+   const ranged=unitRange(u.form).ranged;
+   // Ranged forms keep a longer leash so they read as firing from outside the brawl, but they are
+   // still ON the ring - not parked in a back column.
+   const rMin=ranged?ringR(ew)+STAGE.RING_RANGED_PAD:ringR(ew);
+   const rMax=rMin+STAGE.RING_SPAN;
+   slots.enemies.push(ringScatter(run,u,i,{cx:fx,cz:fz,rMin,rMax,order:i,count:enemies.length,hasBoss,ranged}));
   });
   return {partners,enemies,slots};
  }

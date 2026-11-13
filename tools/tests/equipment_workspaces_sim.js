@@ -132,5 +132,43 @@ try{
   assert.match(css,/\.title \.ui-window-tools \.ui-icon\{width:18px!important;height:18px!important/,'window tool icons stay inside their buttons');
   assert.doesNotMatch(css,/\.title \.ui-icon\{display:grid;width:38px/,'the framed title badge no longer applies to the close button');
  });
+ // v399 (owner: "refine even on +8 ascension equipment are showing me to use mythic scroll").
+ // The workshop moved only the toggle's IMMEDIATE previous sibling into the side panel, and that
+ // sibling is the Mythic line - so the Regular line was left in the discarded row and never shown.
+ // The panel then named mythic as the only scroll in existence, on gear that spends a regular one.
+ test('Refine workshop shows the regular scroll count, not just mythic',()=>{
+  ev(`S.refineScrolls=12;S.mythicScrolls=3;tabs.push('equip');sub.equip='refine';renderWin()`);
+  const aside=doc.querySelector('.eclipse-protection');
+  assert.ok(aside,'the workshop renders a protection panel');
+  const text=aside.textContent.replace(/\s+/g,' ');
+  assert.match(text,/Regular:\s*12/,'the regular scroll count is visible: '+text.slice(0,160));
+  assert.match(text,/Mythic:\s*3/,'the mythic scroll count is still visible');
+  assert.match(text,/for \+0 to \+10 on all gear/,'the panel says what the regular scroll covers');
+  assert.ok(aside.querySelector('[data-a=refprotect]'),'the on/off toggle moved with the block');
+ });
+ test('Ascension refine picks the scroll the rank actually needs',()=>{
+  const mk=r=>`(()=>{S=fresh();S.auto=false;S.lv=150;S.zeny=1e9;S.ore.ori=9999;S.ore.elu=9999;S.refineScrolls=5;S.mythicScrolls=5;S.useRefineScroll=1;S.items=[];const it={id:88001,slot:'armor',wt:'armor',tier:4,val:100,name:'Mythic Infernal Vest',aff:[],slots:0,cards:[],sec:6,lvl:150,quality:1.5,mythic:true,ascSet:'infernal',r:${r}};S.eq.armor=it;return S})()`;
+  // +8 must ask for a REGULAR scroll, and must spend one when the attempt runs.
+  ev(`${mk(8)};refine('armor',true)`);
+  assert.equal(ev('S.mythicScrolls'),5,'+8 ascension does not spend a mythic scroll');
+  assert.equal(ev('S.refineScrolls'),4,'+8 ascension spends a regular scroll');
+  // +11 must ask for a MYTHIC scroll.
+  ev(`${mk(11)};refine('armor',true)`);
+  assert.equal(ev('S.refineScrolls'),5,'+11 ascension does not spend a regular scroll');
+  assert.equal(ev('S.mythicScrolls'),4,'+11 ascension spends a mythic scroll');
+  // +10 is the safe rank: it can never drop, so neither scroll is demanded or spent. Passing the
+  // item as `answered` skips the "use a scroll anyway?" prompt so the attempt actually runs - without
+  // that the guard returns early and this assertion would pass no matter what the boundary said.
+  ev(`${mk(10)};S.refineScrolls=0;S.mythicScrolls=0;refine('armor',S.eq.armor)`);
+  assert.equal(ev('S.refineScrolls'),0,'+10 is safe and does not need a regular scroll');
+  assert.equal(ev('S.mythicScrolls'),0,'+10 is safe and does not need a mythic scroll');
+  // And with a stack of both, it still spends none of either.
+  ev(`${mk(10)};S.refineScrolls=9;S.mythicScrolls=9;refine('armor',S.eq.armor)`);
+  assert.equal(ev('S.refineScrolls'),9,'+10 spends no regular scroll even when one is stocked');
+  assert.equal(ev('S.mythicScrolls'),9,'+10 spends no mythic scroll even when one is stocked');
+  // Load-bearing proof: the rank ABOVE the safe point must still demand and spend mythic.
+  ev(`${mk(11)};S.refineScrolls=9;S.mythicScrolls=9;refine('armor',S.eq.armor)`);
+  assert.equal(ev('S.mythicScrolls'),8,'+11 spends a mythic scroll');
+ });
  console.log(`${passed} equipment workspace checks passed`);
 }finally{g.close()}

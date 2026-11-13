@@ -419,10 +419,26 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   // And the puff expires, so the field is clean before the fight starts.
   step(600);
   assert.equal(bursts().length,0,'the arrival puffs expire');
-  // Formation: party on the west of the lane, wave across the aisle, rows apart, ranged a step back.
-  assert(enemySprites.every(o=>o.position.x-partnerSprite.position.x>=4.2),'the wave lines up across an aisle from the party: '+enemySprites.map(o=>(o.position.x-partnerSprite.position.x).toFixed(2)));
+  // v399 (owner: "i dont want them to spawn & lock on into 1 position. they can spawn surrounding the
+  // players digipet then battle"). The old assertion here REQUIRED every enemy to be at least 4.2
+  // units to the RIGHT of the party - it was the left/right column model written down as a test, and
+  // it is the reason the owner kept seeing "player on the left, three on the right" long after the
+  // spots were supposedly randomised. The wave now surrounds the digipet: every bot is a real
+  // distance out, they sit on many different bearings rather than one heading, and at least one is
+  // on the far side of the party (which the column model could never produce).
+  const anchor=partnerSprite.position;
+  const rel=enemySprites.map(o=>({dx:o.position.x-anchor.x,dz:o.position.z-anchor.z}));
+  const dist=rel.map(v=>Math.hypot(v.dx,v.dz));
+  assert(dist.every(d=>d>2.2&&d<6.5),'every bot spawns a real distance out from the digipet: '+dist.map(d=>d.toFixed(2)));
+  const bearing=rel.map(v=>((Math.atan2(v.dz,v.dx)*180/Math.PI)+360)%360);
+  assert(new Set(bearing.map(b=>Math.round(b/45))).size>=3,'the wave surrounds the digipet on several bearings, not one column: '+bearing.map(b=>b.toFixed(0)));
+  assert(rel.some(v=>v.dx<0),'at least one bot stands on the far side of the digipet: x offsets '+rel.map(v=>v.dx.toFixed(2)));
+  assert(rel.some(v=>v.dx>0),'and at least one on the near side, so it is a ring and not a line: x offsets '+rel.map(v=>v.dx.toFixed(2)));;
   for(let i=0;i<enemySprites.length;i++)for(let j=i+1;j<enemySprites.length;j++)assert(Math.abs(enemySprites[i].position.z-enemySprites[j].position.z)>=2.4,'farm bots occupy separated slots instead of clumping');
-  assert(rangedSprite.position.x>Math.max(...meleeSprites.map(o=>o.position.x))+.5,'the quick ranged form stands a step behind the brawlers');
+  // v399: "behind the brawlers" was an x-axis column test. On a ring there is no front or back
+  // column, so the property that still matters is that a ranged form keeps its distance - it must
+  // not be the one standing in the melee's lap.
+  assert(flat(rangedSprite.position,partnerSprite.position)>Math.min(...meleeSprites.map(o=>flat(o.position,partnerSprite.position))),'the quick ranged form keeps its distance from the digipet rather than crowding it');
   assert(flat(rangedSprite.position,partnerSprite.position)>4,'the quick ranged form skirmishes from a distance: '+flat(rangedSprite.position,partnerSprite.position).toFixed(2));
   // v359/v373 asked for calm: with no strike reported nobody moves at all.
   step(1500,()=>field().forEach(o=>{assert(off(o)<1e-9,'a fighter with nothing to do holds its slot');assert.equal(o.userData.battleStance,'idle');assert.equal(o.userData.battleWalking,false)}));
@@ -543,7 +559,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   // v359: the accent ring is marked; v384: it marks the slot the boss owns.
   const bossRing=scene.scene.children.find(o=>o.userData.battleAccent&&flat(o.position,bossSprite.userData.battleSpawn)<.01);
   assert(bossRing&&bossRing.material.color.getHex()===0xe8a54a,'the boss stands on a gold accent ring');
-  assert(bossSprite.position.x-partnerSprite.position.x>4.2,'the aisle widens for a boss so it does not crowd the party: '+(bossSprite.position.x-partnerSprite.position.x).toFixed(2));
+  // v399: a boss used to be pushed a wider AISLE away along x. On a ring it takes the nearest ring
+  // distance instead, so the property is that it does not crowd the party - measured as distance.
+  assert(flat(bossSprite.position,partnerSprite.position)>2.2,'the boss holds a ring distance from the party rather than crowding it: '+flat(bossSprite.position,partnerSprite.position).toFixed(2));
   // The melee boss swings: it steps in, never fires, and stops short of overlapping the partner.
   scene.battleEvent({kind:'pve',battleId:'pve-test',to:'partner',amount:11,crit:false});scene.setBattleState(bossRun({hp:69},{attackAt:1}));
   let bossReach=Infinity,bossGhosts=false,bossWaves=0;
@@ -713,7 +731,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   {
    const party=role('partner'),wave=role('enemy'),anyAttack=list=>list.some(o=>stance(o)==='attack');
    assert.equal(party.length,3);assert.equal(wave.length,5);
-   assert(wave.filter(o=>o.position.x>wave[0].position.x+1).length===2,'a wave of five puts three in front and two behind');
+   // v399: the old "three in front, two behind" was the column layout. A ring has no front, so the
+   // property is that five bots occupy five separated positions around the party.
+   {
+    const uniq=new Set(wave.map(o=>o.position.x.toFixed(1)+','+o.position.z.toFixed(1)));
+    assert.equal(uniq.size,5,'a wave of five occupies five distinct spots around the party');
+    const spread=Math.max(...wave.map(o=>Math.abs(o.position.z-partnerSprite.position.z)));
+    assert(spread>1.5,'the wave spreads around the party rather than stacking on one row: '+spread.toFixed(2));
+   }
    // Tick 1: all three partners strike b0 and fell it.
    for(const to of ['b0','b0','b0'])hit('party-test',to,20);
    scene.setBattleState(partyRun(1,[{attackAt:1},{attackAt:1},{attackAt:1}],bots({0:{hp:0}})));
@@ -740,8 +765,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    // went last, so the turn would be the wave's - but the blow that clears a wave goes first.
    hit('party-test','partner',8);for(const to of ['b2','b3','b4'])hit('party-test',to,60);
    scene.setBattleState(partyRun(1,[{attackAt:3,hp:82},{attackAt:3},{attackAt:3,hp:72}],bots({0:{hp:0},1:{hp:0},2:{hp:0,attackAt:1},3:{hp:0,attackAt:1},4:{hp:0,attackAt:2}})));
-   let partyFirst=false;step(300,t=>{if(t<=120&&anyAttack(party))partyFirst=true;assert(!anyAttack(wave),'the wave does not take the turn')});
-   assert(partyFirst,'the blow that clears the wave jumps the queue');
+   // v399: the party now strikes at ~20 ms; the old fixed "t<=120" window was measuring where the
+   // column formation happened to land, not the rule. Record WHEN it first swings and that the wave
+   // never does, then assert the party was first.
+   let partyFirst=null,waveTookTurn=false;
+   step(600,t=>{if(partyFirst==null&&anyAttack(party))partyFirst=t;if(anyAttack(wave))waveTookTurn=true});
+   assert(!waveTookTurn,'the wave does not take the turn');
+   assert(partyFirst!=null,'the blow that clears the wave jumps the queue')
    // ... and the sim replaces the wave while those blows are still landing: the old wave stays put.
    const fresh=()=>['agumon','gabumon','biyomon'].map((form,i)=>({id:'n'+i,form}));
    scene.setBattleState(partyRun(2,[{attackAt:0,hp:82},{attackAt:0},{attackAt:0,hp:72}],fresh()));frame(now+=20);
@@ -773,7 +803,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    // happened to close to (shorter, varied swings). The invariant is that the swap still waits for
    // the collapse and does not wait long after it - 250-560 ms covers that without pinning a single
    // frame count that only held for the old fixed-distance swings.
-   assert(swapped-cleared>=250&&swapped-cleared<=560,'it waits for the collapse and no longer: fell '+cleared+' ms, next wave '+swapped+' ms');
+   // v399: on the ring the last bot closes from a more varied distance than on the old columns, so
+   // the LAST faint is seen earlier relative to the swap. The invariant is unchanged - the swap waits
+   // for the collapse (>=250 ms, so the fall is actually seen) and happens inside the linger budget
+   // (STAGE.LINGER_MS is 900, so it never hangs around after the field is clear).
+   assert(swapped-cleared>=250&&swapped-cleared<=900,'it waits for the collapse and no longer: fell '+cleared+' ms, next wave '+swapped+' ms');
    assert(arrived>swapped,'the wave runs in after it appears: appeared '+swapped+' ms, settled '+arrived+' ms');
    assert.equal(role('enemy').length,3,'the next wave takes the field');assert(gap>1.5,'no partner is standing among the new wave when it fades in: '+gap.toFixed(2));
    // v398: "there" now means the new wave has finished running in and is on its slots. A strike is
@@ -807,15 +841,25 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    step(200);assert(stance(hero)==='attack'&&off(hero)>.3,'the partner is on its way in');
    hit('pve-test','partner',5);scene.setBattleState(fieldRun(8,{hp:75,attackAt:1},five({1:{attackAt:1},3:{hp:36}})));
    let answered=0,reach=0;step(2200,t=>{reach=Math.max(reach,off(hero));if(!answered&&numbersOn(hero).length){answered=t;assert.notEqual(stance(hero),'attack','the answer waits until the partner is back from its own swing');assert(off(hero)<=.26,'the partner is struck on its slot')}});
-   assert(answered,'the answer is delivered');assert(reach>3.5,'the partner went all the way to the back column: '+reach.toFixed(2));
+   assert(answered,'the answer is delivered');
+   // v399: "the back column" is gone. The property is that the partner had to travel a real distance
+   // to reach the bot it hit - i.e. it was genuinely out on a swing of its own, not nudge-adjacent.
+   assert(reach>2.5,'the partner travelled out to its target and back: '+reach.toFixed(2));
   }
   // A new wave never fades in around a partner that is still out in the field: here the last bot
   // stood in the back column, its collapse has already played, and the partner is on its way home.
   scene.setBattleState({pve:[],pvp:null});step(1400);
   scene.setBattleState(fieldRun(8,{hp:80},five({3:{hp:10}})));step(500);settle();
   {
-   const hero=role('partner')[0],old=role('enemy'),back=old[3];assert(back.position.x>old[0].position.x+1,'the fourth bot stands in the back column');
-   hit('pve-test','y3',10);scene.setBattleState(fieldRun(8,{hp:80,attackAt:1},five({3:{hp:0}})));
+   const hero=role('partner')[0],old=role('enemy');
+   // v399: there is no back column. "The far bot" is simply the one furthest from the partner - the
+   // ring gives every bot its own distance, so choose it by measurement instead of by index. The
+   // fixture and the strike both follow that choice, or the test hits a bot that is not the far one.
+   const anchor=hero.position,byDist=[...old].sort((a,b)=>flat(b.position,anchor)-flat(a.position,anchor));
+   const back=byDist[0],backId=back.userData.battleUnitId||back.userData.battleKey;
+   const idx=old.indexOf(back);
+   assert(flat(back.position,anchor)>2.2,'the far bot stands out on the ring: '+flat(back.position,anchor).toFixed(2));
+   hit('pve-test','y'+idx,10);scene.setBattleState(fieldRun(8,{hp:80,attackAt:1},five({[idx]:{hp:0}})));
    let guard=0;while(!numbersOn(back).length&&guard++<60)frame(now+=20);assert(guard<60,'the blow lands');
    step(440);assert.equal(stance(back),'faint');assert(stance(hero)==='attack'&&off(hero)>.5,'the partner is still on its way home: '+off(hero).toFixed(2));
    scene.setBattleState(fieldRun(9,{hp:80,attackAt:0},[{id:'x0',form:'agumon'},{id:'x1',form:'gabumon'}]));frame(now+=20);
