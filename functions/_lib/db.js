@@ -133,7 +133,12 @@ export const allUsers = (db, limit = 200) =>
                      (SELECT updated_at FROM saves s WHERE s.user_id = u.id) AS updated_at,
                      (SELECT level FROM saves s WHERE s.user_id = u.id) AS level,
                      (SELECT cls FROM saves s WHERE s.user_id = u.id) AS cls
-              FROM users u ORDER BY u.last_login_at DESC LIMIT ?`).bind(limit).all();
+              FROM users u
+              -- v403: most recent sign-in first; a player who has never signed in (NULL) sorts last
+              -- instead of being treated as the largest value, then by account age so the tail is
+              -- stable rather than arbitrary.
+              ORDER BY (u.last_login_at IS NULL) ASC, u.last_login_at DESC, u.created_at DESC
+              LIMIT ?`).bind(limit).all();
 
 export const blobBytes = (db, userId) =>
   db.prepare('SELECT LENGTH(blob) AS n FROM saves WHERE user_id = ?').bind(userId).first();
