@@ -5,12 +5,16 @@ const doc=g.window.document;
 try{
  ev("S=fresh();maybeGuide()");
  assert.equal(ev('guideTour'),'beginner');
- const steps=ev('GUIDE_LESSONS.beginner.length');
- assert.ok(steps>=5,'the first-login tour covers the current screen');
+ // v404: the tour is split by where the player is standing. In the field it is the field
+ // lessons; in the plaza it opens with the plaza lessons and leads them out. The old test
+ // counted GUIDE_LESSONS.beginner, which is now both halves plus the plaza ones.
+ const steps=ev('guideVisibleSteps("beginner").length');
+ assert.ok(steps>=4,'the first-login tour covers the current screen');
  ev("guideStep('next')");
+ assert.equal(ev('S.handbook.beginnerStepId'),'points');
  assert.equal(ev('S.handbook.beginnerStep'),1);
  ev("localStorage.setItem(saveKey(),JSON.stringify(S));S=load();maybeGuide()");
- assert.equal(ev('S.handbook.beginnerStep'),1);
+ assert.equal(ev('S.handbook.beginnerStepId'),'points');
  assert.match(ev('guideTourPanel()'),new RegExp('2 / '+steps));
  ev("guideStep('dismiss');maybeGuide()");assert.equal(ev('guideTour'),null);
  ev("S.cls='Lord Knight';S.lv=150;S.handbook={beginner:true};maybeGuide()");assert.equal(ev('guideTour'),null);
@@ -39,36 +43,96 @@ try{
  assert.match(ascension,/drop no equipment/);assert.match(ascension,/Mythic set targets for survival/);assert.match(ascension,/View recipe/);
  const recipes=['farm','boss','survive'].map(mode=>ev(`guideMode='${mode}';guideMythicTargets()`));assert.equal(new Set(recipes).size,3);
 
+ // ---- v404: the beginner tour starts in the plaza and leads to the field ------------------
+ // Owner: "when players login they are teleported into plaza, there are no guide whatsoever
+ // to guide them to the field. the old guide only start in the field not plaza."
+ // The tour used to be the else-branch of the plaza login, so the plaza skipped it entirely.
+ ev("S=fresh();S.handbook={};guideTour=null;document.body.classList.add('social-open');maybeGuide()");
+ assert.equal(ev('guideTour'),'beginner','the guide opens in the plaza, where the player lands');
+ const plazaSteps=ev('guideVisibleSteps("beginner").map(s=>s.id).join(",")');
+ assert.equal(plazaSteps,'hub,hub-tour,hub-field','the plaza gets the plaza lessons only');
+ assert.ok(ev('GUIDE_LESSONS.beginner.filter(s=>s.hub).every(s=>s.pointer||s.act)'),
+   'every plaza lesson points at something that exists in the plaza');
+ // The dock is hidden in the plaza, so no plaza lesson may point at it.
+ assert.ok(ev('GUIDE_LESSONS.beginner.filter(s=>s.hub).every(s=>!String(s.pointer||"").includes("#dock"))'),
+   'no plaza lesson rings a dock button that the hub hides');
+ assert.match(ev('guideTourPanel()'),/1 \/ 3/,'the plaza tour counts its own lessons');
+ ev("guideStep('next')");
+ assert.equal(ev('S.handbook.beginnerStepId'),'hub-tour','Next advances instead of travelling');
+ ev("guideStep('next')");
+ assert.equal(ev('S.handbook.beginnerStepId'),'hub-field');
+ assert.ok(ev('guideTourPanel().includes("Go to the field")'),'the last plaza lesson offers the trip');
+ // Pressing it travels rather than retiring the tour.
+ ev("guideStep('next')");
+ assert.equal(ev('guideTour'),'beginner','the tour survives the trip');
+ assert.notEqual(ev('S.handbook.beginnerSeen'),true,'it does not mark the field half as read');
+ // Arriving in the field picks the field lessons up from the top.
+ ev("document.body.classList.remove('social-open');guideHubResume()");
+ assert.equal(ev('guideTour'),'beginner','the tour continues on arrival');
+ assert.equal(ev('S.handbook.beginnerStepId'),'combat');
+ assert.equal(ev('guideVisibleSteps("beginner").map(s=>s.id).join(",")'),'combat,points,gear,job,hub2',
+   'the field gets the field lessons, starting where the travel left off');
+ assert.match(ev('guideTourPanel()'),/1 \/ 5/);
+ // Finishing the field half retires the tour for good.
+ for(let i=0;i<6;i++)ev("guideStep('next')");
+ assert.equal(ev('guideTour'),null);
+ assert.equal(ev('S.handbook.beginnerSeen'),true);
+ ev("S.handbook={...S.handbook,beginnerHubSeen:true};maybeGuide()");
+ assert.equal(ev('guideTour'),null,'a finished beginner tour never reopens by itself');
+ // Back in the plaza, a player who finished the field half long ago still gets the new
+ // plaza lessons once - that is the whole point of the separate marker.
+ ev("S.handbook={beginner:true,beginnerSeen:true};guideTour=null;document.body.classList.add('social-open');maybeGuide()");
+ assert.equal(ev('guideTour'),'beginner','the plaza lessons are new, so they are shown once');
+ ev("guideStep('dismiss');maybeGuide()");
+ assert.equal(ev('guideTour'),null,'and only once');
+ // A mid-plaza dismissal must not retire the field half, and vice versa.
+ ev("S.handbook={};guideTour=null;maybeGuide();guideStep('dismiss')");
+ assert.equal(ev('S.handbook.beginnerHubSeen'),true,'dismissing in the plaza marks only the plaza half');
+ assert.equal(ev('S.handbook.beginnerSeen'),undefined);
+ ev("document.body.classList.remove('social-open');maybeGuide()");
+ assert.equal(ev('guideTour'),'beginner','the field half is still owed');
+
  // ---- v255: first-session checklist -------------------------------------------------
  // The beginner page opens on a live checklist rather than a wall of text, so every row has to
  // read the save and flip on its own, including the class-specific attack row.
  ev("S=fresh();S.auto=false;guidePage='beginner';S.lv=1;S.pts=10");
  const page=()=>{const d=doc.createElement('div');d.innerHTML=ev('beginnerGuide()');return d};
  let html=page();
+ // The row count is read from the checklist itself: it gained a "Learn an attack skill" row
+ // and this test kept asserting the old magic 7, so it failed on every build regardless of the
+ // code under test. Counting the source keeps the intent (every row is live and pressable)
+ // without pinning a number that the checklist legitimately grows past.
+ const rows=ev('beginnerChecklist().length');
+ assert.ok(rows>=7,'the first-session checklist covers the opening moves');
  assert.equal(html.querySelectorAll('.guide-checklist').length,1);
- assert.equal(html.querySelectorAll('.guide-checklist li').length,7);
- assert.equal(html.querySelector('.guide-checklist header span').textContent,'0 / 7 done');
+ assert.equal(html.querySelectorAll('.guide-checklist li').length,rows);
+ assert.equal(html.querySelector('.guide-checklist header span').textContent,'0 / '+rows+' done');
  assert.equal(html.querySelectorAll('.guide-checklist li.done').length,0);
- assert.equal(html.querySelectorAll('.guide-checklist li button').length,7,'every open row jumps to its panel');
+ assert.equal(html.querySelectorAll('.guide-checklist li button').length,rows,'every open row jumps to its panel');
  for(const li of html.querySelectorAll('.guide-checklist li')){
    assert.ok(li.querySelector('b').textContent.length>4);
    assert.ok(li.querySelector('small').textContent.length>20,li.querySelector('b').textContent+' explains itself');
    assert.ok(li.querySelector('button').hasAttribute('data-t')||li.querySelector('button').hasAttribute('data-a'));
  }
- assert.equal(html.querySelectorAll('.guide-chapters details').length,12,'the handbook keeps its twelve chapters');
+ // Derived, not pinned: the handbook grew to thirteen chapters and the literal 12 made this
+ // fail on every build. The intent is that every chapter is a real disclosure and the first
+ // one opens.
+ const chapters=html.querySelectorAll('.guide-chapters details').length;
+ assert.ok(chapters>=12,'the handbook keeps its chapters');
  assert.ok(html.querySelector('.guide-chapters details').open,'the first chapter starts open');
- assert.equal(html.querySelectorAll('[data-ui-disclosure^="handbook-beginner-"]').length,12);
+ assert.equal(html.querySelectorAll('[data-ui-disclosure^="handbook-beginner-"]').length,chapters,
+   'every chapter is a real disclosure');
  // progress: points, equipment, stage, job, card and the daily spin
  ev("S.pts=0;S.st.str=30;S.prog[0]=2;S.cls='Swordman';S.eq.weapon={...S.eq.weapon,id:7};S.cards=[{id:'probe',cardKey:'poring'}];S.dailyWheel={day:trialDay(),spun:1,bonusRolls:0,lastReward:null,totalSpins:1}");
  html=page();
- assert.equal(html.querySelector('.guide-checklist header span').textContent,'6 / 7 done');
+ assert.equal(html.querySelector('.guide-checklist header span').textContent,(rows-1)+' / '+rows+' done');
  const doneLabels=[...html.querySelectorAll('.guide-checklist li.done b')].map(x=>x.textContent);
- for(const label of ['Spend your first stat points','Equip a better weapon','Clear a stage','Choose your first job at Job 10','Get a card','Spin the daily roulette'])
+ for(const label of ['Spend your first stat points','Equip a better weapon','Clear a second stage','Choose your first job at Job 10','Get a card','Spin the daily roulette'])
    assert.ok(doneLabels.includes(label),label+' is ticked when done');
- assert.equal(html.querySelectorAll('.guide-checklist li.done em').length,6,'done rows show a tick instead of a button');
+ assert.equal(html.querySelectorAll('.guide-checklist li.done em').length,rows-1,'done rows show a tick instead of a button');
  assert.equal(html.querySelectorAll('.guide-checklist li button').length,1,'only the unfinished row keeps its button');
  ev("S.sk={aid:1,bash:1}");html=page();
- assert.equal(html.querySelector('.guide-checklist header span').textContent,'7 / 7 done');
+ assert.equal(html.querySelector('.guide-checklist header span').textContent,rows+' / '+rows+' done');
  assert.equal(html.querySelectorAll('.guide-checklist li button').length,0,'a finished checklist hands nothing else to press');
 
  // ---- v255: new-player coach tips ---------------------------------------------------
@@ -132,5 +196,27 @@ try{
  ev("S=fresh();tabs.length=0;maybeGuide();escapeUI()");assert.equal(ev('guideFindStage'),'more');
  ev("S=fresh();guideFinderSync()");assert.equal(g.window.document.querySelector('#guideFinder'),null);assert.equal(ev('S.handbook?.findGuide'),undefined);
  ev("tabs.length=0;maybeGuide();openTab('guide');guideFinderFinish();maybeGuide()");assert.equal(ev('guideFindStage'),'');
+ // ---- v404: every login path has to actually reach the guide --------------------------
+ // The unit tests above call maybeGuide() directly, so they pass even when the login flow
+ // never calls it - which is exactly the bug the owner reported. These assertions read the
+ // source and check the call sites, because the call site IS the bug.
+ {
+   const src=require('node:fs').readFileSync(require('node:path').join(__dirname,'..','..','index.html'),'utf8');
+   // The plaza login used to be `if(hubFirstPending){PGSocial.enter()} else maybeGuide()`,
+   // so the plaza - the screen every login opens since v363 - skipped the guide entirely.
+   assert.ok(!/PGSocial\.enter\(\)[^\n]*\n\s*else if\(typeof maybeGuide/.test(src),
+     'the guide is not the else-branch of the plaza login');
+   assert.ok(/PGSocial\.enter\(\).*\n\s*if\(typeof maybeGuide==='function'\)maybeGuide\(\);/.test(src),
+     'the plaza login opens the guide too');
+   // The cloud login path never called it at all.
+   const cloud=src.slice(src.indexOf('await cloudPull();')-600,src.indexOf('await cloudPull();'));
+   assert.ok(/maybeGuide/.test(cloud),'the cloud login path opens the guide');
+   // The plaza lessons must be reachable without the legacy beginner flag, or a returning
+   // player whose save says beginner:true would never be shown the new lessons.
+   assert.ok(/p\.beginner!==true\|\|plazaLesson/.test(src),
+     'the plaza lessons do not depend on the legacy beginner flag');
+   // The tour must survive the trip to the field.
+   assert.ok(/guideHubResume/.test(src),'arriving at the field resumes the tour');
+ }
  console.log('Guide regression passed: tour persistence, completion, fourth-job gate, account isolation, malformed progress, chapters, source filters, the beginner checklist and the coach tips.');
 }finally{g.close()}
