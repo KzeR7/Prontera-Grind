@@ -924,9 +924,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=322">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=398d">
+<link rel="stylesheet" href="assets/social.css?v=399">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=398d"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=399"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1324,7 +1324,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-12 haven-v398d free movement and pet emoji at player size';
+const BUILD='2026-11-12 haven-v399 ring formation and correct scroll per rank';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -6534,9 +6534,15 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
   // the unit price, the total for the attempt and what the purse would be left with. `answered`
   // carries what has already been agreed to, so a second question never re-asks the first.
   const answered=arguments[1],buyAnswered=answered===it||!!(answered&&answered.buy),scrollAnswered=answered===it;
-  const needsMythicScroll=it.sec===6&&previousRank>=10;
-  if(protectedAttempt&&needsMythicScroll&&!safeCount(S.mythicScrolls)){log('Mythic Protection Scroll required for +11 to +15 refines. Find them on Ascension bosses, or exchange 100 Sigils in the Black Market or 600 Echo Shards in Echo.');return;}
-  if(protectedAttempt&&!needsMythicScroll&&!safeCount(S.refineScrolls)){log('Refine Protection Scroll is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
+  // v399 (owner: "+10 is safe, nothing wrong... +10 above only use mythic protection scroll").
+  // At +10 on mythic gear a failed attempt cannot drop the rank, so there is nothing for a scroll to
+  // protect and NEITHER kind should be demanded. Before this, +10 fell on the mythic side of the
+  // boundary and refused the attempt with "Mythic Protection Scroll required for +11 to +15" while
+  // the player stood on a rank that cannot fall.
+  const safeRank=it.sec===6&&previousRank===10;
+  const needsMythicScroll=it.sec===6&&previousRank>10;
+  if(protectedAttempt&&!safeRank&&needsMythicScroll&&!safeCount(S.mythicScrolls)){log('Mythic Protection Scroll required for +11 to +15 refines. Find them on Ascension bosses, or exchange 100 Sigils in the Black Market or 600 Echo Shards in Echo.');return;}
+  if(protectedAttempt&&!safeRank&&!needsMythicScroll&&!safeCount(S.refineScrolls)){log('Refine Protection Scroll is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
   if(short.miss>0&&!buyAnswered){
    const owner=S;let pending=true,left=S.zeny-c-short.cost;
    ask(`This refine needs ${need} ${ORE[o]} and you have ${short.have}. Buy the missing ${short.miss} ${ORE[o]} at the Black Market price of ${BM_ORE.toLocaleString()}z each - ${short.cost.toLocaleString()}z - and refine for ${c.toLocaleString()}z? Total ${(c+short.cost).toLocaleString()}z, leaving ${left.toLocaleString()}z.`,()=>{
@@ -6554,11 +6560,11 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
       refine(sl,it);
     },{yes:'Use scroll & refine',no:'Cancel'});return;
   }
-  if(protectedAttempt){if(needsMythicScroll)S.mythicScrolls--;else S.refineScrolls--;}
+  if(protectedAttempt&&!safeRank){if(needsMythicScroll)S.mythicScrolls--;else S.refineScrolls--;}
   const buy=refineOreShortfall(it);
   if(buy.miss>0){S.zeny-=buy.cost;S.ore[o]=safeCount(S.ore[o])+buy.miss;log(`Bought ${buy.miss} ${ORE[o]} for ${buy.cost.toLocaleString()}z to finish this refine.`,'r3','zeny')}
   S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){succeeded=true;it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
-  else{if(protectedAttempt){log(`Refine failed, but your ${needsMythicScroll?'Mythic ':''}Protection Scroll kept +${it.r}.`,'r3','gear')}
+  else{if(protectedAttempt&&!safeRank){log(`Refine failed, but your ${needsMythicScroll?'Mythic ':''}Protection Scroll kept +${it.r}.`,'r3','gear')}
     else if(it.r>=5&&(it.sec!==6||it.r<10)){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
     else if(it.sec===6&&it.r>=11){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
     else if(it.r>=10&&it.sec===6){log(`Refine failed, but +10 is safe on Mythic gear. Kept +${it.r}.`,'r3','gear')}
@@ -8431,7 +8437,18 @@ function arrangePanel(k,root){
       }
       const aside=section(mode==='refine'?'Protection & supplies':'Reforge quote','eclipse-workshop-aside');
       const protection=make('div','eclipse-protection'),protectionRow=q('[data-a=refprotect]')?.parentElement;
-      if(protectionRow){const heading=protectionRow.previousElementSibling,hint=protectionRow.nextElementSibling;put(protection,heading,protectionRow,hint)}
+      // v399 (owner: "refine even on +8 ascension equipment are showing me to use mythic scroll").
+      // This used to take only the toggle's IMMEDIATE previous sibling - which is the Mythic line -
+      // so the section heading and the "Regular: N (for +0 to +10 on all gear)" line were left in the
+      // discarded row and never shown. The panel then named mythic as the only scroll that existed,
+      // on gear that would have spent a regular one. Move the whole block: everything from the
+      // section heading through the toggle's trailing hint.
+      if(protectionRow){
+       const block=protectionRow.parentElement?[...protectionRow.parentElement.children]:[];
+       const at=block.indexOf(protectionRow);
+       if(at>=0)put(protection,block.slice(0,at+2));
+       else put(protection,protectionRow);
+      }
       const notes=direct().filter(e=>!rows.includes(e));
       if(mode==='reforge'){
         const buttons=[...chosen.querySelectorAll('[data-a="bmref"]')];const quote=make('div','eclipse-quote-summary');const picked=reforgeSelection[it.id]||[],cost=reforgeQuote(it,picked.length||it.aff.length);const oreMissing=Math.max(0,cost.ore-safeCount(S.ore[cost.oreKey])),matMissing=Math.max(0,cost.mat-safeCount(nmMatCounts()[cost.map])),extra=oreMissing*BM_ORE+matMissing*BM_MAT_PRICE;quote.innerHTML='<h2>'+(picked.length?'Selected affixes':'Full reroll')+'</h2><div><span>Reforge fee</span><b>'+cost.zeny.toLocaleString()+'z</b></div><div><span>'+ORE[cost.oreKey]+'</span><b>'+cost.ore+' / '+safeCount(S.ore[cost.oreKey])+' owned</b></div>'+(cost.mat?'<div><span>'+esc(NM_MAT[cost.map])+'</span><b>'+cost.mat+' / '+safeCount(nmMatCounts()[cost.map])+' owned</b></div>':'')+(cost.ascMat&&cost.ascMatType>=0?'<div><span>'+esc(ASCENSION_MATERIALS[cost.ascMatType])+'</span><b>'+cost.ascMat+' / '+safeCount(S.ascensionMat[cost.ascMatType])+' owned</b></div>':'')+'<div><span>Missing materials</span><b>'+extra.toLocaleString()+'z</b></div><div><span>Total</span><b>'+(cost.zeny+extra).toLocaleString()+'z</b></div>';put(aside,quote);put(aside,make('p','','Select individual affixes or reroll all. Review the result before accepting.'));buttons.forEach(b=>put(aside,b));
@@ -14022,16 +14039,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=398d"></script>
-<script src="assets/digimon/base-stats.js?v=398d"></script>
-<script src="assets/social-rules.js?v=398d"></script>
-<script src="assets/social-poker.js?v=398d"></script>
-<script src="assets/digimon-sanctuary.js?v=398d"></script>
+<script src="assets/digimon/roster.js?v=399"></script>
+<script src="assets/digimon/base-stats.js?v=399"></script>
+<script src="assets/social-rules.js?v=399"></script>
+<script src="assets/social-poker.js?v=399"></script>
+<script src="assets/digimon-sanctuary.js?v=399"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=398d"></script>
+<script src="assets/social-digimon.js?v=399"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=398d"></script>
-<script src="assets/social-fishing.js?v=398d"></script>
-<script src="assets/social.js?v=398d"></script></body>
+<script src="assets/social-scene.js?v=399"></script>
+<script src="assets/social-fishing.js?v=399"></script>
+<script src="assets/social.js?v=399"></script></body>
 </html>
