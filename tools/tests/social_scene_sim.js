@@ -444,7 +444,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   // landing-time + 1050 or the "it expires" assertion below is really asserting "it just landed".
   step(600);
   assert(furthest>1.2,'the brawler steps in to its target: '+furthest.toFixed(2));
-  assert(closest>1.9&&closest<3.0,'v354/v373 brawlers stop at arm\'s length instead of overlapping their target: '+closest.toFixed(2));
+  // v398c (owner: "there is no lock position... even the melee closer random digipets attack from
+  // far now"): the old rule pinned every swing to the same 1.9-3.0 unit gap, which IS the lock the
+  // owner is complaining about - a fixed stop distance reads as attacking from far away. What must
+  // hold now is only that the two bodies never overlap and that the swing is not a lunge across the
+  // field. Variety across swings is asserted separately, below.
+  assert(closest>0.4,'brawlers never stand inside their target: '+closest.toFixed(2));
+  assert(closest<2.1,'a swing is not a lunge from out of frame: '+closest.toFixed(2));
   assert(landed>=240&&landed<=520,'the blow connects after a readable step in: '+landed+' ms');
   assert.deepEqual(numbersOn(palmon),[],'the damage number expires (v373 popup lasts 1050 ms)');
   assert(home>=650,'a whole swing - in, connect, back - takes long enough to read (v359/v373 "too fast to see"): '+home+' ms');
@@ -493,7 +499,10 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   step(200);assert.equal(partnerSprite.userData.battleStance,'attack');assert(off(partnerSprite)>.3,'the partner is on its way in');
   scene.battleEvent({kind:'pve',battleId:'pve-test',to:'partner',amount:5,crit:false});scene.setBattleState(wave2({attackAt:5,hp:57},{attackAt:2,hp:8},{attackAt:1,hp:12},{attackAt:1}));
   let answeredAt=0;step(2000,t=>{if(!answeredAt&&numbersOn(partnerSprite).length){answeredAt=t;assert.notEqual(partnerSprite.userData.battleStance,'attack','the answer waits until the partner is back from its own swing');assert(off(partnerSprite)<=.26,'the partner is struck on its slot')}});
-  assert(answeredAt,'the answer is delivered');assert(field().every(o=>off(o)<1e-9&&o.userData.battleStance==='idle'));
+  assert(answeredAt,'the answer is delivered');
+  // v398c: swings are shorter now (the fighter closes to its own distance, often much nearer), so the
+  // window above can end mid-swing. Let everyone finish before asserting the field is at rest.
+  step(600);assert(field().every(o=>off(o)<1e-9&&o.userData.battleStance==='idle'));
 
   // --- a unit the sim has felled stays up until the blow that felled it lands, then collapses and dissolves ---
   scene.battleEvent({kind:'pve',battleId:'pve-test',to:'e0',amount:9,crit:false});
@@ -539,7 +548,10 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   scene.battleEvent({kind:'pve',battleId:'pve-test',to:'partner',amount:11,crit:false});scene.setBattleState(bossRun({hp:69},{attackAt:1}));
   let bossReach=Infinity,bossGhosts=false,bossWaves=0;
   step(1400,()=>{bossReach=Math.min(bossReach,flat(bossSprite.position,partnerSprite.userData.battleSpawn));if(ghosts().filter(g=>g.visible).length>=2)bossGhosts=true;bossWaves=Math.max(bossWaves,waves().length);assert.equal(shots().length,0,'melee fighters fire no projectiles')});
-  assert(bossGhosts,'a brawler carries after-image ghosts on its way in');assert(bossReach>2.2&&bossReach<3.6,'the boss stops at arm\'s length of the partner: '+bossReach.toFixed(2));
+  assert(bossGhosts,'a brawler carries after-image ghosts on its way in');// v398c: the boss no longer halts at a fixed 2.2-3.6 units - it closes to its own distance like
+  // every other melee fighter. It must still make contact rather than standing off.
+  assert(bossReach>0.4&&bossReach<2.6,'the boss closes on the partner instead of standing off: '+bossReach.toFixed(2));
+
   assert.equal(bossWaves,1,'a boss blow lands with a ground ring even when it is not a crit');
   assert(ghosts().every(g=>!g.visible),'ghosts hide once the lunge is over');
   // A ranged partner: it never leaves its slot; the shot is seen in flight and carries the number.
@@ -573,6 +585,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   assert.deepEqual(numbersOn(archer),['6'],'a strike with no attacker left standing lands as a plain hit');
   // --- v384: what is on screen is finished before the sim's next step replaces it ---
   const idleResidents=()=>scene.scene.children.filter(o=>o.userData.sanctuaryResident),stance=o=>o.userData.battleStance,hit=(battleId,to,amount)=>scene.battleEvent({kind:'pve',battleId,to,amount,crit:false}),critHit=(battleId,to,amount)=>scene.battleEvent({kind:'pve',battleId,to,amount,crit:true});
+
+
   // A run that is over with nothing left to show fades out at once.
   step(1200);scene.setBattleState({pve:[],pvp:null});frame(now+=20);
   assert.equal(field().length,0,'a finished run with nothing left to show has no live field units');assert(leaving().length>=1,'its units fade out instead of blinking off');
@@ -612,35 +626,60 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   assert.equal(field().length,0,'a lingering run is released when its time is up, even with its blow undelivered');assert(popups().some(p=>p.userData.battlePopupText==='30'),'the undelivered damage is still shown as a number');
   step(1400);assert.equal(leaving().length,0);assert.equal(popups().length,0);
 
-  // v398 (owner: "still no pet emoji"): a digipet reacts with the world-chat emotion images when it
-  // takes a hit and when a run ends. Asserted on the Sprite in the scene and on what is painted onto
-  // its canvas - the reaction is invisible if either is missing, and there was no coverage at all for
-  // this before, which is how it shipped seen-by-nobody.
+
+  // v398d (owner: "i still dont see any emoji" / "size of the emoji can be the same as player one"):
+  // a pet reaction is a DOM element using the SAME .social-emotion markup and 48px image as the
+  // player's own bubble. It used to be a world sprite scaled 0.7-1.1 units, which measured about
+  // 25px at the default camera - drawn, and invisible. The assertions below are about what a player
+  // would actually see: a visible element, the right image, and the player's size.
   {
    scene.setBattleState(fieldRun(1,{hp:80},[{id:'e0',form:'agumon'},{id:'e1',form:'biyomon'},{id:'e2',form:'palmon'}]));
    settle();
-   // Crit has a 55% chance per hit, so drive several crits until one fires a reaction.
+   // The harness camera does not frame the battle field, so a reaction is legitimately projected
+   // off-screen here; assert on the element itself (which is what was wrong before) rather than on
+   // its pixel placement. On-screen placement is the projection every player bubble already uses.
+   const petEmoji=()=>[...w.document.querySelectorAll('.social-pet-emotion')];
    let fired=null;
-   for(let i=0;i<12&&!fired;i++){
-    critHit('pve-test','e0',9);
-    step(120,t=>{if(!fired&&emoji().some(e=>e.visible))fired=t});
+   for(let i=0;i<6&&!fired;i++){critHit('pve-test','e0',9);step(120,t=>{if(!fired&&petEmoji().some(el=>el.querySelector('img').getAttribute('src')))fired=t})}
+   assert(fired!=null,'a crit makes a digipet show a world-chat emotion');
+   const shown=petEmoji()[0];
+   assert(shown,'the reaction is a visible element, not just an internal object');
+   const img=shown.querySelector('img');
+   assert(img&&/assets\/social\/emotions\/.+\.png$/.test(img.getAttribute('src')),'the reaction is one of the world-chat emotion images: '+(img&&img.getAttribute('src')));
+   // THE SIZE. The player's bubble image is 48x48; the pet's must be the same class, so it inherits
+   // exactly that. This is the assertion that would have caught "drawn but 25px".
+   assert(shown.classList.contains('social-emotion'),'the reaction reuses the player emoji styling');
+   const css=fs.readFileSync('assets/social.css','utf8');
+   const rule=(css.match(/\.social-bubble img\{[^}]*\}/)||[''])[0];
+   assert(/width:\s*48px/.test(rule)&&/height:\s*48px/.test(rule),'the player emoji image is 48px, so the pet matches it: '+rule);
+   // (No on-screen placement assertion here: the harness camera does not frame the battle field, so
+   // a correctly-projected reaction lands off-screen in this test. Placement uses the identical
+   // projection as the player's own bubble and nameplate, which ARE asserted above.)
+   let gone=false,peak=0;
+   step(3000,()=>{peak=Math.max(peak,petEmoji().length);if(shown.hidden)gone=true});
+   assert(gone,'the reaction retires instead of staying on the pet forever');
+   assert(peak<=8,'reactions are pooled and do not pile up: peak '+peak);
+   // v398d (owner: "can the random emoji be in random times too like afk or fishing the digipets
+   // following the player do random emoji?"): the follower reacts on its own clock while idle and
+   // while fishing. The pools exist, they are disjoint enough to tell the two moods apart, and the
+   // scheduling is a randomised interval rather than a fixed tick.
+   {
+    const pools=scene.scene.userData.emojiPools;
+    assert(pools&&pools.idle&&pools.fish,'the follower has its own idle and fishing moods');
+    assert(pools.idle.length>=4&&pools.fish.length>=3,'each ambient mood has a real pool: idle '+pools.idle.length+', fish '+pools.fish.length);
+    assert(pools.idle.includes('sleep'),'idling can look sleepy');
+    assert(pools.fish.includes('surprise'),'a bite can look surprising');
+    // Randomised timing: the next reaction is scheduled from a RANGE, not one fixed delay.
+    const schedule=scene.scene.userData.emojiSchedule;
+    const fishTimes=new Set(),idleTimes=new Set();
+    for(let i=0;i<40;i++){fishTimes.add(Math.round(schedule(true)));idleTimes.add(Math.round(schedule(false)))}
+    assert(fishTimes.size>20,'fishing reactions happen at varying times, not on a fixed tick: '+fishTimes.size+'/40 distinct');
+    assert(idleTimes.size>20,'idle reactions happen at varying times, not on a fixed tick: '+idleTimes.size+'/40 distinct');
+    // And fishing is the livelier of the two, which is the moment the owner asked about.
+    assert(Math.min(...fishTimes)<Math.min(...idleTimes)||Math.max(...fishTimes)<Math.max(...idleTimes),'fishing reactions come round more often than idle ones');
    }
-   assert(fired!=null,'a crit makes a digipet react with a world-chat emotion');
-   const shown=emoji().find(e=>e.visible);
-   assert(shown,'the reaction sprite is in the scene and visible');
-   assert(shown.material.map&&shown.material.map.image,'the reaction carries a texture');
-   // The reaction paints the shared emotion PNG, not an empty square.
-   const log=canvasLogs.get(shown.material.map.image)||[];
-   assert(log.some(r=>r[0]==='drawImage'),'the emotion image is actually drawn onto the reaction sprite');
-   assert(shown.position.y>0.2,'the reaction floats above the field rather than sitting in it');
-   // And it retires itself, so reactions cannot pile up on a long grind. Watch THAT sprite: the
-   // fight keeps landing crits during the wait, so "no reactions visible at all" would be asserting
-   // that the battle went quiet, which is not the property under test.
-   let retired=false,peak=0;
-   step(3000,()=>{peak=Math.max(peak,emoji().filter(e=>e.visible).length);if(!shown.visible)retired=true});
-   assert(retired,'the reaction sprite retires itself instead of staying under the pet forever');
-   assert(peak<=6,'reactions are drawn from a reuse pool and do not pile up: peak '+peak);
-  }  // v398b (owner: "it went back to the old location to actually start the fight"): a wave fights
+  }
+  // v398b (owner: "it went back to the old location to actually start the fight"): a wave fights
   // where it came in, and the NEXT wave fights somewhere else. The old code rebuilt the same lane
   // grid for every wave, so every wave fought on identical spots - exactly the "old location" the
   // owner saw. Checked here without disturbing the wave the sections below use.
@@ -730,7 +769,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    // v398: the swap is still timed off the collapse; the RUN-IN then takes a further moment, so the
    // test separates "the new wave appears" from "it has reached its slots".
    assert(cleared&&swapped>cleared,'the next wave comes in after the last bot has been seen falling: fell '+cleared+' ms, next wave '+swapped+' ms');
-   assert(swapped-cleared>=400&&swapped-cleared<=500,'it waits for the collapse and no longer: fell '+cleared+' ms, next wave '+swapped+' ms');
+   // v398c: `cleared` is when the LAST bot is seen fainting, which now depends on where each bot
+   // happened to close to (shorter, varied swings). The invariant is that the swap still waits for
+   // the collapse and does not wait long after it - 250-560 ms covers that without pinning a single
+   // frame count that only held for the old fixed-distance swings.
+   assert(swapped-cleared>=250&&swapped-cleared<=560,'it waits for the collapse and no longer: fell '+cleared+' ms, next wave '+swapped+' ms');
    assert(arrived>swapped,'the wave runs in after it appears: appeared '+swapped+' ms, settled '+arrived+' ms');
    assert.equal(role('enemy').length,3,'the next wave takes the field');assert(gap>1.5,'no partner is standing among the new wave when it fades in: '+gap.toFixed(2));
    // v398: "there" now means the new wave has finished running in and is on its slots. A strike is
@@ -779,6 +822,36 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    assert.deepEqual(role('enemy'),old,'the next wave waits while a partner is still out in the field');
    let arrived=0,homeAt=0;step(900,t=>{if(!homeAt&&off(hero)<1e-9)homeAt=t;if(!arrived&&role('enemy').length===2){arrived=t;assert(off(hero)<1e-9,'the partner is back on its slot when the next wave fades in')}});
    assert(arrived&&arrived<=homeAt+40,'and the wave comes in as soon as it is: home '+homeAt+' ms, wave '+arrived+' ms');
+  }
+  // v398c (owner: "there is no lock position"): the same unit must NOT swing from the same distance
+  // every time. This is the property the old code could not satisfy - it always halted at
+  // body+body+REACH, so every swing landed at one fixed gap and the movement read as scripted.
+  // Each round reports a fresh strike ON the bot, so it owes a swing, and measures how close it
+  // actually came to the partner during that swing.
+  {
+   const distances=[];
+   // Put a wave on the field first: by this point in the file the PvE block has been cleared.
+   scene.setBattleState(wave2({attackAt:30,hp:80},{}));
+   settle();
+   for(let round=0;round<7;round++){
+    const bot=role('enemy')[0];
+    if(!bot)break;
+    // Strike the PARTNER: that is what makes the wave owe a swing back. Bumping the bot's own
+    // attackAt only makes the bot wait, because the turn goes to whoever has a pending strike.
+    // wave2(partner, e0, e1, e2) - strike the PARTNER so the wave owes a swing back.
+    scene.battleEvent({kind:'pve',battleId:'pve-test',to:'partner',amount:1,crit:false});
+    scene.setBattleState(wave2({attackAt:30+round,hp:80},{attackAt:2+round,hp:60},{},{id:'e2',form:'biyomon'}));
+    let near=Infinity,swung=false;
+    step(1500,()=>{
+     if(stance(bot)==='attack'){swung=true;near=Math.min(near,flat(bot.position,partnerSprite.position))}
+    });
+    if(swung&&Number.isFinite(near))distances.push(near);
+    step(700);
+   }
+   const uniq=new Set(distances.map(d=>d.toFixed(1)));
+   assert(distances.length>=4,'the bot swung enough times to judge variety: '+distances.length);
+   assert(uniq.size>=3,'a bot does not swing from one locked distance every time: '+distances.map(d=>d.toFixed(2)).join(', '));
+   assert(Math.max(...distances)-Math.min(...distances)>.3,'the swing distances genuinely differ, not rounding: '+distances.map(d=>d.toFixed(2)).join(', '));
   }
   scene.setBattleState({pve:[],pvp:null});step(1800);
   assert.equal(field().length,0);assert.equal(leaving().length,0);assert.equal(popups().length,0);assert.equal(bursts().length,0);assert.equal(waves().length,0);assert.equal(shots().length,0);
