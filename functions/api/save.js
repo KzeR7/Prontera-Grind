@@ -20,7 +20,7 @@
 import { currentUser } from '../_lib/auth.js';
 import { lockedCosmetics } from '../_lib/shop.js';
 import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
-import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH } from '../_lib/validate.js';
+import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED } from '../_lib/validate.js';
 import * as db from '../_lib/db.js';
 import { recordDamageObservation } from '../_lib/damage-monitor.js';
 import { recordUnverifiedEcho, settleUnverifiedEcho } from '../_lib/unverified-echo.js';
@@ -195,7 +195,24 @@ export const onRequestPut = guard(async ({ request, env }) => {
   if (!saveBelongsTo(row.blob, user)) return saveMismatch(user);
 
   const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt);
+
+  // haven-v396: the GM restore fence. A restore is a decision about the account, so it is enforced
+  // here, on the write, rather than being asked of each browser (v394 did the 409 branch, v395 the
+  // login push - both are code the stale tab does not have to run). While the row carries a restore
+  // stamp, a save that does not carry it is a copy from before the restore, whatever version number
+  // it presents, and it is refused instead of written. A client that adopted the restore carries the
+  // stamp forward, so ordinary play after the rollback still saves normally.
   const early = earlyReturn(D, user.id, savedAt);
+  // haven-v396: the GM restore fence (see functions/_lib/validate.js). Enforced on the WRITE, not
+  // asked of the browser: v394 guarded cloudPush's 409 branch and v395 the login push, and both were
+  // undone in the field by a tab that was simply open across the rollback. While the row carries a
+  // restore stamp, a save without that stamp is a pre-restore copy whatever version it presents.
+  const fenceAt = storedRestoreAt(row.blob);
+  if (!restoreAllowsWrite(row.blob, save, fenceAt)) {
+    return early({ err: RESTORE_FENCED, restoreFenced: true, restoreAt: fenceAt,
+      conflict: true, version: row.version, blob: row.blob, savedAt: row.saved_at,
+      updatedAt: row.updated_at, offlineClaim: publicClaim(pending) }, 409);
+  }
   if (clientVersion !== row.version) {
     return early({ conflict: true, version: row.version, blob: row.blob, savedAt: row.saved_at,
       updatedAt: row.updated_at, offlineClaim: publicClaim(pending) }, 409);

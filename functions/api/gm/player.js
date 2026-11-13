@@ -181,6 +181,25 @@ export const onRequestPost = guard(async ({ request, env }) => {
           : 'Announcement sent.',
       });
     }
+    case 'unlock': {
+      // haven-v396: lift the restore fence on purpose. A restore locks the account against any copy
+      // that predates it, so a player whose devices all still hold pre-restore saves needs a way out
+      // once the GM is satisfied. This is the only action that clears the stamp; nothing on the
+      // client can, which is what makes "roll back and wait" unable to re-open the account.
+      const live = await db.saveByUser(D, id);
+      if (!live) return fail('That account has no live save.', 400);
+      let save;
+      try { save = JSON.parse(live.blob); } catch { return fail('The live save is not readable.', 500); }
+      if (!save || typeof save !== 'object' || Array.isArray(save)) return fail('The live save is not readable.', 500);
+      const had = save.gmRestore || null;
+      delete save.gmRestore;
+      const blob = JSON.stringify(save);
+      const pub = publicFields(save);
+      await db.pushHistory(D, id, live.version, live.blob, live.saved_at);
+      await db.updateSave(D, id, live.version + 1, blob, live.saved_at, pub, live.rate_kph);
+      await audit('gm-restore-unlock', had ? `fence from ${new Date(Number(had.at)).toISOString()} cleared` : 'no fence was set');
+      return json({ ok: true, version: live.version + 1, cleared: !!had });
+    }
     case 'restore': {
       const version = Math.floor(Number(body.version));
       const blob = await db.historyBlob(D, id, version);
