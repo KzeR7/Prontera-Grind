@@ -560,6 +560,14 @@ await T('a save backup can be restored, and the overwritten save is kept', async
   const rows = sqlite.prepare('SELECT COUNT(*) AS n FROM save_history WHERE user_id = ?').get(friendId);
   assert.ok(rows.n >= 2, 'the overwritten save is still recoverable');
   assert.strictEqual((await api.act(env, owner, { id: friendId, action: 'restore', version: 999999 })).status, 404);
+  // v394: the restored blob must say it came from a restore, or an open tab rebases its (bigger)
+  // pre-restore save straight back on top and the restore is gone seconds later.
+  const stamp = JSON.parse(nowSave.data.blob).gmRestore;
+  assert.ok(stamp && Number.isFinite(Number(stamp.at)), 'the restored save is stamped with the restore');
+  assert.strictEqual(Number(stamp.from), Number(backup.version), 'and names the backup it came from');
+  const backupBlob = JSON.parse(sqlite.prepare('SELECT blob FROM save_history WHERE user_id = ? AND version = ?')
+    .get(friendId, backup.version).blob);
+  assert.strictEqual(JSON.parse(nowSave.data.blob).lv, backupBlob.lv, 'the restored figures are what the account now holds');
 });
 
 await T('every GM action is in the audit log with the actor and the target', async () => {

@@ -1743,6 +1743,41 @@ await T('v330: a 409 that is this device\'s own last upload rebases instead of r
     'the ledger records both numbers');
 });
 
+await T('v394: a 409 that is a GM restore is adopted, never rebased over', async () => {
+  // The owner's audit log: four restores in one sitting (5710->5719, 5710->5722, 5700->5724, 5690->5725),
+  // and the live version was 5726 minutes later with no GM action between. Every restore carries exactly
+  // the shape the v330 rule calls a self-echo - one version ahead, and behind this device in every figure,
+  // because rolling the account back is the whole point. The tab rebased and put the pre-restore save back.
+  const h = harness({ storage: { pg_save3_A: JSON.stringify({ lv: 150, kills: 1100, zeny: 33300000, owner: 'A' }) },
+    routes: { '/save': { status: 409, body: { conflict: true, version: 8, blob: JSON.stringify({
+      lv: 120, kills: 400, zeny: 12000000, owner: 'A', gmRestore: { at: Date.now(), from: 5710 } }) } } } });
+  const b = h.sandbox;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.CLOUD.ver = 7;
+  b.S = { lv: 150, kills: 1100, zeny: 33300000, owner: 'A' };
+  assert.strictEqual(await b.cloudPush(true), 'adopted', 'the restore wins over this device, not the other way round');
+  assert.strictEqual(b.S.zeny, 12000000, 'the restored figure is what is now played');
+  assert.strictEqual(b.CLOUD.ver, 8, 'and the account version is taken with it');
+  const puts = h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.strictEqual(puts.length, 1, 'the only upload is the one that was refused - nothing is retried on top of the restore');
+  assert.ok(h.store.get('pg_save3_A').includes('12000000'), 'and the account slot now holds the restored save');
+  const rows = JSON.parse(h.store.get(b.SYNC_LOG_KEY) || '[]');
+  assert.ok(rows.some(r => r.kind === 'restore-adopt'), 'the ledger says why the account won');
+});
+
+await T('v394: a restore this device has already seen does not block a normal rebase', async () => {
+  // The stamp is per-restore, not a permanent switch: once this device is playing the restored copy, the
+  // ordinary v330 rule applies again, or one restore would disable self-echo recovery for good.
+  const stamp = { at: Date.now(), from: 5710 };
+  const h = harness({ routes: { '/save': (seq) => seq === 1
+    ? { status: 409, body: { conflict: true, version: 8, blob: JSON.stringify({ lv: 150, kills: 1000, zeny: 31700000, owner: 'A', gmRestore: stamp }) } }
+    : { body: { version: 9 } } } });
+  const b = h.sandbox;
+  b.currentUser = 'A'; b.CLOUD.on = true; b.CLOUD.user = 'A'; b.CLOUD.api = true; b.CLOUD.ver = 7;
+  b.S = { lv: 150, kills: 1100, zeny: 33300000, owner: 'A', gmRestore: stamp };
+  assert.strictEqual(await b.cloudPush(true), 'rebase', 'a restore this copy already carries is not a reason to roll back');
+  assert.strictEqual(b.S.zeny, 33300000, 'the play since the restore is kept');
+});
+
 await T('v330: a conflict that is really another copy still loses to the account', async () => {
   const ahead = harness({ routes: { '/save': { status: 409, body: { conflict: true, version: 8,
     blob: JSON.stringify({ lv: 150, kills: 1200, zeny: 41000000, owner: 'A' }) } } } });

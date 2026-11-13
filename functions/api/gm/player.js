@@ -196,8 +196,21 @@ export const onRequestPost = guard(async ({ request, env }) => {
       // Keep the save we are about to overwrite, so even a mistaken restore is reversible.
       await db.pushHistory(D, id, live.version, live.blob, live.saved_at);
       // The leaderboard columns are re-derived from the restored blob, never copied from the live row.
-      const pub = publicFields(checkSaveBlob(blob.blob));
-      await db.updateSave(D, id, live.version + 1, blob.blob, blob.saved_at, pub, live.rate_kph);
+      const restored = checkSaveBlob(blob.blob);
+      // v394: a restore must not be silently rebased away by a tab that is still open. It moves the
+      // live version on by exactly one, which is precisely the shape cloudPush's v330 "this is our own
+      // upload whose answer was lost" rule treats as a rebase - and a pre-restore save beats the restored
+      // one on Zeny, kills and level by definition (that is why it is being rolled back). So the tab
+      // took the account's version NUMBER, kept its own bigger save and pushed it on top: the restore
+      // ran, the audit recorded it, and the save was gone seconds later. The owner hit that four times
+      // in one sitting (5725 became 5726 with no GM action in between). The blob now says it came from
+      // a restore, and the client adopts instead of rebasing whenever the account carries a restore
+      // this device has not seen. The stamp is additive, so every older client still reads the save.
+      const stamped = JSON.stringify(Object.assign({}, restored, {
+        gmRestore: { at: Date.now(), from: version },
+      }));
+      const pub = publicFields(restored);
+      await db.updateSave(D, id, live.version + 1, stamped, blob.saved_at, pub, live.rate_kph);
       await audit('gm-restore', `version ${version} restored as ${live.version + 1}`);
       return json({ ok: true, version: live.version + 1 });
     }

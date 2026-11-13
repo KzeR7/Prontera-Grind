@@ -4035,6 +4035,16 @@ async function cloudPush(push,leave){
       const mine=saveFigures(JSON.stringify(S)),theirs=saveFigures(c.blob);
       const selfEcho=!!(theirs&&mine)&&Number(c.version)===Number(CLOUD.ver)+1
         &&mine.zeny>=theirs.zeny&&mine.kills>=theirs.kills&&mine.lv>=theirs.lv;
+      // v394: ...unless the account's copy is a GM restore this device has not seen. A restore bumps the
+      // version by one and is always behind us in every figure - the exact shape of a self-echo - so
+      // rebasing would undo it. This device's copy is stashed by cloudAdopt, so nothing is lost either.
+      if(selfEcho&&!sawRestore(restoreStamp(c.blob))){
+        syncLog('restore-adopt',{v:c.version,from:(restoreStamp(c.blob)||{}).from});
+        cloudBadge('☁ ↺','A restore was applied to this account - loading it');
+        await cloudAdopt(c);
+        cloudSay('The GM restored an earlier copy of this account, so it was loaded. The copy this device held was kept as a backup.','r1');
+        return 'adopted';
+      }
       if(selfEcho&&Number(c.version)!==cloudRebaseRetried){
         cloudRebaseRetried=Number(c.version);
         syncLog('rebase',{from:CLOUD.ver,to:c.version,serverZeny:theirs.zeny,keptZeny:mine.zeny});
@@ -4312,6 +4322,12 @@ const pgSyncLog=syncLogShow;
 // "the account has nothing" can never be confused with "the account has 0 Zeny".
 const saveFigures=blob=>{try{const o=JSON.parse(blob);if(!o||typeof o!=='object')return null;
   return {lv:Number(o.lv)||0,zeny:Number(o.zeny)||0,kills:Number(o.kills)||0,asc:Number(o.ascension&&o.ascension.level)||0,ver:Number(o.cloud&&o.cloud.v)||0}}catch(e){return null}};
+// v394: a GM restore (`gmRestore:{at,from}`, stamped by /api/gm/player) is the one change a device must
+// never argue with - it moves the account BACKWARDS on purpose, so the tab's copy always beats it on Zeny,
+// kills and level, which is exactly the v330 self-echo shape. See the guard in cloudPush.
+const restoreStamp=blob=>{try{const o=JSON.parse(blob);const g=o&&o.gmRestore;
+  return g&&typeof g==='object'&&Number.isFinite(Number(g.at))?{at:Number(g.at),from:Number(g.from)||0}:null}catch(e){return null}};
+const sawRestore=stamp=>{if(!stamp)return true;const seen=Number(S&&S.gmRestore&&S.gmRestore.at)||0;return seen>=stamp.at};
 
 // Take the server's copy as the live save. This device's copy is stashed under its own backup key
 // first, so "keep cloud" is never a deletion either.
