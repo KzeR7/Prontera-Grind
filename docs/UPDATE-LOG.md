@@ -10917,3 +10917,29 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 ### 2026-11-12 — `haven-v389` PR validation
 * **Checks:** Ran the complete 218-suite pre-push gate. After fetching missing historical commits and rerunning the four history-dependent suites: 209 passed, 9 remained red (no dependency skips). Reproduced all nine on unchanged base `e99317c`: `cloud_login_error_sim`, `cloud_sim`, `registration_sim`, `save_owner_boot_smoke`, `sanctuary_battle_sim`, `sanctuary_worker_battle_sim`, `social_fishing_sim` (assertion followed by timeout), `hosted_launch_stage_sim` (unpackaged Turnstile runtime), and `skill_balance_sim` (already-stale progression fixtures). No assertions, balance fixtures or unrelated systems were changed to hide these failures.
 * **Delivery:** Preparing a commit and pull request on `arena/4764470e-prontera-grind`; no merge or deployment.
+
+### 2026-11-12 — `v394 a GM restore is never rebased away`
+* **Changed:** A GM restore now survives an open tab. The restore stamps the blob it writes with
+  `gmRestore:{at,from}`; the client adopts a copy carrying a restore it has not seen instead of
+  rebasing over it. The GM console re-reads the player when the Backups tab is opened and after a
+  restore, and names a running tab as the one thing that still undoes it.
+* **Why:** The owner restored `demonz` four times in one sitting and saw nothing change — *"it shows,
+  but when click it doesnt do anything."* Every restore ran and was audited (5710→5719, 5710→5722,
+  5700→5724, 5690→5725), and the live version was 5726 shortly after with no GM action between. A
+  restore bumps the version by exactly one and installs a copy that is behind the tab in Zeny, kills
+  and level — which is the whole point of a rollback, and is exactly the shape the v330 self-echo rule
+  treats as "our own upload whose answer was lost". So the tab took the account's version **number**,
+  kept its own larger save and pushed it back on top. The restore worked; the client reverted it. That
+  rule is still right for its own case and still pinned.
+* **Second cause of "it does nothing":** the Backups tab was painted from the snapshot `openPlayer()`
+  took when the card opened, so a successful restore left the old version and the old backup list on
+  screen. Fixed, and the page now declares `haven-v394` — it declared `haven-v393`, an already
+  deployed build, so a loaded fix and a cached page were indistinguishable.
+* **Tests:** `cloud_sim` 97, `api_sim` 46, `gm_console_sim` 16, `update_watch_sim` 18 — green. The new
+  restore case fails both when the client guard is removed and when the server stamp is removed
+  (mutation-checked both ways); a second case pins that the stamp is per-restore, so one restore does
+  not disable self-echo recovery for good.
+* **Delivery:** Committed on `arena/c0afde4e-prontera-grind`; PR #216. A restore is only safe once the
+  client carries this build: until the player reloads, their old tab keeps rebasing. The immediate
+  workaround for a live account is **Force sign-out** in the console (a 401 sets `CLOUD.lost`, which
+  stops that tab syncing for good), then restore, then have them reload.
