@@ -407,6 +407,36 @@ await T('the GM sends Zeny, an item and a level, and the player receives them on
   assert.strictEqual(stillMine.n, 3);
 });
 
+await T('a gift expires 5 days after it was sent and can no longer be claimed', async () => {
+  // v401 (owner: "i want the gm mail expiry to be 5 days. any gift not claim will be directly
+  // vanish."). Back-date one grant past the window and leave one fresh, then prove the stale one is
+  // both invisible to the client AND unclaimable if the client still holds its id.
+  const owner = globalThis.__owner;
+  const friendId = sqlite.prepare('SELECT id FROM users WHERE username = ?').get('FRIEND').id;
+  const freshGrp = await api.register(env, { u: 'TTLTEST', p: 'ttl-password-xyz' });
+  const ttlId = sqlite.prepare('SELECT id FROM users WHERE username = ?').get('TTLTEST').id;
+  await api.act(env, owner, { id: ttlId, action: 'grant', kind: 'zeny', payload: { amount: 111 } });
+  await api.act(env, owner, { id: ttlId, action: 'grant', kind: 'zeny', payload: { amount: 222 } });
+  const rows = sqlite.prepare('SELECT id FROM grants WHERE user_id = ? ORDER BY id').all(ttlId);
+  assert.strictEqual(rows.length, 2, 'two gifts were queued');
+  const day = 24 * 60 * 60 * 1000;
+  // Age the first one to 5 days + 1 minute: inside the boundary check it must already be gone.
+  sqlite.prepare('UPDATE grants SET created_at = ? WHERE id = ?').run(Date.now() - (5 * day) - 60000, rows[0].id);
+  // Age the second to 4 days 23 hours: still claimable.
+  sqlite.prepare('UPDATE grants SET created_at = ? WHERE id = ?').run(Date.now() - (5 * day) + 60000, rows[1].id);
+  const seen = await api.grants(env, freshGrp.cookie);
+  assert.strictEqual(seen.data.grants.length, 1, 'only the in-window gift is listed');
+  assert.strictEqual(seen.data.grants[0].id, rows[1].id, 'the fresh gift is the one still offered');
+  // A client that cached the expired id must not be able to redeem it.
+  await api.claim(env, freshGrp.cookie, [rows[0].id]);
+  const stale = sqlite.prepare('SELECT claimed_at FROM grants WHERE id = ?').get(rows[0].id);
+  assert.strictEqual(stale.claimed_at, null, 'an expired gift cannot be claimed even by id');
+  // The in-window one still works.
+  await api.claim(env, freshGrp.cookie, [rows[1].id]);
+  assert.ok(sqlite.prepare('SELECT claimed_at FROM grants WHERE id = ?').get(rows[1].id).claimed_at, 'an unexpired gift is still claimable');
+  void friendId;
+});
+
 await T('one player cannot claim another player\'s grants', async () => {
   const owner = globalThis.__owner;
   const friendId = sqlite.prepare('SELECT id FROM users WHERE username = ?').get('FRIEND').id;

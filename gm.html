@@ -689,7 +689,7 @@ $('detail').addEventListener('click', async e => {
       // looking like nothing happened: reload the panel so the version and the backups list are the ones
       // the server now holds, and say plainly that an open tab is the thing that undoes a restore.
       await openPlayer(id);
-      // haven-v400: the restore now revokes the account's sessions, so every open tab is signed out
+      // haven-v401: the restore now revokes the account's sessions, so every open tab is signed out
       // at that instant instead of being asked to notice. That is what makes "reopen the game" true -
       // the next sign-in reconciles against the restored save, which is the path the tests cover.
       say('Restored as version ' + r.version + (r.sessionsRevoked ? '. Every open session was signed out' : '') +

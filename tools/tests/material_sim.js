@@ -23,6 +23,10 @@ const rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(4,(i
 ${grab('const REF_ZENY_MUL=3,refCost=', 'const affTxt=')}
 const ORE={ori:'Oridecon',elu:'Elunium'};
 const iname=it=>(it.r?'+'+it.r+' ':'')+it.name;
+// v401: refine() consults refineOreKey() for the ore an item uses (accessories moved to Oridecon),
+// and that helper sits just outside the slice below, so define it here the same way the page does.
+${pick(/const ORI_SLOTS=\[[^\]]*\];/, 'ORI_SLOTS')}
+${pick(/function refineOreKey\(it\)\{[^\n]*\}/, 'refineOreKey')}
 ${grab('function refine(sl){', 'const bmOpen=()=>')}
 // v311: the workshop now buys missing ore itself, so the Black Market's ore price travels with it.
 // Presentation is exercised with a real DOM in eclipse_ui_sim.js.

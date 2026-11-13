@@ -182,6 +182,23 @@ try{
   const aside2=doc.querySelector('.eclipse-card-sockets');
   assert.match(aside2.textContent,/Infernal Charm/,'selecting an accessory card moves the panel to the accessory');
  });
+ // v401 (owner: "can we make oridecon to refine weapons & accessories? so move accessories to
+ // oridecon"). Weapons and accessories share Oridecon now; every other slot keeps Elunium.
+ test('Accessories refine with Oridecon, the rest keep Elunium',()=>{
+  ev(`S=fresh();S.auto=false;S.lv=150`);
+  assert.equal(ev(`refineOreKey({slot:'weapon'})`),'ori','weapons use Oridecon');
+  assert.equal(ev(`refineOreKey({slot:'acc'})`),'ori','accessories moved to Oridecon');
+  for(const slot of ['armor','head','off','leg'])
+   assert.equal(ev(`refineOreKey({slot:'${slot}'})`),'elu',slot+' still uses Elunium');
+  // The shortfall helper - which the panel prices against - must agree with the same rule.
+  ev(`S.ore.ori=0;S.ore.elu=99;S.eq.acc1={id:5,slot:'acc',wt:'acc',tier:3,val:9,name:'Mythic Infernal Charm',aff:[],slots:0,cards:[],sec:6,lvl:150,mythic:true,r:0}`);
+  const short=ev(`JSON.stringify(refineOreShortfall(S.eq.acc1))`);
+  assert.match(short,/"ore":"ori"/,'an accessory refinement is priced in Oridecon: '+short);
+  // And the header text names the new rule.
+  const h=ev(`V.refine()`);
+  assert.match(h,/Weapons and accessories use Oridecon/,'the panel states the new ore rule');
+ });
+
  test('Ascension refine picks the scroll the rank actually needs',()=>{
   const mk=r=>`(()=>{S=fresh();S.auto=false;S.lv=150;S.zeny=1e9;S.ore.ori=9999;S.ore.elu=9999;S.refineScrolls=5;S.mythicScrolls=5;S.useRefineScroll=1;S.items=[];const it={id:88001,slot:'armor',wt:'armor',tier:4,val:100,name:'Mythic Infernal Vest',aff:[],slots:0,cards:[],sec:6,lvl:150,quality:1.5,mythic:true,ascSet:'infernal',r:${r}};S.eq.armor=it;return S})()`;
   // +8 must ask for a REGULAR scroll, and must spend one when the attempt runs.
