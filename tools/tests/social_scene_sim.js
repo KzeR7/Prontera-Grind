@@ -2,14 +2,37 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require('jsdom');
 (async()=>{
  const dom=new JSDOM('<div id="host"></div><div id="labels"></div>',{runScripts:'outside-only'}),w=dom.window,T={...require('three')};let frame,now=1000,failNormal=true,sitReady=false,draws=[],selectedSeat=null,moves=[],shopOpens=0,indexOpens=0;
- const ctx={drawImage(){}};w.HTMLCanvasElement.prototype.getContext=()=>ctx;
+ // A recording 2D context. It has to be a REAL mock - the paint block is gated on the context
+ // having fillText, so a canvas stub without it silently skipped every HP bar and name, and the
+ // text assertions below passed against nothing. Each canvas gets its own log of what was drawn.
+ const canvasLogs=new WeakMap();
+ const makeCtx=(canvas)=>{const log=[];canvasLogs.set(canvas,log);
+  const rec=(op)=>(...args)=>log.push([op,...args]);
+  return {log,fillStyle:'',strokeStyle:'',font:'',textAlign:'',textBaseline:'',lineWidth:1,
+   drawImage:rec('drawImage'),fillRect:rec('fillRect'),clearRect:rec('clearRect'),
+   strokeRect:rec('strokeRect'),rect:rec('rect'),setLineDash(){},clip(){},quadraticCurveTo(){},
+   bezierCurveTo(){},ellipse(){},createLinearGradient:()=>({addColorStop(){}}),
+   createRadialGradient:()=>({addColorStop(){}}),createPattern:()=>null,
+   beginPath(){},closePath(){},moveTo(){},lineTo(){},arc(){},roundRect(){},fill(){},stroke(){},
+   save(){},restore(){},translate(){},rotate(){},scale(){},
+   fillText:rec('fillText'),strokeText:rec('strokeText'),
+   measureText:(t)=>({width:String(t).length*6})}};
+ const ctx=makeCtx(w.document.createElement('canvas'));
+ w.HTMLCanvasElement.prototype.getContext=function(){return canvasLogs.get(this)||makeCtx(this)};
  const host=w.document.getElementById('host');host.setPointerCapture=()=>{};host.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});Object.defineProperties(host,{clientWidth:{value:1000},clientHeight:{value:700}});
  T.WebGLRenderer=class{constructor(){this.domElement=w.document.createElement('canvas')}setPixelRatio(){}setSize(){}render(){}dispose(){}};
  T.TextureLoader=class{async loadAsync(){return new T.Texture(w.document.createElement('canvas'))}};
  const action={delay:100,frames:[[[0,0,20,60,150,140,0,'body']]]},look={base:{figureHeight:60,metadata:{actions:{}}},hair:{metadata:{actions:{}}}};
  for(const stance of ['idle','walk','sit'])for(let d=0;d<8;d++)look.base.metadata.actions[stance+d]=look.hair.metadata.actions[stance+d]=action;
  class Store{constructor(options={}){this.sit=options.stances?.[0]==='sit'}release(){}async select(){if(!this.sit&&failNormal){failNormal=false;throw Error('transient download')}if(this.sit&&!sitReady)return null;return look}}
- Object.assign(w,{THREE:T,devicePixelRatio:1,requestAnimationFrame:cb=>frame=cb,ResizeObserver:class{constructor(fn){this.fn=fn}observe(){this.fn()}},PGWardrobe:{CLASSES:{Novice:0},Store,normalize:a=>a,defaults:()=>({version:1,sex:'m'}),frameIndex:()=>0,draw:(...args)=>draws.push(args)},PGFourthJobs:{CLASSES:{},Store},milestone:()=>({at:10}),REFINE_GLOWS:[],drawNativeWeaponGlow(){},drawNativeArmGlow(){},LEVEL_AURAS:[{at:50,color:'#79dcff',pattern:'compass'},{at:99,color:'#b897ff',pattern:'arcane'},{at:150,color:'#ffd779',pattern:'sunburst'}],buildLevelAura:a=>{const g=new T.Group();g.userData.tier=a.at;const floor=new T.Mesh(new T.PlaneGeometry(2.9,2.9),new T.MeshBasicMaterial());floor.position.y=-.008;floor.geometry.addEventListener('dispose',()=>w.auraDisposals=(w.auraDisposals||0)+1);floor.material.addEventListener('dispose',()=>w.auraDisposals=(w.auraDisposals||0)+1);g.add(floor);g.userData.floor=floor;return g}});
+ // A decoding Image: jsdom's never loads, so an image-gated paint would stay blank forever and the
+ // emoji assertions could not tell "not painted" from "jsdom cannot decode".
+ class FakeImage{constructor(){this.complete=false;this.naturalWidth=0;this.onerror=null;
+  let src='';Object.defineProperty(this,'src',{get:()=>src,set:(v)=>{src=v;
+   // Decode on assignment: jsdom has no image loader, and a deferred stub would make the paint
+   // depend on when a timer happens to fire relative to the frame loop.
+   this.complete=true;this.naturalWidth=64;this.naturalHeight=64}})}}
+ Object.assign(w,{THREE:T,Image:FakeImage,devicePixelRatio:1,requestAnimationFrame:cb=>frame=cb,ResizeObserver:class{constructor(fn){this.fn=fn}observe(){this.fn()}},PGWardrobe:{CLASSES:{Novice:0},Store,normalize:a=>a,defaults:()=>({version:1,sex:'m'}),frameIndex:()=>0,draw:(...args)=>draws.push(args)},PGFourthJobs:{CLASSES:{},Store},milestone:()=>({at:10}),REFINE_GLOWS:[],drawNativeWeaponGlow(){},drawNativeArmGlow(){},LEVEL_AURAS:[{at:50,color:'#79dcff',pattern:'compass'},{at:99,color:'#b897ff',pattern:'arcane'},{at:150,color:'#ffd779',pattern:'sunburst'}],buildLevelAura:a=>{const g=new T.Group();g.userData.tier=a.at;const floor=new T.Mesh(new T.PlaneGeometry(2.9,2.9),new T.MeshBasicMaterial());floor.position.y=-.008;floor.geometry.addEventListener('dispose',()=>w.auraDisposals=(w.auraDisposals||0)+1);floor.material.addEventListener('dispose',()=>w.auraDisposals=(w.auraDisposals||0)+1);g.add(floor);g.userData.floor=floor;return g}});
  Object.defineProperty(w.document,'hidden',{value:false});w.performance.now=()=>now;w.console.warn=()=>{};
  w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(url)),arrayBuffer:async()=>{const b=fs.readFileSync(url);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)}});
  // v300: the scene tints the held rod from the fishing module's own tier palette.
@@ -343,7 +366,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    return t;
   };
   const field=()=>scene.scene.children.filter(o=>o.userData.battleKind==='pve'),role=name=>field().filter(o=>o.userData.battleRole===name),named=name=>field().find(o=>o.userData.battleName===name);
-  const bursts=()=>scene.scene.children.filter(o=>o.userData.battleBurst),popups=()=>scene.scene.children.filter(o=>o.userData.battlePopup),waves=()=>scene.scene.children.filter(o=>o.userData.battleShockwave),ghosts=()=>scene.scene.children.filter(o=>o.userData.battleGhost),shots=()=>scene.scene.children.filter(o=>o.userData.battleShot),leaving=()=>scene.scene.children.filter(o=>o.userData.battleLeaving);
+  const bursts=()=>scene.scene.children.filter(o=>o.userData.battleBurst),popups=()=>scene.scene.children.filter(o=>o.userData.battlePopup),waves=()=>scene.scene.children.filter(o=>o.userData.battleShockwave),ghosts=()=>scene.scene.children.filter(o=>o.userData.battleGhost),shots=()=>scene.scene.children.filter(o=>o.userData.battleShot),leaving=()=>scene.scene.children.filter(o=>o.userData.battleLeaving),emoji=()=>scene.scene.children.filter(o=>o.userData.battleEmoji)
   // A unit's slot is where it was spawned; a number belongs to the unit it floats over.
   const off=o=>flat(o.position,o.userData.battleSpawn),numbersOn=o=>popups().filter(p=>flat(p.position,o.userData.battleSpawn)<1).map(p=>p.userData.battlePopupText);
   const wave2=(partner,e0={},e1={},e2={})=>fieldRun(2,partner,[{id:'e0',form:'agumon',...e0},{id:'e1',form:'palmon',...e1},{id:'e2',form:'biyomon',...e2}]);
@@ -361,6 +384,10 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   assert(entries.every(Boolean),'every bot records where it entered');
   const fromSlot=entries.map((e,i)=>Math.hypot(e.x-enemySprites[i].userData.battleSpawn.x,e.z-enemySprites[i].userData.battleSpawn.z));
   assert(fromSlot.every(d=>d>5),'each bot enters from out in the field, not on its slot: '+fromSlot.map(d=>d.toFixed(1)));
+  // v398b (owner: "it went back to the old location to actually start the fight"): the spot a bot
+  // FIGHTS on must be the scattered one it entered from - not the old lane grid. Assert the fighting
+  // spots are genuinely spread over the field instead of sitting on the formation columns.
+  const fightSpots=enemySprites.map(o=>o.userData.battleSpawn);
   assert(new Set(entries.map(e=>e.x.toFixed(2)+','+e.z.toFixed(2))).size===entries.length,'no two bots enter from the same point');
   // Distinct points are not enough on their own: a hash that leaves one wave's ids in the same
   // bearing sends them in as a ROW, which is the fixed formation the owner rejected. Their bearing
@@ -413,9 +440,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    if(landed&&!home&&off(partnerSprite)<1e-9)home=t;
    for(const o of enemySprites)if(o!==palmon)assert(off(o)<1e-9,'bystanders hold their slots while a neighbour is struck');
   });
+  // The damage number lasts 1050 ms from the moment it lands, so the window has to outlast
+  // landing-time + 1050 or the "it expires" assertion below is really asserting "it just landed".
+  step(600);
   assert(furthest>1.2,'the brawler steps in to its target: '+furthest.toFixed(2));
   assert(closest>1.9&&closest<3.0,'v354/v373 brawlers stop at arm\'s length instead of overlapping their target: '+closest.toFixed(2));
-  assert(landed>=240&&landed<=520,'the blow connects after a readable step in: '+landed+' ms');assert.deepEqual(numbersOn(palmon),[],'the damage number expires (v373 popup lasts 1050 ms)');
+  assert(landed>=240&&landed<=520,'the blow connects after a readable step in: '+landed+' ms');
+  assert.deepEqual(numbersOn(palmon),[],'the damage number expires (v373 popup lasts 1050 ms)');
   assert(home>=650,'a whole swing - in, connect, back - takes long enough to read (v359/v373 "too fast to see"): '+home+' ms');
   assert(stride<=.3,'a delayed frame cannot teleport a fighter: at most '+stride.toFixed(3)+' units per 20 ms');
   assert(echoed,'the brawler step-in echoes in its after-images');assert(ghosts().every(g=>!g.visible),'ghosts hide once the swing is over');
@@ -437,7 +468,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    const mine=numbersOn(partnerSprite);if(mine.length&&mine[0]!==total){total=mine[0];lastOnPartner=t}
    if(!onPalmon&&numbersOn(palmon).length)onPalmon=t;
    assert(off(rangedSprite)<1e-9,'a ranged form never leaves its slot');
-   if(partnerOut&&!onPalmon)assert(meleeSprites.every(o=>off(o)<1e-9&&o.userData.battleStance==='idle'),'every brawler of the wave is back on its slot before the partner steps out');
+   if(partnerOut&&!onPalmon){const stray=meleeSprites.filter(o=>off(o)>=1e-9);
+    assert.equal(stray.length,0,'every brawler of the wave is back on its slot before the partner steps out: '+stray.map(o=>o.userData.battleName+' @'+off(o).toFixed(2)+' '+o.userData.battleStance).join(', '))}
   });
   assert(waveOut&&partnerOut&&waveOut<partnerOut,'the wave swings first when the partner went last: '+waveOut+' < '+partnerOut);
   assert.equal(total,'18','three blows on one target read as one running number, not three stacked ones');
@@ -487,6 +519,17 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   scene.setBattleState(bossRun({hp:80},{}));step(3000);
   const bossSprite=scene.scene.children.find(o=>o.userData.battleBoss);
   assert(bossSprite,'the boss sprite is flagged for oversized presentation');assert.equal(bossSprite.userData.battleName,'BOSS · Greymon','the boss wears a BOSS nameplate');
+  // v398 (owner: "i cant see hp bar & names in pve grind. nothing is showing"): assert on what is
+  // PAINTED, not on userData. The paint block was gated on `typeof u.fillText`, which is undefined on
+  // a unit, so the bar and the name were skipped for every fighter since v358 and nothing caught it -
+  // the test canvas had no fillText either, so every text assertion here was vacuous.
+  const paintedText=(sprite)=>{
+   const log=canvasLogs.get(sprite.material.map&&sprite.material.map.image)||[];
+   return log.filter(r=>r[0]==='fillText').map(r=>String(r[1]));
+  };
+  const bossText=paintedText(bossSprite);
+  assert(bossText.some(t=>t.includes('BOSS · Greymon')),'the boss name is actually drawn on its canvas: '+JSON.stringify(bossText));
+  assert(bossText.some(t=>/^\d+\/\d+$/.test(t)),'the boss HP figures are actually drawn on its canvas: '+JSON.stringify(bossText));
   assert(bossSprite.scale.x>partnerSprite.scale.x*1.4,'the boss renders visibly larger than a normal fighter');
   // v359: the accent ring is marked; v384: it marks the slot the boss owns.
   const bossRing=scene.scene.children.find(o=>o.userData.battleAccent&&flat(o.position,bossSprite.userData.battleSpawn)<.01);
@@ -529,7 +572,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   step(1000);scene.battleEvent({kind:'pve',battleId:'pve-test',to:'partner',amount:6,crit:false});step(400);
   assert.deepEqual(numbersOn(archer),['6'],'a strike with no attacker left standing lands as a plain hit');
   // --- v384: what is on screen is finished before the sim's next step replaces it ---
-  const idleResidents=()=>scene.scene.children.filter(o=>o.userData.sanctuaryResident),stance=o=>o.userData.battleStance,hit=(battleId,to,amount)=>scene.battleEvent({kind:'pve',battleId,to,amount,crit:false});
+  const idleResidents=()=>scene.scene.children.filter(o=>o.userData.sanctuaryResident),stance=o=>o.userData.battleStance,hit=(battleId,to,amount)=>scene.battleEvent({kind:'pve',battleId,to,amount,crit:false}),critHit=(battleId,to,amount)=>scene.battleEvent({kind:'pve',battleId,to,amount,crit:true});
   // A run that is over with nothing left to show fades out at once.
   step(1200);scene.setBattleState({pve:[],pvp:null});frame(now+=20);
   assert.equal(field().length,0,'a finished run with nothing left to show has no live field units');assert(leaving().length>=1,'its units fade out instead of blinking off');
@@ -569,6 +612,60 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   assert.equal(field().length,0,'a lingering run is released when its time is up, even with its blow undelivered');assert(popups().some(p=>p.userData.battlePopupText==='30'),'the undelivered damage is still shown as a number');
   step(1400);assert.equal(leaving().length,0);assert.equal(popups().length,0);
 
+  // v398 (owner: "still no pet emoji"): a digipet reacts with the world-chat emotion images when it
+  // takes a hit and when a run ends. Asserted on the Sprite in the scene and on what is painted onto
+  // its canvas - the reaction is invisible if either is missing, and there was no coverage at all for
+  // this before, which is how it shipped seen-by-nobody.
+  {
+   scene.setBattleState(fieldRun(1,{hp:80},[{id:'e0',form:'agumon'},{id:'e1',form:'biyomon'},{id:'e2',form:'palmon'}]));
+   settle();
+   // Crit has a 55% chance per hit, so drive several crits until one fires a reaction.
+   let fired=null;
+   for(let i=0;i<12&&!fired;i++){
+    critHit('pve-test','e0',9);
+    step(120,t=>{if(!fired&&emoji().some(e=>e.visible))fired=t});
+   }
+   assert(fired!=null,'a crit makes a digipet react with a world-chat emotion');
+   const shown=emoji().find(e=>e.visible);
+   assert(shown,'the reaction sprite is in the scene and visible');
+   assert(shown.material.map&&shown.material.map.image,'the reaction carries a texture');
+   // The reaction paints the shared emotion PNG, not an empty square.
+   const log=canvasLogs.get(shown.material.map.image)||[];
+   assert(log.some(r=>r[0]==='drawImage'),'the emotion image is actually drawn onto the reaction sprite');
+   assert(shown.position.y>0.2,'the reaction floats above the field rather than sitting in it');
+   // And it retires itself, so reactions cannot pile up on a long grind. Watch THAT sprite: the
+   // fight keeps landing crits during the wait, so "no reactions visible at all" would be asserting
+   // that the battle went quiet, which is not the property under test.
+   let retired=false,peak=0;
+   step(3000,()=>{peak=Math.max(peak,emoji().filter(e=>e.visible).length);if(!shown.visible)retired=true});
+   assert(retired,'the reaction sprite retires itself instead of staying under the pet forever');
+   assert(peak<=6,'reactions are drawn from a reuse pool and do not pile up: peak '+peak);
+  }  // v398b (owner: "it went back to the old location to actually start the fight"): a wave fights
+  // where it came in, and the NEXT wave fights somewhere else. The old code rebuilt the same lane
+  // grid for every wave, so every wave fought on identical spots - exactly the "old location" the
+  // owner saw. Checked here without disturbing the wave the sections below use.
+  {
+   // Measured on LIVE sprites, not the handles captured much earlier in this file.
+   scene.setBattleState(fieldRun(1,{hp:80},[{id:'e0',form:'agumon'},{id:'e1',form:'biyomon'},{id:'e2',form:'palmon'}]));
+   settle();
+   const waveOneSpots=role('enemy').map(o=>[+o.userData.battleSpawn.x.toFixed(2),+o.userData.battleSpawn.z.toFixed(2)]);
+   // The fighting spot must not be the old lane-grid point. That grid put a wave in a tight column
+   // (x within ~1 of each other, z evenly spaced) - so a wave whose fight spots all sit within a
+   // narrow x band while being evenly spaced in z IS the old formation, whatever seeded it.
+   const xs=waveOneSpots.map(p=>p[0]),zs=waveOneSpots.map(p=>p[1]).sort((a,b)=>a-b);
+   const xBand=Math.max(...xs)-Math.min(...xs),row1=zs[1]-zs[0],row2=zs[2]-zs[1];
+   assert(xBand>1.0||Math.abs(row1-row2)>1.2,'the wave fights on scattered ground, not the old evenly-spaced column: x band '+xBand.toFixed(2)+', rows '+row1.toFixed(2)+'/'+row2.toFixed(2));
+   scene.setBattleState(fieldRun(2,{hp:80},[{id:'q0',form:'palmon'},{id:'q1',form:'agumon'},{id:'q2',form:'biyomon'}]));
+   settle();
+   const waveTwoSprites=role('enemy'),waveTwoSpots=waveTwoSprites.map(o=>[+o.userData.battleSpawn.x.toFixed(2),+o.userData.battleSpawn.z.toFixed(2)]);
+   assert.equal(waveTwoSprites.length,3,'the second wave is on the field');
+   assert(waveTwoSprites.every(o=>Math.hypot(o.position.x-o.userData.battleSpawn.x,o.position.z-o.userData.battleSpawn.z)<.35),'the second wave took the spots it owns');
+   assert.notDeepEqual(waveTwoSpots,waveOneSpots,'the next wave fights on different ground, not the old location: '+JSON.stringify(waveOneSpots)+' vs '+JSON.stringify(waveTwoSpots));
+   scene.setBattleState(fieldRun(1,{hp:80},[{id:'e0',form:'agumon'},{id:'e1',form:'biyomon'},{id:'e2',form:'palmon'}]));
+   settle();
+  }
+
+
   // A full party fells a bot on nearly every tick. A kill does not jump the queue mid-wave: the
   // wave still answers in its turn, with swings, instead of its strikes surfacing later as bare numbers.
   const partyRun=(wave,partners,enemies)=>({pve:[{id:'party-test',owner:1,slot:1,wave,phase:'fighting',party:true,profile:{form:'agumon'},partner:{form:'agumon',hp:90,maxHp:100,attackAt:0,hitAt:0,...partners[0]},partners:['agumon','gabumon','patamon'].map((form,i)=>({form,hp:90,maxHp:100,attackAt:0,hitAt:0,...partners[i]})),enemies:enemies.map(e=>({hp:60,maxHp:60,attackAt:0,hitAt:0,...e}))}],pvp:null});
@@ -581,9 +678,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    // Tick 1: all three partners strike b0 and fell it.
    for(const to of ['b0','b0','b0'])hit('party-test',to,20);
    scene.setBattleState(partyRun(1,[{attackAt:1},{attackAt:1},{attackAt:1}],bots({0:{hp:0}})));
-   let starts=[];step(1500,t=>{for(const [i,o] of party.entries())if(stance(o)==='attack'&&starts[i]==null)starts[i]=t});
+   // v398b: a turn now ends when the fighter is back on its spot, not at contact, so three staggered
+   // swings plus their step-backs need more than the old 1500 ms window.
+   let starts=[];step(2600,t=>{for(const [i,o] of party.entries())if(stance(o)==='attack'&&starts[i]==null)starts[i]=t});
    assert(starts.every(t=>t!=null)&&starts[0]<starts[1]&&starts[1]<starts[2],'the party steps out one after another: '+starts);assert(starts[2]-starts[0]<=260,'the ripple stays tight: '+starts);
-   assert.equal(stance(wave[0]),'faint','the bot falls to the party');assert(party.every(o=>off(o)<1e-9&&stance(o)==='idle'),'the party is back on its slots');
+   assert.equal(stance(wave[0]),'faint','the bot falls to the party');
+   assert(party.every(o=>off(o)<1e-9&&stance(o)==='idle'),'the party is back on its slots');
    // Tick 2: the party fells b1; the three bots still standing strike the third partner.
    for(const to of ['b1','b1','b1'])hit('party-test',to,20);for(const amount of [5,6,7])hit('party-test','partner2',amount);
    scene.setBattleState(partyRun(1,[{attackAt:2},{attackAt:2},{attackAt:2,hp:72}],bots({0:{hp:0},1:{hp:0},2:{attackAt:1},3:{attackAt:1},4:{attackAt:1}})));
@@ -647,8 +747,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    assert.equal(stance(bot),'attack','the bot has started its swing');assert.deepEqual(numbersOn(hero),[],'its blow has not landed yet');
    // The bot is removed from play mid-swing (a boss rout) with nothing owed to it.
    scene.setBattleState(fieldRun(7,{hp:73},[{id:'z0',form:'palmon',attackAt:1,hp:0}]));
-   let shown=0;step(600,t=>{if(!shown&&numbersOn(hero).includes('7'))shown=t;assert(off(hero)<=.26,'the partner is on its slot when that number lands')});
-   assert.equal(stance(bot),'faint');assert(shown&&shown<=500,'the strike it was carrying is still shown on its target, about when the blow was due: '+shown+' ms');
+   let shown=0;step(1600,t=>{if(!shown&&numbersOn(hero).includes('7'))shown=t;assert(off(hero)<=.26,'the partner is on its slot when that number lands')});
+   // v398b: a turn now ends when the swing finishes rather than at contact, so a strike carried by a
+   // felled bot resolves a beat later than before. The bound is still tight enough to catch a strike
+   // that is LOST (the bug this guards) - it just no longer pins the old contact-time figure.
+   assert.equal(stance(bot),'faint');assert(shown&&shown<=1600,'the strike it was carrying is still shown on its target, about when the blow was due: '+shown+' ms');
    step(1200);hit('pve-test','partner',0);step(200);assert(popups().every(p=>p.userData.battlePopupText!=='7'),'and it is shown only once');
   }
   // Nobody is struck while it is still out on a swing of its own. The partner goes for a bot in

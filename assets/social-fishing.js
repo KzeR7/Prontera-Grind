@@ -77,7 +77,7 @@ const SPECIES_DATA={
   ['coelacanth','Ancient Coelacanth','🐟',230,10,30],['dragonet','Emerald Dragonet','🐠',0,.8,3],
   ['phoenixfish','Ember Phoenixfish','🐠',20,2,9],['oarfish','Banner Oarfish','🐟',265,7,26],
   // v297: thresher and goblin sharks, and the first true freshwater giants.
-  ['thresher','Whiptail Thresher','🦈',205,15,45,'thresher'],['goblin','Goblin Shark','🦈',340,12,38,'goblin'],
+  ['thresher','Whiptail Thresher','🦈',205,1,1000,'thresher'],['goblin','Goblin Shark','🦈',340,1,1000,'goblin'],
   ['arapaima','Arapaima','🐟',20,30,120,'fish',true],['mekong','Mekong Giant Catfish','🐟',45,50,200,'fish',true],
   ['manta','Plaza Manta','🐟',210,25,110,'ray',true],
  ],
@@ -162,11 +162,11 @@ const EXTRA_SPECIES=[
  ['silvershark','Silverfin Shark','🦈',200,15,60,'shark','rare'],
  ['ghostshark','Ghost Shark','🦈',265,10,40,'shark','rare'],
  ['lanternshark','Lantern Shark','🦈',240,2,9,'shark','rare'],
- ['tigershark','Tiger Shark','🦈',40,60,220,'shark','legendary'],
- ['greatmaw','Greatmaw','🦈',0,80,260,'shark','legendary'],
- ['sunshark','Sunspot Shark','🦈',45,30,120,'shark','legendary'],
- ['abysssaw','Abyssal Sawshark','🦈',215,40,150,'shark','mythical'],
- ['voidfin','Voidfin Shark','🦈',270,50,180,'shark','mythical'],
+ ['tigershark','Tiger Shark','🦈',40,1,1000,'shark','legendary'],
+ ['greatmaw','Greatmaw','🦈',0,1,1000,'shark','legendary'],
+ ['sunshark','Sunspot Shark','🦈',45,1,1000,'shark','legendary'],
+ ['abysssaw','Abyssal Sawshark','🦈',215,1,1000,'shark','mythical'],
+ ['voidfin','Voidfin Shark','🦈',270,1,1000,'shark','mythical'],
 ].map(([id,name,glyph,hue,min,max,shape,rarity])=>({id,name,glyph,hue,min,max,shape:shape||null,mega:false,rarity}));
 // v304 (owner): the shark line is the boss line now - the big ones moved up a tier (or two), so a
 // Great White or a Tiger Shark is an event and the Abyssal Saw is a secret.
