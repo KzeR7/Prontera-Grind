@@ -35,8 +35,8 @@ const PRICE_OVERRIDES={};
 // Consumables. `resource` and `amount` are exactly the gift payload the game already applies
 // (gmApplyGift in index.html), so a purchase is delivered like a GM gift: once, on the next sync.
 const RESOURCES={
- ori:{name:'Oridecon',group:'Refining ore',blurb:'Refines weapons. The Black Market sells it for 100,000z each.'},
- elu:{name:'Elunium',group:'Refining ore',blurb:'Refines armor and accessories. The Black Market sells it for 100,000z each.'},
+ ori:{name:'Oridecon',group:'Refining ore',blurb:'Refines weapons and accessories. The Black Market sells it for 100,000z each.'},
+ elu:{name:'Elunium',group:'Refining ore',blurb:'Refines armor, shields, headgear and legwear. The Black Market sells it for 100,000z each.'},
  refineScrolls:{name:'Refine Protection Scroll',group:'Protection scrolls',blurb:'Protects one +5 and above refinement attempt from losing a rank. 80,000,000z in the Black Market.'},
  mythicScrolls:{name:'Mythic Protection Scroll',group:'Protection scrolls',blurb:'Protects one +11 to +15 Mythic refinement attempt. 100 Valkyrie\u2019s Sigils in the Black Market.'},
  ascMat0:{name:'Astral Shard',group:'Ascension materials',blurb:'Astral Citadel material for forging Mythic equipment.'},
