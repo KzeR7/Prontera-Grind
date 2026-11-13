@@ -329,6 +329,19 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  {
   const fieldRun=(wave,partner,enemies)=>({pve:[{id:'pve-test',owner:1,slot:0,wave,phase:'fighting',profile:{form:'agumon'},partner:{form:'agumon',hp:80,maxHp:100,attackAt:0,hitAt:0,...partner},enemies:enemies.map(e=>({hp:40,maxHp:50,attackAt:0,hitAt:0,...e}))}],pvp:null});
   const step=(ms,each)=>{for(let t=0;t<ms;t+=20){frame(now+=20);if(each)each(t+20)}},flat=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+  // v398: a wave now RUNS IN, so anything that measures where a fighter stands has to let it arrive
+  // first. This steps until no unit is still entering (capped), so a formation assertion is never
+  // taken against a bot that is halfway across the field.
+  const settle=(cap=6000)=>{
+   let t=0;
+   // wait until nobody is still entering...
+   while(t<cap&&scene.scene.children.some(o=>o.userData.battleKind&&o.userData.battleEntering)){frame(now+=20);t+=20}
+   // ...and then until every fighter is back on the slot it owns, so a formation assertion is never
+   // taken mid-swing (a staged swing takes a fighter off its slot by design).
+   let g=0;
+   while(g<cap&&scene.scene.children.some(o=>o.userData.battleKind==='pve'&&flat(o.position,o.userData.battleSpawn)>.35)){frame(now+=20);t+=20;g+=20}
+   return t;
+  };
   const field=()=>scene.scene.children.filter(o=>o.userData.battleKind==='pve'),role=name=>field().filter(o=>o.userData.battleRole===name),named=name=>field().find(o=>o.userData.battleName===name);
   const bursts=()=>scene.scene.children.filter(o=>o.userData.battleBurst),popups=()=>scene.scene.children.filter(o=>o.userData.battlePopup),waves=()=>scene.scene.children.filter(o=>o.userData.battleShockwave),ghosts=()=>scene.scene.children.filter(o=>o.userData.battleGhost),shots=()=>scene.scene.children.filter(o=>o.userData.battleShot),leaving=()=>scene.scene.children.filter(o=>o.userData.battleLeaving);
   // A unit's slot is where it was spawned; a number belongs to the unit it floats over.
@@ -338,9 +351,39 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   assert.equal(field().length,4,'partner and three bot sprites are rendered');assert(scene.scene.children.filter(o=>o.userData.sanctuaryResident).every(o=>!o.visible),'idle residents are hidden during grinding');
   const enemySprites=role('enemy'),partnerSprite=role('partner')[0],rangedSprite=named('Biyomon'),meleeSprites=enemySprites.filter(o=>o!==rangedSprite),palmon=named('Palmon');
   assert.deepEqual(enemySprites.map(o=>o.userData.battleName).sort(),['Agumon','Biyomon','Palmon'],'farm bots show species names instead of generic wave labels');assert.equal(new Set(enemySprites.map(o=>JSON.stringify(o.userData.battleSpawn))).size,3,'each bot receives a distinct stable slot');
-  // The wave arrives on its slots: a short fade and a puff, not a run in from the far field.
-  assert(enemySprites.every(o=>o.material.opacity<.2),'a new wave fades in');assert.equal(bursts().length,15,'each bot arrives with a small puff');
-  step(500);assert(field().every(o=>o.material.opacity===1),'the fade-in is over within half a second');assert.equal(bursts().length,0,'the arrival puffs expire');
+  // v398 (owner: "random spawn pve grind... spawn randomly on the farm then battle"): a new wave now
+  // ENTERS from the field instead of blinking onto its slots. Each bot starts away from the slot it
+  // owns, walks in, and is not in the fight until it arrives.
+  assert(enemySprites.every(o=>o.material.opacity<.2),'a new wave still fades in as it enters');
+  // Each bot enters from its OWN point out in the field, not from the slot it will fight on, and
+  // those entry points differ from each other - that is the "spawns randomly" the owner asked for.
+  const entries=enemySprites.map(o=>o.userData.battleEntered);
+  assert(entries.every(Boolean),'every bot records where it entered');
+  const fromSlot=entries.map((e,i)=>Math.hypot(e.x-enemySprites[i].userData.battleSpawn.x,e.z-enemySprites[i].userData.battleSpawn.z));
+  assert(fromSlot.every(d=>d>5),'each bot enters from out in the field, not on its slot: '+fromSlot.map(d=>d.toFixed(1)));
+  assert(new Set(entries.map(e=>e.x.toFixed(2)+','+e.z.toFixed(2))).size===entries.length,'no two bots enter from the same point');
+  assert(enemySprites.every(o=>o.userData.battleStance==='walking'||o.material.opacity<.2),'an entering bot is drawn walking in');
+  // The puff is the ARRIVAL, not the spawn: nothing has burst yet while they are still on their way.
+  assert.equal(bursts().length,0,'no arrival puff while the wave is still running in');
+  // Watch the arrival itself: the puff is short-lived (420 ms), so it is caught on the frame the
+  // unit lands rather than after the whole step.
+  let sawArrivalPuff=false,arriveMs=null;
+  // The run-in is bounded by STAGE.RUNIN_MS measured from a unit's first frame WITH ART, so a slow
+  // sprite load delays the walk rather than truncating it. Give the window room for that.
+  step(5000,t=>{
+   if(!sawArrivalPuff&&bursts().length){sawArrivalPuff=true;arriveMs=t;assert.ok(bursts().length>=5,'the arrival puff is a small burst: '+bursts().length)}
+  });
+  assert(sawArrivalPuff,'a bot puffs when it ARRIVES on its slot');
+  assert(arriveMs>150,'the run-in takes a moment instead of blinking in: '+arriveMs+' ms');
+  assert(field().every(o=>o.material.opacity===1),'the entry fade is over');
+  // Let any fighter still finishing its walk reach its slot (the run-in is bounded by RUNIN_MS).
+  // step() advances the sim clock; calling frame() from this scope would leave `now` frozen.
+  step(3000);
+  const offSlotEnd=enemySprites.map(o=>Math.hypot(o.position.x-o.userData.battleSpawn.x,o.position.z-o.userData.battleSpawn.z));
+  assert(offSlotEnd.every(d=>d<.35),'every bot reaches the slot it owns: '+offSlotEnd.map(d=>d.toFixed(2)));
+  // And the puff expires, so the field is clean before the fight starts.
+  step(600);
+  assert.equal(bursts().length,0,'the arrival puffs expire');
   // Formation: party on the west of the lane, wave across the aisle, rows apart, ranged a step back.
   assert(enemySprites.every(o=>o.position.x-partnerSprite.position.x>=4.2),'the wave lines up across an aisle from the party: '+enemySprites.map(o=>(o.position.x-partnerSprite.position.x).toFixed(2)));
   for(let i=0;i<enemySprites.length;i++)for(let j=i+1;j<enemySprites.length;j++)assert(Math.abs(enemySprites[i].position.z-enemySprites[j].position.z)>=2.4,'farm bots occupy separated slots instead of clumping');
@@ -432,7 +475,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   // v350 boss waves: one oversized gold-ringed boss with a BOSS nameplate, and quick ranged
   // attackers fire a visible travelling shot instead of only bumping into each other.
   const bossRun=(partner,boss)=>fieldRun(5,partner,[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,...boss}]);
-  scene.setBattleState(bossRun({hp:80},{}));step(500);
+  // v398: a wave runs in, so give it time to reach its slot before measuring the formation.
+  scene.setBattleState(bossRun({hp:80},{}));step(3000);
   const bossSprite=scene.scene.children.find(o=>o.userData.battleBoss);
   assert(bossSprite,'the boss sprite is flagged for oversized presentation');assert.equal(bossSprite.userData.battleName,'BOSS · Greymon','the boss wears a BOSS nameplate');
   assert(bossSprite.scale.x>partnerSprite.scale.x*1.4,'the boss renders visibly larger than a normal fighter');
@@ -450,8 +494,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   // A ranged partner: it never leaves its slot; the shot is seen in flight and carries the number.
   scene.setBattleState({pve:[],pvp:null});step(400);
   const rangedRun=(partner,boss)=>({pve:[{id:'pve-test',owner:1,slot:0,wave:5,phase:'fighting',profile:{form:'biyomon'},partner:{form:'biyomon',hp:80,maxHp:100,attackAt:0,hitAt:0,...partner},enemies:[{id:'w5-boss',form:'greymon',hp:120,maxHp:300,boss:true,attackAt:0,hitAt:0,...boss}]}],pvp:null});
-  scene.setBattleState(rangedRun({},{}));step(500);
-  const archer=role('partner')[0],bigBoss=role('enemy')[0],settled={x:bigBoss.position.x,z:bigBoss.position.z};
+  scene.setBattleState(rangedRun({},{}));step(500);settle();
+  const archer=role('partner')[0],bigBoss=role('enemy')[0];
+  // v398: the boss runs in, so the shake baseline is the slot it OWNS, not wherever it happens to be
+  // standing the moment this section starts (that would fold the walk-in into the shake amplitude).
+  settle();
+  const settled={x:bigBoss.userData.battleSpawn.x,z:bigBoss.userData.battleSpawn.z};
   assert(ghosts().every(g=>!g.visible),'a ranged form never shows after-images - stale ghosts stay hidden');
   scene.battleEvent({kind:'pve',battleId:'pve-test',to:'w5-boss',amount:21,crit:false});scene.setBattleState(rangedRun({attackAt:1},{hp:99}));
   let firstShot=0,shotGone=0,number=0,shook=false;
@@ -482,7 +530,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   // Raid victory: the sim ends the run on the very tick the boss falls, so no snapshot ever shows
   // it at 0 HP. The finished run stays until that blow has landed and the collapse has played.
   const raid=(partner={},boss={})=>({pve:[{id:'raid-test',owner:1,slot:0,wave:1,phase:'fighting',mode:'boss',profile:{form:'agumon'},partner:{form:'agumon',hp:80,maxHp:100,attackAt:0,hitAt:0,...partner},enemies:[{id:'boss',form:'greymon',hp:30,maxHp:300,boss:true,attackAt:0,hitAt:0,...boss},{id:'add',form:'palmon',hp:40,maxHp:50,attackAt:0,hitAt:0}]}],pvp:null});
-  scene.setBattleState(raid());step(500);
+  scene.setBattleState(raid());step(500);settle();
   {
    const hero=role('partner')[0],raidBoss=field().find(o=>o.userData.battleBoss),add=role('enemy').find(o=>!o.userData.battleBoss);
    // Last tick: the partner's strike takes the boss's last 30 HP; the add's strike is still unanswered.
@@ -502,7 +550,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    assert.equal(leaving().length,0,'the lingering units have faded out');assert.equal(field().length,0);
   }
   // Defeat: the blow that fells the last partner is shown and the partner goes down before the field clears.
-  scene.setBattleState(raid({hp:9}));step(500);
+  scene.setBattleState(raid({hp:9}));step(500);settle();
   {
    const hero=role('partner')[0];hit('raid-test','partner',9);scene.setBattleState({pve:[],pvp:null});
    let down=0,gone=0,struck=false;step(1600,t=>{if(role('enemy').some(o=>stance(o)==='attack'))struck=true;if(!down&&stance(hero)==='faint')down=t;if(!gone&&!field().length)gone=t});
@@ -517,7 +565,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   // wave still answers in its turn, with swings, instead of its strikes surfacing later as bare numbers.
   const partyRun=(wave,partners,enemies)=>({pve:[{id:'party-test',owner:1,slot:1,wave,phase:'fighting',party:true,profile:{form:'agumon'},partner:{form:'agumon',hp:90,maxHp:100,attackAt:0,hitAt:0,...partners[0]},partners:['agumon','gabumon','patamon'].map((form,i)=>({form,hp:90,maxHp:100,attackAt:0,hitAt:0,...partners[i]})),enemies:enemies.map(e=>({hp:60,maxHp:60,attackAt:0,hitAt:0,...e}))}],pvp:null});
   const bots=(over={})=>['palmon','gomamon','tentomon','veemon','hawkmon'].map((form,i)=>({id:'b'+i,form,...(over[i]||{})}));
-  scene.setBattleState(partyRun(1,[{},{},{}],bots()));step(500);
+  scene.setBattleState(partyRun(1,[{},{},{}],bots()));step(500);settle();
   {
    const party=role('partner'),wave=role('enemy'),anyAttack=list=>list.some(o=>stance(o)==='attack');
    assert.equal(party.length,3);assert.equal(wave.length,5);
@@ -551,23 +599,40 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
    const fresh=()=>['agumon','gabumon','biyomon'].map((form,i)=>({id:'n'+i,form}));
    scene.setBattleState(partyRun(2,[{attackAt:0,hp:82},{attackAt:0},{attackAt:0,hp:72}],fresh()));frame(now+=20);
    assert.deepEqual(role('enemy'),wave,'a cleared wave is not replaced while the blow that cleared it is still on its way');
-   assert.equal(hit('party-test','n0',11),true,'a strike on the wave that is waiting is kept for it');
-   let cleared=0,arrived=0,gap=Infinity,early=0;
-   step(2600,t=>{
+   const kept=hit('party-test','n0',11);
+   assert.equal(kept,true,'a strike on the wave that is waiting is kept for it');
+   let cleared=0,arrived=0,swapped=0,gap=Infinity,early=0;
+   // v398: the swap plus a full run-in can eat most of this window, so it has to outlast RUNIN_MS.
+   step(4200,t=>{
     if(!cleared&&[2,3,4].every(i=>stance(wave[i])==='faint'))cleared=t;
-    const now_=role('enemy');if(!arrived&&now_.length&&!now_.includes(wave[0])){arrived=t;for(const p of party)for(const e of now_)gap=Math.min(gap,flat(p.position,e.position))}
-    if(!arrived)assert(now_.length===5&&now_.every(o=>wave.includes(o)),'the old wave holds its slots until it has been seen falling');
+    // v398: the new wave now RUNS IN, so "it is there" means it has reached its slots - measuring
+    // the gap to the party while it was still crossing the field would read as if it spawned on top
+    // of them.
+    const now_=role('enemy');
+    if(!swapped&&now_.length&&!now_.includes(wave[0]))swapped=t;
+    if(!arrived&&swapped&&now_.every(o=>!o.userData.battleEntering)){
+     arrived=t;for(const p of party)for(const e of now_)gap=Math.min(gap,flat(p.position,e.position))
+    }
+    // While the old wave is still being seen falling, the new one must not be on the field at all.
+    // (Once it has been swapped in it is RUNNING IN - v398 - so its sprites exist but are still
+    // entering; that is "replaced", not "replaced on top of them".)
+    if(!cleared)assert(now_.length===5&&now_.every(o=>wave.includes(o)),'the old wave holds its slots until it has been seen falling');
     if(arrived&&!early&&role('enemy')[0]&&numbersOn(role('enemy')[0]).includes('11'))early=t;
    });
-   assert(cleared&&arrived>cleared,'the next wave comes in after the last bot has been seen falling: fell '+cleared+' ms, next wave '+arrived+' ms');
-   assert(arrived-cleared>=400&&arrived-cleared<=500,'it waits for the collapse and no longer: fell '+cleared+' ms, next wave '+arrived+' ms');
+   // v398: the swap is still timed off the collapse; the RUN-IN then takes a further moment, so the
+   // test separates "the new wave appears" from "it has reached its slots".
+   assert(cleared&&swapped>cleared,'the next wave comes in after the last bot has been seen falling: fell '+cleared+' ms, next wave '+swapped+' ms');
+   assert(swapped-cleared>=400&&swapped-cleared<=500,'it waits for the collapse and no longer: fell '+cleared+' ms, next wave '+swapped+' ms');
+   assert(arrived>swapped,'the wave runs in after it appears: appeared '+swapped+' ms, settled '+arrived+' ms');
    assert.equal(role('enemy').length,3,'the next wave takes the field');assert(gap>1.5,'no partner is standing among the new wave when it fades in: '+gap.toFixed(2));
-   assert(early>arrived,'the strike kept for the new wave is shown once it is there: '+early+' ms');
+   // v398: "there" now means the new wave has finished running in and is on its slots. A strike is
+   // never shown on a bot that is still crossing the field, which is the v384 bug this protects.
+   assert(early>arrived,'the strike kept for the new wave is shown once it has settled on its slot: landed '+early+' ms, settled '+arrived+' ms');
   }
   // A fighter that is felled before its swing connects gives the strike back: it is shown on its
   // target as a plain number instead of being lost (or landing on a fighter that is away).
   scene.setBattleState({pve:[],pvp:null});step(1400);
-  scene.setBattleState(fieldRun(7,{hp:80},[{id:'z0',form:'palmon'}]));step(500);
+  scene.setBattleState(fieldRun(7,{hp:80},[{id:'z0',form:'palmon'}]));step(500);settle();
   {
    const hero=role('partner')[0],bot=role('enemy')[0];hit('pve-test','partner',7);
    scene.setBattleState(fieldRun(7,{hp:73},[{id:'z0',form:'palmon',attackAt:1}]));step(160);
@@ -582,7 +647,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   // the back column (a long way home); a front-row bot's answer is reported while it is on its way in.
   scene.setBattleState({pve:[],pvp:null});step(1400);
   const five=(over={})=>['palmon','gomamon','tentomon','veemon','hawkmon'].map((form,i)=>({id:'y'+i,form,...(over[i]||{})}));
-  scene.setBattleState(fieldRun(8,{hp:80},five()));step(500);
+  scene.setBattleState(fieldRun(8,{hp:80},five()));step(500);settle();
   {
    const hero=role('partner')[0];hit('pve-test','y3',4);scene.setBattleState(fieldRun(8,{hp:80,attackAt:1},five({3:{hp:36}})));
    step(200);assert(stance(hero)==='attack'&&off(hero)>.3,'the partner is on its way in');
@@ -593,7 +658,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   // A new wave never fades in around a partner that is still out in the field: here the last bot
   // stood in the back column, its collapse has already played, and the partner is on its way home.
   scene.setBattleState({pve:[],pvp:null});step(1400);
-  scene.setBattleState(fieldRun(8,{hp:80},five({3:{hp:10}})));step(500);
+  scene.setBattleState(fieldRun(8,{hp:80},five({3:{hp:10}})));step(500);settle();
   {
    const hero=role('partner')[0],old=role('enemy'),back=old[3];assert(back.position.x>old[0].position.x+1,'the fourth bot stands in the back column');
    hit('pve-test','y3',10);scene.setBattleState(fieldRun(8,{hp:80,attackAt:1},five({3:{hp:0}})));
@@ -607,7 +672,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
   scene.setBattleState({pve:[],pvp:null});step(1800);
   assert.equal(field().length,0);assert.equal(leaving().length,0);assert.equal(popups().length,0);assert.equal(bursts().length,0);assert.equal(waves().length,0);assert.equal(shots().length,0);
  }
- scene.setBattleState({pve:[],pvp:{id:'pvp-test',phase:'fighting',winnerId:null,participants:[{id:1,name:'One',side:'left',unit:{form:'agumon',hp:80,maxHp:100}},{id:2,name:'Two',side:'right',unit:{form:'palmon',hp:70,maxHp:100}}]}});frame(now+=100);assert.equal(scene.scene.children.filter(o=>o.userData.battleKind==='pvp').length,2,'two accepted ring fighters are rendered');const ringFighters=scene.scene.children.filter(o=>o.userData.battleKind==='pvp');for(let i=0;i<12;i++)frame(now+=100);const ringDistance=Math.hypot(ringFighters[0].position.x-ringFighters[1].position.x,ringFighters[0].position.z-ringFighters[1].position.z);assert(ringDistance>4.2&&ringDistance<4.6,'ring fighters approach opposite marks without clumping');assert(scene.scene.children.filter(o=>o.userData.sanctuaryResident).every(o=>o.visible),'residents return when PvE ends');
+ scene.setBattleState({pve:[],pvp:{id:'pvp-test',phase:'fighting',winnerId:null,participants:[{id:1,name:'One',side:'left',unit:{form:'agumon',hp:80,maxHp:100}},{id:2,name:'Two',side:'right',unit:{form:'palmon',hp:70,maxHp:100}}]}});frame(now+=100);assert.equal(scene.scene.children.filter(o=>o.userData.battleKind==='pvp').length,2,'two accepted ring fighters are rendered');
+ // The ring has no run-in, but its fighters still cross from wherever they last stood, so this waits
+ // for them to reach their marks instead of assuming a fixed number of frames covers the walk.
+ for(let i=0;i<60;i++)frame(now+=100);
+
  assert.equal(scene.battleEvent({kind:'pvp',battleId:'pvp-test',to:1,amount:9,crit:false}),true,'ring strikes land their FX too');frame(now+=40);assert(scene.scene.children.some(o=>o.userData.battlePopup&&o.userData.battlePopupText==='9'),'the ring damage number floats');
  // v360 (owner: "replace the social hub middle fountain with this"): the Prontera Grand
  // Aetherwell GLB takes the plaza centre when its vendored loader exists; the atlas

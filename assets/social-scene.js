@@ -609,7 +609,11 @@ const ATTACK_MS=520;let fxTextures=null;
   // a cleared wave (or a finished run) may stay up to LINGER_MS so its last blow is seen; FALL_MS shows the collapse
   LINGER_MS:900,FALL_MS:420,LINGER_QUEUE:32,
   // looks
-  SPAWN_MS:350,SPAWN_SPARKS:5,BODY_FADE_AT:950,BODY_FADE_MS:350,LEAVE_MS:320,HIT_SPARKS:8,CRIT_SPARKS:14};
+  SPAWN_MS:350,SPAWN_SPARKS:5,BODY_FADE_AT:950,BODY_FADE_MS:350,LEAVE_MS:320,HIT_SPARKS:8,CRIT_SPARKS:14,
+  // v398 run-in: a new wave enters from the field edge instead of blinking onto its slots. FAR_MIN/
+  // FAR_MAX is how far out it starts, RUNIN_SPEED is the walk back in, and RUNIN_MS is the hard
+  // ceiling - a unit that somehow cannot reach its slot is placed on it rather than stranded.
+  RUNIN_FAR_MIN:7,RUNIN_FAR_MAX:13,RUNIN_SPEED:6.2,RUNIN_MS:2600};
  const battleStages=new Map(),battleHolds=new Map(),battleLeaving=[];
  // A strike that has arrived on its target: flash, shake, sparks and a number. Crits add the
  // contact freeze and the ground ring. v384: in the field a normal hit is deliberately quieter
@@ -619,6 +623,11 @@ const ATTACK_MS=520;let fxTextures=null;
   // Contact freeze + shake live on the defender; both are purely visual timers.
   unit.shakeUntil=clock+(crit?340:220);unit.shakeAmp=crit?.24:.13;unit.hitStarted=clock;
   if(crit){unit.hitStopUntil=clock+120;unit.hitStopClock=clock}
+  // v398 (owner: "pet random emoji, using the world chat emoji"): a digipet that takes a hit reacts
+  // with the same emotion image a player can send in chat - a crit almost always, a normal hit now
+  // and then. Purely visual, and only in the field: the ring duel fires many more strikes and would
+  // read as noise. See the pools and the sprite pool below.
+  if(field&&amount>0){if(crit&&Math.random()<.55)triggerBattleEmoji(unit,'crit');else if(!crit&&Math.random()<.12)triggerBattleEmoji(unit,'hit')}
   if(field){
    spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?STAGE.CRIT_SPARKS:STAGE.HIT_SPARKS,crit?1.5:1.15,crit?.22:.16,crit?720:540);
    if(crit||heavy)spawnBattleShockwave(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?700:560);
@@ -640,11 +649,84 @@ const ATTACK_MS=520;let fxTextures=null;
   const p=unit.sprite.position;unit.shakeUntil=clock+160;unit.shakeAmp=.08;unit.hitStarted=clock;
   spawnBattleBurst(p.x,p.z,0xfff6e0,4,.9,.12,380);
  }
+
+ // v398 (owner: "pet random emoji, using the world chat emoji"): digipets react with the SAME
+ // emotion images players send in chat - assets/social/emotions/<id>.png - so the reaction reads as
+ // the game's own vocabulary rather than a second set of stickers. One floating sprite per reaction,
+ // pooled: it rises, wobbles, fades, and is reused. Purely visual; nothing here touches a save.
+ const BATTLE_EMOJI_POOLS={
+  win:['laugh','ok','gg','heart','music','rock','love'],
+  lose:['cry','dead','sorry','panic','sleep','sweat'],
+  hit:['anger','panic','sweat','surprise'],
+  crit:['dead','panic','surprise','anger'],
+  boss:['anger','surprise','panic'],
+  train:['ok','rock','heart','idea'],
+ };
+ // One image per id, shared by every sprite: a pool of 16 reactions must not refetch a PNG each time.
+ const battleEmotionImages=new Map();
+ function battleEmotionImage(id){
+  const had=battleEmotionImages.get(id);
+  if(had)return had;
+  const img=new Image();
+  img.onerror=()=>{battleEmotionImages.set(id,null)};
+  img.src='assets/social/emotions/'+id+'.png';
+  battleEmotionImages.set(id,img);
+  return img;
+ }
+ const battleEmojiPool=[];
+ function spawnBattleEmoji(x,y,z,emotionId,dur){
+  const life=Math.max(400,Number(dur)||1800);
+  let e=battleEmojiPool.find(v=>!v.active);
+  if(!e){
+   const canvas=document.createElement('canvas');canvas.width=canvas.height=64;
+   const texture=new T.CanvasTexture(canvas);
+   // Nearest keeps the pixel emotions crisp instead of a blurred smear at plaza distance.
+   texture.magFilter=T.NearestFilter;texture.minFilter=T.NearestFilter;
+   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
+   sprite.scale.set(.8,.8,1);sprite.visible=false;sprite.renderOrder=20;scene.add(sprite);
+   e={canvas,ctx:canvas.getContext('2d'),texture,sprite,active:false,painted:''};
+   battleEmojiPool.push(e);
+  }
+  e.active=true;e.at=clock;e.dur=life;e.startY=y;e.x=x;e.z=z;e.emotionId=emotionId;
+  e.wobble=Math.random()*Math.PI*2;e.painted='';
+  e.sprite.visible=true;e.sprite.material.opacity=1;e.sprite.position.set(x,y,z);
+  return e;
+ }
+ function paintBattleEmoji(e){
+  if(e.painted===e.emotionId)return;
+  const img=battleEmotionImage(e.emotionId);
+  // A PNG that has not decoded yet leaves the sprite blank for a frame and is repainted on a later
+  // tick - the alternative is a SpriteMaterial with no map, which three draws as a white square.
+  if(!img||!img.complete||!(img.naturalWidth>0))return;
+  e.ctx.clearRect(0,0,64,64);
+  e.ctx.drawImage(img,4,4,56,56);
+  e.texture.needsUpdate=true;e.painted=e.emotionId;
+ }
+ function updateBattleEmoji(now){
+  for(const e of battleEmojiPool){
+   if(!e.active)continue;
+   const t=(now-e.at)/e.dur;
+   if(t>=1){e.active=false;e.sprite.visible=false;continue}
+   paintBattleEmoji(e);
+   e.sprite.position.set(e.x+.3*Math.sin(t*6+e.wobble),e.startY+1.8*t,e.z);
+   e.sprite.material.opacity=t<.2?t/.2:Math.max(0,1-((t-.2)/.8));
+   e.sprite.scale.setScalar(.7+.4*(t<.3?t/.3:1));
+  }
+ }
+ function triggerBattleEmoji(unit,mood){
+  if(!unit||!unit.sprite)return;
+  const pool=BATTLE_EMOJI_POOLS[mood];if(!pool||!pool.length)return;
+  const p=unit.sprite.position,ox=(Math.random()-.5)*.6;
+  spawnBattleEmoji(p.x+ox,p.y+1.6,p.z,pool[Math.floor(Math.random()*pool.length)],1400+Math.random()*800);
+ }
  function battleEvent(ev){
   if(!ev||typeof ev!=='object')return false;
   const kind=ev.kind==='pvp'?'pvp':'pve',unit=battleResidents.get(kind+':'+ev.battleId+':'+ev.to);
-  // A strike on a wave that is still waiting behind the one on screen is kept for it.
-  if(!unit){const hold=kind==='pve'&&battleHolds.get('pve:'+ev.battleId);if(!hold||hold.early.length>=STAGE.LINGER_QUEUE)return false;hold.early.push(ev);return true}
+  // A strike on a wave that is still waiting behind the one on screen is kept for it - and so is a
+  // strike on a bot that is still RUNNING IN (v398): the number belongs over a bot on its slot, not
+  // over one halfway across the field, which is the v384 complaint this whole path protects.
+  // The arriving check is pve-only: the ring has no run-in, and a pvp body is never "arriving".
+  if(!unit||(kind==='pve'&&unit.arriving)){const hold=kind==='pve'&&battleHolds.get('pve:'+ev.battleId);if(!hold||hold.early.length>=STAGE.LINGER_QUEUE)return false;hold.early.push(ev);return true}
   const crit=!!ev.crit,amount=Math.max(0,Math.round(Number(ev.amount)||0));
   // The ring is a two-fighter duel with nothing to stage: its strikes land as they are reported.
   if(kind==='pvp'){landBattleHit(unit,amount,crit);return true}
@@ -664,6 +746,7 @@ const ATTACK_MS=520;let fxTextures=null;
    b.mesh.position.y=Math.max(.12,b.mesh.position.y+b.vy*dt);
    b.mesh.material.opacity=Math.max(0,1-t*t);
   }
+  updateBattleEmoji(now);   // v398: reaction sprites rise, wobble and fade on the same clock as the numbers
   for(let i=battlePopups.length-1;i>=0;i--){const pop=battlePopups[i],t=(now-pop.at)/pop.dur;
    if(t>=1){scene.remove(pop.mesh);pop.mesh.material.map.dispose();pop.mesh.material.dispose();battlePopups.splice(i,1);continue}
    const popIn=t<.16?.6+2.5*t:1;
@@ -730,7 +813,30 @@ const ATTACK_MS=520;let fxTextures=null;
  function battleHash(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0)/4294967296}
  // v384: every unit appears on its own formation slot. (Field bots used to be dropped 8-16 units
  // out and run in, so they were being hit while they were still on their way.)
- function battleSpawn(s){return {x:s.x,z:s.z}}
+ // v398 (owner: "random spawn pve grind, i want them to be spawn randomly on the farm then battle"):
+ // a field unit used to appear already standing on its formation slot. It now starts out in the
+ // grass, away from the formation, and walks in. The offset is seeded from the unit's own key, so a
+ // given bot keeps the same approach across frames (it is not re-rolled every snapshot) while two
+ // different waves, and two different players' grinds, enter from different places.
+ //
+ // The v384 bug this must not bring back - bots being hit while still on their way in - is handled by
+ // `arriving` below: a unit that has not reached its slot holds no weapon and cannot be struck.
+ const battleEntryPoints=new Map();   // key -> {x,z}: where this unit entered, so a re-created one resumes
+ function battleSpawn(s){
+  const key=String(s.key||'')+'|'+String(s.runKey||'');
+  const had=battleEntryPoints.get(key);
+  if(had)return {x:had.x,z:had.z,arriving:had.arriving};
+  // A deterministic point per unit: same key, same approach. Two units of one wave always differ
+  // because the key carries their id, so a wave fans out instead of stacking.
+  let h=2166136261;
+  for(let i=0;i<key.length;i++)h=Math.imul(h^key.charCodeAt(i),16777619);
+  const a=((h>>>0)/4294967296)*Math.PI*2;
+  const far=STAGE.RUNIN_FAR_MIN+(((h>>>9)&255)/255)*(STAGE.RUNIN_FAR_MAX-STAGE.RUNIN_FAR_MIN);
+  const away=s.enemy?1:-1;   // bots enter from the field side, the party from its own
+  const pt={x:s.x+Math.cos(a)*far*away,z:s.z+Math.sin(a)*far*.7,arriving:true};
+  battleEntryPoints.set(key,pt);
+  return {x:pt.x,z:pt.z,arriving:true};
+ }
  function battleApproach(from,to,distance,tolerance=.05){const dx=to.x-from.x,dz=to.z-from.z,length=Math.hypot(dx,dz);if(length<=tolerance)return {x:to.x,z:to.z};const travel=Math.min(Math.max(0,distance),Math.max(0,length-tolerance));return {x:from.x+dx/length*travel,z:from.z+dz/length*travel}}
  function disposeBattleUnit(u){scene.remove(u.sprite);u.sprite.material.dispose();u.texture.dispose()}
  // v384: a field unit that drops out of the snapshot (its wave was replaced, the run is over)
@@ -755,6 +861,22 @@ const ATTACK_MS=520;let fxTextures=null;
  // Is what is on screen for this run still finishing? A blow is still to be shown, a collapse is
  // still playing, or a partner is still out in the field (a new wave must not fade in around it).
  // For a wave change only the bots can be owed anything that matters; for a finished run everyone can.
+ // v398: is any unit of this run still walking in from where it entered the field?
+ // Is this run's wave still on its way to its slots?
+ // The check is made against the run's CURRENT enemy ids, not against the bodies that happen to
+ // exist, because on the frame a wave is swapped in its bodies have not been built yet - reading
+ // "no bodies" as "already landed" is what replayed the kept strike onto a bot still crossing the
+ // field. A wave counts as arriving while any of its bots is missing OR still walking in.
+ function battleResidentsArriving(runKey){
+  const run=(battleState.pve||[]).find(r=>r&&'pve:'+r.id===runKey);
+  if(run&&run.phase!=='ended')for(const e of run.enemies||[]){
+   if(!e)continue;
+   const u=battleResidents.get(runKey+':'+e.id);
+   if(!u||u.arriving)return true;
+  }
+  for(const u of battleResidents.values())if(u.spec.runKey===runKey&&u.spec.enemy&&u.arriving)return true;
+  return false;
+ }
  function battleRunBusy(runKey,now,ended){
   for(const u of battleResidents.values()){
    if(u.spec.runKey!==runKey||u.bornAt==null||!u.sprite.visible)continue;
@@ -783,6 +905,15 @@ const ATTACK_MS=520;let fxTextures=null;
     // Run over: the party is frozen too (a defeat is the blow that felled the last partner).
     const partners=(old.partners&&old.partners.length?old.partners:[old.partner]).filter(Boolean).map((e,i)=>final(runKey+':partner'+(i||''),e));
     battleHolds.set(runKey,{until:clock+STAGE.LINGER_MS,run:{...old,partner:partners[0],partners,enemies},early:[]});
+    // v398: the run ended - the party reacts once, in the world-chat emotions. A defeat is the blow
+    // that felled the last partner, so the frozen copy on screen still has units to hang it on.
+    const defeated=old.reason==='defeat';
+    partners.forEach((pe,idx)=>{
+     const pu=battleResidents.get(runKey+':partner'+(idx||''));
+     if(!pu)return;
+     triggerBattleEmoji(pu,defeated?'lose':'win');
+     if(Math.random()<(defeated?.5:.6))triggerBattleEmoji(pu,defeated?'lose':'win');
+    });
    }
   }
   for(const run of battleState.pve)if(Number.isInteger(run.owner))battleParticipantIds.add(run.owner);
@@ -793,11 +924,16 @@ const ATTACK_MS=520;let fxTextures=null;
     u={canvas,ctx:canvas.getContext('2d'),texture,sprite,ring,paint:'',spec,spawn,lastMove,lastAttack:spec.attackAt,attackStarted:-Infinity,lastHit:spec.hitAt,hitStarted:-Infinity,ranged:false,shakeUntil:0,shakeAmp:0,hitStopUntil:0,hitStopClock:0,fainted:false,faintAt:0,ghosts:null,
      // v384 staging: where the unit stands and the slot it owns; the strikes waiting to be shown
      // on it and their total; the swings it owes; the swing it is in; when it first appeared.
-     px:spawn.x,pz:spawn.z,home:{x:spawn.x,z:spawn.z},pending:[],owedDamage:0,unsynced:0,owedSwings:0,owedAt:0,swing:null,bornAt:null,popup:null};
+     px:spawn.x,pz:spawn.z,home:{x:spec.x,z:spec.z},entered:{x:spawn.x,z:spawn.z},arriving:!!spawn.arriving,pending:[],owedDamage:0,unsynced:0,owedSwings:0,owedAt:0,swing:null,bornAt:null,popup:null};
     battleResidents.set(spec.key,u)}
    // `unsynced` is the damage reported since the last snapshot - a snapshot already includes it.
    u.spec=spec;u.unsynced=0;if(spec.kind==='pve'){u.home.x=spec.x;u.home.z=spec.z}
-   u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;u.sprite.userData.battleRole=spec.role;u.sprite.userData.battleName=spec.label;u.sprite.userData.battleSpawn={...u.spawn};digimonStore?.request(spec.species);
+   // v398: userData.battleSpawn is the slot the unit owns - the test and the HUD read it to mean
+   // "where this fighter belongs". Where it ENTERED is `entered`, which is a different thing now.
+   u.sprite.userData.battleSpawn={x:spec.x,z:spec.z};
+   u.sprite.userData.battleEntered=u.entered?{...u.entered}:null;
+   u.sprite.userData.battleEntering=!!u.arriving;
+   u.sprite.userData.battleKind=spec.kind;u.sprite.userData.battleOwner=spec.owner;u.sprite.userData.battleRole=spec.role;u.sprite.userData.battleName=spec.label;digimonStore?.request(spec.species);
   }
   for(const [key,u] of battleResidents)if(!keep.has(key)){retireBattleUnit(u);battleResidents.delete(key)}
   for(const key of [...battleStages.keys()])if(!runs.has(key))battleStages.delete(key);
@@ -839,7 +975,12 @@ const ATTACK_MS=520;let fxTextures=null;
   let st=battleStages.get(runKey);if(!st){st={turn:'',busyUntil:0};battleStages.set(runKey,st)}
   const units=list.map(s=>battleResidents.get(s.key)).filter(Boolean),ready=u=>!!digimonStore?.ready(u.spec.species),over=!!battleHolds.get(runKey)?.run;
   // On its feet as drawn: a unit the sim has already felled stands until that blow has been shown.
-  const standing=u=>ready(u)&&!(u.spec.hp<=0&&u.owedDamage<=0);
+  // v398: a unit still walking in is not in the fight yet. `ready`/`standing` gate BOTH sides of a
+  // volley - who may swing and who may be struck - so adding the run-in here means an arriving bot
+  // can neither hit nor be hit, and the whole "struck while still on its way" class of bug is
+  // impossible instead of merely unlikely. It clears the moment the unit reaches its slot.
+  const settled=u=>!u.arriving;
+  const standing=u=>ready(u)&&settled(u)&&!(u.spec.hp<=0&&u.owedDamage<=0);
   const release=(t,amount,crit,count,heavy)=>{t.owedDamage=Math.max(0,t.owedDamage-amount);if(!ready(t))return;if(count)landBattleHit(t,amount,crit,heavy);else softBattleHit(t)};
   const drain=t=>{let amount=0,crit=false;for(const e of t.pending){amount+=e.amount;crit=crit||e.crit}t.pending.length=0;return {amount,crit}};
   for(const u of units){
@@ -857,7 +998,12 @@ const ATTACK_MS=520;let fxTextures=null;
    }
    // Strikes nobody could deliver (their attacker is gone, or art is still loading) land on their
    // own once stale - and are dropped without a show if they are older than anyone would connect.
-   if(u.pending.length&&now-u.pending[0].at>=STAGE.FLUSH_MS){const quiet=now-u.pending[0].at>=STAGE.DROP_MS;if(quiet||!u.swing){const d=drain(u);if(quiet)u.owedDamage=Math.max(0,u.owedDamage-d.amount);else release(u,d.amount,d.crit,1,false)}}
+   // v398: the staleness clock must not run while the unit is still walking in. Otherwise the run-in
+   // would eat the FLUSH_MS budget and a strike kept for a wave that had not arrived yet would be
+   // dropped as "too old" instead of being shown when it does - which is what the hold/replay path
+   // exists to prevent.
+   const pendingAge=u.pending.length?(u.arriving?0:now-u.pending[0].at):0;
+   if(u.pending.length&&pendingAge>=STAGE.FLUSH_MS){const quiet=pendingAge>=STAGE.DROP_MS;if(quiet||!u.swing){const d=drain(u);if(quiet)u.owedDamage=Math.max(0,u.owedDamage-d.amount);else release(u,d.amount,d.crit,1,false)}}
   }
   if(now<st.busyUntil)return;
   const team={partner:units.filter(u=>u.spec.role==='partner'),enemy:units.filter(u=>u.spec.role!=='partner')};
@@ -913,11 +1059,29 @@ const ATTACK_MS=520;let fxTextures=null;
   for(const u of team[next.side])u.owedSwings=0;
   st.turn=next.side;st.busyUntil=last+STAGE.GAP_MS;
  }
+ // Strikes kept through a wave swap, waiting for the incoming wave to take its slots.
+ const earlyStrikes=new Map();
+ function flushEarlyStrikes(now){
+  for(const [runKey,park] of earlyStrikes){
+   // The run-in is bounded by RUNIN_MS, so past that plus a margin the strike is shown wherever the
+   // bot is rather than being swallowed - a strike is never silently dropped.
+   if(battleResidentsArriving(runKey)&&now-park.from<STAGE.RUNIN_MS+1200)continue;
+   earlyStrikes.delete(runKey);for(const ev of park.evs)battleEvent(ev);
+  }
+ }
  function updateBattleResidents(now){
+  flushEarlyStrikes(now);
   // A lingering wave or run leaves once its last blow and collapse have been seen (or time is up).
   for(const [runKey,hold] of battleHolds){
    if(now<hold.until&&battleRunBusy(runKey,now,!!hold.run))continue;
-   battleHolds.delete(runKey);setBattleState(battleState);for(const ev of hold.early)battleEvent(ev);
+   // v398: strikes kept for the incoming wave are replayed only once that wave has RUN IN. Replaying
+   // them while it is still crossing the field would put the number over a bot that is not on its
+   // slot yet - which is the v384 complaint this guards.
+   // The hold itself is still released on schedule: holding it back would pin the OLD wave on the
+   // field and stall the swap. Only the strikes wait, parked on the run so they survive the drop.
+   battleHolds.delete(runKey);setBattleState(battleState);
+   if(hold.early.length&&battleResidentsArriving(runKey))earlyStrikes.set(runKey,{evs:hold.early,from:now});
+   else for(const ev of hold.early)battleEvent(ev);
   }
   const positions=new Map(),targets=new Map(),groups=new Map(),specs=battleSpecs();
   for(const s of specs){if(s.kind!=='pve')continue;if(!groups.has(s.runKey))groups.set(s.runKey,[]);groups.get(s.runKey).push(s)}
@@ -935,9 +1099,31 @@ const ATTACK_MS=520;let fxTextures=null;
    let pos=previous,target=null,stance='idle',time=visualNow,walking=false,trail=null;
    if(staged){
     const w=u.swing,elapsed=Math.max(0,Math.min(.5,(now-(u.lastMove??now))/1000));u.lastMove=now;
-    // First frame with art: the unit fades in on its slot; a wave arrives with a small puff.
-    if(u.bornAt==null){u.bornAt=now;if(s.enemy&&!dead)spawnBattleBurst(u.home.x,u.home.z,0xdfe9d6,STAGE.SPAWN_SPARKS,.7,.1,420)}
-    if(w&&!dead){
+    // First frame with art.
+    // bornAt is the first frame with ART, so the run-in clock starts when the unit is actually on
+    // screen rather than when the snapshot arrived - otherwise a slow sprite download eats the whole
+    // RUNIN_MS budget and the unit is teleported onto its slot the moment it appears.
+    if(u.bornAt==null){u.bornAt=now;u.arrivedAt=null}
+    // v398 run-in: the unit walks from where it entered to the slot it owns, and it is not in the
+    // fight until it gets there. Nothing can strike it (stageBattle treats `arriving` as unreadable)
+    // and it swings at nobody, which is exactly the v384 complaint - "they were being hit while they
+    // were still on their way" - handled by construction rather than by timing the first volley.
+    if(u.arriving){
+     const dx=u.home.x-u.px,dz=u.home.z-u.pz,gap=Math.hypot(dx,dz);
+     const step=elapsed*STAGE.RUNIN_SPEED;
+     const forced=now-u.bornAt>STAGE.RUNIN_MS;
+     if(gap<=Math.max(step,.02)||forced){
+      u.px=u.home.x;u.pz=u.home.z;u.arriving=false;u.arrivedAt=now;
+      const ep=battleEntryPoints.get(String(u.spec.key||'')+'|'+String(u.spec.runKey||''));
+      if(ep)ep.arriving=false;
+      if(s.enemy&&!dead)spawnBattleBurst(u.home.x,u.home.z,0xdfe9d6,STAGE.SPAWN_SPARKS,.7,.1,420);
+     }else{
+      u.px+=dx/gap*step;u.pz+=dz/gap*step;
+      // Run in, and look like it: the walking anim is what sells the entry.
+      stance='walking';walking=true;
+     }
+     pos={x:u.px,z:u.pz};
+    }else if(w&&!dead){
      const pose=swingPose(u,w,now),aim=battleResidents.get(w.hits[0].key);u.px=pose.x;u.pz=pose.z;if(aim)target={x:aim.px,z:aim.pz};
      if(pose.frac>=0){stance='attack';const frames=asset.record.actions.attack?.length||1;time=Math.min(frames-1,Math.floor(pose.frac*frames))*50+1}
      if(w.ranged&&!w.fired&&now>=w.impactAt){w.fired=true;for(const h of w.hits){const hit=battleResidents.get(h.key);if(hit)spawnBattleShot({x:u.px,z:u.pz},{x:hit.px,z:hit.pz},now,s.boss,s.enemy,Math.max(120,w.contactAt-now))}}
@@ -969,15 +1155,22 @@ const ATTACK_MS=520;let fxTextures=null;
    // slim rounded pill that only appears once a unit is actually hurt.
    if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,6,flip);if(u.ctx&&typeof u.fillText==='function'){const ctx=u.ctx;
     const frac=Math.max(0,Math.min(1,shownHp/Math.max(1,s.maxHp)));
-    if(frac<.999){
-     const bw=132,bx=(256-bw)/2,by=13,bh=8;
-     const pill=(x,y,pw,ph,r)=>{if(typeof ctx.beginPath==='function'&&typeof ctx.roundRect==='function'){ctx.beginPath();ctx.roundRect(x,y,pw,ph,r);ctx.fill()}else if(typeof ctx.fillRect==='function')ctx.fillRect(x,y,pw,ph)};
-     ctx.fillStyle='rgba(14,20,16,.55)';pill(bx-3,by-3,bw+6,bh+6,(bh+6)/2);
-     ctx.fillStyle=frac>.35?'#8fca66':'#e07862';pill(bx,by,Math.max(bh,bw*frac),bh,bh/2);
-    }
+    // v398 (owner: "while pve grind battle, the HP & name"): the health bar used to appear only once
+    // a unit had been hurt, and it carried no numbers - so a player watching the grind could not see
+    // how much health anything had, or how hard a blow landed. The bar is now always drawn and the
+    // exact figures sit on it. The v358 rule stands: no chunky name-plate, just the slim rounded pill
+    // and outlined text, so the field does not go back to reading as floating boxes.
+    const bw=132,bx=(256-bw)/2,by=11,bh=9;
+    const pill=(x,y,pw,ph,r)=>{if(typeof ctx.beginPath==='function'&&typeof ctx.roundRect==='function'){ctx.beginPath();ctx.roundRect(x,y,pw,ph,r);ctx.fill()}else if(typeof ctx.fillRect==='function')ctx.fillRect(x,y,pw,ph)};
+    ctx.fillStyle='rgba(14,20,16,.55)';pill(bx-3,by-3,bw+6,bh+6,(bh+6)/2);
+    ctx.fillStyle=frac>.6?'#8fca66':frac>.3?'#e8c94a':'#e07862';pill(bx,by,Math.max(bh,bw*frac),bh,bh/2);
+    // The figures ride the bar itself, so they cost no extra vertical space on a crowded field.
+    ctx.font='bold 9px "Trebuchet MS",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    if(typeof ctx.strokeText==='function'){ctx.strokeStyle='rgba(10,14,10,.9)';ctx.lineWidth=3;ctx.strokeText(Math.max(0,Math.round(shownHp))+'/'+Math.max(1,s.maxHp),128,by+bh/2+1,196)}
+    ctx.fillStyle='#fff';ctx.fillText(Math.max(0,Math.round(shownHp))+'/'+Math.max(1,s.maxHp),128,by+bh/2+1,196);
     ctx.font=(s.boss?'bold 20px':'600 17px')+' "Trebuchet MS",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    if(typeof ctx.strokeText==='function'){ctx.strokeStyle='rgba(10,14,10,.85)';ctx.lineWidth=4;ctx.strokeText(String(s.label).slice(0,25),128,frac<.999?36:22,198)}
-    ctx.fillStyle=s.boss?'#ffd98a':s.enemy?'#f3e6c8':'#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,frac<.999?36:22,198);
+    if(typeof ctx.strokeText==='function'){ctx.strokeStyle='rgba(10,14,10,.85)';ctx.lineWidth=4;ctx.strokeText(String(s.label).slice(0,25),128,37,198)}
+    ctx.fillStyle=s.boss?'#ffd98a':s.enemy?'#f3e6c8':'#fff5d7';ctx.fillText(String(s.label).slice(0,25),128,37,198);
    }u.texture.needsUpdate=true;u.paint=key}
    // The ring duel keeps its short in-place lunge; a staged swing already carries the fighter.
    let drawX=pos.x,drawZ=pos.z;if(!staged&&stance==='attack'&&target){const dx=target.x-pos.x,dz=target.z-pos.z,length=Math.hypot(dx,dz)||1,lunge=Math.sin(Math.min(1,(visualNow-u.attackStarted)/ATTACK_MS)*Math.PI)*(u.ranged?.14:.28);drawX+=dx/length*lunge;drawZ+=dz/length*lunge}
@@ -991,7 +1184,7 @@ const ATTACK_MS=520;let fxTextures=null;
    // Hit flash tints the sprite material itself - nothing rectangular is ever painted onto
    // the unit canvas (the old full-canvas red fillRect read as a flashing box).
    // The accent ring marks the slot a field fighter owns, so it stays put while the fighter steps out.
-   u.sprite.material.color.setHex(flash?(flash>2?0xff8f7c:flash>1?0xffa08e:0xffb2a2):0xffffff);u.sprite.position.set(drawX,.06+lift,drawZ);u.ring.position.set(staged?u.home.x:pos.x,.08+lift,staged?u.home.z:pos.z);u.ring.scale.setScalar((s.boss?1.5:1)*(1+.08*Math.sin(now/180)));u.ring.material.color.setHex(s.boss?0xe8a54a:s.kind==='pvp'?0xf3c876:0x9ed6b0);u.sprite.userData.battleWalking=walking;u.sprite.userData.battleRanged=u.ranged;u.sprite.userData.battleBoss=!!s.boss;u.sprite.userData.battleStance=stance;
+   u.sprite.material.color.setHex(flash?(flash>2?0xff8f7c:flash>1?0xffa08e:0xffb2a2):0xffffff);u.sprite.position.set(drawX,.06+lift,drawZ);u.ring.position.set(staged?u.home.x:pos.x,.08+lift,staged?u.home.z:pos.z);u.ring.scale.setScalar((s.boss?1.5:1)*(1+.08*Math.sin(now/180)));u.ring.material.color.setHex(s.boss?0xe8a54a:s.kind==='pvp'?0xf3c876:0x9ed6b0);u.sprite.userData.battleWalking=walking;u.sprite.userData.battleEntering=!!u.arriving;u.sprite.userData.battleRanged=u.ranged;u.sprite.userData.battleBoss=!!s.boss;u.sprite.userData.battleStance=stance;
    // After-images trail a lunging brawler: ghost sprites share the live canvas texture,
    // so they echo whatever frame the unit has painted without any extra draw work.
    if(!u.ranged&&!u.ghosts){u.ghosts=[.3,.15].map(o=>{const g=new T.Sprite(new T.SpriteMaterial({map:u.texture,transparent:true,opacity:o,depthWrite:false,alphaTest:.02}));g.center.copy(u.sprite.center);g.userData.battleGhost=true;g.visible=false;scene.add(g);return g})}
