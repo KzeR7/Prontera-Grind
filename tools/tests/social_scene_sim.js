@@ -1,7 +1,7 @@
 // Exercise the actual scene lifecycle with Three geometry and controlled asset timing.
 const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require('jsdom');
 (async()=>{
- const dom=new JSDOM('<div id="host"></div><div id="labels"></div>',{runScripts:'outside-only'}),w=dom.window,T={...require('three')};let frame,now=1000,failNormal=true,sitReady=false,draws=[],selectedSeat=null,moves=[],shopOpens=0,indexOpens=0;
+ const dom=new JSDOM('<div id="host"></div><div id="labels"></div>',{runScripts:'outside-only'}),w=dom.window,T={...require('three')};let frame,now=1000,failNormal=true,sitReady=false,draws=[],selectedSeat=null,moves=[],shopOpens=0,indexOpens=0,menuCalls=[];
  // A recording 2D context. It has to be a REAL mock - the paint block is gated on the context
  // having fillText, so a canvas stub without it silently skipped every HP bar and name, and the
  // text assertions below passed against nothing. Each canvas gets its own log of what was drawn.
@@ -40,7 +40,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  w.PGSocialDigimon={clean:id=>battleReady?id:null,frameIndex:()=>0,draw:()=>{},sharedStore:()=>({ready:()=>battleReady?battleAsset:null,request:()=>Promise.resolve(null)})};
  w.PGSocialFishing={ROD_TIER_COLORS:{twig:'#8b6b45',oak:'#b07a3c',brass:'#c8873a',silver:'#cfd8e0',golden:'#ffcb45',mythril:'#7fe3ff'}};
  w.eval(fs.readFileSync('assets/digimon/roster.js','utf8'));w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social-scene.js','utf8'));
- const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(){},move(x,z){moves.push({x,z})},seat(id){selectedSeat=id},sanctuaryShop(){shopOpens++},sanctuaryIndex(){indexOpens++}}),flush=async()=>{for(let i=0;i<6;i++)await Promise.resolve()};
+ const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(...a){menuCalls.push(a)},move(x,z){moves.push({x,z})},seat(id){selectedSeat=id},sanctuaryShop(){shopOpens++},sanctuaryIndex(){indexOpens++}}),flush=async()=>{for(let i=0;i<6;i++)await Promise.resolve()};
  const groundPlane=scene.scene.children.find(o=>o.geometry?.parameters?.width===192&&o.geometry?.parameters?.height===218);
  assert(groundPlane&&groundPlane.position.z===27&&groundPlane.position.x===14,'ground extends south and east while retaining the original north and west edges');
  assert(scene.scene.children.some(o=>o.geometry?.parameters?.width===18&&o.geometry?.parameters?.height===218&&o.position.z===27),'north-south road extends south');
@@ -234,6 +234,41 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert.notEqual(scene.cameraState.angle,0,'touch drag still orbits');
  scene.resetCamera();moves.length=0;
  scene.resetCamera();host.onpointerdown(pointer(200,200,1,{button:2}));host.onpointermove(pointer(250,240,1,{button:2}));host.onpointerup(pointer(250,240,1,{button:2}));assert.notEqual(scene.cameraState.angle,0,'right-drag orbits instead of map panning');assert.equal(moves.length,0,'right-drag never walks');assert.equal(scene.cameraState.panX,0);
+
+ // v406 (owner: "in the plaza where if i right click a player im able to add friend, whisper"):
+ // a right-CLICK with no drag opens that player's menu. The right-DRAG above must keep orbiting
+ // and must NOT open it - both use button 2, so `moved` is what tells them apart. And your own
+ // body never raises the menu: whispering and friending yourself is meaningless.
+ {
+  scene.resetCamera();moves.length=0;
+  const selfSprite=scene.scene.children.find(o=>o.userData.socialId===1);
+  assert(selfSprite,'the local player is a pickable body in the scene');
+  scene.putPlayer({id:7,name:'Stranger',x:selfSprite.position.x+2,z:selfSprite.position.z,dir:0,sit:false,seat:null,path:[],look:state.look});
+  frame(now+=100);
+  scene.camera.updateMatrixWorld();
+  const otherSprite=scene.scene.children.find(o=>o.userData.socialId===7);
+  assert(otherSprite,'the stranger is in the scene');
+  const rightClickOn=sprite=>{const p=sprite.position.clone().project(scene.camera);
+   assert(Math.abs(p.x)<=1&&Math.abs(p.y)<=1,'the target projects on screen before it is right-clicked');
+   const ev={clientX:(p.x+1)*500,clientY:(1-p.y)*350,pointerId:9,button:2,preventDefault(){}};
+   host.onpointerdown(ev);host.onpointerup(ev)};
+  menuCalls.length=0;rightClickOn(otherSprite);
+  assert.equal(menuCalls.length,1,'a right-click on a player body opens their menu');
+  assert.equal(menuCalls[0][0],'Stranger','the menu is opened for the player under the pointer');
+  assert.equal(menuCalls[0][1],7,'and carries that player s id for Add friend');
+  menuCalls.length=0;rightClickOn(selfSprite);
+  assert.equal(menuCalls.length,0,'right-clicking YOUR OWN body never offers whisper/friend');
+  // Same button, but dragged: orbit, no menu.
+  scene.resetCamera();menuCalls.length=0;
+  const q=otherSprite.position.clone().project(scene.camera);
+  const ax=(q.x+1)*500,ay=(1-q.y)*350;
+  host.onpointerdown({clientX:ax,clientY:ay,pointerId:11,button:2,preventDefault(){}});
+  host.onpointermove({clientX:ax+70,clientY:ay+45,pointerId:11,button:2,preventDefault(){}});
+  host.onpointerup({clientX:ax+70,clientY:ay+45,pointerId:11,button:2,preventDefault(){}});
+  assert.equal(menuCalls.length,0,'a right-DRAG over a player still only orbits the camera');
+  assert.notEqual(scene.cameraState.angle,0,'and it really did orbit');
+  scene.removePlayer(7);scene.resetCamera();moves.length=0;
+ }
  scene.resetCamera();host.onpointerdown(pointer(200,200));host.onpointerdown(pointer(300,200,2));host.onpointermove(pointer(320,200,2));host.onpointermove(pointer(360,220,2));host.onpointerup(pointer(360,220,2));host.onpointerup(pointer(200,200));assert(scene.cameraState.distance<44);assert.equal(scene.cameraState.panX,0);assert.equal(moves.length,0,'camera gestures do not walk');
  scene.bubble(1,{emotion:'cry'});const bubble=w.document.querySelector('.social-bubble');assert(bubble.classList.contains('social-emotion'));assert.equal(bubble.parentElement.id,'labels');scene.bubble(1,{body:'Hello'});assert(!bubble.classList.contains('social-emotion'));
  // High-refresh frames within 16ms render without dropping, and unchanged sprite frames skip redundant 2D redraws.

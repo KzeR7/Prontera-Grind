@@ -639,13 +639,13 @@ const ATTACK_MS=520;let fxTextures=null;
   unit.shakeUntil=clock+(crit?340:220);unit.shakeAmp=crit?.24:.13;unit.hitStarted=clock;
   if(crit){unit.hitStopUntil=clock+120;unit.hitStopClock=clock}
   // v398 (owner: "pet random emoji, using the world chat emoji"): a digipet that takes a hit reacts
-  // with the same emotion image a player can send in chat - a crit almost always, a normal hit now
-  // and then. Purely visual, and only in the field: the ring duel fires many more strikes and would
+  // with the same emotion image a player can send in chat - a crit now and then, a rare normal
+  // hit. Purely visual, and only in the field: the ring duel fires many more strikes and would
   // read as noise. See the pools and the sprite pool below.
-  // A crit ALWAYS reacts - it is the loudest thing on the field and the owner's complaint was that
-  // no reaction was ever visible. A normal hit still reacts now and then so the field is not a
-  // constant stream of stickers.
-  if(field&&amount>0){if(crit)triggerBattleEmoji(unit,'crit');else if(Math.random()<.12)triggerBattleEmoji(unit,'hit')}
+  // v406 (owner: "i like to tune it down"): a crit reacts 30% of the time and a plain hit 5%.
+  // It used to be every crit and 12% of hits, which turned the field into a constant stream of
+  // stickers - the crowd, not the moment, was the problem once reactions were finally visible.
+  if(field&&amount>0){if(crit){if(Math.random()<.30)triggerBattleEmoji(unit,'crit')}else if(Math.random()<.05)triggerBattleEmoji(unit,'hit')}
   if(field){
    spawnBattleBurst(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?STAGE.CRIT_SPARKS:STAGE.HIT_SPARKS,crit?1.5:1.15,crit?.22:.16,crit?720:540);
    if(crit||heavy)spawnBattleShockwave(p.x,p.z,crit?0xffd98a:0xfff6e0,crit?700:560);
@@ -758,9 +758,10 @@ const ATTACK_MS=520;let fxTextures=null;
    e.el.style.opacity=(t<.2?t/.2:Math.max(0,1-((t-.2)/.8))).toFixed(2);
   }
  }
- // A roomy interval so an ambient reaction reads as a mood, not a tick: idle 9-22 s, fishing
- // 5-11 s. Randomised inside the window, so it never lands on a predictable beat.
- function ambientEmojiDelay(fishing){return (fishing?5000:9000)+Math.random()*(fishing?6000:13000)}
+ // A roomy interval so an ambient reaction reads as a mood, not a tick: idle 60-300 s, fishing
+ // 30-60 s. v406 (owner: "tune it down"): the old 9-22 s / 5-11 s made the follower chatter
+ // constantly. Randomised inside the window, so it never lands on a predictable beat.
+ function ambientEmojiDelay(fishing){return (fishing?30000:60000)+Math.random()*(fishing?30000:240000)}
  // Read-only view of the ambient pools and scheduler, for the sim. Nothing in the game reads this.
  scene.userData.emojiPools={idle:BATTLE_EMOJI_POOLS.idle,fish:BATTLE_EMOJI_POOLS.fish};
  scene.userData.emojiSchedule=ambientEmojiDelay;
@@ -2595,7 +2596,7 @@ void main(){
  function putPlayer(state){let p=players.get(state.id);if(!p){
   const canvas=document.createElement('canvas');canvas.width=320;canvas.height=280;const ctx=canvas.getContext('2d'),texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.userData.socialId=state.id;sprite.center.set(.5,80/280);scene.add(sprite);
-  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');if(state.gm){name.textContent='🛠 '+state.name;name.title='Game Master';name.classList.add('social-gm')}else name.textContent=state.name;name.onclick=()=>callbacks.menu(state.name,state.id);const title=document.createElement('small');title.className='social-player-title';const fishTitle=document.createElement('small');fishTitle.className='social-player-fish-title';const digiTitle=document.createElement('small');digiTitle.className='social-player-digi-title';label.append(name,title,fishTitle,digiTitle);labels.append(label,bubble);
+  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');if(state.gm){name.textContent='🛠 '+state.name;name.title='Game Master';name.classList.add('social-gm')}else name.textContent=state.name;name.onclick=()=>{if(state.id!==callbacks.self())callbacks.menu(state.name,state.id)};const title=document.createElement('small');title.className='social-player-title';const fishTitle=document.createElement('small');fishTitle.className='social-player-fish-title';const digiTitle=document.createElement('small');digiTitle.className='social-player-digi-title';label.append(name,title,fishTitle,digiTitle);labels.append(label,bubble);
   p={canvas,ctx,texture,sprite,label,bubble,title,fishTitle,digiTitle,state,loaded:'',paint:'',height:3.2,aura:null,auraTier:-1,lx:'',ly:'',lhid:null,bx:'',by:'',bhid:null,bubbleUntil:0,looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
  }
  const nextTitle=state.look?.title||'';if(p.title.textContent!==nextTitle){p.title.textContent=nextTitle;p.title.hidden=!nextTitle}else if(p.title.hidden!==!nextTitle)p.title.hidden=!nextTitle;
@@ -2634,7 +2635,24 @@ void main(){
  else if(down.orbit&&(down.moved||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)){setCamera({angle:down.angle-(e.clientX-down.x)*.006,pitch:down.pitch+(e.clientY-down.y)*.28});down.moved=true}
  // A left drag is a dead zone: it cancels the click-to-walk, but never moves the camera.
  else if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)down.moved=true};
- host.onpointerup=e=>{if(!touches.has(e.pointerId))return;touches.delete(e.pointerId);if(down&&!down.moved&&!(e.button>0)){const rect=host.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
+ host.onpointerup=e=>{if(!touches.has(e.pointerId))return;touches.delete(e.pointerId);
+ // v406 (owner: "in the plaza where if i right click a player im able to add friend, whisper"):
+ // a right-CLICK with no drag opens that player's menu; a right-DRAG still orbits the camera,
+ // because startDrag marks the gesture `moved` past a 7px dead zone. The nameplate button already
+ // opened this menu on left click - this adds the BODY, which is what a player actually aims at.
+ // Self is left out: whispering or friending yourself is meaningless.
+ if(down&&!down.moved&&e.button===2){const rect=host.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
+  const selfId=callbacks.self(),sprites=[];
+  for(const pl of players.values())if(pl.sprite&&pl.state&&pl.state.id!==selfId)sprites.push(pl.sprite);
+  // Sprite.raycast reads matrixWorld, which only the render loop refreshes. A pick issued before
+  // the next frame (or while the loop is paused) would test last frame's - or creation's - origin
+  // and silently miss, so the matrices are brought current here rather than assumed.
+  if(sprites.length){scene.updateMatrixWorld();camera.updateMatrixWorld()}
+  const hit=sprites.length?ray.intersectObjects(sprites,false)[0]:null;
+  const pl=hit?players.get(hit.object.userData.socialId):null;
+  if(pl&&pl.state&&pl.state.name&&typeof callbacks.menu==='function')callbacks.menu(pl.state.name,pl.state.id);
+ }
+ if(down&&!down.moved&&!(e.button>0)){const rect=host.getBoundingClientRect();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
  const sanctuaryHit=sanctuaryNpcs.find(n=>n.look&&!behindGymWall(n.spec.x,2,n.spec.z)&&ray.ray.intersectBox(n.bounds,new T.Vector3()));
  const pokerSeatHit=pokerStools.map(mesh=>{const point=ray.ray.intersectBox(mesh.userData.pokerSeatBounds,new T.Vector3());return point?{mesh,distance:point.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];
  const tableHit=pokerUnits.map(u=>{const dp=ray.ray.intersectBox(u.dealerBounds,new T.Vector3()),tp=ray.ray.intersectBox(u.tableBounds,new T.Vector3());const pt=dp||tp;return pt?{u,dealerDist:dp?dp.distanceTo(ray.ray.origin):Infinity,distance:pt.distanceTo(ray.ray.origin)}:null}).filter(Boolean).sort((a,b)=>a.distance-b.distance)[0];
