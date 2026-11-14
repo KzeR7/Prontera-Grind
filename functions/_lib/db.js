@@ -382,6 +382,91 @@ export const markRead = (db, userId, ids) => {
 export const allMessages = (db, limit = 50) =>
   db.prepare('SELECT * FROM messages ORDER BY id DESC LIMIT ?').bind(limit).all();
 
+// --------------------------------------------------- announcement gift campaigns ----
+// 0017: a "to everyone" announcement's gift is also a campaign, so an account created after the
+// send can still claim it. The text was never the problem - one `messages` row with target_user
+// NULL reaches anyone - but the grant fan-out only ever covered accounts that already existed.
+// A campaign stays open until a GM closes it; closing stops future grants and takes nothing back.
+// Fails soft everywhere: a database without 0017 must still register accounts and send mail.
+export async function openAnnouncementGiftCampaign(db, { messageId, kind, payload, label, note, actor }) {
+  try {
+    await db.prepare(`INSERT OR IGNORE INTO announcement_gifts(message_id, kind, payload, label, note, created_by, created_at)
+      VALUES(?,?,?,?,?,?,?)`)
+      .bind(Number(messageId), String(kind), JSON.stringify(payload ?? {}), label ?? null, note ?? null, actor ?? null, now()).run();
+    return { ok: true };
+  } catch (e) {
+    console.warn('announcement gift campaign not recorded (migration 0017 missing?):', e && e.message);
+    return { ok: false };
+  }
+}
+
+// The campaigns still handing out to new accounts, newest first.
+export async function openAnnouncementGifts(db) {
+  try {
+    return await db.prepare(`SELECT g.*, m.body AS message_body FROM announcement_gifts g
+      LEFT JOIN messages m ON m.id = g.message_id
+      WHERE g.closed_at IS NULL ORDER BY g.created_at DESC`).all();
+  } catch (e) {
+    console.warn('announcement gift campaigns unreadable (migration 0017 missing?):', e && e.message);
+    return { results: [] };
+  }
+}
+
+// Every campaign with its state, for the console's list.
+export async function listAnnouncementGifts(db, limit = 40) {
+  try {
+    return await db.prepare(`SELECT g.*, m.body AS message_body FROM announcement_gifts g
+      LEFT JOIN messages m ON m.id = g.message_id
+      ORDER BY g.created_at DESC LIMIT ?`).bind(Math.max(1, Math.min(200, Number(limit) || 40))).all();
+  } catch (e) {
+    console.warn('announcement gift campaigns unreadable (migration 0017 missing?):', e && e.message);
+    return { results: [] };
+  }
+}
+
+// A new account claims what is still open. Idempotent: the grants(batch_id,user_id) unique index
+// makes a repeat call a no-op, and the batch id is the same one the original fan-out used, so an
+// account can never hold two copies of one announcement's gift.
+export async function claimAnnouncementGiftsFor(db, userId) {
+  const open = await openAnnouncementGifts(db);
+  let granted = 0;
+  for (const g of open.results || []) {
+    try {
+      await db.prepare(`INSERT OR IGNORE INTO grants(user_id, kind, payload, note, created_by, created_at, batch_id)
+        VALUES(?,?,?,?,?,?,?)`)
+        .bind(Number(userId), String(g.kind), String(g.payload || '{}'), g.note ?? null,
+          g.created_by ?? 'GM', now(), 'ann:' + Number(g.message_id)).run();
+      granted++;
+    } catch (e) {
+      console.warn('announcement gift not delivered to a new account:', e && e.message);
+      break;
+    }
+  }
+  return granted;
+}
+
+export async function closeAnnouncementGift(db, messageId, actor) {
+  try {
+    const res = await db.prepare(`UPDATE announcement_gifts SET closed_at = ?, closed_by = ?
+      WHERE message_id = ? AND closed_at IS NULL`).bind(now(), actor ?? null, Number(messageId)).run();
+    return { changed: Number(res?.meta?.changes ?? 0) || 0 };
+  } catch (e) {
+    console.warn('announcement gift campaign not closable (migration 0017 missing?):', e && e.message);
+    return { changed: 0, missing: true };
+  }
+}
+
+export async function reopenAnnouncementGift(db, messageId, actor) {
+  try {
+    const res = await db.prepare(`UPDATE announcement_gifts SET closed_at = NULL, closed_by = NULL
+      WHERE message_id = ? AND closed_at IS NOT NULL`).bind(Number(messageId)).run();
+    return { changed: Number(res?.meta?.changes ?? 0) || 0, actor: actor ?? null };
+  } catch (e) {
+    console.warn('announcement gift campaign not reopenable (migration 0017 missing?):', e && e.message);
+    return { changed: 0, missing: true };
+  }
+}
+
 // ---------------------------------------------------------------- events ----
 export const logEvent = (db, actor, userId, kind, detail) =>
   db.prepare('INSERT INTO events(at, actor, user_id, kind, detail) VALUES(?, ?, ?, ?, ?)')
@@ -448,19 +533,24 @@ export const saveAlertStatement = (db,{userId,kind,at,value,threshold,detail,buc
     ON CONFLICT(user_id, kind) DO UPDATE SET
       last_seen=excluded.last_seen, value=MAX(save_alerts.value, excluded.value),
       threshold=excluded.threshold, detail=excluded.detail,
+      cleared_at=NULL, cleared_by=NULL,
       observations=save_alerts.observations + (CASE WHEN excluded.last_seen - save_alerts.last_seen >= ? THEN 1 ELSE 0 END)`)
     .bind(Number(userId),String(kind),Number(at),Number(at),Number(value)||0,Number(threshold)||0,String(detail==null?'':detail).slice(0,400),Number(bucketMs)||300000);
 
 // Which rules already fired for this account (to notify the owner only the first time).
+// Cleared flags do not count: if the same rule fires again after a GM cleared it, the owner is
+// poked once more - the verdict covered the evidence that was reviewed, not the future.
 export const existingSaveAlertKinds = (db, userId) =>
-  db.prepare(`SELECT kind FROM save_alerts WHERE user_id = ?`).bind(Number(userId)).all();
+  db.prepare(`SELECT kind FROM save_alerts WHERE user_id = ? AND cleared_at IS NULL`).bind(Number(userId)).all();
 
 // This account's flags, newest first (player panel).
 // Fails OPEN: if migration 0015 has not been applied, the player detail still loads with an
 // empty flag list — a missing optional table must never take the console down.
 export async function saveAlertsFor(db, userId) {
   try {
-    return await db.prepare(`SELECT * FROM save_alerts WHERE user_id = ? ORDER BY last_seen DESC`).bind(Number(userId)).all();
+    // 0016: cleared flags stay in the list (as history) but sink below the open ones.
+    return await db.prepare(`SELECT * FROM save_alerts WHERE user_id = ?
+      ORDER BY CASE WHEN cleared_at IS NULL THEN 0 ELSE 1 END, last_seen DESC`).bind(Number(userId)).all();
   } catch (e) {
     console.warn('save_alerts read failed (migration 0015 missing?):', e && e.message);
     return { results: [] };
@@ -471,7 +561,7 @@ export async function saveAlertsFor(db, userId) {
 // "nobody flagged" for the same reason — the list itself must always load.
 export async function alertedUserIds(db) {
   try {
-    const rows = (await db.prepare(`SELECT DISTINCT user_id FROM save_alerts`).all()).results;
+    const rows = (await db.prepare(`SELECT DISTINCT user_id FROM save_alerts WHERE cleared_at IS NULL`).all()).results;
     return new Set(rows.map(r => Number(r.user_id)));
   } catch (e) {
     console.warn('save_alerts list failed (migration 0015 missing?):', e && e.message);
@@ -482,7 +572,37 @@ export async function alertedUserIds(db) {
 // Every account's flags, newest first (the console's "Suspicious saves" card).
 export const recentSaveAlerts = (db, limit=100) =>
   db.prepare(`SELECT a.*, u.username FROM save_alerts a JOIN users u ON u.id=a.user_id
+    WHERE a.cleared_at IS NULL
     ORDER BY a.last_seen DESC LIMIT ?`).bind(Math.max(1,Math.min(500,Number(limit)||100))).all();
+
+// 0016: a GM's verdict on one flag. CLEARING keeps the row (the evidence stays) and stamps who
+// looked and when; it stops the ⚠ marker, the audit card and the player warning. REOPENING undoes
+// that for a cleared flag that turns out to matter. Both are scoped to one account + one rule, and
+// both return how many rows they touched so the caller can tell "no such flag" from "already so".
+// Fails soft when migration 0016 has not been applied yet: no verdict is better than a broken card.
+export async function clearSaveAlert(db, userId, kind, actor) {
+  try {
+    const res = await db.prepare(`UPDATE save_alerts SET cleared_at = ?, cleared_by = ?
+      WHERE user_id = ? AND kind = ? AND cleared_at IS NULL`)
+      .bind(now(), actor ?? null, Number(userId), String(kind)).run();
+    return { changed: Number(res?.meta?.changes ?? res?.meta?.changes_count ?? 0) || 0 };
+  } catch (e) {
+    console.warn('save_alerts clear failed (migration 0016 missing?):', e && e.message);
+    return { changed: 0, missing: true };
+  }
+}
+
+export async function reopenSaveAlert(db, userId, kind, actor) {
+  try {
+    const res = await db.prepare(`UPDATE save_alerts SET cleared_at = NULL, cleared_by = NULL
+      WHERE user_id = ? AND kind = ? AND cleared_at IS NOT NULL`)
+      .bind(Number(userId), String(kind)).run();
+    return { changed: Number(res?.meta?.changes ?? res?.meta?.changes_count ?? 0) || 0, actor: actor ?? null };
+  } catch (e) {
+    console.warn('save_alerts reopen failed (migration 0016 missing?):', e && e.message);
+    return { changed: 0, missing: true };
+  }
+}
 
 // Grants claimed inside a save window, credited back so GM gifts never flag their receiver.
 export const grantsClaimedBetween = (db, userId, fromMs, toMs) =>

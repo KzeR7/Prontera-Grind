@@ -1251,7 +1251,7 @@ adds between authoritative snapshots.
 
 ## Owner pass: MVP art, pond spawns, aura deck, DigiDex scope, toolbar and the activity meter (haven-v383)
 
-**MVP art is crops, not drawings.** The seven Fishing bosses ship as crops of the owner's
+**MVP art is crops, not drawings.** The Fishing bosses ship as crops of the owner's
 own reference images. `tools/mvp-art-source/` holds those references verbatim and
 `tools/mvp_art_crop.py` is the only producer of the `assets/social/fish/mvp_*.png` files it
 serves: it floods the plate colour inward from the borders (multi-seed, so a white strip next
@@ -1390,8 +1390,26 @@ silently on a force resync. Fish modes/rods are the server's vocabulary
 walkability over two loops, `fastPath` equivalence, seat/chair pools, loop closure, pond
 bobbers, 10–20 minute stay clamping with at most four short walk legs, the DigiPet-corridor
 hang, one emote per stay with 5–30 minute gaps, source pins for the snapshot/tick/menu wiring
-and the `?v=406` tag, plus a jsdom
+and the current `?v=` build tag, plus a jsdom
 pass driving enter → room rebuild → drop heal → leave). Existing suites keep the social
 client honest: `social_sim.js`, `social_ui_sim.js`, `social_scene_sim.js`,
 `social_connection_sim.js`, `social_table_chat_sim.js`, `update_watch_sim.js` (18, now also
 pinning `plaza-bots.js` in its bust list) and `gear_sim.js` (43).
+
+## MVP fish roster (haven-v407)
+
+**Ten bosses, the owner's own crops.** The seven painted/cropped bosses were replaced outright:
+`mvp_tidewarden` (Tideforged Warden), `mvp_rimewraith` (Rimewraith Sovereign), `mvp_tidecourser`
+(Tidebound Courser), `mvp_dreadnought` (Dreadnought Reaper), `mvp_thousandeye` (Thousand-Eye
+Ravager), `mvp_auricmaw` (Auric Ceremaw), `mvp_worldeye` (World-Eye Tortoise), `mvp_volthorn`
+(Volthorn Narwhal), `mvp_dreadclaw` (Dreadclaw Behemoth) and `mvp_stormcoil` (Stormcoil
+Leviathan). The retired ids and their files are gone from `assets/social/fish/`, and
+`MANIFEST.json`, `FISH_ART`, the Worker's `FISHING_MVP_IDS` pool and the GM console's spawn list
+all name the same ten.
+
+**Same 512 px contract, lossless bytes.** Each sprite is a transparent 512 × 512 cutout whose
+content box is 456 px, so the pond, the index and the catch card downsample it exactly as before.
+Weight ramps 1,000 kg → 3,000 kg in roster order, keeping the show-off scale and the 3 t ceiling
+intact. Every crop carried ≤256 colours, so the shipped files are indexed PNGs accepted only
+after a full RGBA compare against the truecolour encode — no quantisation, no dithering — which
+keeps the native-social budget under its 12 MiB ceiling (11.94 MiB measured).

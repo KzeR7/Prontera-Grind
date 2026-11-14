@@ -122,6 +122,30 @@ t('save audit: the Suspicious saves card, the flag list on the player, and the G
   assert.match(audit, /ownerIds/, 'a first-time flag pokes the owner in-game');
 });
 
+// 0016 (owner: "after review if i think its nothing wrong is there an option to unflag?"): a flag
+// can be cleared without losing the evidence, and a cleared flag reopens by itself if it fires again.
+t('save audit review: a flag can be cleared after review, and that verdict is reversible', () => {
+  assert.match(src, /data-act="flagclear"/, 'each open flag carries a clear button');
+  assert.match(src, /data-act="flagreopen"/, 'a cleared flag can be reopened');
+  assert.match(src, /Looks fine — clear/, 'the button says what the verdict means');
+  assert.match(src, /cleared after review — kept as history/i, 'cleared flags are kept, not deleted');
+  assert.match(src, /reopens by itself/i, 'the console says a re-fire undoes a verdict');
+  assert.match(src, /api\('\/gm\/damage', \{ method: 'POST'/, 'the verdict goes to the GM-only flag endpoint');
+  const api = fs.readFileSync(path.join(root, 'functions/api/gm/damage.js'), 'utf8');
+  assert.match(api, /export const onRequestPost/, 'the flag endpoint accepts a verdict');
+  assert.match(api, /isGm\(user\)/, 'only a GM can clear or reopen a flag');
+  assert.match(api, /clearSaveAlert/, 'clearing is a stamped update, not a delete');
+  assert.match(api, /logEvent/, 'every verdict lands in the audit log');
+  const dbjs = fs.readFileSync(path.join(root, 'functions/_lib/db.js'), 'utf8');
+  assert.match(dbjs, /cleared_at=NULL, cleared_by=NULL/, 'a rule that fires again reopens its flag');
+  assert.match(dbjs, /WHERE cleared_at IS NULL/, 'the ⚠ marker and the card only count open flags');
+  assert.match(dbjs, /WHERE user_id = \? AND cleared_at IS NULL/, 'a cleared rule no longer suppresses the owner poke');
+  const mig = fs.readFileSync(path.join(root, 'migrations/0016_save_alert_review.sql'), 'utf8');
+  assert.match(mig, /ADD COLUMN cleared_at/, 'the verdict is a column, so the row survives');
+  const player = fs.readFileSync(path.join(root, 'functions/api/gm/player.js'), 'utf8');
+  assert.match(player, /cleared: !!a\.cleared_at/, 'the player panel receives the verdict');
+});
+
 t('the console survives a data-endpoint outage without telling the owner to sign in', () => {
   assert.match(src, /try \{ me = await api\('\/me'\); \} catch/, 'only the session probe may decide the sign-in card');
   assert.match(src, /if \(!me\)/, 'no session at all -> the sign-in card');

@@ -1474,6 +1474,135 @@ await T('save audit: the owner account is never audited (GM tools legitimately m
   assert.strictEqual(Number(msgs), 0, 'the owner is never mailed about their own account');
 });
 
+await T('a reviewed save-audit flag can be cleared, reopened, and reopens itself if the rule fires again', async () => {
+  const h = freshEnv();
+  const owner = await api.register(h.env, { u: 'ReviewOwner', p: 'owner-password-1' });
+  h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='ReviewOwner'").run();
+  const sus = await api.register(h.env, { u: 'Reviewed', p: 'reviewed-password-1' });
+  const evil = n => JSON.stringify(Object.assign(JSON.parse(saveBlob(50, 0)), { st: { str: n, agi: 1, dex: 1, luk: 1, int: 1, vit: 5 } }));
+  const put = await api.putSave(h.env, sus.cookie, { blob: evil(300), version: 1 });
+  assert.strictEqual(put.status, 200, 'the impossible save is stored, not rejected');
+  const id = h.sqlite.prepare(`SELECT id FROM users WHERE username='Reviewed'`).get().id;
+  const flag = (action, kind = 'stat-over-cap') =>
+    call('onRequestPost', 'api/gm/damage.js', { request: req('POST', '/api/gm/damage', { cookie: owner.cookie, body: { id, action, kind } }), env: h.env });
+  const flagged = async () => (await api.players(h.env, owner.cookie)).data.players.find(p => p.id === id)?.alerted;
+  const detailFlag = async () => (await api.player(h.env, owner.cookie, id)).data.alerts.find(a => a.kind === 'stat-over-cap');
+
+  assert.strictEqual(await flagged(), true, 'the account starts flagged');
+  assert.strictEqual((await detailFlag()).cleared, false, 'an open flag reads as not cleared');
+
+  // clearing: the verdict is recorded, the row survives, the marker goes away
+  // (this save breaks more than one rule - an over-cap stat also means unearned points - so the
+  // account is only unflagged once every open rule has been read and cleared.)
+  const cleared = await flag('clear');
+  assert.strictEqual(cleared.status, 200, JSON.stringify(cleared.data));
+  assert.match(cleared.data.note, /reopens by itself/i, 'the note says a re-fire undoes the verdict');
+  assert.strictEqual(await flagged(), true, 'one cleared rule does not unflag the account while another is open');
+  const otherKinds = h.sqlite.prepare('SELECT kind FROM save_alerts WHERE user_id=? AND kind<>?').all(id, 'stat-over-cap').map(r => r.kind);
+  assert.ok(otherKinds.length >= 1, 'the same save breaks more than one rule: ' + otherKinds.join(', '));
+  for (const kind of otherKinds) assert.strictEqual((await flag('clear', kind)).status, 200, 'clearing ' + kind);
+  assert.strictEqual(await flagged(), false, 'a cleared flag stops marking the account');
+  const afterClear = await detailFlag();
+  assert.strictEqual(afterClear.cleared, true, 'the flag is still listed, as history');
+  assert.strictEqual(afterClear.clearedBy, 'ReviewOwner', 'who cleared it is recorded');
+  assert.ok(Number(afterClear.clearedAt) > 0, 'when it was cleared is recorded');
+  assert.strictEqual(h.sqlite.prepare('SELECT COUNT(*) n FROM save_alerts WHERE user_id=?').get(id).n, 1 + otherKinds.length, 'clearing keeps the rows - evidence is not deleted');
+  const card = await call('onRequestGet', 'api/gm/audit.js', { request: req('GET', '/api/gm/audit', { cookie: owner.cookie }), env: h.env });
+  assert.ok(!(card.data.alerts || []).some(a => a.user_id === id), 'the Suspicious-saves card only shows open flags');
+  assert.ok(h.sqlite.prepare(`SELECT COUNT(*) n FROM events WHERE kind='gm-flag-clear'`).get().n >= 1, 'the verdict is in the audit log');
+
+  // idempotence and rules
+  assert.strictEqual((await flag('clear')).status, 409, 'clearing an already-cleared flag is refused, not silently repeated');
+  assert.strictEqual((await flag('clear', 'not-a-rule')).status, 400, 'only real rules can be cleared');
+  assert.strictEqual((await flag('nonsense')).status, 400, 'only clear/reopen exist');
+  const asPlayer = await call('onRequestPost', 'api/gm/damage.js', { request: req('POST', '/api/gm/damage', { cookie: sus.cookie, body: { id, action: 'clear', kind: 'stat-over-cap' } }), env: h.env });
+  assert.strictEqual(asPlayer.status, 403, 'a player cannot clear their own flag');
+
+  // reopening by hand
+  const reopened = await flag('reopen');
+  assert.strictEqual(reopened.status, 200, JSON.stringify(reopened.data));
+  assert.strictEqual(await flagged(), true, 'a reopened flag marks the account again');
+  assert.strictEqual((await detailFlag()).cleared, false);
+  assert.strictEqual((await flag('reopen')).status, 409, 'reopening an open flag is refused');
+
+  // and the important one: a verdict is not an immunity - the same rule firing again reopens it
+  const clearedAgain = await flag('clear');
+  assert.strictEqual(clearedAgain.status, 200);
+  assert.strictEqual(await flagged(), false);
+  for (const kind of otherKinds) await flag('clear', kind);
+  const more = await api.putSave(h.env, sus.cookie, { blob: evil(301), version: put.data.version });
+  assert.strictEqual(more.status, 200, 'the second impossible save is also stored');
+  const refired = h.sqlite.prepare(`SELECT cleared_at FROM save_alerts WHERE user_id=? AND kind='stat-over-cap'`).get(id);
+  assert.strictEqual(refired.cleared_at, null, 'a fresh violation reopens the flag by itself');
+  assert.strictEqual(await flagged(), true, 'so the marker is back on the account');
+});
+
+await T('an announcement gift also reaches accounts created after it was sent, until a GM closes it', async () => {
+  const h = freshEnv();
+  const owner = await api.register(h.env, { u: 'GiftOwner', p: 'owner-password-1' });
+  h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='GiftOwner'").run();
+  const early = await api.register(h.env, { u: 'WasHere', p: 'was-here-password' });
+  const earlyId = h.sqlite.prepare("SELECT id FROM users WHERE username='WasHere'").get().id;
+  const send = await api.act(h.env, owner.cookie, {
+    id: earlyId, action: 'announce', toAll: true, kind: 'event',
+    body: 'Launch week gift!', gift: { kind: 'zeny', amount: 5000 },
+  });
+  assert.strictEqual(send.status, 200, JSON.stringify(send.data));
+  const mid = send.data.messageId;
+  assert.match(send.data.note, /join later/i, 'the console is told the gift keeps going');
+  const grantFor = name => h.sqlite.prepare(`SELECT g.kind, g.payload, g.batch_id FROM grants g
+    JOIN users u ON u.id=g.user_id WHERE u.username=?`).all(name);
+
+  // the account that existed at send time, as before
+  assert.strictEqual(grantFor('WasHere').length, 1, 'existing accounts are paid once');
+
+  // the account created afterwards - the actual bug (owner, 2026-11-14)
+  const late = await api.register(h.env, { u: 'JoinedLater', p: 'joined-later-password' });
+  const lateGrants = grantFor('JoinedLater');
+  assert.strictEqual(lateGrants.length, 1, 'a later account receives the announcement gift');
+  assert.strictEqual(lateGrants[0].kind, 'zeny');
+  assert.strictEqual(JSON.parse(lateGrants[0].payload).amount, 5000);
+  assert.strictEqual(lateGrants[0].batch_id, 'ann:' + mid, 'the same batch as the original fan-out, so nobody is paid twice');
+  const lateMail = await api.messages(h.env, late.cookie);
+  const letter = (lateMail.data.inbox || []).find(m => m.body === 'Launch week gift!');
+  assert.ok(letter, 'and the letter is in their mail box');
+  assert.ok(letter.gift, 'the letter carries the gift, not a bare message');
+  assert.strictEqual(letter.gift.payload.amount, 5000);
+
+  // closing the campaign stops it for the next account, and keeps what was already delivered
+  const close = (cookie, action, id) => call('onRequestPost', 'api/gm/announcements.js', {
+    request: req('POST', '/api/gm/announcements', { cookie, body: { id, action } }), env: h.env });
+  assert.strictEqual((await close(early.cookie, 'close', mid)).status, 403, 'a player cannot close a campaign');
+  const closed = await close(owner.cookie, 'close', mid);
+  assert.strictEqual(closed.status, 200, JSON.stringify(closed.data));
+  assert.match(closed.data.note, /already delivered stays/i, 'closing takes nothing back');
+  await api.register(h.env, { u: 'AfterClose', p: 'after-close-password' });
+  assert.strictEqual(grantFor('AfterClose').length, 0, 'a closed campaign pays no new account');
+  assert.strictEqual(grantFor('JoinedLater').length, 1, 'the account that already had it keeps it');
+  assert.strictEqual((await close(owner.cookie, 'close', mid)).status, 409, 'closing twice is refused');
+  assert.strictEqual((await close(owner.cookie, 'reopen', mid)).status, 200, 'a campaign can be reopened');
+  await api.register(h.env, { u: 'AfterReopen', p: 'after-reopen-password' });
+  assert.strictEqual(grantFor('AfterReopen').length, 1, 'reopening pays new accounts again');
+
+  // the console list says which ones are open
+  const listed = await call('onRequestGet', 'api/gm/announcements.js', { request: req('GET', '/api/gm/announcements', { cookie: owner.cookie }), env: h.env });
+  assert.strictEqual(listed.status, 200);
+  const row = (listed.data.gifts || []).find(g => g.messageId === mid);
+  assert.ok(row && row.closed === false && /Launch week/.test(row.body), 'the list shows the letter and its state');
+  assert.ok(h.sqlite.prepare(`SELECT COUNT(*) n FROM events WHERE kind='gm-announce-gift-close'`).get().n >= 1, 'closing is audited');
+
+  // a one-off drop can opt out entirely (close the earlier campaign first, so this account can
+  // only be paid by the one-off itself)
+  assert.strictEqual((await close(owner.cookie, 'close', mid)).status, 200, 'closing the first campaign again');
+  const oneOff = await api.act(h.env, owner.cookie, {
+    id: earlyId, action: 'announce', toAll: true, body: 'One-off compensation', gift: { kind: 'zeny', amount: 1000 }, giftLater: false,
+  });
+  assert.strictEqual(oneOff.status, 200);
+  assert.ok(!/join later/i.test(oneOff.data.note), 'no later-joiner promise for a one-off');
+  await api.register(h.env, { u: 'AfterOneOff', p: 'after-one-off-password' });
+  assert.strictEqual(grantFor('AfterOneOff').length, 0, 'a one-off drop stays a snapshot');
+});
+
 await T('the console fails open when migration 0015 is absent — the "sign in first" regression', async () => {
   const h = freshEnv();
   const owner = await api.register(h.env, { u: 'DegOwner', p: 'owner-password-1' });

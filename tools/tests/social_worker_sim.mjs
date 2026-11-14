@@ -82,8 +82,8 @@ async function mvpCommand(mf,body,admin){
  adminDO.ctx={storage:{getAlarm:async()=>null,setAlarm:async at=>alarmWrites.push(at)}};
  adminDO.room={mvpActive:new Map(),hasActiveBattles:()=>true,spawnMvp:(room,now,species)=>{spawned.push({room,species});return{room,sp:species,id:'mvp:alarm-test',spawnedAt:now,endsAt:now+600000}}};
  adminDO.battleAlarmWrite=Promise.resolve();adminDO.sockets=new WeakMap();adminDO.restored=false;adminDO.scheduleBattleAlarm=()=>battleSchedules.push('battle');
- const result=await adminDO.adminFishingMvp(new Request('https://social/gm/fishing-mvp',{method:'POST',headers:{'Content-Type':'application/json','X-Social-Admin':JSON.stringify({id:9,username:'MvpAdmin',gm:2})},body:JSON.stringify({room:2,species:'mvp_tide_drake'})}));
- assert.equal(result.status,200);assert.deepEqual(spawned,[{room:2,species:'mvp_tide_drake'}]);
+ const result=await adminDO.adminFishingMvp(new Request('https://social/gm/fishing-mvp',{method:'POST',headers:{'Content-Type':'application/json','X-Social-Admin':JSON.stringify({id:9,username:'MvpAdmin',gm:2})},body:JSON.stringify({room:2,species:'mvp_stormcoil'})}));
+ assert.equal(result.status,200);assert.deepEqual(spawned,[{room:2,species:'mvp_stormcoil'}]);
  assert.deepEqual(battleSchedules,['battle']);assert.deepEqual(alarmWrites,[],'active battle alarm is preserved without a direct 60-second reset');
 }
 {
@@ -98,15 +98,15 @@ try{
  await until(messages,m=>m.type==='hello','first hello');
  ws.send(JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));
  const joined=await until(messages,m=>m.type==='room','plaza join');assert.equal(joined.room,1);
- assert.equal((await mvpCommand(mf,{room:1,species:'mvp_tide_drake'})).status,403,'the private command requires an internal GM identity');
- assert.equal((await mvpCommand(mf,{room:1,species:'mvp_tide_drake'},{id:8,username:'Player',gm:0})).status,403,'a non-GM identity is refused');
+ assert.equal((await mvpCommand(mf,{room:1,species:'mvp_stormcoil'})).status,403,'the private command requires an internal GM identity');
+ assert.equal((await mvpCommand(mf,{room:1,species:'mvp_stormcoil'},{id:8,username:'Player',gm:0})).status,403,'a non-GM identity is refused');
  const gm={id:9,username:'MvpAdmin',gm:2};
- assert.equal((await mvpCommand(mf,{room:0,species:'mvp_tide_drake'},gm)).status,400,'rooms outside the plaza bounds are refused');
+ assert.equal((await mvpCommand(mf,{room:0,species:'mvp_stormcoil'},gm)).status,400,'rooms outside the plaza bounds are refused');
  assert.equal((await mvpCommand(mf,{room:1,species:'not_a_fish'},gm)).status,400,'unlisted MVP IDs are refused');
- const spawnedResponse=await mvpCommand(mf,{room:1,species:'mvp_tide_drake'},gm),spawned=await spawnedResponse.json();
- assert.equal(spawnedResponse.status,200);assert.equal(spawned.sp,'mvp_tide_drake');assert.equal(spawned.room,1);assert.equal(spawned.endsAt-spawned.spawnedAt,10*60*1000);
+ const spawnedResponse=await mvpCommand(mf,{room:1,species:'mvp_stormcoil'},gm),spawned=await spawnedResponse.json();
+ assert.equal(spawnedResponse.status,200);assert.equal(spawned.sp,'mvp_stormcoil');assert.equal(spawned.room,1);assert.equal(spawned.endsAt-spawned.spawnedAt,10*60*1000);
  await until(messages,m=>m.type==='mvp_spawn'&&m.id===spawned.id,'authenticated manual MVP broadcast');
- assert.equal((await mvpCommand(mf,{room:1,species:'mvp_iron_crab'},gm)).status,409,'a room cannot have two active MVPs');
+ assert.equal((await mvpCommand(mf,{room:1,species:'mvp_tidewarden'},gm)).status,409,'a room cannot have two active MVPs');
  ws.send(JSON.stringify({type:'chat',channel:'world',body:'survives a Durable Object restart'}));
  await until(messages,m=>m.type==='message'&&m.body==='survives a Durable Object restart','World echo');
  await new Promise(r=>setTimeout(r,3100));

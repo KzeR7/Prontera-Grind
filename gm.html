@@ -189,7 +189,7 @@ tr:hover{background:#2a2014;cursor:pointer}
 
   <section class="card" id="saveauditcard">
     <h2>Suspicious saves <span id="audit-count" class="small"></span></h2>
-    <p class="small">The server audits every accepted save on its own — no one has to be watching the game. It breaks a flag into two kinds: <b>impossible</b> (a stat above the level cap, more stat points than any level can earn, an over-cap refine) and <b>too fast</b> (kills, levels, Zeny or materials gained since the previous sync faster than the game itself can pay out, with GM gifts and offline claims credited back). Flags are REVIEW-ONLY: nothing here rejects a save or bans an account, and a first-time flag also mails the owner in-game. Cross-check Gifts and History before acting.</p>
+    <p class="small">The server audits every accepted save on its own — no one has to be watching the game. It breaks a flag into two kinds: <b>impossible</b> (a stat above the level cap, more stat points than any level can earn, an over-cap refine) and <b>too fast</b> (kills, levels, Zeny or materials gained since the previous sync faster than the game itself can pay out, with GM gifts and offline claims credited back). Flags are REVIEW-ONLY: nothing here rejects a save or bans an account, and a first-time flag also mails the owner in-game. Clearing is the verdict: it removes the ⚠ marker but keeps the evidence, and reopens by itself if the rule fires again. Cross-check Gifts and History before acting.</p>
     <div id="auditlist" class="small">Loading…</div>
   </section>
   </div>
@@ -382,9 +382,19 @@ async function renderDamage(body,id) {
     if(SEL?.account.id!==id||TAB!=='damage'||body!==$('tabbody'))return;
     const alerts = (SEL && SEL.account.id === id && Array.isArray(SEL.alerts)) ? SEL.alerts : [];
     body.innerHTML=`<p class="small">Reported by the browser, not proof of cheating. Samples are at most one per six-hour period, up to 28 per account. Total damage is cumulative, not field DPS; Echo is a reported personal best. No automatic ban or payout action.</p>` +
-      (alerts.length
-        ? `<h3 class="small">Save audit flags — checked by the server while storing each save (review-only; cross-check Gifts and History)</h3><table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>First / last seen</th></tr></thead><tbody>${alerts.map(a=>`<tr><td>${esc(a.label)}</td><td>${esc(nfmt(a.threshold||0))} / ${esc(nfmt(Math.round(a.value||0)))}</td><td>${esc(a.detail||'')}</td><td class="small">${esc(when(a.firstSeen))} → ${esc(when(a.lastSeen))}<br>${nfmt(a.observations)} observation${a.observations===1?'':'s'}</td></tr>`).join('')}</tbody></table>`
-        : `<p class="small">No save-audit flags on this account — its last accepted saves are within the game's own limits.</p>`) +
+      (() => {
+        // 0016: a reviewed flag can be cleared. Open flags are the working list; cleared ones are
+        // kept underneath as the verdict trail, each reopenable. Clearing never deletes evidence.
+        const openFlags = alerts.filter(a => !a.cleared), clearedFlags = alerts.filter(a => a.cleared);
+        const rows = list => list.map(a=>`<tr><td>${esc(a.label)}</td><td>${esc(nfmt(a.threshold||0))} / ${esc(nfmt(Math.round(a.value||0)))}</td><td>${esc(a.detail||'')}</td><td class="small">${esc(when(a.firstSeen))} → ${esc(when(a.lastSeen))}<br>${nfmt(a.observations)} observation${a.observations===1?'':'s'}</td>`);
+        const openTable = `<table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>First / last seen</th><th></th></tr></thead><tbody>${openFlags.map(a=>rows([a])[0].replace('</tr>', `<td><button type="button" data-act="flagclear" data-kind="${esc(a.kind)}">Looks fine — clear</button></td></tr>`)).join('')}</tbody></table>`;
+        const clearedTable = clearedFlags.length
+          ? `<h3 class="small">Cleared after review — kept as history, reopenable</h3><table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>Cleared</th><th></th></tr></thead><tbody>${clearedFlags.map(a=>rows([a])[0].replace('</tr>', `<td class="small">${esc(when(a.clearedAt))}${a.clearedBy?' · '+esc(a.clearedBy):''}<br><button type="button" data-act="flagreopen" data-kind="${esc(a.kind)}">Reopen</button></td></tr>`)).join('')}</tbody></table>`
+          : '';
+        if (!alerts.length) return `<p class="small">No save-audit flags on this account — its last accepted saves are within the game's own limits.</p>`;
+        if (!openFlags.length) return `<p class="small">Every save-audit flag on this account has been reviewed and cleared. A cleared rule reopens by itself if it fires again.</p>${clearedTable}`;
+        return `<h3 class="small">Save audit flags — checked by the server while storing each save (review-only; cross-check Gifts and History)</h3>${openTable}<p class="small">Clearing says a human read this evidence and it is explained. It removes the ⚠ marker, but the rule reopens by itself if it fires again.</p>${clearedTable}`;
+      })() +
       `<h3 class="small">Damage samples — browser-reported, never proof</h3>` +
       (d.samples.length?`<table><thead><tr><th>Sampled</th><th>Map / stage</th><th>Total damage</th><th>Echo best DPS</th></tr></thead><tbody>${d.samples.map(r=>`<tr><td>${esc(when(r.sampled_at))}</td><td>${esc(r.map==null?'—':r.map)} / ${esc(r.stage==null?'—':r.stage)}</td><td>${esc(damageNumber(r.reported_total_damage))}</td><td>${esc(damageNumber(r.reported_echo_best))}</td></tr>`).join('')}</tbody></table>`:'<p class="small">No samples recorded yet.</p>');
   } catch(e) { if(SEL?.account.id===id&&TAB==='damage'&&body===$('tabbody'))body.textContent='Damage monitoring unavailable: '+e.message; }
@@ -560,9 +570,12 @@ function renderTab() {
         <label class="small"><input type="checkbox" id="atoall"> to everyone</label>
       </div>
       <div id="agiftbody" style="margin-top:6px"></div>
+      <label class="small" style="display:block;margin-top:6px"><input type="checkbox" id="agiftlater" checked> players who join later also get the gift, until you close it</label>
+      <p class="small">The letter always reaches everyone, including accounts made after it is sent. Ticking the box makes the GIFT follow it too; close it below when the give-away is over, so a later account is not an unlimited supply.</p>
       <div class="row" style="margin-top:8px">
         <button class="primary" data-act="announce">Send announcement</button>
-      </div>`;
+      </div>
+      <div id="acampaigns" style="margin-top:10px"></div>`;
     const paintAnnGift = () => {
       const gk = $('agiftkind').value;
       if (gk === 'none') {
@@ -592,6 +605,22 @@ function renderTab() {
     };
     $('agiftkind').onchange = paintAnnGift;
     paintAnnGift();
+    /* 0017: which announcements are still handing their gift to brand-new accounts. Closing one
+       stops future grants; it never reaches back into an account that already has it. */
+    const paintCampaigns = async () => {
+      const box = $('acampaigns');
+      if (!box) return;
+      box.innerHTML = '<p class="small">Loading announcement gifts…</p>';
+      try {
+        const d = await api('/gm/announcements');
+        const rows = Array.isArray(d.gifts) ? d.gifts : [];
+        box.innerHTML = rows.length
+          ? `<h3 class="small">Announcement gifts and who gets them</h3><table><thead><tr><th>Announcement</th><th>Gift</th><th>State</th><th></th></tr></thead><tbody>${rows.map(g => `<tr><td class="small">${esc(String(g.body || '').slice(0, 90))}</td><td>${esc(g.label || g.kind)}</td><td class="small">${g.closed ? 'closed ' + esc(when(g.closedAt)) : 'open — new accounts get it'}</td><td><button type="button" data-act="${g.closed ? 'giftopen' : 'giftclose'}" data-id="${g.messageId}">${g.closed ? 'Reopen' : 'Close'}</button></td></tr>`).join('')}</tbody></table>`
+          : '<p class="small">No announcement has carried a gift yet.</p>';
+      } catch (e) { box.innerHTML = '<p class="small">Gift campaigns unavailable: ' + esc(e.message) + '</p>'; }
+    };
+    paintCampaigns();
+    window.__paintCampaigns = paintCampaigns;
   } else if (TAB === 'history') {
     body.innerHTML = s && s.history.length
       ? `<p class="small">Saved copies of this account. Restoring one makes it the live save (a new version on top) and keeps the current one as a backup, so a mistake is reversible.</p>
@@ -728,6 +757,14 @@ $('detail').addEventListener('click', async e => {
   if (!SEL) return;
   const act = btn.dataset.act, id = SEL.account.id;
   try {
+    if (act === 'flagclear' || act === 'flagreopen') {
+      const kind = btn.dataset.kind;
+      if (!kind) return;
+      const r = await api('/gm/damage', { method: 'POST', body: JSON.stringify({ id, action: act === 'flagclear' ? 'clear' : 'reopen', kind }) });
+      say(r.note || (act === 'flagclear' ? 'Flag cleared.' : 'Flag reopened.'));
+      await openPlayer(id);
+      return;
+    }
     if (act === 'note') {
       const text = prompt('Note for the audit log:');
       if (!text) return;
@@ -807,11 +844,19 @@ $('detail').addEventListener('click', async e => {
           return say('Enter a valid whole-number gift quantity.', 1);
         }
         const giftLabel = giftKind === 'zeny' ? amount.toLocaleString() + ' Zeny' : amount + ' × ' + entry.label;
-        if (!confirm('Send announcement + ' + giftLabel + ' to ' + (toAll ? 'everyone' : SEL.account.u) + '?')) return;
+        const later = toAll && (!giftKind || $('agiftlater')?.checked !== false);
+        if (!confirm('Send announcement + ' + giftLabel + ' to ' + (toAll ? 'everyone' : SEL.account.u) + '?' + (later ? ' New accounts will receive the gift too until you close it.' : ''))) return;
         reqBody.gift = { kind: giftKind, catalogId: entry?.id, amount };
+        reqBody.giftLater = later;
       }
       const r = await api('/gm/player', { method: 'POST', body: JSON.stringify(reqBody) });
       say(r.note || (toAll ? 'Announced to everyone.' : 'Sent to ' + SEL.account.u + '.'));
+    } else if (act === 'giftclose' || act === 'giftopen') {
+      const mid = +btn.dataset.id;
+      if (!Number.isInteger(mid)) return;
+      const r = await api('/gm/announcements', { method: 'POST', body: JSON.stringify({ id: mid, action: act === 'giftclose' ? 'close' : 'reopen' }) });
+      say(r.note || 'Updated.');
+      if (typeof window.__paintCampaigns === 'function') await window.__paintCampaigns();
     } else if (act === 'restore') {
       const v = +btn.dataset.v;
       if (!confirm('Restore version ' + v + ' as their live save? The current save is kept as a backup.')) return;

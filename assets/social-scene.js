@@ -2143,7 +2143,7 @@ void main(){
   /* v380 (owner): "mvp half body is peek above the pond ... scale on the weights". The boss is
      drawn rising out of the water: the sprite art is cut at a wavy waterline (lower body erased,
      a ripple drawn along the cut) and the whole peek scales with the species' real weight range -
-     a 3,000 kg Void Maw looms well over a 1,000 kg Azure Drake. Falls back to the plain art when
+     a 3,000 kg Stormcoil Leviathan looms well over a 1,000 kg Tideforged Warden. Falls back to the plain art when
      a canvas is too limited for the compositing. */
   const MVP_BASE_PX=512;
   function mvpWeightScale(spId){

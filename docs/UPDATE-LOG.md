@@ -11070,6 +11070,69 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   and the audit card answers with the `0015` note), `gm_console_sim` **19** (boot probes `/me`
   alone, `allSettled`, guarded `loadPlayers`, guarded marker, named note). No BUILD bump.
 
+### 2026-11-14 — `haven-v407 MVP fish art drop, reviewable save flags, announcement gifts for later players, points-to-spend under the attributes`
+
+* **MVP fishing: the owner's ten crops replaced the seven painted bosses.** `assets/social/fish/`
+  now carries `mvp_tidewarden`, `mvp_rimewraith`, `mvp_tidecourser`, `mvp_dreadnought`,
+  `mvp_thousandeye`, `mvp_auricmaw`, `mvp_worldeye`, `mvp_volthorn`, `mvp_dreadclaw` and
+  `mvp_stormcoil` — Tideforged Warden, Rimewraith Sovereign, Tidebound Courser, Dreadnought
+  Reaper, Thousand-Eye Ravager, Auric Ceremaw, World-Eye Tortoise, Volthorn Narwhal, Dreadclaw
+  Behemoth and Stormcoil Leviathan. The seven retired files (azure/tide/abyss drake, iron crab,
+  crimson/gilded shark, void maw) are deleted, not left behind; `MANIFEST.json`, `FISH_ART`,
+  `FISH_ART_VERSION` (`384` → `407`), the Worker's spawn pool (`FISHING_MVP_IDS`) and the GM
+  console's species list all move to the same ten ids. Each sprite is the pond's 512 px contract
+  (512 × 512, transparent cutout, content box 456 px so it reads at the same on-screen size as
+  the old set) built from the owner's crops with a Lanczos resample. Weight ramps 1,000 kg →
+  3,000 kg in roster order, so the pond's show-off scale still reads as a ladder and the 3 t
+  ceiling is unchanged.
+* **The art is compressed only where compression is provably lossless.** Every crop carried
+  ≤256 distinct colours, so the sprites ship as *indexed* PNGs — and each one was accepted only
+  after decoding it back and comparing all 262,144 RGBA pixels against the truecolour encode
+  (identical, or the file keeps its truecolour bytes). Nothing was quantised, dithered or
+  re-cropped. `publish_sim`'s separate 12 MiB native-social budget still passes (11.94 MiB of a
+  12 MiB ceiling, ~60 KiB of headroom left — the ten sprites are 599 KiB against the retired
+  set's 336 KiB).
+* **Save-audit flags can be reviewed and cleared (migration `0016_save_alert_review.sql`).** The
+  owner asked for an unflag: until now a flag was permanent even when a human had looked and
+  found a lawful explanation. Clearing stamps `cleared_at`/`cleared_by` on the row — the evidence
+  is kept, never deleted — and the account stops carrying the ⚠ marker, the Suspicious-saves card
+  entry and the player-panel warning. Cleared flags stay listed under the open ones with who
+  cleared them and when, and can be reopened by hand. A rule that fires **again** reopens its
+  flag by itself (the audit upsert resets the stamp), and a cleared rule no longer suppresses the
+  owner's first-time poke, so a verdict is about the evidence reviewed rather than permanent
+  immunity. Endpoint: `POST /api/gm/damage {id, kind, action:'clear'|'reopen'}` (GM-only, audited
+  as `gm-flag-clear` / `gm-flag-reopen`); the flags table gains a per-row "Looks fine — clear".
+* **An announcement's gift now reaches accounts created later (migration
+  `0017_announcement_gifts.sql`).** The owner reported that GM mail only reached existing players:
+  the *letter* already did reach everyone (one `messages` row with `target_user NULL`), but its
+  gift was fanned out to the accounts that existed at send time, so a new account opened the mail
+  with no attachment. The gift is now also a campaign row; registration replays every open
+  campaign to the new account through the same `ann:messageId` batch (so nobody can hold two
+  copies). A GM closes a campaign when the give-away is over — closing stops future grants and
+  takes nothing back — from the announce tab's new list, `GET/POST /api/gm/announcements`, both
+  audited. A one-off drop opts out with `giftLater:false`.
+* **Points to spend moved out of the Build notes fold.** The "Stat points: N" line used to sit
+  inside *Build notes & progression*, so a player could allocate and never see how many points
+  were still waiting. It now has its own strip between **Allocate attributes** and **Combat
+  overview**, with the number itself emphasised and the cap note beside it
+  (`panel_layout_smoke` pins attributes → points → Combat overview and that the notes fold no
+  longer repeats the line).
+* **Checks:** `api_sim` **64** (adds the clear/reopen/re-fire lifecycle on real handlers, and the
+  later-joiner gift campaign end to end: existing accounts paid once, a later account paid and
+  shown the attachment, close stops new grants without reclaiming, reopen pays again, one-off
+  opt-out), `gm_console_sim` **20** (the review UI and its GM-only wiring), `social_fishing_sim`
+  (165 species, 155 + 10 MVP, 156 art files at 512 px, indexed-alpha or rgba, plus the banner and
+  alert-sign names), `dev_server_sim`/`gm_tools_sim`/`social_worker_sim` moved to the new ids,
+  `migration_sim` **9** (both new migrations stay auto-runnable), `publish_sim` **18**,
+  `panel_layout_smoke` **42**. Full gate: see **Delivery** below.
+* **Server:** apply `migrations/0016_save_alert_review.sql` and
+  `migrations/0017_announcement_gifts.sql` to D1 before (or with) the code deploy. Both are
+  additive and safe to reapply; without them the console and sign-up still work and simply say
+  the feature is not set up yet.
+* **Delivery:** Branch `arena/2929301b-prontera-grind`, PR **#231**. Full gate on the final tree:
+  **219 passed / 6 failed** — the same six pre-existing reds as `main`, each verified with an
+  identical failure message on a clean `origin/main` snapshot.
+
 ### 2026-11-13 — `haven-v406 seeded plaza regulars walk sit and fish`
 * **Changed:** The Social Hub plaza is now inhabited. Six fixed seeded regulars — generated
   characters with generated names and looks, never real accounts — walk the promenade rings,

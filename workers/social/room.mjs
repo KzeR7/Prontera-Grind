@@ -51,7 +51,7 @@ const FISH_MUTATIONS=new Set(['shiny','sparkling','frozen','electric','ghostly',
 // follows the game's weight ceiling instead of the old 60 kg-era 999.
 const MAX_FISH_W=5000;
 // v304: MVP fish - server-random spawn every 1-2h, 10min active at the pond.
-export const FISHING_MVP_IDS=Object.freeze(['mvp_azure_drake','mvp_tide_drake','mvp_abyss_drake','mvp_iron_crab','mvp_crimson_shark','mvp_gilded_shark','mvp_void_maw']);
+export const FISHING_MVP_IDS=Object.freeze(['mvp_tidewarden','mvp_rimewraith','mvp_tidecourser','mvp_dreadnought','mvp_thousandeye','mvp_auricmaw','mvp_worldeye','mvp_volthorn','mvp_dreadclaw','mvp_stormcoil']);
 const MVP_IDS=FISHING_MVP_IDS;
 const MVP_SPAWN_MIN=60*60*1000,MVP_SPAWN_MAX=2*60*60*1000,MVP_DURATION=10*60*1000;
 const ledgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id);
