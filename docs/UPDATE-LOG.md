@@ -11041,3 +11041,31 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   EXISTS`; until it exists the audit hook fails OPEN like the damage monitor — saves accepted,
   feature off). No BUILD bump: no game build changed, only server functions, the GM console and
   docs.
+
+### 2026-11-14 — `gm console: an endpoint outage never looks like "sign in first"` (no build bump — no index.html change)
+
+* **What:** After PR #228 merged, the owner signed in with their gm=2 account and the console
+  kept showing the SIGN IN FIRST card — *"i signed in with a gm account, can u give me back the
+  controls?"* The cause: the console's boot wrapped **every** data load in the same try/catch as
+  the session probe, and `GET /api/gm/players` started 500ing whenever code shipped **before**
+  `migrations/0015_save_audit.sql` was applied (the new `EXISTS(save_alerts)` column in `allUsers`
+  throws `no such table`). Login worked, saves worked, but the signed-in owner was bounced back
+  to the login card forever — violating the stated fail-open policy for not-yet-applied
+  migrations.
+* **Fix, three layers:** (1) `gm.html` boot now decides the sign-in card from the `/me` probe
+  alone (`if (!me)` / `if (!me.gm)`); everything after that renders the console shell and each
+  card degrades in place — loaders use `Promise.allSettled`, and `loadPlayers` catches internally
+  with a toast. (2) Server side, the optional-flag lookups fail open: `saveAlertsFor` reads an
+  absent table as `[]`, `alertedUserIds` as "nobody flagged" (the ⚠ marker moved out of the
+  `allUsers` query into this guarded lookup), so `/gm/players` and `/gm/player` always answer.
+  (3) `GET /api/gm/audit` answers 200 with `alerts: []` plus a `note` naming the migration to
+  apply, shown in the Suspicious saves card instead of a dead page.
+* **Diagnosis for the owner:** run
+  `SELECT name FROM sqlite_master WHERE type='table' AND name IN ('ip_bans','save_alerts') ORDER BY name;`
+  in D1 — two rows required. If `save_alerts` is missing, applying `0015_save_audit.sql`
+  restores the console immediately even without this fix; this fix makes the next such mistake
+  cosmetic instead of lockout.
+* **Checks:** `api_sim` **62** (new: with `save_alerts` dropped, an impossible save still
+  stores, the player list loads with `alerted:false`, the player detail answers `alerts: []`,
+  and the audit card answers with the `0015` note), `gm_console_sim` **19** (boot probes `/me`
+  alone, `allSettled`, guarded `loadPlayers`, guarded marker, named note). No BUILD bump.

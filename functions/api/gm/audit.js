@@ -14,7 +14,15 @@ export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
   if (!user) return await unauth(request);
   if (!isGm(user)) return json({ err: 'GM only.' }, 403);
-  const rows = await db.recentSaveAlerts(env.DB, 100);
+  // Fails OPEN with an explicit note: if migration 0015 is not applied yet, the card says so
+  // instead of the endpoint 500ing (and, before this, taking the whole console boot down).
+  let rows = { results: [] }, note = null;
+  try {
+    rows = await db.recentSaveAlerts(env.DB, 100);
+  } catch (e) {
+    console.warn('save_alerts read failed (migration 0015 missing?):', e && e.message);
+    note = 'save_alerts unavailable — apply migrations/0015_save_audit.sql to D1. Everything else on this page keeps working.';
+  }
   return json({ alerts: (rows.results || []).map(r => ({
     user_id: r.user_id,
     username: r.username,
@@ -26,5 +34,5 @@ export const onRequestGet = guard(async ({ request, env }) => {
     threshold: r.threshold,
     detail: r.detail || '',
     observations: r.observations,
-  })) });
+  })), note });
 });

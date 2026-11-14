@@ -304,6 +304,7 @@ async function loadAudit() {
           `<td class="small">${esc(when(a.last_seen))}<br>${nfmt(a.observations)} observation${a.observations === 1 ? '' : 's'}</td></tr>`).join('') +
         `</tbody></table>`
       : 'No flags recorded.';
+    if (d.note) box.innerHTML += `<p class="small bad" style="margin:6px 0 0">${esc(d.note)}</p>`;
   } catch (e) { box.textContent = 'Save audit unavailable: ' + e.message; }
 }
 $('auditlist').onclick = e => { const b = e.target.closest('[data-audit-player]'); if (b) { TAB = 'damage'; openPlayer(+b.dataset.auditPlayer).catch(err => say(err.message, 1)); } };
@@ -390,11 +391,16 @@ async function renderDamage(body,id) {
 }
 
 async function loadPlayers() {
-  const d = await api('/gm/players');
-  PLAYERS = d.players;
-  $('who').textContent = (d.me.gm >= 2 ? '👑 owner' : '🛠 GM') + ' · ' + d.me.u;
-  $('count').textContent = '(' + PLAYERS.length + ')';
-  renderPlayers();
+  try {
+    const d = await api('/gm/players');
+    PLAYERS = d.players;
+    $('who').textContent = (d.me.gm >= 2 ? '👑 owner' : '🛠 GM') + ' · ' + d.me.u;
+    $('count').textContent = '(' + PLAYERS.length + ')';
+    renderPlayers();
+  } catch (e) { // never reject: a failing list must not take the console boot down
+    PLAYERS = [];
+    say('Player list unavailable: ' + e.message, 1);
+  }
 }
 function renderPlayers() {
   const q = $('search').value.trim().toLowerCase();
@@ -848,27 +854,38 @@ $('detail').addEventListener('click', async e => {
 });
 
 // Sign-in check: this page is public, but every call it makes is authorised on the server.
+// v406 (owner: "i signed in with a gm account, can u give me back the controls?" — it started
+// right after 228 merged): ONLY the session probe may show the sign-in card. A data endpoint
+// failing downstream — a not-yet-applied optional migration (0015) made /gm/players 500 — used
+// to share this catch and bounce the signed-in owner back to the login card forever. The
+// console shell stays; each card degrades in place with its own error.
 (async () => {
-  try {
-    const me = await api('/me');
-    if (!me.gm) { document.body.innerHTML = '<main><section class="card"><h2>Not a GM</h2><p>Sign in with the owner account in the game first, then come back. <a href="/" onclick="backToGame();return false" style="color:var(--gold)">Back to the game</a></p></section></main>'; return; }
-    CATALOG=await api('/gm/catalog');
-    await Promise.all([loadUsage(),loadDamageAlerts(),loadAudit(),loadFishingTools(),loadIpBans()]);
-    await loadPlayers();
-  } catch (e) {
-    document.body.innerHTML = '<main><section class="card"><h2>Sign in first</h2><p>This console signs in with the same account as the game. On the embedded preview it now carries the session itself; or sign in right here:</p>'
-      + '<div style="display:flex;flex-direction:column;gap:8px;margin:12px 0;max-width:280px">'
-      + '<input id="gmSignUser" placeholder="Username" autocomplete="username" style="padding:8px 10px;border:1px solid var(--edge,#444);border-radius:6px;background:#171410;color:#f0e6d2">'
-      + '<input id="gmSignPass" type="password" placeholder="Password" autocomplete="current-password" style="padding:8px 10px;border:1px solid var(--edge,#444);border-radius:6px;background:#171410;color:#f0e6d2">'
-      + '<button id="gmSignBtn" style="padding:9px 10px;border:1px solid var(--edge,#444);border-radius:6px;background:#2a241a;color:#f0e6d2;cursor:pointer">Sign in</button>'
-      + '<span id="gmSignErr" class="bad" role="status"></span></div>'
-      + '<p class="small">Or <a href="/" target="_top" style="color:var(--gold)">open the game and sign in</a>, then return here.</p></section></main>';
-    document.getElementById('gmSignBtn').onclick = consoleSignIn;
-    document.getElementById('gmSignUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('gmSignPass').focus(); });
-    document.getElementById('gmSignPass').addEventListener('keydown', e => { if (e.key === 'Enter') consoleSignIn(); });
-    document.getElementById('gmSignUser').focus();
-  }
+  let me = null;
+  try { me = await api('/me'); } catch {}
+  if (!me) { renderSignInCard(); return; }
+  if (!me.gm) { renderNotGmCard(); return; }
+  try { CATALOG = await api('/gm/catalog'); }
+  catch (e) { say('Catalog unavailable: ' + e.message, 1); }
+  await Promise.allSettled([loadUsage(), loadDamageAlerts(), loadAudit(), loadFishingTools(), loadIpBans()]);
+  await loadPlayers(); // carries its own catch: empty list + a toast, never a dead page
 })();
+
+function renderNotGmCard() {
+  document.body.innerHTML = '<main><section class="card"><h2>Not a GM</h2><p>Sign in with the owner account in the game first, then come back. <a href="/" onclick="backToGame();return false" style="color:var(--gold)">Back to the game</a></p></section></main>';
+}
+function renderSignInCard() {
+  document.body.innerHTML = '<main><section class="card"><h2>Sign in first</h2><p>This console signs in with the same account as the game. On the embedded preview it now carries the session itself; or sign in right here:</p>'
+    + '<div style="display:flex;flex-direction:column;gap:8px;margin:12px 0;max-width:280px">'
+    + '<input id="gmSignUser" placeholder="Username" autocomplete="username" style="padding:8px 10px;border:1px solid var(--edge,#444);border-radius:6px;background:#171410;color:#f0e6d2">'
+    + '<input id="gmSignPass" type="password" placeholder="Password" autocomplete="current-password" style="padding:8px 10px;border:1px solid var(--edge,#444);border-radius:6px;background:#171410;color:#f0e6d2">'
+    + '<button id="gmSignBtn" style="padding:9px 10px;border:1px solid var(--edge,#444);border-radius:6px;background:#2a241a;color:#f0e6d2;cursor:pointer">Sign in</button>'
+    + '<span id="gmSignErr" class="bad" role="status"></span></div>'
+    + '<p class="small">Or <a href="/" target="_top" style="color:var(--gold)">open the game and sign in</a>, then return here.</p></section></main>';
+  document.getElementById('gmSignBtn').onclick = consoleSignIn;
+  document.getElementById('gmSignUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('gmSignPass').focus(); });
+  document.getElementById('gmSignPass').addEventListener('keydown', e => { if (e.key === 'Enter') consoleSignIn(); });
+  document.getElementById('gmSignUser').focus();
+}
 </script>
 </body>
 </html>

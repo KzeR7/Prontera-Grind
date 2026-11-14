@@ -15,13 +15,16 @@ export const onRequestGet = guard(async ({ request, env }) => {
 
   const rows = await db.allUsers(env.DB, 200);
   const bannedNets = new Set((await db.listIpBans(env.DB, 1000)).map(b => b.ip_hash));
+  // Both lookups fail open on their own (missing 0014/0015), so the list always loads — a not-yet
+  // applied migration must never leave the signed-out-looking console with no controls.
+  const alerted = await db.alertedUserIds(env.DB);
   const players = rows.results.map(r => ({
     id: r.id, u: r.username, gm: r.gm, banned: !!r.banned,
     // 🚫 marker in the console: this account's CURRENT session comes from a suspended network —
     // the usual shape of "he came back on a new name". Derived, never a client value.
     netBanned: !!(r.ip_fp && bannedNets.has(r.ip_fp)),
     // ⚠ marker: this account carries a save-audit flag (0015) — review-only, see the card.
-    alerted: !!r.alerted,
+    alerted: alerted.has(Number(r.id)),
     level: r.level, cls: r.cls, version: r.version ?? 0,
     lastSync: r.updated_at ?? null, lastLogin: r.last_login_at ?? null, created: r.created_at,
     hasSave: r.version != null,

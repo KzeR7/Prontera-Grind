@@ -122,6 +122,18 @@ t('save audit: the Suspicious saves card, the flag list on the player, and the G
   assert.match(audit, /ownerIds/, 'a first-time flag pokes the owner in-game');
 });
 
+t('the console survives a data-endpoint outage without telling the owner to sign in', () => {
+  assert.match(src, /try \{ me = await api\('\/me'\); \} catch/, 'only the session probe may decide the sign-in card');
+  assert.match(src, /if \(!me\)/, 'no session at all -> the sign-in card');
+  assert.match(src, /renderSignInCard\(\)/, 'the card lives behind its own renderer');
+  assert.match(src, /Promise\.allSettled\(/, 'data loaders must not nuke the page');
+  assert.match(src, /async function loadPlayers\(\) \{[\s\S]{0,800}?catch \(e\)/, 'the player list degrades with a toast');
+  const dbjs = fs.readFileSync(path.join(root, 'functions/_lib/db.js'), 'utf8');
+  assert.match(dbjs, /alertedUserIds/, 'the ⚠ marker is a guarded lookup, not part of the list query');
+  const audit = fs.readFileSync(path.join(root, 'functions/api/gm/audit.js'), 'utf8');
+  assert.match(audit, /0015_save_audit\.sql/, 'the audit card names the missing migration instead of failing');
+});
+
 t('Fishing and DigiPet controls use the audited queue and authenticated Social MVP route', () => {
   assert.match(src, /Fishing & DigiPet/, 'the player detail has a systems resource tab');
   assert.match(src, /data-act="systems-grant"/, 'resource delivery is an explicit action');
