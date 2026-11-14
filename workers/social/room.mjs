@@ -42,6 +42,10 @@ const LEDGER_REASONS=new Set(['blind','call','raise','win']);
 // drawn, so an unknown id simply renders nothing.
 const FISH_MODES=new Set(['flight','wait','bite','reel','ready']);
 const FISH_RODS=new Set(['twig','oak','brass','silver','golden','mythril']);
+// haven-v403: how many seeded regulars walk the plaza. The crowd rides the existing room
+// snapshot (seed + clock + count) - no new message type and no extra Durable Object traffic.
+// Set to0 and the next room snapshot turns the crowd off without a page deploy.
+const PLAZA_BOT_COUNT=6;
 const FISH_MUTATIONS=new Set(['shiny','sparkling','frozen','electric','ghostly','golden','prismatic']);
 // v297: the biggest catch in the catalog is a 1.8 t whale shark, so the show-off weight clamp
 // follows the game's weight ceiling instead of the old 60 kg-era 999.
@@ -765,12 +769,20 @@ export class SocialRoom {
   if(Number.isInteger(saved.pokerSeat)&&!this.tables.get(saved.room)?.[Math.floor(saved.pokerSeat/6)]?.findPlayer(id))saved.pokerSeat=null;
   return saved;
  }
+ // v403: one seed per room for the life of this Durable Object, so every viewer of a room
+ // builds the same crowd while joins/resumes keep sending the same snapshot field.
+ botSeed(room){
+  if(!this.botSeeds)this.botSeeds=new Map();
+  let seed=this.botSeeds.get(room);
+  if(seed===undefined){seed=(this.random()*0x100000000)>>>0;this.botSeeds.set(room,seed)}
+  return seed;
+ }
  sendRoom(c,now){
   c.resumed=false;
   this.adoptFriends(c);
   this.syncPokerArrivals(c.room,now);
   const rooms=this.roomList();
-  this.send(c,{type:'room',room:c.room,rooms,rules:R.rulesFingerprint(),players:[...this.clients.values()].filter(p=>p.room===c.room).map(p=>this.snapshot(p,c))});
+  this.send(c,{type:'room',room:c.room,rooms,rules:R.rulesFingerprint(),players:[...this.clients.values()].filter(p=>p.room===c.room).map(p=>this.snapshot(p,c)),bots:{seed:this.botSeed(c.room),at:now,count:PLAZA_BOT_COUNT}});
   this.send(c,{type:'gym',room:c.room,entries:this.gymSnapshot(c.room)});
   // MVP active state for this room
   {const m=this.mvpSnapshot(c.room);if(m)this.send(c,{type:'mvp_spawn',...m})}

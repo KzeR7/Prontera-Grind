@@ -1334,3 +1334,64 @@ rod-control multiplier are measured against the live Auto controller: a hooked M
 about 1% of the time with the free Training Rod and about 5% with Mythril. Auto is still
 hard; manual players still play the reel and face the same 30% roll. The seeded profile in
 `social_fishing_sim.js` pins both ends of the ladder.
+
+## Seeded plaza regulars (haven-v406)
+
+**Six regulars, one shared truth per room.** `assets/plaza-bots.js` is a pure UMD module:
+`buildRoster(seed, {count})` generates six named characters (count clamped 5–8, `0` disables)
+whose looks are wardrobe defaults plus seeded hair/colour picks run through
+`PGWardrobe.normalize`, with walk speeds inside the shared 2–13 clamp. The schedule is a list
+of segments — `walk`, `idle`, `seat` (bench) and `fish` (pond chair) — over ring waypoints
+filtered by `R.walkable`, and it always closes with a walk-home leg. Every rest is a
+**10–20 minute stay** (`STAY_MIN_MS`/`STAY_SPAN_MS`), so a loop is four long stays — spawn
+stand, a DigiPet-corridor spot, a bench, a pond chair — joined by two short walks (the seat and
+chair legs carry their approach walk inside the stay), and the plan falls back to a plain
+stand if a walk, bench or chair is unavailable, so the four stays are always there.
+`buildDigiSpots()` probes nine tiles along the DigiPet corridor and each regular takes one in
+round-robin order, which is how the crowd gathers around Cook Lina, Trainer Jori and Guide Nia.
+`segmentAt`/`stateAt`
+are pure functions of `(bot, t)`; a mulberry32 PRNG is the only randomness (`Math.random` is
+banned in the module), so two clients on the same seed draw byte-identical crowds. Route
+planning runs through `fastPath`, an in-module typed-array BFS over a once-built walkability
+grid that is row-for-row equivalent to the social-rules `path()` (100-pair pin in
+`plaza_bots_sim.js`).
+
+**The seed rides the existing join snapshot.** `workers/social/room.mjs` stamps
+`bots:{seed, at, count}` onto the room message it already sends — one field, no new message
+type, no new alarm, no extra Durable Object traffic. The seed is drawn once per room DO
+lifetime and memoized (`botSeed`), so every viewer and every later join of the same room
+sees the same crowd, while `at` lets the client skew its clock. `PLAZA_BOT_COUNT = 6`
+(`0` = kill switch) is the only server-side dial. A room message without the field falls
+back to a deterministic per-room hash on the client, so either deploy order works.
+
+**Client push model: the scene, never the roster.** The `plazaBots*` glue inside
+`assets/social.js` keeps bots out of `app.players`
+entirely: string ids fail every integer-id gate, and states are pushed only via
+`app.scene.putPlayer(...)` + `scene.fishing.setRig(...)`. Population, room lists, minimap,
+party candidates and field counts therefore never see the crowd. `resetPlayers()` ends with
+`plazaBotsResync()`, so every room switch, socket drop and first enter re-pushes the roster;
+the tick rides the existing 2 s session interval (wrapped `try{plazaBotsTick()}catch{}` — no
+new timer), skips while the tab is hidden, and each push re-uses the scene's sprite reuse
+path (re-stamped `state`/`at`, guarded aura sync). `playerMenu` recognises `bot*` ids and
+offers Close only.
+
+**Seats and emotions are shared vocabulary.** Bench seats (ids with `bench < 100`) and pond
+chairs (`bench ≥ 100`) are two disjoint pools, so a sitting regular and a fishing regular
+never claim each other's furniture; chairs are unique across the crowd. If a real player
+holds a bot's seat when it arrives, the bot pushes a stand-aside state (`sit:false`, path to
+a fallback tile) for the rest of the segment. Emotes come from `R.EMOTIONS` (no `wave`), fire
+**once per stay** — at 35–65% of the rest, `after:'enter'` — never on a walk, so the plaza sees
+roughly one bubble every 10–20 minutes rather than a stream; they go out through `scene.bubble`,
+are client-side only and are suppressed
+silently on a force resync. Fish modes/rods are the server's vocabulary
+(`wait/bite/reel`, `twig…mythril`) and the bobber is clamped inside the pond.
+
+**Coverage.** New `tools/tests/plaza_bots_sim.js` (25 assertions groups: module determinism,
+walkability over two loops, `fastPath` equivalence, seat/chair pools, loop closure, pond
+bobbers, 10–20 minute stay clamping with at most four short walk legs, the DigiPet-corridor
+hang, one emote per stay with 5–30 minute gaps, source pins for the snapshot/tick/menu wiring
+and the `?v=406` tag, plus a jsdom
+pass driving enter → room rebuild → drop heal → leave). Existing suites keep the social
+client honest: `social_sim.js`, `social_ui_sim.js`, `social_scene_sim.js`,
+`social_connection_sim.js`, `social_table_chat_sim.js`, `update_watch_sim.js` (18, now also
+pinning `plaza-bots.js` in its bust list) and `gear_sim.js` (43).

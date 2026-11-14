@@ -11069,3 +11069,43 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   stores, the player list loads with `alerted:false`, the player detail answers `alerts: []`,
   and the audit card answers with the `0015` note), `gm_console_sim` **19** (boot probes `/me`
   alone, `allSettled`, guarded `loadPlayers`, guarded marker, named note). No BUILD bump.
+
+### 2026-11-13 — `haven-v406 seeded plaza regulars walk sit and fish`
+* **Changed:** The Social Hub plaza is now inhabited. Six fixed seeded regulars — generated
+  characters with generated names and looks, never real accounts — walk the promenade rings,
+  sit on benches, fish from the pond chairs and emote whenever the plaza is open, in every
+  Prontera room and in the solo plaza. The pacing is deliberately slow: every stop is a
+  **10–20 minute stay** — a bench, a pond chair, a plain stand or a spot along the DigiPet
+  corridor by Cook Lina, Trainer Jori and Guide Nia — so a regular's loop is four long stays
+  (spawn → DigiPet corridor → bench → pond chair → home) joined by only a couple of short
+  walks, and each stay fires **exactly one emote** from the shared vocabulary, which works
+  out to roughly one bubble every 10–20 minutes instead of a stream of them. Everyone
+  watching the same room sees the same crowd:
+  the existing join snapshot gained one field, `bots:{seed, at, count}` — no new message type
+  and no extra Durable Object traffic. The crowd never enters `app.players`, so player counts,
+  room lists, minimap, party candidates, population text and account-only menus are untouched;
+  a regular's name menu offers only Close, they stand aside if you take their seat, and
+  `PLAZA_BOT_COUNT = 0` in `workers/social/room.mjs` turns them off server-side.
+* **Try it:** Enter the Social Hub and watch the plaza for a few minutes: named regulars pick a
+  spot and settle into it — a bench, a pond chair, or the DigiPet corridor on the east side
+  near Cook Lina, Trainer Jori and Guide Nia — staying put for ten to twenty minutes before
+  moving on, with one emote bubble roughly every ten to twenty minutes. Open the same plaza in
+  a second tab — the crowd is identical. Take the bench a regular is walking to and they stop
+  beside it instead of sitting on you. Click a regular's name (only Close) versus a real
+  player's (full menu). The population line still reads Solo / `P1 · n/20` without them.
+* **Checks:** New `tools/tests/plaza_bots_sim.js` 25/25 — determinism, walkability across two
+  schedule loops, `fastPath` ≡ social-rules `path()`, bench/chair seat pools and pond bobbers,
+  loop closure, **stays pinned to 10–20 minutes with at most four short walk legs**, **one
+  DigiPet-corridor hang per regular**, **one emote per stay with 5–30 minute gaps**, source pins
+  (room snapshot, session-interval tick, menu guard, `?v=406` tag) and a jsdom pass driving
+  `enter()`, a room-snapshot rebuild, a socket drop and `leave()`. Full gate on the merged
+  tree: **218 passed / 6 failed**, and every red row is red on `main` too — none is new:
+  `card_star_balance_sim`, `skill_balance_sim`, `fourth_job_mythic_sim`,
+  `hosted_launch_stage_sim`, `hosted_scrypt_prepare_sim`, and `render_lost_boot_smoke`
+  (its two beginner-guide assertions are red on a clean `origin/main` snapshot, from the v404
+  login-path `maybeGuide()` call). `guide_sim` now passes on their v405 fixtures, and
+  `update_watch_sim` (18) and `gear_sim` (43) are green with the BUILD mirror refresh.
+* **Delivery:** Branch `arena/d3ff0e83-prontera-grind`, PR #230 against `main`; Pages and the Social
+  Worker ship from the same commit, and either order is safe — an old client ignores the
+  snapshot field, and a new client falls back to a deterministic per-room seed when the field
+  is missing.
