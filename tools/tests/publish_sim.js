@@ -176,8 +176,9 @@ t('the published tree is small enough to stay honest', () => {
   // v379-v381 owner pass (DigiPet tabs + Mastery/Titles views + DigiDex redesign, the merged
   // training panel with its Party overview, the painted poker icon and Prontera naming) are
   // classic-tree code and spent the last of the deliberate headroom. v355's note on this line's
-  // original 59.5 stands.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes)/1048576 < 60.1, 'existing classic runtime assets exceed their 60.1 MiB budget');
+  // original 59.5 stands. haven-v409: 60.2, for the 56 inventory icons (about 50 KB) of the seven
+  // expanded-roster weapon families and their drop / budget code.
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes)/1048576 < 60.2, 'existing classic runtime assets exceed their 60.2 MiB budget');
   assert.ok(expandedBytes > 0 && expandedBytes/1048576 < 3, 'lazy expanded-roster bodies exceed their separate 3 MiB budget (2.63 measured 2026-11-14)');
   assert.ok(digimonBytes/1048576 < 40, 'lazy Digimon roster exceeds its separate 40 MiB budget');
   assert.ok(nativeBytes/1048576 < 68, 'ten native field sets and seventy lossless monster atlases exceed their separate 68 MiB budget');

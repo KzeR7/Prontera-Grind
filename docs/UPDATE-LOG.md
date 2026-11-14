@@ -11256,3 +11256,53 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Delivery:** Branch `arena/ef87a1e5-prontera-grind`; not merged, not deployed. Still open:
   real skill icons (owner will supply) and the new weapon categories as real gear (drops,
   Mythic pieces, Ascension) — that needs weapon and icon art before it can be built.
+
+### 2026-11-14 — `haven-v409 expanded roster: native class sprites, seven weapon families, fitted damage`
+
+* **Changed (sprites):** All 40 expanded-roster bodies (20 classes × male/female) were
+  rebuilt from the real Ragnarok Online client sprite and action files instead of being cut
+  out of the uploaded sheets by pose-matching, which had produced wrong idle and walk rows
+  (Ninja and Gunslinger worst). Every direction, the 8 walk frames and the attack now come
+  from the client's own animation, and the head is pinned with the client's own attach
+  points (it also turns the way the client turns it during an attack). Melee classes play
+  the first attack, Bard/Dancer and Gunslinger lines the aimed one; the Gunslinger holds a
+  native gun while attacking. Sources are pinned by git blob id and SHA-256 in
+  `tools/native-expanded/source-manifest.json`; nothing is redrawn or recoloured. Each body
+  was checked by eye on contact sheets. Folder size 2.58 MiB (was 2.63).
+* **Changed (weapons):** Seven new weapon families are real gear: **spear** (Crusader line),
+  **book** (Sage line), **knuckle** (Monk line), **instrument** and **whip** (Bard & Dancer
+  line), **shuriken** (Ninja) and **gun** (Gunslinger). Each is the kin of a shipped family
+  and drops wherever that family drops (spear↔sword, book↔staff, knuckle↔mace,
+  instrument/whip/gun↔bow, shuriken↔dagger): for a class that trains in it, 60% of those
+  drops arrive as its own family (100% for the Gunslinger, who uses guns only; a Bard gets
+  mostly instruments, a Dancer mostly whips). Drop tables, rates and every other class are
+  unchanged. They work in online and offline drops, the Shard Store, the Ascension Forge
+  (42 new Mythic weapon names across the six sets), the GM console (presets for the six new
+  fourth jobs) and auto-sell filters. 56 real RO inventory icons were added (six
+  progression bands per family plus Mythic). Books roll magic affixes; instruments, whips
+  and guns have four card sockets like bows. The Job and Equipment panels say where each
+  family drops.
+* **Fixed:** Sage, Scholar and Sorcerer were attacking with physical ATK while wearing INT
+  gear; they are magic classes now, like the Wizard line.
+* **Changed (balance):** The expanded classes did 12–65% of their sibling class's damage
+  (a few did far more). Each was measured for sustained damage against 1 and 3 targets
+  with every skill maxed and fitted to its sibling: Crusader line 92% of the Knight line
+  (it has ~45% more HP), Monk line 105% (less HP), Sage and Alchemist lines 100%, Rogue,
+  Bard & Dancer, Ninja and Gunslinger 97%. The fit is in `SKILL_TUNING` plus each class's
+  attack multiplier, recorded in `tools/tests/fixtures/expanded_skill_budget.json`.
+* **Try it:** On an account with a fourth job at Base Lv 150, become a Gunslinger and fight
+  in Payon: bows now drop as guns. Open Equipment to see the new icons; a fourth job of the
+  new lines can forge its own Mythic weapon in the Ascension Forge.
+* **Checks:** `expanded_roster_sim` 13/13 (new: weapon families, icons with hashes, kin
+  drops, damage budgets, native sprite manifest). Full gate: 229 checks, 225 green. The 4 red ones
+  (`fourth_job_mythic_sim`, `hosted_launch_stage_sim`, `skill_balance_sim`,
+  `render_lost_boot_smoke`) are red on `main` too and were left alone. Thirteen suites
+  that hard-coded the old counts (14 icon families, 6 GM presets, 72 Mythic gifts) or
+  looked for a class weapon by exact family were updated to the new numbers and to the
+  kin rule. The classic-asset size ceiling in `publish_sim` moved from 60.1 to 60.2 MiB
+  for the 56 new icons. Ninja and Gunslinger have no fourth job, so their Mythic weapons
+  exist as GM gifts but cannot be forged yet.
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`; not merged, not deployed. Still
+  open: real skill icons (owner will supply), held-weapon art on the body for classes other
+  than the Gunslinger (no pack hero shows one), the Wardrobe for the new classes, and their
+  own job-trial opponents. Not yet seen in a real browser.

@@ -925,9 +925,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=324">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=408">
+<link rel="stylesheet" href="assets/social.css?v=409">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=408"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=409"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1325,7 +1325,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-14 haven-v408 expanded roster: 20 new classes (6 alternate lines + Ninja and Gunslinger) behind a Base 150 fourth-job unlock';
+const BUILD='2026-11-14 haven-v409 expanded roster: native class sprites, seven new weapon families and fitted damage budgets';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -1353,20 +1353,21 @@ const CD4=[
 // Swordman, Sage from Mage, Bard & Dancer from Archer, Rogue from Thief, Monk from Acolyte,
 // Alchemist from Merchant) and two Expanded classes start straight from Novice. They are kept
 // OUT of CD/CD4 on purpose: those two tables are the original 19 + 6 roster that the native
-// Wardrobe, the class-skin manifest and the balance fixtures enumerate. Every row here trains in
-// one of the seven existing weapon families, so every map already drops a weapon for it.
+// Wardrobe, the class-skin manifest and the balance fixtures enumerate. haven-v409: seven lines
+// carry their own weapon family (spear, book, knuckle, instrument, whip, shuriken, gun); each is
+// the kin of a shipped family (WEAPON_KIN) and drops wherever that family drops - see kinDrop().
 // It opens from a fourth job, so it is live exactly when the fourth jobs are.
 const EXPANDED_JOBS_LIVE=FOURTH_JOBS_LIVE;
 const CDX=[
-['Crusader','Swordman',.85,1.45,1.7,'d4af37','5a4208',['sword'],'str',0],['Paladin','Crusader',.74,1.88,2.05,'e6c35c','7a5c0c',['sword'],'str',0],
-['Sage','Mage',.95,1.75,.95,'7a4b9e','351b4d',['staff'],'int',1],['Scholar','Sage',.86,2.25,1.1,'9a68c4','482666',['staff'],'int',1],
-['Alchemist','Merchant',.82,1.55,1.35,'4a8c5c','1e4028',['axe','mace'],'str',0],['Biochemist','Alchemist',.72,1.98,1.55,'5cb874','285c36',['axe','mace'],'str',0],
-['Monk','Acolyte',.65,1.65,1.25,'d96b27','662a08',['mace'],'str',0],['Champion','Monk',.56,2.05,1.45,'f0843c','80360a',['mace'],'str',0],
-['Rogue','Thief',.64,1.48,1.05,'5a426e','261933',['dagger','bow'],'dex',0],['Stalker','Rogue',.54,1.9,1.2,'75558f','362247',['dagger','bow'],'dex',0],
-['Bard & Dancer','Archer',.7,1.42,1.0,'c44b7a','5c1934',['bow'],'dex',1],['Minstrel & Gypsy','Bard & Dancer',.58,1.86,1.15,'e06596','732242',['bow'],'dex',1],
-['Ninja','Novice',.6,1.75,1.1,'3b3b54','181826',['dagger'],'dex',1],['Gunslinger','Novice',.58,1.8,1.05,'5c4033','2b1b14',['bow'],'dex',1]];
+['Crusader','Swordman',.85,1.81,1.7,'d4af37','5a4208',['spear','sword'],'str',0],['Paladin','Crusader',.74,2.35,2.05,'e6c35c','7a5c0c',['spear','sword'],'str',0],
+['Sage','Mage',.95,1.68,.95,'7a4b9e','351b4d',['book','staff'],'int',1],['Scholar','Sage',.86,2.69,1.1,'9a68c4','482666',['book','staff'],'int',1],
+['Alchemist','Merchant',.82,1.94,1.35,'4a8c5c','1e4028',['axe','mace'],'str',0],['Biochemist','Alchemist',.72,2.48,1.55,'5cb874','285c36',['axe','mace'],'str',0],
+['Monk','Acolyte',.65,0.91,1.25,'d96b27','662a08',['knuckle','mace'],'str',0],['Champion','Monk',.56,1.45,1.45,'f0843c','80360a',['knuckle','mace'],'str',0],
+['Rogue','Thief',.64,1.53,1.05,'5a426e','261933',['dagger','bow'],'dex',0],['Stalker','Rogue',.54,2.38,1.2,'75558f','362247',['dagger','bow'],'dex',0],
+['Bard & Dancer','Archer',.7,1.44,1.0,'c44b7a','5c1934',['instrument','whip','bow'],'dex',1],['Minstrel & Gypsy','Bard & Dancer',.58,2.03,1.15,'e06596','732242',['instrument','whip','bow'],'dex',1],
+['Ninja','Novice',.6,2.19,1.1,'3b3b54','181826',['shuriken','dagger'],'dex',1],['Gunslinger','Novice',.58,2.25,1.05,'5c4033','2b1b14',['gun'],'dex',1]];
 const CD4X=[
-['Royal Guard','Paladin',.7,2.05,2.25,'f2d16b','8a6a10',['sword'],'str',0,'a88418'],['Sorcerer','Scholar',.82,2.5,1.2,'b580e8','4f2475',['staff'],'int',1,'6c369c'],['Geneticist','Biochemist',.68,2.2,1.7,'70d68c','2d6b3e',['axe','mace'],'str',0,'3c8a52'],['Sura','Champion',.5,2.25,1.6,'ff9b4f','994008',['mace'],'str',0,'b85210'],['Shadow Chaser','Stalker',.5,2.1,1.3,'9470b5','3d2654',['dagger','bow'],'dex',0,'533470'],['Maestro & Wanderer','Minstrel & Gypsy',.54,2.05,1.25,'ff80b3','8a2650',['bow'],'dex',1,'a83264']];
+['Royal Guard','Paladin',.7,2.56,2.25,'f2d16b','8a6a10',['spear','sword'],'str',0,'a88418'],['Sorcerer','Scholar',.82,2.67,1.2,'b580e8','4f2475',['book','staff'],'int',1,'6c369c'],['Geneticist','Biochemist',.68,2.75,1.7,'70d68c','2d6b3e',['axe','mace'],'str',0,'3c8a52'],['Sura','Champion',.5,1.3,1.6,'ff9b4f','994008',['knuckle','mace'],'str',0,'b85210'],['Shadow Chaser','Stalker',.5,2.45,1.3,'9470b5','3d2654',['dagger','bow'],'dex',0,'533470'],['Maestro & Wanderer','Minstrel & Gypsy',.54,1.61,1.25,'ff80b3','8a2650',['instrument','whip','bow'],'dex',1,'a83264']];
 const EXPANDED_CLASSES=new Set(['Ninja','Gunslinger']);
 const NEW_GATE_CLASSES=new Set([...CDX,...CD4X].map(row=>row[0]));
 // The whole expanded roster is a prestige unlock: one fourth job at Base Lv 150 opens it for good.
@@ -1846,6 +1847,30 @@ const mobSpriteUrl=id=>ASCENSION_MOB_IDS.has(+id)?`assets/mobs/v1/${+id}-0.png`:
 // 1-7 weapon types, body, headgear, optional shield, legwear and two accessories. Every
 // stage-routed weapon drop matches a class line that levels there, so it is something they can wear.
 // G(sec, w, a, h, o, l, ac, ac2): weapons are 'type:Name' pairs, the rest are names.
+// haven-v409 expanded-roster weapon families. Each is the kin of one shipped family: the drop
+// tables, rates and pools above stay exactly as they are (every other class sees no change),
+// and a kin weapon is what a drop of the shipped family becomes for a class that trains in it.
+const WEAPON_KIN={spear:'sword',book:'staff',knuckle:'mace',instrument:'bow',whip:'bow',shuriken:'dagger',gun:'bow'};
+const WEAPON_LABEL={spear:'Spear',book:'Book',knuckle:'Knuckle',instrument:'Instrument',whip:'Whip',shuriken:'Shuriken',gun:'Gun'};
+const KIN_NOUN={spear:'Spear',book:'Tome',knuckle:'Knuckle',instrument:'Lute',whip:'Whip',shuriken:'Shuriken',gun:'Revolver'};
+const KIN_CLASSIC={spear:['Javelin','Pike','Lance','Gungnir'],book:['Book','Bible','Tablet','Book of the Apocalypse'],knuckle:['Waghnak','Knuckle Duster','Studded Knuckles','Kaiser Knuckle'],
+  instrument:['Violin','Mandolin','Lute','Electric Guitar'],whip:['Rope','Whip','Wire Whip','Lariat'],shuriken:['Huuma Bird Wing','Huuma Giant Wheel','Huuma Blaze','Huuma Calm Mind'],gun:['Six Shooter','Crimson Bolt','Garrison','Destroyer']};
+const KIN_SHARE=.6;   // share of kin-family drops that arrive as the class's own family when it can also wear the kin
+const magicWeapon=wt=>wt==='staff'||wt==='book',fourSocketWeapon=wt=>wt==='katar'||wt==='bow'||WEAPON_KIN[wt]==='bow',rangedWeapon=wt=>wt==='bow'||WEAPON_KIN[wt]==='bow'||wt==='shuriken';
+const KIN_STRIP=/\b(?:Short Sword|Broad Sword|Practice Sword|Sword|Blade|Saber|Katana|Edge|Slayer|Staff|Rod|Wand|Orb|Focus|Mace|Maul|Hammer|Club|Glaive|Longbow|Bow|Recurve|Dagger|Knife|Fang|Kunai)\b/gi;
+function kinWeaponName(wt,name,sec){const theme=String(name||'').replace(KIN_STRIP,'').replace(/\s+/g,' ').trim();
+  return theme&&theme!==name?theme+' '+KIN_NOUN[wt]:KIN_CLASSIC[wt][Math.max(0,Math.min(3,sec|0))]}
+// Which family a class's kin drop becomes: a Bard (male body) favours the instrument, a Dancer the whip.
+function kinFamilyFor(cls,k,sex,roll=Math.random()){const c=CLASSES[cls];if(!c||typeof EXPANDED_LINE==='undefined'||!EXPANDED_LINE.has(cls))return null;
+  const own=c.wt.filter(w=>WEAPON_KIN[w]===k);if(!own.length)return null;
+  return own.length>1?own[(sex==='f'?1:0)^(roll<.25?1:0)]:own[0]}
+function kinDrop(T,cls=S&&S.cls,sex=S&&S.sex){const c=CLASSES[cls],k=T&&kinFamilyFor(cls,T.k,sex);if(!k)return T;
+  if(c.wt.includes(T.k)&&Math.random()>=KIN_SHARE)return T;
+  return{...T,k,n:kinWeaponName(k,T.n,T.sec)}}
+// One plain sentence for the Job and Equipment panels: where this class's own family comes from.
+const kinNote=c=>{const own=(c&&c.wt||[]).filter(w=>WEAPON_KIN[w]);if(!own.length)return'';
+  const by={};for(const w of own)(by[WEAPON_KIN[w]]=by[WEAPON_KIN[w]]||[]).push(WEAPON_LABEL[w].toLowerCase()+'s');
+  return ' ('+Object.entries(by).map(([kin,list])=>list.join(' and ')+' drop wherever '+kin+'s drop').join('; ')+')'};
 const G=(w,a,h,o,l,ac,ac2)=>({w:Object.fromEntries(w.map(x=>[x.split(':')[0],x.split(':')[1]])),a,h,o,l,ac,ac2});
 const GEAR=[
  // --- Prontera: the Novice start (only weapons Novice can use: swords and daggers) ---
@@ -1919,7 +1944,7 @@ const ASC_SETS={
   celestial:{
     name:'Celestial',map:10,mat:0,
     pieces:{
-      weapon:{sword:'Celestial Blade',katar:'Celestial Fang',staff:'Celestial Orb',dagger:'Celestial Spike',bow:'Celestial Longbow',axe:'Celestial Halberd',mace:'Celestial Gavel'},
+      weapon:{sword:'Celestial Blade',katar:'Celestial Fang',staff:'Celestial Orb',dagger:'Celestial Spike',bow:'Celestial Longbow',axe:'Celestial Halberd',mace:'Celestial Gavel',spear:'Celestial Lance',book:'Celestial Codex',knuckle:'Celestial Gauntlet',instrument:'Celestial Lyre',whip:'Celestial Lash',shuriken:'Celestial Star',gun:'Celestial Cannon'},
       armor:'Celestial Vestments',head:'Celestial Circlet',off:'Celestial Aegis',
       leg:'Celestial Greaves',acc:'Celestial Signet'
     },
@@ -1935,7 +1960,7 @@ const ASC_SETS={
   voidwalker:{
     name:'Voidwalker',map:10,mat:0,
     pieces:{
-      weapon:{sword:'Voidwalker Edge',katar:'Voidwalker Claw',staff:'Voidwalker Focus',dagger:'Voidwalker Fang',bow:'Voidwalker String',axe:'Voidwalker Splitter',mace:'Voidwalker Hammer'},
+      weapon:{sword:'Voidwalker Edge',katar:'Voidwalker Claw',staff:'Voidwalker Focus',dagger:'Voidwalker Fang',bow:'Voidwalker String',axe:'Voidwalker Splitter',mace:'Voidwalker Hammer',spear:'Voidwalker Lance',book:'Voidwalker Codex',knuckle:'Voidwalker Gauntlet',instrument:'Voidwalker Lyre',whip:'Voidwalker Lash',shuriken:'Voidwalker Star',gun:'Voidwalker Cannon'},
       armor:'Voidwalker Shroud',head:'Voidwalker Hood',off:'Voidwalker Guard',
       leg:'Voidwalker Boots',acc:'Voidwalker Talisman'
     },
@@ -1949,7 +1974,7 @@ const ASC_SETS={
   ethereal:{
     name:'Ethereal',map:10,mat:0,
     pieces:{
-      weapon:{sword:'Ethereal Light',katar:'Ethereal Touch',staff:'Ethereal Core',dagger:'Ethereal Whisper',bow:'Ethereal Arc',axe:'Ethereal Split',mace:'Ethereal Toll'},
+      weapon:{sword:'Ethereal Light',katar:'Ethereal Touch',staff:'Ethereal Core',dagger:'Ethereal Whisper',bow:'Ethereal Arc',axe:'Ethereal Split',mace:'Ethereal Toll',spear:'Ethereal Lance',book:'Ethereal Codex',knuckle:'Ethereal Gauntlet',instrument:'Ethereal Lyre',whip:'Ethereal Lash',shuriken:'Ethereal Star',gun:'Ethereal Cannon'},
       armor:'Ethereal Robes',head:'Ethereal Crown',off:'Ethereal Ward',
       leg:'Ethereal Wraps',acc:'Ethereal Orb'
     },
@@ -1963,7 +1988,7 @@ const ASC_SETS={
   primal:{
     name:'Primal',map:11,mat:1,
     pieces:{
-      weapon:{sword:'Primal Slayer',katar:'Primal Rend',staff:'Primal Conduit',dagger:'Primal Shiv',bow:'Primal Recurve',axe:'Primal Cleaver',mace:'Primal Crusher'},
+      weapon:{sword:'Primal Slayer',katar:'Primal Rend',staff:'Primal Conduit',dagger:'Primal Shiv',bow:'Primal Recurve',axe:'Primal Cleaver',mace:'Primal Crusher',spear:'Primal Lance',book:'Primal Codex',knuckle:'Primal Gauntlet',instrument:'Primal Lyre',whip:'Primal Lash',shuriken:'Primal Star',gun:'Primal Cannon'},
       armor:'Primal Hide',head:'Primal Crown',off:'Primal Bulwark',
       leg:'Primal Stompers',acc:'Primal Band'
     },
@@ -1977,7 +2002,7 @@ const ASC_SETS={
   molten:{
     name:'Molten',map:11,mat:1,
     pieces:{
-      weapon:{sword:'Molten Blade',katar:'Molten Claw',staff:'Molten Rod',dagger:'Molten Spike',bow:'Molten Bow',axe:'Molten Axe',mace:'Molten Maul'},
+      weapon:{sword:'Molten Blade',katar:'Molten Claw',staff:'Molten Rod',dagger:'Molten Spike',bow:'Molten Bow',axe:'Molten Axe',mace:'Molten Maul',spear:'Molten Lance',book:'Molten Codex',knuckle:'Molten Gauntlet',instrument:'Molten Lyre',whip:'Molten Lash',shuriken:'Molten Star',gun:'Molten Cannon'},
       armor:'Molten Plate',head:'Molten Helm',off:'Molten Shield',
       leg:'Molten Greaves',acc:'Molten Ring'
     },
@@ -1991,7 +2016,7 @@ const ASC_SETS={
   infernal:{
     name:'Infernal',map:11,mat:1,
     pieces:{
-      weapon:{sword:'Infernal Edge',katar:'Infernal Fang',staff:'Infernal Focus',dagger:'Infernal Spike',bow:'Infernal String',axe:'Infernal Splitter',mace:'Infernal Hammer'},
+      weapon:{sword:'Infernal Edge',katar:'Infernal Fang',staff:'Infernal Focus',dagger:'Infernal Spike',bow:'Infernal String',axe:'Infernal Splitter',mace:'Infernal Hammer',spear:'Infernal Lance',book:'Infernal Codex',knuckle:'Infernal Gauntlet',instrument:'Infernal Lyre',whip:'Infernal Lash',shuriken:'Infernal Star',gun:'Infernal Cannon'},
       armor:'Infernal Vest',head:'Infernal Mask',off:'Infernal Buckler',
       leg:'Infernal Boots',acc:'Infernal Charm'
     },
@@ -2082,7 +2107,7 @@ function makeMythicEquipment(setKey,slot,weaponType){
   const profile={slot,wt:slot==='weapon'?weaponType:undefined,sec:6,tier,mp:set.map,quality:1.5};
   const pool=affixPool(profile).slice(),aff=[];
   for(let i=0;i<4;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push(rollAffix(k,profile))}
-  const slots=slot==='weapon'&&(weaponType==='katar'||weaponType==='bow')?4:slot==='weapon'?3:1;
+  const slots=slot==='weapon'&&(weaponType==='katar'||weaponType==='bow'||(typeof WEAPON_KIN!=='undefined'&&WEAPON_KIN[weaponType]==='bow'))?4:slot==='weapon'?3:1;
   const item={id:uid(),slot,wt:slot==='weapon'?weaponType:undefined,tier,val,name:'Mythic '+name,aff,slots,cards:[],sec:6,lvl:150,quality:1.5,mp:set.map,mythic:true,ascSet:setKey,mythicGiftVersion:1};
   return{item};
 }
@@ -2102,7 +2127,9 @@ function gmGearIdAllocator(state){
 const GM_ASC_PRESETS={
   'Rune Knight':{set:'molten',main:'str'},'Warlock':{set:'ethereal',main:'int'},
   'Ranger':{set:'infernal',main:'dex'},'Guillotine Cross':{set:'voidwalker',main:'str'},
-  'Arch Bishop':{set:'primal',main:'int'},'Mechanic':{set:'molten',main:'str'}
+  'Arch Bishop':{set:'primal',main:'int'},'Mechanic':{set:'molten',main:'str'},
+  'Royal Guard':{set:'celestial',main:'str'},'Sorcerer':{set:'ethereal',main:'int'},'Geneticist':{set:'molten',main:'str'},
+  'Sura':{set:'primal',main:'str'},'Shadow Chaser':{set:'voidwalker',main:'dex'},'Maestro & Wanderer':{set:'infernal',main:'dex'}
 };
 function gmMaxAscensionGear(cls){
   if(!S.gm||!Object.hasOwn(GM_ASC_PRESETS,cls))return;
@@ -2113,7 +2140,7 @@ function gmMaxAscensionGear(cls){
   const reserveId=gmGearIdAllocator(S);
   const gear=recipes.map(([slot,wt])=>{
     const it=reserveId(makeMythicEquipment(preset.set,slot,wt).item),magic=preset.main==='int';
-    const priority=slot==='weapon'?(wt==='staff'?['matk','int','dex','hp']:magic?['str','atk','aspd','cdm']:[preset.main,'atk','crit','cdm']):
+    const priority=slot==='weapon'?((wt==='staff'||wt==='book')?['matk','int','dex','hp']:magic?['str','atk','aspd','cdm']:[preset.main,'atk','crit','cdm']):
       slot==='head'?[preset.main,magic?'matk':'atk','vit','hp']:
       slot==='acc'?[preset.main,magic?'matk':'atk','crit','cdm']:
       slot==='leg'?['aspd','move','hp','vit']:['hp','vit','agi','flee'];
@@ -2766,10 +2793,10 @@ function trialGrantNm(mapIndex){
   // actually swing (falling back to armour for a class with no listed weapon type).
   if(!Number.isInteger(mapIndex)||mapIndex<0||mapIndex>=10)return;
   const sec=secField(mapIndex,12),T=gearPool(mapIndex,12),c=C();
-  let pool=T.filter(x=>c.wt&&c.wt.includes(x.k));
+  let pool=T.filter(x=>c.wt&&(c.wt.includes(x.k)||(typeof kinFamilyFor==='function'&&kinFamilyFor(S.cls,x.k,S.sex))));
   if(!pool.length)pool=T.filter(x=>x.k==='armor');
   if(!pool.length)pool=T;
-  const chosen=pool[(S.kills|0)%pool.length];
+  const picked=pool[(S.kills|0)%pool.length],chosen=typeof kinDrop==='function'?kinDrop(picked):picked;
   const it=genGear(chosen,150,sec,false,dropTier(mapIndex,12));
   S.inv.push(it);log(`Shard Store: ${it.name} (${SECN[sec]}) is in your bag.`,'r5','trial')}
 
@@ -2908,7 +2935,7 @@ function applyLeech(dealt,rate){
  if(h>0){S.hp+=h;leechWindow.push({at:t,hp:h});addFloat(pl.x,2.9,pl.z,'+'+numTxt(h),'#ff6b8a');}return h;
 }
 // Physical skill training replaces universal INT scaling; no physical skill reads INT here.
-const INT_CLASSES=['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest','Warlock','Arch Bishop'];
+const INT_CLASSES=['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest','Warlock','Arch Bishop','Sage','Scholar','Sorcerer'];
 const PHYSICAL_TRAINING={"Novice": [1.01, 1.01, 1.01], "Swordman": [1.01, 1.01, 1.01], "Archer": [1.13, 1.22, 1.3], "Thief": [1.27294, 1.41074, 1.64825], "Merchant": [1.01, 1.01, 1.01], "Knight": [1.01, 1.01, 1.01], "Hunter": [1.33, 1.45, 1.6], "Assassin": [1.66207, 2.04084, 2.26048], "Blacksmith": [1.01, 1.01, 1.01], "Lord Knight": [1.05, 1.05, 1.05], "Sniper": [1.45, 1.55, 1.6], "Assassin Cross": [2.46, 2.53, 2.32], "Whitesmith": [1.01, 1.01, 1.01]};
 function physicalTraining(sk,L){const a=PHYSICAL_TRAINING[S.cls]||[1,1,1],r=Math.max(1,Math.min(10,L));return r<=5?a[0]+(a[1]-a[0])*(r-1)/4:a[1]+(a[2]-a[1])*(r-5)/5;}
 const skillStatScale=(sk,L)=>INT_CLASSES.includes(S.cls)?1+st('int')*.01:1;
@@ -3346,14 +3373,14 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
 // ---------- auto-sell rules: shared by live drops, offline drops and bag previews ----------
-const AUTOSELL_SLOTS=['weapon','armor','head','off','leg','acc'],AUTOSELL_WEAPONS=['sword','dagger','katar','bow','staff','mace','axe'];
+const AUTOSELL_SLOTS=['weapon','armor','head','off','leg','acc'],AUTOSELL_WEAPONS=['sword','dagger','katar','bow','staff','mace','axe'],AUTOSELL_WEAPONS_X=['spear','book','knuckle','instrument','whip','shuriken','gun'];
 const AUTOSELL_AFFIXES=['str','agi','dex','luk','int','vit','hp','atk','matk','crit','aspd','flee','cdm','move'];
 const defaultAutoSellRules=()=>({version:1,slots:[],weapons:[],names:[],affixes:[],mode:'any',affixAction:'keep',refined:true,socketed:true,minEmpty:0});
 function cleanAutoSellRules(raw){
   if(raw===undefined)return defaultAutoSellRules();
   if(!raw||typeof raw!=='object'||Array.isArray(raw)||raw.version!==1)return null;
   const out=defaultAutoSellRules();
-  for(const [key,allowed] of [['slots',AUTOSELL_SLOTS],['weapons',AUTOSELL_WEAPONS]]){
+  for(const [key,allowed] of [['slots',AUTOSELL_SLOTS],['weapons',[...AUTOSELL_WEAPONS,...AUTOSELL_WEAPONS_X]]]){
     if(!Array.isArray(raw[key])||raw[key].some(x=>!allowed.includes(x)))return null;
     out[key]=[...new Set(raw[key])];
   }
@@ -5329,7 +5356,7 @@ const isBoss=()=>bossStage(S.mp,S.lvl),fieldName=()=>S.lvl>10?`Nightmare ${MAPS[
 // Curated original RO equipment art: progression follows the saved job section,
 // with robe and pendant variants selected by item type. All selected PNGs ship locally.
 const RO_ITEM_ICON_CANDIDATES={
- mythic:{"celestial":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450264,"head":430002,"off":460040,"leg":470196,"acc":490327},"voidwalker":{"sword":500054,"dagger":510075,"axe":520021,"mace":590047,"staff":550089,"katar":610041,"bow":700059,"armor":450270,"head":430002,"off":460040,"leg":470197,"acc":490328},"ethereal":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450265,"head":430002,"off":460040,"leg":450268,"acc":490330},"primal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15380,"head":19343,"off":460023,"leg":22201,"acc":490104},"molten":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15378,"head":19343,"off":460023,"leg":22199,"acc":490104},"infernal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15379,"head":19343,"off":460023,"leg":22200,"acc":490451}},
+ mythic:{"celestial":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450264,"head":430002,"off":460040,"leg":470196,"acc":490327,"spear":1433,"book":1565,"knuckle":1822,"instrument":1918,"whip":1970,"shuriken":13307,"gun":13163},"voidwalker":{"sword":500054,"dagger":510075,"axe":520021,"mace":590047,"staff":550089,"katar":610041,"bow":700059,"armor":450270,"head":430002,"off":460040,"leg":470197,"acc":490328,"spear":1433,"book":1565,"knuckle":1822,"instrument":1918,"whip":1970,"shuriken":13307,"gun":13163},"ethereal":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450265,"head":430002,"off":460040,"leg":450268,"acc":490330,"spear":1433,"book":1565,"knuckle":1822,"instrument":1918,"whip":1970,"shuriken":13307,"gun":13163},"primal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15380,"head":19343,"off":460023,"leg":22201,"acc":490104,"spear":1437,"book":1572,"knuckle":1826,"instrument":1926,"whip":1979,"shuriken":13313,"gun":13171},"molten":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15378,"head":19343,"off":460023,"leg":22199,"acc":490104,"spear":1437,"book":1572,"knuckle":1826,"instrument":1926,"whip":1979,"shuriken":13313,"gun":13171},"infernal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15379,"head":19343,"off":460023,"leg":22200,"acc":490451,"spear":1437,"book":1572,"knuckle":1826,"instrument":1926,"whip":1979,"shuriken":13313,"gun":13171}},
  sword:[1101,1123,1137,1142,1133,1145],
  dagger:[1201,1207,1217,1226,1232,1240],
  katar:[1250,1252,1254,1256,1258,1260],
@@ -5337,6 +5364,13 @@ const RO_ITEM_ICON_CANDIDATES={
  bow:[1701,1704,1707,1723,1720,1722],
  axe:[1301,1307,1357,1360,1363,1366],
  mace:[1501,1504,1513,1527,1540,1530],
+ spear:[1401,1407,1410,1413,1415,1420],
+ book:[1550,1551,1552,1553,1556,1557],
+ knuckle:[1801,1803,1807,1809,1813,1814],
+ instrument:[1901,1903,1905,1907,1909,1913],
+ whip:[1950,1952,1954,1956,1962,1964],
+ shuriken:[13300,13301,13302,13303,13304,13305],
+ gun:[13100,13102,13104,13151,13154,13157],
  armor:[2301,2329,2315,2341,2367,2357],
  robe:[2301,2305,2309,2359,2360,2365],
  head:[2222,2229,2230,2234,2235,2254],
@@ -5613,7 +5647,7 @@ function spawn(){
   }
   activePack=nearestPack();mob=bossWave?mobs[0]:packMob();pAtkT=.3;
 }
-const affixPool=it=>it.slot==='weapon'?(it.wt==='staff'?['int','dex','matk','crit','cdm','hp']:['str','agi','dex','luk','atk','crit','aspd','cdm']):it.slot==='acc'?['str','agi','dex','int','vit','luk','atk','matk','crit','cdm','move']:it.slot==='leg'?['agi','vit','hp','flee','aspd','move']:it.slot==='head'?['str','dex','int','vit','hp','atk','matk']:['vit','hp','flee','str','agi'];
+const affixPool=it=>it.slot==='weapon'?((it.wt==='staff'||it.wt==='book')?['int','dex','matk','crit','cdm','hp']:['str','agi','dex','luk','atk','crit','aspd','cdm']):it.slot==='acc'?['str','agi','dex','int','vit','luk','atk','matk','crit','cdm','move']:it.slot==='leg'?['agi','vit','hp','flee','aspd','move']:it.slot==='head'?['str','dex','int','vit','hp','atk','matk']:['vit','hp','flee','str','agi'];
 // v173 (owner: Mythic should sit ~1.5x over N+, smooth): Mythic rolls use the plain table value.
 // The stored quality:1.5 used to multiply every Mythic roll (STR 44-69 became 66-104), pushing a
 // fully-reforged piece to 2.5x N+. Rolls now ignore it (existing values stay exactly as rolled);
@@ -5640,7 +5674,7 @@ function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){
   const n=[1,1,2,3,3][t],profile={slot,wt:T.k,sec,tier:t,mp:(sourceMap|0),quality},pool=affixPool(profile).slice(),aff=[];
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push(rollAffix(k,profile))}
   // Katars and bows always have four card sockets; every other weapon keeps the existing 1-3 roll.
-  const slots=slot==='weapon'&&(T.k==='katar'||T.k==='bow')?4:slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
+  const slots=slot==='weapon'&&(T.k==='katar'||T.k==='bow'||(typeof WEAPON_KIN!=='undefined'&&WEAPON_KIN[T.k]==='bow'))?4:slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
   return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=5?'N+ ':sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l,quality,mp:(sourceMap|0)};
 }
 // Away time is earned from the same map/stage and drop tables as online play. The browser records
@@ -5702,7 +5736,7 @@ function offlineAwardKill(mob,r){
   recordMonsterKill(mob);if(!r.measured)S.kl=safeCount(S.kl)+1;qProg('kill');if(mob.boss)qProg('boss');
   const z=r.measured?0:Math.round(mob.zeny*(1+pv('zeny')/100)*nmZenyRoll(mob))*gx(),xp=r.measured?0:Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;
   if(!r.measured){gainAscension(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();}
-  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier,mob.mapIndex),r);
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear((typeof kinDrop==='function'?kinDrop(T):T),mob.lvl,mob.sec,mob.boss,mob.tier,mob.mapIndex),r);
   if(Math.random()*100<mob.cardCh){const g=mob.card.g;S.cards.push(newCard(mob.card));questEvent('card');r.cards++;r.drops++}
   for(const item of ascensionDrops(mob)){S.ascensionMat[item.ascMat]=safeCount(S.ascensionMat[item.ascMat])+1;r.drops++}
   if(mob.boss)recordMapClear(mob.mapIndex??S.mp,mob.stage??S.lvl);
@@ -5977,7 +6011,7 @@ function log(m,cls,cat,visual){const e={m,cls,cat,id:++logSequence};logs.push(e)
 const CLASS_BAND=cls=>cls&&INT_CLASSES.includes(cls.n)?6:cls&&cls.rng?4:0;
 let standC={t:-9,r:0},engageTgt=null,engageWait=0;   // engageTgt: latched into a stand-and-trade fight (v83.1); engageWait: seconds latched while out of reach (v88.4)
 function heroStandoff(m){
-  let r=CLASS_BAND(C());if(r&&C().wt.includes('bow'))r+=Math.min(.5,pv('range'));
+  let r=CLASS_BAND(C());if(r&&(typeof rangedWeapon==='function'?C().wt.some(rangedWeapon):C().wt.includes('bow')))r+=Math.min(.5,pv('range'));
   // A ranged skill must not keep a melee class outside its basic/combo reach.
   if(!r)r=1.2+.45*(m&&m.size?m.size:1);
   // hold the last stand-off for 1.5s, so a skill coming off cooldown does not make the hero pace.
@@ -6010,7 +6044,7 @@ function heroKite(dt,target,reach){
   }
   return best;
 }
-function shot(col){if(!mob)return;const magic=INT_CLASSES.includes(S.cls),arrow=heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)==='bow';if(!magic&&!arrow)return;
+function shot(col){if(!mob)return;const magic=INT_CLASSES.includes(S.cls),heldType=heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt),arrow=(typeof rangedWeapon==='function'?rangedWeapon(heldType):heldType==='bow');if(!magic&&!arrow)return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||(magic?'#d9b9ff':'#fff'),arrow:!magic&&arrow})}
 function hurt(o,d,col,c,skill=false,soundWeapon=S.eq.weapon?.wt,soundKind=skill?'skill':'normal'){if(d>0&&typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false,soundWeapon,soundKind);S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill);try{provokeNearby(o);}catch(e){}if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false,skill=false){
@@ -6049,6 +6083,269 @@ function skillBonus(key){const r=skillState();let sum=0;for(const id in r.buffs)
 // growth and geared builds, with real-loop single/three-target measurements.
 // Rank interpolation below still enforces increasing damage as skills level up.
 const SKILL_TUNING={
+ // haven-v409 expanded roster: fitted by measurement so each class lands on its sibling's sustained
+ // damage (1 target and 3 targets) - Crusader line 92%, Monk line 105%, Sage and Alchemist lines 100%,
+ // the rest 97%. Budgets and the fit targets are recorded in tools/tests/fixtures/expanded_skill_budget.json.
+ "Crusader": {
+  "single": [
+   1.465,
+   1.465,
+   1.465
+  ],
+  "area": [
+   0.244,
+   0.244,
+   0.244
+  ],
+  "companion": 1
+ },
+ "Paladin": {
+  "single": [
+   3.253,
+   3.253,
+   3.253
+  ],
+  "area": [
+   0.2,
+   0.2,
+   0.2
+  ],
+  "companion": 1
+ },
+ "Royal Guard": {
+  "single": [
+   1.179,
+   1.179,
+   1.179
+  ],
+  "area": [
+   0.762,
+   0.762,
+   0.762
+  ],
+  "companion": 1
+ },
+ "Sage": {
+  "single": [
+   1.619,
+   1.619,
+   1.619
+  ],
+  "area": [
+   1.474,
+   1.474,
+   1.474
+  ],
+  "companion": 1
+ },
+ "Scholar": {
+  "single": [
+   1.649,
+   1.649,
+   1.649
+  ],
+  "area": [
+   0.795,
+   0.795,
+   0.795
+  ],
+  "companion": 1
+ },
+ "Sorcerer": {
+  "single": [
+   0.74,
+   0.74,
+   0.74
+  ],
+  "area": [
+   1.213,
+   1.213,
+   1.213
+  ],
+  "companion": 1
+ },
+ "Alchemist": {
+  "single": [
+   2.917,
+   2.917,
+   2.917
+  ],
+  "area": [
+   0.237,
+   0.237,
+   0.237
+  ],
+  "companion": 1
+ },
+ "Biochemist": {
+  "single": [
+   3.127,
+   3.127,
+   3.127
+  ],
+  "area": [
+   2.392,
+   2.392,
+   2.392
+  ],
+  "companion": 1
+ },
+ "Geneticist": {
+  "single": [
+   1.433,
+   1.433,
+   1.433
+  ],
+  "area": [
+   0.483,
+   0.483,
+   0.483
+  ],
+  "companion": 1
+ },
+ "Monk": {
+  "single": [
+   2.37,
+   2.37,
+   2.37
+  ],
+  "area": [
+   0.741,
+   0.741,
+   0.741
+  ],
+  "companion": 1
+ },
+ "Champion": {
+  "single": [
+   3.648,
+   3.648,
+   3.648
+  ],
+  "area": [
+   0.94,
+   0.94,
+   0.94
+  ],
+  "companion": 1
+ },
+ "Sura": {
+  "single": [
+   0.971,
+   0.971,
+   0.971
+  ],
+  "area": [
+   1.393,
+   1.393,
+   1.393
+  ],
+  "companion": 1
+ },
+ "Rogue": {
+  "single": [
+   5.372,
+   5.372,
+   5.372
+  ],
+  "area": [
+   1.05,
+   1.05,
+   1.05
+  ],
+  "companion": 1
+ },
+ "Stalker": {
+  "single": [
+   6.979,
+   6.979,
+   6.979
+  ],
+  "area": [
+   1,
+   1,
+   1
+  ],
+  "companion": 1
+ },
+ "Shadow Chaser": {
+  "single": [
+   1.191,
+   1.191,
+   1.191
+  ],
+  "area": [
+   0.925,
+   0.925,
+   0.925
+  ],
+  "companion": 1
+ },
+ "Bard & Dancer": {
+  "single": [
+   2.879,
+   2.879,
+   2.879
+  ],
+  "area": [
+   1.489,
+   1.489,
+   1.489
+  ],
+  "companion": 1
+ },
+ "Minstrel & Gypsy": {
+  "single": [
+   3.161,
+   3.161,
+   3.161
+  ],
+  "area": [
+   0.2,
+   0.2,
+   0.2
+  ],
+  "companion": 1
+ },
+ "Maestro & Wanderer": {
+  "single": [
+   0.889,
+   0.889,
+   0.889
+  ],
+  "area": [
+   0.656,
+   0.656,
+   0.656
+  ],
+  "companion": 1
+ },
+ "Ninja": {
+  "single": [
+   13.665,
+   13.665,
+   13.665
+  ],
+  "area": [
+   0.429,
+   0.429,
+   0.429
+  ],
+  "companion": 1
+ },
+ "Gunslinger": {
+  "single": [
+   6.921,
+   6.921,
+   6.921
+  ],
+  "area": [
+   0.2,
+   0.2,
+   0.2
+  ],
+  "companion": 1
+ },
  "Blacksmith": {
   "single": [
    1.467273,
@@ -6298,7 +6595,7 @@ function skillTuning(area=false,sk,L){const table=SKILL_TUNING[S.cls];if(!table)
   return power/sk.mul(rank);
 }
 function skillRange(sk,target){const range=(sk.rng||sk.dash||CLASS_BAND(C()))+ascSkillValue(sk.id,'range');
-  return range?range+(C().wt.includes('bow')?Math.min(.5,pv('range')):0):1.8+.45*(target&&target.size||1);}
+  return range?range+((typeof rangedWeapon==='function'?C().wt.some(rangedWeapon):C().wt.includes('bow'))?Math.min(.5,pv('range')):0):1.8+.45*(target&&target.size||1);}
 function skillTargets(sk,target,origin=pl){const area=sk.areaScale||1,shape=sk.shape||'single',center=shape==='radial'?origin:target;
   const dx=target.x-origin.x,dz=target.z-origin.z,len=Math.hypot(dx,dz)||1,ux=dx/len,uz=dz/len;
   const hits=mobs.slice().filter(o=>{if(o.hp<=0) return false;if(o===target) return true;if(shape==='single')return false;
@@ -6552,7 +6849,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
   // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
   // what it is for).
-  for(const[T,ch]of mob.drops)if(Math.random()*100<ch*(1+petPassive('gear')/100))drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier)));
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch*(1+petPassive('gear')/100))drops.push(mkDrop(genGear((typeof kinDrop==='function'?kinDrop(T):T),mob.lvl,mob.sec,mob.boss,mob.tier)));
   if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop(newCard(mob.card)))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh*(1+petPassive('ore')/100))drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
   for(const item of ascensionDrops(mob))drops.push(mkDrop(item));
@@ -7530,7 +7827,7 @@ function itemMain(it){
   <div><small>Worn by: <b>${gearUserOf(it)}</b></small></div>
   <div><small>Gear Lv ${gearRefLevel(it)} &middot; reference only: gear is gated by class tier, never by Base Lv</small></div>${it.locked?`<div><small class="r3">&#9733; Locked &middot; protected from auto-sell</small></div>`:''}
   ${canUse(it)?'':`<div><small class="r0">${whyNot(it)}${it.wearer?` This was ${it.wearer}'s gear - it goes straight back on when you switch to ${it.wearer} again.`:''}</small></div>`}
-  <div><b>${it.wt==='staff'?'Weapon MATK contribution':SLOTS[it.slot].stat} +${it.wt==='staff'?Math.round(ev(it)*.8):ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${worn?`<div><small class="r0">Lower base value than the ${SLOTS[it.slot].label.toLowerCase()} you are wearing (${SLOTS[it.slot].stat} +${ev(worn)}) — compare affixes and cards before replacing it.</small></div>`:''}${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}${it.sec===6&&it.ascSet?mythicSetCard(it):''}`}
+  <div><b>${it.wt==='staff'||it.wt==='book'?'Weapon MATK contribution':SLOTS[it.slot].stat} +${it.wt==='staff'||it.wt==='book'?Math.round(ev(it)*.8):ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${worn?`<div><small class="r0">Lower base value than the ${SLOTS[it.slot].label.toLowerCase()} you are wearing (${SLOTS[it.slot].stat} +${ev(worn)}) — compare affixes and cards before replacing it.</small></div>`:''}${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}${it.sec===6&&it.ascSet?mythicSetCard(it):''}`}
 // v171 (owner: set bonuses only exist in the Forge): one reader for the full bonus list on every
 // Mythic item description plus the one-liner in the equipment inspector. Guarded like bon() so the
 // UI sims that slice itemMain without the Ascension tables still run.
@@ -7671,7 +7968,7 @@ function autoSellEditor(workspace=false){const r=workspace?autoSellWorkspaceStat
   return `<details class="autosell-editor" data-ui-disclosure="${workspace?'equipment-autosell-filters':'bag-sell-filters'}" ${workspace?'data-autosell-workspace="true"':''}><summary>${workspace?'Advanced filters':'Equipment &amp; affix filters'}</summary><p class="sell-help">Match every selected category. Within a category, match any selection. Empty equipment filters mean all equipment. Affix minimums use stored roll values; HP contributes twice its roll to your stats. ${workspace?'These rules only affect new and offline drops after you apply them.':'Save filters to apply them to drops, offline loot and previews.'}</p>
   <div class="row"><small>Presets (edit before saving):</small><button data-a="${preset}" data-v="physical">Physical</button><button data-a="${preset}" data-v="caster">Caster</button><button data-a="${preset}" data-v="collector">Collector</button></div>
   <fieldset><legend>Sell these equipment slots</legend><div class="sell-options">${AUTOSELL_SLOTS.map(k=>`<label><input type="checkbox" data-sell-field="slots" value="${k}" ${on(r.slots,k)}> ${SLOTS[k].label}</label>`).join('')}</div></fieldset>
-  <fieldset><legend>Weapon families (optional)</legend><div class="sell-options">${AUTOSELL_WEAPONS.map(k=>`<label><input type="checkbox" data-sell-field="weapons" value="${k}" ${on(r.weapons,k)}> ${k}</label>`).join('')}<small>Choosing a family keeps all non-weapons.</small></div></fieldset>
+  <fieldset><legend>Weapon families (optional)</legend><div class="sell-options">${[...AUTOSELL_WEAPONS,...(typeof EXPANDED_LINE!=='undefined'&&EXPANDED_LINE.has(S.cls)?AUTOSELL_WEAPONS_X:[])].map(k=>`<label><input type="checkbox" data-sell-field="weapons" value="${k}" ${on(r.weapons,k)}> ${k}</label>`).join('')}<small>Choosing a family keeps all non-weapons.</small></div></fieldset>
   <label class="sell-label">Exact equipment names (optional, one per line)<textarea data-sell-field="names" rows="2" placeholder="Leave blank for all names">${esc(r.names.join('\\n'))}</textarea></label>
   ${workspace?`<fieldset><legend>Minimum empty sockets</legend><label>Keep at least <input type="number" data-sell-field="minEmpty" aria-label="Minimum empty sockets to keep" min="0" max="10" step="1" value="${r.minEmpty}"> empty sockets (0 = off)</label></fieldset>`:`<fieldset><legend>Affix rules</legend><label>Action <select data-sell-field="affixAction"><option value="keep" ${r.affixAction==='keep'?'selected':''}>Keep matches, sell the rest</option><option value="sell" ${r.affixAction==='sell'?'selected':''}>Sell matching affixes</option></select></label><label>Match <select data-sell-field="mode"><option value="any" ${r.mode==='any'?'selected':''}>any chosen affix matches</option><option value="all" ${r.mode==='all'?'selected':''}>all chosen affixes match</option></select></label><small>Minimums use the value printed on the equipment affix. 0 matches any roll of that affix. No affixes selected means no affix restriction.</small>
   <div class="sell-affixes">${AUTOSELL_AFFIXES.map(k=>{const a=r.affixes.find(x=>x.k===k);return `<label><span><input type="checkbox" data-sell-affix="${k}" ${a?'checked':''}> ${AL[k]||k}</span><input type="number" data-sell-min="${k}" aria-label="Minimum ${AL[k]||k} to match" min="0" max="100000" step="0.1" value="${a?a.min:0}" ${a?'':'disabled'}></label>`}).join('')}</div></fieldset>
@@ -8141,7 +8438,7 @@ const V={
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${Math.round(144+5/aspd())}</b> <small>${(1/aspd()).toFixed(2)}/s</small></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Movement speed <b>${moveSpd().toFixed(2)}</b> <small>u/s</small></span></div>
     <small><b>Movement speed</b> starts at ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} u/s from AGI ${st('agi')}. Pets, skills and running share a ${MOVE_CAP} u/s cap. Equipment and cards add ${equipmentMove()}% afterward (up to 20%), allowing movement above the cap.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}% before the cap.`:''}</small>
     <small>Ordinary crit from stats, skills, gear and card mastery caps at 60%; above 45% each further point counts half. <b>Index Crit</b> adds +${idxC}% of +40 max from Hunt Titles. Mythic crit affixes and set bonuses add after the normal 100% cap (100% + 20% = 120%).</small>
-    <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${statResetCost()&&S.zeny<statResetCost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${statResetCost()?statResetCost()+'z':'free'})</button>`},
+    <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''}${kinNote(c)} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${statResetCost()&&S.zeny<statResetCost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${statResetCost()?statResetCost()+'z':'free'})</button>`},
   job(){const lines=[['Swordman','Knight','Lord Knight','Rune Knight'],['Mage','Wizard','High Wizard','Warlock'],['Archer','Hunter','Sniper','Ranger'],['Thief','Assassin','Assassin Cross','Guillotine Cross'],['Acolyte','Priest','High Priest','Arch Bishop'],['Merchant','Blacksmith','Whitesmith','Mechanic']];
     // haven-v408: the alternate line of each first job sits in the same column as that first job.
     const altLines=EXPANDED_JOBS_LIVE?[['Swordman','Crusader','Paladin','Royal Guard'],['Mage','Sage','Scholar','Sorcerer'],['Archer','Bard & Dancer','Minstrel & Gypsy','Maestro & Wanderer'],['Thief','Rogue','Stalker','Shadow Chaser'],['Acolyte','Monk','Champion','Sura'],['Merchant','Alchemist','Biochemist','Geneticist']]:[];
@@ -8212,7 +8509,7 @@ const V={
     const rows=[['','head',''],['weapon','armor','off'],['acc1','leg','acc2']];
     const rowAt=rows.findIndex(r=>r.includes(selE));
     return`<div class="doll">${rows.map((r,i)=>r.map(slotCell).join('')+(i===rowAt?detail:'')).join('')}</div>`
-    +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar, or a dagger in each hand</b>':''}</small><div class="eclipse-doll-preview"><canvas id="eclipseDoll" width="126" height="134" aria-label="Equipped character"></canvas></div><div class="eclipse-loadout-inventory">${V.bag0()}</div>`},
+    +`<small>Weapons: ${c.wt.join(', ')}${kinNote(c)} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar, or a dagger in each hand</b>':''}</small><div class="eclipse-doll-preview"><canvas id="eclipseDoll" width="126" height="134" aria-label="Equipped character"></canvas></div><div class="eclipse-loadout-inventory">${V.bag0()}</div>`},
   cards(){const entries=ownedCardEntries(),g={};entries.forEach(({card:c,key:k})=>{(g[k]=g[k]||[]).push(c)});const mergeGroups=Object.keys(g).filter(k=>g[k].some(cardMergeable)).length;const ks=Object.keys(g).filter(k=>(collectionGrade<0||g[k][0].g===collectionGrade)&&(!collectionMergeOnly||g[k].some(cardMergeable))).sort((a,b)=>cardStars(g[b][0])-cardStars(g[a][0])||g[b][0].g-g[a][0].g||g[a][0].n.localeCompare(g[b][0].n)||a.localeCompare(b)),sel=ks.includes(selC)?g[selC][0]:null,loose=sel&&S.cards.includes(sel);
     return`<p>Equipped cards stay here and can be merged using loose copies. Compatible cards transfer when replacing gear; cards that cannot fit stay on the old item. Merge identical cards: ★ +9%, ★★ +12%, ★★★ +15% effects. Each step consumes 1 / 3 / 5 extra unstarred copies (10 cards total for ★★★). Normal and Nightmare merge separately. Starred cards are protected from Mastery donations and resets.</p><div class="eclipse-card-filters" role="group" aria-label="Card filters">${[[-1,"All grades"],...GRADE.map((n,i)=>[i,n])].map(([v,n])=>`<button data-a="cardgrade" data-v="${v}" aria-pressed="${collectionGrade===v}">${n}</button>`).join('')}<button data-a="cardmerge" data-v="${collectionMergeOnly?0:1}" aria-pressed="${collectionMergeOnly}">Mergeable now${mergeGroups?' ('+mergeGroups+')':''}</button></div><div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${esc(n)}" data-tip="${g[n][0].id}">🃏<small>${"★".repeat(cardStars(g[n][0]))}</small><i class="rf">x${g[n].length}</i></div>`).join('')||(!entries.length?'<small>No cards yet. Every monster drops its own card at a low chance.</small>':collectionMergeOnly?'<small>Nothing can merge right now. A merge needs extra unstarred copies of the same card; Normal and Nightmare copies merge separately.</small>':'<small>No cards in this grade.</small>')}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<p class="card-location">${esc(entries.find(x=>x.card===sel).location)}</p><div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return loose&&e&&(e.cards||[]).length<(e.slots||0)&&!socketWhy(sel,e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}${!sel.legacy&&sel.cardKey&&cardStars(sel)<3?`<button data-a="mergecard" data-v="${sel.id}">Merge to ${cardStars(sel)+1}★ · ${cardMergeable(sel)?CARD_MERGE_COST[cardStars(sel)]+' extra copies':'need '+cardMergeNeed(sel)+' more'}</button>`:""}${loose?`<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button>`:''}</div></div>`:''}`},
@@ -12328,11 +12625,11 @@ const expandedPack={index:0,bodies:new Map()};
 function expandedRefresh(){heroKey='';if(typeof drawAppearancePreview==='function'){drawAppearancePreview();drawClassPreview()}}
 function requestExpandedBody(name){const PK=window.SPRITE_PACK,X=window.SPRITE_PACK_X;if(!PK||!name)return false;
   if(PK.bodies[name]&&packImg['b:'+name])return true;
-  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=1';
+  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=409';
     script.onload=()=>{expandedPack.index=2;expandedRefresh()};script.onerror=()=>{expandedPack.index=3;script.remove()};document.head.appendChild(script)}return false}
   const rec=X.bodies[name];if(!rec||expandedPack.bodies.has(name))return false;expandedPack.bodies.set(name,'loading');
-  const img=new Image();img.onload=()=>{PK.bodies[name]={atlas:img.src,anchors:rec.anchors};packImg['b:'+name]=img;expandedPack.bodies.set(name,'ready');expandedRefresh()};
-  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file);return false}
+  const img=new Image();img.onload=()=>{PK.bodies[name]={atlas:img.src,anchors:rec.anchors,cell:X.cell,pivotY:X.pivotY};packImg['b:'+name]=img;expandedPack.bodies.set(name,'ready');expandedRefresh()};
+  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=409';return false}
 function packBodyFor(cls,tier,sex){const PK=window.SPRITE_PACK;if(!PK)return null;
   const own=expandedBodyName(cls,sex||(typeof S!=='undefined'&&S&&S.sex)||'m');if(own&&requestExpandedBody(own))return own;
   const n=packBodyName(cls);if(!own&&PK.bodies&&PK.bodies[n])return n;
@@ -12887,11 +13184,13 @@ function packTex(opt){
   if(packCache.has(key))return packCache.get(key);
   const cv=document.createElement('canvas');cv.width=PK.cellW*8;cv.height=PK.cellH*24;
   const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
-  const bi=packImg['b:'+body],hi=packImg['h:'+sex],anc=PK.bodies[body].anchors;
+  // haven-v409: an expanded-roster body is a native RO render that already fills the padded
+  // cell (rec.cell) and may turn the head to another direction mid-attack (anchor[2]).
+  const bi=packImg['b:'+body],hi=packImg['h:'+sex],rec=PK.bodies[body],anc=rec.anchors,full=rec.cell,sw=full?full[0]:96,sh=full?full[1]:96;
   for(let a=0;a<3;a++)for(let d=0;d<8;d++)for(let f=0;f<PK.frames[a];f++){
-    const dx=f*PK.cellW+PK.padL,dy=(a*8+d)*PK.cellH+PK.padT;
-    g.drawImage(bi,f*96,(a*8+d)*96,96,96,dx,dy,96,96);
-    const an=anc[a][d][f];g.drawImage(hi,d*64,hs*64,64,64,dx+an[0]-32,dy+an[1]-48,64,64)}
+    const dx=f*PK.cellW+(full?0:PK.padL),dy=(a*8+d)*PK.cellH+(full?0:PK.padT);
+    g.drawImage(bi,f*sw,(a*8+d)*sh,sw,sh,dx,dy,sw,sh);
+    const an=anc[a][d][f];g.drawImage(hi,(an.length>2?an[2]:d)*64,hs*64,64,64,dx+an[0]-32,dy+an[1]-48,64,64)}
   const t=new THREE.CanvasTexture(cv);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;packCache.set(key,t);return t}
 // Both previews play the real class skin: the same APNG source the 3D hero wears, redrawn every
 // animation frame from the live decoder, so the panel shows the actual animation and not a still.
@@ -12916,7 +13215,8 @@ function drawClassPreview(){if(S)drawSkinPreview('classPreview','classPreviewLoa
 function mkPackHero(opt){
   const PK=window.SPRITE_PACK,t=packTex(opt).clone();t.needsUpdate=true;t.repeat.set(1/8,1/24);
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.12}));
-  s.center.set(PK.pivotX/PK.cellW,(PK.cellH-PK.pivotY)/PK.cellH);s.scale.set(PK.cellW*PACK_K,PK.cellH*PACK_K,1);s.userData.pack=1;s.userData.body=packBodyFor(opt.cls,opt.tier,opt.sex)||'thief';return s}
+  s.userData.pack=1;s.userData.body=packBodyFor(opt.cls,opt.tier,opt.sex)||'thief';const pivotY=(PK.bodies[s.userData.body]||{}).pivotY||PK.pivotY;
+  s.center.set(PK.pivotX/PK.cellW,(PK.cellH-pivotY)/PK.cellH);s.scale.set(PK.cellW*PACK_K,PK.cellH*PACK_K,1);return s}
 function setPackCell(spr,dir,run,atk,clock){
   const p=heroPoseFrame(run,atk,clock,true),t=spr.material.map;t.repeat.set(1/8,1/24);t.offset.set(p.frame/8,1-(p.kind*8+dir+1)/24)}
 function ensureHero(opt){const native=typeof wardrobeHero==='function'?wardrobeHero(opt):null;const k=JSON.stringify([opt,native&&native.selection,typeof wardrobeFailure==='string'?wardrobeFailure:'']);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
@@ -14468,20 +14768,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=408"></script>
+<script src="assets/wardrobe-ui.js?v=409"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=408"></script>
-<script src="assets/digimon/base-stats.js?v=408"></script>
-<script src="assets/social-rules.js?v=408"></script>
-<script src="assets/social-poker.js?v=408"></script>
-<script src="assets/digimon-sanctuary.js?v=408"></script>
+<script src="assets/digimon/roster.js?v=409"></script>
+<script src="assets/digimon/base-stats.js?v=409"></script>
+<script src="assets/social-rules.js?v=409"></script>
+<script src="assets/social-poker.js?v=409"></script>
+<script src="assets/digimon-sanctuary.js?v=409"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=408"></script>
+<script src="assets/social-digimon.js?v=409"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=408"></script>
-<script src="assets/social-fishing.js?v=408"></script>
-<script src="assets/plaza-bots.js?v=408"></script>
-<script src="assets/social.js?v=408"></script></body>
+<script src="assets/social-scene.js?v=409"></script>
+<script src="assets/social-fishing.js?v=409"></script>
+<script src="assets/plaza-bots.js?v=409"></script>
+<script src="assets/social.js?v=409"></script></body>
 </html>

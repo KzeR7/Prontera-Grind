@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Expanded roster (haven-v408): 20 classes on top of the shipped 25, opened by a fourth job at
+// Expanded roster (haven-v408, weapons and native sprites haven-v409): 20 classes on top of the shipped 25, opened by a fourth job at
 // Base Lv 150. Runs the real page.   node tools/tests/expanded_roster_sim.js
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
@@ -27,9 +27,9 @@ test('twenty classes join the shipped twenty-five without disturbing them',()=>{
   for(const solo of ['Ninja','Gunslinger']){assert.equal(ev(`CLASSES.${solo}.par`),'Novice');assert.equal(ev(`classTierOf(${JSON.stringify(solo)})`),3)}
 });
 
-test('every expanded class trains in a weapon family the game already drops',()=>{
+test('every expanded class trains in a shipped weapon family or the kin of one',()=>{
   const wt=json('return [...EXPANDED_LINE].map(n=>[n,CLASSES[n].wt])');
-  for(const [name,types] of wt){assert.ok(types.length>0,name);for(const t of types)assert.ok(FAMILIES.includes(t),name+' trains in unknown weapon family '+t)}
+  for(const [name,types] of wt){assert.ok(types.length>0,name);for(const t of types)assert.ok(FAMILIES.includes(t)||FAMILIES.includes(ev(`WEAPON_KIN[${JSON.stringify(t)}]`)),name+' trains in unknown weapon family '+t)}
   assert.deepEqual(json('return Object.keys(CLASS_WEAPON).filter(n=>EXPANDED_LINE.has(n))'),[],'the native class/weapon preview catalogue is unchanged');
 });
 
@@ -143,8 +143,15 @@ test('each class has a male and a female body built from its own sheet',()=>{
     assert.equal(file.subarray(12,16).toString(),'VP8L',n+' must stay lossless');
     // idle / walk / attack, eight directions each, every frame anchored
     assert.equal(b.anchors.length,3,n);
-    for(const anim of b.anchors){assert.equal(anim.length,8,n+' lost a direction');for(const dir of anim){assert.ok(dir.length>0,n);for(const a of dir)assert.ok(a.every(Number.isFinite),n)}}
+    for(const [i,anim] of b.anchors.entries()){assert.equal(anim.length,8,n+' lost a direction');for(const dir of anim){assert.equal(dir.length,[1,8,6][i],n+' frame count');
+      // [x, y] or [x, y, headColumn]; the head must land inside the padded cell
+      for(const a of dir){assert.ok(a.length===2||a.length===3,n);assert.ok(a.every(Number.isInteger),n);assert.ok(a[0]>=20&&a[0]<=X.cell[0]-20&&a[1]>=28&&a[1]<=X.cell[1],n+' head anchor '+a);if(a.length===3)assert.ok(a[2]>=0&&a[2]<8,n)}}}
   }
+  // haven-v409: native RO renders that fill the shipped pack's padded cell, on their own ground line.
+  assert.deepEqual([...X.cell],[126,134]);assert.equal(ev('window.SPRITE_PACK.cellW+","+window.SPRITE_PACK.cellH'),'126,134');
+  assert.ok(X.pivotY>X.origin[1]&&X.pivotY<X.cell[1]);
+  const manifest=JSON.parse(fs.readFileSync(path.join(root,'tools/native-expanded/source-manifest.json'),'utf8'));
+  assert.equal(manifest.files.length,88);for(const f of manifest.files){assert.match(f.sha256,/^[0-9a-f]{64}$/);assert.match(f.blob,/^[0-9a-f]{40}$/);assert.ok(f.repo&&f.commit&&f.path&&f.bytes>0,f.name)}
   for(const cls of CLASS_IDS)for(const sex of ['m','f']){
     const body=ev(`expandedBodyName(${JSON.stringify(cls)},${JSON.stringify(sex)})`);
     assert.ok(X.bodies[body],cls+' '+sex+' -> '+body);assert.equal(body.startsWith('f_'),sex==='f');
@@ -155,6 +162,54 @@ test('each class has a male and a female body built from its own sheet',()=>{
   for(const cls of CLASS_IDS){const body=ev(`packBodyFor(${JSON.stringify(cls)},CLASSES[${JSON.stringify(cls)}].tier,'m')`);assert.ok(body&&ev(`!!window.SPRITE_PACK.bodies[${JSON.stringify(body)}]`),cls+' has no stand-in body')}
   const src=fs.readFileSync(path.join(root,'index.html'),'utf8');
   assert.ok(!/<script[^>]+sprite-pack-x/.test(src),'the expanded bodies must stay lazy, not a startup script');
+});
+
+test('the seven new weapon families are real gear',()=>{
+  const KIN=json('return WEAPON_KIN');
+  assert.deepEqual(Object.keys(KIN).sort(),['book','gun','instrument','knuckle','shuriken','spear','whip']);
+  const own=json(`return Object.fromEntries([...EXPANDED_LINE].map(n=>[n,CLASSES[n].wt]))`);
+  for(const [cls,fam] of [['Crusader','spear'],['Paladin','spear'],['Royal Guard','spear'],['Sage','book'],['Scholar','book'],['Sorcerer','book'],['Monk','knuckle'],['Champion','knuckle'],['Sura','knuckle'],
+    ['Bard & Dancer','instrument'],['Minstrel & Gypsy','whip'],['Maestro & Wanderer','instrument'],['Ninja','shuriken'],['Gunslinger','gun']])assert.ok(own[cls].includes(fam),cls+' cannot wear a '+fam);
+  assert.deepEqual(own.Gunslinger,['gun']);
+  // every new family is reachable: its kin is in a drop pool, and the kin drop converts for the class
+  for(const [cls,wt] of Object.entries(own))for(const w of wt){const kin=KIN[w]||w;
+    assert.ok(ev(`[0,1,2,3,4,5,6,7,8,9].some(m=>[1,6,8,10,12,15].some(l=>gearPool(m,l).some(x=>x.k===${JSON.stringify(kin)})))`),cls+' has no drop source for '+w)}
+  // shipped classes never see a kin weapon; a class that can only wear the new family always gets it
+  ev(`S=fresh();S.cls='Knight'`);assert.equal(ev(`[...Array(200)].every(()=>kinDrop({k:'sword',n:'Dragon Slayer',sec:3}).k==='sword')`),true);
+  ev(`S=fresh();S.cls='Gunslinger'`);assert.equal(ev(`[...Array(200)].every(()=>kinDrop({k:'bow',n:'Dragon Bow',sec:3}).k==='gun')`),true);
+  assert.equal(ev(`kinDrop({k:'bow',n:'Dragon Bow',sec:3}).n`),'Dragon Revolver');assert.equal(ev(`kinDrop({k:'sword',n:'x',sec:3}).k`),'sword');
+  ev(`S=fresh();S.cls='Crusader'`);const mix=json(`const r={};for(let i=0;i<2000;i++){const k=kinDrop({k:'sword',n:'Claymore',sec:2}).k;r[k]=(r[k]||0)+1}return r`);
+  assert.ok(mix.spear>1000&&mix.spear<1400&&mix.sword>600,'a Crusader should get both spears and swords: '+JSON.stringify(mix));
+  assert.equal(ev(`kinWeaponName('spear','Claymore',2)`),'Lance');
+  ev(`S=fresh();S.cls='Bard & Dancer';S.sex='f'`);const bd=json(`const r={};for(let i=0;i<2000;i++){const k=kinDrop({k:'bow',n:'Long Bow',sec:2}).k;r[k]=(r[k]||0)+1}return r`);
+  assert.ok(bd.whip>bd.instrument&&bd.instrument>0&&bd.bow>0,JSON.stringify(bd));
+  // generated items: named, socketed, affixed and drawn with their own local icon in every band
+  for(const w of Object.keys(KIN)){
+    for(const sec of [0,1,2,3,4,5]){const it=json(`return genGear({k:${JSON.stringify(w)},n:'Test',sec:${sec},tier:2,quality:1},100,${sec},false,2,5,5)`);
+      assert.equal(it.slot,'weapon');assert.equal(it.wt,w);assert.equal(it.slots===4,KIN[w]==='bow',w+' sockets');
+      const id=ev(`gearItemIconId(${JSON.stringify(it)})`);assert.ok(id>0&&fs.existsSync(path.join(root,'assets/equipment-icons',id+'.png')),w+' band '+sec+' has no icon');
+      assert.equal(it.aff.every(a=>(w==='book'?['int','dex','matk','crit','cdm','hp']:['str','agi','dex','luk','atk','crit','aspd','cdm']).includes(a.k)),true,w+' affix pool')}
+    for(const set of json('return Object.keys(ASC_SETS)')){
+      assert.ok(ev(`ASC_SETS[${JSON.stringify(set)}].pieces.weapon[${JSON.stringify(w)}]`),set+' has no Mythic '+w);
+      const id=ev(`RO_ITEM_ICON_CANDIDATES.mythic[${JSON.stringify(set)}][${JSON.stringify(w)}]`);assert.ok(id>0&&fs.existsSync(path.join(root,'assets/equipment-icons',id+'.png')),set+' Mythic '+w+' icon')}
+  }
+  const icons=JSON.parse(fs.readFileSync(path.join(root,'assets/equipment-icons/manifest.json'),'utf8')),mythic=JSON.parse(fs.readFileSync(path.join(root,'assets/equipment-icons/mythic-manifest.json'),'utf8'));
+  for(const w of Object.keys(KIN)){assert.deepEqual(icons.families[w],json(`return RO_ITEM_ICON_CANDIDATES[${JSON.stringify(w)}]`));for(const set in mythic.sets)assert.equal(mythic.sets[set][w],ev(`RO_ITEM_ICON_CANDIDATES.mythic[${JSON.stringify(set)}][${JSON.stringify(w)}]`))}
+  for(const a of [...icons.assets,...mythic.assets])assert.equal(require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,'assets/equipment-icons',a.file))).digest('hex'),a.sha256,a.file);
+  // the Sage line fights with magic, book or staff
+  for(const cls of ['Sage','Scholar','Sorcerer'])assert.ok(ev(`INT_CLASSES.includes(${JSON.stringify(cls)})`),cls);
+  // GM presets cover the six new fourth jobs, each naming a real set
+  for(const cls of ['Royal Guard','Sorcerer','Geneticist','Sura','Shadow Chaser','Maestro & Wanderer'])assert.ok(ev(`!!ASC_SETS[GM_ASC_PRESETS[${JSON.stringify(cls)}].set]`),cls);
+});
+
+test('every expanded class has a fitted damage budget',()=>{
+  const budget=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/fixtures/expanded_skill_budget.json'),'utf8')).classes;
+  assert.deepEqual(Object.keys(budget).sort(),[...CLASS_IDS].sort());
+  for(const [cls,b] of Object.entries(budget)){
+    const t=json(`return SKILL_TUNING[${JSON.stringify(cls)}]`);assert.ok(t,cls+' has no budget');
+    assert.equal(t.single.length,3);assert.equal(t.area.length,3);assert.ok(Math.abs(t.single[2]-b.K)<.001&&Math.abs(t.area[2]-b.A)<.001,cls+' drifted from its recorded fit');
+    assert.equal(ev(`CLASSES[${JSON.stringify(cls)}].atk`),b.atk,cls+' attack multiplier');assert.ok(ev(`!!CLASSES[${JSON.stringify(b.sibling)}]`),cls);
+  }
 });
 
 test('saves on an expanded class load back unchanged',()=>{

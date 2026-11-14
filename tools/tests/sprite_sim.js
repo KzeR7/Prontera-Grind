@@ -297,7 +297,9 @@ t('Ascension fields stand every monster above the character, both MVPs above the
 t('Divine Pride item icons cover every weapon type used by all 19 classes', () => {
   const families = Object.keys(WEAPON_ITEM_IDS).sort();
   assert.deepStrictEqual(families, ['axe', 'bow', 'dagger', 'katar', 'mace', 'staff', 'sword']);
-  const missing = [...new Set(CD.flatMap(row => row[7]).filter(type => !WEAPON_ITEM_IDS[type]))];
+  // the expanded roster's own families (haven-v409) use local client icons, not this legacy remote table
+  const X = ['spear', 'book', 'knuckle', 'instrument', 'whip', 'shuriken', 'gun'];
+  const missing = [...new Set(CD.flatMap(row => row[7]).filter(type => !WEAPON_ITEM_IDS[type] && !X.includes(type)))];
   assert.deepStrictEqual(missing, [], 'weapon families without an icon: ' + missing.join(', '));
   for (const [type, id] of Object.entries(WEAPON_ITEM_IDS))
     assert.strictEqual(weaponItemUrl(type), 'https://www.divine-pride.net/img/items/item/dpRO/' + id);

@@ -72,11 +72,17 @@ an exhaustive test selection. Follow dependencies across systems and see
 - **Expanded roster (haven-v408):** the 20 extra classes live in `CDX`/`CD4X` and their
   skills in `SKILLSX` (`index.html`), apart from the shipped `CD`/`CD4`/`SKILLS4`, so the
   Wardrobe, class-skin and balance fixtures still enumerate the original 25. `EXPANDED_LINE`
-  is the membership test; `hasLv150ThirdClass()` is the unlock. Bodies are built by
-  `tools/make_expanded_pack.py` from `Sprite/` and `Sprite/female/` into
-  `assets/sprite-pack-x/` (one lossless WebP per body plus `index.js`) and fetched one body
-  at a time by `requestExpandedBody()`. Skills borrow a shipped icon (`icon`) and cast
-  effect (`fx`); `tools/tests/expanded_roster_sim.js` covers the lot.
+  is the membership test; `hasLv150ThirdClass()` is the unlock. Bodies (haven-v409) are
+  native RO client sprites rendered by `tools/make_expanded_pack.py` with the SPR/ACT reader
+  in `tools/native-expanded/` (sources pinned by git blob id + SHA-256 in
+  `source-manifest.json`, downloaded to `.cache/`) into `assets/sprite-pack-x/` (one
+  lossless WebP per body in 126×134 cells plus `index.js`) and fetched one body at a time
+  by `requestExpandedBody()`; `packTex()` reads `rec.cell` and the optional head column in
+  an anchor. Their weapon families (spear, book, knuckle, instrument, whip, shuriken, gun)
+  are kin of shipped families: `WEAPON_KIN`, `kinDrop()`, `kinWeaponName()` next to `GEAR`;
+  the pools and rates are untouched. Damage budgets sit at the top of `SKILL_TUNING` and are
+  recorded in `tools/tests/fixtures/expanded_skill_budget.json`. Skills borrow a shipped
+  icon (`icon`) and cast effect (`fx`); `tools/tests/expanded_roster_sim.js` covers the lot.
 - **Weapons:** `assets/weapons/`, `assets/weapons_data.js`,
   `assets/weapon_joints_data.js`, `tools/make_weapon_pack.py`.
 - **Map kit:** `assets/kit/`, with original working material under
