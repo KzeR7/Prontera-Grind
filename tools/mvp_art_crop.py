@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# v407 (owner): the ten MVP sprites are now the owner's own cropped art, resized to the pond's
+# 512px format (see assets/social/fish/MANIFEST.json). The per-species table below produced the
+# RETIRED v384 set and no longer matches any shipped file - kept only as a record of that pass.
 """haven-v383: the seven Fishing MVPs are CROPS of the owner's reference art.
 
 v380 painted chibi stand-ins because those references arrived as opaque 128px drops. The owner

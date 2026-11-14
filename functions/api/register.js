@@ -48,6 +48,9 @@ export const onRequestPost = guard(async ({ request, env }) => {
     throw e;
   }
   const user = await db.userByName(D, username);
+  // 0017: an announcement's gift campaign is still open, so this brand-new account gets the same
+  // attachment the letter carries. Best-effort: a missing migration must never block a sign-up.
+  if (user) { try { await db.claimAnnouncementGiftsFor(D, user.id); } catch (_) {} }
 
   const token = newToken();
   const hash = await tokenHash(token);

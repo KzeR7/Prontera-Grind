@@ -71,13 +71,13 @@ for(const sp of F.SPECIES){
 }
 for(const r of F.RARITIES)assert(F.SPECIES.some(sp=>sp.rarity===r.id),'every rarity has at least one fish');
 // v302 (owner): the index holds every creature from the art drop, and the original ids survive.
-assert.equal(F.SPECIES.length,162,'162 fish species (155 + 7 MVP)');
+assert.equal(F.SPECIES.length,165,'165 fish species (155 + 10 MVP)');
 // v304: the shark line moved up a tier (Greatmaw and the Voidfin are secrets now), so the secret
 // pool is ten and Secret Circle follows it - it is derived, never hardcoded.
  assert.equal(F.SPECIES.filter(sp=>sp.rarity==='secret').length,10,'the secret pool is ten species');
  assert.equal(F.FISHING_TITLE_BY_ID['secret-circle'].goal,F.SPECIES.filter(sp=>sp.rarity==='secret').length,'Secret Circle wants the whole secret pool');
 assert.equal(new Set(F.SPECIES.map(sp=>sp.id)).size,F.SPECIES.length,'no duplicate species ids in the index');
-assert.equal(F.SPECIES.filter(sp=>sp.rarity==='mvp').length,7,'seven MVP species');
+assert.equal(F.SPECIES.filter(sp=>sp.rarity==='mvp').length,10,'ten MVP species, the owner\'s v407 art drop');
 assert.equal(F.MVP_REEL_CATCH_CHANCE,.30,'a hooked MVP has an exact 30% reel-catch chance');
 assert(F.DIFF.mvp,'mvp difficulty exists');
 // v297: every species is either a glyph body or one of the named body plans the renderer paints.
@@ -95,7 +95,7 @@ const plainSpecies=F.SPECIES.filter(sp=>sp.shape?sp.shape==='fish'||sp.shape==='
 assert(plainSpecies<F.SPECIES.length/2,'fewer than half the catalog is the plain fish body (got '+plainSpecies+' of '+F.SPECIES.length+')');
 assert(plainSpecies<F.SPECIES.length-40,'at least forty species use a named body plan');
 // v297: weight scales up to a pond-sized giant and the mega flag marks the announced fish.
-assert.equal(F.MAX_W,3000,'the heaviest species is a 3 t MVP (Void Maw)');
+assert.equal(F.MAX_W,3000,'the heaviest species is a 3 t MVP (Stormcoil Leviathan)');
 const mega=F.SPECIES.filter(sp=>sp.mega);
 assert.equal(mega.length,10,'ten species are pond-monster scale');
 for(const sp of mega)assert(sp.max>=100,'a mega species is heavy: '+sp.id);
@@ -257,7 +257,7 @@ assert(F.DIFF.mythical.fill<F.DIFF.common.fill);
 // the free Training Rod and about 5% on Mythril. Manual fishing does not call this controller.
 {
  const seeded=seed=>{let x=seed|0;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296}};
- const boss=F.speciesById('mvp_void_maw'),N=1500,landed=[];
+ const boss=F.speciesById('mvp_stormcoil'),N=1500,landed=[];
  for(let ri=0;ri<F.RODS.length;ri++){
   const random=seeded((ri+1)*0x12345),rod=F.RODS[ri];let reels=0;
   for(let n=0;n<N;n++){
@@ -570,7 +570,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
 
 // --- Part B: the real scene renderer builds ponds and routes pond clicks to fishing --------
 (async()=>{
- let THREE=null; try{THREE=require('three')}catch{ console.log('PASS social fishing: ponds+chairs, 162-species catalog (155 + 7 MVP) - Part B skipped (three not installed)'); return; }
+ let THREE=null; try{THREE=require('three')}catch{ console.log('PASS social fishing: ponds+chairs, 165-species catalog (155 + 10 MVP) - Part B skipped (three not installed)'); return; }
  const {JSDOM}=require('jsdom');
  const dom=new JSDOM('<div id="host"></div><div id="labels"></div>',{runScripts:'outside-only'}),w=dom.window,T={...THREE};
  let frame,now=1000,moves=[],pondClicks=[];
@@ -584,7 +584,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  for(const stance of ['idle','walk','sit'])for(let d=0;d<8;d++)look.base.metadata.actions[stance+d]=look.hair.metadata.actions[stance+d]=action;
  class Store{release(){}async select(){return look}}
  Object.assign(w,{THREE:T,devicePixelRatio:1,requestAnimationFrame:cb=>frame=cb,ResizeObserver:class{constructor(fn){this.fn=fn}observe(){this.fn()}},PGWardrobe:{CLASSES:{Novice:0},Store,normalize:a=>a,defaults:()=>({version:1,sex:'m'}),frameIndex:()=>0,draw(){}},PGFourthJobs:{CLASSES:{},Store},milestone:()=>null,REFINE_GLOWS:[],drawNativeWeaponGlow(){},drawNativeArmGlow(){},LEVEL_AURAS:[],buildLevelAura:()=>new T.Group()});
- w.PGSocialFishing={speciesById:id=>({mvp_void_maw:{id,name:'Void Maw',glyph:'🐋',max:3000},mvp_iron_crab:{id,name:'Iron Crab Titan',glyph:'🦀',max:1800}}[id]||null),fishSprite:()=>{const c=w.document.createElement('canvas');c.width=c.height=256;return c}};
+ w.PGSocialFishing={speciesById:id=>({mvp_stormcoil:{id,name:'Stormcoil Leviathan',glyph:'🐉',max:3000},mvp_tidewarden:{id,name:'Tideforged Warden',glyph:'🦈',max:1500}}[id]||null),fishSprite:()=>{const c=w.document.createElement('canvas');c.width=c.height=256;return c}};
  Object.defineProperty(w.document,'hidden',{value:false});w.performance.now=()=>now;w.console.warn=()=>{};
  w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(url)),arrayBuffer:async()=>{const b=fs.readFileSync(url);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)}});
  w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','digimon','roster.js'),'utf8'));w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
@@ -596,13 +596,13 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  for(const fn of ['setFishVisible','setMvp','cast','bite','reel','catchFly','escapeSplash','ripple','splash','hide','off','showFish'])assert.equal(typeof scene.fishing[fn],'function','fishing.'+fn);
  const R=w.PGSocialRules,pond=R.PONDS[0],bridge=R.POND_PROPS[0].bridge;
  // The alert is a large, live-only board, and the server-selected species floats above the lake.
- scene.fishing.setMvp('mvp_void_maw',true);
+ scene.fishing.setMvp('mvp_stormcoil',true);
  const mvpSign=scene.scene.children.find(o=>o.userData&&o.userData.socialMvpSign);
  const mvpBoard=mvpSign&&mvpSign.children.find(o=>o.userData&&o.userData.socialMvpSignBoard);
  const mvpFloat=scene.scene.children.find(o=>o.userData&&o.userData.socialMvpFloat);
  const mvpSprite=mvpFloat&&mvpFloat.children.find(o=>o.userData&&o.userData.socialMvpFish);
  assert(mvpSign&&mvpSign.visible&&mvpBoard&&mvpBoard.geometry.parameters.width>=12.5&&mvpBoard.geometry.parameters.height>=3&&mvpBoard.position.y>=9,'the bridge alert is substantially bigger and higher');
- assert(mvpFloat&&mvpFloat.visible&&mvpFloat.userData.spId==='mvp_void_maw','the selected MVP has its own visible pond sprite');
+ assert(mvpFloat&&mvpFloat.visible&&mvpFloat.userData.spId==='mvp_stormcoil','the selected MVP has its own visible pond sprite');
  assert.equal(mvpSign.children.length,1,'the warning sign floats above the bridge - no posts or mirrored glow plane');
  assert.equal(mvpBoard.position.x,bridge.x);assert.equal(mvpBoard.position.z,bridge.z,'the requested sign is the one over the bridge, not a side-bank sign');
  /* v383 (owner: "the mvp fish should be floating around the pond randomly, not one spot"): every
@@ -614,7 +614,7 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert(mvpSprite&&inWater(mvpFloat.position.x,mvpFloat.position.z),'the selected MVP floats inside the pond');
  assert(Math.abs(mvpFloat.position.z-bridge.z)>bridge.width/2,'the MVP never surfaces underneath the bridge deck');
  const spots=new Set();
- for(let i=0;i<18;i++){scene.fishing.setMvp('mvp_void_maw',true);spots.add(mvpFloat.position.x.toFixed(2)+':'+mvpFloat.position.z.toFixed(2));assert(inWater(mvpFloat.position.x,mvpFloat.position.z),'every spawn lands in the water')}
+ for(let i=0;i<18;i++){scene.fishing.setMvp('mvp_stormcoil',true);spots.add(mvpFloat.position.x.toFixed(2)+':'+mvpFloat.position.z.toFixed(2));assert(inWater(mvpFloat.position.x,mvpFloat.position.z),'every spawn lands in the water')}
  assert(spots.size>=6,'the MVP surfaces at random pond positions, not one fixed spot ('+spots.size+' of 18)');
  frame(now+=100);
  // v386 anchor: the sprite sits just above the waterline and bobs around baseY (.72), with the art's
@@ -624,12 +624,12 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
     the camera, so the printed side - never the mirrored one - is what the player reads. */
  const cam=scene.camera||null;
  if(cam&&cam.position){const want=Math.atan2(cam.position.x-mvpBoard.position.x,cam.position.z-mvpBoard.position.z);assert(Math.abs(Math.atan2(Math.sin(mvpBoard.rotation.y-want),Math.cos(mvpBoard.rotation.y-want)))<.02,'the MVP alert board faces the camera instead of showing its mirrored back')}
- assert(mvpSignText.some(text=>/MVP ALERT: VOID MAW/.test(text))&&!mvpSignText.some(text=>/%|hook|catch chance|land chance/i.test(text)),'the alert sign names the MVP without displaying rates');
+ assert(mvpSignText.some(text=>/MVP ALERT: STORMCOIL LEVIATHAN/.test(text))&&!mvpSignText.some(text=>/%|hook|catch chance|land chance/i.test(text)),'the alert sign names the MVP without displaying rates');
  // v380: the half-body peek scales with the species' real weight range.
  const voidScale=mvpSprite.scale.x;
- scene.fishing.setMvp('mvp_iron_crab',true);
+ scene.fishing.setMvp('mvp_tidewarden',true);
  const crabScale=mvpSprite.scale.x;
- assert(voidScale>crabScale,'a 3.0t Void Maw peeks larger than a 1.8t Iron Crab Titan ('+voidScale.toFixed(2)+' vs '+crabScale.toFixed(2)+')');
+ assert(voidScale>crabScale,'a 3.0t Stormcoil Leviathan peeks larger than a 1.5t Tideforged Warden ('+voidScale.toFixed(2)+' vs '+crabScale.toFixed(2)+')');
  scene.fishing.setMvp(null,false);
  assert(!mvpSign.visible&&!mvpFloat.visible,'the sign and MVP disappear when the spawn ends');
  // Stand the local player on the east pond rim.
@@ -939,10 +939,10 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  const mvpNotices=[];
  FISH.bind({host:()=>hostS,scene:()=>null,self:()=>null,moveTo:()=>{},notice:m=>mvpNotices.push(m),save:()=>{}});
  const mvpEnds=Date.now()+10*60*1000;
- FISH.setMvp({sp:'mvp_void_maw',id:'mvp-ui-test',spawnedAt:Date.now(),endsAt:mvpEnds});
+ FISH.setMvp({sp:'mvp_stormcoil',id:'mvp-ui-test',spawnedAt:Date.now(),endsAt:mvpEnds});
  const mvpBannerText=d2.getElementById('fishingMvpBanner').textContent;
- assert(/Void Maw/.test(mvpBannerText)&&!/\d+%|hook|catch chance|land chance/i.test(mvpBannerText),'the active MVP banner names the fish and omits rates');
- assert(mvpNotices[0]&&/Void Maw/.test(mvpNotices[0])&&!/\d+%|hook|catch chance|land chance/i.test(mvpNotices[0]),'the spawn announcement omits rates');
+ assert(/Stormcoil Leviathan/.test(mvpBannerText)&&!/\d+%|hook|catch chance|land chance/i.test(mvpBannerText),'the active MVP banner names the fish and omits rates');
+ assert(mvpNotices[0]&&/Stormcoil Leviathan/.test(mvpNotices[0])&&!/\d+%|hook|catch chance|land chance/i.test(mvpNotices[0]),'the spawn announcement omits rates');
  FISH.clearMvp({id:'mvp-ui-test'});
  assert(mvpNotices[1]&&/fled the pond/i.test(mvpNotices[1])&&!/\d+%|hook|catch chance|land chance/i.test(mvpNotices[1]),'the despawn notice omits rates');
  if(FISH.setMvp._ticker){clearInterval(FISH.setMvp._ticker);FISH.setMvp._ticker=null}
@@ -1006,7 +1006,7 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  const artDir=path.join(__dirname,'..','..','assets','social','fish');
  const manifest=JSON.parse(fs.readFileSync(path.join(artDir,'MANIFEST.json'),'utf8'));
  const artIds=Object.keys(manifest);
- assert.equal(artIds.length,153,'153 species ship a real drawing (146 + 7 MVP)');
+ assert.equal(artIds.length,156,'156 species ship a real drawing (146 + 10 MVP)');
  assert.deepEqual(artIds.slice().sort(),Object.keys(F.FISH_ART).sort(),'the module and the manifest agree');
  assert.equal(new Set(Object.values(manifest)).size,artIds.length,'no two species share one file');
  const PNG=Buffer.from([137,80,78,71,13,10,26,10]);
@@ -1017,7 +1017,7 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
   assert(buf.subarray(0,8).equals(PNG),id+'.png is a png');
   // v303 (owner): 128, not 96 - the detail panel draws 128 and the index 64, so the art is either
   // 1:1 or an exact halving instead of being upscaled (which is what looked blurry).
-  // v384: the seven MVP bosses ship at 512 - the pond's hero texture stays 512 all the way to
+  // v384/v407: the MVP bosses ship at 512 - the pond's hero texture stays 512 all the way to
   // Three.js, while the Index/catch cards only downsample it. Ordinary fish retain their 128 art.
   const want=Number(id.startsWith('mvp_'))?512:128;
   assert.equal(buf.readUInt32BE(16),want,id+' is '+want+' wide');
@@ -1027,7 +1027,7 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  // v380 (owner): the live spawn banner is created with the fishing DOM - it used to be read
  // from an index.html node that never existed, so MVP notices never rendered.
  assert(mod.includes("mvpBanner.id='fishingMvpBanner'"),'the live MVP banner is created in ensureDom');
- assert(mod.includes("FISH_ART_VERSION='384'"),'the fish-art cache version is bumped with the 512px recrop');
+ assert(mod.includes("FISH_ART_VERSION='407'"),'the fish-art cache version is bumped with the v407 MVP recrop');
  assert(sceneSrc.includes('const MVP_BASE_PX=512')&&sceneSrc.includes("F.fishSprite(spId,null,512)"),'the pond keeps the 512px crop through its GPU texture');
  // v380 (owner: "cropped, HD"): every MVP crop is a real transparent sprite - decode when sharp
  // is installed and require an empty top-left corner plus a real cutout (some transparency).
@@ -1073,5 +1073,5 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  assert(/announce:fishingAnnounce/.test(social),'the fishing bind receives it');
  assert(/\.social-line-sys/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'system lines have their own style');
  assert(/socialFishLeaveWarning/.test(fs.readFileSync(path.join(__dirname,'..','..','assets','social.css'),'utf8')),'the fishing dialog shares the poker overlay style');
- console.log('PASS social fishing: ponds+chairs, 162-species catalog (155 + 7 MVP) across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 3.0 t (MVP), a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler; v302 139 cropped drawings behind the same fishSprite, with the painted fallback for the other nine; v303 whales and 146 crops at 128px, prices that read rarity+weight, twenty harder titles and an AFK walk-back that never asks; v304/v305 soft rod gates (a cheap rod can still be surprised by a Legendary or a Secret), a fully random index draw with a ~85 h median wall, cheap rods and bags, and Index odds that use the gear you are holding');
+ console.log('PASS social fishing: ponds+chairs, 165-species catalog (155 + 10 MVP) across 25 body plans with rates, luck/weight/mutation gear math, Fishcoin economy, reel physics, bag bounds, show-off round-trip and scene rig; v295 bag tiers 120→500, ten fishing titles, painted rods, public rigs and the Fishing window tabs; v296 rod height follows the character, two-line titles, cheaper bag ladder, scrollable Titles tab and Auto walk-back; v297 100 species with distinct silhouettes, weight giants to 3.0 t (MVP), a poker-style leave-confirm instead of chat nagging, and Local-chat announcements for mega and secret catches; v299 twenty fishing titles, sit/stand that never interrupts fishing, a visible tier aura on every rod and one show-off sprite per angler; v302 139 cropped drawings behind the same fishSprite, with the painted fallback for the other nine; v303 whales and 146 crops at 128px, prices that read rarity+weight, twenty harder titles and an AFK walk-back that never asks; v304/v305 soft rod gates (a cheap rod can still be surprised by a Legendary or a Secret), a fully random index draw with a ~85 h median wall, cheap rods and bags, and Index odds that use the gear you are holding');
 })().catch(e=>{console.error(e);process.exitCode=1});

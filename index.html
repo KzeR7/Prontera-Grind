@@ -640,6 +640,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 .ui-challenge .dungeoncard{min-height:70px;padding:8px;grid-template-columns:32px 1fr 50px;gap:7px}.ui-challenge .echo-mark{width:30px;height:30px;font-size:20px}.ui-challenge .echo-copy>b{font-size:13px}.ui-challenge .echo-sub{font-size:9px}.ui-challenge .echo-meta small{font-size:8px}.ui-challenge .map-specials{margin:0}
 .ui-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.ui-metrics>.ui-section-label{grid-column:1/-1;margin:0}
 .ui-metrics>span{display:flex;flex-direction:column;justify-content:center;padding:9px 7px;background:#23392a;border:1px solid #3e573d;border-radius:5px;font-size:9px;color:#b4c5a7;line-height:1.6}.ui-metrics>span>b{font-size:16px;color:#ece2c1}.ui-metrics>span>small{font-size:8px}
+.ui-points-section{margin-top:8px}.ui-points-section .ui-points-line{margin:0;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;padding:9px 11px;border:1px solid #6f7f4a;border-left:3px solid #c9b06a;border-radius:5px;background:#26361f;font-size:11px;color:#d9dcb9}.ui-points-section .ui-points-line>b{font-size:17px;color:#ffe9a8;line-height:1}.ui-points-section .ui-points-line>small{font-weight:400;color:#a9b79b}.ui-points-section .ui-empty{margin:0}
 .ui-attributes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.ui-attributes .slot{display:block;padding:9px;border:1px solid #476145;background:#253c2b;margin:0;font-size:11px}.ui-attributes .slot>span:first-child{display:block;min-height:32px}.ui-attributes .bts{justify-content:flex-end;margin-top:7px;gap:4px}.ui-attributes .bts small{margin-right:auto;width:auto}.ui-attributes .bts button{width:33px}
 .ui-job-paths{display:flex;flex-direction:column;gap:7px}.ui-job-paths .ui-section-label{margin:0}.ui-job-start .trow{display:block}.ui-job-start .tn{padding:8px}
 .ui-job-path{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;position:relative;align-items:stretch}.ui-job-path:before{content:'';height:1px;background:#536b4b;position:absolute;top:50%;left:12%;right:12%}.ui-job-path .tn{position:relative;z-index:1;min-height:50px;padding:9px 4px;border-width:1px;font-size:10px;justify-content:center;word-break:normal;overflow-wrap:anywhere}
@@ -924,9 +925,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=324">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=406">
+<link rel="stylesheet" href="assets/social.css?v=407">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=406"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=407"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1324,7 +1325,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-13 haven-v406 seeded plaza regulars walk sit and fish, calmer pet emoji, and right-click player menus';
+const BUILD='2026-11-14 haven-v407 MVP fish art drop, reviewable save flags, announcement gifts for later players, points-to-spend under the attributes';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -7975,7 +7976,7 @@ const V={
         </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage '+normalStages(mapM)}.</small>`}
         ${mapM>=10?(()=>{const ah=ascensionCombatStats(mapM,mapL).hp,pc=ch=>String(+ch.toFixed(3)),mc=pc(ascMaterialChance({max:ah})),bc=pc(ascMaterialChance({max:ah*3})),sc=pc(ascSigilChance({max:ah}));return`<div class="sec">Ascension materials</div><p>${ASCENSION_MATERIALS[mapM-10]}: ${mc}% per kill (${bc}% from the MVP)<br>Valkyrie's Sigil: ${sc}% per mob / 1% per MVP</p><small>Both chances scale with this stage's monster HP, so every stage pays the same materials an hour.</small><small>Stored: ${ASCENSION_MATERIALS.map((n,i)=>esc(n)+' × '+safeCount(S.ascensionMat?.[i])).join(' · ')}</small>`})():''}<div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from MVPs. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'',idxC=typeof indexCrit==='function'?indexCrit():0;
-    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
+    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd ui-points-line" data-points-left>Stat points: <b>${S.pts}</b> <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
     +(petBonusList().length?`<small><b>Pet bonuses</b> (the fighting pets): ${petBonusList().join(' &middot; ')}</small>`:'')
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${Math.round(144+5/aspd())}</b> <small>${(1/aspd()).toFixed(2)}/s</small></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Movement speed <b>${moveSpd().toFixed(2)}</b> <small>u/s</small></span></div>
@@ -8477,8 +8478,14 @@ function arrangePanel(k,root){
   }else if(mode==='stats'){
     const slots=direct().filter(e=>e.classList.contains('slot')),attrs=slots.filter(e=>e.querySelector('[data-a="stat"]')),combat=slots.find(e=>!e.querySelector('[data-a="stat"]')),reset=q('[data-a="rstat"]');
     const attributes=section('Allocate attributes','ui-attribute-section');put(attributes,put(make('div','ui-attributes'),attrs));
+    // haven-v407 (owner): the points left to spend used to be buried in the Build notes fold, so a
+    // player could allocate and never learn how many points were still waiting. It now sits in its
+    // own strip between the attribute rows and Combat overview, with the count in front.
+    const pointsLine=q('[data-points-left]');
+    const points=section('Points to spend','ui-points-section');
+    put(points,pointsLine?[pointsLine]:[make('p','ui-empty','No stat points are waiting - every Base level adds more.')]);
     const metrics=section('Combat overview','ui-metrics');if(combat)put(metrics,[...combat.children]);
-    const notes=direct().filter(e=>e!==combat&&!attrs.includes(e)&&e!==reset);body.replaceChildren(attributes,metrics,fold('Build notes & progression',notes,'build-notes'),fold('Reset attributes',reset,'respec'));
+    const notes=direct().filter(e=>e!==combat&&!attrs.includes(e)&&e!==reset&&e!==pointsLine);body.replaceChildren(attributes,points,metrics,fold('Build notes & progression',notes,'build-notes'),fold('Reset attributes',reset,'respec'));
   }else if(k==='job'){
     body.classList.add('class-path-panel');
     body.querySelectorAll('.tn[data-a=selk]').forEach(node=>{node.setAttribute('role','button');node.setAttribute('tabindex','0');node.setAttribute('aria-pressed',String(node.dataset.v===(selK||S.cls)))});
@@ -9107,6 +9114,9 @@ async function gmSendMailAnnouncement(){
     try{
       const req={action:'announce',body:text,kind,toAll};
       if(!toAll)req.id=Number(target.id);
+      // 0017: an announcement to everyone keeps its gift going to accounts created later, until a
+      // GM closes it in the console. Declared explicitly so the behaviour is visible in the code.
+      else req.giftLater=true;
       if(opt.kind!=='none')req.gift={kind:opt.kind,catalogId:opt.catalogId,amount};
       const res=await cloudFetch('/gm/player',{method:'POST',body:JSON.stringify(req)}),data=await res.json();
       if(res.ok&&data.ok){
@@ -9399,7 +9409,7 @@ function renderGmStudioView(){
   return `<div class="rd-gm-layout"><form class="rd-composer" id="gmStudioForm"><fieldset class="rd-step"><legend><span>1</span> Choose your audience</legend><div class="rd-audience" role="group" aria-label="Announcement audience"><button type="button" data-a="gmstudioaudience" data-v="all" aria-pressed="${d.audience==='all'}">${rdIcon('users')}Everyone</button><button type="button" data-a="gmstudioaudience" data-v="player" aria-pressed="${d.audience==='player'}">${rdIcon('user')}One player</button></div><label class="rd-field" ${d.audience==='all'?'hidden':''}><span>Player <small>Authorised accounts only</small></span><select id="gmStudioPlayer" ${d.audience==='all'?'disabled':''}>${players.length?players.map(p=>`<option value="${esc(String(p.id))}"${String(p.id)===String(d.player)?' selected':''}>${esc(p.u)}${p.level!=null?' · Lv '+p.level:''}</option>`).join(''):`<option value="">${esc(gmStudioLoading?'Loading players…':'No cloud connection - sign in to target one player')}</option>`}</select></label></fieldset>
   <fieldset class="rd-step"><legend><span>2</span> Write your message</legend><div class="rd-form-row"><label class="rd-field"><span>Headline <small>First line of the message</small></span><input id="gmStudioHeadline" value="${esc(d.headline)}" placeholder="Give your message a clear heading" maxlength="140"></label><label class="rd-field"><span>Type</span><select id="gmStudioKind">${['notice','event','welcome'].map(k=>`<option value="${k}"${d.kind===k?' selected':''}>${k[0].toUpperCase()+k.slice(1)}</option>`).join('')}</select></label></div><label class="rd-field"><span>Message</span><textarea id="gmStudioBody" rows="5" maxlength="500" placeholder="Write an official announcement or event notice…">${esc(d.body)}</textarea></label><div class="rd-meta"><span>Plain text. The headline and message are sent together as one body.</span><span id="gmStudioCount"${over?' class="invalid"':''}>${msg.length} / 500</span></div></fieldset>
   <fieldset class="rd-step"><legend><span>3</span> Attach a reward <em>Optional</em></legend><div class="rd-form-row"><label class="rd-field"><span>Reward</span><select id="gmStudioGift">${MAIL_GIFT_OPTIONS.map(o=>`<option value="${esc(o.key)}"${d.gift===o.key?' selected':''}>${esc(o.label)}</option>`).join('')}</select></label><label class="rd-field" ${d.gift==='none'?'hidden':''}><span>Quantity</span><input id="gmStudioAmount" type="number" min="1" max="1000000000" step="1" value="${esc(String(d.amount))}" ${d.gift==='none'?'disabled':''}></label></div><p class="rd-note">${rdIcon('info')}One optional attachment per message, as in the previous composer.</p></fieldset></form>
-  <aside class="rd-gm-preview" aria-label="Player-side announcement preview"><div class="rd-preview-label"><span>${rdIcon('eye')} WHAT THE PLAYER SEES</span><em>● LIVE PREVIEW</em></div><div id="gmStudioPreview">${gmStudioPreviewMarkup()}</div><p class="rd-assurance">${rdIcon('shield')}The same letter layout players see in their inbox.<br>No GM tools appear in player mail.</p><div class="rd-send"><p id="gmStudioSummary">This announcement goes to <b>${esc(gmStudioAudienceLabel())}</b>.</p><p class="rd-meta" id="gmStudioStatus"${d.status?'':' hidden'}><span class="invalid">${esc(d.status)}</span></p>${d.confirm?`<div class="rd-confirm"><div class="rd-confirm-row"><span>Audience</span><b>${esc(gmStudioAudienceLabel())}</b></div><div class="rd-confirm-row"><span>Attachment</span><b>${esc(gift?formatMailGiftLabel(gift):'None')}</b></div><div class="rd-confirm-row"><span>Message</span><b>${msg.length} / 500 characters</b></div><div class="rd-confirm-actions"><button type="button" class="rd-btn" data-a="gmstudiocancel">Keep editing</button><button type="button" class="rd-btn primary" data-a="gmstudiosend" ${d.sending||over?'disabled':''}>${d.sending?'Sending…':rdIcon('send')+' Send now'}</button></div></div>`:`<button type="button" class="rd-btn primary" data-a="gmstudioreview" ${!msg.trim()||over?'disabled':''}>Review announcement ${rdIcon('arrow')}</button>`}<small>${d.confirm?'Confirm the audience and reward before it goes out.':'Nothing is sent until you confirm on the next step.'}</small></div></aside></div>`;
+  <aside class="rd-gm-preview" aria-label="Player-side announcement preview"><div class="rd-preview-label"><span>${rdIcon('eye')} WHAT THE PLAYER SEES</span><em>● LIVE PREVIEW</em></div><div id="gmStudioPreview">${gmStudioPreviewMarkup()}</div><p class="rd-assurance">${rdIcon('shield')}The same letter layout players see in their inbox.<br>No GM tools appear in player mail.<br>Announcements reach everyone, including accounts made later; an attached gift keeps reaching them until it is closed in the GM console.</p><div class="rd-send"><p id="gmStudioSummary">This announcement goes to <b>${esc(gmStudioAudienceLabel())}</b>.</p><p class="rd-meta" id="gmStudioStatus"${d.status?'':' hidden'}><span class="invalid">${esc(d.status)}</span></p>${d.confirm?`<div class="rd-confirm"><div class="rd-confirm-row"><span>Audience</span><b>${esc(gmStudioAudienceLabel())}</b></div><div class="rd-confirm-row"><span>Attachment</span><b>${esc(gift?formatMailGiftLabel(gift):'None')}</b></div><div class="rd-confirm-row"><span>Message</span><b>${msg.length} / 500 characters</b></div><div class="rd-confirm-actions"><button type="button" class="rd-btn" data-a="gmstudiocancel">Keep editing</button><button type="button" class="rd-btn primary" data-a="gmstudiosend" ${d.sending||over?'disabled':''}>${d.sending?'Sending…':rdIcon('send')+' Send now'}</button></div></div>`:`<button type="button" class="rd-btn primary" data-a="gmstudioreview" ${!msg.trim()||over?'disabled':''}>Review announcement ${rdIcon('arrow')}</button>`}<small>${d.confirm?'Confirm the audience and reward before it goes out.':'Nothing is sent until you confirm on the next step.'}</small></div></aside></div>`;
 }
 function renderGmStudio(){
   if(!S||typeof $!=='function')return;
@@ -14263,17 +14273,17 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=406"></script>
-<script src="assets/digimon/base-stats.js?v=406"></script>
-<script src="assets/social-rules.js?v=406"></script>
-<script src="assets/social-poker.js?v=406"></script>
-<script src="assets/digimon-sanctuary.js?v=406"></script>
+<script src="assets/digimon/roster.js?v=407"></script>
+<script src="assets/digimon/base-stats.js?v=407"></script>
+<script src="assets/social-rules.js?v=407"></script>
+<script src="assets/social-poker.js?v=407"></script>
+<script src="assets/digimon-sanctuary.js?v=407"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=406"></script>
+<script src="assets/social-digimon.js?v=407"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=406"></script>
-<script src="assets/social-fishing.js?v=406"></script>
-<script src="assets/plaza-bots.js?v=406"></script>
-<script src="assets/social.js?v=406"></script></body>
+<script src="assets/social-scene.js?v=407"></script>
+<script src="assets/social-fishing.js?v=407"></script>
+<script src="assets/plaza-bots.js?v=407"></script>
+<script src="assets/social.js?v=407"></script></body>
 </html>

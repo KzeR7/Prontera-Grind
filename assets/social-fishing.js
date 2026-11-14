@@ -99,10 +99,14 @@ const SPECIES_DATA={
   ['anglerdeep','Abyssal Angler','🐡',280,1,1000,'angler',true],['colossus','Plaza Colossus','🐙',270,1,1000,'octopus',true],
  ],
  mvp:[
-  ['mvp_azure_drake','Azure Drake','🐉',195,1000,1700],['mvp_tide_drake','Tide Drake','🐉',200,1200,2000],
-  ['mvp_abyss_drake','Abyss Drake','🐉',235,1500,2400],['mvp_iron_crab','Iron Crab Titan','🦀',18,1100,1800],
-  ['mvp_crimson_shark','Crimson Tyrant','🦈',0,1800,2600],['mvp_gilded_shark','Gilded Tyrant','🦈',40,2000,2850],
-  ['mvp_void_maw','Void Maw','🐙',270,2200,3000],
+  // v407 (owner): the ten MVP bosses are the owner's own cropped art, renamed and extended from
+  // seven. Weight ramps 1.0 t to the 3 t ceiling in this order, so the pond's show-off scale still
+  // reads "bigger fish = later in the ladder".
+  ['mvp_tidewarden','Tideforged Warden','🦈',170,1000,1500],['mvp_rimewraith','Rimewraith Sovereign','🐉',195,1100,1600],
+  ['mvp_tidecourser','Tidebound Courser','🦈',210,1200,1700],['mvp_dreadnought','Dreadnought Reaper','🦈',340,1300,1850],
+  ['mvp_thousandeye','Thousand-Eye Ravager','🦈',190,1450,2000],['mvp_auricmaw','Auric Ceremaw','🐙',45,1550,2150],
+  ['mvp_worldeye','World-Eye Tortoise','🐢',190,1700,2300],['mvp_volthorn','Volthorn Narwhal','🐋',200,1850,2450],
+  ['mvp_dreadclaw','Dreadclaw Behemoth','🦀',18,2050,2650],['mvp_stormcoil','Stormcoil Leviathan','🐉',205,2300,3000],
  ],
 };
 // v297: a species may name its own body plan (shape) and be flagged mega - the giants that get a
@@ -1319,12 +1323,13 @@ const FISH_ART={
   rosedolphin:'assets/social/fish/rosedolphin.png', violetbeluga:'assets/social/fish/violetbeluga.png',
   greywhale:'assets/social/fish/greywhale.png', mintwhale:'assets/social/fish/mintwhale.png',
   azurwhale:'assets/social/fish/azurwhale.png', starwhale:'assets/social/fish/starwhale.png',
-  mvp_azure_drake:'assets/social/fish/mvp_azure_drake.png', mvp_tide_drake:'assets/social/fish/mvp_tide_drake.png',
-  mvp_abyss_drake:'assets/social/fish/mvp_abyss_drake.png', mvp_iron_crab:'assets/social/fish/mvp_iron_crab.png',
-  mvp_crimson_shark:'assets/social/fish/mvp_crimson_shark.png', mvp_gilded_shark:'assets/social/fish/mvp_gilded_shark.png',
-  mvp_void_maw:'assets/social/fish/mvp_void_maw.png',
+  mvp_tidewarden:'assets/social/fish/mvp_tidewarden.png', mvp_rimewraith:'assets/social/fish/mvp_rimewraith.png',
+  mvp_tidecourser:'assets/social/fish/mvp_tidecourser.png', mvp_dreadnought:'assets/social/fish/mvp_dreadnought.png',
+  mvp_thousandeye:'assets/social/fish/mvp_thousandeye.png', mvp_auricmaw:'assets/social/fish/mvp_auricmaw.png',
+  mvp_worldeye:'assets/social/fish/mvp_worldeye.png', mvp_volthorn:'assets/social/fish/mvp_volthorn.png',
+  mvp_dreadclaw:'assets/social/fish/mvp_dreadclaw.png', mvp_stormcoil:'assets/social/fish/mvp_stormcoil.png',
 };
-const FISH_ART_VERSION='384'; // v384: 512px reference crops with decontaminated transparent edges
+const FISH_ART_VERSION='407'; // v384: 512px reference crops with decontaminated transparent edges
 const FISH_IMG=new Map();
 function preloadFishArt(){
  if(typeof Image!=='function'||typeof document==='undefined'||!document.createElement)return;

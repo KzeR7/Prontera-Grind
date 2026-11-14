@@ -26,6 +26,9 @@ export const CLEARED_TABLES = Object.freeze([
   'offline_reward_claims', 'damage_samples', 'damage_alerts', 'competition_baselines',
   // 0015: save-audit flags describe saves that no longer exist after a reset.
   'save_alerts',
+  // 0017: a gift campaign belongs to a letter and pays through `grants`; both are cleared, so a
+  // campaign left behind would replay its gift to every post-reset signup with no letter to open.
+  'announcement_gifts',
   'gm_gift_batches', 'grants', 'message_reads', 'messages', 'save_history', 'sessions',
 ]);
 const UPDATED_TABLES = ['saves', 'events', 'unverified_echo_config'];

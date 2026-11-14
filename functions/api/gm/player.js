@@ -61,11 +61,14 @@ async function loadAccount(D, id) {
     grants: grants.results.map(g => ({ id: g.id, kind: g.kind, claimed: !!g.claimed_at, at: g.created_at, note: g.note })),
     // Automatic impossible-save flags (0015): stat caps, pts entitlement, kill/level/zeny/
     // material rates between accepted syncs. Review-only evidence for the Damage tab.
+    // 0016: a cleared flag stays in this list as history (active ones first) so the console can
+    // show the verdict, who gave it and when - and offer to reopen it.
     alerts: (await db.saveAlertsFor(D, id)).results.map(a => ({
       kind: a.kind,
       label: a.kind && a.kind.startsWith('rate:') ? rateLabel(a.kind) : (AUDIT_LABELS[a.kind] || a.kind),
       firstSeen: a.first_seen, lastSeen: a.last_seen, value: a.value,
       threshold: a.threshold, detail: a.detail || '', observations: a.observations,
+      cleared: !!a.cleared_at, clearedAt: a.cleared_at || null, clearedBy: a.cleared_by || '',
     })),
   };
 }
@@ -209,6 +212,14 @@ export const onRequestPost = guard(async ({ request, env }) => {
           await db.insertGrant(D, id, giftKind, payload, note, user.username);
         } else {
           recipients = await db.insertMassGrants(D, `ann:${msgId}`, user.username, giftKind, payload, note);
+          // 0017: the letter already reaches players who join later (one broadcast row); now the
+          // GIFT does too, as a campaign a GM can close. Opt-out with giftLater:false for a
+          // one-off drop that must stay a snapshot of who existed at send time.
+          if (body.giftLater !== false && msgId) {
+            await db.openAnnouncementGiftCampaign(D, {
+              messageId: msgId, kind: giftKind, payload, label: giftLabel, note, actor: user.username,
+            });
+          }
         }
       }
       const who = target2 ? 'to ' + (target.username || target.u || id) + ': ' : 'to all: ';
@@ -220,7 +231,10 @@ export const onRequestPost = guard(async ({ request, env }) => {
         giftLabel: giftLabel || null,
         recipients,
         note: giftLabel
-          ? (target2 ? `Announcement & gift (${giftLabel}) sent.` : `Announcement & gift (${giftLabel}) queued for ${recipients} account(s).`)
+          ? (target2
+            ? `Announcement & gift (${giftLabel}) sent.`
+            : `Announcement & gift (${giftLabel}) queued for ${recipients} account(s)` +
+              (body.giftLater !== false ? ', and for players who join later until you close it.' : '.'))
           : 'Announcement sent.',
       });
     }

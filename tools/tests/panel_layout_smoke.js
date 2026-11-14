@@ -270,7 +270,14 @@ t('attributes precede combat stats and supporting destinations remain accessible
   ev("tabs.splice(0,tabs.length,'status');sub.status='stats';renderWin();renderQ()");
   const root=window.document.querySelector('[data-win="status"] .ui-content');
   assert.ok(root.children[0].classList.contains('ui-attribute-section'));
-  assert.ok(root.children[1].classList.contains('ui-metrics'));
+  // v407 (owner): the points left to spend moved out of the Build notes fold and sits between the
+  // attribute rows and Combat overview, so allocating never hides how many points are still waiting.
+  assert.ok(root.children[1].classList.contains('ui-points-section'),'points to spend sit right under the attributes');
+  assert.ok(root.children[2].classList.contains('ui-metrics'),'Combat overview still follows them');
+  const left=root.children[1].textContent||'';
+  assert.ok(/Points to spend/.test(left)&&/Stat points:\s*\d+/.test(left),'the strip names the count: '+left.trim().slice(0,60));
+  assert.ok(root.children[1].querySelector('.ui-points-line>b'),'the number itself is emphasised, not buried in a sentence');
+  assert.ok(!/Stat points:/.test(root.children[3].textContent||''),'Build notes no longer repeats the points line');
   for(const key of ['index','board']){
     assert.ok(window.document.querySelector('#dock .eclipse-more'));assert.ok(window.document.querySelector('#sideMenu [data-t="'+key+'"]'));assert.equal(window.document.querySelector('#dock [data-t="'+key+'"]'),null);
     assert.ok(window.document.querySelector('#sideLinks [data-t="'+key+'"]'));
