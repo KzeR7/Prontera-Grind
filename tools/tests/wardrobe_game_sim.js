@@ -3,7 +3,8 @@ const {createGame}=require('./helpers/game');const repo=path.resolve(__dirname,'
 for(const f of ['assets/wardrobe.js','assets/fourth-jobs.js','assets/wardrobe-ui.js'])html=html.replace(new RegExp('<script src="'+f.replaceAll('.','\\.')+'\\?v=[0-9]+"></script>'),()=>'<script>'+fs.readFileSync(path.join(repo,f),'utf8')+'</script>');
 const g=createGame(html),ev=g.ev;
 (async()=>{
- assert.deepEqual(Array.from(ev('Object.keys(PGWardrobe.CLASSES)')).sort(),Array.from(ev('Object.keys(CLASSES).filter(k=>CLASSES[k].tier<4)')).sort(),'native wardrobe retains the nineteen customizable classes');
+ assert.deepEqual(Array.from(ev('Object.keys(PGWardrobe.CLASSES)')).sort(),Array.from(ev('Object.keys(CLASSES).filter(k=>CLASSES[k].tier<4&&!EXPANDED_LINE.has(k))')).sort(),'native wardrobe retains the nineteen customizable classes');
+ assert.equal(ev('[...EXPANDED_LINE].some(c=>wardrobeSupported(c)||wardrobePending(c))'),false,'expanded classes use their own sprite-pack body, never a Wardrobe body');
  assert.equal(ev('CD4.every(c=>wardrobeSupported(c[0])&&wardrobePending(c[0]))'),true,'every fourth job waits for its original native sprite');
  ev(`window.matchMedia=()=>({matches:false});window.__saveCount=0;save=()=>{__saveCount++};S.hair=17;S.sex='f';S.cls='Lord Knight';tabs.push('wardrobe');renderWin();`);
  // Loader itself is checked against actual files separately; this test controls readiness/failure.

@@ -135,7 +135,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-14 haven-v407 MVP fish art drop, reviewable save flags, announcement gifts for later players, points-to-spend under the attributes` || Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
+| Build tag at the bottom of the card | `2026-11-14 haven-v408 expanded roster: 20 new classes (6 alternate lines + Ninja and Gunslinger) behind a Base 150 fourth-job unlock` || Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
 | `/gm.html` | after deliberate D1 owner provisioning, the GM console lists players and shows **👑 owner** |

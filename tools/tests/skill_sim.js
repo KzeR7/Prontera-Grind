@@ -71,7 +71,7 @@ const fakeThree={RingGeometry:FakeGeometry,TorusGeometry:FakeGeometry,Icosahedro
   BoxGeometry:FakeGeometry,CircleGeometry:FakeGeometry,PlaneGeometry:FakePlaneGeometry,MeshBasicMaterial:FakeMaterial,LineBasicMaterial:FakeMaterial,
   CanvasTexture:FakeCanvasTexture,LinearFilter:1006,NormalBlending:1,
   Mesh:FakeMesh,Line:FakeLine,Group:FakeObject,BufferGeometry:FakeBufferGeometry,Vector3:FakeVec3,DoubleSide:2,AdditiveBlending:3};
-const vfxBox={SKILLS:K.SKILLS,SKILLS4:K.run('SKILLS4'),FOURTH_JOBS_LIVE:K.run('FOURTH_JOBS_LIVE'),simVisualsOff:()=>false,THREE:fakeThree,removed:[],scene:{add(){},remove(o){vfxBox.removed.push(o)}},cam:{quaternion:{}},pl:{x:0,z:0},cl:(v,a,b)=>Math.max(a,Math.min(b,v)),
+const vfxBox={SKILLS:K.SKILLS,SKILLS4:K.run('SKILLS4'),SKILLSX:K.run('SKILLSX'),FOURTH_JOBS_LIVE:K.run('FOURTH_JOBS_LIVE'),simVisualsOff:()=>false,THREE:fakeThree,removed:[],scene:{add(){},remove(o){vfxBox.removed.push(o)}},cam:{quaternion:{}},pl:{x:0,z:0},cl:(v,a,b)=>Math.max(a,Math.min(b,v)),
   document:{createElement:t=>t==='canvas'?fakeCanvas():{}},
   skillFx:[],skillState:()=>({fields:[]}),SKILL_VFX:JSON.parse(JSON.stringify(K.SKILL_VFX))};
 vm.createContext(vfxBox);
@@ -154,7 +154,7 @@ t('every skill id is unique (a duplicate would strand spent points)', () => {
 });
 
 t('magical class skills route through MATK, while physical classes remain ATK-based', () => {
-  const magicLines = new Set(['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest','Warlock','Arch Bishop']);
+  const magicLines = new Set(['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest','Warlock','Arch Bishop','Sage','Scholar','Sorcerer']);
   for (const s of K.SKILLS.filter(x=>x.type==='act')) assert.strictEqual(!!s.magic,magicLines.has(s.from),s.n+' has the wrong damage stat');
   for (const id of ['fire','nap','storm','holy','magnus','judex','tundead']) assert.ok(byId(id).magic,id+' should deal MATK damage');
   for (const id of ['bash','dstr','mammo','env']) assert.ok(!byId(id).magic,id+' should deal physical ATK damage');

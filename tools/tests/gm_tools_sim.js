@@ -181,7 +181,7 @@ try{
   await test('GM catalogue and API support Mythic gear and fourth-job shields',async()=>{
    const {GM_CATALOG}=await import('../../functions/_lib/gm-catalog.js');
    const {equipmentPayload,giftPayload}=await import('../../functions/_lib/gm-tools.js');
-   assert.equal(Object.values(GM_CATALOG.classes).filter(c=>c.tier===4).length,6);
+   assert.equal(Object.values(GM_CATALOG.classes).filter(c=>c.tier===4).length,12);
    assert.equal(GM_CATALOG.entries.filter(e=>e.id.startsWith('mythic:')).length,72);
    assert.equal(giftPayload({catalogId:'ascMat2',amount:5}).resource,'ascMat2');
    assert.equal(giftPayload({catalogId:'mythicScrolls',amount:5}).resource,'mythicScrolls');

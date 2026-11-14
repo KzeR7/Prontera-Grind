@@ -137,6 +137,8 @@ t('the published tree is small enough to stay honest', () => {
   // and one lossless WebP only when a form is shown. It has its own ceiling below,
   // is excluded from classic, and remains part of combined delivery.
   const digimonBytes=walk(path.join(out,'assets/digimon'));
+  // haven-v408: one lossless WebP per expanded-roster body, fetched only when that body is first drawn.
+  const expandedBytes=walk(path.join(out,'assets/sprite-pack-x'));
   // Illustrated Rune-Midgard World Atlas pack (v314): only requested when the player opens the
   // World Map window, budgeted separately at < 3.5 MiB (2.69 MiB measured) while still covered by
   // the combined runtime ceiling below.
@@ -175,7 +177,8 @@ t('the published tree is small enough to stay honest', () => {
   // training panel with its Party overview, the painted poker icon and Prontera naming) are
   // classic-tree code and spent the last of the deliberate headroom. v355's note on this line's
   // original 59.5 stands.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes)/1048576 < 60.1, 'existing classic runtime assets exceed their 60.1 MiB budget');
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes)/1048576 < 60.1, 'existing classic runtime assets exceed their 60.1 MiB budget');
+  assert.ok(expandedBytes > 0 && expandedBytes/1048576 < 3, 'lazy expanded-roster bodies exceed their separate 3 MiB budget (2.63 measured 2026-11-14)');
   assert.ok(digimonBytes/1048576 < 40, 'lazy Digimon roster exceeds its separate 40 MiB budget');
   assert.ok(nativeBytes/1048576 < 68, 'ten native field sets and seventy lossless monster atlases exceed their separate 68 MiB budget');
   // v342 owner approval: all 280 forms as a roughly 36 MiB on-demand pack. The

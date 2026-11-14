@@ -11184,3 +11184,58 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   and the Social Worker ship from the same commit, and either order is safe — an old client
   ignores the snapshot field, and a new client falls back to a deterministic per-room seed
   when the field is missing.
+
+### 2026-11-14 — `haven-v408 expanded roster: 20 new classes (6 alternate lines + Ninja and Gunslinger) behind a Base 150 fourth-job unlock`
+
+* **Changed:** Continues PR #232 (its commit is carried here unchanged as the first commit, the
+  rework as the second). Twenty classes join the 25: Crusader → Paladin → Royal Guard, Sage →
+  Scholar → Sorcerer, Alchemist → Biochemist → Geneticist, Monk → Champion → Sura, Rogue →
+  Stalker → Shadow Chaser, Bard & Dancer → Minstrel & Gypsy → Maestro & Wanderer, plus Ninja
+  and Gunslinger straight from Novice. The whole roster opens for good once any of the six
+  shipped fourth jobs has reached Base Lv 150; after that the usual parent / job-level /
+  Crucible rules apply (each new job fights its sister class's trial opponent).
+* **What was reworked from the PR, and why:**
+  * The PR put the new rows straight into `CD`/`CD4`/`SKILLS4`, which broke 20 suites and the
+    Wardrobe / class-skin / balance fixtures that enumerate the original roster. They now live
+    in `CDX`/`CD4X`/`SKILLSX`; nothing about the shipped 25 classes or 127 skills changed.
+  * The PR's seven new weapon categories (spear, book, knuckle, instrument, whip, shuriken, gun)
+    had no drops, icons, forge or Mythic pieces, so those classes could never be armed. Each
+    line now trains in existing families (Crusader sword; Sage staff; Alchemist axe + mace; Monk
+    mace; Rogue dagger + bow; Bard & Dancer bow; Ninja dagger; Gunslinger bow).
+  * The PR's 143 files in `assets/skill-icons/new/` were cut on a wrong grid (each held parts
+    of several icons) and are deleted. Every new skill borrows a shipped icon (`icon`) and a
+    shipped cast effect (`fx`) until real crops exist. **No art was drawn or recoloured.**
+  * Skills went from 43 uneven ones to the shipped shape: 5 per class (45 points; 50 for a
+    fourth job) plus a sixth Ascension-only skill for each new fourth job — 106 in all. The 43
+    original ids are kept. Ascension upgrades cover all six new fourth jobs.
+  * The Bard / Dancer tabs called a function that does not exist; they are now real
+    `data-a="bdtree"` tabs and the choice is a view setting, not written to the save.
+  * The 40 uploaded sheets in `Sprite/` and `Sprite/female/` were not used by the game at all.
+    `tools/make_expanded_pack.py` cuts them (same cell layout, anchors, 8 directions and
+    idle / walk / attack as the shipped pack) into `assets/sprite-pack-x/`: one lossless WebP
+    per body, 2.6 MiB for all 40, and only the body being worn is downloaded. Until it arrives
+    the class is drawn with its first-job family body. Men and women get their own body.
+  * The Transcendent class-collection bonus still counts only the original six (cap stays +6%).
+  * Wardrobe looks are not available on the new classes yet (no native Wardrobe bodies); the
+    Wardrobe tab says so instead of showing a load error.
+* **Try it:** With a fourth job at Base Lv 150, open Jobs → Class tree: the "Expanded roster"
+  block under the main tree is unlocked. Reset to Novice for Ninja / Gunslinger, or step from
+  Swordman into Crusader. Without a Lv 150 fourth job every new class reads "Needs any 4th job
+  at Base Lv 150 first". GM console: the class list includes the new classes.
+* **Checks:** New `tools/tests/expanded_roster_sim.js` 11/11 (roster and pinned ids, weapon
+  families, the gate, no item duplicated on class change, collection unchanged, 5 + 1 skills,
+  borrowed icons / effects resolve, Ascension, Jobs and Skills windows for all 20, 40 lossless
+  bodies with 3 animations × 8 directions, save round trip). `make_expanded_pack.py --check`,
+  `build_afterglow.py --check`, `build_gm_catalog.cjs --check` and the four Python gate checks
+  pass. Full gate: **219 passed / 4 failed**, all four red on `main` before this work
+  (`fourth_job_mythic_sim`, `hosted_launch_stage_sim`, `skill_balance_sim`,
+  `render_lost_boot_smoke`). Existing suites that pinned the old totals were updated to the
+  new totals while still pinning the original roster separately (class count 25 → 45 with 25
+  shipped, fourth jobs 6 → 12 with 6 shipped, skills 127 → 233 with 127 shipped); the native
+  preview audits (`class_weapon_sim`, `hair_color_sim`, `wardrobe_game_sim`) now state that
+  they cover the shipped roster; `publish_sim` gives the lazy bodies their own 3 MiB budget
+  and the combined 180 MiB ceiling is unchanged (179.8 measured — almost no headroom left).
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`; not merged, not deployed. Supersedes
+  PR #232. No server, Worker or plaza traffic change; no migration. Open for the owner: the
+  original skill-icon sheet (to cut real icons), whether the new weapon categories are wanted
+  as real gear later, and whether the new Transcendent classes should count for the collection.

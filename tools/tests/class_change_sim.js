@@ -44,7 +44,7 @@ const classTierOf = (cls = S.cls) => Math.max(0, Math.min(3, (CLASSES[cls] && CL
 const ${gearTierRule};
 const iname = it => (it.r ? '+' + it.r + ' ' : '') + it.name;
 const canUse = it => gearTierOK(it) && (it.slot === 'off' ? canShield() : (it.slot !== 'weapon' || !it.wt || C().wt.includes(it.wt)));
-this.__h = {changeClass, classBlock, playedClass, playedClasses, t3Total, collDmg, classRec, snapClass, equipRec, noviceRun, clearClassSkills, stowUnfit, canUse, gearTierOK, CLASSES,
+this.__h = {changeClass, classBlock, playedClass, playedClasses, t3Total, collDmg, classRec, snapClass, equipRec, noviceRun, clearClassSkills, stowUnfit, canUse, gearTierOK, CLASSES, EXPANDED_LINE,
             set S(v){S=v}, get S(){return S}};
 `;
 const sb = { console };
@@ -88,6 +88,8 @@ t('new second and transcendent jobs preserve every stat and unspent point', () =
     const jobs={}; for(let n=c.par;n;n=H.CLASSES[n].par)jobs[n]={jl:50,jx:0};
     const stats=st({str:20,agi:17,dex:14,int:11,vit:8,luk:5});
     H.S=mk({cls:c.par,lv:60,exp:123,pts:7,st:stats,jobs});
+    // haven-v408: the expanded roster opens once any fourth job has reached Base Lv 150.
+    if(H.EXPANDED_LINE.has(name))H.S.base={...(H.S.base||{}),'Rune Knight':{lv:150}};
     H.changeClass(name);
     assert.strictEqual(H.S.cls,name);
     assert.deepStrictEqual({...H.S.st},stats,name+' allocation changed');
@@ -333,7 +335,7 @@ t('a transcendent class below Base Lv 100 earns nothing', () => {
 
 t('the cap follows the class data, so classes added later join automatically', () => {
   H.S = mk();
-  const t3 = Object.keys(H.CLASSES).filter(n => H.CLASSES[n].tier === 3);
+  const t3 = Object.keys(H.CLASSES).filter(n => H.CLASSES[n].tier === 3 && !H.EXPANDED_LINE.has(n));
   assert.strictEqual(t3.length, 6, 'there are 6 transcendent classes today');
   assert.strictEqual(H.t3Total(), 6, 'the denominator is derived, not hardcoded');
   H.S.cls = 'Novice'; H.S.lv = 150;
@@ -342,6 +344,9 @@ t('the cap follows the class data, so classes added later join automatically', (
   assert.strictEqual(H.collDmg(), 6, 'the cap is 1% per transcendent class');
   H.S.base.Swordman = {lv:150};
   assert.strictEqual(H.playedClasses(), 6, 'lower tiers never inflate the count');
+  // haven-v408: the expanded roster's transcendent classes never join the collection.
+  for (const n of H.EXPANDED_LINE) H.S.base[n] = {lv:150};
+  assert.strictEqual(H.playedClasses(), 6, 'expanded classes never inflate the count');
 });
 
 t('records made while playing grow the transcendent collection', () => {

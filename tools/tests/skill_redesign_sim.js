@@ -12,7 +12,7 @@ function setup(cls='Assassin Cross',weapon='katar'){
 }
 function test(name,fn){try{fn();passed++;console.log('  ok '+name);}catch(e){failed++;console.error('  FAIL '+name+' — '+e.stack);}}
 test('five core skills plus one Ascension unlock per fourth job, one Novice skill, sword-only progression',()=>{
- assert.equal(ev('SKILLS.length'),127);
+ assert.equal(ev('SKILLS.length'),233);assert.equal(ev('SKILLS.filter(s=>!SKILLSX.includes(s)).length'),127);
  assert.ok(ev(`Object.keys(CLASSES).every(c=>SKILLS.filter(s=>s.from===c).length===(c==='Novice'?1:CLASSES[c].tier===4?6:5))`));
  assert.ok(ev(`['Swordman','Knight','Lord Knight'].every(c=>CLASSES[c].wt.join()==='sword')`));
 });

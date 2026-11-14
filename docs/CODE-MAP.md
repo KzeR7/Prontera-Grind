@@ -69,6 +69,14 @@ an exhaustive test selection. Follow dependencies across systems and see
 - **Legacy packed bodies/heads:** `assets/sprite_pack_data.js`, `Sprite/`,
   `tools/make_sprite_pack.py`, `tools/montage.py`. Fixed frame counts and the
   stub-based anchors apply to this pack, not native ACT/SPR animation.
+- **Expanded roster (haven-v408):** the 20 extra classes live in `CDX`/`CD4X` and their
+  skills in `SKILLSX` (`index.html`), apart from the shipped `CD`/`CD4`/`SKILLS4`, so the
+  Wardrobe, class-skin and balance fixtures still enumerate the original 25. `EXPANDED_LINE`
+  is the membership test; `hasLv150ThirdClass()` is the unlock. Bodies are built by
+  `tools/make_expanded_pack.py` from `Sprite/` and `Sprite/female/` into
+  `assets/sprite-pack-x/` (one lossless WebP per body plus `index.js`) and fetched one body
+  at a time by `requestExpandedBody()`. Skills borrow a shipped icon (`icon`) and cast
+  effect (`fx`); `tools/tests/expanded_roster_sim.js` covers the lot.
 - **Weapons:** `assets/weapons/`, `assets/weapons_data.js`,
   `assets/weapon_joints_data.js`, `tools/make_weapon_pack.py`.
 - **Map kit:** `assets/kit/`, with original working material under
