@@ -335,18 +335,22 @@ t('a transcendent class below Base Lv 100 earns nothing', () => {
 
 t('the cap follows the class data, so classes added later join automatically', () => {
   H.S = mk();
-  const t3 = Object.keys(H.CLASSES).filter(n => H.CLASSES[n].tier === 3 && !H.EXPANDED_LINE.has(n));
-  assert.strictEqual(t3.length, 6, 'there are 6 transcendent classes today');
-  assert.strictEqual(H.t3Total(), 6, 'the denominator is derived, not hardcoded');
+  const t3 = Object.keys(H.CLASSES).filter(n => H.CLASSES[n].tier === 3);
+  // haven-v408: six shipped transcendent classes plus the six of the expanded roster.
+  assert.strictEqual(t3.length, 12, 'there are 12 transcendent classes today');
+  assert.strictEqual(t3.filter(n => !H.EXPANDED_LINE.has(n)).length, 6, 'the original six are all still there');
+  assert.strictEqual(H.t3Total(), 12, 'the denominator is derived, not hardcoded');
   H.S.cls = 'Novice'; H.S.lv = 150;
   H.S.base = {}; t3.forEach(n => H.S.base[n] = {lv:110});
-  assert.strictEqual(H.playedClasses(), 6);
-  assert.strictEqual(H.collDmg(), 6, 'the cap is 1% per transcendent class');
+  assert.strictEqual(H.playedClasses(), 12);
+  assert.strictEqual(H.collDmg(), 12, 'the cap is 1% per transcendent class');
   H.S.base.Swordman = {lv:150};
-  assert.strictEqual(H.playedClasses(), 6, 'lower tiers never inflate the count');
-  // haven-v408: the expanded roster's transcendent classes never join the collection.
+  assert.strictEqual(H.playedClasses(), 12, 'lower tiers never inflate the count');
+  // Only the tier-3 half of the expanded roster counts: its 2nd jobs, 4th jobs, Ninja and Gunslinger do not.
   for (const n of H.EXPANDED_LINE) H.S.base[n] = {lv:150};
-  assert.strictEqual(H.playedClasses(), 6, 'expanded classes never inflate the count');
+  assert.strictEqual(H.playedClasses(), 12, 'other expanded classes never inflate the count');
+  H.S.base = {}; t3.filter(n => !H.EXPANDED_LINE.has(n)).forEach(n => H.S.base[n] = {lv:110});
+  assert.strictEqual(H.collDmg(), 6, 'a save that had the old full collection keeps exactly its +6%');
 });
 
 t('records made while playing grow the transcendent collection', () => {

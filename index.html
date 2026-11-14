@@ -3407,7 +3407,7 @@ const ASC_UPGRADES={
  rg_hunt:{damage:25,boss:10},rg_warg:{damage:25,cooldown:10},rg_storm:{damage:20,area:20},rg_bite:{damage:20,root:1},rg_cluster:{damage:25,area:15},rg_unlimit:{buff:15},
  gc_cross:{damage:25,critical:10},gc_slip:{damage:20,cooldown:15},gc_veil:{duration:2,flee:5},gc_roll:{damage:20,area:15},gc_ripper:{damage:25},gc_claw:{vulnerable:10},
  ab_chain:{damage:25,area:15},ab_judge:{damage:25,boss:10},ab_ward:{barrier:10,duration:2},ab_duple:{buff:10,duration:2},ab_highness:{heal:20,cooldown:10},ab_epiclesis:{regen:10},
- // haven-v408 expanded fourth jobs: five ordinary skills each, no Ascension-only signature yet.
+ // haven-v408 expanded fourth jobs: five ordinary skills and one Ascension-only signature each.
  rg_vanish:{damage:25,range:1},rg_over:{damage:20,area:20},rg_cannon:{damage:25,boss:10},rg_earth:{damage:20,slow:10},rg_prestige:{buff:1,duration:2},
  so_psychic:{damage:25,area:15},so_diamond:{damage:20,slow:10},so_varetyr:{damage:25,stun:.5},so_grave:{damage:20,area:20},so_strike:{buff:10,duration:2},
  ge_cart:{damage:25,boss:10},ge_thorn:{damage:20,root:1},ge_spore:{damage:25,area:15},ge_weed:{damage:20,cooldown:10},ge_fire:{damage:25,boss:10},
@@ -7337,9 +7337,9 @@ const classCareer=n=>{const j=S.jobs&&S.jobs[n];return !!(j&&((+j.jl||1)>1||(+j.
 // Derived at runtime, so old saves get credit for free; a class's own S.base record carries the
 // Base Lv it left at. Played = a tier-3 record, or being on one right now.
 const t3At100=n=>{const lv=n===S.cls?safeCount(S.lv):safeCount(S.base&&S.base[n]&&S.base[n].lv);return lv>=100};
-// haven-v408: the expanded roster's transcendent classes stay outside the collection, so its
-// cap (and everyone's damage) is what it was before those classes arrived.
-const collClass=k=>CLASSES[k]&&CLASSES[k].tier===3&&!EXPANDED_LINE.has(k);
+// haven-v408 (owner decision): the six transcendent classes of the expanded roster count too,
+// so the cap is +12%. Nobody loses anything: credit already earned on the original six stays.
+const collClass=k=>!!CLASSES[k]&&CLASSES[k].tier===3;
 const playedClasses=()=>{const s=new Set();if(collClass(S.cls)&&t3At100(S.cls))s.add(S.cls);for(const k in CLASSES)if(collClass(k)&&playedClass(k)&&t3At100(k))s.add(k);return s.size};
 const t3Total=()=>{let n=0;for(const k in CLASSES)if(collClass(k))n++;return n};
 const collDmg=()=>playedClasses();

@@ -11239,3 +11239,20 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   PR #232. No server, Worker or plaza traffic change; no migration. Open for the owner: the
   original skill-icon sheet (to cut real icons), whether the new weapon categories are wanted
   as real gear later, and whether the new Transcendent classes should count for the collection.
+
+### 2026-11-14 — `haven-v408 (same unreleased build): expanded Transcendent classes count for the class collection`
+
+* **Changed:** Owner decision. The six Transcendent classes of the expanded roster (Paladin,
+  Scholar, Biochemist, Champion, Stalker, Minstrel & Gypsy) now count toward the class
+  collection, so it reads `n/12` and the cap is **+12% damage** instead of +6%. This corrects
+  the previous entry, which kept the collection at the original six. Rules are otherwise the
+  same: +1% per Transcendent class at Base Lv 100+, permanent, account-wide; second jobs,
+  fourth jobs, Ninja and Gunslinger never count. No save loses credit. No new build number:
+  v408 has not shipped, so this folds into it.
+* **Try it:** Character window → the Class collection line now shows `/12`.
+* **Checks:** `class_change_sim` (27), `fourth_job_sim`, `ui_sim`, `mythic_testing_sim` and
+  `expanded_roster_sim` (11) pass with the 12-class collection pinned, including "a save with
+  the old full collection keeps exactly +6%".
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`; not merged, not deployed. Still open:
+  real skill icons (owner will supply) and the new weapon categories as real gear (drops,
+  Mythic pieces, Ascension) — that needs weapon and icon art before it can be built.

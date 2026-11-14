@@ -93,9 +93,10 @@ test('six 4th-tier classes exist under the right Transcendent parents', () => `
 test('parents list the 4th job as their next class', () => `
   return ${JSON.stringify(FOURTH)}.every(([n,p])=>CLASSES[p].kids.includes(n));`);
 
-test('the 3rd-job collection is unchanged: six transcendent classes, none of them 4th jobs', () => `
+test('the 3rd-job collection is the six shipped transcendent classes plus the six expanded ones, none of them 4th jobs', () => `
   const third=Object.values(CLASSES).filter(c=>c.tier===3&&!EXPANDED_LINE.has(c.n)).map(c=>c.n).sort().join();
-  return t3Total()===6&&third===['Assassin Cross','High Priest','High Wizard','Lord Knight','Sniper','Whitesmith'].sort().join();`);
+  const extra=Object.values(CLASSES).filter(c=>c.tier===3&&EXPANDED_LINE.has(c.n)).map(c=>c.n).sort().join();
+  return t3Total()===12&&extra===['Biochemist','Champion','Minstrel & Gypsy','Paladin','Scholar','Stalker'].join()&&third===['Assassin Cross','High Priest','High Wizard','Lord Knight','Sniper','Whitesmith'].sort().join();`);
 
 test('playing a 4th job does not add to the Transcendent collection bonus', () => `
   ${setup('Lord Knight', 50, 150)}
