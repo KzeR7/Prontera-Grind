@@ -146,6 +146,63 @@ t('save audit review: a flag can be cleared after review, and that verdict is re
   assert.match(player, /cleared: !!a\.cleared_at/, 'the player panel receives the verdict');
 });
 
+// The flag tables are rendered FOR REAL here, not grepped: `saveAuditMarkup` plus the three
+// formatters are lifted out of the page's inline script and run on synthetic alerts. The verdict
+// buttons were shipped invisible once - the row template never closed its `<tr>`, so the code that
+// appended the button cell with a string replace matched nothing and every flag came out with four
+// cells. No assertion on the page's text could see that, because the text was there all along.
+function renderFlags(alerts) {
+  const grab = re => {
+    const m = src.match(re);
+    assert.ok(m, 'gm.html must still define ' + re);
+    return m[0];
+  };
+  const start = src.indexOf('function saveAuditMarkup(');
+  assert.ok(start > 0, 'gm.html must define saveAuditMarkup() at top level so it can be rendered');
+  const end = src.indexOf('\n}\n', start) + 2;
+  assert.ok(end > start, 'saveAuditMarkup() must end with a closing brace in column 0');
+  // The formatters are `const`s in the same script scope as the builder, so they go in the body too
+  // (new Function's own arguments are parameter names, not statements).
+  const factory = new Function([grab(/const when = .*;/), grab(/const nfmt = .*;/), grab(/const esc = .*;/),
+    src.slice(start, end), 'return saveAuditMarkup;'].join('\n'));
+  return factory()(alerts);   // factory() returns saveAuditMarkup; call it with the alerts
+}
+const openFlag = {
+  kind: 'level-rate', label: 'Level speed above human limits', threshold: 90, value: 93,
+  detail: '+4 levels in 3 min from level 40', firstSeen: 1763000000000, lastSeen: 1763000000000,
+  observations: 1, cleared: false,
+};
+const clearedFlag = {
+  kind: 'rate:shards', label: 'Shards above human limits', threshold: 5000, value: 9000, detail: '',
+  firstSeen: 1763000000000, lastSeen: 1763100000000, observations: 2, cleared: true,
+  clearedAt: 1763200000000, clearedBy: 'GM',
+};
+
+t('every save-audit flag renders its verdict button inside a closed five-cell row', () => {
+  const html = renderFlags([openFlag, clearedFlag]);
+  const tables = html.split('<tbody>').slice(1).map(b => b.slice(0, b.indexOf('</tbody>')));
+  assert.strictEqual(tables.length, 2, 'an open table and a cleared table are both rendered');
+  const [open, cleared] = tables;
+
+  assert.strictEqual((open.match(/<tr>/g) || []).length, 1, 'one row per open flag');
+  assert.strictEqual((open.match(/<td/g) || []).length, 5, 'the open row has five cells, the last being the verdict');
+  assert.match(open, /<td><button type="button" data-act="flagclear" data-kind="level-rate">Looks fine — clear<\/button><\/td><\/tr>$/,
+    'the clear button is a real cell at the end of a CLOSED row');
+
+  assert.strictEqual((cleared.match(/<tr>/g) || []).length, 1, 'one row per cleared flag');
+  assert.strictEqual((cleared.match(/<td/g) || []).length, 5, 'the cleared row has five cells too');
+  assert.match(cleared, /data-act="flagreopen" data-kind="rate:shards"/, 'a cleared flag keeps a reopen button');
+  assert.match(cleared, /GM/, 'the cleared row names the GM who reviewed it');
+
+  assert.match(renderFlags([]), /No save-audit flags/, 'an account with no flags says so');
+  assert.match(renderFlags([{ ...openFlag, cleared: true, clearedAt: 5, clearedBy: 'GM' }]), /Every save-audit flag/,
+    'an account whose flags are all cleared says so, and still lists them');
+  const quoted = renderFlags([{ ...openFlag, label: 'a<b', detail: 'x"y' }]);
+  assert.ok(quoted.includes('a&lt;b') && quoted.includes('x&quot;y'), 'flag text stays escaped inside the row');
+  assert.ok(!/replace\('\)<\/tr>'/.test(src) && !src.includes("replace('</tr>'"),
+    'rows must be written whole - patching a closing tag in is how the button disappeared');
+});
+
 t('the console survives a data-endpoint outage without telling the owner to sign in', () => {
   assert.match(src, /try \{ me = await api\('\/me'\); \} catch/, 'only the session probe may decide the sign-in card');
   assert.match(src, /if \(!me\)/, 'no session at all -> the sign-in card');
