@@ -823,7 +823,7 @@ t('the short-form option (100K / 1M) goes well with the floats: labels size the 
     'a 7-digit label stretches the star the same way (max(64, 7*32*.84) = 188 wide) - short and full both size from the finished label');
 });
 
-t('Zeny and kill rates refresh every second using a rolling minute and reset after stalls', () => {
+t('Zeny and kill rates refresh every second using a rolling minute and survive a stall', () => {
   assert.ok(!src.includes('id="zenyRate"'),'the redundant Zeny flyout is removed');
   assert.ok(!src.includes('.xp-side:hover'),'the level bars have no tinted hover box');
   assert.ok(src.includes('Kills/min <b id="kills"'),'kills rate must replace lifetime count');
@@ -853,12 +853,18 @@ t('Zeny and kill rates refresh every second using a rolling minute and reset aft
   m=sample('player',103,600,2000);assert.strictEqual(m.kills,90,'rate decays every second, not every 30');
   m=sample('player',104,650,30000);assert.strictEqual(m.kills,8,'four kills in 30 seconds -> 8/min');
   assert.strictEqual(m.zeny,1300,'650 earned in 30s -> 1,300/min');
-  m=sample('player',104,650,60500);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
-    'after a browser stall longer than 30 seconds, old rates vanish instead of spiking');
-  m=sample('player',106,750,61500);assert.strictEqual(m.kills,120);assert.strictEqual(m.zeny,6000,
-    'new kills and credits after resume count against the new window');
-  m=sample('player',106,750,121501);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
-    'a 60-second inactive period resets rates to zero');
+  // A stall used to wipe the meter to 0, which is what made the HUD read "0 kills/min" every time
+  // the player switched tabs and spend a minute climbing back - the moment they check whether the
+  // game kept grinding while they were away. A stalled sampler now keeps the rate it had, and the
+  // kills the stall produced are prorated into the window instead of being dropped.
+  m=sample('player',104,650,60500);
+  assert.strictEqual(m.kills,8);assert.strictEqual(m.zeny,1300,
+    'a stall with no new production keeps the rate instead of wiping it to zero');
+  m=sample('player',106,750,61500);
+  assert.ok(Math.abs(m.kills-11.612903225806452)<0.01,'kills after resume count against the window (got '+m.kills+')');
+  assert.ok(Math.abs(m.zeny-1451.6129032258063)<0.01,'Zeny after resume count against the window (got '+m.zeny+')');
+  m=sample('player',106,750,121501);
+  assert.ok(Math.abs(m.kills-11.612903225806452)<0.01,'a 60-second inactive period does not wipe the rate either');
   m=sample('player',10,100,122501);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
     'counter changes that indicate a fresh save must reset');
   m=sample('another-player',20,9000,123501);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
@@ -867,15 +873,21 @@ t('Zeny and kill rates refresh every second using a rolling minute and reset aft
   let clock=123501;for(let i=0;i<61;i++){clock+=1000;m=sample('another-player',i<60?21:21,9000,clock)}
   assert.strictEqual(m.kills,0,'old kills age out of the uninterrupted rolling minute');
   m=sample('another-player',900,999999,clock+600000);
-  assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
-    'ten minutes with no frames must not compress 879 accumulated kills into one second');
+  // 879 kills and 990,999 Zeny over ten minutes is 87.9/min and 99,100/min - the AVERAGE of what
+  // happened. Compressing them into one second would read 52,740 kills/min, which is the spike the
+  // old reset existed to prevent; wiping them to 0 is the bug the reset introduced. Neither.
+  assert.ok(Math.abs(m.kills-87.9)<0.01,
+    'ten minutes of kills average out to 87.9/min instead of spiking or vanishing (got '+m.kills+')');
+  assert.ok(m.zeny>99000&&m.zeny<100000,
+    'ten minutes of Zeny average out instead of compressing into one second (got '+m.zeny+')');
 });
 
 t('v74: the HUD shows EXP/min beside the kill rate, on the same rolling minute', () => {
   assert.ok(src.includes('<div>EXP/min <b id=\"expmin\"'), 'the EXP/min chip must sit beside Kills/min');
-  assert.ok(src.includes('${stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg,expEarned)}') ||
-            src.includes('stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg,expEarned)'),
-    'bars() must feed the session EXP total into the rate');
+  assert.ok(src.includes('stepHudRate(hudRate,currentUser,S.kills,zenyEarned,now,S.dmg,expEarned)'),
+    'sampleHudRate must feed the session EXP total into the rate');
+  assert.ok(src.includes('function sampleHudRate(now=performance.now())')&&src.includes('const rates=sampleHudRate()'),
+    'bars() reads the rate through sampleHudRate, the one entry point the background tick shares');
   assert.ok(src.includes("const expEl=$('expmin')"), 'the readout element is read once per refresh');
   assert.ok(src.includes('function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarned+=n}'),
     'EXP income is counted like Zeny: gross, never lowered by a level-up');
@@ -901,7 +913,8 @@ t('v74: the HUD shows EXP/min beside the kill rate, on the same rolling minute',
   m=s(10,0,500,1500);assert.strictEqual(m.exp,30000,'and it holds between whole seconds');
   s(10,0,1500,2000);
   assert.strictEqual(state.expPerMin,45000,'1,500 EXP in two seconds reads 45,000/min (the whole window counts)');
-  m=s(10,0,1500,40000);assert.strictEqual(m.exp,0,'a stall longer than 30s wipes the EXP rate too');
+  m=s(10,0,1500,40000);assert.strictEqual(m.exp,45000,
+    'a stall longer than 30s keeps the EXP rate instead of wiping it');
   m=s(0,0,0,41000);assert.strictEqual(m.exp,0,'a counter reset (fresh save) starts at zero');
 });
 
@@ -922,9 +935,13 @@ t('the DPS meter shares the rolling minute and resets with the save', () => {
   assert.strictEqual(m.dps,10000,'10,000 damage in the first second reads 10,000 dps');
   m=s('p',0,0,10000,1500);assert.strictEqual(m.dps,10000,'the reading holds between whole seconds');
   m=s('p',0,0,30000,2000);assert.strictEqual(m.dps,15000,'30,000 over two seconds reads 15,000 dps');
-  // a browser stall longer than 30s throws the old window away instead of spiking the meter
-  m=s('p',0,0,40000,78000);assert.strictEqual(m.dps,0,'a stall longer than 30s wipes the old rate');
-  m=s('p',0,0,50000,79000);assert.strictEqual(m.dps,10000,'and damage after the resume starts a new window');
+  // A stall longer than 30s used to wipe the window. It now carries the damage the stall produced
+  // into the window, prorated so a long absence cannot read as one furious second of combat.
+  m=s('p',0,0,40000,78000);
+  assert.ok(Math.abs(m.dps-131.57894736842105)<0.01,
+    'damage produced during a 76s stall is prorated into the minute, not wiped and not spiked (got '+m.dps+')');
+  m=s('p',0,0,50000,79000);
+  assert.ok(m.dps>131&&m.dps<400,'damage after the resume joins the same window (got '+m.dps+')');
   m=s('p',0,0,0,80000);assert.strictEqual(m.dps,0,'a fresh save (damage counter reset) starts at zero');
 });
 

@@ -921,12 +921,12 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="assets/ui/eclipse.css?v=324">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=322">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=324">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=402">
+<link rel="stylesheet" href="assets/social.css?v=405">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=402"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=405"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1324,7 +1324,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-12 haven-v402 echo prizes arrive as mail with a 5-day expiry';
+const BUILD='2026-11-12 haven-v405 the HUD rate meters survive a tab switch, and the tour buttons are thumb-sized';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3839,8 +3839,13 @@ function initSession(gm,newAccount=false){
     if(typeof PGSocial!=='undefined')presentPlazaFirst();
     else ui();
     $('loginOverlay').style.display='none';log(newAccount?`Account ready — welcome, ${currentUser}!`:`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
+    // v404 (owner: "when players login they are teleported into plaza, there are no guide
+    // whatsoever"). The guide used to be the *else* branch here, so the plaza - which every
+    // login opens since v363 - skipped it entirely, and the only remaining call was inside
+    // gotoField(), i.e. after the player had already left the plaza. That is precisely the
+    // report: no guide in the plaza, and the old guide starting in the field.
     if(hubFirstPending){PGSocial.enter() /* plaza covers the field first; combat stays off, AFK pays the last field rate */}
-    else if(typeof maybeGuide==='function')maybeGuide();
+    if(typeof maybeGuide==='function')maybeGuide();
     try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
   }catch(err){S=null;showErr('Could not start: '+err.message)}
 }
@@ -4818,6 +4823,9 @@ async function initSessionFromCloud(u,gm,isNew,id){
   // adopt the account copy and cloudAdopt runs ui() itself, so the hub is entered here rather
   // than in each branch.
   if(typeof hubFirstPending!=='undefined'&&hubFirstPending)PGSocial.enter();
+  // v404: this branch never ran maybeGuide at all, so a cloud login that adopted the account
+  // copy opened the plaza with no tour. The guide belongs on every login path.
+  if(typeof maybeGuide==='function')maybeGuide();
   await cloudPull();          // announcements and gifts land at login, then cloudPollTick takes over
 }
 
@@ -6741,7 +6749,15 @@ function levelingGuide(){return `<header class="handbook-intro"><small>02 / YOUR
  ].map(([level,title,maps,body])=>`<article><span class="route-level">${level}</span><div><h3>${title}</h3><p>${body}</p><div class="guide-actions">${maps.map(m=>`<button data-a="guidemap" data-v="${m}:${level.includes('139')||level.includes('140')?11:1}">${MAPS[m].n}</button>`).join('')}</div></div></article>`).join('')}</div><section class="guide-note"><h3>When should I move?</h3><p>Watch a full minute of EXP/min and Zeny/min after each change. If deaths, travel or slow kills lower your income, return to your previous field. Turn Auto-advance off to camp a card or material. Drops are random; a listed chance is per monster kill, not a promise.</p><p>Nightmare MVPs across all regions supply Void Core. Craft a Refine Protection Scroll with ${DPS_MATS} Void Cores. Selected-affix N/N+ reforges also use Void Core.</p></section>`;}
 const GUIDE_LESSONS={
  beginner:[
-  {id:'hub',title:'Welcome to the Social Hub!',body:'You are now in the <b>Prontera Fountain Plaza</b> \u2014 the social hub. Other players walk around you, and you can chat, fish, play poker and train DigiPets here. Your character keeps fighting in the field while you explore. Look around, then click the <b>\u21a9 Field</b> button in the top-right toolbar to go back to combat.',target:'status',pointer:'#socialLeave'},
+/* v404 (owner: "the new beginner tutorial is not working... there are no guide whatsoever to
+   guide them to the field... can u redesign this. make a proper guide and leads new players
+   along"). The first lessons now speak about the plaza the player is actually standing in.
+   `hub:true` marks a plaza lesson - it is shown only in the plaza, and only plaza lessons are
+   shown there, so the guide opens where the player is instead of being deferred to a field
+   they have not reached. `act:'field'` gives the step a button that really travels. */
+  {id:'hub',title:'Welcome to Prontera Plaza!',body:'This is the <b>Fountain Plaza</b>, the social hub. Players gather here to chat, fish (\ud83c\udfa3), hatch DigiPets (\ud83e\udd5a) and play Hold\u2019em (\ud83c\udccf). Your character keeps earning the last field rate while you look around, so nothing is lost. Press <b>Next</b> and the guide shows you around, then walks you out to the field.',hub:true,pointer:'#socialHub'},
+  {id:'hub-tour',title:'Five things to try in the plaza',body:'Tap the ground or use the arrow keys to walk. The toolbar across the top holds <b>\ud83c\udfa3 Fishing</b> at the south ponds, <b>\ud83e\udd5a DigiPet</b> for companion care, <b>\ud83c\udfb2 Poker</b> for Hold\u2019em, and <b>\u21a9 Field</b> when you want combat. The room selector and Party sit beside them; chat and the activity log are on the left.',hub:true,pointer:'#socialHubToolbar'},
+  {id:'hub-field',title:'Head out to the field',pointer:'#socialLeave',hub:true,act:'field',body:'Press <b>Go to the field</b> and you land in <b>Prontera Fields, Stage 1</b> \u2014 the easiest fight in the game. Your character attacks on its own from there; you choose where to farm, not which swing to take. The guide continues automatically the moment you arrive.'},
   {id:'combat',title:'Start fighting at Prontera Stage 1',body:'Click the <b>\ud83d\uddfc World Map</b> button in the bottom dock. Select <b>Prontera Fields \u2192 Stage 1</b> and tap <b>Travel</b>. Your character attacks on its own \u2014 every kill pays Base EXP, Job EXP, Zeny and loot. Leave <b>Auto-advance</b> on so you move to Stage 2 automatically when ready.',target:'map',pointer:'#dock [data-t="map"]'},
   {id:'points',title:'Spend your first points',body:'You gain stat points every Base level and Job points every Job level. Click the <b>\ud83d\udcca Character</b> button in the bottom dock \u2192 <b>Stats</b> and put points into STR, AGI or VIT. Click <b>\u2728 Skills</b> and learn an attack \u2014 it joins the combo and fires by itself.',target:'skills',skip:function(){return ptsSpent()>0},pointer:'#dock [data-t="status"]'},
   {id:'gear',title:'Equip better gear',body:'Monsters drop weapons and armor. Click the <b>\ud83c\udf92 Inventory</b> button in the bottom dock and tap a stronger item to compare, then tap <b>Equip</b>. Lock anything valuable so Auto-sell skips it. Then go back to the Map and pick the next stage you can clear quickly.',target:'bag',skip:function(){return !!(S.eq&&S.eq.weapon&&S.eq.weapon.id!==1)},pointer:'#dock [data-t="bag"]'},
@@ -6763,7 +6779,27 @@ function guideProgress(){const o=S.handbook;return o&&typeof o==='object'&&!Arra
    a chapter in the handbook) - then a once-ever marker is written into the save and the tour
    never opens by itself again. Both tours remain replayable from the handbook (H) at any time. */
 function tourMarkSeen(){const kind=guideTour;if(!kind)return;const p=guideProgress();try{S.handbook={...p,[kind+'Seen']:true};save()}catch(e){}}
-function maybeGuide(){guideTour=null;guideFindOwner=null;guideFindStage='';guideFinderClear();clearGuidePointer();const p=guideProgress(),kind=fourthJob()?(p.ascension!==true?'ascension':null):p.beginner!==true?'beginner':null;if(!kind)return;if(p[kind+'Seen']===true)return;guideTour=kind;guidePage=kind;if(kind==='beginner'&&p.findGuide!==true){guideFindOwner=S;guideFindStage='waiting';}if(!tabs.includes('guide'))openTab('guide');else renderWin();}
+function maybeGuide(){
+ guideTour=null;guideFindOwner=null;guideFindStage='';guideFinderClear();clearGuidePointer();
+ const p=guideProgress();
+ // v404: `beginner!==true` used to gate the whole tour, and a returning player's save already
+ // carries beginner:true from the old field-only guide. The plaza lessons are new content, so
+ // they are owed even to a save that has finished the old tour - the plazaHubSeen marker
+ // below, not the beginner flag, decides whether they get shown.
+ const plazaLesson=!fourthJob()&&inPlazaNow()&&guideVisibleSteps('beginner').some(x=>x.hub);
+ const kind=fourthJob()?(p.ascension!==true?'ascension':null):(p.beginner!==true||plazaLesson)?'beginner':null;
+ if(!kind)return;
+ // beginnerSeen used to retire the whole beginner tour for good, so anyone who had read the
+ // old field-only guide never saw a plaza lesson. The plaza lessons get their own once-ever
+ // marker; the field lessons keep honouring beginnerSeen exactly as before.
+ if(plazaLesson?p.beginnerHubSeen===true:p[kind+'Seen']===true)return;
+ guideTour=kind;guidePage=kind;
+ // The find-the-guide tip teaches where the handbook lives in the DOCK, which is hidden in
+ // the plaza. Over the plaza it would ring a hidden button under the hub, so it waits for
+ // the field, where every control it names is on screen.
+ if(kind==='beginner'&&!inPlazaNow()&&p.findGuide!==true){guideFindOwner=S;guideFindStage='waiting';}
+ if(!tabs.includes('guide'))openTab('guide');else renderWin();
+}
 // One-time, account-owned route back to the handbook after its first automatic opening.
 function guideFinderClear(){document.getElementById('guideFinder')?.remove();document.getElementById('guideFinderRing')?.remove();}
 function guideFinderFinish(){
@@ -6825,34 +6861,101 @@ function showGuidePointer(selector){
  window.addEventListener('resize',onScroll);
  guidePointerCleanup=()=>{cancelAnimationFrame(raf);ring.remove();window.removeEventListener('scroll',onScroll,true);window.removeEventListener('resize',onScroll)};
 }
+// v404: a step marked hub:true is a plaza lesson (its controls exist only there); a step
+// without the mark is a field lesson. Filtering by where the player actually stands lets the
+// tour open in the plaza with plaza lessons and pick up the field lessons on arrival - the
+// "leads new players along" half of the owner's report.
+function inPlazaNow(){
+ try{return !!(document.body&&document.body.classList&&document.body.classList.contains('social-open'))}catch(_){return false}
+}
 function guideVisibleSteps(kind){
- const all=GUIDE_LESSONS[kind]||[];
- return all.filter(s=>!s.skip||!s.skip());
+ const all=GUIDE_LESSONS[kind]||[],here=inPlazaNow();
+ return all.filter(s=>{
+  if(kind==='beginner'&&!!s.hub!==here)return false;
+  return !s.skip||!s.skip();
+ });
+}
+// v404: the step is remembered by ID, not index. The plaza and the field show different
+// halves of the lesson list, so an index saved in the plaza would land on whatever occupied
+// that slot after the player travelled. An ID survives the list changing shape underneath it.
+function guideStepId(kind,p){
+ const id=p[kind+'StepId'],list=GUIDE_LESSONS[kind]||[];
+ if(typeof id==='string'&&list.some(s=>s.id===id))return id;
+ // A save from before v404 has only an index. Honour it once against the field list, which
+ // is the list those indexes were written against.
+ const stored=Number.isInteger(p[kind+'Step'])?p[kind+'Step']:0;
+ const all=list.filter(s=>!s.hub);
+ const byIndex=all[Math.max(0,Math.min(all.length-1,stored))];
+ return byIndex?byIndex.id:(list[0]&&list[0].id)||'';
+}
+function guideStepIndex(kind){
+ const visible=guideVisibleSteps(kind),id=guideStepId(kind,guideProgress());
+ const at=visible.findIndex(s=>s.id===id);
+ // Standing where the remembered step does not exist (the player stepped back into the
+ // plaza): open the first lesson that does, rather than an empty tour.
+ return at<0?0:at;
 }
 function guideTourPanel(){
  if(!guideTour)return '';clearGuidePointer();
- const p=guideProgress(),allSteps=GUIDE_LESSONS[guideTour]||[],visible=guideVisibleSteps(guideTour);
+ const p=guideProgress(),visible=guideVisibleSteps(guideTour);
  if(!visible.length)return '';
- const stored=Number.isInteger(p[guideTour+'Step'])?p[guideTour+'Step']:0;
- const i=Math.max(0,Math.min(visible.length-1,stored));
- if(i!==stored){p[guideTour+'Step']=i;try{S.handbook=p;save()}catch(_){}}
+ const i=guideStepIndex(guideTour);
+ if(p[guideTour+'StepId']!==visible[i].id){p[guideTour+'StepId']=visible[i].id;try{S.handbook=p;save()}catch(_){}}
  const step=visible[i];
  const pointer=step.pointer||null;
  requestAnimationFrame(()=>{if(guideTour)showGuidePointer(pointer)});
  const total=visible.length,tabName=step.target?TABS[step.target]?.[1]||'':'',label=guideTour==='ascension'?'ASCENSION ORIENTATION':'FIRST STEPS';
- return `<section class="guide-tour" aria-label="Getting started"><small>${label} \xb7 ${i+1} / ${total}</small><h2>${step.title}</h2><p>${step.body}</p><div class="guide-actions">${tabName?`<button data-t="${step.target}">Open ${tabName}</button>`:''}<button data-a="guidestep" data-v="back" ${i?'':'disabled'}>Back</button><button data-a="guidestep" data-v="next">${i===total-1?'Finish tour':'Next'}</button><button data-a="guidestep" data-v="dismiss">Read later</button></div><small>You can replay this tour from the guide at any time.</small></section>`;
+ return `<section class="guide-tour" aria-label="Getting started"><small>${label} \xb7 ${i+1} / ${total}</small><h2>${step.title}</h2><p>${step.body}</p><div class="guide-actions">${step.act==='field'?`<button data-a="guidestep" data-v="next" class="guide-go">\u21a9 Go to the field</button>`:(tabName?`<button data-t="${step.target}">Open ${tabName}</button>`:'')}<button data-a="guidestep" data-v="back" ${i?'':'disabled'}>Back</button><button data-a="guidestep" data-v="next">${i===total-1?'Finish tour':'Next'}</button><button data-a="guidestep" data-v="dismiss">Read later</button></div><small>You can replay this tour from the guide at any time.</small></section>`;
 }
 function guideStep(action){
  if(!guideTour||!['next','back','dismiss'].includes(action))return;
  const kind=guideTour,p={...guideProgress()},key=kind+'Step';
  const visible=guideVisibleSteps(kind);if(!visible.length)return;
- const stored=Number.isInteger(p[key])?p[key]:0;
- const i=Math.max(0,Math.min(visible.length-1,stored));
+ const i=guideStepIndex(kind),step=visible[i];
+ // "Go to the field" travels instead of advancing. The field lessons live on the far side of
+ // the trip, so finishing here would retire a tour the player has not walked yet.
+ if(action==='next'&&step&&step.act==='field'){
+  p[key+'Id']=step.id;S.handbook=p;save();
+  guideGoField();
+  return;
+ }
  if(action==='dismiss'||action==='next'&&i>=visible.length-1){
-  p[kind]=true;p[kind+'Seen']=true;guideTour=null;clearGuidePointer();
- }else if(action==='next'){p[key]=Math.min(visible.length-1,i+1)}
- else if(action==='back'){p[key]=Math.max(0,i-1)}
+  p[key+'Id']=visible[visible.length-1].id;guideTour=null;clearGuidePointer();
+  // Finishing the plaza lessons must not retire the field lessons - they are what carry the
+  // player into combat. Each half gets its own marker.
+  if(kind==='beginner'&&inPlazaNow())p.beginnerHubSeen=true;
+  else{p[kind]=true;p[kind+'Seen']=true}
+ }else if(action==='next'){
+  const n=visible[i+1];
+  p[key+'Id']=n.id;
+  // The legacy index is kept in step, but only against the field list - the list those
+  // indexes were always written against.
+  const fieldList=(GUIDE_LESSONS[kind]||[]).filter(x=>!x.hub);
+  const at=fieldList.findIndex(x=>x.id===n.id);
+  if(at>=0)p[key]=at;
+ }else if(action==='back'){p[key+'Id']=visible[Math.max(0,i-1)].id}
  S.handbook=p;save();renderWin();
+}
+// The plaza lesson's own action. It leaves through the hub's Field button - the exact control
+// the step points at - so the player watches the button they were shown do the work.
+function guideGoField(){
+ try{
+  const b=document.getElementById('socialLeave');
+  if(inPlazaNow()&&b&&typeof b.onclick==='function'){b.onclick();return}
+ }catch(_){}
+ if(typeof gotoField==='function'&&S)gotoField(S.mp|0,S.lvl||1);
+}
+// Called by gotoField after a player travels. A tour left open on the plaza half continues
+// with the field lessons; a finished or dismissed tour stays closed.
+function guideHubResume(){
+ if(inPlazaNow())return;
+ const p=guideProgress();
+ if(p.beginnerSeen===true)return;
+ if(p.beginnerStepId!=='hub-field'&&p.beginnerHubSeen!==true)return;
+ const list=GUIDE_LESSONS.beginner||[],at=list.findIndex(x=>x.id===p.beginnerStepId);
+ if(at>=0&&list[at].hub&&list[at].id!=='hub-field')return;
+ guideTour='beginner';guidePage='beginner';
+ if(!tabs.includes('guide'))openTab('guide');else renderWin();
 }
 // ---------- new-player coach tips (v255) ------------------------------------------------
 // One small card at a time, anchored to the control it is about. A tip hides itself the moment its
@@ -8843,7 +8946,10 @@ const gotoField=(m,l)=>{
   qRefresh();ui();save();
   // v361: the first map pick of a hub-first account starts the field - release the battle that
   // was held back at login and run the beginner guide that normally accompanies the first render.
-  if(hubFirstPending){hubFirstPending=false;if(typeof maybeGuide==='function')maybeGuide()}};
+  if(hubFirstPending){hubFirstPending=false;if(typeof maybeGuide==='function')maybeGuide()}
+  // v404: a player who pressed "Go to the field" mid-tour arrives here; the field lessons
+  // pick up from the plaza step they left on.
+  else if(typeof guideHubResume==='function')guideHubResume();};
 // ---------- Mail & Announcements + Daily Reward Roulette ----------
 const DAILY_WHEEL_SEGMENTS=[
   {id:'ori',resource:'ori',amount:15,badge:'×15',rate:33,label:'15 × Oridecon',short:'Oridecon',desc:'Weapon refinement ore (33%)',weight:33,color:'#9c3b16',colorInner:'#42160a',accent:'#ffd08a',tier:'common',icon:'⛏'},
@@ -9691,14 +9797,55 @@ const eclipseMetricNumber=n=>{const value=Math.max(0,Math.round(Number(n)||0));r
 // the kill rate. expGained is the session's gross EXP (earnExp), not S.exp, which level-ups lower.
 function stepHudRate(rate,user,kills,earned,now,damage,exp){
   const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(earned)||0),d=Math.max(0,Number(damage)||0),x=Math.max(0,Number(exp)||0);
-  if(!rate||rate.user!==user||now<rate.lastAt||now-rate.lastAt>HUD_IDLE_RESET||k<rate.lastKills||z<rate.lastEarned||d<rate.lastDmg||x<rate.lastExp)
+  // Only a genuinely broken baseline starts over: another account, a clock running backwards, or a
+  // save that rewound the counters. An IDLE GAP is not a broken baseline - it is a stretch of play
+  // the sampler missed and can still account for. Treating it as one used to wipe the meter to 0
+  // every time the player switched tabs, and it spent the next minute climbing back to their real
+  // rate, which is the moment they check whether the game kept grinding while they were away.
+  // v390 already had to route the plaza Field card around this same reset; the HUD meters now
+  // account for the gap instead of discarding it.
+  if(!rate||rate.user!==user||now<rate.lastAt||k<rate.lastKills||z<rate.lastEarned||d<rate.lastDmg||x<rate.lastExp)
     rate={user,lastAt:now,lastSampleAt:now,lastKills:k,lastEarned:z,lastDmg:d,lastExp:x,started:now,killsPerMin:0,zenyPerMin:0,dps:0,expPerMin:0,killsEvents:[],events:[],dmgEvents:[],expEvents:[]};
   else{
+    const gap=now-rate.lastAt;
     const dk=k-rate.lastKills,dz=z-rate.lastEarned,dd=d-rate.lastDmg,dx=x-rate.lastExp;
-    if(dk)rate.killsEvents.push({at:now,amount:dk});
-    if(dz)rate.events.push({at:now,amount:dz});
-    if(dd)rate.dmgEvents.push({at:now,amount:dd});
-    if(dx)(rate.expEvents=rate.expEvents||[]).push({at:now,amount:dx});
+    // Everything the sampler missed belongs to the gap. Only the slice that still fits inside the
+    // rolling window may be counted: a gap of a minute or less carries in full, a longer one is
+    // prorated to the window. That is the guarantee the old reset was there for - ten minutes of
+    // background grinding must not read as one furious second - without throwing the reading away.
+    // A gap is one of two things, and they need opposite handling. Either the character kept
+    // grinding while nobody was looking - in which case what it earned has to be added to the
+    // window, prorated so ten minutes away cannot read as one furious second - or the game was
+    // parked (a lost cloud connection, a sleeping machine), in which case the window has a hole
+    // where that time should be and a hole reads as a collapse in earnings for a full minute.
+    // Told apart by whether the gap delivered anything near the rate we had been seeing.
+    // Told apart by whether the gap delivered close to the rate we had been seeing - and only once
+    // that rate is trustworthy, i.e. the window has had a full minute to fill. Before that the
+    // estimate is a few seconds old and comparing against it would mistake real production for a
+    // stall. Every metric is checked in its own unit; a metric with no established rate cannot
+    // vouch either way, so anything that moved counts as production.
+    const mature=rate.lastSampleAt-rate.started>=HUD_RATE_WINDOW;
+    const span=Math.max(gap,1),perMin=a=>a*60000/span;
+    const moved=!!(dx||dz||dk||dd);
+    const known=(rate.expPerMin>0||rate.zenyPerMin>0||rate.killsPerMin>0||rate.dps>0);
+    const productive=!mature||!known?moved:
+      (rate.expPerMin>0&&perMin(dx)>=rate.expPerMin*.25)||
+      (rate.zenyPerMin>0&&perMin(dz)>=rate.zenyPerMin*.25)||
+      (rate.killsPerMin>0&&perMin(dk)>=rate.killsPerMin*.25)||
+      (rate.dps>0&&dd*1000/span>=rate.dps*.25);
+    if(gap>HUD_IDLE_RESET&&!productive){
+      // Compress the dead time out: shift what was already measured forward, and leave lastSampleAt
+      // alone so this very call still recomputes - the window just changed shape.
+      for(const key of ['killsEvents','events','dmgEvents','expEvents'])
+        (rate[key]||[]).forEach(e=>{e.at+=gap});
+      rate.started+=gap;
+    }else{
+      const fit=gap>0?Math.min(gap,HUD_RATE_WINDOW)/gap:1;
+      if(dk)rate.killsEvents.push({at:now,amount:dk*fit});
+      if(dz)rate.events.push({at:now,amount:dz*fit});
+      if(dd)rate.dmgEvents.push({at:now,amount:dd*fit});
+      if(dx)(rate.expEvents=rate.expEvents||[]).push({at:now,amount:dx*fit});
+    }
     rate.lastKills=k;rate.lastEarned=z;rate.lastDmg=d;rate.lastExp=x;rate.lastAt=now;
     if(now-rate.lastSampleAt>=HUD_RATE_REFRESH){
       while(rate.killsEvents.length&&rate.killsEvents[0].at<=now-HUD_RATE_WINDOW)rate.killsEvents.shift();
@@ -9716,8 +9863,18 @@ function stepHudRate(rate,user,kills,earned,now,damage,exp){
   return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny:rate.zenyPerMin,dps:rate.dps,exp:rate.expPerMin};
 }
 const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(+value||0)/Math.max(1,+required||1)*100));
+// Sampling the rate is not drawing. The frame driver skips draw() in a hidden tab so a background
+// page stays cheap, but stepHudRate only reads counters and pushes timestamps - it never touches
+// the DOM. Letting the background tick sample too keeps lastAt fresh, so coming back finds a window
+// that is already true instead of one with a hole punched through it.
+function sampleHudRate(now=performance.now()){
+  if(!S)return null;
+  const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,now,S.dmg,expEarned);
+  hudRate=rates.state;
+  return rates;
+}
 function bars(){if(!S||simVisualsOff())return;applyDisplay();
-  const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg,expEarned);hudRate=rates.state;
+  const rates=sampleHudRate();if(!rates)return;
   const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
   if($('eclipseStageLabel'))$('eclipseStageLabel').textContent=(S.lvl>10?'Nightmare ':'Stage ')+(S.lvl>10?S.lvl-10:S.lvl)+' / '+(S.lvl>10?5:normalStages(S.mp));
   if($('eclipseShards'))$('eclipseShards').textContent=safeCount(S.shards).toLocaleString();
@@ -13911,7 +14068,12 @@ function bgTick(fromWorker=false){
     if(!simOccluded){simOccluded=true;if(!awayAt){awayAt=simAt;awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0}}
   }
   if(!bgOn()){simAt=now;return}
-  try{simAdvance(now)}catch(e){if(!bgTick.e){bgTick.e=1;console.error(e);log('Error: '+e.message,'r0')}}}
+  try{
+    simAdvance(now);
+    // Keep the HUD rate window fed while nothing can be drawn. Without this the sampler goes quiet
+    // for the whole absence and the meter has to rebuild from zero the moment the player returns.
+    if(typeof sampleHudRate==='function')sampleHudRate(now);
+  }catch(e){if(!bgTick.e){bgTick.e=1;console.error(e);log('Error: '+e.message,'r0')}}}
 function bgHide(){                      // the tab went to the background: note the moment, then save
   const now=performance.now();awayReturnAt=0;if(!awayAt){awayAt=now;awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0}
   simAdvance(now);save();simBgSaveAt=now}
@@ -14101,16 +14263,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=402"></script>
-<script src="assets/digimon/base-stats.js?v=402"></script>
-<script src="assets/social-rules.js?v=402"></script>
-<script src="assets/social-poker.js?v=402"></script>
-<script src="assets/digimon-sanctuary.js?v=402"></script>
+<script src="assets/digimon/roster.js?v=405"></script>
+<script src="assets/digimon/base-stats.js?v=405"></script>
+<script src="assets/social-rules.js?v=405"></script>
+<script src="assets/social-poker.js?v=405"></script>
+<script src="assets/digimon-sanctuary.js?v=405"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=402"></script>
+<script src="assets/social-digimon.js?v=405"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=402"></script>
-<script src="assets/social-fishing.js?v=402"></script>
-<script src="assets/social.js?v=402"></script></body>
+<script src="assets/social-scene.js?v=405"></script>
+<script src="assets/social-fishing.js?v=405"></script>
+<script src="assets/social.js?v=405"></script></body>
 </html>

@@ -35,10 +35,58 @@ const query = ({ withDatabase }) => `query PgUsage($accountTag: String!, $date: 
   }
 }`;
 
+// v403: Durable Object usage, asked for separately. The two numbers the owner wants are requests
+// (the billable invocation count for both the gate and the social object) and stored bytes.
+// This is a SECOND query on purpose: if Cloudflare renames a field here the main request/D1 numbers
+// must still render, so a failure is contained to the DO card and reported as such.
+const doQuery = () => `query DoUsage($accountTag: String!, $dayStart: String, $now: String) {
+  viewer {
+    accounts(filter: { accountTag: $accountTag }) {
+      durableObjectsInvocationsAdaptiveGroups(limit: 200, filter: { datetime_geq: $dayStart, datetime_leq: $now }) {
+        sum { requests }
+        dimensions { date }
+      }
+      durableObjectsStorageGroups(limit: 200, filter: { date_geq: $dayStart, date_leq: $now }) {
+        max { storedBytes }
+      }
+    }
+  }
+}`;
+
 // Cloudflare's free-plan day is the UTC day, not the Singapore one the game's boards use.
 export const utcDay = (at = Date.now()) => new Date(at).toISOString().slice(0, 10);
 
 const add = (rows, pick) => (Array.isArray(rows) ? rows.reduce((sum, r) => sum + (Number(pick(r)) || 0), 0) : 0);
+
+// Durable Object usage for the GM console. Two objects are bound on this project - the write gate
+// and the social scene - so the number is account-wide rather than per-class; the card says so.
+// Never throws. `ok:false` means "ask the dashboard", not "zero".
+export async function durableObjectUsage({ account, token, day, at }) {
+  try {
+    const res = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        query: doQuery(),
+        variables: { accountTag: account, dayStart: `${day}T00:00:00.000Z`, now: new Date(at || Date.now()).toISOString() },
+      }),
+    });
+    const payload = await res.json().catch(() => null);
+    if (!res.ok || !payload || payload.errors?.length) {
+      const why = payload?.errors?.[0]?.message || `HTTP ${res.status}`;
+      return { ok: false, error: `Durable Object analytics refused: ${why}` };
+    }
+    const acct = payload.data?.viewer?.accounts?.[0];
+    if (!acct) return { ok: false, error: 'Cloudflare returned no account for that id.' };
+    return {
+      ok: true,
+      requests: add(acct.durableObjectsInvocationsAdaptiveGroups, r => r.sum?.requests),
+      storedBytes: add(acct.durableObjectsStorageGroups, r => r.max?.storedBytes),
+    };
+  } catch (e) {
+    return { ok: false, error: `Durable Object analytics failed: ${e.message}` };
+  }
+}
 
 // -> { ok: true, requests, d1, day } | { ok: false, error }
 // Never throws: a bad token, a GraphQL rename or a network blip must only make the card say so.
@@ -71,8 +119,9 @@ export async function cloudflareUsage(env, at = Date.now()) {
     }
     const acct = payload.data?.viewer?.accounts?.[0];
     if (!acct) return { ok: false, error: 'Cloudflare returned no account for that id.' };
+    const objects = await durableObjectUsage({ account, token, day, at });
     return {
-      ok: true, day,
+      ok: true, day, objects,
       requests: {
         used: add(acct.workersInvocationsAdaptive, r => r.sum?.requests),
         errors: add(acct.workersInvocationsAdaptive, r => r.sum?.errors),
@@ -92,4 +141,6 @@ export async function cloudflareUsage(env, at = Date.now()) {
 }
 
 // The free-plan allowances, in one place so the console and the docs cannot drift apart.
-export const FREE_LIMITS = { requests: 100_000, rowsRead: 5_000_000, rowsWritten: 100_000 };
+// Durable Object requests share the Workers daily request allowance on the free plan; the card shows
+// the same 100k ceiling so the bar means the same thing as the one above it.
+export const FREE_LIMITS = { requests: 100_000, rowsRead: 5_000_000, rowsWritten: 100_000, durableRequests: 100_000 };

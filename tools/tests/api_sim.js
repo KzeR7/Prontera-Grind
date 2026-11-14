@@ -438,6 +438,30 @@ await T('a gift expires 5 days after it was sent and can no longer be claimed', 
   void friendId;
 });
 
+await T('the players list is ordered by most recent sign-in, never-signed-in last', async () => {
+  // v403 (owner: "the top will be always the players play currently then by date, means players that
+  // never login will go further down based on latest login").
+  const owner = globalThis.__owner;
+  const day = 86400000, t = Date.now();
+  const mk = (name, login) => {
+    const id = Number(sqlite.prepare('INSERT INTO users(username,pass_hash,created_at,last_login_at) VALUES(?,?,?,?)')
+      .run(name, 'synthetic', t, login).lastInsertRowid);
+    return id;
+  };
+  mk('ORDER_YESTERDAY', t - day);
+  mk('ORDER_NEVER', null);
+  mk('ORDER_RECENT', t - 60000);
+  mk('ORDER_WEEKAGO', t - 7 * day);
+  const list = (await api.players(env, owner)).data.players;
+  const names = list.map(p => p.u);
+  const positions = names.reduce((m, n) => (m[n] = names.indexOf(n), m), {});
+  assert.ok(positions.ORDER_RECENT < positions.ORDER_YESTERDAY, 'the most recent sign-in is above yesterday');
+  assert.ok(positions.ORDER_YESTERDAY < positions.ORDER_WEEKAGO, 'yesterday is above last week');
+  assert.ok(positions.ORDER_WEEKAGO < positions.ORDER_NEVER, 'a player who never signed in sorts last, not first');
+  // The payload must carry the field the table shows, or the column and the order disagree.
+  for (const p of list) assert.ok('lastLogin' in p, 'every row reports lastLogin');
+});
+
 await T('the mailbox lists claimable gifts with a 5-day deadline', async () => {
   // v401 (owner: "i want endless echo payout to be on mail & with expiry. so 5 days without claim,
   // rewards will vanish."). The mailbox is the player-facing view of the same grants queue.
@@ -908,9 +932,19 @@ await T('the usage card reads Cloudflare\'s own counters when the token is set',
   const owner = (await api.register(h.env, { u: 'OWNER', p: 'owner-password-1' })).cookie;
   h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='OWNER'").run();
   const realFetch = globalThis.fetch;
-  let seen = null;
+  let seen = null, doSeen = null;
   globalThis.fetch = async (url, init) => {
-    seen = { url: String(url), init };
+    // v403: Durable Object usage is a SECOND query, so answer each one with its own shape.
+    const isDo = String(init?.body || '').includes('durableObjectsInvocationsAdaptiveGroups');
+    if (isDo) doSeen = { url: String(url), init };
+    else seen = { url: String(url), init };
+    if (isDo) return {
+      ok: true, status: 200,
+      json: async () => ({ data: { viewer: { accounts: [{
+        durableObjectsInvocationsAdaptiveGroups: [{ sum: { requests: 70 } }, { sum: { requests: 12 } }],
+        durableObjectsStorageGroups: [{ max: { storedBytes: 4096 } }],
+      }] } } }),
+    };
     return {
       ok: true, status: 200,
       json: async () => ({ data: { viewer: { accounts: [{
@@ -933,6 +967,37 @@ await T('the usage card reads Cloudflare\'s own counters when the token is set',
     const body = JSON.parse(seen.init.body);
     assert.match(body.variables.dayStart, /T00:00:00\.000Z$/, 'the free-plan day starts at midnight UTC');
     assert.ok(body.query.includes('workersInvocationsAdaptive') && body.query.includes('d1AnalyticsAdaptiveGroups'));
+    // v403: the Durable Object meter is present, summed across its rows, and never folded into the
+    // request count above - a wrong field there must not corrupt the numbers that were already right.
+    assert.ok(doSeen, 'a separate Durable Object query is made');
+    assert.ok(JSON.parse(doSeen.init.body).query.includes('durableObjectsStorageGroups'));
+    assert.strictEqual(r.data.objects.requests, 82, 'DO request rows are summed');
+    assert.strictEqual(r.data.objects.storedBytes, 4096, 'stored bytes come through');
+    assert.strictEqual(r.data.requests.used, 150, 'the DO query did not disturb the request total');
+  } finally { globalThis.fetch = realFetch; }
+});
+
+await T('a failed Durable Object query leaves the request and D1 numbers intact', async () => {
+  // v403: the DO meter is a second, optional query. If Cloudflare renames a field there, the card must
+  // still show requests and D1 rather than blanking out - that is why it is not folded into the first.
+  const h = freshEnv();
+  const owner = (await api.register(h.env, { u: 'OWNER', p: 'owner-password-1' })).cookie;
+  h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='OWNER'").run();
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (String(init?.body || '').includes('durableObjectsInvocationsAdaptiveGroups'))
+      return { ok: false, status: 400, json: async () => ({ errors: [{ message: 'Unknown field durableObjectsStorageGroups' }] }) };
+    return { ok: true, status: 200, json: async () => ({ data: { viewer: { accounts: [{
+      workersInvocationsAdaptive: [{ sum: { requests: 200, errors: 1 } }],
+      d1AnalyticsAdaptiveGroups: [{ sum: { rowsRead: 5000, rowsWritten: 22, readQueries: 1, writeQueries: 1 } }],
+    }] } } }) };
+  };
+  try {
+    const r = await api.usage({ ...h.env, CF_ACCOUNT_ID: 'acct-123', CF_ANALYTICS_TOKEN: 'tok-abc' }, owner);
+    assert.strictEqual(r.status, 200, 'the card still answers');
+    assert.strictEqual(r.data.requests.used, 200, 'request numbers survive a DO failure');
+    assert.strictEqual(r.data.d1.rowsWritten, 22, 'D1 numbers survive a DO failure');
+    assert.strictEqual(r.data.objects, null, 'the DO meter reports unknown, never zero');
   } finally { globalThis.fetch = realFetch; }
 });
 

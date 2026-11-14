@@ -71,6 +71,10 @@ html.pg-mobile{
   --pg-dockh: 52px;           /* #dock height, portrait */
   --pg-dockgap: 6px;          /* #dock distance from the bottom of the field */
   --pg-r: 10px;               /* the one corner radius used by the chrome */
+  /* The Q chip's band, published so the sheet it opens can clear it instead of
+     guessing the same arithmetic twice and drifting out of sync (v404). */
+  --pg-chip-h: 28px;          /* #pgQuests height, portrait */
+  --pg-chip-top: calc(6px + 42px + 8px);  /* under the 42px Mail / Daily / Social buttons */
   --pg-safe-l: env(safe-area-inset-left,0px);
   --pg-safe-r: env(safe-area-inset-right,0px);
   --pg-safe-b: env(safe-area-inset-bottom,0px);
@@ -220,9 +224,9 @@ html.pg-mobile .social-hub-badge{min-width:17px;height:17px;font-size:9.5px;line
    player was left on a darkened field with no way back (owner, v274). */
 html.pg-mobile #pgQuests{
   position:absolute;right:calc(6px + var(--pg-safe-r));left:auto;
-  top:calc(6px + 42px + 8px);bottom:auto;
+  top:var(--pg-chip-top);bottom:auto;
   z-index:59;display:inline-flex;align-items:center;gap:5px;
-  height:28px;padding:0 10px 0 8px;border-radius:999px;
+  height:var(--pg-chip-h);padding:0 10px 0 8px;border-radius:999px;
   background:var(--e-glass,#1b2b24f5);border:1px solid var(--e-line-bright,#61725b);
   color:#eee0b8;font-size:9px;line-height:1;pointer-events:auto;
   box-shadow:0 4px 14px #0006;
@@ -323,7 +327,15 @@ html.pg-mobile #pgScrim:not([hidden]){display:block}
 html.pg-mobile #pgScrim[hidden]{display:none!important}
 
 html.pg-mobile #sideRail{
-  left:calc(6px + var(--pg-safe-l));right:calc(6px + var(--pg-safe-r));top:6px;
+  /* v404 (owner: "the quest tab ui is overlapping all tabs... it's blocking all view").
+     The sheet used to start at top:6px - 50px ABOVE the chip that opens it - while the chip
+     stayed at z-index 59, one above the sheet. So the chip floated on top of the sheet's own
+     quest tabs, directly over the controls the player had just asked for, and the sheet itself
+     ran from the very top of the screen down to the dock. The sheet now starts BELOW the chip
+     (which keeps its 56px band and its z-index so it is always the way out), and the chip's
+     row is reserved rather than overlapped. */
+  left:calc(6px + var(--pg-safe-l));right:calc(6px + var(--pg-safe-r));
+  top:calc(var(--pg-chip-top) + var(--pg-chip-h) + 8px);
   width:auto;max-height:none;bottom:calc(var(--docktop) + 2px);
   gap:8px;z-index:58;overflow-y:auto;overscroll-behavior:contain;
   padding:0;background:transparent;scrollbar-width:thin;
@@ -442,6 +454,14 @@ html.pg-mobile body.equipment-workspace-open #wins{
   width:auto;transform:none;top:4px;bottom:var(--docktop);
 }
 
+/* The beginner tour's own buttons. .handbook button only pins min-height:34px, which is
+   below the phone floor the rest of this file uses for anything you actually tap (30-44px),
+   and the tour is the one control a new player is meant to press without hunting. Sized here
+   so Next / Back / "Go to the field" are the largest thing on the panel. */
+html.pg-mobile .guide-actions button{min-height:44px;font-size:12px;padding:11px 16px}
+html.pg-mobile .guide-tour h2{font-size:17px}
+html.pg-mobile .guide-tour p{font-size:13px}
+
 /* ── 6. Display sheet ────────────────────────────────────────────────────── */
 
 html.pg-mobile #screenOptions{
@@ -523,7 +543,8 @@ html.pg-mobile .modal-card{max-width:calc(100vw - 20px)}
   html.pg-mobile #hudBuffs{bottom:calc(var(--docktop) + 2px);right:calc(4px + var(--pg-safe-r))}
   html.pg-mobile #hudBuffs .pbx{width:26px;height:26px;font-size:13px}
   html.pg-mobile #eclipseCompanions{bottom:calc(var(--docktop) + 30px);right:calc(4px + var(--pg-safe-r))}
-  html.pg-mobile #pgQuests{height:24px;top:calc(4px + 38px + 6px);right:calc(4px + var(--pg-safe-r));font-size:8px}
+  html.pg-mobile{--pg-chip-h:24px;--pg-chip-top:calc(4px + 38px + 6px)}
+  html.pg-mobile #pgQuests{right:calc(4px + var(--pg-safe-r));font-size:8px}
 
   html.pg-mobile #xp-dock{padding:2px calc(6px + var(--pg-safe-r)) calc(2px + var(--pg-safe-b)) calc(6px + var(--pg-safe-l))}
   html.pg-mobile #xp-track{height:18px;border-radius:5px}

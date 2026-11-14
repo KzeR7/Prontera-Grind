@@ -172,7 +172,7 @@ tr:hover{background:#2a2014;cursor:pointer}
     <h2>Players <span id="count" class="small"></span></h2>
     <div class="row"><input id="search" placeholder="filter by name" style="flex:1"></div>
     <div class="players-scroll"><table id="players"><thead>
-      <tr><th>Name</th><th>Lv</th><th>Class</th><th>Last sync</th></tr>
+      <tr><th>Name</th><th>Lv</th><th>Class</th><th>Last login</th></tr>
     </thead><tbody></tbody></table></div>
     <p class="small">Click a player to open them. “never” means they have not synced a save yet.</p>
   </section>
@@ -247,6 +247,9 @@ async function loadUsage() {
     meter('Function requests (all Workers on the account)', d.requests?.used, d.limits.requests, d.requests ? nfmt(d.requests.errors) + ' errors' : ''),
     meter('D1 rows written (the tight one)', d.d1?.rowsWritten, d.limits.rowsWritten, d.d1 && !d.d1.scoped ? 'all databases' : ''),
     meter('D1 rows read', d.d1?.rowsRead, d.limits.rowsRead, ''),
+    // v403: the two Durable Objects (the write gate and the social scene). Cloudflare reports them
+    // account-wide, not per class, so the label says so rather than implying one object.
+    meter('Durable Object requests (gate + social)', d.objects?.requests, d.limits.durableRequests, d.objects ? bytes(d.objects.storedBytes) + ' stored' : ''),
     `<div class="grid2" style="margin-top:8px">
       <div class="stat">accounts<b>${nfmt(L.accounts)}</b><span class="small">${nfmt(L.saves)} with a cloud save · ${nfmt(L.liveSessions)} live sessions</span></div>
       <div class="stat">save storage<b>${bytes(L.saveBytes)}</b><span class="small">biggest ${bytes(L.biggestSave)}</span></div>
@@ -255,6 +258,7 @@ async function loadUsage() {
     </div>`,
     `<p class="small" style="margin:8px 0 0">${esc(d.note)}</p>`,
     d.error ? `<p class="small bad" style="margin:6px 0 0">Analytics: ${esc(d.error)}</p>` : '',
+    d.objectsError ? `<p class="small" style="margin:6px 0 0">Durable Objects: ${esc(d.objectsError)} — use the dashboard for this number.</p>` : '',
     d.hint ? `<p class="small" style="margin:6px 0 0">${esc(d.hint)}</p>` : '',
   ].join('');
 }
@@ -312,11 +316,18 @@ async function loadPlayers() {
 }
 function renderPlayers() {
   const q = $('search').value.trim().toLowerCase();
-  const rows = PLAYERS.filter(p => !q || p.u.toLowerCase().includes(q));
+  // v403 (owner: "i want it to shown accordingly, latest login then latest date. so the top will be
+  // always the players play currently then by date, means players that never login will go further
+  // down based on latest login"). Sorting here rather than trusting the API's ORDER BY, because the
+  // search filter rebuilds this list and the order must survive it. A player who has never logged in
+  // has no timestamp, so it sinks below every real date instead of floating to the top as 0 would.
+  const stamp = p => { const t = Number(p.lastLogin); return Number.isFinite(t) && t > 0 ? t : -Infinity; };
+  const rows = PLAYERS.filter(p => !q || p.u.toLowerCase().includes(q))
+    .slice().sort((a, b) => stamp(b) - stamp(a) || String(a.u).localeCompare(String(b.u)));
   $('players').tBodies[0].innerHTML = rows.map(p =>
     `<tr data-id="${p.id}" class="${SEL && SEL.account.id === p.id ? 'sel' : ''}">
        <td>${p.banned ? '⛔ ' : ''}${p.gm ? (p.gm >= 2 ? '👑 ' : '🛠 ') : ''}${esc(p.u)}</td>
-       <td>${p.level ?? '—'}</td><td>${esc(p.cls || '—')}</td><td>${when(p.lastSync)}</td>
+       <td>${p.level ?? '—'}</td><td>${esc(p.cls || '—')}</td><td>${p.lastLogin ? when(p.lastLogin) : '<span class="small">never</span>'}</td>
      </tr>`).join('') || '<tr><td colspan="4" class="small">No players match.</td></tr>';
 }
 $('search').oninput = renderPlayers;
@@ -689,7 +700,7 @@ $('detail').addEventListener('click', async e => {
       // looking like nothing happened: reload the panel so the version and the backups list are the ones
       // the server now holds, and say plainly that an open tab is the thing that undoes a restore.
       await openPlayer(id);
-      // haven-v402: the restore now revokes the account's sessions, so every open tab is signed out
+      // haven-v403: the restore now revokes the account's sessions, so every open tab is signed out
       // at that instant instead of being asked to notice. That is what makes "reopen the game" true -
       // the next sign-in reconciles against the restored save, which is the path the tests cover.
       say('Restored as version ' + r.version + (r.sessionsRevoked ? '. Every open session was signed out' : '') +

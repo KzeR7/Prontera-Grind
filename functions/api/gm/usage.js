@@ -33,6 +33,13 @@ export const onRequestGet = guard(async ({ request, env }) => {
     // "zero" — the console must not draw a reassuring bar out of a missing number.
     requests: usage.ok ? usage.requests : null,
     d1: usage.ok ? usage.d1 : null,
+    // v403: Durable Objects are asked for separately, so `objects` can be present even when the main
+    // query failed - and null while it is unknown rather than zero.
+    // Never a reassuring zero: an unknown meter is null, which the card renders as "not measured".
+    objects: usage.ok && usage.objects && usage.objects.ok
+      ? { requests: usage.objects.requests, storedBytes: usage.objects.storedBytes }
+      : null,
+    objectsError: usage.ok && usage.objects && !usage.objects.ok ? usage.objects.error : null,
     source: usage.ok ? 'analytics' : 'ledger',
     // The exact string to paste in the dashboard, and the reason it is worth doing.
     hint: usage.missing

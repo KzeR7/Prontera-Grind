@@ -116,10 +116,40 @@ test('the quest chip lives in the right rail, clear of the world chat', () => {
   // chip sits under Mail and Daily instead of on top of the chat's tabs.
   assert.equal(declOf('html.pg-mobile #pgQuests', 'left'), 'auto');
   assert.match(declOf('html.pg-mobile #pgQuests', 'right'), /--pg-safe-r/);
-  assert.match(declOf('html.pg-mobile #pgQuests', 'top'), /42px/, 'just under the 42px Mail / Daily / Social buttons');
+  // v404: the 42px offset moved into --pg-chip-top so the sheet can share it.
+  assert.match(declOf('html.pg-mobile #pgQuests', 'top'), /var\(--pg-chip-top\)/,
+    'just under the 42px Mail / Daily / Social buttons');
   assert.equal(declOf('html.pg-mobile #pgQuests', 'bottom'), 'auto');
-  // Landscape keeps the same corner with the smaller 38px tools.
-  assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)[\s\S]*#pgQuests\{height:24px;top:calc\(4px \+ 38px \+ 6px\)/, 'landscape keeps the chip off the chat');
+  // Landscape keeps the same corner with the smaller 38px tools. v404: it now shrinks
+  // the published band instead of restating the chip's geometry, so the chip and the
+  // sheet it opens stay in step in both orientations.
+  assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)[\s\S]*--pg-chip-h:24px;--pg-chip-top:calc\(4px \+ 38px \+ 6px\)/, 'landscape keeps the chip off the chat');
+});
+
+test('v404: the quest sheet opens BELOW its chip instead of under it', () => {
+  // Owner: "on mobile ui, the quest tab ui is overlapping all tabs... it's blocking all
+  // view." The chip that opens the sheet sits at 56px, but #sideRail started at top:6px -
+  // 50px higher - and the chip keeps z-index 59, one above the sheet's 58. The chip
+  // therefore floated on top of the sheet it had just opened, covering the quest tabs and
+  // the first rows. The sheet must start at the chip's band, not above it.
+  // The chip and the sheet now read the same published band, so they cannot drift.
+  assert.equal(declOf('html.pg-mobile #pgQuests', 'top'), 'var(--pg-chip-top)',
+    'the chip takes its own row from the published band');
+  assert.equal(declOf('html.pg-mobile #pgQuests', 'height'), 'var(--pg-chip-h)');
+  assert.match(declOf('html.pg-mobile', '--pg-chip-top'), /42px/,
+    'the band still clears the 42px Mail / Daily / Social buttons');
+  const railTop = declOf('html.pg-mobile #sideRail', 'top');
+  assert.match(railTop, /--pg-chip-top/, 'the sheet starts from the chip row...');
+  assert.match(railTop, /--pg-chip-h/, '...and clears the whole chip, not just its top edge');
+  // Landscape shrinks the band and both consumers follow; it must not re-hardcode.
+  assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)[\s\S]*--pg-chip-h:24px/,
+    'landscape shrinks the band for both the chip and the sheet');
+  assert.ok(!/#pgQuests\{height:24px;top:/.test(css),
+    'the landscape rule no longer hardcodes a second copy of the chip geometry');
+  const chipZ = Number(declOf('html.pg-mobile #pgQuests', 'z-index'));
+  const railZ = Number(declOf('html.pg-mobile #sideRail', 'z-index'));
+  assert.ok(chipZ > railZ, 'the chip stays above the sheet so it is always the way out');
+  assert.ok(chipZ - railZ <= 2, 'but only just above it - not a separate overlay league');
 });
 
 test('v325: the GM console button keeps its place on a phone', () => {
