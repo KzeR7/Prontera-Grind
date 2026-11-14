@@ -328,7 +328,7 @@ t('every asset versioned in index.html points at a build, never at a stale cache
                    'assets/social-fishing.js', 'assets/social-fishing.css',
                    'assets/digimon/roster.js', 'assets/digimon/base-stats.js',
                    'assets/digimon-sanctuary.js',
-                   'assets/social-digimon.js']) {
+                   'assets/social-digimon.js', 'assets/plaza-bots.js']) {
     const found = tags.find(([, file]) => file === f);
     assert.ok(found, f + ' is loaded by index.html');
     assert.strictEqual(found[2], build, f + ' must be busted to the build that changed it');

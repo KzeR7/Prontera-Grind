@@ -37,6 +37,36 @@ const bar=w.document.getElementById('socialMin');bar.dispatchEvent(new w.Keyboar
 let socket;w.WebSocket=class {constructor(){socket=this;this.readyState=1;this.sent=[]}close(){}send(m){this.sent.push(JSON.parse(m))}};w.CLOUD.on=true;w.CLOUD.user='new';w.sessionTick();socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:[]})});
 app.messages=Array.from({length:400},(_,i)=>({channel:'whisper',body:'old'+i,name:'Name',from:1,id:'w'+i,at:i}));socket.onmessage({data:JSON.stringify({type:'hello',id:2,history:Array.from({length:100},(_,i)=>({channel:'world',body:'world',name:'Name',from:1,id:'world'+i,at:i}))})});assert.equal(app.messages.length,400);
 w.PGSocial.select('world');socket.onmessage({data:JSON.stringify({type:'message',channel:'world',body:'<img src=x onerror=alert(1)>',name:'<script>',from:3,at:1000})});assert.equal(w.document.querySelectorAll('#socialLines img,#socialLines script').length,0);assert(w.document.getElementById('socialLines').textContent.includes('<img'));
+ // v406 (owner: "in world chat when click on own name whisper tab, friend and all came out.
+ // should not happen for own name & make click elsewhere is will be close for other players name").
+ // Your own line is not a contact: whispering, friending or muting yourself is meaningless. And
+ // the menu used to have no way out but Escape or its own Close button, so it sat over the chat.
+ {
+  const d=w.document,menu=d.getElementById('socialPeople'),me=app.id;
+  assert(Number.isInteger(me),'the socket has handed out our chat id');
+  w.PGSocial.select('world');
+  socket.onmessage({data:JSON.stringify({type:'message',channel:'world',body:'mine',name:'Self',from:me,at:90000})});
+  const selfBtn=[...d.querySelectorAll('#socialLines .social-line button')].find(b=>b.textContent==='Self');
+  assert(selfBtn,'our own world-chat line renders a name button');
+  menu.hidden=true;selfBtn.click();
+  assert.equal(menu.hidden,true,'clicking your OWN name must not raise the player menu');
+  socket.onmessage({data:JSON.stringify({type:'message',channel:'world',body:'theirs',name:'Stranger',from:me+1000,at:90001})});
+  const otherBtn=[...d.querySelectorAll('#socialLines .social-line button')].find(b=>b.textContent==='Stranger');
+  assert(otherBtn,"another player's world-chat line renders a name button");
+  otherBtn.click();
+  assert.equal(menu.hidden,false,"another player's name still opens the menu");
+  assert.match(menu.textContent,/Whisper/,'the menu still offers Whisper');
+  assert.match(menu.textContent,/Close/,'and keeps its own way out');
+  menu.querySelector('strong').click();
+  assert.equal(menu.hidden,false,'a click INSIDE the menu does not close it');
+  d.body.click();
+  assert.equal(menu.hidden,true,'clicking anywhere else closes the menu');
+  otherBtn.click();
+  assert.equal(menu.hidden,false,'the menu opens again on the next click on that name');
+  d.body.click();
+  assert.equal(menu.hidden,true,'and closes again');
+ }
+
  // v374 (owner): typing /gg and pressing Enter sends the evil-grin emote on the current channel and the
  // room echoes it back, so the sender sees it too. /thx is the Thanks art (id ok), not the id 'ok'.
  app.nextChat=0;w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='/gg';

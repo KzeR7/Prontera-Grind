@@ -230,7 +230,19 @@ function syncDisplay(){if(app.channel==='log'&&feedHidden()){select(app.room?'lo
 // v273: the same menu is where a friend is made, because World chat and whispers are where people
 // meet. The entry is answered by the friends panel (assets/friends.js), which owns the server list;
 // "Friend ✓" is a state, not a button that would fail, so it is left out once you are friends.
+// v406 (owner: "make click elsewhere is will be close for other players name"): the menu had
+// no way out except Escape or the Close button, so it sat over the chat until one of those.
+// The name buttons that OPEN it are exempt - they would otherwise close the menu on the same
+// click that raised it, and the bubbling order guarantees document runs after the button.
+function closePlayerMenuOutside(e){const menu=$id('socialPeople');if(!menu||menu.hidden)return;
+ if(menu.contains(e.target))return;
+ if(e.target.closest&&e.target.closest('.social-line button,.social-player-label button'))return;
+ menu.hidden=true}
+document.addEventListener('click',closePlayerMenuOutside);
 function playerMenu(name,id){const menu=$id('socialPeople');menu.replaceChildren();menu.hidden=false;const label=document.createElement('strong');label.textContent=name;menu.append(label);
+ // v403: a seeded crowd regular is not an account - no Whisper (the name resolves nowhere on
+ // the server), no Mute, no friend request. The label still opens so the click feels alive.
+ if(typeof id==='string'&&id.startsWith('bot')){const b=document.createElement('button');b.type='button';b.textContent='Close';b.onclick=()=>{menu.hidden=true};menu.append(b);return}
  const isFriend=Number.isInteger(id)?app.friends.has(id):false;
  const items=[['Whisper',()=>{$id('socialTo').value=name;select('whisper');$id('socialInput').focus()}]];
  if(!isFriend&&typeof PGFriends==='object'&&PGFriends)items.push(['Add friend',()=>PGFriends.addPlayer(name,id)]);
@@ -242,7 +254,7 @@ function playerMenu(name,id){const menu=$id('socialPeople');menu.replaceChildren
 }
 function messageNode(m){const p=document.createElement('div');p.className='social-line';p.dataset.channel=m.channel;const t=document.createElement('time');t.textContent=new Date(m.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});p.append(t);
  // v297: pond announcements are system lines, not something a player typed.
- if(m.sys){p.classList.add('social-line-sys');const span=document.createElement('span');span.className='social-sys-text';span.textContent=m.body;p.append(span);return p}const b=document.createElement('button');b.type='button';b.textContent=(m.gm?'🛠 ':'')+(app.friends.has(m.from)?'★ ':'')+m.name+(m.channel==='whisper'?' → '+m.toName:'');b.title=(m.gm?'Game Master':'')+(m.gm&&app.friends.has(m.from)?' · ':'')+(app.friends.has(m.from)?'Friend':'');b.classList.toggle('social-gm',!!m.gm);b.onclick=()=>playerMenu(m.name,m.from);p.append(b,document.createTextNode(': '));if(m.emotion){const im=document.createElement('img');im.src=emojiURL(m.emotion);im.alt='/'+m.emotion;im.title='/'+m.emotion;p.append(im)}else p.append(document.createTextNode(m.body));return p}
+ if(m.sys){p.classList.add('social-line-sys');const span=document.createElement('span');span.className='social-sys-text';span.textContent=m.body;p.append(span);return p}const b=document.createElement('button');b.type='button';b.textContent=(m.gm?'🛠 ':'')+(app.friends.has(m.from)?'★ ':'')+m.name+(m.channel==='whisper'?' → '+m.toName:'');b.title=(m.gm?'Game Master':'')+(m.gm&&app.friends.has(m.from)?' · ':'')+(app.friends.has(m.from)?'Friend':'');b.classList.toggle('social-gm',!!m.gm);b.onclick=()=>{if(Number.isInteger(app.id)&&m.from===app.id)return;playerMenu(m.name,m.from)};p.append(b,document.createTextNode(': '));if(m.emotion){const im=document.createElement('img');im.src=emojiURL(m.emotion);im.alt='/'+m.emotion;im.title='/'+m.emotion;p.append(im)}else p.append(document.createTextNode(m.body));return p}
 function renderMessages(preserve=false){const box=$id('socialLines'),bottom=box.scrollHeight-box.scrollTop-box.clientHeight<35,top=box.scrollTop;box.replaceChildren();if(app.channel==='log'){for(const l of logShown()){const p=document.createElement('div');p.className='social-line '+(l.cls||'');p.textContent=l.m;box.append(p)}const b=document.createElement('button');b.textContent='Log filters';b.onclick=()=>openTab('log');box.append(b)}else for(const m of app.messages.filter(m=>m.channel===app.channel&&!app.muted.has(m.from)))box.append(messageNode(m));if(!box.childNodes.length)notice(app.channel==='local'?'Messages here are visible only to this plaza.':'No messages yet.');if(!preserve||bottom){box.scrollTop=box.scrollHeight;$id('socialNew').hidden=true}else {box.scrollTop=top;$id('socialNew').hidden=false}}
 $id('socialNew').onclick=()=>{$id('socialLines').scrollTop=$id('socialLines').scrollHeight;$id('socialNew').hidden=true};
 let lastCooldownKey='';
@@ -1093,7 +1105,7 @@ setInterval(()=>{
  updatePokerTurnClock();
 },200);
 
-function resetPlayers(){app.players.clear();app.scene?.clearPlayers();$id('socialLabels').querySelectorAll('.social-player-label,.social-bubble').forEach(n=>n.remove())}
+function resetPlayers(){app.players.clear();app.scene?.clearPlayers();$id('socialLabels').querySelectorAll('.social-player-label,.social-bubble').forEach(n=>n.remove());plazaBotsResync()}
 // v296 (owner): wearing a fishing title must not replace the Hunt title. The two now travel as
 // separate fields and draw as separate lines above the head - Hunt title first, fishing under it.
 function huntTitleName(st){return st&&typeof HUNT_TITLES!=='undefined'?HUNT_TITLES.find(t=>t.id===st.equippedTitle&&titleUnlocked(t))?.name||'':''}
@@ -2272,7 +2284,7 @@ $id('socialMapClose').onclick=()=>{$id('socialMapModal').hidden=true};
 async function enter(){ensureDigimonBag();discardLegacyActivities();digimonSelect.value=partnerLine()||'';if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');measureHubToolbar();syncFieldMonitor();closeHubMore();
  // v359 (owner: "I want the BGM permanent and the toggle removed"): the music player is
  // part of the hub chrome - it shows whenever the hub is open, with no toolbar toggle.
- {$id('socialBgmMount').hidden=typeof BGM!=='undefined'&&BGM.phoneShell?BGM.phoneShell():false;if(typeof BGM!=='undefined')BGM.renderUI()}syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),trainStation:startWorldTraining,sanctuaryShop:openSanctuaryShop,sanctuaryIndex:openSanctuaryIndex,trainingNearby:worldNearbyFrame,sitting});if(app.wanted){app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
+ {$id('socialBgmMount').hidden=typeof BGM!=='undefined'&&BGM.phoneShell?BGM.phoneShell():false;if(typeof BGM!=='undefined')BGM.renderUI()}syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),trainStation:startWorldTraining,sanctuaryShop:openSanctuaryShop,sanctuaryIndex:openSanctuaryIndex,trainingNearby:worldNearbyFrame,sitting});if(app.wanted){app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);plazaBotsResync();refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
 function leave(){worldNearbyStat='';worldNearby.hidden=true;worldTrainingHUD.hidden=true;worldBattleNearby.hidden=true;clearPveRepeat();sapDismissedArea=sapAreaNow='';closeActivityPanel();stopSoloPve('stopped',false);app.battleIntent=null;battleOffer=null;app.battleResult=null;app.battle={pve:[],pvp:null,queue:[]};battleHUD.hidden=true;pvpDialog.hidden=true;renderBattleResult();app.scene?.setBattleState?.(app.battle);if(!sanctuaryPanel.hidden)sanctuaryClose();FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});stashLocal(app.room);app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');$id('socialMapModal').hidden=true;if(app.scene)app.scene.active=false;resetPlayers();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');// v361: a hub-first account has no field behind the hub yet - the Field button drops them
    // into their saved map (which starts the battle) instead of restoring an empty screen.
    if(typeof hubFirstPending!=='undefined'&&hubFirstPending){
@@ -2372,7 +2384,7 @@ function receive(m){
   // workers/social is redeployed to match the page. Say so once, the moment it is detectable,
   // instead of leaving the player to diagnose rubber-banding.
   if(m.room&&R.rulesFingerprint&&!app.rulesNoticed){const mine=R.rulesFingerprint();if(m.rules!==mine){app.rulesNoticed=true;worldNotice(m.rules?'Plaza mismatch — page '+mine+' vs Social Worker '+m.rules+'. Redeploy workers/social to match this page; movement, seats and battles will misbehave until they agree.':'This Social Worker is older than the page ('+mine+') — no plaza fingerprint was sent. Redeploy workers/social to match; movement, seats and battles will misbehave until they agree.')}}
-  if(worldTraining?.room&&m.room&&m.room!==worldTraining.room)cancelWorldTraining('Gym training stopped after changing plazas.');friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());const moved=app.room!==m.room;if(moved){stashLocal(app.room);clearPokerResult();app.poker=null;app.pokerTables=null;pokerUI.renderKey='';}app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;resetPlayers();if(moved){app.messages=app.messages.filter(x=>x.channel!=='local');const back=recallLocal(m.room);if(back.length)app.messages=mergeChatMessages(app.messages,back)}pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)} if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
+  if(worldTraining?.room&&m.room&&m.room!==worldTraining.room)cancelWorldTraining('Gym training stopped after changing plazas.');friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());const moved=app.room!==m.room;if(moved){stashLocal(app.room);clearPokerResult();app.poker=null;app.pokerTables=null;pokerUI.renderKey='';}app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;plazaBotsOnRoom(m);resetPlayers();if(moved){app.messages=app.messages.filter(x=>x.channel!=='local');const back=recallLocal(m.room);if(back.length)app.messages=mergeChatMessages(app.messages,back)}pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)} if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
 
  if(m.type==='left'&&m.room===app.room){app.players.delete(m.id);app.scene?.removePlayer(m.id);population();friendPresenceChanged()}
  if(m.type==='message'){if(m.channel==='local'&&m.room!==app.room)return;app.messages=mergeChatMessages(app.messages,[m]);if(m.channel==='world')saveWorldHistory();else if(m.channel==='local')stashLocal();if(app.channel!==m.channel||chat.classList.contains('minimized'))app.unread.add(m.channel);if(!app.muted.has(m.from)){if(m.channel==='local'){const fishShown=FISHING()?.onLocalMessage?.(m.from,m.body||'');if(!fishShown)app.scene?.bubble(m.from,m);pokerTableChatBubble(m)}if(app.channel===m.channel)renderMessages(true)}tabsUI()}}
@@ -2403,6 +2415,99 @@ function putPlayer(p){p.at=performance.now();app.players.set(p.id,p);app.scene?.
  const selfId=app.room?app.id:SOLO_ID;
  if(p.id!==selfId&&app.scene?.fishing&&typeof app.scene.fishing.setRig==='function')try{app.scene.fishing.setRig(p.id,p.fish||{on:false})}catch{}
  if(p.id===selfId)sitting(p.sit);population()}
+// v403: the seeded plaza crowd. Bots live only in the scene - never in app.players - so
+// population, room counts, party lists, the minimap and the hub badge keep counting real
+// players only. The seed/clock/count ride the existing room snapshot (workers/social
+// sendRoom), so the crowd adds zero Durable Object traffic; assets/plaza-bots.js holds the
+// pure roster + schedule every viewer rebuilds from that seed.
+let plazaBotSeed=null,plazaBotCount=6,plazaBotSkew=0,plazaBotRoster=null,plazaBotKey='';
+const PLAZA_BOT_SOLO_SEED=0x504c415a;
+function plazaBotsModule(){return typeof PGPlazaBots==='object'&&PGPlazaBots&&typeof PGPlazaBots.buildRoster==='function'?PGPlazaBots:null}
+function plazaBotsRoomSeed(room){return (Math.imul(room|0,0x9e3779b9)^0x5f356495)>>>0}
+function plazaBotsOnRoom(m){
+ const B=plazaBotsModule();if(!B)return;
+ const snap=m&&m.bots;
+ if(snap&&Number.isFinite(snap.seed)){plazaBotSeed=snap.seed>>>0;plazaBotSkew=Number.isFinite(snap.at)?snap.at-Date.now():0;plazaBotCount=Math.max(0,Math.min(B.MAX_COUNT,Math.floor(snap.count)))}
+ else if(m&&m.room){plazaBotSeed=plazaBotsRoomSeed(m.room);plazaBotSkew=0;plazaBotCount=B.DEFAULT_COUNT}
+ // room0 (the leave ack) keeps the last crowd: leave() already stopped the plaza.
+}
+function plazaBotsWantedSeed(){
+ if(plazaBotSeed!=null)return plazaBotSeed;
+ if(typeof CLOUD==='object'&&CLOUD&&CLOUD.on)return null; // wait for the room snapshot
+ return PLAZA_BOT_SOLO_SEED;
+}
+function plazaBotsEnsureRoster(){
+ const B=plazaBotsModule();if(!B)return null;
+ const seed=plazaBotsWantedSeed();
+ if(seed==null||!plazaBotCount){
+  if(plazaBotRoster){for(const b of plazaBotRoster)app.scene?.removePlayer?.(b.id);plazaBotRoster=null;plazaBotKey=''}
+  return null;
+ }
+ const key=seed+':'+plazaBotCount;
+ if(plazaBotRoster&&plazaBotKey===key)return plazaBotRoster;
+ if(plazaBotRoster)for(const b of plazaBotRoster)app.scene?.removePlayer?.(b.id);
+ plazaBotRoster=null;
+ try{plazaBotRoster=B.buildRoster(seed,{count:plazaBotCount})}catch(e){console.warn('Plaza crowd:',e);plazaBotRoster=[]}
+ plazaBotKey=key;
+ return plazaBotRoster;
+}
+function plazaBotsPush(state){
+ if(!app.scene||typeof app.scene.putPlayer!=='function')return;
+ app.scene.putPlayer(state);
+ if(app.scene.fishing&&typeof app.scene.fishing.setRig==='function')try{app.scene.fishing.setRig(state.id,state.fish||{on:false})}catch{}
+}
+function plazaBotsRealSeatTaken(seat){
+ if(!Number.isInteger(seat))return false;
+ for(const p of app.players.values())if(p.seat===seat)return true;
+ return false;
+}
+function plazaBotsStep(bot,t,force){
+ const B=plazaBotsModule();if(!B||!app.scene)return;
+ const cur=B.segmentAt(bot,t),st=B.stateAt(bot,t),seg=cur.seg;
+ const key=cur.cycle+':'+cur.index+':'+(st.fish?st.fish.mode:'');
+ // A real player took the bot's bench or chair: stand aside for the rest of the segment
+ // instead of two characters occupying one seat. Checked every tick, once per segment.
+ if((seg.kind==='seat'||seg.kind==='fish')&&!bot._yielded&&Number.isInteger(seg.seat)&&plazaBotsRealSeatTaken(seg.seat)){
+  bot._yielded=true;
+  const fb=seg.fallback;
+  const route=fb?R.path(st.x,st.z,fb):null;
+  plazaBotsPush({id:bot.id,name:bot.name,room:app.room,look:bot.look,bot:true,pokerSeat:null,
+   x:st.x,z:st.z,dir:st.dir||0,path:route&&route.length?route:[],sit:false,seat:null,fish:null});
+  bot._key=key;
+  return;
+ }
+ const fresh=force||bot._key!==key;
+ if(fresh){
+  bot._key=key;
+  plazaBotsPush({id:bot.id,name:bot.name,room:app.room,look:bot.look,bot:true,pokerSeat:null,
+   x:st.x,z:st.z,dir:st.dir||0,path:st.path,sit:st.sit,seat:st.seat,fish:st.fish});
+ }
+ // Emotion bubble, once per segment cycle: idles wave on arrival, sitters after sitting down.
+ const em=seg.emote;
+ if(em&&!bot._yielded){
+  const ekey=cur.cycle+':'+cur.index;
+  const due=em.after==='enter'?cur.local>=em.at:cur.local>=(seg.walkMs||0)+em.at;
+  if(due&&bot._emoteKey!==ekey){
+   bot._emoteKey=ekey;
+   if(!force&&app.scene&&typeof app.scene.bubble==='function')try{app.scene.bubble(bot.id,{emotion:em.emotion})}catch{}
+  }
+ }
+}
+function plazaBotsTick(){
+ const B=plazaBotsModule();if(!B||!app.wanted||!app.scene)return;
+ if(typeof document!=='undefined'&&document.hidden)return;
+ const roster=plazaBotsEnsureRoster();if(!roster||!roster.length)return;
+ const t=Date.now()+plazaBotSkew;
+ for(const bot of roster)plazaBotsStep(bot,t,false);
+}
+// Called after every resetPlayers(): the scene was just wiped, so all bots re-push on the next
+// step (room switch, socket drop with the plaza still open, first enter).
+function plazaBotsResync(){
+ const B=plazaBotsModule();if(!B||!app.wanted||!app.scene)return;
+ const roster=plazaBotsEnsureRoster();if(!roster||!roster.length)return;
+ const t=Date.now()+plazaBotSkew;
+ for(const bot of roster){bot._key=null;bot._yielded=false;plazaBotsStep(bot,t,true)}
+}
 // v319: the field HUD Social Hub button (third seat in #minimapTools). The count is the server's
 // total across every Plaza room; while standing in a plaza the friend count is read from the
 // live player list, on the field it rides the personalised `plaza.friends` figure. The badge
@@ -2524,7 +2629,7 @@ function connect(){
    // once the retry ladder has had a chance, so the status line names the cause instead of repeating
    // "retrying" forever. Not for 4001 (that one explains itself) and not before a second attempt.
    if(e.code!==4001&&app.retry>=2)diagnoseSocket()};ws.onerror=()=>status('Chat unavailable — checking connection…');}
-let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();
+let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{try{plazaBotsTick()}catch{}if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();
  // v313: a socket can open against a cold Durable Object and then sit there - Pages accepted the
  // upgrade, the room has not said hello. Nothing used to notice: the plaza showed "Connecting to
  // chat…" forever with a healthy-looking socket and no reconnect. A handshake that takes longer than
