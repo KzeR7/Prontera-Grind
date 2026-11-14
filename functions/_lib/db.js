@@ -134,8 +134,7 @@ export const allUsers = (db, limit = 200) =>
                      (SELECT level FROM saves s WHERE s.user_id = u.id) AS level,
                      (SELECT cls FROM saves s WHERE s.user_id = u.id) AS cls,
                      (SELECT s.ip_hash FROM sessions s WHERE s.user_id = u.id
-                        AND s.ip_hash IS NOT NULL LIMIT 1) AS ip_fp,
-                     EXISTS(SELECT 1 FROM save_alerts a WHERE a.user_id = u.id) AS alerted
+                        AND s.ip_hash IS NOT NULL LIMIT 1) AS ip_fp
               FROM users u
               -- v403: most recent sign-in first; a player who has never signed in (NULL) sorts last
               -- instead of being treated as the largest value, then by account age so the tail is
@@ -457,8 +456,28 @@ export const existingSaveAlertKinds = (db, userId) =>
   db.prepare(`SELECT kind FROM save_alerts WHERE user_id = ?`).bind(Number(userId)).all();
 
 // This account's flags, newest first (player panel).
-export const saveAlertsFor = (db, userId) =>
-  db.prepare(`SELECT * FROM save_alerts WHERE user_id = ? ORDER BY last_seen DESC`).bind(Number(userId)).all();
+// Fails OPEN: if migration 0015 has not been applied, the player detail still loads with an
+// empty flag list — a missing optional table must never take the console down.
+export async function saveAlertsFor(db, userId) {
+  try {
+    return await db.prepare(`SELECT * FROM save_alerts WHERE user_id = ? ORDER BY last_seen DESC`).bind(Number(userId)).all();
+  } catch (e) {
+    console.warn('save_alerts read failed (migration 0015 missing?):', e && e.message);
+    return { results: [] };
+  }
+}
+
+// Which accounts carry at least one save-audit flag, for the player-list marker. Fails OPEN to
+// "nobody flagged" for the same reason — the list itself must always load.
+export async function alertedUserIds(db) {
+  try {
+    const rows = (await db.prepare(`SELECT DISTINCT user_id FROM save_alerts`).all()).results;
+    return new Set(rows.map(r => Number(r.user_id)));
+  } catch (e) {
+    console.warn('save_alerts list failed (migration 0015 missing?):', e && e.message);
+    return new Set();
+  }
+}
 
 // Every account's flags, newest first (the console's "Suspicious saves" card).
 export const recentSaveAlerts = (db, limit=100) =>

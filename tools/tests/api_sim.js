@@ -1474,6 +1474,34 @@ await T('save audit: the owner account is never audited (GM tools legitimately m
   assert.strictEqual(Number(msgs), 0, 'the owner is never mailed about their own account');
 });
 
+await T('the console fails open when migration 0015 is absent — the "sign in first" regression', async () => {
+  const h = freshEnv();
+  const owner = await api.register(h.env, { u: 'DegOwner', p: 'owner-password-1' });
+  h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='DegOwner'").run();
+  const p = await api.register(h.env, { u: 'DegPlayer', p: 'deg-password-1' });
+  let put = await api.putSave(h.env, p.cookie, { blob: quietSave(), version: 1 });
+  assert.strictEqual(put.status, 200, 'an ordinary save records normally');
+  // A deployment where the code shipped but migration 0015 has not been applied yet — exactly
+  // what bounced the signed-in owner back to the sign-in card after PR 228 merged.
+  h.sqlite.exec('DROP TABLE save_alerts');
+  // The audit hook now fails (its tables are gone) — and must still never fail the save.
+  const evil = JSON.stringify(Object.assign(JSON.parse(quietSave()), { st: { str: 300 } }));
+  put = await api.putSave(h.env, p.cookie, { blob: evil, version: put.data.version });
+  assert.strictEqual(put.status, 200, 'an audit failure must never fail an accepted save: ' + JSON.stringify(put.data));
+  const list = await api.players(h.env, owner.cookie);
+  assert.strictEqual(list.status, 200, 'the player list must load: ' + JSON.stringify(list.data || {}).slice(0, 200));
+  assert.ok(list.data.players.length >= 2, 'accounts still listed');
+  assert.ok(list.data.players.every(x => x.alerted === false), 'the ⚠ marker degrades to off');
+  const id = h.sqlite.prepare(`SELECT id FROM users WHERE username='DegPlayer'`).get().id;
+  const detail = await api.player(h.env, owner.cookie, id);
+  assert.strictEqual(detail.status, 200, 'the player detail must load: ' + JSON.stringify(detail.data || {}).slice(0, 200));
+  assert.deepStrictEqual(detail.data.alerts, [], 'an absent table reads as an empty flag list');
+  const audit = await call('onRequestGet', 'api/gm/audit.js', { request: req('GET', '/api/gm/audit', { cookie: owner.cookie }), env: h.env });
+  assert.strictEqual(audit.status, 200, 'the Suspicious saves card must answer: ' + JSON.stringify(audit.data || {}).slice(0, 200));
+  assert.deepStrictEqual(audit.data.alerts, []);
+  assert.match(String(audit.data.note || ''), /0015/, 'the card names the migration to apply');
+});
+
 sqlite.close();
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
