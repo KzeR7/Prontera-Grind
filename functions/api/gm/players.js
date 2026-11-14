@@ -14,8 +14,14 @@ export const onRequestGet = guard(async ({ request, env }) => {
   if (!isGm(user)) return fail('Not a GM.', 403);
 
   const rows = await db.allUsers(env.DB, 200);
+  const bannedNets = new Set((await db.listIpBans(env.DB, 1000)).map(b => b.ip_hash));
   const players = rows.results.map(r => ({
     id: r.id, u: r.username, gm: r.gm, banned: !!r.banned,
+    // 🚫 marker in the console: this account's CURRENT session comes from a suspended network —
+    // the usual shape of "he came back on a new name". Derived, never a client value.
+    netBanned: !!(r.ip_fp && bannedNets.has(r.ip_fp)),
+    // ⚠ marker: this account carries a save-audit flag (0015) — review-only, see the card.
+    alerted: !!r.alerted,
     level: r.level, cls: r.cls, version: r.version ?? 0,
     lastSync: r.updated_at ?? null, lastLogin: r.last_login_at ?? null, created: r.created_at,
     hasSave: r.version != null,

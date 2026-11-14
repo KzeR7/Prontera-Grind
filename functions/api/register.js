@@ -26,6 +26,12 @@ export const onRequestPost = guard(async ({ request, env }) => {
   const address = checkEmail(email);
 
   const ip = await ipHash(request);
+  // NETWORK BAN (migration 0014): no new account from a suspended network. Checked before the
+  // rate-limit rows so a banned address does not even write a counter. There is no owner
+  // bypass here — a brand-new registration cannot be an owner anyway.
+  if (await db.isIpBanned(D, ip)) {
+    return fail('This network is suspended. Contact the GM.', 403, { ipBanned: true });
+  }
   const gate = await db.hitRate(D, `reg:${ip || 'noip'}`, 10, 3600_000);
   if (!gate.ok) return fail('Too many accounts from here. Try again later.', 429);
 
@@ -50,7 +56,9 @@ export const onRequestPost = guard(async ({ request, env }) => {
     expiresAt: Date.now() + SESSION_DAYS * 86400000, ua: userAgent(request), ipHash: ip,
   });
   if (!created) return fail('Account details changed. Please sign in again.', 401);
-  await db.logEvent(D, username, user.id, 'register', '');
+  // Record the network fingerprint (never the raw address) alongside the account creation, the
+  // same way failed logins already do — this is how the GM console links alternate accounts.
+  await db.logEvent(D, username, user.id, 'register', ip ? `ip ${ip}` : '');
 
   return json({ u: user.username, gm: user.gm, recovery: code },
     201, { 'Set-Cookie': sessionCookie(token) });

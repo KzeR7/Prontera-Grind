@@ -14,6 +14,9 @@ export const onRequestPost = guard(async ({request, env}) => {
   const ip = await ipHash(request);
   const byIp = await db.hitRate(env.DB, `recover-ip:${ip || 'noip'}`, 20, 900000);
   if (!byIp.ok) return fail('Too many recovery attempts. Try again later.', 429);
+  // NETWORK BAN (migration 0014): a suspended network may not reset passwords either. The
+  // owner (gm>=2) keeps the same bypass as on login, checked below once the account is known.
+  const netBanned = await db.isIpBanned(env.DB, ip);
   if (!USERNAME_RE.test(username)) return fail('Recovery details are incorrect or unavailable.', 400);
   const byName = await db.hitRate(env.DB, `recover-name:${username.toLowerCase()}`, 5, 900000);
   if (!byName.ok) return fail('Too many recovery attempts. Try again later.', 429);
@@ -24,6 +27,9 @@ export const onRequestPost = guard(async ({request, env}) => {
   if (!user || user.banned || !user.email || user.email.toLowerCase() !== email ||
       !/^[A-Z0-9-]{8,32}$/.test(code) || !await verifyRecovery(code, user.recovery_hash)) {
     return fail('Recovery details are incorrect or unavailable.', 400);
+  }
+  if (netBanned && user.gm < 2) {
+    return fail('This network is suspended. Contact the GM.', 403, { ipBanned: true });
   }
   const nextCode = recoveryCode();
   const [passwordHash, nextRecoveryHash] = await Promise.all([hashPassword(password), hashRecovery(nextCode)]);

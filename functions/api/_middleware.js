@@ -20,8 +20,15 @@
 //
 // Unset (local dev, tests, `wrangler pages dev`) the pause does not exist and nothing changes.
 import { gateStub } from '../_lib/gate-binding.js';
+import { json, ipHash } from '../_lib/http.js';
+import { readCookie, tokenHash } from '../_lib/auth.js';
+import { isIpBanned, sessionByToken } from '../_lib/db.js';
 
 const CONTROL_PATH = '/api/gate';
+// The login endpoint enforces the network ban itself (after the password check, with the
+// owner exception) — the front door must still answer a banned player's sign-in attempt with
+// the real reason instead of a blanket refusal the handler could have explained better.
+const LOGIN_PATH = '/api/sessions';
 const RETRY_AFTER = '30';
 
 export const gateRequired = env => String((env && env.WRITE_GATE) || '').trim().toLowerCase() === 'required';
@@ -45,6 +52,43 @@ const askGate = (gate, path, body) => gate.fetch(new Request('https://gate.inter
   body: JSON.stringify(body),
 }));
 
+// NETWORK BANS (migration 0014): refuse every /api request from a suspended network in one
+// place, so a banned address cannot keep playing on an old session, chat, or sync saves —
+// not just fail at the login box. Properties, in order of importance:
+//   * fails OPEN if anything about the check itself breaks (missing migration, D1 error):
+//     a broken ban lookup must never take the whole API down — it logs and lets the request
+//     through, and the entry points (login/register/recover) each re-check on their own.
+//   * /api/sessions is exempt: the login handler gives the ban answer AFTER password
+//     verification and lets the owner (gm>=2) through, so a mistaken ban is always fixable.
+//   * an already-signed-in OWNER session is exempt everywhere, for the same reason: the one
+//     account that cannot be suspended must be able to open the console and remove the ban.
+//   * no CF-Connecting-IP (local dev, tests) means no fingerprint: nothing to match, pass.
+async function networkBanVerdict(request, env, pathname) {
+  let fp = null;
+  try {
+    fp = await ipHash(request);
+    if (!fp) return null;
+    if (!(await isIpBanned(env.DB, fp))) return null;
+    if (pathname === LOGIN_PATH) return null;
+    if (await ownerSession(request, env.DB)) return null;
+    return json({ err: 'This network is suspended. Contact the GM.', ipBanned: true }, 403);
+  } catch (e) {
+    if (fp) console.warn('ip-ban check failed; request allowed:', e && e.message);
+    return null;
+  }
+}
+
+async function ownerSession(request, DB) {
+  try {
+    const token = readCookie(request);
+    if (!token || token.length < 40) return false;
+    const row = await sessionByToken(DB, await tokenHash(token));
+    return !!(row && row.expires_at >= Date.now() && Number(row.gm) >= 2 && !row.banned);
+  } catch {
+    return false;
+  }
+}
+
 export async function onRequest(context) {
   const url = new URL(context.request.url);
   const host = url.hostname;
@@ -59,6 +103,13 @@ export async function onRequest(context) {
   }
 
   if (url.pathname === CONTROL_PATH) return context.next();
+
+  // Network bans sit in front of the gate: a suspended address should not even spend a
+  // Durable Object request on the way to being refused. (And /api/gate, returned just above,
+  // stays reachable so the owner can always unpause — or unban via the console afterwards.)
+  const banned = await networkBanVerdict(context.request, context.env, url.pathname);
+  if (banned) return banned;
+
   if (!gateRequired(context.env)) return context.next();
 
   const namespace = context.env && context.env.GATE;

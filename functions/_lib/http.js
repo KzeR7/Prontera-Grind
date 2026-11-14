@@ -79,11 +79,33 @@ export function guard(handler) {
 }
 
 // A coarse, non-reversible client fingerprint for the audit trail (never the raw IP).
+// The digest is deterministic ('pg-ip:' + address, first 64 bits) so the same network hashes to
+// the same value on every request — that is what makes network bans (migration 0014) and the
+// GM console's "same network" match possible without ever storing an address. The first
+// X-Forwarded-For entry wins and hex letters are folded to lowercase, so one network cannot
+// present two spellings of itself.
+async function digestAddress(address) {
+  const bits = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('pg-ip:' + address));
+  return [...new Uint8Array(bits)].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export async function ipHash(request) {
   const raw = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || '';
   if (!raw) return null;
-  const bits = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('pg-ip:' + raw.split(',')[0].trim()));
-  return [...new Uint8Array(bits)].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
+  return digestAddress(raw.split(',')[0].trim().toLowerCase());
+}
+
+// Normalise what the GM types into the network-ban box into the stored fingerprint: either a
+// fingerprint we already hold (16 hex chars — the form the console shows), or a raw IPv4/IPv6
+// literal that is hashed here and never stored raw. Anything else is refused (null) — a
+// half-typed string must not become a silent, useless ban row. No ranges/CIDR: bans are exact.
+export async function banFingerprint(value) {
+  const v = String(value || '').trim().toLowerCase();
+  if (/^[0-9a-f]{16}$/.test(v)) return v;
+  if (!/^[0-9a-f:.]{3,64}$/.test(v)) return null;
+  if (!/[.:]/.test(v)) return null;            // an IP literal always carries '.' or ':'
+  if (/[^0-9a-f.:]/.test(v)) return null;      // (belt and braces after the class check)
+  return digestAddress(v);
 }
 
 export const userAgent = request => (request.headers.get('User-Agent') || '').slice(0, 120) || null;

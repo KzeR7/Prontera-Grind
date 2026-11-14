@@ -16,11 +16,16 @@ const MIGRATIONS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..',
 // decision rather than silently surviving, or being deleted by a generic loop.
 // `friends` is preserved with the shop's tables: it is a relationship between two ACCOUNTS, not
 // gameplay progress, and the same two people are still friends after a character reset.
-export const PRESERVED_TABLES = Object.freeze(['users', 'rate_limits', 'shop_orders', 'entitlements', 'shop_webhooks', 'friends']);
+// `ip_bans` (migration 0014) is preserved with `users` for the same class of reason: a network
+// suspension is moderation state, exactly like the `banned` column that survives on the accounts
+// themselves. A gameplay reset that quietly reopened a suspended network would undo a live ban.
+export const PRESERVED_TABLES = Object.freeze(['users', 'rate_limits', 'shop_orders', 'entitlements', 'shop_webhooks', 'friends', 'ip_bans']);
 export const CLEARED_TABLES = Object.freeze([
   'competition_prize_ledger', 'competition_placements', 'competition_scores', 'competition_periods',
   'leaderboard_echo_rewards', 'leaderboard_echo_settlements', 'leaderboard_echo', 'leaderboard_kills',
   'offline_reward_claims', 'damage_samples', 'damage_alerts', 'competition_baselines',
+  // 0015: save-audit flags describe saves that no longer exist after a reset.
+  'save_alerts',
   'gm_gift_batches', 'grants', 'message_reads', 'messages', 'save_history', 'sessions',
 ]);
 const UPDATED_TABLES = ['saves', 'events', 'unverified_echo_config'];
@@ -88,6 +93,7 @@ export const CHECK_SQL = `SELECT
   (SELECT COUNT(*) FROM offline_reward_claims) AS offline_reward_claims,
   (SELECT COUNT(*) FROM damage_samples) AS damage_samples,
   (SELECT COUNT(*) FROM damage_alerts) AS damage_alerts,
+  (SELECT COUNT(*) FROM save_alerts) AS save_alerts,
   (SELECT COUNT(*) FROM competition_baselines) AS competition_baselines,
   (SELECT COUNT(*) FROM gm_gift_batches) AS gm_gift_batches,
   (SELECT starts_at FROM unverified_echo_config WHERE singleton=1) AS starts_at,

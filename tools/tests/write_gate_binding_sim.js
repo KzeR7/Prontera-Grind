@@ -212,9 +212,19 @@ await ok('Cloudflare local runtime: closed on boot, CLI opens writes, saves pass
           {type: 'ESModule', path: 'functions/api/gate.js'},
           {type: 'ESModule', path: 'functions/_lib/gate-binding.js'},
           {type: 'ESModule', path: 'functions/_lib/http.js'},
+          // The network-ban check in the middleware resolves the caller (owner exemption)
+          // through the real session code, so workerd needs its module graph too:
+          // auth.js -> db.js + scrypt-reader.js (and http.js's lazy import of auth.js).
+          {type: 'ESModule', path: 'functions/_lib/auth.js'},
+          {type: 'ESModule', path: 'functions/_lib/db.js'},
+          {type: 'ESModule', path: 'functions/_lib/scrypt-reader.js'},
         ],
         modulesRoot: '.',
         compatibilityDate: compatDate,
+        // Pages Functions run with the Node.js compatibility flag (auth.js's password
+        // verification graph reaches node:crypto through scrypt-reader.js); without it the
+        // local workerd refuses to load the middleware's imports at all.
+        compatibilityFlags: ['nodejs_compat'],
         durableObjects: {GATE: {className: 'WriteGate', scriptName: 'prontera-gate'}},
         bindings: {WRITE_GATE: 'required'},
       },
