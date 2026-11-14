@@ -1,0 +1,299 @@
+// _lib/save-audit.js — the server's referee, without a live game.
+//
+// The browser runs the whole simulation (kills, exp, drops), so the server can never PROVE a
+// save is honest — but it can prove parts of it are IMPOSSIBLE, and it can prove that the rate
+// of progress between two accepted saves exceeded anything the game itself can pay out. This
+// module is that check, run automatically on every accepted cloud save so the owner does not
+// have to watch the game 24/7: flags land in `save_alerts`, the GM console's "Suspicious saves"
+// card, and a targeted mail message to the owner the first time a rule fires.
+//
+// DESIGN RULES (kept in step with docs/COMPETITION-SECURITY.md and the damage monitor):
+//   * REVIEW-ONLY. A flag never rejects a save, never bans, never changes a score. The save is
+//     stored; the console shows the evidence; the owner decides.
+//   * Only server-owned clocks and stored numbers decide: elapsed time is the wall time between
+//     two ACCEPTED saves (client clocks are never consulted), and a server-issued offline claim
+//     is subtracted from the kill delta so away progress is never called cheating.
+//   * GM gifts are subtracted too: every grant claimed inside the window (zeny, level, resources)
+//     is credited back, so the owner's own giveaways never flag the receiver.
+//   * Thresholds are PROVISIONAL and deliberately generous: a flag must mean "a human should look
+//     at this", not "the numbers are unusual". Every label says which limit was broken.
+//
+// STATIC INVARIANTS are transcribed from index.html and must be kept in step with it:
+//   * statCapForLv: BASECAP 99 below Base Lv 100, MAXST 120 from Lv 100 (line ~2946).
+//   * points(lv):  10 + Σ 4+⌊i/5⌋ over levels 2..lv; spent(st): Σ cost of each stat step
+//     (1+⌊(n-1)/10⌋ below 100, 10+n-100 above) — the pts invariant is pts + spent === points.
+//   * refine cap: +10 on normal gear, +15 on Mythic (sec 6) (refineUI `maxRef`).
+//   * zeny cap: 1e15, level cap: 150 (validate.js CAPS).
+
+import * as db from './db.js';
+import { CAPS } from './validate.js';
+
+export const AUDIT_LABELS = {
+  'level-over-cap': 'Impossible base level',
+  'stat-over-cap': 'Stat above the level cap',
+  'stat-points-over': 'More stat points than any level can earn',
+  'zeny-over-cap': 'Impossible Zeny figure',
+  'negative-kills': 'Negative kill count',
+  'refine-over-cap': 'Refine above the maximum',
+  'affix-over-cap': 'Affix value above any legitimate roll',
+  'kill-rate': 'Kill rate above the server cap',
+  'level-rate': 'Level speed above human limits',
+  'zeny-rate': 'Zen gain above human limits',
+};
+export const rateLabel = key => AUDIT_LABELS[key] || ('Material gain above limit: ' + key.replace(/^rate:/, ''));
+
+// ---------------------------------------------------------------- helpers ----
+const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
+const floor = v => Math.max(0, Math.floor(num(v)));
+
+// index.html: statCapForLv = lv => lv >= ELITELV ? MAXST : BASECAP
+export const statCapForLv = lv => (num(lv) >= 100 ? 120 : 99);
+// index.html: points = lv => 10 + Σ (4 + ⌊i/5⌋), i = 2..lv
+export const pointsAt = lv => {
+  const L = Math.max(0, Math.floor(num(lv)));
+  let n = 10;
+  for (let i = 2; i <= L; i++) n += 4 + Math.floor(i / 5);
+  return n;
+};
+// index.html: spent = st => Σ over stats of (n<100 ? 1+⌊(n-1)/10⌋ : 10+n-100), n = 1..v-1
+export const statsSpent = st => {
+  if (!st || typeof st !== 'object') return 0;
+  let sum = 0;
+  for (const v of Object.values(st)) {
+    const target = Math.max(1, Math.floor(num(v)));
+    for (let n = 1; n < target; n++) sum += n < 100 ? 1 + Math.floor((n - 1) / 10) : 10 + n - 100;
+  }
+  return sum;
+};
+const refineCap = item => (Number(item && item.sec) === 6 ? 15 : 10);
+
+// What one of our counters is in the save blob (gift resource key -> save path).
+export const COUNTERS = {
+  shards: s => floor(s && s.shards),
+  refineScrolls: s => floor(s && s.refineScrolls),
+  mythicScrolls: s => floor(s && s.mythicScrolls),
+  ori: s => floor(s && s.ore && s.ore.ori),
+  elu: s => floor(s && s.ore && s.ore.elu),
+  ascMat0: s => floor(s && s.ascensionMat && s.ascensionMat[0]),
+  ascMat1: s => floor(s && s.ascensionMat && s.ascensionMat[1]),
+  ascMat2: s => floor(s && s.ascensionMat && s.ascensionMat[2]),
+  nmat0: s => floor(s && s.nmMat && s.nmMat[0]),
+  fishcoins: s => floor(s && s.fishing && s.fishing.coins),
+  petcoins: s => floor(s && s.digimonBag && s.digimonBag.coins),
+};
+
+// Provisional per-hour limits. Generous on purpose: each must be beatable only by play the game
+// itself cannot produce (or by an edited save). Cross-check a flag against gifts before acting.
+export const RATE_LIMITS = {
+  kills: 30000,                    // the server's own OFFLINE_RATE_CAP — the most it will ever pay
+  zeny: 1e9,                       // ≫ legit max farm (30k kills/h × top zeny/kill with slack)
+  shards: 3000, ori: 800, elu: 800,
+  refineScrolls: 200, mythicScrolls: 100,
+  ascMat0: 200, ascMat1: 200, ascMat2: 200, nmat0: 200,
+  fishcoins: 100000, petcoins: 10000,
+};
+// Levels per hour by the level you STARTED the window at. Early game can be quick; Lv 100+
+// cannot: the exp curve (needAt) makes 30 levels in one hour unreachable without a hack.
+export const levelRateLimit = prevLv => (num(prevLv) >= 100 ? 30 : num(prevLv) >= 40 ? 90 : 240);
+
+// --------------------------------------------------------------- static ----
+// Impossible IN THIS SAVE, no timing needed. Runs on every accepted save.
+export function auditStaticSave(save) {
+  const out = [];
+  if (!save || typeof save !== 'object' || Array.isArray(save)) return out;
+  const lv = num(save.lv);
+  if (lv > CAPS.level || lv < 1) {
+    out.push({ kind: 'level-over-cap', value: lv, threshold: CAPS.level, detail: `base level ${lv}` });
+  }
+  const st = save.st && typeof save.st === 'object' ? save.st : null;
+  if (st) {
+    const cap = statCapForLv(lv);
+    let worst = 0, worstKey = '';
+    for (const [k, v] of Object.entries(st)) {
+      const val = Math.floor(num(v));
+      if (val > worst) { worst = val; worstKey = k; }
+    }
+    if (worst > cap) {
+      out.push({ kind: 'stat-over-cap', value: worst, threshold: cap,
+        detail: `${worstKey} ${worst} at base level ${Math.floor(lv)} (cap ${cap})` });
+    }
+    // The game's own invariant: pts === points(lv) − spent(st), recomputed at load and after
+    // every refund. More than that exists only in an edited save.
+    const pts = floor(save.pts), spent = statsSpent(st), entitled = pointsAt(lv);
+    if (pts + spent > entitled) {
+      out.push({ kind: 'stat-points-over', value: pts + spent, threshold: entitled,
+        detail: `${pts} unspent + ${spent} spent = ${pts + spent}, but level ${Math.floor(lv)} earns ${entitled}` });
+    }
+  }
+  const zeny = num(save.zeny);
+  if (zeny > CAPS.maxZeny || zeny < 0) {
+    out.push({ kind: 'zeny-over-cap', value: zeny, threshold: CAPS.maxZeny, detail: `zeny ${zeny}` });
+  }
+  const kills = num(save.kills);
+  if (save.kills !== undefined && kills < 0) {
+    out.push({ kind: 'negative-kills', value: kills, threshold: 0, detail: `kills ${kills}` });
+  }
+  // Gear: refine ceilings and affix magnitudes, across everything the save carries.
+  const items = [
+    ...Object.values(save.eq && typeof save.eq === 'object' ? save.eq : {}).filter(Boolean),
+    ...(Array.isArray(save.inv) ? save.inv : []).filter(Boolean),
+    ...(Array.isArray(save.cards) ? save.cards : []).filter(Boolean),
+  ];
+  let worstRefine = 0, worstAffix = 0;
+  for (const it of items) {
+    const r = Math.floor(num(it.r));
+    if (r > worstRefine) worstRefine = r;
+    for (const list of [it.aff, it.effects]) {
+      if (!Array.isArray(list)) continue;
+      for (const a of list) {
+        const v = num(a && a.v);
+        if (v > worstAffix) worstAffix = v;
+      }
+    }
+  }
+  if (worstRefine > 0) {
+    // Only flag when the item that holds it exists and the roll exceeds ITS ceiling; a save can
+    // carry different sections, so the check is per item, not per worst number.
+    for (const it of items) {
+      if (Math.floor(num(it.r)) > refineCap(it)) {
+        out.push({ kind: 'refine-over-cap', value: Math.floor(num(it.r)), threshold: refineCap(it),
+          detail: `${it.name || 'item'} +${Math.floor(num(it.r))} (max +${refineCap(it)})` });
+        break; // one row per kind is enough; the console shows the worst case
+      }
+    }
+  }
+  if (worstAffix > 10000) {
+    out.push({ kind: 'affix-over-cap', value: worstAffix, threshold: 10000,
+      detail: `affix/effect value ${worstAffix} (max legitimate roll is five figures below)` });
+  }
+  return out;
+}
+
+// ----------------------------------------------------------------- rates ----
+// Progress BETWEEN two accepted saves. Pure: everything (prev row, next save, elapsed ms,
+// offline-claim kills, grant credits) is an argument, so tests can drive any timing.
+//
+// credits: { zeny, levels, kills, resources: { counter: amount } } — gifts claimed in the window.
+export function auditSaveRates({ prev, next, elapsedMs, claimKills = 0, credits = null }) {
+  const out = [];
+  if (!(elapsedMs >= 60_000)) return out;           // sub-minute windows are too noisy to judge
+  const hours = elapsedMs / 3_600_000;
+  const cred = credits || { zeny: 0, levels: 0, kills: 0, resources: {} };
+  const c = key => num(cred.resources && cred.resources[key]);
+
+  // Kills: the grind backbone. Claimed offline kills are the SERVER's own payout, never a flag.
+  const killsDelta = Math.max(0, floor(next.kills) - floor(prev.kills) - Math.max(0, floor(claimKills)));
+  const killRate = killsDelta / hours;
+  if (killRate > RATE_LIMITS.kills) {
+    out.push({ kind: 'kill-rate', value: Math.round(killRate), threshold: RATE_LIMITS.kills,
+      detail: `${killsDelta.toLocaleString('en-US')} kills in ${Math.round(elapsedMs / 60000)} min` });
+  }
+
+  // Levels: by the band you started in (early game is allowed to be fast, Lv 100+ is not).
+  const lvDelta = Math.max(0, floor(next.lv) - floor(prev.lv) - floor(cred.levels));
+  if (lvDelta >= 3) {
+    const limit = levelRateLimit(prev.lv);
+    const rate = lvDelta / hours;
+    if (rate > limit) {
+      out.push({ kind: 'level-rate', value: Math.round(rate * 10) / 10, threshold: limit,
+        detail: `+${lvDelta} levels in ${Math.round(elapsedMs / 60000)} min from level ${floor(prev.lv)}` });
+    }
+  }
+
+  // Zeny: only the blatant end (a real farm at the kill-rate cap stays under this).
+  const zenyDelta = Math.max(0, num(next.zeny) - num(prev.zeny) - floor(cred.zeny));
+  const zenyRate = zenyDelta / hours;
+  if (zenyRate > RATE_LIMITS.zeny) {
+    out.push({ kind: 'zeny-rate', value: Math.round(zenyRate), threshold: RATE_LIMITS.zeny,
+      detail: `${zenyDelta.toLocaleString('en-US')} zeny in ${Math.round(elapsedMs / 60000)} min` });
+  }
+
+  // Materials: the "made in 5 minutes" detector. One flag per counter.
+  for (const [key, read] of Object.entries(COUNTERS)) {
+    const limit = RATE_LIMITS[key];
+    if (!limit) continue;
+    const delta = Math.max(0, read(next.raw) - read(prev.raw) - c(key));
+    const rate = delta / hours;
+    if (rate > limit) {
+      out.push({ kind: 'rate:' + key, value: Math.round(rate), threshold: limit,
+        detail: `+${delta.toLocaleString('en-US')} ${key} in ${Math.round(elapsedMs / 60000)} min` });
+    }
+  }
+  return out;
+}
+
+// Grant payloads claimed inside the window, credited back against the deltas. Pure and total:
+// an unrecognised payload contributes nothing, which can only ever ADD a flag, never hide one
+// — and a hidden flag would need a later window to exceed the limit anyway.
+export function creditsFromGrants(rows) {
+  const credits = { zeny: 0, levels: 0, kills: 0, resources: {} };
+  for (const r of rows || []) {
+    let p = {};
+    try { p = JSON.parse(r.payload || '{}'); } catch { continue; }
+    if (r.kind === 'zeny') credits.zeny += Math.max(0, floor(p.amount));
+    else if (r.kind === 'level') credits.levels += Math.max(0, floor(p.amount));
+    else if (typeof p.resource === 'string' && p.resource in COUNTERS) {
+      credits.resources[p.resource] = (credits.resources[p.resource] || 0) + Math.max(0, floor(p.amount));
+    }
+  }
+  return credits;
+}
+
+// -------------------------------------------------------------- recording ----
+// Orchestration for save.js: audit one accepted save, record any flags, poke the owner the first
+// time a rule fires for an account. NEVER throws — a monitoring failure must not fail a save.
+export async function auditAcceptedSave(D, { userId, username, gm, prev, save, pub, savedAt, claimKills = 0 }) {
+  // The owner's own account is not audited: GM tools deliberately create impossible figures
+  // (level grants, test gear), and flagging them would bury the console in self-noise.
+  if (Number(gm) >= 2) return { flagged: false };
+
+  const violations = auditStaticSave(save);
+  if (violations.length === 0 && prev) {
+    const elapsedMs = savedAt - Number(prev.saved_at || savedAt);
+    const prevView = {
+      kills: prev.kills_total, lv: prev.level, zeny: prev.zeny,
+      raw: safeParse(prev.blob),
+    };
+    const nextView = { kills: pub.kills, lv: pub.lv, zeny: pub.zeny, raw: save };
+    let rates = auditSaveRates({ prev: prevView, next: nextView, elapsedMs, claimKills });
+    if (rates.length) {
+      // Only a suspicious window pays for the grant lookup: ordinary syncs cost nothing extra.
+      const grantRows = await db.grantsClaimedBetween(D, userId,
+        Number(prev.saved_at || savedAt) - 120_000, savedAt + 120_000);
+      const credits = creditsFromGrants(grantRows.results);
+      rates = auditSaveRates({ prev: prevView, next: nextView, elapsedMs, claimKills, credits });
+    }
+    violations.push(...rates);
+  }
+  if (!violations.length) return { flagged: false };
+
+  const at = savedAt;
+  const known = new Set((await db.existingSaveAlertKinds(D, userId)).results.map(r => r.kind));
+  for (const v of violations) {
+    await db.saveAlertStatement(D, { userId, kind: v.kind, at, value: v.value,
+      threshold: v.threshold, detail: v.detail, bucketMs: 300_000 }).run();
+  }
+  const fresh = violations.filter(v => !known.has(v.kind));
+  if (fresh.length) {
+    const summary = fresh.map(v => `${labelFor(v)} — ${v.detail}`).join('; ').slice(0, 400);
+    await db.logEvent(D, username, userId, 'save-alert', summary);
+    // Poke every owner account: this is the "i can't watch 24/7" half of the feature.
+    for (const owner of (await db.ownerIds(D)).results) {
+      if (Number(owner.id) === Number(userId)) continue;
+      await db.insertMessage(D,
+        `⚠ Suspicious save flagged: ${username}. ${summary}. Review in the GM console — flags are review-only, not proof.`,
+        'notice', owner.id, 'Save audit');
+    }
+  }
+  return { flagged: true, fresh };
+}
+
+const safeParse = blob => {
+  try { const s = JSON.parse(blob); return s && typeof s === 'object' && !Array.isArray(s) ? s : {}; }
+  catch { return {}; }
+};
+
+// Human sentence for one violation (console and message share this).
+export const labelFor = v => (v.kind.startsWith('rate:') ? rateLabel(v.kind)
+  : AUDIT_LABELS[v.kind] || v.kind) + (v.threshold ? ` (limit ${fmt(v.threshold)}, saw ${fmt(v.value)})` : '');
+const fmt = n => (Math.abs(n) >= 1000 ? Math.round(n).toLocaleString('en-US') : String(n));

@@ -11,6 +11,10 @@ const NICE = {
   register: 'Account created', login: 'Logged in', 'login-failed': 'Failed login',
   'gm-note': 'GM note', 'gm-set-password': 'Password reset', 'gm-set-level': 'GM level changed',
   'gm-ban': 'Suspended', 'gm-unban': 'Unsuspended', 'gm-logout': 'Signed out everywhere',
+  'gm-ip-ban': 'Network suspended', 'gm-ip-unban': 'Network restored',
+  // Save audit (0015): the server's own "this save cannot be honest" verdict, logged the first
+  // time a rule fires for an account so the player's log shows what the flag was about.
+  'save-alert': 'Suspicious save',
   'gm-grant': 'Sent something', 'gm-systems': 'Fishing / DigiPet resources',
   'gm-fishing-mvp-request': 'Fishing MVP spawn requested', 'gm-fishing-mvp': 'Fishing MVP spawned', 'gm-fishing-mvp-failed': 'Fishing MVP spawn failed or refused',
   'gm-announce': 'Announcement', 'gm-restore': 'Save restored',

@@ -10943,3 +10943,101 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   client carries this build: until the player reloads, their old tab keeps rebasing. The immediate
   workaround for a live account is **Force sign-out** in the console (a 401 sets `CLOUD.lost`, which
   stops that tab syncing for good), then restore, then have them reload.
+
+### 2026-11-14 — `network (IP) bans in the GM console` (no build bump — no index.html change)
+* **Changed:** The owner asked (after banning one player twice): *"i need an ip ban in my gm
+  console to remove these kind of players"*. The GM console can now suspend a whole NETWORK, not
+  just an account. Open a player → the header has **Ban network**, the Account tab lists every
+  sign-in network fingerprint with per-network Suspended/Remove buttons, and **"Also seen on these
+  networks"** links straight to the alternate account sharing one (the banned-then-came-back case).
+  The left column gained a **Network bans** card: the full list (fingerprint, why, by whom, when,
+  Remove) plus a manual "paste an IP" box. The player list marks accounts currently signed in from
+  a suspended network with 🚫.
+* **Server:** migration `0014_ip_bans.sql` adds `ip_bans` (SHA-256 fingerprints only — the raw IP
+  is never stored anywhere, same `ipHash` the sessions table already used) plus three indexes.
+  Enforcement: `functions/api/_middleware.js` refuses EVERY `/api` request from a banned network
+  (a live old session cannot keep playing); `sessions.js` refuses login after password verification,
+  with a **gm≥2 owner exemption** so a mistaken ban (shared mobile IP) is always undoable from the
+  console; `register.js` and `recover.js` refuse new accounts and password resets from it. Banning
+  also ends every session created from those networks in the same request. Login/register events
+  now record `ip <fingerprint>` in their detail, which is what feeds the "same network" matching.
+  All checks fail OPEN with a console warning until migration 0014 is applied — deploying the code
+  first disables the feature, it cannot brick sign-in.
+* **Try it:** In the GM console, open the cheater's account → Account tab shows their network
+  fingerprints and any other accounts seen on them → **Ban network**. A later account from that
+  home network shows 🚫 in the list and cannot log in, register or recover ("This network is
+  suspended. Contact the GM."). Remove bans from the Network bans card; the owner can always sign
+  in from anywhere to do it.
+* **Reset policy:** `ip_bans` is explicitly PRESERVED by the prelaunch gameplay reset, alongside
+  the `banned` column on `users` — a reset must not quietly reopen a live suspension
+  (`tools/recovery/launch_reset_sim.js` pins the count at 28 with the decision).
+* **Checks:** Full local gate (Node 22.22.3): **212 passed / 7 failed**, all 7 reproduced
+  unchanged on base `94603dd` (`drop_card_sheet_sim`, `fourth_job_mythic_sim`, `gear_sim`,
+  `hosted_launch_stage_sim`, `skill_balance_sim`, `update_watch_sim`, `render_lost_boot_smoke` —
+  stale BUILD mirrors/stale balance fixtures/staging-overlay drift that predate this work; zero new
+  failures). The four Python asset/config checks pass. Targeted: `api_sim` **56** (3 new network-
+  ban cases: console view + ban, manual suspend/restore, middleware front-door with owner bypass),
+  `gm_console_sim` **17** (new endpoint/confirm/audit assertions), `launch_reset_sim` **17`,
+  `write_gate_binding_sim` **9** (real workerd now bundles auth/db/scrypt modules + `nodejs_compat`,
+  matching Pages), `write_gate_middleware_sim` 11, `migration_sim` 9. The staging packager overlay
+  carries the three new/changed runtime files (`gm/ipbans.js`, `gm/players.js`, `0014`).
+* **Delivery:** Local branch `arena/a4d28d3b-prontera-grind` only — no commit pushed, no PR, no
+  deployment. **Production needs migration `0014_ip_bans.sql` applied to D1 before (or with) the
+  code deploy**; it is additive/`IF NOT EXISTS`, but follow the usual manual-migration ledger
+  caution from docs/LAUNCH-SECURITY.md. Not pushed, so no production exposure yet.
+
+### 2026-11-14 — `automatic save audit: impossible or too-fast saves, flagged for review` (no build bump — no index.html change)
+
+* **Why:** The owner's follow-up to the IP-ban work: *"how i identify is the stats is over the
+  limit, level to fast & alot of materials which the account only made in 5mins. i cant be
+  monitoring the game myself 24 hours."* The browser runs the whole simulation, so the server
+  cannot prove a save is honest — but it can prove parts of it are IMPOSSIBLE, and it can prove
+  the rate of progress between two accepted syncs exceeded anything the game can pay out. That
+  check now runs automatically on every accepted save; no one has to be watching.
+* **Impossible in itself (static, no timing needed)** — transcribed from `index.html` and kept in
+  step with it in `functions/_lib/save-audit.js`: a base level outside 1–150; a stat above
+  `statCapForLv` (99 below Lv 100, 120 above); more stat points than any level can earn
+  (`pts + spent(st) > points(lv)` — the game's own invariant, recomputed at load); Zeny outside
+  0–1e15; a refine above +10 (+15 on Mythic); an affix/effect value no legitimate roll can
+  produce; a negative kill count.
+* **Too fast since the last sync (rate)** — elapsed time is wall time between two ACCEPTED saves
+  (client clocks never consulted): kills/hour above 30,000 (the server's own `OFFLINE_RATE_CAP`);
+  levels/hour above a level-band limit (240 below Lv 40, 90 to Lv 99, 30 from Lv 100); Zeny/hour
+  above 1e9; and per-material per-hour limits for shards, ores, refine/mythic scrolls, ascension
+  and Nightmare materials, Fishing coins and DigiPet coins — the *"made in 5 minutes"* detector.
+  Windows shorter than 60s are not judged at all.
+* **Anti-false-positive credits:** a server-issued offline claim subtracts its kills, and every
+  GM grant claimed inside the window (zeny, level, `{resource, amount}` gifts, fish/pet coins) is
+  credited back against the delta — the owner's own giveaways and away progress can never flag
+  their receiver. An unrecognised payload credits nothing (can only add a flag, never hide one).
+* **Surface:** flags land in `save_alerts` (0015, one row per account per rule, worst value +
+  coarse ~5-minute observation count) and are **REVIEW-ONLY** — the save is always stored, nothing
+  auto-bans (docs/COMPETITION-SECURITY.md policy, unchanged). The GM console gets a **Suspicious
+  saves** card (newest flags first, click through to the account), a ⚠ marker on the player list,
+  and a **Save audit flags** section on the player's Damage tab with limit/saw/detail/first-last
+  seen. Because the owner cannot watch 24/7, the FIRST time a rule fires for an account the server
+  also writes a `save-alert` event (player log, labelled "Suspicious save") and a targeted in-game
+  message to every `gm ≥ 2` account — bounded to one poke per rule per account, never repeats.
+* **Owner exemption:** accounts with `gm ≥ 2` are never audited — GM tools legitimately create
+  impossible figures, and flagging them would bury the console in self-noise.
+* **Try it:** `PUT /api/save` with `st.str = 300` on any non-owner account → the save still
+  returns 200, the account gains ⚠, the Suspicious saves card lists "Stat above the level cap",
+  and the owner's next login/mail shows "⚠ Suspicious save flagged: … Review in the GM console —
+  flags are review-only, not proof." Honest play (+100 kills over three minutes) records nothing.
+* **Reset policy:** `save_alerts` is CLEARED by the prelaunch gameplay reset — flags describe
+  saves that no longer exist (`launch_reset_sim` pins the count at 29 with the decision).
+* **Checks:** Full local gate (Node 22.22.3): **212 passed / 7 failed**, the same 7 reproduced
+  unchanged on base `94603dd` (stale BUILD mirrors/stale balance fixtures/staging-overlay drift;
+  zero new failures). Targeted: `api_sim` **61** (5 new save-audit cases: pure rules incl. claim
+  and grant credit maths; impossible save stores + first-flag poke + console surfaces + no re-poke;
+  too-fast kills/materials flag while honest play does not, with the coarse observation bucket;
+  GM grants credited so gifts never flag; owner never audited), `gm_console_sim` **18** (card,
+  player section, ⚠ marker, GM-only endpoint, best-effort hook, credits), `launch_reset_sim` 17,
+  `migration_sim` 9, `write_gate_binding_sim` 9, `write_gate_middleware_sim` 11, `dev_server_sim`
+  21, `launch_security_sim` pass. The staging packager overlay carries the new/changed runtime
+  files (`gm/audit.js`, `_lib/save-audit.js`, `0015`).
+* **Delivery:** local branch only — no push, no PR, no deployment. **Production needs migration
+  `0015_save_audit.sql` applied to D1 before (or with) the code deploy** (additive/`IF NOT
+  EXISTS`; until it exists the audit hook fails OPEN like the damage monitor — saves accepted,
+  feature off). No BUILD bump: no game build changed, only server functions, the GM console and
+  docs.

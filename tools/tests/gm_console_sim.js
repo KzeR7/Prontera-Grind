@@ -40,6 +40,8 @@ t('it cannot read a password: the field is a setter with a confirm', () => {
 t('the destructive actions all confirm first', () => {
   for (const [act, re] of [
     ['ban', /confirm\(\s*'Suspend/],
+    ['banip (network ban)', /confirm\(\s*'Suspend every network/],
+    ['ban-net-one', /confirm\(\s*'Suspend this network/],
     ['set-password', /confirm\(\s*'Set a new password/],
     ['restore', /confirm\(\s*'Restore version/],
   ]) assert.match(src, re, act + ' must ask before it acts');
@@ -70,13 +72,54 @@ t('the "never claim what you cannot apply" contract is stated for the player-fac
 // This was an `async` function under the sync `t` runner - an async throw becomes a rejected
 // promise the runner never sees, so every assertion below silently passed without running.
 // Found while adding the grant-all action (haven-v325); the function is sync now, and the
-// action contract spans both GM endpoints the console drives: /gm/player and /gm/shop.
+// action contract spans the GM endpoints the console drives: /gm/player, /gm/shop and
+// /gm/ipbans (network bans).
 t('every action the console offers exists on the server', () => {
-  const server = ['functions/api/gm/player.js', 'functions/api/gm/shop.js']
+  const server = ['functions/api/gm/player.js', 'functions/api/gm/shop.js', 'functions/api/gm/ipbans.js']
     .map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
   const actions = [...new Set([...src.matchAll(/action:\s*'([a-z-]+)'/g)].map(m => m[1]))];
   assert.ok(actions.length >= 6, 'expected several GM actions, got ' + actions.join(','));
   for (const a of actions) assert.ok(server.includes(`'${a}'`), `the server must implement ${a}`);
+});
+
+t('network bans: the card reads the ban list, suspends by fingerprint/IP, and stores no raw address itself', () => {
+  assert.match(src, /api\('\/gm\/ipbans'\)/, 'the card must load the ban list from the GM endpoint');
+  assert.match(src, /action:\s*'add'[\s\S]{0,120}?value:/, 'suspending a typed IP posts it to the server');
+  assert.match(src, /action:\s*'remove'[\s\S]{0,80}?fp:/, 'restoring a network posts its fingerprint');
+  assert.match(src, /data-act="banip"/, 'a player can be network-suspended from the header');
+  assert.match(src, /action:\s*'ban-ip'/, 'and it goes through the audited player endpoint');
+  assert.match(src, /Also seen on these networks/, 'the console must surface accounts sharing a network');
+  const bans = fs.readFileSync(path.join(root, 'functions/api/gm/ipbans.js'), 'utf8');
+  assert.match(bans, /banFingerprint\(/, 'the server, not the page, normalises and hashes what was typed');
+  assert.match(bans, /ipBanStatement\(env\.DB, fp/, 'only the derived fingerprint is written into the ban row');
+  const player = fs.readFileSync(path.join(root, 'functions/api/gm/player.js'), 'utf8');
+  assert.match(player, /case 'ban-ip'/, 'the batch ban action exists on the player endpoint');
+  assert.match(player, /target\.gm >= 2/, 'the owner can never be network-suspended');
+});
+
+// save audit (0015): the automatic "this save cannot be honest" surface — the card, the
+// player-panel evidence, and the wiring that keeps it GM-only and review-only.
+t('save audit: the Suspicious saves card, the flag list on the player, and the GM-only endpoint', () => {
+  assert.match(src, /id="saveauditcard"/, 'the console has a Suspicious saves card');
+  assert.match(src, /api\('\/gm\/audit'\)/, 'the card loads the audit endpoint');
+  assert.match(src, /Save audit flags/, 'the player detail shows the flags with their evidence');
+  assert.match(src, /data-audit-player=/, 'each flag jumps to the account behind it');
+  assert.match(src, /p\.alerted \? '⚠ '/, 'the player list marks flagged accounts');
+  assert.match(src, /REVIEW-ONLY/, 'the card must say flags never auto-ban');
+  const server = fs.readFileSync(path.join(root, 'functions/api/gm/audit.js'), 'utf8');
+  assert.match(server, /isGm\(user\)/, 'the audit endpoint is GM-only');
+  assert.match(server, /recentSaveAlerts/, 'the endpoint reads the server-computed flags');
+  const dev = fs.readFileSync(path.join(root, 'tools/dev_server.js'), 'utf8');
+  assert.match(dev, /'GET \/api\/gm\/audit'/, 'the dev server serves the endpoint');
+  // the hook lives on the accepted-save path and can never reject a save
+  const save = fs.readFileSync(path.join(root, 'functions/api/save.js'), 'utf8');
+  assert.match(save, /await auditSave\(\);/, 'every accepted write is audited');
+  assert.match(save, /monitoring failure never fails an accepted save/, 'the hook is best-effort');
+  const audit = fs.readFileSync(path.join(root, 'functions/_lib/save-audit.js'), 'utf8');
+  assert.match(audit, /Number\(gm\) >= 2/, "the owner's own account is not audited");
+  assert.match(audit, /grantsClaimedBetween/, 'GM gifts claimed in the window are credited back');
+  assert.match(audit, /claimKills/, 'server-issued offline-claim kills are credited back');
+  assert.match(audit, /ownerIds/, 'a first-time flag pokes the owner in-game');
 });
 
 t('Fishing and DigiPet controls use the audited queue and authenticated Social MVP route', () => {

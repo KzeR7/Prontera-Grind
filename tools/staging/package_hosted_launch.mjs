@@ -41,8 +41,15 @@ const files=['index.html','gm.html','assets/shop-catalog.js','assets/shop.css','
  // endpoint is a runtime change this candidate contains - it ships with the package.
  // v377: GM Fishing/DigiPet tools from main (PR #200) are runtime functions; without them in the overlay the
 // staging package fails closed with "Unpackaged runtime change".
-'functions/_lib/gm-systems.js','functions/_lib/gm-tools.js','functions/api/gm/fishing.js','functions/api/gm/log.js','functions/api/gm/player.js',
+ 'functions/_lib/gm-systems.js','functions/_lib/gm-tools.js','functions/api/gm/fishing.js','functions/api/gm/log.js','functions/api/gm/player.js',
  'functions/api/gm/shop.js',
+ // 2026-11-14 network (IP) bans: /api/gm/ipbans is the new console endpoint, /api/gm/players now
+ // marks accounts on a suspended network (netBanned), and migration 0014 creates the fingerprint
+ // table those endpoints and the login/register/middleware checks read. Runtime files of this
+ // candidate, so they ship in the overlay; without them the package fails closed.
+    'functions/api/gm/ipbans.js','functions/api/gm/players.js','migrations/0014_ip_bans.sql',
+    // 2026-11-14 save audit (0015): automatic impossible-save detection for the GM console.
+    'functions/api/gm/audit.js','functions/_lib/save-audit.js','migrations/0015_save_audit.sql',
  // v263: the write-pause control endpoint. It answers 404 without the `GATE` binding, so packaging it
  // does not enable anything; it is listed because it is a runtime file this candidate contains.
  'functions/api/gate.js','migrations/0008_damage_monitoring.sql',

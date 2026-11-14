@@ -132,7 +132,10 @@ export const allUsers = (db, limit = 200) =>
                      (SELECT version FROM saves s WHERE s.user_id = u.id) AS version,
                      (SELECT updated_at FROM saves s WHERE s.user_id = u.id) AS updated_at,
                      (SELECT level FROM saves s WHERE s.user_id = u.id) AS level,
-                     (SELECT cls FROM saves s WHERE s.user_id = u.id) AS cls
+                     (SELECT cls FROM saves s WHERE s.user_id = u.id) AS cls,
+                     (SELECT s.ip_hash FROM sessions s WHERE s.user_id = u.id
+                        AND s.ip_hash IS NOT NULL LIMIT 1) AS ip_fp,
+                     EXISTS(SELECT 1 FROM save_alerts a WHERE a.user_id = u.id) AS alerted
               FROM users u
               -- v403: most recent sign-in first; a player who has never signed in (NULL) sorts last
               -- instead of being treated as the largest value, then by account age so the tail is
@@ -198,6 +201,92 @@ export const deleteOtherSessions = (db, userId, keepHash) =>
 
 export const expireSessions = (db) =>
   db.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now()).run();
+
+// ---------------------------------------------------------- network bans ----
+// Migration 0014: one row per suspended network, keyed by the ipHash fingerprint. The two
+// readers here FAIL OPEN (empty/false) when the table does not exist yet, with a warning:
+// deploying the code before the migration must disable the feature, not brick every login.
+// The writers do not swallow errors — a GM pressing Ban on an unmigrated server should get a
+// loud failure, not a silent no-op.
+export async function isIpBanned(db, fp) {
+  if (!fp) return false;
+  try {
+    return !!(await db.prepare('SELECT 1 AS x FROM ip_bans WHERE ip_hash = ?').bind(fp).first());
+  } catch (e) {
+    console.warn('ip_bans lookup failed (migration 0014 missing?):', e && e.message);
+    return false;
+  }
+}
+
+export async function listIpBans(db, limit = 200) {
+  try {
+    return (await db.prepare('SELECT ip_hash, note, created_by, created_at FROM ip_bans ORDER BY created_at DESC LIMIT ?')
+      .bind(limit).all()).results;
+  } catch (e) {
+    console.warn('ip_bans list failed (migration 0014 missing?):', e && e.message);
+    return [];
+  }
+}
+
+export const ipBanStatement = (db, fp, note, by) =>
+  db.prepare('INSERT OR IGNORE INTO ip_bans(ip_hash, note, created_by, created_at) VALUES(?,?,?,?)')
+    .bind(fp, note || null, by || null, now());
+
+export const ipUnbanStatement = (db, fp) =>
+  db.prepare('DELETE FROM ip_bans WHERE ip_hash = ?').bind(fp);
+
+// Every live session created from any of these networks is ended at ban time — that is what
+// kicks the cheater's already-signed-in second account in the same request as the ban.
+export const sessionsOnNetworksStatement = (db, fps) =>
+  db.prepare(`DELETE FROM sessions WHERE ip_hash IN (${fps.map(() => '?').join(',')})`).bind(...fps);
+
+// The networks an account has actually signed in from: the live session(s) plus the login /
+// register / failed-login events, which record `ip <fingerprint>` (never a raw address).
+// Returns [{ fp, sources }] newest sources first, capped so one player cannot balloon a response.
+export async function userIpFingerprints(db, userId) {
+  const out = new Map();
+  const add = (fp, source) => {
+    if (!/^[0-9a-f]{16}$/.test(String(fp || ''))) return;
+    const e = out.get(fp) || { fp, sources: [] };
+    if (!e.sources.includes(source)) e.sources.push(source);
+    out.set(fp, e);
+  };
+  try {
+    const sess = await db.prepare('SELECT DISTINCT ip_hash FROM sessions WHERE user_id = ? AND ip_hash IS NOT NULL')
+      .bind(userId).all();
+    for (const r of sess.results) add(r.ip_hash, 'current session');
+    const ev = await db.prepare(`SELECT detail, MAX(id) AS mid FROM events
+      WHERE user_id = ? AND detail LIKE 'ip %' GROUP BY detail ORDER BY mid DESC LIMIT 10`)
+      .bind(userId).all();
+    for (const r of ev.results) add(String(r.detail).slice(3), 'sign-in log');
+  } catch (e) {
+    console.warn('network fingerprint lookup failed (migration 0014 missing?):', e && e.message);
+  }
+  return [...out.values()].slice(0, 8);
+}
+
+// Which OTHER accounts share these networks — the "banned him twice, he came back" detector.
+// Sessions catch the accounts signed in right now; the event rows catch ones seen before.
+export async function accountsOnNetworks(db, fps, excludeUserId) {
+  const list = (fps || []).slice(0, 8);
+  if (!list.length) return [];
+  const out = new Map();
+  try {
+    const marks = list.map(() => '?').join(',');
+    const sess = await db.prepare(`SELECT DISTINCT u.id, u.username AS u FROM sessions s
+      JOIN users u ON u.id = s.user_id WHERE s.ip_hash IN (${marks}) AND s.user_id <> ?`)
+      .bind(...list, excludeUserId).all();
+    for (const r of sess.results) out.set(Number(r.id), { id: Number(r.id), u: r.u });
+    const details = list.map(f => 'ip ' + f);
+    const ev = await db.prepare(`SELECT DISTINCT u.id, u.username AS u FROM events e
+      JOIN users u ON u.id = e.user_id WHERE e.detail IN (${marks}) AND e.user_id <> ?`)
+      .bind(...details, excludeUserId).all();
+    for (const r of ev.results) out.set(Number(r.id), { id: Number(r.id), u: r.u });
+  } catch (e) {
+    console.warn('network match lookup failed (migration 0014 missing?):', e && e.message);
+  }
+  return [...out.values()].slice(0, 8);
+}
 
 // ---------------------------------------------------------------- grants ----
 export const insertGrant = (db, userId, kind, payload, note, createdBy) =>
@@ -347,6 +436,44 @@ export const clearRate = (db, key) =>
   db.prepare('DELETE FROM rate_limits WHERE key = ?').bind(key).run();
 
 export { now };
+
+// ------------------------------------------------------------- save audit ----
+// Server-side impossible-save flags (0015_save_audit.sql). One row per account per rule: worst
+// value, last time seen, and a coarse observation count. Written only by the save audit hook —
+// flags are review-only and never touch the save, the score or a ban.
+// Coarse bucket (default 5 min): repeats within the bucket bump last_seen/value but count as
+// one observation, so a syncing cheater cannot flood the table (same idea as damage samples).
+export const saveAlertStatement = (db,{userId,kind,at,value,threshold,detail,bucketMs=300000}) =>
+  db.prepare(`INSERT INTO save_alerts(user_id, kind, first_seen, last_seen, value, threshold, detail, observations)
+    VALUES(?,?,?,?,?,?,?,1)
+    ON CONFLICT(user_id, kind) DO UPDATE SET
+      last_seen=excluded.last_seen, value=MAX(save_alerts.value, excluded.value),
+      threshold=excluded.threshold, detail=excluded.detail,
+      observations=save_alerts.observations + (CASE WHEN excluded.last_seen - save_alerts.last_seen >= ? THEN 1 ELSE 0 END)`)
+    .bind(Number(userId),String(kind),Number(at),Number(at),Number(value)||0,Number(threshold)||0,String(detail==null?'':detail).slice(0,400),Number(bucketMs)||300000);
+
+// Which rules already fired for this account (to notify the owner only the first time).
+export const existingSaveAlertKinds = (db, userId) =>
+  db.prepare(`SELECT kind FROM save_alerts WHERE user_id = ?`).bind(Number(userId)).all();
+
+// This account's flags, newest first (player panel).
+export const saveAlertsFor = (db, userId) =>
+  db.prepare(`SELECT * FROM save_alerts WHERE user_id = ? ORDER BY last_seen DESC`).bind(Number(userId)).all();
+
+// Every account's flags, newest first (the console's "Suspicious saves" card).
+export const recentSaveAlerts = (db, limit=100) =>
+  db.prepare(`SELECT a.*, u.username FROM save_alerts a JOIN users u ON u.id=a.user_id
+    ORDER BY a.last_seen DESC LIMIT ?`).bind(Math.max(1,Math.min(500,Number(limit)||100))).all();
+
+// Grants claimed inside a save window, credited back so GM gifts never flag their receiver.
+export const grantsClaimedBetween = (db, userId, fromMs, toMs) =>
+  db.prepare(`SELECT kind, payload FROM grants
+    WHERE user_id = ? AND claimed_at >= ? AND claimed_at <= ?
+    ORDER BY claimed_at ASC`).bind(Number(userId),Number(fromMs),Number(toMs)).all();
+
+// Every owner account — the save audit pokes these (targeted message) when a rule fires fresh.
+export const ownerIds = (db) =>
+  db.prepare(`SELECT id FROM users WHERE gm >= 2 ORDER BY id`).all();
 
 // ---------------------------------------------------------- damage monitor ----
 // Client-reported diagnostics only. Six-hour buckets and fixed slots cap writes

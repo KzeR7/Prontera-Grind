@@ -8,6 +8,9 @@
 //   set-password    { password }                - OWNER ONLY; the GM never sees the old one
 //   set-gm          { level }                   - OWNER ONLY; 0 user, 1 gm, 2 owner
 //   ban / unban                                 - suspend and restore an account
+//   ban-ip          { note? }                   - suspend every network this account signed in
+//                                                  from (fingerprint rows; raw IPs are never
+//                                                  stored) and end every session on them
 //   logout          {}                          - kill every session (a "force sign-out")
 //   grant           { kind, payload, note }      - zeny | item | level | message  (see gm-panel-plan §4)
 //   systems         { system, resource, ... }   - queued Fishing / DigiPet resource with save receipt
@@ -22,6 +25,7 @@ import { currentUser, isGm, hashPassword } from '../../_lib/auth.js';
 import { json, guard, readJson, fail } from '../../_lib/http.js';
 import { checkGrant, checkAnnouncement, GRANT_KINDS, checkSaveBlob, publicFields, savedElsewhere } from '../../_lib/validate.js';
 import { inspectSave, giftPayload, equipmentPayload, systemsPayload } from '../../_lib/gm-tools.js';
+import { AUDIT_LABELS, rateLabel } from '../../_lib/save-audit.js';
 import { GM_CATALOG } from '../../_lib/gm-catalog.js';
 import * as db from '../../_lib/db.js';
 
@@ -36,6 +40,17 @@ async function loadAccount(D, id) {
       id: row.id, u: row.username, gm: row.gm, banned: !!row.banned,
       created: row.created_at, lastLogin: row.last_login_at, recoverySet: !!row.recovery_hash,
     },
+    // NETWORKS (migration 0014): the fingerprints this account signed in from, which of them
+    // are currently suspended, and which OTHER accounts were seen on the same networks — the
+    // "he came back on a second account" answer, one click away from the ban button.
+    network: await (async () => {
+      const fps = await db.userIpFingerprints(D, id);
+      const banned = new Set((await db.listIpBans(D, 500)).map(b => b.ip_hash));
+      return {
+        fps: fps.map(f => ({ fp: f.fp, sources: f.sources, banned: banned.has(f.fp) })),
+        shared: await db.accountsOnNetworks(D, fps.map(f => f.fp), id),
+      };
+    })(),
     save: save ? {
       version: save.version, bytes: bytes?.n ?? 0, savedAt: save.saved_at, updatedAt: save.updated_at,
       lastSeen: save.last_seen, rateKph: save.rate_kph, kills: save.kills_total,
@@ -44,6 +59,14 @@ async function loadAccount(D, id) {
       history: history.results.map(h => ({ version: h.version, savedAt: h.saved_at })),
     } : null,
     grants: grants.results.map(g => ({ id: g.id, kind: g.kind, claimed: !!g.claimed_at, at: g.created_at, note: g.note })),
+    // Automatic impossible-save flags (0015): stat caps, pts entitlement, kill/level/zeny/
+    // material rates between accepted syncs. Review-only evidence for the Damage tab.
+    alerts: (await db.saveAlertsFor(D, id)).results.map(a => ({
+      kind: a.kind,
+      label: a.kind && a.kind.startsWith('rate:') ? rateLabel(a.kind) : (AUDIT_LABELS[a.kind] || a.kind),
+      firstSeen: a.first_seen, lastSeen: a.last_seen, value: a.value,
+      threshold: a.threshold, detail: a.detail || '', observations: a.observations,
+    })),
   };
 }
 
@@ -106,6 +129,26 @@ export const onRequestPost = guard(async ({ request, env }) => {
       if (banned) await db.deleteUserSessions(D, id);
       await audit(banned ? 'gm-ban' : 'gm-unban', null);
       return json({ ok: true });
+    }
+    case 'ban-ip': {
+      // Suspend every network this account has signed in from, and end every live session on
+      // those networks — including a second account the same person is signed in on right now.
+      // This is the "banned him twice" answer: the account ban stops the name, this stops the
+      // address. Removal goes through /api/gm/ipbans (the Network bans card in the console).
+      if (target.gm >= 2) return fail('The owner cannot be network-suspended.', 400);
+      const fps = (await db.userIpFingerprints(D, id)).map(f => f.fp);
+      if (!fps.length) return fail('No sign-in network is recorded for this account yet.', 400);
+      const note = String(body.note || '').trim().slice(0, 140) || `via ${target.username} (#${id})`;
+      await D.batch([
+        ...fps.map(fp => db.ipBanStatement(D, fp, note, user.username)),
+        db.sessionsOnNetworksStatement(D, fps),
+      ]);
+      await audit('gm-ip-ban', `${fps.length} network(s): ${fps.join(' ')} — ${note}`.slice(0, 500));
+      return json({
+        ok: true, count: fps.length, fps,
+        note: `Network suspended (${fps.length} fingerprint${fps.length === 1 ? '' : 's'}). ` +
+          'Every signed-in session from them was ended; sign-in and new accounts are blocked there.',
+      });
     }
     case 'logout': {
       await db.deleteUserSessions(D, id);

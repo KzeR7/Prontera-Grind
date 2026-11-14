@@ -23,6 +23,7 @@ import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
 import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED } from '../_lib/validate.js';
 import * as db from '../_lib/db.js';
 import { recordDamageObservation } from '../_lib/damage-monitor.js';
+import { auditAcceptedSave } from '../_lib/save-audit.js';
 import { recordUnverifiedEcho, settleUnverifiedEcho } from '../_lib/unverified-echo.js';
 
 const HISTORY_EVERY = 10;
@@ -169,6 +170,25 @@ export const onRequestPut = guard(async ({ request, env }) => {
     try { await recordDamageObservation(D,user.id,save,savedAt); }
     catch { console.warn('Damage monitoring unavailable; cloud save remains accepted.'); }
   };
+  // The owner cannot watch the game 24/7, so the server does: every accepted save is audited
+  // against the game's own static invariants (stat caps, pts entitlement, refine ceilings) and
+  // against the rate of progress since the previous accepted save (kills/levels/zeny/materials
+  // per hour, with offline claims and GM grants credited back). Flags are REVIEW-ONLY — they
+  // never reject a save — and land in `save_alerts` for the GM console's "Suspicious saves"
+  // card plus a first-time targeted message to the owner accounts (migrations/0015).
+  // Best-effort like the two hooks above: a monitoring failure never fails an accepted save.
+  const auditSave = async () => {
+    try {
+      const { flagged, fresh } = await auditAcceptedSave(D, {
+        userId: user.id, username: user.username, gm: user.gm,
+        prev: row, save: storedSave, pub, savedAt,
+        claimKills: appliedClaim ? Number(appliedClaim.kills) || 0 : 0,
+      });
+      if (flagged) console.log(`Save audit flagged ${user.username}: ${(fresh || []).map(v => v.kind).join(', ')}`);
+    } catch (err) {
+      console.warn('Save audit unavailable; cloud save remains accepted.', err);
+    }
+  };
   // Leaderboard work happens after the committed save; a monitoring/score
   // outage must not cause an accepted save to be reported as rejected.
   const updateLeaderboard = async () => {
@@ -180,12 +200,16 @@ export const onRequestPut = guard(async ({ request, env }) => {
     return true;
   };
   const clientVersion = Math.floor(Number(body.version) || 0);
+  // Declared up here because the audit hook (below) closes over it and runs on both write paths;
+  // it is only ASSIGNED once the claim section below is reached.
+  let appliedClaim = null;
 
   const row = await db.saveByUser(D, user.id);
   if (!row) {
     await db.insertSave(D, user.id, stored, savedAt, pub);
     await db.pushHistory(D, user.id, 1, stored, savedAt);
     await observeDamage();
+    await auditSave(); // first save for this account: static impossibilities only (no previous row)
     const leaderboardSynced = await updateLeaderboard();
     return json({ version: 1, bytes: stored.length, leaderboardPending: !leaderboardSynced });
   }
@@ -226,7 +250,6 @@ export const onRequestPut = guard(async ({ request, env }) => {
   if (requestedClaimId != null && Number(save.offlineClaimId) !== requestedClaimId)
     return early({ err: 'Offline claim ID does not match the save.' }, 400);
 
-  let appliedClaim = null;
   if (requestedClaimId != null) {
     const known = await db.offlineClaimById(D, user.id, requestedClaimId);
     if (!known) return early({ err: 'Unknown offline claim.' }, 400);
@@ -265,6 +288,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
 
   // This board is explicitly unverified: a browser-authored save is not proof of a score.
   await observeDamage();
+  await auditSave(); // static invariants + rate since `row`, credits for claims and grants
   const leaderboardSynced = await updateLeaderboard();
   if (next % HISTORY_EVERY === 0) {
     await db.pushHistory(D, user.id, next, stored, savedAt);

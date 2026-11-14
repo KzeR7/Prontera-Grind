@@ -174,7 +174,23 @@ tr:hover{background:#2a2014;cursor:pointer}
     <div class="players-scroll"><table id="players"><thead>
       <tr><th>Name</th><th>Lv</th><th>Class</th><th>Last login</th></tr>
     </thead><tbody></tbody></table></div>
-    <p class="small">Click a player to open them. “never” means they have not synced a save yet.</p>
+    <p class="small">Click a player to open them. “never” means they have not synced a save yet. 🚫 marks a player whose current network is suspended. ⚠ marks an account carrying a suspicious-save flag.</p>
+  </section>
+
+  <section class="card" id="ipbanscard">
+    <h2>Network bans <span id="ipban-count" class="small"></span></h2>
+    <p class="small">A suspended network cannot sign in, register a new account or recover a password — the usual way a player who was banned twice comes back on a third name. Only fingerprints are stored, never raw IPs. The owner can always still sign in from anywhere to remove a ban here.</p>
+    <div id="ipbanlist" class="small">Loading…</div>
+    <div class="row" style="margin-top:8px">
+      <input id="manualip" placeholder="IP address (e.g. 203.0.113.7)" style="flex:1" autocomplete="off">
+      <button id="addipban" class="danger">Suspend network</button>
+    </div>
+  </section>
+
+  <section class="card" id="saveauditcard">
+    <h2>Suspicious saves <span id="audit-count" class="small"></span></h2>
+    <p class="small">The server audits every accepted save on its own — no one has to be watching the game. It breaks a flag into two kinds: <b>impossible</b> (a stat above the level cap, more stat points than any level can earn, an over-cap refine) and <b>too fast</b> (kills, levels, Zeny or materials gained since the previous sync faster than the game itself can pay out, with GM gifts and offline claims credited back). Flags are REVIEW-ONLY: nothing here rejects a save or bans an account, and a first-time flag also mails the owner in-game. Cross-check Gifts and History before acting.</p>
+    <div id="auditlist" class="small">Loading…</div>
   </section>
   </div>
 
@@ -272,6 +288,67 @@ async function loadDamageAlerts() {
 }
 function damageNumber(n) { return n == null ? '—' : Number(n)>=1e12 ? '≥1,000,000,000,000' : nfmt(Math.round(Number(n))); }
 $('damagealerts').onclick=e=>{const b=e.target.closest('[data-damage-player]');if(b){TAB='damage';openPlayer(+b.dataset.damagePlayer).catch(err=>say(err.message,1));}};
+
+// ---------- save audit: the list behind the "Suspicious saves" card ----------
+// One row per account per broken rule (0015), newest first. The server produced these while
+// storing the save; this card is for reading them and jumping to the account behind one.
+async function loadAudit() {
+  const box = $('auditlist');
+  try {
+    const d = await api('/gm/audit');
+    $('audit-count').textContent = d.alerts.length ? '(' + d.alerts.length + ')' : '';
+    box.innerHTML = d.alerts.length
+      ? `<table><thead><tr><th>Account</th><th>Flag</th><th>When</th></tr></thead><tbody>` +
+        d.alerts.map(a => `<tr><td><button type="button" data-audit-player="${a.user_id}">${esc(a.username)}</button></td>` +
+          `<td>${esc(a.label)}${a.threshold ? ` <span class="small">(limit ${nfmt(a.threshold)}, saw ${nfmt(Math.round(a.value))})</span>` : ''}<br><span class="small">${esc(a.detail || '')}</span></td>` +
+          `<td class="small">${esc(when(a.last_seen))}<br>${nfmt(a.observations)} observation${a.observations === 1 ? '' : 's'}</td></tr>`).join('') +
+        `</tbody></table>`
+      : 'No flags recorded.';
+  } catch (e) { box.textContent = 'Save audit unavailable: ' + e.message; }
+}
+$('auditlist').onclick = e => { const b = e.target.closest('[data-audit-player]'); if (b) { TAB = 'damage'; openPlayer(+b.dataset.auditPlayer).catch(err => say(err.message, 1)); } };
+
+// ---------- network bans: the list behind the "Network bans" card ----------
+// One row per suspended network (fingerprint only — the server never stores a raw IP). The
+// server enforced the ban the moment it was added; this card is for reading and undoing.
+async function loadIpBans() {
+  const box = $('ipbanlist');
+  try {
+    const d = await api('/gm/ipbans');
+    $('ipban-count').textContent = d.bans.length ? '(' + d.bans.length + ')' : '';
+    box.innerHTML = d.bans.length
+      ? `<table><thead><tr><th>Fingerprint</th><th>Why</th><th>By</th><th>When</th><th></th></tr></thead><tbody>` +
+        d.bans.map(b => `<tr><td class="mono">${esc(b.fp)}</td><td class="small">${esc(b.note || '—')}</td>` +
+          `<td>${esc(b.by || '—')}</td><td>${esc(when(b.at))}</td>` +
+          `<td><button class="danger" data-rmfp="${esc(b.fp)}">Remove</button></td></tr>`).join('') +
+        `</tbody></table>`
+      : 'No networks suspended.';
+  } catch (e) {
+    $('ipban-count').textContent = '';
+    box.innerHTML = `<span class="bad">Could not read network bans: ${esc(e.message)}</span>`;
+  }
+}
+$('ipbanscard').addEventListener('click', async e => {
+  const rm = e.target.closest('[data-rmfp]');
+  if (!rm) return;
+  if (!confirm('Restore this network? Anyone on it can sign in, register and recover again.')) return;
+  try {
+    const r = await api('/gm/ipbans', { method: 'POST', body: JSON.stringify({ action: 'remove', fp: rm.dataset.rmfp }) });
+    say(r.note || 'Network restored.');
+    await Promise.all([loadIpBans(), loadPlayers()]);
+  } catch (err) { say(err.message, 1); }
+});
+$('addipban').onclick = async () => {
+  const v = $('manualip').value.trim();
+  if (!v) return say('Enter an IP address first.', 1);
+  if (!confirm('Suspend network ' + v + '? Sign-in, registration and recovery will be refused from it until you remove the ban.')) return;
+  try {
+    const r = await api('/gm/ipbans', { method: 'POST', body: JSON.stringify({ action: 'add', value: v }) });
+    say(r.note || 'Network suspended.');
+    $('manualip').value = '';
+    await Promise.all([loadIpBans(), loadPlayers()]);
+  } catch (err) { say(err.message, 1); }
+};
 async function loadFishingTools(){
   const status=$('mvpresult'),room=$('mvproom'),species=$('mvpspecies'),button=$('spawnmvp');
   try{
@@ -302,7 +379,12 @@ async function renderDamage(body,id) {
   try {
     const d=await api('/gm/damage?id='+id);
     if(SEL?.account.id!==id||TAB!=='damage'||body!==$('tabbody'))return;
+    const alerts = (SEL && SEL.account.id === id && Array.isArray(SEL.alerts)) ? SEL.alerts : [];
     body.innerHTML=`<p class="small">Reported by the browser, not proof of cheating. Samples are at most one per six-hour period, up to 28 per account. Total damage is cumulative, not field DPS; Echo is a reported personal best. No automatic ban or payout action.</p>` +
+      (alerts.length
+        ? `<h3 class="small">Save audit flags — checked by the server while storing each save (review-only; cross-check Gifts and History)</h3><table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>First / last seen</th></tr></thead><tbody>${alerts.map(a=>`<tr><td>${esc(a.label)}</td><td>${esc(nfmt(a.threshold||0))} / ${esc(nfmt(Math.round(a.value||0)))}</td><td>${esc(a.detail||'')}</td><td class="small">${esc(when(a.firstSeen))} → ${esc(when(a.lastSeen))}<br>${nfmt(a.observations)} observation${a.observations===1?'':'s'}</td></tr>`).join('')}</tbody></table>`
+        : `<p class="small">No save-audit flags on this account — its last accepted saves are within the game's own limits.</p>`) +
+      `<h3 class="small">Damage samples — browser-reported, never proof</h3>` +
       (d.samples.length?`<table><thead><tr><th>Sampled</th><th>Map / stage</th><th>Total damage</th><th>Echo best DPS</th></tr></thead><tbody>${d.samples.map(r=>`<tr><td>${esc(when(r.sampled_at))}</td><td>${esc(r.map==null?'—':r.map)} / ${esc(r.stage==null?'—':r.stage)}</td><td>${esc(damageNumber(r.reported_total_damage))}</td><td>${esc(damageNumber(r.reported_echo_best))}</td></tr>`).join('')}</tbody></table>`:'<p class="small">No samples recorded yet.</p>');
   } catch(e) { if(SEL?.account.id===id&&TAB==='damage'&&body===$('tabbody'))body.textContent='Damage monitoring unavailable: '+e.message; }
 }
@@ -326,7 +408,7 @@ function renderPlayers() {
     .slice().sort((a, b) => stamp(b) - stamp(a) || String(a.u).localeCompare(String(b.u)));
   $('players').tBodies[0].innerHTML = rows.map(p =>
     `<tr data-id="${p.id}" class="${SEL && SEL.account.id === p.id ? 'sel' : ''}">
-       <td>${p.banned ? '⛔ ' : ''}${p.gm ? (p.gm >= 2 ? '👑 ' : '🛠 ') : ''}${esc(p.u)}</td>
+       <td>${p.alerted ? '⚠ ' : ''}${p.netBanned ? '🚫 ' : ''}${p.banned ? '⛔ ' : ''}${p.gm ? (p.gm >= 2 ? '👑 ' : '🛠 ') : ''}${esc(p.u)}</td>
        <td>${p.level ?? '—'}</td><td>${esc(p.cls || '—')}</td><td>${p.lastLogin ? when(p.lastLogin) : '<span class="small">never</span>'}</td>
      </tr>`).join('') || '<tr><td colspan="4" class="small">No players match.</td></tr>';
 }
@@ -337,7 +419,7 @@ $('players').onclick = e => {
 };
 // Refresh reloads the usage card too: it is the screen the owner checks when they want to know what
 // the game is costing, and a stale number there would be worse than the one extra request.
-$('refresh').onclick = () => Promise.all([loadUsage(), loadDamageAlerts(), SEL ? openPlayer(SEL.account.id) : loadPlayers()]).then(() => say('Refreshed.'));
+$('refresh').onclick = () => Promise.all([loadUsage(), loadDamageAlerts(), loadAudit(), loadIpBans(), SEL ? openPlayer(SEL.account.id) : loadPlayers()]).then(() => say('Refreshed.'));
 function backToGame() {
   try {
     if (window.parent && window.parent !== window && typeof window.parent.closeGmConsole === 'function') {
@@ -388,6 +470,7 @@ function renderDetail() {
         <span class="small">#${a.id} · created ${when(a.created)} · last login ${when(a.lastLogin)}</span></h2>
       <span class="spacer"></span>
       ${a.banned ? `<button data-act="unban">Unsuspend</button>` : `<button class="danger" data-act="ban">Suspend</button>`}
+      <button class="danger" data-act="banip" title="Suspend every network this account signed in from — blocks sign-in and new accounts there">Ban network</button>
       <button data-act="logout">Force sign-out</button>
       <button data-act="closedetail" class="detail-close" title="Close this player and go back to the list">✕ Close</button>
     </div>
@@ -429,6 +512,20 @@ function renderTab() {
           <option value="1"${a.gm === 1 ? ' selected' : ''}>1 · GM (moderate, send, announce)</option>
           <option value="2"${a.gm === 2 ? ' selected' : ''}>2 · owner (also passwords and GM levels)</option>
         </select><button data-act="set-gm">Apply</button></div>
+      </fieldset>
+      <fieldset style="border:1px solid var(--edge);border-radius:6px;padding:8px;margin-top:8px">
+        <legend class="small">Sign-in networks (fingerprint — the raw IP is never stored)</legend>
+        ${((d.network && d.network.fps) || []).length ? ((d.network && d.network.fps) || []).map(f => `
+        <div class="row" style="margin-bottom:4px">
+          <code class="mono">${esc(f.fp)}</code>
+          <span class="small">${esc((f.sources || []).join(' · '))}</span>
+          <span class="spacer"></span>
+          ${f.banned
+            ? `<button data-act="unban-net" data-fp="${esc(f.fp)}">Remove suspension</button>`
+            : `<button class="danger" data-act="ban-net-one" data-fp="${esc(f.fp)}">Suspend network</button>`}
+        </div>`).join('')
+          : '<p class="small" style="margin:0">No sign-in network recorded for this account yet.</p>'}
+        ${((d.network && d.network.shared) || []).length ? `<p class="small" style="margin:6px 0 0">Also seen on these networks: ${((d.network && d.network.shared) || []).map(s => `<button type="button" data-open-id="${s.id}">${esc(s.u)}</button>`).join(' ')}</p>` : ''}
       </fieldset>`;
   } else if (TAB === 'send') {
     body.innerHTML = `<p class="small">Choose a gift and quantity. Offline players receive gifts when they return. A full bag leaves equipment gifts waiting.</p>
@@ -614,6 +711,9 @@ function closeDetail() {
 $('detail').addEventListener('click', async e => {
   const tabBtn = e.target.closest('[data-tab]');
   if (tabBtn) { TAB = tabBtn.dataset.tab; renderDetail(); return; }
+  // "Also seen on these networks" — jump straight to the alternate account.
+  const gotoBtn = e.target.closest('[data-open-id]');
+  if (gotoBtn) { openPlayer(+gotoBtn.dataset.openId).catch(err => say(err.message, 1)); return; }
   const btn = e.target.closest('[data-act]');
   if (!btn) return;
   // Closing the card needs no selection, and it must work even in the moment
@@ -631,6 +731,23 @@ $('detail').addEventListener('click', async e => {
       if (act === 'ban' && !confirm('Suspend ' + SEL.account.u + '? They will not be able to log in until you unsuspend.')) return;
       await api('/gm/player', { method: 'POST', body: JSON.stringify({ id, action: act }) });
       say(act === 'ban' ? 'Suspended.' : 'Unsuspended.');
+    } else if (act === 'banip') {
+      const fps = (SEL.network && SEL.network.fps) || [];
+      if (!fps.length) return say('No sign-in network recorded for this account yet.', 1);
+      if (!confirm('Suspend every network ' + SEL.account.u + ' signed in from (' + fps.length +
+        ' fingerprint' + (fps.length === 1 ? '' : 's') + ')? Everyone sharing them will be signed out, and sign-in, registration and recovery will be refused there until you remove the ban from the Network bans card.')) return;
+      const r = await api('/gm/player', { method: 'POST', body: JSON.stringify({ id, action: 'ban-ip' }) });
+      say(r.note || 'Network suspended.');
+      await Promise.all([loadIpBans(), loadPlayers()]);
+    } else if (act === 'ban-net-one') {
+      if (!confirm('Suspend this network? Everyone on it will be signed out, and sign-in, registration and recovery will be refused there until you remove the ban.')) return;
+      const r = await api('/gm/ipbans', { method: 'POST', body: JSON.stringify({ action: 'add', value: btn.dataset.fp }) });
+      say(r.note || 'Network suspended.');
+      await Promise.all([loadIpBans(), loadPlayers()]);
+    } else if (act === 'unban-net') {
+      const r = await api('/gm/ipbans', { method: 'POST', body: JSON.stringify({ action: 'remove', fp: btn.dataset.fp }) });
+      say(r.note || 'Network restored.');
+      await Promise.all([loadIpBans(), loadPlayers()]);
     } else if (act === 'logout') {
       await api('/gm/player', { method: 'POST', body: JSON.stringify({ id, action: 'logout' }) });
       say('Signed out everywhere.');
@@ -736,7 +853,7 @@ $('detail').addEventListener('click', async e => {
     const me = await api('/me');
     if (!me.gm) { document.body.innerHTML = '<main><section class="card"><h2>Not a GM</h2><p>Sign in with the owner account in the game first, then come back. <a href="/" onclick="backToGame();return false" style="color:var(--gold)">Back to the game</a></p></section></main>'; return; }
     CATALOG=await api('/gm/catalog');
-    await Promise.all([loadUsage(),loadDamageAlerts(),loadFishingTools()]);
+    await Promise.all([loadUsage(),loadDamageAlerts(),loadAudit(),loadFishingTools(),loadIpBans()]);
     await loadPlayers();
   } catch (e) {
     document.body.innerHTML = '<main><section class="card"><h2>Sign in first</h2><p>This console signs in with the same account as the game. On the embedded preview it now carries the session itself; or sign in right here:</p>'

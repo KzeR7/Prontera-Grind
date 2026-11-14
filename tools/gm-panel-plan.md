@@ -252,3 +252,38 @@ phase 2. The owner gets a working "control the game" panel in the same week the 
 * **Planning boundary:** the DigiPet Rift campaign is only in
   `docs/proposals/digipet-rift-campaign-proposal-2026-11-09.md`. No redesign gameplay, save migration,
   combat or map work is part of this release.
+
+## Shipped 2026-11-14 — network (IP) bans, for the player who came back
+
+The owner's brief: *"someone try hacking in my game, i banned him twice … i need an ip ban in my gm
+console to remove these kind of players."* The account ban stops a NAME; this stops the ADDRESS.
+
+* **`@ban` for a network:** `POST /api/gm/player` with `action: "ban-ip"` suspends every network
+  fingerprint the account has signed in from and ends every live session on them, in one batch.
+  `GET/POST /api/gm/ipbans` is the list behind the console's **Network bans** card: add (raw IP or
+  fingerprint — the server hashes it; raw addresses are never stored) and remove.
+* **Same-network detection:** the player's Account tab shows each fingerprint (source and ban
+  state) and **"Also seen on these networks"** — the second account a cheater is signed in on, one
+  click away. The player list marks current sessions on a suspended network with 🚫.
+* **Enforcement:** every `/api` request from a suspended network is refused at the front door
+  (`functions/api/_middleware.js`), plus explicit checks in login, register and recovery. The
+  owner (`gm ≥ 2`) is exempt everywhere, so a mistaken ban is always undoable from this page.
+  Migration `0014_ip_bans.sql` is required; every check fails open (feature off, site up) until
+  it is applied. Full rationale and test coverage: docs/UPDATE-LOG.md, 2026-11-14 entry.
+
+### Shipped 2026-11-14 — automatic save audit (0015)
+
+The owner's follow-up: *"how i identify is the stats is over the limit, level to fast & alot of
+materials which the account only made in 5mins. i cant be monitoring the game myself 24 hours."*
+
+* **The server audits every accepted save** (`functions/_lib/save-audit.js`, hooked after the
+  commit in `functions/api/save.js`, best-effort like the damage monitor): static impossibilities
+  (stat/level/Zeny caps, the `pts + spent === points` invariant, refine ceilings, affix sanity)
+  plus wall-clock rate limits since the previous sync (kills/levels/Zeny/materials per hour),
+  with offline-claim kills and claimed GM grants credited back so gifts and away progress never
+  flag their receiver. `gm ≥ 2` accounts are never audited (GM tools make impossible figures).
+* **Flags are REVIEW-ONLY** — the save is always stored, nothing auto-bans. Rows live in
+  `save_alerts` (migration 0015); the console gets the **Suspicious saves** card, a ⚠ player-list
+  marker, and a **Save audit flags** block on the player's Damage tab. The first time a rule
+  fires for an account the server logs a `save-alert` event and mails every owner account
+  in-game, so a busy owner gets poked instead of watching 24/7.

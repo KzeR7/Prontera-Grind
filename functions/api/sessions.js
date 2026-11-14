@@ -45,6 +45,14 @@ export const onRequestPost = guard(async ({ request, env }) => {
 
   const { ok, upgrade } = await verifyPassword(String(p), user.pass_hash);
   if (!ok) return reject();
+  // NETWORK BAN (migration 0014): a suspended network cannot sign in, so a player who was
+  // banned twice cannot simply register the next account and walk back in. Checked AFTER the
+  // password so a wrong password gets the same answer on every network. The owner (gm>=2) is
+  // exempt — a mistaken ban (shared mobile IP, an alt of the GM, a fat-fingered manual entry)
+  // must always be undoable by exactly the one account that cannot be suspended.
+  if (user.gm < 2 && await db.isIpBanned(D, ip)) {
+    return fail('This network is suspended. Contact the GM.', 403, { ipBanned: true });
+  }
   const token = newToken();
   const hash = await tokenHash(token);
   const created = await db.startVerifiedSession(D, {
@@ -62,7 +70,9 @@ export const onRequestPost = guard(async ({ request, env }) => {
   // The sign-in itself is recorded in users.last_login_at (in the verified-session transaction) for the GM player
   // list, and the away baseline moves on the first save exchange of the session (GET/PUT
   // /api/save), which is the server-observed return the offline reward is timed from.
-  await db.logEvent(D, user.username, user.id, 'login', null);
+  // The event detail carries the network fingerprint (`ip <hash>`, never the raw address) so the
+  // GM console can show which networks an account used and match alternate accounts to each other.
+  await db.logEvent(D, user.username, user.id, 'login', ip ? `ip ${ip}` : null);
 
   // v280: the login answer carries the durable account id, so the very first sync can stamp the save
   // with it instead of waiting for a later /api/me poll.

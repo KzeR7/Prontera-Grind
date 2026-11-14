@@ -1153,6 +1153,327 @@ await T('v396: a save that already carries the restore is never refused', async 
   assert.strictEqual(ok.status, 200, 'the restore does not block the account forever');
 });
 
+// ---------------------------------------------------------- network bans ----
+// The owner's brief (2026-11-14): a player was banned twice and came back on a new name. An
+// account ban stops one name; a network ban must stop the address — and the console must show
+// which accounts share a network so the second name is obvious before it is opened.
+const regFrom = (env, u, p, ip) =>
+  call('onRequestPost', 'api/register.js', {
+    request: req('POST', '/api/register', {
+      body: { u, p, email: u.toLowerCase() + '@example.test' },
+      headers: ip ? { 'CF-Connecting-IP': ip } : {},
+    }), env,
+  });
+const loginFrom = (env, u, p, ip) =>
+  call('onRequestPost', 'api/sessions.js', {
+    request: req('POST', '/api/sessions', {
+      body: { u, p }, headers: ip ? { 'CF-Connecting-IP': ip } : {},
+    }), env,
+  });
+const ipbans = (env, cookie, body) =>
+  call('onRequestPost', 'api/gm/ipbans.js', { request: req('POST', '/api/gm/ipbans', { cookie, body }), env });
+const ipbansList = (env, cookie) =>
+  call('onRequestGet', 'api/gm/ipbans.js', { request: req('GET', '/api/gm/ipbans', { cookie }), env });
+
+await T('network bans: the console sees the network, the second account on it, and bans both names off it', async () => {
+  const net = freshEnv(), e = net.env, d = net.sqlite;
+  const ownerReg = await api.register(e, { u: 'NETOWNER', p: 'owner-net-pass' });
+  d.prepare("UPDATE users SET gm = 2 WHERE username = 'NETOWNER'").run();
+  const owner = ownerReg.cookie;
+  // The shape of the incident: one cheat, a second name, same home network.
+  const cheat = await regFrom(e, 'X74055', 'cheat-net-pass', '198.51.100.10');
+  assert.strictEqual(cheat.status, 201);
+  const alt = await regFrom(e, 'RICO957', 'alt-net-pass', '198.51.100.10');
+  assert.strictEqual(alt.status, 201);
+  const cheatId = d.prepare("SELECT id FROM users WHERE username = 'X74055'").get().id;
+
+  // The player panel names the network and — the point — the other account sitting on it.
+  const detail = await api.player(e, owner, cheatId);
+  assert.strictEqual(detail.status, 200);
+  assert.strictEqual(detail.data.network.fps.length, 1, 'both sign-ins hash to one fingerprint');
+  assert.ok(detail.data.network.fps[0].sources.includes('current session'), 'the live session is a source');
+  assert.ok(detail.data.network.fps[0].sources.includes('sign-in log'), 'the register event records `ip <fp>`');
+  assert.ok(!detail.data.network.fps[0].banned, 'nothing is banned yet');
+  assert.ok(detail.data.network.shared.some(s => s.u === 'RICO957'), 'the alternate name must be surfaced');
+
+  // Ban the network once: both names lose it.
+  const ban = await api.act(e, owner, { id: cheatId, action: 'ban-ip', note: 'cheating; same net as RICO957' });
+  assert.strictEqual(ban.status, 200);
+  assert.strictEqual(ban.data.count, 1, 'one shared fingerprint was suspended');
+  assert.match(ban.data.fps[0], /^[0-9a-f]{16}$/);
+
+  assert.strictEqual((await loginFrom(e, 'X74055', 'cheat-net-pass', '198.51.100.10')).status, 403,
+    'the cheat cannot sign in from the banned network');
+  const altLogin = await loginFrom(e, 'RICO957', 'alt-net-pass', '198.51.100.10');
+  assert.strictEqual(altLogin.status, 403, 'the second name is refused on the same network');
+  assert.strictEqual(altLogin.data.ipBanned, true, 'and the refusal says why');
+  assert.strictEqual((await regFrom(e, 'THIRDNAME', 'third-net-pass', '198.51.100.10')).status, 403,
+    'a THIRD name cannot be registered from that network either');
+  assert.strictEqual((await api.me(e, alt.cookie)).status, 401,
+    'the alt account was signed out with the ban, mid-session');
+
+  // The ban is the network, not the account: the same name plays from anywhere else.
+  assert.strictEqual((await loginFrom(e, 'X74055', 'cheat-net-pass', '203.0.113.9')).status, 200,
+    'a different network still works');
+
+  // And the one lockout that must never happen: the owner signing in from the banned network.
+  const ownerFromBanned = await loginFrom(e, 'NETOWNER', 'owner-net-pass', '198.51.100.10');
+  assert.strictEqual(ownerFromBanned.status, 200, 'the owner is exempt, so a mistaken ban is fixable');
+
+  // The audit row carries human words, the fingerprints, and the GM's own note. (The owner
+  // re-signed-in from the banned network just above, so that fresh cookie is the live session.)
+  const log = await api.log(e, ownerFromBanned.cookie);
+  const ev = log.data.events.find(x => x.kind === 'gm-ip-ban');
+  assert.ok(ev, 'gm-ip-ban must be in the log');
+  assert.strictEqual(ev.label, 'Network suspended', 'every event has a human label');
+  assert.ok((ev.detail || '').includes(ban.data.fps[0]), 'the detail names the fingerprint');
+  assert.ok((ev.detail || '').includes('same net as RICO957'), 'the note survives into the log');
+});
+
+await T('network bans: manual suspend/restore by IP, GM-only, idempotent, and validated', async () => {
+  const net = freshEnv(), e = net.env, d = net.sqlite;
+  const ownerReg = await api.register(e, { u: 'NETOWNER2', p: 'owner-net-pass' });
+  d.prepare("UPDATE users SET gm = 2 WHERE username = 'NETOWNER2'").run();
+  const owner = ownerReg.cookie;
+  const joe = await regFrom(e, 'PLAINJOE', 'plain-pass-1', '203.0.113.44');
+  assert.strictEqual(joe.status, 201);
+
+  // A player may not look at or touch the ban list.
+  assert.strictEqual((await ipbansList(e, joe.cookie)).status, 403);
+  assert.strictEqual((await ipbans(e, joe.cookie, { action: 'add', value: '203.0.113.44' })).status, 403);
+
+  // The owner suspends a raw IP: it is hashed before storage, never written raw.
+  const add = await ipbans(e, owner, { action: 'add', value: '203.0.113.44', note: 'alt factory' });
+  assert.strictEqual(add.status, 200);
+  assert.match(add.data.fp, /^[0-9a-f]{16}$/, 'the answer is a fingerprint, not the address');
+  assert.strictEqual((await loginFrom(e, 'PLAINJOE', 'plain-pass-1', '203.0.113.44')).status, 403);
+  assert.strictEqual((await loginFrom(e, 'PLAINJOE', 'plain-pass-1', '198.51.100.99')).status, 200,
+    'other networks are untouched');
+
+  // Adding the same network again (typed IP or pasted fingerprint) keeps one row.
+  assert.strictEqual((await ipbans(e, owner, { action: 'add', value: add.data.fp })).status, 200);
+  const list = await ipbansList(e, owner);
+  assert.strictEqual(list.data.bans.length, 1, 'one row per network, however it is typed in');
+  assert.strictEqual(list.data.bans[0].fp, add.data.fp);
+  assert.strictEqual(list.data.bans[0].by, 'NETOWNER2', 'the row says who suspended it');
+
+  // Garbage never becomes a silent useless ban.
+  assert.strictEqual((await ipbans(e, owner, { action: 'add', value: 'not-an-ip!!' })).status, 400);
+  assert.strictEqual((await ipbans(e, owner, { action: 'add', value: '' })).status, 400);
+
+  // Restore, exactly once.
+  assert.strictEqual((await ipbans(e, owner, { action: 'remove', fp: add.data.fp })).status, 200);
+  assert.strictEqual((await ipbans(e, owner, { action: 'remove', fp: add.data.fp })).status, 404,
+    'removing a network that is not banned says so');
+  assert.strictEqual((await loginFrom(e, 'PLAINJOE', 'plain-pass-1', '203.0.113.44')).status, 200,
+    'removing the ban reopens the network');
+
+  // The owner can never be network-suspended through their own account, exactly like `ban`.
+  const ownerId = d.prepare("SELECT id FROM users WHERE username = 'NETOWNER2'").get().id;
+  const ownerDetail = await api.player(e, owner, ownerId);
+  assert.strictEqual(ownerDetail.status, 200);
+  assert.strictEqual((await api.act(e, owner, { id: ownerId, action: 'ban-ip' })).status, 400);
+});
+
+await T('network bans: the front door refuses every route from a banned network, except login and the owner', async () => {
+  const net = freshEnv(), e = net.env, d = net.sqlite;
+  const ownerReg = await api.register(e, { u: 'NETOWNER3', p: 'owner-net-pass' });
+  d.prepare("UPDATE users SET gm = 2 WHERE username = 'NETOWNER3'").run();
+  const owner = ownerReg.cookie;
+  const cheat = await regFrom(e, 'BANME1', 'banme-net-pass', '192.0.2.77');
+  assert.strictEqual(cheat.status, 201);
+  const cheatId = d.prepare("SELECT id FROM users WHERE username = 'BANME1'").get().id;
+  assert.strictEqual((await api.act(e, owner, { id: cheatId, action: 'ban-ip' })).status, 200);
+
+  const mw = await import(pathToFileURL(path.join(root, 'functions', 'api', '_middleware.js')).href);
+  const run = async (path, { ip, cookie, method = 'GET' } = {}) => {
+    let nexted = 0;
+    const r = await mw.onRequest({
+      request: req(method, path, { cookie, headers: ip ? { 'CF-Connecting-IP': ip } : {} }),
+      env: e,
+      next: async () => { nexted++; return new Response('handler', { status: 200 }); },
+    });
+    return { status: r.status, nexted, body: r.headers.get('Content-Type')?.includes('json') ? await r.clone().json() : null };
+  };
+
+  // From the banned network, nothing reaches a handler — not even with a cookie in hand.
+  for (const path of ['/api/save', '/api/me', '/api/board', '/api/gm/player']) {
+    const r = await run(path, { ip: '192.0.2.77', cookie: cheat.cookie });
+    assert.strictEqual(r.status, 403, path + ' must be refused at the front door');
+    assert.strictEqual(r.nexted, 0, path + ' must never reach its handler');
+  }
+  assert.strictEqual((await run('/api/save', { ip: '192.0.2.77' })).body.ipBanned, true,
+    'the refusal names itself so the client can explain it');
+
+  // The login route is passed through for the handler to judge (password first, owner exempt).
+  const loginRoute = await run('/api/sessions', { ip: '192.0.2.77', method: 'POST' });
+  assert.strictEqual(loginRoute.nexted, 1, 'login is enforced by the login handler, not blanket-blocked');
+
+  // The owner's session passes anywhere, so a mistaken ban can always be undone from the console.
+  const ownerOk = await run('/api/save', { ip: '192.0.2.77', cookie: owner });
+  assert.strictEqual(ownerOk.status, 200, 'the owner is exempt at the front door');
+  assert.strictEqual(ownerOk.nexted, 1);
+
+  // No fingerprint at all (local dev, tests without the header): behaviour is unchanged.
+  const noIp = await run('/api/save', {});
+  assert.strictEqual(noIp.status, 200, 'no CF-Connecting-IP means nothing to match');
+  assert.strictEqual(noIp.nexted, 1);
+
+  // An unbanned network is untouched.
+  const otherIp = await run('/api/save', { ip: '198.51.100.200' });
+  assert.strictEqual(otherIp.status, 200);
+  assert.strictEqual(otherIp.nexted, 1);
+
+  // And a login attempt from the banned network really is refused by the handler itself.
+  const refused = await loginFrom(e, 'BANME1', 'banme-net-pass', '192.0.2.77');
+  assert.strictEqual(refused.status, 403, 'the handler enforces the ban with the password checked first');
+  assert.strictEqual(refused.data.ipBanned, true);
+});
+
+// ---------------------------------------------- the automatic save audit ----
+// The owner (2026-11-14): "how i identify is the stats is over the limit, level to fast & alot
+// of materials which the account only made in 5mins. i cant be monitoring the game myself 24
+// hours." The server audits every accepted save against the game's own invariants and against
+// the rate of progress since the previous one (0015), flags REVIEW-ONLY, pokes the owner in-game
+// the first time a rule fires, and never lets a GM gift or an offline claim look like cheating.
+import { auditStaticSave, auditSaveRates, creditsFromGrants } from '../../functions/_lib/save-audit.js';
+
+// A save that passes every static rule (lv 60 earns far more points than this fixture spends).
+const quietSave = (over = {}) => JSON.stringify(Object.assign({}, JSON.parse(saveBlob(60, 0)), { pts: 0 }, over));
+
+t('save audit: the pure rules — impossible stats, refine ceilings, rates with claims credited', () => {
+  // static impossibilities
+  const evil = JSON.parse(quietSave({ st: { str: 300, agi: 1, dex: 1, luk: 1, int: 1, vit: 5 } }));
+  assert.ok(auditStaticSave(evil).some(v => v.kind === 'stat-over-cap'), 'a 300 STR at lv 60 is flagged');
+  const broke = JSON.parse(quietSave({ pts: 999999 }));
+  assert.ok(auditStaticSave(broke).some(v => v.kind === 'stat-points-over'), 'more points than the level earns is flagged');
+  const gear = JSON.parse(quietSave({ eq: { weapon: { name: 'Dagger', sec: 0, r: 99 } } }));
+  assert.ok(auditStaticSave(gear).some(v => v.kind === 'refine-over-cap'), '+99 on normal gear is flagged');
+  assert.deepStrictEqual(auditStaticSave(JSON.parse(quietSave())), [], 'an honest save has no static flags');
+  // rates: sub-minute windows are not judged; a 2-minute 50k-kill jump is impossible
+  const prev = { kills: 7, lv: 60, zeny: 0, raw: JSON.parse(quietSave()) };
+  const next = { kills: 50007, lv: 62, zeny: 0, raw: JSON.parse(quietSave({ kills: 50007, lv: 62 })) };
+  assert.deepStrictEqual(auditSaveRates({ prev, next, elapsedMs: 30_000 }), [], 'too short a window proves nothing');
+  const flagged = auditSaveRates({ prev, next, elapsedMs: 180_000 });
+  assert.ok(flagged.some(v => v.kind === 'kill-rate'), '50k kills in two minutes is flagged');
+  // the server's own offline-claim payout is never a flag
+  const claimed = auditSaveRates({ prev, next, elapsedMs: 180_000, claimKills: 50_000 });
+  assert.ok(!claimed.some(v => v.kind === 'kill-rate'), 'claim-credited kills are not a flag');
+  // GM grants claimed inside the window are credited back
+  const credits = creditsFromGrants([
+    { kind: 'zeny', payload: JSON.stringify({ amount: 500_000_000 }) },
+    { kind: 'level', payload: JSON.stringify({ amount: 60 }) },
+    { kind: 'gift', payload: JSON.stringify({ resource: 'shards', amount: 5_000 }) },
+    { kind: 'gift', payload: JSON.stringify({ resource: 'mystery', amount: 5_000 }) },
+  ]);
+  assert.strictEqual(credits.zeny, 500_000_000);
+  assert.strictEqual(credits.levels, 60);
+  assert.strictEqual(credits.resources.shards, 5_000);
+  assert.strictEqual(credits.resources.mystery, undefined, 'an unrecognised resource credits nothing');
+});
+
+await T('save audit: an impossible save still stores, and the FIRST flag pokes the owner in-game', async () => {
+  const h = freshEnv();
+  const owner = await api.register(h.env, { u: 'AuditOwner', p: 'owner-password-1' });
+  h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='AuditOwner'").run();
+  const sus = await api.register(h.env, { u: 'Suspect', p: 'suspect-password-1' });
+  const evil = JSON.stringify(Object.assign(JSON.parse(saveBlob(50, 0)), { st: { str: 300, agi: 1, dex: 1, luk: 1, int: 1, vit: 5 } }));
+  const put = await api.putSave(h.env, sus.cookie, { blob: evil, version: 1 });
+  assert.strictEqual(put.status, 200, 'flags never reject a save: ' + JSON.stringify(put.data));
+  const alerts = h.sqlite.prepare('SELECT kind, threshold FROM save_alerts').all();
+  assert.ok(alerts.some(a => a.kind === 'stat-over-cap'), 'the impossible stat is recorded');
+  const msgs = h.sqlite.prepare(`SELECT body FROM messages WHERE target_user=(SELECT id FROM users WHERE username='AuditOwner')`).all();
+  assert.ok(msgs.length >= 1, 'the owner is poked in-game');
+  assert.match(msgs[0].body, /Suspicious save flagged: Suspect/);
+  assert.match(msgs[0].body, /review/i, 'the poke says flags are for review');
+  const ev = h.sqlite.prepare(`SELECT detail FROM events WHERE kind='save-alert'`).all();
+  assert.ok(ev.length >= 1, 'the player log records why');
+  // the GM surface reads it back: player detail, the list marker, the audit card feed
+  const id = h.sqlite.prepare(`SELECT id FROM users WHERE username='Suspect'`).get().id;
+  const detail = await api.player(h.env, owner.cookie, id);
+  assert.ok(Array.isArray(detail.data && detail.data.alerts), 'player detail carries alerts: ' + JSON.stringify(detail.data || {}).slice(0, 300));
+  assert.ok(detail.data.alerts.some(a => a.kind === 'stat-over-cap' && a.label), 'the player panel lists the flag');
+  const list = await api.players(h.env, owner.cookie);
+  assert.ok(list.data.players.find(p => p.id === id)?.alerted, 'the player list marks the account');
+  const audit = await call('onRequestGet', 'api/gm/audit.js', { request: req('GET', '/api/gm/audit', { cookie: owner.cookie }), env: h.env });
+  assert.ok(Array.isArray(audit.data && audit.data.alerts), 'audit endpoint answers: ' + JSON.stringify(audit.data || {}).slice(0, 300));
+  assert.ok(audit.data.alerts.some(a => a.username === 'Suspect' && a.kind === 'stat-over-cap'), 'the Suspicious saves card is fed');
+  // a second violation of the SAME rule must not poke the owner again
+  const put2 = await api.putSave(h.env, sus.cookie, { blob: JSON.stringify(Object.assign(JSON.parse(put.data.blob || evil), { st: { str: 301 } })), version: put.data.version });
+  if (put2.status === 200) {
+    const again = h.sqlite.prepare(`SELECT COUNT(*) n FROM messages WHERE target_user=(SELECT id FROM users WHERE username='AuditOwner')`).get().n;
+    assert.strictEqual(Number(again), Number(msgs.length), 'repeat flags update the row, they do not re-poke');
+  }
+});
+
+await T('save audit: too-fast kills and materials flag between syncs; honest play does not', async () => {
+  const h = freshEnv();
+  const owner = await api.register(h.env, { u: 'RateOwner', p: 'owner-password-1' });
+  h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='RateOwner'").run();
+  const sus = await api.register(h.env, { u: 'Speedy', p: 'speedy-password-1' });
+  // honest play first: +100 kills over three minutes records nothing
+  let put = await api.putSave(h.env, sus.cookie, { blob: quietSave(), version: 1 });
+  assert.strictEqual(put.status, 200);
+  h.sqlite.prepare(`UPDATE saves SET saved_at = saved_at - 180000 WHERE user_id=(SELECT id FROM users WHERE username='Speedy')`).run();
+  put = await api.putSave(h.env, sus.cookie, { blob: JSON.stringify(Object.assign(JSON.parse(quietSave()), { kills: 107 })), version: put.data.version });
+  assert.strictEqual(put.status, 200);
+  assert.strictEqual(h.sqlite.prepare(`SELECT COUNT(*) n FROM save_alerts`).get().n, 0, 'honest play must not flag');
+  // now the impossible window: 50k kills and 10k shards in three minutes
+  h.sqlite.prepare(`UPDATE saves SET saved_at = saved_at - 180000 WHERE user_id=(SELECT id FROM users WHERE username='Speedy')`).run();
+  put = await api.putSave(h.env, sus.cookie, { blob: JSON.stringify(Object.assign(JSON.parse(quietSave()), { kills: 50107, shards: 10000 })), version: put.data.version });
+  assert.strictEqual(put.status, 200, 'a flagged save is still stored');
+  const kinds = h.sqlite.prepare(`SELECT kind, observations FROM save_alerts`).all().map(a => a.kind);
+  assert.ok(kinds.includes('kill-rate'), 'kill rate flagged: ' + kinds);
+  assert.ok(kinds.includes('rate:shards'), 'material rate flagged: ' + kinds);
+  // within the 5-minute bucket a repeat counts as one observation
+  h.sqlite.prepare(`UPDATE saves SET saved_at = saved_at - 180000 WHERE user_id=(SELECT id FROM users WHERE username='Speedy')`).run();
+  put = await api.putSave(h.env, sus.cookie, { blob: JSON.stringify(Object.assign(JSON.parse(quietSave()), { kills: 100107, shards: 20000 })), version: put.data.version });
+  assert.strictEqual(put.status, 200);
+  const row = h.sqlite.prepare(`SELECT observations FROM save_alerts WHERE kind='kill-rate'`).get();
+  assert.strictEqual(Number(row.observations), 1, 'coarse bucket: repeats inside it are one observation');
+  // the owner's poke names the human rule, not the machine kind
+  const msgs = h.sqlite.prepare(`SELECT body FROM messages WHERE target_user=(SELECT id FROM users WHERE username='RateOwner')`).all();
+  assert.ok(msgs.length >= 1 && /Kill rate/.test(msgs[0].body), 'the poke is in plain language: ' + (msgs[0] && msgs[0].body));
+});
+
+await T('save audit: GM grants claimed in the window are credited, so gifts never flag the receiver', async () => {
+  const h = freshEnv();
+  const owner = await api.register(h.env, { u: 'GrantOwner', p: 'owner-password-1' });
+  h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='GrantOwner'").run();
+  const lucky = await api.register(h.env, { u: 'Lucky', p: 'lucky-password-1' });
+  const id = h.sqlite.prepare(`SELECT id FROM users WHERE username='Lucky'`).get().id;
+  let put = await api.putSave(h.env, lucky.cookie, { blob: quietSave(), version: 1 });
+  assert.strictEqual(put.status, 200);
+  // the owner's own tools: 500M zeny and 60 levels, claimed moments before the sync that shows them
+  const g1 = await api.act(h.env, owner.cookie, { action: 'grant', id, kind: 'zeny', payload: { amount: 500000000 } });
+  assert.ok(g1.status === 200, 'grant zeny: ' + JSON.stringify(g1.data));
+  const g2 = await api.act(h.env, owner.cookie, { action: 'grant', id, kind: 'level', payload: { amount: 60 } });
+  assert.ok(g2.status === 200, 'grant level: ' + JSON.stringify(g2.data));
+  const grantIds = h.sqlite.prepare(`SELECT id FROM grants WHERE user_id=?`).all(id).map(r => r.id);
+  const claimed = await api.claim(h.env, lucky.cookie, grantIds);
+  assert.strictEqual(claimed.status, 200, 'the receiver claims: ' + JSON.stringify(claimed.data));
+  h.sqlite.prepare(`UPDATE saves SET saved_at = saved_at - 180000 WHERE user_id=?`).run(id);
+  put = await api.putSave(h.env, lucky.cookie, {
+    blob: JSON.stringify(Object.assign(JSON.parse(quietSave()), { lv: 120, zeny: 500000000 })),
+    version: put.data.version,
+  });
+  assert.strictEqual(put.status, 200, 'the gifted save is stored: ' + JSON.stringify(put.data));
+  const kinds = h.sqlite.prepare(`SELECT kind FROM save_alerts`).all().map(a => a.kind);
+  assert.deepStrictEqual(kinds, [], 'a claimed GM gift and a granted level never flag their receiver: ' + kinds);
+});
+
+await T('save audit: the owner account is never audited (GM tools legitimately make impossible figures)', async () => {
+  const h = freshEnv();
+  const owner = await api.register(h.env, { u: 'SelfAudit', p: 'owner-password-1' });
+  h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='SelfAudit'").run();
+  const evil = JSON.stringify(Object.assign(JSON.parse(saveBlob(150, 0)), { st: { str: 300 } }));
+  const put = await api.putSave(h.env, owner.cookie, { blob: evil, version: 1 });
+  assert.strictEqual(put.status, 200);
+  assert.strictEqual(h.sqlite.prepare(`SELECT COUNT(*) n FROM save_alerts`).get().n, 0, 'no self-noise from the owner');
+  const msgs = h.sqlite.prepare(`SELECT COUNT(*) n FROM messages WHERE target_user=(SELECT id FROM users WHERE username='SelfAudit')`).get().n;
+  assert.strictEqual(Number(msgs), 0, 'the owner is never mailed about their own account');
+});
+
 sqlite.close();
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
