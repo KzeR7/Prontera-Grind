@@ -38,11 +38,21 @@ try{
   try{
    for(let rank=11;rank<=15;rank++){
     ev("refine('weapon')");
-    if(rank===11)assert.match(ev(`document.getElementById('mt').textContent`),/This Mythic equipment is \+10, so failure cannot drop its rank\. Use one Mythic Refine Protection Scroll anyway\?/,'v174: protected Mythic at +10 warns before spending the scroll');
+    // v399 (owner: "+10 is safe, nothing wrong... +10 above only use mythic protection scroll"):
+    // at +10 on Mythic gear the rank cannot fall, so the attempt needs NEITHER scroll and must not
+    // offer one. The old assertion here demanded a "Mythic Refine Protection Scroll" at +10, which
+    // v399 deliberately reversed - the test was stale, and the warning it looked for is the bug.
+    if(rank===11){
+      assert.match(ev(`document.getElementById('mt').textContent`),/This Mythic equipment is \+10, so failure cannot drop its rank\. Use one Refine Protection Scroll anyway\?/,'v399: +10 warns, and names the NORMAL scroll');
+      assert.doesNotMatch(ev(`document.getElementById('mt').textContent`),/Mythic Refine Protection Scroll/,'v399: +10 must never demand a Mythic scroll');
+    }
     ev(`if(document.getElementById('modal').style.display==='flex')document.getElementById('my').click()`);
     assert.equal(ev('S.eq.weapon.r'),rank);
    }
-   assert.equal(ev('S.mythicScrolls'),0);
+   // v399 arithmetic: the +10 -> +11 attempt is the safe one, so it spends NO scroll. The four
+   // attempts after it (+11 through +14) each spend one Mythic scroll: 5 - 4 = 1 left. The old test
+   // expected 0 because it counted the +10 attempt as a Mythic-scroll spend, which v399 removed.
+   assert.equal(ev('S.mythicScrolls'),1,'+10 spends nothing, the four later attempts spend four Mythic scrolls');
    assert.equal(ev("rarOf(S.eq.weapon).n"),'Mythic');
   }finally{ev('Math.random=window.previousRandom')}
  });

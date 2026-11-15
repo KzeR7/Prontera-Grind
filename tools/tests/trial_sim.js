@@ -57,6 +57,8 @@ function arena(opts = {}) {
       {n:'Louyang',mobs:[{n:'Jiangshi'}]},{n:'Amatsu',mobs:[{n:'Tengu'}]},{n:'Niflheim',mobs:[{n:'Ghoul'}]},{n:'Abyss',mobs:[{n:'Dread'}]}];
     const CARD_CATALOG=MAPS.map((mp,map)=>({n:mp.n+' MVP Card',map,bossCard:true,nightmare:false,g:3,stat:map%2?'atk':'hp',v:5,effects:[{k:map%2?'atk':'hp',v:5}]}));
     const newCard=c=>({...c,id:uid()}),cardEffectText=e=>e.k+' +'+e.v;
+    // v411: cards no longer push straight into the collection; the same one-door helper is stubbed here.
+    const addCard=(c,o)=>!!c&&(S.cards.push(c),true),cardStorageFull=()=>S.cards.length>=1000;
     const MONSTER_INDEX=MAPS.flatMap((mp,map)=>[...mp.mobs.map(m=>({id:map+':'+m.n,map,name:m.n,boss:false})),{id:map+':'+mp.n+' MVP',map,name:mp.n+' MVP',boss:true}]);
     const MAPTIER=[0,0,1,1,2,2,3,3,3,3],MAPGRADE=[1,2,2,3,3,3,3,3,3,4];
     const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(9,m|0))],l>=10?4:MAPTIER[Math.max(0,Math.min(9,m|0))]);

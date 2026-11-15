@@ -10,7 +10,7 @@
 import { currentUser, isGm } from '../../_lib/auth.js';
 import { json, guard, fail } from '../../_lib/http.js';
 import * as db from '../../_lib/db.js';
-import { cloudflareUsage, utcDay, FREE_LIMITS } from '../../_lib/usage.js';
+import { cloudflareUsage, cpuUsage, utcDay, FREE_LIMITS, CPU_LIMIT_US } from '../../_lib/usage.js';
 
 // "Today" for the ledger line: the UTC day the free-plan counters reset on, so both halves of the
 // card describe the same window.
@@ -24,6 +24,9 @@ export const onRequestGet = guard(async ({ request, env }) => {
   const now = Date.now();
   const ledger = await db.usageLedger(env.DB, startOfUtcDay(now));
   const usage = await cloudflareUsage(env, now);
+  // v411: the CPU breakdown, asked for separately so a renamed field there cannot blank the 
+  // request/D1/DO numbers above. This is the answer to "why did it spike, and when did it start".
+  const cpu = await cpuUsage(env, now);
 
   return json({
     at: now,
@@ -40,6 +43,9 @@ export const onRequestGet = guard(async ({ request, env }) => {
       ? { requests: usage.objects.requests, storedBytes: usage.objects.storedBytes }
       : null,
     objectsError: usage.ok && usage.objects && !usage.objects.ok ? usage.objects.error : null,
+    // CPU is null when unmeasured, never zero - same rule as every other meter here.
+    cpu: cpu.ok ? { day: cpu.day, limitUs: CPU_LIMIT_US, pages: cpu.pages, workers: cpu.workers, verdict: cpu.verdict } : null,
+    cpuError: cpu.ok ? null : (cpu.missing ? null : cpu.error),
     source: usage.ok ? 'analytics' : 'ledger',
     // The exact string to paste in the dashboard, and the reason it is worth doing.
     hint: usage.missing

@@ -11367,3 +11367,141 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   both keys are asserted absent from `COUNTERS`, `RATE_LIMITS` and `LUMP_ALLOWANCE`. Full gate on the
   final tree: **1690 passed**, the same five reds as `main`.
 * **Delivery:** Branch `arena/369b4228-prontera-grind`, PR **#236**.
+
+### 2026-11-15 — `docs/CPU-LIMIT.md`: why the free plan's 10 ms CPU limit is hit so fast
+* **What changed for the player:** nothing. Documentation only; no build bump, no deploy.
+* **Why:** the owner forwarded Cloudflare's daily summary ("Workers hit the free tier CPU time limit at
+  least 1,000+ times in the past 24 hours") and asked what it means and why it happens so fast. The
+  answer needed measuring, not guessing.
+* **Measured (local, Node + the `api_sim` D1 shim — hosted values still need the dashboard):**
+  * one accepted `PUT /api/save` on a **90 KB** save costs **~9 ms**, and instruments at **6 full
+    `JSON.parse` + 2 `JSON.stringify` of the blob** (~0.67 MB re-tokenised) because
+    `checkSaveBlob`, `saveBelongsTo`, `storedRestoreAt`, `withSaveIdentity` and the `storedSave`
+    re-parse each re-read the same string;
+  * PBKDF2-SHA256 at the live 20,000 iterations costs **6.2 ms**, so a single login verification is
+    over half a request's whole budget, and a registration (password + recovery, sequential) is
+    **~12 ms of hashing before any D1 call**;
+  * everything else on the PUT path is cheap and was ruled out explicitly: the save audit ~0.3 ms,
+    damage observation ~0.03 ms, Echo record + settle ~0.05 ms, `gm-catalog.js` is GM-only.
+* **Also documented:** the write gate's per-request cost (`WRITE_GATE = "required"` adds a D1 ban
+  read, a SHA-256 fingerprint and two Durable Object round trips to *every* `/api/*` request,
+  including the 45 s `/api/me` probe), and the fact that a killed `PUT` is a save that never landed,
+  not just a slow request.
+* **Options listed for the owner, cheapest first:** parse the blob once (3 of the 6 parses are pure
+  duplication), shrink the 512 KB ceiling, sample the diagnostics, trim the gate's work on read-only
+  probes, or move to Workers Paid. No code changed in this entry.
+* **Delivery:** branch `arena/6d3886c8-prontera-grind`. Not deployed.
+* **CORRECTED the same day, after the owner supplied the Metrics charts (Oct 30, Nov 6-9, Nov 11-13,
+  Nov 13, Nov 15).** The first version of the doc treated this as a chronic over-budget design. The
+  charts say otherwise and the doc was rewritten:
+  * **The CPU limit was never hit at all before Nov 15** - 0 kills on Oct 30, Oct 30-31, Nov 6-9 and
+    Nov 11-13, on days whose median CPU was already **10-18 ms**, i.e. already over the nominal 10 ms
+    cap and tolerated. Nov 15 then recorded **1,084** CPU kills against 7,631 successes (92% of all
+    errors), with median CPU up 8.7 -> 13.7 ms and p99 45 -> 62 ms. So this is a **regression on
+    Nov 14-15**, not a design that was always doomed.
+  * **The write-gate hypothesis is withdrawn.** It went live Oct 30 and two weeks of zero CPU errors
+    followed; its Durable Object hops are wall time. The doc no longer blames it.
+  * **The save audit is not the smoke either** - measured ~1.1 ms on a 90 KB save with a previous row
+    present, the same whether it flags or not (my first measurement passed `prev: null`, which skips
+    the whole rate check; the number was wrong and the doc now says so).
+  * **The real number:** one accepted `PUT /api/save` parses the blob **6 times** and stringifies it
+    twice. At the 456 KB ceiling that is **34.9 ms**, of which **21.1 ms is duplicated work**; at
+    81 KB it is 6.5 ms vs 2.5 ms if parsed once. That is the floor that makes the account fragile and
+    the first thing to fix. `/api/version` (dead code since v389) was measured and ruled out.
+
+### 2026-11-15 — `v410 CPU diet: a save sync parses the blob three times, not six` (no build bump — `functions/` only)
+* **Why:** the owner's Cloudflare Metrics showed `Exceeded CPU Time Limits` going from **0 every day**
+  (Oct 30 → Nov 13) to **1,084 in one day** on Nov 15, 92% of all errors, with median CPU 8.7 → 13.7 ms
+  and p99 45 → 62 ms. See [CPU-LIMIT](CPU-LIMIT.md). The owner asked for "all u can" that cannot change
+  gameplay.
+* **What was wrong:** one accepted `PUT /api/save` parsed the same save blob **six times** — the
+  request envelope, `checkSaveBlob`, `saveBelongsTo`, `storedRestoreAt`, `withSaveIdentity`, and a
+  final `storedSave` re-parse — and stringified it twice, with the save-audit then parsing the stored
+  blob a **seventh** time. At the 512 KB ceiling that is ~35 ms of pure JSON work, two thirds
+  duplicated, against a 10 ms free-plan budget.
+* **What changed:** `_lib/validate.js` helpers accept an already-parsed save (`parseSave`), so a caller
+  that parsed once does not force three more; `save.js` parses the stored row **once** and shares it
+  with the ownership check, the restore fence and the audit; `save-audit.js` takes `prevSave` instead
+  of re-parsing, and its gear walk folds two passes into one that stops each rule once fired.
+* **Measured:** a 90 KB save went **8.9 ms → 4.0 ms** per accepted sync; parses **6 → 3** and
+  stringifies **2 → 1**. The three left are irreducible (envelope, incoming save, stored row).
+* **No gameplay change, deliberately:** no rule, threshold, rejection or prize path was touched. The
+  ownership decision is still accountId-then-name, and the restore fence is byte-identical in effect.
+  Nothing about what a player can do, earn or lose changed.
+* **Not fixed, and stated plainly:** the Nov 15 spike is still not *explained*. Ruled out by
+  measurement — the write gate (0 kills for two weeks after it shipped), the settlement queue (the
+  owner's query showed **no rows stuck in `settling`**, and the batch's claim→place→ledger→close lock
+  was re-tested and holds under interleaving), and `/api/version` (dead code since v389). Still open:
+  (2) the overnight window, where the spike died by noon while traffic continued. What this entry
+  buys is **headroom on the floor**, not the root cause.
+* **Checks:** `api_sim` **70**, including a new case that instruments `JSON.parse`/`JSON.stringify`
+  around one accepted sync and pins 3 parses / 1 stringify. Full gate: **45 suites green**, the 2 reds
+  (`combat_float_sim`, `ui_sim`) reproduced identically on the base commit (both are `jsdom` missing
+  from this sandbox, not this change).
+* **Delivery:** branch `arena/6d3886c8-prontera-grind`, commit `0c68ee9`. Not pushed, not deployed.
+
+### 2026-11-15 — `v411 CPU diet: cards capped at 1,000, a bulk sale, a real account delete, no /api/version stampede` (build bump)
+* **Why:** the same Nov 15 investigation as v410. v410 removed the duplicated work on the floor; this
+  one removes the *inputs* that keep growing, and the two things that make an already-expensive save
+  arrive more often than it needs to. The owner approved each item and asked to be told where gameplay
+  is touched — it is, in three places, all marked below.
+* **`S.cards` was the last unbounded list in a save.** Measured at **86 B per card**, so 1,000 cards is
+  ~86 KB; with the 1,000-item bag (~209 KB) the worst honest save is **~295 KB**, inside the 512 KB
+  ceiling and ~8 ms of parse after v410. It is now capped at `CARDMAX = 1000` (matching `BAGMAX`) and
+  every grant path goes through one `addCard()` instead of seven call sites each re-stating the rule.
+  **Gameplay change (approved, Option A):** a full collection now *refuses* a new card and says so,
+  rather than storing it. A player at the cap stops collecting cards until they sell or merge. Nothing
+  is ever deleted automatically.
+* **Nothing is destroyed on the way in.** A collection that already exceeds the cap (only possible from
+  before this build) is trimmed to the first 1,000 on load and the surplus is **paid out at the Sell
+  price**, `v*150`, with a one-off notice in the card panel naming the count and the Zeny so the
+  balance jump is never unexplained. The notice is dismissed by a button, never a timer. Reloading a
+  trimmed save pays nothing a second time.
+* **`sellallcards` — selling a full collection one card at a time is not a real answer to a cap.**
+  **Gameplay change (approved):** the card view gets "Sell all loose". It touches only plain, unmerged
+  (0-star) loose cards. A starred card is left alone because it is the product of a merge the player
+  paid for, and a legacy card is left alone because it still needs its free update. The confirmation
+  names the exact count and payout first. There was no delete option before this, which the owner
+  also asked for; this is it, in bulk, with the value returned rather than lost.
+* **Cards coming back off gear the player sells still push directly** (auto-sell, bulk sell, the
+  equipment workspace, removing a socketed card). Those are the player's own property and already
+  exist; refusing them at the cap would destroy value the player never chose to give up, and the
+  measured worst case already fits. This is the one deliberate exception to "everything goes through
+  `addCard`", and it is commented as such.
+* **`/api/version` is deleted.** It answered a value that only a deploy changes and every open tab
+  polled it on a timer; it has been dead code since v389. Removal is pinned by a test that asserts the
+  file is gone *and* that nothing in `functions/`, `index.html`, `gm.html` or `dev_server.js` routes to
+  it, so it cannot quietly come back.
+* **A deploy no longer stampedes every open tab at once.** The auto-reload already had to happen (a
+  stale tab must not keep saving an old build), but every tab used to flush its save in the same
+  second, which is exactly the shape of a CPU spike. The *upload* that precedes the reload now waits a
+  random slice of `UPDATE_JITTER_MS` (90 s). **The reset gate itself is untouched** — a fresh page
+  still hard-resets immediately and a background tab still never does, which is what v299/v371 pin.
+  The first attempt gated the reset instead and broke those three tests; that design was abandoned.
+* **An owner-only account delete**, because erasing a banned cheater's account had no code path at
+  all. Guarded three ways: owner only, never yourself, and a staff account must lose its GM level first;
+  the username must be typed back, checked in the console **and** again on the server. **Order matters
+  more than the guardrails:** `userIpFingerprints()` reads the sessions and events rows that
+  `ON DELETE CASCADE` is about to remove, so the account's networks are suspended **first** — ban first
+  and every network that person used stays blocked, ban after and that knowledge dies with the account.
+  `ip_bans` and `events` carry no foreign key, so both outlive the delete, which is why the audit entry
+  can still name who was removed and exactly what went with them. Every user-referencing table is
+  `ON DELETE CASCADE`, so the erase itself is one statement.
+* **Not fixed, and still stated plainly:** the Nov 15 spike is still not *explained*. This build shrinks
+  the biggest honest saves and makes deploys stop arriving in a burst. It does not prove what fired on
+  Nov 15. See [CPU-LIMIT](CPU-LIMIT.md).
+* **Checks:** new `card_cap_sim` (cap boundaries, refusal, real-loader trim + no double payout, bulk
+  sale sparing starred/legacy) and new `gm_delete_account_sim` (7 cases: every non-owner refused, staff
+  and self refused, 5 wrong confirmations delete nothing, a correct one cascades and leaves the network
+  ban standing, the audit entry survives with the removed rows counted, a second delete is a clean 404,
+  an account with no recorded network still deletes). `ui_sim` and `trial_sim` gained a stub for
+  `addCard` — their sandboxes re-declare the game's API by hand — plus a cap assertion in `ui_sim`.
+  `update_watch_sim` pins the jitter and the removal. Full gate: **207 green**, 9 red, and every one of
+  the 9 was re-run on the base commit and failed identically there (`card_star_balance_sim`,
+  `fourth_job_mythic_sim`, `hosted_launch_stage_sim`, `hosted_scrypt_prepare_sim`, `skill_balance_sim`,
+  `social_digimon_sim`, `write_gate_binding_sim`, `sanctuary_worker_battle_sim`, `social_worker_sim` —
+  all sandbox/tooling, not this change). One further suite, `unverified_echo_launch_sim`, went red once
+  inside the full run and passed 3/3 standalone and on re-run; it is week-clock sensitive and shares no
+  code with this diff.
+* **Delivery:** branch `arena/6d3886c8-prontera-grind`, commits `9cdf4fb` (cards, bulk sale,
+  `/api/version`, jitter) and `5c8e840` (account delete). Not pushed, not deployed.

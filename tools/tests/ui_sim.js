@@ -1300,7 +1300,12 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
     const GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],ORE={ori:'Oridecon',elu:'Elunium'},
       RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}];
     const RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]),rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
-    const cardTxt=c=>c.n,addFloat=()=>{},ui=()=>{},log=m=>{msg=m},qProg=()=>{},questEvent=()=>{},recordFarmIncome=()=>{},canUse=()=>false,equip=()=>{};
+    const cardStars=c=>(c&&+c.stars)||0,cardName=c=>c.n+(cardStars(c)?' '+'★'.repeat(cardStars(c)):''),cardTxt=c=>c.n,addFloat=()=>{},ui=()=>{},log=m=>{msg=m},qProg=()=>{},questEvent=()=>{},recordFarmIncome=()=>{},canUse=()=>false,equip=()=>{};
+    // v411: the loose-card bag has its own ceiling, reached through one door.
+    const CARDMAX=1000,cardStorageFull=()=>Array.isArray(S.cards)&&S.cards.length>=CARDMAX;
+    const addCard=(c,o)=>{if(!c)return false;if(!Array.isArray(S.cards))S.cards=[];
+      if(S.cards.length>=CARDMAX){if(!(o&&o.quiet))msg='Card collection full ('+CARDMAX+') - '+(o&&o.label||'Card')+' was not stored.';return false}
+      S.cards.push(c);return true};
     const earnZeny=a=>{S.zeny+=a},save=()=>{};
     ${pick(/const BAGMAX=\d+;/, 'BAGMAX')}
     ${pick(/const autoSellOn=[^\n]*/, 'auto-sell / click-sell readers')}
@@ -1319,6 +1324,14 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
   C.clear();
   C.collect({ card: 1, id: 3, n: 'Poring Card', g: 1, stat: 'str', v: 3 });
   assert.strictEqual(C.S.cards.length, 1, 'cards live in their own bag and are not capped by the item limit');
+  // v411: but that bag has its own ceiling now, and a full one refuses rather than deletes.
+  C.S.cards = new Array(1000).fill(0).map((_, i) => ({ id: 900 + i, n: 'Card ' + i, v: 1 }));
+  C.clear();
+  C.collect({ card: 1, id: 4, n: 'Poring Card', g: 1, stat: 'str', v: 3 });
+  assert.strictEqual(C.S.cards.length, 1000, 'the loose-card bag never grows past CARDMAX');
+  assert.ok(C.msg.includes('Card collection full'), 'and the refusal is reported: ' + C.msg);
+  assert.ok(!C.S.cards.some(c => c.id === 4), 'the refused card is not stored');
+  C.S.cards = [];
   // v39: a ticked rarity is sold the moment it drops - the full bag never sees it
   C.S.autoSell = [false, false, true, false, false]; C.S.zeny = 0; C.clear();
   C.collect({ id: 7, name: 'Blue Robe', tier: 2, slot: 'armor', val: 40, sec: 1, lvl: 10, cards: [] });
