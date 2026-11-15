@@ -5625,9 +5625,16 @@ function showOfflineReward(r){
 // A claim's EXP is added with earnExp() and settled by checkLevel(), so a level costs the claim
 // exactly what it costs a player in the field - the curve is never re-priced here.
 function offlineExpBudget(lv,levels){const from=Math.max(1,Math.min(149,Math.floor(Number(lv)||1)));let sum=0;for(let i=0;i<levels&&from+i<150;i++)sum+=baseNeedAt(from+i);return sum}
-// The one exception, at Lv 120+ (OFFLINE_LEVEL_CAP_LV): ten levels is the whole claim. It is a
-// silent ceiling - the popup reports what was paid, never that anything was withheld.
-function offlineLevelBudget(lv){return Number(lv)>=OFFLINE_LEVEL_CAP_LV?offlineExpBudget(lv,OFFLINE_LEVEL_CAP):Infinity}
+// The one exception, and it starts the moment the claim reaches OFFLINE_LEVEL_CAP_LV rather than
+// when it starts: everything the sample earned up to 120 is paid, then at most ten more levels.
+// So a claim from 118 ends at 130 at the latest, and a claim from 113 pays its seven levels to 120
+// plus ten - 130 is the highest any single claim can reach, whatever the sample says. Silent: the
+// popup reports what was paid, never that anything was withheld.
+function offlineLevelBudget(lv){
+  const from=Math.max(1,Math.min(149,Math.floor(Number(lv)||1)));
+  const toCeiling=Math.max(0,Math.min(OFFLINE_LEVEL_CAP_LV,150)-from);
+  return offlineExpBudget(from,toCeiling+OFFLINE_LEVEL_CAP);
+}
 function applyOfflineProgress(now=Date.now(),serverClaim=null){
   if(!S)return null;
   let plan;

@@ -120,13 +120,20 @@ export const OFFLINE_CAP_MS = 4 * 60 * 60 * 1000;   // functions/api/save.js OFF
 // online players"), then narrowed the same day: "can u make level 120 above, have a cap of 10
 // levels per offline rewards. this should be hidden from players." So a claim is worth half of its
 // measured minute, walked by levelsFromExp() - the page's checkLevel walk on the page's own curve -
-// with ONE ceiling: from Lv 120 a claim pays at most ten levels, silently. The credit below honours
+// with ONE ceiling: a claim pays everything up to Lv 120 and then ten levels, silently (so one
+// claim reaches 130 at the most). The credit below honours
 // that ceiling, so the monitor never credits more than the client can pay, and a jump past ten
 // levels from 120+ is a real flag. What keeps the rate honest (and there is no price ceiling on it)
 // is index.html's farmSamplingPaused(): no sample is published while the sim replays a frozen window.
 export const OFFLINE_LEVEL_CAP_LV = 120;            // index.html OFFLINE_LEVEL_CAP_LV
 export const OFFLINE_LEVEL_CAP = 10;                // index.html OFFLINE_LEVEL_CAP
-export const offlineLevelCapFor = prevLv => (num(prevLv) >= OFFLINE_LEVEL_CAP_LV ? OFFLINE_LEVEL_CAP : Infinity);
+// The ceiling starts when a claim REACHES Lv 120, not when it starts: every level up to 120 is
+// paid, then ten more at most. A claim from 113 is therefore worth 17 levels (to 130), from 118
+// twelve, from 130 ten - 130 is the highest one claim can reach.
+export const offlineLevelCapFor = prevLv => {
+  const from = Math.max(1, Math.floor(num(prevLv) || 1));
+  return Math.max(0, Math.min(OFFLINE_LEVEL_CAP_LV, CAPS.level) - from) + OFFLINE_LEVEL_CAP;
+};
 // The exp that many levels cost from lv, in this module's transcribed curve (index.html baseNeedAt).
 export const offlineExpBudget = (lv, levels) => {
   const from = Math.max(1, Math.min(149, Math.floor(num(lv) || 1)));

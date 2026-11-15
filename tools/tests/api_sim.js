@@ -1434,15 +1434,16 @@ t('save audit: a claim is half its measured minute, ten levels at most from Lv 1
     grab(/baseNeedAt=L=>[\s\S]*?(?=,need=)/).replace(/^baseNeedAt=/, 'const baseNeedAt = '),
     grab(/const OFFLINE_LEVEL_CAP_LV=\d+,OFFLINE_LEVEL_CAP=\d+;/),
     grab(/function offlineExpBudget\([^\n]*/),
-    grab(/function offlineLevelBudget\([^\n]*/),
+    grab(/function offlineLevelBudget\(lv\)\{[\s\S]*?\n\}/),
     'return { offlineExpBudget, offlineLevelBudget };',
   ].join('\n'))();
-  assert.strictEqual(pageBudget.offlineLevelBudget(119), Infinity, 'below 120 the page clamps nothing');
-  assert.strictEqual(offlineLevelCapFor(119), Infinity, 'and neither does the audit');
-  for (const lv of [120, 127, 140, 149]) {
-    assert.strictEqual(pageBudget.offlineExpBudget(lv, 10), offlineExpBudget(lv, 10), 'the audit prices ten levels as the page does at Lv ' + lv);
-    assert.strictEqual(pageBudget.offlineLevelBudget(lv), offlineExpBudget(lv, 10), 'the page budget is ten levels at Lv ' + lv);
-    assert.strictEqual(offlineLevelCapFor(lv), 10, 'the audit budget is ten levels at Lv ' + lv);
+  // and it starts INSIDE the claim: everything to 120, then ten levels. One claim reaches 130.
+  for (const [lv, levels] of [[60, 70], [113, 17], [118, 12], [119, 11], [120, 10], [130, 10], [149, 10]]) {
+    assert.strictEqual(offlineLevelCapFor(lv), levels, 'the audit allows ' + levels + ' levels from ' + lv);
+    assert.strictEqual(pageBudget.offlineLevelBudget(lv), offlineExpBudget(lv, levels),
+      'the page budget from Lv ' + lv + ' is the same ' + levels + ' levels');
+    assert.strictEqual(pageBudget.offlineExpBudget(lv, levels), offlineExpBudget(lv, levels),
+      'and it prices them the same way');
   }
 });
 
@@ -1450,19 +1451,22 @@ t('save audit: a welcome-back claim credits what it paid, walked down the game c
   const claim = { kills: 60_000, creditedMs: 4 * 60 * 60 * 1000 };
   const minutes = (OFFLINE_CAP_MS / 60_000) * OFFLINE_REWARD_MULT;   // 4 h, paid at half rate
   const paid = claimCredits({ claim, income: { version: 1, xp: 1.2e6, zeny: 300_000 }, prevLv: 113 });
-  assert.strictEqual(paid.levels, levelsFromExp(1.2e6 * minutes, 113),
+  // 1.2M exp/min over 120 paid minutes is 36 levels' worth, held at the 113 -> 130 ceiling
+  assert.strictEqual(paid.levels, Math.min(levelsFromExp(1.2e6 * minutes, 113), offlineLevelCapFor(113)),
     'levels are exactly the exp the payout paid, on the same curve as the page');
-  assert.strictEqual(paid.levels, 36, '1.2M exp/min over 120 paid minutes is 36 levels from 113');
-  assert.ok(paid.levels > 4, 'nothing holds a claim down to four levels any more');
+  assert.strictEqual(levelsFromExp(1.2e6 * minutes, 113), 36, 'the curve alone would buy 36 levels');
+  assert.strictEqual(paid.levels, 17, 'the 130 ceiling is what lands it');
   assert.strictEqual(paid.zeny, Math.ceil(300_000 * minutes), 'Zeny is credited the same way');
   assert.ok(paid.resources.ori >= 1_000 && paid.resources.nmat0 >= 1_000, 'claim kills also roll loot');
   assert.strictEqual(paid.kills, 0, 'the kills themselves are credited separately, not twice');
-  // the sample the owner actually saw: 1.25M exp/min for four hours, i.e. the 37-level payout
+  // the sample the owner actually saw (1.25M exp/min = 37 levels' worth) is now held at 113 -> 130
   const rich = claimCredits({ claim, income: { version: 1, xp: 1.25e6, zeny: 0 }, prevLv: 113 });
-  assert.strictEqual(rich.levels, 37, 'a 37-level claim is credited as 37 levels, not clamped');
+  assert.strictEqual(rich.levels, 17, 'a claim from 113 pays its seven levels to 120 plus ten');
   // from Lv 120 the same claim is worth exactly ten levels, and not one more
   const capped = claimCredits({ claim, income: { version: 1, xp: 1.25e6, zeny: 0 }, prevLv: 120 });
   assert.strictEqual(capped.levels, 10, 'ten levels is the whole claim above 120');
+  const from118 = claimCredits({ claim, income: { version: 1, xp: 1.25e6, zeny: 0 }, prevLv: 118 });
+  assert.strictEqual(from118.levels, 12, 'from 118 the claim pays two levels to 120 plus ten');
   assert.ok(capped.levels < rich.levels, 'the ceiling is doing the work at 120, not at 113');
   // no measured sample (an old save): the kills are priced from the game's own reference
   const priced = claimCredits({ claim, income: null, prevLv: 113 });
@@ -1483,16 +1487,20 @@ t('save audit: the AFK payout is not a flag, but a leap past it is', () => {
   const prev = { kills: 1_000, lv: 113, zeny: 0, raw: { ...base, offlineIncome: income } };
   const claim = { kills: 60_000, creditedMs: 4 * 3600 * 1000 };
   const credits = claimCredits({ claim, income, prevLv: 113 });
-  assert.strictEqual(credits.levels, 37, 'a four-hour claim at this sample is worth 37 levels');
-  // ...and those 37 levels landing in the two minutes after the claim is the payout, not a hack.
-  const modest = { kills: 61_000, lv: 150, zeny: 36_000_000, raw: { ...base, lv: 150, kills: 61_000 } };
+  assert.strictEqual(credits.levels, 17, 'a four-hour claim from 113 is worth 17 levels, i.e. it reaches 130');
+  // ...and those landing in the two minutes after the claim is the payout, not a hack.
+  const modest = { kills: 61_000, lv: 130, zeny: 36_000_000, raw: { ...base, lv: 130, kills: 61_000 } };
   assert.deepStrictEqual(
     auditSaveRates({ prev, next: modest, elapsedMs: 120_000, claimKills: 60_000, credits }), [],
     'a payout the claim explains is never a flag');
+  // the same save at 150 is 20 levels nothing paid for
+  const past = { kills: 61_000, lv: 150, zeny: 36_000_000, raw: { ...base, lv: 150, kills: 61_000 } };
+  const pastFlag = auditSaveRates({ prev, next: past, elapsedMs: 120_000, claimKills: 60_000, credits });
+  assert.ok(pastFlag.some(v => v.kind === 'level-rate'), 'a jump past 130 still flags: ' + JSON.stringify(pastFlag));
   // The same 37-level jump under a half-hour claim is 25 levels nothing paid for, so it reports.
   const short = claimCredits({ claim: { kills: 7_500, creditedMs: 30 * 60 * 1000 }, income, prevLv: 113 });
   assert.strictEqual(short.levels, 12, 'half an hour at this sample is worth 12 levels');
-  const flagged = auditSaveRates({ prev, next: modest, elapsedMs: 120_000, claimKills: 7_500, credits: short });
+  const flagged = auditSaveRates({ prev, next: past, elapsedMs: 120_000, claimKills: 7_500, credits: short });
   assert.ok(flagged.some(v => v.kind === 'level-rate'), 'a jump past the claim is still a flag: ' + JSON.stringify(flagged));
 
   // Above Lv 120 the claim pays ten levels, so a 17-level jump is 7 levels nothing paid for.
@@ -1545,11 +1553,13 @@ await T('save audit: the away payout is credited end to end, and a leap past it 
     return h.sqlite.prepare('SELECT kind, detail FROM save_alerts').all();
   };
 
-  // four hours at this sample pays 37 levels; the save that lands them is the payout, not a flag
-  const inside = await scenario('Away', 150, 60007, 36_000_000, 4 * 3600 * 1000);
+  // four hours at this sample pays 17 levels from 113 - 130 is inside the claim, 150 is not
+  const inside = await scenario('Away', 130, 60007, 36_000_000, 4 * 3600 * 1000);
   assert.deepStrictEqual(inside, [], 'a claim-explained jump records no alert');
+  const past = await scenario('AwayPast', 150, 60007, 36_000_000, 4 * 3600 * 1000);
+  assert.ok(past.some(a => a.kind === 'level-rate'), 'a jump past 130 still flags: ' + JSON.stringify(past));
 
-  // the same 37-level jump under a half-hour claim is 25 levels the claim cannot pay
+  // the same jump under a half-hour claim is 12 levels the claim cannot pay
   const leap = await scenario('AwayLeap', 150, 60007, 36_000_000, 30 * 60 * 1000);
   assert.ok(leap.some(a => a.kind === 'level-rate'), 'a leap past the claim still flags: ' + JSON.stringify(leap));
 
