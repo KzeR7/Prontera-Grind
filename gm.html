@@ -254,6 +254,49 @@ function meter(label, used, cap, hint) {
     <div class="track"><div class="fill ${cls}" style="width:${pct.toFixed(1)}%"></div></div></div>`;
 }
 
+// ---------- v411: CPU, per hour ----------
+// The question this answers is not "is CPU high" but "when did it start, and was it every request or
+// a few". A day total cannot tell you that; an hour-by-hour strip with the kills marked can.
+function cpuCard(cpu, error) {
+  if (error) return `<p class="small bad" style="margin:6px 0 0">CPU: ${esc(error)} — the dashboard's Workers metrics have the same numbers.</p>`;
+  if (!cpu) return '';
+  const v = cpu.verdict;
+  const us = n => (n == null ? '—' : (n / 1000).toFixed(1) + ' ms');
+  const limitMs = (cpu.limitUs / 1000).toFixed(0);
+  const hourCell = h => {
+    const hot = h.kills > 0;
+    return `<span title="${esc(h.hour)} UTC · ${nfmt(h.requests)} requests · p99 ${us(h.p99)}"
+      style="flex:1;min-width:7px;height:26px;border-radius:2px;align-self:flex-end;
+      background:${hot ? '#b3261e' : 'var(--e-line,#3a3a3a)'};
+      opacity:${hot ? Math.min(1, .45 + h.kills / Math.max(1, v.kills)) : .55}"></span>`;
+  };
+  const lead = v && (v.source === 'Pages Functions' ? cpu.pages : cpu.workers);
+  const strip = lead && lead.hours.length
+    ? `<div style="display:flex;gap:2px;align-items:flex-end;height:26px;margin:8px 0 4px">${lead.hours.map(hourCell).join('')}</div>
+       <p class="small" style="margin:0">Each bar is one UTC hour; red means requests were killed for CPU there.</p>`
+    : '';
+  const lines = [];
+  if (v) {
+    lines.push(`<p><b>${nfmt(v.kills)}</b> CPU kill${v.kills === 1 ? '' : 's'} in <b>${nfmt(v.requests)}</b> ${esc(v.source)} requests today`
+      + (v.requests ? ` (${(v.killRate * 100).toFixed(2)}%)` : '') + '.</p>');
+    if (v.startedAt) lines.push(`<p class="small" style="margin:4px 0 0">First kill: <b>${esc(v.startedAt)}:00 UTC</b>. Busiest: ${esc(v.peakHour)}:00 UTC.</p>`);
+    if (v.quietP99Us != null) {
+      const atCeiling = v.quietP99Us >= cpu.limitUs;
+      lines.push(`<p class="small" style="margin:4px 0 0">Dearest request in a quiet hour: <b>${us(v.quietP99Us)}</b> against the ${limitMs} ms ceiling. `
+        + (atCeiling ? 'That is at or over the limit even when nothing is spiking — the code floor is the problem, not the traffic.'
+                     : 'Under the limit, so quiet hours are safe; a spike is then about volume or one heavy path.') + '</p>');
+    }
+  }
+  const names = [cpu.pages && `Pages Functions ${nfmt(cpu.pages.requests)} requests${cpu.pages.cpuMs != null ? ' / ' + nfmt(Math.round(cpu.pages.cpuMs)) + ' ms CPU' : ''}${cpu.pages.kills ? ' / ' + nfmt(cpu.pages.kills) + ' killed' : ''}`,
+                 cpu.workers && `Workers ${nfmt(cpu.workers.requests)} requests${cpu.workers.cpuMs != null ? ' / ' + nfmt(Math.round(cpu.workers.cpuMs)) + ' ms CPU' : ''}${cpu.workers.kills ? ' / ' + nfmt(cpu.workers.kills) + ' killed' : ''}`].filter(Boolean);
+  return `<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--e-line,#3a3a3a)">
+    <p class="small" style="margin:0 0 4px;letter-spacing:1px">CPU · ${esc(cpu.day)} UTC</p>
+    ${lines.join('')}${strip}
+    <p class="small" style="margin:6px 0 0;opacity:.75">${names.map(esc).join(' · ')}</p>
+    <p class="small" style="margin:4px 0 0;opacity:.6">Pages Functions is where /api/* lives; the Workers line is the two Durable Objects. Reading only the Workers number hides the game's own traffic.</p>
+  </div>`;
+}
+
 async function loadUsage() {
   let d = null;
   try { d = await api('/gm/usage'); } catch (e) { $('usagebody').innerHTML = `<span class="bad">Could not read usage: ${esc(e.message)}</span>`; return; }
@@ -276,6 +319,7 @@ async function loadUsage() {
     d.error ? `<p class="small bad" style="margin:6px 0 0">Analytics: ${esc(d.error)}</p>` : '',
     d.objectsError ? `<p class="small" style="margin:6px 0 0">Durable Objects: ${esc(d.objectsError)} — use the dashboard for this number.</p>` : '',
     d.hint ? `<p class="small" style="margin:6px 0 0">${esc(d.hint)}</p>` : '',
+    cpuCard(d.cpu, d.cpuError),
   ].join('');
 }
 

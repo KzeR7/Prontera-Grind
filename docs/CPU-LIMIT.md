@@ -132,6 +132,67 @@ largest honest saves went from 2.8–21.9 ms of parse to under 10 ms **including
 of overhead, and the two biggest accounts (`Demonz`, the owner's own, and the two banned cheaters)
 either shrink on their next load or are gone.
 
+**What is still not known, stated plainly:** *why* Nov 15 at ~09:00 SGT stepped from 0 to 1,084 kills
+in one day. Two things blocked the answer, and v411 fixes both:
+
+* **The data to answer it was never collected.** The console asked only for request counts from
+  `workersInvocationsAdaptive`, which does not contain this project's own `/api/*` traffic (that is
+  Pages Functions) and never asked for CPU or for the `exceededResources` status at all. So the
+  question was unanswerable in principle, not merely unanswered. It is asked for now, per hour, in
+  the Usage card (`_lib/usage.js` `cpuUsage`), with a test pinning the "Workers looks quiet while
+  Pages is dying" trap that made this invisible.
+* **This sandbox cannot reach Cloudflare's API** (only GitHub/npm/PyPI are allow-listed), so the
+  historical query could not be run from here even now that it exists. The first run of it — in the
+  console, or the `curl` above — is what will name the hour and the median.
+
+**If it recurs**, the console now records the three facts that decide the response: the first killed
+hour, whether `cpuTimeP50` moved (the code got heavier for everyone → revert) or only `cpuTimeP99`
+(the same code, few heavy requests → find the endpoint), and the kill rate per hour. Items 3–5 remain
+the standing defences if it turns out to be volume rather than code.
+
+## How to answer this in one query, any time it happens again
+
+The GM console's Usage card now draws this (v411), but the same numbers are one `curl` away when the
+console is not to hand. Two things had to be true to be able to say anything at all:
+
+1. **The traffic is in `pagesFunctionsInvocationsAdaptiveGroups`, not `workersInvocationsAdaptive`.**
+   This project serves `/api/*` as Pages Functions. `workersInvocationsAdaptive` covers only the two
+   Durable Object Workers, so a query against it alone reports a calm, tiny day while `/api` is being
+   killed — which is precisely how the Nov spike could look absent from the charts.
+2. **The kills are a `status`, and the shape is per hour.** A CPU kill (error 1102) is recorded as
+   `dimensions.status: "exceededResources"`. Grouping by `datetimeHour` turns "it spiked" into
+   "it started at HH:00".
+
+```bash
+curl -s https://api.cloudflare.com/client/v4/graphql \
+  -H "Authorization: Bearer $CF_ANALYTICS_TOKEN" -H "Content-Type: application/json" \
+  -d '{"query":"{ viewer { accounts(filter:{accountTag:\"'$CF_ACCOUNT_ID'\"}) {
+        pagesFunctionsInvocationsAdaptiveGroups(limit:1000, filter:{datetime_geq:\"2026-11-15T00:00:00Z\", datetime_leq:\"2026-11-16T00:00:00Z\"}) {
+          sum { requests errors }
+          quantiles { cpuTimeP50 cpuTimeP99 }
+          dimensions { datetimeHour status }
+        } } } }"}' | jq .
+```
+
+Read it in this order:
+
+| What you see | What it means |
+| --- | --- |
+| `status: exceededResources` rows | these are the CPU kills; count `errors` on them |
+| First hour with any | when it started |
+| `cpuTimeP99` in a **quiet** hour at or above 10,000 µs | the code floor is already at the ceiling — an everyday request is one bad save from being killed |
+| `cpuTimeP99` quiet and low, kills only in the spike | one path or one account went heavy; correlate with the deploy time |
+| `cpuTimeP50` also jumped | every request got heavier (the code changed), not a few heavy ones |
+| `cpuTimeP50` flat, only P99 up | a minority of requests: big saves, settlement, a specific endpoint |
+
+The free-plan kill pins at **exactly 10,000 µs**, so a P99 of 10,000 on a killed hour is the ceiling
+being hit, not a coincidence — that is the fingerprint of "these requests were terminated".
+
+**If it happens again, in order:** (1) run the query above for that day and note the first killed
+hour; (2) compare it against the deploy time of the build that landed nearest before it; (3) look at
+`cpuTimeP50` — if the median moved, the code got heavier for everyone and it is a revert or a hackday;
+if only P99 moved, find the endpoint. This is now a measurement, not a guess.
+
 ## How to confirm which one it was
 
 The charts already answer the "is it chronic" question. To pin the Nov 15 09:00 SGT step

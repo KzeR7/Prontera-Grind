@@ -978,11 +978,25 @@ await T('the usage card reads Cloudflare\'s own counters when the token is set',
   h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='OWNER'").run();
   const realFetch = globalThis.fetch;
   let seen = null, doSeen = null;
+  let cpuSeen = null;
   globalThis.fetch = async (url, init) => {
     // v403: Durable Object usage is a SECOND query, so answer each one with its own shape.
-    const isDo = String(init?.body || '').includes('durableObjectsInvocationsAdaptiveGroups');
+    // v411: CPU diagnosis is a THIRD. Keying on the dataset each one asks for keeps them apart -
+    // matching only "is it the DO query" would let the CPU query overwrite `seen` and make the
+    // assertions below read the wrong body.
+    const bodyText = String(init?.body || '');
+    const isDo = bodyText.includes('durableObjectsInvocationsAdaptiveGroups');
+    const isCpu = bodyText.includes('pagesFunctionsInvocationsAdaptiveGroups');
     if (isDo) doSeen = { url: String(url), init };
+    else if (isCpu) cpuSeen = { url: String(url), init };
     else seen = { url: String(url), init };
+    if (isCpu) return {
+      ok: true, status: 200,
+      json: async () => ({ data: { viewer: { accounts: [{
+        workersInvocationsAdaptive: [{ sum: { requests: 4, errors: 0, cpuTimeUs: 2000 }, quantiles: { cpuTimeP50: 400, cpuTimeP99: 900 }, dimensions: { datetimeHour: '2026-11-15T05', status: 'success' } }],
+        pagesFunctionsInvocationsAdaptiveGroups: [{ sum: { requests: 90, errors: 9 }, quantiles: { cpuTimeP50: 3000, cpuTimeP99: 10000 }, dimensions: { datetimeHour: '2026-11-15T05', status: 'exceededResources' } }],
+      }] } } }),
+    };
     if (isDo) return {
       ok: true, status: 200,
       json: async () => ({ data: { viewer: { accounts: [{
@@ -1019,6 +1033,17 @@ await T('the usage card reads Cloudflare\'s own counters when the token is set',
     assert.strictEqual(r.data.objects.requests, 82, 'DO request rows are summed');
     assert.strictEqual(r.data.objects.storedBytes, 4096, 'stored bytes come through');
     assert.strictEqual(r.data.requests.used, 150, 'the DO query did not disturb the request total');
+    // v411: the CPU card is a third, isolated query. It must report the kills and lead with Pages,
+    // because that is where /api/* actually lives - the Workers line alone shows 4 requests and
+    // would call this a calm day.
+    assert.ok(cpuSeen, 'a separate CPU query is made');
+    const cpuBody = JSON.parse(cpuSeen.init.body);
+    assert.match(cpuBody.query, /pagesFunctionsInvocationsAdaptiveGroups/);
+    assert.match(cpuBody.query, /cpuTimeUs/);
+    assert.equal(r.data.cpu.verdict.kills, 9, 'the kills are counted from exceededResources');
+    assert.equal(r.data.cpu.verdict.source, 'Pages Functions', 'the lead dataset is the game traffic');
+    assert.equal(r.data.cpu.limitUs, 10000);
+    assert.equal(r.data.requests.used, 150, 'the CPU query did not disturb the request total either');
   } finally { globalThis.fetch = realFetch; }
 });
 
