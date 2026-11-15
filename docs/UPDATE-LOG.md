@@ -11408,3 +11408,34 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
     twice. At the 456 KB ceiling that is **34.9 ms**, of which **21.1 ms is duplicated work**; at
     81 KB it is 6.5 ms vs 2.5 ms if parsed once. That is the floor that makes the account fragile and
     the first thing to fix. `/api/version` (dead code since v389) was measured and ruled out.
+
+### 2026-11-15 — `v410 CPU diet: a save sync parses the blob three times, not six` (no build bump — `functions/` only)
+* **Why:** the owner's Cloudflare Metrics showed `Exceeded CPU Time Limits` going from **0 every day**
+  (Oct 30 → Nov 13) to **1,084 in one day** on Nov 15, 92% of all errors, with median CPU 8.7 → 13.7 ms
+  and p99 45 → 62 ms. See [CPU-LIMIT](CPU-LIMIT.md). The owner asked for "all u can" that cannot change
+  gameplay.
+* **What was wrong:** one accepted `PUT /api/save` parsed the same save blob **six times** — the
+  request envelope, `checkSaveBlob`, `saveBelongsTo`, `storedRestoreAt`, `withSaveIdentity`, and a
+  final `storedSave` re-parse — and stringified it twice, with the save-audit then parsing the stored
+  blob a **seventh** time. At the 512 KB ceiling that is ~35 ms of pure JSON work, two thirds
+  duplicated, against a 10 ms free-plan budget.
+* **What changed:** `_lib/validate.js` helpers accept an already-parsed save (`parseSave`), so a caller
+  that parsed once does not force three more; `save.js` parses the stored row **once** and shares it
+  with the ownership check, the restore fence and the audit; `save-audit.js` takes `prevSave` instead
+  of re-parsing, and its gear walk folds two passes into one that stops each rule once fired.
+* **Measured:** a 90 KB save went **8.9 ms → 4.0 ms** per accepted sync; parses **6 → 3** and
+  stringifies **2 → 1**. The three left are irreducible (envelope, incoming save, stored row).
+* **No gameplay change, deliberately:** no rule, threshold, rejection or prize path was touched. The
+  ownership decision is still accountId-then-name, and the restore fence is byte-identical in effect.
+  Nothing about what a player can do, earn or lose changed.
+* **Not fixed, and stated plainly:** the Nov 15 spike is still not *explained*. Ruled out by
+  measurement — the write gate (0 kills for two weeks after it shipped), the settlement queue (the
+  owner's query showed **no rows stuck in `settling`**, and the batch's claim→place→ledger→close lock
+  was re-tested and holds under interleaving), and `/api/version` (dead code since v389). Still open:
+  (2) the overnight window, where the spike died by noon while traffic continued. What this entry
+  buys is **headroom on the floor**, not the root cause.
+* **Checks:** `api_sim` **70**, including a new case that instruments `JSON.parse`/`JSON.stringify`
+  around one accepted sync and pins 3 parses / 1 stringify. Full gate: **45 suites green**, the 2 reds
+  (`combat_float_sim`, `ui_sim`) reproduced identically on the base commit (both are `jsdom` missing
+  from this sandbox, not this change).
+* **Delivery:** branch `arena/6d3886c8-prontera-grind`, commit `0c68ee9`. Not pushed, not deployed.
