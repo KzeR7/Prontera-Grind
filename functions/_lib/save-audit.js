@@ -96,6 +96,124 @@ export const RATE_LIMITS = {
 // cannot: the exp curve (needAt) makes 30 levels in one hour unreachable without a hack.
 export const levelRateLimit = prevLv => (num(prevLv) >= 100 ? 30 : num(prevLv) >= 40 ? 90 : 240);
 
+// Some counters move in LUMPS that no hourly rate can describe: selling a whole fishing bag is one
+// click (the Aether Keep holds 1,000 fish), the Black Market sells ore by the thousand, a DigiPet
+// payout lands at once. Each window is therefore allowed ONE such action on top of the hourly
+// limit; a second one, or one bigger than this, is still judged as before. The allowance is on the
+// DELTA, so it can only ever prevent a false positive - never hide a repeated gain.
+export const LUMP_ALLOWANCE = {
+  fishcoins: 1_500_000,            // 1,000 fish averaging 1,500 coins each
+  petcoins: 100_000,
+  ori: 5_000, elu: 5_000,          // one Black Market purchase / one salvage run
+};
+
+// ------------------------------------------- the offline claim, mirrored ----
+// A welcome-back payout is the server's own money: /api/save issues the claim from a rate it
+// measured itself (4 h ceiling, 50% of that rate) and index.html's applyOfflineProgress() pays it.
+// This module used to credit only the claim's KILLS, so everything those kills bought - the exp
+// that becomes levels, the Zeny, and the loot every kill rolls - landed in the next window as
+// impossible progress. That is what the owner saw: away for a while, back with 37 levels at once
+// (limit 30/h), and the console called it cheating.
+export const OFFLINE_REWARD_MULT = .5;              // functions/api/save.js OFFLINE_REWARD_MULT
+export const OFFLINE_CAP_MS = 4 * 60 * 60 * 1000;   // functions/api/save.js OFFLINE_CAP_MS
+// v408 (owner: "i would not want to have a cap level ... offline rewards should be only half of the
+// online players"), then narrowed the same day: "can u make level 120 above, have a cap of 10
+// levels per offline rewards. this should be hidden from players." So a claim is worth half of its
+// measured minute, walked by levelsFromExp() - the page's checkLevel walk on the page's own curve -
+// with ONE ceiling: a claim pays everything up to Lv 120 and then ten levels, silently (so one
+// claim reaches 130 at the most). The credit below honours
+// that ceiling, so the monitor never credits more than the client can pay, and a jump past ten
+// levels from 120+ is a real flag. What keeps the rate honest (and there is no price ceiling on it)
+// is index.html's farmSamplingPaused(): no sample is published while the sim replays a frozen window.
+export const OFFLINE_LEVEL_CAP_LV = 120;            // index.html OFFLINE_LEVEL_CAP_LV
+export const OFFLINE_LEVEL_CAP = 10;                // index.html OFFLINE_LEVEL_CAP
+// The ceiling starts when a claim REACHES Lv 120, not when it starts: every level up to 120 is
+// paid, then ten more at most. A claim from 113 is therefore worth 17 levels (to 130), from 118
+// twelve, from 130 ten - 130 is the highest one claim can reach.
+export const offlineLevelCapFor = prevLv => {
+  const from = Math.max(1, Math.floor(num(prevLv) || 1));
+  return Math.max(0, Math.min(OFFLINE_LEVEL_CAP_LV, CAPS.level) - from) + OFFLINE_LEVEL_CAP;
+};
+// The exp that many levels cost from lv, in this module's transcribed curve (index.html baseNeedAt).
+export const offlineExpBudget = (lv, levels) => {
+  const from = Math.max(1, Math.min(149, Math.floor(num(lv) || 1)));
+  let sum = 0;
+  for (let i = 0; i < levels && from + i < CAPS.level; i++) sum += expToNext(from + i);
+  return sum;
+};
+
+// index.html: needAt/baseNeedAt. Lv 100+ costs ×4 and every requirement is rounded by roundReq.
+const NA1 = 18.705917193, NE1 = 1.28684215, NE2 = 11.33248639, NE2B = .72933977;
+const N100 = 86520, NE3 = 8.2928141;
+const N50 = Math.floor(NA1 * Math.pow(50, NE1));
+const N70 = Math.floor(N50 * Math.pow(1.4, NE2));
+const roundReq = n => {
+  const a = Math.abs(n), m = a < 100 ? 1 : a < 1e4 ? 10 : a < 1e5 ? 100 : 1e3;
+  return Math.max(1, Math.round(n / m) * m);
+};
+const needAt = L => roundReq(L <= 50 ? Math.floor(NA1 * Math.pow(L, NE1))
+  : L <= 70 ? Math.floor(N50 * Math.pow(L / 50, NE2))
+  : L <= 99 ? Math.floor(N70 * Math.pow(L / 70, NE2B))
+  : Math.floor(N100 * Math.pow(L / 100, NE3)));
+// The exp a level costs (index.html baseNeedAt). Exported so a test can hold it against the page.
+export const expToNext = lv => (num(lv) >= 100 ? roundReq(needAt(num(lv)) * 4) : needAt(num(lv)));
+// How many levels that much exp buys from `fromLv` (index.html checkLevel walks the same loop).
+export function levelsFromExp(exp, fromLv) {
+  let lv = Math.max(1, Math.floor(num(fromLv))), left = Math.max(0, num(exp)), gained = 0;
+  while (lv < CAPS.level && left >= expToNext(lv)) { left -= expToNext(lv); lv++; gained++; }
+  return gained;
+}
+
+// The game's own per-kill references (index.html EXPK / ZK) at the level band the window started in.
+const bandPower = lv => Math.max(1, Math.min(99, Math.floor(num(lv))));
+const expPerKillRef = lv => (5.5 * Math.pow(bandPower(lv), 1.5)) / 50;
+const zenyPerKillRef = lv => (14 * bandPower(lv) * bandPower(lv)) / 1000;
+// Slack over those references: expRate (7, or 7/3 past Lv 100), pet EXP and bosses (46/5.5 ≈ 8.4)
+// put a kill's exp under ×60 of the reference; Zeny also carries Nightmare multipliers, the per-kill
+// roll and Zeny gear, so its slack is wider. Only used when the save has no measured farm sample.
+const KILL_EXP_SLACK = 60, KILL_ZENY_SLACK = 200;
+
+// Loot one claim kill can roll, with slack over the field tables: ore .5-1%, Nightmare material 1%,
+// Ascension material .5% × HP index (≤ ~1.5%), Sigil .125% × index (bosses 1%).
+export const CLAIM_LOOT_PER_KILL = {
+  ori: .03, elu: .03, nmat0: .03, ascMat0: .05, ascMat1: .05, ascMat2: .05,
+};
+
+// What a claim paid, as the same credits shape auditSaveRates() already takes. Mirrors
+// applyOfflineProgress(): the measured sample (xp and zeny per minute, kept in the save) is what
+// the client multiplies by the credited minutes at half rate; without one it prices each kill.
+// Claim kills are also loot rolls, so every material counter is credited at its per-kill ceiling.
+export function claimCredits({ claim, income, prevLv }) {
+  const kills = floor(claim && claim.kills);
+  const creditedMs = Math.min(floor(claim && claim.creditedMs), OFFLINE_CAP_MS);
+  if (!kills && !creditedMs) return null;
+  const minutes = (creditedMs / 60000) * OFFLINE_REWARD_MULT;
+  const measured = !!income && Number(income.version) === 1
+    && Number.isFinite(Number(income.xp)) && Number.isFinite(Number(income.zeny));
+  const exp = measured ? Math.max(0, num(income.xp)) * minutes
+    : kills * expPerKillRef(prevLv) * KILL_EXP_SLACK;
+  const zeny = measured ? Math.max(0, num(income.zeny)) * minutes
+    : kills * zenyPerKillRef(prevLv) * KILL_ZENY_SLACK;
+  const resources = {};
+  for (const [key, perKill] of Object.entries(CLAIM_LOOT_PER_KILL)) {
+    resources[key] = Math.ceil(kills * perKill);
+  }
+  // Exactly what the page would buy: the claim's half-rate exp walked down the same curve, under
+  // the Lv 120+ ceiling the client also applies.
+  const levels = Math.min(levelsFromExp(exp, prevLv), offlineLevelCapFor(prevLv));
+  return { kills: 0, levels, zeny: Math.ceil(zeny), resources };
+}
+
+// Add two credit sets (a claim's own payout + the GM grants claimed in the same window).
+export function addCredits(a, b) {
+  const out = { kills: 0, levels: num(a && a.levels) + num(b && b.levels), zeny: num(a && a.zeny) + num(b && b.zeny), resources: {} };
+  for (const src of [a, b]) {
+    if (!src || !src.resources) continue;
+    for (const [key, amount] of Object.entries(src.resources)) out.resources[key] = num(out.resources[key]) + num(amount);
+  }
+  return out;
+}
+
 // --------------------------------------------------------------- static ----
 // Impossible IN THIS SAVE, no timing needed. Runs on every accepted save.
 export function auditStaticSave(save) {
@@ -212,7 +330,8 @@ export function auditSaveRates({ prev, next, elapsedMs, claimKills = 0, credits 
   for (const [key, read] of Object.entries(COUNTERS)) {
     const limit = RATE_LIMITS[key];
     if (!limit) continue;
-    const delta = Math.max(0, read(next.raw) - read(prev.raw) - c(key));
+    // One lump action per window (a sold-out fishing bag, an ore purchase) is not a rate.
+    const delta = Math.max(0, read(next.raw) - read(prev.raw) - c(key) - num(LUMP_ALLOWANCE[key]));
     const rate = delta / hours;
     if (rate > limit) {
       out.push({ kind: 'rate:' + key, value: Math.round(rate), threshold: limit,
@@ -242,7 +361,7 @@ export function creditsFromGrants(rows) {
 // -------------------------------------------------------------- recording ----
 // Orchestration for save.js: audit one accepted save, record any flags, poke the owner the first
 // time a rule fires for an account. NEVER throws — a monitoring failure must not fail a save.
-export async function auditAcceptedSave(D, { userId, username, gm, prev, save, pub, savedAt, claimKills = 0 }) {
+export async function auditAcceptedSave(D, { userId, username, gm, prev, save, pub, savedAt, claimKills = 0, claim = null }) {
   // The owner's own account is not audited: GM tools deliberately create impossible figures
   // (level grants, test gear), and flagging them would bury the console in self-noise.
   if (Number(gm) >= 2) return { flagged: false };
@@ -255,12 +374,17 @@ export async function auditAcceptedSave(D, { userId, username, gm, prev, save, p
       raw: safeParse(prev.blob),
     };
     const nextView = { kills: pub.kills, lv: pub.lv, zeny: pub.zeny, raw: save };
-    let rates = auditSaveRates({ prev: prevView, next: nextView, elapsedMs, claimKills });
+    // The claim this save consumed, priced the way the client paid it (see claimCredits).
+    const claimInfo = claim || (claimKills ? { kills: claimKills, creditedMs: 0 } : null);
+    const claimPaid = claimInfo
+      ? claimCredits({ claim: claimInfo, income: prevView.raw.offlineIncome, prevLv: prevView.lv })
+      : null;
+    let rates = auditSaveRates({ prev: prevView, next: nextView, elapsedMs, claimKills, credits: claimPaid });
     if (rates.length) {
       // Only a suspicious window pays for the grant lookup: ordinary syncs cost nothing extra.
       const grantRows = await db.grantsClaimedBetween(D, userId,
         Number(prev.saved_at || savedAt) - 120_000, savedAt + 120_000);
-      const credits = creditsFromGrants(grantRows.results);
+      const credits = addCredits(claimPaid, creditsFromGrants(grantRows.results));
       rates = auditSaveRates({ prev: prevView, next: nextView, elapsedMs, claimKills, credits });
     }
     violations.push(...rates);

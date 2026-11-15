@@ -11070,6 +11070,134 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   and the audit card answers with the `0015` note), `gm_console_sim` **19** (boot probes `/me`
   alone, `allSettled`, guarded `loadPlayers`, guarded marker, named note). No BUILD bump.
 
+### 2026-11-15 — `haven-v408 away pay is half your measured minute, ten levels at most above 120` (build bump: the welcome-back payout changed)
+
+* **The owner (2026-11-15): "can u try and simulate a offline rewards, cause i think 4 hours reward
+  for 37level is too much. players shouldnt be getting so much exp and level at once."** He is
+  right, and a simulation of the payout at the game's own reference rates says so plainly. A claim
+  pays `measured exp/min × credited minutes × 50%`, which at four hours is 120 paid minutes; turned
+  into levels by the game's own curve that was worth, at 3,000-30,000 kills an hour: **33-71 levels
+  at Lv 40, 21-60 at Lv 60, 20-47 at Lv 80, 3-19 at Lv 100** and 1-10 at Lv 113 for the reference
+  field — and more wherever a boss field or exp gear made the measured sample richer, which is how
+  a 37-level jump at 113 happened. The 50% was never the culprit: the sample that priced it had been
+  inflated by a replayed minute (root cause below), so the claim multiplied a rate nobody had farmed.
+* **No level ceiling — the owner turned the first proposal down.** His follow-up: "i would not want
+  to have a cap level but i need the offline rewards to work properly ... this is not fair to online
+  players as offline rewards should be only half of the online players." He is right about the rule,
+  and the rule is the one the claim already followed: `income.xp × credited minutes × 0.5`, handed
+  straight to `earnExp()` and settled by `checkLevel()` walking `need()` — the same curve, at the
+  same price, as a player standing in the field. Below Lv 120 nothing is clipped, so an away window
+  buys exactly the levels its half-rate exp pays for; the other bounds are the ones that describe
+  the player's own play: `OFFLINE_CAP_MS` (four hours) and `OFFLINE_RATE_CAP` (30,000 kills/h).
+* **Then narrowed, the same day: ten levels from Lv 120.** Owner: "can u make level 120 above,
+  have a cap of 10 levels per offline rewards. this should be hidden from players." The reason is
+  arithmetic, not paranoia: `need(113) = 952,000` while one Nightmare-Abyss-15 kill pays **29,750**
+  (power 180, `nmExpOf` ×48), so a kill there is **1/32 of a level** instead of 1/3,778 in a
+  level-appropriate field - a 118x swing decided purely by where the player stands. At 2,521 kills/h
+  a four-hour claim therefore buys the 37 levels honestly, which is what the owner saw.
+  `OFFLINE_LEVEL_CAP_LV = 120`, `OFFLINE_LEVEL_CAP = 10`, and **the ceiling starts inside the
+  claim**: "yes, so example 118, when the exp reach 120, then the capping starts including the
+  current claim, so there is no way from 118 level can go above 10 levels after lv 120."
+  `offlineLevelBudget(lv)` therefore pays every level up to 120 and then ten more, so a claim can
+  reach **Lv 130 at the very most** - 113 pays 17 levels, 118 pays 12, 120 pays 10
+  (21.6M EXP at 120). Kills, Zeny and loot are untouched and **nothing is announced** - the popup
+  reports only what was paid. `save-audit.js` mirrors the same budget
+  (`offlineLevelCapFor(lv) = (120 - lv) + 10`), so the levels a claim can pay are credited and a
+  jump past 130 is a real flag.
+* **Which makes the measured minute the whole safety property.** Nothing now stands between a bad
+  measurement and a level slam except the guard below — and the guard below is exactly that
+  measurement, closed at the source. The welcome-back popup still says what the number is made of
+  (measured EXP/min and Zeny/min, 50%, four-hour window); the "Away EXP is capped at N levels"
+  sentence is gone with the ceiling.
+* **The audit credits the claim's price, not a policy number.** `claimCredits()` runs the half-rate
+  exp through `levelsFromExp()` — the page's `checkLevel` walk, on a curve a test holds against the
+  page for all 149 levels — and the `Math.min(..., ceiling)` is gone with the ceiling. `api_sim`
+  asserts the absence (no `OFFLINE_LEVELS_PER_HOUR` / `offlineExpBudget` / `offlineMaxLevels` in
+  `index.html`), that both sides pay `.5`, and that the owner's own case is credited honestly
+  (1.25M exp/min for four hours = **37 levels**, not four). End to end, that 37-level jump *with*
+  its claim records **no** alert, while the same jump under a half-hour claim (12 levels paid) is
+  still reported: the console now separates "the claim paid for it" from "nothing did", instead of
+  measuring both against a number the game does not enforce.
+* **The root cause the owner suspected, found and closed (his second report).** "If a tab doesnt run
+  ... a sudden surge of exp and zeny will happen which spike it for abit ... would this might what
+  have happen in this 37 level increase?" Yes - and this is the mechanism that made the payout big
+  enough to matter. A throttled, frozen or slept tab replays its owed time through `simAdvance()`,
+  which may replay up to `SIM_CATCHUP` (**600 seconds**) of grinding inside a few milliseconds of
+  wall clock. The farm sampler divided the last 60 seconds of *events* by 60 seconds of *wall* time,
+  so a ten-minute replay read as **ten times the real rate**, and a player who closed the tab on
+  that minute had an inflated sample stored - which the welcome-back claim then multiplied by 120
+  credited minutes. `farmSamplingPaused()` now also stops sampling while the sim owes more than
+  `FARM_CATCHUP_PAUSE` (**2 s**) of time: the partial window is dropped, no sample is published,
+  and the away rate stays whatever the last honest field minute measured. Both samplers gate on
+  that one function, so the kill rate (`offlineKph`) is protected the same way. `adventurer_updates_sim`
+  pins it: a clean minute samples 600 EXP/min and 600 kills/hour, a 300-second replay samples
+  nothing and leaves the stored sample untouched (verified to fail with the guard removed).
+* **Zeny and loot pay the same half** — `income.zeny × minutes`, and every claim kill rolls its
+  loot — so "only half of the online players" is true of the whole payout, not of EXP alone.
+  `OFFLINE_REWARD_MULT` (0.5) and the four-hour cap are unchanged.
+* **Checks:** `api_sim` **69**: the half-rate price on both sides, the budget run against the page's
+  own `offlineExpBudget`/`offlineLevelBudget` at 60/113/118/119/120/130/149 (70/17/12/11/10/10/10
+  levels), the pure payout cases and the two-sided end-to-end run (a claim landing on 130 records
+  nothing, the same jump to 150 flags); `adventurer_updates_sim` **29** adds the replayed-minute
+  guard; `offline_sim` **15** proves the client pays exactly 120 paid minutes of a sample that fits
+  under the ceiling, pays exactly the budget at every boundary level, never carries anyone past 130,
+  and that Zeny, kills and the rendered popup are unaffected.
+  `plaza_stranded_still_paid_sim`
+  had been measuring the plaza rate off the frame clock and demanding 99% of a nominal 1200,
+  which drifts by about a percent run to run (both `v407` and `v408` trees produce 1180 or 1190
+  depending on frame timing); it now keeps the frame-loop check with that documented tolerance
+  and pins the exact rate with 120 direct one-second ticks instead. Full gate on the final tree:
+  see **Delivery** below.
+* **Nothing to apply server-side** (no migration; Functions + the page).
+* **Delivery:** Branch `arena/972fca22-prontera-grind`, PR **#235** (same PR as the audit credit —
+  the flagging fix and the payout it was hiding belong together). Full gate on the final tree:
+  **219 passed / 6 failed** — the same six pre-existing reds as `main`.
+
+### 2026-11-14 — `save audit: a welcome-back payout and a sold-out fishing bag are not cheating` (no build bump — no `index.html` change)
+
+* **The owner (2026-11-15): "the anti cheat flagging system seems to be a bit broken, most of the
+  flagging are incorrect... 37 level from 2 mins, i believe its the afk reward."** He was right, and
+  the bug was in the monitor, not the player. `auditSaveRates` credited a consumed offline claim's
+  **kills** against the kill rule and nothing else, so everything those kills bought landed in the
+  next window as impossible progress: the exp that becomes **levels**, the **Zeny**, and the **loot
+  every claim kill rolls** (ore, Nightmare materials, Ascension materials). A player who came back
+  from an away window was flagged on their first save after it — `+37 levels in 2 min from level
+  113` against a 30/hour limit, which is exactly the row in the console.
+* **The claim is now priced the way the client pays it.** `claimCredits()` mirrors
+  `applyOfflineProgress()`: with the measured farm sample the save carries (`offlineIncome.xp` and
+  `.zeny` per minute) it credits `sample × credited minutes × 0.5`, the same arithmetic the browser
+  uses; without one it prices each kill from the game's own reference (`EXPK`/`ZK` at the level
+  band, with slack for expRate, pets, bosses and the Nightmare multipliers). Exp is turned into
+  **levels by the game's own curve** — `needAt`/`baseNeedAt` transcribed from `index.html`, and a
+  test holds the transcription against the page for all 149 levels — and each kill credits loot at
+  its per-kill ceiling (ore 3%, Nightmare material 3%, Ascension material/Sigil 5%). `/api/save`
+  passes the claim row (kills **and** credited ms) into the audit; the GM-grant credits from `0016`
+  still add on top instead of replacing it.
+* **A single bulk action is not a rate.** The fishing bag sells in one click and the Aether Keep
+  holds 1,000 fish, so a sold-out bag could add millions of Fishcoins inside one 2-minute window and
+  trip a 100,000/hour rule — the owner's "fishing coins where they sell in bulk". Each window now
+  has one **`LUMP_ALLOWANCE`** per lumpy counter (Fishcoins 1.5 M = 1,000 fish at 1,500 each,
+  DigiPet coins 100 k, Black-Market ore/elu 5,000) subtracted before the rate is judged. The
+  allowance is on the delta, so it can only prevent a false positive; twenty sold-out bags inside
+  two minutes still flag.
+* **What was deliberately NOT changed: the payout itself.** It is not broken — it is `4 h ceiling ×
+  50% × the kill rate the server measured`, i.e. at most 60,000 kills for a four-hour absence, and
+  the play session's own measured exp/Zeny per minute is what turns those kills into levels. At the
+  Lv 113 band the game's reference field kill pays ~250 exp, which buys ~15 levels from a full
+  claim; ~37 levels means the sample the client measured was far richer (a late/boss field with exp
+  gear). Lowering `OFFLINE_REWARD_MULT` or the 4 h ceiling is a balance decision for the owner, not
+  a bug fix, so this entry only stops the monitor calling it cheating.
+* **Checks:** `api_sim` **68** (was 64): the exp-curve transcription against `index.html`, the claim
+  credits themselves, a pure "AFK payout is not a flag / twenty bags still are" case, and an
+  end-to-end `/api/save` run where a real `offline_reward_claims` row pays 37 levels and 36 M Zeny —
+  it reproduces the console's exact `+37 levels in 2 min` row when the new wiring is removed, and
+  records no alert with it in place. Full gate: see **Delivery** below.
+* **Nothing to apply server-side** (no migration): deploy the Functions and the next accepted save
+  is judged with the claim credited. Flags already recorded stay as they are — clear them from the
+  Suspicious-saves card once reviewed.
+* **Delivery:** Branch `arena/972fca22-prontera-grind`, PR **#235**. Full gate on the final tree:
+  **219 passed / 6 failed** — the same six pre-existing reds as `main`.
+
 ### 2026-11-14 — `gm console: every save-audit flag renders its clear/reopen button` (no build bump — `gm.html` only)
 
 * **The owner could not unflag anything: the button was written into a row that never closed.**

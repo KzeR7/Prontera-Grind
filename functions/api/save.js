@@ -183,6 +183,10 @@ export const onRequestPut = guard(async ({ request, env }) => {
         userId: user.id, username: user.username, gm: user.gm,
         prev: row, save: storedSave, pub, savedAt,
         claimKills: appliedClaim ? Number(appliedClaim.kills) || 0 : 0,
+        // The claim row itself: the audit credits what the payout bought (levels, Zeny, loot),
+        // not just the kills, or a welcome-back lands in the next window as impossible progress.
+        claim: appliedClaim ? { kills: Number(appliedClaim.kills) || 0,
+          creditedMs: Number(appliedClaim.credited_ms) || 0 } : null,
       });
       if (flagged) console.log(`Save audit flagged ${user.username}: ${(fresh || []).map(v => v.kind).join(', ')}`);
     } catch (err) {
