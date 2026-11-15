@@ -4,9 +4,8 @@
 // this browser already has a session (so it can offer "continue as <name>" instead of showing the
 // login card). A 401 here is normal and means "not logged in", not "broken".
 
-import { currentUser } from '../_lib/auth.js';
+import { currentUser, recoverySetFor } from '../_lib/auth.js';
 import { json, guard, unauth } from '../_lib/http.js';
-import { userById } from '../_lib/db.js';
 
 export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
@@ -18,9 +17,12 @@ export const onRequestGet = guard(async ({ request, env }) => {
   // The client used to show the takeover card for both, which made a lost cookie look like a hijack
   // and left the player with no way back in.
   if (!user) return await unauth(request);
-  const row = await userById(env.DB, user.id);
   // v280: `id` lets the client stamp its save with the durable account identity, so a rename (which
   // changes the name, never the id) cannot strand the save. It is the caller's own id and nothing
   // else, so exposing it reveals nothing about other accounts.
-  return json({ u: user.username, id: user.id, gm: user.gm, recoverySet: !!row?.recovery_hash });
+  //
+  // v412 (CPU): `recoverySet` comes from the session JOIN that `currentUser()` already ran, instead of
+  // a second `SELECT * FROM users`. This endpoint is polled by every open tab every 45 s, so the extra
+  // round trip was the most-repeated wasted read in the game.
+  return json({ u: user.username, id: user.id, gm: user.gm, recoverySet: recoverySetFor(user) });
 });
