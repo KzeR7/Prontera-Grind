@@ -11367,3 +11367,27 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   both keys are asserted absent from `COUNTERS`, `RATE_LIMITS` and `LUMP_ALLOWANCE`. Full gate on the
   final tree: **1690 passed**, the same five reds as `main`.
 * **Delivery:** Branch `arena/369b4228-prontera-grind`, PR **#236**.
+
+### 2026-11-15 — `docs/CPU-LIMIT.md`: why the free plan's 10 ms CPU limit is hit so fast
+* **What changed for the player:** nothing. Documentation only; no build bump, no deploy.
+* **Why:** the owner forwarded Cloudflare's daily summary ("Workers hit the free tier CPU time limit at
+  least 1,000+ times in the past 24 hours") and asked what it means and why it happens so fast. The
+  answer needed measuring, not guessing.
+* **Measured (local, Node + the `api_sim` D1 shim — hosted values still need the dashboard):**
+  * one accepted `PUT /api/save` on a **90 KB** save costs **~9 ms**, and instruments at **6 full
+    `JSON.parse` + 2 `JSON.stringify` of the blob** (~0.67 MB re-tokenised) because
+    `checkSaveBlob`, `saveBelongsTo`, `storedRestoreAt`, `withSaveIdentity` and the `storedSave`
+    re-parse each re-read the same string;
+  * PBKDF2-SHA256 at the live 20,000 iterations costs **6.2 ms**, so a single login verification is
+    over half a request's whole budget, and a registration (password + recovery, sequential) is
+    **~12 ms of hashing before any D1 call**;
+  * everything else on the PUT path is cheap and was ruled out explicitly: the save audit ~0.3 ms,
+    damage observation ~0.03 ms, Echo record + settle ~0.05 ms, `gm-catalog.js` is GM-only.
+* **Also documented:** the write gate's per-request cost (`WRITE_GATE = "required"` adds a D1 ban
+  read, a SHA-256 fingerprint and two Durable Object round trips to *every* `/api/*` request,
+  including the 45 s `/api/me` probe), and the fact that a killed `PUT` is a save that never landed,
+  not just a slow request.
+* **Options listed for the owner, cheapest first:** parse the blob once (3 of the 6 parses are pure
+  duplication), shrink the 512 KB ceiling, sample the diagnostics, trim the gate's work on read-only
+  probes, or move to Workers Paid. No code changed in this entry.
+* **Delivery:** branch `arena/6d3886c8-prontera-grind`. Not deployed.
