@@ -11439,3 +11439,69 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   (`combat_float_sim`, `ui_sim`) reproduced identically on the base commit (both are `jsdom` missing
   from this sandbox, not this change).
 * **Delivery:** branch `arena/6d3886c8-prontera-grind`, commit `0c68ee9`. Not pushed, not deployed.
+
+### 2026-11-15 — `v411 CPU diet: cards capped at 1,000, a bulk sale, a real account delete, no /api/version stampede` (build bump)
+* **Why:** the same Nov 15 investigation as v410. v410 removed the duplicated work on the floor; this
+  one removes the *inputs* that keep growing, and the two things that make an already-expensive save
+  arrive more often than it needs to. The owner approved each item and asked to be told where gameplay
+  is touched — it is, in three places, all marked below.
+* **`S.cards` was the last unbounded list in a save.** Measured at **86 B per card**, so 1,000 cards is
+  ~86 KB; with the 1,000-item bag (~209 KB) the worst honest save is **~295 KB**, inside the 512 KB
+  ceiling and ~8 ms of parse after v410. It is now capped at `CARDMAX = 1000` (matching `BAGMAX`) and
+  every grant path goes through one `addCard()` instead of seven call sites each re-stating the rule.
+  **Gameplay change (approved, Option A):** a full collection now *refuses* a new card and says so,
+  rather than storing it. A player at the cap stops collecting cards until they sell or merge. Nothing
+  is ever deleted automatically.
+* **Nothing is destroyed on the way in.** A collection that already exceeds the cap (only possible from
+  before this build) is trimmed to the first 1,000 on load and the surplus is **paid out at the Sell
+  price**, `v*150`, with a one-off notice in the card panel naming the count and the Zeny so the
+  balance jump is never unexplained. The notice is dismissed by a button, never a timer. Reloading a
+  trimmed save pays nothing a second time.
+* **`sellallcards` — selling a full collection one card at a time is not a real answer to a cap.**
+  **Gameplay change (approved):** the card view gets "Sell all loose". It touches only plain, unmerged
+  (0-star) loose cards. A starred card is left alone because it is the product of a merge the player
+  paid for, and a legacy card is left alone because it still needs its free update. The confirmation
+  names the exact count and payout first. There was no delete option before this, which the owner
+  also asked for; this is it, in bulk, with the value returned rather than lost.
+* **Cards coming back off gear the player sells still push directly** (auto-sell, bulk sell, the
+  equipment workspace, removing a socketed card). Those are the player's own property and already
+  exist; refusing them at the cap would destroy value the player never chose to give up, and the
+  measured worst case already fits. This is the one deliberate exception to "everything goes through
+  `addCard`", and it is commented as such.
+* **`/api/version` is deleted.** It answered a value that only a deploy changes and every open tab
+  polled it on a timer; it has been dead code since v389. Removal is pinned by a test that asserts the
+  file is gone *and* that nothing in `functions/`, `index.html`, `gm.html` or `dev_server.js` routes to
+  it, so it cannot quietly come back.
+* **A deploy no longer stampedes every open tab at once.** The auto-reload already had to happen (a
+  stale tab must not keep saving an old build), but every tab used to flush its save in the same
+  second, which is exactly the shape of a CPU spike. The *upload* that precedes the reload now waits a
+  random slice of `UPDATE_JITTER_MS` (90 s). **The reset gate itself is untouched** — a fresh page
+  still hard-resets immediately and a background tab still never does, which is what v299/v371 pin.
+  The first attempt gated the reset instead and broke those three tests; that design was abandoned.
+* **An owner-only account delete**, because erasing a banned cheater's account had no code path at
+  all. Guarded three ways: owner only, never yourself, and a staff account must lose its GM level first;
+  the username must be typed back, checked in the console **and** again on the server. **Order matters
+  more than the guardrails:** `userIpFingerprints()` reads the sessions and events rows that
+  `ON DELETE CASCADE` is about to remove, so the account's networks are suspended **first** — ban first
+  and every network that person used stays blocked, ban after and that knowledge dies with the account.
+  `ip_bans` and `events` carry no foreign key, so both outlive the delete, which is why the audit entry
+  can still name who was removed and exactly what went with them. Every user-referencing table is
+  `ON DELETE CASCADE`, so the erase itself is one statement.
+* **Not fixed, and still stated plainly:** the Nov 15 spike is still not *explained*. This build shrinks
+  the biggest honest saves and makes deploys stop arriving in a burst. It does not prove what fired on
+  Nov 15. See [CPU-LIMIT](CPU-LIMIT.md).
+* **Checks:** new `card_cap_sim` (cap boundaries, refusal, real-loader trim + no double payout, bulk
+  sale sparing starred/legacy) and new `gm_delete_account_sim` (7 cases: every non-owner refused, staff
+  and self refused, 5 wrong confirmations delete nothing, a correct one cascades and leaves the network
+  ban standing, the audit entry survives with the removed rows counted, a second delete is a clean 404,
+  an account with no recorded network still deletes). `ui_sim` and `trial_sim` gained a stub for
+  `addCard` — their sandboxes re-declare the game's API by hand — plus a cap assertion in `ui_sim`.
+  `update_watch_sim` pins the jitter and the removal. Full gate: **207 green**, 9 red, and every one of
+  the 9 was re-run on the base commit and failed identically there (`card_star_balance_sim`,
+  `fourth_job_mythic_sim`, `hosted_launch_stage_sim`, `hosted_scrypt_prepare_sim`, `skill_balance_sim`,
+  `social_digimon_sim`, `write_gate_binding_sim`, `sanctuary_worker_battle_sim`, `social_worker_sim` —
+  all sandbox/tooling, not this change). One further suite, `unverified_echo_launch_sim`, went red once
+  inside the full run and passed 3/3 standalone and on re-run; it is week-clock sensitive and shares no
+  code with this diff.
+* **Delivery:** branch `arena/6d3886c8-prontera-grind`, commits `9cdf4fb` (cards, bulk sale,
+  `/api/version`, jitter) and `5c8e840` (account delete). Not pushed, not deployed.
