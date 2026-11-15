@@ -116,6 +116,13 @@ export const LUMP_ALLOWANCE = {
 // (limit 30/h), and the console called it cheating.
 export const OFFLINE_REWARD_MULT = .5;              // functions/api/save.js OFFLINE_REWARD_MULT
 export const OFFLINE_CAP_MS = 4 * 60 * 60 * 1000;   // functions/api/save.js OFFLINE_CAP_MS
+// v408 (owner: "37 level from 2 mins... players shouldnt be getting so much exp and level at once"):
+// index.html caps a claim's EXP at one level per credited hour (four levels for a full claim).
+// The credit below honours the same ceiling, so the monitor never credits more than the client
+// can pay - a jump bigger than the cap is now genuinely suspicious.
+export const OFFLINE_LEVELS_PER_HOUR = 1;           // index.html OFFLINE_LEVELS_PER_HOUR
+export const offlineMaxLevels = creditedMs =>
+  Math.max(1, Math.ceil(Math.max(0, num(creditedMs)) / 3_600_000) * OFFLINE_LEVELS_PER_HOUR);
 
 // index.html: needAt/baseNeedAt. Lv 100+ costs ×4 and every requirement is rounded by roundReq.
 const NA1 = 18.705917193, NE1 = 1.28684215, NE2 = 11.33248639, NE2B = .72933977;
@@ -173,7 +180,9 @@ export function claimCredits({ claim, income, prevLv }) {
   for (const [key, perKill] of Object.entries(CLAIM_LOOT_PER_KILL)) {
     resources[key] = Math.ceil(kills * perKill);
   }
-  return { kills: 0, levels: levelsFromExp(exp, prevLv), zeny: Math.ceil(zeny), resources };
+  // The client pays at most one level per credited hour, so the credit stops where it does.
+  const levels = Math.min(levelsFromExp(exp, prevLv), offlineMaxLevels(creditedMs));
+  return { kills: 0, levels, zeny: Math.ceil(zeny), resources };
 }
 
 // Add two credit sets (a claim's own payout + the GM grants claimed in the same window).

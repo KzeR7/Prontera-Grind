@@ -11070,6 +11070,46 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   and the audit card answers with the `0015` note), `gm_console_sim` **19** (boot probes `/me`
   alone, `allSettled`, guarded `loadPlayers`, guarded marker, named note). No BUILD bump.
 
+### 2026-11-15 — `haven-v408 away exp capped at one level an hour` (build bump: the welcome-back payout changed)
+
+* **The owner (2026-11-15): "can u try and simulate a offline rewards, cause i think 4 hours reward
+  for 37level is too much. players shouldnt be getting so much exp and level at once."** He is
+  right, and a simulation of the payout at the game's own reference rates says so plainly. A claim
+  pays `measured exp/min × credited minutes × 50%`, which at four hours is 120 paid minutes; turned
+  into levels by the game's own curve that was worth, at 3,000-30,000 kills an hour: **33-71 levels
+  at Lv 40, 21-60 at Lv 60, 20-47 at Lv 80, 3-19 at Lv 100** and 1-10 at Lv 113 for the reference
+  field — and more wherever a boss field or exp gear made the measured sample richer, which is how
+  a 37-level jump at 113 happened. Away time was paying more progression than the play it replaces.
+* **The fix is a ceiling on away EXP, not on the claim.** `offlineMaxLevels(creditedMs)` allows
+  **one level per credited hour** (`OFFLINE_LEVELS_PER_HOUR = 1`), so a full four-hour claim pays at
+  most four levels, a one-hour absence one, half an hour one. `offlineExpBudget(lv, levels)` sums
+  the game's own `baseNeedAt` for that many levels and the payout is `min(income.xp × minutes,
+  budget)` — the exp is what gets clipped, so a capped claim still pays its kills, Zeny, and all the
+  loot those kills roll. Re-running the same simulation with the ceiling: **4 levels at every band
+  and every rate**, down from 71.
+* **The popup says when it bit.** The welcome-back note gains "Away EXP is capped at N levels for
+  this claim — a long absence pays a bonus, not a leap", next to the existing 4-hour and 50% notes.
+* **The audit mirrors the ceiling instead of assuming it.** `save-audit.js` carries the same
+  `OFFLINE_LEVELS_PER_HOUR` and caps the levels it credits, and `api_sim` extracts the page's own
+  `offlineMaxLevels`/`offlineExpBudget` and holds the audit against them. That flips the meaning of
+  a big post-claim jump: a claim can no longer explain 37 levels, so `+37 levels in 2 min` is now a
+  **real** flag rather than a false one, and the end-to-end `/api/save` test asserts both halves —
+  four levels with a claim records nothing, 37 levels with the same claim is reported.
+* **Zeny and loot were left alone** — they are the income the player actually measured, and the
+  complaint is the level slam. `OFFLINE_REWARD_MULT` (0.5) and the four-hour cap are unchanged.
+* **Checks:** `api_sim` **69** (was 68): the ceiling/cap mirror, the pure payout cases, and the
+  two-sided end-to-end run; `offline_sim` **14** adds the client-side proof (a four-hour claim
+  pays exactly the exp four levels cost, a half-hour claim one). `plaza_stranded_still_paid_sim`
+  had been measuring the plaza rate off the frame clock and demanding 99% of a nominal 1200,
+  which drifts by about a percent run to run (both `v407` and `v408` trees produce 1180 or 1190
+  depending on frame timing); it now keeps the frame-loop check with that documented tolerance
+  and pins the exact rate with 120 direct one-second ticks instead. Full gate on the final tree:
+  see **Delivery** below.
+* **Nothing to apply server-side** (no migration; Functions + the page).
+* **Delivery:** Branch `arena/972fca22-prontera-grind`, PR **#235** (same PR as the audit credit —
+  the flagging fix and the payout it was hiding belong together). Full gate on the final tree:
+  **219 passed / 6 failed** — the same six pre-existing reds as `main`.
+
 ### 2026-11-14 — `save audit: a welcome-back payout and a sold-out fishing bag are not cheating` (no build bump — no `index.html` change)
 
 * **The owner (2026-11-15): "the anti cheat flagging system seems to be a bit broken, most of the
