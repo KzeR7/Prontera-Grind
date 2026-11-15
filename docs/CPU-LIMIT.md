@@ -1,147 +1,128 @@
 # Why the free plan's CPU limit is hit so fast
 
-2026-11-15. Written in answer to the Cloudflare daily summary *"Your Workers hit the free tier CPU
-time limit at least 1,000+ times in the past 24 hours"*.
+2026-11-15, **revised** after the owner supplied the Metrics charts for Oct 30, Nov 6–9, Nov 11–13,
+Nov 13 and Nov 15. The first version of this document was written from the email alone and got the
+shape wrong; this version uses the charts, which are the real evidence.
 
-This document explains what the email means, which of this repository's requests actually exceed the
-free plan's budget, and what the options are. **It contains no code change on its own** — the numbers
-below are local measurements on the Node/D1 shim (`tools/tests/api_sim.js` style harness, not the
-hosted runtime), and they are stated as such.
+## What the charts show
 
-## What the email means
+`Exceeded CPU Time Limits` per the Errors panel:
 
-* The free plan allows **10 ms of CPU per request** (not wall time — time spent waiting on D1 or the
-  network does not count). Workers Free cannot raise it. Workers Paid gives 30 s by default,
-  configurable up to 5 minutes per request.
-* When a Worker goes over, the runtime **kills the isolate mid-execution**. The player sees error
-  1102, a broken page, or an API call that never returns. Nothing in our code catches it; the
-  handler simply stops. That is why the email says "stops running it mid-task".
-* "1,000+ times in 24 hours" is a count of those kills, not of all requests. A single endpoint that
-  is killed for every caller produces exactly this shape, and it keeps producing it every day until
-  either the code gets cheaper or the plan changes.
+| Date | Success | Errors | of which CPU | Median CPU |
+| --- | ---: | ---: | ---: | ---: |
+| Oct 30 | 386 | 5 | **0** | 17.8 ms |
+| Oct 30–31 | 1,220 | 9 | **0** | 11.6 ms |
+| Nov 6–9 | 7,169 | 41 | **0** | 11.5 ms |
+| **Nov 11–13** | 10,152 | 34 | **0** | 9.5 ms |
+| Nov 13 | 11,869 | 43 | **13** | 8.7 ms |
+| **Nov 15 (24 h)** | 7,631 | 1,097 | **1,084** | **13.7 ms** |
 
-**The important consequence for this game:** a killed `PUT /api/save` is not a lost request, it is a
-save that never landed. The client retries, so the player usually just sees a stalled sync — but a
-request that dies *after* D1 took the write and *before* the response is built leaves the client
-holding an older version number, and the next push 409s. So this is not only a performance issue.
+Two facts decide this whole question:
 
-## What the CPU budget actually buys
+1. **For two weeks the CPU limit was never hit — zero, on every single day.** The code was *already*
+   running 10–18 ms median CPU in all of those days, i.e. already far over the nominal 10 ms cap, and
+   Cloudflare killed nothing. The free tier tolerates ordinary overruns on a small account.
+2. **Then on Nov 15 it killed 1,084 in one day**, with ~92% of all errors being CPU kills, while
+   median CPU *rose* from 8.7 ms to 13.7 ms and p99 went 45 → 62 ms.
 
-Cloudflare documents the free tier as 10 ms CPU per request. As a rough conversion, native
-PBKDF2-SHA256 on this sandbox costs:
+**The correct conclusion: this is a regression, not a chronic over-budget design.** Something that
+went live on/around Nov 14–15 both raised the CPU and blew up the request count. Nothing else about
+the account changed: subrequests per request are flat (~2.1) on every day including the bad one, and
+"Script Threw Exception" and "Exceeded Memory" are 0 throughout — so it is not new heavy endpoints
+and not a crash loop.
 
-| work | measured cost |
-| --- | --- |
-| PBKDF2-SHA256, 20,000 iterations (our current login work factor) | **6.2 ms** |
-| PBKDF2-SHA256, 100,000 iterations | 22.9 ms |
-| scrypt N=16384 r=8 p=5 (the reader-only profile in `_lib/scrypt-reader.js`) | 208 ms |
+Note also that the owner's timezone is GMT+8: the Nov 15 spike began around **09:00 SGT** and peaked
+about an hour later, which is when that day's deploy and the players arrived together.
 
-So **one password verification already spends more than half of a free request's entire CPU
-budget**, and every registration spends two of them (password + recovery code, in sequence) — which
-is ~12 ms of hashing before any D1 call is made. `docs/PASSWORD-KDF-PLAN.md` already records that
-raising the work factor to anything modern is impossible on the free plan for exactly this reason.
+## What shipped just before it
 
-`GET /api/me` costs almost nothing, so the session probe is not the problem. Login and registration
-are the two cheapest-looking endpoints that are actually expensive, and they are the ones a new
-player hits first.
+From `docs/UPDATE-LOG.md`, all on Nov 14–15 and all server-side (no visible build change, so nobody
+would connect them to a slowdown):
 
-## The bigger per-request cost: the save blob
+* **network (IP) bans** — `_middleware.js` now runs `ipHash()` + `isIpBanned()` **on every `/api/*`
+  request**;
+* **automatic save audit** — `auditAcceptedSave()` now runs on **every accepted save**;
+* **the save audit's own false positives** — the welcome-back payout and the sold-out fishing bag
+  were being flagged as cheating on Nov 14, patched on Nov 15;
+* **v408 offline rewards** (build bump, client);
+* v407 MVP fish art and announcement gifts (build bump).
 
-`PUT /api/save` is the hottest endpoint in the game (the client pushes on a 60 s debounce while
-visible, 150 s while hidden, and immediately after any meaningful action). It is also the one that
-handles the largest payload — the accepted ceiling is **512 KB** (`validate.js`), and the request cap
-is 600 KB (`save.js`).
+## Measured cost of each culprit
 
-Measured on a **90 KB** save (a late-game character with a few hundred inventory rows), one accepted
-`PUT` was **~9 ms** end-to-end in Node, and instrumenting `JSON.parse`/`JSON.stringify` shows why:
+All numbers are local (Node 22 + the real handlers against the real migrations through a D1 shim),
+so they bound *shape*, not the hosted millisecond. Measured twice, the second time correctly — the
+first pass wrongly passed `prev: null` to the audit, which skips the entire rate check.
 
-> **6 full parses of the save blob and 2 full stringifies per accepted sync** — ~0.67 MB of JSON
-> re-tokenised for a 90 KB save.
+### 1. The save blob is parsed six times per sync — and this is the big one
 
-The parses are spread across the pipeline, each re-reading the same string:
+Instrumenting `JSON.parse`/`JSON.stringify` over one accepted `PUT /api/save` counts **6 parses of the
+blob and 2 stringifies**, because each helper re-reads the same string:
+`readJson` (body), `checkSaveBlob`, `saveBelongsTo` (stored), `storedRestoreAt` (stored),
+`withSaveIdentity` (incoming), and the `storedSave` re-parse.
 
-| where | what it is doing |
-| --- | --- |
-| `readJson` → `JSON.parse(text)` | the request body itself |
-| `checkSaveBlob(blob)` | parse #2 — validate + return `save` |
-| `saveBelongsTo(row.blob, user)` → `storedSaveAccountId` | parses the **stored** blob |
-| `storedRestoreAt(row.blob)` | parses the **stored** blob again |
-| `withSaveIdentity(body.blob, user)` | parses the **incoming** blob again |
-| `JSON.parse(stored)` | parses it once more to get `storedSave` |
-| `recordDamageObservation` / `auditAcceptedSave` / `publicFields` | reuse the parsed object (cheap) |
+| real save size | one parse | today (6 parses + 2 stringify) | parse-once | saved |
+| ---: | ---: | ---: | ---: | ---: |
+| 18 KB | 0.18 ms | **1.5 ms** | 0.6 ms | 0.9 ms |
+| 81 KB | 0.76 ms | **6.5 ms** | 2.5 ms | 4.0 ms |
+| 273 KB | 2.81 ms | **24.4 ms** | 9.4 ms | **15.0 ms** |
+| 456 KB (near the 512 KB cap) | 3.64 ms | **34.9 ms** | 13.8 ms | **21.1 ms** |
 
-On a 512 KB save that is roughly 3.5 MB of JSON tokenised per sync, and the per-sync cost scales
-linearly with save size: **the players who have played longest pay the most CPU per save**, which is
-the opposite of what a free tier wants. Parsing is pure synchronous CPU, so it is counted in full
-against the 10 ms budget.
+**A big-save player is burning 25–35 ms of pure JSON work per sync, two thirds of it duplicated.**
+That is enough on its own to be killed on the free plan, and it is why the p99 sits at 62 ms.
 
-That alone does not explain 1,000+ kills a day — a single player pushing every 60 s is 1,440 requests
-a day, so the *hours played* matter. But it does mean that **any burst of players (or one tab with a
-large save left open) turns into a burst of over-budget requests**, and each one is a visible error in
-the client.
+This is not new code, but it is what makes the account fragile: the *distribution* matters more than
+the average. The moment more players reach large saves, or a few tabs with big saves sync close
+together, the kills start — exactly the Nov 15 shape.
 
-## The second suspect: the write gate
+### 2. The per-request ban check (Nov 14)
 
-`functions/api/_middleware.js` runs on **every** `/api/*` request. Since 2026-10-30 the deployment is
-configured with `WRITE_GATE = "required"`, so every request also does:
+`networkBanVerdict()` runs on **every** `/api/*` request: `ipHash()` (SHA-256) plus at least one D1
+read of `ip_bans`. Measured: a bare `GET /api/me` is now **2 D1 statements** where it used to be 1.
+It is small, and it is not the reason for the spike (Nov 13 already had 13 CPU kills *before* this
+shipped), but it is a permanent tax on the cheapest, most frequent call in the game.
 
-1. `networkBanVerdict` → `ipHash` (SHA-256) + a D1 read of the ban table;
-2. `askGate('/admit')` → a **Durable Object round trip**;
-3. in `finally`, `askGate('/release')` → a **second Durable Object round trip** via `waitUntil`.
+### 3. The automatic save audit (Nov 14)
 
-The DO calls themselves are wall time (not CPU), but the SHA-256 fingerprinting, the JSON
-encode/decode of both bodies, and the session lookup for the owner-exemption check are CPU, and they
-are paid by requests that would otherwise cost nearly nothing — `/api/me` every 45 s per open tab,
-`/api/version`, the chat probe. They are small individually but they add up across many tabs, and
-they are the reason so many *trivial* requests can appear in a CPU metric at all.
+Measured at **~1.1 ms** on a 90 KB save with a previous row present (5 D1 statements), and the same
+~1.1 ms whether it flags or not — there is no CPU cliff on the flagging path. It also writes a
+`save_alerts` row and mails every owner account the **first** time a rule fires per account, which is
+a rows-written cost rather than a CPU one. `auditStaticSave` accounts for most of it (1.2 ms at
+300 KB), and it walks the whole inventory on every sync.
 
-The gate is also a single Durable Object (`idFromName('world')` style binding, one instance), so its
-own admission/release path is a serialisation point — worth knowing when the account is being
-hammered.
+**It was correct to suspect this, but the numbers say it is not the smoke — it is ~1 ms per save.**
 
-## What is almost certainly NOT the cost
+### 4. Ruled out, so nobody "fixes" these by mistake
 
-Checked and ruled out so they do not get "fixed" by mistake:
-
-* **The plaza Worker's 1 s battle alarm** — that bills Durable Object *requests* and duration, which
-  is a different budget. It does not count against a Pages Function's 10 ms CPU.
+* **`/api/version`** — dead code. `index.html`'s update watcher has fetched `version.txt` since
+  v389; nothing calls `/api/version`. (It would have been expensive: decoding the 1.33 MB
+  `index.html` is ~5.3 ms. If it were ever revived, it must not re-read the whole page.)
+* **The write gate** — it adds a ban read, a SHA-256 and two Durable Object round trips per request,
+  but it went live Oct 30 and the account hit **zero** CPU errors for the following two weeks.
+  The DO hops are wall time, not CPU. Keep the leases; this is not the regression.
+* **The plaza Worker's 1 s battle alarm** — a different budget (DO requests/duration).
 * **D1 reads/writes** — I/O, not CPU.
-* **The save audit** (`save-audit.js`) — measured at ~0.3 ms on a 90 KB save; it reuses the already
-  parsed object, and it only pays for a grant lookup when it is about to flag something.
-* **`recordUnverifiedEcho` / `settleUnverifiedEcho`** — ~0.03 ms each; they are cheap D1 statements
-  and skip entirely when the save carries no Echo score.
-* **`gm-catalog.js`** (220 KB of literal data) — only imported by `/api/gm/*` routes, so a player
-  request never pays for it. Do not "optimise" it for this problem.
+* **`gm-catalog.js`** (220 KB of literals) — GM routes only; a player request never pays for it.
 
-## Options, cheapest first
+## What to do, in order
 
-1. **Make `PUT /api/save` parse the blob once.** `checkSaveBlob` already returns the parsed object, but
-   the callers re-parse the same string up to four more times (see the table above). Passing the parsed
-   object through — and having `saveBelongsTo` / `storedRestoreAt` accept an already-parsed stored
-   blob — removes 3 of the 6 parses without changing any rule. This is a pure, testable win and is the
-   single highest-leverage change in the repository for this limit.
-2. **Cap or shrink the blob.** 512 KB is generous for this game; the client's own save is padded by
-   history and inventory rows. A smaller ceiling (and pruning on the client) reduces every player's
-   per-sync cost proportionally.
-3. **Move diagnostics off the write path.** `recordDamageObservation`, the audit and Echo settlement are
-   already best-effort; on the free plan they could run on a sampled basis (every Nth save) instead of
-   every sync. This does not change their guarantees — they are review-only.
-4. **Trim the gate's per-request work.** The ban check only needs to run on entry points (login,
-   register, recover) to be useful; running it on every `/api/me` probe is the expensive version of a
-   check that a suspended player cannot exploit through a read. The admission lease still has to be
-   paid — that is the pause's whole design — but the fingerprinting and the session lookup inside it
-   can be skipped for the cheap read paths.
-5. **Workers Paid.** Trivial to switch on (free tier is 10 ms fixed; paid is 30 s default, up to 5 min)
-   and it makes all of the above optional rather than urgent. It does **not** make a 6-parse save
-   path efficient, so it is a budget decision, not a fix.
+1. **Parse the save once.** Removes 3 of the 6 parses and 1 of the 2 stringifies; saves 4 ms at 81 KB
+   and 21 ms at the 456 KB ceiling. Pure win, no rule changes, and it is the difference between
+   "fragile" and "fine" for the players who matter most.
+2. **Trim the audit's static pass** — it walks every item in `eq`/`inv`/`cards` on every sync for
+   `refine-over-cap`/`affix-over-cap`. Check the worst item, not all of them, or run the static pass
+   every Nth save (it is review-only, so a sampled run loses nothing but a little latency in the
+   flag appearing).
+3. **Shrink the 512 KB save ceiling** — every player's per-sync CPU scales directly with it.
+4. **Move the ban check off the hot read paths** — it only needs to gate entry points (login,
+   register, recover) and writes to be useful; a suspended player cannot do anything with a read.
+5. **Workers Paid ($5)** — a legitimate stopgap, since the account already runs 8–18 ms median on
+   *every* day and is only surviving on Cloudflare's overrun tolerance. It is not a substitute for
+   (1), which is waste regardless of plan.
 
-## What to check before acting
+## How to confirm which one it was
 
-* Cloudflare dashboard → Workers & Pages → the Pages project → **Metrics**: the breakdown by
-  endpoint/cron and the "Exceeded CPU Time Limits" line. The email gives a count, not a caller, and
-  the numbers above are local — they establish *shape*, not the hosted value.
-* The daily summary counts every script in the account. Confirm the kills are on the Pages Functions
-  and not the `prontera-social` / `prontera-gate` Workers, whose budgets are different (requests and
-  duration, not per-request CPU).
-* `docs/PASSWORD-KDF-PLAN.md` and `docs/CAMP-AUTH-AUDIT.md` already concluded that a modern password
-  KDF is impossible on this plan. Nothing here changes that; it only quantifies it.
+The charts already answer the "is it chronic" question. To pin the Nov 15 09:00 SGT step
+specifically, correlate it with the deploy that landed that morning (the Nov 15 build bump for v408
+and the save-audit false-positive fix) and with the request line, which is the busiest of the whole
+set that day. If the CPU kills stop after the next deploy, the deploy is the suspect; if they persist
+on quiet days, item (1) is the floor that has to come down.

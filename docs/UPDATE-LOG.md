@@ -11391,3 +11391,20 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   duplication), shrink the 512 KB ceiling, sample the diagnostics, trim the gate's work on read-only
   probes, or move to Workers Paid. No code changed in this entry.
 * **Delivery:** branch `arena/6d3886c8-prontera-grind`. Not deployed.
+* **CORRECTED the same day, after the owner supplied the Metrics charts (Oct 30, Nov 6-9, Nov 11-13,
+  Nov 13, Nov 15).** The first version of the doc treated this as a chronic over-budget design. The
+  charts say otherwise and the doc was rewritten:
+  * **The CPU limit was never hit at all before Nov 15** - 0 kills on Oct 30, Oct 30-31, Nov 6-9 and
+    Nov 11-13, on days whose median CPU was already **10-18 ms**, i.e. already over the nominal 10 ms
+    cap and tolerated. Nov 15 then recorded **1,084** CPU kills against 7,631 successes (92% of all
+    errors), with median CPU up 8.7 -> 13.7 ms and p99 45 -> 62 ms. So this is a **regression on
+    Nov 14-15**, not a design that was always doomed.
+  * **The write-gate hypothesis is withdrawn.** It went live Oct 30 and two weeks of zero CPU errors
+    followed; its Durable Object hops are wall time. The doc no longer blames it.
+  * **The save audit is not the smoke either** - measured ~1.1 ms on a 90 KB save with a previous row
+    present, the same whether it flags or not (my first measurement passed `prev: null`, which skips
+    the whole rate check; the number was wrong and the doc now says so).
+  * **The real number:** one accepted `PUT /api/save` parses the blob **6 times** and stringifies it
+    twice. At the 456 KB ceiling that is **34.9 ms**, of which **21.1 ms is duplicated work**; at
+    81 KB it is 6.5 ms vs 2.5 ms if parsed once. That is the floor that makes the account fragile and
+    the first thing to fix. `/api/version` (dead code since v389) was measured and ruled out.
