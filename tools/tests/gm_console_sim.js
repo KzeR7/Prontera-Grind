@@ -44,7 +44,21 @@ t('the destructive actions all confirm first', () => {
     ['ban-net-one', /confirm\(\s*'Suspend this network/],
     ['set-password', /confirm\(\s*'Set a new password/],
     ['restore', /confirm\(\s*'Restore version/],
+    ['delete', /confirm\(\s*'DELETE/],
   ]) assert.match(src, re, act + ' must ask before it acts');
+});
+
+t('deleting an account needs the username typed, and says what it destroys', () => {
+  const block = src.slice(src.indexOf("act === 'delete'"), src.indexOf("act === 'set-password'"));
+  assert.ok(block, 'the delete action must exist');
+  assert.match(block, /prompt\(/, 'it asks for the username, not just a yes/no');
+  assert.match(block, /typed\.trim\(\) !== u/, 'a mismatched name aborts before any request');
+  assert.match(block, /action: 'delete', confirm/, 'the typed name is sent for the server to check again');
+  assert.match(block, /There is no undo/, 'the confirmation admits what it does');
+  assert.match(block, /networks stay suspended/, 'and says the network bans outlive the account');
+  assert.ok(!/delete.*SEL = null[\s\S]{0,200}SEL\.account/.test(block.slice(block.indexOf('SEL = null'))),
+    'the panel is closed before anything reads the deleted account again');
+  assert.match(src, /data-act="delete"/, 'the button is in the player panel');
 });
 
 t('it carries no credentials, tokens, hashes or account names of its own', () => {

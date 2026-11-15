@@ -500,6 +500,11 @@ function renderDetail() {
       <button data-act="logout">Force sign-out</button>
       <button data-act="closedetail" class="detail-close" title="Close this player and go back to the list">✕ Close</button>
     </div>
+    <div class="row">
+      <span class="small">Erase the account, its save and its backup history. Their networks stay suspended. No undo.</span>
+      <span class="spacer"></span>
+      <button class="danger" data-act="delete" title="Delete this account permanently — the owner must type the username to confirm">Delete account…</button>
+    </div>
     <div class="grid2" style="margin-bottom:10px">
       <div class="stat"><b>${s ? nfmt(s.pub.lv) : '—'}</b><span class="small">level${s && s.pub.cls ? ' · ' + esc(s.pub.cls) : ''}</span></div>
       <div class="stat"><b>${s ? nfmt(s.pub.zeny) : '—'}</b><span class="small">Zeny</span></div>
@@ -804,6 +809,18 @@ $('detail').addEventListener('click', async e => {
     } else if (act === 'logout') {
       await api('/gm/player', { method: 'POST', body: JSON.stringify({ id, action: 'logout' }) });
       say('Signed out everywhere.');
+    } else if (act === 'delete') {
+      // Irreversible, so the guardrails are in the console as well as on the server: name the
+      // account, then make the owner type it. Nothing happens on a mis-click.
+      const u = SEL.account.u;
+      if (!confirm('DELETE ' + u + ' for good?\n\nThis erases the account, its save and all of its backup history. Their networks stay suspended afterwards. There is no undo.')) return;
+      const typed = prompt('Type the username exactly ("' + u + '") to delete it:');
+      if (typed === null) return;
+      if (typed.trim() !== u) return say('That does not match "' + u + '". Nothing was deleted.', 1);
+      const r = await api('/gm/player', { method: 'POST', body: JSON.stringify({ id, action: 'delete', confirm: typed.trim() }) });
+      say(r.note || 'Deleted.');
+      await Promise.all([loadPlayers(), loadIpBans()]);
+      SEL = null;
     } else if (act === 'set-password') {
       const password = $('newpw').value;
       if (password.length < 10) return say('Use at least 10 characters.', 1);
