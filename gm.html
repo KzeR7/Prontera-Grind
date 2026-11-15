@@ -375,6 +375,28 @@ $('spawnmvp').onclick=async()=>{
   catch(e){$('mvpresult').textContent='Spawn refused: '+e.message;say(e.message,1);}
   finally{button.disabled=false;}
 };
+// 0016 (owner: "after review if i think its nothing wrong is there an option to unflag?"): the
+// flag tables for one account, as markup. Open flags are the working list; cleared ones sit
+// underneath as the verdict trail, each reopenable. Clearing never deletes evidence.
+//
+// Every row is written whole here - all five cells and its own `</tr>` - and the verdict cell is
+// passed in. The first cut appended that cell by patching a closing row tag into a row template that
+// never closed the row, so the match failed and the button silently vanished from every flag; a
+// test that only grepped the source for `data-act="flagclear"` could not see it.
+function saveAuditMarkup(alerts) {
+  const openFlags = alerts.filter(a => !a.cleared), clearedFlags = alerts.filter(a => a.cleared);
+  const cells = (a, whenText) => `<td>${esc(a.label)}</td><td>${esc(nfmt(a.threshold||0))} / ${esc(nfmt(Math.round(a.value||0)))}</td><td>${esc(a.detail||'')}</td><td class="small">${whenText}</td>`;
+  const seen = a => `${esc(when(a.firstSeen))} → ${esc(when(a.lastSeen))}<br>${nfmt(a.observations)} observation${a.observations===1?'':'s'}`;
+  const row = (a, whenText, verdict) => `<tr>${cells(a, whenText)}${verdict}</tr>`;
+  const openTable = `<table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>First / last seen</th><th></th></tr></thead><tbody>${openFlags.map(a=>row(a, seen(a), `<td><button type="button" data-act="flagclear" data-kind="${esc(a.kind)}">Looks fine — clear</button></td>`)).join('')}</tbody></table>`;
+  const clearedTable = clearedFlags.length
+    ? `<h3 class="small">Cleared after review — kept as history, reopenable</h3><table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>Cleared</th><th></th></tr></thead><tbody>${clearedFlags.map(a=>row(a, `${esc(when(a.clearedAt))}${a.clearedBy?' · '+esc(a.clearedBy):''}`, `<td><button type="button" data-act="flagreopen" data-kind="${esc(a.kind)}">Reopen</button></td>`)).join('')}</tbody></table>`
+    : '';
+  if (!alerts.length) return `<p class="small">No save-audit flags on this account — its last accepted saves are within the game's own limits.</p>`;
+  if (!openFlags.length) return `<p class="small">Every save-audit flag on this account has been reviewed and cleared. A cleared rule reopens by itself if it fires again.</p>${clearedTable}`;
+  return `<h3 class="small">Save audit flags — checked by the server while storing each save (review-only; cross-check Gifts and History)</h3>${openTable}<p class="small">Clearing says a human read this evidence and it is explained. It removes the ⚠ marker, but the rule reopens by itself if it fires again.</p>${clearedTable}`;
+}
+
 async function renderDamage(body,id) {
   body.innerHTML='<p class="small">Loading damage observations…</p>';
   try {
@@ -382,19 +404,7 @@ async function renderDamage(body,id) {
     if(SEL?.account.id!==id||TAB!=='damage'||body!==$('tabbody'))return;
     const alerts = (SEL && SEL.account.id === id && Array.isArray(SEL.alerts)) ? SEL.alerts : [];
     body.innerHTML=`<p class="small">Reported by the browser, not proof of cheating. Samples are at most one per six-hour period, up to 28 per account. Total damage is cumulative, not field DPS; Echo is a reported personal best. No automatic ban or payout action.</p>` +
-      (() => {
-        // 0016: a reviewed flag can be cleared. Open flags are the working list; cleared ones are
-        // kept underneath as the verdict trail, each reopenable. Clearing never deletes evidence.
-        const openFlags = alerts.filter(a => !a.cleared), clearedFlags = alerts.filter(a => a.cleared);
-        const rows = list => list.map(a=>`<tr><td>${esc(a.label)}</td><td>${esc(nfmt(a.threshold||0))} / ${esc(nfmt(Math.round(a.value||0)))}</td><td>${esc(a.detail||'')}</td><td class="small">${esc(when(a.firstSeen))} → ${esc(when(a.lastSeen))}<br>${nfmt(a.observations)} observation${a.observations===1?'':'s'}</td>`);
-        const openTable = `<table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>First / last seen</th><th></th></tr></thead><tbody>${openFlags.map(a=>rows([a])[0].replace('</tr>', `<td><button type="button" data-act="flagclear" data-kind="${esc(a.kind)}">Looks fine — clear</button></td></tr>`)).join('')}</tbody></table>`;
-        const clearedTable = clearedFlags.length
-          ? `<h3 class="small">Cleared after review — kept as history, reopenable</h3><table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>Cleared</th><th></th></tr></thead><tbody>${clearedFlags.map(a=>rows([a])[0].replace('</tr>', `<td class="small">${esc(when(a.clearedAt))}${a.clearedBy?' · '+esc(a.clearedBy):''}<br><button type="button" data-act="flagreopen" data-kind="${esc(a.kind)}">Reopen</button></td></tr>`)).join('')}</tbody></table>`
-          : '';
-        if (!alerts.length) return `<p class="small">No save-audit flags on this account — its last accepted saves are within the game's own limits.</p>`;
-        if (!openFlags.length) return `<p class="small">Every save-audit flag on this account has been reviewed and cleared. A cleared rule reopens by itself if it fires again.</p>${clearedTable}`;
-        return `<h3 class="small">Save audit flags — checked by the server while storing each save (review-only; cross-check Gifts and History)</h3>${openTable}<p class="small">Clearing says a human read this evidence and it is explained. It removes the ⚠ marker, but the rule reopens by itself if it fires again.</p>${clearedTable}`;
-      })() +
+      saveAuditMarkup(alerts) +
       `<h3 class="small">Damage samples — browser-reported, never proof</h3>` +
       (d.samples.length?`<table><thead><tr><th>Sampled</th><th>Map / stage</th><th>Total damage</th><th>Echo best DPS</th></tr></thead><tbody>${d.samples.map(r=>`<tr><td>${esc(when(r.sampled_at))}</td><td>${esc(r.map==null?'—':r.map)} / ${esc(r.stage==null?'—':r.stage)}</td><td>${esc(damageNumber(r.reported_total_damage))}</td><td>${esc(damageNumber(r.reported_echo_best))}</td></tr>`).join('')}</tbody></table>`:'<p class="small">No samples recorded yet.</p>');
   } catch(e) { if(SEL?.account.id===id&&TAB==='damage'&&body===$('tabbody'))body.textContent='Damage monitoring unavailable: '+e.message; }

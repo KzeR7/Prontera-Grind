@@ -11070,6 +11070,38 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   and the audit card answers with the `0015` note), `gm_console_sim` **19** (boot probes `/me`
   alone, `allSettled`, guarded `loadPlayers`, guarded marker, named note). No BUILD bump.
 
+### 2026-11-14 — `gm console: every save-audit flag renders its clear/reopen button` (no build bump — `gm.html` only)
+
+* **The owner could not unflag anything: the button was written into a row that never closed.**
+  `v407` shipped the review feature, but on the live console a flagged player's Damage tab showed
+  four columns and no verdict cell. The cause was in the page, not the deploy: the row template
+  ended at its fourth `</td>` — no `</tr>` — and the button cell was appended with
+  `replace('</tr>', …)`, a replace that matched nothing. The browser then auto-closed each row, so
+  the fifth `<th>` stayed empty and the clear button existed nowhere in the DOM. The reopen button
+  on the cleared list was lost the same way.
+* **Rows are written whole now.** The flag tables moved out of an inline IIFE into a top-level
+  `saveAuditMarkup(alerts)` with two small helpers: `cells()` for the four evidence cells and
+  `row()` which always emits `<tr>…</tr>` and takes the verdict cell as an argument. The cleared
+  table also had its header and body disagreeing — the header's fourth column said "Cleared" while
+  the cell underneath showed first/last seen — so the fourth cell is now the cleared timestamp and
+  reviewer, with Reopen in the fifth.
+* **The regression test renders the table instead of grepping it.** `gm_console_sim` used to assert
+  only that `gm.html`'s *text* contained `data-act="flagclear"`, which was true while the button was
+  invisible to every user. It now lifts `saveAuditMarkup` and its three formatters out of the page's
+  inline script, runs them on a synthetic open flag and a synthetic cleared flag, splits the two
+  `<tbody>` blocks and asserts five `<td>` per row, a closed row, and the button as the last cell —
+  plus that a re-fire button is labelled with the right `data-kind` and that flag text stays escaped.
+  Verified to fail against the broken page and pass against the fix. A source-level guard also
+  rejects patching a closing tag into a row template again.
+* **Checks:** `gm_console_sim` **21** (was 20), and the full gate on the final tree — see
+  **Delivery** below. No API, migration, save or Workers change: `functions/api/gm/damage.js` and
+  the `0016` verdict columns were already correct, which is why the flags themselves listed fine.
+* **Nothing to apply server-side** — this is a static page, so the fix lands with the Pages deploy.
+  A hard reload of the console is enough (`_headers` already sends `no-cache, must-revalidate` for
+  `gm.html`, so the stale-page theory was ruled out on the way to the real cause).
+* **Delivery:** Branch `arena/266e222b-prontera-grind`, PR **#233**. Full gate on the final tree:
+  **219 passed / 6 failed** — the same six pre-existing reds as `main`.
+
 ### 2026-11-14 — `haven-v407 MVP fish art drop, reviewable save flags, announcement gifts for later players, points-to-spend under the attributes`
 
 * **MVP fishing: the owner's ten crops replaced the seven painted bosses.** `assets/social/fish/`
